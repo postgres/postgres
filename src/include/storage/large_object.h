@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: large_object.h,v 1.3 1996/11/05 06:10:58 scrappy Exp $
+ * $Id: large_object.h,v 1.4 1997/08/19 21:39:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,7 +49,6 @@ extern LargeObjectDesc *inv_create(int flags);
 extern LargeObjectDesc *inv_open(Oid lobjId, int flags);
 extern void inv_close(LargeObjectDesc *obj_desc);
 extern int inv_destroy(Oid lobjId);
-extern int inv_stat(LargeObjectDesc *obj_desc, struct pgstat *stbuf);
 extern int inv_seek(LargeObjectDesc *obj_desc, int offset, int whence);
 extern int inv_tell(LargeObjectDesc *obj_desc);
 extern int inv_read(LargeObjectDesc *obj_desc, char *buf, int nbytes);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.11 1997/08/12 22:52:01 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.12 1997/08/19 21:30:19 momjian Exp $
  *	
  * NOTES
  *	Transaction aborts can now occur two ways:
@@ -151,6 +151,21 @@
 #include <commands/async.h>
 #include <commands/sequence.h>
 
+static void AbortTransaction(void);
+static void AtAbort_Cache(void);
+static void AtAbort_Locks(void);
+static void AtAbort_Memory(void);
+static void AtCommit_Cache(void);
+static void AtCommit_Locks(void);
+static void AtCommit_Memory(void);
+static void AtStart_Cache(void);
+static void AtStart_Locks(void);
+static void AtStart_Memory(void);
+static void CommitTransaction(void);
+static void RecordTransactionAbort(void);
+static void RecordTransactionCommit(void);
+static void StartTransaction(void);
+
 /* ----------------
  *	global variables holding the current transaction state.
  *
@@ -232,11 +247,13 @@ TransactionFlushEnabled(void)
     return TransactionFlushState;
 }
 
+#ifdef NOT_USED
 void
 SetTransactionFlushEnabled(bool state)
 {    
     TransactionFlushState = (state == true);
 }
+#endif
 
 /* --------------------------------
  *	IsTransactionState
@@ -420,12 +437,13 @@ CommandIdIsCurrentCommandId(CommandId cid)
  *	ClearCommandIdCounterOverflowFlag
  * --------------------------------
  */
+#ifdef NOT_USED
 void
 ClearCommandIdCounterOverflowFlag()
 {
     CommandIdCounterOverflowFlag = false;
 }
-
+#endif
 
 /* --------------------------------
  *	CommandCounterIncrement
@@ -464,7 +482,7 @@ InitializeTransactionSystem()
  *	AtStart_Cache
  * --------------------------------
  */
-void
+static void
 AtStart_Cache()    
 {
     DiscardInvalid();
@@ -474,7 +492,7 @@ AtStart_Cache()
  *	AtStart_Locks
  * --------------------------------
  */
-void
+static void
 AtStart_Locks()    
 {
     /*
@@ -489,7 +507,7 @@ AtStart_Locks()
  *	AtStart_Memory
  * --------------------------------
  */
-void
+static void
 AtStart_Memory()    
 {
     Portal	     portal;
@@ -526,7 +544,7 @@ AtStart_Memory()
  *	      -cim 3/18/90
  * --------------------------------
  */
-void
+static void
 RecordTransactionCommit()    
 {
     TransactionId xid;
@@ -569,7 +587,7 @@ RecordTransactionCommit()
  *	AtCommit_Cache
  * --------------------------------
  */
-void
+static void
 AtCommit_Cache()
 {
     /* ----------------
@@ -586,7 +604,7 @@ AtCommit_Cache()
  *	AtCommit_Locks
  * --------------------------------
  */
-void
+static void
 AtCommit_Locks()  
 {
     /* ----------------
@@ -602,7 +620,7 @@ AtCommit_Locks()
  *	AtCommit_Memory
  * --------------------------------
  */
-void
+static void
 AtCommit_Memory()  
 {
     /* ----------------
@@ -624,7 +642,7 @@ AtCommit_Memory()
  *	RecordTransactionAbort
  * --------------------------------
  */
-void
+static void
 RecordTransactionAbort()    
 {
     TransactionId xid;
@@ -655,7 +673,7 @@ RecordTransactionAbort()
  *	AtAbort_Cache
  * --------------------------------
  */
-void
+static void
 AtAbort_Cache()    
 {
     RegisterInvalid(false);
@@ -665,7 +683,7 @@ AtAbort_Cache()
  *	AtAbort_Locks
  * --------------------------------
  */
-void
+static void
 AtAbort_Locks()    
 {
     /* ----------------
@@ -682,7 +700,7 @@ AtAbort_Locks()
  *	AtAbort_Memory
  * --------------------------------
  */
-void
+static void
 AtAbort_Memory()    
 {
     /* ----------------
@@ -704,7 +722,7 @@ AtAbort_Memory()
  *
  * --------------------------------
  */
-void
+static void
 StartTransaction()
 {
     TransactionState s = CurrentTransactionState;
@@ -788,7 +806,7 @@ CurrentXactInProgress()
  *
  * --------------------------------
  */
-void
+static void
 CommitTransaction()
 {
     TransactionState s = CurrentTransactionState;
@@ -847,7 +865,7 @@ CommitTransaction()
  *
  * --------------------------------
  */
-void
+static void
 AbortTransaction()
 {
     TransactionState s = CurrentTransactionState;
@@ -1245,7 +1263,8 @@ EndTransactionBlock(void)
  *	AbortTransactionBlock
  * --------------------------------
  */
-void
+#ifdef NOT_USED
+static void
 AbortTransactionBlock(void)
 {
     TransactionState s = CurrentTransactionState;
@@ -1288,6 +1307,7 @@ AbortTransactionBlock(void)
     AbortTransaction();
     s->blockState = TBLOCK_ENDABORT;
 }
+#endif
 
 /* --------------------------------
  *	UserAbortTransactionBlock

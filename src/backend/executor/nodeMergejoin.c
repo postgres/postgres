@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.7 1997/08/12 22:52:38 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.8 1997/08/19 21:31:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,6 +83,8 @@
 #include "executor/execdebug.h"
 #include "utils/lsyscache.h"
 #include "utils/psort.h"
+
+static bool MergeCompare(List *eqQual, List *compareQual, ExprContext *econtext);
 
 /* ----------------------------------------------------------------
  *	MarkInnerTuple and RestoreInnerTuple macros
@@ -251,7 +253,7 @@ MJFormISortopO(List *qualList, Oid sortOp)
  *   	if (key1i > key2i) is true and (key1j = key2j) for 0 < j < i.
  * ----------------------------------------------------------------
  */
-bool
+static bool
 MergeCompare(List *eqQual, List *compareQual, ExprContext *econtext)
 {
     List   *clause;
@@ -319,6 +321,7 @@ MergeCompare(List *eqQual, List *compareQual, ExprContext *econtext)
  *	when EXEC_MERGEJOINDEBUG is defined
  * ----------------------------------------------------------------
  */
+#ifdef EXEC_MERGEJOINDEBUG
 void
 ExecMergeTupleDumpInner(ExprContext *econtext)
 {
@@ -332,7 +335,7 @@ ExecMergeTupleDumpInner(ExprContext *econtext)
 	debugtup(innerSlot->val,
 		 innerSlot->ttc_tupleDescriptor);
 }
- 
+
 void
 ExecMergeTupleDumpOuter(ExprContext *econtext)
 {
@@ -346,7 +349,7 @@ ExecMergeTupleDumpOuter(ExprContext *econtext)
 	debugtup(outerSlot->val,
 		 outerSlot->ttc_tupleDescriptor);
 }
- 
+
 void
 ExecMergeTupleDumpMarked(ExprContext *econtext,
 			 MergeJoinState *mergestate)
@@ -362,7 +365,7 @@ ExecMergeTupleDumpMarked(ExprContext *econtext,
 	debugtup(markedSlot->val,
 		 markedSlot->ttc_tupleDescriptor);
 }
- 
+
 void
 ExecMergeTupleDump(ExprContext *econtext, MergeJoinState *mergestate)
 {
@@ -374,6 +377,7 @@ ExecMergeTupleDump(ExprContext *econtext, MergeJoinState *mergestate)
     
     printf("******** \n");
 }
+#endif
  
 static void
 CleanUpSort(Plan *plan) {

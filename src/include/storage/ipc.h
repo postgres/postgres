@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: ipc.h,v 1.16 1997/03/12 21:12:27 scrappy Exp $
+ * $Id: ipc.h,v 1.17 1997/08/19 21:39:50 momjian Exp $
  *
  * NOTES
  *    This file is very architecture-specific.  This stuff should actually
@@ -92,7 +92,6 @@ extern int on_exitpg(void (*function)(), caddr_t arg);
 extern IpcSemaphoreId IpcSemaphoreCreate(IpcSemaphoreKey semKey,
 		int semNum, int permission, int semStartValue,
 		int removeOnExit, int *status);
-extern void IpcSemaphoreSet(int semId, int semno, int value);
 extern void IpcSemaphoreKill(IpcSemaphoreKey key);
 extern void IpcSemaphoreLock(IpcSemaphoreId semId, int sem, int lock);
 extern void IpcSemaphoreUnlock(IpcSemaphoreId semId, int sem, int lock);
@@ -101,7 +100,6 @@ extern int IpcSemaphoreGetValue(IpcSemaphoreId semId, int sem);
 extern IpcMemoryId IpcMemoryCreate(IpcMemoryKey memKey, uint32 size,
 				   int permission);
 extern IpcMemoryId IpcMemoryIdGet(IpcMemoryKey memKey, uint32 size);
-extern void IpcMemoryDetach(int status, char *shmaddr);
 extern char *IpcMemoryAttach(IpcMemoryId memId);
 extern void IpcMemoryKill(IpcMemoryKey memKey);
 extern void CreateAndInitSLockMemory(IPCKey key);

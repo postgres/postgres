@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tcopprot.h,v 1.3 1996/11/10 03:06:11 momjian Exp $
+ * $Id: tcopprot.h,v 1.4 1997/08/19 21:40:10 momjian Exp $
  *
  * OLD COMMENTS
  *    This file was created so that other c files could get the two
@@ -30,7 +30,6 @@ extern void pg_eval_dest(char *query_string, char **argv, Oid *typev,
 #endif /* BOOTSTRAP_HEADER */
 
 extern void handle_warn(SIGNAL_ARGS);
-extern void quickdie(SIGNAL_ARGS);
 extern void die(SIGNAL_ARGS);
 extern int PostgresMain(int argc, char *argv[]);
 extern void ResetUsage(void);

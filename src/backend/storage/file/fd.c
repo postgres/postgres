@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *    $Id: fd.c,v 1.21 1997/08/18 02:14:50 momjian Exp $
+ *    $Id: fd.c,v 1.22 1997/08/19 21:32:48 momjian Exp $
  *
  * NOTES:
  *
@@ -503,6 +503,7 @@ FileAccess(File file)
 /*
  *  Called when we get a shared invalidation message on some relation.
  */
+#ifdef NOT_USED
 void
 FileInvalidate(File file)
 {
@@ -511,6 +512,7 @@ FileInvalidate(File file)
         LruDelete(file);
     }
 }
+#endif
 
 /* VARARGS2 */
 static File
@@ -735,6 +737,7 @@ FileSeek(File file, long offset, int whence)
 /*
  * XXX not actually used but here for completeness
  */
+#ifdef NOT_USED
 long
 FileTell(File file)
 {
@@ -742,6 +745,7 @@ FileTell(File file)
                  file, VfdCache[file].fileName));
     return VfdCache[file].seekPos;
 }
+#endif
 
 int
 FileTruncate(File file, int offset)

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/keys.c,v 1.1.1.1 1996/07/09 06:21:38 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/keys.c,v 1.2 1997/08/19 21:32:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,7 @@
 
 
 static Expr *matching2_tlvar(int var, List *tlist, bool (*test)());
+static bool equal_indexkey_var(int index_key, Var *var);
 
 /*    
  * 1. index key
@@ -69,7 +70,7 @@ match_indexkey_operand(int indexkey, Var *operand, Rel *rel)
  *    fields of var node 'var'.
  *    
  */
-bool
+static bool
 equal_indexkey_var(int index_key, Var *var)
 {
     if (index_key == var->varattno)

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.15 1997/04/24 15:49:30 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.16 1997/08/19 21:31:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,6 +41,7 @@ extern int NBuffers;
 
 static int compute_attribute_width(TargetEntry *tlistentry);
 static double base_log(double x, double b);
+static int compute_targetlist_width(List *targetlist);
 
 int _disable_cost_ = 30000000;
  
@@ -209,6 +210,7 @@ cost_sort(List *keys, int tuples, int width, bool noread)
  * Returns a flonum.
  *
  */
+#ifdef NOT_USED
 Cost
 cost_result(int tuples, int width)
 {
@@ -218,6 +220,7 @@ cost_result(int tuples, int width)
     Assert(temp >= 0);
     return(temp);
 }
+#endif
 
 /*    
  * cost_nestloop--
@@ -386,7 +389,7 @@ compute_rel_width(Rel *rel)
  *    
  * Returns the width of the tuple as a fixnum.
  */
-int
+static int
 compute_targetlist_width(List *targetlist)
 {
     List *temp_tl;

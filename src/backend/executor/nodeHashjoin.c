@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.4 1997/07/28 00:54:06 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.5 1997/08/19 21:31:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,6 +38,13 @@ ExecHashJoinOuterGetTuple(Plan *node, Plan* parent, HashJoinState *hjstate);
 static TupleTableSlot *
 ExecHashJoinGetSavedTuple(HashJoinState *hjstate, char *buffer,
 	File file, TupleTableSlot *tupleSlot, int *block, char **position);
+
+static int ExecHashJoinGetBatch(int bucketno, HashJoinTable hashtable,
+				int nbatch);
+
+static int ExecHashJoinNewBatch(HashJoinState *hjstate);
+
+
 
 /* ----------------------------------------------------------------
  *   	ExecHashJoin
@@ -624,7 +631,7 @@ ExecHashJoinGetSavedTuple(HashJoinState *hjstate,
  *   	switch to a new hashjoin batch
  * ----------------------------------------------------------------
  */
-int
+static int
 ExecHashJoinNewBatch(HashJoinState *hjstate)
 {
     File 		*innerBatches;
@@ -742,7 +749,7 @@ ExecHashJoinNewBatch(HashJoinState *hjstate)
  * batch         0           1       2     ...
  * ----------------------------------------------------------------
  */
-int
+static int
 ExecHashJoinGetBatch(int bucketno, HashJoinTable hashtable, int nbatch)
 {
     int b;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.6 1996/12/04 03:06:09 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.7 1997/08/19 21:34:58 momjian Exp $
  *
  * Notes:
  *	XXX This needs to use exception.h to handle recovery when
@@ -33,6 +33,14 @@
 #include "utils/rel.h"
 #include "catalog/pg_type.h"	/* for OID of int28 type */
 #include "lib/dllist.h"
+
+static void CatCacheRemoveCTup(CatCache *cache, Dlelem *e);  
+static Index CatalogCacheComputeHashIndex(struct catcache *cacheInP);
+static Index CatalogCacheComputeTupleHashIndex(struct catcache *cacheInOutP,
+				       Relation relation, HeapTuple tuple);
+static void CatalogCacheInitializeCache(struct catcache *cache, 
+					Relation relation);
+static long comphash(long l, char *v);
 
 /* ----------------
  *	variables, macros and other stuff
@@ -106,7 +114,7 @@ static long   eqproc[] = {
 #define CatalogCacheInitializeCache_DEBUG2
 #endif
 
-void
+static void
 CatalogCacheInitializeCache(struct catcache *cache,
 			    Relation relation)
 {
@@ -249,12 +257,14 @@ CatalogCacheInitializeCache(struct catcache *cache,
  * 	XXX temporary function
  * --------------------------------
  */
+#ifdef NOT_USED
 void
 CatalogCacheSetId(CatCache *cacheInOutP, int id)
 {
     Assert(id == InvalidCatalogCacheId || id >= 0);
     cacheInOutP->id = id;
 }
+#endif
 
 /* ----------------
  * comphash --
@@ -266,7 +276,7 @@ CatalogCacheSetId(CatCache *cacheInOutP, int id)
  * v is the attribute value ("Datum")
  * ----------------
  */
-long
+static long
 comphash(long l, register char *v)
 {
     long  i;
@@ -305,7 +315,7 @@ comphash(long l, register char *v)
  *	CatalogCacheComputeHashIndex
  * --------------------------------
  */
-Index
+static Index
 CatalogCacheComputeHashIndex(struct catcache *cacheInP)
 {
     Index	hashIndex;
@@ -346,7 +356,7 @@ CatalogCacheComputeHashIndex(struct catcache *cacheInP)
  *	CatalogCacheComputeTupleHashIndex
  * --------------------------------
  */
-Index
+static Index
 CatalogCacheComputeTupleHashIndex(struct catcache	*cacheInOutP,
 				  Relation relation,
 				  HeapTuple tuple)
@@ -410,7 +420,7 @@ CatalogCacheComputeTupleHashIndex(struct catcache	*cacheInOutP,
  *	CatCacheRemoveCTup
  * --------------------------------
  */
-void
+static void
 CatCacheRemoveCTup(CatCache *cache, Dlelem *elt)
 {
     CatCTup *ct;

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: auth.h,v 1.3 1996/11/06 10:29:54 scrappy Exp $
+ * $Id: auth.h,v 1.4 1997/08/19 21:38:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,7 +36,6 @@ extern MsgType fe_getauthsvc();
 extern char *fe_getauthname(void);
 extern int be_recvauth(MsgType msgtype, Port *port, char *username, StartupInfo* sp);
 extern void be_setauthsvc(char *name);
-extern int be_getauthsvc(MsgType msgtype);
 
 /* the value that matches any dbName value when doing
    host based authentication*/

@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.5 1996/12/11 00:26:38 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.6 1997/08/19 21:31:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -130,6 +130,9 @@
 #include "storage/bufmgr.h"
 #include "parser/catalog_utils.h"
 #include "catalog/pg_type.h"
+
+static TupleTableSlot *NodeGetResultTupleSlot(Plan *node);
+
 
 /* ----------------------------------------------------------------
  *		  tuple table create/delete functions
@@ -428,11 +431,13 @@ ExecClearTuple(TupleTableSlot* slot)	/* slot in which to store tuple */
  *	merge joins that you need to diddle the slot policy.
  * --------------------------------
  */
+#ifdef NOT_USED
 bool				/* return: slot policy */
 ExecSlotPolicy(TupleTableSlot* slot)	/* slot to inspect */
 {
     return slot->ttc_shouldFree;
 }
+#endif
 
 /* --------------------------------
  *	ExecSetSlotPolicy
@@ -500,6 +505,7 @@ ExecSetSlotDescriptorIsNew(TupleTableSlot *slot,/* slot to change */
  *	with the slot's tuple, and set the "isNew" flag at the same time.
  * --------------------------------
  */
+#ifdef NOT_USED
 TupleDesc			/* return: old slot tuple descriptor */
 ExecSetNewSlotDescriptor(TupleTableSlot *slot,	/* slot to change */
 			 TupleDesc tupdesc) /* tuple descriptor */
@@ -510,6 +516,7 @@ ExecSetNewSlotDescriptor(TupleTableSlot *slot,	/* slot to change */
     
     return old_tupdesc;
 }
+#endif
 
 /* --------------------------------
  *	ExecSlotBuffer
@@ -532,6 +539,7 @@ ExecSetNewSlotDescriptor(TupleTableSlot *slot,	/* slot to change */
  *	also use ExecIncrSlotBufferRefcnt().
  * --------------------------------
  */
+#ifdef NOT_USED
 Buffer				/* return: old slot buffer */
 ExecSetSlotBuffer(TupleTableSlot *slot,	/* slot to change */
 		  Buffer  b)		/* tuple descriptor */
@@ -541,6 +549,7 @@ ExecSetSlotBuffer(TupleTableSlot *slot,	/* slot to change */
     
     return oldb;
 }
+#endif
 
 /* --------------------------------
  *	ExecIncrSlotBufferRefcnt
@@ -602,6 +611,7 @@ TupIsNull(TupleTableSlot* slot)		/* slot to check */
  *	now storing a new type of tuple in this slot
  * --------------------------------
  */
+#ifdef NOT_USED
 bool				/* return: descriptor "is new" */
 ExecSlotDescriptorIsNew(TupleTableSlot *slot)	/* slot to inspect */
 {
@@ -609,6 +619,7 @@ ExecSlotDescriptorIsNew(TupleTableSlot *slot)	/* slot to inspect */
     return isNew; */
   return slot->ttc_descIsNew;
 }
+#endif
 
 /* ----------------------------------------------------------------
  *		convenience initialization routines 
@@ -686,6 +697,7 @@ ExecInitOuterTupleSlot(EState *estate, HashJoinState *hashstate)
  *	ExecInitHashTupleSlot
  * ----------------
  */
+#ifdef NOT_USED
 void
 ExecInitHashTupleSlot(EState *estate, HashJoinState *hashstate)
 {
@@ -693,8 +705,9 @@ ExecInitHashTupleSlot(EState *estate, HashJoinState *hashstate)
     INIT_SLOT_ALLOC;
     hashstate->hj_HashTupleSlot = slot;
 }
+#endif
 
-TupleTableSlot *
+static TupleTableSlot *
 NodeGetResultTupleSlot(Plan *node)
 {
     TupleTableSlot *slot;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/Attic/parse_query.c,v 1.16 1997/05/31 07:10:25 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/Attic/parse_query.c,v 1.17 1997/08/19 21:32:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,6 +37,9 @@
 #include "nodes/primnodes.h"
 #include "nodes/parsenodes.h"
 #include "nodes/makefuncs.h"
+
+static void checkTargetTypes(ParseState *pstate, char *target_colname,
+					char *refname, char *colname);
 
 Oid *param_type_info;
 int pfunc_num_args;
@@ -755,7 +758,7 @@ handleTargetColname(ParseState *pstate, char **resname,
  * checkTargetTypes -
  *    checks value and target column types
  */
-void
+static void
 checkTargetTypes(ParseState *pstate, char *target_colname,
 					char *refname, char *colname)
 {

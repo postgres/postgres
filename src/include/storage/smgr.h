@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: smgr.h,v 1.6 1996/11/27 07:33:42 vadim Exp $
+ * $Id: smgr.h,v 1.7 1997/08/19 21:40:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,6 @@
 #define	DEFAULT_SMGR	0
 
 extern int smgrinit(void);
-extern void smgrshutdown(int dummy);
 extern int smgrcreate(int16 which, Relation reln);
 extern int smgrunlink(int16 which, Relation reln);
 extern int smgrextend(int16 which, Relation reln, char *buffer);
@@ -40,7 +39,6 @@ extern int smgrblindwrt(int16 which, char *dbname, char *relname, Oid dbid,
 extern int smgrnblocks(int16 which, Relation reln);
 extern int smgrtruncate(int16 which, Relation reln, int nblocks);
 extern int smgrcommit(void);
-extern int smgrabort(void);
 extern bool smgriswo(int16 smgrno);
 
 

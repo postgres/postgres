@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.12 1997/08/12 22:54:04 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.13 1997/08/19 21:33:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -296,6 +296,7 @@ inv_destroy(Oid lobjId)
  *	updated so frequently, and postgres only appends tuples at the
  *	end of relations.  Once clustering works, we should fix this.
  */
+#ifdef NOT_USED
 int
 inv_stat(LargeObjectDesc *obj_desc, struct pgstat *stbuf)
 {
@@ -325,6 +326,7 @@ inv_stat(LargeObjectDesc *obj_desc, struct pgstat *stbuf)
 
     return (0);
 }
+#endif
 
 int
 inv_seek(LargeObjectDesc *obj_desc, int offset, int whence)

@@ -102,6 +102,7 @@ RelationGetGISTStrategy(Relation r,
     return (RelationGetStrategy(r, attnum, &GISTEvaluationData, proc));
 }
 
+#ifdef NOT_USED
 bool
 RelationInvokeGISTStrategy(Relation r,
 			 AttrNumber attnum,
@@ -112,4 +113,4 @@ RelationInvokeGISTStrategy(Relation r,
     return (RelationInvokeStrategy(r, &GISTEvaluationData, attnum, s,
 				   left, right));
 }
-
+#endif

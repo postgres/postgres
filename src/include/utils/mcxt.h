@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: mcxt.h,v 1.4 1996/11/04 11:51:21 scrappy Exp $
+ * $Id: mcxt.h,v 1.5 1997/08/19 21:40:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,8 +43,6 @@ extern Pointer MemoryContextRealloc(MemoryContext context,
 				    Pointer pointer,
 				    Size size);
 extern void MemoryContextFree(MemoryContext context, Pointer pointer);
-extern char *MemoryContextGetName(MemoryContext context);
-extern Size PointerGetAllocSize(Pointer pointer);
 extern MemoryContext MemoryContextSwitchTo(MemoryContext context);
 extern GlobalMemory CreateGlobalMemory(char *name);
 extern void GlobalMemoryDestroy(GlobalMemory context);

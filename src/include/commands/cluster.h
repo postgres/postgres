@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994-5, Regents of the University of California
  *
- * $Id: cluster.h,v 1.1 1996/08/28 07:21:42 scrappy Exp $
+ * $Id: cluster.h,v 1.2 1997/08/19 21:38:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,8 +23,5 @@
  * functions
  */
 extern void cluster(char oldrelname[], char oldindexname[]);
-extern Relation copy_heap(Oid OIDOldHeap);
-extern void copy_index(Oid OIDOldIndex, Oid OIDNewHeap);
-extern void rebuildheap(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex);
 
 #endif	/* CLUSTER_H */

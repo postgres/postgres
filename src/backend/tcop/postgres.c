@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.41 1997/08/14 16:11:15 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.42 1997/08/19 21:34:04 momjian Exp $
  *
  * NOTES
  *    this is the "main" module of the postgres backend and
@@ -89,6 +89,8 @@
 #include "libpq/libpq.h"
 #include "libpq/pqsignal.h"
 #include "rewrite/rewriteHandler.h" /* for QueryRewrite() */
+
+static void quickdie(SIGNAL_ARGS);
 
 /* ----------------
  *      global variables
@@ -720,7 +722,7 @@ handle_warn(SIGNAL_ARGS)
     siglongjmp(Warn_restart, 1);
 }
 
-void
+static void
 quickdie(SIGNAL_ARGS)
 {
     elog(NOTICE, "I have been signalled by the postmaster.");
@@ -1275,7 +1277,7 @@ PostgresMain(int argc, char *argv[])
      */
     if (IsUnderPostmaster == false) {
         puts("\nPOSTGRES backend interactive interface");
-        puts("$Revision: 1.41 $ $Date: 1997/08/14 16:11:15 $");
+        puts("$Revision: 1.42 $ $Date: 1997/08/19 21:34:04 $");
     }
     
     /* ----------------

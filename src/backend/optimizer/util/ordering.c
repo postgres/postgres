@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/ordering.c,v 1.2 1996/10/31 10:59:41 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/ordering.c,v 1.3 1997/08/19 21:32:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 #include "optimizer/internal.h"
 #include "optimizer/ordering.h"
 
+static bool equal_sortops_order(Oid *ordering1, Oid *ordering2);
 
 /*    
  * equal-path-path-ordering--
@@ -102,7 +103,7 @@ equal_merge_merge_ordering(MergeOrder *merge_ordering1,
  * equal_sort_ops_order -
  *    Returns true iff the sort operators are in the same order.
  */
-bool
+static bool
 equal_sortops_order(Oid *ordering1, Oid *ordering2)
 {
     int i = 0;

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lock.h,v 1.4 1997/02/12 05:25:13 scrappy Exp $
+ * $Id: lock.h,v 1.5 1997/08/19 21:39:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -199,12 +199,9 @@ extern void InitLocks(void);
 extern void LockDisable(int status);
 extern LockTableId LockTabInit(char *tabName, MASK *conflictsP, int *prioP,
 			       int ntypes);
-extern LockTableId LockTabRename(LockTableId tableId);
 extern bool LockAcquire(LockTableId tableId, LOCKTAG *lockName, LOCKT lockt);
 extern int LockResolveConflicts(LOCKTAB *ltable, LOCK *lock, LOCKT lockt,
 			    TransactionId xid);
-extern int WaitOnLock(LOCKTAB *ltable, LockTableId tableId, LOCK *lock,
-		      LOCKT lockt);
 extern bool LockRelease(LockTableId tableId, LOCKTAG *lockName, LOCKT lockt);
 extern void GrantLock(LOCK *lock, LOCKT lockt);
 extern bool LockReleaseAll(LockTableId tableId, SHM_QUEUE *lockQueue);

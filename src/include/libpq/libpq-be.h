@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-be.h,v 1.3 1996/11/10 03:05:18 momjian Exp $
+ * $Id: libpq-be.h,v 1.4 1997/08/19 21:38:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,6 @@ extern char *PQfn(int fnid, int *result_buf, int result_len, int result_is_int,
 		  PQArgBlock *args, int nargs);
 extern char *PQexec(char *query);
 extern int pqtest_PQexec(char *q);
-extern char *strmake(char *str, int len);
 extern int pqtest_PQfn(char *q);
 extern int32 pqtest(struct varlena *vlena);
 

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/numutils.c,v 1.12 1997/08/12 22:54:34 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/numutils.c,v 1.13 1997/08/19 21:34:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -134,6 +134,7 @@ ltoa(int32 l, char *a)
  **	stars ("*****") and returns zero.  Normal return is the width
  **	of the output field (sometimes shorter than 'width').
  */
+#ifdef NOT_USED
 int
 ftoa(double value, char *ascii, int width, int prec1, char format)
 {
@@ -286,6 +287,7 @@ ftoa(double value, char *ascii, int width, int prec1, char format)
     return (avail);
 #endif /* !BSD44_derived */
 }
+#endif
 
 /*
  **   atof1	- ASCII TO FLOATING CONVERSION
@@ -315,6 +317,7 @@ ftoa(double value, char *ascii, int width, int prec1, char format)
  **	Side Effects:
  **		clobbers *val.
  */
+#ifdef NOT_USED
 int
 atof1(char *str, double *val)
 {
@@ -404,3 +407,4 @@ atof1(char *str, double *val)
     *val = v;
     return (0);
 }
+#endif

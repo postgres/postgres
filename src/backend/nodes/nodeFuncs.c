@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/nodes/nodeFuncs.c,v 1.2 1996/10/31 10:42:56 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/nodes/nodeFuncs.c,v 1.3 1997/08/19 21:31:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,8 @@
 #include "nodes/relation.h"
 #include "nodes/nodeFuncs.h"
 #include "utils/lsyscache.h"
+
+static bool var_is_inner(Var *var);
 
 /*    
  * single_node -
@@ -61,7 +63,7 @@ var_is_outer (Var *var)
     return((bool)(var->varno == OUTER));
 }
 
-bool
+static bool
 var_is_inner (Var *var)
 {
     return ( (bool) (var->varno == INNER));

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/transam/Attic/transsup.c,v 1.8 1997/08/12 22:51:57 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/transam/Attic/transsup.c,v 1.9 1997/08/19 21:30:12 momjian Exp $
  *
  * NOTES
  *    This file contains support functions for the high
@@ -22,6 +22,15 @@
 #include <utils/bit.h>
 #include <access/xact.h>
 #include <storage/lmgr.h>
+
+static AbsoluteTime TransBlockGetCommitTime(Block tblock,
+	TransactionId transactionId);
+static XidStatus TransBlockGetXidStatus(Block tblock,
+					TransactionId transactionId);
+static void TransBlockSetCommitTime(Block tblock,
+	TransactionId transactionId, AbsoluteTime commitTime);
+static void TransBlockSetXidStatus(Block tblock,
+	TransactionId transactionId, XidStatus xstatus);
 
 /* ----------------------------------------------------------------
  *		      general support routines
@@ -93,7 +102,8 @@ TransComputeBlockNumber(Relation relation, /* relation to test */
  * --------------------------------
  */
 
-XidStatus
+#ifdef NOT_USED
+static XidStatus
 TransBlockGetLastTransactionIdStatus(Block tblock,
 				     TransactionId baseXid,
 				     TransactionId *returnXidP)
@@ -159,6 +169,7 @@ TransBlockGetLastTransactionIdStatus(Block tblock,
      */
     return xstatus;
 }
+#endif
 
 /* --------------------------------
  *	TransBlockGetXidStatus
@@ -167,7 +178,7 @@ TransBlockGetLastTransactionIdStatus(Block tblock,
  * --------------------------------
  */
 
-XidStatus
+static XidStatus
 TransBlockGetXidStatus(Block tblock,
 		       TransactionId transactionId)
 {
@@ -218,7 +229,7 @@ TransBlockGetXidStatus(Block tblock,
  *	This sets the status of the desired transaction
  * --------------------------------
  */
-void
+static void
 TransBlockSetXidStatus(Block tblock,
 		       TransactionId transactionId, 
 		       XidStatus xstatus)
@@ -279,7 +290,7 @@ TransBlockSetXidStatus(Block tblock,
  *	specified transaction id in the trans block.
  * --------------------------------
  */
-AbsoluteTime
+static AbsoluteTime
 TransBlockGetCommitTime(Block tblock,
 			TransactionId transactionId)
 {
@@ -320,7 +331,7 @@ TransBlockGetCommitTime(Block tblock,
  *	This sets the commit time of the specified transaction
  * --------------------------------
  */
-void
+static void
 TransBlockSetCommitTime(Block tblock,
 			TransactionId transactionId,
 			AbsoluteTime commitTime)
@@ -590,6 +601,7 @@ TransBlockNumberSetCommitTime(Relation relation,
  *	TransGetLastRecordedTransaction
  * --------------------------------
  */
+#ifdef NOT_USED
 void
 TransGetLastRecordedTransaction(Relation relation,
 				TransactionId xid, /* return: transaction id */
@@ -651,3 +663,4 @@ TransGetLastRecordedTransaction(Relation relation,
      */
     RelationUnsetLockForRead(relation);
 }
+#endif

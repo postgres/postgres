@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmqueue.c,v 1.2 1996/11/03 05:06:58 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmqueue.c,v 1.3 1997/08/19 21:33:06 momjian Exp $
  *
  * NOTES
  *
@@ -49,12 +49,14 @@ SHMQueueInit(SHM_QUEUE *queue)
  * SHMQueueIsDetached -- TRUE if element is not currently
  *	in a queue.
  */
+#ifdef NOT_USED
 bool
 SHMQueueIsDetached(SHM_QUEUE *queue)
 {
     Assert(SHM_PTR_VALID(queue));
     return ((queue)->prev == INVALID_OFFSET);
 }
+#endif
 
 /*
  * SHMQueueElemInit -- clear an element's links
@@ -146,6 +148,7 @@ dumpQ(SHM_QUEUE *q, char *s)
  * SHMQueueInsertHD -- put elem in queue between the queue head
  *	and its "prev" element.
  */
+#ifdef NOT_USED
 void
 SHMQueueInsertHD(SHM_QUEUE *queue, SHM_QUEUE *elem)
 {
@@ -168,6 +171,7 @@ SHMQueueInsertHD(SHM_QUEUE *queue, SHM_QUEUE *elem)
     dumpQ(queue, "in SHMQueueInsertHD: end");
 #endif /* SHMQUEUE_DEBUG_HD */
 }
+#endif
 
 void
 SHMQueueInsertTL(SHM_QUEUE *queue, SHM_QUEUE *elem)

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: catalog_utils.h,v 1.9 1997/05/22 00:16:28 scrappy Exp $
+ * $Id: catalog_utils.h,v 1.10 1997/08/19 21:39:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,6 @@
 typedef HeapTuple	Type;
 typedef HeapTuple	Operator;
 
-extern bool check_typeid(Oid id);
 extern Type get_id_type(Oid id);
 extern char *get_id_typname(Oid id);
 extern Type type(char *);
@@ -38,9 +37,7 @@ extern int varattno(Relation rd, char *a);
 extern bool varisset(Relation rd, char *name);
 extern int nf_varattno(Relation rd, char *a);
 extern char *getAttrName(Relation rd, int attrno);
-extern char *outstr(char *typename, char *value);
 extern char *instr2(Type tp, char *string, int typlen);
-extern char *instr1(TypeTupleForm tp, char *string, int typlen);
 extern Oid GetArrayElementType(Oid typearray);
 extern Oid funcid_get_rettype(Oid funcid);
 extern bool func_get_detail(char *funcname, int nargs, Oid *oid_array,
@@ -50,8 +47,6 @@ extern Oid typeid_get_retoutfunc(Oid type_id);
 extern Oid typeid_get_relid(Oid type_id);
 extern Oid get_typrelid(Type typ);
 extern Oid get_typelem(Oid type_id);
-extern char FindDelimiter(char *typename);
-extern void op_error(char *op, Oid arg1, Oid arg2);
 extern void func_error(char *caller, char *funcname, int nargs, Oid *argtypes);
 extern void agg_error(char *caller, char *aggname, Oid basetypeID);
 

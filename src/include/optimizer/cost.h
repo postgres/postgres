@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: cost.h,v 1.1 1996/08/28 07:23:12 scrappy Exp $
+ * $Id: cost.h,v 1.2 1997/08/19 21:39:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,6 @@ extern Cost cost_index(Oid indexid, int expected_indexpages, Cost selec,
 		       int relpages, int reltuples, int indexpages,
 		       int indextuples, bool is_injoin);
 extern Cost cost_sort(List *keys, int tuples, int width, bool noread);
-extern Cost cost_result(int tuples, int width);
 extern Cost cost_nestloop(Cost outercost, Cost innercost, int outertuples,
 		int innertuples, int outerpages, bool is_indexjoin);
 extern Cost cost_mergesort(Cost outercost, Cost innercost,
@@ -41,7 +40,6 @@ extern Cost cost_hashjoin(Cost outercost, Cost innercost, List *outerkeys,
 		int outerwidth, int innerwidth);
 extern int compute_rel_size(Rel *rel);
 extern int compute_rel_width(Rel *rel);
-extern int compute_targetlist_width(List *targetlist);
 extern int compute_joinrel_size(JoinPath *joinpath);
 extern int page_size(int tuples, int width);
 

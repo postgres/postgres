@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: async.h,v 1.4 1996/11/08 06:01:49 momjian Exp $
+ * $Id: async.h,v 1.5 1997/08/19 21:38:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,10 +20,7 @@ extern void Async_Notify(char *relname);
 extern void Async_NotifyAtCommit(void);
 extern void Async_NotifyAtAbort(void);
 extern void Async_Listen(char *relname, int pid);
-extern void Async_Unlisten(char *relname, int pid);
-extern void Async_UnlistenOnExit(int code, char *relname);
 
 extern GlobalMemory notifyContext;
-extern void Async_NotifyFrontEnd(void);
 
 #endif	/* ASYNC_H */

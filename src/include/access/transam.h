@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: transam.h,v 1.6 1996/11/27 07:30:28 vadim Exp $
+ * $Id: transam.h,v 1.7 1997/08/19 21:37:38 momjian Exp $
  *
  *   NOTES
  *	Transaction System Version 101 now support proper oid
@@ -140,34 +140,17 @@ typedef VariableRelationContentsData *VariableRelationContents;
 /*
  * prototypes for functions in transam/transam.c
  */
-extern int RecoveryCheckingEnabled(void);
-extern void SetRecoveryCheckingEnabled(bool state);
-extern bool TransactionLogTest(TransactionId transactionId, XidStatus status);
-extern void TransactionLogUpdate(TransactionId transactionId,
-				 XidStatus status);
 extern AbsoluteTime TransactionIdGetCommitTime(TransactionId transactionId);
-extern void TransRecover(Relation logRelation);
 extern void InitializeTransactionLog(void);
 extern bool TransactionIdDidCommit(TransactionId transactionId);
 extern bool TransactionIdDidAbort(TransactionId transactionId);
 extern void TransactionIdCommit(TransactionId transactionId);
 extern void TransactionIdAbort(TransactionId transactionId);
-extern void TransactionIdSetInProgress(TransactionId transactionId);
 
 /* in transam/transsup.c */
 extern void AmiTransactionOverride(bool flag);
 extern void TransComputeBlockNumber(Relation relation,
 	TransactionId transactionId, BlockNumber *blockNumberOutP);
-extern XidStatus TransBlockGetLastTransactionIdStatus(Block tblock,
-	TransactionId baseXid, TransactionId *returnXidP);
-extern XidStatus TransBlockGetXidStatus(Block tblock,
-					TransactionId transactionId);
-extern void TransBlockSetXidStatus(Block tblock,
-	TransactionId transactionId, XidStatus xstatus);
-extern AbsoluteTime TransBlockGetCommitTime(Block tblock,
-	TransactionId transactionId);
-extern void TransBlockSetCommitTime(Block tblock,
-	TransactionId transactionId, AbsoluteTime commitTime);
 extern XidStatus TransBlockNumberGetXidStatus(Relation relation,
 	BlockNumber blockNumber, TransactionId xid, bool *failP);
 extern void TransBlockNumberSetXidStatus(Relation relation,
@@ -178,19 +161,11 @@ extern AbsoluteTime TransBlockNumberGetCommitTime(Relation relation,
 extern void TransBlockNumberSetCommitTime(Relation relation,
 	BlockNumber blockNumber, TransactionId xid, AbsoluteTime xtime,
 	bool *failP);
-extern void TransGetLastRecordedTransaction(Relation relation,
-	TransactionId xid, bool *failP);
 
 /* in transam/varsup.c */
-extern void VariableRelationGetNextXid(TransactionId *xidP);
-extern void VariableRelationGetLastXid(TransactionId *xidP);
 extern void VariableRelationPutNextXid(TransactionId xid);
-extern void VariableRelationPutLastXid(TransactionId xid);
-extern void VariableRelationGetNextOid(Oid *oid_return);
-extern void VariableRelationPutNextOid(Oid *oidP);
 extern void GetNewTransactionId(TransactionId *xid);
 extern void UpdateLastCommittedXid(TransactionId xid);
-extern void GetNewObjectIdBlock(Oid *oid_return, int oid_block_size);
 extern void GetNewObjectId(Oid *oid_return);
 extern void CheckMaxObjectId(Oid assigned_oid);
 

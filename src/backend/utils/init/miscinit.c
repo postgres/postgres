@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.5 1997/04/27 19:20:37 thomas Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.6 1997/08/19 21:35:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -101,6 +101,7 @@ ExitPostgres(ExitStatus status)
  * Exceptions:
  *	none
  */
+#ifdef NOT_USED
 void
 AbortPostgres()
 {
@@ -115,6 +116,7 @@ AbortPostgres()
     else
 	exitpg(FatalExitStatus);
 }
+#endif
 
 /* ----------------
  *	StatusBackendExit

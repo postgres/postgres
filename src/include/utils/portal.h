@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: portal.h,v 1.3 1996/11/04 11:51:22 scrappy Exp $
+ * $Id: portal.h,v 1.4 1997/08/19 21:40:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,7 +62,6 @@ struct PortalD {
 #define	VACPNAME	"<vacuum>"
 
 extern bool PortalNameIsSpecial(char *pname);
-extern void CollectNamedPortals(Portal *portalP, int destroy);
 extern void AtEOXact_portals(void);
 extern void EnablePortalManager(bool on);
 extern Portal GetPortalByName(char *name);
@@ -74,15 +73,10 @@ extern QueryDesc *PortalGetQueryDesc(Portal portal);
 extern EState *PortalGetState(Portal portal);
 extern Portal CreatePortal(char *name);
 extern void PortalDestroy(Portal *portalP);
-extern void PortalResetHeapMemory(Portal portal);
 extern void StartPortalAllocMode(AllocMode mode, Size limit);
 extern void EndPortalAllocMode(void);
 extern PortalVariableMemory PortalGetVariableMemory(Portal portal);
 extern PortalHeapMemory PortalGetHeapMemory(Portal portal);
-extern Portal PortalVariableMemoryGetPortal(PortalVariableMemory context);
-extern Portal PortalHeapMemoryGetPortal(PortalHeapMemory context);
-extern PortalHeapMemory PortalVariableMemoryGetHeapMemory(PortalVariableMemory context);
-extern PortalVariableMemory PortalHeapMemoryGetVariableMemory(PortalHeapMemory context);
 
 /* estimate of the maximum number of open portals a user would have,
  * used in initially sizing the PortalHashTable in  EnablePortalManager() 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.7 1996/11/05 10:02:06 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.8 1997/08/19 21:29:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,6 +25,16 @@
 #include <access/heapam.h>
 #include <access/istrat.h>
 #include <fmgr.h>
+
+static bool StrategyEvaluationIsValid(StrategyEvaluation evaluation);
+static bool StrategyExpressionIsValid(StrategyExpression expression,
+				      StrategyNumber maxStrategy);
+static ScanKey StrategyMapGetScanKeyEntry(StrategyMap map,
+					  StrategyNumber strategyNumber);
+static bool StrategyOperatorIsValid(StrategyOperator operator,
+				    StrategyNumber maxStrategy);
+static bool StrategyTermIsValid(StrategyTerm term,
+				StrategyNumber maxStrategy);
 
 /* ----------------------------------------------------------------
  *	           misc strategy support routines
@@ -50,7 +60,7 @@
  *	Assumes that the index strategy number is valid.
  *	Bounds checking should be done outside this routine.
  */
-ScanKey
+static ScanKey
 StrategyMapGetScanKeyEntry(StrategyMap map,
 			   StrategyNumber strategyNumber)
 {
@@ -103,7 +113,7 @@ AttributeNumberGetIndexStrategySize(AttrNumber maxAttributeNumber,
  *	StrategyOperatorIsValid
  * ----------------
  */
-bool
+static bool
 StrategyOperatorIsValid(StrategyOperator operator,
 			StrategyNumber maxStrategy)
 {
@@ -117,7 +127,7 @@ StrategyOperatorIsValid(StrategyOperator operator,
  *	StrategyTermIsValid
  * ----------------
  */
-bool
+static bool
 StrategyTermIsValid(StrategyTerm term,
 		    StrategyNumber maxStrategy)
 {
@@ -141,7 +151,7 @@ StrategyTermIsValid(StrategyTerm term,
  *	StrategyExpressionIsValid
  * ----------------
  */
-bool
+static bool
 StrategyExpressionIsValid(StrategyExpression expression,
 			  StrategyNumber maxStrategy)
 {
@@ -165,7 +175,7 @@ StrategyExpressionIsValid(StrategyExpression expression,
  *	StrategyEvaluationIsValid
  * ----------------
  */
-bool
+static bool
 StrategyEvaluationIsValid(StrategyEvaluation evaluation)
 {
     Index	index;

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufpage.h,v 1.7 1996/11/05 06:10:57 scrappy Exp $
+ * $Id: bufpage.h,v 1.8 1997/08/19 21:39:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -253,8 +253,6 @@ extern void PageRepairFragmentation(Page page);
 extern Size PageGetFreeSpace(Page page);
 extern void PageManagerModeSet(PageManagerMode mode);
 extern void PageIndexTupleDelete(Page page, OffsetNumber offset);
-extern void PageIndexTupleDeleteAdjustLinePointers(PageHeader phdr,
-				       char *location, Size size);
 
 
 #endif	/* BUFPAGE_H */

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_dump.h,v 1.18 1997/08/19 04:44:40 vadim Exp $
+ * $Id: pg_dump.h,v 1.19 1997/08/19 21:36:45 momjian Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -167,20 +167,11 @@ extern void dumpSchemaIdx(FILE* fout,
 extern char* findTypeByOid(TypeInfo* tinfo, int numTypes, const char* oid);
 extern char* findOprByOid(OprInfo *oprinfo, int numOprs, const char *oid);
 extern int findFuncByName(FuncInfo* finfo, int numFuncs, const char* name);
-extern char** findParentsByOid(TableInfo* tbinfo, int numTables,
-			      InhInfo* inhinfo, int numInherits,
-			      const char *oid, 
-			      int *numParents);
 extern int findTableByName(TableInfo *tbinfo, int numTables, const char *relname);
-extern int findTableByOid(TableInfo *tbinfo, int numTables, const char *oid);
-extern void flagInhAttrs(TableInfo* tbinfo, int numTables,
-			   InhInfo* inhinfo, int numInherits);
 
 extern void check_conn_and_db(void);
-extern int strInArray(const char* pattern, char** arr, int arr_size);
 extern void parseArgTypes(char **argtypes, const char* str);
 extern int isArchiveName(const char*);
-extern bool isViewRule(char *relname);
 
 /*
  * version specific routines 
@@ -195,7 +186,6 @@ extern void clearInhInfo(InhInfo*, int);
 extern void clearIndInfo(IndInfo*, int);
 extern void clearOprInfo(OprInfo*, int);
 extern void clearTypeInfo(TypeInfo*, int);
-extern void clearTableInfo(TableInfo*, int);
 
 extern OprInfo* getOperators(int *numOperators);
 extern TableInfo* getTables(int *numTables);
@@ -210,20 +200,12 @@ extern void dumpAggs(FILE* fout, AggInfo* agginfo, int numAggregates,
 		     TypeInfo *tinfo, int numTypes);
 extern void dumpOprs(FILE* fout, OprInfo* agginfo, int numOperators,
 		     TypeInfo *tinfo, int numTypes);
-extern void dumpOneFunc(FILE* fout, FuncInfo* finfo, int i,
-			TypeInfo *tinfo, int numTypes);
 extern void dumpTables(FILE* fout, TableInfo* tbinfo, int numTables,
 		       InhInfo *inhinfo, int numInherits,
 		       TypeInfo *tinfo, int numTypes, const char *tablename,
 		       const bool acls);
 extern void dumpIndices(FILE* fout, IndInfo* indinfo, int numIndices,
 			TableInfo* tbinfo, int numTables, const char *tablename);
-
-extern void dumpTuples(PGresult *res, FILE *fout, int *attrmap);
-extern void setMaxOid(FILE *fout);
-extern char* checkForQuote(const char* s);
-extern int findLastBuiltinOid(void);
-
 
 /* largest query string size */
 #define MAXQUERYLEN  5000

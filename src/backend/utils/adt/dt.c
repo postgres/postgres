@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.31 1997/07/29 16:09:38 thomas Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.32 1997/08/19 21:34:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,6 +31,24 @@
 #endif
 #include "utils/builtins.h"
 
+static int DecodeDate(char *str, int fmask, int *tmask, struct tm *tm);
+static int DecodeNumber( int flen, char *field,
+	int fmask, int *tmask, struct tm *tm, double *fsec);
+static int DecodeNumberField( int len, char *str,
+	int fmask, int *tmask, struct tm *tm, double *fsec);
+static int DecodeSpecial(int field, char *lowtoken, int *val);
+static int DecodeTime(char *str, int fmask, int *tmask,
+	struct tm *tm, double *fsec);
+static int DecodeTimezone( char *str, int *tzp);
+static int DecodeUnits(int field, char *lowtoken, int *val);
+static int EncodeSpecialDateTime(DateTime dt, char *str);
+static datetkn *datebsearch(char *key, datetkn *base, unsigned int nel);
+static DateTime dt2local( DateTime dt, int timezone);
+static void dt2time(DateTime dt, int *hour, int *min, double *sec);
+static int j2day( int jd);
+static int timespan2tm(TimeSpan span, struct tm *tm, float8 *fsec);
+static int tm2timespan(struct tm *tm, double fsec, TimeSpan *span);
+
 #define USE_DATE_CACHE 1
 #define ROUND_ALL 0
 
@@ -50,7 +68,7 @@ char *days[] = {"Sunday", "Monday", "Tuesday", "Wednesday",
 #define TMODULO(t,q,u) {q = ((t < 0)? ceil(t / u): floor(t / u)); \
 			if (q != 0) t -= rint(q * u);}
 
-void GetEpochTime( struct tm *tm);
+static void GetEpochTime( struct tm *tm);
 
 #define UTIME_MINYEAR (1901)
 #define UTIME_MINMONTH (12)
@@ -265,6 +283,7 @@ datetime_finite(DateTime *datetime)
 } /* datetime_finite() */
 
 
+#ifdef NOT_USED
 bool
 timespan_finite(TimeSpan *timespan)
 {
@@ -273,13 +292,13 @@ timespan_finite(TimeSpan *timespan)
 
     return(! TIMESPAN_NOT_FINITE(*timespan));
 } /* timespan_finite() */
-
+#endif
 
 /*----------------------------------------------------------
  *  Relational operators for datetime.
  *---------------------------------------------------------*/
 
-void
+static void
 GetEpochTime( struct tm *tm)
 {
     struct tm *t0;
@@ -1115,6 +1134,7 @@ timespan_text(TimeSpan *timespan)
  * Text type may not be null terminated, so copy to temporary string
  *  then call the standard input routine.
  */
+#ifdef NOT_USED
 TimeSpan *
 text_timespan(text *str)
 {
@@ -1134,7 +1154,7 @@ text_timespan(text *str)
 
     return(result);
 } /* text_timespan() */
-
+#endif
 
 /* datetime_trunc()
  * Extract specified field from datetime.
@@ -2005,7 +2025,7 @@ j2date( int jd, int *year, int *month, int *day)
     return;
 } /* j2date() */
 
-int
+static int
 j2day( int date)
 {
     int day;
@@ -2188,7 +2208,7 @@ printf( "tm2datetime- time is %f %02d:%02d:%02d %f\n", time, tm->tm_hour, tm->tm
 /* timespan2tm()
  * Convert a timespan data type to a tm structure.
  */
-int
+static int
 timespan2tm(TimeSpan span, struct tm *tm, float8 *fsec)
 {
     double time;
@@ -2222,7 +2242,7 @@ printf( "timespan2tm- %d %f = %04d-%02d-%02d %02d:%02d:%02d %.2f\n", span.month,
     return 0;
 } /* timespan2tm() */
 
-int
+static int
 tm2timespan( struct tm *tm, double fsec, TimeSpan *span)
 {
     span->month = ((tm->tm_year*12)+tm->tm_mon);
@@ -2238,7 +2258,7 @@ printf( "tm2timespan- %d %f = %04d-%02d-%02d %02d:%02d:%02d %.2f\n", span->month
 } /* tm2timespan() */
 
 
-DateTime
+static DateTime
 dt2local(DateTime dt, int tz)
 {
     dt -= tz;
@@ -2252,7 +2272,7 @@ time2t(const int hour, const int min, const double sec)
     return((((hour*60)+min)*60)+sec);
 } /* time2t() */
 
-void
+static void
 dt2time(DateTime jd, int *hour, int *min, double *sec)
 {
     double time;
@@ -2748,7 +2768,7 @@ printf( " %02d:%02d:%02d (%f)\n", tm->tm_hour, tm->tm_min, tm->tm_sec, *fsec);
  * Decode date string which includes delimiters.
  * Insist on a complete set of fields.
  */
-int
+static int
 DecodeDate(char *str, int fmask, int *tmask, struct tm *tm)
 {
     double fsec;
@@ -2835,7 +2855,7 @@ printf( "DecodeDate- illegal field %s value is %d\n", field[i], val);
  * Only check the lower limit on hours, since this same code
  *  can be used to represent time spans.
  */
-int
+static int
 DecodeTime(char *str, int fmask, int *tmask, struct tm *tm, double *fsec)
 {
     char *cp;
@@ -2879,7 +2899,7 @@ DecodeTime(char *str, int fmask, int *tmask, struct tm *tm, double *fsec)
 /* DecodeNumber()
  * Interpret numeric field as a date value in context.
  */
-int
+static int
 DecodeNumber( int flen, char *str, int fmask, int *tmask, struct tm *tm, double *fsec)
 {
     int val;
@@ -2985,7 +3005,7 @@ printf( "DecodeNumber- (2) match %d (%s) as year\n", val, str);
 /* DecodeNumberField()
  * Interpret numeric string as a concatenated date field.
  */
-int
+static int
 DecodeNumberField( int len, char *str, int fmask, int *tmask, struct tm *tm, double *fsec)
 {
     char *cp;
@@ -3058,7 +3078,8 @@ printf( "DecodeNumberField- %s is time field fmask=%08x tmask=%08x\n", str, fmas
 /* DecodeTimezone()
  * Interpret string as a numeric timezone.
  */
-int DecodeTimezone( char *str, int *tzp)
+static int
+DecodeTimezone( char *str, int *tzp)
 {
     int tz;
     int hr, min;
@@ -3095,7 +3116,7 @@ int DecodeTimezone( char *str, int *tzp)
  * Implement a cache lookup since it is likely that dates
  *  will be related in format.
  */
-int
+static int
 DecodeSpecial(int field, char *lowtoken, int *val)
 {
     int type;
@@ -3351,7 +3372,7 @@ printf( " %02d:%02d:%02d\n", tm->tm_hour, tm->tm_min, tm->tm_sec);
  * Decode text string using lookup table.
  * This routine supports time interval decoding.
  */
-int
+static int
 DecodeUnits(int field, char *lowtoken, int *val)
 {
     int type;
@@ -3388,7 +3409,7 @@ DecodeUnits(int field, char *lowtoken, int *val)
  * Binary search -- from Knuth (6.2.1) Algorithm B.  Special case like this
  * is WAY faster than the generic bsearch().
  */
-datetkn *
+static datetkn *
 datebsearch(char *key, datetkn *base, unsigned int nel)
 {
     register datetkn *last = base + nel - 1, *position;
@@ -3414,7 +3435,8 @@ datebsearch(char *key, datetkn *base, unsigned int nel)
 /* EncodeSpecialDateTime()
  * Convert reserved datetime data type to string.
  */
-int EncodeSpecialDateTime(DateTime dt, char *str)
+static int
+EncodeSpecialDateTime(DateTime dt, char *str)
 {
     if (DATETIME_IS_RESERVED(dt)) {
 	if (DATETIME_IS_INVALID(dt)) {

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.10 1997/08/18 20:52:27 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.11 1997/08/19 21:31:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,6 +58,9 @@
 #include "catalog/pg_type.h"
 #include "parser/parsetree.h"
 
+static void ExecGetIndexKeyInfo(IndexTupleForm indexTuple, int *numAttsOutP,
+		 AttrNumber **attsOutP, FuncIndexInfoPtr fInfoP);
+
 /* ----------------------------------------------------------------
  *      global counters for number of tuples processed, retrieved,
  *      appended, replaced, deleted.
@@ -82,6 +85,7 @@ extern int NIndexTupleProcessed;  /* have to be defined in the access
  *	ResetTupleCount
  * ----------------------------------------------------------------
  */
+#ifdef NOT_USED
 void
 ResetTupleCount(void)
 {
@@ -92,11 +96,13 @@ ResetTupleCount(void)
     NTupleReplaced = 0;
     NIndexTupleProcessed = 0;
 }
+#endif
 
 /* ----------------------------------------------------------------
  *	PrintTupleCount
  * ----------------------------------------------------------------
  */
+#ifdef NOT_USED
 void
 DisplayTupleCount(FILE *statfp)
 {
@@ -127,6 +133,7 @@ DisplayTupleCount(FILE *statfp)
 		(NTupleReplaced == 1) ? "" : "s");
     fprintf(statfp, "\n");
 }
+#endif
 
 /* ----------------------------------------------------------------
  *		 miscellanious init node support functions
@@ -287,6 +294,7 @@ ExecGetResultType(CommonState *commonstate)
  *	ExecFreeResultType
  * ----------------
  */
+#ifdef NOT_USED
 void
 ExecFreeResultType(CommonState *commonstate)
 {
@@ -299,7 +307,7 @@ ExecFreeResultType(CommonState *commonstate)
 /*    ExecFreeTypeInfo(tupType); */
     pfree(tupType);
 }
-
+#endif
 
 /* ----------------
  *	ExecAssignProjectionInfo
@@ -382,6 +390,7 @@ ExecGetScanType(CommonScanState *csstate)
  *	ExecFreeScanType
  * ----------------
  */
+#ifdef NOT_USED
 void
 ExecFreeScanType(CommonScanState *csstate)
 {
@@ -394,6 +403,7 @@ ExecFreeScanType(CommonScanState *csstate)
 /*    ExecFreeTypeInfo(tupType); */
     pfree(tupType);
 }
+#endif
 
 /* ----------------
  *	ExecAssignScanType
@@ -581,7 +591,7 @@ QueryDescGetTypeInfo(QueryDesc *queryDesc)
  *	parameters.
  * ----------------------------------------------------------------
  */
-void
+static void
 ExecGetIndexKeyInfo(IndexTupleForm indexTuple,
 		    int *numAttsOutP,
 		    AttrNumber **attsOutP,
@@ -938,6 +948,7 @@ ExecCloseIndices(RelationInfo *resultRelationInfo)
  *	set of routines..
  * ----------------------------------------------------------------
  */
+#ifdef NOT_USED
 IndexTuple
 ExecFormIndexTuple(HeapTuple heapTuple,
 		   Relation heapRelation,
@@ -1011,6 +1022,7 @@ ExecFormIndexTuple(HeapTuple heapTuple,
 
     return indexTuple;
 }
+#endif
 
 /* ----------------------------------------------------------------
  *	ExecInsertIndexTuples

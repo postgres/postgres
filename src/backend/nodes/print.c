@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.5 1997/08/12 20:15:27 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.6 1997/08/19 21:31:43 momjian Exp $
  *
  * HISTORY
  *    AUTHOR		DATE		MAJOR EVENT
@@ -32,6 +32,9 @@
 #include "nodes/nodes.h"
 #include "nodes/plannodes.h"
 #include "optimizer/clauses.h"
+
+static char *plannode_type (Plan* p);
+
 /*
  * print--
  *    print contents of Node to stdout
@@ -258,7 +261,7 @@ print_slot(TupleTableSlot *slot)
     debugtup(slot->val, slot->ttc_tupleDescriptor);
 }
 
-char* 
+static char * 
 plannode_type (Plan* p)
 {
     switch(nodeTag(p)) {

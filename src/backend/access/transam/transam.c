@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.8 1996/11/27 15:15:54 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.9 1997/08/19 21:29:59 momjian Exp $
  *
  * NOTES
  *    This file contains the high level access-method interface to the
@@ -25,6 +25,12 @@
 #include <catalog/catname.h>
 #include <storage/spin.h>
 #include <commands/vacuum.h>
+
+static int RecoveryCheckingEnabled(void);
+static void TransRecover(Relation logRelation);
+static bool TransactionLogTest(TransactionId transactionId, XidStatus status);
+static void TransactionLogUpdate(TransactionId transactionId,
+				 XidStatus status);
 
 /* ----------------
  *    global variables holding pointers to relations used
@@ -95,17 +101,19 @@ extern bool	BuildingBtree;
  *	recovery checking accessors
  * ----------------
  */
-int
+static int
 RecoveryCheckingEnabled(void)
 {    
     return RecoveryCheckingEnableState;
 }
 
-void
+#ifdef NOT_USED
+static void
 SetRecoveryCheckingEnabled(bool state)
 {    
     RecoveryCheckingEnableState = (state == true);
 }
+#endif
 
 /* ----------------------------------------------------------------
  *	postgres log/time access method interface
@@ -124,7 +132,7 @@ SetRecoveryCheckingEnabled(bool state)
  * --------------------------------
  */
 
-bool	/* true/false: does transaction id have specified status? */
+static bool	/* true/false: does transaction id have specified status? */
 TransactionLogTest(TransactionId transactionId,	/* transaction id to test */
 		   XidStatus status)		/* transaction status */
 {
@@ -186,7 +194,7 @@ TransactionLogTest(TransactionId transactionId,	/* transaction id to test */
  *	TransactionLogUpdate
  * --------------------------------
  */
-void
+static void
 TransactionLogUpdate(TransactionId transactionId, /* trans id to update */
 		     XidStatus status) /* new trans status */
 {
@@ -371,7 +379,7 @@ TransactionIdGetCommitTime(TransactionId transactionId) /* transaction id to tes
  *      passed a flag on the command line.
  * --------------------------------
  */
-void
+static void
 TransRecover(Relation logRelation)
 {
 #if 0    
@@ -664,6 +672,7 @@ TransactionIdAbort(TransactionId transactionId)
     TransactionLogUpdate(transactionId, XID_ABORT);
 }
 
+#ifdef NOT_USED
 void
 TransactionIdSetInProgress(TransactionId transactionId)
 {
@@ -672,3 +681,4 @@ TransactionIdSetInProgress(TransactionId transactionId)
     
     TransactionLogUpdate(transactionId, XID_INPROGRESS);
 }
+#endif

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.17 1997/02/14 04:16:56 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.18 1997/08/19 21:33:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@
  *      This is so that we can support more backends. (system-wide semaphore
  *      sets run out pretty fast.)                -ay 4/95
  *
- * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.17 1997/02/14 04:16:56 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.18 1997/08/19 21:33:29 momjian Exp $
  */
 #include <sys/time.h>
 #include <unistd.h>
@@ -75,6 +75,9 @@
 #include "storage/shmem.h"
 #include "storage/spin.h"
 #include "storage/proc.h"
+
+static void HandleDeadLock(int sig);
+static PROC *ProcWakeup(PROC *proc, int errType);
 
 /*
  * timeout (in seconds) for resolving possible deadlock
@@ -401,6 +404,7 @@ ProcKill(int exitStatus, int pid)
  * Returns: a pointer to the queue or NULL
  * Side Effects: Initializes the queue if we allocated one
  */
+#ifdef NOT_USED
 PROC_QUEUE *
 ProcQueueAlloc(char *name)
 {
@@ -418,6 +422,7 @@ ProcQueueAlloc(char *name)
 	}
     return(queue);
 }
+#endif
 
 /*
  * ProcQueueInit -- initialize a shared memory process queue
@@ -536,7 +541,7 @@ ProcSleep(PROC_QUEUE *queue,
  *   remove the process from the wait queue and set its links invalid.
  *   RETURN: the next process in the wait queue.
  */
-PROC *
+static PROC *
 ProcWakeup(PROC *proc, int errType)
 {
     PROC *retProc;
@@ -563,11 +568,13 @@ ProcWakeup(PROC *proc, int errType)
 /*
  * ProcGetId --
  */
+#ifdef NOT_USED
 int
 ProcGetId()
 {
     return( MyProc->procId );
 }
+#endif
 
 /*
  * ProcLockWakeup -- routine for waking up processes when a lock is
@@ -631,7 +638,7 @@ ProcAddLock(SHM_QUEUE *elem)
  * up my semaphore.
  * --------------------
  */
-void
+static void
 HandleDeadLock(int sig)
 {
     LOCK *lock;

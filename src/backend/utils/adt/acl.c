@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.12 1997/08/12 20:15:54 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.13 1997/08/19 21:34:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,6 +24,7 @@
 static char *getid(char *s, char *n);
 static int32 aclitemeq(AclItem *a1, AclItem *a2);
 static int32 aclitemgt(AclItem *a1, AclItem *a2);
+static char *aclparse(char *s, AclItem *aip, unsigned *modechg);
 
 #define	ACL_IDTYPE_GID_KEYWORD	"group"
 #define	ACL_IDTYPE_UID_KEYWORD	"user"
@@ -81,7 +82,7 @@ getid(char *s, char *n)
  *	  UID/GID, id type identifier and mode type values.
  *	- loads 'modechg' with the mode change flag.
  */
-char *
+static char *
 aclparse(char *s, AclItem *aip, unsigned *modechg)
 {
     HeapTuple htp;

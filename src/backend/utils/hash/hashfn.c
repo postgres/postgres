@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/hash/hashfn.c,v 1.2 1996/11/03 06:54:16 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/hash/hashfn.c,v 1.3 1997/08/19 21:35:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -125,6 +125,7 @@ tag_hash(int *key, int keysize)
  * instructions.  If this routine is heavily used enough, it's
  * worth the ugly coding
  */
+#ifdef NOT_USED
 long
 disk_hash(char *key)
 {
@@ -154,5 +155,5 @@ disk_hash(char *key)
     }
     return(n);
 }
-
+#endif
 

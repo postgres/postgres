@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: itup.h,v 1.4 1996/11/05 07:20:09 scrappy Exp $
+ * $Id: itup.h,v 1.5 1997/08/19 21:37:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,8 +88,6 @@ typedef struct PredInfo {
 /* indextuple.h */
 extern IndexTuple index_formtuple(TupleDesc tupleDescriptor,
 				  Datum value[], char null[]);
-extern char *fastgetiattr(IndexTuple tup, int attnum,
-	TupleDesc att, bool *isnull);
 extern Datum index_getattr(IndexTuple tuple, AttrNumber attNum,
 	TupleDesc tupDesc, bool *isNullOutP);
 extern RetrieveIndexResult

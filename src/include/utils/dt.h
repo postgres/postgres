@@ -8,7 +8,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dt.h,v 1.15 1997/07/29 16:16:12 thomas Exp $
+ * $Id: dt.h,v 1.16 1997/08/19 21:40:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -270,14 +270,12 @@ extern bool timespan_lt(TimeSpan *span1, TimeSpan *span2);
 extern bool timespan_le(TimeSpan *span1, TimeSpan *span2);
 extern bool timespan_ge(TimeSpan *span1, TimeSpan *span2);
 extern bool timespan_gt(TimeSpan *span1, TimeSpan *span2);
-extern bool timespan_finite(TimeSpan *span);
 extern TimeSpan *timespan_smaller(TimeSpan *span1, TimeSpan *span2);
 extern TimeSpan *timespan_larger(TimeSpan *span1, TimeSpan *span2);
 
 extern text *datetime_text(DateTime *datetime);
 extern DateTime *text_datetime(text *str);
 extern text *timespan_text(TimeSpan *timespan);
-extern TimeSpan *text_timespan(text *str);
 extern DateTime *datetime_trunc(text *units, DateTime *datetime);
 extern TimeSpan *timespan_trunc(text *units, TimeSpan *timespan);
 extern float64 datetime_part(text *units, DateTime *datetime);
@@ -296,46 +294,26 @@ extern TimeSpan *datetime_age(DateTime *dt1, DateTime *dt2);
 extern void GetCurrentTime(struct tm *tm);
 extern DateTime SetDateTime(DateTime datetime);
 extern int tm2datetime(struct tm *tm, double fsec, int *tzp, DateTime *dt);
-extern int datetime2tm( DateTime dt, int *tzp, struct tm *tm, double *fsec, char **tzn);
-
-extern int timespan2tm(TimeSpan span, struct tm *tm, float8 *fsec);
-extern int tm2timespan(struct tm *tm, double fsec, TimeSpan *span);
-
-extern DateTime dt2local( DateTime dt, int timezone);
 
 extern void j2date( int jd, int *year, int *month, int *day);
 extern int date2j( int year, int month, int day);
-extern int j2day( int jd);
 
 extern double time2t(const int hour, const int min, const double sec);
-extern void dt2time(DateTime dt, int *hour, int *min, double *sec);
 
 extern int ParseDateTime( char *timestr, char *lowstr,
   char *field[], int ftype[], int maxfields, int *numfields);
 extern int DecodeDateTime( char *field[], int ftype[],
  int nf, int *dtype, struct tm *tm, double *fsec, int *tzp);
-extern int DecodeDate(char *str, int fmask, int *tmask, struct tm *tm);
-extern int DecodeNumber( int flen, char *field,
- int fmask, int *tmask, struct tm *tm, double *fsec);
-extern int DecodeNumberField( int len, char *str,
- int fmask, int *tmask, struct tm *tm, double *fsec);
-extern int DecodeTime(char *str,
- int fmask, int *tmask, struct tm *tm, double *fsec);
+
 extern int DecodeTimeOnly( char *field[], int ftype[], int nf,
  int *dtype, struct tm *tm, double *fsec);
-extern int DecodeTimezone( char *str, int *tzp);
-extern int DecodeSpecial(int field, char *lowtoken, int *val);
 
 extern int DecodeDateDelta( char *field[], int ftype[],
  int nf, int *dtype, struct tm *tm, double *fsec);
-extern int DecodeUnits(int field, char *lowtoken, int *val);
 
-extern int EncodeSpecialDateTime(DateTime dt, char *str);
 extern int EncodeDateOnly(struct tm *tm, int style, char *str);
 extern int EncodeTimeOnly(struct tm *tm, double fsec, int style, char *str);
 extern int EncodeDateTime(struct tm *tm, double fsec, int *tzp, char **tzn, int style, char *str);
 extern int EncodeTimeSpan(struct tm *tm, double fsec, int style, char *str);
-
-extern datetkn *datebsearch(char *key, datetkn *base, unsigned int nel);
 
 #endif /* DT_H */

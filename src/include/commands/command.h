@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: command.h,v 1.3 1996/11/06 08:05:02 scrappy Exp $
+ * $Id: command.h,v 1.4 1997/08/19 21:38:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,16 +16,6 @@
 #include <utils/portal.h>
 
 extern MemoryContext PortalExecutorHeapMemory;
-
-/*
- * PortalCleanup --
- *	Cleans up the query state of the portal.
- *
- * Exceptions:
- *	BadArg if portal invalid.
- */
-extern void PortalCleanup(Portal portal);
-
 
 /*
  * PerformPortalFetch --
@@ -44,6 +34,8 @@ extern void PerformPortalFetch(char *name, bool forward, int count,
  *	Performs the POSTQUEL function CLOSE.
  */
 extern void PerformPortalClose(char *name, CommandDest dest);
+
+extern void PortalCleanup(Portal portal);
 
 /*
  * PerformAddAttribute --

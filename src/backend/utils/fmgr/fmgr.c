@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.2 1996/11/08 06:00:14 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.3 1997/08/19 21:35:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -207,6 +207,7 @@ fmgr(Oid procedureId, ... )
  * 
  * func_ptr, func_id, n_arguments, args...
  */
+#ifdef NOT_USED
 char *
 fmgr_ptr(func_ptr user_fn, Oid func_id, ...)
 {
@@ -230,6 +231,7 @@ fmgr_ptr(func_ptr user_fn, Oid func_id, ...)
     return(fmgr_c(user_fn, func_id, n_arguments, &values,
 		  &isNull));
 }
+#endif
 
 /*
  * This routine is not well thought out.  When I get around to adding a

@@ -10,7 +10,7 @@
  *  
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/_deadcode/Attic/version.c,v 1.4 1997/08/12 20:15:13 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/_deadcode/Attic/version.c,v 1.5 1997/08/19 21:30:47 momjian Exp $
  *
  * NOTES
  *    At the point the version is defined, 2 physical relations are created
@@ -35,9 +35,9 @@
 #define MAX_QUERY_LEN 1024
 
 char rule_buf[MAX_QUERY_LEN];
+#ifdef NOT_USED
 static char attr_list[MAX_QUERY_LEN];
-
-static void setAttrList(char *bname);
+#endif
 
 /*
  * problem: the version system assumes that the rules it declares will
@@ -82,6 +82,7 @@ static void setAttrList(char *bname);
  * DO NOT COMMIT THE XACT, just increase the Cid counter!
  *							_sp.
  */
+#ifdef NOT_USED
 static void
 eval_as_new_xact(char *query)
 {
@@ -92,10 +93,11 @@ eval_as_new_xact(char *query)
     CommandCounterIncrement();
     pg_eval(query, (char **) NULL, (Oid *) NULL, 0);
 }
-
+#endif
 /*
  *  Define a version.
  */
+#ifdef NOT_USED
 void
 DefineVersion(char *name, char *fromRelname, char *date)
 {
@@ -130,11 +132,12 @@ DefineVersion(char *name, char *fromRelname, char *date)
     VersionReplace (name, saved_basename,saved_snapshot);
     VersionRetrieve (name, saved_basename, saved_snapshot);
 }
-
+#endif
 
 /*
  *  Creates the deltas.
  */
+#ifdef NOT_USED
 void
 VersionCreate(char *vname, char *bname)
 {
@@ -161,6 +164,7 @@ VersionCreate(char *vname, char *bname)
     sprintf (query_buf, "CREATE TABLE %s_del (DOID oid)", vname);
     eval_as_new_xact (query_buf); 
 }
+#endif
 
 
 /*
@@ -168,6 +172,7 @@ VersionCreate(char *vname, char *bname)
  * sets the global variable 'attr_list' with the list of attributes (names)
  * for that relation. 
  */
+#ifdef NOT_USED
 static void
 setAttrList(char *bname)
 {
@@ -203,13 +208,15 @@ setAttrList(char *bname)
     
     return;
 }
+#endif
 
 /*
  * This routine defines the rule governing the append semantics of
  * versions.  All tuples appended to a version gets appended to the 
  * <vname>_added relation.
  */
-void
+#ifdef NOT_USED
+static void
 VersionAppend(char *vname, char *bname)
 {
     sprintf(rule_buf,
@@ -218,7 +225,7 @@ VersionAppend(char *vname, char *bname)
     
     eval_as_new_xact(rule_buf); 
 }
-
+#endif
 
 /*
  * This routine defines the rule governing the retrieval semantics of
@@ -228,6 +235,7 @@ VersionAppend(char *vname, char *bname)
  *      2. Retrieve all tuples in the base relation which are not in 
  *         the <vname>_del relation.
  */
+#ifdef NOT_USED
 void
 VersionRetrieve(char *vname, char *bname, char *snapshot)
 {
@@ -245,6 +253,7 @@ where _%s.oid !!= '%s_del.DOID'",
     /*  printf("%s\n",rule_buf); */
     
 }
+#endif
 
 /*
  * This routine defines the rules that govern the delete semantics of 
@@ -257,6 +266,7 @@ where _%s.oid !!= '%s_del.DOID'",
  *        then we have to mark that tuple as being deleted by adding
  *        it to the <vname>_del relation.
  */
+#ifdef NOT_USED
 void
 VersionDelete(char *vname, char *bname, char *snapshot)
 {
@@ -280,6 +290,7 @@ bname,bname,snapshot,bname);
    eval_as_new_xact(rule_buf);
 #endif /*  OLD_REWRITE */
 }
+#endif
 
 /*
  *  This routine defines the rules that govern the update semantics
@@ -293,6 +304,7 @@ bname,bname,snapshot,bname);
  *              adding the tuple to the <vname>_del relation. 
  *         2.2  A copy of the tuple is appended to the <vname>_added relation
  */
+#ifdef NOT_USED
 void
 VersionReplace(char *vname, char *bname, char *snapshot)
 {
@@ -332,3 +344,4 @@ vname,attr_list,bname,bname,snapshot,vname,bname);
 
 }
 
+#endif

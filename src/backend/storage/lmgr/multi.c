@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Attic/multi.c,v 1.3 1997/08/12 22:54:09 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Attic/multi.c,v 1.4 1997/08/19 21:33:25 momjian Exp $
  *
  * NOTES:
  *   (1) The lock.c module assumes that the caller here is doing
@@ -29,6 +29,10 @@
 #include "utils/rel.h"
 #include "miscadmin.h"		/* MyDatabaseId */
 
+static bool MultiAcquire(LockTableId tableId, LOCKTAG *tag, LOCKT lockt,
+			 LOCK_LEVEL level);
+static bool MultiRelease(LockTableId tableId, LOCKTAG *tag, LOCKT lockt,
+			 LOCK_LEVEL level);
 
 /*
  * INTENT indicates to higher level that a lower level lock has been
@@ -186,7 +190,7 @@ MultiLockPage(LockInfo linfo, ItemPointer tidPtr, LOCKT lockt)
  * Returns: TRUE if lock is set, FALSE if not
  * Side Effects:
  */
-bool
+static bool
 MultiAcquire(LockTableId tableId,
 	     LOCKTAG *tag,
 	     LOCKT lockt,
@@ -288,6 +292,7 @@ MultiAcquire(LockTableId tableId,
  * Release a page in the multi-level lock table
  * ------------------
  */
+#ifdef NOT_USED
 bool
 MultiReleasePage(LockInfo linfo, ItemPointer tidPtr, LOCKT	lockt)
 {
@@ -307,6 +312,7 @@ MultiReleasePage(LockInfo linfo, ItemPointer tidPtr, LOCKT	lockt)
     
     return (MultiRelease(MultiTableId, &tag, lockt, PAGE_LEVEL));
 }
+#endif
 
 /* ------------------
  * Release a relation in the multi-level lock table
@@ -335,7 +341,7 @@ MultiReleaseReln(LockInfo linfo, LOCKT lockt)
  *
  * Returns: TRUE if successful, FALSE otherwise.
  */
-bool
+static bool
 MultiRelease(LockTableId tableId,
 	     LOCKTAG *tag,
 	     LOCKT	lockt,

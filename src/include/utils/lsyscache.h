@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lsyscache.h,v 1.2 1996/11/04 11:51:20 scrappy Exp $
+ * $Id: lsyscache.h,v 1.3 1997/08/19 21:40:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,10 +37,8 @@ extern struct varlena * get_relstub(Oid relid, int no, bool *islast);
 extern Oid get_ruleid(char *rulename);
 extern Oid get_eventrelid(Oid ruleid);
 extern int16 get_typlen(Oid typid);
-extern char get_typalign(Oid typid);
 extern bool get_typbyval(Oid typid);
 extern struct varlena *get_typdefault(Oid typid);
-extern char get_typtype(Oid typid);
 
 #endif	/* LSYSCACHE_H */
 

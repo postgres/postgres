@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heapam.h,v 1.6 1996/11/10 03:04:37 momjian Exp $
+ * $Id: heapam.h,v 1.7 1997/08/19 21:37:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,7 +88,6 @@ extern HeapAccessStatistics heap_access_stats;	/* in stats.c */
 
 /* heapam.c */
 extern void doinsert(Relation relation, HeapTuple tup);
-extern void SetHeapAccessMethodImmediateInvalidation(bool on);
 
 extern Relation heap_open(Oid relationId);
 extern Relation heap_openr(char *relationName);
@@ -115,14 +114,11 @@ extern void DataFill(char *data, TupleDesc tupleDesc,
 extern int heap_attisnull(HeapTuple tup, int attnum);
 extern int heap_sysattrlen(AttrNumber attno);
 extern bool heap_sysattrbyval(AttrNumber attno);
-extern char *heap_getsysattr(HeapTuple tup, Buffer b, int attnum);
 extern char *fastgetattr(HeapTuple tup, int attnum,
 			 TupleDesc att, bool *isnull);
 extern char *heap_getattr(HeapTuple tup, Buffer b, int attnum,
 			  TupleDesc att, bool *isnull);
 extern HeapTuple heap_copytuple(HeapTuple tuple);
-extern void heap_deformtuple(HeapTuple tuple, TupleDesc tdesc,
-			     Datum values[], char nulls[]);
 extern HeapTuple heap_formtuple(TupleDesc tupleDescriptor, 
 				Datum value[], char nulls[]);
 extern HeapTuple heap_modifytuple(HeapTuple tuple, Buffer buffer,
@@ -130,11 +126,7 @@ extern HeapTuple heap_modifytuple(HeapTuple tuple, Buffer buffer,
 HeapTuple heap_addheader(uint32	natts, int structlen, char *structure);
 
 /* in common/heap/stats.c */
-extern void InitHeapAccessStatistics(void);
-extern void ResetHeapAccessStatistics(void);
-extern HeapAccessStatistics GetHeapAccessStatistics(void);
 extern void PrintHeapAccessStatistics(HeapAccessStatistics stats);
-extern void PrintAndFreeHeapAccessStatistics(HeapAccessStatistics stats);
 extern void initam(void);
 
 /* hio.c */

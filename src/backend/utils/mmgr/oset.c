@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/mmgr/Attic/oset.c,v 1.1.1.1 1996/07/09 06:22:09 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/mmgr/Attic/oset.c,v 1.2 1997/08/19 21:35:59 momjian Exp $
  *
  * NOTE
  *    XXX This is a preliminary implementation which lacks fail-fast
@@ -89,6 +89,7 @@ OrderedSetGetHead(OrderedSet set)
 /*
  * OrderedSetGetTail --
  */
+#ifdef NOT_USED
 Pointer
 OrderedSetGetTail(OrderedSet set)
 {
@@ -100,6 +101,7 @@ OrderedSetGetTail(OrderedSet set)
     }
     return (NULL);
 }
+#endif
 
 /*
  * OrderedElemGetPredecessor --

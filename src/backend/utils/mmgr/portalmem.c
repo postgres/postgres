@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.4 1997/08/12 22:54:57 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.5 1997/08/19 21:36:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -90,6 +90,12 @@
 #include "nodes/execnodes.h"	/* for EState */
 
 #include "utils/portal.h"
+
+static void CollectNamedPortals(Portal *portalP, int destroy);
+static Portal PortalHeapMemoryGetPortal(PortalHeapMemory context);
+static PortalVariableMemory PortalHeapMemoryGetVariableMemory(PortalHeapMemory context);
+static void PortalResetHeapMemory(Portal portal);
+static Portal PortalVariableMemoryGetPortal(PortalVariableMemory context);
 
 /* ----------------
  *   	ALLOCFREE_ERROR_ABORT
@@ -413,7 +419,7 @@ PortalNameIsSpecial(char *pname)
  * entry *before* we destroy anything (destroying updates the hashtable
  * and screws up the sequential walk of the table). -mer 17 Aug 1992
  */
-void
+static void
 CollectNamedPortals(Portal *portalP, int destroy)
 {
     static Portal *portalList = (Portal *)NULL;
@@ -800,7 +806,7 @@ PortalDestroy(Portal *portalP)
  *	BadArg if mode is invalid.
  * ----------------
  */
-void
+static void
 PortalResetHeapMemory(Portal portal)
 {
     PortalHeapMemory	context;
@@ -929,7 +935,7 @@ PortalGetHeapMemory(Portal portal)
  *	BadState if called when disabled.
  *	BadArg if context is invalid.
  */
-Portal
+static Portal
 PortalVariableMemoryGetPortal(PortalVariableMemory context)
 {
     return ((Portal)((char *)context - offsetof (PortalD, variable)));
@@ -943,7 +949,7 @@ PortalVariableMemoryGetPortal(PortalVariableMemory context)
  *	BadState if called when disabled.
  *	BadArg if context is invalid.
  */
-Portal
+static Portal
 PortalHeapMemoryGetPortal(PortalHeapMemory context)
 {
     return ((Portal)((char *)context - offsetof (PortalD, heap)));
@@ -957,6 +963,7 @@ PortalHeapMemoryGetPortal(PortalHeapMemory context)
  *	BadState if called when disabled.
  *	BadArg if context is invalid.
  */
+#ifdef NOT_USED
 PortalHeapMemory
 PortalVariableMemoryGetHeapMemory(PortalVariableMemory context)
 {
@@ -964,6 +971,7 @@ PortalVariableMemoryGetHeapMemory(PortalVariableMemory context)
 			       - offsetof (PortalD, variable)
 			       + offsetof (PortalD, heap)));
 }
+#endif
 
 /*
  * PortalHeapMemoryGetVariableMemory --
@@ -973,7 +981,7 @@ PortalVariableMemoryGetHeapMemory(PortalVariableMemory context)
  *	BadState if called when disabled.
  *	BadArg if context is invalid.
  */
-PortalVariableMemory
+static PortalVariableMemory
 PortalHeapMemoryGetVariableMemory(PortalHeapMemory context)
 {
     return ((PortalVariableMemory)((char *)context

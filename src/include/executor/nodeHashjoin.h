@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeHashjoin.h,v 1.1 1996/08/28 07:22:19 scrappy Exp $
+ * $Id: nodeHashjoin.h,v 1.2 1997/08/19 21:38:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,13 +21,8 @@ extern int ExecCountSlotsHashJoin(HashJoin *node);
 
 extern void ExecEndHashJoin(HashJoin *node);
 
-extern int ExecHashJoinNewBatch(HashJoinState *hjstate);
-
 extern char *ExecHashJoinSaveTuple(HeapTuple heapTuple, char *buffer,
 				   File file, char *position);
-
-extern int ExecHashJoinGetBatch(int bucketno, HashJoinTable hashtable,
-				int nbatch);
 
 
 #endif	/* NODEHASHJOIN_H */

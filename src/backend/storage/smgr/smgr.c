@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.7 1997/08/18 20:53:18 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.8 1997/08/19 21:33:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,8 @@
 #include "storage/smgr.h"
 #include "utils/rel.h"
 #include "utils/palloc.h"
+
+static void smgrshutdown(int dummy);
 
 typedef struct f_smgr {
     int		(*smgr_init)();		/* may be NULL */
@@ -100,7 +102,7 @@ smgrinit()
     return (SM_SUCCESS);
 }
 
-void
+static void
 smgrshutdown(int dummy)
 {
     int i;
@@ -373,6 +375,7 @@ smgrcommit()
     return (SM_SUCCESS);
 }
 
+#ifdef NOT_USED
 int
 smgrabort()
 {
@@ -387,6 +390,7 @@ smgrabort()
 
     return (SM_SUCCESS);
 }
+#endif
 
 bool
 smgriswo(int16 smgrno)

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/buffer/freelist.c,v 1.3 1996/11/10 03:02:16 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/buffer/freelist.c,v 1.4 1997/08/19 21:32:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,6 +109,7 @@ PinBuffer(BufferDesc *buf)
     PrivateRefCount[b]++;
 }
 
+#ifdef NOT_USED
 void
 PinBuffer_Debug(char *file, int line, BufferDesc *buf)
 {
@@ -122,6 +123,7 @@ refcount = %ld, file: %s, line: %d\n",
 		PrivateRefCount[buffer - 1], file, line);
     }
 }
+#endif
 
 #undef UnpinBuffer
 
@@ -148,6 +150,7 @@ UnpinBuffer(BufferDesc *buf)
     }
 }
 
+#ifdef NOT_USED
 void
 UnpinBuffer_Debug(char *file, int line, BufferDesc *buf)
 {
@@ -161,6 +164,7 @@ refcount = %ld, file: %s, line: %d\n",
 		PrivateRefCount[buffer - 1], file, line);
     }
 }
+#endif
 
 /*
  * GetFreeBuffer() -- get the 'next' buffer from the freelist.
@@ -222,6 +226,7 @@ InitFreeList(bool init)
 /*
  * print out the free list and check for breaks.
  */
+#ifdef NOT_USED
 void
 DBG_FreeListCheck(int nfree)
 {
@@ -256,6 +261,7 @@ DBG_FreeListCheck(int nfree)
 	
     }
 }
+#endif
 
 #ifdef NOT_USED
 /*

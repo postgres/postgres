@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.5 1997/01/10 20:17:43 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.6 1997/08/19 21:31:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,6 +25,8 @@
 #include "utils/datum.h"
 #include "utils/elog.h"
 #include "storage/itemptr.h"
+
+static bool equali(List *a, List *b);
 
 /*
  *  Stuff from primnodes.h
@@ -703,7 +705,8 @@ equal(void *a, void *b)
  *
  * XXX temp hack. needs something like T_IntList
  */
-bool equali(List *a, List *b)
+static bool
+equali(List *a, List *b)
 {     
     List *la = (List*)a;
     List *lb = (List*)b;

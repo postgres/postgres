@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.33 1997/08/18 20:53:00 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.34 1997/08/19 21:32:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,6 +87,7 @@ static void make_arguments(int nargs, List *fargs, Oid *input_typeids,
 static void AddAggToParseState(ParseState *pstate, Aggreg *aggreg);
 static void finalizeAggregates(ParseState *pstate, Query *qry);
 static void parseCheckAggregates(ParseState *pstate, Query *qry);
+static ParseState* makeParseState(void);
 
 /*****************************************************************************
  *
@@ -99,7 +100,7 @@ static void parseCheckAggregates(ParseState *pstate, Query *qry);
  *
  */
 
-ParseState* 
+static ParseState* 
 makeParseState(void)
 {
     ParseState *pstate;

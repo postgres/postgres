@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.12 1997/06/02 02:51:49 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.13 1997/08/19 21:36:25 momjian Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -34,6 +34,15 @@
 #endif
 
 #include "pg_dump.h"
+
+static char** findParentsByOid(TableInfo* tbinfo, int numTables,
+			      InhInfo* inhinfo, int numInherits,
+			      const char *oid, 
+			      int *numParents);
+static int findTableByOid(TableInfo *tbinfo, int numTables, const char *oid);
+static void flagInhAttrs(TableInfo* tbinfo, int numTables,
+			   InhInfo* inhinfo, int numInherits);
+static int strInArray(const char* pattern, char** arr, int arr_size);
 
 /*
  * findTypeByOid 
@@ -95,7 +104,7 @@ findOprByOid(OprInfo *oprinfo, int numOprs, const char *oid)
  * returns NULL if none
  */
 
-char** 
+static char** 
 findParentsByOid(TableInfo* tblinfo, int numTables,
 		 InhInfo* inhinfo, int numInherits, const char *oid,
 		 int *numParentsPtr)
@@ -173,7 +182,7 @@ parseArgTypes(char **argtypes, const char* str)
  *
  */
 
-int 
+static int 
 strInArray(const char* pattern, char** arr, int arr_size)
 {
     int i;
@@ -316,7 +325,7 @@ dumpSchemaIdx(FILE *fout, int *numTablesPtr, const char *tablename,
  * modifies tblinfo
  *
  */
-void
+static void
 flagInhAttrs(TableInfo* tblinfo, int numTables,
 	     InhInfo* inhinfo, int numInherits)
 {
@@ -373,7 +382,7 @@ findTableByName(TableInfo* tblinfo, int numTables, const char* relname)
  * NOTE:  should hash this, but just do linear search for now
  */
 
-int
+static int
 findTableByOid(TableInfo* tblinfo, int numTables, const char* oid)
 {
     int i;

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lmgr.h,v 1.4 1996/11/08 06:02:18 momjian Exp $
+ * $Id: lmgr.h,v 1.5 1997/08/19 21:39:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,19 +38,13 @@ typedef LockInfoData    *LockInfo;
 
 
 extern LRelId RelationGetLRelId(Relation relation);
-extern Oid LRelIdGetDatabaseId(LRelId lRelId);
 extern Oid LRelIdGetRelationId(LRelId lRelId);
-extern bool DatabaseIdIsMyDatabaseId(Oid databaseId);
-extern bool LRelIdContainsMyDatabaseId(LRelId lRelId);
 extern void RelationInitLockInfo(Relation relation);
-extern void RelationDiscardLockInfo(Relation relation);
 extern void RelationSetLockForDescriptorOpen(Relation relation);
 extern void RelationSetLockForRead(Relation relation);
 extern void RelationUnsetLockForRead(Relation relation);
 extern void RelationSetLockForWrite(Relation relation);
 extern void RelationUnsetLockForWrite(Relation relation);
-extern void RelationSetLockForTupleRead(Relation relation,
-					ItemPointer itemPointer);
 
 /* used in vaccum.c */
 extern void RelationSetLockForWritePage(Relation relation,
@@ -69,9 +63,6 @@ extern void RelationSetRIntentLock(Relation relation);
 extern void RelationUnsetRIntentLock(Relation relation);
 extern void RelationSetWIntentLock(Relation relation);
 extern void RelationUnsetWIntentLock(Relation relation);
-extern void RelationSetLockForExtend(Relation relation);
-extern void RelationUnsetLockForExtend(Relation relation);
-extern void LRelIdAssign(LRelId *lRelId, Oid dbId, Oid relId);
 
 /* single.c */
 extern bool SingleLockReln(LockInfo linfo, LOCKT lockt, int action);

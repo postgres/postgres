@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/nodeSeqscan.c,v 1.3 1996/11/08 05:56:16 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/nodeSeqscan.c,v 1.4 1997/08/19 21:31:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,6 +30,11 @@
 #include "access/heapam.h"
 #include "parser/parsetree.h"
 
+static Oid InitScanRelation(SeqScan *node, EState *estate,
+			    CommonScanState *scanstate, Plan *outerPlan);
+
+static TupleTableSlot *SeqNext(SeqScan *node);
+
 /* ----------------------------------------------------------------
  *   			Scan Support
  * ----------------------------------------------------------------
@@ -40,7 +45,7 @@
  *	This is a workhorse for ExecSeqScan
  * ----------------------------------------------------------------
  */
-TupleTableSlot *
+static TupleTableSlot *
 SeqNext(SeqScan *node)
 {
     HeapTuple	 	tuple;
@@ -139,7 +144,7 @@ S1_printf("ExecSeqScan: returned tuple slot: %d\n", slot);
  *	subplans of scans.
  * ----------------------------------------------------------------
  */
-Oid
+static Oid
 InitScanRelation(SeqScan *node, EState *estate,
 		 CommonScanState *scanstate, Plan *outerPlan)
 {

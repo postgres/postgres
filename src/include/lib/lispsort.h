@@ -6,13 +6,11 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lispsort.h,v 1.1 1996/08/28 07:22:39 scrappy Exp $
+ * $Id: lispsort.h,v 1.2 1997/08/19 21:38:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef	LISPSORT_H
 #define	LISPSORT_H
-
-extern List *lisp_qsort(List *the_list, int (*compare)());
 
 #endif	/* LISPSORT_H */

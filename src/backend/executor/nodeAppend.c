@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/nodeAppend.c,v 1.4 1996/11/06 06:47:39 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/nodeAppend.c,v 1.5 1997/08/19 21:31:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,6 +64,8 @@
 #include "utils/mcxt.h"
 #include "parser/parsetree.h"		/* for rt_store() macro */
 
+static bool exec_append_initialize_next(Append *node);
+
 /* ----------------------------------------------------------------
  *      exec-append-initialize-next
  *    
@@ -73,7 +75,7 @@
  *      Returns t iff there is a "next" scan to process.
  * ----------------------------------------------------------------
  */
-bool
+static bool
 exec_append_initialize_next(Append *node)
 {
     EState         *estate;

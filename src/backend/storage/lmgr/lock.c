@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.10 1997/08/12 22:54:07 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.11 1997/08/19 21:33:19 momjian Exp $
  *
  * NOTES
  *    Outside modules can create a lock table and acquire/release
@@ -47,6 +47,9 @@
 #include "utils/palloc.h"
 #include "access/xact.h"
 #include "access/transam.h"
+
+static int WaitOnLock(LOCKTAB *ltable, LockTableId tableId, LOCK *lock,
+		      LOCKT lockt);
 
 /*#define LOCK_MGR_DEBUG*/
 
@@ -369,6 +372,7 @@ LockTabInit(char *tabName,
  *	client to use different tableIds when acquiring/releasing
  *	short term and long term locks.
  */
+#ifdef NOT_USED
 LockTableId
 LockTabRename(LockTableId tableId)
 {
@@ -390,6 +394,7 @@ LockTabRename(LockTableId tableId)
     AllTables[newTableId] = AllTables[tableId];
     return(newTableId);
 }
+#endif
 
 /*
  * LockAcquire -- Check for lock conflicts, sleep if conflict found,
@@ -753,7 +758,7 @@ LockResolveConflicts(LOCKTAB *ltable,
     return(STATUS_FOUND);
 }
 
-int
+static int
 WaitOnLock(LOCKTAB *ltable, LockTableId tableId, LOCK *lock, LOCKT lockt)
 {
     PROC_QUEUE *waitQueue = &(lock->waitProcs);

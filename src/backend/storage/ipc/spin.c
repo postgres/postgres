@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/spin.c,v 1.4 1997/01/14 01:53:11 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/spin.c,v 1.5 1997/08/19 21:33:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,13 +46,6 @@ CreateSpinlocks(IPCKey key)
 { 
     /* the spin lock shared memory must have been created by now */
     return(TRUE); 
-}
-
-bool
-AttachSpinLocks(IPCKey key)
-{
-    /* the spin lock shared memory must have been attached by now */
-    return(TRUE);
 }
 
 bool
@@ -100,15 +93,25 @@ SpinRelease(SPINLOCK lock)
     ExclusiveUnlock(lock);
 }
 
-bool
+#else /* HAS_TEST_AND_SET */
+/* Spinlocks are implemented using SysV semaphores */
+
+static bool AttachSpinLocks(IPCKey key);
+static bool SpinIsLocked(SPINLOCK lock);
+
+
+static bool
+AttachSpinLocks(IPCKey key)
+{
+    /* the spin lock shared memory must have been attached by now */
+    return(TRUE);
+}
+
+static bool
 SpinIsLocked(SPINLOCK lock)
 {
     return(!LockIsFree(lock));
 }
-
-#else /* HAS_TEST_AND_SET */
-/* Spinlocks are implemented using SysV semaphores */
-
 
 /*
  * SpinAcquire -- try to grab a spinlock
@@ -135,7 +138,7 @@ SpinRelease(SPINLOCK lock)
     IpcSemaphoreUnlock(SpinLockId, lock, IpcExclusiveLock);
 }
 
-bool
+static bool
 SpinIsLocked(SPINLOCK lock)
 {
     int semval;
@@ -176,7 +179,7 @@ CreateSpinlocks(IPCKey key)
 /*
  * Attach to existing spinlock set
  */
-bool
+static bool
 AttachSpinLocks(IPCKey key)
 {
     IpcSemaphoreId id;

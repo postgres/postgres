@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.11 1997/04/22 03:32:35 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.12 1997/08/19 21:31:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,6 +72,19 @@ int 	execConstLen;
 static Datum ExecEvalAggreg(Aggreg *agg, ExprContext *econtext, bool *isNull);
 static Datum ExecEvalArrayRef(ArrayRef *arrayRef, ExprContext *econtext,
 			      bool *isNull, bool *isDone);
+static Datum ExecEvalAnd(Expr *andExpr, ExprContext *econtext, bool *isNull);
+static Datum ExecEvalFunc(Expr *funcClause, ExprContext *econtext,
+			  bool *isNull, bool *isDone);
+static void ExecEvalFuncArgs(FunctionCachePtr fcache, ExprContext *econtext,
+		      List *argList, Datum argV[], bool *argIsDone);
+static Datum ExecEvalNot(Expr *notclause, ExprContext *econtext, bool *isNull);
+static Datum ExecEvalOper(Expr *opClause, ExprContext *econtext,
+			  bool *isNull);
+static Datum ExecEvalOr(Expr *orExpr, ExprContext *econtext, bool *isNull);
+static Datum ExecEvalVar(Var *variable, ExprContext *econtext, bool *isNull);
+static Datum ExecMakeFunctionResult(Node *node, List *arguments,
+		ExprContext *econtext, bool *isNull, bool *isDone);
+static bool ExecQualClause(Node *clause, ExprContext *econtext);
 
 /* --------------------------------
  *    ExecEvalArrayRef
@@ -201,7 +214,7 @@ ExecEvalAggreg(Aggreg *agg, ExprContext *econtext, bool *isNull)
  *      We have an Assert to make sure this entry condition is met.
  * 
  * ---------------------------------------------------------------- */
-Datum
+static Datum
 ExecEvalVar(Var *variable, ExprContext *econtext, bool *isNull)
 {
     Datum	    	result;
@@ -460,7 +473,8 @@ ExecEvalParam(Param *expression, ExprContext *econtext, bool *isNull)
  *	to use this.  Ex: overpaid(EMP) might call GetAttributeByNum().
  * ----------------
  */
-char *
+#ifdef NOT_USED
+static char *
 GetAttributeByNum(TupleTableSlot  *slot,
 		  AttrNumber attrno,
 		  bool *isNull)
@@ -492,8 +506,10 @@ GetAttributeByNum(TupleTableSlot  *slot,
 	return (char *) NULL;
     return (char *) retval;
 }
+#endif
 
 /* XXX char16 name for catalogs */
+#ifdef NOT_USED
 char *
 att_by_num(TupleTableSlot *slot,
 	   AttrNumber attrno,
@@ -501,6 +517,7 @@ att_by_num(TupleTableSlot *slot,
 {
     return(GetAttributeByNum(slot, attrno, isNull));
 }
+#endif
 
 char *
 GetAttributeByName(TupleTableSlot *slot, char *attname, bool *isNull)
@@ -552,13 +569,15 @@ GetAttributeByName(TupleTableSlot *slot, char *attname, bool *isNull)
 }
 
 /* XXX char16 name for catalogs */
+#ifdef NOT_USED
 char *
 att_by_name(TupleTableSlot *slot, char *attname, bool *isNull)
 {
     return(GetAttributeByName(slot, attname, isNull));
 }
+#endif
 
-void
+static void
 ExecEvalFuncArgs(FunctionCachePtr fcache,
 		 ExprContext *econtext,
 		 List *argList,
@@ -603,7 +622,7 @@ ExecEvalFuncArgs(FunctionCachePtr fcache,
  *	ExecMakeFunctionResult
  * ----------------
  */
-Datum
+static Datum
 ExecMakeFunctionResult(Node *node,
 		       List *arguments,
 		       ExprContext *econtext,
@@ -785,7 +804,7 @@ ExecMakeFunctionResult(Node *node,
  *	ExecEvalOper
  * ----------------------------------------------------------------
  */
-Datum
+static Datum
 ExecEvalOper(Expr *opClause, ExprContext *econtext, bool *isNull)
 {
     Oper	*op; 
@@ -829,7 +848,7 @@ ExecEvalOper(Expr *opClause, ExprContext *econtext, bool *isNull)
  * ----------------------------------------------------------------
  */
 
-Datum
+static Datum
 ExecEvalFunc(Expr *funcClause,
 	     ExprContext *econtext,
 	     bool *isNull,
@@ -883,7 +902,7 @@ ExecEvalFunc(Expr *funcClause,
  *	need to know this, mind you...
  * ----------------------------------------------------------------
  */
-Datum
+static Datum
 ExecEvalNot(Expr *notclause, ExprContext *econtext, bool *isNull)
 {
     Datum expr_value;
@@ -922,7 +941,7 @@ ExecEvalNot(Expr *notclause, ExprContext *econtext, bool *isNull)
  *	ExecEvalOr
  * ----------------------------------------------------------------
  */
-Datum
+static Datum
 ExecEvalOr(Expr *orExpr, ExprContext *econtext, bool *isNull)
 {
     List   *clauses;
@@ -985,7 +1004,7 @@ ExecEvalOr(Expr *orExpr, ExprContext *econtext, bool *isNull)
  *	ExecEvalAnd
  * ----------------------------------------------------------------
  */
-Datum
+static Datum
 ExecEvalAnd(Expr *andExpr, ExprContext *econtext, bool *isNull)
 {
     List   *clauses;
@@ -1168,7 +1187,7 @@ ExecEvalExpr(Node *expression,
  *	rest of the qualification)
  * ----------------------------------------------------------------
  */
-bool
+static bool
 ExecQualClause(Node *clause, ExprContext *econtext)
 {
     Datum   expr_value;

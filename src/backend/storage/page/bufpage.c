@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.6 1997/03/12 21:07:11 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.7 1997/08/19 21:33:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,6 +25,9 @@
 #include "storage/bufpage.h"
 
 #include "lib/qsort.h"
+
+static void PageIndexTupleDeleteAdjustLinePointers(PageHeader phdr,
+				       char *location, Size size);
 
 static bool PageManagerShuffle = true;	/* default is shuffle mode */
 
@@ -506,7 +509,7 @@ PageIndexTupleDelete(Page page, OffsetNumber offnum)
  *
  *	This routine should never be called on an empty page.
  */
-void
+static void
 PageIndexTupleDeleteAdjustLinePointers(PageHeader phdr,
 				       char *location,
 				       Size size)

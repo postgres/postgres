@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/heap/Attic/stats.c,v 1.10 1997/08/12 22:51:44 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/heap/Attic/stats.c,v 1.11 1997/08/19 21:29:21 momjian Exp $
  *
  * NOTES
  *    initam should be moved someplace else.
@@ -28,13 +28,15 @@
 # include <string.h>
 #endif
 
+static void InitHeapAccessStatistics(void);
+
 /* ----------------
  *      InitHeapAccessStatistics
  * ----------------
  */
 HeapAccessStatistics heap_access_stats = (HeapAccessStatistics) NULL;
      
-void
+static void
 InitHeapAccessStatistics()    
 {
     MemoryContext    oldContext;
@@ -121,6 +123,7 @@ InitHeapAccessStatistics()
     heap_access_stats = stats;
 }
 
+#ifdef NOT_USED
 /* ----------------
  *      ResetHeapAccessStatistics
  * ----------------
@@ -171,7 +174,9 @@ ResetHeapAccessStatistics()
     time(&stats->local_reset_timestamp);
     time(&stats->last_request_timestamp);
 }
+#endif
 
+#ifdef NOT_USED
 /* ----------------
  *      GetHeapAccessStatistics
  * ----------------
@@ -206,7 +211,9 @@ HeapAccessStatistics GetHeapAccessStatistics()
     
     return stats;
 }
+#endif
 
+#ifdef NOT_USED
 /* ----------------
  *      PrintHeapAccessStatistics
  * ----------------
@@ -302,7 +309,9 @@ PrintHeapAccessStatistics(HeapAccessStatistics stats)
     
     printf("\n");
 }
+#endif
 
+#ifdef NOT_USED
 /* ----------------
  *      PrintAndFreeHeapAccessStatistics
  * ----------------
@@ -314,6 +323,7 @@ PrintAndFreeHeapAccessStatistics(HeapAccessStatistics stats)
     if (stats != NULL)
 	pfree(stats);
 }
+#endif
 
 /* ----------------------------------------------------------------
  *		    access method initialization

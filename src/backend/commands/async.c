@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.16 1997/08/12 22:52:15 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.17 1997/08/19 21:30:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -93,6 +93,9 @@ static Dllist *pendingNotifies = NULL;
 
 static int AsyncExistsPendingNotify(char *);
 static void ClearPendingNotify(void);
+static void Async_NotifyFrontEnd(void);
+static void Async_Unlisten(char *relname, int pid);
+static void Async_UnlistenOnExit(int code, char *relname);
      
 /*
  *--------------------------------------------------------------
@@ -478,7 +481,7 @@ Async_Listen(char *relname, int pid)
  *
  *--------------------------------------------------------------
  */
-void
+static void
 Async_Unlisten(char *relname, int pid)
 {
     Relation lDesc;
@@ -498,7 +501,7 @@ Async_Unlisten(char *relname, int pid)
     heap_close(lDesc);
 }
 
-void
+static void
 Async_UnlistenOnExit(int code,	/* from exitpg */
 		     char *relname)
 {
@@ -529,7 +532,7 @@ Async_UnlistenOnExit(int code,	/* from exitpg */
  */
 GlobalMemory notifyContext = NULL;
 
-void
+static void
 Async_NotifyFrontEnd()
 {
     extern CommandDest whereToSendOutput;

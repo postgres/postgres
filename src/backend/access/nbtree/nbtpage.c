@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.8 1997/05/30 18:35:33 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.9 1997/08/19 21:29:36 momjian Exp $
  *
  *  NOTES
  *     Postgres btree pages look like ordinary relation pages.  The opaque
@@ -35,6 +35,9 @@
 #else
 # include <string.h>
 #endif
+
+static void _bt_setpagelock(Relation rel, BlockNumber blkno, int access);
+static void _bt_unsetpagelock(Relation rel, BlockNumber blkno, int access);
 
 #define BTREE_METAPAGE	0
 #define BTREE_MAGIC	0x053162
@@ -118,6 +121,7 @@ _bt_metapinit(Relation rel)
 	RelationUnsetLockForWrite(rel);
 }
 
+#ifdef NOT_USED
 /*
  *  _bt_checkmeta() -- Verify that the metadata stored in a btree are
  *		       reasonable.
@@ -157,6 +161,7 @@ _bt_checkmeta(Relation rel)
     
     _bt_relbuf(rel, metabuf, BT_READ);
 }
+#endif
 
 /*
  *  _bt_getroot() -- Get the root page of the btree.
@@ -537,7 +542,7 @@ _bt_getstackbuf(Relation rel, BTStack stack, int access)
     }
 }
 
-void
+static void
 _bt_setpagelock(Relation rel, BlockNumber blkno, int access)
 {
     ItemPointerData iptr;
@@ -552,7 +557,7 @@ _bt_setpagelock(Relation rel, BlockNumber blkno, int access)
     }
 }
 
-void
+static void
 _bt_unsetpagelock(Relation rel, BlockNumber blkno, int access)
 {
     ItemPointerData iptr;

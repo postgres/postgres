@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.10 1997/07/01 00:22:40 thomas Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.11 1997/08/19 21:34:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,6 +24,9 @@
 #include "utils/nabstime.h"
 #include "utils/datetime.h"
 #include "access/xact.h"
+
+static int date2tm(DateADT dateVal, int *tzp, struct tm *tm, double *fsec, char **tzn);
+
 
 static int	day_tab[2][12] = {
 	{31,28,31,30,31,30,31,31,30,31,30,31},
@@ -139,8 +142,6 @@ date_out(DateADT date)
 
     return(result);
 } /* date_out() */
-
-int date2tm(DateADT dateVal, int *tzp, struct tm *tm, double *fsec, char **tzn);
 
 bool
 date_eq(DateADT dateVal1, DateADT dateVal2)
@@ -330,7 +331,7 @@ abstime_date(AbsoluteTime abstime)
  *  that everything is GMT. So, convert to GMT, rotate to local time,
  *  and then convert again to try to get the time zones correct.
  */
-int
+static int
 date2tm(DateADT dateVal, int *tzp, struct tm *tm, double *fsec, char **tzn)
 {
     struct tm *tx;

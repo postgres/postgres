@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: acl.h,v 1.6 1997/05/22 00:16:41 scrappy Exp $
+ * $Id: acl.h,v 1.7 1997/08/19 21:40:18 momjian Exp $
  *
  * NOTES
  *    For backward-compatability purposes we have to allow there
@@ -128,7 +128,6 @@ extern char *aclcheck_error_strings[];
 /*
  * routines used internally (parser, etc.) 
  */
-extern char *aclparse(char *s, AclItem *aip, unsigned *modechg);
 extern Acl *aclownerdefault(AclId ownerid);
 extern Acl *acldefault(void);
 extern Acl *aclinsert3(Acl *old_acl, AclItem *mod_aip, unsigned modechg);
@@ -154,7 +153,6 @@ extern int32 aclcontains(Acl *acl, AclItem *aip);
 extern void ChangeAcl(char *relname, AclItem *mod_aip, unsigned modechg);
 extern AclId get_grosysid(char *groname);
 extern char *get_groname(AclId grosysid);
-extern int32 aclcheck(Acl *acl, AclId id, AclIdType idtype, AclMode mode);
 
 /* XXX move these elsewhere -pma */
 extern int32 pg_aclcheck(char *relname, char *usename, AclMode mode);

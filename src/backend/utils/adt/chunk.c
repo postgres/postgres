@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/chunk.c,v 1.5 1997/03/02 01:34:37 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/chunk.c,v 1.6 1997/08/19 21:34:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,6 +57,8 @@ static void read_chunk(int chunk_no[], int C[], char a_chunk[], int srcfd,
 static int write_chunk(struct varlena * a_chunk, int ofile);
 static int seek_and_read(int pos, int size, char buff[], int fp, int from);
 #endif
+static int GetChunkSize(FILE *fd, int ndim, int dim[MAXDIM], int baseSize, 
+			int d[MAXDIM]);
 
 /*------------------------------------------------------------------------
  * _ChunkArray ---
@@ -119,7 +121,7 @@ int cfd = 0;
  *      returns the dimensions of the chunk in "d"
  *-----------------------------------------------------------------------
  */
-int
+static int
 GetChunkSize(FILE *fd, 
 	     int ndim,
 	     int dim[MAXDIM], 

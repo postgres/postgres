@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: catcache.h,v 1.4 1996/11/04 11:51:15 scrappy Exp $
+ * $Id: catcache.h,v 1.5 1997/08/19 21:40:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,14 +61,6 @@ typedef struct catcache {
 extern struct catcache	*Caches;
 extern GlobalMemory	CacheCxt;
 
-extern void CatalogCacheInitializeCache(struct catcache *cache, 
-					Relation relation);
-extern void CatalogCacheSetId(CatCache *cacheInOutP, int id);
-extern long comphash(long l, char *v);
-extern Index CatalogCacheComputeHashIndex(struct catcache *cacheInP);
-extern Index CatalogCacheComputeTupleHashIndex(struct catcache *cacheInOutP,
-				       Relation relation, HeapTuple tuple);
-extern void CatCacheRemoveCTup(CatCache *cache, Dlelem *e);  
 extern void CatalogCacheIdInvalidate(int cacheId, Index hashIndex, 
 				     ItemPointer pointer);
 extern void ResetSystemCache(void);

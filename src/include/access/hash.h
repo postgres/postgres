@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hash.h,v 1.6 1997/01/10 09:36:32 vadim Exp $
+ * $Id: hash.h,v 1.7 1997/08/19 21:37:27 momjian Exp $
  *
  * NOTES
  *	modeled after Margo Seltzer's hash implementation for unix. 
@@ -320,13 +320,6 @@ extern RetrieveIndexResult _hash_next(IndexScanDesc scan, ScanDirection dir);
 extern RetrieveIndexResult _hash_first(IndexScanDesc scan, ScanDirection dir);
 extern bool _hash_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir,
 		       Buffer metabuf);
-
-
-/* hashstrat.c */
-extern StrategyNumber _hash_getstrat(Relation rel, AttrNumber attno,
-				     RegProcedure proc);
-extern bool _hash_invokestrat(Relation rel, AttrNumber attno,
-			      StrategyNumber strat, Datum left, Datum right);
 
 
 /* hashutil.c */

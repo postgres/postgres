@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: buf_internals.h,v 1.13 1997/08/03 02:38:25 momjian Exp $
+ * $Id: buf_internals.h,v 1.14 1997/08/19 21:39:41 momjian Exp $
  *
  * NOTE
  *	If BUFFERPAGE0 is defined, then 0 will be used as a
@@ -63,7 +63,7 @@ struct buftag{
   (a)->blockNum = xx_blockNum;\
   (a)->relId = RelationGetLRelId(xx_reln); \
 }
-
+#ifdef NOT_USED
 #define COPY_BUFFERTAG(a,b)\
 { \
   (a)->blockNum = (b)->blockNum;\
@@ -73,7 +73,7 @@ struct buftag{
 #define EQUAL_BUFFERTAG(a,b) \
   (((a)->blockNum == (b)->blockNum) &&\
    (OID_Equal((a)->relId.relId,(b)->relId.relId)))
-
+#endif
 
 #define BAD_BUFFER_ID(bid) ((bid<1) || (bid>(NBuffers)))
 #define INVALID_DESCRIPTOR (-3)
@@ -199,17 +199,14 @@ extern void AddBufferToFreelist(BufferDesc *bf);
 extern void PinBuffer(BufferDesc *buf);
 extern void PinBuffer_Debug(char *file, int line, BufferDesc *buf);
 extern void UnpinBuffer(BufferDesc *buf);
-extern void UnpinBuffer_Debug(char *file, int line, BufferDesc *buf);
 extern BufferDesc *GetFreeBuffer(void);
 extern void InitFreeList(bool init);
-extern void DBG_FreeListCheck(int nfree);
 
 /* buf_table.c */
 extern void InitBufTable(void);
 extern BufferDesc *BufTableLookup(BufferTag *tagPtr);
 extern bool BufTableDelete(BufferDesc *buf);
 extern bool BufTableInsert(BufferDesc *buf);
-extern void DBG_LookupListCheck(int nlookup);
 
 /* bufmgr.c */
 extern BufferDesc 	*BufferDescriptors;

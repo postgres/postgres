@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.14 1997/06/12 15:41:52 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.15 1997/08/19 21:28:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,6 +27,8 @@
 #endif
 
 static Size IndexInfoFindDataOffset(unsigned short t_info);
+static char *fastgetiattr(IndexTuple tup, int attnum,
+	TupleDesc att, bool *isnull);
 
 /* ----------------------------------------------------------------
  *		  index_ tuple interface routines
@@ -125,7 +127,7 @@ index_formtuple(TupleDesc tupleDescriptor,
  *	the same attribute descriptor will go much quicker. -cim 5/4/91
  * ----------------
  */
-char *
+static char *
 fastgetiattr(IndexTuple tup,
 	     int attnum,
 	     TupleDesc tupleDesc,

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: ordering.h,v 1.2 1996/11/06 09:27:29 scrappy Exp $
+ * $Id: ordering.h,v 1.3 1997/08/19 21:39:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,4 @@ extern bool equal_path_merge_ordering(Oid *path_ordering,
 				      MergeOrder *merge_ordering);
 extern bool equal_merge_merge_ordering(MergeOrder *merge_ordering1,
 				       MergeOrder *merge_ordering2);
-extern bool equal_sortops_order(Oid *ordering1, Oid *ordering2);
-
 #endif	/* ORDERING_H */

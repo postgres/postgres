@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fd.h,v 1.7 1997/08/18 02:15:04 momjian Exp $
+ * $Id: fd.h,v 1.8 1997/08/19 21:39:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,7 +60,6 @@ struct pgstat { /* just the fields we need from stat structure */
 /*
  * prototypes for functions in fd.c
  */
-extern void FileInvalidate(File file);
 extern File FileNameOpenFile(FileName fileName, int fileFlags, int fileMode);
 extern File PathNameOpenFile(FileName fileName, int fileFlags, int fileMode);
 extern void FileClose(File file);
@@ -68,7 +67,6 @@ extern void FileUnlink(File file);
 extern int FileRead(File file, char *buffer, int amount);
 extern int FileWrite(File file, char *buffer, int amount);
 extern long FileSeek(File file, long offset, int whence);
-extern long FileTell(File file);
 extern int FileTruncate(File file, int offset);
 extern int FileSync(File file);
 extern int FileNameUnlink(char *filename);

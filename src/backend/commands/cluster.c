@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.12 1997/08/18 20:52:07 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.13 1997/08/19 21:30:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,6 +48,10 @@
 #ifndef NO_SECURITY
 #include <utils/acl.h>
 #endif /* !NO_SECURITY */
+
+static Relation copy_heap(Oid OIDOldHeap);
+static void copy_index(Oid OIDOldIndex, Oid OIDNewHeap);
+static void rebuildheap(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex);
 
 /*
  * cluster
@@ -178,7 +182,7 @@ cluster(char oldrelname[], char oldindexname[])
     StartTransactionCommand();
 }
 
-Relation
+static Relation
 copy_heap(Oid OIDOldHeap)
 {
     char NewName[NAMEDATALEN];
@@ -219,7 +223,7 @@ copy_heap(Oid OIDOldHeap)
     return NewHeap;
 }
 
-void
+static void
 copy_index(Oid OIDOldIndex, Oid OIDNewHeap)
 {
     Relation OldIndex, NewHeap;
@@ -309,7 +313,7 @@ copy_index(Oid OIDOldIndex, Oid OIDNewHeap)
 }
 
 
-void
+static void
 rebuildheap(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex)
 {
     Relation              LocalNewHeap, LocalOldHeap, LocalOldIndex;

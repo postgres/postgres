@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.14 1997/08/18 02:14:54 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.15 1997/08/19 21:34:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,7 +68,9 @@ static void _LOArrayRange(int st[], int endp[], int bsize, int srcfd,
 static void _ReadArray (int st[], int endp[], int bsize, int srcfd, int destfd,
 		       ArrayType *array, int isDestLO, bool *isNull);
 static ArrayCastAndSet(char *src, bool typbyval, int typlen, char *dest);
-
+static SanityCheckInput(int ndim, int n, int dim[], int lb[], int indx[]);
+static int array_read(char *destptr, int eltsize, int nitems, char *srcptr);
+static char *array_seek(char *ptr, int eltsize, int nitems);
 
 /*---------------------------------------------------------------------
  * array_in : 
@@ -1189,7 +1191,7 @@ _AdvanceBy1word(char *str, char **word)
 }
 #endif
 
-int
+static int
 SanityCheckInput(int ndim, int n, int dim[], int lb[], int indx[])
 {
     int i;
@@ -1261,7 +1263,7 @@ _ArrayClipCount(int stI[], int endpI[], ArrayType *array)
     return count;
 }
 
-char *
+static char *
 array_seek(char *ptr, int eltsize, int nitems)
 {
     int i;
@@ -1273,7 +1275,7 @@ array_seek(char *ptr, int eltsize, int nitems)
     return(ptr);
 }
 
-int
+static int
 array_read(char *destptr, int eltsize, int nitems, char *srcptr)
 {
     int i, inc, tmp;

@@ -57,7 +57,9 @@ static OffsetNumber gistchoose(Relation r, Page p, IndexTuple it,
 static int gistnospace(Page p, IndexTuple it);
 void gistdelete(Relation r, ItemPointer tid);
 static IndexTuple gist_tuple_replacekey(Relation r, GISTENTRY entry, IndexTuple t);
-
+static void gistcentryinit(GISTSTATE *giststate, GISTENTRY *e, char *pr,
+			   Relation r, Page pg, OffsetNumber o, int b, bool l) ;
+static char *int_range_out(INTRANGE *r);
 
 /*
 ** routine to build an index.  Basically calls insert over and over
@@ -1172,7 +1174,7 @@ gistdentryinit(GISTSTATE *giststate, GISTENTRY *e, char *pr, Relation r,
 /*
 ** initialize a GiST entry with a compressed version of pred
 */
-void
+static void
 gistcentryinit(GISTSTATE *giststate, GISTENTRY *e, char *pr, Relation r, 
 	       Page pg, OffsetNumber o, int b, bool l) 
 { 
@@ -1244,7 +1246,8 @@ _gistdump(Relation r)
     }
 }
 
-char *text_range_out(TXTRANGE *r)
+#ifdef NOT_USED
+static char *text_range_out(TXTRANGE *r)
 {
     char	*result;
     char        *lower, *upper;
@@ -1266,8 +1269,9 @@ char *text_range_out(TXTRANGE *r)
     pfree(upper);
     return(result);
 }
+#endif
 
-char *
+static char *
 int_range_out(INTRANGE *r)
 {
     char	*result;

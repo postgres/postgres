@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: genam.h,v 1.6 1997/01/10 09:36:29 vadim Exp $
+ * $Id: genam.h,v 1.7 1997/08/19 21:37:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,8 +34,6 @@ extern IndexScanDesc index_beginscan(Relation relation, bool scanFromEnd,
      uint16 numberOfKeys, ScanKey key);
 extern void index_rescan(IndexScanDesc scan, bool scanFromEnd, ScanKey key);
 extern void index_endscan(IndexScanDesc scan);
-extern void index_markpos(IndexScanDesc scan);
-extern void index_restrpos(IndexScanDesc scan);
 extern RetrieveIndexResult index_getnext(IndexScanDesc scan,
 					 ScanDirection direction);
 extern RegProcedure index_getprocid(Relation irel, AttrNumber attnum,
@@ -47,9 +45,6 @@ extern Datum GetIndexValue(HeapTuple tuple, TupleDesc hTupDesc,
 /* in genam.c */
 extern IndexScanDesc RelationGetIndexScan(Relation relation, bool scanFromEnd,
 					  uint16 numberOfKeys, ScanKey key);
-extern void IndexScanRestart(IndexScanDesc scan, bool scanFromEnd,
-			     ScanKey key);
-extern void IndexScanEnd(IndexScanDesc scan);
 extern void IndexScanMarkPosition(IndexScanDesc scan);
 extern void IndexScanRestorePosition(IndexScanDesc scan);
 

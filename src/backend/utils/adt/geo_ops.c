@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.14 1997/08/12 22:54:29 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.15 1997/08/19 21:34:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,8 +28,39 @@
 #define PI 3.1415926536
 #endif
 
-int point_inside( Point *p, int npts, Point plist[]);
-int lseg_crossing( double x, double y, double px, double py);
+static int point_inside( Point *p, int npts, Point plist[]);
+static int lseg_crossing( double x, double y, double px, double py);
+static BOX *box_construct(double x1, double x2, double y1, double y2);
+static BOX *box_copy(BOX *box);
+static BOX *box_fill(BOX *result, double x1, double x2, double y1, double y2);
+static double box_ht(BOX *box);
+static double box_wd(BOX *box);
+static double circle_ar(CIRCLE *circle);
+static CIRCLE *circle_copy(CIRCLE *circle);
+static LINE *line_construct_pm(Point *pt, double m);
+static bool line_horizontal(LINE *line);
+static Point *line_interpt(LINE *l1, LINE *l2);
+static bool line_intersect(LINE *l1, LINE *l2);
+static bool line_parallel(LINE *l1, LINE *l2);
+static bool line_vertical(LINE *line);
+static double lseg_dt(LSEG *l1, LSEG *l2);
+static void make_bound_box(POLYGON *poly);
+static PATH *path_copy(PATH *path);
+static bool plist_same(int npts, Point p1[], Point p2[]);
+static Point *point_construct(double x, double y);
+static Point *point_copy(Point *pt);
+static int single_decode(char *str, float8 *x, char **ss);
+static int single_encode(float8 x, char *str);
+static int pair_decode(char *str, float8 *x, float8 *y, char **s);
+static int pair_encode(float8 x, float8 y, char *str);
+static int pair_count(char *s, char delim);
+static int path_decode(int opentype, int npts, char *str, int *isopen, char **ss, Point *p);
+static char *path_encode( bool closed, int npts, Point *pt);
+static void statlseg_construct(LSEG *lseg, Point *pt1, Point *pt2);
+static double box_ar(BOX *box);
+static Point *interpt_sl(LSEG *lseg, LINE *line);
+static LINE *line_construct_pp(Point *pt1, Point *pt2);
+
 
 /*
  * Delimiters for input and output strings.
@@ -77,16 +108,7 @@ static int digits8 = P_MAXDIG;
  *  and restore that order for text output - tgl 97/01/16
  */
 
-int single_decode(char *str, float8 *x, char **ss);
-int single_encode(float8 x, char *str);
-int pair_decode(char *str, float8 *x, float8 *y, char **s);
-int pair_encode(float8 x, float8 y, char *str);
-int pair_count(char *s, char delim);
-int path_decode(int opentype, int npts, char *str, int *isopen, char **ss, Point *p);
-
-char *path_encode( bool closed, int npts, Point *pt);
-
-int single_decode(char *str, float8 *x, char **s)
+static int single_decode(char *str, float8 *x, char **s)
 {
     char *cp;
 
@@ -106,13 +128,13 @@ fprintf( stderr, "single_decode- (%x) try decoding %s to %g\n", (cp-str), str, *
     return(TRUE);
 } /* single_decode() */
 
-int single_encode(float8 x, char *str)
+static int single_encode(float8 x, char *str)
 {
     sprintf(str, "%.*g", digits8, x);
     return(TRUE);
 } /* single_encode() */
 
-int pair_decode(char *str, float8 *x, float8 *y, char **s)
+static int pair_decode(char *str, float8 *x, float8 *y, char **s)
 {
     int has_delim;
     char *cp;
@@ -142,13 +164,13 @@ int pair_decode(char *str, float8 *x, float8 *y, char **s)
     return(TRUE);
 }
 
-int pair_encode(float8 x, float8 y, char *str)
+static int pair_encode(float8 x, float8 y, char *str)
 {
     sprintf(str, "%.*g,%.*g", digits8, x, digits8, y);
     return(TRUE);
 }
 
-int path_decode(int opentype, int npts, char *str, int *isopen, char **ss, Point *p)
+static int path_decode(int opentype, int npts, char *str, int *isopen, char **ss, Point *p)
 {
     int depth = 0;
     char *s, *cp;
@@ -200,7 +222,7 @@ int path_decode(int opentype, int npts, char *str, int *isopen, char **ss, Point
     return(TRUE);
 } /* path_decode() */
 
-char *path_encode( bool closed, int npts, Point *pt)
+static char *path_encode( bool closed, int npts, Point *pt)
 {
     char *result = PALLOC(npts*(P_MAXLEN+3)+2);
 
@@ -251,7 +273,7 @@ char *path_encode( bool closed, int npts, Point *pt)
  * '(1,3,2,4)'
  * require an odd number of delim characters in the string
  *-------------------------------------------------------------*/
-int pair_count(char *s, char delim)
+static int pair_count(char *s, char delim)
 {
     int ndelim = 0;
 
@@ -321,7 +343,7 @@ char *box_out(BOX *box)
 
 /*	box_construct	-	fill in a new box.
  */
-BOX *box_construct(double x1, double x2, double y1, double y2)
+static BOX *box_construct(double x1, double x2, double y1, double y2)
 {
     BOX	*result = PALLOCTYPE(BOX);
 
@@ -331,7 +353,7 @@ BOX *box_construct(double x1, double x2, double y1, double y2)
 
 /*	box_fill	-	fill in a static box
  */
-BOX *box_fill(BOX *result, double x1, double x2, double y1, double y2)
+static BOX *box_fill(BOX *result, double x1, double x2, double y1, double y2)
 {
     if (x1 > x2) {
 	result->high.x = x1;
@@ -354,7 +376,7 @@ BOX *box_fill(BOX *result, double x1, double x2, double y1, double y2)
 
 /*	box_copy	-	copy a box
  */
-BOX *box_copy(BOX *box)
+static BOX *box_copy(BOX *box)
 {
     BOX	*result = PALLOCTYPE(BOX);
 
@@ -563,7 +585,7 @@ Point *box_center(BOX *box)
 
 /*	box_ar	-	returns the area of the box.
  */
-double box_ar(BOX *box)
+static double box_ar(BOX *box)
 {
     return( box_wd(box) * box_ht(box) );
 }
@@ -572,7 +594,7 @@ double box_ar(BOX *box)
 /*	box_wd	-	returns the width (length) of the box 
  *				  (horizontal magnitude).
  */
-double box_wd(BOX *box)
+static double box_wd(BOX *box)
 {
     return( box->high.x - box->low.x );
 }
@@ -581,7 +603,7 @@ double box_wd(BOX *box)
 /*	box_ht	-	returns the height of the box 
  *				  (vertical magnitude).
  */
-double box_ht(BOX *box)
+static double box_ht(BOX *box)
 {
     return( box->high.y - box->low.y );
 }
@@ -590,7 +612,8 @@ double box_ht(BOX *box)
 /*	box_dt	-	returns the distance between the
  *			  center points of two boxes.
  */
-double box_dt(BOX *box1, BOX *box2)
+#ifdef NOT_USED
+static double box_dt(BOX *box1, BOX *box2)
 {
     double	result;
     Point	*a, *b;
@@ -603,6 +626,7 @@ double box_dt(BOX *box1, BOX *box2)
     PFREE(b);
     return(result);
 }
+#endif
 
 /*----------------------------------------------------------
  *  Funky operations.
@@ -661,7 +685,7 @@ LSEG *box_diagonal(BOX *box)
  *	Internal form:	Ax+By+C=0
  *---------------------------------------------------------*/
 
-LINE *				/* point-slope */
+static LINE *				/* point-slope */
 line_construct_pm(Point *pt, double m)
 {
     LINE *result = PALLOCTYPE(LINE);
@@ -677,7 +701,7 @@ line_construct_pm(Point *pt, double m)
 } /* line_construct_pm() */
 
 
-LINE *				/* two points */
+static LINE *				/* two points */
 line_construct_pp(Point *pt1, Point *pt2)
 {
     LINE *result = PALLOCTYPE(LINE);
@@ -724,12 +748,12 @@ printf( "line_construct_pp- line is neither vertical nor horizontal (diffs x=%.*
  *  Relative position routines.
  *---------------------------------------------------------*/
 
-bool line_intersect(LINE *l1, LINE *l2)
+static bool line_intersect(LINE *l1, LINE *l2)
 {
     return( ! line_parallel(l1, l2) );
 }
 
-bool line_parallel(LINE *l1, LINE *l2)
+static bool line_parallel(LINE *l1, LINE *l2)
 {
 #if FALSE
     return( FPeq(l1->m, l2->m) );
@@ -741,6 +765,7 @@ bool line_parallel(LINE *l1, LINE *l2)
     return(FPeq(l2->A, l1->A*(l2->B / l1->B)));
 } /* line_parallel() */
 
+#ifdef NOT_USED
 bool line_perp(LINE *l1, LINE *l2)
 {
 #if FALSE
@@ -757,8 +782,9 @@ bool line_perp(LINE *l1, LINE *l2)
 
     return( FPeq(((l1->A * l2->B) / (l1->B * l2->A)), -1.0) );
 } /* line_perp() */
+#endif
 
-bool line_vertical(LINE *line)
+static bool line_vertical(LINE *line)
 {
 #if FALSE
     return( FPeq(line->A, -1.0) && FPzero(line->B) );
@@ -766,7 +792,7 @@ bool line_vertical(LINE *line)
     return( FPzero(line->B) );
 } /* line_vertical() */
 
-bool line_horizontal(LINE *line)
+static bool line_horizontal(LINE *line)
 {
 #if FALSE
     return( FPzero(line->m) );
@@ -774,7 +800,7 @@ bool line_horizontal(LINE *line)
     return( FPzero(line->A) );
 } /* line_horizontal() */
 
-
+#ifdef NOT_USED
 bool line_eq(LINE *l1, LINE *l2)
 {
     double k;
@@ -792,7 +818,7 @@ bool line_eq(LINE *l1, LINE *l2)
 	    FPeq(l1->B, k * l2->B) &&
 	    FPeq(l1->C, k * l2->C) );
 }
-
+#endif
 
 /*----------------------------------------------------------
  *  Line arithmetic routines.
@@ -821,7 +847,7 @@ line_distance(LINE *l1, LINE *l2)
 /* line_interpt()
  * Point where two lines l1, l2 intersect (if any)
  */
-Point *
+static Point *
 line_interpt(LINE *l1, LINE *l2)
 {
     Point	*result;
@@ -984,8 +1010,6 @@ bool path_n_ge(PATH *p1, PATH *p2)
 /*----------------------------------------------------------
  * Conversion operators.
  *---------------------------------------------------------*/
-
-PATH *path_copy(PATH *path);
 
 bool
 path_isclosed( PATH *path)
@@ -1155,7 +1179,7 @@ double *path_length(PATH *path)
 } /* path_length() */
 
 
-
+#ifdef NOT_USED
 double path_ln(PATH *path)
 {
     double result;
@@ -1167,6 +1191,7 @@ double path_ln(PATH *path)
 
     return(result);
 } /* path_ln() */
+#endif
 
 /***********************************************************************
  **
@@ -1213,7 +1238,7 @@ point_out(Point *pt)
 } /* point_out() */
 
 
-Point *point_construct(double x, double y)
+static Point *point_construct(double x, double y)
 {
     Point *result = PALLOCTYPE(Point);
 
@@ -1223,7 +1248,7 @@ Point *point_construct(double x, double y)
 }
 
 
-Point *point_copy(Point *pt)
+static Point *point_copy(Point *pt)
 {
     Point *result;
 
@@ -1392,7 +1417,7 @@ LSEG *lseg_construct(Point *pt1, Point *pt2)
 }
 
 /* like lseg_construct, but assume space already allocated */
-void statlseg_construct(LSEG *lseg, Point *pt1, Point *pt2)
+static void statlseg_construct(LSEG *lseg, Point *pt1, Point *pt2)
 {
     lseg->p[0].x = pt1->x;
     lseg->p[0].y = pt1->y;
@@ -1489,7 +1514,7 @@ double *lseg_distance(LSEG *l1, LSEG *l2)
 }
 
 /* distance between l1, l2 */
-double
+static double
 lseg_dt(LSEG *l1, LSEG *l2)
 {
     double	*d, result;
@@ -1833,7 +1858,7 @@ printf( "dist_cpoly- segment %d distance is %f\n", (i+1), *d);
  *		  lines and boxes, since there are typically two.
  *-------------------------------------------------------------------*/
 
-Point *interpt_sl(LSEG *lseg, LINE *line)
+static Point *interpt_sl(LSEG *lseg, LINE *line)
 {
     LINE	*tmp;
     Point	*p;
@@ -2194,7 +2219,7 @@ bool inter_lb(LINE *line, BOX *box)
 /*---------------------------------------------------------------------
  * Make the smallest bounding box for the given polygon.
  *---------------------------------------------------------------------*/
-void make_bound_box(POLYGON *poly)
+static void make_bound_box(POLYGON *poly)
 {
     int i;
     double x1,y1,x2,y2;
@@ -3286,9 +3311,7 @@ bool circle_ge(CIRCLE	*circle1, CIRCLE *circle2)
  *			actual value.
  *---------------------------------------------------------*/
 
-CIRCLE *circle_copy(CIRCLE *circle);
-
-CIRCLE *
+static CIRCLE *
 circle_copy(CIRCLE *circle)
 {
     CIRCLE *result;
@@ -3494,7 +3517,7 @@ Point *circle_center(CIRCLE *circle)
 
 /*	circle_ar	-	returns the area of the circle.
  */
-double circle_ar(CIRCLE *circle)
+static double circle_ar(CIRCLE *circle)
 {
     return(PI*(circle->radius*circle->radius));
 }
@@ -3503,6 +3526,7 @@ double circle_ar(CIRCLE *circle)
 /*	circle_dt	-	returns the distance between the
  *			  center points of two circlees.
  */
+#ifdef NOT_USED
 double circle_dt(CIRCLE *circle1, CIRCLE *circle2)
 {
     double	result;
@@ -3511,7 +3535,7 @@ double circle_dt(CIRCLE *circle1, CIRCLE *circle2)
 
     return(result);
 }
-
+#endif
 
 /*----------------------------------------------------------
  *  Conversion operators.
@@ -3657,7 +3681,7 @@ CIRCLE *poly_circle(POLYGON *poly)
 
 #define HIT_IT INT_MAX
 
-int
+static int
 point_inside( Point *p, int npts, Point plist[])
 {
     double x0, y0;
@@ -3716,7 +3740,7 @@ point_inside( Point *p, int npts, Point plist[])
  * It returns HIT_IT if the segment contains (0,0)
  */
 
-int
+static int
 lseg_crossing( double x, double y, double px, double py)
 {
     double z;
@@ -3756,7 +3780,7 @@ lseg_crossing( double x, double y, double px, double py)
 } /* lseg_crossing() */
 
 
-bool
+static bool
 plist_same(int npts, Point p1[], Point p2[])
 {
     int i, ii, j;

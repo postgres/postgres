@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.83 1997/08/19 04:45:02 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.84 1997/08/19 21:36:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,18 +88,18 @@ static void     prompt_for_password(char *username, char *password);
 static char *   make_connect_string(char *host, char *port, char *dbname,
 				    char *username, char *password);
 
-char           *gets_noreadline(char *prompt, FILE * source);
-char           *gets_readline(char *prompt, FILE * source);
-char           *gets_fromFile(char *prompt, FILE * source);
-int             listAllDbs(PsqlSettings * settings);
-void
+static char           *gets_noreadline(char *prompt, FILE * source);
+static char           *gets_readline(char *prompt, FILE * source);
+static char     *gets_fromFile(char *prompt, FILE * source);
+static int             listAllDbs(PsqlSettings * settings);
+static void
 SendQuery(bool * success_p, PsqlSettings * settings, const char *query,
 	  const bool copy_in, const bool copy_out, FILE * copystream);
-int
+static int
 HandleSlashCmds(PsqlSettings * settings,
 		char *line,
 		char *query);
-int             MainLoop(PsqlSettings * settings, FILE * source);
+static int             MainLoop(PsqlSettings * settings, FILE * source);
 /* probably should move this into libpq */
 void
 PQprint(FILE * fp,
@@ -107,7 +107,7 @@ PQprint(FILE * fp,
 	PQprintOpt * po
 );
 
-FILE           *setFout(PsqlSettings * ps, char *fname);
+static FILE *setFout(PsqlSettings * ps, char *fname);
 
 /*
  * usage print out usage for command line arguments
@@ -226,7 +226,7 @@ PSQLexec(PsqlSettings * ps, char *query)
  * 
  */
 
-int
+static int
 listAllDbs(PsqlSettings * ps)
 {
     PGresult       *results;
@@ -495,7 +495,7 @@ typedef char   *(*READ_ROUTINE) (char *prompt, FILE * source);
  * gets_noreadline  prompt source gets a line of input without calling
  * readline, the source is ignored
  */
-char           *
+static char           *
 gets_noreadline(char *prompt, FILE * source)
 {
     fputs(prompt, stdout);
@@ -507,7 +507,7 @@ gets_noreadline(char *prompt, FILE * source)
  * gets_readline  prompt source the routine to get input from GNU readline(),
  * the source is ignored the prompt argument is used as the prompting string
  */
-char           *
+static char           *
 gets_readline(char *prompt, FILE * source)
 {
     char *s;
@@ -529,7 +529,7 @@ gets_readline(char *prompt, FILE * source)
  * the routine to read from a file, the prompt argument is ignored the source
  * argument is a FILE *
  */
-char           *
+static char *
 gets_fromFile(char *prompt, FILE * source)
 {
     char           *line;
@@ -557,7 +557,7 @@ gets_fromFile(char *prompt, FILE * source)
  * SendQuery: send the query string to the backend return *success_p = 1 if
  * the query executed successfully returns *success_p = 0 otherwise
  */
-void
+static void
 SendQuery(bool * success_p, PsqlSettings * settings, const char *query,
 	  const bool copy_in, const bool copy_out, FILE * copystream)
 {
@@ -1120,7 +1120,7 @@ do_shell(const char *command)
  * this line, continue building up query 2 - terminate processing of this
  * query entirely, 3 - new query supplied by edit
  */
-int
+static int
 HandleSlashCmds(PsqlSettings * settings,
 		char *line,
 		char *query)
@@ -1416,7 +1416,7 @@ HandleSlashCmds(PsqlSettings * settings,
  * db_ptr must be initialized and set
  */
 
-int
+static int
 MainLoop(PsqlSettings * settings, FILE * source)
 {
     char           *line;	/* line of input */
@@ -1901,7 +1901,7 @@ handleCopyIn(PGresult * res, const bool mustprompt, FILE * copystream)
  * try to open fname and return a FILE *, if it fails, use stdout, instead
  */
 
-FILE           *
+static FILE           *
 setFout(PsqlSettings * ps, char *fname)
 {
     if (ps->queryFout && ps->queryFout != stdout) {

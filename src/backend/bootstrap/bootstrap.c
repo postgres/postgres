@@ -7,7 +7,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.20 1997/08/18 20:51:44 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.21 1997/08/19 21:30:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -103,7 +103,14 @@
 #define ALLOC(t, c)     (t *)calloc((unsigned)(c), sizeof(t))
 #define FIRST_TYPE_OID 16       /* OID of the first type */
 
- extern int Int_yyparse (void);
+extern int Int_yyparse (void);
+static hashnode *AddStr(char *str, int strlength, int mderef);
+static AttributeTupleForm AllocateAttribute(void);
+static bool BootstrapAlreadySeen(Oid id);
+static int CompHash (char *str, int len);
+static hashnode *FindStr (char *str, int length, hashnode *mderef);
+static int gettype(char *type);
+static void cleanup(void);
 
 /* ----------------
  *      global variables
@@ -701,7 +708,7 @@ InsertOneNull(int i)
 
 #define MORE_THAN_THE_NUMBER_OF_CATALOGS 256
 
-bool
+static bool
 BootstrapAlreadySeen(Oid id)
 {
     static Oid seenArray[MORE_THAN_THE_NUMBER_OF_CATALOGS];
@@ -728,7 +735,7 @@ BootstrapAlreadySeen(Oid id)
  *      cleanup
  * ----------------
  */
-void
+static void
 cleanup()
 {
     static      int     beenhere = 0;
@@ -750,7 +757,7 @@ cleanup()
  *      gettype
  * ----------------
  */
-int
+static int
 gettype(char *type)
 {
     int         i;
@@ -806,7 +813,7 @@ gettype(char *type)
  *      AllocateAttribute
  * ----------------
  */
-AttributeTupleForm  /* XXX */
+static AttributeTupleForm  /* XXX */
 AllocateAttribute()
 {
     AttributeTupleForm attribute =
@@ -898,7 +905,7 @@ LexIDStr(int ident_num)
  *      are mod'ing by a prime number.
  * ----------------
  */
-int
+static int
 CompHash(char *str, int len)
 {
     register int result;
@@ -917,7 +924,7 @@ CompHash(char *str, int len)
  *      or NULL if the string is not in the table.
  * ----------------
  */
-hashnode *
+static hashnode *
 FindStr(char *str, int length, hashnode *mderef)
 {
     hashnode    *node;
@@ -947,7 +954,7 @@ FindStr(char *str, int length, hashnode *mderef)
  *      has assigned to this string.
  * ----------------
  */
-hashnode *
+static hashnode *
 AddStr(char *str, int strlength, int mderef)
 {
     hashnode    *temp, *trail, *newnode;

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: psort.h,v 1.6 1997/08/06 07:02:49 momjian Exp $
+ * $Id: psort.h,v 1.7 1997/08/19 21:40:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -96,22 +96,9 @@ if (1) CODE; else
 
 /* psort.c */
 extern bool psort_begin(Sort *node, int nkeys, ScanKey key);
-extern void inittapes(Sort *node);
-extern void resetpsort(void);
-extern void initialrun(Sort *node, bool *empty);
-extern bool createrun(Sort *node, FILE *file, bool *empty);
-extern HeapTuple tuplecopy(HeapTuple tup);
-extern FILE *mergeruns(Sort *node);
-extern void merge(Sort *node, struct tape *dest);
-
-extern void dumptuples(FILE *file, Sort *node);
 extern HeapTuple psort_grabtuple(Sort *node);
 extern void psort_markpos(Sort *node);
 extern void psort_restorepos(Sort *node);
 extern void psort_end(Sort *node);
-
-extern FILE *gettape(void);
-extern void resettape(FILE *file);
-extern void destroytape(FILE *file);
 
 #endif	/* PSORT_H */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/transam/Attic/xid.c,v 1.6 1997/08/12 22:52:02 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/transam/Attic/xid.c,v 1.7 1997/08/19 21:30:20 momjian Exp $
  *
  * OLD COMMENTS
  * XXX WARNING
@@ -132,6 +132,7 @@ xideq(TransactionId xid1, TransactionId xid2)
  *	TransactionIdIncrement
  * ----------------------------------------------------------------
  */
+#ifdef NOT_USED
 void
 TransactionIdIncrement(TransactionId *transactionId)
 {
@@ -141,6 +142,7 @@ TransactionIdIncrement(TransactionId *transactionId)
 	elog(FATAL, "TransactionIdIncrement: exhausted XID's");
     return;
 }
+#endif
 
 /* ----------------------------------------------------------------
  *	TransactionIdAdd

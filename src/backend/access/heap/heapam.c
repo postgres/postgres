@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.13 1997/08/12 22:51:40 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.14 1997/08/19 21:29:17 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -461,6 +461,7 @@ doinsert(Relation relation, HeapTuple tup)
  *	HeapScanIsValid is now a macro in relscan.h -cim 4/27/91
  */
 
+#ifdef NOT_USED
 /* ----------------
  *	SetHeapAccessMethodImmediateInvalidation
  * ----------------
@@ -470,6 +471,7 @@ SetHeapAccessMethodImmediateInvalidation(bool on)
 {
     ImmediateInvalidation = on;
 }
+#endif
 
 /* ----------------------------------------------------------------
  *                   heap access method interface

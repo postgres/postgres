@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.37 1997/08/19 04:44:38 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.38 1997/08/19 21:36:40 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -68,6 +68,13 @@
 #include "pg_dump.h"
 
 static void dumpSequence (FILE* fout, TableInfo tbinfo);
+static char *checkForQuote(const char* s);
+static void clearTableInfo(TableInfo*, int);
+static void dumpOneFunc(FILE* fout, FuncInfo* finfo, int i,
+			TypeInfo *tinfo, int numTypes);
+static int findLastBuiltinOid(void);
+static bool isViewRule(char *relname);
+static void setMaxOid(FILE *fout);
 
 extern char *optarg;
 extern int optind, opterr;
@@ -139,7 +146,7 @@ exit_nicely(PGconn* conn)
  *		Determine if the relation is a VIEW 
  *
  */
-bool
+static bool
 isViewRule(char *relname)
 {
     PGresult *res;
@@ -776,7 +783,7 @@ clearFuncInfo (FuncInfo *fun, int numFuncs)
     free(fun);
 }
 
-void
+static void
 clearTableInfo(TableInfo *tblinfo, int numTables)
 {
     int i,j;
@@ -1482,7 +1489,7 @@ dumpFuncs(FILE* fout, FuncInfo* finfo, int numFuncs,
  *
  */
 
-void
+static void
 dumpOneFunc(FILE* fout, FuncInfo* finfo, int i,
             TypeInfo *tinfo, int numTypes)
 {
@@ -1956,6 +1963,7 @@ dumpIndices(FILE* fout, IndInfo* indinfo, int numIndices,
  * the attrmap passed in tells how to map the attributes copied in to the
  * attributes copied out
  */
+#ifdef NOT_USED
 void
 dumpTuples(PGresult *res, FILE *fout, int* attrmap)
 {
@@ -1998,13 +2006,14 @@ dumpTuples(PGresult *res, FILE *fout, int* attrmap)
         free (outVals);
     }
 }
+#endif
 
 /*
  * setMaxOid -
  * find the maximum oid and generate a COPY statement to set it
 */
 
-void
+static void
 setMaxOid(FILE *fout)
 {
     PGresult *res;
@@ -2053,7 +2062,7 @@ setMaxOid(FILE *fout)
  * this is probably not foolproof but comes close 
 */
 
-int
+static int
 findLastBuiltinOid(void)
 {
     PGresult* res;
@@ -2083,7 +2092,7 @@ findLastBuiltinOid(void)
  * checkForQuote:
  *    checks a string for quote characters and quotes them
  */
-char*
+static char*
 checkForQuote(const char* s)
 {
     char *r;

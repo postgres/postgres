@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: multilev.h,v 1.2 1996/11/05 06:11:01 scrappy Exp $
+ * $Id: multilev.h,v 1.3 1997/08/19 21:39:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,11 +53,6 @@ extern LockTableId InitMultiLevelLockm(void);
 extern bool MultiLockReln(LockInfo linfo, LOCKT lockt);
 extern bool MultiLockTuple(LockInfo linfo, ItemPointer tidPtr, LOCKT lockt);
 extern bool MultiLockPage(LockInfo linfo, ItemPointer tidPtr, LOCKT lockt);
-extern bool MultiAcquire(LockTableId tableId, LOCKTAG *tag, LOCKT lockt,
-			 LOCK_LEVEL level);
-extern bool MultiReleasePage(LockInfo linfo, ItemPointer tidPtr, LOCKT lockt);
 extern bool MultiReleaseReln(LockInfo linfo, LOCKT lockt);
-extern bool MultiRelease(LockTableId tableId, LOCKTAG *tag, LOCKT lockt,
-			 LOCK_LEVEL level);
 
 #endif /* MULTILEV_H */

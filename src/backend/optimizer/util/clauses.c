@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.6 1997/01/22 06:30:57 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.7 1997/08/19 21:31:54 momjian Exp $
  *
  * HISTORY
  *    AUTHOR		DATE		MAJOR EVENT
@@ -33,6 +33,8 @@
 #include "optimizer/clauses.h"
 #include "optimizer/internal.h"
 #include "optimizer/var.h"
+
+static bool agg_clause(Node *clause);
 
 
 Expr *
@@ -134,7 +136,7 @@ get_rightop(Expr *clause)
  *    	AGG clause functions
  *****************************************************************************/
 
-bool
+static bool
 agg_clause(Node *clause)
 {
     return

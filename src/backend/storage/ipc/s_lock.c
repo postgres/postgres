@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/s_lock.c,v 1.17 1997/08/17 02:39:54 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/s_lock.c,v 1.18 1997/08/19 21:33:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,9 +45,9 @@
 #if defined(HAS_TEST_AND_SET)
 
 # if defined(__alpha__) && defined(linux)
-extern long int tas(slock_t *lock);
+static long int tas(slock_t *lock);
 # else
-extern int tas(slock_t *lock);
+static int tas(slock_t *lock);
 #endif
 
 #if defined (nextstep)
@@ -383,7 +383,7 @@ S_INIT_LOCK(unsigned char *addr)
 
 #if defined(NEED_I386_TAS_ASM)
 
-int
+static int
 tas(slock_t *m)
 {
     slock_t res;
@@ -415,7 +415,7 @@ S_INIT_LOCK(slock_t *lock)
 
 #if defined(__alpha__) && defined(linux)
 
-long int
+static long int
 tas(slock_t *m)
 {
     slock_t res;
@@ -459,7 +459,7 @@ S_INIT_LOCK(slock_t *lock)
 
 #if defined(linux) && defined(sparc)
  
-int 
+static int 
 tas(slock_t *m)
 {
   slock_t res;
@@ -492,7 +492,7 @@ S_INIT_LOCK(slock_t *lock)
 
 #if defined(NEED_NS32K_TAS_ASM)
 
-int
+static int
 tas(slock_t *m)
 {
     slock_t res = 0;

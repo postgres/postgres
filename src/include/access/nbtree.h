@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nbtree.h,v 1.13 1997/05/30 18:40:02 vadim Exp $
+ * $Id: nbtree.h,v 1.14 1997/08/19 21:37:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -219,7 +219,6 @@ extern bool _bt_itemcmp(Relation rel, Size keysz, BTItem item1, BTItem item2,
  * prototypes for functions in nbtpage.c
  */
 extern void _bt_metapinit(Relation rel);
-extern void _bt_checkmeta(Relation rel);
 extern Buffer _bt_getroot(Relation rel, int access);
 extern Buffer _bt_getbuf(Relation rel, BlockNumber blkno, int access);
 extern void _bt_relbuf(Relation rel, Buffer buf, int access);
@@ -228,8 +227,6 @@ extern void _bt_wrtnorelbuf(Relation rel, Buffer buf);
 extern void _bt_pageinit(Page page, Size size);
 extern void _bt_metaproot(Relation rel, BlockNumber rootbknum, int level);
 extern Buffer _bt_getstackbuf(Relation rel, BTStack stack, int access);
-extern void _bt_setpagelock(Relation rel, BlockNumber blkno, int access);
-extern void _bt_unsetpagelock(Relation rel, BlockNumber blkno, int access);
 extern void _bt_pagedel(Relation rel, ItemPointer tid);
 
 /*
@@ -274,7 +271,6 @@ extern OffsetNumber _bt_binsrch(Relation rel, Buffer buf, int keysz,
 extern RetrieveIndexResult _bt_next(IndexScanDesc scan, ScanDirection dir);
 extern RetrieveIndexResult _bt_first(IndexScanDesc scan, ScanDirection dir);
 extern bool _bt_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir);
-extern int _bt_compare(Relation rel, TupleDesc itupdesc, Page page, int keysz, ScanKey scankey, OffsetNumber offnum);
 
 /*
  * prototypes for functions in nbtstrat.c
@@ -291,8 +287,6 @@ extern ScanKey  _bt_mkscankey(Relation rel, IndexTuple itup);
 extern void _bt_freeskey(ScanKey skey);
 extern void _bt_freestack(BTStack stack);
 extern void _bt_orderkeys(Relation relation, BTScanOpaque so);
-extern bool _bt_checkqual(IndexScanDesc scan, IndexTuple itup);
-extern bool _bt_checkforkeys(IndexScanDesc scan, IndexTuple itup, Size keysz);
 extern bool _bt_checkkeys (IndexScanDesc scan, IndexTuple tuple, Size *keysok);
 extern BTItem _bt_formitem(IndexTuple itup);
 
@@ -300,13 +294,8 @@ extern BTItem _bt_formitem(IndexTuple itup);
  * prototypes for functions in nbtsort.c
  */
 extern void *_bt_spoolinit(Relation index, int ntapes, bool isunique);
-extern void *_bt_pagestate(Relation index, int flags, int level, bool doupper);
-extern BTItem _bt_minitem(Page opage, BlockNumber oblkno, int atend);
-extern BTItem _bt_buildadd(Relation index, void *pstate, BTItem bti, int flags);
-extern void _bt_uppershutdown(Relation index, BTPageState *state);
 extern void _bt_spooldestroy(void *spool);
 extern void _bt_spool(Relation index, BTItem btitem, void *spool);
-extern void _bt_upperbuild(Relation index);
 extern void _bt_leafbuild(Relation index, void *spool);
 
 #endif	/* NBTREE_H */

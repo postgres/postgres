@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/index/genam.c,v 1.6 1996/11/05 10:02:02 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/index/genam.c,v 1.7 1997/08/19 21:29:26 momjian Exp $
  *
  * NOTES
  *    many of the old access method routines have been turned into
@@ -127,6 +127,7 @@ RelationGetIndexScan(Relation relation,
     return (scan);
 }
 
+#ifdef NOT_USED
 /* ----------------
  *  IndexScanRestart -- Restart an index scan.
  *
@@ -166,7 +167,9 @@ IndexScanRestart(IndexScanDesc scan,
 		key,
 		scan->numberOfKeys * sizeof(ScanKeyData));
 }
+#endif
 
+#ifdef NOT_USED
 /* ----------------
  *  IndexScanEnd -- End and index scan.
  *
@@ -188,6 +191,7 @@ IndexScanEnd(IndexScanDesc scan)
     
     pfree(scan);
 }
+#endif
 
 /* ----------------
  *  IndexScanMarkPosition -- Mark current position in a scan.

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/lib/dllist.c,v 1.4 1996/11/10 03:00:20 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/lib/dllist.c,v 1.5 1997/08/19 21:31:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,6 +67,7 @@ DLGetHead(Dllist* l)
 }
 
 /* get the value stored in the first element */
+#ifdef NOT_USED
 void*
 DLGetHeadVal(Dllist* l)
 {
@@ -74,6 +75,7 @@ DLGetHeadVal(Dllist* l)
   
   return (e ? e->dle_val : 0);
 }
+#endif
 
 Dlelem* 
 DLGetTail(Dllist* l)
@@ -82,6 +84,7 @@ DLGetTail(Dllist* l)
 }
 
 /* get the value stored in the first element */
+#ifdef NOT_USED
 void*
 DLGetTailVal(Dllist* l)
 {
@@ -89,7 +92,7 @@ DLGetTailVal(Dllist* l)
   
   return (e ? e->dle_val : 0);
 }
-
+#endif
 
 Dlelem* 
 DLGetPred(Dlelem* e) /* get predecessor */

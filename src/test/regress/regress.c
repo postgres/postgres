@@ -1,5 +1,5 @@
 /*
- * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.8 1997/08/12 22:55:25 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.9 1997/08/19 21:40:56 momjian Exp $
  */
 
 #include <float.h>		/* faked on sunos */
@@ -30,7 +30,7 @@ extern char *reverse_c16 (char *string);
 /*
 ** Distance from a point to a path 
 */
-double *
+ double *
 regress_dist_ptpath(pt, path)
     Point *pt;
     PATH *path;
@@ -70,7 +70,7 @@ regress_dist_ptpath(pt, path)
 
 /* this essentially does a cartesian product of the lsegs in the
    two paths, and finds the min distance between any two lsegs */
-double *
+ double *
 regress_path_dist(p1, p2)
     PATH *p1;
     PATH *p2;
@@ -97,7 +97,7 @@ regress_path_dist(p1, p2)
     return(min);
 }
 
-PATH *
+ PATH *
 poly2path(poly)
     POLYGON *poly;
 {
@@ -119,7 +119,7 @@ poly2path(poly)
 }
 
 /* return the point where two paths intersect.  Assumes that they do. */
-Point *
+ Point *
 interpt_pp(p1,p2)
     PATH *p1;
     PATH *p2;
@@ -154,7 +154,7 @@ interpt_pp(p1,p2)
 
 
 /* like lseg_construct, but assume space already allocated */
-void
+ void
 regress_lseg_construct(lseg, pt1, pt2)
     LSEG *lseg;
     Point *pt1;
@@ -168,7 +168,7 @@ regress_lseg_construct(lseg, pt1, pt2)
 }
 
 
-char overpaid(tuple)
+ char overpaid(tuple)
     TUPLE tuple;
 {
     bool isnull;
@@ -188,13 +188,13 @@ typedef struct {
 	double	radius;
 } WIDGET;
 
-extern WIDGET *widget_in (char *str);
-extern char *widget_out (WIDGET *widget);
-extern int pt_in_widget (Point *point, WIDGET *widget);
+ WIDGET *widget_in (char *str);
+ char *widget_out (WIDGET *widget);
+ int pt_in_widget (Point *point, WIDGET *widget);
 
 #define NARGS	3
 
-WIDGET *
+ WIDGET *
 widget_in(str)
 char	*str;
 {
@@ -219,7 +219,7 @@ char	*str;
 	return(result);
 }
 
-char *
+ char *
 widget_out(widget)
     WIDGET	*widget;
 {
@@ -234,7 +234,7 @@ widget_out(widget)
     return(result);
 }
 
-int
+ int
 pt_in_widget(point, widget)
 	Point	*point;
 	WIDGET	*widget;
@@ -246,7 +246,7 @@ pt_in_widget(point, widget)
 
 #define ABS(X) ((X) > 0 ? (X) : -(X))
 
-int
+ int
 boxarea(box)
 
 BOX *box;
@@ -259,7 +259,7 @@ BOX *box;
 	return (width * height);
 }
 
-char *
+ char *
 reverse_c16(string)
     char *string;
 {

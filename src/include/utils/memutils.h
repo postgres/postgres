@@ -15,7 +15,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: memutils.h,v 1.6 1997/03/12 21:13:19 scrappy Exp $
+ * $Id: memutils.h,v 1.7 1997/08/19 21:40:43 momjian Exp $
  *
  * NOTES
  *    some of the information in this file will be moved to
@@ -120,7 +120,6 @@ struct OrderedSetData {
 extern void OrderedSetInit(OrderedSet set, Offset offset);
 extern bool OrderedSetContains(OrderedSet set, OrderedElem elem);
 extern Pointer OrderedSetGetHead(OrderedSet set);
-extern Pointer OrderedSetGetTail(OrderedSet set);
 extern Pointer OrderedElemGetPredecessor(OrderedElem elem);
 extern Pointer OrderedElemGetSuccessor(OrderedElem elem);
 extern void  OrderedElemPop(OrderedElem elem);
@@ -226,12 +225,6 @@ extern void AllocSetFree(AllocSet set, AllocPointer pointer);
 extern AllocPointer AllocSetRealloc(AllocSet set, AllocPointer pointer, 
 				    Size size);
 
-extern int AllocSetIterate(AllocSet set,
-			     void (*function)(AllocPointer pointer));
-
-extern int AllocSetCount(AllocSet set);
-
-extern void AllocPointerDump(AllocPointer pointer);
 extern void AllocSetDump(AllocSet set);
 
 /*****************************************************************************

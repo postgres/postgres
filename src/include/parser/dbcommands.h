@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dbcommands.h,v 1.1 1996/08/28 07:23:53 scrappy Exp $
+ * $Id: dbcommands.h,v 1.2 1997/08/19 21:39:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,6 @@
 
 extern void createdb(char *dbname);
 extern void destroydb(char *dbname);
-void stop_vacuum(char *dbname);
 
 #endif	/* DBCOMMANDS_H */
 

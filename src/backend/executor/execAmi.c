@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/execAmi.c,v 1.4 1996/11/08 00:45:54 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/execAmi.c,v 1.5 1997/08/19 21:30:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,6 +42,10 @@
 #include "access/genam.h"
 #include "access/heapam.h"
 #include "catalog/heap.h"
+
+static Pointer ExecBeginScan(Relation relation, int nkeys, ScanKey skeys,
+		      bool isindex, ScanDirection dir, TimeQual time_range);
+static Relation ExecOpenR(Oid relationOid, bool isindex);
 
 /* ----------------------------------------------------------------
  *   	ExecOpenScanR
@@ -99,7 +103,7 @@ ExecOpenScanR(Oid relOid,
  *	returns a relation descriptor given an object id.
  * ----------------------------------------------------------------
  */
-Relation
+static Relation
 ExecOpenR(Oid relationOid, bool isindex)
 {
     Relation relation;
@@ -133,7 +137,7 @@ ExecOpenR(Oid relationOid, bool isindex)
  *		-cim 9/14/89
  * ----------------------------------------------------------------
  */
-Pointer
+static Pointer
 ExecBeginScan(Relation relation,
 	      int nkeys,
 	      ScanKey skeys,

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rtree.h,v 1.5 1997/01/10 09:36:34 vadim Exp $
+ * $Id: rtree.h,v 1.6 1997/08/19 21:37:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -132,10 +132,6 @@ extern void _rtdump(Relation r);
 extern void rtadjscans(Relation r, int op, BlockNumber blkno,
 				OffsetNumber offnum);
 /* rtstrat.h */
-extern StrategyNumber RelationGetRTStrategy(Relation r,
-			AttrNumber attnum, RegProcedure proc);
-extern bool RelationInvokeRTStrategy(Relation r, AttrNumber attnum,
-			StrategyNumber s, Datum left, Datum right);
 extern RegProcedure RTMapOperator(Relation r, AttrNumber attnum,
 			RegProcedure proc);
 

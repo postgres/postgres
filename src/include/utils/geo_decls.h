@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geo_decls.h,v 1.6 1997/07/29 16:16:13 thomas Exp $
+ * $Id: geo_decls.h,v 1.7 1997/08/19 21:40:34 momjian Exp $
  *
  * NOTE
  *    These routines do *not* use the float types from adt/.
@@ -140,8 +140,6 @@ typedef struct {
 /* public point routines */
 extern Point *point_in(char *str);
 extern char *point_out(Point *pt);
-extern Point *point_construct(double x, double y);
-extern Point *point_copy(Point *pt);
 extern bool point_left(Point *pt1, Point *pt2);
 extern bool point_right(Point *pt1, Point *pt2);
 extern bool point_above(Point *pt1, Point *pt2);
@@ -182,7 +180,6 @@ extern double *dist_pb(Point *pt, BOX *box);
 extern double *dist_sl(LSEG *lseg, LINE *line);
 extern double *dist_sb(LSEG *lseg, BOX *box);
 extern double *dist_lb(LINE *line, BOX *box);
-extern Point *interpt_sl(LSEG *lseg, LINE *line);
 extern Point *close_pl(Point *pt, LINE *line);
 extern Point *close_ps(Point *pt, LSEG *lseg);
 extern Point *close_pb(Point *pt, BOX *box);
@@ -201,9 +198,6 @@ extern bool inter_lb(LINE *line, BOX *box);
 
 /* private routines */
 extern LSEG *lseg_construct(Point *pt1, Point *pt2);
-extern void statlseg_construct(LSEG *lseg, Point *pt1, Point *pt2);
-extern double lseg_dt(LSEG *l1, LSEG *l2);
-extern void make_bound_box(POLYGON *poly);
 
 /* public box routines */
 extern BOX *box_in(char *str);
@@ -224,7 +218,6 @@ extern bool box_eq(BOX *box1, BOX *box2);
 extern bool box_le(BOX *box1, BOX *box2);
 extern bool box_ge(BOX *box1, BOX *box2);
 extern Point *box_center(BOX *box);
-extern double *box_area(BOX *box);
 extern double *box_width(BOX *box);
 extern double *box_height(BOX *box);
 extern double *box_distance(BOX *box1, BOX *box2);
@@ -233,13 +226,7 @@ extern BOX *box_intersect(BOX *box1, BOX *box2);
 extern LSEG *box_diagonal(BOX *box);
 
 /* private routines */
-extern BOX *box_construct(double x1, double x2, double y1, double y2);
-extern BOX *box_fill(BOX *result, double x1, double x2, double y1, double y2);
-extern BOX *box_copy(BOX *box);
 
-extern double box_ar(BOX *box);
-extern double box_wd(BOX *box);
-extern double box_ht(BOX *box);
 extern double box_dt(BOX *box1, BOX *box2);
 
 extern BOX *box(Point *p1, Point *p2);
@@ -249,16 +236,7 @@ extern BOX *box_mul(BOX *box, Point *p);
 extern BOX *box_div(BOX *box, Point *p);
 
 /* private line routines */
-extern LINE *line_construct_pm(Point *pt, double m);
-extern LINE *line_construct_pp(Point *pt1, Point *pt2);
-extern bool line_intersect(LINE *l1, LINE *l2);
-extern bool line_parallel(LINE *l1, LINE *l2);
-extern bool line_perp(LINE *l1, LINE *l2);
-extern bool line_vertical(LINE *line);
-extern bool line_horizontal(LINE *line);
-extern bool line_eq(LINE *l1, LINE *l2);
 extern double *line_distance(LINE *l1, LINE *l2);
-extern Point *line_interpt(LINE *l1, LINE *l2);
 
 /* public path routines */
 extern PATH *path_in(char *str);
@@ -291,10 +269,6 @@ extern POLYGON *path_poly(PATH *path);
 
 extern PATH *upgradepath(PATH *path);
 extern bool isoldpath(PATH *path);
-
-/* private routines */
-extern double path_ln(PATH *path);
-extern bool plist_same(int npts, Point p1[], Point p2[]);
 
 /* public polygon routines */
 extern POLYGON *poly_in(char *s);
@@ -348,7 +322,6 @@ extern CIRCLE *circle_add_pt(CIRCLE *circle, Point *point);
 extern CIRCLE *circle_sub_pt(CIRCLE *circle, Point *point);
 extern CIRCLE *circle_mul_pt(CIRCLE *circle, Point *point);
 extern CIRCLE *circle_div_pt(CIRCLE *circle, Point *point);
-extern double *circle_area(CIRCLE *circle);
 extern double *circle_diameter(CIRCLE *circle);
 extern double *circle_radius(CIRCLE *circle);
 extern double *circle_distance(CIRCLE *circle1, CIRCLE *circle2);
@@ -362,21 +335,13 @@ extern CIRCLE *poly_circle(POLYGON *poly);
 extern POLYGON *circle_poly(int npts, CIRCLE *circle);
 
 /* private routines */
-extern double circle_ar(CIRCLE *circle);
+extern double *circle_area(CIRCLE *circle);
 extern double circle_dt(CIRCLE *circle1, CIRCLE *circle2);
 
 /* geo_selfuncs.c */
 extern float64 areasel(Oid opid, Oid relid, AttrNumber attno, 
 	char *value, int32 flag);
 extern float64 areajoinsel(Oid opid, Oid relid, AttrNumber attno,
-	char *value, int32 flag);
-extern float64 leftsel(Oid opid, Oid relid, AttrNumber attno,
-	char *value, int32 flag);
-extern float64 leftjoinsel(Oid opid, Oid relid, AttrNumber attno,
-	char *value, int32 flag);
-extern float64 contsel(Oid opid, Oid relid, AttrNumber attno,
-	char *value, int32 flag);
-extern float64 contjoinsel(Oid opid, Oid relid, AttrNumber attno,
 	char *value, int32 flag);
 
 #endif	/* GEO_DECLS_H */

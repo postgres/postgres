@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/datum.c,v 1.4 1996/12/14 07:56:05 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/datum.c,v 1.5 1997/08/19 21:34:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -131,6 +131,7 @@ datumCopy(Datum value, Oid type, bool byVal, Size len)
  * ONLY datums created by "datumCopy" can be freed!
  *-------------------------------------------------------------------------
  */
+#ifdef NOT_USED
 void
 datumFree(Datum value, Oid type, bool byVal, Size len)
 {
@@ -148,6 +149,7 @@ datumFree(Datum value, Oid type, bool byVal, Size len)
 	pfree(s);
     }
 }
+#endif
 
 /*-------------------------------------------------------------------------
  * datumIsEqual

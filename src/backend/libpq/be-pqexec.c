@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-pqexec.c,v 1.3 1997/08/12 20:15:19 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-pqexec.c,v 1.4 1997/08/19 21:31:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,6 +36,8 @@
 #else
 # include <string.h>
 #endif
+
+static char *strmake(char *str, int len);
 
 /* ----------------------------------------------------------------
  *			PQ interface routines
@@ -215,7 +217,7 @@ pqtest_PQexec(char *q)
  *	utilities for pqtest_PQfn()
  * ----------------
  */
-char *
+static char *
 strmake(char *str, int len)
 {
     char *newstr;

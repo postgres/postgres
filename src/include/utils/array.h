@@ -10,7 +10,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: array.h,v 1.3 1996/11/04 07:18:39 scrappy Exp $
+ * $Id: array.h,v 1.4 1997/08/19 21:40:21 momjian Exp $
  *
  * NOTES
  *    XXX the data array should be LONGALIGN'd -- notice that the array
@@ -125,9 +125,6 @@ extern char *array_assgn(ArrayType *array, int n, int upperIndx[],
 		  int lowerIndx[], ArrayType *newArr, int reftype,
 		  int len, bool *isNull);
 extern int array_eq (ArrayType *array1, ArrayType *array2);
-extern SanityCheckInput(int ndim, int n, int dim[], int lb[], int indx[]);
-extern char *array_seek(char *ptr, int eltsize, int nitems);
-extern int array_read(char *destptr, int eltsize, int nitems, char *srcptr);
 extern int _LOtransfer(char **destfd, int size,	int nitems, char **srcfd,
 		int isSrcLO, int isDestLO);
 
@@ -154,8 +151,6 @@ extern int next_tuple(int n, int curr[], int span[]);
  */
 extern char * _ChunkArray(int fd, FILE *afd, int ndim, int dim[], int baseSize,
 			  int *nbytes, char *chunkfile);
-extern int GetChunkSize(FILE *fd, int ndim, int dim[MAXDIM], int baseSize, 
-			int d[MAXDIM]);
 extern int _ReadChunkArray(int st[], int endp[], int bsize, int fp,
 		char *destfp, ArrayType *array, int isDestLO, bool *isNull);
 extern struct varlena *_ReadChunkArray1El(int st[], int bsize, int fp,

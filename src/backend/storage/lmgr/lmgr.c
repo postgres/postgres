@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.4 1997/01/10 20:18:47 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.5 1997/08/19 21:33:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,6 +47,8 @@
 #include "nodes/memnodes.h"
 #include "storage/bufmgr.h"
 #include "access/transam.h"	/* for AmiTransactionId */
+
+static void LRelIdAssign(LRelId *lRelId, Oid dbId, Oid relId);
 
 /* ----------------
  *	
@@ -134,12 +136,13 @@ RelationGetLRelId(Relation relation)
  *	 after it is created.
  * ----------------
  */
+#ifdef NOT_USED
 Oid
 LRelIdGetDatabaseId(LRelId lRelId)
 {
     return (lRelId.dbId);
 }
-
+#endif
 
 /*
  * LRelIdGetRelationId --
@@ -155,23 +158,27 @@ LRelIdGetRelationId(LRelId lRelId)
  * DatabaseIdIsMyDatabaseId --
  *	True iff database object identifier is valid in my present database.
  */
+#ifdef NOT_USED
 bool
 DatabaseIdIsMyDatabaseId(Oid databaseId)
 {
     return (bool)
 	(!OidIsValid(databaseId) || databaseId == MyDatabaseId);
 }
+#endif
 
 /*
  * LRelIdContainsMyDatabaseId --
  *	True iff "lock" relation identifier is valid in my present database.
  */
+#ifdef NOT_USED
 bool
 LRelIdContainsMyDatabaseId(LRelId lRelId)
 {
     return (bool)
 	(!OidIsValid(lRelId.dbId) || lRelId.dbId == MyDatabaseId);
 }
+#endif
 
 /*
  * RelationInitLockInfo --
@@ -285,6 +292,7 @@ elog(DEBUG, "DiscardLockInfo: NULL relation->lockInfo")
  * RelationDiscardLockInfo --
  *	Discards the lock information in a relation descriptor.
  */
+#ifdef NOT_USED
 void
 RelationDiscardLockInfo(Relation relation)
 {
@@ -296,6 +304,7 @@ RelationDiscardLockInfo(Relation relation)
     pfree(relation->lockInfo);
     relation->lockInfo = NULL;
 }
+#endif
 
 /*
  * RelationSetLockForDescriptorOpen --
@@ -537,6 +546,7 @@ elog(DEBUG, "RelationSetLockForTupleRead(%s[%d,%d], 0x%x) called", \
  * RelationSetLockForTupleRead --
  *	Sets tuple level read lock.
  */
+#ifdef NOT_USED
 void
 RelationSetLockForTupleRead(Relation relation, ItemPointer itemPointer)
 {
@@ -625,6 +635,7 @@ RelationSetLockForTupleRead(Relation relation, ItemPointer itemPointer)
      */
     MultiLockTuple(linfo, itemPointer, READ_LOCK);
 }
+#endif
 
 /* ----------------
  *	RelationSetLockForReadPage
@@ -890,6 +901,7 @@ RelationUnsetWIntentLock(Relation relation)
  * a WORM disk jukebox.  Sometimes need exclusive access to extend a 
  * file by a block.
  */
+#ifdef NOT_USED
 void
 RelationSetLockForExtend(Relation relation)
 {
@@ -906,7 +918,9 @@ RelationSetLockForExtend(Relation relation)
     
     MultiLockReln((LockInfo) relation->lockInfo, EXTEND_LOCK);
 }
+#endif
 
+#ifdef NOT_USED
 void
 RelationUnsetLockForExtend(Relation relation)
 {
@@ -923,11 +937,12 @@ RelationUnsetLockForExtend(Relation relation)
     
     MultiReleaseReln((LockInfo) relation->lockInfo, EXTEND_LOCK);
 }
+#endif
 
 /* 
  * Create an LRelid --- Why not just pass in a pointer to the storage?
  */
-void
+static void
 LRelIdAssign(LRelId *lRelId, Oid dbId, Oid relId)
 {   
     lRelId->dbId = dbId;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/not_in.c,v 1.2 1996/11/06 06:49:53 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/not_in.c,v 1.3 1997/08/19 21:34:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,6 +28,8 @@
 #include "access/heapam.h"
 #include "access/relscan.h"
 #include "utils/builtins.h"	/* where function decls go */
+
+static int my_varattno(Relation rd, char *a);
 
 /* ----------------------------------------------------------------
  *	
@@ -107,7 +109,7 @@ bool oidnotin(Oid the_oid, char *compare)
  * If varattno (in parser/catalog_utils.h) ever is added to
  * cinterface.a, this routine should go away
  */
-int my_varattno(Relation rd, char *a)
+static int my_varattno(Relation rd, char *a)
 {
     int i;
     

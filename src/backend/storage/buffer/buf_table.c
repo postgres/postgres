@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_table.c,v 1.3 1996/11/03 04:56:59 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_table.c,v 1.4 1997/08/19 21:32:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -153,6 +153,7 @@ BufTableInsert(BufferDesc *buf)
 }
 
 /* prints out collision stats for the buf table */
+#ifdef NOT_USED
 void
 DBG_LookupListCheck(int nlookup)
 {
@@ -160,3 +161,4 @@ DBG_LookupListCheck(int nlookup)
     
     hash_stats("Shared",SharedBufHash);
 }
+#endif

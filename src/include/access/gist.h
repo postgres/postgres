@@ -183,24 +183,13 @@ extern void gistbuild(Relation heap,
 extern InsertIndexResult gistinsert(Relation r, Datum *datum,
 			char *nulls,ItemPointer ht_ctid, Relation heapRel);
 extern void _gistdump(Relation r);
-extern char *text_range_out(TXTRANGE *r);
-extern char *int_range_out(INTRANGE *r);
 extern void gistfreestack(GISTSTACK *s);
 extern void initGISTstate(GISTSTATE *giststate, Relation index);
 extern void gistdentryinit(GISTSTATE *giststate, GISTENTRY *e, char *pr, 
-			   Relation r, Page pg, OffsetNumber o, int b, bool l) ;
-extern void gistcentryinit(GISTSTATE *giststate, GISTENTRY *e, char *pr, 
 			   Relation r, Page pg, OffsetNumber o, int b, bool l) ;
 extern StrategyNumber RelationGetGISTStrategy(Relation, AttrNumber, RegProcedure);
 
 /* gistget.c */
 extern RetrieveIndexResult gistgettuple(IndexScanDesc s, ScanDirection dir);
-extern bool gistindex_keytest(IndexTuple tuple, TupleDesc tupdesc,
-		  int scanKeySize, ScanKey key, GISTSTATE *giststate,
-		  Relation r, Page p, OffsetNumber offset);
-
-/* giststrat.c */
-extern bool RelationInvokeGISTStrategy(Relation r, AttrNumber attnum,
-			 StrategyNumber s, Datum left, Datum right);
 
 #endif /* GIST_H */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.6 1997/08/12 22:52:13 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.7 1997/08/19 21:30:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,9 @@
 #else
 # include <string.h>
 #endif
+
+static Oid TypeShellMakeWithOpenRelation(Relation pg_type_desc,
+					 char *typeName);
 
 /* ----------------------------------------------------------------
  * 	TypeGetWithOpenRelation
@@ -145,7 +148,7 @@ TypeGet(char* typeName,		/* name of type to be fetched */
  *
  * ----------------------------------------------------------------
  */
-Oid
+static Oid
 TypeShellMakeWithOpenRelation(Relation pg_type_desc, char *typeName)
 {
     register int 	i;

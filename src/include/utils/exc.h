@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: exc.h,v 1.6 1996/12/10 07:04:22 bryanh Exp $
+ * $Id: exc.h,v 1.7 1997/08/19 21:40:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,14 +75,6 @@ typedef	void ExcProc(Exception*, ExcDetail, ExcData, ExcMessage);
  * prototypes for functions in exc.c
  */
 extern void EnableExceptionHandling(bool on);
-extern void ExcPrint(Exception *excP, ExcDetail detail, ExcData data,
-		     ExcMessage message);
-extern ExcProc *ExcGetUnCaught(void);
-extern ExcProc *ExcSetUnCaught(ExcProc *newP);
-extern void ExcUnCaught(Exception *excP, ExcDetail detail, ExcData data,
-			ExcMessage message);
-extern void ExcUnCaught(Exception *excP, ExcDetail detail, ExcData data,
-			ExcMessage message);
 extern void ExcRaise(Exception *excP,
 		     ExcDetail detail,
 		     ExcData    data,

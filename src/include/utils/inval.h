@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: inval.h,v 1.3 1996/11/04 11:51:18 scrappy Exp $
+ * $Id: inval.h,v 1.4 1997/08/19 21:40:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,15 +41,6 @@ typedef Pointer InvalidationEntry;
 typedef InvalidationEntry	LocalInvalid;
 
 #define EmptyLocalInvalid	NULL
-
-extern InvalidationEntry InvalidationEntryAllocate(uint16 size);
-
-extern LocalInvalid LocalInvalidRegister(LocalInvalid invalid,
-					 InvalidationEntry entry);
-
-extern void LocalInvalidInvalidate(LocalInvalid invalid, void (*function)());
-
-extern void getmyrelids(void);
 
 #endif	/* INVAL_H */
 

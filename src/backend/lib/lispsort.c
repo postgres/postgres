@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/lib/Attic/lispsort.c,v 1.3 1996/11/06 08:27:14 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/lib/Attic/lispsort.c,v 1.4 1997/08/19 21:31:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,7 @@
 #include <lib/lispsort.h>
 #include <lib/qsort.h>
 
+#ifdef NOT_USED
 /*
 ** lisp_qsort: Takes a lisp list as input, copies it into an array of lisp 
 **             nodes which it sorts via qsort() with the comparison function
@@ -57,3 +58,4 @@ List *lisp_qsort(List *the_list,    /* the list to be sorted */
     
     return(output);
 }
+#endif

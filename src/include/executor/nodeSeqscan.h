@@ -6,17 +6,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeSeqscan.h,v 1.1 1996/08/28 07:22:24 scrappy Exp $
+ * $Id: nodeSeqscan.h,v 1.2 1997/08/19 21:38:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef	NODESEQSCAN_H
 #define	NODESEQSCAN_H
 
-extern TupleTableSlot *SeqNext(SeqScan *node);
 extern TupleTableSlot *ExecSeqScan(SeqScan *node);
-extern Oid InitScanRelation(SeqScan *node, EState *estate,
-			    CommonScanState *scanstate, Plan *outerPlan);
 extern bool ExecInitSeqScan(SeqScan *node, EState *estate, Plan *parent);
 extern int ExecCountSlotsSeqScan(SeqScan *node);
 extern void ExecEndSeqScan(SeqScan *node);

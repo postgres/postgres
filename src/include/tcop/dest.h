@@ -26,7 +26,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dest.h,v 1.5 1997/01/08 08:39:10 bryanh Exp $
+ * $Id: dest.h,v 1.6 1997/08/19 21:40:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,8 +69,6 @@ extern void NullCommand(CommandDest dest);
 extern void BeginCommand(char *pname, int operation, TupleDesc attinfo,
 			 bool isIntoRel, bool isIntoPortal, char *tag,
 			 CommandDest dest);
-extern void ResetAppendOid(void);
 extern void UpdateAppendOid(Oid newoid);
-extern Oid GetAppendOid(void);
 
 #endif  /* DEST_H */

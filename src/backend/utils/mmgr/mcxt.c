@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/mmgr/mcxt.c,v 1.2 1996/11/08 06:00:54 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/mmgr/mcxt.c,v 1.3 1997/08/19 21:35:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -281,6 +281,7 @@ MemoryContextRealloc(MemoryContext context,
  *	???
  *	BadArgumentsErr if firstTime is true for subsequent calls.
  */
+#ifdef NOT_USED
 char*
 MemoryContextGetName(MemoryContext context)
 {
@@ -289,6 +290,7 @@ MemoryContextGetName(MemoryContext context)
     
     return (context->method->getName(context));
 }
+#endif
 
 /*
  * PointerGetAllocSize --
@@ -301,6 +303,7 @@ MemoryContextGetName(MemoryContext context)
  *	???
  *	BadArgumentsErr if firstTime is true for subsequent calls.
  */
+#ifdef NOT_USED
 Size
 PointerGetAllocSize(Pointer pointer)
 {
@@ -309,6 +312,7 @@ PointerGetAllocSize(Pointer pointer)
     
     return (PSIZE(pointer));
 }
+#endif
 
 /*
  * MemoryContextSwitchTo --

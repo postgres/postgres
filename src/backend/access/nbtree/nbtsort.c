@@ -5,7 +5,7 @@
  *
  *
  * IDENTIFICATION
- *    $Id: nbtsort.c,v 1.18 1997/08/12 22:51:52 momjian Exp $
+ *    $Id: nbtsort.c,v 1.19 1997/08/19 21:29:46 momjian Exp $
  *
  * NOTES
  *
@@ -67,6 +67,11 @@
 #include <tcop/tcopprot.h>
 extern int ShowExecutorStats;
 #endif
+
+static BTItem _bt_buildadd(Relation index, void *pstate, BTItem bti, int flags);
+static BTItem _bt_minitem(Page opage, BlockNumber oblkno, int atend);
+static void *_bt_pagestate(Relation index, int flags, int level, bool doupper);
+static void _bt_uppershutdown(Relation index, BTPageState *state);
 
 /*
  * turn on debugging output.
@@ -806,7 +811,7 @@ _bt_slideleft(Relation index, Buffer buf, Page page)
  * allocate and initialize a new BTPageState.  the returned structure
  * is suitable for immediate use by _bt_buildadd.
  */
-void *
+static void *
 _bt_pagestate(Relation index, int flags, int level, bool doupper)
 {
     BTPageState *state = (BTPageState *) palloc(sizeof(BTPageState));
@@ -829,7 +834,7 @@ _bt_pagestate(Relation index, int flags, int level, bool doupper)
  * the page to which the item used to point, e.g., a heap page if
  * 'opage' is a leaf page).
  */
-BTItem
+static BTItem
 _bt_minitem(Page opage, BlockNumber oblkno, int atend)
 {
     OffsetNumber off;
@@ -883,7 +888,7 @@ _bt_minitem(Page opage, BlockNumber oblkno, int atend)
  *
  * if all keys are unique, 'first' will always be the same as 'last'.
  */
-BTItem
+static BTItem
 _bt_buildadd(Relation index, void *pstate, BTItem bti, int flags)
 {
     BTPageState *state = (BTPageState *) pstate;
@@ -1055,7 +1060,7 @@ _bt_buildadd(Relation index, void *pstate, BTItem bti, int flags)
     return(last_bti);
 }
 
-void
+static void
 _bt_uppershutdown(Relation index, BTPageState *state)
 {
     BTPageState *s;
@@ -1311,6 +1316,7 @@ _bt_merge(Relation index, BTSpool *btspool)
  * which case we can just build the upper levels as we create the
  * sorted bottom level).  it is only used for index recycling.
  */
+#ifdef NOT_USED
 void
 _bt_upperbuild(Relation index)
 {
@@ -1370,6 +1376,7 @@ _bt_upperbuild(Relation index)
 	
     _bt_uppershutdown(index, state);
 }
+#endif
 
 /*
  * given a spool loading by successive calls to _bt_spool, create an

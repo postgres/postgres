@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.13 1997/08/12 22:52:45 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.14 1997/08/19 21:31:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,6 +71,8 @@
 #include <libpq/libpq-be.h>
 #include <libpq/hba.h>
 #include <libpq/password.h>
+
+static int be_getauthsvc(MsgType msgtype);
 
 /*----------------------------------------------------------------
  * common definitions for generic fe/be routines
@@ -586,7 +588,7 @@ be_setauthsvc(char *name)
     return;
 }
 
-int
+static int
 be_getauthsvc(MsgType msgtype)
 {
     int i;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.5 1996/11/10 03:02:54 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.6 1997/08/19 21:34:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,6 +39,8 @@
 #include "commands/command.h"
 
 static char* CreateOperationTag(int operationType);
+static void ProcessQueryDesc(QueryDesc *queryDesc);
+
 
 /* ----------------------------------------------------------------
  *	CreateQueryDesc
@@ -199,7 +201,7 @@ ProcessPortal(char* portalName,
  *	Read the comments for ProcessQuery() below...
  * ----------------------------------------------------------------
  */
-void
+static void
 ProcessQueryDesc(QueryDesc *queryDesc)
 {
     Query 	*parseTree;

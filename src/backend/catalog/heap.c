@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.16 1997/08/19 04:42:54 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.17 1997/08/19 21:30:30 momjian Exp $
  *
  * INTERFACE ROUTINES
  *	heap_creatr()		- Create an uncataloged heap relation
@@ -52,6 +52,19 @@
 #else
 # include <string.h>
 #endif
+
+static void AddPgRelationTuple(Relation pg_class_desc,
+	Relation new_rel_desc, Oid new_rel_oid, int arch, unsigned natts);
+static void AddToTempRelList(Relation r);
+static void DeletePgAttributeTuples(Relation rdesc);
+static void DeletePgRelationTuple(Relation rdesc);
+static void DeletePgTypeTuple(Relation rdesc);
+static int RelationAlreadyExists(Relation pg_class_desc, char relname[]);
+static void RelationRemoveIndexes(Relation relation);
+static void RelationRemoveInheritance(Relation relation);
+static void RemoveFromTempRelList(Relation r);
+static void addNewRelationType(char *typeName, Oid new_rel_oid);
+
 
 /* ----------------------------------------------------------------
  *		XXX UGLY HARD CODED BADNESS FOLLOWS XXX
@@ -447,7 +460,7 @@ CheckAttributeNames(TupleDesc tupdesc)
  *	has to open pg_class and pass an open descriptor.
  * --------------------------------
  */
-int
+static int
 RelationAlreadyExists(Relation pg_class_desc, char relname[])
 {
     ScanKeyData	        key;
@@ -610,7 +623,7 @@ AddNewAttributeTuples(Oid new_rel_oid,
  *	adding a tuple to pg_class.
  * --------------------------------
  */
-void
+static void
 AddPgRelationTuple(Relation pg_class_desc,
 		   Relation new_rel_desc,
 		   Oid new_rel_oid,
@@ -689,7 +702,7 @@ AddPgRelationTuple(Relation pg_class_desc,
  *	define a complex type corresponding to the new relation
  * --------------------------------
  */
-void
+static void
 addNewRelationType(char *typeName, Oid new_rel_oid)
 {
     Oid 		new_type_oid;
@@ -854,7 +867,7 @@ heap_create(char relname[],
  *	lots of work.
  * --------------------------------
  */
-void
+static void
 RelationRemoveInheritance(Relation relation)
 {
     Relation		catalogRelation;
@@ -953,7 +966,7 @@ RelationRemoveInheritance(Relation relation)
  *	
  * --------------------------------
  */
-void
+static void
 RelationRemoveIndexes(Relation relation)
 {
     Relation		indexRelation;
@@ -991,7 +1004,7 @@ RelationRemoveIndexes(Relation relation)
  *
  * --------------------------------
  */
-void
+static void
 DeletePgRelationTuple(Relation rdesc)
 {
     Relation		pg_class_desc;
@@ -1048,7 +1061,7 @@ DeletePgRelationTuple(Relation rdesc)
  *
  * --------------------------------
  */
-void
+static void
 DeletePgAttributeTuples(Relation rdesc)
 {
     Relation		pg_attribute_desc;
@@ -1117,7 +1130,7 @@ DeletePgAttributeTuples(Relation rdesc)
  *	special.  presently we disallow the destroy.
  * --------------------------------
  */
-void
+static void
 DeletePgTypeTuple(Relation rdesc)
 {
     Relation		pg_type_desc;
@@ -1386,7 +1399,7 @@ InitTempRelList(void)
       we don't really remove it, just mark it as NULL
       and DestroyTempRels will look for NULLs
 */
-void
+static void
 RemoveFromTempRelList(Relation r)
 {
     int i;
@@ -1407,7 +1420,7 @@ RemoveFromTempRelList(Relation r)
 
    MODIFIES the global variable tempRels
 */
-void
+static void
 AddToTempRelList(Relation r)
 {
     if (!tempRels)

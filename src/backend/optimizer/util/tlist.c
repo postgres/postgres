@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.2 1997/04/05 06:39:58 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.3 1997/08/19 21:32:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -532,10 +532,10 @@ get_expr(TargetEntry *tle)
  *    append the group attribute to the target list if it's not already
  *    in there.
  */
+#if 0
 void
 AddGroupAttrToTlist(List *tlist, List *grpCl)
 {
-#if 0
     List *gl;
     int last_resdomno = length(tlist) + 1;
     
@@ -557,8 +557,8 @@ AddGroupAttrToTlist(List *tlist, List *grpCl)
 	    tlist = lappend(tlist, MakeTLE(r, (Node*)var));
 	}
     }
-#endif
 }
+#endif
 
 /* was ExecTargetListLength() in execQual.c, 
    moved here to reduce dependencies on the executor module */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.22 1997/08/12 22:51:50 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.23 1997/08/19 21:29:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,7 @@ _bt_searchr(Relation rel, int keysz, ScanKey scankey,
 static OffsetNumber 
 _bt_firsteq(Relation rel, TupleDesc itupdesc, Page page, 
             Size keysz, ScanKey scankey, OffsetNumber offnum);
-int 
+static int 
 _bt_compare(Relation rel, TupleDesc itupdesc, Page page, 
             int keysz, ScanKey scankey, OffsetNumber offnum);
 static bool 
@@ -556,7 +556,7 @@ _bt_firsteq(Relation rel,
  *	but not "any time a new min key is inserted" (see _bt_insertonpg). 
  *		- vadim 12/05/96
  */
-int
+static int
 _bt_compare(Relation rel,
 	    TupleDesc itupdesc,
 	    Page page,

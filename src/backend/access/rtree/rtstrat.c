@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtstrat.c,v 1.5 1996/11/05 10:54:20 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtstrat.c,v 1.6 1997/08/19 21:29:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,9 @@
 #include <utils/rel.h>
 #include <access/rtree.h>
 #include <access/istrat.h>
+
+static StrategyNumber RelationGetRTStrategy(Relation r,
+			AttrNumber attnum, RegProcedure proc);
 
 /*
  *  Note:  negate, commute, and negatecommute all assume that operators are
@@ -200,7 +203,7 @@ static StrategyNumber RTOperMap[RTNStrategies] = {
     RTOverlapStrategyNumber
     };
 
-StrategyNumber
+static StrategyNumber
 RelationGetRTStrategy(Relation r,
 		      AttrNumber attnum,
 		      RegProcedure proc)
@@ -208,6 +211,7 @@ RelationGetRTStrategy(Relation r,
     return (RelationGetStrategy(r, attnum, &RTEvaluationData, proc));
 }
 
+#ifdef NOT_USED
 bool
 RelationInvokeRTStrategy(Relation r,
 			 AttrNumber attnum,
@@ -218,6 +222,7 @@ RelationInvokeRTStrategy(Relation r,
     return (RelationInvokeStrategy(r, &RTEvaluationData, attnum, s,
 				   left, right));
 }
+#endif
 
 RegProcedure
 RTMapOperator(Relation r,

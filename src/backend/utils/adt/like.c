@@ -22,6 +22,8 @@
 #include "utils/palloc.h"
 #include "utils/builtins.h"	/* where the function declarations go */
 
+static int like(char *text, char *p);
+
 /*
  *  interface routines called by the function manager
  */
@@ -139,7 +141,7 @@ bool textnlike(struct varlena *s, struct varlena *p)
 }
 
 
-/*  $Revision: 1.5 $
+/*  $Revision: 1.6 $
 **  "like.c" A first attempt at a LIKE operator for Postgres95.
 **
 **  Originally written by Rich $alz, mirror!rs, Wed Nov 26 19:03:17 EST 1986.
@@ -214,7 +216,7 @@ DoMatch(register char *text, register char *p)
 /*
 **  User-level routine.  Returns TRUE or FALSE.
 */
-int
+static int
 like(char *text, char *p)
 {
     if (p[0] == '%' && p[1] == '\0')

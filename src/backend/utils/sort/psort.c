@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/psort.c,v 1.16 1997/08/18 02:14:56 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/psort.c,v 1.17 1997/08/19 21:36:06 momjian Exp $
  *
  * NOTES
  *      Sorts the first relation into the second relation.
@@ -63,6 +63,18 @@
 
 #include "miscadmin.h"
 #include "storage/fd.h"
+
+static bool createrun(Sort *node, FILE *file, bool *empty);
+static void destroytape(FILE *file);
+static void dumptuples(FILE *file, Sort *node);
+static FILE *gettape(void);
+static void initialrun(Sort *node, bool *empty);
+static void inittapes(Sort *node);
+static void merge(Sort *node, struct tape *dest);
+static FILE *mergeruns(Sort *node);
+static HeapTuple tuplecopy(HeapTuple tup);
+
+
 
 #define	TEMPDIR	"./"
 
@@ -157,7 +169,7 @@ psort_begin(Sort *node, int nkeys, ScanKey key)
  *	Returns:
  *		number of allocated tapes
  */
-void
+static void
 inittapes(Sort *node)
 {
     register	int			i;
@@ -191,17 +203,6 @@ inittapes(Sort *node)
     PS(node)->TotalDummy = PS(node)->TapeRange;
 
     PS(node)->using_tape_files = true;
-}
-
-/*
- *	resetpsort	- resets (pfrees) palloc'd memory for an aborted Xaction
- *
- *	Not implemented yet.
- */
-void
-resetpsort()
-{
-    ;
 }
 
 /*
@@ -266,7 +267,7 @@ resetpsort()
  *		I (perhaps prematurely) combined the 2 algorithms.
  *		Also, perhaps allocate tapes when needed. Split into 2 funcs.
  */
-void
+static void
 initialrun(Sort *node, bool *empty)
 {
     /*	register struct	tuple	*tup; */
@@ -341,7 +342,7 @@ initialrun(Sort *node, bool *empty)
  *		FALSE iff process through end of relation
  *		Tuples contains the tuples for the following run upon exit
  */
-bool
+static bool
 createrun(Sort *node, FILE *file, bool *empty)
 {
     register HeapTuple	lasttuple;
@@ -429,7 +430,7 @@ createrun(Sort *node, FILE *file, bool *empty)
  *	This should eventually go there under that name?  And this will
  *	then use palloc directly (see version -r1.2).
  */
-HeapTuple
+static HeapTuple
 tuplecopy(HeapTuple tup)
 {
     HeapTuple	rettup;
@@ -449,7 +450,7 @@ tuplecopy(HeapTuple tup)
  *	Returns:
  *		file of tuples in order
  */
-FILE *
+static FILE *
 mergeruns(Sort *node)
 {
     register struct     tape    *tp;
@@ -475,7 +476,7 @@ mergeruns(Sort *node)
  *	merge		- handles a single merge of the tape
  *			  (polyphase merge Alg.D(D5)--Knuth, Vol.3, p271)
  */
-void
+static void
 merge(Sort *node, struct tape *dest)
 {
     register HeapTuple	tup;
@@ -571,7 +572,7 @@ merge(Sort *node, struct tape *dest)
 /*
  * dumptuples	- stores all the tuples in tree into file
  */
-void
+static void
 dumptuples(FILE *file, Sort *node)
 {
     register struct	leftist	*tp;
@@ -736,7 +737,7 @@ static struct	tapelst	*Tapes = NULL;
  *		Open stream for writing/reading.
  *		NULL if unable to open temporary file.
  */
-FILE *
+static FILE *
 gettape()
 {
     register 	struct		tapelst	*tp;
@@ -777,7 +778,8 @@ gettape()
 /*
  *	resettape	- resets the tape to size 0
  */
-void
+#ifdef NOT_USED
+static void
 resettape(FILE *file)
 {
     register	struct	tapelst	*tp;
@@ -796,6 +798,7 @@ resettape(FILE *file)
 	elog(FATAL, "could not freopen temporary file");
     }
 }
+#endif
 
 /*
  *	distroytape	- unlinks the tape
@@ -806,7 +809,7 @@ resettape(FILE *file)
  *	Possible bugs:
  *		Exits instead of returning status, if given invalid tape.
  */
-void
+static void
 destroytape(FILE *file)
 {
     register	struct	tapelst		*tp, *tq;

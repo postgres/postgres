@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/name.c,v 1.5 1997/08/18 20:53:41 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/name.c,v 1.6 1997/08/19 21:34:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -130,10 +130,12 @@ int namecpy(Name n1, Name n2)
     return(0);
 }
 
+#ifdef NOT_USED
 int namecat(Name n1, Name n2)
 {
     return(namestrcat(n1, n2->data)); /* n2 can't be any longer than n1 */
 }
+#endif
 
 int namecmp(Name n1, Name n2)
 {
@@ -149,6 +151,7 @@ namestrcpy(Name name, char *str)
     return(0);
 }
 
+#ifdef NOT_USED
 int namestrcat(Name name, char *str)
 {
     int i;
@@ -165,6 +168,7 @@ int namestrcat(Name name, char *str)
     }
     return(0);
 }
+#endif
 
 int 
 namestrcmp(Name name, char *str)
@@ -182,6 +186,7 @@ namestrcmp(Name name, char *str)
  *   PRIVATE ROUTINES                                                        *
  *****************************************************************************/
 
+#ifdef NOT_USED
 uint32 
 NameComputeLength(Name name)
 {
@@ -195,3 +200,4 @@ NameComputeLength(Name name)
     }
     return (uint32)length;
 }
+#endif

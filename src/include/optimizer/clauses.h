@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: clauses.h,v 1.2 1996/11/06 09:19:16 scrappy Exp $
+ * $Id: clauses.h,v 1.3 1997/08/19 21:39:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,8 +20,6 @@ extern bool is_opclause(Node *clause);
 extern Expr *make_opclause(Oper *op, Var *leftop, Var *rightop);
 extern Var *get_leftop(Expr *clause);
 extern Var *get_rightop(Expr *clause);
-
-extern bool agg_clause(Node *clause);
 
 extern bool is_funcclause(Node *clause);
 extern Expr *make_funcclause(Func *func, List *funcargs);

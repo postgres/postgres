@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tqual.h,v 1.5 1996/11/04 07:18:46 scrappy Exp $
+ * $Id: tqual.h,v 1.6 1997/08/19 21:40:50 momjian Exp $
  *
  * NOTE
  *    It may be desirable to allow time qualifications to indicate
@@ -34,16 +34,6 @@ extern TimeQual	SelfTimeQual;
 extern void setheapoverride(bool on);
 extern bool heapisoverride(void);
 
-extern bool TimeQualIsValid(TimeQual qual);
-extern bool TimeQualIsLegal(TimeQual qual);
-extern bool TimeQualIncludesNow(TimeQual qual);
-extern bool TimeQualIncludesPast(TimeQual qual);
-extern bool TimeQualIsSnapshot(TimeQual qual);
-extern bool TimeQualIsRanged(TimeQual qual);
-extern bool TimeQualIndicatesDisableValidityChecking(TimeQual qual);
-extern AbsoluteTime TimeQualGetSnapshotTime(TimeQual qual);
-extern AbsoluteTime TimeQualGetStartTime(TimeQual qual);
-extern AbsoluteTime TimeQualGetEndTime(TimeQual qual);
 extern TimeQual TimeFormSnapshotTimeQual(AbsoluteTime time);
 extern TimeQual TimeFormRangedTimeQual(AbsoluteTime startTime,
 				       AbsoluteTime endTime);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/hash/Attic/hashstrat.c,v 1.7 1996/11/05 09:40:24 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/hash/Attic/hashstrat.c,v 1.8 1997/08/19 21:29:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,6 +33,7 @@ static StrategyNumber	HTNegateCommute[1] = {
     InvalidStrategy
 };
 
+#ifdef NOT_USED
 static StrategyEvaluationData	HTEvaluationData = {
     /* XXX static for simplicity */
 
@@ -42,13 +43,15 @@ static StrategyEvaluationData	HTEvaluationData = {
     (StrategyTransformMap)HTNegateCommute,
     {NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL}
 };
+#endif
 
 /* ----------------------------------------------------------------
  *	RelationGetHashStrategy
  * ----------------------------------------------------------------
  */
 
-StrategyNumber
+#ifdef NOT_USED
+static StrategyNumber
 _hash_getstrat(Relation rel,
 	       AttrNumber attno,
 	       RegProcedure proc)
@@ -61,8 +64,10 @@ _hash_getstrat(Relation rel,
 
     return (strat);
 }
+#endif
 
-bool
+#ifdef NOT_USED
+static bool
 _hash_invokestrat(Relation rel,
 		  AttrNumber attno,
 		  StrategyNumber strat,
@@ -72,28 +77,4 @@ _hash_invokestrat(Relation rel,
     return (RelationInvokeStrategy(rel, &HTEvaluationData, attno, strat, 
 				   left, right));
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+#endif

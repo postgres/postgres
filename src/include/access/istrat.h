@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: istrat.h,v 1.4 1996/11/05 10:37:04 scrappy Exp $
+ * $Id: istrat.h,v 1.5 1997/08/19 21:37:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,21 +47,12 @@
  */
 #define	IndexStrategyIsValid(s)	PointerIsValid(s)
 
-extern ScanKey StrategyMapGetScanKeyEntry(StrategyMap map,
-					  StrategyNumber strategyNumber);
 extern StrategyMap IndexStrategyGetStrategyMap(IndexStrategy indexStrategy,
 	StrategyNumber maxStrategyNum, AttrNumber attrNum);
 
 extern Size
 AttributeNumberGetIndexStrategySize(AttrNumber maxAttributeNumber,
 				    StrategyNumber maxStrategyNumber);
-extern bool StrategyOperatorIsValid(StrategyOperator operator,
-				    StrategyNumber maxStrategy);
-extern bool StrategyTermIsValid(StrategyTerm term,
-				StrategyNumber maxStrategy);
-extern bool StrategyExpressionIsValid(StrategyExpression expression,
-				      StrategyNumber maxStrategy);
-extern bool StrategyEvaluationIsValid(StrategyEvaluation evaluation);
 extern StrategyNumber RelationGetStrategy(Relation relation,
 	AttrNumber attributeNumber, StrategyEvaluation evaluation,
 	RegProcedure procedure);

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: shmem.h,v 1.4 1996/11/27 07:32:10 vadim Exp $
+ * $Id: shmem.h,v 1.5 1997/08/19 21:40:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -94,10 +94,8 @@ typedef struct {
  * prototypes for functions in shmqueue.c
  */
 extern void SHMQueueInit(SHM_QUEUE *queue);
-extern bool SHMQueueIsDetached(SHM_QUEUE *queue);
 extern void SHMQueueElemInit(SHM_QUEUE *queue);
 extern void SHMQueueDelete(SHM_QUEUE *queue);
-extern void SHMQueueInsertHD(SHM_QUEUE *queue, SHM_QUEUE *elem);
 extern void SHMQueueInsertTL(SHM_QUEUE *queue, SHM_QUEUE *elem);
 extern void SHMQueueFirst(SHM_QUEUE *queue, Pointer *nextPtrPtr,
 			  SHM_QUEUE *nextQueue);

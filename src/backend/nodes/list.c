@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.3 1997/03/12 20:59:27 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.4 1997/08/19 21:31:39 momjian Exp $
  *
  * NOTES
  *    XXX a few of the following functions are duplicated to handle
@@ -408,6 +408,7 @@ LispRemove(void *elem, List *list)
     return(list);
 }
 
+#ifdef NOT_USED
 List *
 intLispRemove(int elem, List *list)
 {
@@ -429,6 +430,7 @@ intLispRemove(int elem, List *list)
     }
     return(list);
 }
+#endif
 
 List *
 set_difference(List *list1, List *list2)

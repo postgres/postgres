@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_query.h,v 1.7 1996/11/30 18:07:02 momjian Exp $
+ * $Id: parse_query.h,v 1.8 1997/08/19 21:39:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,8 +53,6 @@ extern Node *parser_typecast2(Node *expr, Oid exprType, Type tp, int typlen);
 extern Aggreg *ParseAgg(char *aggname, Oid basetype, Node *target);
 extern void handleTargetColname(ParseState *pstate, char **resname,
 					char *refname, char *colname);
-extern void checkTargetTypes(ParseState *pstate, char *target_colname,
-					char *refname, char *colname);
 
 /*
  * analyze.c
@@ -66,7 +64,6 @@ extern int NumLevels;
 #endif
 
 Oid exprType(Node *expr);
-ParseState* makeParseState(void);
 QueryTreeList *parse_analyze(List *querytree_list);
 
 /* define in parse_query.c, used in gram.y */

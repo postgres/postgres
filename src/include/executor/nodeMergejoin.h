@@ -6,24 +6,12 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeMergejoin.h,v 1.2 1996/11/10 03:05:09 momjian Exp $
+ * $Id: nodeMergejoin.h,v 1.3 1997/08/19 21:38:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef	NODEMERGEJOIN_H
 #define	NODEMERGEJOIN_H
-
-extern bool MergeCompare(List *eqQual, List *compareQual, ExprContext *econtext);
-
-extern void ExecMergeTupleDumpInner(ExprContext *econtext);
-
-extern void ExecMergeTupleDumpOuter(ExprContext *econtext);
-
-extern void ExecMergeTupleDumpMarked(ExprContext *econtext,
-				     MergeJoinState *mergestate);
-
-extern void ExecMergeTupleDump(ExprContext *econtext,
-			       MergeJoinState *mergestate);
 
 extern TupleTableSlot *ExecMergeJoin(MergeJoin *node);
 

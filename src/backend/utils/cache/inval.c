@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.3 1996/11/08 05:59:55 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.4 1997/08/19 21:35:06 momjian Exp $
  *
  * Note - this code is real crufty...
  *
@@ -30,6 +30,13 @@
 #include "utils/relcache.h"
 #include "catalog/catname.h"	/* XXX to support hacks below */
 #include "utils/syscache.h"	/* XXX to support the hacks below */
+
+static InvalidationEntry InvalidationEntryAllocate(uint16 size);
+static void LocalInvalidInvalidate(LocalInvalid invalid, void (*function)());
+static LocalInvalid LocalInvalidRegister(LocalInvalid invalid,
+					 InvalidationEntry entry);
+static void getmyrelids(void);
+
 
 /* ----------------
  *	private invalidation structures
@@ -83,7 +90,7 @@ Oid MyAMOPRelationId = 	InvalidOid;
  *		Allocates an invalidation entry.
  * --------------------------------
  */
-InvalidationEntry
+static InvalidationEntry
 InvalidationEntryAllocate(uint16 size)
 {
     InvalidationEntryData	*entryDataP;
@@ -98,7 +105,7 @@ InvalidationEntryAllocate(uint16 size)
  *	   Returns a new local cache invalidation state containing a new entry.
  * --------------------------------
  */
-LocalInvalid
+static LocalInvalid
 LocalInvalidRegister(LocalInvalid invalid,
 		     InvalidationEntry entry)
 {
@@ -116,7 +123,7 @@ LocalInvalidRegister(LocalInvalid invalid,
  *		invalidation state.
  * --------------------------------
  */
-void
+static void
 LocalInvalidInvalidate(LocalInvalid invalid, void (*function)())
 {
     InvalidationEntryData	*entryDataP;
@@ -230,7 +237,7 @@ RelationIdRegisterLocalInvalid(Oid relationId, Oid objectId)
  *	getmyrelids
  * --------------------------------
  */
-void
+static void
 getmyrelids()
 {
     HeapTuple	tuple;

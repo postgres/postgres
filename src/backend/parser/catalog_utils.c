@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/Attic/catalog_utils.c,v 1.20 1997/08/12 20:15:32 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/Attic/catalog_utils.c,v 1.21 1997/08/19 21:32:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,6 +109,9 @@ typedef struct _CandidateList {
 static Oid **argtype_inherit(int nargs, Oid *oid_array);
 static Oid **genxprod(InhPaths *arginh, int nargs);
 static int findsupers(Oid relid, Oid **supervec);
+static bool check_typeid(Oid id);
+static char *instr1(TypeTupleForm tp, char *string, int typlen);
+static void op_error(char *op, Oid arg1, Oid arg2);
 
 /* check to see if a type id is valid,
  * returns true if it is. By using this call before calling 
@@ -116,7 +119,7 @@ static int findsupers(Oid relid, Oid **supervec);
  * can be produced because the caller typically has more context of
  *  what's going on                 - jolly
  */
-bool
+static bool
 check_typeid(Oid id)
 {
     return (SearchSysCacheTuple(TYPOID, 
@@ -784,6 +787,7 @@ getAttrName(Relation rd, int attrno)
 
 /* Given a typename and value, returns the ascii form of the value */
 
+#ifdef NOT_USED
 char *
 outstr(char *typename,	/* Name of type of value */
        char *value)	/* Could be of any type */
@@ -795,6 +799,7 @@ outstr(char *typename,	/* Name of type of value */
     op = tp->typoutput;
     return((char *) fmgr(op, value));
 }
+#endif
 
 /* Given a Type and a string, return the internal form of that string */
 char *
@@ -805,7 +810,7 @@ instr2(Type tp, char *string, int typlen)
 
 /* Given a type structure and a string, returns the internal form of
    that string */
-char *
+static char *
 instr1(TypeTupleForm tp, char *string, int typlen)
 {
     Oid op;
@@ -1422,6 +1427,7 @@ get_typelem(Oid type_id)
     return (type->typelem);
 }
 
+#ifdef NOT_USED
 char
 FindDelimiter(char *typename)
 {
@@ -1440,12 +1446,13 @@ FindDelimiter(char *typename)
     delim = type->typdelim;
     return (delim);
 }
+#endif
 
 /*
  * Give a somewhat useful error message when the operator for two types
  * is not found.
  */
-void
+static void
 op_error(char *op, Oid arg1, Oid arg2)
 {
     Type tp1 = NULL, tp2 = NULL;

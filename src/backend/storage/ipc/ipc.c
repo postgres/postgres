@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.10 1997/01/08 08:32:01 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.11 1997/08/19 21:32:54 momjian Exp $
  *
  * NOTES
  *
@@ -48,6 +48,8 @@ int UsePrivateMemory = 1;
 #else
 int UsePrivateMemory = 0;
 #endif
+
+static void IpcMemoryDetach(int status, char *shmaddr);
 
 /* ----------------------------------------------------------------
  *			exit() handling stuff
@@ -312,6 +314,7 @@ IpcSemaphoreCreate(IpcSemaphoreKey semKey,
 /*									    */
 /*	note: the xxx_return variables are only used for debugging.	    */
 /****************************************************************************/
+#ifdef NOT_USED
 static int IpcSemaphoreSet_return;
 
 void
@@ -330,6 +333,7 @@ IpcSemaphoreSet(int semId, int semno, int value)
 	IpcConfigTip();
     }
 }
+#endif
 
 /****************************************************************************/
 /*   IpcSemaphoreKill(key)	- removes a semaphore			    */
@@ -513,7 +517,7 @@ IpcMemoryIdGet(IpcMemoryKey memKey, uint32 size)
 /*					from a backend address space	    */
 /*  (only called by backends running under the postmaster)		    */
 /****************************************************************************/
-void
+static void
 IpcMemoryDetach(int status, char *shmaddr)
 {
     if (shmdt(shmaddr) < 0) {

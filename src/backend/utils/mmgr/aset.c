@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/mmgr/aset.c,v 1.4 1996/11/10 03:03:45 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/mmgr/aset.c,v 1.5 1997/08/19 21:35:54 momjian Exp $
  *
  * NOTE
  *    XXX This is a preliminary implementation which lacks fail-fast
@@ -24,6 +24,10 @@
 #else
 # include <string.h>
 #endif
+
+static void AllocPointerDump(AllocPointer pointer);
+static int AllocSetIterate(AllocSet set,
+			 void (*function)(AllocPointer pointer));
 
 #undef AllocSetReset
 #undef malloc
@@ -273,7 +277,7 @@ AllocSetRealloc(AllocSet set, AllocPointer pointer, Size size)
  * Exceptions:
  *	BadArg if set is invalid.
  */
-int
+static int
 AllocSetIterate(AllocSet set,
 		void (*function)(AllocPointer pointer))
 {
@@ -295,6 +299,7 @@ AllocSetIterate(AllocSet set,
     return (count);
 }
 
+#ifdef NOT_USED
 int
 AllocSetCount(AllocSet set)
 {
@@ -310,6 +315,7 @@ AllocSetCount(AllocSet set)
     }
     return count;
 }
+#endif
 
 /*
  * Private routines
@@ -367,7 +373,7 @@ AllocPointerGetNext(AllocPointer pointer)
  * XXX AllocPointerDump --
  *	Displays allocated pointer.
  */
-void
+static void
 AllocPointerDump(AllocPointer pointer)
 {
     printf("\t%-10ld@ %0#lx\n", ((long*)pointer)[-1], (long)pointer); /* XXX */

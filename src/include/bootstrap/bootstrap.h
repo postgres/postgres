@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bootstrap.h,v 1.4 1996/11/08 06:43:28 scrappy Exp $
+ * $Id: bootstrap.h,v 1.5 1997/08/19 21:37:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,16 +50,9 @@ extern char *LexIDStr(int ident_num);
 extern void DefineAttr(char *name, char *type, int attnum);
 extern void InsertOneValue(Oid objectid, char *value, int i);
 extern void InsertOneNull(int i);
-extern bool BootstrapAlreadySeen(Oid id);
-extern void cleanup(void);
-extern int gettype(char *type);
-extern AttributeTupleForm AllocateAttribute(void);
 extern char* MapArrayTypeName(char *s);
 extern char* CleanUpStr(char *s);
 extern int EnterString (char *str);
-extern int CompHash (char *str, int len);
-extern hashnode *FindStr (char *str, int length, hashnode *mderef);
-extern hashnode *AddStr(char *str, int strlength, int mderef);
 extern void build_indices(void);
 
 #endif /* BOOTSTRAP_H */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.18 1997/08/18 20:53:08 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.19 1997/08/19 21:32:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,12 +29,6 @@
  *	replacement if WriteMode is BUFFER_LATE_WRITE.
  *
  * WriteBuffer() -- WriteNoReleaseBuffer() + ReleaseBuffer() 
- *
- * DirtyBufferCopy() -- For a given dbid/relid/blockno, if the buffer is
- *			in the cache and is dirty, mark it clean and copy
- *			it to the requested location.  This is a logical
- *			write, and has been installed to support the cache
- *			management code for write-once storage managers.
  *
  * FlushBuffer() -- as above but never delayed write.
  *
@@ -169,6 +163,7 @@ ReadBuffer(Relation reln, BlockNumber blockNum)
  *
  * XXX caller must have already acquired BufMgrLock
  */
+#ifdef NOT_USED
 static bool
 is_userbuffer(Buffer buffer)
 {
@@ -178,7 +173,9 @@ is_userbuffer(Buffer buffer)
 	return false;
     return true;
 }
+#endif
 
+#ifdef NOT_USED
 Buffer
 ReadBuffer_Debug(char *file,
 		 int line,
@@ -198,6 +195,7 @@ refcount = %ld, file: %s, line: %d\n",
     }
     return buffer;
 }
+#endif
 
 /*
  * ReadBufferWithBufferLock -- does the work of 
@@ -669,6 +667,7 @@ WriteBuffer(Buffer buffer)
     return(TRUE);
 } 
 
+#ifdef NOT_USED
 void
 WriteBuffer_Debug(char *file, int line, Buffer buffer)
 {
@@ -682,8 +681,15 @@ refcount = %ld, file: %s, line: %d\n",
 		PrivateRefCount[buffer - 1], file, line);
     }
 }
+#endif
 
 /*
+ * DirtyBufferCopy() -- For a given dbid/relid/blockno, if the buffer is
+ *			in the cache and is dirty, mark it clean and copy
+ *			it to the requested location.  This is a logical
+ *			write, and has been installed to support the cache
+ *			management code for write-once storage managers.
+ *
  *  DirtyBufferCopy() -- Copy a given dirty buffer to the requested
  *			 destination.
  *
@@ -695,6 +701,7 @@ refcount = %ld, file: %s, line: %d\n",
  *
  *  NOTE: used by sony jukebox code in postgres 4.2   - ay 2/95
  */
+#ifdef NOT_USED
 void
 DirtyBufferCopy(Oid dbid, Oid relid, BlockNumber blkno, char *dest)
 {
@@ -722,6 +729,7 @@ DirtyBufferCopy(Oid dbid, Oid relid, BlockNumber blkno, char *dest)
     
     SpinRelease(BufMgrLock);
 }
+#endif
 
 /*
  * FlushBuffer -- like WriteBuffer, but force the page to disk.
@@ -1462,6 +1470,7 @@ blockNum=%d, flags=0x%x, refcount=%d %d)\n",
  * pool and start measuring some performance with a clean empty buffer
  * pool.
  */
+#ifdef NOT_USED
 void
 BufferPoolBlowaway()
 {
@@ -1476,6 +1485,7 @@ BufferPoolBlowaway()
         BufTableDelete(&BufferDescriptors[i-1]);
     }
 }
+#endif
 
 #undef IncrBufferRefCount
 #undef ReleaseBuffer
@@ -1535,6 +1545,7 @@ ReleaseBuffer(Buffer buffer)
     return(STATUS_OK);
 }
 
+#ifdef NOT_USED
 void
 IncrBufferRefCount_Debug(char *file, int line, Buffer buffer)
 {
@@ -1548,7 +1559,9 @@ refcount = %ld, file: %s, line: %d\n",
 		PrivateRefCount[buffer - 1], file, line);
     }
 }
+#endif
 
+#ifdef NOT_USED
 void
 ReleaseBuffer_Debug(char *file, int line, Buffer buffer)
 {
@@ -1562,7 +1575,9 @@ refcount = %ld, file: %s, line: %d\n",
 		PrivateRefCount[buffer - 1], file, line);
     }
 }
+#endif
 
+#ifdef NOT_USED
 int
 ReleaseAndReadBuffer_Debug(char *file,
 			   int line,
@@ -1594,6 +1609,7 @@ refcount = %ld, file: %s, line: %d\n",
     }
     return b;
 }
+#endif
 
 #ifdef BMTRACE
 

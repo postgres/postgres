@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tlist.h,v 1.1 1996/08/28 07:23:28 scrappy Exp $
+ * $Id: tlist.h,v 1.2 1997/08/19 21:39:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,6 +31,4 @@ extern List *copy_vars(List *target, List *source);
 extern List *flatten_tlist(List *tlist);
 extern List *flatten_tlist_vars(List *full_tlist,
 				List *flat_tlist);
-extern void AddGroupAttrToTlist(List *tlist, List *grpCl);
-
 #endif	/* TLIST_H */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/Attic/dbcommands.c,v 1.5 1997/08/18 20:53:03 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/Attic/dbcommands.c,v 1.6 1997/08/19 21:32:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,6 +38,7 @@
 static void check_permissions(char *command, char *dbname,
 			      Oid *dbIdP, Oid *userIdP);
 static HeapTuple get_pg_dbtup(char *command, char *dbname, Relation dbrel);
+static void stop_vacuum(char *dbname);
 
 void
 createdb(char *dbname)
@@ -241,7 +242,7 @@ check_permissions(char *command,
  *  stop_vacuum() -- stop the vacuum daemon on the database, if one is
  *		     running.
  */
-void
+static void
 stop_vacuum(char *dbname)
 {
     char filename[256];

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hsearch.h,v 1.2 1996/10/31 09:51:20 scrappy Exp $
+ * $Id: hsearch.h,v 1.3 1997/08/19 21:40:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -135,6 +135,5 @@ extern long *hash_seq(HTAB *hashp);
  */
 extern long string_hash(char *key, int keysize);
 extern long tag_hash(int *key, int keysize);
-extern long disk_hash(char *key);
 
 #endif /* HSEARCH_H */

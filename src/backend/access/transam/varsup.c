@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.8 1997/08/12 22:51:58 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.9 1997/08/19 21:30:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,13 @@
 #include <access/xact.h>
 #include <access/heapam.h>
 #include <catalog/catname.h>
+
+static void GetNewObjectIdBlock(Oid *oid_return, int oid_block_size);
+static void VariableRelationGetNextOid(Oid *oid_return);
+static void VariableRelationGetNextXid(TransactionId *xidP);
+static void VariableRelationPutLastXid(TransactionId xid);
+static void VariableRelationPutNextOid(Oid *oidP);
+static void VariableRelationGetLastXid(TransactionId *xidP);
 
 /* ---------------------
  *	spin lock for oid generation
@@ -35,7 +42,7 @@ int OidGenLockId;
  *	VariableRelationGetNextXid
  * --------------------------------
  */
-void
+static void
 VariableRelationGetNextXid(TransactionId *xidP)
 {
     Buffer buf;
@@ -77,7 +84,7 @@ VariableRelationGetNextXid(TransactionId *xidP)
  *	VariableRelationGetLastXid
  * --------------------------------
  */
-void
+static void
 VariableRelationGetLastXid(TransactionId *xidP)
 {
     Buffer buf;
@@ -166,7 +173,7 @@ VariableRelationPutNextXid(TransactionId xid)
  *	VariableRelationPutLastXid
  * --------------------------------
  */
-void
+static void
 VariableRelationPutLastXid(TransactionId xid)
 {
     Buffer buf;
@@ -209,7 +216,7 @@ VariableRelationPutLastXid(TransactionId xid)
  *	VariableRelationGetNextOid
  * --------------------------------
  */
-void
+static void
 VariableRelationGetNextOid(Oid *oid_return)
 {
     Buffer buf;
@@ -277,7 +284,7 @@ VariableRelationGetNextOid(Oid *oid_return)
  *	VariableRelationPutNextOid
  * --------------------------------
  */
-void
+static void
 VariableRelationPutNextOid(Oid *oidP)
 {
     Buffer buf;
@@ -484,7 +491,7 @@ UpdateLastCommittedXid(TransactionId xid)
  *	id assignments should use this 
  * ----------------
  */
-void
+static void
 GetNewObjectIdBlock(Oid *oid_return, /* place to return the new object id */
 		    int oid_block_size)	/* number of oids desired */
 {

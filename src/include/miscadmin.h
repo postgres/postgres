@@ -11,7 +11,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.10 1997/08/14 16:11:41 momjian Exp $
+ * $Id: miscadmin.h,v 1.11 1997/08/19 21:37:03 momjian Exp $
  *
  * NOTES
  *    some of the information in this file will be moved to
@@ -172,10 +172,6 @@ typedef	int16	ExitStatus;
 /* XXX are there any other meaningful exit codes? */
 
 /* in utils/init/postinit.c */
-extern void InitMyDatabaseId(void);
-extern void InitUserid(void);
-extern void InitCommunication(void);
-extern void InitStdio(void);
 
 extern bool PostgresIsInitialized;
 
@@ -183,7 +179,6 @@ extern void InitPostgres(char *name);
 
 /* in miscinit.c */
 extern void ExitPostgres(ExitStatus status);
-extern void AbortPostgres(void);
 extern void StatusBackendExit(int status);
 extern void StatusPostmasterExit(int status);
 

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.20 1997/07/29 16:16:10 thomas Exp $
+ * $Id: builtins.h,v 1.21 1997/08/19 21:40:26 momjian Exp $
  *
  * NOTES
  *    This should normally only be included by fmgr.h.
@@ -166,11 +166,8 @@ extern bool namegt(NameData *arg1, NameData *arg2);
 extern bool namege(NameData *arg1, NameData *arg2);
 extern int namecmp(Name n1, Name n2);
 extern int namecpy(Name n1, Name n2);
-extern int namecat(Name n1, Name n2);
 extern int namestrcpy(Name name, char *str);
-extern int namestrcat(Name name, char *str);
 extern int namestrcmp(Name name, char *str);
-extern uint32 NameComputeLength(Name name);
 
 /* numutils.c */
 /* XXX hack.  HP-UX has a ltoa (with different arguments) already. */
@@ -180,8 +177,6 @@ extern uint32 NameComputeLength(Name name);
 extern int32 pg_atoi(char *s, int size, int c);
 extern void itoa(int i, char *a);
 extern void ltoa(int32 l, char *a);
-extern int ftoa(double value, char *ascii, int width, int prec1, char format);
-extern int atof1(char *str, double *val);
 
 /*
  *	Per-opclass comparison functions for new btrees.  These are
@@ -261,6 +256,7 @@ extern DateTime *datetime_in(char *str);
 extern char *datetime_out(DateTime *datetime);
 extern TimeSpan *timespan_in(char *str);
 extern char *timespan_out(TimeSpan *timespan);
+extern int datetime2tm( DateTime dt, int *tzp, struct tm *tm, double *fsec, char **tzn);
 
 /* filename.c */
 extern char *filename_in(char *file);
@@ -341,6 +337,7 @@ extern bool float84gt(float64 arg1, float32 arg2);
 extern bool float84ge(float64 arg1, float32 arg2);
 
 /* geo_ops.c, geo_selfuncs.c */
+extern double *box_area(BOX *box);
 
 /* misc.c */
 extern bool nullvalue(Datum value, bool *isNull);
@@ -356,7 +353,6 @@ extern int32 userfntest(int i);
 /* not_in.c */
 extern bool int4notin(int16 not_in_arg, char *relation_and_attr);
 extern bool oidnotin(Oid the_oid, char *compare);
-extern int my_varattno(Relation rd, char *a);
 
 /* oid.c */
 extern Oid *oid8in(char *oidString);
@@ -462,11 +458,9 @@ extern uint32 hashvarchar(struct varlena *key);
 
 /* varlena.c */
 extern struct varlena *byteain(char *inputText);
-extern struct varlena *shove_bytes(unsigned char *stuff, int len);
 extern char *byteaout(struct varlena *vlena);
 extern struct varlena *textin(char *inputText);
 extern char *textout(struct varlena *vlena);
-extern int textlen (text* t);
 extern text *textcat(text* t1, text* t2);
 extern bool texteq(struct varlena *arg1, struct varlena *arg2);
 extern bool textne(struct varlena *arg1, struct varlena *arg2);
@@ -525,7 +519,6 @@ extern bool namelike(NameData *n, struct varlena *p);
 extern bool namenlike(NameData *s, struct varlena *p);
 extern bool textlike(struct varlena *s, struct varlena *p);
 extern bool textnlike(struct varlena *s, struct varlena *p);
-extern int like(char *text, char *p);
 
 /* oracle_compat.c */
 
