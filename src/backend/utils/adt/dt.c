@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.21 1997/05/13 04:26:07 thomas Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.22 1997/05/23 05:24:47 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2640,7 +2640,7 @@ DecodeDateDelta( char *field[], int ftype[], int nf, int *dtype, struct tm *tm, 
 
     *dtype = DTK_DELTA;
 
-    type = DTK_SECOND;
+    type = SECOND;
     tm->tm_year = 0;
     tm->tm_mon = 0;
     tm->tm_mday = 0;
@@ -2691,7 +2691,7 @@ printf( "DecodeDateDelta- field[%d] is %s (type %d)\n", i, field[i], ftype[i]);
 		if (val < 0) *fsec = - (*fsec);
 	    };
 	    flen = strlen(field[i]);
-	    tmask = DTK_M(type);
+	    tmask = 0; /* DTK_M(type); */
 
 	    switch (type) {
 	    case DTK_MICROSEC:
@@ -2704,42 +2704,52 @@ printf( "DecodeDateDelta- field[%d] is %s (type %d)\n", i, field[i], ftype[i]);
 
 	    case DTK_SECOND:
 		tm->tm_sec += val;
+		tmask = DTK_M(SECOND);
 		break;
 
 	    case DTK_MINUTE:
 		tm->tm_min += val;
+		tmask = DTK_M(MINUTE);
 		break;
 
 	    case DTK_HOUR:
 		tm->tm_hour += val;
+		tmask = DTK_M(HOUR);
 		break;
 
 	    case DTK_DAY:
 		tm->tm_mday += val;
+		tmask = ((fmask & DTK_M(DAY))? 0: DTK_M(DAY));
 		break;
 
 	    case DTK_WEEK:
 		tm->tm_mday += val*7;
+		tmask = ((fmask & DTK_M(DAY))? 0: DTK_M(DAY));
 		break;
 
 	    case DTK_MONTH:
 		tm->tm_mon += val;
+		tmask = DTK_M(MONTH);
 		break;
 
 	    case DTK_YEAR:
 		tm->tm_year += val;
+		tmask = ((fmask & DTK_M(YEAR))? 0: DTK_M(YEAR));
 		break;
 
 	    case DTK_DECADE:
 		tm->tm_year += val*10;
+		tmask = ((fmask & DTK_M(YEAR))? 0: DTK_M(YEAR));
 		break;
 
 	    case DTK_CENTURY:
 		tm->tm_year += val*100;
+		tmask = ((fmask & DTK_M(YEAR))? 0: DTK_M(YEAR));
 		break;
 
 	    case DTK_MILLENIUM:
 		tm->tm_year += val*1000;
+		tmask = ((fmask & DTK_M(YEAR))? 0: DTK_M(YEAR));
 		break;
 
 	    default:
@@ -2770,7 +2780,7 @@ printf( "DecodeDateDelta- UNITS field %s value is %d\n", field[i], val);
 		break;
 
 	    case RESERV:
-		type = (DTK_DATE_M || DTK_TIME_M);
+		tmask = (DTK_DATE_M || DTK_TIME_M);
 		*dtype = val;
 		break;
 

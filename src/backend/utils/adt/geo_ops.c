@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.8 1997/05/22 00:07:21 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.9 1997/05/23 05:24:53 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -95,7 +95,7 @@ int pair_decode(char *str, float8 *x, float8 *y, char **s)
     int has_delim;
     char *cp;
 
-    if (!PointerIsValid((char *)str))
+    if (!PointerIsValid(str))
 	return(FALSE);
 
     while (isspace( *str)) str++;
@@ -264,7 +264,7 @@ BOX *box_in(char *str)
     char *s;
     double x, y;
 
-    if (!PointerIsValid((char *)str))
+    if (!PointerIsValid(str))
 	elog (WARN," Bad (null) box external representation",NULL);
 
     if ((! path_decode(FALSE, 2, str, &isopen, &s, &(box->high)))
@@ -296,7 +296,7 @@ char *box_out(BOX *box)
     char *cp;
 #endif
 
-    if (!PointerIsValid((char *)box))
+    if (!PointerIsValid(box))
 	return(NULL);
 
 #if OLD_FORMAT_OUT
@@ -826,7 +826,7 @@ PATH *path_in(char *str)
     double x, y;
 #endif
 
-    if (!PointerIsValid((char *)str))
+    if (!PointerIsValid(str))
 	elog(WARN, "Bad (null) path external representation");
 
     if ((npts = pair_count(str, ',')) <= 0)
@@ -886,7 +886,7 @@ char *path_out(PATH *path)
     char *result, *cp;
 #endif
 
-    if (!PointerIsValid((char *)path))
+    if (!PointerIsValid(path))
 	return NULL;
 
 #if OLD_FORMAT_OUT
@@ -956,7 +956,7 @@ PATH *path_copy(PATH *path);
 bool
 path_isclosed( PATH *path)
 {
-    if (!PointerIsValid((char *)path))
+    if (!PointerIsValid(path))
 	return FALSE;
 
     return(path->closed);
@@ -965,7 +965,7 @@ path_isclosed( PATH *path)
 bool
 path_isopen( PATH *path)
 {
-    if (!PointerIsValid((char *)path))
+    if (!PointerIsValid(path))
 	return FALSE;
 
     return(! path->closed);
@@ -975,7 +975,7 @@ path_isopen( PATH *path)
 int4
 path_npoints( PATH *path)
 {
-    if (!PointerIsValid((char *)path))
+    if (!PointerIsValid(path))
 	return 0;
 
     return(path->npts);
@@ -987,7 +987,7 @@ path_close(PATH *path)
     PATH *result;
 
     result = path_copy(path);
-    if (PointerIsValid((char *)result))
+    if (PointerIsValid(result))
 	result->closed = TRUE;
 
     return(result);
@@ -999,7 +999,7 @@ path_open(PATH *path)
     PATH *result;
 
     result = path_copy(path);
-    if (PointerIsValid((char *)result))
+    if (PointerIsValid(result))
 	result->closed = FALSE;
 
     return(result);
@@ -1012,7 +1012,7 @@ path_copy(PATH *path)
     PATH *result;
     int size;
 
-    if (!PointerIsValid((char *)path))
+    if (!PointerIsValid(path))
 	return NULL;
 
     size = offsetof(PATH, p[0]) + (sizeof(path->p[0]) * path->npts);
@@ -1169,7 +1169,7 @@ point_in(char *str)
 char *
 point_out(Point *pt)
 {
-    if (!PointerIsValid((char *)pt))
+    if (!PointerIsValid(pt))
 	return(NULL);
 
     return( path_encode( -1, 1, pt));
@@ -1308,7 +1308,7 @@ LSEG *lseg_in(char *str)
     int isopen;
     char *s;
 
-    if (!PointerIsValid((char *)str))
+    if (!PointerIsValid(str))
 	elog (WARN," Bad (null) lseg external representation",NULL);
 
     lseg = PALLOCTYPE(LSEG);
@@ -1325,7 +1325,7 @@ LSEG *lseg_in(char *str)
 
 char *lseg_out(LSEG *ls)
 {
-    if (!PointerIsValid((char *)ls))
+    if (!PointerIsValid(ls))
 	return(NULL);
 
     return( path_encode( FALSE, 2, (Point *) &(ls->p[0])));
@@ -2005,7 +2005,7 @@ POLYGON *poly_in(char *str)
     double x1, x2;
 #endif
 
-    if (!PointerIsValid((char *)str))
+    if (!PointerIsValid(str))
 	elog (WARN," Bad (null) polygon external representation");
 
     if ((npts = pair_count(str, ',')) <= 0)
@@ -2091,7 +2091,7 @@ char *poly_out(POLYGON *poly)
     char *result, *cp;
 #endif
 
-    if (!PointerIsValid((char *)poly))
+    if (!PointerIsValid(poly))
 	return NULL;
 
 #if OLD_FORMAT_OUT
@@ -2434,8 +2434,7 @@ path_add_pt(PATH *path, Point *point)
     if (! (PointerIsValid(path) && PointerIsValid(point)))
 	return(NULL);
 
-    if (! PointerIsValid(result = path_copy(path)))
-	elog(WARN, "Memory allocation failed, can't add path",NULL);
+    result = path_copy(path);
 
     for (i=0; i<path->npts; i++) {
 	result->p[i].x += point->x;
@@ -2454,8 +2453,7 @@ path_sub_pt(PATH *path, Point *point)
     if (! (PointerIsValid(path) && PointerIsValid(point)))
 	return(NULL);
 
-    if (! PointerIsValid(result = path_copy(path)))
-	elog(WARN, "Memory allocation failed, can't subtract path",NULL);
+    result = path_copy(path);
 
     for (i=0; i<path->npts; i++) {
 	result->p[i].x -= point->x;
@@ -2479,8 +2477,7 @@ path_mul_pt(PATH *path, Point *point)
     if (! (PointerIsValid(path) && PointerIsValid(point)))
 	return(NULL);
 
-    if (! PointerIsValid(result = path_copy(path)))
-	elog(WARN, "Memory allocation failed, can't multiply path",NULL);
+    result = path_copy(path);
 
     for (i=0; i<path->npts; i++) {
 	p = point_mul( &path->p[i], point);
@@ -2502,8 +2499,7 @@ path_div_pt(PATH *path, Point *point)
     if (! (PointerIsValid(path) && PointerIsValid(point)))
 	return(NULL);
 
-    if (! PointerIsValid(result = path_copy(path)))
-	elog(WARN, "Memory allocation failed, can't divide path",NULL);
+    result = path_copy(path);
 
     for (i=0; i<path->npts; i++) {
 	p = point_div( &path->p[i], point);
@@ -2641,7 +2637,7 @@ poly_path(POLYGON *poly)
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.8 1997/05/22 00:07:21 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.9 1997/05/23 05:24:53 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2923,11 +2919,10 @@ circle_add_pt(CIRCLE *circle, Point *point)
 {
     CIRCLE *result;
 
-    if (!PointerIsValid(circle) && !PointerIsValid(point))
+    if (!PointerIsValid(circle) || !PointerIsValid(point))
 	return(NULL);
 
-    if (! PointerIsValid(result = circle_copy(circle)))
-	elog(WARN, "Memory allocation failed, can't add circle",NULL);
+    result = circle_copy(circle);
 
     result->center.x += point->x;
     result->center.y += point->y;
@@ -2940,11 +2935,10 @@ circle_sub_pt(CIRCLE *circle, Point *point)
 {
     CIRCLE *result;
 
-    if (!PointerIsValid(circle) && !PointerIsValid(point))
+    if (!PointerIsValid(circle) || !PointerIsValid(point))
 	return(NULL);
 
-    if (! PointerIsValid(result = circle_copy(circle)))
-	elog(WARN, "Memory allocation failed, can't subtract circle",NULL);
+    result = circle_copy(circle);
 
     result->center.x -= point->x;
     result->center.y -= point->y;
@@ -2962,11 +2956,10 @@ circle_mul_pt(CIRCLE *circle, Point *point)
     CIRCLE *result;
     Point *p;
 
-    if (!PointerIsValid(circle) && !PointerIsValid(point))
+    if (!PointerIsValid(circle) || !PointerIsValid(point))
 	return(NULL);
 
-    if (! PointerIsValid(result = circle_copy(circle)))
-	elog(WARN, "Memory allocation failed, can't multiply circle",NULL);
+    result = circle_copy(circle);
 
     p = point_mul( &circle->center, point);
     result->center.x = p->x;
@@ -2983,11 +2976,10 @@ circle_div_pt(CIRCLE *circle, Point *point)
     CIRCLE *result;
     Point *p;
 
-    if (!PointerIsValid(circle) && !PointerIsValid(point))
+    if (!PointerIsValid(circle) || !PointerIsValid(point))
 	return(NULL);
 
-    if (! PointerIsValid(result = circle_copy(circle)))
-	elog(WARN, "Memory allocation failed, can't add circle",NULL);
+    result = circle_copy(circle);
 
     p = point_div( &circle->center, point);
     result->center.x = p->x;
