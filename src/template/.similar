@@ -1,5 +1,5 @@
 # Format of this file is expr-style-regular-expression=templatefilename
-alpha-unknown-linux-gnu=linux_alpha
+alpha[a-z0-9]*-unknown-linux-gnu=linux_alpha
 alpha[a-z0-9]*-dec-osf=alpha_cc
 arm-unknown-linux-gnu=linux_arm
 hppa[0-9.]*-hp-hpux=hpux_cc
