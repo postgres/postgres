@@ -1,0 +1,112 @@
+*** /laptop/my2pg.pl	Mon Apr 19 18:51:44 2004
+--- my2pg.pl	Mon Apr 19 18:59:09 2004
+***************
+*** 38,43 ****
+--- 38,50 ----
+  # $My2pg: my2pg.pl,v 1.28 2001/12/06 19:32:20 fonin Exp $
+  # $Id: my2pg.diff,v 1.1 2004/04/19 23:18:12 momjian Exp $
+  
++ # Custom patch
++ # Revision 1.9  2002/08/22 00:01:39  tgl
++ # Add a bunch of pseudo-types to replace the behavior formerly associated
++ # with OPAQUE, as per recent pghackers discussion.  I still want to do some
++ # more work on the 'cstring' pseudo-type, but I'm going to commit the bulk
++ # of the changes now before the tree starts shifting under me ...
++ 
+  #
+  # $Log: my2pg.diff,v $
+  # Revision 1.1  2004/04/19 23:18:12  momjian
+  # Update to my2pg version 1.28, add docs, update URL for newest version.
+  #
+  # Create diff of custom changes Tom made to the utility for CREATE
+  # FUNCTION.
+  #
+  # This will make moving this utility out of CVS easier.
+  #
+  # Revision 1.28  2002/11/30 12:03:48  fonin
+***************
+*** 332,342 ****
+  	    print LIBTYPES "\n * Types for table ".uc($table_name);
+  	    print LIBTYPES "\n */\n";
+  
+! 	    $types.="\nCREATE FUNCTION $typename"."_in (opaque)
+  	RETURNS $typename
+  	AS '$libtypename'
+  	LANGUAGE 'c'
+! 	WITH (ISCACHABLE);\n";
+  
+  # creating output function
+  	    my $func_out="
+--- 339,349 ----
+  	    print LIBTYPES "\n * Types for table ".uc($table_name);
+  	    print LIBTYPES "\n */\n";
+  
+! 	    $types.="\nCREATE FUNCTION $typename"."_in (cstring)
+  	RETURNS $typename
+  	AS '$libtypename'
+  	LANGUAGE 'c'
+! 	WITH (ISSTRICT, ISCACHABLE);\n";
+  
+  # creating output function
+  	    my $func_out="
+***************
+*** 386,396 ****
+      return (*a>=*b);
+  }\n";
+  
+! 	    $types.="\nCREATE FUNCTION $typename"."_out (opaque)
+! 	RETURNS opaque
+  	AS '$libtypename'
+  	LANGUAGE 'c'
+! 	WITH (ISCACHABLE);\n";
+  
+  	    $types.="\nCREATE TYPE $typename (
+  	internallength = 2,
+--- 393,403 ----
+      return (*a>=*b);
+  }\n";
+  
+! 	    $types.="\nCREATE FUNCTION $typename"."_out ($typename)
+! 	RETURNS cstring
+  	AS '$libtypename'
+  	LANGUAGE 'c'
+! 	WITH (ISSTRICT, ISCACHABLE);\n";
+  
+  	    $types.="\nCREATE TYPE $typename (
+  	internallength = 2,
+***************
+*** 532,538 ****
+  	    print LIBTYPES "\n * Types for table ".uc($table_name);
+  	    print LIBTYPES "\n */\n";
+  
+! 	    $types.="\nCREATE FUNCTION $typename"."_in (opaque)
+  	RETURNS $typename
+  	AS '$libtypename'
+  	LANGUAGE 'c';\n";
+--- 539,545 ----
+  	    print LIBTYPES "\n * Types for table ".uc($table_name);
+  	    print LIBTYPES "\n */\n";
+  
+! 	    $types.="\nCREATE FUNCTION $typename"."_in (cstring)
+  	RETURNS $typename
+  	AS '$libtypename'
+  	LANGUAGE 'c';\n";
+***************
+*** 584,591 ****
+  
+  \n";
+  
+! 	    $types.="\nCREATE FUNCTION $typename"."_out (opaque)
+! 	RETURNS opaque
+  	AS '$libtypename'
+  	LANGUAGE 'c';\n";
+  
+--- 591,598 ----
+  
+  \n";
+  
+! 	    $types.="\nCREATE FUNCTION $typename"."_out ($typename)
+! 	RETURNS cstring
+  	AS '$libtypename'
+  	LANGUAGE 'c';\n";
+  
