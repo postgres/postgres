@@ -48,6 +48,9 @@
 # include <sys/ioctl.h>
 # include <sys/param.h>
 
+/* IRIX doesn't do 'long long' in va_arg(), so use a typedef */
+typedef long long long_long;
+
 /*
 **  SNPRINTF, VSNPRINT -- counted versions of printf
 **
@@ -70,7 +73,7 @@
  * causing nast effects.
  **************************************************************/
 
-/*static char _id[] = "$Id: snprintf.c,v 1.7 1998/09/23 03:11:24 scrappy Exp $";*/
+/*static char _id[] = "$Id: snprintf.c,v 1.8 1998/10/02 15:38:01 momjian Exp $";*/
 static char *end;
 static int	SnprfOverflow;
 
@@ -192,7 +195,7 @@ dopr (char *buffer, const char *format, ... )
                        case 'd': case 'D':
                                if( longflag ){
                                  if( longlongflag ) {
-                                       value = va_arg( args, long long );
+                                       value = va_arg( args, long_long );
                                  } else {
                                        value = va_arg( args, long );
                                  }
