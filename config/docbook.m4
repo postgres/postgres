@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/config/docbook.m4,v 1.3 2002/04/14 17:23:20 petere Exp $
+# $Header: /cvsroot/pgsql/config/docbook.m4,v 1.4 2002/07/16 00:51:37 momjian Exp $
 
 # PGAC_PROG_JADE
 # --------------
@@ -59,6 +59,7 @@ else
         sgml/stylesheets/nwalsh-modular \
         sgml/stylesheets/docbook \
         sgml/docbook/dsssl/modular \
+        sgml/docbook/stylesheet/dsssl/modular \
         sgml/docbook/dsssl-stylesheets
       do
         pgac_candidate=$pgac_prefix/$pgac_infix/$pgac_postfix

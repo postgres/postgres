@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.4 2002/07/04 15:10:43 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.5 2002/07/16 00:51:37 momjian Exp $
 -->
 
  <appendix id="features">
@@ -878,11 +878,6 @@ $Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.4 2002/07/04 15:10:43 tho
         <entry></entry>
        </row>
        <row>
-        <entry>F291</entry>
-        <entry>UNIQUE predicate</entry>
-        <entry></entry>
-       </row>
-       <row>
         <entry>F302</entry>
         <entry>INTERSECT table operator</entry>
         <entry></entry>
@@ -1153,11 +1148,6 @@ $Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.4 2002/07/04 15:10:43 tho
         <entry></entry>
        </row>
        <row>
-        <entry>T151</entry>
-        <entry>DISTINCT predicate</entry>
-        <entry></entry>
-       </row>
-       <row>
         <entry>T191</entry>
         <entry>Referential action RESTRICT</entry>
         <entry></entry>
@@ -1423,6 +1413,11 @@ $Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.4 2002/07/04 15:10:43 tho
        <row>
         <entry>F251</entry>
         <entry>Domain support</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>F291</entry>
+        <entry>UNIQUE predicate</entry>
         <entry></entry>
        </row>
        <row>
@@ -1705,6 +1700,11 @@ $Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.4 2002/07/04 15:10:43 tho
        <row>
         <entry>T131</entry>
         <entry>Recursive query</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>T151</entry>
+        <entry>DISTINCT predicate</entry>
         <entry></entry>
        </row>
        <row>
