@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Jun 11 17:27:56 EDT 2002
+Last updated:		Wed Jun 12 17:20:38 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -166,7 +166,6 @@ Indexes
 * Improve concurrency in GIST
 * Improve concurrency of hash indexes (Neil Conway)
 * Test hash index performance and recommend or discourage usage
-
 
 Commands
 ========
