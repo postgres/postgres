@@ -42,7 +42,7 @@ find_struct_member(char *name, char *str, struct ECPGstruct_member * members, in
 				switch (members->type->type)
 				{
 					case ECPGt_array:
-						return (new_variable(name, ECPGmake_array_type(members->type->u.element, members->type->size), brace_level));
+						return (new_variable(name, ECPGmake_array_type(ECPGmake_simple_type(members->type->u.element->type, members->type->u.element->size), members->type->size), brace_level));
 					case ECPGt_struct:
 					case ECPGt_union:
 						return (new_variable(name, ECPGmake_struct_type(members->type->u.members, members->type->type, members->type->struct_sizeof), brace_level));
@@ -92,7 +92,7 @@ find_struct_member(char *name, char *str, struct ECPGstruct_member * members, in
 						switch (members->type->u.element->type)
 						{
 							case ECPGt_array:
-								return (new_variable(name, ECPGmake_array_type(members->type->u.element->u.element, members->type->u.element->size), brace_level));
+								return (new_variable(name, ECPGmake_array_type(ECPGmake_simple_type(members->type->u.element->u.element->type, members->type->u.element->u.element->size), members->type->u.element->size), brace_level));
 							case ECPGt_struct:
 							case ECPGt_union:
 								return (new_variable(name, ECPGmake_struct_type(members->type->u.element->u.members, members->type->u.element->type, members->type->u.element->struct_sizeof), brace_level));
@@ -251,7 +251,7 @@ find_variable(char *name)
 				switch (p->type->u.element->type)
 				{
 					case ECPGt_array:
-						return (new_variable(name, ECPGmake_array_type(p->type->u.element->u.element, p->type->u.element->size), p->brace_level));
+						return (new_variable(name, ECPGmake_array_type(ECPGmake_simple_type(p->type->u.element->u.element->type, p->type->u.element->u.element->size), p->type->u.element->size), p->brace_level));
 					case ECPGt_struct:
 					case ECPGt_union:
 						return (new_variable(name, ECPGmake_struct_type(p->type->u.element->u.members, p->type->u.element->type, p->type->u.element->struct_sizeof), p->brace_level));
