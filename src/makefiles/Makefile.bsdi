@@ -1,4 +1,4 @@
-AROPT = cq
+AROPT = cr
 
 # bsdi 4.0 and later is ELF
 DLSUFFIX = .so

@@ -1,6 +1,6 @@
 override CFLAGS += -dy
 export_dynamic = -W l,-Bexport
-AROPT = cq
+AROPT = cr
 
 DLSUFFIX = .so
 CFLAGS_SL = -K PIC

@@ -1,4 +1,4 @@
-AROPT = cq
+AROPT = cr
 
 ifdef ELF_SYSTEM
 export_dynamic = -Wl,-E
