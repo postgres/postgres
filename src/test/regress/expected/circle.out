@@ -74,9 +74,9 @@ four|f1
     |<(100,0),100> 
 (4 rows)
 
-QUERY: SELECT '' as five, c1.f1 AS one, c2.f1 AS two, (c1.f1 <===> c2.f1) AS distance
+QUERY: SELECT '' as five, c1.f1 AS one, c2.f1 AS two, (c1.f1 <-> c2.f1) AS distance
   FROM CIRCLE_TBL c1, CIRCLE_TBL c2
-  WHERE (c1.f1 < c2.f1) AND ((c1.f1 <===> c2.f1) > 0)
+  WHERE (c1.f1 < c2.f1) AND ((c1.f1 <-> c2.f1) > 0)
   ORDER BY distance, one, two;
 five|one           |two           |        distance
 ----+--------------+--------------+----------------

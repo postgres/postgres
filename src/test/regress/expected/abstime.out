@@ -143,17 +143,17 @@ QUERY: SELECT '' AS ten, ABSTIME_TBL.f1 AS abstime, RELTIME_TBL.f1 AS reltime
    WHERE (ABSTIME_TBL.f1 + RELTIME_TBL.f1)
 	< 'Jan 14 14:00:00 1971'::abstime
    ORDER BY abstime, reltime;
-ten|abstime                     |reltime         
----+----------------------------+----------------
-   |Sat May 10 23:59:12 1947 PST|@ 14 seconds ago
-   |Sat May 10 23:59:12 1947 PST|@ 1 minute      
-   |Sat May 10 23:59:12 1947 PST|@ 5 hours       
-   |Sat May 10 23:59:12 1947 PST|@ 10 days       
-   |Sat May 10 23:59:12 1947 PST|@ 3 months      
-   |epoch                       |@ 14 seconds ago
-   |epoch                       |@ 1 minute      
-   |epoch                       |@ 5 hours       
-   |epoch                       |@ 10 days       
-   |epoch                       |@ 3 months      
+ten|abstime                     |reltime      
+---+----------------------------+-------------
+   |Sat May 10 23:59:12 1947 PST|@ 14 secs ago
+   |Sat May 10 23:59:12 1947 PST|@ 1 min      
+   |Sat May 10 23:59:12 1947 PST|@ 5 hours    
+   |Sat May 10 23:59:12 1947 PST|@ 10 days    
+   |Sat May 10 23:59:12 1947 PST|@ 3 mons     
+   |epoch                       |@ 14 secs ago
+   |epoch                       |@ 1 min      
+   |epoch                       |@ 5 hours    
+   |epoch                       |@ 10 days    
+   |epoch                       |@ 3 mons     
 (10 rows)
 

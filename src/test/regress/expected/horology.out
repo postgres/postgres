@@ -505,30 +505,30 @@ three|abstime  |datetime
 
 QUERY: SELECT '' AS ten, f1 AS timespan, reltime( f1) AS reltime
   FROM TIMESPAN_TBL;
-ten|timespan                     |reltime         
----+-----------------------------+----------------
-   |@ 1 min                      |@ 1 minute      
-   |@ 5 hours                    |@ 5 hours       
-   |@ 10 days                    |@ 10 days       
-   |@ 34 years                   |@ 408 months    
-   |@ 3 mons                     |@ 3 months      
-   |@ 14 secs ago                |@ 14 seconds ago
-   |@ 1 day 2 hours 3 mins 4 secs|@ 93784 seconds 
-   |@ 6 years                    |@ 72 months     
-   |@ 5 mons                     |@ 5 months      
-   |@ 5 mons 12 hours            |@ 3612 hours    
+ten|timespan                     |reltime                      
+---+-----------------------------+-----------------------------
+   |@ 1 min                      |@ 1 min                      
+   |@ 5 hours                    |@ 5 hours                    
+   |@ 10 days                    |@ 10 days                    
+   |@ 34 years                   |@ 34 years                   
+   |@ 3 mons                     |@ 3 mons                     
+   |@ 14 secs ago                |@ 14 secs ago                
+   |@ 1 day 2 hours 3 mins 4 secs|@ 1 day 2 hours 3 mins 4 secs
+   |@ 6 years                    |@ 6 years                    
+   |@ 5 mons                     |@ 5 mons                     
+   |@ 5 mons 12 hours            |@ 5 mons 12 hours            
 (10 rows)
 
 QUERY: SELECT '' AS six, f1 as reltime, timespan( f1) AS timespan
   FROM RELTIME_TBL;
-six|reltime         |timespan     
----+----------------+-------------
-   |@ 1 minute      |@ 1 min      
-   |@ 5 hours       |@ 5 hours    
-   |@ 10 days       |@ 10 days    
-   |@ 34 years      |@ 12410 days 
-   |@ 3 months      |@ 90 days    
-   |@ 14 seconds ago|@ 14 secs ago
+six|reltime      |timespan     
+---+-------------+-------------
+   |@ 1 min      |@ 1 min      
+   |@ 5 hours    |@ 5 hours    
+   |@ 10 days    |@ 10 days    
+   |@ 34 years   |@ 34 years   
+   |@ 3 mons     |@ 3 mons     
+   |@ 14 secs ago|@ 14 secs ago
 (6 rows)
 
 QUERY: DROP TABLE TEMP_DATETIME;
