@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_sequence.sgml,v 1.15 2002/07/12 18:43:13 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_sequence.sgml,v 1.16 2002/07/18 15:49:08 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -42,6 +42,23 @@ DROP SEQUENCE <replaceable class="PARAMETER">name</replaceable> [, ...] [ CASCAD
        </para>
       </listitem>
      </varlistentry>
+     <varlistentry>
+      <term>CASCADE</term>
+      <listitem>
+       <para>
+        Automatically drop objects that depend on the sequence.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term>RESTRICT</term>
+      <listitem>
+       <para>
+        Refuse to drop the sequence if there are any dependent objects.
+	This is the default.
+       </para>
+      </listitem>
+     </varlistentry>
     </variablelist>
    </para>
   </refsect2>
@@ -73,23 +90,6 @@ ERROR: sequence "<replaceable class="parameter">name</replaceable>" does not exi
       <listitem>
        <para>
 	This message occurs if the specified sequence does not exist.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term>CASCADE</term>
-      <listitem>
-       <para>
-        Automatically drop objects that depend on the sequence.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term>RESTRICT</term>
-      <listitem>
-       <para>
-        Refuse to drop the sequence if there are any dependent objects.
-	This is the default.
        </para>
       </listitem>
      </varlistentry>
