@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1995, Regents of the University of California
  *
- * $Id: postgres.h,v 1.47 2001/03/22 04:00:25 momjian Exp $
+ * $Id: postgres.h,v 1.48 2001/03/23 18:26:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -453,11 +453,11 @@ typedef struct Exception
 	ExcMessage	message;
 } Exception;
 
-extern Exception FailedAssertion;
-extern Exception BadArg;
-extern Exception BadState;
+extern DLLIMPORT Exception FailedAssertion;
+extern DLLIMPORT Exception BadArg;
+extern DLLIMPORT Exception BadState;
 
-extern bool assert_enabled;
+extern DLLIMPORT bool assert_enabled;
 
 /*
  * USE_ASSERT_CHECKING, if defined, turns on all the assertions.

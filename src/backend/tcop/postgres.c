@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.214 2001/03/22 06:16:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.215 2001/03/23 18:26:01 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -87,7 +87,7 @@ CommandDest whereToSendOutput = Debug;
 static bool dontExecute = false;
 
 /* note: these declarations had better match tcopprot.h */
-DLLIMPORT sigjmp_buf Warn_restart;
+sigjmp_buf	Warn_restart;
 
 bool		Warn_restart_ready = false;
 bool		InError = false;
@@ -1703,7 +1703,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.214 $ $Date: 2001/03/22 06:16:17 $\n");
+		puts("$Revision: 1.215 $ $Date: 2001/03/23 18:26:01 $\n");
 	}
 
 	/*
