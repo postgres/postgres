@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.26 1997/09/18 20:19:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.27 1997/09/24 17:44:24 thomas Exp $
  *
  * NOTES
  *	  The old interface functions have been converted to macros
@@ -424,7 +424,7 @@ heap_getsysattr(HeapTuple tup, Buffer b, int attnum)
 		default:
 			elog(WARN, "heap_getsysattr: undefined attnum %d", attnum);
 	}
-	return (NULL);
+	return ((Datum) NULL);
 }
 
 /* ----------------
@@ -517,7 +517,7 @@ fastgetattr(HeapTuple tup,
 		{
 			if (isnull)
 				*isnull = true;
-			return NULL;
+			return (Datum) NULL;
 		}
 
 		/* ----------------
