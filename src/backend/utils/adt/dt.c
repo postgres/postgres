@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.66 1999/03/14 16:03:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.67 1999/03/20 02:31:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1099,7 +1099,7 @@ timespan_div(TimeSpan *span1, float8 *arg2)
 		return NULL;
 
 	if (!PointerIsValid(result = palloc(sizeof(TimeSpan))))
-		elog(ERROR, "Memory allocation failed, can't subtract timespans", NULL);
+		elog(ERROR, "Memory allocation failed, can't divide timespans", NULL);
 
 	if (*arg2 == 0.0)
 		elog(ERROR, "timespan_div:  divide by 0.0 error");
