@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pgctl-ref.sgml,v 1.3 2000/05/23 21:46:57 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pgctl-ref.sgml,v 1.4 2000/07/21 00:42:34 momjian Exp $
 Postgres documentation
 -->
 
@@ -216,7 +216,7 @@ pg_ctl [-D <replaceable class="parameter">datadir</replaceable>] status
     To start up <application>postmaster</application>:
 
     <programlisting>
-&gt; pg_ctl start
+$ pg_ctl start
     </programlisting>
    </para>
 
@@ -278,7 +278,7 @@ pg_ctl [-D <replaceable class="parameter">datadir</replaceable>] status
     <application>postmaster</application>, blocking until
     postmaster comes up is:
     <programlisting>
-&gt; pg_ctl -w start
+$ pg_ctl -w start
     </programlisting>
    </para>
 
@@ -287,7 +287,7 @@ pg_ctl [-D <replaceable class="parameter">datadir</replaceable>] status
     try:
 
     <programlisting>
-&gt; pg_ctl -p /usr/local/pgsq/bin/postmaster start
+$ pg_ctl -p /usr/local/pgsq/bin/postmaster start
     </programlisting>
    </para>
 
@@ -296,7 +296,7 @@ pg_ctl [-D <replaceable class="parameter">datadir</replaceable>] status
     running without <function>fsync</function>, use:
 
     <programlisting>
-&gt; pg_ctl -o "-o -F -p 5433" start
+$ pg_ctl -o "-o -F -p 5433" start
     </programlisting>
    </para>
   </refsect2>
@@ -308,7 +308,7 @@ pg_ctl [-D <replaceable class="parameter">datadir</replaceable>] status
    <para>
 
     <programlisting>
-&gt; pg_ctl stop
+$ pg_ctl stop
     </programlisting>
 
     stops postmaster. Using the <option>-m</option> switch allows one
@@ -342,7 +342,7 @@ pg_ctl [-D <replaceable class="parameter">datadir</replaceable>] status
     form:
 
     <programlisting>
-&gt; pg_ctl restart
+$ pg_ctl restart
     </programlisting>
    </para>
 
@@ -351,7 +351,7 @@ pg_ctl [-D <replaceable class="parameter">datadir</replaceable>] status
     waiting for it to shut down and to come up:
 
     <programlisting>
-&gt; pg_ctl -w restart
+$ pg_ctl -w restart
     </programlisting>
    </para>
 
@@ -359,7 +359,7 @@ pg_ctl [-D <replaceable class="parameter">datadir</replaceable>] status
     To restart using port 5433 and disabling fsync after restarting:
 
     <programlisting>
-&gt; pg_ctl -o "-o -F -p 5433" restart
+$ pg_ctl -o "-o -F -p 5433" restart
     </programlisting>
    </para>
   </refsect2>
@@ -373,7 +373,7 @@ pg_ctl [-D <replaceable class="parameter">datadir</replaceable>] status
     To get status information from postmaster:
 
     <programlisting>
-&gt; pg_ctl status
+$ pg_ctl status
     </programlisting>
    </para>
 
