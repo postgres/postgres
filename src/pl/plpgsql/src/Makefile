@@ -2,7 +2,7 @@
 #
 # Makefile for the plpgsql shared object
 #
-# $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Makefile,v 1.13 2001/04/04 21:15:56 tgl Exp $
+# $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Makefile,v 1.14 2001/05/24 22:33:18 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -21,7 +21,14 @@ override DLLLIBS := $(BE_DLLLIBS) $(DLLLIBS)
 
 OBJS = pl_parse.o pl_handler.o pl_comp.o pl_exec.o pl_funcs.o
 
+ifeq ($(PORTNAME), qnx4)
 all: all-lib
+else
+all:
+      @echo "*****"; \
+       echo "* PL/pgSQL was not built due to library manager problems."; \
+       echo "*****"
+endif
 
 # Shared library stuff
 include $(top_srcdir)/src/Makefile.shlib
