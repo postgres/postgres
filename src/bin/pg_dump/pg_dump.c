@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.255 2002/04/24 22:39:49 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.256 2002/04/29 04:10:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3039,8 +3039,8 @@ getIndexes(int *numIndexes)
 					  "t1.relname as indexrelname, t2.relname as indrelname, "
 					  "pg_get_indexdef(i.indexrelid) as indexdef, "
 					  "i.indisprimary, i.indkey, "
-					  "CASE WHEN regproctooid(i.indproc) <> 0 "
-					  "  THEN (SELECT pronargs FROM pg_proc WHERE pg_proc.oid = regproctooid(i.indproc)) "
+					  "CASE WHEN i.indproc <> 0 "
+					  "  THEN (SELECT pronargs FROM pg_proc WHERE pg_proc.oid = i.indproc) "
 					  "  ELSE t1.relnatts END as indnkeys "
 					  "FROM pg_index i, pg_class t1, pg_class t2 "
 					  "WHERE t1.oid = i.indexrelid and t2.oid = i.indrelid "
