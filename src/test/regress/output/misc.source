@@ -481,6 +481,7 @@ hash_txt_heap
 hobbies_r      
 iexit          
 ihighway       
+inet_tbl       
 insert_seq     
 insert_tbl     
 int2_tbl       
@@ -513,5 +514,5 @@ tinterval_tbl
 toyemp         
 varchar_tbl    
 xacttest       
-(71 rows)
+(72 rows)
 

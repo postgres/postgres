@@ -24,6 +24,7 @@ reltime
 abstime
 tinterval
 horology
+inet
 comments
 create_function_1
 create_type
