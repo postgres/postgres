@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.121 2000/09/12 21:06:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.122 2000/09/20 15:28:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1920,7 +1920,8 @@ _copyCommentStmt(CommentStmt *from)
 	
 	newnode->objtype = from->objtype;
 	newnode->objname = pstrdup(from->objname);
-	newnode->objproperty = pstrdup(from->objproperty);
+	if (from->objproperty)
+	  newnode->objproperty = pstrdup(from->objproperty);
 	Node_Copy(from, newnode, objlist);
 	newnode->comment = pstrdup(from->comment);
 
