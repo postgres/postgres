@@ -70,6 +70,7 @@ CLEAN :
 	-@erase "$(INTDIR)\print.obj"
 	-@erase "$(INTDIR)\describe.obj"
 	-@erase "$(INTDIR)\tab-complete.obj"
+	-@erase "$(INTDIR)\sprompt.obj"
 	-@erase "$(INTDIR)\getopt.obj"
 	-@erase "$(INTDIR)\getopt_long.obj"
 	-@erase "$(INTDIR)\path.obj"
@@ -123,9 +124,10 @@ LINK32_OBJS= \
 	print.obj \
 	describe.obj \
 	tab-complete.obj \
+	sprompt.obj \
 	getopt.obj \
-      getopt_long.obj \
-      path.obj \
+	getopt_long.obj \
+	path.obj \
 	mbprint.obj
 	
 
@@ -137,6 +139,7 @@ LINK32_OBJS= \
 	import32.lib $(LIBRARIES),,
 !
 
+sprompt.obj : "$(OUTDIR)" ..\..\port\sprompt.c
 getopt.obj : "$(OUTDIR)" ..\..\port\getopt.c
 getopt_long.obj : "$(OUTDIR)" ..\..\port\getopt_long.c
 path.obj : "$(OUTDIR)" ..\..\port\path.c
