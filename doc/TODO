@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Aug 14 01:46:11 EDT 2002
+Last updated:		Wed Aug 14 13:45:01 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -205,8 +205,8 @@ Commands
 	o Add ALTER TABLE tab SET WITHOUT OIDS
 
 * CLUSTER
-	o Cluster all tables at once using pg_index.indisclustered or primary
-          key
+	o Cluster all tables at once using pg_index.indisclustered set during
+          previous CLUSTER
 	o Prevent loss of indexes, permissions, inheritance
 	o Automatically maintain clustering on a table
 
