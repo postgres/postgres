@@ -177,11 +177,11 @@ slashUsage(PsqlSettings *pset)
 
 	/* if you add/remove a line here, change the row test above */
 	fprintf(fout, " \\?           -- help\n");
-	fprintf(fout, " \\c[onnect] [<dbname>|- [<user>|?]] -- connect to new database (currently '%s')\n", PQdb(pset->db));
-	fprintf(fout, " \\copy [binary] <table> [with oids] {from|to} <fname> [with delimiters '<char>']\n");
+	fprintf(fout, " \\c[onnect] [<dbname>|- [<user>|?]] -- connect to new database (now '%s')\n", PQdb(pset->db));
+	fprintf(fout, " \\copy [binary] <table> [with oids] {from|to} <fname>[using delimiters '<char>']\n");
 	fprintf(fout, " \\copyright   -- show PostgreSQL copyright\n");
 	fprintf(fout, " \\d           -- list tables, views, and sequences\n");
-	fprintf(fout, " \\distvS      -- list only indices/sequences/tables/views/system tables\n");
+	fprintf(fout, " \\d{i|s|t|v|S}-- list only indices/sequences/tables/views/system tables\n");
 	fprintf(fout, " \\da          -- list aggregates\n");
 	fprintf(fout, " \\dd [<object>]- list comment for table, type, function, or operator\n");
 	fprintf(fout, " \\df          -- list functions\n");
@@ -202,8 +202,8 @@ slashUsage(PsqlSettings *pset)
 	fprintf(fout, " \\r           -- reset (clear) the query buffer\n");
 	fprintf(fout, " \\s [<fname>] -- print history or save it in <fname>\n");
 	fprintf(fout, " \\set <var> [<value>] -- set/unset internal variable\n");
-	fprintf(fout, " \\t           -- don't show table headers or footers (currently %s)\n", ON(pset->popt.topt.tuples_only));
-	fprintf(fout, " \\x           -- toggle expanded output (currently %s)\n", ON(pset->popt.topt.expanded));
+	fprintf(fout, " \\t           -- don't show table headers or footers (now %s)\n", ON(pset->popt.topt.tuples_only));
+	fprintf(fout, " \\x           -- toggle expanded output (now %s)\n", ON(pset->popt.topt.expanded));
 	fprintf(fout, " \\w <fname>   -- write current query buffer to a file\n");
 	fprintf(fout, " \\z           -- list table access permissions\n");
 	fprintf(fout, " \\! [<cmd>]   -- shell escape or command\n");
