@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.56 1999/10/11 06:28:27 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.57 1999/10/30 23:10:21 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -102,7 +102,16 @@ initscan(HeapScanDesc scan,
 		 unsigned nkeys,
 		 ScanKey key)
 {
-	if (!RelationGetNumberOfBlocks(relation))
+	/* ----------------
+	 *	Make sure we have up-to-date idea of number of blocks in relation.
+	 *	It is sufficient to do this once at scan start, since any tuples
+	 *	added while the scan is in progress will be invisible to my
+	 *	transaction anyway...
+	 * ----------------
+	 */
+	relation->rd_nblocks = RelationGetNumberOfBlocks(relation);
+
+	if (relation->rd_nblocks == 0)
 	{
 		/* ----------------
 		 *	relation is empty
@@ -652,11 +661,12 @@ heap_beginscan(Relation relation,
 	 */
 	scan = (HeapScanDesc) palloc(sizeof(HeapScanDescData));
 
-	relation->rd_nblocks = smgrnblocks(DEFAULT_SMGR, relation);
 	scan->rs_rd = relation;
+	scan->rs_atend = atend;
+	scan->rs_snapshot = snapshot;
+	scan->rs_nkeys = (short) nkeys;
 
 	if (nkeys)
-
 		/*
 		 * we do this here instead of in initscan() because heap_rescan
 		 * also calls initscan() and we don't want to allocate memory
@@ -667,10 +677,6 @@ heap_beginscan(Relation relation,
 		scan->rs_key = NULL;
 
 	initscan(scan, relation, atend, nkeys, key);
-
-	scan->rs_atend = atend;
-	scan->rs_snapshot = snapshot;
-	scan->rs_nkeys = (short) nkeys;
 
 	return scan;
 }
@@ -703,8 +709,8 @@ heap_rescan(HeapScanDesc scan,
 	 *	reinitialize scan descriptor
 	 * ----------------
 	 */
-	initscan(scan, scan->rs_rd, scanFromEnd, scan->rs_nkeys, key);
 	scan->rs_atend = (bool) scanFromEnd;
+	initscan(scan, scan->rs_rd, scanFromEnd, scan->rs_nkeys, key);
 }
 
 /* ----------------
@@ -1096,7 +1102,7 @@ heap_get_latest_tid(Relation relation,
 		   Snapshot snapshot,
 		   ItemPointer tid)
 {
-	ItemId		lp;
+	ItemId		lp = NULL;
 	Buffer		buffer;
 	PageHeader	dp;
 	OffsetNumber	offnum;
