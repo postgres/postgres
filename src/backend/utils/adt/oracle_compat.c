@@ -1,7 +1,7 @@
 /*
  *	Edmund Mergl <E.Mergl@bawue.de>
  *
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/oracle_compat.c,v 1.32 2001/09/14 17:46:40 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/oracle_compat.c,v 1.33 2001/09/22 03:26:30 ishii Exp $
  *
  */
 
@@ -11,6 +11,9 @@
 
 #include "utils/builtins.h"
 
+#ifdef MULTIBYTE
+#include "mb/pg_wchar.h"
+#endif
 
 /********************************************************************
  *
@@ -304,14 +307,82 @@ btrim(PG_FUNCTION_ARGS)
 			   *end2;
 	int			m;
 
+#ifdef MULTIBYTE
+	char	**mp;
+	int	mplen;
+	char	*p;
+	int	mblen;
+	int	len;
+#endif
+
 	if ((m = VARSIZE(string) - VARHDRSZ) <= 0 ||
 		(VARSIZE(set) - VARHDRSZ) <= 0)
 		PG_RETURN_TEXT_P(string);
 
 	ptr = VARDATA(string);
+
+#ifdef MULTIBYTE
+        len = m;
+	mp = (char **)palloc(len*sizeof(char *));
+	p = ptr;
+	mplen = 0;
+
+	/* build the mb pointer array */
+	while (len > 0)
+	{
+	    mp[mplen++] = p;
+	    mblen = pg_mblen(p);
+	    p += mblen;
+	    len -= mblen;
+	}
+	mplen--;
+#else
 	end = VARDATA(string) + VARSIZE(string) - VARHDRSZ - 1;
+#endif
 	end2 = VARDATA(set) + VARSIZE(set) - VARHDRSZ - 1;
 
+#ifdef MULTIBYTE
+	while (m > 0)
+	{
+		int str_len = pg_mblen(ptr);
+		ptr2 = VARDATA(set);
+		while (ptr2 <= end2)
+		{
+		    int set_len = pg_mblen(ptr2);
+
+		    if (str_len == set_len &&
+			memcmp(ptr,ptr2,str_len) == 0)
+				break;
+		    ptr2 += set_len;
+		}
+		if (ptr2 > end2)
+			break;
+		ptr += str_len;
+		m -= str_len;
+	}
+
+	while (m > 0)
+	{
+		int str_len;
+		end = mp[mplen--];
+		str_len = pg_mblen(end);
+		ptr2 = VARDATA(set);
+		while (ptr2 <= end2)
+		{
+		    int set_len = pg_mblen(ptr2);
+
+		    if (str_len == set_len &&
+			memcmp(end,ptr2,str_len) == 0)
+				break;
+		    ptr2 += set_len;
+		}
+		if (ptr2 > end2)
+			break;
+		m -= str_len;
+	}
+	pfree(mp);
+
+#else
 	while (m > 0)
 	{
 		ptr2 = VARDATA(set);
@@ -341,7 +412,7 @@ btrim(PG_FUNCTION_ARGS)
 		end--;
 		m--;
 	}
-
+#endif
 	ret = (text *) palloc(VARHDRSZ + m);
 	VARATT_SIZEP(ret) = VARHDRSZ + m;
 	memcpy(VARDATA(ret), ptr, m);
@@ -455,6 +526,26 @@ ltrim(PG_FUNCTION_ARGS)
 	ptr = VARDATA(string);
 	end2 = VARDATA(set) + VARSIZE(set) - VARHDRSZ - 1;
 
+#ifdef MULTIBYTE
+	while (m > 0)
+	{
+		int str_len = pg_mblen(ptr);
+		ptr2 = VARDATA(set);
+		while (ptr2 <= end2)
+		{
+		    int set_len = pg_mblen(ptr2);
+
+		    if (str_len == set_len &&
+			memcmp(ptr,ptr2,str_len) == 0)
+				break;
+		    ptr2 += set_len;
+		}
+		if (ptr2 > end2)
+			break;
+		ptr += str_len;
+		m -= str_len;
+	}
+#else
 	while (m > 0)
 	{
 		ptr2 = VARDATA(set);
@@ -469,7 +560,7 @@ ltrim(PG_FUNCTION_ARGS)
 		ptr++;
 		m--;
 	}
-
+#endif
 	ret = (text *) palloc(VARHDRSZ + m);
 	VARATT_SIZEP(ret) = VARHDRSZ + m;
 	memcpy(VARDATA(ret), ptr, m);
@@ -499,20 +590,70 @@ rtrim(PG_FUNCTION_ARGS)
 	text	   *string = PG_GETARG_TEXT_P(0);
 	text	   *set = PG_GETARG_TEXT_P(1);
 	text	   *ret;
+
 	char	   *ptr,
 			   *end,
 			   *ptr2,
 			   *end2;
 	int			m;
 
+#ifdef MULTIBYTE
+	char	**mp;
+	int	mplen;
+	char	*p;
+	int	mblen;
+	int	len;
+#endif
+
 	if ((m = VARSIZE(string) - VARHDRSZ) <= 0 ||
 		(VARSIZE(set) - VARHDRSZ) <= 0)
 		PG_RETURN_TEXT_P(string);
 
 	ptr = VARDATA(string);
+
+#ifdef MULTIBYTE
+        len = m;
+	mp = (char **)palloc(len*sizeof(char *));
+	p = ptr;
+	mplen = 0;
+
+	/* build the mb pointer array */
+	while (len > 0)
+	{
+	    mp[mplen++] = p;
+	    mblen = pg_mblen(p);
+	    p += mblen;
+	    len -= mblen;
+	}
+	mplen--;
+#else
 	end = VARDATA(string) + VARSIZE(string) - VARHDRSZ - 1;
+#endif
 	end2 = VARDATA(set) + VARSIZE(set) - VARHDRSZ - 1;
 
+#ifdef MULTIBYTE
+	while (m > 0)
+	{
+		int str_len;
+		end = mp[mplen--];
+		str_len = pg_mblen(end);
+		ptr2 = VARDATA(set);
+		while (ptr2 <= end2)
+		{
+		    int set_len = pg_mblen(ptr2);
+
+		    if (str_len == set_len &&
+			memcmp(end,ptr2,str_len) == 0)
+				break;
+		    ptr2 += set_len;
+		}
+		if (ptr2 > end2)
+			break;
+		m -= str_len;
+	}
+	pfree(mp);
+
+#else
 	while (m > 0)
 	{
 		ptr2 = VARDATA(set);
@@ -527,7 +668,7 @@ rtrim(PG_FUNCTION_ARGS)
 		end--;
 		m--;
 	}
-
+#endif
 	ret = (text *) palloc(VARHDRSZ + m);
 	VARATT_SIZEP(ret) = VARHDRSZ + m;
 	memcpy(VARDATA(ret), ptr, m);
