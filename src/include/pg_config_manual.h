@@ -6,7 +6,7 @@
  * for developers.	If you edit any of these, be sure to do a *full*
  * rebuild (and an initdb if noted).
  *
- * $PostgreSQL: pgsql/src/include/pg_config_manual.h,v 1.14 2004/08/29 05:06:55 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/pg_config_manual.h,v 1.15 2004/09/10 14:27:37 momjian Exp $
  *------------------------------------------------------------------------
  */
 
@@ -148,7 +148,7 @@
  * Define this if your operating system supports link()
  */
 #if !defined(__QNX__) && !defined(__BEOS__) && \
-	!defined(__CYGWIN__) && !defined(WIN32)
+	!defined(WIN32) && !defined(__CYGWIN__)
 #define HAVE_WORKING_LINK 1
 #endif
 
