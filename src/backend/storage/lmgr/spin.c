@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/spin.c,v 1.2 2001/09/29 04:02:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/spin.c,v 1.3 2001/10/01 17:52:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,7 @@
 
 #include <errno.h>
 #ifdef HAVE_SYS_SEM_H
+#include <sys/types.h>
 #include <sys/sem.h>
 #endif
 
