@@ -1,11 +1,16 @@
 
-PostgreSQL Data Base Management System (formally known as Postgres95)
+PostgreSQL Data Base Management System (formerly known as Postgres, then
+as Postgres95).
+  
+This directory contains the version 6.1 release of the PostgreSQL
+database server.  The server is not ANSI SQL compliant, but it gets
+closer with every release.  After you unzip and untar the distribution
+file, look at file INSTALL for the installation notes and file HISTORY
+for the changes.
 
-This directory contains the 6.0 release of PostgreSQL. See INSTALL for
-the installation notes and HISTORY for the changes.
-
-We also have a WWW home page located at:
-	http://www.postgreSQL.org
+The latest version of this software may be obtained at
+ftp://ftp.postgresql.org/pub/.  For more information look at our WWW
+home page located at http://www.postgreSQL.org/.
 
 PostgreSQL is not public domain software.  It is copyrighted by the
 University of California but may be used according to the licensing
