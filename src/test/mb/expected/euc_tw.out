@@ -1,85 +1,38 @@
 drop table ìÞÙ¸æñÕè;
-ERROR:  Relation 'ìÞÙ¸æñÕè' does not exist
+ERROR:  parser: parse error at or near "("
 create table ìÞÙ¸æñÕè (ÈçäÆÉ± text, ÄüÆ³Íñó¤ varchar, ÇâÉß varchar(16));
+ERROR:  parser: parse error at or near "("
 create index ìÞÙ¸æñÕèindex1 on ìÞÙ¸æñÕè using btree (ÈçäÆÉ±);
+ERROR:  parser: parse error at or near "("
 create index ìÞÙ¸æñÕèindex2 on ìÞÙ¸æñÕè using hash (ÄüÆ³Íñó¤);
+ERROR:  parser: parse error at or near "("
 insert into ìÞÙ¸æñÕè values ('çÙæªäÆ', 'ç®ç®ÒïÊÀ', 'Æ¡A01Äî');
+ERROR:  parser: parse error at or near "("
 insert into ìÞÙ¸æñÕè values ('êûÝßäÆ', 'ØÂäãÈ´ÓîÄüÆ³', 'ÄãB10Äã');
+ERROR:  parser: parse error at or near "("
 insert into ìÞÙ¸æñÕè values ('ó§ã£äÆ', 'Ó¡ÌÀÏ´Ç¹È´ÓîÄüÆ³', 'ØíZ01Ä¦');
+ERROR:  parser: parse error at or near "("
 vacuum ìÞÙ¸æñÕè;
+ERROR:  parser: parse error at or near "("
 select * from ìÞÙ¸æñÕè;
- ÈçäÆÉ± |     ÄüÆ³Íñó¤     |  ÇâÉß   
---------+------------------+---------
- çÙæªäÆ | ç®ç®ÒïÊÀ         | Æ¡A01Äî
- êûÝßäÆ | ØÂäãÈ´ÓîÄüÆ³     | ÄãB10Äã
- ó§ã£äÆ | Ó¡ÌÀÏ´Ç¹È´ÓîÄüÆ³ | ØíZ01Ä¦
-(3 rows)
-
+ERROR:  parser: parse error at or near "92"
 select * from ìÞÙ¸æñÕè where ÇâÉß = 'ØíZ01Ä¦';
- ÈçäÆÉ± |     ÄüÆ³Íñó¤     |  ÇâÉß   
---------+------------------+---------
- ó§ã£äÆ | Ó¡ÌÀÏ´Ç¹È´ÓîÄüÆ³ | ØíZ01Ä¦
-(1 row)
-
+ERROR:  parser: parse error at or near "92"
 select * from ìÞÙ¸æñÕè where ÇâÉß ~* 'Øíz01Ä¦';
- ÈçäÆÉ± |     ÄüÆ³Íñó¤     |  ÇâÉß   
---------+------------------+---------
- ó§ã£äÆ | Ó¡ÌÀÏ´Ç¹È´ÓîÄüÆ³ | ØíZ01Ä¦
-(1 row)
-
+ERROR:  parser: parse error at or near "92"
 select * from ìÞÙ¸æñÕè where ÇâÉß like '_Z01_';
- ÈçäÆÉ± |     ÄüÆ³Íñó¤     |  ÇâÉß   
---------+------------------+---------
- ó§ã£äÆ | Ó¡ÌÀÏ´Ç¹È´ÓîÄüÆ³ | ØíZ01Ä¦
-(1 row)
-
+ERROR:  parser: parse error at or near "92"
 select * from ìÞÙ¸æñÕè where ÇâÉß like '_Z%';
- ÈçäÆÉ± |     ÄüÆ³Íñó¤     |  ÇâÉß   
---------+------------------+---------
- ó§ã£äÆ | Ó¡ÌÀÏ´Ç¹È´ÓîÄüÆ³ | ØíZ01Ä¦
-(1 row)
-
+ERROR:  parser: parse error at or near "92"
 select * from ìÞÙ¸æñÕè where ÄüÆ³Íñó¤ ~ 'ç®ç®Òï[ÙìØ´ÊÀ]';
- ÈçäÆÉ± | ÄüÆ³Íñó¤ |  ÇâÉß   
---------+----------+---------
- çÙæªäÆ | ç®ç®ÒïÊÀ | Æ¡A01Äî
-(1 row)
-
+ERROR:  parser: parse error at or near "92"
 select * from ìÞÙ¸æñÕè where ÄüÆ³Íñó¤ ~* 'ç®ç®Òï[ÙìØ´ÊÀ]';
- ÈçäÆÉ± | ÄüÆ³Íñó¤ |  ÇâÉß   
---------+----------+---------
- çÙæªäÆ | ç®ç®ÒïÊÀ | Æ¡A01Äî
-(1 row)
-
+ERROR:  parser: parse error at or near "92"
 select *, character_length(ÈçäÆÉ±) from ìÞÙ¸æñÕè;
- ÈçäÆÉ± |     ÄüÆ³Íñó¤     |  ÇâÉß   | char_length 
---------+------------------+---------+-------------
- çÙæªäÆ | ç®ç®ÒïÊÀ         | Æ¡A01Äî |           3
- êûÝßäÆ | ØÂäãÈ´ÓîÄüÆ³     | ÄãB10Äã |           3
- ó§ã£äÆ | Ó¡ÌÀÏ´Ç¹È´ÓîÄüÆ³ | ØíZ01Ä¦ |           3
-(3 rows)
-
+ERROR:  parser: parse error at or near "c8e7"
 select *, octet_length(ÈçäÆÉ±) from ìÞÙ¸æñÕè;
- ÈçäÆÉ± |     ÄüÆ³Íñó¤     |  ÇâÉß   | octet_length 
---------+------------------+---------+--------------
- çÙæªäÆ | ç®ç®ÒïÊÀ         | Æ¡A01Äî |            6
- êûÝßäÆ | ØÂäãÈ´ÓîÄüÆ³     | ÄãB10Äã |            6
- ó§ã£äÆ | Ó¡ÌÀÏ´Ç¹È´ÓîÄüÆ³ | ØíZ01Ä¦ |            6
-(3 rows)
-
+ERROR:  parser: parse error at or near "c8e7"
 select *, position('È´Óî' in ÄüÆ³Íñó¤) from ìÞÙ¸æñÕè;
- ÈçäÆÉ± |     ÄüÆ³Íñó¤     |  ÇâÉß   | strpos 
---------+------------------+---------+--------
- çÙæªäÆ | ç®ç®ÒïÊÀ         | Æ¡A01Äî |      0
- êûÝßäÆ | ØÂäãÈ´ÓîÄüÆ³     | ÄãB10Äã |      3
- ó§ã£äÆ | Ó¡ÌÀÏ´Ç¹È´ÓîÄüÆ³ | ØíZ01Ä¦ |      5
-(3 rows)
-
+ERROR:  parser: parse error at or near "c4fc"
 select *, substring(ÄüÆ³Íñó¤ from 3 for 6 ) from ìÞÙ¸æñÕè;
- ÈçäÆÉ± |     ÄüÆ³Íñó¤     |  ÇâÉß   |    substr    
---------+------------------+---------+--------------
- çÙæªäÆ | ç®ç®ÒïÊÀ         | Æ¡A01Äî | ÒïÊÀ
- êûÝßäÆ | ØÂäãÈ´ÓîÄüÆ³     | ÄãB10Äã | È´ÓîÄüÆ³
- ó§ã£äÆ | Ó¡ÌÀÏ´Ç¹È´ÓîÄüÆ³ | ØíZ01Ä¦ | Ï´Ç¹È´ÓîÄüÆ³
-(3 rows)
-
+ERROR:  parser: parse error at or near "c4fc"

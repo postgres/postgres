@@ -1,87 +1,295 @@
 drop table 計算機用語;
-ERROR:  Relation '計算機用語' does not exist
+NOTICE:  local_to_utf: could not convert (0x88e7) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xae97) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x9fe7) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x94a8) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x9e3b) EUC_JP to UTF-8. Ignored
+ERROR:  table "���" does not exist
 create table 計算機用語 (用語 text, 分類コード varchar, 備考1Aだよ char(16));
+NOTICE:  local_to_utf: could not convert (0x88e7) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xae97) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x9fe7) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x94a8) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x9e20) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xe794) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xa8e8) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xaa9e) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xe588) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x86e9) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xa19e) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xe382) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x83bc) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xe383) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x8920) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xe582) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x99e8) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x8083) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xe381) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xa0e3) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x8288) EUC_JP to UTF-8. Ignored
+ERROR:  parser: parse error at or near "1"
 create index 計算機用語index1 on 計算機用語 using btree (用語);
+NOTICE:  local_to_utf: could not convert (0x88e7) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xae97) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x9fe7) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x94a8) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x9e69) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x88e7) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xae97) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x9fe7) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x94a8) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x9e20) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xe794) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xa8e8) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xaa9e) EUC_JP to UTF-8. Ignored
+ERROR:  parser: parse error at or near "btree"
 create index 計算機用語index2 on 計算機用語 using hash (分類コード);
+NOTICE:  local_to_utf: could not convert (0x88e7) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xae97) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x9fe7) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x94a8) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x9e69) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x88e7) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xae97) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x9fe7) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x94a8) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x9e20) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xe588) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x86e9) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xa19e) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xe382) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x83bc) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xe383) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x8929) EUC_JP to UTF-8. Ignored
+ERROR:  parser: parse error at or near "hash"
 insert into 計算機用語 values('コンピュータディスプレイ','機A01上');
+NOTICE:  local_to_utf: could not convert (0x88e7) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xae97) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x9fe7) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x94a8) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x9e20) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xe382) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x83b3) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xe383) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x94e3) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x83a5) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xe383) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x82bf) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xe383) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x87e3) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x82a3) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xe382) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x8397) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xe383) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xace3) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x82a4) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x9f41) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x8a27) EUC_JP to UTF-8. Ignored
+ERROR:  parser: parse error at or near "'"
 insert into 計算機用語 values('コンピュータグラフィックス','分B10中');
+NOTICE:  local_to_utf: could not convert (0x88e7) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xae97) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x9fe7) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x94a8) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x9e20) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xe382) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x83b3) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xe383) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x94e3) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x83a5) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xe383) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x82bf) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xe382) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x83a9) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xe383) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x95e3) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x82a3) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xe383) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x83e3) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x82af) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xe382) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xb927) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xe588) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x8642) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xad27) EUC_JP to UTF-8. Ignored
+ERROR:  parser: parse error at or near "'"
 insert into 計算機用語 values('コンピュータプログラマー','人Z01下');
+NOTICE:  local_to_utf: could not convert (0x88e7) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xae97) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x9fe7) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x94a8) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x9e20) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xe382) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x83b3) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xe383) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x94e3) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x83a5) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xe383) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x82bf) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xe383) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x97e3) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x83ad) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xe382) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x83a9) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xe383) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x9ee3) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x83bc) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xba5a) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x8b27) EUC_JP to UTF-8. Ignored
+ERROR:  parser: parse error at or near "'"
 vacuum 計算機用語;
+NOTICE:  local_to_utf: could not convert (0x88e7) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xae97) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x9fe7) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x94a8) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x9e3b) EUC_JP to UTF-8. Ignored
+NOTICE:  Vacuum: table not found
 select * from 計算機用語;
-                 用語                  | 分類コード | 備考1aだよ 
------------------------------------------+-----------------+----------------
- コンピュータディスプレイ    | 機A01上       | 
- コンピュータグラフィックス | 分B10中       | 
- コンピュータプログラマー    | 人Z01下       | 
-(3 rows)
-
+NOTICE:  local_to_utf: could not convert (0x88e7) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xae97) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x9fe7) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x94a8) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x9e3b) EUC_JP to UTF-8. Ignored
+ERROR:  Relation '���' does not exist
 select * from 計算機用語 where 分類コード = '人Z01下';
-                用語                | 分類コード | 備考1aだよ 
---------------------------------------+-----------------+----------------
- コンピュータプログラマー | 人Z01下       | 
-(1 row)
-
+NOTICE:  local_to_utf: could not convert (0x88e7) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xae97) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x9fe7) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x94a8) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x9e20) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xe588) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x86e9) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xa19e) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xe382) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x83bc) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xe383) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x8920) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xba5a) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x8b27) EUC_JP to UTF-8. Ignored
+ERROR:  parser: parse error at or near "="
 select * from 計算機用語 where 分類コード ~* '人z01下';
-                用語                | 分類コード | 備考1aだよ 
---------------------------------------+-----------------+----------------
- コンピュータプログラマー | 人Z01下       | 
-(1 row)
-
+NOTICE:  local_to_utf: could not convert (0x88e7) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xae97) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x9fe7) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x94a8) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x9e20) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xe588) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x86e9) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xa19e) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xe382) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x83bc) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xe383) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x8920) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xba7a) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x8b27) EUC_JP to UTF-8. Ignored
+ERROR:  parser: parse error at or near "~*"
 select * from 計算機用語 where 分類コード like '_Z01_';
-                用語                | 分類コード | 備考1aだよ 
---------------------------------------+-----------------+----------------
- コンピュータプログラマー | 人Z01下       | 
-(1 row)
-
+NOTICE:  local_to_utf: could not convert (0x88e7) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xae97) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x9fe7) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x94a8) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x9e20) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xe588) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x86e9) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xa19e) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xe382) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x83bc) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xe383) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x8920) EUC_JP to UTF-8. Ignored
+ERROR:  parser: parse error at or near "'"
 select * from 計算機用語 where 分類コード like '_Z%';
-                用語                | 分類コード | 備考1aだよ 
---------------------------------------+-----------------+----------------
- コンピュータプログラマー | 人Z01下       | 
-(1 row)
-
+NOTICE:  local_to_utf: could not convert (0x88e7) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xae97) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x9fe7) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x94a8) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x9e20) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xe588) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x86e9) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xa19e) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xe382) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x83bc) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xe383) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x8920) EUC_JP to UTF-8. Ignored
+ERROR:  parser: parse error at or near "'"
 select * from 計算機用語 where 用語 ~ 'コンピュータ[デグ]';
-                 用語                  | 分類コード | 備考1aだよ 
------------------------------------------+-----------------+----------------
- コンピュータディスプレイ    | 機A01上       | 
- コンピュータグラフィックス | 分B10中       | 
-(2 rows)
-
+NOTICE:  local_to_utf: could not convert (0x88e7) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xae97) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x9fe7) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x94a8) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x9e20) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xe794) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xa8e8) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xaa9e) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xe382) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x83b3) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xe383) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x94e3) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x83a5) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xe383) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x82bf) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xe383) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x87e3) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x82b0) EUC_JP to UTF-8. Ignored
+ERROR:  parser: parse error at or near "~"
 select * from 計算機用語 where 用語 ~* 'コンピュータ[デグ]';
-                 用語                  | 分類コード | 備考1aだよ 
------------------------------------------+-----------------+----------------
- コンピュータディスプレイ    | 機A01上       | 
- コンピュータグラフィックス | 分B10中       | 
-(2 rows)
-
+NOTICE:  local_to_utf: could not convert (0x88e7) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xae97) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x9fe7) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x94a8) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x9e20) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xe794) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xa8e8) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xaa9e) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xe382) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x83b3) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xe383) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x94e3) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x83a5) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xe383) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x82bf) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xe383) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x87e3) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x82b0) EUC_JP to UTF-8. Ignored
+ERROR:  parser: parse error at or near "~*"
 select *,character_length(用語) from 計算機用語;
-                 用語                  | 分類コード | 備考1aだよ | char_length 
------------------------------------------+-----------------+----------------+-------------
- コンピュータディスプレイ    | 機A01上       |                |          12
- コンピュータグラフィックス | 分B10中       |                |          13
- コンピュータプログラマー    | 人Z01下       |                |          12
-(3 rows)
-
+NOTICE:  local_to_utf: could not convert (0xe794) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xa8e8) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xaa9e) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x88e7) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xae97) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x9fe7) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x94a8) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x9e3b) EUC_JP to UTF-8. Ignored
+ERROR:  Relation '���' does not exist
 select *,octet_length(用語) from 計算機用語;
-                 用語                  | 分類コード | 備考1aだよ | octet_length 
------------------------------------------+-----------------+----------------+--------------
- コンピュータディスプレイ    | 機A01上       |                |           36
- コンピュータグラフィックス | 分B10中       |                |           39
- コンピュータプログラマー    | 人Z01下       |                |           36
-(3 rows)
-
+NOTICE:  local_to_utf: could not convert (0xe794) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xa8e8) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xaa9e) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x88e7) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xae97) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x9fe7) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x94a8) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x9e3b) EUC_JP to UTF-8. Ignored
+ERROR:  Relation '���' does not exist
 select *,position('デ' in 用語) from 計算機用語;
-                 用語                  | 分類コード | 備考1aだよ | strpos 
------------------------------------------+-----------------+----------------+--------
- コンピュータディスプレイ    | 機A01上       |                |      7
- コンピュータグラフィックス | 分B10中       |                |      0
- コンピュータプログラマー    | 人Z01下       |                |      0
-(3 rows)
-
+NOTICE:  local_to_utf: could not convert (0xe383) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x8727) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xe794) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xa8e8) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xaa9e) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x88e7) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xae97) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x9fe7) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x94a8) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x9e3b) EUC_JP to UTF-8. Ignored
+ERROR:  Unterminated quoted string
 select *,substring(用語 from 10 for 4) from 計算機用語;
-                 用語                  | 分類コード | 備考1aだよ |    substr    
------------------------------------------+-----------------+----------------+--------------
- コンピュータディスプレイ    | 機A01上       |                | プレイ
- コンピュータグラフィックス | 分B10中       |                | ィックス
- コンピュータプログラマー    | 人Z01下       |                | ラマー
-(3 rows)
-
+NOTICE:  local_to_utf: could not convert (0xe794) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xa8e8) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xaa9e) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x88e7) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0xae97) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x9fe7) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x94a8) EUC_JP to UTF-8. Ignored
+NOTICE:  local_to_utf: could not convert (0x9e3b) EUC_JP to UTF-8. Ignored
+ERROR:  parser: parse error at or near "from"

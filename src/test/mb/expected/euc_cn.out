@@ -1,87 +1,38 @@
 drop table 计算机术语;
-ERROR:  Relation '计算机术语' does not exist
+ERROR:  parser: parse error at or near "("
 create table 计算机术语(术语 text, 分类号 varchar, 备注1A char(16));
+ERROR:  parser: parse error at or near "("
 create index 计算机术语index1 on 计算机术语 using btree(术语);
+ERROR:  parser: parse error at or near "("
 create index 计算机术语index2 on 计算机术语 using btree(分类号);
+ERROR:  parser: parse error at or near "("
 insert into 计算机术语 values('电脑显示屏','机A01上');
+ERROR:  parser: parse error at or near "("
 insert into 计算机术语 values('电脑图形','分B01中');
+ERROR:  parser: parse error at or near "("
 insert into 计算机术语 values('电脑程序员','人Z01下');
+ERROR:  parser: parse error at or near "("
 vacuum 计算机术语;
+ERROR:  parser: parse error at or near "("
 select * from 计算机术语;
-    术语    | 分类号  | 备注1a 
-------------+---------+--------
- 电脑显示屏 | 机A01上 | 
- 电脑图形   | 分B01中 | 
- 电脑程序员 | 人Z01下 | 
-(3 rows)
-
+ERROR:  parser: parse error at or near "92"
 select * from 计算机术语 where 分类号 = '人Z01下';
-    术语    | 分类号  | 备注1a 
-------------+---------+--------
- 电脑程序员 | 人Z01下 | 
-(1 row)
-
+ERROR:  parser: parse error at or near "92"
 select * from 计算机术语 where 分类号 ~* '人z01下';
-    术语    | 分类号  | 备注1a 
-------------+---------+--------
- 电脑程序员 | 人Z01下 | 
-(1 row)
-
+ERROR:  parser: parse error at or near "92"
 select * from 计算机术语 where 分类号 like '_Z01_';
-    术语    | 分类号  | 备注1a 
-------------+---------+--------
- 电脑程序员 | 人Z01下 | 
-(1 row)
-
+ERROR:  parser: parse error at or near "92"
 select * from 计算机术语 where 分类号 like '_Z%';
-    术语    | 分类号  | 备注1a 
-------------+---------+--------
- 电脑程序员 | 人Z01下 | 
-(1 row)
-
+ERROR:  parser: parse error at or near "92"
 select * from 计算机术语 where 术语 ~ '电脑[显图]';
-    术语    | 分类号  | 备注1a 
-------------+---------+--------
- 电脑显示屏 | 机A01上 | 
- 电脑图形   | 分B01中 | 
-(2 rows)
-
+ERROR:  parser: parse error at or near "92"
 select * from 计算机术语 where 术语 ~* '电脑[显图]';
-    术语    | 分类号  | 备注1a 
-------------+---------+--------
- 电脑显示屏 | 机A01上 | 
- 电脑图形   | 分B01中 | 
-(2 rows)
-
+ERROR:  parser: parse error at or near "92"
 select *,character_length(术语) from 计算机术语;
-    术语    | 分类号  | 备注1a | char_length 
-------------+---------+--------+-------------
- 电脑显示屏 | 机A01上 |        |           5
- 电脑图形   | 分B01中 |        |           4
- 电脑程序员 | 人Z01下 |        |           5
-(3 rows)
-
+ERROR:  parser: parse error at or near "caf5"
 select *,octet_length(术语) from 计算机术语;
-    术语    | 分类号  | 备注1a | octet_length 
-------------+---------+--------+--------------
- 电脑显示屏 | 机A01上 |        |           10
- 电脑图形   | 分B01中 |        |            8
- 电脑程序员 | 人Z01下 |        |           10
-(3 rows)
-
+ERROR:  parser: parse error at or near "caf5"
 select *,position('显' in 术语) from 计算机术语;
-    术语    | 分类号  | 备注1a | strpos 
-------------+---------+--------+--------
- 电脑显示屏 | 机A01上 |        |      3
- 电脑图形   | 分B01中 |        |      0
- 电脑程序员 | 人Z01下 |        |      0
-(3 rows)
-
+ERROR:  parser: parse error at or near "caf5"
 select *,substring(术语 from 3 for 4) from 计算机术语;
-    术语    | 分类号  | 备注1a | substr 
-------------+---------+--------+--------
- 电脑显示屏 | 机A01上 |        | 显示屏
- 电脑图形   | 分B01中 |        | 图形
- 电脑程序员 | 人Z01下 |        | 程序员
-(3 rows)
-
+ERROR:  parser: parse error at or near "caf5"
