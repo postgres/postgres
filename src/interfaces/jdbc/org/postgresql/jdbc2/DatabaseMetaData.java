@@ -15,7 +15,7 @@ import org.postgresql.util.PSQLException;
 /**
  * This class provides information about the database as a whole.
  *
- * $Id: DatabaseMetaData.java,v 1.42 2001/10/31 20:27:37 davec Exp $
+ * $Id: DatabaseMetaData.java,v 1.43 2001/11/02 23:51:18 davec Exp $
  *
  * <p>Many of the methods here return lists of information in ResultSets.  You
  * can use the normal ResultSet methods such as getString and getInt to
@@ -2643,19 +2643,17 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
                                                            + "a.tgdeferrable,"
                                                            + "a.tginitdeferred "
                                                            + "FROM "
-                                                           + "(SELECT t.tgargs, t.tgconstrname, p.proname, t.tgdeferrable,"
-                                                           + "t.tginitdeferred "
+                                                           + "(SELECT t.tgargs, t.tgconstrname, p.proname,"
+                                                           + "t.tgdeferrable, t.tginitdeferred "
                                                            + "FROM pg_class as c, pg_proc as p, pg_trigger as t "
-                                                           + "WHERE c.relfilenode=t.tgrelid AND t.tgfoid = p.oid "
-                                                           + "AND p.proname LIKE 'RI_FKey_%_upd') as a,"
+                                                           + "WHERE c.relname like '"+table+"' AND c.relfilenode=t.tgrelid "
+                                                           + "AND t.tgfoid = p.oid AND p.proname LIKE 'RI_FKey_%_upd') as a, "
                                                            + "(SELECT t.tgconstrname, p.proname "
                                                            + "FROM pg_class as c, pg_proc as p, pg_trigger as t "
-                                                           + "WHERE c.relfilenode=t.tgrelid AND t.tgfoid = p.oid "
-                                                           + "AND p.proname LIKE 'RI_FKey_%_del') as b,"
-                                                           + "(SELECT t.tgconstrname FROM pg_class as c, pg_trigger as t "
-                                                           + "WHERE c.relname like '"+table+"' AND c.relfilenode=t.tgrelid) as c "
-                                                           + "WHERE a.tgconstrname=b.tgconstrname AND a.tgconstrname=c.tgconstrname"
-                                                           );
+                                                           + "WHERE c.relname like '"+table+"' AND c.relfilenode=t.tgrelid "
+                                                           + "AND t.tgfoid = p.oid AND p.proname LIKE 'RI_FKey_%_del') as b "
+                                                           + "WHERE a.tgconstrname=b.tgconstrname"
+							   );
                 Vector tuples = new Vector();
 
                 while (rs.next())
