@@ -655,7 +655,7 @@ Maximum number of indexes on a table?    unlimited
    files.
    
    The maximum table size and maximum number of columns can be increased
-   by four if the default block size is increased to 32k.
+   by a factor of four if the default block size is increased to 32k.
    
     4.7) How much database disk space is required to store data from a typical
     text file?
