@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/src/interfaces/python/Attic/GNUmakefile,v 1.15 2002/12/11 04:07:39 momjian Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/python/Attic/GNUmakefile,v 1.16 2003/03/21 17:18:34 petere Exp $
 
 subdir = src/interfaces/python
 top_builddir = ../../..
@@ -9,7 +9,7 @@ SO_MAJOR_VERSION = 2
 SO_MINOR_VERSION = 4
 OBJS = pgmodule.o
 SHLIB_LINK = $(libpq)
-ifeq ($(PORTNAME), win)
+ifeq ($(PORTNAME), cygwin)
 override CPPFLAGS += -DUSE_DL_IMPORT
 SHLIB_LINK += $(python_libspec)
 endif

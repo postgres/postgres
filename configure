@@ -1387,13 +1387,14 @@ case $host_os in
      aix*) template=aix ;;
     beos*) template=beos ;;
     bsdi*) template=bsdi ;;
-  cygwin*) template=win ;;
+  cygwin*) template=cygwin ;;
   darwin*) template=darwin ;;
     dgux*) template=dgux ;;
  freebsd*) template=freebsd ;;
     hpux*) template=hpux ;;
     irix*) template=irix5 ;;
    linux*) template=linux ;;
+   mingw*) template=win ;;
   netbsd*) template=netbsd ;;
 nextstep*) template=nextstep ;;
  openbsd*) template=openbsd ;;

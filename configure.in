@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $Header: /cvsroot/pgsql/configure.in,v 1.238 2003/03/06 03:16:55 tgl Exp $
+dnl $Header: /cvsroot/pgsql/configure.in,v 1.239 2003/03/21 17:18:34 petere Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -58,13 +58,14 @@ case $host_os in
      aix*) template=aix ;;
     beos*) template=beos ;;
     bsdi*) template=bsdi ;;
-  cygwin*) template=win ;;
+  cygwin*) template=cygwin ;;
   darwin*) template=darwin ;;
     dgux*) template=dgux ;;
  freebsd*) template=freebsd ;;
     hpux*) template=hpux ;;
     irix*) template=irix5 ;;
    linux*) template=linux ;;
+   mingw*) template=win ;;
   netbsd*) template=netbsd ;;
 nextstep*) template=nextstep ;;
  openbsd*) template=openbsd ;;

@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.66 2003/01/11 17:22:19 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.67 2003/03/21 17:18:34 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -194,7 +194,7 @@ ifeq ($(PORTNAME), unixware)
   LINK.shared		+= -Wl,-z,text -Wl,-h,$(soname)
 endif
 
-ifeq ($(PORTNAME), win)
+ifeq ($(PORTNAME), cygwin)
   shlib			:= $(NAME)$(DLSUFFIX)
 endif
 
@@ -225,7 +225,7 @@ all-static-lib: lib$(NAME).a
 
 all-shared-lib: $(shlib)
 
-ifneq ($(PORTNAME), win)
+ifneq ($(PORTNAME), cygwin)
 
 ifndef LORDER
 MK_NO_LORDER := true
@@ -239,12 +239,12 @@ else
 endif
 	$(RANLIB) $@
 
-endif # not win
+endif # not cygwin
 
 ifeq ($(enable_shared), yes)
 
 ifneq ($(PORTNAME), beos)
-ifneq ($(PORTNAME), win)
+ifneq ($(PORTNAME), cygwin)
 ifneq ($(PORTNAME), aix)
 
 # Normal case
@@ -270,9 +270,9 @@ $(shlib): lib$(NAME).a
 	
 endif # PORTNAME == aix
 
-else # PORTNAME == win
+else # PORTNAME == cygwin
 
-# WIN case
+# Cygwin case
 $(shlib) lib$(NAME).a: $(OBJS) $(DLLINIT)
 	$(DLLTOOL) --export-all --output-def $(NAME).def $(OBJS)
 	$(DLLWRAP) -o $(shlib) --dllname $(shlib) --def $(NAME).def $(OBJS) $(DLLINIT) $(SHLIB_LINK)
@@ -281,7 +281,7 @@ $(shlib) lib$(NAME).a: $(OBJS) $(DLLINIT)
 $(DLLINIT): $(DLLINIT:%.o=%.c)
 	$(MAKE) -C $(@D) $(@F)
 
-endif # PORTNAME == win
+endif # PORTNAME == cygwin
 
 else # PORTNAME == beos
 
@@ -308,7 +308,7 @@ install-lib-static: lib$(NAME).a
 ifeq ($(enable_shared), yes)
 install-lib-shared: $(shlib)
 	$(INSTALL_SHLIB) $< $(DESTDIR)$(libdir)/$(shlib)
-ifneq ($(PORTNAME), win)
+ifneq ($(PORTNAME), cygwin)
 ifneq ($(shlib), lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION))
 	cd $(DESTDIR)$(libdir) && \
 	rm -f lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION) && \
@@ -320,7 +320,7 @@ ifneq ($(shlib), lib$(NAME)$(DLSUFFIX))
 	$(LN_S) $(shlib) lib$(NAME)$(DLSUFFIX)
 endif
 
-endif # not win
+endif # not cygwin
 endif # enable_shared
 
 
@@ -351,6 +351,6 @@ ifdef EXPSUFF
 	rm -f lib$(NAME)$(EXPSUFF)
 endif
 endif
-ifeq ($(PORTNAME), win)
+ifeq ($(PORTNAME), cygwin)
 	rm -f $(NAME).dll $(NAME).def
 endif
