@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.87 2003/10/11 16:30:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.88 2003/10/11 18:04:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3525,7 +3525,7 @@ validateForeignKeyConstraint(FkConstraint *fkconstraint,
 		trigdata.tg_newtuple = NULL;
 		trigdata.tg_trigger = &trig;
 
-		fcinfo.context = (void *) &trigdata;
+		fcinfo.context = (Node *) &trigdata;
 
 		RI_FKey_check_ins(&fcinfo);
 	}

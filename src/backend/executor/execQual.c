@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.147 2003/10/11 16:30:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.148 2003/10/11 18:04:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -746,7 +746,7 @@ ExecMakeFunctionResult(FuncExprState *fcache,
 	 */
 	if (fcache->func.fn_retset)
 	{
-		fcinfo.resultinfo = (void *) &rsinfo;
+		fcinfo.resultinfo = (Node *) &rsinfo;
 		rsinfo.type = T_ReturnSetInfo;
 		rsinfo.econtext = econtext;
 		rsinfo.expectedDesc = NULL;
@@ -992,7 +992,7 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 	 * doesn't actually get to see the resultinfo, but set it up anyway
 	 * because we use some of the fields as our own state variables.
 	 */
-	fcinfo.resultinfo = (void *) &rsinfo;
+	fcinfo.resultinfo = (Node *) &rsinfo;
 	rsinfo.type = T_ReturnSetInfo;
 	rsinfo.econtext = econtext;
 	rsinfo.expectedDesc = expectedDesc;
