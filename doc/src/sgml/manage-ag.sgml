@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/manage-ag.sgml,v 2.31 2004/06/21 04:06:03 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/manage-ag.sgml,v 2.32 2004/08/07 19:02:43 tgl Exp $
 -->
 
 <chapter id="managing-databases">
@@ -32,8 +32,8 @@ $PostgreSQL: pgsql/doc/src/sgml/manage-ag.sgml,v 2.31 2004/06/21 04:06:03 tgl Ex
    are accessible from each database within the cluster.)  More
    accurately, a database is a collection of schemas and the schemas
    contain the tables, functions, etc.  So the full hierarchy is:
-   server, database, schema, table (or something else instead of a
-   table).
+   server, database, schema, table (or some other kind of object,
+   such as a function).
   </para>
 
   <para>
@@ -58,8 +58,8 @@ $PostgreSQL: pgsql/doc/src/sgml/manage-ag.sgml,v 2.31 2004/06/21 04:06:03 tgl Ex
 
   <note>
    <para>
-    <acronym>SQL</> calls databases <quote>catalogs</>, but there is no
-    difference in practice.
+    The <acronym>SQL</> standard calls databases <quote>catalogs</>, but there
+    is no difference in practice.
    </para>
   </note>
  </sect1>
@@ -68,14 +68,16 @@ $PostgreSQL: pgsql/doc/src/sgml/manage-ag.sgml,v 2.31 2004/06/21 04:06:03 tgl Ex
   <title>Creating a Database</title>
 
   <para>
-   In order to create a databases, the <productname>PostgreSQL</>
+   In order to create a database, the <productname>PostgreSQL</>
    server must be up and running (see <xref
    linkend="postmaster-start">).
   </para>
 
   <para>
-   Databases are created with the SQL command <command>CREATE
-   DATABASE</command>:<indexterm><primary>CREATE DATABASE</></>
+   Databases are created with the SQL command
+   <xref linkend="sql-createdatabase"
+   endterm="sql-createdatabase-title">:<indexterm><primary>CREATE
+   DATABASE</></>
 <synopsis>
 CREATE DATABASE <replaceable>name</>;
 </synopsis>
@@ -105,7 +107,7 @@ CREATE DATABASE <replaceable>name</>;
   </para>
 
   <para>
-   The name <literal>template1</literal> is no accident: When a new
+   The name <literal>template1</literal> is no accident: when a new
    database is created, the template database is essentially cloned.
    This means that any changes you make in <literal>template1</> are
    propagated to all subsequently created databases. This implies that
@@ -280,8 +282,8 @@ createdb -T template0 <replaceable>dbname</>
    <acronym>GEQO</acronym> optimizer for a given database, you'd
    ordinarily have to either disable it for all databases or make sure
    that every connecting client is careful to issue <literal>SET geqo
-   TO off;</literal>.  To make this setting the default you can
-   execute the command
+   TO off;</literal>.  To make this setting the default within a particular
+   database, you can execute the command
 <programlisting>
 ALTER DATABASE mydb SET geqo TO off;
 </programlisting>
@@ -299,12 +301,13 @@ ALTER DATABASE mydb SET geqo TO off;
   <title>Destroying a Database</title>
 
   <para>
-   Databases are destroyed with the command <command>DROP
-   DATABASE</command>:<indexterm><primary>DROP DATABASE</></>
+   Databases are destroyed with the command 
+   <xref linkend="sql-dropdatabase"
+   endterm="sql-dropdatabase-title">:<indexterm><primary>DROP DATABASE</></>
 <synopsis>
 DROP DATABASE <replaceable>name</>;
 </synopsis>
-   Only the owner of the database (i.e., the user that created it) or
+   Only the owner of the database (i.e., the user that created it), or
    a superuser, can drop a database. Dropping a database removes all objects
    that were 
    contained within the database. The destruction of a database cannot
@@ -335,7 +338,7 @@ dropdb <replaceable class="parameter">dbname</replaceable>
   <title>Tablespaces</title>
 
    <para>
-    Tablespaces in <productname>PostgreSQL</> allow database superusers to
+    Tablespaces in <productname>PostgreSQL</> allow database administrators to
     define locations in the file system where the files representing
     database objects can be stored. Once created, a tablespace can be referred
     to by name when creating database objects.
@@ -360,7 +363,37 @@ dropdb <replaceable class="parameter">dbname</replaceable>
    </para>
 
    <para>
-    Databases, schemas, tables, indexes and sequences can all be placed in
+    To define a tablespace, use the <xref linkend="sql-createtablespace"
+    endterm="sql-createtablespace-title"> command, for
+    example:<indexterm><primary>CREATE TABLESPACE</></>
+<programlisting>
+CREATE TABLESPACE fastspace LOCATION '/mnt/sda1/postgresql/data';
+</programlisting>
+    The location must be an existing, empty directory that is owned by
+    the <productname>PostgreSQL</> system user.  All objects subsequently
+    created within the tablespace will be stored in files underneath this
+    directory.
+   </para>
+
+   <note>
+   <para>
+    There is usually not much point in making more than one
+    tablespace per logical filesystem, since you can't control the location
+    of individual files within a logical filesystem.  However,
+    <productname>PostgreSQL</> does not enforce any such limitation, and
+    indeed it's not directly aware of the filesystem boundaries on your
+    system.  It just stores files in the directories you tell it to use.
+   </para>
+   </note>
+
+   <para>
+    Creation of the tablespace itself must be done as a database superuser,
+    but after that you can allow ordinary database users to make use of it.
+    To do that, grant them the <literal>CREATE</> privilege on it.
+   </para>
+
+   <para>
+    Databases, schemas, tables, and indexes can all be assigned to
     particular tablespaces. To do so, a user with the <literal>CREATE</>
     privilege on a given tablespace must pass the tablespace name as a 
     parameter to the relevant command. For example, the following creates 
@@ -385,7 +418,7 @@ CREATE TABLE foo(i int) TABLESPACE space1;
     A schema does not in itself occupy any storage (other than a system
     catalog entry), so assigning a tablespace to a schema does not in itself
     do anything.  What this actually does is to set a default tablespace
-    for tables, indexes, and sequences later created within the schema.  If
+    for tables later created within the schema.  If
     no tablespace is mentioned when creating a schema, it inherits its
     default tablespace from the current database.
    </para>
@@ -396,10 +429,10 @@ CREATE TABLE foo(i int) TABLESPACE space1;
    </para>
 
    <para>
-    Another way to state the above rules is that when a schema, table, index
-    or sequence is created without specifying a tablespace, the object
+    Another way to state the above rules is that when a schema, table, or index
+    is created without specifying a tablespace, the object
     inherits its logical parent's tablespace. A schema will be created in the
-    current database's tablespace; a table or sequence will be created in the
+    current database's tablespace; a table will be created in the
     tablespace of the schema it is being created in; an index will be created
     in the tablespace of the table underlying the index.
    </para>
