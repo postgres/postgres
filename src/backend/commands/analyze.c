@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.63 2003/09/25 06:57:58 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.64 2003/10/18 15:38:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -714,7 +714,7 @@ random_fract(void)
 	do
 	{
 		z = random();
-	} while (!(z > 0 && z < MAX_RANDOM_VALUE));
+	} while (z <= 0 || z >= MAX_RANDOM_VALUE);
 	return (double) z / (double) MAX_RANDOM_VALUE;
 }
 
