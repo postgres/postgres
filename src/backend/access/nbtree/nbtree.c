@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.68 2000/10/29 18:33:40 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.69 2000/11/01 20:39:58 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1018,7 +1018,17 @@ btree_xlog_delete(bool redo, XLogRecPtr lsn, XLogRecord *record)
 	if (PageIsNew((PageHeader) page))
 		elog(STOP, "btree_delete_redo: uninitialized page");
 
+	if (XLByteLE(lsn, PageGetLSN(page)))
+	{
+		UnlockAndReleaseBuffer(buffer);
+		return;
+	}
+
 	PageIndexTupleDelete(page, ItemPointerGetOffsetNumber(&(xlrec->target.tid)));
+
+	PageSetLSN(page, lsn);
+	PageSetSUI(page, ThisStartUpID);
+	UnlockAndWriteBuffer(buffer);
 
 	return;
 }
