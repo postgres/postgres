@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.7 1996/11/10 03:06:18 momjian Exp $
+ * $Id: builtins.h,v 1.8 1996/11/16 04:59:10 momjian Exp $
  *
  * NOTES
  *    This should normally only be included by fmgr.h.
@@ -454,6 +454,11 @@ extern int date_le(int4 dateVal1, int4 dateVal2);
 extern int date_gt(int4 dateVal1, int4 dateVal2);
 extern int date_ge(int4 dateVal1, int4 dateVal2);
 extern int date_cmp(int4 dateVal1, int4 dateVal2);
+extern int4 date_larger(int4 dateVal1, int4 dateVal2);
+extern int4 date_smaller(int4 dateVal1, int4 dateVal2);
+extern int32 date_mi(int4 dateVal1, int4 dateVal2);
+extern int4 date_pli(int4 dateVal, int32 days);
+extern int4 date_mii(int4 dateVal, int32 days);
 extern char *time_in(char *timestr);
 extern char *time_out(TimeADT *time);
 extern int time_eq(TimeADT *time1, TimeADT *time2);
