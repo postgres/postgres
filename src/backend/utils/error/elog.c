@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.88 2001/08/06 21:55:13 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.89 2001/10/18 23:07:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,10 +63,12 @@ bool		Log_pid;
 
 static const char *print_timestamp(void);
 static const char *print_pid(void);
-static void send_notice_to_frontend(const char *msg);
-static void send_error_to_frontend(const char *msg);
+static void send_message_to_frontend(int type, const char *msg);
 static const char *useful_strerror(int errnum);
 static const char *elog_message_prefix(int lev);
+
+#define send_notice_to_frontend(msg)  send_message_to_frontend(NOTICE, msg)
+#define send_error_to_frontend(msg)  send_message_to_frontend(ERROR, msg)
 
 
 static int	Debugfile = -1;
@@ -667,40 +669,18 @@ write_syslog(int level, const char *line)
 #endif /* ENABLE_SYSLOG */
 
 
-
 static void
-send_notice_or_error_to_frontend(int type, const char *msg);
-
-
-static void
-send_notice_to_frontend(const char *msg)
+send_message_to_frontend(int type, const char *msg)
 {
-	send_notice_or_error_to_frontend(NOTICE, msg);
-}
-
-
-static void
-send_error_to_frontend(const char *msg)
-{
-	send_notice_or_error_to_frontend(ERROR, msg);
-}
-
-
-static void
-send_notice_or_error_to_frontend(int type, const char *msg)
-{
-	StringInfo buf;
+	StringInfoData buf;
 
 	AssertArg(type == NOTICE || type == ERROR);
 
-	buf = makeStringInfo();
+	pq_beginmessage(&buf);
+	pq_sendbyte(&buf, type == NOTICE ? 'N' : 'E');
+	pq_sendstring(&buf, msg);
+	pq_endmessage(&buf);
 
-	pq_beginmessage(buf);
-	pq_sendbyte(buf, type == NOTICE ? 'N' : 'E');
-	pq_sendstring(buf, msg);
-	pq_endmessage(buf);
-
-	pfree(buf);
 	/*
 	 * This flush is normally not necessary, since postgres.c will
 	 * flush out waiting data when control returns to the main loop.
