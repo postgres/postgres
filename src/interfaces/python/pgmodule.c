@@ -91,6 +91,10 @@ const char *__movename[5] =
 #define DEFAULT_VARS	1		/* enables default variables use */
 #endif							/* NO_DEF_VAR */
 
+#ifdef MS_WIN32
+#define NO_SNPRINTF 1
+#endif
+
 /* --------------------------------------------------------------------- */
 
 /* MODULE GLOBAL VARIABLES */
@@ -937,7 +941,12 @@ pgsource_print(pgsourceobject * self, FILE *fp, int flags)
 
 /* query type definition */
 staticforward PyTypeObject PgSourceType = {
+#ifndef MS_WIN32
 	PyObject_HEAD_INIT(&PyType_Type)
+#else
+	PyObject_HEAD_INIT(NULL)
+#endif
+
 	0,								/* ob_size */
 	"pgsourceobject",				/* tp_name */
 	sizeof(pgsourceobject),			/* tp_basicsize */
@@ -3075,8 +3084,7 @@ static struct PyMethodDef pg_methods[] = {
 static char pg__doc__[] = "Python interface to PostgreSQL DB";
 
 /* Initialization function for the module */
-void init_pg(void);		/* Python doesn't prototype this */
-void
+DL_EXPORT(void)
 init_pg(void)
 {
 	PyObject	*mod, *dict, *v;

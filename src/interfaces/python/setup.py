@@ -1,12 +1,9 @@
 #!/usr/bin/env python
 
-include_dirs=['/usr/include/pgsql']
-library_dirs=['usr/lib/pgsql']
-optional_libs=['pq']
-
 # Setup script for the PyGreSQL version 3
 # created 2000/04 Mark Alexander <mwa@gate.net>
 # tweaked 2000/05 Jeremy Hylton <jeremy@cnri.reston.va.us>
+# win32 support 2001/01 Gerhard Haering <gerhard@bigfoot.de>
 
 # requires distutils; standard in Python 1.6, otherwise download from
 # http://www.python.org/sigs/distutils-sig/download.html
@@ -22,6 +19,20 @@ optional_libs=['pq']
 # on using distutils to install Python programs.
 
 from distutils.core import setup
+import sys
+
+if sys.platform == "win32":
+	# If you want to build from source; you must have built a win32 native libpq	# before and copied libpq.dll into the PyGreSQL root directory.
+	win_pg_build_root = 'd:/dev/pg/postgresql-7.0.2/'
+	include_dirs=[ win_pg_build_root + 'src/include', win_pg_build_root + '/src/include/libpq', win_pg_build_root + 'src', win_pg_build_root + 'src/interfaces/libpq' ]
+	library_dirs=[ win_pg_build_root + 'src/interfaces/libpq/Release' ]
+	optional_libs=[ 'libpqdll', 'wsock32', 'advapi32' ]
+	data_files = [ 'libpq.dll' ]
+else:
+	include_dirs=['/usr/include/pgsql']
+	library_dirs=['usr/lib/pgsql']
+	optional_libs=['pq']
+	data_files = []
 
 setup (name = "PyGreSQL",
     version = "3.1",
@@ -32,12 +43,13 @@ setup (name = "PyGreSQL",
     licence = "Python",
 
 	py_modules = ['pg', 'pgdb'],
-    ext_modules = [ ('_pgmodule', {
+    ext_modules = [ Extension(
+		name='_pg',
         'sources': ['pgmodule.c'],
         'include_dirs': include_dirs,
         'library_dirs': library_dirs,
         'libraries': optional_libs
-        }
     )]
+	data_files = data_files
 )
 
