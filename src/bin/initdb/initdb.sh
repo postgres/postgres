@@ -26,7 +26,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.27 1997/11/15 17:15:34 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.28 1997/11/15 20:57:30 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -346,15 +346,10 @@ fi
 
 echo
 
-echo "vacuuming template1"
-echo "vacuum analyze" | postgres -F -Q -D$PGDATA template1 2>&1 > /dev/null |\
-	grep -v "^DEBUG:"
-
 echo "loading pg_description"
 echo "copy pg_description from '$TEMPLATE_DESCR'" | postgres -F -Q -D$PGDATA template1 > /dev/null
 echo "copy pg_description from '$GLOBAL_DESCR'" | postgres -F -Q -D$PGDATA template1 > /dev/null
-echo "vacuum analyze pg_description" | postgres -F -Q -D$PGDATA template1 2>&1 > /dev/null |\
+
+echo "vacuuming template1"
+echo "vacuum analyze" | postgres -F -Q -D$PGDATA template1 2>&1 > /dev/null |\
 	grep -v "^DEBUG:"
-
-
-

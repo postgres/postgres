@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_description.h,v 1.2 1997/11/14 05:57:46 momjian Exp $
+ * $Id: pg_description.h,v 1.3 1997/11/15 20:57:48 momjian Exp $
  *
  * NOTES
  *		the genbki.sh script reads this file and generates .bki
@@ -32,7 +32,7 @@
  *		typedef struct FormData_pg_description
  * ----------------
  */
-CATALOG(pg_description)
+CATALOG(pg_description) BOOTSTRAP
 {
 	Oid			objoid;
 	text		description;
@@ -59,7 +59,8 @@ typedef FormData_pg_description *Form_pg_description;
  */
 
 /* Because the contents of this table are taken from the other *.h files,
-   there is no initialization.
+   there is no initialization.  It is loaded from initdb using a COPY
+   statement.
 */
 
 #endif							/* PG_DESCRIPTION_H */

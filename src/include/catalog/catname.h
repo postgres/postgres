@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: catname.h,v 1.7 1997/11/02 15:26:50 vadim Exp $
+ * $Id: catname.h,v 1.8 1997/11/15 20:57:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,10 +21,8 @@
 #define  AccessMethodProcedureRelationName "pg_amproc"
 #define  AttributeRelationName "pg_attribute"
 #define  DatabaseRelationName "pg_database"
-#define  DefaultsRelationName "pg_defaults"
-#define  DemonRelationName "pg_demon"
+#define  DescriptionRelationName "pg_description"
 #define  GroupRelationName "pg_group"
-#define  HostsRelationName "pg_hosts"
 #define  IndexRelationName "pg_index"
 #define  InheritProcedureRelationName "pg_inheritproc"
 #define  InheritsRelationName "pg_inherits"
@@ -32,13 +30,11 @@
 #define  LanguageRelationName "pg_language"
 #define  ListenerRelationName "pg_listener"
 #define  LogRelationName "pg_log"
-#define  MagicRelationName "pg_magic"
 #define  OperatorClassRelationName "pg_opclass"
 #define  OperatorRelationName "pg_operator"
 #define  ProcedureRelationName "pg_proc"
 #define  RelationRelationName "pg_class"
 #define  RewriteRelationName "pg_rewrite"
-#define  ServerRelationName "pg_server"
 #define  StatisticRelationName "pg_statistic"
 #define  TypeRelationName "pg_type"
 #define  UserRelationName "pg_user"

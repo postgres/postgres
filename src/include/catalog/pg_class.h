@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_class.h,v 1.13 1997/11/13 03:22:58 momjian Exp $
+ * $Id: pg_class.h,v 1.14 1997/11/15 20:57:41 momjian Exp $
  *
  * NOTES
  *	  ``pg_relation'' is being replaced by ``pg_class''.  currently
@@ -132,13 +132,9 @@ DATA(insert OID = 1247 (  pg_type 71		  PGUID 0 0 0 0 0 f f r n 16 0 0 0 f _null
 DESCR("");
 DATA(insert OID = 1249 (  pg_attribute 75	  PGUID 0 0 0 0 0 f f r n 16 0 0 0 f _null_ ));
 DESCR("");
-DATA(insert OID = 1251 (  pg_demon 76		  PGUID 0 0 0 0 0 f t r n 4 0 0 0 f _null_ ));
-DESCR("");
-DATA(insert OID = 1253 (  pg_magic 80		  PGUID 0 0 0 0 0 f t r n 2 0 0 0 f _null_ ));
+DATA(insert OID = 1251 (  pg_description 76	  PGUID 0 0 0 0 0 f t r n 2 0 0 0 f _null_ ));
 DESCR("");
 DATA(insert OID = 1255 (  pg_proc 81		  PGUID 0 0 0 0 0 f f r n 16 0 0 0 f _null_ ));
-DESCR("");
-DATA(insert OID = 1257 (  pg_server 82		  PGUID 0 0 0 0 0 f t r n 3 0 0 0 f _null_ ));
 DESCR("");
 DATA(insert OID = 1259 (  pg_class 83		  PGUID 0 0 0 0 0 f f r n 18 0 0 0 f _null_ ));
 DESCR("");
@@ -148,13 +144,9 @@ DATA(insert OID = 1261 (  pg_group 87		  PGUID 0 0 0 0 0 f t s n 3 0 0 0 f _null
 DESCR("");
 DATA(insert OID = 1262 (  pg_database 88	  PGUID 0 0 0 0 0 f t r n 3 0 0 0 f _null_ ));
 DESCR("");
-DATA(insert OID = 1263 (  pg_defaults 89	  PGUID 0 0 0 0 0 f t r n 2 0 0 0 f _null_ ));
-DESCR("");
 DATA(insert OID = 1264 (  pg_variable 90	  PGUID 0 0 0 0 0 f t s n 2 0 0 0 f _null_ ));
 DESCR("");
 DATA(insert OID = 1269 (  pg_log  99		  PGUID 0 0 0 0 0 f t s n 1 0 0 0 f _null_ ));
-DESCR("");
-DATA(insert OID = 1273 (  pg_hosts 101		  PGUID 0 0 0 0 0 f t s n 3 0 0 0 f _null_ ));
 DESCR("");
 DATA(insert OID = 1215 (  pg_attrdef 109	  PGUID 0 0 0 0 0 t t r n 4 0 0 0 f _null_ ));
 DESCR("");
@@ -164,25 +156,18 @@ DATA(insert OID = 1219 (  pg_trigger 111	  PGUID 0 0 0 0 0 t t r n 7 0 0 0 f _nu
 DESCR("");
 
 #define RelOid_pg_type			1247
-#define RelOid_pg_demon			1251
+#define RelOid_pg_description	1251
 #define RelOid_pg_attribute		1249
-#define RelOid_pg_magic			1253
 #define RelOid_pg_proc			1255
-#define RelOid_pg_server		1257
 #define RelOid_pg_class			1259
 #define RelOid_pg_user			1260
 #define RelOid_pg_group			1261
 #define RelOid_pg_database		1262
-#define RelOid_pg_defaults		1263
 #define RelOid_pg_variable		1264
 #define RelOid_pg_log			1269
-#define RelOid_pg_hosts			1273
 #define RelOid_pg_attrdef		1215
 #define RelOid_pg_relcheck		1216
 #define RelOid_pg_trigger		1219
-
-#define MAX_SYSTEM_RELOID		1273	/* this does not seem to be used */
- /* anywhere					  */
 
 #define		  RELKIND_INDEX			  'i'		/* secondary index */
 #define		  RELKIND_RELATION		  'r'		/* cataloged heap */

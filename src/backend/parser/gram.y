@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.66 1997/11/14 06:09:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.67 1997/11/15 20:57:09 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -3366,10 +3366,9 @@ relation_name:	SpecialRuleRelation
 				}
 		| ColId
 				{
-					/* disallow refs to magic system tables */
+					/* disallow refs to variable system tables */
 					if (strcmp(LogRelationName, $1) == 0
-					   || strcmp(VariableRelationName, $1) == 0
-					   || strcmp(MagicRelationName, $1) == 0)
+					   || strcmp(VariableRelationName, $1) == 0)
 						elog(WARN,"%s cannot be accessed by users",$1);
 					else
 						$$ = $1;

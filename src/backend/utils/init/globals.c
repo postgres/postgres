@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.15 1997/11/02 15:26:12 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.16 1997/11/15 20:57:27 momjian Exp $
  *
  * NOTES
  *	  Globals used all over the place should be declared here and not
@@ -107,13 +107,8 @@ char	   *IndexedCatalogNames[] = {
  */
 char	   *SharedSystemRelationNames[] = {
 	DatabaseRelationName,
-	DefaultsRelationName,
-	DemonRelationName,
 	GroupRelationName,
-	HostsRelationName,
 	LogRelationName,
-	MagicRelationName,
-	ServerRelationName,
 	UserRelationName,
 	VariableRelationName,
 	0

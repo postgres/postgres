@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_attribute.h,v 1.17 1997/11/02 15:26:56 vadim Exp $
+ * $Id: pg_attribute.h,v 1.18 1997/11/15 20:57:40 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -227,15 +227,12 @@ DATA(insert OID = 0 ( 1262 xmax				28 0  4  -5 0 -1 f f i f f));
 DATA(insert OID = 0 ( 1262 cmax				29 0  4  -6 0 -1 t f i f f));
 
 /* ----------------
- *		pg_demon
+ *		pg_description
  * ----------------
  */
-DATA(insert OID = 0 ( 1251 demserid			26 0  4   1 0 -1 t f i f f));
-DATA(insert OID = 0 ( 1251 demname			19 0 NAMEDATALEN  2 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1251 demowner			26 0  4   3 0 -1 t f i f f));
-DATA(insert OID = 0 ( 1251 demcode			24 0  4   4 0 -1 t f i f f));
+DATA(insert OID = 0 ( 1251 objoid			26 0  4   1 0 -1 t f i f f));
+DATA(insert OID = 0 ( 1251 description		25 0 -1   2 0 -1 f f i f f));
 DATA(insert OID = 0 ( 1251 ctid				27 0  6  -1 0 -1 f f i f f));
-
 DATA(insert OID = 0 ( 1251 oid				26 0  4  -2 0 -1 t f i f f));
 DATA(insert OID = 0 ( 1251 xmin				28 0  4  -3 0 -1 f f i f f));
 DATA(insert OID = 0 ( 1251 cmin				29 0  4  -4 0 -1 t f i f f));
@@ -286,20 +283,6 @@ DATA(insert OID = 0 ( 1255 xmin				28 0  4  -3 0 -1 f f i f f));
 DATA(insert OID = 0 ( 1255 cmin				29 0  4  -4 0 -1 t f i f f));
 DATA(insert OID = 0 ( 1255 xmax				28 0  4  -5 0 -1 f f i f f));
 DATA(insert OID = 0 ( 1255 cmax				29 0  4  -6 0 -1 t f i f f));
-
-/* ----------------
- *		pg_server
- * ----------------
- */
-DATA(insert OID = 0 ( 1257 sername			19 0 NAMEDATALEN   1 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1257 serpid			21 0  2   2 0 -1 t f s f f));
-DATA(insert OID = 0 ( 1257 serport			21 0  2   3 0 -1 t f s f f));
-DATA(insert OID = 0 ( 1257 ctid				27 0  6  -1 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1257 oid				26 0  4  -2 0 -1 t f i f f));
-DATA(insert OID = 0 ( 1257 xmin				28 0  4  -3 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1257 cmin				29 0  4  -4 0 -1 t f i f f));
-DATA(insert OID = 0 ( 1257 xmax				28 0  4  -5 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1257 cmax				29 0  4  -6 0 -1 t f i f f));
 
 /* ----------------
  *		pg_user
@@ -421,32 +404,6 @@ DATA(insert OID = 0 ( 1259 xmax				28 0  4  -5 0 -1 f f i f f));
 DATA(insert OID = 0 ( 1259 cmax				29 0  4  -6 0 -1 t f i f f));
 
 /* ----------------
- *		pg_magic
- * ----------------
- */
-DATA(insert OID = 0 ( 1253 magname			19 0 NAMEDATALEN   1 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1253 magvalue			19 0 NAMEDATALEN   2 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1253 ctid				27 0  6  -1 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1253 oid				26 0  4  -2 0 -1 t f i f f));
-DATA(insert OID = 0 ( 1253 xmin				28 0  4  -3 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1253 cmin				29 0  4  -4 0 -1 t f i f f));
-DATA(insert OID = 0 ( 1253 xmax				28 0  4  -5 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1253 cmax				29 0  4  -6 0 -1 t f i f f));
-
-/* ----------------
- *		pg_defaults
- * ----------------
- */
-DATA(insert OID = 0 ( 1263 defname			19 0 NAMEDATALEN   1 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1263 defvalue			19 0 NAMEDATALEN   2 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1263 ctid				27 0  6  -1 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1263 oid				26 0  4  -2 0 -1 t f i f f));
-DATA(insert OID = 0 ( 1263 xmin				28 0  4  -3 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1263 cmin				29 0  4  -4 0 -1 t f i f f));
-DATA(insert OID = 0 ( 1263 xmax				28 0  4  -5 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1263 cmax				29 0  4  -6 0 -1 t f i f f));
-
-/* ----------------
  *		pg_attrdef
  * ----------------
  */
@@ -493,16 +450,6 @@ DATA(insert OID = 0 ( 1219 xmin				28 0  4  -3 0 -1 f f i f f));
 DATA(insert OID = 0 ( 1219 cmin				29 0  4  -4 0 -1 t f i f f));
 DATA(insert OID = 0 ( 1219 xmax				28 0  4  -5 0 -1 f f i f f));
 DATA(insert OID = 0 ( 1219 cmax				29 0  4  -6 0 -1 t f i f f));
-
-/* ----------------
- *		pg_hosts - this relation is used to store host based authentication
- *				   info
- *
- * ----------------
- */
-DATA(insert OID = 0 ( 1273 dbName			19 0  NAMEDATALEN	1 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1273 address			25 0  -1   2 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1273 mask				25 0  -1   3 0 -1 f f i f f));
 
 /* ----------------
  *		pg_variable - this relation is modified by special purpose access

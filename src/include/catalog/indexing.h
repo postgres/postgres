@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: indexing.h,v 1.10 1997/11/15 17:15:35 momjian Exp $
+ * $Id: indexing.h,v 1.11 1997/11/15 20:57:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,7 @@
 #define Num_pg_attrdef_indices	1
 #define Num_pg_relcheck_indices 1
 #define Num_pg_trigger_indices	1
-#define Num_pg_description_indices	1
+#define Num_pg_objoid_indices	1
 
 
 /*

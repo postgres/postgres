@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.21 1997/11/13 03:23:09 momjian Exp $
+ * $Id: pg_type.h,v 1.22 1997/11/15 20:58:05 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -210,13 +210,9 @@ DATA(insert OID = 71 (	pg_type		 PGUID 1 1 t b t \054 1247 0 foo bar foo bar c _
 DESCR("");
 DATA(insert OID = 75 (	pg_attribute PGUID 1 1 t b t \054 1249 0 foo bar foo bar c _null_));
 DESCR("");
-DATA(insert OID = 76 (	pg_demon	 PGUID 1 1 t b t \054 1251 0 foo bar foo bar c _null_));
-DESCR("");
-DATA(insert OID = 80 (	pg_magic	 PGUID 1 1 t b t \054 1253 0 foo bar foo bar c _null_));
+DATA(insert OID = 76 (	pg_description	 PGUID 1 1 t b t \054 1251 0 foo bar foo bar c _null_));
 DESCR("");
 DATA(insert OID = 81 (	pg_proc		 PGUID 1 1 t b t \054 1255 0 foo bar foo bar c _null_));
-DESCR("");
-DATA(insert OID = 82 (	pg_server	 PGUID 1 1 t b t \054 1257 0 foo bar foo bar c _null_));
 DESCR("");
 DATA(insert OID = 83 (	pg_class	 PGUID 1 1 t b t \054 1259 0 foo bar foo bar c _null_));
 DESCR("");
@@ -226,8 +222,6 @@ DATA(insert OID = 87 (	pg_group	 PGUID 1 1 t b t \054 1261 0 foo bar foo bar c _
 DESCR("");
 DATA(insert OID = 88 (	pg_database  PGUID 1 1 t b t \054 1262 0 foo bar foo bar c _null_));
 DESCR("");
-DATA(insert OID = 89 (	pg_defaults  PGUID 1 1 t b t \054 1263 0 foo bar foo bar c _null_));
-DESCR("");
 DATA(insert OID = 90 (	pg_variable  PGUID 1 1 t b t \054 1264 0 foo bar foo bar c _null_));
 DESCR("");
 DATA(insert OID = 99 (	pg_log		 PGUID 1 1 t b t \054 1269 0 foo bar foo bar c _null_));
@@ -235,8 +229,6 @@ DESCR("");
 
 /* OIDS 100 - 199 */
 
-DATA(insert OID = 101 (  pg_hosts	 PGUID 1 1 t b t \054 1273 0 foo bar foo bar c _null_));
-DESCR("");
 DATA(insert OID = 109 (  pg_attrdef  PGUID 1 1 t b t \054 1215 0 foo bar foo bar c _null_));
 DESCR("");
 DATA(insert OID = 110 (  pg_relcheck PGUID 1 1 t b t \054 1216 0 foo bar foo bar c _null_));
