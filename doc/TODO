@@ -5,7 +5,7 @@ TODO list for PostgreSQL
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Tue Nov  2 09:49:20 EST 2004
+Last updated:		Wed Nov  3 14:27:54 EST 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -380,7 +380,8 @@ Commands
 	  during periods of low usage. It might also require tables to be only
 	  paritally filled for easier reorganization.  Another idea would
           be to create a merged heap/index data file so an index lookup would
-	  automatically access the heap data too.
+	  automatically access the heap data too.  A third idea would be to
+	  store heap rows in hashed groups.
 
 	o Add default clustering to system tables
 
