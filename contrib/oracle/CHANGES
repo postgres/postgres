@@ -38,6 +38,7 @@
 	  by the schema name.
 	- Fix output of Oracle data extraction. It now require a call to the function
 	  export_data().
+
 2002 01 07 - Version 1.6
 	- Fix problem exporting NULL value. Thanks to Stephane Schildknecht.
 
@@ -48,4 +49,18 @@
 	- Add Oracle type FLOAT conversion to float8.
 	- Add column alias extraction on view. Thanks to Jean-Francois RIPOUTEAU
 	- Add PACKAGE extraction (type => DATA).
+
+2002 06 04 - Version 1.9
+	- Fix a problem export data which fill NULL instead of 0 or empty string.
+	  Thanks to Jan Kester.
+	- Add time with date when export data [ tochar('YYYY-MM-DD HH24:MI:SS') ].
+	  Thanks to Paolo Mattioli.
+
+2002 07 29 - Version 1.10
+	- Fix a problem with local settings regarding decimal separator (all ,
+	  are changed to .) Thank to Jan Kester.
+
+Thanks for all congratulation message and bug report I received.
+
+Gilles DAROLD <gilles@darold.net>
 

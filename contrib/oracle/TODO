@@ -1,10 +1,6 @@
-Add possible call to perl function for each field value exported
-(data conversion on the fly before dump)
+The following need your contribution :
 
 	- Fix problem regarding table/constraint output order.
-
-The following need your help :
-
 	- SQL queries converter.
 	- PL/SQL code converter.
 

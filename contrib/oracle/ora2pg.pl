@@ -30,7 +30,7 @@ my $schema = new Ora2Pg (
 	user => $dbuser,		# Database user
 	password => $dbpwd,		# Database password
 	debug => 1,			# Verbose mode
-	schema => 'APPS',		# Extract only APPS schema
+	schema => 'ALICIA7',		# Extract only APPS schema
 	type => 'TABLE',		# Extract table
 #	type => 'PACKAGE',		# Extract PACKAGE information
 #	type => 'DATA',			# Extract data with output as INSERT statement
@@ -46,6 +46,7 @@ my $schema = new Ora2Pg (
 #	tables => [('TX_DATA')],		# simple indexes
 #	tables => [('NDW_BROWSER_ATTRIBUTES')],	# view
 #	tables => [('TRIP_DATA')],	# Foreign key
+#	tables => [('JO_TMP')],	# Foreign key
 #	showtableid => 1,		# Display only table indice during extraction
 #	min => 1,			# Extract begin at indice 3
 #	max => 10,			# Extract ended at indice 5
@@ -56,7 +57,8 @@ my $schema = new Ora2Pg (
 # Just export data of the following fields from table 's_txcot'
 #$schema->modify_struct('s_txcot','dossier', 'rub', 'datapp');
 
-# Function to use for extraction when type option is set to DATA or COPY
+#### Function to use for extraction when type option is set to DATA or COPY
+
 	# Send exported data to a PostgreSQL database
 	#$schema->send_to_pgdb('dbi:Pg:dbname=template1;host=localhost;port=5432','test','test');
 
@@ -64,7 +66,8 @@ my $schema = new Ora2Pg (
 	# If you set the send_to_pgdb() method the output is given to PG database. See above
 	#$schema->export_data("output.sql");
 
-# Function to use ifor extraction with other type
+#### Function to use for extraction of other type
+
 	# Create the POSTGRESQL representation of all objects in the database
 	$schema->export_schema("output.sql");
 
