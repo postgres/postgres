@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/Makefile,v 1.23 1999/05/21 19:03:48 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/Makefile,v 1.23.2.1 1999/08/16 20:10:25 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -46,11 +46,11 @@ ifeq ($(USE_ODBC), true)
 endif
 
 perl5/Makefile: perl5/Makefile.PL
-	cd perl5 && perl Makefile.PL
+	cd perl5 && perl5 Makefile.PL
 
 install-perl5: perl5/Makefile
 	$(MAKE) -C perl5 clean
-	cd perl5 && POSTGRES_HOME="$(POSTGRESDIR)" perl Makefile.PL
+	cd perl5 && POSTGRES_HOME="$(POSTGRESDIR)" perl5 Makefile.PL
 	$(MAKE) -C perl5 all
 	@if [ -w `sed -n -e 's/^ *INSTALLSITELIB *= *//p' perl5/Makefile` ]; then \
 		$(MAKE) $(MFLAGS) -C perl5 install; \
