@@ -103,6 +103,7 @@
 #  define USE_LIMITS_H
 #  define USE_POSIX_TIME
 #  define NEED_CBRT
+#  define HAVE_MEMMOVE
 #endif
 
 #if defined(bsdi)
