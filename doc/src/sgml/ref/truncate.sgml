@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/truncate.sgml,v 1.18 2005/01/27 03:17:08 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/truncate.sgml,v 1.19 2005/02/22 19:06:18 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -52,6 +52,10 @@ TRUNCATE [ TABLE ] <replaceable class="PARAMETER">name</replaceable> [, ...]
 
  <refsect1>
   <title>Notes</title>
+
+  <para>
+   Only the owner of a table may <command>TRUNCATE</> it.
+  </para>
 
   <para>
    <command>TRUNCATE</> cannot be used on a table that has foreign-key
