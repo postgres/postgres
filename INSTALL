@@ -255,15 +255,9 @@ PostgreSQL:
 
        --enable-hba       Enables Host Based Authentication (DEFAULT)
 
-       --disable-hba      Disables Host Based Authentication
-
        --enable-locale    Enables USE_LOCALE
 
-       --disable-locale   Disables USE_LOCALE (DEFAULT)
-
        --enable-cassert   Enables ASSERT_CHECKING
-
-       --disable-cassert  Disables ASSERT_CHECKING (DEFAULT)
 
        --with-template=TEMPLATE
                           Use template file TEMPLATE - the template
@@ -299,7 +293,7 @@ PostgreSQL:
 
        % ./configure --prefix=/opt/postgres 
 		--with-template=sparc_solaris-gcc --with-pgport=5432
-		--enable-hba --disable-locale
+		--enable-hba
 
      Of course, in a real shell, you would type these three lines all
      on the same line.
