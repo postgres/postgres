@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: datetime.h,v 1.20 2001/07/10 01:39:20 tgl Exp $
+ * $Id: datetime.h,v 1.21 2001/08/27 20:02:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -183,7 +183,6 @@ typedef struct
 	char		value;			/* this may be unsigned, alas */
 } datetkn;
 
-extern datetkn datetktbl[];
 
 /* TMODULO()
  * Macro to replace modf(), which is broken on some platforms.
