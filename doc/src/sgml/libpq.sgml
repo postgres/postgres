@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.64 2001/07/31 02:14:49 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.65 2001/08/10 14:42:47 momjian Exp $
 -->
 
  <chapter id="libpq">
@@ -665,24 +665,6 @@ SSL *PQgetssl(const PGconn *conn);
       </para>
      </listitem>
 
-     <listitem>
-      <para>
-       <function>PQgetssl</function>
-       Returns the SSL structure used in the connection, or NULL
-       if SSL is not in use. 
-       <synopsis>
-SSL *PQgetssl(const PGconn *conn);
-       </synopsis>
-       This structure can be used to verify encryption levels, check
-       server certificate and more. Refer to the OpenSSL documentation
-       for information about this structure.
-      </para>
-      <para>
-       You must define <literal>USE_SSL</literal> in order to get the
-       prototype for this function. Doing this will also 
-       automatically include <filename>ssl.h</filename> from OpenSSL.
-      </para>
-     </listitem>
     </itemizedlist>
    </para>
   </sect1>
