@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.280 2002/02/25 02:53:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.281 2002/02/25 03:37:14 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -3156,8 +3156,8 @@ createdb_opt_item:  LOCATION opt_equal Sconst
 		;
 
 /*
- *	Optional equals is here only for backward compatibility.
- *	Should be removed someday.  bjm 2002-02-24
+ *	Though the equals sign doesn't match other WITH options, pg_dump uses
+ *  equals for backward compability, and it doesn't seem worth remove it.
  */
 opt_equal: '='								{ $$ = TRUE; }
 		| /*EMPTY*/							{ $$ = FALSE; }

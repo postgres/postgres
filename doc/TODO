@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sat Feb 23 16:51:48 EST 2002
+Last updated:		Sun Feb 24 22:35:16 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -55,9 +55,9 @@ ADMIN
 -----
 
 * Incremental backups
-* Make it easier to create a database owned by someone who can't createdb,
+* -Make it easier to create a database owned by someone who can't createdb,
   perhaps CREATE DATABASE dbname WITH OWNER = "user" (Gavin)
-* Make equals sign optional in CREATE DATABASE WITH param = 'val'
+* -Make equals sign optional in CREATE DATABASE WITH param = 'val'
 * Remove unreferenced table files and temp tables during database vacuum
   or postmaster startup (Bruce)
 * Add table name mapping for numeric file names (Bruce)
