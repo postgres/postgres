@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.42 2000/06/08 22:37:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.43 2000/07/02 22:00:48 momjian Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -249,6 +249,8 @@ get_attdisbursion(Oid relid, AttrNumber attnum, double min_estimate)
 	if (attnum == ObjectIdAttributeNumber ||
 		attnum == SelfItemPointerAttributeNumber)
 		return 1.0 / (double) ntuples;
+	if (attnum == TableOidAttributeNumber)
+		return 1.0;
 
 	/*
 	 * VACUUM ANALYZE has not been run for this table. Produce an estimate

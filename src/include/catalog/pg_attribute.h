@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_attribute.h,v 1.59 2000/06/12 03:40:52 momjian Exp $
+ * $Id: pg_attribute.h,v 1.60 2000/07/02 22:01:08 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -267,6 +267,7 @@ DATA(insert OID = 0 ( 1247 xmin				28 0  4  -3 0 -1 -1 t p f i f f));
 DATA(insert OID = 0 ( 1247 cmin				29 0  4  -4 0 -1 -1 t p f i f f));
 DATA(insert OID = 0 ( 1247 xmax				28 0  4  -5 0 -1 -1 t p f i f f));
 DATA(insert OID = 0 ( 1247 cmax				29 0  4  -6 0 -1 -1 t p f i f f));
+DATA(insert OID = 0 ( 1247 tableoid			26 0  4  -7 0 -1 -1 t p f i f f));
 
 /* ----------------
  *		pg_database
@@ -282,6 +283,7 @@ DATA(insert OID = 0 ( 1262 xmin				28 0  4  -3 0 -1 -1 t p f i f f));
 DATA(insert OID = 0 ( 1262 cmin				29 0  4  -4 0 -1 -1 t p f i f f));
 DATA(insert OID = 0 ( 1262 xmax				28 0  4  -5 0 -1 -1 t p f i f f));
 DATA(insert OID = 0 ( 1262 cmax				29 0  4  -6 0 -1 -1 t p f i f f));
+DATA(insert OID = 0 ( 1262 tableoid			26 0  4  -7 0 -1 -1 t p f i f f));
 
 /* ----------------
  *		pg_proc
@@ -329,6 +331,7 @@ DATA(insert OID = 0 ( 1255 xmin				28 0  4  -3 0 -1 -1 t p f i f f));
 DATA(insert OID = 0 ( 1255 cmin				29 0  4  -4 0 -1 -1 t p f i f f));
 DATA(insert OID = 0 ( 1255 xmax				28 0  4  -5 0 -1 -1 t p f i f f));
 DATA(insert OID = 0 ( 1255 cmax				29 0  4  -6 0 -1 -1 t p f i f f));
+DATA(insert OID = 0 ( 1255 tableoid			26 0  4  -7 0 -1 -1 t p f i f f));
 
 /* ----------------
  *		pg_shadow
@@ -348,6 +351,7 @@ DATA(insert OID = 0 ( 1260 xmin				28 0  4  -3 0 -1 -1 t p f i f f));
 DATA(insert OID = 0 ( 1260 cmin				29 0  4  -4 0 -1 -1 t p f i f f));
 DATA(insert OID = 0 ( 1260 xmax				28 0  4  -5 0 -1 -1 t p f i f f));
 DATA(insert OID = 0 ( 1260 cmax				29 0  4  -6 0 -1 -1 t p f i f f));
+DATA(insert OID = 0 ( 1260 tableoid			26 0  4  -7 0 -1 -1 t p f i f f));
 
 /* ----------------
  *		pg_group
@@ -362,6 +366,7 @@ DATA(insert OID = 0 ( 1261 xmin				28 0  4  -3 0 -1 -1 t p f i f f));
 DATA(insert OID = 0 ( 1261 cmin				29 0  4  -4 0 -1 -1 t p f i f f));
 DATA(insert OID = 0 ( 1261 xmax				28 0  4  -5 0 -1 -1 t p f i f f));
 DATA(insert OID = 0 ( 1261 cmax				29 0  4  -6 0 -1 -1 t p f i f f));
+DATA(insert OID = 0 ( 1261 tableoid			26 0  4  -7 0 -1 -1 t p f i f f));
 
 /* ----------------
  *		pg_attribute
@@ -405,6 +410,7 @@ DATA(insert OID = 0 ( 1249 xmin				28 0  4  -3 0 -1 -1 t p f i f f));
 DATA(insert OID = 0 ( 1249 cmin				29 0  4  -4 0 -1 -1 t p f i f f));
 DATA(insert OID = 0 ( 1249 xmax				28 0  4  -5 0 -1 -1 t p f i f f));
 DATA(insert OID = 0 ( 1249 cmax				29 0  4  -6 0 -1 -1 t p f i f f));
+DATA(insert OID = 0 ( 1249 tableoid			26 0  4  -7 0 -1 -1 t p f i f f));
 
 /* ----------------
  *		pg_class
@@ -458,6 +464,7 @@ DATA(insert OID = 0 ( 1259 xmin				28 0  4  -3 0 -1 -1 t p f i f f));
 DATA(insert OID = 0 ( 1259 cmin				29 0  4  -4 0 -1 -1 t p f i f f));
 DATA(insert OID = 0 ( 1259 xmax				28 0  4  -5 0 -1 -1 t p f i f f));
 DATA(insert OID = 0 ( 1259 cmax				29 0  4  -6 0 -1 -1 t p f i f f));
+DATA(insert OID = 0 ( 1259 tableoid			26 0  4  -7 0 -1 -1 t p f i f f));
 
 /* ----------------
  *		pg_attrdef
@@ -473,6 +480,7 @@ DATA(insert OID = 0 ( 1215 xmin				28 0  4  -3 0 -1 -1 t p f i f f));
 DATA(insert OID = 0 ( 1215 cmin				29 0  4  -4 0 -1 -1 t p f i f f));
 DATA(insert OID = 0 ( 1215 xmax				28 0  4  -5 0 -1 -1 t p f i f f));
 DATA(insert OID = 0 ( 1215 cmax				29 0  4  -6 0 -1 -1 t p f i f f));
+DATA(insert OID = 0 ( 1215 tableoid			26 0  4  -7 0 -1 -1 t p f i f f));
 
 /* ----------------
  *		pg_relcheck
@@ -488,6 +496,7 @@ DATA(insert OID = 0 ( 1216 xmin				28 0  4  -3 0 -1 -1 t p f i f f));
 DATA(insert OID = 0 ( 1216 cmin				29 0  4  -4 0 -1 -1 t p f i f f));
 DATA(insert OID = 0 ( 1216 xmax				28 0  4  -5 0 -1 -1 t p f i f f));
 DATA(insert OID = 0 ( 1216 cmax				29 0  4  -6 0 -1 -1 t p f i f f));
+DATA(insert OID = 0 ( 1216 tableoid			26 0  4  -7 0 -1 -1 t p f i f f));
 
 /* ----------------
  *		pg_trigger
@@ -513,6 +522,7 @@ DATA(insert OID = 0 ( 1219 xmin				28 0  4  -3 0 -1 -1 t p f i f f));
 DATA(insert OID = 0 ( 1219 cmin				29 0  4  -4 0 -1 -1 t p f i f f));
 DATA(insert OID = 0 ( 1219 xmax				28 0  4  -5 0 -1 -1 t p f i f f));
 DATA(insert OID = 0 ( 1219 cmax				29 0  4  -6 0 -1 -1 t p f i f f));
+DATA(insert OID = 0 ( 1219 tableoid			26 0  4  -7 0 -1 -1 t p f i f f));
 
 /* ----------------
  *		pg_variable - this relation is modified by special purpose access

@@ -1,6 +1,6 @@
 #!/bin/sh
 find `pwd`/ \( -name _deadcode -a -prune \) -o \
-	-type f -name '*.[chyl]' -print|sed 's;//;/;g' | mkid
+	-type f -name '*.[chyl]' -print|sed 's;//;/;g' | mkid -
 
 find . -name  'CVS' -prune -o -type d -print  |while read DIR
 do

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.62 2000/04/12 17:14:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.63 2000/07/02 22:00:24 momjian Exp $
  *
  * NOTES
  *	  The old interface functions have been converted to macros
@@ -169,6 +169,7 @@ heap_attisnull(HeapTuple tup, int attnum)
 	else
 		switch (attnum)
 		{
+			case TableOidAttributeNumber:
 			case SelfItemPointerAttributeNumber:
 			case ObjectIdAttributeNumber:
 			case MinTransactionIdAttributeNumber:
@@ -205,6 +206,8 @@ heap_sysattrlen(AttrNumber attno)
 
 	switch (attno)
 	{
+		case TableOidAttributeNumber:
+			return sizeof f->t_oid;
 		case SelfItemPointerAttributeNumber:
 			return sizeof f->t_ctid;
 		case ObjectIdAttributeNumber:
@@ -237,6 +240,9 @@ heap_sysattrbyval(AttrNumber attno)
 
 	switch (attno)
 	{
+		case TableOidAttributeNumber:
+			byval = true;
+			break;
 		case SelfItemPointerAttributeNumber:
 			byval = false;
 			break;
@@ -275,7 +281,9 @@ heap_getsysattr(HeapTuple tup, Buffer b, int attnum)
 {
 	switch (attnum)
 	{
-			case SelfItemPointerAttributeNumber:
+		case TableOidAttributeNumber:
+			return (Datum) &tup->t_tableoid;
+		case SelfItemPointerAttributeNumber:
 			return (Datum) &tup->t_ctid;
 		case ObjectIdAttributeNumber:
 			return (Datum) (long) tup->t_oid;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.135 2000/07/02 04:46:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.136 2000/07/02 22:00:34 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -131,12 +131,22 @@ static FormData_pg_attribute a6 = {
 	MaxCommandIdAttributeNumber, 0, -1, -1, '\001', 'p', '\0', 'i', '\0', '\0'
 };
 
-static Form_pg_attribute HeapAtt[] = {&a1, &a2, &a3, &a4, &a5, &a6};
+/* 
+   We decide to call this attribute "tableoid" rather than say
+"classoid" on the basis that in the future there may be more than one
+table of a particular class/type. In any case table is still the word
+used in SQL. 
+*/
+static FormData_pg_attribute a7 = {
+	0xffffffff, {"tableoid"}, OIDOID, 0, sizeof(Oid),
+	TableOidAttributeNumber, 0, -1, -1, '\001', 'p', '\0', 'i', '\0', '\0'
+};
+
+static Form_pg_attribute HeapAtt[] = {&a1, &a2, &a3, &a4, &a5, &a6, &a7};
 
 /* ----------------------------------------------------------------
  *				XXX END OF UGLY HARD CODED BADNESS XXX
- * ----------------------------------------------------------------
- */
+ * ---------------------------------------------------------------- */
 
 
 /* ----------------------------------------------------------------

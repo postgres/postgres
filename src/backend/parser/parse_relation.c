@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.44 2000/06/20 01:41:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.45 2000/07/02 22:00:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,6 +57,9 @@ static struct
 	{
 		"cmax", MaxCommandIdAttributeNumber, CIDOID
 	},
+	{
+		"tableoid", TableOidAttributeNumber, OIDOID
+	}
 };
 
 #define SPECIALS ((int) (sizeof(special_attr)/sizeof(special_attr[0])))

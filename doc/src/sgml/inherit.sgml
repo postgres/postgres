@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/inherit.sgml,v 1.10 2000/06/22 22:31:15 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/inherit.sgml,v 1.11 2000/07/02 22:00:23 momjian Exp $
 -->
 
  <chapter id="inherit">
@@ -96,6 +96,57 @@ CREATE TABLE capitals UNDER cities (
    <command>UPDATE</command> and <command>DELETE</command> --
    support this <quote>ONLY</quote> notation.
   </para>
+
+  <para>
+  In some cases you may wish to know which table a particular tuple
+  originated from. There is a system attribute called
+  <quote>TABLEOID</quote> in each table which can tell you the
+  originating table:
+
+   <programlisting>
+    SELECT c.tableoid, c.name, c.altitude
+    FROM cities c
+    WHERE c.altitude > 500;
+   </programlisting>
+
+   which returns:
+
+   <programlisting>
++---------+----------+----------+
+|tableoid |name      | altitude |
++---------+----------+----------+
+|37292    |Las Vegas | 2174     |
++---------+----------+----------+
+|37280    |Mariposa  | 1953     |
++---------+----------+----------+
+|37280    |Madison   | 845      |
++---------+----------+----------+
+   </programlisting>
+
+   If you do a join with pg_class you can see the actual table name:
+
+   <programlisting>
+    SELECT p.relname, c.name, c.altitude
+    FROM cities c, pg_class p
+    WHERE c.altitude > 500 and c.tableoid = p.oid;
+   </programlisting>
+
+   which returns:
+
+   <programlisting>
++---------+----------+----------+
+|relname  |name      | altitude |
++---------+----------+----------+
+|capitals |Las Vegas | 2174     |
++---------+----------+----------+
+|cities   |Mariposa  | 1953     |
++---------+----------+----------+
+|cities   |Madison   | 845      |
++---------+----------+----------+
+   </programlisting>
+   
+  </para>
+
   <note>
    <title>Deprecated</title> 
    <para>

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.73 2000/06/30 16:10:40 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.74 2000/07/02 22:00:27 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -235,6 +235,8 @@ heapgettup(Relation relation,
 	int			linesleft;
 	ItemPointer tid = (tuple->t_data == NULL) ?
 	(ItemPointer) NULL : &(tuple->t_self);
+    
+	tuple->tableOid = relation->rd_id;
 
 	/* ----------------
 	 *	increment access statistics
@@ -620,6 +622,7 @@ heap_openr(const char *relationName, LOCKMODE lockmode)
 	Relation	r;
 
 	Assert(lockmode >= NoLock && lockmode < MAX_LOCKMODES);
+
 
 	/* ----------------
 	 *	increment access statistics
@@ -1084,6 +1087,7 @@ heap_fetch(Relation relation,
 	ItemPointer tid = &(tuple->t_self);
 	OffsetNumber offnum;
 
+	tuple->tableOid = relation->rd_id;
 	/* ----------------
 	 *	increment access statistics
 	 * ----------------
@@ -1178,6 +1182,7 @@ heap_get_latest_tid(Relation relation,
 	bool		invalidBlock,
 				linkend;
 
+	tp.tableOid = relation->rd_id;
 	/* ----------------
 	 *	get the buffer from the relation descriptor
 	 *	Note that this does a buffer pin.
@@ -1270,6 +1275,7 @@ heap_insert(Relation relation, HeapTuple tup)
 	 *	increment access statistics
 	 * ----------------
 	 */
+	tup->tableOid = relation->rd_id;
 	IncrHeapAccessStat(local_insert);
 	IncrHeapAccessStat(global_insert);
 
@@ -1335,6 +1341,7 @@ heap_delete(Relation relation, ItemPointer tid, ItemPointer ctid)
 	Buffer		buffer;
 	int			result;
 
+	tp.tableOid = relation->rd_id;
 	/* increment access statistics */
 	IncrHeapAccessStat(local_delete);
 	IncrHeapAccessStat(global_delete);
@@ -1447,6 +1454,7 @@ heap_update(Relation relation, ItemPointer otid, HeapTuple newtup,
 	Buffer		buffer;
 	int			result;
 
+	newtup->tableOid = relation->rd_id;
 	/* increment access statistics */
 	IncrHeapAccessStat(local_replace);
 	IncrHeapAccessStat(global_replace);
@@ -1575,6 +1583,7 @@ heap_mark4update(Relation relation, HeapTuple tuple, Buffer *buffer)
 	PageHeader	dp;
 	int			result;
 
+	tuple->tableOid = relation->rd_id;
 	/* increment access statistics */
 	IncrHeapAccessStat(local_mark4update);
 	IncrHeapAccessStat(global_mark4update);

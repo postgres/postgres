@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: htup.h,v 1.30 2000/06/02 10:20:26 vadim Exp $
+ * $Id: htup.h,v 1.31 2000/07/02 22:01:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -133,7 +133,8 @@ typedef struct xl_heap_move
 #define MinCommandIdAttributeNumber				(-4)
 #define MaxTransactionIdAttributeNumber			(-5)
 #define MaxCommandIdAttributeNumber				(-6)
-#define FirstLowInvalidHeapAttributeNumber		(-7)
+#define TableOidAttributeNumber			        (-7)
+#define FirstLowInvalidHeapAttributeNumber		(-8)
 
 /* If you make any changes above, the order off offsets in this must change */
 extern long heap_sysoffset[];
@@ -156,6 +157,7 @@ typedef struct HeapTupleData
 {
 	uint32		t_len;			/* length of *t_data */
 	ItemPointerData t_self;		/* SelfItemPointer */
+	Oid tableOid;                    /* */
 	MemoryContext t_datamcxt;	/* */
 	HeapTupleHeader t_data;		/* */
 } HeapTupleData;
