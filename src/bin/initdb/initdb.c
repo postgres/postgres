@@ -43,7 +43,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.23 2004/03/09 04:49:02 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.24 2004/05/05 16:09:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -261,6 +261,24 @@ xstrdup(const char *s)
 		exit(1);
 	}
 	return result;
+}
+
+/*
+ * unsetenv() doesn't exist everywhere, so emulate it with this ugly
+ * but well-tested technique (borrowed from backend's variable.c).
+ */
+static void
+pg_unsetenv(const char *varname)
+{
+	char  *envstr = xmalloc(strlen(varname) + 2);
+
+	/* First, override any existing setting by forcibly defining the var */
+	sprintf(envstr, "%s=", varname);
+	putenv(envstr);
+
+	/* Now we can clobber the variable definition this way: */
+	strcpy(envstr, "=");
+	putenv(envstr);
 }
 
 /*
@@ -1242,7 +1260,10 @@ bootstrap_template1(char *short_version)
 	snprintf(cmd, sizeof(cmd), "LC_CTYPE=%s", lc_ctype);
 	putenv(xstrdup(cmd));
 
-	putenv("LC_ALL");
+	pg_unsetenv("LC_ALL");
+
+	/* Also ensure backend isn't confused by this environment var: */
+	pg_unsetenv("PGCLIENTENCODING");
 
 	snprintf(cmd, sizeof(cmd),
 			 "\"%s/postgres\" -boot -x1 %s %s template1",
