@@ -1,54 +1,74 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/lobj.sgml,v 1.21 2001/09/15 16:08:59 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/lobj.sgml,v 1.22 2001/09/16 22:53:52 petere Exp $
 -->
 
  <chapter id="largeObjects">
   <title id="largeObjects-title">Large Objects</title>
 
-  <para>
-   In <productname>Postgres</productname>,
-   data values are stored in tuples and 
-   individual tuples cannot span data pages. Since the size of
-   a data page is 8192 bytes, the upper limit on the  size
-   of a data value is relatively low. To support the storage 
-   of larger atomic values, 
-   <productname>Postgres</productname> provides a  large
-   object   interface.    This  interface  provides  file
-   oriented access to user data that has been declared  to
-   be a large type.
-   This  section describes the implementation and the 
-   programming and query  language  interfaces  to 
-   <productname>Postgres</productname>
-   large object data.
-  </para>
-
-  <sect1 id="lo-history">
-   <title>Historical Note</title>
+  <sect1 id="lo-intro">
+   <title>Introduction</title>
 
    <para>
-    Originally, <productname>Postgres 4.2</productname> supported three standard 
-    implementations of large objects: as files external 
-    to <productname>Postgres</productname>,  as
-    external files managed by <productname>Postgres</productname>, and as data
-    stored within the <productname>Postgres</productname> database. It causes  
-    considerable confusion among users. As a result, we only 
-    support large objects as data stored within  the  <productname>Postgres</productname>
-    database  in  <productname>PostgreSQL</productname>.  Even  though it is slower to
-    access, it provides stricter data  integrity.
-    For historical reasons, this storage scheme is referred to as 
-    Inversion large objects. (We will use  Inversion  and  large
-    objects  interchangeably to mean the same thing in this
-    section.)
-    Since <productname>PostgreSQL 7.1</productname> all large objects are placed in
-    one system table called <classname>pg_largeobject</classname>.
+    In <productname>PostgreSQL</productname> releases prior to 7.1,
+    the size of any row in the database could not exceed the size of a
+    data page.  Since the size of a data page is 8192 bytes (the
+    default, which can be raised up to 32768), the upper limit on the
+    size of a data value was relatively low. To support the storage of
+    larger atomic values, <productname>PostgreSQL</productname>
+    provided and continues to provide a large object interface.  This
+    interface provides file-oriented access to user data that has been
+    declared to be a large object.
    </para>
+
+   <para>
+    <productname>POSTGRES 4.2</productname>, the indirect predecessor
+    of <productname>PostgreSQL</productname>, supported three standard
+    implementations of large objects: as files external to the
+    <productname>POSTGRES</productname> server, as external files
+    managed by the <productname>POSTGRES</productname> server, and as
+    data stored within the <productname>POSTGRES</productname>
+    database. This caused considerable confusion among users. As a
+    result, only support for large objects as data stored within the
+    database is retained in <productname>PostgreSQL</productname>.
+    Even though this is slower to access, it provides stricter data
+    integrity.  For historical reasons, this storage scheme is
+    referred to as <firstterm>Inversion large
+    objects</firstterm>. (You will see the term Inversion used
+    occasionally to mean the same thing as large object.)  Since
+    <productname>PostgreSQL 7.1</productname>, all large objects are
+    placed in one system table called
+    <classname>pg_largeobject</classname>.
+   </para>
+
+   <para>
+    <productname>PostgreSQL 7.1</productname> introduced a mechanism
+    (nicknamed <quote><acronym>TOAST</acronym></quote>) that allows
+    data rows to be much larger than individual data pages.  This
+    makes the large object interface partially obsolete.  One
+    remaining advantage of the large object interface is that it
+    allows random access to the data, i.e., the ability to read or
+    write small chunks of a large value.  It is planned to equip
+    <acronym>TOAST</acronym> with such functionality in the future.
+   </para>
+
+   <para>
+    This section describes the implementation and the programming and
+    query language interfaces to <productname>PostgreSQL</productname>
+    large object data.  We use the <application>libpq</application> C
+    library for the examples in this section, but most programming
+    interfaces native to <productname>PostgreSQL</productname> support
+    equivalent functionality.  Other interfaces may use the large
+    object interface internally to provide generic support for large
+    values.  This is not described here.
+   </para>
+
   </sect1>
 
   <sect1 id="lo-implementation">
    <title>Implementation Features</title>
 
    <para>
-    The Inversion large object implementation breaks  large
+    The large object implementation breaks  large
     objects  up  into  <quote>chunks</quote>  and  stores  the chunks in
     tuples in the database.  A B-tree index guarantees fast
     searches for the correct chunk number when doing random
@@ -60,11 +80,11 @@ $Header: /cvsroot/pgsql/doc/src/sgml/lobj.sgml,v 1.21 2001/09/15 16:08:59 petere
    <title>Interfaces</title>
 
    <para>
-    The  facilities  <productname>Postgres</productname> provides  to
+    The  facilities  <productname>PostgreSQL</productname> provides  to
     access large objects,  both  in  the backend as part of user-defined
     functions or the front end as part  of  an  application
     using  the   interface, are described below. For users
-    familiar with <productname>Postgres 4.2</productname>,
+    familiar with <productname>POSTGRES 4.2</productname>,
     <productname>PostgreSQL</productname> has a new set of
     functions  providing  a  more  coherent  interface.
 
@@ -72,7 +92,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/lobj.sgml,v 1.21 2001/09/15 16:08:59 petere
      <para>
       All large object manipulation <emphasis>must</emphasis> take
       place within an SQL transaction. This requirement is strictly
-      enforced as of Postgres 6.5, though it has been an
+      enforced as of <productname>PostgreSQL 6.5</>, though it has been an
       implicit requirement in previous versions, resulting in
       misbehavior if ignored.
      </para>
@@ -80,7 +100,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/lobj.sgml,v 1.21 2001/09/15 16:08:59 petere
    </para>
 
    <para>
-    The  <productname>Postgres</productname>  large  object interface is modeled after
+    The  <productname>PostgreSQL</productname>  large  object interface is modeled after
     the <acronym>Unix</acronym>  file  system  interface,  with  analogues  of
     <function>open(2)</function>,  <function>read(2)</function>,
     <function>write(2)</function>,
@@ -96,7 +116,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/lobj.sgml,v 1.21 2001/09/15 16:08:59 petere
     examined, by the beard function.
     Large objects may be accessed from dynamically-loaded <acronym>C</acronym>
     functions  or  database  client  programs that link the
-    library.  <productname>Postgres</productname> provides a set of routines that 
+    library.  <productname>PostgreSQL</productname> provides a set of routines that 
     support opening, reading, writing, closing, and seeking on
     large objects.
    </para>
@@ -113,18 +133,17 @@ Oid lo_creat(PGconn *<replaceable class="parameter">conn</replaceable>, int <rep
      <replaceable class="parameter">mode</replaceable>  is  a  bit mask
      describing  several  different  attributes  of  the new
      object.  The symbolic constants listed here are defined
-     in
-     <filename>$<envar>PGROOT</envar>/src/backend/libpq/libpq-fs.h</filename>
+     in the header file <filename>libpq/libpq-fs.h</filename>.
      The access type (read, write, or both) is controlled by
-     OR'ing together the bits <acronym>INV_READ</acronym>  and
-     <acronym>INV_WRITE</acronym>.  The low-order sixteen bits of mask  are
-     the  storage  manager  number on which the large object
-     should reside.  For sites other  than  Berkeley,  these
-     bits should always be zero.
-     The commands below create an (Inversion) large object:
-     <programlisting>
+     OR'ing together the bits <symbol>INV_READ</symbol>  and
+     <symbol>INV_WRITE</symbol>.  The low-order sixteen bits of the mask have
+     historically been used at Berkeley to designate the storage  manager  number on which the large object
+     should reside.  These
+     bits should always be zero now.
+     The commands below create a large object:
+<programlisting>
 inv_oid = lo_creat(INV_READ|INV_WRITE);
-     </programlisting>
+</programlisting>
     </para>
    </sect2>
 
