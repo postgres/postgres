@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sat Aug 31 21:32:13 EDT 2002
+Last updated:		Sun Sep  1 18:35:52 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -271,6 +271,7 @@ Commands
 	o Add PL/PgSQL packages
 	o Allow array declarations and other data types in PL/PgSQl DECLARE
 	o Add PL/PgSQL PROCEDURES that can return multiple values
+	o Add table function support to pltcl, plperl, plpython
 
 
 Clients
