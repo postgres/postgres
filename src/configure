@@ -13,21 +13,21 @@ ac_default_prefix=/usr/local
 # Any additions from configure.in:
 ac_default_prefix=/usr/local/pgsql
 ac_help="$ac_help
-  --with-includes=DIR    site header files for tk/tcl, etc in DIR"
+  --with-includes=DIR     site header files for tk/tcl, etc in DIR"
 ac_help="$ac_help
-  --with-libraries=DIR   site library directories for tk/tcl, etc in DIR"
+  --with-libraries=DIR    site library directories for tk/tcl, etc in DIR"
 ac_help="$ac_help
-  --enable-locale	       enable locale support "
+  --enable-locale	  enable locale support "
 ac_help="$ac_help
-  --enable-recode	       enable cyrillic recode support "
+  --enable-recode	  enable cyrillic recode support "
 ac_help="$ac_help
   --with-pgport=<portnum> change default startup port "
 ac_help="$ac_help
-  --with-tcl	       use tcl "
+  --with-tcl		  use tcl "
 ac_help="$ac_help
-  --with-perl	       use perl "
+  --with-perl		  use perl "
 ac_help="$ac_help
-  --enable-cassert        enable assertion checks (debugging) "
+  --enable-cassert	      enable assertion checks (debugging) "
 ac_help="$ac_help
   --with-x                use the X Window System"
 
@@ -877,7 +877,7 @@ echo "configure:876: checking setting ASSERT CHECKING" >&5
 if test "${enable_cassert+set}" = set; then
   enableval="$enable_cassert"
   cat >> confdefs.h <<\EOF
-#define NO_ASSERT_CHECKING 1
+#define USE_ASSERT_CHECKING 1
 EOF
  echo "$ac_t""enabled" 1>&6
 else

@@ -142,7 +142,7 @@ LIBS=`grep '^LIBS:' $TEMPLATE | awk -F: '{print $2}'`
 
 
 AC_ARG_WITH(includes,
-    [  --with-includes=DIR    site header files for tk/tcl, etc in DIR],
+    [  --with-includes=DIR     site header files for tk/tcl, etc in DIR],
     [
 	case "$withval" in
 	"" | y | ye | yes | n | no)
@@ -163,7 +163,7 @@ if test "$INCLUDE_DIRS"; then
 fi
 
 AC_ARG_WITH(libraries,
-    [  --with-libraries=DIR   site library directories for tk/tcl, etc in DIR],
+    [  --with-libraries=DIR    site library directories for tk/tcl, etc in DIR],
     [
 	case "$withval" in
 	"" | y | ye | yes | n | no)
@@ -191,7 +191,7 @@ dnl It defaults to disabled
 AC_MSG_CHECKING(setting USE_LOCALE)
 AC_ARG_ENABLE(
    locale,
-   [  --enable-locale	       enable locale support ],
+   [  --enable-locale	  enable locale support ],
    AC_DEFINE(USE_LOCALE) AC_MSG_RESULT(enabled),
    AC_MSG_RESULT(disabled)
 )
@@ -204,7 +204,7 @@ dnl It defaults to disabled
 AC_MSG_CHECKING(setting CYR_RECODE)
 AC_ARG_ENABLE(
    recode,
-   [  --enable-recode	       enable cyrillic recode support ],
+   [  --enable-recode	  enable cyrillic recode support ],
    AC_DEFINE(CYR_RECODE) AC_MSG_RESULT(enabled),
    AC_MSG_RESULT(disabled)
 )
@@ -223,7 +223,7 @@ dnl We exclude tcl support unless we override it with --with-tcl
 AC_MSG_CHECKING(setting USE_TCL)
 AC_ARG_WITH(
    tcl,
-   [  --with-tcl	       use tcl ],
+   [  --with-tcl		  use tcl ],
    USE_TCL=true; AC_MSG_RESULT(enabled),
    USE_TCL=false; AC_MSG_RESULT(disabled)
 )
@@ -255,7 +255,7 @@ dnl We exclude perl support unless we override it with --with-perl
 AC_MSG_CHECKING(setting USE_PERL)
 AC_ARG_WITH(
    perl,
-   [  --with-perl	       use perl ],
+   [  --with-perl		  use perl ],
    USE_PERL=true; AC_MSG_RESULT(enabled),
    USE_PERL=false; AC_MSG_RESULT(disabled)
 )
@@ -279,8 +279,8 @@ dnl We need some explanatory text here.
 AC_MSG_CHECKING(setting ASSERT CHECKING)
 AC_ARG_ENABLE(
    cassert,
-   [  --enable-cassert        enable assertion checks (debugging) ],
-   AC_DEFINE(NO_ASSERT_CHECKING) AC_MSG_RESULT(enabled),
+   [  --enable-cassert	      enable assertion checks (debugging) ],
+   AC_DEFINE(USE_ASSERT_CHECKING) AC_MSG_RESULT(enabled),
    AC_MSG_RESULT(disabled)
 )
 

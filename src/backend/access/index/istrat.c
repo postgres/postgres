@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.17 1998/02/26 04:29:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.18 1998/04/06 17:27:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,7 +26,7 @@
 #include <access/istrat.h>
 #include <fmgr.h>
 
-#ifndef NO_ASSERT_CHECKING
+#ifdef USE_ASSERT_CHECKING
 static bool StrategyEvaluationIsValid(StrategyEvaluation evaluation);
 static bool
 StrategyExpressionIsValid(StrategyExpression expression,
@@ -113,7 +113,7 @@ AttributeNumberGetIndexStrategySize(AttrNumber maxAttributeNumber,
 		maxAttributeNumber * maxStrategyNumber * sizeof(ScanKeyData);
 }
 
-#ifndef NO_ASSERT_CHECKING
+#ifdef USE_ASSERT_CHECKING
 /*
  * StrategyTransformMapIsValid is now a macro in istrat.h -cim 4/27/91
  */

@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.38 1998/03/31 15:53:39 momjian Exp $
+ * $Id: c.h,v 1.39 1998/04/06 17:27:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -583,12 +583,12 @@ typedef struct Exception
 } Exception;
 
 /*
- * NO_ASSERT_CHECKING, if defined, turns off all the assertions.
+ * USE_ASSERT_CHECKING, if defined, turns off all the assertions.
  * - plai  9/5/90
  *
  * It should _NOT_ be undef'ed in releases or in benchmark copies
  *
- * #undef NO_ASSERT_CHECKING
+ * #undef USE_ASSERT_CHECKING
  */
 
 /*
@@ -614,7 +614,7 @@ typedef struct Exception
 								  &(exception), \
 								  (char*) NULL, __FILE__, __LINE__))))
 
-#ifdef NO_ASSERT_CHECKING
+#ifndef USE_ASSERT_CHECKING
 #define Assert(condition)
 #define AssertMacro(condition)	true
 #define AssertArg(condition)
@@ -632,7 +632,7 @@ typedef struct Exception
 #define AssertState(condition) \
 		Trap(!(condition), BadState)
 
-#endif							/* NO_ASSERT_CHECKING */
+#endif							/* USE_ASSERT_CHECKING */
 
 /*
  * LogTrap --
@@ -655,7 +655,7 @@ typedef struct Exception
 								   &(exception), \
 								   form printArgs, __FILE__, __LINE__))))
 
-#ifdef NO_ASSERT_CHECKING
+#ifndef USE_ASSERT_CHECKING
 #define LogAssert(condition, printArgs)
 #define LogAssertMacro(condition, printArgs) true
 #define LogAssertArg(condition, printArgs)
@@ -673,7 +673,7 @@ typedef struct Exception
 #define LogAssertState(condition, printArgs) \
 		LogTrap(!(condition), BadState, printArgs)
 
-#endif							/* NO_ASSERT_CHECKING */
+#endif							/* USE_ASSERT_CHECKING */
 
 /* ----------------------------------------------------------------
  *				Section 8:	Min, Max, Abs macros

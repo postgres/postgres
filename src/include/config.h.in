@@ -208,7 +208,7 @@ extern void srandom(int seed);
 #undef CYR_RECODE
 
 /* Set to 1 if you want to Disable ASSERT CHECKING */
-#undef NO_ASSERT_CHECKING
+#undef USE_ASSERT_CHECKING
 
 /*
  * Code below this point should not require changes
