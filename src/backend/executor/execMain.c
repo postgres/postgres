@@ -27,7 +27,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.187 2002/11/23 03:59:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.188 2002/11/29 19:03:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -943,6 +943,7 @@ ExecutePlan(EState *estate,
 			break;
 		default:
 			/* do nothing */
+			break;
 	}
 
 	/*
@@ -1158,6 +1159,7 @@ lnext:	;
 			break;
 		default:
 			/* do nothing */
+			break;
 	}
 
 	/*
