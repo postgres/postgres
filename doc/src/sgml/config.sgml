@@ -16,7 +16,7 @@
    The following parameters may be of interest to installers:
    
    <programlisting>
-Directory and file names:
+Directories to install PostgreSQL in:
   --prefix=PREFIX         install architecture-independent files in PREFIX
                           [/usr/local/pgsql]
   --bindir=DIR            user executables in DIR [EPREFIX/bin]
@@ -32,28 +32,23 @@ Features and packages:
   --with-template=<replaceable>template</replaceable>
                           use operating system template file
                               see template directory
-  --with-includes=<replaceable>incdir</replaceable>
-                          site header files for tk/tcl, etc in DIR
-  --with-libs=<replaceable>incdir</replaceable>
-                          also search for libraries in DIR
-  --with-libraries=<replaceable>libdir</replaceable>
-                          also search for libraries in DIR
+  --with-includes=<replaceable>dirs</replaceable>    look for header files for tcl/tk, etc in DIRS
+  --with-libraries=<replaceable>dirs</replaceable>   look for additional libraries in DIRS
+  --with-libs=<replaceable>dirs</replaceable>        alternate spelling of --with-libraries
   --enable-locale         enable locale support
   --enable-recode         enable cyrillic recode support
-  --with-mb=<replaceable>encoding</replaceable>
-                          enable multi-byte support
-  --with-pgport=<replaceable>portnum</replaceable>
-                          change default startup port
-  --with-maxbackends=<replaceable>n</replaceable>
-                          set default maximum number of server processes 
+  --enable-multibyte      enable multibyte character support
+  --with-pgport=<replaceable>portnum</replaceable>   change default postmaster port
+  --with-maxbackends=<replaceable>n</replaceable>    set default maximum number of server processes 
   --with-tcl              build Tcl interfaces and pgtclsh
   --with-tclconfig=<replaceable>tcldir</replaceable>
                           tclConfig.sh and tkConfig.sh are in DIR
-  --with-perl             build Perl interface
+  --with-perl             build Perl interface and plperl
   --with-odbc             build ODBC driver package
   --with-odbcinst=<replaceable>odbcdir</replaceable>
                           change default directory for odbcinst.ini
-  --enable-cassert        enable assertion checks (debugging)
+  --enable-cassert        enable assertion checks (for debugging)
+  --enable-debug          build with debugging symbols (-g) 
   --with-CC=<replaceable>compiler</replaceable>
                           use specific C compiler
   --with-CXX=<replaceable>compiler</replaceable>
@@ -66,6 +61,20 @@ Features and packages:
    <productname>Postgres</productname>. For example, systems with a damaged
    C++ compiler may need to specify <option>--without-CXX</option> to instruct
    the build procedure to skip construction of <filename>libpq++</filename>.
+  </para>
+  <para>
+   Use the <option>--with-includes</option> and
+   <option>--with-libraries</option> options if you want to build
+   <productname>Postgres</productname> using include files or libraries
+   that are not installed in your system's standard search path.  For
+   example, you might use these to build with an experimental version of
+   Tcl.  If you need to specify more than one nonstandard directory for
+   include files or libraries, do it like this:
+   <programlisting>
+   --with-includes="/opt/tcl/include /opt/perl5/include"
+   </programlisting>
+  </para>
+  <para>
   </para>
  </sect1>
  <sect1>
@@ -82,7 +91,10 @@ Features and packages:
    will create it using a text editor of your choice. When upgrading installations,
    you can simply copy your old Makefile.custom to the new installation before
    doing the build.
-   
+  </para>
+  <para>
+   Alternatively, you can set variables on the <application>make</application>
+   command line:
    <synopsis>
     make [ <replaceable>variable</replaceable>=<replaceable class="parameter">value</replaceable> [,...] ]
    </synopsis>
