@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.43 2000/11/08 22:10:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.44 2000/11/13 09:06:36 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -262,6 +262,8 @@ smgropen(int16 which, Relation reln, bool failOK)
 {
 	int			fd;
 
+	if (reln->rd_rel->relkind == RELKIND_VIEW)
+		return -1;
 	if ((fd = (*(smgrsw[which].smgr_open)) (reln)) < 0)
 		if (! failOK)
 			elog(ERROR, "cannot open %s: %m", RelationGetRelationName(reln));
