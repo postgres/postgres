@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/spi_priv.h,v 1.17 2003/11/29 22:41:01 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/executor/spi_priv.h,v 1.18 2004/03/21 22:29:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,11 +27,10 @@ typedef struct
 
 typedef struct
 {
-	/*
-	 * context containing _SPI_plan itself as well as subsidiary
-	 * structures
-	 */
+	/* Context containing _SPI_plan itself as well as subsidiary data */
 	MemoryContext plancxt;
+	/* Original query string (used for error reporting) */
+	const char *query;
 	/* List of List of querytrees; one sublist per original parsetree */
 	List	   *qtlist;
 	/* List of plan trees --- length == # of querytrees, but flat list */

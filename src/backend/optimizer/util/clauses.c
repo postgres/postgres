@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.165 2004/03/17 20:48:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.166 2004/03/21 22:29:11 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1917,7 +1917,7 @@ inline_function(Oid funcid, Oid result_type, List *args,
 	 * can finger the function that bad information came from.
 	 */
 	sqlerrcontext.callback = sql_inline_error_callback;
-	sqlerrcontext.arg = funcform;
+	sqlerrcontext.arg = func_tuple;
 	sqlerrcontext.previous = error_context_stack;
 	error_context_stack = &sqlerrcontext;
 
@@ -2146,7 +2146,27 @@ substitute_actual_parameters_mutator(Node *node,
 static void
 sql_inline_error_callback(void *arg)
 {
-	Form_pg_proc funcform = (Form_pg_proc) arg;
+	HeapTuple func_tuple = (HeapTuple) arg;
+	Form_pg_proc funcform = (Form_pg_proc) GETSTRUCT(func_tuple);
+	int			syntaxerrposition;
+
+	/* If it's a syntax error, convert to internal syntax error report */
+	syntaxerrposition = geterrposition();
+	if (syntaxerrposition > 0)
+	{
+		bool		isnull;
+		Datum		tmp;
+		char	   *prosrc;
+
+		tmp = SysCacheGetAttr(PROCOID, func_tuple, Anum_pg_proc_prosrc,
+							  &isnull);
+		if (isnull)
+			elog(ERROR, "null prosrc");
+		prosrc = DatumGetCString(DirectFunctionCall1(textout, tmp));
+		errposition(0);
+		internalerrposition(syntaxerrposition);
+		internalerrquery(prosrc);
+	}
 
 	errcontext("SQL function \"%s\" during inlining",
 			   NameStr(funcform->proname));

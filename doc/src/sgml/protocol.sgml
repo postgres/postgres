@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/protocol.sgml,v 1.50 2004/03/09 16:57:46 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/protocol.sgml,v 1.51 2004/03/21 22:29:10 tgl Exp $ -->
 
 <chapter id="protocol">
  <title>Frontend/Backend Protocol</title>
@@ -3904,14 +3904,40 @@ message.
 
 <VarListEntry>
 <Term>
+<literal>p</>
+</Term>
+<ListItem>
+<Para>
+        Internal position: this is defined the same as the <literal>P</>
+        field, but it is used when the cursor position refers to an internally
+        generated command rather than the one submitted by the client.
+        The <literal>q</> field will always appear when this field appears.
+</Para>
+</ListItem>
+</VarListEntry>
+
+<VarListEntry>
+<Term>
+<literal>q</>
+</Term>
+<ListItem>
+<Para>
+        Internal query: the text of a failed internally-generated command.
+        This could be, for example, a SQL query issued by a PL/pgSQL function.
+</Para>
+</ListItem>
+</VarListEntry>
+
+<VarListEntry>
+<Term>
 <literal>W</>
 </Term>
 <ListItem>
 <Para>
         Where: an indication of the context in which the error occurred.
-	Presently this includes a call stack traceback of active
-	procedural language functions.  The trace is one entry per line,
-	most recent first.
+        Presently this includes a call stack traceback of active
+        procedural language functions and internally-generated queries.
+        The trace is one entry per line, most recent first.
 </Para>
 </ListItem>
 </VarListEntry>

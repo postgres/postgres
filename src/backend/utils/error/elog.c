@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.129 2004/03/19 02:23:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.130 2004/03/21 22:29:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -112,6 +112,8 @@ typedef struct ErrorData
 	char	   *hint;			/* hint message */
 	char	   *context;		/* context message */
 	int			cursorpos;		/* cursor index into query string */
+	int			internalpos;	/* cursor index into internalquery */
+	char	   *internalquery;	/* text of internally-generated query */
 	int			saved_errno;	/* errno at entry */
 } ErrorData;
 
@@ -364,6 +366,8 @@ errfinish(int dummy,...)
 		pfree(edata->hint);
 	if (edata->context)
 		pfree(edata->context);
+	if (edata->internalquery)
+		pfree(edata->internalquery);
 
 	MemoryContextSwitchTo(oldcontext);
 
@@ -809,6 +813,83 @@ errposition(int cursorpos)
 	return 0;					/* return value does not matter */
 }
 
+/*
+ * internalerrposition --- add internal cursor position to the current error
+ */
+int
+internalerrposition(int cursorpos)
+{
+	ErrorData  *edata = &errordata[errordata_stack_depth];
+
+	/* we don't bother incrementing recursion_depth */
+	CHECK_STACK_DEPTH();
+
+	edata->internalpos = cursorpos;
+
+	return 0;					/* return value does not matter */
+}
+
+/*
+ * internalerrquery --- add internal query text to the current error
+ *
+ * Can also pass NULL to drop the internal query text entry.  This case
+ * is intended for use in error callback subroutines that are editorializing
+ * on the layout of the error report.
+ */
+int
+internalerrquery(const char *query)
+{
+	ErrorData  *edata = &errordata[errordata_stack_depth];
+
+	/* we don't bother incrementing recursion_depth */
+	CHECK_STACK_DEPTH();
+
+	if (edata->internalquery)
+	{
+		pfree(edata->internalquery);
+		edata->internalquery = NULL;
+	}
+
+	if (query)
+		edata->internalquery = MemoryContextStrdup(ErrorContext, query);
+
+	return 0;					/* return value does not matter */
+}
+
+/*
+ * geterrposition --- return the currently set error position (0 if none)
+ *
+ * This is only intended for use in error callback subroutines, since there
+ * is no other place outside elog.c where the concept is meaningful.
+ */
+int
+geterrposition(void)
+{
+	ErrorData  *edata = &errordata[errordata_stack_depth];
+
+	/* we don't bother incrementing recursion_depth */
+	CHECK_STACK_DEPTH();
+
+	return edata->cursorpos;
+}
+
+/*
+ * getinternalerrposition --- same for internal error position
+ *
+ * This is only intended for use in error callback subroutines, since there
+ * is no other place outside elog.c where the concept is meaningful.
+ */
+int
+getinternalerrposition(void)
+{
+	ErrorData  *edata = &errordata[errordata_stack_depth];
+
+	/* we don't bother incrementing recursion_depth */
+	CHECK_STACK_DEPTH();
+
+	return edata->internalpos;
+}
+
 
 /*
  * elog_finish --- finish up for old-style API
@@ -1192,7 +1273,11 @@ send_message_to_server_log(ErrorData *edata)
 		append_with_tabs(&buf, gettext("missing error text"));
 
 	if (edata->cursorpos > 0)
-		appendStringInfo(&buf, gettext(" at character %d"), edata->cursorpos);
+		appendStringInfo(&buf, gettext(" at character %d"),
+						 edata->cursorpos);
+	else if (edata->internalpos > 0)
+		appendStringInfo(&buf, gettext(" at character %d"),
+						 edata->internalpos);
 
 	appendStringInfoChar(&buf, '\n');
 
@@ -1210,6 +1295,13 @@ send_message_to_server_log(ErrorData *edata)
 			log_line_prefix(&buf);
 			appendStringInfoString(&buf, gettext("HINT:  "));
 			append_with_tabs(&buf, edata->hint);
+			appendStringInfoChar(&buf, '\n');
+		}
+		if (edata->internalquery)
+		{
+			log_line_prefix(&buf);
+			appendStringInfoString(&buf, gettext("QUERY:  "));
+			append_with_tabs(&buf, edata->internalquery);
 			appendStringInfoChar(&buf, '\n');
 		}
 		if (edata->context)
@@ -1365,6 +1457,19 @@ send_message_to_frontend(ErrorData *edata)
 			pq_sendstring(&msgbuf, tbuf);
 		}
 
+		if (edata->internalpos > 0)
+		{
+			snprintf(tbuf, sizeof(tbuf), "%d", edata->internalpos);
+			pq_sendbyte(&msgbuf, PG_DIAG_INTERNAL_POSITION);
+			pq_sendstring(&msgbuf, tbuf);
+		}
+
+		if (edata->internalquery)
+		{
+			pq_sendbyte(&msgbuf, PG_DIAG_INTERNAL_QUERY);
+			pq_sendstring(&msgbuf, edata->internalquery);
+		}
+
 		if (edata->filename)
 		{
 			pq_sendbyte(&msgbuf, PG_DIAG_SOURCE_FILE);
@@ -1406,6 +1511,9 @@ send_message_to_frontend(ErrorData *edata)
 		if (edata->cursorpos > 0)
 			appendStringInfo(&buf, gettext(" at character %d"),
 							 edata->cursorpos);
+		else if (edata->internalpos > 0)
+			appendStringInfo(&buf, gettext(" at character %d"),
+							 edata->internalpos);
 
 		appendStringInfoChar(&buf, '\n');
 

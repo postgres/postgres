@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.77 2004/01/07 18:56:26 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.78 2004/03/21 22:29:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -645,12 +645,40 @@ sql_exec_error_callback(void *arg)
 {
 	FmgrInfo   *flinfo = (FmgrInfo *) arg;
 	SQLFunctionCachePtr fcache = (SQLFunctionCachePtr) flinfo->fn_extra;
+	HeapTuple	func_tuple;
+	Form_pg_proc functup;
 	char	   *fn_name;
+	int			syntaxerrposition;
 
-	fn_name = get_func_name(flinfo->fn_oid);
-	/* safety check, shouldn't happen */
-	if (fn_name == NULL)
-		return;
+	/* Need access to function's pg_proc tuple */
+	func_tuple = SearchSysCache(PROCOID,
+								ObjectIdGetDatum(flinfo->fn_oid),
+								0, 0, 0);
+	if (!HeapTupleIsValid(func_tuple))
+		return;					/* shouldn't happen */
+	functup = (Form_pg_proc) GETSTRUCT(func_tuple);
+	fn_name = NameStr(functup->proname);
+
+	/*
+	 * If there is a syntax error position, convert to internal syntax error
+	 */
+	syntaxerrposition = geterrposition();
+	if (syntaxerrposition > 0)
+	{
+		bool		isnull;
+		Datum		tmp;
+		char	   *prosrc;
+
+		tmp = SysCacheGetAttr(PROCOID, func_tuple, Anum_pg_proc_prosrc,
+							  &isnull);
+		if (isnull)
+			elog(ERROR, "null prosrc");
+		prosrc = DatumGetCString(DirectFunctionCall1(textout, tmp));
+		errposition(0);
+		internalerrposition(syntaxerrposition);
+		internalerrquery(prosrc);
+		pfree(prosrc);
+	}
 
 	/*
 	 * Try to determine where in the function we failed.  If there is a
@@ -692,8 +720,7 @@ sql_exec_error_callback(void *arg)
 		errcontext("SQL function \"%s\" during startup", fn_name);
 	}
 
-	/* free result of get_func_name (in case this is only a notice) */
-	pfree(fn_name);
+	ReleaseSysCache(func_tuple);
 }
 
 

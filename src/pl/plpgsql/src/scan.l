@@ -4,7 +4,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *    $PostgreSQL: pgsql/src/pl/plpgsql/src/scan.l,v 1.33 2004/03/19 18:58:07 tgl Exp $
+ *    $PostgreSQL: pgsql/src/pl/plpgsql/src/scan.l,v 1.34 2004/03/21 22:29:11 tgl Exp $
  *
  *    This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -50,6 +50,8 @@
 /* Handles to the buffer that the lexer uses internally */
 static YY_BUFFER_STATE scanbufhandle;
 static char *scanbuf;
+
+static const char *scanstr;		/* original input string */
 
 static int	scanner_functype;
 static int	scanner_typereported;
@@ -431,7 +433,8 @@ plpgsql_yyerror(const char *message)
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 /* translator: %s is typically "syntax error" */
 				 errmsg("%s at end of input", message),
-				 errposition(cursorpos)));
+				 internalerrposition(cursorpos),
+				 internalerrquery(scanstr)));
 	}
 	else
 	{
@@ -439,7 +442,8 @@ plpgsql_yyerror(const char *message)
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 /* translator: first %s is typically "syntax error" */
 				 errmsg("%s at or near \"%s\"", message, loc),
-				 errposition(cursorpos)));
+				 internalerrposition(cursorpos),
+				 internalerrquery(scanstr)));
 	}
 }
 
@@ -467,6 +471,10 @@ plpgsql_scanner_lineno(void)
 
 /*
  * Called before any actual parsing is done
+ *
+ * Note: the passed "str" must remain valid until plpgsql_scanner_finish().
+ * Although it is not fed directly to flex, we need the original string
+ * to cite in error messages.
  */
 void
 plpgsql_scanner_init(const char *str, int functype)
@@ -490,7 +498,9 @@ plpgsql_scanner_init(const char *str, int functype)
 	scanbufhandle = yy_scan_buffer(scanbuf, slen + 2);
 
 	/* Other setup */
-    scanner_functype     = functype;
+	scanstr = str;
+
+    scanner_functype = functype;
     scanner_typereported = 0;
 
 	have_pushback_token = false;

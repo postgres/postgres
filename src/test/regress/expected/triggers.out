@@ -85,12 +85,14 @@ DETAIL:  Trigger "check_fkeys_pkey2_exist" found tuple referencing non-existent 
 delete from pkeys where pkey1 = 30 and pkey2 = '3';
 NOTICE:  check_pkeys_fkey_cascade: 1 tuple(s) of fkeys are deleted
 ERROR:  "check_fkeys2_fkey_restrict": tuple is referenced in "fkeys"
+CONTEXT:  SQL query "delete from fkeys2 where fkey21 = $1 and fkey22 = $2 "
 delete from pkeys where pkey1 = 40 and pkey2 = '4';
 NOTICE:  check_pkeys_fkey_cascade: 1 tuple(s) of fkeys are deleted
 NOTICE:  check_pkeys_fkey_cascade: 1 tuple(s) of fkeys2 are deleted
 update pkeys set pkey1 = 7, pkey2 = '70' where pkey1 = 50 and pkey2 = '5';
 NOTICE:  check_pkeys_fkey_cascade: 1 tuple(s) of fkeys are deleted
 ERROR:  "check_fkeys2_fkey_restrict": tuple is referenced in "fkeys"
+CONTEXT:  SQL query "delete from fkeys2 where fkey21 = $1 and fkey22 = $2 "
 update pkeys set pkey1 = 7, pkey2 = '70' where pkey1 = 10 and pkey2 = '1';
 NOTICE:  check_pkeys_fkey_cascade: 1 tuple(s) of fkeys are deleted
 NOTICE:  check_pkeys_fkey_cascade: 1 tuple(s) of fkeys2 are deleted

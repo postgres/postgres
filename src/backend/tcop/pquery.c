@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.76 2004/03/18 23:26:17 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.77 2004/03/21 22:29:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,13 @@
 #include "tcop/utility.h"
 #include "utils/guc.h"
 #include "utils/memutils.h"
+
+
+/*
+ * ActivePortal is the currently executing Portal (the most closely nested,
+ * if there are several).
+ */
+Portal	ActivePortal = NULL;
 
 
 static uint32 RunFromStore(Portal portal, ScanDirection direction, long count,
@@ -395,6 +402,7 @@ PortalRun(Portal portal, long count,
 		  char *completionTag)
 {
 	bool		result;
+	Portal		saveActivePortal;
 	MemoryContext savePortalContext;
 	MemoryContext saveQueryContext;
 	MemoryContext oldContext;
@@ -430,6 +438,8 @@ PortalRun(Portal portal, long count,
 	/*
 	 * Set global portal context pointers.
 	 */
+	saveActivePortal = ActivePortal;
+	ActivePortal = portal;
 	savePortalContext = PortalContext;
 	PortalContext = PortalGetHeapMemory(portal);
 	saveQueryContext = QueryContext;
@@ -505,6 +515,7 @@ PortalRun(Portal portal, long count,
 	/* Mark portal not active */
 	portal->portalActive = false;
 
+	ActivePortal = saveActivePortal;
 	PortalContext = savePortalContext;
 	QueryContext = saveQueryContext;
 
@@ -922,6 +933,7 @@ PortalRunFetch(Portal portal,
 			   DestReceiver *dest)
 {
 	long		result;
+	Portal		saveActivePortal;
 	MemoryContext savePortalContext;
 	MemoryContext saveQueryContext;
 	MemoryContext oldContext;
@@ -945,6 +957,8 @@ PortalRunFetch(Portal portal,
 	/*
 	 * Set global portal context pointers.
 	 */
+	saveActivePortal = ActivePortal;
+	ActivePortal = portal;
 	savePortalContext = PortalContext;
 	PortalContext = PortalGetHeapMemory(portal);
 	saveQueryContext = QueryContext;
@@ -969,6 +983,7 @@ PortalRunFetch(Portal portal,
 	/* Mark portal not active */
 	portal->portalActive = false;
 
+	ActivePortal = saveActivePortal;
 	PortalContext = savePortalContext;
 	QueryContext = saveQueryContext;
 

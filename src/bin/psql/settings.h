@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/settings.h,v 1.16 2003/11/29 19:52:07 pgsql Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/settings.h,v 1.17 2004/03/21 22:29:11 tgl Exp $
  */
 #ifndef SETTINGS_H
 #define SETTINGS_H
@@ -36,8 +36,6 @@ typedef struct _psqlSettings
 
 	bool		notty;			/* stdin or stdout is not a tty (as
 								 * determined on startup) */
-	bool		useReadline;	/* use libreadline routines */
-	bool		useHistory;
 	bool		getPassword;	/* prompt the user for a username and
 								 * password */
 	FILE	   *cur_cmd_source; /* describe the status of the current main
@@ -49,6 +47,8 @@ typedef struct _psqlSettings
 	unsigned	lineno;			/* also for error reporting */
 
 	bool		timing;			/* enable timing of all queries */
+
+	PGVerbosity verbosity;		/* current error verbosity level */
 } PsqlSettings;
 
 extern PsqlSettings pset;

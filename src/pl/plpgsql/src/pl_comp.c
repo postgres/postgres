@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.74 2004/03/19 18:58:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.75 2004/03/21 22:29:11 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -270,7 +270,6 @@ do_compile(FunctionCallInfo fcinfo,
 		elog(ERROR, "null prosrc");
 	proc_source = DatumGetCString(DirectFunctionCall1(textout, prosrcdatum));
 	plpgsql_scanner_init(proc_source, functype);
-	pfree(proc_source);
 
 	plpgsql_error_funcname = pstrdup(NameStr(procStruct->proname));
 	plpgsql_error_lineno = 0;
@@ -279,7 +278,7 @@ do_compile(FunctionCallInfo fcinfo,
 	 * Setup error traceback support for ereport()
 	 */
 	plerrcontext.callback = plpgsql_compile_error_callback;
-	plerrcontext.arg = NULL;
+	plerrcontext.arg = forValidator ? proc_source : (char *) NULL;
 	plerrcontext.previous = error_context_stack;
 	error_context_stack = &plerrcontext;
 
@@ -714,6 +713,7 @@ do_compile(FunctionCallInfo fcinfo,
 		elog(ERROR, "plpgsql parser returned %d", parse_rc);
 
 	plpgsql_scanner_finish();
+	pfree(proc_source);
 
 	/*
 	 * If that was successful, complete the functions info.
@@ -749,10 +749,26 @@ do_compile(FunctionCallInfo fcinfo,
 
 /*
  * error context callback to let us supply a call-stack traceback
+ *
+ * If we are validating, the function source is passed as argument.
  */
 static void
 plpgsql_compile_error_callback(void *arg)
 {
+	if (arg)
+	{
+		/*
+		 * Try to convert syntax error position to reference text of
+		 * original CREATE FUNCTION command.
+		 */
+		if (function_parse_error_transpose((const char *) arg))
+			return;
+		/*
+		 * Done if a syntax error position was reported; otherwise we
+		 * have to fall back to a "near line N" report.
+		 */
+	}
+
 	if (plpgsql_error_funcname)
 		errcontext("compile of PL/pgSQL function \"%s\" near line %d",
 				   plpgsql_error_funcname, plpgsql_error_lineno);

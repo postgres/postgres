@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.147 2004/03/11 02:39:10 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.148 2004/03/21 22:29:10 tgl Exp $
 -->
 
  <chapter id="libpq">
@@ -1391,12 +1391,36 @@ bytes.
 </varlistentry>
 
 <varlistentry>
+<term><symbol>PG_DIAG_INTERNAL_POSITION</></term>
+<listitem>
+<para>
+This is defined the same as the <symbol>PG_DIAG_STATEMENT_POSITION</>
+field, but it is used when the cursor position refers to an internally
+generated command rather than the one submitted by the client.
+The <symbol>PG_DIAG_INTERNAL_QUERY</> field will always appear when this field
+appears.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term><symbol>PG_DIAG_INTERNAL_QUERY</></term>
+<listitem>
+<para>
+The text of a failed internally-generated command.
+This could be, for example, a SQL query issued by a PL/pgSQL function.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
 <term><symbol>PG_DIAG_CONTEXT</></term>
 <listitem>
 <para>
-An indication of the context in which the error occurred.  Presently
-this includes a call stack traceback of active PL functions.  The
-trace is one entry per line, most recent first.
+An indication of the context in which the error occurred.
+Presently this includes a call stack traceback of active
+procedural language functions and internally-generated queries.
+The trace is one entry per line, most recent first.
 </para>
 </listitem>
 </varlistentry>

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.111 2004/03/17 01:05:10 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.112 2004/03/21 22:29:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,6 +38,8 @@ static int	_SPI_pquery(QueryDesc *queryDesc, bool runit,
 static int _SPI_execute_plan(_SPI_plan *plan,
 							 Datum *Values, const char *Nulls,
 							 bool useCurrentSnapshot, int tcount);
+
+static void _SPI_error_callback(void *arg);
 
 static void _SPI_cursor_operation(Portal portal, bool forward, int count,
 					  DestReceiver *dest);
@@ -286,7 +288,8 @@ SPI_execp_current(void *plan, Datum *Values, const char *Nulls,
 void *
 SPI_prepare(const char *src, int nargs, Oid *argtypes)
 {
-	_SPI_plan  *plan;
+	_SPI_plan	plan;
+	_SPI_plan  *result;
 
 	if (src == NULL || nargs < 0 || (nargs > 0 && argtypes == NULL))
 	{
@@ -298,20 +301,21 @@ SPI_prepare(const char *src, int nargs, Oid *argtypes)
 	if (SPI_result < 0)
 		return NULL;
 
-	plan = (_SPI_plan *) palloc(sizeof(_SPI_plan));		/* Executor context */
-	plan->argtypes = argtypes;
-	plan->nargs = nargs;
+	plan.plancxt = NULL;		/* doesn't have own context */
+	plan.query = src;
+	plan.nargs = nargs;
+	plan.argtypes = argtypes;
 
-	SPI_result = _SPI_execute(src, 0, plan);
+	SPI_result = _SPI_execute(src, 0, &plan);
 
 	if (SPI_result >= 0)		/* copy plan to procedure context */
-		plan = _SPI_copy_plan(plan, _SPI_CPLAN_PROCXT);
+		result = _SPI_copy_plan(&plan, _SPI_CPLAN_PROCXT);
 	else
-		plan = NULL;
+		result = NULL;
 
 	_SPI_end_call(true);
 
-	return (void *) plan;
+	return (void *) result;
 }
 
 void *
@@ -335,7 +339,6 @@ SPI_saveplan(void *plan)
 	SPI_result = 0;
 
 	return (void *) newplan;
-
 }
 
 int
@@ -927,12 +930,12 @@ SPI_cursor_close(Portal portal)
 Oid
 SPI_getargtypeid(void *plan, int argIndex)
 {
- if (plan == NULL || argIndex < 0 || argIndex >= ((_SPI_plan*)plan)->nargs)
- {
-  SPI_result = SPI_ERROR_ARGUMENT;
-  return InvalidOid;
- }
- return ((_SPI_plan *) plan)->argtypes[argIndex];
+	if (plan == NULL || argIndex < 0 || argIndex >= ((_SPI_plan*)plan)->nargs)
+	{
+		SPI_result = SPI_ERROR_ARGUMENT;
+		return InvalidOid;
+	}
+	return ((_SPI_plan *) plan)->argtypes[argIndex];
 }
 
 /*
@@ -941,12 +944,12 @@ SPI_getargtypeid(void *plan, int argIndex)
 int
 SPI_getargcount(void *plan)
 {
- if (plan == NULL)
- {
-  SPI_result = SPI_ERROR_ARGUMENT;
-  return -1;
- }
- return ((_SPI_plan *) plan)->nargs;
+	if (plan == NULL)
+	{
+		SPI_result = SPI_ERROR_ARGUMENT;
+		return -1;
+	}
+	return ((_SPI_plan *) plan)->nargs;
 }
 
 /*
@@ -961,22 +964,24 @@ SPI_getargcount(void *plan)
 bool
 SPI_is_cursor_plan(void *plan)
 {
- List *qtlist;
- _SPI_plan *spiplan = (_SPI_plan *) plan;
- if (spiplan == NULL)
- {
-  SPI_result = SPI_ERROR_ARGUMENT;
-  return false;
- }
+	_SPI_plan *spiplan = (_SPI_plan *) plan;
+	List *qtlist;
 
- qtlist = spiplan->qtlist;
- if(length(spiplan->ptlist) == 1 && length(qtlist) == 1)
- {
-  Query *queryTree = (Query *) lfirst((List *) lfirst(qtlist));
-  if(queryTree->commandType == CMD_SELECT && queryTree->into == NULL)
-   return true;
- }
- return false;
+	if (spiplan == NULL)
+	{
+		SPI_result = SPI_ERROR_ARGUMENT;
+		return false;
+	}
+
+	qtlist = spiplan->qtlist;
+	if (length(spiplan->ptlist) == 1 && length(qtlist) == 1)
+	{
+		Query *queryTree = (Query *) lfirst((List *) lfirst(qtlist));
+
+		if (queryTree->commandType == CMD_SELECT && queryTree->into == NULL)
+			return true;
+	}
+	return false;
 }
 
 /* =================== private functions =================== */
@@ -1071,7 +1076,8 @@ spi_printtup(HeapTuple tuple, TupleDesc tupdesc, DestReceiver *self)
 /*
  * Plan and optionally execute a querystring.
  *
- * If plan != NULL, just prepare plan tree, else execute immediately.
+ * If plan != NULL, just prepare plan trees and save them in *plan;
+ * else execute immediately.
  */
 static int
 _SPI_execute(const char *src, int tcount, _SPI_plan *plan)
@@ -1080,6 +1086,7 @@ _SPI_execute(const char *src, int tcount, _SPI_plan *plan)
 	List	   *query_list_list;
 	List	   *plan_list;
 	List	   *list_item;
+	ErrorContextCallback spierrcontext;
 	int			nargs = 0;
 	Oid		   *argtypes = NULL;
 	int			res = 0;
@@ -1098,6 +1105,14 @@ _SPI_execute(const char *src, int tcount, _SPI_plan *plan)
 	SPI_lastoid = InvalidOid;
 	SPI_tuptable = NULL;
 	_SPI_current->tuptable = NULL;
+
+	/*
+	 * Setup error traceback support for ereport()
+	 */
+	spierrcontext.callback = _SPI_error_callback;
+	spierrcontext.arg = (void *) src;
+	spierrcontext.previous = error_context_stack;
+	error_context_stack = &spierrcontext;
 
 	/*
 	 * Parse the request string into a list of raw parse trees.
@@ -1149,14 +1164,23 @@ _SPI_execute(const char *src, int tcount, _SPI_plan *plan)
 					CopyStmt   *stmt = (CopyStmt *) queryTree->utilityStmt;
 
 					if (stmt->filename == NULL)
-						return SPI_ERROR_COPY;
+					{
+						res = SPI_ERROR_COPY;
+						goto fail;
+					}
 				}
 				else if (IsA(queryTree->utilityStmt, DeclareCursorStmt) ||
 						 IsA(queryTree->utilityStmt, ClosePortalStmt) ||
 						 IsA(queryTree->utilityStmt, FetchStmt))
-					return SPI_ERROR_CURSOR;
+				{
+					res = SPI_ERROR_CURSOR;
+					goto fail;
+				}
 				else if (IsA(queryTree->utilityStmt, TransactionStmt))
-					return SPI_ERROR_TRANSACTION;
+				{
+					res = SPI_ERROR_TRANSACTION;
+					goto fail;
+				}
 				res = SPI_OK_UTILITY;
 				if (plan == NULL)
 				{
@@ -1171,7 +1195,7 @@ _SPI_execute(const char *src, int tcount, _SPI_plan *plan)
 				res = _SPI_pquery(qdesc, true, false,
 								  queryTree->canSetTag ? tcount : 0);
 				if (res < 0)
-					return res;
+					goto fail;
 				CommandCounterIncrement();
 			}
 			else
@@ -1180,7 +1204,7 @@ _SPI_execute(const char *src, int tcount, _SPI_plan *plan)
 										NULL, false);
 				res = _SPI_pquery(qdesc, false, false, 0);
 				if (res < 0)
-					return res;
+					goto fail;
 			}
 		}
 	}
@@ -1190,6 +1214,13 @@ _SPI_execute(const char *src, int tcount, _SPI_plan *plan)
 		plan->qtlist = query_list_list;
 		plan->ptlist = plan_list;
 	}
+
+fail:
+
+	/*
+	 * Pop the error context stack
+	 */
+	error_context_stack = spierrcontext.previous;
 
 	return res;
 }
@@ -1201,6 +1232,7 @@ _SPI_execute_plan(_SPI_plan *plan, Datum *Values, const char *Nulls,
 	List	   *query_list_list = plan->qtlist;
 	List	   *plan_list = plan->ptlist;
 	List	   *query_list_list_item;
+	ErrorContextCallback spierrcontext;
 	int			nargs = plan->nargs;
 	int			res = 0;
 	ParamListInfo paramLI;
@@ -1233,6 +1265,14 @@ _SPI_execute_plan(_SPI_plan *plan, Datum *Values, const char *Nulls,
 	SPI_lastoid = InvalidOid;
 	SPI_tuptable = NULL;
 	_SPI_current->tuptable = NULL;
+
+	/*
+	 * Setup error traceback support for ereport()
+	 */
+	spierrcontext.callback = _SPI_error_callback;
+	spierrcontext.arg = (void *) plan->query;
+	spierrcontext.previous = error_context_stack;
+	error_context_stack = &spierrcontext;
 
 	foreach(query_list_list_item, query_list_list)
 	{
@@ -1270,11 +1310,18 @@ _SPI_execute_plan(_SPI_plan *plan, Datum *Values, const char *Nulls,
 				res = _SPI_pquery(qdesc, true, useCurrentSnapshot,
 								  queryTree->canSetTag ? tcount : 0);
 				if (res < 0)
-					return res;
+					goto fail;
 				CommandCounterIncrement();
 			}
 		}
 	}
+
+fail:
+
+	/*
+	 * Pop the error context stack
+	 */
+	error_context_stack = spierrcontext.previous;
 
 	return res;
 }
@@ -1353,6 +1400,32 @@ _SPI_pquery(QueryDesc *queryDesc, bool runit,
 #endif
 
 	return res;
+}
+
+/*
+ * _SPI_error_callback
+ *
+ * Add context information when a query invoked via SPI fails
+ */
+static void
+_SPI_error_callback(void *arg)
+{
+	const char *query = (const char *) arg;
+	int			syntaxerrposition;
+
+	/*
+	 * If there is a syntax error position, convert to internal syntax error;
+	 * otherwise treat the query as an item of context stack
+	 */
+	syntaxerrposition = geterrposition();
+	if (syntaxerrposition > 0)
+	{
+		errposition(0);
+		internalerrposition(syntaxerrposition);
+		internalerrquery(query);
+	}
+	else
+		errcontext("SQL query \"%s\"", query);
 }
 
 /*
@@ -1490,8 +1563,7 @@ _SPI_copy_plan(_SPI_plan *plan, int location)
 		parentcxt = _SPI_current->procCxt;
 	else if (location == _SPI_CPLAN_TOPCXT)
 		parentcxt = TopMemoryContext;
-	else
-/* (this case not currently used) */
+	else				/* (this case not currently used) */
 		parentcxt = CurrentMemoryContext;
 
 	/*
@@ -1508,6 +1580,7 @@ _SPI_copy_plan(_SPI_plan *plan, int location)
 	/* Copy the SPI plan into its own context */
 	newplan = (_SPI_plan *) palloc(sizeof(_SPI_plan));
 	newplan->plancxt = plancxt;
+	newplan->query = pstrdup(plan->query);
 	newplan->qtlist = (List *) copyObject(plan->qtlist);
 	newplan->ptlist = (List *) copyObject(plan->ptlist);
 	newplan->nargs = plan->nargs;

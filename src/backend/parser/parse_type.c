@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_type.c,v 1.64 2003/11/29 19:51:52 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_type.c,v 1.65 2004/03/21 22:29:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -439,6 +439,12 @@ pts_error_callback(void *arg)
 	const char *str = (const char *) arg;
 
 	errcontext("invalid type name \"%s\"", str);
+	/*
+	 * Currently we just suppress any syntax error position report,
+	 * rather than transforming to an "internal query" error.  It's
+	 * unlikely that a type name is complex enough to need positioning.
+	 */
+	errposition(0);
 }
 
 /*

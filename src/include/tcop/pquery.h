@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/tcop/pquery.h,v 1.30 2003/11/29 22:41:14 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/tcop/pquery.h,v 1.31 2004/03/21 22:29:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,6 +15,9 @@
 #define PQUERY_H
 
 #include "utils/portal.h"
+
+
+extern DLLIMPORT Portal ActivePortal;
 
 
 extern void ProcessQuery(Query *parsetree,

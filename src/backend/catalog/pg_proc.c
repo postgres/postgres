@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.112 2004/03/14 01:58:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.113 2004/03/21 22:29:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,9 +23,11 @@
 #include "executor/executor.h"
 #include "fmgr.h"
 #include "miscadmin.h"
+#include "mb/pg_wchar.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_type.h"
+#include "tcop/pquery.h"
 #include "tcop/tcopprot.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
@@ -45,6 +47,10 @@ Datum		fmgr_sql_validator(PG_FUNCTION_ARGS);
 static Datum create_parameternames_array(int parameterCount,
 										 const char *parameterNames[]);
 static void sql_function_parse_error_callback(void *arg);
+static int	match_prosrc_to_query(const char *prosrc, const char *queryText,
+								  int cursorpos);
+static bool match_prosrc_to_literal(const char *prosrc, const char *literal,
+									int cursorpos, int *newcursorpos);
 
 
 /* ----------------------------------------------------------------
@@ -763,12 +769,10 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 		prosrc = DatumGetCString(DirectFunctionCall1(textout, tmp));
 
 		/*
-		 * Setup error traceback support for ereport().  This is mostly
-		 * so we can add context info that shows that a syntax-error
-		 * location is inside the function body, not out in CREATE FUNCTION.
+		 * Setup error traceback support for ereport().
 		 */
 		sqlerrcontext.callback = sql_function_parse_error_callback;
-		sqlerrcontext.arg = proc;
+		sqlerrcontext.arg = tuple;
 		sqlerrcontext.previous = error_context_stack;
 		error_context_stack = &sqlerrcontext;
 
@@ -800,22 +804,203 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 }
 
 /*
- * error context callback to let us supply a context marker
+ * Error context callback for handling errors in SQL function definitions
  */
 static void
 sql_function_parse_error_callback(void *arg)
 {
-	Form_pg_proc proc = (Form_pg_proc) arg;
+	HeapTuple	tuple = (HeapTuple) arg;
+	Form_pg_proc proc = (Form_pg_proc) GETSTRUCT(tuple);
+	bool		isnull;
+	Datum		tmp;
+	char	   *prosrc;
+
+	/* See if it's a syntax error; if so, transpose to CREATE FUNCTION */
+	tmp = SysCacheGetAttr(PROCOID, tuple, Anum_pg_proc_prosrc, &isnull);
+	if (isnull)
+		elog(ERROR, "null prosrc");
+	prosrc = DatumGetCString(DirectFunctionCall1(textout, tmp));
+
+	if (!function_parse_error_transpose(prosrc))
+	{
+		/* If it's not a syntax error, push info onto context stack */
+		errcontext("SQL function \"%s\"", NameStr(proc->proname));
+	}
+
+	pfree(prosrc);
+}
+
+/*
+ * Adjust a syntax error occurring inside the function body of a CREATE
+ * FUNCTION command.  This can be used by any function validator, not only
+ * for SQL-language functions.  It is assumed that the syntax error position
+ * is initially relative to the function body string (as passed in).  If
+ * possible, we adjust the position to reference the original CREATE command;
+ * if we can't manage that, we set up an "internal query" syntax error instead.
+ *
+ * Returns true if a syntax error was processed, false if not.
+ */
+bool
+function_parse_error_transpose(const char *prosrc)
+{
+	int			origerrposition;
+	int			newerrposition;
+	const char *queryText;
 
 	/*
-	 * XXX it'd be really nice to adjust the syntax error position to
-	 * account for the offset from the start of the statement to the
-	 * function body string, not to mention any quoting characters in
-	 * the string, but I can't see any decent way to do that...
+	 * Nothing to do unless we are dealing with a syntax error that has
+	 * a cursor position.
 	 *
-	 * In the meantime, put in a CONTEXT entry that can cue clients
-	 * not to trust the syntax error position completely.
+	 * Some PLs may prefer to report the error position as an internal
+	 * error to begin with, so check that too.
 	 */
-	errcontext("SQL function \"%s\"",
-			   NameStr(proc->proname));
+	origerrposition = geterrposition();
+	if (origerrposition <= 0)
+	{
+		origerrposition = getinternalerrposition();
+		if (origerrposition <= 0)
+			return false;
+	}
+
+	/* We can get the original query text from the active portal (hack...) */
+	Assert(ActivePortal && ActivePortal->portalActive);
+	queryText = ActivePortal->sourceText;
+
+	/* Try to locate the prosrc in the original text */
+	newerrposition = match_prosrc_to_query(prosrc, queryText, origerrposition);
+
+	if (newerrposition > 0)
+	{
+		/* Successful, so fix error position to reference original query */
+		errposition(newerrposition);
+		/* Get rid of any report of the error as an "internal query" */
+		internalerrposition(0);
+		internalerrquery(NULL);
+	}
+	else
+	{
+		/*
+		 * If unsuccessful, convert the position to an internal position
+		 * marker and give the function text as the internal query.
+		 */
+		errposition(0);
+		internalerrposition(origerrposition);
+		internalerrquery(prosrc);
+	}
+
+	return true;
+}
+
+/*
+ * Try to locate the string literal containing the function body in the
+ * given text of the CREATE FUNCTION command.  If successful, return the
+ * character (not byte) index within the command corresponding to the
+ * given character index within the literal.  If not successful, return 0.
+ */
+static int
+match_prosrc_to_query(const char *prosrc, const char *queryText,
+					  int cursorpos)
+{
+	/*
+	 * Rather than fully parsing the CREATE FUNCTION command, we just scan
+	 * the command looking for $prosrc$ or 'prosrc'.  This could be fooled
+	 * (though not in any very probable scenarios), so fail if we find
+	 * more than one match.
+	 */
+	int		prosrclen = strlen(prosrc);
+	int		querylen = strlen(queryText);
+	int		matchpos = 0;
+	int		curpos;
+	int		newcursorpos;
+
+	for (curpos = 0; curpos < querylen-prosrclen; curpos++)
+	{
+		if (queryText[curpos] == '$' &&
+			strncmp(prosrc, &queryText[curpos+1], prosrclen) == 0 &&
+			queryText[curpos+1+prosrclen] == '$')
+		{
+			/*
+			 * Found a $foo$ match.  Since there are no embedded quoting
+			 * characters in a dollar-quoted literal, we don't have to do
+			 * any fancy arithmetic; just offset by the starting position.
+			 */
+			if (matchpos)
+				return 0;		/* multiple matches, fail */
+			matchpos = pg_mbstrlen_with_len(queryText, curpos+1)
+				+ cursorpos;
+		}
+		else if (queryText[curpos] == '\'' &&
+				 match_prosrc_to_literal(prosrc, &queryText[curpos+1],
+										 cursorpos, &newcursorpos))
+		{
+			/*
+			 * Found a 'foo' match.  match_prosrc_to_literal() has adjusted
+			 * for any quotes or backslashes embedded in the literal.
+			 */
+			if (matchpos)
+				return 0;		/* multiple matches, fail */
+			matchpos = pg_mbstrlen_with_len(queryText, curpos+1)
+				+ newcursorpos;
+		}
+	}
+
+	return matchpos;
+}
+
+/*
+ * Try to match the given source text to a single-quoted literal.
+ * If successful, adjust newcursorpos to correspond to the character
+ * (not byte) index corresponding to cursorpos in the source text.
+ *
+ * At entry, literal points just past a ' character.  We must check for the
+ * trailing quote.
+ */
+static bool
+match_prosrc_to_literal(const char *prosrc, const char *literal,
+						int cursorpos, int *newcursorpos)
+{
+	int			newcp = cursorpos;
+	int			chlen;
+
+	/*
+	 * This implementation handles backslashes and doubled quotes in the
+	 * string literal.  It does not handle the SQL syntax for literals
+	 * continued across line boundaries.
+	 *
+	 * We do the comparison a character at a time, not a byte at a time,
+	 * so that we can do the correct cursorpos math.
+	 */
+	while (*prosrc)
+	{
+		cursorpos--;			/* characters left before cursor */
+		/*
+		 * Check for backslashes and doubled quotes in the literal; adjust
+		 * newcp when one is found before the cursor.
+		 */
+		if (*literal == '\\')
+		{
+			literal++;
+			if (cursorpos > 0)
+				newcp++;
+		}
+		else if (*literal == '\'')
+		{
+			if (literal[1] != '\'')
+				return false;
+			literal++;
+			if (cursorpos > 0)
+				newcp++;
+		}
+		chlen = pg_mblen(prosrc);
+		if (strncmp(prosrc, literal, chlen) != 0)
+			return false;
+		prosrc += chlen;
+		literal += chlen;
+	}
+
+	*newcursorpos = newcp;
+
+	if (*literal == '\'' && literal[1] != '\'')
+		return true;
+	return false;
 }

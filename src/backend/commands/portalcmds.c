@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/portalcmds.c,v 1.25 2003/11/29 19:51:47 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/portalcmds.c,v 1.26 2004/03/21 22:29:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -270,6 +270,7 @@ void
 PersistHoldablePortal(Portal portal)
 {
 	QueryDesc  *queryDesc = PortalGetQueryDesc(portal);
+	Portal		saveActivePortal;
 	MemoryContext savePortalContext;
 	MemoryContext saveQueryContext;
 	MemoryContext oldcxt;
@@ -311,6 +312,8 @@ PersistHoldablePortal(Portal portal)
 	/*
 	 * Set global portal context pointers.
 	 */
+	saveActivePortal = ActivePortal;
+	ActivePortal = portal;
 	savePortalContext = PortalContext;
 	PortalContext = PortalGetHeapMemory(portal);
 	saveQueryContext = QueryContext;
@@ -342,6 +345,7 @@ PersistHoldablePortal(Portal portal)
 	/* Mark portal not active */
 	portal->portalActive = false;
 
+	ActivePortal = saveActivePortal;
 	PortalContext = savePortalContext;
 	QueryContext = saveQueryContext;
 
