@@ -6,6 +6,11 @@
 #include "miscadmin.h"
 #include "utils/builtins.h"
 
+/* sunos doesn't have this function */
+#if defined(sunos)
+#define difftime(time1,time0)  ((time1) - (time0))
+#endif
+
 #if FALSE
 /* copy the next part of the string into a buffer */
 static const char *
