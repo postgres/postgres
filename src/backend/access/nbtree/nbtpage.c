@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtpage.c,v 1.75 2004/04/21 18:24:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtpage.c,v 1.76 2004/06/02 17:28:17 tgl Exp $
  *
  *	NOTES
  *	   Postgres btree pages look like ordinary relation pages.	The opaque
@@ -31,8 +31,9 @@
 /*
  *	_bt_metapinit() -- Initialize the metadata page of a new btree.
  *
- * If markvalid is true, the index is immediately marked valid, else it
- * will be invalid until _bt_metaproot() is called.
+ * Note: this is actually not used for standard btree index building;
+ * nbtsort.c prefers not to make the metadata page valid until completion
+ * of build.
  *
  * Note: there's no real need for any locking here.  Since the transaction
  * creating the index hasn't committed yet, no one else can even see the index
@@ -40,12 +41,11 @@
  * not true, but we assume the caller holds sufficient locks on the index.)
  */
 void
-_bt_metapinit(Relation rel, bool markvalid)
+_bt_metapinit(Relation rel)
 {
 	Buffer		buf;
 	Page		pg;
 	BTMetaPageData *metad;
-	BTPageOpaque op;
 
 	if (RelationGetNumberOfBlocks(rel) != 0)
 		elog(ERROR, "cannot initialize non-empty btree index \"%s\"",
@@ -55,21 +55,11 @@ _bt_metapinit(Relation rel, bool markvalid)
 	Assert(BufferGetBlockNumber(buf) == BTREE_METAPAGE);
 	pg = BufferGetPage(buf);
 
+	_bt_initmetapage(pg, P_NONE, 0);
+	metad = BTPageGetMeta(pg);
+
 	/* NO ELOG(ERROR) from here till newmeta op is logged */
 	START_CRIT_SECTION();
-
-	_bt_pageinit(pg, BufferGetPageSize(buf));
-
-	metad = BTPageGetMeta(pg);
-	metad->btm_magic = markvalid ? BTREE_MAGIC : 0;
-	metad->btm_version = BTREE_VERSION;
-	metad->btm_root = P_NONE;
-	metad->btm_level = 0;
-	metad->btm_fastroot = P_NONE;
-	metad->btm_fastlevel = 0;
-
-	op = (BTPageOpaque) PageGetSpecialPointer(pg);
-	op->btpo_flags = BTP_META;
 
 	/* XLOG stuff */
 	if (!rel->rd_istemp)
@@ -90,7 +80,7 @@ _bt_metapinit(Relation rel, bool markvalid)
 		rdata[0].next = NULL;
 
 		recptr = XLogInsert(RM_BTREE_ID,
-							markvalid ? XLOG_BTREE_NEWMETA : XLOG_BTREE_INVALIDMETA,
+							XLOG_BTREE_NEWMETA,
 							rdata);
 
 		PageSetLSN(pg, recptr);
@@ -100,6 +90,29 @@ _bt_metapinit(Relation rel, bool markvalid)
 	END_CRIT_SECTION();
 
 	WriteBuffer(buf);
+}
+
+/*
+ *	_bt_initmetapage() -- Fill a page buffer with a correct metapage image
+ */
+void
+_bt_initmetapage(Page page, BlockNumber rootbknum, uint32 level)
+{
+	BTMetaPageData *metad;
+	BTPageOpaque metaopaque;
+
+	_bt_pageinit(page, BLCKSZ);
+
+	metad = BTPageGetMeta(page);
+	metad->btm_magic = BTREE_MAGIC;
+	metad->btm_version = BTREE_VERSION;
+	metad->btm_root = rootbknum;
+	metad->btm_level = level;
+	metad->btm_fastroot = rootbknum;
+	metad->btm_fastlevel = level;
+
+	metaopaque = (BTPageOpaque) PageGetSpecialPointer(page);
+	metaopaque->btpo_flags = BTP_META;
 }
 
 /*
@@ -607,76 +620,6 @@ _bt_page_recyclable(Page page)
 		TransactionIdPrecedesOrEquals(opaque->btpo.xact, RecentXmin))
 		return true;
 	return false;
-}
-
-/*
- *	_bt_metaproot() -- Change the root page of the btree.
- *
- *		Lehman and Yao require that the root page move around in order to
- *		guarantee deadlock-free short-term, fine-granularity locking.  When
- *		we split the root page, we record the new parent in the metadata page
- *		for the relation.  This routine does the work.
- *
- *		No direct preconditions, but if you don't have the write lock on
- *		at least the old root page when you call this, you're making a big
- *		mistake.  On exit, metapage data is correct and we no longer have
- *		a pin or lock on the metapage.
- *
- * Actually this is not used for splitting on-the-fly anymore.	It's only used
- * in nbtsort.c at the completion of btree building, where we know we have
- * sole access to the index anyway.
- */
-void
-_bt_metaproot(Relation rel, BlockNumber rootbknum, uint32 level)
-{
-	Buffer		metabuf;
-	Page		metap;
-	BTPageOpaque metaopaque;
-	BTMetaPageData *metad;
-
-	metabuf = _bt_getbuf(rel, BTREE_METAPAGE, BT_WRITE);
-	metap = BufferGetPage(metabuf);
-	metaopaque = (BTPageOpaque) PageGetSpecialPointer(metap);
-	Assert(metaopaque->btpo_flags & BTP_META);
-
-	/* NO ELOG(ERROR) from here till newmeta op is logged */
-	START_CRIT_SECTION();
-
-	metad = BTPageGetMeta(metap);
-	Assert(metad->btm_magic == BTREE_MAGIC || metad->btm_magic == 0);
-	metad->btm_magic = BTREE_MAGIC;		/* it's valid now for sure */
-	metad->btm_root = rootbknum;
-	metad->btm_level = level;
-	metad->btm_fastroot = rootbknum;
-	metad->btm_fastlevel = level;
-
-	/* XLOG stuff */
-	if (!rel->rd_istemp)
-	{
-		xl_btree_newmeta xlrec;
-		XLogRecPtr	recptr;
-		XLogRecData rdata[1];
-
-		xlrec.node = rel->rd_node;
-		xlrec.meta.root = metad->btm_root;
-		xlrec.meta.level = metad->btm_level;
-		xlrec.meta.fastroot = metad->btm_fastroot;
-		xlrec.meta.fastlevel = metad->btm_fastlevel;
-
-		rdata[0].buffer = InvalidBuffer;
-		rdata[0].data = (char *) &xlrec;
-		rdata[0].len = SizeOfBtreeNewmeta;
-		rdata[0].next = NULL;
-
-		recptr = XLogInsert(RM_BTREE_ID, XLOG_BTREE_NEWMETA, rdata);
-
-		PageSetLSN(metap, recptr);
-		PageSetSUI(metap, ThisStartUpID);
-	}
-
-	END_CRIT_SECTION();
-
-	_bt_wrtbuf(rel, metabuf);
 }
 
 /*

@@ -31,12 +31,32 @@
  * (there aren't many upper pages if the keys are reasonable-size) without
  * incurring a lot of cascading splits during early insertions.
  *
+ * Formerly the index pages being built were kept in shared buffers, but
+ * that is of no value (since other backends have no interest in them yet)
+ * and it created locking problems for CHECKPOINT, because the upper-level
+ * pages were held exclusive-locked for long periods.  Now we just build
+ * the pages in local memory and smgrwrite() them as we finish them.  They
+ * will need to be re-read into shared buffers on first use after the build
+ * finishes.
+ *
+ * Since the index will never be used unless it is completely built,
+ * from a crash-recovery point of view there is no need to WAL-log the
+ * steps of the build.  After completing the index build, we can just sync
+ * the whole file to disk using smgrimmedsync() before exiting this module.
+ * This can be seen to be sufficient for crash recovery by considering that
+ * it's effectively equivalent to what would happen if a CHECKPOINT occurred
+ * just after the index build.  However, it is clearly not sufficient if the
+ * DBA is using the WAL log for PITR or replication purposes, since another
+ * machine would not be able to reconstruct the index from WAL.  Therefore,
+ * we log the completed index pages to WAL if and only if WAL archiving is
+ * active.
+ *
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsort.c,v 1.81 2004/02/03 17:34:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsort.c,v 1.82 2004/06/02 17:28:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,11 +65,14 @@
 
 #include "access/nbtree.h"
 #include "miscadmin.h"
+#include "storage/smgr.h"
 #include "utils/tuplesort.h"
 
 
 /*
- * Status record for spooling.
+ * Status record for spooling/sorting phase.  (Note we may have two of
+ * these due to the special requirements for uniqueness-checking with
+ * dead tuples.)
  */
 struct BTSpool
 {
@@ -73,8 +96,8 @@ struct BTSpool
  */
 typedef struct BTPageState
 {
-	Buffer		btps_buf;		/* current buffer & page */
-	Page		btps_page;
+	Page		btps_page;		/* workspace for page building */
+	BlockNumber	btps_blkno;		/* block # to write this page at */
 	BTItem		btps_minkey;	/* copy of minimum key (first item) on
 								 * page */
 	OffsetNumber btps_lastoff;	/* last item offset loaded */
@@ -84,6 +107,18 @@ typedef struct BTPageState
 	struct BTPageState *btps_next;		/* link to parent level, if any */
 } BTPageState;
 
+/*
+ * Overall status record for index writing phase.
+ */
+typedef struct BTWriteState
+{
+	Relation	index;
+	bool		btws_use_wal;		/* dump pages to WAL? */
+	BlockNumber	btws_pages_alloced;	/* # pages allocated */
+	BlockNumber	btws_pages_written;	/* # pages written out */
+	Page		btws_zeropage;		/* workspace for filling zeroes */
+} BTWriteState;
+
 
 #define BTITEMSZ(btitem) \
 	((btitem) ? \
@@ -92,15 +127,15 @@ typedef struct BTPageState
 	 0)
 
 
-static void _bt_blnewpage(Relation index, Buffer *buf, Page *page,
-			  uint32 level);
-static BTPageState *_bt_pagestate(Relation index, uint32 level);
-static void _bt_slideleft(Relation index, Buffer buf, Page page);
+static Page _bt_blnewpage(uint32 level);
+static BTPageState *_bt_pagestate(BTWriteState *wstate, uint32 level);
+static void _bt_slideleft(Page page);
 static void _bt_sortaddtup(Page page, Size itemsize,
 			   BTItem btitem, OffsetNumber itup_off);
-static void _bt_buildadd(Relation index, BTPageState *state, BTItem bti);
-static void _bt_uppershutdown(Relation index, BTPageState *state);
-static void _bt_load(Relation index, BTSpool *btspool, BTSpool *btspool2);
+static void _bt_buildadd(BTWriteState *wstate, BTPageState *state, BTItem bti);
+static void _bt_uppershutdown(BTWriteState *wstate, BTPageState *state);
+static void _bt_load(BTWriteState *wstate,
+					 BTSpool *btspool, BTSpool *btspool2);
 
 
 /*
@@ -169,6 +204,8 @@ _bt_spool(BTItem btitem, BTSpool *btspool)
 void
 _bt_leafbuild(BTSpool *btspool, BTSpool *btspool2)
 {
+	BTWriteState	wstate;
+
 #ifdef BTREE_BUILD_STATS
 	if (log_btree_build_stats)
 	{
@@ -180,7 +217,26 @@ _bt_leafbuild(BTSpool *btspool, BTSpool *btspool2)
 	tuplesort_performsort(btspool->sortstate);
 	if (btspool2)
 		tuplesort_performsort(btspool2->sortstate);
-	_bt_load(btspool->index, btspool, btspool2);
+
+	wstate.index = btspool->index;
+	/*
+	 * We need to log index creation in WAL iff WAL archiving is enabled
+	 * AND it's not a temp index.
+	 *
+	 * XXX when WAL archiving is actually supported, this test will likely
+	 * need to change; and the hardwired extern is cruddy anyway ...
+	 */
+	{
+		extern char XLOG_archive_dir[];
+
+		wstate.btws_use_wal = XLOG_archive_dir[0] && !wstate.index->rd_istemp;
+	}
+	/* reserve the metapage */
+	wstate.btws_pages_alloced = BTREE_METAPAGE + 1;
+	wstate.btws_pages_written = 0;
+	wstate.btws_zeropage = NULL;	 /* until needed */
+
+	_bt_load(&wstate, btspool, btspool2);
 }
 
 
@@ -190,70 +246,101 @@ _bt_leafbuild(BTSpool *btspool, BTSpool *btspool2)
 
 
 /*
- * allocate a new, clean btree page, not linked to any siblings.
+ * allocate workspace for a new, clean btree page, not linked to any siblings.
  */
-static void
-_bt_blnewpage(Relation index, Buffer *buf, Page *page, uint32 level)
+static Page
+_bt_blnewpage(uint32 level)
 {
+	Page	page;
 	BTPageOpaque opaque;
 
-	*buf = _bt_getbuf(index, P_NEW, BT_WRITE);
-	*page = BufferGetPage(*buf);
+	page = (Page) palloc(BLCKSZ);
 
 	/* Zero the page and set up standard page header info */
-	_bt_pageinit(*page, BufferGetPageSize(*buf));
+	_bt_pageinit(page, BLCKSZ);
 
 	/* Initialize BT opaque state */
-	opaque = (BTPageOpaque) PageGetSpecialPointer(*page);
+	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 	opaque->btpo_prev = opaque->btpo_next = P_NONE;
 	opaque->btpo.level = level;
 	opaque->btpo_flags = (level > 0) ? 0 : BTP_LEAF;
 
 	/* Make the P_HIKEY line pointer appear allocated */
-	((PageHeader) *page)->pd_lower += sizeof(ItemIdData);
+	((PageHeader) page)->pd_lower += sizeof(ItemIdData);
+
+	return page;
 }
 
 /*
- * emit a completed btree page, and release the lock and pin on it.
- * This is essentially _bt_wrtbuf except we also emit a WAL record.
+ * emit a completed btree page, and release the working storage.
  */
 static void
-_bt_blwritepage(Relation index, Buffer buf)
+_bt_blwritepage(BTWriteState *wstate, Page page, BlockNumber blkno)
 {
-	Page		pg = BufferGetPage(buf);
-
-	/* NO ELOG(ERROR) from here till newpage op is logged */
-	START_CRIT_SECTION();
-
 	/* XLOG stuff */
-	if (!index->rd_istemp)
+	if (wstate->btws_use_wal)
 	{
 		xl_btree_newpage xlrec;
 		XLogRecPtr	recptr;
 		XLogRecData rdata[2];
 
-		xlrec.node = index->rd_node;
-		xlrec.blkno = BufferGetBlockNumber(buf);
+		/* NO ELOG(ERROR) from here till newpage op is logged */
+		START_CRIT_SECTION();
+
+		xlrec.node = wstate->index->rd_node;
+		xlrec.blkno = blkno;
 
 		rdata[0].buffer = InvalidBuffer;
 		rdata[0].data = (char *) &xlrec;
 		rdata[0].len = SizeOfBtreeNewpage;
 		rdata[0].next = &(rdata[1]);
 
-		rdata[1].buffer = buf;
-		rdata[1].data = (char *) pg;
+		rdata[1].buffer = InvalidBuffer;
+		rdata[1].data = (char *) page;
 		rdata[1].len = BLCKSZ;
 		rdata[1].next = NULL;
 
 		recptr = XLogInsert(RM_BTREE_ID, XLOG_BTREE_NEWPAGE, rdata);
 
-		PageSetLSN(pg, recptr);
-		PageSetSUI(pg, ThisStartUpID);
+		PageSetLSN(page, recptr);
+		PageSetSUI(page, ThisStartUpID);
+
+		END_CRIT_SECTION();
+	}
+	else
+	{
+		/* Leave the page LSN zero if not WAL-logged, but set SUI anyway */
+		PageSetSUI(page, ThisStartUpID);
 	}
 
-	END_CRIT_SECTION();
+	/*
+	 * If we have to write pages nonsequentially, fill in the space with
+	 * zeroes until we come back and overwrite.  This is not logically
+	 * necessary on standard Unix filesystems (unwritten space will read
+	 * as zeroes anyway), but it should help to avoid fragmentation.
+	 * The dummy pages aren't WAL-logged though.
+	 */
+	while (blkno > wstate->btws_pages_written)
+	{
+		if (!wstate->btws_zeropage)
+			wstate->btws_zeropage = (Page) palloc0(BLCKSZ);
+		smgrwrite(wstate->index->rd_smgr, wstate->btws_pages_written++,
+				  (char *) wstate->btws_zeropage,
+				  !wstate->btws_use_wal);
+	}
 
-	_bt_wrtbuf(index, buf);
+	/*
+	 * Now write the page.  If not using WAL, say isTemp = true, to suppress
+	 * duplicate fsync.  If we are using WAL, it surely isn't a temp index,
+	 * so !use_wal is a sufficient condition.
+	 */
+	smgrwrite(wstate->index->rd_smgr, blkno, (char *) page,
+			  !wstate->btws_use_wal);
+
+	if (blkno == wstate->btws_pages_written)
+		wstate->btws_pages_written++;
+
+	pfree(page);
 }
 
 /*
@@ -261,12 +348,15 @@ _bt_blwritepage(Relation index, Buffer buf)
  * is suitable for immediate use by _bt_buildadd.
  */
 static BTPageState *
-_bt_pagestate(Relation index, uint32 level)
+_bt_pagestate(BTWriteState *wstate, uint32 level)
 {
 	BTPageState *state = (BTPageState *) palloc0(sizeof(BTPageState));
 
-	/* create initial page */
-	_bt_blnewpage(index, &(state->btps_buf), &(state->btps_page), level);
+	/* create initial page for level */
+	state->btps_page = _bt_blnewpage(level);
+
+	/* and assign it a page position */
+	state->btps_blkno = wstate->btws_pages_alloced++;
 
 	state->btps_minkey = NULL;
 	/* initialize lastoff so first item goes into P_FIRSTKEY */
@@ -290,7 +380,7 @@ _bt_pagestate(Relation index, uint32 level)
  * P_RIGHTMOST page.
  */
 static void
-_bt_slideleft(Relation index, Buffer buf, Page page)
+_bt_slideleft(Page page)
 {
 	OffsetNumber off;
 	OffsetNumber maxoff;
@@ -380,16 +470,16 @@ _bt_sortaddtup(Page page,
  *----------
  */
 static void
-_bt_buildadd(Relation index, BTPageState *state, BTItem bti)
+_bt_buildadd(BTWriteState *wstate, BTPageState *state, BTItem bti)
 {
-	Buffer		nbuf;
 	Page		npage;
+	BlockNumber	nblkno;
 	OffsetNumber last_off;
 	Size		pgspc;
 	Size		btisz;
 
-	nbuf = state->btps_buf;
 	npage = state->btps_page;
+	nblkno = state->btps_blkno;
 	last_off = state->btps_lastoff;
 
 	pgspc = PageGetFreeSpace(npage);
@@ -420,14 +510,17 @@ _bt_buildadd(Relation index, BTPageState *state, BTItem bti)
 		 * Item won't fit on this page, or we feel the page is full enough
 		 * already.  Finish off the page and write it out.
 		 */
-		Buffer		obuf = nbuf;
 		Page		opage = npage;
+		BlockNumber	oblkno = nblkno;
 		ItemId		ii;
 		ItemId		hii;
 		BTItem		obti;
 
-		/* Create new page on same level */
-		_bt_blnewpage(index, &nbuf, &npage, state->btps_level);
+		/* Create new page of same level */
+		npage = _bt_blnewpage(state->btps_level);
+
+		/* and assign it a page position */
+		nblkno = wstate->btws_pages_alloced++;
 
 		/*
 		 * We copy the last item on the page into the new page, and then
@@ -451,17 +544,17 @@ _bt_buildadd(Relation index, BTPageState *state, BTItem bti)
 		((PageHeader) opage)->pd_lower -= sizeof(ItemIdData);
 
 		/*
-		 * Link the old buffer into its parent, using its minimum key. If
+		 * Link the old page into its parent, using its minimum key. If
 		 * we don't have a parent, we have to create one; this adds a new
 		 * btree level.
 		 */
 		if (state->btps_next == NULL)
-			state->btps_next = _bt_pagestate(index, state->btps_level + 1);
+			state->btps_next = _bt_pagestate(wstate, state->btps_level + 1);
 
 		Assert(state->btps_minkey != NULL);
 		ItemPointerSet(&(state->btps_minkey->bti_itup.t_tid),
-					   BufferGetBlockNumber(obuf), P_HIKEY);
-		_bt_buildadd(index, state->btps_next, state->btps_minkey);
+					   oblkno, P_HIKEY);
+		_bt_buildadd(wstate, state->btps_next, state->btps_minkey);
 		pfree((void *) state->btps_minkey);
 
 		/*
@@ -478,16 +571,16 @@ _bt_buildadd(Relation index, BTPageState *state, BTItem bti)
 			BTPageOpaque oopaque = (BTPageOpaque) PageGetSpecialPointer(opage);
 			BTPageOpaque nopaque = (BTPageOpaque) PageGetSpecialPointer(npage);
 
-			oopaque->btpo_next = BufferGetBlockNumber(nbuf);
-			nopaque->btpo_prev = BufferGetBlockNumber(obuf);
+			oopaque->btpo_next = nblkno;
+			nopaque->btpo_prev = oblkno;
 			nopaque->btpo_next = P_NONE;		/* redundant */
 		}
 
 		/*
-		 * Write out the old page.	We never want to see it again, so we
-		 * can give up our lock.
+		 * Write out the old page.	We never need to touch it again,
+		 * so we can free the opage workspace too.
 		 */
-		_bt_blwritepage(index, obuf);
+		_bt_blwritepage(wstate, opage, oblkno);
 
 		/*
 		 * Reset last_off to point to new page
@@ -513,8 +606,8 @@ _bt_buildadd(Relation index, BTPageState *state, BTItem bti)
 	last_off = OffsetNumberNext(last_off);
 	_bt_sortaddtup(npage, btisz, bti, last_off);
 
-	state->btps_buf = nbuf;
 	state->btps_page = npage;
+	state->btps_blkno = nblkno;
 	state->btps_lastoff = last_off;
 }
 
@@ -522,11 +615,12 @@ _bt_buildadd(Relation index, BTPageState *state, BTItem bti)
  * Finish writing out the completed btree.
  */
 static void
-_bt_uppershutdown(Relation index, BTPageState *state)
+_bt_uppershutdown(BTWriteState *wstate, BTPageState *state)
 {
 	BTPageState *s;
 	BlockNumber	rootblkno = P_NONE;
 	uint32		rootlevel = 0;
+	Page		metapage;
 
 	/*
 	 * Each iteration of this loop completes one more level of the tree.
@@ -536,7 +630,7 @@ _bt_uppershutdown(Relation index, BTPageState *state)
 		BlockNumber blkno;
 		BTPageOpaque opaque;
 
-		blkno = BufferGetBlockNumber(s->btps_buf);
+		blkno = s->btps_blkno;
 		opaque = (BTPageOpaque) PageGetSpecialPointer(s->btps_page);
 
 		/*
@@ -558,7 +652,7 @@ _bt_uppershutdown(Relation index, BTPageState *state)
 			Assert(s->btps_minkey != NULL);
 			ItemPointerSet(&(s->btps_minkey->bti_itup.t_tid),
 						   blkno, P_HIKEY);
-			_bt_buildadd(index, s->btps_next, s->btps_minkey);
+			_bt_buildadd(wstate, s->btps_next, s->btps_minkey);
 			pfree((void *) s->btps_minkey);
 			s->btps_minkey = NULL;
 		}
@@ -567,17 +661,20 @@ _bt_uppershutdown(Relation index, BTPageState *state)
 		 * This is the rightmost page, so the ItemId array needs to be
 		 * slid back one slot.	Then we can dump out the page.
 		 */
-		_bt_slideleft(index, s->btps_buf, s->btps_page);
-		_bt_blwritepage(index, s->btps_buf);
+		_bt_slideleft(s->btps_page);
+		_bt_blwritepage(wstate, s->btps_page, s->btps_blkno);
+		s->btps_page = NULL;	/* writepage freed the workspace */
 	}
 
 	/*
-	 * As the last step in the process, update the metapage to point to
-	 * the new root (unless we had no data at all, in which case it's
-	 * left pointing to "P_NONE").  This changes the index to the "valid"
-	 * state by updating its magic number.
+	 * As the last step in the process, construct the metapage and make it
+	 * point to the new root (unless we had no data at all, in which case it's
+	 * set to point to "P_NONE").  This changes the index to the "valid"
+	 * state by filling in a valid magic number in the metapage.
 	 */
-	_bt_metaproot(index, rootblkno, rootlevel);
+	metapage = (Page) palloc(BLCKSZ);
+	_bt_initmetapage(metapage, rootblkno, rootlevel);
+	_bt_blwritepage(wstate, metapage, BTREE_METAPAGE);
 }
 
 /*
@@ -585,7 +682,7 @@ _bt_uppershutdown(Relation index, BTPageState *state)
  * btree leaves.
  */
 static void
-_bt_load(Relation index, BTSpool *btspool, BTSpool *btspool2)
+_bt_load(BTWriteState *wstate, BTSpool *btspool, BTSpool *btspool2)
 {
 	BTPageState *state = NULL;
 	bool		merge = (btspool2 != NULL);
@@ -594,9 +691,9 @@ _bt_load(Relation index, BTSpool *btspool, BTSpool *btspool2)
 	bool		should_free,
 				should_free2,
 				load1;
-	TupleDesc	tupdes = RelationGetDescr(index);
+	TupleDesc	tupdes = RelationGetDescr(wstate->index);
 	int			i,
-				keysz = RelationGetNumberOfAttributes(index);
+				keysz = RelationGetNumberOfAttributes(wstate->index);
 	ScanKey		indexScanKey = NULL;
 
 	if (merge)
@@ -611,7 +708,7 @@ _bt_load(Relation index, BTSpool *btspool, BTSpool *btspool2)
 											   true, &should_free);
 		bti2 = (BTItem) tuplesort_getindextuple(btspool2->sortstate,
 												true, &should_free2);
-		indexScanKey = _bt_mkscankey_nodata(index);
+		indexScanKey = _bt_mkscankey_nodata(wstate->index);
 
 		for (;;)
 		{
@@ -668,11 +765,11 @@ _bt_load(Relation index, BTSpool *btspool, BTSpool *btspool2)
 
 			/* When we see first tuple, create first index page */
 			if (state == NULL)
-				state = _bt_pagestate(index, 0);
+				state = _bt_pagestate(wstate, 0);
 
 			if (load1)
 			{
-				_bt_buildadd(index, state, bti);
+				_bt_buildadd(wstate, state, bti);
 				if (should_free)
 					pfree((void *) bti);
 				bti = (BTItem) tuplesort_getindextuple(btspool->sortstate,
@@ -680,7 +777,7 @@ _bt_load(Relation index, BTSpool *btspool, BTSpool *btspool2)
 			}
 			else
 			{
-				_bt_buildadd(index, state, bti2);
+				_bt_buildadd(wstate, state, bti2);
 				if (should_free2)
 					pfree((void *) bti2);
 				bti2 = (BTItem) tuplesort_getindextuple(btspool2->sortstate,
@@ -697,14 +794,21 @@ _bt_load(Relation index, BTSpool *btspool, BTSpool *btspool2)
 		{
 			/* When we see first tuple, create first index page */
 			if (state == NULL)
-				state = _bt_pagestate(index, 0);
+				state = _bt_pagestate(wstate, 0);
 
-			_bt_buildadd(index, state, bti);
+			_bt_buildadd(wstate, state, bti);
 			if (should_free)
 				pfree((void *) bti);
 		}
 	}
 
-	/* Close down final pages and rewrite the metapage */
-	_bt_uppershutdown(index, state);
+	/* Close down final pages and write the metapage */
+	_bt_uppershutdown(wstate, state);
+
+	/*
+	 * If we weren't using WAL, and the index isn't temp, we must fsync it
+	 * down to disk before it's safe to commit the transaction.
+	 */
+	if (!wstate->btws_use_wal && !wstate->index->rd_istemp)
+		smgrimmedsync(wstate->index->rd_smgr);
 }

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.72 2004/05/31 20:31:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.73 2004/06/02 17:28:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,6 +48,7 @@ typedef struct f_smgr
 	BlockNumber (*smgr_nblocks) (SMgrRelation reln);
 	BlockNumber (*smgr_truncate) (SMgrRelation reln, BlockNumber nblocks,
 								  bool isTemp);
+	bool		(*smgr_immedsync) (SMgrRelation reln);
 	bool		(*smgr_commit) (void);			/* may be NULL */
 	bool		(*smgr_abort) (void);			/* may be NULL */
 	bool		(*smgr_sync) (void);			/* may be NULL */
@@ -57,7 +58,8 @@ typedef struct f_smgr
 static const f_smgr smgrsw[] = {
 	/* magnetic disk */
 	{mdinit, NULL, mdclose, mdcreate, mdunlink, mdextend,
-	 mdread, mdwrite, mdnblocks, mdtruncate, NULL, NULL, mdsync
+	 mdread, mdwrite, mdnblocks, mdtruncate, mdimmedsync,
+	 NULL, NULL, mdsync
 	}
 };
 
@@ -580,6 +582,34 @@ smgrtruncate(SMgrRelation reln, BlockNumber nblocks, bool isTemp)
 	}
 
 	return newblks;
+}
+
+/*
+ *	smgrimmedsync() -- Force the specified relation to stable storage.
+ *
+ *		Synchronously force all of the specified relation down to disk.
+ *
+ *		This is really only useful for non-WAL-logged index building:
+ *		instead of incrementally WAL-logging the index build steps,
+ *		we can just write completed index pages to disk with smgrwrite
+ *		or smgrextend, and then fsync the completed index file before
+ *		committing the transaction.  (This is sufficient for purposes of
+ *		crash recovery, since it effectively duplicates forcing a checkpoint
+ *		for the completed index.  But it is *not* workable if one wishes
+ *		to use the WAL log for PITR or replication purposes.)
+ *
+ *		The preceding writes should specify isTemp = true to avoid
+ *		duplicative fsyncs.
+ */
+void
+smgrimmedsync(SMgrRelation reln)
+{
+	if (! (*(smgrsw[reln->smgr_which].smgr_immedsync)) (reln))
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not sync relation %u/%u: %m",
+						reln->smgr_rnode.tblNode,
+						reln->smgr_rnode.relNode)));
 }
 
 /*

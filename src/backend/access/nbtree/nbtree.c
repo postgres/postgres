@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.116 2004/05/31 19:24:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.117 2004/06/02 17:28:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -112,10 +112,6 @@ btbuild(PG_FUNCTION_ARGS)
 		elog(ERROR, "index \"%s\" already contains data",
 			 RelationGetRelationName(index));
 
-	/* initialize the btree index metadata page */
-	/* mark it valid right away only if using slow build */
-	_bt_metapinit(index, !buildstate.usefast);
-
 	if (buildstate.usefast)
 	{
 		buildstate.spool = _bt_spoolinit(index, indexInfo->ii_Unique, false);
@@ -126,6 +122,11 @@ btbuild(PG_FUNCTION_ARGS)
 		 */
 		if (indexInfo->ii_Unique)
 			buildstate.spool2 = _bt_spoolinit(index, false, true);
+	}
+	else
+	{
+		/* if using slow build, initialize the btree index metadata page */
+		_bt_metapinit(index);
 	}
 
 	/* do the heap scan */

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.12 2004/05/30 23:40:25 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.13 2004/06/02 17:28:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -110,8 +110,7 @@ _bt_restore_page(Page page, char *from, int len)
 static void
 _bt_restore_meta(Relation reln, XLogRecPtr lsn,
 				 BlockNumber root, uint32 level,
-				 BlockNumber fastroot, uint32 fastlevel,
-				 bool markvalid)
+				 BlockNumber fastroot, uint32 fastlevel)
 {
 	Buffer		metabuf;
 	Page		metapg;
@@ -126,7 +125,7 @@ _bt_restore_meta(Relation reln, XLogRecPtr lsn,
 	_bt_pageinit(metapg, BufferGetPageSize(metabuf));
 
 	md = BTPageGetMeta(metapg);
-	md->btm_magic = markvalid ? BTREE_MAGIC : 0;
+	md->btm_magic = BTREE_MAGIC;
 	md->btm_version = BTREE_VERSION;
 	md->btm_root = root;
 	md->btm_level = level;
@@ -223,8 +222,7 @@ btree_xlog_insert(bool redo, bool isleaf, bool ismeta,
 		if (ismeta)
 			_bt_restore_meta(reln, lsn,
 							 md.root, md.level,
-							 md.fastroot, md.fastlevel,
-							 true);
+							 md.fastroot, md.fastlevel);
 	}
 
 	/* Forget any split this insertion completes */
@@ -594,8 +592,7 @@ btree_xlog_delete_page(bool redo, bool ismeta,
 				   sizeof(xl_btree_metadata));
 			_bt_restore_meta(reln, lsn,
 							 md.root, md.level,
-							 md.fastroot, md.fastlevel,
-							 true);
+							 md.fastroot, md.fastlevel);
 		}
 	}
 }
@@ -641,8 +638,7 @@ btree_xlog_newroot(bool redo, XLogRecPtr lsn, XLogRecord *record)
 
 	_bt_restore_meta(reln, lsn,
 					 xlrec->rootblk, xlrec->level,
-					 xlrec->rootblk, xlrec->level,
-					 true);
+					 xlrec->rootblk, xlrec->level);
 
 	/* Check to see if this satisfies any incomplete insertions */
 	if (record->xl_len > SizeOfBtreeNewroot &&
@@ -656,8 +652,7 @@ btree_xlog_newroot(bool redo, XLogRecPtr lsn, XLogRecord *record)
 }
 
 static void
-btree_xlog_newmeta(bool redo, XLogRecPtr lsn, XLogRecord *record,
-				   bool markvalid)
+btree_xlog_newmeta(bool redo, XLogRecPtr lsn, XLogRecord *record)
 {
 	xl_btree_newmeta *xlrec = (xl_btree_newmeta *) XLogRecGetData(record);
 	Relation	reln;
@@ -671,8 +666,7 @@ btree_xlog_newmeta(bool redo, XLogRecPtr lsn, XLogRecord *record,
 
 	_bt_restore_meta(reln, lsn,
 					 xlrec->meta.root, xlrec->meta.level,
-					 xlrec->meta.fastroot, xlrec->meta.fastlevel,
-					 markvalid);
+					 xlrec->meta.fastroot, xlrec->meta.fastlevel);
 }
 
 static void
@@ -745,13 +739,10 @@ btree_redo(XLogRecPtr lsn, XLogRecord *record)
 			btree_xlog_newroot(true, lsn, record);
 			break;
 		case XLOG_BTREE_NEWMETA:
-			btree_xlog_newmeta(true, lsn, record, true);
+			btree_xlog_newmeta(true, lsn, record);
 			break;
 		case XLOG_BTREE_NEWPAGE:
 			btree_xlog_newpage(true, lsn, record);
-			break;
-		case XLOG_BTREE_INVALIDMETA:
-			btree_xlog_newmeta(true, lsn, record, false);
 			break;
 		default:
 			elog(PANIC, "btree_redo: unknown op code %u", info);
@@ -799,13 +790,10 @@ btree_undo(XLogRecPtr lsn, XLogRecord *record)
 			btree_xlog_newroot(false, lsn, record);
 			break;
 		case XLOG_BTREE_NEWMETA:
-			btree_xlog_newmeta(false, lsn, record, true);
+			btree_xlog_newmeta(false, lsn, record);
 			break;
 		case XLOG_BTREE_NEWPAGE:
 			btree_xlog_newpage(false, lsn, record);
-			break;
-		case XLOG_BTREE_INVALIDMETA:
-			btree_xlog_newmeta(false, lsn, record, false);
 			break;
 		default:
 			elog(PANIC, "btree_undo: unknown op code %u", info);
@@ -937,16 +925,6 @@ btree_desc(char *buf, uint8 xl_info, char *rec)
 				sprintf(buf + strlen(buf), "newpage: node %u/%u; page %u",
 						xlrec->node.tblNode, xlrec->node.relNode,
 						xlrec->blkno);
-				break;
-			}
-		case XLOG_BTREE_INVALIDMETA:
-			{
-				xl_btree_newmeta *xlrec = (xl_btree_newmeta *) rec;
-
-				sprintf(buf + strlen(buf), "invalidmeta: node %u/%u; root %u lev %u fast %u lev %u",
-						xlrec->node.tblNode, xlrec->node.relNode,
-						xlrec->meta.root, xlrec->meta.level,
-						xlrec->meta.fastroot, xlrec->meta.fastlevel);
 				break;
 			}
 		default:

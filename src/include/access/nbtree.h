@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.77 2004/04/21 18:24:26 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.78 2004/06/02 17:28:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -198,7 +198,6 @@ typedef BTItemData *BTItem;
 #define XLOG_BTREE_NEWROOT		0xA0	/* new root page */
 #define XLOG_BTREE_NEWMETA		0xB0	/* update metadata page */
 #define XLOG_BTREE_NEWPAGE		0xC0	/* new index page during build */
-#define XLOG_BTREE_INVALIDMETA	0xD0	/* new metadata, temp. invalid */
 
 /*
  * All that we need to find changed index tuple
@@ -315,8 +314,7 @@ typedef struct xl_btree_newroot
 
 /*
  * New metapage log record.  This is not issued during routine operations;
- * it's only used when initializing an empty index and at completion of
- * index build.
+ * it's only used when initializing an empty index.
  */
 typedef struct xl_btree_newmeta
 {
@@ -442,7 +440,8 @@ extern void _bt_insert_parent(Relation rel, Buffer buf, Buffer rbuf,
 /*
  * prototypes for functions in nbtpage.c
  */
-extern void _bt_metapinit(Relation rel, bool markvalid);
+extern void _bt_metapinit(Relation rel);
+extern void _bt_initmetapage(Page page, BlockNumber rootbknum, uint32 level);
 extern Buffer _bt_getroot(Relation rel, int access);
 extern Buffer _bt_gettrueroot(Relation rel);
 extern Buffer _bt_getbuf(Relation rel, BlockNumber blkno, int access);
@@ -453,7 +452,6 @@ extern void _bt_wrtbuf(Relation rel, Buffer buf);
 extern void _bt_wrtnorelbuf(Relation rel, Buffer buf);
 extern void _bt_pageinit(Page page, Size size);
 extern bool _bt_page_recyclable(Page page);
-extern void _bt_metaproot(Relation rel, BlockNumber rootbknum, uint32 level);
 extern void _bt_delitems(Relation rel, Buffer buf,
 			 OffsetNumber *itemnos, int nitems);
 extern int	_bt_pagedel(Relation rel, Buffer buf, bool vacuum_full);

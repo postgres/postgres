@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/smgr/md.c,v 1.106 2004/05/31 20:31:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/smgr/md.c,v 1.107 2004/06/02 17:28:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -659,6 +659,40 @@ mdtruncate(SMgrRelation reln, BlockNumber nblocks, bool isTemp)
 #endif
 
 	return nblocks;
+}
+
+/*
+ *	mdimmedsync() -- Immediately sync a relation to stable storage.
+ */
+bool
+mdimmedsync(SMgrRelation reln)
+{
+	MdfdVec    *v;
+	BlockNumber curnblk;
+
+	/*
+	 * NOTE: mdnblocks makes sure we have opened all existing segments, so
+	 * that fsync loop will get them all!
+	 */
+	curnblk = mdnblocks(reln);
+	if (curnblk == InvalidBlockNumber)
+		return false;			/* mdnblocks failed */
+
+	v = mdopen(reln, false);
+
+#ifndef LET_OS_MANAGE_FILESIZE
+	while (v != NULL)
+	{
+		if (FileSync(v->mdfd_vfd) < 0)
+			return false;
+		v = v->mdfd_chain;
+	}
+#else
+	if (FileSync(v->mdfd_vfd) < 0)
+		return false;
+#endif
+
+	return true;
 }
 
 /*
