@@ -1,12 +1,12 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.80 2001/02/11 01:48:51 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.81 2001/02/11 14:20:30 momjian Exp $
 -->
 
  <appendix id="release">
   <title>Release Notes</title>
 
   <sect1>
-   <title>Release 7.1</title>
+   <title>Release 7.1  (2001-??-??)</title>
    <!--
   <docinfo>
   <authorgroup>
@@ -15,12 +15,10 @@ $Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.80 2001/02/11 01:48:51 mom
   <surname>Momjian</surname>
   </author>
   </authorgroup>
-  <date>2001-??-??</date>
   </docinfo>
    -->
 
    <para>
-	Release date 2001-??-??.
 	This release focuses on removing limitations that have existed in the
 	PostgreSQL code for many years.
    </para>
@@ -305,7 +303,7 @@ Improved assembly language source code format (Bruce)
 
 
   <sect1 id="release-7-0-3">
-   <title>Release 7.0.3</title>
+   <title>Release 7.0.3  (2000-11-11)</title>
    <!--
   <docinfo>
   <authorgroup>
@@ -314,12 +312,11 @@ Improved assembly language source code format (Bruce)
   <surname>Momjian</surname>
   </author>
   </authorgroup>
-  <date>2000-11-11</date>
   </docinfo>
    -->
 
    <para>
-    Release date 2000-11-11. This has a variety of fixes from 7.0.2.
+    This has a variety of fixes from 7.0.2.
    </para>
 
 
@@ -383,7 +380,7 @@ Fix for crash of backend, on abort (Tom)
 
 
   <sect1 id="release-7-0-2">
-   <title>Release 7.0.2</title>
+   <title>Release 7.0.2  (2000-06-05)</title>
    <!--
   <docinfo>
   <authorgroup>
@@ -392,12 +389,11 @@ Fix for crash of backend, on abort (Tom)
   <surname>Momjian</surname>
   </author>
   </authorgroup>
-  <date>2000-06-05</date>
   </docinfo>
    -->
 
    <para>
-    Release date 2000-06-05. This is a repackaging of 7.0.1 with added documentation.
+    This is a repackaging of 7.0.1 with added documentation.
    </para>
 
 
@@ -423,7 +419,7 @@ Added documentation to tarball.
 
 
   <sect1 id="release-7-0-1">
-   <title>Release 7.0.1</title>
+   <title>Release 7.0.1  (2000-06-01)</title>
    <!--
   <docinfo>
   <authorgroup>
@@ -432,12 +428,10 @@ Added documentation to tarball.
   <surname>Momjian</surname>
   </author>
   </authorgroup>
-  <date>2000-06-01</date>
   </docinfo>
    -->
 
    <para>
-    Release date 2000-06-01.
     This is a cleanup release for 7.0.
    </para>
 
@@ -485,7 +479,7 @@ ecpg changes (Michael)
   </sect1>
 
   <sect1 id="release-7-0">
-   <title>Release 7.0</title>
+   <title>Release 7.0  (2000-05-08)</title>
    <!--
   <docinfo>
   <authorgroup>
@@ -494,11 +488,9 @@ ecpg changes (Michael)
   <surname>Momjian</surname>
   </author>
   </authorgroup>
-  <date>2000-05-08</date>
   </docinfo>
    -->
    <para> 
-    Released 2000-05-08.
     This release contains improvements in many areas, demonstrating
     the continued growth of <productname>PostgreSQL</productname>.
     There are more improvements and fixes in 7.0 than in any previous
@@ -609,18 +601,6 @@ ecpg changes (Michael)
 	your existing application.
        </para>
       </listitem>
-
-<!--
-      <listitem>
-       <para>
-	The security provisions for <firstterm>alternate locations</firstterm> have
-	been strengthened by requiring the absolute path to be present
-	in the environment variable <envar>PGxxx
-
-Ack! This isn't yet in the code?? - thomas 2000-04-30
-       </para>
-      </listitem>
--->
 
       <listitem>
        <para>
@@ -984,7 +964,7 @@ New multibyte encodings
   </sect1>
 
   <sect1 id="release-6-5-3">
-   <title>Release 6.5.3</title>
+   <title>Release 6.5.3  (1999-10-13)</title>
    <!--
   <docinfo>
   <authorgroup>
@@ -993,12 +973,10 @@ New multibyte encodings
   <surname>Momjian</surname>
   </author>
   </authorgroup>
-  <date>1999-10-13</date>
   </docinfo>
    -->
 
    <para>
-    Released 1999-10-13.
     This is basically a cleanup release for 6.5.2.  We have added a new
     pgaccess that was missing in 6.5.2, and installed an NT-specific fix.
    </para>
@@ -1027,7 +1005,7 @@ Fix dumping rules on inherited tables
 
 
   <sect1 id="release-6-5-2">
-   <title>Release 6.5.2</title>
+   <title>Release 6.5.2  (1999-09-15)</title>
    <!--
   <docinfo>
   <authorgroup>
@@ -1036,12 +1014,10 @@ Fix dumping rules on inherited tables
   <surname>Momjian</surname>
   </author>
   </authorgroup>
-  <date>1999-09-15</date>
   </docinfo>
    -->
 
    <para>
-    Released 1999-09-15.
     This is basically a cleanup release for 6.5.1.  We have fixed a variety of
     problems reported by 6.5.1 users.
    </para>
@@ -1091,7 +1067,7 @@ Updated version of pgaccess 0.98
   </sect1>
 
   <sect1 id="release-6-5-1">
-   <title>Release 6.5.1</title>
+   <title>Release 6.5.1  (1999-07-15)</title>
    <!--
   <docinfo>
   <authorgroup>
@@ -1100,13 +1076,9 @@ Updated version of pgaccess 0.98
   <surname>Momjian</surname>
   </author>
   </authorgroup>
-  <date>1999-07-15</date>
   </docinfo>
    -->
 
-   <para>
-    Released 1999-07-15.
-   </para>
    <para>
     This is basically a cleanup release for 6.5.  We have fixed a variety of
     problems reported by 6.5 users.
@@ -1155,7 +1127,7 @@ Add Win1250 (Czech) support (Pavel Behal)
   </sect1>
 
   <sect1 id="release-6-5">
-   <title>Release 6.5</title>
+   <title>Release 6.5  (1999-06-09)</title>
    <!--
   <docinfo>
   <authorgroup>
@@ -1164,12 +1136,10 @@ Add Win1250 (Czech) support (Pavel Behal)
   <surname>Momjian</surname>
   </author>
   </authorgroup>
-  <date>1999-06-09</date>
   </docinfo>
    -->
 
    <para>
-    Released 1999-06-09.
     This release marks a major step in the development team's mastery of the source
     code we inherited from Berkeley.  You will see we are now easily adding
     major features, thanks to the increasing size and experience of our
@@ -1560,7 +1530,7 @@ New install commands for plpgsql(Jan)
 
 
 <sect1 id="release-6-4-2">
-<title>Release 6.4.2</title>
+<title>Release 6.4.2  (1999-12-20)</title>
 <!--
 <docinfo>
 <authorgroup>
@@ -1569,13 +1539,9 @@ New install commands for plpgsql(Jan)
 <surname>Momjian</surname>
 </author>
 </authorgroup>
-<date>1999-12-20</date>
 </docinfo>
 -->
 
-<para>
-1999-12-20
-</para>
 <para>
 The 6.4.1 release was improperly packaged.  This also has one additional
 bug fix.
@@ -1604,7 +1570,7 @@ Fix for datetime constant problem on some platforms(Thomas)
 
 
 <sect1 id="release-6-4-1">
-<title>Release 6.4.1</title>
+<title>Release 6.4.1  (1999-12-18)</title>
 <!--
 <docinfo>
 <authorgroup>
@@ -1613,13 +1579,9 @@ Fix for datetime constant problem on some platforms(Thomas)
 <surname>Momjian</surname>
 </author>
 </authorgroup>
-<date>1999-12-18</date>
 </docinfo>
 -->
 
-<para>
-1999-12-18
-</para>
 <para>
 This is basically a cleanup release for 6.4.  We have fixed a variety of
 problems reported by 6.4 users.
@@ -1677,7 +1639,7 @@ Upgrade to PyGreSQL 2.2(D'Arcy)
 
 
 <sect1 id="release-6-4">
-<title>Release 6.4</title>
+<title>Release 6.4  (1998-10-30)</title>
 <!--
 <docinfo>
 <authorgroup>
@@ -1686,13 +1648,9 @@ Upgrade to PyGreSQL 2.2(D'Arcy)
 <surname>Momjian</surname>
 </author>
 </authorgroup>
-<date>1998-10-30</date>
 </docinfo>
 -->
 
-<para>
-1998-10-30
-</para>
 <para>
 There are <emphasis>many</emphasis> new features and improvements in this release.
 Thanks to our developers and maintainers, nearly every aspect of the system
@@ -1983,7 +1941,7 @@ new Makefile.shlib for shared library configuration(Tom)
 </sect1>
 
 <sect1 id="release-6-3-2">
-<title>Release 6.3.2</title>
+<title>Release 6.3.2  (1998-04-07)</title>
 <!--
 <docinfo>
 <authorgroup>
@@ -1992,13 +1950,9 @@ new Makefile.shlib for shared library configuration(Tom)
 <surname>Momjian</surname>
 </author>
 </authorgroup>
-<date>1998-04-07</date>
 </docinfo>
 -->
 
-<para>
-1998-04-07
-</para>
 <para>
 This is a bugfix release for 6.3.x.
 Refer to the release notes for version 6.3 for a more complete summary of new features.
@@ -2062,7 +2016,7 @@ ASSERT fixes(Bruce)
   </sect1>
 
   <sect1 id="release-6-3-1">
-   <title>Release 6.3.1</title>
+   <title>Release 6.3.1  (1998-03-23)</title>
    <!--
   <docinfo>
   <authorgroup>
@@ -2071,12 +2025,10 @@ ASSERT fixes(Bruce)
   <surname>Momjian</surname>
   </author>
   </authorgroup>
-  <date>1998-03-23</date>
   </docinfo>
    -->
 
    <para>
-    Released 1998-03-23.
     Summary:
 
 <itemizedlist>
@@ -2155,7 +2107,7 @@ Better identify tcl and tk libs and includes(Bruce)
   </sect1>
 
   <sect1 id="release-6-3">
-   <title>Release 6.3</title>
+   <title>Release 6.3  (1998-03-01)</title>
    <!--
   <docinfo>
   <authorgroup>
@@ -2164,12 +2116,10 @@ Better identify tcl and tk libs and includes(Bruce)
   <surname>Momjian</surname>
   </author>
   </authorgroup>
-  <date>1998-03-01</date>
   </docinfo>
    -->
 
    <para>
-    Released 1998-03-01.
     There are <emphasis>many</emphasis> new features and improvements in this release.
     Here is a brief, incomplete summary:
 
@@ -2474,7 +2424,7 @@ Remove un-needed malloc() calls and replace with palloc()(Bruce)
 </sect1>
 
 <sect1 id="release-6-2-1">
-<title>Release 6.2.1</title>
+<title>Release 6.2.1  (1997-10-17)</title>
 <!--
 <docinfo>
 <authorgroup>
@@ -2483,13 +2433,9 @@ Remove un-needed malloc() calls and replace with palloc()(Bruce)
 <surname>Momjian</surname>
 </author>
 </authorgroup>
-<date>1997-10-17</date>
 </docinfo>
 -->
 
-<para>
-1997-10-17
-</para>
 <para>
 6.2.1 is a bug-fix and usability release on 6.2.
 </para>
@@ -2565,7 +2511,7 @@ Trigger function for inserting user names for INSERT/UPDATE(Brook Milligan)
   </sect1>
 
 <sect1 id="release-6-2">
-<title>Release 6.2</title>
+<title>Release 6.2  (1997-10-02)</title>
 <!--
 <docinfo>
 <authorgroup>
@@ -2574,14 +2520,9 @@ Trigger function for inserting user names for INSERT/UPDATE(Brook Milligan)
 <surname>Momjian</surname>
 </author>
 </authorgroup>
-<date>1997-10-02
-</date>
 </docinfo>
 -->
 
-<para>
-1997-10-02
-</para>
 <para>
 A dump/restore is required for those wishing to migrate data from
 previous releases of <productname>Postgres</productname>.
@@ -2728,7 +2669,7 @@ SPI and Trigger programming guides (Vadim & D'Arcy)
 </sect1>
 
 <sect1 id="release-6-1-1">
-<title>Release 6.1.1</title>
+<title>Release 6.1.1  (1997-07-22)</title>
 <!--
 <docinfo>
 <authorgroup>
@@ -2737,7 +2678,6 @@ SPI and Trigger programming guides (Vadim & D'Arcy)
 <surname>Momjian</surname>
 </author>
 </authorgroup>
-<date>1997-07-22</date>
 </docinfo>
 -->
 
@@ -2745,9 +2685,6 @@ SPI and Trigger programming guides (Vadim & D'Arcy)
 <sect2>
 <title>Migration from version 6.1 to version 6.1.1</title>
 
-<para>
-1997-07-22
-</para>
 <para>
 This is a minor bug-fix release. A dump/reload is not required from version 6.1,
 but is required from any release prior to 6.1.
@@ -2783,7 +2720,7 @@ pg_dumpall now returns proper status, portability fix(Bruce)
   </sect1>
 
 <sect1 id="release-6-1">
-<title>Release 6.1</title>
+<title>Release 6.1  (1997-06-08)</title>
 <!--
 <docinfo>
 <authorgroup>
@@ -2792,13 +2729,9 @@ pg_dumpall now returns proper status, portability fix(Bruce)
 <surname>Momjian</surname>
 </author>
 </authorgroup>
-<date>1997-06-08</date>
 </docinfo>
 -->
 
-<para>
-1997-06-08
-</para>
 <para>
   The regression tests have been adapted and extensively modified for the
   6.1 release of <productname>Postgres</productname>.
@@ -2963,7 +2896,7 @@ DG-UX, Ultrix, Irix, AIX portability fixes
 </sect1>
 
 <sect1 id="release-6-0">
-<title>Release 6.0</title>
+<title>Release 6.0  (1997-01-29)</title>
 <!--
 <docinfo>
 <authorgroup>
@@ -2972,13 +2905,9 @@ DG-UX, Ultrix, Irix, AIX portability fixes
 <surname>Momjian</surname>
 </author>
 </authorgroup>
-<date>1997-01-29</date>
 </docinfo>
 -->
 
-<para>
-1997-01-29
-</para>
 <para>
 A dump/restore is required for those wishing to migrate data from
 previous releases of <productname>Postgres</productname>.
@@ -3141,7 +3070,7 @@ releases.
 </sect1>
 
 <sect1 id="release-1-02">
-<title>Release 1.02</title>
+<title>Release 1.02  (1996-08-01)</title>
 <!--
 <docinfo>
 <authorgroup>
@@ -3150,16 +3079,12 @@ releases.
 <surname>Momjian</surname>
 </author>
 </authorgroup>
-<date>1996-08-01</date>
 </docinfo>
 -->
 
 <sect2>
 <title>Migration from version 1.02 to version 1.02.1</title>
 
-<para>
-1996-08-01
-</para>
 <para>
 Here is a new migration file for 1.02.1.  It includes the 'copy' change
 and a script to convert old ascii files.
@@ -3299,7 +3224,7 @@ Contributors (appologies to any missed)
 </sect1>
 
 <sect1 id="release-1-01">
-<title>Release 1.01</title>
+<title>Release 1.01  (1996-02-23)</title>
 <!--
 <docinfo>
 <authorgroup>
@@ -3308,16 +3233,12 @@ Contributors (appologies to any missed)
 <surname>Momjian</surname>
 </author>
 </authorgroup>
-<date>1996-02-23</date>
 </docinfo>
 -->
 
 <sect2>
 <title>Migration from version 1.0 to version 1.01</title>
 
-<para>
-1996-02-23
-</para>
 <para>
 The following notes are for the benefit of users who want to migrate
 databases from postgres95 1.0 to postgres95 1.01.  
@@ -3499,7 +3420,7 @@ Bug fixes:
 </sect1>
 
 <sect1 id="release-1-0">
-<title>Release 1.0</title>
+<title>Release 1.0  (1995-09-05)</title>
 <!--
 <docinfo>
 <authorgroup>
@@ -3508,16 +3429,12 @@ Bug fixes:
 <surname>Momjian</surname>
 </author>
 </authorgroup>
-<date>1995-09-05</date>
 </docinfo>
 -->
 
 <sect2>
 <title>Changes</title>
 
-<para>
-1995-09-05
-</para>
 <para>
 <programlisting>
 Copyright change:
@@ -3565,7 +3482,7 @@ Bug fixes:
 </sect1>
 
 <sect1 id="release-0-03">
-<title><productname>Postgres95</productname> Beta 0.03</title>
+<title><productname>Postgres95</productname> Release 0.03  (1995-07-21)</title>
 <!--
 <docinfo>
 <authorgroup>
@@ -3574,16 +3491,11 @@ Bug fixes:
 <surname>Momjian</surname>
 </author>
 </authorgroup>
-<date>1995-07-21</date>
 </docinfo>
 -->
 
 <sect2>
 <title>Changes</title>
-
-<para>
-1995-07-21
-</para>
 <para>
 <programlisting>
 Incompatible changes:
@@ -3697,7 +3609,7 @@ New documentation:
 </sect1>
 
 <sect1 id="release-0-02">
-<title><productname>Postgres95</productname> Beta 0.02</title>
+<title><productname>Postgres95</productname> Release 0.02  (1995-03-25)</title>
 <!--
 <docinfo>
 <authorgroup>
@@ -3706,16 +3618,12 @@ New documentation:
 <surname>Momjian</surname>
 </author>
 </authorgroup>
-<date>1995-03-25</date>
 </docinfo>
 -->
 
 <sect2>
 <title>Changes</title>
 
-<para>
-1995-03-25
-</para>
 <para>
 <programlisting>
 Incompatible changes:
@@ -3757,7 +3665,7 @@ The following bugs have been fixed in postgres95-beta-0.02:
 </sect1>
 
 <sect1 id="release-0-01">
-<title><productname>Postgres95</productname> Beta 0.01</title>
+<title><productname>Postgres95</productname> Release 0.01  (1995-05-01)</title>
 <!--
 <docinfo>
 <authorgroup>
@@ -3766,13 +3674,9 @@ The following bugs have been fixed in postgres95-beta-0.02:
 <surname>Momjian</surname>
 </author>
 </authorgroup>
-<date>1995-05-01</date>
 </docinfo>
 -->
 
-<para>
-1995-05-01
-</para>
 <para>
 Initial release.
 </para>
