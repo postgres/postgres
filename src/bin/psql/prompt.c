@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/prompt.c,v 1.29 2003/09/03 22:05:09 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/prompt.c,v 1.30 2003/10/04 01:04:46 petere Exp $
  */
 #include "postgres_fe.h"
 #include "prompt.h"
@@ -44,7 +44,7 @@
  *			or a ! if session is not connected to a database;
  *		in prompt2 -, *, ', or ";
  *		in prompt3 nothing
- * %T - transaction status: empty, *, !, ? (unknown or no connection)
+ * %x - transaction status: empty, *, !, ? (unknown or no connection)
  * %? - the error code of the last query (not yet implemented)
  * %% - a percent sign
  *
@@ -208,7 +208,7 @@ get_prompt(promptStatus_t status)
 					}
 					break;
 
-				case 'T':
+				case 'x':
 					if (!pset.db)
 						buf[0] = '?';
 					else

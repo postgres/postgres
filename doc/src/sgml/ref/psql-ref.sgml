@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.97 2003/09/12 02:40:09 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.98 2003/10/04 01:04:46 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -2254,7 +2254,7 @@ testdb=> <userinput>\set content '\'' `sed -e "s/'/\\\\\\'/g" < my_file.txt` '\'
       </varlistentry>
 
       <varlistentry>
-        <term><literal>%T</literal></term>
+        <term><literal>%x</literal></term>
 	<listitem>
 	<para>
 	Transaction status: an empty string when not in a transaction
