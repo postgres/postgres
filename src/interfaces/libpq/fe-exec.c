@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.22 1996/12/20 20:34:38 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.23 1996/12/24 09:03:16 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1486,8 +1486,7 @@ const char* PQoidStatus(PGresult *res) {
 
 /*
    PQgetvalue:
-    return the attribute value of field 'field_num' of
-    row 'tup_num'
+    return the value of field 'field_num' of row 'tup_num'
 
     If res is binary, then the value returned is NOT a null-terminated 
     ASCII string, but the binary representation in the server's native
@@ -1499,20 +1498,26 @@ char*
 PQgetvalue(PGresult *res, int tup_num, int field_num)
 {
     if (!res) {
-      fprintf(stderr, "PQgetvalue() -- pointer to PQresult is null");
+      fprintf(stderr, "PQgetvalue: pointer to PQresult is null\n");
       return NULL;
-    }
-
-    if (tup_num > (res->ntups - 1) ||
-        field_num > (res->numAttributes - 1))  {
-        fprintf(stderr,
-                "PQgetvalue: ERROR! field %d(of %d) of row %d(of %d) "
-                "is not available", 
-                field_num, res->numAttributes - 1, tup_num, res->ntups);
+    } else if (tup_num > (res->ntups - 1)) {
+      fprintf(stderr, 
+              "PQgetvalue: There is no row %d in the query results.  "
+              "The highest numbered row is %d.\n",
+              tup_num, res->ntups - 1);
+      return NULL;
+    } else if (field_num > (res->numAttributes - 1)) {
+      fprintf(stderr,
+              "PQgetvalue: There is no field %d in the query results.  "
+              "The highest numbered field is %d.\n", 
+              field_num, res->numAttributes - 1);
+      return NULL;
     }
     
     return res->tuples[tup_num][field_num].value;
 }
+
+
 
 /* PQgetlength:
      returns the length of a field value in bytes.  If res is binary,
