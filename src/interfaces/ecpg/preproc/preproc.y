@@ -27,7 +27,6 @@ static char	*connection = NULL;
 static int      QueryIsRule = 0, ForUpdateNotAllowed = 0, FoundInto = 0;
 static struct this_type actual_type[STRUCT_DEPTH];
 static char     *actual_storage[STRUCT_DEPTH];
-static char     *actual_startline[STRUCT_DEPTH];
 
 /* temporarily store struct members while creating the data structure */
 struct ECPGstruct_member *struct_member_list[STRUCT_DEPTH] = { NULL };
@@ -70,7 +69,7 @@ void
 output_line_number()
 {
     if (input_filename)
-       fprintf(yyout, "\n#line %d \"%s\"\n", yylineno, input_filename);
+       fprintf(yyout, "\n#line %d \"%s\"\n", yylineno + 1, input_filename);
 }
 
 static void
@@ -480,20 +479,6 @@ make_name(void)
 	return(name);
 }
 
-static char *
-hashline_number()
-{
-    if (input_filename)
-    {
-	char* line = mm_alloc(strlen("\n#line %d \"%s\"\n") + 21 + strlen(input_filename));
-	sprintf(line, "\n#line %d \"%s\"\n", yylineno, input_filename);
-
-	return line;
-    }
-
-    return EMPTY;
-}
-
 static void
 output_statement(char * stmt, int mode)
 {
@@ -772,7 +757,7 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 %type  <str>    columnList DeleteStmt LockStmt UpdateStmt CursorStmt
 %type  <str>    NotifyStmt columnElem copy_dirn UnlistenStmt copy_null
 %type  <str>    copy_delimiter ListenStmt CopyStmt copy_file_name opt_binary
-%type  <str>    opt_with_copy FetchStmt direction fetch_how_many portal_name
+%type  <str>    opt_with_copy FetchStmt opt_direction fetch_how_many opt_portal_name
 %type  <str>    ClosePortalStmt DropStmt VacuumStmt opt_verbose
 %type  <str>    opt_analyze opt_va_list va_list ExplainStmt index_params
 %type  <str>    index_list func_index index_elem opt_type opt_class access_method_clause
@@ -803,11 +788,12 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 %type  <str>    select_offset_value table_list using_expr join_expr
 %type  <str>	using_list from_expr table_expr join_clause join_type
 %type  <str>	join_qual update_list join_clause join_clause_with_union
-%type  <str>	opt_level opt_lock lock_type,
+%type  <str>	opt_level opt_lock lock_type users_in_new_group_clause
 %type  <str>    OptConstrFromTable comment_op ConstraintAttributeSpec
 %type  <str>    constraints_set_list constraints_set_namelist comment_fn
 %type  <str>	constraints_set_mode comment_type comment_cl comment_ag
 %type  <str>	ConstraintDeferrabilitySpec ConstraintTimeSpec 
+%type  <str>	CreateGroupStmt, AlterGroupStmt, DropGroupStmt
 
 %type  <str>	ECPGWhenever ECPGConnect connection_target ECPGOpen
 %type  <str>	indicator ECPGExecute ECPGPrepare ecpg_using
@@ -822,7 +808,7 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 %type  <str>	enum_type civariableonly ECPGCursorStmt ECPGDeallocate
 %type  <str>	ECPGFree ECPGDeclare ECPGVar sql_variable_declarations
 %type  <str>	sql_declaration sql_variable_list sql_variable opt_at
-%type  <str>    struct_type s_struct declaration declarations variable_declarations
+%type  <str>    struct_type s_struct declaration variable_declarations
 %type  <str>    s_struct s_union union_type ECPGSetAutocommit on_off
 
 %type  <type_enum> simple_type varchar_type
@@ -851,12 +837,14 @@ statement: ecpgstart opt_at stmt ';'	{ connection = NULL; }
 opt_at:	SQL_AT connection_target	{ connection = $2; }
 
 stmt:  AddAttrStmt			{ output_statement($1, 0); }
+		| AlterGroupStmt	{ output_statement($1, 0); }
 		| AlterUserStmt		{ output_statement($1, 0); }
 		| ClosePortalStmt	{ output_statement($1, 0); }
 		| CommentStmt		{ output_statement($1, 0); }
 		| CopyStmt		{ output_statement($1, 0); }
 		| CreateStmt		{ output_statement($1, 0); }
 		| CreateAsStmt		{ output_statement($1, 0); }
+		| CreateGroupStmt	{ output_statement($1, 0); }
 		| CreateSeqStmt		{ output_statement($1, 0); }
 		| CreatePLangStmt	{ output_statement($1, 0); }
 		| CreateTrigStmt	{ output_statement($1, 0); }
@@ -865,6 +853,7 @@ stmt:  AddAttrStmt			{ output_statement($1, 0); }
 		| DefineStmt 		{ output_statement($1, 0); }
 		| DropStmt		{ output_statement($1, 0); }
 		| TruncateStmt		{ output_statement($1, 0); }
+		| DropGroupStmt		{ output_statement($1, 0); }
 		| DropPLangStmt		{ output_statement($1, 0); }
 		| DropTrigStmt		{ output_statement($1, 0); }
 		| DropUserStmt		{ output_statement($1, 0); }
@@ -1111,10 +1100,6 @@ user_group_list:  user_group_list ',' UserId
 
 user_group_clause:  IN GROUP user_group_list
 			{
-				/* the backend doesn't actually process this,
-                                 * so an warning message is probably fairer */
-				mmerror(ET_WARN, "IN GROUP is not implemented");
-
 				$$ = cat2_str(make_str("in group"), $3); 
 			}
 			| /*EMPTY*/		{ $$ = EMPTY; }
@@ -1123,6 +1108,63 @@ user_group_clause:  IN GROUP user_group_list
 user_valid_clause:  VALID UNTIL Sconst			{ $$ = cat2_str(make_str("valid until"), $3); }
 			| /*EMPTY*/			{ $$ = EMPTY; }
 		;
+
+
+/*****************************************************************************
+ *
+ * Create a postresql group
+ *
+ *
+ ****************************************************************************/
+CreateGroupStmt: CREATE GROUP UserId
+                 {
+			$$ = cat2_str(make_str("create group"), $3);
+		 }
+               | CREATE GROUP UserId WITH sysid_clause users_in_new_group_clause
+                 {
+			$$ = cat_str(5, make_str("create group"), $3, make_str("with"), $5, $6);
+                 }
+                ;
+
+users_in_new_group_clause:  USER user_group_list   { $$ = cat2_str(make_str("user"), $2); }
+                            | /* EMPTY */          { $$ = EMPTY; }
+               ;
+
+
+/*****************************************************************************
+ *
+ * Alter a postresql group
+ *
+ *
+ *****************************************************************************/
+AlterGroupStmt: ALTER GROUP UserId WITH SYSID Iconst
+                {
+			$$ = cat_str(4, make_str("alter group"), $3, make_str("with sysid"), $6);
+                }
+                |
+                ALTER GROUP UserId ADD USER user_group_list
+                {
+			$$ = cat_str(4, make_str("alter group"), $3, make_str("add user"), $6);
+                }
+                |
+                ALTER GROUP UserId DROP USER user_group_list
+                {
+			$$ = cat_str(4, make_str("alter group"), $3, make_str("drop user"), $6);
+                }
+                ;
+
+/*****************************************************************************
+ *
+ * Drop a postresql group
+ *
+ *
+ *****************************************************************************/
+DropGroupStmt: DROP GROUP UserId
+               {
+			$$ = cat2_str(make_str("drop group"), $3);
+               }
+               ;
+
 
 /*****************************************************************************
  *
@@ -1885,36 +1927,20 @@ TruncateStmt:  TRUNCATE TABLE relation_name
  *
  *****************************************************************************/
 
-FetchStmt:	FETCH direction fetch_how_many portal_name INTO into_list
+FetchStmt:	FETCH opt_direction fetch_how_many opt_portal_name INTO into_list
 				{
 					if (strcmp($2, "relative") == 0 && atol($3) == 0L)
 						mmerror(ET_ERROR, "FETCH/RELATIVE at current position is not supported");
 
 					$$ = cat_str(4, make_str("fetch"), $2, $3, $4);
 				}
-		|	FETCH fetch_how_many portal_name INTO into_list
-  				{
-					$$ = cat_str(3, make_str("fetch"), $2, $3);
-				}
-		|	FETCH portal_name INTO into_list
+		|	MOVE opt_direction fetch_how_many opt_portal_name
 				{
-					$$ = cat_str(2, make_str("fetch"), $2);
-				}
-		|	MOVE direction fetch_how_many portal_name
-				{
-					$$ = cat_str(4, make_str("move"), $2, $3, $4);
-				}
-		|	MOVE fetch_how_many portal_name
-				{
-					$$ = cat_str(3, make_str("move"), $2, $3);
-				}
-		|	MOVE portal_name
-				{
-					$$ = cat_str(2, make_str("move"), $2);
+					$$ = cat_str(4, make_str("fetch"), $2, $3, $4);
 				}
 		;
 
-direction:	FORWARD		{ $$ = make_str("forward"); }
+opt_direction:	FORWARD		{ $$ = make_str("forward"); }
 		| BACKWARD	{ $$ = make_str("backward"); }
 		| RELATIVE      { $$ = make_str("relative"); }
                 | ABSOLUTE
@@ -1922,6 +1948,7 @@ direction:	FORWARD		{ $$ = make_str("forward"); }
 					mmerror(ET_WARN, "FETCH/ABSOLUTE not supported, backend will use RELATIVE");
 					$$ = make_str("absolute");
 				}
+		| /*EMPTY*/	{ $$ = EMPTY; /* default */ }
 		;
 
 fetch_how_many:   Iconst        { $$ = $1; }
@@ -1929,11 +1956,13 @@ fetch_how_many:   Iconst        { $$ = $1; }
 		| ALL		{ $$ = make_str("all"); }
 		| NEXT		{ $$ = make_str("next"); }
 		| PRIOR		{ $$ = make_str("prior"); }
+		| /*EMPTY*/	{ $$ = EMPTY; /*default*/ }
 		;
 
-portal_name:      IN name		{ $$ = cat2_str(make_str("in"), $2); }
+opt_portal_name:  IN name		{ $$ = cat2_str(make_str("in"), $2); }
 		| FROM name		{ $$ = cat2_str(make_str("from"), $2); }
-		| name			{ $$ = cat2_str(make_str("in"), $1); }
+/*		| name			{ $$ = cat2_str(make_str("in"), $1); }*/
+		| /*EMPTY*/		{ $$ = EMPTY; }
 		;
 
 /*****************************************************************************
@@ -4503,6 +4532,7 @@ ECPGDeallocate:	SQL_DEALLOCATE SQL_PREPARE ident	{ $$ = cat_str(3, make_str("ECP
 ECPGDeclaration: sql_startdeclare
 	{
 		fputs("/* exec sql begin declare section */", yyout);
+	        output_line_number();
 	}
 	variable_declarations sql_enddeclare
 	{
@@ -4515,16 +4545,18 @@ sql_startdeclare : ecpgstart BEGIN_TRANS DECLARE SQL_SECTION ';' {}
 
 sql_enddeclare: ecpgstart END_TRANS DECLARE SQL_SECTION ';' {}
 
-variable_declarations:  /* empty */ { $$ = EMPTY; }
-			| declarations { $$ = $1; }
-
-declarations:  declaration { $$ = $1; }
-			| declarations declaration { $$ = cat2_str($1, $2); }
+variable_declarations: /* empty */
+	{
+		$$ = EMPTY;
+	}
+	| declaration variable_declarations
+	{
+		$$ = cat2_str($1, $2);
+	}
 
 declaration: storage_clause
 	{
 		actual_storage[struct_level] = mm_strdup($1);
-		actual_startline[struct_level] = hashline_number();
 	}
 	type
 	{
@@ -4534,7 +4566,7 @@ declaration: storage_clause
 	}
 	variable_list ';'
 	{
- 		$$ = cat_str(5, actual_startline[struct_level], $1, $3.type_str, $5, make_str(";\n"));
+ 		$$ = cat_str(4, $1, $3.type_str, $5, make_str(";\n"));
 	}
 
 storage_clause : S_EXTERN	{ $$ = make_str("extern"); }
@@ -5441,7 +5473,7 @@ c_stuff: c_anything 	{ $$ = $1; }
 			}
 
 c_list: c_term			{ $$ = $1; }
-	| c_list ',' c_term	{ $$ = cat_str(3, $1, make_str(","), $3); }
+	| c_term ',' c_list	{ $$ = cat_str(3, $1, make_str(","), $3); }
 
 c_term:  c_stuff 		{ $$ = $1; }
 	| '{' c_list '}'	{ $$ = cat_str(3, make_str("{"), $2, make_str("}")); }

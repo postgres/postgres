@@ -19,7 +19,7 @@ exec sql begin declare section;
 	int ind_children;
 	str *married = NULL;
 	char *wifesname="Petra";
-	char *query="select name, born, age, married, children from meskes where name = :var1";
+	char *query="select * from meskes where name = :var1";
 exec sql end declare section;
 
 	exec sql declare cur cursor for
@@ -41,8 +41,8 @@ exec sql end declare section;
 	exec sql insert into meskes(name, married, children) values (:wifesname, '19900404', 3);
 	exec sql insert into meskes(name, born, age, married, children) values ('Michael', 19660117, 33, '19900404', 3);
 	exec sql insert into meskes(name, born, age) values ('Carsten', 19910103, 8);
-	exec sql insert into meskes(name, born, age) values ('Marc', 19930907, 5);
-	exec sql insert into meskes(name, born, age) values ('Chris', 19970923, 1);
+	exec sql insert into meskes(name, born, age) values ('Marc', 19930907, 6);
+	exec sql insert into meskes(name, born, age) values ('Chris', 19970923, 2);
 
 	strcpy(msg, "commit");
 	exec sql commit;

@@ -82,7 +82,7 @@ exec sql end declare section;
         for (i=0, j=sqlca.sqlerrd[2]; i<j; i++)
             printf("name[%d]=%8.8s\tamount[%d]=%d\tletter[%d]=%c\n", i, name[i], i, amount[i],i, letter[i][0]);
 
-        exec sql at pm select name, amount, letter into :name, :amount, :letter from "Test";
+        exec sql at pm select * into :name, :amount, :letter from "Test";
 
         for (i=0, j=sqlca.sqlerrd[2]; i<j; i++)
             printf("name[%d]=%8.8s\tamount[%d]=%d\tletter[%d]=%c\n", i, name[i], i, amount[i],i, letter[i][0]);

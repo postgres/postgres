@@ -755,3 +755,8 @@ Thu Dec 23 13:25:05 CET 1999
 	- Fixed command line parsing. 
 	- Set ecpg version to 2.6.13.
 
+Thu Jan  6 09:52:27 CET 2000
+
+	- Synced preproc.y with gram.y.
+	- Made sure Bruce's additions also make it into my source tree.
+	- Set ecpg version to 2.6.14.
