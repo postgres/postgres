@@ -8,20 +8,16 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/misc/superuser.c,v 1.1 1996/11/02 02:06:47 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/misc/superuser.c,v 1.2 1996/11/03 23:46:28 scrappy Exp $
  *
  * DESCRIPTION
  *    See superuser().
  *-------------------------------------------------------------------------
  */
 
-#include <c.h>
 #include <postgres.h>
-#include <access/htup.h>
 #include <utils/syscache.h>
 #include <catalog/pg_user.h>
-
-
 
 bool
 superuser(void) {
