@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.86 2002/09/04 15:45:50 tgl Exp $
+# $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.87 2002/09/05 18:28:46 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -40,10 +40,16 @@ else # win
 
 postgres: $(OBJS) $(DLLINIT) postgres.def libpostgres.a
 	$(DLLTOOL) --dllname $@$(X) --output-exp $@.exp --def postgres.def
-	$(CC) $(LDFLAGS) -o $@$(X) -Wl,--base-file,$@.base $@.exp $(OBJS) $(DLLLIBS)
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@$(X) -Wl,--base-file,$@.base $@.exp $(OBJS) $(LIBS)
 	$(DLLTOOL) --dllname $@$(X) --base-file $@.base --output-exp $@.exp --def postgres.def
-	$(CC) $(LDFLAGS) -o $@$(X) $@.exp $(OBJS) $(DLLLIBS)
-	rm $@.exp $@.base
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@$(X) $@.exp $(OBJS) $(LIBS)
+	rm -f $@.exp $@.base
+
+postgres.def: $(OBJS)
+	$(DLLTOOL) --export-all --output-def $@ $^
+
+libpostgres.a: postgres.def
+	$(DLLTOOL) --dllname postgres.exe --def postgres.def --output-lib $@
 
 endif # win
 
@@ -55,17 +61,6 @@ $(OBJS): $(DIRS:%=%-recursive) ;
 # Update the commonly used headers before building the subdirectories
 $(DIRS:%=%-recursive): $(top_builddir)/src/include/parser/parse.h $(top_builddir)/src/include/utils/fmgroids.h
 	$(MAKE) -C $(subst -recursive,,$@) all
-
-
-ifeq ($(MAKE_DLL), true)
-
-postgres.def: $(OBJS)
-	$(DLLTOOL) --export-all --output-def $@ $(OBJS)
-
-libpostgres.a: $(OBJS) $(DLLINIT) postgres.def
-	$(DLLTOOL) --dllname postgres.exe --def postgres.def --output-lib $@
-
-endif # MAKE_DLL
 
 
 $(DLLINIT): $(DLLINIT:%.o=%.c)
@@ -169,9 +164,7 @@ clean:
 		$(top_srcdir)/src/include/parser/parse.h \
 		$(top_builddir)/src/include/utils/fmgroids.h
 ifeq ($(PORTNAME), win)
-ifeq ($(MAKE_DLL), true)
 	rm -f postgres.dll postgres.def libpostgres.a
-endif
 endif
 	for i in $(DIRS); do $(MAKE) -C $$i clean || exit; done
 

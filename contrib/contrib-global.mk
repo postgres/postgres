@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/contrib/contrib-global.mk,v 1.2 2001/09/16 16:11:08 petere Exp $
+# $Header: /cvsroot/pgsql/contrib/contrib-global.mk,v 1.3 2002/09/05 18:28:45 petere Exp $
 
 # This file contains generic rules to build many kinds of simple
 # contrib modules.  You only need to set a few variables and include
@@ -45,7 +45,7 @@ override CPPFLAGS := -I$(srcdir) $(CPPFLAGS)
 
 ifdef MODULES
 override CFLAGS += $(CFLAGS_SL)
-override DLLLIBS := $(BE_DLLLIBS) $(DLLLIBS)
+SHLIB_LINK += $(BE_DLLLIBS)
 endif
 
 ifdef PG_CPPFLAGS
@@ -61,7 +61,7 @@ SO_MAJOR_VERSION= 0
 SO_MINOR_VERSION= 0
 rpath =
 
-override DLLLIBS := $(BE_DLLLIBS) $(DLLLIBS)
+SHLIB_LINK += $(BE_DLLLIBS)
 
 include $(top_srcdir)/src/Makefile.shlib
 

@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/Makefile,v 1.28 2002/09/04 15:45:50 tgl Exp $
+# $Header: /cvsroot/pgsql/src/Makefile,v 1.29 2002/09/05 18:28:45 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -34,6 +34,7 @@ clean:
 	$(MAKE) -C pl $@
 	$(MAKE) -C test $@
 	$(MAKE) -C tutorial $@
+	$(MAKE) -C utils $@
 
 distclean maintainer-clean:
 	-$(MAKE) -C port $@
@@ -44,4 +45,5 @@ distclean maintainer-clean:
 	-$(MAKE) -C pl $@
 	-$(MAKE) -C test $@
 	-$(MAKE) -C tutorial $@
+	-$(MAKE) -C utils $@
 	rm -f Makefile.port Makefile.global

@@ -1,7 +1,6 @@
 SRCS		+= $(NAME).c
 OBJS		+= $(NAME).o
 
-PG_CPPFLAGS	:=
 SHLIB_LINK 	:= $(BE_DLLLIBS)
 
 SO_MAJOR_VERSION := 0
@@ -18,4 +17,4 @@ install: all
 uninstall: uninstall-lib
 
 clean distclean maintainer-clean: clean-lib
-	$(RM) $(OBJS)
+	rm -f $(OBJS)

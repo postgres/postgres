@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $Header: /cvsroot/pgsql/configure.in,v 1.205 2002/09/04 22:54:18 petere Exp $
+dnl $Header: /cvsroot/pgsql/configure.in,v 1.206 2002/09/05 18:28:45 petere Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -614,6 +614,8 @@ AC_SEARCH_LIBS(crypt,  crypt)
 AC_CHECK_LIB(bind,     __inet_ntoa)
 # Solaris:
 AC_SEARCH_LIBS(fdatasync, [rt posix4])
+# Cygwin:
+AC_CHECK_LIB(cygipc, shmget)
 
 if test "$with_readline" = yes; then
   PGAC_CHECK_READLINE

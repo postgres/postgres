@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/test/regress/GNUmakefile,v 1.39 2002/09/03 21:45:44 petere Exp $
+#    $Header: /cvsroot/pgsql/src/test/regress/GNUmakefile,v 1.40 2002/09/05 18:28:46 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -20,7 +20,7 @@ contribdir := $(top_builddir)/contrib
 override CPPFLAGS := -I$(libpq_srcdir) $(CPPFLAGS)
 override CFLAGS += $(CFLAGS_SL)
 
-override DLLLIBS := $(BE_DLLLIBS) $(DLLLIBS)
+SHLIB_LINK = $(BE_DLLLIBS)
 
 # default encoding
 MULTIBYTE = SQL_ASCII

@@ -1,13 +1,9 @@
-# $Header: /cvsroot/pgsql/src/makefiles/Attic/Makefile.win,v 1.17 2002/07/27 20:10:05 petere Exp $
-LDFLAGS+= -g
+# $Header: /cvsroot/pgsql/src/makefiles/Attic/Makefile.win,v 1.18 2002/09/05 18:28:46 petere Exp $
 DLLTOOL= dlltool
 DLLWRAP= dllwrap
-DLLLIBS= -lcygipc -lcrypt
 BE_DLLLIBS= -L$(top_builddir)/src/backend -lpostgres
 DLLINIT = $(top_builddir)/src/utils/dllinit.o
-MK_NO_LORDER=true
-MAKE_DLL=true
-#MAKE_DLL=false
+
 # linking with -lm or -lc causes program to crash
 # (see http://sources.redhat.com/cygwin/faq/faq.html#SEC110)
 LIBS:=$(filter-out -lm -lc, $(LIBS))
@@ -18,22 +14,21 @@ CFLAGS_SL =
 
 %.dll: %.o
 	$(DLLTOOL) --export-all --output-def $*.def $<
-	$(DLLWRAP) -o $@ --def $*.def $< $(DLLINIT) $(DLLLIBS)
+	$(DLLWRAP) -o $@ --def $*.def $< $(DLLINIT) $(SHLIB_LINK)
 	rm -f $*.def
 
-ifeq ($(findstring backend,$(subdir)), backend)
-override CPPFLAGS+= -DBUILDING_DLL=1
+ifneq (,$(findstring backend,$(subdir)))
+ifeq (,$(findstring conversion_procs,$(subdir)))
+override CPPFLAGS+= -DBUILDING_DLL
+endif
 endif
 
-ifeq ($(findstring ecpg/lib,$(subdir)), ecpg/lib)
-override CPPFLAGS+= -DBUILDING_DLL=1
+ifneq (,$(findstring ecpg/lib,$(subdir)))
+override CPPFLAGS+= -DBUILDING_DLL
 endif
 
-ifeq ($(findstring interfaces/libpq++,$(subdir)), interfaces/libpq++)
-override CPPFLAGS+= -DBUILDING_DLL=1
-endif
-
-ifeq ($(findstring src/pl/plpython,$(subdir)), src/pl/plpython)
+# required by Python headers
+ifneq (,$(findstring src/pl/plpython,$(subdir)))
 override CPPFLAGS+= -DUSE_DL_IMPORT
 endif
 

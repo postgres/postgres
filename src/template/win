@@ -1,4 +1,2 @@
 CFLAGS=-O2
-SRCH_INC=/usr/local/include
 SRCH_LIB=/usr/local/lib
-LIBS=-lcygipc

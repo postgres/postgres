@@ -4,7 +4,7 @@
 #    Makefile for tutorial
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/tutorial/Makefile,v 1.15 2002/07/30 17:47:58 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/tutorial/Makefile,v 1.16 2002/09/05 18:28:46 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -13,7 +13,7 @@ top_builddir = ../..
 include $(top_builddir)/src/Makefile.global
 
 override CFLAGS+= $(CFLAGS_SL)
-override DLLLIBS := $(BE_DLLLIBS) $(DLLLIBS)
+SHLIB_LINK = $(BE_DLLLIBS)
 
 #
 # DLOBJS are the dynamically-loaded object files.  The "funcs" queries

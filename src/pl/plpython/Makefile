@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/src/pl/plpython/Makefile,v 1.10 2001/09/16 16:11:11 petere Exp $
+# $Header: /cvsroot/pgsql/src/pl/plpython/Makefile,v 1.11 2002/09/05 18:28:46 petere Exp $
 
 subdir = src/pl/plpython
 top_builddir = ../../..
@@ -17,7 +17,6 @@ endif
 ifneq (,$(findstring yes, $(shared_libpython)$(allow_nonpic_in_shlib)))
 
 override CPPFLAGS := -I$(srcdir) $(python_includespec) $(CPPFLAGS)
-override DLLLIBS := $(BE_DLLLIBS) $(DLLLIBS)
 rpath :=
 
 NAME = plpython
@@ -25,7 +24,7 @@ SO_MAJOR_VERSION = 0
 SO_MINOR_VERSION = 0
 OBJS = plpython.o
 
-SHLIB_LINK += $(python_libspec)
+SHLIB_LINK = $(BE_DLLLIBS) $(python_libspec)
 
 include $(top_srcdir)/src/Makefile.shlib
 

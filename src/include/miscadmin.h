@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.109 2002/09/04 20:31:36 momjian Exp $
+ * $Id: miscadmin.h,v 1.110 2002/09/05 18:28:46 petere Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to
@@ -62,7 +62,7 @@
 
 /* in globals.c */
 /* these are marked volatile because they are set by signal handlers: */
-extern volatile bool InterruptPending;
+extern DLLIMPORT volatile bool InterruptPending;
 extern volatile bool QueryCancelPending;
 extern volatile bool ProcDiePending;
 
@@ -166,7 +166,7 @@ extern char DateFormat[];
 
 extern bool enableFsync;
 extern bool allowSystemTableMods;
-extern int	SortMem;
+extern DLLIMPORT int SortMem;
 extern int	VacuumMem;
 
 /*

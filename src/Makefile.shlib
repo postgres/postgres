@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.63 2002/09/04 22:54:18 petere Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.64 2002/09/05 18:28:46 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -276,7 +276,7 @@ else # PORTNAME == win
 # WIN case
 $(shlib) lib$(NAME).a: $(OBJS) $(DLLINIT)
 	$(DLLTOOL) --export-all --output-def $(NAME).def $(OBJS)
-	$(DLLWRAP) -o $(shlib) --dllname $(shlib) --def $(NAME).def $(OBJS) $(DLLINIT) $(DLLLIBS) $(SHLIB_LINK)
+	$(DLLWRAP) -o $(shlib) --dllname $(shlib) --def $(NAME).def $(OBJS) $(DLLINIT) $(SHLIB_LINK)
 	$(DLLTOOL) --dllname $(shlib) --def $(NAME).def --output-lib lib$(NAME).a
 
 $(DLLINIT): $(DLLINIT:%.o=%.c)
@@ -353,5 +353,5 @@ ifdef EXPSUFF
 endif
 endif
 ifeq ($(PORTNAME), win)
-	rm -rf $(NAME).def
+	rm -f $(NAME).dll $(NAME).def
 endif
