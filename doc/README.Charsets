@@ -1,0 +1,113 @@
+  
+  PostgreSQL Charsets README
+  Josef Balatka, <balatka@email.cz>
+  Draft v0.1, Tue Jul 20 15:49:07 CEST 1999
+  
+  This document is a brief overview of the national charsets support
+  that PostgreSQL ver. 6.5 has implemented. Various compilation options
+  and setup tips are mentioned here to be helpful in the particular use.
+  
+  ---------------------------------------------------------------------------
+  
+  Table of Contents
+  
+  1. Locale awareness
+  
+  2. Single-byte charsets recoding
+  
+  3. Multi-byte support/recoding
+  
+  4. Credits
+  
+  ---------------------------------------------------------------------------
+  
+  1. Locale awareness
+  
+     PostgreSQL server supports both locale aware and locale not aware
+     (default) operational modes. You can determine this mode during the
+     configuration stage of the installation with --enable-locale option.
+  
+     If you don't use --enable-locale, the multi-language code will not be
+     compiled and PostgreSQL will behave as an ASCII compliant application.
+     This mode is useful for its speed but only provided that you don't
+     have to consider national specific chars.
+
+     With --enable-locale you will get a locale aware server using LC_*
+     environment variables to determine how to process national specifics.
+     In this case strcoll(3) and similar functions are used internally
+     so speed is somewhat lower.
+  
+     Notice here that --enable-locale is sufficient when all your clients
+     use the same single-byte encoding as the database server does.
+  
+     When your clients use encoding different from the server than you have
+     to use, moreover, --enable-recode or --with-mb=<encoding> options on
+     the server side or a particular client that does recoding itself (e.g.
+     there exists a PostgreSQL ODBC driver for Win32 with various Cyrillic
+     encoding capability). Option --with-mb=<encoding> is necessary for the
+     multi-byte charsets support.
+  
+  
+  2. Single-byte charsets recoding
+  
+     You can set up this feature with --enable-recode option. This option
+     is described as 'enable Cyrillic recode support' which doesn't express
+     all its power. It can be used for *any* single-byte charset recoding.
+  
+     This method uses charset.conf file located in the $PGDATA directory.
+     It's a typical configuration text file where spaces and newlines
+     separate items and records and # specifies comments. Three keywords
+     with the following syntax are recognized here:
+  
+       BaseCharset	<server_charset>
+       RecodeTable	<from_charset>     <to_charset>    <file_name>
+       HostCharset	<host_spec>	   <host_charset>
+  
+     BaseCharset defines encoding of the database server. All charset
+     names are only used for mapping inside the charset.conf so you can
+     freely use typing-friendly names.
+     
+     RecodeTable records specify translation table between server and client.
+     The file name is relative to the $PGDATA directory. Table file format
+     is very simple. There are no keywords and characters are represented by
+     a pair of decimal or hexadecimal (0x prefixed) values on single lines:
+  
+       <char_value>  <translated_char_value>
+  
+     HostCharset records define IP address and charset. You can use a single
+     IP address, an IP mask range starting from the given address or an IP
+     interval (e.g. 127.0.0.1, 192.168.1.100/24, 192.168.1.20-192.168.1.40)
+  
+     The charset.conf is always processed up to the end, so you can easily
+     specify exceptions from the previous rules. In the src/data you will
+     find charset.conf example and a few recoding tables.
+  
+     As this solution is based on the client's IP address / charset mapping
+     there are obviously some restrictions as well. You can't use different
+     encoding on the same host at the same time. It's also inconvenient when
+     you boot your client hosts into more operating systems.
+     Nevertheless, when these restrictions are not limiting and you don't
+     need multi-byte chars than it's a simple and effective solution.
+  
+  
+  3. Multi-byte support/recoding
+  
+     It's a new generation of charset encoding in PostgreSQL designed as a
+     more complex solution supporting both single-byte and multi-byte chars.
+     You can set up this feature with --with-mb=<encoding> option.
+  
+     There is no IP mapping file and recoding is controlled through the new
+     SQL statements. Recoding tables are included in the code. Many national
+     charsets are already supported and further will follow.
+  
+     See doc/README.mb, doc/README.mb.jp to get detailed instruction on how
+     to use the multibyte support. In the file doc/README.locale there is
+     a particular instruction on usage of the multibyte support with Cyrillic.
+  
+  
+  4. Credits
+  
+     I'd like to thank the PostgreSQL development team and all contributors
+     for creating PostgreSQL. Thanks to Oleg Bartunov, Oleg Broytmann and
+     Tatsuo Ishii for opening the door into the multi-language world.
+  
