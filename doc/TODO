@@ -2,7 +2,7 @@ TODO list for PostgreSQL
 ========================
 Last updated:		Sat Nov  6 11:54:11 EST 1999
 
-Current maintainer:	Bruce Momjian (maillist@candle.pha.pa.us)
+Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
 The most recent version of this document can be viewed at
 the PostgreSQL web site, http://www.PostgreSQL.org.
@@ -292,7 +292,7 @@ Developers who have claimed items are:
 --------------------------------------
 	* Billy is Billy G. Allie <Bill.Allie@mug.org>
 	* Brook is Brook Milligan <brook@trillium.NMSU.Edu>
-	* Bruce is Bruce Momjian<maillist@candle.pha.pa.us>
+	* Bruce is Bruce Momjian<pgman@candle.pha.pa.us>
 	* Bryan is Bryan Henderson<bryanh@giraffe.netgate.net>
 	* D'Arcy is D'Arcy J.M. Cain <darcy@druid.net>
 	* David is David Hartwig <daveh@insightdist.com>
