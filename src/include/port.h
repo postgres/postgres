@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/port.h,v 1.61 2004/09/09 14:18:20 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/port.h,v 1.62 2004/09/27 20:37:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -167,6 +167,11 @@ extern int	pclose_check(FILE *stream);
 extern int	pgrename(const char *from, const char *to);
 extern int	pgunlink(const char *path);
 extern int	pgsymlink(const char *oldpath, const char *newpath);
+
+/* Include this first so later includes don't see these defines */
+#ifdef _MSC_VER
+#include <io.h>
+#endif
 
 #define rename(from, to)		pgrename(from, to)
 #define unlink(path)			pgunlink(path)

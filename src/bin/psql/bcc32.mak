@@ -37,6 +37,7 @@ NULL=nul
 
 CPP=bcc32.exe
 PERL=perl.exe
+FLEX=flex.exe
 
 !IF "$(CFG)" == "Debug"
 DEBUG=1
@@ -53,7 +54,7 @@ REFDOCDIR=../../../doc/src/sgml/ref
 .c.obj:
 	$(CPP) -o"$(INTDIR)\$&" $(CPP_PROJ) $<
 
-ALL : sql_help.h "..\..\port\pg_config_paths.h" "$(OUTDIR)\psql.exe"
+ALL : sql_help.h psqlscan.c "..\..\port\pg_config_paths.h" "$(OUTDIR)\psql.exe"
 
 CLEAN :
 	-@erase "$(INTDIR)\command.obj"
@@ -158,3 +159,6 @@ path.obj : "$(OUTDIR)" ..\..\port\path.c
 
 "sql_help.h": create_help.pl 
        $(PERL) create_help.pl $(REFDOCDIR) $@
+
+psqlscan.c : psqlscan.l
+	$(FLEX) -Cfe -opsqlscan.c psqlscan.l

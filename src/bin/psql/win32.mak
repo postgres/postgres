@@ -8,6 +8,7 @@ NULL=nul
 
 CPP=cl.exe
 PERL=perl.exe
+FLEX=flex.exe
 
 OUTDIR=.\Release
 INTDIR=.\Release
@@ -16,7 +17,7 @@ REFDOCDIR= ../../../doc/src/sgml/ref
 OutDir=.\Release
 # End Custom Macros
 
-ALL : sql_help.h "..\..\port\pg_config_paths.h" "$(OUTDIR)\psql.exe"
+ALL : sql_help.h psqlscan.c "..\..\port\pg_config_paths.h" "$(OUTDIR)\psql.exe"
 
 CLEAN :
 	-@erase "$(INTDIR)\command.obj"
@@ -127,5 +128,8 @@ LINK32_OBJS= \
    $(CPP_PROJ) $< 
 <<
 
-sql_help.h: create_help.pl
+sql_help.h : create_help.pl
         $(PERL) create_help.pl $(REFDOCDIR) $@
+	
+psqlscan.c: psqlscan.l
+	$(FLEX) -Cfe -opsqlscan.c psqlscan.l
