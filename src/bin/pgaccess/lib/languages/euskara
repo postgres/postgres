@@ -1,0 +1,532 @@
+array set Messages {
+
+"Label" "Etiketa"
+
+"Save schema" "Salbatu Eskema"
+
+"Is unique ?" "Indice bakarra da?"
+
+"Report builder" "Txostenen Sorgailua"
+
+"Criteria" "Erizpide"
+
+"FATAL ERROR upgrading PgAccess table" "HALABEHARREZKO ERROREA gaurkotzen PgAccess-aren taula"
+
+"Save this query as a view" "Salbazu kontsulta hau bista bezala"
+
+"Page header" "Orrialdearen burua"
+
+"Query name" "Izen"
+
+"Please select an object first!" "Mesedez, aukeratu helburu bat"
+
+"Fields :" "Arloak"
+
+"Name" "Izen"
+
+"File name" "Artxiboaren izena"
+
+"Detail record" "Erregistroaren Xehetasuna"
+
+"Auto-load the last opened database at startup" "Hasieran base-datuen azkena automatikoki kargatzen du"
+
+"Maxvalue" "Balio Maximoa"
+
+"Start value" "Hasierako balioa"
+
+"Report fields" "Informearen arloak"
+
+"Test form" "Formulario gauzatze"
+
+"Error trying to connect to database '%s' on host %s \n\nPostgreSQL error 
+message:%s" "Errorea konektatzean base-datu '%s' %s -n serbitzailean  \n\nPostgresSQL-ren mezu errorea:%s"
+
+"No field type ?" "Arlo-Mota ez?"
+
+"User without name?" "¿Izen gabeko erabiltzailea?"
+
+"You have to supply a name for this schema!" "Eskema honetarako izen bat hornitu behar duzu!"
+
+"Last value" "Azken balioa"
+
+"Preferences" "Lehentasunak"
+
+"View '%s' already exists!\nOverwrite ?" "Bista  '%s' existitzen da jadanik.\nGainean idatzi?"
+
+"You have to select an index!" "Zuk ez duzu indizea aukeratu!"
+
+"Field type" "Mota"
+
+"Script name" "Script-aren izena"
+
+"Reload" "Gaurkotu"
+
+"Remove table %s from query?" "Ezabatu taula  %s kontsultatik?"
+
+"SQL window" "SQL Lehioa"
+
+"Allow user to create other users" "Beste erabiltzaile batzuk sortzen utzi erabiltzaileari"
+
+"Delete current record ?" "Ezabatu oraingo erregistroa?"
+
+"List box" "Zerrenda"
+
+"Save to query builder" "Salbatu Kontsulten sorgailuan"
+
+"fixed width" "Zabalera fixoa"
+
+"Scripts" "Script"
+
+"Yes" "Bai"
+
+"Add label" "Gehitu etiketa"
+
+"Sequence created!" "Sekuentzia sortua!"
+
+"Field information" "Arloaren informazioa"
+
+"Design" "Diseinua"
+
+"Field" "Arlo"
+
+"You have to supply an external file name!" "Idatzi artxibo berriaren izena!"
+
+"Increment" "Gehikuntza"
+
+"No" "Ez"
+
+"Form design" "Formulario diseinua"
+
+"You must supply a return type!" "Itzultzeko mota bat hornitu behar duzu!"
+
+"Remove field from result ?" "Ezabatu arloa emaitzatik?"
+
+"There is another object (a %s) with the same name.\nPlease change it!" "Beste objektu, (%s), izen berberaz\nMesedez, aldatu izena"
+
+"This query has no commands?" "Kontsulta honek ez du komandorik?"
+
+"Execute query" "Exekutatu kontsulta"
+
+"field cannot be null" "Baliogabeko Arloa ezin da izan"
+
+"Help" "Laguntza"
+
+"Rename column" "Renombrar columna"
+
+"Database" "Datutegi"
+
+"Information" "Informazioa"
+
+"Close" "Itxi"
+
+"Command" "Komando"
+
+"Table" "Taula"
+
+"verify password" "Egiaztatu Pasahitza"
+
+"Vacuum" "Hustu"
+
+"Default value" "Berezko balioa"
+
+"Import" "Importatu"
+
+"Delete index" "Ezabatu Indizea"
+
+"Move up" "Mugi Gora"
+
+"index properties" "Indizearen Propietateak"
+
+"check" "Egiaztatu"
+
+"Create new table" "Sortu taula berria"
+
+"Visual query designer" "Kontsulten sorgailu bisuala"
+
+"Delete all" "Ezabatu oro"
+
+"You are going to delete\n\n %s \n\nProceed?" "Zuk ezabatu (ote) duzu\n\n %s 
+\n\nJarraitu?"
+
+"Schema name" "Eskemaren izena"
+
+"Error executing query" "Errorea Kontsulta exekutatzen"
+
+"Report name" "Izena"
+
+"Add field" "Gehitu arlo bat"
+
+"Field name" "Arloaren izena"
+
+"FATAL ERROR searching for PgAccess system tables" "HALABEHARREZKO ERROREA  PgAccess-en Taula Sisteman bilatzen"
+
+"A big number of rows displayed in table view will take a lot of memory!" 
+"Oroimen handia okupatuko du zabaldutako ilada kopuru handiak"
+
+"Preview" "Aurretiko"
+
+"Users" "Erabiltzaileak"
+
+"Owner" "Jabea"
+
+"Form's window internal name" "Formulario lehioaren barne izena"
+
+"Sort field" "Ordenatu ...gatik"
+
+"New name is the same as the old one!" "Izen berria aurreko berbera da!"
+
+"Warning" "Oharra"
+
+"Suggestions at" "Iradokizuna"
+
+"Functions" "Funtzioak"
+
+"Schema" "Eskema"
+
+"Open" "Ireki"
+
+"size" "Neurria"
+
+"Delete" "Ezabatu"
+
+"Returns" "Itzuli"
+
+"Define new user" "Erabiltzaile berria"
+
+"Move down" "Mugi behera"
+
+"Design script" "Scripts-en Diseinua"
+
+"Check box" "Txekeo Kutxa"
+
+"FINAL WARNING" "BUKAERAKO OHARRA"
+
+"Add table" "Gehitu taula"
+
+"Table viewer font" "Letra-mota Taula"
+
+"The field type is not specified!" "Arlo-mota ez da zehaztua izan!"
+
+"Close test form" "Itxi formularioaren froga"
+
+"Export table" "Exportatu taula"
+
+"Add new index" "Gehitu indize berria"
+
+"Left" "Ezkerra"
+
+"Field delimiter" "Mugagailu"
+
+"Add formula" "Gehitu formula"
+
+"Open database" "Ireki datutegi"
+
+"Return" "Itzuli"
+
+"Changed fonts may appear in the next working session!" "Iturrien aldaketa hurrengo saioan azalduko da"
+
+"Error" "Errore"
+
+"Enter a field name" "Arlo-izena eman"
+
+"field name" "Arloaren izena"
+
+"Forms" "Formularioak"
+
+"Cannot add column" "Ezin dut gehitu zutabea"
+
+"Clean" "Garbitu"
+
+"Delete all objects ?" "Ezabatu objektu oro?"
+
+"Preferred language" "Lengoaia hobetsia"
+
+"Execute SQL" "SQL exekutatu"
+
+"Sequences" "Sekuentziak"
+
+"Button" "Botoi"
+
+"Language" "Lengoaia"
+
+"Query '%s' was not found!" "Kontsulta '%s' ez zen aurkitu"
+
+"Object" "Objektu"
+
+"Font fixed" "Iturri fixoa"
+
+"Table name" "Taularen izena"
+
+"Export" "Exportatu"
+
+"Change user" "Aldatu erabiltzailea"
+
+"You must give object a new name!" "Zuk izen berri bat eman behar diozu objektuari!"
+
+"Query" "Kontsulta"
+
+"User name" "Erabiltzailearen izena"
+
+"Font normal" "Iturri normala"
+
+"Import table" "Importatu Taula"
+
+"Toolbar" "Tresnen barra"
+
+"Radio btn" "Radio Botio"
+
+"You must supply a name for this function!" "Zuk izen bat eman behar diozu Funtzio honi!"
+
+"You have to select index fields!" "Indize arloa aukeratu behar duzu!"
+
+"Constraint" "Coacción"
+
+"The script must have a name" "Script-ak izen bat behar du izan"
+
+"Save" "Gorde"
+
+"Exit" "Irten"
+
+"Inherits" "Heredatu"
+
+"Delete field" "Ezabatu arloa"
+
+"About" "PGaccess-i buruz"
+
+"Empty field name ?" "Arlo izenik ez?"
+
+"All report information will be deleted.\n\nProceed ?" "Txostenaren informazio oro ezabatuko da.\n\nJarraitu?"
+
+"Host" "Zerbitzari"
+
+"vacuuming database %s ..." "Datutegi  %s  hustutzen..."
+
+"Indexes defined" "Definitu indizeak"
+
+"You must specify field size!" "Arloaren neurria zehaztu behar duzu"
+
+"Schema '%s' already exists!" "Eskema '%s' existitzen da!"
+
+"There is another field with the same name: '%s'!\n\nReplace it ?" "Beste arlo bat dago izen berberaz: '%s' \n\nOrdezkatu nahi?"
+
+"Contents" "Edukina"
+
+"Views" "Bistak"
+
+"Variable" "Aldagai"
+
+"Error executing query\n\n%s\n\nPostgreSQL error message:\n%s\nPostgreSQL 
+status:%s" "Errorea kontsulta exekutatzen:\n\n%s\n\nPostgreSQL-aren mezu errorea:\n%s\nStatus:%s"
+
+"Filter conditions" "Iragazkiaren baldintzak"
+
+"Error retrieving query definition" "Errorea errekuperatzen kontsultaren definizioa"
+"Error deleting view" "Errorea ezabatzen bista"
+
+"New" "Berri"
+
+"Tables" "Taulak"
+
+"Create" "Sortu"
+
+"Forms need an internal name, only literals, low case" "Formularioak barne izena behar du, letrak soilik, letra xehez"
+
+"Do you want to save the form into the database?" "Datutegian formularioa gorde nahi duzu?"
+
+"Schema '%s' was not found!" "Eskema '%s' ez zen aurkitu!"
+
+"proportional" "Proportzional"
+
+"Function saved!" "Funtzio gordeta!"
+
+"with OIDs" " OID-ekin"
+
+"Table information" "Taularen informazioa"
+
+"Error inserting new record" "Errorea txertxatzen erregistro berria"
+
+"Column name '%s' already exists in this table!" "Taula honetan existitzen da zutabearen izena '%s'!"
+
+"File" "Artxibo"
+
+"Your table has no fields!" "Taulak ez du arlorik!"
+
+"Height" "Garaiera"
+
+"You will always get the latest version at:" "Beti azken bertsioa eskuratuko duzu hemen:"
+
+"Form must have a name" "Formularioak izen bat behar du!"
+
+"Password" "Pasahitz"
+
+"Valid until (date)" "Balioduna ...arte (data)"
+
+"Report source" "Datuen jatorria"
+
+"Allow user to create databases" "Baimendu erabiltzaileari datutegi sortzeko"
+
+"Cancel" "Ezeztatu"
+
+"Is clustered ?" "Multzokaturik dago?"
+
+"Add new column" "Gehitu zutabe berria"
+
+"Show SQL" "Erakutsi SQL"
+
+"New name" "Izen berria"
+
+"Table '%s' not found!" "Taula '%s' ez da aurkitzen!"
+
+"Form name" "Formularioaren izena"
+
+"Visual designer" "Diseinagailu Bisuala"
+
+"You choose to delete index\n\n %s \n\nProceed?" "Hautatu duzu indize\n\n %s  ezabatu\n\nJarraitu?"
+
+"Error retrieving from" "Errorea kargatzen"
+
+"Save query definition" "Salbatu kontsultaren definizioa"
+
+"A Tcl/Tk interface to\nPostgreSQL\nby Constantin Teodorescu" "Tcl/Tk interfaze bat\nPostgreSQL-rako\nConstantin Teodorescu-ren eskutik"
+
+"Operation completed!" "Eragiketa Osatua!"
+
+"Max rows displayed in table/query view" "Ilada maximoak taula/kontsultan erakutsiak"
+
+"Passwords do not match!" "Pasahitz ez baliozkoa!"
+
+"Rename" "Berrizendu"
+
+"Entry" "Sarrera"
+
+"Error retrieving schema definition" "Errorea errekuperatzen eskemaren definizioa"
+
+"This is an action query!\n\nExecute it?" "Hau kontsulta ekintza da!\n\nExekutatu?"
+
+"Error retrieving view definition for" "Errorea errekuperatzen  definizioa  ...(ta)rako"
+
+"options" "Hautabideak"
+
+"Sequence '%s' not found!" "¡Sekuentzia '%s' ez aurkitua!"
+
+"Text" "Testu"
+
+"Tcl error executing pg_exec %s\n\n%s" "Tcl Errorea  exekutatzen pg_exec 
+%s\n\n%s"
+
+"Width" "Zabalera"
+
+"You have to supply a name for this query!" "Izen bat eman behar diozu kontsulta honi"
+
+"Accessing data. Please wait ..." "Datuen sarbidea. Itxaron, mesedez..."
+
+"Report footer" "Txostenaren oina"
+
+"Parameters" "Parametroak"
+
+"Queries" "Kontsultak"
+
+"Query '%s' already exists!" "Konsulta '%s' existitzen da jadanik!"
+
+"Font bold" "Iturria lodiz"
+
+"Query builder" "Kontsulten sorgailua"
+
+"Error defining view" "Errorea bistaren  definizioan"
+
+"Top" "Gora"
+
+"You must supply a name for your table!" "Zure taularako izen bat eman behar duzu!"
+
+"Page footer" "Orrialdearen oina"
+
+"Font italic" "Iturri Italikoa"
+
+"Field name not entered!" "Arlo-izena ez metatua!"
+
+"Index name cannot be null!" "Indizearen izena ezin da izan nulu!"
+
+"Sort" "Ordenatu"
+
+"Import-Export table" "Inportatu/Exportatu taula"
+
+"Point" "Puntu"
+
+"type" "Mota"
+
+"You should supply a name for this sequence" "Izen bat eman beharko zenuke sekuentzia honetarako"
+
+"Remove link ?" "Ezabatu lotura?"
+
+"You have to supply a table name!" "Taula-izen bat eman behar duzu!"
+
+"Report header" "Txostenaren burua"
+
+"Attributes" "Atributuak"
+
+"Table '%s' already in schema" "Taula '%s' eskeman existitzen da jadanik!"
+
+"Username" "Erabiltzaile"
+
+"Minvalue" "Balio minimoa"
+
+"Sequence name" "Sekuentziaren Izena"
+
+"Define sequence" "Definitu sekuentzia"
+
+"Function" "Funtzio"
+
+"Sorting and filtering not (yet) available from queries!\n\nPlease enter 
+them in the query definition!" "Ordenatzen eta iragazten, kontsultak egiteko prest ez!\n\nMesedez, sartu kontsultaren definizioan"
+
+"Reports" "Txostenak"
+
+"primary key" "Lehen gakoa"
+
+"Back" "Atzean"
+
+"Columns" "Zutabeak"
+
+"Indexes" "Indizeak"
+
+"Permissions" "Baimenak"
+
+"not null" "Ez nulu"
+
+"Cluster index" "Indize multzokaturik"
+
+"index columns" "Zutabe indize"
+
+"Add user" "Gehitu erabiltzailea"
+
+"Change permissions" "Aldatu baimenak"
+
+"select" "Aukeratu"
+
+"update" "Gaurkotu"
+
+"insert" "Txertatu"
+
+"rule" "Arau"
+
+"Identification" "Identifikazio"
+
+"Owner ID" "Jabearen ID"
+
+"Has primary key ?" "Gako primarioa du?"
+
+"Has rules ?" "Arauak ditu?"
+
+"Statistics" "Estatika"
+
+"Number of tuples" "Tupleen kopurua"
+
+"Number of pages" "Orrialde kopurua"
+
+"Index name" "Indizearen izena"
+
+"Index fields" "Arlo indize"
+
+"Table OID" "Taularen OID"
+}
+

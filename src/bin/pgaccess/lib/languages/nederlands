@@ -1,0 +1,534 @@
+array set Messages {
+
+"Label" "Beschrijving"
+ 
+"Save schema" "Schema opslaan"
+ 
+"Is unique ?" "Uniek ?"
+ 
+"Report builder" "Rapport Generator "
+ 
+"Criteria" "Criteria"
+ 
+"FATAL ERROR upgrading PgAccess table" "FATALE FOUT bij het actualiseren van de PgAccess tabel"
+ 
+"Save this query as a view" "Sla deze query op als een view"
+ 
+"Page header" "Paginakop"
+ 
+"Query name" "Query naam"
+ 
+"Please select an object first!" "Selecteer a.u.b. eerst een object"
+ 
+"Fields :" "Velden :"
+ 
+"Name" "Naam"
+ 
+"File name" "Bestandsnaam"
+ 
+"Detail record" "Detail record"
+ 
+"Auto-load the last opened database at startup" "Bij opstarten automatisch laatste-geopende database openen"
+ 
+"Maxvalue" "Maximale waarde"
+ 
+"Start value" "Startwaarde"
+ 
+"Report fields" "Rapport velden"
+ 
+"Test form" "Formulier testen"
+ 
+"Error trying to connect to database '%s' on host %s \n\nPostgreSQL error message:%s" "Fout bij het verbinden met de database '%s' op computer %s \n\nPostgreSQL fout code :%s"
+ 
+"No field type ?" "Geen veldtype ?"
+ 
+"User without name?" "Gebruiker zonder naam ?"
+ 
+"You have to supply a name for this schema!" "U dient een naam voor dit schema te specifieren!"
+ 
+"Last value" "Laatste waarde"
+ 
+"Preferences" "Voorkeuren"
+ 
+"View '%s' already exists!\nOverwrite ?" "View '%s' bestaat al.\nOverschrijven ?"
+ 
+"You have to select an index!" "U dient een index te selecteren!"
+ 
+"Field type" "Veldtype"
+ 
+"Script name" "Scriptnaam"
+ 
+"Reload" "Opnieuw laden"
+ 
+"Remove table %s from query?" "Tabel %s uit query verwijderen ?"
+ 
+"SQL window" "SQL venster"
+ 
+"Allow user to create other users" "Sta gebruiker toe andere gebruikers toe te voegen"
+ 
+"Delete current record ?" "Huidige record verwijderen ?"
+ 
+"List box" "Listbox"
+ 
+"Save to query builder" "Opslaan naar query generator"
+ 
+"fixed width" "vaste breedte"
+ 
+"Scripts" "Scripts"
+ 
+"Yes" "Ja"
+ 
+"Add label" "Beschrijving toevoegen"
+ 
+"Sequence created!" "Lijst aangemaakt"
+ 
+"Field information" "Veldeigenschappen"
+ 
+"Design" "Ontwerp"
+ 
+"Field" "Veld"
+ 
+"You have to supply an external file name!" "U dient een externe bestandsnaam op te geven."
+ 
+"Increment" "Ophogen"
+ 
+"No" "Nee"
+ 
+"Form design" "Formulierontwerp"
+ 
+"You must supply a return type!" "U dient een return-type op te geven."
+ 
+"Remove field from result ?" "Veld uit resultaat verwijderen ?"
+ 
+"There is another object (a %s) with the same name.\nPlease change it!" "Er is een ander object (een %s) met dezelfde naam.\nVerander dit a.u.b. !"
+ 
+"This query has no commands?" "Deze query heeft geen commando's?"
+ 
+"Execute query" "Query uitvoeren"
+ 
+"field cannot be null" "Veld kan niet null zijn"
+ 
+"Help" "Hulp"
+ 
+"Rename column" "Kolom hernoemen"
+ 
+"Database" "Database"
+ 
+"Information" "Informatie"
+ 
+"Close" "Sluiten"
+ 
+"Command" "Commando"
+ 
+"Table" "Tabel"
+ 
+"verify password" "Password bevestigen"
+ 
+"Vacuum" "Comprimeren"
+ 
+"Default value" "Standaardwaarde"
+ 
+"Import" "Importeren"
+ 
+"Delete index" "Index verwijderen"
+ 
+"Move up" "Naar boven"
+ 
+"index properties" "Eigenschappen index"
+ 
+"check" "controleer"
+ 
+"Create new table" "Nieuwe tabel toevoegen"
+ 
+"Visual query designer" "Visuele query generator"
+ 
+"Delete all" "Allemaal verwijderen"
+ 
+"You are going to delete\n\n %s \n\nProceed?" "U staat op het punt\n\n %s \n\nte verwijderen. Doorgaan ?"
+ 
+"Schema name" "Naam schema"
+ 
+"Error executing query" "Fout bij uitvoeren query"
+ 
+"Report name" "Naam rapport"
+ 
+"Add field" "Veld toevoegen"
+ 
+"Field name" "Veldnaam"
+ 
+"FATAL ERROR searching for PgAccess system tables" "FATALE FOUT bij het zoeken naar de PgAccess systeem tabellen"
+ 
+"A big number of rows displayed in table view will take a lot of memory!" "Een groot aantal rijen weergeven in de tabel view kost veel geheugen!"
+ 
+"Preview" "Voorbeeld"
+ 
+"Users" "Gebruikers"
+ 
+"Owner" "Eigenaar"
+ 
+"Form's window internal name" "Interne naam formulier"
+ 
+"Sort field" "Sorteerveld"
+ 
+"New name is the same as the old one!" "De nieuwe naam is gelijk aan de oude naam!"
+ 
+"Warning" "Melding"
+ 
+"Suggestions at" "Suggesties naar"
+ 
+"Functions" "Functies"
+ 
+"Schema" "Schema"
+ 
+"Open" "Openen"
+ 
+"size" "Grootte"
+ 
+"Delete" "Verwijderen"
+ 
+"Returns" "Teruggave"
+ 
+"Define new user" "Nieuwe gebruiker definieren"
+ 
+"Move down" "Naar onder"
+ 
+"Design script" "Ontwerpscript"
+ 
+"Check box" "Checkbox"
+ 
+"FINAL WARNING" "LAATSTE WAARSCHUWING"
+ 
+"Add table" "Tabel toevoegen"
+ 
+"Table viewer font" "Lettertype voor tabel viewer"
+ 
+"The field type is not specified!" "Het veldtype is niet opgegeven!"
+ 
+"Close test form" "Sluit testformulier"
+ 
+"Export table" "Tabel exporteren"
+ 
+"Add new index" "Nieuwe Index toevoegen"
+ 
+"Left" "Links"
+ 
+"Field delimiter" "Veldafscheiding"
+ 
+"Add formula" "Formule toevoegen"
+ 
+"Open database" "Database openen"
+ 
+"Return" "Teruggave"
+ 
+"Changed fonts may appear in the next working session!" "Indien u de lettertypen hebt aangepast worden deze zichtbaar nadat u het programma opnieuw hebt opgestart."
+ 
+"Error" "Fout"
+ 
+"Enter a field name" "Geef een veldnaam op"
+ 
+"field name" "Veldnaam"
+ 
+"Forms" "Formulieren"
+ 
+"Cannot add column" "Kolom niet toegevoegd worden"
+ 
+"Clean" "Reset"
+ 
+"Delete all objects ?" "Alle objecten verwijderen ?"
+ 
+"Preferred language" "Voorkeurstaal"
+ 
+"Execute SQL" "SQL uitvoeren"
+ 
+"Sequences" "Lijsten"
+ 
+"Button" "Knop"
+ 
+"Language" "Taal"
+ 
+"Query '%s' was not found!" "Query '%s' is niet gevonden!"
+ 
+"Object" "Object"
+ 
+"Font fixed" "Lettertype met vaste breedte"
+ 
+"Table name" "Tabelnaam"
+ 
+"Export" "Exporteer"
+ 
+"Change user" "Wijzigen gebruiker"
+ 
+"You must give object a new name!" "U dient het object een nieuwe naam te geven!"
+ 
+"Query" "Query"
+ 
+"User name" "Gebruikersnaam"
+ 
+"Font normal" "Normaal lettertype"
+ 
+"Import table" "Tabel importeren"
+ 
+"Toolbar" "Toolbar"
+ 
+"Radio btn" "Radio"
+ 
+"You must supply a name for this function!" "U dient deze functie een naam te geven!"
+ 
+"You have to select index fields!" "U dient indexvelden te selecteren!"
+ 
+"Constraint" "Constraint"
+ 
+"The script must have a name" "U dient een naam op te geven voor het script"
+ 
+"Save" "Opslaan"
+ 
+"Exit" "Afsluiten"
+ 
+"Inherits" "Overerft"
+ 
+"Delete field" "Veld verwijderen"
+ 
+"About" "Over"
+ 
+"Empty field name ?" "Lege veldnaam ?"
+ 
+"All report information will be deleted.\n\nProceed ?" "Alle rapport data zal worden verwijderd.\n\nDoorgaan ?"
+ 
+"Host" "Computer"
+ 
+"vacuuming database %s ..." "Comprimeren database %s ..."
+ 
+"Indexes defined" "Gedefinieerde indexen"
+ 
+"You must specify field size!" "U dient de veldbreedte op te geven."
+ 
+"Schema '%s' already exists!" "Schema '%s' bestaat al!"
+ 
+"There is another field with the same name: '%s'!\n\nReplace it ?" "Er is een ander veld met de zelfde naam: '%s'!\n\nVervangen ?"
+ 
+"Contents" "Inhoud"
+ 
+"Views" "Views"
+ 
+"Variable" "Variabele"
+ 
+"Error executing query\n\n%s\n\nPostgreSQL error message:\n%s\nPostgreSQL status:%s" "Fout bij het uitvoeren van de query\n\n%s\n\nPostgreSQL foutboodschap :\n%s\n PostgreSQL status :%s"
+ 
+"Filter conditions" "Filtercondities"
+ 
+"Error retrieving query definition" "Fout bij het laden van de query definitie."
+ 
+"Error deleting view" "Fout bij het verwijderen van de view"
+ 
+"New" "Nieuw"
+ 
+"Tables" "Tabellen"
+ 
+"Create" "Aanmaken"
+ 
+"Forms need an internal name, only literals, low case" "Formulieren moeten een interne naam krijgen, bestaand uit kleine letters"
+ 
+"Do you want to save the form into the database?" "Wilt u het formulier in de database opslaan?"
+ 
+"Schema '%s' was not found!" "Schema '%s' niet gevonden"
+ 
+"proportional" "proportioneel"
+ 
+"Function saved!" "Functie opgeslagen!"
+ 
+"with OIDs" "met OID's"
+ 
+"Table information" "Tabelinformatie"
+ 
+"Error inserting new record" "Fout bij het toevoegen van een nieuw record"
+ 
+"Column name '%s' already exists in this table!" "Kolom '%s' bestaat al in deze tabel!"
+ 
+"File" "Bestand"
+ 
+"Your table has no columns!" "Uw tabel heeft geen velden!"
+ 
+"Height" "Hoogte"
+ 
+"You will always get the latest version at:" "De laatste versie kunt u altijd krijgen op:"
+ 
+"Form must have a name" "U dient het formulier een naam te geven"
+ 
+"Password" "Wachtwoord"
+ 
+"Valid until (date)" "Geldig tot (datum)"
+ 
+"Report source" "Bron rapport"
+ 
+"Allow user to create databases" "Gebruiker toestaan nieuwe databases te maken"
+ 
+"Cancel" "Annuleren"
+ 
+"Is clustered ?" "Geclusterd ?"
+ 
+"Add new column" "Nieuwe kolom toevoegen"
+ 
+"Show SQL" "SQL weergeven"
+ 
+"New name" "Nieuwe naam"
+ 
+"Table '%s' not found!" "Tabel '%s' niet gevonden!"
+ 
+"Form name" "Naam formulier"
+ 
+"Visual designer" "Visuele ontwerpeer"
+ 
+"You choose to delete index\n\n %s \n\nProceed?" "U heeft er voor gekozen de index te verwijderen\n\n %s \n\nDoorgaan?"
+ 
+"Error retrieving from" "Fout bij het laden vanaf"
+ 
+"Save query definition" "Opslaan querydefinitie"
+ 
+"A Tcl/Tk interface to\nPostgreSQL\nby Constantin Teodorescu" "Een Tcl/TK interface voor\nPostgreSQL\n door Constantin Teodorescu"
+ 
+"Operation completed!" "Operatie uitgevoerd!"
+ 
+"Max rows displayed in table/query view" "Maximaal aantal rijen weergegeven in tabel/query view"
+ 
+"Passwords do not match!" "De wachtwoorden komen niet overeen!"
+ 
+"Rename" "Naam wijzigen"
+ 
+"Entry" "Entry???"
+ 
+"Error retrieving schema definition" "Fout bij het laden van de schemadefinitie"
+ 
+"This is an action query!\n\nExecute it?" "Dit is een actiequery!\n\nUitvoeren ?"
+ 
+"Error retrieving view definition for" "Fout bij het laden van de view definitie voor"
+ 
+"options" "opties"
+ 
+"Sequence '%s' not found!" "Lijst '%s' niet gevonden!"
+ 
+"Text" "Tekst"
+ 
+"Tcl error executing pg_exec %s\n\n%s" "Tcl fout bij het uitvoeren van pg_exec %s\n\n%s"
+ 
+"Width" "Breedte"
+ 
+"You have to supply a name for this query!" "U dient een naam op te geven voor deze query!"
+ 
+"Accessing data. Please wait ..." "Bezig met ophalen data. Een ogenblik geduld..."
+ 
+"Report footer" "Voettekst rapport"
+ 
+"Parameters" "Parameters"
+ 
+"Queries" "Queries"
+ 
+"Query '%s' already exists!" "Query '%s' bestaat al!"
+ 
+"Font bold" "Vetgedrukt lettertype"
+ 
+"Query builder" "Query generator"
+ 
+"Error defining view" "Fout bij het definieren van de view"
+ 
+"Top" "Top"
+ 
+"You must supply a name for your table!" "U dient een naam voor de tabel op te geven"
+ 
+"Page footer" "Voettekst"
+ 
+"Font italic" "Cursief lettertype"
+ 
+"Field name not entered!" "Veldnaam niet opgegeven!"
+ 
+"Index name cannot be null!" "De naam van de index mag niet leeg zijn!"
+ 
+"Sort" "Sorteren"
+ 
+"Import-Export table" "Tabel im-/exporteren"
+ 
+"Point" "Punt"
+ 
+"type" "type"
+ 
+"You should supply a name for this sequence" "Sie sollten einen Namen für diesen Zähler angeben"
+ 
+"Remove link ?" "Verweis löschen?"
+ 
+"You have to supply a table name!" "Sie müssen einen Tabellennamen angeben"
+ 
+"Report header" "Berichtskopf"
+ 
+"Attributes" "Eigenschappen"
+ 
+"Table '%s' already in schema" "Tabel '%s' bestaat al in dit schema"
+ 
+"Username" "Gebruikersnaam"
+ 
+"Minvalue" "Minimale waarde"
+ 
+"Sequence name" "Lijstnaam"
+ 
+"Define sequence" "Lijst definieren"
+ 
+"Function" "Functie"
+ 
+"Sorting and filtering not (yet) available from queries!\n\nPlease enter them in the query definition!" "Sorteren en filteren is (nog) niet beschikbaar vanuit queries!\n\nVoert u ze a.u.b. in de query definitie in!"
+ 
+"Reports" "Rapporten"
+
+"Columns" "Kolommen"
+ 
+"Indexes" "Indexen"
+
+"Permissions" "Permissies"
+
+"not null" "niet leeg"
+
+"Cluster index" "Cluster index" 
+
+"index columns" "Indexkollommen"
+
+"Add user" "Gebruiker toevoegen"
+
+"Change permissions" "Permissies wijzigen"
+
+"select" "selecteren"
+
+"update" "wijzigen"
+
+"insert" "toevoegen"
+
+"rule" "regel"
+
+"Identification" "Identificatie"
+
+"Owner ID" "ID eigenaar"
+
+"Has primary key ?" "Heeft primaire sleutel ?"
+
+"Has rules ?" "Heeft regels ?"
+
+"Statistics" "Statistieken"
+
+"Number of tuples" "Aantal tupels"
+
+"Number of pages" "Aantal pagina's"
+
+"Index name" "Naam index"
+
+"Index fields" "Indexvelden"
+
+"Table OID" "OID tabel"
+
+"View system tables" "Bekijken systeemtabellen"
+
+"Back" "Terug"
+
+"primary key" "Primaire sleutel"
+
+"Comments" "Aanmerkingen"
+
+"Print" "Afdrukken"
+}
+
+

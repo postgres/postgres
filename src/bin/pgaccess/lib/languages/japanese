@@ -1,0 +1,548 @@
+array set Messages {
+
+"Label" "ラベル"
+
+"Save schema" "スキーマを保存"
+
+"Is unique ?" "ユニーク?"
+
+"Report builder" "レポートビルダー"
+
+"Criteria" "区分"
+
+"FATAL ERROR upgrading PgAccess table" "PgAccessのテーブルをアップグレードする際に致命的なエラーが発生しました"
+
+"Save this query as a view" "このクエリをビューとして保存"
+
+"Page header" "ページへッダー"
+
+"Query name" "クエリ名"
+
+"Please select an object first!" "まず最初にオブジェクトを選んでください!"
+
+"Fields :" "フィールド :"
+
+"Name" "名前"
+
+"File name" "フィールド名"
+
+"Detail record" "レコード詳細"
+
+"Auto-load the last opened database at startup" "最後に開いたデータベースを立ち上げ時に自動的にロードする"
+
+"Maxvalue" "最大値"
+
+"Start value" "開始値"
+
+"Report fields" "レポートのフィールド"
+
+"Test form" "テストフォーム"
+
+"Error trying to connect to database '%s' on host %s \n\nPostgreSQL error
+message:%s" "接続を試みたデータベース: '%s' ホスト名: %s \n\nPostgreSQLのエラーメッセージ :%s"
+
+"No field type ?" "フィールドの型名?"
+
+"User without name?" "ユーザに名前がありませんが?"
+
+"You have to supply a name for this schema!" "このスキーマの名前を与えてください．"
+
+"Last value" "最終値"
+
+"Preferences" "設定"
+
+"View '%s' already exists!\nOverwrite ?" "ビュー '%s' はすでに存在します!\n書き換えますか?"
+
+"You have to select an index!" "インデックスを選んでください!"
+
+"Field type" "フィールドの型"
+
+"Script name" "スクリプトの名前"
+
+"Reload" "再読込"
+
+"Remove table %s from query?" "テーブル %s をクエリから削除しますか?"
+
+"SQL window" "SQLウィンドウ"
+
+"Allow user to create other users" "ユーザ作成許可"
+
+"Delete current record ?" "現在のレコードを削除しますか?"
+
+"List box" "リストボックス"
+
+"Save to query builder" "クエリビルダに保存"
+
+"fixed width" "固定幅"
+
+"Scripts" "スクリプト"
+
+"Yes" "はい"
+
+"Add label" "ラベルを追加"
+
+"Sequence created!" "シーケンスを作成しました!"
+
+"Field information" "フィールド情報"
+
+"Design" "デザイン"
+
+"Field" "フィールド"
+
+"You have to supply an external file name!" "外部ファイル名を与えてください!"
+
+"Increment" "インクリメント"
+
+"No" "いいえ"
+
+"Form design" "フォームデザイン"
+
+"You must supply a return type!" "戻りデータ型を与えてください!"
+
+"Remove field from result ?" "結果からフィールドを削除しますか?"
+
+"There is another object (a %s) with the same name.\nPlease change it!" "同じ名前のオブジェクト(%s)が存在します．\n変更してください．"
+
+"This query has no commands?" "コマンドなしのクエリですが?"
+
+"Execute query" "クエリ実行"
+
+"field cannot be null" "NOT NULL"
+
+"Help" "へルプ"
+
+"Rename column" "カラム名変更"
+
+"Database" "データベース"
+
+"Information" "情報"
+
+"Close" "閉じる"
+
+"Command" "コマンド"
+
+"Table" "テーブル"
+
+"verify password" "もう一度入力"
+
+"Vacuum" "Vacuum"
+
+"Default value" "デフォルト値"
+
+"Import" "Import"
+
+"Delete index" "インデックス削除"
+
+"Move up" "上に移動"
+
+"index properties" "インデックスのプロパティ"
+
+"check" "チェック"
+
+"Create new table" "新規テーブル作成"
+
+"Visual query designer" "ビジュアルクエリデザイナ"
+
+"Delete all" "全削除"
+
+"You are going to delete\n\n %s \n\nProceed?" "次のものを削除しようとしています\n\n %s \n\n続けますか?"
+
+"Schema name" "スキーマ名"
+
+"Error executing query" "クエリ実行エラー"
+
+"Report name" "レポート名"
+
+"Add field" "フィールド追加"
+
+"Field name" "フィールド名"
+
+"FATAL ERROR searching for PgAccess system tables" "PgAccessシステムテーブル検索中に致命的なエラー発生"
+
+"A big number of rows displayed in table view will take a lot of memory!" "テーブルビューに非常に多くの行を表示するとメモリをたくさん消費します!"
+
+"Preview" "プレビュー"
+
+"Users" "ユーザ"
+
+"Owner" "オーナ"
+
+"Form's window internal name" "フォームウィンドウの内部名"
+
+"Sort field" "フィールドでソート"
+
+"New name is the same as the old one!" "新しい名前が以前の名前と同じです!"
+
+"Warning" "警告"
+
+"Suggestions at" "ご意見はこちら"
+
+"Functions" "関数"
+
+"Schema" "スキーマ"
+
+"Open" "開く"
+
+"size" "サイズ"
+
+"Delete" "削除"
+
+"Returns" "戻り"
+
+"Define new user" "新規ユーザ作成"
+
+"Move down" "下に移動"
+
+"Design script" "スクリプトデザイン"
+
+"Check box" "チェックボックス"
+
+"FINAL WARNING" "＊最終警告＊"
+
+"Add table" "テーブル追加"
+
+"Table viewer font" "テーブルビューワのフォント"
+
+"The field type is not specified!" "フィールドの型が指定されていません!"
+
+"Close test form" "テストフォームを閉じる"
+
+"Export table" "テーブルをexport"
+
+"Add new index" "新規インデックス追加"
+
+"Left" "左"
+
+"Field delimiter" "フィールドデリミッタ"
+
+"Add formula" "式の追加"
+
+"Open database" "データベースを開く"
+
+"Return" "戻り"
+
+"Changed fonts may appear in the next working session!" "フォントの変更は次回のセッションに反映されます"
+
+"Error" "エラー"
+
+"Enter a field name" "フィールド名を入れてください．"
+
+"field name" "フィールド名"
+
+"Forms" "フォーム"
+
+"Cannot add column" "カラムを追加できません"
+
+"Clean" "消去"
+
+"Delete all objects ?" "オブジェクトをすべて削除しても良いですか?"
+
+"Preferred language" "言語選択"
+
+"Execute SQL" "SQL実行"
+
+"Sequences" "シーケンス"
+
+"Button" "ボタン"
+
+"Language" "言語"
+
+"Query '%s' was not found!" "クエリ '%s' が見つかりませんでした"
+
+"Object" "オブジェクト"
+
+"Font fixed" "固定幅フォント"
+
+"Table name" "テーブル名"
+
+"Export" "Export"
+
+"Change user" "ユーザ変更"
+
+"You must give object a new name!" "オブジェクトに新しい名前を付けてください!"
+
+"Query" "クエリ"
+
+"User name" "ユーザ名"
+
+"Font normal" "通常フォント"
+
+"Import table" "テーブルをimport"
+
+"Toolbar" "ツールバー"
+
+"Radio btn" "ラジオボタン"
+
+"You must supply a name for this function!" "関数名を指定してください!"
+
+"You have to select index fields!" "インデックスフィールドを選択してください!"
+
+"Constraint" "制約"
+
+"The script must have a name!" "スクリプトには名前が必要です!"
+
+"Save" "保存"
+
+"Exit" "終了"
+
+"Inherits" "継承"
+
+"Delete field" "フィールド削除"
+
+"About" "pgaccessについて"
+
+"Empty field name ?" "フィールド名がありません?"
+
+"All report information will be deleted.\n\nProceed ?" "すべてのレポートを削除します．\n\n続けますか?"
+
+"Host" "ホスト"
+
+"vacuuming database %s ..." "データベース %s を vacuum 中..."
+
+"Indexes defined" "定義済インデックス"
+
+"You must specify field size!" "フィールドサイズを指定してください!"
+
+"Schema '%s' already exists!" "スキーマ '%s' はすでに存在します!"
+
+"There is another field with the same name: '%s'!\n\nReplace it ?" "同一名の別のフィールド '%s' が存在します!\n\n置き換えますか?"
+
+"Contents" "内容"
+
+"Views" "ビュー"
+
+"Variable" "Variable"
+
+"Error executing query\n\n%s\n\nPostgreSQL error message:\n%s\nPostgreSQL
+status:%s" "クエリ実行中にエラー\n\nPostgreSQLのエラーメッセージ:\n%s\nPostgreSQLステータス:%s"
+
+"Filter conditions" "フィルター条件"
+
+"Error retrieving query definition" "クエリ定義読み込み中にエラー"
+
+"Error deleting view" "ビュー削除でエラー"
+
+"New" "新規"
+
+"Tables" "テーブル"
+
+"Create" "作成"
+
+"Forms need an internal name, only literals, low case" "フォームには小文字の文字列のみによる内部名が必要です"
+
+"Do you want to save the form into the database?" "データベースにフォームを保存しますか?"
+
+"Schema '%s' was not found!" "スキーマ '%s' が見つかりません!"
+
+"proportional" "プロポーナショナル"
+
+"Function saved!" "関数を保存しました"
+
+"with OIDs" "OID付帯"
+
+"Table information" "テーブル情報"
+
+"Error inserting new record" "新規レコード追加でエラー発生"
+
+"Column name '%s' already exists in this table!" "カラム名 '%s' はすでにテーブルに存在します!"
+
+"File" "ファイル"
+
+"Your table has no fields!" "テーブルにフィールドがありません!"
+
+"Height" "高さ"
+
+"You will always get the latest version at:" "最新バージョンはここから入手できます:"
+
+"Form must have a name" "フォームには名前が必要です"
+
+"Password" "パスワード"
+
+"Valid until (date)" "有効期日(日付)"
+
+"Report source" "レポートのソース"
+
+"Allow user to create databases" "データベース作成許可"
+
+"Cancel" "キャンセル"
+
+"Is clustered ?" "クラスター?"
+
+"Add new column" "新規カラム追加"
+
+"Show SQL" "SQL表示"
+
+"New name" "新規名称"
+
+"Table '%s' not found!" "テーブル '%s' が見つかりません!"
+
+"Form name" "フォーム名"
+
+"Visual designer" "ビジュアルデザイナ"
+
+"You choose to delete index\n\n %s \n\nProceed?" "インデックス削除選択．\n\n続行しますか?"
+
+"Error retrieving from" "読み込みエラー: "
+
+"Save query definition" "クエリ定義保存"
+
+"A Tcl/Tk interface to\nPostgreSQL\nby Constantin Teodorescu" "A Tcl/Tk interface to\nPostgreSQL\nby Constantin Teodorescu"
+
+"Operation completed!" "操作完了!"
+
+"Max rows displayed in table/query view" "テーブル/クエリビューに表示できる最大行数"
+
+"Passwords do not match!" "パスワードが一致しません!"
+
+"Rename" "名称変更"
+
+"Entry" "エントリ"
+
+"Error retrieving schema definition" "スキーマ定義読み込み中にエラー"
+
+"This is an action query!\n\nExecute it?" "これはアクションクエリです!\n\n実行しますか?"
+
+"Error retrieving view definition for" "次のビュー定義を読み込み中にエラー: "
+
+"options" "オプション"
+
+"Sequence '%s' not found!" "シーケンス '%s' が見つかりません!"
+
+"Text" "テキスト"
+
+"Tcl error executing pg_exec %s\n\n%s" "Tclエラー発生．pg_exec %s\n\n%s"
+
+"Width" "幅"
+
+"You have to supply a name for this query!" "クエリには名前を付けてください!"
+
+"Accessing data. Please wait ..." "データアクセス中．お待ち下さい..."
+
+"Report footer" "レポートフッタ"
+
+"Parameters" "パラメータ"
+
+"Queries" "クエリ"
+
+"Query '%s' already exists!" "クエリ '%s' はすでに存在します!"
+
+"Font bold" "ボールドフォント"
+
+"Query builder" "クエリビルダ"
+
+"Error defining view" "ビュー定義でエラー"
+
+"Top" "トップ"
+
+"You must supply a name for your table!" "テーブル名を入れてください!"
+
+"Page footer" "ページフッタ"
+
+"Font italic" "イタリックフォント"
+
+"Field name not entered!" "フィールド名が入力されていません!"
+
+"Index name cannot be null!" "インデックス名は空ではいけません!"
+
+"Sort" "ソート"
+
+"Import-Export table" "Import-Export テーブル"
+
+"Point" "点"
+
+"type" "型"
+
+"You should supply a name for this sequence" "シーケンスの名前を入れてください"
+
+"Remove link ?" "リンクを削除しますか?"
+
+"You have to supply a table name!" "テーブル名を入れてください!"
+
+"Report header" "レポートへッダ"
+
+"Attributes" "属性"
+
+"Table '%s' already in schema" "テーブル '%s' はすでにスキーマにあります"
+
+"Username" "ユーザ名"
+
+"Minvalue" "最小値"
+
+"Sequence name" "シーケンス名"
+
+"Define sequence" "シーケンス定義"
+
+"Function" "関数"
+
+"Sorting and filtering not (yet) available from queries!\n\nPlease enter
+them in the query definition!" "クエリでソートとフィルタリングを行うことは(まだ)できません!\n\nクエリ定義にソートとフィルタリングを入れてください!"
+
+"Reports" "レポート"
+
+"primary key" "主キー"
+
+"Back" "戻る"
+
+"Columns" "カラム"
+
+"Indexes" "インデックス"
+
+"Permissions" "パーミッション"
+
+"not null" "NOT NULL"
+
+"Cluster index" "クラスターインデックス"
+
+"index columns" "インデックスカラム"
+
+"Add user" "ユーザ追加"
+
+"Change permissions" "パーミッション変更"
+
+"select" "選択"
+
+"update" "更新"
+
+"insert" "追加"
+
+"rule" "ルール"
+
+"Identification" "属性"
+
+"Owner ID" "オーナID"
+
+"Has primary key ?" "主キーあり?"
+
+"Has rules ?" "ルールあり?"
+
+"Statistics" "統計情報"
+
+"Number of tuples" "タプル数"
+
+"Number of pages" "ページ数"
+
+"Index name" "インデックス名"
+
+"Index fields" "インデックスフィールド"
+
+"Table OID" "テーブルOID"
+
+"Print" "印刷"
+
+"Comments" "注釈"
+
+"Form designer" "フォームデザイナー"
+
+"Width" "幅"
+
+"Height" "高さ"
+
+"Left" "左座標"
+
+"Top" "頂点"
+
+"Class" "クラス"
+
+"View system tables" "システムテーブルも参照可能にする"
+
+}
