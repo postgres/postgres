@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.14 1999/11/04 22:07:56 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.15 1999/11/05 00:57:39 momjian Exp $
 Postgres documentation
 -->
 
@@ -132,12 +132,12 @@ Postgres documentation
     <programlisting>
 $ <userinput>psql testdb</userinput>
 Welcome to psql, the PostgreSQL interactive terminal.
-(Please type \copyright to see the distribution terms of PostgreSQL.)
- 
-Type \h for help with SQL commands,
-     \? for help on internal slash commands,
-     \q to quit,
-     \g or terminate with semicolon to execute query.
+Type \copyright for distribution terms
+     \h for help with SQL commands
+     \? for help on internal slash commands
+     \g or terminate with semicolon to execute query
+     \q to quit
+
 testdb=>
     </programlisting>
     </para>
