@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/print.c,v 1.10 2000/02/07 23:10:06 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/print.c,v 1.11 2000/02/09 16:23:43 momjian Exp $
  */
 #include <c.h>
 #include "print.h"
@@ -24,7 +24,11 @@
 #include <libpq-fe.h>
 #include <postgres_ext.h>		/* for Oid type */
 
+#ifndef __CYGWIN__
 #define DEFAULT_PAGER "more"
+#else
+#define DEFAULT_PAGER "less"
+#endif
 
 
 

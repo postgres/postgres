@@ -14,3 +14,6 @@ typedef unsigned char slock_t;
 #if (CYGWIN_VERSION_API_MAJOR >= 0) && (CYGWIN_VERSION_API_MINOR >= 8)
 #define sys_nerr _sys_nerr
 #endif
+
+/* not exported in readline.h */
+char * filename_completion_function();
