@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: primnodes.h,v 1.44 2000/07/17 03:05:27 tgl Exp $
+ * $Id: primnodes.h,v 1.45 2000/07/22 04:22:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -390,44 +390,18 @@ typedef struct SubLink
 } SubLink;
 
 /* ----------------
- * Array
- *		arrayelemtype	- type of the array's elements (homogenous!)
- *		arrayelemlength - length of that type
- *		arrayelembyval	- is the element type pass-by-value?
- *		arrayndim		- number of dimensions of the array
- *		arraylow		- base for array indexing
- *		arrayhigh		- limit for array indexing
- *		arraylen		- total length of array object
- * ----------------
- *
- *	memo from mao:	the array support we inherited from 3.1 is just
- *	wrong.	when time exists, we should redesign this stuff to get
- *	around a bunch of unfortunate implementation decisions made there.
- */
-typedef struct Array
-{
-	NodeTag		type;
-	Oid			arrayelemtype;
-	int			arrayelemlength;
-	bool		arrayelembyval;
-	int			arrayndim;
-	IntArray	arraylow;
-	IntArray	arrayhigh;
-	int			arraylen;
-} Array;
-
-/* ----------------
  *	ArrayRef: describes an array subscripting operation
  *
  * An ArrayRef can describe fetching a single element from an array,
  * fetching a subarray (array slice), storing a single element into
  * an array, or storing a slice.  The "store" cases work with an
  * initial array value and a source value that is inserted into the
- * appropriate part of the array.
+ * appropriate part of the array; the result of the operation is an
+ * entire new modified array value.
  *
- *		refattrlength	- total length of array object
- *		refelemtype		- type of the result of the subscript operation
- *		refelemlength	- length of the array element type
+ *		refattrlength	- typlen of array type
+ *		refelemtype		- type of the result of the ArrayRef operation
+ *		refelemlength	- typlen of the array element type
  *		refelembyval	- is the element type pass-by-value?
  *		refupperindexpr - expressions that evaluate to upper array indexes
  *		reflowerindexpr - expressions that evaluate to lower array indexes
@@ -449,7 +423,7 @@ typedef struct Array
  * Note: currently, refelemtype is NOT the element type, but the array type,
  * when doing subarray fetch or either type of store.  It would be cleaner
  * to add more fields so we can distinguish the array element type from the
- * result type of the subscript operator...
+ * result type of the ArrayRef operator...
  * ----------------
  */
 typedef struct ArrayRef

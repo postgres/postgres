@@ -24,7 +24,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.69 2000/07/17 03:05:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.70 2000/07/22 04:22:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -290,25 +290,6 @@ _equalRelabelType(RelabelType *a, RelabelType *b)
 		return false;
 	if (a->resulttypmod != b->resulttypmod)
 		return false;
-	return true;
-}
-
-static bool
-_equalArray(Array *a, Array *b)
-{
-	if (a->arrayelemtype != b->arrayelemtype)
-		return false;
-	/* We need not check arrayelemlength, arrayelembyval if types match */
-	if (a->arrayndim != b->arrayndim)
-		return false;
-	/* XXX shouldn't we be checking all indices??? */
-	if (a->arraylow.indx[0] != b->arraylow.indx[0])
-		return false;
-	if (a->arrayhigh.indx[0] != b->arrayhigh.indx[0])
-		return false;
-	if (a->arraylen != b->arraylen)
-		return false;
-
 	return true;
 }
 
@@ -799,9 +780,6 @@ equal(void *a, void *b)
 			break;
 		case T_Func:
 			retval = _equalFunc(a, b);
-			break;
-		case T_Array:
-			retval = _equalArray(a, b);
 			break;
 		case T_ArrayRef:
 			retval = _equalArrayRef(a, b);

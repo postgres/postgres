@@ -19,7 +19,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.117 2000/07/17 03:04:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.118 2000/07/22 04:22:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -933,26 +933,6 @@ _copyCaseWhen(CaseWhen *from)
 	return newnode;
 }
 
-static Array *
-_copyArray(Array *from)
-{
-	Array	   *newnode = makeNode(Array);
-
-	/* ----------------
-	 *	copy remainder of node
-	 * ----------------
-	 */
-	newnode->arrayelemtype = from->arrayelemtype;
-	newnode->arrayelemlength = from->arrayelemlength;
-	newnode->arrayelembyval = from->arrayelembyval;
-	newnode->arrayndim = from->arrayndim;
-	newnode->arraylow = from->arraylow;
-	newnode->arrayhigh = from->arrayhigh;
-	newnode->arraylen = from->arraylen;
-
-	return newnode;
-}
-
 static ArrayRef *
 _copyArrayRef(ArrayRef *from)
 {
@@ -1723,9 +1703,6 @@ copyObject(void *from)
 			break;
 		case T_Func:
 			retval = _copyFunc(from);
-			break;
-		case T_Array:
-			retval = _copyArray(from);
 			break;
 		case T_ArrayRef:
 			retval = _copyArrayRef(from);
