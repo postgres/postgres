@@ -1,5 +1,5 @@
 AROPT:crs
-CFLAGS:-Xa -v
+CFLAGS:-Xa -v -D__sparc__ -D__sun__
 SHARED_LIB:-K PIC
 ALL:
 SRCH_INC:
