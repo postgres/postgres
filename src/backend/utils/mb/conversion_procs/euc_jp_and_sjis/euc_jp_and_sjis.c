@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/euc_jp_and_sjis/euc_jp_and_sjis.c,v 1.3 2002/09/04 20:31:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/euc_jp_and_sjis/euc_jp_and_sjis.c,v 1.4 2002/09/13 06:41:17 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,14 +69,14 @@ euc_jp_to_sjis(PG_FUNCTION_ARGS)
 
 	Assert(PG_GETARG_INT32(0) == PG_EUC_JP);
 	Assert(PG_GETARG_INT32(1) == PG_SJIS);
-	Assert(len > 0);
+	Assert(len >= 0);
 
 	buf = palloc(len * ENCODING_GROWTH_RATE);
 	euc_jp2mic(src, buf, len);
 	mic2sjis(buf, dest, strlen(buf));
 	pfree(buf);
 
-	PG_RETURN_INT32(0);
+	PG_RETURN_VOID();
 }
 
 Datum
@@ -89,14 +89,14 @@ sjis_to_euc_jp(PG_FUNCTION_ARGS)
 
 	Assert(PG_GETARG_INT32(0) == PG_SJIS);
 	Assert(PG_GETARG_INT32(1) == PG_EUC_JP);
-	Assert(len > 0);
+	Assert(len >= 0);
 
 	buf = palloc(len * ENCODING_GROWTH_RATE);
 	sjis2mic(src, buf, len);
 	mic2euc_jp(buf, dest, strlen(buf));
 	pfree(buf);
 
-	PG_RETURN_INT32(0);
+	PG_RETURN_VOID();
 }
 
 Datum
@@ -108,11 +108,11 @@ euc_jp_to_mic(PG_FUNCTION_ARGS)
 
 	Assert(PG_GETARG_INT32(0) == PG_EUC_JP);
 	Assert(PG_GETARG_INT32(1) == PG_MULE_INTERNAL);
-	Assert(len > 0);
+	Assert(len >= 0);
 
 	euc_jp2mic(src, dest, len);
 
-	PG_RETURN_INT32(0);
+	PG_RETURN_VOID();
 }
 
 Datum
@@ -124,11 +124,11 @@ mic_to_euc_jp(PG_FUNCTION_ARGS)
 
 	Assert(PG_GETARG_INT32(0) == PG_MULE_INTERNAL);
 	Assert(PG_GETARG_INT32(1) == PG_EUC_JP);
-	Assert(len > 0);
+	Assert(len >= 0);
 
 	mic2sjis(src, dest, len);
 
-	PG_RETURN_INT32(0);
+	PG_RETURN_VOID();
 }
 
 Datum
@@ -140,11 +140,11 @@ sjis_to_mic(PG_FUNCTION_ARGS)
 
 	Assert(PG_GETARG_INT32(0) == PG_SJIS);
 	Assert(PG_GETARG_INT32(1) == PG_MULE_INTERNAL);
-	Assert(len > 0);
+	Assert(len >= 0);
 
 	sjis2mic(src, dest, len);
 
-	PG_RETURN_INT32(0);
+	PG_RETURN_VOID();
 }
 
 Datum
@@ -156,11 +156,11 @@ mic_to_sjis(PG_FUNCTION_ARGS)
 
 	Assert(PG_GETARG_INT32(0) == PG_MULE_INTERNAL);
 	Assert(PG_GETARG_INT32(1) == PG_SJIS);
-	Assert(len > 0);
+	Assert(len >= 0);
 
 	mic2sjis(src, dest, len);
 
-	PG_RETURN_INT32(0);
+	PG_RETURN_VOID();
 }
 
 /*
@@ -177,7 +177,7 @@ sjis2mic(unsigned char *sjis, unsigned char *p, int len)
 				k2;
 
 /* Eiji Tokuya patched end */
-	while (len > 0 && (c1 = *sjis++))
+	while (len >= 0 && (c1 = *sjis++))
 	{
 		if (c1 >= 0xa1 && c1 <= 0xdf)
 		{
@@ -303,7 +303,7 @@ mic2sjis(unsigned char *mic, unsigned char *p, int len)
 				c2,
 				k;
 
-	while (len > 0 && (c1 = *mic))
+	while (len >= 0 && (c1 = *mic))
 	{
 		len -= pg_mic_mblen(mic++);
 
@@ -383,7 +383,7 @@ euc_jp2mic(unsigned char *euc, unsigned char *p, int len)
 {
 	int			c1;
 
-	while (len > 0 && (c1 = *euc++))
+	while (len >= 0 && (c1 = *euc++))
 	{
 		if (c1 == SS2)
 		{						/* 1 byte kana? */
@@ -422,7 +422,7 @@ mic2euc_jp(unsigned char *mic, unsigned char *p, int len)
 {
 	int			c1;
 
-	while (len > 0 && (c1 = *mic))
+	while (len >= 0 && (c1 = *mic))
 	{
 		len -= pg_mic_mblen(mic++);
 

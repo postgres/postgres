@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/latin_and_mic/latin_and_mic.c,v 1.3 2002/09/04 20:31:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/latin_and_mic/latin_and_mic.c,v 1.4 2002/09/13 06:41:17 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,11 +56,11 @@ latin1_to_mic(PG_FUNCTION_ARGS)
 
 	Assert(PG_GETARG_INT32(0) == PG_LATIN1);
 	Assert(PG_GETARG_INT32(1) == PG_MULE_INTERNAL);
-	Assert(len > 0);
+	Assert(len >= 0);
 
 	latin12mic(src, dest, len);
 
-	PG_RETURN_INT32(0);
+	PG_RETURN_VOID();
 }
 
 Datum
@@ -72,11 +72,11 @@ mic_to_latin1(PG_FUNCTION_ARGS)
 
 	Assert(PG_GETARG_INT32(0) == PG_MULE_INTERNAL);
 	Assert(PG_GETARG_INT32(1) == PG_LATIN1);
-	Assert(len > 0);
+	Assert(len >= 0);
 
 	mic2latin1(src, dest, len);
 
-	PG_RETURN_INT32(0);
+	PG_RETURN_VOID();
 }
 
 Datum
@@ -88,11 +88,11 @@ latin3_to_mic(PG_FUNCTION_ARGS)
 
 	Assert(PG_GETARG_INT32(0) == PG_LATIN3);
 	Assert(PG_GETARG_INT32(1) == PG_MULE_INTERNAL);
-	Assert(len > 0);
+	Assert(len >= 0);
 
 	latin32mic(src, dest, len);
 
-	PG_RETURN_INT32(0);
+	PG_RETURN_VOID();
 }
 
 Datum
@@ -104,11 +104,11 @@ mic_to_latin3(PG_FUNCTION_ARGS)
 
 	Assert(PG_GETARG_INT32(0) == PG_MULE_INTERNAL);
 	Assert(PG_GETARG_INT32(1) == PG_LATIN3);
-	Assert(len > 0);
+	Assert(len >= 0);
 
 	mic2latin3(src, dest, len);
 
-	PG_RETURN_INT32(0);
+	PG_RETURN_VOID();
 }
 
 Datum
@@ -120,11 +120,11 @@ latin4_to_mic(PG_FUNCTION_ARGS)
 
 	Assert(PG_GETARG_INT32(0) == PG_LATIN4);
 	Assert(PG_GETARG_INT32(1) == PG_MULE_INTERNAL);
-	Assert(len > 0);
+	Assert(len >= 0);
 
 	latin42mic(src, dest, len);
 
-	PG_RETURN_INT32(0);
+	PG_RETURN_VOID();
 }
 
 Datum
@@ -136,11 +136,11 @@ mic_to_latin4(PG_FUNCTION_ARGS)
 
 	Assert(PG_GETARG_INT32(0) == PG_MULE_INTERNAL);
 	Assert(PG_GETARG_INT32(1) == PG_LATIN4);
-	Assert(len > 0);
+	Assert(len >= 0);
 
 	mic2latin4(src, dest, len);
 
-	PG_RETURN_INT32(0);
+	PG_RETURN_VOID();
 }
 
 static void

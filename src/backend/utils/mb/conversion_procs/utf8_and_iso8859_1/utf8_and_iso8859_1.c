@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/utf8_and_iso8859_1/utf8_and_iso8859_1.c,v 1.3 2002/09/04 20:31:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/utf8_and_iso8859_1/utf8_and_iso8859_1.c,v 1.4 2002/09/13 06:41:17 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,7 +42,7 @@ iso8859_1_to_utf8(PG_FUNCTION_ARGS)
 
 	Assert(PG_GETARG_INT32(0) == PG_LATIN1);
 	Assert(PG_GETARG_INT32(1) == PG_UTF8);
-	Assert(len > 0);
+	Assert(len >= 0);
 
 	while (len-- > 0 && (c = *src++))
 	{
@@ -56,7 +56,7 @@ iso8859_1_to_utf8(PG_FUNCTION_ARGS)
 	}
 	*dest = '\0';
 
-	PG_RETURN_INT32(0);
+	PG_RETURN_VOID();
 }
 
 Datum
@@ -71,9 +71,9 @@ utf8_to_iso8859_1(PG_FUNCTION_ARGS)
 
 	Assert(PG_GETARG_INT32(0) == PG_UTF8);
 	Assert(PG_GETARG_INT32(1) == PG_LATIN1);
-	Assert(len > 0);
+	Assert(len >= 0);
 
-	while (len > 0 && (c = *src++))
+	while (len >= 0 && (c = *src++))
 	{
 		if ((c & 0xe0) == 0xc0)
 		{
@@ -93,5 +93,5 @@ utf8_to_iso8859_1(PG_FUNCTION_ARGS)
 	}
 	*dest = '\0';
 
-	PG_RETURN_INT32(0);
+	PG_RETURN_VOID();
 }

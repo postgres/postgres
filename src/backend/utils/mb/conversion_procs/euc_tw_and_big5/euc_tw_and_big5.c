@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/euc_tw_and_big5/euc_tw_and_big5.c,v 1.3 2002/09/04 20:31:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/euc_tw_and_big5/euc_tw_and_big5.c,v 1.4 2002/09/13 06:41:17 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,14 +57,14 @@ euc_tw_to_big5(PG_FUNCTION_ARGS)
 
 	Assert(PG_GETARG_INT32(0) == PG_EUC_TW);
 	Assert(PG_GETARG_INT32(1) == PG_BIG5);
-	Assert(len > 0);
+	Assert(len >= 0);
 
 	buf = palloc(len * ENCODING_GROWTH_RATE);
 	euc_tw2mic(src, buf, len);
 	mic2big5(buf, dest, strlen(buf));
 	pfree(buf);
 
-	PG_RETURN_INT32(0);
+	PG_RETURN_VOID();
 }
 
 Datum
@@ -77,14 +77,14 @@ big5_to_euc_tw(PG_FUNCTION_ARGS)
 
 	Assert(PG_GETARG_INT32(0) == PG_BIG5);
 	Assert(PG_GETARG_INT32(1) == PG_EUC_TW);
-	Assert(len > 0);
+	Assert(len >= 0);
 
 	buf = palloc(len * ENCODING_GROWTH_RATE);
 	big52mic(src, buf, len);
 	mic2euc_tw(buf, dest, strlen(buf));
 	pfree(buf);
 
-	PG_RETURN_INT32(0);
+	PG_RETURN_VOID();
 }
 
 Datum
@@ -96,11 +96,11 @@ euc_tw_to_mic(PG_FUNCTION_ARGS)
 
 	Assert(PG_GETARG_INT32(0) == PG_EUC_TW);
 	Assert(PG_GETARG_INT32(1) == PG_MULE_INTERNAL);
-	Assert(len > 0);
+	Assert(len >= 0);
 
 	euc_tw2mic(src, dest, len);
 
-	PG_RETURN_INT32(0);
+	PG_RETURN_VOID();
 }
 
 Datum
@@ -112,11 +112,11 @@ mic_to_euc_tw(PG_FUNCTION_ARGS)
 
 	Assert(PG_GETARG_INT32(0) == PG_MULE_INTERNAL);
 	Assert(PG_GETARG_INT32(1) == PG_EUC_TW);
-	Assert(len > 0);
+	Assert(len >= 0);
 
 	mic2big5(src, dest, len);
 
-	PG_RETURN_INT32(0);
+	PG_RETURN_VOID();
 }
 
 Datum
@@ -128,11 +128,11 @@ big5_to_mic(PG_FUNCTION_ARGS)
 
 	Assert(PG_GETARG_INT32(0) == PG_BIG5);
 	Assert(PG_GETARG_INT32(1) == PG_MULE_INTERNAL);
-	Assert(len > 0);
+	Assert(len >= 0);
 
 	big52mic(src, dest, len);
 
-	PG_RETURN_INT32(0);
+	PG_RETURN_VOID();
 }
 
 Datum
@@ -144,11 +144,11 @@ mic_to_big5(PG_FUNCTION_ARGS)
 
 	Assert(PG_GETARG_INT32(0) == PG_MULE_INTERNAL);
 	Assert(PG_GETARG_INT32(1) == PG_BIG5);
-	Assert(len > 0);
+	Assert(len >= 0);
 
 	mic2big5(src, dest, len);
 
-	PG_RETURN_INT32(0);
+	PG_RETURN_VOID();
 }
 
 /*
@@ -159,7 +159,7 @@ euc_tw2mic(unsigned char *euc, unsigned char *p, int len)
 {
 	int			c1;
 
-	while (len > 0 && (c1 = *euc++))
+	while (len >= 0 && (c1 = *euc++))
 	{
 		if (c1 == SS2)
 		{
@@ -201,7 +201,7 @@ mic2euc_tw(unsigned char *mic, unsigned char *p, int len)
 {
 	int			c1;
 
-	while (len > 0 && (c1 = *mic))
+	while (len >= 0 && (c1 = *mic))
 	{
 		len -= pg_mic_mblen(mic++);
 
@@ -250,7 +250,7 @@ big52mic(unsigned char *big5, unsigned char *p, int len)
 	char		bogusBuf[3];
 	int			i;
 
-	while (len > 0 && (c1 = *big5++))
+	while (len >= 0 && (c1 = *big5++))
 	{
 		if (c1 <= 0x7fU)
 		{						/* ASCII */
@@ -302,7 +302,7 @@ mic2big5(unsigned char *mic, unsigned char *p, int len)
 	unsigned short big5buf,
 				cnsBuf;
 
-	while (len > 0 && (c1 = *mic))
+	while (len >= 0 && (c1 = *mic))
 	{
 		l = pg_mic_mblen(mic++);
 		len -= l;

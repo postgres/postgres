@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/latin2_and_win1250/latin2_and_win1250.c,v 1.3 2002/09/04 20:31:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/latin2_and_win1250/latin2_and_win1250.c,v 1.4 2002/09/13 06:41:17 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,11 +56,11 @@ latin2_to_mic(PG_FUNCTION_ARGS)
 
 	Assert(PG_GETARG_INT32(0) == PG_LATIN2);
 	Assert(PG_GETARG_INT32(1) == PG_MULE_INTERNAL);
-	Assert(len > 0);
+	Assert(len >= 0);
 
 	latin22mic(src, dest, len);
 
-	PG_RETURN_INT32(0);
+	PG_RETURN_VOID();
 }
 
 Datum
@@ -72,11 +72,11 @@ mic_to_latin2(PG_FUNCTION_ARGS)
 
 	Assert(PG_GETARG_INT32(0) == PG_MULE_INTERNAL);
 	Assert(PG_GETARG_INT32(1) == PG_LATIN2);
-	Assert(len > 0);
+	Assert(len >= 0);
 
 	mic2latin2(src, dest, len);
 
-	PG_RETURN_INT32(0);
+	PG_RETURN_VOID();
 }
 
 Datum
@@ -88,11 +88,11 @@ win1250_to_mic(PG_FUNCTION_ARGS)
 
 	Assert(PG_GETARG_INT32(0) == PG_WIN1250);
 	Assert(PG_GETARG_INT32(1) == PG_MULE_INTERNAL);
-	Assert(len > 0);
+	Assert(len >= 0);
 
 	win12502mic(src, dest, len);
 
-	PG_RETURN_INT32(0);
+	PG_RETURN_VOID();
 }
 
 Datum
@@ -104,11 +104,11 @@ mic_to_win1250(PG_FUNCTION_ARGS)
 
 	Assert(PG_GETARG_INT32(0) == PG_MULE_INTERNAL);
 	Assert(PG_GETARG_INT32(1) == PG_WIN1250);
-	Assert(len > 0);
+	Assert(len >= 0);
 
 	mic2win1250(src, dest, len);
 
-	PG_RETURN_INT32(0);
+	PG_RETURN_VOID();
 }
 
 Datum
@@ -121,14 +121,14 @@ latin2_to_win1250(PG_FUNCTION_ARGS)
 
 	Assert(PG_GETARG_INT32(0) == PG_LATIN2);
 	Assert(PG_GETARG_INT32(1) == PG_WIN1250);
-	Assert(len > 0);
+	Assert(len >= 0);
 
 	buf = palloc(len * ENCODING_GROWTH_RATE);
 	latin22mic(src, buf, len);
 	mic2win1250(buf, dest, strlen(buf));
 	pfree(buf);
 
-	PG_RETURN_INT32(0);
+	PG_RETURN_VOID();
 }
 
 Datum
@@ -141,14 +141,14 @@ win1250_to_latin2(PG_FUNCTION_ARGS)
 
 	Assert(PG_GETARG_INT32(0) == PG_WIN1250);
 	Assert(PG_GETARG_INT32(1) == PG_LATIN2);
-	Assert(len > 0);
+	Assert(len >= 0);
 
 	buf = palloc(len * ENCODING_GROWTH_RATE);
 	win12502mic(src, buf, len);
 	mic2latin2(buf, dest, strlen(buf));
 	pfree(buf);
 
-	PG_RETURN_INT32(0);
+	PG_RETURN_VOID();
 }
 
 static void

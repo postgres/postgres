@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/ascii_and_mic/ascii_and_mic.c,v 1.3 2002/09/04 20:31:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/ascii_and_mic/ascii_and_mic.c,v 1.4 2002/09/13 06:41:17 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,11 +41,11 @@ ascii_to_mic(PG_FUNCTION_ARGS)
 
 	Assert(PG_GETARG_INT32(0) == PG_SQL_ASCII);
 	Assert(PG_GETARG_INT32(1) == PG_MULE_INTERNAL);
-	Assert(len > 0);
+	Assert(len >= 0);
 
 	pg_ascii2mic(src, dest, len);
 
-	PG_RETURN_INT32(0);
+	PG_RETURN_VOID();
 }
 
 Datum
@@ -57,9 +57,9 @@ mic_to_ascii(PG_FUNCTION_ARGS)
 
 	Assert(PG_GETARG_INT32(0) == PG_MULE_INTERNAL);
 	Assert(PG_GETARG_INT32(1) == PG_SQL_ASCII);
-	Assert(len > 0);
+	Assert(len >= 0);
 
 	pg_mic2ascii(src, dest, len);
 
-	PG_RETURN_INT32(0);
+	PG_RETURN_VOID();
 }
