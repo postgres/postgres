@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.91 2003/03/25 02:44:36 momjian Exp $
+ * $Id: libpq-fe.h,v 1.92 2003/04/19 00:02:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -284,7 +284,6 @@ extern int	PQisnonblocking(const PGconn *conn);
 
 /* Force the write buffer to be written (or at least try) */
 extern int	PQflush(PGconn *conn);
-extern int	PQsendSome(PGconn *conn);
 
 /*
  * "Fast path" interface --- not really recommended for application

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.232 2003/04/17 22:26:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.233 2003/04/19 00:02:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1820,11 +1820,11 @@ makeEmptyPGconn(void)
 #endif
 
 	/*
-	 * The output buffer size is set to 8K, which is the usual size of
-	 * pipe buffers on Unix systems.  That way, when we are sending a
+	 * We try to send at least 8K at a time, which is the usual size
+	 * of pipe buffers on Unix systems.  That way, when we are sending a
 	 * large amount of data, we avoid incurring extra kernel context swaps
-	 * for partial bufferloads.  Note that we currently don't ever enlarge
-	 * the output buffer.
+	 * for partial bufferloads.  The output buffer is initially made 16K
+	 * in size, and we try to dump it after accumulating 8K.
 	 *
 	 * With the same goal of minimizing context swaps, the input buffer will
 	 * be enlarged anytime it has less than 8K free, so we initially
@@ -1832,7 +1832,7 @@ makeEmptyPGconn(void)
 	 */
 	conn->inBufSize = 16 * 1024;
 	conn->inBuffer = (char *) malloc(conn->inBufSize);
-	conn->outBufSize = 8 * 1024;
+	conn->outBufSize = 16 * 1024;
 	conn->outBuffer = (char *) malloc(conn->outBufSize);
 	conn->nonblocking = FALSE;
 	initPQExpBuffer(&conn->errorMessage);
@@ -1918,11 +1918,10 @@ closePGconn(PGconn *conn)
 	{
 		/*
 		 * Try to send "close connection" message to backend. Ignore any
-		 * error. Note: this routine used to go to substantial lengths to
-		 * avoid getting SIGPIPE'd if the connection were already closed.
-		 * Now we rely on pqFlush to avoid the signal.
+		 * error.
 		 */
-		pqPutc('X', conn);
+		pqPutMsgStart('X', conn);
+		pqPutMsgEnd(conn);
 		pqFlush(conn);
 	}
 
@@ -2152,7 +2151,7 @@ cancel_errReturn:
 
 
 /*
- * pqPacketSend() -- send a single-packet message.
+ * pqPacketSend() -- convenience routine to send a message to server.
  *
  * pack_type: the single-byte message type code.  (Pass zero for startup
  * packets, which have no message type code.)
@@ -2167,17 +2166,16 @@ int
 pqPacketSend(PGconn *conn, char pack_type,
 			 const void *buf, size_t buf_len)
 {
-	/* Send the message type. */
-	if (pack_type != 0)
-		if (pqPutc(pack_type, conn))
-			return STATUS_ERROR;
-			
-	/* Send the (self-inclusive) message length word. */
-	if (pqPutInt(buf_len + 4, 4, conn))
+	/* Start the message. */
+	if (pqPutMsgStart(pack_type, conn))
 		return STATUS_ERROR;
 
 	/* Send the message body. */
 	if (pqPutnchar(buf, buf_len, conn))
+		return STATUS_ERROR;
+
+	/* Finish the message. */
+	if (pqPutMsgEnd(conn))
 		return STATUS_ERROR;
 
 	/* Flush to ensure backend gets it. */
@@ -2624,7 +2622,7 @@ build_startup_packet(const PGconn *conn, char *packet)
 	packet_len += sizeof(ProtocolVersion);
 
 	/* Add user name, database name, options */
-	if (conn->pguser)
+	if (conn->pguser && conn->pguser[0])
 	{
 		if (packet)
 			strcpy(packet + packet_len, "user");
@@ -2633,7 +2631,7 @@ build_startup_packet(const PGconn *conn, char *packet)
 			strcpy(packet + packet_len, conn->pguser);
 		packet_len += strlen(conn->pguser) + 1;
 	}
-	if (conn->dbName)
+	if (conn->dbName && conn->dbName[0])
 	{
 		if (packet)
 			strcpy(packet + packet_len, "database");
@@ -2642,7 +2640,7 @@ build_startup_packet(const PGconn *conn, char *packet)
 			strcpy(packet + packet_len, conn->dbName);
 		packet_len += strlen(conn->dbName) + 1;
 	}
-	if (conn->pgoptions)
+	if (conn->pgoptions && conn->pgoptions[0])
 	{
 		if (packet)
 			strcpy(packet + packet_len, "options");

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.118 2003/04/17 22:26:00 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.119 2003/04/19 00:02:29 tgl Exp $
 -->
 
  <chapter id="libpq">
@@ -1749,9 +1749,10 @@ state will never end.
 <term><function>PQflush</function></term>
 <listitem>
 <para>
-Attempts to flush any data queued to the server,
-returns 0 if successful (or if the send queue is empty) or <symbol>EOF</symbol> if it failed for
-some reason.
+Attempts to flush any data queued to the server.
+Returns 0 if successful (or if the send queue is empty), -1 if it failed for
+some reason, or 1 if it was unable to send all the data in the send queue yet
+(this case can only occur if the connection is nonblocking).
 <synopsis>
 int PQflush(PGconn *conn);
 </synopsis>

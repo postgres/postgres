@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: stringinfo.h,v 1.24 2002/06/20 20:29:49 momjian Exp $
+ * $Id: stringinfo.h,v 1.25 2003/04/19 00:02:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,6 +27,9 @@
  *				string size (including the terminating '\0' char) that we can
  *				currently store in 'data' without having to reallocate
  *				more space.  We must always have maxlen > len.
+ *		cursor	is initialized to zero by makeStringInfo or initStringInfo,
+ *				but is not otherwise touched by the stringinfo.c routines.
+ *				Some routines use it to scan through a StringInfo.
  *-------------------------
  */
 typedef struct StringInfoData
@@ -34,6 +37,7 @@ typedef struct StringInfoData
 	char	   *data;
 	int			len;
 	int			maxlen;
+	int			cursor;
 } StringInfoData;
 
 typedef StringInfoData *StringInfo;
@@ -110,5 +114,11 @@ extern void appendStringInfoChar(StringInfo str, char ch);
  */
 extern void appendBinaryStringInfo(StringInfo str,
 					   const char *data, int datalen);
+
+/*------------------------
+ * enlargeStringInfo
+ * Make sure a StringInfo's buffer can hold at least 'needed' more bytes.
+ */
+extern void enlargeStringInfo(StringInfo str, int needed);
 
 #endif   /* STRINGINFO_H */

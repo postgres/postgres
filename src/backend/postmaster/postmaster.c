@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.312 2003/04/18 01:03:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.313 2003/04/19 00:02:29 tgl Exp $
  *
  * NOTES
  *
@@ -1118,7 +1118,7 @@ ProcessStartupPacket(Port *port, bool SSLdone)
 
 	if (pq_getbytes((char *) &len, 4) == EOF)
 	{
-		elog(LOG, "incomplete startup packet");
+		elog(COMMERROR, "incomplete startup packet");
 		return STATUS_ERROR;
 	}
 
@@ -1142,7 +1142,7 @@ ProcessStartupPacket(Port *port, bool SSLdone)
 
 	if (pq_getbytes(buf, len) == EOF)
 	{
-		elog(LOG, "incomplete startup packet");
+		elog(COMMERROR, "incomplete startup packet");
 		return STATUS_ERROR;
 	}
 
@@ -1189,6 +1189,16 @@ ProcessStartupPacket(Port *port, bool SSLdone)
 	/* Could add additional special packet types here */
 
 
+	/*
+	 * XXX temporary for 3.0 protocol development: we are using the minor
+	 * number as a test-version number.  Insist it match exactly so people
+	 * don't get burnt by using yesterday's libpq with today's server.
+	 * XXX this must go away before release!!!
+	 */
+	if (PG_PROTOCOL_MAJOR(proto) == 3 &&
+		PG_PROTOCOL_MINOR(proto) != PG_PROTOCOL_MINOR(PG_PROTOCOL_LATEST))
+		elog(FATAL, "Your development libpq is out of sync with the server");
+
 	/* Check we can handle the protocol the frontend is using. */
 
 	if (PG_PROTOCOL_MAJOR(proto) < PG_PROTOCOL_MAJOR(PG_PROTOCOL_EARLIEST) ||
@@ -1200,16 +1210,6 @@ ProcessStartupPacket(Port *port, bool SSLdone)
 			 PG_PROTOCOL_MAJOR(PG_PROTOCOL_EARLIEST),
 			 PG_PROTOCOL_MAJOR(PG_PROTOCOL_LATEST),
 			 PG_PROTOCOL_MINOR(PG_PROTOCOL_LATEST));
-
-	/*
-	 * XXX temporary for 3.0 protocol development: we are using the minor
-	 * number as a test-version number.  Insist it match exactly so people
-	 * don't get burnt by using yesterday's libpq with today's server.
-	 * XXX this must go away before release!!!
-	 */
-	if (PG_PROTOCOL_MAJOR(proto) == 3 &&
-		PG_PROTOCOL_MINOR(proto) != PG_PROTOCOL_MINOR(PG_PROTOCOL_LATEST))
-		elog(FATAL, "Your development libpq is out of sync with the server");
 
 	/*
 	 * Now fetch parameters out of startup packet and save them into the

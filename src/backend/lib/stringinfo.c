@@ -9,14 +9,14 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	  $Id: stringinfo.c,v 1.32 2002/09/04 20:31:18 momjian Exp $
+ *	  $Id: stringinfo.c,v 1.33 2003/04/19 00:02:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
-
-
 #include "postgres.h"
+
 #include "lib/stringinfo.h"
+
 
 /*
  * makeStringInfo
@@ -50,41 +50,7 @@ initStringInfo(StringInfo str)
 	str->maxlen = size;
 	str->len = 0;
 	str->data[0] = '\0';
-}
-
-/*
- * enlargeStringInfo
- *
- * Internal routine: make sure there is enough space for 'needed' more bytes
- * ('needed' does not include the terminating null).
- *
- * NB: because we use repalloc() to enlarge the buffer, the string buffer
- * will remain allocated in the same memory context that was current when
- * initStringInfo was called, even if another context is now current.
- * This is the desired and indeed critical behavior!
- */
-static void
-enlargeStringInfo(StringInfo str, int needed)
-{
-	int			newlen;
-
-	needed += str->len + 1;		/* total space required now */
-	if (needed <= str->maxlen)
-		return;					/* got enough space already */
-
-	/*
-	 * We don't want to allocate just a little more space with each
-	 * append; for efficiency, double the buffer size each time it
-	 * overflows. Actually, we might need to more than double it if
-	 * 'needed' is big...
-	 */
-	newlen = 2 * str->maxlen;
-	while (needed > newlen)
-		newlen = 2 * newlen;
-
-	str->data = (char *) repalloc(str->data, newlen);
-
-	str->maxlen = newlen;
+	str->cursor = 0;
 }
 
 /*
@@ -147,8 +113,9 @@ appendStringInfo(StringInfo str, const char *fmt,...)
 	}
 }
 
-/*------------------------
+/*
  * appendStringInfoChar
+ *
  * Append a single byte to str.
  * Like appendStringInfo(str, "%c", ch) but much faster.
  */
@@ -188,4 +155,45 @@ appendBinaryStringInfo(StringInfo str, const char *data, int datalen)
 	 * for binary data...
 	 */
 	str->data[str->len] = '\0';
+}
+
+/*
+ * enlargeStringInfo
+ *
+ * Make sure there is enough space for 'needed' more bytes
+ * ('needed' does not include the terminating null).
+ *
+ * External callers need not concern themselves with this, since all
+ * stringinfo.c routines do it automatically.  However, if a caller
+ * knows that a StringInfo will eventually become X bytes large, it
+ * can save some palloc overhead by enlarging the buffer before starting
+ * to store data in it.
+ *
+ * NB: because we use repalloc() to enlarge the buffer, the string buffer
+ * will remain allocated in the same memory context that was current when
+ * initStringInfo was called, even if another context is now current.
+ * This is the desired and indeed critical behavior!
+ */
+void
+enlargeStringInfo(StringInfo str, int needed)
+{
+	int			newlen;
+
+	needed += str->len + 1;		/* total space required now */
+	if (needed <= str->maxlen)
+		return;					/* got enough space already */
+
+	/*
+	 * We don't want to allocate just a little more space with each
+	 * append; for efficiency, double the buffer size each time it
+	 * overflows. Actually, we might need to more than double it if
+	 * 'needed' is big...
+	 */
+	newlen = 2 * str->maxlen;
+	while (needed > newlen)
+		newlen = 2 * newlen;
+
+	str->data = (char *) repalloc(str->data, newlen);
+
+	str->maxlen = newlen;
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.128 2003/03/25 02:44:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.129 2003/04/19 00:02:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -734,7 +734,6 @@ addTuple(PGresult *res, PGresAttValue * tup)
  * Returns: 1 if successfully submitted
  *			0 if error (conn->errorMessage is set)
  */
-
 int
 PQsendQuery(PGconn *conn, const char *query)
 {
@@ -770,51 +769,24 @@ PQsendQuery(PGconn *conn, const char *query)
 	conn->result = NULL;
 	conn->curTuple = NULL;
 
-	/* send the query to the backend; */
+	/* construct the outgoing Query message */
+	if (pqPutMsgStart('Q', conn) < 0 ||
+		pqPuts(query, conn) < 0 ||
+		pqPutMsgEnd(conn) < 0)
+	{
+		handleSendFailure(conn);
+		return 0;
+	}
 
 	/*
-	 * in order to guarantee that we don't send a partial query where we
-	 * would become out of sync with the backend and/or block during a
-	 * non-blocking connection we must first flush the send buffer before
-	 * sending more data
-	 *
-	 * an alternative is to implement 'queue reservations' where we are able
-	 * to roll up a transaction (the 'Q' along with our query) and make
-	 * sure we have enough space for it all in the send buffer.
+	 * Give the data a push.  In nonblock mode, don't complain if we're
+	 * unable to send it all; PQconsumeInput() will do any additional flushing
+	 * needed.
 	 */
-	if (pqIsnonblocking(conn))
+	if (pqFlush(conn) < 0)
 	{
-		/*
-		 * the buffer must have emptied completely before we allow a new
-		 * query to be buffered
-		 */
-		if (pqFlush(conn))
-			return 0;
-		/* 'Q' == queries */
-		/* XXX: if we fail here we really ought to not block */
-		if (pqPutc('Q', conn) != 0 || pqPuts(query, conn) != 0)
-		{
-			handleSendFailure(conn);
-			return 0;
-		}
-
-		/*
-		 * give the data a push, ignore the return value as ConsumeInput()
-		 * will do any additional flushing if needed
-		 */
-		pqFlush(conn);
-	}
-	else
-	{
-		/*
-		 * the frontend-backend protocol uses 'Q' to designate queries
-		 */
-		if (pqPutc('Q', conn) != 0 || pqPuts(query, conn) != 0 ||
-			pqFlush(conn) != 0)
-		{
-			handleSendFailure(conn);
-			return 0;
-		}
+		handleSendFailure(conn);
+		return 0;
 	}
 
 	/* OK, it's launched! */
@@ -830,7 +802,6 @@ PQsendQuery(PGconn *conn, const char *query)
  *
  * NOTE: this routine should only be called in PGASYNC_IDLE state.
  */
-
 static void
 handleSendFailure(PGconn *conn)
 {
@@ -854,12 +825,22 @@ handleSendFailure(PGconn *conn)
  * 0 return: some kind of trouble
  * 1 return: no problem
  */
-
 int
 PQconsumeInput(PGconn *conn)
 {
 	if (!conn)
 		return 0;
+
+	/*
+	 * for non-blocking connections try to flush the send-queue,
+	 * otherwise we may never get a response for something that may
+	 * not have already been sent because it's in our write buffer!
+	 */
+	if (pqIsnonblocking(conn))
+	{
+		if (pqFlush(conn) < 0)
+			return 0;
+	}
 
 	/*
 	 * Load more data, if available. We do this no matter what state we
@@ -868,16 +849,8 @@ PQconsumeInput(PGconn *conn)
 	 * we will NOT block waiting for more input.
 	 */
 	if (pqReadData(conn) < 0)
-	{
-		/*
-		 * for non-blocking connections try to flush the send-queue
-		 * otherwise we may never get a responce for something that may
-		 * not have already been sent because it's in our write buffer!
-		 */
-		if (pqIsnonblocking(conn))
-			(void) pqFlush(conn);
 		return 0;
-	}
+
 	/* Parsing of the data waits till later. */
 	return 1;
 }
@@ -1733,14 +1706,13 @@ PQgetlineAsync(PGconn *conn, char *buffer, int bufsize)
  * PQputline -- sends a string to the backend.
  * Returns 0 if OK, EOF if not.
  *
- * Chiefly here so that applications can use "COPY <rel> from stdin".
+ * This exists to support "COPY <rel> from stdin".  The backend will ignore
+ * the string if not doing COPY.
  */
 int
 PQputline(PGconn *conn, const char *s)
 {
-	if (!conn || conn->sock < 0)
-		return EOF;
-	return pqPutnchar(s, strlen(s), conn);
+	return PQputnbytes(conn, s, strlen(s));
 }
 
 /*
@@ -1752,7 +1724,14 @@ PQputnbytes(PGconn *conn, const char *buffer, int nbytes)
 {
 	if (!conn || conn->sock < 0)
 		return EOF;
-	return pqPutnchar(buffer, nbytes, conn);
+	if (nbytes > 0)
+	{
+		if (pqPutMsgStart('d', conn) < 0 ||
+			pqPutnchar(buffer, nbytes, conn) < 0 ||
+			pqPutMsgEnd(conn) < 0)
+			return EOF;
+	}
+	return 0;
 }
 
 /*
@@ -1778,6 +1757,14 @@ PQendcopy(PGconn *conn)
 		printfPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext("no COPY in progress\n"));
 		return 1;
+	}
+
+	/* Send the CopyDone message if needed */
+	if (conn->asyncStatus == PGASYNC_COPY_IN)
+	{
+		if (pqPutMsgStart('c', conn) < 0 ||
+			pqPutMsgEnd(conn) < 0)
+			return 1;
 	}
 
 	/*
@@ -1884,9 +1871,10 @@ PQfn(PGconn *conn,
 		return NULL;
 	}
 
-	if (pqPuts("F ", conn) != 0 ||		/* function */
-		pqPutInt(fnid, 4, conn) != 0 || /* function id */
-		pqPutInt(nargs, 4, conn) != 0)	/* # of args */
+	if (pqPutMsgStart('F', conn) < 0 ||	/* function call msg */
+		pqPuts("", conn) < 0 ||	/* useless string */
+		pqPutInt(fnid, 4, conn) < 0 || /* function id */
+		pqPutInt(nargs, 4, conn) < 0)	/* # of args */
 	{
 		handleSendFailure(conn);
 		return NULL;
@@ -1917,7 +1905,9 @@ PQfn(PGconn *conn,
 			}
 		}
 	}
-	if (pqFlush(conn))
+
+	if (pqPutMsgEnd(conn) < 0 ||
+		pqFlush(conn))
 	{
 		handleSendFailure(conn);
 		return NULL;
@@ -2409,7 +2399,6 @@ PQgetisnull(const PGresult *res, int tup_num, int field_num)
 int
 PQsetnonblocking(PGconn *conn, int arg)
 {
-
 	arg = (arg == TRUE) ? 1 : 0;
 	/* early out if the socket is already in the state requested */
 	if (arg == conn->nonblocking)
@@ -2437,7 +2426,6 @@ PQsetnonblocking(PGconn *conn, int arg)
 int
 PQisnonblocking(const PGconn *conn)
 {
-
 	return (pqIsnonblocking(conn));
 }
 
@@ -2445,16 +2433,7 @@ PQisnonblocking(const PGconn *conn)
 int
 PQflush(PGconn *conn)
 {
-
 	return (pqFlush(conn));
-}
-
-/* try to force data out, really only useful for non-blocking users.
- * This implementation actually works for non-blocking connections */
-int
-PQsendSome(PGconn *conn)
-{
-	return pqSendSome(conn);
 }
 
 /*
@@ -2473,5 +2452,3 @@ PQfreeNotify(PGnotify *notify)
 {
 	PQfreemem(notify);
 }
-
-

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.321 2003/04/17 22:26:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.322 2003/04/19 00:02:29 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -133,7 +133,9 @@ static const char *CreateCommandTag(Node *parsetree);
 
 /* ----------------
  *	InteractiveBackend() is called for user interactive connections
- *	the string entered by the user is placed in its parameter inBuf.
+ *
+ *	the string entered by the user is placed in its parameter inBuf,
+ *	and we act like a Q message was received.
  *
  *	EOF is returned if end-of-file input is seen; time to shut down.
  * ----------------
@@ -155,6 +157,7 @@ InteractiveBackend(StringInfo inBuf)
 	/* Reset inBuf to empty */
 	inBuf->len = 0;
 	inBuf->data[0] = '\0';
+	inBuf->cursor = 0;
 
 	for (;;)
 	{
@@ -214,6 +217,9 @@ InteractiveBackend(StringInfo inBuf)
 		break;
 	}
 
+	/* Add '\0' to make it look the same as message case. */
+	appendStringInfoChar(inBuf, (char) '\0');
+
 	/*
 	 * if the query echo flag was given, print the query..
 	 */
@@ -227,64 +233,77 @@ InteractiveBackend(StringInfo inBuf)
 /* ----------------
  *	SocketBackend()		Is called for frontend-backend connections
  *
- *	If the input is a query (case 'Q') then the string entered by
- *	the user is placed in its parameter inBuf.
- *
- *	If the input is a fastpath function call (case 'F') then
- *	the function call is processed in HandleFunctionRequest()
- *	(now called from PostgresMain()).
+ *	Returns the message type code, and loads message body data into inBuf.
  *
  *	EOF is returned if the connection is lost.
  * ----------------
  */
-
 static int
 SocketBackend(StringInfo inBuf)
 {
 	int			qtype;
 
 	/*
-	 * get input from the frontend
+	 * Get message type code from the frontend.
 	 */
 	qtype = pq_getbyte();
 
+	if (qtype == EOF)			/* frontend disconnected */
+	{
+		elog(COMMERROR, "unexpected EOF on client connection");
+		return qtype;
+	}
+
+	/*
+	 * Validate message type code before trying to read body; if we have
+	 * lost sync, better to say "command unknown" than to run out of memory
+	 * because we used garbage as a length word.
+	 */
 	switch (qtype)
 	{
-		case EOF:
-			/* frontend disconnected */
+		case 'Q':				/* simple query */
+			if (PG_PROTOCOL_MAJOR(FrontendProtocol) < 3)
+			{
+				/* old style without length word; convert */
+				if (pq_getstring(inBuf))
+				{
+					elog(COMMERROR, "unexpected EOF on client connection");
+					return EOF;
+				}
+			}
 			break;
 
-			/*
-			 * 'Q': user entered a query
-			 */
-		case 'Q':
-			if (pq_getstr(inBuf))
-				return EOF;
+		case 'F':				/* fastpath function call */
 			break;
 
-			/*
-			 * 'F':  calling user/system functions
-			 */
-		case 'F':
-			if (pq_getstr(inBuf))
-				return EOF;		/* ignore "string" at start of F message */
+		case 'X':				/* terminate */
 			break;
 
-			/*
-			 * 'X':  frontend is exiting
-			 */
-		case 'X':
+		case 'd':				/* copy data */
+		case 'c':				/* copy done */
+		case 'f':				/* copy fail */
+			/* Accept but ignore these messages, per protocol spec */
 			break;
 
-			/*
-			 * otherwise we got garbage from the frontend.
-			 *
-			 * XXX are we certain that we want to do an elog(FATAL) here?
-			 * -cim 1/24/90
-			 */
 		default:
+			/*
+			 * Otherwise we got garbage from the frontend.  We treat this
+			 * as fatal because we have probably lost message boundary sync,
+			 * and there's no good way to recover.
+			 */
 			elog(FATAL, "Socket command type %c unknown", qtype);
 			break;
+	}
+
+	/*
+	 * In protocol version 3, all frontend messages have a length word
+	 * next after the type code; we can read the message contents
+	 * independently of the type.
+	 */
+	if (PG_PROTOCOL_MAJOR(FrontendProtocol) >= 3)
+	{
+		if (pq_getmessage(inBuf, 0))
+			return EOF;			/* suitable message already logged */
 	}
 
 	return qtype;
@@ -1220,19 +1239,17 @@ int
 PostgresMain(int argc, char *argv[], const char *username)
 {
 	int			flag;
-
 	const char *DBName = NULL;
+	char	   *potential_DataDir = NULL;
 	bool		secure;
 	int			errs = 0;
 	int			debug_flag = 0;
 	GucContext	ctx;
 	GucSource	gucsource;
 	char	   *tmp;
-
 	int			firstchar;
 	StringInfo	parser_input;
-
-	char	   *potential_DataDir = NULL;
+	bool		send_rfq;
 
 	/*
 	 * Catch standard options before doing much else.  This even works on
@@ -1815,7 +1832,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.321 $ $Date: 2003/04/17 22:26:01 $\n");
+		puts("$Revision: 1.322 $ $Date: 2003/04/19 00:02:29 $\n");
 	}
 
 	/*
@@ -1902,6 +1919,8 @@ PostgresMain(int argc, char *argv[], const char *username)
 
 	PG_SETMASK(&UnBlockSig);
 
+	send_rfq = true;			/* initially, or after error */
+
 	/*
 	 * Non-error queries loop here.
 	 */
@@ -1922,7 +1941,11 @@ PostgresMain(int argc, char *argv[], const char *username)
 		 *
 		 * Note: this includes fflush()'ing the last of the prior output.
 		 */
-		ReadyForQuery(whereToSendOutput);
+		if (send_rfq)
+		{
+			ReadyForQuery(whereToSendOutput);
+			send_rfq = false;
+		}
 
 		/* ----------
 		 * Tell the statistics collector what we've collected
@@ -1986,43 +2009,9 @@ PostgresMain(int argc, char *argv[], const char *username)
 		 */
 		switch (firstchar)
 		{
+			case 'Q':			/* simple query */
 				/*
-				 * 'F' indicates a fastpath call.
-				 */
-			case 'F':
-				/* ----------
-				 * Tell the collector what we're doing
-				 * ----------
-				 */
-				pgstat_report_activity("<FASTPATH> function call");
-
-				/* start an xact for this function invocation */
-				start_xact_command();
-
-				if (HandleFunctionRequest() == EOF)
-				{
-					/* lost frontend connection during F message input */
-
-					/*
-					 * Reset whereToSendOutput to prevent elog from
-					 * attempting to send any more messages to client.
-					 */
-					if (whereToSendOutput == Remote)
-						whereToSendOutput = None;
-
-					proc_exit(0);
-				}
-
-				/* commit the function-invocation transaction */
-				finish_xact_command(false);
-				break;
-
-				/*
-				 * 'Q' indicates a user query
-				 */
-			case 'Q':
-				/*
-				 * otherwise, process the input string.
+				 * Process the query string.
 				 *
 				 * Note: transaction command start/end is now done within
 				 * pg_exec_query_string(), not here.
@@ -2038,6 +2027,35 @@ PostgresMain(int argc, char *argv[], const char *username)
 
 				if (log_statement_stats)
 					ShowUsage("QUERY STATISTICS");
+
+				send_rfq = true;
+				break;
+
+			case 'F':			/* fastpath function call */
+				/* Tell the collector what we're doing */
+				pgstat_report_activity("<FASTPATH> function call");
+
+				/* start an xact for this function invocation */
+				start_xact_command();
+
+				if (HandleFunctionRequest(parser_input) == EOF)
+				{
+					/* lost frontend connection during F message input */
+
+					/*
+					 * Reset whereToSendOutput to prevent elog from
+					 * attempting to send any more messages to client.
+					 */
+					if (whereToSendOutput == Remote)
+						whereToSendOutput = None;
+
+					proc_exit(0);
+				}
+
+				/* commit the function-invocation transaction */
+				finish_xact_command(false);
+
+				send_rfq = true;
 				break;
 
 				/*
@@ -2064,8 +2082,18 @@ PostgresMain(int argc, char *argv[], const char *username)
 				 */
 				proc_exit(0);
 
+			case 'd':				/* copy data */
+			case 'c':				/* copy done */
+			case 'f':				/* copy fail */
+				/*
+				 * Accept but ignore these messages, per protocol spec;
+				 * we probably got here because a COPY failed, and the
+				 * frontend is still sending data.
+				 */
+				break;
+
 			default:
-				elog(ERROR, "unknown frontend message was received");
+				elog(FATAL, "Socket command type %c unknown", firstchar);
 		}
 
 #ifdef MEMORY_CONTEXT_CHECKING

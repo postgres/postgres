@@ -44,7 +44,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dest.h,v 1.33 2003/03/27 16:51:29 momjian Exp $
+ * $Id: dest.h,v 1.34 2003/04/19 00:02:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -102,8 +102,6 @@ extern void EndCommand(const char *commandTag, CommandDest dest);
 
 /* Additional functions that go with destination management, more or less. */
 
-extern void SendCopyBegin(void);
-extern void ReceiveCopyBegin(void);
 extern void NullCommand(CommandDest dest);
 extern void ReadyForQuery(CommandDest dest);
 

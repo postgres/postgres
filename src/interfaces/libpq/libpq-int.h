@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-int.h,v 1.61 2003/04/17 22:26:02 tgl Exp $
+ * $Id: libpq-int.h,v 1.62 2003/04/19 00:02:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,7 +56,7 @@ typedef int ssize_t;			/* ssize_t doesn't exist in VC (atleast
  * pqcomm.h describe what the backend knows, not what libpq knows.
  */
 
-#define PG_PROTOCOL_LIBPQ	PG_PROTOCOL(3,100) /* XXX temporary value */
+#define PG_PROTOCOL_LIBPQ	PG_PROTOCOL(3,101) /* XXX temporary value */
 
 /*
  * POSTGRES backend dependent Constants.
@@ -266,6 +266,10 @@ struct pg_conn
 	int			outBufSize;		/* allocated size of buffer */
 	int			outCount;		/* number of chars waiting in buffer */
 
+	/* State for constructing messages in outBuffer */
+	int			outMsgStart;	/* offset to msg start (length word) */
+	int			outMsgEnd;		/* offset to msg end (so far) */
+
 	/* Status for asynchronous result construction */
 	PGresult   *result;			/* result being constructed */
 	PGresAttValue *curTuple;	/* tuple currently being read */
@@ -334,9 +338,10 @@ extern int	pqGetnchar(char *s, size_t len, PGconn *conn);
 extern int	pqPutnchar(const char *s, size_t len, PGconn *conn);
 extern int	pqGetInt(int *result, size_t bytes, PGconn *conn);
 extern int	pqPutInt(int value, size_t bytes, PGconn *conn);
+extern int	pqPutMsgStart(char msg_type, PGconn *conn);
+extern int	pqPutMsgEnd(PGconn *conn);
 extern int	pqReadData(PGconn *conn);
 extern int	pqFlush(PGconn *conn);
-extern int	pqSendSome(PGconn *conn);
 extern int	pqWait(int forRead, int forWrite, PGconn *conn);
 extern int	pqWaitTimed(int forRead, int forWrite, PGconn *conn, 
 						time_t finish_time);

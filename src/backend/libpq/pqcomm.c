@@ -6,8 +6,8 @@
  * These routines handle the low-level details of communication between
  * frontend and backend.  They just shove data across the communication
  * channel, and are ignorant of the semantics of the data --- or would be,
- * except for major brain damage in the design of the COPY OUT protocol.
- * Unfortunately, COPY OUT is designed to commandeer the communication
+ * except for major brain damage in the design of the old COPY OUT protocol.
+ * Unfortunately, COPY OUT was designed to commandeer the communication
  * channel (it just transfers data without wrapping it into messages).
  * No other messages can be sent while COPY OUT is in progress; and if the
  * copy is aborted by an elog(ERROR), we need to close out the copy so that
@@ -29,7 +29,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqcomm.c,v 1.149 2003/04/02 00:49:28 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.150 2003/04/19 00:02:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,12 +48,13 @@
  * low-level I/O:
  *		pq_getbytes		- get a known number of bytes from connection
  *		pq_getstring	- get a null terminated string from connection
+ *		pq_getmessage	- get a message with length word from connection
  *		pq_getbyte		- get next byte from connection
  *		pq_peekbyte		- peek at next byte from connection
  *		pq_putbytes		- send bytes to connection (not flushed until pq_flush)
  *		pq_flush		- flush pending output
  *
- * message-level I/O (and COPY OUT cruft):
+ * message-level I/O (and old-style-COPY-OUT cruft):
  *		pq_putmessage	- send a normal message (suppressed in COPY OUT mode)
  *		pq_startcopyout - inform libpq that a COPY OUT transfer is beginning
  *		pq_endcopyout	- end a COPY OUT transfer
@@ -85,9 +86,6 @@
 #include "miscadmin.h"
 #include "storage/ipc.h"
 
-extern void secure_close(Port *);
-extern ssize_t secure_read(Port *, void *, size_t);
-extern ssize_t secure_write(Port *, const void *, size_t);
 
 static void pq_close(void);
 
@@ -562,8 +560,10 @@ pq_recvbuf(void)
 		}
 		if (r == 0)
 		{
-			/* as above, only write to postmaster log */
-			elog(COMMERROR, "pq_recvbuf: unexpected EOF on client connection");
+			/*
+			 * EOF detected.  We used to write a log message here, but it's
+			 * better to expect the ultimate caller to do that.
+			 */
 			return EOF;
 		}
 		/* r contains number of bytes read, so just incr length */
@@ -636,35 +636,29 @@ pq_getbytes(char *s, size_t len)
 /* --------------------------------
  *		pq_getstring	- get a null terminated string from connection
  *
- *		The return value is placed in an expansible StringInfo.
- *		Note that space allocation comes from the current memory context!
+ *		The return value is placed in an expansible StringInfo, which has
+ *		already been initialized by the caller.
  *
- *		If maxlen is not zero, it is an upper limit on the length of the
- *		string we are willing to accept.  We abort the connection (by
- *		returning EOF) if client tries to send more than that.	Note that
- *		since we test maxlen in the outer per-bufferload loop, the limit
- *		is fuzzy: we might accept up to PQ_BUFFER_SIZE more bytes than
- *		specified.	This is fine for the intended purpose, which is just
- *		to prevent DoS attacks from not-yet-authenticated clients.
- *
- *		NOTE: this routine does not do any character set conversion,
- *		even though it is presumably useful only for text, because
- *		no code in this module should depend on the encoding.
- *		See pq_getstr_bounded in pqformat.c for that.
+ *		This is used only for dealing with old-protocol clients.  The idea
+ *		is to produce a StringInfo that looks the same as we would get from
+ *		pq_getmessage() with a newer client; we will then process it with
+ *		pq_getmsgstring.  Therefore, no character set conversion is done here,
+ *		even though this is presumably useful only for text.
  *
  *		returns 0 if OK, EOF if trouble
  * --------------------------------
  */
 int
-pq_getstring(StringInfo s, int maxlen)
+pq_getstring(StringInfo s)
 {
 	int			i;
 
 	/* Reset string to empty */
 	s->len = 0;
 	s->data[0] = '\0';
+	s->cursor = 0;
 
-	/* Read until we get the terminating '\0' or overrun maxlen */
+	/* Read until we get the terminating '\0' */
 	for (;;)
 	{
 		while (PqRecvPointer >= PqRecvLength)
@@ -677,9 +671,9 @@ pq_getstring(StringInfo s, int maxlen)
 		{
 			if (PqRecvBuffer[i] == '\0')
 			{
-				/* does not copy the \0 */
+				/* include the '\0' in the copy */
 				appendBinaryStringInfo(s, PqRecvBuffer + PqRecvPointer,
-									   i - PqRecvPointer);
+									   i - PqRecvPointer + 1);
 				PqRecvPointer = i + 1;	/* advance past \0 */
 				return 0;
 			}
@@ -689,11 +683,70 @@ pq_getstring(StringInfo s, int maxlen)
 		appendBinaryStringInfo(s, PqRecvBuffer + PqRecvPointer,
 							   PqRecvLength - PqRecvPointer);
 		PqRecvPointer = PqRecvLength;
-
-		/* If maxlen is specified, check for overlength input. */
-		if (maxlen > 0 && s->len > maxlen)
-			return EOF;
 	}
+}
+
+
+/* --------------------------------
+ *		pq_getmessage	- get a message with length word from connection
+ *
+ *		The return value is placed in an expansible StringInfo, which has
+ *		already been initialized by the caller.
+ *		Only the message body is placed in the StringInfo; the length word
+ *		is removed.  Also, s->cursor is initialized to zero for convenience
+ *		in scanning the message contents.
+ *
+ *		If maxlen is not zero, it is an upper limit on the length of the
+ *		message we are willing to accept.  We abort the connection (by
+ *		returning EOF) if client tries to send more than that.
+ *
+ *		returns 0 if OK, EOF if trouble
+ * --------------------------------
+ */
+int
+pq_getmessage(StringInfo s, int maxlen)
+{
+	int32		len;
+
+	/* Reset message buffer to empty */
+	s->len = 0;
+	s->data[0] = '\0';
+	s->cursor = 0;
+
+	/* Read message length word */
+	if (pq_getbytes((char *) &len, 4) == EOF)
+	{
+		elog(COMMERROR, "unexpected EOF within message length word");
+		return EOF;
+	}
+
+	len = ntohl(len);
+	len -= 4;					/* discount length itself */
+
+	if (len < 0 ||
+		(maxlen > 0 && len > maxlen))
+	{
+		elog(COMMERROR, "invalid message length");
+		return EOF;
+	}
+
+	if (len > 0)
+	{
+		/* Allocate space for message */
+		enlargeStringInfo(s, len);
+
+		/* And grab the message */
+		if (pq_getbytes(s->data, len) == EOF)
+		{
+			elog(COMMERROR, "incomplete client message");
+			return EOF;
+		}
+		s->len = len;
+		/* Place a trailing null per StringInfo convention */
+		s->data[len] = '\0';
+	}
+
+	return 0;
 }
 
 
@@ -781,34 +834,10 @@ pq_flush(void)
 }
 
 
-/*
- * Return EOF if the connection has been broken, else 0.
- */
-int
-pq_eof(void)
-{
-	char		x;
-	int			res;
-
-	res = recv(MyProcPort->sock, &x, 1, MSG_PEEK);
-
-	if (res < 0)
-	{
-		/* can log to postmaster log only */
-		elog(COMMERROR, "pq_eof: recv() failed: %m");
-		return EOF;
-	}
-	if (res == 0)
-		return EOF;
-	else
-		return 0;
-}
-
-
 /* --------------------------------
  * Message-level I/O routines begin here.
  *
- * These routines understand about COPY OUT protocol.
+ * These routines understand about the old-style COPY OUT protocol.
  * --------------------------------
  */
 
@@ -840,7 +869,8 @@ pq_putmessage(char msgtype, const char *s, size_t len)
 }
 
 /* --------------------------------
- *		pq_startcopyout - inform libpq that a COPY OUT transfer is beginning
+ *		pq_startcopyout - inform libpq that an old-style COPY OUT transfer
+ *			is beginning
  * --------------------------------
  */
 void

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.51 2003/03/27 16:51:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.52 2003/04/19 00:02:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -132,37 +132,6 @@ EndCommand(const char *commandTag, CommandDest dest)
 		case SPI:
 			break;
 	}
-}
-
-/*
- * These are necessary to sync communications between fe/be processes doing
- * COPY rel TO stdout
- *
- * or
- *
- * COPY rel FROM stdin
- *
- * NOTE: the message code letters are changed at protocol version 2.0
- * to eliminate possible confusion with data tuple messages.
- */
-void
-SendCopyBegin(void)
-{
-	if (PG_PROTOCOL_MAJOR(FrontendProtocol) >= 2)
-		pq_putbytes("H", 1);	/* new way */
-	else
-		pq_putbytes("B", 1);	/* old way */
-}
-
-void
-ReceiveCopyBegin(void)
-{
-	if (PG_PROTOCOL_MAJOR(FrontendProtocol) >= 2)
-		pq_putbytes("G", 1);	/* new way */
-	else
-		pq_putbytes("D", 1);	/* old way */
-	/* We *must* flush here to ensure FE knows it can send. */
-	pq_flush();
 }
 
 /* ----------------

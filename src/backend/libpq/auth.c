@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.98 2003/04/17 22:26:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.99 2003/04/19 00:02:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,6 +37,7 @@
 
 static void sendAuthRequest(Port *port, AuthRequest areq);
 static void auth_failed(Port *port, int status);
+static char *recv_password_packet(Port *port);
 static int	recv_and_check_password_packet(Port *port);
 
 char	   *pg_krb_server_keyfile;
@@ -539,11 +540,9 @@ sendAuthRequest(Port *port, AuthRequest areq)
  */
 
 static int
-pam_passwd_conv_proc(int num_msg, const struct pam_message ** msg, struct pam_response ** resp, void *appdata_ptr)
+pam_passwd_conv_proc(int num_msg, const struct pam_message ** msg,
+					 struct pam_response ** resp, void *appdata_ptr)
 {
-	StringInfoData buf;
-	int32		len;
-
 	if (num_msg != 1 || msg[0]->msg_style != PAM_PROMPT_ECHO_OFF)
 	{
 		switch (msg[0]->msg_style)
@@ -574,23 +573,20 @@ pam_passwd_conv_proc(int num_msg, const struct pam_message ** msg, struct pam_re
 	 */
 	if (strlen(appdata_ptr) == 0)
 	{
+		char	   *passwd;
+
 		sendAuthRequest(pam_port_cludge, AUTH_REQ_PASSWORD);
-		if (pq_eof() == EOF || pq_getint(&len, 4) == EOF)
+		passwd = recv_password_packet(pam_port_cludge);
+
+		if (passwd == NULL)
 			return PAM_CONV_ERR;	/* client didn't want to send password */
 
-		initStringInfo(&buf);
-		if (pq_getstr_bounded(&buf, 1000) == EOF)
-			return PAM_CONV_ERR;	/* EOF while reading password */
-
-		/* Do not echo failed password to logs, for security. */
-		elog(DEBUG5, "received PAM packet");
-
-		if (strlen(buf.data) == 0)
+		if (strlen(passwd) == 0)
 		{
 			elog(LOG, "pam_passwd_conv_proc: no password");
 			return PAM_CONV_ERR;
 		}
-		appdata_ptr = buf.data;
+		appdata_ptr = passwd;
 	}
 
 	/*
@@ -601,8 +597,6 @@ pam_passwd_conv_proc(int num_msg, const struct pam_message ** msg, struct pam_re
 	if (!*resp)
 	{
 		elog(LOG, "pam_passwd_conv_proc: Out of memory!");
-		if (buf.data)
-			pfree(buf.data);
 		return PAM_CONV_ERR;
 	}
 
@@ -708,42 +702,87 @@ CheckPAMAuth(Port *port, char *user, char *password)
 
 
 /*
- * Called when we have received the password packet.
+ * Collect password response packet from frontend.
+ *
+ * Returns NULL if couldn't get password, else palloc'd string.
  */
-static int
-recv_and_check_password_packet(Port *port)
+static char *
+recv_password_packet(Port *port)
 {
 	StringInfoData buf;
-	int32		len;
-	int			result;
 
-	if (pq_eof() == EOF || pq_getint(&len, 4) == EOF)
-		return STATUS_EOF;		/* client didn't want to send password */
+	if (PG_PROTOCOL_MAJOR(port->proto) >= 3)
+	{
+		/* Expect 'p' message type */
+		int		mtype;
+
+		mtype = pq_getbyte();
+		if (mtype != 'p')
+		{
+			/*
+			 * If the client just disconnects without offering a password,
+			 * don't make a log entry.  This is legal per protocol spec and
+			 * in fact commonly done by psql, so complaining just clutters
+			 * the log.
+			 */
+			if (mtype != EOF)
+				elog(COMMERROR, "Expected password response, got %c", mtype);
+			return NULL;		/* EOF or bad message type */
+		}
+	}
+	else
+	{
+		/* For pre-3.0 clients, avoid log entry if they just disconnect */
+		if (pq_peekbyte() == EOF)
+			return NULL;		/* EOF */
+	}
 
 	initStringInfo(&buf);
-	if (pq_getstr_bounded(&buf, 1000) == EOF) /* receive password */
+	if (pq_getmessage(&buf, 1000)) /* receive password */
 	{
+		/* EOF - pq_getmessage already logged a suitable message */
 		pfree(buf.data);
-		return STATUS_EOF;
+		return NULL;
 	}
 
 	/*
-	 * We don't actually use the password packet length the frontend sent
-	 * us; however, it's a reasonable sanity check to ensure that we
-	 * actually read as much data as we expected to.
-	 *
-	 * The password packet size is the length of the buffer, plus the size
-	 * field itself (4 bytes), plus a 1-byte terminator.
+	 * Apply sanity check: password packet length should agree with length
+	 * of contained string.  Note it is safe to use strlen here because
+	 * StringInfo is guaranteed to have an appended '\0'.
 	 */
-	if (len != (buf.len + 4 + 1))
-		elog(LOG, "unexpected password packet size: read %d, expected %d",
-			 buf.len + 4 + 1, len);
+	if (strlen(buf.data) + 1 != buf.len)
+		elog(COMMERROR, "bogus password packet size");
 
 	/* Do not echo password to logs, for security. */
 	elog(DEBUG5, "received password packet");
 
-	result = md5_crypt_verify(port, port->user_name, buf.data);
+	/*
+	 * Return the received string.  Note we do not attempt to do any
+	 * character-set conversion on it; since we don't yet know the
+	 * client's encoding, there wouldn't be much point.
+	 */
+	return buf.data;
+}
 
-	pfree(buf.data);
+
+/*
+ * Called when we have sent an authorization request for a password.
+ * Get the response and check it.
+ */
+static int
+recv_and_check_password_packet(Port *port)
+{
+	char	   *passwd;
+	int			result;
+
+	passwd = recv_password_packet(port);
+
+	if (passwd == NULL)
+		return STATUS_EOF;		/* client wouldn't send password */
+
+	result = md5_crypt_verify(port, port->user_name, passwd);
+
+	pfree(passwd);
+
 	return result;
 }

@@ -8,15 +8,17 @@
  * formatting/conversion routines that are needed to produce valid messages.
  * Note in particular the distinction between "raw data" and "text"; raw data
  * is message protocol characters and binary values that are not subject to
- * character set conversion, while text is converted by character encoding rules.
+ * character set conversion, while text is converted by character encoding
+ * rules.
  *
- * Incoming messages are read directly off the wire, as it were, but there
- * are still data-conversion tasks to be performed.
+ * Incoming messages are similarly read into a StringInfo buffer, via
+ * pq_getmessage, and then parsed and converted from that using the routines
+ * in this module.
  *
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqformat.c,v 1.26 2003/04/02 00:49:28 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/libpq/pqformat.c,v 1.27 2003/04/19 00:02:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,12 +39,13 @@
  * Special-case message output:
  *		pq_puttextmessage - generate a character set-converted message in one step
  *
- * Message input:
- *		pq_getint			- get an integer from connection
- *		pq_getstr_bounded	- get a null terminated string from connection
- * pq_getstr_bounded performs character set conversion on the collected
- * string.  Use the raw pqcomm.c routines pq_getstring or pq_getbytes
- * to fetch data without conversion.
+ * Message parsing after input:
+ *		pq_getmsgbyte	- get a raw byte from a message buffer
+ *		pq_getmsgint	- get a binary integer from a message buffer
+ *		pq_getmsgbytes	- get raw data from a message buffer
+ *		pq_copymsgbytes	- copy raw data from a message buffer
+ *		pq_getmsgstring	- get a null-terminated text string (with conversion)
+ *		pq_getmsgend	- verify message fully consumed
  */
 
 #include "postgres.h"
@@ -206,16 +209,29 @@ pq_puttextmessage(char msgtype, const char *str)
 	return pq_putmessage(msgtype, str, slen + 1);
 }
 
+
 /* --------------------------------
- *		pq_getint - get an integer from connection
- *
- *		returns 0 if OK, EOF if trouble
+ *		pq_getmsgbyte	- get a raw byte from a message buffer
  * --------------------------------
  */
 int
-pq_getint(int *result, int b)
+pq_getmsgbyte(StringInfo msg)
 {
-	int			status;
+	if (msg->cursor >= msg->len)
+		elog(ERROR, "pq_getmsgbyte: no data left in message");
+	return (unsigned char) msg->data[msg->cursor++];
+}
+
+/* --------------------------------
+ *		pq_getmsgint	- get a binary integer from a message buffer
+ *
+ *		Values are treated as unsigned.
+ * --------------------------------
+ */
+unsigned int
+pq_getmsgint(StringInfo msg, int b)
+{
+	unsigned int result;
 	unsigned char n8;
 	uint16		n16;
 	uint32		n32;
@@ -223,59 +239,93 @@ pq_getint(int *result, int b)
 	switch (b)
 	{
 		case 1:
-			status = pq_getbytes((char *) &n8, 1);
-			*result = (int) n8;
+			pq_copymsgbytes(msg, (char *) &n8, 1);
+			result = n8;
 			break;
 		case 2:
-			status = pq_getbytes((char *) &n16, 2);
-			*result = (int) (ntohs(n16));
+			pq_copymsgbytes(msg, (char *) &n16, 2);
+			result = ntohs(n16);
 			break;
 		case 4:
-			status = pq_getbytes((char *) &n32, 4);
-			*result = (int) (ntohl(n32));
+			pq_copymsgbytes(msg, (char *) &n32, 4);
+			result = ntohl(n32);
 			break;
 		default:
-
-			/*
-			 * if we elog(ERROR) here, we will lose sync with the
-			 * frontend, so just complain to postmaster log instead...
-			 */
-			elog(COMMERROR, "pq_getint: unsupported size %d", b);
-			status = EOF;
-			*result = 0;
+			elog(ERROR, "pq_getmsgint: unsupported size %d", b);
+			result = 0;			/* keep compiler quiet */
 			break;
 	}
-	return status;
+	return result;
 }
 
 /* --------------------------------
- *		pq_getstr_bounded - get a null terminated string from connection
+ *		pq_getmsgbytes	- get raw data from a message buffer
  *
- *		The return value is placed in an expansible StringInfo.
- *		Note that space allocation comes from the current memory context!
- *
- *		The maxlen parameter is interpreted as per pq_getstring.
- *
- *		returns 0 if OK, EOF if trouble
+ *		Returns a pointer directly into the message buffer; note this
+ *		may not have any particular alignment.
  * --------------------------------
  */
-int
-pq_getstr_bounded(StringInfo s, int maxlen)
+const char *
+pq_getmsgbytes(StringInfo msg, int datalen)
 {
-	int			result;
-	char	   *p;
+	const char *result;
 
-	result = pq_getstring(s, maxlen);
-
-	p = (char *) pg_client_to_server((unsigned char *) s->data, s->len);
-	if (p != s->data)			/* actual conversion has been done? */
-	{
-		/* reset s to empty, and append the new string p */
-		s->len = 0;
-		s->data[0] = '\0';
-		appendBinaryStringInfo(s, p, strlen(p));
-		pfree(p);
-	}
-
+	if (datalen > (msg->len - msg->cursor))
+		elog(ERROR, "pq_getmsgbytes: insufficient data left in message");
+	result = &msg->data[msg->cursor];
+	msg->cursor += datalen;
 	return result;
+}
+
+/* --------------------------------
+ *		pq_copymsgbytes	- copy raw data from a message buffer
+ *
+ *		Same as above, except data is copied to caller's buffer.
+ * --------------------------------
+ */
+void
+pq_copymsgbytes(StringInfo msg, char *buf, int datalen)
+{
+	if (datalen > (msg->len - msg->cursor))
+		elog(ERROR, "pq_copymsgbytes: insufficient data left in message");
+	memcpy(buf, &msg->data[msg->cursor], datalen);
+	msg->cursor += datalen;
+}
+
+/* --------------------------------
+ *		pq_getmsgstring	- get a null-terminated text string (with conversion)
+ *
+ *		May return a pointer directly into the message buffer, or a pointer
+ *		to a palloc'd conversion result.
+ * --------------------------------
+ */
+const char *
+pq_getmsgstring(StringInfo msg)
+{
+	char   *str;
+	int		slen;
+
+	str = &msg->data[msg->cursor];
+	/*
+	 * It's safe to use strlen() here because a StringInfo is guaranteed
+	 * to have a trailing null byte.  But check we found a null inside
+	 * the message.
+	 */
+	slen = strlen(str);
+	if (msg->cursor + slen >= msg->len)
+		elog(ERROR, "pq_getmsgstring: invalid string in message");
+	msg->cursor += slen + 1;
+
+	return (const char *) pg_client_to_server((unsigned char *) str, slen);
+}
+
+/* --------------------------------
+ *		pq_getmsgend	- verify message fully consumed
+ * --------------------------------
+ */
+void
+pq_getmsgend(StringInfo msg)
+{
+	if (msg->cursor != msg->len)
+		elog(ERROR, "pq_getmsgend: invalid message format");
 }

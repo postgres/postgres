@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-secure.c,v 1.29 2003/04/10 23:03:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-secure.c,v 1.30 2003/04/19 00:02:29 tgl Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
@@ -109,13 +109,6 @@
 
 extern void ExitPostmaster(int);
 extern void postmaster_error(const char *fmt,...);
-
-int			secure_initialize(void);
-void		secure_destroy(void);
-int			secure_open_server(Port *);
-void		secure_close(Port *);
-ssize_t		secure_read(Port *, void *ptr, size_t len);
-ssize_t		secure_write(Port *, void *ptr, size_t len);
 
 #ifdef USE_SSL
 static DH  *load_dh_file(int keylength);

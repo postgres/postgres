@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq.h,v 1.56 2003/01/25 05:19:47 tgl Exp $
+ * $Id: libpq.h,v 1.57 2003/04/19 00:02:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,14 +52,24 @@ extern void StreamClose(int sock);
 extern void TouchSocketFile(void);
 extern void pq_init(void);
 extern int	pq_getbytes(char *s, size_t len);
-extern int	pq_getstring(StringInfo s, int maxlen);
+extern int	pq_getstring(StringInfo s);
+extern int	pq_getmessage(StringInfo s, int maxlen);
 extern int	pq_getbyte(void);
 extern int	pq_peekbyte(void);
 extern int	pq_putbytes(const char *s, size_t len);
 extern int	pq_flush(void);
-extern int	pq_eof(void);
 extern int	pq_putmessage(char msgtype, const char *s, size_t len);
 extern void pq_startcopyout(void);
 extern void pq_endcopyout(bool errorAbort);
+
+/*
+ * prototypes for functions in be-secure.c
+ */
+extern int		secure_initialize(void);
+extern void		secure_destroy(void);
+extern int		secure_open_server(Port *port);
+extern void		secure_close(Port *port);
+extern ssize_t	secure_read(Port *port, void *ptr, size_t len);
+extern ssize_t	secure_write(Port *port, void *ptr, size_t len);
 
 #endif   /* LIBPQ_H */

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/protocol.sgml,v 1.27 2003/04/16 20:53:38 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/protocol.sgml,v 1.28 2003/04/19 00:02:29 tgl Exp $ -->
 
 <chapter id="protocol">
  <title>Frontend/Backend Protocol</title>
@@ -819,8 +819,9 @@
     Copy-in mode (data transfer to the server) is initiated when the
     backend executes a <command>COPY FROM STDIN</> SQL statement.  The backend
     sends a CopyInResponse message to the frontend.  The frontend should
-    then send zero or more CopyDataRow messages, one per row to be loaded.
-    (For <command>COPY BINARY</>, send CopyBinaryRow messages instead.)
+    then send zero or more CopyData messages, forming a stream of input
+    data.  (The message boundaries are not required to have anything to do
+    with row boundaries, although that is often a reasonable choice.)
     The frontend can terminate the copy-in mode by sending either a CopyDone
     message (allowing successful termination) or a CopyFail message (which
     will cause the <command>COPY</> SQL statement to fail with an
@@ -833,37 +834,33 @@
    <para>
     In the event of a backend-detected error during copy-in mode (including
     receipt of a CopyFail message, or indeed any frontend message other than
-    CopyDataRow, CopyBinaryRow, or CopyDone), the backend will issue an
-    ErrorResponse 
+    CopyData or CopyDone), the backend will issue an ErrorResponse 
     message.  If the <command>COPY</> command was issued via an extended-query
     message, the backend will now discard frontend messages until a Sync
     message is received, then it will issue ReadyForQuery and return to normal
     processing.  If the <command>COPY</> command was issued in a simple
     Query message, the rest of that message is discarded and ReadyForQuery
-    is issued.  In either case, any subsequent CopyDataRow, CopyBinaryRow,
-    CopyDone, or CopyFail messages issued by the frontend will simply be
-    dropped.
+    is issued.  In either case, any subsequent CopyData, CopyDone, or CopyFail
+    messages issued by the frontend will simply be dropped.
    </para>
 
    <para>
     Copy-out mode (data transfer from the server) is initiated when the
     backend executes a <command>COPY TO STDOUT</> SQL statement.  The backend
     sends a CopyOutResponse message to the frontend, followed by
-    zero or more CopyDataRow messages, one per row, followed by CopyDone.
-    (For <command>COPY BINARY</>, CopyBinaryRow messages are sent instead.)
+    zero or more CopyData messages (always one per row), followed by CopyDone.
     The backend then reverts to the command-processing mode it was
     in before the <command>COPY</> started, and sends CommandComplete.
-    The frontend cannot abort
-    the transfer (short of closing the connection), but it can discard
-    unwanted CopyDataRow, CopyBinaryRow, and CopyDone messages.
+    The frontend cannot abort the transfer (short of closing the connection),
+    but it can discard unwanted CopyData and CopyDone messages.
    </para>
 
    <para>
     In the event of a backend-detected error during copy-out mode,
     the backend will issue an ErrorResponse message and revert to normal
     processing.  The frontend should treat receipt of ErrorResponse (or
-    indeed any message type other than CopyDataRow, CopyBinaryRow, or
-    CopyDone) as terminating the copy-out mode.
+    indeed any message type other than CopyData or CopyDone) as terminating
+    the copy-out mode.
    </para>
   </sect2>
 
@@ -1157,7 +1154,9 @@ indicate that it may be sent by a frontend (F), a backend (B), or both
 (F &amp; B).
 Notice that although each message includes a byte count at the beginning,
 the message format is defined so that the message end can be found without
-reference to the byte count.  This aids validity checking.
+reference to the byte count.  This aids validity checking.  (The CopyData
+message is an exception, because it forms part of a data stream; the contents
+may not be interpretable on their own.)
 </para>
 
 <VariableList>
@@ -2002,83 +2001,7 @@ CommandComplete (B)
 
 <VarListEntry>
 <Term>
-CopyBinaryRow (F &amp; B)
-</Term>
-<ListItem>
-<Para>
-<VariableList>
-<VarListEntry>
-<Term>
-        Byte1('b')
-</Term>
-<ListItem>
-<Para>
-                Identifies the message as binary COPY data.
-		Note that the message body format is identical to the
-		<command>COPY BINARY</> file-format representation for
-		a single row of data.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
-        Int32
-</Term>
-<ListItem>
-<Para>
-                Length of message contents in bytes, including self.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
-        Int16
-</Term>
-<ListItem>
-<Para>
-                Specifies the number of fields in the row (can be zero).
-</Para>
-</ListItem>
-</VarListEntry>
-</VariableList>
-        Then, for each field, there is the following:
-<VariableList>
-<VarListEntry>
-<Term>
-        Int16
-</Term>
-<ListItem>
-<Para>
-                Zero if the field is null, otherwise the <varname>typlen</>
-		for the field datatype.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
-        Byte<Replaceable>n</Replaceable>
-</Term>
-<ListItem>
-<Para>
-                The value of the field itself in binary format.
-		Omitted if the field is null.
-		<Replaceable>n</Replaceable> is the <varname>typlen</>
-		value if <varname>typlen</> is positive.  If
-		<varname>typlen</> is -1 then the field value begins with
-		its own length as an Int32 (the length includes itself).
-</Para>
-</ListItem>
-</VarListEntry>
-</VariableList>
-
-</Para>
-</ListItem>
-</VarListEntry>
-
-
-<VarListEntry>
-<Term>
-CopyDataRow (F &amp; B)
+CopyData (F &amp; B)
 </Term>
 <ListItem>
 <Para>
@@ -2089,7 +2012,7 @@ CopyDataRow (F &amp; B)
 </Term>
 <ListItem>
 <Para>
-                Identifies the message as textual COPY data.
+                Identifies the message as COPY data.
 </Para>
 </ListItem>
 </VarListEntry>
@@ -2105,12 +2028,14 @@ CopyDataRow (F &amp; B)
 </VarListEntry>
 <VarListEntry>
 <Term>
-        String
+        Byte<Replaceable>n</Replaceable>
 </Term>
 <ListItem>
 <Para>
-                The textual representation of a single row of table data.
-		It should end with a newline.
+                Data that forms part of a COPY datastream.  Messages sent
+		from the backend will always correspond to single data rows,
+		but messages sent by frontends may divide the datastream
+		arbitrarily.
 </Para>
 </ListItem>
 </VarListEntry>
@@ -2236,8 +2161,7 @@ CopyInResponse (B)
 </Term>
 <ListItem>
 <Para>
-                0 for textual copy (CopyDataRow is expected), 1 for
-		binary copy (CopyBinaryRow is expected).
+                0 for textual copy, 1 for binary copy.
 </Para>
 </ListItem>
 </VarListEntry>
@@ -2283,8 +2207,7 @@ CopyOutResponse (B)
 </Term>
 <ListItem>
 <Para>
-                0 for textual copy (CopyDataRow will follow), 1 for
-		binary copy (CopyBinaryRow will follow).
+                0 for textual copy, 1 for binary copy.
 </Para>
 </ListItem>
 </VarListEntry>
@@ -3606,8 +3529,9 @@ StartupMessage (F)
 <ListItem>
 <Para>
                 The protocol version number.  The most significant 16 bits are
-                the major version number (3 for the format described here).
-		The least 16 significant bits are the minor version number.
+                the major version number (3 or more for the format described
+		here).
+		The least significant 16 bits are the minor version number.
 </Para>
 </ListItem>
 </VarListEntry>
@@ -3654,17 +3578,18 @@ StartupMessage (F)
 <ListItem>
 <Para>
                         Command-line arguments for the backend.  (This is
-			deprecated in favor of setting individual GUC
+			deprecated in favor of setting individual run-time
 			parameters.)
 </Para>
 </ListItem>
 </VarListEntry>
 </VariableList>
 
-                In addition to the above, any GUC parameter that can be
+                In addition to the above, any run-time parameter that can be
 		set at backend start time may be listed.  Such settings
 		will be applied during backend start (after parsing the
-		command-line options if any).
+		command-line options if any).  The values will act as
+		session defaults.
 </Para>
 </ListItem>
 </VarListEntry>
@@ -3909,6 +3834,43 @@ needs; in particular it should break long lines as needed.  Newline characters
 appearing in the error message fields should be treated as paragraph breaks,
 not line breaks.
 </para>
+
+</sect1>
+
+
+<Sect1 id="protocol-changes">
+<Title>Summary of Changes since Protocol 2.0</Title>
+
+<para>
+This section provides a quick checklist of changes, for the benefit of
+developers trying to update existing client libraries to protocol 3.0.
+</para>
+
+<para>
+The initial startup packet uses a flexible list-of-strings format
+instead of a fixed format.  Notice that session default values for run-time
+parameters can now be specified directly in the startup packet.  (Actually,
+you could do that before using the <literal>options</> field, but given the
+limited width of <literal>options</> and the lack of any way to quote
+whitespace in the values, it wasn't a very safe technique.)
+</para>
+
+<para>
+All messages now have a length count immediately following the message type
+byte (except for startup packets, which have no type byte).  Also note that
+PasswordMessage now has a type byte.
+</para>
+
+<para>
+COPY data is now encapsulated into CopyData and CopyDone messages.  There
+is a well-defined way to recover from errors during COPY.
+</para>
+
+<note>
+<para>
+Additional changes will be documented as they are implemented.
+</para>
+</note>
 
 </sect1>
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.57 2003/01/09 18:00:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.58 2003/04/19 00:02:29 tgl Exp $
  *
  * NOTES
  *	  This cruft is the server side of PQfn.
@@ -28,37 +28,12 @@
  *	  back to the frontend.  If the return returns by reference,
  *	  send down only the data portion and set the return size appropriately.
  *
- *	 OLD COMMENTS FOLLOW
- *
- *	  The VAR_LENGTH_{ARGS,RESULT} stuff is limited to MAX_STRING_LENGTH
- *	  (see src/backend/tmp/fastpath.h) for no obvious reason.  Since its
- *	  primary use (for us) is for Inversion path names, it should probably
- *	  be increased to 256 (MAXPATHLEN for Inversion, hidden in pg_type
- *	  as well as utils/adt/filename.c).
- *
- *	  Quoth PMA on 08/15/93:
- *
- *	  This code has been almost completely rewritten with an eye to
- *	  keeping it as compatible as possible with the previous (broken)
- *	  implementation.
- *
- *	  The previous implementation would assume (1) that any value of
- *	  length <= 4 bytes was passed-by-value, and that any other value
- *	  was a struct varlena (by-reference).	There was NO way to pass a
- *	  fixed-length by-reference argument (like name) or a struct
- *	  varlena of size <= 4 bytes.
- *
- *	  The new implementation checks the catalogs to determine whether
- *	  a value is by-value (type "0" is null-delimited character string,
- *	  as it is for, e.g., the parser).	The only other item obtained
- *	  from the catalogs is whether or not the value should be placed in
- *	  a struct varlena or not.	Otherwise, the size given by the
- *	  frontend is assumed to be correct (probably a bad decision, but
- *	  we do strange things in the name of compatibility).
- *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
+
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include "access/xact.h"
 #include "catalog/pg_proc.h"
@@ -71,6 +46,67 @@
 #include "utils/syscache.h"
 #include "utils/tqual.h"
 
+
+/* ----------------
+ *		GetOldFunctionMessage
+ *
+ * In pre-3.0 protocol, there is no length word on the message, so we have
+ * to have code that understands the message layout to absorb the message
+ * into a buffer.  We want to do this before we start execution, so that
+ * we do not lose sync with the frontend if there's an error.
+ *
+ * The caller should already have initialized buf to empty.
+ * ----------------
+ */
+static int
+GetOldFunctionMessage(StringInfo buf)
+{
+	int32		ibuf;
+	int			nargs;
+
+	/* Dummy string argument */
+	if (pq_getstring(buf))
+		return EOF;
+	/* Function OID */
+	if (pq_getbytes((char *) &ibuf, 4))
+		return EOF;
+	appendBinaryStringInfo(buf, (char *) &ibuf, 4);
+	/* Number of arguments */
+	if (pq_getbytes((char *) &ibuf, 4))
+		return EOF;
+	appendBinaryStringInfo(buf, (char *) &ibuf, 4);
+	nargs = ntohl(ibuf);
+	/* For each argument ... */
+	while (nargs-- > 0)
+	{
+		int			argsize;
+
+		/* argsize */
+		if (pq_getbytes((char *) &ibuf, 4))
+			return EOF;
+		appendBinaryStringInfo(buf, (char *) &ibuf, 4);
+		argsize = ntohl(ibuf);
+		if (argsize < 0)
+		{
+			/* FATAL here since no hope of regaining message sync */
+			elog(FATAL, "HandleFunctionRequest: bogus argsize %d",
+				 argsize);
+		}
+		/* and arg contents */
+		if (argsize > 0)
+		{
+			/* Allocate space for arg */
+			enlargeStringInfo(buf, argsize);
+			/* And grab it */
+			if (pq_getbytes(buf->data + buf->len, argsize))
+				return EOF;
+			buf->len += argsize;
+			/* Place a trailing null per StringInfo convention */
+			buf->data[buf->len] = '\0';
+		}
+	}
+	return 0;
+}
 
 /* ----------------
  *		SendFunctionResult
@@ -205,6 +241,12 @@ fetch_fp_info(Oid func_id, struct fp_info * fip)
  * Server side of PQfn (fastpath function calls from the frontend).
  * This corresponds to the libpq protocol symbol "F".
  *
+ * INPUT:
+ *		In protocol version 3, postgres.c has already read the message body
+ *		and will pass it in msgBuf.
+ *		In old protocol, the passed msgBuf is empty and we must read the
+ *		message here.
+ * 
  * RETURNS:
  *		0 if successful completion, EOF if frontend connection lost.
  *
@@ -218,54 +260,44 @@ fetch_fp_info(Oid func_id, struct fp_info * fip)
  * control returns to PostgresMain.
  */
 int
-HandleFunctionRequest(void)
+HandleFunctionRequest(StringInfo msgBuf)
 {
 	Oid			fid;
-	int			argsize;
 	int			nargs;
-	int			tmp;
 	AclResult	aclresult;
 	FunctionCallInfoData fcinfo;
 	Datum		retval;
 	int			i;
-	char	   *p;
 	struct fp_info my_fp;
 	struct fp_info *fip;
 
 	/*
-	 * XXX FIXME: This protocol is misdesigned.
-	 *
-	 * We really do not want to elog() before having swallowed all of the
-	 * frontend's fastpath message; otherwise we will lose sync with the
-	 * input datastream.  What should happen is we absorb all of the input
-	 * message per protocol syntax, and *then* do error checking
-	 * (including lookup of the given function ID) and elog if
-	 * appropriate.  Unfortunately, because we cannot even read the
-	 * message properly without knowing whether the data types are
-	 * pass-by-ref or pass-by-value, it's not all that easy to do :-(. The
-	 * protocol should require the client to supply what it thinks is the
-	 * typbyval and typlen value for each arg, so that we can read the
-	 * data without having to do any lookups.  Then after we've read the
-	 * message, we should do the lookups, verify agreement of the actual
-	 * function arg types with what we received, and finally call the
-	 * function.
-	 *
-	 * As things stand, not only will we lose sync for an invalid message
-	 * (such as requested function OID doesn't exist), but we may lose
-	 * sync for a perfectly valid message if we are in transaction-aborted
-	 * state! This can happen because our database lookup attempts may
-	 * fail entirely in abort state.
-	 *
-	 * Unfortunately I see no way to fix this without breaking a lot of
-	 * existing clients.  Maybe do it as part of next protocol version
-	 * change.
+	 * Read message contents if not already done.
 	 */
+	if (PG_PROTOCOL_MAJOR(FrontendProtocol) < 3)
+	{
+		if (GetOldFunctionMessage(msgBuf))
+		{
+			elog(COMMERROR, "unexpected EOF on client connection");
+			return EOF;
+		}
+	}
 
-	if (pq_getint(&tmp, 4))		/* function oid */
-		return EOF;
-	fid = (Oid) tmp;
-	if (pq_getint(&nargs, 4))	/* # of arguments */
-		return EOF;
+	/*
+	 * Now that we've eaten the input message, check to see if we actually
+	 * want to do the function call or not.  It's now safe to elog(); we won't
+	 * lose sync with the frontend.
+	 */
+	if (IsAbortedTransactionBlockState())
+		elog(ERROR, "current transaction is aborted, "
+			 "queries ignored until end of transaction block");
+
+	/*
+	 * Parse the buffer contents.
+	 */
+	(void) pq_getmsgstring(msgBuf);	/* dummy string */
+	fid = (Oid) pq_getmsgint(msgBuf, 4); /* function oid */
+	nargs = pq_getmsgint(msgBuf, 4);	/* # of arguments */
 
 	/*
 	 * There used to be a lame attempt at caching lookup info here. Now we
@@ -274,11 +306,14 @@ HandleFunctionRequest(void)
 	fip = &my_fp;
 	fetch_fp_info(fid, fip);
 
+	/* Check permission to call function */
+	aclresult = pg_proc_aclcheck(fid, GetUserId(), ACL_EXECUTE);
+	if (aclresult != ACLCHECK_OK)
+		aclcheck_error(aclresult, get_func_name(fid));
+
 	if (fip->flinfo.fn_nargs != nargs || nargs > FUNC_MAX_ARGS)
-	{
 		elog(ERROR, "HandleFunctionRequest: actual arguments (%d) != registered arguments (%d)",
 			 nargs, fip->flinfo.fn_nargs);
-	}
 
 	MemSet(&fcinfo, 0, sizeof(fcinfo));
 	fcinfo.flinfo = &fip->flinfo;
@@ -286,21 +321,21 @@ HandleFunctionRequest(void)
 
 	/*
 	 * Copy supplied arguments into arg vector.  Note there is no way for
-	 * frontend to specify a NULL argument --- more misdesign.
+	 * frontend to specify a NULL argument --- this protocol is misdesigned.
 	 */
 	for (i = 0; i < nargs; ++i)
 	{
-		if (pq_getint(&argsize, 4))
-			return EOF;
+		int			argsize;
+		char	   *p;
+
+		argsize = pq_getmsgint(msgBuf, 4);
 		if (fip->argbyval[i])
 		{						/* by-value */
 			if (argsize < 1 || argsize > 4)
 				elog(ERROR, "HandleFunctionRequest: bogus argsize %d",
 					 argsize);
 			/* XXX should we demand argsize == fip->arglen[i] ? */
-			if (pq_getint(&tmp, argsize))
-				return EOF;
-			fcinfo.arg[i] = (Datum) tmp;
+			fcinfo.arg[i] = (Datum) pq_getmsgint(msgBuf, argsize);
 		}
 		else
 		{						/* by-reference ... */
@@ -309,13 +344,9 @@ HandleFunctionRequest(void)
 				if (argsize < 0)
 					elog(ERROR, "HandleFunctionRequest: bogus argsize %d",
 						 argsize);
-				/* I suspect this +1 isn't really needed - tgl 5/2000 */
-				p = palloc(argsize + VARHDRSZ + 1);		/* Added +1 to solve
-														 * memory leak - Peter
-														 * 98 Jan 6 */
+				p = palloc(argsize + VARHDRSZ);
 				VARATT_SIZEP(p) = argsize + VARHDRSZ;
-				if (pq_getbytes(VARDATA(p), argsize))
-					return EOF;
+				pq_copymsgbytes(msgBuf, VARDATA(p), argsize);
 			}
 			else
 			{					/* ... fixed */
@@ -323,28 +354,11 @@ HandleFunctionRequest(void)
 					elog(ERROR, "HandleFunctionRequest: bogus argsize %d, should be %d",
 						 argsize, fip->arglen[i]);
 				p = palloc(argsize + 1);		/* +1 in case argsize is 0 */
-				if (pq_getbytes(p, argsize))
-					return EOF;
+				pq_copymsgbytes(msgBuf, p, argsize);
 			}
 			fcinfo.arg[i] = PointerGetDatum(p);
 		}
 	}
-
-	/*
-	 * Now that we've eaten the input message, check to see if we actually
-	 * want to do the function call or not.
-	 *
-	 * Currently, we report an error if in ABORT state, or return a dummy
-	 * NULL response if fastpath support has been compiled out.
-	 */
-	if (IsAbortedTransactionBlockState())
-		elog(ERROR, "current transaction is aborted, "
-			 "queries ignored until end of transaction block");
-
-	/* Check permission to call function */
-	aclresult = pg_proc_aclcheck(fid, GetUserId(), ACL_EXECUTE);
-	if (aclresult != ACLCHECK_OK)
-		aclcheck_error(aclresult, get_func_name(fid));
 
 	/*
 	 * Set up a query snapshot in case function needs one.  (It is not safe

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.191 2003/04/04 20:42:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.192 2003/04/19 00:02:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,6 +31,7 @@
 #include "commands/trigger.h"
 #include "executor/executor.h"
 #include "libpq/libpq.h"
+#include "libpq/pqformat.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
@@ -50,6 +51,17 @@
 #define OCTVALUE(c) ((c) - '0')
 
 /*
+ * Represents the different source/dest cases we need to worry about at
+ * the bottom level
+ */
+typedef enum CopyDest
+{
+	COPY_FILE,					/* to/from file */
+	COPY_OLD_FE,				/* to/from frontend (old protocol) */
+	COPY_NEW_FE					/* to/from frontend (new protocol) */
+} CopyDest;
+
+/*
  * Represents the type of data returned by CopyReadAttribute()
  */
 typedef enum CopyReadResult
@@ -61,13 +73,13 @@ typedef enum CopyReadResult
 
 /* non-export function prototypes */
 static void CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
-	   FILE *fp, char *delim, char *null_print);
+				   char *delim, char *null_print);
 static void CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
-		 FILE *fp, char *delim, char *null_print);
+					 char *delim, char *null_print);
 static Oid	GetInputFunction(Oid type);
 static Oid	GetTypeElement(Oid type);
-static char *CopyReadAttribute(FILE *fp, const char *delim, CopyReadResult *result);
-static void CopyAttributeOut(FILE *fp, char *string, char *delim);
+static char *CopyReadAttribute(const char *delim, CopyReadResult *result);
+static void CopyAttributeOut(char *string, char *delim);
 static List *CopyGetAttnums(Relation rel, List *attnamelist);
 
 static const char BinarySignature[12] = "PGBCOPY\n\377\r\n\0";
@@ -77,7 +89,11 @@ static const char BinarySignature[12] = "PGBCOPY\n\377\r\n\0";
  * never been reentrant...
  */
 int			copy_lineno = 0;	/* exported for use by elog() -- dz */
-static bool fe_eof;
+
+static CopyDest copy_dest;
+static FILE *copy_file;			/* if copy_dest == COPY_FILE */
+static StringInfo copy_msgbuf;	/* if copy_dest == COPY_NEW_FE */
+static bool fe_eof;				/* true if detected end of copy data */
 
 /*
  * These static variables are used to avoid incurring overhead for each
@@ -96,98 +112,229 @@ static int	server_encoding;
 /*
  * Internal communications functions
  */
-static void CopySendData(void *databuf, int datasize, FILE *fp);
-static void CopySendString(const char *str, FILE *fp);
-static void CopySendChar(char c, FILE *fp);
-static void CopyGetData(void *databuf, int datasize, FILE *fp);
-static int	CopyGetChar(FILE *fp);
-static int	CopyGetEof(FILE *fp);
-static int	CopyPeekChar(FILE *fp);
-static void CopyDonePeek(FILE *fp, int c, bool pickup);
+static void SendCopyBegin(bool binary);
+static void ReceiveCopyBegin(bool binary);
+static void SendCopyEnd(bool binary);
+static void CopySendData(void *databuf, int datasize);
+static void CopySendString(const char *str);
+static void CopySendChar(char c);
+static void CopyGetData(void *databuf, int datasize);
+static int	CopyGetChar(void);
+#define CopyGetEof()  (fe_eof)
+static int	CopyPeekChar(void);
+static void CopyDonePeek(int c, bool pickup);
 
 /*
- * CopySendData sends output data either to the file
- *	specified by fp or, if fp is NULL, using the standard
- *	backend->frontend functions
- *
+ * Send copy start/stop messages for frontend copies.  These have changed
+ * in past protocol redesigns.
+ */
+static void
+SendCopyBegin(bool binary)
+{
+	if (PG_PROTOCOL_MAJOR(FrontendProtocol) >= 3)
+	{
+		pq_putbytes("H", 1);	/* new way */
+		/* XXX grottiness needed for old protocol */
+		pq_startcopyout();
+		copy_dest = COPY_NEW_FE;
+	}
+	else if (PG_PROTOCOL_MAJOR(FrontendProtocol) >= 2)
+	{
+		pq_putbytes("H", 1);	/* old way */
+		/* grottiness needed for old protocol */
+		pq_startcopyout();
+		copy_dest = COPY_OLD_FE;
+	}
+	else
+	{
+		pq_putbytes("B", 1);	/* very old way */
+		/* grottiness needed for old protocol */
+		pq_startcopyout();
+		copy_dest = COPY_OLD_FE;
+	}
+}
+
+static void
+ReceiveCopyBegin(bool binary)
+{
+	if (PG_PROTOCOL_MAJOR(FrontendProtocol) >= 3)
+	{
+		pq_putbytes("G", 1);	/* new way */
+		copy_dest = COPY_NEW_FE;
+		copy_msgbuf = makeStringInfo();
+	}
+	else if (PG_PROTOCOL_MAJOR(FrontendProtocol) >= 2)
+	{
+		pq_putbytes("G", 1);	/* old way */
+		copy_dest = COPY_OLD_FE;
+	}
+	else
+	{
+		pq_putbytes("D", 1);	/* very old way */
+		copy_dest = COPY_OLD_FE;
+	}
+	/* We *must* flush here to ensure FE knows it can send. */
+	pq_flush();
+}
+
+static void
+SendCopyEnd(bool binary)
+{
+	if (!binary)
+		CopySendData("\\.\n", 3);
+	pq_endcopyout(false);
+}
+
+/*
+ * CopySendData sends output data to the destination (file or frontend)
  * CopySendString does the same for null-terminated strings
  * CopySendChar does the same for single characters
  *
  * NB: no data conversion is applied by these functions
  */
 static void
-CopySendData(void *databuf, int datasize, FILE *fp)
+CopySendData(void *databuf, int datasize)
 {
-	if (!fp)
+	switch (copy_dest)
 	{
-		if (pq_putbytes((char *) databuf, datasize))
-			fe_eof = true;
-	}
-	else
-	{
-		fwrite(databuf, datasize, 1, fp);
-		if (ferror(fp))
-			elog(ERROR, "CopySendData: %m");
+		case COPY_FILE:
+			fwrite(databuf, datasize, 1, copy_file);
+			if (ferror(copy_file))
+				elog(ERROR, "CopySendData: %m");
+			break;
+		case COPY_OLD_FE:
+			if (pq_putbytes((char *) databuf, datasize))
+				fe_eof = true;
+			break;
+		case COPY_NEW_FE:
+			/* XXX fix later */
+			if (pq_putbytes((char *) databuf, datasize))
+				fe_eof = true;
+			break;
 	}
 }
 
 static void
-CopySendString(const char *str, FILE *fp)
+CopySendString(const char *str)
 {
-	CopySendData((void *) str, strlen(str), fp);
+	CopySendData((void *) str, strlen(str));
 }
 
 static void
-CopySendChar(char c, FILE *fp)
+CopySendChar(char c)
 {
-	CopySendData(&c, 1, fp);
+	CopySendData(&c, 1);
 }
 
 /*
- * CopyGetData reads output data either from the file
- *	specified by fp or, if fp is NULL, using the standard
- *	backend->frontend functions
- *
+ * CopyGetData reads data from the source (file or frontend)
  * CopyGetChar does the same for single characters
- * CopyGetEof checks if it's EOF on the input (or, check for EOF result
- *		from CopyGetChar)
+ *
+ * CopyGetEof checks if EOF was detected by previous Get operation.
+ *
+ * Note: when copying from the frontend, we expect a proper EOF mark per
+ * protocol; if the frontend simply drops the connection, we raise error.
+ * It seems unwise to allow the COPY IN to complete normally in that case.
  *
  * NB: no data conversion is applied by these functions
  */
 static void
-CopyGetData(void *databuf, int datasize, FILE *fp)
+CopyGetData(void *databuf, int datasize)
 {
-	if (!fp)
+	switch (copy_dest)
 	{
-		if (pq_getbytes((char *) databuf, datasize))
-			fe_eof = true;
+		case COPY_FILE:
+			fread(databuf, datasize, 1, copy_file);
+			if (feof(copy_file))
+				fe_eof = true;
+			break;
+		case COPY_OLD_FE:
+			if (pq_getbytes((char *) databuf, datasize))
+			{
+				/* Only a \. terminator is legal EOF in old protocol */
+				elog(ERROR, "unexpected EOF on client connection");
+			}
+			break;
+		case COPY_NEW_FE:
+			while (datasize > 0 && !fe_eof)
+			{
+				int		avail;
+
+				while (copy_msgbuf->cursor >= copy_msgbuf->len)
+				{
+					/* Try to receive another message */
+					int			mtype;
+
+					mtype = pq_getbyte();
+					if (mtype == EOF)
+						elog(ERROR, "unexpected EOF on client connection");
+					if (pq_getmessage(copy_msgbuf, 0))
+						elog(ERROR, "unexpected EOF on client connection");
+					switch (mtype)
+					{
+						case 'd': /* CopyData */
+							break;
+						case 'c': /* CopyDone */
+							/* COPY IN correctly terminated by frontend */
+							fe_eof = true;
+							return;
+						case 'f': /* CopyFail */
+							elog(ERROR, "COPY IN failed: %s",
+								 pq_getmsgstring(copy_msgbuf));
+							break;
+						default:
+							elog(ERROR, "unexpected message type %c during COPY IN",
+								 mtype);
+							break;
+					}
+				}
+				avail = copy_msgbuf->len - copy_msgbuf->cursor;
+				if (avail > datasize)
+					avail = datasize;
+				pq_copymsgbytes(copy_msgbuf, databuf, avail);
+				databuf = (void *) ((char *) databuf + avail);
+				datasize =- avail;
+			}
+			break;
 	}
-	else
-		fread(databuf, datasize, 1, fp);
 }
 
 static int
-CopyGetChar(FILE *fp)
+CopyGetChar(void)
 {
-	if (!fp)
+	int		ch;
+
+	switch (copy_dest)
 	{
-		int			ch = pq_getbyte();
+		case COPY_FILE:
+			ch = getc(copy_file);
+			break;
+		case COPY_OLD_FE:
+			ch = pq_getbyte();
+			if (ch == EOF)
+			{
+				/* Only a \. terminator is legal EOF in old protocol */
+				elog(ERROR, "unexpected EOF on client connection");
+			}
+			break;
+		case COPY_NEW_FE:
+		{
+			unsigned char	cc;
 
-		if (ch == EOF)
-			fe_eof = true;
-		return ch;
+			CopyGetData(&cc, 1);
+			if (fe_eof)
+				ch = EOF;
+			else
+				ch = cc;
+			break;
+		}
+		default:
+			ch = EOF;
+			break;
 	}
-	else
-		return getc(fp);
-}
-
-static int
-CopyGetEof(FILE *fp)
-{
-	if (!fp)
-		return fe_eof;
-	else
-		return feof(fp);
+	if (ch == EOF)
+		fe_eof = true;
+	return ch;
 }
 
 /*
@@ -200,40 +347,74 @@ CopyGetEof(FILE *fp)
  * (if pickup is true) or leave it on the stream (if pickup is false).
  */
 static int
-CopyPeekChar(FILE *fp)
+CopyPeekChar(void)
 {
-	if (!fp)
-	{
-		int			ch = pq_peekbyte();
+	int		ch;
 
-		if (ch == EOF)
-			fe_eof = true;
-		return ch;
+	switch (copy_dest)
+	{
+		case COPY_FILE:
+			ch = getc(copy_file);
+			break;
+		case COPY_OLD_FE:
+			ch = pq_peekbyte();
+			if (ch == EOF)
+			{
+				/* Only a \. terminator is legal EOF in old protocol */
+				elog(ERROR, "unexpected EOF on client connection");
+			}
+			break;
+		case COPY_NEW_FE:
+		{
+			unsigned char	cc;
+
+			CopyGetData(&cc, 1);
+			if (fe_eof)
+				ch = EOF;
+			else
+				ch = cc;
+			break;
+		}
+		default:
+			ch = EOF;
+			break;
 	}
-	else
-		return getc(fp);
+	if (ch == EOF)
+		fe_eof = true;
+	return ch;
 }
 
 static void
-CopyDonePeek(FILE *fp, int c, bool pickup)
+CopyDonePeek(int c, bool pickup)
 {
-	if (!fp)
+	if (fe_eof)
+		return;					/* can't unget an EOF */
+	switch (copy_dest)
 	{
-		if (pickup)
-		{
-			/* We want to pick it up */
-			(void) pq_getbyte();
-		}
-		/* If we didn't want to pick it up, just leave it where it sits */
-	}
-	else
-	{
-		if (!pickup)
-		{
-			/* We don't want to pick it up - so put it back in there */
-			ungetc(c, fp);
-		}
-		/* If we wanted to pick it up, it's already done */
+		case COPY_FILE:
+			if (!pickup) 
+			{
+				/* We don't want to pick it up - so put it back in there */
+				ungetc(c, copy_file);
+			}
+			/* If we wanted to pick it up, it's already done */
+			break;
+		case COPY_OLD_FE:
+			if (pickup)
+			{
+				/* We want to pick it up */
+				(void) pq_getbyte();
+			}
+			/* If we didn't want to pick it up, just leave it where it sits */
+			break;
+		case COPY_NEW_FE:
+			if (!pickup)
+			{
+				/* We don't want to pick it up - so put it back in there */
+				copy_msgbuf->cursor--;
+			}
+			/* If we wanted to pick it up, it's already done */
+			break;
 	}
 }
 
@@ -287,7 +468,6 @@ DoCopy(const CopyStmt *stmt)
 	bool		oids = false;
 	char	   *delim = NULL;
 	char	   *null_print = NULL;
-	FILE	   *fp;
 	Relation	rel;
 	AclMode		required_access = (is_from ? ACL_INSERT : ACL_SELECT);
 	AclResult	aclresult;
@@ -397,6 +577,11 @@ DoCopy(const CopyStmt *stmt)
 	client_encoding = pg_get_client_encoding();
 	server_encoding = GetDatabaseEncoding();
 
+	copy_dest = COPY_FILE;		/* default */
+	copy_file = NULL;
+	copy_msgbuf = NULL;
+	fe_eof = false;
+
 	if (is_from)
 	{							/* copy from file to database */
 		if (rel->rd_rel->relkind != RELKIND_RELATION)
@@ -414,33 +599,30 @@ DoCopy(const CopyStmt *stmt)
 		if (pipe)
 		{
 			if (IsUnderPostmaster)
-			{
-				ReceiveCopyBegin();
-				fp = NULL;
-			}
+				ReceiveCopyBegin(binary);
 			else
-				fp = stdin;
+				copy_file = stdin;
 		}
 		else
 		{
 			struct stat st;
 
-			fp = AllocateFile(filename, PG_BINARY_R);
+			copy_file = AllocateFile(filename, PG_BINARY_R);
 
-			if (fp == NULL)
+			if (copy_file == NULL)
 				elog(ERROR, "COPY command, running in backend with "
 					 "effective uid %d, could not open file '%s' for "
 					 "reading.  Errno = %s (%d).",
 					 (int) geteuid(), filename, strerror(errno), errno);
 
-			fstat(fileno(fp), &st);
+			fstat(fileno(copy_file), &st);
 			if (S_ISDIR(st.st_mode))
 			{
-				FreeFile(fp);
+				FreeFile(copy_file);
 				elog(ERROR, "COPY: %s is a directory", filename);
 			}
 		}
-		CopyFrom(rel, attnumlist, binary, oids, fp, delim, null_print);
+		CopyFrom(rel, attnumlist, binary, oids, delim, null_print);
 	}
 	else
 	{							/* copy from database to file */
@@ -459,13 +641,9 @@ DoCopy(const CopyStmt *stmt)
 		if (pipe)
 		{
 			if (IsUnderPostmaster)
-			{
-				SendCopyBegin();
-				pq_startcopyout();
-				fp = NULL;
-			}
+				SendCopyBegin(binary);
 			else
-				fp = stdout;
+				copy_file = stdout;
 		}
 		else
 		{
@@ -481,33 +659,28 @@ DoCopy(const CopyStmt *stmt)
 					 " COPY command");
 
 			oumask = umask((mode_t) 022);
-			fp = AllocateFile(filename, PG_BINARY_W);
+			copy_file = AllocateFile(filename, PG_BINARY_W);
 			umask(oumask);
 
-			if (fp == NULL)
+			if (copy_file == NULL)
 				elog(ERROR, "COPY command, running in backend with "
 					 "effective uid %d, could not open file '%s' for "
 					 "writing.  Errno = %s (%d).",
 					 (int) geteuid(), filename, strerror(errno), errno);
-			fstat(fileno(fp), &st);
+			fstat(fileno(copy_file), &st);
 			if (S_ISDIR(st.st_mode))
 			{
-				FreeFile(fp);
+				FreeFile(copy_file);
 				elog(ERROR, "COPY: %s is a directory", filename);
 			}
 		}
-		CopyTo(rel, attnumlist, binary, oids, fp, delim, null_print);
+		CopyTo(rel, attnumlist, binary, oids, delim, null_print);
 	}
 
 	if (!pipe)
-		FreeFile(fp);
-	else if (!is_from)
-	{
-		if (!binary)
-			CopySendData("\\.\n", 3, fp);
-		if (IsUnderPostmaster)
-			pq_endcopyout(false);
-	}
+		FreeFile(copy_file);
+	else if (IsUnderPostmaster && !is_from)
+		SendCopyEnd(binary);
 	pfree(attribute_buf.data);
 
 	/*
@@ -525,7 +698,7 @@ DoCopy(const CopyStmt *stmt)
  */
 static void
 CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
-	   FILE *fp, char *delim, char *null_print)
+	   char *delim, char *null_print)
 {
 	HeapTuple	tuple;
 	TupleDesc	tupDesc;
@@ -589,18 +762,18 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 		int32		tmp;
 
 		/* Signature */
-		CopySendData((char *) BinarySignature, 12, fp);
+		CopySendData((char *) BinarySignature, 12);
 		/* Integer layout field */
 		tmp = 0x01020304;
-		CopySendData(&tmp, sizeof(int32), fp);
+		CopySendData(&tmp, sizeof(int32));
 		/* Flags field */
 		tmp = 0;
 		if (oids)
 			tmp |= (1 << 16);
-		CopySendData(&tmp, sizeof(int32), fp);
+		CopySendData(&tmp, sizeof(int32));
 		/* No header extension */
 		tmp = 0;
-		CopySendData(&tmp, sizeof(int32), fp);
+		CopySendData(&tmp, sizeof(int32));
 	}
 
 	mySnapshot = CopyQuerySnapshot();
@@ -621,15 +794,15 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 			/* Binary per-tuple header */
 			int16		fld_count = attr_count;
 
-			CopySendData(&fld_count, sizeof(int16), fp);
+			CopySendData(&fld_count, sizeof(int16));
 			/* Send OID if wanted --- note fld_count doesn't include it */
 			if (oids)
 			{
 				Oid			oid = HeapTupleGetOid(tuple);
 
 				fld_size = sizeof(Oid);
-				CopySendData(&fld_size, sizeof(int16), fp);
-				CopySendData(&oid, sizeof(Oid), fp);
+				CopySendData(&fld_size, sizeof(int16));
+				CopySendData(&oid, sizeof(Oid));
 			}
 		}
 		else
@@ -639,7 +812,7 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 			{
 				string = DatumGetCString(DirectFunctionCall1(oidout,
 							  ObjectIdGetDatum(HeapTupleGetOid(tuple))));
-				CopySendString(string, fp);
+				CopySendString(string);
 				need_delim = true;
 			}
 		}
@@ -655,7 +828,7 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 			if (!binary)
 			{
 				if (need_delim)
-					CopySendChar(delim[0], fp);
+					CopySendChar(delim[0]);
 				need_delim = true;
 			}
 
@@ -663,12 +836,12 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 			{
 				if (!binary)
 				{
-					CopySendString(null_print, fp);		/* null indicator */
+					CopySendString(null_print);		/* null indicator */
 				}
 				else
 				{
 					fld_size = 0;		/* null marker */
-					CopySendData(&fld_size, sizeof(int16), fp);
+					CopySendData(&fld_size, sizeof(int16));
 				}
 			}
 			else
@@ -679,12 +852,12 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 														   value,
 								  ObjectIdGetDatum(elements[attnum - 1]),
 							Int32GetDatum(attr[attnum - 1]->atttypmod)));
-					CopyAttributeOut(fp, string, delim);
+					CopyAttributeOut(string, delim);
 				}
 				else
 				{
 					fld_size = attr[attnum - 1]->attlen;
-					CopySendData(&fld_size, sizeof(int16), fp);
+					CopySendData(&fld_size, sizeof(int16));
 					if (isvarlena[attnum - 1])
 					{
 						/* varlena */
@@ -694,16 +867,14 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 						value = PointerGetDatum(PG_DETOAST_DATUM(value));
 
 						CopySendData(DatumGetPointer(value),
-									 VARSIZE(value),
-									 fp);
+									 VARSIZE(value));
 					}
 					else if (!attr[attnum - 1]->attbyval)
 					{
 						/* fixed-length pass-by-reference */
 						Assert(fld_size > 0);
 						CopySendData(DatumGetPointer(value),
-									 fld_size,
-									 fp);
+									 fld_size);
 					}
 					else
 					{
@@ -717,15 +888,14 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 						 */
 						store_att_byval(&datumBuf, value, fld_size);
 						CopySendData(&datumBuf,
-									 fld_size,
-									 fp);
+									 fld_size);
 					}
 				}
 			}
 		}
 
 		if (!binary)
-			CopySendChar('\n', fp);
+			CopySendChar('\n');
 
 		MemoryContextSwitchTo(oldcontext);
 	}
@@ -737,7 +907,7 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 		/* Generate trailer for a binary copy */
 		int16		fld_count = -1;
 
-		CopySendData(&fld_count, sizeof(int16), fp);
+		CopySendData(&fld_count, sizeof(int16));
 	}
 
 	MemoryContextDelete(mycontext);
@@ -753,7 +923,7 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
  */
 static void
 CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
-		 FILE *fp, char *delim, char *null_print)
+		 char *delim, char *null_print)
 {
 	HeapTuple	tuple;
 	TupleDesc	tupDesc;
@@ -905,30 +1075,30 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 		int32		tmp;
 
 		/* Signature */
-		CopyGetData(readSig, 12, fp);
-		if (CopyGetEof(fp) || memcmp(readSig, BinarySignature, 12) != 0)
+		CopyGetData(readSig, 12);
+		if (CopyGetEof() || memcmp(readSig, BinarySignature, 12) != 0)
 			elog(ERROR, "COPY BINARY: file signature not recognized");
 		/* Integer layout field */
-		CopyGetData(&tmp, sizeof(int32), fp);
-		if (CopyGetEof(fp) || tmp != 0x01020304)
+		CopyGetData(&tmp, sizeof(int32));
+		if (CopyGetEof() || tmp != 0x01020304)
 			elog(ERROR, "COPY BINARY: incompatible integer layout");
 		/* Flags field */
-		CopyGetData(&tmp, sizeof(int32), fp);
-		if (CopyGetEof(fp))
+		CopyGetData(&tmp, sizeof(int32));
+		if (CopyGetEof())
 			elog(ERROR, "COPY BINARY: bogus file header (missing flags)");
 		file_has_oids = (tmp & (1 << 16)) != 0;
 		tmp &= ~(1 << 16);
 		if ((tmp >> 16) != 0)
 			elog(ERROR, "COPY BINARY: unrecognized critical flags in header");
 		/* Header extension length */
-		CopyGetData(&tmp, sizeof(int32), fp);
-		if (CopyGetEof(fp) || tmp < 0)
+		CopyGetData(&tmp, sizeof(int32));
+		if (CopyGetEof() || tmp < 0)
 			elog(ERROR, "COPY BINARY: bogus file header (missing length)");
 		/* Skip extension header, if present */
 		while (tmp-- > 0)
 		{
-			CopyGetData(readSig, 1, fp);
-			if (CopyGetEof(fp))
+			CopyGetData(readSig, 1);
+			if (CopyGetEof())
 				elog(ERROR, "COPY BINARY: bogus file header (wrong length)");
 		}
 	}
@@ -936,6 +1106,7 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 	values = (Datum *) palloc(num_phys_attrs * sizeof(Datum));
 	nulls = (char *) palloc(num_phys_attrs * sizeof(char));
 
+	/* Initialize static variables */
 	copy_lineno = 0;
 	fe_eof = false;
 
@@ -970,7 +1141,7 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 
 			if (file_has_oids)
 			{
-				string = CopyReadAttribute(fp, delim, &result);
+				string = CopyReadAttribute(delim, &result);
 
 				if (result == END_OF_FILE && *string == '\0')
 				{
@@ -1006,7 +1177,7 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 					elog(ERROR, "Missing data for column \"%s\"",
 						 NameStr(attr[m]->attname));
 
-				string = CopyReadAttribute(fp, delim, &result);
+				string = CopyReadAttribute(delim, &result);
 
 				if (result == END_OF_FILE && *string == '\0' &&
 					cur == attnumlist && !file_has_oids)
@@ -1051,8 +1222,8 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 			int16		fld_count,
 						fld_size;
 
-			CopyGetData(&fld_count, sizeof(int16), fp);
-			if (CopyGetEof(fp) || fld_count == -1)
+			CopyGetData(&fld_count, sizeof(int16));
+			if (CopyGetEof() || fld_count == -1)
 			{
 				done = true;
 				break;
@@ -1064,14 +1235,14 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 
 			if (file_has_oids)
 			{
-				CopyGetData(&fld_size, sizeof(int16), fp);
-				if (CopyGetEof(fp))
+				CopyGetData(&fld_size, sizeof(int16));
+				if (CopyGetEof())
 					elog(ERROR, "COPY BINARY: unexpected EOF");
 				if (fld_size != (int16) sizeof(Oid))
 					elog(ERROR, "COPY BINARY: sizeof(Oid) is %d, expected %d",
 						 (int) fld_size, (int) sizeof(Oid));
-				CopyGetData(&loaded_oid, sizeof(Oid), fp);
-				if (CopyGetEof(fp))
+				CopyGetData(&loaded_oid, sizeof(Oid));
+				if (CopyGetEof())
 					elog(ERROR, "COPY BINARY: unexpected EOF");
 				if (loaded_oid == InvalidOid)
 					elog(ERROR, "COPY BINARY: Invalid Oid");
@@ -1085,8 +1256,8 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 
 				i++;
 
-				CopyGetData(&fld_size, sizeof(int16), fp);
-				if (CopyGetEof(fp))
+				CopyGetData(&fld_size, sizeof(int16));
+				if (CopyGetEof())
 					elog(ERROR, "COPY BINARY: unexpected EOF");
 				if (fld_size == 0)
 					continue;	/* it's NULL; nulls[attnum-1] already set */
@@ -1099,17 +1270,16 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 					int32		varlena_size;
 					Pointer		varlena_ptr;
 
-					CopyGetData(&varlena_size, sizeof(int32), fp);
-					if (CopyGetEof(fp))
+					CopyGetData(&varlena_size, sizeof(int32));
+					if (CopyGetEof())
 						elog(ERROR, "COPY BINARY: unexpected EOF");
 					if (varlena_size < (int32) sizeof(int32))
 						elog(ERROR, "COPY BINARY: bogus varlena length");
 					varlena_ptr = (Pointer) palloc(varlena_size);
 					VARATT_SIZEP(varlena_ptr) = varlena_size;
 					CopyGetData(VARDATA(varlena_ptr),
-								varlena_size - sizeof(int32),
-								fp);
-					if (CopyGetEof(fp))
+								varlena_size - sizeof(int32));
+					if (CopyGetEof())
 						elog(ERROR, "COPY BINARY: unexpected EOF");
 					values[m] = PointerGetDatum(varlena_ptr);
 				}
@@ -1120,8 +1290,8 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 
 					Assert(fld_size > 0);
 					refval_ptr = (Pointer) palloc(fld_size);
-					CopyGetData(refval_ptr, fld_size, fp);
-					if (CopyGetEof(fp))
+					CopyGetData(refval_ptr, fld_size);
+					if (CopyGetEof())
 						elog(ERROR, "COPY BINARY: unexpected EOF");
 					values[m] = PointerGetDatum(refval_ptr);
 				}
@@ -1135,8 +1305,8 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 					 * how shorter data values are aligned within a Datum.
 					 */
 					Assert(fld_size > 0 && fld_size <= sizeof(Datum));
-					CopyGetData(&datumBuf, fld_size, fp);
-					if (CopyGetEof(fp))
+					CopyGetData(&datumBuf, fld_size);
+					if (CopyGetEof())
 						elog(ERROR, "COPY BINARY: unexpected EOF");
 					values[m] = fetch_att(&datumBuf, true, fld_size);
 				}
@@ -1324,7 +1494,7 @@ GetTypeElement(Oid type)
  */
 
 static char *
-CopyReadAttribute(FILE *fp, const char *delim, CopyReadResult *result)
+CopyReadAttribute(const char *delim, CopyReadResult *result)
 {
 	int			c;
 	int			delimc = (unsigned char) delim[0];
@@ -1344,7 +1514,7 @@ CopyReadAttribute(FILE *fp, const char *delim, CopyReadResult *result)
 
 	for (;;)
 	{
-		c = CopyGetChar(fp);
+		c = CopyGetChar();
 		if (c == EOF)
 		{
 			*result = END_OF_FILE;
@@ -1359,7 +1529,7 @@ CopyReadAttribute(FILE *fp, const char *delim, CopyReadResult *result)
 			break;
 		if (c == '\\')
 		{
-			c = CopyGetChar(fp);
+			c = CopyGetChar();
 			if (c == EOF)
 			{
 				*result = END_OF_FILE;
@@ -1379,16 +1549,16 @@ CopyReadAttribute(FILE *fp, const char *delim, CopyReadResult *result)
 						int			val;
 
 						val = OCTVALUE(c);
-						c = CopyPeekChar(fp);
+						c = CopyPeekChar();
 						if (ISOCTAL(c))
 						{
 							val = (val << 3) + OCTVALUE(c);
-							CopyDonePeek(fp, c, true /* pick up */ );
-							c = CopyPeekChar(fp);
+							CopyDonePeek(c, true /* pick up */ );
+							c = CopyPeekChar();
 							if (ISOCTAL(c))
 							{
 								val = (val << 3) + OCTVALUE(c);
-								CopyDonePeek(fp, c, true /* pick up */ );
+								CopyDonePeek(c, true /* pick up */ );
 							}
 							else
 							{
@@ -1397,7 +1567,7 @@ CopyReadAttribute(FILE *fp, const char *delim, CopyReadResult *result)
 									*result = END_OF_FILE;
 									goto copy_eof;
 								}
-								CopyDonePeek(fp, c, false /* put back */ );
+								CopyDonePeek(c, false /* put back */ );
 							}
 						}
 						else
@@ -1407,7 +1577,7 @@ CopyReadAttribute(FILE *fp, const char *delim, CopyReadResult *result)
 								*result = END_OF_FILE;
 								goto copy_eof;
 							}
-							CopyDonePeek(fp, c, false /* put back */ );
+							CopyDonePeek(c, false /* put back */ );
 						}
 						c = val & 0377;
 					}
@@ -1441,9 +1611,21 @@ CopyReadAttribute(FILE *fp, const char *delim, CopyReadResult *result)
 					c = '\v';
 					break;
 				case '.':
-					c = CopyGetChar(fp);
+					c = CopyGetChar();
 					if (c != '\n')
 						elog(ERROR, "CopyReadAttribute: end of record marker corrupted");
+					/*
+					 * In protocol version 3, we should ignore anything after
+					 * \. up to the protocol end of copy data.  (XXX maybe
+					 * better not to treat \. as special?)
+					 */
+					if (copy_dest == COPY_NEW_FE)
+					{
+						while (c != EOF)
+						{
+							c = CopyGetChar();
+						}
+					}
 					*result = END_OF_FILE;
 					goto copy_eof;
 			}
@@ -1458,7 +1640,7 @@ CopyReadAttribute(FILE *fp, const char *delim, CopyReadResult *result)
 			mblen = pg_encoding_mblen(client_encoding, s);
 			for (j = 1; j < mblen; j++)
 			{
-				c = CopyGetChar(fp);
+				c = CopyGetChar();
 				if (c == EOF)
 				{
 					*result = END_OF_FILE;
@@ -1488,7 +1670,7 @@ copy_eof:
 }
 
 static void
-CopyAttributeOut(FILE *fp, char *server_string, char *delim)
+CopyAttributeOut(char *server_string, char *delim)
 {
 	char	   *string;
 	char		c;
@@ -1511,30 +1693,30 @@ CopyAttributeOut(FILE *fp, char *server_string, char *delim)
 		switch (c)
 		{
 			case '\b':
-				CopySendString("\\b", fp);
+				CopySendString("\\b");
 				break;
 			case '\f':
-				CopySendString("\\f", fp);
+				CopySendString("\\f");
 				break;
 			case '\n':
-				CopySendString("\\n", fp);
+				CopySendString("\\n");
 				break;
 			case '\r':
-				CopySendString("\\r", fp);
+				CopySendString("\\r");
 				break;
 			case '\t':
-				CopySendString("\\t", fp);
+				CopySendString("\\t");
 				break;
 			case '\v':
-				CopySendString("\\v", fp);
+				CopySendString("\\v");
 				break;
 			case '\\':
-				CopySendString("\\\\", fp);
+				CopySendString("\\\\");
 				break;
 			default:
 				if (c == delimc)
-					CopySendChar('\\', fp);
-				CopySendChar(c, fp);
+					CopySendChar('\\');
+				CopySendChar(c);
 
 				/*
 				 * We can skip pg_encoding_mblen() overhead when encoding
@@ -1546,7 +1728,7 @@ CopyAttributeOut(FILE *fp, char *server_string, char *delim)
 					/* send additional bytes of the char, if any */
 					mblen = pg_encoding_mblen(client_encoding, string);
 					for (i = 1; i < mblen; i++)
-						CopySendChar(string[i], fp);
+						CopySendChar(string[i]);
 				}
 				break;
 		}
