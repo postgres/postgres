@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootscanner.l,v 1.26 2002/11/01 22:52:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootscanner.l,v 1.27 2002/11/04 14:22:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,10 +40,10 @@
 #include "utils/nabstime.h"
 #include "utils/rel.h"
 
-#include "bootstrap_tokens.h"
+/* Not needed now that this file is compiled as part of bootparse. */
+/* #include "bootstrap_tokens.h" */
 
 
-YYSTYPE yylval;
 int		yyline;  /* keep track of the line number for error reporting */
 
 %}
