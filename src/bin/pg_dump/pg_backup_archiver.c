@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.30 2001/08/12 19:02:39 petere Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.31 2001/08/19 22:17:03 petere Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *
@@ -1765,7 +1765,7 @@ ReadToc(ArchiveHandle *AH)
 
 		/* Sanity check */
 		if (te->id <= 0 || te->id > AH->tocCount)
-			die_horribly(AH, modulename, "failed sanity check (bad entry id) - perhaps a corrupt TOC\n");
+			die_horribly(AH, modulename, "entry id out of range - perhaps a corrupt TOC\n");
 
 		te->hadDumper = ReadInt(AH);
 		te->oid = ReadStr(AH);
