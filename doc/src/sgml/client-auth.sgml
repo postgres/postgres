@@ -1,25 +1,24 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.8 2000/10/21 01:08:34 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.9 2000/11/21 20:44:31 tgl Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
 
  <para>
-  User names from the operating system and from a
-  <productname>Postgres</productname> database installation are
-  logically separate. When a client application connects, it specifies
-  which database user name it wants to connect as, similar to how one
-  logs into a Unix computer. Within the SQL environment the active
-  database user name determines various access privileges to database
+  When a client application connects to the database server, it specifies which
+  <productname>Postgres</productname> user name it wants to connect as,
+  much the same way one logs into a Unix computer as a particular user.
+  Within the SQL environment the active
+  database user name determines access privileges to database
   objects -- see <xref linkend="user-manag"> for more information
-  about that. It is therefore obviously essential to restrict what
-  database user name a given client can connect as.
+  about that. It is therefore obviously essential to restrict which
+  database user name(s) a given client can connect as.
  </para>
 
  <para>
   <firstterm>Authentication</firstterm> is the process by which the
   database server establishes the identity of the client, and by
   extension determines whether the client application (or the user
-  which runs the client application) is permitted to connect with the
+  who runs the client application) is permitted to connect with the
   user name that was requested.
  </para>
 
@@ -29,14 +28,26 @@
   authentication methods available.
  </para>
 
+ <para>
+  <productname>Postgres</productname> database user names are logically
+  separate from user names of the operating system in which the server
+  runs.  If all the users of a particular server also have accounts on
+  the server's machine, it makes sense to assign database user names
+  that match their Unix user ids.  However, a server that accepts remote
+  connections may have many users who have no local account, and in such
+  cases there need be no connection between database usernames and Unix
+  usernames.
+ </para>
+
  <sect1 id="pg-hba.conf">
   <title>The <filename>pg_hba.conf</filename> file</title>
 
   <para>
    Client authentication is controlled by the file
-   <filename>pg_hba.conf</filename> in the data directory, e.g.,
-   <filename>/usr/local/pgsql/data/pg_hba.conf</filename>. (HBA =
-   host-based authentication) A default file is installed when the
+   <filename>pg_hba.conf</filename> in the $PGDATA directory, e.g.,
+   <filename>/usr/local/pgsql/data/pg_hba.conf</filename>. (HBA stands
+   for host-based authentication.) A default <filename>pg_hba.conf</filename>
+   file is installed when the
    data area is initialized by <application>initdb</application>.
   </para>
 
@@ -84,7 +95,7 @@ hostssl <replaceable>database</replaceable> <replaceable>IP-address</replaceable
      <term><literal>hostssl</literal></term>
      <listitem>
       <para>
-       This record pertains to connection attemps with SSL over
+       This record pertains to connection attempts with SSL over
        TCP/IP. To make use of this option the server must be
        built with SSL support enabled. Furthermore, SSL must be
        enabled with the <option>-l</> option or equivalent configuration
@@ -99,8 +110,10 @@ hostssl <replaceable>database</replaceable> <replaceable>IP-address</replaceable
       <para>
        Specifies the database that this record applies to. The value
        <literal>all</literal> specifies that it applies to all
-       databases, the value <literal>sameuser</> identifies the
-       database with the same name as the connecting user.
+       databases, while the value <literal>sameuser</> identifies the
+       database with the same name as the connecting user.  Otherwise,
+       this is the name of a specific <productname>Postgres</productname>
+       database.
       </para>
      </listitem>
     </varlistentry>
@@ -140,7 +153,7 @@ hostssl <replaceable>database</replaceable> <replaceable>IP-address</replaceable
          <para>
           The connection is allowed unconditionally. This method allows
           any user that has login access to the client host to connect as
-          any user whatsoever.
+          any <productname>Postgres</productname> user whatsoever.
          </para>
         </listitem>
        </varlistentry>
@@ -246,17 +259,18 @@ hostssl <replaceable>database</replaceable> <replaceable>IP-address</replaceable
     </varlistentry>
    </variablelist>
 
-   The first record that matches a connection attempt is used. There
-   is no <quote>fall-through</> or <quote>backup</>, that means, if
+   The first record that matches a connection attempt's client IP address
+   and requested database name is used to do the authentication step.
+   There is no <quote>fall-through</> or <quote>backup</>: if
    one record is chosen and the
    authentication fails, the following records are not considered. If
    no record matches, the access will be denied.
   </para>
 
   <para>
-   The <filename>pg_hba.conf</filename> file is re-read before each
-   connection attempt. It is therefore easily possible to modify
-   access permissions while the server is running.
+   The <filename>pg_hba.conf</filename> file is re-read during each
+   connection attempt. It is therefore trivial to modify access
+   permissions while the server is running: just edit the file.
   </para>
 
   <para>
@@ -267,42 +281,44 @@ hostssl <replaceable>database</replaceable> <replaceable>IP-address</replaceable
    <example id="example-pg-hba.conf">
     <title>An example <filename>pg_hba.conf</filename> file</title>
 <programlisting>
-#TYPE    DATABASE       IP-ADDRESS     MASK                AUTHTYPE   ARG
+# TYPE       DATABASE    IP_ADDRESS    MASK               AUTHTYPE  MAP
 
-# Allow any user on the local system to connect to any database under
-# any user name.
-#
-host     all            127.0.0.1      255.255.255.255     trust     
- 
-# Allow any user from any host with IP address 192.168.93.x to connect
-# to database "template1" as the same user name that ident on that
-# host identifies him as (typically his Unix user name).
-#
-host     template1      192.168.93.0   255.255.255.0       ident      sameuser
+# Allow any user on the local system to connect to any
+# database under any username, but only via an IP connection:
 
-# Allow a user from host 192.168.12.10 to connect to database
-# "template1" if the user's password in pg_shadow is supplied.
-#
-host     template1      192.168.12.10  255.255.255.255     crypt
+host         all         127.0.0.1     255.255.255.255    trust     
 
-# In absence of the other records, this would allow anyone anywhere
-# except from 192.168.54.1 to connect to any database under any user
-# name.
-#
-host     all            192.168.54.1   255.255.255.255     reject
-host     all            0.0.0.0        0.0.0.0             trust
+# The same, over Unix-socket connections:
 
-# Allow users from 192.168.77.x hosts to connect to any database, but if,
-# for example, ident says the user is "bryanh" and he requests to
-# connect as PostgreSQL user "guest1", the connection is only allowed if
-# there is an entry for map "omicron" in `pg_ident.conf' that says
-# "bryanh" is allowed to connect as "guest1".
-#
-host     all            192.168.77.0  255.255.255.0        ident      omicron
+local        all                                          trust
 
-# Allow all users to connect to all databases via Unix sockets.
-#
-local        all                                           trust
+# Allow any user from any host with IP address 192.168.93.x to
+# connect to database "template1" as the same username that ident on that
+# host identifies him as (typically his Unix username):
+
+host         template1   192.168.93.0  255.255.255.0      ident     sameuser
+
+# Allow a user from host 192.168.12.10 to connect to database "template1"
+# if the user's password in pg_shadow is correctly supplied:
+
+host         template1   192.168.12.10 255.255.255.255    crypt
+
+# In the absence of preceding "host" lines, these two lines will reject
+# all connection attempts from 192.168.54.1 (since that entry will be
+# matched first), but allow Kerberos V5-validated connections from anywhere
+# else on the Internet. The zero mask means that no bits of the host IP
+# address are considered, so it matches any host:
+
+host         all        192.168.54.1   255.255.255.255    reject
+host         all        0.0.0.0        0.0.0.0            krb5
+
+# Allow users from 192.168.x.x hosts to connect to any database, if they
+# pass the ident check.  If, for example, ident says the user is "bryanh"
+# and he requests to connect as PostgreSQL user "guest1", the connection
+# is allowed if there is an entry in pg_ident.conf for map "omicron" that
+# says "bryanh" is allowed to connect as "guest1":
+
+host         all        192.168.0.0    255.255.0.0        ident     omicron
 </programlisting>
    </example>
   </para>
@@ -324,7 +340,7 @@ local        all                                           trust
     <command>CREATE USER</command> and <command>ALTER USER</command>,
     e.g., <userinput>CREATE USER foo WITH PASSWORD
     'secret';</userinput>. By default, that is, if no password has
-    explicitly been set up, the stored password is <quote>NULL</quote>
+    been set up, the stored password is <literal>NULL</literal>
     and password authentication will always fail for that user.
    </para>
 
@@ -336,12 +352,12 @@ local        all                                           trust
     file after the <literal>password</> or <literal>crypt</> keyword,
     respectively, in <filename>pg_hba.conf</>. If you do not use this
     feature, then any user that is known to the database system can
-    connect to any database (as long as he passes password
+    connect to any database (so long as he passes password
     authentication, of course).
    </para>
 
    <para>
-    These files can also be used a apply a different set of passwords
+    These files can also be used to apply a different set of passwords
     to a particular database or set thereof. In that case, the files
     have a format similar to the standard Unix password file
     <filename>/etc/passwd</filename>, that is,
@@ -401,7 +417,7 @@ local        all                                           trust
 
    <para>
     In order to use <productname>Kerberos</>, support for it must be
-    enable at build time. Both Kerberos 4 and 5 are supported
+    enabled at build time. Both Kerberos 4 and 5 are supported
     (<literal>./configure --with-krb4</> or <literal>./configure
     --with-krb5</> respectively).
    </para>
@@ -411,7 +427,7 @@ local        all                                           trust
     service. The name of the service principal is normally
     <literal>postgres</literal>, unless it was changed during the
     build. Make sure that your server key file is readable (and
-    preferrably only readable) by the Postgres server account (see
+    preferably only readable) by the Postgres server account (see
     <xref linkend="postgres-user">). The location of the key file
     is specified with the <varname>krb_server_keyfile</> run time
     configuration parameter. (See also <xref linkend="runtime-config">.)
@@ -553,13 +569,13 @@ local        all                                           trust
     A <filename>pg_ident.conf</filename> file that could be used in
     conjunction with the <filename>pg_hba.conf</> file in <xref
     linkend="example-pg-hba.conf"> is shown in <xref
-    linkend="example-pg-ident.conf">. In that example setup, anyone
-    logged in to a machine on the 192.168.77 network that does not have
-    the a user name bryanh, ann, or robert would not be granted access.
+    linkend="example-pg-ident.conf">. In this example setup, anyone
+    logged in to a machine on the 192.168 network that does not have
+    the Unix user name bryanh, ann, or robert would not be granted access.
     Unix user robert would only be allowed access when he tries to
-    connect as <quote>bob</quote>, not as <quote>robert</quote> or
-    anyone else. <quote>ann</quote> would only be allowed to connect
-    <quote>as herself</>. User bryanh would be allowed to connect as either
+    connect as Postgres user <quote>bob</quote>, not as <quote>robert</quote>
+    or anyone else. <quote>ann</quote> would only be allowed to connect as
+    <quote>ann</>. User bryanh would be allowed to connect as either
     <quote>bryanh</> himself or as <quote>guest1</>.
    </para>
 
