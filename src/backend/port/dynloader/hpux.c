@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/hpux.c,v 1.1 1997/12/20 04:48:06 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/hpux.c,v 1.2 1998/02/02 00:10:10 scrappy Exp $
  *
  *	NOTES
  *		all functions are defined here -- it's impossible to trace the
@@ -22,7 +22,7 @@
 #include "c.h"
 #include "fmgr.h"
 #include "utils/dynamic_loader.h"
-#include "port-protos.h"
+#include "dynloader.h"
 
 void	   *
 pg_dlopen(char *filename)
