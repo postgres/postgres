@@ -738,17 +738,20 @@ AC_CHECK_LIB(BSD,      main)
 AC_CHECK_LIB(gen,      main)
 AC_CHECK_LIB(PW,       main)
 AC_CHECK_LIB(resolv,   main)
+# QNX:
 AC_CHECK_LIB([[unix]], main)
 AC_SEARCH_LIBS(crypt,  crypt)
+# BeOS:
 AC_CHECK_LIB(bind,     __inet_ntoa)
-dnl Only consider libz to be present if we find <zlib.h> as well;
-dnl furthermore, check that <zlib.h> defines z_streamp (versions before
-dnl about 1.0.4 did not).  While we could work around the lack of z_streamp,
-dnl it seems unwise to encourage people to use such old zlib versions...
+# Only consider libz to be present if we find <zlib.h> as well;
+# furthermore, check that <zlib.h> defines z_streamp (versions before
+# about 1.0.4 did not).  While we could work around the lack of z_streamp,
+# it seems unwise to encourage people to use such old zlib versions...
 AC_EGREP_HEADER(z_streamp, zlib.h, [
 AC_CHECK_LIB(z,        inflate)
 ])
-
+# Solaris:
+AC_SEARCH_LIBS(fdatasync, rt)
 
 if test "$with_krb4" = yes ; then
   AC_CHECK_LIB(des, [des_encrypt], [], [AC_MSG_ERROR([library 'des' is required for Kerberos 4])])
