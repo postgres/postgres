@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.170 2000/10/11 17:55:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.171 2000/10/11 17:58:01 momjian Exp $
  *
  * NOTES
  *
@@ -540,22 +540,6 @@ PostmasterMain(int argc, char *argv[])
 	if (optind < argc)
 	{
 		fprintf(stderr, "%s: invalid argument -- %s\n", progname, argv[optind]);
-		exit(1);
-	}
-
-	/*
-	 * Select default values for switches where needed
-	 */
-	if (HostName == NULL)
-	{
-		if (!(HostName = getenv("PGHOST")))
-		{
-			HostName = "any";
-		}
-	}
-	else if (!NetServer)
-	{
-		fprintf(stderr, "%s: -h requires -i.\n", progname);
 		exit(1);
 	}
 
