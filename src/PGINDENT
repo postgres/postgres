@@ -29,7 +29,7 @@ do
 \2;g' | # workaround for indent bug
 	detab -t4 -qc |
 	sed 's;^DATA(.*$;/*&*/;' >/tmp/$$a    # protect backslashes in DATA() 
-	indent -bad -bap -bbb -bc -bl -d0 -cdb -nce -nfc1 -di12 -i4 -l70 \
+	indent -bad -bap -bbb -bc -bl -d0 -cdb -nce -nfc1 -di16 -i4 -l70 \
 		-lp -nip -npro /tmp/$$a >/tmp/$$ 2>&1
 	if [ "$?" -ne 0 -o -s /tmp/$$ ]
 	then	echo "$FILE"
