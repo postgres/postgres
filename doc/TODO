@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Sep  6 14:46:07 EDT 2002
+Last updated:		Sat Sep  7 14:36:58 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -472,7 +472,6 @@ Miscellaneous
 * Use mmap() rather than SYSV shared memory or to write WAL files (?) [mmap]
 * Improve caching of attribute offsets when NULLs exist in the row
 * -Add Intimate Shared Memory(ISM) for Solaris
-* Add documentation to lock shared memory into RAM for each OS, if possible
 * -Use faster flex flags for performance improvement (Peter E)
 * -Add BSD-licensed qsort() for Solaris
 
