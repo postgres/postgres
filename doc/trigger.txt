@@ -1,0 +1,297 @@
+
+		PostgreSQL Trigger Programming Guide
+
+   For the lack of Procedural Language (PL) in current version of
+PostgreSQL, there is only ability to specify call to a C-function as trigger
+action. 
+   Also, STATEMENT-level trigger events are not supported in current
+version, and so you are only able to specify BEFORE | AFTER
+INSERT|DELETE|UPDATE of a tuple as trigger event.
+
+   If trigger event occures, trigger manager (called by Executor)
+initializes global structure TriggerData *CurrentTriggerData (described
+below) and calls trigger function to handle event.
+
+   Trigger function must be created before trigger creation as function
+not accepting any arguments and returns opaque.
+   Actually, there are two specific features in triggers handling.
+
+   First, in CREATE TRIGGER one may specify arguments for trigger
+function (EXECUTE PROCEDURE tfunc (aa,'bb', 1)), and these arguments
+will be passed to trigger function in CurrentTriggerData.
+   It allows to use single function for many triggers and process events in
+different ways.
+   Also, function may be used for triggering different relations (these
+functions are named as "general trigger functions").
+
+   Second, trigger function has to return HeapTuple to upper Executor.
+No matter for triggers fired AFTER operation (INSERT, DELETE, UPDATE),
+but it allows to BEFORE triggers:
+   - return NULL to skip operation for current tuple (and so tuple
+     will not be inserted/updated/deleted);
+   - return pointer to another tuple (INSERT and UPDATE only) which will be
+     inserted (as new version of updated tuple if UPDATE) instead of
+     original tuple.
+
+   Note, that there is no initialization performed by CREATE TRIGGER
+handler. It will be changed in the future.
+
+   Also, if more than one trigger defined for the same event on the same
+relation then order of trigger firing is unpredictable. It may be changed in
+the future.
+
+   Also, if a trigger function executes SQL-queries (using SPI) then these
+queries may fire triggers again. This is known as cascading of triggers.
+There is no explicit limitation for number of cascade levels.
+   If a trigger is fired by INSERT and inserts new tuple in the same
+relation then this trigger will be fired again. Currently, there is nothing
+provided for synchronization (etc) of these cases. It may be changed.  At
+the moment, there is function funny_dup17() in the regress tests which uses
+some technics to stop recursion (cascading) of itself...
+
+
+                 Interaction with trigger manager
+
+   As it's mentioned above when function is called by trigger manager
+structure TriggerData *CurrentTriggerData is NOT NULL and initialized. And
+so, it's better to check CurrentTriggerData against being NULL in the
+begining and set it to NULL just after fetching information - to prevent
+calls to trigger function not from trigger manager.
+
+   struct TriggerData is defined in src/include/commands/trigger.h:
+
+typedef struct TriggerData
+{
+	TriggerEvent	tg_event;
+	Relation	tg_relation;
+	HeapTuple	tg_trigtuple;
+	HeapTuple	tg_newtuple;
+	Trigger		*tg_trigger;
+} TriggerData;
+
+tg_event 
+   describes event for what function is called. You may use macros
+   to deal with tg_event:
+
+   TRIGGER_FIRED_BEFORE(event) returns TRUE if trigger fired BEFORE;
+   TRIGGER_FIRED_AFTER(event) returns TRUE if trigger fired AFTER;
+   TRIGGER_FIRED_FOR_ROW(event) returns TRUE if trigger fired for
+                                ROW-level event;
+   TRIGGER_FIRED_FOR_STATEMENT(event) returns TRUE if trigger fired for
+                                STATEMENT-level event;
+   TRIGGER_FIRED_BY_INSERT(event) returns TRUE if trigger fired by INSERT;
+   TRIGGER_FIRED_BY_DELETE(event) returns TRUE if trigger fired by DELETE;
+   TRIGGER_FIRED_BY_UPDATE(event) returns TRUE if trigger fired by UPDATE.
+
+tg_relation
+   is pointer to structure describing triggered relation. Look @
+   src/include/utils/rel.h about this structure. The most interest things
+   are tg_relation->rd_att (descriptor of relation tuples) and
+   tg_relation->rd_rel->relname (relation' name. This is not char*, but
+   NameData - use SPI_getrelname(tg_relation) to get char* to copy of name).
+
+tg_trigtuple
+   is tuple (pointer) for which trigger is fired. This is tuple to being
+   inserted (if INSERT), deleted (if DELETE) or updated (if UPDATE).
+   If INSERT/DELETE then this is what you are to return to Executor if 
+   you don't want to replace tuple with another one (INSERT) or skip
+   operation.
+
+tg_newtuple
+   is pointer to new version of tuple if UPDATE and NULL if INSERT/DELETE. 
+   This is what you are to return to Executor if UPDATE and you don't want
+   to replace tuple with another one or skip operation.
+
+tg_trigger
+   is pointer to structure Trigger defined in src/include/utils/rel.h:
+
+typedef struct Trigger
+{
+	char		*tgname;
+	Oid		tgfoid;
+	func_ptr	tgfunc;
+	int16		tgtype;
+	int16		tgnargs;
+	int16		tgattr[8];
+	char		**tgargs;
+} Trigger;
+
+   tgname is trigger' name, tgnargs is number of arguments in tgargs, tgargs
+   is array of pointers to arguments specified in CREATE TRIGGER. Other
+   members are for internal use.
+
+
+                         Data changes visibility
+
+   PostgreSQL data changes visibility rule: during query execution data
+changes made by query itself (via SQL-function, SPI-function, triggers)
+are invisible to the query scan.
+
+   For example, in query
+
+   INSERT INTO a SELECT * FROM a
+
+   tuples inserted are invisible for SELECT' scan.
+
+   But keep in mind notices about visibility in SPI documentation:
+
+   changes made by query Q are visible by queries which are started after
+   query Q, no matter - are they started inside Q (during execution of Q) or
+   after Q is done.
+
+   This is true for triggers as well. And so, though tuple being inserted
+(tg_trigtuple) is not visible to queries in BEFORE trigger, this tuple (just
+inserted) is visible to queries in AFTER trigger, and to queries in
+BEFORE/AFTER triggers fired after this!
+
+
+                         Examples
+
+   There are complex examples in contrib/spi and in
+src/test/regress/regress.c. 
+
+   This is very simple example of trigger usage. Function trigf reports
+about number of tuples in triggered relation ttest and in trigger fired
+BEFORE INSERT/UPDATE checks against is attribute x NULL and skips operations
+for NULLs (ala NOT NULL implementation using triggers without aborting
+transaction if NULL).
+
+----------------------------------------------------------------------------
+#include "executor/spi.h"	/* this is what you need to work with SPI */
+#include "commands/trigger.h"	/* -"- and triggers */
+
+HeapTuple		trigf(void);
+
+HeapTuple
+trigf()
+{
+	TupleDesc	tupdesc;
+	HeapTuple	rettuple;
+	char		*when;
+	bool		checknull = false;
+	bool		isnull;
+	int		ret, i;
+
+	if (!CurrentTriggerData)
+		elog(WARN, "trigf: triggers are not initialized");
+	
+	/* tuple to return to Executor */
+	if (TRIGGER_FIRED_BY_UPDATE(CurrentTriggerData->tg_event))
+		rettuple = CurrentTriggerData->tg_newtuple;
+	else
+		rettuple = CurrentTriggerData->tg_trigtuple;
+	
+	/* check for NULLs ? */
+	if (!TRIGGER_FIRED_BY_DELETE(CurrentTriggerData->tg_event) &&
+		TRIGGER_FIRED_BEFORE(CurrentTriggerData->tg_event))
+		checknull = true;
+	
+	if (TRIGGER_FIRED_BEFORE(CurrentTriggerData->tg_event))
+		when = "before";
+	else
+		when = "after ";
+	
+	tupdesc = CurrentTriggerData->tg_relation->rd_att;
+	CurrentTriggerData = NULL;
+	
+	/* Connect to SPI manager */
+	if ((ret = SPI_connect()) < 0)
+		elog(WARN, "trigf (fired %s): SPI_connect returned %d", when, ret);
+	
+	/* Get number of tuples in relation */
+	ret = SPI_exec("select count(*) from ttest", 0);
+	
+	if (ret < 0)
+		elog(WARN, "trigf (fired %s): SPI_exec returned %d", when, ret);
+	
+	i = SPI_getbinval(SPI_tuptable->vals[0], SPI_tuptable->tupdesc, 1, &isnull);
+	
+	elog (NOTICE, "trigf (fired %s): there are %d tuples in ttest", when, i);
+	
+	SPI_finish();
+	
+	if (checknull)
+	{
+		i = SPI_getbinval(rettuple, tupdesc, 1, &isnull);
+		if (isnull)
+			rettuple = NULL;
+	}
+
+	return (rettuple);
+}
+----------------------------------------------------------------------------
+
+   Now, compile and 
+create table ttest (x int4);
+create function trigf () returns opaque as 
+'...path_to_so' language 'c';
+
+vac=> create trigger tbefore before insert or update or delete on ttest 
+for each row execute procedure trigf();
+CREATE
+vac=> create trigger tafter after insert or update or delete on ttest 
+for each row execute procedure trigf();
+CREATE
+vac=> insert into ttest values (null);
+NOTICE:trigf (fired before): there are 0 tuples in ttest
+INSERT 0 0
+
+-- Insertion skipped and AFTER trigger is not fired
+
+vac=> select * from ttest;
+x
+-
+(0 rows)
+
+vac=> insert into ttest values (1);
+NOTICE:trigf (fired before): there are 0 tuples in ttest
+NOTICE:trigf (fired after ): there are 1 tuples in ttest
+                                       ^^^^^^^^
+                             remember about visibility
+INSERT 167793 1
+vac=> select * from ttest;
+x
+-
+1
+(1 row)
+
+vac=> insert into ttest select x * 2 from ttest;
+NOTICE:trigf (fired before): there are 1 tuples in ttest
+NOTICE:trigf (fired after ): there are 2 tuples in ttest
+                                       ^^^^^^^^
+                             remember about visibility
+INSERT 167794 1
+vac=> select * from ttest;
+x
+-
+1
+2
+(2 rows)
+
+vac=> update ttest set x = null where x = 2;
+NOTICE:trigf (fired before): there are 2 tuples in ttest
+UPDATE 0
+vac=> update ttest set x = 4 where x = 2;
+NOTICE:trigf (fired before): there are 2 tuples in ttest
+NOTICE:trigf (fired after ): there are 2 tuples in ttest
+UPDATE 1
+vac=> select * from ttest;
+x
+-
+1
+4
+(2 rows)
+
+vac=> delete from ttest;
+NOTICE:trigf (fired before): there are 2 tuples in ttest
+NOTICE:trigf (fired after ): there are 1 tuples in ttest
+NOTICE:trigf (fired before): there are 1 tuples in ttest
+NOTICE:trigf (fired after ): there are 0 tuples in ttest
+                                       ^^^^^^^^
+                             remember about visibility
+DELETE 2
+vac=> select * from ttest;
+x
+-
+(0 rows)
+

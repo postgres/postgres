@@ -71,7 +71,8 @@ int SPI_finish(void)
    with this - it means that nothing was made by SPI manager.
 
    NOTE! SPI_finish() MUST be called by connected procedure or you may get
-   unpredictable results!
+   unpredictable results! But you are able to don't call SPI_finish() if you
+   abort transaction (via elog(WARN)).
 
 
 int SPI_exec(char *query, int tcount)
@@ -354,6 +355,27 @@ allocate memory for this in upper context!
    this query is done!
 
 
+                         Data changes visibility
+
+   PostgreSQL data changes visibility rule: during query execution data
+changes made by query itself (via SQL-function, SPI-function, triggers)
+are invisible to the query scan.
+
+   For example, in query
+
+   INSERT INTO a SELECT * FROM a
+
+   tuples inserted are invisible for SELECT' scan.
+
+   But also note that
+
+   changes made by query Q are visible by queries which are started after
+   query Q, no matter - are they started inside Q (during execution of Q) or
+   after Q is done.
+
+   Last example of usage SPI function below demonstrates visibility rule.
+
+
                          Examples
 
    There are complex examples in contrib/spi and in
@@ -446,3 +468,43 @@ execq
 -----
     3            <<< 10 is max value only, 3 is real # of tuples
 (1 row)
+
+vac=> delete from a;
+DELETE 3
+vac=> insert into a values (execq('select * from a', 0) + 1);
+INSERT 167712 1
+vac=> select * from a;
+x
+-
+1                <<< no tuples in a (0) + 1
+(1 row)
+
+vac=> insert into a values (execq('select * from a', 0) + 1);
+NOTICE:EXECQ:  0 
+INSERT 167713 1
+vac=> select * from a;
+x
+-
+1
+2                <<< there was single tuple in a + 1
+(2 rows)
+
+--   This demonstrates data changes visibility rule:
+
+vac=> insert into a select execq('select * from a', 0) * x from a;
+NOTICE:EXECQ:  1 
+NOTICE:EXECQ:  2 
+NOTICE:EXECQ:  1 
+NOTICE:EXECQ:  2 
+NOTICE:EXECQ:  2 
+INSERT 0 2
+vac=> select * from a;
+x
+-
+1
+2
+2                <<< 2 tuples * 1 (x in first tuple)
+6                <<< 3 tuples (2 + 1 just inserted) * 2 (x in second tuple)
+(4 rows)             ^^^^^^^^ 
+                     tuples visible to execq() in different invocations
+
