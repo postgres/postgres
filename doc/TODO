@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Mar  7 22:03:10 EST 2003
+Last updated:		Fri Mar  7 23:22:59 EST 2003
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -394,7 +394,7 @@ Optimizer / Executor
 * Allow ORDER BY ... LIMIT to select top values without sort or index
   using a sequential scan for highest/lowest values (Oleg)
 * -Inline simple SQL functions to avoid overhead (Tom)
-* -Precompile SQL functions to avoid overhead (Neil)
+* Precompile SQL functions to avoid overhead (Neil)
 * Add utility to compute accurate random_page_cost value
 * Improve ability to display optimizer analysis using OPTIMIZER_DEBUG
 * Use CHECK constraints to improve optimizer decisions
