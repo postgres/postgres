@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.60 2001/01/24 19:43:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.61 2001/03/14 20:12:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2397,36 +2397,3 @@ EncodeTimeSpan(struct tm * tm, double fsec, int style, char *str)
 
 	return 0;
 }	/* EncodeTimeSpan() */
-
-
-#if defined(linux) && defined(__powerpc__)
-
-int
-timestamp_is_epoch(double j)
-{
-	static union
-	{
-		double		epoch;
-		unsigned char c[8];
-	}			u;
-
-	u.c[0] = 0x80;				/* sign bit */
-	u.c[1] = 0x10;				/* DBL_MIN */
-
-	return j == u.epoch;
-}
-int
-timestamp_is_current(double j)
-{
-	static union
-	{
-		double		current;
-		unsigned char c[8];
-	}			u;
-
-	u.c[1] = 0x10;				/* DBL_MIN */
-
-	return j == u.current;
-}
-
-#endif

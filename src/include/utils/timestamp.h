@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: timestamp.h,v 1.14 2001/01/24 19:43:29 momjian Exp $
+ * $Id: timestamp.h,v 1.15 2001/03/14 20:12:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,36 +74,24 @@ typedef struct
 #define DT_CURRENT		(DBL_MIN)
 #define DT_EPOCH		(-DBL_MIN)
 
-#define TIMESTAMP_INVALID(j)		do {j = DT_INVALID;} while (0)
+#define TIMESTAMP_INVALID(j)	do {j = DT_INVALID;} while (0)
 #ifdef NAN
 #define TIMESTAMP_IS_INVALID(j) (isnan(j))
 #else
-#define TIMESTAMP_IS_INVALID(j) (j == DT_INVALID)
+#define TIMESTAMP_IS_INVALID(j) ((j) == DT_INVALID)
 #endif
 
-#define TIMESTAMP_NOBEGIN(j)		do {j = DT_NOBEGIN;} while (0)
-#define TIMESTAMP_IS_NOBEGIN(j) (j == DT_NOBEGIN)
+#define TIMESTAMP_NOBEGIN(j)	do {j = DT_NOBEGIN;} while (0)
+#define TIMESTAMP_IS_NOBEGIN(j) ((j) == DT_NOBEGIN)
 
 #define TIMESTAMP_NOEND(j)		do {j = DT_NOEND;} while (0)
-#define TIMESTAMP_IS_NOEND(j)	(j == DT_NOEND)
+#define TIMESTAMP_IS_NOEND(j)	((j) == DT_NOEND)
 
-#define TIMESTAMP_CURRENT(j)		do {j = DT_CURRENT;} while (0)
-#if defined(linux) && defined(__powerpc__)
-extern int	timestamp_is_current(double j);
-
-#define TIMESTAMP_IS_CURRENT(j) timestamp_is_current(j)
-#else
-#define TIMESTAMP_IS_CURRENT(j) (j == DT_CURRENT)
-#endif
+#define TIMESTAMP_CURRENT(j)	do {j = DT_CURRENT;} while (0)
+#define TIMESTAMP_IS_CURRENT(j) ((j) == DT_CURRENT)
 
 #define TIMESTAMP_EPOCH(j)		do {j = DT_EPOCH;} while (0)
-#if defined(linux) && defined(__powerpc__)
-extern int	timestamp_is_epoch(double j);
-
-#define TIMESTAMP_IS_EPOCH(j)	timestamp_is_epoch(j)
-#else
-#define TIMESTAMP_IS_EPOCH(j)	(j == DT_EPOCH)
-#endif
+#define TIMESTAMP_IS_EPOCH(j)	((j) == DT_EPOCH)
 
 #define TIMESTAMP_IS_RELATIVE(j) (TIMESTAMP_IS_CURRENT(j) || TIMESTAMP_IS_EPOCH(j))
 #define TIMESTAMP_NOT_FINITE(j) (TIMESTAMP_IS_INVALID(j) \
