@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_resetxlog.sgml,v 1.2 2002/08/17 04:09:18 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_resetxlog.sgml,v 1.3 2002/08/17 05:07:18 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -12,13 +12,17 @@ PostgreSQL documentation
 
  <refnamediv>
   <refname>pg_resetxlog</refname>
-  <refpurpose>reset write-ahead log file and optionally the pg_controldata file</refpurpose>
+  <refpurpose>reset write-ahead log file and optionally the pg_control file</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>
   <cmdsynopsis>
    <command>pg_resetxlog</command>
-   <arg><replaceable class="parameter">datadir</replaceable></arg>
+   <arg> -f </arg>
+   <arg> -n </arg>
+   <arg> -x <replaceable class="parameter">xid</replaceable> </arg>
+   <arg> -l <replaceable class="parameter">fileid</replaceable> <replaceable class="parameter">seg</replaceable> </arg>
+   <arg choice="plain"><replaceable>datadir</replaceable></arg>
   </cmdsynopsis>
  </refsynopsisdiv>
 
@@ -26,37 +30,51 @@ PostgreSQL documentation
   <title>Description</title>
   <para>
    <command>pg_resetxlog</command> clears the write-ahead log file and
-   optionally the <filename>pg_controldata</> file.  This is
-   used so the server can be started after these files have become corrupted.
-   (In every reported case, such file corruption has been caused 
-   by faulty hardware.)  It is to be used only as a last resort,
+   optionally the <filename>pg_control</> file.  This function is sometimes
+   needed if these files have become corrupted.
+   It should be used only as a last resort,
    when the server will not start due to such corruption.
   </para>
 
   <para>
-   After running this command, the server may contain index corruption and
-   partially-committed transactions.  You should immediately dump your data
-   and reload.  After reload, check for partially committed transactions 
-   that may have been open at the time of the server crash.
+   After running this command, it should be possible to start the server,
+   but bear in mind that the database may contain inconsistent data due to
+   partially-committed transactions.  You should immediately dump your data,
+   run <application>initdb</>, and reload.  After reload, check for
+   inconsistencies and repair as needed.
   </para>
 
   <para>
-   <command>pg_resetxlog</command> can also fix a corrupted
-   <filename>pg_controldata</> file using the <literal>-f</>
-   flag.  Use this option when <command>pg_resetxlog</> reports it can't
-   reconstruct valid data for pg_control.
-  </para>
-
-  <para>
-   <command>pg_resetxlog</command> has a few more options for
-   special purposes.  Run the command with no arguments to see them.
-  </para>
-
-  <para>
-   This utility can only be run by the user who installed the server because
+   This utility can only be run by the user who installed the server, because
    it requires read/write access to the <literal>datadir</>.
-   For safety reasons, you must specify the data directory on the command line. 
-   It does not use the environment variable <envar>PGDATA</>.
+   For safety reasons, you must specify the data directory on the command line.
+   <command>pg_resetxlog</command> does not use the environment variable
+   <envar>PGDATA</>.
+  </para>
+
+  <para>
+   If <command>pg_resetxlog</command> complains that it cannot determine
+   valid data for <filename>pg_control</>, you can force it to proceed anyway
+   by specifying the <literal>-f</> (force) switch.  In this case plausible values
+   will be substituted for the missing data.  If <literal>-f</> is used then
+   the recovered database must be treated with even more suspicion than
+   usual --- an immediate dump and reload is imperative.  <emphasis>Do not</>
+   execute any data-modifying operations in the database before you dump,
+   as any such action is likely to make the corruption worse.
+  </para>
+
+  <para>
+   The <literal>-n</> (no operation) switch instructs
+   <command>pg_resetxlog</command> to print the values reconstructed from
+   <filename>pg_control</> and then exit without modifying anything.
+   This is mainly a debugging tool, but may be useful as a sanity check
+   before allowing <command>pg_resetxlog</command> to proceed for real.
+  </para>
+
+  <para>
+   The <literal>-x</> and <literal>-l</> switches are intended for use by
+   <application>pg_upgrade</>.  In most case they should not be used in
+   manual recovery operations.
   </para>
  </refsect1>
 
@@ -64,8 +82,14 @@ PostgreSQL documentation
   <title>Notes</title>
 
   <para>
-   This command can not be used when the <application>postmaster</> is 
-   running.
+   This command must not be used when the <application>postmaster</> is 
+   running.  <command>pg_resetxlog</command> will refuse to start up if
+   it finds a postmaster lock file in the <literal>datadir</>.  If the
+   <application>postmaster</> crashed then a lock file may have been left
+   behind; in that case you can remove the lock file to allow
+   <command>pg_resetxlog</command> to run.  But before you do
+   so, make doubly certain that there
+   is no postmaster nor any backend server process still alive.
   </para>
  </refsect1>
 
