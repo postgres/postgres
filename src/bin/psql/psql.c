@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.147 1998/07/09 03:28:53 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.148 1998/07/18 18:34:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -129,7 +129,7 @@ static int
 tableList(PsqlSettings *pset, bool deep_tablelist,
 		  char info_type, bool system_tables);
 static int	tableDesc(PsqlSettings *pset, char *table, FILE *fout);
-static int	objectDescription(PsqlSettings *pset, char *object, FILE *fout);
+static int	objectDescription(PsqlSettings *pset, char *object);
 static int	rightsList(PsqlSettings *pset);
 static void prompt_for_password(char *username, char *password);
 static char *
@@ -144,9 +144,7 @@ static void
 SendQuery(bool *success_p, PsqlSettings *pset, const char *query,
 		  const bool copy_in, const bool copy_out, FILE *copystream);
 static int
-HandleSlashCmds(PsqlSettings *pset,
-				char *line,
-				char *query);
+HandleSlashCmds(PsqlSettings *pset,	char *line, char *query);
 static int	MainLoop(PsqlSettings *pset, char *query, FILE *source);
 static FILE *setFout(PsqlSettings *pset, char *fname);
 
@@ -626,8 +624,7 @@ tableDesc(PsqlSettings *pset, char *table, FILE *fout)
 	char	   *pagerenv;
 
 #ifdef TIOCGWINSZ
-	if (fout == NULL &&
-		pset->notty == 0 &&
+	if (pset->notty == 0 &&
 		(ioctl(fileno(stdout), TIOCGWINSZ, &screen_size) == -1 ||
 		 screen_size.ws_col == 0 ||
 		 screen_size.ws_row == 0))
@@ -653,7 +650,7 @@ tableDesc(PsqlSettings *pset, char *table, FILE *fout)
 	}
 	else
 	{
-#ifdef MB
+#ifdef MULTIBYTE
 		for (i = 0; table[i]; i += PQmblen(table+i))
 #else
 		for (i = 0; table[i]; i++)
@@ -790,29 +787,13 @@ tableDesc(PsqlSettings *pset, char *table, FILE *fout)
  *
  */
 int
-objectDescription(PsqlSettings *pset, char *object, FILE *fout)
+objectDescription(PsqlSettings *pset, char *object)
 {
 	char		descbuf[512];
-	int			nDescriptions;
-	int			i;
 	PGresult   *res;
-	int			usePipe = 0;
-	char	   *pagerenv;
-
-#ifdef TIOCGWINSZ
-	if (fout == NULL &&
-		pset->notty == 0 &&
-		(ioctl(fileno(stdout), TIOCGWINSZ, &screen_size) == -1 ||
-		 screen_size.ws_col == 0 ||
-		 screen_size.ws_row == 0))
-	{
-#endif
-		screen_size.ws_row = 24;
-		screen_size.ws_col = 80;
-#ifdef TIOCGWINSZ
-	}
-#endif
-
+	int			i;
+	bool		success;
+	
 	/* Build the query */
 
 	while (isspace(*object))
@@ -830,7 +811,7 @@ objectDescription(PsqlSettings *pset, char *object, FILE *fout)
 	}
 	else
 	{
-#ifdef MB
+#ifdef MULTIBYTE
 		for (i = 0; object[i]; i += PQmblen(object+i))
 #else
 		for (i = 0; object[i]; i++)
@@ -866,7 +847,7 @@ objectDescription(PsqlSettings *pset, char *object, FILE *fout)
 	{
 		strcat(descbuf, "SELECT DISTINCT description ");
 		strcat(descbuf, "FROM pg_class, pg_description ");
-		strcat(descbuf, "WHERE pg_class.relname = '");
+		strcat(descbuf, "WHERE pg_class.relname ~ '^");
 		strcat(descbuf, object);
 		strcat(descbuf, "'");
 		strcat(descbuf, " and pg_class.oid = pg_description.objoid ");
@@ -878,7 +859,7 @@ objectDescription(PsqlSettings *pset, char *object, FILE *fout)
 			descbuf[0] = '\0';
 			strcat(descbuf, "SELECT DISTINCT description ");
 			strcat(descbuf, "FROM pg_type, pg_description ");
-			strcat(descbuf, "WHERE pg_type.typname = '");
+			strcat(descbuf, "WHERE pg_type.typname ~ '^");
 			strcat(descbuf, object);
 			strcat(descbuf, "' and ");
 			strcat(descbuf, " pg_type.oid = pg_description.objoid ");
@@ -890,7 +871,7 @@ objectDescription(PsqlSettings *pset, char *object, FILE *fout)
 				descbuf[0] = '\0';
 				strcat(descbuf, "SELECT DISTINCT description ");
 				strcat(descbuf, "FROM pg_proc, pg_description ");
-				strcat(descbuf, "WHERE pg_proc.proname = '");
+				strcat(descbuf, "WHERE pg_proc.proname ~ '^");
 				strcat(descbuf, object);
 				strcat(descbuf, "'");
 				strcat(descbuf, " and pg_proc.oid = pg_description.objoid ");
@@ -902,7 +883,7 @@ objectDescription(PsqlSettings *pset, char *object, FILE *fout)
 					descbuf[0] = '\0';
 					strcat(descbuf, "SELECT DISTINCT description ");
 					strcat(descbuf, "FROM pg_operator, pg_description ");
-					strcat(descbuf, "WHERE pg_operator.oprname = '");
+					strcat(descbuf, "WHERE pg_operator.oprname ~ '^");
 					strcat(descbuf, object);
 					strcat(descbuf, "'");
 					/* operator descriptions are attached to the proc */
@@ -915,59 +896,31 @@ objectDescription(PsqlSettings *pset, char *object, FILE *fout)
 						descbuf[0] = '\0';
 						strcat(descbuf, "SELECT DISTINCT description ");
 						strcat(descbuf, "FROM pg_aggregate, pg_description ");
-						strcat(descbuf, "WHERE pg_aggregate.aggname = '");
+						strcat(descbuf, "WHERE pg_aggregate.aggname ~ '^");
 						strcat(descbuf, object);
 						strcat(descbuf, "'");
 						strcat(descbuf, " and pg_aggregate.oid = pg_description.objoid ");
 						if (!(res = PSQLexec(pset, descbuf)))
 							return -1;
+						else if (PQntuples(res) <= 0)
+						{
+							PQclear(res);
+							descbuf[0] = '\0';
+							strcat(descbuf, "SELECT 'no description' as description ");
+							if (!(res = PSQLexec(pset, descbuf)))
+								return -1;
+						}
 					}
 				}
 			}
 		}
 	}
-	nDescriptions = PQntuples(res);
-	if (nDescriptions > 0)
-	{
-		if (fout == NULL)
-		{
-			if (pset->notty == 0 &&
-				(pagerenv = getenv("PAGER")) &&
-				pagerenv[0] != '\0' &&
-				screen_size.ws_row <= nDescriptions + 1 &&
-				(fout = popen(pagerenv, "w")))
-			{
-				usePipe = 1;
-				pqsignal(SIGPIPE, SIG_IGN);
-			}
-			else
-				fout = stdout;
-		}
 
-		/*
-		 * * Display the information
-		 */
+	PQclear(res);
 
-		fprintf(fout, "\nObject    = %s\n", object);
+	SendQuery(&success, pset, descbuf, false, false, NULL);
 
-		/* next, print out the instances */
-		for (i = 0; i < PQntuples(res); i++)
-			fprintf(fout, "%s\n", PQgetvalue(res, i, 0));
-
-		PQclear(res);
-		if (usePipe)
-		{
-			pclose(fout);
-			pqsignal(SIGPIPE, SIG_DFL);
-		}
-		return 0;
-
-	}
-	else
-	{
-		fprintf(stderr, "Couldn't find comments for object %s!\n", object);
-		return -1;
-	}
+	return 0;
 }
 
 typedef char *(*READ_ROUTINE) (char *prompt, FILE *source);
@@ -1752,6 +1705,7 @@ HandleSlashCmds(PsqlSettings *pset,
 		case 'a':				/* toggles to align fields on output */
 			toggle(pset, &pset->opt.align, "field alignment");
 			break;
+
 		case 'C':				/* define new caption */
 			if (pset->opt.caption)
 			{
@@ -1764,6 +1718,7 @@ HandleSlashCmds(PsqlSettings *pset,
 				exit(CMD_TERMINATE);
 			}
 			break;
+
 		case 'c':
 			{
 				if (strncmp(cmd, "copy ", strlen("copy ")) == 0 ||
@@ -1815,32 +1770,83 @@ HandleSlashCmds(PsqlSettings *pset,
 				}
 			}
 			break;
+
 		case 'd':				/* \d describe database information */
+			/*
+			 * if the optarg2 name is surrounded by double-quotes, then don't
+			 * convert case
+			 */
+			if (optarg2)
+			{
+				if (*optarg2 == '"')
+				{
+					optarg2++;
+					if (*(optarg2 + strlen(optarg2) - 1) == '"')
+						*(optarg2 + strlen(optarg2) - 1) = '\0';
+				}
+				else
+				{
+					int i;
+#ifdef MULTIBYTE
+					for (i = 0; optarg2[i]; i += PQmblen(optarg2+i))
+#else
+					for (i = 0; optarg2[i]; i++)
+#endif
+						if (isupper(optarg2[i]))
+							optarg2[i] = tolower(optarg2[i]);
+				}
+			}
+			
+#ifdef TIOCGWINSZ
+			if (pset->notty == 0 &&
+				(ioctl(fileno(stdout), TIOCGWINSZ, &screen_size) == -1 ||
+				 screen_size.ws_col == 0 ||
+				 screen_size.ws_row == 0))
+			{
+#endif
+				screen_size.ws_row = 24;
+				screen_size.ws_col = 80;
+#ifdef TIOCGWINSZ
+			}
+#endif
 			if (strncmp(cmd, "da", 2) == 0)
 			{
+				char descbuf[4096];
+
 				/* aggregates */
-				SendQuery(&success, pset, "\
-					SELECT	a.aggname AS aggname, \
-							t.typname AS typname, \
-							obj_description(a.oid) as description \
-					FROM	pg_aggregate a, pg_type t \
-					WHERE	a.aggbasetype = t.oid \
-					ORDER BY aggname, typname;",
-						  false, false, 0);
-				SendQuery(&success, pset, "\
-					SELECT	a.aggname AS aggname, \
-							'all types' as all_types, \
-							obj_description(a.oid) as description \
-					FROM	pg_aggregate a \
-					WHERE	a.aggbasetype = 0 \
-					ORDER BY aggname;",
-						  false, false, 0);
+				descbuf[0] = '\0';
+				strcat(descbuf, "SELECT	a.aggname AS aggname, ");
+				strcat(descbuf, "		t.typname AS type, ");
+				strcat(descbuf, "		obj_description(a.oid) as description ");
+				strcat(descbuf, "FROM	pg_aggregate a, pg_type t ");
+				strcat(descbuf, "WHERE	a.aggbasetype = t.oid ");
+				if (optarg2)
+				{
+					strcat(descbuf, 	"AND a.aggname ~ '^");
+					strcat(descbuf, 	optarg2);
+					strcat(descbuf, 	"' ");
+				}
+				strcat(descbuf, "UNION ");
+				strcat(descbuf, "SELECT	a.aggname AS aggname, ");
+				strcat(descbuf, "		'all types' as type, ");
+				strcat(descbuf, "		obj_description(a.oid) as description ");
+				strcat(descbuf, "FROM	pg_aggregate a ");
+				strcat(descbuf, "WHERE	a.aggbasetype = 0 ");
+				if (optarg2)
+				{
+					strcat(descbuf, 	"AND a.aggname ~ '^");
+					strcat(descbuf, 	optarg2);
+					strcat(descbuf, 	"' ");
+				}
+				strcat(descbuf, "ORDER BY aggname, type;");
+				SendQuery(&success, pset, descbuf, false, false, NULL);
 			}
 			else if (strncmp(cmd, "dd", 2) == 0)
 				/* descriptions */
-				objectDescription(pset, optarg + 1, NULL);
+				objectDescription(pset, optarg + 1);
 			else if (strncmp(cmd, "df", 2) == 0)
 			{
+				char descbuf[4096];
 				/* functions/procedures */
 
 				/*
@@ -1848,75 +1854,101 @@ HandleSlashCmds(PsqlSettings *pset,
 				 * some arguments, but have no types defined for those
 				 * arguments
 				 */
-				SendQuery(&success, pset, "\
-					SELECT	t.typname as return_type, \
-							p.proname as function, \
-							substr(oid8types(p.proargtypes),1,20) as arguments, \
-							substr(obj_description(p.oid),1,28) as description \
-					FROM 	pg_proc p, pg_type t \
-					WHERE 	p.prorettype = t.oid and \
-							(pronargs = 0 or oid8types(p.proargtypes) != '') and \
-							t.typname != 'bool' \
-					ORDER BY return_type, function;",
-						  false, false, 0);
-				SendQuery(&success, pset, "\
-					SELECT	t.typname as rtns, \
-							p.proname as function, \
-							oid8types(p.proargtypes) as arguments, \
-							substr(obj_description(p.oid),1,34) as description \
-					FROM pg_proc p, pg_type t \
-					WHERE p.prorettype = t.oid and \
-							(pronargs = 0 or oid8types(p.proargtypes) != '') and \
-							t.typname = 'bool' \
-					ORDER BY rtns, function;",
-						  false, false, 0);
+				descbuf[0] = '\0';
+				strcat(descbuf, "SELECT	t.typname as result, ");
+				strcat(descbuf, "		p.proname as function, ");
+				if (screen_size.ws_col <= 80)
+					strcat(descbuf, "	substr(oid8types(p.proargtypes),1,14) as arguments, ");
+				else
+					strcat(descbuf, "	oid8types(p.proargtypes) as arguments, ");
+				if (screen_size.ws_col <= 80)
+					strcat(descbuf, "	substr(obj_description(p.oid),1,34) as description ");
+				else
+					strcat(descbuf, "	obj_description(p.oid) as description ");
+				strcat(descbuf, "FROM 	pg_proc p, pg_type t ");
+				strcat(descbuf, "WHERE 	p.prorettype = t.oid and ");
+				strcat(descbuf, "(pronargs = 0 or oid8types(p.proargtypes) != '') ");
+				if (optarg2)
+				{
+					strcat(descbuf, 	"AND p.proname ~ '^");
+					strcat(descbuf, 	optarg2);
+					strcat(descbuf, 	"' ");
+				}
+				strcat(descbuf, "ORDER BY result, function, arguments;");
+				SendQuery(&success, pset, descbuf, false, false, NULL);
 			}
 			else if (strncmp(cmd, "di", 2) == 0)
 				/* only indices */
 				tableList(pset, false, 'i', false);
 			else if (strncmp(cmd, "do", 2) == 0)
 			{
+				char descbuf[4096];
 				/* operators */
-				SendQuery(&success, pset, "\
-					SELECT	o.oprname AS op, \
-							t0.typname AS result, \
-							t1.typname AS left_type, \
-							t2.typname AS right_type, \
-							substr(obj_description(p.oid),1,42) as description \
-					FROM	pg_proc p, pg_type t0, \
-							pg_type t1, pg_type t2, \
-							pg_operator o \
-					WHERE	p.prorettype = t0.oid AND \
-							RegprocToOid(o.oprcode) = p.oid AND \
-							p.pronargs = 2 AND \
-							o.oprleft = t1.oid AND \
-							o.oprright = t2.oid \
-					ORDER BY op, result, left_type, right_type;",
-						  false, false, 0);
-				SendQuery(&success, pset, "\
-					SELECT	o.oprname AS left_unary, \
-							t0.typname AS return_type, \
-							t1.typname AS operand, \
-							obj_description(p.oid) as description \
-					FROM	pg_operator o, pg_proc p, pg_type t0, pg_type t1 \
-					WHERE	RegprocToOid(o.oprcode) = p.oid AND \
-							o.oprresult = t0.oid AND \
-							o.oprkind = 'l' AND \
-							o.oprright = t1.oid \
-					ORDER BY left_unary, return_type, operand;",
-						  false, false, 0);
-				SendQuery(&success, pset, "\
-					SELECT	o.oprname AS right_unary, \
-							t0.typname AS return_type, \
-							t1.typname AS operand, \
-							obj_description(p.oid) as description \
-					FROM	pg_operator o, pg_proc p, pg_type t0, pg_type t1 \
-					WHERE	RegprocToOid(o.oprcode) = p.oid AND \
-							o.oprresult = t0.oid AND \
-							o.oprkind = 'r' AND \
-							o.oprleft = t1.oid \
-					ORDER BY right_unary, return_type, operand;",
-						  false, false, 0);
+				descbuf[0] = '\0';
+				strcat(descbuf, "SELECT	o.oprname AS op, ");
+				strcat(descbuf, "		t1.typname AS left_arg, ");
+				strcat(descbuf, "		t2.typname AS right_arg, ");
+				strcat(descbuf, "		t0.typname AS result, ");
+				if (screen_size.ws_col <= 80)
+					strcat(descbuf, "	substr(obj_description(p.oid),1,41) as description ");
+				else
+					strcat(descbuf, "	obj_description(p.oid) as description ");
+				strcat(descbuf, "FROM	pg_proc p, pg_type t0, ");
+				strcat(descbuf, "		pg_type t1, pg_type t2, ");
+				strcat(descbuf, "		pg_operator o ");
+				strcat(descbuf, "WHERE	p.prorettype = t0.oid AND ");
+				strcat(descbuf, "		RegprocToOid(o.oprcode) = p.oid AND ");
+				strcat(descbuf, "		p.pronargs = 2 AND ");
+				strcat(descbuf, "		o.oprleft = t1.oid AND ");
+				strcat(descbuf, "		o.oprright = t2.oid ");
+				if (optarg2)
+				{
+					strcat(descbuf, 	"AND o.oprname ~ '^");
+					strcat(descbuf, 	optarg2);
+					strcat(descbuf, 	"' ");
+				}
+				strcat(descbuf, "UNION ");
+				strcat(descbuf, "SELECT	o.oprname as op, ");
+				strcat(descbuf, "		''::name AS left_arg, ");
+				strcat(descbuf, "		t1.typname AS right_arg, ");
+				strcat(descbuf, "		t0.typname AS result, ");
+				if (screen_size.ws_col <= 80)
+					strcat(descbuf, "	substr(obj_description(p.oid),1,41) as description ");
+				else
+					strcat(descbuf, "	obj_description(p.oid) as description ");
+				strcat(descbuf, "FROM	pg_operator o, pg_proc p, pg_type t0, pg_type t1 ");
+				strcat(descbuf, "WHERE	RegprocToOid(o.oprcode) = p.oid AND ");
+				strcat(descbuf, "		o.oprresult = t0.oid AND ");
+				strcat(descbuf, "		o.oprkind = 'l' AND ");
+				strcat(descbuf, "		o.oprright = t1.oid ");
+				if (optarg2)
+				{
+					strcat(descbuf, 	"AND o.oprname ~ '^");
+					strcat(descbuf, 	optarg2);
+					strcat(descbuf, 	"' ");
+				}
+				strcat(descbuf, "UNION ");
+				strcat(descbuf, "SELECT	o.oprname  as op, ");
+				strcat(descbuf, "		t1.typname AS left_arg, ");
+				strcat(descbuf, "		''::name AS right_arg, ");
+				strcat(descbuf, "		t0.typname AS result, ");
+				if (screen_size.ws_col <= 80)
+					strcat(descbuf, "	substr(obj_description(p.oid),1,41) as description ");
+				else
+					strcat(descbuf, "	obj_description(p.oid) as description ");
+				strcat(descbuf, "FROM	pg_operator o, pg_proc p, pg_type t0, pg_type t1 ");
+				strcat(descbuf, "WHERE	RegprocToOid(o.oprcode) = p.oid AND ");
+				strcat(descbuf, "		o.oprresult = t0.oid AND ");
+				strcat(descbuf, "		o.oprkind = 'r' AND ");
+				strcat(descbuf, "		o.oprleft = t1.oid ");
+				if (optarg2)
+				{
+					strcat(descbuf, 	"AND o.oprname ~ '^");
+					strcat(descbuf, 	optarg2);
+					strcat(descbuf, 	"' ");
+				}
+				strcat(descbuf, "ORDER BY op, left_arg, right_arg, result;");
+				SendQuery(&success, pset, descbuf, false, false, NULL);
 			}
 			else if (strncmp(cmd, "ds", 2) == 0)
 				/* only sequences */
@@ -1928,15 +1960,25 @@ HandleSlashCmds(PsqlSettings *pset,
 				/* only tables */
 				tableList(pset, false, 't', false);
 			else if (strncmp(cmd, "dT", 2) == 0)
-				/* types */
-				SendQuery(&success, pset, "\
-					SELECT	typname AS type, \
-							obj_description(oid) as description \
-					FROM	pg_type \
-					WHERE	typrelid = 0 AND \
-							typname !~ '^_.*' \
-					ORDER BY type;",
-						  false, false, 0);
+		    {
+					char descbuf[4096];
+	
+					/* types */
+					descbuf[0] = '\0';
+					strcat(descbuf, "SELECT	typname AS type, ");
+					strcat(descbuf, "		obj_description(oid) as description ");
+					strcat(descbuf, "FROM	pg_type ");
+					strcat(descbuf, "WHERE	typrelid = 0 AND ");
+					strcat(descbuf, "		typname !~ '^_.*' ");
+					strcat(descbuf, "ORDER BY type;");
+					if (optarg2)
+					{
+						strcat(descbuf, 	"AND typname ~ '^");
+						strcat(descbuf, 	optarg2);
+						strcat(descbuf, 	"' ");
+					}
+					SendQuery(&success, pset, descbuf, false, false, NULL);
+			}
 			else if (!optarg)
 				/* show tables, sequences and indices */
 				tableList(pset, false, 'b', false);
@@ -1950,13 +1992,14 @@ HandleSlashCmds(PsqlSettings *pset,
 				tableDesc(pset, optarg, NULL);
 			else
 				slashUsage(pset);
-
 			break;
+
 		case 'e':				/* edit */
 			{
 				do_edit(optarg, query, &status);
 				break;
 			}
+
 		case 'E':
 			{
 				FILE	   *fd;
@@ -1999,6 +2042,7 @@ HandleSlashCmds(PsqlSettings *pset,
 				fclose(fd);
 				break;
 			}
+
 		case 'f':
 			{
 				char	   *fs = DEFAULT_FIELD_SEP;
@@ -2036,11 +2080,13 @@ HandleSlashCmds(PsqlSettings *pset,
 			}
 			status = CMD_SEND;
 			break;
+
 		case 'h':				/* help */
 			{
 				do_help(pset, optarg);
 				break;
 			}
+
 		case 'i':				/* \i is include file */
 			{
 				FILE	   *fd;
@@ -2059,16 +2105,20 @@ HandleSlashCmds(PsqlSettings *pset,
 				fclose(fd);
 				break;
 			}
+
 		case 'l':				/* \l is list database */
 			listAllDbs(pset);
 			break;
+
 		case 'H':
 			if (toggle(pset, &pset->opt.html3, "HTML3.0 tabular output"))
 				pset->opt.standard = 0;
 			break;
+
 		case 'o':
 			setFout(pset, optarg);
 			break;
+
 		case 'p':
 			if (query)
 			{
@@ -2076,14 +2126,17 @@ HandleSlashCmds(PsqlSettings *pset,
 				fputc('\n', stdout);
 			}
 			break;
+
 		case 'q':				/* \q is quit */
 			status = CMD_TERMINATE;
 			break;
+
 		case 'r':				/* reset(clear) the buffer */
 			query[0] = '\0';
 			if (!pset->quiet)
 				printf("buffer reset(cleared)\n");
 			break;
+
 		case 's':				/* \s is save history to a file */
 			if (!optarg)
 				optarg = "/dev/tty";
@@ -2092,6 +2145,7 @@ HandleSlashCmds(PsqlSettings *pset,
 				fprintf(stderr, "cannot write history to %s\n", optarg);
 #endif
 			break;
+
 		case 'm':				/* monitor like type-setting */
 			if (toggle(pset, &pset->opt.standard, "standard SQL separaters and padding"))
 			{
@@ -2112,12 +2166,15 @@ HandleSlashCmds(PsqlSettings *pset,
 					printf("field separator changed to '%s'\n", pset->opt.fieldSep);
 			}
 			break;
+
 		case 'z':				/* list table rights (grant/revoke) */
 			rightsList(pset);
 			break;
+
 		case 't':				/* toggle headers */
 			toggle(pset, &pset->opt.header, "output headings and row count");
 			break;
+
 		case 'T':				/* define html <table ...> option */
 			if (pset->opt.tableOpt)
 				free(pset->opt.tableOpt);
@@ -2129,20 +2186,23 @@ HandleSlashCmds(PsqlSettings *pset,
 				exit(CMD_TERMINATE);
 			}
 			break;
+
 		case 'x':
 			toggle(pset, &pset->opt.expanded, "expanded table representation");
 			break;
+
 		case '!':
 			do_shell(optarg);
 			break;
 		default:
+
 		case '?':				/* \? is help */
 			slashUsage(pset);
 			break;
 	}
 	free(cmd);
 	return status;
-}	/* HandleSlashCmds() */
+}
 
 /* MainLoop()
  * Main processing loop for reading lines of input
@@ -2311,7 +2371,7 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 
 		if (pset->singleLineMode)
 		{
-			SendQuery(&success, pset, line, false, false, 0);
+			SendQuery(&success, pset, line, false, false, NULL);
 			successResult &= success;
 			querySent = true;
 		}
@@ -2319,12 +2379,12 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 		{
 			int			i;
 
-#ifdef MB
+#ifdef MULTIBYTE
 			int mblen = 1;
 #endif
 
 			was_bslash = false;
-#ifdef MB
+#ifdef MULTIBYTE
 			for (i = 0; i < len; mblen=PQmblen(line+i), i+=mblen)
 #else
 			for (i = 0; i < len; i++)
@@ -2362,7 +2422,7 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 
 				if (was_bslash)
 					was_bslash = false;
-#ifdef MB
+#ifdef MULTIBYTE
 				else if (i > 0 && line[i - mblen] == '\\')
 #else
 				else if (i > 0 && line[i - 1] == '\\')
@@ -2375,14 +2435,14 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 				else if (xcomment != NULL)		/* inside an extended
 												 * comment? */
 				{
-#ifdef MB
+#ifdef MULTIBYTE
 					if (line[i] == '*' && line[i + mblen] == '/')
 #else
 					if (line[i] == '*' && line[i + 1] == '/')
 #endif
 					{
 						xcomment = NULL;
-#ifdef MB
+#ifdef MULTIBYTE
 						i += mblen;
 #else
 						i++;
@@ -2390,21 +2450,21 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 					}
 				}
 				/* possible backslash command? */
-#ifdef MB
+#ifdef MULTIBYTE
 				else if (line[i] == '/' && line[i + mblen] == '*')
 #else
 				else if (line[i] == '/' && line[i + 1] == '*')
 #endif
 				{
 					xcomment = line + i;
-#ifdef MB
+#ifdef MULTIBYTE
 					i += mblen;
 #else
 					i++;
 #endif
 				}
 				/* single-line comment? truncate line */
-#ifdef MB
+#ifdef MULTIBYTE
 				else if ((line[i] == '-' && line[i + mblen] == '-') ||
 						 (line[i] == '/' && line[i + mblen] == '/'))
 #else
@@ -2436,7 +2496,7 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 						else
 							strcpy(query, query_start);
 					}
-					SendQuery(&success, pset, query, false, false, 0);
+					SendQuery(&success, pset, query, false, false, NULL);
 					successResult &= success;
 					line[i + 1] = hold_char;
 					query_start = line + i + 1;
@@ -2509,7 +2569,7 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 		/* had a backslash-g? force the query to be sent */
 		if (slashCmdStatus == CMD_SEND)
 		{
-			SendQuery(&success, pset, query, false, false, 0);
+			SendQuery(&success, pset, query, false, false, NULL);
 			successResult &= success;
 			xcomment = NULL;
 			in_quote = false;
@@ -2745,7 +2805,7 @@ main(int argc, char **argv)
 		{
 			bool		success;/* The query succeeded at the backend */
 
-			SendQuery(&success, &settings, singleQuery, false, false, 0);
+			SendQuery(&success, &settings, singleQuery, false, false, NULL);
 			successResult = success;
 		}
 		else

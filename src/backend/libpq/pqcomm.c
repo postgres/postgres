@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.48 1998/07/09 03:28:46 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.49 1998/07/18 18:34:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,7 +67,7 @@
 #include "libpq/auth.h"
 #include "libpq/libpq.h"		/* where the declarations go */
 #include "storage/ipc.h"
-#ifdef MB
+#ifdef MULTIBYTE
 #include "commands/variable.h"
 #endif
 
@@ -181,7 +181,7 @@ pq_getstr(char *s, int maxlen)
 {
 	int			c = '\0';
 
-#ifdef MB
+#ifdef MULTIBYTE
 	unsigned char *p, *ps;
 	int len;
 
@@ -199,7 +199,7 @@ pq_getstr(char *s, int maxlen)
 		*s++ = c;
 	*s = '\0';
 
-#ifdef MB
+#ifdef MULTIBYTE
 	p = pg_client_to_server(ps, len);
 	if (ps != p) {	/* actual conversion has been done? */
 	  strcpy(ps, p);
@@ -341,7 +341,7 @@ pq_getint(int b)
 void
 pq_putstr(char *s)
 {
-#ifdef MB
+#ifdef MULTIBYTE
         unsigned char *p;
 
         p = pg_server_to_client(s, strlen(s));
@@ -740,7 +740,7 @@ StreamOpen(char *hostName, short portName, Port *port)
 	return (STATUS_OK);
 }
 
-#ifdef MB
+#ifdef MULTIBYTE
 void
 pq_putncharlen(char *s, int n)
 {

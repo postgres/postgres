@@ -117,14 +117,14 @@ extern		"C"
 #define EOW		(BOL+5)
 #define CODEMAX (BOL+5)			/* highest code used */
 
-#ifdef MB
-#  if MB == MULE_INTERNAL
+#ifdef MULTIBYTE
+#  if MULTIBYTE == MULE_INTERNAL
 #    define NONCHAR(c)	((c) > 16777216)	/* 16777216 == 2^24 == 3 bytes */
 #    define NNONCHAR	(CODEMAX-16777216)
-#  elif MB == EUC_JP || MB == EUC_CN || MB == EUC_KR || MB == EUC_TW
+#  elif MULTIBYTE == EUC_JP || MULTIBYTE == EUC_CN || MULTIBYTE == EUC_KR || MULTIBYTE == EUC_TW
 #    define NONCHAR(c)	((c) > USHRT_MAX)
 #    define NNONCHAR	(CODEMAX-USHRT_MAX)
-#  elif MB == UNICODE
+#  elif MULTIBYTE == UNICODE
 #    define NONCHAR(c)	((c) > USHRT_MAX)
 #    define NNONCHAR	(CODEMAX-USHRT_MAX)
 #  else	/* assume 1 byte code such as ISO8859-1 */
@@ -200,7 +200,7 @@ int			eflags;
 	else
 	{
 		start = string;
-#ifdef MB
+#ifdef MULTIBYTE
 		stop = start + pg_wchar_strlen(start);
 #else
 		stop = start + strlen(start);
@@ -214,7 +214,7 @@ int			eflags;
 	{
 		for (dp = start; dp < stop; dp++)
 			if (*dp == g->must[0] && stop - dp >= g->mlen &&
-#ifdef MB
+#ifdef MULTIBYTE
 				memcmp(dp, g->must, (size_t) (g->mlen * sizeof(pg_wchar))) == 0)
 #else
 				memcmp(dp, g->must, (size_t) g->mlen) == 0)
@@ -1165,7 +1165,7 @@ sopno		stopst;
 
 static int pg_isprint(int c)
 {
-#ifdef MB
+#ifdef MULTIBYTE
   return(c >= 0 && c <= UCHAR_MAX && isprint(c));
 #else
   return(isprint(c));

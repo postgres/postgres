@@ -1,4 +1,4 @@
-/* $Id: pg_wchar.h,v 1.3 1998/06/16 07:29:43 momjian Exp $ */
+/* $Id: pg_wchar.h,v 1.4 1998/07/18 18:34:24 momjian Exp $ */
 
 #ifndef PG_WCHAR_H
 #define PG_WCHAR_H
@@ -19,8 +19,8 @@
 /* followings are for client encoding only */
 #define SJIS 16		/* Shift JIS */
 
-#ifdef MB
-# if LATIN1 <= MB && MB <= LATIN5
+#ifdef MULTIBYTE
+# if LATIN1 <= MULTIBYTE && MULTIBYTE <= LATIN5
 typedef unsigned char pg_wchar;
 # else
 typedef unsigned int pg_wchar;
@@ -65,7 +65,7 @@ typedef unsigned int pg_wchar;
 #define	LC_CNS11643_6	0xf9	/* CNS 11643-1992 Plane 6 */
 #define	LC_CNS11643_7	0xfa	/* CNS 11643-1992 Plane 7 */
 
-#ifdef MB
+#ifdef MULTIBYTE
 extern void pg_mb2wchar(const unsigned char *, pg_wchar *);
 extern void pg_mb2wchar_with_len(const unsigned char *, pg_wchar *, int);
 extern int pg_char_and_wchar_strcmp(const char *, const pg_wchar *);

@@ -164,7 +164,7 @@ int			eflags;
 {
 	struct re_guts *g = preg->re_g;
 
-#ifdef MB
+#ifdef MULTIBYTE
 	pg_wchar *str;
 	int sts;
 #endif
@@ -182,7 +182,7 @@ int			eflags;
 		return (REG_BADPAT);
 	eflags = GOODFLAGS(eflags);
 
-#ifdef MB
+#ifdef MULTIBYTE
 	str = (pg_wchar *)malloc((strlen(string)+1) * sizeof(pg_wchar));
 	if (!str) {
 	  return(REG_ESPACE);

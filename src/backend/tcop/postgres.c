@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.79 1998/07/09 03:28:48 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.80 1998/07/18 18:34:09 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -83,7 +83,7 @@
 #include "nodes/memnodes.h"
 #endif
 
-#ifdef MB
+#ifdef MULTIBYTE
 #include "commands/variable.h"
 #endif
 
@@ -1270,7 +1270,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 
 	InitPostgres(DBName);
 
-#ifdef MB
+#ifdef MULTIBYTE
 	/* set default client encoding */
 	if (!Quiet)
 	{
@@ -1339,7 +1339,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface");
-		puts("$Revision: 1.79 $ $Date: 1998/07/09 03:28:48 $");
+		puts("$Revision: 1.80 $ $Date: 1998/07/18 18:34:09 $");
 	}
 
 	/* ----------------

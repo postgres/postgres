@@ -68,7 +68,7 @@ regex_t    *preg;
 		return;
 	preg->re_magic = 0;			/* mark it invalid */
 	g->magic = 0;				/* mark it invalid */
-#ifdef MB
+#ifdef MULTIBYTE
 	if (preg->patsave != NULL) {
 	  free((char *)preg->patsave);
 	}

@@ -194,7 +194,7 @@ int			cflags;
 	struct parse *p = &pa;
 	int			i;
 	size_t		len;
-#ifdef MB
+#ifdef MULTIBYTE
  	pg_wchar *wcp;
 #endif
 
@@ -210,7 +210,7 @@ int			cflags;
 
 	if (cflags & REG_PEND)
 	{
-#ifdef MB
+#ifdef MULTIBYTE
 	        wcp = preg->patsave;
 		if (preg->re_endp < wcp)
 			return (REG_INVARG);
@@ -222,7 +222,7 @@ int			cflags;
 #endif
 	}
 	else {
-#ifdef MB
+#ifdef MULTIBYTE
 	  wcp = (pg_wchar *)malloc((strlen(pattern)+1) * sizeof(pg_wchar));
 	  if (wcp == NULL) {
 	    return (REG_ESPACE);
@@ -253,7 +253,7 @@ int			cflags;
 
 	/* set things up */
 	p->g = g;
-#ifdef MB
+#ifdef MULTIBYTE
 	p->next = wcp;
 #else
 	p->next = (pg_wchar *)pattern; /* convenience; we do not modify it */
@@ -607,7 +607,7 @@ int			starordinary;		/* is a leading * an ordinary character? */
 	if (c == '\\')
 	{
 		REQUIRE(MORE(), REG_EESCAPE);
-#ifdef MB
+#ifdef MULTIBYTE
 		c = BACKSL | (pg_wchar) GETNEXT();
 #else
 		c = BACKSL | (unsigned char) GETNEXT();
@@ -755,13 +755,13 @@ struct parse *p;
 {
 	cset	   *cs = allocset(p);
 	int			invert = 0;
-#ifdef MB
+#ifdef MULTIBYTE
 	pg_wchar sp1[] = {'[', ':', '<', ':', ']', ']'};
 	pg_wchar sp2[] = {'[', ':', '>', ':', ']', ']'};
 #endif
 
 	/* Dept of Truly Sickening Special-Case Kludges */
-#ifdef MB
+#ifdef MULTIBYTE
  	if (p->next + 5 < p->end && pg_wchar_strncmp(p->next, sp1, 6) == 0)
 #else
 	if (p->next + 5 < p->end && strncmp(p->next, "[:<:]]", 6) == 0)
@@ -771,7 +771,7 @@ struct parse *p;
 		NEXTn(6);
 		return;
 	}
-#ifdef MB
+#ifdef MULTIBYTE
  	if (p->next + 5 < p->end && pg_wchar_strncmp(p->next, sp2, 6) == 0)
 #else
 	if (p->next + 5 < p->end && strncmp(p->next, "[:>:]]", 6) == 0)
@@ -903,7 +903,7 @@ cset	   *cs;
 				finish = start;
 /* xxx what about signed chars here... */
 			REQUIRE(start <= finish, REG_ERANGE);
-#ifdef MB
+#ifdef MULTIBYTE
 		  if (CHlc(start) != CHlc(finish)) {
 		    SETERROR(REG_ERANGE);
 		  }
@@ -933,7 +933,7 @@ cset	   *cs;
 		NEXT();
 	len = p->next - sp;
 	for (cp = cclasses; cp->name != NULL; cp++)
-#ifdef MB
+#ifdef MULTIBYTE
 		if (pg_char_and_wchar_strncmp(cp->name, sp, len) == 0 && cp->name[len] == '\0')
 #else
 		if (strncmp(cp->name, sp, len) == 0 && cp->name[len] == '\0')
@@ -1012,7 +1012,7 @@ int			endc;				/* name ended by endc,']' */
 	}
 	len = p->next - sp;
 	for (cp = cnames; cp->name != NULL; cp++)
-#ifdef MB
+#ifdef MULTIBYTE
 		if (pg_char_and_wchar_strncmp(cp->name, sp, len) == 0 && cp->name[len] == '\0')
 #else
 		if (strncmp(cp->name, sp, len) == 0 && cp->name[len] == '\0')
@@ -1084,7 +1084,7 @@ int			ch;
 		bothcases(p, ch);
 	else
 	{
-#ifdef MB
+#ifdef MULTIBYTE
 		EMIT(OCHAR, (pg_wchar) ch);
 #else
 		EMIT(OCHAR, (unsigned char) ch);
@@ -1788,7 +1788,7 @@ struct re_guts *g;
 		return;
 
 	/* turn it into a character string */
-#ifdef MB
+#ifdef MULTIBYTE
 	g->must = (pg_wchar *)malloc((size_t) (g->mlen + 1)*sizeof(pg_wchar));
 #else
 	g->must = malloc((size_t) g->mlen + 1);
@@ -1854,7 +1854,7 @@ struct re_guts *g;
  */
 static int pg_isdigit(int c)
 {
-#ifdef MB
+#ifdef MULTIBYTE
   return(c >= 0 && c <= UCHAR_MAX && isdigit(c));
 #else
   return(isdigit(c));
@@ -1863,7 +1863,7 @@ static int pg_isdigit(int c)
 
 static int pg_isalpha(int c)
 {
-#ifdef MB
+#ifdef MULTIBYTE
   return(c >= 0 && c <= UCHAR_MAX && isalpha(c));
 #else
   return(isalpha(c));
@@ -1872,7 +1872,7 @@ static int pg_isalpha(int c)
 
 static int pg_isupper(int c)
 {
-#ifdef MB
+#ifdef MULTIBYTE
   return(c >= 0 && c <= UCHAR_MAX && isupper(c));
 #else
   return(isupper(c));
@@ -1881,7 +1881,7 @@ static int pg_isupper(int c)
 
 static int pg_islower(int c)
 {
-#ifdef MB
+#ifdef MULTIBYTE
   return(c >= 0 && c <= UCHAR_MAX && islower(c));
 #else
   return(islower(c));

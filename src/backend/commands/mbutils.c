@@ -2,7 +2,7 @@
  * conversion between client encoding and server internal encoding
  * (currently mule internal code (mic) is used)
  * Tatsuo Ishii
- * $Id: mbutils.c,v 1.1 1998/06/16 07:38:18 momjian Exp $
+ * $Id: mbutils.c,v 1.2 1998/07/18 18:34:01 momjian Exp $
  */
 #include <stdio.h>
 #include <string.h>
@@ -12,7 +12,7 @@
 #include "regex/pg_wchar.h"
 #include "commands/variable.h"
 
-static int client_encoding = MB;	/* defalut client encoding is set to
+static int client_encoding = MULTIBYTE;	/* defalut client encoding is set to
 					   same as the server encoding */
 /*
  * convert bogus chars that cannot be represented in the current encoding
@@ -381,10 +381,10 @@ int pg_set_client_encoding(int encoding)
 {
   client_encoding = encoding;
 
-  if (client_encoding == MB) {	/* server == client? */
+  if (client_encoding == MULTIBYTE) {	/* server == client? */
     client_to_mic = client_from_mic = 0;
     server_to_mic = server_from_mic = 0;
-  } else if (MB == MULE_INTERNAL) {	/* server == MULE_INETRNAL? */
+  } else if (MULTIBYTE == MULE_INTERNAL) {	/* server == MULE_INETRNAL? */
     client_to_mic = get_enc_ent(encoding)->to_mic;
     client_from_mic = get_enc_ent(encoding)->from_mic;
     server_to_mic = server_from_mic = 0;
@@ -393,16 +393,16 @@ int pg_set_client_encoding(int encoding)
     }
   } else if (encoding == MULE_INTERNAL) {	/* client == MULE_INETRNAL? */
     client_to_mic = client_from_mic = 0;
-    server_to_mic = get_enc_ent(MB)->to_mic;
-    server_from_mic = get_enc_ent(MB)->from_mic;
+    server_to_mic = get_enc_ent(MULTIBYTE)->to_mic;
+    server_from_mic = get_enc_ent(MULTIBYTE)->from_mic;
     if (server_to_mic == 0 || server_from_mic == 0) {
       return(-1);
     }
   } else {
     client_to_mic = get_enc_ent(encoding)->to_mic;
     client_from_mic = get_enc_ent(encoding)->from_mic;
-    server_to_mic = get_enc_ent(MB)->to_mic;
-    server_from_mic = get_enc_ent(MB)->from_mic;
+    server_to_mic = get_enc_ent(MULTIBYTE)->to_mic;
+    server_from_mic = get_enc_ent(MULTIBYTE)->from_mic;
     if (client_to_mic == 0 || client_from_mic == 0) {
       return(-1);
     }
@@ -504,7 +504,7 @@ const char *pg_encoding_to_char(int encoding)
   return(p->name);
 }
 
-#ifdef MBUTILSDEBUG
+#ifdef MULTIBYTEUTILSDEBUG
 #include <stdio.h>
 
 main()

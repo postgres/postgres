@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.35 1998/07/14 02:41:25 momjian Exp $
+ * $Id: libpq-fe.h,v 1.36 1998/07/18 18:34:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -368,7 +368,7 @@ extern		"C"
 											 * 0, use variable width */
 		);
 
-#ifdef MB
+#ifdef MULTIBYTE
 	extern int PQmblen(unsigned char *s);
 #endif
 

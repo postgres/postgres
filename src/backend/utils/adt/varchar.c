@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.35 1998/07/12 21:29:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.36 1998/07/18 18:34:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -398,13 +398,13 @@ bcTruelen(char *arg)
 int32
 bpcharlen(char *arg)
 {
-#ifdef MB
+#ifdef MULTIBYTE
 	unsigned char *s;
 	int len, l, wl;
 #endif
 	if (!PointerIsValid(arg))
 		elog(ERROR, "Bad (null) char() external representation", NULL);
-#ifdef MB
+#ifdef MULTIBYTE
 	l = bcTruelen(arg);
 	len = 0;
 	s = VARDATA(arg);
@@ -563,14 +563,14 @@ bpcharcmp(char *arg1, char *arg2)
 int32
 varcharlen(char *arg)
 {
-#ifdef MB
+#ifdef MULTIBYTE
 	unsigned char *s;
 	int len, l, wl;
 #endif
 	if (!PointerIsValid(arg))
 		elog(ERROR, "Bad (null) varchar() external representation", NULL);
 
-#ifdef MB
+#ifdef MULTIBYTE
 	len = 0;
 	s = VARDATA(arg);
 	l = VARSIZE(arg) - VARHDRSZ;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.74 1998/07/09 03:32:10 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.75 1998/07/18 18:34:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -124,7 +124,7 @@ struct EnvironmentOptions
 	{
 		"PGTZ", "timezone"
 	},
-#ifdef MB
+#ifdef MULTIBYTE
 	{
 		"PGCLIENTENCODING", "client_encoding"
 	},

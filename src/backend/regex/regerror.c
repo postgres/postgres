@@ -215,7 +215,7 @@ char	   *localbuf;
 	struct rerr *r;
 
 	for (r = rerrs; r->code != 0; r++)
-#ifdef MB
+#ifdef MULTIBYTE
 		if (pg_char_and_wchar_strcmp(r->name, preg->re_endp) == 0)
 #else
 		if (strcmp(r->name, preg->re_endp) == 0)

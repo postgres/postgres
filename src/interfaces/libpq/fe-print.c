@@ -9,7 +9,7 @@
  * didn't really belong there.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-print.c,v 1.6 1998/07/03 04:24:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-print.c,v 1.7 1998/07/18 18:34:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,7 +35,7 @@
 #endif
 #endif /* WIN32 */
 
-#ifdef MB
+#ifdef MULTIBYTE
 #include "regex/pg_wchar.h"
 #include "commands/variable.h"
 #endif
@@ -494,7 +494,7 @@ PQprintTuples(PGresult *res,
 	}
 }
 
-#ifdef MB
+#ifdef MULTIBYTE
 /*
  * returns the byte length of the word beginning s.
  * Client side encoding is determined by the environment variable
@@ -512,7 +512,7 @@ int PQmblen(unsigned char *s)
     encoding = pg_char_to_encoding(str);
   }
   if (encoding < 0) {
-    encoding = MB;
+    encoding = MULTIBYTE;
   }
   return(pg_encoding_mblen(encoding, s));
 }
@@ -551,7 +551,7 @@ do_field(PQprintOpt *po, PGresult *res,
 
 	if (!skipit)
 	{
-#ifdef MB
+#ifdef MULTIBYTE
 	        int len;
 
  		for (p = pval, o = buf; *p;

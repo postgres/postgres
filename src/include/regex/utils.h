@@ -43,7 +43,7 @@
 #define DUPMAX			100000000		/* xxx is this right? */
 #define INFINITY		(DUPMAX + 1)
 
-#ifdef MB
+#ifdef MULTIBYTE
 #define NC				(SHRT_MAX - SHRT_MIN + 1)
 #else
 #define NC				(CHAR_MAX - CHAR_MIN + 1)

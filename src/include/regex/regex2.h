@@ -127,7 +127,7 @@ typedef struct
 {
 	uch		   *ptr;			/* -> uch [csetsize] */
 	uch			mask;			/* bit within array */
-#ifdef MB
+#ifdef MULTIBYTE
 	pg_wchar	hash;			/* hash code */
 	unsigned int	lc;	/* leading character (character-set) */
 #else
@@ -138,7 +138,7 @@ typedef struct
 } cset;
 
 /* note that CHadd and CHsub are unsafe, and CHIN doesn't yield 0/1 */
-#ifdef MB
+#ifdef MULTIBYTE
 #define CHlc(c)	(((unsigned)(c)&0xff0000)>>16)
 #define CHadd(cs, c)	((cs)->ptr[(unsigned)(c)&0xffff] |= (cs)->mask, (cs)->hash += (unsigned)(c)&0xffff,\
 			 (cs)->lc = CHlc(c))
@@ -196,12 +196,12 @@ struct re_guts
 };
 
 /* misc utilities */
-#ifdef MB
-#  if MB == MULE_INTERNAL
+#ifdef MULTIBYTE
+#  if MULTIBYTE == MULE_INTERNAL
 #    define OUT		(16777216+1)	/* 16777216 == 2^24 == 3 bytes */
-#  elif MB == EUC_JP || MB == EUC_CN || MB == EUC_KR || MB == EUC_TW
+#  elif MULTIBYTE == EUC_JP || MULTIBYTE == EUC_CN || MULTIBYTE == EUC_KR || MULTIBYTE == EUC_TW
 #    define OUT		(USHRT_MAX+1)	/* 2 bytes */
-#  elif MB == UNICODE
+#  elif MULTIBYTE == UNICODE
 #    define OUT		(USHRT_MAX+1)	/* 2 bytes. assuming UCS-2 */
 #  else
 #    define OUT		(UCHAR_MAX+1)	/* other codes. assuming 1 byte */
@@ -210,7 +210,7 @@ struct re_guts
 #  define OUT		(CHAR_MAX+1)	/* a non-character value */
 #endif
 
-#ifdef MB
+#ifdef MULTIBYTE
 #define ISWORD(c)	((c >= 0 && c <= UCHAR_MAX) && \
 			 (isalnum(c) || (c) == '_'))
 #else

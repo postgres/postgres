@@ -49,7 +49,7 @@ fixedlen_like(char *s, struct varlena * p, int charlen)
 		return FALSE;
 
 	/* be sure sterm is null-terminated */
-#ifdef MB
+#ifdef MULTIBYTE
 	sterm = (pg_wchar *) palloc((charlen + 1)*sizeof(pg_wchar));
 	(void)pg_mb2wchar_with_len((unsigned char *)s,sterm,charlen);
 #else
@@ -64,7 +64,7 @@ fixedlen_like(char *s, struct varlena * p, int charlen)
 
 	/* palloc the length of the text + the null character */
 	len = VARSIZE(p) - VARHDRSZ;
-#ifdef MB
+#ifdef MULTIBYTE
 	pterm = (pg_wchar *) palloc((len + 1)*sizeof(pg_wchar));
 	(void)pg_mb2wchar_with_len((unsigned char *)VARDATA(p),pterm,len);
 #else
@@ -111,7 +111,7 @@ textnlike(struct varlena * s, struct varlena * p)
 }
 
 
-/*	$Revision: 1.16 $
+/*	$Revision: 1.17 $
 **	"like.c" A first attempt at a LIKE operator for Postgres95.
 **
 **	Originally written by Rich $alz, mirror!rs, Wed Nov 26 19:03:17 EST 1986.

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.37 1998/06/16 06:41:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.38 1998/07/18 18:34:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -206,7 +206,7 @@ textout(text *vlena)
 int32
 textlen(text *t)
 {
-#ifdef MB
+#ifdef MULTIBYTE
 	unsigned char *s;
 	int len, l, wl;
 #endif
@@ -214,7 +214,7 @@ textlen(text *t)
 	if (!PointerIsValid(t))
 		elog(ERROR, "Null input to textlen");
 
-#ifdef MB
+#ifdef MULTIBYTE
 	len = 0;
 	s = VARDATA(t);
 	l = VARSIZE(t) - VARHDRSZ;
@@ -322,7 +322,7 @@ text_substr(text *string, int32 m, int32 n)
 {
 	text	   *ret;
 	int			len;
-#ifdef MB
+#ifdef MULTIBYTE
 	int i;
 	char *p;
 #endif
@@ -331,7 +331,7 @@ text_substr(text *string, int32 m, int32 n)
 		return string;
 
 	len = VARSIZE(string) - VARHDRSZ;
-#ifdef MB
+#ifdef MULTIBYTE
 	len = pg_mbstrlen_with_len(VARDATA(string),len);
 #endif
 
@@ -348,7 +348,7 @@ text_substr(text *string, int32 m, int32 n)
 			n = (len - m);
 	}
 
-#ifdef MB
+#ifdef MULTIBYTE
 	p = VARDATA(string);
 	for (i=0;i<m;i++) {
 	  p += pg_mblen(p);
@@ -387,7 +387,7 @@ textpos(text *t1, text *t2)
 				len2;
 	pg_wchar	   *p1,
 			   *p2;
-#ifdef MB
+#ifdef MULTIBYTE
 	pg_wchar	*ps1, *ps2;
 #endif
 
@@ -399,7 +399,7 @@ textpos(text *t1, text *t2)
 
 	len1 = (VARSIZE(t1) - VARHDRSZ);
 	len2 = (VARSIZE(t2) - VARHDRSZ);
-#ifdef MB
+#ifdef MULTIBYTE
 	ps1 = p1 = (pg_wchar *) palloc((len1 + 1)*sizeof(pg_wchar));
 	(void)pg_mb2wchar_with_len((unsigned char *)VARDATA(t1),p1,len1);
 	len1 = pg_wchar_strlen(p1);
@@ -414,7 +414,7 @@ textpos(text *t1, text *t2)
 	px = (len1 - len2);
 	for (p = 0; p <= px; p++)
 	{
-#ifdef MB
+#ifdef MULTIBYTE
 		if ((*p2 == *p1) && (pg_wchar_strncmp(p1, p2, len2) == 0))
 #else
 		if ((*p2 == *p1) && (strncmp(p1, p2, len2) == 0))
@@ -425,7 +425,7 @@ textpos(text *t1, text *t2)
 		};
 		p1++;
 	};
-#ifdef MB
+#ifdef MULTIBYTE
 	pfree(ps1);
 	pfree(ps2);
 #endif

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.29 1998/06/16 07:29:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.30 1998/07/18 18:34:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,7 @@
 #include <libpq/libpq.h>
 #include <utils/syscache.h>
 
-#ifdef MB
+#ifdef MULTIBYTE
 #include <commands/variable.h>
 #endif
 
@@ -84,7 +84,7 @@ printtup(HeapTuple tuple, TupleDesc typeinfo)
 	Datum		attr;
 	bool		isnull;
 	Oid			typoutput;
-#ifdef MB
+#ifdef MULTIBYTE
 	unsigned char *p;
 #endif
 
@@ -132,7 +132,7 @@ printtup(HeapTuple tuple, TupleDesc typeinfo)
 			outputstr = fmgr(typoutput, attr,
 							 gettypelem(typeinfo->attrs[i]->atttypid),
 							 typeinfo->attrs[i]->atttypmod);
-#ifdef MB
+#ifdef MULTIBYTE
 			p = pg_server_to_client(outputstr, strlen(outputstr));
 			pq_putint(strlen(p) + VARHDRSZ, VARHDRSZ);
 			pq_putnchar(p, strlen(p));
@@ -281,7 +281,7 @@ printtup_internal(HeapTuple tuple, TupleDesc typeinfo)
 				/* variable length, assume a varlena structure */
 				len = VARSIZE(attr) - VARHDRSZ;
 
-#ifdef MB
+#ifdef MULTIBYTE
 				pq_putncharlen(VARDATA(attr), len);
 #else
 				pq_putint(len, VARHDRSZ);

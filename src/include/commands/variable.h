@@ -2,7 +2,7 @@
  * Headers for handling of 'SET var TO', 'SHOW var' and 'RESET var'
  * statements
  *
- * $Id: variable.h,v 1.3 1998/06/16 07:29:40 momjian Exp $
+ * $Id: variable.h,v 1.4 1998/07/18 18:34:21 momjian Exp $
  *
  */
 #ifndef VARIABLE_H
@@ -54,7 +54,7 @@ extern bool set_geqo(void);
 extern bool show_geqo(void);
 extern bool reset_geqo(void);
 extern bool parse_geqo(const char *);
-#ifdef MB
+#ifdef MULTIBYTE
 extern bool show_client_encoding(void);
 extern bool reset_client_encoding(void);
 extern bool parse_client_encoding(const char *);

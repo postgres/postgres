@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq.h,v 1.18 1998/07/13 16:34:53 momjian Exp $
+ * $Id: libpq.h,v 1.19 1998/07/18 18:34:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -270,7 +270,7 @@ extern void pq_putint(int i, int b);
 extern int	pq_getinaddr(struct sockaddr_in * sin, char *host, int port);
 extern int	pq_getinserv(struct sockaddr_in * sin, char *host, char *serv);
 
-#ifdef MB
+#ifdef MULTIBYTE
 extern void	pq_putncharlen(char *s, int n);
 #endif
 

@@ -1,7 +1,7 @@
 /*
  * misc conversion functions between pg_wchar and other encodings.
  * Tatsuo Ishii
- * $Id: utils.c,v 1.3 1998/06/16 07:29:29 momjian Exp $
+ * $Id: utils.c,v 1.4 1998/07/18 18:34:08 momjian Exp $
  */
 #include <regex/pg_wchar.h>
 
@@ -350,19 +350,19 @@ static pg_wchar_tbl pg_wchar_table[] = {
 /* convert a multi-byte string to a wchar */
 void pg_mb2wchar(const unsigned char *from, pg_wchar *to)
 {
-  (*pg_wchar_table[MB].mb2wchar_with_len)(from,to,strlen(from));
+  (*pg_wchar_table[MULTIBYTE].mb2wchar_with_len)(from,to,strlen(from));
 }
 
 /* convert a multi-byte string to a wchar with a limited length */
 void pg_mb2wchar_with_len(const unsigned char *from, pg_wchar *to, int len)
 {
-  (*pg_wchar_table[MB].mb2wchar_with_len)(from,to,len);
+  (*pg_wchar_table[MULTIBYTE].mb2wchar_with_len)(from,to,len);
 }
 
 /* returns the byte length of a multi-byte word */
 int pg_mblen(const unsigned char *mbstr)
 {
-  return((*pg_wchar_table[MB].mblen)(mbstr));
+  return((*pg_wchar_table[MULTIBYTE].mblen)(mbstr));
 }
 
 /* returns the byte length of a multi-byte word for an encoding */

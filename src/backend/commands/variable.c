@@ -2,7 +2,7 @@
  * Routines for handling of 'SET var TO',
  *	'SHOW var' and 'RESET var' statements.
  *
- * $Id: variable.c,v 1.7 1998/06/16 07:29:21 momjian Exp $
+ * $Id: variable.c,v 1.8 1998/07/18 18:34:01 momjian Exp $
  *
  */
 
@@ -15,7 +15,7 @@
 #include "commands/variable.h"
 #include "utils/builtins.h"
 #include "optimizer/internal.h"
-#ifdef MB
+#ifdef MULTIBYTE
 #include "regex/pg_wchar.h"
 #endif
 
@@ -522,7 +522,7 @@ reset_timezone()
 	return TRUE;
 }	/* reset_timezone() */
 
-#ifdef MB
+#ifdef MULTIBYTE
 /*-----------------------------------------------------------------------*/
 bool
 parse_client_encoding(const char *value)
@@ -535,7 +535,7 @@ parse_client_encoding(const char *value)
   } else {    
     if (pg_set_client_encoding(encoding)) {
       elog(ERROR, "Conversion between %s and %s is not supported",
-	   value, pg_encoding_to_char(MB));
+	   value, pg_encoding_to_char(MULTIBYTE));
     }
   }
   return TRUE;
@@ -558,10 +558,10 @@ reset_client_encoding()
   if (env) {
     encoding = pg_char_to_encoding(env);
     if (encoding < 0) {
-      encoding = MB;
+      encoding = MULTIBYTE;
     }
   } else {
-    encoding = MB;
+    encoding = MULTIBYTE;
   }
   pg_set_client_encoding(encoding);
   return TRUE;
@@ -598,7 +598,7 @@ struct VariableParsers
 	{
 		"r_plans", parse_r_plans, show_r_plans, reset_r_plans
 	},
-#ifdef MB
+#ifdef MULTIBYTE
 	{
 		"client_encoding", parse_client_encoding, show_client_encoding, reset_client_encoding
 	},
