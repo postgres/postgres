@@ -2,7 +2,7 @@
 # Peter Eisentraut <peter_e@gmx.net>, 2001.
 # Dennis Björklund <db@zigo.dhs.org>, 2002, 2003, 2004.
 #
-# $PostgreSQL: pgsql/src/bin/psql/po/sv.po,v 1.26 2004/06/25 11:22:58 dennis Exp $
+# $PostgreSQL: pgsql/src/bin/psql/po/sv.po,v 1.27 2004/06/26 07:11:31 dennis Exp $
 #
 # Use these quotes: "%s"
 #
@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.5\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-06-25 13:20+0200\n"
+"POT-Creation-Date: 2004-06-26 09:09+0200\n"
 "PO-Revision-Date: 2004-06-25 13:21+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
@@ -1464,7 +1464,7 @@ msgstr "Lista med typomvandlingar"
 msgid "List of schemas"
 msgstr "Lista med scheman"
 
-#: sql_help.h:25 sql_help.h:353
+#: sql_help.h:25 sql_help.h:365
 msgid "abort the current transaction"
 msgstr "avbryt aktuell transaktion"
 
@@ -1477,7 +1477,10 @@ msgid "change the definition of an aggregate function"
 msgstr "ändra definitionen av en aggregatfunktion"
 
 #: sql_help.h:30
-msgid "ALTER AGGREGATE name ( type ) RENAME TO newname"
+#, fuzzy
+msgid ""
+"ALTER AGGREGATE name ( type ) RENAME TO newname\n"
+"ALTER AGGREGATE name ( type ) OWNER TO newowner"
 msgstr "ALTER AGGREGATE namn ( typ ) RENAME TO nyttnamn"
 
 #: sql_help.h:33
@@ -1485,7 +1488,10 @@ msgid "change the definition of a conversion"
 msgstr "ändra definitionen av en konvertering"
 
 #: sql_help.h:34
-msgid "ALTER CONVERSION name RENAME TO newname"
+#, fuzzy
+msgid ""
+"ALTER CONVERSION name RENAME TO newname\n"
+"ALTER CONVERSION name OWNER TO newowner"
 msgstr "ALTER CONVERSION namn RENAME TO nyttnamn"
 
 #: sql_help.h:37
@@ -1541,7 +1547,10 @@ msgid "change the definition of a function"
 msgstr "ändra definitionen av en funktion"
 
 #: sql_help.h:46
-msgid "ALTER FUNCTION name ( [ type [, ...] ] ) RENAME TO newname"
+#, fuzzy
+msgid ""
+"ALTER FUNCTION name ( [ type [, ...] ] ) RENAME TO newname\n"
+"ALTER FUNCTION name ( [ type [, ...] ] ) OWNER TO newowner"
 msgstr "ALTER FUNCTION namn ( [ typ [, ...] ] ) RENAME TO nyttnamn"
 
 #: sql_help.h:49
@@ -1573,22 +1582,42 @@ msgid "change the definition of an operator class"
 msgstr "ändra definitionen av en operatorklass"
 
 #: sql_help.h:58
-msgid "ALTER OPERATOR CLASS name USING index_method RENAME TO newname"
+#, fuzzy
+msgid ""
+"ALTER OPERATOR CLASS name USING index_method RENAME TO newname\n"
+"ALTER OPERATOR CLASS name USING index_method OWNER TO newowner"
 msgstr "ALTER OPERATOR CLASS namn USING indexmetod RENAME TO nyttnamn"
 
 #: sql_help.h:61
+#, fuzzy
+msgid "change the definition of an operator"
+msgstr "ändra definitionen av en operatorklass"
+
+#: sql_help.h:62
+#, fuzzy
+msgid ""
+"ALTER OPERATOR name ( { lefttype | NONE } , { righttype | NONE } ) OWNER TO "
+"newowner"
+msgstr ""
+"DROP OPERATOR namn ( vänster typ | NONE , höger typ | NONE ) [ CASCADE | "
+"RESTRICT ]"
+
+#: sql_help.h:65
 msgid "change the definition of a schema"
 msgstr "ändra definitionen av ett schema"
 
-#: sql_help.h:62
-msgid "ALTER SCHEMA name RENAME TO newname"
+#: sql_help.h:66
+#, fuzzy
+msgid ""
+"ALTER SCHEMA name RENAME TO newname\n"
+"ALTER SCHEMA name OWNER TO newowner"
 msgstr "ALTER SCHEMA namn RENAME TO nyttnamn"
 
-#: sql_help.h:65
+#: sql_help.h:69
 msgid "alter the definition of a sequence generator"
 msgstr "ändra definitionen av en sekvensgenerator"
 
-#: sql_help.h:66
+#: sql_help.h:70
 msgid ""
 "ALTER SEQUENCE name [ INCREMENT [ BY ] increment ]\n"
 "    [ MINVALUE minvalue | NO MINVALUE ] [ MAXVALUE maxvalue | NO MAXVALUE ]\n"
@@ -1598,11 +1627,11 @@ msgstr ""
 "    [ MINVALUE minvärde | NO MINVALUE ] [ MAXVALUE maxvärde | NO MAXVALUE ]\n"
 "    [ RESTART [ WITH ] start ] [ CACHE cache ] [ [ NO ] CYCLE ]"
 
-#: sql_help.h:69
+#: sql_help.h:73
 msgid "change the definition of a table"
 msgstr "ändra definitionen av en tabell"
 
-#: sql_help.h:70
+#: sql_help.h:74
 msgid ""
 "ALTER TABLE [ ONLY ] name [ * ]\n"
 "    action [, ... ]\n"
@@ -1654,19 +1683,40 @@ msgstr ""
 "    CLUSTER ON indexnamn\n"
 "    SET WITHOUT CLUSTER"
 
-#: sql_help.h:73
+#: sql_help.h:77
+#, fuzzy
+msgid "change the definition of a tablespace"
+msgstr "ändra definitionen av en tabell"
+
+#: sql_help.h:78
+msgid ""
+"ALTER TABLESPACE name RENAME TO newname\n"
+"ALTER TABLESPACE name OWNER TO newowner"
+msgstr ""
+
+#: sql_help.h:81
 msgid "change the definition of a trigger"
 msgstr "ändra definitionen av en utlösare"
 
-#: sql_help.h:74
+#: sql_help.h:82
 msgid "ALTER TRIGGER name ON table RENAME TO newname"
 msgstr "ALTER TRIGGER namb ON tabell RENAME TO nyttnamn"
 
-#: sql_help.h:77
+#: sql_help.h:85
+#, fuzzy
+msgid "change the definition of a type"
+msgstr "ändra definitionen av en tabell"
+
+#: sql_help.h:86
+#, fuzzy
+msgid "ALTER TYPE name OWNER TO new_owner"
+msgstr "ALTER SCHEMA namn RENAME TO nyttnamn"
+
+#: sql_help.h:89
 msgid "change a database user account"
 msgstr "ändra ett användarkonto i databasen"
 
-#: sql_help.h:78
+#: sql_help.h:90
 msgid ""
 "ALTER USER name [ [ WITH ] option [ ... ] ]\n"
 "\n"
@@ -1696,19 +1746,19 @@ msgstr ""
 "ALTER USER namn SET parameter { TO | = } { värde | DEFAULT }\n"
 "ALTER USER namn RESET parameter"
 
-#: sql_help.h:81
+#: sql_help.h:93
 msgid "collect statistics about a database"
 msgstr "samla in statistik om en databas"
 
-#: sql_help.h:82
+#: sql_help.h:94
 msgid "ANALYZE [ VERBOSE ] [ table [ (column [, ...] ) ] ]"
 msgstr "ANALYZE [ VERBOSE ] [ tabell [ (kolumn [, ...] ) ] ]"
 
-#: sql_help.h:85 sql_help.h:385
+#: sql_help.h:97 sql_help.h:397
 msgid "start a transaction block"
 msgstr "starta ett transaktionsblock"
 
-#: sql_help.h:86
+#: sql_help.h:98
 msgid ""
 "BEGIN [ WORK | TRANSACTION ]\n"
 "    [ ISOLATION LEVEL { READ UNCOMMITTED | READ COMMITTED | REPEATABLE READ "
@@ -1720,27 +1770,27 @@ msgstr ""
 "| SERIALIZABLE } ]\n"
 "    [ READ WRITE | READ ONLY ]"
 
-#: sql_help.h:89
+#: sql_help.h:101
 msgid "force a transaction log checkpoint"
 msgstr "tvinga transaktionsloggen att göra en checkpoint"
 
-#: sql_help.h:90
+#: sql_help.h:102
 msgid "CHECKPOINT"
 msgstr "CHECKPOINT"
 
-#: sql_help.h:93
+#: sql_help.h:105
 msgid "close a cursor"
 msgstr "stäng en markör"
 
-#: sql_help.h:94
+#: sql_help.h:106
 msgid "CLOSE name"
 msgstr "CLOSE namn"
 
-#: sql_help.h:97
+#: sql_help.h:109
 msgid "cluster a table according to an index"
 msgstr "klustra en tabell efter ett index"
 
-#: sql_help.h:98
+#: sql_help.h:110
 msgid ""
 "CLUSTER indexname ON tablename\n"
 "CLUSTER tablename\n"
@@ -1750,11 +1800,11 @@ msgstr ""
 "CLUSTER tabellnamn\n"
 "CLUSTER"
 
-#: sql_help.h:101
+#: sql_help.h:113
 msgid "define or change the comment of an object"
 msgstr "definiera eller ändra en kommentar på ett objekt"
 
-#: sql_help.h:102
+#: sql_help.h:114
 msgid ""
 "COMMENT ON\n"
 "{\n"
@@ -1804,19 +1854,19 @@ msgstr ""
 "  VIEW objektnamn\n"
 "} IS 'text'"
 
-#: sql_help.h:105 sql_help.h:293
+#: sql_help.h:117 sql_help.h:305
 msgid "commit the current transaction"
 msgstr "utför den aktuella transaktionen"
 
-#: sql_help.h:106
+#: sql_help.h:118
 msgid "COMMIT [ WORK | TRANSACTION ]"
 msgstr "COMMIT [ WORK | TRANSACTION ]"
 
-#: sql_help.h:109
+#: sql_help.h:121
 msgid "copy data between a file and a table"
 msgstr "kopiera data mellan en fil och en tabell"
 
-#: sql_help.h:110
+#: sql_help.h:122
 msgid ""
 "COPY tablename [ ( column [, ...] ) ]\n"
 "    FROM { 'filename' | STDIN }\n"
@@ -1862,11 +1912,11 @@ msgstr ""
 "                [ ESCAPE [ AS ] 'escape' ]\n"
 "                [ FORCE QUOTE kolumn [, ...] ]"
 
-#: sql_help.h:113
+#: sql_help.h:125
 msgid "define a new aggregate function"
 msgstr "definiera en ny aggregatfunktion"
 
-#: sql_help.h:114
+#: sql_help.h:126
 msgid ""
 "CREATE AGGREGATE name (\n"
 "    BASETYPE = input_data_type,\n"
@@ -1884,11 +1934,11 @@ msgstr ""
 "    [ , INITCOND = startvärde ]\n"
 ")"
 
-#: sql_help.h:117
+#: sql_help.h:129
 msgid "define a new cast"
 msgstr "definiera en ny typomvandling"
 
-#: sql_help.h:118
+#: sql_help.h:130
 msgid ""
 "CREATE CAST (sourcetype AS targettype)\n"
 "    WITH FUNCTION funcname (argtypes)\n"
@@ -1906,11 +1956,11 @@ msgstr ""
 "    WITHOUT FUNCTION\n"
 "    [ AS ASSIGNMENT | AS IMPLICIT ]"
 
-#: sql_help.h:121
+#: sql_help.h:133
 msgid "define a new constraint trigger"
 msgstr "definiera en ny villkorsutlösare"
 
-#: sql_help.h:122
+#: sql_help.h:134
 msgid ""
 "CREATE CONSTRAINT TRIGGER name\n"
 "    AFTER events ON\n"
@@ -1922,11 +1972,11 @@ msgstr ""
 "    tabellnamn villkor attribut\n"
 "    FOR EACH ROW EXECUTE PROCEDURE funknamn ( argument )"
 
-#: sql_help.h:125
+#: sql_help.h:137
 msgid "define a new conversion"
 msgstr "definiera en ny konvertering"
 
-#: sql_help.h:126
+#: sql_help.h:138
 msgid ""
 "CREATE [DEFAULT] CONVERSION name\n"
 "    FOR source_encoding TO dest_encoding FROM funcname"
@@ -1934,11 +1984,11 @@ msgstr ""
 "CREATE [DEFAULT] CONVERSION namn\n"
 "    FOR källkodning TO målkodning FROM funknamn"
 
-#: sql_help.h:129
+#: sql_help.h:141
 msgid "create a new database"
 msgstr "skapa en ny databas"
 
-#: sql_help.h:130
+#: sql_help.h:142
 msgid ""
 "CREATE DATABASE name\n"
 "    [ [ WITH ] [ OWNER [=] dbowner ]\n"
@@ -1952,11 +2002,11 @@ msgstr ""
 "           [ ENCODING [=] kodning ]\n"
 "           [ TABLESPACE [=] tabellutrymme ] ]"
 
-#: sql_help.h:133
+#: sql_help.h:145
 msgid "define a new domain"
 msgstr "definiera en ny domän"
 
-#: sql_help.h:134
+#: sql_help.h:146
 msgid ""
 "CREATE DOMAIN name [AS] data_type\n"
 "    [ DEFAULT expression ]\n"
@@ -1976,11 +2026,11 @@ msgstr ""
 "[ CONSTRAINT villkorsnamn ]\n"
 "{ NOT NULL | NULL | CHECK (uttryck) }"
 
-#: sql_help.h:137
+#: sql_help.h:149
 msgid "define a new function"
 msgstr "definiera en ny funktion"
 
-#: sql_help.h:138
+#: sql_help.h:150
 msgid ""
 "CREATE [ OR REPLACE ] FUNCTION name ( [ [ argname ] argtype [, ...] ] )\n"
 "    RETURNS rettype\n"
@@ -2004,11 +2054,11 @@ msgstr ""
 "  } ...\n"
 "    [ WITH ( attribut [, ...] ) ]"
 
-#: sql_help.h:141
+#: sql_help.h:153
 msgid "define a new user group"
 msgstr "definiera en ny användargrupp"
 
-#: sql_help.h:142
+#: sql_help.h:154
 msgid ""
 "CREATE GROUP name [ [ WITH ] option [ ... ] ]\n"
 "\n"
@@ -2024,11 +2074,11 @@ msgstr ""
 "     SYSID gid\n"
 "   | USER  användarnamn [, ...]"
 
-#: sql_help.h:145
+#: sql_help.h:157
 msgid "define a new index"
 msgstr "skapa ett nytt index"
 
-#: sql_help.h:146
+#: sql_help.h:158
 msgid ""
 "CREATE [ UNIQUE ] INDEX name ON table [ USING method ]\n"
 "    ( { column | ( expression ) } [ opclass ] [, ...] )\n"
@@ -2040,11 +2090,11 @@ msgstr ""
 "    [ TABLESPACE tabellutrymme ]\n"
 "    [ WHERE predikat ]"
 
-#: sql_help.h:149
+#: sql_help.h:161
 msgid "define a new procedural language"
 msgstr "definiera ett nytt procedur-språk"
 
-#: sql_help.h:150
+#: sql_help.h:162
 msgid ""
 "CREATE [ TRUSTED ] [ PROCEDURAL ] LANGUAGE name\n"
 "    HANDLER call_handler [ VALIDATOR valfunction ]"
@@ -2052,11 +2102,11 @@ msgstr ""
 "CREATE [ TRUSTED ] [ PROCEDURAL ] LANGUAGE namn\n"
 "    HANDLER anropshanterare [ VALIDATOR val-funktion ]"
 
-#: sql_help.h:153
+#: sql_help.h:165
 msgid "define a new operator class"
 msgstr "definiera en ny operatorklass"
 
-#: sql_help.h:154
+#: sql_help.h:166
 msgid ""
 "CREATE OPERATOR CLASS name [ DEFAULT ] FOR TYPE data_type USING index_method "
 "AS\n"
@@ -2073,11 +2123,11 @@ msgstr ""
 "   | STORAGE lagringstyp\n"
 "  } [, ... ]"
 
-#: sql_help.h:157
+#: sql_help.h:169
 msgid "define a new operator"
 msgstr "definiera en ny operator"
 
-#: sql_help.h:158
+#: sql_help.h:170
 msgid ""
 "CREATE OPERATOR name (\n"
 "    PROCEDURE = funcname\n"
@@ -2099,11 +2149,11 @@ msgstr ""
 "    [, LTCMP = mindre_än_op ] [, GTCMP = större_än_op ]\n"
 ")"
 
-#: sql_help.h:161
+#: sql_help.h:173
 msgid "define a new rewrite rule"
 msgstr "definiera en ny omskrivningsregel"
 
-#: sql_help.h:162
+#: sql_help.h:174
 msgid ""
 "CREATE [ OR REPLACE ] RULE name AS ON event\n"
 "    TO table [ WHERE condition ]\n"
@@ -2114,11 +2164,11 @@ msgstr ""
 "    DO [ ALSO | INSTEAD ] { NOTHING | kommando | ( kommando ; "
 "kommando ... ) }"
 
-#: sql_help.h:165
+#: sql_help.h:177
 msgid "define a new schema"
 msgstr "definiera ett nytt schema"
 
-#: sql_help.h:166
+#: sql_help.h:178
 msgid ""
 "CREATE SCHEMA schemaname [ AUTHORIZATION username ] [ TABLESPACE "
 "tablespace ] [ schema_element [ ... ] ]\n"
@@ -2130,11 +2180,11 @@ msgstr ""
 "CREATE SCHEMA AUTHORIZATION användarnamn [ TABLESPACE tabellutrymme ] "
 "[ schema-element [ ... ] ]"
 
-#: sql_help.h:169
+#: sql_help.h:181
 msgid "define a new sequence generator"
 msgstr "definiera en ny sekvensgenerator"
 
-#: sql_help.h:170
+#: sql_help.h:182
 msgid ""
 "CREATE [ TEMPORARY | TEMP ] SEQUENCE name [ INCREMENT [ BY ] increment ]\n"
 "    [ MINVALUE minvalue | NO MINVALUE ] [ MAXVALUE maxvalue | NO MAXVALUE ]\n"
@@ -2146,11 +2196,11 @@ msgstr ""
 "    [ START [ WITH ] start ] [ CACHE cache ] [ [ NO ] CYCLE ]\n"
 "    [ TABLESPACE tabellutrymme ]"
 
-#: sql_help.h:173
+#: sql_help.h:185
 msgid "define a new table"
 msgstr "definiera en ny tabell"
 
-#: sql_help.h:174
+#: sql_help.h:186
 msgid ""
 "CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE table_name (\n"
 "  { column_name data_type [ DEFAULT default_expr ] [ column_constraint "
@@ -2221,11 +2271,11 @@ msgstr ""
 "UPDATE action ] }\n"
 "[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]"
 
-#: sql_help.h:177 sql_help.h:361
+#: sql_help.h:189 sql_help.h:373
 msgid "create a new table from the results of a query"
 msgstr "skapa en ny tabell från resultatet av en fråga"
 
-#: sql_help.h:178
+#: sql_help.h:190
 msgid ""
 "CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE table_name "
 "[ (column_name [, ...] ) ] [ [ WITH | WITHOUT ] OIDS ]\n"
@@ -2235,22 +2285,22 @@ msgstr ""
 "[ (kolumnnamn [, ...] ) ] [ [ WITH | WITHOUT ] OIDS ]\n"
 "    AS fråga"
 
-#: sql_help.h:181
+#: sql_help.h:193
 msgid "define a new tablespace"
 msgstr "definiera ett nytt tabellutrymme"
 
-#: sql_help.h:182
+#: sql_help.h:194
 msgid ""
 "CREATE TABLESPACE tablespacename [ OWNER username ] LOCATION 'directory'"
 msgstr ""
 "CREATE TABLESPACE tabellutrymmesnamn [ OWNER användarnamn ] LOCATION "
 "'katalog'"
 
-#: sql_help.h:185
+#: sql_help.h:197
 msgid "define a new trigger"
 msgstr "definiera en ny utlösare"
 
-#: sql_help.h:186
+#: sql_help.h:198
 msgid ""
 "CREATE TRIGGER name { BEFORE | AFTER } { event [ OR ... ] }\n"
 "    ON table [ FOR [ EACH ] { ROW | STATEMENT } ]\n"
@@ -2260,11 +2310,11 @@ msgstr ""
 "    ON tabell [ FOR [ EACH ] { ROW | STATEMENT } ]\n"
 "    EXECUTE PROCEDURE funknamn ( argument )"
 
-#: sql_help.h:189
+#: sql_help.h:201
 msgid "define a new data type"
 msgstr "definiera en ny datatyp"
 
-#: sql_help.h:190
+#: sql_help.h:202
 msgid ""
 "CREATE TYPE name AS\n"
 "    ( attribute_name data_type [, ... ] )\n"
@@ -2302,11 +2352,11 @@ msgstr ""
 "    [ , DELIMITER = avskiljare ]\n"
 ")"
 
-#: sql_help.h:193
+#: sql_help.h:205
 msgid "define a new database user account"
 msgstr "definiera ett nytt användarkonto i databasen"
 
-#: sql_help.h:194
+#: sql_help.h:206
 msgid ""
 "CREATE USER name [ [ WITH ] option [ ... ] ]\n"
 "\n"
@@ -2330,27 +2380,27 @@ msgstr ""
 "    | IN GROUP gruppnamn [, ...]\n"
 "    | VALID UNTIL 'abs-tid'"
 
-#: sql_help.h:197
+#: sql_help.h:209
 msgid "define a new view"
 msgstr "definiera en ny vy"
 
-#: sql_help.h:198
+#: sql_help.h:210
 msgid "CREATE [ OR REPLACE ] VIEW name [ ( column_name [, ...] ) ] AS query"
 msgstr "CREATE [ OR REPLACE ] VIEW namn [ ( kolumnnamn [, ...] ) ] AS fråga"
 
-#: sql_help.h:201
+#: sql_help.h:213
 msgid "deallocate a prepared statement"
 msgstr "deallokera en förberedd sats"
 
-#: sql_help.h:202
+#: sql_help.h:214
 msgid "DEALLOCATE [ PREPARE ] plan_name"
 msgstr "DEALLOCATE [ PREPARE ] plannamn"
 
-#: sql_help.h:205
+#: sql_help.h:217
 msgid "define a cursor"
 msgstr "definiera en markör"
 
-#: sql_help.h:206
+#: sql_help.h:218
 msgid ""
 "DECLARE name [ BINARY ] [ INSENSITIVE ] [ [ NO ] SCROLL ]\n"
 "    CURSOR [ { WITH | WITHOUT } HOLD ] FOR query\n"
@@ -2360,203 +2410,204 @@ msgstr ""
 "    CURSOR [ { WITH | WITHOUT } HOLD ] FOR fråga\n"
 "    [ FOR { READ ONLY | UPDATE [ OF kolumn [, ...] ] } ]"
 
-#: sql_help.h:209
+#: sql_help.h:221
 msgid "delete rows of a table"
 msgstr "radera rader i en tabell"
 
-#: sql_help.h:210
+#: sql_help.h:222
 msgid "DELETE FROM [ ONLY ] table [ WHERE condition ]"
 msgstr "DELETE FROM [ ONLY ] tabell [ WHERE villkor ]"
 
-#: sql_help.h:213
+#: sql_help.h:225
 msgid "remove an aggregate function"
 msgstr "ta bort en aggregatfunktioner"
 
-#: sql_help.h:214
+#: sql_help.h:226
 msgid "DROP AGGREGATE name ( type ) [ CASCADE | RESTRICT ]"
 msgstr "DROP AGGREGATE namn ( typ ) [ CASCADE | RESTRICT ]"
 
-#: sql_help.h:217
+#: sql_help.h:229
 msgid "remove a cast"
 msgstr "ta bort en typomvandling"
 
-#: sql_help.h:218
+#: sql_help.h:230
 msgid "DROP CAST (sourcetype AS targettype) [ CASCADE | RESTRICT ]"
 msgstr "DROP CAST (källtyp AS måltyp) [ CASCADE | RESTRICT ]"
 
-#: sql_help.h:221
+#: sql_help.h:233
 msgid "remove a conversion"
 msgstr "ta bort en konvertering"
 
-#: sql_help.h:222
+#: sql_help.h:234
 msgid "DROP CONVERSION name [ CASCADE | RESTRICT ]"
 msgstr "DROP CONVERSION namn [ CASCADE | RESTRICT ]"
 
-#: sql_help.h:225
+#: sql_help.h:237
 msgid "remove a database"
 msgstr "ta bort en databas"
 
-#: sql_help.h:226
+#: sql_help.h:238
 msgid "DROP DATABASE name"
 msgstr "DROP DATABASE namn"
 
-#: sql_help.h:229
+#: sql_help.h:241
 msgid "remove a domain"
 msgstr "ta bort en domän"
 
-#: sql_help.h:230
+#: sql_help.h:242
 msgid "DROP DOMAIN name [, ...]  [ CASCADE | RESTRICT ]"
 msgstr "DROP DOMAIN namn [, ...]  [ CASCADE | RESTRICT ]"
 
-#: sql_help.h:233
+#: sql_help.h:245
 msgid "remove a function"
 msgstr "ta bort en funktion"
 
-#: sql_help.h:234
+#: sql_help.h:246
 msgid "DROP FUNCTION name ( [ type [, ...] ] ) [ CASCADE | RESTRICT ]"
 msgstr "DROP FUNCTION namn ( [ typ [, ...] ] ) [ CASCADE | RESTRICT ]"
 
-#: sql_help.h:237
+#: sql_help.h:249
 msgid "remove a user group"
 msgstr "ta bort en användargrupp"
 
-#: sql_help.h:238
+#: sql_help.h:250
 msgid "DROP GROUP name"
 msgstr "DROP GROUP namn"
 
-#: sql_help.h:241
+#: sql_help.h:253
 msgid "remove an index"
 msgstr "ta bort ett index"
 
-#: sql_help.h:242
+#: sql_help.h:254
 msgid "DROP INDEX name [, ...] [ CASCADE | RESTRICT ]"
 msgstr "DROP INDEX namn [, ...] [ CASCADE | RESTRICT ]"
 
-#: sql_help.h:245
+#: sql_help.h:257
 msgid "remove a procedural language"
 msgstr "ta bort ett procedur-språk"
 
-#: sql_help.h:246
+#: sql_help.h:258
 msgid "DROP [ PROCEDURAL ] LANGUAGE name [ CASCADE | RESTRICT ]"
 msgstr "DROP [ PROCEDURAL ] LANGUAGE namn [ CASCADE | RESTRICT ]"
 
-#: sql_help.h:249
+#: sql_help.h:261
 msgid "remove an operator class"
 msgstr "ta bort en operatorklass"
 
-#: sql_help.h:250
+#: sql_help.h:262
 msgid "DROP OPERATOR CLASS name USING index_method [ CASCADE | RESTRICT ]"
 msgstr "DROP OPERATOR CLASS namn USING indexmetod [ CASCADE | RESTRICT ]"
 
-#: sql_help.h:253
+#: sql_help.h:265
 msgid "remove an operator"
 msgstr "ta bort en operator"
 
-#: sql_help.h:254
+#: sql_help.h:266
+#, fuzzy
 msgid ""
-"DROP OPERATOR name ( lefttype | NONE , righttype | NONE ) [ CASCADE | "
-"RESTRICT ]"
+"DROP OPERATOR name ( { lefttype | NONE } , { righttype | NONE } ) [ CASCADE "
+"| RESTRICT ]"
 msgstr ""
 "DROP OPERATOR namn ( vänster typ | NONE , höger typ | NONE ) [ CASCADE | "
 "RESTRICT ]"
 
-#: sql_help.h:257
+#: sql_help.h:269
 msgid "remove a rewrite rule"
 msgstr "ta bort en omskrivningsregel"
 
-#: sql_help.h:258
+#: sql_help.h:270
 msgid "DROP RULE name ON relation [ CASCADE | RESTRICT ]"
 msgstr "DROP RULE namn ON relation [ CASCADE | RESTRICT ]"
 
-#: sql_help.h:261
+#: sql_help.h:273
 msgid "remove a schema"
 msgstr "ta bort ett schema"
 
-#: sql_help.h:262
+#: sql_help.h:274
 msgid "DROP SCHEMA name [, ...] [ CASCADE | RESTRICT ]"
 msgstr "DROP SCHEMA namn [, ...] [ CASCADE | RESTRICT ]"
 
-#: sql_help.h:265
+#: sql_help.h:277
 msgid "remove a sequence"
 msgstr "ta bort en sekvens"
 
-#: sql_help.h:266
+#: sql_help.h:278
 msgid "DROP SEQUENCE name [, ...] [ CASCADE | RESTRICT ]"
 msgstr "DROP SEQUENCE namn [, ...] [ CASCADE | RESTRICT ]"
 
-#: sql_help.h:269
+#: sql_help.h:281
 msgid "remove a table"
 msgstr "ta bort en tabell"
 
-#: sql_help.h:270
+#: sql_help.h:282
 msgid "DROP TABLE name [, ...] [ CASCADE | RESTRICT ]"
 msgstr "DROP TABLE namn [, ...] [ CASCADE | RESTRICT ]"
 
-#: sql_help.h:273
+#: sql_help.h:285
 msgid "remove a tablespace"
 msgstr "ta bort ett tabellutrymme"
 
-#: sql_help.h:274
+#: sql_help.h:286
 msgid "DROP TABLESPACE tablespacename"
 msgstr "DROP TABLESPACE tabellutrymmesnamn"
 
-#: sql_help.h:277
+#: sql_help.h:289
 msgid "remove a trigger"
 msgstr "ta bort en utlösare"
 
-#: sql_help.h:278
+#: sql_help.h:290
 msgid "DROP TRIGGER name ON table [ CASCADE | RESTRICT ]"
 msgstr "DROP TRIGGER namn ON tabell [ CASCADE | RESTRICT ]"
 
-#: sql_help.h:281
+#: sql_help.h:293
 msgid "remove a data type"
 msgstr "ta bort en datatyp"
 
-#: sql_help.h:282
+#: sql_help.h:294
 msgid "DROP TYPE name [, ...] [ CASCADE | RESTRICT ]"
 msgstr "DROP TYPE namn [, ...] [ CASCADE | RESTRICT ]"
 
-#: sql_help.h:285
+#: sql_help.h:297
 msgid "remove a database user account"
 msgstr "ta bort ett användarkonto från databasen"
 
-#: sql_help.h:286
+#: sql_help.h:298
 msgid "DROP USER name"
 msgstr "DROP USER namn"
 
-#: sql_help.h:289
+#: sql_help.h:301
 msgid "remove a view"
 msgstr "ta bort en vy"
 
-#: sql_help.h:290
+#: sql_help.h:302
 msgid "DROP VIEW name [, ...] [ CASCADE | RESTRICT ]"
 msgstr "DROP VIEW namn [, ...] [ CASCADE | RESTRICT ]"
 
-#: sql_help.h:294
+#: sql_help.h:306
 msgid "END [ WORK | TRANSACTION ]"
 msgstr "END [ WORK | TRANSACTION ]"
 
-#: sql_help.h:297
+#: sql_help.h:309
 msgid "execute a prepared statement"
 msgstr "utför en förberedd sats"
 
-#: sql_help.h:298
+#: sql_help.h:310
 msgid "EXECUTE plan_name [ (parameter [, ...] ) ]"
 msgstr "EXECUTE plannamn [ (parameter [, ...] ) ]"
 
-#: sql_help.h:301
+#: sql_help.h:313
 msgid "show the execution plan of a statement"
 msgstr "visa körningsplanen för en sats"
 
-#: sql_help.h:302
+#: sql_help.h:314
 msgid "EXPLAIN [ ANALYZE ] [ VERBOSE ] statement"
 msgstr "EXPLAIN [ ANALYZE ] [ VERBOSE ] sats"
 
-#: sql_help.h:305
+#: sql_help.h:317
 msgid "retrieve rows from a query using a cursor"
 msgstr "hämta rader från en fråga med hjälp av en markör"
 
-#: sql_help.h:306
+#: sql_help.h:318
 msgid ""
 "FETCH [ direction { FROM | IN } ] cursorname\n"
 "\n"
@@ -2596,11 +2647,11 @@ msgstr ""
 "    BACKWARD antal\n"
 "    BACKWARD ALL"
 
-#: sql_help.h:309
+#: sql_help.h:321
 msgid "define access privileges"
 msgstr "definera Åtkomsträttigheter"
 
-#: sql_help.h:310
+#: sql_help.h:322
 msgid ""
 "GRANT { { SELECT | INSERT | UPDATE | DELETE | RULE | REFERENCES | TRIGGER }\n"
 "    [,...] | ALL [ PRIVILEGES ] }\n"
@@ -2663,11 +2714,11 @@ msgstr ""
 "    TO { användarnamn | GROUP gruppnamn | PUBLIC } [, ...] [ WITH GRANT "
 "OPTION ]"
 
-#: sql_help.h:313
+#: sql_help.h:325
 msgid "create new rows in a table"
 msgstr "skapa nya rader i en tabell"
 
-#: sql_help.h:314
+#: sql_help.h:326
 msgid ""
 "INSERT INTO table [ ( column [, ...] ) ]\n"
 "    { DEFAULT VALUES | VALUES ( { expression | DEFAULT } [, ...] ) | query }"
@@ -2675,27 +2726,27 @@ msgstr ""
 "INSERT INTO tabell [ ( kolumn [, ...] ) ]\n"
 "    { DEFAULT VALUES | VALUES ( { uttryck | DEFAULT } [, ...] ) | fråga }"
 
-#: sql_help.h:317
+#: sql_help.h:329
 msgid "listen for a notification"
 msgstr "lyssna efter notifiering"
 
-#: sql_help.h:318
+#: sql_help.h:330
 msgid "LISTEN name"
 msgstr "LISTEN namn"
 
-#: sql_help.h:321
+#: sql_help.h:333
 msgid "load or reload a shared library file"
 msgstr "ladda eller ladda om en delad biblioteksfil (shared library)"
 
-#: sql_help.h:322
+#: sql_help.h:334
 msgid "LOAD 'filename'"
 msgstr "LOAD 'filnamn'"
 
-#: sql_help.h:325
+#: sql_help.h:337
 msgid "lock a table"
 msgstr "lås en tabell"
 
-#: sql_help.h:326
+#: sql_help.h:338
 msgid ""
 "LOCK [ TABLE ] name [, ...] [ IN lockmode MODE ] [ NOWAIT ]\n"
 "\n"
@@ -2711,43 +2762,43 @@ msgstr ""
 "    ACCESS SHARE | ROW SHARE | ROW EXCLUSIVE | SHARE UPDATE EXCLUSIVE\n"
 "    | SHARE | SHARE ROW EXCLUSIVE | EXCLUSIVE | ACCESS EXCLUSIVE"
 
-#: sql_help.h:329
+#: sql_help.h:341
 msgid "position a cursor"
 msgstr "flytta en markör"
 
-#: sql_help.h:330
+#: sql_help.h:342
 msgid "MOVE [ direction { FROM | IN } ] cursorname"
 msgstr "MOVE [ riktning { FROM | IN } ] markörnamn"
 
-#: sql_help.h:333
+#: sql_help.h:345
 msgid "generate a notification"
 msgstr "generera en notifiering"
 
-#: sql_help.h:334
+#: sql_help.h:346
 msgid "NOTIFY name"
 msgstr "NOTIFY namn"
 
-#: sql_help.h:337
+#: sql_help.h:349
 msgid "prepare a statement for execution"
 msgstr "förbered en sats för körning"
 
-#: sql_help.h:338
+#: sql_help.h:350
 msgid "PREPARE plan_name [ (datatype [, ...] ) ] AS statement"
 msgstr "PREPARE plannamn [ (datatyp [, ...] ) ] AS sats"
 
-#: sql_help.h:341
+#: sql_help.h:353
 msgid "rebuild indexes"
 msgstr "återskapa index"
 
-#: sql_help.h:342
+#: sql_help.h:354
 msgid "REINDEX { DATABASE | TABLE | INDEX } name [ FORCE ]"
 msgstr "REINDEX { DATABASE | TABLE | INDEX } namn [ FORCE ]"
 
-#: sql_help.h:345
+#: sql_help.h:357
 msgid "restore the value of a run-time parameter to the default value"
 msgstr "återställ värde av körningsparameter till standardvärdet"
 
-#: sql_help.h:346
+#: sql_help.h:358
 msgid ""
 "RESET name\n"
 "RESET ALL"
@@ -2755,11 +2806,11 @@ msgstr ""
 "RESET namn\n"
 "RESET ALL"
 
-#: sql_help.h:349
+#: sql_help.h:361
 msgid "remove access privileges"
 msgstr "ta bort Åtkomsträttigheter"
 
-#: sql_help.h:350
+#: sql_help.h:362
 msgid ""
 "REVOKE [ GRANT OPTION FOR ]\n"
 "    { { SELECT | INSERT | UPDATE | DELETE | RULE | REFERENCES | TRIGGER }\n"
@@ -2835,15 +2886,15 @@ msgstr ""
 "    FROM { användarnamn | GROUP gruppnamn | PUBLIC } [, ...]\n"
 "    [ CASCADE | RESTRICT ]"
 
-#: sql_help.h:354
+#: sql_help.h:366
 msgid "ROLLBACK [ WORK | TRANSACTION ]"
 msgstr "ROLLBACK [ WORK | TRANSACTION ]"
 
-#: sql_help.h:357
+#: sql_help.h:369
 msgid "retrieve rows from a table or view"
 msgstr "hämta rader från en tabell eller vy"
 
-#: sql_help.h:358
+#: sql_help.h:370
 msgid ""
 "SELECT [ ALL | DISTINCT [ ON ( expression [, ...] ) ] ]\n"
 "    * | expression [ AS output_name ] [, ...]\n"
@@ -2889,7 +2940,7 @@ msgstr ""
 "    frånval [ NATURAL ] join-typ frånval [ ON join-villkor | USING ( join-"
 "kolumn [, ...] ) ]"
 
-#: sql_help.h:362
+#: sql_help.h:374
 msgid ""
 "SELECT [ ALL | DISTINCT [ ON ( expression [, ...] ) ] ]\n"
 "    * | expression [ AS output_name ] [, ...]\n"
@@ -2917,11 +2968,11 @@ msgstr ""
 "    [ OFFSET start ]\n"
 "    [ FOR UPDATE [ OF tabellnamn [, ...] ] ]"
 
-#: sql_help.h:365
+#: sql_help.h:377
 msgid "change a run-time parameter"
 msgstr "ändra en körningsparamter"
 
-#: sql_help.h:366
+#: sql_help.h:378
 msgid ""
 "SET [ SESSION | LOCAL ] name { TO | = } { value | 'value' | DEFAULT }\n"
 "SET [ SESSION | LOCAL ] TIME ZONE { timezone | LOCAL | DEFAULT }"
@@ -2929,15 +2980,15 @@ msgstr ""
 "SET [ SESSION | LOCAL ] namn { TO | = } { värde | 'värde' | DEFAULT }\n"
 "SET [ SESSION | LOCAL ] TIME ZONE { tidszon | LOCAL | DEFAULT }"
 
-#: sql_help.h:369
+#: sql_help.h:381
 msgid "set the constraint mode of the current transaction"
 msgstr "sätt integritetsvillkorsläge för nuvarande transaktion"
 
-#: sql_help.h:370
+#: sql_help.h:382
 msgid "SET CONSTRAINTS { ALL | name [, ...] } { DEFERRED | IMMEDIATE }"
 msgstr "SET CONSTRAINTS { ALL | namn [, ...] } { DEFERRED | IMMEDIATE }"
 
-#: sql_help.h:373
+#: sql_help.h:385
 msgid ""
 "set the session user identifier and the current user identifier of the "
 "current session"
@@ -2945,7 +2996,7 @@ msgstr ""
 "sätt sessionsanvändaridentifierare och nuvarande användaridentifierare för "
 "den aktiva sessionen"
 
-#: sql_help.h:374
+#: sql_help.h:386
 msgid ""
 "SET [ SESSION | LOCAL ] SESSION AUTHORIZATION username\n"
 "SET [ SESSION | LOCAL ] SESSION AUTHORIZATION DEFAULT\n"
@@ -2955,11 +3006,11 @@ msgstr ""
 "SET [ SESSION | LOCAL ] SESSION AUTHORIZATION DEFAULT\n"
 "RESET SESSION AUTHORIZATION"
 
-#: sql_help.h:377
+#: sql_help.h:389
 msgid "set the characteristics of the current transaction"
 msgstr "sätt inställningar för nuvarande transaktionen"
 
-#: sql_help.h:378
+#: sql_help.h:390
 msgid ""
 "SET TRANSACTION\n"
 "    [ ISOLATION LEVEL { READ UNCOMMITTED | READ COMMITTED | REPEATABLE READ "
@@ -2980,11 +3031,11 @@ msgstr ""
 "| SERIALIZABLE } ]\n"
 "    [ READ WRITE | READ ONLY ]"
 
-#: sql_help.h:381
+#: sql_help.h:393
 msgid "show the value of a run-time parameter"
 msgstr "visa värde på en körningsparameter"
 
-#: sql_help.h:382
+#: sql_help.h:394
 msgid ""
 "SHOW name\n"
 "SHOW ALL"
@@ -2992,7 +3043,7 @@ msgstr ""
 "SHOW namn\n"
 "SHOW ALL"
 
-#: sql_help.h:386
+#: sql_help.h:398
 msgid ""
 "START TRANSACTION\n"
 "    [ ISOLATION LEVEL { READ UNCOMMITTED | READ COMMITTED | REPEATABLE READ "
@@ -3003,27 +3054,27 @@ msgstr ""
 "REPEATABLE READ | SERIALIZABLE } ]\n"
 "    [ READ WRITE | READ ONLY ]"
 
-#: sql_help.h:389
+#: sql_help.h:401
 msgid "empty a table"
 msgstr "töm en tabell"
 
-#: sql_help.h:390
+#: sql_help.h:402
 msgid "TRUNCATE [ TABLE ] name"
 msgstr "TRUNCATE [ TABLE ] namn"
 
-#: sql_help.h:393
+#: sql_help.h:405
 msgid "stop listening for a notification"
 msgstr "sluta att lyssna efter notifiering"
 
-#: sql_help.h:394
+#: sql_help.h:406
 msgid "UNLISTEN { name | * }"
 msgstr "UNLISTEN { namn | * }"
 
-#: sql_help.h:397
+#: sql_help.h:409
 msgid "update rows of a table"
 msgstr "uppdatera rader i en tabell"
 
-#: sql_help.h:398
+#: sql_help.h:410
 msgid ""
 "UPDATE [ ONLY ] table SET column = { expression | DEFAULT } [, ...]\n"
 "    [ FROM fromlist ]\n"
@@ -3033,11 +3084,11 @@ msgstr ""
 "    [ FROM frånlista ]\n"
 "    [ WHERE villkor ]"
 
-#: sql_help.h:401
+#: sql_help.h:413
 msgid "garbage-collect and optionally analyze a database"
 msgstr "skräpsamla och eventuellt analysera en databas"
 
-#: sql_help.h:402
+#: sql_help.h:414
 msgid ""
 "VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ table ]\n"
 "VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ table [ (column "
