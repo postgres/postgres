@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu May 17 18:06:54 EDT 2001
+Last updated:		Fri May 18 10:39:40 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -171,6 +171,7 @@ COMMANDS
 	* Allow INSERT/UPDATE ... RETURNING new.col or old.col (Philip)
 * SHOW/SET
 	* Add SHOW command to display locks
+	* Add SHOW command to show all settings
 	* Add a global RESET command for use with connection pooling
 	* Add SET or BEGIN timeout parameter to cancel query if waiting too long
 	* Add SET REAL_FORMAT and SET DOUBLE_PRECISION_FORMAT using printf args
