@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.54 2002/03/06 06:10:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.55 2002/03/25 07:41:10 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -2019,13 +2019,25 @@ exec_stmt_dynexecute(PLpgSQL_execstate * estate,
 		case SPI_OK_SELINTO:
 
 			/*
-			 * Disallow this for now, because its behavior is not
-			 * consistent with SELECT INTO in a normal plpgsql context. We
-			 * need to reimplement EXECUTE to parse the string as a
-			 * plpgsql command, not just feed it to SPI_exec.
+			 * We want to disallow SELECT INTO for now, because its behavior
+			 * is not consistent with SELECT INTO in a normal plpgsql
+			 * context. (We need to reimplement EXECUTE to parse the string
+			 * as a plpgsql command, not just feed it to SPI_exec.)
+			 * However, CREATE AS should be allowed ... and since it produces
+			 * the same parsetree as SELECT INTO, there's no way to tell
+			 * the difference except to look at the source text.  Wotta
+			 * kluge!
 			 */
-			elog(ERROR, "EXECUTE of SELECT ... INTO is not implemented yet");
+		{
+			char   *ptr;
+
+			for (ptr = querystr; *ptr; ptr++)
+				if (!isspace((unsigned char) *ptr))
+					break;
+			if (*ptr == 'S' || *ptr == 's')
+				elog(ERROR, "EXECUTE of SELECT ... INTO is not implemented yet");
 			break;
+		}
 
 		default:
 			elog(ERROR, "unexpected error %d in EXECUTE of query '%s'",
