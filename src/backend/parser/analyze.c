@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: analyze.c,v 1.173 2000/12/18 01:37:56 tgl Exp $
+ *	$Id: analyze.c,v 1.174 2001/01/05 06:34:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -260,7 +260,8 @@ transformDeleteStmt(ParseState *pstate, DeleteStmt *stmt)
 	/* set up a range table */
 	lockTargetTable(pstate, stmt->relname);
 	makeRangeTable(pstate, NIL);
-	setTargetTable(pstate, stmt->relname, stmt->inh, true);
+	setTargetTable(pstate, stmt->relname,
+				   interpretInhOption(stmt->inhOpt), true);
 
 	qry->distinctClause = NIL;
 
@@ -2213,7 +2214,8 @@ transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
 	 */
 	lockTargetTable(pstate, stmt->relname);
 	makeRangeTable(pstate, stmt->fromClause);
-	setTargetTable(pstate, stmt->relname, stmt->inh, true);
+	setTargetTable(pstate, stmt->relname,
+				   interpretInhOption(stmt->inhOpt), true);
 
 	qry->targetList = transformTargetList(pstate, stmt->targetList);
 

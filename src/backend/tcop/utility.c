@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.104 2000/12/08 06:17:58 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.105 2001/01/05 06:34:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,6 +37,7 @@
 #include "commands/view.h"
 #include "miscadmin.h"
 #include "parser/parse.h"
+#include "parser/parse_clause.h"
 #include "parser/parse_expr.h"
 #include "rewrite/rewriteDefine.h"
 #include "rewrite/rewriteRemove.h"
@@ -400,7 +401,7 @@ ProcessUtility(Node *parsetree,
 					renameatt(relname,	/* relname */
 							  stmt->column,		/* old att name */
 							  stmt->newname,	/* new att name */
-							  stmt->inh);		/* recursive? */
+							  interpretInhOption(stmt->inhOpt)); /* recursive? */
 				}
 			}
 			break;
@@ -420,25 +421,40 @@ ProcessUtility(Node *parsetree,
 				switch (stmt->subtype)
 				{
 					case 'A':	/* ADD COLUMN */
-						AlterTableAddColumn(stmt->relname, stmt->inh, (ColumnDef *) stmt->def);
+						AlterTableAddColumn(stmt->relname,
+											interpretInhOption(stmt->inhOpt),
+											(ColumnDef *) stmt->def);
 						break;
 					case 'T':	/* ALTER COLUMN */
-						AlterTableAlterColumn(stmt->relname, stmt->inh, stmt->name, stmt->def);
+						AlterTableAlterColumn(stmt->relname,
+											  interpretInhOption(stmt->inhOpt),
+											  stmt->name,
+											  stmt->def);
 						break;
 					case 'D':	/* ALTER DROP */
-						AlterTableDropColumn(stmt->relname, stmt->inh, stmt->name, stmt->behavior);
+						AlterTableDropColumn(stmt->relname,
+											 interpretInhOption(stmt->inhOpt),
+											 stmt->name,
+											 stmt->behavior);
 						break;
 					case 'C':	/* ADD CONSTRAINT */
-						AlterTableAddConstraint(stmt->relname, stmt->inh, stmt->def);
+						AlterTableAddConstraint(stmt->relname,
+												interpretInhOption(stmt->inhOpt),
+												stmt->def);
 						break;
 					case 'X':	/* DROP CONSTRAINT */
-						AlterTableDropConstraint(stmt->relname, stmt->inh, stmt->name, stmt->behavior);
+						AlterTableDropConstraint(stmt->relname,
+												 interpretInhOption(stmt->inhOpt),
+												 stmt->name,
+												 stmt->behavior);
 						break;
 					case 'E':	/* CREATE TOAST TABLE */
-						AlterTableCreateToastTable(stmt->relname, false);
+						AlterTableCreateToastTable(stmt->relname,
+												   false);
 						break;
 					case 'U':	/* ALTER OWNER */
-						AlterTableOwner(stmt->relname, stmt->name);
+						AlterTableOwner(stmt->relname,
+										stmt->name);
 						break;
 					default:	/* oops */
 						elog(ERROR, "T_AlterTableStmt: unknown subtype");

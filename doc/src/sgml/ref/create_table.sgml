@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.38 2000/12/30 19:00:11 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.39 2001/01/05 06:34:16 tgl Exp $
 Postgres documentation
 -->
 
@@ -20,12 +20,10 @@ Postgres documentation
  </refnamediv>
  <refsynopsisdiv>
   <refsynopsisdivinfo>
-   <date>2000-03-25</date>
+   <date>2001-01-04</date>
   </refsynopsisdivinfo>
   <synopsis>
-CREATE [ TEMPORARY | TEMP ] TABLE <replaceable class="PARAMETER">table</replaceable> 
-    [ UNDER <replaceable>inherited_table</replaceable> [, ...] ]
-    (
+CREATE [ TEMPORARY | TEMP ] TABLE <replaceable class="PARAMETER">table</replaceable> (
     <replaceable class="PARAMETER">column</replaceable> <replaceable class="PARAMETER">type</replaceable>
     [ NULL | NOT NULL ] [ UNIQUE ] [ DEFAULT <replaceable class="PARAMETER">value</replaceable> ]
     [<replaceable>column_constraint_clause</replaceable> | PRIMARY KEY } [ ... ] ]
@@ -33,7 +31,7 @@ CREATE [ TEMPORARY | TEMP ] TABLE <replaceable class="PARAMETER">table</replacea
     [, PRIMARY KEY ( <replaceable class="PARAMETER">column</replaceable> [, ...] ) ]
     [, CHECK ( <replaceable class="PARAMETER">condition</replaceable> ) ]
     [, <replaceable>table_constraint_clause</replaceable> ]
-    )
+    ) [ INHERITS ( <replaceable>inherited_table</replaceable> [, ...] ) ]
   </synopsis>
   
   <refsect2 id="R2-SQL-CREATETABLE-1">
@@ -132,10 +130,10 @@ CREATE [ TEMPORARY | TEMP ] TABLE <replaceable class="PARAMETER">table</replacea
      </varlistentry>
 
      <varlistentry>
-      <term>UNDER <replaceable class="PARAMETER">inherited_table</replaceable></term>
+      <term>INHERITS <replaceable class="PARAMETER">inherited_table</replaceable></term>
       <listitem>
        <para>
-	The optional UNDER clause specifies a collection of table
+	The optional INHERITS clause specifies a list of table
 	names from which this table automatically inherits all fields.
 	If any inherited field name appears more than once, 
 	<productname>Postgres</productname>
@@ -231,7 +229,7 @@ ERROR:  DEFAULT: type mismatched
   </para>
 
   <para>
-   The optional UNDER
+   The optional INHERITS
    clause specifies a collection of table names from which this table
    automatically inherits all fields.  If any inherited field name
    appears more than once, Postgres reports an error.  Postgres automatically
@@ -2152,6 +2150,19 @@ ALTER DOMAIN cities
     [ {INITIALLY DEFERRED | INITIALLY IMMEDIATE} ]
     [ [ NOT ] DEFERRABLE ]
      </synopsis>
+    </para>
+   </refsect3>
+
+   <refsect3 id="R3-SQL-INHERITANCE-1">
+    <title>
+     Inheritance
+    </title>
+    <para>
+     Multiple inheritance via the INHERITS clause is a
+     <productname>Postgres</productname> language extension.
+     SQL99 (but not SQL92) defines single inheritance using a different
+     syntax and different semantics.  SQL99-style inheritance is not yet
+     supported by <productname>Postgres</productname>.
     </para>
    </refsect3>
   </refsect2>

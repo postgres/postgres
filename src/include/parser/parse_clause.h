@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_clause.h,v 1.20 2000/11/08 22:10:02 tgl Exp $
+ * $Id: parse_clause.h,v 1.21 2001/01/05 06:34:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,7 @@ extern void makeRangeTable(ParseState *pstate, List *frmList);
 extern void lockTargetTable(ParseState *pstate, char *relname);
 extern void setTargetTable(ParseState *pstate, char *relname,
 						   bool inh, bool inJoinSet);
+extern bool interpretInhOption(InhOption inhOpt);
 extern Node *transformWhereClause(ParseState *pstate, Node *where);
 extern List *transformGroupClause(ParseState *pstate, List *grouplist,
 					 List *targetlist);

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.17 2000/12/25 23:15:26 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.18 2001/01/05 06:34:16 tgl Exp $
 Postgres documentation
 -->
 
@@ -23,10 +23,10 @@ Postgres documentation
    <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
-ALTER TABLE [ ONLY ]<replaceable class="PARAMETER">table</replaceable> [ * ]
+ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ * ]
     ADD [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> <replaceable
     class="PARAMETER">type</replaceable>
-ALTER TABLE [ ONLY ]<replaceable class="PARAMETER">table</replaceable> [ * ]
+ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ * ]
     ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> { SET DEFAULT <replaceable
     class="PARAMETER">value</replaceable> | DROP DEFAULT }
 ALTER TABLE <replaceable class="PARAMETER">table</replaceable> [ * ]

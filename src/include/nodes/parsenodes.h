@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.122 2000/11/24 20:16:40 petere Exp $
+ * $Id: parsenodes.h,v 1.123 2001/01/05 06:34:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -89,6 +89,13 @@ typedef struct Query
 } Query;
 
 
+typedef enum InhOption
+{
+	INH_NO,						/* Do NOT scan child tables */
+	INH_YES,					/* DO scan child tables */
+	INH_DEFAULT					/* Use current SQL_inheritance option */
+} InhOption;
+
 /*****************************************************************************
  *		Other Statements (no optimizations required)
  *
@@ -100,9 +107,11 @@ typedef struct Query
 
 /* ----------------------
  *	Alter Table
+ *
+ * The fields are used in different ways by the different variants of
+ * this command.
  * ----------------------
  */
-/* The fields are used in different ways by the different variants of this command */
 typedef struct AlterTableStmt
 {
 	NodeTag		type;
@@ -111,7 +120,7 @@ typedef struct AlterTableStmt
 								 * E = add toast table,
 								 * U = change owner */
 	char	   *relname;		/* table to work on */
-	bool		inh;			/* recursively on children? */
+	InhOption	inhOpt;			/* recursively act on children? */
 	char	   *name;			/* column or constraint name to act on, or new owner */
 	Node	   *def;			/* definition of new column or constraint */
 	int			behavior;		/* CASCADE or RESTRICT drop behavior */
@@ -554,7 +563,7 @@ typedef struct RenameStmt
 {
 	NodeTag		type;
 	char	   *relname;		/* relation to be altered */
-	bool		inh;			/* recursively alter children? */
+	InhOption	inhOpt;			/* recursively act on children? */
 	char	   *column;			/* if NULL, rename the relation name to
 								 * the new name. Otherwise, rename this
 								 * column name. */
@@ -807,7 +816,7 @@ typedef struct DeleteStmt
 	NodeTag		type;
 	char	   *relname;		/* relation to delete from */
 	Node	   *whereClause;	/* qualifications */
-	bool		inh;			/* delete from subclasses */
+	InhOption	inhOpt;			/* recursively act on children? */
 } DeleteStmt;
 
 /* ----------------------
@@ -821,7 +830,7 @@ typedef struct UpdateStmt
 	List	   *targetList;		/* the target list (of ResTarget) */
 	Node	   *whereClause;	/* qualifications */
 	List	   *fromClause;		/* the from clause */
-	bool		inh;			/* update subclasses */
+	InhOption	inhOpt;			/* recursively act on children? */
 } UpdateStmt;
 
 /* ----------------------
@@ -1125,7 +1134,7 @@ typedef struct RangeVar
 {
 	NodeTag		type;
 	char	   *relname;		/* the relation name */
-	bool		inh;			/* expand rel by inheritance? */
+	InhOption	inhOpt;			/* expand rel by inheritance? */
 	Attr	   *name;			/* optional table alias & column aliases */
 } RangeVar;
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.73 2000/11/16 22:30:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.74 2001/01/05 06:34:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,8 @@
 #include "parser/parse_relation.h"
 #include "parser/parse_target.h"
 #include "parser/parse_type.h"
+#include "utils/guc.h"
+
 
 #define ORDER_CLAUSE 0
 #define GROUP_CLAUSE 1
@@ -171,6 +173,29 @@ setTargetTable(ParseState *pstate, char *relname, bool inh, bool inJoinSet)
 	pstate->p_target_rangetblentry = rte;
 }
 
+/*
+ * Simplify InhOption (yes/no/default) into boolean yes/no.
+ *
+ * The reason we do things this way is that we don't want to examine the
+ * SQL_inheritance option flag until parse_analyze is run.  Otherwise,
+ * we'd do the wrong thing with query strings that intermix SET commands
+ * with queries.
+ */
+bool
+interpretInhOption(InhOption inhOpt)
+{
+	switch (inhOpt)
+	{
+		case INH_NO:
+			return false;
+		case INH_YES:
+			return true;
+		case INH_DEFAULT:
+			return SQL_inheritance;
+	}
+	elog(ERROR, "Bogus InhOption value");
+	return false;				/* keep compiler quiet */
+}
 
 /*
  * Extract all not-in-common columns from column lists of a source table
@@ -355,7 +380,8 @@ transformTableEntry(ParseState *pstate, RangeVar *r)
 	 * automatically generate the range variable if not specified. However
 	 * there are times we need to know whether the entries are legitimate.
 	 */
-	rte = addRangeTableEntry(pstate, relname, r->name, r->inh, true);
+	rte = addRangeTableEntry(pstate, relname, r->name,
+							 interpretInhOption(r->inhOpt), true);
 
 	/*
 	 * We create a RangeTblRef, but we do not add it to the joinlist here.

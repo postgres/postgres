@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/inherit.sgml,v 1.11 2000/07/02 22:00:23 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/inherit.sgml,v 1.12 2001/01/05 06:34:15 tgl Exp $
 -->
 
  <chapter id="inherit">
@@ -17,9 +17,9 @@ CREATE TABLE cities (
     altitude        int     -- (in ft)
 );
 
-CREATE TABLE capitals UNDER cities (
+CREATE TABLE capitals (
     state           char(2)
-);
+) INHERITS (cities);
 </programlisting>
 
    In this case, an  instance  of  capitals  <firstterm>inherits</firstterm>  all
@@ -43,15 +43,15 @@ CREATE TABLE capitals UNDER cities (
   </para>
 
   <para>
-   For example, the  following  query finds the  names  of  all  cities,
-   including  state capitals, that are located at an altitude 
-   over 500ft, the query is:
+    For example, the  following  query finds the  names  of  all  cities,
+    including  state capitals, that are located at an altitude 
+    over 500ft:
 
-   <programlisting>
-    SELECT c.name, c.altitude
-    FROM cities c
-    WHERE c.altitude > 500;
-</programlisting>
+    <programlisting>
+SELECT name, altitude
+    FROM cities
+    WHERE altitude &gt; 500;
+    </programlisting>
 
    which returns:
 
@@ -69,12 +69,12 @@ CREATE TABLE capitals UNDER cities (
   </para>
 
   <para>
-   On the other hand, the  following  query  finds
-   all  the cities, but not capital cities 
-   that are situated at an attitude of 500ft or higher:
+    On the other hand, the  following  query  finds
+    all  the cities that are not state capitals and
+    are situated at an altitude of 500ft or higher:
 
    <programlisting>
-    SELECT name, altitude
+SELECT name, altitude
     FROM ONLY cities
     WHERE altitude &gt; 500;
 
@@ -106,7 +106,7 @@ CREATE TABLE capitals UNDER cities (
    <programlisting>
     SELECT c.tableoid, c.name, c.altitude
     FROM cities c
-    WHERE c.altitude > 500;
+    WHERE c.altitude &gt; 500;
    </programlisting>
 
    which returns:
@@ -128,7 +128,7 @@ CREATE TABLE capitals UNDER cities (
    <programlisting>
     SELECT p.relname, c.name, c.altitude
     FROM cities c, pg_class p
-    WHERE c.altitude > 500 and c.tableoid = p.oid;
+    WHERE c.altitude &gt; 500 and c.tableoid = p.oid;
    </programlisting>
 
    which returns:
@@ -150,20 +150,25 @@ CREATE TABLE capitals UNDER cities (
   <note>
    <title>Deprecated</title> 
    <para>
-    In previous versions of <productname>Postgres</productname>, the
-    default was not to get access to child tables. This was found to
-    be error prone and is also in violation of SQL. Under the old
-    syntax, to get the sub-classes you append "*" to the table name.
-    For example
+     In previous versions of <productname>Postgres</productname>, the
+     default was not to get access to child tables. This was found to
+     be error prone and is also in violation of SQL99. Under the old
+     syntax, to get the sub-classes you append "*" to the table name.
+     For example
 <programlisting>
 SELECT * from cities*;
 </programlisting>
-    To get the old behavior, the set configuration option
-    <literal>SQL_Inheritance</literal> to off, e.g.,
+     You can still explicitly specify scanning child tables by appending
+     "*", as well as explicitly specify not scanning child tables by
+     writing <quote>ONLY</quote>.  But beginning in version 7.1, the default
+     behavior for an undecorated table name is to scan its child tables
+     too, whereas before the default was not to do so.  To get the old
+     default behavior, set the configuration option
+     <literal>SQL_Inheritance</literal> to off, e.g.,
 <programlisting>
 SET SQL_Inheritance TO OFF;
 </programlisting>
-    or add a line in your <filename>postgresql.conf</filename> file.
+     or add a line in your <filename>postgresql.conf</filename> file.
    </para>
   </note>
  </chapter>

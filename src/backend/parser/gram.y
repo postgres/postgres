@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.212 2000/12/22 07:07:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.213 2001/01/05 06:34:18 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -24,36 +24,43 @@
  *	  SQL92-specific syntax is separated from plain SQL/Postgres syntax
  *	  to help isolate the non-extensible portions of the parser.
  *
- *	  if you use list, make sure the datum is a node so that the printing
- *	  routines work
+ *	  In general, nothing in this file should initiate database accesses
+ *	  nor depend on changeable state (such as SET variables).  If you do
+ *	  database accesses, your code will fail when we have aborted the
+ *	  current transaction and are just parsing commands to find the next
+ *	  ROLLBACK or COMMIT.  If you make use of SET variables, then you
+ *	  will do the wrong thing in multi-query strings like this:
+ *			SET SQL_inheritance TO off; SELECT * FROM foo;
+ *	  because the entire string is parsed by gram.y before the SET gets
+ *	  executed.  Anything that depends on the database or changeable state
+ *	  should be handled inside parse_analyze() so that it happens at the
+ *	  right time not the wrong time.  The handling of SQL_inheritance is
+ *	  a good example.
  *
- * WARNING
- *	  sometimes we assign constants to makeStrings. Make sure we don't free
+ * WARNINGS
+ *	  If you use a list, make sure the datum is a node so that the printing
+ *	  routines work.
+ *
+ *	  Sometimes we assign constants to makeStrings. Make sure we don't free
  *	  those.
  *
  *-------------------------------------------------------------------------
  */
-#include <ctype.h>
-
 #include "postgres.h"
 
+#include <ctype.h>
+
 #include "access/htup.h"
-#include "access/xact.h"
 #include "catalog/catname.h"
 #include "catalog/pg_type.h"
+#include "nodes/params.h"
 #include "nodes/parsenodes.h"
-#include "nodes/print.h"
-#include "parser/analyze.h"
 #include "parser/gramparse.h"
-#include "parser/parse_type.h"
-#include "storage/bufpage.h"
 #include "storage/lmgr.h"
 #include "utils/acl.h"
 #include "utils/numeric.h"
-#include "utils/guc.h"
 
 #ifdef MULTIBYTE
-#include "miscadmin.h"
 #include "mb/pg_wchar.h"
 #else
 #define GetStandardEncoding()	0		/* SQL_ASCII */
@@ -99,6 +106,7 @@ static void doNegateFloat(Value *v);
 	char				*str;
 	bool				boolean;
 	JoinType			jtype;
+	InhOption			inhOpt;
 	List				*list;
 	Node				*node;
 	Value				*value;
@@ -175,7 +183,7 @@ static void doNegateFloat(Value *v);
 
 %type <list>	stmtblock, stmtmulti,
 		into_clause, OptTempTableName, relation_name_list,
-		OptTableElementList, OptUnder, OptInherit, definition, opt_distinct,
+		OptTableElementList, OptInherit, definition, opt_distinct,
 		opt_with, func_args, func_args_list, func_as,
 		oper_argtypes, RuleActionList, RuleActionMulti,
 		opt_column_list, columnList, opt_va_list, va_list,
@@ -202,9 +210,10 @@ static void doNegateFloat(Value *v);
 %type <list>	opt_interval
 %type <node>	substr_from, substr_for
 
-%type <boolean> opt_inh_star, opt_binary, opt_using, opt_instead, opt_only
-				opt_with_copy, index_opt_unique, opt_verbose, opt_analyze
-%type <boolean> opt_cursor
+%type <boolean>	opt_binary, opt_using, opt_instead, opt_cursor
+%type <boolean>	opt_with_copy, index_opt_unique, opt_verbose, opt_analyze
+
+%type <inhOpt>	opt_inh_star, opt_only
 
 %type <ival>	copy_dirn, direction, reindex_type, drop_type,
 		opt_column, event, comment_type, comment_cl,
@@ -319,7 +328,6 @@ static void doNegateFloat(Value *v);
 		PATH_P, PENDANT,
 		RESTRICT,
         TRIGGER,
-        UNDER,
 		WITHOUT
 
 /* Keywords (in SQL92 non-reserved words) */
@@ -937,7 +945,7 @@ AlterTableStmt:
 					AlterTableStmt *n = makeNode(AlterTableStmt);
 					n->subtype = 'A';
 					n->relname = $3;
-					n->inh = $4 || SQL_inheritance;
+					n->inhOpt = $4;
 					n->def = $7;
 					$$ = (Node *)n;
 				}
@@ -947,7 +955,7 @@ AlterTableStmt:
 					AlterTableStmt *n = makeNode(AlterTableStmt);
 					n->subtype = 'T';
 					n->relname = $3;
-					n->inh = $4 || SQL_inheritance;
+					n->inhOpt = $4;
 					n->name = $7;
 					n->def = $8;
 					$$ = (Node *)n;
@@ -958,7 +966,7 @@ AlterTableStmt:
 					AlterTableStmt *n = makeNode(AlterTableStmt);
 					n->subtype = 'D';
 					n->relname = $3;
-					n->inh = $4 || SQL_inheritance;
+					n->inhOpt = $4;
 					n->name = $7;
 					n->behavior = $8;
 					$$ = (Node *)n;
@@ -969,7 +977,7 @@ AlterTableStmt:
 					AlterTableStmt *n = makeNode(AlterTableStmt);
 					n->subtype = 'C';
 					n->relname = $3;
-					n->inh = $4 || SQL_inheritance;
+					n->inhOpt = $4;
 					n->def = $6;
 					$$ = (Node *)n;
 				}
@@ -979,7 +987,7 @@ AlterTableStmt:
 					AlterTableStmt *n = makeNode(AlterTableStmt);
 					n->subtype = 'X';
 					n->relname = $3;
-					n->inh = $4 || SQL_inheritance;
+					n->inhOpt = $4;
 					n->name = $7;
 					n->behavior = $8;
 					$$ = (Node *)n;
@@ -1108,22 +1116,13 @@ copy_null:      WITH NULL_P AS Sconst			{ $$ = $4; }
  *
  *****************************************************************************/
 
-CreateStmt:  CREATE OptTemp TABLE relation_name OptUnder '(' OptTableElementList ')' OptInherit
+CreateStmt:  CREATE OptTemp TABLE relation_name '(' OptTableElementList ')' OptInherit
 				{
 					CreateStmt *n = makeNode(CreateStmt);
 					n->istemp = $2;
 					n->relname = $4;
-					n->tableElts = $7;
-					n->inhRelnames = nconc($5, $9);
-/* if ($5 != NIL) 
-					{
-                        n->inhRelnames = $5;
-					}
-                    else
-					{ */
-                        /* INHERITS is deprecated */
-					/* n->inhRelnames = $9;
-					} */
+					n->tableElts = $6;
+					n->inhRelnames = $8;
 					n->constraints = NIL;
 					$$ = (Node *)n;
 				}
@@ -1480,16 +1479,11 @@ key_reference:  NO ACTION				{ $$ = FKCONSTR_ON_KEY_NOACTION; }
 		| SET DEFAULT					{ $$ = FKCONSTR_ON_KEY_SETDEFAULT; }
 		;
 
-OptUnder: UNDER relation_name_list 		        { $$ = $2; }
-        | /*EMPTY*/								{ $$ = NIL; } 
+opt_only: ONLY              	     	        { $$ = INH_NO; }
+        | /*EMPTY*/								{ $$ = INH_DEFAULT; } 
 		;
 
-opt_only: ONLY              	     	        { $$ = FALSE; }
-        | /*EMPTY*/								{ $$ = TRUE; } 
-		;
-
-/* INHERITS is Deprecated */
-OptInherit:  INHERITS '(' relation_name_list ')'		{ $$ = $3; }
+OptInherit:  INHERITS '(' relation_name_list ')'	{ $$ = $3; }
 		| /*EMPTY*/									{ $$ = NIL; }
 		;
 
@@ -1498,7 +1492,7 @@ OptInherit:  INHERITS '(' relation_name_list ')'		{ $$ = $3; }
  * SELECT ... INTO.
  */
 
-CreateAsStmt:  CREATE OptTemp TABLE relation_name OptUnder OptCreateAs AS SelectStmt
+CreateAsStmt:  CREATE OptTemp TABLE relation_name OptCreateAs AS SelectStmt
 				{
 					/*
 					 * When the SelectStmt is a set-operation tree, we must
@@ -1507,16 +1501,14 @@ CreateAsStmt:  CREATE OptTemp TABLE relation_name OptUnder OptCreateAs AS Select
 					 * to find it.  Similarly, the output column names must
 					 * be attached to that Select's target list.
 					 */
-					SelectStmt *n = findLeftmostSelect((SelectStmt *) $8);
+					SelectStmt *n = findLeftmostSelect((SelectStmt *) $7);
 					if (n->into != NULL)
 						elog(ERROR,"CREATE TABLE/AS SELECT may not specify INTO");
 					n->istemp = $2;
 					n->into = $4;
-                    if ($5 != NIL)
-						elog(ERROR,"CREATE TABLE/AS SELECT does not support UNDER");
-					if ($6 != NIL)
-						mapTargetColumns($6, n->targetList);
-					$$ = $8;
+					if ($5 != NIL)
+						mapTargetColumns($5, n->targetList);
+					$$ = $7;
 				}
 		;
 
@@ -2608,12 +2600,11 @@ opt_force:	FORCE									{  $$ = TRUE; }
  *****************************************************************************/
 
 RenameStmt:  ALTER TABLE relation_name opt_inh_star
-				/* "*" deprecated */
 				  RENAME opt_column opt_name TO name
 				{
 					RenameStmt *n = makeNode(RenameStmt);
 					n->relname = $3;
-					n->inh = $4 || SQL_inheritance;
+					n->inhOpt = $4;
 					n->column = $7;
 					n->newname = $9;
 					$$ = (Node *)n;
@@ -3182,7 +3173,7 @@ columnElem:  ColId opt_indirection
 DeleteStmt:  DELETE FROM opt_only relation_name where_clause
 				{
 					DeleteStmt *n = makeNode(DeleteStmt);
-                    n->inh = $3;
+					n->inhOpt = $3;
 					n->relname = $4;
 					n->whereClause = $5;
 					$$ = (Node *)n;
@@ -3227,7 +3218,7 @@ UpdateStmt:  UPDATE opt_only relation_name
 			  where_clause
 				{
 					UpdateStmt *n = makeNode(UpdateStmt);
-					n->inh = $2;
+					n->inhOpt = $2;
 					n->relname = $3;
 					n->targetList = $5;
 					n->fromClause = $6;
@@ -3552,8 +3543,8 @@ select_offset_value:	Iconst
  *	...however, recursive addattr and rename supported.  make special
  *	cases for these.
  */
-opt_inh_star:  '*'								{ $$ = TRUE; }
-		| /*EMPTY*/								{ $$ = FALSE; }
+opt_inh_star:  '*'								{ $$ = INH_YES; }
+		| /*EMPTY*/								{ $$ = INH_DEFAULT; }
 		;
 
 relation_name_list:  name_list;
@@ -3791,10 +3782,10 @@ join_qual:  USING '(' name_list ')'				{ $$ = (Node *) $3; }
 
 relation_expr:	relation_name
 				{
-    				/* default inheritance */
+					/* default inheritance */
 					$$ = makeNode(RangeVar);
 					$$->relname = $1;
-					$$->inh = SQL_inheritance;
+					$$->inhOpt = INH_DEFAULT;
 					$$->name = NULL;
 				}
 		| relation_name '*'				%prec '='
@@ -3802,7 +3793,7 @@ relation_expr:	relation_name
 					/* inheritance query */
 					$$ = makeNode(RangeVar);
 					$$->relname = $1;
-					$$->inh = TRUE;
+					$$->inhOpt = INH_YES;
 					$$->name = NULL;
 				}
 		| ONLY relation_name			%prec '='
@@ -3810,7 +3801,7 @@ relation_expr:	relation_name
 					/* no inheritance */
 					$$ = makeNode(RangeVar);
 					$$->relname = $2;
-					$$->inh = FALSE;
+					$$->inhOpt = INH_NO;
 					$$->name = NULL;
                 }
 		;
@@ -5529,7 +5520,6 @@ TokenId:  ABSOLUTE						{ $$ = "absolute"; }
 		| TRIGGER						{ $$ = "trigger"; }
 		| TRUNCATE						{ $$ = "truncate"; }
 		| TRUSTED						{ $$ = "trusted"; }
-		| UNDER 						{ $$ = "under"; }
 		| UNLISTEN						{ $$ = "unlisten"; }
 		| UNTIL							{ $$ = "until"; }
 		| UPDATE						{ $$ = "update"; }

@@ -232,7 +232,7 @@ make_name(void)
 		OPERATOR, OWNER, PASSWORD, PROCEDURAL, REINDEX, RENAME, RESET,
 		RETURNS, ROW, RULE, SEQUENCE, SERIAL, SETOF, SHARE,
 		SHOW, START, STATEMENT, STDIN, STDOUT, SYSID TEMP,
-		TEMPLATE, TOAST, TRUNCATE, TRUSTED, UNDER, UNLISTEN, UNTIL, VACUUM,
+		TEMPLATE, TOAST, TRUNCATE, TRUSTED, UNLISTEN, UNTIL, VACUUM,
 		VALID, VERBOSE, VERSION
 
 /* The grammar thinks these are keywords, but they are not in the keywords.c
@@ -281,7 +281,7 @@ make_name(void)
 
 %type  <str>	Iconst Fconst Sconst TransactionStmt CreateStmt UserId
 %type  <str>	CreateAsElement OptCreateAs CreateAsList CreateAsStmt
-%type  <str>	OptUnder key_reference comment_text ConstraintDeferrabilitySpec
+%type  <str>	key_reference comment_text ConstraintDeferrabilitySpec
 %type  <str>    key_match ColLabel SpecialRuleRelation ColId columnDef
 %type  <str>    ColConstraint ColConstraintElem drop_type Bitconst
 %type  <str>    OptTableElementList OptTableElement TableConstraint
@@ -1043,10 +1043,10 @@ copy_null:	WITH NULL_P AS StringConst	{ $$ = cat2_str(make_str("with null as"), 
  *
  *****************************************************************************/
 
-CreateStmt:  CREATE OptTemp TABLE relation_name OptUnder '(' OptTableElementList ')'
+CreateStmt:  CREATE OptTemp TABLE relation_name '(' OptTableElementList ')'
 				OptInherit
 				{
-					$$ = cat_str(9, make_str("create"), $2, make_str("table"), $4, $5, make_str("("), $7, make_str(")"), $9);
+					$$ = cat_str(8, make_str("create"), $2, make_str("table"), $4, make_str("("), $6, make_str(")"), $8);
 				}
 		;
 
@@ -1241,15 +1241,10 @@ key_reference:  NO ACTION	{ $$ = make_str("no action"); }
 		| SET NULL_P	{ $$ = make_str("set null"); }
 		;
 
-OptUnder: UNDER relation_name_list	{ $$ = cat2_str(make_str("under"), $2); }
-	| /*EMPTY*/			{ $$ = EMPTY; }
-	;
-
 opt_only: ONLY   	{ $$ = make_str("only"); }
 	| /*EMPTY*/	{ $$ = EMPTY; }
 	;
 
-/* INHERITS is Deprecated */
 OptInherit:  INHERITS '(' relation_name_list ')'                { $$ = cat_str(3, make_str("inherits ("), $3, make_str(")")); }
                 | /*EMPTY*/					{ $$ = EMPTY; }
                 ;      
@@ -1259,15 +1254,12 @@ OptInherit:  INHERITS '(' relation_name_list ')'                { $$ = cat_str(3
  * SELECT ... INTO.
  */
 
-CreateAsStmt:  CREATE OptTemp TABLE relation_name OptUnder OptCreateAs AS SelectStmt
+CreateAsStmt:  CREATE OptTemp TABLE relation_name OptCreateAs AS SelectStmt
 		{
 			if (FoundInto == 1)
 				mmerror(ET_ERROR, "CREATE TABLE/AS SELECT may not specify INTO");
 
-			if (strlen($5) > 0)
-				mmerror(ET_ERROR, "CREATE TABLE/AS SELECT does not support UNDER");
-
-			$$ = cat_str(8, make_str("create"), $2, make_str("table"), $4, $5, $6, make_str("as"), $8); 
+			$$ = cat_str(7, make_str("create"), $2, make_str("table"), $4, $5, make_str("as"), $7); 
 		}
 		;
 
@@ -5084,7 +5076,6 @@ TokenId:  ABSOLUTE			{ $$ = make_str("absolute"); }
 	| TRIGGER			{ $$ = make_str("trigger"); }
 	| TRUNCATE			{ $$ = make_str("truncate"); }
 	| TRUSTED			{ $$ = make_str("trusted"); }
-	| UNDER 			{ $$ = make_str("under"); }
 	| UNLISTEN			{ $$ = make_str("unlisten"); }
 	| UNTIL				{ $$ = make_str("until"); }
 	| UPDATE			{ $$ = make_str("update"); }

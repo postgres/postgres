@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.85 2000/12/14 22:30:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.86 2001/01/05 06:34:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -651,7 +651,7 @@ _equalDeleteStmt(DeleteStmt *a, DeleteStmt *b)
 		return false;
 	if (!equal(a->whereClause, b->whereClause))
 		return false;
-	if (a->inh != b->inh)
+	if (a->inhOpt != b->inhOpt)
 		return false;
 
 	return true;
@@ -668,7 +668,7 @@ _equalUpdateStmt(UpdateStmt *a, UpdateStmt *b)
 		return false;
 	if (!equal(a->fromClause, b->fromClause))
 		return false;
-	if (a->inh != b->inh)
+	if (a->inhOpt != b->inhOpt)
 		return false;
 
 	return true;
@@ -741,7 +741,7 @@ _equalAlterTableStmt(AlterTableStmt *a, AlterTableStmt *b)
 		return false;
 	if (!equalstr(a->relname, b->relname))
 		return false;
-	if (a->inh != b->inh)
+	if (a->inhOpt != b->inhOpt)
 		return false;
 	if (!equalstr(a->name, b->name))
 		return false;
@@ -998,7 +998,7 @@ _equalRenameStmt(RenameStmt *a, RenameStmt *b)
 {
 	if (!equalstr(a->relname, b->relname))
 		return false;
-	if (a->inh != b->inh)
+	if (a->inhOpt != b->inhOpt)
 		return false;
 	if (!equalstr(a->column, b->column))
 		return false;
@@ -1501,7 +1501,7 @@ _equalRangeVar(RangeVar *a, RangeVar *b)
 {
 	if (!equalstr(a->relname, b->relname))
 		return false;
-	if (a->inh != b->inh)
+	if (a->inhOpt != b->inhOpt)
 		return false;
 	if (!equal(a->name, b->name))
 		return false;

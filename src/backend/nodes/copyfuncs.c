@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.135 2000/12/14 22:30:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.136 2001/01/05 06:34:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1675,7 +1675,7 @@ _copyRangeVar(RangeVar *from)
 
 	if (from->relname)
 		newnode->relname = pstrdup(from->relname);
-	newnode->inh = from->inh;
+	newnode->inhOpt = from->inhOpt;
 	Node_Copy(from, newnode, name);
 
 	return newnode;
@@ -1829,7 +1829,7 @@ _copyDeleteStmt(DeleteStmt *from)
 	if (from->relname)
 		newnode->relname = pstrdup(from->relname);
 	Node_Copy(from, newnode, whereClause);
-	newnode->inh = from->inh;
+	newnode->inhOpt = from->inhOpt;
 
 	return newnode;
 }
@@ -1844,7 +1844,7 @@ _copyUpdateStmt(UpdateStmt *from)
 	Node_Copy(from, newnode, targetList);
 	Node_Copy(from, newnode, whereClause);
 	Node_Copy(from, newnode, fromClause);
-	newnode->inh = from->inh;
+	newnode->inhOpt = from->inhOpt;
 
 	return newnode;
 }
@@ -1900,7 +1900,7 @@ _copyAlterTableStmt(AlterTableStmt *from)
 	newnode->subtype = from->subtype;
 	if (from->relname)
 		newnode->relname = pstrdup(from->relname);
-	newnode->inh = from->inh;
+	newnode->inhOpt = from->inhOpt;
 	if (from->name)
 		newnode->name = pstrdup(from->name);
 	Node_Copy(from, newnode, def);
@@ -2137,7 +2137,7 @@ _copyRenameStmt(RenameStmt *from)
 	RenameStmt *newnode = makeNode(RenameStmt);
 	
 	newnode->relname = pstrdup(from->relname);
-	newnode->inh = from->inh;
+	newnode->inhOpt = from->inhOpt;
 	if (from->column)
 		newnode->column = pstrdup(from->column);
 	if (from->newname)

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.86 2000/12/15 23:36:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.87 2001/01/05 06:34:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -262,7 +262,6 @@ static ScanKeyword ScanKeywords[] = {
 	{"truncate", TRUNCATE},
 	{"trusted", TRUSTED},
 	{"type", TYPE_P},
-	{"under", UNDER},
 	{"union", UNION},
 	{"unique", UNIQUE},
 	{"unlisten", UNLISTEN},
