@@ -1848,6 +1848,7 @@ three|f1         |x
      |1004.3     |994.3      
      |1.23457e+20|1.23457e+20
      |1.23457e-20|-10        
+(3 rows)
 
 QUERY: SELECT '' AS three, f.f1, f.f1 / '-10' AS x FROM FLOAT4_TBL f
    WHERE f.f1 > '0.0';
