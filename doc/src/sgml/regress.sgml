@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/regress.sgml,v 1.31 2003/03/13 01:30:29 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/regress.sgml,v 1.32 2003/04/06 17:47:24 tgl Exp $ -->
 
  <chapter id="regress">
   <title id="regress-title">Regression Tests</title>
@@ -201,13 +201,25 @@ gmake installcheck
     <title>Date and time differences</title>
 
     <para>
-     Some of the queries in the <filename>horology</filename> test will
+     A few of the queries in the <filename>horology</filename> test will
      fail if you run the test on the day of a daylight-saving time
-     changeover, or the day before or after one.  These queries assume
-     that the intervals between midnight yesterday, midnight today and
+     changeover, or the day after one.  These queries expect that
+     the intervals between midnight yesterday, midnight today and
      midnight tomorrow are exactly twenty-four hours --- which is wrong
      if daylight-saving time went into or out of effect meanwhile.
     </para>
+
+    <note>
+     <para>
+      Because USA daylight-saving rules are used, this problem always
+      occurs on the first Sunday of April, the last Sunday of October,
+      and their following Mondays, regardless of when daylight-saving
+      is in effect where you live.  Also note that the problem appears or
+      disappears at midnight Pacific time (UTC-7 or UTC-8), not midnight
+      your local time.  Thus the failure may appear late on Saturday or
+      persist through much of Tuesday, depending on where you live.
+     </para>
+    </note>
 
     <para>
      Most of the date and time results are dependent on the time zone
