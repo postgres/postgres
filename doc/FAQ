@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Thu Feb 14 12:14:47 EST 2002
+   Last updated: Tue Mar 5 01:28:16 EST 2002
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -248,8 +248,12 @@
    browse the manual online at
    http://www.PostgreSQL.org/users-lounge/docs/.
    
-   There is a PostgreSQL book available at
-   http://www.PostgreSQL.org/docs/awbook.html.
+   There are two PostgreSQL books available online at
+   http://www.PostgreSQL.org/docs/awbook.html and
+   http://www.commandprompt.com/ppbook/. There is a list of PostgreSQL
+   books available for purchase at http://www.postgresql.org/books/.
+   There is also a collection of PostgreSQL technical articles at
+   http://techdocs.postgresql.org/.
    
    psql has some nice \d commands to show information about types,
    operators, functions, aggregates, etc.
@@ -640,7 +644,7 @@
     4.5) What is the maximum size for a row, a table, and a database?
     
    These are the limits:
-    Maximum size for a database?             unlimited (60 GB databases exist)
+    Maximum size for a database?             unlimited (500 GB databases exist)
     Maximum size for a table?                16 TB
     Maximum size for a row?                  unlimited in 7.1 and later
     Maximum size for a field?                1 GB in 7.1 and later
@@ -667,26 +671,26 @@
    
    As an example, consider a file of 100,000 lines with an integer and
    text description on each line. Suppose the text string avergages
-   twenty characters in length. The flat file would be 2.8 MB. The size
-   of the PostgreSQL database file containing this data can be estimated
-   as 6.6 MB:
+   twenty bytes in length. The flat file would be 2.8 MB. The size of the
+   PostgreSQL database file containing this data can be estimated as 6.4
+   MB:
     36 bytes: each row header (approximate)
-    26 bytes: two int fields @ 4 bytes each
+    24 bytes: one int field and one text filed
    + 4 bytes: pointer on page to tuple
    ----------------------------------------
-    66 bytes per row
+    64 bytes per row
 
    The data page size in PostgreSQL is 8192 bytes (8 KB), so:
 
    8192 bytes per page
-   -------------------   =  124 rows per database page (rounded down)
-     66 bytes per row
+   -------------------   =  128 rows per database page (rounded down)
+     64 bytes per row
 
    100000 data rows
-   --------------------  =  807 database pages (rounded up)
-      124 rows per page
+   --------------------  =  782 database pages (rounded up)
+      128 rows per page
 
-807 database pages * 8192 bytes per page  =  6,610,944 bytes (6.6 MB)
+782 database pages * 8192 bytes per page  =  6,406,144 bytes (6.4 MB)
 
    Indexes do not require as much overhead, but do contain the data that
    is being indexed, so they can be large also.
@@ -702,28 +706,30 @@
    
     4.8) My queries are slow or don't make use of the indexes. Why?
     
-   PostgreSQL does not automatically maintain statistics. VACUUM must be
-   run to update the statistics. After statistics are updated, the
-   optimizer knows how many rows in the table, and can better decide if
-   it should use indexes. Note that the optimizer does not use indexes in
-   cases when the table is small because a sequential scan would be
-   faster.
+   Indexes are not automatically used by every query. Indexes are only
+   used if the table is larger than a minimum size, and the query selects
+   only a small percentage of the rows in the table. This is because the
+   random disk access caused by an index scan is sometimes slower than a
+   straight read through the table, or sequential scan.
    
-   For column-specific optimization statistics, use VACUUM ANALYZE.
-   VACUUM ANALYZE is important for complex multijoin queries, so the
-   optimizer can estimate the number of rows returned from each table,
-   and choose the proper join order. The backend does not keep track of
-   column statistics on its own, so VACUUM ANALYZE must be run to collect
-   them periodically.
+   To determine if an index should be used, PostgreSQL must have
+   statistics about the table. These statistics are collected using
+   VACUUM ANALYZE, or simply ANALYZE. Using statistics, the optimizer
+   knows how many rows are in the table, and can better determine if
+   indexes should be used. Statistics are also valuable in determining
+   optimal join order and join methods. Statistics collection should be
+   performed periodically as the contents of the table change.
    
-   Indexes are usually not used for ORDER BY or joins. A sequential scan
-   followed by an explicit sort is faster than an indexscan of all tuples
-   of a large table. This is because random disk access is very slow.
+   Indexes are normally not used for ORDER BY or to perform joins. A
+   sequential scan followed by an explicit sort is usually faster than an
+   index scan of a large table.
+   However, LIMIT combined with ORDER BY often will use an index because
+   only a small portion of the table is returned.
    
    When using wild-card operators such as LIKE or ~, indexes can only be
    used if the beginning of the search is anchored to the start of the
-   string. So, to use indexes, LIKE searches should not begin with %, and
-   ~(regular expression searches) should start with ^.
+   string. Therefore, to use indexes, LIKE patterns must not start with
+   %, and ~(regular expression) patterns must start with ^.
    
     4.9) How do I see how the query optimizer is evaluating my query?
     
