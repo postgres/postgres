@@ -2,7 +2,7 @@ PROGRAM = pg_autovacuum
 OBJS	= pg_autovacuum.o dllist.o
 
 PG_CPPFLAGS = -I$(libpq_srcdir) -DFRONTEND
-PG_LIBS = $(libpq)
+PG_LIBS = $(libpq_pgport)
 
 DOCS = README.pg_autovacuum
 
