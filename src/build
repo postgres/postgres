@@ -30,5 +30,14 @@ then
         LDFLAGS="$ADD_LIB_DIRS" ; export LDFLAGS
 fi
 
-./configure
+$ECHO_N "Installation directory [/usr/local/pgsql]: $ECHO_C"
+read a
+if [ "$a." != "." ]
+then
+        IDIR=${a}
+else
+	IDIR=/usr/local/pgsql
+fi
+
+./configure --prefix=${IDIR}
 
