@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/createuser.sgml,v 1.23 2002/01/20 22:19:56 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/createuser.sgml,v 1.24 2002/02/13 19:32:17 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -79,7 +79,7 @@ PostgreSQL documentation
       <term>-d, --createdb</term>
       <listitem>
        <para>
-	Allows the new user to create databases.
+	The new user is allowed to create databases.
        </para>
       </listitem>
      </varlistentry>
@@ -88,7 +88,7 @@ PostgreSQL documentation
       <term>-D, --no-createdb</term>
       <listitem>
        <para>
-	Forbids the new user to create databases.
+	The new user is not allowed to create databases.
        </para>
       </listitem>
      </varlistentry>
@@ -97,7 +97,9 @@ PostgreSQL documentation
       <term>-a, --adduser</term>
       <listitem>
        <para>
-	Allows the new user to create other users.
+	The new user is allowed to create other users.
+	(Note: actually, this makes the new user a <firstterm>superuser</>.
+	The option is poorly named.)
        </para>
       </listitem>
      </varlistentry>
@@ -106,7 +108,8 @@ PostgreSQL documentation
       <term>-A, --no-adduser</term>
       <listitem>
        <para>
-	Forbids the new user to create other users.
+	The new user is not allowed to create other users (i.e.,
+	the new user is a regular user not a superuser).
        </para>
       </listitem>
      </varlistentry>
@@ -215,9 +218,17 @@ PostgreSQL documentation
   <para>
    <application>createuser</application> creates a 
    new <productname>PostgreSQL</productname> user.  
-   Only users with <literal>usesuper</literal> set in
-   the <literal>pg_shadow</literal> table can create 
-   new <productname>PostgreSQL</productname> users.
+   Only superusers (users with <literal>usesuper</literal> set in
+   the <literal>pg_shadow</literal> table) can create 
+   new <productname>PostgreSQL</productname> users,
+   so <application>createuser</application> must be
+   invoked by someone who is a <productname>PostgreSQL</productname>
+   superuser.
+  </para>
+
+  <para>
+   Being a superuser also implies the ability to bypass access permission
+   checks within the database, so superuser-dom should not be granted lightly.
   </para>
 
   <para>
@@ -227,10 +238,11 @@ PostgreSQL documentation
    the <productname>PostgreSQL</productname> interactive terminal
    <xref linkend="APP-PSQL">. Thus, there is nothing
    special about creating users via this or other methods. This means
-   that the <application>psql</application> must be found by the script and that
-   a database server is running at the targeted host. Also, any default
-   settings and environment variables available to <application>psql</application>
-   and the <application>libpq</application> front-end library do apply.
+   that the <application>psql</application> application must be found by the
+   script and that 
+   a database server must be running at the targeted host. Also, any default
+   settings and environment variables used by <application>psql</application>
+   and the <application>libpq</application> front-end library will apply.
   </para>
 
  </refsect1>
