@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.1.1.1 1996/07/09 06:21:11 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.2 1996/08/24 20:47:54 scrappy Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1093,6 +1093,8 @@ heap_insert(Relation relation, HeapTuple tup)
 	tup->t_oid = newoid();
 	LastOidProcessed = tup->t_oid;
     }
+    else
+    	CheckMaxObjectId(tup->t_oid);
     
     TransactionIdStore(GetCurrentTransactionId(), &(tup->t_xmin));
     tup->t_cmin = GetCurrentCommandId();

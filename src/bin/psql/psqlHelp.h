@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: psqlHelp.h,v 1.2 1996/07/28 07:08:14 scrappy Exp $
+ * $Id: psqlHelp.h,v 1.3 1996/08/24 20:49:41 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,7 +49,7 @@ static struct _helpStruct QL_HELP[] = {
       "commit [work]"},
   { "copy",
       "copy data to and from a table",
-      "copy [binary] [nonulls] <relname>\n\t{to|from} {<filename>|stdin|stdout} [using delimiters <delim>];"},
+      "copy [binary] <relname> [with oids]\n\t{to|from} {<filename>|stdin|stdout} [using delimiters <delim>];"},
   { "create",   
       "Please more be specific:",
       "\tcreate aggregate\n\tcreate database\n\tcreate function\n\tcreate index\n\tcreate operator\n\tcreate rule\n\tcreate table\n\tcreate type\n\tcreate view"},
@@ -64,7 +64,7 @@ static struct _helpStruct QL_HELP[] = {
       "create function <function_name> ([<type1>,...<typeN>]) returns <return_type>\n\tas '<object_filename>'|'<sql-queries>'\n\tlanguage 'c'|'sql'|'internal';"},
   { "create index",
       "construct an index",
-      "create index <indexname> on <relname> using <access_method> (<attr1>|<funcname>(<attr1>,...) <type_class1>);"},
+      "create index <indexname> on <relname> [using <access_method>] (<attr1>|<funcname>(<attr1>,...) [<type_class1>]);"},
   { "create operator",
       "create a user-defined operator",
       "create operator <operator_name> (\n\t[leftarg = <type1>][,rightarg = <type2>]\n\t,procedure = <func_name>,\n\t[,commutator = <com_op>][,negator = <neg_op>]\n\t[,restrict = <res_proc>][,hashes]\n\t[,join = <join_proc>][,sort = <sort_op1>...<sort_opN>]);"},

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.3 1996/07/22 08:36:59 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.4 1996/08/24 20:49:17 scrappy Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -210,7 +210,6 @@ dumpSchema(FILE *fout, int *numTablesPtr, char *tablename)
     int numFuncs;
     int numTables;
     int numInherits;
-    int numIndices;
     int numAggregates;
     int numOperators;
     TypeInfo *tinfo;
@@ -218,7 +217,6 @@ dumpSchema(FILE *fout, int *numTablesPtr, char *tablename)
     AggInfo *agginfo;
     TableInfo *tblinfo;
     InhInfo *inhinfo;
-    IndInfo *indinfo;
     OprInfo *oprinfo;
 
 if (g_verbose) fprintf(stderr,"%s reading user-defined types %s\n",
@@ -253,10 +251,6 @@ if (g_verbose) fprintf(stderr, "%s flagging inherited attributes in subtables %s
 		       g_comment_start, g_comment_end);
     flagInhAttrs(tblinfo, numTables, inhinfo, numInherits);
 
-if (g_verbose) fprintf(stderr,"%s reading indices information %s\n",
-		       g_comment_start, g_comment_end);
-    indinfo = getIndices(&numIndices);
-
 if (!tablename && fout) {
   if (g_verbose) fprintf(stderr,"%s dumping out user-defined types %s\n",
   		       g_comment_start, g_comment_end);
@@ -288,15 +282,34 @@ if (!tablename && fout) {
       dumpOprs(fout, oprinfo, numOperators, tinfo, numTypes);
 }
 
-if (fout) {
-  if (g_verbose) fprintf(stderr,"%s dumping out indices %s\n",
-  		       g_comment_start, g_comment_end);
-      dumpIndices(fout, indinfo, numIndices, tblinfo, numTables, tablename);
-}
     *numTablesPtr = numTables;
     return tblinfo;
 }
 
+
+/*
+ * dumpSchemaIdx:
+ *    dump indexes at the end for performance
+ *
+ */
+
+extern void
+dumpSchemaIdx(FILE *fout, int *numTablesPtr, char *tablename,
+					TableInfo* tblinfo, int numTables)
+{
+    int numIndices;
+    IndInfo *indinfo;
+    
+    if (g_verbose) fprintf(stderr,"%s reading indices information %s\n",
+		       g_comment_start, g_comment_end);
+    indinfo = getIndices(&numIndices);
+
+    if (fout) {
+  	if (g_verbose) fprintf(stderr,"%s dumping out indices %s\n",
+  		g_comment_start, g_comment_end);
+	dumpIndices(fout, indinfo, numIndices, tblinfo, numTables, tablename);
+    }
+}
 
 /* flagInhAttrs -
  *   for each table in tblinfo, flag its inherited attributes

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.3 1996/08/06 16:37:53 scrappy Exp $
+ * $Id: parsenodes.h,v 1.4 1996/08/24 20:48:31 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -114,6 +114,7 @@ typedef struct CopyStmt {
     NodeTag		type;
     bool		binary;		/* is a binary copy? */
     char		*relname;	/* the relation to copy */
+    bool		oids;		/* copy oid's? */
     int			direction;	/* TO or FROM */
     char		*filename;	/* if NULL, use stdin/stdout */
     char                *delimiter;     /* delimiter character, \t by default*/

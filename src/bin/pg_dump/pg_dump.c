@@ -20,7 +20,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.6 1996/08/14 05:33:11 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.7 1996/08/24 20:49:22 scrappy Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -80,14 +80,15 @@ usage(char* progname)
     fprintf(stderr, "%s - version 1.13.dhb.2\n\n",progname);
     fprintf(stderr, "usage:  %s [options] [dbname]\n",progname);
     fprintf(stderr, "\t -f filename \t\t script output filename\n");
-    fprintf(stderr, "\t -d[a]       \t\t dump data as proper insert strings\n");
-    fprintf(stderr, "\t             \t\t (if 'a' then attribute names also)\n");
     fprintf(stderr, "\t -H hostname \t\t server host name\n");
     fprintf(stderr, "\t -p port     \t\t server port number\n");
     fprintf(stderr, "\t -v          \t\t verbose\n");
+    fprintf(stderr, "\t -d[a]       \t\t dump data as proper insert strings\n");
+    fprintf(stderr, "\t             \t\t (if 'a' then attribute names also)\n");
     fprintf(stderr, "\t -S          \t\t dump out only the schema, no data\n");
     fprintf(stderr, "\t -a          \t\t dump out only the data, no schema\n");
     fprintf(stderr, "\t -t table    \t\t dump for this table only\n");
+    fprintf(stderr, "\t -o          \t\t dump object id's (oids)\n");
     fprintf(stderr, "\n if dbname is not supplied, then the DATABASE environment name is used\n");
     fprintf(stderr, "\n");
 
@@ -117,7 +118,7 @@ main(int argc, char** argv)
     char *pghost = NULL;
     char *pgport = NULL;
     char *tablename;
-
+    int oids;
     TableInfo *tblinfo;
     int numTables;
 
@@ -125,7 +126,8 @@ main(int argc, char** argv)
     filename = NULL;
     tablename = NULL;
     g_verbose = 0;
-
+    oids = 0;
+    
     strcpy(g_comment_start,"-- ");
     g_comment_end[0] = '\0';
     strcpy(g_opaque_type, "opaque");
@@ -134,7 +136,7 @@ main(int argc, char** argv)
 
     progname = *argv;
 
-    while ((c = getopt(argc, argv,"f:H:p:t:vSDd:a")) != EOF) {
+    while ((c = getopt(argc, argv,"f:H:p:t:vSDd:ao")) != EOF) {
 	switch(c) {
 	case 'f': /* output file name */
 	    filename = optarg;
@@ -160,6 +162,9 @@ main(int argc, char** argv)
 	    break;
 	case 'a': /* Dump data only */
 	    dataOnly = 1;
+	    break;
+	case 'o': /* Dump oids */
+	    oids = 1;
 	    break;
 	default:
 	    usage(progname);
@@ -196,27 +201,27 @@ main(int argc, char** argv)
 
     g_last_builtin_oid = findLastBuiltinOid();
 
+    if (oids)
+        setMaxOid(g_fout);
     if (!dataOnly) {
-
-if (g_verbose) 
-    fprintf(stderr, "%s last builtin oid is %d %s\n",
-	    g_comment_start,  g_last_builtin_oid, g_comment_end);
-
-    tblinfo = dumpSchema(g_fout, &numTables, tablename);
-    
+	if (g_verbose) 
+	    fprintf(stderr, "%s last builtin oid is %d %s\n",
+		    g_comment_start,  g_last_builtin_oid, g_comment_end);
+	tblinfo = dumpSchema(g_fout, &numTables, tablename);
     }
-    else {
+    else
       tblinfo = dumpSchema(NULL, &numTables, tablename);
-    }
     
     if (!schemaOnly) {
-
-if (g_verbose) fprintf(stderr,"%s dumping out the contents of each table %s\n",
+	if (g_verbose)
+	    fprintf(stderr,"%s dumping out the contents of each table %s\n",
 		       g_comment_start, g_comment_end);
-
-      dumpClasses(tblinfo, numTables, g_fout, tablename); 
+      dumpClasses(tblinfo, numTables, g_fout, tablename, oids);
     }     
 
+    if (!dataOnly) /* dump indexes at the end for performance */
+	dumpSchemaIdx(g_fout, &numTables, tablename, tblinfo, numTables);
+    
     fflush(g_fout);
     fclose(g_fout);
 
@@ -771,11 +776,11 @@ getTableAttrs(TableInfo* tblinfo, int numTables)
 	/* we must read the attribute names in attribute number order! */
 	/* because we will use the attnum to index into the attnames array 
 	   later */
-if (g_verbose) 
-    fprintf(stderr,"%s finding the attrs and types for table: %s %s\n",
-	    g_comment_start,
-	    tblinfo[i].relname,
-	    g_comment_end);
+	if (g_verbose) 
+	    fprintf(stderr,"%s finding the attrs and types for table: %s %s\n",
+		g_comment_start,
+		tblinfo[i].relname,
+		g_comment_end);
 
 	sprintf(q,"SELECT a.attnum, a.attname, t.typname, a.attlen from pg_attribute a, pg_type t where a.attrelid = '%s'::oid and a.atttypid = t.oid and a.attnum > 0 order by attnum",tblinfo[i].oid);
 	res = PQexec(g_conn, q);
@@ -1356,7 +1361,7 @@ dumpIndices(FILE* fout, IndInfo* indinfo, int numIndices,
  *    dump the contents of all the classes.
  */
 void
-dumpClasses(TableInfo *tblinfo, int numTables, FILE *fout, char *onlytable)
+dumpClasses(TableInfo *tblinfo, int numTables, FILE *fout, char *onlytable, int oids)
 {
     char query[255];
 #define COPYBUFSIZ	8192
@@ -1371,7 +1376,7 @@ dumpClasses(TableInfo *tblinfo, int numTables, FILE *fout, char *onlytable)
     int field;
     int tuple;
     int copydone;
-
+    
     for(i = 0; i < numTables; i++) {
 	char *classname = tblinfo[i].relname;
 
@@ -1382,8 +1387,14 @@ dumpClasses(TableInfo *tblinfo, int numTables, FILE *fout, char *onlytable)
 	        continue;
 
             if(!dumpData) {
-	        fprintf(fout, "COPY %s from stdin;\n", classname);
-	        sprintf(query, "COPY %s to stdout;\n", classname);
+		if (oids) {
+		    fprintf(fout, "COPY %s WITH OIDS FROM stdin;\n", classname);
+		    sprintf(query, "COPY %s WITH OIDS TO stdout;\n", classname);
+		}
+		else {
+		    fprintf(fout, "COPY %s FROM stdin;\n", classname);
+		    sprintf(query, "COPY %s TO stdout;\n", classname);
+		}
 	        res = PQexec(g_conn, query);
 	        if (!res || 
 	            PQresultStatus(res) != PGRES_COPY_OUT) {
@@ -1538,7 +1549,53 @@ dumpTuples(PGresult *res, FILE *fout, int* attrmap)
     }
 }
 
+/*
+ * setMaxOid -
+ * find the maximum oid and generate a COPY statement to set it
+*/
 
+void
+setMaxOid(FILE *fout)
+{
+    char query[255];
+    PGresult *res;
+    Oid max_oid;
+    
+    res = PQexec(g_conn, "CREATE TABLE pgdump_oid (dummy int4)");
+    if (!res || 
+        PQresultStatus(res) != PGRES_COMMAND_OK) {
+        fprintf(stderr,"Can not create pgdump_oid table\n");
+        exit_nicely(g_conn);
+    }
+    PQclear(res);
+    res = PQexec(g_conn, "INSERT INTO pgdump_oid VALUES (0)");
+    if (!res || 
+        PQresultStatus(res) != PGRES_COMMAND_OK) {
+        fprintf(stderr,"Can not insert into pgdump_oid table\n");
+        exit_nicely(g_conn);
+    }
+    max_oid = atol(PQoidStatus(res));
+    if (max_oid == 0) {
+        fprintf(stderr,"Invalid max id in setMaxOid\n");
+        exit_nicely(g_conn);
+    }
+    PQclear(res);
+    res = PQexec(g_conn, "DROP TABLE pgdump_oid;");
+    if (!res || 
+        PQresultStatus(res) != PGRES_COMMAND_OK) {
+        fprintf(stderr,"Can not drop pgdump_oid table\n");
+        exit_nicely(g_conn);
+    }
+    PQclear(res);
+    if (g_verbose) 
+        fprintf(stderr, "%s maximum system oid is %d %s\n",
+    	    g_comment_start,  max_oid, g_comment_end);
+    fprintf(fout, "CREATE TABLE pgdump_oid (dummy int4);\n");
+    fprintf(fout, "COPY pgdump_oid WITH OIDS FROM stdin;\n");
+    fprintf(fout, "%-ld\t0\n", max_oid);
+    fprintf(fout, "\\.\n");
+    fprintf(fout, "DROP TABLE pgdump_oid;\n");
+}    	
 
 /*
  * findLastBuiltInOid -

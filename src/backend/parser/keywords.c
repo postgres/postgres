@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.2 1996/08/06 16:43:08 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.3 1996/08/24 20:48:46 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -103,6 +103,7 @@ static ScanKeyword ScanKeywords[] = {
 	{ "notify",             NOTIFY          },
 	{ "notnull",            NOTNULL         },
 	{ "null",		PNULL		},
+	{ "oids",		OIDS		},
 	{ "on",			ON		},
 	{ "operator",		OPERATOR	},
         { "option",             OPTION          },

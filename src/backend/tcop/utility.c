@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.1.1.1 1996/07/09 06:22:00 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.2 1996/08/24 20:49:03 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -199,6 +199,7 @@ ProcessUtility(Node *parsetree,
 	    char *filename;
 	    char *delim;
 	    bool	isBinary;
+	    bool	isOids;
 	    bool	isFrom;
 	    bool        pipe = false;
 
@@ -207,6 +208,7 @@ ProcessUtility(Node *parsetree,
 	    
 	    relname = stmt->relname;
 	    isBinary = stmt->binary;
+	    isOids = stmt->oids;
 	    
 	    isFrom = (bool)(stmt->direction == FROM);
 	    filename = stmt->filename;
@@ -234,7 +236,7 @@ ProcessUtility(Node *parsetree,
 	    
 	    if (pipe && IsUnderPostmaster) dest = CopyEnd;
 	    
-	    DoCopy(relname, isBinary, isFrom, pipe, filename, delim);
+	    DoCopy(relname, isBinary, isOids, isFrom, pipe, filename, delim);
 	}
 	break;
       
