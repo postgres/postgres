@@ -4,6 +4,7 @@
  *
  */
 #include "psqlodbc.h"
+#include "qresult.h"
 
 /* PostgreSQL client encoding */
 #define SQL_ASCII			0	/* SQL/ASCII */
@@ -56,32 +57,33 @@
 
 /* New Type */
 
-extern int PG_CCST;				/* Client Character StaTus */
-
-extern int PG_SCSC;				/* Server Character Set (Code) */
-extern int PG_CCSC;				/* Client Character Set (Code) */
-extern unsigned char *PG_SCSS;	/* Server Character Set (String) */
-extern unsigned char *PG_CCSS;	/* Client Character Set (String) */
-
 extern void CC_lookup_characterset(ConnectionClass *self);
 
 extern int pg_CS_stat(int stat,unsigned int charcter,int characterset_code);
 extern int pg_CS_code(const unsigned char *stat_string);
-extern unsigned char *pg_CS_name(const int code);
+extern unsigned char *pg_CS_name(int code);
 
 typedef struct pg_CS
 {
 	unsigned char *name;
 	int code;
 }pg_CS;
-extern pg_CS CS_Table[];
-
-extern int pg_mbslen(const unsigned char *string);
-extern unsigned char *pg_mbschr(const unsigned char *string, unsigned int character);
-extern unsigned char *pg_mbsinc( const unsigned char *current );
+extern int pg_mbslen(int ccsc, const unsigned char *string);
+extern unsigned char *pg_mbschr(int ccsc, const unsigned char *string, unsigned int character);
+extern unsigned char *pg_mbsinc(int ccsc, const unsigned char *current );
 
 /* Old Type Compatible */
-#define multibyte_init() (PG_CCST = 0)
-#define multibyte_char_check(X) pg_CS_stat(PG_CCST, (unsigned int) X, PG_CCSC)
-#define multibyte_strchr(X,Y) pg_mbschr(X,Y)
-#define check_client_encoding(X) pg_CS_name(PG_CCSC = pg_CS_code(X))
+typedef struct
+{
+	int	ccsc;
+	const char *encstr;
+	int	pos;
+	int	ccst;
+} encoded_str;
+#define ENCODE_STATUS(enc)	((enc).ccst)
+
+void encoded_str_constr(encoded_str *encstr, int ccsc, const char *str);
+#define make_encoded_str(encstr, conn, str) encoded_str_constr(encstr, conn->ccsc, str)
+extern int encoded_nextchar(encoded_str *encstr);
+extern int encoded_byte_check(encoded_str *encstr, int abspos);
+#define check_client_encoding(X) pg_CS_name(pg_CS_code(X))

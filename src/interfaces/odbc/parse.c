@@ -42,18 +42,29 @@
 #define TAB_INCR	8
 #define COL_INCR	16
 
+#ifdef	MULTIBYTE
+char	   *getNextToken(int ccsc, char *s, char *token, int smax, char *delim, char *quote, char *dquote, char *numeric);
+#else
 char	   *getNextToken(char *s, char *token, int smax, char *delim, char *quote, char *dquote, char *numeric);
+#endif /* MULTIBYTE */
 void		getColInfo(COL_INFO *col_info, FIELD_INFO *fi, int k);
 char		searchColInfo(COL_INFO *col_info, FIELD_INFO *fi);
 
 
 char *
-getNextToken(char *s, char *token, int smax, char *delim, char *quote, char *dquote, char *numeric)
+getNextToken(
+#ifdef	MULTIBYTE
+	int ccsc, /* client encoding */
+#endif /* MULTIBYTE */
+	char *s, char *token, int smax, char *delim, char *quote, char *dquote, char *numeric)
 {
 	int			i = 0;
 	int			out = 0;
 	char		qc,
 				in_escape = FALSE;
+#ifdef MULTIBYTE
+	encoded_str	encstr;
+#endif
 
 	if (smax <= 1)
 		return NULL;
@@ -80,17 +91,22 @@ getNextToken(char *s, char *token, int smax, char *delim, char *quote, char *dqu
 	if (numeric)
 		*numeric = FALSE;
 
+#ifdef MULTIBYTE
+	encoded_str_constr(&encstr, ccsc, &s[i]);
+#endif
 	/* get the next token */
-	while (!isspace((unsigned char) s[i]) && s[i] != ',' &&
-		   s[i] != '\0' && out != smax)
+	while (s[i] != '\0' && out < smax)
 	{
 #ifdef MULTIBYTE
-		if (multibyte_char_check(s[i]) != 0)
+		encoded_nextchar(&encstr);
+		if (ENCODE_STATUS(encstr) != 0)
 		{
 			token[out++] = s[i++];
 			continue;
 		}
 #endif
+		if (isspace((unsigned char) s[i]) || s[i] == ',')
+			break;
 		/* Handle quoted stuff */
 		if (out == 0 && (s[i] == '\"' || s[i] == '\''))
 		{
@@ -110,7 +126,8 @@ getNextToken(char *s, char *token, int smax, char *delim, char *quote, char *dqu
 			while (s[i] != '\0' && out != smax)
 			{
 #ifdef MULTIBYTE
-				if (multibyte_char_check(s[i]) != 0)
+				encoded_nextchar(&encstr);
+				if (ENCODE_STATUS(encstr) != 0)
 				{
 					token[out++] = s[i++];
 					continue;
@@ -197,22 +214,22 @@ getNextToken(char *s, char *token, int smax, char *delim, char *quote, char *dqu
 
 
 #if 0
-QR_set_num_fields(stmt->result, 14);
-QR_set_field_info(stmt->result, 0, "TABLE_QUALIFIER", PG_TYPE_TEXT, MAX_INFO_STRING);
-QR_set_field_info(stmt->result, 1, "TABLE_OWNER", PG_TYPE_TEXT, MAX_INFO_STRING);
-QR_set_field_info(stmt->result, 2, "TABLE_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
-QR_set_field_info(stmt->result, 3, "COLUMN_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
-QR_set_field_info(stmt->result, 4, "DATA_TYPE", PG_TYPE_INT2, 2);
-QR_set_field_info(stmt->result, 5, "TYPE_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
-QR_set_field_info(stmt->result, 6, "PRECISION", PG_TYPE_INT4, 4);
-QR_set_field_info(stmt->result, 7, "LENGTH", PG_TYPE_INT4, 4);
-QR_set_field_info(stmt->result, 8, "SCALE", PG_TYPE_INT2, 2);
-QR_set_field_info(stmt->result, 9, "RADIX", PG_TYPE_INT2, 2);
-QR_set_field_info(stmt->result, 10, "NULLABLE", PG_TYPE_INT2, 2);
-QR_set_field_info(stmt->result, 11, "REMARKS", PG_TYPE_TEXT, 254);
+QR_set_num_fields(SC_get_Curres(stmt), 14);
+QR_set_field_info(SC_get_Curres(stmt), 0, "TABLE_QUALIFIER", PG_TYPE_TEXT, MAX_INFO_STRING);
+QR_set_field_info(SC_get_Curres(stmt), 1, "TABLE_OWNER", PG_TYPE_TEXT, MAX_INFO_STRING);
+QR_set_field_info(SC_get_Curres(stmt), 2, "TABLE_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
+QR_set_field_info(SC_get_Curres(stmt), 3, "COLUMN_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
+QR_set_field_info(SC_get_Curres(stmt), 4, "DATA_TYPE", PG_TYPE_INT2, 2);
+QR_set_field_info(SC_get_Curres(stmt), 5, "TYPE_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
+QR_set_field_info(SC_get_Curres(stmt), 6, "PRECISION", PG_TYPE_INT4, 4);
+QR_set_field_info(SC_get_Curres(stmt), 7, "LENGTH", PG_TYPE_INT4, 4);
+QR_set_field_info(SC_get_Curres(stmt), 8, "SCALE", PG_TYPE_INT2, 2);
+QR_set_field_info(SC_get_Curres(stmt), 9, "RADIX", PG_TYPE_INT2, 2);
+QR_set_field_info(SC_get_Curres(stmt), 10, "NULLABLE", PG_TYPE_INT2, 2);
+QR_set_field_info(SC_get_Curres(stmt), 11, "REMARKS", PG_TYPE_TEXT, 254);
 /*	User defined fields */
-QR_set_field_info(stmt->result, 12, "DISPLAY_SIZE", PG_TYPE_INT4, 4);
-QR_set_field_info(stmt->result, 13, "FIELD_TYPE", PG_TYPE_INT4, 4);
+QR_set_field_info(SC_get_Curres(stmt), 12, "DISPLAY_SIZE", PG_TYPE_INT4, 4);
+QR_set_field_info(SC_get_Curres(stmt), 13, "FIELD_TYPE", PG_TYPE_INT4, 4);
 #endif
 
 void
@@ -312,9 +329,10 @@ parse_statement(StatementClass *stmt)
 	stmt->ntab = 0;
 
 #ifdef MULTIBYTE
-	multibyte_init();
-#endif
+	while (pptr = ptr, (ptr = getNextToken(conn->ccsc, pptr, token, sizeof(token), &delim, &quote, &dquote, &numeric)) != NULL)
+#else
 	while (pptr = ptr, (ptr = getNextToken(pptr, token, sizeof(token), &delim, &quote, &dquote, &numeric)) != NULL)
+#endif
 	{
 		unquoted = !(quote || dquote);
 
@@ -607,12 +625,17 @@ parse_statement(StatementClass *stmt)
 				if (!dquote)
 				{
 					char	   *ptr;
+#ifdef	MULTIBYTE
+					encoded_str	encstr;
+					make_encoded_str(&encstr, conn, ti[stmt->ntab]->name);
+#endif   /* MULTIBYTE */
 
 					/* lower case table name */
 					for (ptr = ti[stmt->ntab]->name; *ptr; ptr++)
 					{
 #ifdef	MULTIBYTE
-						if ((unsigned char) *ptr >= 0x80)
+						encoded_nextchar(&encstr);
+						if (ENCODE_STATUS(encstr) != 0)
 							ptr++;
 						else
 #endif   /* MULTIBYTE */
@@ -773,13 +796,13 @@ parse_statement(StatementClass *stmt)
 				 * structure
 				 */
 				strcpy(conn->col_info[conn->ntables]->name, ti[i]->name);
-				conn->col_info[conn->ntables]->result = col_stmt->result;
+				conn->col_info[conn->ntables]->result = SC_get_Curres(col_stmt);
 
 				/*
 				 * The connection will now free the result structures, so
 				 * make sure that the statement doesn't free it
 				 */
-				col_stmt->result = NULL;
+				SC_set_Result(col_stmt, NULL);
 
 				conn->ntables++;
 

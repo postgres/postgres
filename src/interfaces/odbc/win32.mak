@@ -31,7 +31,7 @@ CFG=Release
 !MESSAGE "Release" (Win32 Release DLL)
 !MESSAGE "Debug" (Win32 Debug DLL)
 !MESSAGE "MultibyteRelease" (Win32 Release DLL with Multibyte support)
-!MESSAGE "MultibyteDebug" (Win32 Release DLL with Multibyte support)
+!MESSAGE "MultibyteDebug" (Win32 Debug DLL with Multibyte support)
 !MESSAGE 
 !ERROR An invalid configuration was specified.
 !ENDIF 
@@ -46,13 +46,15 @@ NULL=nul
 
 !IF "$(CFG)" == "MultibyteRelease"
 OUTDIR=.\MultibyteRelease
+OUTDIRBIN=.\MultibyteRelease
 INTDIR=.\MultibyteRelease
 !ELSE
 OUTDIR=.\Release
+OUTDIRBIN=.\Release
 INTDIR=.\Release
 !ENDIF
 
-ALL : "$(OUTDIR)\psqlodbc.dll"
+ALL : "$(OUTDIRBIN)\psqlodbc.dll"
 
 
 CLEAN :
@@ -64,7 +66,6 @@ CLEAN :
 	-@erase "$(INTDIR)\drvconn.obj"
 	-@erase "$(INTDIR)\environ.obj"
 	-@erase "$(INTDIR)\execute.obj"
-	-@erase "$(INTDIR)\gpps.obj"
 	-@erase "$(INTDIR)\info.obj"
 	-@erase "$(INTDIR)\lobj.obj"
 	-@erase "$(INTDIR)\win_md5.obj"
@@ -139,7 +140,7 @@ BSC32_FLAGS=/nologo /o"$(OUTDIR)\psqlodbc.bsc"
 BSC32_SBRS= \
 	
 LINK32=link.exe
-LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib wsock32.lib /nologo /dll /incremental:no /pdb:"$(OUTDIR)\psqlodbc.pdb" /machine:I386 /def:"psqlodbc_win32.def" /out:"$(OUTDIR)\psqlodbc.dll" /implib:"$(OUTDIR)\psqlodbc.lib" 
+LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib wsock32.lib /nologo /dll /incremental:no /pdb:"$(OUTDIR)\psqlodbc.pdb" /machine:I386 /def:"psqlodbc_win32.def" /out:"$(OUTDIRBIN)\psqlodbc.dll" /implib:"$(OUTDIR)\psqlodbc.lib" 
 DEF_FILE= "psqlodbc_win32.def"
 LINK32_OBJS= \
 	"$(INTDIR)\bind.obj" \
@@ -150,7 +151,6 @@ LINK32_OBJS= \
 	"$(INTDIR)\drvconn.obj" \
 	"$(INTDIR)\environ.obj" \
 	"$(INTDIR)\execute.obj" \
-	"$(INTDIR)\gpps.obj" \
 	"$(INTDIR)\info.obj" \
 	"$(INTDIR)\lobj.obj" \
 	"$(INTDIR)\win_md5.obj" \
@@ -172,7 +172,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\odbcapi.obj" \
 	"$(INTDIR)\psqlodbc.res"
 
-"$(OUTDIR)\psqlodbc.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
+"$(OUTDIRBIN)\psqlodbc.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
     $(LINK32) @<<
   $(LINK32_FLAGS) $(LINK32_OBJS)
 <<
@@ -199,7 +199,6 @@ CLEAN :
 	-@erase "$(INTDIR)\drvconn.obj"
 	-@erase "$(INTDIR)\environ.obj"
 	-@erase "$(INTDIR)\execute.obj"
-	-@erase "$(INTDIR)\gpps.obj"
 	-@erase "$(INTDIR)\info.obj"
 	-@erase "$(INTDIR)\lobj.obj"
 	-@erase "$(INTDIR)\win_md5.obj"
@@ -288,7 +287,6 @@ LINK32_OBJS= \
 	"$(INTDIR)\drvconn.obj" \
 	"$(INTDIR)\environ.obj" \
 	"$(INTDIR)\execute.obj" \
-	"$(INTDIR)\gpps.obj" \
 	"$(INTDIR)\info.obj" \
 	"$(INTDIR)\lobj.obj" \
 	"$(INTDIR)\win_md5.obj"
@@ -364,12 +362,6 @@ SOURCE=environ.c
 SOURCE=execute.c
 
 "$(INTDIR)\execute.obj" : $(SOURCE) "$(INTDIR)"
-	$(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-SOURCE=gpps.c
-
-"$(INTDIR)\gpps.obj" : $(SOURCE) "$(INTDIR)"
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 

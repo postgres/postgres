@@ -52,6 +52,8 @@
 #define DRV_OR_DSN						1059
 #define DRV_DEBUG			1060
 #define DS_DISALLOWPREMATURE		1061
+#define DS_LFCONVERSION			1062
+#define DS_TRUEISMINUS1			1063
 
 /*	Next default values for new objects */
 /* */

@@ -159,10 +159,10 @@ PGAPI_FreeStmt(HSTMT hstmt,
 			}
 
 			/* Free any cursors and discard any result info */
-			if (stmt->result)
+			if (SC_get_Result(stmt))
 			{
-				QR_Destructor(stmt->result);
-				stmt->result = NULL;
+				QR_Destructor(SC_get_Result(stmt));
+				SC_set_Result(stmt,  NULL);
 			}
 		}
 
@@ -230,6 +230,7 @@ SC_Constructor(void)
 		rv->hdbc = NULL;		/* no connection associated yet */
 		rv->phstmt = NULL;
 		rv->result = NULL;
+		rv->curres = NULL;
 		rv->manual_result = FALSE;
 		rv->prepare = FALSE;
 		rv->status = STMT_ALLOCATED;
@@ -238,7 +239,6 @@ SC_Constructor(void)
 		rv->errormsg = NULL;
 		rv->errornumber = 0;
 		rv->errormsg_created = FALSE;
-		rv->errormsg_malloced = FALSE;
 
 		rv->statement = NULL;
 		rv->stmt_with_params = NULL;
@@ -292,7 +292,9 @@ SC_Constructor(void)
 char
 SC_Destructor(StatementClass *self)
 {
-	mylog("SC_Destructor: self=%u, self->result=%u, self->hdbc=%u\n", self, self->result, self->hdbc);
+	QResultClass	*res = SC_get_Result(self);
+
+	mylog("SC_Destructor: self=%u, self->result=%u, self->hdbc=%u\n", self, res, self->hdbc);
 	SC_clear_error(self);
 	if (STMT_EXECUTING == self->status)
 	{
@@ -301,12 +303,12 @@ SC_Destructor(StatementClass *self)
 		return FALSE;
 	}
 
-	if (self->result)
+	if (res)
 	{
 		if (!self->hdbc)
-			self->result->conn = NULL;	/* prevent any dbase activity */
+			res->conn = NULL;	/* prevent any dbase activity */
 
-		QR_Destructor(self->result);
+		QR_Destructor(res);
 	}
 
 	if (self->statement)
@@ -442,6 +444,7 @@ char
 SC_recycle_statement(StatementClass *self)
 {
 	ConnectionClass *conn;
+	QResultClass	*res;
 
 	mylog("recycle statement: self= %u\n", self);
 
@@ -514,10 +517,10 @@ SC_recycle_statement(StatementClass *self)
 	self->parse_status = STMT_PARSE_NONE;
 
 	/* Free any cursors */
-	if (self->result)
+	if (res = SC_get_Result(self), res)
 	{
-		QR_Destructor(self->result);
-		self->result = NULL;
+		QR_Destructor(res);
+		SC_set_Result(self, NULL);
 	}
 	self->inaccurate_result = FALSE;
 
@@ -533,12 +536,9 @@ SC_recycle_statement(StatementClass *self)
 	self->bind_row = 0;
 	self->last_fetch_count = 0;
 
-	if (self->errormsg_malloced && self->errormsg)
-		free(self->errormsg);
 	self->errormsg = NULL;
 	self->errornumber = 0;
 	self->errormsg_created = FALSE;
-	self->errormsg_malloced = FALSE;
 
 	self->lobj_fd = -1;
 
@@ -583,8 +583,8 @@ SC_pre_execute(StatementClass *self)
 		}
 		if (!SC_is_pre_executable(self))
 		{
-			self->result = QR_Constructor();
-			QR_set_status(self->result, PGRES_TUPLES_OK);
+			SC_set_Result(self, QR_Constructor());
+			QR_set_status(SC_get_Result(self), PGRES_TUPLES_OK);
 			self->inaccurate_result = TRUE;
 			self->status = STMT_PREMATURE;
 		}
@@ -617,12 +617,11 @@ SC_unbind_cols(StatementClass *self)
 void
 SC_clear_error(StatementClass *self)
 {
-	if (self->errormsg_malloced && self->errormsg)
-		free(self->errormsg);
 	self->errornumber = 0;
 	self->errormsg = NULL;
 	self->errormsg_created = FALSE;
-	self->errormsg_malloced = FALSE;
+	self->errorpos = 0;
+	self->error_recsize = -1;
 }
 
 
@@ -633,7 +632,7 @@ SC_clear_error(StatementClass *self)
 char *
 SC_create_errormsg(StatementClass *self)
 {
-	QResultClass *res = self->result;
+	QResultClass *res = SC_get_Curres(self);
 	ConnectionClass *conn = self->hdbc;
 	int			pos;
 	static char msg[4096];
@@ -642,10 +641,21 @@ SC_create_errormsg(StatementClass *self)
 
 	if (res && res->message)
 		strcpy(msg, res->message);
-
 	else if (self->errormsg)
 		strcpy(msg, self->errormsg);
 
+	if (!msg[0] && res && QR_get_notice(res))
+	{
+		char *notice = QR_get_notice(res);
+		int len = strlen(notice);
+		if (len < sizeof(msg))
+		{
+			memcpy(msg, notice, len);
+			msg[len] = '\0';
+		}
+		else
+			return notice;
+	}
 	if (conn)
 	{
 		SocketClass *sock = conn->sock;
@@ -653,7 +663,7 @@ SC_create_errormsg(StatementClass *self)
 		if (conn->errormsg && conn->errormsg[0] != '\0')
 		{
 			pos = strlen(msg);
-			sprintf(&msg[pos], ";\n%s", conn->errormsg);
+			/*sprintf(&msg[pos], ";\n%s", conn->errormsg);*/
 		}
 
 		if (sock && sock->errormsg && sock->errormsg[0] != '\0')
@@ -662,9 +672,6 @@ SC_create_errormsg(StatementClass *self)
 			sprintf(&msg[pos], ";\n%s", sock->errormsg);
 		}
 	}
-	if (!msg[0] && res && QR_get_notice(res))
-		return QR_get_notice(res);
-
 	return msg;
 }
 
@@ -679,18 +686,17 @@ SC_get_error(StatementClass *self, int *number, char **message)
 	{
 		self->errormsg = SC_create_errormsg(self);
 		self->errormsg_created = TRUE;
+		self->errorpos = 0;
+		self->error_recsize = -1;
 	}
 
 	if (self->errornumber)
 	{
 		*number = self->errornumber;
 		*message = self->errormsg;
-		if (!self->errormsg_malloced)
-			self->errormsg = NULL;
 	}
 
 	rv = (self->errornumber != 0);
-	self->errornumber = 0;
 
 	return rv;
 }
@@ -712,7 +718,7 @@ RETCODE
 SC_fetch(StatementClass *self)
 {
 	static char *func = "SC_fetch";
-	QResultClass *res = self->result;
+	QResultClass *res = SC_get_Curres(self);
 	int			retval,
 				result;
 
@@ -901,6 +907,7 @@ SC_execute(StatementClass *self)
 	static char *func = "SC_execute";
 	ConnectionClass *conn;
 	char		was_ok, was_nonfatal;
+	QResultClass	*res = NULL;
 	Int2		oldstatus,
 				numcols;
 	QueryInfo	qi;
@@ -952,12 +959,12 @@ SC_execute(StatementClass *self)
 		mylog("       Sending SELECT statement on stmt=%u, cursor_name='%s'\n", self, self->cursor_name);
 
 		/* send the declare/select */
-		self->result = CC_send_query(conn, self->stmt_with_params, NULL);
+		res = CC_send_query(conn, self->stmt_with_params, NULL, TRUE);
 
-		if (SC_is_fetchcursor(self) && self->result != NULL &&
-			QR_command_successful(self->result))
+		if (SC_is_fetchcursor(self) && res != NULL &&
+			QR_command_successful(res))
 		{
-			QR_Destructor(self->result);
+			QR_Destructor(res);
 
 			/*
 			 * That worked, so now send the fetch to start getting data
@@ -976,7 +983,7 @@ SC_execute(StatementClass *self)
 			 */
 			sprintf(fetch, "fetch %d in %s", qi.row_size, self->cursor_name);
 
-			self->result = CC_send_query(conn, fetch, &qi);
+			res = CC_send_query(conn, fetch, &qi, FALSE);
 		}
 		mylog("     done sending the query:\n");
 	}
@@ -984,7 +991,7 @@ SC_execute(StatementClass *self)
 	{
 		/* not a SELECT statement so don't use a cursor */
 		mylog("      it's NOT a select statement: stmt=%u\n", self);
-		self->result = CC_send_query(conn, self->stmt_with_params, NULL);
+		res = CC_send_query(conn, self->stmt_with_params, NULL, FALSE);
 
 		/*
 		 * We shouldn't send COMMIT. Postgres backend does the autocommit
@@ -1003,10 +1010,10 @@ SC_execute(StatementClass *self)
 	self->status = STMT_FINISHED;
 
 	/* Check the status of the result */
-	if (self->result)
+	if (res)
 	{
-		was_ok = QR_command_successful(self->result);
-		was_nonfatal = QR_command_nonfatal(self->result);
+		was_ok = QR_command_successful(res);
+		was_nonfatal = QR_command_nonfatal(res);
 
 		if (was_ok)
 			self->errornumber = STMT_OK;
@@ -1018,24 +1025,30 @@ SC_execute(StatementClass *self)
 		self->current_col = -1;
 		self->rowset_start = -1;
 
-		/* see if the query did return any result columns */
-		numcols = QR_NumResultCols(self->result);
-
-		/* now allocate the array to hold the binding info */
-		if (numcols > 0)
+		/* issue "ABORT" when query aborted */
+		if (QR_get_aborted(res))
 		{
-			extend_bindings(self, numcols);
-			if (self->bindings == NULL)
+			if (!self->internal)
+				CC_abort(conn);
+		}
+		else
+		{
+			/* see if the query did return any result columns */
+			numcols = QR_NumResultCols(res);
+			/* now allocate the array to hold the binding info */
+			if (numcols > 0)
 			{
-				self->errornumber = STMT_NO_MEMORY_ERROR;
-				self->errormsg = "Could not get enough free memory to store the binding information";
-				SC_log_error(func, "", self);
-				return SQL_ERROR;
+				extend_bindings(self, numcols);
+				if (self->bindings == NULL)
+				{
+					QR_Destructor(res);
+					self->errornumber = STMT_NO_MEMORY_ERROR;
+					self->errormsg = "Could not get enough free memory to store the binding information";
+					SC_log_error(func, "", self);
+					return SQL_ERROR;
+				}
 			}
 		}
-		/* issue "ABORT" when query aborted */
-		if (QR_get_aborted(self->result) && !self->internal)
-			CC_abort(conn);
 	}
 	else
 	{
@@ -1060,6 +1073,15 @@ SC_execute(StatementClass *self)
 
 		if (!self->internal)
 			CC_abort(conn);
+	}
+	if (!SC_get_Result(self))
+		SC_set_Result(self, res);
+	else
+	{
+		QResultClass	*last;
+		for (last = SC_get_Result(self); last->next; last = last->next)
+			;
+		last->next = res;
 	}
 
 	if (self->statement_type == STMT_TYPE_PROCCALL &&
@@ -1095,7 +1117,8 @@ SC_execute(StatementClass *self)
 		return SQL_SUCCESS_WITH_INFO;
 	else
 	{
-		self->errormsg = "Error while executing the query";
+		if (!self->errormsg || !self->errormsg[0])
+			self->errormsg = "Error while executing the query";
 		SC_log_error(func, "", self);
 		return SQL_ERROR;
 	}
@@ -1103,17 +1126,19 @@ SC_execute(StatementClass *self)
 
 
 void
-SC_log_error(char *func, char *desc, StatementClass *self)
+SC_log_error(const char *func, const char *desc, const StatementClass *self)
 {
 #ifdef PRN_NULLCHECK
 #define nullcheck(a) (a ? a : "(NULL)")
 #endif
 	if (self)
 	{
+		QResultClass *res = SC_get_Result(self);
+
 		qlog("STATEMENT ERROR: func=%s, desc='%s', errnum=%d, errmsg='%s'\n", func, desc, self->errornumber, nullcheck(self->errormsg));
 		mylog("STATEMENT ERROR: func=%s, desc='%s', errnum=%d, errmsg='%s'\n", func, desc, self->errornumber, nullcheck(self->errormsg));
 		qlog("                 ------------------------------------------------------------\n");
-		qlog("                 hdbc=%u, stmt=%u, result=%u\n", self->hdbc, self, self->result);
+		qlog("                 hdbc=%u, stmt=%u, result=%u\n", self->hdbc, self, res);
 		qlog("                 manual_result=%d, prepare=%d, internal=%d\n", self->manual_result, self->prepare, self->internal);
 		qlog("                 bindings=%u, bindings_allocated=%d\n", self->bindings, self->bindings_allocated);
 		qlog("                 parameters=%u, parameters_allocated=%d\n", self->parameters, self->parameters_allocated);
@@ -1126,10 +1151,8 @@ SC_log_error(char *func, char *desc, StatementClass *self)
 
 		qlog("                 ----------------QResult Info -------------------------------\n");
 
-		if (self->result)
+		if (res)
 		{
-			QResultClass *res = self->result;
-
 			qlog("                 fields=%u, manual_tuples=%u, backend_tuples=%u, tupleField=%d, conn=%u\n", res->fields, res->manual_tuples, res->backend_tuples, res->tupleField, res->conn);
 			qlog("                 fetch_count=%d, fcount=%d, num_fields=%d, cursor='%s'\n", res->fetch_count, res->fcount, res->num_fields, nullcheck(res->cursor));
 			qlog("                 message='%s', command='%s', notice='%s'\n", nullcheck(res->message), nullcheck(res->command), nullcheck(res->notice));
@@ -1140,6 +1163,9 @@ SC_log_error(char *func, char *desc, StatementClass *self)
 		CC_log_error(func, desc, self->hdbc);
 	}
 	else
+	{
 		qlog("INVALID STATEMENT HANDLE ERROR: func=%s, desc='%s'\n", func, desc);
+		mylog("INVALID STATEMENT HANDLE ERROR: func=%s, desc='%s'\n", func, desc);
+	}
 #undef PRN_NULLCHECK
 }

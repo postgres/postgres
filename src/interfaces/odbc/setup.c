@@ -90,7 +90,6 @@ ConfigDSN(HWND hwnd,
 	if (!hglbAttr)
 		return FALSE;
 	lpsetupdlg = (LPSETUPDLG) GlobalLock(hglbAttr);
-
 	/* Parse attribute string */
 	if (lpszAttributes)
 		ParseAttributes(lpszAttributes, lpsetupdlg);
@@ -339,7 +338,7 @@ ParseAttributes(LPCSTR lpszAttributes, LPSETUPDLG lpsetupdlg)
 	int			cbKey;
 	char		value[MAXPGPATH];
 
-	memset(&lpsetupdlg->ci, 0, sizeof(ConnInfo));
+	CC_conninfo_init(&(lpsetupdlg->ci));
 
 	for (lpsz = lpszAttributes; *lpsz; lpsz++)
 	{

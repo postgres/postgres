@@ -75,7 +75,8 @@ PGAPI_AllocConnect(
 		return SQL_ERROR;
 	}
 
-	*phdbc = (HDBC) conn;
+	if (phdbc)
+		*phdbc = (HDBC) conn;
 
 	return SQL_SUCCESS;
 }
@@ -228,6 +229,16 @@ PGAPI_FreeConnect(
 }
 
 
+void
+CC_conninfo_init(ConnInfo *conninfo)
+{
+		memset(conninfo, 0, sizeof(ConnInfo));
+		conninfo->disallow_premature = -1;
+		conninfo->updatable_cursors = -1;
+		conninfo->lf_conversion = -1;
+		conninfo->true_is_minus1 = -1;
+		memcpy(&(conninfo->drivers), &globals, sizeof(globals));
+}
 /*
  *		IMPLEMENTATION CONNECTION CLASS
  */
@@ -249,11 +260,7 @@ CC_Constructor()
 		rv->status = CONN_NOT_CONNECTED;
 		rv->transact_status = CONN_IN_AUTOCOMMIT;		/* autocommit by default */
 
-		memset(&rv->connInfo, 0, sizeof(ConnInfo));
-#ifdef	DRIVER_CURSOR_IMPLEMENT
-		rv->connInfo.updatable_cursors = 1;
-#endif   /* DRIVER_CURSOR_IMPLEMENT */
-		memcpy(&(rv->connInfo.drivers), &globals, sizeof(globals));
+		CC_conninfo_init(&(rv->connInfo));
 		rv->sock = SOCK_Constructor(rv);
 		if (!rv->sock)
 			return NULL;
@@ -280,6 +287,7 @@ CC_Constructor()
 		rv->pg_version_major = 0;
 		rv->pg_version_minor = 0;
 		rv->ms_jet = 0;
+		rv->unicode = 0;
 #ifdef	MULTIBYTE
 		rv->client_encoding = NULL;
 		rv->server_encoding = NULL;
@@ -338,7 +346,7 @@ CC_cursor_count(ConnectionClass *self)
 	for (i = 0; i < self->num_stmts; i++)
 	{
 		stmt = self->stmts[i];
-		if (stmt && stmt->result && stmt->result->cursor)
+		if (stmt && SC_get_Result(stmt) && SC_get_Result(stmt)->cursor)
 			count++;
 	}
 
@@ -366,18 +374,18 @@ CC_begin(ConnectionClass *self)
 	char	ret = TRUE;
 	if (!CC_is_in_trans(self))
 	{
-		QResultClass *res = CC_send_query(self, "BEGIN", NULL);
+		QResultClass *res = CC_send_query(self, "BEGIN", NULL, TRUE);
 		mylog("CC_begin:  sending BEGIN!\n");
 
 		if (res != NULL)
 		{
-			ret = (!QR_aborted(res) && QR_command_successful(res));
+			ret = QR_command_successful(res);
 			QR_Destructor(res);
 			if (ret)
 				CC_set_in_trans(self);
 		}
 		else
-			ret = FALSE;
+			return FALSE;
 	}
 
 	return ret;
@@ -393,7 +401,7 @@ CC_commit(ConnectionClass *self)
 	char	ret = FALSE;
 	if (CC_is_in_trans(self))
 	{
-		QResultClass *res = CC_send_query(self, "COMMIT", NULL);
+		QResultClass *res = CC_send_query(self, "COMMIT", NULL, TRUE);
 		mylog("CC_commit:  sending COMMIT!\n");
 
 		CC_set_no_trans(self);
@@ -404,7 +412,7 @@ CC_commit(ConnectionClass *self)
 			QR_Destructor(res);
 		}
 		else
-			ret = FALSE;
+			return FALSE;
 	}
 
 	return ret;
@@ -419,7 +427,7 @@ CC_abort(ConnectionClass *self)
 {
 	if (CC_is_in_trans(self))
 	{
-		QResultClass *res = CC_send_query(self, "ROLLBACK", NULL);
+		QResultClass *res = CC_send_query(self, "ROLLBACK", NULL, TRUE);
 		mylog("CC_abort:  sending ABORT!\n");
 
 		CC_set_no_trans(self);
@@ -488,11 +496,7 @@ CC_cleanup(ConnectionClass *self)
 
 	self->status = CONN_NOT_CONNECTED;
 	self->transact_status = CONN_IN_AUTOCOMMIT;
-	memset(&self->connInfo, 0, sizeof(ConnInfo));
-#ifdef	DRIVER_CURSOR_IMPLEMENT
-	self->connInfo.updatable_cursors = 1;
-#endif   /* DRIVER_CURSOR_IMPLEMENT */
-	memcpy(&(self->connInfo.drivers), &globals, sizeof(globals));
+	CC_conninfo_init(&(self->connInfo));
 #ifdef	MULTIBYTE
 	if (self->client_encoding)
 		free(self->client_encoding);
@@ -578,12 +582,12 @@ md5_auth_send(ConnectionClass *self, const char *salt)
 	{
 		free(pwd1);
 		return 1;
-	}
+	} 
 	if (!(pwd2 = malloc(MD5_PASSWD_LEN + 1)))
 	{
 		free(pwd1);
 		return 1;
-	}
+	} 
 	if (!EncryptMD5(pwd1 + strlen("md5"), salt, 4, pwd2))
 	{
 		free(pwd2);
@@ -595,7 +599,7 @@ md5_auth_send(ConnectionClass *self, const char *salt)
 	SOCK_put_n_char(sock, pwd2, strlen(pwd2) + 1);
 	SOCK_flush_output(sock);
 	free(pwd2);
-	return 0;
+	return 0; 
 }
 
 char
@@ -608,7 +612,7 @@ CC_connect(ConnectionClass *self, char do_password)
 	ConnInfo   *ci = &(self->connInfo);
 	int			areq = -1;
 	int			beresp;
-	char		msgbuffer[ERROR_MSG_LENGTH];
+	static char		msgbuffer[ERROR_MSG_LENGTH];
 	char		salt[5];
 	static char *func = "CC_connect";
 
@@ -651,15 +655,16 @@ CC_connect(ConnectionClass *self, char do_password)
 			if (encoding && strcmp(encoding, "OTHER"))
 				self->client_encoding = strdup(encoding);
 		}
+		if (self->client_encoding)
+			self->ccsc = pg_CS_code(self->client_encoding);
 		qlog("                extra_systable_prefixes='%s', conn_settings='%s' conn_encoding='%s'\n",
 			 ci->drivers.extra_systable_prefixes,
 			 ci->drivers.conn_settings,
 			 encoding ? encoding : "");
 #else
-		qlog("                extra_systable_prefixes='%s', conn_settings='%s', protocol='%s'\n",
+		qlog("                extra_systable_prefixes='%s', conn_settings='%s'\n",
 			 ci->drivers.extra_systable_prefixes,
-			 ci->drivers.conn_settings,
-			 ci->protocol);
+			 ci->drivers.conn_settings);
 #endif
 
 		if (self->status != CONN_NOT_CONNECTED)
@@ -914,7 +919,7 @@ another_version_retry:
 	 */
 	mylog("sending an empty query...\n");
 
-	res = CC_send_query(self, " ", NULL);
+	res = CC_send_query(self, " ", NULL, TRUE);
 	if (res == NULL || QR_get_status(res) != PGRES_EMPTY_QUERY)
 	{
 		mylog("got no result from the empty query.  (probably database does not exist)\n");
@@ -942,13 +947,55 @@ another_version_retry:
 	 * function instead.
 	 */
 	CC_send_settings(self);
-	CC_lookup_lo(self);			/* a hack to get the oid of our large
-								 * object oid type */
+	CC_lookup_lo(self);			/* a hack to get the oid of
+						   our large object oid type */
+	CC_lookup_pg_version(self);		/* Get PostgreSQL version for
+						   SQLGetInfo use */
+
+	/*
+	 *	Multibyte handling is available ?
+	 */
 #ifdef MULTIBYTE
-	CC_lookup_characterset(self);
-#endif
-	CC_lookup_pg_version(self); /* Get PostgreSQL version for SQLGetInfo
-								 * use */
+	if (PG_VERSION_GE(self, 7.0))
+	{
+		CC_lookup_characterset(self);
+		if (self->errornumber != 0)
+			return 0;
+#ifdef UNICODE_SUPPORT
+		if (self->unicode)
+		{
+			if (!self->client_encoding ||
+			    stricmp(self->client_encoding, "UNICODE"))
+			{
+				QResultClass	*res;
+				if (PG_VERSION_LT(self, 7.1))
+				{
+					self->errornumber = CONN_NOT_IMPLEMENTED_ERROR;
+					self->errormsg = "UTF-8 conversion isn't implemented before 7.1";
+					return 0;
+				}
+				if (self->client_encoding)
+					free(self->client_encoding);
+				self->client_encoding = NULL;
+				if (res = CC_send_query(self, "set client_encoding to 'UTF8'", NULL, TRUE), res)
+				{
+					self->client_encoding = strdup("UNICODE");
+					QR_Destructor(res);
+					
+				}
+			}
+		}
+#endif /* UNICODE_SUPPORT */
+	}
+#ifdef UNICODE_SUPPORT
+	else if (self->unicode)
+	{
+		self->errornumber = CONN_NOT_IMPLEMENTED_ERROR;
+		self->errormsg = "Unicode isn't supported before 7.0";
+		return 0;
+	}
+#endif /* UNICODE_SUPPORT */
+#endif /* MULTIBYTE */
 
 	CC_clear_error(self);		/* clear any initial command errors */
 	self->status = CONN_CONNECTED;
@@ -1081,11 +1128,12 @@ CC_get_error(ConnectionClass *self, int *number, char **message)
  *	'declare cursor C3326857 for ...' and 'fetch 100 in C3326857' statements.
  */
 QResultClass *
-CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi)
+CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi, BOOL clear_result_on_abort)
 {
 	QResultClass *result_in = NULL,
-			   *res = NULL,
-			   *retres = NULL;
+			   *cmdres = NULL,
+			   *retres = NULL,
+			   *res = NULL;
 	char		swallow,
 			   *wq;
 	int			id;
@@ -1094,9 +1142,9 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi)
 				empty_reqs;
 	BOOL		msg_truncated,
 				ReadyToReturn,
-				tuples_return = FALSE,
 				query_completed = FALSE,
 				before_64 = PG_VERSION_LT(self, 6.4),
+				aborted = FALSE,
 				used_passed_result_object = FALSE;
 
 	/* ERROR_MSG_LENGTH is suffcient */
@@ -1156,6 +1204,20 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi)
 		;
 	if (*wq == '\0')
 		empty_reqs = 1;
+	cmdres = qi ? qi->result_in : NULL;
+	if (cmdres)
+		used_passed_result_object = TRUE;
+	else
+	{
+		cmdres = QR_Constructor();
+		if (!cmdres)
+		{
+			self->errornumber = CONNECTION_COULD_NOT_RECEIVE;
+			self->errormsg = "Could not create result info in send_query.";
+			return NULL;
+		}
+	}
+	res = cmdres;
 	while (!ReadyToReturn)
 	{
 		/* what type of message is coming now ? */
@@ -1199,12 +1261,14 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi)
 				{
 					mylog("send_query: ok - 'C' - %s\n", cmdbuffer);
 
-					if (res == NULL)	/* allow for "show" style info */
-						res = QR_Constructor();
+					if (query_completed)	/* allow for "show" style notices */
+					{
+						res->next = QR_Constructor();
+						res = res->next;
+					} 
 
 					mylog("send_query: setting cmdbuffer = '%s'\n", cmdbuffer);
 
-					/* Only save the first command */
 					if (QR_command_successful(res))
 						QR_set_status(res, PGRES_COMMAND_OK);
 					QR_set_command(res, cmdbuffer);
@@ -1233,44 +1297,19 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi)
 				if (empty_reqs == 0)
 				{
 					ReadyToReturn = TRUE;
-					if (res && QR_get_aborted(res))
-						retres = res;
-					else if (tuples_return)
-						retres = result_in;
-					else if (query_completed)
-						retres = res;
+					if (aborted || query_completed)
+						retres = cmdres;
 					else
 						ReadyToReturn = FALSE;
 				}
 				break;
-			case 'N':			/* INFO, NOTICE, WARNING */
+			case 'N':			/* NOTICE: */
 				msg_truncated = SOCK_get_string(sock, cmdbuffer, ERROR_MSG_LENGTH);
-				if (!res)
-					res = QR_Constructor();
 				if (QR_command_successful(res))
 					QR_set_status(res, PGRES_NONFATAL_ERROR);
 				QR_set_notice(res, cmdbuffer);	/* will dup this string */
-#ifdef MULTIBYTE
-				if (strstr(cmdbuffer,"encoding is"))
-				{
-					if (strstr(cmdbuffer,"Current client encoding is"))
-						strcpy(PG_CCSS, cmdbuffer + 36);
-					if (strstr(cmdbuffer,"Current server encoding is"))
-						strcpy(PG_SCSS, cmdbuffer + 36);
-					mylog("~~~ WARNING: '%s'\n", cmdbuffer);
-					qlog("WARNING from backend during send_query: '%s'\n ClientEncoding = %s\n ServerEncoding = %s\n", cmdbuffer, PG_CCSS, PG_SCSS);
-
-				}
-				else
-				{
-
-					mylog("~~~ WARNING: '%s'\n", cmdbuffer);
-					qlog("WARNING from backend during send_query: '%s'\n", cmdbuffer);
-				}
-#else
-				mylog("~~~ WARNING: '%s'\n", cmdbuffer);
-				qlog("WARNING from backend during send_query: '%s'\n", cmdbuffer);
-#endif
+				mylog("~~~ NOTICE: '%s'\n", cmdbuffer);
+				qlog("NOTICE from backend during send_query: '%s'\n", cmdbuffer);
 				while (msg_truncated)
 					msg_truncated = SOCK_get_string(sock, cmdbuffer, ERROR_MSG_LENGTH);
 
@@ -1280,15 +1319,13 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi)
 			case 'I':			/* The server sends an empty query */
 				/* There is a closing '\0' following the 'I', so we eat it */
 				swallow = SOCK_get_char(sock);
-				if (!res)
-					res = QR_Constructor();
 				if ((swallow != '\0') || SOCK_get_errcode(sock) != 0)
 				{
 					self->errornumber = CONNECTION_BACKEND_CRAZY;
 					self->errormsg = "Unexpected protocol character from backend (send_query - I)";
 					QR_set_status(res, PGRES_FATAL_ERROR);
 					ReadyToReturn = TRUE;
-					retres = res;
+					retres = cmdres;
 					break;
 				}
 				else
@@ -1315,8 +1352,6 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi)
 				qlog("ERROR from backend during send_query: '%s'\n", self->errormsg);
 
 				/* We should report that an error occured. Zoltan */
-				if (!res)
-					res = QR_Constructor();
 
 				if (!strncmp(self->errormsg, "FATAL", 5))
 				{
@@ -1327,6 +1362,7 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi)
 					self->errornumber = CONNECTION_SERVER_REPORTED_WARNING;
 				QR_set_status(res, PGRES_FATAL_ERROR);
 				QR_set_aborted(res, TRUE);
+				aborted = TRUE;
 				while (msg_truncated)
 					msg_truncated = SOCK_get_string(sock, cmdbuffer, ERROR_MSG_LENGTH);
 
@@ -1337,13 +1373,11 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi)
 				SOCK_get_string(sock, msgbuffer, ERROR_MSG_LENGTH);
 				break;
 			case 'T':			/* Tuple results start here */
-				result_in = qi ? qi->result_in : NULL;
-
-				if (result_in == NULL)
+				if (query_completed)
 				{
-					result_in = QR_Constructor();
-					mylog("send_query: 'T' no result_in: res = %u\n", result_in);
-					if (!result_in)
+					res->next = QR_Constructor();
+					mylog("send_query: 'T' no result_in: res = %u\n", res->next);
+					if (!res->next)
 					{
 						self->errornumber = CONNECTION_COULD_NOT_RECEIVE;
 						self->errormsg = "Could not create result info in send_query.";
@@ -1351,55 +1385,60 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi)
 						retres = NULL;
 						break;
 					}
+					res = res->next;
 
 					if (qi)
-						QR_set_cache_size(result_in, qi->row_size);
-
-					if (!QR_fetch_tuples(result_in, self, qi ? qi->cursor : NULL))
+						QR_set_cache_size(res, qi->row_size);
+				}
+				if (!used_passed_result_object)
+				{
+					if (!QR_fetch_tuples(res, self, qi ? qi->cursor : NULL))
 					{
 						self->errornumber = CONNECTION_COULD_NOT_RECEIVE;
-						self->errormsg = QR_get_message(result_in);
+						self->errormsg = QR_get_message(res);
 						ReadyToReturn = TRUE;
 						retres = NULL;
 						break;
 					}
+					query_completed = TRUE;
 				}
 				else
 				{				/* next fetch, so reuse an existing result */
 
-					used_passed_result_object = TRUE;
 					/*
 					 * called from QR_next_tuple and must return
 					 * immediately.
 					 */
 					ReadyToReturn = TRUE;
-					if (!QR_fetch_tuples(result_in, NULL, NULL))
+					if (!QR_fetch_tuples(res, NULL, NULL))
 					{
 						self->errornumber = CONNECTION_COULD_NOT_RECEIVE;
-						self->errormsg = QR_get_message(result_in);
+						self->errormsg = QR_get_message(res);
 						retres = NULL;
 						break;
 					}
-					retres = result_in;
+					retres = cmdres;
 				}
-
-				tuples_return = TRUE;
 				break;
 			case 'D':			/* Copy in command began successfully */
-				if (!res)
-					res = QR_Constructor();
-				if (QR_command_successful(res))
-					QR_set_status(res, PGRES_COPY_IN);
+				if (query_completed)
+				{
+					res->next = QR_Constructor();
+					res = res->next;
+				}
+				QR_set_status(res, PGRES_COPY_IN);
 				ReadyToReturn = TRUE;
-				retres = res;
+				retres = cmdres;
 				break;
 			case 'B':			/* Copy out command began successfully */
-				if (!res)
-					res = QR_Constructor();
-				if (QR_command_successful(res))
-					QR_set_status(res, PGRES_COPY_OUT);
+				if (query_completed)
+				{
+					res->next = QR_Constructor();
+					res = res->next;
+				}
+				QR_set_status(res, PGRES_COPY_OUT);
 				ReadyToReturn = TRUE;
-				retres = res;
+				retres = cmdres;
 				break;
 			default:
 				self->errornumber = CONNECTION_BACKEND_CRAZY;
@@ -1417,7 +1456,7 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi)
 		 */
 		if (before_64)
 		{
-			if (empty_reqs == 0 && (query_completed || tuples_return))
+			if (empty_reqs == 0 && query_completed)
 				break;
 		}
 	}
@@ -1426,34 +1465,44 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi)
 	 * Break before being ready to return.
 	 */
 	if (!ReadyToReturn)
-	{
-		if (res && QR_get_aborted(res))
-			retres = res;
-		else if (tuples_return)
-			retres = result_in;
-		else
-			retres = res;
-	}
-
-	/*
-	 * set notice message to result_in.
-	 */
-	if (result_in && res && retres == result_in)
-	{
-		if (QR_command_successful(result_in))
-			QR_set_status(result_in, QR_get_status(res));
-		QR_set_notice(result_in, QR_get_notice(res));
-	}
+		retres = cmdres;
 
 	/*
 	 * Cleanup garbage results before returning.
 	 */
-	if (res && retres != res)
-		QR_Destructor(res);
-	if (result_in && retres != result_in)
+	if (cmdres && retres != cmdres && !used_passed_result_object)
+		QR_Destructor(cmdres);
+	/*
+	 * Cleanup the aborted result if specified
+	 */
+	if (retres)
 	{
-		if (!used_passed_result_object)
-			QR_Destructor(result_in);
+		if (aborted)
+		{
+			if (clear_result_on_abort)
+			{
+	   			if (!used_passed_result_object)
+				{
+					QR_Destructor(retres);
+					retres = NULL;
+				}
+			}
+			else
+			{
+				/*
+				 *	discard results other than errors.
+				 */
+				QResultClass	*qres;
+				for (qres = retres; qres->next; qres = retres)
+				{
+					if (QR_get_aborted(qres))
+						break;
+					retres = qres->next;
+					qres->next = NULL;
+					QR_Destructor(qres);
+				}
+			}
+		}
 	}
 	return retres;
 }
@@ -1591,7 +1640,7 @@ CC_send_function(ConnectionClass *self, int fnid, void *result_buf, int *actual_
 				SOCK_get_string(sock, msgbuffer, ERROR_MSG_LENGTH);
 
 				mylog("send_function(G): 'N' - %s\n", msgbuffer);
-				qlog("WARNING from backend during send_function: '%s'\n", msgbuffer);
+				qlog("NOTICE from backend during send_function: '%s'\n", msgbuffer);
 
 				continue;		/* dont return a result -- continue
 								 * reading */
@@ -1869,7 +1918,7 @@ CC_lookup_pg_version(ConnectionClass *self)
 
 
 void
-CC_log_error(char *func, char *desc, ConnectionClass *self)
+CC_log_error(const char *func, const char *desc, const ConnectionClass *self)
 {
 #ifdef PRN_NULLCHECK
 #define nullcheck(a) (a ? a : "(NULL)")
@@ -1894,7 +1943,10 @@ CC_log_error(char *func, char *desc, ConnectionClass *self)
 		}
 	}
 	else
+{
 		qlog("INVALID CONNECTION HANDLE ERROR: func=%s, desc='%s'\n", func, desc);
+		mylog("INVALID CONNECTION HANDLE ERROR: func=%s, desc='%s'\n", func, desc);
+}
 #undef PRN_NULLCHECK
 }
 

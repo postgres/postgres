@@ -151,6 +151,8 @@ typedef struct
 	char		focus_password;
 	char		disallow_premature;
 	char		updatable_cursors;
+	char		lf_conversion;
+	char		true_is_minus1;
 	GLOBAL_VALUES drivers;		/* moved from driver's option */
 } ConnInfo;
 
@@ -271,6 +273,7 @@ struct ConnectionClass_
 	char	   *client_encoding;
 	char	   *server_encoding;
 #endif   /* MULTIBYTE */
+	int	ccsc;
 };
 
 
@@ -290,6 +293,7 @@ struct ConnectionClass_
 
 /*	prototypes */
 ConnectionClass *CC_Constructor(void);
+void		CC_conninfo_init(ConnInfo *conninfo);
 char		CC_Destructor(ConnectionClass *self);
 int			CC_cursor_count(ConnectionClass *self);
 char		CC_cleanup(ConnectionClass *self);
@@ -301,7 +305,7 @@ char		CC_connect(ConnectionClass *self, char do_password);
 char		CC_add_statement(ConnectionClass *self, StatementClass *stmt);
 char		CC_remove_statement(ConnectionClass *self, StatementClass *stmt);
 char		CC_get_error(ConnectionClass *self, int *number, char **message);
-QResultClass *CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi);
+QResultClass *CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi, BOOL);
 void		CC_clear_error(ConnectionClass *self);
 char	   *CC_create_errormsg(ConnectionClass *self);
 int			CC_send_function(ConnectionClass *conn, int fnid, void *result_buf, int *actual_result_len, int result_is_int, LO_ARG *argv, int nargs);
@@ -309,7 +313,7 @@ char		CC_send_settings(ConnectionClass *self);
 void		CC_lookup_lo(ConnectionClass *conn);
 void		CC_lookup_pg_version(ConnectionClass *conn);
 void		CC_initialize_pg_version(ConnectionClass *conn);
-void		CC_log_error(char *func, char *desc, ConnectionClass *self);
+void		CC_log_error(const char *func, const char *desc, const ConnectionClass *self);
 int			CC_get_max_query_len(const ConnectionClass *self);
 
 #endif

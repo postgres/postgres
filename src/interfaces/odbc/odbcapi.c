@@ -174,7 +174,8 @@ SQLError(HENV EnvironmentHandle,
 {
 	mylog("[SQLError]");
 	return PGAPI_Error(EnvironmentHandle, ConnectionHandle, StatementHandle,
-		   Sqlstate, NativeError, MessageText, BufferLength, TextLength);
+		   Sqlstate, NativeError, MessageText, BufferLength,
+		TextLength);
 }
 
 RETCODE		SQL_API
@@ -281,23 +282,31 @@ SQLGetInfo(HDBC ConnectionHandle,
 		   SQLUSMALLINT InfoType, PTR InfoValue,
 		   SQLSMALLINT BufferLength, SQLSMALLINT *StringLength)
 {
-#if (ODBCVER >= 0x0300)
 	RETCODE		ret;
+	ConnectionClass	*conn = (ConnectionClass *) ConnectionHandle;
 
+	CC_clear_error(conn);
+#if (ODBCVER >= 0x0300)
 	mylog("[SQLGetInfo(30)]");
 	if ((ret = PGAPI_GetInfo(ConnectionHandle, InfoType, InfoValue,
 							 BufferLength, StringLength)) == SQL_ERROR)
 	{
 		if (((ConnectionClass *) ConnectionHandle)->driver_version >= 0x0300)
-			return PGAPI_GetInfo30(ConnectionHandle, InfoType, InfoValue,
+		{
+			CC_clear_error(conn);
+			ret = PGAPI_GetInfo30(ConnectionHandle, InfoType, InfoValue,
 								   BufferLength, StringLength);
+		}
 	}
-	return ret;
+	if (SQL_ERROR == ret)
+		CC_log_error("SQLGetInfo30", "", conn);
 #else
 	mylog("[SQLGetInfo]");
-	return PGAPI_GetInfo(ConnectionHandle, InfoType, InfoValue,
-						 BufferLength, StringLength);
+	if (ret = PGAPI_GetInfo(ConnectionHandle, InfoType, InfoValue,
+			BufferLength, StringLength), SQL_ERROR == ret)
+		CC_log_error("PGAPI_GetInfo", "", conn);
 #endif
+	return ret;
 }
 
 RETCODE		SQL_API
@@ -638,7 +647,7 @@ SQLTablePrivileges(
 {
 	mylog("[SQLTablePrivileges]");
 	return PGAPI_TablePrivileges(hstmt, szCatalogName, cbCatalogName,
-				   szSchemaName, cbSchemaName, szTableName, cbTableName);
+				   szSchemaName, cbSchemaName, szTableName, cbTableName, 0);
 }
 
 RETCODE		SQL_API

@@ -16,13 +16,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int PG_CCST;				/* Client Charcter Status */
-
-int PG_SCSC;				/* Server Charcter Set (code) */
-int PG_CCSC;				/* Client Charcter Set (code) */
-unsigned char *PG_SCSS;	/* Server Charcter Set (string) */
-unsigned char *PG_CCSS;	/* Client Charcter Set (string) */
-
 pg_CS CS_Table[] =
 {
 	{ "SQL_ASCII",	SQL_ASCII },
@@ -78,19 +71,29 @@ pg_ismb(int characterset_code)
 int
 pg_CS_code(const unsigned char *characterset_string)
 {
-	int i = 0, c;
+	int i = 0, c = -1;
+  	unsigned len = 0;
 	for(i = 0; CS_Table[i].code != OTHER; i++)
 	{
 		if (strstr(characterset_string,CS_Table[i].name))
-			c = CS_Table[i].code;
+		{
+                  	if(strlen(CS_Table[i].name) >= len)
+                        {
+                         	len = strlen(CS_Table[i].name);
+                         	c = CS_Table[i].code;
+                        }
+
+		}
 	}
+	if (c < 0)
+		c = i;
 	return (c);
 }
 
 unsigned char *
-pg_CS_name(const int characterset_code)
+pg_CS_name(int characterset_code)
 {
-	int i = 0;
+	int i;
 	for (i = 0; CS_Table[i].code != OTHER; i++)
 	{
 		if (CS_Table[i].code == characterset_code)
@@ -242,7 +245,7 @@ pg_CS_stat(int stat,unsigned int character,int characterset_code)
 
 
 unsigned char *
-pg_mbschr(const unsigned char *string, unsigned int character)
+pg_mbschr(int csc, const unsigned char *string, unsigned int character)
 {
 	int			mb_st = 0;
 	unsigned char *s;
@@ -250,7 +253,7 @@ pg_mbschr(const unsigned char *string, unsigned int character)
 
 	for(;;) 
 	{
-		mb_st = pg_CS_stat(mb_st, (unsigned char) *s,PG_CCSC);
+		mb_st = pg_CS_stat(mb_st, (unsigned char) *s, csc);
 		if (mb_st == 0 && (*s == character || *s == 0))
 			break;
 		else
@@ -260,13 +263,13 @@ pg_mbschr(const unsigned char *string, unsigned int character)
 }
 
 int
-pg_mbslen(const unsigned char *string)
+pg_mbslen(int csc, const unsigned char *string)
 {
 	unsigned char *s;
 	int len, cs_stat;
 	for (len = 0, cs_stat = 0, s = (unsigned char *) string; *s != 0; s++)
 	{
-		cs_stat = pg_CS_stat(cs_stat,(unsigned int) *s, PG_CCSC);
+		cs_stat = pg_CS_stat(cs_stat,(unsigned int) *s, csc);
 		if (cs_stat < 2)
 			len++;
 	}
@@ -274,12 +277,12 @@ pg_mbslen(const unsigned char *string)
 }
 
 unsigned char *
-pg_mbsinc(const unsigned char *current )
+pg_mbsinc(int csc, const unsigned char *current )
 {
 	int mb_stat = 0;
 	if (*current != 0)
 	{
-		mb_stat = (int) pg_CS_stat(mb_stat, *current, PG_CCSC);
+		mb_stat = (int) pg_CS_stat(mb_stat, *current, csc);
 		if (mb_stat == 0)
 			mb_stat = 1;
 		return ((unsigned char *) current + mb_stat);
@@ -288,43 +291,100 @@ pg_mbsinc(const unsigned char *current )
 		return NULL;
 }
 
+static char *
+CC_lookup_cs_new(ConnectionClass *self)
+{
+	char		*encstr = NULL;
+	QResultClass	*res;
+
+	res = CC_send_query(self, "select pg_client_encoding()", NULL, TRUE);
+	if (res)
+	{
+		char 	*enc = QR_get_value_backend_row(res, 0, 0);
+
+		if (enc)
+			encstr = strdup(enc);
+		QR_Destructor(res);
+	}
+	return encstr;
+}
+static char *
+CC_lookup_cs_old(ConnectionClass *self)
+{
+	char		*encstr = NULL;
+	HSTMT		hstmt;
+	RETCODE		result;
+
+	result = PGAPI_AllocStmt(self, &hstmt);
+	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
+		return encstr;
+
+	result = PGAPI_ExecDirect(hstmt, "Show Client_Encoding", SQL_NTS);
+	if (result == SQL_SUCCESS_WITH_INFO)
+	{
+		char sqlState[8], errormsg[128], enc[32];
+
+		if (PGAPI_Error(NULL, NULL, hstmt, sqlState, NULL, errormsg,
+			sizeof(errormsg), NULL) == SQL_SUCCESS &&
+		    sscanf(errormsg, "%*s %*s %*s %*s %*s %s", enc) > 0)
+			encstr = strdup(enc);
+	}
+	PGAPI_FreeStmt(hstmt, SQL_DROP);
+	return encstr;
+}
+
 void
 CC_lookup_characterset(ConnectionClass *self)
 {
-	HSTMT		hstmt;
-	StatementClass *stmt;
-	RETCODE		result;
+	char		*encstr;
 	static char *func = "CC_lookup_characterset";
 
 	mylog("%s: entering...\n", func);
-	PG_SCSS = malloc(MAX_CHARACTERSET_NAME);
-	PG_CCSS = malloc(MAX_CHARACTERSET_NAME);
-
-	result = PGAPI_AllocStmt(self, &hstmt);
-	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
-		return;
-	stmt = (StatementClass *) hstmt;
-
-	result = PGAPI_ExecDirect(hstmt, "Show Client_Encoding", SQL_NTS);
-	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
+	if (PG_VERSION_LT(self, 7.2))
+		encstr = CC_lookup_cs_old(self);
+	else
+		encstr = CC_lookup_cs_new(self);
+	if (self->client_encoding)
+		free(self->client_encoding);
+	if (encstr)
 	{
-		PGAPI_FreeStmt(hstmt, SQL_DROP);
-		return;
+		self->client_encoding = encstr;
+		self->ccsc = pg_CS_code(encstr);
+		qlog("    [ Client encoding = '%s' (code = %d) ]\n", self->client_encoding, self->ccsc);
+		if (stricmp(pg_CS_name(self->ccsc), encstr))
+		{
+			qlog(" Client encoding = '%s' and %s\n", self->client_encoding, pg_CS_name(self->ccsc));
+			self->errornumber = CONN_VALUE_OUT_OF_RANGE;  
+			self->errormsg = "client encoding mismatch"; 
+		}
 	}
-	result = PGAPI_AllocStmt(self, &hstmt);
-	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
-		return;
-	stmt = (StatementClass *) hstmt;
-
-	result = PGAPI_ExecDirect(hstmt, "Show Server_Encoding", SQL_NTS);
-	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
+	else
 	{
-		PGAPI_FreeStmt(hstmt, SQL_DROP);
-		return;
+		self->ccsc = SQL_ASCII;
+		self->client_encoding = NULL;
 	}
+}
 
-	strcpy(PG_SCSS , pg_CS_name(PG_SCSC = pg_CS_code(PG_SCSS)));
-	strcpy(PG_CCSS , pg_CS_name(PG_CCSC = pg_CS_code(PG_CCSS)));
+void encoded_str_constr(encoded_str *encstr, int ccsc, const char *str)
+{
+	encstr->ccsc = ccsc;
+	encstr->encstr = str;
+	encstr->pos = -1;
+	encstr->ccst = 0;
+}
+int encoded_nextchar(encoded_str *encstr)
+{
+	int	chr;
 
-	qlog("    [ Server encoding = '%s' (code = %d), Client encoding = '%s' (code = %d) ]\n", PG_SCSS, PG_SCSC, PG_CCSS, PG_CCSC);
+	chr = encstr->encstr[++encstr->pos]; 
+	encstr->ccst = pg_CS_stat(encstr->ccst, (unsigned int) chr, encstr->ccsc);
+	return chr; 
+}
+int encoded_byte_check(encoded_str *encstr, int abspos)
+{
+	int	chr;
+
+	chr = encstr->encstr[encstr->pos = abspos]; 
+	encstr->ccst = pg_CS_stat(encstr->ccst, (unsigned int) chr, encstr->ccsc);
+	return chr; 
 }

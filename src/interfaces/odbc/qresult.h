@@ -45,6 +45,7 @@ struct QResultClass_
 	TupleListClass *manual_tuples;		/* manual result tuple list */
 	ConnectionClass *conn;		/* the connection this result is using
 								 * (backend) */
+	QResultClass	*next;		/* the following result class */
 
 	/* Stuff for declare/fetch tuples */
 	int			count_allocated;	/* m(re)alloced count */

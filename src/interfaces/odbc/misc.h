@@ -38,6 +38,7 @@
 #define MYLOGDIR			"c:"
 #endif
 extern void mylog(char *fmt,...);
+#define	inolog	mylog	/* for really temporary debug */
 
 #else
 #ifndef WIN32

@@ -342,12 +342,13 @@ PGAPI_SetConnectOption(
 			break;
 
 		case SQL_AUTOCOMMIT:
-			if (vParam == SQL_AUTOCOMMIT_ON && CC_is_in_autocommit(conn))
+			if (vParam == SQL_AUTOCOMMIT_ON && CC_is_in_trans(conn))
 				break;
-			else if (vParam == SQL_AUTOCOMMIT_OFF && !CC_is_in_autocommit(conn))
+			else if (vParam == SQL_AUTOCOMMIT_OFF && !CC_is_in_trans(conn))
 				break;
 			if (CC_is_in_trans(conn))
 				CC_commit(conn);
+
 			mylog("PGAPI_SetConnectOption: AUTOCOMMIT: transact_status=%d, vparam=%d\n", conn->transact_status, vParam);
 
 			switch (vParam)
@@ -401,8 +402,21 @@ PGAPI_SetConnectOption(
 				sprintf(option, "fOption=%d, vParam=%ld", fOption, vParam);
 				if (fOption == 30002 && vParam)
 				{
-					if (strcmp((char *) vParam, "Microsoft Jet") == 0)
+					int	cmp;
+#ifdef	UNICODE_SUPPORT
+					char *asPara;
+					if (conn->unicode)
 					{
+						asPara = ucs2_to_utf8((SQLWCHAR *) vParam, -1, NULL);
+						cmp = strcmp(asPara, "Microsoft Jet");
+						free(asPara);
+					}
+					else
+#endif /* UNICODE_SUPPORT */
+					cmp = strncmp((char *) vParam, "Microsoft Jet", 13);
+					if (0 == cmp)
+					{
+						mylog("Microsoft Jet !!!!\n");
 						conn->errornumber = 0;
 						conn->ms_jet = 1;
 						return SQL_SUCCESS;
@@ -456,7 +470,7 @@ PGAPI_GetConnectOption(
 
 		case SQL_CURRENT_QUALIFIER:		/* don't use qualifiers */
 			if (pvParam)
-				strcpy(pvParam, "");
+				((char *) pvParam)[0] = ((char *) pvParam)[1] = '\0';
 
 			break;
 
@@ -557,7 +571,7 @@ PGAPI_GetStmtOption(
 		case SQL_GET_BOOKMARK:
 		case SQL_ROW_NUMBER:
 
-			res = stmt->result;
+			res = SC_get_Curres(stmt);
 
 			if (stmt->manual_result || !ci->drivers.use_declarefetch)
 			{

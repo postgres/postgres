@@ -17,7 +17,8 @@
 struct EnvironmentClass_
 {
 	char	   *errormsg;
-	int			errornumber;
+	int		errornumber;
+	Int4	flag;
 };
 
 /*	Environment prototypes */
@@ -27,5 +28,11 @@ char		EN_get_error(EnvironmentClass *self, int *number, char **message);
 char		EN_add_connection(EnvironmentClass *self, ConnectionClass *conn);
 char		EN_remove_connection(EnvironmentClass *self, ConnectionClass *conn);
 void		EN_log_error(char *func, char *desc, EnvironmentClass *self);
+
+#define	EN_OV_ODBC2	1L
+#define	EN_is_odbc2(env) ((env->flag & EN_OV_ODBC2) != 0)
+#define	EN_is_odbc3(env) ((env->flag & EN_OV_ODBC2) == 0)
+#define EN_set_odbc2(env) (env->flag |= EN_OV_ODBC2)
+#define EN_set_odbc3(env) (env->flag &= EN_OV_ODBC2)
 
 #endif

@@ -20,6 +20,13 @@
 #define	byte3_mask2	0x0fc0
 #define	byte3_mask3	0x003f
 
+UInt4	ucs2strlen(const SQLWCHAR *ucs2str)
+{
+	UInt4	len;
+	for (len = 0; ucs2str[len]; len++)
+		;
+	return len;
+}
 char *ucs2_to_utf8(const SQLWCHAR *ucs2str, Int4 ilen, UInt4 *olen)
 {
 	char *	utf8str;
@@ -28,24 +35,21 @@ char *ucs2_to_utf8(const SQLWCHAR *ucs2str, Int4 ilen, UInt4 *olen)
 	if (!ucs2str)
 		return NULL;
 	if (ilen < 0)
-	{
-		for (ilen = 0; ucs2str[ilen]; ilen++)
-			;
-	}
+		ilen = ucs2strlen(ucs2str);
 /*mylog(" newlen=%d", ilen);*/
 	utf8str = (char *) malloc(ilen * 3 + 1);
 	if (utf8str)
 	{
 		int	i, len = 0;
-		Int2		byte2code;
-		Int4		byte4code;
-
+		UInt2	byte2code;
+		Int4	byte4code;
 		const SQLWCHAR	*wstr;
+
 		for (i = 0, wstr = ucs2str; i < ilen; i++, wstr++)
 		{
 			if (!*wstr)
 				break;
-			else if (iswascii(*wstr))
+			else if (0 == (*wstr & 0xff80))
 				utf8str[len++] = (char) *wstr;
 			else if ((*wstr & byte3check) == 0)
 			{
@@ -66,7 +70,8 @@ char *ucs2_to_utf8(const SQLWCHAR *ucs2str, Int4 ilen, UInt4 *olen)
 			}
 		} 
 		utf8str[len] = '\0';
-		*olen = len;
+		if (olen)
+			*olen = len;
 	}
 /*mylog(" olen=%d %s\n", *olen, utf8str ? utf8str : "");*/
 	return utf8str;
@@ -109,7 +114,7 @@ UInt4	utf8_to_ucs2(const char *utf8str, Int4 ilen, SQLWCHAR *ucs2str, UInt4 bufc
 			{
 				wcode = ((((UInt4) *str) & byte3_m1) << 12) |
 					((((UInt4) str[1]) & byte3_m2) << 6) |
-				 	((UInt4) str[2]) & byte3_m3;
+				 	(((UInt4) str[2]) & byte3_m3);
 				ucs2str[ocount] = (SQLWCHAR) wcode;
 			}
 			ocount++;
@@ -121,7 +126,7 @@ UInt4	utf8_to_ucs2(const char *utf8str, Int4 ilen, SQLWCHAR *ucs2str, UInt4 bufc
 			if (ocount < bufcount)
 			{
 				wcode = ((((UInt4) *str) & byte2_m1) << 6) |
-				 	((UInt4) str[1]) & byte2_m2;
+				 	(((UInt4) str[1]) & byte2_m2);
 				ucs2str[ocount] = (SQLWCHAR) wcode;
 			}
 			ocount++;

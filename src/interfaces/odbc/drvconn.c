@@ -242,7 +242,7 @@ dialog:
 	qlog("conn=%u, PGAPI_DriverConnect(out)='%s'\n", conn, szConnStrOut);
 
 
-	mylog("PGAPI_DRiverConnect: returning %d\n", result);
+	mylog("PGAPI_DriverConnect: returning %d\n", result);
 	return result;
 }
 
@@ -351,10 +351,7 @@ dconn_get_connect_attributes(const UCHAR FAR * connect_string, ConnInfo *ci)
 			   *equals;
 	char	   *strtok_arg;
 
-	memset(ci, 0, sizeof(ConnInfo));
-#ifdef	DRIVER_CURSOR_IMPLEMENT
-	ci->updatable_cursors = 1;
-#endif   /* DRIVER_CURSOR_IMPLEMENT */
+	CC_conninfo_init(ci);
 
 	our_connect_string = strdup(connect_string);
 	strtok_arg = our_connect_string;

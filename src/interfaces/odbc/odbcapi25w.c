@@ -25,22 +25,27 @@ RETCODE  SQL_API SQLErrorW(HENV EnvironmentHandle,
            SQLSMALLINT *TextLength)
 {
 	RETCODE	ret;
-	SWORD	tlen;
+	SWORD	tlen, buflen;
 	char	*qst = NULL, *mtxt = NULL;
 
 	mylog("[SQLErrorW]");
 	if (Sqlstate)
 		qst = malloc(8);
-	if (MessageText)
-		mtxt = malloc(BufferLength);	
+	buflen = 0;
+	if (MessageText && BufferLength > 0)
+	{
+		buflen = BufferLength * 3 + 1;
+		mtxt = malloc(buflen);
+	}
 	ret = PGAPI_Error(EnvironmentHandle, ConnectionHandle, StatementHandle,
-           	qst, NativeError, mtxt, BufferLength, &tlen);
+           	qst, NativeError, mtxt, buflen, &tlen);
 	if (qst)
 		utf8_to_ucs2(qst, strlen(qst), Sqlstate, 5);
 	if (TextLength)
 		*TextLength = utf8_to_ucs2(mtxt, tlen, MessageText, BufferLength);
 	free(qst);
-	free(mtxt);
+	if (mtxt)
+		free(mtxt);
 	return ret;
 }
 
@@ -56,6 +61,7 @@ RETCODE  SQL_API SQLSetConnectOptionW(HDBC ConnectionHandle,
            SQLUSMALLINT Option, SQLUINTEGER Value)
 {
 	mylog("[SQLSetConnectionOptionW]");
+if (!ConnectionHandle)	return SQL_ERROR;
 	((ConnectionClass *) ConnectionHandle)->unicode = 1;
 	return PGAPI_SetConnectOption(ConnectionHandle, Option, Value);
 }

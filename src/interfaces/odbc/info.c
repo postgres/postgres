@@ -10,7 +10,7 @@
  *					SQLTables, SQLColumns, SQLStatistics, SQLSpecialColumns,
  *					SQLPrimaryKeys, SQLForeignKeys,
  *					SQLProcedureColumns(NI), SQLProcedures,
- *					SQLTablePrivileges(NI), SQLColumnPrivileges(NI)
+ *					SQLTablePrivileges, SQLColumnPrivileges(NI)
  *
  * Comments:		See "notice.txt" for copyright and license information.
  *--------
@@ -231,13 +231,14 @@ PGAPI_GetInfo(
 
 		case SQL_FETCH_DIRECTION:		/* ODBC 1.0 */
 			len = 4;
-			value = ci->drivers.use_declarefetch ? (SQL_FD_FETCH_NEXT) : (SQL_FD_FETCH_NEXT |
-													 SQL_FD_FETCH_FIRST |
-													  SQL_FD_FETCH_LAST |
-													 SQL_FD_FETCH_PRIOR |
-												  SQL_FD_FETCH_ABSOLUTE |
-												  SQL_FD_FETCH_RELATIVE |
-												  SQL_FD_FETCH_BOOKMARK);
+			value = ci->drivers.use_declarefetch ? (SQL_FD_FETCH_NEXT) :
+			 (SQL_FD_FETCH_NEXT | 
+			 SQL_FD_FETCH_FIRST |
+			 SQL_FD_FETCH_LAST |
+			 SQL_FD_FETCH_PRIOR |
+			 SQL_FD_FETCH_ABSOLUTE |
+			 SQL_FD_FETCH_RELATIVE |
+			 SQL_FD_FETCH_BOOKMARK);
 			break;
 
 		case SQL_FILE_USAGE:	/* ODBC 2.0 */
@@ -665,7 +666,6 @@ PGAPI_GetInfo(
 			/* unrecognized key */
 			conn->errormsg = "Unrecognized key passed to PGAPI_GetInfo.";
 			conn->errornumber = CONN_NOT_IMPLEMENTED_ERROR;
-			CC_log_error(func, "", conn);
 			return SQL_ERROR;
 	}
 
@@ -685,12 +685,20 @@ PGAPI_GetInfo(
 
 		if (rgbInfoValue)
 		{
+#ifdef	UNICODE_SUPPORT
+			if (conn->unicode)
+			{
+				len = utf8_to_ucs2(p, len, (SQLWCHAR *) rgbInfoValue, cbInfoValueMax / 2);
+				len *= 2;
+			}
+			else
+#endif /* UNICODE_SUPPORT */
 			strncpy_null((char *) rgbInfoValue, p, (size_t) cbInfoValueMax);
 
 			if (len >= cbInfoValueMax)
 			{
 				result = SQL_SUCCESS_WITH_INFO;
-				conn->errornumber = STMT_TRUNCATED;
+				conn->errornumber = CONN_TRUNCATED;
 				conn->errormsg = "The buffer was too small for tthe InfoValue.";
 			}
 		}
@@ -721,6 +729,7 @@ PGAPI_GetTypeInfo(
 {
 	static char *func = "PGAPI_GetTypeInfo";
 	StatementClass *stmt = (StatementClass *) hstmt;
+	QResultClass	*res;
 	TupleNode  *row;
 	int			i;
 
@@ -737,31 +746,31 @@ PGAPI_GetTypeInfo(
 	}
 
 	stmt->manual_result = TRUE;
-	stmt->result = QR_Constructor();
-	if (!stmt->result)
+	if (res = QR_Constructor(), !res)
 	{
 		SC_log_error(func, "Error creating result.", stmt);
 		return SQL_ERROR;
 	}
+	SC_set_Result(stmt, res);
 
 	extend_bindings(stmt, 15);
 
-	QR_set_num_fields(stmt->result, 15);
-	QR_set_field_info(stmt->result, 0, "TYPE_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
-	QR_set_field_info(stmt->result, 1, "DATA_TYPE", PG_TYPE_INT2, 2);
-	QR_set_field_info(stmt->result, 2, "PRECISION", PG_TYPE_INT4, 4);
-	QR_set_field_info(stmt->result, 3, "LITERAL_PREFIX", PG_TYPE_TEXT, MAX_INFO_STRING);
-	QR_set_field_info(stmt->result, 4, "LITERAL_SUFFIX", PG_TYPE_TEXT, MAX_INFO_STRING);
-	QR_set_field_info(stmt->result, 5, "CREATE_PARAMS", PG_TYPE_TEXT, MAX_INFO_STRING);
-	QR_set_field_info(stmt->result, 6, "NULLABLE", PG_TYPE_INT2, 2);
-	QR_set_field_info(stmt->result, 7, "CASE_SENSITIVE", PG_TYPE_INT2, 2);
-	QR_set_field_info(stmt->result, 8, "SEARCHABLE", PG_TYPE_INT2, 2);
-	QR_set_field_info(stmt->result, 9, "UNSIGNED_ATTRIBUTE", PG_TYPE_INT2, 2);
-	QR_set_field_info(stmt->result, 10, "MONEY", PG_TYPE_INT2, 2);
-	QR_set_field_info(stmt->result, 11, "AUTO_INCREMENT", PG_TYPE_INT2, 2);
-	QR_set_field_info(stmt->result, 12, "LOCAL_TYPE_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
-	QR_set_field_info(stmt->result, 13, "MINIMUM_SCALE", PG_TYPE_INT2, 2);
-	QR_set_field_info(stmt->result, 14, "MAXIMUM_SCALE", PG_TYPE_INT2, 2);
+	QR_set_num_fields(res, 15);
+	QR_set_field_info(res, 0, "TYPE_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
+	QR_set_field_info(res, 1, "DATA_TYPE", PG_TYPE_INT2, 2);
+	QR_set_field_info(res, 2, "PRECISION", PG_TYPE_INT4, 4);
+	QR_set_field_info(res, 3, "LITERAL_PREFIX", PG_TYPE_TEXT, MAX_INFO_STRING);
+	QR_set_field_info(res, 4, "LITERAL_SUFFIX", PG_TYPE_TEXT, MAX_INFO_STRING);
+	QR_set_field_info(res, 5, "CREATE_PARAMS", PG_TYPE_TEXT, MAX_INFO_STRING);
+	QR_set_field_info(res, 6, "NULLABLE", PG_TYPE_INT2, 2);
+	QR_set_field_info(res, 7, "CASE_SENSITIVE", PG_TYPE_INT2, 2);
+	QR_set_field_info(res, 8, "SEARCHABLE", PG_TYPE_INT2, 2);
+	QR_set_field_info(res, 9, "UNSIGNED_ATTRIBUTE", PG_TYPE_INT2, 2);
+	QR_set_field_info(res, 10, "MONEY", PG_TYPE_INT2, 2);
+	QR_set_field_info(res, 11, "AUTO_INCREMENT", PG_TYPE_INT2, 2);
+	QR_set_field_info(res, 12, "LOCAL_TYPE_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
+	QR_set_field_info(res, 13, "MINIMUM_SCALE", PG_TYPE_INT2, 2);
+	QR_set_field_info(res, 14, "MAXIMUM_SCALE", PG_TYPE_INT2, 2);
 
 	for (i = 0, sqlType = sqlTypes[0]; sqlType; sqlType = sqlTypes[++i])
 	{
@@ -795,7 +804,7 @@ PGAPI_GetTypeInfo(
 			set_nullfield_int2(&row->tuple[13], pgtype_scale(stmt, pgType, PG_STATIC));
 			set_nullfield_int2(&row->tuple[14], pgtype_scale(stmt, pgType, PG_STATIC));
 
-			QR_add_tuple(stmt->result, row);
+			QR_add_tuple(res, row);
 		}
 	}
 
@@ -898,7 +907,7 @@ PGAPI_GetFunctions(
 			pfExists[SQL_API_SQLMORERESULTS] = TRUE;
 			pfExists[SQL_API_SQLNATIVESQL] = TRUE;
 			pfExists[SQL_API_SQLNUMPARAMS] = TRUE;
-			pfExists[SQL_API_SQLPARAMOPTIONS] = FALSE;
+			pfExists[SQL_API_SQLPARAMOPTIONS] = TRUE;
 			pfExists[SQL_API_SQLPRIMARYKEYS] = TRUE;
 			pfExists[SQL_API_SQLPROCEDURECOLUMNS] = FALSE;
 			if (PG_VERSION_LT(conn, 6.5))
@@ -907,7 +916,7 @@ PGAPI_GetFunctions(
 				pfExists[SQL_API_SQLPROCEDURES] = TRUE;
 			pfExists[SQL_API_SQLSETPOS] = TRUE;
 			pfExists[SQL_API_SQLSETSCROLLOPTIONS] = TRUE;		/* odbc 1.0 */
-			pfExists[SQL_API_SQLTABLEPRIVILEGES] = FALSE;
+			pfExists[SQL_API_SQLTABLEPRIVILEGES] = TRUE;
 		}
 	}
 	else
@@ -1070,7 +1079,7 @@ PGAPI_GetFunctions(
 					*pfExists = TRUE;
 					break;
 				case SQL_API_SQLPARAMOPTIONS:
-					*pfExists = FALSE;
+					*pfExists = TRUE;
 					break;
 				case SQL_API_SQLPRIMARYKEYS:
 					*pfExists = TRUE;
@@ -1091,7 +1100,7 @@ PGAPI_GetFunctions(
 					*pfExists = TRUE;
 					break;		/* odbc 1.0 */
 				case SQL_API_SQLTABLEPRIVILEGES:
-					*pfExists = FALSE;
+					*pfExists = TRUE;
 					break;
 			}
 		}
@@ -1115,6 +1124,7 @@ PGAPI_Tables(
 	static char *func = "PGAPI_Tables";
 	StatementClass *stmt = (StatementClass *) hstmt;
 	StatementClass *tbl_stmt;
+	QResultClass	*res;
 	TupleNode  *row;
 	HSTMT		htbl_stmt;
 	RETCODE		result;
@@ -1291,8 +1301,7 @@ PGAPI_Tables(
 		return SQL_ERROR;
 	}
 
-	stmt->result = QR_Constructor();
-	if (!stmt->result)
+	if (res = QR_Constructor(), !res)
 	{
 		stmt->errormsg = "Couldn't allocate memory for PGAPI_Tables result.";
 		stmt->errornumber = STMT_NO_MEMORY_ERROR;
@@ -1300,6 +1309,7 @@ PGAPI_Tables(
 		PGAPI_FreeStmt(htbl_stmt, SQL_DROP);
 		return SQL_ERROR;
 	}
+	SC_set_Result(stmt, res);
 
 	/* the binding structure for a statement is not set up until */
 
@@ -1310,12 +1320,12 @@ PGAPI_Tables(
 	extend_bindings(stmt, 5);
 
 	/* set the field names */
-	QR_set_num_fields(stmt->result, 5);
-	QR_set_field_info(stmt->result, 0, "TABLE_QUALIFIER", PG_TYPE_TEXT, MAX_INFO_STRING);
-	QR_set_field_info(stmt->result, 1, "TABLE_OWNER", PG_TYPE_TEXT, MAX_INFO_STRING);
-	QR_set_field_info(stmt->result, 2, "TABLE_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
-	QR_set_field_info(stmt->result, 3, "TABLE_TYPE", PG_TYPE_TEXT, MAX_INFO_STRING);
-	QR_set_field_info(stmt->result, 4, "REMARKS", PG_TYPE_TEXT, 254);
+	QR_set_num_fields(res, 5);
+	QR_set_field_info(res, 0, "TABLE_QUALIFIER", PG_TYPE_TEXT, MAX_INFO_STRING);
+	QR_set_field_info(res, 1, "TABLE_OWNER", PG_TYPE_TEXT, MAX_INFO_STRING);
+	QR_set_field_info(res, 2, "TABLE_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
+	QR_set_field_info(res, 3, "TABLE_TYPE", PG_TYPE_TEXT, MAX_INFO_STRING);
+	QR_set_field_info(res, 4, "REMARKS", PG_TYPE_TEXT, 254);
 
 	/* add the tuples */
 	result = PGAPI_Fetch(htbl_stmt);
@@ -1372,6 +1382,7 @@ PGAPI_Tables(
 			row = (TupleNode *) malloc(sizeof(TupleNode) + (5 - 1) *sizeof(TupleField));
 
 			/*set_tuplefield_string(&row->tuple[0], "");*/
+			/*set_tuplefield_string(&row->tuple[0], "cat0");*/
 			set_tuplefield_null(&row->tuple[0]);
 
 			/*
@@ -1389,9 +1400,10 @@ PGAPI_Tables(
 			set_tuplefield_null(&row->tuple[1]);
 			set_tuplefield_string(&row->tuple[2], table_name);
 			set_tuplefield_string(&row->tuple[3], systable ? "SYSTEM TABLE" : (view ? "VIEW" : "TABLE"));
-			set_tuplefield_string(&row->tuple[4], "");
+			/*set_tuplefield_string(&row->tuple[4], "");*/
+			set_tuplefield_string(&row->tuple[4], "TABLE");
 
-			QR_add_tuple(stmt->result, row);
+			QR_add_tuple(res, row);
 		}
 		result = PGAPI_Fetch(htbl_stmt);
 	}
@@ -1425,11 +1437,14 @@ PGAPI_Tables(
  *	PostgreSQL needs 2 '\\' to escape '_' and '%'. 
  */
 static int
-reallyEscapeCatalogEscapes(const char *src, int srclen, char *dest, int dst_len)
+reallyEscapeCatalogEscapes(const char *src, int srclen, char *dest, int dst_len, int ccsc)
 {
 	int	i, outlen;
 	const char *in;
 	BOOL	escape_in = FALSE;
+#ifdef MULTIBYTE
+	encoded_str	encstr;
+#endif
 
 	if (srclen == SQL_NULL_DATA)
 	{
@@ -1441,12 +1456,13 @@ reallyEscapeCatalogEscapes(const char *src, int srclen, char *dest, int dst_len)
 	if (srclen <= 0)
 		return STRCPY_FAIL;
 #ifdef MULTIBYTE
-	multibyte_init();
+	encoded_str_constr(&encstr, ccsc, src);
 #endif
 	for (i = 0, in = src, outlen = 0; i < srclen && outlen < dst_len; i++, in++)
 	{
 #ifdef MULTIBYTE
-                if (multibyte_char_check(*in) != 0)
+                encoded_nextchar(&encstr);
+                if (ENCODE_STATUS(encstr) != 0)
                 {
                         dest[outlen++] = *in;
                         continue;
@@ -1496,6 +1512,7 @@ PGAPI_Columns(
 {
 	static char *func = "PGAPI_Columns";
 	StatementClass *stmt = (StatementClass *) hstmt;
+	QResultClass	*res;
 	TupleNode  *row;
 	HSTMT		hcol_stmt;
 	StatementClass *col_stmt;
@@ -1505,7 +1522,7 @@ PGAPI_Columns(
 				table_name[MAX_INFO_STRING],
 				field_name[MAX_INFO_STRING],
 				field_type_name[MAX_INFO_STRING];
-	Int2		field_number,
+	Int2		field_number, sqltype,
 				result_cols,
 				scale;
 	Int4		field_type,
@@ -1556,7 +1573,7 @@ PGAPI_Columns(
 		char	esc_table_name[MAX_TABLE_LEN * 2];
 		int	escTbnamelen;
 
-		escTbnamelen = reallyEscapeCatalogEscapes(szTableName, cbTableName, esc_table_name, sizeof(esc_table_name));
+		escTbnamelen = reallyEscapeCatalogEscapes(szTableName, cbTableName, esc_table_name, sizeof(esc_table_name), conn->ccsc);
 		my_strcat(columns_query, " and c.relname like '%.*s'", esc_table_name, escTbnamelen);
 		my_strcat(columns_query, " and u.usename like '%.*s'", szTableOwner, cbTableOwner);
 		my_strcat(columns_query, " and a.attname like '%.*s'", szColumnName, cbColumnName);
@@ -1701,8 +1718,7 @@ PGAPI_Columns(
 		return SQL_ERROR;
 	}
 
-	stmt->result = QR_Constructor();
-	if (!stmt->result)
+	if (res = QR_Constructor(), !res)
 	{
 		stmt->errormsg = "Couldn't allocate memory for PGAPI_Columns result.";
 		stmt->errornumber = STMT_NO_MEMORY_ERROR;
@@ -1710,6 +1726,7 @@ PGAPI_Columns(
 		PGAPI_FreeStmt(hcol_stmt, SQL_DROP);
 		return SQL_ERROR;
 	}
+	SC_set_Result(stmt, res);
 
 	/* the binding structure for a statement is not set up until */
 
@@ -1721,23 +1738,32 @@ PGAPI_Columns(
 	extend_bindings(stmt, result_cols);
 
 	/* set the field names */
-	QR_set_num_fields(stmt->result, result_cols);
-	QR_set_field_info(stmt->result, 0, "TABLE_QUALIFIER", PG_TYPE_TEXT, MAX_INFO_STRING);
-	QR_set_field_info(stmt->result, 1, "TABLE_OWNER", PG_TYPE_TEXT, MAX_INFO_STRING);
-	QR_set_field_info(stmt->result, 2, "TABLE_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
-	QR_set_field_info(stmt->result, 3, "COLUMN_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
-	QR_set_field_info(stmt->result, 4, "DATA_TYPE", PG_TYPE_INT2, 2);
-	QR_set_field_info(stmt->result, 5, "TYPE_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
-	QR_set_field_info(stmt->result, 6, "PRECISION", PG_TYPE_INT4, 4);
-	QR_set_field_info(stmt->result, 7, "LENGTH", PG_TYPE_INT4, 4);
-	QR_set_field_info(stmt->result, 8, "SCALE", PG_TYPE_INT2, 2);
-	QR_set_field_info(stmt->result, 9, "RADIX", PG_TYPE_INT2, 2);
-	QR_set_field_info(stmt->result, 10, "NULLABLE", PG_TYPE_INT2, 2);
-	QR_set_field_info(stmt->result, 11, "REMARKS", PG_TYPE_TEXT, 254);
+	QR_set_num_fields(res, result_cols);
+	QR_set_field_info(res, 0, "TABLE_QUALIFIER", PG_TYPE_TEXT, MAX_INFO_STRING);
+	QR_set_field_info(res, 1, "TABLE_OWNER", PG_TYPE_TEXT, MAX_INFO_STRING);
+	QR_set_field_info(res, 2, "TABLE_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
+	QR_set_field_info(res, 3, "COLUMN_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
+	QR_set_field_info(res, 4, "DATA_TYPE", PG_TYPE_INT2, 2);
+	QR_set_field_info(res, 5, "TYPE_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
+	QR_set_field_info(res, 6, "PRECISION", PG_TYPE_INT4, 4);
+	QR_set_field_info(res, 7, "LENGTH", PG_TYPE_INT4, 4);
+	QR_set_field_info(res, 8, "SCALE", PG_TYPE_INT2, 2);
+	QR_set_field_info(res, 9, "RADIX", PG_TYPE_INT2, 2);
+	QR_set_field_info(res, 10, "NULLABLE", PG_TYPE_INT2, 2);
+	QR_set_field_info(res, 11, "REMARKS", PG_TYPE_TEXT, 254);
 
 	/* User defined fields */
-	QR_set_field_info(stmt->result, 12, "DISPLAY_SIZE", PG_TYPE_INT4, 4);
-	QR_set_field_info(stmt->result, 13, "FIELD_TYPE", PG_TYPE_INT4, 4);
+#if (ODBCVER >= 0x0300)
+	QR_set_field_info(res, 12, "COLUMN_DEF", PG_TYPE_INT4, 254);
+	QR_set_field_info(res, 13, "SQL_DATA_TYPE", PG_TYPE_INT2, 2);
+	QR_set_field_info(res, 14, "SQL_DATETIME_SUB", PG_TYPE_INT2, 2);
+	QR_set_field_info(res, 15, "CHAR_OCTET_LENGTH", PG_TYPE_INT4, 4);
+	QR_set_field_info(res, 16, "ORDINAL_POSITION", PG_TYPE_INT4, 4);
+	QR_set_field_info(res, 17, "IS_NULLABLE", PG_TYPE_TEXT, 254);
+#else
+	QR_set_field_info(res, 12, "DISPLAY_SIZE", PG_TYPE_INT4, 4);
+	QR_set_field_info(res, 13, "FIELD_TYPE", PG_TYPE_INT4, 4);
+#endif /* ODBCVER */
 
 	result = PGAPI_Fetch(hcol_stmt);
 
@@ -1764,7 +1790,8 @@ PGAPI_Columns(
 			set_tuplefield_string(&row->tuple[1], "");
 			set_tuplefield_string(&row->tuple[2], table_name);
 			set_tuplefield_string(&row->tuple[3], "oid");
-			set_tuplefield_int2(&row->tuple[4], pgtype_to_sqltype(stmt, the_type));
+			sqltype = pgtype_to_sqltype(stmt, the_type);
+			set_tuplefield_int2(&row->tuple[4], sqltype);
 			set_tuplefield_string(&row->tuple[5], "OID");
 
 			set_tuplefield_int4(&row->tuple[7], pgtype_length(stmt, the_type, PG_STATIC, PG_STATIC));
@@ -1775,10 +1802,14 @@ PGAPI_Columns(
 			set_tuplefield_int2(&row->tuple[10], SQL_NO_NULLS);
 			set_tuplefield_string(&row->tuple[11], "");
 
+#if (ODBCVER >= 0x0300)
+			set_tuplefield_int2(&row->tuple[13], sqltype);
+#else
 			set_tuplefield_int4(&row->tuple[12], pgtype_display_size(stmt, the_type, PG_STATIC, PG_STATIC));
 			set_tuplefield_int4(&row->tuple[13], the_type);
+#endif /* ODBCVER */
 
-			QR_add_tuple(stmt->result, row);
+			QR_add_tuple(res, row);
 		}
 	}
 
@@ -1794,7 +1825,8 @@ PGAPI_Columns(
 		set_tuplefield_string(&row->tuple[1], "");
 		set_tuplefield_string(&row->tuple[2], table_name);
 		set_tuplefield_string(&row->tuple[3], field_name);
-		set_tuplefield_int2(&row->tuple[4], pgtype_to_sqltype(stmt, field_type));
+		sqltype = pgtype_to_sqltype(stmt, field_type);
+		set_tuplefield_int2(&row->tuple[4], sqltype);
 		set_tuplefield_string(&row->tuple[5], field_type_name);
 
 
@@ -1812,7 +1844,7 @@ PGAPI_Columns(
 		 *----------
 		 */
 		qlog("PGAPI_Columns: table='%s',field_name='%s',type=%d,sqltype=%d,name='%s'\n",
-			 table_name, field_name, field_type, pgtype_to_sqltype(stmt,field_type), field_type_name);
+			 table_name, field_name, field_type, pgtype_to_sqltype, field_type_name);
 
 		useStaticPrecision = TRUE;
 
@@ -1869,9 +1901,31 @@ PGAPI_Columns(
 		set_nullfield_int2(&row->tuple[9], pgtype_radix(stmt, field_type));
 		set_tuplefield_int2(&row->tuple[10], (Int2) (not_null[0] == '1' ? SQL_NO_NULLS : pgtype_nullable(stmt, field_type)));
 		set_tuplefield_string(&row->tuple[11], "");
+#if (ODBCVER >= 0x0300)
+		switch (sqltype)
+		{
+			case SQL_TYPE_DATE:
+				set_tuplefield_int2(&row->tuple[13], SQL_DATETIME);
+				set_tuplefield_int2(&row->tuple[14], SQL_CODE_DATE);
+				break;
+			case SQL_TYPE_TIME:
+				set_tuplefield_int2(&row->tuple[13], SQL_DATETIME);
+				set_tuplefield_int2(&row->tuple[14], SQL_CODE_TIME);
+				break;
+			case SQL_TYPE_TIMESTAMP:
+				set_tuplefield_int2(&row->tuple[13], SQL_DATETIME);
+				set_tuplefield_int2(&row->tuple[14], SQL_CODE_TIMESTAMP);
+				break;
+			default:
+				set_tuplefield_int2(&row->tuple[13], sqltype);
+				break;
+		}
+		set_tuplefield_int4(&row->tuple[16], field_number);
+#else
 		set_tuplefield_int4(&row->tuple[13], field_type);
+#endif /* ODBCVER */
 
-		QR_add_tuple(stmt->result, row);
+		QR_add_tuple(res, row);
 
 
 		result = PGAPI_Fetch(hcol_stmt);
@@ -1913,7 +1967,7 @@ PGAPI_Columns(
 		set_tuplefield_int4(&row->tuple[12], pgtype_display_size(stmt, the_type, PG_STATIC, PG_STATIC));
 		set_tuplefield_int4(&row->tuple[13], the_type);
 
-		QR_add_tuple(stmt->result, row);
+		QR_add_tuple(res, row);
 	}
 
 	/*
@@ -1949,6 +2003,7 @@ PGAPI_SpecialColumns(
 	static char *func = "PGAPI_SpecialColumns";
 	TupleNode  *row;
 	StatementClass *stmt = (StatementClass *) hstmt;
+	QResultClass	*res;
 	ConnInfo   *ci;
 	HSTMT		hcol_stmt;
 	StatementClass *col_stmt;
@@ -2017,18 +2072,19 @@ PGAPI_SpecialColumns(
 	result = PGAPI_Fetch(hcol_stmt);
 	PGAPI_FreeStmt(hcol_stmt, SQL_DROP);
 
-	stmt->result = QR_Constructor();
+	res = QR_Constructor();
+	SC_set_Result(stmt, res);
 	extend_bindings(stmt, 8);
 
-	QR_set_num_fields(stmt->result, 8);
-	QR_set_field_info(stmt->result, 0, "SCOPE", PG_TYPE_INT2, 2);
-	QR_set_field_info(stmt->result, 1, "COLUMN_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
-	QR_set_field_info(stmt->result, 2, "DATA_TYPE", PG_TYPE_INT2, 2);
-	QR_set_field_info(stmt->result, 3, "TYPE_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
-	QR_set_field_info(stmt->result, 4, "PRECISION", PG_TYPE_INT4, 4);
-	QR_set_field_info(stmt->result, 5, "LENGTH", PG_TYPE_INT4, 4);
-	QR_set_field_info(stmt->result, 6, "SCALE", PG_TYPE_INT2, 2);
-	QR_set_field_info(stmt->result, 7, "PSEUDO_COLUMN", PG_TYPE_INT2, 2);
+	QR_set_num_fields(res, 8);
+	QR_set_field_info(res, 0, "SCOPE", PG_TYPE_INT2, 2);
+	QR_set_field_info(res, 1, "COLUMN_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
+	QR_set_field_info(res, 2, "DATA_TYPE", PG_TYPE_INT2, 2);
+	QR_set_field_info(res, 3, "TYPE_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
+	QR_set_field_info(res, 4, "PRECISION", PG_TYPE_INT4, 4);
+	QR_set_field_info(res, 5, "LENGTH", PG_TYPE_INT4, 4);
+	QR_set_field_info(res, 6, "SCALE", PG_TYPE_INT2, 2);
+	QR_set_field_info(res, 7, "PSEUDO_COLUMN", PG_TYPE_INT2, 2);
 
 	if (relhasrules[0] != '1')
 	{
@@ -2046,7 +2102,7 @@ PGAPI_SpecialColumns(
 			set_tuplefield_int2(&row->tuple[6], pgtype_scale(stmt, PG_TYPE_OID, PG_STATIC));
 			set_tuplefield_int2(&row->tuple[7], SQL_PC_PSEUDO);
 
-			QR_add_tuple(stmt->result, row);
+			QR_add_tuple(res, row);
 
 		}
 		else if (fColType == SQL_ROWVER)
@@ -2066,7 +2122,7 @@ PGAPI_SpecialColumns(
 				set_tuplefield_int2(&row->tuple[6], pgtype_scale(stmt, the_type, PG_STATIC));
 				set_tuplefield_int2(&row->tuple[7], SQL_PC_PSEUDO);
 
-				QR_add_tuple(stmt->result, row);
+				QR_add_tuple(res, row);
 			}
 		}
 	}
@@ -2095,6 +2151,7 @@ PGAPI_Statistics(
 {
 	static char *func = "PGAPI_Statistics";
 	StatementClass *stmt = (StatementClass *) hstmt;
+	QResultClass	*res;
 	char		index_query[INFO_INQUIRY_LEN];
 	HSTMT		hindx_stmt;
 	RETCODE		result;
@@ -2133,14 +2190,14 @@ PGAPI_Statistics(
 
 	ci = &(SC_get_conn(stmt)->connInfo);
 
-	stmt->result = QR_Constructor();
-	if (!stmt->result)
+	if (res = QR_Constructor(), !res)
 	{
 		stmt->errormsg = "Couldn't allocate memory for PGAPI_Statistics result.";
 		stmt->errornumber = STMT_NO_MEMORY_ERROR;
 		SC_log_error(func, "", stmt);
 		return SQL_ERROR;
 	}
+	SC_set_Result(stmt, res);
 
 	/* the binding structure for a statement is not set up until */
 
@@ -2151,20 +2208,20 @@ PGAPI_Statistics(
 	extend_bindings(stmt, 13);
 
 	/* set the field names */
-	QR_set_num_fields(stmt->result, 13);
-	QR_set_field_info(stmt->result, 0, "TABLE_QUALIFIER", PG_TYPE_TEXT, MAX_INFO_STRING);
-	QR_set_field_info(stmt->result, 1, "TABLE_OWNER", PG_TYPE_TEXT, MAX_INFO_STRING);
-	QR_set_field_info(stmt->result, 2, "TABLE_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
-	QR_set_field_info(stmt->result, 3, "NON_UNIQUE", PG_TYPE_INT2, 2);
-	QR_set_field_info(stmt->result, 4, "INDEX_QUALIFIER", PG_TYPE_TEXT, MAX_INFO_STRING);
-	QR_set_field_info(stmt->result, 5, "INDEX_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
-	QR_set_field_info(stmt->result, 6, "TYPE", PG_TYPE_INT2, 2);
-	QR_set_field_info(stmt->result, 7, "SEQ_IN_INDEX", PG_TYPE_INT2, 2);
-	QR_set_field_info(stmt->result, 8, "COLUMN_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
-	QR_set_field_info(stmt->result, 9, "COLLATION", PG_TYPE_CHAR, 1);
-	QR_set_field_info(stmt->result, 10, "CARDINALITY", PG_TYPE_INT4, 4);
-	QR_set_field_info(stmt->result, 11, "PAGES", PG_TYPE_INT4, 4);
-	QR_set_field_info(stmt->result, 12, "FILTER_CONDITION", PG_TYPE_TEXT, MAX_INFO_STRING);
+	QR_set_num_fields(res, 13);
+	QR_set_field_info(res, 0, "TABLE_QUALIFIER", PG_TYPE_TEXT, MAX_INFO_STRING);
+	QR_set_field_info(res, 1, "TABLE_OWNER", PG_TYPE_TEXT, MAX_INFO_STRING);
+	QR_set_field_info(res, 2, "TABLE_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
+	QR_set_field_info(res, 3, "NON_UNIQUE", PG_TYPE_INT2, 2);
+	QR_set_field_info(res, 4, "INDEX_QUALIFIER", PG_TYPE_TEXT, MAX_INFO_STRING);
+	QR_set_field_info(res, 5, "INDEX_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
+	QR_set_field_info(res, 6, "TYPE", PG_TYPE_INT2, 2);
+	QR_set_field_info(res, 7, "SEQ_IN_INDEX", PG_TYPE_INT2, 2);
+	QR_set_field_info(res, 8, "COLUMN_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
+	QR_set_field_info(res, 9, "COLLATION", PG_TYPE_CHAR, 1);
+	QR_set_field_info(res, 10, "CARDINALITY", PG_TYPE_INT4, 4);
+	QR_set_field_info(res, 11, "PAGES", PG_TYPE_INT4, 4);
+	QR_set_field_info(res, 12, "FILTER_CONDITION", PG_TYPE_TEXT, MAX_INFO_STRING);
 
 	/*
 	 * only use the table name... the owner should be redundant, and we
@@ -2395,7 +2452,7 @@ PGAPI_Statistics(
 		set_tuplefield_null(&row->tuple[11]);
 		set_tuplefield_null(&row->tuple[12]);
 
-		QR_add_tuple(stmt->result, row);
+		QR_add_tuple(res, row);
 	}
 
 	result = PGAPI_Fetch(hindx_stmt);
@@ -2457,7 +2514,7 @@ PGAPI_Statistics(
 				set_tuplefield_null(&row->tuple[11]);
 				set_tuplefield_null(&row->tuple[12]);
 
-				QR_add_tuple(stmt->result, row);
+				QR_add_tuple(res, row);
 				i++;
 			}
 		}
@@ -2520,12 +2577,15 @@ PGAPI_ColumnPrivileges(
 					   SWORD cbColumnName)
 {
 	static char *func = "PGAPI_ColumnPrivileges";
+	StatementClass	*stmt = (StatementClass *) hstmt;
 
 	mylog("%s: entering...\n", func);
 
 	/* Neither Access or Borland care about this. */
 
-	SC_log_error(func, "Function not implemented", (StatementClass *) hstmt);
+	stmt->errornumber = STMT_NOT_IMPLEMENTED_ERROR;
+	stmt->errormsg = "not implemented";
+	SC_log_error(func, "Function not implemented", stmt);
 	return SQL_ERROR;
 }
 
@@ -2547,6 +2607,7 @@ PGAPI_PrimaryKeys(
 {
 	static char *func = "PGAPI_PrimaryKeys";
 	StatementClass *stmt = (StatementClass *) hstmt;
+	QResultClass	*res;
 	ConnectionClass *conn;
 	TupleNode  *row;
 	RETCODE		result;
@@ -2572,14 +2633,14 @@ PGAPI_PrimaryKeys(
 	stmt->manual_result = TRUE;
 	stmt->errormsg_created = TRUE;
 
-	stmt->result = QR_Constructor();
-	if (!stmt->result)
+	if (res = QR_Constructor(), !res)
 	{
 		stmt->errormsg = "Couldn't allocate memory for PGAPI_PrimaryKeys result.";
 		stmt->errornumber = STMT_NO_MEMORY_ERROR;
 		SC_log_error(func, "", stmt);
 		return SQL_ERROR;
 	}
+	SC_set_Result(stmt, res);
 
 	/* the binding structure for a statement is not set up until */
 
@@ -2591,13 +2652,13 @@ PGAPI_PrimaryKeys(
 	extend_bindings(stmt, result_cols);
 
 	/* set the field names */
-	QR_set_num_fields(stmt->result, result_cols);
-	QR_set_field_info(stmt->result, 0, "TABLE_QUALIFIER", PG_TYPE_TEXT, MAX_INFO_STRING);
-	QR_set_field_info(stmt->result, 1, "TABLE_OWNER", PG_TYPE_TEXT, MAX_INFO_STRING);
-	QR_set_field_info(stmt->result, 2, "TABLE_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
-	QR_set_field_info(stmt->result, 3, "COLUMN_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
-	QR_set_field_info(stmt->result, 4, "KEY_SEQ", PG_TYPE_INT2, 2);
-	QR_set_field_info(stmt->result, 5, "PK_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
+	QR_set_num_fields(res, result_cols);
+	QR_set_field_info(res, 0, "TABLE_QUALIFIER", PG_TYPE_TEXT, MAX_INFO_STRING);
+	QR_set_field_info(res, 1, "TABLE_OWNER", PG_TYPE_TEXT, MAX_INFO_STRING);
+	QR_set_field_info(res, 2, "TABLE_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
+	QR_set_field_info(res, 3, "COLUMN_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
+	QR_set_field_info(res, 4, "KEY_SEQ", PG_TYPE_INT2, 2);
+	QR_set_field_info(res, 5, "PK_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
 
 
 	result = PGAPI_AllocStmt(stmt->hdbc, &htbl_stmt);
@@ -2709,7 +2770,7 @@ PGAPI_PrimaryKeys(
 		set_tuplefield_int2(&row->tuple[4], (Int2) (++seq));
 		set_tuplefield_null(&row->tuple[5]);
 
-		QR_add_tuple(stmt->result, row);
+		QR_add_tuple(res, row);
 
 		mylog(">> primaryKeys: pktab = '%s', attname = '%s', seq = %d\n", pktab, attname, seq);
 
@@ -2775,7 +2836,7 @@ getClientTableName(ConnectionClass *conn, char *serverTableName, BOOL *nameAlloc
 		return ret;
 	if (!conn->server_encoding)
 	{
-		if (res = CC_send_query(conn, "select getdatabaseencoding()", NULL), res)
+		if (res = CC_send_query(conn, "select getdatabaseencoding()", NULL, TRUE), res)
 		{
 			if (QR_get_num_tuples(res) > 0)
 				conn->server_encoding = strdup(QR_get_value_backend_row(res, 0, 0));
@@ -2785,25 +2846,16 @@ getClientTableName(ConnectionClass *conn, char *serverTableName, BOOL *nameAlloc
 	if (!conn->server_encoding)
 		return ret;
 	sprintf(query, "SET CLIENT_ENCODING TO '%s'", conn->server_encoding);
-	if (res = CC_send_query(conn, query, NULL), res)
-	{
-		bError = QR_get_aborted(res);
-		QR_Destructor(res);
-	}
-	else
-		bError = TRUE;
+	bError = (CC_send_query(conn, query, NULL, TRUE) == NULL);
 	if (!bError && continueExec)
 	{
 		sprintf(query, "select OID from pg_class where relname = '%s'", serverTableName);
-		if (res = CC_send_query(conn, query, NULL), res)
+		if (res = CC_send_query(conn, query, NULL, TRUE), res)
 		{
 			if (QR_get_num_tuples(res) > 0)
 				strcpy(saveoid, QR_get_value_backend_row(res, 0, 0));
 			else
-			{
 				continueExec = FALSE;
-				bError = QR_get_aborted(res);
-			}
 			QR_Destructor(res);
 		}
 		else
@@ -2817,17 +2869,11 @@ getClientTableName(ConnectionClass *conn, char *serverTableName, BOOL *nameAlloc
 	}
 	/* restore the client encoding */
 	sprintf(query, "SET CLIENT_ENCODING TO '%s'", conn->client_encoding);
-	if (res = CC_send_query(conn, query, NULL), res)
-	{
-		bError = QR_get_aborted(res);
-		QR_Destructor(res);
-	}
-	else
-		bError = TRUE;
+	bError = (CC_send_query(conn, query, NULL, TRUE) == NULL);
 	if (bError || !continueExec)
 		return ret;
 	sprintf(query, "select relname from pg_class where OID = %s", saveoid);
-	if (res = CC_send_query(conn, query, NULL), res)
+	if (res = CC_send_query(conn, query, NULL, TRUE), res)
 	{
 		if (QR_get_num_tuples(res) > 0)
 		{
@@ -2854,7 +2900,7 @@ getClientColumnName(ConnectionClass *conn, const char *serverTableName, char *se
 		return ret;
 	if (!conn->server_encoding)
 	{
-		if (res = CC_send_query(conn, "select getdatabaseencoding()", NULL), res)
+		if (res = CC_send_query(conn, "select getdatabaseencoding()", NULL, TRUE), res)
 		{
 			if (QR_get_num_tuples(res) > 0)
 				conn->server_encoding = strdup(QR_get_value_backend_row(res, 0, 0));
@@ -2864,19 +2910,13 @@ getClientColumnName(ConnectionClass *conn, const char *serverTableName, char *se
 	if (!conn->server_encoding)
 		return ret;
 	sprintf(query, "SET CLIENT_ENCODING TO '%s'", conn->server_encoding);
-	if (res = CC_send_query(conn, query, NULL), res)
-	{
-		bError = QR_get_aborted(res);
-		QR_Destructor(res);
-	}
-	else
-		bError = TRUE;
+	bError = (CC_send_query(conn, query, NULL, TRUE) == NULL);
 	if (!bError && continueExec)
 	{
 		sprintf(query, "select attrelid, attnum from pg_class, pg_attribute "
 				"where relname = '%s' and attrelid = pg_class.oid "
 				"and attname = '%s'", serverTableName, serverColumnName);
-		if (res = CC_send_query(conn, query, NULL), res)
+		if (res = CC_send_query(conn, query, NULL, TRUE), res)
 		{
 			if (QR_get_num_tuples(res) > 0)
 			{
@@ -2884,10 +2924,7 @@ getClientColumnName(ConnectionClass *conn, const char *serverTableName, char *se
 				strcpy(saveattnum, QR_get_value_backend_row(res, 0, 1));
 			}
 			else
-			{
 				continueExec = FALSE;
-				bError = QR_get_aborted(res);
-			}
 			QR_Destructor(res);
 		}
 		else
@@ -2901,17 +2938,11 @@ getClientColumnName(ConnectionClass *conn, const char *serverTableName, char *se
 	}
 	/* restore the cleint encoding */
 	sprintf(query, "SET CLIENT_ENCODING TO '%s'", conn->client_encoding);
-	if (res = CC_send_query(conn, query, NULL), res)
-	{
-		bError = QR_get_aborted(res);
-		QR_Destructor(res);
-	}
-	else
-		bError = TRUE;
+	bError = (CC_send_query(conn, query, NULL, TRUE) == NULL);
 	if (bError || !continueExec)
 		return ret;
 	sprintf(query, "select attname from pg_attribute where attrelid = %s and attnum = %s", saveattrelid, saveattnum);
-	if (res = CC_send_query(conn, query, NULL), res)
+	if (res = CC_send_query(conn, query, NULL, TRUE), res)
 	{
 		if (QR_get_num_tuples(res) > 0)
 		{
@@ -2942,6 +2973,7 @@ PGAPI_ForeignKeys(
 {
 	static char *func = "PGAPI_ForeignKeys";
 	StatementClass *stmt = (StatementClass *) hstmt;
+	QResultClass	*res;
 	TupleNode  *row;
 	HSTMT		htbl_stmt,
 				hpkey_stmt;
@@ -2997,14 +3029,14 @@ PGAPI_ForeignKeys(
 	stmt->manual_result = TRUE;
 	stmt->errormsg_created = TRUE;
 
-	stmt->result = QR_Constructor();
-	if (!stmt->result)
+	if (res = QR_Constructor(), !res)
 	{
 		stmt->errormsg = "Couldn't allocate memory for PGAPI_ForeignKeys result.";
 		stmt->errornumber = STMT_NO_MEMORY_ERROR;
 		SC_log_error(func, "", stmt);
 		return SQL_ERROR;
 	}
+	SC_set_Result(stmt, res);
 
 	/* the binding structure for a statement is not set up until */
 
@@ -3016,23 +3048,23 @@ PGAPI_ForeignKeys(
 	extend_bindings(stmt, result_cols);
 
 	/* set the field names */
-	QR_set_num_fields(stmt->result, result_cols);
-	QR_set_field_info(stmt->result, 0, "PKTABLE_QUALIFIER", PG_TYPE_TEXT, MAX_INFO_STRING);
-	QR_set_field_info(stmt->result, 1, "PKTABLE_OWNER", PG_TYPE_TEXT, MAX_INFO_STRING);
-	QR_set_field_info(stmt->result, 2, "PKTABLE_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
-	QR_set_field_info(stmt->result, 3, "PKCOLUMN_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
-	QR_set_field_info(stmt->result, 4, "FKTABLE_QUALIFIER", PG_TYPE_TEXT, MAX_INFO_STRING);
-	QR_set_field_info(stmt->result, 5, "FKTABLE_OWNER", PG_TYPE_TEXT, MAX_INFO_STRING);
-	QR_set_field_info(stmt->result, 6, "FKTABLE_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
-	QR_set_field_info(stmt->result, 7, "FKCOLUMN_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
-	QR_set_field_info(stmt->result, 8, "KEY_SEQ", PG_TYPE_INT2, 2);
-	QR_set_field_info(stmt->result, 9, "UPDATE_RULE", PG_TYPE_INT2, 2);
-	QR_set_field_info(stmt->result, 10, "DELETE_RULE", PG_TYPE_INT2, 2);
-	QR_set_field_info(stmt->result, 11, "FK_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
-	QR_set_field_info(stmt->result, 12, "PK_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
-	QR_set_field_info(stmt->result, 13, "TRIGGER_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
+	QR_set_num_fields(res, result_cols);
+	QR_set_field_info(res, 0, "PKTABLE_QUALIFIER", PG_TYPE_TEXT, MAX_INFO_STRING);
+	QR_set_field_info(res, 1, "PKTABLE_OWNER", PG_TYPE_TEXT, MAX_INFO_STRING);
+	QR_set_field_info(res, 2, "PKTABLE_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
+	QR_set_field_info(res, 3, "PKCOLUMN_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
+	QR_set_field_info(res, 4, "FKTABLE_QUALIFIER", PG_TYPE_TEXT, MAX_INFO_STRING);
+	QR_set_field_info(res, 5, "FKTABLE_OWNER", PG_TYPE_TEXT, MAX_INFO_STRING);
+	QR_set_field_info(res, 6, "FKTABLE_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
+	QR_set_field_info(res, 7, "FKCOLUMN_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
+	QR_set_field_info(res, 8, "KEY_SEQ", PG_TYPE_INT2, 2);
+	QR_set_field_info(res, 9, "UPDATE_RULE", PG_TYPE_INT2, 2);
+	QR_set_field_info(res, 10, "DELETE_RULE", PG_TYPE_INT2, 2);
+	QR_set_field_info(res, 11, "FK_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
+	QR_set_field_info(res, 12, "PK_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
+	QR_set_field_info(res, 13, "TRIGGER_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
 #if (ODBCVER >= 0x0300)
-	QR_set_field_info(stmt->result, 14, "DEFERRABILITY", PG_TYPE_INT2, 2);
+	QR_set_field_info(res, 14, "DEFERRABILITY", PG_TYPE_INT2, 2);
 #endif   /* ODBCVER >= 0x0300 */
 
 	/*
@@ -3369,7 +3401,7 @@ PGAPI_ForeignKeys(
 				set_tuplefield_int2(&row->tuple[14], defer_type);
 #endif   /* ODBCVER >= 0x0300 */
 
-				QR_add_tuple(stmt->result, row);
+				QR_add_tuple(res, row);
 #ifdef	MULTIBYTE
 				if (fkey_alloced)
 					free(fkey_text);
@@ -3623,7 +3655,7 @@ PGAPI_ForeignKeys(
 				set_tuplefield_int2(&row->tuple[14], defer_type);
 #endif   /* ODBCVER >= 0x0300 */
 
-				QR_add_tuple(stmt->result, row);
+				QR_add_tuple(res, row);
 #ifdef	MULTIBYTE
 				if (pkey_alloced)
 					free(pkey_text);
@@ -3687,10 +3719,13 @@ PGAPI_ProcedureColumns(
 					   SWORD cbColumnName)
 {
 	static char *func = "PGAPI_ProcedureColumns";
+	StatementClass	*stmt = (StatementClass *) hstmt;
 
 	mylog("%s: entering...\n", func);
 
-	SC_log_error(func, "Function not implemented", (StatementClass *) hstmt);
+	stmt->errornumber = STMT_NOT_IMPLEMENTED_ERROR;
+	stmt->errormsg = "not implemented";
+	SC_log_error(func, "Function not implemented", stmt);
 	return SQL_ERROR;
 }
 
@@ -3717,7 +3752,7 @@ PGAPI_Procedures(
 	{
 		stmt->errornumber = STMT_NOT_IMPLEMENTED_ERROR;
 		stmt->errormsg = "Version is too old";
-		SC_log_error(func, "Function not implemented", (StatementClass *) hstmt);
+		SC_log_error(func, "Function not implemented", stmt);
 		return SQL_ERROR;
 	}
 	if (!SC_recycle_statement(stmt))
@@ -3733,16 +3768,13 @@ PGAPI_Procedures(
 		   " case when prorettype = 0 then 1::int2 else 2::int2 end as " "PROCEDURE_TYPE" " from pg_proc");
 	my_strcat(proc_query, " where proname like '%.*s'", szProcName, cbProcName);
 
-	res = CC_send_query(conn, proc_query, NULL);
-	if (!res || QR_aborted(res))
+	if (res = CC_send_query(conn, proc_query, NULL, TRUE), !res)
 	{
-		if (res)
-			QR_Destructor(res);
 		stmt->errornumber = STMT_EXEC_ERROR;
 		stmt->errormsg = "PGAPI_Procedures query error";
 		return SQL_ERROR;
 	}
-	stmt->result = res;
+	SC_set_Result(stmt, res);
 
 	/*
 	 * also, things need to think that this statement is finished so the
@@ -3759,6 +3791,52 @@ PGAPI_Procedures(
 }
 
 
+#define	ACLMAX	8
+#define ALL_PRIVILIGES "arwdRxt"
+static int
+usracl_auth(char *usracl, const char *auth)
+{
+	int	i, j, addcnt = 0;
+
+	for (i = 0; auth[i]; i++)
+	{
+		for (j = 0; j < ACLMAX; j++)
+		{
+			if (usracl[j] == auth[i])
+				break;
+			else if (!usracl[j])
+			{
+				usracl[j]= auth[i];
+				addcnt++;
+				break;
+			}
+		}
+	}
+	return addcnt;
+} 
+static void
+useracl_upd(char (*useracl)[ACLMAX], QResultClass *allures, const char *user, const char *auth)
+{
+	int usercount = QR_get_num_tuples(allures), i, addcnt = 0;
+
+mylog("user=%s auth=%s\n", user, auth);
+	if (user[0])
+		for (i = 0; i < usercount; i++)
+		{
+			if (strcmp(QR_get_value_backend_row(allures, i, 0), user) == 0)
+			{
+				addcnt += usracl_auth(useracl[i], auth);
+				break;
+			}
+		}
+	else
+		for (i = 0; i < usercount; i++)
+		{
+			addcnt += usracl_auth(useracl[i], auth);
+		}
+	mylog("addcnt=%d\n", addcnt);
+}
+
 RETCODE		SQL_API
 PGAPI_TablePrivileges(
 					  HSTMT hstmt,
@@ -3767,13 +3845,24 @@ PGAPI_TablePrivileges(
 					  UCHAR FAR * szTableOwner,
 					  SWORD cbTableOwner,
 					  UCHAR FAR * szTableName,
-					  SWORD cbTableName)
+					  SWORD cbTableName,
+					  UWORD flag)
 {
 	StatementClass *stmt = (StatementClass *) hstmt;
 	static char *func = "PGAPI_TablePrivileges";
+	ConnectionClass *conn = SC_get_conn(stmt);
 	Int2		result_cols;
+	char		proc_query[INFO_INQUIRY_LEN];
+	QResultClass	*res, *allures = NULL;
+	TupleNode	*row;
+	int		tablecount, usercount, i, j, k;
+	BOOL		grpauth, sys, su;
+	char		(*useracl)[ACLMAX], *acl, *user, *delim, *auth;
+	char		*reln, *owner, *priv;
 
 	mylog("%s: entering...\n", func);
+	if (!SC_recycle_statement(stmt))
+		return SQL_ERROR;
 
 	/*
 	 * a statement is actually executed, so we'll have to do this
@@ -3784,16 +3873,187 @@ PGAPI_TablePrivileges(
 
 	/* set the field names */
 	stmt->manual_result = TRUE;
-	stmt->result = QR_Constructor();
-	QR_set_num_fields(stmt->result, result_cols);
-	QR_set_field_info(stmt->result, 0, "TABLE_CAT", PG_TYPE_TEXT, MAX_INFO_STRING);
-	QR_set_field_info(stmt->result, 1, "TABLE_SCHEM", PG_TYPE_TEXT, MAX_INFO_STRING);
-	QR_set_field_info(stmt->result, 2, "TABLE_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
-	QR_set_field_info(stmt->result, 3, "GRANTOR", PG_TYPE_TEXT, MAX_INFO_STRING);
-	QR_set_field_info(stmt->result, 4, "GRANTEE", PG_TYPE_TEXT, MAX_INFO_STRING);
-	QR_set_field_info(stmt->result, 5, "PRIVILEGE", PG_TYPE_TEXT, MAX_INFO_STRING);
-	QR_set_field_info(stmt->result, 6, "IS_GRANTABLE", PG_TYPE_TEXT, MAX_INFO_STRING);
+	res = QR_Constructor();
+	SC_set_Result(stmt, res);
+	QR_set_num_fields(res, result_cols);
+	QR_set_field_info(res, 0, "TABLE_CAT", PG_TYPE_TEXT, MAX_INFO_STRING);
+	QR_set_field_info(res, 1, "TABLE_SCHEM", PG_TYPE_TEXT, MAX_INFO_STRING);
+	QR_set_field_info(res, 2, "TABLE_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
+	QR_set_field_info(res, 3, "GRANTOR", PG_TYPE_TEXT, MAX_INFO_STRING);
+	QR_set_field_info(res, 4, "GRANTEE", PG_TYPE_TEXT, MAX_INFO_STRING);
+	QR_set_field_info(res, 5, "PRIVILEGE", PG_TYPE_TEXT, MAX_INFO_STRING);
+	QR_set_field_info(res, 6, "IS_GRANTABLE", PG_TYPE_TEXT, MAX_INFO_STRING);
 
-	SC_log_error(func, "Function not implemented", (StatementClass *) hstmt);
-	return SQL_ERROR;
+	/*
+	 * also, things need to think that this statement is finished so the
+	 * results can be retrieved.
+	 */
+	stmt->status = STMT_FINISHED;
+	/* set up the current tuple pointer for SQLFetch */
+	stmt->currTuple = -1;
+	stmt->rowset_start = -1;
+	stmt->current_col = -1;
+	strncpy_null(proc_query, "select relname, usename, relacl from pg_class , pg_user where", sizeof(proc_query)); 
+	if ((flag & PODBC_NOT_SEARCH_PATTERN) != 0) 
+		my_strcat(proc_query, " relname = '%.*s' and", szTableName, cbTableName);
+	else
+	{
+		char	esc_table_name[MAX_TABLE_LEN * 2];
+		int	escTbnamelen;
+
+		escTbnamelen = reallyEscapeCatalogEscapes(szTableName, cbTableName, esc_table_name, sizeof(esc_table_name), conn->ccsc);
+		my_strcat(proc_query, " relname like '%.*s' and", esc_table_name, escTbnamelen);
+	}
+	strcat(proc_query, " pg_user.usesysid = relowner"); 
+	if (res = CC_send_query(conn, proc_query, NULL, TRUE), !res)
+	{
+		stmt->errornumber = STMT_EXEC_ERROR;
+		stmt->errormsg = "PGAPI_TablePrivileges query error";
+		return SQL_ERROR;
+	}
+	strncpy_null(proc_query, "select usename, usesysid, usesuper from pg_user", sizeof(proc_query));
+	tablecount = QR_get_num_tuples(res);
+	if (allures = CC_send_query(conn, proc_query, NULL, TRUE), !allures)
+	{
+		QR_Destructor(res);
+		stmt->errornumber = STMT_EXEC_ERROR;
+		stmt->errormsg = "PGAPI_TablePrivileges query error";
+		return SQL_ERROR;
+	}
+	usercount = QR_get_num_tuples(allures);
+	useracl = (char (*)[ACLMAX]) malloc(usercount * sizeof(char [ACLMAX]));
+	for (i = 0; i < tablecount; i++)
+	{ 
+		memset(useracl, 0, usercount * sizeof(char[ACLMAX]));
+		acl = (char *) QR_get_value_backend_row(res, i, 2);
+		if (acl && acl[0] == '{')
+			user = acl + 1;
+		else
+			user = NULL;
+		for (; user && *user;)
+		{
+			grpauth = FALSE;
+			if (user[0] == '"' && strncmp(user + 1, "group ", 6) == 0)
+			{
+				user += 7;
+				grpauth = TRUE;
+			}
+			if (delim = strchr(user, '='), !delim)
+				break;
+			*delim = '\0';
+			auth = delim + 1;
+			if (grpauth)
+			{
+				if (delim = strchr(auth, '"'), delim)
+				{
+					*delim = '\0';
+					delim++;
+				}
+			}
+			else if (delim = strchr(auth, ','), delim)
+				*delim = '\0';
+			else if (delim = strchr(auth, '}'), delim)
+				*delim = '\0';
+			if (grpauth) /* handle group privilege */
+			{
+				QResultClass	*gres;
+				int		i;
+				char	*grolist, *uid, *delm;
+
+				snprintf(proc_query, sizeof(proc_query) - 1, "select grolist from pg_group where groname = '%s'", user);
+				if (gres = CC_send_query(conn, proc_query, NULL, TRUE))
+				{
+					grolist = QR_get_value_backend_row(gres, 0, 0);
+					if (grolist && grolist[0] == '{')
+					{
+						for (uid = grolist + 1; *uid;)
+						{
+							if (delm = strchr(uid, ','), delm)
+								*delm = '\0';
+							else if (delm = strchr(uid, '}'), delm)
+								*delm = '\0';
+mylog("guid=%s\n", uid);
+							for (i = 0; i < usercount; i++)
+							{
+								if (strcmp(QR_get_value_backend_row(allures, i, 1), uid) == 0)
+									useracl_upd(useracl, allures, QR_get_value_backend_row(allures, i, 0), auth);
+							}
+							uid = delm + 1;
+						}
+					}
+					QR_Destructor(gres);
+				}
+			}
+			else
+				useracl_upd(useracl, allures, user, auth);
+			if (!delim)
+				break;
+			user = delim + 1;
+		}
+		reln = QR_get_value_backend_row(res, i, 0);
+		owner = QR_get_value_backend_row(res, i, 1);
+		/* The owner has all privileges */
+		useracl_upd(useracl, allures, owner, ALL_PRIVILIGES);
+		for (j = 0; j < usercount; j++)
+		{
+			user = QR_get_value_backend_row(allures, j, 0);
+			su = (strcmp(QR_get_value_backend_row(allures, j, 2), "t") == 0);
+			sys = (strcmp(user, owner) == 0);
+			/* Super user has all privileges */
+			if (su)
+				useracl_upd(useracl, allures, user, ALL_PRIVILIGES);
+			for (k = 0; k < ACLMAX; k++)
+			{
+				if (!useracl[j][k])
+					break;
+				switch (useracl[j][k])
+				{
+					case 'R': /* rule */
+					case 't': /* trigger */
+						continue;
+				}
+				row = (TupleNode *) malloc(sizeof(TupleNode) + (7 - 1) *sizeof(TupleField));
+				set_tuplefield_string(&row->tuple[0], "");
+				set_tuplefield_string(&row->tuple[1], "");
+				set_tuplefield_string(&row->tuple[2], reln);
+				if (su || sys)
+					set_tuplefield_string(&row->tuple[3], "_SYSTEM");
+				else
+					set_tuplefield_string(&row->tuple[3], owner);
+				mylog("user=%s\n", user);
+				set_tuplefield_string(&row->tuple[4], user);
+				switch (useracl[j][k])
+				{
+					case 'a':
+						priv = "INSERT";
+						break;
+					case 'r':
+						priv = "SELECT";
+						break;
+					case 'w':
+						priv = "UPDATE";
+						break;
+					case 'd':
+						priv = "DELETE";
+						break;
+					case 'x':
+						priv = "REFERENCES";
+						break;
+					default:
+						priv = "";
+				}
+				set_tuplefield_string(&row->tuple[5], priv);
+				/* The owner and the super user are grantable */
+				if (sys || su)
+					set_tuplefield_string(&row->tuple[6], "YES");
+				else
+					set_tuplefield_string(&row->tuple[6], "NO");
+				QR_add_tuple(SC_get_Result(stmt), row);
+			}
+		}
+	}
+	free(useracl);
+	QR_Destructor(res);
+	QR_Destructor(allures); 
+	return SQL_SUCCESS;
 }

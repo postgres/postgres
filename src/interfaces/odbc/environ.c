@@ -78,6 +78,407 @@ PGAPI_FreeEnv(HENV henv)
 }
 
 
+#define	DRVMNGRDIV	511
+/*		Returns the next SQL error information. */
+RETCODE		SQL_API
+PGAPI_StmtError(	HSTMT hstmt,
+			SWORD	RecNumber,
+			UCHAR FAR * szSqlState,
+			SDWORD FAR * pfNativeError,
+			UCHAR FAR * szErrorMsg,
+			SWORD cbErrorMsgMax,
+			SWORD FAR * pcbErrorMsg,
+			UWORD flag)
+{
+	/* CC: return an error of a hstmt  */
+	StatementClass *stmt = (StatementClass *) hstmt;
+	char		*msg;
+	int		status;
+	BOOL		once_again = FALSE,
+			partial_ok = (flag & PODBC_ALLOW_PARTIAL_EXTRACT != 0),
+			clear_str = (flag & PODBC_ERROR_CLEAR != 0);
+	SWORD		msglen, stapos, wrtlen, pcblen;
+
+	mylog("**** PGAPI_StmtError: hstmt=%u <%d>\n", hstmt, cbErrorMsgMax);
+
+	if (cbErrorMsgMax < 0)
+		return SQL_ERROR;
+
+	if (!SC_get_error(stmt, &status, &msg) || NULL == msg || !msg[0])
+	{
+		mylog("SC_Get_error returned nothing.\n");
+		if (NULL != szSqlState)
+			strcpy(szSqlState, "00000");
+		if (NULL != pcbErrorMsg)
+			*pcbErrorMsg = 0;
+		if ((NULL != szErrorMsg) && (cbErrorMsgMax > 0))
+			szErrorMsg[0] = '\0';
+
+		return SQL_NO_DATA_FOUND;
+	}
+	mylog("SC_get_error: status = %d, msg = #%s#\n", status, msg);
+	msglen = (SWORD) strlen(msg);
+	/*
+	 *	Even though an application specifies a larger error message
+	 *	buffer, the driver manager changes it silently.
+	 *	Therefore we divide the error message into ... 
+	 */
+	if (stmt->error_recsize < 0)
+	{
+		if (cbErrorMsgMax > 0)
+			stmt->error_recsize = cbErrorMsgMax - 1; /* apply the first request */
+		else
+			stmt->error_recsize = DRVMNGRDIV;
+	}
+	if (RecNumber < 0)
+	{
+		if (0 == stmt->errorpos)
+			RecNumber = 1;
+		else
+			RecNumber = 2 + (stmt->errorpos - 1) / stmt->error_recsize;
+	}
+	stapos = (RecNumber - 1) * stmt->error_recsize;
+	if (stapos > msglen)
+		return SQL_NO_DATA_FOUND; 
+	pcblen = wrtlen = msglen - stapos;
+	if (pcblen > stmt->error_recsize)
+		pcblen = stmt->error_recsize;
+	if (0 == cbErrorMsgMax)
+		wrtlen = 0; 
+	else if (wrtlen >= cbErrorMsgMax)
+	{
+		if (partial_ok)
+			wrtlen = cbErrorMsgMax - 1;
+		else if (cbErrorMsgMax <= stmt->error_recsize)
+			wrtlen = 0;
+		else 
+			wrtlen = stmt->error_recsize;
+	}
+	if (wrtlen > pcblen)
+		wrtlen = pcblen;
+	if (NULL != pcbErrorMsg)
+		*pcbErrorMsg = pcblen;
+
+	if ((NULL != szErrorMsg) && (cbErrorMsgMax > 0))
+	{
+		memcpy(szErrorMsg, msg + stapos, wrtlen);
+		szErrorMsg[wrtlen] = '\0';
+	}
+
+	if (NULL != pfNativeError)
+		*pfNativeError = status;
+
+	if (NULL != szSqlState)
+
+		switch (status)
+		{
+				/* now determine the SQLSTATE to be returned */
+			case STMT_ROW_VERSION_CHANGED:
+				strcpy(szSqlState, "01001");
+				/* data truncated */
+				break;
+			case STMT_TRUNCATED:
+				strcpy(szSqlState, "01004");
+				/* data truncated */
+				break;
+			case STMT_INFO_ONLY:
+				strcpy(szSqlState, "00000");
+				/* just information that is returned, no error */
+				break;
+			case STMT_BAD_ERROR:
+				strcpy(szSqlState, "08S01");
+				/* communication link failure */
+				break;
+			case STMT_CREATE_TABLE_ERROR:
+				strcpy(szSqlState, "S0001");
+				/* table already exists */
+				break;
+			case STMT_STATUS_ERROR:
+			case STMT_SEQUENCE_ERROR:
+				strcpy(szSqlState, "S1010");
+				/* Function sequence error */
+				break;
+			case STMT_NO_MEMORY_ERROR:
+				strcpy(szSqlState, "S1001");
+				/* memory allocation failure */
+				break;
+			case STMT_COLNUM_ERROR:
+				strcpy(szSqlState, "S1002");
+				/* invalid column number */
+				break;
+			case STMT_NO_STMTSTRING:
+				strcpy(szSqlState, "S1001");
+				/* having no stmtstring is also a malloc problem */
+				break;
+			case STMT_ERROR_TAKEN_FROM_BACKEND:
+				strcpy(szSqlState, "S1000");
+				/* general error */
+				break;
+			case STMT_INTERNAL_ERROR:
+				strcpy(szSqlState, "S1000");
+				/* general error */
+				break;
+			case STMT_ROW_OUT_OF_RANGE:
+				strcpy(szSqlState, "S1107");
+				break;
+
+			case STMT_OPERATION_CANCELLED:
+				strcpy(szSqlState, "S1008");
+				break;
+
+			case STMT_NOT_IMPLEMENTED_ERROR:
+				strcpy(szSqlState, "S1C00");	/* == 'driver not
+													 * capable' */
+				break;
+			case STMT_OPTION_OUT_OF_RANGE_ERROR:
+				strcpy(szSqlState, "S1092");
+				break;
+			case STMT_BAD_PARAMETER_NUMBER_ERROR:
+				strcpy(szSqlState, "S1093");
+				break;
+			case STMT_INVALID_COLUMN_NUMBER_ERROR:
+				strcpy(szSqlState, "S1002");
+				break;
+			case STMT_RESTRICTED_DATA_TYPE_ERROR:
+				strcpy(szSqlState, "07006");
+				break;
+			case STMT_INVALID_CURSOR_STATE_ERROR:
+				strcpy(szSqlState, "24000");
+				break;
+			case STMT_OPTION_VALUE_CHANGED:
+				strcpy(szSqlState, "01S02");
+				break;
+			case STMT_POS_BEFORE_RECORDSET:
+				strcpy(szSqlState, "01S06");
+				break;
+			case STMT_INVALID_CURSOR_NAME:
+				strcpy(szSqlState, "34000");
+				break;
+			case STMT_NO_CURSOR_NAME:
+				strcpy(szSqlState, "S1015");
+				break;
+			case STMT_INVALID_ARGUMENT_NO:
+				strcpy(szSqlState, "S1009");
+				/* invalid argument value */
+				break;
+			case STMT_INVALID_CURSOR_POSITION:
+				strcpy(szSqlState, "S1109");
+				break;
+			case STMT_RETURN_NULL_WITHOUT_INDICATOR:
+				strcpy(szSqlState, "22002");
+				break;
+			case STMT_VALUE_OUT_OF_RANGE:
+				strcpy(szSqlState, "22003");
+				break;
+			case STMT_OPERATION_INVALID:
+				strcpy(szSqlState, "S1011");
+				break;
+			case STMT_INVALID_OPTION_IDENTIFIER:
+				strcpy(szSqlState, "HY092");
+				break;
+			case STMT_EXEC_ERROR:
+			default:
+				strcpy(szSqlState, "S1000");
+				/* also a general error */
+				break;
+		}
+	mylog("	     szSqlState = '%s',len=%d, szError='%s'\n", szSqlState, pcblen, szErrorMsg);
+	if (clear_str)
+	{
+		stmt->errorpos = stapos + wrtlen;
+		if (stmt->errorpos >= msglen)
+			SC_clear_error(stmt);
+	}
+	if (wrtlen == 0)
+		return SQL_SUCCESS_WITH_INFO;
+	else
+		return SQL_SUCCESS;
+}
+
+RETCODE		SQL_API
+PGAPI_ConnectError(	HDBC hdbc,
+			SWORD	RecNumber,
+			UCHAR FAR * szSqlState,
+			SDWORD FAR * pfNativeError,
+			UCHAR FAR * szErrorMsg,
+			SWORD cbErrorMsgMax,
+			SWORD FAR * pcbErrorMsg,
+			UWORD flag)
+{
+	ConnectionClass *conn = (ConnectionClass *) hdbc;
+	char		*msg;
+	int		status;
+	BOOL	once_again = FALSE;
+	SWORD		msglen;
+
+	if (RecNumber != 1)
+		return SQL_NO_DATA_FOUND;
+	if (cbErrorMsgMax < 0)
+		return SQL_ERROR;
+	if (!CC_get_error(conn, &status, &msg) || NULL == msg)
+	{
+		mylog("CC_Get_error returned nothing.\n");
+		if (NULL != szSqlState)
+			strcpy(szSqlState, "00000");
+		if (NULL != pcbErrorMsg)
+			*pcbErrorMsg = 0;
+		if ((NULL != szErrorMsg) && (cbErrorMsgMax > 0))
+			szErrorMsg[0] = '\0';
+
+		return SQL_NO_DATA_FOUND;
+	}
+	mylog("CC_get_error: status = %d, msg = #%s#\n", status, msg);
+
+	msglen = strlen(msg);
+	if (NULL != pcbErrorMsg)
+	{
+		*pcbErrorMsg = msglen;
+		if (cbErrorMsgMax == 0)
+			once_again = TRUE;
+		else if (msglen >= cbErrorMsgMax)
+			*pcbErrorMsg = cbErrorMsgMax - 1;
+	}
+	if ((NULL != szErrorMsg) && (cbErrorMsgMax > 0))
+		strncpy_null(szErrorMsg, msg, cbErrorMsgMax);
+	if (NULL != pfNativeError)
+		*pfNativeError = status;
+
+	if (NULL != szSqlState)
+		switch (status)
+		{
+			case STMT_OPTION_VALUE_CHANGED:
+			case CONN_OPTION_VALUE_CHANGED:
+				strcpy(szSqlState, "01S02");
+				break;
+			case STMT_TRUNCATED:
+			case CONN_TRUNCATED:
+				strcpy(szSqlState, "01004");
+				/* data truncated */
+				break;
+			case CONN_INIREAD_ERROR:
+				strcpy(szSqlState, "IM002");
+				/* data source not found */
+				break;
+			case CONN_OPENDB_ERROR:
+				strcpy(szSqlState, "08001");
+				/* unable to connect to data source */
+				break;
+			case CONN_INVALID_AUTHENTICATION:
+			case CONN_AUTH_TYPE_UNSUPPORTED:
+				strcpy(szSqlState, "28000");
+				break;
+			case CONN_STMT_ALLOC_ERROR:
+				strcpy(szSqlState, "S1001");
+				/* memory allocation failure */
+				break;
+			case CONN_IN_USE:
+				strcpy(szSqlState, "S1000");
+				/* general error */
+				break;
+			case CONN_UNSUPPORTED_OPTION:
+				strcpy(szSqlState, "IM001");
+				/* driver does not support this function */
+			case CONN_INVALID_ARGUMENT_NO:
+				strcpy(szSqlState, "S1009");
+				/* invalid argument value */
+				break;
+			case CONN_TRANSACT_IN_PROGRES:
+				strcpy(szSqlState, "S1010");
+
+				/*
+				 * when the user tries to switch commit mode in a
+				 * transaction
+				 */
+				/* -> function sequence error */
+				break;
+			case CONN_NO_MEMORY_ERROR:
+				strcpy(szSqlState, "S1001");
+				break;
+			case CONN_NOT_IMPLEMENTED_ERROR:
+			case STMT_NOT_IMPLEMENTED_ERROR:
+				strcpy(szSqlState, "S1C00");
+				break;
+			case STMT_RETURN_NULL_WITHOUT_INDICATOR:
+				strcpy(szSqlState, "22002");
+				break;
+			case CONN_VALUE_OUT_OF_RANGE:
+			case STMT_VALUE_OUT_OF_RANGE:
+				strcpy(szSqlState, "22003");
+				break;
+			default:
+				strcpy(szSqlState, "S1000");
+				/* general error */
+				break;
+		}
+
+	if (once_again)
+	{
+		conn->errornumber = status;
+		return SQL_SUCCESS_WITH_INFO;
+	}
+	else
+		return SQL_SUCCESS;
+}
+
+RETCODE		SQL_API
+PGAPI_EnvError(		HENV henv,
+			SWORD	RecNumber,
+			UCHAR FAR * szSqlState,
+			SDWORD FAR * pfNativeError,
+			UCHAR FAR * szErrorMsg,
+			SWORD cbErrorMsgMax,
+			SWORD FAR * pcbErrorMsg,
+			UWORD flag)
+{
+	EnvironmentClass *env = (EnvironmentClass *) henv;
+	char		*msg;
+	int		status;
+
+	if (RecNumber != 1)
+		return SQL_NO_DATA_FOUND;
+	if (cbErrorMsgMax < 0)
+		return SQL_ERROR;
+	if (!EN_get_error(env, &status, &msg) || NULL == msg)
+	{
+			mylog("EN_get_error: status = %d, msg = #%s#\n", status, msg);
+		
+		if (NULL != szSqlState)
+			strcpy(szSqlState, "00000");
+		if (NULL != pcbErrorMsg)
+			*pcbErrorMsg = 0;
+		if ((NULL != szErrorMsg) && (cbErrorMsgMax > 0))
+			szErrorMsg[0] = '\0';
+
+		return SQL_NO_DATA_FOUND;
+	}
+	mylog("EN_get_error: status = %d, msg = #%s#\n", status, msg);
+
+	if (NULL != pcbErrorMsg)
+		*pcbErrorMsg = (SWORD) strlen(msg);
+	if ((NULL != szErrorMsg) && (cbErrorMsgMax > 0))
+		strncpy_null(szErrorMsg, msg, cbErrorMsgMax);
+	if (NULL != pfNativeError)
+		*pfNativeError = status;
+
+	if (szSqlState)
+	{
+		switch (status)
+		{
+			case ENV_ALLOC_ERROR:
+				/* memory allocation failure */
+				strcpy(szSqlState, "S1001");
+				break;
+			default:
+				strcpy(szSqlState, "S1000");
+				/* general error */
+				break;
+		}
+	}
+
+	return SQL_SUCCESS;
+}
+
+
 /*		Returns the next SQL error information. */
 RETCODE		SQL_API
 PGAPI_Error(
@@ -90,395 +491,36 @@ PGAPI_Error(
 			SWORD cbErrorMsgMax,
 			SWORD FAR * pcbErrorMsg)
 {
-	char	   *msg;
-	int			status;
-	BOOL		once_again = FALSE;
-	SWORD		msglen;
+	RETCODE	ret;
+	UWORD	flag = PODBC_ALLOW_PARTIAL_EXTRACT | PODBC_ERROR_CLEAR;
 
-	mylog("**** PGAPI_Error: henv=%u, hdbc=%u, hstmt=%u <%d>\n", henv, hdbc, hstmt, cbErrorMsgMax);
+	mylog("**** PGAPI_Error: henv=%u, hdbc=%u hstmt=%d\n", henv, hdbc, hstmt);
 
 	if (cbErrorMsgMax < 0)
 		return SQL_ERROR;
 	if (SQL_NULL_HSTMT != hstmt)
-	{
-		/* CC: return an error of a hstmt  */
-		StatementClass *stmt = (StatementClass *) hstmt;
-
-		if (SC_get_error(stmt, &status, &msg))
-		{
-			mylog("SC_get_error: status = %d, msg = #%s#\n", status, msg);
-			if (NULL == msg)
-			{
-				if (NULL != szSqlState)
-					strcpy(szSqlState, "00000");
-				if (NULL != pcbErrorMsg)
-					*pcbErrorMsg = 0;
-				if ((NULL != szErrorMsg) && (cbErrorMsgMax > 0))
-					szErrorMsg[0] = '\0';
-
-				return SQL_NO_DATA_FOUND;
-			}
-			msglen = (SWORD) strlen(msg);
-			if (NULL != pcbErrorMsg)
-			{
-				*pcbErrorMsg = msglen;
-				if (cbErrorMsgMax == 0)
-					once_again = TRUE;
-				else if (msglen >= cbErrorMsgMax)
-				{
-					once_again = TRUE;
-					*pcbErrorMsg = cbErrorMsgMax - 1;
-				}
-			}
-
-			if ((NULL != szErrorMsg) && (cbErrorMsgMax > 0))
-				strncpy_null(szErrorMsg, msg, cbErrorMsgMax);
-
-			if (NULL != pfNativeError)
-				*pfNativeError = status;
-
-			if (NULL != szSqlState)
-
-				switch (status)
-				{
-						/* now determine the SQLSTATE to be returned */
-					case STMT_ROW_VERSION_CHANGED:
-						strcpy(szSqlState, "01001");
-						/* data truncated */
-						break;
-					case STMT_TRUNCATED:
-						strcpy(szSqlState, "01004");
-						/* data truncated */
-						break;
-					case STMT_INFO_ONLY:
-						strcpy(szSqlState, "00000");
-						/* just information that is returned, no error */
-						break;
-					case STMT_BAD_ERROR:
-						strcpy(szSqlState, "08S01");
-						/* communication link failure */
-						break;
-					case STMT_CREATE_TABLE_ERROR:
-						strcpy(szSqlState, "S0001");
-						/* table already exists */
-						break;
-					case STMT_STATUS_ERROR:
-					case STMT_SEQUENCE_ERROR:
-						strcpy(szSqlState, "S1010");
-						/* Function sequence error */
-						break;
-					case STMT_NO_MEMORY_ERROR:
-						strcpy(szSqlState, "S1001");
-						/* memory allocation failure */
-						break;
-					case STMT_COLNUM_ERROR:
-						strcpy(szSqlState, "S1002");
-						/* invalid column number */
-						break;
-					case STMT_NO_STMTSTRING:
-						strcpy(szSqlState, "S1001");
-						/* having no stmtstring is also a malloc problem */
-						break;
-					case STMT_ERROR_TAKEN_FROM_BACKEND:
-						strcpy(szSqlState, "S1000");
-						/* general error */
-						break;
-					case STMT_INTERNAL_ERROR:
-						strcpy(szSqlState, "S1000");
-						/* general error */
-						break;
-					case STMT_ROW_OUT_OF_RANGE:
-						strcpy(szSqlState, "S1107");
-						break;
-
-					case STMT_OPERATION_CANCELLED:
-						strcpy(szSqlState, "S1008");
-						break;
-
-					case STMT_NOT_IMPLEMENTED_ERROR:
-						strcpy(szSqlState, "S1C00");	/* == 'driver not
-														 * capable' */
-						break;
-					case STMT_OPTION_OUT_OF_RANGE_ERROR:
-						strcpy(szSqlState, "S1092");
-						break;
-					case STMT_BAD_PARAMETER_NUMBER_ERROR:
-						strcpy(szSqlState, "S1093");
-						break;
-					case STMT_INVALID_COLUMN_NUMBER_ERROR:
-						strcpy(szSqlState, "S1002");
-						break;
-					case STMT_RESTRICTED_DATA_TYPE_ERROR:
-						strcpy(szSqlState, "07006");
-						break;
-					case STMT_INVALID_CURSOR_STATE_ERROR:
-						strcpy(szSqlState, "24000");
-						break;
-					case STMT_OPTION_VALUE_CHANGED:
-						strcpy(szSqlState, "01S02");
-						break;
-					case STMT_POS_BEFORE_RECORDSET:
-						strcpy(szSqlState, "01S06");
-						break;
-					case STMT_INVALID_CURSOR_NAME:
-						strcpy(szSqlState, "34000");
-						break;
-					case STMT_NO_CURSOR_NAME:
-						strcpy(szSqlState, "S1015");
-						break;
-					case STMT_INVALID_ARGUMENT_NO:
-						strcpy(szSqlState, "S1009");
-						/* invalid argument value */
-						break;
-					case STMT_INVALID_CURSOR_POSITION:
-						strcpy(szSqlState, "S1109");
-						break;
-					case STMT_RETURN_NULL_WITHOUT_INDICATOR:
-						strcpy(szSqlState, "22002");
-						break;
-					case STMT_VALUE_OUT_OF_RANGE:
-						strcpy(szSqlState, "22003");
-						break;
-					case STMT_OPERATION_INVALID:
-						strcpy(szSqlState, "S1011");
-						break;
-					case STMT_INVALID_OPTION_IDENTIFIER:
-						strcpy(szSqlState, "HY092");
-						break;
-					case STMT_EXEC_ERROR:
-					default:
-						strcpy(szSqlState, "S1000");
-						/* also a general error */
-						break;
-				}
-			mylog("       szSqlState = '%s', szError='%s'\n", szSqlState, szErrorMsg);
-		}
-		else
-		{
-			if (NULL != szSqlState)
-				strcpy(szSqlState, "00000");
-			if (NULL != pcbErrorMsg)
-				*pcbErrorMsg = 0;
-			if ((NULL != szErrorMsg) && (cbErrorMsgMax > 0))
-				szErrorMsg[0] = '\0';
-
-			mylog("       returning NO_DATA_FOUND\n");
-
-			return SQL_NO_DATA_FOUND;
-		}
-
-		if (once_again)
-		{
-			int			outlen;
-
-			stmt->errornumber = status;
-			if (cbErrorMsgMax > 0)
-				outlen = *pcbErrorMsg;
-			else
-				outlen = 0;
-			if (!stmt->errormsg_malloced || !stmt->errormsg)
-			{
-				stmt->errormsg = malloc(msglen - outlen + 1);
-				stmt->errormsg_malloced = TRUE;
-			}
-			memmove(stmt->errormsg, msg + outlen, msglen - outlen + 1);
-		}
-		else if (stmt->errormsg_malloced)
-			SC_clear_error(stmt);
-		if (cbErrorMsgMax == 0)
-			return SQL_SUCCESS_WITH_INFO;
-		else
-			return SQL_SUCCESS;
-	}
+		ret = PGAPI_StmtError(hstmt, -1, szSqlState, pfNativeError,
+			 szErrorMsg, cbErrorMsgMax, pcbErrorMsg, flag);
 	else if (SQL_NULL_HDBC != hdbc)
+		ret = PGAPI_ConnectError(hdbc, -1, szSqlState, pfNativeError,
+			 szErrorMsg, cbErrorMsgMax, pcbErrorMsg, flag);
+	else if (SQL_NULL_HENV != hdbc)
+		ret = PGAPI_EnvError(henv, -1, szSqlState, pfNativeError,
+			 szErrorMsg, cbErrorMsgMax, pcbErrorMsg, flag);
+	else
 	{
-		ConnectionClass *conn = (ConnectionClass *) hdbc;
+		if (NULL != szSqlState)
+			strcpy(szSqlState, "00000");
+		if (NULL != pcbErrorMsg)
+			*pcbErrorMsg = 0;
+		if ((NULL != szErrorMsg) && (cbErrorMsgMax > 0))
+			szErrorMsg[0] = '\0';
 
-		mylog("calling CC_get_error\n");
-		if (CC_get_error(conn, &status, &msg))
-		{
-			mylog("CC_get_error: status = %d, msg = #%s#\n", status, msg);
-			if (NULL == msg)
-			{
-				if (NULL != szSqlState)
-					strcpy(szSqlState, "00000");
-				if (NULL != pcbErrorMsg)
-					*pcbErrorMsg = 0;
-				if ((NULL != szErrorMsg) && (cbErrorMsgMax > 0))
-					szErrorMsg[0] = '\0';
-
-				return SQL_NO_DATA_FOUND;
-			}
-
-			msglen = strlen(msg);
-			if (NULL != pcbErrorMsg)
-			{
-				*pcbErrorMsg = msglen;
-				if (cbErrorMsgMax == 0)
-					once_again = TRUE;
-				else if (msglen >= cbErrorMsgMax)
-					*pcbErrorMsg = cbErrorMsgMax - 1;
-			}
-			if ((NULL != szErrorMsg) && (cbErrorMsgMax > 0))
-				strncpy_null(szErrorMsg, msg, cbErrorMsgMax);
-			if (NULL != pfNativeError)
-				*pfNativeError = status;
-
-			if (NULL != szSqlState)
-				switch (status)
-				{
-					case STMT_OPTION_VALUE_CHANGED:
-					case CONN_OPTION_VALUE_CHANGED:
-						strcpy(szSqlState, "01S02");
-						break;
-					case STMT_TRUNCATED:
-					case CONN_TRUNCATED:
-						strcpy(szSqlState, "01004");
-						/* data truncated */
-						break;
-					case CONN_INIREAD_ERROR:
-						strcpy(szSqlState, "IM002");
-						/* data source not found */
-						break;
-					case CONN_OPENDB_ERROR:
-						strcpy(szSqlState, "08001");
-						/* unable to connect to data source */
-						break;
-					case CONN_INVALID_AUTHENTICATION:
-					case CONN_AUTH_TYPE_UNSUPPORTED:
-						strcpy(szSqlState, "28000");
-						break;
-					case CONN_STMT_ALLOC_ERROR:
-						strcpy(szSqlState, "S1001");
-						/* memory allocation failure */
-						break;
-					case CONN_IN_USE:
-						strcpy(szSqlState, "S1000");
-						/* general error */
-						break;
-					case CONN_UNSUPPORTED_OPTION:
-						strcpy(szSqlState, "IM001");
-						/* driver does not support this function */
-					case CONN_INVALID_ARGUMENT_NO:
-						strcpy(szSqlState, "S1009");
-						/* invalid argument value */
-						break;
-					case CONN_TRANSACT_IN_PROGRES:
-						strcpy(szSqlState, "S1010");
-
-						/*
-						 * when the user tries to switch commit mode in a
-						 * transaction
-						 */
-						/* -> function sequence error */
-						break;
-					case CONN_NO_MEMORY_ERROR:
-						strcpy(szSqlState, "S1001");
-						break;
-					case CONN_NOT_IMPLEMENTED_ERROR:
-					case STMT_NOT_IMPLEMENTED_ERROR:
-						strcpy(szSqlState, "S1C00");
-						break;
-					case STMT_RETURN_NULL_WITHOUT_INDICATOR:
-						strcpy(szSqlState, "22002");
-						break;
-					case CONN_VALUE_OUT_OF_RANGE:
-					case STMT_VALUE_OUT_OF_RANGE:
-						strcpy(szSqlState, "22003");
-						break;
-					default:
-						strcpy(szSqlState, "S1000");
-						/* general error */
-						break;
-				}
-		}
-		else
-		{
-			mylog("CC_Get_error returned nothing.\n");
-			if (NULL != szSqlState)
-				strcpy(szSqlState, "00000");
-			if (NULL != pcbErrorMsg)
-				*pcbErrorMsg = 0;
-			if ((NULL != szErrorMsg) && (cbErrorMsgMax > 0))
-				szErrorMsg[0] = '\0';
-
-			return SQL_NO_DATA_FOUND;
-		}
-
-		if (once_again)
-		{
-			conn->errornumber = status;
-			return SQL_SUCCESS_WITH_INFO;
-		}
-		else
-			return SQL_SUCCESS;
+		ret = SQL_NO_DATA_FOUND;
 	}
-	else if (SQL_NULL_HENV != henv)
-	{
-		EnvironmentClass *env = (EnvironmentClass *) henv;
-
-		if (EN_get_error(env, &status, &msg))
-		{
-			mylog("EN_get_error: status = %d, msg = #%s#\n", status, msg);
-			if (NULL == msg)
-			{
-				if (NULL != szSqlState)
-					strcpy(szSqlState, "00000");
-				if (NULL != pcbErrorMsg)
-					*pcbErrorMsg = 0;
-				if ((NULL != szErrorMsg) && (cbErrorMsgMax > 0))
-					szErrorMsg[0] = '\0';
-
-				return SQL_NO_DATA_FOUND;
-			}
-
-			if (NULL != pcbErrorMsg)
-				*pcbErrorMsg = (SWORD) strlen(msg);
-			if ((NULL != szErrorMsg) && (cbErrorMsgMax > 0))
-				strncpy_null(szErrorMsg, msg, cbErrorMsgMax);
-			if (NULL != pfNativeError)
-				*pfNativeError = status;
-
-			if (szSqlState)
-			{
-				switch (status)
-				{
-					case ENV_ALLOC_ERROR:
-						/* memory allocation failure */
-						strcpy(szSqlState, "S1001");
-						break;
-					default:
-						strcpy(szSqlState, "S1000");
-						/* general error */
-						break;
-				}
-			}
-		}
-		else
-		{
-			if (NULL != szSqlState)
-				strcpy(szSqlState, "00000");
-			if (NULL != pcbErrorMsg)
-				*pcbErrorMsg = 0;
-			if ((NULL != szErrorMsg) && (cbErrorMsgMax > 0))
-				szErrorMsg[0] = '\0';
-
-			return SQL_NO_DATA_FOUND;
-		}
-
-		return SQL_SUCCESS;
-	}
-
-	if (NULL != szSqlState)
-		strcpy(szSqlState, "00000");
-	if (NULL != pcbErrorMsg)
-		*pcbErrorMsg = 0;
-	if ((NULL != szErrorMsg) && (cbErrorMsgMax > 0))
-		szErrorMsg[0] = '\0';
-
-	return SQL_NO_DATA_FOUND;
+	mylog("**** PGAPI_Error exit code=%d\n", ret);
+	return ret;
 }
-
 
 /*
  * EnvironmentClass implementation
@@ -493,6 +535,7 @@ EN_Constructor(void)
 	{
 		rv->errormsg = 0;
 		rv->errornumber = 0;
+		rv->flag = 0;
 	}
 
 	return rv;

@@ -267,6 +267,7 @@ PGAPI_Execute(
 	if (stmt->status == STMT_FINISHED)
 	{
 		mylog("%s: recycling statement (should have been done by app)...\n", func);
+/******** Is this really NEEDED ? ******/
 		SC_recycle_statement(stmt);
 	}
 
@@ -291,6 +292,7 @@ PGAPI_Execute(
 	{
 		if (stmt->options.param_processed_ptr)
 			*stmt->options.param_processed_ptr = 0;
+		SC_recycle_statement(stmt);
 	}
 
 next_param_row:
@@ -434,26 +436,24 @@ next_param_row:
 		}
 		/* we are now in a transaction */
 		CC_set_in_trans(conn);
-		stmt->result = res = CC_send_query(conn, stmt->stmt_with_params, NULL);
-		if (!res || QR_aborted(res))
+		res = CC_send_query(conn, stmt->stmt_with_params, NULL, TRUE);
+		if (!res)
 		{
 			CC_abort(conn);
 			stmt->errornumber = STMT_EXEC_ERROR;
 			stmt->errormsg = "Handle prepare error";
 			return SQL_ERROR;
 		}
-		else
+		SC_set_Result(stmt, res);
+		if (CC_is_in_autocommit(conn))
 		{
-			if (CC_is_in_autocommit(conn))
-			{
-				if (issued_begin)
-					CC_commit(conn);
-				else if (!in_trans && begin_included)
-					CC_set_no_trans(conn);
-			}
-			stmt->status = STMT_FINISHED;
-			return SQL_SUCCESS;
+			if (issued_begin)
+				CC_commit(conn);
+			else if (!in_trans && begin_included)
+				CC_set_no_trans(conn);
 		}
+		stmt->status = STMT_FINISHED;
+		return SQL_SUCCESS;
 	}
 	else
 		return SQL_SUCCESS;
@@ -518,7 +518,7 @@ PGAPI_Transact(
 	{
 		mylog("PGAPI_Transact: sending on conn %d '%s'\n", conn, stmt_string);
 
-		res = CC_send_query(conn, stmt_string, NULL);
+		res = CC_send_query(conn, stmt_string, NULL, TRUE);
 		CC_set_no_trans(conn);
 
 		if (!res)
@@ -721,7 +721,7 @@ PGAPI_ParamData(
 		/* commit transaction if needed */
 		if (!ci->drivers.use_declarefetch && CC_is_in_autocommit(stmt->hdbc))
 		{
-			if (!CC_commit(stmt->hdbc))
+			if (CC_commit(stmt->hdbc))
 			{
 				stmt->errormsg = "Could not commit (in-line) a transaction";
 				stmt->errornumber = STMT_EXEC_ERROR;
@@ -902,6 +902,14 @@ PGAPI_PutData(
 		}
 		else
 		{
+			Int2		ctype = current_param->CType;
+			if (ctype == SQL_C_DEFAULT)
+				ctype = sqltype_to_default_ctype(current_param->SQLType);
+
+#ifdef	UNICODE_SUPPORT
+			if (SQL_NTS == cbValue && SQL_C_WCHAR == ctype)
+				cbValue = 2 * ucs2strlen((SQLWCHAR *) rgbValue);
+#endif /* UNICODE_SUPPORT */
 			/* for handling fields */
 			if (cbValue == SQL_NTS)
 			{
@@ -916,11 +924,11 @@ PGAPI_PutData(
 			}
 			else
 			{
-				Int2		ctype = current_param->CType;
-
-				if (ctype == SQL_C_DEFAULT)
-					ctype = sqltype_to_default_ctype(current_param->SQLType);
+#ifdef	UNICODE_SUPPORT
+				if (ctype == SQL_C_CHAR || ctype == SQL_C_BINARY || ctype == SQL_C_WCHAR)
+#else
 				if (ctype == SQL_C_CHAR || ctype == SQL_C_BINARY)
+#endif /* UNICODE_SUPPORT */
 				{
 					current_param->EXEC_buffer = malloc(cbValue + 1);
 					if (!current_param->EXEC_buffer)
@@ -965,31 +973,31 @@ PGAPI_PutData(
 		}
 		else
 		{
+			Int2	ctype = current_param->CType;
+
+			if (ctype == SQL_C_DEFAULT)
+				ctype = sqltype_to_default_ctype(current_param->SQLType);
 			buffer = current_param->EXEC_buffer;
-
-			if (cbValue == SQL_NTS)
+			if (old_pos = *current_param->EXEC_used, SQL_NTS == old_pos)
 			{
-				buffer = realloc(buffer, strlen(buffer) + strlen(rgbValue) + 1);
-				if (!buffer)
-				{
-					stmt->errornumber = STMT_NO_MEMORY_ERROR;
-					stmt->errormsg = "Out of memory in PGAPI_PutData (3)";
-					SC_log_error(func, "", stmt);
-					return SQL_ERROR;
-				}
-				strcat(buffer, rgbValue);
-
-				mylog("       cbValue = SQL_NTS: strlen(buffer) = %d\n", strlen(buffer));
-
-				*current_param->EXEC_used = cbValue;
-
-				/* reassign buffer incase realloc moved it */
-				current_param->EXEC_buffer = buffer;
+#ifdef	UNICODE_SUPPORT
+				if (SQL_C_WCHAR == ctype)
+					old_pos = 2 * ucs2strlen((SQLWCHAR *) buffer);
+				else
+#endif /* UNICODE_SUPPORT */
+				old_pos = strlen(buffer);
 			}
-			else if (cbValue > 0)
+			if (SQL_NTS == cbValue)
 			{
-				old_pos = *current_param->EXEC_used;
-
+#ifdef	UNICODE_SUPPORT
+				if (SQL_C_WCHAR == ctype)
+					cbValue = 2 * ucs2strlen((SQLWCHAR *) rgbValue);
+				else
+#endif /* UNICODE_SUPPORT */
+				cbValue = strlen(rgbValue);
+			}
+			if (cbValue > 0)
+			{
 				*current_param->EXEC_used += cbValue;
 
 				mylog("        cbValue = %d, old_pos = %d, *used = %d\n", cbValue, old_pos, *current_param->EXEC_used);

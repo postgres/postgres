@@ -85,22 +85,37 @@ RETCODE SQL_API	SQLGetDiagRecW(SWORD fHandleType,
 		SQLSMALLINT	*pcbErrorMsg)
 {
 	RETCODE	ret;
-        SWORD   tlen;
-        char    *qst = NULL, *mtxt = NULL;
+        SWORD   buflen, tlen;
+        char    *qstr = NULL, *mtxt = NULL;
 
 	mylog("[SQLGetDiagRecW]");
         if (szSqlState)
-                qst = malloc(8);
-        if (szErrorMsg)
-                mtxt = malloc(cbErrorMsgMax);
-        ret = PGAPI_GetDiagRec(fHandleType, handle, iRecord, qst,
-                pfNativeError, mtxt, cbErrorMsgMax, &tlen);
-        if (qst)
-                utf8_to_ucs2(qst, strlen(qst), szSqlState, 5);
-	if (pcbErrorMsg)
-        	*pcbErrorMsg = utf8_to_ucs2(mtxt, tlen, szErrorMsg, cbErrorMsgMax);
-        free(qst);
-        free(mtxt);
+                qstr = malloc(8);
+	buflen = 0;
+        if (szErrorMsg && cbErrorMsgMax > 0)
+	{
+		buflen = cbErrorMsgMax;
+                mtxt = malloc(buflen);
+	}
+        ret = PGAPI_GetDiagRec(fHandleType, handle, iRecord, qstr,
+                pfNativeError, mtxt, buflen, &tlen);
+	if (ret == SQL_SUCCESS || ret == SQL_SUCCESS_WITH_INFO)
+	{
+        	if (qstr)
+                	utf8_to_ucs2(qstr, strlen(qstr), szSqlState, 6);
+		if (mtxt && tlen <= cbErrorMsgMax)
+		{
+        		tlen = utf8_to_ucs2(mtxt, tlen, szErrorMsg, cbErrorMsgMax);
+			if (tlen >= cbErrorMsgMax)
+				ret = SQL_SUCCESS_WITH_INFO;
+		}
+		if (pcbErrorMsg)
+        		*pcbErrorMsg = tlen;
+	}
+        if (qstr);
+        	free(qstr);
+	if (mtxt)
+        	free(mtxt);
         return ret;
 }
 

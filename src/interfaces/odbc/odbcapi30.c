@@ -144,9 +144,7 @@ SQLEndTran(SQLSMALLINT HandleType, SQLHANDLE Handle,
 		default:
 			break;
 	}
-	return SQL_ERROR;			/* SQLSTATE HY092 ("Invalid
-								 * attribute/option identifier") */
-
+	return SQL_ERROR;
 }
 
 /*	SQLExtendedFetch -> SQLFetchScroll */
@@ -246,39 +244,9 @@ SQLGetDiagRec(SQLSMALLINT HandleType, SQLHANDLE Handle,
 			  SQLINTEGER *NativeError, SQLCHAR *MessageText,
 			  SQLSMALLINT BufferLength, SQLSMALLINT *TextLength)
 {
-	RETCODE		ret;
-
 	mylog("[[SQLGetDiagRec]]\n");
-	switch (HandleType)
-	{
-		case SQL_HANDLE_ENV:
-			ret = PGAPI_Error(Handle, NULL, NULL, Sqlstate, NativeError,
-							  MessageText, BufferLength, TextLength);
-			break;
-		case SQL_HANDLE_DBC:
-			ret = PGAPI_Error(NULL, Handle, NULL, Sqlstate, NativeError,
-							  MessageText, BufferLength, TextLength);
-			break;
-		case SQL_HANDLE_STMT:
-			ret = PGAPI_Error(NULL, NULL, Handle, Sqlstate, NativeError,
-							  MessageText, BufferLength, TextLength);
-			break;
-		default:
-			ret = SQL_ERROR;
-	}
-	if (ret == SQL_SUCCESS_WITH_INFO &&
-		BufferLength == 0 &&
-		*TextLength)
-	{
-		SQLSMALLINT BufferLength = *TextLength + 4;
-		SQLCHAR    *MessageText = malloc(BufferLength);
-
-		ret = SQLGetDiagRec(HandleType, Handle, RecNumber, Sqlstate,
-							NativeError, MessageText, BufferLength,
-							TextLength);
-		free(MessageText);
-	}
-	return ret;
+	return PGAPI_GetDiagRec(HandleType, Handle, RecNumber, Sqlstate,
+			NativeError, MessageText, BufferLength, TextLength);
 }
 
 /*	new function */
@@ -299,7 +267,7 @@ SQLGetEnvAttr(HENV EnvironmentHandle,
 			*((unsigned int *) Value) = SQL_CP_RELAXED_MATCH;
 			break;
 		case SQL_ATTR_ODBC_VERSION:
-			*((unsigned int *) Value) = SQL_OV_ODBC3;
+			*((unsigned int *) Value) = EN_is_odbc2(env) ? SQL_OV_ODBC2 : SQL_OV_ODBC3;
 			break;
 		case SQL_ATTR_OUTPUT_NTS:
 			*((unsigned int *) Value) = SQL_TRUE;
@@ -456,6 +424,7 @@ ARDSetField(StatementClass *stmt, SQLSMALLINT RecNumber,
 		SQLSMALLINT FieldIdentifier, PTR Value, SQLINTEGER BufferLength)
 {
 	RETCODE		ret = SQL_SUCCESS;
+	PTR		tptr;
 	switch (FieldIdentifier)
 	{
 		case SQL_DESC_ARRAY_SIZE:
@@ -470,8 +439,34 @@ ARDSetField(StatementClass *stmt, SQLSMALLINT RecNumber,
 		case SQL_DESC_BIND_TYPE:
 			stmt->options.bind_size = (SQLUINTEGER) Value;
 			break;
+
+		case SQL_DESC_DATA_PTR:
+			if (!RecNumber)
+				stmt->bookmark.buffer = Value;
+			else
+				stmt->bindings[RecNumber - 1].buffer = Value;
+			break;
+		case SQL_DESC_INDICATOR_PTR:
+			if (!RecNumber)
+				tptr = stmt->bookmark.used;
+			else
+				tptr = stmt->bindings[RecNumber - 1].used;
+			if (Value != tptr)
+			{
+				ret = SQL_ERROR;
+				stmt->errornumber = STMT_INVALID_OPTION_IDENTIFIER; 
+				stmt->errormsg = "INDICATOR != OCTET_LENGTH_PTR"; 
+			}
+			break;
+		case SQL_DESC_OCTET_LENGTH_PTR:
+			if (!RecNumber)
+				stmt->bookmark.used = Value;
+			else
+				stmt->bindings[RecNumber - 1].used = Value;
+			break;
 		default:ret = SQL_ERROR;
 			stmt->errornumber = STMT_INVALID_OPTION_IDENTIFIER; 
+			stmt->errormsg = "not implemedted yet"; 
 	}
 	return ret;
 }
@@ -494,6 +489,26 @@ APDSetField(StatementClass *stmt, SQLSMALLINT RecNumber,
 			break;
 		case SQL_DESC_BIND_TYPE:
 			stmt->options.param_bind_type = (SQLUINTEGER) Value;
+			break;
+
+		case SQL_DESC_DATA_PTR:
+			if (stmt->parameters_allocated < RecNumber)
+				PGAPI_BindParameter(stmt, RecNumber, 0, 0, 0, 0, 0, 0, 0, 0);
+			stmt->parameters[RecNumber - 1].buffer = Value;
+			break;
+		case SQL_DESC_INDICATOR_PTR:
+			if (stmt->parameters_allocated < RecNumber ||
+			    Value != stmt->parameters[RecNumber - 1].used)
+			{
+				ret = SQL_ERROR;
+				stmt->errornumber = STMT_INVALID_OPTION_IDENTIFIER; 
+				stmt->errormsg = "INDICATOR != OCTET_LENGTH_PTR"; 
+			}
+			break;
+		case SQL_DESC_OCTET_LENGTH_PTR:
+			if (stmt->parameters_allocated < RecNumber)
+				PGAPI_BindParameter(stmt, RecNumber, 0, 0, 0, 0, 0, 0, 0, 0);
+			stmt->parameters[RecNumber - 1].used = Value;
 			break;
 		default:ret = SQL_ERROR;
 			stmt->errornumber = STMT_INVALID_OPTION_IDENTIFIER; 
@@ -549,6 +564,8 @@ SQLSetDescField(SQLHDESC DescriptorHandle,
 	HSTMT		hstmt;
 	SQLUINTEGER	descType;
 	StatementClass *stmt;
+	static const char *func = "SQLSetDescField";
+
 	mylog("[[SQLSetDescField]] h=%u rec=%d field=%d val=%x\n", DescriptorHandle, RecNumber, FieldIdentifier, Value);
 	hstmt = statementHandleFromDescHandle(DescriptorHandle, &descType);
 	mylog("stmt=%x type=%d\n", hstmt, descType);
@@ -569,8 +586,10 @@ SQLSetDescField(SQLHDESC DescriptorHandle,
 			break;
 		default:ret = SQL_ERROR;
 			stmt->errornumber = STMT_INTERNAL_ERROR; 
-			mylog("Error not implemented\n");
+			stmt->errormsg = "Error not implemented";
 	}
+	if (ret == SQL_ERROR)
+		SC_log_error(func, "", stmt);
 	return ret;
 }
 
@@ -583,6 +602,8 @@ SQLSetDescRec(SQLHDESC DescriptorHandle,
 			  PTR Data, SQLINTEGER *StringLength,
 			  SQLINTEGER *Indicator)
 {
+	const char *func = "SQLSetDescField";
+
 	mylog("[[SQLSetDescRec]]\n");
 	mylog("Error not implemented\n");
 	return SQL_ERROR;
@@ -608,7 +629,10 @@ SQLSetEnvAttr(HENV EnvironmentHandle,
 			return SQL_SUCCESS;
 		case SQL_ATTR_ODBC_VERSION:
 			if ((SQLUINTEGER) Value == SQL_OV_ODBC2)
-				return SQL_SUCCESS;
+				EN_set_odbc2(env);
+			else
+				EN_set_odbc3(env);
+			return SQL_SUCCESS;
 			break;
 		case SQL_ATTR_OUTPUT_NTS:
 			if ((SQLUINTEGER) Value == SQL_TRUE)
@@ -652,26 +676,25 @@ SQLSetStmtAttr(HSTMT StatementHandle,
 			 * case SQL_ATTR_PREDICATE_PTR: case
 			 * SQL_ATTR_PREDICATE_OCTET_LENGTH_PTR:
 			 */
-		case SQL_ATTR_PARAM_OPERATION_PTR:		/* 19 */
-		case SQL_ATTR_PARAM_STATUS_PTR:			/* 20 */
-		case SQL_ATTR_ROW_OPERATION_PTR:		/* 24 */
 			stmt->errornumber = STMT_INVALID_OPTION_IDENTIFIER;
 			stmt->errormsg = "Unsupported statement option (Set)";
 			SC_log_error(func, "", stmt);
 			return SQL_ERROR;
 
-		case SQL_ATTR_PARAM_BIND_OFFSET_PTR:	/* 17 */
-			stmt->options.param_offset_ptr = (SQLUINTEGER *) Value;
-			break;
-		case SQL_ATTR_ROW_BIND_OFFSET_PTR:		/* 23 */
-			stmt->options.row_offset_ptr = (SQLUINTEGER *) Value;
-			break;
-
 		case SQL_ATTR_FETCH_BOOKMARK_PTR:		/* 16 */
 			stmt->options.bookmark_ptr = Value;
 			break;
+		case SQL_ATTR_PARAM_BIND_OFFSET_PTR:	/* 17 */
+			stmt->options.param_offset_ptr = (SQLUINTEGER *) Value;
+			break;
 		case SQL_ATTR_PARAM_BIND_TYPE:	/* 18 */
 			stmt->options.param_bind_type = (SQLUINTEGER) Value;
+			break;
+		case SQL_ATTR_PARAM_OPERATION_PTR:		/* 19 */
+			stmt->options.param_operation_ptr = Value;
+			break;
+		case SQL_ATTR_PARAM_STATUS_PTR:			/* 20 */
+			stmt->options.param_status_ptr = (SQLUSMALLINT *) Value;
 			break;
 		case SQL_ATTR_PARAMS_PROCESSED_PTR:		/* 21 */
 			stmt->options.param_processed_ptr = (SQLUINTEGER *) Value;
@@ -679,17 +702,20 @@ SQLSetStmtAttr(HSTMT StatementHandle,
 		case SQL_ATTR_PARAMSET_SIZE:	/* 22 */
 			stmt->options.paramset_size = (SQLUINTEGER) Value;
 			break;
+		case SQL_ATTR_ROW_BIND_OFFSET_PTR:		/* 23 */
+			stmt->options.row_offset_ptr = (SQLUINTEGER *) Value;
+			break;
+		case SQL_ATTR_ROW_OPERATION_PTR:		/* 24 */
+			stmt->options.row_operation_ptr = Value;
+			break;
 		case SQL_ATTR_ROW_STATUS_PTR:	/* 25 */
 			stmt->options.rowStatusArray = (SQLUSMALLINT *) Value;
-
 			break;
 		case SQL_ATTR_ROWS_FETCHED_PTR: /* 26 */
 			stmt->options.rowsFetched = (SQLUINTEGER *) Value;
-
 			break;
 		case SQL_ATTR_ROW_ARRAY_SIZE:	/* 27 */
 			stmt->options.rowset_size = (SQLUINTEGER) Value;
-
 			break;
 		default:
 			return PGAPI_SetStmtOption(StatementHandle, (UWORD) Attribute, (UDWORD) Value);
@@ -704,7 +730,7 @@ SQLSetStmtAttr(HSTMT StatementHandle,
 RETCODE		SQL_API
 PGAPI_GetFunctions30(HDBC hdbc, UWORD fFunction, UWORD FAR * pfExists)
 {
-	ConnectionClass *conn = (ConnectionClass *) hdbc;
+	ConnectionClass	*conn = (ConnectionClass *) hdbc;
 	ConnInfo	*ci = &(conn->connInfo);
 
 	if (fFunction != SQL_API_ODBC3_ALL_FUNCTIONS)
@@ -755,17 +781,14 @@ PGAPI_GetFunctions30(HDBC hdbc, UWORD fFunction, UWORD FAR * pfExists)
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLPARAMDATA);		/* 48 */
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLPUTDATA);		/* 49 */
 
-	/*
-	 * SQL_FUNC_ESET(pfExists, SQL_API_SQLSETCONNECTIONOPTION); 50
-	 * deprecated
-	 */
+	/* SQL_FUNC_ESET(pfExists, SQL_API_SQLSETCONNECTIONOPTION); 50 deprecated */
 	/* SQL_FUNC_ESET(pfExists, SQL_API_SQLSETSTMTOPTION); 51 deprecated */
-	SQL_FUNC_ESET(pfExists, SQL_API_SQLSPECIALCOLUMNS); /* 52 */
+	SQL_FUNC_ESET(pfExists, SQL_API_SQLSPECIALCOLUMNS);	/* 52 */
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLSTATISTICS);		/* 53 */
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLTABLES); /* 54 */
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLBROWSECONNECT);	/* 55 */
 	if (ci->drivers.lie)
-		SQL_FUNC_ESET(pfExists, SQL_API_SQLCOLUMNPRIVILEGES); /* 56 not implmented yet */
+		SQL_FUNC_ESET(pfExists, SQL_API_SQLCOLUMNPRIVILEGES); /* 56 not implemented yet */ 
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLDATASOURCES);	/* 57 */
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLDESCRIBEPARAM);	/* 58 */
 	/* SQL_FUNC_ESET(pfExists, SQL_API_SQLEXTENDEDFETCH); 59 deprecated */
@@ -781,12 +804,11 @@ PGAPI_GetFunctions30(HDBC hdbc, UWORD fFunction, UWORD FAR * pfExists)
 	/* SQL_FUNC_ESET(pfExists, SQL_API_SQLPARAMOPTIONS); 64 deprecated */
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLPRIMARYKEYS);	/* 65 */
 	if (ci->drivers.lie)
-		SQL_FUNC_ESET(pfExists, SQL_API_SQLPROCEDURECOLUMNS); /* 66 not implmented yet */
+		SQL_FUNC_ESET(pfExists, SQL_API_SQLPROCEDURECOLUMNS); /* 66 not implemeted yet */ 
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLPROCEDURES);		/* 67 */
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLSETPOS);		/* 68 */
-	SQL_FUNC_ESET(pfExists, SQL_API_SQLSETSCROLLOPTIONS);		/* 69 deprecated */
-	if (ci->drivers.lie)
-		SQL_FUNC_ESET(pfExists, SQL_API_SQLTABLEPRIVILEGES); /* 70 not implemented yet */
+	/* SQL_FUNC_ESET(pfExists, SQL_API_SQLSETSCROLLOPTIONS); 69 deprecated */
+	SQL_FUNC_ESET(pfExists, SQL_API_SQLTABLEPRIVILEGES);		/* 70 */
 	/* SQL_FUNC_ESET(pfExists, SQL_API_SQLDRIVERS); */	/* 71 */
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLBINDPARAMETER);	/* 72 */
 
@@ -801,7 +823,7 @@ PGAPI_GetFunctions30(HDBC hdbc, UWORD fFunction, UWORD FAR * pfExists)
 	if (ci->drivers.lie)
 	{
 		SQL_FUNC_ESET(pfExists, SQL_API_SQLGETDESCFIELD); /* 1008 not implemented yet */
-		SQL_FUNC_ESET(pfExists, SQL_API_SQLGETDESCREC);	/* 1009 not implemented yet */
+		SQL_FUNC_ESET(pfExists, SQL_API_SQLGETDESCREC); /* 1009 not implemented yet */
 		SQL_FUNC_ESET(pfExists, SQL_API_SQLGETDIAGFIELD); /* 1010 not implemented yet */
 	}
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLGETDIAGREC);		/* 1011 */
@@ -810,7 +832,9 @@ PGAPI_GetFunctions30(HDBC hdbc, UWORD fFunction, UWORD FAR * pfExists)
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLSETCONNECTATTR);	/* 1016 */
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLSETDESCFIELD);	/* 1017 */
 	if (ci->drivers.lie)
-		SQL_FUNC_ESET(pfExists, SQL_API_SQLSETDESCREC);	/* 1018 not implemented yet */
+	{
+		SQL_FUNC_ESET(pfExists, SQL_API_SQLSETDESCREC); /* 1018 not implemented yet */
+	}
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLSETENVATTR);		/* 1019 */
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLSETSTMTATTR);	/* 1020 */
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLFETCHSCROLL);	/* 1021 */

@@ -21,6 +21,7 @@
 #include "dlg_specific.h"
 #include "statement.h"
 #include "connection.h"
+#include "environ.h"
 #include "qresult.h"
 
 
@@ -90,15 +91,26 @@ Int2		sqlTypes[] = {
 	SQL_TINYINT,
 	SQL_VARBINARY,
 	SQL_VARCHAR,
+#ifdef	UNICODE_SUPPORT
+	SQL_WCHAR,
+	SQL_WVARCHAR,
+	SQL_WLONGVARCHAR,
+#endif /* UNICODE_SUPPORT */
 	0
 };
 
+#if (ODBCVER >= 0x0300) && defined(OBDCINT64)
+#define	ALLOWED_C_BIGINT	SQL_C_SBIGINT
+#else
+#define	ALLOWED_C_BIGINT	SQL_C_CHAR
+#endif
 
 Int4
 sqltype_to_pgtype(StatementClass *stmt, SWORD fSqlType)
 {
 	Int4		pgType;
-	ConnInfo   *ci = &(SC_get_conn(stmt)->connInfo);
+	ConnectionClass	*conn = SC_get_conn(stmt);
+	ConnInfo	*ci = &(conn->connInfo);
 
 	switch (fSqlType)
 	{
@@ -110,11 +122,20 @@ sqltype_to_pgtype(StatementClass *stmt, SWORD fSqlType)
 			pgType = PG_TYPE_BPCHAR;
 			break;
 
+#ifdef	UNICODE_SUPPORT
+		case SQL_WCHAR:
+			pgType = PG_TYPE_BPCHAR;
+			break;
+#endif /* UNICODE_SUPPORT */
+
 		case SQL_BIT:
 			pgType = ci->drivers.bools_as_char ? PG_TYPE_CHAR : PG_TYPE_BOOL;
 			break;
 
 		case SQL_DATE:
+#if (ODBCVER >= 0x0300)
+		case SQL_TYPE_DATE:
+#endif /* ODBCVER */
 			pgType = PG_TYPE_DATE;
 			break;
 
@@ -144,6 +165,12 @@ sqltype_to_pgtype(StatementClass *stmt, SWORD fSqlType)
 			pgType = ci->drivers.text_as_longvarchar ? PG_TYPE_TEXT : PG_TYPE_VARCHAR;
 			break;
 
+#ifdef	UNICODE_SUPPORT
+		case SQL_WLONGVARCHAR:
+			pgType = ci->drivers.text_as_longvarchar ? PG_TYPE_TEXT : PG_TYPE_VARCHAR;
+			break;
+#endif /* UNICODE_SUPPORT */
+
 		case SQL_REAL:
 			pgType = PG_TYPE_FLOAT4;
 			break;
@@ -154,10 +181,16 @@ sqltype_to_pgtype(StatementClass *stmt, SWORD fSqlType)
 			break;
 
 		case SQL_TIME:
+#if (ODBCVER >= 0x0300)
+		case SQL_TYPE_TIME:
+#endif /* ODBCVER */
 			pgType = PG_TYPE_TIME;
 			break;
 
 		case SQL_TIMESTAMP:
+#if (ODBCVER >= 0x0300)
+		case SQL_TYPE_TIMESTAMP:
+#endif /* ODBCVER */
 			pgType = PG_TYPE_DATETIME;
 			break;
 
@@ -168,6 +201,12 @@ sqltype_to_pgtype(StatementClass *stmt, SWORD fSqlType)
 		case SQL_VARCHAR:
 			pgType = PG_TYPE_VARCHAR;
 			break;
+
+#if	UNICODE_SUPPORT
+		case SQL_WVARCHAR:
+			pgType = PG_TYPE_VARCHAR;
+			break;
+#endif /* UNICODE_SUPPORT */
 
 		default:
 			pgType = 0;			/* ??? */
@@ -193,7 +232,9 @@ sqltype_to_pgtype(StatementClass *stmt, SWORD fSqlType)
 Int2
 pgtype_to_sqltype(StatementClass *stmt, Int4 type)
 {
-	ConnInfo   *ci = &(SC_get_conn(stmt)->connInfo);
+	ConnectionClass	*conn = SC_get_conn(stmt);
+	ConnInfo	*ci = &(conn->connInfo);
+	EnvironmentClass *env = (EnvironmentClass *) (conn->henv);
 
 	switch (type)
 	{
@@ -204,6 +245,19 @@ pgtype_to_sqltype(StatementClass *stmt, Int4 type)
 		case PG_TYPE_NAME:
 			return SQL_CHAR;
 
+#ifdef	UNICODE_SUPPORT
+		case PG_TYPE_BPCHAR:
+			return conn->unicode ? SQL_WCHAR : SQL_CHAR;
+
+		case PG_TYPE_VARCHAR:
+			return conn->unicode ? SQL_WVARCHAR : SQL_VARCHAR;
+
+		case PG_TYPE_TEXT:
+			return ci->drivers.text_as_longvarchar ? 
+				(conn->unicode ? SQL_WLONGVARCHAR : SQL_LONGVARCHAR) :
+				(conn->unicode ? SQL_WVARCHAR : SQL_VARCHAR);
+
+#else
 		case PG_TYPE_BPCHAR:
 			return SQL_CHAR;
 
@@ -212,6 +266,7 @@ pgtype_to_sqltype(StatementClass *stmt, Int4 type)
 
 		case PG_TYPE_TEXT:
 			return ci->drivers.text_as_longvarchar ? SQL_LONGVARCHAR : SQL_VARCHAR;
+#endif /* UNICODE_SUPPORT */
 
 		case PG_TYPE_BYTEA:
 			return SQL_VARBINARY;
@@ -229,10 +284,10 @@ pgtype_to_sqltype(StatementClass *stmt, Int4 type)
 			/* Change this to SQL_BIGINT for ODBC v3 bjm 2001-01-23 */
 		case PG_TYPE_INT8:
 #if (ODBCVER >= 0x0300)
-			return SQL_BIGINT;
-#else
-			return SQL_CHAR;
+			if (!conn->ms_jet)
+				return SQL_BIGINT;
 #endif /* ODBCVER */
+			return SQL_CHAR;
 
 		case PG_TYPE_NUMERIC:
 			return SQL_NUMERIC;
@@ -242,12 +297,24 @@ pgtype_to_sqltype(StatementClass *stmt, Int4 type)
 		case PG_TYPE_FLOAT8:
 			return SQL_FLOAT;
 		case PG_TYPE_DATE:
+#if (ODBCVER >= 0x0300)
+			if (EN_is_odbc3(env))
+				return SQL_TYPE_DATE;
+#endif /* ODBCVER */
 			return SQL_DATE;
 		case PG_TYPE_TIME:
+#if (ODBCVER >= 0x0300)
+			if (EN_is_odbc3(env))
+				return SQL_TYPE_TIME;
+#endif /* ODBCVER */
 			return SQL_TIME;
 		case PG_TYPE_ABSTIME:
 		case PG_TYPE_DATETIME:
 		case PG_TYPE_TIMESTAMP:
+#if (ODBCVER >= 0x0300)
+			if (EN_is_odbc3(env))
+				return SQL_TYPE_TIMESTAMP;
+#endif /* ODBCVER */
 			return SQL_TIMESTAMP;
 		case PG_TYPE_MONEY:
 			return SQL_FLOAT;
@@ -273,16 +340,18 @@ pgtype_to_sqltype(StatementClass *stmt, Int4 type)
 Int2
 pgtype_to_ctype(StatementClass *stmt, Int4 type)
 {
-	ConnInfo   *ci = &(SC_get_conn(stmt)->connInfo);
+	ConnectionClass	*conn = SC_get_conn(stmt);
+	ConnInfo	*ci = &(conn->connInfo);
+	EnvironmentClass *env = (EnvironmentClass *) (conn->henv);
 
 	switch (type)
 	{
 		case PG_TYPE_INT8:
 #if (ODBCVER >= 0x0300)
-			return SQL_C_SBIGINT;
-#else
+			if (!conn->ms_jet)
+				return ALLOWED_C_BIGINT;
+#endif /* ODBCVER */
 			return SQL_C_CHAR;
-#endif
 		case PG_TYPE_NUMERIC:
 			return SQL_C_CHAR;
 		case PG_TYPE_INT2:
@@ -297,24 +366,24 @@ pgtype_to_ctype(StatementClass *stmt, Int4 type)
 			return SQL_C_DOUBLE;
 		case PG_TYPE_DATE:
 #if (ODBCVER >= 0x0300)
-			return SQL_C_TYPE_DATE;
-#else
-			return SQL_C_DATE;
+			if (EN_is_odbc3(env))
+				return SQL_C_TYPE_DATE;
 #endif /* ODBCVER */
+			return SQL_C_DATE;
 		case PG_TYPE_TIME:
 #if (ODBCVER >= 0x0300)
-			return SQL_C_TYPE_TIME;
-#else
-			return SQL_C_TIME;
+			if (EN_is_odbc3(env))
+				return SQL_C_TYPE_TIME;
 #endif /* ODBCVER */
+			return SQL_C_TIME;
 		case PG_TYPE_ABSTIME:
 		case PG_TYPE_DATETIME:
 		case PG_TYPE_TIMESTAMP:
 #if (ODBCVER >= 0x0300)
-			return SQL_C_TYPE_TIMESTAMP;
-#else
-			return SQL_C_TIMESTAMP;
+			if (EN_is_odbc3(env))
+				return SQL_C_TYPE_TIMESTAMP;
 #endif /* ODBCVER */
+			return SQL_C_TIMESTAMP;
 		case PG_TYPE_MONEY:
 			return SQL_C_FLOAT;
 		case PG_TYPE_BOOL:
@@ -324,6 +393,12 @@ pgtype_to_ctype(StatementClass *stmt, Int4 type)
 			return SQL_C_BINARY;
 		case PG_TYPE_LO:
 			return SQL_C_BINARY;
+#ifdef	UNICODE_SUPPORT
+		case PG_TYPE_BPCHAR:
+		case PG_TYPE_VARCHAR:
+		case PG_TYPE_TEXT:
+			return conn->unicode ? SQL_C_WCHAR : SQL_C_CHAR;
+#endif /* UNICODE_SUPPORT */
 
 		default:
 			/* hack until permanent type is available */
@@ -416,7 +491,7 @@ getNumericScale(StatementClass *stmt, Int4 type, int col)
 	if (col < 0)
 		return PG_NUMERIC_MAX_SCALE;
 
-	result = SC_get_Result(stmt);
+	result = SC_get_Curres(stmt);
 
 	/*
 	 * Manual Result Sets -- use assigned column width (i.e., from
@@ -457,7 +532,7 @@ getNumericPrecision(StatementClass *stmt, Int4 type, int col)
 	if (col < 0)
 		return PG_NUMERIC_MAX_PRECISION;
 
-	result = SC_get_Result(stmt);
+	result = SC_get_Curres(stmt);
 
 	/*
 	 * Manual Result Sets -- use assigned column width (i.e., from
@@ -520,10 +595,6 @@ getCharPrecision(StatementClass *stmt, Int4 type, int col, int handle_unknown_si
 			break;
 	}
 
-	/*
-	 * Static Precision (i.e., the Maximum Precision of the datatype) This
-	 * has nothing to do with a result set.
-	 */
 	if (maxsize == TEXT_FIELD_SIZE + 1) /* magic length for testing */
 	{
 		if (PG_VERSION_GE(SC_get_conn(stmt), 7.1))
@@ -531,10 +602,14 @@ getCharPrecision(StatementClass *stmt, Int4 type, int col, int handle_unknown_si
 		else
 			maxsize = TEXT_FIELD_SIZE;
 	}
+	/*
+	 * Static Precision (i.e., the Maximum Precision of the datatype) This
+	 * has nothing to do with a result set.
+	 */
 	if (col < 0)
 		return maxsize;
 
-	result = SC_get_Result(stmt);
+	result = SC_get_Curres(stmt);
 
 	/*
 	 * Manual Result Sets -- use assigned column width (i.e., from
@@ -553,16 +628,20 @@ getCharPrecision(StatementClass *stmt, Int4 type, int col, int handle_unknown_si
 	if (QR_get_atttypmod(result, col) > -1)
 		return QR_get_atttypmod(result, col);
 
+	/* The type is really unknown */
 	if (type == PG_TYPE_BPCHAR || handle_unknown_size_as == UNKNOWNS_AS_LONGEST)
 	{
 		p = QR_get_display_size(result, col);
 		mylog("getCharPrecision: LONGEST: p = %d\n", p);
+		if (p >= 0)
+			return p;
 	}
 
-	if (p < 0 && handle_unknown_size_as == UNKNOWNS_AS_MAX)
+	if (handle_unknown_size_as == UNKNOWNS_AS_MAX)
 		return maxsize;
-	else
-		return p;
+	else /* handle_unknown_size_as == DONT_KNOW */
+		return -1;
+	
 }
 
 static Int2
@@ -580,7 +659,7 @@ getTimestampScale(StatementClass *stmt, Int4 type, int col)
 	if (PG_VERSION_LT(conn, 7.2))
 		return 0;
 
-	result = SC_get_Result(stmt);
+	result = SC_get_Curres(stmt);
 
 	/*
 	 * Manual Result Sets -- use assigned column width (i.e., from
@@ -615,10 +694,7 @@ getTimestampPrecision(StatementClass *stmt, Int4 type, int col)
 			fixed = 8;
 			break;
 		case PG_TYPE_TIME_WITH_TMZONE:
-			if (USE_ZONE)
-				fixed = 11;
-			else
-				fixed = 8;
+			fixed = 11;
 			break;
 		case PG_TYPE_TIMESTAMP_NO_TMZONE:
 			fixed = 19;
@@ -692,7 +768,10 @@ pgtype_precision(StatementClass *stmt, Int4 type, int col, int handle_unknown_si
 			return getTimestampPrecision(stmt, type, col);
 
 		case PG_TYPE_BOOL:
-			return 1;
+		{
+			BOOL	true_is_minus1 = FALSE;
+			return true_is_minus1 ? 2 : 1;
+		}
 
 		case PG_TYPE_LO:
 			return SQL_NO_TOTAL;
@@ -756,6 +835,8 @@ pgtype_display_size(StatementClass *stmt, Int4 type, int col, int handle_unknown
 Int4
 pgtype_length(StatementClass *stmt, Int4 type, int col, int handle_unknown_size_as)
 {
+	ConnectionClass	*conn = SC_get_conn(stmt);
+
 	switch (type)
 	{
 		case PG_TYPE_INT2:
@@ -791,15 +872,27 @@ pgtype_length(StatementClass *stmt, Int4 type, int col, int handle_unknown_size_
 			/* Character types (and NUMERIC) use the default precision */
 		case PG_TYPE_VARCHAR:
 		case PG_TYPE_BPCHAR:
+			{
+			int	coef = 1;
+			Int4	prec = pgtype_precision(stmt, type, col, handle_unknown_size_as), maxvarc;
+			if (conn->unicode)
+				return (prec + 1) * 2;
 #ifdef MULTIBYTE
 			/* after 7.2 */
-			if (PG_VERSION_GE(SC_get_conn(stmt), 7.2))
-				return 3 * pgtype_precision(stmt, type, col, handle_unknown_size_as);
+			if (PG_VERSION_GE(conn, 7.2))
+				coef = 3;
 			else
-#else
-			/* CR -> CR/LF */
-			return 2 * pgtype_precision(stmt, type, col, handle_unknown_size_as);
 #endif   /* MULTIBYTE */
+			if ((conn->connInfo).lf_conversion)
+				/* CR -> CR/LF */
+				coef = 2;
+			if (coef == 1)
+				return prec + 1;
+			maxvarc = conn->connInfo.drivers.max_varchar_size;
+			if (prec <= maxvarc && prec * coef > maxvarc)
+				return maxvarc;
+			return coef * prec;
+			}
 		default:
 			return pgtype_precision(stmt, type, col, handle_unknown_size_as);
 	}
@@ -885,8 +978,8 @@ pgtype_auto_increment(StatementClass *stmt, Int4 type)
 		case PG_TYPE_NUMERIC:
 
 		case PG_TYPE_DATE:
-		case PG_TYPE_TIME:
 		case PG_TYPE_TIME_WITH_TMZONE:
+		case PG_TYPE_TIME:
 		case PG_TYPE_ABSTIME:
 		case PG_TYPE_DATETIME:
 		case PG_TYPE_TIMESTAMP:
@@ -1058,8 +1151,15 @@ sqltype_to_default_ctype(Int2 sqltype)
 #else
 			return SQL_C_CHAR;
 		case SQL_BIGINT:
-			return SQL_C_SBIGINT;
+			return ALLOWED_C_BIGINT;
 #endif
+
+#ifdef	UNICODE_SUPPORT
+		case SQL_WCHAR:
+		case SQL_WVARCHAR:
+		case SQL_WLONGVARCHAR:
+			return SQL_C_WCHAR;
+#endif /* UNICODE_SUPPORT */
 
 		case SQL_BIT:
 			return SQL_C_BIT;
@@ -1086,24 +1186,23 @@ sqltype_to_default_ctype(Int2 sqltype)
 			return SQL_C_BINARY;
 
 		case SQL_DATE:
-#if (ODBCVER >= 0x0300)
-			return SQL_C_TYPE_DATE;
-#else
 			return SQL_C_DATE;
-#endif /* ODBCVER */
 
 		case SQL_TIME:
-#if (ODBCVER >= 0x0300)
-			return SQL_C_TYPE_TIME;
-#else
 			return SQL_C_TIME;
-#endif /* ODBCVER */
 
 		case SQL_TIMESTAMP:
-#if (ODBCVER >= 0x0300)
-			return SQL_C_TYPE_TIMESTAMP;
-#else
 			return SQL_C_TIMESTAMP;
+
+#if (ODBCVER >= 0x0300)
+		case SQL_TYPE_DATE:
+			return SQL_C_TYPE_DATE;
+
+		case SQL_TYPE_TIME:
+			return SQL_C_TYPE_TIME;
+
+		case SQL_TYPE_TIMESTAMP:
+			return SQL_C_TYPE_TIMESTAMP;
 #endif /* ODBCVER */
 
 		default:
@@ -1167,6 +1266,7 @@ ctype_length(Int2 ctype)
 
 		case SQL_C_BINARY:
 		case SQL_C_CHAR:
+		case SQL_C_WCHAR:
 			return 0;
 
 		default:				/* should never happen */

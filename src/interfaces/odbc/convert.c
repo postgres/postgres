@@ -335,12 +335,15 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 	int			bind_row = stmt->bind_row;
 	int			bind_size = stmt->options.bind_size;
 	int			result = COPY_OK;
-	BOOL		changed;
+	BOOL		changed, true_is_minus1 = FALSE;
 	const char *neut_str = value;
 	char		midtemp[2][32];
 	int			mtemp_cnt = 0;
 	static BindInfoClass sbic;
 	BindInfoClass *pbic;
+#ifdef	UNICODE_SUPPORT
+	BOOL	wchanged =   FALSE;
+#endif /* UNICODE_SUPPORT */
 
 	if (stmt->current_col >= 0)
 	{
@@ -474,15 +477,23 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 				char	   *s;
 
 				s = midtemp[mtemp_cnt];
-				strcpy(s, (char *) value);
-				if (s[0] == 'f' || s[0] == 'F' || s[0] == 'n' || s[0] == 'N' || s[0] == '0')
-					s[0] = '0';
-				else
-					s[0] = '1';
-				s[1] = '\0';
+				switch (((char *)value)[0])
+				{
+					case 'f':
+					case 'F':
+					case 'n':
+					case 'N':
+					case '0':
+						strcpy(s, "0");
+						break;
+					default:
+						if (true_is_minus1)
+							strcpy(s, "-1");
+						else
+							strcpy(s, "1");
+				}
 				neut_str = midtemp[mtemp_cnt];
 				mtemp_cnt++;
-
 			}
 			break;
 
@@ -567,7 +578,11 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 
 	rgbValueBindRow = (char *) rgbValue + rgbValueOffset;
 
+#ifdef	UNICODE_SUPPORT
+	if (fCType == SQL_C_CHAR || fCType == SQL_C_WCHAR)
+#else
 	if (fCType == SQL_C_CHAR)
+#endif /* UNICODE_SUPPORT */
 	{
 		/* Special character formatting as required */
 
@@ -599,7 +614,7 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 				break;
 
 			case PG_TYPE_BOOL:
-				len = 1;
+				len = strlen(neut_str);
 				if (cbValueMax > len)
 				{
 					strcpy(rgbValueBindRow, neut_str);
@@ -637,8 +652,18 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 					pbic = &stmt->bindings[stmt->current_col];
 				if (pbic->data_left < 0)
 				{
+					BOOL lf_conv = SC_get_conn(stmt)->connInfo.lf_conversion;
+#ifdef	UNICODE_SUPPORT
+					if (fCType == SQL_C_WCHAR)
+					{
+						len = utf8_to_ucs2(neut_str, -1, NULL, 0);
+						len *= 2;
+						wchanged = changed = TRUE;
+					}
+					else
+#endif /* UNICODE_SUPPORT */
 					/* convert linefeeds to carriage-return/linefeed */
-					len = convert_linefeeds(neut_str, NULL, 0, &changed);
+					len = convert_linefeeds(neut_str, NULL, 0, lf_conv, &changed);
 					if (cbValueMax == 0)		/* just returns length
 												 * info */
 					{
@@ -654,7 +679,14 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 							pbic->ttlbuf = realloc(pbic->ttlbuf, len + 1);
 							pbic->ttlbuflen = len + 1;
 						}
-						convert_linefeeds(neut_str, pbic->ttlbuf, pbic->ttlbuflen, &changed);
+#ifdef	UNICODE_SUPPORT
+						if (fCType == SQL_C_WCHAR)
+						{
+							utf8_to_ucs2(neut_str, -1, (SQLWCHAR *) pbic->ttlbuf, len / 2);
+						}
+						else
+#endif /* UNICODE_SUPPORT */
+						convert_linefeeds(neut_str, pbic->ttlbuf, pbic->ttlbuflen, lf_conv, &changed);
 						ptr = pbic->ttlbuf;
 					}
 					else
@@ -715,7 +747,25 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 				mylog("    SQL_C_CHAR, default: len = %d, cbValueMax = %d, rgbValueBindRow = '%s'\n", len, cbValueMax, rgbValueBindRow);
 				break;
 		}
-
+#ifdef	UNICODE_SUPPORT
+		if (SQL_C_WCHAR == fCType && ! wchanged)
+		{
+			if (cbValueMax > 2 * len)
+			{
+				char *str = strdup(rgbValueBindRow);
+				UInt4	ucount = utf8_to_ucs2(str, len, (SQLWCHAR *) rgbValueBindRow, cbValueMax / 2);
+				if (cbValueMax < 2 * (SDWORD) ucount)
+					result = COPY_RESULT_TRUNCATED;
+				len = ucount * 2;
+				free(str); 
+			}
+			else
+			{
+				len *= 2;
+				result = COPY_RESULT_TRUNCATED;
+			}
+		}
+#endif /* UNICODE_SUPPORT */
 
 	}
 	else
@@ -1107,11 +1157,11 @@ do { \
  */
 #define CVT_SPECIAL_CHARS(buf, used) \
 do { \
-	int cnvlen = convert_special_chars(buf, NULL, used); \
+	int cnvlen = convert_special_chars(buf, NULL, used, lf_conv, conn->ccsc); \
 	unsigned int	newlimit = npos + cnvlen; \
 \
 	ENLARGE_NEWSTATEMENT(newlimit); \
-	convert_special_chars(buf, &new_statement[npos], used); \
+	convert_special_chars(buf, &new_statement[npos], used, lf_conv, conn->ccsc); \
 	npos += cnvlen; \
 } while (0)
 
@@ -1181,9 +1231,9 @@ table_for_update(const char *stmt, int *endpos)
 }
 
 #ifdef MULTIBYTE
-#define		my_strchr(s1,c1) multibyte_strchr(s1,c1)
+#define		my_strchr(conn, s1,c1) pg_mbschr(conn->ccsc, s1,c1)
 #else
-#define		my_strchr(s1,c1) strchr(s1,c1)
+#define		my_strchr(conn, s1,c1) strchr(s1,c1)
 #endif
 /*
  *	This function inserts parameters into an SQL statements.
@@ -1213,8 +1263,7 @@ copy_statement_with_parameters(StatementClass *stmt)
 	time_t		t = time(NULL);
 	struct tm  *tim;
 	SDWORD		used;
-	char	   *buffer,
-			   *buf;
+	char	   *buffer, *buf, *allocbuf;
 	BOOL		in_quote = FALSE,
 				in_dquote = FALSE,
 				in_escape = FALSE;
@@ -1234,6 +1283,10 @@ copy_statement_with_parameters(StatementClass *stmt)
 	BOOL		prev_token_end;
 	UInt4	offset = stmt->options.param_offset_ptr ? *stmt->options.param_offset_ptr : 0;
 	UInt4	current_row = stmt->exec_current_row < 0 ? 0 : stmt->exec_current_row;
+	BOOL	lf_conv = ci->lf_conversion;
+#ifdef MULTIBYTE
+	encoded_str	encstr;
+#endif   /* MULTIBYTE */
 
 #ifdef	DRIVER_CURSOR_IMPLEMENT
 	BOOL		search_from_pos = FALSE;
@@ -1311,14 +1364,14 @@ copy_statement_with_parameters(StatementClass *stmt)
 	}
 	param_number = -1;
 #ifdef MULTIBYTE
-	multibyte_init();
+	make_encoded_str(&encstr, conn, old_statement);
 #endif
 
 	for (opos = 0; opos < oldstmtlen; opos++)
 	{
-		oldchar = old_statement[opos];
 #ifdef MULTIBYTE
-		if (multibyte_char_check(oldchar) != 0)
+		oldchar = encoded_byte_check(&encstr, opos);
+		if (ENCODE_STATUS(encstr) != 0)
 		{
 			CVT_APPEND_CHAR(oldchar);
 			continue;
@@ -1327,6 +1380,8 @@ copy_statement_with_parameters(StatementClass *stmt)
 		/*
 		 * From here we are guaranteed to handle a 1-byte character.
 		 */
+#else
+		oldchar = old_statement[opos];
 #endif
 
 		if (in_escape)			/* escape check */
@@ -1352,7 +1407,7 @@ copy_statement_with_parameters(StatementClass *stmt)
 		 * nor a double quote.
 		 */
 		/* Squeeze carriage-return/linefeed pairs to linefeed only */
-		else if (oldchar == '\r' && opos + 1 < oldstmtlen &&
+		else if (lf_conv && oldchar == '\r' && opos + 1 < oldstmtlen &&
 				 old_statement[opos + 1] == '\n')
 			continue;
 
@@ -1390,11 +1445,12 @@ copy_statement_with_parameters(StatementClass *stmt)
 				}
 				opos += lit_call_len;
 				CVT_APPEND_STR("SELECT ");
-				if (my_strchr(&old_statement[opos], '('))
+				if (my_strchr(conn, &old_statement[opos], '('))
 					proc_no_param = FALSE;
 				continue;
 			}
-			if (convert_escape(begin, stmt, &npos, &new_stsize, &end) != CONVERT_ESCAPE_OK)
+			if (convert_escape(begin, stmt, &npos, &new_stsize, &end
+) != CONVERT_ESCAPE_OK)
 			{
 				stmt->errormsg = "ODBC escape convert error";
 				stmt->errornumber = STMT_EXEC_ERROR;
@@ -1585,7 +1641,7 @@ copy_statement_with_parameters(StatementClass *stmt)
 		if (param_ctype == SQL_C_DEFAULT)
 			param_ctype = sqltype_to_default_ctype(param_sqltype);
 
-		buf = NULL;
+		allocbuf = buf = NULL;
 		param_string[0] = '\0';
 		cbuf[0] = '\0';
 
@@ -1596,6 +1652,13 @@ copy_statement_with_parameters(StatementClass *stmt)
 			case SQL_C_CHAR:
 				buf = buffer;
 				break;
+
+#ifdef	UNICODE_SUPPORT
+			case SQL_C_WCHAR:
+				buf = allocbuf = ucs2_to_utf8((SQLWCHAR *) buffer, used / 2, &used);
+				used *= 2;
+				break;
+#endif /* UNICODE_SUPPORT */
 
 			case SQL_C_DOUBLE:
 				sprintf(param_string, "%.15g",
@@ -1729,6 +1792,11 @@ copy_statement_with_parameters(StatementClass *stmt)
 			case SQL_CHAR:
 			case SQL_VARCHAR:
 			case SQL_LONGVARCHAR:
+#ifdef	UNICODE_SUPPORT
+			case SQL_WCHAR:
+			case SQL_WVARCHAR:
+			case SQL_WLONGVARCHAR:
+#endif /* UNICODE_SUPPORT */
 
 				CVT_APPEND_CHAR('\'');	/* Open Quote */
 
@@ -1801,7 +1869,7 @@ copy_statement_with_parameters(StatementClass *stmt)
 				tmp[0] = '\'';
 				/* Time zone stuff is unreliable */
 				stime2timestamp(&st, tmp + 1, USE_ZONE, PG_VERSION_GE(conn, 7.2));
-				strcat(tmp, "'");
+				strcat(tmp, "'::timestamp");
 
 				CVT_APPEND_STR(tmp);
 
@@ -1942,6 +2010,10 @@ copy_statement_with_parameters(StatementClass *stmt)
 
 				break;
 		}
+#ifdef	UNICODE_SUPPORT
+		if (allocbuf)
+			free(allocbuf);
+#endif /* UNICODE_SUPPORT */
 	}							/* end, for */
 
 	/* make sure new_statement is always null-terminated */
@@ -2032,7 +2104,7 @@ int inner_convert_escape(const ConnectionClass *conn, const char *value,
 	while ((*valptr != '\0') && isspace((unsigned char) *valptr))
 		valptr++;
      
-	if (end = my_strchr(valptr, '}'), NULL == end)
+	if (end = my_strchr(conn, valptr, '}'), NULL == end)
 	{
 		mylog("%s couldn't find the ending }\n",func);
 		return CONVERT_ESCAPE_ERROR;
@@ -2226,13 +2298,16 @@ int processParameters(const ConnectionClass *conn, const char *value,
 	const char	*valptr;
 	char	buf[1024];
 	BOOL	in_quote, in_dquote, in_escape, leadingSpace;
+#ifdef MULTIBYTE
+	encoded_str	encstr;
+#endif   /* MULTIBYTE */
  
 	buf[sizeof(buf)-1] = '\0';
 	innerParenthesis = 0;
 	in_quote = in_dquote = in_escape = leadingSpace = FALSE;
 	param_count = 0;
 #ifdef MULTIBYTE
-	multibyte_init();
+	make_encoded_str(&encstr, conn, value);
 #endif /* MULTIBYTE */
 	/* begin with outer '(' */
 	for (stop = FALSE, valptr = value, ipos = count = 0; *valptr != '\0'; ipos++, valptr++)
@@ -2250,7 +2325,8 @@ int processParameters(const ConnectionClass *conn, const char *value,
 			return CONVERT_ESCAPE_OVERFLOW;
 		}
 #ifdef MULTIBYTE
-		if (multibyte_char_check(*valptr) != 0)
+		encoded_byte_check(&encstr, ipos);
+		if (ENCODE_STATUS(encstr) != 0)
 		{
 			result[count++] = *valptr;
 			continue;
@@ -2468,7 +2544,7 @@ parse_datetime(char *buf, SIMPLE_TIME *st)
 
 /*	Change linefeed to carriage-return/linefeed */
 int
-convert_linefeeds(const char *si, char *dst, size_t max, BOOL *changed)
+convert_linefeeds(const char *si, char *dst, size_t max, BOOL convlf, BOOL *changed)
 {
 	size_t		i = 0,
 				out = 0;
@@ -2478,7 +2554,7 @@ convert_linefeeds(const char *si, char *dst, size_t max, BOOL *changed)
 	*changed = FALSE;
 	for (i = 0; si[i] && out < max - 1; i++)
 	{
-		if (si[i] == '\n')
+		if (convlf && si[i] == '\n')
 		{
 			/* Only add the carriage-return if needed */
 			if (i > 0 && si[i - 1] == '\r')
@@ -2518,12 +2594,15 @@ convert_linefeeds(const char *si, char *dst, size_t max, BOOL *changed)
  *	Plus, escape any special characters.
  */
 int
-convert_special_chars(const char *si, char *dst, int used)
+convert_special_chars(const char *si, char *dst, int used, BOOL convlf, int ccsc)
 {
 	size_t		i = 0,
 				out = 0,
 				max;
 	char	   *p = NULL;
+#ifdef MULTIBYTE
+	encoded_str	encstr;
+#endif
 
 
 	if (used == SQL_NTS)
@@ -2536,13 +2615,14 @@ convert_special_chars(const char *si, char *dst, int used)
 		p[0] = '\0';
 	}
 #ifdef MULTIBYTE
-	multibyte_init();
+	encoded_str_constr(&encstr, ccsc, si);
 #endif
 
 	for (i = 0; i < max && si[i]; i++)
 	{
 #ifdef MULTIBYTE
-		if (multibyte_char_check(si[i]) != 0)
+		encoded_nextchar(&encstr);
+		if (ENCODE_STATUS(encstr) != 0)
 		{
 			if (p)
 				p[out] = si[i];
@@ -2550,7 +2630,7 @@ convert_special_chars(const char *si, char *dst, int used)
 			continue;
 		}
 #endif
-		if (si[i] == '\r' && si[i + 1] == '\n')
+		if (convlf && si[i] == '\r' && si[i + 1] == '\n')
 			continue;
 		else if (si[i] == '\'' || si[i] == '\\')
 		{

@@ -19,6 +19,7 @@ PGAPI_GetInfo30(HDBC hdbc, UWORD fInfoType, PTR rgbInfoValue,
 {
 	static char *func = "PGAPI_GetInfo30";
 	ConnectionClass *conn = (ConnectionClass *) hdbc;
+	ConnInfo	*ci = &(conn->connInfo);
 	char	   *p = NULL;
 	int			len = 0,
 				value = 0;
@@ -50,35 +51,60 @@ PGAPI_GetInfo30(HDBC hdbc, UWORD fInfoType, PTR rgbInfoValue,
 				| SQL_CA1_RELATIVE | SQL_CA1_BOOKMARK
 				| SQL_CA1_LOCK_NO_CHANGE | SQL_CA1_POS_POSITION
 				| SQL_CA1_POS_UPDATE | SQL_CA1_POS_DELETE
-				| SQL_CA1_POS_REFRESH
-				/* | SQL_CA1_BULK_ADD
+				| SQL_CA1_POS_REFRESH;
+			if (ci->drivers.lie)
+				value |=
+				( SQL_CA1_BULK_ADD
 				| SQL_CA1_BULK_UPDATE_BY_BOOKMARK
 				| SQL_CA1_BULK_DELETE_BY_BOOKMARK
-				| SQL_CA1_BULK_FETCH_BY_BOOKMARK */
-				;
+				| SQL_CA1_BULK_FETCH_BY_BOOKMARK
+
+				| SQL_CA1_LOCK_EXCLUSIVE
+				| SQL_CA1_LOCK_UNLOCK
+				| SQL_CA1_POSITIONED_UPDATE
+				| SQL_CA1_POSITIONED_DELETE
+				| SQL_CA1_SELECT_FOR_UPDATE
+				);
 			break;
 		case SQL_KEYSET_CURSOR_ATTRIBUTES2:
 			len = 4;
-			value = SQL_CA2_OPT_ROWVER_CONCURRENCY |
-				SQL_CA2_SENSITIVITY_ADDITIONS |
-				SQL_CA2_SENSITIVITY_DELETIONS |
-				SQL_CA2_SENSITIVITY_UPDATES;
+			value = SQL_CA2_OPT_ROWVER_CONCURRENCY
+				| SQL_CA2_SENSITIVITY_ADDITIONS
+				| SQL_CA2_SENSITIVITY_DELETIONS
+				| SQL_CA2_SENSITIVITY_UPDATES;
+			if (ci->drivers.lie)
+				value |=
+				( SQL_CA2_READ_ONLY_CONCURRENCY
+				| SQL_CA2_LOCK_CONCURRENCY
+				| SQL_CA2_OPT_VALUES_CONCURRENCY
+				| SQL_CA2_MAX_ROWS_SELECT
+				| SQL_CA2_MAX_ROWS_INSERT
+				| SQL_CA2_MAX_ROWS_DELETE
+				| SQL_CA2_MAX_ROWS_UPDATE
+				| SQL_CA2_MAX_ROWS_CATALOG
+				| SQL_CA2_MAX_ROWS_AFFECTS_ALL
+				| SQL_CA2_CRC_EXACT
+				| SQL_CA2_CRC_APPROXIMATE
+				| SQL_CA2_SIMULATE_NON_UNIQUE
+				| SQL_CA2_SIMULATE_TRY_UNIQUE
+				| SQL_CA2_SIMULATE_UNIQUE
+				);
 			break;
 
 		case SQL_STATIC_CURSOR_ATTRIBUTES1:
 			len = 4;
-			value = SQL_CA1_NEXT | SQL_CA1_ABSOLUTE |
-				SQL_CA1_RELATIVE | SQL_CA1_BOOKMARK |
-				SQL_CA1_LOCK_NO_CHANGE | SQL_CA1_POS_POSITION |
-				SQL_CA1_POS_UPDATE | SQL_CA1_POS_DELETE |
-				SQL_CA1_POS_REFRESH;
+			value = SQL_CA1_NEXT | SQL_CA1_ABSOLUTE
+				| SQL_CA1_RELATIVE | SQL_CA1_BOOKMARK
+				| SQL_CA1_LOCK_NO_CHANGE | SQL_CA1_POS_POSITION
+				| SQL_CA1_POS_UPDATE | SQL_CA1_POS_DELETE
+				| SQL_CA1_POS_REFRESH;
 			break;
 		case SQL_STATIC_CURSOR_ATTRIBUTES2:
 			len = 4;
-			value = SQL_CA2_OPT_ROWVER_CONCURRENCY |
-				SQL_CA2_SENSITIVITY_ADDITIONS |
-				SQL_CA2_SENSITIVITY_DELETIONS |
-				SQL_CA2_SENSITIVITY_UPDATES;
+			value = SQL_CA2_OPT_ROWVER_CONCURRENCY
+				| SQL_CA2_SENSITIVITY_ADDITIONS
+				| SQL_CA2_SENSITIVITY_DELETIONS
+				| SQL_CA2_SENSITIVITY_UPDATES;
 			break;
 
 		case SQL_ODBC_INTERFACE_CONFORMANCE:
@@ -103,11 +129,11 @@ PGAPI_GetInfo30(HDBC hdbc, UWORD fInfoType, PTR rgbInfoValue,
 			break;
 		case SQL_BATCH_ROW_COUNT:
 			len = 4;
-			value = SQL_BRC_ROLLED_UP | SQL_BRC_EXPLICIT;
+			value = SQL_BRC_EXPLICIT;
 			break;
 		case SQL_BATCH_SUPPORT:
 			len = 4;
-			value = SQL_BS_ROW_COUNT_EXPLICIT;
+			value = SQL_BS_SELECT_EXPLICIT | SQL_BS_ROW_COUNT_EXPLICIT;
 			break;
 		case SQL_CATALOG_NAME:
 			len = 0;
@@ -194,7 +220,7 @@ PGAPI_GetInfo30(HDBC hdbc, UWORD fInfoType, PTR rgbInfoValue,
 			len = 4;
 			value = SQL_DT_DROP_TABLE;
 			if (PG_VERSION_GT(conn, 7.2)) /* hopefully */
-				value |= SQL_DT_RESTRICT | SQL_DT_CASCADE;
+				value |= (SQL_DT_RESTRICT | SQL_DT_CASCADE);
 			break;
 		case SQL_DROP_TRANSLATION:
 			len = 4;
@@ -204,7 +230,7 @@ PGAPI_GetInfo30(HDBC hdbc, UWORD fInfoType, PTR rgbInfoValue,
 			len = 4;
 			value = SQL_DV_DROP_VIEW;
 			if (PG_VERSION_GT(conn, 7.2)) /* hopefully */
-				value |= SQL_DV_RESTRICT | SQL_DV_CASCADE;
+				value |= (SQL_DV_RESTRICT | SQL_DV_CASCADE);
 			break;
 		case SQL_INDEX_KEYWORDS:
 			len = 4;
@@ -227,11 +253,11 @@ PGAPI_GetInfo30(HDBC hdbc, UWORD fInfoType, PTR rgbInfoValue,
 			break;
 		case SQL_PARAM_ARRAY_ROW_COUNTS:
 			len = 4;
-			value = SQL_PARC_NO_BATCH;
+			value = SQL_PARC_BATCH;
 			break;
 		case SQL_PARAM_ARRAY_SELECTS:
 			len = 4;
-			value = SQL_PAS_NO_SELECT;
+			value = SQL_PAS_BATCH;
 			break;
 		case SQL_SQL_CONFORMANCE:
 			len = 4;
@@ -316,6 +342,7 @@ PGAPI_GetInfo30(HDBC hdbc, UWORD fInfoType, PTR rgbInfoValue,
 			return SQL_ERROR;
 	}
 	result = SQL_SUCCESS;
+	mylog("%s: p='%s', len=%d, value=%d, cbMax=%d\n", func, p ? p : "<NULL>", len, value, cbInfoValueMax);
 	if (p)
 	{
 		/* char/binary data */
@@ -323,6 +350,14 @@ PGAPI_GetInfo30(HDBC hdbc, UWORD fInfoType, PTR rgbInfoValue,
 
 		if (rgbInfoValue)
 		{
+#ifdef	UNICODE_SUPPORT
+			if (conn->unicode)
+			{
+				len = utf8_to_ucs2(p, len, (SQLWCHAR *) rgbInfoValue, cbInfoValueMax / 2);
+				len *= 2;
+			}
+			else
+#endif /* UNICODE_SUPPORT */
 			strncpy_null((char *) rgbInfoValue, p, (size_t) cbInfoValueMax);
 
 			if (len >= cbInfoValueMax)

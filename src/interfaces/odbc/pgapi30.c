@@ -36,37 +36,92 @@ PGAPI_GetDiagRec(SQLSMALLINT HandleType, SQLHANDLE Handle,
 	RETCODE		ret;
 	static const char *func = "PGAPI_GetDiagRec";
 
-	mylog("%s entering ", func);
+	mylog("%s entering rec=%d", func, RecNumber);
 	switch (HandleType)
 	{
 		case SQL_HANDLE_ENV:
-			ret = PGAPI_Error(Handle, NULL, NULL, Sqlstate, NativeError,
-							  MessageText, BufferLength, TextLength);
+			ret = PGAPI_EnvError(Handle, RecNumber, Sqlstate,
+					NativeError, MessageText,
+					BufferLength, TextLength, 0);
 			break;
 		case SQL_HANDLE_DBC:
-			ret = PGAPI_Error(NULL, Handle, NULL, Sqlstate, NativeError,
-							  MessageText, BufferLength, TextLength);
+			ret = PGAPI_ConnectError(Handle, RecNumber, Sqlstate,
+					NativeError, MessageText, BufferLength,
+					TextLength, 0);
 			break;
 		case SQL_HANDLE_STMT:
-			ret = PGAPI_Error(NULL, NULL, Handle, Sqlstate, NativeError,
-							  MessageText, BufferLength, TextLength);
+			ret = PGAPI_StmtError(Handle, RecNumber, Sqlstate,
+					NativeError, MessageText, BufferLength,
+					TextLength, 0);
 			break;
 		default:
 			ret = SQL_ERROR;
 	}
-	if (ret == SQL_SUCCESS_WITH_INFO &&
-		BufferLength == 0 &&
-		*TextLength)
-	{
-		SQLSMALLINT BufferLength = *TextLength + 4;
-		SQLCHAR    *MessageText = malloc(BufferLength);
+	mylog("%s exiting %d\n", func, ret);
+	return ret;
+}
 
-		ret = PGAPI_GetDiagRec(HandleType, Handle, RecNumber, Sqlstate,
-							NativeError, MessageText, BufferLength,
-							TextLength);
-		free(MessageText);
+RETCODE		SQL_API
+PGAPI_GetDiagField(SQLSMALLINT HandleType, SQLHANDLE Handle,
+		SQLSMALLINT RecNumber, SQLSMALLINT DiagIdentifier,
+		PTR DiagInfoPtr, SQLSMALLINT BufferLength,
+		SQLSMALLINT *StringLengthPtr)
+{
+	RETCODE		ret = SQL_SUCCESS;
+	static const char *func = "PGAPI_GetDiagField";
+
+	mylog("%s entering rec=%d", func, RecNumber);
+	switch (HandleType)
+	{
+		case SQL_HANDLE_ENV:
+			switch (DiagIdentifier)
+			{
+				case SQL_DIAG_CLASS_ORIGIN:
+				case SQL_DIAG_SUBCLASS_ORIGIN:
+				case SQL_DIAG_CONNECTION_NAME:
+				case SQL_DIAG_MESSAGE_TEXT:
+				case SQL_DIAG_NATIVE:
+				case SQL_DIAG_NUMBER:
+				case SQL_DIAG_RETURNCODE:
+				case SQL_DIAG_SERVER_NAME:
+				case SQL_DIAG_SQLSTATE:
+					break;
+			}
+			break;
+		case SQL_HANDLE_DBC:
+			switch (DiagIdentifier)
+			{
+				case SQL_DIAG_CLASS_ORIGIN:
+				case SQL_DIAG_SUBCLASS_ORIGIN:
+				case SQL_DIAG_CONNECTION_NAME:
+				case SQL_DIAG_MESSAGE_TEXT:
+				case SQL_DIAG_NATIVE:
+				case SQL_DIAG_NUMBER:
+				case SQL_DIAG_RETURNCODE:
+				case SQL_DIAG_SERVER_NAME:
+				case SQL_DIAG_SQLSTATE:
+					break;
+			}
+			break;
+		case SQL_HANDLE_STMT:
+			switch (DiagIdentifier)
+			{
+				case SQL_DIAG_CLASS_ORIGIN:
+				case SQL_DIAG_SUBCLASS_ORIGIN:
+				case SQL_DIAG_CONNECTION_NAME:
+				case SQL_DIAG_MESSAGE_TEXT:
+				case SQL_DIAG_NATIVE:
+				case SQL_DIAG_NUMBER:
+				case SQL_DIAG_RETURNCODE:
+				case SQL_DIAG_SERVER_NAME:
+				case SQL_DIAG_SQLSTATE:
+					break;
+			}
+			break;
+		default:
+			ret = SQL_ERROR;
 	}
-mylog("%s exiting\n", func);
+	mylog("%s exiting %d\n", func, ret);
 	return ret;
 }
 
@@ -87,7 +142,7 @@ PGAPI_GetConnectAttr(HDBC ConnectionHandle,
 		case SQL_ATTR_CONNECTION_TIMEOUT:
 		case SQL_ATTR_METADATA_ID:
 			conn->errornumber = STMT_INVALID_OPTION_IDENTIFIER;
-			conn->errormsg = "Unsupported connection option (Set)";
+			conn->errormsg = "Unsupported connect attribute (Get)";
 			return SQL_ERROR;
 	}
 	return PGAPI_GetConnectOption(ConnectionHandle, (UWORD) Attribute, Value);
@@ -373,7 +428,7 @@ PGAPI_SetConnectAttr(HDBC ConnectionHandle,
 		case SQL_ATTR_CONNECTION_TIMEOUT:
 		case SQL_ATTR_METADATA_ID:
 			conn->errornumber = STMT_INVALID_OPTION_IDENTIFIER;
-			conn->errormsg = "Unsupported connection option (Set)";
+			conn->errormsg = "Unsupported connect attribute (Set)";
 			return SQL_ERROR;
 	}
 	return PGAPI_SetConnectOption(ConnectionHandle, (UWORD) Attribute, (UDWORD) Value);

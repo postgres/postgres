@@ -13,7 +13,7 @@
 			SQLPrepareW, SQLPrimaryKeysW, SQLProcedureColumnsW,
 			SQLProceduresW, SQLSetCursorNameW,
 			SQLSpecialColumnsW, SQLStatisticsW, SQLTablesW,
-			SQLTablePrivilegesW
+			SQLTablePrivilegesW, SQLGetTypeInfoW
  *-------
  */
 
@@ -102,7 +102,11 @@ RETCODE SQL_API SQLDriverConnectW(HDBC hdbc,
 	ret = PGAPI_DriverConnect(hdbc, hwnd, szIn, (SWORD) inlen,
 		szOut, cbConnStrOutMax, &olen, fDriverCompletion);
 	if (ret != SQL_ERROR)
-		*pcbConnStrOut = utf8_to_ucs2(szOut, olen, szConnStrOut, cbConnStrOutMax);
+	{
+		UInt4 outlen = utf8_to_ucs2(szOut, olen, szConnStrOut, cbConnStrOutMax);
+		if (pcbConnStrOut)
+			*pcbConnStrOut = outlen;
+	}
 	free(szOut);
 	if (szIn);
 		free(szIn);
@@ -129,7 +133,11 @@ RETCODE SQL_API SQLBrowseConnectW(
 	ret = PGAPI_BrowseConnect(hdbc, szIn, (SWORD) inlen,
 		szOut, cbConnStrOutMax, &olen);
 	if (ret != SQL_ERROR)
-		*pcbConnStrOut = utf8_to_ucs2(szOut, olen, szConnStrOut, cbConnStrOutMax);
+	{
+		UInt4	outlen = utf8_to_ucs2(szOut, olen, szConnStrOut, cbConnStrOutMax);
+		if (pcbConnStrOut)
+			*pcbConnStrOut = outlen;
+	}
 	free(szOut);
 	if (szIn);
 		free(szIn);
@@ -158,15 +166,28 @@ RETCODE  SQL_API SQLDescribeColW(HSTMT StatementHandle,
            SQLSMALLINT *DecimalDigits, SQLSMALLINT *Nullable)
 {
 	RETCODE	ret;
-	SWORD	nmlen;
+	SWORD	buflen, nmlen;
 	char	*clName;
 
 	mylog("[SQLDescribeColW]");
-	clName = malloc(BufferLength);
+	buflen = BufferLength * 3 + 1;
+	clName = malloc(buflen);
 	ret = PGAPI_DescribeCol(StatementHandle, ColumnNumber,
-		clName, BufferLength, &nmlen,
-           	DataType, ColumnSize, DecimalDigits, Nullable);
-	*NameLength = utf8_to_ucs2(clName, nmlen, ColumnName, BufferLength);
+		clName, buflen, &nmlen, DataType, ColumnSize,
+		DecimalDigits, Nullable);
+	if (ret == SQL_SUCCESS)
+	{
+		UInt4	nmcount = utf8_to_ucs2(clName, nmlen, ColumnName, BufferLength);
+		if (nmcount > (UInt4) BufferLength)
+		{
+			StatementClass	*stmt = (StatementClass *) StatementHandle;
+			ret = SQL_SUCCESS_WITH_INFO;
+			stmt->errornumber = STMT_TRUNCATED;
+			stmt->errormsg = "Column name too large";
+		}
+		if (NameLength)
+			*NameLength = nmcount;
+	}
 	free(clName); 
 	return ret;
 }
@@ -192,13 +213,25 @@ RETCODE  SQL_API SQLGetCursorNameW(HSTMT StatementHandle,
 {
 	RETCODE	ret;
 	char	*crName;
-	SWORD	clen;
+	SWORD	clen, buflen;
 
 	mylog("[SQLGetCursorNameW]");
-	crName = malloc(BufferLength);
-	ret = PGAPI_GetCursorName(StatementHandle, crName, BufferLength,
-           	&clen);
-	*NameLength = utf8_to_ucs2(crName, (Int4) clen, CursorName, BufferLength);
+	buflen = BufferLength * 3 + 1;
+	crName = malloc(buflen);
+	ret = PGAPI_GetCursorName(StatementHandle, crName, buflen, &clen);
+	if (ret == SQL_SUCCESS)	
+	{
+		UInt4	nmcount = utf8_to_ucs2(crName, (Int4) clen, CursorName, BufferLength);
+		if (nmcount > (UInt4) BufferLength)
+		{
+			StatementClass *stmt = (StatementClass *) StatementHandle;
+			ret = SQL_SUCCESS_WITH_INFO;
+			stmt->errornumber = STMT_TRUNCATED;
+			stmt->errormsg = "Cursor name too large";
+		}
+		if (NameLength)
+			*NameLength = utf8_to_ucs2(crName, (Int4) clen, CursorName, BufferLength);
+	}
 	free(crName);
 	return ret;
 }
@@ -207,23 +240,33 @@ RETCODE  SQL_API SQLGetInfoW(HDBC ConnectionHandle,
            SQLUSMALLINT InfoType, PTR InfoValue,
            SQLSMALLINT BufferLength, SQLSMALLINT *StringLength)
 {
+	ConnectionClass	*conn = (ConnectionClass *) ConnectionHandle;
 	RETCODE	ret;
-	((ConnectionClass *) ConnectionHandle)->unicode = 1;
+
+	conn->unicode = 1;
+	CC_clear_error(conn);
 #if (ODBCVER >= 0x0300)
 	mylog("[SQLGetInfoW(30)]");
 	if ((ret = PGAPI_GetInfo(ConnectionHandle, InfoType, InfoValue,
            	BufferLength, StringLength)) == SQL_ERROR)
 	{
-		if (((ConnectionClass *) ConnectionHandle)->driver_version >= 0x0300)
-			return PGAPI_GetInfo30(ConnectionHandle, InfoType, InfoValue,
+		if (conn->driver_version >= 0x0300)
+		{
+			CC_clear_error(conn);
+			ret = PGAPI_GetInfo30(ConnectionHandle, InfoType, InfoValue,
            			BufferLength, StringLength);
+		}
 	}
-	return ret;
+	if (SQL_ERROR == ret)
+		CC_log_error("SQLGetInfoW(30)", "", conn);
 #else
 	mylog("[SQLGetInfoW]");
-	return PGAPI_GetInfo(ConnectionHandle, InfoType, InfoValue,
+	ret = PGAPI_GetInfo(ConnectionHandle, InfoType, InfoValue,
            	BufferLength, StringLength);
+	if (SQL_ERROR == ret)
+		CC_log_error("SQLGetInfoW", "", conn);
 #endif
+	return ret;
 }
 
 RETCODE  SQL_API SQLPrepareW(HSTMT StatementHandle,
@@ -428,17 +471,31 @@ RETCODE SQL_API SQLNativeSqlW(
 	RETCODE		ret;
 	char		*szIn, *szOut;
 	UInt4		slen;
-	SQLINTEGER	olen;
+	SQLINTEGER	buflen, olen;
 
 	mylog("[SQLNativeSqlW]");
 	((ConnectionClass *) hdbc)->unicode = 1;
 	szIn = ucs2_to_utf8(szSqlStrIn, cbSqlStrIn, &slen);
-	szOut = malloc(cbSqlStrMax);
+	buflen = 3 * cbSqlStrMax + 1;
+	szOut = malloc(buflen);
 	ret = PGAPI_NativeSql(hdbc, szIn, (SQLINTEGER) slen,
-		szOut, cbSqlStrMax, &olen);
+		szOut, buflen, &olen);
 	if (szIn);
 		free(szIn);
-	*pcbSqlStr = utf8_to_ucs2(szOut, olen, szSqlStr, cbSqlStrMax);
+	if (ret == SQL_SUCCESS)
+	{
+		UInt4	szcount = utf8_to_ucs2(szOut, olen, szSqlStr, cbSqlStrMax);
+		if (szcount > (UInt4) cbSqlStrMax)
+		{
+			ConnectionClass	*conn = (ConnectionClass *) hdbc;
+
+			ret = SQL_SUCCESS_WITH_INFO;
+			conn->errornumber = CONN_TRUNCATED;
+			conn->errormsg = "Sql string too large";
+		}
+		if (pcbSqlStr)
+			*pcbSqlStr = szcount;
+	}
 	free(szOut);
 	return ret;
 }
@@ -559,4 +616,11 @@ RETCODE SQL_API SQLTablePrivilegesW(
 	if (tbName);
 		free(tbName);
 	return ret;
+}
+
+RETCODE SQL_API	SQLGetTypeInfoW(
+		SQLHSTMT	StatementHandle,
+		SQLSMALLINT	DataType)
+{
+	return PGAPI_GetTypeInfo(StatementHandle, DataType);
 }

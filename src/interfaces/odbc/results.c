@@ -8,7 +8,7 @@
  *
  * API functions:	SQLRowCount, SQLNumResultCols, SQLDescribeCol,
  *					SQLColAttributes, SQLGetData, SQLFetch, SQLExtendedFetch,
- *					SQLMoreResults(NI), SQLSetPos, SQLSetScrollOptions(NI),
+ *					SQLMoreResults, SQLSetPos, SQLSetScrollOptions(NI),
  *					SQLSetCursorName, SQLGetCursorName
  *
  * Comments:		See "notice.txt" for copyright and license information.
@@ -45,6 +45,7 @@ PGAPI_RowCount(
 			   *ptr;
 	ConnInfo   *ci;
 
+	mylog("%s: entering...\n", func);
 	if (!stmt)
 	{
 		SC_log_error(func, "", NULL);
@@ -62,7 +63,7 @@ PGAPI_RowCount(
 	{
 		if (stmt->status == STMT_FINISHED)
 		{
-			res = SC_get_Result(stmt);
+			res = SC_get_Curres(stmt);
 
 			if (res && pcrow)
 			{
@@ -73,7 +74,7 @@ PGAPI_RowCount(
 	}
 	else
 	{
-		res = SC_get_Result(stmt);
+		res = SC_get_Curres(stmt);
 		if (res && pcrow)
 		{
 			msg = QR_get_command(res);
@@ -115,6 +116,7 @@ PGAPI_NumResultCols(
 	char		parse_ok;
 	ConnInfo   *ci;
 
+	mylog("%s: entering...\n", func);
 	if (!stmt)
 	{
 		SC_log_error(func, "", NULL);
@@ -144,7 +146,7 @@ PGAPI_NumResultCols(
 	if (!parse_ok)
 	{
 		SC_pre_execute(stmt);
-		result = SC_get_Result(stmt);
+		result = SC_get_Curres(stmt);
 
 		mylog("PGAPI_NumResultCols: result = %u, status = %d, numcols = %d\n", result, stmt->status, result != NULL ? QR_NumResultCols(result) : -1);
 		if ((!result) || ((stmt->status != STMT_FINISHED) && (stmt->status != STMT_PREMATURE)))
@@ -210,6 +212,25 @@ PGAPI_DescribeCol(
 
 	SC_clear_error(stmt);
 
+#if (ODBCVER >= 0x0300)
+	if (0 == icol) /* bookmark column */
+	{
+		SQLSMALLINT	fType = SQL_INTEGER;
+		if (szColName && cbColNameMax > 0)
+			*szColName = '\0';
+		if (pcbColName)
+			*pcbColName = 0;
+		if (pfSqlType)
+			*pfSqlType = fType;
+		if (pcbColDef)
+			*pcbColDef = 10;
+		if (pibScale)
+			*pibScale = 0;
+		if (pfNullable)
+			*pfNullable = SQL_NO_NULLS;
+		return SQL_SUCCESS;
+	}
+#endif /* ODBCVER */
 	/*
 	 * Dont check for bookmark column. This is the responsibility of the
 	 * driver manager.
@@ -262,7 +283,7 @@ PGAPI_DescribeCol(
 	{
 		SC_pre_execute(stmt);
 
-		res = SC_get_Result(stmt);
+		res = SC_get_Curres(stmt);
 
 		mylog("**** PGAPI_DescribeCol: res = %u, stmt->status = %d, !finished=%d, !premature=%d\n", res, stmt->status, stmt->status != STMT_FINISHED, stmt->status != STMT_PREMATURE);
 		if ((NULL == res) || ((stmt->status != STMT_FINISHED) && (stmt->status != STMT_PREMATURE)))
@@ -305,7 +326,7 @@ PGAPI_DescribeCol(
 	if (pcbColName)
 		*pcbColName = len;
 
-	if (szColName)
+	if (szColName && cbColNameMax > 0)
 	{
 		strncpy_null(szColName, col_name, cbColNameMax);
 
@@ -379,17 +400,19 @@ PGAPI_ColAttributes(
 {
 	static char *func = "PGAPI_ColAttributes";
 	StatementClass *stmt = (StatementClass *) hstmt;
-	Int4		field_type = 0;
-	ConnInfo   *ci;
+	Int4		col_idx, field_type = 0;
+	ConnectionClass	*conn;
+	ConnInfo	*ci;
 	int			unknown_sizes;
 	int			cols = 0;
 	char		parse_ok;
 	RETCODE		result;
-	char	   *p = NULL;
+	const char   *p = NULL;
 	int			len = 0,
 				value = 0;
+	const	FIELD_INFO	*fi = NULL;
 
-	mylog("%s: entering...\n", func);
+	mylog("%s: entering..col=%d %d.\n", func, icol, fDescType);
 
 	if (!stmt)
 	{
@@ -397,7 +420,8 @@ PGAPI_ColAttributes(
 		return SQL_INVALID_HANDLE;
 	}
 
-	ci = &(SC_get_conn(stmt)->connInfo);
+	conn = SC_get_conn(stmt);
+	ci = &(conn->connInfo);
 
 	/*
 	 * Dont check for bookmark column.	This is the responsibility of the
@@ -405,7 +429,24 @@ PGAPI_ColAttributes(
 	 * is ignored anyway, so it may be 0.
 	 */
 
-	icol--;
+#if (ODBCVER >= 0x0300)
+	if (0 == icol) /* bookmark column */
+	{
+		switch (fDescType)
+		{
+			case SQL_DESC_OCTET_LENGTH:
+				if (pfDesc)
+					*pfDesc = 4;
+				break;
+			case SQL_DESC_TYPE:
+				if (pfDesc)
+					*pfDesc = SQL_INTEGER;
+				break;
+		}
+		return SQL_SUCCESS;
+	}
+#endif /* ODBCVER */
+	col_idx = icol - 1;
 
 	/* atoi(ci->unknown_sizes); */
 	unknown_sizes = ci->drivers.unknown_sizes;
@@ -437,28 +478,30 @@ PGAPI_ColAttributes(
 			return SQL_SUCCESS;
 		}
 
-		if (stmt->parse_status != STMT_PARSE_FATAL && stmt->fi && stmt->fi[icol])
+		if (stmt->parse_status != STMT_PARSE_FATAL && stmt->fi && stmt->fi[col_idx])
 		{
-			if (icol >= cols)
+			if (col_idx >= cols)
 			{
 				stmt->errornumber = STMT_INVALID_COLUMN_NUMBER_ERROR;
 				stmt->errormsg = "Invalid column number in ColAttributes.";
 				SC_log_error(func, "", stmt);
 				return SQL_ERROR;
 			}
-			field_type = stmt->fi[icol]->type;
+			field_type = stmt->fi[col_idx]->type;
 			if (field_type > 0)
 				parse_ok = TRUE;
 		}
 	}
 
-	if (!parse_ok)
+	if (parse_ok)
+		fi = stmt->fi[col_idx];
+	else
 	{
 		SC_pre_execute(stmt);
 
-		mylog("**** PGAPI_ColAtt: result = %u, status = %d, numcols = %d\n", stmt->result, stmt->status, stmt->result != NULL ? QR_NumResultCols(stmt->result) : -1);
+		mylog("**** PGAPI_ColAtt: result = %u, status = %d, numcols = %d\n", SC_get_Curres(stmt), stmt->status, SC_get_Curres(stmt) != NULL ? QR_NumResultCols(SC_get_Curres(stmt)) : -1);
 
-		if ((NULL == stmt->result) || ((stmt->status != STMT_FINISHED) && (stmt->status != STMT_PREMATURE)))
+		if ((NULL == SC_get_Curres(stmt)) || ((stmt->status != STMT_FINISHED) && (stmt->status != STMT_PREMATURE)))
 		{
 			stmt->errormsg = "Can't get column attributes: no result found.";
 			stmt->errornumber = STMT_SEQUENCE_ERROR;
@@ -466,13 +509,17 @@ PGAPI_ColAttributes(
 			return SQL_ERROR;
 		}
 
-		cols = QR_NumResultCols(stmt->result);
+		cols = QR_NumResultCols(SC_get_Curres(stmt));
 
 		/*
 		 * Column Count is a special case.	The Column number is ignored
 		 * in this case.
 		 */
+#if (ODBCVER >= 0x0300)
+		if (fDescType == SQL_DESC_COUNT)
+#else
 		if (fDescType == SQL_COLUMN_COUNT)
+#endif /* ODBCVER */
 		{
 			if (pfDesc)
 				*pfDesc = cols;
@@ -480,7 +527,7 @@ PGAPI_ColAttributes(
 			return SQL_SUCCESS;
 		}
 
-		if (icol >= cols)
+		if (col_idx >= cols)
 		{
 			stmt->errornumber = STMT_INVALID_COLUMN_NUMBER_ERROR;
 			stmt->errormsg = "Invalid column number in ColAttributes.";
@@ -488,21 +535,21 @@ PGAPI_ColAttributes(
 			return SQL_ERROR;
 		}
 
-		field_type = QR_get_field_type(stmt->result, icol);
+		field_type = QR_get_field_type(SC_get_Curres(stmt), col_idx);
 	}
 
-	mylog("colAttr: col %d field_type = %d\n", icol, field_type);
+	mylog("colAttr: col %d field_type = %d\n", col_idx, field_type);
 
 	switch (fDescType)
 	{
-		case SQL_COLUMN_AUTO_INCREMENT:
+		case SQL_COLUMN_AUTO_INCREMENT: /* == SQL_DESC_AUTO_UNIQUE_VALUE */
 			value = pgtype_auto_increment(stmt, field_type);
 			if (value == -1)	/* non-numeric becomes FALSE (ODBC Doc) */
 				value = FALSE;
 
 			break;
 
-		case SQL_COLUMN_CASE_SENSITIVE:
+		case SQL_COLUMN_CASE_SENSITIVE: /* == SQL_DESC_CASE_SENSITIVE */
 			value = pgtype_case_sensitive(stmt, field_type);
 			break;
 
@@ -511,17 +558,17 @@ PGAPI_ColAttributes(
 			 *
 			 * case SQL_COLUMN_COUNT:
 			 */
-		case SQL_COLUMN_DISPLAY_SIZE:
-			value = (parse_ok) ? stmt->fi[icol]->display_size : pgtype_display_size(stmt, field_type, icol, unknown_sizes);
+		case SQL_COLUMN_DISPLAY_SIZE: /* == SQL_DESC_DISPLAY_SIZE */
+			value = fi ? fi->display_size : pgtype_display_size(stmt, field_type, col_idx, unknown_sizes);
 
-			mylog("PGAPI_ColAttributes: col %d, display_size= %d\n", icol, value);
+			mylog("PGAPI_ColAttributes: col %d, display_size= %d\n", col_idx, value);
 
 			break;
 
-		case SQL_COLUMN_LABEL:
-			if (parse_ok && stmt->fi[icol]->alias[0] != '\0')
+		case SQL_COLUMN_LABEL: /* == SQL_DESC_LABEL */
+			if (fi && fi->alias[0] != '\0')
 			{
-				p = stmt->fi[icol]->alias;
+				p = fi->alias;
 
 				mylog("PGAPI_ColAttr: COLUMN_LABEL = '%s'\n", p);
 				break;
@@ -529,70 +576,78 @@ PGAPI_ColAttributes(
 			}
 			/* otherwise same as column name -- FALL THROUGH!!! */
 
+#if (ODBCVER >= 0x0300)
+		case SQL_DESC_NAME:
+#else
 		case SQL_COLUMN_NAME:
-			p = (parse_ok) ? stmt->fi[icol]->name : QR_get_fieldname(stmt->result, icol);
+#endif /* ODBCVER */
+			p = fi ? (fi->alias[0] ? fi->alias : fi->name) : QR_get_fieldname(SC_get_Curres(stmt), col_idx);
 
 			mylog("PGAPI_ColAttr: COLUMN_NAME = '%s'\n", p);
 			break;
 
 		case SQL_COLUMN_LENGTH:
-			value = (parse_ok) ? stmt->fi[icol]->length : pgtype_length(stmt, field_type, icol, unknown_sizes);
+			value = fi ? fi->length : pgtype_length(stmt, field_type, col_idx, unknown_sizes);
 
-			mylog("PGAPI_ColAttributes: col %d, length = %d\n", icol, value);
+			mylog("PGAPI_ColAttributes: col %d, length = %d\n", col_idx, value);
 			break;
 
-		case SQL_COLUMN_MONEY:
+		case SQL_COLUMN_MONEY: /* == SQL_DESC_FIXED_PREC_SCALE */
 			value = pgtype_money(stmt, field_type);
 			break;
 
+#if (ODBCVER >= 0x0300)
+		case SQL_DESC_NULLABLE:
+#else
 		case SQL_COLUMN_NULLABLE:
-			value = (parse_ok) ? stmt->fi[icol]->nullable : pgtype_nullable(stmt, field_type);
+#endif /* ODBCVER */
+			value = fi ? fi->nullable : pgtype_nullable(stmt, field_type);
 			break;
 
-		case SQL_COLUMN_OWNER_NAME:
+		case SQL_COLUMN_OWNER_NAME: /* == SQL_DESC_SCHEMA_NAME */
 			p = "";
 			break;
 
 		case SQL_COLUMN_PRECISION:
-			value = (parse_ok) ? stmt->fi[icol]->precision : pgtype_precision(stmt, field_type, icol, unknown_sizes);
+			value = fi ? fi->precision : pgtype_precision(stmt, field_type, col_idx, unknown_sizes);
 
-			mylog("PGAPI_ColAttributes: col %d, precision = %d\n", icol, value);
+			mylog("PGAPI_ColAttributes: col %d, precision = %d\n", col_idx, value);
 			break;
 
-		case SQL_COLUMN_QUALIFIER_NAME:
+		case SQL_COLUMN_QUALIFIER_NAME: /* == SQL_DESC_CATALOG_NAME */
 			p = "";
 			break;
 
 		case SQL_COLUMN_SCALE:
-			value = pgtype_scale(stmt, field_type, icol);
+			value = pgtype_scale(stmt, field_type, col_idx);
 			break;
 
-		case SQL_COLUMN_SEARCHABLE:
+		case SQL_COLUMN_SEARCHABLE: /* SQL_DESC_SEARCHABLE */
 			value = pgtype_searchable(stmt, field_type);
 			break;
 
-		case SQL_COLUMN_TABLE_NAME:
-			p = (parse_ok && stmt->fi[icol]->ti) ? stmt->fi[icol]->ti->name : "";
+		case SQL_COLUMN_TABLE_NAME: /* == SQL_DESC_TABLE_NAME */
+			p = fi && (fi->ti) ? fi->ti->name : "";
 
 			mylog("PGAPI_ColAttr: TABLE_NAME = '%s'\n", p);
 			break;
 
-		case SQL_COLUMN_TYPE:
+		case SQL_COLUMN_TYPE: /* == SQL_DESC_CONCISE_TYPE */
 			value = pgtype_to_sqltype(stmt, field_type);
 			break;
 
-		case SQL_COLUMN_TYPE_NAME:
+		case SQL_COLUMN_TYPE_NAME: /* == SQL_DESC_TYPE_NAME */
 			p = pgtype_to_name(stmt, field_type);
 			break;
 
-		case SQL_COLUMN_UNSIGNED:
+		case SQL_COLUMN_UNSIGNED: /* == SQL_DESC_UNSINGED */
 			value = pgtype_unsigned(stmt, field_type);
 			if (value == -1)	/* non-numeric becomes TRUE (ODBC Doc) */
 				value = TRUE;
 
 			break;
 
-		case SQL_COLUMN_UPDATABLE:
+		case SQL_COLUMN_UPDATABLE: /* == SQL_DESC_UPDATABLE */
 
 			/*
 			 * Neither Access or Borland care about this.
@@ -604,6 +659,60 @@ PGAPI_ColAttributes(
 
 			mylog("PGAPI_ColAttr: UPDATEABLE = %d\n", value);
 			break;
+#if (ODBCVER >= 0x0300)
+		case SQL_DESC_BASE_COLUMN_NAME:
+
+			p = fi ? fi->name : QR_get_fieldname(SC_get_Curres(stmt), col_idx);
+
+			mylog("PGAPI_ColAttr: BASE_COLUMN_NAME = '%s'\n", p);
+			break;
+		case SQL_DESC_BASE_TABLE_NAME: /* the same as TABLE_NAME ok ? */
+			p = fi && (fi->ti) ? fi->ti->name : "";
+
+			mylog("PGAPI_ColAttr: BASE_TABLE_NAME = '%s'\n", p);
+			break;
+		case SQL_DESC_LENGTH: /* different from SQL_COLUMN_LENGTH */
+			value = fi ? fi->length : pgtype_length(stmt, field_type, col_idx, unknown_sizes);
+
+			mylog("PGAPI_ColAttributes: col %d, length = %d\n", col_idx, value);
+			break;
+		case SQL_DESC_OCTET_LENGTH:
+			value = fi ? fi->length : pgtype_length(stmt, field_type, col_idx, unknown_sizes);
+
+			mylog("PGAPI_ColAttributes: col %d, octet_length = %d\n", col_idx, value);
+			break;
+		case SQL_DESC_PRECISION: /* different from SQL_COLUMN_PRECISION */
+			value = fi ? fi->precision : pgtype_precision(stmt, field_type, col_idx, unknown_sizes);
+
+			mylog("PGAPI_ColAttributes: col %d, desc_precision = %d\n", col_idx, value);
+			break;
+		case SQL_DESC_SCALE: /* different from SQL_COLUMN_SCALE */
+			value = pgtype_scale(stmt, field_type, col_idx);
+			break;
+		case SQL_DESC_LOCAL_TYPE_NAME:
+			p = pgtype_to_name(stmt, field_type);
+			break;
+		case SQL_DESC_TYPE:
+			value = pgtype_to_sqltype(stmt, field_type);
+			switch (value)
+			{
+				case SQL_TYPE_DATE:
+				case SQL_TYPE_TIME:
+				case SQL_TYPE_TIMESTAMP:
+					value = SQL_DATETIME;
+					break;
+			}
+			break;
+		case SQL_DESC_LITERAL_PREFIX:
+		case SQL_DESC_LITERAL_SUFFIX:
+		case SQL_DESC_NUM_PREC_RADIX:
+		case SQL_DESC_UNNAMED:
+#endif /* ODBCVER */
+		default:
+			stmt->errornumber = STMT_INVALID_OPTION_IDENTIFIER;
+			stmt->errormsg = "ColAttribute for this type not implemented yet";
+			SC_log_error(func, "", stmt);
+			return SQL_ERROR;
 	}
 
 	result = SQL_SUCCESS;
@@ -614,6 +723,14 @@ PGAPI_ColAttributes(
 
 		if (rgbDesc)
 		{
+#ifdef	UNICODE_SUPPORT
+			if (conn->unicode)
+			{
+				len = utf8_to_ucs2(p, len, (SQLWCHAR *) rgbDesc, cbDescMax / 2);
+				len *= 2;
+			}
+			else
+#endif /* UNICODE_SUPPORT */
 			strncpy_null((char *) rgbDesc, p, (size_t) cbDescMax);
 
 			if (len >= cbDescMax)
@@ -667,7 +784,7 @@ PGAPI_GetData(
 		return SQL_INVALID_HANDLE;
 	}
 	ci = &(SC_get_conn(stmt)->connInfo);
-	res = stmt->result;
+	res = SC_get_Curres(stmt);
 
 	if (STMT_EXECUTING == stmt->status)
 	{
@@ -834,7 +951,7 @@ PGAPI_Fetch(
 	StatementClass *stmt = (StatementClass *) hstmt;
 	QResultClass *res;
 
-	mylog("PGAPI_Fetch: stmt = %u, stmt->result= %u\n", stmt, stmt->result);
+	mylog("PGAPI_Fetch: stmt = %u, stmt->result= %u\n", stmt, SC_get_Curres(stmt));
 
 	if (!stmt)
 	{
@@ -844,7 +961,7 @@ PGAPI_Fetch(
 
 	SC_clear_error(stmt);
 
-	if (!(res = stmt->result))
+	if (!(res = SC_get_Curres(stmt)))
 	{
 		stmt->errormsg = "Null statement result in PGAPI_Fetch.";
 		stmt->errornumber = STMT_SEQUENCE_ERROR;
@@ -935,7 +1052,7 @@ PGAPI_ExtendedFetch(
 
 	SC_clear_error(stmt);
 
-	if (!(res = stmt->result))
+	if (!(res = SC_get_Curres(stmt)))
 	{
 		stmt->errormsg = "Null statement result in PGAPI_ExtendedFetch.";
 		stmt->errornumber = STMT_SEQUENCE_ERROR;
@@ -1214,6 +1331,15 @@ RETCODE		SQL_API
 PGAPI_MoreResults(
 				  HSTMT hstmt)
 {
+	const char *func = "PGAPI_MoreResults";
+	StatementClass	*stmt = (StatementClass *) hstmt;
+	QResultClass	*res;
+
+	mylog("%s: entering...\n", func);
+	if (stmt && (res = SC_get_Curres(stmt)))
+		SC_get_Curres(stmt) = res->next;
+	if (SC_get_Curres(stmt))
+		return SQL_SUCCESS; 
 	return SQL_NO_DATA_FOUND;
 }
 
@@ -1243,12 +1369,7 @@ positioned_load(StatementClass *stmt, BOOL latest, int res_cols, UInt4 oid, cons
 	}
 	sprintf(selstr, "%s oid = %u", selstr, oid),
 		mylog("selstr=%s\n", selstr);
-	qres = CC_send_query(SC_get_conn(stmt), selstr, NULL);
-	if (qres && QR_aborted(qres))
-	{
-		QR_Destructor(qres);
-		qres = (QResultClass *) 0;
-	}
+	qres = CC_send_query(SC_get_conn(stmt), selstr, NULL, TRUE);
 	return qres;
 }
 
@@ -1270,7 +1391,7 @@ SC_pos_reload(StatementClass *stmt, UWORD irow, UWORD *count)
 	rcnt = 0;
 	if (count)
 		*count = 0;
-	if (!(res = stmt->result))
+	if (!(res = SC_get_Curres(stmt)))
 		return SQL_ERROR;
 	if (!stmt->ti)
 		parse_statement(stmt);	/* not preferable */
@@ -1339,7 +1460,7 @@ SC_pos_newload(StatementClass *stmt, UInt4 oid, const char *tidval)
 	RETCODE		ret = SQL_ERROR;
 
 	mylog("positioned new fi=%x ti=%x\n", stmt->fi, stmt->ti);
-	if (!(res = stmt->result))
+	if (!(res = SC_get_Curres(stmt)))
 		return SQL_ERROR;
 	if (!stmt->ti)
 		parse_statement(stmt);	/* not preferable */
@@ -1401,6 +1522,41 @@ SC_pos_newload(StatementClass *stmt, UInt4 oid, const char *tidval)
 	return ret;
 }
 
+static RETCODE SQL_API
+irow_update(RETCODE ret, StatementClass *stmt, UWORD irow)
+{
+	if (ret != SQL_ERROR)
+	{
+		int			updcnt;
+		const char *cmdstr = QR_get_command(SC_get_Curres(stmt));
+
+		if (cmdstr &&
+			sscanf(cmdstr, "UPDATE %d", &updcnt) == 1)
+		{
+			if (updcnt == 1)
+				SC_pos_reload(stmt, irow, (UWORD *) 0);
+			else if (updcnt == 0)
+			{
+				stmt->errornumber = STMT_ROW_VERSION_CHANGED;
+				stmt->errormsg = "the content was changed before updation";
+				ret = SQL_ERROR;
+				if (stmt->options.cursor_type == SQL_CURSOR_KEYSET_DRIVEN)
+					SC_pos_reload(stmt, irow, (UWORD *) 0);
+			}
+			else
+				ret = SQL_ERROR;
+			stmt->currTuple = stmt->rowset_start + irow;
+		}
+		else
+			ret = SQL_ERROR;
+		if (ret == SQL_ERROR && stmt->errornumber == 0)
+		{
+			stmt->errornumber = STMT_ERROR_TAKEN_FROM_BACKEND;
+			stmt->errormsg = "SetPos update return error";
+		}
+	}
+	return ret;
+}
 RETCODE		SQL_API
 SC_pos_update(StatementClass *stmt,
 			  UWORD irow)
@@ -1419,8 +1575,8 @@ SC_pos_update(StatementClass *stmt,
 	UInt4	offset;
 	Int4	*used;
 
-	mylog("POS UPDATE %d+%d fi=%x ti=%x\n", irow, stmt->result->base, stmt->fi, stmt->ti);
-	if (!(res = stmt->result))
+	mylog("POS UPDATE %d+%d fi=%x ti=%x\n", irow, SC_get_Curres(stmt)->base, stmt->fi, stmt->ti);
+	if (!(res = SC_get_Curres(stmt)))
 		return SQL_ERROR;
 	if (!stmt->ti)
 		parse_statement(stmt);	/* not preferable */
@@ -1510,40 +1666,12 @@ SC_pos_update(StatementClass *stmt,
 			stmt->errormsg = "SetPos with data_at_exec not yet supported";
 			ret = SQL_ERROR;
 		}
-		if (ret != SQL_ERROR)
-		{
-			int			updcnt;
-			const char *cmdstr = QR_get_command(qstmt->result);
-
-			if (cmdstr &&
-				sscanf(cmdstr, "UPDATE %d", &updcnt) == 1)
-			{
-				if (updcnt == 1)
-					SC_pos_reload(stmt, irow, (UWORD *) 0);
-				else if (updcnt == 0)
-				{
-					stmt->errornumber = STMT_ROW_VERSION_CHANGED;
-					stmt->errormsg = "the content was changed before updation";
-					ret = SQL_ERROR;
-					if (stmt->options.cursor_type == SQL_CURSOR_KEYSET_DRIVEN)
-						SC_pos_reload(stmt, irow, (UWORD *) 0);
-				}
-				else
-					ret = SQL_ERROR;
-				stmt->currTuple = stmt->rowset_start + irow;
-			}
-			else
-				ret = SQL_ERROR;
-			if (ret == SQL_ERROR && stmt->errornumber == 0)
-			{
-				stmt->errornumber = STMT_ERROR_TAKEN_FROM_BACKEND;
-				stmt->errormsg = "SetPos update return error";
-			}
-		}
+		ret = irow_update(ret, qstmt, irow);
 		PGAPI_FreeStmt(hstmt, SQL_DROP);
 	}
 	else
 		ret = SQL_SUCCESS_WITH_INFO;
+#if (ODBCVER >= 0x0300)
 	if (stmt->options.rowStatusArray)
 	{
 		switch (ret)
@@ -1556,6 +1684,7 @@ SC_pos_update(StatementClass *stmt,
 				break;
 		}
 	}
+#endif /* ODBCVER */
 
 	return ret;
 }
@@ -1573,7 +1702,7 @@ SC_pos_delete(StatementClass *stmt,
 	char	   *oidval;
 
 	mylog("POS DELETE fi=%x ti=%x\n", stmt->fi, stmt->ti);
-	if (!(res = stmt->result))
+	if (!(res = SC_get_Curres(stmt)))
 		return SQL_ERROR;
 	if (!stmt->ti)
 		parse_statement(stmt);	/* not preferable */
@@ -1591,11 +1720,11 @@ SC_pos_delete(StatementClass *stmt,
 	}
 	sprintf(dltstr, "delete from \"%s\" where ctid = '%s' and oid = %s",
 			stmt->ti[0]->name,
-	   QR_get_value_backend_row(stmt->result, global_ridx, res_cols - 2),
+	   QR_get_value_backend_row(SC_get_Curres(stmt), global_ridx, res_cols - 2),
 			oidval);
 
 	mylog("dltstr=%s\n", dltstr);
-	qres = CC_send_query(SC_get_conn(stmt), dltstr, NULL);
+	qres = CC_send_query(SC_get_conn(stmt), dltstr, NULL, TRUE);
 	if (qres && QR_command_successful(qres))
 	{
 		int			dltcnt;
@@ -1630,6 +1759,7 @@ SC_pos_delete(StatementClass *stmt,
 	}
 	if (qres)
 		QR_Destructor(qres);
+#if (ODBCVER >= 0x0300)
 	if (stmt->options.rowStatusArray)
 	{
 		switch (ret)
@@ -1640,6 +1770,40 @@ SC_pos_delete(StatementClass *stmt,
 			case SQL_SUCCESS_WITH_INFO:
 				stmt->options.rowStatusArray[irow] = SQL_ROW_SUCCESS_WITH_INFO;
 				break;
+		}
+	}
+#endif /* ODBCVER */
+	return ret;
+}
+
+static RETCODE SQL_API
+irow_insert(RETCODE ret, StatementClass *stmt, int addpos)
+{
+	if (ret != SQL_ERROR)
+	{
+		int			addcnt;
+		UInt4		oid;
+		const char *cmdstr = QR_get_command(SC_get_Curres(stmt));
+
+		if (cmdstr &&
+			sscanf(cmdstr, "INSERT %u %d", &oid, &addcnt) == 2 &&
+			addcnt == 1)
+		{
+			SC_pos_newload(stmt, oid, NULL);
+			if (stmt->bookmark.buffer)
+			{
+				char		buf[32];
+
+				sprintf(buf, "%ld", addpos);
+				copy_and_convert_field(stmt, 0, buf,
+				 SQL_C_ULONG, stmt->bookmark.buffer,
+				 0, stmt->bookmark.used);
+			}
+		}
+		else
+		{
+			stmt->errornumber = STMT_ERROR_TAKEN_FROM_BACKEND;
+			stmt->errormsg = "SetPos insert return error";
 		}
 	}
 	return ret;
@@ -1661,7 +1825,7 @@ SC_pos_add(StatementClass *stmt,
 	Int4		*used;
 
 	mylog("POS ADD fi=%x ti=%x\n", stmt->fi, stmt->ti);
-	if (!(res = stmt->result))
+	if (!(res = SC_get_Curres(stmt)))
 		return SQL_ERROR;
 	if (!stmt->ti)
 		parse_statement(stmt);	/* not preferable */
@@ -1721,50 +1885,24 @@ SC_pos_add(StatementClass *stmt,
 		mylog("addstr=%s\n", addstr);
 		qstmt->exec_start_row = qstmt->exec_end_row = irow; 
 		ret = PGAPI_ExecDirect(hstmt, addstr, strlen(addstr));
-		if (ret == SQL_NEED_DATA)		/* must be fixed */
+		if (ret == SQL_ERROR)
+		{
+			stmt->errornumber = qstmt->errornumber;
+			stmt->errormsg = qstmt->errormsg;
+		}
+		else if (ret == SQL_NEED_DATA)		/* must be fixed */
 		{
 			stmt->options.scroll_concurrency = SQL_CONCUR_READ_ONLY;
 			stmt->errornumber = STMT_INVALID_CURSOR_STATE_ERROR;
 			stmt->errormsg = "SetPos with data_at_exec not yet supported";
 			ret = SQL_ERROR;
 		}
-		if (ret == SQL_ERROR)
-		{
-			stmt->errornumber = qstmt->errornumber;
-			stmt->errormsg = qstmt->errormsg;
-		}
-		else
-		{
-			int			addcnt;
-			UInt4		oid;
-			const char *cmdstr = QR_get_command(qstmt->result);
-
-			if (cmdstr &&
-				sscanf(cmdstr, "INSERT %u %d", &oid, &addcnt) == 2 &&
-				addcnt == 1)
-			{
-				SC_pos_newload(stmt, oid, NULL);
-				if (stmt->bookmark.buffer)
-				{
-					char		buf[32];
-
-					sprintf(buf, "%ld", res->fcount);
-					copy_and_convert_field(stmt, 0, buf,
-									  SQL_C_ULONG, stmt->bookmark.buffer,
-										   0, stmt->bookmark.used);
-				}
-			}
-			else
-			{
-				stmt->errornumber = STMT_ERROR_TAKEN_FROM_BACKEND;
-				stmt->errormsg = "SetPos insert return error";
-				ret = SQL_ERROR;
-			}
-		}
+		ret = irow_insert(ret, qstmt, res->fcount);
 	}
 	else
 		ret = SQL_SUCCESS_WITH_INFO;
 	PGAPI_FreeStmt(hstmt, SQL_DROP);
+#if (ODBCVER >= 0x0300)
 	if (stmt->options.rowStatusArray)
 	{
 		switch (ret)
@@ -1777,6 +1915,8 @@ SC_pos_add(StatementClass *stmt,
 				break;
 		}
 	}
+#endif /* ODBCVER */
+
 	return ret;
 }
 
@@ -1823,7 +1963,7 @@ PGAPI_SetPos(
 		return SQL_ERROR;
 	}
 
-	if (!(res = stmt->result))
+	if (!(res = SC_get_Curres(stmt)))
 	{
 		stmt->errormsg = "Null statement result in PGAPI_SetPos.";
 		stmt->errornumber = STMT_SEQUENCE_ERROR;

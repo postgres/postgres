@@ -11,6 +11,8 @@
 #include <string.h>
 
 #define	PODBC_NOT_SEARCH_PATTERN	1L
+#define	PODBC_ALLOW_PARTIAL_EXTRACT	1L
+#define	PODBC_ERROR_CLEAR		(1L << 1)
 
 RETCODE SQL_API PGAPI_AllocConnect(HENV EnvironmentHandle,
 				   HDBC FAR * ConnectionHandle);
@@ -56,6 +58,20 @@ RETCODE SQL_API PGAPI_Error(HENV EnvironmentHandle,
 			SQLCHAR *Sqlstate, SQLINTEGER *NativeError,
 			SQLCHAR *MessageText, SQLSMALLINT BufferLength,
 			SQLSMALLINT *TextLength);
+/* Helper functions for Error handling */
+RETCODE SQL_API PGAPI_EnvError(HENV EnvironmentHandle, SWORD RecNumber,
+			SQLCHAR *Sqlstate, SQLINTEGER *NativeError,
+			SQLCHAR *MessageText, SQLSMALLINT BufferLength,
+			SQLSMALLINT *TextLength, UWORD flag);
+RETCODE SQL_API PGAPI_ConnectError(HDBC ConnectionHandle, SWORD RecNumber,
+			SQLCHAR *Sqlstate, SQLINTEGER *NativeError,
+			SQLCHAR *MessageText, SQLSMALLINT BufferLength,
+			SQLSMALLINT *TextLength, UWORD flag);
+RETCODE SQL_API PGAPI_StmtError(HSTMT StatementHandle, SWORD RecNumber,
+			SQLCHAR *Sqlstate, SQLINTEGER *NativeError,
+			SQLCHAR *MessageText, SQLSMALLINT BufferLength,
+			SQLSMALLINT *TextLength, UWORD flag);
+
 RETCODE SQL_API PGAPI_ExecDirect(HSTMT StatementHandle,
 				 SQLCHAR *StatementText, SQLINTEGER TextLength);
 RETCODE SQL_API PGAPI_Execute(HSTMT StatementHandle);
@@ -225,7 +241,8 @@ RETCODE SQL_API PGAPI_TablePrivileges(
 					  SQLCHAR *szSchemaName,
 					  SQLSMALLINT cbSchemaName,
 					  SQLCHAR *szTableName,
-					  SQLSMALLINT cbTableName);
+					  SQLSMALLINT cbTableName,
+					  UWORD flag);
 RETCODE SQL_API PGAPI_BindParameter(
 					HSTMT hstmt,
 					SQLUSMALLINT ipar,
@@ -243,4 +260,25 @@ RETCODE SQL_API PGAPI_SetScrollOptions(
 					   SDWORD crowKeyset,
 					   UWORD crowRowset);
 
+#if (ODBCVER >= 0x0300)
+RETCODE SQL_API PGAPI_GetDiagRec(SQLSMALLINT HandleType, SQLHANDLE Handle,
+		SQLSMALLINT RecNumber, SQLCHAR *Sqlstate,
+		SQLINTEGER *NativeError, SQLCHAR *MessageText,
+		SQLSMALLINT BufferLength, SQLSMALLINT *TextLength);
+RETCODE SQL_API PGAPI_GetConnectAttr(HDBC ConnectionHandle,
+			SQLINTEGER Attribute, PTR Value,
+			SQLINTEGER BufferLength, SQLINTEGER *StringLength);
+RETCODE SQL_API PGAPI_GetStmtAttr(HSTMT StatementHandle,
+		SQLINTEGER Attribute, PTR Value,
+		SQLINTEGER BufferLength, SQLINTEGER *StringLength);
+RETCODE SQL_API PGAPI_SetConnectAttr(HDBC ConnectionHandle,
+			SQLINTEGER Attribute, PTR Value,
+			SQLINTEGER StringLength);
+RETCODE SQL_API PGAPI_SetStmtAttr(HSTMT StatementHandle,
+		SQLINTEGER Attribute, PTR Value,
+		SQLINTEGER StringLength);
+RETCODE SQL_API PGAPI_SetDescField(SQLHDESC DescriptorHandle,
+			SQLSMALLINT RecNumber, SQLSMALLINT FieldIdentifier,
+			PTR Value, SQLINTEGER BufferLength);
+#endif /* ODBCVER */
 #endif   /* define_PG_API_FUNC_H__ */

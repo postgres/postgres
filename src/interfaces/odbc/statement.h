@@ -103,7 +103,7 @@ enum
 	STMT_PARSE_NONE = 0,
 	STMT_PARSE_COMPLETE,
 	STMT_PARSE_INCOMPLETE,
-	STMT_PARSE_FATAL
+	STMT_PARSE_FATAL,
 };
 
 /*	Result style */
@@ -111,7 +111,7 @@ enum
 {
 	STMT_FETCH_NONE = 0,
 	STMT_FETCH_NORMAL,
-	STMT_FETCH_EXTENDED
+	STMT_FETCH_EXTENDED,
 };
 
 typedef struct
@@ -147,6 +147,7 @@ struct StatementClass_
 	ConnectionClass *hdbc;		/* pointer to ConnectionClass this
 								 * statement belongs to */
 	QResultClass *result;		/* result of the current statement */
+	QResultClass *curres;		/* the current result in the chain */
 	HSTMT FAR  *phstmt;
 	StatementOptions options;
 
@@ -215,14 +216,15 @@ struct StatementClass_
 	char		pre_executing;	/* This statement is prematurely executing */
 	char		inaccurate_result;		/* Current status is PREMATURE but
 										 * result is inaccurate */
-	char		errormsg_malloced;		/* Current error message is
-										 * malloed (not in a static
-										 * variable) ? */
 	char		miscinfo;
+	SWORD		errorpos;
+	SWORD		error_recsize;
 };
 
 #define SC_get_conn(a)	  (a->hdbc)
-#define SC_get_Result(a)  (a->result);
+#define SC_set_Result(a, b)  (a->result = a->curres = b)
+#define SC_get_Result(a)  (a->result)
+#define SC_get_Curres(a)  (a->curres)
 
 /*	options for SC_free_params() */
 #define STMT_FREE_PARAMS_ALL				0
@@ -252,7 +254,7 @@ char	   *SC_create_errormsg(StatementClass *self);
 RETCODE		SC_execute(StatementClass *self);
 RETCODE		SC_fetch(StatementClass *self);
 void		SC_free_params(StatementClass *self, char option);
-void		SC_log_error(char *func, char *desc, StatementClass *self);
+void		SC_log_error(const char *func, const char *desc, const StatementClass *self);
 unsigned long SC_get_bookmark(StatementClass *self);
 
 #endif

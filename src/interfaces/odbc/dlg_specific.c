@@ -123,7 +123,7 @@ driver_optionsDraw(HWND hdlg, const ConnInfo *ci, int src, BOOL enable)
 	CheckDlgButton(hdlg, DRV_OPTIMIZER, comval->disable_optimizer);
 	CheckDlgButton(hdlg, DRV_KSQO, comval->ksqo);
 	CheckDlgButton(hdlg, DRV_UNIQUEINDEX, comval->unique_index);
-	EnableWindow(GetDlgItem(hdlg, DRV_UNIQUEINDEX), enable);
+	/* EnableWindow(GetDlgItem(hdlg, DRV_UNIQUEINDEX), enable); */
 	CheckDlgButton(hdlg, DRV_READONLY, comval->onlyread);
 	EnableWindow(GetDlgItem(hdlg, DRV_READONLY), enable);
 	CheckDlgButton(hdlg, DRV_USEDECLAREFETCH, comval->use_declarefetch);
@@ -332,6 +332,8 @@ ds_optionsProc(HWND hdlg,
 			CheckDlgButton(hdlg, DS_ROWVERSIONING, atoi(ci->row_versioning));
 			CheckDlgButton(hdlg, DS_SHOWSYSTEMTABLES, atoi(ci->show_system_tables));
 			CheckDlgButton(hdlg, DS_DISALLOWPREMATURE, ci->disallow_premature);
+			CheckDlgButton(hdlg, DS_LFCONVERSION, ci->lf_conversion);
+			CheckDlgButton(hdlg, DS_TRUEISMINUS1, ci->true_is_minus1);
 
 			EnableWindow(GetDlgItem(hdlg, DS_FAKEOIDINDEX), atoi(ci->show_oid_column));
 
@@ -367,6 +369,8 @@ ds_optionsProc(HWND hdlg,
 
 					sprintf(ci->row_versioning, "%d", IsDlgButtonChecked(hdlg, DS_ROWVERSIONING));
 					ci->disallow_premature = IsDlgButtonChecked(hdlg, DS_DISALLOWPREMATURE);
+					ci->lf_conversion = IsDlgButtonChecked(hdlg, DS_LFCONVERSION);
+					ci->true_is_minus1 = IsDlgButtonChecked(hdlg, DS_TRUEISMINUS1);
 
 					/* OID Options */
 					sprintf(ci->fake_oid_index, "%d", IsDlgButtonChecked(hdlg, DS_FAKEOIDINDEX));
@@ -525,60 +529,186 @@ makeConnectString(char *connect_string, const ConnInfo *ci, UWORD len)
 	hlen = strlen(connect_string);
 	if (!abbrev)
 		sprintf(&connect_string[hlen],
-				";READONLY=%s;PROTOCOL=%s;FAKEOIDINDEX=%s;SHOWOIDCOLUMN=%s;ROWVERSIONING=%s;SHOWSYSTEMTABLES=%s;CONNSETTINGS=%s;FETCH=%d;SOCKET=%d;UNKNOWNSIZES=%d;MAXVARCHARSIZE=%d;MAXLONGVARCHARSIZE=%d;DEBUG=%d;COMMLOG=%d;OPTIMIZER=%d;KSQO=%d;USEDECLAREFETCH=%d;TEXTASLONGVARCHAR=%d;UNKNOWNSASLONGVARCHAR=%d;BOOLSASCHAR=%d;PARSE=%d;CANCELASFREESTMT=%d;EXTRASYSTABLEPREFIXES=%s",
+				";%s=%s;%s=%s;%s=%s;%s=%s;%s=%s;%s=%s;%s=%s;%s=%d;%s=%d;%s=%d;%s=%d;%s=%d;%s=%d;%s=%d;%s=%d;%s=%d;%s=%d;%s=%d;%s=%d;%s=%d;%s=%d;%s=%d;%s=%s;%s=%d;%s=%d;%s=%d;%s=%d",
+				INI_READONLY,
 				ci->onlyread,
+				INI_PROTOCOL,
 				ci->protocol,
+				INI_FAKEOIDINDEX,
 				ci->fake_oid_index,
+				INI_SHOWOIDCOLUMN,
 				ci->show_oid_column,
+				INI_ROWVERSIONING,
 				ci->row_versioning,
+				INI_SHOWSYSTEMTABLES,
 				ci->show_system_tables,
+				INI_CONNSETTINGS,
 				encoded_conn_settings,
+				INI_FETCH,
 				ci->drivers.fetch_max,
+				INI_SOCKET,
 				ci->drivers.socket_buffersize,
+				INI_UNKNOWNSIZES,
 				ci->drivers.unknown_sizes,
+				INI_MAXVARCHARSIZE,
 				ci->drivers.max_varchar_size,
+				INI_MAXLONGVARCHARSIZE,
 				ci->drivers.max_longvarchar_size,
+				INI_DEBUG,
 				ci->drivers.debug,
+				INI_COMMLOG,
 				ci->drivers.commlog,
+				INI_OPTIMIZER,
 				ci->drivers.disable_optimizer,
+				INI_KSQO,
 				ci->drivers.ksqo,
+				INI_USEDECLAREFETCH,
 				ci->drivers.use_declarefetch,
+				INI_TEXTASLONGVARCHAR,
 				ci->drivers.text_as_longvarchar,
+				INI_UNKNOWNSASLONGVARCHAR,
 				ci->drivers.unknowns_as_longvarchar,
+				INI_BOOLSASCHAR,
 				ci->drivers.bools_as_char,
+				INI_PARSE,
 				ci->drivers.parse,
+				INI_CANCELASFREESTMT,
 				ci->drivers.cancel_as_freestmt,
-				ci->drivers.extra_systable_prefixes);
+				INI_EXTRASYSTABLEPREFIXES,
+				ci->drivers.extra_systable_prefixes,
+				INI_LFCONVERSION,
+				ci->lf_conversion,
+				INI_UPDATABLECURSORS,
+				ci->updatable_cursors,
+				INI_DISALLOWPREMATURE,
+				ci->disallow_premature,
+				INI_TRUEISMINUS1,
+				ci->true_is_minus1);
 	/* Abbrebiation is needed ? */
 	if (abbrev || strlen(connect_string) >= len)
+	{
+		unsigned long flag = 0;
+		if (ci->disallow_premature)
+			flag |= BIT_DISALLOWPREMATURE;
+		if (ci->updatable_cursors)
+			flag |= BIT_UPDATABLECURSORS;
+		if (ci->lf_conversion)
+			flag |= BIT_LFCONVERSION;
+		if (ci->drivers.unique_index)
+			flag |= BIT_UNIQUEINDEX;
+		if (strncmp(ci->protocol, PG64, strlen(PG64)) == 0)
+			flag |= BIT_PROTOCOL_64;
+		else if (strncmp(ci->protocol, PG63, strlen(PG63)) == 0)
+			flag |= BIT_PROTOCOL_63;
+		switch (ci->drivers.unknown_sizes)
+		{
+			case UNKNOWNS_AS_DONTKNOW:
+				flag |= BIT_UNKNOWN_DONTKNOW;
+				break;
+			case UNKNOWNS_AS_MAX:
+				flag |= BIT_UNKNOWN_ASMAX;
+				break;
+		}
+		if (ci->drivers.disable_optimizer)
+			flag |= BIT_OPTIMIZER;
+		if (ci->drivers.ksqo)
+			flag |= BIT_KSQO;
+		if (ci->drivers.commlog)
+			flag |= BIT_COMMLOG;
+		if (ci->drivers.debug)
+			flag |= BIT_DEBUG;
+		if (ci->drivers.parse)
+			flag |= BIT_PARSE;
+		if (ci->drivers.cancel_as_freestmt)
+			flag |= BIT_CANCELASFREESTMT;
+		if (ci->drivers.use_declarefetch)
+			flag |= BIT_USEDECLAREFETCH;
+		if (ci->onlyread[0] == '1')
+			flag |= BIT_READONLY;
+		if (ci->drivers.text_as_longvarchar)
+			flag |= BIT_TEXTASLONGVARCHAR;
+		if (ci->drivers.unknowns_as_longvarchar)
+			flag |= BIT_UNKNOWNSASLONGVARCHAR;
+		if (ci->drivers.bools_as_char)
+			flag |= BIT_BOOLSASCHAR;
+		if (ci->row_versioning[0] == '1')
+			flag |= BIT_ROWVERSIONING;
+		if (ci->show_system_tables[0] == '1')
+			flag |= BIT_SHOWSYSTEMTABLES;
+		if (ci->show_oid_column[0] == '1')
+			flag |= BIT_SHOWOIDCOLUMN;
+		if (ci->fake_oid_index[0] == '1')
+			flag |= BIT_FAKEOIDINDEX;
+		if (ci->true_is_minus1)
+			flag |= BIT_TRUEISMINUS1;
+
 		sprintf(&connect_string[hlen],
-				";A0=%s;A1=%s;A2=%s;A3=%s;A4=%s;A5=%s;A6=%s;A7=%d;A8=%d;A9=%d;B0=%d;B1=%d;B2=%d;B3=%d;B4=%d;B5=%d;B6=%d;B7=%d;B8=%d;B9=%d;C0=%d;C1=%d;C2=%s",
-				ci->onlyread,
-				ci->protocol,
-				ci->fake_oid_index,
-				ci->show_oid_column,
-				ci->row_versioning,
-				ci->show_system_tables,
+				";A6=%s;A7=%d;A8=%d;B0=%d;B1=%d;C2=%s;CX=%02x%x",
 				encoded_conn_settings,
 				ci->drivers.fetch_max,
 				ci->drivers.socket_buffersize,
-				ci->drivers.unknown_sizes,
 				ci->drivers.max_varchar_size,
 				ci->drivers.max_longvarchar_size,
-				ci->drivers.debug,
-				ci->drivers.commlog,
-				ci->drivers.disable_optimizer,
-				ci->drivers.ksqo,
-				ci->drivers.use_declarefetch,
-				ci->drivers.text_as_longvarchar,
-				ci->drivers.unknowns_as_longvarchar,
-				ci->drivers.bools_as_char,
-				ci->drivers.parse,
-				ci->drivers.cancel_as_freestmt,
-				ci->drivers.extra_systable_prefixes);
+				ci->drivers.extra_systable_prefixes,
+				EFFECTIVE_BIT_COUNT,
+				flag);
+	}
 }
 
+static void
+unfoldCXAttribute(ConnInfo *ci, const char *value)
+{
+	int		count;
+	unsigned long	flag;
 
+	if (strlen(value) < 2)
+	{
+		count = 3;
+		sscanf(value, "%x", &flag);
+	}
+	else
+	{
+		char	cnt[8];
+		memcpy(cnt, value, 2);
+		cnt[2] = '\0';
+		sscanf(cnt, "%x", &count);
+		sscanf(value + 2, "%x", &flag);
+	}
+	ci->disallow_premature = (char)((flag & BIT_DISALLOWPREMATURE) != 0);
+	ci->updatable_cursors = (char)((flag & BIT_UPDATABLECURSORS) != 0);
+	ci->lf_conversion = (char)((flag & BIT_LFCONVERSION) != 0);
+	if (count < 4)
+		return;
+	ci->drivers.unique_index = (char)((flag & BIT_UNIQUEINDEX) != 0);
+	if ((flag & BIT_PROTOCOL_64) != 0)
+		strcpy(ci->protocol, PG64);
+	else if ((flag & BIT_PROTOCOL_63) != 0)
+		strcpy(ci->protocol, PG63);
+	else
+		strcpy(ci->protocol, PG62);
+	if ((flag & BIT_UNKNOWN_DONTKNOW) != 0)
+		ci->drivers.unknown_sizes = UNKNOWNS_AS_DONTKNOW;
+	else if ((flag & BIT_UNKNOWN_ASMAX) != 0)
+		ci->drivers.unknown_sizes = UNKNOWNS_AS_MAX;
+	else 
+		ci->drivers.unknown_sizes = UNKNOWNS_AS_LONGEST;
+	ci->drivers.disable_optimizer = (char)((flag & BIT_OPTIMIZER) != 0);
+	ci->drivers.ksqo = (char)((flag & BIT_KSQO) != 0);
+	ci->drivers.commlog = (char)((flag & BIT_COMMLOG) != 0);
+	ci->drivers.debug = (char)((flag & BIT_DEBUG) != 0);
+	ci->drivers.parse = (char)((flag & BIT_PARSE) != 0);
+	ci->drivers.cancel_as_freestmt = (char)((flag & BIT_CANCELASFREESTMT) != 0);
+	ci->drivers.use_declarefetch = (char)((flag & BIT_USEDECLAREFETCH) != 0);
+	sprintf(ci->onlyread, "%d", (char)((flag & BIT_READONLY) != 0));
+	ci->drivers.text_as_longvarchar = (char)((flag & BIT_TEXTASLONGVARCHAR) !=0);
+	ci->drivers.unknowns_as_longvarchar = (char)((flag & BIT_UNKNOWNSASLONGVARCHAR) !=0);
+	ci->drivers.bools_as_char = (char)((flag & BIT_BOOLSASCHAR) != 0);
+	sprintf(ci->row_versioning, "%d", (char)((flag & BIT_ROWVERSIONING) != 0));
+	sprintf(ci->show_system_tables, "%d", (char)((flag & BIT_SHOWSYSTEMTABLES) != 0));
+	sprintf(ci->show_oid_column, "%d", (char)((flag & BIT_SHOWOIDCOLUMN) != 0));
+	sprintf(ci->fake_oid_index, "%d", (char)((flag & BIT_FAKEOIDINDEX) != 0));
+	ci->true_is_minus1 = (char)((flag & BIT_TRUEISMINUS1) != 0);
+}
 void
 copyAttributes(ConnInfo *ci, const char *attribute, const char *value)
 {
@@ -630,6 +760,12 @@ copyAttributes(ConnInfo *ci, const char *attribute, const char *value)
 		ci->disallow_premature = atoi(value);
 	else if (stricmp(attribute, INI_UPDATABLECURSORS) == 0 || stricmp(attribute, "C4") == 0)
 		ci->updatable_cursors = atoi(value);
+	else if (stricmp(attribute, INI_LFCONVERSION) == 0)
+		ci->lf_conversion = atoi(value);
+	else if (stricmp(attribute, INI_TRUEISMINUS1) == 0)
+		ci->true_is_minus1 = atoi(value);
+	else if (stricmp(attribute, "CX") == 0)
+		unfoldCXAttribute(ci, value);
 
 	mylog("copyAttributes: DSN='%s',server='%s',dbase='%s',user='%s',passwd='%s',port='%s',onlyread='%s',protocol='%s',conn_settings='%s',disallow_premature=%d)\n", ci->dsn, ci->server, ci->database, ci->username, ci->password, ci->port, ci->onlyread, ci->protocol, ci->conn_settings, ci->disallow_premature);
 }
@@ -720,6 +856,15 @@ getDSNdefaults(ConnInfo *ci)
 
 	if (ci->row_versioning[0] == '\0')
 		sprintf(ci->row_versioning, "%d", DEFAULT_ROWVERSIONING);
+
+	if (ci->disallow_premature < 0)
+		ci->disallow_premature = DEFAULT_DISALLOWPREMATURE;
+	if (ci->updatable_cursors < 0)
+		ci->updatable_cursors = DEFAULT_UPDATABLECURSORS;
+	if (ci->lf_conversion < 0)
+		ci->lf_conversion = DEFAULT_LFCONVERSION;
+	if (ci->true_is_minus1 < 0)
+		ci->true_is_minus1 = DEFAULT_TRUEISMINUS1;
 }
 
 
@@ -797,16 +942,32 @@ getDSNinfo(ConnInfo *ci, char overwrite)
 	if (ci->translation_option[0] == '\0' || overwrite)
 		SQLGetPrivateProfileString(DSN, INI_TRANSLATIONOPTION, "", ci->translation_option, sizeof(ci->translation_option), ODBC_INI);
 
-	if (ci->disallow_premature == 0 || overwrite)
+	if (ci->disallow_premature < 0 || overwrite)
 	{
 		SQLGetPrivateProfileString(DSN, INI_DISALLOWPREMATURE, "", temp, sizeof(temp), ODBC_INI);
-		ci->disallow_premature = atoi(temp);
+		if (temp[0])
+			ci->disallow_premature = atoi(temp);
 	}
 
-	if (ci->updatable_cursors == 0 || overwrite)
+	if (ci->updatable_cursors < 0 || overwrite)
 	{
 		SQLGetPrivateProfileString(DSN, INI_UPDATABLECURSORS, "", temp, sizeof(temp), ODBC_INI);
-		ci->updatable_cursors = atoi(temp);
+		if (temp[0])
+			ci->updatable_cursors = atoi(temp);
+	}
+
+	if (ci->lf_conversion < 0 || overwrite)
+	{
+		SQLGetPrivateProfileString(DSN, INI_LFCONVERSION, "", temp, sizeof(temp), ODBC_INI);
+		if (temp[0])
+			ci->lf_conversion = atoi(temp);
+	}
+
+	if (ci->true_is_minus1 < 0 || overwrite)
+	{
+		SQLGetPrivateProfileString(DSN, INI_TRUEISMINUS1, "", temp, sizeof(temp), ODBC_INI);
+		if (temp[0])
+			ci->true_is_minus1 = atoi(temp);
 	}
 
 	/* Allow override of odbcinst.ini parameters here */
@@ -925,6 +1086,16 @@ writeDSNinfo(const ConnInfo *ci)
 	sprintf(temp, "%d", ci->updatable_cursors);
 	SQLWritePrivateProfileString(DSN,
 								 INI_UPDATABLECURSORS,
+								 temp,
+								 ODBC_INI);
+	sprintf(temp, "%d", ci->lf_conversion);
+	SQLWritePrivateProfileString(DSN,
+								 INI_LFCONVERSION,
+								 temp,
+								 ODBC_INI);
+	sprintf(temp, "%d", ci->true_is_minus1);
+	SQLWritePrivateProfileString(DSN,
+								 INI_TRUEISMINUS1,
 								 temp,
 								 ODBC_INI);
 }

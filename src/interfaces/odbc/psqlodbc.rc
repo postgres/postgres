@@ -138,7 +138,7 @@ BEGIN
                     BS_NOTIFY | WS_TABSTOP,247,205,40,10
 END
 
-DLG_OPTIONS_DS DIALOG DISCARDABLE  0, 0, 267, 161
+DLG_OPTIONS_DS DIALOG DISCARDABLE  0, 0, 267, 176
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Advanced Options (DataSource)"
 FONT 10, "Terminal"
@@ -151,23 +151,27 @@ BEGIN
                     BS_AUTOCHECKBOX | WS_TABSTOP,45,28,88,10
     CONTROL         "Disallow &Premature",DS_DISALLOWPREMATURE,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,149,28,86,10
-    GROUPBOX        "Protocol",IDC_STATIC,43,44,180,25
+    CONTROL         "LF <-> CR/LF convert",DS_LFCONVERSION,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,45,43,92,10
+    CONTROL         "True is -1",DS_TRUEISMINUS1,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,149,43,86,10
+    GROUPBOX        "Protocol",IDC_STATIC,43,59,180,25
     CONTROL         "7.X,6.4+",DS_PG64,"Button",BS_AUTORADIOBUTTON | 
-                    WS_GROUP,53,54,47,10
+                    WS_GROUP,53,69,47,10
     CONTROL         "6.3",DS_PG63,"Button",BS_AUTORADIOBUTTON | WS_TABSTOP,
-                    131,54,26,10
+                    131,69,26,10
     CONTROL         "6.2",DS_PG62,"Button",BS_AUTORADIOBUTTON | WS_TABSTOP,
-                    187,54,26,10
-    GROUPBOX        "OID Options",IDC_STATIC,43,74,180,25
+                    187,69,26,10
+    GROUPBOX        "OID Options",IDC_STATIC,43,89,180,25
     CONTROL         "Show &Column",DS_SHOWOIDCOLUMN,"Button",BS_AUTOCHECKBOX | 
-                    WS_GROUP | WS_TABSTOP,53,85,59,10
+                    WS_GROUP | WS_TABSTOP,53,100,59,10
     CONTROL         "Fake &Index",DS_FAKEOIDINDEX,"Button",BS_AUTOCHECKBOX | 
-                    WS_GROUP | WS_TABSTOP,161,85,55,10
-    LTEXT           "Connect &Settings:",IDC_STATIC,10,105,35,25
-    EDITTEXT        DS_CONNSETTINGS,50,105,200,20,ES_MULTILINE | 
+                    WS_GROUP | WS_TABSTOP,161,100,55,10
+    LTEXT           "Connect &Settings:",IDC_STATIC,10,120,35,25
+    EDITTEXT        DS_CONNSETTINGS,50,120,200,20,ES_MULTILINE | 
                     ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_WANTRETURN
-    DEFPUSHBUTTON   "OK",IDOK,71,135,50,14,WS_GROUP
-    PUSHBUTTON      "Cancel",IDCANCEL,146,135,50,14
+    DEFPUSHBUTTON   "OK",IDOK,71,150,50,14,WS_GROUP
+    PUSHBUTTON      "Cancel",IDCANCEL,146,150,50,14
 END
 #else
 DLG_CONFIG DIALOG DISCARDABLE  65, 43, 292, 116
@@ -255,7 +259,7 @@ BEGIN
                     BS_NOTIFY | WS_TABSTOP,233,224,40,10
 END
 
-DLG_OPTIONS_DS DIALOG DISCARDABLE  0, 0, 267, 161
+DLG_OPTIONS_DS DIALOG DISCARDABLE  0, 0, 267, 176
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Advanced Options (DataSource)"
 FONT 8, "MS Sans Serif"
@@ -268,23 +272,27 @@ BEGIN
                     BS_AUTOCHECKBOX | WS_TABSTOP,25,25,85,10
     CONTROL         "Disallow &Premature",DS_DISALLOWPREMATURE,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,130,25,85,10
-    GROUPBOX        "Protocol",IDC_STATIC,15,40,180,25
+    CONTROL         "LF <-> CR/LF convert",DS_LFCONVERSION,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,45,40,92,10
+    CONTROL         "True is -1",DS_TRUEISMINUS1,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,149,40,86,10
+    GROUPBOX        "Protocol",IDC_STATIC,15,55,180,25
     CONTROL         "7.X,6.4+",DS_PG64,"Button",BS_AUTORADIOBUTTON | WS_GROUP,25,
-                    50,35,10
+                    65,35,10
     CONTROL         "6.3",DS_PG63,"Button",BS_AUTORADIOBUTTON | WS_TABSTOP,
-                    75,50,26,10
+                    75,65,26,10
     CONTROL         "6.2",DS_PG62,"Button",BS_AUTORADIOBUTTON | WS_TABSTOP,
-                    130,50,26,10
-    GROUPBOX        "OID Options",IDC_STATIC,15,70,180,25
+                    130,65,26,10
+    GROUPBOX        "OID Options",IDC_STATIC,15,86,180,25
     CONTROL         "Show &Column",DS_SHOWOIDCOLUMN,"Button",BS_AUTOCHECKBOX | 
-                    WS_GROUP | WS_TABSTOP,25,81,59,10
+                    WS_GROUP | WS_TABSTOP,25,96,59,10
     CONTROL         "Fake &Index",DS_FAKEOIDINDEX,"Button",BS_AUTOCHECKBOX | 
-                    WS_GROUP | WS_TABSTOP,115,81,51,10
-    RTEXT           "Connect &Settings:",IDC_STATIC,10,105,35,25
-    EDITTEXT        DS_CONNSETTINGS,50,105,200,20,ES_MULTILINE | 
+                    WS_GROUP | WS_TABSTOP,115,96,51,10
+    RTEXT           "Connect &Settings:",IDC_STATIC,10,120,35,25
+    EDITTEXT        DS_CONNSETTINGS,50,120,200,20,ES_MULTILINE | 
                     ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_WANTRETURN
-    DEFPUSHBUTTON   "OK",IDOK,71,135,50,14,WS_GROUP
-    PUSHBUTTON      "Cancel",IDCANCEL,146,135,50,14
+    DEFPUSHBUTTON   "OK",IDOK,71,150,50,14,WS_GROUP
+    PUSHBUTTON      "Cancel",IDCANCEL,146,150,50,14
 END
 #endif
 
@@ -354,8 +362,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 7,1,0,10
- PRODUCTVERSION 7,1,0,10
+ FILEVERSION 7,1,0,11
+ PRODUCTVERSION 7,1,0,11
  FILEFLAGSMASK 0x3L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -377,14 +385,14 @@ BEGIN
             VALUE "CompanyName", "Insight Distribution Systems\0"
 #endif
             VALUE "FileDescription", "PostgreSQL Driver\0"
-            VALUE "FileVersion", " 07.01.0010\0"
+            VALUE "FileVersion", " 07.01.0011\0"
             VALUE "InternalName", "psqlodbc\0"
             VALUE "LegalCopyright", "\0"
             VALUE "LegalTrademarks", "ODBC(TM) is a trademark of Microsoft Corporation.  Microsoft® is a registered trademark of Microsoft Corporation. Windows(TM) is a trademark of Microsoft Corporation.\0"
             VALUE "OriginalFilename", "psqlodbc.dll\0"
             VALUE "PrivateBuild", "\0"
             VALUE "ProductName", "Microsoft Open Database Connectivity\0"
-            VALUE "ProductVersion", " 07.01.0010\0"
+            VALUE "ProductVersion", " 07.01.0011\0"
             VALUE "SpecialBuild", "\0"
         END
     END

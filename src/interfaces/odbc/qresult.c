@@ -108,6 +108,7 @@ QR_Constructor()
 		rv->command = NULL;
 		rv->notice = NULL;
 		rv->conn = NULL;
+		rv->next = NULL;
 		rv->inTuples = FALSE;
 		rv->fcount = 0;
 		rv->fetch_count = 0;
@@ -160,6 +161,9 @@ QR_Destructor(QResultClass *self)
 	/* Free notice info (this is from strdup()) */
 	if (self->notice)
 		free(self->notice);
+	/* Destruct the result object in the chain */
+	if (self->next)
+		QR_Destructor(self->next);
 
 	free(self);
 
@@ -247,6 +251,7 @@ QR_fetch_tuples(QResultClass *self, ConnectionClass *conn, char *cursor)
 
 		if (self->cursor)
 			free(self->cursor);
+		self->cursor = NULL;
 
 		if (fetch_cursor)
 		{
@@ -342,7 +347,7 @@ QR_close(QResultClass *self)
 		sprintf(buf, "close %s", self->cursor);
 		mylog("QResult: closing cursor: '%s'\n", buf);
 
-		res = CC_send_query(self->conn, buf, NULL);
+		res = CC_send_query(self->conn, buf, NULL, TRUE);
 
 		self->inTuples = FALSE;
 		self->currTuple = -1;
@@ -487,13 +492,11 @@ QR_next_tuple(QResultClass *self)
 			qi.row_size = self->cache_size;
 			qi.result_in = self;
 			qi.cursor = NULL;
-			res = CC_send_query(self->conn, fetch, &qi);
-			if (res == NULL || QR_get_aborted(res))
+			res = CC_send_query(self->conn, fetch, &qi, TRUE);
+			if (res == NULL)
 			{
 				self->status = PGRES_FATAL_ERROR;
 				QR_set_message(self, "Error fetching next group.");
-				if (res)
-					QR_Destructor(res);
 				return FALSE;
 			}
 			self->inTuples = TRUE;
@@ -689,7 +692,7 @@ QR_read_tuple(QResultClass *self, char binary)
 			 */
 
 			flds = self->fields;
-			if (flds->display_size[field_lf] < len)
+			if (flds && flds->display_size && flds->display_size[field_lf] < len)
 				flds->display_size[field_lf] = len;
 		}
 

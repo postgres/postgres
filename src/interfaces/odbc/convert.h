@@ -21,7 +21,7 @@
 /* convert_escape results */
 #define CONVERT_ESCAPE_OK					0
 #define CONVERT_ESCAPE_OVERFLOW					1
-#define CONVERT_ESCAPE_ERROR					2
+#define CONVERT_ESCAPE_ERROR					-1
 
 typedef struct
 {
@@ -43,8 +43,8 @@ int		convert_escape(const char *value, StatementClass *stmt,
 			int *npos, int *stsize, const char **val_resume);
 BOOL		convert_money(const char *s, char *sout, size_t soutmax);
 char		parse_datetime(char *buf, SIMPLE_TIME *st);
-int			convert_linefeeds(const char *s, char *dst, size_t max, BOOL *changed);
-int			convert_special_chars(const char *si, char *dst, int used);
+int			convert_linefeeds(const char *s, char *dst, size_t max, BOOL convlf, BOOL *changed);
+int			convert_special_chars(const char *si, char *dst, int used, BOOL convlf,int ccsc);
 
 int			convert_pgbinary_to_char(const char *value, char *rgbValue, int cbValueMax);
 int			convert_from_pgbinary(const unsigned char *value, unsigned char *rgbValue, int cbValueMax);

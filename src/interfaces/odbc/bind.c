@@ -7,7 +7,7 @@
  * Classes:			BindInfoClass, ParameterInfoClass
  *
  * API functions:	SQLBindParameter, SQLBindCol, SQLDescribeParam, SQLNumParams,
- *					SQLParamOptions(NI)
+ *					SQLParamOptions
  *
  * Comments:		See "notice.txt" for copyright and license information.
  *-------
@@ -331,17 +331,9 @@ PGAPI_ParamOptions(
 
 	mylog("%s: entering... %d %x\n", func, crow, pirow);
 
-	if (crow == 1)				/* temporary solution and must be
-								 * rewritten later */
-	{
-		if (pirow)
-			*pirow = 1;
-		return SQL_SUCCESS;
-	}
-	stmt->errornumber = CONN_UNSUPPORTED_OPTION;
-	stmt->errormsg = "Function not implemented";
-	SC_log_error(func, "Function not implemented", (StatementClass *) hstmt);
-	return SQL_ERROR;
+	stmt->options.paramset_size = crow;
+	stmt->options.param_processed_ptr = pirow;
+	return SQL_SUCCESS;
 }
 
 

@@ -89,6 +89,35 @@
 #define INI_TRANSLATIONOPTION			"TranslationOption"
 #define INI_DISALLOWPREMATURE			"DisallowPremature"
 #define INI_UPDATABLECURSORS			"UpdatableCursors"
+#define INI_LFCONVERSION			"LFConversion"
+#define INI_TRUEISMINUS1			"TrueIsMinus1"
+/* Bit representaion for abbreviated connection strings */
+#define BIT_LFCONVERSION			(1L)
+#define BIT_UPDATABLECURSORS			(1L<<1)
+#define BIT_DISALLOWPREMATURE			(1L<<2)
+#define BIT_UNIQUEINDEX				(1L<<3)
+#define BIT_PROTOCOL_63				(1L<<4)
+#define BIT_PROTOCOL_64				(1L<<5)
+#define BIT_UNKNOWN_DONTKNOW			(1L<<6)
+#define BIT_UNKNOWN_ASMAX			(1L<<7)
+#define BIT_OPTIMIZER				(1L<<8)
+#define BIT_KSQO				(1L<<9)
+#define BIT_COMMLOG				(1L<<10)
+#define BIT_DEBUG				(1L<<11)
+#define BIT_PARSE				(1L<<12)
+#define BIT_CANCELASFREESTMT			(1L<<13)
+#define BIT_USEDECLAREFETCH			(1L<<14)
+#define BIT_READONLY				(1L<<15)
+#define BIT_TEXTASLONGVARCHAR			(1L<<16)
+#define BIT_UNKNOWNSASLONGVARCHAR		(1L<<17)
+#define BIT_BOOLSASCHAR				(1L<<18)
+#define BIT_ROWVERSIONING			(1L<<19)
+#define BIT_SHOWSYSTEMTABLES			(1L<<20)
+#define BIT_SHOWOIDCOLUMN			(1L<<21)
+#define BIT_FAKEOIDINDEX			(1L<<22)
+#define BIT_TRUEISMINUS1			(1L<<23)
+
+#define EFFECTIVE_BIT_COUNT			24
 
 
 /*	Connection Defaults */
@@ -118,6 +147,19 @@
 #define DEFAULT_CANCELASFREESTMT		0
 
 #define DEFAULT_EXTRASYSTABLEPREFIXES	"dd_;"
+
+#define DEFAULT_DISALLOWPREMATURE	0
+#define DEFAULT_TRUEISMINUS1		0
+#ifdef	DRIVER_CURSOR_IMPLEMENT
+#define DEFAULT_UPDATABLECURSORS	1
+#else
+#define DEFAULT_UPDATABLECURSORS	0
+#endif /* DRIVER_CURSOR_IMPLEMENT */
+#ifdef	WIN32
+#define DEFAULT_LFCONVERSION		1
+#else
+#define DEFAULT_LFCONVERSION		0
+#endif	/* WIN32 */
 
 /*	prototypes */
 void		getCommonDefaults(const char *section, const char *filename, ConnInfo *ci);

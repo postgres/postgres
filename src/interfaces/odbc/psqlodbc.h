@@ -5,7 +5,7 @@
  *
  * Comments:		See "notice.txt" for copyright and license information.
  *
- * $Id: psqlodbc.h,v 1.57 2002/02/18 03:16:11 inoue Exp $
+ * $Id: psqlodbc.h,v 1.58 2002/03/08 08:52:53 inoue Exp $
  *
  */
 
@@ -87,7 +87,7 @@ typedef UInt4 Oid;
 #define DBMS_NAME					"PostgreSQL"
 #endif   /* ODBCVER */
 
-#define POSTGRESDRIVERVERSION		"07.01.0010"
+#define POSTGRESDRIVERVERSION		"07.01.0011"
 
 #ifdef WIN32
 #if (ODBCVER >= 0x0300)
@@ -254,6 +254,11 @@ void		logs_on_off(int cnopen, int, int);
 
 #include "misc.h"
 
+#ifdef	UNICODE_SUPPORT
+UInt4	ucs2strlen(const SQLWCHAR *ucs2str);
+char	*ucs2_to_utf8(const SQLWCHAR *ucs2str, Int4 ilen, UInt4 *olen);
+UInt4	utf8_to_ucs2(const char * utf8str, Int4 ilen, SQLWCHAR *ucs2str, UInt4 buflen);
+#endif /* UNICODE_SUPPORT */
 #ifdef	_MEMORY_DEBUG_
 void	   *debug_alloc(size_t);
 void	   *debug_realloc(void *, size_t);
