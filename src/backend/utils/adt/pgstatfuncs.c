@@ -286,20 +286,24 @@ pg_stat_get_backend_activity(PG_FUNCTION_ARGS)
 	PgStat_StatBeEntry *beentry;
 	int32		beid;
 	int			len;
+	char	   *activity;
 	text	   *result;
 
 	beid = PG_GETARG_INT32(0);
 
 	if ((beentry = pgstat_fetch_stat_beentry(beid)) == NULL)
-		PG_RETURN_NULL();
+		activity = "<backend information not available>";
+	else if (!superuser() && beentry->userid != GetUserId())
+		activity = "<insufficient privilege>";
+	else if (*(beentry->activity) == '\0')
+		activity = "<command string not enabled>";
+	else
+		activity = beentry->activity;
 
-	if (!superuser() && beentry->userid != GetUserId())
-		PG_RETURN_NULL();
-
-	len = strlen(beentry->activity);
+	len = strlen(activity);
 	result = palloc(VARHDRSZ + len);
 	VARATT_SIZEP(result) = VARHDRSZ + len;
-	memcpy(VARDATA(result), beentry->activity, len);
+	memcpy(VARDATA(result), activity, len);
 
 	PG_RETURN_TEXT_P(result);
 }
