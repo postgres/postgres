@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.36 1999/07/15 15:19:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.37 1999/07/15 22:39:13 momjian Exp $
  *
  * NOTES
  *	  This should be moved to a more appropriate place.  It is here
@@ -37,14 +37,8 @@
 
 #include <postgres.h>
 
-#include <lib/dllist.h>
-#include <libpq/libpq.h>
 #include <libpq/libpq-fs.h>
-#include <nodes/nodes.h>
-#include <utils/memutils.h>
-#include <lib/fstack.h>
 #include <catalog/pg_shadow.h>	/* for superuser() */
-#include <storage/fd.h>			/* for O_ */
 #include <storage/large_object.h>
 #include <libpq/be-fsstubs.h>
 

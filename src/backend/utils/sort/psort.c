@@ -4,7 +4,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	  $Id: psort.c,v 1.53 1999/05/25 22:42:22 momjian Exp $
+ *	  $Id: psort.c,v 1.54 1999/07/15 22:40:14 momjian Exp $
  *
  * NOTES
  *		Sorts the first relation into the second relation.
@@ -40,19 +40,9 @@
 #include "miscadmin.h"
 
 #include "access/heapam.h"
-#include "access/htup.h"
-#include "access/relscan.h"
-#include "access/skey.h"
 #include "executor/execdebug.h"
 #include "executor/executor.h"
-#include "nodes/execnodes.h"
-#include "nodes/plannodes.h"
-#include "storage/buf.h"
-#include "storage/fd.h"
-#include "utils/lselect.h"
-#include "utils/portal.h"		/* for {Start,End}PortalAllocMode */
 #include "utils/psort.h"
-#include "utils/rel.h"
 
 static bool createfirstrun(Sort *node);
 static bool createrun(Sort *node, BufFile *file);

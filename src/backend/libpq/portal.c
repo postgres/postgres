@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: portal.c,v 1.22 1999/05/25 16:09:01 momjian Exp $
+ *	$Id: portal.c,v 1.23 1999/07/15 22:39:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,9 +55,7 @@
 
 #include <postgres.h>
 
-#include <lib/dllist.h>
 #include <libpq/libpq.h>		/* where the declarations go */
-#include <utils/exc.h>
 
 
 /* ----------------------------------------------------------------

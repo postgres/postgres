@@ -18,15 +18,12 @@
 #include <string.h>
 
 #include "postgres.h"
-#include "fmgr.h"
 
 #include "access/heapam.h"
 #include "catalog/pg_aggregate.h"
-#include "catalog/catalog.h"
 #include "parser/parse_type.h"
 #include "executor/executor.h"
 #include "executor/nodeAgg.h"
-#include "storage/bufmgr.h"
 #include "utils/syscache.h"
 #include "optimizer/clauses.h"
 

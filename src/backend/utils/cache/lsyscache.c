@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.28 1999/07/15 15:20:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.29 1999/07/15 22:40:04 momjian Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -16,15 +16,9 @@
 #include <string.h>
 #include "postgres.h"
 
-#include "nodes/pg_list.h"
 #include "utils/syscache.h"
 #include "utils/lsyscache.h"
-#include "access/tupmacs.h"
-#include "utils/rel.h"
-#include "access/attnum.h"
-#include "access/heapam.h"
 
-#include "catalog/pg_amop.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_type.h"
 

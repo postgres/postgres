@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.38 1999/05/25 22:41:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.39 1999/07/15 22:39:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,16 +16,10 @@
 
 #include "postgres.h"
 
-#include "storage/buf_internals.h"
 
-#include "nodes/pg_list.h"
-#include "nodes/relation.h"
-#include "nodes/plannodes.h"
 
-#include "optimizer/internal.h"
 #include "optimizer/paths.h"
 #include "optimizer/pathnode.h"
-#include "optimizer/keys.h"
 #include "optimizer/cost.h"		/* for _enable_{hashjoin,
 								 * _enable_mergejoin} */
 

@@ -7,18 +7,14 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/rel.c,v 1.5 1999/05/25 16:12:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/rel.c,v 1.6 1999/07/15 22:40:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 /* #define RELREFDEBUG	1 */
 
 #include "postgres.h"
-#include "miscadmin.h"
 #include "access/istrat.h"
-#include "access/tupdesc.h"
-#include "utils/rel.h"
-#include "storage/fd.h"
 
 
 /*

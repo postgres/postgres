@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-pqexec.c,v 1.20 1999/02/13 23:15:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-pqexec.c,v 1.21 1999/07/15 22:39:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,17 +22,11 @@
  */
 #include <postgres.h>
 
-#include <nodes/pg_list.h>
-#include <tcop/dest.h>
 #include <tcop/fastpath.h>
 #include <tcop/tcopprot.h>
-#include <lib/dllist.h>
 #include <libpq/libpq.h>
-#include <fmgr.h>
-#include <utils/exc.h>
 #include <utils/builtins.h>
 #ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
 #else
 #include <string.h>
 #endif

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.90 1999/07/15 15:18:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.91 1999/07/15 22:38:58 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -40,30 +40,19 @@
 #include "catalog/pg_inherits.h"
 #include "catalog/pg_ipl.h"
 #include "catalog/pg_relcheck.h"
-#include "catalog/pg_type.h"
 #include "commands/trigger.h"
-#include "fmgr.h"
-#include "nodes/plannodes.h"
 #include "optimizer/tlist.h"
 #include "parser/parse_expr.h"
-#include "parser/parse_node.h"
-#include "parser/parse_target.h"
-#include "parser/parse_type.h"
 #include "parser/parse_coerce.h"
 #include "rewrite/rewriteRemove.h"
-#include "storage/bufmgr.h"
-#include "storage/lmgr.h"
 #include "storage/smgr.h"
 #include "tcop/tcopprot.h"
-#include "utils/catcache.h"
 #include "utils/builtins.h"
 #include "utils/relcache.h"
 #include "utils/syscache.h"
-#include "utils/tqual.h"
 #include "utils/temprel.h"
 
 #ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
 #else
 #include <string.h>
 #endif

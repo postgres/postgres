@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/genam.c,v 1.17 1999/05/25 16:07:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/genam.c,v 1.18 1999/07/15 22:38:42 momjian Exp $
  *
  * NOTES
  *	  many of the old access method routines have been turned into
@@ -46,12 +46,9 @@
 
 #include <postgres.h>
 
-#include <utils/catcache.h>
 #include <access/genam.h>
-#include <storage/bufmgr.h>
 
 #ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
 #else
 #include <string.h>
 #endif

@@ -7,16 +7,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.35 1999/05/26 12:55:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.36 1999/07/15 22:39:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-#include "nodes/pg_list.h"
-#include "nodes/relation.h"
 
-#include "optimizer/internal.h"
 #include "optimizer/cost.h"
 #include "optimizer/paths.h"
 #include "optimizer/tlist.h"

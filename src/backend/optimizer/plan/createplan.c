@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.58 1999/07/15 15:19:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.59 1999/07/15 22:39:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,25 +17,18 @@
 #include "postgres.h"
 
 #include <utils/syscache.h>
-#include <catalog/pg_index.h>
 
-#include "nodes/execnodes.h"
-#include "nodes/plannodes.h"
-#include "nodes/relation.h"
-#include "nodes/primnodes.h"
 #include "nodes/nodeFuncs.h"
 
 #include "nodes/makefuncs.h"
 
 #include "utils/lsyscache.h"
-#include "utils/builtins.h"
 
 #include "optimizer/restrictinfo.h"
 #include "optimizer/cost.h"
 #include "optimizer/clauses.h"
 #include "optimizer/planmain.h"
 #include "optimizer/tlist.h"
-#include "optimizer/planner.h"
 #include "optimizer/internal.h"
 
 

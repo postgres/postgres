@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeNestloop.c,v 1.11 1999/02/13 23:15:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeNestloop.c,v 1.12 1999/07/15 22:39:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,6 @@
 #include "executor/executor.h"
 #include "executor/execdebug.h"
 #include "executor/nodeNestloop.h"
-#include "executor/nodeIndexscan.h"
 
 /* ----------------------------------------------------------------
  *		ExecNestLoop(node)

@@ -7,16 +7,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/mergeutils.c,v 1.22 1999/05/25 16:09:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/mergeutils.c,v 1.23 1999/07/15 22:39:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-#include "nodes/pg_list.h"
-#include "nodes/relation.h"
 
-#include "optimizer/internal.h"
 #include "optimizer/paths.h"
 #include "optimizer/clauses.h"
 #include "optimizer/ordering.h"

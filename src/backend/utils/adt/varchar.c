@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.49 1999/07/15 15:20:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.50 1999/07/15 22:40:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,17 +15,13 @@
 #include <string.h>
 #include "postgres.h"
 #include "access/htup.h"
-#include "utils/array.h"
 #include "utils/builtins.h"
 #include "catalog/pg_type.h"
-#include "storage/bufpage.h"
-#include "utils/memutils.h"
 
 #ifdef CYR_RECODE
 char	   *convertstr(char *, int, int);
 #endif
 
-#include "mb/pg_wchar.h"
 
 /*
  * CHAR() and VARCHAR() types are part of the ANSI SQL standard. CHAR()

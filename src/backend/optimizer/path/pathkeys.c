@@ -7,19 +7,14 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.10 1999/05/25 16:09:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.11 1999/07/15 22:39:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-#include "nodes/pg_list.h"
-#include "nodes/relation.h"
-#include "nodes/plannodes.h"
 
-#include "optimizer/internal.h"
 #include "optimizer/paths.h"
-#include "optimizer/var.h"
 #include "optimizer/keys.h"
 #include "optimizer/tlist.h"
 #include "optimizer/joininfo.h"

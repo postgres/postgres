@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.23 1999/06/21 01:18:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.24 1999/07/15 22:39:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,17 +16,10 @@
 #include <string.h>
 
 #include "postgres.h"
-#include "access/heapam.h"
 #include "catalog/pg_aggregate.h"
-#include "catalog/pg_type.h"
-#include "nodes/nodeFuncs.h"
-#include "nodes/primnodes.h"
-#include "nodes/relation.h"
 #include "optimizer/clauses.h"
 #include "parser/parse_agg.h"
 #include "parser/parse_expr.h"
-#include "parser/parse_node.h"
-#include "parser/parse_target.h"
 #include "parser/parse_coerce.h"
 #include "utils/syscache.h"
 #include "utils/lsyscache.h"

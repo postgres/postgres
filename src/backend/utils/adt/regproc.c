@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.38 1999/07/15 15:20:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.39 1999/07/15 22:40:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,10 +16,6 @@
 #include "miscadmin.h"
 #include "access/heapam.h"
 #include "access/genam.h"
-#include "access/itup.h"
-#include "access/relscan.h"
-#include "storage/bufmgr.h"
-#include "fmgr.h"
 #include "utils/syscache.h"
 
 #include "catalog/catname.h"

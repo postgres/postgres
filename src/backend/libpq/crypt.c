@@ -9,7 +9,7 @@
  * Dec 17, 1997 - Todd A. Brandys
  *	Orignal Version Completed.
  *
- * $Id: crypt.c,v 1.20 1999/07/15 15:19:05 momjian Exp $
+ * $Id: crypt.c,v 1.21 1999/07/15 22:39:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,7 +26,6 @@
 #include "libpq/crypt.h"
 
 #ifdef HAVE_CRYPT_H
-#include <crypt.h>
 #endif
 
 char	  **pwd_cache = NULL;

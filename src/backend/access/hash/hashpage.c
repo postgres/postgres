@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashpage.c,v 1.20 1999/05/25 16:06:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashpage.c,v 1.21 1999/07/15 22:38:37 momjian Exp $
  *
  * NOTES
  *	  Postgres hash pages look like ordinary relation pages.  The opaque
@@ -26,14 +26,10 @@
 #include <postgres.h>
 
 #include <access/hash.h>
-#include <storage/bufmgr.h>
 #include <miscadmin.h>
-#include <utils/memutils.h>
-#include <storage/lmgr.h>
 #include <access/genam.h>
 
 #ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
 #else
 #include <string.h>
 #endif

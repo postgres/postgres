@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtproc.c,v 1.20 1999/07/15 15:18:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtproc.c,v 1.21 1999/07/15 22:38:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,10 +15,8 @@
 #include <postgres.h>
 
 #include <utils/builtins.h>
-#include <utils/geo_decls.h>
 
 #ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
 #else
 #include <string.h>
 #endif

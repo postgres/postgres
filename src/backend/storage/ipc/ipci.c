@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipci.c,v 1.26 1999/05/31 18:28:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipci.c,v 1.27 1999/07/15 22:39:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,12 +16,8 @@
 
 #include "postgres.h"
 
-#include "storage/ipc.h"
 #include "storage/sinval.h"
 #include "storage/bufmgr.h"
-#include "storage/proc.h"
-#include "storage/smgr.h"
-#include "storage/lock.h"
 #include "miscadmin.h"			/* for DebugLvl */
 
 /*

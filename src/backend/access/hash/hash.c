@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.26 1999/05/25 16:06:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.27 1999/07/15 22:38:35 momjian Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -22,11 +22,9 @@
 #include <access/heapam.h>
 #include <access/genam.h>
 #include <catalog/index.h>
-#include <storage/bufmgr.h>
 #include <miscadmin.h>
 
 #ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
 #else
 #include <string.h>
 #endif

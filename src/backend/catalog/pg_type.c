@@ -7,28 +7,22 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.37 1999/05/25 16:08:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.38 1999/07/15 22:38:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include "access/heapam.h"
-#include "access/relscan.h"
 #include "catalog/catname.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_type.h"
-#include "fmgr.h"
 #include "miscadmin.h"
 #include "parser/parse_func.h"
-#include "storage/bufmgr.h"
-#include "storage/lmgr.h"
 #include "utils/builtins.h"
 #include "utils/syscache.h"
-#include "utils/tqual.h"
 
 #ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
 #else
 #include <string.h>
 #endif

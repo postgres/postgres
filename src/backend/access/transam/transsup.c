@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/Attic/transsup.c,v 1.21 1999/03/30 01:37:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/Attic/transsup.c,v 1.22 1999/07/15 22:38:54 momjian Exp $
  *
  * NOTES
  *	  This file contains support functions for the high
@@ -18,10 +18,8 @@
 
 #include <postgres.h>
 
-#include <access/transam.h>
 #include <utils/bit.h>
 #include <access/xact.h>
-#include <storage/lmgr.h>
 
 static XidStatus TransBlockGetXidStatus(Block tblock,
 					   TransactionId transactionId);

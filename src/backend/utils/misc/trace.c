@@ -26,7 +26,6 @@
 #include "postgres.h"
 #include "miscadmin.h"
 #include "utils/trace.h"
-#include "libpq/pqsignal.h"
 
 #ifdef USE_SYSLOG
 /*

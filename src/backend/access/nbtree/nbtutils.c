@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.29 1999/07/15 15:18:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.30 1999/07/15 22:38:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,18 +15,14 @@
 #include "postgres.h"
 
 #include "access/genam.h"
-#include "access/iqual.h"
 #include "access/istrat.h"
 #include "access/nbtree.h"
 #include "executor/execdebug.h"
-#include "fmgr.h"
-#include "storage/bufpage.h"
 
 extern int	NIndexTupleProcessed;
 
 
 #ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
 #else
 #include <string.h>
 #endif

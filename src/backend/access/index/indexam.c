@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.32 1999/07/15 15:18:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.33 1999/07/15 22:38:43 momjian Exp $
  *
  * INTERFACE ROUTINES
  *		index_open		- open an index relation by relationId
@@ -67,8 +67,6 @@
 
 #include <access/genam.h>
 #include <utils/relcache.h>
-#include <fmgr.h>
-#include <storage/lmgr.h>
 #include <access/heapam.h>
 
 /* ----------------

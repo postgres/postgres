@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/lib/Attic/bit.c,v 1.6 1999/02/13 23:15:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/lib/Attic/bit.c,v 1.7 1999/07/15 22:39:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,6 @@
 #include <postgres.h>
 
 #include <utils/bit.h>
-#include <utils/memutils.h>
 
 void
 BitArraySetBit(BitArray bitArray, BitIndex bitIndex)

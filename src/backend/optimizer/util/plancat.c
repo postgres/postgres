@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.31 1999/07/07 16:09:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.32 1999/07/15 22:39:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,24 +18,18 @@
 
 #include "access/heapam.h"
 #include "access/genam.h"
-#include "access/htup.h"
-#include "access/itup.h"
 
 #include "catalog/catname.h"
 #include "catalog/pg_amop.h"
-#include "catalog/pg_index.h"
 #include "catalog/pg_inherits.h"
-#include "catalog/pg_version.h"
 
 #include "parser/parsetree.h"	/* for getrelid() */
-#include "fmgr.h"
 
 #include "optimizer/internal.h"
 #include "optimizer/plancat.h"
 
 #include "utils/syscache.h"
 #ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
 #else
 #include <string.h>
 #endif

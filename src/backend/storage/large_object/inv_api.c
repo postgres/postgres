@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.53 1999/05/25 16:11:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.54 1999/07/15 22:39:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,30 +22,16 @@
 
 #include "access/genam.h"
 #include "access/heapam.h"
-#include "access/relscan.h"
-#include "access/tupdesc.h"
-#include "access/transam.h"
-#include "access/xact.h"
 #include "access/nbtree.h"
-#include "access/tupdesc.h"
 #include "catalog/catalog.h"	/* for newoid() */
 #include "catalog/heap.h"
 #include "catalog/index.h"		/* for index_create() */
-#include "catalog/pg_am.h"		/* for BTREE_AM_OID */
 #include "catalog/pg_type.h"	/* for INT4OID */
 #include "catalog/pg_opclass.h" /* for INT4_OPS_OID */
-#include "fmgr.h"
 #include "libpq/libpq-fs.h"
 #include "miscadmin.h"
-#include "nodes/pg_list.h"
-#include "storage/itemptr.h"
-#include "storage/bufpage.h"
-#include "storage/bufmgr.h"
 #include "storage/large_object.h"
-#include "storage/lmgr.h"
 #include "storage/smgr.h"
-#include "utils/builtins.h"		/* for namestrcpy() */
-#include "utils/rel.h"
 #include "utils/relcache.h"
 
 /*

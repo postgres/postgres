@@ -8,14 +8,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/lib/Attic/hasht.c,v 1.8 1999/02/13 23:15:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/lib/Attic/hasht.c,v 1.9 1999/07/15 22:39:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <postgres.h>
 
 #include <utils/memutils.h>
-#include <utils/hsearch.h>
 #include <lib/hasht.h>
 
 /* -----------------------------------

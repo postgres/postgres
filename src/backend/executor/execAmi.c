@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: execAmi.c,v 1.37 1999/07/15 15:18:56 momjian Exp $
+ *	$Id: execAmi.c,v 1.38 1999/07/15 22:39:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +29,6 @@
 #include "postgres.h"
 
 #include "executor/executor.h"
-#include "storage/smgr.h"
 #include "executor/nodeSeqscan.h"
 #include "executor/nodeIndexscan.h"
 #include "executor/nodeSort.h"

@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.39 1999/05/25 16:10:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.40 1999/07/15 22:39:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -14,10 +14,8 @@
 #include <stdio.h>
 
 #include "postgres.h"
-#include "nodes/pg_list.h"
 #include "parser/analyze.h"
 #include "parser/gramparse.h"
-#include "parser/parse_node.h"
 #include "parser/parser.h"
 
 #if defined(FLEX_SCANNER)

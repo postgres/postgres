@@ -6,7 +6,7 @@
 *	 OX2 operator according to Syswerda
 *	 (The Genetic Algorithms Handbook, ed L Davis)
 *
-* $Id: geqo_ox2.c,v 1.6 1999/07/15 15:19:12 momjian Exp $
+* $Id: geqo_ox2.c,v 1.7 1999/07/15 22:39:21 momjian Exp $
 *
 *-------------------------------------------------------------------------
 */
@@ -35,19 +35,9 @@
 
 #include "postgres.h"
 
-#include "nodes/pg_list.h"
-#include "nodes/relation.h"
-#include "nodes/primnodes.h"
 
 
-#include "optimizer/internal.h"
-#include "optimizer/paths.h"
-#include "optimizer/pathnode.h"
-#include "optimizer/clauses.h"
-#include "optimizer/cost.h"
 
-#include "optimizer/geqo_gene.h"
-#include "optimizer/geqo.h"
 #include "optimizer/geqo_recombination.h"
 #include "optimizer/geqo_random.h"
 

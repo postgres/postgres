@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.33 1999/06/19 04:54:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.34 1999/07/15 22:38:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,8 +24,6 @@
 #include "catalog/pg_index.h"
 #include "catalog/pg_operator.h"
 #include "utils/syscache.h"
-#include "fmgr.h"
-#include "utils/memutils.h"		/* could have been access/itup.h */
 
 #ifdef USE_ASSERT_CHECKING
 static bool StrategyEvaluationIsValid(StrategyEvaluation evaluation);

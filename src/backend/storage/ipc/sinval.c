@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.15 1999/05/28 17:03:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.16 1999/07/15 22:39:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,6 @@
 #include "storage/backendid.h"
 #include "storage/sinval.h"
 #include "storage/sinvaladt.h"
-#include "storage/spin.h"
 
 extern SISeg *shmInvalBuffer;	/* the shared buffer segment, set by */
 

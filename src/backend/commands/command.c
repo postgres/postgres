@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.48 1999/07/15 15:18:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.49 1999/07/15 22:39:00 momjian Exp $
  *
  * NOTES
  *	  The PortalExecutorHeapMemory crap needs to be eliminated
@@ -23,7 +23,6 @@
 #include "postgres.h"
 
 #include "access/heapam.h"
-#include "access/relscan.h"
 #include "catalog/indexing.h"
 #include "catalog/catalog.h"
 #include "catalog/catname.h"
@@ -31,13 +30,9 @@
 #include "commands/command.h"
 #include "executor/execdefs.h"
 #include "executor/executor.h"
-#include "fmgr.h"
 #include "optimizer/prep.h"
 #include "utils/acl.h"
-#include "utils/array.h"
 #include "utils/builtins.h"
-#include "utils/portal.h"
-#include "utils/relcache.h"
 #include "utils/temprel.h"
 #include "utils/syscache.h"
 #include "miscadmin.h"

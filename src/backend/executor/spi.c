@@ -3,15 +3,12 @@
  * spi.c
  *				Server Programming Interface
  *
- * $Id: spi.c,v 1.39 1999/05/25 22:41:02 momjian Exp $
+ * $Id: spi.c,v 1.40 1999/07/15 22:39:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include "executor/spi.h"
 #include "executor/spi_priv.h"
-#include "catalog/pg_type.h"
 #include "access/printtup.h"
-#include "fmgr.h"
 
 static Portal _SPI_portal = (Portal) NULL;
 static _SPI_connection *_SPI_stack = NULL;

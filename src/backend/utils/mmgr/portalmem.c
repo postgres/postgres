@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.24 1999/07/15 15:20:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.25 1999/07/15 22:40:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,13 +80,7 @@
 
 #include "lib/hasht.h"
 #include "utils/module.h"
-#include "utils/excid.h"		/* for Unimplemented */
-#include "utils/hsearch.h"
 
-#include "nodes/memnodes.h"
-#include "nodes/nodes.h"
-#include "nodes/pg_list.h"
-#include "nodes/execnodes.h"	/* for EState */
 
 #include "utils/portal.h"
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.57 1999/05/25 22:42:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.58 1999/07/15 22:39:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@
  *		This is so that we can support more backends. (system-wide semaphore
  *		sets run out pretty fast.)				  -ay 4/95
  *
- * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.57 1999/05/25 22:42:03 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.58 1999/07/15 22:39:52 momjian Exp $
  */
 #include <sys/time.h>
 #include <unistd.h>
@@ -63,17 +63,10 @@
 #include "miscadmin.h"
 #include "libpq/pqsignal.h"
 
-#include "access/xact.h"
-#include "utils/hsearch.h"
 
-#include "storage/ipc.h"
 /* In Ultrix, sem.h must be included after ipc.h */
 #include <sys/sem.h>
-#include "storage/buf.h"
-#include "storage/lock.h"
 #include "storage/lmgr.h"
-#include "storage/shmem.h"
-#include "storage/spin.h"
 #include "storage/proc.h"
 #include "utils/trace.h"
 

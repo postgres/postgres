@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.83 1999/07/15 15:19:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.84 1999/07/15 22:39:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,17 +16,9 @@
 
 #include "postgres.h"
 
-#include "nodes/pg_list.h"
-#include "nodes/execnodes.h"
-#include "nodes/plannodes.h"
-#include "nodes/parsenodes.h"
-#include "nodes/primnodes.h"
-#include "nodes/relation.h"
 
 #include "utils/syscache.h"
-#include "utils/builtins.h"		/* for namecpy */
 #include "catalog/pg_type.h"
-#include "storage/lmgr.h"
 #include "optimizer/planmain.h"
 #include "optimizer/subselect.h"
 

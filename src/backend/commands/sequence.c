@@ -11,11 +11,7 @@
 #include <postgres.h>
 #include <miscadmin.h>
 
-#include <storage/bufmgr.h>
-#include <storage/bufpage.h>
-#include <storage/lmgr.h>
 #include <access/heapam.h>
-#include <nodes/parsenodes.h>
 #include <commands/creatinh.h>
 #include <commands/sequence.h>
 #include <utils/builtins.h>

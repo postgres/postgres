@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.4 1999/05/25 16:08:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.5 1999/07/15 22:39:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,7 +15,6 @@
 
 #include <postgres.h>
 
-#include <access/attnum.h>
 #include <access/genam.h>
 #include <access/heapam.h>
 #include <utils/builtins.h>
@@ -26,17 +25,10 @@
 #include <catalog/pg_proc.h>
 #include <catalog/pg_type.h>
 #include <catalog/pg_opclass.h>
-#include <nodes/plannodes.h>
-#include <nodes/primnodes.h>
-#include <nodes/relation.h>
-#include <utils/relcache.h>
-#include <utils/lsyscache.h>
 #include <commands/defrem.h>
 #include <parser/parsetree.h>	/* for getrelid() */
 #include <optimizer/prep.h>
 #include <optimizer/clauses.h>
-#include <storage/lmgr.h>
-#include <fmgr.h>
 
 #define IsFuncIndex(ATTR_LIST) (((IndexElem*)lfirst(ATTR_LIST))->args!=NULL)
 

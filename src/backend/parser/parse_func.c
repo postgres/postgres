@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.47 1999/06/17 22:21:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.48 1999/07/15 22:39:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,17 +17,11 @@
 
 #include "access/genam.h"
 #include "access/heapam.h"
-#include "access/itup.h"
-#include "access/relscan.h"
-#include "access/sdir.h"
 #include "catalog/catname.h"
-#include "catalog/heap.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_inherits.h"
 #include "catalog/pg_proc.h"
-#include "catalog/pg_type.h"
 #include "catalog/pg_aggregate.h"
-#include "fmgr.h"
 #include "lib/dllist.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
@@ -35,13 +29,9 @@
 #include "parser/parse_agg.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_func.h"
-#include "parser/parse_node.h"
 #include "parser/parse_relation.h"
 #include "parser/parse_target.h"
-#include "parser/parse_type.h"
 #include "parser/parse_coerce.h"
-#include "storage/bufmgr.h"
-#include "storage/lmgr.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"

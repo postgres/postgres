@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/tid.c,v 1.8 1999/07/15 15:20:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/tid.c,v 1.9 1999/07/15 22:40:01 momjian Exp $
  *
  * NOTES
  *	  input routine largely stolen from boxin().
@@ -17,7 +17,6 @@
 #include <stdio.h>				/* for sprintf() */
 #include <string.h>
 #include "postgres.h"
-#include "storage/bufpage.h"
 
 #include "utils/builtins.h"		/* where function declarations go */
 

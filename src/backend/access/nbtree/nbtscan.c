@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/Attic/nbtscan.c,v 1.25 1999/07/15 15:18:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/Attic/nbtscan.c,v 1.26 1999/07/15 22:38:48 momjian Exp $
  *
  *
  * NOTES
@@ -29,8 +29,6 @@
 
 #include <postgres.h>
 
-#include <storage/bufpage.h>
-#include <storage/bufmgr.h>
 #include <access/nbtree.h>
 
 typedef struct BTScanListData

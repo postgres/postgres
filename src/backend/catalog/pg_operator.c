@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.38 1999/07/15 15:18:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.39 1999/07/15 22:38:59 momjian Exp $
  *
  * NOTES
  *	  these routines moved here from commands/define.c and somewhat cleaned up.
@@ -19,20 +19,14 @@
 #include "access/heapam.h"
 #include "catalog/catname.h"
 #include "catalog/pg_operator.h"
-#include "parser/parse_type.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "parser/parse_func.h"
-#include "fmgr.h"
 #include "miscadmin.h"
-#include "parser/parse_oper.h"
-#include "storage/bufmgr.h"
 #include "utils/builtins.h"
 #include "utils/syscache.h"
-#include "utils/tqual.h"
 
 #ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
 #else
 #include <string.h>
 #endif

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMaterial.c,v 1.22 1999/05/25 16:08:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMaterial.c,v 1.23 1999/07/15 22:39:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,6 @@
 
 #include "executor/executor.h"
 #include "executor/nodeMaterial.h"
-#include "catalog/catalog.h"
 #include "catalog/heap.h"
 #include "optimizer/internal.h" /* for _NONAME_RELATION_ID_ */
 #include "access/heapam.h"

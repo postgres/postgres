@@ -36,8 +36,14 @@ do
 		if [ "$?" -eq 0 ]
 		then	echo "$FILE $INCLUDE"
 			if [ "$IS_INCLUDE" = "N" ]
-			then	grep -v '^#include[ 	][ 	]*[<"]'"$INCLUDE"'[>"]' $FILE >/tmp/$$b
+			then	grep -v '^#include[ 	][ 	]*[<"]'"$INCLUDE"'[>"]' "$FILE" >/tmp/$$b
 				mv /tmp/$$b "$FILE"
+				# reload after #include removal
+				if [ "$IS_INCLUDE" = "Y" ]
+				then	cat "$FILE" | grep -v "^#if" | grep -v "^#else" | 
+					grep -v "^#endif" | sed 's/->[a-zA-Z0-9_\.]*//g' >/tmp/$$a
+				else	cat "$FILE" >/tmp/$$a
+				fi
 			fi
 			if [ "$1" = "-v" ]
 			then	cat /tmp/$$

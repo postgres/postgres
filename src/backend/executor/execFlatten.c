@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/Attic/execFlatten.c,v 1.9 1999/02/23 07:33:09 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/Attic/execFlatten.c,v 1.10 1999/07/15 22:39:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,9 +26,6 @@
  *	 node does the actual flattening work.
  */
 #include "postgres.h"
-#include "nodes/primnodes.h"
-#include "nodes/relation.h"
-#include "nodes/execnodes.h"
 #include "executor/executor.h"
 #include "executor/execFlatten.h"
 

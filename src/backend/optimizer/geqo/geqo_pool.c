@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_pool.c,v 1.14 1999/07/15 15:19:14 momjian Exp $
+ * $Id: geqo_pool.c,v 1.15 1999/07/15 22:39:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,18 +22,9 @@
 
 #include "postgres.h"
 
-#include "nodes/pg_list.h"
-#include "nodes/relation.h"
-#include "nodes/primnodes.h"
 
 
-#include "optimizer/internal.h"
-#include "optimizer/paths.h"
-#include "optimizer/pathnode.h"
-#include "optimizer/clauses.h"
-#include "optimizer/cost.h"
 
-#include "optimizer/geqo_gene.h"
 #include "optimizer/geqo.h"
 #include "optimizer/geqo_pool.h"
 #include "optimizer/geqo_copy.h"

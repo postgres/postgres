@@ -9,12 +9,11 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.62 1999/07/15 15:20:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.63 1999/07/15 22:39:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
-#include "access/xact.h"
 #include "access/heapam.h"
 #include "catalog/catalog.h"
 #include "catalog/pg_type.h"
@@ -29,24 +28,17 @@
 #include "commands/defrem.h"
 #include "commands/rename.h"
 #include "commands/view.h"
-#include "commands/version.h"
 #include "commands/vacuum.h"
 #include "commands/explain.h"
 #include "commands/trigger.h"
 #include "commands/proclang.h"
 #include "commands/variable.h"
 
-#include "nodes/parsenodes.h"
 #include "../backend/parser/parse.h"
-#include "utils/builtins.h"
 #include "utils/acl.h"
 #include "rewrite/rewriteRemove.h"
 #include "rewrite/rewriteDefine.h"
-#include "tcop/tcopdebug.h"
-#include "tcop/dest.h"
 #include "tcop/utility.h"
-#include "fmgr.h"				/* For load_file() */
-#include "storage/fd.h"
 #include "utils/ps_status.h"
 
 #ifndef NO_SECURITY

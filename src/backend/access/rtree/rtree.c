@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.32 1999/05/25 16:07:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.33 1999/07/15 22:38:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,18 +16,12 @@
 
 #include <access/genam.h>
 #include <catalog/index.h>
-#include <access/rtscan.h>
-#include <storage/lmgr.h>
 #include <access/rtree.h>
-#include <storage/bufmgr.h>
 #include <utils/geo_decls.h>
 #include <executor/executor.h>
 #include <access/heapam.h>
-#include <fmgr.h>
-#include <storage/bufpage.h>
 
 #ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
 #else
 #include <string.h>
 #endif

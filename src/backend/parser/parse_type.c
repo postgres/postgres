@@ -7,21 +7,15 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.22 1999/05/29 03:17:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.23 1999/07/15 22:39:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <string.h>
 #include "postgres.h"
-#include "fmgr.h"
 
-#include "nodes/nodes.h"
-#include "nodes/parsenodes.h"
-#include "nodes/primnodes.h"
-#include "parser/parse_node.h"
 
 #include "catalog/pg_type.h"
-#include "parser/parse_target.h"
 #include "parser/parse_type.h"
 #include "utils/syscache.h"
 

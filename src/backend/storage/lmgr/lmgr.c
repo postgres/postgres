@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.29 1999/07/15 20:32:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.30 1999/07/15 22:39:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,27 +22,11 @@
 
 #include "postgres.h"
 
-#include "access/heapam.h"
-#include "access/htup.h"
-#include "access/relscan.h"
-#include "access/skey.h"
-#include "access/xact.h"
 
-#include "storage/block.h"
-#include "storage/buf.h"
-#include "storage/itemptr.h"
-#include "storage/bufpage.h"
-#include "storage/multilev.h"
-#include "storage/lmgr.h"
 
-#include "utils/rel.h"
 
-#include "catalog/catname.h"
 #include "catalog/catalog.h"
-#include "catalog/pg_class.h"
 
-#include "nodes/memnodes.h"
-#include "storage/bufmgr.h"
 #include "access/transam.h"		/* for AmiTransactionId */
 
 extern Oid	MyDatabaseId;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.25 1999/07/15 15:20:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.26 1999/07/15 22:40:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,20 +19,12 @@
 
 #include "postgres.h"
 
-#include "access/heapam.h"
-#include "access/transam.h"
 #include "access/xact.h"
-#include "catalog/catname.h"
 #include "catalog/pg_database.h"
-#include "fmgr.h"
 #include "miscadmin.h"
-#include "storage/bufmgr.h"
-#include "storage/bufpage.h"
-#include "utils/builtins.h"
 #include "utils/syscache.h"
 
 #ifdef MULTIBYTE
-#include "mb/pg_wchar.h"
 #endif
 
 #ifdef NOT_USED

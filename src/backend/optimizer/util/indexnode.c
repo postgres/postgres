@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/indexnode.c,v 1.16 1999/05/25 22:41:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/indexnode.c,v 1.17 1999/07/15 22:39:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,11 +15,7 @@
 
 #include "postgres.h"
 
-#include "nodes/plannodes.h"
-#include "nodes/parsenodes.h"
-#include "nodes/relation.h"
 
-#include "optimizer/internal.h"
 #include "optimizer/plancat.h"
 #include "optimizer/pathnode.h" /* where the decls go */
 

@@ -4,7 +4,7 @@
  *
  * Copyright (c) 1994-5, Regents of the University of California
  *
- *	  $Id: explain.c,v 1.38 1999/06/17 23:45:32 tgl Exp $
+ *	  $Id: explain.c,v 1.39 1999/07/15 22:39:01 momjian Exp $
  *
  */
 #include <stdio.h>
@@ -12,15 +12,11 @@
 
 #include <postgres.h>
 
-#include <nodes/plannodes.h>
 #include <nodes/print.h>
-#include <tcop/tcopprot.h>
 #include <lib/stringinfo.h>
 #include <commands/explain.h>
 #include <parser/parsetree.h>
-#include <parser/parse_node.h>
 #include <optimizer/planner.h>
-#include <access/xact.h>
 #include <utils/relcache.h>
 #include <rewrite/rewriteHandler.h>
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/pqpacket.c,v 1.19 1999/02/13 23:15:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/pqpacket.c,v 1.20 1999/07/15 22:39:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,8 +24,6 @@
 #include <errno.h>
 
 #include <postgres.h>
-#include <miscadmin.h>
-#include <storage/ipc.h>
 #include <libpq/libpq.h>
 
 

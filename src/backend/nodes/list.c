@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.23 1999/07/15 15:19:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.24 1999/07/15 22:39:17 momjian Exp $
  *
  * NOTES
  *	  XXX a few of the following functions are duplicated to handle
@@ -23,9 +23,7 @@
  */
 #include <stdarg.h>
 #include "postgres.h"
-#include "nodes/pg_list.h"
 #include "nodes/parsenodes.h"
-#include "utils/builtins.h"		/* for namecpy */
 
 /*
  *	makeList

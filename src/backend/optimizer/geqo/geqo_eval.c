@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_eval.c,v 1.40 1999/07/15 15:19:11 momjian Exp $
+ * $Id: geqo_eval.c,v 1.41 1999/07/15 22:39:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,21 +30,12 @@
 #include <values.h>
 #endif
 
-#include "nodes/pg_list.h"
-#include "nodes/relation.h"
-#include "nodes/primnodes.h"
 
 #include "utils/portal.h"
 
-#include "optimizer/internal.h"
 #include "optimizer/paths.h"
-#include "optimizer/pathnode.h"
-#include "optimizer/clauses.h"
 #include "optimizer/cost.h"
-#include "optimizer/tlist.h"
-#include "optimizer/joininfo.h"
 
-#include "optimizer/geqo_gene.h"
 #include "optimizer/geqo.h"
 
 /*

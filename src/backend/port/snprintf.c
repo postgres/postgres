@@ -32,13 +32,10 @@
  * SUCH DAMAGE.
  */
 #ifdef NOT_USED
-#include "sendmail.h"
-#include "pathnames.h"
 #endif
 
 #include "postgres.h"
 
-#include "regex/cdefs.h"
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -82,7 +79,7 @@ typedef unsigned long ulong_long;
  * causing nast effects.
  **************************************************************/
 
-/*static char _id[] = "$Id: snprintf.c,v 1.22 1999/05/25 16:10:28 momjian Exp $";*/
+/*static char _id[] = "$Id: snprintf.c,v 1.23 1999/07/15 22:39:39 momjian Exp $";*/
 static char *end;
 static int	SnprfOverflow;
 

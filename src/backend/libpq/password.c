@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: password.c,v 1.21 1999/05/25 16:09:00 momjian Exp $
+ * $Id: password.c,v 1.22 1999/07/15 22:39:14 momjian Exp $
  *
  */
 
@@ -9,11 +9,9 @@
 #include <miscadmin.h>
 #include <libpq/password.h>
 #include <libpq/libpq.h>
-#include <storage/fd.h>
 #include <string.h>
 #include <unistd.h>
 #ifdef HAVE_CRYPT_H
-#include <crypt.h>
 #endif
 
 int

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.47 1999/07/15 15:19:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.48 1999/07/15 22:39:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,10 +21,7 @@
 #include "miscadmin.h"			/* for DataDir */
 
 #include "catalog/catalog.h"
-#include "storage/block.h"
-#include "storage/fd.h"
 #include "storage/smgr.h"		/* where the declarations go */
-#include "utils/rel.h"
 
 #undef DIAGNOSTIC
 

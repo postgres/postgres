@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/linux.c,v 1.12 1999/07/15 15:19:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/linux.c,v 1.13 1999/07/15 22:39:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,10 +19,7 @@
 
 #include "postgres.h"
 #ifdef HAVE_DLD_H
-#include <dld.h>
 #endif
-#include "dynloader.h"
-#include "fmgr.h"
 
 #ifdef NOT_USED
 extern char *pg_pathname;

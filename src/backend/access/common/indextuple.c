@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.33 1999/02/13 23:14:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.34 1999/07/15 22:38:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,13 +16,10 @@
 #include <postgres.h>
 
 #include <access/heapam.h>
-#include <access/ibit.h>
 #include <access/itup.h>
-#include <access/tupmacs.h>
 #include <catalog/pg_type.h>
 
 #ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
 #else
 #include <string.h>
 #endif

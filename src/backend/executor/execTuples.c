@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.26 1999/07/15 15:18:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.27 1999/07/15 22:39:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -124,11 +124,7 @@
 #include "executor/executor.h"
 #undef ExecStoreTuple
 
-#include "access/tupdesc.h"
 #include "catalog/pg_type.h"
-#include "parser/parse_type.h"
-#include "storage/bufmgr.h"
-#include "utils/lsyscache.h"
 
 static TupleTableSlot *NodeGetResultTupleSlot(Plan *node);
 

@@ -7,14 +7,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/scankey.c,v 1.14 1999/05/25 16:06:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/scankey.c,v 1.15 1999/07/15 22:38:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include <postgres.h>
 
-#include <fmgr.h>
 #include <access/skey.h>
 
 /*

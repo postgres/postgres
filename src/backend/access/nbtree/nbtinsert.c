@@ -7,24 +7,17 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.44 1999/07/15 15:18:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.45 1999/07/15 22:38:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include <postgres.h>
 
-#include <utils/memutils.h>
-#include <storage/bufpage.h>
 #include <access/nbtree.h>
 #include <access/heapam.h>
-#include <access/xact.h>
-#include <storage/bufmgr.h>
-#include <access/transam.h>
-#include <fmgr.h>
 
 #ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
 #else
 #include <string.h>
 #endif

@@ -7,16 +7,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.22 1999/06/06 20:19:33 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.23 1999/07/15 22:38:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include <postgres.h>
 
-#include <access/transam.h>
-#include <storage/spin.h>
-#include <access/xact.h>
 #include <access/heapam.h>
 #include <catalog/catname.h>
 #include <storage/proc.h>

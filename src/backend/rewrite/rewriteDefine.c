@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.31 1999/07/15 15:19:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.32 1999/07/15 22:39:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,21 +16,13 @@
 
 #include "postgres.h"
 
-#include "access/htup.h"
 #include "access/heapam.h"		/* access methods like amopenr */
 #include "catalog/pg_rewrite.h"
-#include "nodes/parsenodes.h"
-#include "nodes/pg_list.h"
 #include "parser/parse_relation.h"
-#include "rewrite/locks.h"
 #include "rewrite/rewriteDefine.h"
-#include "rewrite/rewriteRemove.h"
 #include "rewrite/rewriteSupport.h"
 #include "tcop/tcopprot.h"
 #include "utils/builtins.h"
-#include "utils/lsyscache.h"
-#include "utils/rel.h"
-#include "storage/bufpage.h"
 
 Oid			LastOidProcessed = InvalidOid;
 

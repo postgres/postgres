@@ -16,7 +16,6 @@
 #include "access/heapam.h"
 #include "tcop/pquery.h"
 #include "executor/executor.h"
-#include "executor/execdebug.h"
 #include "executor/nodeSubplan.h"
 
 /* ----------------------------------------------------------------

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.111 1999/07/15 15:18:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.112 1999/07/15 22:39:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,25 +23,15 @@
 #include "miscadmin.h"
 #include "access/genam.h"
 #include "access/heapam.h"
-#include "access/transam.h"
-#include "access/xact.h"
 #include "catalog/catalog.h"
 #include "catalog/catname.h"
 #include "catalog/index.h"
-#include "catalog/pg_class.h"
-#include "catalog/pg_index.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_statistic.h"
 #include "catalog/pg_type.h"
 #include "commands/vacuum.h"
-#include "fmgr.h"
 #include "parser/parse_oper.h"
-#include "storage/bufmgr.h"
-#include "storage/bufpage.h"
-#include "storage/shmem.h"
 #include "storage/smgr.h"
-#include "storage/itemptr.h"
-#include "storage/lmgr.h"
 #include "utils/builtins.h"
 #include "utils/inval.h"
 #include "utils/portal.h"
@@ -49,7 +39,6 @@
 #include "utils/syscache.h"
 
 #ifndef HAVE_GETRUSAGE
-#include <rusagestub.h>
 #else
 #include <sys/time.h>
 #include <sys/resource.h>

@@ -13,16 +13,10 @@
 
 #include <postgres.h>
 
-#include <access/relscan.h>
-#include <storage/bufpage.h>
-#include <access/sdir.h>
-#include <access/itup.h>
 #include <access/gist.h>
 #include <executor/execdebug.h>
-#include <storage/bufmgr.h>
 
 #ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
 #else
 #include <string.h>
 #endif

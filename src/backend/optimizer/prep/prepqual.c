@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepqual.c,v 1.15 1999/05/25 16:09:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepqual.c,v 1.16 1999/07/15 22:39:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,10 +15,8 @@
 
 #include "postgres.h"
 
-#include "nodes/pg_list.h"
 #include "nodes/makefuncs.h"
 
-#include "optimizer/internal.h"
 #include "optimizer/clauses.h"
 #include "optimizer/prep.h"
 

@@ -1,7 +1,6 @@
-/* $Id: isinf.c,v 1.6 1998/09/01 03:24:29 momjian Exp $ */
+/* $Id: isinf.c,v 1.7 1999/07/15 22:39:38 momjian Exp $ */
 
 #include <math.h>
-#include "config.h"
 
 #if HAVE_FPCLASS
 #if HAVE_IEEEFP_H
@@ -27,7 +26,6 @@ isinf(double d)
 
 #if defined(HAVE_FP_CLASS) || defined(HAVE_FP_CLASS_D)
 #if HAVE_FP_CLASS_H
-#include <fp_class.h>
 #endif
 int
 isinf(x)

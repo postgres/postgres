@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.20 1999/02/13 23:14:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.21 1999/07/15 22:38:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,16 +15,13 @@
 
 #include <access/heapam.h>
 #include <utils/builtins.h>
-#include <fmgr.h>
 #include <catalog/catname.h>
 #include <utils/syscache.h>
-#include <catalog/pg_operator.h>
 #include <catalog/pg_proc.h>
 #include <catalog/pg_type.h>
 #include <catalog/pg_aggregate.h>
 #include <miscadmin.h>
 #ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
 #else
 #include <string.h>
 #endif

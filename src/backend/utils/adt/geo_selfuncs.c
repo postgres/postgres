@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_selfuncs.c,v 1.10 1999/07/15 15:20:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_selfuncs.c,v 1.11 1999/07/15 22:39:59 momjian Exp $
  *
  *		XXX These are totally bogus.
  *
@@ -16,8 +16,6 @@
  */
 #include "postgres.h"
 
-#include "access/attnum.h"
-#include "utils/geo_decls.h"	/* where function declarations go */
 #include "utils/builtins.h"
 
 float64

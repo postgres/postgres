@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/Attic/mm.c,v 1.16 1999/05/25 16:11:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/Attic/mm.c,v 1.17 1999/07/15 22:39:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,15 +19,7 @@
 #ifdef STABLE_MEMORY_STORAGE
 
 #include <math.h>
-#include "storage/ipc.h"
-#include "storage/smgr.h"		/* where the declarations go */
-#include "storage/block.h"
-#include "storage/shmem.h"
-#include "storage/spin.h"
 
-#include "utils/hsearch.h"
-#include "utils/rel.h"
-#include "utils/memutils.h"
 
 /*
  *	MMCacheTag -- Unique triplet for blocks stored by the main memory

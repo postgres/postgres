@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.120 1999/07/15 15:19:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.121 1999/07/15 22:39:56 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -39,58 +39,40 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #ifdef __CYGWIN32__
-#include <getopt.h>
 #endif
 
 #include "postgres.h"
 #include "miscadmin.h"
-#include "fmgr.h"
 
-#include "access/xact.h"
-#include "catalog/catname.h"
 #include "commands/async.h"
-#include "executor/execdebug.h"
-#include "executor/executor.h"
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
-#include "libpq/libpq-be.h"
 #include "libpq/pqsignal.h"
-#include "nodes/pg_list.h"
 #include "nodes/print.h"
 #include "optimizer/cost.h"
 #include "optimizer/planner.h"
-#include "optimizer/prep.h"
 #include "parser/parser.h"
 #include "rewrite/rewriteHandler.h"		/* for QueryRewrite() */
-#include "storage/bufmgr.h"
-#include "tcop/dest.h"
 #include "tcop/fastpath.h"
 #include "tcop/pquery.h"
-#include "tcop/tcopdebug.h"
 #include "tcop/tcopprot.h"		/* where declarations for this file go */
 #include "tcop/utility.h"
-#include "utils/rel.h"
 #include "utils/ps_status.h"
 #include "utils/temprel.h"
-#include "nodes/parsenodes.h"
 #include "../backend/parser/parse.h"
 
 #ifdef NOT_USED
-#include "nodes/relation.h"
 #endif
 
 #ifdef NOT_USED
-#include "nodes/plannodes.h"
 #endif
 
 #ifdef NOT_USED
-#include "nodes/memnodes.h"
 #endif
 
 #include "utils/trace.h"
 
 #ifdef MULTIBYTE
-#include "mb/pg_wchar.h"
 #endif
 
 /*
@@ -1520,7 +1502,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.120 $ $Date: 1999/07/15 15:19:59 $\n");
+		puts("$Revision: 1.121 $ $Date: 1999/07/15 22:39:56 $\n");
 	}
 
 	/* ----------------
@@ -1685,7 +1667,6 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 }
 
 #ifndef HAVE_GETRUSAGE
-#include "rusagestub.h"
 #else							/* HAVE_GETRUSAGE */
 #include <sys/resource.h>
 #endif	 /* HAVE_GETRUSAGE */

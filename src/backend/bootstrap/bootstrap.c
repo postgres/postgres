@@ -7,7 +7,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.61 1999/07/15 15:18:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.62 1999/07/15 22:38:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,6 @@
 #include <setjmp.h>
 #include <string.h>
 #ifdef __CYGWIN32__
-#include <getopt.h>
 #endif
 
 #define BOOTSTRAP_INCLUDE		/* mask out stuff in tcop/tcopprot.h */
@@ -26,61 +25,20 @@
 #include "postgres.h"
 
 #include "miscadmin.h"
-#include "fmgr.h"
 
-#include "access/attnum.h"
-#include "access/funcindex.h"
 #include "access/genam.h"
 #include "access/heapam.h"
-#include "access/htup.h"
-#include "access/itup.h"
-#include "access/relscan.h"
-#include "access/sdir.h"
-#include "access/skey.h"
-#include "access/strat.h"
-#include "access/tupdesc.h"
-#include "access/xact.h"
 #include "bootstrap/bootstrap.h"
 #include "catalog/catname.h"
 #include "catalog/index.h"
-#include "catalog/pg_am.h"
-#include "catalog/pg_attribute.h"
-#include "catalog/pg_class.h"
 #include "catalog/pg_type.h"
-#include "executor/execdesc.h"
-#include "executor/hashjoin.h"
-#include "executor/tuptable.h"
 #include "libpq/pqsignal.h"
-#include "nodes/execnodes.h"
-#include "nodes/memnodes.h"
-#include "nodes/nodes.h"
-#include "nodes/params.h"
-#include "nodes/parsenodes.h"
-#include "nodes/plannodes.h"
-#include "nodes/pg_list.h"
-#include "nodes/primnodes.h"
-#include "rewrite/prs2lock.h"
-#include "storage/block.h"
-#include "storage/buf.h"
-#include "storage/fd.h"
-#include "storage/ipc.h"
-#include "storage/itemptr.h"
-#include "storage/lock.h"
-#include "storage/off.h"
-#include "storage/shmem.h"
-#include "storage/spin.h"
-#include "tcop/dest.h"
 #include "tcop/tcopprot.h"
 #include "utils/builtins.h"
-#include "utils/geo_decls.h"
-#include "utils/hsearch.h"
 #include "utils/lsyscache.h"
-#include "utils/nabstime.h"
 #include "utils/portal.h"
-#include "utils/rel.h"
 
 #ifndef HAVE_MEMMOVE
-#include "regex/utils.h"
 #endif
 
 #define ALLOC(t, c)		(t *)calloc((unsigned)(c), sizeof(t))

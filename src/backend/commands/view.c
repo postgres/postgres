@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: view.c,v 1.33 1999/05/25 16:08:28 momjian Exp $
+ *	$Id: view.c,v 1.34 1999/07/15 22:39:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,14 +15,10 @@
 #include <postgres.h>
 
 #include <catalog/heap.h>
-#include <access/heapam.h>
 #include <access/xact.h>
-#include <utils/builtins.h>
-#include <nodes/relation.h>
 #include <parser/parse_relation.h>
 #include <parser/parse_type.h>
 #include <rewrite/rewriteDefine.h>
-#include <rewrite/rewriteHandler.h>
 #include <rewrite/rewriteManip.h>
 #include <rewrite/rewriteRemove.h>
 #include <commands/creatinh.h>

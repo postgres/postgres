@@ -7,17 +7,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.20 1999/05/25 16:09:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.21 1999/07/15 22:39:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include "catalog/pg_operator.h"
-#include "fmgr.h"
-#include "nodes/pg_list.h"
-#include "nodes/primnodes.h"
-#include "nodes/relation.h"
 #include "optimizer/clauses.h"
 #include "optimizer/restrictinfo.h"
 #include "optimizer/cost.h"

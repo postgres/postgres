@@ -28,7 +28,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqcomm.c,v 1.73 1999/07/07 17:17:47 momjian Exp $
+ *	$Id: pqcomm.c,v 1.74 1999/07/15 22:39:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,10 +81,6 @@
 
 #include "libpq/libpq.h"		/* where my declarations go */
 #include "miscadmin.h"
-#include "libpq/pqsignal.h"
-#include "libpq/auth.h"
-#include "storage/ipc.h"
-#include "utils/trace.h"
 
 #ifndef SOMAXCONN
 #define SOMAXCONN 5				/* from Linux listen(2) man page */

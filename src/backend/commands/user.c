@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: user.c,v 1.28 1999/05/25 16:08:27 momjian Exp $
+ * $Id: user.c,v 1.29 1999/07/15 22:39:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,12 +24,8 @@
 #include <catalog/pg_shadow.h>
 #include <libpq/crypt.h>
 #include <access/heapam.h>
-#include <access/xact.h>
-#include <storage/bufmgr.h>
-#include <storage/lmgr.h>
 #include <tcop/tcopprot.h>
 #include <utils/acl.h>
-#include <utils/rel.h>
 #include <utils/syscache.h>
 #include <commands/user.h>
 

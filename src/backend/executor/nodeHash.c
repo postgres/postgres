@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  *
- *	$Id: nodeHash.c,v 1.36 1999/05/25 16:08:41 momjian Exp $
+ *	$Id: nodeHash.c,v 1.37 1999/07/15 22:39:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,12 +24,10 @@
 #include <string.h>
 
 #include "postgres.h"
-#include "miscadmin.h"
 #include "executor/execdebug.h"
 #include "executor/executor.h"
 #include "executor/nodeHash.h"
 #include "executor/nodeHashjoin.h"
-#include "utils/hsearch.h"
 #include "utils/portal.h"
 
 extern int	SortMem;

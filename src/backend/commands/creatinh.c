@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.41 1999/05/25 16:08:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.42 1999/07/15 22:39:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,11 +16,8 @@
 
 #include <postgres.h>
 
-#include <utils/rel.h>
-#include <nodes/parsenodes.h>
 #include <catalog/heap.h>
 #include <commands/creatinh.h>
-#include <access/xact.h>
 #include <access/heapam.h>
 #include <utils/syscache.h>
 #include <catalog/catname.h>

@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.47 1999/05/25 16:08:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.48 1999/07/15 22:38:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,18 +87,12 @@
 
 #include "commands/async.h"
 #include "access/heapam.h"
-#include "access/relscan.h"
-#include "access/xact.h"
 #include "catalog/catname.h"
 #include "catalog/pg_listener.h"
-#include "fmgr.h"
 #include "lib/dllist.h"
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
-#include "storage/bufmgr.h"
-#include "storage/lmgr.h"
-#include "tcop/dest.h"
 #include "utils/syscache.h"
 #include <utils/trace.h>
 #include <utils/ps_status.h>

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/not_in.c,v 1.16 1999/05/25 16:12:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/not_in.c,v 1.17 1999/07/15 22:40:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,7 +26,6 @@
 #include <string.h>
 #include "postgres.h"
 #include "access/heapam.h"
-#include "access/relscan.h"
 #include "utils/builtins.h"		/* where function decls go */
 
 static int	my_varattno(Relation rd, char *a);

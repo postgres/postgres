@@ -13,7 +13,6 @@
 
 #include <postgres.h>
 
-#include <fmgr.h>
 #include <catalog/pg_index.h>
 #include <access/genam.h>
 #include <access/gist.h>
@@ -21,14 +20,9 @@
 #include <access/heapam.h>
 #include <catalog/index.h>
 #include <executor/executor.h>
-#include <storage/bufmgr.h>
-#include <storage/bufpage.h>
-#include <storage/lmgr.h>
 #include <utils/syscache.h>
-#include <utils/tqual.h>
 
 #ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
 #else
 #include <string.h>
 #endif

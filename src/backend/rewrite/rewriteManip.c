@@ -6,25 +6,17 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.34 1999/07/15 15:19:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.35 1999/07/15 22:39:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <string.h>
 #include "postgres.h"
-#include "nodes/pg_list.h"
-#include "nodes/nodes.h"
-#include "nodes/relation.h"
-#include "nodes/primnodes.h"
 #include "parser/parsetree.h"	/* for getrelid() */
 #include "utils/lsyscache.h"
 #include "utils/builtins.h"
-#include "rewrite/rewriteHandler.h"
 #include "rewrite/rewriteManip.h"
-#include "rewrite/rewriteSupport.h"
-#include "rewrite/locks.h"
 
-#include "nodes/plannodes.h"
 #include "optimizer/clauses.h"
 
 static void ResolveNew(RewriteInfo *info, List *targetlist,

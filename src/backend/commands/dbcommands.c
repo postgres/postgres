@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.35 1999/05/25 16:08:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.36 1999/07/15 22:39:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,19 +19,12 @@
 #include "postgres.h"
 
 #include "access/heapam.h"
-#include "access/htup.h"
-#include "access/relscan.h"
 #include "catalog/catname.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_shadow.h"
-#include "fmgr.h"
 #include "miscadmin.h"			/* for DataDir */
-#include "storage/bufmgr.h"
-#include "storage/fd.h"
-#include "storage/lmgr.h"
 #include "tcop/tcopprot.h"
 #include "commands/dbcommands.h"
-#include "utils/rel.h"
 #include "utils/syscache.h"
 
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteRemove.c,v 1.24 1999/05/25 16:10:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteRemove.c,v 1.25 1999/07/15 22:39:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,10 +16,8 @@
 
 #include "postgres.h"
 
-#include "fmgr.h"				/* for F_NAMEEQ */
 
 #include "access/heapam.h"		/* heap AM calls defined here */
-#include "access/skey.h"
 #include "catalog/catname.h"	/* for RewriteRelationName */
 #include "catalog/pg_rewrite.h"
 #include "utils/syscache.h"

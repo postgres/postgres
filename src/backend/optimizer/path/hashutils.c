@@ -7,15 +7,12 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/hashutils.c,v 1.16 1999/05/25 16:09:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/hashutils.c,v 1.17 1999/07/15 22:39:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
-#include "nodes/pg_list.h"
-#include "nodes/relation.h"
 
-#include "optimizer/internal.h"
 #include "optimizer/paths.h"
 #include "optimizer/clauses.h"
 

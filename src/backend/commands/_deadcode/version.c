@@ -9,7 +9,7 @@
  *	doesn't work! - jolly 8/19/95
  *
  *
- *	$Id: version.c,v 1.19 1999/05/25 16:08:32 momjian Exp $
+ *	$Id: version.c,v 1.20 1999/07/15 22:39:03 momjian Exp $
  *
  * NOTES
  *	At the point the version is defined, 2 physical relations are created
@@ -25,12 +25,6 @@
 
 #include <postgres.h>
 
-#include <access/heapam.h>
-#include <utils/builtins.h>
-#include <commands/version.h>
-#include <access/xact.h>		/* for GetCurrentXactStartTime */
-#include <parser/parse_node.h>
-#include <tcop/tcopprot.h>
 
 #define MAX_QUERY_LEN 1024
 

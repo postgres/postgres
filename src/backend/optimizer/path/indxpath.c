@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.58 1999/07/15 15:19:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.59 1999/07/15 22:39:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,22 +16,16 @@
 
 #include "postgres.h"
 
-#include "access/attnum.h"
 #include "access/heapam.h"
 #include "access/nbtree.h"
 #include "catalog/catname.h"
 #include "catalog/pg_amop.h"
-#include "catalog/pg_type.h"
 #include "executor/executor.h"
-#include "fmgr.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
-#include "nodes/pg_list.h"
-#include "nodes/relation.h"
 #include "optimizer/clauses.h"
 #include "optimizer/restrictinfo.h"
 #include "optimizer/cost.h"
-#include "optimizer/internal.h"
 #include "optimizer/keys.h"
 #include "optimizer/ordering.h"
 #include "optimizer/paths.h"

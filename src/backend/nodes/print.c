@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.28 1999/05/25 16:09:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.29 1999/07/15 22:39:18 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -21,16 +21,9 @@
 #include "postgres.h"
 
 #include "access/printtup.h"
-#include "nodes/pg_list.h"
-#include "nodes/execnodes.h"
-#include "nodes/parsenodes.h"
 #include "nodes/print.h"
 #include "parser/parsetree.h"
-#include "access/heapam.h"
 #include "utils/lsyscache.h"
-#include "nodes/nodes.h"
-#include "nodes/plannodes.h"
-#include "parser/parse_relation.h"
 #include "optimizer/clauses.h"
 
 static char *plannode_type(Plan *p);

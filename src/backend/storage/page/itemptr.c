@@ -7,15 +7,12 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/page/itemptr.c,v 1.6 1999/05/25 16:11:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/page/itemptr.c,v 1.7 1999/07/15 22:39:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-#include "storage/block.h"
-#include "storage/off.h"
-#include "storage/itemptr.h"
 #include "storage/bufpage.h"
 
 /*

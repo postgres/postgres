@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.22 1999/06/19 05:05:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.23 1999/07/15 22:38:57 momjian Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -19,8 +19,6 @@
 
 #include "utils/acl.h"			/* where declarations for this file go */
 #include "access/heapam.h"
-#include "access/htup.h"
-#include "access/tupmacs.h"
 #include "catalog/indexing.h"
 #include "catalog/catalog.h"
 #include "catalog/catname.h"
@@ -30,14 +28,9 @@
 #include "catalog/pg_proc.h"
 #include "catalog/pg_shadow.h"
 #include "catalog/pg_type.h"
-#include "fmgr.h"
 #include "parser/parse_agg.h"
 #include "parser/parse_func.h"
-#include "storage/bufmgr.h"
-#include "utils/builtins.h"
-#include "utils/memutils.h"
 #include "utils/syscache.h"
-#include "utils/tqual.h"
 #include "miscadmin.h"
 
 static int32 aclcheck(char *relname, Acl *acl, AclId id, AclIdType idtype, AclMode mode);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.44 1999/07/15 15:20:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.45 1999/07/15 22:40:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,17 +15,11 @@
 #include "postgres.h"
 #include "access/heapam.h"
 #include "access/genam.h"
-#include "utils/tqual.h"
 #include "utils/builtins.h"
-#include "utils/portal.h"
 #include "utils/catcache.h"
-#include "utils/rel.h"
-#include "storage/bufpage.h"
 #include "access/valid.h"
 #include "miscadmin.h"
-#include "fmgr.h"				/* for F_BOOLEQ, etc.  DANGER */
 #include "catalog/pg_type.h"	/* for OID of int28 type */
-#include "lib/dllist.h"
 
 static void CatCacheRemoveCTup(CatCache *cache, Dlelem *e);
 static Index CatalogCacheComputeHashIndex(struct catcache * cacheInP);

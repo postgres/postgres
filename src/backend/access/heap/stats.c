@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/Attic/stats.c,v 1.17 1999/07/15 15:18:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/Attic/stats.c,v 1.18 1999/07/15 22:38:42 momjian Exp $
  *
  * NOTES
  *	  initam should be moved someplace else.
@@ -23,7 +23,6 @@
 #include <access/heapam.h>
 
 #ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
 #else
 #include <string.h>
 #endif

@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.31 1999/07/15 15:20:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.32 1999/07/15 22:40:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,6 @@
 #include "postgres.h"
 
 #include "access/heapam.h"
-#include "fmgr.h"
 #include "utils/builtins.h"		/* for textout() prototype and where the
 								 * declarations go */
 

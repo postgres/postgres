@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.47 1999/05/25 22:40:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.48 1999/07/15 22:38:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,11 +17,9 @@
 
 #include "postgres.h"
 
-#include "fmgr.h"
 #include "access/heapam.h"
 #include "access/printtup.h"
 #include "catalog/pg_type.h"
-#include "libpq/libpq.h"
 #include "libpq/pqformat.h"
 #include "utils/syscache.h"
 

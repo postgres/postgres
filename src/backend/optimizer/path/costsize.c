@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.41 1999/07/07 09:36:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.42 1999/07/15 22:39:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,10 +27,8 @@
 #endif
 #endif
 
-#include "nodes/relation.h"
 #include "optimizer/cost.h"
 #include "optimizer/internal.h"
-#include "optimizer/keys.h"
 #include "optimizer/tlist.h"
 #include "utils/lsyscache.h"
 

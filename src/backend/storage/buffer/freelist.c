@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/freelist.c,v 1.15 1999/05/25 16:10:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/freelist.c,v 1.16 1999/07/15 22:39:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,8 +28,6 @@
 #include "postgres.h"
 
 #include "storage/bufmgr.h"
-#include "storage/buf_internals.h"		/* where declarations go */
-#include "storage/spin.h"
 
 
 static BufferDesc *SharedFreeList;

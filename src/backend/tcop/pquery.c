@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.24 1999/07/15 15:20:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.25 1999/07/15 22:39:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,22 +15,11 @@
 
 #include "postgres.h"
 
-#include "tcop/tcopdebug.h"
 
-#include "nodes/nodes.h"
-#include "miscadmin.h"
-#include "utils/portal.h"
 
-#include "nodes/pg_list.h"
-#include "nodes/primnodes.h"
-#include "nodes/plannodes.h"
-#include "nodes/execnodes.h"
-#include "nodes/memnodes.h"
 
-#include "tcop/dest.h"
 
 #include "executor/execdefs.h"
-#include "executor/execdesc.h"
 #include "executor/executor.h"
 #include "tcop/pquery.h"
 #include "utils/ps_status.h"

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.50 1999/07/11 02:04:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.51 1999/07/15 22:39:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,9 +16,7 @@
 #include <string.h>
 
 #include "postgres.h"
-#include "catalog/pg_type.h"
 #include "nodes/makefuncs.h"
-#include "nodes/nodes.h"
 #include "nodes/params.h"
 #include "nodes/relation.h"
 #include "parse.h"
@@ -26,7 +24,6 @@
 #include "parser/gramparse.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_func.h"
-#include "parser/parse_node.h"
 #include "parser/parse_relation.h"
 #include "parser/parse_target.h"
 #include "parser/parse_coerce.h"

@@ -3,15 +3,15 @@ trap "rm -f /tmp/$$.c /tmp/$$.o /tmp/$$ /tmp/$$a /tmp/$$b" 0 1 2 3 15
 find . \( -name CVS -a -prune \) -o -type f -print |
 while read FILE
 do
-	cat /tmp/$$a | grep "^#include" |
+	cat "$FILE" | grep "^#include" |
 	sed 's/^#include[ 	]*[<"]\([^>"]*\).*$/\1/g' |
 	while read INCLUDE
 	do
 		if [ -s /usr/include/"$INCLUDE" ]
 		then	cat "$FILE" |
-			sed 's/^#include[ 	]*[<"]'"$INCLUDE"'[>"]$/#include <'"$INCLUDE"'>/g' >/tmp/$$
+			sed 's;^#include[ 	][ 	]*[<"]'"$INCLUDE"'[>"]$;#include <'"$INCLUDE"'>;g' >/tmp/$$
 		else	cat "$FILE" |
-			sed 's/^#include[ 	]*[<"]'"$INCLUDE"'[>"]$/#include "'"$INCLUDE"'"/g' >/tmp/$$
+			sed 's;^#include[ 	][ 	]*[<"]'"$INCLUDE"'[>"]$;#include "'"$INCLUDE"'";g' >/tmp/$$
 		fi
 		cat /tmp/$$ > "$FILE"
 	done

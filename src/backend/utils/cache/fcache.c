@@ -7,30 +7,21 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.22 1999/05/10 00:46:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.23 1999/07/15 22:40:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-#include <nodes/parsenodes.h>
-#include <fmgr.h>
 
-#include "access/htup.h"
-#include "utils/catcache.h"
 #include "utils/syscache.h"
 #include "catalog/pg_type.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_language.h"
-#include "catalog/pg_class.h"
 #include "parser/parsetree.h"	/* for getrelname() */
 #include "utils/builtins.h"
-#include "utils/fcache.h"
 #include "utils/fcache2.h"
-#include "nodes/primnodes.h"
-#include "nodes/execnodes.h"
 #ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
 #else
 #include <string.h>
 #endif

@@ -6,14 +6,11 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/Attic/locks.c,v 1.18 1999/07/15 15:19:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/Attic/locks.c,v 1.19 1999/07/15 22:39:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"			/* for oid defs */
-#include "nodes/pg_list.h"		/* lisp support package */
-#include "nodes/parsenodes.h"
-#include "nodes/primnodes.h"	/* Var node def */
 #include "utils/syscache.h"		/* for SearchSysCache */
 #include "rewrite/locks.h"		/* for rewrite specific lock defns */
 

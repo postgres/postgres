@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.58 1999/07/15 15:19:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.59 1999/07/15 22:39:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,10 +16,6 @@
 
 #include "postgres.h"
 
-#include "nodes/pg_list.h"
-#include "nodes/plannodes.h"
-#include "nodes/parsenodes.h"
-#include "nodes/relation.h"
 #include "nodes/makefuncs.h"
 #include "catalog/pg_type.h"
 #include "parser/parse_expr.h"
@@ -29,20 +25,11 @@
 
 #include "optimizer/internal.h"
 #include "optimizer/planner.h"
-#include "optimizer/plancat.h"
 #include "optimizer/prep.h"
 #include "optimizer/planmain.h"
 #include "optimizer/subselect.h"
-#include "optimizer/paths.h"
-#include "optimizer/cost.h"
 
 /* DATA STRUCTURE CREATION/MANIPULATION ROUTINES */
-#include "nodes/relation.h"
-#include "optimizer/restrictinfo.h"
-#include "optimizer/joininfo.h"
-#include "optimizer/keys.h"
-#include "optimizer/ordering.h"
-#include "optimizer/pathnode.h"
 #include "optimizer/clauses.h"
 #include "optimizer/tlist.h"
 #include "optimizer/var.h"

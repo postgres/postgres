@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datum.c,v 1.14 1999/07/15 15:20:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datum.c,v 1.15 1999/07/15 22:39:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,6 @@
 #include <string.h>
 #include "postgres.h"
 #include "utils/datum.h"
-#include "catalog/pg_type.h"
 
 /*-------------------------------------------------------------------------
  * datumGetSize

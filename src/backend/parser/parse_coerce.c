@@ -7,21 +7,17 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.18 1999/06/17 22:21:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.19 1999/07/15 22:39:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <string.h>
 #include "postgres.h"
 #include "utils/builtins.h"
-#include "fmgr.h"
-#include "nodes/makefuncs.h"
 
 #include "parser/parse_expr.h"
 
-#include "catalog/pg_type.h"
 #include "parser/parse_func.h"
-#include "parser/parse_type.h"
 #include "parser/parse_target.h"
 #include "parser/parse_coerce.h"
 #include "utils/syscache.h"

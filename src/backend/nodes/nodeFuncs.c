@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/nodeFuncs.c,v 1.9 1999/02/13 23:15:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/nodeFuncs.c,v 1.10 1999/07/15 22:39:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,10 +16,6 @@
 
 #include "postgres.h"
 
-#include "nodes/primnodes.h"
-#include "nodes/plannodes.h"
-#include "nodes/pg_list.h"
-#include "nodes/relation.h"
 #include "nodes/nodeFuncs.h"
 #include "utils/lsyscache.h"
 

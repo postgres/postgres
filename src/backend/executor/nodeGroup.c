@@ -13,17 +13,15 @@
  *	  columns. (ie. tuples from the same group are consecutive)
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeGroup.c,v 1.27 1999/07/11 01:57:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeGroup.c,v 1.28 1999/07/15 22:39:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <string.h>
 
 #include "postgres.h"
-#include "fmgr.h"
 
 #include "access/heapam.h"
-#include "catalog/catalog.h"
 #include "access/printtup.h"
 #include "executor/executor.h"
 #include "executor/nodeGroup.h"
