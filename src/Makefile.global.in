@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.187 2004/05/22 00:34:49 tgl Exp $
+# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.188 2004/05/23 15:24:32 tgl Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -105,9 +105,12 @@ mandir := @mandir@
 sqlmansect_dummy = l
 
 docdir := @docdir@
+# docdir can be an empty string to signify --without-docdir
+ifneq (,$(docdir))
 ifeq "$(findstring pgsql, $(docdir))" ""
 ifeq "$(findstring postgres, $(docdir))" ""
 override docdir := $(docdir)/postgresql
+endif
 endif
 endif
 
