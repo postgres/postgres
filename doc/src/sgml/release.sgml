@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.200 2003/07/23 22:58:38 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.201 2003/07/24 00:43:53 momjian Exp $
 -->
 
 <appendix id="release">
@@ -87,6 +87,7 @@ Object owners can allow grantees to grant the privilege to others (grant option)
 
     <para>
 <literallayout>
+Repair breakage in timestamp-to-date conversion for dates before 2000
 Prevent rare possibility of server startup failure (Tom)
 Fix bugs in interval-to-time conversion (Tom)
 Add constraint names in a few places in pg_dump (Rod)
