@@ -13,8 +13,6 @@ tas:
         movl    %esp,%ebp       /new base pointer
         pushl   %ebx            /save prev bx
         movl    8(%ebp),%ebx    /load bx with address of lock
-        pushl   %ebx            /save prev bx
-        movl    8(%ebp),%ebx    /load bx with address of lock
         movl    $255,%eax       /put something in ax
         xchgb   %al,(%ebx)      /swap lock value with "0"
         cmpb    $0,%al          /did we get the lock?
