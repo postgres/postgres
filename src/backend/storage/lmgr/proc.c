@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.2 1996/07/20 08:35:58 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.3 1996/07/25 19:45:31 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@
  *      This is so that we can support more backends. (system-wide semaphore
  *      sets run out pretty fast.)                -ay 4/95
  *
- * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.2 1996/07/20 08:35:58 scrappy Exp $
+ * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.3 1996/07/25 19:45:31 scrappy Exp $
  */
 #include <sys/time.h>
 #ifndef WIN32
@@ -55,15 +55,6 @@
 #include <string.h>
 #include <sys/types.h>
 #include "libpq/pqsignal.h"	/* substitute for <signal.h> */
-
-#if defined(PORTNAME_bsdi)||defined(PORTNAME_i386_solaris)
-/* hacka, hacka, hacka (XXX) */
-union semun {
-	int val; /* value for SETVAL */
-	struct semid_ds *buf; /* buffer for IPC_STAT & IPC_SET */
-	ushort *array; /* array for GETALL & SETALL */
-};
-#endif
 
 #include "access/xact.h"
 #include "utils/hsearch.h"

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.2 1996/07/20 08:35:52 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.3 1996/07/25 19:45:24 scrappy Exp $
  *
  * NOTES
  *
@@ -46,16 +46,6 @@ int UsePrivateMemory = 1;
 #else
 int UsePrivateMemory = 0;
 #endif
-
-#if defined(PORTNAME_bsdi)||defined(PORTNAME_i386_solaris)
-/* hacka, hacka, hacka (XXX) */
-union semun {
-	int val; /* value for SETVAL */
-	struct semid_ds *buf; /* buffer for IPC_STAT & IPC_SET */
-	ushort *array; /* array for GETALL & SETALL */
-};
-#endif
-
 
 /* ----------------------------------------------------------------
  *			exit() handling stuff
