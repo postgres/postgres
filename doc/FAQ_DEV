@@ -113,11 +113,14 @@ existing code doing similar things is helpful.
 
 There are several ways to obtain the source tree. Occasional developers can
 just get the most recent source tree snapshot from ftp.postgresql.org. For
-regular developers, you can get CVSup, which is available from
+regular developers, you can use CVSup, which is available from
 ftp.postgresql.org too. CVSup allows you to download the source tree, then
 occasionally update your copy of the source tree with any new changes. Using
 CVSup, you don't have to download the entire source each time, only the
 changed files. CVSup does not allow developers to update the source tree.
+
+Anonymous CVS is available too.  See the doc/FAQ_CVS file for more
+information.
 
 To update the source tree, there are two ways. You can generate a patch
 against your current source tree, perhaps using the make_diff tools
