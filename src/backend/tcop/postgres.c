@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.29 1997/02/03 04:43:31 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.30 1997/02/12 05:24:22 scrappy Exp $
  *
  * NOTES
  *    this is the "main" module of the postgres backend and
@@ -91,6 +91,9 @@ static bool     DebugPrintRewrittenParsetree = false;
 /*static bool   EnableRewrite = true; , never changes why have it*/
 CommandDest whereToSendOutput;
 
+#ifdef LOCK_MGR_DEBUG
+extern int      lockDebug;
+#endif
 extern int      lockingOff;
 extern int      NBuffers;
 
@@ -757,6 +760,9 @@ static void usage(char* progname)
     fprintf(stderr, "    F: turn off fsync\n");
     fprintf(stderr, "    f: forbid plantype generation\n");
     fprintf(stderr, "    i: don't execute the query, just show the plan tree\n");
+#ifdef LOCK_MGR_DEBUG
+    fprintf(stderr, "    K: set locking debug level [0|1|2]\n");
+#endif
     fprintf(stderr, "    L: turn off locking\n");
     fprintf(stderr, "    m: set up a listening backend at portno to support multiple front-ends\n");
     fprintf(stderr, "    M: start as postmaster\n");
@@ -846,7 +852,10 @@ PostgresMain(int argc, char *argv[])
      */
     flagC = flagQ = flagS = flagE = flagEu = ShowStats = 0;
     ShowParserStats = ShowPlannerStats = ShowExecutorStats = 0;
-    
+#ifdef LOCK_MGR_DEBUG
+    lockDebug = 0;
+#endif
+
     /* get hostname is either the environment variable PGHOST
        or 'localhost' */
     if (!(hostName = getenv("PGHOST"))) {
@@ -858,7 +867,7 @@ PostgresMain(int argc, char *argv[])
     DataDir = getenv("PGDATA");   /* default */
     multiplexedBackend = false;   /* default */
 
-    while ((flag = getopt(argc, argv, "B:bCD:d:Eef:iLm:MNo:P:pQSst:x:F")) 
+    while ((flag = getopt(argc, argv, "B:bCD:d:Eef:iK:Lm:MNo:P:pQSst:x:F")) 
            != EOF)
         switch (flag) {
             
@@ -953,6 +962,14 @@ PostgresMain(int argc, char *argv[])
 
         case 'i':
             dontExecute = 1;
+            break;
+            
+        case 'K':
+#ifdef LOCK_MGR_DEBUG
+            lockDebug = atoi(optarg);
+#else
+	    fprintf(stderr, "Lock debug not compiled in\n");
+#endif
             break;
             
         case 'L':
@@ -1283,7 +1300,7 @@ PostgresMain(int argc, char *argv[])
      */
     if (IsUnderPostmaster == false) {
         puts("\nPOSTGRES backend interactive interface");
-        puts("$Revision: 1.29 $ $Date: 1997/02/03 04:43:31 $");
+        puts("$Revision: 1.30 $ $Date: 1997/02/12 05:24:22 $");
     }
     
     /* ----------------

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.6 1996/12/26 17:50:26 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.7 1997/02/12 05:23:49 scrappy Exp $
  *
  * NOTES
  *    Outside modules can create a lock table and acquire/release
@@ -57,41 +57,65 @@
 
 #else /* LOCK_MGR_DEBUG */
 
+int lockDebug = 0;
+
+#ifndef LOCK_DEBUG_OID_MIN
+/*
+ * This is totally arbitrary. It is the minimum relation oid
+ * which will trigger the locking debug when the -K option
+ * is given to the backend. This is done to avoid tracing
+ * locks on system relations.
+ */
+#define LOCK_DEBUG_OID_MIN 20000
+#endif
+
 #define LOCK_PRINT(where,tag,type)\
-  elog(NOTICE, "%s: rel (%d) dbid (%d) tid (%d,%d) type (%d)\n",where, \
-	 tag->relId, tag->dbId, \
-	 ( (tag->tupleId.ip_blkid.data[0] >= 0) ? \
-		BlockIdGetBlockNumber(&tag->tupleId.ip_blkid) : -1 ), \
-	 tag->tupleId.ip_posid, \
-	 type);
+    if ((lockDebug >= 1) && (tag->relId >= LOCK_DEBUG_OID_MIN)) \
+        elog(DEBUG, \
+	     "%s: pid (%d) rel (%d) dbid (%d) tid (%d,%d) type (%d)",where, \
+	     getpid(),\
+	     tag->relId, tag->dbId, \
+	     ((tag->tupleId.ip_blkid.bi_hi<<16)+\
+	      tag->tupleId.ip_blkid.bi_lo),\
+	     tag->tupleId.ip_posid, \
+	     type);
 
 #define LOCK_DUMP(where,lock,type)\
-  elog(NOTICE, "%s: rel (%d) dbid (%d) tid (%d,%d) nHolding (%d) holders (%d,%d,%d,%d,%d) type (%d)\n",where, \
-       lock->tag.relId, lock->tag.dbId, \
-       ((lock->tag.tupleId.ip_blkid.data[0] >= 0) ? \
-	BlockIdGetBlockNumber(&lock->tag.tupleId.ip_blkid) : -1 ), \
-       lock->tag.tupleId.ip_posid, \
-       lock->nHolding,\
-       lock->holders[1],\
-       lock->holders[2],\
-       lock->holders[3],\
-       lock->holders[4],\
-       lock->holders[5],\
-       type);
+    if ((lockDebug >= 1) && (lock->tag.relId >= LOCK_DEBUG_OID_MIN)) \
+        elog(DEBUG, \
+	     "%s: pid (%d) rel (%d) dbid (%d) tid (%d,%d) nHolding (%d) "\
+	     "holders (%d,%d,%d,%d,%d) type (%d)",where, \
+	     getpid(),\
+	     lock->tag.relId, lock->tag.dbId, \
+	     ((lock->tag.tupleId.ip_blkid.bi_hi<<16)+\
+	      lock->tag.tupleId.ip_blkid.bi_lo),\
+	     lock->tag.tupleId.ip_posid, \
+	     lock->nHolding,\
+	     lock->holders[1],\
+	     lock->holders[2],\
+	     lock->holders[3],\
+	     lock->holders[4],\
+	     lock->holders[5],\
+	     type);
 
 #define XID_PRINT(where,xidentP)\
-  elog(NOTICE,\
-       "%s:xid (%d) pid (%d) lock (%x) nHolding (%d) holders (%d,%d,%d,%d,%d)",\
-       where,\
-       xidentP->tag.xid,\
-       xidentP->tag.pid,\
-       xidentP->tag.lock,\
-       xidentP->nHolding,\
-       xidentP->holders[1],\
-       xidentP->holders[2],\
-       xidentP->holders[3],\
-       xidentP->holders[4],\
-       xidentP->holders[5]);
+    if ((lockDebug >= 2) && \
+	(((LOCK *)MAKE_PTR(xidentP->tag.lock))->tag.relId \
+	 >= LOCK_DEBUG_OID_MIN)) \
+	elog(DEBUG,\
+	     "%s: pid (%d) xid (%d) pid (%d) lock (%x) nHolding (%d) "\
+	     "holders (%d,%d,%d,%d,%d)",\
+	     where,\
+	     getpid(),\
+	     xidentP->tag.xid,\
+	     xidentP->tag.pid,\
+	     xidentP->tag.lock,\
+	     xidentP->nHolding,\
+	     xidentP->holders[1],\
+	     xidentP->holders[2],\
+	     xidentP->holders[3],\
+	     xidentP->holders[4],\
+	     xidentP->holders[5]);
 
 #endif /* LOCK_MGR_DEBUG */
 
@@ -528,7 +552,7 @@ LockAcquire(LockTableId tableId, LOCKTAG *lockName, LOCKT lockt)
 	}
     if (!found)
 	{
-	    XID_PRINT("queueing XidEnt LockAcquire:", result);
+	    XID_PRINT("LockAcquire: queueing XidEnt", result);
 	    ProcAddLock(&result->queue);
 	    result->nHolding = 0;
 	    memset((char *)result->holders, 0, sizeof(int)*MAX_LOCKTYPES);
@@ -1102,7 +1126,7 @@ LockReleaseAll(LockTableId tableId, SHM_QUEUE *lockQueue)
 #endif
     SHMQueueFirst(lockQueue,(Pointer*)&xidLook,&xidLook->queue);
     
-    XID_PRINT("LockReleaseAll:", xidLook);
+    XID_PRINT("LockReleaseAll", xidLook);
     
 #ifndef USER_LOCKS
     SpinAcquire(masterLock);
@@ -1322,3 +1346,75 @@ LockingDisabled()
 {
     return LockingIsDisabled;
 }
+
+#ifdef DEADLOCK_DEBUG
+/*
+ * Dump all locks. Must have already acquired the masterLock.
+ */
+void
+DumpLocks()
+{
+    SHMEM_OFFSET	location;
+    PROC 		*proc;
+    SHM_QUEUE		*lockQueue;
+    int			done;
+    XIDLookupEnt	*xidLook = NULL;
+    XIDLookupEnt	*tmp = NULL;
+    SHMEM_OFFSET 	end;
+    SPINLOCK 		masterLock;
+    int			nLockTypes;
+    LOCK		*lock;
+    int 		pid, count;
+    int			tableId = 1;
+    LOCKTAB 		*ltable;
+
+    pid = getpid();
+    ShmemPIDLookup(pid,&location);
+    if (location == INVALID_OFFSET)
+      return;
+    proc = (PROC *) MAKE_PTR(location);
+    if (proc != MyProc)
+      return;
+    lockQueue = &proc->lockQueue;
+
+    Assert (tableId < NumTables);
+    ltable = AllTables[tableId];
+    if (!ltable)
+	return;
+    
+    nLockTypes = ltable->ctl->nLockTypes;
+    masterLock = ltable->ctl->masterLock;
+    
+    if (SHMQueueEmpty(lockQueue))
+	return;
+
+    SHMQueueFirst(lockQueue,(Pointer*)&xidLook,&xidLook->queue);
+    end = MAKE_OFFSET(lockQueue);
+    
+    LOCK_DUMP("DumpLocks", MyProc->waitLock, 0);
+    XID_PRINT("DumpLocks", xidLook);
+    
+    for (count=0;;) {
+	/* ---------------------------
+	 * XXX Here we assume the shared memory queue is circular and
+	 * that we know its internal structure.  Should have some sort of
+	 * macros to allow one to walk it.  mer 20 July 1991
+	 * ---------------------------
+	 */
+	done = (xidLook->queue.next == end);
+	lock = (LOCK *) MAKE_PTR(xidLook->tag.lock);
+	
+	LOCK_DUMP("DumpLocks",lock,0);
+	
+	if (count++ > 2000) {
+	    elog(NOTICE,"DumpLocks: xid loop detected, giving up");
+	    break;
+	}
+	
+	if (done)
+	  break;
+	SHMQueueFirst(&xidLook->queue,(Pointer*)&tmp,&tmp->queue);
+	xidLook = tmp;
+    }
+}
+#endif

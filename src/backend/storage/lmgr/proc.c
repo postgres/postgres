@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.14 1997/02/11 23:05:38 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.15 1997/02/12 05:23:54 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@
  *      This is so that we can support more backends. (system-wide semaphore
  *      sets run out pretty fast.)                -ay 4/95
  *
- * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.14 1997/02/11 23:05:38 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.15 1997/02/12 05:23:54 scrappy Exp $
  */
 #include <sys/time.h>
 #ifndef WIN32
@@ -685,6 +685,10 @@ HandleDeadLock(int sig)
     lock = MyProc->waitLock;
     size = lock->waitProcs.size; /* so we can look at this in the core */
     
+#ifdef DEADLOCK_DEBUG
+    DumpLocks();
+#endif
+
     /* ------------------------
      * Get this process off the lock's wait queue
      * ------------------------

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lock.h,v 1.3 1996/11/05 06:11:00 scrappy Exp $
+ * $Id: lock.h,v 1.4 1997/02/12 05:25:13 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -210,5 +210,9 @@ extern void GrantLock(LOCK *lock, LOCKT lockt);
 extern bool LockReleaseAll(LockTableId tableId, SHM_QUEUE *lockQueue);
 extern int LockShmemSize(void);
 extern bool LockingDisabled(void);
+
+#ifdef DEADLOCK_DEBUG
+extern void DumpLocks(void);
+#endif
 
 #endif /* LOCK_H */
