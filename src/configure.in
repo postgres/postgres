@@ -1093,6 +1093,7 @@ then
 	else
 		AC_MSG_RESULT($TK_CONFIG_SH)
 		AC_SUBST(TK_CONFIG_SH)
+		AC_PATH_PROG(wish, wish)
 	fi
 fi
 
@@ -1186,9 +1187,10 @@ AC_OUTPUT(
 	backend/utils/Gen_fmgrtab.sh
 	bin/pg_dump/Makefile
 	bin/pg_version/Makefile
-	bin/psql/Makefile
+	bin/pgaccess/Makefile
 	bin/pgtclsh/mkMakefile.tcldefs.sh
 	bin/pgtclsh/mkMakefile.tkdefs.sh
+	bin/psql/Makefile
 	include/version.h
 	interfaces/libpq/Makefile
 	interfaces/ecpg/lib/Makefile
