@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.12.2.2 1999/07/16 22:46:16 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.12.2.3 1999/07/30 04:13:44 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -56,25 +56,12 @@ install-shlib-dep :=
 # Makefile.global (or really Makefile.port) to supply DLSUFFIX and other
 # symbols.
 
-ifeq ($(PORTNAME), irix5)
-  install-shlib-dep := install-shlib
-  shlib := lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
-  LDFLAGS_SL := -shared
-  CFLAGS += $(CFLAGS_SL)
-endif
+# Try to keep the sections in some kind of order, folks...
 
-ifeq ($(PORTNAME), freebsd)
-  ifdef BSD_SHLIB
-    install-shlib-dep	:= install-shlib
-    ifdef ELF_SYSTEM
-      shlib		:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
-      LDFLAGS_SL	:= -x -shared -soname $(shlib)
-    else
-      shlib		:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
-      LDFLAGS_SL	:= -x -Bshareable -Bforcearchive
-    endif
-    CFLAGS		+= $(CFLAGS_SL)
-  endif
+ifeq ($(PORTNAME), aix)
+  install-shlib-dep	:= install-shlib
+  shlib				:= lib$(NAME)$(DLSUFFIX)
+  SHLIB_LINK		+= -lc
 endif
 
 ifeq ($(PORTNAME), bsd)
@@ -108,12 +95,33 @@ ifeq ($(PORTNAME), bsdi)
   endif
 endif
 
+ifeq ($(PORTNAME), freebsd)
+  ifdef BSD_SHLIB
+    install-shlib-dep	:= install-shlib
+    ifdef ELF_SYSTEM
+      shlib		:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
+      LDFLAGS_SL	:= -x -shared -soname $(shlib)
+    else
+      shlib		:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+      LDFLAGS_SL	:= -x -Bshareable -Bforcearchive
+    endif
+    CFLAGS		+= $(CFLAGS_SL)
+  endif
+endif
+
 ifeq ($(PORTNAME), hpux)
   install-shlib-dep	:= install-shlib
 # HPUX doesn't believe in version numbers for shlibs
   shlib				:= lib$(NAME)$(DLSUFFIX)
   LDFLAGS_SL		:= -b
   CFLAGS			+= $(CFLAGS_SL)
+endif
+
+ifeq ($(PORTNAME), irix5)
+  install-shlib-dep := install-shlib
+  shlib := lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+  LDFLAGS_SL := -shared
+  CFLAGS += $(CFLAGS_SL)
 endif
 
 ifeq ($(PORTNAME), linux)
@@ -188,6 +196,7 @@ all: lib$(NAME).a $(shlib)
 # Rules to build regular and shared libraries
 
 ifneq ($(PORTNAME), win)
+
 lib$(NAME).a: $(OBJS)
 ifdef MK_NO_LORDER
 	$(AR) $(AROPT) $@ $(OBJS) 
@@ -195,11 +204,14 @@ else
 	$(AR) $(AROPT) $@ `lorder $(OBJS) | tsort`
 endif
 	$(RANLIB) $@
+
 endif
 
 ifneq ($(shlib),)
 ifneq ($(PORTNAME), win)
+ifneq ($(PORTNAME), aix)
 
+# Normal case
 $(shlib): $(OBJS)
 	$(LD) $(LDFLAGS_SL) -o $@ $(OBJS) $(SHLIB_LINK)
 	if [ "$(shlib)" != "lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)" ]; then \
@@ -213,6 +225,16 @@ $(shlib): $(OBJS)
 
 else
 
+# AIX case
+$(shlib): lib$(NAME).a
+	$(MKLDEXPORT) lib$(NAME).a $(LIBDIR) > lib$(NAME)$(EXPSUFF)
+	$(LD) -H512 -bM:SRE -bI:$(SRCDIR)/backend/$(POSTGRES_IMP) -bE:lib$(NAME)$(EXPSUFF) -o $@ $< $(LDFLAGS) $(SHLIB_LINK)
+
+endif
+
+else
+
+# WIN case
 $(shlib) lib$(NAME).a: $(OBJS) $(SRCDIR)/utils/dllinit.o
 	$(DLLTOOL) --export-all --output-def $(NAME).def $(OBJS)
 	$(DLLWRAP) -o $(shlib) --dllname $(shlib) --def $(NAME).def $(OBJS) $(SRCDIR)/utils/dllinit.o $(DLLINIT) $(SHLIB_LINK)

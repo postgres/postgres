@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.56 1999/06/25 00:13:45 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.56.2.1 1999/07/30 04:13:44 scrappy Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the
@@ -220,6 +220,7 @@ GZCAT= @GZCAT@
 
 # Name of the target platform.
 PORTNAME= @PORTNAME@
+CPU= @CPU@
 
 # Various grungy items needed to configure some platforms.
 HAVE_POSIX_SIGNALS= @HAVE_POSIX_SIGNALS@
