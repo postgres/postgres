@@ -1,6 +1,6 @@
 #-------------------------------------------------------
 #
-# $Id: Makefile.PL,v 1.14 1998/10/18 02:36:48 tgl Exp $
+# $Id: Makefile.PL,v 1.15 2000/04/23 04:26:32 tgl Exp $
 #
 # Copyright (c) 1997, 1998  Edmund Mergl
 #
@@ -53,6 +53,14 @@ where Postgres is installed (often /usr/local/pgsql).\n";
 
 WriteMakefile(%opts);
 
-exit(0);
 
-# end of Makefile.PL
+sub MY::installbin { 
+
+q[
+# Create a target that interfaces/Makefile can use to
+# determine the Perl install directory.
+echo-installdir:
+	@echo $(INSTALLSITELIB)
+];
+
+}
