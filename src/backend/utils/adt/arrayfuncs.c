@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.52 2000/01/26 05:57:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.53 2000/05/29 21:02:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,7 +16,6 @@
 #include <ctype.h>
 
 #include "postgres.h"
-
 
 #include "catalog/catalog.h"
 #include "catalog/pg_type.h"
@@ -1277,19 +1276,33 @@ array_assgn(ArrayType *array,
 /*
  * array_map()
  *
- * Map an arbitrary function to an array and return a new array with
- * same dimensions and the source elements transformed by fn().
+ * Map an array through an arbitrary function.  Return a new array with
+ * same dimensions and each source element transformed by fn().  Each
+ * source element is passed as the first argument to fn(); additional
+ * arguments to be passed to fn() can be specified by the caller.
+ * The output array can have a different element type than the input.
+ *
+ * Parameters are:
+ * * fcinfo: a function-call data structure pre-constructed by the caller
+ *   to be ready to call the desired function, with everything except the
+ *   first argument position filled in.  In particular, flinfo identifies
+ *   the function fn(), and if nargs > 1 then argument positions after the
+ *   first must be preset to the additional values to be passed.  The
+ *   first argument position initially holds the input array value.
+ * * inpType: OID of element type of input array.  This must be the same as,
+ *   or binary-compatible with, the first argument type of fn().
+ * * retType: OID of element type of output array.  This must be the same as,
+ *   or binary-compatible with, the result type of fn().
+ *
+ * NB: caller must assure that input array is not NULL.  Currently,
+ * any additional parameters passed to fn() may not be specified as NULL
+ * either.
  */
-ArrayType  *
-array_map(ArrayType *v,
-		  Oid type,
-		  char *(*fn) (),
-		  Oid retType,
-		  int nargs,
-		  ...)
+Datum
+array_map(FunctionCallInfo fcinfo, Oid inpType, Oid retType)
 {
+	ArrayType  *v;
 	ArrayType  *result;
-	void	   *args[4];
 	char	  **values;
 	char	   *elt;
 	int		   *dim;
@@ -1307,27 +1320,17 @@ array_map(ArrayType *v,
 	char		typalign;
 	char	   *s;
 	char	   *p;
-	va_list		ap;
+
+	/* Get input array */
+	if (fcinfo->nargs < 1)
+		elog(ERROR, "array_map: invalid nargs: %d", fcinfo->nargs);
+	if (PG_ARGISNULL(0))
+		elog(ERROR, "array_map: null input array");
+	v = (ArrayType *) PG_GETARG_POINTER(0);
 
 	/* Large objects not yet supported */
 	if (ARR_IS_LO(v) == true)
 		elog(ERROR, "array_map: large objects not supported");
-
-	/* Check nargs */
-	if ((nargs < 0) || (nargs > 4))
-		elog(ERROR, "array_map: invalid nargs: %d", nargs);
-
-	/* Copy extra args to local variable */
-	va_start(ap, nargs);
-	for (i = 0; i < nargs; i++)
-		args[i] = (void *) va_arg(ap, char *);
-	va_end(ap);
-
-	/* Lookup source and result types. Unneeded variables are reused. */
-	system_cache_lookup(type, false, &inp_typlen, &inp_typbyval,
-						&typdelim, &typelem, &proc, &typalign);
-	system_cache_lookup(retType, false, &typlen, &typbyval,
-						&typdelim, &typelem, &proc, &typalign);
 
 	ndim = ARR_NDIM(v);
 	dim = ARR_DIMS(v);
@@ -1335,7 +1338,13 @@ array_map(ArrayType *v,
 
 	/* Check for empty array */
 	if (nitems <= 0)
-		return v;
+		PG_RETURN_POINTER(v);
+
+	/* Lookup source and result types. Unneeded variables are reused. */
+	system_cache_lookup(inpType, false, &inp_typlen, &inp_typbyval,
+						&typdelim, &typelem, &proc, &typalign);
+	system_cache_lookup(retType, false, &typlen, &typbyval,
+						&typdelim, &typelem, &proc, &typalign);
 
 	/* Allocate temporary array for new values */
 	values = (char **) palloc(nitems * sizeof(char *));
@@ -1374,33 +1383,23 @@ array_map(ArrayType *v,
 		}
 
 		/*
-		 * Apply the given function to source elt and extra args. nargs is
-		 * the number of extra args taken by fn().
+		 * Apply the given function to source elt and extra args.
+		 *
+		 * We assume the extra args are non-NULL, so need not check
+		 * whether fn() is strict.  Would need to do more work here
+		 * to support arrays containing nulls, too.
 		 */
-		switch (nargs)
-		{
-			case 0:
-				p = (char *) (*fn) (elt);
-				break;
-			case 1:
-				p = (char *) (*fn) (elt, args[0]);
-				break;
-			case 2:
-				p = (char *) (*fn) (elt, args[0], args[1]);
-				break;
-			case 3:
-				p = (char *) (*fn) (elt, args[0], args[1], args[2]);
-				break;
-			case 4:
-			default:
-				p = (char *) (*fn) (elt, args[0], args[1], args[2], args[3]);
-				break;
-		}
+		fcinfo->arg[0] = (Datum) elt;
+		fcinfo->argnull[0] = false;
+		fcinfo->isnull = false;
+		p = (char *) FunctionCallInvoke(fcinfo);
+		if (fcinfo->isnull)
+			elog(ERROR, "array_map: cannot handle NULL in array");
 
 		/* Update values and total result size */
 		if (typbyval)
 		{
-			values[i] = (char *) p;
+			values[i] = p;
 			nbytes += typlen;
 		}
 		else
@@ -1414,7 +1413,7 @@ array_map(ArrayType *v,
 				p = (char *) palloc(len);
 				memcpy(p, elt, len);
 			}
-			values[i] = (char *) p;
+			values[i] = p;
 			nbytes += len;
 		}
 	}
@@ -1433,7 +1432,7 @@ array_map(ArrayType *v,
 				  ARR_DATA_PTR(result), nitems,
 				  typlen, typalign, typbyval);
 
-	return result;
+	PG_RETURN_POINTER(result);
 }
 
 /*-----------------------------------------------------------------------------

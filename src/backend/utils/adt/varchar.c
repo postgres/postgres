@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.60 2000/04/12 17:15:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.61 2000/05/29 21:02:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,7 @@
 #include "access/htup.h"
 #include "catalog/pg_type.h"
 #include "utils/builtins.h"
+#include "utils/fmgroids.h"
 
 #ifdef MULTIBYTE
 #include "mb/pg_wchar.h"
@@ -206,7 +207,26 @@ bpchar(char *s, int32 len)
 ArrayType  *
 _bpchar(ArrayType *v, int32 len)
 {
-	return array_map(v, BPCHAROID, bpchar, BPCHAROID, 1, len);
+	FunctionCallInfoData	locfcinfo;
+	Datum					result;
+	/* Since bpchar() is a built-in function, we should only need to
+	 * look it up once per run.
+	 */
+	static FmgrInfo			bpchar_finfo;
+
+	if (bpchar_finfo.fn_oid == InvalidOid)
+		fmgr_info(F_BPCHAR, &bpchar_finfo);
+
+	MemSet(&locfcinfo, 0, sizeof(locfcinfo));
+    locfcinfo.flinfo = &bpchar_finfo;
+	locfcinfo.nargs = 2;
+	/* We assume we are "strict" and need not worry about null inputs */
+	locfcinfo.arg[0] = PointerGetDatum(v);
+	locfcinfo.arg[1] = Int32GetDatum(len);
+
+	result = array_map(&locfcinfo, BPCHAROID, BPCHAROID);
+
+	return (ArrayType *) DatumGetPointer(result);
 }
 
 
@@ -409,7 +429,26 @@ varchar(char *s, int32 slen)
 ArrayType  *
 _varchar(ArrayType *v, int32 len)
 {
-	return array_map(v, VARCHAROID, varchar, VARCHAROID, 1, len);
+	FunctionCallInfoData	locfcinfo;
+	Datum					result;
+	/* Since varchar() is a built-in function, we should only need to
+	 * look it up once per run.
+	 */
+	static FmgrInfo			varchar_finfo;
+
+	if (varchar_finfo.fn_oid == InvalidOid)
+		fmgr_info(F_VARCHAR, &varchar_finfo);
+
+	MemSet(&locfcinfo, 0, sizeof(locfcinfo));
+    locfcinfo.flinfo = &varchar_finfo;
+	locfcinfo.nargs = 2;
+	/* We assume we are "strict" and need not worry about null inputs */
+	locfcinfo.arg[0] = PointerGetDatum(v);
+	locfcinfo.arg[1] = Int32GetDatum(len);
+
+	result = array_map(&locfcinfo, VARCHAROID, VARCHAROID);
+
+	return (ArrayType *) DatumGetPointer(result);
 }
 
 
