@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.139 2003/02/13 05:24:01 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.140 2003/02/16 02:30:36 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -6295,17 +6295,6 @@ SELECT NULLIF(value, '(none)') ...
 </programlisting>
   </para>
 
-  <tip>
-   <para>
-    <function>COALESCE</function> and <function>NULLIF</function> are
-    just shorthand for <token>CASE</token> expressions.  They are actually
-    converted into <token>CASE</token> expressions at a very early stage
-    of processing, and subsequent processing thinks it is dealing with
-    <token>CASE</token>.  Thus an incorrect <function>COALESCE</function> or
-    <function>NULLIF</function> usage may draw an error message that
-    refers to <token>CASE</token>.
-   </para>
-  </tip>
   </sect2>
 
  </sect1>

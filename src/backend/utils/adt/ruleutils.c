@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.135 2003/02/13 05:10:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.136 2003/02/16 02:30:39 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -2235,6 +2235,46 @@ get_rule_expr(Node *node, deparse_context *context,
 				appendStringInfo(buf, " ELSE ");
 				get_rule_expr((Node *) caseexpr->defresult, context, true);
 				appendStringInfo(buf, " END");
+			}
+			break;
+
+		case T_CoalesceExpr:
+			{
+				CoalesceExpr *coalesceexpr = (CoalesceExpr *) node;
+				List *arg;
+				char *sep;
+
+				appendStringInfo(buf, "COALESCE(");
+				sep = "";
+				foreach(arg, coalesceexpr->args)
+				{
+					Node *e = (Node *) lfirst(arg);
+
+					appendStringInfo(buf, sep);
+					get_rule_expr(e, context, true);
+					sep = ", ";
+				}
+				appendStringInfo(buf, ")");
+			}
+			break;
+			
+		case T_NullIfExpr:
+			{
+				NullIfExpr *nullifexpr = (NullIfExpr *) node;
+				List *arg;
+				char *sep;
+
+				appendStringInfo(buf, "NULLIF(");
+				sep = "";
+				foreach(arg, nullifexpr->args)
+				{
+					Node *e = (Node *) lfirst(arg);
+
+					appendStringInfo(buf, sep);
+					get_rule_expr(e, context, true);
+					sep = ", ";
+				}
+				appendStringInfo(buf, ")");
 			}
 			break;
 

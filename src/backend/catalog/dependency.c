@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/dependency.c,v 1.21 2003/02/09 06:56:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/dependency.c,v 1.22 2003/02/16 02:30:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -930,6 +930,14 @@ find_expr_references_walker(Node *node,
 		DistinctExpr   *distinctexpr = (DistinctExpr *) node;
 
 		add_object_address(OCLASS_OPERATOR, distinctexpr->opno, 0,
+						   &context->addrs);
+		/* fall through to examine arguments */
+	}
+	if (IsA(node, NullIfExpr))
+	{
+		NullIfExpr *nullifexpr = (NullIfExpr *) node;
+
+		add_object_address(OCLASS_OPERATOR, nullifexpr->opno, 0,
 						   &context->addrs);
 		/* fall through to examine arguments */
 	}

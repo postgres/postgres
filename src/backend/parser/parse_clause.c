@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.109 2003/02/13 20:45:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.110 2003/02/16 02:30:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -922,17 +922,10 @@ buildMergedJoinVar(JoinType jointype, Var *l_colvar, Var *r_colvar)
 				 * Here we must build a COALESCE expression to ensure that
 				 * the join output is non-null if either input is.
 				 */
-				CaseExpr   *c = makeNode(CaseExpr);
-				CaseWhen   *w = makeNode(CaseWhen);
-				NullTest   *n = makeNode(NullTest);
+				CoalesceExpr *c = makeNode(CoalesceExpr);
 
-				n->arg = (Expr *) l_node;
-				n->nulltesttype = IS_NOT_NULL;
-				w->expr = (Expr *) n;
-				w->result = (Expr *) l_node;
-				c->casetype = outcoltype;
-				c->args = makeList1(w);
-				c->defresult = (Expr *) r_node;
+				c->coalescetype = outcoltype;
+				c->args = makeList2(l_node, r_node);
 				res_node = (Node *) c;
 				break;
 			}

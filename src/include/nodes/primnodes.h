@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: primnodes.h,v 1.79 2003/02/09 00:30:40 tgl Exp $
+ * $Id: primnodes.h,v 1.80 2003/02/16 02:30:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -536,6 +536,24 @@ typedef struct CaseWhen
 	Expr	   *expr;			/* condition expression */
 	Expr	   *result;			/* substitution result */
 } CaseWhen;
+
+/*
+ * CoalesceExpr - a COALESCE expression
+ */
+typedef struct CoalesceExpr
+{
+	Expr	xpr;
+	Oid		coalescetype;		/* type of expression result */
+	List   *args;				/* the arguments */
+} CoalesceExpr;
+
+/*
+ * NullIfExpr - a NULLIF expression
+ *
+ * Like DistinctExpr, this is represented the same as an OpExpr referencing
+ * the "=" operator for x and y.
+ */
+typedef OpExpr NullIfExpr;
 
 /* ----------------
  * NullTest

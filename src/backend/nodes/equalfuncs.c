@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.186 2003/02/10 04:44:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.187 2003/02/16 02:30:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -374,6 +374,37 @@ _equalCaseWhen(CaseWhen *a, CaseWhen *b)
 {
 	COMPARE_NODE_FIELD(expr);
 	COMPARE_NODE_FIELD(result);
+
+	return true;
+}
+
+static bool
+_equalCoalesceExpr(CoalesceExpr *a, CoalesceExpr *b)
+{
+	COMPARE_SCALAR_FIELD(coalescetype);
+	COMPARE_NODE_FIELD(args);
+
+	return true;
+}
+
+static bool
+_equalNullIfExpr(NullIfExpr *a, NullIfExpr *b)
+{
+	COMPARE_SCALAR_FIELD(opno);
+	/*
+	 * Special-case opfuncid: it is allowable for it to differ if one
+	 * node contains zero and the other doesn't.  This just means that the
+	 * one node isn't as far along in the parse/plan pipeline and hasn't
+	 * had the opfuncid cache filled yet.
+	 */
+	if (a->opfuncid != b->opfuncid &&
+		a->opfuncid != 0 &&
+		b->opfuncid != 0)
+		return false;
+
+	COMPARE_SCALAR_FIELD(opresulttype);
+	COMPARE_SCALAR_FIELD(opretset);
+	COMPARE_NODE_FIELD(args);
 
 	return true;
 }
@@ -1612,6 +1643,12 @@ equal(void *a, void *b)
 			break;
 		case T_CaseWhen:
 			retval = _equalCaseWhen(a, b);
+			break;
+		case T_CoalesceExpr:
+			retval = _equalCoalesceExpr(a, b);
+			break;
+		case T_NullIfExpr:
+			retval = _equalNullIfExpr(a, b);
 			break;
 		case T_NullTest:
 			retval = _equalNullTest(a, b);

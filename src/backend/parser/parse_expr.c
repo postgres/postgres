@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.145 2003/02/13 18:29:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.146 2003/02/16 02:30:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -275,6 +275,24 @@ transformExpr(ParseState *pstate, Node *expr)
 							 * We rely on DistinctExpr and OpExpr being same struct
 							 */
 							NodeSetTag(result, T_DistinctExpr);
+						}
+						break;
+					case AEXPR_NULLIF:
+						{
+							Node	   *lexpr = transformExpr(pstate,
+															  a->lexpr);
+							Node	   *rexpr = transformExpr(pstate,
+															  a->rexpr);
+
+							result = (Node *) make_op(a->name,
+													  lexpr,
+													  rexpr);
+							if (((OpExpr *) result)->opresulttype != BOOLOID)
+								elog(ERROR, "NULLIF requires = operator to yield boolean");
+							/*
+							 * We rely on NullIfExpr and OpExpr being same struct
+							 */
+							NodeSetTag(result, T_NullIfExpr);
 						}
 						break;
 					case AEXPR_OF:
@@ -615,6 +633,43 @@ transformExpr(ParseState *pstate, Node *expr)
 				break;
 			}
 
+		case T_CoalesceExpr:
+			{
+				CoalesceExpr *c = (CoalesceExpr *) expr;
+				CoalesceExpr *newc = makeNode(CoalesceExpr);
+				List *newargs = NIL;
+				List *newcoercedargs = NIL;
+				List *typeids = NIL;
+				List *args;
+
+				foreach(args, c->args)
+				{
+					Node *e = (Node *) lfirst(args);
+					Node *newe;
+
+					newe = transformExpr(pstate, e);
+					newargs = lappend(newargs, newe);
+					typeids = lappendo(typeids, exprType(newe));
+				}
+
+				newc->coalescetype = select_common_type(typeids, "COALESCE");
+
+				/* Convert arguments if necessary */
+				foreach(args, newargs)
+				{
+					Node *e = (Node *) lfirst(args);
+					Node *newe;
+
+					newe = coerce_to_common_type(e, newc->coalescetype,
+												 "COALESCE");
+					newcoercedargs = lappend(newcoercedargs, newe);
+				}
+
+				newc->args = newcoercedargs;
+				result = (Node *) newc;
+				break;
+			}
+
 		case T_NullTest:
 			{
 				NullTest   *n = (NullTest *) expr;
@@ -680,6 +735,7 @@ transformExpr(ParseState *pstate, Node *expr)
 		case T_FuncExpr:
 		case T_OpExpr:
 		case T_DistinctExpr:
+		case T_NullIfExpr:
 		case T_BoolExpr:
 		case T_FieldSelect:
 		case T_RelabelType:
@@ -1020,6 +1076,12 @@ exprType(Node *expr)
 		case T_CaseWhen:
 			type = exprType((Node *) ((CaseWhen *) expr)->result);
 			break;
+		case T_CoalesceExpr:
+			type = ((CoalesceExpr *) expr)->coalescetype;
+			break;
+		case T_NullIfExpr:
+			type = exprType((Node *) lfirst(((NullIfExpr *) expr)->args));
+			break;
 		case T_NullTest:
 			type = BOOLOID;
 			break;
@@ -1124,6 +1186,37 @@ exprTypmod(Node *expr)
 						return -1;
 				}
 				return typmod;
+			}
+			break;
+		case T_CoalesceExpr:
+			{
+				/*
+				 * If all the alternatives agree on type/typmod, return
+				 * that typmod, else use -1
+				 */
+				CoalesceExpr *cexpr = (CoalesceExpr *) expr;
+				Oid coalescetype = cexpr->coalescetype;
+				int32 typmod;
+				List *arg;
+
+				typmod = exprTypmod((Node *) lfirst(cexpr->args));
+				foreach(arg, cexpr->args)
+				{
+					Node *e = (Node *) lfirst(arg);
+
+					if (exprType(e) != coalescetype)
+						return -1;
+					if (exprTypmod(e) != typmod)
+						return -1;
+				}
+				return typmod;
+			}
+			break;
+		case T_NullIfExpr:
+			{
+				NullIfExpr *nexpr = (NullIfExpr *) expr;
+
+				return exprTypmod((Node *) lfirst(nexpr->args));
 			}
 			break;
 		case T_CoerceToDomain:

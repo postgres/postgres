@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.129 2003/02/09 06:56:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.130 2003/02/16 02:30:38 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -451,23 +451,21 @@ expression_returns_set_walker(Node *node, void *context)
 			return true;
 		/* else fall through to check args */
 	}
-	if (IsA(node, DistinctExpr))
-	{
-		DistinctExpr   *expr = (DistinctExpr *) node;
-
-		if (expr->opretset)
-			return true;
-		/* else fall through to check args */
-	}
 
 	/* Avoid recursion for some cases that can't return a set */
-	if (IsA(node, BoolExpr))
-		return false;
 	if (IsA(node, Aggref))
+		return false;
+	if (IsA(node, DistinctExpr))
+		return false;
+	if (IsA(node, BoolExpr))
 		return false;
 	if (IsA(node, SubLink))
 		return false;
 	if (IsA(node, SubPlan))
+		return false;
+	if (IsA(node, CoalesceExpr))
+		return false;
+	if (IsA(node, NullIfExpr))
 		return false;
 
 	return expression_tree_walker(node, expression_returns_set_walker,
@@ -559,6 +557,14 @@ contain_mutable_functions_walker(Node *node, void *context)
 			return true;
 		/* else fall through to check args */
 	}
+	if (IsA(node, NullIfExpr))
+	{
+		NullIfExpr   *expr = (NullIfExpr *) node;
+
+		if (op_volatile(expr->opno) != PROVOLATILE_IMMUTABLE)
+			return true;
+		/* else fall through to check args */
+	}
 	if (IsA(node, SubLink))
 	{
 		SubLink	   *sublink = (SubLink *) node;
@@ -621,6 +627,14 @@ contain_volatile_functions_walker(Node *node, void *context)
 	if (IsA(node, DistinctExpr))
 	{
 		DistinctExpr   *expr = (DistinctExpr *) node;
+
+		if (op_volatile(expr->opno) == PROVOLATILE_VOLATILE)
+			return true;
+		/* else fall through to check args */
+	}
+	if (IsA(node, NullIfExpr))
+	{
+		NullIfExpr   *expr = (NullIfExpr *) node;
 
 		if (op_volatile(expr->opno) == PROVOLATILE_VOLATILE)
 			return true;
@@ -706,6 +720,10 @@ contain_nonstrict_functions_walker(Node *node, void *context)
 		}
 	}
 	if (IsA(node, CaseExpr))
+		return true;
+	if (IsA(node, CoalesceExpr))
+		return true;
+	if (IsA(node, NullIfExpr))
 		return true;
 	if (IsA(node, NullTest))
 		return true;
@@ -1446,6 +1464,39 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 		newcase->defresult = (Expr *) defresult;
 		return (Node *) newcase;
 	}
+	if (IsA(node, CoalesceExpr))
+	{
+		CoalesceExpr *coalesceexpr = (CoalesceExpr *) node;
+		CoalesceExpr *newcoalesce;
+		List *newargs = NIL;
+		List *arg;
+
+		foreach(arg, coalesceexpr->args)
+		{
+			Node *e;
+
+			e = eval_const_expressions_mutator((Node *) lfirst(arg),
+											   active_fns);
+			/* 
+			 * We can remove null constants from the list.
+			 * For a non-null constant, if it has not been preceded by any
+			 * other non-null-constant expressions then that is the result.
+			 */
+			if (IsA(e, Const))
+			{
+				if (((Const *) e)->constisnull)
+					continue;	/* drop null constant */
+				if (newargs == NIL)
+					return e;	/* first expr */
+			}
+			newargs = lappend(newargs, e);
+		}
+
+		newcoalesce = makeNode(CoalesceExpr);
+		newcoalesce->coalescetype = coalesceexpr->coalescetype;
+		newcoalesce->args = newargs;
+		return (Node *) newcoalesce;
+	}
 
 	/*
 	 * For any node type not handled above, we recurse using
@@ -2109,6 +2160,10 @@ expression_tree_walker(Node *node,
 					return true;
 			}
 			break;
+		case T_CoalesceExpr:
+			return walker(((CoalesceExpr *) node)->args, context);
+		case T_NullIfExpr:
+			return walker(((NullIfExpr *) node)->args, context);
 		case T_NullTest:
 			return walker(((NullTest *) node)->arg, context);
 		case T_BooleanTest:
@@ -2478,6 +2533,26 @@ expression_tree_mutator(Node *node,
 				FLATCOPY(newnode, casewhen, CaseWhen);
 				MUTATE(newnode->expr, casewhen->expr, Expr *);
 				MUTATE(newnode->result, casewhen->result, Expr *);
+				return (Node *) newnode;
+			}
+			break;
+		case T_CoalesceExpr:
+			{
+				CoalesceExpr *coalesceexpr = (CoalesceExpr *) node;
+				CoalesceExpr *newnode;
+
+				FLATCOPY(newnode, coalesceexpr, CoalesceExpr);
+				MUTATE(newnode->args, coalesceexpr->args, List *);
+				return (Node *) newnode;
+			}
+			break;
+		case T_NullIfExpr:
+			{
+				NullIfExpr   *expr = (NullIfExpr *) node;
+				NullIfExpr   *newnode;
+
+				FLATCOPY(newnode, expr, NullIfExpr);
+				MUTATE(newnode->args, expr->args, List *);
 				return (Node *) newnode;
 			}
 			break;

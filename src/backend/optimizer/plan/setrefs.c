@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.91 2003/01/20 18:54:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.92 2003/02/16 02:30:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -283,6 +283,8 @@ fix_expr_references_walker(Node *node, void *context)
 	if (IsA(node, OpExpr))
 		set_opfuncid((OpExpr *) node);
 	else if (IsA(node, DistinctExpr))
+		set_opfuncid((OpExpr *) node); /* rely on struct equivalence */
+	else if (IsA(node, NullIfExpr))
 		set_opfuncid((OpExpr *) node); /* rely on struct equivalence */
 	else if (IsA(node, SubPlan))
 	{
@@ -735,6 +737,8 @@ fix_opfuncids_walker(Node *node, void *context)
 	if (IsA(node, OpExpr))
 		set_opfuncid((OpExpr *) node);
 	else if (IsA(node, DistinctExpr))
+		set_opfuncid((OpExpr *) node); /* rely on struct equivalence */
+	else if (IsA(node, NullIfExpr))
 		set_opfuncid((OpExpr *) node); /* rely on struct equivalence */
 	return expression_tree_walker(node, fix_opfuncids_walker, context);
 }

@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.243 2003/02/10 04:44:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.244 2003/02/16 02:30:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -785,7 +785,7 @@ _copyOpExpr(OpExpr *from)
 }
 
 /*
- * _copyDistinctExpr
+ * _copyDistinctExpr (same as OpExpr)
  */
 static DistinctExpr *
 _copyDistinctExpr(DistinctExpr *from)
@@ -915,6 +915,37 @@ _copyCaseWhen(CaseWhen *from)
 
 	COPY_NODE_FIELD(expr);
 	COPY_NODE_FIELD(result);
+
+	return newnode;
+}
+
+/*
+ * _copyCoalesceExpr
+ */
+static CoalesceExpr *
+_copyCoalesceExpr(CoalesceExpr *from)
+{
+	CoalesceExpr *newnode = makeNode(CoalesceExpr);
+
+	COPY_SCALAR_FIELD(coalescetype);
+	COPY_NODE_FIELD(args);
+
+	return newnode;
+}
+
+/*
+ * _copyNullIfExpr (same as OpExpr)
+ */
+static NullIfExpr *
+_copyNullIfExpr(NullIfExpr *from)
+{
+	NullIfExpr	   *newnode = makeNode(NullIfExpr);
+
+	COPY_SCALAR_FIELD(opno);
+	COPY_SCALAR_FIELD(opfuncid);
+	COPY_SCALAR_FIELD(opresulttype);
+	COPY_SCALAR_FIELD(opretset);
+	COPY_NODE_FIELD(args);
 
 	return newnode;
 }
@@ -2483,6 +2514,12 @@ copyObject(void *from)
 			break;
 		case T_CaseWhen:
 			retval = _copyCaseWhen(from);
+			break;
+		case T_CoalesceExpr:
+			retval = _copyCoalesceExpr(from);
+			break;
+		case T_NullIfExpr:
+			retval = _copyNullIfExpr(from);
 			break;
 		case T_NullTest:
 			retval = _copyNullTest(from);

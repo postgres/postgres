@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.94 2003/02/09 00:30:39 tgl Exp $
+ * $Id: execnodes.h,v 1.95 2003/02/16 02:30:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -441,8 +441,9 @@ typedef struct ArrayRefExprState
 /* ----------------
  *		FuncExprState node
  *
- * Although named for FuncExpr, this is also used for OpExpr and DistinctExpr
- * nodes; be careful to check what xprstate.expr is actually pointing at!
+ * Although named for FuncExpr, this is also used for OpExpr, DistinctExpr,
+ * and NullIf nodes; be careful to check what xprstate.expr is actually
+ * pointing at!
  * ----------------
  */
 typedef struct FuncExprState
@@ -538,6 +539,16 @@ typedef struct CaseWhenState
 	ExprState  *expr;			/* condition expression */
 	ExprState  *result;			/* substitution result */
 } CaseWhenState;
+
+/* ----------------
+ *		CoalesceExprState node
+ * ----------------
+ */
+typedef struct CoalesceExprState
+{
+	ExprState	xprstate;
+	List	*args;				/* the arguments */
+} CoalesceExprState;
 
 /* ----------------
  *		CoerceToDomainState node

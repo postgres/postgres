@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.136 2003/02/03 21:15:44 tgl Exp $
+ * $Id: nodes.h,v 1.137 2003/02/16 02:30:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -112,6 +112,8 @@ typedef enum NodeTag
 	T_RelabelType,
 	T_CaseExpr,
 	T_CaseWhen,
+	T_CoalesceExpr,
+	T_NullIfExpr,
 	T_NullTest,
 	T_BooleanTest,
 	T_CoerceToDomain,
@@ -136,6 +138,7 @@ typedef enum NodeTag
 	T_SubPlanState,
 	T_CaseExprState,
 	T_CaseWhenState,
+	T_CoalesceExprState,
 	T_CoerceToDomainState,
 	T_DomainConstraintState,
 

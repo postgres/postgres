@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.199 2003/02/10 04:44:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.200 2003/02/16 02:30:37 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -754,6 +754,27 @@ _outCaseWhen(StringInfo str, CaseWhen *node)
 }
 
 static void
+_outCoalesceExpr(StringInfo str, CoalesceExpr *node)
+{
+	WRITE_NODE_TYPE("COALESCE");
+
+	WRITE_OID_FIELD(coalescetype);
+	WRITE_NODE_FIELD(args);
+}
+
+static void
+_outNullIfExpr(StringInfo str, NullIfExpr *node)
+{
+	WRITE_NODE_TYPE("NULLIFEXPR");
+
+	WRITE_OID_FIELD(opno);
+	WRITE_OID_FIELD(opfuncid);
+	WRITE_OID_FIELD(opresulttype);
+	WRITE_BOOL_FIELD(opretset);
+	WRITE_NODE_FIELD(args);
+}
+
+static void
 _outNullTest(StringInfo str, NullTest *node)
 {
 	WRITE_NODE_TYPE("NULLTEST");
@@ -1277,6 +1298,10 @@ _outAExpr(StringInfo str, A_Expr *node)
 			appendStringInfo(str, " DISTINCT ");
 			WRITE_NODE_FIELD(name);
 			break;
+		case AEXPR_NULLIF:
+			appendStringInfo(str, " NULLIF ");
+			WRITE_NODE_FIELD(name);
+			break;
 		case AEXPR_OF:
 			appendStringInfo(str, " OF ");
 			WRITE_NODE_FIELD(name);
@@ -1575,6 +1600,12 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_CaseWhen:
 				_outCaseWhen(str, obj);
+				break;
+			case T_CoalesceExpr:
+				_outCoalesceExpr(str, obj);
+				break;
+			case T_NullIfExpr:
+				_outNullIfExpr(str, obj);
 				break;
 			case T_NullTest:
 				_outNullTest(str, obj);

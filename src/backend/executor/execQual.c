@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.124 2003/02/03 21:15:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.125 2003/02/16 02:30:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,7 +64,7 @@ static Datum ExecEvalFunc(FuncExprState *fcache, ExprContext *econtext,
 static Datum ExecEvalOper(FuncExprState *fcache, ExprContext *econtext,
 			 bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalDistinct(FuncExprState *fcache, ExprContext *econtext,
-				 bool *isNull, ExprDoneCond *isDone);
+				 bool *isNull);
 static ExprDoneCond ExecEvalFuncArgs(FunctionCallInfo fcinfo,
 				 List *argList, ExprContext *econtext);
 static Datum ExecEvalNot(BoolExprState *notclause, ExprContext *econtext,
@@ -75,6 +75,11 @@ static Datum ExecEvalAnd(BoolExprState *andExpr, ExprContext *econtext,
 						 bool *isNull);
 static Datum ExecEvalCase(CaseExprState *caseExpr, ExprContext *econtext,
 			 bool *isNull, ExprDoneCond *isDone);
+static Datum ExecEvalCoalesce(CoalesceExprState *coalesceExpr,
+							  ExprContext *econtext,
+							  bool *isNull);
+static Datum ExecEvalNullIf(FuncExprState *nullIfExpr, ExprContext *econtext,
+							bool *isNull);
 static Datum ExecEvalNullTest(GenericExprState *nstate,
 							  ExprContext *econtext,
 							  bool *isNull, ExprDoneCond *isDone);
@@ -1187,8 +1192,7 @@ ExecEvalOper(FuncExprState *fcache,
 static Datum
 ExecEvalDistinct(FuncExprState *fcache,
 				 ExprContext *econtext,
-				 bool *isNull,
-				 ExprDoneCond *isDone)
+				 bool *isNull)
 {
 	Datum		result;
 	FunctionCallInfoData fcinfo;
@@ -1370,6 +1374,7 @@ ExecEvalAnd(BoolExprState *andExpr, ExprContext *econtext, bool *isNull)
 	return BoolGetDatum(!AnyNull);
 }
 
+
 /* ----------------------------------------------------------------
  *		ExecEvalCase
  *
@@ -1427,6 +1432,91 @@ ExecEvalCase(CaseExprState *caseExpr, ExprContext *econtext,
 
 	*isNull = true;
 	return (Datum) 0;
+}
+
+/* ----------------------------------------------------------------
+ *		ExecEvalCoalesce
+ * ----------------------------------------------------------------
+ */
+static Datum
+ExecEvalCoalesce(CoalesceExprState *coalesceExpr, ExprContext *econtext,
+				 bool *isNull)
+{
+	List *arg;
+
+	/* Simply loop through until something NOT NULL is found */
+	foreach(arg, coalesceExpr->args)
+	{
+		ExprState *e = (ExprState *) lfirst(arg);
+		Datum value;
+
+		value = ExecEvalExpr(e, econtext, isNull, NULL);
+		if (!*isNull)
+			return value;
+	}
+
+	/* Else return NULL */
+	*isNull = true;
+	return (Datum) 0;
+}
+	
+/* ----------------------------------------------------------------
+ *		ExecEvalNullIf
+ *
+ * Note that this is *always* derived from the equals operator,
+ * but since we need special processing of the arguments
+ * we can not simply reuse ExecEvalOper() or ExecEvalFunc().
+ * ----------------------------------------------------------------
+ */
+static Datum
+ExecEvalNullIf(FuncExprState *fcache, ExprContext *econtext,
+			   bool *isNull)
+{
+	Datum		result;
+	FunctionCallInfoData fcinfo;
+	ExprDoneCond argDone;
+	List	   *argList;
+
+	/*
+	 * Initialize function cache if first time through
+	 */
+	if (fcache->func.fn_oid == InvalidOid)
+	{
+		NullIfExpr *op = (NullIfExpr *) fcache->xprstate.expr;
+
+		init_fcache(op->opfuncid, fcache, econtext->ecxt_per_query_memory);
+		Assert(!fcache->func.fn_retset);
+	}
+
+	/*
+	 * extract info from fcache
+	 */
+	argList = fcache->args;
+
+	/* Need to prep callinfo structure */
+	MemSet(&fcinfo, 0, sizeof(fcinfo));
+	fcinfo.flinfo = &(fcache->func);
+	argDone = ExecEvalFuncArgs(&fcinfo, argList, econtext);
+	if (argDone != ExprSingleResult)
+		elog(ERROR, "NULLIF does not support set arguments");
+	Assert(fcinfo.nargs == 2);
+
+	/* if either argument is NULL they can't be equal */
+	if (!fcinfo.argnull[0] && !fcinfo.argnull[1])
+	{
+		fcinfo.isnull = false;
+		result = FunctionCallInvoke(&fcinfo);
+		/* if the arguments are equal return null */
+		if (!fcinfo.isnull && DatumGetBool(result))
+		{
+			*isNull = true;
+			return (Datum) 0;
+		}
+	}
+
+	/* else return first argument */
+	*isNull = fcinfo.argnull[0];
+	return fcinfo.arg[0];
 }
 
 /* ----------------------------------------------------------------
@@ -1778,7 +1868,7 @@ ExecEvalExpr(ExprState *expression,
 			break;
 		case T_DistinctExpr:
 			retDatum = ExecEvalDistinct((FuncExprState *) expression, econtext,
-										isNull, isDone);
+										isNull);
 			break;
 		case T_BoolExpr:
 			{
@@ -1825,6 +1915,16 @@ ExecEvalExpr(ExprState *expression,
 									econtext,
 									isNull,
 									isDone);
+			break;
+		case T_CoalesceExpr:
+			retDatum = ExecEvalCoalesce((CoalesceExprState *) expression,
+										econtext,
+										isNull);
+			break;
+		case T_NullIfExpr:
+			retDatum = ExecEvalNullIf((FuncExprState *) expression,
+									  econtext,
+									  isNull);
 			break;
 		case T_NullTest:
 			retDatum = ExecEvalNullTest((GenericExprState *) expression,
@@ -2080,6 +2180,36 @@ ExecInitExpr(Expr *node, PlanState *parent)
 				Assert(caseexpr->arg == NULL);
 				cstate->defresult = ExecInitExpr(caseexpr->defresult, parent);
 				state = (ExprState *) cstate;
+			}
+			break;
+		case T_CoalesceExpr:
+			{
+				CoalesceExpr *coalesceexpr = (CoalesceExpr *) node;
+				CoalesceExprState *cstate = makeNode(CoalesceExprState);
+				List	   *outlist = NIL;
+				List	   *inlist;
+
+				foreach(inlist, coalesceexpr->args)
+				{
+					Expr *e = (Expr *) lfirst(inlist);
+					ExprState *estate;
+
+					estate = ExecInitExpr(e, parent);
+					outlist = lappend(outlist, estate);
+				}
+				cstate->args = outlist;
+				state = (ExprState *) cstate;
+			}
+			break;
+		case T_NullIfExpr:
+			{
+				NullIfExpr *nullifexpr = (NullIfExpr *) node;
+				FuncExprState *fstate = makeNode(FuncExprState);
+
+				fstate->args = (List *)
+					ExecInitExpr((Expr *) nullifexpr->args, parent);
+				fstate->func.fn_oid = InvalidOid; /* not initialized */
+				state = (ExprState *) fstate;
 			}
 			break;
 		case T_NullTest:

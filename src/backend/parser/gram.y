@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.403 2003/02/13 05:25:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.404 2003/02/16 02:30:38 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -6650,6 +6650,10 @@ in_expr:	select_with_parens
  *	COALESCE(a,b,...)
  * same as CASE WHEN a IS NOT NULL THEN a WHEN b IS NOT NULL THEN b ... END
  * - thomas 1998-11-09
+ * 
+ * NULLIF and COALESCE have become first class nodes to
+ * prevent double evaluation of arguments.
+ * - Kris Jurka 2003-02-11
  */
 case_expr:	CASE case_arg when_clause_list case_default END_P
 				{
@@ -6661,29 +6665,12 @@ case_expr:	CASE case_arg when_clause_list case_default END_P
 				}
 			| NULLIF '(' a_expr ',' a_expr ')'
 				{
-					CaseExpr *c = makeNode(CaseExpr);
-					CaseWhen *w = makeNode(CaseWhen);
-
-					w->expr = (Expr *) makeSimpleA_Expr(AEXPR_OP, "=", $3, $5);
-					/* w->result is left NULL */
-					c->args = makeList1(w);
-					c->defresult = (Expr *) $3;
-					$$ = (Node *)c;
+					$$ = (Node *) makeSimpleA_Expr(AEXPR_NULLIF, "=", $3, $5);
 				}
 			| COALESCE '(' expr_list ')'
 				{
-					CaseExpr *c = makeNode(CaseExpr);
-					List *l;
-					foreach (l,$3)
-					{
-						CaseWhen *w = makeNode(CaseWhen);
-						NullTest *n = makeNode(NullTest);
-						n->arg = lfirst(l);
-						n->nulltesttype = IS_NOT_NULL;
-						w->expr = (Expr *) n;
-						w->result = lfirst(l);
-						c->args = lappend(c->args, w);
-					}
+					CoalesceExpr *c = makeNode(CoalesceExpr);
+					c->args = $3;
 					$$ = (Node *)c;
 				}
 		;
