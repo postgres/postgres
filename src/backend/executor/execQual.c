@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.120 2002/12/14 00:17:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.121 2002/12/15 16:17:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,6 +40,7 @@
 #include "executor/functions.h"
 #include "executor/nodeSubplan.h"
 #include "miscadmin.h"
+#include "optimizer/planmain.h"
 #include "parser/parse_expr.h"
 #include "utils/acl.h"
 #include "utils/array.h"
@@ -1896,9 +1897,11 @@ ExecEvalExprSwitchContext(ExprState *expression,
  * cleanup work can register a shutdown callback in the ExprContext.
  *
  *	'node' is the root of the expression tree to examine
- *	'parent' is the PlanState node that owns the expression,
- *		or NULL if we are preparing an expression that is not associated
- *		with a plan.  (If so, it can't have aggs or subplans.)
+ *	'parent' is the PlanState node that owns the expression.
+ *
+ * 'parent' may be NULL if we are preparing an expression that is not
+ * associated with a plan tree.  (If so, it can't have aggs or subplans.)
+ * This case should usually come through ExecPrepareExpr, not directly here.
  */
 ExprState *
 ExecInitExpr(Expr *node, PlanState *parent)
@@ -2017,6 +2020,7 @@ ExecInitExpr(Expr *node, PlanState *parent)
 				 * parent->subPlan.  The subplans will be initialized later.
 				 */
 				parent->subPlan = lcons(sstate, parent->subPlan);
+				sstate->sub_estate = NULL;
 				sstate->planstate = NULL;
 
 				sstate->oper = (List *)
@@ -2149,6 +2153,7 @@ ExecInitExprInitPlan(SubPlan *node, PlanState *parent)
 		elog(ERROR, "ExecInitExpr: SubPlan not expected here");
 
 	/* The subplan's state will be initialized later */
+	sstate->sub_estate = NULL;
 	sstate->planstate = NULL;
 
 	sstate->oper = (List *) ExecInitExpr((Expr *) node->oper, parent);
@@ -2157,6 +2162,33 @@ ExecInitExprInitPlan(SubPlan *node, PlanState *parent)
 	sstate->xprstate.expr = (Expr *) node;
 
 	return sstate;
+}
+
+/*
+ * ExecPrepareExpr --- initialize for expression execution outside a normal
+ * Plan tree context.
+ *
+ * This differs from ExecInitExpr in that we don't assume the caller is
+ * already running in the EState's per-query context.  Also, we apply
+ * fix_opfuncids() to the passed expression tree to be sure it is ready
+ * to run.  (In ordinary Plan trees the planner will have fixed opfuncids,
+ * but callers outside the executor will not have done this.)
+ */
+ExprState *
+ExecPrepareExpr(Expr *node, EState *estate)
+{
+	ExprState  *result;
+	MemoryContext oldcontext;
+
+	fix_opfuncids((Node *) node);
+
+	oldcontext = MemoryContextSwitchTo(estate->es_query_cxt);
+
+	result = ExecInitExpr(node, NULL);
+
+	MemoryContextSwitchTo(oldcontext);
+
+	return result;
 }
 
 

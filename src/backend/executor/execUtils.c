@@ -8,13 +8,20 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.92 2002/12/13 19:45:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.93 2002/12/15 16:17:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 /*
  * INTERFACE ROUTINES
+ *		CreateExecutorState		Create/delete executor working state
+ *		FreeExecutorState
+ *		CreateExprContext
+ *		FreeExprContext
+ *
  *		ExecAssignExprContext	Common code for plan node init routines.
+ *		ExecAssignResultType
+ *		etc
  *
  *		ExecOpenIndices			\
  *		ExecCloseIndices		 | referenced by InitPlan, EndPlan,
@@ -26,7 +33,6 @@
  *	 NOTES
  *		This file has traditionally been the place to stick misc.
  *		executor support stuff that doesn't really go anyplace else.
- *
  */
 
 #include "postgres.h"
@@ -63,6 +69,7 @@ extern int	NIndexTupleProcessed;		/* have to be defined in the
 
 
 static void ShutdownExprContext(ExprContext *econtext);
+
 
 /* ----------------------------------------------------------------
  *						statistic functions
@@ -124,135 +131,262 @@ DisplayTupleCount(FILE *statfp)
 }
 #endif
 
+
 /* ----------------------------------------------------------------
- *				 miscellaneous node-init support functions
+ *				 Executor state and memory management functions
  * ----------------------------------------------------------------
  */
 
 /* ----------------
- *		ExecAssignExprContext
+ *		CreateExecutorState
  *
- *		This initializes the ExprContext field.  It is only necessary
- *		to do this for nodes which use ExecQual or ExecProject
- *		because those routines depend on econtext.	Other nodes that
- *		don't have to evaluate expressions don't need to do this.
+ *		Create and initialize an EState node, which is the root of
+ *		working storage for an entire Executor invocation.
  *
- * Note: we assume CurrentMemoryContext is the correct per-query context.
- * This should be true during plan node initialization.
+ * Principally, this creates the per-query memory context that will be
+ * used to hold all working data that lives till the end of the query.
+ * Note that the per-query context will become a child of the caller's
+ * CurrentMemoryContext.
+ * ----------------
+ */
+EState *
+CreateExecutorState(void)
+{
+	EState	   *estate;
+	MemoryContext qcontext;
+	MemoryContext oldcontext;
+
+	/*
+	 * Create the per-query context for this Executor run.
+	 */
+	qcontext = AllocSetContextCreate(CurrentMemoryContext,
+									 "ExecutorState",
+									 ALLOCSET_DEFAULT_MINSIZE,
+									 ALLOCSET_DEFAULT_INITSIZE,
+									 ALLOCSET_DEFAULT_MAXSIZE);
+
+	/*
+	 * Make the EState node within the per-query context.  This way,
+	 * we don't need a separate pfree() operation for it at shutdown.
+	 */
+	oldcontext = MemoryContextSwitchTo(qcontext);
+
+	estate = makeNode(EState);
+
+	/*
+	 * Initialize all fields of the Executor State structure
+	 */
+	estate->es_direction = ForwardScanDirection;
+	estate->es_snapshot = SnapshotNow;
+	estate->es_range_table = NIL;
+
+	estate->es_result_relations = NULL;
+	estate->es_num_result_relations = 0;
+	estate->es_result_relation_info = NULL;
+
+	estate->es_junkFilter = NULL;
+	estate->es_into_relation_descriptor = NULL;
+
+	estate->es_param_list_info = NULL;
+	estate->es_param_exec_vals = NULL;
+
+	estate->es_query_cxt = qcontext;
+
+	estate->es_tupleTable = NULL;
+
+	estate->es_processed = 0;
+	estate->es_lastoid = InvalidOid;
+	estate->es_rowMark = NIL;
+
+	estate->es_instrument = false;
+
+	estate->es_exprcontexts = NIL;
+
+	estate->es_per_tuple_exprcontext = NULL;
+
+	estate->es_origPlan = NULL;
+	estate->es_evalPlanQual = NULL;
+	estate->es_evTupleNull = NULL;
+	estate->es_evTuple = NULL;
+	estate->es_useEvalPlan = false;
+
+	/*
+	 * Return the executor state structure
+	 */
+	MemoryContextSwitchTo(oldcontext);
+
+	return estate;
+}
+
+/* ----------------
+ *		FreeExecutorState
+ *
+ *		Release an EState along with all remaining working storage.
+ *
+ * Note: this is not responsible for releasing non-memory resources,
+ * such as open relations or buffer pins.  But it will shut down any
+ * still-active ExprContexts within the EState.  That is sufficient
+ * cleanup for situations where the EState has only been used for expression
+ * evaluation, and not to run a complete Plan.
+ *
+ * This can be called in any memory context ... so long as it's not one
+ * of the ones to be freed.
  * ----------------
  */
 void
-ExecAssignExprContext(EState *estate, PlanState *planstate)
+FreeExecutorState(EState *estate)
 {
-	ExprContext *econtext = makeNode(ExprContext);
+	/*
+	 * Shut down and free any remaining ExprContexts.  We do this
+	 * explicitly to ensure that any remaining shutdown callbacks get
+	 * called (since they might need to release resources that aren't
+	 * simply memory within the per-query memory context).
+	 */
+	while (estate->es_exprcontexts)
+	{
+		FreeExprContext((ExprContext *) lfirst(estate->es_exprcontexts));
+		/* FreeExprContext removed the list link for us */
+	}
+	/*
+	 * Free the per-query memory context, thereby releasing all working
+	 * memory, including the EState node itself.
+	 */
+	MemoryContextDelete(estate->es_query_cxt);
+}
 
+/* ----------------
+ *		CreateExprContext
+ *
+ *		Create a context for expression evaluation within an EState.
+ *
+ * An executor run may require multiple ExprContexts (we usually make one
+ * for each Plan node, and a separate one for per-output-tuple processing
+ * such as constraint checking).  Each ExprContext has its own "per-tuple"
+ * memory context.
+ *
+ * Note we make no assumption about the caller's memory context.
+ * ----------------
+ */
+ExprContext *
+CreateExprContext(EState *estate)
+{
+	ExprContext *econtext;
+	MemoryContext oldcontext;
+
+	/* Create the ExprContext node within the per-query memory context */
+	oldcontext = MemoryContextSwitchTo(estate->es_query_cxt);
+
+	econtext = makeNode(ExprContext);
+
+	/* Initialize fields of ExprContext */
 	econtext->ecxt_scantuple = NULL;
 	econtext->ecxt_innertuple = NULL;
 	econtext->ecxt_outertuple = NULL;
-	econtext->ecxt_per_query_memory = CurrentMemoryContext;
+
+	econtext->ecxt_per_query_memory = estate->es_query_cxt;
 
 	/*
 	 * Create working memory for expression evaluation in this context.
 	 */
 	econtext->ecxt_per_tuple_memory =
-		AllocSetContextCreate(CurrentMemoryContext,
-							  "PlanExprContext",
+		AllocSetContextCreate(estate->es_query_cxt,
+							  "ExprContext",
 							  ALLOCSET_DEFAULT_MINSIZE,
 							  ALLOCSET_DEFAULT_INITSIZE,
 							  ALLOCSET_DEFAULT_MAXSIZE);
+
 	econtext->ecxt_param_exec_vals = estate->es_param_exec_vals;
 	econtext->ecxt_param_list_info = estate->es_param_list_info;
+
 	econtext->ecxt_aggvalues = NULL;
 	econtext->ecxt_aggnulls = NULL;
+
+	econtext->domainValue_datum = (Datum) 0;
+	econtext->domainValue_isNull = true;
+
+	econtext->ecxt_estate = estate;
+
 	econtext->ecxt_callbacks = NULL;
-
-	planstate->ps_ExprContext = econtext;
-}
-
-/* ----------------
- *		MakeExprContext
- *
- *		Build an expression context for use outside normal plan-node cases.
- *		A fake scan-tuple slot can be supplied (pass NULL if not needed).
- *		A memory context sufficiently long-lived to use as fcache context
- *		must be supplied as well.
- * ----------------
- */
-ExprContext *
-MakeExprContext(TupleTableSlot *slot,
-				MemoryContext queryContext)
-{
-	ExprContext *econtext = makeNode(ExprContext);
-
-	econtext->ecxt_scantuple = slot;
-	econtext->ecxt_innertuple = NULL;
-	econtext->ecxt_outertuple = NULL;
-	econtext->ecxt_per_query_memory = queryContext;
 
 	/*
-	 * We make the temporary context a child of current working context,
-	 * not of the specified queryContext.  This seems reasonable but I'm
-	 * not totally sure about it...
-	 *
-	 * Expression contexts made via this routine typically don't live long
-	 * enough to get reset, so specify a minsize of 0.	That avoids
-	 * alloc'ing any memory in the common case where expr eval doesn't use
-	 * any.
+	 * Link the ExprContext into the EState to ensure it is shut down
+	 * when the EState is freed.  Because we use lcons(), shutdowns will
+	 * occur in reverse order of creation, which may not be essential
+	 * but can't hurt.
 	 */
-	econtext->ecxt_per_tuple_memory =
-		AllocSetContextCreate(CurrentMemoryContext,
-							  "TempExprContext",
-							  0,
-							  ALLOCSET_DEFAULT_INITSIZE,
-							  ALLOCSET_DEFAULT_MAXSIZE);
-	econtext->ecxt_param_exec_vals = NULL;
-	econtext->ecxt_param_list_info = NULL;
-	econtext->ecxt_aggvalues = NULL;
-	econtext->ecxt_aggnulls = NULL;
-	econtext->ecxt_callbacks = NULL;
+	estate->es_exprcontexts = lcons(econtext, estate->es_exprcontexts);
+
+	MemoryContextSwitchTo(oldcontext);
 
 	return econtext;
 }
 
-/*
- * Free an ExprContext made by MakeExprContext, including the temporary
- * context used for expression evaluation.	Note this will cause any
- * pass-by-reference expression result to go away!
+/* ----------------
+ *		FreeExprContext
+ *
+ *		Free an expression context, including calling any remaining
+ *		shutdown callbacks.
+ *
+ * Since we free the temporary context used for expression evaluation,
+ * any previously computed pass-by-reference expression result will go away!
+ *
+ * Note we make no assumption about the caller's memory context.
+ * ----------------
  */
 void
 FreeExprContext(ExprContext *econtext)
 {
+	EState	   *estate;
+
 	/* Call any registered callbacks */
 	ShutdownExprContext(econtext);
 	/* And clean up the memory used */
 	MemoryContextDelete(econtext->ecxt_per_tuple_memory);
+	/* Unlink self from owning EState */
+	estate = econtext->ecxt_estate;
+	estate->es_exprcontexts = lremove(econtext, estate->es_exprcontexts);
+	/* And delete the ExprContext node */
 	pfree(econtext);
 }
 
 /*
  * Build a per-output-tuple ExprContext for an EState.
  *
- * This is normally invoked via GetPerTupleExprContext() macro.
+ * This is normally invoked via GetPerTupleExprContext() macro,
+ * not directly.
  */
 ExprContext *
 MakePerTupleExprContext(EState *estate)
 {
 	if (estate->es_per_tuple_exprcontext == NULL)
-	{
-		MemoryContext oldContext;
+		estate->es_per_tuple_exprcontext = CreateExprContext(estate);
 
-		oldContext = MemoryContextSwitchTo(estate->es_query_cxt);
-		estate->es_per_tuple_exprcontext =
-			MakeExprContext(NULL, estate->es_query_cxt);
-		MemoryContextSwitchTo(oldContext);
-	}
 	return estate->es_per_tuple_exprcontext;
 }
 
+
 /* ----------------------------------------------------------------
- *		Result slot tuple type and ProjectionInfo support
+ *				 miscellaneous node-init support functions
+ *
+ * Note: all of these are expected to be called with CurrentMemoryContext
+ * equal to the per-query memory context.
  * ----------------------------------------------------------------
  */
+
+/* ----------------
+ *		ExecAssignExprContext
+ *
+ *		This initializes the ps_ExprContext field.  It is only necessary
+ *		to do this for nodes which use ExecQual or ExecProject
+ *		because those routines require an econtext.	Other nodes that
+ *		don't have to evaluate expressions don't need to do this.
+ * ----------------
+ */
+void
+ExecAssignExprContext(EState *estate, PlanState *planstate)
+{
+	planstate->ps_ExprContext = CreateExprContext(estate);
+}
 
 /* ----------------
  *		ExecAssignResultType
@@ -368,34 +502,12 @@ ExecAssignProjectionInfo(PlanState *planstate)
 
 
 /* ----------------
- *		ExecFreeProjectionInfo
- * ----------------
- */
-void
-ExecFreeProjectionInfo(PlanState *planstate)
-{
-	ProjectionInfo *projInfo;
-
-	/*
-	 * get projection info.  if NULL then this node has none so we just
-	 * return.
-	 */
-	projInfo = planstate->ps_ProjInfo;
-	if (projInfo == NULL)
-		return;
-
-	/*
-	 * clean up memory used.
-	 */
-	if (projInfo->pi_tupValue != NULL)
-		pfree(projInfo->pi_tupValue);
-
-	pfree(projInfo);
-	planstate->ps_ProjInfo = NULL;
-}
-
-/* ----------------
  *		ExecFreeExprContext
+ *
+ * A plan node's ExprContext should be freed explicitly during ExecEndNode
+ * because there may be shutdown callbacks to call.  (Other resources made
+ * by the above routines, such as projection info, don't need to be freed
+ * explicitly because they're just memory in the per-query memory context.)
  * ----------------
  */
 void
@@ -411,16 +523,8 @@ ExecFreeExprContext(PlanState *planstate)
 	if (econtext == NULL)
 		return;
 
-	/*
-	 * clean up any registered callbacks
-	 */
-	ShutdownExprContext(econtext);
+	FreeExprContext(econtext);
 
-	/*
-	 * clean up memory used.
-	 */
-	MemoryContextDelete(econtext->ecxt_per_tuple_memory);
-	pfree(econtext);
 	planstate->ps_ExprContext = NULL;
 }
 
@@ -612,7 +716,8 @@ ExecCloseIndices(ResultRelInfo *resultRelInfo)
 	}
 
 	/*
-	 * XXX should free indexInfo array here too.
+	 * XXX should free indexInfo array here too?  Currently we assume that
+	 * such stuff will be cleaned up automatically in FreeExecutorState.
 	 */
 }
 
@@ -674,16 +779,31 @@ ExecInsertIndexTuples(TupleTableSlot *slot,
 	for (i = 0; i < numIndices; i++)
 	{
 		IndexInfo  *indexInfo;
-		List	   *predicate;
 		InsertIndexResult result;
 
 		if (relationDescs[i] == NULL)
 			continue;
 
 		indexInfo = indexInfoArray[i];
-		predicate = indexInfo->ii_PredicateState;
-		if (predicate != NIL)
+
+		/* Check for partial index */
+		if (indexInfo->ii_Predicate != NIL)
 		{
+			List	   *predicate;
+
+			/*
+			 * If predicate state not set up yet, create it (in the
+			 * estate's per-query context)
+			 */
+			predicate = indexInfo->ii_PredicateState;
+			if (predicate == NIL)
+			{
+				predicate = (List *)
+					ExecPrepareExpr((Expr *) indexInfo->ii_Predicate,
+									estate);
+				indexInfo->ii_PredicateState = predicate;
+			}
+
 			/* Skip this index-update if the predicate isn't satisfied */
 			if (!ExecQual(predicate, econtext, false))
 				continue;
@@ -811,6 +931,17 @@ static void
 ShutdownExprContext(ExprContext *econtext)
 {
 	ExprContext_CB *ecxt_callback;
+	MemoryContext oldcontext;
+
+	/* Fast path in normal case where there's nothing to do. */
+	if (econtext->ecxt_callbacks == NULL)
+		return;
+
+	/*
+	 * Call the callbacks in econtext's per-tuple context.  This ensures
+	 * that any memory they might leak will get cleaned up.
+	 */
+	oldcontext = MemoryContextSwitchTo(econtext->ecxt_per_tuple_memory);
 
 	/*
 	 * Call each callback function in reverse registration order.
@@ -821,4 +952,6 @@ ShutdownExprContext(ExprContext *econtext)
 		(*ecxt_callback->function) (ecxt_callback->arg);
 		pfree(ecxt_callback);
 	}
+
+	MemoryContextSwitchTo(oldcontext);
 }

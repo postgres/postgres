@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSetOp.c,v 1.7 2002/12/05 15:50:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSetOp.c,v 1.8 2002/12/15 16:17:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -301,9 +301,9 @@ ExecEndSetOp(SetOpState *node)
 	ExecClearTuple(node->ps.ps_ResultTupleSlot);
 	node->ps.ps_OuterTupleSlot = NULL;
 
-	ExecEndNode(outerPlanState(node));
-
 	MemoryContextDelete(node->tempContext);
+
+	ExecEndNode(outerPlanState(node));
 }
 
 

@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.30 2002/12/13 19:46:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.31 2002/12/15 16:17:59 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -166,6 +166,7 @@ typedef struct
 	char	   *query;
 	void	   *plan;
 	ExprState  *plan_simple_expr;
+	EState	   *plan_simple_estate;
 	Oid			plan_simple_type;
 	Oid		   *plan_argtypes;
 	int			nparams;

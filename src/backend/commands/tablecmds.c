@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.60 2002/12/13 19:45:51 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.61 2002/12/15 16:17:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,6 @@
 #include "nodes/makefuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/plancat.h"
-#include "optimizer/planmain.h"
 #include "optimizer/prep.h"
 #include "parser/gramparse.h"
 #include "parser/parse_coerce.h"
@@ -2713,6 +2712,7 @@ AlterTableAddCheckConstraint(Relation rel, Constraint *constr)
 	ParseState *pstate;
 	bool		successful = true;
 	HeapScanDesc scan;
+	EState	   *estate;
 	ExprContext *econtext;
 	TupleTableSlot *slot;
 	HeapTuple	tuple;
@@ -2723,9 +2723,7 @@ AlterTableAddCheckConstraint(Relation rel, Constraint *constr)
 
 	/*
 	 * We need to make a parse state and range
-	 * table to allow us to transformExpr and
-	 * fix_opfuncids to get a version of the
-	 * expression we can pass to ExecQual
+	 * table to allow us to do transformExpr()
 	 */
 	pstate = make_parsestate(NULL);
 	rte = addRangeTableEntryForRelation(pstate,
@@ -2765,19 +2763,22 @@ AlterTableAddCheckConstraint(Relation rel, Constraint *constr)
 	 */
 	expr = eval_const_expressions(expr);
 
-	/* And fix the opfuncids */
-	fix_opfuncids(expr);
+	/* Needs to be in implicit-ANDs form for ExecQual */
+	qual = make_ands_implicit((Expr *) expr);
 
-	qual = makeList1(expr);
+	/* Need an EState to run ExecQual */
+	estate = CreateExecutorState();
+	econtext = GetPerTupleExprContext(estate);
 
 	/* build execution state for qual */
-	qualstate = (List *) ExecInitExpr((Expr *) qual, NULL);
+	qualstate = (List *) ExecPrepareExpr((Expr *) qual, estate);
 
 	/* Make tuple slot to hold tuples */
 	slot = MakeTupleTableSlot();
 	ExecSetSlotDescriptor(slot, RelationGetDescr(rel), false);
-	/* Make an expression context for ExecQual */
-	econtext = MakeExprContext(slot, CurrentMemoryContext);
+
+	/* Arrange for econtext's scan tuple to be the tuple under test */
+	econtext->ecxt_scantuple = slot;
 
 	/*
 	 * Scan through the rows now, checking the expression at each row.
@@ -2797,8 +2798,8 @@ AlterTableAddCheckConstraint(Relation rel, Constraint *constr)
 
 	heap_endscan(scan);
 
-	FreeExprContext(econtext);
 	pfree(slot);
+	FreeExecutorState(estate);
 
 	if (!successful)
 		elog(ERROR, "AlterTableAddConstraint: rejected due to CHECK constraint %s",

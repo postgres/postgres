@@ -6,7 +6,7 @@
  * Copyright (c) 2002, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/prepare.c,v 1.10 2002/12/13 19:45:51 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/prepare.c,v 1.11 2002/12/15 16:17:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,7 +15,6 @@
 #include "commands/prepare.h"
 #include "executor/executor.h"
 #include "utils/guc.h"
-#include "optimizer/planmain.h"
 #include "optimizer/planner.h"
 #include "rewrite/rewriteHandler.h"
 #include "tcop/pquery.h"
@@ -50,7 +49,6 @@ static void InitQueryHashTable(void);
 static void StoreQuery(const char *stmt_name, List *query_list,
 		   List *plan_list, List *argtype_list);
 static QueryHashEntry *FetchQuery(const char *plan_name);
-static void RunQuery(QueryDesc *qdesc);
 
 
 /*
@@ -96,15 +94,21 @@ ExecuteQuery(ExecuteStmt *stmt, CommandDest outputDest)
 			   *query_list,
 			   *plan_list;
 	ParamListInfo paramLI = NULL;
+	EState	   *estate;
 
 	/* Look it up in the hash table */
 	entry = FetchQuery(stmt->name);
 
-	/* Make working copies the executor can safely scribble on */
-	query_list = (List *) copyObject(entry->query_list);
-	plan_list = (List *) copyObject(entry->plan_list);
+	query_list = entry->query_list;
+	plan_list = entry->plan_list;
 
 	Assert(length(query_list) == length(plan_list));
+
+	/*
+	 * Need an EState to evaluate parameters; must not delete it till end
+	 * of query, in case parameters are pass-by-reference.
+	 */
+	estate = CreateExecutorState();
 
 	/* Evaluate parameters, if any */
 	if (entry->argtype_list != NIL)
@@ -112,17 +116,15 @@ ExecuteQuery(ExecuteStmt *stmt, CommandDest outputDest)
 		int			nargs = length(entry->argtype_list);
 		int			i = 0;
 		List	   *exprstates;
-		ExprContext *econtext = MakeExprContext(NULL, CurrentMemoryContext);
 
 		/* Parser should have caught this error, but check */
 		if (nargs != length(stmt->params))
 			elog(ERROR, "ExecuteQuery: wrong number of arguments");
 
-		fix_opfuncids((Node *) stmt->params);
+		exprstates = (List *) ExecPrepareExpr((Expr *) stmt->params, estate);
 
-		exprstates = (List *) ExecInitExpr((Expr *) stmt->params, NULL);
-
-		paramLI = (ParamListInfo) palloc0((nargs + 1) * sizeof(ParamListInfoData));
+		paramLI = (ParamListInfo)
+			palloc0((nargs + 1) * sizeof(ParamListInfoData));
 
 		foreach(l, exprstates)
 		{
@@ -130,7 +132,7 @@ ExecuteQuery(ExecuteStmt *stmt, CommandDest outputDest)
 			bool		isNull;
 
 			paramLI[i].value = ExecEvalExprSwitchContext(n,
-														 econtext,
+											 GetPerTupleExprContext(estate),
 														 &isNull,
 														 NULL);
 			paramLI[i].kind = PARAM_NUM;
@@ -173,7 +175,13 @@ ExecuteQuery(ExecuteStmt *stmt, CommandDest outputDest)
 				qdesc->dest = None;
 			}
 
-			RunQuery(qdesc);
+			ExecutorStart(qdesc);
+
+			ExecutorRun(qdesc, ForwardScanDirection, 0L);
+
+			ExecutorEnd(qdesc);
+
+			FreeQueryDesc(qdesc);
 
 			if (log_executor_stats)
 				ShowUsage("EXECUTOR STATISTICS");
@@ -188,7 +196,9 @@ ExecuteQuery(ExecuteStmt *stmt, CommandDest outputDest)
 			CommandCounterIncrement();
 	}
 
-	/* No need to pfree memory, MemoryContext will be reset */
+	FreeExecutorState(estate);
+
+	/* No need to pfree other memory, MemoryContext will be reset */
 }
 
 /*
@@ -331,17 +341,6 @@ FetchQueryParams(const char *plan_name)
 	entry = FetchQuery(plan_name);
 
 	return entry->argtype_list;
-}
-
-/*
- * Actually execute a prepared query.
- */
-static void
-RunQuery(QueryDesc *qdesc)
-{
-	ExecutorStart(qdesc);
-	ExecutorRun(qdesc, ForwardScanDirection, 0L);
-	ExecutorEnd(qdesc);
 }
 
 /*

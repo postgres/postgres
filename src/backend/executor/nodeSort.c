@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSort.c,v 1.41 2002/12/05 15:50:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSort.c,v 1.42 2002/12/15 16:17:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -285,16 +285,16 @@ ExecEndSort(SortState *node)
 	ExecClearTuple(node->ss.ss_ScanTupleSlot);
 
 	/*
-	 * shut down the subplan
-	 */
-	ExecEndNode(outerPlanState(node));
-
-	/*
 	 * Release tuplesort resources
 	 */
 	if (node->tuplesortstate != NULL)
 		tuplesort_end((Tuplesortstate *) node->tuplesortstate);
 	node->tuplesortstate = NULL;
+
+	/*
+	 * shut down the subplan
+	 */
+	ExecEndNode(outerPlanState(node));
 
 	SO1_printf("ExecEndSort: %s\n",
 			   "sort node shutdown");

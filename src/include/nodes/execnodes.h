@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.85 2002/12/14 00:17:59 tgl Exp $
+ * $Id: execnodes.h,v 1.86 2002/12/15 16:17:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,14 +81,14 @@ typedef struct ExprContext_CB
  *		context.
  *
  *	There are two memory contexts associated with an ExprContext:
- *	* ecxt_per_query_memory is a relatively long-lived context (such as
- *	  TransactionCommandContext); typically it's the same context the
- *	  ExprContext node itself is allocated in.	This context can be
- *	  used for purposes such as storing function call cache info.
+ *	* ecxt_per_query_memory is a query-lifespan context, typically the same
+ *	  context the ExprContext node itself is allocated in.  This context
+ *	  can be used for purposes such as storing function call cache info.
  *	* ecxt_per_tuple_memory is a short-term context for expression results.
  *	  As the name suggests, it will typically be reset once per tuple,
  *	  before we begin to evaluate expressions for that tuple.  Each
  *	  ExprContext normally has its very own per-tuple memory context.
+ *
  *	CurrentMemoryContext should be set to ecxt_per_tuple_memory before
  *	calling ExecEvalExpr() --- see ExecEvalExprSwitchContext().
  * ----------------
@@ -117,6 +117,9 @@ typedef struct ExprContext
 	/* Value to substitute for ConstraintTestValue nodes in expression */
 	Datum		domainValue_datum;
 	bool		domainValue_isNull;
+
+	/* Link to containing EState */
+	struct EState *ecxt_estate;
 
 	/* Functions to call back when ExprContext is shut down */
 	ExprContext_CB *ecxt_callbacks;
@@ -277,44 +280,42 @@ typedef struct ResultRelInfo
 /* ----------------
  *	  EState information
  *
- *		direction						direction of the scan
- *
- *		snapshot						time qual to use
- *
- *		range_table						array of scan relation information
- *
- *		result_relation information		for insert/update/delete queries
- *
- *		into_relation_descriptor		relation being retrieved "into"
- *
- *		param_list_info					information about Param values
- *
- *		tupleTable						this is a pointer to an array
- *										of pointers to tuples used by
- *										the executor at any given moment.
+ * Master working state for an Executor invocation
  * ----------------
  */
 typedef struct EState
 {
 	NodeTag		type;
-	ScanDirection es_direction;
-	Snapshot	es_snapshot;
-	List	   *es_range_table;
+
+	/* Basic state for all query types: */
+	ScanDirection es_direction;	/* current scan direction */
+	Snapshot	es_snapshot;	/* time qual to use */
+	List	   *es_range_table;	/* List of RangeTableEntrys */
+
+	/* Info about target table for insert/update/delete queries: */
 	ResultRelInfo *es_result_relations; /* array of ResultRelInfos */
 	int			es_num_result_relations;		/* length of array */
 	ResultRelInfo *es_result_relation_info;		/* currently active array
 												 * elt */
 	JunkFilter *es_junkFilter;	/* currently active junk filter */
-	Relation	es_into_relation_descriptor;
+	Relation	es_into_relation_descriptor; /* for SELECT INTO */
+
+	/* Parameter info: */
 	ParamListInfo es_param_list_info;	/* values of external params */
 	ParamExecData *es_param_exec_vals;	/* values of internal params */
-	TupleTable	es_tupleTable;
+
+	/* Other working state: */
+	MemoryContext es_query_cxt; /* per-query context in which EState lives */
+
+	TupleTable	es_tupleTable;	/* Array of TupleTableSlots */
+
 	uint32		es_processed;	/* # of tuples processed */
 	Oid			es_lastoid;		/* last oid processed (by INSERT) */
 	List	   *es_rowMark;		/* not good place, but there is no other */
-	MemoryContext es_query_cxt; /* per-query context in which EState lives */
 
 	bool		es_instrument;	/* true requests runtime instrumentation */
+
+	List	   *es_exprcontexts; /* List of ExprContexts within EState */
 
 	/*
 	 * this ExprContext is for per-output-tuple operations, such as
@@ -457,6 +458,7 @@ typedef struct BoolExprState
 typedef struct SubPlanState
 {
 	ExprState	xprstate;
+	EState	   *sub_estate;		/* subselect plan has its own EState */
 	struct PlanState *planstate; /* subselect plan's state tree */
 	bool		needShutdown;	/* TRUE = need to shutdown subplan */
 	HeapTuple	curTuple;		/* copy of most recent tuple from subplan */

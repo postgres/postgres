@@ -1,4 +1,4 @@
-$Header: /cvsroot/pgsql/src/backend/executor/README,v 1.2 2002/12/05 15:50:30 tgl Exp $
+$Header: /cvsroot/pgsql/src/backend/executor/README,v 1.3 2002/12/15 16:17:45 tgl Exp $
 
 The Postgres Executor
 ---------------------
@@ -58,6 +58,83 @@ Altogether there are four classes of nodes used in these trees: Plan nodes,
 their corresponding PlanState nodes, Expr nodes, and their corresponding
 ExprState nodes.  (Actually, there are also List nodes, which are used as
 "glue" in all four kinds of tree.)
+
+
+Memory Management
+-----------------
+
+A "per query" memory context is created during CreateExecutorState();
+all storage allocated during an executor invocation is allocated in that
+context or a child context.  This allows easy reclamation of storage
+during executor shutdown --- rather than messing with retail pfree's and
+probable storage leaks, we just destroy the memory context.
+
+In particular, the plan state trees and expression state trees described
+in the previous section are allocated in the per-query memory context.
+
+To avoid intra-query memory leaks, most processing while a query runs
+is done in "per tuple" memory contexts, which are so-called because they
+are typically reset to empty once per tuple.  Per-tuple contexts are usually
+associated with ExprContexts, and commonly each PlanState node has its own
+ExprContext to evaluate its qual and targetlist expressions in.
+
+
+Query Processing Control Flow
+-----------------------------
+
+This is a sketch of control flow for full query processing:
+
+	CreateQueryDesc
+
+	ExecutorStart
+		CreateExecutorState
+			creates per-query context
+		switch to per-query context to run ExecInitNode
+		ExecInitNode --- recursively scans plan tree
+			CreateExprContext
+				creates per-tuple context
+			ExecInitExpr
+
+	ExecutorRun
+		ExecProcNode --- recursively called in per-query context
+			ExecEvalExpr --- called in per-tuple context
+			ResetExprContext --- to free memory
+
+	ExecutorEnd
+		ExecEndNode --- recursively releases resources
+		FreeExecutorState
+			frees per-query context and child contexts
+
+	FreeQueryDesc
+
+Per above comments, it's not really critical for ExecEndNode to free any
+memory; it'll all go away in FreeExecutorState anyway.  However, we do need to
+be careful to close relations, drop buffer pins, etc, so we do need to scan
+the plan state tree to find these sorts of resources.
+
+
+The executor can also be used to evaluate simple expressions without any Plan
+tree ("simple" meaning "no aggregates and no sub-selects", though such might
+be hidden inside function calls).  This case has a flow of control like
+
+	CreateExecutorState
+		creates per-query context
+
+	CreateExprContext	-- or use GetPerTupleExprContext(estate)
+		creates per-tuple context
+
+	ExecPrepareExpr
+		switch to per-query context to run ExecInitExpr
+		ExecInitExpr
+
+	Repeatedly do:
+		ExecEvalExprSwitchContext
+			ExecEvalExpr --- called in per-tuple context
+		ResetExprContext --- to free memory
+
+	FreeExecutorState
+		frees per-query context, as well as ExprContext
+		(a separate FreeExprContext call is not necessary)
 
 
 EvalPlanQual (READ COMMITTED update checking)

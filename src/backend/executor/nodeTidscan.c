@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeTidscan.c,v 1.29 2002/12/13 19:45:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeTidscan.c,v 1.30 2002/12/15 16:17:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -278,19 +278,8 @@ void
 ExecEndTidScan(TidScanState *node)
 {
 	/*
-	 * extract information from the node
+	 * Free the exprcontext
 	 */
-	if (node && node->tss_TidList)
-		pfree(node->tss_TidList);
-
-	/*
-	 * Free the projection info and the scan attribute info
-	 *
-	 * Note: we don't ExecFreeResultType(scanstate) because the rule manager
-	 * depends on the tupType returned by ExecMain().  So for now, this is
-	 * freed at end-transaction time.  -cim 6/2/91
-	 */
-	ExecFreeProjectionInfo(&node->ss.ps);
 	ExecFreeExprContext(&node->ss.ps);
 
 	/*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeUnique.c,v 1.35 2002/12/05 15:50:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeUnique.c,v 1.36 2002/12/15 16:17:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -194,15 +194,10 @@ ExecEndUnique(UniqueState *node)
 {
 	/* clean up tuple table */
 	ExecClearTuple(node->ps.ps_ResultTupleSlot);
-	if (node->priorTuple != NULL)
-	{
-		heap_freetuple(node->priorTuple);
-		node->priorTuple = NULL;
-	}
-
-	ExecEndNode(outerPlanState(node));
 
 	MemoryContextDelete(node->tempContext);
+
+	ExecEndNode(outerPlanState(node));
 }
 
 

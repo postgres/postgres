@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.186 2002/12/13 19:45:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.187 2002/12/15 16:17:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,7 +35,6 @@
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
-#include "optimizer/planmain.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_relation.h"
 #include "rewrite/rewriteHandler.h"
@@ -803,6 +802,8 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 	slot = ExecAllocTableSlot(tupleTable);
 	ExecSetSlotDescriptor(slot, tupDesc, false);
 
+	econtext = GetPerTupleExprContext(estate);
+
 	/*
 	 * Pick up the required catalog information for each attribute in the
 	 * relation, including the input function, the element type (to pass
@@ -841,8 +842,8 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 
 			if (defexpr != NULL)
 			{
-				fix_opfuncids(defexpr);
-				defexprs[num_defaults] = ExecInitExpr((Expr *) defexpr, NULL);
+				defexprs[num_defaults] = ExecPrepareExpr((Expr *) defexpr,
+														 estate);
 				defmap[num_defaults] = i;
 				num_defaults++;
 			}
@@ -873,8 +874,8 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 			/* check whether any constraints actually found */
 			if (node != (Node *) prm)
 			{
-				fix_opfuncids(node);
-				constraintexprs[i] = ExecInitExpr((Expr *) node, NULL);
+				constraintexprs[i] = ExecPrepareExpr((Expr *) node,
+													 estate);
 				hasConstraints = true;
 			}
 		}
@@ -934,8 +935,6 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 	copy_lineno = 0;
 	fe_eof = false;
 
-	econtext = GetPerTupleExprContext(estate);
-
 	/* Make room for a PARAM_EXEC value for domain constraint checks */
 	if (hasConstraints)
 		econtext->ecxt_param_exec_vals = (ParamExecData *)
@@ -953,9 +952,8 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 		/* Reset the per-tuple exprcontext */
 		ResetPerTupleExprContext(estate);
 
-		/* Switch to and reset per-tuple memory context, too */
+		/* Switch into its memory context */
 		MemoryContextSwitchTo(GetPerTupleMemoryContext(estate));
-		MemoryContextReset(CurrentMemoryContext);
 
 		/* Initialize all values for row to NULL */
 		MemSet(values, 0, num_phys_attrs * sizeof(Datum));
@@ -1268,6 +1266,8 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 	ExecDropTupleTable(tupleTable, true);
 
 	ExecCloseIndices(resultRelInfo);
+
+	FreeExecutorState(estate);
 }
 
 

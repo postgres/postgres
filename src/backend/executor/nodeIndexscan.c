@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.74 2002/12/13 19:45:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.75 2002/12/15 16:17:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -399,43 +399,37 @@ ExecIndexReScan(IndexScanState *node, ExprContext *exprCtxt)
 
 /* ----------------------------------------------------------------
  *		ExecEndIndexScan
- *
- * old comments
- *		Releases any storage allocated through C routines.
- *		Returns nothing.
  * ----------------------------------------------------------------
  */
 void
 ExecEndIndexScan(IndexScanState *node)
 {
-	ExprState ***runtimeKeyInfo;
-	ScanKey    *scanKeys;
-	int		   *numScanKeys;
 	int			numIndices;
-	Relation	relation;
 	RelationPtr indexRelationDescs;
 	IndexScanDescPtr indexScanDescs;
+	Relation	relation;
 	int			i;
-
-	runtimeKeyInfo = node->iss_RuntimeKeyInfo;
 
 	/*
 	 * extract information from the node
 	 */
 	numIndices = node->iss_NumIndices;
-	scanKeys = node->iss_ScanKeys;
-	numScanKeys = node->iss_NumScanKeys;
 	indexRelationDescs = node->iss_RelationDescs;
 	indexScanDescs = node->iss_ScanDescs;
 	relation = node->ss.ss_currentRelation;
 
 	/*
-	 * Free the projection info and the scan attribute info
+	 * Free the exprcontext(s)
 	 */
-	ExecFreeProjectionInfo(&node->ss.ps);
 	ExecFreeExprContext(&node->ss.ps);
 	if (node->iss_RuntimeContext)
 		FreeExprContext(node->iss_RuntimeContext);
+
+	/*
+	 * clear out tuple table slots
+	 */
+	ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
+	ExecClearTuple(node->ss.ss_ScanTupleSlot);
 
 	/*
 	 * close the index relations
@@ -458,36 +452,6 @@ ExecEndIndexScan(IndexScanState *node)
 	 * locking, however.)
 	 */
 	heap_close(relation, NoLock);
-
-	/*
-	 * free the scan keys used in scanning the indices
-	 */
-	for (i = 0; i < numIndices; i++)
-	{
-		if (scanKeys[i] != NULL)
-			pfree(scanKeys[i]);
-	}
-	pfree(scanKeys);
-	pfree(numScanKeys);
-
-	if (runtimeKeyInfo)
-	{
-		for (i = 0; i < numIndices; i++)
-		{
-			if (runtimeKeyInfo[i] != NULL)
-				pfree(runtimeKeyInfo[i]);
-		}
-		pfree(runtimeKeyInfo);
-	}
-
-	/*
-	 * clear out tuple table slots
-	 */
-	ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
-	ExecClearTuple(node->ss.ss_ScanTupleSlot);
-	pfree(node->iss_RelationDescs);
-	pfree(node->iss_ScanDescs);
-	pfree(node);
 }
 
 /* ----------------------------------------------------------------

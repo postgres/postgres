@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeFunctionscan.c,v 1.15 2002/12/13 19:45:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeFunctionscan.c,v 1.16 2002/12/15 16:17:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -273,9 +273,8 @@ void
 ExecEndFunctionScan(FunctionScanState *node)
 {
 	/*
-	 * Free the projection info and the scan attribute info
+	 * Free the exprcontext
 	 */
-	ExecFreeProjectionInfo(&node->ss.ps);
 	ExecFreeExprContext(&node->ss.ps);
 
 	/*

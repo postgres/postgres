@@ -15,7 +15,7 @@
  *	  locate group boundaries.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeGroup.c,v 1.52 2002/12/13 19:45:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeGroup.c,v 1.53 2002/12/15 16:17:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -218,19 +218,13 @@ ExecEndGroup(GroupState *node)
 {
 	PlanState  *outerPlan;
 
-	ExecFreeProjectionInfo(&node->ss.ps);
 	ExecFreeExprContext(&node->ss.ps);
-
-	outerPlan = outerPlanState(node);
-	ExecEndNode(outerPlan);
 
 	/* clean up tuple table */
 	ExecClearTuple(node->ss.ss_ScanTupleSlot);
-	if (node->grp_firstTuple != NULL)
-	{
-		heap_freetuple(node->grp_firstTuple);
-		node->grp_firstTuple = NULL;
-	}
+
+	outerPlan = outerPlanState(node);
+	ExecEndNode(outerPlan);
 }
 
 void

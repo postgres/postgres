@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeNestloop.c,v 1.28 2002/12/13 19:45:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeNestloop.c,v 1.29 2002/12/15 16:17:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -364,21 +364,20 @@ ExecEndNestLoop(NestLoopState *node)
 			   "ending node processing");
 
 	/*
-	 * Free the projection info
+	 * Free the exprcontext
 	 */
-	ExecFreeProjectionInfo(&node->js.ps);
 	ExecFreeExprContext(&node->js.ps);
+
+	/*
+	 * clean out the tuple table
+	 */
+	ExecClearTuple(node->js.ps.ps_ResultTupleSlot);
 
 	/*
 	 * close down subplans
 	 */
 	ExecEndNode(outerPlanState(node));
 	ExecEndNode(innerPlanState(node));
-
-	/*
-	 * clean out the tuple table
-	 */
-	ExecClearTuple(node->js.ps.ps_ResultTupleSlot);
 
 	NL1_printf("ExecEndNestLoop: %s\n",
 			   "node processing ended");

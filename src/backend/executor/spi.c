@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.79 2002/12/05 15:50:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.80 2002/12/15 16:17:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1287,23 +1287,23 @@ _SPI_pquery(QueryDesc *queryDesc, bool runit, int tcount)
 			elog(FATAL, "SPI_select: # of processed tuples check failed");
 	}
 
-	ExecutorEnd(queryDesc);
-
-#ifdef SPI_EXECUTOR_STATS
-	if (ShowExecutorStats)
-		ShowUsage("SPI EXECUTOR STATS");
-#endif
-
 	if (dest == SPI)
 	{
 		SPI_processed = _SPI_current->processed;
 		SPI_lastoid = save_lastoid;
 		SPI_tuptable = _SPI_current->tuptable;
 	}
-	queryDesc->dest = dest;
+
+	ExecutorEnd(queryDesc);
+
+	FreeQueryDesc(queryDesc);
+
+#ifdef SPI_EXECUTOR_STATS
+	if (ShowExecutorStats)
+		ShowUsage("SPI EXECUTOR STATS");
+#endif
 
 	return res;
-
 }
 
 /*

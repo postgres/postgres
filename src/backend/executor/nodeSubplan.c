@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubplan.c,v 1.38 2002/12/14 00:17:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubplan.c,v 1.39 2002/12/15 16:17:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,9 +47,10 @@ ExecSubPlan(SubPlanState *node,
 
 	/*
 	 * We are probably in a short-lived expression-evaluation context.
-	 * Switch to longer-lived per-query context.
+	 * Switch to the child plan's per-query context for manipulating its
+	 * chgParam, calling ExecProcNode on it, etc.
 	 */
-	oldcontext = MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
+	oldcontext = MemoryContextSwitchTo(node->sub_estate->es_query_cxt);
 
 	if (subplan->setParam != NIL)
 		elog(ERROR, "ExecSubPlan: can't set parent params from subquery");
@@ -132,10 +133,13 @@ ExecSubPlan(SubPlanState *node,
 			 * ExecProcNode() call. node->curTuple keeps track of the
 			 * copied tuple for eventual freeing.
 			 */
+			MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
 			tup = heap_copytuple(tup);
 			if (node->curTuple)
 				heap_freetuple(node->curTuple);
 			node->curTuple = tup;
+			MemoryContextSwitchTo(node->sub_estate->es_query_cxt);
+
 			result = heap_getattr(tup, col, tdesc, isNull);
 			/* keep scanning subplan to make sure there's only one tuple */
 			continue;
@@ -295,6 +299,7 @@ ExecInitSubPlan(SubPlanState *node, EState *estate)
 {
 	SubPlan	   *subplan = (SubPlan *) node->xprstate.expr;
 	EState	   *sp_estate;
+	MemoryContext oldcontext;
 
 	/*
 	 * Do access checking on the rangetable entries in the subquery.
@@ -303,15 +308,23 @@ ExecInitSubPlan(SubPlanState *node, EState *estate)
 	ExecCheckRTPerms(subplan->rtable, CMD_SELECT);
 
 	/*
-	 * initialize state
+	 * initialize my state
 	 */
 	node->needShutdown = false;
 	node->curTuple = NULL;
 
 	/*
 	 * create an EState for the subplan
+	 *
+	 * The subquery needs its own EState because it has its own rangetable.
+	 * It shares our Param ID space, however.  XXX if rangetable access were
+	 * done differently, the subquery could share our EState, which would
+	 * eliminate some thrashing about in this module...
 	 */
 	sp_estate = CreateExecutorState();
+	node->sub_estate = sp_estate;
+
+	oldcontext = MemoryContextSwitchTo(sp_estate->es_query_cxt);
 
 	sp_estate->es_range_table = subplan->rtable;
 	sp_estate->es_param_list_info = estate->es_param_list_info;
@@ -322,11 +335,13 @@ ExecInitSubPlan(SubPlanState *node, EState *estate)
 	sp_estate->es_instrument = estate->es_instrument;
 
 	/*
-	 * Start up the subplan
+	 * Start up the subplan (this is a very cut-down form of InitPlan())
 	 */
 	node->planstate = ExecInitNode(subplan->plan, sp_estate);
 
 	node->needShutdown = true;	/* now we need to shutdown the subplan */
+
+	MemoryContextSwitchTo(oldcontext);
 
 	/*
 	 * If this plan is un-correlated or undirect correlated one and want
@@ -376,10 +391,9 @@ ExecSetParamPlan(SubPlanState *node, ExprContext *econtext)
 	bool		found = false;
 
 	/*
-	 * We are probably in a short-lived expression-evaluation context.
-	 * Switch to longer-lived per-query context.
+	 * Must switch to child query's per-query memory context.
 	 */
-	oldcontext = MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
+	oldcontext = MemoryContextSwitchTo(node->sub_estate->es_query_cxt);
 
 	if (subLinkType == ANY_SUBLINK ||
 		subLinkType == ALL_SUBLINK)
@@ -415,15 +429,18 @@ ExecSetParamPlan(SubPlanState *node, ExprContext *econtext)
 		found = true;
 
 		/*
-		 * We need to copy the subplan's tuple in case any of the params
-		 * are pass-by-ref type --- the pointers stored in the param
-		 * structs will point at this copied tuple!  node->curTuple keeps
-		 * track of the copied tuple for eventual freeing.
+		 * We need to copy the subplan's tuple into our own context,
+		 * in case any of the params are pass-by-ref type --- the pointers
+		 * stored in the param structs will point at this copied tuple!
+		 * node->curTuple keeps track of the copied tuple for eventual
+		 * freeing.
 		 */
+		MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
 		tup = heap_copytuple(tup);
 		if (node->curTuple)
 			heap_freetuple(node->curTuple);
 		node->curTuple = tup;
+		MemoryContextSwitchTo(node->sub_estate->es_query_cxt);
 
 		foreach(lst, subplan->setParam)
 		{
@@ -460,7 +477,10 @@ ExecSetParamPlan(SubPlanState *node, ExprContext *econtext)
 
 	if (planstate->plan->extParam == NULL) /* un-correlated ... */
 	{
-		ExecEndNode(planstate);
+		ExecEndPlan(planstate, node->sub_estate);
+		/* mustn't free context while still in it... */
+		MemoryContextSwitchTo(oldcontext);
+		FreeExecutorState(node->sub_estate);
 		node->needShutdown = false;
 	}
 
@@ -476,7 +496,12 @@ ExecEndSubPlan(SubPlanState *node)
 {
 	if (node->needShutdown)
 	{
-		ExecEndNode(node->planstate);
+		MemoryContext oldcontext;
+
+		oldcontext = MemoryContextSwitchTo(node->sub_estate->es_query_cxt);
+		ExecEndPlan(node->planstate, node->sub_estate);
+		MemoryContextSwitchTo(oldcontext);
+		FreeExecutorState(node->sub_estate);
 		node->needShutdown = false;
 	}
 	if (node->curTuple)

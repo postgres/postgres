@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMaterial.c,v 1.39 2002/12/05 15:50:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMaterial.c,v 1.40 2002/12/15 16:17:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -197,16 +197,16 @@ ExecEndMaterial(MaterialState *node)
 	ExecClearTuple(node->ss.ss_ScanTupleSlot);
 
 	/*
-	 * shut down the subplan
-	 */
-	ExecEndNode(outerPlanState(node));
-
-	/*
 	 * Release tuplestore resources
 	 */
 	if (node->tuplestorestate != NULL)
 		tuplestore_end((Tuplestorestate *) node->tuplestorestate);
 	node->tuplestorestate = NULL;
+
+	/*
+	 * shut down the subplan
+	 */
+	ExecEndNode(outerPlanState(node));
 }
 
 /* ----------------------------------------------------------------

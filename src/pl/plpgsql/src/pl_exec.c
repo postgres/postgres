@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.74 2002/12/13 19:46:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.75 2002/12/15 16:17:58 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -3227,7 +3227,6 @@ exec_eval_simple_expr(PLpgSQL_execstate * estate,
 					  bool *isNull,
 					  Oid *rettype)
 {
-	_SPI_plan  *spi_plan = (_SPI_plan *) expr->plan;
 	Datum		retval;
 	PLpgSQL_var *var;
 	PLpgSQL_rec *rec;
@@ -3242,14 +3241,11 @@ exec_eval_simple_expr(PLpgSQL_execstate * estate,
 	ParamListInfo paramLI;
 
 	/*
-	 * Create a simple expression context to hold the arguments.
-	 *
-	 * NOTE: we pass the SPI plan's context as the query-lifetime context for
-	 * function cache nodes and suchlike allocations.  This is appropriate
-	 * because that's where the expression tree itself is, and the
-	 * function cache nodes must live as long as it does.
+	 * Create an expression context to hold the arguments and the result
+	 * of this expression evaluation.  This must be a child of the EState
+	 * we created in the SPI plan's context.
 	 */
-	econtext = MakeExprContext(NULL, spi_plan->plancxt);
+	econtext = CreateExprContext(expr->plan_simple_estate);
 
 	/*
 	 * Param list can live in econtext's temporary memory context.
@@ -3691,13 +3687,20 @@ exec_simple_check_plan(PLpgSQL_expr * expr)
 		return;
 
 	/*
-	 * Yes - this is a simple expression.  Prepare to execute it, and
-	 * stash away the result type.  Put the expression state tree in the
-	 * plan context so it will have appropriate lifespan.
+	 * Yes - this is a simple expression.  Prepare to execute it.
+	 * We need an EState and an expression state tree, which we'll put
+	 * into the plan context so they will have appropriate lifespan.
 	 */
 	oldcontext = MemoryContextSwitchTo(spi_plan->plancxt);
-	expr->plan_simple_expr = ExecInitExpr(tle->expr, NULL);
+
+	expr->plan_simple_estate = CreateExecutorState();
+
+	expr->plan_simple_expr = ExecPrepareExpr(tle->expr,
+											 expr->plan_simple_estate);
+
 	MemoryContextSwitchTo(oldcontext);
+
+	/* Also stash away the expression result type */
 	expr->plan_simple_type = exprType((Node *) tle->expr);
 }
 

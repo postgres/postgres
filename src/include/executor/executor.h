@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: executor.h,v 1.83 2002/12/14 00:17:59 tgl Exp $
+ * $Id: executor.h,v 1.84 2002/12/15 16:17:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,8 +54,8 @@ extern void ExecutorStart(QueryDesc *queryDesc);
 extern TupleTableSlot *ExecutorRun(QueryDesc *queryDesc,
 			ScanDirection direction, long count);
 extern void ExecutorEnd(QueryDesc *queryDesc);
-extern EState *CreateExecutorState(void);
 extern void ExecCheckRTPerms(List *rangeTable, CmdType operation);
+extern void ExecEndPlan(PlanState *planstate, EState *estate);
 extern void ExecConstraints(const char *caller, ResultRelInfo *resultRelInfo,
 				TupleTableSlot *slot, EState *estate);
 extern TupleTableSlot *EvalPlanQual(EState *estate, Index rti,
@@ -93,6 +93,7 @@ extern Datum ExecEvalExprSwitchContext(ExprState *expression, ExprContext *econt
 						  bool *isNull, ExprDoneCond *isDone);
 extern ExprState *ExecInitExpr(Expr *node, PlanState *parent);
 extern SubPlanState *ExecInitExprInitPlan(SubPlan *node, PlanState *parent);
+extern ExprState *ExecPrepareExpr(Expr *node, EState *estate);
 extern bool ExecQual(List *qual, ExprContext *econtext, bool resultForNull);
 extern int	ExecTargetListLength(List *targetlist);
 extern int	ExecCleanTargetListLength(List *targetlist);
@@ -157,23 +158,9 @@ extern void end_tup_output(TupOutputState *tstate);
 /*
  * prototypes from functions in execUtils.c
  */
-extern void ResetTupleCount(void);
-extern void ExecAssignExprContext(EState *estate, PlanState *planstate);
-extern void ExecAssignResultType(PlanState *planstate,
-					 TupleDesc tupDesc, bool shouldFree);
-extern void ExecAssignResultTypeFromOuterPlan(PlanState *planstate);
-extern void ExecAssignResultTypeFromTL(PlanState *planstate);
-extern TupleDesc ExecGetResultType(PlanState *planstate);
-extern void ExecAssignProjectionInfo(PlanState *planstate);
-extern void ExecFreeProjectionInfo(PlanState *planstate);
-extern void ExecFreeExprContext(PlanState *planstate);
-extern TupleDesc ExecGetScanType(ScanState *scanstate);
-extern void ExecAssignScanType(ScanState *scanstate,
-				   TupleDesc tupDesc, bool shouldFree);
-extern void ExecAssignScanTypeFromOuterPlan(ScanState *scanstate);
-
-extern ExprContext *MakeExprContext(TupleTableSlot *slot,
-				MemoryContext queryContext);
+extern EState *CreateExecutorState(void);
+extern void FreeExecutorState(EState *estate);
+extern ExprContext *CreateExprContext(EState *estate);
 extern void FreeExprContext(ExprContext *econtext);
 
 #define ResetExprContext(econtext) \
@@ -196,6 +183,19 @@ extern ExprContext *MakePerTupleExprContext(EState *estate);
 		if ((estate)->es_per_tuple_exprcontext) \
 			ResetExprContext((estate)->es_per_tuple_exprcontext); \
 	} while (0)
+
+extern void ExecAssignExprContext(EState *estate, PlanState *planstate);
+extern void ExecAssignResultType(PlanState *planstate,
+					 TupleDesc tupDesc, bool shouldFree);
+extern void ExecAssignResultTypeFromOuterPlan(PlanState *planstate);
+extern void ExecAssignResultTypeFromTL(PlanState *planstate);
+extern TupleDesc ExecGetResultType(PlanState *planstate);
+extern void ExecAssignProjectionInfo(PlanState *planstate);
+extern void ExecFreeExprContext(PlanState *planstate);
+extern TupleDesc ExecGetScanType(ScanState *scanstate);
+extern void ExecAssignScanType(ScanState *scanstate,
+				   TupleDesc tupDesc, bool shouldFree);
+extern void ExecAssignScanTypeFromOuterPlan(ScanState *scanstate);
 
 extern void ExecOpenIndices(ResultRelInfo *resultRelInfo);
 extern void ExecCloseIndices(ResultRelInfo *resultRelInfo);

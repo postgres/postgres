@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHash.c,v 1.70 2002/12/13 19:45:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHash.c,v 1.71 2002/12/15 16:17:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -179,10 +179,8 @@ ExecEndHash(HashState *node)
 	PlanState  *outerPlan;
 
 	/*
-	 * free projection info.  no need to free result type info because
-	 * that came from the outer plan...
+	 * free exprcontext
 	 */
-	ExecFreeProjectionInfo(&node->ps);
 	ExecFreeExprContext(&node->ps);
 
 	/*

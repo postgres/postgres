@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execdesc.h,v 1.21 2002/12/05 15:50:36 tgl Exp $
+ * $Id: execdesc.h,v 1.22 2002/12/15 16:17:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,5 +49,7 @@ extern QueryDesc *CreateQueryDesc(Query *parsetree, Plan *plantree,
 								  CommandDest dest, const char *portalName,
 								  ParamListInfo params,
 								  bool doInstrument);
+
+extern void FreeQueryDesc(QueryDesc *qdesc);
 
 #endif   /* EXECDESC_H  */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.24 2002/12/13 19:45:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.25 2002/12/15 16:17:43 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -47,7 +47,6 @@
 #include "miscadmin.h"
 #include "nodes/nodes.h"
 #include "optimizer/clauses.h"
-#include "optimizer/planmain.h"
 #include "optimizer/var.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
@@ -1242,6 +1241,7 @@ AlterDomainAddConstraint(List *names, Node *newConstraint)
 	List   *rels;
 	List   *rt;
 	Form_pg_type	typTup;
+	EState *estate;
 	ExprContext *econtext;
 	char   *ccbin;
 	Expr   *expr;
@@ -1338,11 +1338,13 @@ AlterDomainAddConstraint(List *names, Node *newConstraint)
 	 * the constraint is being added to.
 	 */
 	expr = (Expr *) stringToNode(ccbin);
-	fix_opfuncids((Node *) expr);
-	exprstate = ExecInitExpr(expr, NULL);
 
-	/* Make an expression context for ExecEvalExpr */
-	econtext = MakeExprContext(NULL, CurrentMemoryContext);
+	/* Need an EState to run ExecEvalExpr */
+	estate = CreateExecutorState();
+	econtext = GetPerTupleExprContext(estate);
+
+	/* build execution state for expr */
+	exprstate = ExecPrepareExpr(expr, estate);
 
 	rels = get_rels_with_domain(domainoid);
 
@@ -1377,7 +1379,9 @@ AlterDomainAddConstraint(List *names, Node *newConstraint)
 				econtext->domainValue_datum = d;
 				econtext->domainValue_isNull = isNull;
 
-				conResult = ExecEvalExpr(exprstate, econtext, &isNull, NULL);
+				conResult = ExecEvalExprSwitchContext(exprstate,
+													  econtext,
+													  &isNull, NULL);
 
 				if (!isNull && !DatumGetBool(conResult))
 					elog(ERROR, "AlterDomainAddConstraint: Domain %s constraint %s failed",
@@ -1393,7 +1397,7 @@ AlterDomainAddConstraint(List *names, Node *newConstraint)
 		heap_close(testrel, NoLock);
 	}
 
-	FreeExprContext(econtext);
+	FreeExecutorState(estate);
 
 	/* Clean up */
 	heap_close(rel, NoLock);

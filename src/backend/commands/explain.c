@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.98 2002/12/14 00:17:50 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.99 2002/12/15 16:17:38 tgl Exp $
  *
  */
 
@@ -206,6 +206,8 @@ ExplainOneQuery(Query *query, ExplainStmt *stmt, TupOutputState *tstate)
 	gettimeofday(&starttime, NULL);
 
 	ExecutorEnd(queryDesc);
+	FreeQueryDesc(queryDesc);
+
 	CommandCounterIncrement();
 
 	totaltime += elapsed_time(&starttime);

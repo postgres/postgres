@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.207 2002/12/13 19:45:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.208 2002/12/15 16:17:38 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -41,7 +41,6 @@
 #include "executor/executor.h"
 #include "miscadmin.h"
 #include "optimizer/clauses.h"
-#include "optimizer/planmain.h"
 #include "optimizer/prep.h"
 #include "parser/parse_func.h"
 #include "storage/sinval.h"
@@ -912,7 +911,6 @@ BuildIndexInfo(Form_pg_index indexStruct)
 
 	/*
 	 * If partial index, convert predicate into expression nodetree
-	 * and prepare an execution state nodetree for it
 	 */
 	if (VARSIZE(&indexStruct->indpred) > VARHDRSZ)
 	{
@@ -921,9 +919,7 @@ BuildIndexInfo(Form_pg_index indexStruct)
 		predString = DatumGetCString(DirectFunctionCall1(textout,
 								PointerGetDatum(&indexStruct->indpred)));
 		ii->ii_Predicate = stringToNode(predString);
-		fix_opfuncids((Node *) ii->ii_Predicate);
-		ii->ii_PredicateState = (List *)
-			ExecInitExpr((Expr *) ii->ii_Predicate, NULL);
+		ii->ii_PredicateState = NIL;
 		pfree(predString);
 	}
 	else
@@ -1489,9 +1485,10 @@ IndexBuildHeapScan(Relation heapRelation,
 	Datum		attdata[INDEX_MAX_KEYS];
 	char		nulls[INDEX_MAX_KEYS];
 	double		reltuples;
-	List	   *predicate = indexInfo->ii_PredicateState;
+	List	   *predicate;
 	TupleTable	tupleTable;
 	TupleTableSlot *slot;
+	EState	   *estate;
 	ExprContext *econtext;
 	Snapshot	snapshot;
 	TransactionId OldestXmin;
@@ -1504,27 +1501,41 @@ IndexBuildHeapScan(Relation heapRelation,
 	heapDescriptor = RelationGetDescr(heapRelation);
 
 	/*
+	 * Need an EState for evaluation of functional-index functions
+	 * and partial-index predicates.
+	 */
+	estate = CreateExecutorState();
+	econtext = GetPerTupleExprContext(estate);
+
+	/*
 	 * If this is a predicate (partial) index, we will need to evaluate
 	 * the predicate using ExecQual, which requires the current tuple to
-	 * be in a slot of a TupleTable.  In addition, ExecQual must have an
-	 * ExprContext referring to that slot.	Here, we initialize dummy
-	 * TupleTable and ExprContext objects for this purpose. --Nels, Feb 92
-	 *
-	 * We construct the ExprContext anyway since we need a per-tuple
-	 * temporary memory context for function evaluation -- tgl July 00
+	 * be in a slot of a TupleTable.
 	 */
-	if (predicate != NIL)
+	if (indexInfo->ii_Predicate != NIL)
 	{
 		tupleTable = ExecCreateTupleTable(1);
 		slot = ExecAllocTableSlot(tupleTable);
 		ExecSetSlotDescriptor(slot, heapDescriptor, false);
+
+		/* Arrange for econtext's scan tuple to be the tuple under test */
+		econtext->ecxt_scantuple = slot;
+
+		/*
+		 * Set up execution state for predicate.  Note: we mustn't attempt to
+		 * cache this in the indexInfo, since we're building it in a transient
+		 * EState.
+		 */
+		predicate = (List *)
+			ExecPrepareExpr((Expr *) indexInfo->ii_Predicate,
+							estate);
 	}
 	else
 	{
 		tupleTable = NULL;
 		slot = NULL;
+		predicate = NIL;
 	}
-	econtext = MakeExprContext(slot, TransactionCommandContext);
 
 	/*
 	 * Ok, begin our scan of the base relation.  We use SnapshotAny
@@ -1687,9 +1698,10 @@ IndexBuildHeapScan(Relation heapRelation,
 
 	heap_endscan(scan);
 
-	if (predicate != NIL)
+	if (tupleTable)
 		ExecDropTupleTable(tupleTable, true);
-	FreeExprContext(econtext);
+
+	FreeExecutorState(estate);
 
 	return reltuples;
 }

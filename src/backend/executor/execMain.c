@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.192 2002/12/13 19:45:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.193 2002/12/15 16:17:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,7 +40,6 @@
 #include "executor/execdebug.h"
 #include "executor/execdefs.h"
 #include "miscadmin.h"
-#include "optimizer/planmain.h"
 #include "optimizer/var.h"
 #include "parser/parsetree.h"
 #include "utils/acl.h"
@@ -53,7 +52,6 @@ static void initResultRelInfo(ResultRelInfo *resultRelInfo,
 				  Index resultRelationIndex,
 				  List *rangeTable,
 				  CmdType operation);
-static void EndPlan(PlanState *planstate, EState *estate);
 static TupleTableSlot *ExecutePlan(EState *estate, PlanState *planstate,
 			CmdType operation,
 			long numberTuples,
@@ -86,27 +84,31 @@ static void ExecCheckRTEPerms(RangeTblEntry *rte, CmdType operation);
  * field of the QueryDesc is filled in to describe the tuples that will be
  * returned, and the internal fields (estate and planstate) are set up.
  *
- * XXX this will change soon:
- * NB: the CurrentMemoryContext when this is called must be the context
- * to be used as the per-query context for the query plan.	ExecutorRun()
- * and ExecutorEnd() must be called in this same memory context.
+ * NB: the CurrentMemoryContext when this is called will become the parent
+ * of the per-query context used for this Executor invocation.
  * ----------------------------------------------------------------
  */
 void
 ExecutorStart(QueryDesc *queryDesc)
 {
 	EState	   *estate;
+	MemoryContext oldcontext;
 
 	/* sanity checks: queryDesc must not be started already */
 	Assert(queryDesc != NULL);
 	Assert(queryDesc->estate == NULL);
 
 	/*
-	 * Build EState, fill with parameters from queryDesc
+	 * Build EState, switch into per-query memory context for startup.
 	 */
 	estate = CreateExecutorState();
 	queryDesc->estate = estate;
 
+	oldcontext = MemoryContextSwitchTo(estate->es_query_cxt);
+
+	/*
+	 * Fill in parameters, if any, from queryDesc
+	 */
 	estate->es_param_list_info = queryDesc->params;
 
 	if (queryDesc->plantree->nParamExec > 0)
@@ -128,6 +130,8 @@ ExecutorStart(QueryDesc *queryDesc)
 	 * Initialize the plan state tree
 	 */
 	InitPlan(queryDesc);
+
+	MemoryContextSwitchTo(oldcontext);
 }
 
 /* ----------------------------------------------------------------
@@ -152,23 +156,30 @@ TupleTableSlot *
 ExecutorRun(QueryDesc *queryDesc,
 			ScanDirection direction, long count)
 {
-	CmdType		operation;
 	EState	   *estate;
+	CmdType		operation;
 	CommandDest dest;
 	DestReceiver *destfunc;
 	TupleTableSlot *result;
+	MemoryContext oldcontext;
+
+	/* sanity checks */
+	Assert(queryDesc != NULL);
+
+	estate = queryDesc->estate;
+
+	Assert(estate != NULL);
 
 	/*
-	 * sanity checks
+	 * Switch into per-query memory context
 	 */
-	Assert(queryDesc != NULL);
+	oldcontext = MemoryContextSwitchTo(estate->es_query_cxt);
 
 	/*
 	 * extract information from the query descriptor and the query
 	 * feature.
 	 */
 	operation = queryDesc->operation;
-	estate = queryDesc->estate;
 	dest = queryDesc->dest;
 
 	/*
@@ -199,6 +210,8 @@ ExecutorRun(QueryDesc *queryDesc,
 	 */
 	(*destfunc->cleanup) (destfunc);
 
+	MemoryContextSwitchTo(oldcontext);
+
 	return result;
 }
 
@@ -213,72 +226,37 @@ void
 ExecutorEnd(QueryDesc *queryDesc)
 {
 	EState	   *estate;
+	MemoryContext oldcontext;
 
 	/* sanity checks */
 	Assert(queryDesc != NULL);
 
 	estate = queryDesc->estate;
 
-	EndPlan(queryDesc->planstate, estate);
-
-	if (estate->es_snapshot != NULL)
-	{
-		if (estate->es_snapshot->xcnt > 0)
-			pfree(estate->es_snapshot->xip);
-		pfree(estate->es_snapshot);
-		estate->es_snapshot = NULL;
-	}
-
-	if (estate->es_param_exec_vals != NULL)
-	{
-		pfree(estate->es_param_exec_vals);
-		estate->es_param_exec_vals = NULL;
-	}
-}
-
-
-/*
- * CreateExecutorState
- */
-EState *
-CreateExecutorState(void)
-{
-	EState	   *state;
+	Assert(estate != NULL);
 
 	/*
-	 * create a new executor state
+	 * Switch into per-query memory context to run ExecEndPlan
 	 */
-	state = makeNode(EState);
+	oldcontext = MemoryContextSwitchTo(estate->es_query_cxt);
+
+	ExecEndPlan(queryDesc->planstate, estate);
 
 	/*
-	 * initialize the Executor State structure
+	 * Must switch out of context before destroying it
 	 */
-	state->es_direction = ForwardScanDirection;
-	state->es_range_table = NIL;
-
-	state->es_result_relations = NULL;
-	state->es_num_result_relations = 0;
-	state->es_result_relation_info = NULL;
-
-	state->es_junkFilter = NULL;
-
-	state->es_into_relation_descriptor = NULL;
-
-	state->es_param_list_info = NULL;
-	state->es_param_exec_vals = NULL;
-
-	state->es_tupleTable = NULL;
-
-	state->es_query_cxt = CurrentMemoryContext;
-
-	state->es_instrument = false;
-
-	state->es_per_tuple_exprcontext = NULL;
+	MemoryContextSwitchTo(oldcontext);
 
 	/*
-	 * return the executor state structure
+	 * Release EState and per-query memory context.  This should release
+	 * everything the executor has allocated.
 	 */
-	return state;
+	FreeExecutorState(estate);
+
+	/* Reset queryDesc fields that no longer point to anything */
+	queryDesc->tupDesc = NULL;
+	queryDesc->estate = NULL;
+	queryDesc->planstate = NULL;
 }
 
 
@@ -794,13 +772,13 @@ initResultRelInfo(ResultRelInfo *resultRelInfo,
 }
 
 /* ----------------------------------------------------------------
- *		EndPlan
+ *		ExecEndPlan
  *
  *		Cleans up the query plan -- closes files and frees up storage
  * ----------------------------------------------------------------
  */
-static void
-EndPlan(PlanState *planstate, EState *estate)
+void
+ExecEndPlan(PlanState *planstate, EState *estate)
 {
 	ResultRelInfo *resultRelInfo;
 	int			i;
@@ -1542,9 +1520,8 @@ ExecRelCheck(ResultRelInfo *resultRelInfo,
 		for (i = 0; i < ncheck; i++)
 		{
 			qual = (List *) stringToNode(check[i].ccbin);
-			fix_opfuncids((Node *) qual);
 			resultRelInfo->ri_ConstraintExprs[i] = (List *)
-				ExecInitExpr((Expr *) qual, NULL);
+				ExecPrepareExpr((Expr *) qual, estate);
 		}
 		MemoryContextSwitchTo(oldContext);
 	}

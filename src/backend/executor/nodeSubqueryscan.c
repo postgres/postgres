@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubqueryscan.c,v 1.15 2002/12/13 19:45:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubqueryscan.c,v 1.16 2002/12/15 16:17:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,6 +53,7 @@ SubqueryNext(SubqueryScanState *node)
 	EState	   *estate;
 	ScanDirection direction;
 	TupleTableSlot *slot;
+	MemoryContext oldcontext;
 
 	/*
 	 * get information from the estate and scan state
@@ -66,11 +67,16 @@ SubqueryNext(SubqueryScanState *node)
 	 */
 
 	/*
-	 * get the next tuple from the sub-query
+	 * Get the next tuple from the sub-query.  We have to be careful to
+	 * run it in its appropriate memory context.
 	 */
 	node->sss_SubEState->es_direction = direction;
 
+	oldcontext = MemoryContextSwitchTo(node->sss_SubEState->es_query_cxt);
+
 	slot = ExecProcNode(node->subplan);
+
+	MemoryContextSwitchTo(oldcontext);
 
 	node->ss.ss_ScanTupleSlot = slot;
 
@@ -106,6 +112,7 @@ ExecInitSubqueryScan(SubqueryScan *node, EState *estate)
 	SubqueryScanState *subquerystate;
 	RangeTblEntry *rte;
 	EState	   *sp_estate;
+	MemoryContext oldcontext;
 
 	/*
 	 * SubqueryScan should not have any "normal" children.
@@ -152,8 +159,16 @@ ExecInitSubqueryScan(SubqueryScan *node, EState *estate)
 	rte = rt_fetch(node->scan.scanrelid, estate->es_range_table);
 	Assert(rte->rtekind == RTE_SUBQUERY);
 
+	/*
+	 * The subquery needs its own EState because it has its own rangetable.
+	 * It shares our Param ID space, however.  XXX if rangetable access were
+	 * done differently, the subquery could share our EState, which would
+	 * eliminate some thrashing about in this module...
+	 */
 	sp_estate = CreateExecutorState();
 	subquerystate->sss_SubEState = sp_estate;
+
+	oldcontext = MemoryContextSwitchTo(sp_estate->es_query_cxt);
 
 	sp_estate->es_range_table = rte->subquery->rtable;
 	sp_estate->es_param_list_info = estate->es_param_list_info;
@@ -163,7 +178,12 @@ ExecInitSubqueryScan(SubqueryScan *node, EState *estate)
 	sp_estate->es_snapshot = estate->es_snapshot;
 	sp_estate->es_instrument = estate->es_instrument;
 
+	/*
+	 * Start up the subplan (this is a very cut-down form of InitPlan())
+	 */
 	subquerystate->subplan = ExecInitNode(node->subplan, sp_estate);
+
+	MemoryContextSwitchTo(oldcontext);
 
 	subquerystate->ss.ss_ScanTupleSlot = NULL;
 	subquerystate->ss.ps.ps_TupFromTlist = false;
@@ -197,10 +217,11 @@ ExecCountSlotsSubqueryScan(SubqueryScan *node)
 void
 ExecEndSubqueryScan(SubqueryScanState *node)
 {
+	MemoryContext oldcontext;
+
 	/*
-	 * Free the projection info and the scan attribute info
+	 * Free the exprcontext
 	 */
-	ExecFreeProjectionInfo(&node->ss.ps);
 	ExecFreeExprContext(&node->ss.ps);
 
 	/*
@@ -211,15 +232,13 @@ ExecEndSubqueryScan(SubqueryScanState *node)
 	/*
 	 * close down subquery
 	 */
-	ExecEndNode(node->subplan);
+	oldcontext = MemoryContextSwitchTo(node->sss_SubEState->es_query_cxt);
 
-	/*
-	 * clean up subquery's tuple table
-	 */
-	node->ss.ss_ScanTupleSlot = NULL;
-	ExecDropTupleTable(node->sss_SubEState->es_tupleTable, true);
+	ExecEndPlan(node->subplan, node->sss_SubEState);
 
-	/* XXX we seem to be leaking the sub-EState... */
+	MemoryContextSwitchTo(oldcontext);
+
+	FreeExecutorState(node->sss_SubEState);
 }
 
 /* ----------------------------------------------------------------
@@ -232,12 +251,17 @@ void
 ExecSubqueryReScan(SubqueryScanState *node, ExprContext *exprCtxt)
 {
 	EState	   *estate;
+	MemoryContext oldcontext;
 
 	estate = node->ss.ps.state;
 
+	oldcontext = MemoryContextSwitchTo(node->sss_SubEState->es_query_cxt);
+
 	/*
 	 * ExecReScan doesn't know about my subplan, so I have to do
-	 * changed-parameter signaling myself.
+	 * changed-parameter signaling myself.  This is just as well,
+	 * because the subplan has its own memory context in which its
+	 * chgParam lists live.
 	 */
 	if (node->ss.ps.chgParam != NULL)
 		SetChangedParamList(node->subplan, node->ss.ps.chgParam);
@@ -248,6 +272,8 @@ ExecSubqueryReScan(SubqueryScanState *node, ExprContext *exprCtxt)
 	 */
 	if (node->subplan->chgParam == NULL)
 		ExecReScan(node->subplan, NULL);
+
+	MemoryContextSwitchTo(oldcontext);
 
 	node->ss.ss_ScanTupleSlot = NULL;
 }

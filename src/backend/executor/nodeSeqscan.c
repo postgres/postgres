@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSeqscan.c,v 1.40 2002/12/13 19:45:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSeqscan.c,v 1.41 2002/12/15 16:17:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -264,21 +264,20 @@ ExecEndSeqScan(SeqScanState *node)
 	scanDesc = node->ss_currentScanDesc;
 
 	/*
-	 * Free the projection info and the scan attribute info
+	 * Free the exprcontext
 	 */
-	ExecFreeProjectionInfo(&node->ps);
 	ExecFreeExprContext(&node->ps);
-
-	/*
-	 * close heap scan
-	 */
-	heap_endscan(scanDesc);
 
 	/*
 	 * clean out the tuple table
 	 */
 	ExecClearTuple(node->ps.ps_ResultTupleSlot);
 	ExecClearTuple(node->ss_ScanTupleSlot);
+
+	/*
+	 * close heap scan
+	 */
+	heap_endscan(scanDesc);
 
 	/*
 	 * close the heap relation.

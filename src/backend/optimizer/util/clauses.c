@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.119 2002/12/14 00:17:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.120 2002/12/15 16:17:50 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1684,7 +1684,8 @@ evaluate_function(Oid funcid, List *args, HeapTuple func_tuple)
 	bool		has_null_input = false;
 	FuncExpr   *newexpr;
 	ExprState  *newexprstate;
-	ExprContext *econtext;
+	EState	   *estate;
+	MemoryContext oldcontext;
 	Datum		const_val;
 	bool		const_is_null;
 	List	   *arg;
@@ -1729,7 +1730,14 @@ evaluate_function(Oid funcid, List *args, HeapTuple func_tuple)
 	 *
 	 * We use the executor's routine ExecEvalExpr() to avoid duplication of
 	 * code and ensure we get the same result as the executor would get.
-	 *
+	 * To use the executor, we need an EState.
+	 */
+	estate = CreateExecutorState();
+
+	/* We can use the estate's working context to avoid memory leaks. */
+	oldcontext = MemoryContextSwitchTo(estate->es_query_cxt);
+
+	/*
 	 * Build a new FuncExpr node containing the already-simplified arguments.
 	 */
 	newexpr = makeNode(FuncExpr);
@@ -1739,27 +1747,35 @@ evaluate_function(Oid funcid, List *args, HeapTuple func_tuple)
 	newexpr->funcformat = COERCE_EXPLICIT_CALL;	/* doesn't matter */
 	newexpr->args = args;
 
-	/* Get info needed about result datatype */
-	get_typlenbyval(result_typeid, &resultTypLen, &resultTypByVal);
+	/*
+	 * Prepare it for execution.
+	 */
+	newexprstate = ExecPrepareExpr((Expr *) newexpr, estate);
 
 	/*
-	 * It is OK to use a dummy econtext because none of the
+	 * And evaluate it.
+	 *
+	 * It is OK to use a default econtext because none of the
 	 * ExecEvalExpr() code used in this situation will use econtext.  That
 	 * might seem fortuitous, but it's not so unreasonable --- a constant
 	 * expression does not depend on context, by definition, n'est ce pas?
 	 */
-	econtext = MakeExprContext(NULL, CurrentMemoryContext);
-
-	newexprstate = ExecInitExpr((Expr *) newexpr, NULL);
-
-	const_val = ExecEvalExprSwitchContext(newexprstate, econtext,
+	const_val = ExecEvalExprSwitchContext(newexprstate,
+										  GetPerTupleExprContext(estate),
 										  &const_is_null, NULL);
+
+	/* Get info needed about result datatype */
+	get_typlenbyval(result_typeid, &resultTypLen, &resultTypByVal);
+
+	/* Get back to outer memory context */
+	MemoryContextSwitchTo(oldcontext);
 
 	/* Must copy result out of sub-context used by expression eval */
 	if (!const_is_null)
 		const_val = datumCopy(const_val, resultTypByVal, resultTypLen);
 
-	FreeExprContext(econtext);
+	/* Release all the junk we just created */
+	FreeExecutorState(estate);
 
 	/*
 	 * Make the constant result node.

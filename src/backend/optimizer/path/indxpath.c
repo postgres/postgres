@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.128 2002/12/13 19:45:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.129 2002/12/15 16:17:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1132,7 +1132,8 @@ pred_test_simple_clause(Expr *predicate, Node *clause)
 	HeapTuple	tuple;
 	ScanKeyData entry[1];
 	Form_pg_amop aform;
-	ExprContext *econtext;
+	EState	   *estate;
+	MemoryContext oldcontext;
 
 	/* First try the equal() test */
 	if (equal((Node *) predicate, clause))
@@ -1267,20 +1268,33 @@ pred_test_simple_clause(Expr *predicate, Node *clause)
 	ReleaseSysCache(tuple);
 
 	/*
-	 * 5. Evaluate the test
+	 * 5. Evaluate the test.  For this we need an EState.
 	 */
+	estate = CreateExecutorState();
+
+	/* We can use the estate's working context to avoid memory leaks. */
+	oldcontext = MemoryContextSwitchTo(estate->es_query_cxt);
+
+	/* Build expression tree */
 	test_expr = make_opclause(test_op,
 							  BOOLOID,
 							  false,
 							  (Expr *) clause_const,
 							  (Expr *) pred_const);
-	set_opfuncid((OpExpr *) test_expr);
-	test_exprstate = ExecInitExpr(test_expr, NULL);
 
-	econtext = MakeExprContext(NULL, CurrentMemoryContext);
-	test_result = ExecEvalExprSwitchContext(test_exprstate, econtext,
+	/* Prepare it for execution */
+	test_exprstate = ExecPrepareExpr(test_expr, estate);
+
+	/* And execute it. */
+	test_result = ExecEvalExprSwitchContext(test_exprstate,
+											GetPerTupleExprContext(estate),
 											&isNull, NULL);
-	FreeExprContext(econtext);
+
+	/* Get back to outer memory context */
+	MemoryContextSwitchTo(oldcontext);
+
+	/* Release all the junk we just created */
+	FreeExecutorState(estate);
 
 	if (isNull)
 	{

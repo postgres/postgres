@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.94 2002/12/13 19:45:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.95 2002/12/15 16:17:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,6 @@
 #include "executor/executor.h"
 #include "miscadmin.h"
 #include "optimizer/clauses.h"
-#include "optimizer/planmain.h"
 #include "optimizer/prep.h"
 #include "parser/parsetree.h"
 #include "parser/parse_coerce.h"
@@ -163,7 +162,6 @@ DefineIndex(RangeVar *heapRelation,
 	if (predicate)
 	{
 		cnfPred = canonicalize_qual((Expr *) copyObject(predicate), true);
-		fix_opfuncids((Node *) cnfPred);
 		CheckPredicate(cnfPred, rangetable, relationId);
 	}
 
@@ -173,8 +171,7 @@ DefineIndex(RangeVar *heapRelation,
 	 */
 	indexInfo = makeNode(IndexInfo);
 	indexInfo->ii_Predicate = cnfPred;
-	indexInfo->ii_PredicateState = (List *)
-		ExecInitExpr((Expr *) cnfPred, NULL);
+	indexInfo->ii_PredicateState = NIL;
 	indexInfo->ii_FuncOid = InvalidOid;
 	indexInfo->ii_Unique = unique;
 

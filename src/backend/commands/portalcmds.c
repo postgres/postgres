@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/portalcmds.c,v 1.5 2002/12/05 15:50:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/portalcmds.c,v 1.6 2002/12/15 16:17:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,8 +31,6 @@
 void
 PortalCleanup(Portal portal)
 {
-	MemoryContext oldcontext;
-
 	/*
 	 * sanity checks
 	 */
@@ -40,19 +38,15 @@ PortalCleanup(Portal portal)
 	AssertArg(portal->cleanup == PortalCleanup);
 
 	/*
-	 * set proper portal-executor context before calling ExecMain.
-	 */
-	oldcontext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
-
-	/*
 	 * tell the executor to shutdown the query
 	 */
 	ExecutorEnd(PortalGetQueryDesc(portal));
 
 	/*
-	 * switch back to previous context
+	 * This should be unnecessary since the querydesc should be in the
+	 * portal's memory context, but do it anyway for symmetry.
 	 */
-	MemoryContextSwitchTo(oldcontext);
+	FreeQueryDesc(PortalGetQueryDesc(portal));
 }
 
 

@@ -45,7 +45,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.100 2002/12/13 19:45:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.101 2002/12/15 16:17:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1392,8 +1392,6 @@ ExecEndAgg(AggState *node)
 			tuplesort_end(peraggstate->sortstate);
 	}
 
-	ExecFreeProjectionInfo(&node->ss.ps);
-
 	/*
 	 * Free both the expr contexts.
 	 */
@@ -1401,18 +1399,13 @@ ExecEndAgg(AggState *node)
 	node->ss.ps.ps_ExprContext = node->tmpcontext;
 	ExecFreeExprContext(&node->ss.ps);
 
+	/* clean up tuple table */
+	ExecClearTuple(node->ss.ss_ScanTupleSlot);
+
 	MemoryContextDelete(node->aggcontext);
 
 	outerPlan = outerPlanState(node);
 	ExecEndNode(outerPlan);
-
-	/* clean up tuple table */
-	ExecClearTuple(node->ss.ss_ScanTupleSlot);
-	if (node->grp_firstTuple != NULL)
-	{
-		heap_freetuple(node->grp_firstTuple);
-		node->grp_firstTuple = NULL;
-	}
 }
 
 void

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeLimit.c,v 1.13 2002/12/13 19:45:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeLimit.c,v 1.14 2002/12/15 16:17:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -349,10 +349,10 @@ ExecEndLimit(LimitState *node)
 {
 	ExecFreeExprContext(&node->ps);
 
-	ExecEndNode(outerPlanState(node));
-
 	/* clean up tuple table */
 	ExecClearTuple(node->ps.ps_ResultTupleSlot);
+
+	ExecEndNode(outerPlanState(node));
 }
 
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.61 2002/12/05 15:50:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.62 2002/12/15 16:17:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -284,7 +284,8 @@ postquel_end(execution_state *es)
 	if (es->qd->operation != CMD_UTILITY)
 		ExecutorEnd(es->qd);
 
-	pfree(es->qd);
+	FreeQueryDesc(es->qd);
+
 	es->qd = NULL;
 
 	es->status = F_EXEC_DONE;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.44 2002/12/13 19:45:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.45 2002/12/15 16:17:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -456,16 +456,9 @@ ExecEndHashJoin(HashJoinState *node)
 	}
 
 	/*
-	 * Free the projection info and the scan attribute info
+	 * Free the exprcontext
 	 */
-	ExecFreeProjectionInfo(&node->js.ps);
 	ExecFreeExprContext(&node->js.ps);
-
-	/*
-	 * clean up subtrees
-	 */
-	ExecEndNode(outerPlanState(node));
-	ExecEndNode(innerPlanState(node));
 
 	/*
 	 * clean out the tuple table
@@ -474,6 +467,11 @@ ExecEndHashJoin(HashJoinState *node)
 	ExecClearTuple(node->hj_OuterTupleSlot);
 	ExecClearTuple(node->hj_HashTupleSlot);
 
+	/*
+	 * clean up subtrees
+	 */
+	ExecEndNode(outerPlanState(node));
+	ExecEndNode(innerPlanState(node));
 }
 
 /* ----------------------------------------------------------------
