@@ -345,7 +345,7 @@ From owner-pgsql-hackers@hub.org Tue Oct 19 10:31:10 1999
 Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id KAA29087
 	for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 10:31:08 -0400 (EDT)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id KAA27535 for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 10:19:47 -0400 (EDT)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.5 $) with ESMTP id KAA27535 for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 10:19:47 -0400 (EDT)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.3/8.9.3) with SMTP id KAA30328;
 	Tue, 19 Oct 1999 10:12:10 -0400 (EDT)
@@ -454,7 +454,7 @@ From owner-pgsql-hackers@hub.org Tue Oct 19 21:25:30 1999
 Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id VAA28130
 	for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 21:25:26 -0400 (EDT)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id VAA10512 for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 21:15:28 -0400 (EDT)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.5 $) with ESMTP id VAA10512 for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 21:15:28 -0400 (EDT)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.3/8.9.3) with SMTP id VAA50745;
 	Tue, 19 Oct 1999 21:07:23 -0400 (EDT)
@@ -734,8 +734,8 @@ Status: OR
 I don't know how much useful could be LRU-2 but with WAL we should try
 to reuse undirty free buffers first, not dirty ones, just to postpone
 writes as long as we can. (BTW, this is what Oracle does.)
-So, we probably should put new free dirty buffer just before first
-undirty one in LRU.
+So, we probably should put new unfree dirty buffer just before first
+dirty one in LRU.
 
 Vadim
 
