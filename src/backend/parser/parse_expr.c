@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.8 1998/01/19 05:06:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.9 1998/01/19 05:48:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -277,12 +277,14 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 					{
 						Node	   *lexpr = transformExpr(pstate, lfirst(elist), precedence);
 						Node	   *rexpr = lfirst(right_expr);
+						TargetEntry *tent = (TargetEntry *)rexpr;
 						Expr	   *op_expr;						
 
-						op_expr = make_op(op, lexpr, rexpr);
+						op_expr = make_op(op, lexpr, tent->expr);
 						sublink->oper = lappend(sublink->oper, op_expr->oper);
 						right_expr = lnext(right_expr);
 					}
+					result = (Node *) expr;
 				}
 				break;
 			}
@@ -381,6 +383,9 @@ exprType(Node *expr)
 			break;
 		case T_Param:
 			type = ((Param *) expr)->paramtype;
+			break;
+		case T_SubLink:
+			type = BOOLOID;
 			break;
 		case T_Ident:
 			/* is this right? */
