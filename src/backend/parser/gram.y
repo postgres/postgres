@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.21 1998/08/05 04:49:08 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.22 1998/08/17 16:08:34 thomas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -204,7 +204,7 @@ Oid	param_type(int t); /* used in parse_expr.c */
 				a_expr, a_expr_or_null, b_expr, AexprConst,
 				in_expr, in_expr_nodes, not_in_expr, not_in_expr_nodes,
 				having_clause
-%type <list>	row_descriptor, row_list
+%type <list>	row_descriptor, row_list, c_list, c_expr
 %type <node>	row_expr
 %type <str>		row_op
 %type <ival>	sub_type
@@ -1043,7 +1043,9 @@ constraint_expr:  AexprConst
 			| constraint_expr Op constraint_expr
 				{	$$ = nconc( $1, lcons( makeString( $2), $3)); }
 			| constraint_expr LIKE constraint_expr
-				{	$$ = nconc( $1, lcons( makeString( "like"), $3)); }
+				{	$$ = nconc( $1, lcons( makeString( "LIKE"), $3)); }
+			| constraint_expr NOT LIKE constraint_expr
+				{	$$ = nconc( $1, lcons( makeString( "NOT LIKE"), $4)); }
 			| constraint_expr AND constraint_expr
 				{	$$ = nconc( $1, lcons( makeString( "AND"), $3)); }
 			| constraint_expr OR constraint_expr
@@ -1070,6 +1072,49 @@ constraint_expr:  AexprConst
 				{	$$ = lappend( $1, makeString( "IS NOT TRUE")); }
 			| constraint_expr IS NOT FALSE_P
 				{	$$ = lappend( $1, makeString( "IS NOT FALSE")); }
+			| constraint_expr IN '(' c_list ')'
+				{
+					$$ = lappend( $1, makeString("IN"));
+					$$ = lappend( $$, makeString("("));
+					$$ = nconc( $$, $4);
+					$$ = lappend( $$, makeString(")"));
+				}
+			| constraint_expr NOT IN '(' c_list ')'
+				{
+					$$ = lappend( $1, makeString("NOT IN"));
+					$$ = lappend( $$, makeString("("));
+					$$ = nconc( $$, $5);
+					$$ = lappend( $$, makeString(")"));
+				}
+			| constraint_expr BETWEEN c_expr AND c_expr
+				{
+					$$ = lappend( $1, makeString("BETWEEN"));
+					$$ = nconc( $$, $3);
+					$$ = lappend( $$, makeString("AND"));
+					$$ = nconc( $$, $5);
+				}
+			| constraint_expr NOT BETWEEN c_expr AND c_expr
+				{
+					$$ = lappend( $1, makeString("NOT BETWEEN"));
+					$$ = nconc( $$, $4);
+					$$ = lappend( $$, makeString("AND"));
+					$$ = nconc( $$, $6);
+				}
+		;
+
+c_list:  c_list ',' c_expr
+				{
+					$$ = lappend($1, makeString(","));
+					$$ = nconc($$, $3);
+				}
+			| c_expr
+				{
+					$$ = $1;
+				}
+		;
+
+c_expr:  AexprConst
+				{	$$ = makeConstantList((A_Const *) $1); }
 		;
 
 key_match:  MATCH FULL					{ $$ = NULL; }
