@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/orindxpath.c,v 1.62 2004/08/29 05:06:43 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/orindxpath.c,v 1.63 2004/10/11 22:56:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -355,15 +355,42 @@ best_or_subclause_index(Query *root,
 		List	   *indexquals;
 		Path		subclause_path;
 
-		/* Ignore partial indexes that do not match the query */
+		/*
+		 * Ignore partial indexes that do not match the query.  If predOK
+		 * is true then the index's predicate is implied by top-level
+		 * restriction clauses, so we can use it.  However, it might also
+		 * be implied by the current OR subclause (perhaps in conjunction
+		 * with the top-level clauses), in which case we can use it for this
+		 * particular scan.
+		 *
+		 * XXX this code is partially redundant with logic in
+		 * group_clauses_by_indexkey_for_or(); consider refactoring.
+		 */
 		if (index->indpred != NIL && !index->predOK)
-			continue;
+		{
+			List   *subclauserinfos;
+
+			if (and_clause((Node *) subclause))
+				subclauserinfos = list_copy(((BoolExpr *) subclause)->args);
+			else if (IsA(subclause, RestrictInfo))
+				subclauserinfos = list_make1(subclause);
+			else
+				continue;		/* probably can't happen */
+			if (!pred_test(index->indpred,
+						   list_concat(subclauserinfos, 
+									   rel->baserestrictinfo)))
+				continue;
+		}
 
 		/* Collect index clauses usable with this index */
 		indexclauses = group_clauses_by_indexkey_for_or(rel, index, subclause);
 
-		/* Ignore index if it doesn't match the subclause at all */
-		if (indexclauses == NIL)
+		/*
+		 * Ignore index if it doesn't match the subclause at all; except
+		 * that if it's a partial index, consider it anyway, since the
+		 * selectivity of the predicate alone might make the index useful.
+		 */
+		if (indexclauses == NIL && index->indpred == NIL)
 			continue;
 
 		/* Convert clauses to indexquals the executor can handle */
