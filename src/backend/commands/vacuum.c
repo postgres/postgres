@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.83 1998/10/07 17:12:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.84 1998/10/07 22:31:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -306,26 +306,11 @@ vc_getrels(NameData *VacRelP)
 		d = heap_getattr(tuple, Anum_pg_class_relname, tupdesc, &n);
 		rname = (char *) d;
 
-		/*
-		 * don't vacuum large objects for now - something breaks when we
-		 * do
-		 */
-		if ((strlen(rname) >= 5) && rname[0] == 'x' &&
-			rname[1] == 'i' && rname[2] == 'n' &&
-			(rname[3] == 'v' || rname[3] == 'x') &&
-			rname[4] >= '0' && rname[4] <= '9')
-		{
-			elog(NOTICE, "Rel %s: can't vacuum LargeObjects now",
-				 rname);
-			continue;
-		}
-
 		d = heap_getattr(tuple, Anum_pg_class_relkind, tupdesc, &n);
 
 		rkind = DatumGetChar(d);
 
-		/* skip system relations */
-		if (rkind != 'r')
+		if (rkind != RELKIND_RELATION)
 		{
 			elog(NOTICE, "Vacuum: can not process index and certain system tables");
 			continue;
@@ -372,8 +357,6 @@ vc_getrels(NameData *VacRelP)
 static void
 vc_vacone(Oid relid, bool analyze, List *va_cols)
 {
-	Relation	rel;
-	TupleDesc	tupdesc;
 	HeapTuple	tuple,
 				typetuple;
 	Relation	onerel;
@@ -389,9 +372,6 @@ vc_vacone(Oid relid, bool analyze, List *va_cols)
 
 	StartTransactionCommand();
 
-	rel = heap_openr(RelationRelationName);
-	tupdesc = RelationGetDescr(rel);
-
 	/*
 	 * Race condition -- if the pg_class tuple has gone away since the
 	 * last time we saw it, we don't need to vacuum it.
@@ -401,7 +381,6 @@ vc_vacone(Oid relid, bool analyze, List *va_cols)
 								0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
 	{
-		heap_close(rel);
 		CommitTransactionCommand();
 		return;
 	}
@@ -573,7 +552,6 @@ vc_vacone(Oid relid, bool analyze, List *va_cols)
 
 	/* all done with this class */
 	heap_close(onerel);
-	heap_close(rel);
 
 	/* update statistics in pg_class */
 	vc_updstats(vacrelstats->relid, vacrelstats->num_pages,
@@ -1744,6 +1722,7 @@ vc_updstats(Oid relid, int num_pages, int num_tuples, bool hasindex, VRelStats *
 				sd;
 	HeapScanDesc scan;
 	HeapTuple	rtup,
+				ctup,
 				atup,
 				stup;
 	Form_pg_class pgcform;
@@ -1754,18 +1733,19 @@ vc_updstats(Oid relid, int num_pages, int num_tuples, bool hasindex, VRelStats *
 	/*
 	 * update number of tuples and number of pages in pg_class
 	 */
-	rtup = SearchSysCacheTuple(RELOID,
+	ctup = SearchSysCacheTupleCopy(RELOID,
 							   ObjectIdGetDatum(relid),
 							   0, 0, 0);
-	if (!HeapTupleIsValid(rtup))
+	if (!HeapTupleIsValid(ctup))
 		elog(ERROR, "pg_class entry for relid %d vanished during vacuuming",
 			 relid);
 
 	rd = heap_openr(RelationRelationName);
 
 	/* get the buffer cache tuple */
-	rtup = heap_fetch(rd, SnapshotNow, &rtup->t_ctid, &buffer);
-
+	rtup = heap_fetch(rd, SnapshotNow, &ctup->t_ctid, &buffer);
+	pfree(ctup);
+	
 	/* overwrite the existing statistics in the tuple */
 	vc_setpagelock(rd, ItemPointerGetBlockNumber(&rtup->t_ctid));
 	pgcform = (Form_pg_class) GETSTRUCT(rtup);
@@ -2175,7 +2155,7 @@ vc_getindices(Oid relid, int *nindices, Relation **Irel)
 			k++;
 		}
 		else
-			elog(NOTICE, "CAN't OPEN INDEX %u - SKIP IT", ioid[i]);
+			elog(NOTICE, "CAN'T OPEN INDEX %u - SKIP IT", ioid[i]);
 	}
 	*nindices = k;
 	pfree(ioid);
