@@ -520,7 +520,7 @@ pgtype_to_name(StatementClass *stmt, Int4 type)
 static Int2
 getNumericDecimalDigits(StatementClass *stmt, Int4 type, int col)
 {
-	Int4		atttypmod = -1;
+	Int4		atttypmod = -1, default_decimal_digits = 6;
 	QResultClass *result;
 	ColumnInfoClass *flds;
 
@@ -545,30 +545,35 @@ getNumericDecimalDigits(StatementClass *stmt, Int4 type, int col)
 				return flds->adtsize[col];
 		}
 		if (atttypmod < 0)
-			return PG_NUMERIC_MAX_SCALE;
+			return default_decimal_digits;
 	}
 	else 
 		atttypmod = QR_get_atttypmod(result, col);
 	if (atttypmod > -1)
 		return (atttypmod & 0xffff);
 	else
-		return (QR_get_display_size(result, col) ?
-				QR_get_display_size(result, col) :
-				PG_NUMERIC_MAX_SCALE);
+	{
+		Int4 dsp_size = QR_get_display_size(result, col);
+		if (dsp_size <= 0)
+			return default_decimal_digits;
+		if (dsp_size < 5)
+			dsp_size = 5;
+		return dsp_size;
+	}
 }
 
 
 static Int4
 getNumericColumnSize(StatementClass *stmt, Int4 type, int col)
 {
-	Int4		atttypmod = -1;
+	Int4	atttypmod = -1, max_column_size = PG_NUMERIC_MAX_PRECISION + PG_NUMERIC_MAX_SCALE, default_column_size = 28;
 	QResultClass *result;
 	ColumnInfoClass *flds;
 
 	mylog("getNumericColumnSize: type=%d, col=%d\n", type, col);
 
 	if (col < 0)
-		return PG_NUMERIC_MAX_PRECISION;
+		return max_column_size;
 
 	result = SC_get_Curres(stmt);
 
@@ -583,19 +588,25 @@ getNumericColumnSize(StatementClass *stmt, Int4 type, int col)
 		{
 			atttypmod = flds->atttypmod[col];
 			if (atttypmod < 0 && flds->adtsize[col] > 0)
-				return flds->adtsize[col];
+				return 2 * flds->adtsize[col];
 		}
 		if (atttypmod < 0)
-			return PG_NUMERIC_MAX_PRECISION;
+			return default_column_size;
 	}
 	else
 		atttypmod = QR_get_atttypmod(result, col);
 	if (atttypmod > -1)
 		return (atttypmod >> 16) & 0xffff;
 	else
-		return (QR_get_display_size(result, col) > 0 ?
-				QR_get_display_size(result, col) :
-				PG_NUMERIC_MAX_PRECISION);
+	{
+		Int4	dsp_size = QR_get_display_size(result, col);
+		if (dsp_size <= 0)
+			return default_column_size;
+		dsp_size *= 2;
+		if (dsp_size < 10)
+			dsp_size = 10;
+		return dsp_size;
+	}
 }
 
 
@@ -665,7 +676,7 @@ getCharColumnSize(StatementClass *stmt, Int4 type, int col, int handle_unknown_s
 	p = QR_get_display_size(result, col); /* longest */
 	attlen = QR_get_atttypmod(result, col);
 	/* Size is unknown -- handle according to parameter */
-	if (attlen > p)		/* maybe the length is known */
+	if (attlen >= p && attlen > 0)	/* maybe the length is known */
 		return attlen;
 
 	/* The type is really unknown */
