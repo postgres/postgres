@@ -49,7 +49,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.114 2003/08/08 21:41:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.115 2003/10/05 22:44:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,6 +64,7 @@
 #include "optimizer/clauses.h"
 #include "optimizer/cost.h"
 #include "optimizer/pathnode.h"
+#include "optimizer/plancat.h"
 #include "parser/parsetree.h"
 #include "utils/selfuncs.h"
 #include "utils/lsyscache.h"
@@ -1343,6 +1344,13 @@ estimate_hash_bucketsize(Query *root, Var *var, int nbuckets)
 						   0, 0);
 	if (!HeapTupleIsValid(tuple))
 	{
+		/*
+		 * If the attribute is known unique because of an index,
+		 * we can treat it as well-distributed.
+		 */
+		if (has_unique_index(rel, var->varattno))
+			return 1.0 / (double) nbuckets;
+
 		/*
 		 * Perhaps the Var is a system attribute; if so, it will have no
 		 * entry in pg_statistic, but we may be able to guess something
