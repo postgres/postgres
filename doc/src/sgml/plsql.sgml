@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.51 2001/11/28 04:18:46 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.52 2002/01/02 00:41:26 tgl Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -457,18 +457,25 @@ END;
 
     <para>
 <synopsis>
-<replaceable>name</replaceable> <replaceable>table-datatype</replaceable>;
+<replaceable>name</replaceable> <replaceable>tablename</replaceable><literal>%ROWTYPE</literal>;
 </synopsis>
     </para>
 
    <para>
-    A variable declared with a composite type (referenced by the name of
-    the table that defines that type) is called a <firstterm>row</>
-    variable.  Such a variable can hold a whole row of a SELECT or FOR
+    A variable of a composite type is called a <firstterm>row</>
+    variable (or <firstterm>rowtype</> variable).  Such a variable can hold a
+    whole row of a SELECT or FOR
     query result, so long as that query's column set matches the declared
-    rowtype of the variable.  The individual fields of the row value are
+    type of the variable.  The individual fields of the row value are
     accessed using the usual dot notation, for example
     <literal>rowvar.field</literal>.
+   </para>
+
+   <para>
+    Presently, a row variable can only be declared using the
+    <literal>%ROWTYPE</literal> notation; although one might expect a
+    bare table name to work as a type declaration, it won't be accepted
+    within <application>PL/pgSQL</application> functions.
    </para>
 
    <para>
@@ -563,9 +570,7 @@ user_id   users.user_id%TYPE;
 	 <type>%ROWTYPE</type> provides the composite data type corresponding
 	 to a whole row of the specified table.
 	 <replaceable>table</replaceable> must be an existing
-	 table or view name of the database.  A row variable declared
-	 in this way acts the same as a row variable explicitly declared using
-	 the same composite (row) datatype.
+	 table or view name of the database.
         </para>
 
 <programlisting>
@@ -616,6 +621,15 @@ RENAME id TO user_id;
 RENAME this_var TO that_var;
 </programlisting>
      </para>
+
+    <note>
+    <para>
+     RENAME appears to be broken as of PostgreSQL 7.2.  Fixing this is
+     of low priority, since ALIAS covers most of the practical uses of
+     RENAME.
+    </para>
+    </note>
+
     </sect2>
   </sect1>
 
