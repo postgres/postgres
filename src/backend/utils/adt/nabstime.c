@@ -4,7 +4,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	  $Id: nabstime.c,v 1.62 1999/12/09 05:02:24 momjian Exp $
+ *	  $Id: nabstime.c,v 1.63 2000/01/02 01:37:27 momjian Exp $
  *
  */
 #include <ctype.h>
@@ -103,11 +103,6 @@ GetCurrentAbsoluteTime(void)
 #endif
 	};
 
-#ifdef DATEDEBUG
-	printf("GetCurrentAbsoluteTime- timezone is %s -> %d seconds from UTC\n",
-		   CTZName, CTimeZone);
-#endif
-
 	return (AbsoluteTime) now;
 }	/* GetCurrentAbsoluteTime() */
 
@@ -142,18 +137,6 @@ abstime2tm(AbsoluteTime time, int *tzp, struct tm * tm, char *tzn)
 	{
 		tx = gmtime((time_t *) &time);
 	};
-#endif
-
-#if defined(DATEDEBUG)
-#if defined(HAVE_TM_ZONE)
-	printf("datetime2tm- (localtime) %d.%02d.%02d %02d:%02d:%02d %s dst=%d\n",
-		   tx->tm_year, tx->tm_mon, tx->tm_mday, tx->tm_hour, tx->tm_min, tx->tm_sec,
-		   tx->tm_zone, tx->tm_isdst);
-#elif defined(HAVE_INT_TIMEZONE)
-	printf("datetime2tm- (localtime) %d.%02d.%02d %02d:%02d:%02d %s %s dst=%d\n",
-		   tx->tm_year, tx->tm_mon, tx->tm_mday, tx->tm_hour, tx->tm_min, tx->tm_sec,
-		   tzname[0], tzname[1], tx->tm_isdst);
-#endif
 #endif
 
 #ifdef USE_POSIX_TIME
@@ -290,10 +273,6 @@ nabstimein(char *str)
 	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
 	  || (DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, &tz) != 0))
 		elog(ERROR, "Bad abstime external representation '%s'", str);
-
-#ifdef DATEDEBUG
-	printf("nabstimein- %d fields are type %d (DTK_DATE=%d)\n", nf, dtype, DTK_DATE);
-#endif
 
 	switch (dtype)
 	{

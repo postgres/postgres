@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.38 1999/07/17 20:17:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.39 2000/01/02 01:37:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,9 +48,6 @@ date_in(char *str)
 	if (!PointerIsValid(str))
 		elog(ERROR, "Bad (null) date external representation", NULL);
 
-#ifdef DATEDEBUG
-	printf("date_in- input string is %s\n", str);
-#endif
 	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
 	 || (DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, &tzp) != 0))
 		elog(ERROR, "Bad date external representation '%s'", str);
@@ -204,11 +201,6 @@ date_datetime(DateADT dateVal)
 	if (date2tm(dateVal, &tz, tm, &fsec, &tzn) != 0)
 		elog(ERROR, "Unable to convert date to datetime", NULL);
 
-#ifdef DATEDEBUG
-	printf("date_datetime- date is %d.%02d.%02d\n", tm->tm_year, tm->tm_mon, tm->tm_mday);
-	printf("date_datetime- time is %02d:%02d:%02d %.7f\n", tm->tm_hour, tm->tm_min, tm->tm_sec, fsec);
-#endif
-
 	if (tm2datetime(tm, fsec, &tz, result) != 0)
 		elog(ERROR, "Datetime out of range", NULL);
 
@@ -330,17 +322,6 @@ date2tm(DateADT dateVal, int *tzp, struct tm * tm, double *fsec, char **tzn)
 #ifdef USE_POSIX_TIME
 		tx = localtime(&utime);
 
-#ifdef DATEDEBUG
-#if defined(HAVE_TM_ZONE)
-		printf("date2tm- (localtime) %d.%02d.%02d %02d:%02d:%02.0f %s dst=%d\n",
-			   tx->tm_year, tx->tm_mon, tx->tm_mday, tx->tm_hour, tx->tm_min, (double) tm->tm_sec,
-			   tx->tm_zone, tx->tm_isdst);
-#elif defined(HAVE_INT_TIMEZONE)
-		printf("date2tm- (localtime) %d.%02d.%02d %02d:%02d:%02.0f %s %s dst=%d\n",
-			   tx->tm_year, tx->tm_mon, tx->tm_mday, tx->tm_hour, tx->tm_min, (double) tm->tm_sec,
-			   tzname[0], tzname[1], tx->tm_isdst);
-#endif
-#endif
 		tm->tm_year = tx->tm_year + 1900;
 		tm->tm_mon = tx->tm_mon + 1;
 		tm->tm_mday = tx->tm_mday;
@@ -375,28 +356,11 @@ date2tm(DateADT dateVal, int *tzp, struct tm * tm, double *fsec, char **tzn)
 	}
 	else
 	{
-#ifdef DATEDEBUG
-		printf("date2tm- convert %d-%d-%d %d:%d%d to datetime\n",
-			   tm->tm_year, tm->tm_mon, tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec);
-#endif
-
 		*tzp = 0;
 		tm->tm_isdst = 0;
 		if (tzn != NULL)
 			*tzn = NULL;
 	}
-
-#ifdef DATEDEBUG
-#if defined(HAVE_TM_ZONE)
-	printf("date2tm- %d.%02d.%02d %02d:%02d:%02.0f (%d %s) dst=%d\n",
-		   tm->tm_year, tm->tm_mon, tm->tm_mday, tm->tm_hour, tm->tm_min, (double) tm->tm_sec,
-		   *tzp, tm->tm_zone, tm->tm_isdst);
-#elif defined(HAVE_INT_TIMEZONE)
-	printf("date2tm- %d.%02d.%02d %02d:%02d:%02.0f (%d %s %s) dst=%d\n",
-		   tm->tm_year, tm->tm_mon, tm->tm_mday, tm->tm_hour, tm->tm_min, (double) tm->tm_sec,
-		   *tzp, tzname[0], tzname[1], tm->tm_isdst);
-#endif
-#endif
 
 	return 0;
 }	/* date2tm() */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.77 1999/12/09 05:02:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.78 2000/01/02 01:37:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -127,11 +127,6 @@ datetime_in(char *str)
 		case DTK_DATE:
 			if (tm2datetime(tm, fsec, &tz, result) != 0)
 				elog(ERROR, "Datetime out of range '%s'", str);
-
-#ifdef DATEDEBUG
-			printf("datetime_in- date is %f\n", *result);
-#endif
-
 			break;
 
 		case DTK_EPOCH:
@@ -327,14 +322,8 @@ GetEpochTime(struct tm * tm)
 	tm->tm_min = t0->tm_min;
 	tm->tm_sec = t0->tm_sec;
 
-	if (tm->tm_year < 1900)
-		tm->tm_year += 1900;
+	tm->tm_year += 1900;
 	tm->tm_mon++;
-
-#ifdef DATEDEBUG
-	printf("GetEpochTime- %04d-%02d-%02d %02d:%02d:%02d\n",
-		   tm->tm_year, tm->tm_mon, tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec);
-#endif
 
 	return;
 }	/* GetEpochTime() */
@@ -349,18 +338,11 @@ SetDateTime(DateTime dt)
 		GetCurrentTime(&tt);
 		tm2datetime(&tt, 0, NULL, &dt);
 		dt = dt2local(dt, -CTimeZone);
-
-#ifdef DATEDEBUG
-		printf("SetDateTime- current time is %f\n", dt);
-#endif
 	}
 	else
 	{							/* if (DATETIME_IS_EPOCH(dt1)) */
 		GetEpochTime(&tt);
 		tm2datetime(&tt, 0, NULL, &dt);
-#ifdef DATEDEBUG
-		printf("SetDateTime- epoch time is %f\n", dt);
-#endif
 	}
 
 	return dt;
@@ -457,9 +439,6 @@ datetime_gt(DateTime *datetime1, DateTime *datetime2)
 	if (DATETIME_IS_RELATIVE(dt2))
 		dt2 = SetDateTime(dt2);
 
-#ifdef DATEDEBUG
-	printf("datetime_gt- %f %s greater than %f\n", dt1, ((dt1 > dt2) ? "is" : "is not"), dt2);
-#endif
 	return dt1 > dt2;
 }	/* datetime_gt() */
 
@@ -786,10 +765,6 @@ datetime_mi(DateTime *datetime1, DateTime *datetime2)
 	if (DATETIME_IS_RELATIVE(dt2))
 		dt2 = SetDateTime(dt2);
 
-#ifdef DATEDEBUG
-	printf("datetime_mi- evaluate %f - %f\n", dt1, dt2);
-#endif
-
 	if (DATETIME_IS_INVALID(dt1)
 		|| DATETIME_IS_INVALID(dt2))
 	{
@@ -825,10 +800,6 @@ datetime_pl_span(DateTime *datetime, TimeSpan *span)
 
 	result = palloc(sizeof(DateTime));
 
-#ifdef DATEDEBUG
-	printf("datetime_pl_span- add %f to %d %f\n", *datetime, span->month, span->time);
-#endif
-
 	if (DATETIME_NOT_FINITE(*datetime))
 	{
 		*result = *datetime;
@@ -857,10 +828,6 @@ datetime_pl_span(DateTime *datetime, TimeSpan *span)
 
 			if (datetime2tm(dt, &tz, tm, &fsec, &tzn) == 0)
 			{
-#ifdef DATEDEBUG
-				printf("datetime_pl_span- date was %04d-%02d-%02d %02d:%02d:%02d\n",
-					   tm->tm_year, tm->tm_mon, tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec);
-#endif
 				tm->tm_mon += span->month;
 				if (tm->tm_mon > 12)
 				{
@@ -877,10 +844,6 @@ datetime_pl_span(DateTime *datetime, TimeSpan *span)
 				if (tm->tm_mday > day_tab[isleap(tm->tm_year)][tm->tm_mon - 1])
 					tm->tm_mday = (day_tab[isleap(tm->tm_year)][tm->tm_mon - 1]);
 
-#ifdef DATEDEBUG
-				printf("datetime_pl_span- date becomes %04d-%02d-%02d %02d:%02d:%02d\n",
-					   tm->tm_year, tm->tm_mon, tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec);
-#endif
 				if (tm2datetime(tm, fsec, &tz, &dt) != 0)
 					elog(ERROR, "Unable to add datetime and timespan", NULL);
 
@@ -964,11 +927,6 @@ timespan_smaller(TimeSpan *timespan1, TimeSpan *timespan2)
 		if (timespan2->month != 0)
 			span2 += (timespan2->month * (30.0 * 86400));
 
-#ifdef DATEDEBUG
-		printf("timespan_smaller- months %d %d times %f %f spans %f %f\n",
-			   timespan1->month, timespan2->month, timespan1->time, timespan2->time, span1, span2);
-#endif
-
 		if (span2 < span1)
 		{
 			result->time = timespan2->time;
@@ -1018,11 +976,6 @@ timespan_larger(TimeSpan *timespan1, TimeSpan *timespan2)
 		span2 = timespan2->time;
 		if (timespan2->month != 0)
 			span2 += (timespan2->month * (30.0 * 86400));
-
-#ifdef DATEDEBUG
-		printf("timespan_larger- months %d %d times %f %f spans %f %f\n",
-			   timespan1->month, timespan2->month, timespan1->time, timespan2->time, span1, span2);
-#endif
 
 		if (span2 > span1)
 		{
@@ -1377,12 +1330,6 @@ datetime_trunc(text *units, DateTime *datetime)
 
 	type = DecodeUnits(0, lowunits, &val);
 
-#ifdef DATEDEBUG
-	if (type == IGNORE)
-		strcpy(lowunits, "(unknown)");
-	printf("datetime_trunc- units %s type=%d value=%d\n", lowunits, type, val);
-#endif
-
 	if (DATETIME_NOT_FINITE(*datetime))
 	{
 #if NOT_USED
@@ -1523,12 +1470,6 @@ timespan_trunc(text *units, TimeSpan *timespan)
 
 	type = DecodeUnits(0, lowunits, &val);
 
-#ifdef DATEDEBUG
-	if (type == IGNORE)
-		strcpy(lowunits, "(unknown)");
-	printf("timespan_trunc- units %s type=%d value=%d\n", lowunits, type, val);
-#endif
-
 	if (TIMESPAN_IS_INVALID(*timespan))
 	{
 #if NOT_USED
@@ -1648,12 +1589,6 @@ datetime_part(text *units, DateTime *datetime)
 	type = DecodeUnits(0, lowunits, &val);
 	if (type == IGNORE)
 		type = DecodeSpecial(0, lowunits, &val);
-
-#ifdef DATEDEBUG
-	if (type == IGNORE)
-		strcpy(lowunits, "(unknown)");
-	printf("datetime_part- units %s type=%d value=%d\n", lowunits, type, val);
-#endif
 
 	if (DATETIME_NOT_FINITE(*datetime))
 	{
@@ -1814,12 +1749,6 @@ timespan_part(text *units, TimeSpan *timespan)
 	if (type == IGNORE)
 		type = DecodeSpecial(0, lowunits, &val);
 
-#ifdef DATEDEBUG
-	if (type == IGNORE)
-		strcpy(lowunits, "(unknown)");
-	printf("timespan_part- units %s type=%d value=%d\n", lowunits, type, val);
-#endif
-
 	if (TIMESPAN_IS_INVALID(*timespan))
 	{
 #if NOT_USED
@@ -1950,12 +1879,6 @@ datetime_zone(text *zone, DateTime *datetime)
 	*lp = '\0';
 
 	type = DecodeSpecial(0, lowzone, &val);
-
-#ifdef DATEDEBUG
-	if (type == IGNORE)
-		strcpy(lowzone, "(unknown)");
-	printf("datetime_zone- zone %s type=%d value=%d\n", lowzone, type, val);
-#endif
 
 	if (DATETIME_NOT_FINITE(*datetime))
 	{
@@ -2373,24 +2296,11 @@ datetime2tm(DateTime dt, int *tzp, struct tm * tm, double *fsec, char **tzn)
 	/* add offset to go from J2000 back to standard Julian date */
 	date += date0;
 
-#ifdef DATEDEBUG
-	printf("datetime2tm- date is %f (%f %f)\n", dt, date, time);
-#endif
-
 	j2date((int) date, &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
 	dt2time(time, &tm->tm_hour, &tm->tm_min, &sec);
 
-#ifdef DATEDEBUG
-	printf("datetime2tm- date is %d.%02d.%02d\n", tm->tm_year, tm->tm_mon, tm->tm_mday);
-	printf("datetime2tm- time is %02d:%02d:%02.0f\n", tm->tm_hour, tm->tm_min, sec);
-#endif
-
 	*fsec = JROUND(sec);
 	TMODULO(*fsec, tm->tm_sec, 1e0);
-
-#ifdef DATEDEBUG
-	printf("datetime2tm- time is %02d:%02d:%02d %.7f\n", tm->tm_hour, tm->tm_min, tm->tm_sec, *fsec);
-#endif
 
 	if (tzp != NULL)
 	{
@@ -2400,18 +2310,6 @@ datetime2tm(DateTime dt, int *tzp, struct tm * tm, double *fsec, char **tzn)
 
 #ifdef USE_POSIX_TIME
 			tx = localtime(&utime);
-#ifdef DATEDEBUG
-#if defined(HAVE_TM_ZONE)
-			printf("datetime2tm- (localtime) %d.%02d.%02d %02d:%02d:%02.0f %s dst=%d\n",
-				   tx->tm_year, tx->tm_mon, tx->tm_mday, tx->tm_hour, tx->tm_min, sec,
-				   tx->tm_zone, tx->tm_isdst);
-#elif defined(HAVE_INT_TIMEZONE)
-			printf("datetime2tm- (localtime) %d.%02d.%02d %02d:%02d:%02.0f %s %s dst=%d\n",
-				   tx->tm_year, tx->tm_mon, tx->tm_mday, tx->tm_hour, tx->tm_min, sec,
-				   tzname[0], tzname[1], tx->tm_isdst);
-#else
-#error USE_POSIX_TIME is defined but neither HAVE_TM_ZONE or HAVE_INT_TIMEZONE are defined
-#endif
 #endif
 			tm->tm_year = tx->tm_year + 1900;
 			tm->tm_mon = tx->tm_mon + 1;
@@ -2474,23 +2372,6 @@ datetime2tm(DateTime dt, int *tzp, struct tm * tm, double *fsec, char **tzn)
 			*tzn = NULL;
 	}
 
-#ifdef DATEDEBUG
-	printf("datetime2tm- date is %d.%02d.%02d\n", tm->tm_year, tm->tm_mon, tm->tm_mday);
-	printf("datetime2tm- time is %02d:%02d:%02d %.7f\n", tm->tm_hour, tm->tm_min, tm->tm_sec, *fsec);
-#endif
-
-#ifdef DATEDEBUG
-#ifdef USE_POSIX_TIME
-#if defined(HAVE_TM_ZONE)
-	printf("datetime2tm- timezone is %s; offset is %d\n",
-		   tm->tm_zone, ((tzp != NULL) ? *tzp : 0));
-#elif defined(HAVE_INT_TIMEZONE)
-	printf("datetime2tm- timezone is %s; offset is %d (%d); daylight is %d\n",
-		   tzname[tm->tm_isdst != 0], ((tzp != NULL) ? *tzp : 0), CTimeZone, CDayLight);
-#endif
-#endif
-#endif
-
 	return 0;
 }	/* datetime2tm() */
 
@@ -2514,10 +2395,6 @@ tm2datetime(struct tm * tm, double fsec, int *tzp, DateTime *result)
 	date = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - date2j(2000, 1, 1);
 	time = time2t(tm->tm_hour, tm->tm_min, (tm->tm_sec + fsec));
 	*result = (date * 86400 + time);
-#ifdef DATEDEBUG
-	printf("tm2datetime- date is %f (%f %f %d)\n", *result, date, time, (((tm->tm_hour * 60) + tm->tm_min) * 60 + tm->tm_sec));
-	printf("tm2datetime- time is %f %02d:%02d:%02d %f\n", time, tm->tm_hour, tm->tm_min, tm->tm_sec, fsec);
-#endif
 	if (tzp != NULL)
 		*result = dt2local(*result, -(*tzp));
 
@@ -2557,11 +2434,6 @@ timespan2tm(TimeSpan span, struct tm * tm, float8 *fsec)
 	TMODULO(time, tm->tm_sec, 1e0);
 	*fsec = time;
 
-#ifdef DATEDEBUG
-	printf("timespan2tm- %d %f = %04d-%02d-%02d %02d:%02d:%02d %.2f\n", span.month, span.time,
-		   tm->tm_year, tm->tm_mon, tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, *fsec);
-#endif
-
 	return 0;
 }	/* timespan2tm() */
 
@@ -2571,11 +2443,6 @@ tm2timespan(struct tm * tm, double fsec, TimeSpan *span)
 	span->month = ((tm->tm_year * 12) + tm->tm_mon);
 	span->time = ((((((tm->tm_mday * 24) + tm->tm_hour) * 60) + tm->tm_min) * 60) + tm->tm_sec);
 	span->time = JROUND(span->time + fsec);
-
-#ifdef DATEDEBUG
-	printf("tm2timespan- %d %f = %04d-%02d-%02d %02d:%02d:%02d %.2f\n", span->month, span->time,
-		   tm->tm_year, tm->tm_mon, tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, fsec);
-#endif
 
 	return 0;
 }	/* tm2timespan() */
@@ -2629,9 +2496,6 @@ ParseDateTime(char *timestr, char *lowstr,
 	char	   *cp = timestr;
 	char	   *lp = lowstr;
 
-#ifdef DATEDEBUG
-	printf("ParseDateTime- input string is %s\n", timestr);
-#endif
 	/* outer loop through fields */
 	while (*cp != '\0')
 	{
@@ -2741,9 +2605,6 @@ ParseDateTime(char *timestr, char *lowstr,
 		nf++;
 		if (nf > MAXDATEFIELDS)
 			return -1;
-#ifdef DATEDEBUG
-		printf("ParseDateTime- set field[%d] to %s type %d\n", (nf - 1), field[nf - 1], ftype[nf - 1]);
-#endif
 	}
 
 	*numfields = nf;
@@ -2798,9 +2659,6 @@ DecodeDateTime(char **field, int *ftype, int nf,
 
 	for (i = 0; i < nf; i++)
 	{
-#ifdef DATEDEBUG
-		printf("DecodeDateTime- field[%d] is %s (type %d)\n", i, field[i], ftype[i]);
-#endif
 		switch (ftype[i])
 		{
 			case DTK_DATE:
@@ -2852,9 +2710,6 @@ DecodeDateTime(char **field, int *ftype, int nf,
 			case DTK_STRING:
 			case DTK_SPECIAL:
 				type = DecodeSpecial(i, field[i], &val);
-#ifdef DATEDEBUG
-				printf("DecodeDateTime- special field[%d] %s type=%d value=%d\n", i, field[i], type, val);
-#endif
 				if (type == IGNORE)
 					continue;
 
@@ -2862,9 +2717,6 @@ DecodeDateTime(char **field, int *ftype, int nf,
 				switch (type)
 				{
 					case RESERV:
-#ifdef DATEDEBUG
-						printf("DecodeDateTime- RESERV field %s value is %d\n", field[i], val);
-#endif
 						switch (val)
 						{
 							case DTK_NOW:
@@ -2923,10 +2775,6 @@ DecodeDateTime(char **field, int *ftype, int nf,
 						break;
 
 					case MONTH:
-#ifdef DATEDEBUG
-						printf("DecodeDateTime- month field %s value is %d\n", field[i], val);
-#endif
-
 						/*
 						 * already have a (numeric) month? then see if we
 						 * can substitute...
@@ -2937,9 +2785,6 @@ DecodeDateTime(char **field, int *ftype, int nf,
 						{
 							tm->tm_mday = tm->tm_mon;
 							tmask = DTK_M(DAY);
-#ifdef DATEDEBUG
-							printf("DecodeNumber- misidentified month previously; assign as day %d\n", tm->tm_mday);
-#endif
 						}
 						haveTextMonth = TRUE;
 						tm->tm_mon = val;
@@ -3002,11 +2847,6 @@ DecodeDateTime(char **field, int *ftype, int nf,
 				return -1;
 		}
 
-#ifdef DATEDEBUG
-		printf("DecodeDateTime- field[%d] %s (%08x/%08x) value is %d\n",
-			   i, field[i], fmask, tmask, val);
-#endif
-
 		if (tmask & fmask)
 			return -1;
 		fmask |= tmask;
@@ -3034,12 +2874,6 @@ DecodeDateTime(char **field, int *ftype, int nf,
 		tm->tm_hour = 0;
 	else if ((mer == PM) && (tm->tm_hour != 12))
 		tm->tm_hour += 12;
-
-#ifdef DATEDEBUG
-	printf("DecodeDateTime- mask %08x (%08x)", fmask, DTK_DATE_M);
-	printf(" set y%04d m%02d d%02d", tm->tm_year, tm->tm_mon, tm->tm_mday);
-	printf(" %02d:%02d:%02d\n", tm->tm_hour, tm->tm_min, tm->tm_sec);
-#endif
 
 	/* do additional checking for full date specs... */
 	if (*dtype == DTK_DATE)
@@ -3133,9 +2967,6 @@ DecodeTimeOnly(char **field, int *ftype, int nf, int *dtype, struct tm * tm, dou
 
 	for (i = 0; i < nf; i++)
 	{
-#ifdef DATEDEBUG
-		printf("DecodeTimeOnly- field[%d] is %s (type %d)\n", i, field[i], ftype[i]);
-#endif
 		switch (ftype[i])
 		{
 			case DTK_TIME:
@@ -3153,9 +2984,6 @@ DecodeTimeOnly(char **field, int *ftype, int nf, int *dtype, struct tm * tm, dou
 			case DTK_STRING:
 			case DTK_SPECIAL:
 				type = DecodeSpecial(i, field[i], &val);
-#ifdef DATEDEBUG
-				printf("DecodeTimeOnly- special field[%d] %s type=%d value=%d\n", i, field[i], type, val);
-#endif
 				if (type == IGNORE)
 					continue;
 
@@ -3163,9 +2991,6 @@ DecodeTimeOnly(char **field, int *ftype, int nf, int *dtype, struct tm * tm, dou
 				switch (type)
 				{
 					case RESERV:
-#ifdef DATEDEBUG
-						printf("DecodeTimeOnly- RESERV field %s value is %d\n", field[i], val);
-#endif
 						switch (val)
 						{
 							case DTK_NOW:
@@ -3208,16 +3033,7 @@ DecodeTimeOnly(char **field, int *ftype, int nf, int *dtype, struct tm * tm, dou
 		if (tmask & fmask)
 			return -1;
 		fmask |= tmask;
-
-#ifdef DATEDEBUG
-		printf("DecodeTimeOnly- field[%d] %s value is %d\n", i, field[i], val);
-#endif
 	}
-
-#ifdef DATEDEBUG
-	printf("DecodeTimeOnly- mask %08x (%08x)", fmask, DTK_TIME_M);
-	printf(" %02d:%02d:%02d (%f)\n", tm->tm_hour, tm->tm_min, tm->tm_sec, *fsec);
-#endif
 
 	if ((mer != HR24) && (tm->tm_hour > 12))
 		return -1;
@@ -3302,9 +3118,6 @@ DecodeDate(char *str, int fmask, int *tmask, struct tm * tm)
 			switch (type)
 			{
 				case MONTH:
-#ifdef DATEDEBUG
-					printf("DecodeDate- month field %s value is %d\n", field[i], val);
-#endif
 					tm->tm_mon = val;
 					break;
 
@@ -3313,9 +3126,6 @@ DecodeDate(char *str, int fmask, int *tmask, struct tm * tm)
 					break;
 
 				default:
-#ifdef DATEDEBUG
-					printf("DecodeDate- illegal field %s value is %d\n", field[i], val);
-#endif
 					return -1;
 			}
 			if (fmask & dmask)
@@ -3448,10 +3258,6 @@ DecodeNumber(int flen, char *str, int fmask,
 			return -1;
 	}
 
-#ifdef DATEDEBUG
-	printf("DecodeNumber- %s is %d fmask=%08x tmask=%08x\n", str, val, fmask, *tmask);
-#endif
-
 	/* Special case day of year? */
 	if ((flen == 3) && (fmask & DTK_M(YEAR))
 		&& ((val >= 1) && (val <= 366)))
@@ -3471,9 +3277,6 @@ DecodeNumber(int flen, char *str, int fmask,
 	 */
 	else if (flen > 2)
 	{
-#ifdef DATEDEBUG
-		printf("DecodeNumber- match %d (%s) as year\n", val, str);
-#endif
 		*tmask = DTK_M(YEAR);
 
 		/* already have a year? then see if we can substitute... */
@@ -3482,9 +3285,6 @@ DecodeNumber(int flen, char *str, int fmask,
 		{
 			tm->tm_mday = tm->tm_year;
 			*tmask = DTK_M(DAY);
-#ifdef DATEDEBUG
-			printf("DecodeNumber- misidentified year previously; assign as day %d\n", tm->tm_mday);
-#endif
 		}
 
 		tm->tm_year = val;
@@ -3494,9 +3294,6 @@ DecodeNumber(int flen, char *str, int fmask,
 	else if ((fmask & DTK_M(YEAR)) && (!(fmask & DTK_M(MONTH)))
 			 && ((val >= 1) && (val <= 12)))
 	{
-#ifdef DATEDEBUG
-		printf("DecodeNumber- match %d (%s) as month\n", val, str);
-#endif
 		*tmask = DTK_M(MONTH);
 		tm->tm_mon = val;
 
@@ -3506,9 +3303,6 @@ DecodeNumber(int flen, char *str, int fmask,
 			 && (!(fmask & DTK_M(YEAR)) && !(fmask & DTK_M(DAY)))
 			 && ((val >= 1) && (val <= 31)))
 	{
-#ifdef DATEDEBUG
-		printf("DecodeNumber- match %d (%s) as day\n", val, str);
-#endif
 		*tmask = DTK_M(DAY);
 		tm->tm_mday = val;
 
@@ -3516,9 +3310,6 @@ DecodeNumber(int flen, char *str, int fmask,
 	else if ((!(fmask & DTK_M(MONTH)))
 			 && ((val >= 1) && (val <= 12)))
 	{
-#ifdef DATEDEBUG
-		printf("DecodeNumber- (2) match %d (%s) as month\n", val, str);
-#endif
 		*tmask = DTK_M(MONTH);
 		tm->tm_mon = val;
 
@@ -3526,24 +3317,16 @@ DecodeNumber(int flen, char *str, int fmask,
 	else if ((!(fmask & DTK_M(DAY)))
 			 && ((val >= 1) && (val <= 31)))
 	{
-#ifdef DATEDEBUG
-		printf("DecodeNumber- (2) match %d (%s) as day\n", val, str);
-#endif
 		*tmask = DTK_M(DAY);
 		tm->tm_mday = val;
-
 	}
 	else if (!(fmask & DTK_M(YEAR)))
 	{
-#ifdef DATEDEBUG
-		printf("DecodeNumber- (2) match %d (%s) as year\n", val, str);
-#endif
 		*tmask = DTK_M(YEAR);
 		tm->tm_year = val;
 
 		/* adjust ONLY if exactly two digits... */
 		*is2digits = (flen == 2);
-
 	}
 	else
 		return -1;
@@ -3564,10 +3347,6 @@ DecodeNumberField(int len, char *str, int fmask,
 	/* yyyymmdd? */
 	if (len == 8)
 	{
-#ifdef DATEDEBUG
-		printf("DecodeNumberField- %s is 8 character date fmask=%08x tmask=%08x\n", str, fmask, *tmask);
-#endif
-
 		*tmask = DTK_DATE_M;
 
 		tm->tm_mday = atoi(str + 6);
@@ -3580,27 +3359,17 @@ DecodeNumberField(int len, char *str, int fmask,
 	}
 	else if (len == 6)
 	{
-#ifdef DATEDEBUG
-		printf("DecodeNumberField- %s is 6 characters fmask=%08x tmask=%08x\n", str, fmask, *tmask);
-#endif
 		if (fmask & DTK_DATE_M)
 		{
-#ifdef DATEDEBUG
-			printf("DecodeNumberField- %s is time field fmask=%08x tmask=%08x\n", str, fmask, *tmask);
-#endif
 			*tmask = DTK_TIME_M;
 			tm->tm_sec = atoi(str + 4);
 			*(str + 4) = '\0';
 			tm->tm_min = atoi(str + 2);
 			*(str + 2) = '\0';
 			tm->tm_hour = atoi(str + 0);
-
 		}
 		else
 		{
-#ifdef DATEDEBUG
-			printf("DecodeNumberField- %s is date field fmask=%08x tmask=%08x\n", str, fmask, *tmask);
-#endif
 			*tmask = DTK_DATE_M;
 			tm->tm_mday = atoi(str + 4);
 			*(str + 4) = '\0';
@@ -3613,9 +3382,6 @@ DecodeNumberField(int len, char *str, int fmask,
 	}
 	else if ((len == 5) && !(fmask & DTK_DATE_M))
 	{
-#ifdef DATEDEBUG
-		printf("DecodeNumberField- %s is 5 characters fmask=%08x tmask=%08x\n", str, fmask, *tmask);
-#endif
 		*tmask = DTK_DATE_M;
 		tm->tm_mday = atoi(str + 2);
 		*(str + 2) = '\0';
@@ -3625,9 +3391,6 @@ DecodeNumberField(int len, char *str, int fmask,
 	}
 	else if (strchr(str, '.') != NULL)
 	{
-#ifdef DATEDEBUG
-		printf("DecodeNumberField- %s is time field fmask=%08x tmask=%08x\n", str, fmask, *tmask);
-#endif
 		*tmask = DTK_TIME_M;
 		tm->tm_sec = strtod((str + 4), &cp);
 		if (cp == (str + 4))
@@ -3776,9 +3539,6 @@ DecodeDateDelta(char **field, int *ftype, int nf, int *dtype, struct tm * tm, do
 	/* read through list backwards to pick up units before values */
 	for (i = nf - 1; i >= 0; i--)
 	{
-#ifdef DATEDEBUG
-		printf("DecodeDateDelta- field[%d] is %s (type %d)\n", i, field[i], ftype[i]);
-#endif
 		switch (ftype[i])
 		{
 			case DTK_TIME:
@@ -3900,9 +3660,6 @@ DecodeDateDelta(char **field, int *ftype, int nf, int *dtype, struct tm * tm, do
 			case DTK_STRING:
 			case DTK_SPECIAL:
 				type = DecodeUnits(i, field[i], &val);
-#ifdef DATEDEBUG
-				printf("DecodeDateDelta- special field[%d] %s type=%d value=%d\n", i, field[i], type, val);
-#endif
 				if (type == IGNORE)
 					continue;
 
@@ -3910,9 +3667,6 @@ DecodeDateDelta(char **field, int *ftype, int nf, int *dtype, struct tm * tm, do
 				switch (type)
 				{
 					case UNITS:
-#ifdef DATEDEBUG
-						printf("DecodeDateDelta- UNITS field %s value is %d\n", field[i], val);
-#endif
 						type = val;
 						break;
 
@@ -3935,11 +3689,6 @@ DecodeDateDelta(char **field, int *ftype, int nf, int *dtype, struct tm * tm, do
 				return -1;
 		}
 
-#ifdef DATEDEBUG
-		printf("DecodeDateDelta- (%08x/%08x) field[%d] %s value is %d\n",
-			   fmask, tmask, i, field[i], val);
-#endif
-
 		if (tmask & fmask)
 			return -1;
 		fmask |= tmask;
@@ -3961,12 +3710,6 @@ DecodeDateDelta(char **field, int *ftype, int nf, int *dtype, struct tm * tm, do
 		tm->tm_mon = -(tm->tm_mon);
 		tm->tm_year = -(tm->tm_year);
 	}
-
-#ifdef DATEDEBUG
-	printf("DecodeDateDelta- mask %08x (%08x)", fmask, DTK_DATE_M);
-	printf(" set y%04d m%02d d%02d", tm->tm_year, tm->tm_mon, tm->tm_mday);
-	printf(" %02d:%02d:%02d\n", tm->tm_hour, tm->tm_min, tm->tm_sec);
-#endif
 
 	/* ensure that at least one time field has been found */
 	return (fmask != 0) ? 0 : -1;
@@ -4052,37 +3795,17 @@ EncodeSpecialDateTime(DateTime dt, char *str)
 	if (DATETIME_IS_RESERVED(dt))
 	{
 		if (DATETIME_IS_INVALID(dt))
-		{
 			strcpy(str, INVALID);
-
-		}
 		else if (DATETIME_IS_NOBEGIN(dt))
-		{
 			strcpy(str, EARLY);
-
-		}
 		else if (DATETIME_IS_NOEND(dt))
-		{
 			strcpy(str, LATE);
-
-		}
 		else if (DATETIME_IS_CURRENT(dt))
-		{
 			strcpy(str, DCURRENT);
-
-		}
 		else if (DATETIME_IS_EPOCH(dt))
-		{
 			strcpy(str, EPOCH);
-
-		}
 		else
-		{
-#ifdef DATEDEBUG
-			printf("EncodeSpecialDateTime- unrecognized date\n");
-#endif
 			strcpy(str, INVALID);
-		}
 		return TRUE;
 	}
 
@@ -4146,10 +3869,6 @@ EncodeDateOnly(struct tm * tm, int style, char *str)
 			break;
 	}
 
-#ifdef DATEDEBUG
-	printf("EncodeDateOnly- date result is %s\n", str);
-#endif
-
 	return TRUE;
 }	/* EncodeDateOnly() */
 
@@ -4169,10 +3888,6 @@ EncodeTimeOnly(struct tm * tm, double fsec, int style, char *str)
 
 	sprintf(str, "%02d:%02d:", tm->tm_hour, tm->tm_min);
 	sprintf((str + 6), ((fsec != 0) ? "%05.2f" : "%02.0f"), sec);
-
-#ifdef DATEDEBUG
-	printf("EncodeTimeOnly- time result is %s\n", str);
-#endif
 
 	return TRUE;
 }	/* EncodeTimeOnly() */
@@ -4201,23 +3916,6 @@ EncodeDateTime(struct tm * tm, double fsec, int *tzp, char **tzn, int style, cha
 		return -1;
 
 	sec = (tm->tm_sec + fsec);
-
-#ifdef DATEDEBUG
-#ifdef USE_POSIX_TIME
-#if defined(HAVE_TM_ZONE)
-	printf("EncodeDateTime- timezone is %s (%s); offset is %ld (%d); daylight is %d (%d)\n",
-		   *tzn, tm->tm_zone, (-tm->tm_gmtoff), CTimeZone, tm->tm_isdst, CDayLight);
-#elif defined(HAVE_INT_TIMEZONE)
-	printf("EncodeDateTime- timezone is %s (%s); offset is %d (%d); daylight is %d (%d)\n",
-		   *tzn, tzname[0], *tzp, CTimeZone, tm->tm_isdst, CDayLight);
-#else
-#error USE_POSIX_TIME is defined but neither HAVE_TM_ZONE or HAVE_INT_TIMEZONE are defined
-#endif
-#else
-	printf("EncodeDateTime- timezone is %s (%s); offset is %d; daylight is %d\n",
-		   *tzn, CTZName, CTimeZone, CDayLight);
-#endif
-#endif
 
 	switch (style)
 	{
@@ -4305,9 +4003,6 @@ EncodeDateTime(struct tm * tm, double fsec, int *tzp, char **tzn, int style, cha
 		case USE_POSTGRES_DATES:
 		default:
 			day = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday);
-#ifdef DATEDEBUG
-			printf("EncodeDateTime- day is %d\n", day);
-#endif
 			tm->tm_wday = j2day(day);
 
 			strncpy(str, days[tm->tm_wday], 3);
@@ -4348,10 +4043,6 @@ EncodeDateTime(struct tm * tm, double fsec, int *tzp, char **tzn, int style, cha
 			}
 			break;
 	}
-
-#ifdef DATEDEBUG
-	printf("EncodeDateTime- date result is %s\n", str);
-#endif
 
 	return TRUE;
 }	/* EncodeDateTime() */
@@ -4502,10 +4193,6 @@ EncodeTimeSpan(struct tm * tm, double fsec, int style, char *str)
 		strcat(cp, " ago");
 		cp += strlen(cp);
 	}
-
-#ifdef DATEDEBUG
-	printf("EncodeTimeSpan- result is %s\n", str);
-#endif
 
 	return 0;
 }	/* EncodeTimeSpan() */

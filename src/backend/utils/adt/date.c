@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.38 1999/09/21 20:58:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.39 2000/01/02 01:37:26 momjian Exp $
  *
  * NOTES
  *	 This code is actually (almost) unused.
@@ -141,10 +141,6 @@ reltimein(char *str)
 	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
 		|| (DecodeDateDelta(field, ftype, nf, &dtype, tm, &fsec) != 0))
 		elog(ERROR, "Bad reltime external representation '%s'", str);
-
-#ifdef DATEDEBUG
-	printf("reltimein- %d fields are type %d (DTK_DATE=%d)\n", nf, dtype, DTK_DATE);
-#endif
 
 	switch (dtype)
 	{
@@ -350,11 +346,6 @@ timespan_reltime(TimeSpan *timespan)
 		}
 
 		span = (((((double) 365 * year) + ((double) 30 * month)) * 86400) + timespan->time);
-
-#ifdef DATEDEBUG
-		printf("timespan_reltime- convert m%d s%f to %f [%d %d]\n",
-			   timespan->month, timespan->time, span, INT_MIN, INT_MAX);
-#endif
 
 		time = (((span > INT_MIN) && (span < INT_MAX)) ? span : INVALID_RELTIME);
 	}
