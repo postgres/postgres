@@ -134,9 +134,10 @@ gbt_inet_consistent_internal (
 ){
     inetKEY            *kkk = (inetKEY *) DatumGetPointer(entry->key);
     GBT_NUMKEY_R        key ;
+
     key.lower = (GBT_NUMKEY*) &kkk->lower ;
     key.upper = (GBT_NUMKEY*) &kkk->upper ;
-
+        
     return (
       gbt_num_consistent( &key, (void*)query,strategy,GIST_LEAF(entry),&tinfo)
     );
@@ -189,8 +190,7 @@ gbt_inet_penalty(PG_FUNCTION_ARGS)
 
   *result = 0.0;
 
-  res     = Max(newentry->upper - origentry->upper, 0) +
-            Max(origentry->lower - newentry->lower, 0);
+  penalty_range_enlarge ( origentry->lower, origentry->upper, newentry->lower, newentry->upper );
 
   if ( res > 0 ){
     *result += FLT_MIN ;

@@ -91,6 +91,7 @@ gbt_float8_compress(PG_FUNCTION_ARGS)
 Datum
 gbt_float8_consistent(PG_FUNCTION_ARGS)
 {
+
     GISTENTRY        *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
     float8            query = PG_GETARG_FLOAT8(1);
     float8KEY          *kkk = (float8KEY *) DatumGetPointer(entry->key);
@@ -126,8 +127,7 @@ gbt_float8_penalty(PG_FUNCTION_ARGS)
 
   *result = 0.0;
  
-  res     = Max(newentry->upper - origentry->upper, 0) +
-            Max(origentry->lower - newentry->lower, 0);
+  penalty_range_enlarge ( origentry->lower, origentry->upper, newentry->lower, newentry->upper );
 
   if ( res > 0 ){
     *result += FLT_MIN ;

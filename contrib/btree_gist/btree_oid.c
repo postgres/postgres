@@ -91,6 +91,7 @@ gbt_oid_compress(PG_FUNCTION_ARGS)
 Datum
 gbt_oid_consistent(PG_FUNCTION_ARGS)
 {
+
     GISTENTRY        *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
     Oid               query = PG_GETARG_OID(1);
     oidKEY             *kkk = (oidKEY *) DatumGetPointer(entry->key);
@@ -122,12 +123,11 @@ gbt_oid_penalty(PG_FUNCTION_ARGS)
   oidKEY    *newentry  = (oidKEY *) DatumGetPointer(((GISTENTRY *) PG_GETARG_POINTER(1))->key);
   float        *result = (float *) PG_GETARG_POINTER(2);
 
-  Oid               res ;
+  Oid              res = 0 ;
 
   *result = 0.0;
  
-  res     = Max(newentry->upper - origentry->upper, 0) +
-            Max(origentry->lower - newentry->lower, 0);
+  penalty_range_enlarge ( origentry->lower, origentry->upper, newentry->lower , newentry->upper );
 
   if ( res > 0 ){
     *result += FLT_MIN ;

@@ -140,7 +140,7 @@ gbt_tstz_compress(PG_FUNCTION_ARGS)
   if (entry->leafkey)   
   {
     tsKEY      *r      = (tsKEY *) palloc(sizeof(tsKEY));
-    
+
     TimestampTz ts = *(TimestampTz *) DatumGetPointer(entry->key);
     Timestamp   gmt ;
 
@@ -167,6 +167,7 @@ gbt_ts_consistent(PG_FUNCTION_ARGS)
     tsKEY              *kkk = (tsKEY *) DatumGetPointer(entry->key);
     GBT_NUMKEY_R        key ;
     StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
+
     key.lower = (GBT_NUMKEY*) &kkk->lower ;
     key.upper = (GBT_NUMKEY*) &kkk->upper ;
 
@@ -180,12 +181,13 @@ gbt_tstz_consistent(PG_FUNCTION_ARGS)
 {
     GISTENTRY        *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
     TimestampTz      *query = (Timestamp *) PG_GETARG_POINTER(1);
-    tsKEY              *kkk = (tsKEY *) DatumGetPointer(entry->key);
+    char               *kkk = (char *) DatumGetPointer(entry->key);
     GBT_NUMKEY_R        key ;
     StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
     Timestamp    qqq  ;
-    key.lower = (GBT_NUMKEY*) &kkk->lower ;
-    key.upper = (GBT_NUMKEY*) &kkk->upper ;
+
+    key.lower = (GBT_NUMKEY*) &kkk[0]; 
+    key.upper = (GBT_NUMKEY*) &kkk[MAXALIGN(tinfo.size)];
     tstz_to_ts_gmt ( &qqq, query );
 
     PG_RETURN_BOOL( 

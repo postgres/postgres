@@ -84,12 +84,12 @@ static const gbtree_ninfo tinfo =
 
 
 
-static int64 mac_2_int64  ( macaddr * m ){
+static uint64 mac_2_uint64  ( macaddr * m ){
    unsigned char * mi = ( unsigned char * ) m;
-   int64    res = 0;
+   uint64    res = 0;
    int i;
    for (i=0; i<6; i++ ){
-     res += mi[i] << ( (5-i)*8 );
+     res += ( ( (uint64) mi[i] ) <<  ( (uint64) ( (5-i)*8 ) ) );
    }
    return res;
 }
@@ -108,6 +108,7 @@ gbt_macad_compress(PG_FUNCTION_ARGS)
 Datum
 gbt_macad_consistent(PG_FUNCTION_ARGS)
 {
+
     GISTENTRY        *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
     macaddr          *query = (macaddr *) PG_GETARG_POINTER(1);
     macKEY             *kkk = (macKEY *) DatumGetPointer(entry->key);
@@ -138,21 +139,21 @@ gbt_macad_penalty(PG_FUNCTION_ARGS)
         macKEY    *origentry = (macKEY *) DatumGetPointer(((GISTENTRY *) PG_GETARG_POINTER(0))->key);
         macKEY    *newentry  = (macKEY *) DatumGetPointer(((GISTENTRY *) PG_GETARG_POINTER(1))->key);
         float      *result   = (float *) PG_GETARG_POINTER(2);
-        int64      iorg[2], inew[2], res ;
+        uint64     iorg[2], inew[2];
+        uint64     res;
 
-        iorg[0] =  mac_2_int64 ( &origentry->lower );
-        iorg[1] =  mac_2_int64 ( &origentry->upper );
-        inew[0] =  mac_2_int64 ( &newentry->lower  );
-        inew[1] =  mac_2_int64 ( &newentry->upper  );
+        iorg[0] =  mac_2_uint64 ( &origentry->lower );
+        iorg[1] =  mac_2_uint64 ( &origentry->upper );
+        inew[0] =  mac_2_uint64 ( &newentry->lower  );
+        inew[1] =  mac_2_uint64 ( &newentry->upper  );
 
-        res = Max(inew[1] - iorg[1], 0) +
-                Max(iorg[0] - inew[0] , 0);
+        penalty_range_enlarge ( iorg[0], iorg[1], inew[0], inew[1] );
 
         *result = 0.0;
 
         if ( res > 0 ){
           *result += FLT_MIN ;
-          *result += (float) ( res / ( (double) ( res + iorg[1] - iorg[0] ) ) );
+          *result += (float) ( ( (double)res ) / ( (double)res + (double)iorg[1] - (double)iorg[0] ) );
           *result *= ( FLT_MAX / ( ( (GISTENTRY *) PG_GETARG_POINTER(0))->rel->rd_att->natts + 1 ) );
         }
 

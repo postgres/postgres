@@ -676,6 +676,11 @@ RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE 'C';
 
+CREATE FUNCTION gbt_intv_decompress(internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';
+
 CREATE FUNCTION gbt_intv_penalty(internal,internal,internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
@@ -708,7 +713,7 @@ AS
 	FUNCTION	1	gbt_intv_consistent (internal, interval, int2),
 	FUNCTION	2	gbt_intv_union (bytea, internal),
 	FUNCTION	3	gbt_intv_compress (internal),
-	FUNCTION	4	gbt_decompress (internal),
+	FUNCTION	4	gbt_intv_decompress (internal),
 	FUNCTION	5	gbt_intv_penalty (internal, internal, internal),
 	FUNCTION	6	gbt_intv_picksplit (internal, internal),
 	FUNCTION	7	gbt_intv_same (internal, internal, internal),

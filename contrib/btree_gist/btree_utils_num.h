@@ -41,6 +41,17 @@ typedef struct
  *  Numeric btree functions
 */
 
+
+#define penalty_range_enlarge(olower,oupper,nlower,nupper) do { \
+  res = 0; \
+  if ( (nupper) > (oupper) ) \
+    res += ( (nupper) - (oupper) ); \
+  if (  (olower) > (nlower)  ) \
+    res += ( (olower) - (nlower) ); \
+} while (0);
+
+
+
 extern bool            gbt_num_consistent( const GBT_NUMKEY_R * key , const void * query,
                                 const StrategyNumber * strategy , bool is_leaf,
                                 const gbtree_ninfo * tinfo );

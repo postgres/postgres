@@ -9,7 +9,7 @@ extern GBT_VARKEY_R gbt_var_key_readable ( const GBT_VARKEY * k ){
         GBT_VARKEY_R    r ;
         r.lower   = ( bytea * ) &(((char*)k)[VARHDRSZ] ) ;
         if ( VARSIZE(k) > ( VARHDRSZ+(VARSIZE(r.lower)) ) )
-          r.upper = ( bytea * ) &(((char*)k)[VARHDRSZ+(VARSIZE(r.lower))] ) ;
+          r.upper = ( bytea * ) &(((char*)k)[VARHDRSZ+INTALIGN(VARSIZE(r.lower))] ) ;
         else
           r.upper = r.lower;
         return r;
@@ -28,10 +28,10 @@ extern GBT_VARKEY * gbt_var_key_copy ( const GBT_VARKEY_R * u , bool force_node 
 
         } else {                     /* node key mode  */
 
-          r = (GBT_VARKEY *) palloc(VARSIZE(u->lower) + VARSIZE(u->upper) + VARHDRSZ );
+          r = (GBT_VARKEY *) palloc(INTALIGN(VARSIZE(u->lower)) + VARSIZE(u->upper) + VARHDRSZ );
           memcpy ( (void*) VARDATA(r)                               , (void*) u->lower , VARSIZE(u->lower) );
-          memcpy ( (void*)&(((char *)r)[VARHDRSZ+VARSIZE(u->lower)]), (void*) u->upper , VARSIZE(u->upper) );
-          r->vl_len    = VARSIZE(u->lower) + VARSIZE(u->upper) + VARHDRSZ ;
+          memcpy ( (void*)&(((char *)r)[VARHDRSZ+INTALIGN(VARSIZE(u->lower))]), (void*) u->upper , VARSIZE(u->upper) );
+          r->vl_len    = INTALIGN(VARSIZE(u->lower)) + VARSIZE(u->upper) + VARHDRSZ ;
 
         }
         return r;
@@ -153,19 +153,19 @@ static GBT_VARKEY * gbt_var_node_truncate ( const GBT_VARKEY * node , int32 leng
 
   len1        = Min( len1, length ) ;
   len2        = Min( len2, length ) ;
-  si          = 3*VARHDRSZ + len1 + len2;
+  si          = 2*VARHDRSZ + INTALIGN(VARHDRSZ+len1) + len2;
   out         = (GBT_VARKEY *) palloc ( si );
   out->vl_len = si;
   memcpy ( (void*) &(((char*)out)[VARHDRSZ])         , (void*)r.lower, len1+VARHDRSZ-s );
-  memcpy ( (void*) &(((char*)out)[2*VARHDRSZ+len1])  , (void*)r.upper, len2+VARHDRSZ-s );
+  memcpy ( (void*) &(((char*)out)[VARHDRSZ+INTALIGN(VARHDRSZ+len1)])  , (void*)r.upper, len2+VARHDRSZ-s );
 
   if (tinfo->str)
   {
-    ((char*)out)[2*VARHDRSZ+len1-1]               = '\0';
-    ((char*)out)[3*VARHDRSZ+len1+len2-1]          = '\0';
+    ((char*)out)[VARHDRSZ+INTALIGN(VARHDRSZ+len1)-1]               = '\0';
+    ((char*)out)[2*VARHDRSZ+INTALIGN(VARHDRSZ+len1)+len2-1]          = '\0';
   }
   *((int32*)&(((char*)out)[VARHDRSZ]))          = len1 + VARHDRSZ;
-  *((int32*)&(((char*)out)[2*VARHDRSZ+len1]))   = len2 + VARHDRSZ;
+  *((int32*)&(((char*)out)[VARHDRSZ+INTALIGN(VARHDRSZ+len1)]))   = len2 + VARHDRSZ;
 
   return out;
 }

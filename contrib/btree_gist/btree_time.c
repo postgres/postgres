@@ -138,11 +138,13 @@ gbt_time_consistent(PG_FUNCTION_ARGS)
 {
     GISTENTRY        *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
     TimeADT          query  = PG_GETARG_TIMEADT( 1 );
-    timeKEY            *kkk = (timeKEY *) DatumGetPointer(entry->key);
+    timeKEY            *kkk = (timeKEY*) DatumGetPointer(entry->key);
     GBT_NUMKEY_R        key ;
     StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
+ 
     key.lower = (GBT_NUMKEY*) &kkk->lower ;
     key.upper = (GBT_NUMKEY*) &kkk->upper ;
+        
 
     PG_RETURN_BOOL(
       gbt_num_consistent( &key, (void*)&query,&strategy,GIST_LEAF(entry),&tinfo)
@@ -155,9 +157,10 @@ gbt_timetz_consistent(PG_FUNCTION_ARGS)
     GISTENTRY        *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
     TimeTzADT        *query = PG_GETARG_TIMETZADT_P( 1 );
     TimeADT             qqq = query->time + query->zone ;
-    timeKEY            *kkk = (timeKEY *) DatumGetPointer(entry->key);
+    timeKEY            *kkk = (timeKEY*) DatumGetPointer(entry->key);
     GBT_NUMKEY_R        key ;
     StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
+ 
     key.lower = (GBT_NUMKEY*) &kkk->lower ;
     key.upper = (GBT_NUMKEY*) &kkk->upper ;
 

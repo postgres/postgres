@@ -112,9 +112,10 @@ gbt_date_consistent(PG_FUNCTION_ARGS)
     dateKEY            *kkk = (dateKEY *) DatumGetPointer(entry->key);
     GBT_NUMKEY_R        key ;
     StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
+
     key.lower = (GBT_NUMKEY*) &kkk->lower ;
     key.upper = (GBT_NUMKEY*) &kkk->upper ;
-
+                
     PG_RETURN_BOOL(
       gbt_num_consistent( &key, (void*)&query,&strategy,GIST_LEAF(entry),&tinfo)
     );

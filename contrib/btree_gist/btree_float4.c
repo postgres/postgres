@@ -91,8 +91,8 @@ Datum
 gbt_float4_consistent(PG_FUNCTION_ARGS)
 {
     GISTENTRY        *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
-    float4             query = PG_GETARG_FLOAT4(1);
-    float4KEY           *kkk = (float4KEY *) DatumGetPointer(entry->key);
+    float4            query = PG_GETARG_FLOAT4(1);
+    float4KEY          *kkk = (float4KEY *) DatumGetPointer(entry->key);
     GBT_NUMKEY_R        key ;
     StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
     key.lower = (GBT_NUMKEY*) &kkk->lower ;
@@ -125,8 +125,7 @@ gbt_float4_penalty(PG_FUNCTION_ARGS)
 
   *result = 0.0;
  
-  res     = Max(newentry->upper - origentry->upper, 0) +
-            Max(origentry->lower - newentry->lower, 0);
+  penalty_range_enlarge ( origentry->lower, origentry->upper, newentry->lower, newentry->upper );
 
   if ( res > 0 ){
     *result += FLT_MIN ;

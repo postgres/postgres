@@ -15,8 +15,8 @@ gbt_num_compress( GISTENTRY  *retval , GISTENTRY  *entry , const gbtree_ninfo * 
          TimeADT    ts;
          DateADT    dt;
        } v ;
-
-       GBT_NUMKEY  *r  = ( GBT_NUMKEY * ) palloc(2 * tinfo->size);
+       
+       GBT_NUMKEY  *r  = ( GBT_NUMKEY * ) palloc(2 * tinfo->size );
        void  *leaf  = NULL;
 
        switch ( tinfo->t )
@@ -45,12 +45,12 @@ gbt_num_compress( GISTENTRY  *retval , GISTENTRY  *entry , const gbtree_ninfo * 
            leaf = DatumGetPointer(entry->key);
        }
 
-       memcpy ( (void*) &r[0]           , leaf, tinfo->size ); 
-       memcpy ( (void*) &r[tinfo->size] , leaf, tinfo->size );          
-
+       memset ( (void*) &r[0]  , 0   , 2*tinfo->size );
+       memcpy ( (void*) &r[0]  , leaf, tinfo->size ); 
+       memcpy ( (void*) &r[tinfo->size] , leaf, tinfo->size );
        retval = palloc(sizeof(GISTENTRY));
        gistentryinit(*retval, PointerGetDatum(r), entry->rel, entry->page,
-                                 entry->offset,( 2 * tinfo->size), FALSE);
+                                 entry->offset,( 2 * tinfo->size ), FALSE);
     } else
        retval = entry;
 
@@ -72,8 +72,8 @@ gbt_num_union( GBT_NUMKEY * out, const GistEntryVector * entryvec, const gbtree_
         GBT_NUMKEY *   cur ;
         GBT_NUMKEY_R   o, c;
 
-          numranges = entryvec->n;
-          cur       = (GBT_NUMKEY *) DatumGetPointer((entryvec->vector[0].key));
+        numranges = entryvec->n;
+        cur       = (GBT_NUMKEY *) DatumGetPointer((entryvec->vector[0].key));
 
 
         o.lower = &((GBT_NUMKEY *)out)[0];
@@ -86,7 +86,6 @@ gbt_num_union( GBT_NUMKEY * out, const GistEntryVector * entryvec, const gbtree_
                 cur = (GBT_NUMKEY *) DatumGetPointer((entryvec->vector[i].key));
                 c.lower = &cur[0];
                 c.upper = &cur[tinfo->size];
-
                 if ( (*tinfo->f_gt)(o.lower, c.lower) ) /* out->lower > cur->lower */
                      memcpy( (void* ) o.lower, (void*) c.lower, tinfo->size );
                 if ( (*tinfo->f_lt)(o.upper, c.upper) ) /* out->upper < cur->upper */
@@ -127,26 +126,26 @@ gbt_num_bin_union(Datum * u , GBT_NUMKEY * e , const gbtree_ninfo * tinfo )
 {
 
   GBT_NUMKEY_R rd;
+
   rd.lower = &e[0];
   rd.upper = &e[tinfo->size];
 
   if (!DatumGetPointer(*u))
   {
     *u  = PointerGetDatum(palloc(2 * tinfo->size));
-    memcpy( (void* ) &( ( (GBT_NUMKEY *) DatumGetPointer(*u) )[0] )          , (void*)rd.lower , tinfo->size );
+    memcpy( (void* ) &( ( (GBT_NUMKEY *) DatumGetPointer(*u) )[0] ) , (void*)rd.lower , tinfo->size );
     memcpy( (void* ) &( ( (GBT_NUMKEY *) DatumGetPointer(*u) )[tinfo->size]) , (void*)rd.upper , tinfo->size );
   }
   else
   {
     GBT_NUMKEY_R  ur ;
-    ur.lower   = &( ( (GBT_NUMKEY *) DatumGetPointer(*u) )[0]          ) ;
+    ur.lower   = &( ( (GBT_NUMKEY *) DatumGetPointer(*u) )[0] ) ;
     ur.upper   = &( ( (GBT_NUMKEY *) DatumGetPointer(*u) )[tinfo->size]) ;
     if ( (*tinfo->f_gt)((void*)ur.lower, (void*)rd.lower) )
        memcpy( (void*) ur.lower, (void*) rd.lower, tinfo->size );
     if ( (*tinfo->f_lt)((void*)ur.upper, (void*)rd.upper) )
        memcpy( (void*) ur.upper, (void*) rd.upper, tinfo->size );
   }
-
 }
 
 
