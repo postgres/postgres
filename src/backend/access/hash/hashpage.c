@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashpage.c,v 1.39 2003/09/01 20:26:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashpage.c,v 1.40 2003/09/02 02:18:38 tgl Exp $
  *
  * NOTES
  *	  Postgres hash pages look like ordinary relation pages.  The opaque
@@ -143,7 +143,7 @@ _hash_metapinit(Relation rel)
 	 */
 	for (i = 0; i <= 1; i++)
 	{
-		buf = _hash_getbuf(rel, BUCKET_TO_BLKNO(i), HASH_WRITE);
+		buf = _hash_getbuf(rel, BUCKET_TO_BLKNO(metap, i), HASH_WRITE);
 		pg = BufferGetPage(buf);
 		_hash_pageinit(pg, BufferGetPageSize(buf));
 		pageopaque = (HashPageOpaque) PageGetSpecialPointer(pg);
@@ -456,6 +456,8 @@ _hash_splitbucket(Relation rel,
 	Buffer		ovflbuf;
 	BlockNumber oblkno;
 	BlockNumber nblkno;
+	BlockNumber start_oblkno;
+	BlockNumber start_nblkno;
 	bool		null;
 	Datum		datum;
 	HashItem	hitem;
@@ -475,8 +477,10 @@ _hash_splitbucket(Relation rel,
 	_hash_checkpage((Page) metap, LH_META_PAGE);
 
 	/* get the buffers & pages */
-	oblkno = BUCKET_TO_BLKNO(obucket);
-	nblkno = BUCKET_TO_BLKNO(nbucket);
+	start_oblkno = BUCKET_TO_BLKNO(metap, obucket);
+	start_nblkno = BUCKET_TO_BLKNO(metap, nbucket);
+	oblkno = start_oblkno;
+	nblkno = start_nblkno;
 	obuf = _hash_getbuf(rel, oblkno, HASH_WRITE);
 	nbuf = _hash_getbuf(rel, nblkno, HASH_WRITE);
 	opage = BufferGetPage(obuf);
@@ -571,7 +575,7 @@ _hash_splitbucket(Relation rel,
 				 */
 				_hash_wrtbuf(rel, obuf);
 				_hash_wrtbuf(rel, nbuf);
-				_hash_squeezebucket(rel, metap, obucket);
+				_hash_squeezebucket(rel, obucket, start_oblkno);
 				return;
 			}
 		}
@@ -639,7 +643,7 @@ _hash_splitbucket(Relation rel,
 				if (!BlockNumberIsValid(oblkno))
 				{
 					_hash_wrtbuf(rel, nbuf);
-					_hash_squeezebucket(rel, metap, obucket);
+					_hash_squeezebucket(rel, obucket, start_oblkno);
 					return;
 				}
 

@@ -8,11 +8,10 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashutil.c,v 1.33 2003/08/04 02:39:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashutil.c,v 1.34 2003/09/02 02:18:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
-
 #include "postgres.h"
 
 #include "access/genam.h"
@@ -20,19 +19,22 @@
 #include "access/iqual.h"
 
 
+/*
+ * _hash_mkscankey -- build a scan key matching the given indextuple
+ *
+ * Note: this is prepared for multiple index columns, but very little
+ * else in access/hash is ...
+ */
 ScanKey
 _hash_mkscankey(Relation rel, IndexTuple itup)
 {
 	ScanKey		skey;
-	TupleDesc	itupdesc;
-	int			natts;
+	TupleDesc	itupdesc = RelationGetDescr(rel);
+	int			natts = rel->rd_rel->relnatts;
 	AttrNumber	i;
 	Datum		arg;
 	FmgrInfo   *procinfo;
 	bool		isnull;
-
-	natts = rel->rd_rel->relnatts;
-	itupdesc = RelationGetDescr(rel);
 
 	skey = (ScanKey) palloc(natts * sizeof(ScanKeyData));
 
@@ -41,7 +43,7 @@ _hash_mkscankey(Relation rel, IndexTuple itup)
 		arg = index_getattr(itup, i + 1, itupdesc, &isnull);
 		procinfo = index_getprocinfo(rel, i + 1, HASHPROC);
 		ScanKeyEntryInitializeWithInfo(&skey[i],
-									   0x0,
+									   isnull ? SK_ISNULL : 0x0,
 									   (AttrNumber) (i + 1),
 									   procinfo,
 									   CurrentMemoryContext,
@@ -57,18 +59,19 @@ _hash_freeskey(ScanKey skey)
 	pfree(skey);
 }
 
-
+/*
+ * _hash_checkqual -- does the index tuple satisfy the scan conditions?
+ */
 bool
 _hash_checkqual(IndexScanDesc scan, IndexTuple itup)
 {
-	if (scan->numberOfKeys > 0)
-		return (index_keytest(itup,
-							  RelationGetDescr(scan->indexRelation),
-							  scan->numberOfKeys, scan->keyData));
-	else
-		return true;
+	return index_keytest(itup, RelationGetDescr(scan->indexRelation),
+						 scan->numberOfKeys, scan->keyData);
 }
 
+/*
+ * _hash_formitem -- construct a hash index entry
+ */
 HashItem
 _hash_formitem(IndexTuple itup)
 {
@@ -82,17 +85,27 @@ _hash_formitem(IndexTuple itup)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("hash indexes cannot include null keys")));
 
-	/* make a copy of the index tuple with room for the sequence number */
+	/*
+	 * make a copy of the index tuple (XXX do we still need to copy?)
+	 *
+	 * HashItemData used to have more fields than IndexTupleData, but no
+	 * longer...
+	 */
 	tuplen = IndexTupleSize(itup);
 	nbytes_hitem = tuplen +
 		(sizeof(HashItemData) - sizeof(IndexTupleData));
 
 	hitem = (HashItem) palloc(nbytes_hitem);
-	memmove((char *) &(hitem->hash_itup), (char *) itup, tuplen);
+	memcpy((char *) &(hitem->hash_itup), (char *) itup, tuplen);
 
 	return hitem;
 }
 
+/*
+ * _hash_call -- given a Datum, call the index's hash procedure
+ *
+ * Returns the bucket number that the hash key maps to.
+ */
 Bucket
 _hash_call(Relation rel, HashMetaPage metap, Datum key)
 {
@@ -103,9 +116,11 @@ _hash_call(Relation rel, HashMetaPage metap, Datum key)
 	/* XXX assumes index has only one attribute */
 	procinfo = index_getprocinfo(rel, 1, HASHPROC);
 	n = DatumGetUInt32(FunctionCall1(procinfo, key));
+
 	bucket = n & metap->hashm_highmask;
 	if (bucket > metap->hashm_maxbucket)
 		bucket = bucket & metap->hashm_lowmask;
+
 	return bucket;
 }
 
@@ -119,7 +134,7 @@ _hash_log2(uint32 num)
 				limit;
 
 	limit = 1;
-	for (i = 0; limit < num; limit = limit << 1, i++)
+	for (i = 0; limit < num; limit <<= 1, i++)
 		;
 	return i;
 }
@@ -130,20 +145,19 @@ _hash_log2(uint32 num)
 void
 _hash_checkpage(Page page, int flags)
 {
-	HashPageOpaque opaque;
-
+#ifdef USE_ASSERT_CHECKING
 	Assert(page);
 	Assert(((PageHeader) (page))->pd_lower >= SizeOfPageHeaderData);
-#if 1
 	Assert(((PageHeader) (page))->pd_upper <=
 		   (BLCKSZ - MAXALIGN(sizeof(HashPageOpaqueData))));
 	Assert(((PageHeader) (page))->pd_special ==
 		   (BLCKSZ - MAXALIGN(sizeof(HashPageOpaqueData))));
 	Assert(PageGetPageSize(page) == BLCKSZ);
-#endif
 	if (flags)
 	{
-		opaque = (HashPageOpaque) PageGetSpecialPointer(page);
+		HashPageOpaque opaque = (HashPageOpaque) PageGetSpecialPointer(page);
+
 		Assert(opaque->hasho_flag & flags);
 	}
+#endif   /* USE_ASSERT_CHECKING */
 }

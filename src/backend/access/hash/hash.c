@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.65 2003/08/04 02:39:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.66 2003/09/02 02:18:38 tgl Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -449,40 +449,178 @@ hashbulkdelete(PG_FUNCTION_ARGS)
 	BlockNumber num_pages;
 	double		tuples_removed;
 	double		num_index_tuples;
-	IndexScanDesc iscan;
-
-	tuples_removed = 0;
-	num_index_tuples = 0;
+	uint32		deleted_tuples;
+	uint32		tuples_remaining;
+	uint32		orig_ntuples;
+	Bucket		orig_maxbucket;
+	Bucket		cur_maxbucket;
+	Bucket		cur_bucket;
+	Buffer		metabuf;
+	HashMetaPage metap;
+	HashMetaPageData local_metapage;
 
 	/*
-	 * XXX generic implementation --- should be improved!
+	 * keep track of counts in both float form (to return) and integer form
+	 * (to update hashm_ntuples).  It'd be better to make hashm_ntuples a
+	 * double, but that will have to wait for an initdb.
 	 */
+	tuples_removed = 0;
+	num_index_tuples = 0;
+	deleted_tuples = 0;
+	tuples_remaining = 0;
 
-	/* walk through the entire index */
-	iscan = index_beginscan(NULL, rel, SnapshotAny, 0, (ScanKey) NULL);
-	/* including killed tuples */
-	iscan->ignore_killed_tuples = false;
+	/*
+	 * Read the metapage to fetch original bucket and tuple counts.  Also,
+	 * we keep a copy of the last-seen metapage so that we can use its
+	 * hashm_spares[] values to compute bucket page addresses.  This is a
+	 * bit hokey but perfectly safe, since the interesting entries in the
+	 * spares array cannot change under us; and it beats rereading the
+	 * metapage for each bucket.
+	 */
+	metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_READ);
+	metap = (HashMetaPage) BufferGetPage(metabuf);
+	_hash_checkpage((Page) metap, LH_META_PAGE);
+	orig_maxbucket = metap->hashm_maxbucket;
+	orig_ntuples = metap->hashm_ntuples;
+	memcpy(&local_metapage, metap, sizeof(local_metapage));
+	_hash_relbuf(rel, metabuf, HASH_READ);
 
-	while (index_getnext_indexitem(iscan, ForwardScanDirection))
+	/* Scan the buckets that we know exist */
+	cur_bucket = 0;
+	cur_maxbucket = orig_maxbucket;
+
+loop_top:
+	while (cur_bucket <= cur_maxbucket)
 	{
-		if (callback(&iscan->xs_ctup.t_self, callback_state))
+		BlockNumber bucket_blkno;
+		BlockNumber blkno;
+		bool		bucket_dirty = false;
+
+		/* Get address of bucket's start page */
+		bucket_blkno = BUCKET_TO_BLKNO(&local_metapage, cur_bucket);
+
+		/* XXX lock bucket here */
+
+		/* Scan each page in bucket */
+		blkno = bucket_blkno;
+		while (BlockNumberIsValid(blkno))
 		{
-			ItemPointerData indextup = iscan->currentItemData;
+			Buffer		buf;
+			Page		page;
+			HashPageOpaque opaque;
+			OffsetNumber offno;
+			OffsetNumber maxoffno;
+			bool		page_dirty = false;
 
-			/* adjust any active scans that will be affected by deletion */
-			/* (namely, my own scan) */
-			_hash_adjscans(rel, &indextup);
+			buf = _hash_getbuf(rel, blkno, HASH_WRITE);
+			page = BufferGetPage(buf);
+			_hash_checkpage(page, LH_BUCKET_PAGE | LH_OVERFLOW_PAGE);
+			opaque = (HashPageOpaque) PageGetSpecialPointer(page);
+			Assert(opaque->hasho_bucket == cur_bucket);
 
-			/* delete the data from the page */
-			_hash_pagedel(rel, &indextup);
+			/* Scan each tuple in page */
+			offno = FirstOffsetNumber;
+			maxoffno = PageGetMaxOffsetNumber(page);
+			while (offno <= maxoffno)
+			{
+				HashItem	hitem;
+				ItemPointer htup;
 
-			tuples_removed += 1;
+				hitem = (HashItem) PageGetItem(page,
+											   PageGetItemId(page, offno));
+				htup = &(hitem->hash_itup.t_tid);
+				if (callback(htup, callback_state))
+				{
+					ItemPointerData indextup;
+
+					/* adjust any active scans that will be affected */
+					/* (this should be unnecessary) */
+					ItemPointerSet(&indextup, blkno, offno);
+					_hash_adjscans(rel, &indextup);
+
+					/* delete the item from the page */
+					PageIndexTupleDelete(page, offno);
+					bucket_dirty = page_dirty = true;
+
+					/* don't increment offno, instead decrement maxoffno */
+					maxoffno = OffsetNumberPrev(maxoffno);
+
+					tuples_removed += 1;
+					deleted_tuples += 1;
+				}
+				else
+				{
+					offno = OffsetNumberNext(offno);
+
+					num_index_tuples += 1;
+					tuples_remaining += 1;
+				}
+			}
+
+			/*
+			 * Write or free page if needed, advance to next page.  We want
+			 * to preserve the invariant that overflow pages are nonempty.
+			 */
+			blkno = opaque->hasho_nextblkno;
+
+			if (PageIsEmpty(page) && (opaque->hasho_flag & LH_OVERFLOW_PAGE))
+				_hash_freeovflpage(rel, buf);
+			else if (page_dirty)
+				_hash_wrtbuf(rel, buf);
+			else
+				_hash_relbuf(rel, buf, HASH_WRITE);
 		}
-		else
-			num_index_tuples += 1;
+
+		/* If we deleted anything, try to compact free space */
+		if (bucket_dirty)
+			_hash_squeezebucket(rel, cur_bucket, bucket_blkno);
+
+		/* XXX unlock bucket here */
+
+		/* Advance to next bucket */
+		cur_bucket++;
 	}
 
-	index_endscan(iscan);
+	/* Write-lock metapage and check for split since we started */
+	metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_WRITE);
+	metap = (HashMetaPage) BufferGetPage(metabuf);
+	_hash_checkpage((Page) metap, LH_META_PAGE);
+
+	if (cur_maxbucket != metap->hashm_maxbucket)
+	{
+		/* There's been a split, so process the additional bucket(s) */
+		cur_maxbucket = metap->hashm_maxbucket;
+		memcpy(&local_metapage, metap, sizeof(local_metapage));
+		_hash_relbuf(rel, metabuf, HASH_WRITE);
+		goto loop_top;
+	}
+
+	/* Okay, we're really done.  Update tuple count in metapage. */
+
+	if (orig_maxbucket == metap->hashm_maxbucket &&
+		orig_ntuples == metap->hashm_ntuples)
+	{
+		/*
+		 * No one has split or inserted anything since start of scan,
+		 * so believe our count as gospel.
+		 */
+		metap->hashm_ntuples = tuples_remaining;
+	}
+	else
+	{
+		/*
+		 * Otherwise, our count is untrustworthy since we may have
+		 * double-scanned tuples in split buckets.  Proceed by
+		 * dead-reckoning.
+		 */
+		if (metap->hashm_ntuples > deleted_tuples)
+			metap->hashm_ntuples -= deleted_tuples;
+		else
+			metap->hashm_ntuples = 0;
+		num_index_tuples = metap->hashm_ntuples;
+	}
+
+	_hash_wrtbuf(rel, metabuf);
 
 	/* return statistics */
 	num_pages = RelationGetNumberOfBlocks(rel);

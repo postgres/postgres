@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashsearch.c,v 1.31 2003/08/04 02:39:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashsearch.c,v 1.32 2003/09/02 02:18:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,8 +19,10 @@
 
 
 /*
- *	_hash_search() -- Finds the page/bucket that the contains the
- *	scankey and loads it into *bufP.  the buffer has a read lock.
+ *	_hash_search() -- Find the bucket that contains the scankey
+ *		and fetch its primary bucket page into *bufP.
+ *
+ * the buffer has a read lock.
  */
 void
 _hash_search(Relation rel,
@@ -30,22 +32,23 @@ _hash_search(Relation rel,
 			 HashMetaPage metap)
 {
 	BlockNumber blkno;
-	Datum		keyDatum;
 	Bucket		bucket;
 
-	if (scankey == (ScanKey) NULL ||
-		(keyDatum = scankey[0].sk_argument) == (Datum) NULL)
+	if (scankey == NULL)
 	{
 		/*
-		 * If the scankey argument is NULL, all tuples will satisfy the
+		 * If the scankey is empty, all tuples will satisfy the
 		 * scan so we start the scan at the first bucket (bucket 0).
 		 */
 		bucket = 0;
 	}
 	else
-		bucket = _hash_call(rel, metap, keyDatum);
+	{
+		Assert(!(scankey[0].sk_flags & SK_ISNULL));
+		bucket = _hash_call(rel, metap, scankey[0].sk_argument);
+	}
 
-	blkno = BUCKET_TO_BLKNO(bucket);
+	blkno = BUCKET_TO_BLKNO(metap, bucket);
 
 	*bufP = _hash_getbuf(rel, blkno, HASH_READ);
 }
@@ -330,7 +333,7 @@ _hash_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir, Buffer metabuf)
 						if (allbuckets && bucket < metap->hashm_maxbucket)
 						{
 							++bucket;
-							blkno = BUCKET_TO_BLKNO(bucket);
+							blkno = BUCKET_TO_BLKNO(metap, bucket);
 							buf = _hash_getbuf(rel, blkno, HASH_READ);
 							page = BufferGetPage(buf);
 							_hash_checkpage(page, LH_BUCKET_PAGE);
@@ -380,7 +383,7 @@ _hash_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir, Buffer metabuf)
 						if (allbuckets && bucket > 0)
 						{
 							--bucket;
-							blkno = BUCKET_TO_BLKNO(bucket);
+							blkno = BUCKET_TO_BLKNO(metap, bucket);
 							buf = _hash_getbuf(rel, blkno, HASH_READ);
 							page = BufferGetPage(buf);
 							_hash_checkpage(page, LH_BUCKET_PAGE);
