@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.1 1997/11/07 07:05:46 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.2 1997/11/10 15:14:34 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -130,6 +130,10 @@ ExpandDatabasePath(char *dbpath)
 		strncpy(buf,dbpath,(cp-dbpath));
 		buf[cp-dbpath] = '\0';
 		path = getenv(buf);
+		/* problem getting environment variable? let calling routine handle it */
+		if (path == NULL)
+			return path;
+
 		sprintf(buf, "%s%cbase%c%s", path, SEP_CHAR, SEP_CHAR, (cp+1));
 	}
 	/* no path delimiter? then add the default path prefixes */
