@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.29 2000/01/10 05:23:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.30 2000/01/10 15:41:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,7 @@
  * fix me when we figure out what we want to do about ANSIfication...
  */
 
+#include <ctype.h>
 #include "postgres.h"
 #ifdef HAVE_LIMITS_H
 #include <limits.h>
@@ -90,10 +91,15 @@ int28in(char *intString)
 	{
 		if (sscanf(intString, "%hd", &result[slot]) != 1)
 			break;
-		do
+		while (*intString && isspace(*intString))
 			intString++;
-		while (*intString && *intString != ' ')
+		while (*intString && !isspace(*intString))
+			intString++;
 	}
+	while (*intString && isspace(*intString))
+		intString++;
+	if (*intString)
+		elog(ERROR,"int28 value has too many values");
 	while (slot < INDEX_MAX_KEYS)
 		result[slot++] = 0;
 
@@ -104,31 +110,36 @@ int28in(char *intString)
  *		int28out		- converts internal form to "num num ..."
  */
 char *
-int28out(int16 *shs)
+int28out(int16 *int2Array)
 {
-	int			num;
-	int16	   *sp;
+	int			num, maxnum;
 	char	   *rp;
 	char	   *result;
 
-	if (shs == NULL)
+	if (int2Array == NULL)
 	{
 		result = (char *) palloc(2);
 		result[0] = '-';
 		result[1] = '\0';
 		return result;
 	}
-	rp = result = (char *) palloc(INDEX_MAX_KEYS * 7);
-							/* assumes sign, 5 digits, ' ' */
-	sp = shs;
-	for (num = INDEX_MAX_KEYS; num != 0; num--)
+
+	/* find last non-zero value in vector */
+	for (maxnum = INDEX_MAX_KEYS-1; maxnum >= 0; maxnum--)
+		if (int2Array[maxnum] != 0)
+			break;
+
+	/* assumes sign, 5 digits, ' ' */
+	rp = result = (char *) palloc(maxnum * 7 + 1);
+	for (num = 0; num <= maxnum; num++)
 	{
-		itoa(*sp++, rp);
+		if (num != 0)
+			*rp++ = ' ';
+		ltoa(int2Array[num], rp);
 		while (*++rp != '\0')
 			;
-		*rp++ = ' ';
 	}
-	*--rp = '\0';
+	*rp = '\0';
 	return result;
 }
 

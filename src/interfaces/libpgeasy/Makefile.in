@@ -4,13 +4,13 @@
 #    Makefile for pgeasy library
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpgeasy/Attic/Makefile.in,v 1.4 1999/12/16 01:25:16 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpgeasy/Attic/Makefile.in,v 1.5 2000/01/10 15:41:28 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
 NAME= pgeasy
 SO_MAJOR_VERSION= 2
-SO_MINOR_VERSION= 0
+SO_MINOR_VERSION= 1
 
 SRCDIR= @top_srcdir@
 include $(SRCDIR)/Makefile.global

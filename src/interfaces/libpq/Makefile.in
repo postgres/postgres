@@ -6,13 +6,13 @@
 # Copyright (c) 1994, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Attic/Makefile.in,v 1.50 1999/12/16 01:25:19 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Attic/Makefile.in,v 1.51 2000/01/10 15:41:30 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
 NAME= pq
 SO_MAJOR_VERSION= 2
-SO_MINOR_VERSION= 0
+SO_MINOR_VERSION= 1
 
 SRCDIR= @top_srcdir@
 include $(SRCDIR)/Makefile.global

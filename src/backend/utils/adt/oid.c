@@ -7,12 +7,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/oid.c,v 1.30 2000/01/10 05:23:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/oid.c,v 1.31 2000/01/10 15:41:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 
+#include <ctype.h>
 #include "postgres.h"
 #include "utils/builtins.h"
 
@@ -41,10 +42,15 @@ oid8in(char *oidString)
 	{
 		if (sscanf(oidString, "%u", &result[slot]) != 1)
 			break;
-		do
+		while (*oidString && isspace(*oidString))
 			oidString++;
-		while (*oidString && *oidString != ' ')
+		while (*oidString && !isspace(*oidString))
+			oidString++;
 	}
+	while (*oidString && isspace(*oidString))
+		oidString++;
+	if (*oidString)
+		elog(ERROR,"oid8 value has too many values");
 	while (slot < INDEX_MAX_KEYS)
 		result[slot++] = 0;
 
@@ -57,8 +63,7 @@ oid8in(char *oidString)
 char *
 oid8out(Oid *oidArray)
 {
-	int			num;
-	Oid		   *sp;
+	int			num, maxnum;
 	char	   *rp;
 	char	   *result;
 
@@ -70,17 +75,22 @@ oid8out(Oid *oidArray)
 		return result;
 	}
 
+	/* find last non-zero value in vector */
+	for (maxnum = INDEX_MAX_KEYS-1; maxnum >= 0; maxnum--)
+		if (oidArray[maxnum] != 0)
+			break;
+
 	/* assumes sign, 10 digits, ' ' */
-	rp = result = (char *) palloc(INDEX_MAX_KEYS * 12);
-	sp = oidArray;
-	for (num = INDEX_MAX_KEYS; num != 0; num--)
+	rp = result = (char *) palloc(maxnum * 12 + 1);
+	for (num = 0; num <= maxnum; num++)
 	{
-		ltoa(*sp++, rp);
+		if (num != 0)
+			*rp++ = ' ';
+		ltoa(oidArray[num], rp);
 		while (*++rp != '\0')
 			;
-		*rp++ = ' ';
 	}
-	*--rp = '\0';
+	*rp = '\0';
 	return result;
 }
 
