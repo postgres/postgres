@@ -1,48 +1,33 @@
 /*
- *
  * outfuncs.c
  *	  routines to convert a node to ascii representation
  *
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.135 2000/12/03 20:45:33 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.136 2001/01/07 01:08:47 tgl Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
  *	  knows how to create its ascii representation. These functions are
  *	  useful for debugging as well as for storing plans in the system
- *	  catalogs (eg. indexes). This is also the plan string sent out in
- *	  Mariposa.
- *
- *	  These functions update the in/out argument of type StringInfo
- *	  passed to them. This argument contains the string holding the ASCII
- *	  representation plus some other information (string length, etc.)
- *
+ *	  catalogs (eg. views).
  */
 #include "postgres.h"
 
 #include <ctype.h>
 
-#include "access/heapam.h"
-#include "access/htup.h"
-#include "catalog/pg_type.h"
-#include "fmgr.h"
 #include "lib/stringinfo.h"
-#include "nodes/execnodes.h"
 #include "nodes/nodes.h"
 #include "nodes/parsenodes.h"
-#include "nodes/pg_list.h"
 #include "nodes/plannodes.h"
 #include "nodes/primnodes.h"
 #include "nodes/relation.h"
 #include "parser/parse.h"
 #include "utils/datum.h"
-#include "utils/lsyscache.h"
-#include "utils/syscache.h"
 
 
-static void _outDatum(StringInfo str, Datum value, Oid type);
+static void _outDatum(StringInfo str, Datum value, int typlen, bool typbyval);
 static void _outNode(StringInfo str, void *obj);
 
 /*
@@ -63,8 +48,8 @@ _outToken(StringInfo str, char *s)
 
 	/*
 	 * Look for characters or patterns that are treated specially by
-	 * read.c (either in lsptok() or in nodeRead()), and therefore need a
-	 * protective backslash.
+	 * read.c (either in pg_strtok() or in nodeRead()), and therefore need
+	 * a protective backslash.
 	 */
 	/* These characters only need to be quoted at the start of the string */
 	if (*s == '<' ||
@@ -762,18 +747,17 @@ static void
 _outConst(StringInfo str, Const *node)
 {
 	appendStringInfo(str,
-		" CONST :consttype %u :constlen %d :constisnull %s :constvalue ",
+					 " CONST :consttype %u :constlen %d :constbyval %s"
+					 " :constisnull %s :constvalue ",
 					 node->consttype,
 					 node->constlen,
+					 node->constbyval ? "true" : "false",
 					 node->constisnull ? "true" : "false");
 
 	if (node->constisnull)
 		appendStringInfo(str, "<>");
 	else
-		_outDatum(str, node->constvalue, node->consttype);
-
-	appendStringInfo(str, " :constbyval %s ",
-					 node->constbyval ? "true" : "false");
+		_outDatum(str, node->constvalue, node->constlen, node->constbyval);
 }
 
 /*
@@ -1234,38 +1218,31 @@ _outJoinInfo(StringInfo str, JoinInfo *node)
  * Print the value of a Datum given its type.
  */
 static void
-_outDatum(StringInfo str, Datum value, Oid type)
+_outDatum(StringInfo str, Datum value, int typlen, bool typbyval)
 {
-	int16		typeLength;
-	bool		byValue;
-	Size		length;
+	Size		length,
+				i;
 	char	   *s;
-	int			i;
 
-	/*
-	 * find some information about the type and the "real" length of the
-	 * datum.
-	 */
-	get_typlenbyval(type, &typeLength, &byValue);
-	length = datumGetSize(value, byValue, typeLength);
+	length = datumGetSize(value, typbyval, typlen);
 
-	if (byValue)
+	if (typbyval)
 	{
 		s = (char *) (&value);
 		appendStringInfo(str, " %u [ ", (unsigned int) length);
-		for (i = 0; i < (int) sizeof(Datum); i++)
+		for (i = 0; i < (Size) sizeof(Datum); i++)
 			appendStringInfo(str, "%d ", (int) (s[i]));
 		appendStringInfo(str, "] ");
 	}
 	else
-	{							/* !byValue */
+	{
 		s = (char *) DatumGetPointer(value);
 		if (!PointerIsValid(s))
 			appendStringInfo(str, " 0 [ ] ");
 		else
 		{
 			appendStringInfo(str, " %u [ ", (unsigned int) length);
-			for (i = 0; i < (int) length; i++)
+			for (i = 0; i < length; i++)
 				appendStringInfo(str, "%d ", (int) (s[i]));
 			appendStringInfo(str, "] ");
 		}

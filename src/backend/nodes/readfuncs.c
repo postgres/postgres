@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.102 2000/12/14 22:30:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.103 2001/01/07 01:08:47 tgl Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -23,21 +23,22 @@
  *
  *-------------------------------------------------------------------------
  */
-#include <math.h>
-
 #include "postgres.h"
+
+#include <math.h>
 
 #include "nodes/plannodes.h"
 #include "nodes/readfuncs.h"
 #include "nodes/relation.h"
-#include "utils/lsyscache.h"
+
+
+static Datum readDatum(bool typbyval);
+
 
 /* ----------------
  *		node creator declarations
  * ----------------
  */
-
-static Datum readDatum(Oid type);
 
 static List *
 toIntList(List *list)
@@ -65,12 +66,12 @@ _readQuery(void)
 
 	local_node = makeNode(Query);
 
-	token = lsptok(NULL, &length);		/* skip the :command */
-	token = lsptok(NULL, &length);		/* get the commandType */
+	token = pg_strtok(&length);		/* skip the :command */
+	token = pg_strtok(&length);		/* get the commandType */
 	local_node->commandType = atoi(token);
 
-	token = lsptok(NULL, &length);		/* skip :utility */
-	token = lsptok(NULL, &length);
+	token = pg_strtok(&length);		/* skip :utility */
+	token = pg_strtok(&length);
 	if (length == 0)
 		local_node->utilityStmt = NULL;
 	else
@@ -86,71 +87,71 @@ _readQuery(void)
 		local_node->utilityStmt = (Node *) n;
 	}
 
-	token = lsptok(NULL, &length);		/* skip the :resultRelation */
-	token = lsptok(NULL, &length);		/* get the resultRelation */
+	token = pg_strtok(&length);		/* skip the :resultRelation */
+	token = pg_strtok(&length);		/* get the resultRelation */
 	local_node->resultRelation = atoi(token);
 
-	token = lsptok(NULL, &length);		/* skip :into */
-	token = lsptok(NULL, &length);		/* get into */
+	token = pg_strtok(&length);		/* skip :into */
+	token = pg_strtok(&length);		/* get into */
 	if (length == 0)
 		local_node->into = NULL;
 	else
 		local_node->into = debackslash(token, length);
 
-	token = lsptok(NULL, &length);		/* skip :isPortal */
-	token = lsptok(NULL, &length);		/* get isPortal */
+	token = pg_strtok(&length);		/* skip :isPortal */
+	token = pg_strtok(&length);		/* get isPortal */
 	local_node->isPortal = (token[0] == 't') ? true : false;
 
-	token = lsptok(NULL, &length);		/* skip :isBinary */
-	token = lsptok(NULL, &length);		/* get isBinary */
+	token = pg_strtok(&length);		/* skip :isBinary */
+	token = pg_strtok(&length);		/* get isBinary */
 	local_node->isBinary = (token[0] == 't') ? true : false;
 
-	token = lsptok(NULL, &length);		/* skip :isTemp */
-	token = lsptok(NULL, &length);		/* get isTemp */
+	token = pg_strtok(&length);		/* skip :isTemp */
+	token = pg_strtok(&length);		/* get isTemp */
 	local_node->isTemp = (token[0] == 't') ? true : false;
 
-	token = lsptok(NULL, &length);		/* skip the :hasAggs */
-	token = lsptok(NULL, &length);		/* get hasAggs */
+	token = pg_strtok(&length);		/* skip the :hasAggs */
+	token = pg_strtok(&length);		/* get hasAggs */
 	local_node->hasAggs = (token[0] == 't') ? true : false;
 
-	token = lsptok(NULL, &length);		/* skip the :hasSubLinks */
-	token = lsptok(NULL, &length);		/* get hasSubLinks */
+	token = pg_strtok(&length);		/* skip the :hasSubLinks */
+	token = pg_strtok(&length);		/* get hasSubLinks */
 	local_node->hasSubLinks = (token[0] == 't') ? true : false;
 
-	token = lsptok(NULL, &length);		/* skip :rtable */
+	token = pg_strtok(&length);		/* skip :rtable */
 	local_node->rtable = nodeRead(true);
 
-	token = lsptok(NULL, &length);		/* skip :jointree */
+	token = pg_strtok(&length);		/* skip :jointree */
 	local_node->jointree = nodeRead(true);
 
-	token = lsptok(NULL, &length);		/* skip :rowMarks */
+	token = pg_strtok(&length);		/* skip :rowMarks */
 	local_node->rowMarks = toIntList(nodeRead(true));
 
-	token = lsptok(NULL, &length);		/* skip :targetlist */
+	token = pg_strtok(&length);		/* skip :targetlist */
 	local_node->targetList = nodeRead(true);
 
-	token = lsptok(NULL, &length);		/* skip :groupClause */
+	token = pg_strtok(&length);		/* skip :groupClause */
 	local_node->groupClause = nodeRead(true);
 
-	token = lsptok(NULL, &length);		/* skip :havingQual */
+	token = pg_strtok(&length);		/* skip :havingQual */
 	local_node->havingQual = nodeRead(true);
 
-	token = lsptok(NULL, &length);		/* skip :distinctClause */
+	token = pg_strtok(&length);		/* skip :distinctClause */
 	local_node->distinctClause = nodeRead(true);
 
-	token = lsptok(NULL, &length);		/* skip :sortClause */
+	token = pg_strtok(&length);		/* skip :sortClause */
 	local_node->sortClause = nodeRead(true);
 
-	token = lsptok(NULL, &length);		/* skip :limitOffset */
+	token = pg_strtok(&length);		/* skip :limitOffset */
 	local_node->limitOffset = nodeRead(true);
 
-	token = lsptok(NULL, &length);		/* skip :limitCount */
+	token = pg_strtok(&length);		/* skip :limitCount */
 	local_node->limitCount = nodeRead(true);
 
-	token = lsptok(NULL, &length);		/* skip :setOperations */
+	token = pg_strtok(&length);		/* skip :setOperations */
 	local_node->setOperations = nodeRead(true);
 
-	token = lsptok(NULL, &length);		/* skip :resultRelations */
+	token = pg_strtok(&length);		/* skip :resultRelations */
 	local_node->resultRelations = toIntList(nodeRead(true));
 
 	return local_node;
@@ -169,12 +170,12 @@ _readSortClause(void)
 
 	local_node = makeNode(SortClause);
 
-	token = lsptok(NULL, &length);		/* skip :tleSortGroupRef */
-	token = lsptok(NULL, &length);		/* get tleSortGroupRef */
+	token = pg_strtok(&length);		/* skip :tleSortGroupRef */
+	token = pg_strtok(&length);		/* get tleSortGroupRef */
 	local_node->tleSortGroupRef = strtoul(token, NULL, 10);
 
-	token = lsptok(NULL, &length);		/* skip :sortop */
-	token = lsptok(NULL, &length);		/* get sortop */
+	token = pg_strtok(&length);		/* skip :sortop */
+	token = pg_strtok(&length);		/* get sortop */
 	local_node->sortop = strtoul(token, NULL, 10);
 
 	return local_node;
@@ -193,12 +194,12 @@ _readGroupClause(void)
 
 	local_node = makeNode(GroupClause);
 
-	token = lsptok(NULL, &length);		/* skip :tleSortGroupRef */
-	token = lsptok(NULL, &length);		/* get tleSortGroupRef */
+	token = pg_strtok(&length);		/* skip :tleSortGroupRef */
+	token = pg_strtok(&length);		/* get tleSortGroupRef */
 	local_node->tleSortGroupRef = strtoul(token, NULL, 10);
 
-	token = lsptok(NULL, &length);		/* skip :sortop */
-	token = lsptok(NULL, &length);		/* get sortop */
+	token = pg_strtok(&length);		/* skip :sortop */
+	token = pg_strtok(&length);		/* get sortop */
 	local_node->sortop = strtoul(token, NULL, 10);
 
 	return local_node;
@@ -217,21 +218,21 @@ _readSetOperationStmt(void)
 
 	local_node = makeNode(SetOperationStmt);
 
-	token = lsptok(NULL, &length);		/* eat :op */
-	token = lsptok(NULL, &length);		/* get op */
+	token = pg_strtok(&length);		/* eat :op */
+	token = pg_strtok(&length);		/* get op */
 	local_node->op = (SetOperation) atoi(token);
 
-	token = lsptok(NULL, &length);		/* eat :all */
-	token = lsptok(NULL, &length);		/* get all */
+	token = pg_strtok(&length);		/* eat :all */
+	token = pg_strtok(&length);		/* get all */
 	local_node->all = (token[0] == 't') ? true : false;
 
-	token = lsptok(NULL, &length);		/* eat :larg */
+	token = pg_strtok(&length);		/* eat :larg */
 	local_node->larg = nodeRead(true);	/* get larg */
 
-	token = lsptok(NULL, &length);		/* eat :rarg */
+	token = pg_strtok(&length);		/* eat :rarg */
 	local_node->rarg = nodeRead(true);	/* get rarg */
 
-	token = lsptok(NULL, &length);		/* eat :colTypes */
+	token = pg_strtok(&length);		/* eat :colTypes */
 	local_node->colTypes = toIntList(nodeRead(true));
 
 	return local_node;
@@ -247,32 +248,32 @@ _getPlan(Plan *node)
 	char	   *token;
 	int			length;
 
-	token = lsptok(NULL, &length);		/* first token is :startup_cost */
-	token = lsptok(NULL, &length);		/* next is the actual cost */
+	token = pg_strtok(&length);		/* first token is :startup_cost */
+	token = pg_strtok(&length);		/* next is the actual cost */
 	node->startup_cost = (Cost) atof(token);
 
-	token = lsptok(NULL, &length);		/* skip the :total_cost */
-	token = lsptok(NULL, &length);		/* next is the actual cost */
+	token = pg_strtok(&length);		/* skip the :total_cost */
+	token = pg_strtok(&length);		/* next is the actual cost */
 	node->total_cost = (Cost) atof(token);
 
-	token = lsptok(NULL, &length);		/* skip the :rows */
-	token = lsptok(NULL, &length);		/* get the plan_rows */
+	token = pg_strtok(&length);		/* skip the :rows */
+	token = pg_strtok(&length);		/* get the plan_rows */
 	node->plan_rows = atof(token);
 
-	token = lsptok(NULL, &length);		/* skip the :width */
-	token = lsptok(NULL, &length);		/* get the plan_width */
+	token = pg_strtok(&length);		/* skip the :width */
+	token = pg_strtok(&length);		/* get the plan_width */
 	node->plan_width = atoi(token);
 
-	token = lsptok(NULL, &length);		/* eat :qptargetlist */
+	token = pg_strtok(&length);		/* eat :qptargetlist */
 	node->targetlist = nodeRead(true);
 
-	token = lsptok(NULL, &length);		/* eat :qpqual */
+	token = pg_strtok(&length);		/* eat :qpqual */
 	node->qual = nodeRead(true);
 
-	token = lsptok(NULL, &length);		/* eat :lefttree */
+	token = pg_strtok(&length);		/* eat :lefttree */
 	node->lefttree = (Plan *) nodeRead(true);
 
-	token = lsptok(NULL, &length);		/* eat :righttree */
+	token = pg_strtok(&length);		/* eat :righttree */
 	node->righttree = (Plan *) nodeRead(true);
 
 	node->state = (EState *) NULL;		/* never read in */
@@ -315,7 +316,7 @@ _readResult(void)
 
 	_getPlan((Plan *) local_node);
 
-	token = lsptok(NULL, &length);		/* eat :resconstantqual */
+	token = pg_strtok(&length);		/* eat :resconstantqual */
 	local_node->resconstantqual = nodeRead(true);		/* now read it */
 
 	return local_node;
@@ -339,11 +340,11 @@ _readAppend(void)
 
 	_getPlan((Plan *) local_node);
 
-	token = lsptok(NULL, &length);		/* eat :appendplans */
+	token = pg_strtok(&length);		/* eat :appendplans */
 	local_node->appendplans = nodeRead(true);	/* now read it */
 
-	token = lsptok(NULL, &length);		/* eat :isTarget */
-	token = lsptok(NULL, &length);		/* get isTarget */
+	token = pg_strtok(&length);		/* eat :isTarget */
+	token = pg_strtok(&length);		/* get isTarget */
 	local_node->isTarget = (token[0] == 't') ? true : false;
 
 	return local_node;
@@ -361,11 +362,11 @@ _getJoin(Join *node)
 
 	_getPlan((Plan *) node);
 
-	token = lsptok(NULL, &length);		/* skip the :jointype */
-	token = lsptok(NULL, &length);		/* get the jointype */
+	token = pg_strtok(&length);		/* skip the :jointype */
+	token = pg_strtok(&length);		/* get the jointype */
 	node->jointype = (JoinType) atoi(token);
 
-	token = lsptok(NULL, &length);		/* skip the :joinqual */
+	token = pg_strtok(&length);		/* skip the :joinqual */
 	node->joinqual = nodeRead(true);	/* get the joinqual */
 }
 
@@ -424,7 +425,7 @@ _readMergeJoin(void)
 
 	_getJoin((Join *) local_node);
 
-	token = lsptok(NULL, &length);		/* eat :mergeclauses */
+	token = pg_strtok(&length);		/* eat :mergeclauses */
 	local_node->mergeclauses = nodeRead(true);	/* now read it */
 
 	return local_node;
@@ -447,11 +448,11 @@ _readHashJoin(void)
 
 	_getJoin((Join *) local_node);
 
-	token = lsptok(NULL, &length);		/* eat :hashclauses */
+	token = pg_strtok(&length);		/* eat :hashclauses */
 	local_node->hashclauses = nodeRead(true);	/* now read it */
 
-	token = lsptok(NULL, &length);		/* eat :hashjoinop */
-	token = lsptok(NULL, &length);		/* get hashjoinop */
+	token = pg_strtok(&length);		/* eat :hashjoinop */
+	token = pg_strtok(&length);		/* get hashjoinop */
 	local_node->hashjoinop = strtoul(token, NULL, 10);
 
 	return local_node;
@@ -473,8 +474,8 @@ _getScan(Scan *node)
 
 	_getPlan((Plan *) node);
 
-	token = lsptok(NULL, &length);		/* eat :scanrelid */
-	token = lsptok(NULL, &length);		/* get scanrelid */
+	token = pg_strtok(&length);		/* eat :scanrelid */
+	token = pg_strtok(&length);		/* get scanrelid */
 	node->scanrelid = strtoul(token, NULL, 10);
 }
 
@@ -531,17 +532,17 @@ _readIndexScan(void)
 
 	_getScan((Scan *) local_node);
 
-	token = lsptok(NULL, &length);		/* eat :indxid */
+	token = pg_strtok(&length);		/* eat :indxid */
 	local_node->indxid = toIntList(nodeRead(true));		/* now read it */
 
-	token = lsptok(NULL, &length);		/* eat :indxqual */
+	token = pg_strtok(&length);		/* eat :indxqual */
 	local_node->indxqual = nodeRead(true);		/* now read it */
 
-	token = lsptok(NULL, &length);		/* eat :indxqualorig */
+	token = pg_strtok(&length);		/* eat :indxqualorig */
 	local_node->indxqualorig = nodeRead(true);	/* now read it */
 
-	token = lsptok(NULL, &length);		/* eat :indxorderdir */
-	token = lsptok(NULL, &length);		/* get indxorderdir */
+	token = pg_strtok(&length);		/* eat :indxorderdir */
+	token = pg_strtok(&length);		/* get indxorderdir */
 	local_node->indxorderdir = atoi(token);
 
 	return local_node;
@@ -564,11 +565,11 @@ _readTidScan(void)
 
 	_getScan((Scan *) local_node);
 
-	token = lsptok(NULL, &length);		/* eat :needrescan */
-	token = lsptok(NULL, &length);		/* get needrescan */
+	token = pg_strtok(&length);		/* eat :needrescan */
+	token = pg_strtok(&length);		/* get needrescan */
 	local_node->needRescan = atoi(token);
 
-	token = lsptok(NULL, &length);		/* eat :tideval */
+	token = pg_strtok(&length);		/* eat :tideval */
 	local_node->tideval = nodeRead(true);		/* now read it */
 
 	return local_node;
@@ -591,7 +592,7 @@ _readSubqueryScan(void)
 
 	_getScan((Scan *) local_node);
 
-	token = lsptok(NULL, &length);			/* eat :subplan */
+	token = pg_strtok(&length);			/* eat :subplan */
 	local_node->subplan = nodeRead(true);	/* now read it */
 
 	return local_node;
@@ -614,8 +615,8 @@ _readSort(void)
 
 	_getPlan((Plan *) local_node);
 
-	token = lsptok(NULL, &length);		/* eat :keycount */
-	token = lsptok(NULL, &length);		/* get keycount */
+	token = pg_strtok(&length);		/* eat :keycount */
+	token = pg_strtok(&length);		/* get keycount */
 	local_node->keycount = atoi(token);
 
 	return local_node;
@@ -649,7 +650,7 @@ _readHash(void)
 
 	_getPlan((Plan *) local_node);
 
-	token = lsptok(NULL, &length);		/* eat :hashkey */
+	token = pg_strtok(&length);		/* eat :hashkey */
 	local_node->hashkey = nodeRead(true);
 
 	return local_node;
@@ -674,39 +675,39 @@ _readResdom(void)
 
 	local_node = makeNode(Resdom);
 
-	token = lsptok(NULL, &length);		/* eat :resno */
-	token = lsptok(NULL, &length);		/* get resno */
+	token = pg_strtok(&length);		/* eat :resno */
+	token = pg_strtok(&length);		/* get resno */
 	local_node->resno = atoi(token);
 
-	token = lsptok(NULL, &length);		/* eat :restype */
-	token = lsptok(NULL, &length);		/* get restype */
+	token = pg_strtok(&length);		/* eat :restype */
+	token = pg_strtok(&length);		/* get restype */
 	local_node->restype = (Oid) atol(token);
 
-	token = lsptok(NULL, &length);		/* eat :restypmod */
-	token = lsptok(NULL, &length);		/* get restypmod */
+	token = pg_strtok(&length);		/* eat :restypmod */
+	token = pg_strtok(&length);		/* get restypmod */
 	local_node->restypmod = atoi(token);
 
-	token = lsptok(NULL, &length);		/* eat :resname */
-	token = lsptok(NULL, &length);		/* get the name */
+	token = pg_strtok(&length);		/* eat :resname */
+	token = pg_strtok(&length);		/* get the name */
 	if (length == 0)
 		local_node->resname = NULL;
 	else
 		local_node->resname = debackslash(token, length);
 
-	token = lsptok(NULL, &length);		/* eat :reskey */
-	token = lsptok(NULL, &length);		/* get reskey */
+	token = pg_strtok(&length);		/* eat :reskey */
+	token = pg_strtok(&length);		/* get reskey */
 	local_node->reskey = strtoul(token, NULL, 10);
 
-	token = lsptok(NULL, &length);		/* eat :reskeyop */
-	token = lsptok(NULL, &length);		/* get reskeyop */
+	token = pg_strtok(&length);		/* eat :reskeyop */
+	token = pg_strtok(&length);		/* get reskeyop */
 	local_node->reskeyop = (Oid) atol(token);
 
-	token = lsptok(NULL, &length);		/* eat :ressortgroupref */
-	token = lsptok(NULL, &length);		/* get ressortgroupref */
+	token = pg_strtok(&length);		/* eat :ressortgroupref */
+	token = pg_strtok(&length);		/* get ressortgroupref */
 	local_node->ressortgroupref = strtoul(token, NULL, 10);
 
-	token = lsptok(NULL, &length);		/* eat :resjunk */
-	token = lsptok(NULL, &length);		/* get resjunk */
+	token = pg_strtok(&length);		/* eat :resjunk */
+	token = pg_strtok(&length);		/* get resjunk */
 	local_node->resjunk = (token[0] == 't') ? true : false;
 
 	return local_node;
@@ -727,12 +728,12 @@ _readExpr(void)
 
 	local_node = makeNode(Expr);
 
-	token = lsptok(NULL, &length);		/* eat :typeOid */
-	token = lsptok(NULL, &length);		/* get typeOid */
+	token = pg_strtok(&length);		/* eat :typeOid */
+	token = pg_strtok(&length);		/* get typeOid */
 	local_node->typeOid = (Oid) atol(token);
 
-	token = lsptok(NULL, &length);		/* eat :opType */
-	token = lsptok(NULL, &length);		/* get opType */
+	token = pg_strtok(&length);		/* eat :opType */
+	token = pg_strtok(&length);		/* get opType */
 	if (!strncmp(token, "op", 2))
 		local_node->opType = OP_EXPR;
 	else if (!strncmp(token, "func", 4))
@@ -748,10 +749,10 @@ _readExpr(void)
 	else
 		elog(ERROR, "_readExpr: unknown opType \"%.10s\"", token);
 
-	token = lsptok(NULL, &length);		/* eat :oper */
+	token = pg_strtok(&length);		/* eat :oper */
 	local_node->oper = nodeRead(true);
 
-	token = lsptok(NULL, &length);		/* eat :args */
+	token = pg_strtok(&length);		/* eat :args */
 	local_node->args = nodeRead(true);	/* now read it */
 
 	return local_node;
@@ -772,17 +773,17 @@ _readCaseExpr(void)
 
 	local_node = makeNode(CaseExpr);
 
-	token = lsptok(NULL, &length);		/* eat :casetype */
-	token = lsptok(NULL, &length);		/* get casetype */
+	token = pg_strtok(&length);		/* eat :casetype */
+	token = pg_strtok(&length);		/* get casetype */
 	local_node->casetype = (Oid) atol(token);
 
-	token = lsptok(NULL, &length);		/* eat :arg */
+	token = pg_strtok(&length);		/* eat :arg */
 	local_node->arg = nodeRead(true);
 
-	token = lsptok(NULL, &length);		/* eat :args */
+	token = pg_strtok(&length);		/* eat :args */
 	local_node->args = nodeRead(true);
 
-	token = lsptok(NULL, &length);		/* eat :defresult */
+	token = pg_strtok(&length);		/* eat :defresult */
 	local_node->defresult = nodeRead(true);
 
 	return local_node;
@@ -804,7 +805,7 @@ _readCaseWhen(void)
 	local_node = makeNode(CaseWhen);
 
 	local_node->expr = nodeRead(true);
-	token = lsptok(NULL, &length);		/* eat :then */
+	token = pg_strtok(&length);		/* eat :then */
 	local_node->result = nodeRead(true);
 
 	return local_node;
@@ -825,32 +826,32 @@ _readVar(void)
 
 	local_node = makeNode(Var);
 
-	token = lsptok(NULL, &length);		/* eat :varno */
-	token = lsptok(NULL, &length);		/* get varno */
+	token = pg_strtok(&length);		/* eat :varno */
+	token = pg_strtok(&length);		/* get varno */
 	local_node->varno = strtoul(token, NULL, 10);
 
-	token = lsptok(NULL, &length);		/* eat :varattno */
-	token = lsptok(NULL, &length);		/* get varattno */
+	token = pg_strtok(&length);		/* eat :varattno */
+	token = pg_strtok(&length);		/* get varattno */
 	local_node->varattno = atoi(token);
 
-	token = lsptok(NULL, &length);		/* eat :vartype */
-	token = lsptok(NULL, &length);		/* get vartype */
+	token = pg_strtok(&length);		/* eat :vartype */
+	token = pg_strtok(&length);		/* get vartype */
 	local_node->vartype = (Oid) atol(token);
 
-	token = lsptok(NULL, &length);		/* eat :vartypmod */
-	token = lsptok(NULL, &length);		/* get vartypmod */
+	token = pg_strtok(&length);		/* eat :vartypmod */
+	token = pg_strtok(&length);		/* get vartypmod */
 	local_node->vartypmod = atoi(token);
 
-	token = lsptok(NULL, &length);		/* eat :varlevelsup */
-	token = lsptok(NULL, &length);		/* get varlevelsup */
+	token = pg_strtok(&length);		/* eat :varlevelsup */
+	token = pg_strtok(&length);		/* get varlevelsup */
 	local_node->varlevelsup = (Index) atoi(token);
 
-	token = lsptok(NULL, &length);		/* eat :varnoold */
-	token = lsptok(NULL, &length);		/* get varnoold */
+	token = pg_strtok(&length);		/* eat :varnoold */
+	token = pg_strtok(&length);		/* get varnoold */
 	local_node->varnoold = (Index) atoi(token);
 
-	token = lsptok(NULL, &length);		/* eat :varoattno */
-	token = lsptok(NULL, &length);		/* eat :varoattno */
+	token = pg_strtok(&length);		/* eat :varoattno */
+	token = pg_strtok(&length);		/* eat :varoattno */
 	local_node->varoattno = atoi(token);
 
 	return local_node;
@@ -871,32 +872,32 @@ _readArrayRef(void)
 
 	local_node = makeNode(ArrayRef);
 
-	token = lsptok(NULL, &length);		/* eat :refelemtype */
-	token = lsptok(NULL, &length);		/* get refelemtype */
+	token = pg_strtok(&length);		/* eat :refelemtype */
+	token = pg_strtok(&length);		/* get refelemtype */
 	local_node->refelemtype = strtoul(token, NULL, 10);
 
-	token = lsptok(NULL, &length);		/* eat :refattrlength */
-	token = lsptok(NULL, &length);		/* get refattrlength */
+	token = pg_strtok(&length);		/* eat :refattrlength */
+	token = pg_strtok(&length);		/* get refattrlength */
 	local_node->refattrlength = atoi(token);
 
-	token = lsptok(NULL, &length);		/* eat :refelemlength */
-	token = lsptok(NULL, &length);		/* get refelemlength */
+	token = pg_strtok(&length);		/* eat :refelemlength */
+	token = pg_strtok(&length);		/* get refelemlength */
 	local_node->refelemlength = atoi(token);
 
-	token = lsptok(NULL, &length);		/* eat :refelembyval */
-	token = lsptok(NULL, &length);		/* get refelembyval */
+	token = pg_strtok(&length);		/* eat :refelembyval */
+	token = pg_strtok(&length);		/* get refelembyval */
 	local_node->refelembyval = (token[0] == 't') ? true : false;
 
-	token = lsptok(NULL, &length);		/* eat :refupperindex */
+	token = pg_strtok(&length);		/* eat :refupperindex */
 	local_node->refupperindexpr = nodeRead(true);
 
-	token = lsptok(NULL, &length);		/* eat :reflowerindex */
+	token = pg_strtok(&length);		/* eat :reflowerindex */
 	local_node->reflowerindexpr = nodeRead(true);
 
-	token = lsptok(NULL, &length);		/* eat :refexpr */
+	token = pg_strtok(&length);		/* eat :refexpr */
 	local_node->refexpr = nodeRead(true);
 
-	token = lsptok(NULL, &length);		/* eat :refassgnexpr */
+	token = pg_strtok(&length);		/* eat :refassgnexpr */
 	local_node->refassgnexpr = nodeRead(true);
 
 	return local_node;
@@ -917,46 +918,40 @@ _readConst(void)
 
 	local_node = makeNode(Const);
 
-	token = lsptok(NULL, &length);		/* get :consttype */
-	token = lsptok(NULL, &length);		/* now read it */
+	token = pg_strtok(&length);		/* get :consttype */
+	token = pg_strtok(&length);		/* now read it */
 	local_node->consttype = (Oid) atol(token);
 
-
-	token = lsptok(NULL, &length);		/* get :constlen */
-	token = lsptok(NULL, &length);		/* now read it */
+	token = pg_strtok(&length);		/* get :constlen */
+	token = pg_strtok(&length);		/* now read it */
 	local_node->constlen = strtol(token, NULL, 10);
 
-	token = lsptok(NULL, &length);		/* get :constisnull */
-	token = lsptok(NULL, &length);		/* now read it */
+	token = pg_strtok(&length);		/* get :constbyval */
+	token = pg_strtok(&length);		/* now read it */
+
+	if (!strncmp(token, "true", 4))
+		local_node->constbyval = true;
+	else
+		local_node->constbyval = false;
+
+	token = pg_strtok(&length);		/* get :constisnull */
+	token = pg_strtok(&length);		/* now read it */
 
 	if (!strncmp(token, "true", 4))
 		local_node->constisnull = true;
 	else
 		local_node->constisnull = false;
 
-
-	token = lsptok(NULL, &length);		/* get :constvalue */
+	token = pg_strtok(&length);		/* get :constvalue */
 
 	if (local_node->constisnull)
 	{
-		token = lsptok(NULL, &length);	/* skip "NIL" */
+		token = pg_strtok(&length);	/* skip "NIL" */
 	}
 	else
 	{
-
-		/*
-		 * read the value
-		 */
-		local_node->constvalue = readDatum(local_node->consttype);
+		local_node->constvalue = readDatum(local_node->constbyval);
 	}
-
-	token = lsptok(NULL, &length);		/* get :constbyval */
-	token = lsptok(NULL, &length);		/* now read it */
-
-	if (!strncmp(token, "true", 4))
-		local_node->constbyval = true;
-	else
-		local_node->constbyval = false;
 
 	return local_node;
 }
@@ -976,12 +971,12 @@ _readFunc(void)
 
 	local_node = makeNode(Func);
 
-	token = lsptok(NULL, &length);		/* get :funcid */
-	token = lsptok(NULL, &length);		/* now read it */
+	token = pg_strtok(&length);		/* get :funcid */
+	token = pg_strtok(&length);		/* now read it */
 	local_node->funcid = (Oid) atol(token);
 
-	token = lsptok(NULL, &length);		/* get :functype */
-	token = lsptok(NULL, &length);		/* now read it */
+	token = pg_strtok(&length);		/* get :functype */
+	token = pg_strtok(&length);		/* now read it */
 	local_node->functype = (Oid) atol(token);
 
 	local_node->func_fcache = NULL;
@@ -1004,16 +999,16 @@ _readOper(void)
 
 	local_node = makeNode(Oper);
 
-	token = lsptok(NULL, &length);		/* get :opno */
-	token = lsptok(NULL, &length);		/* now read it */
+	token = pg_strtok(&length);		/* get :opno */
+	token = pg_strtok(&length);		/* now read it */
 	local_node->opno = (Oid) atol(token);
 
-	token = lsptok(NULL, &length);		/* get :opid */
-	token = lsptok(NULL, &length);		/* now read it */
+	token = pg_strtok(&length);		/* get :opid */
+	token = pg_strtok(&length);		/* now read it */
 	local_node->opid = (Oid) atol(token);
 
-	token = lsptok(NULL, &length);		/* get :opresulttype */
-	token = lsptok(NULL, &length);		/* now read it */
+	token = pg_strtok(&length);		/* get :opresulttype */
+	token = pg_strtok(&length);		/* now read it */
 	local_node->opresulttype = (Oid) atol(token);
 
 	local_node->op_fcache = NULL;
@@ -1036,23 +1031,23 @@ _readParam(void)
 
 	local_node = makeNode(Param);
 
-	token = lsptok(NULL, &length);		/* get :paramkind */
-	token = lsptok(NULL, &length);		/* now read it */
+	token = pg_strtok(&length);		/* get :paramkind */
+	token = pg_strtok(&length);		/* now read it */
 	local_node->paramkind = atoi(token);
 
-	token = lsptok(NULL, &length);		/* get :paramid */
-	token = lsptok(NULL, &length);		/* now read it */
+	token = pg_strtok(&length);		/* get :paramid */
+	token = pg_strtok(&length);		/* now read it */
 	local_node->paramid = atol(token);
 
-	token = lsptok(NULL, &length);		/* get :paramname */
-	token = lsptok(NULL, &length);		/* now read it */
+	token = pg_strtok(&length);		/* get :paramname */
+	token = pg_strtok(&length);		/* now read it */
 	if (length == 0)
 		local_node->paramname = NULL;
 	else
 		local_node->paramname = debackslash(token, length);
 
-	token = lsptok(NULL, &length);		/* get :paramtype */
-	token = lsptok(NULL, &length);		/* now read it */
+	token = pg_strtok(&length);		/* get :paramtype */
+	token = pg_strtok(&length);		/* now read it */
 	local_node->paramtype = (Oid) atol(token);
 
 	return local_node;
@@ -1073,27 +1068,27 @@ _readAggref(void)
 
 	local_node = makeNode(Aggref);
 
-	token = lsptok(NULL, &length);		/* eat :aggname */
-	token = lsptok(NULL, &length);		/* get aggname */
+	token = pg_strtok(&length);		/* eat :aggname */
+	token = pg_strtok(&length);		/* get aggname */
 	local_node->aggname = debackslash(token, length);
 
-	token = lsptok(NULL, &length);		/* eat :basetype */
-	token = lsptok(NULL, &length);		/* get basetype */
+	token = pg_strtok(&length);		/* eat :basetype */
+	token = pg_strtok(&length);		/* get basetype */
 	local_node->basetype = (Oid) atol(token);
 
-	token = lsptok(NULL, &length);		/* eat :aggtype */
-	token = lsptok(NULL, &length);		/* get aggtype */
+	token = pg_strtok(&length);		/* eat :aggtype */
+	token = pg_strtok(&length);		/* get aggtype */
 	local_node->aggtype = (Oid) atol(token);
 
-	token = lsptok(NULL, &length);		/* eat :target */
+	token = pg_strtok(&length);		/* eat :target */
 	local_node->target = nodeRead(true);		/* now read it */
 
-	token = lsptok(NULL, &length);		/* eat :aggstar */
-	token = lsptok(NULL, &length);		/* get aggstar */
+	token = pg_strtok(&length);		/* eat :aggstar */
+	token = pg_strtok(&length);		/* get aggstar */
 	local_node->aggstar = (token[0] == 't') ? true : false;
 
-	token = lsptok(NULL, &length);		/* eat :aggdistinct */
-	token = lsptok(NULL, &length);		/* get aggdistinct */
+	token = pg_strtok(&length);		/* eat :aggdistinct */
+	token = pg_strtok(&length);		/* get aggdistinct */
 	local_node->aggdistinct = (token[0] == 't') ? true : false;
 
 	return local_node;
@@ -1114,21 +1109,21 @@ _readSubLink(void)
 
 	local_node = makeNode(SubLink);
 
-	token = lsptok(NULL, &length);		/* eat :subLinkType */
-	token = lsptok(NULL, &length);		/* get subLinkType */
+	token = pg_strtok(&length);		/* eat :subLinkType */
+	token = pg_strtok(&length);		/* get subLinkType */
 	local_node->subLinkType = atoi(token);
 
-	token = lsptok(NULL, &length);		/* eat :useor */
-	token = lsptok(NULL, &length);		/* get useor */
+	token = pg_strtok(&length);		/* eat :useor */
+	token = pg_strtok(&length);		/* get useor */
 	local_node->useor = (token[0] == 't') ? true : false;
 
-	token = lsptok(NULL, &length);		/* eat :lefthand */
+	token = pg_strtok(&length);		/* eat :lefthand */
 	local_node->lefthand = nodeRead(true);		/* now read it */
 
-	token = lsptok(NULL, &length);		/* eat :oper */
+	token = pg_strtok(&length);		/* eat :oper */
 	local_node->oper = nodeRead(true);	/* now read it */
 
-	token = lsptok(NULL, &length);		/* eat :subselect */
+	token = pg_strtok(&length);		/* eat :subselect */
 	local_node->subselect = nodeRead(true);		/* now read it */
 
 	return local_node;
@@ -1149,19 +1144,19 @@ _readFieldSelect(void)
 
 	local_node = makeNode(FieldSelect);
 
-	token = lsptok(NULL, &length);		/* eat :arg */
+	token = pg_strtok(&length);		/* eat :arg */
 	local_node->arg = nodeRead(true);	/* now read it */
 
-	token = lsptok(NULL, &length);		/* eat :fieldnum */
-	token = lsptok(NULL, &length);		/* get fieldnum */
+	token = pg_strtok(&length);		/* eat :fieldnum */
+	token = pg_strtok(&length);		/* get fieldnum */
 	local_node->fieldnum = (AttrNumber) atoi(token);
 
-	token = lsptok(NULL, &length);		/* eat :resulttype */
-	token = lsptok(NULL, &length);		/* get resulttype */
+	token = pg_strtok(&length);		/* eat :resulttype */
+	token = pg_strtok(&length);		/* get resulttype */
 	local_node->resulttype = (Oid) atol(token);
 
-	token = lsptok(NULL, &length);		/* eat :resulttypmod */
-	token = lsptok(NULL, &length);		/* get resulttypmod */
+	token = pg_strtok(&length);		/* eat :resulttypmod */
+	token = pg_strtok(&length);		/* get resulttypmod */
 	local_node->resulttypmod = atoi(token);
 
 	return local_node;
@@ -1182,15 +1177,15 @@ _readRelabelType(void)
 
 	local_node = makeNode(RelabelType);
 
-	token = lsptok(NULL, &length);		/* eat :arg */
+	token = pg_strtok(&length);		/* eat :arg */
 	local_node->arg = nodeRead(true);	/* now read it */
 
-	token = lsptok(NULL, &length);		/* eat :resulttype */
-	token = lsptok(NULL, &length);		/* get resulttype */
+	token = pg_strtok(&length);		/* eat :resulttype */
+	token = pg_strtok(&length);		/* get resulttype */
 	local_node->resulttype = (Oid) atol(token);
 
-	token = lsptok(NULL, &length);		/* eat :resulttypmod */
-	token = lsptok(NULL, &length);		/* get resulttypmod */
+	token = pg_strtok(&length);		/* eat :resulttypmod */
+	token = pg_strtok(&length);		/* get resulttypmod */
 	local_node->resulttypmod = atoi(token);
 
 	return local_node;
@@ -1211,7 +1206,7 @@ _readRangeTblRef(void)
 
 	local_node = makeNode(RangeTblRef);
 
-	token = lsptok(NULL, &length);		/* get rtindex */
+	token = pg_strtok(&length);		/* get rtindex */
 	local_node->rtindex = atoi(token);
 
 	return local_node;
@@ -1232,10 +1227,10 @@ _readFromExpr(void)
 
 	local_node = makeNode(FromExpr);
 
-	token = lsptok(NULL, &length);		/* eat :fromlist */
+	token = pg_strtok(&length);		/* eat :fromlist */
 	local_node->fromlist = nodeRead(true);	/* now read it */
 
-	token = lsptok(NULL, &length);		/* eat :quals */
+	token = pg_strtok(&length);		/* eat :quals */
 	local_node->quals = nodeRead(true);	/* now read it */
 
 	return local_node;
@@ -1256,33 +1251,33 @@ _readJoinExpr(void)
 
 	local_node = makeNode(JoinExpr);
 
-	token = lsptok(NULL, &length);		/* eat :jointype */
-	token = lsptok(NULL, &length);		/* get jointype */
+	token = pg_strtok(&length);		/* eat :jointype */
+	token = pg_strtok(&length);		/* get jointype */
 	local_node->jointype = (JoinType) atoi(token);
 
-	token = lsptok(NULL, &length);		/* eat :isNatural */
-	token = lsptok(NULL, &length);		/* get :isNatural */
+	token = pg_strtok(&length);		/* eat :isNatural */
+	token = pg_strtok(&length);		/* get :isNatural */
 	local_node->isNatural = (token[0] == 't') ? true : false;
 
-	token = lsptok(NULL, &length);		/* eat :larg */
+	token = pg_strtok(&length);		/* eat :larg */
 	local_node->larg = nodeRead(true);	/* now read it */
 
-	token = lsptok(NULL, &length);		/* eat :rarg */
+	token = pg_strtok(&length);		/* eat :rarg */
 	local_node->rarg = nodeRead(true);	/* now read it */
 
-	token = lsptok(NULL, &length);		/* eat :using */
+	token = pg_strtok(&length);		/* eat :using */
 	local_node->using = nodeRead(true);	/* now read it */
 
-	token = lsptok(NULL, &length);		/* eat :quals */
+	token = pg_strtok(&length);		/* eat :quals */
 	local_node->quals = nodeRead(true);	/* now read it */
 
-	token = lsptok(NULL, &length);		/* eat :alias */
+	token = pg_strtok(&length);		/* eat :alias */
 	local_node->alias = nodeRead(true);	/* now read it */
 
-	token = lsptok(NULL, &length);		/* eat :colnames */
+	token = pg_strtok(&length);		/* eat :colnames */
 	local_node->colnames = nodeRead(true); /* now read it */
 
-	token = lsptok(NULL, &length);		/* eat :colvars */
+	token = pg_strtok(&length);		/* eat :colvars */
 	local_node->colvars = nodeRead(true); /* now read it */
 
 	return local_node;
@@ -1305,66 +1300,66 @@ _readRelOptInfo(void)
 
 	local_node = makeNode(RelOptInfo);
 
-	token = lsptok(NULL, &length);		/* get :relids */
+	token = pg_strtok(&length);		/* get :relids */
 	local_node->relids = toIntList(nodeRead(true));		/* now read it */
 
-	token = lsptok(NULL, &length);		/* get :rows */
-	token = lsptok(NULL, &length);		/* now read it */
+	token = pg_strtok(&length);		/* get :rows */
+	token = pg_strtok(&length);		/* now read it */
 	local_node->rows = atof(token);
 
-	token = lsptok(NULL, &length);		/* get :width */
-	token = lsptok(NULL, &length);		/* now read it */
+	token = pg_strtok(&length);		/* get :width */
+	token = pg_strtok(&length);		/* now read it */
 	local_node->width = atoi(token);
 
-	token = lsptok(NULL, &length);		/* get :targetlist */
+	token = pg_strtok(&length);		/* get :targetlist */
 	local_node->targetlist = nodeRead(true);	/* now read it */
 
-	token = lsptok(NULL, &length);		/* get :pathlist */
+	token = pg_strtok(&length);		/* get :pathlist */
 	local_node->pathlist = nodeRead(true);		/* now read it */
 
-	token = lsptok(NULL, &length);		/* get :cheapest_startup_path */
+	token = pg_strtok(&length);		/* get :cheapest_startup_path */
 	local_node->cheapest_startup_path = nodeRead(true); /* now read it */
 
-	token = lsptok(NULL, &length);		/* get :cheapest_total_path */
+	token = pg_strtok(&length);		/* get :cheapest_total_path */
 	local_node->cheapest_total_path = nodeRead(true);	/* now read it */
 
-	token = lsptok(NULL, &length);		/* eat :pruneable */
-	token = lsptok(NULL, &length);		/* get :pruneable */
+	token = pg_strtok(&length);		/* eat :pruneable */
+	token = pg_strtok(&length);		/* get :pruneable */
 	local_node->pruneable = (token[0] == 't') ? true : false;
 
-	token = lsptok(NULL, &length);		/* get :issubquery */
-	token = lsptok(NULL, &length);		/* now read it */
+	token = pg_strtok(&length);		/* get :issubquery */
+	token = pg_strtok(&length);		/* now read it */
 	local_node->issubquery = (token[0] == 't') ? true : false;
 
-	token = lsptok(NULL, &length);		/* get :indexed */
-	token = lsptok(NULL, &length);		/* now read it */
+	token = pg_strtok(&length);		/* get :indexed */
+	token = pg_strtok(&length);		/* now read it */
 	local_node->indexed = (token[0] == 't') ? true : false;
 
-	token = lsptok(NULL, &length);		/* get :pages */
-	token = lsptok(NULL, &length);		/* now read it */
+	token = pg_strtok(&length);		/* get :pages */
+	token = pg_strtok(&length);		/* now read it */
 	local_node->pages = atol(token);
 
-	token = lsptok(NULL, &length);		/* get :tuples */
-	token = lsptok(NULL, &length);		/* now read it */
+	token = pg_strtok(&length);		/* get :tuples */
+	token = pg_strtok(&length);		/* now read it */
 	local_node->tuples = atof(token);
 
-	token = lsptok(NULL, &length);		/* get :subplan */
+	token = pg_strtok(&length);		/* get :subplan */
 	local_node->subplan = nodeRead(true); /* now read it */
 
-	token = lsptok(NULL, &length);		/* get :baserestrictinfo */
+	token = pg_strtok(&length);		/* get :baserestrictinfo */
 	local_node->baserestrictinfo = nodeRead(true); /* now read it */
 
-	token = lsptok(NULL, &length);		/* get :baserestrictcost */
-	token = lsptok(NULL, &length);		/* now read it */
+	token = pg_strtok(&length);		/* get :baserestrictcost */
+	token = pg_strtok(&length);		/* now read it */
 	local_node->baserestrictcost = (Cost) atof(token);
 
-	token = lsptok(NULL, &length);		/* get :outerjoinset */
+	token = pg_strtok(&length);		/* get :outerjoinset */
 	local_node->outerjoinset = toIntList(nodeRead(true)); /* now read it */
 
-	token = lsptok(NULL, &length);		/* get :joininfo */
+	token = pg_strtok(&length);		/* get :joininfo */
 	local_node->joininfo = nodeRead(true);		/* now read it */
 
-	token = lsptok(NULL, &length);		/* get :innerjoin */
+	token = pg_strtok(&length);		/* get :innerjoin */
 	local_node->innerjoin = nodeRead(true);		/* now read it */
 
 	return local_node;
@@ -1383,10 +1378,10 @@ _readTargetEntry(void)
 
 	local_node = makeNode(TargetEntry);
 
-	token = lsptok(NULL, &length);		/* get :resdom */
+	token = pg_strtok(&length);		/* get :resdom */
 	local_node->resdom = nodeRead(true);		/* now read it */
 
-	token = lsptok(NULL, &length);		/* get :expr */
+	token = pg_strtok(&length);		/* get :expr */
 	local_node->expr = nodeRead(true);	/* now read it */
 
 	return local_node;
@@ -1401,11 +1396,11 @@ _readAttr(void)
 
 	local_node = makeNode(Attr);
 
-	token = lsptok(NULL, &length);		/* eat :relname */
-	token = lsptok(NULL, &length);		/* get relname */
+	token = pg_strtok(&length);		/* eat :relname */
+	token = pg_strtok(&length);		/* get relname */
 	local_node->relname = debackslash(token, length);
 
-	token = lsptok(NULL, &length);		/* eat :attrs */
+	token = pg_strtok(&length);		/* eat :attrs */
 	local_node->attrs = nodeRead(true); /* now read it */
 
 	return local_node;
@@ -1424,44 +1419,44 @@ _readRangeTblEntry(void)
 
 	local_node = makeNode(RangeTblEntry);
 
-	token = lsptok(NULL, &length);		/* eat :relname */
-	token = lsptok(NULL, &length);		/* get :relname */
+	token = pg_strtok(&length);		/* eat :relname */
+	token = pg_strtok(&length);		/* get :relname */
 	if (length == 0)
 		local_node->relname = NULL;
 	else
 		local_node->relname = debackslash(token, length);
 
-	token = lsptok(NULL, &length);		/* eat :relid */
-	token = lsptok(NULL, &length);		/* get :relid */
+	token = pg_strtok(&length);		/* eat :relid */
+	token = pg_strtok(&length);		/* get :relid */
 	local_node->relid = strtoul(token, NULL, 10);
 
-	token = lsptok(NULL, &length);		/* eat :subquery */
+	token = pg_strtok(&length);		/* eat :subquery */
 	local_node->subquery = nodeRead(true);	/* now read it */
 
-	token = lsptok(NULL, &length);		/* eat :alias */
+	token = pg_strtok(&length);		/* eat :alias */
 	local_node->alias = nodeRead(true);	/* now read it */
 
-	token = lsptok(NULL, &length);		/* eat :eref */
+	token = pg_strtok(&length);		/* eat :eref */
 	local_node->eref = nodeRead(true);	/* now read it */
 
-	token = lsptok(NULL, &length);		/* eat :inh */
-	token = lsptok(NULL, &length);		/* get :inh */
+	token = pg_strtok(&length);		/* eat :inh */
+	token = pg_strtok(&length);		/* get :inh */
 	local_node->inh = (token[0] == 't') ? true : false;
 
-	token = lsptok(NULL, &length);		/* eat :inFromCl */
-	token = lsptok(NULL, &length);		/* get :inFromCl */
+	token = pg_strtok(&length);		/* eat :inFromCl */
+	token = pg_strtok(&length);		/* get :inFromCl */
 	local_node->inFromCl = (token[0] == 't') ? true : false;
 
-	token = lsptok(NULL, &length);		/* eat :checkForRead */
-	token = lsptok(NULL, &length);		/* get :checkForRead */
+	token = pg_strtok(&length);		/* eat :checkForRead */
+	token = pg_strtok(&length);		/* get :checkForRead */
 	local_node->checkForRead = (token[0] == 't') ? true : false;
 
-	token = lsptok(NULL, &length);		/* eat :checkForWrite */
-	token = lsptok(NULL, &length);		/* get :checkForWrite */
+	token = pg_strtok(&length);		/* eat :checkForWrite */
+	token = pg_strtok(&length);		/* get :checkForWrite */
 	local_node->checkForWrite = (token[0] == 't') ? true : false;
 
-	token = lsptok(NULL, &length);		/* eat :checkAsUser */
-	token = lsptok(NULL, &length);		/* get :checkAsUser */
+	token = pg_strtok(&length);		/* eat :checkAsUser */
+	token = pg_strtok(&length);		/* get :checkAsUser */
 	local_node->checkAsUser = strtoul(token, NULL, 10);
 
 	return local_node;
@@ -1482,19 +1477,19 @@ _readPath(void)
 
 	local_node = makeNode(Path);
 
-	token = lsptok(NULL, &length);		/* get :pathtype */
-	token = lsptok(NULL, &length);		/* now read it */
+	token = pg_strtok(&length);		/* get :pathtype */
+	token = pg_strtok(&length);		/* now read it */
 	local_node->pathtype = atol(token);
 
-	token = lsptok(NULL, &length);		/* get :startup_cost */
-	token = lsptok(NULL, &length);		/* now read it */
+	token = pg_strtok(&length);		/* get :startup_cost */
+	token = pg_strtok(&length);		/* now read it */
 	local_node->startup_cost = (Cost) atof(token);
 
-	token = lsptok(NULL, &length);		/* get :total_cost */
-	token = lsptok(NULL, &length);		/* now read it */
+	token = pg_strtok(&length);		/* get :total_cost */
+	token = pg_strtok(&length);		/* now read it */
 	local_node->total_cost = (Cost) atof(token);
 
-	token = lsptok(NULL, &length);		/* get :pathkeys */
+	token = pg_strtok(&length);		/* get :pathkeys */
 	local_node->pathkeys = nodeRead(true);		/* now read it */
 
 	return local_node;
@@ -1515,40 +1510,40 @@ _readIndexPath(void)
 
 	local_node = makeNode(IndexPath);
 
-	token = lsptok(NULL, &length);		/* get :pathtype */
-	token = lsptok(NULL, &length);		/* now read it */
+	token = pg_strtok(&length);		/* get :pathtype */
+	token = pg_strtok(&length);		/* now read it */
 	local_node->path.pathtype = atol(token);
 
-	token = lsptok(NULL, &length);		/* get :startup_cost */
-	token = lsptok(NULL, &length);		/* now read it */
+	token = pg_strtok(&length);		/* get :startup_cost */
+	token = pg_strtok(&length);		/* now read it */
 	local_node->path.startup_cost = (Cost) atof(token);
 
-	token = lsptok(NULL, &length);		/* get :total_cost */
-	token = lsptok(NULL, &length);		/* now read it */
+	token = pg_strtok(&length);		/* get :total_cost */
+	token = pg_strtok(&length);		/* now read it */
 	local_node->path.total_cost = (Cost) atof(token);
 
-	token = lsptok(NULL, &length);		/* get :pathkeys */
+	token = pg_strtok(&length);		/* get :pathkeys */
 	local_node->path.pathkeys = nodeRead(true); /* now read it */
 
-	token = lsptok(NULL, &length);		/* get :indexid */
+	token = pg_strtok(&length);		/* get :indexid */
 	local_node->indexid = toIntList(nodeRead(true));
 
-	token = lsptok(NULL, &length);		/* get :indexqual */
+	token = pg_strtok(&length);		/* get :indexqual */
 	local_node->indexqual = nodeRead(true);		/* now read it */
 
-	token = lsptok(NULL, &length);		/* get :indexscandir */
-	token = lsptok(NULL, &length);		/* now read it */
+	token = pg_strtok(&length);		/* get :indexscandir */
+	token = pg_strtok(&length);		/* now read it */
 	local_node->indexscandir = (ScanDirection) atoi(token);
 
-	token = lsptok(NULL, &length);		/* get :joinrelids */
+	token = pg_strtok(&length);		/* get :joinrelids */
 	local_node->joinrelids = toIntList(nodeRead(true));
 
-	token = lsptok(NULL, &length);		/* get :alljoinquals */
-	token = lsptok(NULL, &length);		/* now read it */
+	token = pg_strtok(&length);		/* get :alljoinquals */
+	token = pg_strtok(&length);		/* now read it */
 	local_node->alljoinquals = (token[0] == 't') ? true : false;
 
-	token = lsptok(NULL, &length);		/* get :rows */
-	token = lsptok(NULL, &length);		/* now read it */
+	token = pg_strtok(&length);		/* get :rows */
+	token = pg_strtok(&length);		/* now read it */
 	local_node->rows = atof(token);
 
 	return local_node;
@@ -1569,25 +1564,25 @@ _readTidPath(void)
 
 	local_node = makeNode(TidPath);
 
-	token = lsptok(NULL, &length);		/* get :pathtype */
-	token = lsptok(NULL, &length);		/* now read it */
+	token = pg_strtok(&length);		/* get :pathtype */
+	token = pg_strtok(&length);		/* now read it */
 	local_node->path.pathtype = atol(token);
 
-	token = lsptok(NULL, &length);		/* get :startup_cost */
-	token = lsptok(NULL, &length);		/* now read it */
+	token = pg_strtok(&length);		/* get :startup_cost */
+	token = pg_strtok(&length);		/* now read it */
 	local_node->path.startup_cost = (Cost) atof(token);
 
-	token = lsptok(NULL, &length);		/* get :total_cost */
-	token = lsptok(NULL, &length);		/* now read it */
+	token = pg_strtok(&length);		/* get :total_cost */
+	token = pg_strtok(&length);		/* now read it */
 	local_node->path.total_cost = (Cost) atof(token);
 
-	token = lsptok(NULL, &length);		/* get :pathkeys */
+	token = pg_strtok(&length);		/* get :pathkeys */
 	local_node->path.pathkeys = nodeRead(true); /* now read it */
 
-	token = lsptok(NULL, &length);		/* get :tideval */
+	token = pg_strtok(&length);		/* get :tideval */
 	local_node->tideval = nodeRead(true);		/* now read it */
 
-	token = lsptok(NULL, &length);		/* get :unjoined_relids */
+	token = pg_strtok(&length);		/* get :unjoined_relids */
 	local_node->unjoined_relids = toIntList(nodeRead(true));
 
 	return local_node;
@@ -1608,22 +1603,22 @@ _readAppendPath(void)
 
 	local_node = makeNode(AppendPath);
 
-	token = lsptok(NULL, &length);		/* get :pathtype */
-	token = lsptok(NULL, &length);		/* now read it */
+	token = pg_strtok(&length);		/* get :pathtype */
+	token = pg_strtok(&length);		/* now read it */
 	local_node->path.pathtype = atol(token);
 
-	token = lsptok(NULL, &length);		/* get :startup_cost */
-	token = lsptok(NULL, &length);		/* now read it */
+	token = pg_strtok(&length);		/* get :startup_cost */
+	token = pg_strtok(&length);		/* now read it */
 	local_node->path.startup_cost = (Cost) atof(token);
 
-	token = lsptok(NULL, &length);		/* get :total_cost */
-	token = lsptok(NULL, &length);		/* now read it */
+	token = pg_strtok(&length);		/* get :total_cost */
+	token = pg_strtok(&length);		/* now read it */
 	local_node->path.total_cost = (Cost) atof(token);
 
-	token = lsptok(NULL, &length);		/* get :pathkeys */
+	token = pg_strtok(&length);		/* get :pathkeys */
 	local_node->path.pathkeys = nodeRead(true); /* now read it */
 
-	token = lsptok(NULL, &length);		/* get :subpaths */
+	token = pg_strtok(&length);		/* get :subpaths */
 	local_node->subpaths = nodeRead(true);		/* now read it */
 
 	return local_node;
@@ -1644,32 +1639,32 @@ _readNestPath(void)
 
 	local_node = makeNode(NestPath);
 
-	token = lsptok(NULL, &length);		/* get :pathtype */
-	token = lsptok(NULL, &length);		/* now read it */
+	token = pg_strtok(&length);		/* get :pathtype */
+	token = pg_strtok(&length);		/* now read it */
 	local_node->path.pathtype = atol(token);
 
-	token = lsptok(NULL, &length);		/* get :startup_cost */
-	token = lsptok(NULL, &length);		/* now read it */
+	token = pg_strtok(&length);		/* get :startup_cost */
+	token = pg_strtok(&length);		/* now read it */
 	local_node->path.startup_cost = (Cost) atof(token);
 
-	token = lsptok(NULL, &length);		/* get :total_cost */
-	token = lsptok(NULL, &length);		/* now read it */
+	token = pg_strtok(&length);		/* get :total_cost */
+	token = pg_strtok(&length);		/* now read it */
 	local_node->path.total_cost = (Cost) atof(token);
 
-	token = lsptok(NULL, &length);		/* get :pathkeys */
+	token = pg_strtok(&length);		/* get :pathkeys */
 	local_node->path.pathkeys = nodeRead(true); /* now read it */
 
-	token = lsptok(NULL, &length);		/* get :jointype */
-	token = lsptok(NULL, &length);		/* now read it */
+	token = pg_strtok(&length);		/* get :jointype */
+	token = pg_strtok(&length);		/* now read it */
 	local_node->jointype = (JoinType) atoi(token);
 
-	token = lsptok(NULL, &length);		/* get :outerjoinpath */
+	token = pg_strtok(&length);		/* get :outerjoinpath */
 	local_node->outerjoinpath = nodeRead(true); /* now read it */
 
-	token = lsptok(NULL, &length);		/* get :innerjoinpath */
+	token = pg_strtok(&length);		/* get :innerjoinpath */
 	local_node->innerjoinpath = nodeRead(true); /* now read it */
 
-	token = lsptok(NULL, &length);		/* get :joinrestrictinfo */
+	token = pg_strtok(&length);		/* get :joinrestrictinfo */
 	local_node->joinrestrictinfo = nodeRead(true); /* now read it */
 
 	return local_node;
@@ -1690,41 +1685,41 @@ _readMergePath(void)
 
 	local_node = makeNode(MergePath);
 
-	token = lsptok(NULL, &length);		/* get :pathtype */
-	token = lsptok(NULL, &length);		/* now read it */
+	token = pg_strtok(&length);		/* get :pathtype */
+	token = pg_strtok(&length);		/* now read it */
 	local_node->jpath.path.pathtype = atol(token);
 
-	token = lsptok(NULL, &length);		/* get :startup_cost */
-	token = lsptok(NULL, &length);		/* now read it */
+	token = pg_strtok(&length);		/* get :startup_cost */
+	token = pg_strtok(&length);		/* now read it */
 	local_node->jpath.path.startup_cost = (Cost) atof(token);
 
-	token = lsptok(NULL, &length);		/* get :total_cost */
-	token = lsptok(NULL, &length);		/* now read it */
+	token = pg_strtok(&length);		/* get :total_cost */
+	token = pg_strtok(&length);		/* now read it */
 	local_node->jpath.path.total_cost = (Cost) atof(token);
 
-	token = lsptok(NULL, &length);		/* get :pathkeys */
+	token = pg_strtok(&length);		/* get :pathkeys */
 	local_node->jpath.path.pathkeys = nodeRead(true);	/* now read it */
 
-	token = lsptok(NULL, &length);		/* get :jointype */
-	token = lsptok(NULL, &length);		/* now read it */
+	token = pg_strtok(&length);		/* get :jointype */
+	token = pg_strtok(&length);		/* now read it */
 	local_node->jpath.jointype = (JoinType) atoi(token);
 
-	token = lsptok(NULL, &length);		/* get :outerjoinpath */
+	token = pg_strtok(&length);		/* get :outerjoinpath */
 	local_node->jpath.outerjoinpath = nodeRead(true);	/* now read it */
 
-	token = lsptok(NULL, &length);		/* get :innerjoinpath */
+	token = pg_strtok(&length);		/* get :innerjoinpath */
 	local_node->jpath.innerjoinpath = nodeRead(true);	/* now read it */
 
-	token = lsptok(NULL, &length);		/* get :joinrestrictinfo */
+	token = pg_strtok(&length);		/* get :joinrestrictinfo */
 	local_node->jpath.joinrestrictinfo = nodeRead(true); /* now read it */
 
-	token = lsptok(NULL, &length);		/* get :path_mergeclauses */
+	token = pg_strtok(&length);		/* get :path_mergeclauses */
 	local_node->path_mergeclauses = nodeRead(true);		/* now read it */
 
-	token = lsptok(NULL, &length);		/* get :outersortkeys */
+	token = pg_strtok(&length);		/* get :outersortkeys */
 	local_node->outersortkeys = nodeRead(true); /* now read it */
 
-	token = lsptok(NULL, &length);		/* get :innersortkeys */
+	token = pg_strtok(&length);		/* get :innersortkeys */
 	local_node->innersortkeys = nodeRead(true); /* now read it */
 
 	return local_node;
@@ -1745,35 +1740,35 @@ _readHashPath(void)
 
 	local_node = makeNode(HashPath);
 
-	token = lsptok(NULL, &length);		/* get :pathtype */
-	token = lsptok(NULL, &length);		/* now read it */
+	token = pg_strtok(&length);		/* get :pathtype */
+	token = pg_strtok(&length);		/* now read it */
 	local_node->jpath.path.pathtype = atol(token);
 
-	token = lsptok(NULL, &length);		/* get :startup_cost */
-	token = lsptok(NULL, &length);		/* now read it */
+	token = pg_strtok(&length);		/* get :startup_cost */
+	token = pg_strtok(&length);		/* now read it */
 	local_node->jpath.path.startup_cost = (Cost) atof(token);
 
-	token = lsptok(NULL, &length);		/* get :total_cost */
-	token = lsptok(NULL, &length);		/* now read it */
+	token = pg_strtok(&length);		/* get :total_cost */
+	token = pg_strtok(&length);		/* now read it */
 	local_node->jpath.path.total_cost = (Cost) atof(token);
 
-	token = lsptok(NULL, &length);		/* get :pathkeys */
+	token = pg_strtok(&length);		/* get :pathkeys */
 	local_node->jpath.path.pathkeys = nodeRead(true);	/* now read it */
 
-	token = lsptok(NULL, &length);		/* get :jointype */
-	token = lsptok(NULL, &length);		/* now read it */
+	token = pg_strtok(&length);		/* get :jointype */
+	token = pg_strtok(&length);		/* now read it */
 	local_node->jpath.jointype = (JoinType) atoi(token);
 
-	token = lsptok(NULL, &length);		/* get :outerjoinpath */
+	token = pg_strtok(&length);		/* get :outerjoinpath */
 	local_node->jpath.outerjoinpath = nodeRead(true);	/* now read it */
 
-	token = lsptok(NULL, &length);		/* get :innerjoinpath */
+	token = pg_strtok(&length);		/* get :innerjoinpath */
 	local_node->jpath.innerjoinpath = nodeRead(true);	/* now read it */
 
-	token = lsptok(NULL, &length);		/* get :joinrestrictinfo */
+	token = pg_strtok(&length);		/* get :joinrestrictinfo */
 	local_node->jpath.joinrestrictinfo = nodeRead(true); /* now read it */
 
-	token = lsptok(NULL, &length);		/* get :path_hashclauses */
+	token = pg_strtok(&length);		/* get :path_hashclauses */
 	local_node->path_hashclauses = nodeRead(true);		/* now read it */
 
 	return local_node;
@@ -1794,12 +1789,12 @@ _readPathKeyItem(void)
 
 	local_node = makeNode(PathKeyItem);
 
-	token = lsptok(NULL, &length);		/* get :sortop */
-	token = lsptok(NULL, &length);		/* now read it */
+	token = pg_strtok(&length);		/* get :sortop */
+	token = pg_strtok(&length);		/* now read it */
 
 	local_node->sortop = (Oid) atol(token);
 
-	token = lsptok(NULL, &length);		/* get :key */
+	token = pg_strtok(&length);		/* get :key */
 	local_node->key = nodeRead(true);	/* now read it */
 
 	return local_node;
@@ -1820,30 +1815,30 @@ _readRestrictInfo(void)
 
 	local_node = makeNode(RestrictInfo);
 
-	token = lsptok(NULL, &length);		/* get :clause */
+	token = pg_strtok(&length);		/* get :clause */
 	local_node->clause = nodeRead(true);		/* now read it */
 
-	token = lsptok(NULL, &length);		/* get :ispusheddown */
-	token = lsptok(NULL, &length);		/* now read it */
+	token = pg_strtok(&length);		/* get :ispusheddown */
+	token = pg_strtok(&length);		/* now read it */
 	local_node->ispusheddown = (token[0] == 't') ? true : false;
 
-	token = lsptok(NULL, &length);		/* get :subclauseindices */
+	token = pg_strtok(&length);		/* get :subclauseindices */
 	local_node->subclauseindices = nodeRead(true);		/* now read it */
 
-	token = lsptok(NULL, &length);		/* get :mergejoinoperator */
-	token = lsptok(NULL, &length);		/* now read it */
+	token = pg_strtok(&length);		/* get :mergejoinoperator */
+	token = pg_strtok(&length);		/* now read it */
 	local_node->mergejoinoperator = (Oid) atol(token);
 
-	token = lsptok(NULL, &length);		/* get :left_sortop */
-	token = lsptok(NULL, &length);		/* now read it */
+	token = pg_strtok(&length);		/* get :left_sortop */
+	token = pg_strtok(&length);		/* now read it */
 	local_node->left_sortop = (Oid) atol(token);
 
-	token = lsptok(NULL, &length);		/* get :right_sortop */
-	token = lsptok(NULL, &length);		/* now read it */
+	token = pg_strtok(&length);		/* get :right_sortop */
+	token = pg_strtok(&length);		/* now read it */
 	local_node->right_sortop = (Oid) atol(token);
 
-	token = lsptok(NULL, &length);		/* get :hashjoinoperator */
-	token = lsptok(NULL, &length);		/* now read it */
+	token = pg_strtok(&length);		/* get :hashjoinoperator */
+	token = pg_strtok(&length);		/* now read it */
 	local_node->hashjoinoperator = (Oid) atol(token);
 
 	/* eval_cost is not part of saved representation; compute on first use */
@@ -1872,10 +1867,10 @@ _readJoinInfo(void)
 
 	local_node = makeNode(JoinInfo);
 
-	token = lsptok(NULL, &length);		/* get :unjoined_relids */
+	token = pg_strtok(&length);		/* get :unjoined_relids */
 	local_node->unjoined_relids = toIntList(nodeRead(true));	/* now read it */
 
-	token = lsptok(NULL, &length);		/* get :jinfo_restrictinfo */
+	token = pg_strtok(&length);		/* get :jinfo_restrictinfo */
 	local_node->jinfo_restrictinfo = nodeRead(true);	/* now read it */
 
 	return local_node;
@@ -1895,7 +1890,7 @@ _readIter(void)
 
 	local_node = makeNode(Iter);
 
-	token = lsptok(NULL, &length);		/* eat :iterexpr */
+	token = pg_strtok(&length);		/* eat :iterexpr */
 	local_node->iterexpr = nodeRead(true);		/* now read it */
 
 	return local_node;
@@ -1908,7 +1903,7 @@ _readIter(void)
  * Given a character string containing a plan, parsePlanString sets up the
  * plan structure representing that plan.
  *
- * The string to be read must already have been loaded into lsptok().
+ * The string to be read must already have been loaded into pg_strtok().
  * ----------------
  */
 Node *
@@ -1918,7 +1913,7 @@ parsePlanString(void)
 	int			length;
 	void	   *return_value = NULL;
 
-	token = lsptok(NULL, &length);
+	token = pg_strtok(&length);
 
 	if (length == 4 && strncmp(token, "PLAN", length) == 0)
 		return_value = _readPlan();
@@ -2033,39 +2028,38 @@ parsePlanString(void)
 /* ----------------
  *		readDatum
  *
- * given a string representation of the value of the given type,
- * create the appropriate Datum
+ * Given a string representation of a constant, recreate the appropriate
+ * Datum.  The string representation embeds length info, but not byValue,
+ * so we must be told that.
  * ----------------
  */
 static Datum
-readDatum(Oid type)
+readDatum(bool typbyval)
 {
 	int			length;
 	int			tokenLength;
 	char	   *token;
-	bool		byValue;
 	Datum		res;
 	char	   *s;
 	int			i;
 
-	byValue = get_typbyval(type);
-
 	/*
 	 * read the actual length of the value
 	 */
-	token = lsptok(NULL, &tokenLength);
+	token = pg_strtok(&tokenLength);
 	length = atoi(token);
-	token = lsptok(NULL, &tokenLength); /* skip the '[' */
 
-	if (byValue)
+	token = pg_strtok(&tokenLength); /* skip the '[' */
+
+	if (typbyval)
 	{
 		if ((Size) length > sizeof(Datum))
-			elog(ERROR, "readValue: byval & length = %d", length);
+			elog(ERROR, "readDatum: byval & length = %d", length);
 		res = (Datum) 0;
 		s = (char *) (&res);
 		for (i = 0; i < (int) sizeof(Datum); i++)
 		{
-			token = lsptok(NULL, &tokenLength);
+			token = pg_strtok(&tokenLength);
 			s[i] = (char) atoi(token);
 		}
 	}
@@ -2076,15 +2070,15 @@ readDatum(Oid type)
 		s = (char *) palloc(length);
 		for (i = 0; i < length; i++)
 		{
-			token = lsptok(NULL, &tokenLength);
+			token = pg_strtok(&tokenLength);
 			s[i] = (char) atoi(token);
 		}
 		res = PointerGetDatum(s);
 	}
 
-	token = lsptok(NULL, &tokenLength); /* skip the ']' */
-	if (token[0] != ']')
-		elog(ERROR, "readValue: ']' expected, length =%d", length);
+	token = pg_strtok(&tokenLength); /* skip the ']' */
+	if (token == NULL || token[0] != ']')
+		elog(ERROR, "readDatum: ']' expected, length = %d", length);
 
 	return res;
 }

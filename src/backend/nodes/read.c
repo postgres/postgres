@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/read.c,v 1.26 2000/12/03 20:45:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/read.c,v 1.27 2001/01/07 01:08:47 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -25,6 +25,11 @@
 #include "nodes/pg_list.h"
 #include "nodes/readfuncs.h"
 
+
+/* Static state for pg_strtok */
+static char *pg_strtok_ptr = NULL;
+
+
 /*
  * stringToNode -
  *	  returns a Node with a given legal ASCII representation
@@ -32,10 +37,22 @@
 void *
 stringToNode(char *str)
 {
+	char	   *save_strtok;
 	void	   *retval;
 
-	lsptok(str, NULL);			/* set the string used in lsptok */
-	retval = nodeRead(true);	/* start reading */
+	/*
+	 * We save and restore the pre-existing state of pg_strtok.
+	 * This makes the world safe for re-entrant invocation of stringToNode,
+	 * without incurring a lot of notational overhead by having to pass the
+	 * next-character pointer around through all the readfuncs.c code.
+	 */
+	save_strtok = pg_strtok_ptr;
+
+	pg_strtok_ptr = str;		/* point pg_strtok at the string to read */
+
+	retval = nodeRead(true);	/* do the reading */
+
+	pg_strtok_ptr = save_strtok;
 
 	return retval;
 }
@@ -47,7 +64,7 @@ stringToNode(char *str)
  *****************************************************************************/
 
 /*
- * lsptok --- retrieve next "token" from a string.
+ * pg_strtok --- retrieve next "token" from a string.
  *
  * Works kinda like strtok, except it never modifies the source string.
  * (Instead of storing nulls into the string, the length of the token
@@ -55,9 +72,7 @@ stringToNode(char *str)
  * Also, the rules about what is a token are hard-wired rather than being
  * configured by passing a set of terminating characters.
  *
- * The string is initially set by passing a non-NULL "string" value,
- * and subsequent calls with string==NULL read the previously given value.
- * (Pass length==NULL to set the string without reading its first token.)
+ * The string is assumed to have been initialized already by stringToNode.
  *
  * The rules for tokens are:
  *	* Whitespace (space, tab, newline) always separates tokens.
@@ -89,20 +104,12 @@ stringToNode(char *str)
  * as a single token.
  */
 char *
-lsptok(char *string, int *length)
+pg_strtok(int *length)
 {
-	static char *saved_str = NULL;
 	char	   *local_str;		/* working pointer to string */
 	char	   *ret_str;		/* start of token to return */
 
-	if (string != NULL)
-	{
-		saved_str = string;
-		if (length == NULL)
-			return NULL;
-	}
-
-	local_str = saved_str;
+	local_str = pg_strtok_ptr;
 
 	while (*local_str == ' ' || *local_str == '\n' || *local_str == '\t')
 		local_str++;
@@ -110,7 +117,7 @@ lsptok(char *string, int *length)
 	if (*local_str == '\0')
 	{
 		*length = 0;
-		saved_str = local_str;
+		pg_strtok_ptr = local_str;
 		return NULL;			/* no more tokens */
 	}
 
@@ -147,7 +154,7 @@ lsptok(char *string, int *length)
 	if (*length == 2 && ret_str[0] == '<' && ret_str[1] == '>')
 		*length = 0;
 
-	saved_str = local_str;
+	pg_strtok_ptr = local_str;
 
 	return ret_str;
 }
@@ -223,7 +230,7 @@ nodeTokenType(char *token, int length)
 	}
 
 	/*
-	 * these three cases do not need length checks, since lsptok() will
+	 * these three cases do not need length checks, since pg_strtok() will
 	 * always treat them as single-byte tokens
 	 */
 	else if (*token == '(')
@@ -248,12 +255,13 @@ nodeTokenType(char *token, int length)
  *	  Slightly higher-level reader.
  *
  * This routine applies some semantic knowledge on top of the purely
- * lexical tokenizer lsptok().	It can read
+ * lexical tokenizer pg_strtok().	It can read
  *	* Value token nodes (integers, floats, or strings);
  *	* Plan nodes (via parsePlanString() from readfuncs.c);
  *	* Lists of the above.
  *
- * Secrets:  He assumes that lsptok already has the string (see above).
+ * We assume pg_strtok is already initialized with a string to read (hence
+ * this should only be invoked from within a stringToNode operation).
  * Any callers should set read_car_only to true.
  */
 void *
@@ -266,7 +274,7 @@ nodeRead(bool read_car_only)
 			   *return_value;
 	bool		make_dotted_pair_cell = false;
 
-	token = lsptok(NULL, &tok_len);
+	token = pg_strtok(&tok_len);
 
 	if (token == NULL)
 		return NULL;
@@ -277,8 +285,8 @@ nodeRead(bool read_car_only)
 	{
 		case PLAN_SYM:
 			this_value = parsePlanString();
-			token = lsptok(NULL, &tok_len);
-			if (token[0] != '}')
+			token = pg_strtok(&tok_len);
+			if (token == NULL || token[0] != '}')
 				elog(ERROR, "nodeRead: did not find '}' at end of plan node");
 			if (!read_car_only)
 				make_dotted_pair_cell = true;
