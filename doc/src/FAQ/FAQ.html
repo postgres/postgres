@@ -12,7 +12,7 @@
   alink="#0000FF">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Wed May 30 18:57:52 EDT 2001</P>
+    <P>Last updated: Wed May 30 19:00:33 EDT 2001</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -908,9 +908,9 @@ Maximum number of indexes on a table?    unlimited
     periodically.</P>
 
     <P>Indexes are usually not used for <SMALL>ORDER BY</SMALL>
-    or joins: a sequential scan followed by an explicit sort is
-    faster than an indexscan of all tuples of a large table, because it
-    takes fewer disk accesses.</P>
+    or joins.  A sequential scan followed by an explicit sort is
+    faster than an indexscan of all tuples of a large table.  This
+    is because random disk access is very slow.</P>
 
     <P>When using wild-card operators such as <SMALL>LIKE</SMALL> or
     <I>~,</I> indices can only be used if the beginning of the search
