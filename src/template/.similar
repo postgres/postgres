@@ -1,6 +1,7 @@
 alpha-dec-osf=alpha_cc
 alpha-unknown-linux-gnu=linux_alpha
 hppa1.1-hp-hpux=hpux_cc
+hppa2.0-hp-hpux10.20=hpux_cc
 hppa1.1-stratus-sysv4=svr4
 i386-next-nextstep3=nextstep
 i386-pc-bsdi2.0=bsdi_2.0
