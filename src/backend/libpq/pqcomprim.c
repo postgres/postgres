@@ -1,6 +1,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#ifdef        HAVE_ENDIAN_H
+#  include    <endian.h>
+#endif
+
 #include "postgres.h"
 #include "libpq/pqcomm.h"
 
