@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.4 1997/12/23 19:36:20 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.5 1998/01/04 04:53:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,7 +55,8 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 				Node	   *temp;
 
 				/* what if att.attrs == "*"?? */
-				temp = handleNestedDots(pstate, att, &pstate->p_last_resno);
+				temp = handleNestedDots(pstate, att, &pstate->p_last_resno,
+										precedence);
 				if (att->indirection != NIL)
 				{
 					List	   *idx = att->indirection;
@@ -156,7 +157,8 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 
 							result = ParseFunc(pstate,
 										  "nullvalue", lcons(lexpr, NIL),
-											   &pstate->p_last_resno);
+											   &pstate->p_last_resno,
+											   precedence);
 						}
 						break;
 					case NOTNULL:
@@ -165,7 +167,8 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 
 							result = ParseFunc(pstate,
 									   "nonnullvalue", lcons(lexpr, NIL),
-											   &pstate->p_last_resno);
+											   &pstate->p_last_resno,
+											   precedence);
 						}
 						break;
 					case AND:
@@ -242,7 +245,8 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 				foreach(args, fn->args)
 					lfirst(args) = transformExpr(pstate, (Node *) lfirst(args), precedence);
 				result = ParseFunc(pstate,
-						  fn->funcname, fn->args, &pstate->p_last_resno);
+						  fn->funcname, fn->args, &pstate->p_last_resno,
+						  precedence);
 				break;
 			}
 		default:
@@ -273,7 +277,8 @@ transformIdent(ParseState *pstate, Node *expr, int precedence)
 		att->relname = rte->refname;
 		att->attrs = lcons(makeString(ident->name), NIL);
 		column_result =
-			(Node *) handleNestedDots(pstate, att, &pstate->p_last_resno);
+			(Node *) handleNestedDots(pstate, att, &pstate->p_last_resno,
+								precedence);
 	}
 
 	/* try to find the ident as a relation */
@@ -358,7 +363,7 @@ exprType(Node *expr)
  ** a tree with of Iter and Func nodes.
  */
 Node *
-handleNestedDots(ParseState *pstate, Attr *attr, int *curr_resno)
+handleNestedDots(ParseState *pstate, Attr *attr, int *curr_resno, int precedence)
 {
 	List	   *mutator_iter;
 	Node	   *retval = NULL;
@@ -370,7 +375,8 @@ handleNestedDots(ParseState *pstate, Attr *attr, int *curr_resno)
 		retval =
 			ParseFunc(pstate, strVal(lfirst(attr->attrs)),
 					  lcons(param, NIL),
-					  curr_resno);
+					  curr_resno,
+					  precedence);
 	}
 	else
 	{
@@ -381,14 +387,16 @@ handleNestedDots(ParseState *pstate, Attr *attr, int *curr_resno)
 		retval =
 			ParseFunc(pstate, strVal(lfirst(attr->attrs)),
 					  lcons(ident, NIL),
-					  curr_resno);
+					  curr_resno,
+					  precedence);
 	}
 
 	foreach(mutator_iter, lnext(attr->attrs))
 	{
 		retval = ParseFunc(pstate, strVal(lfirst(mutator_iter)),
 						   lcons(retval, NIL),
-						   curr_resno);
+						   curr_resno,
+						   precedence);
 	}
 
 	return (retval);
