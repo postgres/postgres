@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.67 2000/11/16 22:30:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.68 2000/12/14 00:41:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,10 +34,10 @@
 
 static int checkAttrExists(const char *attributeName,
 				const char *attributeType, List *schema);
-static List *MergeAttributes(List *schema, List *supers, List **supconstr);
+static List *MergeAttributes(List *schema, List *supers,
+							 List **supOids, List **supconstr);
 static void StoreCatalogInheritance(Oid relationId, List *supers);
-static void
-setRelhassubclassInRelation(Oid relationId, bool relhassubclass);
+static void setRelhassubclassInRelation(Oid relationId, bool relhassubclass);
 
 
 /* ----------------------------------------------------------------
@@ -53,8 +53,8 @@ DefineRelation(CreateStmt *stmt, char relkind)
 	int			numberOfAttributes;
 	Oid			relationId;
 	Relation	rel;
-	List	   *inheritList;
 	TupleDesc	descriptor;
+	List	   *inheritOids;
 	List	   *old_constraints;
 	List	   *rawDefaults;
 	List	   *listptr;
@@ -67,24 +67,16 @@ DefineRelation(CreateStmt *stmt, char relkind)
 	StrNCpy(relname, stmt->relname, NAMEDATALEN);
 
 	/* ----------------
-	 *	Handle parameters
-	 *	XXX parameter handling missing below.
+	 *	Look up inheritance ancestors and generate relation schema,
+	 *	including inherited attributes.
 	 * ----------------
 	 */
-	inheritList = stmt->inhRelnames;
-
-	/* ----------------
-	 *	generate relation schema, including inherited attributes.
-	 * ----------------
-	 */
-	schema = MergeAttributes(schema, inheritList, &old_constraints);
+	schema = MergeAttributes(schema, stmt->inhRelnames,
+							 &inheritOids, &old_constraints);
 
 	numberOfAttributes = length(schema);
 	if (numberOfAttributes <= 0)
-	{
-		elog(ERROR, "DefineRelation: %s",
-			 "please inherit from a relation or define an attribute");
-	}
+		elog(ERROR, "DefineRelation: please inherit from a relation or define an attribute");
 
 	/* ----------------
 	 *	create a relation descriptor from the relation schema
@@ -147,7 +139,7 @@ DefineRelation(CreateStmt *stmt, char relkind)
 										  relkind, stmt->istemp,
 										  allowSystemTableMods);
 
-	StoreCatalogInheritance(relationId, inheritList);
+	StoreCatalogInheritance(relationId, inheritOids);
 
 	/*
 	 * We must bump the command counter to make the newly-created relation
@@ -286,10 +278,15 @@ change_varattnos_of_a_node(Node *node, const AttrNumber *newattno)
  * MergeAttributes
  *		Returns new schema given initial schema and supers.
  *
+ * Input arguments:
  *
  * 'schema' is the column/attribute definition for the table. (It's a list
  *		of ColumnDef's.) It is destructively changed.
- * 'inheritList' is the list of inherited relations (a list of Value(str)'s).
+ * 'supers' is a list of names (as Value objects) of parent relations.
+ *
+ * Output arguments:
+ * 'supOids' receives an integer list of the OIDs of the parent relations.
+ * 'supconstr' receives a list of constraints belonging to the parents.
  *
  * Notes:
  *	  The order in which the attributes are inherited is very important.
@@ -314,12 +311,14 @@ change_varattnos_of_a_node(Node *node, const AttrNumber *newattno)
  *						   stud_emp {7:percent}
  */
 static List *
-MergeAttributes(List *schema, List *supers, List **supconstr)
+MergeAttributes(List *schema, List *supers,
+				List **supOids, List **supconstr)
 {
 	List	   *entry;
 	List	   *inhSchema = NIL;
+	List	   *parentOids = NIL;
 	List	   *constraints = NIL;
-	int		attnums;
+	int			attnums;
 
 	/*
 	 * Validates that there are no duplications. Validity checking of
@@ -338,7 +337,7 @@ MergeAttributes(List *schema, List *supers, List **supconstr)
 			 */
 			ColumnDef  *restdef = lfirst(rest);
 
-			if (!strcmp(coldef->colname, restdef->colname))
+			if (strcmp(coldef->colname, restdef->colname) == 0)
 			{
 				elog(ERROR, "CREATE TABLE: attribute \"%s\" duplicated",
 					 coldef->colname);
@@ -351,7 +350,7 @@ MergeAttributes(List *schema, List *supers, List **supconstr)
 
 		foreach(rest, lnext(entry))
 		{
-			if (!strcmp(strVal(lfirst(entry)), strVal(lfirst(rest))))
+			if (strcmp(strVal(lfirst(entry)), strVal(lfirst(rest))) == 0)
 			{
 				elog(ERROR, "CREATE TABLE: inherited relation \"%s\" duplicated",
 					 strVal(lfirst(entry)));
@@ -376,6 +375,11 @@ MergeAttributes(List *schema, List *supers, List **supconstr)
 		int		i, attidx, attno_exist;
 
 		relation = heap_openr(name, AccessShareLock);
+
+		if (relation->rd_rel->relkind != RELKIND_RELATION)
+			elog(ERROR, "CREATE TABLE: inherited relation \"%s\" is not a table", name);
+
+		parentOids = lappendi(parentOids, relation->rd_id);
 		setRelhassubclassInRelation(relation->rd_id, true);
 		tupleDesc = RelationGetDescr(relation);
 		/* allocate a new attribute number table and initialize */
@@ -390,9 +394,6 @@ MergeAttributes(List *schema, List *supers, List **supconstr)
 		for (i = 0; i < tupleDesc->natts; i++)
 			partialAttidx [i] = 0;
 		constr = tupleDesc->constr;
-
-		if (relation->rd_rel->relkind != RELKIND_RELATION)
-			elog(ERROR, "CREATE TABLE: inherited relation \"%s\" is not a table", name);
 
 		attidx = 0;
 		for (attrno = relation->rd_rel->relnatts - 1; attrno >= 0; attrno--)
@@ -519,6 +520,8 @@ MergeAttributes(List *schema, List *supers, List **supconstr)
 	 * put the inherited schema before our the schema for this table
 	 */
 	schema = nconc(inhSchema, schema);
+
+	*supOids = parentOids;
 	*supconstr = constraints;
 	return schema;
 }
@@ -526,6 +529,9 @@ MergeAttributes(List *schema, List *supers, List **supconstr)
 /*
  * StoreCatalogInheritance
  *		Updates the system catalogs with proper inheritance information.
+ *
+ * supers is an integer list of the OIDs of the new relation's direct
+ * ancestors.  NB: it is destructively changed to include indirect ancestors.
  */
 static void
 StoreCatalogInheritance(Oid relationId, List *supers)
@@ -534,7 +540,6 @@ StoreCatalogInheritance(Oid relationId, List *supers)
 	TupleDesc	desc;
 	int16		seqNumber;
 	List	   *entry;
-	List	   *idList;
 	HeapTuple	tuple;
 
 	/* ----------------
@@ -547,31 +552,18 @@ StoreCatalogInheritance(Oid relationId, List *supers)
 		return;
 
 	/* ----------------
-	 * Catalog INHERITS information.
+	 * Catalog INHERITS information using direct ancestors only.
 	 * ----------------
 	 */
 	relation = heap_openr(InheritsRelationName, RowExclusiveLock);
 	desc = RelationGetDescr(relation);
 
 	seqNumber = 1;
-	idList = NIL;
 	foreach(entry, supers)
 	{
-		Oid			entryOid;
+		Oid			entryOid = lfirsti(entry);
 		Datum		datum[Natts_pg_inherits];
 		char		nullarr[Natts_pg_inherits];
-
-		entryOid = GetSysCacheOid(RELNAME,
-								  PointerGetDatum(strVal(lfirst(entry))),
-								  0, 0, 0);
-		if (!OidIsValid(entryOid))
-			elog(ERROR, "StoreCatalogInheritance: cache lookup failed for relation \"%s\"",
-				 strVal(lfirst(entry)));
-
-		/*
-		 * build idList for use below
-		 */
-		idList = lappendi(idList, entryOid);
 
 		datum[0] = ObjectIdGetDatum(relationId);	/* inhrel */
 		datum[1] = ObjectIdGetDatum(entryOid);		/* inhparent */
@@ -602,21 +594,20 @@ StoreCatalogInheritance(Oid relationId, List *supers)
 	heap_close(relation, RowExclusiveLock);
 
 	/* ----------------
-	 * Catalog IPL information.
+	 * Expand supers list to include indirect ancestors as well.
 	 *
 	 * Algorithm:
-	 *	0. list superclasses (by Oid) in order given (see idList).
+	 *	0. begin with list of direct superclasses.
 	 *	1. append after each relationId, its superclasses, recursively.
-	 *	3. remove all but last of duplicates.
-	 *	4. store result.
+	 *	2. remove all but last of duplicates.
 	 * ----------------
 	 */
 
 	/* ----------------
-	 *	1.
+	 *	1. append after each relationId, its superclasses, recursively.
 	 * ----------------
 	 */
-	foreach(entry, idList)
+	foreach(entry, supers)
 	{
 		HeapTuple	tuple;
 		Oid			id;
@@ -649,20 +640,21 @@ StoreCatalogInheritance(Oid relationId, List *supers)
 	}
 
 	/* ----------------
-	 *	2.
+	 *	2. remove all but last of duplicates.
 	 * ----------------
 	 */
-	foreach(entry, idList)
+	foreach(entry, supers)
 	{
-		Oid			name;
+		Oid			thisone;
+		bool		found;
 		List	   *rest;
-		bool		found = false;
 
 again:
-		name = lfirsti(entry);
+		thisone = lfirsti(entry);
+		found = false;
 		foreach(rest, lnext(entry))
 		{
-			if (name == lfirsti(rest))
+			if (thisone == lfirsti(rest))
 			{
 				found = true;
 				break;
@@ -672,20 +664,17 @@ again:
 		{
 
 			/*
-			 * entry list must be of length >= 2 or else no match
-			 *
-			 * so, remove this entry.
+			 * found a later duplicate, so remove this entry.
 			 */
-			lfirst(entry) = lfirst(lnext(entry));
+			lfirsti(entry) = lfirsti(lnext(entry));
 			lnext(entry) = lnext(lnext(entry));
 
-			found = false;
 			goto again;
 		}
 	}
 
 	/* ----------------
-	 *	3.
+	 * Catalog IPL information using expanded list.
 	 * ----------------
 	 */
 	relation = heap_openr(InheritancePrecidenceListRelationName, RowExclusiveLock);
@@ -693,7 +682,7 @@ again:
 
 	seqNumber = 1;
 
-	foreach(entry, idList)
+	foreach(entry, supers)
 	{
 		Datum		datum[Natts_pg_ipl];
 		char		nullarr[Natts_pg_ipl];
@@ -721,10 +710,12 @@ again:
 
 
 /*
- * returns the index(star with 1) if attribute already exists in schema, 0 otherwise.
+ * returns the index (starting with 1) if attribute already exists in schema,
+ * 0 if it doesn't.
  */
 static int
-checkAttrExists(const char *attributeName, const char *attributeType, List *schema)
+checkAttrExists(const char *attributeName, const char *attributeType,
+				List *schema)
 {
 	List	   *s;
 	int	i = 0;
