@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.140 2003/04/25 01:24:00 momjian Exp $
+ * $Id: c.h,v 1.141 2003/04/25 16:18:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -714,7 +714,7 @@ off_t ftello(FILE *stream);
 /*
  * Win32 doesn't have reliable rename/unlink during concurrent access
  */
-#ifdef WIN32
+#if defined(WIN32) && !defined(FRONTEND)
 int pgrename(const char *from, const char *to);
 int pgunlink(const char *path);      
 #define rename(path)		pgrename(path)
