@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.19 2001/11/19 03:58:25 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.20 2001/11/26 23:09:21 tgl Exp $ -->
 
 <refentry id="APP-PGRESTORE">
  <docinfo>
@@ -28,7 +28,7 @@
    <arg> -c </arg>
    <arg> -C </arg>
    <arg> -d <replaceable class="parameter">dbname</replaceable> </arg>
-   <arg> -f <replaceable class="parameter">archive-file</replaceable> </arg>
+   <arg> -f <replaceable class="parameter">output-file</replaceable> </arg>
    <arg> -F <replaceable class="parameter">format</replaceable> </arg>
    <arg> -i  <replaceable class="parameter">index</replaceable> </arg>
    <arg> -l </arg>
@@ -111,7 +111,7 @@
       <listitem>
        <para>
        Specifies the location of the archive file to be restored.
-       If not specified, and no <option>-f</option> option is specified, then the standard input is used.
+       If not specified, the standard input is used.
        </para>
       </listitem>
      </varlistentry>
