@@ -1,0 +1,44 @@
+exec sql whenever sqlerror sqlprint;
+
+exec sql include sqlca;
+
+int
+main ()
+{
+EXEC SQL BEGIN DECLARE SECTION;
+	int a = 1;
+	double f;
+EXEC SQL END DECLARE SECTION;
+	FILE *dbgs;
+        
+	if ((dbgs = fopen("log", "w")) != NULL)
+                ECPGdebug(1, dbgs);
+
+        EXEC SQL CONNECT TO mm;
+
+	EXEC SQL CREATE TABLE test (f decimal(8,2), a int);
+
+	EXEC SQL INSERT INTO test(f,a) VALUES(17000.00,1);
+
+	EXEC SQL COMMIT;
+
+	EXEC SQL SELECT f::float
+         INTO :f
+         FROM test
+         WHERE a = :a;
+
+	printf("Found f::float=%f\n", f);
+
+	EXEC SQL SELECT f
+         INTO :f
+         FROM test
+         WHERE a = :a;
+
+	printf("Found f=%f\n", f);
+
+	EXEC SQL DROP TABLE test;
+
+	EXEC SQL COMMIT;
+
+	EXEC SQL DISCONNECT;
+}	
