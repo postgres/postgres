@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.49 2000/07/12 22:59:08 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.50 2000/09/12 05:41:37 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,10 +23,6 @@
 #include "miscadmin.h"
 #include "utils/date.h"
 #include "utils/nabstime.h"
-
-
-static int date2tm(DateADT dateVal, int *tzp, struct tm * tm,
-				   double *fsec, char **tzn);
 
 
 /*****************************************************************************
@@ -230,15 +226,34 @@ date_timestamp(PG_FUNCTION_ARGS)
 	Timestamp	result;
 	struct tm	tt,
 			   *tm = &tt;
-	int			tz;
-	double		fsec = 0;
-	char	   *tzn;
+	time_t		utime;
 
-	if (date2tm(dateVal, &tz, tm, &fsec, &tzn) != 0)
-		elog(ERROR, "Unable to convert date to timestamp");
+	j2date((dateVal + date2j(2000, 1, 1)), &(tm->tm_year), &(tm->tm_mon), &(tm->tm_mday));
 
-	if (tm2timestamp(tm, fsec, &tz, &result) != 0)
-		elog(ERROR, "Timestamp out of range");
+	if (IS_VALID_UTIME(tm->tm_year, tm->tm_mon, tm->tm_mday))
+	{
+#ifdef USE_POSIX_TIME
+		tm->tm_hour = 0;
+		tm->tm_min = 0;
+		tm->tm_sec = 0;
+		tm->tm_isdst = -1;
+
+		tm->tm_year -= 1900;
+		tm->tm_mon -= 1;
+		utime = mktime(tm);
+		if (utime == -1)
+			elog(ERROR, "Unable to convert date to tm");
+
+		result = utime + ((date2j(1970,1,1)-date2j(2000,1,1))*86400.0);
+#else							/* !USE_POSIX_TIME */
+		result = dateVal*86400.0+CTimeZone;
+#endif
+	}
+	else
+	{
+		/* Outside of range for timezone support, so assume UTC */
+		result = dateVal*86400.0;
+	}
 
 	PG_RETURN_TIMESTAMP(result);
 }
@@ -322,81 +337,6 @@ abstime_date(PG_FUNCTION_ARGS)
 
 	PG_RETURN_DATEADT(result);
 }
-
-
-/* date2tm()
- * Convert date to time structure.
- * Note that date is an implicit local time, but the system calls assume
- *	that everything is GMT. So, convert to GMT, rotate to local time,
- *	and then convert again to try to get the time zones correct.
- */
-static int
-date2tm(DateADT dateVal, int *tzp, struct tm * tm, double *fsec, char **tzn)
-{
-	struct tm  *tx;
-	time_t		utime;
-
-	*fsec = 0;
-
-	j2date((dateVal + date2j(2000, 1, 1)), &(tm->tm_year), &(tm->tm_mon), &(tm->tm_mday));
-	tm->tm_hour = 0;
-	tm->tm_min = 0;
-	tm->tm_sec = 0;
-	tm->tm_isdst = -1;
-
-	if (IS_VALID_UTIME(tm->tm_year, tm->tm_mon, tm->tm_mday))
-	{
-
-		/* convert to system time */
-		utime = ((dateVal + (date2j(2000, 1, 1) - date2j(1970, 1, 1))) * 86400);
-		/* rotate to noon to get the right day in time zone */
-		utime += (12 * 60 * 60);
-
-#ifdef USE_POSIX_TIME
-		tx = localtime(&utime);
-
-		tm->tm_year = tx->tm_year + 1900;
-		tm->tm_mon = tx->tm_mon + 1;
-		tm->tm_mday = tx->tm_mday;
-		tm->tm_isdst = tx->tm_isdst;
-
-#if defined(HAVE_TM_ZONE)
-		tm->tm_gmtoff = tx->tm_gmtoff;
-		tm->tm_zone = tx->tm_zone;
-
-		/* tm_gmtoff is Sun/DEC-ism */
-		*tzp = -(tm->tm_gmtoff);
-		if (tzn != NULL)
-			*tzn = (char *) tm->tm_zone;
-#elif defined(HAVE_INT_TIMEZONE)
-#ifdef __CYGWIN__
-		*tzp = (tm->tm_isdst ? (_timezone - 3600) : _timezone);
-#else
-		*tzp = (tm->tm_isdst ? (timezone - 3600) : timezone);
-#endif
-		if (tzn != NULL)
-			*tzn = tzname[(tm->tm_isdst > 0)];
-#else
-#error USE_POSIX_TIME is defined but neither HAVE_TM_ZONE or HAVE_INT_TIMEZONE are defined
-#endif
-#else							/* !USE_POSIX_TIME */
-		*tzp = CTimeZone;		/* V7 conventions; don't know timezone? */
-		if (tzn != NULL)
-			*tzn = CTZName;
-#endif
-
-		/* otherwise, outside of timezone range so convert to GMT... */
-	}
-	else
-	{
-		*tzp = 0;
-		tm->tm_isdst = 0;
-		if (tzn != NULL)
-			*tzn = NULL;
-	}
-
-	return 0;
-}	/* date2tm() */
 
 
 /*****************************************************************************
@@ -906,19 +846,8 @@ datetimetz_timestamp(PG_FUNCTION_ARGS)
 	DateADT		date = PG_GETARG_DATEADT(0);
 	TimeTzADT  *time = PG_GETARG_TIMETZADT_P(1);
 	Timestamp	result;
-	struct tm	tt,
-			   *tm = &tt;
-	int			tz;
-	double		fsec = 0;
-	char	   *tzn;
 
-	if (date2tm(date, &tz, tm, &fsec, &tzn) != 0)
-		elog(ERROR, "Unable to convert date to timestamp");
-
-	if (tm2timestamp(tm, fsec, &time->zone, &result) != 0)
-		elog(ERROR, "Timestamp out of range");
-
-	result += time->time;
+	result = date*86400.0 + time->time + time->zone;
 
 	PG_RETURN_TIMESTAMP(result);
 }
