@@ -61,6 +61,37 @@ do
 			if (NR >= 1)
 				print line1;
 		}' |
+# prevent indenting of code in 'extern "C"' blocks
+	awk '	BEGIN	{line1 = ""; line2 = ""; skips = 0}
+		{
+			line2 = $0;
+			if (skips > 0)
+				skips--;
+			if (line1 ~ "^extern[ 	]*\"C\"" &&
+			    line2 ~ "^{[ 	]*$")
+			{
+				# don't print first line
+				print "/* Open extern \"C\" */";
+				line2 = "";
+				skips = 2;
+			}
+			else if (line1 ~ "^#ifdef[ 	]*__cplusplus" &&
+			    line2 ~ "^}[ 	]*$")
+			{
+				print line1;
+				print "/* Close extern \"C\" */";
+				line2 = "";
+				skips = 2;
+			}
+			else
+	 			if (skips == 0 && NR >= 2)
+					print line1;
+			line1 = line2;
+		}
+		END {
+			if (NR >= 1 && skips <= 1)
+				print line1;
+		}' |
 # protect backslashes in DATA()
 	sed 's;^DATA(.*$;/*&*/;' |
 # protect wrapping in CATALOG()
@@ -1456,6 +1487,9 @@ do
 	cat /tmp/$$a |
 	sed 's;^/\*\(DATA(.*\)\*/$;\1;' |
 	sed 's;^/\*\(CATALOG(.*\)\*/$;\1;' |
+	sed 's;^/\* Open extern \"C\" \*/$;extern    "C"\
+{;' |
+	sed 's;^/\* Close extern \"C\" \*/$;};' |
 # remove tabs and retab with four spaces
 	detab -t8 -qc |
 	entab -t4 -qc |
