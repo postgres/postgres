@@ -49,7 +49,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.105 2003/02/08 20:20:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.106 2003/02/15 21:39:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -601,6 +601,15 @@ cost_agg(Path *path, Query *root,
 	 *
 	 * We will produce a single output tuple if not grouping,
 	 * and a tuple per group otherwise.
+	 *
+	 * Note: in this cost model, AGG_SORTED and AGG_HASHED have exactly the
+	 * same total CPU cost, but AGG_SORTED has lower startup cost.  If the
+	 * input path is already sorted appropriately, AGG_SORTED should be
+	 * preferred (since it has no risk of memory overflow).  This will happen
+	 * as long as the computed total costs are indeed exactly equal --- but
+	 * if there's roundoff error we might do the wrong thing.  So be sure
+	 * that the computations below form the same intermediate values in the
+	 * same order.
 	 */
 	if (aggstrategy == AGG_PLAIN)
 	{
@@ -614,15 +623,17 @@ cost_agg(Path *path, Query *root,
 		/* Here we are able to deliver output on-the-fly */
 		startup_cost = input_startup_cost;
 		total_cost = input_total_cost;
-		total_cost += cpu_operator_cost * (input_tuples + numGroups) * numAggs;
+		/* calcs phrased this way to match HASHED case, see note above */
 		total_cost += cpu_operator_cost * input_tuples * numGroupCols;
+		total_cost += cpu_operator_cost * input_tuples * numAggs;
+		total_cost += cpu_operator_cost * numGroups * numAggs;
 	}
 	else
 	{
 		/* must be AGG_HASHED */
 		startup_cost = input_total_cost;
-		startup_cost += cpu_operator_cost * input_tuples * numAggs;
 		startup_cost += cpu_operator_cost * input_tuples * numGroupCols;
+		startup_cost += cpu_operator_cost * input_tuples * numAggs;
 		total_cost = startup_cost;
 		total_cost += cpu_operator_cost * numGroups * numAggs;
 	}

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.147 2003/02/15 20:12:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.148 2003/02/15 21:39:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1003,7 +1003,7 @@ grouping_planner(Query *parse, double tuple_fraction)
 						tuple_fraction /= dNumGroups;
 
 					if (compare_fractional_path_costs(&hashed_p, &sorted_p,
-													  tuple_fraction) <= 0)
+													  tuple_fraction) < 0)
 					{
 						/* Hashed is cheaper, so use it */
 						use_hashed_grouping = true;
