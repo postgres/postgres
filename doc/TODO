@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Jan 18 15:46:23 EST 2002
+Last updated:		Sat Jan 19 23:56:04 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -375,7 +375,7 @@ VACUUM
 MISCELLANEOUS
 
 * -Allow compression of log and meta data (Tom)
-* Do async I/O to do better read-ahead of data
+* Do async I/O for faster random read-ahead of data
 * Experiment with multi-threaded backend [thread]
 * Get faster regex() code from Henry Spencer <henry@zoo.utoronto.ca>
   when it is available
@@ -408,6 +408,7 @@ MISCELLANEOUS
   evaluated only once or once per query
 * Change FIXED_CHAR_SEL to 0.20 from 0.04 to give better selectivity (Bruce)
 * Make locking of shared data structures more fine-grained
+* Make IN/NOT IN have similar performance to EXISTS/NOT EXISTS [exists]
 
 SOURCE CODE
 -----------
