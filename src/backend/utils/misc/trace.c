@@ -138,7 +138,7 @@ tprintf1(const char *fmt, ... )
 #ifdef ELOG_TIMESTAMPS
 	strcpy(line, tprintf_timestamp());
 #endif
-	vsnprintf(line+TIMESTAMP_SIZE, ELOG_MAXLEN, fmt, ap);
+	vsnprintf(line + TIMESTAMP_SIZE, ELOG_MAXLEN, fmt, ap);
 	va_end(ap);
 
 #ifdef USE_SYSLOG

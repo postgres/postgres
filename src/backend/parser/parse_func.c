@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.40 1999/03/15 16:48:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.41 1999/03/16 04:25:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -580,7 +580,15 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 			elog(ERROR, "Only constant sequence names are acceptable for function '%s'", funcname);
 
 		seqrel = textout((text *) DatumGetPointer(seq->constvalue));
-		if (RelnameFindRelid(seqrel) == InvalidOid)
+		/* Do we have nextval('"Aa"')? */
+		if (strlen(seqrel) >= 2 &&
+			seqrel[0] == '\"' && seqrel[strlen(seqrel)-1] == '\"')
+		{
+			/* strip off quotes, keep case */
+			seqrel = pstrdup(seqrel+1);
+			seqrel[strlen(seqrel)-1] = '\0';
+		}
+		else
 		{
 			pfree(seqrel);
 			seqname = lower((text *) DatumGetPointer(seq->constvalue));

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.32 1999/03/16 03:24:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.33 1999/03/16 04:25:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,7 +85,8 @@ createdb(char *dbname, char *dbpath, int encoding, CommandDest dest)
 
 	snprintf(buf, 512, 
 			"insert into pg_database (datname, datdba, encoding, datpath)"
-			" values ('%s', '%d', '%d', '%s');", dbname, user_id, encoding, loc);
+			" values ('%s', '%d', '%d', '%s');", dbname, user_id, encoding,
+			loc);
 
 	pg_exec_query_dest(buf, dest, false);
 }

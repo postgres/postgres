@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/_deadcode/Attic/recipe.c,v 1.1 1999/02/24 17:29:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/_deadcode/Attic/recipe.c,v 1.2 1999/03/16 04:25:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -878,8 +878,8 @@ tg_parseSubQuery(TgRecipe * r, TgNode * n, TeeInfo * teeInfo)
 
 						snprintf(newquery, 1000, "select %s($1", funcName);
 						for (i = 1; i < parameterCount; i++)
-							snprintf(newquery, 1000, "%s,$%d", newquery, i);
-						snprintf(newquery, 1000, "%s)", newquery);
+							snprintf(newquery, 1000, "%s,$%d", pstrdup(newquery), i);
+						snprintf(newquery, 1000, "%s)", pstrdup(newquery));
 					}
 					else
 						snprintf(newquery, 1000, "select %s()", funcName);

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: user.c,v 1.25 1999/03/16 03:24:16 momjian Exp $
+ * $Id: user.c,v 1.26 1999/03/16 04:25:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -256,31 +256,33 @@ AlterUser(AlterUserStmt *stmt, CommandDest dest)
 
 	if (stmt->password)
 	{
-		snprintf(sql, SQL_LENGTH, "%s passwd = '%s'", sql, stmt->password);
+		snprintf(sql, SQL_LENGTH, "%s passwd = '%s'", pstrdup(sql), stmt->password);
 	}
 
 	if (stmt->createdb)
 	{
 		snprintf(sql, SQL_LENGTH, "%s %susecreatedb='%s'",
-				sql, stmt->password ? "," : "", *stmt->createdb ? "t" : "f");
+				pstrdup(sql), stmt->password ? "," : "",
+				*stmt->createdb ? "t" : "f");
 	}
 
 	if (stmt->createuser)
 	{
 		snprintf(sql, SQL_LENGTH, "%s %susesuper='%s'",
-				sql, (stmt->password || stmt->createdb) ? "," : "",
+				pstrdup(sql), (stmt->password || stmt->createdb) ? "," : "",
 				*stmt->createuser ? "t" : "f");
 	}
 
 	if (stmt->validUntil)
 	{
 		snprintf(sql, SQL_LENGTH, "%s %svaluntil='%s'",
-				sql,
+				pstrdup(sql),
 				(stmt->password || stmt->createdb || stmt->createuser) ? "," : "",
 				stmt->validUntil);
 	}
 
-	snprintf(sql, SQL_LENGTH, "%s where usename = '%s'", sql, stmt->user);
+	snprintf(sql, SQL_LENGTH, "%s where usename = '%s'",
+				pstrdup(sql), stmt->user);
 
 	pg_exec_query_dest(sql, dest, false);
 
