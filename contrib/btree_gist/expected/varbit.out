@@ -1,0 +1,66 @@
+-- varbit check
+CREATE TABLE varbittmp (a varbit);
+\copy varbittmp from 'data/varbit.data'
+SET enable_seqscan=on;
+SELECT count(*) FROM varbittmp WHERE a <   '1110100111010';
+ count 
+-------
+   549
+(1 row)
+
+SELECT count(*) FROM varbittmp WHERE a <=  '1110100111010';
+ count 
+-------
+   550
+(1 row)
+
+SELECT count(*) FROM varbittmp WHERE a  =  '1110100111010';
+ count 
+-------
+     1
+(1 row)
+
+SELECT count(*) FROM varbittmp WHERE a >=  '1110100111010';
+ count 
+-------
+    51
+(1 row)
+
+SELECT count(*) FROM varbittmp WHERE a >   '1110100111010';
+ count 
+-------
+    50
+(1 row)
+
+CREATE INDEX varbitidx ON varbittmp USING GIST ( a );
+SET enable_seqscan=off;
+SELECT count(*) FROM varbittmp WHERE a <   '1110100111010'::varbit;
+ count 
+-------
+   549
+(1 row)
+
+SELECT count(*) FROM varbittmp WHERE a <=  '1110100111010'::varbit;
+ count 
+-------
+   550
+(1 row)
+
+SELECT count(*) FROM varbittmp WHERE a  =  '1110100111010'::varbit;
+ count 
+-------
+     1
+(1 row)
+
+SELECT count(*) FROM varbittmp WHERE a >=  '1110100111010'::varbit;
+ count 
+-------
+    51
+(1 row)
+
+SELECT count(*) FROM varbittmp WHERE a >   '1110100111010'::varbit;
+ count 
+-------
+    50
+(1 row)
+

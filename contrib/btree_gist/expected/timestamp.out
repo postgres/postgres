@@ -1,0 +1,66 @@
+-- timestamp check
+CREATE TABLE timestamptmp (a timestamp);
+\copy timestamptmp from 'data/timestamp.data'
+SET enable_seqscan=on;
+SELECT count(*) FROM timestamptmp WHERE a <  '2004-10-26 08:55:08';
+ count 
+-------
+   270
+(1 row)
+
+SELECT count(*) FROM timestamptmp WHERE a <= '2004-10-26 08:55:08';
+ count 
+-------
+   271
+(1 row)
+
+SELECT count(*) FROM timestamptmp WHERE a  = '2004-10-26 08:55:08';
+ count 
+-------
+     1
+(1 row)
+
+SELECT count(*) FROM timestamptmp WHERE a >= '2004-10-26 08:55:08';
+ count 
+-------
+   274
+(1 row)
+
+SELECT count(*) FROM timestamptmp WHERE a >  '2004-10-26 08:55:08';
+ count 
+-------
+   273
+(1 row)
+
+CREATE INDEX timestampidx ON timestamptmp USING gist ( a );
+SET enable_seqscan=off;
+SELECT count(*) FROM timestamptmp WHERE a <  '2004-10-26 08:55:08'::timestamp;
+ count 
+-------
+   270
+(1 row)
+
+SELECT count(*) FROM timestamptmp WHERE a <= '2004-10-26 08:55:08'::timestamp;
+ count 
+-------
+   271
+(1 row)
+
+SELECT count(*) FROM timestamptmp WHERE a  = '2004-10-26 08:55:08'::timestamp;
+ count 
+-------
+     1
+(1 row)
+
+SELECT count(*) FROM timestamptmp WHERE a >= '2004-10-26 08:55:08'::timestamp;
+ count 
+-------
+   274
+(1 row)
+
+SELECT count(*) FROM timestamptmp WHERE a >  '2004-10-26 08:55:08'::timestamp;
+ count 
+-------
+   273
+(1 row)
+

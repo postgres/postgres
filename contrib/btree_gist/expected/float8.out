@@ -1,0 +1,66 @@
+-- float8 check
+CREATE TABLE float8tmp (a float8);
+\copy float8tmp from 'data/float8.data'
+SET enable_seqscan=on;
+SELECT count(*) FROM float8tmp WHERE a <  -1890.0;
+ count 
+-------
+   237
+(1 row)
+
+SELECT count(*) FROM float8tmp WHERE a <= -1890.0;
+ count 
+-------
+   238
+(1 row)
+
+SELECT count(*) FROM float8tmp WHERE a  = -1890.0;
+ count 
+-------
+     1
+(1 row)
+
+SELECT count(*) FROM float8tmp WHERE a >= -1890.0;
+ count 
+-------
+   307
+(1 row)
+
+SELECT count(*) FROM float8tmp WHERE a >  -1890.0;
+ count 
+-------
+   306
+(1 row)
+
+CREATE INDEX float8idx ON float8tmp USING gist ( a );
+SET enable_seqscan=off;
+SELECT count(*) FROM float8tmp WHERE a <  -1890.0::float8;
+ count 
+-------
+   237
+(1 row)
+
+SELECT count(*) FROM float8tmp WHERE a <= -1890.0::float8;
+ count 
+-------
+   238
+(1 row)
+
+SELECT count(*) FROM float8tmp WHERE a  = -1890.0::float8;
+ count 
+-------
+     1
+(1 row)
+
+SELECT count(*) FROM float8tmp WHERE a >= -1890.0::float8;
+ count 
+-------
+   307
+(1 row)
+
+SELECT count(*) FROM float8tmp WHERE a >  -1890.0::float8;
+ count 
+-------
+   306
+(1 row)
+

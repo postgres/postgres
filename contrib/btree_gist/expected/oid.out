@@ -1,0 +1,64 @@
+-- oid check
+SET enable_seqscan=on;
+SELECT count(*) FROM moneytmp WHERE oid <  ( SELECT oid FROM moneytmp WHERE a  = '22649.64' );
+ count 
+-------
+   372
+(1 row)
+
+SELECT count(*) FROM moneytmp WHERE oid <= ( SELECT oid FROM moneytmp WHERE a  = '22649.64' );
+ count 
+-------
+   373
+(1 row)
+
+SELECT count(*) FROM moneytmp WHERE oid  = ( SELECT oid FROM moneytmp WHERE a  = '22649.64' );
+ count 
+-------
+     1
+(1 row)
+
+SELECT count(*) FROM moneytmp WHERE oid >= ( SELECT oid FROM moneytmp WHERE a  = '22649.64' );
+ count 
+-------
+   228
+(1 row)
+
+SELECT count(*) FROM moneytmp WHERE oid >  ( SELECT oid FROM moneytmp WHERE a  = '22649.64' );
+ count 
+-------
+   227
+(1 row)
+
+CREATE INDEX oididx ON moneytmp USING gist ( oid );
+SET enable_seqscan=off;
+SELECT count(*) FROM moneytmp WHERE oid <  ( SELECT oid FROM moneytmp WHERE a  = '22649.64' );
+ count 
+-------
+   372
+(1 row)
+
+SELECT count(*) FROM moneytmp WHERE oid <= ( SELECT oid FROM moneytmp WHERE a  = '22649.64' );
+ count 
+-------
+   373
+(1 row)
+
+SELECT count(*) FROM moneytmp WHERE oid  = ( SELECT oid FROM moneytmp WHERE a  = '22649.64' );
+ count 
+-------
+     1
+(1 row)
+
+SELECT count(*) FROM moneytmp WHERE oid >= ( SELECT oid FROM moneytmp WHERE a  = '22649.64' );
+ count 
+-------
+   228
+(1 row)
+
+SELECT count(*) FROM moneytmp WHERE oid >  ( SELECT oid FROM moneytmp WHERE a  = '22649.64' );
+ count 
+-------
+   227
+(1 row)
+

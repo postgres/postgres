@@ -1,0 +1,66 @@
+-- time check
+CREATE TABLE timetmp (a time);
+\copy timetmp from 'data/time.data'
+SET enable_seqscan=on;
+SELECT count(*) FROM timetmp WHERE a <  '10:57:11';
+ count 
+-------
+   251
+(1 row)
+
+SELECT count(*) FROM timetmp WHERE a <= '10:57:11';
+ count 
+-------
+   252
+(1 row)
+
+SELECT count(*) FROM timetmp WHERE a  = '10:57:11';
+ count 
+-------
+     1
+(1 row)
+
+SELECT count(*) FROM timetmp WHERE a >= '10:57:11';
+ count 
+-------
+   293
+(1 row)
+
+SELECT count(*) FROM timetmp WHERE a >  '10:57:11';
+ count 
+-------
+   292
+(1 row)
+
+CREATE INDEX timeidx ON timetmp USING gist ( a );
+SET enable_seqscan=off;
+SELECT count(*) FROM timetmp WHERE a <  '10:57:11'::time;
+ count 
+-------
+   251
+(1 row)
+
+SELECT count(*) FROM timetmp WHERE a <= '10:57:11'::time;
+ count 
+-------
+   252
+(1 row)
+
+SELECT count(*) FROM timetmp WHERE a  = '10:57:11'::time;
+ count 
+-------
+     1
+(1 row)
+
+SELECT count(*) FROM timetmp WHERE a >= '10:57:11'::time;
+ count 
+-------
+   293
+(1 row)
+
+SELECT count(*) FROM timetmp WHERE a >  '10:57:11'::time;
+ count 
+-------
+   292
+(1 row)
+

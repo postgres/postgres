@@ -1,0 +1,66 @@
+-- money check
+CREATE TABLE moneytmp (a money) WITH OIDS;
+\copy moneytmp from 'data/cash.data'
+SET enable_seqscan=on;
+SELECT count(*) FROM moneytmp WHERE a <  '22649.64';
+ count 
+-------
+   289
+(1 row)
+
+SELECT count(*) FROM moneytmp WHERE a <= '22649.64';
+ count 
+-------
+   290
+(1 row)
+
+SELECT count(*) FROM moneytmp WHERE a  = '22649.64';
+ count 
+-------
+     1
+(1 row)
+
+SELECT count(*) FROM moneytmp WHERE a >= '22649.64';
+ count 
+-------
+   254
+(1 row)
+
+SELECT count(*) FROM moneytmp WHERE a >  '22649.64';
+ count 
+-------
+   253
+(1 row)
+
+CREATE INDEX moneyidx ON moneytmp USING gist ( a );
+SET enable_seqscan=off;
+SELECT count(*) FROM moneytmp WHERE a <  '22649.64'::money;
+ count 
+-------
+   289
+(1 row)
+
+SELECT count(*) FROM moneytmp WHERE a <= '22649.64'::money;
+ count 
+-------
+   290
+(1 row)
+
+SELECT count(*) FROM moneytmp WHERE a  = '22649.64'::money;
+ count 
+-------
+     1
+(1 row)
+
+SELECT count(*) FROM moneytmp WHERE a >= '22649.64'::money;
+ count 
+-------
+   254
+(1 row)
+
+SELECT count(*) FROM moneytmp WHERE a >  '22649.64'::money;
+ count 
+-------
+   253
+(1 row)
+

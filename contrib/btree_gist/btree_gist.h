@@ -1,25 +1,39 @@
 #include "postgres.h"
-
 #include "access/gist.h"
 #include "access/itup.h"
 #include "access/nbtree.h"
-#include "utils/geo_decls.h"
 
-typedef int (*CMPFUNC) (const void *a, const void *b);
-typedef void (*BINARY_UNION) (Datum *, char *);
+/* indexed types */
 
-
-/* used for sorting */
-
-typedef struct rix
+enum gbtree_type
 {
-	int			index;
-	char	   *r;
-}	RIX;
+ gbt_t_var  ,
+ gbt_t_int2 ,
+ gbt_t_int4 ,
+ gbt_t_int8 ,
+ gbt_t_float4 ,
+ gbt_t_float8 ,
+ gbt_t_numeric,
+ gbt_t_ts,
+ gbt_t_cash,
+ gbt_t_oid,
+ gbt_t_time,
+ gbt_t_date,
+ gbt_t_intv,
+ gbt_t_macad,
+ gbt_t_text,
+ gbt_t_bpchar,
+ gbt_t_bytea,
+ gbt_t_bit,
+ gbt_t_inet
+};
+
+
 
 /*
-** Common btree-function (for all ops)
-*/
+ * Generic btree functions
+ */
 
-extern GIST_SPLITVEC *btree_picksplit(GistEntryVector *entryvec, GIST_SPLITVEC *v,
-				BINARY_UNION bu, CMPFUNC cmp);
+Datum                 gbtreekey_in (PG_FUNCTION_ARGS);
+
+Datum                 gbtreekey_out(PG_FUNCTION_ARGS);

@@ -1,0 +1,66 @@
+-- int8 check
+CREATE TABLE int8tmp (a int8);
+\copy int8tmp from 'data/int8.data'
+SET enable_seqscan=on;
+SELECT count(*) FROM int8tmp WHERE a <  464571291354841;
+ count 
+-------
+   276
+(1 row)
+
+SELECT count(*) FROM int8tmp WHERE a <= 464571291354841;
+ count 
+-------
+   277
+(1 row)
+
+SELECT count(*) FROM int8tmp WHERE a  = 464571291354841;
+ count 
+-------
+     1
+(1 row)
+
+SELECT count(*) FROM int8tmp WHERE a >= 464571291354841;
+ count 
+-------
+   271
+(1 row)
+
+SELECT count(*) FROM int8tmp WHERE a >  464571291354841;
+ count 
+-------
+   270
+(1 row)
+
+CREATE INDEX int8idx ON int8tmp USING gist ( a );
+SET enable_seqscan=off;
+SELECT count(*) FROM int8tmp WHERE a <  464571291354841::int8;
+ count 
+-------
+   276
+(1 row)
+
+SELECT count(*) FROM int8tmp WHERE a <= 464571291354841::int8;
+ count 
+-------
+   277
+(1 row)
+
+SELECT count(*) FROM int8tmp WHERE a  = 464571291354841::int8;
+ count 
+-------
+     1
+(1 row)
+
+SELECT count(*) FROM int8tmp WHERE a >= 464571291354841::int8;
+ count 
+-------
+   271
+(1 row)
+
+SELECT count(*) FROM int8tmp WHERE a >  464571291354841::int8;
+ count 
+-------
+   270
+(1 row)
+

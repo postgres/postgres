@@ -1,0 +1,66 @@
+-- macaddr check
+CREATE TABLE macaddrtmp (a macaddr);
+\copy macaddrtmp from 'data/macaddr.data'
+SET enable_seqscan=on;
+SELECT count(*) FROM macaddrtmp WHERE a <  '22:00:5c:e5:9b:0d';
+ count 
+-------
+    56
+(1 row)
+
+SELECT count(*) FROM macaddrtmp WHERE a <= '22:00:5c:e5:9b:0d';
+ count 
+-------
+    60
+(1 row)
+
+SELECT count(*) FROM macaddrtmp WHERE a  = '22:00:5c:e5:9b:0d';
+ count 
+-------
+     4
+(1 row)
+
+SELECT count(*) FROM macaddrtmp WHERE a >= '22:00:5c:e5:9b:0d';
+ count 
+-------
+   544
+(1 row)
+
+SELECT count(*) FROM macaddrtmp WHERE a >  '22:00:5c:e5:9b:0d';
+ count 
+-------
+   540
+(1 row)
+
+CREATE INDEX macaddridx ON macaddrtmp USING gist ( a );
+SET enable_seqscan=off;
+SELECT count(*) FROM macaddrtmp WHERE a <  '22:00:5c:e5:9b:0d'::macaddr;
+ count 
+-------
+    56
+(1 row)
+
+SELECT count(*) FROM macaddrtmp WHERE a <= '22:00:5c:e5:9b:0d'::macaddr;
+ count 
+-------
+    60
+(1 row)
+
+SELECT count(*) FROM macaddrtmp WHERE a  = '22:00:5c:e5:9b:0d'::macaddr;
+ count 
+-------
+     4
+(1 row)
+
+SELECT count(*) FROM macaddrtmp WHERE a >= '22:00:5c:e5:9b:0d'::macaddr;
+ count 
+-------
+   544
+(1 row)
+
+SELECT count(*) FROM macaddrtmp WHERE a >  '22:00:5c:e5:9b:0d'::macaddr;
+ count 
+-------
+   540
+(1 row)
+

@@ -1,19 +1,38 @@
 This is B-Tree implementation using GiST for int2, int4, int8, float4, float8
-timestamp types.
+timestamp with/without time zone, time with/without time zone, date,
+interval, oid, money and macaddr, char, varchar/text, bytea, numeric,
+bit, varbit, inet/cidr types.
 
-All work was done by Teodor Sigaev (teodor@stack.net) and Oleg Bartunov
-(oleg@sai.msu.su). See http://www.sai.msu.su/~megera/postgres/gist
-for additional information.
+All work was done by Teodor Sigaev (teodor@stack.net) , Oleg Bartunov
+(oleg@sai.msu.su), Janko Richter (jankorichter@yahoo.de).
+See http://www.sai.msu.su/~megera/postgres/gist for additional
+information.
 
 NEWS:
-     Feb 5, 2003 - btree_gist now support int2, int8, float4, float8 !
-                   Thank Janko Richter <jankorichter@yahoo.de> for
-                   contribution.
+
+     Apr 17, 2004 - Performance optimizing
+
+     Jan 21, 2004 - add support for bytea, numeric, bit, varbit, inet/cidr
+
+     Jan 17, 2004 - Reorganizing code and add support for char, varchar/text
+
+     Jan 10, 2004 - btree_gist now support oid , timestamp with time zone ,
+                    time with and without time zone, date , interval
+                    money, macaddr
+
+     Feb  5, 2003 - btree_gist now support int2, int8, float4, float8
      
 NOTICE:
-     This version will works only with postgresql version 7.3 and above
+     This version will works only with postgresql version 7.4 and above
      because of changes in interface of function calling and in system
      tables.
+     
+     If you want to index varchar attributes, you have to index using
+     the function text(<varchar>):
+     Example:
+       CREATE TABLE test ( a varchar(23) );
+       CREATE INDEX testidx ON test USING GIST ( text(a) );
+
 
 INSTALLATION:
 

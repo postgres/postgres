@@ -1,0 +1,66 @@
+-- inet check
+CREATE TABLE inettmp (a inet);
+\copy inettmp from 'data/inet.data'
+SET enable_seqscan=on;
+SELECT count(*) FROM inettmp WHERE a <  '89.225.196.191';
+ count 
+-------
+   213
+(1 row)
+
+SELECT count(*) FROM inettmp WHERE a <= '89.225.196.191';
+ count 
+-------
+   214
+(1 row)
+
+SELECT count(*) FROM inettmp WHERE a  = '89.225.196.191';
+ count 
+-------
+     1
+(1 row)
+
+SELECT count(*) FROM inettmp WHERE a >= '89.225.196.191';
+ count 
+-------
+   387
+(1 row)
+
+SELECT count(*) FROM inettmp WHERE a >  '89.225.196.191';
+ count 
+-------
+   386
+(1 row)
+
+CREATE INDEX inetidx ON inettmp USING gist ( a );
+SET enable_seqscan=off;
+SELECT count(*) FROM inettmp WHERE a <  '89.225.196.191'::inet;
+ count 
+-------
+   213
+(1 row)
+
+SELECT count(*) FROM inettmp WHERE a <= '89.225.196.191'::inet;
+ count 
+-------
+   214
+(1 row)
+
+SELECT count(*) FROM inettmp WHERE a  = '89.225.196.191'::inet;
+ count 
+-------
+     1
+(1 row)
+
+SELECT count(*) FROM inettmp WHERE a >= '89.225.196.191'::inet;
+ count 
+-------
+   387
+(1 row)
+
+SELECT count(*) FROM inettmp WHERE a >  '89.225.196.191'::inet;
+ count 
+-------
+   386
+(1 row)
+
