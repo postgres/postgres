@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.32 2000/11/16 22:30:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.33 2000/12/01 20:43:59 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -54,6 +54,7 @@
 #include "executor/spi.h"
 #include "executor/spi_priv.h"
 #include "fmgr.h"
+#include "optimizer/clauses.h"
 #include "parser/parse_expr.h"
 #include "tcop/tcopprot.h"
 #include "utils/builtins.h"
@@ -112,6 +113,7 @@ static void exec_prepare_plan(PLpgSQL_execstate * estate,
 static bool exec_simple_check_node(Node *node);
 static void exec_simple_check_plan(PLpgSQL_expr * expr);
 static void exec_eval_clear_fcache(Node *node);
+static bool exec_eval_clear_fcache_walker(Node *node, void *context);
 static Datum exec_eval_simple_expr(PLpgSQL_execstate * estate,
 					  PLpgSQL_expr * expr,
 					  bool *isNull,
@@ -2593,7 +2595,7 @@ exec_eval_simple_expr(PLpgSQL_execstate * estate,
 	*rettype = expr->plan_simple_type;
 
 	/* ----------
-	 * Clear the function cache
+	 * Clear any function cache entries in the expression tree
 	 * ----------
 	 */
 	exec_eval_clear_fcache(expr->plan_simple_expr);
@@ -2904,32 +2906,34 @@ exec_simple_check_plan(PLpgSQL_expr * expr)
 static void
 exec_eval_clear_fcache(Node *node)
 {
-	Expr	   *expr;
-	List	   *l;
-
-	if (nodeTag(node) != T_Expr)
-		return;
-
-	expr = (Expr *) node;
-
-	switch (expr->opType)
-	{
-		case OP_EXPR:
-			((Oper *) (expr->oper))->op_fcache = NULL;
-			break;
-
-		case FUNC_EXPR:
-			((Func *) (expr->oper))->func_fcache = NULL;
-			break;
-
-		default:
-			break;
-	}
-
-	foreach(l, expr->args)
-		exec_eval_clear_fcache(lfirst(l));
+	/* This tree walk requires no special setup, so away we go... */
+	exec_eval_clear_fcache_walker(node, NULL);
 }
 
+static bool
+exec_eval_clear_fcache_walker(Node *node, void *context)
+{
+	if (node == NULL)
+		return false;
+	if (IsA(node, Expr))
+	{
+		Expr   *expr = (Expr *) node;
+
+		switch (expr->opType)
+		{
+			case OP_EXPR:
+				((Oper *) (expr->oper))->op_fcache = NULL;
+				break;
+			case FUNC_EXPR:
+				((Func *) (expr->oper))->func_fcache = NULL;
+				break;
+			default:
+				break;
+		}
+	}
+	return expression_tree_walker(node, exec_eval_clear_fcache_walker,
+								  context);
+}
 
 /* ----------
  * exec_set_found			Set the global found variable
