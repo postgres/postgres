@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.274 2004/07/31 07:11:07 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.275 2004/08/01 05:22:26 momjian Exp $
 -->
 
 <appendix id="release">
@@ -169,7 +169,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.274 2004/07/31 07:11:07 tgl Exp
       <para>
        Server configuration parameters SortMem and VacuumMem have been
        renamed to work_mem and maintenance_work_mem to better reflect
-       their use. The original names are still supported.
+       their use. The original names still supported.
       </para>
      </listitem>
 
@@ -570,7 +570,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.274 2004/07/31 07:11:07 tgl Exp
     <listitem>
      <para>
       Listen on localhost by default, which eliminates the need for the -i
-      postmaster switch in many scenarios (Andrew Dunstan)
+      postmaster switch in many scenarios (Andrew)
      </para>
      <para>
       Listening on localhost (127.0.0.1) opens no new security holes but
@@ -773,7 +773,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.274 2004/07/31 07:11:07 tgl Exp
 
     <listitem>
      <para>
-      Allow composite types as table columns (Tom)
+      Allowing composite types as table columns (Tom)
      </para>
     </listitem>
 
@@ -810,7 +810,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.274 2004/07/31 07:11:07 tgl Exp
       Allow ALTER DATABASE ... OWNER (Euler Taveira de Oliveira)
      </para>
      <para>
-      Previously, this required modifying the system tables.
+      Previously this required modifying the system tables.
      </para>
     </listitem>
 
@@ -855,7 +855,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.274 2004/07/31 07:11:07 tgl Exp
     <listitem>
      <para>
       Add pg_get_serial_sequence() to return the serial columns
-      sequence name (Christopher Kings-Lynne)
+      sequence name(Christopher)
      </para>
      <para>
       This allows automated scripts to reliabily find the serial
@@ -873,7 +873,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.274 2004/07/31 07:11:07 tgl Exp
 
     <listitem>
      <para>
-      Warn that primary/foreign key mismatch requires costly lookup.
+      Warn of primary/foreign key mismatch requires costly lookup
      </para>
     </listitem>
    </itemizedlist>
@@ -1011,7 +1011,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.274 2004/07/31 07:11:07 tgl Exp
 
     <listitem>
      <para>
-      Warn of empty string being passed to oid/float4/float8 data types; 7.6
+      Warn of empty string being passes to oid/float4/float8 data types; 7.6
       will throw an error instead (Neil)
      </para>
     </listitem>
@@ -1502,8 +1502,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.274 2004/07/31 07:11:07 tgl Exp
     <listitem>
      <para>
       Allow external interfaces to create their own server configuration
-      parameters (Thomas
-      Hallgren)
+      parameters (Thomas Hallgren)
      </para>
     </listitem>
 
