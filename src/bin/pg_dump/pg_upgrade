@@ -1,0 +1,87 @@
+:
+trap "rm -f /tmp/$$" 0 1 2 3 15
+
+if [ "$#" -eq 0 ]
+then	echo "Usage:  $0 [-f inputfile] database" 1>&2
+	exit 1
+fi
+
+if [ "X$1" = "X-f" ]
+then	INPUT="$2"
+	shift 2
+	if [ ! -f "$INPUT" ]
+	then	echo "$INPUT does not exist" 1>&2
+		exit 1
+	fi
+else	INPUT=""
+fi
+
+if [ "$#" -ne 1 ]
+then	echo "Usage:  $0 [-f input_file] database" 1>&2
+	exit 1
+fi
+
+DATABASE="$1"
+
+# check things
+
+if [ ! -f "./lib/global1.bki.source" ]
+then	echo "$0 must be run from the top of the postgres directory tree." 1>&2
+	exit 1
+fi
+
+if [ ! -d "./data.upgrade" ]
+then	echo "You must rename your old /data directory to /data.upgrade and run initdb." 1>&2
+	exit 1
+fi
+
+if [ ! -d "./data" ]
+then	echo "You must run initdb to create the template1 database." 1>&2
+	exit 1
+fi
+
+if [ ! -d "./data/base/template1" ]
+then	echo "$0 must be run as the postgres superuser." 1>&2
+	exit 1
+fi
+
+# do I need to create a database?
+
+if [ "$DATABASE" != "template1" ]
+then	destroydb "$DATABASE"
+	createdb "$DATABASE"
+fi
+
+# remove COPY statements, preserve pgdump_oid setting from pg_dumpall
+
+cat $INPUT | awk '	{
+				if (toupper($0) ~ /^COPY / &&
+				    toupper($0) !~ /^COPY[ 	]*PGDUMP_OID/ )
+					while (getline $0 > 0 && $0 != "\\.")
+						;
+				else	print $0;
+			}' >/tmp/$$
+ 
+#create empty tables/indexes
+
+psql "$DATABASE" <"/tmp/$$"
+set -x
+
+for DIR in data/base/*
+do
+	BASEDIR="`basename $DIR`"
+	if [ -d "$DIR" -a \
+	     -d "data.upgrade/$DIR" -a \
+		\( "$DATABASE" = "$BASEDIR" -o "$DATABASE" = "template1" \) ]
+	then	for FILE in data.upgrade/$DIR/*
+		do
+			BASEFILE="`basename $FILE`"
+			if [ `expr "$BASEFILE" : "pg_"` -ne 3 -a \
+				"$BASEFILE" != "PG_VERSION" ]
+			then	mv $FILE $DIR
+			fi
+		done
+	fi
+done
+
+echo "You may removed the data.upgrade directory with 'rm -r data.upgrade'."

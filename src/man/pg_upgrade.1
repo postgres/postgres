@@ -1,0 +1,56 @@
+.\" This is -*-nroff-*-
+.\" XXX standard disclaimer belongs here....
+.\" $Header: /cvsroot/pgsql/src/man/Attic/pg_upgrade.1,v 1.1 1998/08/30 05:06:54 momjian Exp $
+.TH pg_upgrade UNIX 1/20/96 PostgreSQL PostgreSQL
+.SH NAME
+pg_upgrade - allows upgrade from a previous release without reloading data
+.SH SYNOPSIS
+.BR pg_upgrade 
+[-f input_file] database
+.SH DESCRIPTION
+.IR "pg_upgrade"
+is a utility for upgrading from a previous PostgreSQL release
+without reloading all the data.
+First, to be safe, back up your data directory.
+Then, use:
+.nf
+
+	pg_dumpall -s -o >db.out
+
+.fi
+to dump out your old database definitions without data,
+while perserving the max system oid.
+.PP
+Then rename (using
+.IR mv )
+your old pgsql /data directory to /data.upgrade and do a
+.IR "make install"
+to install the new binaries.
+Then run
+.IR initdb
+to create a new
+.IR template1
+database containing the system tables for the new release.
+.IR cd
+to the pgsql main directory, and type:
+.nf
+
+	pg_upgrade -f db.out template1
+
+.fi
+The system will do some checking to make sure everything is properly
+configured, and run your
+.IR db.out
+script to create all the databases and tables you had, but with no data.
+It will then move the data files from /data.upgrade into the proper
+.IR /data
+directory.
+You can then start the
+.IR postmaster
+and check out the data.
+You can delete the
+.IR /data.upgrade
+directory when you are finished.
+.fi
+.SH "SEE ALSO"
+pg_dumpall(1).
