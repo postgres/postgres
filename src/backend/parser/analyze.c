@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: analyze.c,v 1.129 2000/01/15 02:59:31 petere Exp $
+ *	$Id: analyze.c,v 1.130 2000/01/16 08:21:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1573,14 +1573,16 @@ transformForUpdate(Query *qry, List *forUpdate)
 
 	foreach(l, forUpdate)
 	{
+		char	   *relname = lfirst(l);
 		List	   *l2;
-		List	   *l3;
 
 		i = 1;
 		foreach(l2, qry->rtable)
 		{
-			if (strcmp(((RangeTblEntry *) lfirst(l2))->refname, lfirst(l)) == 0)
+			if (strcmp(((RangeTblEntry *) lfirst(l2))->refname, relname) == 0)
 			{
+				List	   *l3;
+
 				foreach(l3, rowMark)
 				{
 					if (((RowMark *) lfirst(l3))->rti == i)		/* duplicate */
@@ -1598,11 +1600,11 @@ transformForUpdate(Query *qry, List *forUpdate)
 			i++;
 		}
 		if (l2 == NULL)
-			elog(ERROR, "FOR UPDATE: relation %s not found in FROM clause", strVal(lfirst(l)));
+			elog(ERROR, "FOR UPDATE: relation %s not found in FROM clause",
+				 relname);
 	}
 
 	qry->rowMark = rowMark;
-	return;
 }
 
 
