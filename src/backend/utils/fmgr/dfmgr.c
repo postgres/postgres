@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.33 1999/09/28 04:34:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.34 1999/09/28 11:27:13 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -103,7 +103,7 @@ fmgr_dynamic(Oid procedureId, int *pronargs)
 	}
 	else if (!PointerIsValid(prosrcattr))
 	{							/* pg_proc must be messed up! */
-		heap_close(rel);
+		heap_close(rel, AccessShareLock);
 		elog(ERROR, "fmgr: Could not extract prosrc for %u from %s",
 			 procedureId, ProcedureRelationName);
 		return (func_ptr) NULL;
