@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.46 1998/09/01 04:29:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.47 1998/10/22 13:52:21 momjian Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -259,6 +259,10 @@ _outQuery(StringInfo str, Query *node)
 	appendStringInfo(str, (node->hasSubLinks ? "true" : "false"));
 	appendStringInfo(str, " :unionClause ");
 	_outNode(str, node->unionClause);
+	appendStringInfo(str, " :limitOffset ");
+	_outNode(str, node->limitOffset);
+	appendStringInfo(str, " :limitCount ");
+	_outNode(str, node->limitCount);
 }
 
 static void

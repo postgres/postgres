@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.60 1998/10/02 16:23:07 momjian Exp $
+ * $Id: parsenodes.h,v 1.61 1998/10/22 13:52:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,6 +60,8 @@ typedef struct Query
 
 	List	   *unionClause;	/* unions are linked under the previous
 								 * query */
+	Node	   *limitOffset;	/* # of result tuples to skip */
+	Node	   *limitCount;		/* # of result tuples to return */
 
 	/* internal to planner */
 	List	   *base_rel_list;	/* base relation list */
@@ -639,6 +641,8 @@ typedef struct SelectStmt
 	char	   *portalname;		/* the portal (cursor) to create */
 	bool		binary;			/* a binary (internal) portal? */
 	bool		unionall;		/* union without unique sort */
+	Node	   *limitOffset;	/* # of result tuples to skip */
+	Node	   *limitCount;		/* # of result tuples to return */
 } SelectStmt;
 
 
