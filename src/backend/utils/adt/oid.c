@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/oid.c,v 1.7 1997/07/24 20:16:17 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/oid.c,v 1.8 1997/08/24 23:07:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -96,6 +96,10 @@ char *oidout(Oid o)
  *   PUBLIC ROUTINES                                                         *
  *****************************************************************************/
 
+/*
+ * If you change this function, change heap_keytest()
+ * because we have hardcoded this in there as an optimization
+ */
 bool oideq(Oid arg1, Oid arg2)
 {
     return(arg1 == arg2);

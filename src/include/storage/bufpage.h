@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufpage.h,v 1.8 1997/08/19 21:39:47 momjian Exp $
+ * $Id: bufpage.h,v 1.9 1997/08/24 23:08:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -233,17 +233,50 @@ typedef enum {
 #define PageGetSpecialPointer(page) \
     (AssertMacro(PageIsValid(page)) ? \
      (char *) ((char *) (page) + ((PageHeader) (page))->pd_special) \
-     : (char *) 0)
+     : (char *)0 )
 
+/*
+ * PageGetItem --
+ *	Retrieves an item on the given page.
+ *
+ * Note:
+ *	This does change the status of any of the resources passed.
+ *	The semantics may change in the future.
+ */
+#define PageGetItem(page, itemId) \
+    (AssertMacro(PageIsValid(page)) ? \
+     AssertMacro(itemId->lp_flags & LP_USED) ? \
+    (Item)(((char *)page) + itemId->lp_off) : false : false)
+
+/*
+ * BufferGetPageSize --
+ *	Returns the page size within a buffer.
+ *
+ * Notes:
+ *	Assumes buffer is valid.
+ *
+ *	The buffer can be a raw disk block and need not contain a valid
+ *	(formatted) disk page.
+ */
+/* XXX dig out of buffer descriptor */
+#define BufferGetPageSize(buffer) \
+    (AssertMacro(BufferIsValid(buffer)) ? \
+     AssertMacro(PageSizeIsValid(pageSize)) ? \
+     ((Size)BLCKSZ) : false : false)
+
+/*
+ * BufferGetPage --
+ *	Returns the page associated with a buffer.
+ */
+#define BufferGetPage(buffer) ((Page)BufferGetBlock(buffer))
+
+     
 /* ----------------------------------------------------------------
  *	extern declarations
  * ----------------------------------------------------------------
  */
 
-extern Size BufferGetPageSize(Buffer buffer);
-extern Page BufferGetPage(Buffer buffer);
 extern void PageInit(Page page, Size pageSize, Size specialSize);
-extern Item PageGetItem(Page page, ItemId itemId);
 extern OffsetNumber PageAddItem(Page page, Item item, Size size,
 			 OffsetNumber offsetNumber, ItemIdFlags flags);
 extern Page PageGetTempPage(Page page, Size specialSize);

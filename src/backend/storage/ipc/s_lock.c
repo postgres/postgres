@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/s_lock.c,v 1.19 1997/08/20 00:50:11 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/s_lock.c,v 1.20 1997/08/24 23:07:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,12 +43,6 @@
 
 
 #if defined(HAS_TEST_AND_SET)
-
-# if defined(__alpha__) && defined(linux)
-static long int tas(slock_t *lock);
-# else
-static int tas(slock_t *lock);
-#endif
 
 #if defined (nextstep)
 /*
@@ -167,6 +161,8 @@ S_LOCK_FREE(slock_t *lock)
     defined(sparc_solaris)
 /* for xxxxx_solaris, this is defined in port/.../tas.s */
 
+static int tas(slock_t *lock);
+
 void
 S_LOCK(slock_t *lock)
 {
@@ -233,6 +229,8 @@ S_INIT_LOCK(slock_t *lock)
 */
 static slock_t clear_lock = { -1, -1, -1, -1 };
 
+static int tas(slock_t *lock);
+
 void
 S_LOCK(slock_t *lock)
 {
@@ -267,6 +265,8 @@ S_LOCK_FREE(slock_t *lock)
  */
  
 #if defined(sun3)
+
+static int tas(slock_t *lock);
 
 void    
 S_LOCK(slock_t *lock)
@@ -319,6 +319,8 @@ tas_dummy()
 #if defined(__STRICT_ANSI__)
 #define asm(x)  __asm__(x)
 #endif 
+
+static int tas(slock_t *lock);
 
 static int
 tas_dummy()
@@ -383,19 +385,14 @@ S_INIT_LOCK(unsigned char *addr)
 
 #if defined(NEED_I386_TAS_ASM)
 
-static int
-tas(slock_t *m)
-{
-    slock_t res;
-    __asm__("xchgb %0,%1":"=q" (res),"=m" (*m):"0" (0x1));
-    return(res);
-}
-
 void
 S_LOCK(slock_t *lock)
 {
-    while (tas(lock))
-	;
+    slock_t res;
+
+    do{
+	__asm__("xchgb %0,%1":"=q" (res),"=m" (*lock):"0" (0x1));
+    }while(res != 0);
 }
 
 void
@@ -415,31 +412,26 @@ S_INIT_LOCK(slock_t *lock)
 
 #if defined(__alpha__) && defined(linux)
 
-static long int
-tas(slock_t *m)
-{
-    slock_t res;
-    __asm__("         ldq   $0, %0            \n\
-                      bne   $0, already_set   \n\
-                      ldq_l $0, %0            \n\
-                      bne   $0, already_set   \n\
-                      or    $31, 1, $0        \n\
-                      stq_c $0, %0            \n\
-                      beq   $0, stqc_fail     \n\
-        success:      bis   $31, $31, %1      \n\
-                      mb                      \n\
-                      jmp   $31, end          \n\
-        stqc_fail:    or    $31, 1, $0        \n\
-        already_set:  bis   $0, $0, %1        \n\
-        end:          nop      " : "=m" (*m), "=r" (res) :: "0" );
-    return(res);
-}
-
 void
 S_LOCK(slock_t *lock)
 {
-    while (tas(lock))
-	;
+    slock_t res;
+
+    do{
+	__asm__("    ldq   $0, %0	     \n\
+		     bne   $0, already_set   \n\
+		     ldq_l $0, %0	     \n\
+		     bne   $0, already_set   \n\
+		     or    $31, 1, $0	     \n\
+		     stq_c $0, %0	     \n\
+		     beq   $0, stqc_fail     \n\
+	success:     bis   $31, $31, %1      \n\
+		     mb		             \n\
+		     jmp   $31, end	     \n\
+	stqc_fail:   or    $31, 1, $0	     \n\
+	already_set: bis   $0, $0, %1	     \n\
+	end:	     nop      " : "=m" (*lock), "=r" (res) :: "0" );
+    }while(res != 0);
 }
 
 void
@@ -459,21 +451,16 @@ S_INIT_LOCK(slock_t *lock)
 
 #if defined(linux) && defined(sparc)
  
-static int 
-tas(slock_t *m)
-{
-  slock_t res;
-  __asm__("ldstub [%1], %0"
-	  : "=&r" (res)
-	  : "r" (m));
-  return (res != 0);
-}
-
 void
 S_LOCK(slock_t *lock)
 {
-    while (tas(lock))
-	;
+    slock_t res;
+
+    do{
+	__asm__("ldstub [%1], %0"
+		  : "=&r" (res)
+		  : "r" (lock));
+    }while(!res != 0);
 }
 
 void
@@ -489,41 +476,6 @@ S_INIT_LOCK(slock_t *lock)
 }
 
 #endif /* defined(linux) && defined(sparc) */
-
-#if defined(NEED_NS32K_TAS_ASM)
-
-static int
-tas(slock_t *m)
-{
-    slock_t res = 0;
-    __asm__("movd 8(fp), r1");
-    __asm__("movqd 0, r0");
-    __asm__("sbitd r0, 0(r1)");
-    __asm__("sprb us, %0" : "=r" (res));
-    res =  (res >> 5) & 1;
-    return res;
-}
-
-void
-S_LOCK(slock_t *lock)
-{
-    while (tas(lock))
-	;
-}
-
-void
-S_UNLOCK(slock_t *lock)
-{
-    *lock = 0;
-}
-
-void
-S_INIT_LOCK(slock_t *lock)
-{
-    S_UNLOCK(lock);
-}
-
-#endif /* NEED_NS32K_TAS_ASM */
 
 #if defined(linux) && defined(PPC)
 
