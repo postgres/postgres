@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Jul 28 13:51:59 EDT 1999
+Last updated:		Wed Aug 18 11:10:25 EDT 1999
 
 Current maintainer:	Bruce Momjian (maillist@candle.pha.pa.us)
 
@@ -137,6 +137,7 @@ COMMANDS
   supplied ESCAPE
 * Move LIKE index optimization handling to the optimizer
 * Allow RULE recompilation
+* Support UNION/INTERSECT/EXCEPT in sub-selects
   
 CLIENTS
 
