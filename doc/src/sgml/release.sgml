@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.49.2.8 2000/11/03 04:17:55 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.49.2.9 2000/11/12 14:26:59 momjian Exp $
 -->
 
  <chapter id="release">
@@ -76,14 +76,12 @@ Fix to_char() to avoid coredump on NULL input (Tom)
 Buffer fix (Tom)
 Fix for inserting/copying longer multibyte strings into char() data
     types (Tatsuo)
+Fix for crash of backend, on abort (Tom)
      </programlisting>
     </para>
    </sect2>
   </sect1>
 
-
- <chapter id="release">
-  <title>Release Notes</title>
 
   <sect1>
    <title>Release 7.0.2</title>
