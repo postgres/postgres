@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Attic/multi.c,v 1.10 1998/01/07 21:05:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Attic/multi.c,v 1.11 1998/01/23 19:53:40 scrappy Exp $
  *
  * NOTES:
  *	 (1) The lock.c module assumes that the caller here is doing
@@ -31,10 +31,10 @@
 
 static bool
 MultiAcquire(LockTableId tableId, LOCKTAG *tag, LOCKT lockt,
-			 LOCK_LEVEL level);
+			 PG_LOCK_LEVEL level);
 static bool
 MultiRelease(LockTableId tableId, LOCKTAG *tag, LOCKT lockt,
-			 LOCK_LEVEL level);
+			 PG_LOCK_LEVEL level);
 
 /*
  * INTENT indicates to higher level that a lower level lock has been
@@ -201,7 +201,7 @@ static bool
 MultiAcquire(LockTableId tableId,
 			 LOCKTAG *tag,
 			 LOCKT lockt,
-			 LOCK_LEVEL level)
+			 PG_LOCK_LEVEL level)
 {
 	LOCKT		locks[N_LEVELS];
 	int			i,
@@ -361,7 +361,7 @@ static bool
 MultiRelease(LockTableId tableId,
 			 LOCKTAG *tag,
 			 LOCKT lockt,
-			 LOCK_LEVEL level)
+			 PG_LOCK_LEVEL level)
 {
 	LOCKT		locks[N_LEVELS];
 	int			i,

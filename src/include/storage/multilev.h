@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: multilev.h,v 1.5 1997/09/08 02:39:05 momjian Exp $
+ * $Id: multilev.h,v 1.6 1998/01/23 19:53:44 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,7 +39,7 @@
 #define RELN_LEVEL 0
 #define PAGE_LEVEL 1
 #define TUPLE_LEVEL 2
-typedef int LOCK_LEVEL;
+typedef int PG_LOCK_LEVEL; 
 
 /* multi.c */
 
