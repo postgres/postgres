@@ -1,7 +1,7 @@
 
           Developer's Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Fri Mar 11 06:42:00 EST 2005
+   Last updated: Fri Mar 11 06:43:43 EST 2005
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -139,7 +139,7 @@
    Basic system testing
    
    The easiest way to test your code is to ensure that it builds against
-   the latest verion of the code and that it does not generate compiler
+   the latest version of the code and that it does not generate compiler
    warnings.
    
    It is worth advised that you pass --enable-cassert to configure. This
@@ -155,7 +155,7 @@
    test suite. To do this, issue "make check" in the root directory of
    the source tree. If any tests failure, investigate.
    
-   If you've deliberately changed existing behaviour, this change may
+   If you've deliberately changed existing behavior, this change may
    cause a regression test failure but not any actual regression. If so,
    you should also patch the regression test suite.
    
@@ -382,7 +382,7 @@
     1. A set of patches to make certain portions of the source tree
        'behave' in the different environment of the RPMset;
     2. The initscript;
-    3. Any other ancilliary scripts and files;
+    3. Any other ancillary scripts and files;
     4. A README.rpm-dist document that tries to adequately document both
        the differences between the RPM build and the WHY of the
        differences, as well as useful RPM environment operations (like,
@@ -500,7 +500,7 @@
    want to contain the toplevel "pgsql" directory and say
     cvs ... checkout pgsql
 
-   To get a past branch, you cd to whereever you want it and say
+   To get a past branch, you cd to wherever you want it and say
     cvs ... checkout -r BRANCHNAME pgsql
 
    For example, just a couple days ago I did
@@ -560,7 +560,7 @@
    source code is available at
    http://gborg.postgresql.org/project/pgweb/projdisplay.php , the code
    for the next version of the website is under the "portal" module. You
-   will al so find code for the "techdocs" website if you would like to
+   will also find code for the "techdocs" website if you would like to
    contribute to that. A temporary todo list for current website
    development issues is available at http://xzilla.postgresql.org/todo
    
