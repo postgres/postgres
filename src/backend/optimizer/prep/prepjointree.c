@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.12 2003/09/25 06:58:00 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.13 2003/10/13 23:48:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -148,9 +148,10 @@ pull_up_subqueries(Query *parse, Node *jtnode, bool below_outer_join)
 		 * If we are inside an outer join, only pull up subqueries whose
 		 * targetlists are nullable --- otherwise substituting their tlist
 		 * entries for upper Var references would do the wrong thing (the
-		 * results wouldn't become NULL when they're supposed to). XXX
-		 * This could be improved by generating pseudo-variables for such
-		 * expressions; we'd have to figure out how to get the pseudo-
+		 * results wouldn't become NULL when they're supposed to).
+		 *
+		 * XXX This could be improved by generating pseudo-variables for
+		 * such expressions; we'd have to figure out how to get the pseudo-
 		 * variables evaluated at the right place in the modified plan
 		 * tree. Fix it someday.
 		 *
@@ -167,7 +168,15 @@ pull_up_subqueries(Query *parse, Node *jtnode, bool below_outer_join)
 			List	   *rt;
 
 			/*
-			 * First, pull up any IN clauses within the subquery's WHERE,
+			 * First make a modifiable copy of the subquery.  This avoids
+			 * problems if the same subquery is referenced from multiple
+			 * jointree items (which can't happen normally, but might after
+			 * rule rewriting).
+			 */
+			subquery = copyObject(subquery);
+
+			/*
+			 * Pull up any IN clauses within the subquery's WHERE,
 			 * so that we don't leave unoptimized INs behind.
 			 */
 			if (subquery->hasSubLinks)
@@ -175,15 +184,9 @@ pull_up_subqueries(Query *parse, Node *jtnode, bool below_outer_join)
 											  subquery->jointree->quals);
 
 			/*
-			 * Now, recursively pull up the subquery's subqueries, so that
+			 * Recursively pull up the subquery's subqueries, so that
 			 * this routine's processing is complete for its jointree and
-			 * rangetable.	NB: if the same subquery is referenced from
-			 * multiple jointree items (which can't happen normally, but
-			 * might after rule rewriting), then we will invoke this
-			 * processing multiple times on that subquery.	OK because
-			 * nothing will happen after the first time.  We do have to be
-			 * careful to copy everything we pull up, however, or risk
-			 * having chunks of structure multiply linked.
+			 * rangetable.
 			 *
 			 * Note: 'false' is correct here even if we are within an outer
 			 * join in the upper query; the lower query starts with a
@@ -192,12 +195,6 @@ pull_up_subqueries(Query *parse, Node *jtnode, bool below_outer_join)
 			subquery->jointree = (FromExpr *)
 				pull_up_subqueries(subquery, (Node *) subquery->jointree,
 								   false);
-
-			/*
-			 * Now make a modifiable copy of the subquery that we can run
-			 * OffsetVarNodes and IncrementVarSublevelsUp on.
-			 */
-			subquery = copyObject(subquery);
 
 			/*
 			 * Adjust level-0 varnos in subquery so that we can append its
