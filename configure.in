@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $Header: /cvsroot/pgsql/configure.in,v 1.244 2003/04/24 21:16:42 tgl Exp $
+dnl $Header: /cvsroot/pgsql/configure.in,v 1.245 2003/05/07 03:47:08 momjian Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -779,7 +779,7 @@ PGAC_FUNC_GETTIMEOFDAY_1ARG
 # SunOS doesn't handle negative byte comparisons properly with +/- return
 AC_FUNC_MEMCMP
 
-AC_CHECK_FUNCS([cbrt dlopen fcvt fdatasync getpeereid memmove poll pstat setproctitle setsid sigprocmask sysconf utime utimes waitpid])
+AC_CHECK_FUNCS([cbrt dlopen fcvt fdatasync getpeereid memmove poll pstat setproctitle setsid sigprocmask symlink sysconf utime utimes waitpid])
 
 AC_CHECK_DECLS(fdatasync, [], [], [#include <unistd.h>])
 

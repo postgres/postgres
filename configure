@@ -3577,7 +3577,7 @@ else
       then
         echo '%%'  > conftest.l
         if $pgac_candidate -t conftest.l 2>/dev/null | grep FLEX_SCANNER >/dev/null 2>&1; then
-          if $pgac_candidate --version | grep '2\.5\.3$' >/dev/null 2>&1; then
+          if $pgac_candidate --version | grep ' 2\.5\.3$' >/dev/null 2>&1; then
             pgac_broken_flex=$pgac_candidate
             continue
           fi
@@ -10305,7 +10305,8 @@ test $ac_cv_func_memcmp_working = no && LIBOBJS="$LIBOBJS memcmp.$ac_objext"
 
 
 
-for ac_func in cbrt dlopen fcvt fdatasync getpeereid memmove poll pstat setproctitle setsid sigprocmask sysconf utime utimes waitpid
+
+for ac_func in cbrt dlopen fcvt fdatasync getpeereid memmove poll pstat setproctitle setsid sigprocmask symlink sysconf utime utimes waitpid
 do
 as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`
 echo "$as_me:$LINENO: checking for $ac_func" >&5
