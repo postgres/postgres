@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.83 2004/07/12 01:22:53 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.84 2004/08/02 04:25:31 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -33,7 +33,10 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable class="PAR
 where <replaceable class="PARAMETER">column_constraint</replaceable> is:
 
 [ CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> ]
-{ NOT NULL | NULL | UNIQUE | PRIMARY KEY |
+{ NOT NULL | 
+  NULL | 
+  UNIQUE [ USING INDEX TABLESPACE <replaceable class="PARAMETER">tablespace</replaceable> ] |
+  PRIMARY KEY [ USING INDEX TABLESPACE <replaceable class="PARAMETER">tablespace</replaceable> ] |
   CHECK (<replaceable class="PARAMETER">expression</replaceable>) |
   REFERENCES <replaceable class="PARAMETER">reftable</replaceable> [ ( <replaceable class="PARAMETER">refcolumn</replaceable> ) ] [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ]
     [ ON DELETE <replaceable class="parameter">action</replaceable> ] [ ON UPDATE <replaceable class="parameter">action</replaceable> ] }
@@ -42,8 +45,8 @@ where <replaceable class="PARAMETER">column_constraint</replaceable> is:
 and <replaceable class="PARAMETER">table_constraint</replaceable> is:
 
 [ CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> ]
-{ UNIQUE ( <replaceable class="PARAMETER">column_name</replaceable> [, ... ] ) |
-  PRIMARY KEY ( <replaceable class="PARAMETER">column_name</replaceable> [, ... ] ) |
+{ UNIQUE ( <replaceable class="PARAMETER">column_name</replaceable> [, ... ] ) [ USING INDEX TABLESPACE <replaceable class="PARAMETER">tablespace</replaceable> ] |
+  PRIMARY KEY ( <replaceable class="PARAMETER">column_name</replaceable> [, ... ] ) [ USING INDEX TABLESPACE <replaceable class="PARAMETER">tablespace</replaceable> ] |
   CHECK ( <replaceable class="PARAMETER">expression</replaceable> ) |
   FOREIGN KEY ( <replaceable class="PARAMETER">column_name</replaceable> [, ... ] ) REFERENCES <replaceable class="PARAMETER">reftable</replaceable> [ ( <replaceable class="PARAMETER">refcolumn</replaceable> [, ... ] ) ]
     [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ] [ ON DELETE <replaceable class="parameter">action</replaceable> ] [ ON UPDATE <replaceable class="parameter">action</replaceable> ] }
@@ -604,6 +607,18 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
     </listitem>
    </varlistentry>
 
+   <varlistentry>
+    <term><literal>USING INDEX TABLESPACE <replaceable class="PARAMETER">tablespace</replaceable></literal></term>
+    <listitem>
+     <para>
+      This clause allows selection of the tablespace in which the index
+      associated with a <literal>UNIQUE</literal> or <literal>PRIMARY
+      KEY</literal> constraint will be created.  If not supplied, the index
+      will be created in the same tablespace as the table.
+     </para>
+    </listitem>
+   </varlistentry>
+
   </variablelist>
  </refsect1>
 
@@ -950,7 +965,7 @@ CREATE TABLE cinemas (
   </refsect2>
 
   <refsect2>
-   <title>TABLESPACE</title>
+   <title>TABLESPACE and USING INDEX TABLESPACE</title>
 
    <para>
     The <productname>PostgreSQL</productname> concept of tablespaces is not

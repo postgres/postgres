@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.380 2004/07/19 21:39:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.381 2004/08/02 04:28:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2696,7 +2696,8 @@ getIndexes(TableInfo tblinfo[], int numTables)
 				i_contype,
 				i_conname,
 				i_contableoid,
-				i_conoid;
+				i_conoid,
+				i_tablespace;
 	int			ntups;
 
 	for (i = 0; i < numTables; i++)
@@ -2725,7 +2726,7 @@ getIndexes(TableInfo tblinfo[], int numTables)
 		 * one internal dependency.
 		 */
 		resetPQExpBuffer(query);
-		if (g_fout->remoteVersion >= 70300)
+		if (g_fout->remoteVersion >= 70500)
 		{
 			appendPQExpBuffer(query,
 							  "SELECT t.tableoid, t.oid, "
@@ -2735,7 +2736,33 @@ getIndexes(TableInfo tblinfo[], int numTables)
 							  "i.indkey, i.indisclustered, "
 							  "c.contype, c.conname, "
 							  "c.tableoid as contableoid, "
-							  "c.oid as conoid "
+							  "c.oid as conoid, "
+				  "(SELECT spcname FROM pg_catalog.pg_tablespace s WHERE s.oid = t.reltablespace) as tablespace "
+							  "FROM pg_catalog.pg_index i "
+				  "JOIN pg_catalog.pg_class t ON (t.oid = i.indexrelid) "
+							  "LEFT JOIN pg_catalog.pg_depend d "
+							  "ON (d.classid = t.tableoid "
+							  "AND d.objid = t.oid "
+							  "AND d.deptype = 'i') "
+							  "LEFT JOIN pg_catalog.pg_constraint c "
+							  "ON (d.refclassid = c.tableoid "
+							  "AND d.refobjid = c.oid) "
+							  "WHERE i.indrelid = '%u'::pg_catalog.oid "
+							  "ORDER BY indexname",
+							  tbinfo->dobj.catId.oid);
+		}
+		else if (g_fout->remoteVersion >= 70300)
+		{
+			appendPQExpBuffer(query,
+							  "SELECT t.tableoid, t.oid, "
+							  "t.relname as indexname, "
+				 "pg_catalog.pg_get_indexdef(i.indexrelid) as indexdef, "
+							  "t.relnatts as indnkeys, "
+							  "i.indkey, i.indisclustered, "
+							  "c.contype, c.conname, "
+							  "c.tableoid as contableoid, "
+							  "c.oid as conoid, "
+							  "NULL as tablespace "
 							  "FROM pg_catalog.pg_index i "
 				  "JOIN pg_catalog.pg_class t ON (t.oid = i.indexrelid) "
 							  "LEFT JOIN pg_catalog.pg_depend d "
@@ -2761,7 +2788,8 @@ getIndexes(TableInfo tblinfo[], int numTables)
 							  "ELSE '0'::char END as contype, "
 							  "t.relname as conname, "
 							  "0::oid as contableoid, "
-							  "t.oid as conoid "
+							  "t.oid as conoid, "
+							  "NULL as tablespace "
 							  "FROM pg_index i, pg_class t "
 							  "WHERE t.oid = i.indexrelid "
 							  "AND i.indrelid = '%u'::oid "
@@ -2782,7 +2810,8 @@ getIndexes(TableInfo tblinfo[], int numTables)
 							  "ELSE '0'::char END as contype, "
 							  "t.relname as conname, "
 							  "0::oid as contableoid, "
-							  "t.oid as conoid "
+							  "t.oid as conoid, "
+							  "NULL as tablespace "
 							  "FROM pg_index i, pg_class t "
 							  "WHERE t.oid = i.indexrelid "
 							  "AND i.indrelid = '%u'::oid "
@@ -2806,6 +2835,7 @@ getIndexes(TableInfo tblinfo[], int numTables)
 		i_conname = PQfnumber(res, "conname");
 		i_contableoid = PQfnumber(res, "contableoid");
 		i_conoid = PQfnumber(res, "conoid");
+		i_tablespace = PQfnumber(res, "tablespace");
 
 		indxinfo = (IndxInfo *) malloc(ntups * sizeof(IndxInfo));
 		constrinfo = (ConstraintInfo *) malloc(ntups * sizeof(ConstraintInfo));
@@ -2823,6 +2853,7 @@ getIndexes(TableInfo tblinfo[], int numTables)
 			indxinfo[j].indextable = tbinfo;
 			indxinfo[j].indexdef = strdup(PQgetvalue(res, j, i_indexdef));
 			indxinfo[j].indnkeys = atoi(PQgetvalue(res, j, i_indnkeys));
+			indxinfo[j].tablespace = strdup(PQgetvalue(res, j, i_tablespace));
 
 			/*
 			 * In pre-7.4 releases, indkeys may contain more entries than
@@ -6910,7 +6941,18 @@ dumpConstraint(Archive *fout, ConstraintInfo *coninfo)
 							  fmtId(attname));
 		}
 
-		appendPQExpBuffer(q, ");\n");
+		appendPQExpBuffer(q, ")");
+
+		/* Output tablespace clause if necessary */
+		if (strlen(indxinfo->tablespace) != 0 &&
+			strcmp(indxinfo->tablespace,
+				   indxinfo->indextable->reltablespace) != 0)
+		{
+			appendPQExpBuffer(q, " USING INDEX TABLESPACE %s",
+							  fmtId(indxinfo->tablespace));
+		}
+
+		appendPQExpBuffer(q, ";\n");
 
 		/* If the index is clustered, we need to record that. */
 		if (indxinfo->indisclustered)

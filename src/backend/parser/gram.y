@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.468 2004/07/27 05:10:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.469 2004/08/02 04:26:35 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -320,7 +320,7 @@ static void doNegateFloat(Value *v);
 
 %type <list>	constraints_set_list
 %type <boolean> constraints_set_mode
-%type <str>		OptTableSpace OptTableSpaceOwner
+%type <str>		OptTableSpace OptConsTableSpace OptTableSpaceOwner
 
 
 /*
@@ -1609,6 +1609,7 @@ ColConstraintElem:
 					n->raw_expr = NULL;
 					n->cooked_expr = NULL;
 					n->keys = NULL;
+					n->indexspace = NULL;
 					$$ = (Node *)n;
 				}
 			| NULL_P
@@ -1619,9 +1620,10 @@ ColConstraintElem:
 					n->raw_expr = NULL;
 					n->cooked_expr = NULL;
 					n->keys = NULL;
+					n->indexspace = NULL;
 					$$ = (Node *)n;
 				}
-			| UNIQUE
+			| UNIQUE OptConsTableSpace
 				{
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_UNIQUE;
@@ -1629,9 +1631,10 @@ ColConstraintElem:
 					n->raw_expr = NULL;
 					n->cooked_expr = NULL;
 					n->keys = NULL;
+					n->indexspace = $2;
 					$$ = (Node *)n;
 				}
-			| PRIMARY KEY
+			| PRIMARY KEY OptConsTableSpace
 				{
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_PRIMARY;
@@ -1639,6 +1642,7 @@ ColConstraintElem:
 					n->raw_expr = NULL;
 					n->cooked_expr = NULL;
 					n->keys = NULL;
+					n->indexspace = $3;
 					$$ = (Node *)n;
 				}
 			| CHECK '(' a_expr ')'
@@ -1649,6 +1653,7 @@ ColConstraintElem:
 					n->raw_expr = $3;
 					n->cooked_expr = NULL;
 					n->keys = NULL;
+					n->indexspace = NULL;
 					$$ = (Node *)n;
 				}
 			| DEFAULT b_expr
@@ -1667,6 +1672,7 @@ ColConstraintElem:
 					}
 					n->cooked_expr = NULL;
 					n->keys = NULL;
+					n->indexspace = NULL;
 					$$ = (Node *)n;
 				}
 			| REFERENCES qualified_name opt_column_list key_match key_actions
@@ -1787,9 +1793,10 @@ ConstraintElem:
 					n->name = NULL;
 					n->raw_expr = $3;
 					n->cooked_expr = NULL;
+					n->indexspace = NULL;
 					$$ = (Node *)n;
 				}
-			| UNIQUE '(' columnList ')'
+			| UNIQUE '(' columnList ')' OptConsTableSpace
 				{
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_UNIQUE;
@@ -1797,9 +1804,10 @@ ConstraintElem:
 					n->raw_expr = NULL;
 					n->cooked_expr = NULL;
 					n->keys = $3;
+					n->indexspace = $5;
 					$$ = (Node *)n;
 				}
-			| PRIMARY KEY '(' columnList ')'
+			| PRIMARY KEY '(' columnList ')' OptConsTableSpace
 				{
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_PRIMARY;
@@ -1807,6 +1815,7 @@ ConstraintElem:
 					n->raw_expr = NULL;
 					n->cooked_expr = NULL;
 					n->keys = $4;
+					n->indexspace = $6;
 					$$ = (Node *)n;
 				}
 			| FOREIGN KEY '(' columnList ')' REFERENCES qualified_name
@@ -1913,6 +1922,10 @@ OnCommitOption:  ON COMMIT DROP				{ $$ = ONCOMMIT_DROP; }
 		;
 
 OptTableSpace:   TABLESPACE name					{ $$ = $2; }
+			| /*EMPTY*/								{ $$ = NULL; }
+		;
+
+OptConsTableSpace:   USING INDEX TABLESPACE name	{ $$ = $4; }
 			| /*EMPTY*/								{ $$ = NULL; }
 		;
 

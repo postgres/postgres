@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.240 2004/06/18 06:13:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.241 2004/08/02 04:26:05 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -1537,6 +1537,13 @@ _outConstraint(StringInfo str, Constraint *node)
 		case CONSTR_PRIMARY:
 			appendStringInfo(str, "PRIMARY_KEY");
 			WRITE_NODE_FIELD(keys);
+			WRITE_STRING_FIELD(indexspace);
+			break;
+
+		case CONSTR_UNIQUE:
+			appendStringInfo(str, "UNIQUE");
+			WRITE_NODE_FIELD(keys);
+			WRITE_STRING_FIELD(indexspace);
 			break;
 
 		case CONSTR_CHECK:
@@ -1553,11 +1560,6 @@ _outConstraint(StringInfo str, Constraint *node)
 
 		case CONSTR_NOTNULL:
 			appendStringInfo(str, "NOT_NULL");
-			break;
-
-		case CONSTR_UNIQUE:
-			appendStringInfo(str, "UNIQUE");
-			WRITE_NODE_FIELD(keys);
 			break;
 
 		default:

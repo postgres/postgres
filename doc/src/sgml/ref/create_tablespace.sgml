@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_tablespace.sgml,v 1.2 2004/06/25 21:55:50 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_tablespace.sgml,v 1.3 2004/08/02 04:25:37 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -43,7 +43,7 @@ CREATE TABLESPACE <replaceable class="parameter">tablespacename</replaceable> [ 
    A user with appropriate privileges can pass
    <replaceable class="parameter">tablespacename</> to <command>CREATE
    DATABASE</>, <command>CREATE SCHEMA</>, <command>CREATE TABLE</>,
-   <command>CREATE INDEX</> or <command>CREATE SEQUENCE</> to have the data
+   <command>CREATE INDEX</> or <command>ADD CONSTRAINT</> to have the data
    files for these objects stored within the specified tablespace.
   </para>
  </refsect1>
@@ -133,7 +133,6 @@ CREATE TABLESPACE indexspace OWNER genevieve LOCATION '/data/indexes';
    <member><xref linkend="sql-createschema" endterm="sql-createschema-title"></member>
    <member><xref linkend="sql-createtable" endterm="sql-createtable-title"></member>
    <member><xref linkend="sql-createindex" endterm="sql-createindex-title"></member>
-   <member><xref linkend="sql-createsequence" endterm="sql-createsequence-title"></member>
    <member><xref linkend="sql-droptablespace" endterm="sql-droptablespace-title"></member>
    <member><xref linkend="sql-altertablespace" endterm="sql-altertablespace-title"></member>
   </simplelist>
