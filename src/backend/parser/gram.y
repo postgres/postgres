@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.240 2001/08/04 22:01:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.241 2001/08/06 05:42:48 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2720,6 +2720,7 @@ RuleStmt:  CREATE RULE name AS
 					n->instead = $12;
 					n->actions = $13;
 					$$ = (Node *)n;
+					QueryIsRule=FALSE;
 				}
 		;
 
