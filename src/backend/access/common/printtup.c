@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.36 1998/11/27 19:51:28 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.37 1998/12/12 22:04:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -289,12 +289,9 @@ printtup_internal(HeapTuple tuple, TupleDesc typeinfo)
 				/* variable length, assume a varlena structure */
 				len = VARSIZE(attr) - VARHDRSZ;
 
-#ifdef MULTIBYTE
-				pq_putncharlen(VARDATA(attr), len);
-#else
 				pq_putint(len, VARHDRSZ);
 				pq_putnchar(VARDATA(attr), len);
-#endif
+
 #ifdef IPORTAL_DEBUG
 				{
 					char	   *d = VARDATA(attr);
