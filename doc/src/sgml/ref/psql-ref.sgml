@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.33 2000/05/12 00:54:52 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.34 2000/07/21 17:58:49 momjian Exp $
 Postgres documentation
 -->
 
@@ -491,8 +491,8 @@ testdb=>
         <para>
         The new query buffer is then re-parsed according to the normal rules of
         <application>psql</application>, where the whole buffer is treated as
-        a single line. (Thus you cannot make <quote>scripts</quote> this way,
-        use <command>\i</command> for that.) This means also that
+        a single line. (Thus you cannot make scripts this way.
+        Use <command>\i</command> for that.) This means also that
         if the query ends with (or rather contains) a semicolon, it is immediately
         executed. In other cases it will merely wait in the query buffer.
         </para>
@@ -551,8 +551,8 @@ Tue Oct 26 21:40:57 CEST 1999
 
         <listitem>
         <para>
-        Sets the field separator for unaligned query output. The default is <quote><literal>|</literal></quote>
-	(a <quote>pipe</quote> symbol). See also <command>\pset</command> for a generic way
+        Sets the field separator for unaligned query output. The default is
+pipe (<literal>|</literal>). See also <command>\pset</command> for a generic way
 	of setting output options.
         </para>
         </listitem>
@@ -1533,7 +1533,7 @@ Access permissions for database "test"
       <para>
       As of version 7.0, <application>psql</application> automatically issues a
       password prompt whenever the backend requests password authentication.
-      Because this is currently based on a <quote>hack</quote>, the automatic
+      Because this is currently based on a hack, the automatic
       recognition might mysteriously fail, hence this option to force a prompt.
       If no password prompt is issued and the backend requires password authentication
       the connection attempt will fail.
@@ -2148,7 +2148,7 @@ $ ./configure --with-includes=/opt/gnu/include --with-libs=/opt/gnu/lib  ...
 
   <para>
   The first example shows how to spread a query over several lines of input.
-  Notice the changing prompt.
+  Notice the changing prompt:
 <programlisting>
 testdb=> <userinput>CREATE TABLE my_table (</userinput>
 testdb(> <userinput> first integer not null default 0,</userinput>
@@ -2186,7 +2186,7 @@ peter@localhost testdb=> SELECT * FROM my_table;
 </programlisting>
   Notice how the int4 colums in right aligned while the text column in left aligned.
   You can make this table look differently by using the <command>\pset</command>
-  command.
+  command:
 <programlisting>
 peter@localhost testdb=> <userinput>\pset border 2</userinput>
 Border style is 2.

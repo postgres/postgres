@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_operator.sgml,v 1.13 2000/03/27 17:14:42 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_operator.sgml,v 1.14 2000/07/21 17:58:49 momjian Exp $
 Postgres documentation
 -->
 
@@ -393,7 +393,7 @@ MYBOXES.description === box '((0,0),(1,1))'
    Usage
   </title>
   <para>The following command defines a new operator,
-   area-equality, for the BOX data type.
+   area-equality, for the BOX data type:
   </para>
   <programlisting>
 CREATE OPERATOR === (
