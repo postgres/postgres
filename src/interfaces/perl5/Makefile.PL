@@ -1,7 +1,7 @@
 # Generated automatically from Makefile.PL.in by configure.
 #-------------------------------------------------------
 #
-# $Id: Makefile.PL,v 1.11 1998/10/16 17:00:44 momjian Exp $
+# $Id: Makefile.PL,v 1.12 1998/10/17 02:36:13 momjian Exp $
 #
 # Copyright (c) 1997, 1998  Edmund Mergl
 #

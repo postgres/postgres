@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/GNUmakefile.in,v 1.36 1998/10/16 17:00:42 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/GNUmakefile.in,v 1.37 1998/10/17 02:36:11 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -68,44 +68,42 @@ clean:
 	$(MAKE) -C ../contrib/spi clean
 
 distclean: clean
-	rm -f Makefile.global \
+	#  The second group of files comes from configure.in
+	rm -f 
+		Makefile.port
 		config.cache \
 		config.status \
 		config.log \
-		GNUmakefile \
-		Makefile.global \
-		backend/port/Makefile \
-		bin/psql/Makefile \
-		bin/pgtclsh/mkMakefile.tcltkdefs.sh \
-		bin/pgtclsh/Makefile.tcltkdefs \
-
-? pgsql/src/bin/pgtclsh/mkMakefile.tcldefs.sh
-? pgsql/src/bin/pgtclsh/mkMakefile.tkdefs.sh.in
-? pgsql/src/bin/pgtclsh/mkMakefile.tcldefs.sh.in
-? pgsql/src/bin/pgtclsh/mkMakefile.tkdefs.sh
-? pgsql/src/bin/pgtclsh/Makefile.tkdefs
-? pgsql/src/bin/pgtclsh/Makefile.
-
-		bin/pg_dump/Makefile \
-		bin/pg_version/Makefile \
 		include/config.h \
 		include/dynloader.h \
 		include/os.h \
-		include/version.h \
 		backend/port/tas.s \
 		backend/port/dynloader.c \
 		backend/utils/Gen_fmgrtab.sh \
-		interfaces/ecpg/lib/Makefile \
+\
+\
+\
+		GNUmakefile \
+		Makefile.global \
+		backend/port/Makefile \
+		backend/catalog/genbki.sh \
+		backend/utils/Gen_fmgrtab.sh \
+		bin/pg_dump/Makefile \
+		bin/pg_version/Makefile \
+		bin/psql/Makefile \
+		bin/pgtclsh/mkMakefile.tcldefs.sh \
+		bin/pgtclsh/mkMakefile.tkdefs.sh \
+		include/version.h \
 		interfaces/libpq/Makefile \
+		interfaces/ecpg/lib/Makefile \
 		interfaces/libpq++/Makefile \
 		interfaces/libpgtcl/Makefile \
-		interfaces/odbc/Makefile.global \
 		interfaces/odbc/GNUmakefile \
+		interfaces/odbc/Makefile.global \
+		interfaces/perl5/Makefile.PL \
 		pl/plpgsql/src/Makefile \
 		pl/plpgsql/src/mklang.sql \
-		pl/tcl/mkMakefile.tcldefs.sh \
-		Makefile.port
-
+		pl/tcl/mkMakefile.tcldefs.sh
 
 .DEFAULT:
 	$(MAKE) -C lextest $@
