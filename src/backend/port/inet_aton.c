@@ -1,4 +1,4 @@
-/* $Id: inet_aton.c,v 1.11 1997/12/19 13:34:28 scrappy Exp $
+/* $Id: inet_aton.c,v 1.12 1998/01/23 19:13:14 scrappy Exp $
  *
  *	This inet_aton() function was taken from the GNU C library and
  *	incorporated into Postgres for those systems which do not have this
@@ -45,7 +45,6 @@
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <ctype.h>
-#include "inet_aton.h"
 
 /*
  * Check whether "cp" is a valid ascii representation

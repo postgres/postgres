@@ -2738,7 +2738,7 @@ else
 fi
 done
 
-for ac_hdr in sys/resource.h netdb.h
+for ac_hdr in sys/resource.h netdb.h arpa/inet.h
 do
 ac_safe=`echo "$ac_hdr" | sed 'y%./+-%__p_%'`
 echo $ac_n "checking for $ac_hdr""... $ac_c" 1>&6
