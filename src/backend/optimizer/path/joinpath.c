@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.41 1999/07/16 04:59:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.42 1999/07/27 06:23:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -147,13 +147,14 @@ update_rels_pathlist_for_joins(Query *root, List *joinrels)
 /*
  * best_innerjoin
  *	  Find the cheapest index path that has already been identified by
- *	  (indexable_joinclauses) as being a possible inner path for the given
- *	  outer relation in a nestloop join.
+ *	  indexable_joinclauses() as being a possible inner path for the given
+ *	  outer relation(s) in a nestloop join.
  *
- * 'join_paths' is a list of join nodes
- * 'outer_relid' is the relid of the outer join relation
+ * 'join_paths' is a list of potential inner indexscan join paths
+ * 'outer_relids' is the relid list of the outer join relation
  *
- * Returns the pathnode of the selected path.
+ * Returns the pathnode of the best path, or NULL if there's no
+ * usable path.
  */
 static Path *
 best_innerjoin(List *join_paths, Relids outer_relids)
@@ -165,7 +166,11 @@ best_innerjoin(List *join_paths, Relids outer_relids)
 	{
 		Path	   *path = (Path *) lfirst(join_path);
 
-		if (intMember(lfirsti(path->joinid), outer_relids) &&
+		/* path->joinid is the set of base rels that must be part of
+		 * outer_relids in order to use this inner path, because those
+		 * rels are used in the index join quals of this inner path.
+		 */
+		if (is_subset(path->joinid, outer_relids) &&
 			(cheapest == NULL ||
 			 path_is_cheaper(path, cheapest)))
 			cheapest = path;

@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
  * paths.h
- *	  prototypes for various files in optimizer/paths (were separate
- *	  header files
+ *	  prototypes for various files in optimizer/path (were separate
+ *	  header files)
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: paths.h,v 1.32 1999/07/27 03:51:01 tgl Exp $
+ * $Id: paths.h,v 1.33 1999/07/27 06:23:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,12 +17,12 @@
 #include "nodes/relation.h"
 
 /*
- * allpaths.h
+ * allpaths.c
  */
 extern RelOptInfo *make_one_rel(Query *root, List *rels);
 
 /*
- * indxpath.h
+ * indxpath.c
  *	  routines to generate index paths
  */
 extern List *create_index_paths(Query *root, RelOptInfo *rel, List *indices,
@@ -31,26 +31,26 @@ extern List *create_index_paths(Query *root, RelOptInfo *rel, List *indices,
 extern List *expand_indexqual_conditions(List *indexquals);
 
 /*
- * joinpath.h
+ * joinpath.c
  *	   routines to create join paths
  */
 extern void update_rels_pathlist_for_joins(Query *root, List *joinrels);
 
 
 /*
- * orindxpath.h
+ * orindxpath.c
  */
 extern List *create_or_index_paths(Query *root, RelOptInfo *rel, List *clauses);
 
 /*
- * hashutils.h
+ * hashutils.c
  *	  routines to deal with hash keys and clauses
  */
 extern List *group_clauses_by_hashop(List *restrictinfo_list,
 						Relids inner_relids);
 
 /*
- * joinutils.h
+ * joinutils.c
  *	  generic join method key/clause routines
  */
 extern bool order_joinkeys_by_pathkeys(List *pathkeys,
@@ -65,7 +65,7 @@ extern List *new_join_pathkeys(List *outer_pathkeys,
 				  List *join_rel_tlist, List *joinclauses);
 
 /*
- * mergeutils.h
+ * mergeutils.c
  *	  routines to deal with merge keys and clauses
  */
 extern List *group_clauses_by_order(List *restrictinfo_list,
@@ -74,7 +74,7 @@ extern MergeInfo *match_order_mergeinfo(PathOrder *ordering,
 					  List *mergeinfo_list);
 
 /*
- * joinrels.h
+ * joinrels.c
  *	  routines to determine which relations to join
  */
 extern List *make_rels_by_joins(Query *root, List *old_rels);
@@ -83,6 +83,8 @@ extern List *make_rels_by_clause_joins(Query *root, RelOptInfo *old_rel,
 extern List *make_rels_by_clauseless_joins(RelOptInfo *old_rel,
 							  List *inner_rels);
 extern RelOptInfo *get_cheapest_complete_rel(List *join_rel_list);
+extern bool nonoverlap_sets(List *s1, List *s2);
+extern bool is_subset(List *s1, List *s2);
 
 /*
  * prototypes for path/prune.c

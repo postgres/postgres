@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.37 1999/07/16 04:59:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.38 1999/07/27 06:23:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,8 +21,6 @@
 #include "optimizer/tlist.h"
 
 static List *new_joininfo_list(List *joininfo_list, Relids join_relids);
-static bool nonoverlap_sets(List *s1, List *s2);
-static bool is_subset(List *s1, List *s2);
 static void set_joinrel_size(RelOptInfo *joinrel, RelOptInfo *outer_rel,
 				 RelOptInfo *inner_rel, JoinInfo *jinfo);
 static RelOptInfo *make_join_rel(RelOptInfo *outer_rel, RelOptInfo *inner_rel,
@@ -373,8 +371,8 @@ new_joininfo_list(List *joininfo_list, Relids join_relids)
 RelOptInfo *
 get_cheapest_complete_rel(List *join_rel_list)
 {
-	List	   *xrel = NIL;
 	RelOptInfo *final_rel = NULL;
+	List	   *xrel;
 
 	/*
 	 * find the relations that have no further joins, i.e., its joininfos
@@ -383,8 +381,8 @@ get_cheapest_complete_rel(List *join_rel_list)
 	foreach(xrel, join_rel_list)
 	{
 		RelOptInfo *rel = (RelOptInfo *) lfirst(xrel);
-		List	   *xjoininfo = NIL;
 		bool		final = true;
+		List	   *xjoininfo;
 
 		foreach(xjoininfo, rel->joininfo)
 		{
@@ -403,36 +401,6 @@ get_cheapest_complete_rel(List *join_rel_list)
 	}
 
 	return final_rel;
-}
-
-static bool
-nonoverlap_sets(List *s1, List *s2)
-{
-	List	   *x = NIL;
-
-	foreach(x, s1)
-	{
-		int			e = lfirsti(x);
-
-		if (intMember(e, s2))
-			return false;
-	}
-	return true;
-}
-
-static bool
-is_subset(List *s1, List *s2)
-{
-	List	   *x = NIL;
-
-	foreach(x, s1)
-	{
-		int			e = lfirsti(x);
-
-		if (!intMember(e, s2))
-			return false;
-	}
-	return true;
 }
 
 static void
@@ -465,4 +433,40 @@ set_joinrel_size(RelOptInfo *joinrel, RelOptInfo *outer_rel, RelOptInfo *inner_r
 		ntuples = 1;
 
 	joinrel->tuples = ntuples;
+}
+
+/*
+ * Subset-inclusion tests on integer lists.
+ *
+ * XXX these probably ought to be in nodes/list.c or some such place.
+ */
+
+bool
+nonoverlap_sets(List *s1, List *s2)
+{
+	List	   *x;
+
+	foreach(x, s1)
+	{
+		int			e = lfirsti(x);
+
+		if (intMember(e, s2))
+			return false;
+	}
+	return true;
+}
+
+bool
+is_subset(List *s1, List *s2)
+{
+	List	   *x;
+
+	foreach(x, s1)
+	{
+		int			e = lfirsti(x);
+
+		if (!intMember(e, s2))
+			return false;
+	}
+	return true;
 }
