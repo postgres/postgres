@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.214 2001/01/06 10:50:02 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.215 2001/01/15 20:36:36 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -146,7 +146,8 @@ static void doNegateFloat(Value *v);
 		UnlistenStmt, UpdateStmt, VacuumStmt, VariableResetStmt,
 		VariableSetStmt, VariableShowStmt, ViewStmt, CheckPointStmt
 
-%type <node>	select_no_parens, select_clause, simple_select
+%type <node>	select_no_parens, select_with_parens, select_clause,
+				simple_select
 
 %type <node>    alter_column_action
 %type <ival>    drop_behavior
@@ -2666,16 +2667,7 @@ RuleActionMulti:  RuleActionMulti ';' RuleActionStmtOrEmpty
 				}
 		;
 
-/*
- * Allowing RuleActionStmt to be a SelectStmt creates an ambiguity:
- * is the RuleActionList "((SELECT foo))" a standalone RuleActionStmt,
- * or a one-entry RuleActionMulti list?  We don't really care, but yacc
- * wants to know.  We use operator precedence to resolve the ambiguity:
- * giving this rule a higher precedence than ')' will force a reduce
- * rather than shift decision, causing the one-entry-list interpretation
- * to be chosen.
- */
-RuleActionStmt:	SelectStmt				%prec TYPECAST
+RuleActionStmt:	SelectStmt
 		| InsertStmt
 		| UpdateStmt
 		| DeleteStmt
@@ -3262,32 +3254,48 @@ opt_cursor:  BINARY						{ $$ = TRUE; }
  * The rule returns either a single SelectStmt node or a tree of them,
  * representing a set-operation tree.
  *
- * To avoid ambiguity problems with nested parentheses, we have to define
- * a "select_no_parens" nonterminal in which there are no parentheses
- * at the outermost level.  This is used in the production
- *		c_expr: '(' select_no_parens ')'
- * This gives a unique parsing of constructs where a subselect is nested
- * in an expression with extra parentheses: the parentheses are not part
- * of the subselect but of the outer expression.  yacc is not quite bright
- * enough to handle the situation completely, however.  To prevent a shift/
- * reduce conflict, we also have to attach a precedence to the
- *		SelectStmt: select_no_parens
- * rule that is higher than the precedence of ')'.  This means that when
- * "((SELECT foo" has been parsed in an expression context, and the
- * next token is ')', the parser will follow the '(' SelectStmt ')' reduction
- * path rather than '(' select_no_parens ')'.  The upshot is that excess
- * parens don't work in this context: SELECT ((SELECT foo)) will give a
- * parse error, whereas SELECT ((SELECT foo) UNION (SELECT bar)) is OK.
- * This is ugly, but it beats not allowing excess parens anywhere...
+ * There is an ambiguity when a sub-SELECT is within an a_expr and there
+ * are excess parentheses: do the parentheses belong to the sub-SELECT or
+ * to the surrounding a_expr?  We don't really care, but yacc wants to know.
+ * To resolve the ambiguity, we are careful to define the grammar so that
+ * the decision is staved off as long as possible: as long as we can keep
+ * absorbing parentheses into the sub-SELECT, we will do so, and only when
+ * it's no longer possible to do that will we decide that parens belong to
+ * the expression.  For example, in "SELECT (((SELECT 2)) + 3)" the extra
+ * parentheses are treated as part of the sub-select.  The necessity of doing
+ * it that way is shown by "SELECT (((SELECT 2)) UNION SELECT 2)".  Had we
+ * parsed "((SELECT 2))" as an a_expr, it'd be too late to go back to the
+ * SELECT viewpoint when we see the UNION.
  *
- * In all other contexts, we can use SelectStmt which allows outer parens.
+ * This approach is implemented by defining a nonterminal select_with_parens,
+ * which represents a SELECT with at least one outer layer of parentheses,
+ * and being careful to use select_with_parens, never '(' SelectStmt ')',
+ * in the expression grammar.  We will then have shift-reduce conflicts
+ * which we can resolve in favor of always treating '(' <select> ')' as
+ * a select_with_parens.  To resolve the conflicts, the productions that
+ * conflict with the select_with_parens productions are manually given
+ * precedences lower than the precedence of ')', thereby ensuring that we
+ * shift ')' (and then reduce to select_with_parens) rather than trying to
+ * reduce the inner <select> nonterminal to something else.  We use UMINUS
+ * precedence for this, which is a fairly arbitrary choice.
+ *
+ * To be able to define select_with_parens itself without ambiguity, we need
+ * a nonterminal select_no_parens that represents a SELECT structure with no
+ * outermost parentheses.  This is a little bit tedious, but it works.
+ *
+ * In non-expression contexts, we use SelectStmt which can represent a SELECT
+ * with or without outer parentheses.
  */
 
-SelectStmt: select_no_parens			%prec TYPECAST
+SelectStmt: select_no_parens			%prec UMINUS
+		| select_with_parens			%prec UMINUS
+		;
+
+select_with_parens: '(' select_no_parens ')'
 			{
-				$$ = $1;
+				$$ = $2;
 			}
-		| '(' SelectStmt ')'
+		| '(' select_with_parens ')'
 			{
 				$$ = $2;
 			}
@@ -3318,13 +3326,7 @@ select_no_parens: simple_select
 		;
 
 select_clause: simple_select
-			{
-				$$ = $1;
-			}
-		| '(' SelectStmt ')'
-			{
-				$$ = $2;
-			}
+		| select_with_parens
 		;
 
 /*
@@ -3342,8 +3344,10 @@ select_clause: simple_select
  *		(SELECT foo UNION SELECT bar) ORDER BY baz
  * not
  *		SELECT foo UNION (SELECT bar ORDER BY baz)
- * Likewise FOR UPDATE and LIMIT.  This does not limit functionality,
- * because you can reintroduce sort and limit clauses inside parentheses.
+ * Likewise FOR UPDATE and LIMIT.  Therefore, those clauses are described
+ * as part of the select_no_parens production, not simple_select.
+ * This does not limit functionality, because you can reintroduce sort and
+ * limit clauses inside parentheses.
  *
  * NOTE: only the leftmost component SelectStmt should have INTO.
  * However, this is not checked by the grammar; parse analysis must check it.
@@ -3614,11 +3618,11 @@ table_ref:  relation_expr
 					$1->name = $2;
 					$$ = (Node *) $1;
 				}
-		| '(' SelectStmt ')' alias_clause
+		| select_with_parens alias_clause
 				{
 					RangeSubselect *n = makeNode(RangeSubselect);
-					n->subquery = $2;
-					n->name = $4;
+					n->subquery = $1;
+					n->name = $2;
 					$$ = (Node *) n;
 				}
 		| joined_table
@@ -3788,7 +3792,7 @@ relation_expr:	relation_name
 					$$->inhOpt = INH_DEFAULT;
 					$$->name = NULL;
 				}
-		| relation_name '*'				%prec '='
+		| relation_name '*'
 				{
 					/* inheritance query */
 					$$ = makeNode(RangeVar);
@@ -3796,7 +3800,7 @@ relation_expr:	relation_name
 					$$->inhOpt = INH_YES;
 					$$->name = NULL;
 				}
-		| ONLY relation_name			%prec '='
+		| ONLY relation_name
 				{
 					/* no inheritance */
 					$$ = makeNode(RangeVar);
@@ -4146,27 +4150,27 @@ opt_interval:  datetime							{ $$ = makeList1($1); }
  * Define row_descriptor to allow yacc to break the reduce/reduce conflict
  *  with singleton expressions.
  */
-row_expr: '(' row_descriptor ')' IN '(' SelectStmt ')'
+row_expr: '(' row_descriptor ')' IN select_with_parens
 				{
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = $2;
 					n->oper = (List *) makeA_Expr(OP, "=", NULL, NULL);
 					n->useor = FALSE;
 					n->subLinkType = ANY_SUBLINK;
-					n->subselect = $6;
+					n->subselect = $5;
 					$$ = (Node *)n;
 				}
-		| '(' row_descriptor ')' NOT IN '(' SelectStmt ')'
+		| '(' row_descriptor ')' NOT IN select_with_parens
 				{
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = $2;
 					n->oper = (List *) makeA_Expr(OP, "<>", NULL, NULL);
 					n->useor = TRUE;
 					n->subLinkType = ALL_SUBLINK;
-					n->subselect = $7;
+					n->subselect = $6;
 					$$ = (Node *)n;
 				}
-		| '(' row_descriptor ')' all_Op sub_type '(' SelectStmt ')'
+		| '(' row_descriptor ')' all_Op sub_type select_with_parens
 				{
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = $2;
@@ -4176,10 +4180,10 @@ row_expr: '(' row_descriptor ')' IN '(' SelectStmt ')'
 					else
 						n->useor = FALSE;
 					n->subLinkType = $5;
-					n->subselect = $7;
+					n->subselect = $6;
 					$$ = (Node *)n;
 				}
-		| '(' row_descriptor ')' all_Op '(' SelectStmt ')'
+		| '(' row_descriptor ')' all_Op select_with_parens
 				{
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = $2;
@@ -4189,7 +4193,7 @@ row_expr: '(' row_descriptor ')' IN '(' SelectStmt ')'
 					else
 						n->useor = FALSE;
 					n->subLinkType = MULTIEXPR_SUBLINK;
-					n->subselect = $6;
+					n->subselect = $5;
 					$$ = (Node *)n;
 				}
 		| '(' row_descriptor ')' all_Op '(' row_descriptor ')'
@@ -4291,9 +4295,9 @@ a_expr:  c_expr
 		 * If you add more explicitly-known operators, be sure to add them
 		 * also to b_expr and to the MathOp list above.
 		 */
-		| '+' a_expr %prec UMINUS
+		| '+' a_expr					%prec UMINUS
 				{	$$ = makeA_Expr(OP, "+", NULL, $2); }
-		| '-' a_expr %prec UMINUS
+		| '-' a_expr					%prec UMINUS
 				{	$$ = doNegate($2); }
 		| '%' a_expr
 				{	$$ = makeA_Expr(OP, "%", NULL, $2); }
@@ -4458,12 +4462,12 @@ a_expr:  c_expr
 						makeA_Expr(OP, "<", $1, $4),
 						makeA_Expr(OP, ">", $1, $6));
 				}
-		| a_expr IN '(' in_expr ')'
+		| a_expr IN in_expr
 				{
 					/* in_expr returns a SubLink or a list of a_exprs */
-					if (IsA($4, SubLink))
+					if (IsA($3, SubLink))
 					{
-							SubLink *n = (SubLink *)$4;
+							SubLink *n = (SubLink *)$3;
 							n->lefthand = makeList1($1);
 							n->oper = (List *) makeA_Expr(OP, "=", NULL, NULL);
 							n->useor = FALSE;
@@ -4474,7 +4478,7 @@ a_expr:  c_expr
 					{
 						Node *n = NULL;
 						List *l;
-						foreach(l, (List *) $4)
+						foreach(l, (List *) $3)
 						{
 							Node *cmp = makeA_Expr(OP, "=", $1, lfirst(l));
 							if (n == NULL)
@@ -4485,12 +4489,12 @@ a_expr:  c_expr
 						$$ = n;
 					}
 				}
-		| a_expr NOT IN '(' in_expr ')'
+		| a_expr NOT IN in_expr
 				{
 					/* in_expr returns a SubLink or a list of a_exprs */
-					if (IsA($5, SubLink))
+					if (IsA($4, SubLink))
 					{
-						SubLink *n = (SubLink *)$5;
+						SubLink *n = (SubLink *)$4;
 						n->lefthand = makeList1($1);
 						n->oper = (List *) makeA_Expr(OP, "<>", NULL, NULL);
 						n->useor = FALSE;
@@ -4501,7 +4505,7 @@ a_expr:  c_expr
 					{
 						Node *n = NULL;
 						List *l;
-						foreach(l, (List *) $5)
+						foreach(l, (List *) $4)
 						{
 							Node *cmp = makeA_Expr(OP, "<>", $1, lfirst(l));
 							if (n == NULL)
@@ -4512,14 +4516,14 @@ a_expr:  c_expr
 						$$ = n;
 					}
 				}
-		| a_expr all_Op sub_type '(' SelectStmt ')'
+		| a_expr all_Op sub_type select_with_parens
 				{
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = makeList1($1);
 					n->oper = (List *) makeA_Expr(OP, $2, NULL, NULL);
 					n->useor = FALSE; /* doesn't matter since only one col */
 					n->subLinkType = $3;
-					n->subselect = $5;
+					n->subselect = $4;
 					$$ = (Node *)n;
 				}
 		| row_expr
@@ -4539,9 +4543,9 @@ b_expr:  c_expr
 				{	$$ = $1;  }
 		| b_expr TYPECAST Typename
 				{	$$ = makeTypeCast($1, $3); }
-		| '+' b_expr %prec UMINUS
+		| '+' b_expr					%prec UMINUS
 				{	$$ = makeA_Expr(OP, "+", NULL, $2); }
-		| '-' b_expr %prec UMINUS
+		| '-' b_expr					%prec UMINUS
 				{	$$ = doNegate($2); }
 		| '%' b_expr
 				{	$$ = makeA_Expr(OP, "%", NULL, $2); }
@@ -4908,24 +4912,24 @@ c_expr:  attr
 					n->agg_distinct = FALSE;
 					$$ = (Node *)n;
 				}
-		| '(' select_no_parens ')'
+		| select_with_parens			%prec UMINUS
 				{
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = NIL;
 					n->oper = NIL;
 					n->useor = FALSE;
 					n->subLinkType = EXPR_SUBLINK;
-					n->subselect = $2;
+					n->subselect = $1;
 					$$ = (Node *)n;
 				}
-		| EXISTS '(' SelectStmt ')'
+		| EXISTS select_with_parens
 				{
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = NIL;
 					n->oper = NIL;
 					n->useor = FALSE;
 					n->subLinkType = EXISTS_SUBLINK;
-					n->subselect = $3;
+					n->subselect = $2;
 					$$ = (Node *)n;
 				}
 		;
@@ -5037,14 +5041,14 @@ trim_list:  a_expr FROM expr_list
 				{ $$ = $1; }
 		;
 
-in_expr:  SelectStmt
+in_expr:  select_with_parens
 				{
 					SubLink *n = makeNode(SubLink);
 					n->subselect = $1;
 					$$ = (Node *)n;
 				}
-		| in_expr_nodes
-				{	$$ = (Node *)$1; }
+		| '(' in_expr_nodes ')'
+				{	$$ = (Node *)$2; }
 		;
 
 in_expr_nodes:  a_expr
