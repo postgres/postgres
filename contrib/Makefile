@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/contrib/Makefile,v 1.33 2002/07/30 16:32:20 momjian Exp $
+# $Header: /cvsroot/pgsql/contrib/Makefile,v 1.34 2002/07/30 16:40:34 momjian Exp $
 
 subdir = contrib
 top_builddir = ..
@@ -20,6 +20,7 @@ WANTED_DIRS = \
 		intarray	\
 		isbn_issn	\
 		lo		\
+		ltree		\
 		miscutil	\
 		noupdate	\
 		oid2name	\

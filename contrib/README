@@ -95,6 +95,10 @@ lo -
 	Large Object maintenance
 	by Peter Mount <peter@retep.org.uk> 
 
+ltree -
+	Tree-like data structures
+	by Teodor Sigaev <teodor@stack.net> and Oleg Bartunov <oleg@sai.msu.su>
+
 mSQL-interface -
 	mSQL API translation library
 	by Aldrin Leal <aldrin@americasnet.com>
