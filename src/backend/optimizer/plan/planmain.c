@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.56 2000/07/24 03:11:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.57 2000/07/27 04:51:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,6 +28,7 @@
 #include "optimizer/paths.h"
 #include "optimizer/planmain.h"
 #include "optimizer/tlist.h"
+#include "utils/memutils.h"
 
 
 static Plan *subplanner(Query *root, List *flat_tlist, List *qual,
@@ -176,6 +177,9 @@ subplanner(Query *root,
 		   double tuple_fraction)
 {
 	RelOptInfo *final_rel;
+	Plan	   *resultplan;
+	MemoryContext mycontext;
+	MemoryContext oldcxt;
 	Path	   *cheapestpath;
 	Path	   *presortedpath;
 
@@ -213,6 +217,24 @@ subplanner(Query *root,
 	root->query_pathkeys = canonicalize_pathkeys(root, root->query_pathkeys);
 
 	/*
+	 * We might allocate quite a lot of storage during planning (due to
+	 * constructing lots of Paths), but all of it can be reclaimed after
+	 * we generate the finished Plan tree.  Work in a temporary context
+	 * to let that happen.  We make the context a child of
+	 * TransactionCommandContext so it will be freed if error abort.
+	 *
+	 * Note: beware of trying to move this up to the start of this routine.
+	 * Some of the data structures built above --- notably the pathkey
+	 * equivalence sets --- will still be needed after this routine exits.
+	 */
+	mycontext = AllocSetContextCreate(TransactionCommandContext,
+									  "Planner",
+									  ALLOCSET_DEFAULT_MINSIZE,
+									  ALLOCSET_DEFAULT_INITSIZE,
+									  ALLOCSET_DEFAULT_MAXSIZE);
+	oldcxt = MemoryContextSwitchTo(mycontext);
+
+	/*
 	 * Ready to do the primary planning.
 	 */
 	final_rel = make_one_rel(root);
@@ -235,7 +257,9 @@ subplanner(Query *root,
 		root->query_pathkeys = NIL;		/* signal unordered result */
 
 		/* Make childless Result node to evaluate given tlist. */
-		return (Plan *) make_result(flat_tlist, (Node *) qual, (Plan *) NULL);
+		resultplan = (Plan *) make_result(flat_tlist, (Node *) qual,
+										  (Plan *) NULL);
+		goto plan_built;
 	}
 
 #ifdef NOT_USED					/* fix xfunc */
@@ -295,7 +319,8 @@ subplanner(Query *root,
 							  cheapestpath->pathkeys))
 	{
 		root->query_pathkeys = cheapestpath->pathkeys;
-		return create_plan(root, cheapestpath);
+		resultplan = create_plan(root, cheapestpath);
+		goto plan_built;
 	}
 
 	/*
@@ -321,7 +346,8 @@ subplanner(Query *root,
 		{
 			/* Presorted path is cheaper, use it */
 			root->query_pathkeys = presortedpath->pathkeys;
-			return create_plan(root, presortedpath);
+			resultplan = create_plan(root, presortedpath);
+			goto plan_built;
 		}
 		/* otherwise, doing it the hard way is still cheaper */
 	}
@@ -334,5 +360,24 @@ subplanner(Query *root,
 	 * as an aggregate function...)
 	 */
 	root->query_pathkeys = cheapestpath->pathkeys;
-	return create_plan(root, cheapestpath);
+	resultplan = create_plan(root, cheapestpath);
+
+plan_built:
+
+	/*
+	 * Must copy the completed plan tree and its pathkeys out of temporary
+	 * context.
+	 */
+	MemoryContextSwitchTo(oldcxt);
+
+	resultplan = copyObject(resultplan);
+
+	root->query_pathkeys = copyObject(root->query_pathkeys);
+
+	/*
+	 * Now we can release the Path storage.
+	 */
+	MemoryContextDelete(mycontext);
+
+	return resultplan;
 }
