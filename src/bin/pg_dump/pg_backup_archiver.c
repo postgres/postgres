@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.90 2004/07/19 21:39:47 momjian Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.91 2004/08/04 17:13:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,7 +49,7 @@ static ArchiveHandle *_allocAH(const char *FileSpec, const ArchiveFormat fmt,
 		 const int compression, ArchiveMode mode);
 static char 	*_getObjectFromDropStmt(const char *dropStmt, const char *type);
 static void	_printTocHeader(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isData);
-static int	_printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isData, bool ownerAndACL);
+static int	_printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isData, bool acl_pass);
 
 
 static void fixPriorBlobRefs(ArchiveHandle *AH, TocEntry *blobte,
@@ -62,7 +62,7 @@ static void _becomeUser(ArchiveHandle *AH, const char *user);
 static void _becomeOwner(ArchiveHandle *AH, TocEntry *te);
 static void _selectOutputSchema(ArchiveHandle *AH, const char *schemaName);
 
-static teReqs _tocEntryRequired(TocEntry *te, RestoreOptions *ropt, bool ownerAndACL);
+static teReqs _tocEntryRequired(TocEntry *te, RestoreOptions *ropt, bool acl_pass);
 static void _disableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt);
 static void _enableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt);
 static TocEntry *getTocEntryByDumpId(ArchiveHandle *AH, DumpId id);
@@ -1913,7 +1913,7 @@ ReadToc(ArchiveHandle *AH)
 }
 
 static teReqs
-_tocEntryRequired(TocEntry *te, RestoreOptions *ropt, bool ownerAndACL)
+_tocEntryRequired(TocEntry *te, RestoreOptions *ropt, bool acl_pass)
 {
 	teReqs		res = 3;		/* Schema = 1, Data = 2, Both = 3 */
 
@@ -1922,7 +1922,7 @@ _tocEntryRequired(TocEntry *te, RestoreOptions *ropt, bool ownerAndACL)
 		return 0;
 
 	/* If it's an ACL, maybe ignore it */
-	if ((!ownerAndACL || ropt->aclsSkip) && strcmp(te->desc, "ACL") == 0)
+	if ((!acl_pass || ropt->aclsSkip) && strcmp(te->desc, "ACL") == 0)
 		return 0;
 
 	if (!ropt->create && strcmp(te->desc, "DATABASE") == 0)
@@ -2338,39 +2338,20 @@ _printTocHeader(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isDa
 }
 
 static int
-_printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isData, bool ownerAndACL)
+_printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isData, bool acl_pass)
 {
 	/* Select schema as necessary */
 	_becomeOwner(AH, te);
 	_selectOutputSchema(AH, te->namespace);
-	if (strcmp(te->desc, "TABLE") == 0 && !ownerAndACL)
+	if (strcmp(te->desc, "TABLE") == 0 && !acl_pass)
 		_setWithOids(AH, te);
 
-	if (!ropt->noOwner && !ropt->use_setsessauth && ownerAndACL && strlen(te->owner) > 0 && strlen(te->dropStmt) > 0 && (
-							strcmp(te->desc, "AGGREGATE") == 0 ||
-							strcmp(te->desc, "CONVERSION") == 0 ||
-							strcmp(te->desc, "DOMAIN") == 0 ||
-							strcmp(te->desc, "FUNCTION") == 0 ||
-							strcmp(te->desc, "OPERATOR") == 0 ||
-							strcmp(te->desc, "OPERATOR CLASS") == 0 ||
-							strcmp(te->desc, "TABLE") == 0 ||
-							strcmp(te->desc, "TYPE") == 0 ||
-							strcmp(te->desc, "VIEW") == 0 ||
-							strcmp(te->desc, "SEQUENCE") == 0 ||
-							(strcmp(te->desc, "SCHEMA") == 0 && strcmp(te->tag, "public") == 0) /* Only public schema */
-							))
-	{
-		char *temp = _getObjectFromDropStmt(te->dropStmt, te->desc);
-		_printTocHeader(AH, te, ropt, isData);
-		ahprintf(AH, "ALTER %s OWNER TO %s;\n\n", temp, fmtId(te->owner));
-		free (temp);
-	} 
-	else if (ownerAndACL && strcmp(te->desc, "ACL") == 0)
+	if (acl_pass && strcmp(te->desc, "ACL") == 0)
 	{
 		_printTocHeader(AH, te, ropt, isData);
 		ahprintf(AH, "%s\n\n", te->defn);
 	}
-	else if (!ownerAndACL && strlen(te->defn) > 0)
+	else if (!acl_pass && strlen(te->defn) > 0)
 	{
 		_printTocHeader(AH, te, ropt, isData);
 
@@ -2388,6 +2369,25 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isDat
 			else
 			{
 				ahprintf(AH, "%s\n\n", te->defn);
+
+				if (!ropt->noOwner && !ropt->use_setsessauth && strlen(te->owner) > 0 && strlen(te->dropStmt) > 0 && (
+										strcmp(te->desc, "AGGREGATE") == 0 ||
+										strcmp(te->desc, "CONVERSION") == 0 ||
+										strcmp(te->desc, "DOMAIN") == 0 ||
+										strcmp(te->desc, "FUNCTION") == 0 ||
+										strcmp(te->desc, "OPERATOR") == 0 ||
+										strcmp(te->desc, "OPERATOR CLASS") == 0 ||
+										strcmp(te->desc, "TABLE") == 0 ||
+										strcmp(te->desc, "TYPE") == 0 ||
+										strcmp(te->desc, "VIEW") == 0 ||
+										strcmp(te->desc, "SEQUENCE") == 0 ||
+										(strcmp(te->desc, "SCHEMA") == 0 && strcmp(te->tag, "public") == 0) /* Only public schema */
+										))
+				{
+					char *temp = _getObjectFromDropStmt(te->dropStmt, te->desc);
+					ahprintf(AH, "ALTER %s OWNER TO %s;\n\n", temp, fmtId(te->owner));
+					free (temp);
+				} 
 			}
 		}
 	}

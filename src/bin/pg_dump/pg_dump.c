@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.381 2004/08/02 04:28:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.382 2004/08/04 17:13:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2393,10 +2393,10 @@ getTables(int *numTables)
 						"d.classid = c.tableoid and d.objid = c.oid and "
 						  "d.objsubid = 0 and "
 						"d.refclassid = c.tableoid and d.deptype = 'i') "
-						  "where relkind in ('%c', '%c', '%c') "
+						  "where relkind in ('%c', '%c', '%c', '%c') "
 						  "order by c.oid",
 						  RELKIND_SEQUENCE,
-					   RELKIND_RELATION, RELKIND_SEQUENCE, RELKIND_VIEW);
+					   RELKIND_RELATION, RELKIND_SEQUENCE, RELKIND_VIEW, RELKIND_COMPOSITE_TYPE);
 	}
 	else if (g_fout->remoteVersion >= 70300)
 	{
@@ -2419,10 +2419,10 @@ getTables(int *numTables)
 						"d.classid = c.tableoid and d.objid = c.oid and "
 						  "d.objsubid = 0 and "
 						"d.refclassid = c.tableoid and d.deptype = 'i') "
-						  "where relkind in ('%c', '%c', '%c') "
+						  "where relkind in ('%c', '%c', '%c', '%c') "
 						  "order by c.oid",
 						  RELKIND_SEQUENCE,
-					   RELKIND_RELATION, RELKIND_SEQUENCE, RELKIND_VIEW);
+					   RELKIND_RELATION, RELKIND_SEQUENCE, RELKIND_VIEW, RELKIND_COMPOSITE_TYPE);
 	}
 	else if (g_fout->remoteVersion >= 70200)
 	{
@@ -4063,7 +4063,7 @@ dumpComment(Archive *fout, const char *target,
 /*
  * dumpTableComment --
  *
- * As above, but dump comments for both the specified table (or view)
+ * As above, but dump comments for both the specified table, view or composite type
  * and its columns.
  */
 static void
@@ -4864,6 +4864,7 @@ dumpCompositeType(Archive *fout, TypeInfo *tinfo)
 	int			i_attname;
 	int			i_atttypdefn;
 	int			i;
+	TableInfo		*tableInfo;
 
 	/* Set proper schema search path so type references list correctly */
 	selectSourceSchema(tinfo->dobj.namespace->dobj.name);
@@ -4928,7 +4929,6 @@ dumpCompositeType(Archive *fout, TypeInfo *tinfo)
 				 tinfo->dobj.dependencies, tinfo->dobj.nDeps,
 				 NULL, NULL);
 
-
 	/* Dump Type Comments */
 	resetPQExpBuffer(q);
 
@@ -4937,7 +4937,13 @@ dumpCompositeType(Archive *fout, TypeInfo *tinfo)
 				tinfo->dobj.namespace->dobj.name, tinfo->usename,
 				tinfo->dobj.catId, 0, tinfo->dobj.dumpId);
 
+	/* Dump column comments */
+	tableInfo = findTableByOid(tinfo->typrelid);
+	if (tableInfo)
+		dumpTableComment(fout, tableInfo, "TABLE");
+
 	PQclear(res);
+
 	destroyPQExpBuffer(q);
 	destroyPQExpBuffer(delq);
 	destroyPQExpBuffer(query);
@@ -6432,7 +6438,7 @@ dumpTable(Archive *fout, TableInfo *tbinfo)
 	{
 		if (tbinfo->relkind == RELKIND_SEQUENCE)
 			dumpSequence(fout, tbinfo);
-		else if (!dataOnly)
+		else if (!dataOnly && tbinfo->relkind != RELKIND_COMPOSITE_TYPE)
 			dumpTableSchema(fout, tbinfo);
 
 		/* Handle the ACL here */
