@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.14 2003/11/29 19:52:06 pgsql Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.15 2004/02/11 22:55:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,6 +33,7 @@
 #include <unistd.h>
 #include <time.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <fcntl.h>
 #include <dirent.h>
 #include <locale.h>
@@ -289,7 +290,7 @@ main(int argc, char *argv[])
  * Try to read the existing pg_control file.
  *
  * This routine is also responsible for updating old pg_control versions
- * to the current format.
+ * to the current format.  (Currently we don't do anything of the sort.)
  */
 static bool
 ReadControlFile(void)
@@ -366,6 +367,8 @@ ReadControlFile(void)
 static void
 GuessControlValues(void)
 {
+	uint64		sysidentifier;
+	struct timeval tv;
 	char	   *localeptr;
 
 	/*
@@ -377,8 +380,18 @@ GuessControlValues(void)
 	ControlFile.pg_control_version = PG_CONTROL_VERSION;
 	ControlFile.catalog_version_no = CATALOG_VERSION_NO;
 
+	/*
+	 * Create a new unique installation identifier, since we can no longer
+	 * use any old XLOG records.  See notes in xlog.c about the algorithm.
+	 */
+	gettimeofday(&tv, NULL);
+	sysidentifier = ((uint64) tv.tv_sec) << 32;
+	sysidentifier |= (uint32) (tv.tv_sec | tv.tv_usec);
+
+	ControlFile.system_identifier = sysidentifier;
+
 	ControlFile.checkPointCopy.redo.xlogid = 0;
-	ControlFile.checkPointCopy.redo.xrecoff = SizeOfXLogPHD;
+	ControlFile.checkPointCopy.redo.xrecoff = SizeOfXLogPHD + SizeOfXLogRecord + SizeOfXLogFHD;
 	ControlFile.checkPointCopy.undo = ControlFile.checkPointCopy.redo;
 	ControlFile.checkPointCopy.ThisStartUpID = 0;
 	ControlFile.checkPointCopy.nextXid = (TransactionId) 514;	/* XXX */
@@ -393,6 +406,7 @@ GuessControlValues(void)
 
 	ControlFile.blcksz = BLCKSZ;
 	ControlFile.relseg_size = RELSEG_SIZE;
+	ControlFile.xlog_seg_size = XLOG_SEG_SIZE;
 	ControlFile.nameDataLen = NAMEDATALEN;
 	ControlFile.funcMaxArgs = FUNC_MAX_ARGS;
 #ifdef HAVE_INT64_TIMESTAMP
@@ -433,13 +447,23 @@ GuessControlValues(void)
 static void
 PrintControlValues(bool guessed)
 {
+	char		sysident_str[32];
+
 	if (guessed)
 		printf(_("Guessed pg_control values:\n\n"));
 	else
 		printf(_("pg_control values:\n\n"));
 
+	/*
+	 * Format system_identifier separately to keep platform-dependent format
+	 * code out of the translatable message string.
+	 */
+	snprintf(sysident_str, sizeof(sysident_str), UINT64_FORMAT,
+			 ControlFile.system_identifier);
+
 	printf(_("pg_control version number:            %u\n"), ControlFile.pg_control_version);
 	printf(_("Catalog version number:               %u\n"), ControlFile.catalog_version_no);
+	printf(_("Database system identifier:           %s\n"), sysident_str);
 	printf(_("Current log file ID:                  %u\n"), ControlFile.logId);
 	printf(_("Next log file segment:                %u\n"), ControlFile.logSeg);
 	printf(_("Latest checkpoint's StartUpID:        %u\n"), ControlFile.checkPointCopy.ThisStartUpID);
@@ -472,12 +496,20 @@ RewriteControlFile(void)
 	 */
 	newXlogId = ControlFile.logId;
 	newXlogSeg = ControlFile.logSeg;
+
+	/* adjust in case we are changing segment size */
+	newXlogSeg *= ControlFile.xlog_seg_size;
+	newXlogSeg = (newXlogSeg + XLogSegSize-1) / XLogSegSize;
+
 	/* be sure we wrap around correctly at end of a logfile */
 	NextLogSeg(newXlogId, newXlogSeg);
 
+	/* Now we can force the recorded xlog seg size to the right thing. */
+	ControlFile.xlog_seg_size = XLogSegSize;
+
 	ControlFile.checkPointCopy.redo.xlogid = newXlogId;
 	ControlFile.checkPointCopy.redo.xrecoff =
-		newXlogSeg * XLogSegSize + SizeOfXLogPHD;
+		newXlogSeg * XLogSegSize + SizeOfXLogPHD + SizeOfXLogRecord + SizeOfXLogFHD;
 	ControlFile.checkPointCopy.undo = ControlFile.checkPointCopy.redo;
 	ControlFile.checkPointCopy.time = time(NULL);
 
@@ -600,6 +632,7 @@ WriteEmptyXLOG(void)
 	char	   *buffer;
 	XLogPageHeader page;
 	XLogRecord *record;
+	XLogFileHeaderData *fhdr;
 	crc64		crc;
 	char		path[MAXPGPATH];
 	int			fd;
@@ -608,20 +641,47 @@ WriteEmptyXLOG(void)
 	/* Use malloc() to ensure buffer is MAXALIGNED */
 	buffer = (char *) malloc(BLCKSZ);
 	page = (XLogPageHeader) buffer;
-
-	/* Set up the first page with initial record */
 	memset(buffer, 0, BLCKSZ);
+
+	/* Set up the XLOG page header */
 	page->xlp_magic = XLOG_PAGE_MAGIC;
 	page->xlp_info = 0;
 	page->xlp_sui = ControlFile.checkPointCopy.ThisStartUpID;
 	page->xlp_pageaddr.xlogid =
 		ControlFile.checkPointCopy.redo.xlogid;
 	page->xlp_pageaddr.xrecoff =
-		ControlFile.checkPointCopy.redo.xrecoff - SizeOfXLogPHD;
+		ControlFile.checkPointCopy.redo.xrecoff -
+		(SizeOfXLogPHD + SizeOfXLogRecord + SizeOfXLogFHD);
+
+	/* Insert the file header record */
 	record = (XLogRecord *) ((char *) page + SizeOfXLogPHD);
 	record->xl_prev.xlogid = 0;
 	record->xl_prev.xrecoff = 0;
-	record->xl_xact_prev = record->xl_prev;
+	record->xl_xact_prev.xlogid = 0;
+	record->xl_xact_prev.xrecoff = 0;
+	record->xl_xid = InvalidTransactionId;
+	record->xl_len = SizeOfXLogFHD;
+	record->xl_info = XLOG_FILE_HEADER;
+	record->xl_rmid = RM_XLOG_ID;
+	fhdr = (XLogFileHeaderData *) XLogRecGetData(record);
+	fhdr->xlfhd_sysid = ControlFile.system_identifier;
+	fhdr->xlfhd_xlogid = page->xlp_pageaddr.xlogid;
+	fhdr->xlfhd_segno = page->xlp_pageaddr.xrecoff / XLogSegSize;
+	fhdr->xlfhd_seg_size = XLogSegSize;
+
+	INIT_CRC64(crc);
+	COMP_CRC64(crc, fhdr, SizeOfXLogFHD);
+	COMP_CRC64(crc, (char *) record + sizeof(crc64),
+			   SizeOfXLogRecord - sizeof(crc64));
+	FIN_CRC64(crc);
+	record->xl_crc = crc;
+
+	/* Insert the initial checkpoint record */
+	record = (XLogRecord *) ((char *) page + SizeOfXLogPHD + SizeOfXLogRecord + SizeOfXLogFHD);
+	record->xl_prev.xlogid = page->xlp_pageaddr.xlogid;
+	record->xl_prev.xrecoff = page->xlp_pageaddr.xrecoff + SizeOfXLogPHD;
+	record->xl_xact_prev.xlogid = 0;
+	record->xl_xact_prev.xrecoff = 0;
 	record->xl_xid = InvalidTransactionId;
 	record->xl_len = sizeof(CheckPoint);
 	record->xl_info = XLOG_CHECKPOINT_SHUTDOWN;

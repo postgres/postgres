@@ -6,7 +6,7 @@
  * copyright (c) Oliver Elphick <olly@lfix.co.uk>, 2001;
  * licence: BSD
  *
- * $PostgreSQL: pgsql/src/bin/pg_controldata/pg_controldata.c,v 1.12 2003/11/29 19:52:04 pgsql Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_controldata/pg_controldata.c,v 1.13 2004/02/11 22:55:25 tgl Exp $
  */
 #include "postgres.h"
 
@@ -73,6 +73,7 @@ main(int argc, char *argv[])
 	crc64		crc;
 	char		pgctime_str[32];
 	char		ckpttime_str[32];
+	char		sysident_str[32];
 	char	   *strftime_fmt = "%c";
 	char	   *progname;
 
@@ -146,9 +147,16 @@ main(int argc, char *argv[])
 			 localtime(&(ControlFile.time)));
 	strftime(ckpttime_str, sizeof(ckpttime_str), strftime_fmt,
 			 localtime(&(ControlFile.checkPointCopy.time)));
+	/*
+	 * Format system_identifier separately to keep platform-dependent format
+	 * code out of the translatable message string.
+	 */
+	snprintf(sysident_str, sizeof(sysident_str), UINT64_FORMAT,
+			 ControlFile.system_identifier);
 
 	printf(_("pg_control version number:            %u\n"), ControlFile.pg_control_version);
 	printf(_("Catalog version number:               %u\n"), ControlFile.catalog_version_no);
+	printf(_("Database system identifier:           %s\n"), sysident_str);
 	printf(_("Database cluster state:               %s\n"), dbState(ControlFile.state));
 	printf(_("pg_control last modified:             %s\n"), pgctime_str);
 	printf(_("Current log file ID:                  %u\n"), ControlFile.logId);
@@ -167,6 +175,7 @@ main(int argc, char *argv[])
 	printf(_("Time of latest checkpoint:            %s\n"), ckpttime_str);
 	printf(_("Database block size:                  %u\n"), ControlFile.blcksz);
 	printf(_("Blocks per segment of large relation: %u\n"), ControlFile.relseg_size);
+	printf(_("Bytes per WAL segment:                %u\n"), ControlFile.xlog_seg_size);
 	printf(_("Maximum length of identifiers:        %u\n"), ControlFile.nameDataLen);
 	printf(_("Maximum number of function arguments: %u\n"), ControlFile.funcMaxArgs);
 	printf(_("Date/time type storage:               %s\n"),

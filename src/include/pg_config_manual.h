@@ -6,7 +6,7 @@
  * for developers.	If you edit any of these, be sure to do a *full*
  * rebuild (and an initdb if noted).
  *
- * $PostgreSQL: pgsql/src/include/pg_config_manual.h,v 1.9 2004/01/06 17:26:23 neilc Exp $
+ * $PostgreSQL: pgsql/src/include/pg_config_manual.h,v 1.10 2004/02/11 22:55:26 tgl Exp $
  *------------------------------------------------------------------------
  */
 
@@ -42,6 +42,14 @@
  * Changing RELSEG_SIZE requires an initdb.
  */
 #define RELSEG_SIZE (0x40000000 / BLCKSZ)
+
+/*
+ * XLOG_SEG_SIZE is the size of a single WAL file.  This must be a power of 2
+ * and larger than BLCKSZ (preferably, a great deal larger than BLCKSZ).
+ *
+ * Changing XLOG_SEG_SIZE requires an initdb.
+ */
+#define XLOG_SEG_SIZE	(16*1024*1024)
 
 /*
  * Maximum number of columns in an index and maximum number of

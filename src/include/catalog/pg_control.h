@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_control.h,v 1.12 2003/11/29 22:40:58 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_control.h,v 1.13 2004/02/11 22:55:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,7 @@
 
 
 /* Version identifier for this pg_control format */
-#define PG_CONTROL_VERSION	72
+#define PG_CONTROL_VERSION	73
 
 /*
  * Body of CheckPoint XLOG records.  This is declared here because we keep
@@ -46,6 +46,8 @@ typedef struct CheckPoint
 #define XLOG_CHECKPOINT_SHUTDOWN		0x00
 #define XLOG_CHECKPOINT_ONLINE			0x10
 #define XLOG_NEXTOID					0x30
+#define XLOG_FILE_HEADER				0x40
+#define XLOG_WASTED_SPACE				0x50
 
 
 /* System status indicator */
@@ -89,6 +91,12 @@ typedef struct ControlFileData
 	uint32		catalog_version_no;		/* see catversion.h */
 
 	/*
+	 * Unique system identifier --- to ensure we match up xlog files with
+	 * the installation that produced them.
+	 */
+	uint64		system_identifier;
+
+	/*
 	 * System status data
 	 */
 	DBState		state;			/* see enum above */
@@ -106,6 +114,8 @@ typedef struct ControlFileData
 	 */
 	uint32		blcksz;			/* block size for this DB */
 	uint32		relseg_size;	/* blocks per segment of large relation */
+
+	uint32		xlog_seg_size;	/* size of each WAL segment */
 
 	uint32		nameDataLen;	/* catalog name field width */
 	uint32		funcMaxArgs;	/* maximum number of function arguments */

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.69 2004/02/10 01:55:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.70 2004/02/11 22:55:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,6 +92,29 @@ typedef struct PendingRelDelete
 } PendingRelDelete;
 
 static PendingRelDelete *pendingDeletes = NULL; /* head of linked list */
+
+
+/*
+ * Declarations for smgr-related XLOG records
+ *
+ * Note: we log file creation and truncation here, but logging of deletion
+ * actions is handled by xact.c, because it is part of transaction commit.
+ */
+
+/* XLOG gives us high 4 bits */
+#define XLOG_SMGR_CREATE	0x10
+#define XLOG_SMGR_TRUNCATE	0x20
+
+typedef struct xl_smgr_create
+{
+	RelFileNode		rnode;
+} xl_smgr_create;
+
+typedef struct xl_smgr_truncate
+{
+	BlockNumber		blkno;
+	RelFileNode		rnode;
+} xl_smgr_truncate;
 
 
 /* local function prototypes */
@@ -274,6 +297,9 @@ smgrclosenode(RelFileNode rnode)
 void
 smgrcreate(SMgrRelation reln, bool isTemp, bool isRedo)
 {
+	XLogRecPtr		lsn;
+	XLogRecData		rdata;
+	xl_smgr_create	xlrec;
 	PendingRelDelete *pending;
 
 	if (! (*(smgrsw[reln->smgr_which].smgr_create)) (reln, isRedo))
@@ -285,6 +311,20 @@ smgrcreate(SMgrRelation reln, bool isTemp, bool isRedo)
 
 	if (isRedo)
 		return;
+
+	/*
+	 * Make a non-transactional XLOG entry showing the file creation.  It's
+	 * non-transactional because we should replay it whether the transaction
+	 * commits or not; if not, the file will be dropped at abort time.
+	 */
+	xlrec.rnode = reln->smgr_rnode;
+
+	rdata.buffer = InvalidBuffer;
+	rdata.data = (char *) &xlrec;
+	rdata.len = sizeof(xlrec);
+	rdata.next = NULL;
+
+	lsn = XLogInsert(RM_SMGR_ID, XLOG_SMGR_CREATE | XLOG_NO_TRAN, &rdata);
 
 	/* Add the relation to the list of stuff to delete at abort */
 	pending = (PendingRelDelete *)
@@ -488,6 +528,9 @@ BlockNumber
 smgrtruncate(SMgrRelation reln, BlockNumber nblocks)
 {
 	BlockNumber newblks;
+	XLogRecPtr		lsn;
+	XLogRecData		rdata;
+	xl_smgr_truncate xlrec;
 
 	/*
 	 * Tell the free space map to forget anything it may have stored
@@ -496,6 +539,7 @@ smgrtruncate(SMgrRelation reln, BlockNumber nblocks)
 	 */
 	FreeSpaceMapTruncateRel(&reln->smgr_rnode, nblocks);
 
+	/* Do the truncation */
 	newblks = (*(smgrsw[reln->smgr_which].smgr_truncate)) (reln, nblocks);
 	if (newblks == InvalidBlockNumber)
 		ereport(ERROR,
@@ -504,6 +548,21 @@ smgrtruncate(SMgrRelation reln, BlockNumber nblocks)
 						reln->smgr_rnode.tblNode,
 						reln->smgr_rnode.relNode,
 						nblocks)));
+
+	/*
+	 * Make a non-transactional XLOG entry showing the file truncation.  It's
+	 * non-transactional because we should replay it whether the transaction
+	 * commits or not; the underlying file change is certainly not reversible.
+	 */
+	xlrec.blkno = newblks;
+	xlrec.rnode = reln->smgr_rnode;
+
+	rdata.buffer = InvalidBuffer;
+	rdata.data = (char *) &xlrec;
+	rdata.len = sizeof(xlrec);
+	rdata.next = NULL;
+
+	lsn = XLogInsert(RM_SMGR_ID, XLOG_SMGR_TRUNCATE | XLOG_NO_TRAN, &rdata);
 
 	return newblks;
 }
@@ -526,6 +585,41 @@ smgrDoPendingDeletes(bool isCommit)
 								 false);
 		pfree(pending);
 	}
+}
+
+/*
+ * smgrGetPendingDeletes() -- Get a list of relations to be deleted.
+ *
+ * The return value is the number of relations scheduled for termination.
+ * *ptr is set to point to a freshly-palloc'd array of RelFileNodes.
+ * If there are no relations to be deleted, *ptr is set to NULL.
+ */
+int
+smgrGetPendingDeletes(bool forCommit, RelFileNode **ptr)
+{
+	int			nrels;
+	RelFileNode *rptr;
+	PendingRelDelete *pending;
+
+	nrels = 0;
+	for (pending = pendingDeletes; pending != NULL; pending = pending->next)
+	{
+		if (pending->atCommit == forCommit)
+			nrels++;
+	}
+	if (nrels == 0)
+	{
+		*ptr = NULL;
+		return 0;
+	}
+	rptr = (RelFileNode *) palloc(nrels * sizeof(RelFileNode));
+	*ptr = rptr;
+	for (pending = pendingDeletes; pending != NULL; pending = pending->next)
+	{
+		if (pending->atCommit == forCommit)
+			*rptr++ = pending->relnode;
+	}
+	return nrels;
 }
 
 /*
@@ -595,14 +689,75 @@ smgrsync(void)
 void
 smgr_redo(XLogRecPtr lsn, XLogRecord *record)
 {
+	uint8		info = record->xl_info & ~XLR_INFO_MASK;
+
+	if (info == XLOG_SMGR_CREATE)
+	{
+		xl_smgr_create *xlrec = (xl_smgr_create *) XLogRecGetData(record);
+		SMgrRelation reln;
+
+		reln = smgropen(xlrec->rnode);
+		smgrcreate(reln, false, true);
+	}
+	else if (info == XLOG_SMGR_TRUNCATE)
+	{
+		xl_smgr_truncate *xlrec = (xl_smgr_truncate *) XLogRecGetData(record);
+		SMgrRelation reln;
+		BlockNumber newblks;
+
+		reln = smgropen(xlrec->rnode);
+
+		/* Can't use smgrtruncate because it would try to xlog */
+
+		/*
+		 * Tell the free space map to forget anything it may have stored
+		 * for the about-to-be-deleted blocks.	We want to be sure it
+		 * won't return bogus block numbers later on.
+		 */
+		FreeSpaceMapTruncateRel(&reln->smgr_rnode, xlrec->blkno);
+
+		/* Do the truncation */
+		newblks = (*(smgrsw[reln->smgr_which].smgr_truncate)) (reln,
+															   xlrec->blkno);
+		if (newblks == InvalidBlockNumber)
+			ereport(WARNING,
+					(errcode_for_file_access(),
+					 errmsg("could not truncate relation %u/%u to %u blocks: %m",
+							reln->smgr_rnode.tblNode,
+							reln->smgr_rnode.relNode,
+							xlrec->blkno)));
+	}
+	else
+		elog(PANIC, "smgr_redo: unknown op code %u", info);
 }
 
 void
 smgr_undo(XLogRecPtr lsn, XLogRecord *record)
 {
+	/* Since we have no transactional WAL entries, should never undo */
+	elog(PANIC, "smgr_undo: cannot undo");
 }
 
 void
 smgr_desc(char *buf, uint8 xl_info, char *rec)
 {
+	uint8		info = xl_info & ~XLR_INFO_MASK;
+
+	if (info == XLOG_SMGR_CREATE)
+	{
+		xl_smgr_create *xlrec = (xl_smgr_create *) rec;
+
+		sprintf(buf + strlen(buf), "file create: %u/%u",
+				xlrec->rnode.tblNode, xlrec->rnode.relNode);
+	}
+	else if (info == XLOG_SMGR_TRUNCATE)
+	{
+		xl_smgr_truncate *xlrec = (xl_smgr_truncate *) rec;
+
+		sprintf(buf + strlen(buf), "file truncate: %u/%u to %u blocks",
+				xlrec->rnode.tblNode, xlrec->rnode.relNode,
+				xlrec->blkno);
+	}
+	else
+		strcat(buf, "UNKNOWN");
 }

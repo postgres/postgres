@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xact.h,v 1.60 2004/01/26 22:51:56 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/xact.h,v 1.61 2004/02/11 22:55:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -101,20 +101,23 @@ typedef TransactionStateData *TransactionState;
 typedef struct xl_xact_commit
 {
 	time_t		xtime;
-
-	/*
-	 * Array of RelFileNode-s to drop may follow at the end of struct
-	 */
+	/* Array of RelFileNode(s) to drop at commit */
+	/* The XLOG record length determines how many there are */
+	RelFileNode	xnodes[1];		/* VARIABLE LENGTH ARRAY */
 } xl_xact_commit;
 
-#define SizeOfXactCommit	((offsetof(xl_xact_commit, xtime) + sizeof(time_t)))
+#define MinSizeOfXactCommit	offsetof(xl_xact_commit, xnodes)
 
 typedef struct xl_xact_abort
 {
 	time_t		xtime;
+	/* Array of RelFileNode(s) to drop at abort */
+	/* The XLOG record length determines how many there are */
+	RelFileNode	xnodes[1];		/* VARIABLE LENGTH ARRAY */
 } xl_xact_abort;
 
-#define SizeOfXactAbort ((offsetof(xl_xact_abort, xtime) + sizeof(time_t)))
+#define MinSizeOfXactAbort offsetof(xl_xact_abort, xnodes)
+
 
 /* ----------------
  *		extern definitions

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xlog.h,v 1.48 2004/01/19 19:04:40 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/xlog.h,v 1.49 2004/02/11 22:55:25 tgl Exp $
  */
 #ifndef XLOG_H
 #define XLOG_H
@@ -131,13 +131,33 @@ typedef XLogPageHeaderData *XLogPageHeader;
 #define XLP_ALL_FLAGS				0x0001
 
 /*
- * We break each logical log file (xlogid value) into 16Mb segments.
- * One possible segment at the end of each log file is wasted, to ensure
- * that we don't have problems representing last-byte-position-plus-1.
+ * We break each logical log file (xlogid value) into segment files of the
+ * size indicated by XLOG_SEG_SIZE.  One possible segment at the end of each
+ * log file is wasted, to ensure that we don't have problems representing
+ * last-byte-position-plus-1.
  */
-#define XLogSegSize		((uint32) (16*1024*1024))
+#define XLogSegSize		((uint32) XLOG_SEG_SIZE)
 #define XLogSegsPerFile (((uint32) 0xffffffff) / XLogSegSize)
 #define XLogFileSize	(XLogSegsPerFile * XLogSegSize)
+
+/*
+ * The first XLOG record in each segment file is always an XLOG_FILE_HEADER
+ * record.  This record does nothing as far as XLOG replay is concerned,
+ * but it is useful for verifying that we haven't mixed up XLOG segment files.
+ * The body of an XLOG_FILE_HEADER record is a struct XLogFileHeaderData.
+ * Note: the xlogid/segno fields are really redundant with xlp_pageaddr in
+ * the page header, but we store them anyway as an extra check.
+ */
+typedef struct XLogFileHeaderData
+{
+	uint64		xlfhd_sysid;	/* system identifier from pg_control */
+	uint32		xlfhd_xlogid;	/* logical log file # */
+	uint32		xlfhd_segno;	/* segment number within logical log file */
+	uint32		xlfhd_seg_size;	/* just as a cross-check */
+} XLogFileHeaderData;
+
+#define SizeOfXLogFHD	MAXALIGN(sizeof(XLogFileHeaderData))
+
 
 /*
  * Method table for resource managers.

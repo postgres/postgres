@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.163 2004/02/10 03:42:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.164 2004/02/11 22:55:24 tgl Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -519,19 +519,32 @@ RecordTransactionCommit(void)
 		if (MyLastRecPtr.xrecoff != 0)
 		{
 			/* Need to emit a commit record */
-			XLogRecData rdata;
+			XLogRecData rdata[2];
 			xl_xact_commit xlrec;
+			int			nrels;
+			RelFileNode *rptr;
+
+			nrels = smgrGetPendingDeletes(true, &rptr);
 
 			xlrec.xtime = time(NULL);
-			rdata.buffer = InvalidBuffer;
-			rdata.data = (char *) (&xlrec);
-			rdata.len = SizeOfXactCommit;
-			rdata.next = NULL;
+			rdata[0].buffer = InvalidBuffer;
+			rdata[0].data = (char *) (&xlrec);
+			rdata[0].len = MinSizeOfXactCommit;
+			if (nrels > 0)
+			{
+				rdata[0].next = &(rdata[1]);
+				rdata[1].buffer = InvalidBuffer;
+				rdata[1].data = (char *) rptr;
+				rdata[1].len = nrels * sizeof(RelFileNode);
+				rdata[1].next = NULL;
+			}
+			else
+				rdata[0].next = NULL;
 
-			/*
-			 * XXX SHOULD SAVE ARRAY OF RELFILENODE-s TO DROP
-			 */
-			recptr = XLogInsert(RM_XACT_ID, XLOG_XACT_COMMIT, &rdata);
+			recptr = XLogInsert(RM_XACT_ID, XLOG_XACT_COMMIT, rdata);
+
+			if (rptr)
+				pfree(rptr);
 		}
 		else
 		{
@@ -689,26 +702,42 @@ RecordTransactionAbort(void)
 		 * We only need to log the abort in XLOG if the transaction made
 		 * any transaction-controlled XLOG entries.  (Otherwise, its XID
 		 * appears nowhere in permanent storage, so no one else will ever
-		 * care if it committed.)  We do not flush XLOG to disk in any
-		 * case, since the default assumption after a crash would be that
-		 * we aborted, anyway.
+		 * care if it committed.)  We do not flush XLOG to disk unless
+		 * deleting files, since the default assumption after a crash
+		 * would be that we aborted, anyway.
 		 */
 		if (MyLastRecPtr.xrecoff != 0)
 		{
-			XLogRecData rdata;
+			XLogRecData rdata[2];
 			xl_xact_abort xlrec;
+			int			nrels;
+			RelFileNode *rptr;
 			XLogRecPtr	recptr;
 
-			xlrec.xtime = time(NULL);
-			rdata.buffer = InvalidBuffer;
-			rdata.data = (char *) (&xlrec);
-			rdata.len = SizeOfXactAbort;
-			rdata.next = NULL;
+			nrels = smgrGetPendingDeletes(false, &rptr);
 
-			/*
-			 * SHOULD SAVE ARRAY OF RELFILENODE-s TO DROP
-			 */
-			recptr = XLogInsert(RM_XACT_ID, XLOG_XACT_ABORT, &rdata);
+			xlrec.xtime = time(NULL);
+			rdata[0].buffer = InvalidBuffer;
+			rdata[0].data = (char *) (&xlrec);
+			rdata[0].len = MinSizeOfXactAbort;
+			if (nrels > 0)
+			{
+				rdata[0].next = &(rdata[1]);
+				rdata[1].buffer = InvalidBuffer;
+				rdata[1].data = (char *) rptr;
+				rdata[1].len = nrels * sizeof(RelFileNode);
+				rdata[1].next = NULL;
+			}
+			else
+				rdata[0].next = NULL;
+
+			recptr = XLogInsert(RM_XACT_ID, XLOG_XACT_ABORT, rdata);
+
+			if (nrels > 0)
+				XLogFlush(recptr);
+
+			if (rptr)
+				pfree(rptr);
 		}
 
 		/*
@@ -1774,13 +1803,33 @@ xact_redo(XLogRecPtr lsn, XLogRecord *record)
 
 	if (info == XLOG_XACT_COMMIT)
 	{
+		xl_xact_commit *xlrec = (xl_xact_commit *) XLogRecGetData(record);
+		int		nfiles;
+		int		i;
+
 		TransactionIdCommit(record->xl_xid);
-		/* SHOULD REMOVE FILES OF ALL DROPPED RELATIONS */
+		/* Make sure files supposed to be dropped are dropped */
+		nfiles = (record->xl_len - MinSizeOfXactCommit) / sizeof(RelFileNode);
+		for (i = 0; i < nfiles; i++)
+		{
+			XLogCloseRelation(xlrec->xnodes[i]);
+			smgrdounlink(smgropen(xlrec->xnodes[i]), false, true);
+		}
 	}
 	else if (info == XLOG_XACT_ABORT)
 	{
+		xl_xact_abort *xlrec = (xl_xact_abort *) XLogRecGetData(record);
+		int		nfiles;
+		int		i;
+
 		TransactionIdAbort(record->xl_xid);
-		/* SHOULD REMOVE FILES OF ALL FAILED-TO-BE-CREATED RELATIONS */
+		/* Make sure files supposed to be dropped are dropped */
+		nfiles = (record->xl_len - MinSizeOfXactAbort) / sizeof(RelFileNode);
+		for (i = 0; i < nfiles; i++)
+		{
+			XLogCloseRelation(xlrec->xnodes[i]);
+			smgrdounlink(smgropen(xlrec->xnodes[i]), false, true);
+		}
 	}
 	else
 		elog(PANIC, "xact_redo: unknown op code %u", info);
@@ -1810,6 +1859,7 @@ xact_desc(char *buf, uint8 xl_info, char *rec)
 		sprintf(buf + strlen(buf), "commit: %04u-%02u-%02u %02u:%02u:%02u",
 				tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,
 				tm->tm_hour, tm->tm_min, tm->tm_sec);
+		/* XXX can't show RelFileNodes for lack of access to record length */
 	}
 	else if (info == XLOG_XACT_ABORT)
 	{
@@ -1819,6 +1869,7 @@ xact_desc(char *buf, uint8 xl_info, char *rec)
 		sprintf(buf + strlen(buf), "abort: %04u-%02u-%02u %02u:%02u:%02u",
 				tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,
 				tm->tm_hour, tm->tm_min, tm->tm_sec);
+		/* XXX can't show RelFileNodes for lack of access to record length */
 	}
 	else
 		strcat(buf, "UNKNOWN");

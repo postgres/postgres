@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/smgr/md.c,v 1.102 2004/02/10 01:55:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/smgr/md.c,v 1.103 2004/02/11 22:55:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,6 +92,9 @@ mdcreate(SMgrRelation reln, bool isRedo)
 {
 	char	   *path;
 	File		fd;
+
+	if (isRedo && reln->md_fd != NULL)
+		return true;			/* created and opened already... */
 
 	Assert(reln->md_fd == NULL);
 
