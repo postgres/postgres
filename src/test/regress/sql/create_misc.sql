@@ -228,3 +228,16 @@ INSERT INTO iportaltest (i, d, p)
 INSERT INTO iportaltest (i, d, p)
    VALUES (2, 89.05, '(4.0,2.0),(3.0,1.0)'::polygon);
 
+
+---
+--- test creation of SERIAL column
+---
+
+CREATE TABLE serialTest (f1 text, f2 serial);
+
+INSERT INTO serialTest VALUES ('foo');
+INSERT INTO serialTest VALUES ('bar');
+INSERT INTO serialTest VALUES ('force', 100);
+INSERT INTO serialTest VALUES ('wrong', NULL);
+
+SELECT * FROM serialTest;

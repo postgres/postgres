@@ -49,8 +49,9 @@ SELECT relname, relhasindex
  pg_trigger          | t
  pg_type             | t
  road                | t
+ serialtest          | t
  shighway            | t
  tenk1               | t
  tenk2               | t
-(43 rows)
+(44 rows)
 
