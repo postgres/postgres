@@ -4,7 +4,7 @@
  * Support for grand unified configuration scheme, including SET
  * command, configuration file, and command line options.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.28 2001/01/24 18:37:31 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.29 2001/02/07 23:36:22 vadim Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -41,6 +41,8 @@ extern int XLOGbuffers;
 extern int XLOGfiles;
 extern int XLOG_DEBUG;
 extern int CommitDelay;
+
+extern bool FixBTree;
 
 #ifdef ENABLE_SYSLOG
 extern char *Syslog_facility;
@@ -217,6 +219,8 @@ ConfigureNamesBool[] =
 	{"show_source_port",        PGC_SIGHUP,     &ShowPortNumber,        false},
 
 	{"sql_inheritance",         PGC_USERSET,    &SQL_inheritance,       true},
+
+	{"fixbtree",                PGC_POSTMASTER, &FixBTree,              true},
 
 	{NULL, 0, NULL, false}
 };
