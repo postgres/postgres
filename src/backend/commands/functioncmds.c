@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/functioncmds.c,v 1.16 2002/08/05 03:29:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/functioncmds.c,v 1.17 2002/08/11 17:44:12 petere Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -621,6 +621,12 @@ CreateCast(CreateCastStmt *stmt)
 	if (sourcetypeid == targettypeid)
 		elog(ERROR, "source data type and target data type are the same");
 
+	if (!pg_type_ownercheck(sourcetypeid, GetUserId())
+		&& !pg_type_ownercheck(targettypeid, GetUserId()))
+		elog(ERROR, "must be owner of type %s or type %s",
+			 TypeNameToString(stmt->sourcetype),
+			 TypeNameToString(stmt->targettype));
+
 	relation = heap_openr(CastRelationName, RowExclusiveLock);
 
 	tuple = SearchSysCache(CASTSOURCETARGET,
@@ -638,10 +644,6 @@ CreateCast(CreateCastStmt *stmt)
 										 stmt->func->funcargs,
 										 false,
 										 "CreateCast");
-
-		if (!pg_proc_ownercheck(funcid, GetUserId()))
-			aclcheck_error(ACLCHECK_NOT_OWNER,
-						   NameListToString(stmt->func->funcname));
 
 		tuple = SearchSysCache(PROCOID, ObjectIdGetDatum(funcid), 0, 0, 0);
 		if (!HeapTupleIsValid(tuple))
@@ -666,12 +668,6 @@ CreateCast(CreateCastStmt *stmt)
 	else
 	{
 		/* indicates binary compatibility */
-		if (!pg_type_ownercheck(sourcetypeid, GetUserId()))
-			aclcheck_error(ACLCHECK_NOT_OWNER,
-						   TypeNameToString(stmt->sourcetype));
-		if (!pg_type_ownercheck(targettypeid, GetUserId()))
-			aclcheck_error(ACLCHECK_NOT_OWNER,
-						   TypeNameToString(stmt->targettype));
 		funcid = InvalidOid;
 	}
 
@@ -730,7 +726,6 @@ DropCast(DropCastStmt *stmt)
 	Oid			sourcetypeid;
 	Oid			targettypeid;
 	HeapTuple	tuple;
-	Form_pg_cast caststruct;
 	ObjectAddress object;
 
 	sourcetypeid = LookupTypeName(stmt->sourcetype);
@@ -753,22 +748,11 @@ DropCast(DropCastStmt *stmt)
 			 TypeNameToString(stmt->targettype));
 
 	/* Permission check */
-	caststruct = (Form_pg_cast) GETSTRUCT(tuple);
-	if (caststruct->castfunc != InvalidOid)
-	{
-		if (!pg_proc_ownercheck(caststruct->castfunc, GetUserId()))
-			aclcheck_error(ACLCHECK_NOT_OWNER,
-						   get_func_name(caststruct->castfunc));
-	}
-	else
-	{
-		if (!pg_type_ownercheck(sourcetypeid, GetUserId()))
-			aclcheck_error(ACLCHECK_NOT_OWNER,
-						   format_type_be(sourcetypeid));
-		if (!pg_type_ownercheck(targettypeid, GetUserId()))
-			aclcheck_error(ACLCHECK_NOT_OWNER,
-						   format_type_be(targettypeid));
-	}
+	if (!pg_type_ownercheck(sourcetypeid, GetUserId())
+		&& !pg_type_ownercheck(targettypeid, GetUserId()))
+		elog(ERROR, "must be owner of type %s or type %s",
+			 TypeNameToString(stmt->sourcetype),
+			 TypeNameToString(stmt->targettype));
 
 	/*
 	 * Do the deletion

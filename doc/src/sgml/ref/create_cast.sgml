@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/create_cast.sgml,v 1.1 2002/07/18 23:11:27 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/create_cast.sgml,v 1.2 2002/08/11 17:44:12 petere Exp $ -->
 
 <refentry id="SQL-CREATECAST">
  <refmeta>
@@ -81,9 +81,8 @@ INSERT INTO foo(f1) VALUES(42);
   </para>
 
   <para>
-   To be able to create a cast, you must own the underlying function.
-   To be able to create a binary compatible cast, you must own both
-   the source and the target data type.
+   To be able to create a cast, you must own the source or the target
+   data type.
   </para>
 
    <variablelist>
@@ -152,11 +151,6 @@ INSERT INTO foo(f1) VALUES(42);
 
   <para>
    Use <command>DROP CAST</command> to remove user-defined casts.
-  </para>
-
-  <para>
-   The privileges required to create a cast may be changed in a future
-   release.
   </para>
 
   <para>
