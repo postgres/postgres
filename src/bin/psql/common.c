@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.57 2003/03/18 22:15:44 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.58 2003/03/20 04:49:18 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -252,8 +252,8 @@ PSQLexec(const char *query, bool ignore_command_ok)
 			}
 			PQclear(res);
 			res = newres;
-			if (rstatus == PGRES_COPY_IN ||
-				rstatus == PGRES_COPY_OUT)
+			if (rstatus != PGRES_COPY_IN &&
+				rstatus != PGRES_COPY_OUT)
 				break;
 		}
 	}
