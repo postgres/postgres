@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.43 2003/08/08 21:41:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.44 2003/09/09 23:22:19 petere Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -594,8 +594,8 @@ DefineDomain(CreateDomainStmt *stmt)
 		/* Check for unsupported constraint types */
 		if (IsA(newConstraint, FkConstraint))
 			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			errmsg("FOREIGN KEY constraints not supported for domains")));
+					(errcode(ERRCODE_SYNTAX_ERROR),
+			errmsg("foreign key constraints not possible for domains")));
 
 		/* otherwise it should be a plain Constraint */
 		if (!IsA(newConstraint, Constraint))
@@ -672,14 +672,14 @@ DefineDomain(CreateDomainStmt *stmt)
 				 */
 			case CONSTR_UNIQUE:
 				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				errmsg("UNIQUE constraints not supported for domains")));
+						(errcode(ERRCODE_SYNTAX_ERROR),
+				errmsg("unique constraints not possible for domains")));
 				break;
 
 			case CONSTR_PRIMARY:
 				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("PRIMARY KEY constraints not supported for domains")));
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("primary key constraints not possible for domains")));
 				break;
 
 			case CONSTR_ATTR_DEFERRABLE:
@@ -688,7 +688,7 @@ DefineDomain(CreateDomainStmt *stmt)
 			case CONSTR_ATTR_IMMEDIATE:
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("deferrability constraints not supported for domains")));
+						 errmsg("specifying constraint deferrability not supported for domains")));
 				break;
 
 			default:
@@ -1453,8 +1453,8 @@ AlterDomainAddConstraint(List *names, Node *newConstraint)
 	/* Check for unsupported constraint types */
 	if (IsA(newConstraint, FkConstraint))
 		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-		   errmsg("FOREIGN KEY constraints not supported for domains")));
+				(errcode(ERRCODE_SYNTAX_ERROR),
+		   errmsg("foreign key constraints not possible for domains")));
 
 	/* otherwise it should be a plain Constraint */
 	if (!IsA(newConstraint, Constraint))
@@ -1465,33 +1465,20 @@ AlterDomainAddConstraint(List *names, Node *newConstraint)
 
 	switch (constr->contype)
 	{
-		case CONSTR_DEFAULT:
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("use ALTER DOMAIN .. SET DEFAULT instead")));
-			break;
-
-		case CONSTR_NOTNULL:
-		case CONSTR_NULL:
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("use ALTER DOMAIN .. [ SET | DROP ] NOT NULL instead")));
-			break;
-
 		case CONSTR_CHECK:
 			/* processed below */
 			break;
 
 		case CONSTR_UNIQUE:
 			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				errmsg("UNIQUE constraints not supported for domains")));
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("unique constraints not possible for domains")));
 			break;
 
 		case CONSTR_PRIMARY:
 			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			errmsg("PRIMARY KEY constraints not supported for domains")));
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("primary key constraints not possible for domains")));
 			break;
 
 		case CONSTR_ATTR_DEFERRABLE:
@@ -1500,7 +1487,7 @@ AlterDomainAddConstraint(List *names, Node *newConstraint)
 		case CONSTR_ATTR_IMMEDIATE:
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("deferrability constraints not supported for domains")));
+					 errmsg("specifying constraint deferrability not supported for domains")));
 			break;
 
 		default:

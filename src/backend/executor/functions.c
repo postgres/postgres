@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.71 2003/08/04 02:39:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.72 2003/09/09 23:22:20 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -574,7 +574,7 @@ fmgr_sql(PG_FUNCTION_ARGS)
 				rsi->isDone = ExprEndResult;
 			else
 				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("set-valued function called in context that cannot accept a set")));
 			fcinfo->isnull = true;
 			result = (Datum) 0;
@@ -613,7 +613,7 @@ fmgr_sql(PG_FUNCTION_ARGS)
 			rsi->isDone = ExprMultipleResult;
 		else
 			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("set-valued function called in context that cannot accept a set")));
 
 		/*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.96 2003/08/17 19:58:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.97 2003/09/09 23:22:21 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -846,7 +846,7 @@ makeaclitem(PG_FUNCTION_ARGS)
 	else if (u_grantee != 0 && g_grantee != 0)
 	{
 		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("cannot specify both user and group")));
 	}
 	else if (u_grantee != 0)

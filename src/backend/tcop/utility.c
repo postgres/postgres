@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.205 2003/08/04 02:40:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.206 2003/09/09 23:22:21 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -630,7 +630,7 @@ ProcessUtility(Node *parsetree,
 				 */
 				switch (stmt->subtype)
 				{
-					case 'T':	/* ALTER COLUMN DEFAULT */
+					case 'T':	/* ALTER DOMAIN DEFAULT */
 
 						/*
 						 * Recursively alter column default for table and,
@@ -639,11 +639,11 @@ ProcessUtility(Node *parsetree,
 						AlterDomainDefault(stmt->typename,
 										   stmt->def);
 						break;
-					case 'N':	/* ALTER COLUMN DROP NOT NULL */
+					case 'N':	/* ALTER DOMAIN DROP NOT NULL */
 						AlterDomainNotNull(stmt->typename,
 										   false);
 						break;
-					case 'O':	/* ALTER COLUMN SET NOT NULL */
+					case 'O':	/* ALTER DOMAIN SET NOT NULL */
 						AlterDomainNotNull(stmt->typename,
 										   true);
 						break;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.142 2003/08/17 23:43:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.143 2003/09/09 23:22:20 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -713,7 +713,7 @@ ExecMakeFunctionResult(FuncExprState *fcache,
 				*isDone = ExprEndResult;
 			else
 				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("set-valued function called in context that cannot accept a set")));
 			return (Datum) 0;
 		}
@@ -757,7 +757,7 @@ ExecMakeFunctionResult(FuncExprState *fcache,
 		 */
 		if (isDone == NULL)
 			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("set-valued function called in context that cannot accept a set")));
 
 		/*
@@ -944,7 +944,7 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 		/* We don't allow sets in the arguments of the table function */
 		if (argDone != ExprSingleResult)
 			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("set-valued function called in context that cannot accept a set")));
 
 		/*
@@ -2955,7 +2955,7 @@ ExecTargetList(List *targetlist,
 			/* We have a set-valued expression in the tlist */
 			if (isDone == NULL)
 				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("set-valued function called in context that cannot accept a set")));
 			if (itemIsDone[resind] == ExprMultipleResult)
 			{

@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varbit.c,v 1.34 2003/08/04 02:40:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varbit.c,v 1.35 2003/09/09 23:22:21 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -901,7 +901,7 @@ bitand(PG_FUNCTION_ARGS)
 	bitlen2 = VARBITLEN(arg2);
 	if (bitlen1 != bitlen2)
 		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("cannot AND bit strings of different sizes")));
 
 	len = VARSIZE(arg1);
@@ -942,7 +942,7 @@ bitor(PG_FUNCTION_ARGS)
 	bitlen2 = VARBITLEN(arg2);
 	if (bitlen1 != bitlen2)
 		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("cannot OR bit strings of different sizes")));
 	len = VARSIZE(arg1);
 	result = (VarBit *) palloc(len);
@@ -988,7 +988,7 @@ bitxor(PG_FUNCTION_ARGS)
 	bitlen2 = VARBITLEN(arg2);
 	if (bitlen1 != bitlen2)
 		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("cannot XOR bit strings of different sizes")));
 
 	len = VARSIZE(arg1);

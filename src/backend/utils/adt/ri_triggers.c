@@ -17,7 +17,7 @@
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.55 2003/08/17 19:58:05 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.56 2003/09/09 23:22:21 petere Exp $
  *
  * ----------
  */
@@ -3009,7 +3009,7 @@ ri_ReportViolation(RI_QueryKey *qkey, const char *constrname,
 
 	if (spi_err)
 		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				(errcode(ERRCODE_INTERNAL_ERROR),
 				 errmsg("referential integrity query on \"%s\" from constraint \"%s\" on \"%s\" gave unexpected result",
 						RelationGetRelationName(pk_rel),
 						constrname,

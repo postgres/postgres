@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.58 2003/08/04 02:40:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.59 2003/09/09 23:22:21 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -203,7 +203,7 @@ seteval(PG_FUNCTION_ARGS)
 			rsi->isDone = isDone;
 		else
 			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("set-valued function called in context that "
 							"cannot accept a set")));
 	}

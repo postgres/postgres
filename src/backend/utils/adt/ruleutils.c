@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.152 2003/08/17 19:58:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.153 2003/09/09 23:22:21 petere Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1098,8 +1098,8 @@ pg_get_constraintdef_worker(Oid constraintId, int prettyFlags)
 			}
 		default:
 			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("unsupported constraint type \"%c\"",
+					(errcode(ERRCODE_INTERNAL_ERROR),
+					 errmsg("invalid constraint type \"%c\"",
 							conForm->contype)));
 			break;
 	}
