@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.25 1997/03/09 23:29:15 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.26 1997/03/10 15:08:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1566,7 +1566,7 @@ vc_attrstats(Relation onerel, VacAttrStats *vacattrstats, HeapTuple htup)
 		}
 		stats->initialized = true;
 	    }
-	    if (VacAttrStatsLtGtValid(stats) {
+	    if (VacAttrStatsLtGtValid(stats)) {
 		if (fmgr(stats->cmplt,value,stats->min)) {
 		    vc_bucketcpy(stats->attr, value, &stats->min, &stats->min_len);
 		    stats->min_cnt = 0;
