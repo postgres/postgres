@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/s_lock.c,v 1.10 1997/01/26 20:15:00 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/s_lock.c,v 1.11 1997/02/14 04:16:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,10 +37,6 @@
  *	manual for POWER in any case.
  *
  */
-#ifdef WIN32
-#include <windows.h>
-#endif /* WIN32 */
-
 #include "postgres.h"
 
 #include "storage/ipc.h"
@@ -414,27 +410,3 @@ S_INIT_LOCK(slock_t *lock)
 
 
 #endif /* HAS_TEST_AND_SET */
-
-
-#ifdef WIN32
-void
-S_LOCK(HANDLE *lock)
-{
-      int x = 0;
-      x = x / x;
-}
-
-void
-S_UNLOCK(HANDLE *lock)
-{
-      int x = 0;
-      x = x / x;
-}
-
-void
-S_INIT_LOCK(HANDLE *lock)
-{
-      int x = 0;
-      x = x / x;
-}
-#endif /*WIN32*/

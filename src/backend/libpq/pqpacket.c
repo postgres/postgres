@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/libpq/Attic/pqpacket.c,v 1.3 1997/02/13 08:06:36 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/libpq/Attic/pqpacket.c,v 1.4 1997/02/14 04:15:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,13 +38,9 @@
  */
 #include <stdio.h>
 #include <sys/types.h>
-#ifndef WIN32
 #include <sys/socket.h>
 #include <netdb.h>
 #include <netinet/in.h>
-#else
-#include <winsock.h>
-#endif /*WIN32 */
 #include <fcntl.h>
 #include <errno.h>
 

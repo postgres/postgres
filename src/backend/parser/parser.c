@@ -6,15 +6,13 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.17 1997/01/22 01:43:26 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.18 1997/02/14 04:15:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <string.h>
 #include <stdio.h>
-#ifndef WIN32
 #include <pwd.h>
-#endif /*WIN32 */
 #include <sys/param.h>		/* for MAXPATHLEN */
 
 #include "postgres.h"

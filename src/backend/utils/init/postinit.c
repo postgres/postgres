@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.7 1997/01/08 08:33:07 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.8 1997/02/14 04:18:20 momjian Exp $
  *
  * NOTES
  *      InitPostgres() is the function called from PostgresMain
@@ -135,9 +135,6 @@ InitMyDatabaseId()
     dbfname = (char *) palloc(strlen(DataDir) + strlen("pg_database") + 2);
     sprintf(dbfname, "%s%cpg_database", DataDir, SEP_CHAR);
     fileflags = O_RDONLY;
-#ifdef WIN32
-    fileflags |= _O_BINARY;
-#endif /* WIN32 */
     
     if ((dbfd = open(dbfname, O_RDONLY, 0666)) < 0)
         elog(FATAL, "Cannot open %s", dbfname);
@@ -259,11 +256,7 @@ static void
 DoChdirAndInitDatabaseNameAndPath(char *name) {
     char *reason;  
       /* Failure reason returned by some function.  NULL if no failure */
-#ifndef WIN32
     struct stat	statbuf;
-#else    
-    struct _stat statbuf;
-#endif    
     char errormsg[1000];
 
     if (stat(DataDir, &statbuf) < 0) 

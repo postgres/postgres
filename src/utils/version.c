@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/utils/Attic/version.c,v 1.3 1996/11/26 01:17:56 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/utils/Attic/version.c,v 1.4 1997/02/14 04:19:07 momjian Exp $
  *
  * NOTES
  *	XXX eventually, should be able to handle version identifiers
@@ -63,11 +63,8 @@ ValidatePgVersion(const char *path, char **reason_p) {
     int	 fd;
     char version[4];
     char full_path[MAXPGPATH+1];
-#ifndef WIN32
     struct stat	statbuf;
-#else    
-    struct _stat statbuf;
-#endif    
+
     PathSetVersionFilePath(path, full_path);
     
     if (stat(full_path, &statbuf) < 0) {

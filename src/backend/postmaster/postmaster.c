@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.39 1997/02/13 08:31:09 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.40 1997/02/14 04:16:12 momjian Exp $
  *
  * NOTES
  *
@@ -198,11 +198,7 @@ checkDataDir(const char *DataDir, bool *DataDirOK)
 
             fclose(fp);
         
-#ifndef WIN32   
             ValidatePgVersion(DataDir, &reason); 
-#else
-            reason = NULL;
-#endif /* WIN32 */
             if (reason) {
                 fprintf(stderr, 
                         "Database system in directory %s "
@@ -231,9 +227,6 @@ PostmasterMain(int argc, char *argv[])
     int         silentflag = 0;
     char        hostbuf[MAXHOSTNAMELEN];
     bool        DataDirOK;  /* We have a usable PGDATA value */
-#if defined(WIN32)
-    WSADATA WSAData;
-#endif /* WIN32 */
     
     progname = argv[0];
     
@@ -363,18 +356,6 @@ PostmasterMain(int argc, char *argv[])
     }
     
 
-#if defined(WIN32)
-    if ((status = WSAStartup(MAKEWORD(1,1), &WSAData)) == 0)
-      (void) printf("%s\nInitializing WinSock: %s\n", WSAData.szDescription, WSAData.szSystemStatus);
-    else
-    {
-      fprintf(stderr, "Error initializing WinSock: %d is the err", status);
-      exit(1);
-    }
-     _nt_init();
-     _nt_attach();
-#endif /* WIN32 */
-
     status = StreamServerPort(hostName, PostPortName, &ServerSock);
     if (status != STATUS_OK) {
         fprintf(stderr, "%s: cannot create stream port\n",
@@ -397,15 +378,12 @@ PostmasterMain(int argc, char *argv[])
         pmdaemonize();
     
     pqsignal(SIGINT, pmdie);
-#ifndef WIN32
     pqsignal(SIGCHLD, reaper);
     pqsignal(SIGTTIN, SIG_IGN);
     pqsignal(SIGTTOU, SIG_IGN);
     pqsignal(SIGHUP, pmdie);
     pqsignal(SIGTERM, pmdie);
     pqsignal(SIGCONT, dumpstatus);
-#endif /* WIN32 */
-    
 
     status = ServerLoop();
     
@@ -845,7 +823,6 @@ reaper(SIGNAL_ARGS)
     if (DebugLvl)
         fprintf(stderr, "%s: reaping dead processes...\n",
                 progname);
-#ifndef WIN32
 #ifdef HAVE_WAITPID
     while((pid = waitpid(-1, &status, WNOHANG)) > 0)
         CleanupProc(pid, status);
@@ -853,7 +830,6 @@ reaper(SIGNAL_ARGS)
     while((pid = wait3(&statusp, WNOHANG, NULL)) > 0)
         CleanupProc(pid, statusp.w_status);
 #endif
-#endif /* WIN32 */
 }
 
 /*
@@ -914,7 +890,6 @@ CleanupProc(int pid,
                                                                   * collect core dumps from all backends by hand.
                                                                   * -----------------
                                                                   */
-#ifndef WIN32
         sig = (SendStop) ? SIGSTOP : SIGUSR1;
         if (bp->pid != pid) {
             if (DebugLvl)
@@ -925,7 +900,6 @@ CleanupProc(int pid,
                         bp->pid);
             (void) kill(bp->pid, sig);
         }
-#endif /* WIN32 */
         ProcRemove(bp->pid);
         
         prev = DLGetPred(curr);
@@ -1006,7 +980,6 @@ BackendStartup(StartupInfo *packet, /* client's startup packet */
         fprintf(stderr, "-----------------------------------------\n");
     }
     
-#ifndef WIN32
     if ((pid = FORK()) == 0) {  /* child */
         if (DoExec(packet, port->sock))
             fprintf(stderr, "%s child[%d]: BackendStartup: execv failed\n",
@@ -1021,14 +994,6 @@ BackendStartup(StartupInfo *packet, /* client's startup packet */
                 progname);
         return(STATUS_ERROR);
     }
-#else
-    pid = DoExec(packet, port->sock);
-    if (pid == FALSE) {
-        fprintf(stderr, "%s: BackendStartup: CreateProcess failed\n",
-                progname);
-        return(STATUS_ERROR);
-    }
-#endif /* WIN32 */
     
     if (DebugLvl)
         fprintf(stderr, "%s: BackendStartup: pid %d user %s db %s socket %d\n",
@@ -1119,12 +1084,6 @@ DoExec(StartupInfo *packet, int portFd)
     char        dbbuf[ARGV_SIZE + 1];
     int ac = 0;
     int i;
-#if defined(WIN32)
-    char      win32_args[(2 * ARGV_SIZE) + 1];
-    PROCESS_INFORMATION piProcInfo;
-    STARTUPINFO siStartInfo;
-    BOOL fSuccess;
-#endif /* WIN32 */
 
     (void) strncpy(execbuf, Execfile, MAXPATHLEN);
     execbuf[MAXPATHLEN - 1] = '\0';
@@ -1152,16 +1111,7 @@ DoExec(StartupInfo *packet, int portFd)
     if (packet->tty[0]) {
         (void) strncpy(ttybuf, packet->tty, ARGV_SIZE);
         av[ac++] = "-o";
-#if defined(WIN32)
-     /* BIG HACK - The front end is passing "/dev/null" here which
-     ** causes new backends to fail. So, as a very special case,
-     ** use a real NT filename.
-     */
-        av[ac++] = "CON";
-#else
         av[ac++] = ttybuf;
-#endif /* WIN32 */
-
     }
 
     /* tell the backend we're using European dates */
@@ -1200,39 +1150,7 @@ DoExec(StartupInfo *packet, int portFd)
         fprintf(stderr, ")\n");
     }
     
-#ifndef WIN32
     return(execv(av[0], av));
-#else
-
-    /* Copy all the arguments into one char array */
-    win32_args[0] = '\0';
-    for (i = 0; i < ac; i++)
-    {
-      strcat(win32_args, av[i]);
-      strcat(win32_args, " ");
-    }
-
-    siStartInfo.cb = sizeof(STARTUPINFO);
-    siStartInfo.lpReserved = NULL;
-    siStartInfo.lpDesktop = NULL;
-    siStartInfo.lpTitle = NULL;
-    siStartInfo.lpReserved2 = NULL;
-    siStartInfo.cbReserved2 = 0;
-    siStartInfo.dwFlags = 0;
-
-
-     fSuccess = CreateProcess(progname, win32_args, NULL, NULL,
-               TRUE, 0, NULL, NULL, &siStartInfo, &piProcInfo);
-     if (fSuccess)
-     {
-       /* The parent process doesn't need the handles */
-       CloseHandle(piProcInfo.hThread);
-       CloseHandle(piProcInfo.hProcess);
-       return (piProcInfo.dwProcessId);
-     }
-     else
-       return (FALSE);
-#endif /* WIN32 */
 }
 
 /*

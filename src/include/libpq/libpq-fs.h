@@ -6,18 +6,12 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fs.h,v 1.2 1996/11/06 10:30:02 scrappy Exp $
+ * $Id: libpq-fs.h,v 1.3 1997/02/14 04:18:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef LIBPQ_FS_H
 #define LIBPQ_FS_H
-
-
-#ifndef WIN32
-#endif /* WIN32 */
-#ifndef SEEK_SET
-#endif /* SEEK_SET */
 
 /* UNIX compatibility junk.  This should be in all systems' include files,
    but this is not always the case. */

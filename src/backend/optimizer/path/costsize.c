@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.12 1997/01/26 16:06:42 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.13 1997/02/14 04:15:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,21 +16,15 @@
 #include "config.h"
 
 #include <math.h>
-#ifdef WIN32
-# include <float.h>
+#ifdef HAVE_LIMITS_H
 # include <limits.h>
-# define MAXINT        INT_MAX
+# ifndef MAXINT
+#  define MAXINT	INT_MAX
+# endif
 #else
-# ifdef HAVE_LIMITS_H
-#  include <limits.h>
-#  ifndef MAXINT
-#   define MAXINT	INT_MAX
-#  endif
-# else
-#  ifdef HAVE_VALUES_H
-#   include <values.h>
-#  endif
-# endif 
+# ifdef HAVE_VALUES_H
+#  include <values.h>
+# endif
 #endif 
 
 #include <utils/lsyscache.h>

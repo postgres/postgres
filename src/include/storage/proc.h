@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: proc.h,v 1.3 1996/11/05 06:11:03 scrappy Exp $
+ * $Id: proc.h,v 1.4 1997/02/14 04:18:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -14,13 +14,6 @@
 #define _PROC_H_
 
 #include <storage/lock.h>
-
-#ifndef WIN32
-#else
-/* This is because WIN32 already defines PROC */
-#define PROC	PGL_PROC
-#endif /* WIN32 */
-
 
 typedef struct {
   int	 		sleeplock;

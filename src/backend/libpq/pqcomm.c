@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.10 1996/12/26 22:07:03 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.11 1997/02/14 04:15:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,16 +39,12 @@
 #include <signal.h>
 #include <errno.h>
 #include <fcntl.h>
-#ifndef WIN32
 #include <unistd.h>		/* for ttyname() */
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#else
-#include <winsock.h>
-#endif /* WIN32 */
 
 #if defined(linux)
 #ifndef SOMAXCONN
@@ -77,17 +73,8 @@ int PQAsyncNotifyWaiting;	/* for async. notification */
 void
 pq_init(int fd)
 {
-#ifdef WIN32
-    int in, out;
-
-    in = _open_osfhandle(fd, _O_RDONLY);
-    out = _open_osfhandle(fd, _O_APPEND);
-    Pfin = fdopen(in, "rb");
-    Pfout = fdopen(out, "wb");
-#else
     Pfin = fdopen(fd, "r");
     Pfout = fdopen(dup(fd), "w");
-#endif /* WIN32 */
     if (!Pfin || !Pfout)
 	elog(FATAL, "pq_init: Couldn't initialize socket connection");
     PQnotifies_init();
@@ -487,10 +474,6 @@ pq_getinserv(struct sockaddr_in *sin, char *host, char *serv)
 void
 pq_regoob(void (*fptr)())
 {
-#ifdef WIN32
-    /* Who knows what to do here? */
-    return;
-#else
     int fd = fileno(Pfout);
 #if defined(hpux)
     ioctl(fd, FIOSSAIOOWN, getpid());
@@ -498,15 +481,12 @@ pq_regoob(void (*fptr)())
     fcntl(fd, F_SETOWN, getpid());
 #endif /* hpux */
     (void) pqsignal(SIGURG,fptr);
-#endif /* WIN32 */    
 }
 
 void
 pq_unregoob()
 {
-#ifndef WIN32
     pqsignal(SIGURG,SIG_DFL);
-#endif /* WIN32 */    
 }
 
 
@@ -554,15 +534,6 @@ StreamServerPort(char *hostName, short portName, int *fdP)
     int			fd;
     int                 one = 1;
     
-#ifdef WIN32
-    /* This is necessary to make it possible for a backend to use
-    ** stdio to read from the socket.
-    */
-    int optionvalue = SO_SYNCHRONOUS_NONALERT;
-
-    setsockopt(INVALID_SOCKET, SOL_SOCKET, SO_OPENTYPE, (char *)&optionvalue,
-	       sizeof(optionvalue));
-#endif /* WIN32 */
 
     if (! hostName)
 	hostName = "localhost";
@@ -648,10 +619,8 @@ StreamConnection(int server_fd, Port *port)
     
     port->mask = 1 << port->sock;
 
-#ifndef WIN32    
     /* reset to non-blocking */
     fcntl(port->sock, F_SETFL, 1);
-#endif /* WIN32 */    
     
     return(STATUS_OK);
 }

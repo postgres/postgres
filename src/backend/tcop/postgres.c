@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.30 1997/02/12 05:24:22 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.31 1997/02/14 04:17:21 momjian Exp $
  *
  * NOTES
  *    this is the "main" module of the postgres backend and
@@ -105,13 +105,13 @@ static bool     IsEmptyQuery = false;
 
 char            relname[80];            /* current relation name */
 
-#if defined(WIN32) || defined(nextstep)
+#if defined(nextstep)
 jmp_buf    Warn_restart;
 #define sigsetjmp(x,y)  setjmp(x)
 #define siglongjmp longjmp
 #else
 sigjmp_buf Warn_restart;
-#endif /*defined(WIN32) || defined(nextstep) */
+#endif /* defined(nextstep) */
 int InWarn;
 
 extern int      NBuffers;
@@ -816,10 +816,6 @@ PostgresMain(int argc, char *argv[])
     Dlelem *curr;
     int    status;
 
-#ifdef WIN32
-    WSADATA WSAData;
-#endif /* WIN32 */
-
     extern int    optind;
     extern char   *optarg;
     extern short  DebugLvl;
@@ -830,14 +826,12 @@ PostgresMain(int argc, char *argv[])
      */
     pqsignal(SIGINT, die);
 
-#ifndef WIN32
     pqsignal(SIGHUP, die);
     pqsignal(SIGTERM, die);
     pqsignal(SIGPIPE, die);
     pqsignal(SIGUSR1, quickdie);
     pqsignal(SIGUSR2, Async_NotifyHandler);
     pqsignal(SIGFPE, FloatExceptionHandler);
-#endif /* WIN32 */
     
     /* --------------------
      *  initialize globals 
@@ -988,13 +982,6 @@ PostgresMain(int argc, char *argv[])
                */
             multiplexedBackend = true;
             serverPortnum = atoi(optarg);
-#ifdef WIN32
-           /* There was no postmaster started so the shared memory
-           ** for the shared memory table hasn't been allocated so
-           ** do it now.
-           */
-           _nt_init();
-#endif /* WIN32 */
             break;
         case 'M':
             exit(PostmasterMain(argc, argv));
@@ -1196,15 +1183,6 @@ PostgresMain(int argc, char *argv[])
         pq_init(Portfd);
     }
 
-#ifdef WIN32
-    if ((status = WSAStartup(MAKEWORD(1,1), &WSAData)) == 0)
-        (void) printf("%s\nInitializing WinSock: %s\n", WSAData.szDescription, WSAData.szSystemStatus);
-    else {
-        fprintf(stderr, "Error initializing WinSock: %d is the err", status);
-        exit(1);
-    }
-#endif /* WIN32 */
-    
     if (multiplexedBackend) {
       if (serverPortnum == 0 ||
           StreamServerPort(hostName, serverPortnum, &serverSock) != STATUS_OK)
@@ -1256,10 +1234,6 @@ PostgresMain(int argc, char *argv[])
         puts("\tInitPostgres()..");
     }
  
-#if WIN32
-     _nt_attach();
-#endif /* WIN32 */
-
     InitPostgres(DBName);
 
     /* ----------------
@@ -1274,13 +1248,9 @@ PostgresMain(int argc, char *argv[])
      * ----------------
      */
 
-#ifndef WIN32    
     pqsignal(SIGHUP, handle_warn);
 
     if (sigsetjmp(Warn_restart, 1) != 0) {
-#else
-    if (setjmp(Warn_restart) != 0) {
-#endif /* WIN32 */
         InWarn = 1;
 
         time(&tim);
@@ -1300,7 +1270,7 @@ PostgresMain(int argc, char *argv[])
      */
     if (IsUnderPostmaster == false) {
         puts("\nPOSTGRES backend interactive interface");
-        puts("$Revision: 1.30 $ $Date: 1997/02/12 05:24:22 $");
+        puts("$Revision: 1.31 $ $Date: 1997/02/14 04:17:21 $");
     }
     
     /* ----------------
@@ -1497,7 +1467,6 @@ PostgresMain(int argc, char *argv[])
   return 1;
 }
 
-#ifndef WIN32
 #ifdef HAVE_RUSAGE
 #include "rusagestub.h"
 #else /* HAVE_RUSAGE */
@@ -1597,12 +1566,3 @@ ShowUsage(void)
     PrintBufferUsage(StatFp);
 /*     DisplayTupleCount(StatFp); */
 }
-#else
-void
-ShowUsage()
-{}
-
-void
-ResetUsage()
-{}
-#endif /* WIN32 */

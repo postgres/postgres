@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.16 1997/02/13 15:55:01 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.17 1997/02/14 04:16:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,12 +46,10 @@
  *      This is so that we can support more backends. (system-wide semaphore
  *      sets run out pretty fast.)                -ay 4/95
  *
- * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.16 1997/02/13 15:55:01 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.17 1997/02/14 04:16:56 momjian Exp $
  */
 #include <sys/time.h>
-#ifndef WIN32
 #include <unistd.h>
-#endif /* WIN32 */
 #include <string.h>
 #include <signal.h>
 #include <sys/types.h>
@@ -157,9 +155,7 @@ InitProcess(IPCKey key)
      * Routine called if deadlock timer goes off. See ProcSleep()
      * ------------------
      */
-#ifndef WIN32
     pqsignal(SIGALRM, HandleDeadLock);
-#endif /* WIN32 we'll have to figure out how to handle this later */
 
     SpinAcquire(ProcStructLock);
     
@@ -456,9 +452,7 @@ ProcSleep(PROC_QUEUE *queue,
 {
     int 	i;
     PROC	*proc;
-#ifndef WIN32 /* figure this out later */
     struct itimerval timeval, dummy;
-#endif /* WIN32 */
     
     proc = (PROC *) MAKE_PTR(queue->links.prev);
     for (i=0;i<queue->size;i++)
@@ -501,13 +495,11 @@ ProcSleep(PROC_QUEUE *queue,
      * to 0.
      * --------------
      */
-#ifndef WIN32
     memset(&timeval, 0, sizeof(struct itimerval));
     timeval.it_value.tv_sec = DEADLOCK_TIMEOUT;
     
     if (setitimer(ITIMER_REAL, &timeval, &dummy))
 	elog(FATAL, "ProcSleep: Unable to set timer for process wakeup");
-#endif /* WIN32 */
     
     /* --------------
      * if someone wakes us between SpinRelease and IpcSemaphoreLock,
@@ -521,13 +513,11 @@ ProcSleep(PROC_QUEUE *queue,
      * We were awoken before a timeout - now disable the timer
      * ---------------
      */
-#ifndef WIN32
     timeval.it_value.tv_sec = 0;
     
     
     if (setitimer(ITIMER_REAL, &timeval, &dummy))
 	elog(FATAL, "ProcSleep: Unable to diable timer for process wakeup");
-#endif /* WIN32 */
     
     /* ----------------
      * We were assumed to be in a critical section when we went

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.11 1996/11/14 10:24:22 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.12 1997/02/14 04:17:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,9 +34,6 @@ static int	Err_file = -1;
 static int	ElogDebugIndentLevel = 0;
 
 extern char	OutputFileName[];
-#ifdef WIN32
-extern jmp_buf  Warn_restart;
-#endif
 
 /*
  * elog --
@@ -160,12 +157,8 @@ elog(int lev, const char *fmt, ... )
         extern int InWarn;
 	ProcReleaseSpins(NULL);	/* get rid of spinlocks we hold */
         if (!InWarn) {
-#ifndef WIN32
 	    kill(getpid(), 1);	/* abort to traffic cop */
 	    pause();
-#else
-	    longjmp(Warn_restart, 1);
-#endif /* WIN32 */
         }
 	/*
 	 * The pause(3) is just to avoid race conditions where the
@@ -227,7 +220,6 @@ DebugFileOpen(void)
 	Err_file = Debugfile = fileno(stderr);
 	return(Debugfile);
     }
-#ifndef WIN32    
     /* If no filename was specified, send debugging output to stderr.
      * If stderr has been hosed, try to open a file.
      */
@@ -237,7 +229,6 @@ DebugFileOpen(void)
                 DataDir, (int)getpid());
 	fd = open(OutputFileName, O_CREAT|O_APPEND|O_WRONLY, 0666);
     }
-#endif /* WIN32 */    
     if (fd < 0)
 	elog(FATAL, "DebugFileOpen: could not open debugging file");
     

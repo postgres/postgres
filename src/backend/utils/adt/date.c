@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.4 1996/11/10 03:03:05 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.5 1997/02/14 04:17:35 momjian Exp $
  *
  * NOTES
  *   This code is actually (almost) unused.
@@ -855,16 +855,13 @@ text *
 timeofday(void)
 {
 
-#ifndef WIN32
     struct timeval tp;
     struct timezone tpz;
-#endif /* WIN32 */
     char templ[500];
     char buf[500];
     text *tm;
     int len = 0;
 
-#ifndef WIN32
     gettimeofday(&tp, &tpz);
     (void) strftime(templ, sizeof(templ), "%a %b %d %H:%M:%S.%%d %Y %Z",
 		    localtime((time_t *) &tp.tv_sec));
@@ -875,9 +872,4 @@ timeofday(void)
     VARSIZE(tm) = len;
     strncpy(VARDATA(tm), buf, strlen(buf));
     return tm;
-#else
-    len = len / len;
-    return tm;
-#endif /* WIN32 */
-
 }

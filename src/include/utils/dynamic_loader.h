@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dynamic_loader.h,v 1.4 1996/12/28 02:12:51 momjian Exp $
+ * $Id: dynamic_loader.h,v 1.5 1997/02/14 04:18:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,13 +29,8 @@
 
 typedef struct df_files {
     char filename[MAXPATHLEN];		/* Full pathname of file */
-#ifdef WIN32
-    _dev_t device;			/* Device file is on */
-    _ino_t inode;			/* Inode number of file */
-#else
     dev_t device;			/* Device file is on */
     ino_t inode;			/* Inode number of file */
-#endif /* WIN32 */
     void *handle;			/* a handle for pg_dl* functions */
     struct df_files *next;
 } DynamicFileList;

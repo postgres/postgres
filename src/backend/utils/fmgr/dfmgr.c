@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.5 1997/02/13 09:54:04 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.6 1997/02/14 04:18:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -118,11 +118,7 @@ handle_load(char *filename, char *funcname)
     DynamicFileList     *file_scanner = (DynamicFileList *) NULL;
     func_ptr            retval = (func_ptr) NULL;
     char                *load_error;
-#ifdef WIN32
-    struct _stat        stat_buf;
-#else
     struct stat	stat_buf;
-#endif     /* WIN32 */
 
     /*
      * Do this because loading files may screw up the dynamic function
@@ -180,10 +176,8 @@ handle_load(char *filename, char *funcname)
 	memset((char *) file_scanner, 0, sizeof(DynamicFileList));
 	
         (void) strcpy(file_scanner->filename, filename);
-#ifndef WIN32
         file_scanner->device = stat_buf.st_dev;
         file_scanner->inode = stat_buf.st_ino;
-#endif /* WIN32 */
         file_scanner->next = (DynamicFileList *) NULL;
 	
 	file_scanner->handle = pg_dlopen(filename);
@@ -232,11 +226,7 @@ void
 load_file(char *filename)
 {
     DynamicFileList *file_scanner, *p;
-#ifdef WIN32
-    struct _stat stat_buf;
-#else
-     struct stat stat_buf;
-#endif /* WIN32 */
+    struct stat stat_buf;
 
     int done = 0;
     

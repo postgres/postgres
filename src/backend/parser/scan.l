@@ -8,14 +8,12 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.8 1996/12/04 14:23:11 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.9 1997/02/14 04:15:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <ctype.h>
-#ifndef WIN32
 #include <unistd.h>
-#endif /* WIN32 */
 #ifndef __linux__
 #include <math.h>
 #else

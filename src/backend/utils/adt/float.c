@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.10 1997/01/24 18:17:06 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.11 1997/02/14 04:17:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -220,17 +220,10 @@ char *float8out(float64	num)
     if (!num)
 	return strcpy(ascii, "(null)");
 
-#ifndef WIN32
     if (isnan(*num))
 	return strcpy(ascii, "NaN");
     if (isinf(*num))
 	return strcpy(ascii, "Infinity");
-#else
-    if (_isnan(*num))
-	return strcpy(ascii, "NaN");
-    if (!_finite(*num))
-	return strcpy(ascii, "Infinity");
-#endif    
 
     sprintf(ascii, "%.*g", DBL_DIG, *num);
     return(ascii);
