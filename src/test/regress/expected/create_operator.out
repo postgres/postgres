@@ -1,25 +1,28 @@
-QUERY: CREATE OPERATOR ## (
+--
+-- CREATE_OPERATOR
+--
+CREATE OPERATOR ## ( 
    leftarg = path,
    rightarg = path,
    procedure = path_inter,
-   commutator = ##
+   commutator = ## 
 );
-QUERY: CREATE OPERATOR <% (
+CREATE OPERATOR <% (
    leftarg = point,
    rightarg = widget,
    procedure = pt_in_widget,
    commutator = >% ,
-   negator = >=%
+   negator = >=% 
 );
-QUERY: CREATE OPERATOR @#@ (
-   rightarg = int4,		
-   procedure = int4fac
+CREATE OPERATOR @#@ (
+   rightarg = int4,		-- left unary 
+   procedure = int4fac 
 );
-QUERY: CREATE OPERATOR #@# (
-   leftarg = int4,		
-   procedure = int4fac
+CREATE OPERATOR #@# (
+   leftarg = int4,		-- right unary
+   procedure = int4fac 
 );
-QUERY: CREATE OPERATOR #%# (
-   leftarg = int4,		
-   procedure = int4fac
+CREATE OPERATOR #%# ( 
+   leftarg = int4,		-- right unary 
+   procedure = int4fac 
 );

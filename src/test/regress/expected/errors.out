@@ -1,58 +1,118 @@
-QUERY: select 1
+--
+-- errors.source
+--
+-- $Header: /cvsroot/pgsql/src/test/regress/expected/errors.out,v 1.15 2000/01/05 17:31:08 thomas Exp $
+ 
+-- bad in postquel, but ok in postsql
+select 1
+--
+-- UNSUPPORTED STUFF
+ 
+-- doesn't work 
+-- attachas nonesuch
+--
+-- doesn't work 
+-- notify pg_class
+--
+--
+-- RETRIEVE
+ 
+-- missing relation name 
 select
+-- no such relation 
 select * from nonesuch;
 ERROR:  parser: parse error at or near "select"
-QUERY: select nonesuch from pg_database;
+-- bad name in target list
+select nonesuch from pg_database;
 ERROR:  attribute 'nonesuch' not found
-QUERY: select * from pg_database where nonesuch = pg_database.datname;
+-- bad attribute name on lhs of operator
+select * from pg_database where nonesuch = pg_database.datname;
 ERROR:  attribute 'nonesuch' not found
-QUERY: select * from pg_database where pg_database.datname = nonesuch;
+-- bad attribute name on rhs of operator
+select * from pg_database where pg_database.datname = nonesuch;
 ERROR:  attribute 'nonesuch' not found
-QUERY: select distinct on foobar from pg_database;
+-- bad select distinct on  syntax,  distinct attribute missing
+select distinct on foobar from pg_database;
 ERROR:  parser: parse error at or near "from"
-QUERY: select distinct on foobar * from pg_database;
+-- bad select distinct on syntax, distinct attribute not in target list
+select distinct on foobar * from pg_database;
 ERROR:  All fields in the UNIQUE ON clause must appear in the target list
-QUERY: delete from;
-ERROR:  parser: parse error at or near ";"
-QUERY: delete from nonesuch;
+--
+-- DELETE
+ 
+-- missing relation name (this had better not wildcard!) 
+delete from;
+ERROR:  parser: parse error at or near ""
+-- no such relation 
+delete from nonesuch;
 ERROR:  Relation 'nonesuch' does not exist
-QUERY: drop table;
-ERROR:  parser: parse error at or near ";"
-QUERY: drop table nonesuch;
+--
+-- DESTROY
+ 
+-- missing relation name (this had better not wildcard!) 
+drop table;
+ERROR:  parser: parse error at or near ""
+-- no such relation 
+drop table nonesuch;
 ERROR:  Relation 'nonesuch' does not exist
-QUERY: alter table rename;
-ERROR:  parser: parse error at or near ";"
-QUERY: alter table nonesuch rename to newnonesuch;
+--
+-- RENAME
+ 
+-- relation renaming 
+-- missing relation name 
+alter table rename;
+ERROR:  parser: parse error at or near ""
+-- no such relation 
+alter table nonesuch rename to newnonesuch;
 ERROR:  Relation 'nonesuch' does not exist
-QUERY: alter table nonesuch rename to stud_emp;
+-- no such relation 
+alter table nonesuch rename to stud_emp;
 ERROR:  Relation 'nonesuch' does not exist
-QUERY: alter table stud_emp rename to pg_stud_emp;
+-- system relation 
+alter table stud_emp rename to pg_stud_emp;
 ERROR:  renamerel: Illegal class name: "pg_stud_emp" -- pg_ is reserved for system catalogs
-QUERY: alter table stud_emp rename to aggtest;
+-- conflict 
+alter table stud_emp rename to aggtest;
 ERROR:  renamerel: relation "aggtest" exists
-QUERY: alter table stud_emp rename to stud_emp;
+-- self-conflict 
+alter table stud_emp rename to stud_emp;
 ERROR:  renamerel: relation "stud_emp" exists
-QUERY: alter table nonesuchrel rename column nonesuchatt to newnonesuchatt;
+-- attribute renaming 
+-- no such relation 
+alter table nonesuchrel rename column nonesuchatt to newnonesuchatt;
 ERROR:  Relation 'nonesuchrel' does not exist
-QUERY: alter table emp rename column nonesuchatt to newnonesuchatt;
+-- no such attribute 
+alter table emp rename column nonesuchatt to newnonesuchatt;
 ERROR:  renameatt: attribute "nonesuchatt" nonexistent
-QUERY: alter table emp rename column salary to manager;
+-- conflict 
+alter table emp rename column salary to manager;
 ERROR:  renameatt: attribute "manager" exists
-QUERY: alter table emp rename column salary to oid;
+-- conflict 
+alter table emp rename column salary to oid;
 ERROR:  renameatt: attribute "oid" exists
-QUERY: abort;
+--
+-- TRANSACTION STUFF
+ 
+-- not in a xact 
 NOTICE:  UserAbortTransactionBlock and not in in-progress state
-QUERY: end;
+abort;
+-- not in a xact 
 NOTICE:  EndTransactionBlock and not inprogress/abort state 
-QUERY: create aggregate newavg1 (sfunc1 = int4pl,
+end;
+--
+-- DEFINE AGGREGATE
+ 
+-- left out finalfunc 
+create aggregate newavg1 (sfunc1 = int4pl,
 			  basetype = int4,
 			  stype1 = int4,
 			  sfunc2 = int4inc,
-			  stype2 = int4,
+			  stype2 = int4, 
 			  initcond1 = '0',
 			  initcond2 = '0');
 ERROR:  AggregateCreate: Aggregate must have final function with both transition functions
-QUERY: create aggregate newavg2 (sfunc1 = int4pl,
+-- sfunc return type disagreement 
+create aggregate newavg2 (sfunc1 = int4pl,
 			  basetype = int4,
 			  stype1 = int4,
 			  sfunc2 = int2inc,
@@ -61,7 +121,8 @@ QUERY: create aggregate newavg2 (sfunc1 = int4pl,
 			  initcond1 = '0',
 			  initcond2 = '0');
 ERROR:  AggregateCreate: 'int4div'('int4','int2') does not exist
-QUERY: create aggregate newavg3 (sfunc1 = int4pl,
+-- sfunc/finalfunc type disagreement 
+create aggregate newavg3 (sfunc1 = int4pl,
 			  basetype = int4,
 			  stype1 = int4,
 			  sfunc2 = int4inc,
@@ -70,79 +131,133 @@ QUERY: create aggregate newavg3 (sfunc1 = int4pl,
 			  initcond1 = '0',
 			  initcond2 = '0');
 ERROR:  AggregateCreate: 'int2div'('int4','int4') does not exist
-QUERY: create aggregate newcnt1 (sfunc2 = int4inc,
+-- left out basetype
+create aggregate newcnt1 (sfunc2 = int4inc,
 			  stype2 = int4,
 			initcond2 = '0');
 ERROR:  Define: "basetype" unspecified
-QUERY: create aggregate newcnt1 (sfunc2 = int4inc,
+-- left out initcond2 (for sfunc2) 
+create aggregate newcnt1 (sfunc2 = int4inc,
 			  basetype = int4,
 			  stype2 = int4);
 ERROR:  AggregateCreate: transition function 2 MUST have an initial value
-QUERY: drop index;
-ERROR:  parser: parse error at or near ";"
-QUERY: drop index 314159;
+--
+-- REMOVE INDEX
+ 
+-- missing index name 
+drop index;
+ERROR:  parser: parse error at or near ""
+-- bad index name 
+drop index 314159;
 ERROR:  parser: parse error at or near "314159"
-QUERY: drop index nonesuch;
+-- no such index 
+drop index nonesuch;
 ERROR:  index "nonesuch" nonexistent
-QUERY: drop aggregate;
-ERROR:  parser: parse error at or near ";"
-QUERY: drop aggregate 314159;
+--
+-- REMOVE AGGREGATE
+ 
+-- missing aggregate name 
+drop aggregate;
+ERROR:  parser: parse error at or near ""
+-- bad aggregate name 
+drop aggregate 314159;
 ERROR:  parser: parse error at or near "314159"
-QUERY: drop aggregate nonesuch;
-ERROR:  parser: parse error at or near ";"
-QUERY: drop aggregate newcnt1;
-ERROR:  parser: parse error at or near ";"
-QUERY: drop aggregate newcnt nonesuch;
+-- no such aggregate 
+drop aggregate nonesuch;
+ERROR:  parser: parse error at or near ""
+-- missing aggregate type
+drop aggregate newcnt1;
+ERROR:  parser: parse error at or near ""
+-- bad aggregate type
+drop aggregate newcnt nonesuch;
 ERROR:  RemoveAggregate: type 'nonesuch' does not exist
-QUERY: drop aggregate newcnt float4;
+-- no such aggregate for type
+drop aggregate newcnt float4;
 ERROR:  RemoveAggregate: aggregate 'newcnt' for 'float4' does not exist
-QUERY: drop function ();
+--
+-- REMOVE FUNCTION
+ 
+-- missing function name 
+drop function ();
 ERROR:  parser: parse error at or near "("
-QUERY: drop function 314159();
+-- bad function name 
+drop function 314159();
 ERROR:  parser: parse error at or near "314159"
-QUERY: drop function nonesuch();
+-- no such function 
+drop function nonesuch();
 ERROR:  RemoveFunction: function 'nonesuch()' does not exist
-QUERY: drop type;
-ERROR:  parser: parse error at or near ";"
-QUERY: drop type 314159;
+--
+-- REMOVE TYPE
+ 
+-- missing type name 
+drop type;
+ERROR:  parser: parse error at or near ""
+-- bad type name 
+drop type 314159;
 ERROR:  parser: parse error at or near "314159"
-QUERY: drop type nonesuch;
+-- no such type 
+drop type nonesuch;
 ERROR:  RemoveType: type 'nonesuch' does not exist
-QUERY: drop operator;
-ERROR:  parser: parse error at or near ";"
-QUERY: drop operator equals;
+--
+-- DROP OPERATOR
+ 
+-- missing everything 
+drop operator;
+ERROR:  parser: parse error at or near ""
+-- bad operator name 
+drop operator equals;
 ERROR:  parser: parse error at or near "equals"
-QUERY: drop operator ===;
-ERROR:  parser: parse error at or near ";"
-QUERY: drop operator int4, int4;
+-- missing type list 
+drop operator ===;
+ERROR:  parser: parse error at or near ""
+-- missing parentheses 
+drop operator int4, int4;
 ERROR:  parser: parse error at or near "int4"
-QUERY: drop operator (int4, int4);
+-- missing operator name 
+drop operator (int4, int4);
 ERROR:  parser: parse error at or near "("
-QUERY: drop operator === ();
+-- missing type list contents 
+drop operator === ();
 ERROR:  parser: parse error at or near ")"
-QUERY: drop operator === (int4);
+-- no such operator 
+drop operator === (int4);
 ERROR:  parser: argument type missing (use NONE for unary operators)
-QUERY: drop operator === (int4, int4);
+-- no such operator by that name 
+drop operator === (int4, int4);
 ERROR:  RemoveOperator: binary operator '===' taking 'int4' and 'int4' does not exist
-QUERY: drop operator = (nonesuch);
+-- no such type1 
+drop operator = (nonesuch);
 ERROR:  parser: argument type missing (use NONE for unary operators)
-QUERY: drop operator = ( , int4);
+-- no such type1 
+drop operator = ( , int4);
 ERROR:  parser: parse error at or near ","
-QUERY: drop operator = (nonesuch, int4);
+-- no such type1 
+drop operator = (nonesuch, int4);
 ERROR:  RemoveOperator: type 'nonesuch' does not exist
-QUERY: drop operator = (int4, nonesuch);
+-- no such type2 
+drop operator = (int4, nonesuch);
 ERROR:  RemoveOperator: type 'nonesuch' does not exist
-QUERY: drop operator = (int4, );
+-- no such type2 
+drop operator = (int4, );
 ERROR:  parser: parse error at or near ")"
-QUERY: drop rule;
-ERROR:  parser: parse error at or near ";"
-QUERY: drop rule 314159;
+--
+-- DROP RULE
+ 
+-- missing rule name 
+drop rule;
+ERROR:  parser: parse error at or near ""
+-- bad rule name 
+drop rule 314159;
 ERROR:  parser: parse error at or near "314159"
-QUERY: drop rule nonesuch;
+-- no such rule 
+drop rule nonesuch;
 ERROR:  Rule or view 'nonesuch' not found
-QUERY: drop tuple rule nonesuch;
+-- bad keyword 
+drop tuple rule nonesuch;
 ERROR:  parser: parse error at or near "tuple"
-QUERY: drop instance rule nonesuch;
+-- no such rule 
+drop instance rule nonesuch;
 ERROR:  parser: parse error at or near "instance"
-QUERY: drop rewrite rule nonesuch;
+-- no such rule 
+drop rewrite rule nonesuch;
 ERROR:  parser: parse error at or near "rewrite"

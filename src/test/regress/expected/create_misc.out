@@ -1,135 +1,151 @@
-QUERY: INSERT INTO tenk2 VALUES (tenk1.*);
-QUERY: SELECT * INTO TABLE onek2 FROM onek;
-QUERY: INSERT INTO fast_emp4000 VALUES (slow_emp4000.*);
-QUERY: SELECT *
+--
+-- CREATE_MISC
+--
+-- CLASS POPULATION
+--	(any resemblance to real life is purely coincidental)
+--
+INSERT INTO tenk2 VALUES (tenk1.*);
+SELECT * INTO TABLE onek2 FROM onek;
+INSERT INTO fast_emp4000 VALUES (slow_emp4000.*);
+SELECT *
    INTO TABLE Bprime
    FROM tenk1
    WHERE unique2 < 1000;
-QUERY: INSERT INTO hobbies_r (name, person)
+INSERT INTO hobbies_r (name, person)
    SELECT 'posthacking', p.name
    FROM person* p
    WHERE p.name = 'mike' or p.name = 'jeff';
-QUERY: INSERT INTO hobbies_r (name, person)
+INSERT INTO hobbies_r (name, person)
    SELECT 'basketball', p.name
    FROM person p
    WHERE p.name = 'joe' or p.name = 'sally';
-QUERY: INSERT INTO hobbies_r (name) VALUES ('skywalking');
-QUERY: INSERT INTO equipment_r (name, hobby) VALUES ('advil', 'posthacking');
-QUERY: INSERT INTO equipment_r (name, hobby) VALUES ('peet''s coffee', 'posthacking');
-QUERY: INSERT INTO equipment_r (name, hobby) VALUES ('hightops', 'basketball');
-QUERY: INSERT INTO equipment_r (name, hobby) VALUES ('guts', 'skywalking');
-QUERY: SELECT *
+INSERT INTO hobbies_r (name) VALUES ('skywalking');
+INSERT INTO equipment_r (name, hobby) VALUES ('advil', 'posthacking');
+INSERT INTO equipment_r (name, hobby) VALUES ('peet''s coffee', 'posthacking');
+INSERT INTO equipment_r (name, hobby) VALUES ('hightops', 'basketball');
+INSERT INTO equipment_r (name, hobby) VALUES ('guts', 'skywalking');
+SELECT *
    INTO TABLE ramp
    FROM road
    WHERE name ~ '.*Ramp';
-QUERY: INSERT INTO ihighway
-   SELECT *
-   FROM road
+INSERT INTO ihighway 
+   SELECT * 
+   FROM road 
    WHERE name ~ 'I- .*';
-QUERY: INSERT INTO shighway
-   SELECT *
-   FROM road
+INSERT INTO shighway 
+   SELECT * 
+   FROM road 
    WHERE name ~ 'State Hwy.*';
-QUERY: UPDATE shighway
+UPDATE shighway
    SET surface = 'asphalt';
-QUERY: INSERT INTO a_star (class, a) VALUES ('a', 1);
-QUERY: INSERT INTO a_star (class, a) VALUES ('a', 2);
-QUERY: INSERT INTO a_star (class) VALUES ('a');
-QUERY: INSERT INTO b_star (class, a, b) VALUES ('b', 3, 'mumble'::text);
-QUERY: INSERT INTO b_star (class, a) VALUES ('b', 4);
-QUERY: INSERT INTO b_star (class, b) VALUES ('b', 'bumble'::text);
-QUERY: INSERT INTO b_star (class) VALUES ('b');
-QUERY: INSERT INTO c_star (class, a, c) VALUES ('c', 5, 'hi mom'::name);
-QUERY: INSERT INTO c_star (class, a) VALUES ('c', 6);
-QUERY: INSERT INTO c_star (class, c) VALUES ('c', 'hi paul'::name);
-QUERY: INSERT INTO c_star (class) VALUES ('c');
-QUERY: INSERT INTO d_star (class, a, b, c, d)
+INSERT INTO a_star (class, a) VALUES ('a', 1);
+INSERT INTO a_star (class, a) VALUES ('a', 2);
+INSERT INTO a_star (class) VALUES ('a');
+INSERT INTO b_star (class, a, b) VALUES ('b', 3, 'mumble'::text);
+INSERT INTO b_star (class, a) VALUES ('b', 4);
+INSERT INTO b_star (class, b) VALUES ('b', 'bumble'::text);
+INSERT INTO b_star (class) VALUES ('b');
+INSERT INTO c_star (class, a, c) VALUES ('c', 5, 'hi mom'::name);
+INSERT INTO c_star (class, a) VALUES ('c', 6);
+INSERT INTO c_star (class, c) VALUES ('c', 'hi paul'::name);
+INSERT INTO c_star (class) VALUES ('c');
+INSERT INTO d_star (class, a, b, c, d)
    VALUES ('d', 7, 'grumble'::text, 'hi sunita'::name, '0.0'::float8);
-QUERY: INSERT INTO d_star (class, a, b, c)
+INSERT INTO d_star (class, a, b, c)
    VALUES ('d', 8, 'stumble'::text, 'hi koko'::name);
-QUERY: INSERT INTO d_star (class, a, b, d)
+INSERT INTO d_star (class, a, b, d)
    VALUES ('d', 9, 'rumble'::text, '1.1'::float8);
-QUERY: INSERT INTO d_star (class, a, c, d)
+INSERT INTO d_star (class, a, c, d)
    VALUES ('d', 10, 'hi kristin'::name, '10.01'::float8);
-QUERY: INSERT INTO d_star (class, b, c, d)
+INSERT INTO d_star (class, b, c, d)
    VALUES ('d', 'crumble'::text, 'hi boris'::name, '100.001'::float8);
-QUERY: INSERT INTO d_star (class, a, b)
+INSERT INTO d_star (class, a, b)
    VALUES ('d', 11, 'fumble'::text);
-QUERY: INSERT INTO d_star (class, a, c)
+INSERT INTO d_star (class, a, c)
    VALUES ('d', 12, 'hi avi'::name);
-QUERY: INSERT INTO d_star (class, a, d)
+INSERT INTO d_star (class, a, d)
    VALUES ('d', 13, '1000.0001'::float8);
-QUERY: INSERT INTO d_star (class, b, c)
+INSERT INTO d_star (class, b, c)
    VALUES ('d', 'tumble'::text, 'hi andrew'::name);
-QUERY: INSERT INTO d_star (class, b, d)
+INSERT INTO d_star (class, b, d)
    VALUES ('d', 'humble'::text, '10000.00001'::float8);
-QUERY: INSERT INTO d_star (class, c, d)
+INSERT INTO d_star (class, c, d)
    VALUES ('d', 'hi ginger'::name, '100000.000001'::float8);
-QUERY: INSERT INTO d_star (class, a) VALUES ('d', 14);
-QUERY: INSERT INTO d_star (class, b) VALUES ('d', 'jumble'::text);
-QUERY: INSERT INTO d_star (class, c) VALUES ('d', 'hi jolly'::name);
-QUERY: INSERT INTO d_star (class, d) VALUES ('d', '1000000.0000001'::float8);
-QUERY: INSERT INTO d_star (class) VALUES ('d');
-QUERY: INSERT INTO e_star (class, a, c, e)
+INSERT INTO d_star (class, a) VALUES ('d', 14);
+INSERT INTO d_star (class, b) VALUES ('d', 'jumble'::text);
+INSERT INTO d_star (class, c) VALUES ('d', 'hi jolly'::name);
+INSERT INTO d_star (class, d) VALUES ('d', '1000000.0000001'::float8);
+INSERT INTO d_star (class) VALUES ('d');
+INSERT INTO e_star (class, a, c, e)
    VALUES ('e', 15, 'hi carol'::name, '-1'::int2);
-QUERY: INSERT INTO e_star (class, a, c)
+INSERT INTO e_star (class, a, c)
    VALUES ('e', 16, 'hi bob'::name);
-QUERY: INSERT INTO e_star (class, a, e)
+INSERT INTO e_star (class, a, e)
    VALUES ('e', 17, '-2'::int2);
-QUERY: INSERT INTO e_star (class, c, e)
+INSERT INTO e_star (class, c, e)
    VALUES ('e', 'hi michelle'::name, '-3'::int2);
-QUERY: INSERT INTO e_star (class, a)
+INSERT INTO e_star (class, a)
    VALUES ('e', 18);
-QUERY: INSERT INTO e_star (class, c)
+INSERT INTO e_star (class, c)
    VALUES ('e', 'hi elisa'::name);
-QUERY: INSERT INTO e_star (class, e)
+INSERT INTO e_star (class, e)
    VALUES ('e', '-4'::int2);
-QUERY: INSERT INTO f_star (class, a, c, e, f)
+INSERT INTO f_star (class, a, c, e, f)
    VALUES ('f', 19, 'hi claire'::name, '-5'::int2, '(1,3),(2,4)'::polygon);
-QUERY: INSERT INTO f_star (class, a, c, e)
+INSERT INTO f_star (class, a, c, e)
    VALUES ('f', 20, 'hi mike'::name, '-6'::int2);
-QUERY: INSERT INTO f_star (class, a, c, f)
+INSERT INTO f_star (class, a, c, f)
    VALUES ('f', 21, 'hi marcel'::name, '(11,44),(22,55),(33,66)'::polygon);
-QUERY: INSERT INTO f_star (class, a, e, f)
+INSERT INTO f_star (class, a, e, f)
    VALUES ('f', 22, '-7'::int2, '(111,555),(222,666),(333,777),(444,888)'::polygon);
-QUERY: INSERT INTO f_star (class, c, e, f)
-   VALUES ('f', 'hi keith'::name, '-8'::int2,
+INSERT INTO f_star (class, c, e, f)
+   VALUES ('f', 'hi keith'::name, '-8'::int2, 
 	   '(1111,3333),(2222,4444)'::polygon);
-QUERY: INSERT INTO f_star (class, a, c)
+INSERT INTO f_star (class, a, c)
    VALUES ('f', 24, 'hi marc'::name);
-QUERY: INSERT INTO f_star (class, a, e)
+INSERT INTO f_star (class, a, e)
    VALUES ('f', 25, '-9'::int2);
-QUERY: INSERT INTO f_star (class, a, f)
-   VALUES ('f', 26, '(11111,33333),(22222,44444)'::polygon);
-QUERY: INSERT INTO f_star (class, c, e)
+INSERT INTO f_star (class, a, f)
+   VALUES ('f', 26, '(11111,33333),(22222,44444)'::polygon); 
+INSERT INTO f_star (class, c, e)
    VALUES ('f', 'hi allison'::name, '-10'::int2);
-QUERY: INSERT INTO f_star (class, c, f)
+INSERT INTO f_star (class, c, f)
    VALUES ('f', 'hi jeff'::name,
            '(111111,333333),(222222,444444)'::polygon);
-QUERY: INSERT INTO f_star (class, e, f)
+INSERT INTO f_star (class, e, f)
    VALUES ('f', '-11'::int2, '(1111111,3333333),(2222222,4444444)'::polygon);
-QUERY: INSERT INTO f_star (class, a) VALUES ('f', 27);
-QUERY: INSERT INTO f_star (class, c) VALUES ('f', 'hi carl'::name);
-QUERY: INSERT INTO f_star (class, e) VALUES ('f', '-12'::int2);
-QUERY: INSERT INTO f_star (class, f)
+INSERT INTO f_star (class, a) VALUES ('f', 27);
+INSERT INTO f_star (class, c) VALUES ('f', 'hi carl'::name);
+INSERT INTO f_star (class, e) VALUES ('f', '-12'::int2);
+INSERT INTO f_star (class, f) 
    VALUES ('f', '(11111111,33333333),(22222222,44444444)'::polygon);
-QUERY: INSERT INTO f_star (class) VALUES ('f');
-QUERY: INSERT INTO arrtest (a[5], b[2][1][2], c, d, f, g)
+INSERT INTO f_star (class) VALUES ('f');
+--
+-- ARRAYS
+--
+--
+-- only this array as a 0-based 'e', the others are 1-based.
+-- 'e' is also a large object.
+--
+INSERT INTO arrtest (a[5], b[2][1][2], c, d, f, g)
    VALUES ('{1,2,3,4,5}', '{{{},{1,2}}}', '{}', '{}', '{}', '{}');
-QUERY: UPDATE arrtest SET e[0] = '1.1';
-QUERY: UPDATE arrtest SET e[1] = '2.2';
-QUERY: INSERT INTO arrtest (a, b[2][2][1], c, d, e, f, g)
-   VALUES ('{11,12,23}', '{{3,4},{4,5}}', '{"foobar"}',
+UPDATE arrtest SET e[0] = '1.1';
+UPDATE arrtest SET e[1] = '2.2';
+INSERT INTO arrtest (a, b[2][2][1], c, d, e, f, g)
+   VALUES ('{11,12,23}', '{{3,4},{4,5}}', '{"foobar"}', 
            '{{"elt1", "elt2"}}', '{"3.4", "6.7"}',
            '{"abc","abcdefgh"}', '{"abc","abcdefgh"}');
-QUERY: INSERT INTO arrtest (a, b[1][2][2], c, d[2][1])
+INSERT INTO arrtest (a, b[1][2][2], c, d[2][1])
    VALUES ('{}', '{3,4}', '{foo,bar}', '{bar,foo}');
-QUERY: CREATE TABLE iportaltest (
-	i		int4,
-	d		float4,
+--
+-- for internal portal (cursor) tests
+--
+CREATE TABLE iportaltest (
+	i		int4, 
+	d		float4, 
 	p		polygon
 );
-QUERY: INSERT INTO iportaltest (i, d, p)
+INSERT INTO iportaltest (i, d, p)
    VALUES (1, 3.567, '(3.0,1.0),(4.0,2.0)'::polygon);
-QUERY: INSERT INTO iportaltest (i, d, p)
+INSERT INTO iportaltest (i, d, p)
    VALUES (2, 89.05, '(4.0,2.0),(3.0,1.0)'::polygon);

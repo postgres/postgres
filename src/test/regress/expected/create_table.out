@@ -1,169 +1,192 @@
-QUERY: CREATE TABLE hobbies_r (
-	name		text,
+--
+-- CREATE_TABLE
+--
+--
+-- CLASS DEFINITIONS
+--
+CREATE TABLE hobbies_r (
+	name		text, 
 	person 		text
 );
-QUERY: CREATE TABLE equipment_r (
+CREATE TABLE equipment_r (
 	name 		text,
 	hobby		text
 );
-QUERY: CREATE TABLE onek (
+CREATE TABLE onek (
 	unique1		int4,
 	unique2		int4,
-	two		int4,
+	two			int4,
 	four		int4,
-	ten		int4,
+	ten			int4,
 	twenty		int4,
 	hundred		int4,
 	thousand	int4,
 	twothousand	int4,
 	fivethous	int4,
 	tenthous	int4,
-	odd		int4,
+	odd			int4,
 	even		int4,
 	stringu1	name,
 	stringu2	name,
 	string4		name
 );
-QUERY: CREATE TABLE tenk1 (
+CREATE TABLE tenk1 (
 	unique1		int4,
 	unique2		int4,
-	two		int4,
+	two			int4,
 	four		int4,
-	ten		int4,
+	ten			int4,
 	twenty		int4,
 	hundred		int4,
 	thousand	int4,
 	twothousand	int4,
 	fivethous	int4,
 	tenthous	int4,
-	odd		int4,
+	odd			int4,
 	even		int4,
 	stringu1	name,
 	stringu2	name,
 	string4		name
 );
-QUERY: CREATE TABLE tenk2 (
+CREATE TABLE tenk2 (
 	unique1 	int4,
 	unique2 	int4,
 	two 	 	int4,
 	four 		int4,
-	ten		int4,
+	ten			int4,
 	twenty 		int4,
 	hundred 	int4,
 	thousand 	int4,
-	twothousand 	int4,
+	twothousand int4,
 	fivethous 	int4,
 	tenthous	int4,
-	odd		int4,
+	odd			int4,
 	even		int4,
 	stringu1	name,
 	stringu2	name,
 	string4		name
 );
-QUERY: CREATE TABLE person (
+CREATE TABLE person (
 	name 		text,
-	age		int4,
+	age			int4,
 	location 	point
 );
-QUERY: CREATE TABLE emp (
+CREATE TABLE emp (
 	salary 		int4,
 	manager 	name
 ) INHERITS (person);
-QUERY: CREATE TABLE student (
+CREATE TABLE student (
 	gpa 		float8
 ) INHERITS (person);
-QUERY: CREATE TABLE stud_emp (
+CREATE TABLE stud_emp (
 	percent 	int4
 ) INHERITS (emp, student);
-QUERY: CREATE TABLE city (
+CREATE TABLE city (
 	name		name,
 	location 	box,
 	budget 		city_budget
 );
-QUERY: CREATE TABLE dept (
+CREATE TABLE dept (
 	dname		name,
 	mgrname 	text
 );
-QUERY: CREATE TABLE slow_emp4000 (
+CREATE TABLE slow_emp4000 (
 	home_base	 box
 );
-QUERY: CREATE TABLE fast_emp4000 (
+CREATE TABLE fast_emp4000 (
 	home_base	 box
 );
-QUERY: CREATE TABLE road (
+CREATE TABLE road (
 	name		text,
 	thepath 	path
 );
-QUERY: CREATE TABLE ihighway () INHERITS (road);
-QUERY: CREATE TABLE shighway (
+CREATE TABLE ihighway () INHERITS (road);
+CREATE TABLE shighway (
 	surface		text
 ) INHERITS (road);
-QUERY: CREATE TABLE real_city (
-	pop		int4,
+CREATE TABLE real_city (
+	pop			int4,
 	cname		text,
 	outline 	path
 );
-QUERY: CREATE TABLE a_star (
-	class		char,
-	a 		int4
+--
+-- test the "star" operators a bit more thoroughly -- this time,
+-- throw in lots of NULL fields...
+--
+-- a is the type root
+-- b and c inherit from a (one-level single inheritance)
+-- d inherits from b and c (two-level multiple inheritance)
+-- e inherits from c (two-level single inheritance)
+-- f inherits from e (three-level single inheritance)
+--
+CREATE TABLE a_star (
+	class		char, 
+	a 			int4
 );
-QUERY: CREATE TABLE b_star (
-	b 		text
+CREATE TABLE b_star (
+	b 			text
 ) INHERITS (a_star);
-QUERY: CREATE TABLE c_star (
-	c 		name
+CREATE TABLE c_star (
+	c 			name
 ) INHERITS (a_star);
-QUERY: CREATE TABLE d_star (
-	d 		float8
+CREATE TABLE d_star (
+	d 			float8
 ) INHERITS (b_star, c_star);
-QUERY: CREATE TABLE e_star (
-	e 		int2
+CREATE TABLE e_star (
+	e 			int2
 ) INHERITS (c_star);
-QUERY: CREATE TABLE f_star (
-	f 		polygon
+CREATE TABLE f_star (
+	f 			polygon
 ) INHERITS (e_star);
-QUERY: CREATE TABLE aggtest (
-	a 		int2,
-	b		float4
+CREATE TABLE aggtest (
+	a 			int2,
+	b			float4
 );
-QUERY: CREATE TABLE arrtest (
-	a 		int2[],
-	b 		int4[][][],
-	c 		name[],
-	d		text[][],
-	e 		float8[],
-	f		char(5)[],
-	g		varchar(5)[]
+CREATE TABLE arrtest (
+	a 			int2[],
+	b 			int4[][][],
+	c 			name[],
+	d			text[][], 
+	e 			float8[],
+	f			char(5)[],
+	g			varchar(5)[]
 );
-QUERY: CREATE TABLE hash_i4_heap (
+CREATE TABLE hash_i4_heap (
 	seqno 		int4,
 	random 		int4
 );
-QUERY: CREATE TABLE hash_name_heap (
+CREATE TABLE hash_name_heap (
 	seqno 		int4,
 	random 		name
 );
-QUERY: CREATE TABLE hash_txt_heap (
+CREATE TABLE hash_txt_heap (
 	seqno 		int4,
 	random 		text
 );
-QUERY: CREATE TABLE hash_f8_heap (
+CREATE TABLE hash_f8_heap (
 	seqno		int4,
 	random 		float8
 );
-QUERY: CREATE TABLE bt_i4_heap (
+-- don't include the hash_ovfl_heap stuff in the distribution
+-- the data set is too large for what it's worth
+-- 
+-- CREATE TABLE hash_ovfl_heap (
+--	x			int4,
+--	y			int4
+-- );
+CREATE TABLE bt_i4_heap (
 	seqno 		int4,
 	random 		int4
 );
-QUERY: CREATE TABLE bt_name_heap (
+CREATE TABLE bt_name_heap (
 	seqno 		name,
 	random 		int4
 );
-QUERY: CREATE TABLE bt_txt_heap (
+CREATE TABLE bt_txt_heap (
 	seqno 		text,
 	random 		int4
 );
-QUERY: CREATE TABLE bt_f8_heap (
-	seqno 		float8,
+CREATE TABLE bt_f8_heap (
+	seqno 		float8, 
 	random 		int4
 );

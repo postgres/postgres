@@ -1,44 +1,56 @@
-QUERY: VACUUM;
-QUERY: SELECT relname, relhasindex
+VACUUM;
+--
+-- sanity check, if we don't have indices the test will take years to
+-- complete.
+--
+SELECT relname, relhasindex
    FROM pg_class
    WHERE relhasindex
    ORDER BY relname;
-relname       |relhasindex
---------------+-----------
-bt_f8_heap    |t          
-bt_i4_heap    |t          
-bt_name_heap  |t          
-bt_txt_heap   |t          
-fast_emp4000  |t          
-hash_f8_heap  |t          
-hash_i4_heap  |t          
-hash_name_heap|t          
-hash_txt_heap |t          
-ihighway      |t          
-onek          |t          
-pg_aggregate  |t          
-pg_am         |t          
-pg_amop       |t          
-pg_attrdef    |t          
-pg_attribute  |t          
-pg_class      |t          
-pg_description|t          
-pg_group      |t          
-pg_index      |t          
-pg_inherits   |t          
-pg_language   |t          
-pg_listener   |t          
-pg_opclass    |t          
-pg_operator   |t          
-pg_proc       |t          
-pg_relcheck   |t          
-pg_rewrite    |t          
-pg_statistic  |t          
-pg_trigger    |t          
-pg_type       |t          
-road          |t          
-shighway      |t          
-tenk1         |t          
-tenk2         |t          
-(35 rows)
+       relname       | relhasindex 
+---------------------+-------------
+ bt_f8_heap          | t
+ bt_i4_heap          | t
+ bt_name_heap        | t
+ bt_txt_heap         | t
+ fast_emp4000        | t
+ hash_f8_heap        | t
+ hash_i4_heap        | t
+ hash_name_heap      | t
+ hash_txt_heap       | t
+ ihighway            | t
+ num_exp_add         | t
+ num_exp_div         | t
+ num_exp_ln          | t
+ num_exp_log10       | t
+ num_exp_mul         | t
+ num_exp_power_10_ln | t
+ num_exp_sqrt        | t
+ num_exp_sub         | t
+ onek                | t
+ pg_aggregate        | t
+ pg_am               | t
+ pg_amop             | t
+ pg_attrdef          | t
+ pg_attribute        | t
+ pg_class            | t
+ pg_description      | t
+ pg_group            | t
+ pg_index            | t
+ pg_inherits         | t
+ pg_language         | t
+ pg_listener         | t
+ pg_opclass          | t
+ pg_operator         | t
+ pg_proc             | t
+ pg_relcheck         | t
+ pg_rewrite          | t
+ pg_statistic        | t
+ pg_trigger          | t
+ pg_type             | t
+ road                | t
+ shighway            | t
+ tenk1               | t
+ tenk2               | t
+(43 rows)
 
