@@ -1,2 +1,4 @@
+MK_NO_LORDER= true
+
 %.so: %.o
 	$(LD) -G -Bdynamic -o $@ $<
