@@ -1,6 +1,6 @@
 # PGXS: PostgreSQL extensions makefile
 
-# $PostgreSQL: pgsql/src/makefiles/pgxs.mk,v 1.2 2004/10/06 08:50:02 momjian Exp $ 
+# $PostgreSQL: pgsql/src/makefiles/pgxs.mk,v 1.3 2004/10/10 16:13:03 tgl Exp $ 
 
 # This file contains generic rules to build many kinds of simple
 # extension modules.  You only need to set a few variables and include
@@ -77,7 +77,6 @@ ifdef MODULE_big
 NAME = $(MODULE_big)
 SO_MAJOR_VERSION= 0
 SO_MINOR_VERSION= 0
-rpath =
 
 SHLIB_LINK += $(BE_DLLLIBS)
 
