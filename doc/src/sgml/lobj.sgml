@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/lobj.sgml,v 1.15 2001/01/20 00:05:54 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/lobj.sgml,v 1.16 2001/02/09 19:24:09 momjian Exp $
 -->
 
  <chapter id="largeObjects">
@@ -39,6 +39,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/lobj.sgml,v 1.15 2001/01/20 00:05:54 momjia
     Inversion large objects. (We will use  Inversion  and  large
     objects  interchangeably to mean the same thing in this
     section.)
+    Since <productname>PostgreSQL 7.1</productname> all large objects are placed in
+    one system table called pg_largeobject.
    </para>
   </sect1>
 
