@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.114 2002/04/26 01:24:08 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.115 2002/05/09 13:30:24 petere Exp $
 -->
 
 <Chapter Id="runtime">
@@ -145,11 +145,10 @@ postgres$ <userinput>initdb -D /usr/local/pgsql/data</userinput>
    linkend="locale">.  One surprise you might encounter while running
    <command>initdb</command> is a notice similar to this:
 <screen>
-WARNING:  Initializing database with en_US collation order.
-        This locale setting will prevent use of index optimization for
-        LIKE and regexp searches.  If you are concerned about speed of
-        such queries, you may wish to set LC_COLLATE to "C" and
-        re-initdb.  For more information see the Administrator's Guide.
+The database cluster will be initialized with locale de_DE.
+This locale setting will prevent the use of indexes for pattern matching
+operations.  If that is a concern, rerun initdb with the collation order
+set to "C".  For more information see the Administrator's Guide.
 </screen>
    This is intended to warn you that the currently selected locale
    will cause indexes to be sorted in an order that prevents them from

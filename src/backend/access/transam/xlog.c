@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.93 2002/04/24 01:54:43 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.94 2002/05/09 13:30:24 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,7 +39,6 @@
 #include "storage/spin.h"
 #include "utils/builtins.h"
 #include "utils/relcache.h"
-#include "utils/selfuncs.h"
 #include "miscadmin.h"
 
 
@@ -2107,19 +2106,6 @@ WriteControlFile(void)
 	if (!localeptr)
 		elog(PANIC, "invalid LC_CTYPE setting");
 	StrNCpy(ControlFile->lc_ctype, localeptr, LOCALE_NAME_BUFLEN);
-
-	/*
-	 * Issue warning WARNING if initdb'ing in a locale that will not permit
-	 * LIKE index optimization.  This is not a clean place to do it, but I
-	 * don't see a better place either...
-	 */
-	if (!locale_is_like_safe())
-		elog(WARNING, "Initializing database with %s collation order."
-			 "\n\tThis locale setting will prevent use of index optimization for"
-			 "\n\tLIKE and regexp searches.  If you are concerned about speed of"
-			 "\n\tsuch queries, you may wish to set LC_COLLATE to \"C\" and"
-			 "\n\tre-initdb.  For more information see the Administrator's Guide.",
-			 ControlFile->lc_collate);
 
 	/* Contents are protected with a CRC */
 	INIT_CRC64(ControlFile->crc);

@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.110 2002/04/25 02:56:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.111 2002/05/09 13:30:24 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3189,6 +3189,8 @@ pattern_selectivity(char *patt, Pattern_Type ptype)
  * could be different from lc_collate_is_c(), but in a different
  * theory, non-C locales are completely unpredicable so it's unlikely
  * to happen.)
+ *
+ * Be sure to maintain the correspondence with the code in initdb.
  */
 bool
 locale_is_like_safe(void)
