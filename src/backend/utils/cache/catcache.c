@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.68 2000/06/28 03:32:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.69 2000/07/02 05:38:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -190,14 +190,25 @@ CatalogCacheInitializeCache(CatCache * cache,
 							Relation relation)
 {
 	MemoryContext oldcxt;
-	short		didopen = 0;
+	bool		didopen = false;
 	short		i;
 	TupleDesc	tupdesc;
 
 	CatalogCacheInitializeCache_DEBUG1;
 
 	/* ----------------
-	 *	first switch to the cache context so our allocations
+	 *	If no relation was passed we must open it to get access to
+	 *	its fields.
+	 * ----------------
+	 */
+	if (!RelationIsValid(relation))
+	{
+		relation = heap_openr(cache->cc_relname, NoLock);
+		didopen = true;
+	}
+
+	/* ----------------
+	 *	switch to the cache context so our allocations
 	 *	do not vanish at the end of a transaction
 	 * ----------------
 	 */
@@ -205,42 +216,6 @@ CatalogCacheInitializeCache(CatCache * cache,
 		CreateCacheMemoryContext();
 
 	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
-
-	/* ----------------
-	 *	If no relation was passed we must open it to get access to
-	 *	its fields.  If one of the other caches has already opened
-	 *	it we use heap_open() instead of heap_openr().
-	 *	XXX is that really worth the trouble of checking?
-	 * ----------------
-	 */
-	if (!RelationIsValid(relation))
-	{
-		CatCache *cp;
-
-		/* ----------------
-		 *	scan the caches to see if any other cache has opened the relation
-		 * ----------------
-		 */
-		for (cp = Caches; cp; cp = cp->cc_next)
-		{
-			if (strncmp(cp->cc_relname, cache->cc_relname, NAMEDATALEN) == 0)
-			{
-				if (cp->relationId != InvalidOid)
-					break;
-			}
-		}
-
-		/* ----------------
-		 *	open the relation by name or by id
-		 * ----------------
-		 */
-		if (cp)
-			relation = heap_open(cp->relationId, NoLock);
-		else
-			relation = heap_openr(cache->cc_relname, NoLock);
-
-		didopen = 1;
-	}
 
 	/* ----------------
 	 *	initialize the cache's relation id and tuple descriptor
@@ -286,6 +261,12 @@ CatalogCacheInitializeCache(CatCache * cache,
 	}
 
 	/* ----------------
+	 *	return to the caller's memory context
+	 * ----------------
+	 */
+	MemoryContextSwitchTo(oldcxt);
+
+	/* ----------------
 	 *	close the relation if we opened it
 	 * ----------------
 	 */
@@ -313,12 +294,6 @@ CatalogCacheInitializeCache(CatCache * cache,
 		else
 			cache->cc_indname = NULL;
 	}
-
-	/* ----------------
-	 *	return to the proper memory context
-	 * ----------------
-	 */
-	MemoryContextSwitchTo(oldcxt);
 }
 
 /* --------------------------------
@@ -433,8 +408,6 @@ CatalogCacheComputeTupleHashIndex(CatCache * cacheInOutP,
 
 /* --------------------------------
  *		CatCacheRemoveCTup
- *
- *		NB: assumes caller has switched to CacheMemoryContext
  * --------------------------------
  */
 static void
@@ -482,7 +455,6 @@ CatalogCacheIdInvalidate(int cacheId,	/* XXX */
 	CatCache   *ccp;
 	CatCTup    *ct;
 	Dlelem	   *elt;
-	MemoryContext oldcxt;
 
 	/* ----------------
 	 *	sanity checks
@@ -491,15 +463,6 @@ CatalogCacheIdInvalidate(int cacheId,	/* XXX */
 	Assert(hashIndex < NCCBUCK);
 	Assert(ItemPointerIsValid(pointer));
 	CACHE1_elog(DEBUG, "CatalogCacheIdInvalidate: called");
-
-	/* ----------------
-	 *	switch to the cache context for our memory allocations
-	 * ----------------
-	 */
-	if (!CacheMemoryContext)
-		CreateCacheMemoryContext();
-
-	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 
 	/* ----------------
 	 *	inspect every cache that could contain the tuple
@@ -537,12 +500,6 @@ CatalogCacheIdInvalidate(int cacheId,	/* XXX */
 		if (cacheId != InvalidCatalogCacheId)
 			break;
 	}
-
-	/* ----------------
-	 *	return to the proper memory context
-	 * ----------------
-	 */
-	MemoryContextSwitchTo(oldcxt);
 }
 
 /* ----------------------------------------------------------------
@@ -562,20 +519,9 @@ CatalogCacheIdInvalidate(int cacheId,	/* XXX */
 void
 ResetSystemCache()
 {
-	MemoryContext oldcxt;
 	CatCache *cache;
 
 	CACHE1_elog(DEBUG, "ResetSystemCache called");
-
-	/* ----------------
-	 *	first switch to the cache context so our allocations
-	 *	do not vanish at the end of a transaction
-	 * ----------------
-	 */
-	if (!CacheMemoryContext)
-		CreateCacheMemoryContext();
-
-	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 
 	/* ----------------
 	 *	here we purge the contents of all the caches
@@ -609,12 +555,6 @@ ResetSystemCache()
 	}
 
 	CACHE1_elog(DEBUG, "end of ResetSystemCache call");
-
-	/* ----------------
-	 *	back to the old context before we return...
-	 * ----------------
-	 */
-	MemoryContextSwitchTo(oldcxt);
 }
 
 /* --------------------------------
@@ -682,7 +622,7 @@ do { \
 
 CatCache   *
 InitSysCache(char *relname,
-			 char *iname,
+			 char *indname,
 			 int id,
 			 int nkeys,
 			 int *key,
@@ -691,10 +631,6 @@ InitSysCache(char *relname,
 	CatCache   *cp;
 	int			i;
 	MemoryContext oldcxt;
-
-	char	   *indname;
-
-	indname = (iname) ? iname : NULL;
 
 	/* ----------------
 	 *	first switch to the cache context so our allocations
@@ -805,6 +741,7 @@ InitSysCache(char *relname,
 	 * ----------------
 	 */
 	MemoryContextSwitchTo(oldcxt);
+
 	return cp;
 }
 
@@ -927,7 +864,7 @@ SearchSysCache(CatCache * cache,
 	CatCTup    *nct;
 	CatCTup    *nct2;
 	Dlelem	   *elt;
-	HeapTuple	ntp = NULL;
+	HeapTuple	ntp;
 	Relation	relation;
 	MemoryContext oldcxt;
 
@@ -950,7 +887,7 @@ SearchSysCache(CatCache * cache,
 	/*
 	 * resolve self referencing informtion
 	 */
-	if ((ntp = SearchSelfReferences(cache)))
+	if ((ntp = SearchSelfReferences(cache)) != NULL)
 		return ntp;
 
 	/* ----------------
@@ -1035,16 +972,6 @@ SearchSysCache(CatCache * cache,
 				RelationGetRelationName(relation));
 
 	/* ----------------
-	 *	Switch to the cache memory context.
-	 * ----------------
-	 */
-
-	if (!CacheMemoryContext)
-		CreateCacheMemoryContext();
-
-	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
-
-	/* ----------------
 	 *	Scan the relation to find the tuple.  If there's an index, and
 	 *	if this isn't bootstrap (initdb) time, use the index.
 	 * ----------------
@@ -1056,14 +983,6 @@ SearchSysCache(CatCache * cache,
 	{
 		HeapTuple	indextp;
 
-		/* ----------
-		 *	Switch back to old memory context so memory not freed
-		 *	in the scan function will go away at transaction end.
-		 *	wieck - 10/18/1996
-		 * ----------
-		 */
-		MemoryContextSwitchTo(oldcxt);
-
 		/* We call the scanfunc with all four arguments to satisfy the
 		 * declared prototype, even though the function will likely not
 		 * use all four.
@@ -1071,53 +990,39 @@ SearchSysCache(CatCache * cache,
 		indextp = cache->cc_iscanfunc(relation, v1, v2, v3, v4);
 
 		/* ----------
-		 *	Back to Cache context. If we got a tuple copy it
-		 *	into our context.	wieck - 10/18/1996
+		 *	If we got a tuple copy it into our context.  wieck - 10/18/1996
 		 *	And free the tuple that was allocated in the
 		 *	transaction's context.   tgl - 02/03/2000
 		 * ----------
 		 */
 		if (HeapTupleIsValid(indextp))
 		{
-			MemoryContextSwitchTo(CacheMemoryContext);
+			oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 			ntp = heap_copytuple(indextp);
-			/* this switch is probably not needed anymore: */
 			MemoryContextSwitchTo(oldcxt);
 			heap_freetuple(indextp);
 		}
-		MemoryContextSwitchTo(CacheMemoryContext);
 	}
 	else
 	{
 		HeapScanDesc sd;
-
-		/* ----------
-		 *	As above do the lookup in the callers memory
-		 *	context.
-		 *	wieck - 10/18/1996
-		 * ----------
-		 */
-		MemoryContextSwitchTo(oldcxt);
 
 		sd = heap_beginscan(relation, 0, SnapshotNow,
 							cache->cc_nkeys, cache->cc_skey);
 
 		ntp = heap_getnext(sd, 0);
 
-		MemoryContextSwitchTo(CacheMemoryContext);
 
 		if (HeapTupleIsValid(ntp))
 		{
 			CACHE1_elog(DEBUG, "SearchSysCache: found tuple");
+			oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 			ntp = heap_copytuple(ntp);
+			MemoryContextSwitchTo(oldcxt);
 			/* We should not free the result of heap_getnext... */
 		}
 
-		MemoryContextSwitchTo(oldcxt);
-
 		heap_endscan(sd);
-
-		MemoryContextSwitchTo(CacheMemoryContext);
 	}
 
 	cache->busy = false;
@@ -1136,6 +1041,8 @@ SearchSysCache(CatCache * cache,
 		 */
 		Dlelem	   *lru_elt;
 
+		oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
+
 		/*
 		 * this is a little cumbersome here because we want the Dlelem's
 		 * in both doubly linked lists to point to one another. That makes
@@ -1153,6 +1060,8 @@ SearchSysCache(CatCache * cache,
 
 		DLAddHead(cache->cc_lrulist, lru_elt);
 		DLAddHead(cache->cc_cache[hash], elt);
+
+		MemoryContextSwitchTo(oldcxt);
 
 		/* ----------------
 		 *	If we've exceeded the desired size of this cache,
@@ -1183,13 +1092,10 @@ SearchSysCache(CatCache * cache,
 	}
 
 	/* ----------------
-	 *	close the relation, switch back to the original memory context
-	 *	and return the tuple we found (or NULL)
+	 *	close the relation and return the tuple we found (or NULL)
 	 * ----------------
 	 */
 	heap_close(relation, AccessShareLock);
-
-	MemoryContextSwitchTo(oldcxt);
 
 	return ntp;
 }
@@ -1208,8 +1114,7 @@ RelationInvalidateCatalogCacheTuple(Relation relation,
 									HeapTuple tuple,
 							  void (*function) (int, Index, ItemPointer))
 {
-	CatCache *ccp;
-	MemoryContext oldcxt;
+	CatCache   *ccp;
 	Oid			relationId;
 
 	/* ----------------
@@ -1220,15 +1125,6 @@ RelationInvalidateCatalogCacheTuple(Relation relation,
 	Assert(HeapTupleIsValid(tuple));
 	Assert(PointerIsValid(function));
 	CACHE1_elog(DEBUG, "RelationInvalidateCatalogCacheTuple: called");
-
-	/* ----------------
-	 *	switch to the cache memory context
-	 * ----------------
-	 */
-	if (!CacheMemoryContext)
-		CreateCacheMemoryContext();
-
-	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 
 	/* ----------------
 	 *	for each cache
@@ -1244,20 +1140,8 @@ RelationInvalidateCatalogCacheTuple(Relation relation,
 		if (relationId != ccp->relationId)
 			continue;
 
-#ifdef NOT_USED
-		/* OPT inline simplification of CatalogCacheIdInvalidate */
-		if (!PointerIsValid(function))
-			function = CatalogCacheIdInvalidate;
-#endif
-
 		(*function) (ccp->id,
 				 CatalogCacheComputeTupleHashIndex(ccp, relation, tuple),
 					 &tuple->t_self);
 	}
-
-	/* ----------------
-	 *	return to the proper memory context
-	 * ----------------
-	 */
-	MemoryContextSwitchTo(oldcxt);
 }
