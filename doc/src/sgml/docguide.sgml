@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/docguide.sgml,v 1.48 2003/11/29 19:51:36 pgsql Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/docguide.sgml,v 1.49 2003/12/13 20:09:15 momjian Exp $ -->
 
 <appendix id="docguide">
  <title>Documentation</title>
@@ -375,16 +375,6 @@ CATALOG "docbook-4.2/docbook.cat"
 
      <step>
       <para>
-       Optionally, you can edit the file
-       <filename>docbook.cat</filename> and comment out or remove the
-       line containing <literal>DTDDECL</literal>.  If you do not then
-       you will get warnings from <application>jade</application>, but
-       there is no further harm.
-      </para>
-     </step>
-
-     <step>
-      <para>
        Download the <ulink
        url="http://www.oasis-open.org/cover/ISOEnts.zip">ISO 8879
        character entities</ulink> archive, unpack it, and put the
@@ -429,7 +419,7 @@ perl -pi -e 's/iso-(.*).gml/ISO\1/g' docbook.cat
      <filename>/usr/local/share/sgml/catalog</filename> can also be
      made:
 <programlisting>
-CATALOG "docbook-dsssl--1.<replaceable>xx</>/catalog
+CATALOG "docbook-dsssl-1.<replaceable>xx</>/catalog
 </programlisting>
      Because stylesheets change rather often, and it's sometimes
      beneficial to try out alternative versions,
