@@ -1,7 +1,7 @@
 #!/bin/sh
 
 ##
-# PotgreSQL RDBMS Server
+# PostgreSQL RDBMS Server
 ##
 
 # PostgreSQL boot time startup script for Darwin/Mac OS X. To install, change
@@ -12,7 +12,7 @@
 # directory it is in. So you'll end up with these two files:
 #
 #    /Library/StartupItems/PostgreSQL/PostgreSQL
-#    /Library/StartupItems/PostgreSQLStartupParameters.plist
+#    /Library/StartupItems/PostgreSQL/StartupParameters.plist
 #
 # Next, add this line to the /etc/hostconfig file:
 #
@@ -30,21 +30,36 @@
 #
 # Created by David Wheeler, 2002.
 
+# modified by Ray Aspeitia 12-03-2003 : 
+# added log rotation script to db startup
+# modified StartupParameters.plist "Provides" parameter to make it easier to 
+# start and stop with the SystemStarter utitlity
+
+# use the below command in order to correctly start/stop/restart PG with log rotation script:
+# SystemStarter [start|stop|restart] PostgreSQL
+
 ################################################################################
 ## EDIT FROM HERE
 ################################################################################
 
 # Installation prefix
-prefix=/usr/local/pgsql
+prefix="/usr/local/pgsql"
 
 # Data directory
 PGDATA="/usr/local/pgsql/data"
 
 # Who to run pg_ctl as, should be "postgres".
-PGUSER=postgres
+PGUSER="postgres"
 
-# Where to keep a log file
-PGLOG="$PGDATA/serverlog"
+# the logfile path and name (NEEDS to be writeable by PGUSER)
+PGLOG="${PGDATA}/logs/logfile"
+
+# do you want to rotate the log files, 1=true 0=false
+ROTATELOGS=1
+
+# logfile rotate in seconds
+ROTATESEC="604800"
+
 
 ################################################################################
 ## STOP EDITING HERE
@@ -56,12 +71,19 @@ PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 # What to use to start up the postmaster
 DAEMON="$prefix/bin/pg_ctl"
 
+# The apache log rotation utility
+LOGUTIL="/usr/sbin/rotatelogs"
+
 . /etc/rc.common
 
 StartService () {
     if [ "${POSTGRESQLSERVER:=-NO-}" = "-YES-" ]; then
-	ConsoleMessage "Starting PostgreSQL database server"
-	sudo -u $PGUSER $DAEMON start -D "$PGDATA" -s -l $PGLOG
+        ConsoleMessage "Starting PostgreSQL database server"
+        if [ "${ROTATELOGS}" = "1" ]; then
+            sudo -u $PGUSER sh -c "${DAEMON} start -D ${PGDATA} -s | ${LOGUTIL} ${PGLOG} ${ROTATESEC} &"
+        else
+            sudo -u $PGUSER $DAEMON start -D "$PGDATA" -s -l $PGLOG
+        fi
     fi
 }
 
@@ -73,9 +95,15 @@ StopService () {
 RestartService () {
     if [ "${POSTGRESQLSERVER:=-NO-}" = "-YES-" ]; then
         ConsoleMessage "Restarting PostgreSQL database server"
-	sudo -u $PGUSER $DAEMON restart -D "$PGDATA" -s -m fast
+        if [ "${ROTATELOGS}" = "1" ]; then
+#            StopService
+#            StartService
+            sudo -u $PGUSER sh -c "${DAEMON} restart -D ${PGDATA} -s -m fast | ${LOGUTIL} ${PGLOG} ${ROTATESEC} &"
+        else
+            sudo -u $PGUSER $DAEMON restart -D "$PGDATA" -s -m fast
+        fi
     else
-	StopService
+        StopService
     fi
 }
 
