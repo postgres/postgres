@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.15 1998/02/26 04:37:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.16 1998/03/07 06:03:28 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -199,6 +199,7 @@ fmgr_info(Oid procedureId, FmgrInfo *finfo)
 				if (!finfo->fn_addr)
 					elog(ERROR, "fmgr_info: function %s: not in internal table",
 						 procedureStruct->proname.data);
+				finfo->fn_nargs = procedureStruct->pronargs;
 				break;
 			case ClanguageId:
 				finfo->fn_addr = fmgr_dynamic(procedureId, &(finfo->fn_nargs));
