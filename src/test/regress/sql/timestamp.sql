@@ -9,6 +9,8 @@ CREATE TABLE TIMESTAMP_TBL ( d1 timestamp(2) without time zone);
 -- Shorthand values
 -- Not directly usable for regression testing since these are not constants.
 -- So, just try to test parser and hope for the best - thomas 97/04/26
+-- NB: could get a failure if local midnight passes during the next few
+-- statements.
 
 INSERT INTO TIMESTAMP_TBL VALUES ('now');
 INSERT INTO TIMESTAMP_TBL VALUES ('current');
@@ -29,7 +31,7 @@ DELETE FROM TIMESTAMP_TBL;
 BEGIN;
 INSERT INTO TIMESTAMP_TBL VALUES ('now');
 INSERT INTO TIMESTAMP_TBL VALUES ('now');
-SELECT count(*) AS two FROM TIMESTAMP_TBL WHERE d1 = timestamp without time zone 'now';
+SELECT count(*) AS two FROM TIMESTAMP_TBL WHERE d1 = timestamp(2) without time zone 'now';
 END;
 DELETE FROM TIMESTAMP_TBL;
 

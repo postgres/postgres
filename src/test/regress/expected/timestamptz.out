@@ -40,7 +40,7 @@ DELETE FROM TIMESTAMPTZ_TBL;
 BEGIN;
 INSERT INTO TIMESTAMPTZ_TBL VALUES ('now');
 INSERT INTO TIMESTAMPTZ_TBL VALUES ('now');
-SELECT count(*) AS two FROM TIMESTAMPTZ_TBL WHERE d1 = timestamp with time zone 'now';
+SELECT count(*) AS two FROM TIMESTAMPTZ_TBL WHERE d1 = timestamp(2) with time zone 'now';
  two 
 -----
    2
