@@ -1,0 +1,11 @@
+#!/bin/sh
+# check regression tests
+# usage:  checkresults < results.out
+
+for file in `cat "$@" | grep 'failed$' | cut -d " " -f 1`
+do
+	echo "======   $file   ======"
+	diff -w expected/$file.out results
+done
+
+
