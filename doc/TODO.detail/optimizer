@@ -1,0 +1,987 @@
+From owner-pgsql-hackers@hub.org Mon Mar 22 18:43:41 1999
+Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id SAA23978
+	for <maillist@candle.pha.pa.us>; Mon, 22 Mar 1999 18:43:39 -0500 (EST)
+Received: from hub.org (majordom@hub.org [209.47.145.100]) by renoir.op.net (o1/$Revision: 1.1 $) with ESMTP id SAA06472 for <maillist@candle.pha.pa.us>; Mon, 22 Mar 1999 18:36:44 -0500 (EST)
+Received: from localhost (majordom@localhost)
+	by hub.org (8.9.2/8.9.1) with SMTP id SAA92604;
+	Mon, 22 Mar 1999 18:34:23 -0500 (EST)
+	(envelope-from owner-pgsql-hackers@hub.org)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Mon, 22 Mar 1999 18:33:50 +0000 (EST)
+Received: (from majordom@localhost)
+	by hub.org (8.9.2/8.9.1) id SAA92469
+	for pgsql-hackers-outgoing; Mon, 22 Mar 1999 18:33:47 -0500 (EST)
+	(envelope-from owner-pgsql-hackers@postgreSQL.org)
+Received: from po8.andrew.cmu.edu (PO8.ANDREW.CMU.EDU [128.2.10.108])
+	by hub.org (8.9.2/8.9.1) with ESMTP id SAA92456
+	for <pgsql-hackers@postgresql.org>; Mon, 22 Mar 1999 18:33:41 -0500 (EST)
+	(envelope-from er1p+@andrew.cmu.edu)
+Received: (from postman@localhost) by po8.andrew.cmu.edu (8.8.5/8.8.2) id SAA12894 for pgsql-hackers@postgresql.org; Mon, 22 Mar 1999 18:33:38 -0500 (EST)
+Received: via switchmail; Mon, 22 Mar 1999 18:33:38 -0500 (EST)
+Received: from cloudy.me.cmu.edu via qmail
+          ID </afs/andrew.cmu.edu/service/mailqs/q007/QF.Aqxh7Lu00gNtQ0TZE5>;
+          Mon, 22 Mar 1999 18:27:20 -0500 (EST)
+Received: from cloudy.me.cmu.edu via qmail
+          ID </afs/andrew.cmu.edu/usr2/er1p/.Outgoing/QF.Uqxh7JS00gNtMmTJFk>;
+          Mon, 22 Mar 1999 18:27:17 -0500 (EST)
+Received: from mms.4.60.Jun.27.1996.03.05.56.sun4.41.EzMail.2.0.CUILIB.3.45.SNAP.NOT.LINKED.cloudy.me.cmu.edu.sun4m.412
+          via MS.5.6.cloudy.me.cmu.edu.sun4_41;
+          Mon, 22 Mar 1999 18:27:15 -0500 (EST)
+Message-ID: <sqxh7H_00gNtAmTJ5Q@andrew.cmu.edu>
+Date: Mon, 22 Mar 1999 18:27:15 -0500 (EST)
+From: Erik Riedel <riedel+@CMU.EDU>
+To: pgsql-hackers@postgreSQL.org
+Subject: [HACKERS] optimizer and type question
+Sender: owner-pgsql-hackers@postgreSQL.org
+Precedence: bulk
+Status: RO
+
+
+[last week aggregation, this week, the optimizer]
+
+I have a somewhat general optimizer question/problem that I would like
+to get some input on - i.e. I'd like to know what is "supposed" to
+work here and what I should be expecting.  Sadly, I think the patch
+for this is more involved than my last message.
+
+Using my favorite table these days:
+
+Table    = lineitem
++------------------------+----------------------------------+-------+
+|              Field     |              Type                | Length|
++------------------------+----------------------------------+-------+
+| l_orderkey             | int4 not null                    |     4 |
+| l_partkey              | int4 not null                    |     4 |
+| l_suppkey              | int4 not null                    |     4 |
+| l_linenumber           | int4 not null                    |     4 |
+| l_quantity             | float4 not null                  |     4 |
+| l_extendedprice        | float4 not null                  |     4 |
+| l_discount             | float4 not null                  |     4 |
+| l_tax                  | float4 not null                  |     4 |
+| l_returnflag           | char() not null                  |     1 |
+| l_linestatus           | char() not null                  |     1 |
+| l_shipdate             | date                             |     4 |
+| l_commitdate           | date                             |     4 |
+| l_receiptdate          | date                             |     4 |
+| l_shipinstruct         | char() not null                  |    25 |
+| l_shipmode             | char() not null                  |    10 |
+| l_comment              | char() not null                  |    44 |
++------------------------+----------------------------------+-------+
+Index:    lineitem_index_
+
+and the query:
+
+--
+-- Query 1
+--
+explain select l_returnflag, l_linestatus, sum(l_quantity) as sum_qty, 
+sum(l_extendedprice) as sum_base_price, 
+sum(l_extendedprice*(1-l_discount)) as sum_disc_price, 
+sum(l_extendedprice*(1-l_discount)*(1+l_tax)) as sum_charge, 
+avg(l_quantity) as avg_qty, avg(l_extendedprice) as avg_price, 
+avg(l_discount) as avg_disc, count(*) as count_order 
+from lineitem 
+where l_shipdate <= '1998-09-02'::date 
+group by l_returnflag, l_linestatus 
+order by l_returnflag, l_linestatus;
+
+
+note that I have eliminated the date calculation in my query of last
+week and manually replaced it with a constant (since this wasn't
+happening automatically - but let's not worry about that for now).
+And this is only an explain, we care about the optimizer.  So we get:
+
+Sort  (cost=34467.88 size=0 width=0)
+ ->  Aggregate  (cost=34467.88 size=0 width=0)
+   ->  Group  (cost=34467.88 size=0 width=0)
+     ->  Sort  (cost=34467.88 size=0 width=0)
+       ->  Seq Scan on lineitem  (cost=34467.88 size=200191 width=44)
+
+so let's think about the selectivity that is being chosen for the
+seq scan (the where l_shipdate <= '1998-09-02').
+
+Turns out the optimizer is choosing "33%", even though the real answer
+is somewhere in 90+% (that's how the query is designed).  So, why does
+it do that?
+
+Turns out that selectivity in this case is determined via
+plancat::restriction_selectivity() which calls into functionOID = 103
+(intltsel) for operatorOID = 1096 (date "<=") on relation OID = 18663
+(my lineitem).
+
+This all follows because of the description of 1096 (date "<=") in
+pg_operator.  Looking at local1_template1.bki.source near line 1754
+shows:
+
+insert OID = 1096 ( "<=" PGUID 0 <...> date_le intltsel intltjoinsel )
+
+where we see that indeed, it thinks "intltsel" is the right function
+to use for "oprrest" in the case of dates.
+
+Question 1 - is intltsel the right thing for selectivity on dates?
+
+Hope someone is still with me.
+
+So now we're running selfuncs::intltsel() where we make a further call
+to selfuncs::gethilokey().  The job of gethilokey is to determine the
+min and max values of a particular attribute in the table, which will
+then be used with the constant in my where clause to estimate the
+selectivity.  It is going to search the pg_statistic relation with
+three key values:
+
+Anum_pg_statistic_starelid     18663  (lineitem)
+Anum_pg_statistic_staattnum       11  (l_shipdate)
+Anum_pg_statistic_staop         1096  (date "<=")
+
+this finds no tuples in pg_statistic.  Why is that?  The only nearby
+tuple in pg_statistic is:
+
+starelid|staattnum|staop|stalokey        |stahikey       
+--------+---------+-----+----------------+----------------
+   18663|       11|    0|01-02-1992      |12-01-1998
+
+and the reason the query doesn't match anything?  Because 1096 != 0.
+But why is it 0 in pg_statistic?  Statistics are determined near line
+1844 in vacuum.c (assuming a 'vacuum analyze' run at some point)
+
+             i = 0;
+             values[i++] = (Datum) relid;            /* 1 */
+             values[i++] = (Datum) attp->attnum; /* 2 */
+====>        values[i++] = (Datum) InvalidOid;       /* 3 */
+             fmgr_info(stats->outfunc, &out_function);
+             out_string = <...min...>
+             values[i++] = (Datum) fmgr(F_TEXTIN, out_string);
+             pfree(out_string);
+             out_string = <...max...>
+             values[i++] = (Datum) fmgr(F_TEXTIN, out_string);
+             pfree(out_string);
+             stup = heap_formtuple(sd->rd_att, values, nulls);
+
+the "offending" line is setting the staop to InvalidOid (i.e. 0).
+
+Question 2 - is this right?  Is the intent for 0 to serve as a
+"wildcard", or should it be inserting an entry for each operation
+individually?
+
+In the case of "wildcard" then gethilokey() should allow a match for 
+
+Anum_pg_statistic_staop         0
+
+instead of requiring the more restrictive 1096.  In the current code,
+what happens next is gethilokey() returns "not found" and intltsel()
+returns the default 1/3 which I see in the resultant query plan (size
+= 200191 is 1/3 of the number of lineitem tuples).
+
+Question 3 - is there any inherent reason it couldn't get this right?
+The statistic is in the table 1992 to 1998, so the '1998-09-02' date
+should be 90-some% selectivity, a much better guess than 33%.
+
+Doesn't make a difference for this particular query, of course,
+because the seq scan must proceed anyhow, but it could easily affect
+other queries where selectivities matter (and it affects the
+modifications I am trying to test in the optimizer to be "smarter"
+about selectivities - my overall context is to understand/improve the
+behavior that the underlying storage system sees from queries like this).
+
+OK, so let's say we treat 0 as a "wildcard" and stop checking for
+1096.  Not we let gethilokey() return the two dates from the statistic
+table.  The immediate next thing that intltsel() does, near lines 122
+in selfuncs.c is call atol() on the strings from gethilokey().  And
+guess what it comes up with?
+
+low = 1
+high = 12
+
+because it calls atol() on '01-02-1992' and '12-01-1998'.  This
+clearly isn't right, it should get some large integer that includes
+the year and day in the result.  Then it should compare reasonably
+with my constant from the where clause and give a decent selectivity
+value.  This leads to a re-visit of Question 1.
+
+Question 4 - should date "<=" use a dateltsel() function instead of
+intltsel() as oprrest?
+
+If anyone is still with me, could you tell me if this makes sense, or
+if there is some other location where the appropriate type conversion
+could take place so that intltsel() gets something reasonable when it
+does the atol() calls?
+
+Could someone also give me a sense for how far out-of-whack the whole
+current selectivity-handling structure is?  It seems that most of the
+operators in pg_operator actually use intltsel() and would have
+type-specific problems like that described.  Or is the problem in the
+way attribute values are stored in pg_statistic by vacuum analyze?  Or
+is there another layer where type conversion belongs?
+
+Phew.  Enough typing, hope someone can follow this and address at
+least some of the questions.
+
+Thanks.
+
+Erik Riedel
+Carnegie Mellon University
+www.cs.cmu.edu/~riedel
+
+
+
+From owner-pgsql-hackers@hub.org Mon Mar 22 20:31:11 1999
+Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id UAA00802
+	for <maillist@candle.pha.pa.us>; Mon, 22 Mar 1999 20:31:09 -0500 (EST)
+Received: from hub.org (majordom@hub.org [209.47.145.100]) by renoir.op.net (o1/$Revision: 1.1 $) with ESMTP id UAA13231 for <maillist@candle.pha.pa.us>; Mon, 22 Mar 1999 20:15:20 -0500 (EST)
+Received: from localhost (majordom@localhost)
+	by hub.org (8.9.2/8.9.1) with SMTP id UAA01981;
+	Mon, 22 Mar 1999 20:14:04 -0500 (EST)
+	(envelope-from owner-pgsql-hackers@hub.org)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Mon, 22 Mar 1999 20:13:32 +0000 (EST)
+Received: (from majordom@localhost)
+	by hub.org (8.9.2/8.9.1) id UAA01835
+	for pgsql-hackers-outgoing; Mon, 22 Mar 1999 20:13:28 -0500 (EST)
+	(envelope-from owner-pgsql-hackers@postgreSQL.org)
+Received: from sss.sss.pgh.pa.us (sss.pgh.pa.us [206.210.65.6])
+	by hub.org (8.9.2/8.9.1) with ESMTP id UAA01822
+	for <pgsql-hackers@postgreSQL.org>; Mon, 22 Mar 1999 20:13:21 -0500 (EST)
+	(envelope-from tgl@sss.pgh.pa.us)
+Received: from sss.sss.pgh.pa.us (localhost [127.0.0.1])
+	by sss.sss.pgh.pa.us (8.9.1/8.9.1) with ESMTP id UAA23294;
+	Mon, 22 Mar 1999 20:12:43 -0500 (EST)
+To: Erik Riedel <riedel+@CMU.EDU>
+cc: pgsql-hackers@postgreSQL.org
+Subject: Re: [HACKERS] optimizer and type question 
+In-reply-to: Your message of Mon, 22 Mar 1999 18:27:15 -0500 (EST) 
+             <sqxh7H_00gNtAmTJ5Q@andrew.cmu.edu> 
+Date: Mon, 22 Mar 1999 20:12:43 -0500
+Message-ID: <23292.922151563@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Sender: owner-pgsql-hackers@postgreSQL.org
+Precedence: bulk
+Status: ROr
+
+Erik Riedel <riedel+@CMU.EDU> writes:
+> [ optimizer doesn't find relevant pg_statistic entry ]
+
+It's clearly a bug that the selectivity code is not finding this tuple.
+If your analysis is correct, then selectivity estimation has *never*
+worked properly, or at least not in recent memory :-(.  Yipes.
+Bruce and I found a bunch of other problems in the optimizer recently,
+so it doesn't faze me to assume that this is broken too.
+
+> the "offending" line is setting the staop to InvalidOid (i.e. 0).
+> Question 2 - is this right?  Is the intent for 0 to serve as a
+> "wildcard",
+
+My thought is that what the staop column ought to be is the OID of the
+comparison function that was used to determine the sort order of the
+column.  Without a sort op the lowest and highest keys in the column are
+not well defined, so it makes no sense to assert "these are the lowest
+and highest values" without providing the sort op that determined that.
+(For sufficiently complex data types one could reasonably have multiple
+ordering operators.  A crude example is sorting on "circumference" and
+"area" for polygons.)  But typically the sort op will be the "<"
+operator for the column data type.
+
+So, the vacuum code is definitely broken --- it's not storing the sort
+op that it used.  The code in gethilokey might be broken too, depending
+on how it is producing the operator it's trying to match against the
+tuple.  For example, if the actual operator in the query is any of
+< <= > >= on int4, then int4lt ought to be used to probe the pg_statistic
+table.  I'm not sure if we have adequate info in pg_operator or pg_type
+to let the optimizer code determine the right thing to probe with :-(
+
+> The immediate next thing that intltsel() does, near lines 122
+> in selfuncs.c is call atol() on the strings from gethilokey().  And
+> guess what it comes up with?
+> low = 1
+> high = 12
+> because it calls atol() on '01-02-1992' and '12-01-1998'.  This
+> clearly isn't right, it should get some large integer that includes
+> the year and day in the result.  Then it should compare reasonably
+> with my constant from the where clause and give a decent selectivity
+> value.  This leads to a re-visit of Question 1.
+> Question 4 - should date "<=" use a dateltsel() function instead of
+> intltsel() as oprrest?
+
+This is clearly busted as well.  I'm not sure that creating dateltsel()
+is the right fix, however, because if you go down that path then every
+single datatype needs its own selectivity function; that's more than we
+need.
+
+What we really want here is to be able to map datatype values into
+some sort of numeric range so that we can compute what fraction of the
+low-key-to-high-key range is on each side of the probe value (the
+constant taken from the query).  This general concept will apply to
+many scalar types, so what we want is a type-specific mapping function
+and a less-specific fraction-computing-function.  Offhand I'd say that
+we want intltsel() and floatltsel(), plus conversion routines that can
+produce either int4 or float8 from a data type as seems appropriate.
+Anything that couldn't map to one or the other would have to supply its
+own selectivity function.
+
+> Or is the problem in the
+> way attribute values are stored in pg_statistic by vacuum analyze?
+
+Looks like it converts the low and high values to text and stores them
+that way.  Ugly as can be :-( but I'm not sure there is a good
+alternative.  We have no "wild card" column type AFAIK, which is what
+these columns of pg_statistic would have to be to allow storage of
+unconverted min and max values.
+
+I think you've found a can of worms here.  Congratulations ;-)
+
+			regards, tom lane
+
+
+From owner-pgsql-hackers@hub.org Mon Mar 22 23:31:00 1999
+Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id XAA03384
+	for <maillist@candle.pha.pa.us>; Mon, 22 Mar 1999 23:30:58 -0500 (EST)
+Received: from hub.org (majordom@hub.org [209.47.145.100]) by renoir.op.net (o1/$Revision: 1.1 $) with ESMTP id XAA25586 for <maillist@candle.pha.pa.us>; Mon, 22 Mar 1999 23:18:25 -0500 (EST)
+Received: from localhost (majordom@localhost)
+	by hub.org (8.9.2/8.9.1) with SMTP id XAA17955;
+	Mon, 22 Mar 1999 23:17:24 -0500 (EST)
+	(envelope-from owner-pgsql-hackers@hub.org)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Mon, 22 Mar 1999 23:16:49 +0000 (EST)
+Received: (from majordom@localhost)
+	by hub.org (8.9.2/8.9.1) id XAA17764
+	for pgsql-hackers-outgoing; Mon, 22 Mar 1999 23:16:46 -0500 (EST)
+	(envelope-from owner-pgsql-hackers@postgreSQL.org)
+Received: from po8.andrew.cmu.edu (PO8.ANDREW.CMU.EDU [128.2.10.108])
+	by hub.org (8.9.2/8.9.1) with ESMTP id XAA17745
+	for <pgsql-hackers@postgreSQL.org>; Mon, 22 Mar 1999 23:16:39 -0500 (EST)
+	(envelope-from er1p+@andrew.cmu.edu)
+Received: (from postman@localhost) by po8.andrew.cmu.edu (8.8.5/8.8.2) id XAA04273; Mon, 22 Mar 1999 23:16:37 -0500 (EST)
+Received: via switchmail; Mon, 22 Mar 1999 23:16:37 -0500 (EST)
+Received: from hazy.adsl.net.cmu.edu via qmail
+          ID </afs/andrew.cmu.edu/service/mailqs/q000/QF.kqxlJ:S00anI00p040>;
+          Mon, 22 Mar 1999 23:15:09 -0500 (EST)
+Received: from hazy.adsl.net.cmu.edu via qmail
+          ID </afs/andrew.cmu.edu/usr2/er1p/.Outgoing/QF.MqxlJ3q00anI01hKE0>;
+          Mon, 22 Mar 1999 23:15:00 -0500 (EST)
+Received: from mms.4.60.Jun.27.1996.03.02.53.sun4.51.EzMail.2.0.CUILIB.3.45.SNAP.NOT.LINKED.hazy.adsl.net.cmu.edu.sun4m.54
+          via MS.5.6.hazy.adsl.net.cmu.edu.sun4_51;
+          Mon, 22 Mar 1999 23:14:55 -0500 (EST)
+Message-ID: <4qxlJ0200anI01hK40@andrew.cmu.edu>
+Date: Mon, 22 Mar 1999 23:14:55 -0500 (EST)
+From: Erik Riedel <riedel+@CMU.EDU>
+To: Tom Lane <tgl@sss.pgh.pa.us>
+Subject: Re: [HACKERS] optimizer and type question
+Cc: pgsql-hackers@postgreSQL.org
+In-Reply-To: <23292.922151563@sss.pgh.pa.us>
+References: <23292.922151563@sss.pgh.pa.us>
+Sender: owner-pgsql-hackers@postgreSQL.org
+Precedence: bulk
+Status: ROr
+
+
+OK, building on your high-level explanation, I am attaching a patch that
+attempts to do something "better" than the current code.  Note that I
+have only tested this with the date type and my particular query.  I
+haven't run it through the regression, so consider it "proof of concept"
+at best.  Although hopefully it will serve my purposes.
+
+> My thought is that what the staop column ought to be is the OID of the
+> comparison function that was used to determine the sort order of the
+> column.  Without a sort op the lowest and highest keys in the column are
+> not well defined, so it makes no sense to assert "these are the lowest
+> and highest values" without providing the sort op that determined that.
+>
+> (For sufficiently complex data types one could reasonably have multiple
+> ordering operators.  A crude example is sorting on "circumference" and
+> "area" for polygons.)  But typically the sort op will be the "<"
+> operator for the column data type.
+>  
+I changed vacuum.c to do exactly that.  oid of the lt sort op.
+
+> So, the vacuum code is definitely broken --- it's not storing the sort
+> op that it used.  The code in gethilokey might be broken too, depending
+> on how it is producing the operator it's trying to match against the
+> tuple.  For example, if the actual operator in the query is any of
+> < <= > >= on int4, then int4lt ought to be used to probe the pg_statistic
+> table.  I'm not sure if we have adequate info in pg_operator or pg_type
+> to let the optimizer code determine the right thing to probe with :-(
+>  
+This indeed seems like a bigger problem.  I thought about somehow using
+type-matching from the sort op and the actual operator in the query - if
+both the left and right type match, then consider them the same for
+purposes of this probe.  That seemed complicated, so I punted in my
+example - it just does the search with relid and attnum and assumes that
+only returns one tuple.  This works in my case (maybe in all cases,
+because of the way vacuum is currently written - ?).
+
+> What we really want here is to be able to map datatype values into
+> some sort of numeric range so that we can compute what fraction of the
+> low-key-to-high-key range is on each side of the probe value (the
+> constant taken from the query).  This general concept will apply to
+> many scalar types, so what we want is a type-specific mapping function
+> and a less-specific fraction-computing-function.  Offhand I'd say that
+> we want intltsel() and floatltsel(), plus conversion routines that can
+> produce either int4 or float8 from a data type as seems appropriate.
+> Anything that couldn't map to one or the other would have to supply its
+> own selectivity function.
+>  
+This is what my example then does.  Uses the stored sort op to get the
+type and then uses typinput to convert from the string to an int4.
+
+Then puts the int4 back into string format because that's what everyone
+was expecting.
+
+It seems to work for my particular query.  I now get:
+
+(selfuncs) gethilokey() obj 18663 attr 11 opid 1096 (ignored)
+(selfuncs) gethilokey() found op 1087 in pg_proc
+(selfuncs) gethilokey() found type 1082 in pg_type
+(selfuncs) gethilokey() going to use 1084 to convert type 1082
+(selfuncs) gethilokey() have low -2921 high -396
+(selfuncs) intltsel() high -396 low -2921 val -486
+(plancat) restriction_selectivity() for func 103 op 1096 rel 18663 attr
+11 const -486 flag 3 returns 0.964356
+NOTICE:  QUERY PLAN:
+
+Sort  (cost=34467.88 size=0 width=0)
+ ->  Aggregate  (cost=34467.88 size=0 width=0)
+  ->  Group  (cost=34467.88 size=0 width=0)
+   ->  Sort  (cost=34467.88 size=0 width=0)
+    ->  Seq Scan on lineitem  (cost=34467.88 size=579166 width=44)
+
+including my printfs, which exist in the patch as well.
+
+Selectivity is now the expected 96% and the size estimate for the seq
+scan is much closer to correct.
+
+Again, not tested with anything besides date, so caveat not-tested.
+
+Hope this helps.
+
+Erik
+
+----------------------[optimizer_fix.sh]------------------------
+
+#! /bin/sh
+# This is a shell archive, meaning:
+# 1. Remove everything above the #! /bin/sh line.
+# 2. Save the resulting text in a file.
+# 3. Execute the file with /bin/sh (not csh) to create:
+#	selfuncs.c.diff
+#	vacuum.c.diff
+# This archive created: Mon Mar 22 22:58:14 1999
+export PATH; PATH=/bin:/usr/bin:$PATH
+if test -f 'selfuncs.c.diff'
+then
+	echo shar: "will not over-write existing file 'selfuncs.c.diff'"
+else
+cat << \SHAR_EOF > 'selfuncs.c.diff'
+***
+/afs/ece.cmu.edu/project/lcs/lcs-004/er1p/postgres/611/src/backend/utils/adt
+/selfuncs.c	Thu Mar 11 23:59:35 1999
+---
+/afs/ece.cmu.edu/project/lcs/lcs-004/er1p/postgres/615/src/backend/utils/adt
+/selfuncs.c	Mon Mar 22 22:57:25 1999
+***************
+*** 32,37 ****
+--- 32,40 ----
+  #include "utils/lsyscache.h"	/* for get_oprrest() */
+  #include "catalog/pg_statistic.h"
+  
++ #include "catalog/pg_proc.h"    /* for Form_pg_proc */
++ #include "catalog/pg_type.h"    /* for Form_pg_type */
++ 
+  /* N is not a valid var/constant or relation id */
+  #define NONVALUE(N)		((N) == -1)
+  
+***************
+*** 103,110 ****
+  				bottom;
+  
+  	result = (float64) palloc(sizeof(float64data));
+! 	if (NONVALUE(attno) || NONVALUE(relid))
+  		*result = 1.0 / 3;
+  	else
+  	{
+  		/* XXX			val = atol(value); */
+--- 106,114 ----
+  				bottom;
+  
+  	result = (float64) palloc(sizeof(float64data));
+! 	if (NONVALUE(attno) || NONVALUE(relid)) {
+  		*result = 1.0 / 3;
++ 	}
+  	else
+  	{
+  		/* XXX			val = atol(value); */
+***************
+*** 117,130 ****
+  		}
+  		high = atol(highchar);
+  		low = atol(lowchar);
+  		if ((flag & SEL_RIGHT && val < low) ||
+  			(!(flag & SEL_RIGHT) && val > high))
+  		{
+  			float32data nvals;
+  
+  			nvals = getattdisbursion(relid, (int) attno);
+! 			if (nvals == 0)
+  				*result = 1.0 / 3.0;
+  			else
+  			{
+  				*result = 3.0 * (float64data) nvals;
+--- 121,136 ----
+  		}
+  		high = atol(highchar);
+  		low = atol(lowchar);
++ 		printf("(selfuncs) intltsel() high %d low %d val %d\n",high,low,val);
+  		if ((flag & SEL_RIGHT && val < low) ||
+  			(!(flag & SEL_RIGHT) && val > high))
+  		{
+  			float32data nvals;
+  
+  			nvals = getattdisbursion(relid, (int) attno);
+! 			if (nvals == 0) {
+  				*result = 1.0 / 3.0;
++ 			}
+  			else
+  			{
+  				*result = 3.0 * (float64data) nvals;
+***************
+*** 336,341 ****
+--- 342,353 ----
+  {
+  	Relation	rel;
+  	HeapScanDesc scan;
++ 	/* this assumes there is only one row in the statistics table for any
+particular */
++ 	/* relid, attnum pair - could be more complicated if staop is also
+used.         */
++ 	/* at the moment, if there are multiple rows, this code ends up
+picking the      */
++ 	/* "first" one                                                       
+   - er1p  */
++ 	/* the actual "ignoring" is done in the call to heap_beginscan()
+below, where    */
++ 	/* we only mention 2 of the 3 keys in this array                     
+   - er1p  */
+  	static ScanKeyData key[3] = {
+  		{0, Anum_pg_statistic_starelid, F_OIDEQ, {0, 0, F_OIDEQ}},
+  		{0, Anum_pg_statistic_staattnum, F_INT2EQ, {0, 0, F_INT2EQ}},
+***************
+*** 344,355 ****
+  	bool		isnull;
+  	HeapTuple	tuple;
+  
+  	rel = heap_openr(StatisticRelationName);
+  
+  	key[0].sk_argument = ObjectIdGetDatum(relid);
+  	key[1].sk_argument = Int16GetDatum((int16) attnum);
+  	key[2].sk_argument = ObjectIdGetDatum(opid);
+! 	scan = heap_beginscan(rel, 0, SnapshotNow, 3, key);
+  	tuple = heap_getnext(scan, 0);
+  	if (!HeapTupleIsValid(tuple))
+  	{
+--- 356,377 ----
+  	bool		isnull;
+  	HeapTuple	tuple;
+  
++ 	HeapTuple tup;
++ 	Form_pg_proc proc;
++ 	Form_pg_type typ;
++ 	Oid which_op;
++ 	Oid which_type;
++ 	int32 low_value;
++ 	int32 high_value;
++ 
+  	rel = heap_openr(StatisticRelationName);
+  
+  	key[0].sk_argument = ObjectIdGetDatum(relid);
+  	key[1].sk_argument = Int16GetDatum((int16) attnum);
+  	key[2].sk_argument = ObjectIdGetDatum(opid);
+! 	printf("(selfuncs) gethilokey() obj %d attr %d opid %d (ignored)\n",
+! 	       key[0].sk_argument,key[1].sk_argument,key[2].sk_argument);
+! 	scan = heap_beginscan(rel, 0, SnapshotNow, 2, key);
+  	tuple = heap_getnext(scan, 0);
+  	if (!HeapTupleIsValid(tuple))
+  	{
+***************
+*** 376,383 ****
+--- 398,461 ----
+  								&isnull));
+  	if (isnull)
+  		elog(DEBUG, "gethilokey: low key is null");
++ 
+  	heap_endscan(scan);
+  	heap_close(rel);
++ 
++ 	/* now we deal with type conversion issues                           
+         */
++ 	/* when intltsel() calls this routine (who knows what other callers
+might do)  */
++ 	/* it assumes that it can call atol() on the strings and then use
+integer      */
++ 	/* comparison from there.  what we are going to do here, then, is try
+to use   */
++ 	/* the type information from Anum_pg_statistic_staop to convert the
+high       */
++ 	/* and low values                                                   
+- er1p    */
++ 
++ 	/* WARNING: this code has only been tested with the date type and has
+NOT      */
++ 	/* been regression tested.  consider it "sample" code of what might
+be the     */
++ 	/* right kind of thing to do                                        
+- er1p    */
++ 
++ 	/* get the 'op' from pg_statistic and look it up in pg_proc */
++ 	which_op = heap_getattr(tuple,
++ 				Anum_pg_statistic_staop,
++ 				RelationGetDescr(rel),
++ 				&isnull);
++ 	if (InvalidOid == which_op) {
++ 	  /* ignore all this stuff, try conversion only if we have a valid staop */
++ 	  /* note that there is an accompanying change to 'vacuum analyze' that  */
++ 	  /* gets this set to something useful.                                  */
++ 	} else {
++ 	  /* staop looks valid, so let's see what we can do about conversion */
++ 	  tup = SearchSysCacheTuple(PROOID, ObjectIdGetDatum(which_op), 0, 0, 0);
++ 	  if (!HeapTupleIsValid(tup)) {
++ 	    elog(ERROR, "selfuncs: unable to find op in pg_proc %d", which_op);
++ 	  }
++ 	  printf("(selfuncs) gethilokey() found op %d in pg_proc\n",which_op);
++ 	  
++ 	  /* use that to determine the type of stahikey and stalokey via pg_type */
++ 	  proc = (Form_pg_proc) GETSTRUCT(tup);
++ 	  which_type = proc->proargtypes[0]; /* XXX - use left and right
+separately? */
++ 	  tup = SearchSysCacheTuple(TYPOID, ObjectIdGetDatum(which_type), 0, 0, 0);
++ 	  if (!HeapTupleIsValid(tup)) {
++ 	    elog(ERROR, "selfuncs: unable to find type in pg_type %d", which_type);
++ 	  }
++ 	  printf("(selfuncs) gethilokey() found type %d in pg_type\n",which_type);
++ 	  
++ 	  /* and use that type to get the conversion function to int4 */
++ 	  typ = (Form_pg_type) GETSTRUCT(tup);
++ 	  printf("(selfuncs) gethilokey() going to use %d to convert type
+%d\n",typ->typinput,which_type);
++ 	  
++ 	  /* and convert the low and high strings */
++ 	  low_value = (int32) fmgr(typ->typinput, *low, -1);
++ 	  high_value = (int32) fmgr(typ->typinput, *high, -1);
++ 	  printf("(selfuncs) gethilokey() have low %d high
+%d\n",low_value,high_value);
++ 	  
++ 	  /* now we have int4's, which we put back into strings because
+that's what out  */
++ 	  /* callers (intltsel() at least) expect                            
+    - er1p */
++ 	  pfree(*low); pfree(*high); /* let's not leak the old strings */
++ 	  *low = int4out(low_value);
++ 	  *high = int4out(high_value);
++ 
++ 	  /* XXX - this probably leaks the two tups we got from
+SearchSysCacheTuple() - er1p */
++ 	}
+  }
+  
+  float64
+SHAR_EOF
+fi
+if test -f 'vacuum.c.diff'
+then
+	echo shar: "will not over-write existing file 'vacuum.c.diff'"
+else
+cat << \SHAR_EOF > 'vacuum.c.diff'
+***
+/afs/ece.cmu.edu/project/lcs/lcs-004/er1p/postgres/611/src/backend/commands/
+vacuum.c	Thu Mar 11 23:59:09 1999
+---
+/afs/ece.cmu.edu/project/lcs/lcs-004/er1p/postgres/615/src/backend/commands/
+vacuum.c	Mon Mar 22 21:23:15 1999
+***************
+*** 1842,1848 ****
+  					i = 0;
+  					values[i++] = (Datum) relid;		/* 1 */
+  					values[i++] = (Datum) attp->attnum; /* 2 */
+! 					values[i++] = (Datum) InvalidOid;	/* 3 */
+  					fmgr_info(stats->outfunc, &out_function);
+  					out_string = (*fmgr_faddr(&out_function)) (stats->min,
+stats->attr->atttypid);
+  					values[i++] = (Datum) fmgr(F_TEXTIN, out_string);
+--- 1842,1848 ----
+  					i = 0;
+  					values[i++] = (Datum) relid;		/* 1 */
+  					values[i++] = (Datum) attp->attnum; /* 2 */
+! 					values[i++] = (Datum) stats->f_cmplt.fn_oid;	/* 3 */ /* get the
+'<' oid, instead of 'invalid' - er1p */
+  					fmgr_info(stats->outfunc, &out_function);
+  					out_string = (*fmgr_faddr(&out_function)) (stats->min,
+stats->attr->atttypid);
+  					values[i++] = (Datum) fmgr(F_TEXTIN, out_string);
+SHAR_EOF
+fi
+exit 0
+#	End of shell archive
+
+
+
+From owner-pgsql-hackers@hub.org Tue Mar 23 12:31:05 1999
+Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id MAA17491
+	for <maillist@candle.pha.pa.us>; Tue, 23 Mar 1999 12:31:04 -0500 (EST)
+Received: from hub.org (majordom@hub.org [209.47.145.100]) by renoir.op.net (o1/$Revision: 1.1 $) with ESMTP id MAA08839 for <maillist@candle.pha.pa.us>; Tue, 23 Mar 1999 12:08:14 -0500 (EST)
+Received: from localhost (majordom@localhost)
+	by hub.org (8.9.2/8.9.1) with SMTP id MAA93649;
+	Tue, 23 Mar 1999 12:04:57 -0500 (EST)
+	(envelope-from owner-pgsql-hackers@hub.org)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Tue, 23 Mar 1999 12:03:00 +0000 (EST)
+Received: (from majordom@localhost)
+	by hub.org (8.9.2/8.9.1) id MAA93355
+	for pgsql-hackers-outgoing; Tue, 23 Mar 1999 12:02:55 -0500 (EST)
+	(envelope-from owner-pgsql-hackers@postgreSQL.org)
+Received: from sss.sss.pgh.pa.us (sss.pgh.pa.us [206.210.65.6])
+	by hub.org (8.9.2/8.9.1) with ESMTP id MAA93336
+	for <pgsql-hackers@postgreSQL.org>; Tue, 23 Mar 1999 12:02:43 -0500 (EST)
+	(envelope-from tgl@sss.pgh.pa.us)
+Received: from sss.sss.pgh.pa.us (localhost [127.0.0.1])
+	by sss.sss.pgh.pa.us (8.9.1/8.9.1) with ESMTP id MAA24455;
+	Tue, 23 Mar 1999 12:01:57 -0500 (EST)
+To: Erik Riedel <riedel+@CMU.EDU>
+cc: pgsql-hackers@postgreSQL.org
+Subject: Re: [HACKERS] optimizer and type question 
+In-reply-to: Your message of Mon, 22 Mar 1999 23:14:55 -0500 (EST) 
+             <4qxlJ0200anI01hK40@andrew.cmu.edu> 
+Date: Tue, 23 Mar 1999 12:01:57 -0500
+Message-ID: <24453.922208517@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Sender: owner-pgsql-hackers@postgreSQL.org
+Precedence: bulk
+Status: RO
+
+Erik Riedel <riedel+@CMU.EDU> writes:
+> OK, building on your high-level explanation, I am attaching a patch that
+> attempts to do something "better" than the current code.  Note that I
+> have only tested this with the date type and my particular query.
+
+Glad to see you working on this.  I don't like the details of your
+patch too much though ;-).  Here are some suggestions for making it
+better.
+
+1. I think just removing staop from the lookup in gethilokey is OK for
+now, though I'm dubious about Bruce's thought that we could delete that
+field entirely.  As you observe, vacuum will not currently put more
+than one tuple for a column into pg_statistic, so we can just do the
+lookup with relid and attno and leave it at that.  But I think we ought
+to leave the field there, with the idea that vacuum might someday
+compute more than one statistic for a data column.  Fixing vacuum to
+put its sort op into the field is a good idea in the meantime.
+
+2. The type conversion you're doing in gethilokey is a mess; I think
+what you ought to make it do is simply the inbound conversion of the
+string from pg_statistic into the internal representation for the
+column's datatype, and return that value as a Datum.  It also needs
+a cleaner success/failure return convention --- this business with
+"n" return is ridiculously type-specific.  Also, the best and easiest
+way to find the type to convert to is to look up the column type in
+the info for the given relid, not search pg_proc with the staop value.
+(I'm not sure that will even work, since there are pg_proc entries
+with wildcard argument types.)
+
+3. The atol() calls currently found in intltsel are a type-specific
+cheat on what is conceptually a two-step process:
+  * Convert the string stored in pg_statistic back to the internal
+    form for the column data type.
+  * Generate a numeric representation of the data value that can be
+    used as an estimate of the range of values in the table.
+The second step is trivial for integers, which may obscure the fact
+that there are two steps involved, but nonetheless there are.  If
+you think about applying selectivity logic to strings, say, it
+becomes clear that the second step is a necessary component of the
+process.  Furthermore, the second step must also be applied to the
+probe value that's being passed into the selectivity operator.
+(The probe value is already in internal form, of course; but it is
+not necessarily in a useful numeric form.)
+
+We can do the first of these steps by applying the appropriate "XXXin"
+conversion function for the column data type, as you have done.  The
+interesting question is how to do the second one.  A really clean
+solution would require adding a column to pg_type that points to a
+function that will do the appropriate conversion.  I'd be inclined to
+make all of these functions return "double" (float8) and just have one
+top-level selectivity routine for all data types that can use
+range-based selectivity logic.
+
+We could probably hack something together that would not use an explicit
+conversion function for each data type, but instead would rely on
+type-specific assumptions inside the selectivity routines.  We'd need many
+more selectivity routines though (at least one for each of int, float4,
+float8, and text data types) so I'm not sure we'd really save any work
+compared to doing it right.
+
+BTW, now that I look at this issue it's real clear that the selectivity
+entries in pg_operator are horribly broken.  The intltsel/intgtsel
+selectivity routines are currently applied to 32 distinct data types:
+
+regression=> select distinct typname,oprleft from pg_operator, pg_type
+regression-> where pg_type.oid = oprleft
+regression-> and oprrest in (103,104);
+typname  |oprleft
+---------+-------
+_aclitem |   1034
+abstime  |    702
+bool     |     16
+box      |    603
+bpchar   |   1042
+char     |     18
+cidr     |    650
+circle   |    718
+date     |   1082
+datetime |   1184
+float4   |    700
+float8   |    701
+inet     |    869
+int2     |     21
+int4     |     23
+int8     |     20
+line     |    628
+lseg     |    601
+macaddr  |    829
+money    |    790
+name     |     19
+numeric  |   1700
+oid      |     26
+oid8     |     30
+path     |    602
+point    |    600
+polygon  |    604
+text     |     25
+time     |   1083
+timespan |   1186
+timestamp|   1296
+varchar  |   1043
+(32 rows)
+
+many of which are very obviously not compatible with integer for *any*
+purpose.  It looks to me like a lot of data types were added to
+pg_operator just by copy-and-paste, without paying attention to whether
+the selectivity routines were actually correct for the data type.
+
+As the code stands today, the bogus entries don't matter because
+gethilokey always fails, so we always get 1/3 as the selectivity
+estimate for any comparison operator (except = and != of course).
+I had actually noticed that fact and assumed that it was supposed
+to work that way :-(.  But, clearly, there is code in here that
+is *trying* to be smarter.
+
+As soon as we fix gethilokey so that it can succeed, we will start
+getting essentially-random selectivity estimates for those data types
+that aren't actually binary-compatible with integer.  That will not do;
+we have to do something about the issue.
+
+			regards, tom lane
+
+
+From tgl@sss.pgh.pa.us Tue Mar 23 12:31:02 1999
+Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id MAA17484
+	for <maillist@candle.pha.pa.us>; Tue, 23 Mar 1999 12:31:01 -0500 (EST)
+Received: from sss.sss.pgh.pa.us (sss.pgh.pa.us [206.210.65.6]) by renoir.op.net (o1/$Revision: 1.1 $) with ESMTP id MAA09042 for <maillist@candle.pha.pa.us>; Tue, 23 Mar 1999 12:10:55 -0500 (EST)
+Received: from sss.sss.pgh.pa.us (localhost [127.0.0.1])
+	by sss.sss.pgh.pa.us (8.9.1/8.9.1) with ESMTP id MAA24474;
+	Tue, 23 Mar 1999 12:09:52 -0500 (EST)
+To: Bruce Momjian <maillist@candle.pha.pa.us>
+cc: riedel+@CMU.EDU, pgsql-hackers@postgreSQL.org
+Subject: Re: [HACKERS] optimizer and type question 
+In-reply-to: Your message of Mon, 22 Mar 1999 21:25:45 -0500 (EST) 
+             <199903230225.VAA01641@candle.pha.pa.us> 
+Date: Tue, 23 Mar 1999 12:09:52 -0500
+Message-ID: <24471.922208992@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Status: RO
+
+Bruce Momjian <maillist@candle.pha.pa.us> writes:
+> What we really need is some way to determine how far the requested value
+> is from the min/max values.  With int, we just do (val-min)/(max-min). 
+> That works, but how do we do that for types that don't support division.
+> Strings come to mind in this case.
+
+What I'm envisioning is that we still apply the (val-min)/(max-min)
+logic, but apply it to numeric values that are produced in a
+type-dependent way.
+
+For ints and floats the conversion is trivial, of course.
+
+For strings, the first thing that comes to mind is to return 0 for a
+null string and the value of the first byte for a non-null string.
+This would give you one-part-in-256 selectivity which is plenty good
+enough for what the selectivity code needs to do.  (Actually, it's
+only that good if the strings' first bytes are pretty well spread out.
+If you have a table containing English words, for example, you might
+only get about one part in 26 this way, since the first bytes will
+probably only run from A to Z.  Might be better to use the first two
+characters of the string to compute the selectivity representation.)
+
+In general, you can apply this logic as long as you can come up with
+some numerical approximation to the data type's sorting order.  It
+doesn't have to be exact.
+
+			regards, tom lane
+
+From owner-pgsql-hackers@hub.org Tue Mar 23 12:31:03 1999
+Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id MAA17488
+	for <maillist@candle.pha.pa.us>; Tue, 23 Mar 1999 12:31:02 -0500 (EST)
+Received: from hub.org (majordom@hub.org [209.47.145.100]) by renoir.op.net (o1/$Revision: 1.1 $) with ESMTP id MAA09987 for <maillist@candle.pha.pa.us>; Tue, 23 Mar 1999 12:21:34 -0500 (EST)
+Received: from localhost (majordom@localhost)
+	by hub.org (8.9.2/8.9.1) with SMTP id MAA95155;
+	Tue, 23 Mar 1999 12:18:33 -0500 (EST)
+	(envelope-from owner-pgsql-hackers@hub.org)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Tue, 23 Mar 1999 12:17:00 +0000 (EST)
+Received: (from majordom@localhost)
+	by hub.org (8.9.2/8.9.1) id MAA94857
+	for pgsql-hackers-outgoing; Tue, 23 Mar 1999 12:16:56 -0500 (EST)
+	(envelope-from owner-pgsql-hackers@postgreSQL.org)
+Received: from sss.sss.pgh.pa.us (sss.pgh.pa.us [206.210.65.6])
+	by hub.org (8.9.2/8.9.1) with ESMTP id MAA94469
+	for <pgsql-hackers@postgreSQL.org>; Tue, 23 Mar 1999 12:11:33 -0500 (EST)
+	(envelope-from tgl@sss.pgh.pa.us)
+Received: from sss.sss.pgh.pa.us (localhost [127.0.0.1])
+	by sss.sss.pgh.pa.us (8.9.1/8.9.1) with ESMTP id MAA24474;
+	Tue, 23 Mar 1999 12:09:52 -0500 (EST)
+To: Bruce Momjian <maillist@candle.pha.pa.us>
+cc: riedel+@CMU.EDU, pgsql-hackers@postgreSQL.org
+Subject: Re: [HACKERS] optimizer and type question 
+In-reply-to: Your message of Mon, 22 Mar 1999 21:25:45 -0500 (EST) 
+             <199903230225.VAA01641@candle.pha.pa.us> 
+Date: Tue, 23 Mar 1999 12:09:52 -0500
+Message-ID: <24471.922208992@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Sender: owner-pgsql-hackers@postgreSQL.org
+Precedence: bulk
+Status: RO
+
+Bruce Momjian <maillist@candle.pha.pa.us> writes:
+> What we really need is some way to determine how far the requested value
+> is from the min/max values.  With int, we just do (val-min)/(max-min). 
+> That works, but how do we do that for types that don't support division.
+> Strings come to mind in this case.
+
+What I'm envisioning is that we still apply the (val-min)/(max-min)
+logic, but apply it to numeric values that are produced in a
+type-dependent way.
+
+For ints and floats the conversion is trivial, of course.
+
+For strings, the first thing that comes to mind is to return 0 for a
+null string and the value of the first byte for a non-null string.
+This would give you one-part-in-256 selectivity which is plenty good
+enough for what the selectivity code needs to do.  (Actually, it's
+only that good if the strings' first bytes are pretty well spread out.
+If you have a table containing English words, for example, you might
+only get about one part in 26 this way, since the first bytes will
+probably only run from A to Z.  Might be better to use the first two
+characters of the string to compute the selectivity representation.)
+
+In general, you can apply this logic as long as you can come up with
+some numerical approximation to the data type's sorting order.  It
+doesn't have to be exact.
+
+			regards, tom lane
+
+

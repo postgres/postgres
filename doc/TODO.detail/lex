@@ -1,0 +1,332 @@
+From selkovjr@mcs.anl.gov Sat Jul 25 05:31:05 1998
+Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
+	by candle.pha.pa.us (8.8.5/8.8.5) with ESMTP id FAA16564
+	for <maillist@candle.pha.pa.us>; Sat, 25 Jul 1998 05:31:03 -0400 (EDT)
+Received: from antares.mcs.anl.gov (mcs.anl.gov [140.221.9.6]) by renoir.op.net (o1/$Revision: 1.1 $) with SMTP id FAA01775 for <maillist@candle.pha.pa.us>; Sat, 25 Jul 1998 05:28:22 -0400 (EDT)
+Received: from mcs.anl.gov (wit.mcs.anl.gov [140.221.5.148]) by antares.mcs.anl.gov (8.6.10/8.6.10)  with ESMTP
+	id EAA28698 for <maillist@candle.pha.pa.us>; Sat, 25 Jul 1998 04:27:05 -0500
+Sender: selkovjr@mcs.anl.gov
+Message-ID: <35B9968D.21CF60A2@mcs.anl.gov>
+Date: Sat, 25 Jul 1998 08:25:49 +0000
+From: "Gene Selkov, Jr." <selkovjr@mcs.anl.gov>
+Organization: MCS, Argonne Natl. Lab
+X-Mailer: Mozilla 4.03 [en] (X11; I; Linux 2.0.32 i586)
+MIME-Version: 1.0
+To: Bruce Momjian <maillist@candle.pha.pa.us>
+Subject: position-aware scanners
+References: <199807250524.BAA07296@candle.pha.pa.us>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Status: RO
+
+Bruce,
+
+I attached here (trough the web links) a couple examples, totally
+irrelevant to postgres but good enough to discuss token locations. I
+might as well try to patch the backend parser, though not sure how soon.
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+1. 
+
+The first c parser I wrote,
+http://wit.mcs.anl.gov/~selkovjr/unit-troff.tgz, is not very
+sophisticated, so token locations reported by yyerr() may be slightly
+incorrect (+/- one position depending on the existence and type of the
+lookahead token. It is a filter used to typeset the units of measurement
+with eqn. To use it, unpack the tar file and run make. The Makefile is
+not too generic but I built it on various systems including linux,
+freebsd and sunos 4.3. The invocation can be something like this:
+
+./check 0 parse "l**3/(mmoll*min)"
+parse error, expecting `BASIC_UNIT' or `INTEGER' or `POSITIVE_NUMBER' or
+`'(''
+
+l**3/(mmoll*min)
+      ^^^^^
+
+Now to the guts. As far as I can imagine, the only way to consistently
+keep track of each character read by the scanner (regardless of the
+length of expressions it will match) is to redefine its YY_INPUT like
+this:
+
+#undef YY_INPUT
+#define YY_INPUT(buf,result,max_size) \
+{ \
+	int c	= (int) buffer[pos++]; \
+	result = (c == '\0') ?	YY_NULL	: (buf[0] = c, 1); \
+}
+
+Here, buffer is the pointer to the origin of the string being scanned
+and pos is a global variable, similar in usage to a file pointer (you
+can both read and manipulate it at will). The buffer and the pointer are
+initialized by the function 
+
+void setString(char *s)
+{
+   buffer = s;
+   pos = 0;
+}
+
+each time the new string is to be parsed. This (exportable) function is
+part of the interface. 
+
+In this simplistic design, yyerror() is part of the scanner module and
+it uses the pos variable to report the location of unexpected tokens.
+The downside of such arrangement is that in case of error condition, you
+can't easily tell whether your context is current or lookahead token, it
+just reports the position of the last token read (be it $ (end of
+buffer) or something else):
+
+./check 0 convert "mol/foo"
+parse error, expecting `BASIC_UNIT' or `INTEGER' or `POSITIVE_NUMBER' or
+`'(''
+
+mol/foo
+       ^^^
+
+(should be at the beginning of "foo")
+
+./check 0 convert "mmol//l"        
+parse error, expecting `BASIC_UNIT' or `INTEGER' or `POSITIVE_NUMBER' or
+`'(''
+
+mmol//l
+    ^
+
+(should be at the second '/')
+
+
+I believe this is why most simple parsers made with yacc would report
+parse errors being "at or near" some token, which is fair enough if the
+expression is not too complex.
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+2. The second version of the same scanner,
+http://wit.mcs.anl.gov/~selkovjr/scanner-example.tgz, addresses this
+problem by recording exact locations of the tokens in each instance of
+the token semantic data structure. The global,
+
+UNIT_YYSTYPE unit_yylval;
+
+would be normally used to export the token semantics (including its
+original or modified text and location data) to the parser.
+Unfortunately, I cannot show you the parser part in c, because that's
+about when I stopped writing parsers in c. Instead, I included a small
+test program, test.c, that mimics the parser's expectations for the
+scanner data pretty well. I am assuming here that you are not interested
+in digging someone else's ugly guts for relatively small bit of
+information; let me know if I am wrong and I will send you the complete
+perl code (also generated with bison).
+
+To run this example, unpack the tar file and run Make. Then do
+
+  gcc test.c scanner.o
+
+and run a.out
+
+Note the line
+
+    yylval = unit_getyylval();
+
+in test.c. You will not normally need it in a c parser. It is enough to
+define yylval as an external variable and link it to yylval in yylex()
+
+In the bison-generated parser, yylval gets pushed into a stack (pointed
+to by yylsp) each time a new token is read. For each syntax rule, the
+bison macros @1, @2, ... are just shortcuts to locations in the stack 1,
+2, ... levels deep. In following code fragment, @3 refers to the
+location info for the third term in the rule (INTEGER):
+
+(sorry about perl, but I think you can do the same things in c without
+significant changes to your existing parser)
+
+term:           base    {
+                        $$ = $1;
+                        $$->{'order'} = 1;
+                }
+        |       base EXP INTEGER {
+                        $$ = $1;
+                        $$->{'order'} = @3->{'text'};
+                        $$->{'scale'} = $$->{'scale'} ** $$->{'order'};
+                        if ( $$->{'order'} == 0 ) {
+                                yyerror("Error: expecting a non-zero
+integer exponent");
+                                YYERROR;
+                        }
+                }
+
+
+which translates to:
+
+  ($yyn == 10)    && do {
+          $yyval = $yyvsa[-1];
+          $yyval->{'order'} = 1;
+          last SWITCH;
+  };
+
+  ($yyn == 11)    && do {
+          $yyval = $yyvsa[-3];
+          $yyval->{'order'} = $yylsa[-1]->{'text'}
+          $yyval->{'scale'} = $yyval->{'scale'} ** $yyval->{'order'};
+          if ( $yyval->{'order'} == 0 ) {
+                   yyerror("Error: expecting a non-zero integer
+exponent");
+                   goto yyerrlab1 ;
+          }
+          last SWITCH;
+  };
+
+In c, you will have a bit more complicated pointer arithmetic to adress
+the stack, but the usage of objects will be the same. Note here that it
+is convenient to keep all information about the token in its location
+info, (yylsa, yylsp, yylval, @n), while everything relating to the value
+of the expression, or to the parse tree, is better placed in the
+semantic stack (yyssa, yyssp, yysval, $n). Also note that in some cases
+you can do semantic checks inside rules and report useful messages
+before or instead of invoking yyerror();
+
+Finally, it is useful to make the following wrapper function around
+external yylex() in order to maintain your own token stack. Unlike the
+parser's internal stack which is only as deep as the rule being reduced,
+this one can hold all tokens recognized during the current run, and that
+can be extremely helpful for error reporting and any transformations you
+may need. In this way, you can even scan (tokenize) the whole buffer
+before handing it off to the parser (who knows, you may need a token
+ahead of what is currently seen by the parser):
+
+
+sub tokenize {
+    undef @tokenTable;
+    my ($tok, $text, $name, $unit, $first_line, $first_column,
+$last_line, $last_column);
+    
+    while ( ($tok = &UnitLex::yylex()) > 0 ) { # this is where the
+c-coded yylex is called,
+                                               # UnitLex is the perl
+extension encapsulating it                            
+       ( $text, $name, $unit, $first_line, $first_column, $last_line,
+$last_column ) = &UnitLex::getyylval;
+       push(@tokenTable, 
+           Unit::yyltype->new (
+              'token'         => $tok,
+              'text'          => $text,
+              'name'          => $name,
+              'unit'          => $unit,
+              'first_line'    => $first_line,
+              'first_column'  => $first_column,
+              'last_line'     => $last_line,
+              'last_column'   => $last_column,
+           )
+       )
+    }
+
+}
+
+
+It is now a lot easier to handle various state-related problems, such as
+backtracking and error reporting. The yylex() function as seen by the
+parser might be constructed somewhat like this:
+
+sub yylex {
+    $yylloc = $tokenTable[$tokenNo];  # $tokenNo is a global; now
+instead of a "file pointer",
+                                      # as in the first example, we have
+a "token pointer"
+    undef $yylval;
+
+
+    # disregard this; name this block "computing semantic values"       
+    if ( $yylloc->{'token'} == UNIT) {
+        $yylval = Unit::Operand->new(
+        'unit'  => Unit::Dict::unit($yylloc->{'unit'}),
+        'base'  => Unit::Dict::base($yylloc->{'unit'}),
+        'scale' => Unit::Dict::scale($yylloc->{'unit'}),
+        'scaleToBase' => Unit::Dict::scaleToBase($yylloc->{'unit'}),
+        'loc'   => $yylloc,
+       );    
+    }
+    elsif ( ($yylloc->{'token'} == INTEGER ) || ($yylloc->{'token'} ==
+POSITIVE_NUMBER) ) {
+        $yylval = Unit::Operand->new(
+          'unit' => '1',
+          'base' => '1',
+          'scale' => 1,
+          'scaleToBase' => 1,
+          'loc'   => $yylloc,
+        );
+    }
+
+    $tokenNo++;
+    return(%{$yylloc}->{'token'}); # This is all the parser needs to
+know about this token. 
+                                   # But we already made sure we saved
+everything we need to know.
+}
+
+
+Now the most interesting part, the error reporting routine:
+
+
+sub yyerror {
+    my ($str) = @_;
+    my ($message, $start, $end, $loc);
+
+    $loc = $tokenTable[$tokenNo-1]; # This is the same as to say, 
+                                    # "obtain the location info for the
+current token"
+  
+    # You may use this routine for your own purposes or let parser use
+it
+    if( $str ne 'parse error' ) {
+        $message = "$str instead of `" . $loc->{'name'} . "' <" .
+$loc->{'text'} . ">,  at line " . $loc->{'first_line'} . ":\n\
+n";
+    }
+    else {
+        $message = "unexpected token `" . $loc->{'name'} . "' <" .
+$loc->{'text'} . ">,  at line " . loc->{'first_line'} . ":\n
+\n";
+    }
+
+    $message .= $parseBuffer . "\n"; # that's the original string that
+was used to set the parser buffer
+
+    $message .= ( ' ' x ($loc->{'first_column'} + 1) ) . ( '^' x
+length($loc->{'text'}) ). "\n";
+    if( $str ne 'parse error' ) {
+        print STDERR "$str instead of `", $loc->{'name'}, "' {",
+$loc->{'text'}, "},  at line ", $loc->{'first_line'}, ":\n\n";
+    }
+    else {
+        print STDERR "unexpected token `", $loc->{'name'}, "' {",
+$loc->{'text'}, "},  at line ", $loc->{'first_line'}, ":\n\n";
+    }
+    
+    print STDERR "$parseBuffer\n";
+    print STDERR ' ' x ($loc->{'first_column'} + 1), '^' x
+length($loc->{'text'}), "\n";
+}
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Scanners used in these examples assume there is a single line of text on
+the input (the first_line and last_line elements of yylloc are simply
+ignored). If you want to be able to parse multi-line buffers, just add a
+lex rule for '\n' that will increment the line count and reset the pos
+variable to zero.
+
+
+Ugly as it may seem, I find this approach extremely liberating. If the
+grammar becomes too complicated for a LALR(1) parser, I can cascade
+multiple parsers. The token table can then be used to reassemble parts
+of original expression for subordinate parsers, preserving the location
+info all the way down, so that subordinate parsers can report their
+problems consistently. You probably don't need this, as SQL is very well
+thought of and has parsable grammar. But it may be of some help, for
+error reporting. 
+
+
+--Gene
+

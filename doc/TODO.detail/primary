@@ -1,0 +1,159 @@
+From owner-pgsql-hackers@hub.org Fri Sep  4 00:47:06 1998
+Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
+	by candle.pha.pa.us (8.8.5/8.8.5) with ESMTP id AAA01047
+	for <maillist@candle.pha.pa.us>; Fri, 4 Sep 1998 00:47:05 -0400 (EDT)
+Received: from hub.org (hub.org [209.47.148.200]) by renoir.op.net (o1/$Revision: 1.1 $) with ESMTP id XAA02044 for <maillist@candle.pha.pa.us>; Thu, 3 Sep 1998 23:11:07 -0400 (EDT)
+Received: from localhost (majordom@localhost) by hub.org (8.8.8/8.7.5) with SMTP id XAA27418; Thu, 3 Sep 1998 23:06:16 -0400 (EDT)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Thu, 03 Sep 1998 23:04:11 +0000 (EDT)
+Received: (from majordom@localhost) by hub.org (8.8.8/8.7.5) id XAA27185 for pgsql-hackers-outgoing; Thu, 3 Sep 1998 23:04:09 -0400 (EDT)
+Received: from dune.krs.ru (dune.krs.ru [195.161.16.38]) by hub.org (8.8.8/8.7.5) with ESMTP id XAA27169 for <hackers@postgreSQL.org>; Thu, 3 Sep 1998 23:03:59 -0400 (EDT)
+Received: from krs.ru (localhost.krs.ru [127.0.0.1])
+	by dune.krs.ru (8.8.8/8.8.8) with ESMTP id LAA10059;
+	Fri, 4 Sep 1998 11:03:00 +0800 (KRSS)
+	(envelope-from vadim@krs.ru)
+Message-ID: <35EF5864.E5142D35@krs.ru>
+Date: Fri, 04 Sep 1998 11:03:00 +0800
+From: Vadim Mikheev <vadim@krs.ru>
+Organization: OJSC Rostelecom (Krasnoyarsk)
+X-Mailer: Mozilla 4.05 [en] (X11; I; FreeBSD 2.2.6-RELEASE i386)
+MIME-Version: 1.0
+To: "D'Arcy J.M. Cain" <darcy@druid.net>
+CC: "Thomas G. Lockhart" <lockhart@alumni.caltech.edu>, hackers@postgreSQL.org
+Subject: Re: [HACKERS] Adding PRIMARY KEY info
+References: <m0zEaoV-00006JC@druid.net>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Sender: owner-pgsql-hackers@hub.org
+Precedence: bulk
+Status: RO
+
+D'Arcy J.M. Cain wrote:
+> 
+> Thus spake Vadim Mikheev
+> > Imho, indices should be used/created for FOREIGN keys and so pg_index
+> > is good place for both PRIMARY and FOREIGN keys infos.
+> 
+> Are you sure?  I don't know about implementing it but it seems more
+> like an attribute thing rather than an index thing.  Certainly from a
+> database design viewpoint you want to refer to the fields, not the
+> index on them.  If you put it into the index then you have to do
+> an extra join to get the information.
+> 
+> Perhaps you have to do the extra join anyway for other purposes so it
+> may not matter.  All I want is to be able to be able to extract the
+> field that the designer specified as the key.  As long as I can design
+> a select statement that gives me that I don't much care how it is
+> implemented.  I'll cache the information anyway so it won't have a
+> huge impact on my programs.
+
+First, let me note that you have to add int28 field to pg_class,
+not just oid field, to know what attributeS are in primary key
+(we support multi-attribute primary keys).
+This could be done...
+But what about foreign and unique (!) keys ?
+There may be _many_ foreign/unique keys defined for one table!
+And so foreign/unique keys info have to be stored somewhere else,
+not in pg_class.
+
+pg_index is good place for all _3_ key types because of:
+
+1. index should be created for each foreign key - 
+   just for performance.
+2. pg_index already has int28 field for key attributes.
+3. pg_index already has indisunique (note that foreign keys 
+   may reference unique keys, not just primary ones).
+
+- so we have just add two fields to pg_index:
+
+bool indisprimary;
+oid  indreferenced; 
+^^^^^^^^^^^^^^^^^^
+this is for foreign keys: oid of referenced relation' 
+primary/unique key index.
+
+I agreed that indices are just implementation...
+If you don't like to store key infos in pg_index then
+new pg_key relation have to be added...
+
+Comments ?
+
+Vadim
+
+
+From owner-pgsql-hackers@hub.org Sat Sep  5 02:01:13 1998
+Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
+	by candle.pha.pa.us (8.8.5/8.8.5) with ESMTP id CAA14437
+	for <maillist@candle.pha.pa.us>; Sat, 5 Sep 1998 02:01:11 -0400 (EDT)
+Received: from hub.org (hub.org [209.47.148.200]) by renoir.op.net (o1/$Revision: 1.1 $) with ESMTP id BAA09928 for <maillist@candle.pha.pa.us>; Sat, 5 Sep 1998 01:48:32 -0400 (EDT)
+Received: from localhost (majordom@localhost) by hub.org (8.8.8/8.7.5) with SMTP id BAA18282; Sat, 5 Sep 1998 01:43:16 -0400 (EDT)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Sat, 05 Sep 1998 01:41:40 +0000 (EDT)
+Received: (from majordom@localhost) by hub.org (8.8.8/8.7.5) id BAA18241 for pgsql-hackers-outgoing; Sat, 5 Sep 1998 01:41:38 -0400 (EDT)
+Received: from dune.krs.ru (dune.krs.ru [195.161.16.38]) by hub.org (8.8.8/8.7.5) with ESMTP id BAA18211; Sat, 5 Sep 1998 01:41:21 -0400 (EDT)
+Received: from krs.ru (localhost.krs.ru [127.0.0.1])
+	by dune.krs.ru (8.8.8/8.8.8) with ESMTP id NAA20555;
+	Sat, 5 Sep 1998 13:40:44 +0800 (KRSS)
+	(envelope-from vadim@krs.ru)
+Message-ID: <35F0CEDB.AD721090@krs.ru>
+Date: Sat, 05 Sep 1998 13:40:43 +0800
+From: Vadim Mikheev <vadim@krs.ru>
+Organization: OJSC Rostelecom (Krasnoyarsk)
+X-Mailer: Mozilla 4.05 [en] (X11; I; FreeBSD 2.2.6-RELEASE i386)
+MIME-Version: 1.0
+To: "D'Arcy J.M. Cain" <darcy@druid.net>
+CC: hackers@postgreSQL.org, pgsql-core@postgreSQL.org
+Subject: Re: [HACKERS] Adding PRIMARY KEY info
+References: <m0zEvLK-00006FC@druid.net>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Sender: owner-pgsql-hackers@hub.org
+Precedence: bulk
+Status: ROr
+
+D'Arcy J.M. Cain wrote:
+> 
+> >
+> > pg_index is good place for all _3_ key types because of:
+> >
+> > 1. index should be created for each foreign key -
+> >    just for performance.
+> > 2. pg_index already has int28 field for key attributes.
+> > 3. pg_index already has indisunique (note that foreign keys
+> >    may reference unique keys, not just primary ones).
+> >
+> > - so we have just add two fields to pg_index:
+> >
+> > bool indisprimary;
+> > oid  indreferenced;
+> > ^^^^^^^^^^^^^^^^^^
+> > this is for foreign keys: oid of referenced relation'
+> > primary/unique key index.
+> 
+> Sounds fine to me.  Any chance of seeing this in 6.4?
+
+I could add this (and FOREIGN key implementation) before
+11-13 Sep... But not the ALTER TABLE ADD/DROP CONSTRAINT
+stuff (ok for Entry SQL).
+But we are in beta...
+
+Comments?
+
+> Nope, pg_index is fine by me.  Now, once we have this, how do we find
+> the index for a particular attribute?  I can't seem to figure out the
+> relationship between pg_attribute and pg_index.  The chart in the docs
+> suggests that indkey is the relation but I can't see any useful info
+> there for joining the tables.
+
+pg_index:
+	indrelid - oid of indexed relation
+	indkey   - up to the 8 attnums
+
+pg_attribute:
+	attrelid - oid of relation
+	attnum   - ...
+
+Without outer join you have to query pg_attribute for each
+valid attnum from pg_index->indkey -:(
+
+Vadim
+
+

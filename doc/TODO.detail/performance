@@ -1,0 +1,343 @@
+From owner-pgsql-hackers@hub.org Sun Jun 14 18:45:04 1998
+Received: from hub.org (hub.org [209.47.148.200])
+	by candle.pha.pa.us (8.8.5/8.8.5) with ESMTP id SAA03690
+	for <maillist@candle.pha.pa.us>; Sun, 14 Jun 1998 18:45:00 -0400 (EDT)
+Received: from localhost (majordom@localhost) by hub.org (8.8.8/8.7.5) with SMTP id SAA28049; Sun, 14 Jun 1998 18:39:42 -0400 (EDT)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Sun, 14 Jun 1998 18:36:06 +0000 (EDT)
+Received: (from majordom@localhost) by hub.org (8.8.8/8.7.5) id SAA27943 for pgsql-hackers-outgoing; Sun, 14 Jun 1998 18:36:04 -0400 (EDT)
+Received: from angular.illustra.com (ifmxoak.illustra.com [206.175.10.34]) by hub.org (8.8.8/8.7.5) with ESMTP id SAA27925 for <pgsql-hackers@postgresql.org>; Sun, 14 Jun 1998 18:35:47 -0400 (EDT)
+Received: from hawk.illustra.com (hawk.illustra.com [158.58.61.70]) by angular.illustra.com (8.7.4/8.7.3) with SMTP id PAA21293 for <pgsql-hackers@postgresql.org>; Sun, 14 Jun 1998 15:35:12 -0700 (PDT)
+Received: by hawk.illustra.com (5.x/smail2.5/06-10-94/S)
+	id AA07922; Sun, 14 Jun 1998 15:35:13 -0700
+From: dg@illustra.com (David Gould)
+Message-Id: <9806142235.AA07922@hawk.illustra.com>
+Subject: [HACKERS] performance tests, initial results
+To: pgsql-hackers@postgreSQL.org
+Date: Sun, 14 Jun 1998 15:35:13 -0700 (PDT)
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Sender: owner-pgsql-hackers@hub.org
+Precedence: bulk
+Status: RO
+
+
+I have been playing a little with the performance tests found in
+pgsql/src/tests/performance and have a few observations that might be of
+minor interest.
+
+The tests themselves are simple enough although the result parsing in the
+driver did not work on Linux. I am enclosing a patch below to fix this. I
+think it will also work better on the other systems.
+
+A summary of results from my testing are below. Details are at the bottom
+of this message.
+
+My test system is 'leslie':
+
+ linux 2.0.32, gcc version 2.7.2.3
+ P133, HX chipset, 512K L2, 32MB mem
+ NCR810 fast scsi, Quantum Atlas 2GB drive (7200 rpm).
+
+
+                     Results Summary (times in seconds)
+
+                    Single txn 8K txn    Create 8K idx 8K random Simple
+Case Description    8K insert  8K insert Index  Insert Scans     Orderby
+=================== ========== ========= ====== ====== ========= =======
+1 From Distribution
+  P90 FreeBsd -B256      39.56   1190.98   3.69  46.65     65.49    2.27
+  IDE
+
+2 Running on leslie
+  P133 Linux 2.0.32      15.48    326.75   2.99  20.69     35.81    1.68
+  SCSI 32M
+
+3 leslie, -o -F
+  no forced writes       15.90     24.98   2.63  20.46     36.43    1.69
+
+4 leslie, -o -F
+  no ASSERTS             14.92     23.23   1.38  18.67     33.79    1.58
+
+5 leslie, -o -F -B2048
+  more buffers           21.31     42.28   2.65  25.74     42.26    1.72
+
+6 leslie, -o -F -B2048
+  more bufs, no ASSERT   20.52     39.79   1.40  24.77     39.51    1.55
+
+
+
+
+                 Case to Case Difference Factors (+ is faster)
+
+                    Single txn 8K txn    Create 8K idx 8K random Simple
+Case Description    8K insert  8K insert Index  Insert Scans     Orderby
+=================== ========== ========= ====== ====== ========= =======
+
+leslie vs BSD P90.        2.56      3.65   1.23   2.25      1.83    1.35
+
+(noflush -F) vs no -F    -1.03     13.08   1.14   1.01     -1.02    1.00
+
+No Assert vs Assert       1.05      1.07   1.90   1.06      1.07    1.09
+
+-B256 vs -B2048           1.34      1.69   1.01   1.26      1.16    1.02
+
+
+Observations:
+
+ - leslie (P133 linux) appears to be about 1.8 times faster than the
+   P90 BSD system used for the test result distributed with the source, not
+   counting the 8K txn insert case which was completely disk bound.
+
+ - SCSI disks make a big (factor of 3.6) difference. During this test the
+   disk was hammering and cpu utilization was < 10%.
+
+ - Assertion checking seems to cost about 7% except for create index where
+   it costs 90%
+
+ - the -F option to avoid flushing buffers has tremendous effect if there are
+   many very small transactions. Or, another way, flushing at the end of the
+   transaction is a major disaster for performance.
+
+ - Something is very wrong with our buffer cache implementation. Going from
+   256 buffers to 2048 buffers costs an average of 25%. In the 8K txn case
+   it costs about 70%. I see looking at the code and profiling that in the 8K
+   txn case this is in BufferSync() which examines all the buffers at commit
+   time. I don't quite understand why it is so costly for the single 8K row
+   txn (35%) though.
+
+It would be nice to have some more tests. Maybe the Wisconsin stuff will
+be useful.
+
+
+
+----------------- patch to test harness. apply from pgsql ------------
+*** src/test/performance/runtests.pl.orig	Sun Jun 14 11:34:04 1998
+
+Differences %
+
+
+----------------- patch to test harness. apply from pgsql ------------
+*** src/test/performance/runtests.pl.orig	Sun Jun 14 11:34:04 1998
+--- src/test/performance/runtests.pl	Sun Jun 14 12:07:30 1998
+***************
+*** 84,123 ****
+  open (STDERR, ">$TmpFile") or die;
+  select (STDERR); $| = 1;
+  
+! for ($i = 0; $i <= $#perftests; $i++)
+! {
+  	$test = $perftests[$i];
+  	($test, $XACTBLOCK) = split (/ /, $test);
+  	$runtest = $test;
+! 	if ( $test =~ /\.ntm/ )
+! 	{
+! 		# 
+  		# No timing for this queries
+- 		# 
+  		close (STDERR);		# close $TmpFile
+  		open (STDERR, ">/dev/null") or die;
+  		$runtest =~ s/\.ntm//;
+  	}
+! 	else
+! 	{
+  		close (STDOUT);
+  		open(STDOUT, ">&SAVEOUT");
+  		print STDOUT "\nRunning: $perftests[$i+1] ...";
+  		close (STDOUT);
+  		open (STDOUT, ">/dev/null") or die;
+  		select (STDERR); $| = 1;
+! 		printf "$perftests[$i+1]: ";
+  	}
+  
+  	do "sqls/$runtest";
+  
+  	# Restore STDERR to $TmpFile
+! 	if ( $test =~ /\.ntm/ )
+! 	{
+  		close (STDERR);
+  		open (STDERR, ">>$TmpFile") or die;
+  	}
+- 
+  	select (STDERR); $| = 1;
+  	$i++;
+  }
+--- 84,116 ----
+  open (STDERR, ">$TmpFile") or die;
+  select (STDERR); $| = 1;
+  
+! for ($i = 0; $i <= $#perftests; $i++) {
+  	$test = $perftests[$i];
+  	($test, $XACTBLOCK) = split (/ /, $test);
+  	$runtest = $test;
+! 	if ( $test =~ /\.ntm/ ) {
+  		# No timing for this queries
+  		close (STDERR);		# close $TmpFile
+  		open (STDERR, ">/dev/null") or die;
+  		$runtest =~ s/\.ntm//;
+  	}
+! 	else {
+  		close (STDOUT);
+  		open(STDOUT, ">&SAVEOUT");
+  		print STDOUT "\nRunning: $perftests[$i+1] ...";
+  		close (STDOUT);
+  		open (STDOUT, ">/dev/null") or die;
+  		select (STDERR); $| = 1;
+! 		print "$perftests[$i+1]: ";
+  	}
+  
+  	do "sqls/$runtest";
+  
+  	# Restore STDERR to $TmpFile
+! 	if ( $test =~ /\.ntm/ ) {
+  		close (STDERR);
+  		open (STDERR, ">>$TmpFile") or die;
+  	}
+  	select (STDERR); $| = 1;
+  	$i++;
+  }
+***************
+*** 128,138 ****
+  open (TMPF, "<$TmpFile") or die;
+  open (RESF, ">$ResFile") or die;
+  
+! while (<TMPF>)
+! {
+! 	$str = $_;
+! 	($test, $rtime) = split (/:/, $str);
+! 	($tmp, $rtime, $rest) = split (/[ 	]+/, $rtime);
+! 	print RESF "$test: $rtime\n";
+  }
+  
+--- 121,130 ----
+  open (TMPF, "<$TmpFile") or die;
+  open (RESF, ">$ResFile") or die;
+  
+! while (<TMPF>) {
+!         if (m/^(.*: ).* ([0-9:.]+) *elapsed/) {
+! 	    ($test, $rtime) = ($1, $2);
+! 	     print RESF $test, $rtime, "\n";
+!         }
+  }
+
+------------------------------------------------------------------------
+
+  
+------------------------- testcase detail --------------------------
+   
+1. from distribution
+   DBMS:		PostgreSQL 6.2b10
+   OS:		FreeBSD 2.1.5-RELEASE
+   HardWare:	i586/90, 24M RAM, IDE
+   StartUp:	postmaster -B 256 '-o -S 2048' -S
+   Compiler:	gcc 2.6.3
+   Compiled:	-O, without CASSERT checking, with
+   		-DTBL_FREE_CMD_MEMORY (to free memory
+   		if BEGIN/END after each query execution)
+   DB connection startup: 0.20
+   8192 INSERTs INTO SIMPLE (1 xact): 39.58
+   8192 INSERTs INTO SIMPLE (8192 xacts): 1190.98
+   Create INDEX on SIMPLE: 3.69
+   8192 INSERTs INTO SIMPLE with INDEX (1 xact): 46.65
+   8192 random INDEX scans on SIMPLE (1 xact): 65.49
+   ORDER BY SIMPLE: 2.27
+   
+   
+2. run on leslie with asserts
+   DBMS:		PostgreSQL 6.3.2 (plus changes to 98/06/01)
+   OS:		Linux 2.0.32 leslie
+   HardWare:	i586/133 HX 512, 32M RAM, fast SCSI, 7200rpm
+   StartUp:	postmaster -B 256 '-o -S 2048' -S
+   Compiler:	gcc 2.7.2.3
+   Compiled:	-O, WITH CASSERT checking, with
+   		-DTBL_FREE_CMD_MEMORY (to free memory
+   		if BEGIN/END after each query execution)
+   DB connection startup: 0.10
+   8192 INSERTs INTO SIMPLE (1 xact): 15.48
+   8192 INSERTs INTO SIMPLE (8192 xacts): 326.75
+   Create INDEX on SIMPLE: 2.99
+   8192 INSERTs INTO SIMPLE with INDEX (1 xact): 20.69
+   8192 random INDEX scans on SIMPLE (1 xact): 35.81
+   ORDER BY SIMPLE: 1.68
+   
+   
+3. with -F to avoid forced i/o
+   DBMS:		PostgreSQL 6.3.2 (plus changes to 98/06/01)
+   OS:		Linux 2.0.32 leslie
+   HardWare:	i586/133 HX 512, 32M RAM, fast SCSI, 7200rpm
+   StartUp:	postmaster -B 256 '-o -S 2048 -F' -S
+   Compiler:	gcc 2.7.2.3
+   Compiled:	-O, WITH CASSERT checking, with
+   		-DTBL_FREE_CMD_MEMORY (to free memory
+   		if BEGIN/END after each query execution)
+   DB connection startup: 0.10
+   8192 INSERTs INTO SIMPLE (1 xact): 15.90
+   8192 INSERTs INTO SIMPLE (8192 xacts): 24.98
+   Create INDEX on SIMPLE: 2.63
+   8192 INSERTs INTO SIMPLE with INDEX (1 xact): 20.46
+   8192 random INDEX scans on SIMPLE (1 xact): 36.43
+   ORDER BY SIMPLE: 1.69
+   
+   
+4. no asserts, -F to avoid forced I/O
+   DBMS:		PostgreSQL 6.3.2 (plus changes to 98/06/01)
+   OS:		Linux 2.0.32 leslie
+   HardWare:	i586/133 HX 512, 32M RAM, fast SCSI, 7200rpm
+   StartUp:	postmaster -B 256 '-o -S 2048' -S
+   Compiler:	gcc 2.7.2.3
+   Compiled:	-O, No CASSERT checking, with
+   		-DTBL_FREE_CMD_MEMORY (to free memory
+   		if BEGIN/END after each query execution)
+   DB connection startup: 0.10
+   8192 INSERTs INTO SIMPLE (1 xact): 14.92
+   8192 INSERTs INTO SIMPLE (8192 xacts): 23.23
+   Create INDEX on SIMPLE: 1.38
+   8192 INSERTs INTO SIMPLE with INDEX (1 xact): 18.67
+   8192 random INDEX scans on SIMPLE (1 xact): 33.79
+   ORDER BY SIMPLE: 1.58
+   
+   
+5. with more buffers (2048 vs 256) and -F to avoid forced i/o
+   DBMS:		PostgreSQL 6.3.2 (plus changes to 98/06/01)
+   OS:		Linux 2.0.32 leslie
+   HardWare:	i586/133 HX 512, 32M RAM, fast SCSI, 7200rpm
+   StartUp:	postmaster -B 2048 '-o -S 2048 -F' -S
+   Compiler:	gcc 2.7.2.3
+   Compiled:	-O, WITH CASSERT checking, with
+   		-DTBL_FREE_CMD_MEMORY (to free memory
+   		if BEGIN/END after each query execution)
+   DB connection startup: 0.11
+   8192 INSERTs INTO SIMPLE (1 xact): 21.31
+   8192 INSERTs INTO SIMPLE (8192 xacts): 42.28
+   Create INDEX on SIMPLE: 2.65
+   8192 INSERTs INTO SIMPLE with INDEX (1 xact): 25.74
+   8192 random INDEX scans on SIMPLE (1 xact): 42.26
+   ORDER BY SIMPLE: 1.72
+   
+   
+6. No Asserts, more buffers (2048 vs 256) and -F to avoid forced i/o
+   DBMS:		PostgreSQL 6.3.2 (plus changes to 98/06/01)
+   OS:		Linux 2.0.32 leslie
+   HardWare:	i586/133 HX 512, 32M RAM, fast SCSI, 7200rpm
+   StartUp:	postmaster -B 2048 '-o -S 2048 -F' -S
+   Compiler:	gcc 2.7.2.3
+   Compiled:	-O, No CASSERT checking, with
+   		-DTBL_FREE_CMD_MEMORY (to free memory
+   		if BEGIN/END after each query execution)
+   DB connection startup: 0.11
+   8192 INSERTs INTO SIMPLE (1 xact): 20.52
+   8192 INSERTs INTO SIMPLE (8192 xacts): 39.79
+   Create INDEX on SIMPLE: 1.40
+   8192 INSERTs INTO SIMPLE with INDEX (1 xact): 24.77
+   8192 random INDEX scans on SIMPLE (1 xact): 39.51
+   ORDER BY SIMPLE: 1.55
+---------------------------------------------------------------------
+
+-dg
+
+David Gould            dg@illustra.com           510.628.3783 or 510.305.9468 
+Informix Software  (No, really)         300 Lakeside Drive  Oakland, CA 94612
+"Don't worry about people stealing your ideas.  If your ideas are any
+ good, you'll have to ram them down people's throats." -- Howard Aiken
+
+

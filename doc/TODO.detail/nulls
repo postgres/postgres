@@ -1,0 +1,119 @@
+From owner-pgsql-general@hub.org Fri Oct  9 18:22:09 1998
+Received: from hub.org (majordom@hub.org [209.47.148.200])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id SAA04220
+	for <maillist@candle.pha.pa.us>; Fri, 9 Oct 1998 18:22:08 -0400 (EDT)
+Received: from localhost (majordom@localhost)
+	by hub.org (8.8.8/8.8.8) with SMTP id SAA26960;
+	Fri, 9 Oct 1998 18:18:29 -0400 (EDT)
+	(envelope-from owner-pgsql-general@hub.org)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Fri, 09 Oct 1998 18:18:07 +0000 (EDT)
+Received: (from majordom@localhost)
+	by hub.org (8.8.8/8.8.8) id SAA26917
+	for pgsql-general-outgoing; Fri, 9 Oct 1998 18:18:04 -0400 (EDT)
+	(envelope-from owner-pgsql-general@postgreSQL.org)
+X-Authentication-Warning: hub.org: majordom set sender to owner-pgsql-general@postgreSQL.org using -f
+Received: from gecko.statsol.com (gecko.statsol.com [198.11.51.133])
+	by hub.org (8.8.8/8.8.8) with ESMTP id SAA26904
+	for <pgsql-general@postgresql.org>; Fri, 9 Oct 1998 18:17:46 -0400 (EDT)
+	(envelope-from statsol@statsol.com)
+Received: from gecko (gecko [198.11.51.133])
+	by gecko.statsol.com (8.9.0/8.9.0) with SMTP id SAA00557
+	for <pgsql-general@postgresql.org>; Fri, 9 Oct 1998 18:18:00 -0400 (EDT)
+Date: Fri, 9 Oct 1998 18:18:00 -0400 (EDT)
+From: Steve Doliov <statsol@statsol.com>
+X-Sender: statsol@gecko
+To: pgsql-general@postgreSQL.org
+Subject: Re: [GENERAL] Making NULLs visible.
+Message-ID: <Pine.GSO.3.96.981009181716.545B-100000@gecko>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Sender: owner-pgsql-general@postgreSQL.org
+Precedence: bulk
+Status: RO
+
+On Fri, 9 Oct 1998, Bruce Momjian wrote:
+
+> [Charset iso-8859-1 unsupported, filtering to ASCII...]
+> > > Yes, \ always outputs as \\, excepts someone changed it last week, and I
+> > > am requesting a reversal.  Do you like the \N if it is unique?
+> > 
+> > Well, it's certainly clear, but could be confused with \n (newline). Can we
+> > have \0 instead?
+> 
+> Yes, but it is uppercase.  \0 looks like an octal number to me, and I
+> think we even output octals sometimes, don't we?
+> 
+
+my first suggestion may have been hare-brained, but why not just make the
+specifics of the output user-configurable.  So if the user chooses \0, so
+be it, if the user chooses \N so be it, if the user likes NULL so be it.
+but the option would only have one value per database at any given point
+in time.  so database x could use \N on tuesday and NULL on wednesday, but
+database x could never have two references to the characters(s) used to
+represent a null value.
+
+steve
+
+
+
+
+From owner-pgsql-general@hub.org Sun Oct 11 17:31:08 1998
+Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id RAA20043
+	for <maillist@candle.pha.pa.us>; Sun, 11 Oct 1998 17:31:02 -0400 (EDT)
+Received: from hub.org (majordom@hub.org [209.47.148.200]) by renoir.op.net (o1/$Revision: 1.1 $) with ESMTP id RAA03069 for <maillist@candle.pha.pa.us>; Sun, 11 Oct 1998 17:10:34 -0400 (EDT)
+Received: from localhost (majordom@localhost)
+	by hub.org (8.8.8/8.8.8) with SMTP id QAA10856;
+	Sun, 11 Oct 1998 16:57:34 -0400 (EDT)
+	(envelope-from owner-pgsql-general@hub.org)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Sun, 11 Oct 1998 16:53:35 +0000 (EDT)
+Received: (from majordom@localhost)
+	by hub.org (8.8.8/8.8.8) id QAA10393
+	for pgsql-general-outgoing; Sun, 11 Oct 1998 16:53:34 -0400 (EDT)
+	(envelope-from owner-pgsql-general@postgreSQL.org)
+X-Authentication-Warning: hub.org: majordom set sender to owner-pgsql-general@postgreSQL.org using -f
+Received: from mail1.panix.com (mail1.panix.com [166.84.0.212])
+	by hub.org (8.8.8/8.8.8) with ESMTP id QAA10378
+	for <pgsql-general@postgreSQL.org>; Sun, 11 Oct 1998 16:53:28 -0400 (EDT)
+	(envelope-from tomg@admin.nrnet.org)
+Received: from mailhost.nrnet.org (root@mailhost.nrnet.org [166.84.192.39])
+	by mail1.panix.com (8.8.8/8.8.8/PanixM1.3) with ESMTP id QAA16311
+	for <pgsql-general@postgreSQL.org>; Sun, 11 Oct 1998 16:53:24 -0400 (EDT)
+Received: from admin.nrnet.org (uucp@localhost)
+          by mailhost.nrnet.org (8.8.7/8.8.4) with UUCP
+   id QAA16345 for pgsql-general@postgreSQL.org; Sun, 11 Oct 1998 16:28:47 -0400
+Received: from localhost (tomg@localhost)
+	by admin.nrnet.org (8.8.7/8.8.7) with SMTP id QAA11569
+	for <pgsql-general@postgreSQL.org>; Sun, 11 Oct 1998 16:28:41 -0400
+Date: Sun, 11 Oct 1998 16:28:41 -0400 (EDT)
+From: Thomas Good <tomg@admin.nrnet.org>
+To: pgsql-general@postgreSQL.org
+Subject: Re: [GENERAL] Making NULLs visible.
+In-Reply-To: <Pine.GSO.3.96.981009181716.545B-100000@gecko>
+Message-ID: <Pine.LNX.3.96.981011161908.11556A-100000@admin.nrnet.org>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Sender: owner-pgsql-general@postgreSQL.org
+Precedence: bulk
+Status: RO
+
+Watching all this go by...as a guy who has to move alot of data
+from legacy dbs to postgres, I've gotten used to \N being a null.
+
+My vote, if I were allowed to cast one, would be to have one null 
+and that would be the COPY command null.  I have no difficulty
+distinguishing a null from a newline...
+
+At the pgsql command prompt I would find seeing \N rather reassuring.
+I've seen alot of these little guys.
+
+    ---------- Sisters of Charity Medical Center ----------
+                   Department of Psychiatry
+                            ----     
+    Thomas Good                          <tomg@q8.nrnet.org>
+    Coordinator, North Richmond C.M.H.C. Information Systems
+    75 Vanderbilt Ave, Quarters 8        Phone: 718-354-5528
+    Staten Island, NY   10304            Fax:   718-354-5056
+
+
+

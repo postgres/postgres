@@ -1,0 +1,102 @@
+From owner-pgsql-hackers@hub.org Mon May 11 11:31:09 1998
+Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
+	by candle.pha.pa.us (8.8.5/8.8.5) with ESMTP id LAA03006
+	for <maillist@candle.pha.pa.us>; Mon, 11 May 1998 11:31:07 -0400 (EDT)
+Received: from hub.org (hub.org [209.47.148.200]) by renoir.op.net (o1/$Revision: 1.1 $) with ESMTP id LAA01663 for <maillist@candle.pha.pa.us>; Mon, 11 May 1998 11:24:42 -0400 (EDT)
+Received: from localhost (majordom@localhost) by hub.org (8.8.8/8.7.5) with SMTP id LAA21841; Mon, 11 May 1998 11:15:25 -0400 (EDT)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Mon, 11 May 1998 11:15:12 +0000 (EDT)
+Received: (from majordom@localhost) by hub.org (8.8.8/8.7.5) id LAA21683 for pgsql-hackers-outgoing; Mon, 11 May 1998 11:15:09 -0400 (EDT)
+Received: from sss.sss.pgh.pa.us (sss.pgh.pa.us [206.210.65.6]) by hub.org (8.8.8/8.7.5) with ESMTP id LAA21451 for <hackers@postgreSQL.org>; Mon, 11 May 1998 11:15:03 -0400 (EDT)
+Received: from sss.sss.pgh.pa.us (localhost [127.0.0.1])
+	by sss.sss.pgh.pa.us (8.8.5/8.8.5) with ESMTP id LAA24915;
+	Mon, 11 May 1998 11:14:43 -0400 (EDT)
+To: Brett McCormick <brett@work.chicken.org>
+cc: hackers@postgreSQL.org
+Subject: Re: [HACKERS] Re: [PATCHES] Try again: S_LOCK reduced contentionh] 
+In-reply-to: Your message of Mon, 11 May 1998 07:57:23 -0700 (PDT) 
+             <13655.4384.345723.466046@abraxas.scene.com> 
+Date: Mon, 11 May 1998 11:14:43 -0400
+Message-ID: <24913.894899683@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Sender: owner-pgsql-hackers@hub.org
+Precedence: bulk
+Status: RO
+
+Brett McCormick <brett@work.chicken.org> writes:
+> same way that the current network socket is passed -- through an execv
+> argument.  hopefully, however, the non-execv()ing fork will be in 6.4.
+
+Um, you missed the point, Brett.  David was hoping to transfer a client
+connection from the postmaster to an *already existing* backend process.
+Fork, with or without exec, solves the problem for a backend that's
+started after the postmaster has accepted the client socket.
+
+This does lead to a different line of thought, however.  Pre-started
+backends would have access to the "master" connection socket on which
+the postmaster listens for client connections, right?  Suppose that we
+fire the postmaster as postmaster, and demote it to being simply a
+manufacturer of new backend processes as old ones get used up.  Have
+one of the idle backend processes be the one doing the accept() on the
+master socket.  Once it has a client connection, it performs the
+authentication handshake and then starts serving the client (or just
+quits if authentication fails).  Meanwhile the next idle backend process
+has executed accept() on the master socket and is waiting for the next
+client; and shortly the postmaster/factory/whateverwecallitnow notices
+that it needs to start another backend to add to the idle-backend pool.
+
+This'd probably need some interlocking among the backends.  I have no
+idea whether it'd be safe to have all the idle backends trying to
+do accept() on the master socket simultaneously, but it sounds risky.
+Better to use a mutex so that only one gets to do it while the others
+sleep.
+
+			regards, tom lane
+
+
+From owner-pgsql-hackers@hub.org Mon May 11 11:35:55 1998
+Received: from hub.org (hub.org [209.47.148.200])
+	by candle.pha.pa.us (8.8.5/8.8.5) with ESMTP id LAA03043
+	for <maillist@candle.pha.pa.us>; Mon, 11 May 1998 11:35:53 -0400 (EDT)
+Received: from localhost (majordom@localhost) by hub.org (8.8.8/8.7.5) with SMTP id LAA23494; Mon, 11 May 1998 11:27:10 -0400 (EDT)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Mon, 11 May 1998 11:27:02 +0000 (EDT)
+Received: (from majordom@localhost) by hub.org (8.8.8/8.7.5) id LAA23473 for pgsql-hackers-outgoing; Mon, 11 May 1998 11:27:01 -0400 (EDT)
+Received: from sss.sss.pgh.pa.us (sss.pgh.pa.us [206.210.65.6]) by hub.org (8.8.8/8.7.5) with ESMTP id LAA23462 for <hackers@postgreSQL.org>; Mon, 11 May 1998 11:26:56 -0400 (EDT)
+Received: from sss.sss.pgh.pa.us (localhost [127.0.0.1])
+	by sss.sss.pgh.pa.us (8.8.5/8.8.5) with ESMTP id LAA25006;
+	Mon, 11 May 1998 11:26:44 -0400 (EDT)
+To: Brett McCormick <brett@work.chicken.org>
+cc: hackers@postgreSQL.org
+Subject: Re: [HACKERS] Re: [PATCHES] Try again: S_LOCK reduced contentionh] 
+In-reply-to: Your message of Mon, 11 May 1998 07:57:23 -0700 (PDT) 
+             <13655.4384.345723.466046@abraxas.scene.com> 
+Date: Mon, 11 May 1998 11:26:44 -0400
+Message-ID: <25004.894900404@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Sender: owner-pgsql-hackers@hub.org
+Precedence: bulk
+Status: RO
+
+Meanwhile, *I* missed the point about Brett's second comment :-(
+
+Brett McCormick <brett@work.chicken.org> writes:
+> There will have to be some sort of arg parsing in any case,
+> considering that you can pass configurable arguments to the backend..
+
+If we do the sort of change David and I were just discussing, then the
+pre-spawned backend would become responsible for parsing and dealing
+with the PGOPTIONS portion of the client's connection request message.
+That's just part of shifting the authentication handshake code from
+postmaster to backend, so it shouldn't be too hard.
+
+BUT: the whole point is to be able to initialize the backend before it
+is connected to a client.  How much of the expensive backend startup
+work depends on having the client connection options available?
+Any work that needs to know the options will have to wait until after
+the client connects.  If that means most of the startup work can't
+happen in advance anyway, then we're out of luck; a pre-started backend
+won't save enough time to be worth the effort.  (Unless we are willing
+to eliminate or redefine the troublesome options...)
+
+			regards, tom lane
+
+

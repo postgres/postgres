@@ -1,0 +1,98 @@
+From owner-pgsql-hackers@hub.org Wed Nov 18 14:40:49 1998
+Received: from hub.org (majordom@hub.org [209.47.148.200])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id OAA29743
+	for <maillist@candle.pha.pa.us>; Wed, 18 Nov 1998 14:40:36 -0500 (EST)
+Received: from localhost (majordom@localhost)
+	by hub.org (8.9.1/8.9.1) with SMTP id OAA03716;
+	Wed, 18 Nov 1998 14:37:04 -0500 (EST)
+	(envelope-from owner-pgsql-hackers@hub.org)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Wed, 18 Nov 1998 14:34:39 +0000 (EST)
+Received: (from majordom@localhost)
+	by hub.org (8.9.1/8.9.1) id OAA03395
+	for pgsql-hackers-outgoing; Wed, 18 Nov 1998 14:34:37 -0500 (EST)
+	(envelope-from owner-pgsql-hackers@postgreSQL.org)
+Received: from orion.SAPserv.Hamburg.dsh.de (Tpolaris2.sapham.debis.de [53.2.131.8])
+	by hub.org (8.9.1/8.9.1) with SMTP id OAA03381
+	for <pgsql-hackers@hub.org>; Wed, 18 Nov 1998 14:34:31 -0500 (EST)
+	(envelope-from wieck@sapserv.debis.de)
+Received: by orion.SAPserv.Hamburg.dsh.de 
+	for pgsql-hackers@hub.org 
+	id m0zgDnj-000EBTC; Wed, 18 Nov 98 21:02 MET
+Message-Id: <m0zgDnj-000EBTC@orion.SAPserv.Hamburg.dsh.de>
+From: jwieck@debis.com (Jan Wieck)
+Subject: Re: [HACKERS] PREPARE
+To: meskes@usa.net (Michael Meskes)
+Date: Wed, 18 Nov 1998 21:02:06 +0100 (MET)
+Cc: pgsql-hackers@hub.org
+Reply-To: jwieck@debis.com (Jan Wieck)
+In-Reply-To: <19981118084843.B869@usa.net> from "Michael Meskes" at Nov 18, 98 08:48:43 am
+X-Mailer: ELM [version 2.4 PL25]
+Content-Type: text
+Sender: owner-pgsql-hackers@postgreSQL.org
+Precedence: bulk
+Status: RO
+
+Michael Meskes wrote:
+
+>
+> On Wed, Nov 18, 1998 at 03:23:30AM +0000, Thomas G. Lockhart wrote:
+> > > I didn't get this one completly. What input do you mean?
+> >
+> > Just the original string/query to be prepared...
+>
+> I see. But wouldn't it be more useful to preprocess the query and store the
+> resulting nodes instead? We don't want to parse the statement everytime a
+> variable binding comes in.
+
+    Right.  A real improvement would only be to have the prepared
+    execution plan in the backend and just giving  the  parameter
+    values.
+
+    I can think of the following construct:
+
+        PREPARE optimizable-statement;
+
+    That one will run parser/rewrite/planner, create a new memory
+    context with a unique identifier and  saves  the  querytree's
+    and  plan's  in  it.   Parameter values are identified by the
+    usual $n notation. The command returns the identifier.
+
+        EXECUTE QUERY identifier [value [, ...]];
+
+    then get's back the prepared plan and querytree  by  the  id,
+    creates  an  executor  context  with  the given values in the
+    parameter array and calls ExecutorRun() for them.
+
+    The PREPARE needs to analyze the resulting parsetrees to  get
+    the  datatypes  (and maybe atttypmod's) of the parameters, so
+    EXECUTE QUERY can convert the values into Datum's  using  the
+    types  input  functions.  And  the  EXECUTE has to be handled
+    special in tcop (it's something between a regular  query  and
+    an utility statement). But it's not too hard to implement.
+
+    Finally a
+
+        FORGET QUERY identifier;
+
+    (don't  remember  how  the  others  named it) will remove the
+    prepared plan etc. simply by destroying  the  memory  context
+    and dropping the identifier from the id->mcontext+prepareinfo
+    mapping.
+
+    This all  restricts  the  usage  of  PREPARE  to  optimizable
+    statements.  Is  it  required  to  be able to prepare utility
+    statements (like CREATE TABLE or so) too?
+
+
+Jan
+
+--
+
+#======================================================================#
+# It's easier to get forgiveness for being wrong than for being right. #
+# Let's break this rule - forgive me.                                  #
+#======================================== jwieck@debis.com (Jan Wieck) #
+
+
+
+

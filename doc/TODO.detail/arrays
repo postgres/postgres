@@ -1,0 +1,94 @@
+From owner-pgsql-hackers@hub.org Wed Nov 25 19:01:02 1998
+Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id TAA16399
+	for <maillist@candle.pha.pa.us>; Wed, 25 Nov 1998 19:01:01 -0500 (EST)
+Received: from hub.org (majordom@hub.org [209.47.148.200]) by renoir.op.net (o1/$Revision: 1.1 $) with ESMTP id SAA05250 for <maillist@candle.pha.pa.us>; Wed, 25 Nov 1998 18:53:12 -0500 (EST)
+Received: from localhost (majordom@localhost)
+	by hub.org (8.9.1/8.9.1) with SMTP id SAA17798;
+	Wed, 25 Nov 1998 18:49:38 -0500 (EST)
+	(envelope-from owner-pgsql-hackers@hub.org)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Wed, 25 Nov 1998 18:49:07 +0000 (EST)
+Received: (from majordom@localhost)
+	by hub.org (8.9.1/8.9.1) id SAA17697
+	for pgsql-hackers-outgoing; Wed, 25 Nov 1998 18:49:06 -0500 (EST)
+	(envelope-from owner-pgsql-hackers@postgreSQL.org)
+Received: from mail.enterprise.net (root@mail.enterprise.net [194.72.192.18])
+	by hub.org (8.9.1/8.9.1) with ESMTP id SAA17650;
+	Wed, 25 Nov 1998 18:48:55 -0500 (EST)
+	(envelope-from olly@lfix.co.uk)
+Received: from linda.lfix.co.uk (root@max01-040.enterprise.net [194.72.197.40])
+	by mail.enterprise.net (8.8.5/8.8.5) with ESMTP id XAA20539;
+	Wed, 25 Nov 1998 23:48:52 GMT
+Received: from linda.lfix.co.uk (olly@localhost [127.0.0.1])
+	by linda.lfix.co.uk (8.9.1a/8.9.1/Debian/GNU) with ESMTP id XAA12089;
+	Wed, 25 Nov 1998 23:48:52 GMT
+Message-Id: <199811252348.XAA12089@linda.lfix.co.uk>
+X-Mailer: exmh version 2.0.2 2/24/98 (debian) 
+X-URL: http://www.lfix.co.uk/oliver
+X-face: "xUFVDj+ZJtL_IbURmI}!~xAyPC"Mrk=MkAm&tPQnNq(FWxv49R}\>0oI8VM?O2VY+N7@F-
+	KMLl*!h}B)u@TW|B}6<X<J|}QsVlTi:RA:O7Abc(@D2Y/"J\S,b1!<&<B/J}b.Ii9@B]H6V!+#sE0Q
+	_+=`K$5TI|4I0-=Cp%pt~L#QYydO'iBXR~\tT?uftep9n9AF`@SzTwsw6uqJ}pL,h(cZi}T#PB"#!k
+	p^e=Z.K~fuw$l?]lUV)?R]U}l;f*~Ol)#fpKR)Yt}XOr6BI\_Jjr0!@GMnpCTnTym4f;c{;Ms=0{`D
+	Lq9MO6{wj%s-*N"G,g
+To: bugs@postgreSQL.org, hackers@postgreSQL.org
+Subject: [HACKERS] Failures with arrays
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Date: Wed, 25 Nov 1998 23:48:51 +0000
+From: "Oliver Elphick" <olly@lfix.co.uk>
+Sender: owner-pgsql-hackers@postgreSQL.org
+Precedence: bulk
+Status: ROr
+
+This was reported as a bug with the Debian package of 6.3.2; the same
+behaviour is still present in 6.4. 
+
+bray=> create table foo ( t text[]);
+CREATE
+bray=> insert into foo values ( '{"a"}');
+INSERT 201354 1
+bray=> insert into foo values ( '{"a","b"}');
+INSERT 201355 1
+bray=>  insert into foo values ( '{"a","b","c"}');
+INSERT 201356 1
+bray=>  select * from foo;
+t            
+-------------
+{"a"}        
+{"a","b"}    
+{"a","b","c"}
+(3 rows)
+
+bray=> select t[1] from foo;
+ERROR:  type name lookup of t failed
+bray=> select * from foo;
+t            
+-------------
+{"a"}        
+{"a","b"}    
+{"a","b","c"}
+(3 rows)
+
+bray=> select foo.t[1] from foo;
+t
+-
+a
+a
+a
+(3 rows)
+
+bray=> select count(foo.t[1]) from foo;
+pqReadData() -- backend closed the channel unexpectedly.
+
+-- 
+Oliver Elphick                                Oliver.Elphick@lfix.co.uk
+Isle of Wight                              http://www.lfix.co.uk/oliver
+               PGP key from public servers; key ID 32B8FAA1
+                 ========================================
+     "Let us therefore come boldly unto the throne of grace,
+      that we may obtain mercy, and find grace to help in 
+      time of need."             Hebrews 4:16 
+
+
+
+

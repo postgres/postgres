@@ -1,0 +1,1240 @@
+From owner-pgsql-hackers@hub.org Thu Nov 26 08:31:13 1998
+Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id IAA24423
+	for <maillist@candle.pha.pa.us>; Thu, 26 Nov 1998 08:31:08 -0500 (EST)
+Received: from hub.org (majordom@hub.org [209.47.148.200]) by renoir.op.net (o1/$Revision: 1.1 $) with ESMTP id IAA04554 for <maillist@candle.pha.pa.us>; Thu, 26 Nov 1998 08:04:30 -0500 (EST)
+Received: from localhost (majordom@localhost)
+	by hub.org (8.9.1/8.9.1) with SMTP id HAA03761;
+	Thu, 26 Nov 1998 07:56:37 -0500 (EST)
+	(envelope-from owner-pgsql-hackers@hub.org)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Thu, 26 Nov 1998 07:55:28 +0000 (EST)
+Received: (from majordom@localhost)
+	by hub.org (8.9.1/8.9.1) id HAA03689
+	for pgsql-hackers-outgoing; Thu, 26 Nov 1998 07:55:26 -0500 (EST)
+	(envelope-from owner-pgsql-hackers@postgreSQL.org)
+Received: from orion.SAPserv.Hamburg.dsh.de (Tpolaris2.sapham.debis.de [53.2.131.8])
+	by hub.org (8.9.1/8.9.1) with SMTP id HAA03674
+	for <pgsql-hackers@postgreSQL.org>; Thu, 26 Nov 1998 07:55:19 -0500 (EST)
+	(envelope-from wieck@sapserv.debis.de)
+Received: by orion.SAPserv.Hamburg.dsh.de 
+	for pgsql-hackers@postgreSQL.org 
+	id m0zj13G-000EBfC; Thu, 26 Nov 98 14:01 MET
+Message-Id: <m0zj13G-000EBfC@orion.SAPserv.Hamburg.dsh.de>
+From: jwieck@debis.com (Jan Wieck)
+Subject: Re: [HACKERS] Re: memory leak with Abort Transaction
+To: takehi-s@ascii.co.jp (SHIOZAKI Takehiko)
+Date: Thu, 26 Nov 1998 14:01:42 +0100 (MET)
+Cc: pgsql-hackers@postgreSQL.org
+Reply-To: jwieck@debis.com (Jan Wieck)
+In-Reply-To: <199811261240.VAA27516@libpc01.pb.ascii.co.jp> from "SHIOZAKI Takehiko" at Nov 26, 98 09:40:19 pm
+X-Mailer: ELM [version 2.4 PL25]
+Content-Type: text
+Sender: owner-pgsql-hackers@postgreSQL.org
+Precedence: bulk
+Status: RO
+
+SHIOZAKI Takehiko wrote:
+
+>
+> Hello!
+>
+> Releasing 6.4.1 is a good news.
+> But would you confirm the following "memory leak" problem?
+> It is reproducable on 6.4 (FreeBSD 2.2.7-RELEASE).
+
+    It's  an far too old problem. And as far as I remember, there
+    are different locations in the code causing it.
+
+    One place I remember well.  It's  in  the  tcop  mainloop  in
+    PostgresMain().  The querytree list is malloc()'ed (there and
+    in the parser) and free()'d after the query  is  processed  -
+    except  the  processing of the queries bails out with elog().
+    In that case it  never  runs  over  the  free()  because  the
+    longjmp() kick's it back to the beginning of the loop.
+
+
+Jan
+
+--
+
+#======================================================================#
+# It's easier to get forgiveness for being wrong than for being right. #
+# Let's break this rule - forgive me.                                  #
+#======================================== jwieck@debis.com (Jan Wieck) #
+
+
+
+
+From owner-pgsql-hackers@hub.org Fri Mar 19 16:01:29 1999
+Received: from hub.org (majordom@hub.org [209.47.145.100])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id QAA05828
+	for <maillist@candle.pha.pa.us>; Fri, 19 Mar 1999 16:01:22 -0500 (EST)
+Received: from localhost (majordom@localhost)
+	by hub.org (8.9.2/8.9.1) with SMTP id PAA15701;
+	Fri, 19 Mar 1999 15:59:51 -0500 (EST)
+	(envelope-from owner-pgsql-hackers@hub.org)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Fri, 19 Mar 1999 15:59:08 +0000 (EST)
+Received: (from majordom@localhost)
+	by hub.org (8.9.2/8.9.1) id PAA15551
+	for pgsql-hackers-outgoing; Fri, 19 Mar 1999 15:59:05 -0500 (EST)
+	(envelope-from owner-pgsql-hackers@postgreSQL.org)
+Received: from andrew.cmu.edu (ANDREW.CMU.EDU [128.2.10.101])
+	by hub.org (8.9.2/8.9.1) with ESMTP id PAA15524
+	for <pgsql-hackers@postgresql.org>; Fri, 19 Mar 1999 15:58:53 -0500 (EST)
+	(envelope-from er1p+@andrew.cmu.edu)
+Received: (from postman@localhost) by andrew.cmu.edu (8.8.5/8.8.2) id PAA29323 for pgsql-hackers@postgresql.org; Fri, 19 Mar 1999 15:58:50 -0500 (EST)
+Received: via switchmail; Fri, 19 Mar 1999 15:58:50 -0500 (EST)
+Received: from cloudy.me.cmu.edu via qmail
+          ID </afs/andrew.cmu.edu/service/mailqs/q005/QF.cqwfdxK00gNtE0TVBp>;
+          Fri, 19 Mar 1999 15:58:37 -0500 (EST)
+Received: from cloudy.me.cmu.edu via qmail
+          ID </afs/andrew.cmu.edu/usr2/er1p/.Outgoing/QF.MqwfdrO00gNtEmTPh2>;
+          Fri, 19 Mar 1999 15:58:31 -0500 (EST)
+Received: from mms.4.60.Jun.27.1996.03.05.56.sun4.41.EzMail.2.0.CUILIB.3.45.SNAP.NOT.LINKED.cloudy.me.cmu.edu.sun4m.412
+          via MS.5.6.cloudy.me.cmu.edu.sun4_41;
+          Fri, 19 Mar 1999 15:58:29 -0500 (EST)
+Message-ID: <wqwfdpu00gNtImTPUm@andrew.cmu.edu>
+Date: Fri, 19 Mar 1999 15:58:29 -0500 (EST)
+From: Erik Riedel <riedel+@CMU.EDU>
+To: pgsql-hackers@postgreSQL.org
+Subject: [HACKERS] aggregation memory leak and fix
+Sender: owner-pgsql-hackers@postgreSQL.org
+Precedence: bulk
+Status: ROr
+
+
+Platform:  Alpha, Digital UNIX 4.0D
+Software:  PostgreSQL 6.4.2 and 6.5 snaphot (11 March 1999)
+
+I have a table as follows:
+
+Table    = lineitem
++------------------------+----------------------------------+-------+
+|              Field     |              Type                | Length|
++------------------------+----------------------------------+-------+
+| l_orderkey             | int4 not null                    |     4 |
+| l_partkey              | int4 not null                    |     4 |
+| l_suppkey              | int4 not null                    |     4 |
+| l_linenumber           | int4 not null                    |     4 |
+| l_quantity             | float4 not null                  |     4 |
+| l_extendedprice        | float4 not null                  |     4 |
+| l_discount             | float4 not null                  |     4 |
+| l_tax                  | float4 not null                  |     4 |
+| l_returnflag           | char() not null                  |     1 |
+| l_linestatus           | char() not null                  |     1 |
+| l_shipdate             | date                             |     4 |
+| l_commitdate           | date                             |     4 |
+| l_receiptdate          | date                             |     4 |
+| l_shipinstruct         | char() not null                  |    25 |
+| l_shipmode             | char() not null                  |    10 |
+| l_comment              | char() not null                  |    44 |
++------------------------+----------------------------------+-------+
+Index:    lineitem_index_
+
+that ends up having on the order of 500,000 rows (about 100 MB on disk).  
+
+I then run an aggregation query as:
+
+--
+-- Query 1
+--
+select l_returnflag, l_linestatus, sum(l_quantity) as sum_qty, 
+sum(l_extendedprice) as sum_base_price, 
+sum(l_extendedprice*(1-l_discount)) as sum_disc_price, 
+sum(l_extendedprice*(1-l_discount)*(1+l_tax)) as sum_charge, 
+avg(l_quantity) as avg_qty, avg(l_extendedprice) as avg_price, 
+avg(l_discount) as avg_disc, count(*) as count_order 
+from lineitem 
+where l_shipdate <= ('1998-12-01'::datetime - interval '90 day')::date 
+group by l_returnflag, l_linestatus 
+order by l_returnflag, l_linestatus;
+
+
+when I run this against 6.4.2, the postgres process grows to upwards of
+1 GB of memory (at which point something overflows and it dumps core) -
+I watch it grow through 200 MB, 400 MB, 800 MB, dies somewhere near 1 GB
+of allocated memory).
+
+If I take out a few of the "sum" expressions it gets better, removing
+sum_disk_price and sum_charge causes it to be only 600 MB and the query
+actually (eventually) completes.  Takes about 10 minutes on my 500 MHz
+machine with 256 MB core and 4 GB of swap.
+
+The problem seems to be the memory allocation mechanism.  Looking at a
+call trace, it is doing some kind of "sub query" plan for each row in
+the database.  That means it does ExecEval and postquel_function and
+postquel_execute and all their friends for each row in the database. 
+Allocating a couple hundred bytes for each one.
+
+The problem is that none of these allocations are freed - they seem to
+depend on the AllocSet to free them at the end of the transaction.  This
+means it isn't a "true" leak, because the bytes are all freed at the
+(very) end of the transaction, but it does mean that the process grows
+to unreasonable size in the meantime.  There is no need for this,
+because the individual expression results are aggregated as it goes
+along, so the intermediate nodes can be freed.
+
+I spent half a day last week chasing down the offending palloc() calls
+and execution stacks sufficiently that I think I found the right places
+to put pfree() calls.
+
+As a result, I have changes in the files:
+
+src/backend/executor/execUtils.c
+src/backend/executor/nodeResult.c 
+src/backend/executor/nodeAgg.c 
+src/backend/executor/execMain.c 
+
+patches to these files are attached at the end of this message.  These
+files are based on the 6.5.0 snapshot downloaded from ftp.postgreql.org
+on 11 March 1999.
+
+Apologies for sending patches to a non-released version.  If anyone has
+problems applying the patches, I can send the full files (I wanted to
+avoid sending a 100K shell archive to the list).  If anyone cares about
+reproducing my exact problem with the above table, I can provide the 100
+MB pg_dump file for download as well.
+
+Secondary Issue:  the reason I did not use the 6.4.2 code to make my
+changes is because the AllocSet calls in that one were particularly
+egregious - they only had the skeleton of the allocsets code that exists
+in the 6.5 snapshots, so they were calling malloc() for all of the 8 and
+16 byte allocations that the above query causes.
+
+Using the fixed code reduces the maximum memory requirement on the above
+query to about 210 MB, and reduces the runtime to (an acceptable) 1.5
+minutes - a factor of more than 6x improvement on my 256 MB machine.
+
+Now the biggest part of the execution time is in the sort before the
+aggregation (which isn't strictly needed, but that is an optimization
+for another day).
+
+Open Issue: there is still a small "leak" that I couldn't eliminate, I
+think I chased it down to the constvalue allocated in
+execQual::ExecTargetList(), but I couldn't figure out where to properly
+free it.  8 bytes leaked was much better than 750 bytes, so I stopped
+banging my head on that particular item.
+
+Secondary Open Issue: what I did have to do to get down to 210 MB of
+core was reduce the minimum allocation size in AllocSet to 8 bytes from
+16 bytes.  That reduces the 8 byte leak above to a true 8 byte, rather
+than a 16 byte leak.  Otherwise, I think the size was 280 MB (still a
+big improvement on 1000+ MB).  I only changed this in my code and I am
+not including a changed mcxt.c for that.
+
+I hope my changes are understandable/reasonable.  Enjoy.
+
+Erik Riedel
+Carnegie Mellon University
+www.cs.cmu.edu/~riedel
+
+--------------[aggregation_memory_patch.sh]-----------------------
+
+#! /bin/sh
+# This is a shell archive, meaning:
+# 1. Remove everything above the #! /bin/sh line.
+# 2. Save the resulting text in a file.
+# 3. Execute the file with /bin/sh (not csh) to create:
+#	execMain.c.diff
+#	execUtils.c.diff
+#	nodeAgg.c.diff
+#	nodeResult.c.diff
+# This archive created: Fri Mar 19 15:47:17 1999
+export PATH; PATH=/bin:/usr/bin:$PATH
+if test -f 'execMain.c.diff'
+then
+	echo shar: "will not over-write existing file 'execMain.c.diff'"
+else
+cat << \SHAR_EOF > 'execMain.c.diff'
+583c
+	
+.
+398a
+
+.
+396a
+	/* XXX - clean up some more from ExecutorStart() - er1p */
+	if (NULL == estate->es_snapshot) {
+	  /* nothing to free */
+	} else {
+	  if (estate->es_snapshot->xcnt > 0) { 
+	    pfree(estate->es_snapshot->xip);
+	  }
+	  pfree(estate->es_snapshot);
+	}
+
+	if (NULL == estate->es_param_exec_vals) {
+	  /* nothing to free */
+	} else {
+	  pfree(estate->es_param_exec_vals);
+	  estate->es_param_exec_vals = NULL;
+	}
+
+.
+SHAR_EOF
+fi
+if test -f 'execUtils.c.diff'
+then
+	echo shar: "will not over-write existing file 'execUtils.c.diff'"
+else
+cat << \SHAR_EOF > 'execUtils.c.diff'
+368a
+}
+
+/* ----------------
+ *		ExecFreeExprContext
+ * ----------------
+ */
+void
+ExecFreeExprContext(CommonState *commonstate)
+{
+	ExprContext *econtext;
+
+	/* ----------------
+	 *	get expression context.  if NULL then this node has
+	 *	none so we just return.
+	 * ----------------
+	 */
+	econtext = commonstate->cs_ExprContext;
+	if (econtext == NULL)
+		return;
+
+	/* ----------------
+	 *	clean up memory used.
+	 * ----------------
+	 */
+	pfree(econtext);
+	commonstate->cs_ExprContext = NULL;
+}
+
+/* ----------------
+ *		ExecFreeTypeInfo
+ * ----------------
+ */
+void
+ExecFreeTypeInfo(CommonState *commonstate)
+{
+	TupleDesc tupDesc;
+
+	tupDesc = commonstate->cs_ResultTupleSlot->ttc_tupleDescriptor;
+	if (tupDesc == NULL)
+		return;
+
+	/* ----------------
+	 *	clean up memory used.
+	 * ----------------
+	 */
+	FreeTupleDesc(tupDesc);
+	commonstate->cs_ResultTupleSlot->ttc_tupleDescriptor = NULL;
+.
+274a
+
+.
+SHAR_EOF
+fi
+if test -f 'nodeAgg.c.diff'
+then
+	echo shar: "will not over-write existing file 'nodeAgg.c.diff'"
+else
+cat << \SHAR_EOF > 'nodeAgg.c.diff'
+376a
+						pfree(oldVal); /* XXX - new, let's free the old datum - er1p */
+.
+374a
+						oldVal = value1[aggno]; /* XXX - save so we can free later - er1p */
+.
+112a
+	Datum  oldVal = (Datum) NULL;  /* XXX - so that we can save and free on
+each iteration - er1p */
+.
+SHAR_EOF
+fi
+if test -f 'nodeResult.c.diff'
+then
+	echo shar: "will not over-write existing file 'nodeResult.c.diff'"
+else
+cat << \SHAR_EOF > 'nodeResult.c.diff'
+278a
+	pfree(resstate); node->resstate = NULL; /* XXX - new for us - er1p */
+.
+265a
+	ExecFreeExprContext(&resstate->cstate); /* XXX - new for us - er1p */
+	ExecFreeTypeInfo(&resstate->cstate); /* XXX - new for us - er1p */
+.
+SHAR_EOF
+fi
+exit 0
+#	End of shell archive
+
+
+
+From er1p+@andrew.cmu.edu Fri Mar 19 19:43:27 1999
+Received: from po8.andrew.cmu.edu (PO8.ANDREW.CMU.EDU [128.2.10.108])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id TAA09183
+	for <maillist@candle.pha.pa.us>; Fri, 19 Mar 1999 19:43:26 -0500 (EST)
+Received: (from postman@localhost) by po8.andrew.cmu.edu (8.8.5/8.8.2) id TAA11773; Fri, 19 Mar 1999 19:43:18 -0500 (EST)
+Received: via switchmail; Fri, 19 Mar 1999 19:43:18 -0500 (EST)
+Received: from cloudy.me.cmu.edu via qmail
+          ID </afs/andrew.cmu.edu/service/mailqs/q007/QF.oqwiwLK00gNtQmTLgB>;
+          Fri, 19 Mar 1999 19:43:05 -0500 (EST)
+Received: from mms.4.60.Jun.27.1996.03.05.56.sun4.41.EzMail.2.0.CUILIB.3.45.SNAP.NOT.LINKED.cloudy.me.cmu.edu.sun4m.412
+          via MS.5.6.cloudy.me.cmu.edu.sun4_41;
+          Fri, 19 Mar 1999 19:43:02 -0500 (EST)
+Message-ID: <YqwiwKW00gNt4mTKsv@andrew.cmu.edu>
+Date: Fri, 19 Mar 1999 19:43:02 -0500 (EST)
+From: Erik Riedel <riedel+@CMU.EDU>
+To: Bruce Momjian <maillist@candle.pha.pa.us>
+Subject: Re: [HACKERS] aggregation memory leak and fix
+Cc: pgsql-hackers@postgreSQL.org
+In-Reply-To: <199903192223.RAA06691@candle.pha.pa.us>
+References: <199903192223.RAA06691@candle.pha.pa.us>
+Status: ROr
+
+
+> No apologies necessary.  Glad to have someone digging into that area of
+> the code.  We will gladly apply your patches to 6.5.  However, I request
+> that you send context diffs(diff -c).  Normal diffs are just too
+> error-prone in application.   Send them, and I will apply them right
+> away.
+>  
+Context diffs attached.  This was due to my ignorance of diff.  When I
+made the other files, I though "hmm, these could be difficult to apply
+if the code has changed a bit, wouldn't it be good if they included a
+few lines before and after the fix".  Now I know "-c".
+
+> Not sure why that is there?  Perhaps for GROUP BY processing?
+>  
+Right, it is a result of the Group processing requiring sorted input. 
+Just that it doesn't "require" sorted input, it "could" be a little more
+flexible and the sort wouldn't be necessary.  Essentially this would be
+a single "AggSort" node that did the aggregation while sorting (probably
+with replacement selection rather than quicksort).  This definitely
+would require some code/smarts that isn't there today.
+
+> > think I chased it down to the constvalue allocated in
+> > execQual::ExecTargetList(), but I couldn't figure out where to properly
+> > free it.  8 bytes leaked was much better than 750 bytes, so I stopped
+> > banging my head on that particular item.
+>  
+> Can you give me the exact line?  Is it the palloc(1)?
+>  
+No, the 8 bytes seem to come from the ExecEvalExpr() call near line
+1530.  Problem was when I tried to free these, I got "not in AllocSet"
+errors, so something more complicated was going on.
+
+Thanks.
+
+Erik
+
+-----------[aggregation_memory_patch.sh]----------------------
+
+#! /bin/sh
+# This is a shell archive, meaning:
+# 1. Remove everything above the #! /bin/sh line.
+# 2. Save the resulting text in a file.
+# 3. Execute the file with /bin/sh (not csh) to create:
+#	execMain.c.diff
+#	execUtils.c.diff
+#	nodeAgg.c.diff
+#	nodeResult.c.diff
+# This archive created: Fri Mar 19 19:35:42 1999
+export PATH; PATH=/bin:/usr/bin:$PATH
+if test -f 'execMain.c.diff'
+then
+	echo shar: "will not over-write existing file 'execMain.c.diff'"
+else
+cat << \SHAR_EOF > 'execMain.c.diff'
+***
+/afs/ece.cmu.edu/project/lcs/lcs-004/er1p/postgres/611/src/backend/executor/
+execMain.c	Thu Mar 11 23:59:11 1999
+---
+/afs/ece.cmu.edu/project/lcs/lcs-004/er1p/postgres/612/src/backend/executor/
+execMain.c	Fri Mar 19 15:03:28 1999
+***************
+*** 394,401 ****
+--- 394,419 ----
+  
+  	EndPlan(queryDesc->plantree, estate);
+  
++ 	/* XXX - clean up some more from ExecutorStart() - er1p */
++ 	if (NULL == estate->es_snapshot) {
++ 	  /* nothing to free */
++ 	} else {
++ 	  if (estate->es_snapshot->xcnt > 0) { 
++ 	    pfree(estate->es_snapshot->xip);
++ 	  }
++ 	  pfree(estate->es_snapshot);
++ 	}
++ 
++ 	if (NULL == estate->es_param_exec_vals) {
++ 	  /* nothing to free */
++ 	} else {
++ 	  pfree(estate->es_param_exec_vals);
++ 	  estate->es_param_exec_vals = NULL;
++ 	}
++ 
+  	/* restore saved refcounts. */
+  	BufferRefCountRestore(estate->es_refcount);
++ 
+  }
+  
+  void
+***************
+*** 580,586 ****
+  	/*
+  	 *	initialize result relation stuff
+  	 */
+! 
+  	if (resultRelation != 0 && operation != CMD_SELECT)
+  	{
+  		/*
+--- 598,604 ----
+  	/*
+  	 *	initialize result relation stuff
+  	 */
+! 	
+  	if (resultRelation != 0 && operation != CMD_SELECT)
+  	{
+  		/*
+SHAR_EOF
+fi
+if test -f 'execUtils.c.diff'
+then
+	echo shar: "will not over-write existing file 'execUtils.c.diff'"
+else
+cat << \SHAR_EOF > 'execUtils.c.diff'
+***
+/afs/ece.cmu.edu/project/lcs/lcs-004/er1p/postgres/611/src/backend/executor/
+execUtils.c	Thu Mar 11 23:59:11 1999
+---
+/afs/ece.cmu.edu/project/lcs/lcs-004/er1p/postgres/612/src/backend/executor/
+execUtils.c	Fri Mar 19 14:55:59 1999
+***************
+*** 272,277 ****
+--- 272,278 ----
+  #endif
+  		i++;
+  	}
++ 
+  	if (len > 0)
+  	{
+  		ExecAssignResultType(commonstate,
+***************
+*** 366,371 ****
+--- 367,419 ----
+  
+  	pfree(projInfo);
+  	commonstate->cs_ProjInfo = NULL;
++ }
++ 
++ /* ----------------
++  *		ExecFreeExprContext
++  * ----------------
++  */
++ void
++ ExecFreeExprContext(CommonState *commonstate)
++ {
++ 	ExprContext *econtext;
++ 
++ 	/* ----------------
++ 	 *	get expression context.  if NULL then this node has
++ 	 *	none so we just return.
++ 	 * ----------------
++ 	 */
++ 	econtext = commonstate->cs_ExprContext;
++ 	if (econtext == NULL)
++ 		return;
++ 
++ 	/* ----------------
++ 	 *	clean up memory used.
++ 	 * ----------------
++ 	 */
++ 	pfree(econtext);
++ 	commonstate->cs_ExprContext = NULL;
++ }
++ 
++ /* ----------------
++  *		ExecFreeTypeInfo
++  * ----------------
++  */
++ void
++ ExecFreeTypeInfo(CommonState *commonstate)
++ {
++ 	TupleDesc tupDesc;
++ 
++ 	tupDesc = commonstate->cs_ResultTupleSlot->ttc_tupleDescriptor;
++ 	if (tupDesc == NULL)
++ 		return;
++ 
++ 	/* ----------------
++ 	 *	clean up memory used.
++ 	 * ----------------
++ 	 */
++ 	FreeTupleDesc(tupDesc);
++ 	commonstate->cs_ResultTupleSlot->ttc_tupleDescriptor = NULL;
+  }
+  
+  /* ----------------------------------------------------------------
+SHAR_EOF
+fi
+if test -f 'nodeAgg.c.diff'
+then
+	echo shar: "will not over-write existing file 'nodeAgg.c.diff'"
+else
+cat << \SHAR_EOF > 'nodeAgg.c.diff'
+***
+/afs/ece.cmu.edu/project/lcs/lcs-004/er1p/postgres/611/src/backend/executor/
+nodeAgg.c	Thu Mar 11 23:59:11 1999
+---
+/afs/ece.cmu.edu/project/lcs/lcs-004/er1p/postgres/612/src/backend/executor/
+nodeAgg.c	Fri Mar 19 15:01:21 1999
+***************
+*** 110,115 ****
+--- 110,116 ----
+  				isNull2 = FALSE;
+  	bool		qual_result;
+  
++ 	Datum  oldVal = (Datum) NULL;  /* XXX - so that we can save and free
+on each iteration - er1p */
+  
+  	/* ---------------------
+  	 *	get state info from node
+***************
+*** 372,379 ****
+--- 373,382 ----
+  						 */
+  						args[0] = value1[aggno];
+  						args[1] = newVal;
++ 						oldVal = value1[aggno]; /* XXX - save so we can free later - er1p */
+  						value1[aggno] =	(Datum) fmgr_c(&aggfns->xfn1,
+  										   (FmgrValues *) args, &isNull1);
++ 						pfree(oldVal); /* XXX - new, let's free the old datum - er1p */
+  						Assert(!isNull1);
+  					}
+  				}
+SHAR_EOF
+fi
+if test -f 'nodeResult.c.diff'
+then
+	echo shar: "will not over-write existing file 'nodeResult.c.diff'"
+else
+cat << \SHAR_EOF > 'nodeResult.c.diff'
+***
+/afs/ece.cmu.edu/project/lcs/lcs-004/er1p/postgres/611/src/backend/executor/
+nodeResult.c	Thu Mar 11 23:59:12 1999
+---
+/afs/ece.cmu.edu/project/lcs/lcs-004/er1p/postgres/612/src/backend/executor/
+nodeResult.c	Fri Mar 19 14:57:26 1999
+***************
+*** 263,268 ****
+--- 263,270 ----
+  	 *		  is freed at end-transaction time.  -cim 6/2/91
+  	 * ----------------
+  	 */
++ 	ExecFreeExprContext(&resstate->cstate); /* XXX - new for us - er1p */
++ 	ExecFreeTypeInfo(&resstate->cstate); /* XXX - new for us - er1p */
+  	ExecFreeProjectionInfo(&resstate->cstate);
+  
+  	/* ----------------
+***************
+*** 276,281 ****
+--- 278,284 ----
+  	 * ----------------
+  	 */
+  	ExecClearTuple(resstate->cstate.cs_ResultTupleSlot);
++ 	pfree(resstate); node->resstate = NULL; /* XXX - new for us - er1p */
+  }
+  
+  void
+SHAR_EOF
+fi
+exit 0
+#	End of shell archive
+
+
+From owner-pgsql-hackers@hub.org Fri Mar 19 21:01:15 1999
+Received: from hub.org (majordom@hub.org [209.47.145.100])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id VAA11368
+	for <maillist@candle.pha.pa.us>; Fri, 19 Mar 1999 21:01:13 -0500 (EST)
+Received: from localhost (majordom@localhost)
+	by hub.org (8.9.2/8.9.1) with SMTP id UAA40887;
+	Fri, 19 Mar 1999 20:59:47 -0500 (EST)
+	(envelope-from owner-pgsql-hackers@hub.org)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Fri, 19 Mar 1999 20:58:14 +0000 (EST)
+Received: (from majordom@localhost)
+	by hub.org (8.9.2/8.9.1) id UAA40637
+	for pgsql-hackers-outgoing; Fri, 19 Mar 1999 20:58:12 -0500 (EST)
+	(envelope-from owner-pgsql-hackers@postgreSQL.org)
+Received: from candle.pha.pa.us (maillist@s5-03.ppp.op.net [209.152.195.67])
+	by hub.org (8.9.2/8.9.1) with ESMTP id UAA40620
+	for <pgsql-hackers@postgreSQL.org>; Fri, 19 Mar 1999 20:58:02 -0500 (EST)
+	(envelope-from maillist@candle.pha.pa.us)
+Received: (from maillist@localhost)
+	by candle.pha.pa.us (8.9.0/8.9.0) id UAA11263;
+	Fri, 19 Mar 1999 20:58:00 -0500 (EST)
+From: Bruce Momjian <maillist@candle.pha.pa.us>
+Message-Id: <199903200158.UAA11263@candle.pha.pa.us>
+Subject: Re: [HACKERS] aggregation memory leak and fix
+In-Reply-To: <YqwiwKW00gNt4mTKsv@andrew.cmu.edu> from Erik Riedel at "Mar 19, 1999  7:43: 2 pm"
+To: riedel+@CMU.EDU (Erik Riedel)
+Date: Fri, 19 Mar 1999 20:58:00 -0500 (EST)
+Cc: pgsql-hackers@postgreSQL.org
+X-Mailer: ELM [version 2.4ME+ PL47 (25)]
+MIME-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Sender: owner-pgsql-hackers@postgreSQL.org
+Precedence: bulk
+Status: ROr
+
+> 
+> > No apologies necessary.  Glad to have someone digging into that area of
+> > the code.  We will gladly apply your patches to 6.5.  However, I request
+> > that you send context diffs(diff -c).  Normal diffs are just too
+> > error-prone in application.   Send them, and I will apply them right
+> > away.
+> >  
+> Context diffs attached.  This was due to my ignorance of diff.  When I
+> made the other files, I though "hmm, these could be difficult to apply
+> if the code has changed a bit, wouldn't it be good if they included a
+> few lines before and after the fix".  Now I know "-c".
+
+Applied.
+
+> > Not sure why that is there?  Perhaps for GROUP BY processing?
+> >  
+> Right, it is a result of the Group processing requiring sorted input. 
+> Just that it doesn't "require" sorted input, it "could" be a little more
+> flexible and the sort wouldn't be necessary.  Essentially this would be
+> a single "AggSort" node that did the aggregation while sorting (probably
+> with replacement selection rather than quicksort).  This definitely
+> would require some code/smarts that isn't there today.
+
+I think you will find make_groupPlan adds the sort as needed by the
+GROUP BY.  I assume you are suggesting to do the aggregate/GROUP on unsorted
+data, which is hard to do in a flexible way.
+
+> > > think I chased it down to the constvalue allocated in
+> > > execQual::ExecTargetList(), but I couldn't figure out where to properly
+> > > free it.  8 bytes leaked was much better than 750 bytes, so I stopped
+> > > banging my head on that particular item.
+> >  
+> > Can you give me the exact line?  Is it the palloc(1)?
+> >  
+> No, the 8 bytes seem to come from the ExecEvalExpr() call near line
+> 1530.  Problem was when I tried to free these, I got "not in AllocSet"
+> errors, so something more complicated was going on.
+
+Yes, if you look inside ExecEvalExpr(), you will see it tries to get a
+value for the expression(Datum).  It may return an int, float4, or a
+string.  In the last case, that is actually a pointer and not a specific
+value.
+
+So, in some cases, the value can just be thrown away, or it may be a
+pointer to memory that can be freed after the call to heap_formtuple()
+later in the function.  The trick is to find the function call in
+ExecEvalExpr() that is allocating something, and conditionally free
+values[] after the call to heap_formtuple().  If you don't want find it,
+perhaps you can send me enough info so I can see it here.
+
+I wonder whether it is the call to CreateTupleDescCopy() inside
+ExecEvalVar()?
+
+Another problem I just fixed is that fjIsNull was not being pfree'ed if
+it was used with >64 targets, but I don't think that affects you.
+
+I also assume you have run your recent patch through the the
+test/regression tests, so see it does not cause some other area to fail,
+right?
+
+-- 
+  Bruce Momjian                        |  http://www.op.net/~candle
+  maillist@candle.pha.pa.us            |  (610) 853-3000
+  +  If your life is a hard drive,     |  830 Blythe Avenue
+  +  Christ can be your backup.        |  Drexel Hill, Pennsylvania 19026
+
+
+From owner-pgsql-hackers@hub.org Sat Mar 20 12:01:44 1999
+Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id MAA24855
+	for <maillist@candle.pha.pa.us>; Sat, 20 Mar 1999 12:01:43 -0500 (EST)
+Received: from hub.org (majordom@hub.org [209.47.145.100]) by renoir.op.net (o1/$Revision: 1.1 $) with ESMTP id LAA11985 for <maillist@candle.pha.pa.us>; Sat, 20 Mar 1999 11:58:48 -0500 (EST)
+Received: from localhost (majordom@localhost)
+	by hub.org (8.9.2/8.9.1) with SMTP id LAA12367;
+	Sat, 20 Mar 1999 11:57:17 -0500 (EST)
+	(envelope-from owner-pgsql-hackers@hub.org)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Sat, 20 Mar 1999 11:55:22 +0000 (EST)
+Received: (from majordom@localhost)
+	by hub.org (8.9.2/8.9.1) id LAA12026
+	for pgsql-hackers-outgoing; Sat, 20 Mar 1999 11:55:17 -0500 (EST)
+	(envelope-from owner-pgsql-hackers@postgreSQL.org)
+Received: from sss.sss.pgh.pa.us (sss.pgh.pa.us [206.210.65.6])
+	by hub.org (8.9.2/8.9.1) with ESMTP id LAA11871
+	for <pgsql-hackers@postgreSQL.org>; Sat, 20 Mar 1999 11:54:57 -0500 (EST)
+	(envelope-from tgl@sss.pgh.pa.us)
+Received: from sss.sss.pgh.pa.us (localhost [127.0.0.1])
+	by sss.sss.pgh.pa.us (8.9.1/8.9.1) with ESMTP id LAA28068;
+	Sat, 20 Mar 1999 11:48:58 -0500 (EST)
+To: Bruce Momjian <maillist@candle.pha.pa.us>
+cc: riedel+@CMU.EDU (Erik Riedel), pgsql-hackers@postgreSQL.org
+Subject: Re: [HACKERS] aggregation memory leak and fix 
+In-reply-to: Your message of Fri, 19 Mar 1999 21:33:33 -0500 (EST) 
+             <199903200233.VAA11816@candle.pha.pa.us> 
+Date: Sat, 20 Mar 1999 11:48:58 -0500
+Message-ID: <28066.921948538@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Sender: owner-pgsql-hackers@postgreSQL.org
+Precedence: bulk
+Status: ROr
+
+Bruce Momjian <maillist@candle.pha.pa.us> writes:
+> My only quick solution would seem to be to add a new "expression" memory
+> context, that can be cleared after every tuple is processed, clearing
+> out temporary values allocated inside an expression.
+
+Right, this whole problem of growing backend memory use during a large
+SELECT (or COPY, or probably a few other things) is one of the things
+that we were talking about addressing by revising the memory management
+structure.
+
+I think what we want inside the executor is a distinction between
+storage that must live to the end of the statement and storage that is
+only needed while processing the current tuple.  The second kind of
+storage would go into a separate context that gets flushed every so
+often.  (It could be every tuple, or every dozen or hundred tuples
+depending on what seems the best tradeoff of cycles against memory
+usage.)
+
+I'm not sure that just two contexts is enough, either.  For example in
+	SELECT field1, SUM(field2) GROUP BY field1;
+the working memory for the SUM aggregate could not be released after
+each tuple, but perhaps we don't want it to live for the whole statement
+either --- in that case we'd need a per-group context.  (This particular
+example isn't very convincing, because the same storage for the SUM
+*could* be recycled from group to group.  But I don't know whether it
+actually *is* reused or not.  If fresh storage is palloc'd for each
+instantiation of SUM then we have a per-group leak in this scenario.
+In any case, I'm not sure all aggregate functions have constant memory
+requirements that would let them recycle storage across groups.)
+
+What we need to do is work out what the best set of memory context
+definitions is, and then decide on a strategy for making sure that
+lower-level routines allocate their return values in the right context.
+It'd be nice if the lower-level routines could still call palloc() and
+not have to worry about this explicitly --- otherwise we'll break not
+only a lot of our own code but perhaps a lot of user code.  (User-
+specific data types and SPI code all use palloc, no?)
+
+I think it is too late to try to fix this for 6.5, but it ought to be a
+top priority for 6.6.
+
+			regards, tom lane
+
+
+From tgl@sss.pgh.pa.us Sun Mar 21 16:01:46 1999
+Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id QAA00139
+	for <maillist@candle.pha.pa.us>; Sun, 21 Mar 1999 16:01:45 -0500 (EST)
+Received: from sss.sss.pgh.pa.us (sss.pgh.pa.us [206.210.65.6]) by renoir.op.net (o1/$Revision: 1.1 $) with ESMTP id PAA27737 for <maillist@candle.pha.pa.us>; Sun, 21 Mar 1999 15:52:38 -0500 (EST)
+Received: from sss.sss.pgh.pa.us (localhost [127.0.0.1])
+	by sss.sss.pgh.pa.us (8.9.1/8.9.1) with ESMTP id PAA14946;
+	Sun, 21 Mar 1999 15:50:20 -0500 (EST)
+To: Bruce Momjian <maillist@candle.pha.pa.us>
+cc: pgsql-hackers@postgreSQL.org
+Subject: Re: [HACKERS] aggregation memory leak and fix 
+In-reply-to: Your message of Sun, 21 Mar 1999 14:20:39 -0500 (EST) 
+             <199903211920.OAA28744@candle.pha.pa.us> 
+Date: Sun, 21 Mar 1999 15:50:20 -0500
+Message-ID: <14944.922049420@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Status: ROr
+
+Bruce Momjian <maillist@candle.pha.pa.us> writes:
+>> What we need to do is work out what the best set of memory context
+>> definitions is, and then decide on a strategy for making sure that
+>> lower-level routines allocate their return values in the right context.
+
+> Let's suppose that we want to free all the memory used as expression
+> intermediate values after each row is processed.
+> It is my understanding that all these are created in utils/adt/*.c
+> files, and that the entry point to all those functions via
+> fmgr()/fmgr_c().
+
+That's probably the bulk of the specific calls of palloc().  Someone
+(Jan?) did a scan of the code a while ago looking for palloc() calls,
+and there aren't that many outside of the data-type-specific functions.
+But we'd have to look individually at all the ones that are elsewhere.
+
+> So, if we go into an expression memory context before calling
+> fmgr/fmgr_c in the executor, and return to the normal context after the
+> function call, all our intermediates are trapped in the expression
+> memory context.
+
+OK, so you're saying we leave the data-type-specific functions as is
+(calling palloc() to allocate their result areas), and make each call
+site specifically responsible for setting the context that palloc() will
+allocate from?  That could work, I think.  We'd need to see what side
+effects it'd have on other uses of palloc().
+
+What we'd probably want is to use a stack discipline for the current
+palloc-target memory context: when you set the context, you get back the
+ID of the old context, and you are supposed to restore that old context
+before returning.
+
+> At the end of each row, we just free the expression memory context.  In
+> almost all cases, the data is stored in tuples, and we can free it.  In
+> a few cases like aggregates, we have to save off the value we need to
+> keep before freeing the expression context.
+
+Actually, nodeAgg would just have to set an appropriate context before
+calling fmgr to execute the aggregate's transition functions, and then
+it wouldn't need an extra copy step.  The results would come back in the
+right context already.
+
+> In fact, you could even optimize the cleanup to only do free'ing if
+> some expression memory was allocated.  In most cases, it is not.
+
+Jan's stuff should already fall through pretty quickly if there's
+nothing in the context, I think.  Note that what we want to do between
+tuples is a "context clear" of the expression context, not a "context
+delete" and then "context create" a new expression context.  Context
+clear should be a pretty quick no-op if nothing's been allocated in that
+context...
+
+> In fact the nodeAgg.c patch that I backed out attempted to do that,
+> though because there wasn't code that checked if the Datum was
+> pg_type.typbyval, it didn't work 100%.
+
+Right.  But if we approach it this way (clear the context at appropriate
+times) rather than thinking in terms of explicitly pfree'ing individual
+objects, life gets much simpler.  Also, if we insist on being able to
+pfree individual objects inside a context, we can't use Jan's faster
+allocator!  Remember, the reason it is faster and lower overhead is that
+it doesn't keep track of individual objects, only pools.
+
+I'd like to see us head in the direction of removing most of the
+explicit pfree calls that exist now, and instead rely on clearing
+memory contexts at appropriate times in order to manage memory.
+The fewer places where we need pfree, the more contexts can be run
+with the low-overhead space allocator.  Also, the fewer explicit
+pfrees we need, the simpler and more reliable the code gets.
+
+			regards, tom lane
+
+From owner-pgsql-hackers@hub.org Sun Mar 21 16:01:49 1999
+Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id QAA00149
+	for <maillist@candle.pha.pa.us>; Sun, 21 Mar 1999 16:01:48 -0500 (EST)
+Received: from hub.org (majordom@hub.org [209.47.145.100]) by renoir.op.net (o1/$Revision: 1.1 $) with ESMTP id PAA27950 for <maillist@candle.pha.pa.us>; Sun, 21 Mar 1999 15:56:07 -0500 (EST)
+Received: from localhost (majordom@localhost)
+	by hub.org (8.9.2/8.9.1) with SMTP id PAA39413;
+	Sun, 21 Mar 1999 15:54:51 -0500 (EST)
+	(envelope-from owner-pgsql-hackers@hub.org)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Sun, 21 Mar 1999 15:54:31 +0000 (EST)
+Received: (from majordom@localhost)
+	by hub.org (8.9.2/8.9.1) id PAA39249
+	for pgsql-hackers-outgoing; Sun, 21 Mar 1999 15:54:27 -0500 (EST)
+	(envelope-from owner-pgsql-hackers@postgreSQL.org)
+Received: from sss.sss.pgh.pa.us (sss.pgh.pa.us [206.210.65.6])
+	by hub.org (8.9.2/8.9.1) with ESMTP id PAA39235
+	for <pgsql-hackers@postgreSQL.org>; Sun, 21 Mar 1999 15:54:21 -0500 (EST)
+	(envelope-from tgl@sss.pgh.pa.us)
+Received: from sss.sss.pgh.pa.us (localhost [127.0.0.1])
+	by sss.sss.pgh.pa.us (8.9.1/8.9.1) with ESMTP id PAA14946;
+	Sun, 21 Mar 1999 15:50:20 -0500 (EST)
+To: Bruce Momjian <maillist@candle.pha.pa.us>
+cc: pgsql-hackers@postgreSQL.org
+Subject: Re: [HACKERS] aggregation memory leak and fix 
+In-reply-to: Your message of Sun, 21 Mar 1999 14:20:39 -0500 (EST) 
+             <199903211920.OAA28744@candle.pha.pa.us> 
+Date: Sun, 21 Mar 1999 15:50:20 -0500
+Message-ID: <14944.922049420@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Sender: owner-pgsql-hackers@postgreSQL.org
+Precedence: bulk
+Status: RO
+
+Bruce Momjian <maillist@candle.pha.pa.us> writes:
+>> What we need to do is work out what the best set of memory context
+>> definitions is, and then decide on a strategy for making sure that
+>> lower-level routines allocate their return values in the right context.
+
+> Let's suppose that we want to free all the memory used as expression
+> intermediate values after each row is processed.
+> It is my understanding that all these are created in utils/adt/*.c
+> files, and that the entry point to all those functions via
+> fmgr()/fmgr_c().
+
+That's probably the bulk of the specific calls of palloc().  Someone
+(Jan?) did a scan of the code a while ago looking for palloc() calls,
+and there aren't that many outside of the data-type-specific functions.
+But we'd have to look individually at all the ones that are elsewhere.
+
+> So, if we go into an expression memory context before calling
+> fmgr/fmgr_c in the executor, and return to the normal context after the
+> function call, all our intermediates are trapped in the expression
+> memory context.
+
+OK, so you're saying we leave the data-type-specific functions as is
+(calling palloc() to allocate their result areas), and make each call
+site specifically responsible for setting the context that palloc() will
+allocate from?  That could work, I think.  We'd need to see what side
+effects it'd have on other uses of palloc().
+
+What we'd probably want is to use a stack discipline for the current
+palloc-target memory context: when you set the context, you get back the
+ID of the old context, and you are supposed to restore that old context
+before returning.
+
+> At the end of each row, we just free the expression memory context.  In
+> almost all cases, the data is stored in tuples, and we can free it.  In
+> a few cases like aggregates, we have to save off the value we need to
+> keep before freeing the expression context.
+
+Actually, nodeAgg would just have to set an appropriate context before
+calling fmgr to execute the aggregate's transition functions, and then
+it wouldn't need an extra copy step.  The results would come back in the
+right context already.
+
+> In fact, you could even optimize the cleanup to only do free'ing if
+> some expression memory was allocated.  In most cases, it is not.
+
+Jan's stuff should already fall through pretty quickly if there's
+nothing in the context, I think.  Note that what we want to do between
+tuples is a "context clear" of the expression context, not a "context
+delete" and then "context create" a new expression context.  Context
+clear should be a pretty quick no-op if nothing's been allocated in that
+context...
+
+> In fact the nodeAgg.c patch that I backed out attempted to do that,
+> though because there wasn't code that checked if the Datum was
+> pg_type.typbyval, it didn't work 100%.
+
+Right.  But if we approach it this way (clear the context at appropriate
+times) rather than thinking in terms of explicitly pfree'ing individual
+objects, life gets much simpler.  Also, if we insist on being able to
+pfree individual objects inside a context, we can't use Jan's faster
+allocator!  Remember, the reason it is faster and lower overhead is that
+it doesn't keep track of individual objects, only pools.
+
+I'd like to see us head in the direction of removing most of the
+explicit pfree calls that exist now, and instead rely on clearing
+memory contexts at appropriate times in order to manage memory.
+The fewer places where we need pfree, the more contexts can be run
+with the low-overhead space allocator.  Also, the fewer explicit
+pfrees we need, the simpler and more reliable the code gets.
+
+			regards, tom lane
+
+
+From owner-pgsql-hackers@hub.org Wed Mar 24 19:10:53 1999
+Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id TAA00906
+	for <maillist@candle.pha.pa.us>; Wed, 24 Mar 1999 19:10:52 -0500 (EST)
+Received: from hub.org (majordom@hub.org [209.47.145.100]) by renoir.op.net (o1/$Revision: 1.1 $) with ESMTP id NAA24258 for <maillist@candle.pha.pa.us>; Wed, 24 Mar 1999 13:09:47 -0500 (EST)
+Received: from localhost (majordom@localhost)
+	by hub.org (8.9.2/8.9.1) with SMTP id NAA60743;
+	Wed, 24 Mar 1999 13:07:26 -0500 (EST)
+	(envelope-from owner-pgsql-hackers@hub.org)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Wed, 24 Mar 1999 13:06:47 +0000 (EST)
+Received: (from majordom@localhost)
+	by hub.org (8.9.2/8.9.1) id NAA60556
+	for pgsql-hackers-outgoing; Wed, 24 Mar 1999 13:06:43 -0500 (EST)
+	(envelope-from owner-pgsql-hackers@postgreSQL.org)
+Received: from po7.andrew.cmu.edu (PO7.ANDREW.CMU.EDU [128.2.10.107])
+	by hub.org (8.9.2/8.9.1) with ESMTP id NAA60540
+	for <pgsql-hackers@postgreSQL.org>; Wed, 24 Mar 1999 13:06:25 -0500 (EST)
+	(envelope-from er1p+@andrew.cmu.edu)
+Received: (from postman@localhost) by po7.andrew.cmu.edu (8.8.5/8.8.2) id NAA06323; Wed, 24 Mar 1999 13:06:16 -0500 (EST)
+Received: via switchmail; Wed, 24 Mar 1999 13:06:16 -0500 (EST)
+Received: from cloudy.me.cmu.edu via qmail
+          ID </afs/andrew.cmu.edu/service/mailqs/q001/QF.cqyGa::00gNtI0TZtD>;
+          Wed, 24 Mar 1999 13:06:02 -0500 (EST)
+Received: from cloudy.me.cmu.edu via qmail
+          ID </afs/andrew.cmu.edu/usr2/er1p/.Outgoing/QF.sqyGa8G00gNtImTGBe>;
+          Wed, 24 Mar 1999 13:06:00 -0500 (EST)
+Received: from mms.4.60.Jun.27.1996.03.05.56.sun4.41.EzMail.2.0.CUILIB.3.45.SNAP.NOT.LINKED.cloudy.me.cmu.edu.sun4m.412
+          via MS.5.6.cloudy.me.cmu.edu.sun4_41;
+          Wed, 24 Mar 1999 13:05:58 -0500 (EST)
+Message-ID: <QqyGa6600gNtMmTG1o@andrew.cmu.edu>
+Date: Wed, 24 Mar 1999 13:05:58 -0500 (EST)
+From: Erik Riedel <riedel+@CMU.EDU>
+To: Bruce Momjian <maillist@candle.pha.pa.us>
+Subject: Re: [HACKERS] aggregation memory leak and fix
+Cc: pgsql-hackers@postgreSQL.org
+In-Reply-To: <199903240611.BAA01206@candle.pha.pa.us>
+References: <199903240611.BAA01206@candle.pha.pa.us>
+Sender: owner-pgsql-hackers@postgreSQL.org
+Precedence: bulk
+Status: RO
+
+
+> I am interested to see if it fixes the expression leak you saw.  I have
+> not committed this yet.  I want to look at it some more.
+>  
+I'm afraid that this doesn't seem to have any effect on my query.
+
+Looking at your code, I think the problem is that most of the
+allocations in my query are on the top part of the if statement that
+you modified (i.e. the == SQLlanguageId part).  Below is a snippet of
+a trace from my query, with approximate line numbers for execQual.c
+with your patch applied:
+
+(execQual) language == SQLlanguageId (execQual.c:757)
+(execQual) execute postquel_function (execQual.c:759)
+(mcxt) MemoryContextAlloc 32 bytes in ** Blank Portal **-heap
+(mcxt) MemoryContextAlloc 16 bytes in ** Blank Portal **-heap
+(mcxt) MemoryContextAlloc 528 bytes in ** Blank Portal **-heap
+(mcxt) MemoryContextAlloc 56 bytes in ** Blank Portal **-heap
+(mcxt) MemoryContextAlloc 88 bytes in ** Blank Portal **-heap
+(mcxt) MemoryContextAlloc 24 bytes in ** Blank Portal **-heap
+(mcxt) MemoryContextAlloc 8 bytes in ** Blank Portal **-heap
+(mcxt) MemoryContextAlloc 65 bytes in ** Blank Portal **-heap
+(mcxt) MemoryContextAlloc 48 bytes in ** Blank Portal **-heap
+(mcxt) MemoryContextAlloc 8 bytes in ** Blank Portal **-heap
+(execQual) else clause NOT SQLlanguageId (execQual.c:822)
+(execQual) install qual memory context (execQual.c:858)
+(execQual) exit qual context (execQual.c:862)
+(mcxt) MemoryContextAlloc 60 bytes in ** Blank Portal **-heap
+(mcxt) MemoryContextFree in ** Blank Portal **-heap freed 16 bytes
+(mcxt) MemoryContextFree in ** Blank Portal **-heap freed 64 bytes
+(mcxt) MemoryContextFree in ** Blank Portal **-heap freed 64 bytes
+(mcxt) MemoryContextFree in ** Blank Portal **-heap freed 528 bytes
+(mcxt) MemoryContextFree in ** Blank Portal **-heap freed 16 bytes
+(execQual) return from postquel_function (execQual.c:764)
+(execQual) return from ExecEvalFuncArgs (execQual.c:792)
+(execQual) else clause NOT SQLlanguageId (execQual.c:822)
+(execQual) install qual memory context (execQual.c:858)
+(execQual) exit qual context (execQual.c:862)
+(mcxt) MemoryContextAlloc 108 bytes in ** Blank Portal **-heap
+(mcxt) MemoryContextAlloc 108 bytes in ** Blank Portal **-heap
+(mcxt) MemoryContextFree in ** Blank Portal **-heap freed 128 bytes
+(execQual) else clause NOT SQLlanguageId (execQual.c:822)
+(execQual) install qual memory context (execQual.c:858)
+(mcxt) MemoryContextAlloc 8 bytes in <Qual manager>-heap
+(execQual) exit qual context (execQual.c:862)
+
+<pattern repeats>
+
+(execQual) language == SQLlanguageId (execQual.c:757)
+(execQual) execute postquel_function (execQual.c:759)
+(mcxt) MemoryContextAlloc 32 bytes in ** Blank Portal **-heap
+(mcxt) MemoryContextAlloc 16 bytes in ** Blank Portal **-heap
+(mcxt) MemoryContextAlloc 528 bytes in ** Blank Portal **-heap
+(mcxt) MemoryContextAlloc 56 bytes in ** Blank Portal **-heap
+(mcxt) MemoryContextAlloc 88 bytes in ** Blank Portal **-heap
+(mcxt) MemoryContextAlloc 24 bytes in ** Blank Portal **-heap
+(mcxt) MemoryContextAlloc 8 bytes in ** Blank Portal **-heap
+(mcxt) MemoryContextAlloc 65 bytes in ** Blank Portal **-heap
+(mcxt) MemoryContextAlloc 48 bytes in ** Blank Portal **-heap
+(mcxt) MemoryContextAlloc 8 bytes in ** Blank Portal **-heap
+(execQual) else clause NOT SQLlanguageId (execQual.c:822)
+(execQual) install qual memory context (execQual.c:858)
+(execQual) exit qual context (execQual.c:862)
+(mcxt) MemoryContextAlloc 60 bytes in ** Blank Portal **-heap
+(mcxt) MemoryContextFree in ** Blank Portal **-heap freed 16 bytes
+(mcxt) MemoryContextFree in ** Blank Portal **-heap freed 64 bytes
+(mcxt) MemoryContextFree in ** Blank Portal **-heap freed 64 bytes
+(mcxt) MemoryContextFree in ** Blank Portal **-heap freed 528 bytes
+(mcxt) MemoryContextFree in ** Blank Portal **-heap freed 16 bytes
+(execQual) return from postquel_function (execQual.c:764)
+(execQual) return from ExecEvalFuncArgs (execQual.c:792)
+(execQual) else clause NOT SQLlanguageId (execQual.c:822)
+(execQual) install qual memory context (execQual.c:858)
+(execQual) exit qual context (execQual.c:862)
+(mcxt) MemoryContextAlloc 108 bytes in ** Blank Portal **-heap
+(mcxt) MemoryContextAlloc 108 bytes in ** Blank Portal **-heap
+(mcxt) MemoryContextFree in ** Blank Portal **-heap freed 128 bytes
+(execQual) else clause NOT SQLlanguageId (execQual.c:822)
+(execQual) install qual memory context (execQual.c:858)
+(mcxt) MemoryContextAlloc 8 bytes in <Qual manager>-heap
+(execQual) exit qual context (execQual.c:862)
+
+
+the MemoryContext lines give the name of the portal where each
+allocation is happening - you see that your Qual manager only captures
+a very small number (one) of the allocations, the rest are in the
+upper part of the if statement.
+
+Note that I also placed a printf next to your EndPortalAllocMode() and
+StartPortalAllocMode() fix in ExecQual() - I believe this is what is
+supposed to clear the portal and free the memory - and that printf
+never appears in the above trace.
+
+Sorry if the trace is a little confusing, but I hope that it helps you
+zero in.
+
+Erik
+
+
+
+
+
+
+
+From owner-pgsql-hackers@hub.org Sat May 15 23:13:50 1999
+Received: from hub.org (hub.org [209.167.229.1])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id XAA29144
+	for <maillist@candle.pha.pa.us>; Sat, 15 May 1999 23:13:49 -0400 (EDT)
+Received: from hub.org (hub.org [209.167.229.1])
+	by hub.org (8.9.3/8.9.3) with ESMTP id XAA25173;
+	Sat, 15 May 1999 23:11:03 -0400 (EDT)
+	(envelope-from owner-pgsql-hackers@hub.org)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Sat, 15 May 1999 23:10:29 +0000 (EDT)
+Received: (from majordom@localhost)
+	by hub.org (8.9.3/8.9.3) id XAA25111
+	for pgsql-hackers-outgoing; Sat, 15 May 1999 23:10:27 -0400 (EDT)
+	(envelope-from owner-pgsql-hackers@postgreSQL.org)
+X-Authentication-Warning: hub.org: majordom set sender to owner-pgsql-hackers@postgreSQL.org using -f
+Received: from sss.sss.pgh.pa.us (sss.pgh.pa.us [206.210.65.6])
+	by hub.org (8.9.3/8.9.3) with ESMTP id XAA25092
+	for <pgsql-hackers@postgreSQL.org>; Sat, 15 May 1999 23:10:22 -0400 (EDT)
+	(envelope-from tgl@sss.pgh.pa.us)
+Received: from sss.sss.pgh.pa.us (localhost [127.0.0.1])
+	by sss.sss.pgh.pa.us (8.9.1/8.9.1) with ESMTP id XAA17752
+	for <pgsql-hackers@postgreSQL.org>; Sat, 15 May 1999 23:09:46 -0400 (EDT)
+To: pgsql-hackers@postgreSQL.org
+Subject: [HACKERS] Memory leaks in relcache
+Date: Sat, 15 May 1999 23:09:46 -0400
+Message-ID: <17750.926824186@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Sender: owner-pgsql-hackers@postgreSQL.org
+Precedence: bulk
+Status: ROr
+
+I have been looking into why a reference to a nonexistent table, eg
+	INSERT INTO nosuchtable VALUES(1);
+leaks a small amount of memory per occurrence.  What I find is a
+memory leak in the indexscan support.  Specifically,
+RelationGetIndexScan in backend/access/index/genam.c palloc's both
+an IndexScanDesc and some keydata storage.  The IndexScanDesc
+block is eventually pfree'd, at the bottom of CatalogIndexFetchTuple
+in backend/catalog/indexing.c.  But the keydata block is not.
+
+This wouldn't matter so much if the palloc were coming from a
+transaction-local context.  But what we're doing is a lookup in pg_class
+on behalf of RelationBuildDesc in backend/utils/cache/relcache.c, and
+it's done a MemoryContextSwitchTo into the global CacheCxt before
+starting the lookup.  Therefore, the un-pfreed block represents a
+permanent memory leak.
+
+In fact, *every* reference to a relation that is not already present in
+the relcache causes a similar leak.  The error case is just the one that
+is easiest to repeat.  The missing pfree of the keydata block is
+probably causing a bunch of other short-term and long-term leaks too.
+
+It seems to me there are two things to fix here: indexscan ought to
+pfree everything it pallocs, and RelationBuildDesc ought to be warier
+about how much work gets done with CacheCxt as the active palloc
+context.  (Even if indexscan didn't leak anything ordinarily, there's
+still the risk of elog(ERROR) causing an abort before the indexscan code
+gets to clean up.)
+
+Comments?  In particular, where is the cleanest place to add the pfree
+of the keydata block?  I don't especially like the fact that callers
+of index_endscan have to clean up the toplevel scan block; I think that
+ought to happen inside index_endscan.
+
+			regards, tom lane
+
+

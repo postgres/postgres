@@ -1,0 +1,313 @@
+From lockhart@alumni.caltech.edu Thu Jan  7 13:31:08 1999
+Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id NAA07771
+	for <maillist@candle.pha.pa.us>; Thu, 7 Jan 1999 13:31:06 -0500 (EST)
+Received: from golem.jpl.nasa.gov (IDENT:root@hectic-2.jpl.nasa.gov [128.149.68.204]) by renoir.op.net (o1/$Revision: 1.1 $) with ESMTP id NAA14597 for <maillist@candle.pha.pa.us>; Thu, 7 Jan 1999 13:27:37 -0500 (EST)
+Received: from alumni.caltech.edu (localhost [127.0.0.1])
+	by golem.jpl.nasa.gov (8.8.5/8.8.5) with ESMTP id SAA13416;
+	Thu, 7 Jan 1999 18:26:56 GMT
+Sender: tgl@mythos.jpl.nasa.gov
+Message-ID: <3694FC70.FAD67BC3@alumni.caltech.edu>
+Date: Thu, 07 Jan 1999 18:26:56 +0000
+From: "Thomas G. Lockhart" <lockhart@alumni.caltech.edu>
+Organization: Caltech/JPL
+X-Mailer: Mozilla 4.07 [en] (X11; I; Linux 2.0.30 i686)
+MIME-Version: 1.0
+To: Bruce Momjian <maillist@candle.pha.pa.us>
+CC: Postgres Hackers List <hackers@postgresql.org>
+Subject: Outer Joins (and need CASE help)
+References: <199901071747.MAA07054@candle.pha.pa.us>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Status: RO
+
+> Thomas, do you need help on outer joins?
+
+Yes. I'm going slowly partly because I get distracted with other
+Postgres stuff like docs, and partly because I don't understand all of
+the pieces I'm working with.
+
+I've identified the place in the MergeJoin code where the null filling
+for outer joins needs to happen, and have the "merge walk" code done.
+But I don't have the supporting code which actually would know how to
+null-fill a result tuple from the left or right. I thought you might be
+interested in that?
+
+I've done some work in the parser, and can now do things like:
+
+postgres=> select * from t1 join t2 using (i);
+NOTICE:  JOIN not yet implemented
+i|j|i|k
+-+-+-+-
+1|2|1|3
+(1 row)
+
+But this is just an inner join, and the result isn't quite right since
+the second "i" column should probably be omitted. At the moment I
+transform it from the syntax above into existing parse nodes, and
+everything from there on works.
+
+I don't yet pass an explicit join node into the planner/optimizer, and
+that will be the hardest part I assume. Perhaps we can work on that
+together.
+
+So, what I'll try to do (soon, in the next few days?) is put in
+
+  #ifdef ENABLE_OUTER_JOINS
+
+conditional code into the parser area (already there for the executor)
+and commit everything to the development tree. Does that sound OK?
+
+Oh, and if anyone is looking for something to do, I've got a couple of
+CASE statements in the case.sql regression test which are commented out
+because they crash the backend. They involve references to multiple
+tables within a single result column, and in other contexts that
+construct works. It would be great if someone had time to track it
+down...
+
+                     - Tom
+
+From lockhart@alumni.caltech.edu Mon Feb 22 02:01:13 1999
+Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id CAA22073
+	for <maillist@candle.pha.pa.us>; Mon, 22 Feb 1999 02:01:12 -0500 (EST)
+Received: from golem.jpl.nasa.gov (IDENT:root@hectic-2.jpl.nasa.gov [128.149.68.204]) by renoir.op.net (o1/$Revision: 1.1 $) with ESMTP id BAA26054 for <maillist@candle.pha.pa.us>; Mon, 22 Feb 1999 01:57:00 -0500 (EST)
+Received: from alumni.caltech.edu (localhost [127.0.0.1])
+	by golem.jpl.nasa.gov (8.8.5/8.8.5) with ESMTP id GAA04715;
+	Mon, 22 Feb 1999 06:56:36 GMT
+Sender: tgl@mythos.jpl.nasa.gov
+Message-ID: <36D0FFA4.32ADB75C@alumni.caltech.edu>
+Date: Mon, 22 Feb 1999 06:56:36 +0000
+From: "Thomas G. Lockhart" <lockhart@alumni.caltech.edu>
+Organization: Caltech/JPL
+X-Mailer: Mozilla 4.07 [en] (X11; I; Linux 2.0.36 i686)
+MIME-Version: 1.0
+To: Bruce Momjian <maillist@candle.pha.pa.us>
+CC: hackers@postgreSQL.org
+Subject: Re: start on outer join
+References: <199902220304.WAA10066@candle.pha.pa.us>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Status: ROr
+
+Bruce Momjian wrote:
+> 
+> > Will apply ... some other changes laying a bit of
+> > groundwork for outer joins so you can start on the planner/optimizer
+> > parts :)
+> Those will be a synch now that I understand the optimizer.  In fact, I
+> think it all will happen in the executor.
+
+I've modified executor/nodeMergeJoin.c to walk a left/right/both outer
+join, but didn't fill in the part which actually creates the result
+tuple (which will be the current left- or right-side tuple plus nulls
+for filler). I hope this is up your alley :)
+
+So far, I'm not certain what to pass to the planner. The syntax leads me
+to pass a select structure from gram.y with a "JoinExpr" structure in
+the "fromClause" list. I need to expand that with a combination of
+column names and qualifications, but at the time I see the JoinExpr I
+don't have access to the top query structure itself. So I may just keep
+a modestly transformed JoinExpr to expand later or to pass to the
+planner.
+
+btw, the EXCEPT/INTERSECT stuff from Stefan has some ugliness in gram.y
+which needs to be fixed (the shift/reduce conflict is not acceptable for
+our release version) and some of that code clearly needs to move to
+analyze.c or some other module.
+
+                     - Tom
+
+From maillist Wed Feb 24 05:27:08 1999
+Received: (from maillist@localhost)
+	by candle.pha.pa.us (8.9.0/8.9.0) id FAA09648;
+	Wed, 24 Feb 1999 05:27:08 -0500 (EST)
+From: Bruce Momjian <maillist>
+Message-Id: <199902241027.FAA09648@candle.pha.pa.us>
+Subject: Re: [HACKERS] OUTER joins
+In-Reply-To: <199902240953.EAA08561@candle.pha.pa.us> from Bruce Momjian at "Feb 24, 1999  4:53:21 am"
+To: maillist@candle.pha.pa.us (Bruce Momjian)
+Date: Wed, 24 Feb 1999 05:27:07 -0500 (EST)
+Cc: lockhart@alumni.caltech.edu, hackers@postgreSQL.org
+X-Mailer: ELM [version 2.4ME+ PL47 (25)]
+MIME-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Status: RO
+
+> 
+> How do you propose doing outer joins in non-mergejoin situations?
+> Mergejoins can only be used currently in equal joins.
+
+Is your solution going to be to make sure the OUTER table is always a
+MergeJoin, or on the outside of a join loop?  That could work.
+
+That could get tricky if the table is joined to _two_ other tables. 
+With the cleaned-up optimizer, we can disable non-merge joins in certain
+circumstances, and prevent OUTER tables from being inner in the others. 
+Is that the plan?
+
+-- 
+  Bruce Momjian                        |  http://www.op.net/~candle
+  maillist@candle.pha.pa.us            |  (610) 853-3000
+  +  If your life is a hard drive,     |  830 Blythe Avenue
+  +  Christ can be your backup.        |  Drexel Hill, Pennsylvania 19026
+
+From lockhart@alumni.caltech.edu Mon Mar  1 13:01:08 1999
+Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id NAA21672
+	for <maillist@candle.pha.pa.us>; Mon, 1 Mar 1999 13:01:06 -0500 (EST)
+Received: from golem.jpl.nasa.gov (IDENT:root@hectic-2.jpl.nasa.gov [128.149.68.204]) by renoir.op.net (o1/$Revision: 1.1 $) with ESMTP id MAA12756 for <maillist@candle.pha.pa.us>; Mon, 1 Mar 1999 12:14:16 -0500 (EST)
+Received: from alumni.caltech.edu (localhost [127.0.0.1])
+	by golem.jpl.nasa.gov (8.8.5/8.8.5) with ESMTP id RAA09406;
+	Mon, 1 Mar 1999 17:10:49 GMT
+Sender: tgl@mythos.jpl.nasa.gov
+Message-ID: <36DACA19.E6DBE7D8@alumni.caltech.edu>
+Date: Mon, 01 Mar 1999 17:10:49 +0000
+From: "Thomas G. Lockhart" <lockhart@alumni.caltech.edu>
+Organization: Caltech/JPL
+X-Mailer: Mozilla 4.07 [en] (X11; I; Linux 2.0.36 i686)
+MIME-Version: 1.0
+To: Bruce Momjian <maillist@candle.pha.pa.us>
+CC: PostgreSQL-development <hackers@postgreSQL.org>
+Subject: Re: OUTER joins
+References: <199902240953.EAA08561@candle.pha.pa.us>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Status: ROr
+
+(back from a short vacation...)
+
+> How do you propose doing outer joins in non-mergejoin situations?
+> Mergejoins can only be used currently in equal joins.
+
+Hadn't thought about it, other than figuring that implementing the
+equi-join first was a good start. There is a class of outer join syntax
+(the USING clause) which is implicitly an equi-join...
+
+                        - Tom
+
+From lockhart@alumni.caltech.edu Mon Mar  8 21:55:02 1999
+Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id VAA15978
+	for <maillist@candle.pha.pa.us>; Mon, 8 Mar 1999 21:54:57 -0500 (EST)
+Received: from golem.jpl.nasa.gov (IDENT:root@hectic-1.jpl.nasa.gov [128.149.68.203]) by renoir.op.net (o1/$Revision: 1.1 $) with ESMTP id VAA15837 for <maillist@candle.pha.pa.us>; Mon, 8 Mar 1999 21:48:33 -0500 (EST)
+Received: from alumni.caltech.edu (localhost [127.0.0.1])
+	by golem.jpl.nasa.gov (8.8.5/8.8.5) with ESMTP id CAA06996;
+	Tue, 9 Mar 1999 02:46:40 GMT
+Sender: tgl@mythos.jpl.nasa.gov
+Message-ID: <36E48B90.F3E902B7@alumni.caltech.edu>
+Date: Tue, 09 Mar 1999 02:46:40 +0000
+From: "Thomas G. Lockhart" <lockhart@alumni.caltech.edu>
+Organization: Caltech/JPL
+X-Mailer: Mozilla 4.07 [en] (X11; I; Linux 2.0.36 i686)
+MIME-Version: 1.0
+To: Bruce Momjian <maillist@candle.pha.pa.us>
+CC: hackers@postgreSQL.org
+Subject: Re: OUTER joins
+References: <199903070325.WAA10357@candle.pha.pa.us>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Status: ROr
+
+> > Hadn't thought about it, other than figuring that implementing the
+> > equi-join first was a good start. There is a class of outer join 
+> > syntax (the USING clause) which is implicitly an equi-join...
+> Not that easy.  You don't automatically get a mergejoin from an
+> equijoin.  I will have to force outer's to be either mergejoins, or
+> inners of non-merge joins.  Can you add code to non-merge joins in the
+> executor to throw out a null row if it does not find an inner match 
+> for the outer row, and I will handle the optimizer so it doesn't throw 
+> a non-conforming plan to the executor.
+
+So far I don't have enough info in the parser to get the
+planner/optimizer going. Should we work from the front to the back, or
+should I go ahead and look at the non-merge joins? It's painfully
+obvious that I don't know anything about the middle parts of this to
+proceed without lots more research.
+
+                        - Tom
+
+From lockhart@alumni.caltech.edu Tue Mar  9 22:47:57 1999
+Received: from golem.jpl.nasa.gov (IDENT:root@hectic-1.jpl.nasa.gov [128.149.68.203])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id WAA07869
+	for <maillist@candle.pha.pa.us>; Tue, 9 Mar 1999 22:47:54 -0500 (EST)
+Received: from alumni.caltech.edu (localhost [127.0.0.1])
+	by golem.jpl.nasa.gov (8.8.5/8.8.5) with ESMTP id DAA14761;
+	Wed, 10 Mar 1999 03:46:43 GMT
+Sender: tgl@mythos.jpl.nasa.gov
+Message-ID: <36E5EB23.F5CD959B@alumni.caltech.edu>
+Date: Wed, 10 Mar 1999 03:46:43 +0000
+From: "Thomas G. Lockhart" <lockhart@alumni.caltech.edu>
+Organization: Caltech/JPL
+X-Mailer: Mozilla 4.07 [en] (X11; I; Linux 2.0.36 i686)
+MIME-Version: 1.0
+To: Bruce Momjian <maillist@candle.pha.pa.us>, tgl@mythos.jpl.nasa.gov
+Subject: Re: SQL outer
+References: <199903100112.UAA05772@candle.pha.pa.us>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Status: RO
+
+>         select  *
+>         from    outer tab1, tab2, tab3
+>         where   tab1.col1 = tab2.col1 and
+>                 tab1.col1 = tab3.col1
+
+select *
+from t1 left join t2 using (c1)
+        join t3 on (c1 = t3.c1)
+
+Result:
+t1.c1	t1.c2	t2.c2	t3.c1
+2	12	NULL	32
+
+t1:
+c1	c2
+1	11
+2	12
+3	13
+4	14
+
+t2:
+c1	c2
+1	21
+3	23
+
+t3:
+c1	c2
+2	32
+
+From lockhart@alumni.caltech.edu Wed Mar 10 10:48:54 1999
+Received: from golem.jpl.nasa.gov (IDENT:root@hectic-1.jpl.nasa.gov [128.149.68.203])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id KAA16741
+	for <maillist@candle.pha.pa.us>; Wed, 10 Mar 1999 10:48:51 -0500 (EST)
+Received: from alumni.caltech.edu (localhost [127.0.0.1])
+	by golem.jpl.nasa.gov (8.8.5/8.8.5) with ESMTP id PAA17723;
+	Wed, 10 Mar 1999 15:48:31 GMT
+Sender: tgl@mythos.jpl.nasa.gov
+Message-ID: <36E6944F.1F93B08@alumni.caltech.edu>
+Date: Wed, 10 Mar 1999 15:48:31 +0000
+From: "Thomas G. Lockhart" <lockhart@alumni.caltech.edu>
+Organization: Caltech/JPL
+X-Mailer: Mozilla 4.07 [en] (X11; I; Linux 2.0.36 i686)
+MIME-Version: 1.0
+To: Bruce Momjian <maillist@candle.pha.pa.us>
+CC: Thomas Lockhart <lockhart@alumni.caltech.edu>
+Subject: Re: SQL outer
+References: <199903100112.UAA05772@candle.pha.pa.us> <36E5EB23.F5CD959B@alumni.caltech.edu>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Status: ROr
+
+Just thinking...
+
+If the initial RelOptInfo groupings are derived from the WHERE clause
+expressions, how about marking the "outer" property in those expressions
+in the parser? istm that is where the parser knows about two tables in
+one place, and I'm generating those expressions anyway. We could add a
+field(s) to the expression structure, or pass along a slightly different
+structure...
+
+                         - Tom
+

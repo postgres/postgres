@@ -1,0 +1,240 @@
+From owner-pgsql-patches@hub.org Wed Oct 14 17:31:26 1998
+Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id RAA01594
+	for <maillist@candle.pha.pa.us>; Wed, 14 Oct 1998 17:31:24 -0400 (EDT)
+Received: from hub.org (majordom@hub.org [209.47.148.200]) by renoir.op.net (o1/$Revision: 1.1 $) with ESMTP id RAA01745 for <maillist@candle.pha.pa.us>; Wed, 14 Oct 1998 17:12:28 -0400 (EDT)
+Received: from localhost (majordom@localhost)
+	by hub.org (8.8.8/8.8.8) with SMTP id RAA06607;
+	Wed, 14 Oct 1998 17:10:43 -0400 (EDT)
+	(envelope-from owner-pgsql-patches@hub.org)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Wed, 14 Oct 1998 17:10:27 +0000 (EDT)
+Received: (from majordom@localhost)
+	by hub.org (8.8.8/8.8.8) id RAA06562
+	for pgsql-patches-outgoing; Wed, 14 Oct 1998 17:10:26 -0400 (EDT)
+	(envelope-from owner-pgsql-patches@postgreSQL.org)
+X-Authentication-Warning: hub.org: majordom set sender to owner-pgsql-patches@postgreSQL.org using -f
+Received: from mambo.cs.unitn.it (mambo.cs.unitn.it [193.205.199.204])
+	by hub.org (8.8.8/8.8.8) with SMTP id RAA06494
+	for <pgsql-patches@postgreSQL.org>; Wed, 14 Oct 1998 17:10:01 -0400 (EDT)
+	(envelope-from dz@cs.unitn.it)
+Received: from nikita.wizard.net (ts-slip31.gelso.unitn.it [193.205.200.31]) by mambo.cs.unitn.it (8.6.12/8.6.12) with ESMTP id XAA20316 for <pgsql-patches@postgreSQL.org>; Wed, 14 Oct 1998 23:09:52 +0200
+Received: (from dz@localhost) by nikita.wizard.net (8.8.5/8.6.9) id WAA00489 for pgsql-patches@postgreSQL.org; Wed, 14 Oct 1998 22:56:58 +0200
+From: Massimo Dal Zotto <dz@cs.unitn.it>
+Message-Id: <199810142056.WAA00489@nikita.wizard.net>
+Subject: [PATCHES] TCL_ARRAYS
+To: pgsql-patches@postgreSQL.org (Pgsql Patches)
+Date: Wed, 14 Oct 1998 22:56:58 +0200 (MET DST)
+X-Mailer: ELM [version 2.4 PL24 ME4]
+MIME-Version: 1.0
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: 8bit
+Sender: owner-pgsql-patches@postgreSQL.org
+Precedence: bulk
+Status: RO
+
+Hi,
+
+I have written this patch which fixes some problems with TCL_ARRAYS.
+The new array code uses a temporary buffer and is disabled by default
+because it depends on contrib/string-io which most of you don't use.
+This raises once again the problem of backslashes/escapes and various
+ambiguities in pgsql output. I hope this will be solved in 6.5.
+
+*** src/interfaces/libpgtcl/pgtclCmds.c.orig	Mon Sep 21 09:00:19 1998
+--- src/interfaces/libpgtcl/pgtclCmds.c	Wed Oct 14 15:32:21 1998
+***************
+*** 602,616 ****
+  		{
+  			for (i = 0; i < PQnfields(result); i++)
+  			{
+  				sprintf(nameBuffer, "%d,%.200s", tupno, PQfname(result, i));
+  				if (Tcl_SetVar2(interp, arrVar, nameBuffer,
+! #ifdef TCL_ARRAYS
+! 								tcl_value(PQgetvalue(result, tupno, i)),
+  #else
+  								PQgetvalue(result, tupno, i),
+- #endif
+  								TCL_LEAVE_ERR_MSG) == NULL)
+  					return TCL_ERROR;
+  			}
+  		}
+  		Tcl_AppendResult(interp, arrVar, 0);
+--- 602,624 ----
+  		{
+  			for (i = 0; i < PQnfields(result); i++)
+  			{
++ #ifdef TCL_ARRAYS
++ 				char *buff = strdup(PQgetvalue(result, tupno, i));
+  				sprintf(nameBuffer, "%d,%.200s", tupno, PQfname(result, i));
+  				if (Tcl_SetVar2(interp, arrVar, nameBuffer,
+! 								tcl_value(buff),
+! 								TCL_LEAVE_ERR_MSG) == NULL) {
+! 					free(buff);
+! 					return TCL_ERROR;
+! 				}
+! 				free(buff);
+  #else
++ 				sprintf(nameBuffer, "%d,%.200s", tupno, PQfname(result, i));
++ 				if (Tcl_SetVar2(interp, arrVar, nameBuffer,
+  								PQgetvalue(result, tupno, i),
+  								TCL_LEAVE_ERR_MSG) == NULL)
+  					return TCL_ERROR;
++ #endif
+  			}
+  		}
+  		Tcl_AppendResult(interp, arrVar, 0);
+***************
+*** 636,643 ****
+  		 */
+  		for (tupno = 0; tupno < PQntuples(result); tupno++)
+  		{
+  			const char *field0 = PQgetvalue(result, tupno, 0);
+! 			char * workspace = malloc(strlen(field0) + strlen(appendstr) + 210);
+  
+  			for (i = 1; i < PQnfields(result); i++)
+  			{
+--- 644,674 ----
+  		 */
+  		for (tupno = 0; tupno < PQntuples(result); tupno++)
+  		{
++ #ifdef TCL_ARRAYS
++ 			char *buff = strdup(PQgetvalue(result, tupno, 0));
++ 			const char *field0 = tcl_value(buff);
++ 			char *workspace = malloc(strlen(field0) + 210 + strlen(appendstr));
++ 
++ 			for (i = 1; i < PQnfields(result); i++)
++ 			{
++ 				free(buff);
++ 				buff = strdup(PQgetvalue(result, tupno, i));
++ 				sprintf(workspace, "%s,%.200s%s", field0, PQfname(result,i),
++ 						appendstr);
++ 				if (Tcl_SetVar2(interp, arrVar, workspace,
++ 								tcl_value(buff),
++ 								TCL_LEAVE_ERR_MSG) == NULL)
++ 				{
++ 					free(buff);
++ 					free(workspace);
++ 					return TCL_ERROR;
++ 				}
++ 			}
++ 			free(buff);
++ 			free(workspace);
++ #else
+  			const char *field0 = PQgetvalue(result, tupno, 0);
+! 			char *workspace = malloc(strlen(field0) + 210 + strlen(appendstr));
+  
+  			for (i = 1; i < PQnfields(result); i++)
+  			{
+***************
+*** 652,657 ****
+--- 683,689 ----
+  				}
+  			}
+  			free(workspace);
++ #endif
+  		}
+  		Tcl_AppendResult(interp, arrVar, 0);
+  		return TCL_OK;
+***************
+*** 669,676 ****
+--- 701,716 ----
+  			Tcl_AppendResult(interp, "argument to getTuple cannot exceed number of tuples - 1", 0);
+  			return TCL_ERROR;
+  		}
++ #ifdef TCL_ARRAYS
++ 		for (i = 0; i < PQnfields(result); i++) {
++ 			char *buff = strdup(PQgetvalue(result, tupno, i));
++ 			Tcl_AppendElement(interp, tcl_value(buff));
++ 			free(buff);
++ 		}
++ #else
+  		for (i = 0; i < PQnfields(result); i++)
+  			Tcl_AppendElement(interp, PQgetvalue(result, tupno, i));
++ #endif
+  		return TCL_OK;
+  	}
+  	else if (strcmp(opt, "-tupleArray") == 0)
+***************
+*** 688,697 ****
+--- 728,748 ----
+  		}
+  		for (i = 0; i < PQnfields(result); i++)
+  		{
++ #ifdef TCL_ARRAYS
++ 			char *buff = strdup(PQgetvalue(result, tupno, i));
++ 			if (Tcl_SetVar2(interp, argv[4], PQfname(result, i),
++ 							tcl_value(buff),
++ 							TCL_LEAVE_ERR_MSG) == NULL) {
++ 				free(buff);
++ 				return TCL_ERROR;
++ 			}
++ 			free(buff);
++ #else
+  			if (Tcl_SetVar2(interp, argv[4], PQfname(result, i),
+  							PQgetvalue(result, tupno, i),
+  							TCL_LEAVE_ERR_MSG) == NULL)
+  				return TCL_ERROR;
++ #endif
+  		}
+  		return TCL_OK;
+  	}
+***************
+*** 1303,1310 ****
+  		sprintf(buffer, "%d", tupno);
+  		Tcl_SetVar2(interp, argv[3], ".tupno", buffer, 0);
+  
+  		for (column = 0; column < ncols; column++)
+! 			Tcl_SetVar2(interp, argv[3], info[column].cname, PQgetvalue(result, tupno, column), 0);
+  
+  		Tcl_SetVar2(interp, argv[3], ".command", "update", 0);
+  
+--- 1354,1371 ----
+  		sprintf(buffer, "%d", tupno);
+  		Tcl_SetVar2(interp, argv[3], ".tupno", buffer, 0);
+  
++ #ifdef TCL_ARRAYS
++ 		for (column = 0; column < ncols; column++) {
++ 			char *buff = strdup(PQgetvalue(result, tupno, column));
++ 			Tcl_SetVar2(interp, argv[3], info[column].cname,
++ 						tcl_value(buff), 0);
++ 			free(buff);
++ 		}
++ #else
+  		for (column = 0; column < ncols; column++)
+! 			Tcl_SetVar2(interp, argv[3], info[column].cname,
+! 						PQgetvalue(result, tupno, column), 0);
+! #endif
+  
+  		Tcl_SetVar2(interp, argv[3], ".command", "update", 0);
+  
+*** src/include/config.h.in.orig	Wed Aug 26 09:01:16 1998
+--- src/include/config.h.in	Wed Oct 14 22:44:00 1998
+***************
+*** 312,318 ****
+   * of postgres C-like arrays, for example {{"a1" "a2"} {"b1" "b2"}} instead 
+   * of {{"a1","a2"},{"b1","b2"}}.
+   */
+! #define TCL_ARRAYS
+  
+  /*
+   * The following flag allows limiting the number of rows returned by a query.
+--- 312,318 ----
+   * of postgres C-like arrays, for example {{"a1" "a2"} {"b1" "b2"}} instead 
+   * of {{"a1","a2"},{"b1","b2"}}.
+   */
+! /* #define TCL_ARRAYS */
+  
+  /*
+   * The following flag allows limiting the number of rows returned by a query.
+
+-- 
+Massimo Dal Zotto
+
++----------------------------------------------------------------------+
+|  Massimo Dal Zotto                email:  dz@cs.unitn.it             |
+|  Via Marconi, 141                 phone:  ++39-461-534251            |
+|  38057 Pergine Valsugana (TN)     www:  http://www.cs.unitn.it/~dz/  |
+|  Italy                            pgp:  finger dz@tango.cs.unitn.it  |
++----------------------------------------------------------------------+
+
+

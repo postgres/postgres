@@ -1,0 +1,69 @@
+From owner-pgsql-general@hub.org Fri Dec 18 06:31:23 1998
+Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id GAA05554
+	for <maillist@candle.pha.pa.us>; Fri, 18 Dec 1998 06:31:21 -0500 (EST)
+Received: from hub.org (majordom@hub.org [209.47.145.100]) by renoir.op.net (o1/$Revision: 1.1 $) with ESMTP id EAA21127 for <maillist@candle.pha.pa.us>; Fri, 18 Dec 1998 04:46:38 -0500 (EST)
+Received: from localhost (majordom@localhost)
+	by hub.org (8.9.1/8.9.1) with SMTP id EAA01409;
+	Fri, 18 Dec 1998 04:44:19 -0500 (EST)
+	(envelope-from owner-pgsql-general@hub.org)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Fri, 18 Dec 1998 04:43:22 +0000 (EST)
+Received: (from majordom@localhost)
+	by hub.org (8.9.1/8.9.1) id EAA01093
+	for pgsql-general-outgoing; Fri, 18 Dec 1998 04:43:18 -0500 (EST)
+	(envelope-from owner-pgsql-general@postgreSQL.org)
+Received: from dune.krs.ru (dune.krs.ru [195.161.16.38])
+	by hub.org (8.9.1/8.9.1) with ESMTP id EAA01067
+	for <pgsql-general@postgreSQL.org>; Fri, 18 Dec 1998 04:43:09 -0500 (EST)
+	(envelope-from vadim@krs.ru)
+Received: from krs.ru (localhost.krs.ru [127.0.0.1])
+	by dune.krs.ru (8.8.8/8.8.7) with ESMTP id QAA16201;
+	Fri, 18 Dec 1998 16:41:44 +0700 (KRS)
+	(envelope-from vadim@krs.ru)
+Message-ID: <367A2354.E998763@krs.ru>
+Date: Fri, 18 Dec 1998 16:41:40 +0700
+From: Vadim Mikheev <vadim@krs.ru>
+Organization: OJSC Rostelecom (Krasnoyarsk)
+X-Mailer: Mozilla 4.5 [en] (X11; I; FreeBSD 2.2.6-RELEASE i386)
+X-Accept-Language: ru, en
+MIME-Version: 1.0
+To: Anton de Wet <adw@obsidian.co.za>
+CC: pgsql-general@postgreSQL.org
+Subject: Re: [GENERAL] Why PostgreSQL is better than other commerial softwares?
+References: <Pine.LNX.4.04.9812181046030.9458-100000@ra.obsidian.co.za>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Sender: owner-pgsql-general@postgreSQL.org
+Precedence: bulk
+Status: RO
+
+Anton de Wet wrote:
+> 
+> >
+> > Often quick mailing list support?
+> 
+> :-)
+> 
+> While on the subject I finally found the solution to a problem I (and one
+> or two other people) posted about without answer. (So sometimes it's slow
+> mailing list support).
+> 
+> In importing about 5 million records (which I copy in blocks of 10000) the
+> copy became linearly slower. After a friend RTFM and refered me, I used
+> the -F switch (passed by the postmaster to the backend processes) and the
+> time became linear and a LOT shorter. Import time for the 5000000 records
+> now the same (or maybe even slightly faster, I didn't accurately time
+> them) as importing the data into oracle on the same machine.
+
+"While on the subject..." -:)
+
+This is the problem of buffer manager, known for very long time:
+when copy eats all buffers, manager begins write/fsync each
+durty buffer to free buffer for new data. All updated relations
+should be fsynced _once_ @ transaction commit. You would get
+the same results without -F...
+I still have no time to implement this -:(
+
+Vadim
+
+

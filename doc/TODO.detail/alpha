@@ -1,0 +1,107 @@
+From owner-pgsql-hackers@hub.org Fri May 14 16:00:46 1999
+Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id QAA02173
+	for <maillist@candle.pha.pa.us>; Fri, 14 May 1999 16:00:44 -0400 (EDT)
+Received: from hub.org (hub.org [209.167.229.1]) by renoir.op.net (o1/$Revision: 1.1 $) with ESMTP id QAA02824 for <maillist@candle.pha.pa.us>; Fri, 14 May 1999 16:00:45 -0400 (EDT)
+Received: from hub.org (hub.org [209.167.229.1])
+	by hub.org (8.9.3/8.9.3) with ESMTP id PAA47798;
+	Fri, 14 May 1999 15:57:54 -0400 (EDT)
+	(envelope-from owner-pgsql-hackers@hub.org)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Fri, 14 May 1999 15:54:30 +0000 (EDT)
+Received: (from majordom@localhost)
+	by hub.org (8.9.3/8.9.3) id PAA47191
+	for pgsql-hackers-outgoing; Fri, 14 May 1999 15:54:28 -0400 (EDT)
+	(envelope-from owner-pgsql-hackers@postgreSQL.org)
+Received: from thelab.hub.org (nat194.147.mpoweredpc.net [142.177.194.147])
+	by hub.org (8.9.3/8.9.3) with ESMTP id PAA46457
+	for <pgsql-hackers@postgresql.org>; Fri, 14 May 1999 15:49:35 -0400 (EDT)
+	(envelope-from scrappy@hub.org)
+Received: from localhost (scrappy@localhost)
+	by thelab.hub.org (8.9.3/8.9.1) with ESMTP id QAA16128;
+	Fri, 14 May 1999 16:49:44 -0300 (ADT)
+	(envelope-from scrappy@hub.org)
+X-Authentication-Warning: thelab.hub.org: scrappy owned process doing -bs
+Date: Fri, 14 May 1999 16:49:44 -0300 (ADT)
+From: The Hermit Hacker <scrappy@hub.org>
+To: pgsql-hackers@postgreSQL.org
+cc: Jack Howarth <howarth@nitro.med.uc.edu>
+Subject: [HACKERS] postgresql bug report (fwd)
+Message-ID: <Pine.BSF.4.05.9905141649150.47191-100000@thelab.hub.org>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Sender: owner-pgsql-hackers@postgreSQL.org
+Precedence: bulk
+Status: ROr
+
+
+Marc G. Fournier                   ICQ#7615664               IRC Nick: Scrappy
+Systems Administrator @ hub.org 
+primary: scrappy@hub.org           secondary: scrappy@{freebsd|postgresql}.org 
+
+---------- Forwarded message ----------
+Date: Fri, 14 May 1999 14:50:58 -0400
+From: Jack Howarth <howarth@nitro.med.uc.edu>
+To: scrappy@hub.org
+Subject: postgresql bug report
+
+Marc,
+      In porting the RedHat 6.0 srpm set for a linuxppc release we
+believe a bug has been identified in
+the postgresql source for 6.5-0.beta1. Our development tools are as
+follows...
+
+glibc 2.1.1 pre 2
+linux 2.2.6
+egcs 1.1.2
+the latest binutils snapshot
+
+The bug that we see is that when egcs compiles postgresql at -O1 or
+higher (-O0 is fine),
+postgresql creates incorrectly formed databases such that when the user
+does a destroydb
+the database can not be destroyed. Franz Sirl has identified the problem
+as follows...
+
+    it seems that this problem is a type casting/promotion bug in the
+source. The
+    routine _bt_checkkeys() in backend/access/nbtree/nbtutils.c calls
+int2eq() in
+    backend/utils/adt/int.c via a function pointer
+*fmgr_faddr(&key[0].sk_func). As
+    the type information for int2eq is lost via the function pointer,
+the compiler
+    passes 2 ints, but int2eq expects 2 (preformatted in a 32bit reg)
+int16's.
+    This particular bug goes away, if I for example change int2eq to:
+
+    bool
+    int2eq(int32 arg1, int32 arg2)
+    {
+            return (int16)arg1 == (int16)arg2;
+    }
+
+    This moves away the type casting/promotion "work" from caller to the
+callee and
+    is probably the right thing to do for functions used via function
+pointers.
+
+...because of the large number of changes required to do this, Franz
+thought we should
+pass this on to the postgresql maintainers for correction. Please feel
+free to contact
+Franz Sirl (Franz.Sirl-kernel@lauterbach.com) if you have any questions
+on this bug
+report.
+
+--
+------------------------------------------------------------------------------
+Jack W. Howarth, Ph.D.                                     231 Bethesda Avenue
+NMR Facility Director                              Cincinnati, Ohio 45267-0524
+Dept. of Molecular Genetics                              phone: (513) 558-4420
+Univ. of Cincinnati College of Medicine                    fax: (513) 558-8474
+
+
+
+
+
+
