@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.349 2004/12/31 22:03:25 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.350 2005/02/26 18:43:34 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2133,8 +2133,8 @@ DESCR("matches LIKE expression, case-insensitive");
 DATA(insert OID = 1661 (  bpcharicnlike		PGNSP PGUID 12 f f t f i 2 16 "1042 25" _null_ texticnlike - _null_ ));
 DESCR("does not match LIKE expression, case-insensitive");
 
-DATA(insert OID = 1689 (  update_pg_pwd_and_pg_group  PGNSP PGUID 12 f f t f v 0 2279  "" _null_	update_pg_pwd_and_pg_group - _null_ ));
-DESCR("update pg_pwd and pg_group files");
+DATA(insert OID = 1689 (  flatfile_update_trigger  PGNSP PGUID 12 f f t f v 0 2279  "" _null_	flatfile_update_trigger - _null_ ));
+DESCR("update flat-file copy of a shared catalog");
 
 /* Oracle Compatibility Related Functions - By Edmund Mergl <E.Mergl@bawue.de> */
 DATA(insert OID =  868 (  strpos	   PGNSP PGUID 12 f f t f i 2 23 "25 25" _null_ textpos - _null_ ));

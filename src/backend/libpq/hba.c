@@ -10,12 +10,13 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.139 2005/02/20 04:45:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.140 2005/02/26 18:43:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
+#include <ctype.h>
 #include <pwd.h>
 #include <fcntl.h>
 #include <sys/param.h>
@@ -36,6 +37,8 @@
 #include "utils/flatfiles.h"
 #include "utils/guc.h"
 
+
+#define atooid(x)  ((Oid) strtoul((x), NULL, 10))
 
 /* Max size of username ident server can return */
 #define IDENT_USERNAME_MAX 512
@@ -1059,6 +1062,51 @@ load_hba(void)
 	FreeFile(file);
 }
 
+/*
+ * Read and parse one line from the flat pg_database file.
+ *
+ * Returns TRUE on success, FALSE if EOF; bad data causes elog(FATAL).
+ *
+ * Output parameters:
+ *	dbname: gets database name (must be of size NAMEDATALEN bytes)
+ *	dboid: gets database OID
+ *	dbtablespace: gets database's default tablespace's OID
+ *
+ * This is not much related to the other functions in hba.c, but we put it
+ * here because it uses the next_token() infrastructure.
+ */
+bool
+read_pg_database_line(FILE *fp, char *dbname,
+					  Oid *dboid, Oid *dbtablespace)
+{
+	char		buf[MAX_TOKEN];
+
+	if (feof(fp))
+		return false;
+	next_token(fp, buf, sizeof(buf));
+	if (!buf[0])
+		return false;
+	if (strlen(buf) >= NAMEDATALEN)
+		elog(FATAL, "bad data in flat pg_database file");
+	strcpy(dbname, buf);
+	next_token(fp, buf, sizeof(buf));
+	if (!isdigit((unsigned char) buf[0]))
+		elog(FATAL, "bad data in flat pg_database file");
+	*dboid = atooid(buf);
+	next_token(fp, buf, sizeof(buf));
+	if (!isdigit((unsigned char) buf[0]))
+		elog(FATAL, "bad data in flat pg_database file");
+	*dbtablespace = atooid(buf);
+	/* discard datfrozenxid */
+	next_token(fp, buf, sizeof(buf));
+	if (!isdigit((unsigned char) buf[0]))
+		elog(FATAL, "bad data in flat pg_database file");
+	/* expect EOL next */
+	next_token(fp, buf, sizeof(buf));
+	if (buf[0])
+		elog(FATAL, "bad data in flat pg_database file");
+	return true;
+}
 
 /*
  *	Process one line from the ident config file.

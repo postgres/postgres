@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.140 2005/02/20 21:46:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.141 2005/02/26 18:43:33 tgl Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -27,14 +27,16 @@
 #include "catalog/pg_database.h"
 #include "catalog/pg_shadow.h"
 #include "catalog/pg_tablespace.h"
+#include "libpq/hba.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "postmaster/postmaster.h"
-#include "storage/backendid.h"
+#include "storage/fd.h"
 #include "storage/ipc.h"
 #include "storage/proc.h"
 #include "storage/sinval.h"
 #include "storage/smgr.h"
+#include "utils/flatfiles.h"
 #include "utils/fmgroids.h"
 #include "utils/guc.h"
 #include "utils/portal.h"
@@ -42,6 +44,7 @@
 #include "utils/syscache.h"
 
 
+static bool FindMyDatabase(const char *name, Oid *db_id, Oid *db_tablespace);
 static void ReverifyMyDatabase(const char *name);
 static void InitCommunication(void);
 static void ShutdownPostgres(int code, Datum arg);
@@ -51,18 +54,60 @@ static bool ThereIsAtLeastOneUser(void);
 /*** InitPostgres support ***/
 
 
-/* --------------------------------
- *		ReverifyMyDatabase
+/*
+ * FindMyDatabase -- get the critical info needed to locate my database
  *
- * Since we are forced to fetch the database OID out of pg_database without
- * benefit of locking or transaction ID checking (see utils/misc/database.c),
- * we might have gotten a wrong answer.  Or, we might have attached to a
- * database that's in process of being destroyed by destroydb().  This
- * routine is called after we have all the locking and other infrastructure
- * running --- now we can check that we are really attached to a valid
- * database.
+ * Find the named database in pg_database, return its database OID and the
+ * OID of its default tablespace.  Return TRUE if found, FALSE if not.
  *
- * In reality, if destroydb() is running in parallel with our startup,
+ * Since we are not yet up and running as a backend, we cannot look directly
+ * at pg_database (we can't obtain locks nor participate in transactions).
+ * So to get the info we need before starting up, we must look at the "flat
+ * file" copy of pg_database that is helpfully maintained by flatfiles.c.
+ * This is subject to various race conditions, so after we have the
+ * transaction infrastructure started, we have to recheck the information;
+ * see ReverifyMyDatabase.
+ */
+static bool
+FindMyDatabase(const char *name, Oid *db_id, Oid *db_tablespace)
+{
+	bool		result = false;
+	char	   *filename;
+	FILE	   *db_file;
+	char		thisname[NAMEDATALEN];
+
+	filename = database_getflatfilename();
+	db_file = AllocateFile(filename, "r");
+	if (db_file == NULL)
+		ereport(FATAL,
+				(errcode_for_file_access(),
+				 errmsg("could not open file \"%s\": %m", filename)));
+
+	while (read_pg_database_line(db_file, thisname, db_id, db_tablespace))
+	{
+		if (strcmp(thisname, name) == 0)
+		{
+			result = true;
+			break;
+		}
+	}
+
+	FreeFile(db_file);
+	pfree(filename);
+
+	return result;
+}
+
+/*
+ * ReverifyMyDatabase -- recheck info obtained by FindMyDatabase
+ *
+ * Since FindMyDatabase cannot lock pg_database, the information it read
+ * could be stale; for example we might have attached to a database that's in
+ * process of being destroyed by dropdb().  This routine is called after
+ * we have all the locking and other infrastructure running --- now we can
+ * check that we are really attached to a valid database.
+ *
+ * In reality, if dropdb() is running in parallel with our startup,
  * it's pretty likely that we will have failed before now, due to being
  * unable to read some of the system tables within the doomed database.
  * This routine just exists to make *sure* we have not started up in an
@@ -75,7 +120,6 @@ static bool ThereIsAtLeastOneUser(void);
  * To avoid having to read pg_database more times than necessary
  * during session startup, this place is also fitting to set up any
  * database-specific configuration variables.
- * --------------------------------
  */
 static void
 ReverifyMyDatabase(const char *name)
@@ -87,10 +131,10 @@ ReverifyMyDatabase(const char *name)
 	Form_pg_database dbform;
 
 	/*
-	 * Because we grab AccessShareLock here, we can be sure that destroydb
+	 * Because we grab RowShareLock here, we can be sure that dropdb()
 	 * is not running in parallel with us (any more).
 	 */
-	pgdbrel = heap_openr(DatabaseRelationName, AccessShareLock);
+	pgdbrel = heap_openr(DatabaseRelationName, RowShareLock);
 
 	ScanKeyInit(&key,
 				Anum_pg_database_datname,
@@ -104,7 +148,7 @@ ReverifyMyDatabase(const char *name)
 		HeapTupleGetOid(tup) != MyDatabaseId)
 	{
 		/* OOPS */
-		heap_close(pgdbrel, AccessShareLock);
+		heap_close(pgdbrel, RowShareLock);
 
 		/*
 		 * The only real problem I could have created is to load dirty
@@ -131,7 +175,7 @@ ReverifyMyDatabase(const char *name)
 				name)));
 
 	/*
-	 * OK, we're golden.  Only other to-do item is to save the encoding
+	 * OK, we're golden.  Next to-do item is to save the encoding
 	 * info out of the pg_database tuple.
 	 */
 	SetDatabaseEncoding(dbform->encoding);
@@ -143,7 +187,7 @@ ReverifyMyDatabase(const char *name)
 					PGC_BACKEND, PGC_S_DEFAULT);
 
 	/*
-	 * Set up database-specific configuration variables.
+	 * Lastly, set up any database-specific configuration variables.
 	 */
 	if (IsUnderPostmaster)
 	{
@@ -161,7 +205,7 @@ ReverifyMyDatabase(const char *name)
 	}
 
 	heap_endscan(pgdbscan);
-	heap_close(pgdbrel, AccessShareLock);
+	heap_close(pgdbrel, RowShareLock);
 }
 
 
@@ -261,11 +305,9 @@ InitPostgres(const char *dbname, const char *username)
 		/*
 		 * Find oid and tablespace of the database we're about to open.
 		 * Since we're not yet up and running we have to use the hackish
-		 * GetRawDatabaseInfo.
+		 * FindMyDatabase.
 		 */
-		GetRawDatabaseInfo(dbname, &MyDatabaseId, &MyDatabaseTableSpace);
-
-		if (!OidIsValid(MyDatabaseId))
+		if (!FindMyDatabase(dbname, &MyDatabaseId, &MyDatabaseTableSpace))
 			ereport(FATAL,
 					(errcode(ERRCODE_UNDEFINED_DATABASE),
 					 errmsg("database \"%s\" does not exist",

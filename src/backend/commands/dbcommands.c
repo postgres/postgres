@@ -3,13 +3,19 @@
  * dbcommands.c
  *		Database management commands (create/drop database).
  *
+ * Note: database creation/destruction commands take ExclusiveLock on
+ * pg_database to ensure that no two proceed in parallel.  We must use
+ * at least this level of locking to ensure that no two backends try to
+ * write the flat-file copy of pg_database at once.  We avoid using
+ * AccessExclusiveLock since there's no need to lock out ordinary readers
+ * of pg_database.
  *
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.150 2005/02/20 02:21:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.151 2005/02/26 18:43:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -446,13 +452,13 @@ createdb(const CreatedbStmt *stmt)
 	/*
 	 * Now OK to grab exclusive lock on pg_database.
 	 */
-	pg_database_rel = heap_openr(DatabaseRelationName, AccessExclusiveLock);
+	pg_database_rel = heap_openr(DatabaseRelationName, ExclusiveLock);
 
 	/* Check to see if someone else created same DB name meanwhile. */
 	if (get_db_info(dbname, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL))
 	{
 		/* Don't hold lock while doing recursive remove */
-		heap_close(pg_database_rel, AccessExclusiveLock);
+		heap_close(pg_database_rel, ExclusiveLock);
 		remove_dbtablespaces(dboid);
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_DATABASE),
@@ -498,13 +504,6 @@ createdb(const CreatedbStmt *stmt)
 	/* Update indexes */
 	CatalogUpdateIndexes(pg_database_rel, tuple);
 
-	/*
-	 * Force dirty buffers out to disk, so that newly-connecting backends
-	 * will see the new database in pg_database right away.  (They'll see
-	 * an uncommitted tuple, but they don't care; see GetRawDatabaseInfo.)
-	 */
-	FlushRelationBuffers(pg_database_rel, MaxBlockNumber);
-
 	/* Close pg_database, but keep exclusive lock till commit */
 	heap_close(pg_database_rel, NoLock);
 
@@ -542,12 +541,15 @@ dropdb(const char *dbname)
 	 * Obtain exclusive lock on pg_database.  We need this to ensure that
 	 * no new backend starts up in the target database while we are
 	 * deleting it.  (Actually, a new backend might still manage to start
-	 * up, because it will read pg_database without any locking to
-	 * discover the database's OID.  But it will detect its error in
-	 * ReverifyMyDatabase and shut down before any serious damage is done.
-	 * See postinit.c.)
+	 * up, because it isn't able to lock pg_database while starting.  But
+	 * it will detect its error in ReverifyMyDatabase and shut down before
+	 * any serious damage is done.  See postinit.c.)
+	 *
+	 * An ExclusiveLock, rather than AccessExclusiveLock, is sufficient
+	 * since ReverifyMyDatabase takes RowShareLock.  This allows ordinary
+	 * readers of pg_database to proceed in parallel.
 	 */
-	pgdbrel = heap_openr(DatabaseRelationName, AccessExclusiveLock);
+	pgdbrel = heap_openr(DatabaseRelationName, ExclusiveLock);
 
 	if (!get_db_info(dbname, &db_id, &db_owner, NULL,
 					 &db_istemplate, NULL, NULL, NULL, NULL))
@@ -638,14 +640,6 @@ dropdb(const char *dbname)
 	 */
 	remove_dbtablespaces(db_id);
 
-	/*
-	 * Force dirty buffers out to disk, so that newly-connecting backends
-	 * will see the database tuple marked dead in pg_database right away.
-	 * (They'll see an uncommitted deletion, but they don't care; see
-	 * GetRawDatabaseInfo.)
-	 */
-	FlushRelationBuffers(pgdbrel, MaxBlockNumber);
-
 	/* Close pg_database, but keep exclusive lock till commit */
 	heap_close(pgdbrel, NoLock);
 
@@ -671,10 +665,10 @@ RenameDatabase(const char *oldname, const char *newname)
 				key2;
 
 	/*
-	 * Obtain AccessExclusiveLock so that no new session gets started
+	 * Obtain ExclusiveLock so that no new session gets started
 	 * while the rename is in progress.
 	 */
-	rel = heap_openr(DatabaseRelationName, AccessExclusiveLock);
+	rel = heap_openr(DatabaseRelationName, ExclusiveLock);
 
 	ScanKeyInit(&key,
 				Anum_pg_database_datname,
@@ -742,14 +736,6 @@ RenameDatabase(const char *oldname, const char *newname)
 
 	systable_endscan(scan);
 
-	/*
-	 * Force dirty buffers out to disk, so that newly-connecting backends
-	 * will see the renamed database in pg_database right away.  (They'll
-	 * see an uncommitted tuple, but they don't care; see
-	 * GetRawDatabaseInfo.)
-	 */
-	FlushRelationBuffers(rel, MaxBlockNumber);
-
 	/* Close pg_database, but keep exclusive lock till commit */
 	heap_close(rel, NoLock);
 
@@ -779,9 +765,10 @@ AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
 	valuestr = flatten_set_variable_args(stmt->variable, stmt->value);
 
 	/*
-	 * We need AccessExclusiveLock so we can safely do FlushRelationBuffers.
+	 * We don't need ExclusiveLock since we aren't updating the
+	 * flat file.
 	 */
-	rel = heap_openr(DatabaseRelationName, AccessExclusiveLock);
+	rel = heap_openr(DatabaseRelationName, RowExclusiveLock);
 	ScanKeyInit(&scankey,
 				Anum_pg_database_datname,
 				BTEqualStrategyNumber, F_NAMEEQ,
@@ -840,15 +827,7 @@ AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
 
 	systable_endscan(scan);
 
-	/*
-	 * Force dirty buffers out to disk, so that newly-connecting backends
-	 * will see the altered row in pg_database right away.  (They'll
-	 * see an uncommitted tuple, but they don't care; see
-	 * GetRawDatabaseInfo.)
-	 */
-	FlushRelationBuffers(rel, MaxBlockNumber);
-
-	/* Close pg_database, but keep exclusive lock till commit */
+	/* Close pg_database, but keep lock till commit */
 	heap_close(rel, NoLock);
 
 	/*
@@ -871,9 +850,10 @@ AlterDatabaseOwner(const char *dbname, AclId newOwnerSysId)
 	Form_pg_database datForm;
 
 	/*
-	 * We need AccessExclusiveLock so we can safely do FlushRelationBuffers.
+	 * We don't need ExclusiveLock since we aren't updating the
+	 * flat file.
 	 */
-	rel = heap_openr(DatabaseRelationName, AccessExclusiveLock);
+	rel = heap_openr(DatabaseRelationName, RowExclusiveLock);
 	ScanKeyInit(&scankey,
 				Anum_pg_database_datname,
 				BTEqualStrategyNumber, F_NAMEEQ,
@@ -937,22 +917,11 @@ AlterDatabaseOwner(const char *dbname, AclId newOwnerSysId)
 		CatalogUpdateIndexes(rel, newtuple);
 
 		heap_freetuple(newtuple);
-
-		/* must release buffer pins before FlushRelationBuffers */
-		systable_endscan(scan);
-
-		/*
-		 * Force dirty buffers out to disk, so that newly-connecting backends
-		 * will see the altered row in pg_database right away.  (They'll
-		 * see an uncommitted tuple, but they don't care; see
-		 * GetRawDatabaseInfo.)
-		 */
-		FlushRelationBuffers(rel, MaxBlockNumber);
 	}
-	else
-		systable_endscan(scan);
 
-	/* Close pg_database, but keep exclusive lock till commit */
+	systable_endscan(scan);
+
+	/* Close pg_database, but keep lock till commit */
 	heap_close(rel, NoLock);
 
 	/*

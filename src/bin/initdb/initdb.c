@@ -39,7 +39,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.75 2005/02/22 04:38:22 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.76 2005/02/26 18:43:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1319,15 +1319,18 @@ setup_shadow(void)
 	char	  **line;
 	static char *pg_shadow_setup[] = {
 		/*
-		 * Create a trigger so that direct updates to pg_shadow will be
-		 * written to the flat password/group files pg_pwd and pg_group
+		 * Create triggers to ensure manual updates to shared catalogs
+		 * will be reflected into their "flat file" copies.
 		 */
-		"CREATE TRIGGER pg_sync_pg_pwd "
-		"  AFTER INSERT OR UPDATE OR DELETE ON pg_shadow "
-		"  FOR EACH ROW EXECUTE PROCEDURE update_pg_pwd_and_pg_group();\n",
+		"CREATE TRIGGER pg_sync_pg_database "
+		"  AFTER INSERT OR UPDATE OR DELETE ON pg_database "
+		"  FOR EACH STATEMENT EXECUTE PROCEDURE flatfile_update_trigger();\n",
 		"CREATE TRIGGER pg_sync_pg_group "
 		"  AFTER INSERT OR UPDATE OR DELETE ON pg_group "
-		"  FOR EACH ROW EXECUTE PROCEDURE update_pg_pwd_and_pg_group();\n",
+		"  FOR EACH STATEMENT EXECUTE PROCEDURE flatfile_update_trigger();\n",
+		"CREATE TRIGGER pg_sync_pg_pwd "
+		"  AFTER INSERT OR UPDATE OR DELETE ON pg_shadow "
+		"  FOR EACH STATEMENT EXECUTE PROCEDURE flatfile_update_trigger();\n",
 
 		/*
 		 * needs to be done before alter user, because alter user checks
