@@ -202,7 +202,7 @@ Multi-Language Support
 Views / Rules
 =============
 
-* Automatically create rules on views so they are updateable, per SQL92 [view]
+* Automatically create rules on views so they are updateable, per SQL99 [view]
 * Add the functionality for WITH CHECK OPTION clause of CREATE VIEW
 * Allow NOTIFY in rules involving conditionals
 * Have views on temporary tables exist in the temporary namespace
