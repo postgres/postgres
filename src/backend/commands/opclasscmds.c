@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/opclasscmds.c,v 1.11 2003/07/04 02:51:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/opclasscmds.c,v 1.12 2003/07/18 23:20:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,8 +85,10 @@ DefineOpClass(CreateOpClassStmt *stmt)
 						 CStringGetDatum(stmt->amname),
 						 0, 0, 0);
 	if (!HeapTupleIsValid(tup))
-		elog(ERROR, "DefineOpClass: access method \"%s\" not found",
-			 stmt->amname);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("access method \"%s\" does not exist",
+						stmt->amname)));
 
 	amoid = HeapTupleGetOid(tup);
 	numOperators = ((Form_pg_am) GETSTRUCT(tup))->amstrategies;
@@ -104,7 +106,9 @@ DefineOpClass(CreateOpClassStmt *stmt)
 	 * if it can be done without solving the halting problem :-(
 	 */
 	if (!superuser())
-		elog(ERROR, "Must be superuser to create an operator class");
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("must be superuser to create an operator class")));
 
 	/* Look up the datatype */
 	typeoid = typenameTypeId(stmt->datatype);
@@ -143,12 +147,16 @@ DefineOpClass(CreateOpClassStmt *stmt)
 		{
 			case OPCLASS_ITEM_OPERATOR:
 				if (item->number <= 0 || item->number > numOperators)
-					elog(ERROR, "DefineOpClass: invalid operator number %d,"
-						 " must be between 1 and %d",
-						 item->number, numOperators);
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+							 errmsg("invalid operator number %d,"
+									" must be between 1 and %d",
+									item->number, numOperators)));
 				if (operators[item->number - 1] != InvalidOid)
-					elog(ERROR, "DefineOpClass: operator number %d appears more than once",
-						 item->number);
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+							 errmsg("operator number %d appears more than once",
+									item->number)));
 				if (item->args != NIL)
 				{
 					TypeName   *typeName1 = (TypeName *) lfirst(item->args);
@@ -176,12 +184,16 @@ DefineOpClass(CreateOpClassStmt *stmt)
 				break;
 			case OPCLASS_ITEM_FUNCTION:
 				if (item->number <= 0 || item->number > numProcs)
-					elog(ERROR, "DefineOpClass: invalid procedure number %d,"
-						 " must be between 1 and %d",
-						 item->number, numProcs);
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+							 errmsg("invalid procedure number %d,"
+									" must be between 1 and %d",
+									item->number, numProcs)));
 				if (procedures[item->number - 1] != InvalidOid)
-					elog(ERROR, "DefineOpClass: procedure number %d appears more than once",
-						 item->number);
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+							 errmsg("DefineOpClass: procedure number %d appears more than once",
+									item->number)));
 				funcOid = LookupFuncNameTypeNames(item->name, item->args,
 												  false);
 				/* Caller must have execute permission on functions */
@@ -193,12 +205,13 @@ DefineOpClass(CreateOpClassStmt *stmt)
 				break;
 			case OPCLASS_ITEM_STORAGETYPE:
 				if (OidIsValid(storageoid))
-					elog(ERROR, "DefineOpClass: storage type specified more than once");
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+							 errmsg("storage type specified more than once")));
 				storageoid = typenameTypeId(item->storedtype);
 				break;
 			default:
-				elog(ERROR, "DefineOpClass: bogus item type %d",
-					 item->itemtype);
+				elog(ERROR, "unrecognized item type: %d", item->itemtype);
 				break;
 		}
 	}
@@ -219,8 +232,10 @@ DefineOpClass(CreateOpClassStmt *stmt)
 			 * favor of adding another boolean column to pg_am ...
 			 */
 			if (amoid != GIST_AM_OID)
-				elog(ERROR, "Storage type may not be different from datatype for access method %s",
-					 stmt->amname);
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+						 errmsg("storage type may not be different from datatype for access method \"%s\"",
+								stmt->amname)));
 		}
 	}
 
@@ -235,8 +250,10 @@ DefineOpClass(CreateOpClassStmt *stmt)
 							 CStringGetDatum(opcname),
 							 ObjectIdGetDatum(namespaceoid),
 							 0))
-		elog(ERROR, "Operator class \"%s\" already exists for access method \"%s\"",
-			 opcname, stmt->amname);
+		ereport(ERROR,
+				(errcode(ERRCODE_DUPLICATE_OBJECT),
+				 errmsg("operator class \"%s\" already exists for access method \"%s\"",
+						opcname, stmt->amname)));
 
 	/*
 	 * If we are creating a default opclass, check there isn't one
@@ -259,11 +276,13 @@ DefineOpClass(CreateOpClassStmt *stmt)
 			Form_pg_opclass opclass = (Form_pg_opclass) GETSTRUCT(tup);
 
 			if (opclass->opcintype == typeoid && opclass->opcdefault)
-				elog(ERROR, "Can't add class \"%s\" as default for type %s"
-					 "\n\tclass \"%s\" already is the default",
-					 opcname,
-					 TypeNameToString(stmt->datatype),
-					 NameStr(opclass->opcname));
+				ereport(ERROR,
+						(errcode(ERRCODE_DUPLICATE_OBJECT),
+						 errmsg("cannot make class \"%s\" be default for type %s",
+								opcname,
+								TypeNameToString(stmt->datatype)),
+						 errdetail("class \"%s\" already is the default",
+								   NameStr(opclass->opcname))));
 		}
 
 		systable_endscan(scan);
@@ -467,8 +486,10 @@ RemoveOpClass(RemoveOpClassStmt *stmt)
 						  CStringGetDatum(stmt->amname),
 						  0, 0, 0);
 	if (!OidIsValid(amID))
-		elog(ERROR, "RemoveOpClass: access method \"%s\" not found",
-			 stmt->amname);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("access method \"%s\" does not exist",
+						stmt->amname)));
 
 	/*
 	 * Look up the opclass.
@@ -494,16 +515,20 @@ RemoveOpClass(RemoveOpClassStmt *stmt)
 		/* Unqualified opclass name, so search the search path */
 		opcID = OpclassnameGetOpcid(amID, opcname);
 		if (!OidIsValid(opcID))
-			elog(ERROR, "RemoveOpClass: operator class \"%s\" not supported by access method \"%s\"",
-				 opcname, stmt->amname);
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("operator class \"%s\" does not exist for access method \"%s\"",
+							opcname, stmt->amname)));
 		tuple = SearchSysCache(CLAOID,
 							   ObjectIdGetDatum(opcID),
 							   0, 0, 0);
 	}
 
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "RemoveOpClass: operator class \"%s\" not supported by access method \"%s\"",
-			 NameListToString(stmt->opclassname), stmt->amname);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("operator class \"%s\" does not exist for access method \"%s\"",
+						NameListToString(stmt->opclassname), stmt->amname)));
 
 	opcID = HeapTupleGetOid(tuple);
 
@@ -546,8 +571,7 @@ RemoveOpClassById(Oid opclassOid)
 						 ObjectIdGetDatum(opclassOid),
 						 0, 0, 0);
 	if (!HeapTupleIsValid(tup)) /* should not happen */
-		elog(ERROR, "RemoveOpClassById: couldn't find pg_opclass entry %u",
-			 opclassOid);
+		elog(ERROR, "cache lookup failed for opclass %u", opclassOid);
 
 	simple_heap_delete(rel, &tup->t_self);
 
@@ -612,7 +636,10 @@ RenameOpClass(List *name, const char *access_method, const char *newname)
 						   CStringGetDatum(access_method),
 						   0, 0, 0);
 	if (!OidIsValid(amOid))
-		elog(ERROR, "access method \"%s\" not found", access_method);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("access method \"%s\" does not exist",
+						access_method)));
 
 	rel = heap_openr(OperatorClassRelationName, RowExclusiveLock);
 
@@ -631,8 +658,10 @@ RenameOpClass(List *name, const char *access_method, const char *newname)
 								 ObjectIdGetDatum(namespaceOid),
 								 0);
 		if (!HeapTupleIsValid(tup))
-			elog(ERROR, "operator class \"%s\" for access method \"%s\" does not exist",
-				 opcname, access_method);
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("operator class \"%s\" does not exist for access method \"%s\"",
+							opcname, access_method)));
 
 		opcOid = HeapTupleGetOid(tup);
 	}
@@ -640,14 +669,16 @@ RenameOpClass(List *name, const char *access_method, const char *newname)
 	{
 		opcOid = OpclassnameGetOpcid(amOid, opcname);
 		if (!OidIsValid(opcOid))
-			elog(ERROR, "operator class \"%s\" for access method \"%s\" does not exist",
-				 opcname, access_method);
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("operator class \"%s\" does not exist for access method \"%s\"",
+							opcname, access_method)));
 
 		tup = SearchSysCacheCopy(CLAOID,
 								 ObjectIdGetDatum(opcOid),
 								 0, 0, 0);
 		if (!HeapTupleIsValid(tup)) /* should not happen */
-			elog(ERROR, "couldn't find pg_opclass tuple for %u", opcOid);
+			elog(ERROR, "cache lookup failed for opclass %u", opcOid);
 
 		namespaceOid = ((Form_pg_opclass) GETSTRUCT(tup))->opcnamespace;
 	}
@@ -660,9 +691,10 @@ RenameOpClass(List *name, const char *access_method, const char *newname)
 							 0))
 	{
 		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR_OR_ACCESS_RULE_VIOLATION),
+				(errcode(ERRCODE_DUPLICATE_OBJECT),
 				 errmsg("operator class \"%s\" for access method \"%s\" already exists in schema \"%s\"",
-						newname, access_method, get_namespace_name(namespaceOid))));
+						newname, access_method,
+						get_namespace_name(namespaceOid))));
 	}
 
 	/* must be owner */

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/sources.sgml,v 2.8 2003/06/22 16:17:01 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/sources.sgml,v 2.9 2003/07/18 23:20:32 tgl Exp $
 -->
 
  <chapter id="source">
@@ -125,11 +125,12 @@ less -x4
     Here is a more complex example:
 <programlisting>
     ereport(ERROR,
-            (errmsg("Unable to identify an operator %s %s %s",
-                    format_type_be(arg1),
-                    NameListToString(op),
-                    format_type_be(arg2)),
-             errhint("Try explicitly casting the arguments to appropriate types")));
+            (errcode(ERRCODE_AMBIGUOUS_FUNCTION),
+             errmsg("function %s is not unique",
+                    func_signature_string(funcname, nargs,
+                                          actual_arg_types)),
+             errhint("Unable to choose a best candidate function. "
+                     "You may need to add explicit typecasts.")));
 </programlisting>
     This illustrates the use of format codes to embed run-time values into
     a message text.  Also, an optional <quote>hint</> message is provided.
@@ -141,11 +142,14 @@ less -x4
    <listitem>
     <para>
      <function>errcode</>(sqlerrcode) specifies the SQLSTATE error identifier
-     code for the condition.  If this is not specified, it defaults to
-     <literal>ERRCODE_INTERNAL_ERROR</>, which is a convenient default since
-     a large number of <function>ereport</> calls are in fact for internal
-     <quote>can't happen</> conditions.  But never use this default when
-     reporting user mistakes.
+     code for the condition.  If this routine is not called, the error
+     identifier defaults to
+     <literal>ERRCODE_INTERNAL_ERROR</> when the error level is
+     <literal>ERROR</> or higher, <literal>ERRCODE_WARNING</> when the
+     error level is <literal>WARNING</>, otherwise (for <literal>NOTICE</>
+     and below) <literal>ERRCODE_SUCCESSFUL_COMPLETION</>.
+     While these defaults are often convenient, always think whether they
+     are appropriate before omitting the <function>errcode</>() call.
     </para>
    </listitem>
    <listitem>
@@ -220,15 +224,25 @@ less -x4
      query processing.
     </para>
    </listitem>
+   <listitem>
+    <para>
+     <function>errcode_for_file_access</>() is a convenience function that
+     selects an appropriate SQLSTATE error identifier for a failure in a
+     file-access-related system call.  It uses the saved
+     <literal>errno</> to determine which error code to generate.
+     Usually this should be used in combination with <literal>%m</> in the
+     primary error message text.
+    </para>
+   </listitem>
   </itemizedlist>
    </para>
 
    <para>
     You may also see uses of the older function <function>elog</>.  This
     is equivalent to an <function>ereport</> call specifying only severity
-    level and primary message.  Because the error code always defaults to
-    <literal>ERRCODE_INTERNAL_ERROR</>, <function>elog</> should only be
-    used for internal errors.
+    level and primary message.  <function>elog</> should only be used if
+    the default errcode assignment is appropriate; this generally restricts
+    its use to internal errors and debug logging output.
    </para>
 
    <para>
@@ -270,7 +284,7 @@ less -x4
 write
 <programlisting>
         Primary:    could not create shared memory segment: %m
-        Detail:     Failed syscall was shmget(key=%d, size=%u, 0%o)
+        Detail:     Failed syscall was shmget(key=%d, size=%u, 0%o).
         Hint:       the addendum
 </programlisting>
    </para>

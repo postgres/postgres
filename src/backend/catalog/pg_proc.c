@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.99 2003/07/01 01:28:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.100 2003/07/18 23:20:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -82,8 +82,10 @@ ProcedureCreate(const char *procedureName,
 	Assert(PointerIsValid(probin));
 
 	if (parameterCount < 0 || parameterCount > FUNC_MAX_ARGS)
-		elog(ERROR, "functions cannot have more than %d arguments",
-			 FUNC_MAX_ARGS);
+		ereport(ERROR,
+				(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
+				 errmsg("functions cannot have more than %d arguments",
+						FUNC_MAX_ARGS)));
 
 	/*
 	 * Do not allow return type ANYARRAY or ANYELEMENT unless at least one
@@ -104,8 +106,9 @@ ProcedureCreate(const char *procedureName,
 		}
 
 		if (!genericParam)
-			elog(ERROR, "functions returning ANYARRAY or ANYELEMENT must " \
-						"have at least one argument of either type");
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+					 errmsg("functions returning ANYARRAY or ANYELEMENT must have at least one argument of either type")));
 	}
 
 	/* Make sure we have a zero-padded param type array */
@@ -156,10 +159,12 @@ ProcedureCreate(const char *procedureName,
 	 * existing attributes of the type
 	 */
 	if (parameterCount == 1 && OidIsValid(typev[0]) &&
-		(relid = typeidTypeRelid(typev[0])) != 0 &&
+		(relid = typeidTypeRelid(typev[0])) != InvalidOid &&
 		get_attnum(relid, (char *) procedureName) != InvalidAttrNumber)
-		elog(ERROR, "method %s already an attribute of type %s",
-			 procedureName, format_type_be(typev[0]));
+		ereport(ERROR,
+				(errcode(ERRCODE_DUPLICATE_COLUMN),
+				 errmsg("\"%s\" is already an attribute of type %s",
+						procedureName, format_type_be(typev[0]))));
 
 	/*
 	 * All seems OK; prepare the data to be inserted into pg_proc.
@@ -208,11 +213,15 @@ ProcedureCreate(const char *procedureName,
 		Form_pg_proc oldproc = (Form_pg_proc) GETSTRUCT(oldtup);
 
 		if (!replace)
-			elog(ERROR, "function %s already exists with same argument types",
-				 procedureName);
+			ereport(ERROR,
+					(errcode(ERRCODE_DUPLICATE_FUNCTION),
+					 errmsg("function \"%s\" already exists with same argument types",
+							procedureName)));
 		if (GetUserId() != oldproc->proowner && !superuser())
-			elog(ERROR, "ProcedureCreate: you do not have permission to replace function %s",
-				 procedureName);
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("you do not have permission to replace function \"%s\"",
+							procedureName)));
 
 		/*
 		 * Not okay to change the return type of the existing proc, since
@@ -220,18 +229,24 @@ ProcedureCreate(const char *procedureName,
 		 */
 		if (returnType != oldproc->prorettype ||
 			returnsSet != oldproc->proretset)
-			elog(ERROR, "ProcedureCreate: cannot change return type of existing function."
-				 "\n\tUse DROP FUNCTION first.");
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+					 errmsg("cannot change return type of existing function"),
+					 errhint("Use DROP FUNCTION first.")));
 
 		/* Can't change aggregate status, either */
 		if (oldproc->proisagg != isAgg)
 		{
 			if (oldproc->proisagg)
-				elog(ERROR, "function %s is an aggregate",
-					 procedureName);
+				ereport(ERROR,
+						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+						 errmsg("function \"%s\" is an aggregate",
+								procedureName)));
 			else
-				elog(ERROR, "function %s is not an aggregate",
-					 procedureName);
+				ereport(ERROR,
+						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+						 errmsg("function \"%s\" is not an aggregate",
+								procedureName)));
 		}
 
 		/* do not change existing ownership or permissions, either */
@@ -347,8 +362,11 @@ check_sql_fn_retval(Oid rettype, char fn_typtype, List *queryTreeList)
 	if (queryTreeList == NIL)
 	{
 		if (rettype != VOIDOID)
-			elog(ERROR, "function declared to return %s, but no SELECT provided",
-				 format_type_be(rettype));
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+					 errmsg("return type mismatch in function declared to return %s",
+							format_type_be(rettype)),
+					 errdetail("Function's final statement must be a SELECT.")));
 		return;
 	}
 
@@ -365,14 +383,21 @@ check_sql_fn_retval(Oid rettype, char fn_typtype, List *queryTreeList)
 	if (rettype == VOIDOID)
 	{
 		if (cmd == CMD_SELECT)
-			elog(ERROR, "function declared to return void, but final statement is a SELECT");
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+					 errmsg("return type mismatch in function declared to return %s",
+							format_type_be(rettype)),
+					 errdetail("Function's final statement must not be a SELECT.")));
 		return;
 	}
 
 	/* by here, the function is declared to return some type */
 	if (cmd != CMD_SELECT)
-		elog(ERROR, "function declared to return %s, but final statement is not a SELECT",
-			 format_type_be(rettype));
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+				 errmsg("return type mismatch in function declared to return %s",
+						format_type_be(rettype)),
+				 errdetail("Function's final statement must be a SELECT.")));
 
 	/*
 	 * Count the non-junk entries in the result targetlist.
@@ -392,13 +417,20 @@ check_sql_fn_retval(Oid rettype, char fn_typtype, List *queryTreeList)
 		 * (As of Postgres 7.2, we accept binary-compatible types too.)
 		 */
 		if (tlistlen != 1)
-			elog(ERROR, "function declared to return %s returns multiple columns in final SELECT",
-				 format_type_be(rettype));
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+					 errmsg("return type mismatch in function declared to return %s",
+							format_type_be(rettype)),
+					 errdetail("Final SELECT must return exactly one column.")));
 
 		restype = ((TargetEntry *) lfirst(tlist))->resdom->restype;
 		if (!IsBinaryCoercible(restype, rettype))
-			elog(ERROR, "return type mismatch in function: declared to return %s, returns %s",
-				 format_type_be(rettype), format_type_be(restype));
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+					 errmsg("return type mismatch in function declared to return %s",
+							format_type_be(rettype)),
+					 errdetail("Actual return type is %s.",
+							   format_type_be(restype))));
 	}
 	else if (fn_typtype == 'c')
 	{
@@ -445,8 +477,11 @@ check_sql_fn_retval(Oid rettype, char fn_typtype, List *queryTreeList)
 			{
 				colindex++;
 				if (colindex > relnatts)
-					elog(ERROR, "function declared to return %s does not SELECT the right number of columns (%d)",
-						 format_type_be(rettype), rellogcols);
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+							 errmsg("return type mismatch in function declared to return %s",
+									format_type_be(rettype)),
+							 errdetail("Final SELECT returns too many columns.")));
 				attr = reln->rd_att->attrs[colindex - 1];
 			} while (attr->attisdropped);
 			rellogcols++;
@@ -454,11 +489,14 @@ check_sql_fn_retval(Oid rettype, char fn_typtype, List *queryTreeList)
 			tletype = exprType((Node *) tle->expr);
 			atttype = attr->atttypid;
 			if (!IsBinaryCoercible(tletype, atttype))
-				elog(ERROR, "function declared to return %s returns %s instead of %s at column %d",
-					 format_type_be(rettype),
-					 format_type_be(tletype),
-					 format_type_be(atttype),
-					 rellogcols);
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+						 errmsg("return type mismatch in function declared to return %s",
+								format_type_be(rettype)),
+						 errdetail("Final SELECT returns %s instead of %s at column %d.",
+								   format_type_be(tletype),
+								   format_type_be(atttype),
+								   rellogcols)));
 		}
 
 		for (;;)
@@ -471,8 +509,11 @@ check_sql_fn_retval(Oid rettype, char fn_typtype, List *queryTreeList)
 		}
 
 		if (tlistlen != rellogcols)
-			elog(ERROR, "function declared to return %s does not SELECT the right number of columns (%d)",
-				 format_type_be(rettype), rellogcols);
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+					 errmsg("return type mismatch in function declared to return %s",
+							format_type_be(rettype)),
+					 errdetail("Final SELECT returns too few columns.")));
 
 		relation_close(reln, AccessShareLock);
 	}
@@ -488,15 +529,16 @@ check_sql_fn_retval(Oid rettype, char fn_typtype, List *queryTreeList)
 	}
 	else if (rettype == ANYARRAYOID || rettype == ANYELEMENTOID)
 	{
-		/*
-		 * This should already have been caught ...
-		 */
-		elog(ERROR, "functions returning ANYARRAY or ANYELEMENT must " \
-			 "have at least one argument of either type");
+		/* This should already have been caught ... */
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+				 errmsg("functions returning ANYARRAY or ANYELEMENT must have at least one argument of either type")));
 	}
 	else
-		elog(ERROR, "return type %s is not supported for SQL functions",
-			 format_type_be(rettype));
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+				 errmsg("return type %s is not supported for SQL functions",
+						format_type_be(rettype))));
 }
 
 
@@ -521,7 +563,7 @@ fmgr_internal_validator(PG_FUNCTION_ARGS)
 						   ObjectIdGetDatum(funcoid),
 						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "cache lookup of function %u failed", funcoid);
+		elog(ERROR, "cache lookup failed for function %u", funcoid);
 	proc = (Form_pg_proc) GETSTRUCT(tuple);
 
 	tmp = SysCacheGetAttr(PROCOID, tuple, Anum_pg_proc_prosrc, &isnull);
@@ -530,7 +572,10 @@ fmgr_internal_validator(PG_FUNCTION_ARGS)
 	prosrc = DatumGetCString(DirectFunctionCall1(textout, tmp));
 
 	if (fmgr_internal_function(prosrc) == InvalidOid)
-		elog(ERROR, "there is no built-in function named \"%s\"", prosrc);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_FUNCTION),
+				 errmsg("there is no built-in function named \"%s\"",
+						prosrc)));
 
 	ReleaseSysCache(tuple);
 
@@ -562,7 +607,7 @@ fmgr_c_validator(PG_FUNCTION_ARGS)
 						   ObjectIdGetDatum(funcoid),
 						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "cache lookup of function %u failed", funcoid);
+		elog(ERROR, "cache lookup failed for function %u", funcoid);
 	proc = (Form_pg_proc) GETSTRUCT(tuple);
 
 	tmp = SysCacheGetAttr(PROCOID, tuple, Anum_pg_proc_prosrc, &isnull);
@@ -608,7 +653,7 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 						   ObjectIdGetDatum(funcoid),
 						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "cache lookup of function %u failed", funcoid);
+		elog(ERROR, "cache lookup failed for function %u", funcoid);
 	proc = (Form_pg_proc) GETSTRUCT(tuple);
 
 	functyptype = get_typtype(proc->prorettype);
@@ -620,8 +665,10 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 		proc->prorettype != VOIDOID &&
 		proc->prorettype != ANYARRAYOID &&
 		proc->prorettype != ANYELEMENTOID)
-		elog(ERROR, "SQL functions cannot return type %s",
-			 format_type_be(proc->prorettype));
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+				 errmsg("SQL functions cannot return type %s",
+						format_type_be(proc->prorettype))));
 
 	/* Disallow pseudotypes in arguments */
 	/* except for ANYARRAY or ANYELEMENT */
@@ -634,8 +681,10 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 				proc->proargtypes[i] == ANYELEMENTOID)
 				haspolyarg = true;
 			else
-				elog(ERROR, "SQL functions cannot have arguments of type %s",
-					 format_type_be(proc->proargtypes[i]));
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+						 errmsg("SQL functions cannot have arguments of type %s",
+								format_type_be(proc->proargtypes[i]))));
 		}
 	}
 

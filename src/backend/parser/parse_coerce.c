@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.103 2003/07/03 19:07:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.104 2003/07/18 23:20:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -228,7 +228,9 @@ coerce_type(ParseState *pstate, Node *node,
 
 		if (paramno <= 0 ||		/* shouldn't happen, but... */
 			paramno > toppstate->p_numparams)
-			elog(ERROR, "Parameter '$%d' is out of range", paramno);
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_PARAMETER),
+					 errmsg("there is no parameter $%d", paramno)));
 
 		if (toppstate->p_paramtypes[paramno-1] == UNKNOWNOID)
 		{
@@ -242,11 +244,13 @@ coerce_type(ParseState *pstate, Node *node,
 		else
 		{
 			/* Ooops */
-			elog(ERROR, "Inconsistent types deduced for parameter '$%d'"
-				 "\n\tCould be either %s or %s",
-				 paramno,
-				 format_type_be(toppstate->p_paramtypes[paramno-1]),
-				 format_type_be(targetTypeId));
+			ereport(ERROR,
+					(errcode(ERRCODE_AMBIGUOUS_PARAMETER),
+					 errmsg("inconsistent types deduced for parameter $%d",
+							paramno),
+					 errdetail("Could be either %s or %s.",
+							   format_type_be(toppstate->p_paramtypes[paramno-1]),
+							   format_type_be(targetTypeId))));
 		}
 
 		param->paramtype = targetTypeId;

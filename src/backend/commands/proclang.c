@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/proclang.c,v 1.45 2003/07/04 02:51:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/proclang.c,v 1.46 2003/07/18 23:20:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,8 +58,9 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 	 * Check permission
 	 */
 	if (!superuser())
-		elog(ERROR, "Only users with superuser privilege are "
-			 "permitted to create procedural languages");
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("must be superuser to create procedural language")));
 
 	/*
 	 * Translate the language name and check that this language doesn't
@@ -70,7 +71,9 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 	if (SearchSysCacheExists(LANGNAME,
 							 PointerGetDatum(languageName),
 							 0, 0, 0))
-		elog(ERROR, "Language %s already exists", languageName);
+		ereport(ERROR,
+				(errcode(ERRCODE_DUPLICATE_OBJECT),
+				 errmsg("language \"%s\" already exists", languageName)));
 
 	/*
 	 * Lookup the PL handler function and check that it is of the expected
@@ -88,13 +91,17 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 		 */
 		if (funcrettype == OPAQUEOID)
 		{
-			elog(NOTICE, "CreateProceduralLanguage: changing return type of function %s() from OPAQUE to LANGUAGE_HANDLER",
-				 NameListToString(stmt->plhandler));
+			ereport(NOTICE,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("changing return type of function %s() from OPAQUE to LANGUAGE_HANDLER",
+							NameListToString(stmt->plhandler))));
 			SetFunctionReturnType(procOid, LANGUAGE_HANDLEROID);
 		}
 		else
-			elog(ERROR, "CreateProceduralLanguage: function %s() must return LANGUAGE_HANDLER",
-				 NameListToString(stmt->plhandler));
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("function %s() must return LANGUAGE_HANDLER",
+							NameListToString(stmt->plhandler))));
 	}
 
 	/* validate the validator function */
@@ -174,8 +181,9 @@ DropProceduralLanguage(DropPLangStmt *stmt)
 	 * Check permission
 	 */
 	if (!superuser())
-		elog(ERROR, "Only users with superuser privilege are "
-			 "permitted to drop procedural languages");
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("must be superuser to drop procedural language")));
 
 	/*
 	 * Translate the language name, check that this language exist and is
@@ -187,7 +195,9 @@ DropProceduralLanguage(DropPLangStmt *stmt)
 							 CStringGetDatum(languageName),
 							 0, 0, 0);
 	if (!HeapTupleIsValid(langTup))
-		elog(ERROR, "Language %s doesn't exist", languageName);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("language \"%s\" does not exist", languageName)));
 
 	object.classId = get_system_catalog_relid(LanguageRelationName);
 	object.objectId = HeapTupleGetOid(langTup);
@@ -215,9 +225,8 @@ DropProceduralLanguageById(Oid langOid)
 	langTup = SearchSysCache(LANGOID,
 							 ObjectIdGetDatum(langOid),
 							 0, 0, 0);
-	if (!HeapTupleIsValid(langTup))
-		elog(ERROR, "DropProceduralLanguageById: language %u not found",
-			 langOid);
+	if (!HeapTupleIsValid(langTup))	/* should not happen */
+		elog(ERROR, "cache lookup failed for language %u", langOid);
 
 	simple_heap_delete(rel, &langTup->t_self);
 
@@ -242,23 +251,21 @@ RenameLanguage(const char *oldname, const char *newname)
 							 0, 0, 0);
 	if (!HeapTupleIsValid(tup))
 		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR_OR_ACCESS_RULE_VIOLATION),
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("language \"%s\" does not exist", oldname)));
 
 	/* make sure the new name doesn't exist */
 	if (SearchSysCacheExists(LANGNAME,
 							 CStringGetDatum(newname),
 							 0, 0, 0))
-	{
 		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR_OR_ACCESS_RULE_VIOLATION),
+				(errcode(ERRCODE_DUPLICATE_OBJECT),
 				 errmsg("language \"%s\" already exists", newname)));
-	}
 
 	/* must be superuser */
 	if (!superuser())
 		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR_OR_ACCESS_RULE_VIOLATION),
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("permission denied")));
 
 	/* rename */

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.118 2003/06/27 14:45:27 petere Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.119 2003/07/18 23:20:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -144,7 +144,9 @@ write_group_file(Relation grel)
 	fp = AllocateFile(tempname, "w");
 	umask(oumask);
 	if (fp == NULL)
-		elog(ERROR, "write_group_file: unable to write %s: %m", tempname);
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("unable to write temp file \"%s\": %m", tempname)));
 
 	/*
 	 * Read pg_group and write the file.  Note we use SnapshotSelf to ensure
@@ -178,7 +180,7 @@ write_group_file(Relation grel)
 		i = strcspn(groname, "\n");
 		if (groname[i] != '\0')
 		{
-			elog(LOG, "Invalid group name '%s'", groname);
+			elog(LOG, "invalid group name \"%s\"", groname);
 			continue;
 		}
 
@@ -208,7 +210,7 @@ write_group_file(Relation grel)
 				j = strcspn(usename, "\n");
 				if (usename[j] != '\0')
 				{
-					elog(LOG, "Invalid user name '%s'", usename);
+					elog(LOG, "invalid user name \"%s\"", usename);
 					continue;
 				}
 
@@ -239,7 +241,9 @@ write_group_file(Relation grel)
 
 	fflush(fp);
 	if (ferror(fp))
-		elog(ERROR, "%s: %m", tempname);
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("unable to write temp file \"%s\": %m", tempname)));
 	FreeFile(fp);
 
 	/*
@@ -247,7 +251,10 @@ write_group_file(Relation grel)
 	 * expect that rename(2) is an atomic action.
 	 */
 	if (rename(tempname, filename))
-		elog(ERROR, "rename %s to %s: %m", tempname, filename);
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not rename \"%s\" to \"%s\": %m",
+						tempname, filename)));
 
 	pfree((void *) tempname);
 	pfree((void *) filename);
@@ -283,7 +290,9 @@ write_user_file(Relation urel)
 	fp = AllocateFile(tempname, "w");
 	umask(oumask);
 	if (fp == NULL)
-		elog(ERROR, "write_user_file: unable to write %s: %m", tempname);
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("unable to write temp file \"%s\": %m", tempname)));
 
 	/*
 	 * Read pg_shadow and write the file.  Note we use SnapshotSelf to ensure
@@ -332,13 +341,13 @@ write_user_file(Relation urel)
 		i = strcspn(usename, "\n");
 		if (usename[i] != '\0')
 		{
-			elog(LOG, "Invalid user name '%s'", usename);
+			elog(LOG, "invalid user name \"%s\"", usename);
 			continue;
 		}
 		i = strcspn(passwd, "\n");
 		if (passwd[i] != '\0')
 		{
-			elog(LOG, "Invalid user password '%s'", passwd);
+			elog(LOG, "invalid user password \"%s\"", passwd);
 			continue;
 		}
 
@@ -361,7 +370,9 @@ write_user_file(Relation urel)
 
 	fflush(fp);
 	if (ferror(fp))
-		elog(ERROR, "%s: %m", tempname);
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("unable to write temp file \"%s\": %m", tempname)));
 	FreeFile(fp);
 
 	/*
@@ -369,7 +380,10 @@ write_user_file(Relation urel)
 	 * expect that rename(2) is an atomic action.
 	 */
 	if (rename(tempname, filename))
-		elog(ERROR, "rename %s to %s: %m", tempname, filename);
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not rename \"%s\" to \"%s\": %m",
+						tempname, filename)));
 
 	pfree((void *) tempname);
 	pfree((void *) filename);
@@ -502,7 +516,9 @@ CreateUser(CreateUserStmt *stmt)
 			strcmp(defel->defname, "unencryptedPassword") == 0)
 		{
 			if (dpassword)
-				elog(ERROR, "CREATE USER: conflicting options");
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("conflicting or redundant options")));
 			dpassword = defel;
 			if (strcmp(defel->defname, "encryptedPassword") == 0)
 				encrypt_password = true;
@@ -512,35 +528,45 @@ CreateUser(CreateUserStmt *stmt)
 		else if (strcmp(defel->defname, "sysid") == 0)
 		{
 			if (dsysid)
-				elog(ERROR, "CREATE USER: conflicting options");
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("conflicting or redundant options")));
 			dsysid = defel;
 		}
 		else if (strcmp(defel->defname, "createdb") == 0)
 		{
 			if (dcreatedb)
-				elog(ERROR, "CREATE USER: conflicting options");
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("conflicting or redundant options")));
 			dcreatedb = defel;
 		}
 		else if (strcmp(defel->defname, "createuser") == 0)
 		{
 			if (dcreateuser)
-				elog(ERROR, "CREATE USER: conflicting options");
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("conflicting or redundant options")));
 			dcreateuser = defel;
 		}
 		else if (strcmp(defel->defname, "groupElts") == 0)
 		{
 			if (dgroupElts)
-				elog(ERROR, "CREATE USER: conflicting options");
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("conflicting or redundant options")));
 			dgroupElts = defel;
 		}
 		else if (strcmp(defel->defname, "validUntil") == 0)
 		{
 			if (dvalidUntil)
-				elog(ERROR, "CREATE USER: conflicting options");
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("conflicting or redundant options")));
 			dvalidUntil = defel;
 		}
 		else
-			elog(ERROR, "CREATE USER: option \"%s\" not recognized",
+			elog(ERROR, "option \"%s\" not recognized",
 				 defel->defname);
 	}
 
@@ -552,7 +578,9 @@ CreateUser(CreateUserStmt *stmt)
 	{
 		sysid = intVal(dsysid->arg);
 		if (sysid <= 0)
-			elog(ERROR, "user id must be positive");
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("user id must be positive")));
 		havesysid = true;
 	}
 	if (dvalidUntil)
@@ -567,11 +595,15 @@ CreateUser(CreateUserStmt *stmt)
 		CheckPgUserAclNotNull();
 
 	if (!superuser())
-		elog(ERROR, "CREATE USER: permission denied");
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("permission denied")));
 
 	if (strcmp(stmt->user, "public") == 0)
-		elog(ERROR, "CREATE USER: user name \"%s\" is reserved",
-			 stmt->user);
+		ereport(ERROR,
+				(errcode(ERRCODE_RESERVED_NAME),
+				 errmsg("user name \"%s\" is reserved",
+						stmt->user)));
 
 	/*
 	 * Scan the pg_shadow relation to be certain the user or id doesn't
@@ -605,10 +637,14 @@ CreateUser(CreateUserStmt *stmt)
 	heap_endscan(scan);
 
 	if (user_exists)
-		elog(ERROR, "CREATE USER: user name \"%s\" already exists",
-			 stmt->user);
+		ereport(ERROR,
+				(errcode(ERRCODE_DUPLICATE_OBJECT),
+				 errmsg("user \"%s\" already exists",
+						stmt->user)));
 	if (sysid_exists)
-		elog(ERROR, "CREATE USER: sysid %d is already assigned", sysid);
+		ereport(ERROR,
+				(errcode(ERRCODE_DUPLICATE_OBJECT),
+				 errmsg("sysid %d is already assigned", sysid)));
 
 	/* If no sysid given, use max existing id + 1 */
 	if (!havesysid)
@@ -639,7 +675,7 @@ CreateUser(CreateUserStmt *stmt)
 		{
 			if (!EncryptMD5(password, stmt->user, strlen(stmt->user),
 							encrypted_password))
-				elog(ERROR, "CREATE USER: password encryption failed");
+				elog(ERROR, "password encryption failed");
 			new_record[Anum_pg_shadow_passwd - 1] =
 				DirectFunctionCall1(textin, CStringGetDatum(encrypted_password));
 		}
@@ -730,7 +766,9 @@ AlterUser(AlterUserStmt *stmt)
 			strcmp(defel->defname, "unencryptedPassword") == 0)
 		{
 			if (dpassword)
-				elog(ERROR, "ALTER USER: conflicting options");
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("conflicting or redundant options")));
 			dpassword = defel;
 			if (strcmp(defel->defname, "encryptedPassword") == 0)
 				encrypt_password = true;
@@ -740,23 +778,29 @@ AlterUser(AlterUserStmt *stmt)
 		else if (strcmp(defel->defname, "createdb") == 0)
 		{
 			if (dcreatedb)
-				elog(ERROR, "ALTER USER: conflicting options");
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("conflicting or redundant options")));
 			dcreatedb = defel;
 		}
 		else if (strcmp(defel->defname, "createuser") == 0)
 		{
 			if (dcreateuser)
-				elog(ERROR, "ALTER USER: conflicting options");
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("conflicting or redundant options")));
 			dcreateuser = defel;
 		}
 		else if (strcmp(defel->defname, "validUntil") == 0)
 		{
 			if (dvalidUntil)
-				elog(ERROR, "ALTER USER: conflicting options");
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("conflicting or redundant options")));
 			dvalidUntil = defel;
 		}
 		else
-			elog(ERROR, "ALTER USER: option \"%s\" not recognized",
+			elog(ERROR, "option \"%s\" not recognized",
 				 defel->defname);
 	}
 
@@ -779,7 +823,9 @@ AlterUser(AlterUserStmt *stmt)
 		  !validUntil &&
 		  password &&
 		  strcmp(GetUserNameFromId(GetUserId()), stmt->user) == 0))
-		elog(ERROR, "ALTER USER: permission denied");
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("permission denied")));
 
 	/*
 	 * Scan the pg_shadow relation to be certain the user exists. Note we
@@ -793,7 +839,9 @@ AlterUser(AlterUserStmt *stmt)
 						   PointerGetDatum(stmt->user),
 						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "ALTER USER: user \"%s\" does not exist", stmt->user);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("user \"%s\" does not exist", stmt->user)));
 
 	/*
 	 * Build an updated tuple, perusing the information just obtained
@@ -840,7 +888,7 @@ AlterUser(AlterUserStmt *stmt)
 		{
 			if (!EncryptMD5(password, stmt->user, strlen(stmt->user),
 							encrypted_password))
-				elog(ERROR, "CREATE USER: password encryption failed");
+				elog(ERROR, "password encryption failed");
 			new_record[Anum_pg_shadow_passwd - 1] =
 				DirectFunctionCall1(textin, CStringGetDatum(encrypted_password));
 		}
@@ -904,11 +952,15 @@ AlterUserSet(AlterUserSetStmt *stmt)
 							  PointerGetDatum(stmt->user),
 							  0, 0, 0);
 	if (!HeapTupleIsValid(oldtuple))
-		elog(ERROR, "user \"%s\" does not exist", stmt->user);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("user \"%s\" does not exist", stmt->user)));
 
 	if (!(superuser()
 	 || ((Form_pg_shadow) GETSTRUCT(oldtuple))->usesysid == GetUserId()))
-		elog(ERROR, "ALTER USER SET: permission denied");
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("permission denied")));
 
 	for (i = 0; i < Natts_pg_shadow; i++)
 		repl_repl[i] = ' ';
@@ -965,7 +1017,9 @@ DropUser(DropUserStmt *stmt)
 	List	   *item;
 
 	if (!superuser())
-		elog(ERROR, "DROP USER: permission denied");
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("permission denied")));
 
 	/*
 	 * Scan the pg_shadow relation to find the usesysid of the user to be
@@ -990,19 +1044,20 @@ DropUser(DropUserStmt *stmt)
 							   PointerGetDatum(user),
 							   0, 0, 0);
 		if (!HeapTupleIsValid(tuple))
-		{
-			if (length(stmt->users) > 1)
-				elog(ERROR, "DROP USER: user \"%s\" does not exist (no users removed)", user);
-			else
-				elog(ERROR, "DROP USER: user \"%s\" does not exist", user);
-		}
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("user \"%s\" does not exist", user)));
 
 		usesysid = ((Form_pg_shadow) GETSTRUCT(tuple))->usesysid;
 
 		if (usesysid == GetUserId())
-			elog(ERROR, "current user cannot be dropped");
+			ereport(ERROR,
+					(errcode(ERRCODE_OBJECT_IN_USE),
+					 errmsg("current user cannot be dropped")));
 		if (usesysid == GetSessionUserId())
-			elog(ERROR, "session user cannot be dropped");
+			ereport(ERROR,
+					(errcode(ERRCODE_OBJECT_IN_USE),
+					 errmsg("session user cannot be dropped")));
 
 		/*
 		 * Check if user still owns a database. If so, error out.
@@ -1026,9 +1081,10 @@ DropUser(DropUserStmt *stmt)
 			char	   *dbname;
 
 			dbname = NameStr(((Form_pg_database) GETSTRUCT(tmp_tuple))->datname);
-			elog(ERROR, "DROP USER: user \"%s\" owns database \"%s\", cannot be removed%s",
-				 user, dbname,
-				 (length(stmt->users) > 1) ? " (no users removed)" : "");
+			ereport(ERROR,
+					(errcode(ERRCODE_OBJECT_IN_USE),
+					 errmsg("user \"%s\" cannot be dropped", user),
+					 errdetail("The user owns database \"%s\".", dbname)));
 		}
 
 		heap_endscan(scan);
@@ -1108,7 +1164,7 @@ RenameUser(const char *oldname, const char *newname)
 							 0, 0, 0);
 	if (!HeapTupleIsValid(tup))
 		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR_OR_ACCESS_RULE_VIOLATION),
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("user \"%s\" does not exist", oldname)));
 
 	/*
@@ -1119,23 +1175,21 @@ RenameUser(const char *oldname, const char *newname)
 	 */
 	if (((Form_pg_shadow) GETSTRUCT(tup))->usesysid == GetSessionUserId())
 		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR_OR_ACCESS_RULE_VIOLATION),
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("session user may not be renamed")));
 
 	/* make sure the new name doesn't exist */
 	if (SearchSysCacheExists(SHADOWNAME,
 							 CStringGetDatum(newname),
 							 0, 0, 0))
-	{
 		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR_OR_ACCESS_RULE_VIOLATION),
+				(errcode(ERRCODE_DUPLICATE_OBJECT),
 				 errmsg("user \"%s\" already exists", newname)));
-	}
 
 	/* must be superuser */
 	if (!superuser())
 		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR_OR_ACCESS_RULE_VIOLATION),
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("permission denied")));
 
 	/* rename */
@@ -1163,16 +1217,17 @@ CheckPgUserAclNotNull(void)
 	htup = SearchSysCache(RELOID,
 						  ObjectIdGetDatum(RelOid_pg_shadow),
 						  0, 0, 0);
-	if (!HeapTupleIsValid(htup))
-		elog(ERROR, "CheckPgUserAclNotNull: \"%s\" not found",
-			 ShadowRelationName);
+	if (!HeapTupleIsValid(htup)) /* should not happen, we hope */
+		elog(ERROR, "cache lookup failed for relation %u", RelOid_pg_shadow);
 
 	if (heap_attisnull(htup, Anum_pg_class_relacl))
-		elog(ERROR,
-			 "To use passwords, you have to revoke permissions on %s "
-			 "so normal users cannot read the passwords. "
-			 "Try 'REVOKE ALL ON \"%s\" FROM PUBLIC'.",
-			 ShadowRelationName, ShadowRelationName);
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("before using passwords you must revoke permissions on %s",
+						ShadowRelationName),
+				 errdetail("This restriction is to prevent unprivileged users from reading the passwords."),
+				 errhint("Try 'REVOKE ALL ON \"%s\" FROM PUBLIC'.",
+						 ShadowRelationName)));
 
 	ReleaseSysCache(htup);
 }
@@ -1211,17 +1266,21 @@ CreateGroup(CreateGroupStmt *stmt)
 		if (strcmp(defel->defname, "sysid") == 0)
 		{
 			if (dsysid)
-				elog(ERROR, "CREATE GROUP: conflicting options");
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("conflicting or redundant options")));
 			dsysid = defel;
 		}
 		else if (strcmp(defel->defname, "userElts") == 0)
 		{
 			if (duserElts)
-				elog(ERROR, "CREATE GROUP: conflicting options");
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("conflicting or redundant options")));
 			duserElts = defel;
 		}
 		else
-			elog(ERROR, "CREATE GROUP: option \"%s\" not recognized",
+			elog(ERROR, "option \"%s\" not recognized",
 				 defel->defname);
 	}
 
@@ -1229,7 +1288,9 @@ CreateGroup(CreateGroupStmt *stmt)
 	{
 		sysid = intVal(dsysid->arg);
 		if (sysid <= 0)
-			elog(ERROR, "group id must be positive");
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("group id must be positive")));
 		havesysid = true;
 	}
 
@@ -1240,11 +1301,15 @@ CreateGroup(CreateGroupStmt *stmt)
 	 * Make sure the user can do this.
 	 */
 	if (!superuser())
-		elog(ERROR, "CREATE GROUP: permission denied");
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("permission denied")));
 
 	if (strcmp(stmt->name, "public") == 0)
-		elog(ERROR, "CREATE GROUP: group name \"%s\" is reserved",
-			 stmt->name);
+		ereport(ERROR,
+				(errcode(ERRCODE_RESERVED_NAME),
+				 errmsg("group name \"%s\" is reserved",
+						stmt->name)));
 
 	/*
 	 * Scan the pg_group relation to be certain the group or id doesn't
@@ -1278,12 +1343,16 @@ CreateGroup(CreateGroupStmt *stmt)
 	heap_endscan(scan);
 
 	if (group_exists)
-		elog(ERROR, "CREATE GROUP: group name \"%s\" already exists",
-			 stmt->name);
+		ereport(ERROR,
+				(errcode(ERRCODE_DUPLICATE_OBJECT),
+				 errmsg("group \"%s\" already exists",
+						stmt->name)));
 	if (sysid_exists)
-		elog(ERROR, "CREATE GROUP: group sysid %d is already assigned",
-			 sysid);
+		ereport(ERROR,
+				(errcode(ERRCODE_DUPLICATE_OBJECT),
+				 errmsg("sysid %d is already assigned", sysid)));
 
+	/* If no sysid given, use max existing id + 1 */
 	if (!havesysid)
 		sysid = max_id + 1;
 
@@ -1359,7 +1428,9 @@ AlterGroup(AlterGroupStmt *stmt, const char *tag)
 	 * Make sure the user can do this.
 	 */
 	if (!superuser())
-		elog(ERROR, "%s: permission denied", tag);
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("permission denied")));
 
 	/*
 	 * Secure exclusive lock to protect our update of the flat group file.
@@ -1374,7 +1445,9 @@ AlterGroup(AlterGroupStmt *stmt, const char *tag)
 								 PointerGetDatum(stmt->name),
 								 0, 0, 0);
 	if (!HeapTupleIsValid(group_tuple))
-		elog(ERROR, "%s: group \"%s\" does not exist", tag, stmt->name);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("group \"%s\" does not exist", stmt->name)));
 
 	/* Fetch old group membership. */
 	datum = heap_getattr(group_tuple, Anum_pg_group_grolist,
@@ -1415,20 +1488,17 @@ AlterGroup(AlterGroupStmt *stmt, const char *tag)
 			}
 			else
 			{
-				elog(ERROR, "AlterGroup: unknown tag %s", tag);
+				elog(ERROR, "unexpected tag: \"%s\"", tag);
 				sysid = 0;		/* keep compiler quiet */
 			}
 
 			if (!intMember(sysid, newlist))
 				newlist = lappendi(newlist, sysid);
 			else
-
-				/*
-				 * we silently assume here that this error will only come
-				 * up in a ALTER GROUP statement
-				 */
-				elog(WARNING, "%s: user \"%s\" is already in group \"%s\"",
-					 tag, strVal(lfirst(item)), stmt->name);
+				ereport(WARNING,
+						(errcode(ERRCODE_DUPLICATE_OBJECT),
+						 errmsg("user \"%s\" is already in group \"%s\"",
+								strVal(lfirst(item)), stmt->name)));
 		}
 
 		/* Do the update */
@@ -1442,7 +1512,10 @@ AlterGroup(AlterGroupStmt *stmt, const char *tag)
 		if (newlist == NIL)
 		{
 			if (!is_dropuser)
-				elog(WARNING, "ALTER GROUP: group \"%s\" does not have any members", stmt->name);
+				ereport(WARNING,
+						(errcode(ERRCODE_WARNING),
+						 errmsg("group \"%s\" does not have any members",
+								stmt->name)));
 		}
 		else
 		{
@@ -1467,7 +1540,10 @@ AlterGroup(AlterGroupStmt *stmt, const char *tag)
 				if (intMember(sysid, newlist))
 					newlist = lremovei(sysid, newlist);
 				else if (!is_dropuser)
-					elog(WARNING, "ALTER GROUP: user \"%s\" is not in group \"%s\"", strVal(lfirst(item)), stmt->name);
+					ereport(WARNING,
+							(errcode(ERRCODE_WARNING),
+							 errmsg("user \"%s\" is not in group \"%s\"",
+									strVal(lfirst(item)), stmt->name)));
 			}
 
 			/* Do the update */
@@ -1596,7 +1672,9 @@ DropGroup(DropGroupStmt *stmt)
 	 * Make sure the user can do this.
 	 */
 	if (!superuser())
-		elog(ERROR, "DROP GROUP: permission denied");
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("permission denied")));
 
 	/*
 	 * Secure exclusive lock to protect our update of the flat group file.
@@ -1609,7 +1687,9 @@ DropGroup(DropGroupStmt *stmt)
 							   PointerGetDatum(stmt->name),
 							   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "DROP GROUP: group \"%s\" does not exist", stmt->name);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("group \"%s\" does not exist", stmt->name)));
 
 	simple_heap_delete(pg_group_rel, &tuple->t_self);
 
@@ -1643,23 +1723,21 @@ RenameGroup(const char *oldname, const char *newname)
 							 0, 0, 0);
 	if (!HeapTupleIsValid(tup))
 		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR_OR_ACCESS_RULE_VIOLATION),
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("group \"%s\" does not exist", oldname)));
 
 	/* make sure the new name doesn't exist */
 	if (SearchSysCacheExists(GRONAME,
 							 CStringGetDatum(newname),
 							 0, 0, 0))
-	{
 		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR_OR_ACCESS_RULE_VIOLATION),
-				 errmsg("a group \"%s\" already exists", newname)));
-	}
+				(errcode(ERRCODE_DUPLICATE_OBJECT),
+				 errmsg("group \"%s\" already exists", newname)));
 
 	/* must be superuser */
 	if (!superuser())
 		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR_OR_ACCESS_RULE_VIOLATION),
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("permission denied")));
 
 	/* rename */

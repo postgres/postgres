@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/functioncmds.c,v 1.27 2003/07/04 02:51:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/functioncmds.c,v 1.28 2003/07/18 23:20:32 tgl Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -78,11 +78,15 @@ compute_return_type(TypeName *returnType, Oid languageOid,
 		if (!get_typisdefined(rettype))
 		{
 			if (languageOid == SQLlanguageId)
-				elog(ERROR, "SQL function cannot return shell type \"%s\"",
-					 TypeNameToString(returnType));
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+						 errmsg("SQL function cannot return shell type %s",
+								TypeNameToString(returnType))));
 			else
-				elog(NOTICE, "Return type \"%s\" is only a shell",
-					 TypeNameToString(returnType));
+				ereport(NOTICE,
+						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+						 errmsg("return type %s is only a shell",
+								TypeNameToString(returnType))));
 		}
 	}
 	else
@@ -100,11 +104,15 @@ compute_return_type(TypeName *returnType, Oid languageOid,
 		 */
 		if (languageOid != INTERNALlanguageId &&
 			languageOid != ClanguageId)
-			elog(ERROR, "Type \"%s\" does not exist", typnam);
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("type %s does not exist", typnam)));
 
 		/* Otherwise, go ahead and make a shell type */
-		elog(NOTICE, "ProcedureCreate: type %s is not yet defined",
-			 typnam);
+		ereport(NOTICE,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("type %s is not yet defined", typnam),
+				 errdetail("Creating a shell type definition.")));
 		namespaceId = QualifiedNameGetCreationNamespace(returnType->names,
 														&typname);
 		aclresult = pg_namespace_aclcheck(namespaceId, GetUserId(),
@@ -112,8 +120,7 @@ compute_return_type(TypeName *returnType, Oid languageOid,
 		if (aclresult != ACLCHECK_OK)
 			aclcheck_error(aclresult, get_namespace_name(namespaceId));
 		rettype = TypeShellMake(typname, namespaceId);
-		if (!OidIsValid(rettype))
-			elog(ERROR, "could not create type %s", typnam);
+		Assert(OidIsValid(rettype));
 	}
 
 	*prorettype_p = rettype;
@@ -137,8 +144,10 @@ compute_parameter_types(List *argTypes, Oid languageOid,
 		Oid			toid;
 
 		if (parameterCount >= FUNC_MAX_ARGS)
-			elog(ERROR, "functions cannot have more than %d arguments",
-				 FUNC_MAX_ARGS);
+			ereport(ERROR,
+					(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
+					 errmsg("functions cannot have more than %d arguments",
+							FUNC_MAX_ARGS)));
 
 		toid = LookupTypeName(t);
 		if (OidIsValid(toid))
@@ -147,21 +156,29 @@ compute_parameter_types(List *argTypes, Oid languageOid,
 			{
 				/* As above, hard error if language is SQL */
 				if (languageOid == SQLlanguageId)
-					elog(ERROR, "SQL function cannot accept shell type \"%s\"",
-						 TypeNameToString(t));
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+							 errmsg("SQL function cannot accept shell type %s",
+									TypeNameToString(t))));
 				else
-					elog(NOTICE, "Argument type \"%s\" is only a shell",
-						 TypeNameToString(t));
+					ereport(NOTICE,
+							(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+							 errmsg("argument type %s is only a shell",
+									TypeNameToString(t))));
 			}
 		}
 		else
 		{
-			elog(ERROR, "Type \"%s\" does not exist",
-				 TypeNameToString(t));
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("type %s does not exist",
+							TypeNameToString(t))));
 		}
 
 		if (t->setof)
-			elog(ERROR, "Functions cannot accept set arguments");
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+					 errmsg("functions cannot accept set arguments")));
 
 		parameterTypes[parameterCount++] = toid;
 	}
@@ -197,46 +214,61 @@ compute_attributes_sql_style(const List *options,
 		if (strcmp(defel->defname, "as") == 0)
 		{
 			if (as_item)
-				elog(ERROR, "conflicting or redundant options");
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("conflicting or redundant options")));
 			as_item = defel;
 		}
 		else if (strcmp(defel->defname, "language") == 0)
 		{
 			if (language_item)
-				elog(ERROR, "conflicting or redundant options");
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("conflicting or redundant options")));
 			language_item = defel;
 		}
 		else if (strcmp(defel->defname, "volatility") == 0)
 		{
 			if (volatility_item)
-				elog(ERROR, "conflicting or redundant options");
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("conflicting or redundant options")));
 			volatility_item = defel;
 		}
 		else if (strcmp(defel->defname, "strict") == 0)
 		{
 			if (strict_item)
-				elog(ERROR, "conflicting or redundant options");
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("conflicting or redundant options")));
 			strict_item = defel;
 		}
 		else if (strcmp(defel->defname, "security") == 0)
 		{
 			if (security_item)
-				elog(ERROR, "conflicting or redundant options");
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("conflicting or redundant options")));
 			security_item = defel;
 		}
 		else
-			elog(ERROR, "invalid CREATE FUNCTION option");
+			elog(ERROR, "option \"%s\" not recognized",
+				 defel->defname);
 	}
 
 	if (as_item)
 		*as = (List *) as_item->arg;
 	else
-		elog(ERROR, "no function body specified");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+				 errmsg("no function body specified")));
 
 	if (language_item)
 		*language = strVal(language_item->arg);
 	else
-		elog(ERROR, "no language specified");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+				 errmsg("no language specified")));
 
 	if (volatility_item)
 	{
@@ -247,7 +279,8 @@ compute_attributes_sql_style(const List *options,
 		else if (strcmp(strVal(volatility_item->arg), "volatile") == 0)
 			*volatility_p = PROVOLATILE_VOLATILE;
 		else
-			elog(ERROR, "invalid volatility");
+			elog(ERROR, "invalid volatility \"%s\"",
+				 strVal(volatility_item->arg));
 	}
 
 	if (strict_item)
@@ -294,8 +327,10 @@ compute_attributes_with_style(List *parameters, bool *isStrict_p, char *volatili
 			*volatility_p = PROVOLATILE_IMMUTABLE;
 		}
 		else
-			elog(WARNING, "Unrecognized function attribute '%s' ignored",
-				 param->defname);
+			ereport(WARNING,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("unrecognized function attribute \"%s\" ignored",
+							param->defname)));
 	}
 }
 
@@ -336,8 +371,10 @@ interpret_AS_clause(Oid languageOid, const char *languageName, const List *as,
 		*probin_str_p = "-";
 
 		if (lnext(as) != NIL)
-			elog(ERROR, "CREATE FUNCTION: only one AS item needed for %s language",
-				 languageName);
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+					 errmsg("only one AS item needed for language \"%s\"",
+							languageName)));
 	}
 }
 
@@ -396,7 +433,9 @@ CreateFunction(CreateFunctionStmt *stmt)
 								   PointerGetDatum(languageName),
 								   0, 0, 0);
 	if (!HeapTupleIsValid(languageTuple))
-		elog(ERROR, "language \"%s\" does not exist", languageName);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("language \"%s\" does not exist", languageName)));
 
 	languageOid = HeapTupleGetOid(languageTuple);
 	languageStruct = (Form_pg_language) GETSTRUCT(languageTuple);
@@ -501,8 +540,7 @@ RemoveFunction(RemoveFuncStmt *stmt)
 						 ObjectIdGetDatum(funcOid),
 						 0, 0, 0);
 	if (!HeapTupleIsValid(tup)) /* should not happen */
-		elog(ERROR, "RemoveFunction: couldn't find tuple for function %s",
-			 NameListToString(functionName));
+		elog(ERROR, "cache lookup failed for function %u", funcOid);
 
 	/* Permission check: must own func or its namespace */
 	if (!pg_proc_ownercheck(funcOid, GetUserId()) &&
@@ -511,15 +549,19 @@ RemoveFunction(RemoveFuncStmt *stmt)
 		aclcheck_error(ACLCHECK_NOT_OWNER, NameListToString(functionName));
 
 	if (((Form_pg_proc) GETSTRUCT(tup))->proisagg)
-		elog(ERROR, "RemoveFunction: function '%s' is an aggregate"
-			 "\n\tUse DROP AGGREGATE to remove it",
-			 NameListToString(functionName));
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is an aggregate function",
+						NameListToString(functionName)),
+				 errhint("Use DROP AGGREGATE to drop aggregate functions.")));
 
 	if (((Form_pg_proc) GETSTRUCT(tup))->prolang == INTERNALlanguageId)
 	{
 		/* "Helpful" NOTICE when removing a builtin function ... */
-		elog(NOTICE, "Removing built-in function \"%s\"",
-			 NameListToString(functionName));
+		ereport(NOTICE,
+				(errcode(ERRCODE_WARNING),
+				 errmsg("removing built-in function \"%s\"",
+						NameListToString(functionName))));
 	}
 
 	ReleaseSysCache(tup);
@@ -556,8 +598,7 @@ RemoveFunctionById(Oid funcOid)
 						 ObjectIdGetDatum(funcOid),
 						 0, 0, 0);
 	if (!HeapTupleIsValid(tup)) /* should not happen */
-		elog(ERROR, "RemoveFunctionById: couldn't find tuple for function %u",
-			 funcOid);
+		elog(ERROR, "cache lookup failed for function %u", funcOid);
 
 	isagg = ((Form_pg_proc) GETSTRUCT(tup))->proisagg;
 
@@ -578,8 +619,7 @@ RemoveFunctionById(Oid funcOid)
 							 ObjectIdGetDatum(funcOid),
 							 0, 0, 0);
 		if (!HeapTupleIsValid(tup))		/* should not happen */
-			elog(ERROR, "RemoveFunctionById: couldn't find pg_aggregate tuple for %u",
-				 funcOid);
+			elog(ERROR, "cache lookup failed for pg_aggregate tuple for function %u", funcOid);
 
 		simple_heap_delete(relation, &tup->t_self);
 
@@ -598,11 +638,10 @@ RenameFunction(List *name, List *argtypes, const char *newname)
 {
 	Oid			procOid;
 	Oid			namespaceOid;
-	Oid			oid_array[FUNC_MAX_ARGS];
 	HeapTuple	tup;
+	Form_pg_proc procForm;
 	Relation	rel;
 	AclResult	aclresult;
-	int16		nargs;
 
 	rel = heap_openr(ProcedureRelationName, RowExclusiveLock);
 
@@ -612,29 +651,31 @@ RenameFunction(List *name, List *argtypes, const char *newname)
 							 ObjectIdGetDatum(procOid),
 							 0, 0, 0);
 	if (!HeapTupleIsValid(tup)) /* should not happen */
-		elog(ERROR, "RenameFunction: couldn't find pg_proc tuple for %s",
-			 NameListToString(name));
+		elog(ERROR, "cache lookup failed for function %u", procOid);
+	procForm = (Form_pg_proc) GETSTRUCT(tup);
 
-	if (((Form_pg_proc) GETSTRUCT(tup))->proisagg)
+	if (procForm->proisagg)
 		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR_OR_ACCESS_RULE_VIOLATION),
-				 errmsg("%s is an aggregate function", NameListToString(name)),
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is an aggregate function",
+						NameListToString(name)),
 				 errhint("Use ALTER AGGREGATE to rename aggregate functions.")));
 
-	namespaceOid = ((Form_pg_proc) GETSTRUCT(tup))->pronamespace;
+	namespaceOid = procForm->pronamespace;
 
 	/* make sure the new name doesn't exist */
-	nargs = compute_parameter_types(argtypes, ((Form_pg_proc) GETSTRUCT(tup))->prolang, oid_array);
 	if (SearchSysCacheExists(PROCNAMENSP,
 							 CStringGetDatum(newname),
-							 Int16GetDatum(nargs),
-							 PointerGetDatum(oid_array),
+							 Int16GetDatum(procForm->pronargs),
+							 PointerGetDatum(procForm->proargtypes),
 							 ObjectIdGetDatum(namespaceOid)))
 	{
 		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR_OR_ACCESS_RULE_VIOLATION),
-				 errmsg("function %s with the same argument types already exists in schema %s",
-						newname, get_namespace_name(namespaceOid))));
+				(errcode(ERRCODE_DUPLICATE_FUNCTION),
+				 errmsg("function %s already exists",
+						func_signature_string(name,
+											  procForm->pronargs,
+											  procForm->proargtypes))));
 	}
 
 	/* must be owner */
@@ -647,7 +688,7 @@ RenameFunction(List *name, List *argtypes, const char *newname)
 		aclcheck_error(aclresult, get_namespace_name(namespaceOid));
 
 	/* rename */
-	namestrcpy(&(((Form_pg_proc) GETSTRUCT(tup))->proname), newname);
+	namestrcpy(&(procForm->proname), newname);
 	simple_heap_update(rel, &tup->t_self, tup);
 	CatalogUpdateIndexes(rel, tup);
 
@@ -676,13 +717,11 @@ SetFunctionReturnType(Oid funcOid, Oid newRetType)
 							 ObjectIdGetDatum(funcOid),
 							 0, 0, 0);
 	if (!HeapTupleIsValid(tup)) /* should not happen */
-		elog(ERROR, "SetFunctionReturnType: couldn't find tuple for function %u",
-			 funcOid);
+		elog(ERROR, "cache lookup failed for function %u", funcOid);
 	procForm = (Form_pg_proc) GETSTRUCT(tup);
 
-	if (procForm->prorettype != OPAQUEOID)
-		elog(ERROR, "SetFunctionReturnType: function %u doesn't return OPAQUE",
-			 funcOid);
+	if (procForm->prorettype != OPAQUEOID) /* caller messed up */
+		elog(ERROR, "function %u doesn't return OPAQUE", funcOid);
 
 	/* okay to overwrite copied tuple */
 	procForm->prorettype = newRetType;
@@ -714,14 +753,12 @@ SetFunctionArgType(Oid funcOid, int argIndex, Oid newArgType)
 							 ObjectIdGetDatum(funcOid),
 							 0, 0, 0);
 	if (!HeapTupleIsValid(tup)) /* should not happen */
-		elog(ERROR, "SetFunctionArgType: couldn't find tuple for function %u",
-			 funcOid);
+		elog(ERROR, "cache lookup failed for function %u", funcOid);
 	procForm = (Form_pg_proc) GETSTRUCT(tup);
 
 	if (argIndex < 0 || argIndex >= procForm->pronargs ||
 		procForm->proargtypes[argIndex] != OPAQUEOID)
-		elog(ERROR, "SetFunctionArgType: function %u doesn't take OPAQUE",
-			 funcOid);
+		elog(ERROR, "function %u doesn't take OPAQUE", funcOid);
 
 	/* okay to overwrite copied tuple */
 	procForm->proargtypes[argIndex] = newArgType;
@@ -755,39 +792,56 @@ CreateCast(CreateCastStmt *stmt)
 
 	sourcetypeid = LookupTypeName(stmt->sourcetype);
 	if (!OidIsValid(sourcetypeid))
-		elog(ERROR, "source data type %s does not exist",
-			 TypeNameToString(stmt->sourcetype));
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("source data type %s does not exist",
+						TypeNameToString(stmt->sourcetype))));
 
 	targettypeid = LookupTypeName(stmt->targettype);
 	if (!OidIsValid(targettypeid))
-		elog(ERROR, "target data type %s does not exist",
-			 TypeNameToString(stmt->targettype));
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("target data type %s does not exist",
+						TypeNameToString(stmt->targettype))));
 
 	if (sourcetypeid == targettypeid)
-		elog(ERROR, "source data type and target data type are the same");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+				 errmsg("source data type and target data type are the same")));
 
 	/* No shells, no pseudo-types allowed */
 	if (!get_typisdefined(sourcetypeid))
-		elog(ERROR, "source data type %s is only a shell",
-			 TypeNameToString(stmt->sourcetype));
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("source data type %s is only a shell",
+						TypeNameToString(stmt->sourcetype))));
 
 	if (!get_typisdefined(targettypeid))
-		elog(ERROR, "target data type %s is only a shell",
-			 TypeNameToString(stmt->targettype));
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("target data type %s is only a shell",
+						TypeNameToString(stmt->targettype))));
 
 	if (get_typtype(sourcetypeid) == 'p')
-		elog(ERROR, "source data type %s is a pseudo-type",
-			 TypeNameToString(stmt->sourcetype));
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("source data type %s is a pseudo-type",
+						TypeNameToString(stmt->sourcetype))));
 
 	if (get_typtype(targettypeid) == 'p')
-		elog(ERROR, "target data type %s is a pseudo-type",
-			 TypeNameToString(stmt->targettype));
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("target data type %s is a pseudo-type",
+						TypeNameToString(stmt->targettype))));
 
+	/* Permission check */
 	if (!pg_type_ownercheck(sourcetypeid, GetUserId())
 		&& !pg_type_ownercheck(targettypeid, GetUserId()))
-		elog(ERROR, "must be owner of type %s or type %s",
-			 TypeNameToString(stmt->sourcetype),
-			 TypeNameToString(stmt->targettype));
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("must be owner of type %s or type %s",
+						TypeNameToString(stmt->sourcetype),
+						TypeNameToString(stmt->targettype))));
 
 	if (stmt->func != NULL)
 	{
@@ -801,15 +855,21 @@ CreateCast(CreateCastStmt *stmt)
 							   ObjectIdGetDatum(funcid),
 							   0, 0, 0);
 		if (!HeapTupleIsValid(tuple))
-			elog(ERROR, "cache lookup of function %u failed", funcid);
+			elog(ERROR, "cache lookup failed for function %u", funcid);
 
 		procstruct = (Form_pg_proc) GETSTRUCT(tuple);
 		if (procstruct->pronargs != 1)
-			elog(ERROR, "cast function must take 1 argument");
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+					 errmsg("cast function must take 1 argument")));
 		if (procstruct->proargtypes[0] != sourcetypeid)
-			elog(ERROR, "argument of cast function must match source data type");
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+					 errmsg("argument of cast function must match source data type")));
 		if (procstruct->prorettype != targettypeid)
-			elog(ERROR, "return data type of cast function must match target data type");
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+					 errmsg("return data type of cast function must match target data type")));
 		/*
 		 * Restricting the volatility of a cast function may or may not be
 		 * a good idea in the abstract, but it definitely breaks many old
@@ -817,12 +877,18 @@ CreateCast(CreateCastStmt *stmt)
 		 */
 #ifdef NOT_USED
 		if (procstruct->provolatile == PROVOLATILE_VOLATILE)
-			elog(ERROR, "cast function must not be volatile");
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+					 errmsg("cast function must not be volatile")));
 #endif
 		if (procstruct->proisagg)
-			elog(ERROR, "cast function must not be an aggregate function");
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+					 errmsg("cast function must not be an aggregate function")));
 		if (procstruct->proretset)
-			elog(ERROR, "cast function must not return a set");
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+					 errmsg("cast function must not return a set")));
 
 		ReleaseSysCache(tuple);
 	}
@@ -843,7 +909,9 @@ CreateCast(CreateCastStmt *stmt)
 		 * erroneous casts can easily crash the backend.
 		 */
 		if (!superuser())
-			elog(ERROR, "Must be superuser to create a cast WITHOUT FUNCTION");
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("must be superuser to create a cast WITHOUT FUNCTION")));
 
 		/*
 		 * Also, insist that the types match as to size, alignment, and
@@ -856,7 +924,9 @@ CreateCast(CreateCastStmt *stmt)
 		if (typ1len != typ2len ||
 			typ1byval != typ2byval ||
 			typ1align != typ2align)
-			elog(ERROR, "source and target datatypes are not physically compatible");
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+					 errmsg("source and target datatypes are not physically compatible")));
 	}
 
 	/* convert CoercionContext enum to char value for castcontext */
@@ -872,7 +942,7 @@ CreateCast(CreateCastStmt *stmt)
 			castcontext = COERCION_CODE_EXPLICIT;
 			break;
 		default:
-			elog(ERROR, "CreateCast: bogus CoercionContext %c", stmt->context);
+			elog(ERROR, "unrecognized CoercionContext: %d", stmt->context);
 			castcontext = 0;	/* keep compiler quiet */
 			break;
 	}
@@ -889,9 +959,11 @@ CreateCast(CreateCastStmt *stmt)
 						   ObjectIdGetDatum(targettypeid),
 						   0, 0);
 	if (HeapTupleIsValid(tuple))
-		elog(ERROR, "cast from data type %s to data type %s already exists",
-			 TypeNameToString(stmt->sourcetype),
-			 TypeNameToString(stmt->targettype));
+		ereport(ERROR,
+				(errcode(ERRCODE_DUPLICATE_OBJECT),
+				 errmsg("cast from data type %s to data type %s already exists",
+						TypeNameToString(stmt->sourcetype),
+						TypeNameToString(stmt->targettype))));
 
 	/* ready to go */
 	values[Anum_pg_cast_castsource - 1] = ObjectIdGetDatum(sourcetypeid);
@@ -953,29 +1025,37 @@ DropCast(DropCastStmt *stmt)
 
 	sourcetypeid = LookupTypeName(stmt->sourcetype);
 	if (!OidIsValid(sourcetypeid))
-		elog(ERROR, "source data type %s does not exist",
-			 TypeNameToString(stmt->sourcetype));
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("source data type %s does not exist",
+						TypeNameToString(stmt->sourcetype))));
 
 	targettypeid = LookupTypeName(stmt->targettype);
 	if (!OidIsValid(targettypeid))
-		elog(ERROR, "target data type %s does not exist",
-			 TypeNameToString(stmt->targettype));
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("target data type %s does not exist",
+						TypeNameToString(stmt->targettype))));
 
 	tuple = SearchSysCache(CASTSOURCETARGET,
 						   ObjectIdGetDatum(sourcetypeid),
 						   ObjectIdGetDatum(targettypeid),
 						   0, 0);
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "cast from type %s to type %s does not exist",
-			 TypeNameToString(stmt->sourcetype),
-			 TypeNameToString(stmt->targettype));
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("cast from type %s to type %s does not exist",
+						TypeNameToString(stmt->sourcetype),
+						TypeNameToString(stmt->targettype))));
 
 	/* Permission check */
 	if (!pg_type_ownercheck(sourcetypeid, GetUserId())
 		&& !pg_type_ownercheck(targettypeid, GetUserId()))
-		elog(ERROR, "must be owner of type %s or type %s",
-			 TypeNameToString(stmt->sourcetype),
-			 TypeNameToString(stmt->targettype));
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("must be owner of type %s or type %s",
+						TypeNameToString(stmt->sourcetype),
+						TypeNameToString(stmt->targettype))));
 
 	/*
 	 * Do the deletion
@@ -1006,10 +1086,9 @@ DropCastById(Oid castOid)
 						   1, F_OIDEQ, ObjectIdGetDatum(castOid));
 	scan = index_beginscan(relation, index, SnapshotNow, 1, &scankey);
 	tuple = index_getnext(scan, ForwardScanDirection);
-	if (HeapTupleIsValid(tuple))
-		simple_heap_delete(relation, &tuple->t_self);
-	else
+	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "could not find tuple for cast %u", castOid);
+	simple_heap_delete(relation, &tuple->t_self);
 	index_endscan(scan);
 
 	index_close(index);

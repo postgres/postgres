@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.69 2003/07/04 02:51:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.70 2003/07/18 23:20:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -107,8 +107,10 @@ LookupOperNameTypeNames(List *opername, TypeName *oprleft,
 	{
 		leftoid = LookupTypeName(oprleft);
 		if (!OidIsValid(leftoid))
-			elog(ERROR, "type %s does not exist",
-				 TypeNameToString(oprleft));
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("type %s does not exist",
+							TypeNameToString(oprleft))));
 	}
 	if (oprright == NULL)
 		rightoid = InvalidOid;
@@ -116,8 +118,10 @@ LookupOperNameTypeNames(List *opername, TypeName *oprleft,
 	{
 		rightoid = LookupTypeName(oprright);
 		if (!OidIsValid(rightoid))
-			elog(ERROR, "type %s does not exist",
-				 TypeNameToString(oprright));
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("type %s does not exist",
+							TypeNameToString(oprright))));
 	}
 
 	return LookupOperName(opername, leftoid, rightoid, noError);
@@ -178,8 +182,10 @@ equality_oper(Oid argtype, bool noError)
 		}
 	}
 	if (!noError)
-		elog(ERROR, "unable to identify an equality operator for type %s",
-			 format_type_be(argtype));
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_FUNCTION),
+				 errmsg("unable to identify an equality operator for type %s",
+						format_type_be(argtype))));
 	return NULL;
 }
 
@@ -239,9 +245,11 @@ ordering_oper(Oid argtype, bool noError)
 		}
 	}
 	if (!noError)
-		elog(ERROR, "unable to identify an ordering operator for type %s"
-			 "\n\tUse an explicit ordering operator or modify the query",
-			 format_type_be(argtype));
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_FUNCTION),
+				 errmsg("unable to identify an ordering operator for type %s",
+						format_type_be(argtype)),
+				 errhint("Use an explicit ordering operator or modify the query.")));
 	return NULL;
 }
 
@@ -483,8 +491,10 @@ compatible_oper(List *op, Oid arg1, Oid arg2, bool noError)
 	ReleaseSysCache(optup);
 
 	if (!noError)
-		elog(ERROR, "operator requires run-time type coercion: %s",
-			 op_signature_string(op, 'b', arg1, arg2));
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_FUNCTION),
+				 errmsg("operator requires run-time type coercion: %s",
+						op_signature_string(op, 'b', arg1, arg2))));
 
 	return (Operator) NULL;
 }
@@ -773,7 +783,9 @@ make_scalar_array_op(ParseState *pstate, List *opname,
 	{
 		rtypeId = get_element_type(atypeId);
 		if (!OidIsValid(rtypeId))
-			elog(ERROR, "op ANY/ALL (array) requires array on right side");
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("op ANY/ALL (array) requires array on right side")));
 	}
 
 	/* Now resolve the operator */
@@ -800,9 +812,13 @@ make_scalar_array_op(ParseState *pstate, List *opname,
 	 * Check that operator result is boolean
 	 */
 	if (rettype != BOOLOID)
-		elog(ERROR, "op ANY/ALL (array) requires operator to yield boolean");
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("op ANY/ALL (array) requires operator to yield boolean")));
 	if (get_func_retset(opform->oprcode))
-		elog(ERROR, "op ANY/ALL (array) requires operator not to return a set");
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("op ANY/ALL (array) requires operator not to return a set")));
 
 	/*
 	 * Now switch back to the array type on the right, arranging for
@@ -810,8 +826,10 @@ make_scalar_array_op(ParseState *pstate, List *opname,
 	 */
 	res_atypeId = get_array_type(declared_arg_types[1]);
 	if (!OidIsValid(res_atypeId))
-		elog(ERROR, "unable to find datatype for array of %s",
-			 format_type_be(declared_arg_types[1]));
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("unable to find datatype for array of %s",
+						format_type_be(declared_arg_types[1]))));
 	actual_arg_types[1] = atypeId;
 	declared_arg_types[1] = res_atypeId;
 

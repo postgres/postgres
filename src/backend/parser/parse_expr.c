@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.155 2003/07/03 16:34:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.156 2003/07/18 23:20:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -128,13 +128,16 @@ transformExpr(ParseState *pstate, Node *expr)
 
 				/* Check parameter number is in range */
 				if (paramno <= 0) /* probably can't happen? */
-					elog(ERROR, "Parameter '$%d' is out of range",
-						 paramno);
+					ereport(ERROR,
+							(errcode(ERRCODE_UNDEFINED_PARAMETER),
+							 errmsg("there is no parameter $%d", paramno)));
 				if (paramno > toppstate->p_numparams)
 				{
 					if (!toppstate->p_variableparams)
-						elog(ERROR, "Parameter '$%d' is out of range",
-							 paramno);
+						ereport(ERROR,
+								(errcode(ERRCODE_UNDEFINED_PARAMETER),
+								 errmsg("there is no parameter $%d",
+										paramno)));
 					/* Okay to enlarge param array */
 					if (toppstate->p_paramtypes)
 						toppstate->p_paramtypes =

@@ -775,7 +775,7 @@ select atacc1.* from atacc1;
 select a from atacc1;
 ERROR:  Attribute "a" not found
 select atacc1.a from atacc1;
-ERROR:  No such attribute atacc1.a
+ERROR:  no such attribute atacc1.a
 select b,c,d from atacc1;
  b | c | d 
 ---+---+---
@@ -789,7 +789,7 @@ ERROR:  Attribute "a" not found
 select "........pg.dropped.1........" from atacc1;
 ERROR:  Attribute "........pg.dropped.1........" not found
 select atacc1."........pg.dropped.1........" from atacc1;
-ERROR:  No such attribute atacc1.........pg.dropped.1........
+ERROR:  no such attribute atacc1.........pg.dropped.1........
 select "........pg.dropped.1........",b,c,d from atacc1;
 ERROR:  Attribute "........pg.dropped.1........" not found
 select * from atacc1 where "........pg.dropped.1........" = 1;

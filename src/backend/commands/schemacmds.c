@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/schemacmds.c,v 1.11 2003/06/27 17:05:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/schemacmds.c,v 1.12 2003/07/18 23:20:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,14 +74,16 @@ CreateSchemaCommand(CreateSchemaStmt *stmt)
 		SetUserId(owner_userid);
 	}
 	else
-/* not superuser */
 	{
+		/* not superuser */
 		owner_userid = saved_userid;
 		owner_name = GetUserNameFromId(owner_userid);
 		if (strcmp(authId, owner_name) != 0)
-			elog(ERROR, "CREATE SCHEMA: permission denied"
-				 "\n\t\"%s\" is not a superuser, so cannot create a schema for \"%s\"",
-				 owner_name, authId);
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("permission denied"),
+					 errdetail("\"%s\" is not a superuser, so cannot create a schema for \"%s\"",
+							   owner_name, authId)));
 	}
 
 	/*
@@ -92,8 +94,10 @@ CreateSchemaCommand(CreateSchemaStmt *stmt)
 		aclcheck_error(aclresult, get_database_name(MyDatabaseId));
 
 	if (!allowSystemTableMods && IsReservedName(schemaName))
-		elog(ERROR, "CREATE SCHEMA: Illegal schema name: \"%s\" -- pg_ is reserved for system schemas",
-			 schemaName);
+		ereport(ERROR,
+				(errcode(ERRCODE_RESERVED_NAME),
+				 errmsg("unacceptable schema name \"%s\"", schemaName),
+				 errdetail("The prefix pg_ is reserved for system schemas.")));
 
 	/* Create the schema's namespace */
 	namespaceId = NamespaceCreate(schemaName, owner_userid);
@@ -162,14 +166,18 @@ RemoveSchema(List *names, DropBehavior behavior)
 	ObjectAddress object;
 
 	if (length(names) != 1)
-		elog(ERROR, "Schema name may not be qualified");
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("schema name may not be qualified")));
 	namespaceName = strVal(lfirst(names));
 
 	namespaceId = GetSysCacheOid(NAMESPACENAME,
 								 CStringGetDatum(namespaceName),
 								 0, 0, 0);
 	if (!OidIsValid(namespaceId))
-		elog(ERROR, "Schema \"%s\" does not exist", namespaceName);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_SCHEMA),
+				 errmsg("schema \"%s\" does not exist", namespaceName)));
 
 	/* Permission check */
 	if (!pg_namespace_ownercheck(namespaceId, GetUserId()))
@@ -205,9 +213,8 @@ RemoveSchemaById(Oid schemaOid)
 	tup = SearchSysCache(NAMESPACEOID,
 						 ObjectIdGetDatum(schemaOid),
 						 0, 0, 0);
-	if (!HeapTupleIsValid(tup))
-		elog(ERROR, "RemoveSchemaById: schema %u not found",
-			 schemaOid);
+	if (!HeapTupleIsValid(tup))	/* should not happen */
+		elog(ERROR, "cache lookup failed for schema %u", schemaOid);
 
 	simple_heap_delete(relation, &tup->t_self);
 
@@ -234,7 +241,7 @@ RenameSchema(const char *oldname, const char *newname)
 							 0, 0, 0);
 	if (!HeapTupleIsValid(tup))
 		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR_OR_ACCESS_RULE_VIOLATION),
+				(errcode(ERRCODE_UNDEFINED_SCHEMA),
 				 errmsg("schema \"%s\" does not exist", oldname)));
 
 	/* make sure the new name doesn't exist */
@@ -242,11 +249,9 @@ RenameSchema(const char *oldname, const char *newname)
 			SearchSysCache(NAMESPACENAME,
 						   CStringGetDatum(newname),
 						   0, 0, 0)))
-	{
 		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR_OR_ACCESS_RULE_VIOLATION),
+				(errcode(ERRCODE_DUPLICATE_SCHEMA),
 				 errmsg("schema \"%s\" already exists", newname)));
-	}
 
 	/* must be owner */
 	if (!pg_namespace_ownercheck(HeapTupleGetOid(tup), GetUserId()))
@@ -258,8 +263,10 @@ RenameSchema(const char *oldname, const char *newname)
 		aclcheck_error(aclresult, get_database_name(MyDatabaseId));
 
 	if (!allowSystemTableMods && IsReservedName(newname))
-		elog(ERROR, "illegal schema name: \"%s\" -- pg_ is reserved for system schemas",
-			 newname);
+		ereport(ERROR,
+				(errcode(ERRCODE_RESERVED_NAME),
+				 errmsg("unacceptable schema name \"%s\"", newname),
+				 errdetail("The prefix pg_ is reserved for system schemas.")));
 
 	/* rename */
 	namestrcpy(&(((Form_pg_namespace) GETSTRUCT(tup))->nspname), newname);

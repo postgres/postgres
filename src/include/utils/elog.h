@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: elog.h,v 1.47 2003/07/14 23:36:15 tgl Exp $
+ * $Id: elog.h,v 1.48 2003/07/18 23:20:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -177,31 +177,62 @@
 #define ERRCODE_INTERNAL_ERROR				MAKE_SQLSTATE('X','X', '0','0','0')
 #define ERRCODE_INSUFFICIENT_PRIVILEGE		MAKE_SQLSTATE('4','2', '5','0','1')
 #define ERRCODE_SYNTAX_ERROR				MAKE_SQLSTATE('4','2', '6','0','1')
+#define ERRCODE_INVALID_NAME				MAKE_SQLSTATE('4','2', '6','0','2')
+#define ERRCODE_NAME_TOO_LONG				MAKE_SQLSTATE('4','2', '6','2','2')
+#define ERRCODE_RESERVED_NAME				MAKE_SQLSTATE('4','2', '9','3','9')
 #define ERRCODE_UNTERMINATED_LITERAL		MAKE_SQLSTATE('4','2', '6','0','3')
 #define ERRCODE_INVALID_LITERAL				MAKE_SQLSTATE('4','2', '6','0','6')
+#define ERRCODE_STATEMENT_TOO_COMPLEX		MAKE_SQLSTATE('5','4', '0','0','1')
 #define ERRCODE_TOO_MANY_ARGUMENTS			MAKE_SQLSTATE('4','2', '6','0','5')
-#define ERRCODE_UNDEFINED_COLUMN			MAKE_SQLSTATE('4','2', '7','0','3')
+#define ERRCODE_TOO_MANY_COLUMNS			MAKE_SQLSTATE('5','4', '0','1','1')
 /*
  * Note: use the above SQL-standard error codes for undefined catalog, schema,
- * prepared statement, or cursor names.  Curiously, they don't define error
- * codes for any other kinds of objects.  We choose to define an errcode for
- * undefined tables, as well as one for functions (also used for operators);
- * all other names (rules, triggers, etc) are lumped as UNDEFINED_OBJECT.
- * The same breakdown is used for "ambiguous" and "duplicate" complaints.
+ * prepared statement, and cursor names.  Curiously, they don't define error
+ * codes for any other kinds of objects.  We choose to define separate error
+ * codes for undefined table and column names, as well as one for functions
+ * (also used for operators).  All other names (rules, triggers, etc) are
+ * lumped as UNDEFINED_OBJECT.
+ * The same breakdown is used for "ambiguous" and "duplicate" complaints,
+ * as well as complaints associated with incorrect declarations.
  */
-#define ERRCODE_UNDEFINED_TABLE				MAKE_SQLSTATE('4','2', '7','0','4')
+#define ERRCODE_UNDEFINED_COLUMN			MAKE_SQLSTATE('4','2', '7','0','3')
+#define ERRCODE_UNDEFINED_CURSOR			ERRCODE_INVALID_CURSOR_NAME
+#define ERRCODE_UNDEFINED_DATABASE			ERRCODE_INVALID_CATALOG_NAME
 #define ERRCODE_UNDEFINED_FUNCTION			MAKE_SQLSTATE('4','2', '8','8','3')
+#define ERRCODE_UNDEFINED_PSTATEMENT		ERRCODE_INVALID_SQL_STATEMENT_NAME
+#define ERRCODE_UNDEFINED_SCHEMA			ERRCODE_INVALID_SCHEMA_NAME
+#define ERRCODE_UNDEFINED_TABLE				MAKE_SQLSTATE('4','2', '7','0','4')
 #define ERRCODE_UNDEFINED_OBJECT			MAKE_SQLSTATE('4','2', '7','0','5')
+#define ERRCODE_UNDEFINED_PARAMETER			MAKE_SQLSTATE('4','2', '7','1','5')
 #define ERRCODE_AMBIGUOUS_COLUMN			MAKE_SQLSTATE('4','2', '7','0','2')
 #define ERRCODE_AMBIGUOUS_FUNCTION			MAKE_SQLSTATE('4','2', '7','2','5')
+#define ERRCODE_AMBIGUOUS_PARAMETER			MAKE_SQLSTATE('4','2', '7','1','6')
 #define ERRCODE_DUPLICATE_COLUMN			MAKE_SQLSTATE('4','2', '7','1','1')
-#define ERRCODE_DUPLICATE_TABLE				MAKE_SQLSTATE('4','2', '7','2','2')
+#define ERRCODE_DUPLICATE_CURSOR			ERRCODE_DUPLICATE_OBJECT
+#define ERRCODE_DUPLICATE_DATABASE			ERRCODE_DUPLICATE_OBJECT
 #define ERRCODE_DUPLICATE_FUNCTION			MAKE_SQLSTATE('4','2', '7','2','3')
+#define ERRCODE_DUPLICATE_PSTATEMENT		ERRCODE_DUPLICATE_OBJECT
+#define ERRCODE_DUPLICATE_SCHEMA			ERRCODE_DUPLICATE_OBJECT
+#define ERRCODE_DUPLICATE_TABLE				MAKE_SQLSTATE('4','2', '7','2','2')
 #define ERRCODE_DUPLICATE_OBJECT			MAKE_SQLSTATE('4','2', '7','1','0')
+#define ERRCODE_INVALID_COLUMN_DEFINITION	MAKE_SQLSTATE('4','2', 'A','0','1')
+#define ERRCODE_INVALID_CURSOR_DEFINITION	MAKE_SQLSTATE('4','2', 'A','0','2')
+#define ERRCODE_INVALID_DATABASE_DEFINITION	MAKE_SQLSTATE('4','2', 'A','0','3')
+#define ERRCODE_INVALID_FUNCTION_DEFINITION	MAKE_SQLSTATE('4','2', 'A','0','4')
+#define ERRCODE_INVALID_PSTATEMENT_DEFINITION MAKE_SQLSTATE('4','2', 'A','0','5')
+#define ERRCODE_INVALID_SCHEMA_DEFINITION	MAKE_SQLSTATE('4','2', 'A','0','6')
+#define ERRCODE_INVALID_TABLE_DEFINITION	MAKE_SQLSTATE('4','2', 'A','0','7')
+#define ERRCODE_INVALID_OBJECT_DEFINITION	MAKE_SQLSTATE('4','2', 'A','0','8')
+#define ERRCODE_WRONG_OBJECT_TYPE			MAKE_SQLSTATE('4','2', '8','0','9')
+#define ERRCODE_OBJECT_IN_USE				MAKE_SQLSTATE('5','5', '0','0','6')
 #define ERRCODE_GROUPING_ERROR				MAKE_SQLSTATE('4','2', '8','0','3')
 #define ERRCODE_TYPE_MISMATCH				MAKE_SQLSTATE('4','2', '8','0','4')
 #define ERRCODE_CANNOT_COERCE				MAKE_SQLSTATE('4','2', '8','4','6')
 #define ERRCODE_INVALID_FOREIGN_KEY			MAKE_SQLSTATE('4','2', '8','3','0')
+#define ERRCODE_TOO_MANY_CONNECTIONS		MAKE_SQLSTATE('5','7', '0','3','2')
+#define ERRCODE_DISK_FULL					MAKE_SQLSTATE('5','4', '1','0','0')
+#define ERRCODE_INSUFFICIENT_RESOURCES		MAKE_SQLSTATE('5','4', '2','0','0')
+#define ERRCODE_IO_ERROR					MAKE_SQLSTATE('5','8', '0','3','0')
 
 
 /* Which __func__ symbol do we have, if any? */
@@ -219,13 +250,15 @@
 /*----------
  * New-style error reporting API: to be used in this way:
  *		ereport(ERROR,
- *				(errcode(ERRCODE_INVALID_CURSOR_NAME),
+ *				(errcode(ERRCODE_UNDEFINED_CURSOR),
  *				 errmsg("portal \"%s\" not found", stmt->portalname),
  *				 ... other errxxx() fields as needed ...));
  *
  * The error level is required, and so is a primary error message (errmsg
  * or errmsg_internal).  All else is optional.  errcode() defaults to
- * ERRCODE_INTERNAL_ERROR.
+ * ERRCODE_INTERNAL_ERROR if elevel is ERROR or more, ERRCODE_WARNING
+ * if elevel is WARNING, or ERRCODE_SUCCESSFUL_COMPLETION if elevel is
+ * NOTICE or below.
  *----------
  */
 #define ereport(elevel, rest)  \
@@ -237,6 +270,8 @@ extern bool errstart(int elevel, const char *filename, int lineno,
 extern void errfinish(int dummy, ...);
 
 extern int errcode(int sqlerrcode);
+
+extern int errcode_for_file_access(void);
 
 extern int errmsg(const char *fmt, ...)
 /* This extension allows gcc to check the format string for consistency with

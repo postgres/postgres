@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.60 2003/05/27 17:49:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.61 2003/07/18 23:20:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,7 +58,7 @@ static char *substitute_libpath_macro(const char *name);
  *
  * If the function is not found, we raise an error if signalNotFound is true,
  * else return (PGFunction) NULL.  Note that errors in loading the library
- * will provoke elog regardless of signalNotFound.
+ * will provoke ereport() regardless of signalNotFound.
  *
  * If filehandle is not NULL, then *filehandle will be set to a handle
  * identifying the library file.  The filehandle can be used with
@@ -94,7 +94,9 @@ load_external_function(char *filename, char *funcname,
 		 * Check for same files - different paths (ie, symlink or link)
 		 */
 		if (stat(fullname, &stat_buf) == -1)
-			elog(ERROR, "stat failed on file '%s': %m", fullname);
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("could not access file \"%s\": %m", fullname)));
 
 		for (file_scanner = file_list;
 			 file_scanner != (DynamicFileList *) NULL &&
@@ -111,7 +113,9 @@ load_external_function(char *filename, char *funcname,
 		file_scanner = (DynamicFileList *)
 			malloc(sizeof(DynamicFileList) + strlen(fullname));
 		if (file_scanner == NULL)
-			elog(ERROR, "Out of memory in load_external_function");
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_RESOURCES),
+					 errmsg("out of memory")));
 
 		MemSet((char *) file_scanner, 0, sizeof(DynamicFileList));
 		strcpy(file_scanner->filename, fullname);
@@ -124,7 +128,11 @@ load_external_function(char *filename, char *funcname,
 		{
 			load_error = (char *) pg_dlerror();
 			free((char *) file_scanner);
-			elog(ERROR, "Load of file %s failed: %s", fullname, load_error);
+			/* errcode_for_file_access might not be appropriate here? */
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("could not load library \"%s\": %s",
+							fullname, load_error)));
 		}
 
 		/* OK to link it into list */
@@ -151,7 +159,10 @@ load_external_function(char *filename, char *funcname,
 	retval = pg_dlsym(file_scanner->handle, funcname);
 
 	if (retval == (PGFunction) NULL && signalNotFound)
-		elog(ERROR, "Can't find function %s in file %s", funcname, fullname);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_FUNCTION),
+				 errmsg("could not find function \"%s\" in file \"%s\"",
+						funcname, fullname)));
 
 	pfree(fullname);
 	return retval;
@@ -181,7 +192,9 @@ load_file(char *filename)
 	 * good error message if bogus file name given.
 	 */
 	if (stat(fullname, &stat_buf) == -1)
-		elog(ERROR, "LOAD: could not open file '%s': %m", fullname);
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not access file \"%s\": %m", fullname)));
 
 	if (file_list != (DynamicFileList *) NULL)
 	{
@@ -236,7 +249,9 @@ file_exists(const char *name)
 	if (stat(name, &st) == 0)
 		return S_ISDIR(st.st_mode) ? false : true;
 	else if (!(errno == ENOENT || errno == ENOTDIR || errno == EACCES))
-		elog(ERROR, "stat failed on %s: %s", name, strerror(errno));
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not access file \"%s\": %m", name)));
 
 	return false;
 }
@@ -335,7 +350,9 @@ substitute_libpath_macro(const char *name)
 	if (strncmp(name, "$libdir", macroname_len) == 0)
 		replacement = PKGLIBDIR;
 	else
-		elog(ERROR, "invalid macro name in dynamic library path");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_NAME),
+				 errmsg("invalid macro name in dynamic library path")));
 
 	if (name[macroname_len] == '\0')
 		return pstrdup(replacement);
@@ -385,7 +402,9 @@ find_in_dynamic_libpath(const char *basename)
 		len = strcspn(p, ":");
 
 		if (len == 0)
-			elog(ERROR, "zero length dynamic_library_path component");
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_NAME),
+					 errmsg("zero-length component in DYNAMIC_LIBRARY_PATH")));
 
 		piece = palloc(len + 1);
 		strncpy(piece, p, len);
@@ -396,13 +415,15 @@ find_in_dynamic_libpath(const char *basename)
 
 		/* only absolute paths */
 		if (!is_absolute_path(mangled))
-			elog(ERROR, "dynamic_library_path component is not absolute");
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_NAME),
+					 errmsg("DYNAMIC_LIBRARY_PATH component is not absolute")));
 
 		full = palloc(strlen(mangled) + 1 + baselen + 1);
 		sprintf(full, "%s/%s", mangled, basename);
 		pfree(mangled);
 
-		elog(DEBUG3, "find_in_dynamic_libpath: trying %s", full);
+		elog(DEBUG3, "find_in_dynamic_libpath: trying \"%s\"", full);
 
 		if (file_exists(full))
 			return full;

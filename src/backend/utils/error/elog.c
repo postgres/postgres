@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.112 2003/06/30 16:47:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.113 2003/07/18 23:20:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -288,7 +288,13 @@ errstart(int elevel, const char *filename, int lineno,
 	edata->filename = filename;
 	edata->lineno = lineno;
 	edata->funcname = funcname;
-	edata->sqlerrcode = ERRCODE_INTERNAL_ERROR; /* default errcode */
+	/* Select default errcode based on elevel */
+	if (elevel >= ERROR)
+		edata->sqlerrcode = ERRCODE_INTERNAL_ERROR;
+	else if (elevel == WARNING)
+		edata->sqlerrcode = ERRCODE_WARNING;
+	else
+		edata->sqlerrcode = ERRCODE_SUCCESSFUL_COMPLETION;
 	/* errno is saved here so that error parameter eval can't change it */
 	edata->saved_errno = errno;
 
@@ -492,6 +498,76 @@ errcode(int sqlerrcode)
 	CHECK_STACK_DEPTH();
 
 	edata->sqlerrcode = sqlerrcode;
+
+	return 0;					/* return value does not matter */
+}
+
+
+/*
+ * errcode_for_file_access --- add SQLSTATE error code to the current error
+ *
+ * The SQLSTATE code is chosen based on the saved errno value.  We assume
+ * that the failing operation was some type of disk file access.
+ *
+ * NOTE: the primary error message string should generally include %m
+ * when this is used.
+ */
+int
+errcode_for_file_access(void)
+{
+	ErrorData  *edata = &errordata[errordata_stack_depth];
+
+	/* we don't bother incrementing recursion_depth */
+	CHECK_STACK_DEPTH();
+
+	switch (edata->saved_errno)
+	{
+		/* Permission-denied failures */
+		case EPERM:				/* Not super-user */
+		case EACCES:			/* Permission denied */
+#ifdef EROFS
+		case EROFS:				/* Read only file system */
+#endif
+			edata->sqlerrcode = ERRCODE_INSUFFICIENT_PRIVILEGE;
+			break;
+
+		/* Object not found */
+		case ENOENT:			/* No such file or directory */
+			edata->sqlerrcode = ERRCODE_UNDEFINED_OBJECT;
+			break;
+
+		/* Duplicate object */
+		case EEXIST:			/* File exists */
+			edata->sqlerrcode = ERRCODE_DUPLICATE_OBJECT;
+			break;
+
+		/* Wrong object type or state */
+		case ENOTDIR:			/* Not a directory */
+		case EISDIR:			/* Is a directory */
+		case ENOTEMPTY:			/* Directory not empty */
+			edata->sqlerrcode = ERRCODE_WRONG_OBJECT_TYPE;
+			break;
+
+		/* Insufficient resources */
+		case ENOSPC:			/* No space left on device */
+			edata->sqlerrcode = ERRCODE_DISK_FULL;
+			break;
+
+		case ENFILE:			/* File table overflow */
+		case EMFILE:			/* Too many open files */
+			edata->sqlerrcode = ERRCODE_INSUFFICIENT_RESOURCES;
+			break;
+
+		/* Hardware failure */
+		case EIO:				/* I/O error */
+			edata->sqlerrcode = ERRCODE_IO_ERROR;
+			break;
+
+		/* All else is classified as internal errors */
+		default:
+			edata->sqlerrcode = ERRCODE_INTERNAL_ERROR;
+			break;
+	}
 
 	return 0;					/* return value does not matter */
 }
@@ -759,7 +835,8 @@ DebugFileOpen(void)
 		if ((fd = open(OutputFileName, O_CREAT | O_APPEND | O_WRONLY,
 					   0666)) < 0)
 			ereport(FATAL,
-					(errmsg("failed to open %s: %m", OutputFileName)));
+					(errcode_for_file_access(),
+					 errmsg("failed to open \"%s\": %m", OutputFileName)));
 		istty = isatty(fd);
 		close(fd);
 
@@ -768,7 +845,8 @@ DebugFileOpen(void)
 		 */
 		if (!freopen(OutputFileName, "a", stderr))
 			ereport(FATAL,
-					(errmsg("failed to reopen %s as stderr: %m",
+					(errcode_for_file_access(),
+					 errmsg("failed to reopen \"%s\" as stderr: %m",
 							OutputFileName)));
 
 		/*
@@ -780,7 +858,8 @@ DebugFileOpen(void)
 		if (istty && IsUnderPostmaster)
 			if (!freopen(OutputFileName, "a", stdout))
 				ereport(FATAL,
-						(errmsg("failed to reopen %s as stdout: %m",
+						(errcode_for_file_access(),
+						 errmsg("failed to reopen \"%s\" as stdout: %m",
 								OutputFileName)));
 	}
 }

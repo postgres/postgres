@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.153 2003/07/04 02:51:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.154 2003/07/18 23:20:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -84,15 +84,15 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	 * function, but the test doesn't hurt.
 	 */
 	if (nargs > FUNC_MAX_ARGS)
-		elog(ERROR, "Cannot pass more than %d arguments to a function",
-			 FUNC_MAX_ARGS);
+		ereport(ERROR,
+				(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
+				 errmsg("cannot pass more than %d arguments to a function",
+						FUNC_MAX_ARGS)));
 
 	if (fargs)
 	{
 		first_arg = lfirst(fargs);
-		if (first_arg == NULL)	/* should not happen */
-			elog(ERROR, "Function '%s' does not allow NULL input",
-				 NameListToString(funcname));
+		Assert(first_arg != NULL);
 	}
 
 	/*
@@ -179,7 +179,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 				case RTE_RELATION:
 					toid = get_rel_type_id(rte->relid);
 					if (!OidIsValid(toid))
-						elog(ERROR, "Cannot find type OID for relation %u",
+						elog(ERROR, "cannot find type OID for relation %u",
 							 rte->relid);
 					/* replace RangeVar in the arg list */
 					lfirst(i) = makeVar(vnum,
@@ -219,8 +219,10 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 						unknown_attribute(schemaname, relname,
 										  strVal(lfirst(funcname)));
 					else
-						elog(ERROR, "Cannot pass result of sub-select or join %s to a function",
-							 relname);
+						ereport(ERROR,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("cannot pass result of sub-select or join %s to a function",
+										relname)));
 					toid = InvalidOid;	/* keep compiler quiet */
 					break;
 			}
@@ -258,11 +260,16 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		 * an aggregate?
 		 */
 		if (agg_star)
-			elog(ERROR, "%s(*) specified, but %s is not an aggregate function",
-				 NameListToString(funcname), NameListToString(funcname));
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("%s(*) specified, but %s is not an aggregate function",
+							NameListToString(funcname),
+							NameListToString(funcname))));
 		if (agg_distinct)
-			elog(ERROR, "DISTINCT specified, but %s is not an aggregate function",
-				 NameListToString(funcname));
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("DISTINCT specified, but %s is not an aggregate function",
+							NameListToString(funcname))));
 	}
 	else if (fdresult != FUNCDETAIL_AGGREGATE)
 	{
@@ -284,11 +291,15 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 								  colname);
 			relTypeId = exprType(first_arg);
 			if (!ISCOMPLEX(relTypeId))
-				elog(ERROR, "Attribute notation .%s applied to type %s, which is not a complex type",
-					 colname, format_type_be(relTypeId));
+				ereport(ERROR,
+						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+						 errmsg("attribute notation .%s applied to type %s, which is not a complex type",
+								colname, format_type_be(relTypeId))));
 			else
-				elog(ERROR, "Attribute \"%s\" not found in datatype %s",
-					 colname, format_type_be(relTypeId));
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_COLUMN),
+						 errmsg("attribute \"%s\" not found in datatype %s",
+								colname, format_type_be(relTypeId))));
 		}
 
 		/*
@@ -302,7 +313,6 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 												  actual_arg_types)),
 					 errhint("Unable to choose a best candidate function. "
 							 "You may need to add explicit typecasts.")));
-
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_FUNCTION),
@@ -356,7 +366,9 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		retval = (Node *) aggref;
 
 		if (retset)
-			elog(ERROR, "Aggregates may not return sets");
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+					 errmsg("aggregates may not return sets")));
 	}
 
 	return retval;
@@ -921,7 +933,7 @@ func_get_detail(List *funcname,
 							  ObjectIdGetDatum(best_candidate->oid),
 							  0, 0, 0);
 		if (!HeapTupleIsValid(ftup))	/* should not happen */
-			elog(ERROR, "cache lookup of function %u failed",
+			elog(ERROR, "cache lookup failed for function %u",
 				 best_candidate->oid);
 		pform = (Form_pg_proc) GETSTRUCT(ftup);
 		*rettype = pform->prorettype;
@@ -1249,8 +1261,10 @@ setup_field_select(Node *input, char *attname, Oid relid)
 
 	attno = get_attnum(relid, attname);
 	if (attno == InvalidAttrNumber)
-		elog(ERROR, "Relation \"%s\" has no column \"%s\"",
-			 get_rel_name(relid), attname);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_COLUMN),
+				 errmsg("relation \"%s\" has no column \"%s\"",
+						get_rel_name(relid), attname)));
 
 	fselect->arg = (Expr *) input;
 	fselect->fieldnum = attno;
@@ -1323,18 +1337,22 @@ ParseComplexProjection(char *funcname, Node *first_arg)
 }
 
 /*
- * Simple helper routine for delivering "No such attribute" error message
+ * Simple helper routine for delivering "no such attribute" error message
  */
 static void
 unknown_attribute(const char *schemaname, const char *relname,
 				  const char *attname)
 {
 	if (schemaname)
-		elog(ERROR, "No such attribute %s.%s.%s",
-			 schemaname, relname, attname);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_COLUMN),
+				 errmsg("no such attribute %s.%s.%s",
+						schemaname, relname, attname)));
 	else
-		elog(ERROR, "No such attribute %s.%s",
-			 relname, attname);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_COLUMN),
+				 errmsg("no such attribute %s.%s",
+						relname, attname)));
 }
 
 /*
@@ -1389,11 +1407,16 @@ find_aggregate_func(List *aggname, Oid basetype, bool noError)
 		if (noError)
 			return InvalidOid;
 		if (basetype == ANYOID)
-			elog(ERROR, "aggregate %s(*) does not exist",
-				 NameListToString(aggname));
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_FUNCTION),
+					 errmsg("aggregate %s(*) does not exist",
+							NameListToString(aggname))));
 		else
-			elog(ERROR, "aggregate %s(%s) does not exist",
-				 NameListToString(aggname), format_type_be(basetype));
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_FUNCTION),
+					 errmsg("aggregate %s(%s) does not exist",
+							NameListToString(aggname),
+							format_type_be(basetype))));
 	}
 
 	/* Make sure it's an aggregate */
@@ -1401,7 +1424,7 @@ find_aggregate_func(List *aggname, Oid basetype, bool noError)
 						  ObjectIdGetDatum(oid),
 						  0, 0, 0);
 	if (!HeapTupleIsValid(ftup))	/* should not happen */
-		elog(ERROR, "function %u not found", oid);
+		elog(ERROR, "cache lookup failed for function %u", oid);
 	pform = (Form_pg_proc) GETSTRUCT(ftup);
 
 	if (!pform->proisagg)
@@ -1410,8 +1433,10 @@ find_aggregate_func(List *aggname, Oid basetype, bool noError)
 		if (noError)
 			return InvalidOid;
 		/* we do not use the (*) notation for functions... */
-		elog(ERROR, "function %s(%s) is not an aggregate",
-			 NameListToString(aggname), format_type_be(basetype));
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("function %s(%s) is not an aggregate",
+						NameListToString(aggname), format_type_be(basetype))));
 	}
 
 	ReleaseSysCache(ftup);
@@ -1445,8 +1470,10 @@ LookupFuncName(List *funcname, int nargs, const Oid *argtypes, bool noError)
 	}
 
 	if (!noError)
-		elog(ERROR, "function %s does not exist",
-			 func_signature_string(funcname, nargs, argtypes));
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_FUNCTION),
+				 errmsg("function %s does not exist",
+						func_signature_string(funcname, nargs, argtypes))));
 
 	return InvalidOid;
 }
@@ -1466,8 +1493,10 @@ LookupFuncNameTypeNames(List *funcname, List *argtypes, bool noError)
 	MemSet(argoids, 0, FUNC_MAX_ARGS * sizeof(Oid));
 	argcount = length(argtypes);
 	if (argcount > FUNC_MAX_ARGS)
-		elog(ERROR, "functions cannot have more than %d arguments",
-			 FUNC_MAX_ARGS);
+		ereport(ERROR,
+				(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
+				 errmsg("functions cannot have more than %d arguments",
+						FUNC_MAX_ARGS)));
 
 	for (i = 0; i < argcount; i++)
 	{
@@ -1476,8 +1505,10 @@ LookupFuncNameTypeNames(List *funcname, List *argtypes, bool noError)
 		argoids[i] = LookupTypeName(t);
 
 		if (!OidIsValid(argoids[i]))
-			elog(ERROR, "Type \"%s\" does not exist",
-				 TypeNameToString(t));
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("type \"%s\" does not exist",
+							TypeNameToString(t))));
 
 		argtypes = lnext(argtypes);
 	}

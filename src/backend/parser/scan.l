@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.108 2003/06/19 23:22:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.109 2003/07/18 23:20:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -403,8 +403,10 @@ other			.
 
 						len = pg_mbcliplen(literalbuf, literallen,
 										   NAMEDATALEN-1);
-						elog(NOTICE, "identifier \"%s\" will be truncated to \"%.*s\"",
-							 literalbuf, len, literalbuf);
+						ereport(NOTICE,
+								(errcode(ERRCODE_NAME_TOO_LONG),
+								 errmsg("identifier \"%s\" will be truncated to \"%.*s\"",
+										literalbuf, len, literalbuf)));
 						literalbuf[len] = '\0';
 						literallen = len;
 					}
@@ -559,8 +561,10 @@ other			.
 						int len;
 
 						len = pg_mbcliplen(ident, i, NAMEDATALEN-1);
-                        elog(NOTICE, "identifier \"%s\" will be truncated to \"%.*s\"",
-                             ident, len, ident);
+						ereport(NOTICE,
+								(errcode(ERRCODE_NAME_TOO_LONG),
+								 errmsg("identifier \"%s\" will be truncated to \"%.*s\"",
+										ident, len, ident)));
 						ident[len] = '\0';
                     }
 					yylval.str = ident;
@@ -582,16 +586,18 @@ yyerror(const char *message)
 
 	if (*loc == YY_END_OF_BUFFER_CHAR)
 	{
-		/* translator: %s is typically "syntax error" */
 		ereport(ERROR,
-				(errmsg("%s at end of input", message),
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 /* translator: %s is typically "syntax error" */
+				 errmsg("%s at end of input", message),
 				 errposition(cursorpos)));
 	}
 	else
 	{
-		/* translator: first %s is typically "syntax error" */
 		ereport(ERROR,
-				(errmsg("%s at or near \"%s\"", message, loc),
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 /* translator: first %s is typically "syntax error" */
+				 errmsg("%s at or near \"%s\"", message, loc),
 				 errposition(cursorpos)));
 	}
 }

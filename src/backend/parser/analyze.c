@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.279 2003/07/16 17:25:48 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.280 2003/07/18 23:20:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3095,11 +3095,15 @@ check_parameter_resolution_walker(Node *node,
 
 			if (paramno <= 0 ||		/* shouldn't happen, but... */
 				paramno > context->numParams)
-				elog(ERROR, "Parameter '$%d' is out of range", paramno);
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_PARAMETER),
+						 errmsg("there is no parameter $%d", paramno)));
 
 			if (param->paramtype != context->paramTypes[paramno-1])
-				elog(ERROR, "Could not determine datatype of parameter $%d",
-					 paramno);
+				ereport(ERROR,
+						(errcode(ERRCODE_AMBIGUOUS_PARAMETER),
+						 errmsg("could not determine datatype of parameter $%d",
+								paramno)));
 		}
 		return false;
 	}

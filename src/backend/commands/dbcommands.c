@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.116 2003/06/27 14:45:27 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.117 2003/07/18 23:20:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -98,29 +98,37 @@ createdb(const CreatedbStmt *stmt)
 		if (strcmp(defel->defname, "owner") == 0)
 		{
 			if (downer)
-				elog(ERROR, "CREATE DATABASE: conflicting options");
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("conflicting or redundant options")));
 			downer = defel;
 		}
 		else if (strcmp(defel->defname, "location") == 0)
 		{
 			if (dpath)
-				elog(ERROR, "CREATE DATABASE: conflicting options");
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("conflicting or redundant options")));
 			dpath = defel;
 		}
 		else if (strcmp(defel->defname, "template") == 0)
 		{
 			if (dtemplate)
-				elog(ERROR, "CREATE DATABASE: conflicting options");
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("conflicting or redundant options")));
 			dtemplate = defel;
 		}
 		else if (strcmp(defel->defname, "encoding") == 0)
 		{
 			if (dencoding)
-				elog(ERROR, "CREATE DATABASE: conflicting options");
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("conflicting or redundant options")));
 			dencoding = defel;
 		}
 		else
-			elog(ERROR, "CREATE DATABASE: option \"%s\" not recognized",
+			elog(ERROR, "option \"%s\" not recognized",
 				 defel->defname);
 	}
 
@@ -140,22 +148,29 @@ createdb(const CreatedbStmt *stmt)
 			encoding_name = pg_encoding_to_char(encoding);
 			if (strcmp(encoding_name, "") == 0 ||
 				pg_valid_server_encoding(encoding_name) < 0)
-				elog(ERROR, "%d is not a valid encoding code", encoding);
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_OBJECT),
+						 errmsg("%d is not a valid encoding code",
+								encoding)));
 		}
 		else if (IsA(dencoding->arg, String))
 		{
 			encoding_name = strVal(dencoding->arg);
 			if (pg_valid_server_encoding(encoding_name) < 0)
-				elog(ERROR, "%s is not a valid encoding name", encoding_name);
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_OBJECT),
+						 errmsg("%s is not a valid encoding name",
+								encoding_name)));
 			encoding = pg_char_to_encoding(encoding_name);
 		}
 		else
-			elog(ERROR, "CREATE DATABASE: bogus encoding parameter");
+			elog(ERROR, "unrecognized node type: %d",
+				 nodeTag(dencoding->arg));
 	}
 
 	/* obtain sysid of proposed owner */
 	if (dbowner)
-		datdba = get_usesysid(dbowner); /* will elog if no such user */
+		datdba = get_usesysid(dbowner); /* will ereport if no such user */
 	else
 		datdba = GetUserId();
 
@@ -163,22 +178,29 @@ createdb(const CreatedbStmt *stmt)
 	{
 		/* creating database for self: can be superuser or createdb */
 		if (!superuser() && !have_createdb_privilege())
-			elog(ERROR, "CREATE DATABASE: permission denied");
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("permission denied")));
 	}
 	else
 	{
 		/* creating database for someone else: must be superuser */
 		/* note that the someone else need not have any permissions */
 		if (!superuser())
-			elog(ERROR, "CREATE DATABASE: permission denied");
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("permission denied")));
 	}
 
 	/* don't call this in a transaction block */
 	PreventTransactionChain((void *) stmt, "CREATE DATABASE");
 
+	/* alternate location requires symlinks */
 #ifndef HAVE_SYMLINK
 	if (dbpath != NULL)
-		elog(ERROR, "CREATE DATABASE: may not use an alternate location on this platform");
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot use an alternate location on this platform")));
 #endif
 
 	/*
@@ -190,7 +212,9 @@ createdb(const CreatedbStmt *stmt)
 	 * after we grab the exclusive lock.
 	 */
 	if (get_db_info(dbname, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL))
-		elog(ERROR, "CREATE DATABASE: database \"%s\" already exists", dbname);
+		ereport(ERROR,
+				(errcode(ERRCODE_DUPLICATE_DATABASE),
+				 errmsg("database \"%s\" already exists", dbname)));
 
 	/*
 	 * Lookup database (template) to be cloned.
@@ -202,8 +226,9 @@ createdb(const CreatedbStmt *stmt)
 					 &src_istemplate, &src_lastsysoid,
 					 &src_vacuumxid, &src_frozenxid,
 					 src_dbpath))
-		elog(ERROR, "CREATE DATABASE: template \"%s\" does not exist",
-			 dbtemplate);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_DATABASE),
+				 errmsg("template \"%s\" does not exist", dbtemplate)));
 
 	/*
 	 * Permission check: to copy a DB that's not marked datistemplate, you
@@ -212,8 +237,10 @@ createdb(const CreatedbStmt *stmt)
 	if (!src_istemplate)
 	{
 		if (!superuser() && GetUserId() != src_owner)
-			elog(ERROR, "CREATE DATABASE: permission to copy \"%s\" denied",
-				 dbtemplate);
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("permission to copy \"%s\" denied",
+							dbtemplate)));
 	}
 
 	/*
@@ -231,7 +258,10 @@ createdb(const CreatedbStmt *stmt)
 	 * bulletproof, since someone might connect while we are copying...
 	 */
 	if (DatabaseHasActiveBackends(src_dboid, true))
-		elog(ERROR, "CREATE DATABASE: source database \"%s\" is being accessed by other users", dbtemplate);
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_IN_USE),
+				 errmsg("source database \"%s\" is being accessed by other users",
+						dbtemplate)));
 
 	/* If encoding is defaulted, use source's encoding */
 	if (encoding < 0)
@@ -239,7 +269,9 @@ createdb(const CreatedbStmt *stmt)
 
 	/* Some encodings are client only */
 	if (!PG_VALID_BE_ENCODING(encoding))
-		elog(ERROR, "CREATE DATABASE: invalid backend encoding");
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("invalid backend encoding %d", encoding)));
 
 	/*
 	 * Preassign OID for pg_database tuple, so that we can compute db
@@ -267,11 +299,17 @@ createdb(const CreatedbStmt *stmt)
 	}
 
 	if (strchr(nominal_loc, '\''))
-		elog(ERROR, "database path may not contain single quotes");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_NAME),
+				 errmsg("database path may not contain single quotes")));
 	if (alt_loc && strchr(alt_loc, '\''))
-		elog(ERROR, "database path may not contain single quotes");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_NAME),
+				 errmsg("database path may not contain single quotes")));
 	if (strchr(src_loc, '\''))
-		elog(ERROR, "database path may not contain single quotes");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_NAME),
+				 errmsg("database path may not contain single quotes")));
 	/* ... otherwise we'd be open to shell exploits below */
 
 	/*
@@ -294,11 +332,15 @@ createdb(const CreatedbStmt *stmt)
 	target_dir = alt_loc ? alt_loc : nominal_loc;
 
 	if (mkdir(target_dir, S_IRWXU) != 0)
-		elog(ERROR, "CREATE DATABASE: unable to create database directory '%s': %m",
-			 target_dir);
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("unable to create database directory \"%s\": %m",
+						target_dir)));
 	if (rmdir(target_dir) != 0)
-		elog(ERROR, "CREATE DATABASE: unable to remove temp directory '%s': %m",
-			 target_dir);
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("unable to remove temp directory \"%s\": %m",
+						target_dir)));
 
 	/* Make the symlink, if needed */
 	if (alt_loc)
@@ -306,8 +348,10 @@ createdb(const CreatedbStmt *stmt)
 #ifdef HAVE_SYMLINK	/* already throws error above */
 		if (symlink(alt_loc, nominal_loc) != 0)
 #endif
-			elog(ERROR, "CREATE DATABASE: could not link '%s' to '%s': %m",
-				 nominal_loc, alt_loc);
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("could not link \"%s\" to \"%s\": %m",
+							nominal_loc, alt_loc)));
 	}
 
 	/* Copy the template database to the new location */
@@ -319,9 +363,9 @@ createdb(const CreatedbStmt *stmt)
 #endif
 	{
 		if (remove_dbdirs(nominal_loc, alt_loc))
-			elog(ERROR, "CREATE DATABASE: could not initialize database directory");
+			elog(ERROR, "could not initialize database directory");
 		else
-			elog(ERROR, "CREATE DATABASE: could not initialize database directory; delete failed as well");
+			elog(ERROR, "could not initialize database directory; delete failed as well");
 	}
 
 	/*
@@ -335,7 +379,9 @@ createdb(const CreatedbStmt *stmt)
 		/* Don't hold lock while doing recursive remove */
 		heap_close(pg_database_rel, AccessExclusiveLock);
 		remove_dbdirs(nominal_loc, alt_loc);
-		elog(ERROR, "CREATE DATABASE: database \"%s\" already exists", dbname);
+		ereport(ERROR,
+				(errcode(ERRCODE_DUPLICATE_DATABASE),
+				 errmsg("database \"%s\" already exists", dbname)));
 	}
 
 	/*
@@ -411,7 +457,9 @@ dropdb(const char *dbname)
 	AssertArg(dbname);
 
 	if (strcmp(dbname, get_database_name(MyDatabaseId)) == 0)
-		elog(ERROR, "DROP DATABASE: cannot be executed on the currently open database");
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_IN_USE),
+				 errmsg("cannot drop the currently open database")));
 
 	PreventTransactionChain((void *) dbname, "DROP DATABASE");
 
@@ -428,10 +476,14 @@ dropdb(const char *dbname)
 
 	if (!get_db_info(dbname, &db_id, &db_owner, NULL,
 					 &db_istemplate, NULL, NULL, NULL, dbpath))
-		elog(ERROR, "DROP DATABASE: database \"%s\" does not exist", dbname);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_DATABASE),
+				 errmsg("database \"%s\" does not exist", dbname)));
 
 	if (GetUserId() != db_owner && !superuser())
-		elog(ERROR, "DROP DATABASE: permission denied");
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("permission denied")));
 
 	/*
 	 * Disallow dropping a DB that is marked istemplate.  This is just to
@@ -439,7 +491,9 @@ dropdb(const char *dbname)
 	 * they can do so if they're really determined ...
 	 */
 	if (db_istemplate)
-		elog(ERROR, "DROP DATABASE: database is marked as a template");
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("cannot drop a template database")));
 
 	nominal_loc = GetDatabasePath(db_id);
 	alt_loc = resolve_alt_dbpath(dbpath, db_id);
@@ -448,7 +502,10 @@ dropdb(const char *dbname)
 	 * Check for active backends in the target database.
 	 */
 	if (DatabaseHasActiveBackends(db_id, false))
-		elog(ERROR, "DROP DATABASE: database \"%s\" is being accessed by other users", dbname);
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_IN_USE),
+				 errmsg("database \"%s\" is being accessed by other users",
+						dbname)));
 
 	/*
 	 * Find the database's tuple by OID (should be unique).
@@ -465,7 +522,7 @@ dropdb(const char *dbname)
 		 * This error should never come up since the existence of the
 		 * database is checked earlier
 		 */
-		elog(ERROR, "DROP DATABASE: Database \"%s\" doesn't exist despite earlier reports to the contrary",
+		elog(ERROR, "database \"%s\" doesn't exist despite earlier reports to the contrary",
 			 dbname);
 	}
 
@@ -539,7 +596,7 @@ RenameDatabase(const char *oldname, const char *newname)
 	tup = systable_getnext(scan);
 	if (!HeapTupleIsValid(tup))
 		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR_OR_ACCESS_RULE_VIOLATION),
+				(errcode(ERRCODE_UNDEFINED_DATABASE),
 				 errmsg("database \"%s\" does not exist", oldname)));
 
 	/*
@@ -550,7 +607,7 @@ RenameDatabase(const char *oldname, const char *newname)
 	 */
 	if (HeapTupleGetOid(tup) == MyDatabaseId)
 		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR_OR_ACCESS_RULE_VIOLATION),
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("current database may not be renamed")));
 
 	/*
@@ -559,18 +616,19 @@ RenameDatabase(const char *oldname, const char *newname)
 	 * operations.
 	 */
 	if (DatabaseHasActiveBackends(HeapTupleGetOid(tup), false))
-		elog(ERROR, "database \"%s\" is being accessed by other users", oldname);
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_IN_USE),
+				 errmsg("database \"%s\" is being accessed by other users",
+						oldname)));
 
 	/* make sure the new name doesn't exist */
 	ScanKeyEntryInitialize(&key2, 0, Anum_pg_database_datname,
 						   F_NAMEEQ, NameGetDatum(newname));
 	scan2 = systable_beginscan(rel, DatabaseNameIndex, true, SnapshotNow, 1, &key2);
 	if (HeapTupleIsValid(systable_getnext(scan2)))
-	{
 		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR_OR_ACCESS_RULE_VIOLATION),
+				(errcode(ERRCODE_DUPLICATE_DATABASE),
 				 errmsg("database \"%s\" already exists", newname)));
-	}
 	systable_endscan(scan2);
 
 	/* must be owner */
@@ -579,11 +637,9 @@ RenameDatabase(const char *oldname, const char *newname)
 
 	/* must have createdb */
 	if (!have_createdb_privilege())
-	{
 		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR_OR_ACCESS_RULE_VIOLATION),
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("permission denied")));
-	}
 
 	/* rename */
 	newtup = heap_copytuple(tup);
@@ -628,11 +684,15 @@ AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
 	scan = systable_beginscan(rel, DatabaseNameIndex, true, SnapshotNow, 1, &scankey);
 	tuple = systable_getnext(scan);
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "database \"%s\" does not exist", stmt->dbname);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_DATABASE),
+				 errmsg("database \"%s\" does not exist", stmt->dbname)));
 
 	if (!(superuser()
-		|| ((Form_pg_database) GETSTRUCT(tuple))->datdba == GetUserId()))
-		elog(ERROR, "ALTER DATABASE SET: permission denied");
+		  || ((Form_pg_database) GETSTRUCT(tuple))->datdba == GetUserId()))
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("permission denied")));
 
 	MemSet(repl_repl, ' ', sizeof(repl_repl));
 	repl_repl[Anum_pg_database_datconfig - 1] = 'r';
@@ -797,9 +857,13 @@ resolve_alt_dbpath(const char *dbpath, Oid dboid)
 	if (first_path_separator(dbpath))
 	{
 		if (!is_absolute_path(dbpath))
-			elog(ERROR, "Relative paths are not allowed as database locations");
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("relative paths are not allowed as database locations")));
 #ifndef ALLOW_ABSOLUTE_DBPATHS
-		elog(ERROR, "Absolute paths are not allowed as database locations");
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("absolute paths are not allowed as database locations")));
 #endif
 		prefix = dbpath;
 	}
@@ -809,15 +873,23 @@ resolve_alt_dbpath(const char *dbpath, Oid dboid)
 		char	   *var = getenv(dbpath);
 
 		if (!var)
-			elog(ERROR, "Postmaster environment variable '%s' not set", dbpath);
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("postmaster environment variable \"%s\" not found",
+							dbpath)));
 		if (!is_absolute_path(var))
-			elog(ERROR, "Postmaster environment variable '%s' must be absolute path", dbpath);
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_NAME),
+					 errmsg("postmaster environment variable \"%s\" must be absolute path",
+							dbpath)));
 		prefix = var;
 	}
 
 	len = strlen(prefix) + 6 + sizeof(Oid) * 8 + 1;
 	if (len >= MAXPGPATH - 100)
-		elog(ERROR, "Alternate path is too long");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_NAME),
+				 errmsg("alternate path is too long")));
 
 	ret = palloc(len);
 	snprintf(ret, len, "%s/base/%u", prefix, dboid);
@@ -846,7 +918,9 @@ remove_dbdirs(const char *nominal_loc, const char *alt_loc)
 		/* remove symlink */
 		if (unlink(nominal_loc) != 0)
 		{
-			elog(WARNING, "could not remove '%s': %m", nominal_loc);
+			ereport(WARNING,
+					(errcode_for_file_access(),
+					 errmsg("could not remove \"%s\": %m", nominal_loc)));
 			success = false;
 		}
 	}
@@ -859,8 +933,10 @@ remove_dbdirs(const char *nominal_loc, const char *alt_loc)
 
 	if (system(buf) != 0)
 	{
-		elog(WARNING, "database directory '%s' could not be removed",
-			 target_dir);
+		ereport(WARNING,
+				(errcode_for_file_access(),
+				 errmsg("could not remove database directory \"%s\": %m",
+						target_dir)));
 		success = false;
 	}
 

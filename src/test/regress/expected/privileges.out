@@ -6,12 +6,12 @@ CREATE USER regressuser2;
 CREATE USER regressuser3;
 CREATE USER regressuser4;
 CREATE USER regressuser4;	-- duplicate
-ERROR:  CREATE USER: user name "regressuser4" already exists
+ERROR:  user "regressuser4" already exists
 CREATE GROUP regressgroup1;
 CREATE GROUP regressgroup2 WITH USER regressuser1, regressuser2;
 ALTER GROUP regressgroup1 ADD USER regressuser4;
 ALTER GROUP regressgroup2 ADD USER regressuser2;	-- duplicate
-WARNING:  ALTER GROUP: user "regressuser2" is already in group "regressgroup2"
+WARNING:  user "regressuser2" is already in group "regressgroup2"
 ALTER GROUP regressgroup2 DROP USER regressuser2;
 ALTER GROUP regressgroup2 ADD USER regressuser4;
 -- test owner privileges
