@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.117 2002/06/15 01:29:49 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.118 2002/06/15 19:58:53 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -921,9 +921,11 @@ env PGOPTIONS='-c geqo=off' psql
       <term><varname>LOG_PID</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
-        Prefixes each server log message with the process ID of the
-        backend process. This is useful to sort out which messages
-        pertain to which connection. The default is off.
+        Prefixes each server message in the logfile with the process ID of
+        the backend process. This is useful to sort out which messages
+        pertain to which connection. The default is off.  This parameter
+        does not affect messages logged via syslog(), which always contain
+        the process ID.
        </para>
       </listitem>
      </varlistentry>
