@@ -32,6 +32,10 @@ extern GLOBAL_VALUES globals;
 // Constants ---------------------------------------------------------------
 #define MIN(x,y)      ((x) < (y) ? (x) : (y))
 
+#ifdef WIN32
+#define MAXPGPATH       (255+1)
+#endif
+
 #define MAXKEYLEN       (15+1)            // Max keyword length
 #define MAXDESC         (255+1)           // Max description length
 #define MAXDSNAME       (32+1)            // Max data source name length

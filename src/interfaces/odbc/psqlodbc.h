@@ -40,8 +40,8 @@ typedef UInt4 Oid;
 #define DRIVERNAME             "PostgreSQL ODBC"
 #define DBMS_NAME              "PostgreSQL"
 
-#define DBMS_VERSION           "06.40.0008 PostgreSQL 6.4/6.5"
-#define POSTGRESDRIVERVERSION  "06.40.0008"
+#define DBMS_VERSION           "06.40.0009 PostgreSQL 6.4/6.5"
+#define POSTGRESDRIVERVERSION  "06.40.0009"
 
 #ifdef WIN32
 #define DRIVER_FILE_NAME		"PSQLODBC.DLL"
@@ -50,6 +50,10 @@ typedef UInt4 Oid;
 #endif
 
 /* Limits */
+#ifdef WIN32
+#define BLCKSZ                      4096
+#endif
+
 #define MAX_QUERY_SIZE				(BLCKSZ*2)
 #define MAX_MESSAGE_LEN				MAX_QUERY_SIZE
 #define MAX_CONNECT_STRING			4096
