@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.463 2004/06/25 21:55:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.464 2004/06/28 00:18:47 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -5617,8 +5617,8 @@ ConstBit:	BitWithLength
 				}
 			| BitWithoutLength
 				{
-					$$->typmod = -1;
 					$$ = $1;
+					$$->typmod = -1;
 				}
 		;
 
@@ -5687,8 +5687,8 @@ ConstCharacter:  CharacterWithLength
 					 * of one, but should not be constrained if the length
 					 * was not specified.
 					 */
-					$1->typmod = -1;
 					$$ = $1;
+					$$->typmod = -1;
 				}
 		;
 
