@@ -6,7 +6,7 @@
  * copyright (c) Oliver Elphick <olly@lfix.co.uk>, 2001;
  * licence: BSD
  *
- * $Header: /cvsroot/pgsql/src/bin/pg_controldata/pg_controldata.c,v 1.2 2002/08/18 02:48:41 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/pg_controldata/pg_controldata.c,v 1.3 2002/08/21 22:24:34 petere Exp $
  */
 #include "postgres.h"
 
@@ -15,8 +15,22 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <locale.h>
+#include <errno.h>
 
 #include "catalog/pg_control.h"
+
+#define _(x) gettext((x))
+
+
+static void
+usage(const char *progname)
+{
+	printf(_("%s displays PostgreSQL database cluster control information.\n"), progname);
+	printf(_("Usage:\n  %s [DATADIR]\n\n"), progname);
+	printf(_("If not data directory is specified, the environment variable PGDATA\nis used.\n\n"));
+	printf(_("Report bugs to <pgsql-bugs@postgresql.org>.\n"));
+}
 
 
 static const char *
@@ -35,7 +49,7 @@ dbState(DBState state)
 		case DB_IN_PRODUCTION:
 			return "IN_PRODUCTION";
 	}
-	return "unrecognized status code";
+	return _("unrecognized status code");
 }
 
 
@@ -50,6 +64,32 @@ main(int argc, char *argv[])
 	char		pgctime_str[32];
 	char		ckpttime_str[32];
 	char	   *strftime_fmt = "%c";
+	char	   *progname;
+
+	setlocale(LC_ALL, "");
+#ifdef ENABLE_NLS
+	bindtextdomain("pg_controldata", LOCALEDIR);
+	textdomain("pg_controldata");
+#endif
+
+	if (!strrchr(argv[0], '/'))
+		progname = argv[0];
+	else
+		progname = strrchr(argv[0], '/') + 1;
+
+	if (argc > 1)
+	{
+		if (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-?") == 0)
+		{
+			usage(progname);
+			exit(0);
+		}
+		if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-V") == 0)
+		{
+			puts("pg_controldata (PostgreSQL) " PG_VERSION);
+			exit(0);
+		}
+	}
 
 	if (argc > 1)
 		DataDir = argv[1];
@@ -57,7 +97,7 @@ main(int argc, char *argv[])
 		DataDir = getenv("PGDATA");
 	if (DataDir == NULL)
 	{
-		fprintf(stderr, "no data directory specified\n");
+		fprintf(stderr, _("%s: no data directory specified\n"), progname);
 		exit(1);
 	}
 
@@ -65,13 +105,15 @@ main(int argc, char *argv[])
 
 	if ((fd = open(ControlFilePath, O_RDONLY)) == -1)
 	{
-		perror("Failed to open $PGDATA/global/pg_control for reading");
+		fprintf(stderr, _("%s: could not open file \"%s\" for reading (%s)\n"),
+				progname, ControlFilePath, strerror(errno));
 		exit(2);
 	}
 
 	if (read(fd, &ControlFile, sizeof(ControlFileData)) != sizeof(ControlFileData))
 	{
-		perror("Failed to read $PGDATA/global/pg_control");
+		fprintf(stderr, _("%s: could not read file \"%s\" (%s)\n"),
+				progname, ControlFilePath, strerror(errno));
 		exit(2);
 	}
 	close(fd);
@@ -84,9 +126,9 @@ main(int argc, char *argv[])
 	FIN_CRC64(crc);
 
 	if (!EQ_CRC64(crc, ControlFile.crc))
-		printf("WARNING: Calculated CRC checksum does not match value stored in file.\n"
-			   "Either the file is corrupt, or it has a different layout than this program\n"
-			   "is expecting.  The results below are untrustworthy.\n\n");
+		printf(_("WARNING: Calculated CRC checksum does not match value stored in file.\n"
+				 "Either the file is corrupt, or it has a different layout than this program\n"
+				 "is expecting.  The results below are untrustworthy.\n\n"));
 
 	/*
 	 * Use variable for format to suppress overly-anal-retentive gcc warning
@@ -97,56 +139,33 @@ main(int argc, char *argv[])
 	strftime(ckpttime_str, sizeof(ckpttime_str), strftime_fmt,
 			 localtime(&(ControlFile.checkPointCopy.time)));
 
-	printf("pg_control version number:            %u\n"
-		   "Catalog version number:               %u\n"
-		   "Database state:                       %s\n"
-		   "pg_control last modified:             %s\n"
-		   "Current log file id:                  %u\n"
-		   "Next log file segment:                %u\n"
-		   "Latest checkpoint location:           %X/%X\n"
-		   "Prior checkpoint location:            %X/%X\n"
-		   "Latest checkpoint's REDO location:    %X/%X\n"
-		   "Latest checkpoint's UNDO location:    %X/%X\n"
-		   "Latest checkpoint's StartUpID:        %u\n"
-		   "Latest checkpoint's NextXID:          %u\n"
-		   "Latest checkpoint's NextOID:          %u\n"
-		   "Time of latest checkpoint:            %s\n"
-		   "Database block size:                  %u\n"
-		   "Blocks per segment of large relation: %u\n"
-		   "Maximum length of names:              %u\n"
-		   "Maximum number of function arguments: %u\n"
-		   "Date/time type storage:               %s\n"
-		   "Maximum length of locale name:        %u\n"
-		   "LC_COLLATE:                           %s\n"
-		   "LC_CTYPE:                             %s\n",
+	printf(_("pg_control version number:            %u\n"), ControlFile.pg_control_version);
+	printf(_("Catalog version number:               %u\n"), ControlFile.catalog_version_no);
+	printf(_("Database cluster state:               %s\n"), dbState(ControlFile.state));
+	printf(_("pg_control last modified:             %s\n"), pgctime_str);
+	printf(_("Current log file ID:                  %u\n"), ControlFile.logId);
+	printf(_("Next log file segment:                %u\n"), ControlFile.logSeg);
+	printf(_("Latest checkpoint location:           %X/%X\n"),
+		   ControlFile.checkPoint.xlogid, ControlFile.checkPoint.xrecoff);
+	printf(_("Prior checkpoint location:            %X/%X\n"),
+		   ControlFile.prevCheckPoint.xlogid, ControlFile.prevCheckPoint.xrecoff);
+	printf(_("Latest checkpoint's REDO location:    %X/%X\n"),
+		   ControlFile.checkPointCopy.redo.xlogid, ControlFile.checkPointCopy.redo.xrecoff);
+	printf(_("Latest checkpoint's UNDO location:    %X/%X\n"),
+		   ControlFile.checkPointCopy.undo.xlogid, ControlFile.checkPointCopy.undo.xrecoff);
+	printf(_("Latest checkpoint's StartUpID:        %u\n"), ControlFile.checkPointCopy.ThisStartUpID);
+	printf(_("Latest checkpoint's NextXID:          %u\n"), ControlFile.checkPointCopy.nextXid);
+	printf(_("Latest checkpoint's NextOID:          %u\n"), ControlFile.checkPointCopy.nextOid);
+	printf(_("Time of latest checkpoint:            %s\n"), ckpttime_str);
+	printf(_("Database block size:                  %u\n"), ControlFile.blcksz);
+	printf(_("Blocks per segment of large relation: %u\n"), ControlFile.relseg_size);
+	printf(_("Maximum length of identifiers:        %u\n"), ControlFile.nameDataLen);
+	printf(_("Maximum number of function arguments: %u\n"), ControlFile.funcMaxArgs);
+	printf(_("Date/time type storage:               %s\n"),
+		   (ControlFile.enableIntTimes ? _("64-bit integers") : _("Floating point")));
+	printf(_("Maximum length of locale name:        %u\n"), ControlFile.localeBuflen);
+	printf(_("LC_COLLATE:                           %s\n"), ControlFile.lc_collate);
+	printf(_("LC_CTYPE:                             %s\n"), ControlFile.lc_ctype);
 
-		   ControlFile.pg_control_version,
-		   ControlFile.catalog_version_no,
-		   dbState(ControlFile.state),
-		   pgctime_str,
-		   ControlFile.logId,
-		   ControlFile.logSeg,
-		   ControlFile.checkPoint.xlogid,
-		   ControlFile.checkPoint.xrecoff,
-		   ControlFile.prevCheckPoint.xlogid,
-		   ControlFile.prevCheckPoint.xrecoff,
-		   ControlFile.checkPointCopy.redo.xlogid,
-		   ControlFile.checkPointCopy.redo.xrecoff,
-		   ControlFile.checkPointCopy.undo.xlogid,
-		   ControlFile.checkPointCopy.undo.xrecoff,
-		   ControlFile.checkPointCopy.ThisStartUpID,
-		   ControlFile.checkPointCopy.nextXid,
-		   ControlFile.checkPointCopy.nextOid,
-		   ckpttime_str,
-		   ControlFile.blcksz,
-		   ControlFile.relseg_size,
-		   ControlFile.nameDataLen,
-		   ControlFile.funcMaxArgs,
-		   (ControlFile.enableIntTimes ?
-			"64-bit integers" : "Floating point"),
-		   ControlFile.localeBuflen,
-		   ControlFile.lc_collate,
-		   ControlFile.lc_ctype);
-
-	return (0);
+	return 0;
 }
