@@ -2,12 +2,13 @@
  * Routines for handling of 'SET var TO', 'SHOW var' and 'RESET var'
  * statements.
  *
- * $Id: variable.c,v 1.11 1997/06/03 06:29:31 vadim Exp $
+ * $Id: variable.c,v 1.12 1997/06/20 17:17:03 thomas Exp $
  *
  */
 
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 #include "postgres.h"
 #include "miscadmin.h"
 #include "tcop/variable.h"
@@ -38,55 +39,60 @@ static const char *get_token(char **tok, char **val, const char *str)
 {
     const char *start;
     int len = 0;
-	
-    *tok = *val = NULL;
-	
+
+    *tok = NULL;
+    if (val != NULL) *val = NULL;
+
     if ( !(*str) )
 	return NULL;
-		
+
     /* skip white spaces */
-    while ( *str == ' ' || *str == '\t' )
-	str++;
+    while (isspace(*str)) str++;
     if ( *str == ',' || *str == '=' )
 	elog(WARN, "Syntax error near (%s): empty setting", str);
+
+    /* end of string? then return NULL */
     if ( !(*str) )
 	return NULL;
-	
+
+    /* OK, at beginning of non-NULL string... */
     start = str;
-	
+
     /* 
      * count chars in token until we hit white space or comma 
      * or '=' or end of string
      */
-    while ( *str && *str != ' ' && *str != '\t' 
-			&& *str != ','  && *str != '=' )
+    while ( *str && (! isspace(*str))
+     && *str != ','  && *str != '=' )
     {
 	str++;
 	len++;
     }
     
-    *tok = (char*) palloc (len + 1);
+    *tok = (char*) PALLOC(len + 1);
     strncpy (*tok, start, len);
     (*tok)[len] = '\0';
 
     /* skip white spaces */
-    while ( *str == ' ' || *str == '\t' )
-	str++;
-    
-    if ( !(*str) )
-    	return (NULL);
-    if ( *str == ',' )
+    while ( isspace(*str)) str++;
+
+    /* end of string? */
+    if ( !(*str) ) {
+    	return(str);
+
+    /* delimiter? */
+    } else if ( *str == ',' ) {
     	return (++str);
 
-    if ( *str != '=' )
+    } else if ((val == NULL) || ( *str != '=' )) {
 	elog(WARN, "Syntax error near (%s)", str);
+    };
     
     str++;		/* '=': get value */
     len = 0;
 
     /* skip white spaces */
-    while ( *str == ' ' || *str == '\t' )
-	str++;
+    while ( isspace(*str)) str++;
 
     if ( *str == ',' || !(*str) )
 	elog(WARN, "Syntax error near (=%s)", str);
@@ -94,22 +100,21 @@ static const char *get_token(char **tok, char **val, const char *str)
     start = str;
 
     /* 
-     * count chars in token' value until we hit white space or comma 
+     * count chars in token's value until we hit white space or comma 
      * or end of string
      */
-    while ( *str && *str != ' ' && *str != '\t' && *str != ',' )
+    while ( *str && (! isspace(*str)) && *str != ',' )
     {
 	str++;
 	len++;
     }
     
-    *val = (char*) palloc (len + 1);
+    *val = (char*) PALLOC(len + 1);
     strncpy (*val, start, len);
     (*val)[len] = '\0';
 
     /* skip white spaces */
-    while ( *str == ' ' || *str == '\t' )
-	str++;
+    while ( isspace(*str)) str++;
 
     if ( !(*str) )
     	return (NULL);
@@ -120,23 +125,23 @@ static const char *get_token(char **tok, char **val, const char *str)
 
     return str;
 }
-	
+
 /*-----------------------------------------------------------------------*/
 static bool parse_null(const char *value)
 	{
 	return TRUE;
 	}
-	
+
 static bool show_null(const char *value)
 	{
 	return TRUE;
 	}
-	
+
 static bool reset_null(const char *value)
 	{
 	return TRUE;
 	}
-	
+
 static bool parse_geqo (const char *value)
 {
     const char *rest;
@@ -146,8 +151,8 @@ static bool parse_geqo (const char *value)
     if ( tok == NULL )
 	elog(WARN, "Value undefined");
 
-    if ( rest )
-	elog(WARN, "Unacceptable data (%s)", rest);
+    if (( rest ) && ( *rest != '\0' ))
+	elog(WARN, "Unable to parse '%s'", value);
 
     if ( strcasecmp (tok, "on") == 0 )
     {
@@ -158,21 +163,21 @@ static bool parse_geqo (const char *value)
     	    geqo_rels = pg_atoi (val, sizeof(int32), '\0');
     	    if ( geqo_rels <= 1 )
 		elog(WARN, "Bad value for # of relations (%s)", val);
-    	    pfree (val);
+    	    PFREE(val);
     	}
     	_use_geqo_ = true;
     	_use_geqo_rels_ = geqo_rels;
     }
     else if ( strcasecmp (tok, "off") == 0 )
     {
-    	if ( val != NULL )
-	    elog(WARN, "Unacceptable data (%s)", val);
+    	if (( val != NULL ) && ( *val != '\0' ))
+	    elog(WARN, "%s does not allow a parameter",tok);
     	_use_geqo_ = false;
     }
     else
     	elog(WARN, "Bad value for GEQO (%s)", value);
     
-    pfree (tok);
+    PFREE(tok);
     return TRUE;
 }
 
@@ -180,7 +185,7 @@ static bool show_geqo ()
 {
 
     if ( _use_geqo_ )
-    	elog (NOTICE, "GEQO is ON begining with %d relations", _use_geqo_rels_);
+    	elog (NOTICE, "GEQO is ON beginning with %d relations", _use_geqo_rels_);
     else
     	elog (NOTICE, "GEQO is OFF");
     return TRUE;
@@ -197,7 +202,7 @@ static bool reset_geqo ()
     _use_geqo_rels_ = GEQO_RELS;
     return TRUE;
 }
-	
+
 static bool parse_r_plans (const char *value)
 {
 
@@ -231,7 +236,7 @@ static bool reset_r_plans ()
 #endif
     return TRUE;
 }
-	
+
 static bool parse_cost_heap (const char *value)
 {
     float32 res = float4in ((char*)value);
@@ -278,16 +283,13 @@ static bool reset_cost_index ()
 
 static bool parse_date(const char *value)
 {
-	char *tok, *val;
+	char *tok;
 	int dcnt = 0, ecnt = 0;
-	
-	while((value = get_token(&tok, &val, value)) != 0)
+
+	while((value = get_token(&tok, NULL, value)) != 0)
 	{
-		if ( val != NULL )
-			elog(WARN, "Syntax error near (%s)", val);
-		
 		/* Ugh. Somebody ought to write a table driven version -- mjl */
-		
+
 		if(!strcasecmp(tok, "iso"))
 			{
 			DateStyle = USE_ISO_DATES;
@@ -324,15 +326,15 @@ static bool parse_date(const char *value)
 			{
 			elog(WARN, "Bad value for date style (%s)", tok);
 			}
-		pfree (tok);
+		PFREE(tok);
 	}
-	
+
 	if(dcnt > 1 || ecnt > 1)
 		elog(NOTICE, "Conflicting settings for date");
 
 	return TRUE;
 }
-	
+
 static bool show_date()
 	{
 	char buf[64];
@@ -357,7 +359,7 @@ static bool show_date()
 
 	return TRUE;
 	}
-	
+
 static bool reset_date()
 	{
 	DateStyle = USE_POSTGRES_DATES;
@@ -365,7 +367,7 @@ static bool reset_date()
 
 	return TRUE;
 	}
-	
+
 /*-----------------------------------------------------------------------*/
 struct VariableParsers
 	{
@@ -390,13 +392,13 @@ struct VariableParsers
 bool SetPGVariable(const char *name, const char *value)
 	{
 	struct VariableParsers *vp;
-	
+
 	for(vp = VariableParsers; vp->name; vp++)
 		{
 		if(!strcasecmp(vp->name, name))
 			return (vp->parser)(value);
 		}
-		
+
 	elog(NOTICE, "Unrecognized variable %s", name);
 
 	return TRUE;
@@ -406,13 +408,13 @@ bool SetPGVariable(const char *name, const char *value)
 bool GetPGVariable(const char *name)
 	{
 	struct VariableParsers *vp;
-	
+
 	for(vp = VariableParsers; vp->name; vp++)
 		{
 		if(!strcasecmp(vp->name, name))
 			return (vp->show)();
 		}
-		
+
 	elog(NOTICE, "Unrecognized variable %s", name);
 
 	return TRUE;
@@ -422,13 +424,13 @@ bool GetPGVariable(const char *name)
 bool ResetPGVariable(const char *name)
 	{
 	struct VariableParsers *vp;
-	
+
 	for(vp = VariableParsers; vp->name; vp++)
 		{
 		if(!strcasecmp(vp->name, name))
 			return (vp->reset)();
 		}
-		
+
 	elog(NOTICE, "Unrecognized variable %s", name);
 
 	return TRUE;
