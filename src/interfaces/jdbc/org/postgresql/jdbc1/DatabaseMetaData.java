@@ -13,7 +13,7 @@ import org.postgresql.util.PSQLException;
 /**
  * This class provides information about the database as a whole.
  *
- * $Id: DatabaseMetaData.java,v 1.36 2001/10/30 05:05:25 barry Exp $
+ * $Id: DatabaseMetaData.java,v 1.37 2001/11/02 23:50:08 davec Exp $
  *
  * <p>Many of the methods here return lists of information in ResultSets.  You
  * can use the normal ResultSet methods such as getString and getInt to
@@ -2272,86 +2272,72 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 														);
 	}
 
-	private void importLoop(Vector tuples, java.sql.ResultSet keyRelation) throws SQLException
-	{
-		String s, s2;
-		String origTable = null, primTable = new String(""), schema;
-		int i;
-		Vector v = new Vector();
-
-		s = keyRelation.getString(1);
-		s2 = s;
-		//System.out.println(s);
-
-		for (i = 0;;i++)
+	private void parseConstraint(java.sql.ResultSet keyRelation, Vector tuples) throws SQLException
+        {
+	    byte tuple[][]=new byte[14][0];
+	    for (int k = 0;k < 14;k++)
+		tuple[k] = null;
+	    String s=keyRelation.getString(1);
+	    int pos=s.indexOf("\\000");
+	    if(pos>-1)
+	    {
+		tuple[11]=s.substring(0,pos).getBytes();; // FK_NAME
+		int pos2=s.indexOf("\\000", pos+1);
+		if(pos2>-1)
 		{
-			s = s.substring(s.indexOf("\\000") + 4);
-			if (s.compareTo("") == 0)
+		    tuple[2]=s.substring(pos+4, pos2).getBytes();; // PKTABLE_NAME
+		    pos=s.indexOf("\\000", pos2+1);
+		    if(pos>-1)
+		    {
+			tuple[6]=s.substring(pos2+4, pos).getBytes();; // FKTABLE_NAME
+			pos=s.indexOf("\\000", pos+1); // Ignore MATCH type 
+			if(pos>-1)
 			{
-				//System.out.println();
-				break;
-			}
-			s2 = s.substring(0, s.indexOf("\\000"));
-			switch (i)
-			{
-			case 0:
-				origTable = s2;
-				break;
-			case 1:
-				primTable = s2;
-				break;
-			case 2:
-				schema = s2;
-				break;
-			default:
-				v.addElement(s2);
-			}
-		}
-
-		java.sql.ResultSet rstmp = connection.ExecSQL("select * from " + origTable + " where 1=0");
-		java.sql.ResultSetMetaData origCols = rstmp.getMetaData();
-
-		String stmp;
-		// Vector tuples=new Vector();
-		byte tuple[][];
-
-		// the foreign keys are only on even positions in the Vector.
-		for (i = 0;i < v.size();i += 2)
-		{
-			stmp = (String)v.elementAt(i);
-
-			for (int j = 1;j <= origCols.getColumnCount();j++)
-			{
-				if (stmp.compareTo(origCols.getColumnName(j)) == 0)
+			    pos2=s.indexOf("\\000",pos+1);
+			    if(pos2>-1)
+			    {
+				tuple[3]=s.substring(pos+4, pos2).getBytes();; // PKCOLUMN_NAME
+				pos=s.indexOf("\\000", pos2+1);
+				if(pos>-1)
 				{
-					tuple = new byte[14][0];
-
-					for (int k = 0;k < 14;k++)
-						tuple[k] = null;
-
-					//PKTABLE_NAME
-					tuple[2] = primTable.getBytes();
-					//PKTABLE_COLUMN
-					stmp = (String)v.elementAt(i + 1);
-					tuple[3] = stmp.getBytes();
-					//FKTABLE_NAME
-					tuple[6] = origTable.getBytes();
-					//FKCOLUMN_NAME
-					tuple[7] = origCols.getColumnName(j).getBytes();
-					//KEY_SEQ
-					tuple[8] = Integer.toString(j).getBytes();
-
-					tuples.addElement(tuple);
-
-					//System.out.println(origCols.getColumnName(j)+
-					//": "+j+" -> "+primTable+": "+
-					//(String)v.elementAt(i+1));
-					break;
+				    tuple[7]=s.substring(pos2+4, pos).getBytes(); //FKCOLUMN_NAME
 				}
+			    }
 			}
+		    }
 		}
+	    }
 
-		//return tuples;
+	    // UPDATE_RULE
+	    String rule=keyRelation.getString(2);
+	    int action=importedKeyNoAction;
+	    if("cascade".equals(rule)) action=importedKeyCascade;
+	    else if("setnull".equals(rule)) action=importedKeySetNull;
+	    else if("setdefault".equals(rule)) action=importedKeySetDefault;
+	    tuple[9]=Integer.toString(action).getBytes();
+
+	    // DELETE_RULE
+	    rule=keyRelation.getString(3);
+	    action=importedKeyNoAction;
+	    if("cascade".equals(rule)) action=importedKeyCascade;
+	    else if("setnull".equals(rule)) action=importedKeySetNull;
+	    else if("setdefault".equals(rule)) action=importedKeySetDefault;
+	    tuple[10]=Integer.toString(action).getBytes();
+
+	    // DEFERRABILITY
+	    int deferrability=importedKeyNotDeferrable;
+	    boolean deferrable=keyRelation.getBoolean(4);
+	    if(deferrable)
+	    {
+		if(keyRelation.getBoolean(5))
+		    deferrability=importedKeyInitiallyDeferred;
+		else
+		    deferrability=importedKeyInitiallyImmediate;
+	    }
+	    tuple[13]=Integer.toString(deferrability).getBytes();
+	    for (int i=0; i< 14; i++){
+		tuples.addElement(tuple[i]);
+	    }
 	}
 
 	/**
@@ -2405,43 +2391,54 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 * @return ResultSet each row is a primary key column description
 	 * @see #getExportedKeys
 	 */
-	public java.sql.ResultSet getImportedKeys(String catalog, String schema, String table) throws SQLException
-	{
-		// Added by Ola Sundell <ola@miranda.org>
-		// FIXME: error checking galore!
-		java.sql.ResultSet rsret;
-		Field f[] = new Field[14];
-		byte tuple[][];
+        public java.sql.ResultSet getImportedKeys(String catalog, String schema, String table) throws SQLException
+        {
+                Field f[]=new Field[14];
 
-		f[0] = new Field(connection, "PKTABLE_CAT", iVarcharOid, 32);
-		f[1] = new Field(connection, "PKTABLE_SCHEM", iVarcharOid, 32);
-		f[2] = new Field(connection, "PKTABLE_NAME", iVarcharOid, 32);
-		f[3] = new Field(connection, "PKCOLUMN_NAME", iVarcharOid, 32);
-		f[4] = new Field(connection, "FKTABLE_CAT", iVarcharOid, 32);
-		f[5] = new Field(connection, "FKTABLE_SCHEM", iVarcharOid, 32);
-		f[6] = new Field(connection, "FKTABLE_NAME", iVarcharOid, 32);
-		f[7] = new Field(connection, "FKCOLUMN_NAME", iVarcharOid, 32);
-		f[8] = new Field(connection, "KEY_SEQ", iInt2Oid, 2);
-		f[9] = new Field(connection, "UPDATE_RULE", iInt2Oid, 2);
-		f[10] = new Field(connection, "DELETE_RULE", iInt2Oid, 2);
-		f[11] = new Field(connection, "FK_NAME", iVarcharOid, 32);
-		f[12] = new Field(connection, "PK_NAME", iVarcharOid, 32);
-		f[13] = new Field(connection, "DEFERRABILITY", iInt2Oid, 2);
+                f[0]=new Field(connection, "PKTABLE_CAT", iVarcharOid, 32);
+                f[1]=new Field(connection, "PKTABLE_SCHEM", iVarcharOid, 32);
+                f[2]=new Field(connection, "PKTABLE_NAME", iVarcharOid, 32);
+                f[3]=new Field(connection, "PKCOLUMN_NAME", iVarcharOid, 32);
+                f[4]=new Field(connection, "FKTABLE_CAT", iVarcharOid, 32);
+                f[5]=new Field(connection, "FKTABLE_SCHEM", iVarcharOid, 32);
+                f[6]=new Field(connection, "FKTABLE_NAME", iVarcharOid, 32);
+                f[7]=new Field(connection, "FKCOLUMN_NAME", iVarcharOid, 32);
+                f[8]=new Field(connection, "KEY_SEQ", iInt2Oid, 2);
+                f[9]=new Field(connection, "UPDATE_RULE", iInt2Oid, 2);
+                f[10]=new Field(connection, "DELETE_RULE", iInt2Oid, 2);
+                f[11]=new Field(connection, "FK_NAME", iVarcharOid, 32);
+                f[12]=new Field(connection, "PK_NAME", iVarcharOid, 32);
+                f[13]=new Field(connection, "DEFERRABILITY", iInt2Oid, 2);
 
-		java.sql.ResultSet rs = connection.ExecSQL("select t.tgargs " +
-								"from pg_class as c, pg_trigger as t " +
-								"where c.relname like '" + table + "' and c.relfilenode=t.tgrelid");
-		Vector tuples = new Vector();
+                java.sql.ResultSet rs = connection.ExecSQL("SELECT a.tgargs,"
+                                                           + "substring(a.proname from 9 for (char_length(a.proname)-12)),"
+                                                           + "substring(b.proname from 9 for (char_length(b.proname)-12)),"
+                                                           + "a.tgdeferrable,"
+                                                           + "a.tginitdeferred "
+                                                           + "FROM "
+                                                           + "(SELECT t.tgargs, t.tgconstrname, p.proname, t.tgdeferrable,"
+                                                           + "t.tginitdeferred "
+                                                           + "FROM pg_class as c, pg_proc as p, pg_trigger as t "
+                                                           + "WHERE c.relfilenode=t.tgrelid AND t.tgfoid = p.oid "
+                                                           + "AND p.proname LIKE 'RI_FKey_%_upd') as a,"
+                                                           + "(SELECT t.tgconstrname, p.proname "
+                                                           + "FROM pg_class as c, pg_proc as p, pg_trigger as t "
+                                                           + "WHERE c.relfilenode=t.tgrelid AND t.tgfoid = p.oid "
+                                                           + "AND p.proname LIKE 'RI_FKey_%_del') as b,"
+                                                           + "(SELECT t.tgconstrname FROM pg_class as c, pg_trigger as t "
+                                                           + "WHERE c.relname like '"+table+"' AND c.relfilenode=t.tgrelid) as c "
+                                                           + "WHERE a.tgconstrname=b.tgconstrname AND a.tgconstrname=c.tgconstrname"
+                                                           );
+                Vector tuples = new Vector();
 
-		while (rs.next())
-		{
-			importLoop(tuples, rs);
-		}
+                while (rs.next())
+                {
+		  
+                  parseConstraint(rs,tuples);
+                }
 
-		rsret = new ResultSet(connection, f, tuples, "OK", 1);
-
-		return rsret;
-	}
+                return new ResultSet(connection, f, tuples, "OK", 1);
+        }
 
 	/**
 	 * Get a description of a foreign key columns that reference a
@@ -2498,7 +2495,47 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public java.sql.ResultSet getExportedKeys(String catalog, String schema, String table) throws SQLException
 	{
-		throw org.postgresql.Driver.notImplemented();
+		Field f[] = new Field[14];
+
+		f[0] = new Field(connection, "PKTABLE_CAT", iVarcharOid, 32);
+		f[1] = new Field(connection, "PKTABLE_SCHEM", iVarcharOid, 32);
+		f[2] = new Field(connection, "PKTABLE_NAME", iVarcharOid, 32);
+		f[3] = new Field(connection, "PKCOLUMN_NAME", iVarcharOid, 32);
+		f[4] = new Field(connection, "FKTABLE_CAT", iVarcharOid, 32);
+		f[5] = new Field(connection, "FKTABLE_SCHEM", iVarcharOid, 32);
+		f[6] = new Field(connection, "FKTABLE_NAME", iVarcharOid, 32);
+		f[7] = new Field(connection, "FKCOLUMN_NAME", iVarcharOid, 32);
+		f[8] = new Field(connection, "KEY_SEQ", iInt2Oid, 2);
+		f[9] = new Field(connection, "UPDATE_RULE", iInt2Oid, 2);
+		f[10] = new Field(connection, "DELETE_RULE", iInt2Oid, 2);
+		f[11] = new Field(connection, "FK_NAME", iVarcharOid, 32);
+		f[12] = new Field(connection, "PK_NAME", iVarcharOid, 32);
+		f[13] = new Field(connection, "DEFERRABILITY", iInt2Oid, 2);
+
+		java.sql.ResultSet rs = connection.ExecSQL("SELECT a.tgargs,"
+							   + "substring(a.proname from 9 for (char_length(a.proname)-12)),"
+							   + "substring(b.proname from 9 for (char_length(b.proname)-12)),"
+							   + "a.tgdeferrable,"
+							   + "a.tginitdeferred "
+							   + "FROM "
+							   + "(SELECT t.tgargs, t.tgconstrname, p.proname,"
+							   + "t.tgdeferrable, t.tginitdeferred "
+							   + "FROM pg_class as c, pg_proc as p, pg_trigger as t "
+							   + "WHERE c.relname like '"+table+"' AND c.relfilenode=t.tgrelid "
+							   + "AND t.tgfoid = p.oid AND p.proname LIKE 'RI_FKey_%_upd') as a, "
+							   + "(SELECT t.tgconstrname, p.proname "
+							   + "FROM pg_class as c, pg_proc as p, pg_trigger as t "
+							   + "WHERE c.relname like '"+table+"' AND c.relfilenode=t.tgrelid "
+							   + "AND t.tgfoid = p.oid AND p.proname LIKE 'RI_FKey_%_del') as b "
+							   + "WHERE a.tgconstrname=b.tgconstrname");
+		Vector tuples = new Vector();
+
+		while (rs.next())
+		{
+			parseConstraint(rs,tuples);
+		}
+
+		return new ResultSet(connection, f, tuples, "OK", 1);
 	}
 
 	/**
