@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.51 1997/11/21 18:09:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.52 1997/11/21 19:59:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1422,7 +1422,6 @@ static void
 vc_vacpage(Page page, VPageDescr vpd)
 {
 	ItemId		itemid;
-	HeapTuple	htup;
 	int			i;
 
 	Assert(vpd->vpd_nusd == 0);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.27 1997/11/21 18:04:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.28 1997/11/21 19:59:28 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1119,7 +1119,6 @@ index_create(char *heapRelationName,
 	 * ----------------
 	 */
 	indexRelation = heap_creatr(indexRelationName,
-								DEFAULT_SMGR,
 								indexTupDesc);
 
 	/* ----------------
