@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.85 2001/11/10 23:51:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.86 2001/11/23 23:41:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -592,6 +592,7 @@ btbulkdelete(PG_FUNCTION_ARGS)
 			BlockNumber blkno;
 			OffsetNumber offnum;
 			BTItem		btitem;
+			BTPageOpaque opaque;
 			IndexTuple	itup;
 			ItemPointer htup;
 
@@ -608,9 +609,17 @@ btbulkdelete(PG_FUNCTION_ARGS)
 				/*
 				 * If this is first deletion on this page, trade in read
 				 * lock for a really-exclusive write lock.	Then, step
-				 * back one and re-examine the item, because someone else
-				 * might have inserted an item while we weren't holding
+				 * back one and re-examine the item, because other backends
+				 * might have inserted item(s) while we weren't holding
 				 * the lock!
+				 *
+				 * We assume that only concurrent insertions, not deletions,
+				 * can occur while we're not holding the page lock (the caller
+				 * should hold a suitable relation lock to ensure this).
+				 * Therefore, the item we want to delete is either in the
+				 * same slot as before, or some slot to its right.
+				 * Rechecking the same slot is necessary and sufficient to
+				 * get back in sync after any insertions.
 				 */
 				if (blkno != lockedBlock)
 				{
@@ -620,7 +629,7 @@ btbulkdelete(PG_FUNCTION_ARGS)
 				}
 				else
 				{
-					/* Delete the item from the page */
+					/* Okay to delete the item from the page */
 					_bt_itemdel(rel, buf, current);
 
 					/* Mark buffer dirty, but keep the lock and pin */
@@ -630,14 +639,23 @@ btbulkdelete(PG_FUNCTION_ARGS)
 				}
 
 				/*
-				 * We need to back up the scan one item so that the next
-				 * cycle will re-examine the same offnum on this page.
+				 * In either case, we now need to back up the scan one item,
+				 * so that the next cycle will re-examine the same offnum on
+				 * this page.
 				 *
 				 * For now, just hack the current-item index.  Will need to
 				 * be smarter when deletion includes removal of empty
 				 * index pages.
+				 *
+				 * We must decrement ip_posid in all cases but one: if the
+				 * page was formerly rightmost but was split while we didn't
+				 * hold the lock, and ip_posid is pointing to item 1, then
+				 * ip_posid now points at the high key not a valid data item.
+				 * In this case we do want to step forward.
 				 */
-				current->ip_posid--;
+				opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+				if (current->ip_posid >= P_FIRSTDATAKEY(opaque))
+					current->ip_posid--;
 			}
 			else
 				num_index_tuples += 1;
