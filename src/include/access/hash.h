@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hash.h,v 1.19 1998/09/01 04:34:11 momjian Exp $
+ * $Id: hash.h,v 1.20 1998/10/04 20:19:06 tgl Exp $
  *
  * NOTES
  *		modeled after Margo Seltzer's hash implementation for unix.
@@ -165,7 +165,6 @@ typedef struct HashMetaPageData
 typedef HashMetaPageData *HashMetaPage;
 
 /* Short hands for accessing structure */
-#define BSHIFT			hashm_bshift
 #define OVFL_POINT		hashm_ovflpoint
 #define LAST_FREED		hashm_lastfreed
 #define MAX_BUCKET		hashm_maxbucket

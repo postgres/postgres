@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashovfl.c,v 1.17 1998/09/01 03:20:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashovfl.c,v 1.18 1998/10/04 20:19:08 tgl Exp $
  *
  * NOTES
  *	  Overflow pages look like ordinary relation pages.
@@ -121,11 +121,11 @@ _hash_getovfladdr(Relation rel, Buffer *metabufp)
 	splitnum = metap->OVFL_POINT;
 	max_free = metap->SPARES[splitnum];
 
-	free_page = (max_free - 1) >> (metap->BSHIFT + BYTE_TO_BIT);
+	free_page = (max_free - 1) >> (metap->hashm_bshift + BYTE_TO_BIT);
 	free_bit = (max_free - 1) & (BMPGSZ_BIT(metap) - 1);
 
 	/* Look through all the free maps to find the first free block */
-	first_page = metap->LAST_FREED >> (metap->BSHIFT + BYTE_TO_BIT);
+	first_page = metap->LAST_FREED >> (metap->hashm_bshift + BYTE_TO_BIT);
 	for (i = first_page; i <= free_page; i++)
 	{
 		Page		mappage;
@@ -369,7 +369,7 @@ _hash_freeovflpage(Relation rel, Buffer ovflbuf)
 	if (ovflpgno < metap->LAST_FREED)
 		metap->LAST_FREED = ovflpgno;
 
-	bitmappage = (ovflpgno >> (metap->BSHIFT + BYTE_TO_BIT));
+	bitmappage = (ovflpgno >> (metap->hashm_bshift + BYTE_TO_BIT));
 	bitmapbit = ovflpgno & (BMPGSZ_BIT(metap) - 1);
 
 	blkno = metap->hashm_mapp[bitmappage];
