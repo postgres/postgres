@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/Makefile,v 1.15 1998/07/26 04:31:08 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/bin/Makefile,v 1.15.2.1 1998/12/18 17:53:45 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -25,6 +25,9 @@ endif
 # TCL/TK programs
 #
 ifeq ($(USE_TCL), true)
+ifeq ($(USE_TK), true)
+	DIRS += pgaccess
+endif
 	DIRS += pgtclsh
 endif
 

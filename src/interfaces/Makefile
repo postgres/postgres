@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/Makefile,v 1.20 1998/10/27 21:27:36 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/Makefile,v 1.20.2.1 1998/12/18 17:53:46 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -48,11 +48,11 @@ endif
 perl5/Makefile: perl5/Makefile.PL
 	cd perl5 && perl Makefile.PL
 
-install-perl5:
+install-perl5: perl5/Makefile
 	$(MAKE) -C perl5 clean
 	cd perl5 && POSTGRES_HOME="$(POSTGRESDIR)" perl Makefile.PL
 	$(MAKE) -C perl5 all
-	if [ -w `sed -n -e 's/^ *SITELIBEXP *= *//p' perl5/Makefile` ]; then \
+	@if [ -w `sed -n -e 's/^ *SITELIBEXP *= *//p' perl5/Makefile` ]; then \
 		$(MAKE) $(MFLAGS) -C perl5 install; \
 		rm -f perl5/Makefile; \
 	else \
