@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.3 1997/11/26 03:42:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.4 1997/12/29 01:12:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 #include "postgres.h"
 #include "access/heapam.h"
 #include "catalog/pg_type.h"
+#include "parser/analyze.h"
 #include "parser/parse_clause.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_node.h"
@@ -370,4 +371,29 @@ transformSortClause(ParseState *pstate,
 	}
 
 	return sortlist;
+}
+
+/*
+ * transformUnionClause -
+ *	  transform a Union clause
+ *
+ */
+List *
+transformUnionClause(List *unionClause, List *targetlist)
+{
+	List *union_list = NIL;
+	QueryTreeList *qlist;
+	int i;
+TargetEntry
+	if (unionClause)
+	{
+		qlist = parse_analyze(unionClause);
+
+		for (i=0; i < qlist->len; i++)
+			union_list = lappend(union_list, qlist->qtrees[i]);
+		/* we need to check return types are consistent here */
+		return union_list;
+	}
+	else
+		return NIL;
 }

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_clause.h,v 1.3 1997/11/26 03:43:09 momjian Exp $
+ * $Id: parse_clause.h,v 1.4 1997/12/29 01:13:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,6 +26,7 @@ extern List *transformGroupClause(ParseState *pstate, List *grouplist,
 extern List *transformSortClause(ParseState *pstate,
 					List *orderlist, List *targetlist,
 					char *uniqueFlag);
+extern List *transformUnionClause(List *unionClause, List *targetlist);
 
 #endif							/* PARSE_CLAUSE_H */
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.17 1997/12/27 06:41:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.18 1997/12/29 01:12:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,14 +76,12 @@ planner(Query *parse)
 	Plan	   *result_plan = (Plan *) NULL;
 
 	List	   *primary_qual;
-	int			rt_index;
+	Index		rt_index;
 	
 
 	if (parse->unionClause)
 	{
-		result_plan = (Plan *) plan_union_queries(  0, /* none */
-													parse,
-													UNION_FLAG);
+		result_plan = (Plan *) plan_union_queries(parse);
 		/* XXX do we need to do this? bjm 12/19/97 */
 		tlist = preprocess_targetlist(tlist,
 									  parse->commandType,
@@ -91,11 +89,9 @@ planner(Query *parse)
 									  parse->rtable);
 	}
 	else if ((rt_index =
-				first_matching_rt_entry(rangetable, INHERITS_FLAG)) != -1)
+				first_inherit_rt_entry(rangetable)) != -1)
 	{
-		result_plan = (Plan *) plan_union_queries((Index) rt_index,
-													parse,
-													INHERITS_FLAG);
+		result_plan = (Plan *) plan_inherit_queries(parse, rt_index);
 		/* XXX do we need to do this? bjm 12/19/97 */
 		tlist = preprocess_targetlist(tlist,
 									  parse->commandType,

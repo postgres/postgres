@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: psqlHelp.h,v 1.34 1997/12/04 00:27:37 scrappy Exp $
+ * $Id: psqlHelp.h,v 1.35 1997/12/29 01:13:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -179,7 +179,12 @@ static struct _helpStruct QL_HELP[] = {
 	"rollback [transaction|work]"},
 	{"select",
 		"retrieve tuples",
-	"select [distinct on <attr>] <expr1> [as <attr1>], ... <exprN> [as <attrN>]\n\t[into table <class_name>] [from <from_list>]\n\t[where <qual>]\n\t[order by <attr1>\n\t\t[using <op1>],..<attrN> [[using <opN>] | ASC | DESC]];"},
+	"select [distinct on <attr>] <expr1> [as <attr1>], ... <exprN> [as <attrN>]\n\
+\t[into table <class_name>]\n\
+\t[from <from_list>]\n\
+\t[where <qual>]\n\
+\t[order by <attr1> [ASC | DESC] [using <op1>], ... <attrN> ]\n\
+\t[union [all] select ...];"},
 	{"set",
 		"set run-time environment",
 	"set DateStyle to {'ISO' | 'SQL' | 'Postgres' | 'European' | 'US' | 'NonEuropean'}\nset GEQO to {'ON[=#]' | 'OFF'}\nset R_PLANS to {'ON' | 'OFF'}"},
