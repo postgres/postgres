@@ -10,10 +10,10 @@ proc unknown {proname args} {
     # On first call prepare the plans
     #-----------------------------------------------------------
     if {![info exists p_mod]} {
-        set p_mod [SPI_prepare 					\
+        set p_mod [spi_prepare 					\
 		"select modname from pltcl_modfuncs		\
 		 where funcname = \$1" name]
-        set p_src [SPI_prepare					\
+        set p_src [spi_prepare					\
 		"select modseq, modsrc from pltcl_modules	\
 		 where modname = \$1				\
 		 order by modseq" name]
@@ -22,7 +22,7 @@ proc unknown {proname args} {
     #-----------------------------------------------------------
     # Lookup the requested function in pltcl_modfuncs
     #-----------------------------------------------------------
-    set n [SPI_execp -count 1 $p_mod [list [quote $proname]]]
+    set n [spi_execp -count 1 $p_mod [list [quote $proname]]]
     if {$n != 1} {
 	#-----------------------------------------------------------
 	# Not found there either - now it's really unknown
@@ -34,7 +34,7 @@ proc unknown {proname args} {
     # Collect the source pieces from pltcl_modules
     #-----------------------------------------------------------
     set src ""
-    SPI_execp $p_src [list [quote $modname]] {
+    spi_execp $p_src [list [quote $modname]] {
         append src $modsrc
     }
 
