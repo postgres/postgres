@@ -65,7 +65,7 @@
  * causing nasty effects.
  **************************************************************/
 
-/*static char _id[] = "$PostgreSQL: pgsql/src/port/snprintf.c,v 1.19 2005/03/12 04:00:56 momjian Exp $";*/
+/*static char _id[] = "$PostgreSQL: pgsql/src/port/snprintf.c,v 1.20 2005/03/16 06:00:58 momjian Exp $";*/
 
 int			pg_snprintf(char *str, size_t count, const char *fmt,...);
 int			pg_vsnprintf(char *str, size_t count, const char *fmt, va_list args);
@@ -151,20 +151,20 @@ static void dopr_outch(int c, char *end, char **output);
 
 #define	FMTSTR		1
 #define	FMTNUM		2
-#define	FMTFLOAT	3
-#define	FMTCHAR		4
+#define	FMTNUM_U	3
+#define	FMTFLOAT	4
+#define	FMTCHAR		5
+#define	FMTWIDTH	6
+#define	FMTLEN		7
 
 static void
 dopr(char *buffer, const char *format, va_list args, char *end)
 {
 	int			ch;
-	int64		value;
-	double		fvalue;
 	int			longlongflag = 0;
 	int			longflag = 0;
 	int			pointflag = 0;
 	int			maxwidth = 0;
-	char	   *strvalue;
 	int			ljust;
 	int			len;
 	int			zpad;
@@ -173,6 +173,7 @@ dopr(char *buffer, const char *format, va_list args, char *end)
 	const char*		fmtbegin;
 	int			fmtpos = 1;
 	int			realpos = 0;
+	int			precision;
 	int			position;
 	char		*output;
 	int			percents = 1;
@@ -195,6 +196,8 @@ dopr(char *buffer, const char *format, va_list args, char *end)
 		int	pointflag;
 		char	func;
 		int	realpos;
+		int	longflag;
+		int	longlongflag;
 	} *fmtpar, **fmtparptr;
 
 	/* Create enough structures to hold all arguments */
@@ -229,12 +232,12 @@ dopr(char *buffer, const char *format, va_list args, char *end)
 				longflag = longlongflag = pointflag = 0;
 				fmtbegin = format - 1;
 				realpos = 0;
-				position = 0;
+				position = precision = 0;
 		nextch:
 				ch = *format++;
 				switch (ch)
 				{
-					case 0:
+					case '\0':
 						goto performpr;
 					case '-':
 						ljust = 1;
@@ -251,13 +254,15 @@ dopr(char *buffer, const char *format, va_list args, char *end)
 					case '7':
 					case '8':
 					case '9':
-						if (pointflag)
-							/* could also be precision */
-							maxwidth = maxwidth * 10 + ch - '0';
-						else
+						if (!pointflag)
 						{ 
 							len = len * 10 + ch - '0';
 							position = position * 10 + ch - '0';
+						}
+						else
+						{
+							maxwidth = maxwidth * 10 + ch - '0';
+							precision = precision * 10 + ch - '0';
 						}
 						goto nextch;
 					case '$':
@@ -265,10 +270,13 @@ dopr(char *buffer, const char *format, va_list args, char *end)
 						len = 0;
 						goto nextch;
 					case '*':
-						if (pointflag)
-							maxwidth = va_arg(args, int);
+						MemSet(&fmtpar[fmtpos], 0, sizeof(fmtpar[fmtpos]));
+						if (!pointflag)
+							fmtpar[fmtpos].func = FMTLEN;
 						else
-							len = va_arg(args, int);
+							fmtpar[fmtpos].func = FMTWIDTH;
+						fmtpar[fmtpos].realpos = realpos?realpos:fmtpos;
+						fmtpos++;
 						goto nextch;
 					case '.':
 						pointflag = 1;
@@ -301,68 +309,40 @@ dopr(char *buffer, const char *format, va_list args, char *end)
 #endif
 					case 'u':
 					case 'U':
-						/* fmtnum(value,base,dosign,ljust,len,zpad,&output) */
-						if (longflag)
-						{
-							if (longlongflag)
-								value = va_arg(args, uint64);
-							else
-								value = va_arg(args, unsigned long);
-						}
-						else
-							value = va_arg(args, unsigned int);
+						fmtpar[fmtpos].longflag = longflag;
+						fmtpar[fmtpos].longlongflag = longlongflag;
 						fmtpar[fmtpos].fmtbegin = fmtbegin;
 						fmtpar[fmtpos].fmtend = format;
-						fmtpar[fmtpos].numvalue = value;
 						fmtpar[fmtpos].base = 10;
 						fmtpar[fmtpos].dosign = 0;
 						fmtpar[fmtpos].ljust = ljust;
 						fmtpar[fmtpos].len = len;
 						fmtpar[fmtpos].zpad = zpad;
-						fmtpar[fmtpos].func = FMTNUM;
+						fmtpar[fmtpos].func = FMTNUM_U;
 						fmtpar[fmtpos].realpos = realpos?realpos:fmtpos;
 						fmtpos++;
 						break;
 					case 'o':
 					case 'O':
-						/* fmtnum(value,base,dosign,ljust,len,zpad,&output) */
-						if (longflag)
-						{
-							if (longlongflag)
-								value = va_arg(args, uint64);
-							else
-								value = va_arg(args, unsigned long);
-						}
-						else
-							value = va_arg(args, unsigned int);
+						fmtpar[fmtpos].longflag = longflag;
+						fmtpar[fmtpos].longlongflag = longlongflag;
 						fmtpar[fmtpos].fmtbegin = fmtbegin;
 						fmtpar[fmtpos].fmtend = format;
-						fmtpar[fmtpos].numvalue = value;
 						fmtpar[fmtpos].base = 8;
 						fmtpar[fmtpos].dosign = 0;
 						fmtpar[fmtpos].ljust = ljust;
 						fmtpar[fmtpos].len = len;
 						fmtpar[fmtpos].zpad = zpad;
-						fmtpar[fmtpos].func = FMTNUM;
+						fmtpar[fmtpos].func = FMTNUM_U;
 						fmtpar[fmtpos].realpos = realpos?realpos:fmtpos;
 						fmtpos++;
 						break;
 					case 'd':
 					case 'D':
-						if (longflag)
-						{
-							if (longlongflag)
-							{
-								value = va_arg(args, int64);
-							}
-							else
-								value = va_arg(args, long);
-						}
-						else
-							value = va_arg(args, int);
+						fmtpar[fmtpos].longflag = longflag;
+						fmtpar[fmtpos].longlongflag = longlongflag;
 						fmtpar[fmtpos].fmtbegin = fmtbegin;
 						fmtpar[fmtpos].fmtend = format;
-						fmtpar[fmtpos].numvalue = value;
 						fmtpar[fmtpos].base = 10;
 						fmtpar[fmtpos].dosign = 1;
 						fmtpar[fmtpos].ljust = ljust;
@@ -373,72 +353,47 @@ dopr(char *buffer, const char *format, va_list args, char *end)
 						fmtpos++;
 						break;
 					case 'x':
-						if (longflag)
-						{
-							if (longlongflag)
-								value = va_arg(args, uint64);
-							else
-								value = va_arg(args, unsigned long);
-						}
-						else
-							value = va_arg(args, unsigned int);
+						fmtpar[fmtpos].longflag = longflag;
+						fmtpar[fmtpos].longlongflag = longlongflag;
 						fmtpar[fmtpos].fmtbegin = fmtbegin;
 						fmtpar[fmtpos].fmtend = format;
-						fmtpar[fmtpos].numvalue = value;
 						fmtpar[fmtpos].base = 16;
 						fmtpar[fmtpos].dosign = 0;
 						fmtpar[fmtpos].ljust = ljust;
 						fmtpar[fmtpos].len = len;
 						fmtpar[fmtpos].zpad = zpad;
-						fmtpar[fmtpos].func = FMTNUM;
+						fmtpar[fmtpos].func = FMTNUM_U;
 						fmtpar[fmtpos].realpos = realpos?realpos:fmtpos;
 						fmtpos++;
 						break;
 					case 'X':
-						if (longflag)
-						{
-							if (longlongflag)
-								value = va_arg(args, uint64);
-							else
-								value = va_arg(args, unsigned long);
-						}
-						else
-							value = va_arg(args, unsigned int);
+						fmtpar[fmtpos].longflag = longflag;
+						fmtpar[fmtpos].longlongflag = longlongflag;
 						fmtpar[fmtpos].fmtbegin = fmtbegin;
 						fmtpar[fmtpos].fmtend = format;
-						fmtpar[fmtpos].numvalue = value;
 						fmtpar[fmtpos].base = -16;
 						fmtpar[fmtpos].dosign = 1;
 						fmtpar[fmtpos].ljust = ljust;
 						fmtpar[fmtpos].len = len;
 						fmtpar[fmtpos].zpad = zpad;
-						fmtpar[fmtpos].func = FMTNUM;
+						fmtpar[fmtpos].func = FMTNUM_U;
 						fmtpar[fmtpos].realpos = realpos?realpos:fmtpos;
 						fmtpos++;
 						break;
 					case 's':
-						strvalue = va_arg(args, char *);
-						if (maxwidth > 0 || !pointflag)
-						{
-							if (pointflag && len > maxwidth)
-								len = maxwidth; /* Adjust padding */
-							fmtpar[fmtpos].fmtbegin = fmtbegin;
-							fmtpar[fmtpos].fmtend = format;
-							fmtpar[fmtpos].value = strvalue;
-							fmtpar[fmtpos].ljust = ljust;
-							fmtpar[fmtpos].len = len;
-							fmtpar[fmtpos].zpad = zpad;
-							fmtpar[fmtpos].maxwidth = maxwidth;
-							fmtpar[fmtpos].func = FMTSTR;
-							fmtpar[fmtpos].realpos = realpos?realpos:fmtpos;
-							fmtpos++;
-						}
-						break;
-					case 'c':
-						ch = va_arg(args, int);
 						fmtpar[fmtpos].fmtbegin = fmtbegin;
 						fmtpar[fmtpos].fmtend = format;
-						fmtpar[fmtpos].charvalue = ch;
+						fmtpar[fmtpos].ljust = ljust;
+						fmtpar[fmtpos].len = len;
+						fmtpar[fmtpos].zpad = zpad;
+						fmtpar[fmtpos].maxwidth = maxwidth;
+						fmtpar[fmtpos].func = FMTSTR;
+						fmtpar[fmtpos].realpos = realpos?realpos:fmtpos;
+						fmtpos++;
+						break;
+					case 'c':
+						fmtpar[fmtpos].fmtbegin = fmtbegin;
+						fmtpar[fmtpos].fmtend = format;
 						fmtpar[fmtpos].func = FMTCHAR;
 						fmtpar[fmtpos].realpos = realpos?realpos:fmtpos;
 						fmtpos++;
@@ -448,15 +403,13 @@ dopr(char *buffer, const char *format, va_list args, char *end)
 					case 'f':
 					case 'g':
 					case 'G':
-						fvalue = va_arg(args, double);
 						fmtpar[fmtpos].fmtbegin = fmtbegin;
 						fmtpar[fmtpos].fmtend = format;
-						fmtpar[fmtpos].fvalue = fvalue;
 						fmtpar[fmtpos].type = ch;
 						fmtpar[fmtpos].ljust = ljust;
 						fmtpar[fmtpos].len = len;
 						fmtpar[fmtpos].maxwidth = maxwidth;
-						fmtpar[fmtpos].precision = position;
+						fmtpar[fmtpos].precision = precision;
 						fmtpar[fmtpos].pointflag = pointflag;
 						fmtpar[fmtpos].func = FMTFLOAT;
 						fmtpar[fmtpos].realpos = realpos?realpos:fmtpos;
@@ -473,22 +426,74 @@ dopr(char *buffer, const char *format, va_list args, char *end)
 				break;
 		}
 	}
+
 performpr:
-	/* shuffle pointers */
+	/* reorder pointers */
 	for(i = 1; i < fmtpos; i++)
 		fmtparptr[i] = &fmtpar[fmtpar[i].realpos];
+
+	/* assign values */
+	for(i = 1; i < fmtpos; i++){
+		switch(fmtparptr[i]->func){
+		case FMTSTR:
+			fmtparptr[i]->value = va_arg(args, char *);
+			break;
+		case FMTNUM:
+			if (fmtparptr[i]->longflag)
+			{
+				if (fmtparptr[i]->longlongflag)
+					fmtparptr[i]->numvalue = va_arg(args, int64);
+				else
+					fmtparptr[i]->numvalue = va_arg(args, long);
+			}
+			else
+				fmtparptr[i]->numvalue = va_arg(args, int);
+			break;
+		case FMTNUM_U:
+			if (fmtparptr[i]->longflag)
+			{
+				if (fmtparptr[i]->longlongflag)
+					fmtparptr[i]->numvalue = va_arg(args, uint64);
+				else
+					fmtparptr[i]->numvalue = va_arg(args, unsigned long);
+			}
+			else
+				fmtparptr[i]->numvalue = va_arg(args, unsigned int);
+			break;
+		case FMTFLOAT:
+			fmtparptr[i]->fvalue = va_arg(args, double);
+			break;
+		case FMTCHAR:
+			fmtparptr[i]->charvalue = va_arg(args, int);
+			break;
+		case FMTLEN:
+			if (i + 1 < fmtpos && fmtpar[i + 1].func != FMTWIDTH)
+				fmtpar[i + 1].len = va_arg(args, int);
+			/* For "%*.*f", use the second arg */
+			if (i + 2 < fmtpos && fmtpar[i + 1].func == FMTWIDTH)
+				fmtpar[i + 2].len = va_arg(args, int);
+			break;
+		case FMTWIDTH:
+			if (i + 1 < fmtpos)
+				fmtpar[i + 1].maxwidth = fmtpar[i + 1].precision =
+														va_arg(args, int);
+			break;
+		}
+	}
+
+	/* do the output */
 	output = buffer;
 	format = format_save;
 	while ((ch = *format++))
 	{
 		for(i = 1; i < fmtpos; i++)
 		{
-			if(ch == '%' && *format == '%')
+			if (ch == '%' && *format == '%')
 			{
 				format++;
 				continue;
 			}
-			if(fmtpar[i].fmtbegin == format - 1)
+			if (fmtpar[i].fmtbegin == format - 1)
 			{
 				switch(fmtparptr[i]->func){
 				case FMTSTR:
@@ -497,6 +502,7 @@ performpr:
 						fmtparptr[i]->maxwidth, end, &output);
 					break;
 				case FMTNUM:
+				case FMTNUM_U:
 					fmtnum(fmtparptr[i]->numvalue, fmtparptr[i]->base,
 						fmtparptr[i]->dosign, fmtparptr[i]->ljust,
 						fmtparptr[i]->len, fmtparptr[i]->zpad, end, &output);
