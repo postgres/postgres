@@ -123,7 +123,7 @@ COMMANDS
 * Rewrite the LIKE handling by rewriting the user string with the 
   supplied ESCAPE
 * Move LIKE index optimization handling to the optimizer
-* Allow RULE recomplation
+* Allow RULE recompilation
   
 CLIENTS
 
@@ -171,7 +171,7 @@ MISC
 * Overhaul bufmgr/lockmgr/transaction manager
 * Add PL/Perl(Mark Hollomon)
 * Make postgres user have a password by default
-
+* Add configure test to check for C++ need for *.h and namespaces
 
 PERFORMANCE
 -----------
