@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.41 1998/04/27 17:07:22 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.42 1998/05/12 15:42:08 momjian Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the 
@@ -257,6 +257,7 @@ endif
 
 ifdef COPT
    CFLAGS+= $(COPT)
+   LDFLAGS+= $(COPT)
 endif
 
 ifdef PROFILE
