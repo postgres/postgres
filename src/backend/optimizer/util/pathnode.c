@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.102 2004/03/02 16:42:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.103 2004/03/29 19:58:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,6 +80,76 @@ compare_path_costs(Path *path1, Path *path2, CostSelector criterion)
 			return -1;
 		if (path1->startup_cost > path2->startup_cost)
 			return +1;
+	}
+	return 0;
+}
+
+/*
+ * compare_fuzzy_path_costs
+ *	  Return -1, 0, or +1 according as path1 is cheaper, the same cost,
+ *	  or more expensive than path2 for the specified criterion.
+ *
+ * This differs from compare_path_costs in that we consider the costs the
+ * same if they agree to within a "fuzz factor".  This is used by add_path
+ * to avoid keeping both of a pair of paths that really have insignificantly
+ * different cost.
+ */
+static int
+compare_fuzzy_path_costs(Path *path1, Path *path2, CostSelector criterion)
+{
+	Cost		fuzz;
+
+	/*
+	 * The fuzz factor is set at one percent of the smaller total_cost, but
+	 * not less than 0.01 cost units (just in case total cost is zero).
+	 *
+	 * XXX does this percentage need to be user-configurable?
+	 */
+	fuzz = Min(path1->total_cost, path2->total_cost) * 0.01;
+	fuzz = Max(fuzz, 0.01);
+
+	if (criterion == STARTUP_COST)
+	{
+		if (Abs(path1->startup_cost - path2->startup_cost) > fuzz)
+		{
+			if (path1->startup_cost < path2->startup_cost)
+				return -1;
+			else
+				return +1;
+		}
+
+		/*
+		 * If paths have the same startup cost (not at all unlikely),
+		 * order them by total cost.
+		 */
+		if (Abs(path1->total_cost - path2->total_cost) > fuzz)
+		{
+			if (path1->total_cost < path2->total_cost)
+				return -1;
+			else
+				return +1;
+		}
+	}
+	else
+	{
+		if (Abs(path1->total_cost - path2->total_cost) > fuzz)
+		{
+			if (path1->total_cost < path2->total_cost)
+				return -1;
+			else
+				return +1;
+		}
+
+		/*
+		 * If paths have the same total cost, order them by startup cost.
+		 */
+		if (Abs(path1->startup_cost - path2->startup_cost) > fuzz)
+		{
+			if (path1->startup_cost < path2->startup_cost)
+				return -1;
+			else
+				return +1;
+		}
 	}
 	return 0;
 }
@@ -215,29 +285,47 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 		bool		remove_old = false; /* unless new proves superior */
 		int			costcmp;
 
-		costcmp = compare_path_costs(new_path, old_path, TOTAL_COST);
+		/*
+		 * As of Postgres 7.5, we use fuzzy cost comparison to avoid wasting
+		 * cycles keeping paths that are really not significantly different
+		 * in cost.
+		 */
+		costcmp = compare_fuzzy_path_costs(new_path, old_path, TOTAL_COST);
 
 		/*
 		 * If the two paths compare differently for startup and total
 		 * cost, then we want to keep both, and we can skip the (much
 		 * slower) comparison of pathkeys.	If they compare the same,
 		 * proceed with the pathkeys comparison.  Note: this test relies
-		 * on the fact that compare_path_costs will only return 0 if both
-		 * costs are equal (and, therefore, there's no need to call it
-		 * twice in that case).
+		 * on the fact that compare_fuzzy_path_costs will only return 0 if
+		 * both costs are effectively equal (and, therefore, there's no need
+		 * to call it twice in that case).
 		 */
 		if (costcmp == 0 ||
-			costcmp == compare_path_costs(new_path, old_path,
-										  STARTUP_COST))
+			costcmp == compare_fuzzy_path_costs(new_path, old_path,
+												STARTUP_COST))
 		{
 			switch (compare_pathkeys(new_path->pathkeys, old_path->pathkeys))
 			{
 				case PATHKEYS_EQUAL:
 					if (costcmp < 0)
 						remove_old = true;		/* new dominates old */
+					else if (costcmp > 0)
+						accept_new = false;		/* old dominates new */
 					else
-						accept_new = false;		/* old equals or dominates
+					{
+						/*
+						 * Same pathkeys, and fuzzily the same cost, so
+						 * keep just one --- but we'll do an exact cost
+						 * comparison to decide which.
+						 */
+						if (compare_path_costs(new_path, old_path,
+											   TOTAL_COST) < 0)
+							remove_old = true; /* new dominates old */
+						else
+							accept_new = false;	/* old equals or dominates
 												 * new */
+					}
 					break;
 				case PATHKEYS_BETTER1:
 					if (costcmp <= 0)
