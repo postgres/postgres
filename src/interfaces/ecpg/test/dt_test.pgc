@@ -34,7 +34,7 @@ main()
 	
 	exec sql insert into date_test(d, ts, iv) values (:date1, :ts1, now()-'Mon Jan 17 1966');
 
-	exec sql select * into :date1, :ts1 , :iv1 from date_test;
+	exec sql select * into :date1, :ts1 , :iv1 from date_test where d=:date1;
 	
 	text = PGTYPESdate_to_asc(date1);
 	printf ("Date: %s\n", text);

@@ -1591,6 +1591,10 @@ Fri Jul 18 16:31:10 CEST 2003
 Thu Jul 24 10:33:51 CEST 2003
 
 	- Fixed mdy functions to use correct offset.
+	
+Fri Jul 25 18:08:18 CEST 2003
+
+	- Added explicit casts for date/timestamp/interval.
 	- Set ecpg version to 3.0.0
 	- Set ecpg library to 4.0.0
 	- Set pgtypes library to 1.0.0

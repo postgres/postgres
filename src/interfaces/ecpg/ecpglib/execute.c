@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.19 2003/07/15 12:38:38 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.20 2003/07/25 16:10:26 meskes Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -543,12 +543,12 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 
 				if (var->arrsize > 1)
 				{
-					strcpy(mallocedval, "'{");
+					strcpy(mallocedval, "array [");
 
 					for (element = 0; element < var->arrsize; element++)
 						sprintf(mallocedval + strlen(mallocedval), "%hd,", ((short *) var->value)[element]);
 
-					strcpy(mallocedval + strlen(mallocedval) - 1, "}'");
+					strcpy(mallocedval + strlen(mallocedval) - 1, "]");
 				}
 				else
 					sprintf(mallocedval, "%hd", *((short *) var->value));
@@ -563,12 +563,12 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 
 				if (var->arrsize > 1)
 				{
-					strcpy(mallocedval, "'{");
+					strcpy(mallocedval, "array [");
 
 					for (element = 0; element < var->arrsize; element++)
 						sprintf(mallocedval + strlen(mallocedval), "%d,", ((int *) var->value)[element]);
 
-					strcpy(mallocedval + strlen(mallocedval) - 1, "}'");
+					strcpy(mallocedval + strlen(mallocedval) - 1, "]");
 				}
 				else
 					sprintf(mallocedval, "%d", *((int *) var->value));
@@ -583,12 +583,12 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 
 				if (var->arrsize > 1)
 				{
-					strcpy(mallocedval, "'{");
+					strcpy(mallocedval, "array [");
 
 					for (element = 0; element < var->arrsize; element++)
 						sprintf(mallocedval + strlen(mallocedval), "%hu,", ((unsigned short *) var->value)[element]);
 
-					strcpy(mallocedval + strlen(mallocedval) - 1, "}'");
+					strcpy(mallocedval + strlen(mallocedval) - 1, "]");
 				}
 				else
 					sprintf(mallocedval, "%hu", *((unsigned short *) var->value));
@@ -603,12 +603,12 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 
 				if (var->arrsize > 1)
 				{
-					strcpy(mallocedval, "'{");
+					strcpy(mallocedval, "array [");
 
 					for (element = 0; element < var->arrsize; element++)
 						sprintf(mallocedval + strlen(mallocedval), "%u,", ((unsigned int *) var->value)[element]);
 
-					strcpy(mallocedval + strlen(mallocedval) - 1, "}'");
+					strcpy(mallocedval + strlen(mallocedval) - 1, "]");
 				}
 				else
 					sprintf(mallocedval, "%u", *((unsigned int *) var->value));
@@ -623,12 +623,12 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 
 				if (var->arrsize > 1)
 				{
-					strcpy(mallocedval, "'{");
+					strcpy(mallocedval, "array [");
 
 					for (element = 0; element < var->arrsize; element++)
 						sprintf(mallocedval + strlen(mallocedval), "%ld,", ((long *) var->value)[element]);
 
-					strcpy(mallocedval + strlen(mallocedval) - 1, "}'");
+					strcpy(mallocedval + strlen(mallocedval) - 1, "]");
 				}
 				else
 					sprintf(mallocedval, "%ld", *((long *) var->value));
@@ -643,12 +643,12 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 
 				if (var->arrsize > 1)
 				{
-					strcpy(mallocedval, "'{");
+					strcpy(mallocedval, "array [");
 
 					for (element = 0; element < var->arrsize; element++)
 						sprintf(mallocedval + strlen(mallocedval), "%lu,", ((unsigned long *) var->value)[element]);
 
-					strcpy(mallocedval + strlen(mallocedval) - 1, "}'");
+					strcpy(mallocedval + strlen(mallocedval) - 1, "]");
 				}
 				else
 					sprintf(mallocedval, "%lu", *((unsigned long *) var->value));
@@ -658,17 +658,17 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 				break;
 #ifdef HAVE_LONG_LONG_INT_64
 			case ECPGt_long_long:
-				if (!(mallocedval = ECPGalloc(var->arrsize * 25, stmt->lineno)))
+				if (!(mallocedval = ECPGalloc(var->arrsize * 30, stmt->lineno)))
 					return false;
 
 				if (var->arrsize > 1)
 				{
-					strcpy(mallocedval, "'{");
+					strcpy(mallocedval, "array [");
 
 					for (element = 0; element < var->arrsize; element++)
 						sprintf(mallocedval + strlen(mallocedval), "%lld,", ((long long *) var->value)[element]);
 
-					strcpy(mallocedval + strlen(mallocedval) - 1, "}'");
+					strcpy(mallocedval + strlen(mallocedval) - 1, "]");
 				}
 				else
 					sprintf(mallocedval, "%lld", *((long long *) var->value));
@@ -678,17 +678,17 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 				break;
 
 			case ECPGt_unsigned_long_long:
-				if (!(mallocedval = ECPGalloc(var->arrsize * 25, stmt->lineno)))
+				if (!(mallocedval = ECPGalloc(var->arrsize * 30, stmt->lineno)))
 					return false;
 
 				if (var->arrsize > 1)
 				{
-					strcpy(mallocedval, "'{");
+					strcpy(mallocedval, "array [");
 
 					for (element = 0; element < var->arrsize; element++)
 						sprintf(mallocedval + strlen(mallocedval), "%llu,", ((unsigned long long *) var->value)[element]);
 
-					strcpy(mallocedval + strlen(mallocedval) - 1, "}'");
+					strcpy(mallocedval + strlen(mallocedval) - 1, "]");
 				}
 				else
 					sprintf(mallocedval, "%llu", *((unsigned long long *) var->value));
@@ -698,17 +698,17 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 				break;
 #endif   /* HAVE_LONG_LONG_INT_64 */
 			case ECPGt_float:
-				if (!(mallocedval = ECPGalloc(var->arrsize * 21, stmt->lineno)))
+				if (!(mallocedval = ECPGalloc(var->arrsize * 25, stmt->lineno)))
 					return false;
 
 				if (var->arrsize > 1)
 				{
-					strcpy(mallocedval, "'{");
+					strcpy(mallocedval, "array [");
 
 					for (element = 0; element < var->arrsize; element++)
 						sprintf(mallocedval + strlen(mallocedval), "%.14g,", ((float *) var->value)[element]);
 
-					strcpy(mallocedval + strlen(mallocedval) - 1, "}'");
+					strcpy(mallocedval + strlen(mallocedval) - 1, "]");
 				}
 				else
 					sprintf(mallocedval, "%.14g", *((float *) var->value));
@@ -718,17 +718,17 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 				break;
 
 			case ECPGt_double:
-				if (!(mallocedval = ECPGalloc(var->arrsize * 21, stmt->lineno)))
+				if (!(mallocedval = ECPGalloc(var->arrsize * 25, stmt->lineno)))
 					return false;
 
 				if (var->arrsize > 1)
 				{
-					strcpy(mallocedval, "'{");
+					strcpy(mallocedval, "array [");
 
 					for (element = 0; element < var->arrsize; element++)
 						sprintf(mallocedval + strlen(mallocedval), "%.14g,", ((double *) var->value)[element]);
 
-					strcpy(mallocedval + strlen(mallocedval) - 1, "}'");
+					strcpy(mallocedval + strlen(mallocedval) - 1, "]");
 				}
 				else
 					sprintf(mallocedval, "%.14g", *((double *) var->value));
@@ -738,12 +738,12 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 				break;
 
 			case ECPGt_bool:
-				if (!(mallocedval = ECPGalloc(var->arrsize * 2, stmt->lineno)))
+				if (!(mallocedval = ECPGalloc(var->arrsize +sizeof ("array []"), stmt->lineno)))
 					return false;
 
 				if (var->arrsize > 1)
 				{
-					strcpy(mallocedval, "'{");
+					strcpy(mallocedval, "array [");
 
 					if (var->offset == sizeof(char))
 						for (element = 0; element < var->arrsize; element++)
@@ -759,7 +759,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 					else
 						ECPGraise(stmt->lineno, ECPG_CONVERT_BOOL, "different size");
 
-					strcpy(mallocedval + strlen(mallocedval) - 1, "}'");
+					strcpy(mallocedval + strlen(mallocedval) - 1, "]");
 				}
 				else
 				{
@@ -854,16 +854,16 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 							PGTYPESnumeric_free(nval);
 							slen = strlen (str);
 							
-							if (!(mallocedval = ECPGrealloc(mallocedval, strlen(mallocedval) + slen + 5, stmt->lineno)))
+							if (!(mallocedval = ECPGrealloc(mallocedval, strlen(mallocedval) + slen + sizeof("array [] "), stmt->lineno)))
 								return false;
 							
 							if (!element)
-								strcpy(mallocedval, "'{");
+								strcpy(mallocedval, "array [");
 							
 							strncpy(mallocedval + strlen(mallocedval), str , slen + 1);
 							strcpy(mallocedval + strlen(mallocedval), ",");
 						}
-						strcpy(mallocedval + strlen(mallocedval) - 1, "}'");
+						strcpy(mallocedval + strlen(mallocedval) - 1, "]");
 					}
 					else
 					{
@@ -902,27 +902,29 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 							str = quote_postgres(PGTYPESinterval_to_asc((Interval *)((var + var->offset * element)->value)), stmt->lineno);
 							slen = strlen (str);
 							
-							if (!(mallocedval = ECPGrealloc(mallocedval, strlen(mallocedval) + slen + 5, stmt->lineno)))
+							if (!(mallocedval = ECPGrealloc(mallocedval, strlen(mallocedval) + slen + sizeof("array [],interval "), stmt->lineno)))
 								return false;
 							
 							if (!element)
-								strcpy(mallocedval, "'{");
-							
+								strcpy(mallocedval, "array [");
+						
+							strcpy(mallocedval + strlen(mallocedval), "interval ");
 							strncpy(mallocedval + strlen(mallocedval), str , slen + 1);
 							strcpy(mallocedval + strlen(mallocedval), ",");
 						}
-						strcpy(mallocedval + strlen(mallocedval) - 1, "}'");
+						strcpy(mallocedval + strlen(mallocedval) - 1, "]");
 					}
 					else
 					{
 						str = quote_postgres(PGTYPESinterval_to_asc((Interval *)(var->value)), stmt->lineno);
 						slen = strlen (str);
 					
-						if (!(mallocedval = ECPGalloc(slen + 1, stmt->lineno)))
+						if (!(mallocedval = ECPGalloc(slen + sizeof("interval ") + 1, stmt->lineno)))
 							return false;
 
-						strncpy(mallocedval, str , slen);
-						mallocedval[slen] = '\0';
+						strcpy(mallocedval, "interval ");
+						/* also copy trailing '\0' */
+						strncpy(mallocedval + strlen(mallocedval), str , slen + 1);
 					}
 					
 					*tobeinserted_p = mallocedval;
@@ -943,27 +945,29 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 							str = quote_postgres(PGTYPESdate_to_asc(*(Date *)((var + var->offset * element)->value)), stmt->lineno);
 							slen = strlen (str);
 							
-							if (!(mallocedval = ECPGrealloc(mallocedval, strlen(mallocedval) + slen + 5, stmt->lineno)))
+							if (!(mallocedval = ECPGrealloc(mallocedval, strlen(mallocedval) + slen + sizeof("array [],date "), stmt->lineno)))
 								return false;
 							
 							if (!element)
-								strcpy(mallocedval, "'{");
+								strcpy(mallocedval, "array [");
 							
+							strcpy(mallocedval + strlen(mallocedval), "date ");
 							strncpy(mallocedval + strlen(mallocedval), str , slen + 1);
 							strcpy(mallocedval + strlen(mallocedval), ",");
 						}
-						strcpy(mallocedval + strlen(mallocedval) - 1, "}'");
+						strcpy(mallocedval + strlen(mallocedval) - 1, "]");
 					}
 					else
 					{
 						str = quote_postgres(PGTYPESdate_to_asc(*(Date *)(var->value)), stmt->lineno);
 						slen = strlen (str);
 					
-						if (!(mallocedval = ECPGalloc(slen + 1, stmt->lineno)))
+						if (!(mallocedval = ECPGalloc(slen + sizeof("date ") + 1, stmt->lineno)))
 							return false;
 
-						strncpy(mallocedval, str , slen);
-						mallocedval[slen] = '\0';
+						strcpy(mallocedval, "date ");
+						/* also copy trailing '\0' */
+						strncpy(mallocedval + strlen(mallocedval), str , slen + 1);
 					}
 					
 					*tobeinserted_p = mallocedval;
@@ -984,27 +988,29 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 							str = quote_postgres(PGTYPEStimestamp_to_asc(*(Timestamp *)((var + var->offset * element)->value)), stmt->lineno);
 							slen = strlen (str);
 							
-							if (!(mallocedval = ECPGrealloc(mallocedval, strlen(mallocedval) + slen + 5, stmt->lineno)))
+							if (!(mallocedval = ECPGrealloc(mallocedval, strlen(mallocedval) + slen + sizeof("array [], timestamp "), stmt->lineno)))
 								return false;
 							
 							if (!element)
-								strcpy(mallocedval, "'{");
+								strcpy(mallocedval, "array [");
 							
+							strcpy(mallocedval + strlen(mallocedval), "timestamp ");
 							strncpy(mallocedval + strlen(mallocedval), str , slen + 1);
 							strcpy(mallocedval + strlen(mallocedval), ",");
 						}
-						strcpy(mallocedval + strlen(mallocedval) - 1, "}'");
+						strcpy(mallocedval + strlen(mallocedval) - 1, "]");
 					}
 					else
 					{
 						str = quote_postgres(PGTYPEStimestamp_to_asc(*(Timestamp *)(var->value)), stmt->lineno);
 						slen = strlen (str);
 					
-						if (!(mallocedval = ECPGalloc(slen + 1, stmt->lineno)))
+						if (!(mallocedval = ECPGalloc(slen + sizeof("timestamp") + 1, stmt->lineno)))
 							return false;
 
-						strncpy(mallocedval, str , slen);
-						mallocedval[slen] = '\0';
+						strcpy(mallocedval, "timestamp ");
+						/* also copy trailing '\0' */
+						strncpy(mallocedval + strlen(mallocedval), str , slen + 1);
 					}
 					
 					*tobeinserted_p = mallocedval;
