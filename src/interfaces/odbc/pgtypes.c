@@ -1320,7 +1320,7 @@ pgtype_create_params(StatementClass *stmt, Int4 type)
 {
 	switch (type)
 	{
-		case PG_TYPE_CHAR:
+		case PG_TYPE_BPCHAR:
 		case PG_TYPE_VARCHAR:
 			return "max. length";
 		default:
