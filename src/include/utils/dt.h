@@ -8,7 +8,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dt.h,v 1.10 1997/06/03 14:07:24 thomas Exp $
+ * $Id: dt.h,v 1.11 1997/06/20 17:15:00 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -111,19 +111,20 @@ typedef struct {
 #define TIME	4
 #define TZ	5
 #define DTZ	6
-#define IGNORE	7
-#define AMPM	8
-#define HOUR	9
-#define MINUTE	10
-#define SECOND	11
-#define DOY	12
-#define DOW	13
-#define UNITS	14
-#define ADBC	15
+#define DTZMOD	7
+#define IGNORE	8
+#define AMPM	9
+#define HOUR	10
+#define MINUTE	11
+#define SECOND	12
+#define DOY	13
+#define DOW	14
+#define UNITS	15
+#define ADBC	16
 /* these are only for relative dates */
-#define ABS_BEFORE	14
-#define ABS_AFTER	15
-#define AGO	16
+#define AGO	17
+#define ABS_BEFORE	18
+#define ABS_AFTER	19
 
 /*
  * Token field definitions for time parsing and decoding.
@@ -131,6 +132,7 @@ typedef struct {
  * At the moment, that means keep them within [-127,127].
  * These are also used for bit masks in DecodeDateDelta()
  *  so actually restrict them to within [0,31] for now.
+ * - tgl 97/06/19
  */
 
 #define DTK_NUMBER	0
