@@ -5,7 +5,7 @@
  *	  wherein you authenticate a user by seeing what IP address the system
  *	  says he comes from and possibly using ident).
  *
- *	$Id: hba.c,v 1.53 2000/07/08 03:04:39 tgl Exp $
+ *	$Id: hba.c,v 1.54 2000/08/27 21:50:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -427,10 +427,8 @@ find_hba_entry(hbaPort *port, bool *hba_ok_p)
 			/* The open of the config file failed.	*/
 
 			snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-				 "find_hba_entry: Host-based authentication config file "
-				"does not exist or permissions are not setup correctly! "
-					 "Unable to open file \"%s\".\n",
-					 conf_file);
+					 "find_hba_entry: Unable to open authentication config file \"%s\": %s\n",
+					 conf_file, strerror(errno));
 			fputs(PQerrormsg, stderr);
 			pqdebug("%s", PQerrormsg);
 		}
@@ -812,16 +810,13 @@ verify_against_usermap(const char *pguser,
 		{
 			/* The open of the map file failed.  */
 
-			*checks_out_p = false;
-
 			snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-				  "verify_against_usermap: usermap file for Ident-based "
-					 "authentication "
-				"does not exist or permissions are not setup correctly! "
-					 "Unable to open file \"%s\".\n",
-					 map_file);
+					 "verify_against_usermap: Unable to open usermap file \"%s\": %s\n",
+					 map_file, strerror(errno));
 			fputs(PQerrormsg, stderr);
 			pqdebug("%s", PQerrormsg);
+
+			*checks_out_p = false;
 		}
 		else
 		{
@@ -981,7 +976,10 @@ GetCharSetByHost(char *TableName, int host, const char *DataDir)
 	snprintf(map_file, bufsize, "%s/%s", DataDir, CHARSET_FILE);
 	file = AllocateFile(map_file, PG_BINARY_R);
 	if (file == NULL)
+	{
+		/* XXX should we log a complaint? */
 		return;
+	}
 	while (!eof)
 	{
 		c = getc(file);

@@ -9,11 +9,12 @@
  * Dec 17, 1997 - Todd A. Brandys
  *	Orignal Version Completed.
  *
- * $Id: crypt.c,v 1.28 2000/07/12 22:58:59 petere Exp $
+ * $Id: crypt.c,v 1.29 2000/08/27 21:50:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
+#include <errno.h>
 #include <unistd.h>
 
 #include "postgres.h"
@@ -32,11 +33,10 @@ int			pwd_cache_count = 0;
 /*-------------------------------------------------------------------------*/
 
 char *
-crypt_getpwdfilename()
+crypt_getpwdfilename(void)
 {
-
-	static char *pfnam = NULL;
 	int			bufsize;
+	char	   *pfnam;
 
 	bufsize = strlen(DataDir) + 8 + strlen(CRYPT_PWD_FILE) + 1;
 	pfnam = (char *) palloc(bufsize);
@@ -48,12 +48,11 @@ crypt_getpwdfilename()
 /*-------------------------------------------------------------------------*/
 
 char *
-crypt_getpwdreloadfilename()
+crypt_getpwdreloadfilename(void)
 {
-
-	static char *rpfnam = NULL;
 	char	   *pwdfilename;
 	int			bufsize;
+	char	   *rpfnam;
 
 	pwdfilename = crypt_getpwdfilename();
 	bufsize = strlen(pwdfilename) + strlen(CRYPT_PWD_RELOAD_SUFX) + 1;
@@ -65,9 +64,8 @@ crypt_getpwdreloadfilename()
 
 /*-------------------------------------------------------------------------*/
 
-static
-FILE *
-crypt_openpwdfile()
+static FILE *
+crypt_openpwdfile(void)
 {
 	char	   *filename;
 	FILE	   *pwdfile;
@@ -75,13 +73,16 @@ crypt_openpwdfile()
 	filename = crypt_getpwdfilename();
 	pwdfile = AllocateFile(filename, PG_BINARY_R);
 
+	if (pwdfile == NULL)
+		fprintf(stderr, "Couldn't read %s: %s\n",
+				filename, strerror(errno));
+
 	return pwdfile;
 }
 
 /*-------------------------------------------------------------------------*/
 
-static
-int
+static int
 compar_user(const void *user_a, const void *user_b)
 {
 
@@ -115,9 +116,8 @@ compar_user(const void *user_a, const void *user_b)
 
 /*-------------------------------------------------------------------------*/
 
-static
-void
-crypt_loadpwdfile()
+static void
+crypt_loadpwdfile(void)
 {
 
 	char	   *filename;
@@ -176,8 +176,7 @@ crypt_loadpwdfile()
 
 /*-------------------------------------------------------------------------*/
 
-static
-void
+static void
 crypt_parsepwdentry(char *buffer, char **pwd, char **valdate)
 {
 
@@ -212,11 +211,9 @@ crypt_parsepwdentry(char *buffer, char **pwd, char **valdate)
 
 /*-------------------------------------------------------------------------*/
 
-static
-int
+static int
 crypt_getloginfo(const char *user, char **passwd, char **valuntil)
 {
-
 	char	   *pwd,
 			   *valdate;
 	void	   *fakeout;

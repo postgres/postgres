@@ -2,10 +2,11 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: password.c,v 1.31 2000/07/08 03:04:40 tgl Exp $
+ * $Id: password.c,v 1.32 2000/08/27 21:50:18 tgl Exp $
  *
  */
 
+#include <errno.h>
 #include <unistd.h>
 
 #include "postgres.h"
@@ -36,8 +37,8 @@ verify_password(const Port *port, const char *user, const char *password)
 	if (!pw_file)
 	{
 		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-				 "verify_password: couldn't open password file '%s'\n",
-				 pw_file_fullname);
+				 "verify_password: Unable to open password file \"%s\": %s\n",
+				 pw_file_fullname, strerror(errno));
 		fputs(PQerrormsg, stderr);
 		pqdebug("%s", PQerrormsg);
 
