@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufpage.h,v 1.22 1999/05/25 16:14:40 momjian Exp $
+ * $Id: bufpage.h,v 1.23 1999/07/03 00:32:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -132,18 +132,6 @@ typedef enum
 	ShufflePageManagerMode,
 	OverwritePageManagerMode
 } PageManagerMode;
-
-/* ----------------
- *		misc support macros
- * ----------------
- */
-
-/*
- * XXX this is wrong -- ignores padding/alignment, variable page size,
- * AM-specific opaque space at the end of the page (as in btrees), ...
- * however, it at least serves as an upper bound for heap pages.
- */
-#define MAXTUPLEN		(BLCKSZ - sizeof (PageHeaderData))
 
 /* ----------------------------------------------------------------
  *						page support macros

@@ -6,14 +6,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: htup.h,v 1.16 1999/05/25 22:42:32 momjian Exp $
+ * $Id: htup.h,v 1.17 1999/07/03 00:32:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef HTUP_H
 #define HTUP_H
 
-#include <utils/nabstime.h>
+#include <storage/bufpage.h>
 #include <storage/itemptr.h>
 
 #define MinHeapTupleBitmapSize	32		/* 8 * 4 */
@@ -51,6 +51,11 @@ typedef struct HeapTupleHeaderData
 } HeapTupleHeaderData;
 
 typedef HeapTupleHeaderData *HeapTupleHeader;
+
+#define MinTupleSize	(sizeof (PageHeaderData) + \
+						 sizeof(HeapTupleHeaderData) + sizeof(int4))
+
+#define MaxTupleSize	(BLCKSZ/2 - MinTupleSize)
 
 #define SelfItemPointerAttributeNumber			(-1)
 #define ObjectIdAttributeNumber					(-2)

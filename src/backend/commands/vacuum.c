@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.109 1999/06/11 09:35:08 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.110 1999/07/03 00:32:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -624,7 +624,7 @@ vc_scanheap(VRelStats *vacrelstats, Relation onerel,
 				empty_end_pages;
 	Size		free_size,
 				usable_free_size;
-	Size		min_tlen = MAXTUPLEN;
+	Size		min_tlen = MaxTupleSize;
 	Size		max_tlen = 0;
 	int32		i;
 	struct rusage ru0,

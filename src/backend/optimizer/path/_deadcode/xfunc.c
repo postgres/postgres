@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/_deadcode/Attic/xfunc.c,v 1.4 1999/05/25 22:41:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/_deadcode/Attic/xfunc.c,v 1.5 1999/07/03 00:32:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,7 @@
 
 #include "postgres.h"
 
+#include "access/htup.h"
 #include "access/heapam.h"
 #include "catalog/pg_language.h"
 #include "catalog/pg_proc.h"
@@ -1094,7 +1095,7 @@ xfunc_expense_per_tuple(JoinPath joinnode, int whichchild)
 	RelOptInfo	outerrel = get_parent((Path) get_outerjoinpath(joinnode));
 	RelOptInfo	innerrel = get_parent((Path) get_innerjoinpath(joinnode));
 	Count		outerwidth = get_width(outerrel);
-	Count		outers_per_page = ceil(BLCKSZ / (outerwidth + sizeof(HeapTupleData)));
+	Count		outers_per_page = ceil(BLCKSZ / (outerwidth + MinTupleSize));
 
 	if (IsA(joinnode, HashPath))
 	{

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.22 1999/05/25 16:11:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.23 1999/07/03 00:32:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,7 @@ PageInit(Page page, Size pageSize, Size specialSize)
 
 	Assert(pageSize == BLCKSZ);
 	Assert(pageSize >
-		   specialSize + sizeof(PageHeaderData) - sizeof(ItemIdData));
+			 specialSize + sizeof(PageHeaderData) - sizeof(ItemIdData));
 
 	specialSize = DOUBLEALIGN(specialSize);
 

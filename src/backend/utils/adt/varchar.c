@@ -7,13 +7,14 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.46 1999/05/25 16:12:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.47 1999/07/03 00:32:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <stdio.h>				/* for sprintf() */
 #include <string.h>
 #include "postgres.h"
+#include "access/htup.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "catalog/pg_type.h"
@@ -81,8 +82,9 @@ bpcharin(char *s, int dummy, int32 atttypmod)
 	else
 		len = atttypmod - VARHDRSZ;
 
-	if (len > BLCKSZ - 128)
-		elog(ERROR, "bpcharin: length of char() must be less than %d", BLCKSZ - 128);
+	if (len > MaxTupleSize)
+		elog(ERROR, "bpcharin: length of char() must be less than %d",
+				MaxTupleSize);
 
 	result = (char *) palloc(atttypmod);
 	VARSIZE(result) = atttypmod;
@@ -151,8 +153,9 @@ bpchar(char *s, int32 len)
 
 	rlen = len - VARHDRSZ;
 
-	if (rlen > BLCKSZ - 128)
-		elog(ERROR, "bpchar: length of char() must be less than %d", BLCKSZ - 128);
+	if (rlen > MaxTupleSize)
+		elog(ERROR, "bpchar: length of char() must be less than %d",
+			MaxTupleSize);
 
 #ifdef STRINGDEBUG
 	printf("bpchar- convert string length %d (%d) ->%d (%d)\n",
@@ -332,8 +335,9 @@ varcharin(char *s, int dummy, int32 atttypmod)
 	if (atttypmod != -1 && len > atttypmod)
 		len = atttypmod;		/* clip the string at max length */
 
-	if (len > BLCKSZ - 128)
-		elog(ERROR, "varcharin: length of char() must be less than %d", BLCKSZ - 128);
+	if (len > MaxTupleSize)
+		elog(ERROR, "varcharin: length of char() must be less than %d",
+				MaxTupleSize);
 
 	result = (char *) palloc(len);
 	VARSIZE(result) = len;
@@ -403,8 +407,9 @@ varchar(char *s, int32 slen)
 	len = slen - VARHDRSZ;
 #endif
 
-	if (len > BLCKSZ - 128)
-		elog(ERROR, "varchar: length of varchar() must be less than BLCKSZ-128");
+	if (len > MaxTupleSize)
+		elog(ERROR, "varchar: length of varchar() must be less than %d",
+			MaxTupleSize);
 
 	result = (char *) palloc(slen);
 	VARSIZE(result) = slen;

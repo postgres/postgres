@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/Attic/stats.c,v 1.15 1999/02/13 23:14:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/Attic/stats.c,v 1.16 1999/07/03 00:32:36 momjian Exp $
  *
  * NOTES
  *	  initam should be moved someplace else.
@@ -16,6 +16,7 @@
  */
 
 #include <stdio.h>
+#include <time.h>
 
 #include <postgres.h>
 

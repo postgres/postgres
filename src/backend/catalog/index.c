@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.79 1999/06/19 04:54:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.80 1999/07/03 00:32:38 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -20,6 +20,7 @@
 #include "postgres.h"
 
 #include "access/genam.h"
+#include "access/htup.h"
 #include "access/heapam.h"
 #include "access/istrat.h"
 #include "access/xact.h"
@@ -56,7 +57,7 @@
 /*
  * macros used in guessing how many tuples are on a page.
  */
-#define AVG_TUPLE_SIZE 8
+#define AVG_TUPLE_SIZE MinTupleSize
 #define NTUPLES_PER_PAGE(natts) (BLCKSZ/((natts)*AVG_TUPLE_SIZE))
 
 /* non-export function prototypes */

@@ -3,6 +3,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+
+#include "postgres.h"
+#include "access/htup.h"
 #include "catalog/catname.h"
 #include "utils/numeric.h"
 
@@ -3351,8 +3354,8 @@ Character:  character '(' Iconst ')'
 						sprintf(errortext, "length for '%s' type must be at least 1",$1);
 						yyerror(errortext);
 					}
-					else if (atol($3) > BLCKSZ - 128) {
-						sprintf(errortext, "length for type '%s' cannot exceed %d",$1,BLCKSZ - 128);
+					else if (atol($3) > MaxTupleSize) {
+						sprintf(errortext, "length for type '%s' cannot exceed %d",$1,MaxTupleSize);
 						yyerror(errortext);
 					}
 

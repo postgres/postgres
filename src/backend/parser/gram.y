@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.84 1999/06/07 14:28:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.85 1999/07/03 00:32:44 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -36,6 +36,7 @@
 #include <ctype.h>
 
 #include "postgres.h"
+#include "access/htup.h"
 #include "nodes/parsenodes.h"
 #include "nodes/print.h"
 #include "parser/gramparse.h"
@@ -3384,8 +3385,9 @@ Character:  character '(' Iconst ')'
 
 					if ($3 < 1)
 						elog(ERROR,"length for '%s' type must be at least 1",$1);
-					else if ($3 > BLCKSZ - 128)
-						elog(ERROR,"length for type '%s' cannot exceed %d",$1, BLCKSZ-128);
+					else if ($3 > MaxTupleSize)
+						elog(ERROR,"length for type '%s' cannot exceed %d",$1,
+							MaxTupleSize);
 
 					/* we actually implement this sort of like a varlen, so
 					 * the first 4 bytes is the length. (the difference
