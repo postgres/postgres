@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.350 2003/09/23 23:31:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.351 2003/09/27 15:34:06 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3903,6 +3903,7 @@ dumpCasts(Archive *fout,
 	PQExpBuffer query = createPQExpBuffer();
 	PQExpBuffer defqry = createPQExpBuffer();
 	PQExpBuffer delqry = createPQExpBuffer();
+	PQExpBuffer castsig = createPQExpBuffer();
 	int			ntups;
 	int			i;
 
@@ -3932,16 +3933,51 @@ dumpCasts(Archive *fout,
 		char	   *castcontext = PQgetvalue(res, i, 4);
 		int			fidx = -1;
 		const char *((*deps)[]);
+		int			source_idx;
+		int			target_idx;
 
 		if (strcmp(castfunc, "0") != 0)
 			fidx = findFuncByOid(finfo, numFuncs, castfunc);
 
 		/*
-		 * We treat the cast as being in the namespace of the underlying
-		 * function.  This doesn't handle binary compatible casts.  Where
-		 * should those go?
+		 * As per discussion we dump casts if one or more of the underlying
+		 * objects (the conversion function and the two data types) are not
+		 * builtin AND if all of the non-builtin objects namespaces are
+		 * included in the dump. Builtin meaning, the namespace name does
+		 * not start with "pg_".
 		 */
-		if (fidx < 0 || !finfo[fidx].pronamespace->dump)
+		source_idx = findTypeByOid(tinfo, numTypes, castsource);
+		target_idx = findTypeByOid(tinfo, numTypes, casttarget);
+
+		/*
+		 * Skip this cast if all objects are from pg_
+		 */
+		if ((fidx < 0 || strncmp(finfo[fidx].pronamespace->nspname, "pg_", 3) == 0) &&
+				strncmp(tinfo[source_idx].typnamespace->nspname, "pg_", 3) == 0 &&
+				strncmp(tinfo[target_idx].typnamespace->nspname, "pg_", 3) == 0)
+			continue;
+
+		/*
+		 * Skip cast if function isn't from pg_ and that namespace is
+		 * not dumped.
+		 */
+		if (fidx >= 0 && 
+				strncmp(finfo[fidx].pronamespace->nspname, "pg_", 3) != 0 &&
+				!finfo[fidx].pronamespace->dump)
+			continue;
+
+		/*
+		 * Same for the Source type
+		 */
+		if (strncmp(tinfo[source_idx].typnamespace->nspname, "pg_", 3) != 0 &&
+				!tinfo[source_idx].typnamespace->dump)
+			continue;
+
+		/*
+		 * and the target type.
+		 */
+		if (strncmp(tinfo[target_idx].typnamespace->nspname, "pg_", 3) != 0 &&
+				!tinfo[target_idx].typnamespace->dump)
 			continue;
 
 		/* Make a dependency to ensure function is dumped first */
@@ -3957,6 +3993,7 @@ dumpCasts(Archive *fout,
 
 		resetPQExpBuffer(defqry);
 		resetPQExpBuffer(delqry);
+		resetPQExpBuffer(castsig);
 
 		appendPQExpBuffer(delqry, "DROP CAST (%s AS %s);\n",
 						  getFormattedTypeName(castsource, zeroAsNone),
@@ -3978,9 +4015,13 @@ dumpCasts(Archive *fout,
 			appendPQExpBuffer(defqry, " AS IMPLICIT");
 		appendPQExpBuffer(defqry, ";\n");
 
+		appendPQExpBuffer(castsig, "CAST (%s AS %s)",
+						  getFormattedTypeName(castsource, zeroAsNone),
+						  getFormattedTypeName(casttarget, zeroAsNone));
+
 		ArchiveEntry(fout, castoid,
-					 format_function_signature(&finfo[fidx], false),
-					 finfo[fidx].pronamespace->nspname, "",
+					 castsig->data,
+					 tinfo[source_idx].typnamespace->nspname, "",
 					 "CAST", deps,
 					 defqry->data, delqry->data,
 					 NULL, NULL, NULL);
@@ -3991,6 +4032,7 @@ dumpCasts(Archive *fout,
 	destroyPQExpBuffer(query);
 	destroyPQExpBuffer(defqry);
 	destroyPQExpBuffer(delqry);
+	destroyPQExpBuffer(castsig);
 }
 
 
