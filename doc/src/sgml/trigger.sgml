@@ -184,13 +184,18 @@ tg_trigger
 
 typedef struct Trigger
 {
-	char		*tgname;
-	Oid		tgfoid;
-	func_ptr	tgfunc;
-	int16		tgtype;
-	int16		tgnargs;
-	int16		tgattr[8];
-	char		**tgargs;
+    Oid         tgoid;
+    char       *tgname;
+    Oid         tgfoid;
+    FmgrInfo    tgfunc;
+    int16       tgtype;
+    bool        tgenabled;
+    bool        tgisconstraint;
+    bool        tgdeferrable;
+    bool        tginitdeferred;
+    int16       tgnargs;
+    int16       tgattr[FUNC_MAX_ARGS];
+    char      **tgargs;
 } Trigger;
 
    tgname is the trigger's name, tgnargs is number of arguments in tgargs,
