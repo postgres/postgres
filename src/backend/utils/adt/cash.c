@@ -9,7 +9,7 @@
  * workings can be found in the book "Software Solutions in C" by
  * Dale Schumacher, Academic Press, ISBN: 0-12-632360-7.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.16 1997/09/20 16:15:34 thomas Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.17 1997/10/03 13:10:06 thomas Exp $
  */
 
 #include <stdio.h>
@@ -33,8 +33,7 @@ static const char *num_word(Cash value);
 #define LAST_DIGIT		(LAST_PAREN - 1)
 
 #ifdef USE_LOCALE
-static struct lconv *lconv = NULL;
-
+static struct lconv *lconvert = NULL;
 #endif
 
 /* cash_in()
@@ -65,18 +64,18 @@ cash_in(const char *str)
 				csymbol;
 
 #ifdef USE_LOCALE
-	if (lconv == NULL)
-		lconv = localeconv();
+	if (lconvert == NULL)
+		lconvert = localeconv();
 
 	/* frac_digits in the C locale seems to return CHAR_MAX */
 	/* best guess is 2 in this case I think */
-	fpoint = ((lconv->frac_digits != CHAR_MAX) ? lconv->frac_digits : 2);		/* int_frac_digits? */
+	fpoint = ((lconvert->frac_digits != CHAR_MAX) ? lconvert->frac_digits : 2);		/* int_frac_digits? */
 
-	dsymbol = *lconv->mon_decimal_point;
-	ssymbol = *lconv->mon_thousands_sep;
-	csymbol = *lconv->currency_symbol;
-	psymbol = *lconv->positive_sign;
-	nsymbol = *lconv->negative_sign;
+	dsymbol = *lconvert->mon_decimal_point;
+	ssymbol = *lconvert->mon_thousands_sep;
+	csymbol = *lconvert->currency_symbol;
+	psymbol = *lconvert->positive_sign;
+	nsymbol = *lconvert->negative_sign;
 #else
 	fpoint = 2;
 	dsymbol = '.';
@@ -183,18 +182,18 @@ cash_out(Cash *in_value)
 	char		convention;
 
 #ifdef USE_LOCALE
-	if (lconv == NULL)
-		lconv = localeconv();
+	if (lconvert == NULL)
+		lconvert = localeconv();
 
-	mon_group = *lconv->mon_grouping;
-	comma = *lconv->mon_thousands_sep;
-	csymbol = *lconv->currency_symbol;
-	dsymbol = *lconv->mon_decimal_point;
-	nsymbol = lconv->negative_sign;
+	mon_group = *lconvert->mon_grouping;
+	comma = *lconvert->mon_thousands_sep;
+	csymbol = *lconvert->currency_symbol;
+	dsymbol = *lconvert->mon_decimal_point;
+	nsymbol = lconvert->negative_sign;
 	/* frac_digits in the C locale seems to return CHAR_MAX */
 	/* best guess is 2 in this case I think */
-	points = ((lconv->frac_digits != CHAR_MAX) ? lconv->frac_digits : 2);		/* int_frac_digits? */
-	convention = lconv->n_sign_posn;
+	points = ((lconvert->frac_digits != CHAR_MAX) ? lconvert->frac_digits : 2);		/* int_frac_digits? */
+	convention = lconvert->n_sign_posn;
 #else
 	mon_group = 3;
 	comma = ',';
