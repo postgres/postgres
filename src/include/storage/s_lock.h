@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.7 1997/09/25 01:48:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.8 1997/09/30 16:21:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -341,7 +341,7 @@ tas_dummy()
 
 #endif							/* defined(__alpha__) && defined(linux) */
 
-#if defined(linux) && defined(sparc)
+#if (defined(linux) || defined(__NetBSD__)) && defined(sparc)
 
 #define S_LOCK(lock)	do \
 						{ \
