@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/createuser.c,v 1.8 2004/01/01 19:27:15 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/createuser.c,v 1.9 2004/01/09 00:15:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -189,12 +189,12 @@ main(int argc, char *argv[])
 	printfPQExpBuffer(&sql, "CREATE USER %s", fmtId(newuser));
 	if (sysid)
 		appendPQExpBuffer(&sql, " SYSID %s", sysid);
-	if (encrypted == +1)
-		appendPQExpBuffer(&sql, " ENCRYPTED");
-	if (encrypted == -1)
-		appendPQExpBuffer(&sql, " UNENCRYPTED");
 	if (newpassword)
 	{
+		if (encrypted == +1)
+			appendPQExpBuffer(&sql, " ENCRYPTED");
+		if (encrypted == -1)
+			appendPQExpBuffer(&sql, " UNENCRYPTED");
 		appendPQExpBuffer(&sql, " PASSWORD ");
 		appendStringLiteral(&sql, newpassword, false);
 	}
