@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.88 2000/07/25 04:30:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.89 2000/07/26 23:46:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,8 +40,22 @@
 #include "utils/syscache.h"
 
 
+/*
+ * DoneMatchingIndexKeys() - MACRO
+ *
+ * Determine whether we should continue matching index keys in a clause.
+ * Depends on if there are more to match or if this is a functional index.
+ * In the latter case we stop after the first match since the there can
+ * be only key (i.e. the function's return value) and the attributes in
+ * keys list represent the arguments to the function.  -mer 3 Oct. 1991
+ */
+#define DoneMatchingIndexKeys(indexkeys, index) \
+		(indexkeys[0] == 0 || \
+		 (index->indproc != InvalidOid))
+
 #define is_indexable_operator(clause,opclass,relam,indexkey_on_left) \
 	(indexable_operator(clause,opclass,relam,indexkey_on_left) != InvalidOid)
+
 
 static void match_index_orclauses(RelOptInfo *rel, IndexOptInfo *index,
 					  List *restrictinfo_list);
@@ -354,10 +368,11 @@ match_index_orclause(RelOptInfo *rel,
  * index, or if it is an AND clause any of whose members is an opclause
  * that matches the index.
  *
- * We currently only look to match the first key of an index against
- * 'or' subclauses.  There are cases where a later key of a multi-key
- * index could be used (if other top-level clauses match earlier keys
- * of the index), but our poor brains are hurting already...
+ * For multi-key indexes, we only look for matches to the first key;
+ * without such a match the index is useless.  If the clause is an AND
+ * then we may be able to extract additional subclauses to use with the
+ * later indexkeys, but we need not worry about that until
+ * extract_or_indexqual_conditions() is called (if it ever is).
  */
 static bool
 match_or_subclause_to_indexkey(RelOptInfo *rel,
@@ -404,19 +419,45 @@ extract_or_indexqual_conditions(RelOptInfo *rel,
 								Expr *orsubclause)
 {
 	List	   *quals = NIL;
-	int			indexkey = index->indexkeys[0];
-	Oid			opclass = index->classlist[0];
 
 	if (and_clause((Node *) orsubclause))
 	{
-		List	   *item;
+		/*
+		 * Extract relevant sub-subclauses in indexkey order.  This is just
+		 * like group_clauses_by_indexkey() except that the input and output
+		 * are lists of bare clauses, not of RestrictInfo nodes.
+		 */
+		int		   *indexkeys = index->indexkeys;
+		Oid		   *classes = index->classlist;
 
-		foreach(item, orsubclause->args)
+		do
 		{
-			if (match_clause_to_indexkey(rel, index, indexkey, opclass,
-										 lfirst(item), false))
-				quals = lappend(quals, lfirst(item));
-		}
+			int			curIndxKey = indexkeys[0];
+			Oid			curClass = classes[0];
+			List	   *clausegroup = NIL;
+			List	   *item;
+
+			foreach(item, orsubclause->args)
+			{
+				if (match_clause_to_indexkey(rel, index,
+											 curIndxKey, curClass,
+											 lfirst(item), false))
+					clausegroup = lappend(clausegroup, lfirst(item));
+			}
+
+			/*
+			 * If no clauses match this key, we're done; we don't want to look
+			 * at keys to its right.
+			 */
+			if (clausegroup == NIL)
+				break;
+
+			quals = nconc(quals, clausegroup);
+
+			indexkeys++;
+			classes++;
+		} while (!DoneMatchingIndexKeys(indexkeys, index));
+
 		if (quals == NIL)
 			elog(ERROR, "extract_or_indexqual_conditions: no matching clause");
 	}
@@ -434,19 +475,6 @@ extract_or_indexqual_conditions(RelOptInfo *rel,
  *				----  ROUTINES TO CHECK RESTRICTIONS  ----
  ****************************************************************************/
 
-
-/*
- * DoneMatchingIndexKeys() - MACRO
- *
- * Determine whether we should continue matching index keys in a clause.
- * Depends on if there are more to match or if this is a functional index.
- * In the latter case we stop after the first match since the there can
- * be only key (i.e. the function's return value) and the attributes in
- * keys list represent the arguments to the function.  -mer 3 Oct. 1991
- */
-#define DoneMatchingIndexKeys(indexkeys, index) \
-		(indexkeys[0] == 0 || \
-		 (index->indproc != InvalidOid))
 
 /*
  * group_clauses_by_indexkey
