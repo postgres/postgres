@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/path.c,v 1.9 2004/05/18 03:36:45 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/path.c,v 1.10 2004/05/19 04:21:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,24 +32,6 @@ static void trim_trailing_separator(char *path);
 	while (ISSEP((p)[0]) && (ISSEP((p)[1]) || !(p)[1])) \
 		(p)++; \
 }
-
-
-/*
- *	is_absolute_path
- */
-bool
-is_absolute_path(const char *filename)
-{
-	return filename[0] == '/'
-#ifdef WIN32					/* WIN32 paths can either have forward or
-								 * backward slashes */
-		|| filename[0] == '\\'
-		|| (isalpha(filename[0]) && filename[1] == ':'
-			&& (filename[2] == '\\' || filename[2] == '/'))
-#endif
-		;
-}
-
 
 
 /*

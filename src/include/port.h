@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/port.h,v 1.32 2004/05/17 14:35:34 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/port.h,v 1.33 2004/05/19 04:21:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,7 +21,6 @@
 bool set_noblock(int sock);
 
 /* Portable path handling for Unix/Win32 */
-extern bool is_absolute_path(const char *filename);
 extern char *first_path_separator(const char *filename);
 extern char *last_path_separator(const char *filename);
 extern void canonicalize_path(char *path);
@@ -31,6 +30,31 @@ extern void get_etc_path(const char *my_exec_path, char *ret_path);
 extern void get_include_path(const char *my_exec_path, char *ret_path);
 extern void get_pkginclude_path(const char *my_exec_path, char *ret_path);
 extern void get_pkglib_path(const char *my_exec_path, char *ret_path);
+
+/*
+ *	is_absolute_path
+ *
+ * 	This capability is needed by libpq and initdb.c
+ *	On Win32, you can't reference the same object file that is
+ *	in two different libraries (pgport and libpq), so a macro is best.
+ */
+#ifndef WIN32
+#define is_absolute_path(filename) \
+( \
+	((filename)[0] == '/') \
+)
+#else
+#define is_absolute_path(filename) \
+( \
+	((filename)[0] == '/') || \
+	(filename)[0] == '\\' || \
+	(isalpha((filename)[0]) && (filename)[1] == ':' && \
+	((filename)[2] == '\\' || (filename)[2] == '/')) \
+)
+#endif
+
+
+
 
 
 /* Portable way to find binaries */
