@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/common.h,v 1.24 2003/03/20 06:43:35 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/common.h,v 1.25 2003/03/20 15:44:17 momjian Exp $
  */
 #ifndef COMMON_H
 #define COMMON_H
@@ -27,7 +27,6 @@ extern void NoticeProcessor(void *arg, const char *message);
 extern char *simple_prompt(const char *prompt, int maxlen, bool echo);
 
 extern volatile bool cancel_pressed;
-extern PGconn *cancelConn;
 
 extern void ResetCancelConn(void);
 
