@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.157.2.1 2003/11/25 19:17:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.157.2.2 2004/01/18 00:31:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1865,10 +1865,10 @@ make_sort_from_pathkeys(Query *root, Plan *lefttree,
 			/*
 			 * Do we need to insert a Result node?
 			 *
-			 * Currently, the only non-projection-capable plan type we can
-			 * see here is Append.
+			 * Currently, the only non-projection-capable plan types we can
+			 * see here are Append and Unique.
 			 */
-			if (IsA(lefttree, Append))
+			if (IsA(lefttree, Append) || IsA(lefttree, Unique))
 			{
 				tlist = copyObject(tlist);
 				lefttree = (Plan *) make_result(tlist, NULL, lefttree);
