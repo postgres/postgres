@@ -5,7 +5,7 @@
  *
  *	Copyright (c) 2001, PostgreSQL Global Development Group
  *
- *  $Id: pgstat.h,v 1.2 2001/06/29 16:29:37 wieck Exp $
+ *  $Id: pgstat.h,v 1.3 2001/06/29 23:03:02 tgl Exp $
  * ----------
  */
 #ifndef PGSTAT_H
@@ -349,61 +349,83 @@ extern void		pgstat_initstats(PgStat_Info *stats, Relation rel);
 
 
 #define pgstat_reset_heap_scan(s)										\
-	if ((s)->tabentry != NULL)											\
-		(s)->heap_scan_counted = FALSE
+	do {																\
+		if ((s)->tabentry != NULL)										\
+			(s)->heap_scan_counted = FALSE;								\
+	} while (0)
 #define pgstat_count_heap_scan(s)										\
-	if ((s)->tabentry != NULL && !(s)->heap_scan_counted) {				\
-		((PgStat_TableEntry *)((s)->tabentry))->t_numscans++;			\
-		(s)->heap_scan_counted = TRUE;									\
-	}
+	do {																\
+		if ((s)->tabentry != NULL && !(s)->heap_scan_counted) {			\
+			((PgStat_TableEntry *)((s)->tabentry))->t_numscans++;		\
+			(s)->heap_scan_counted = TRUE;								\
+		}																\
+	} while (0)
 #define pgstat_count_heap_getnext(s)									\
-	if ((s)->tabentry != NULL)											\
-		((PgStat_TableEntry *)((s)->tabentry))->t_tuples_returned++
+	do {																\
+		if ((s)->tabentry != NULL)										\
+			((PgStat_TableEntry *)((s)->tabentry))->t_tuples_returned++; \
+	} while (0)
 #define pgstat_count_heap_fetch(s)										\
-	if ((s)->tabentry != NULL)											\
-		((PgStat_TableEntry *)((s)->tabentry))->t_tuples_fetched++
+	do {																\
+		if ((s)->tabentry != NULL)										\
+			((PgStat_TableEntry *)((s)->tabentry))->t_tuples_fetched++;	\
+	} while (0)
 #define pgstat_count_heap_insert(s)										\
-	if ((s)->tabentry != NULL)											\
-		((PgStat_TableEntry *)((s)->tabentry))->t_tuples_inserted++
+	do {																\
+		if ((s)->tabentry != NULL)										\
+			((PgStat_TableEntry *)((s)->tabentry))->t_tuples_inserted++; \
+	} while (0)
 #define pgstat_count_heap_update(s)										\
-	if ((s)->tabentry != NULL)											\
-		((PgStat_TableEntry *)((s)->tabentry))->t_tuples_updated++
+	do {																\
+		if ((s)->tabentry != NULL)										\
+			((PgStat_TableEntry *)((s)->tabentry))->t_tuples_updated++;	\
+	} while (0)
 #define pgstat_count_heap_delete(s)										\
-	if ((s)->tabentry != NULL)											\
-		((PgStat_TableEntry *)((s)->tabentry))->t_tuples_deleted++
-
+	do {																\
+		if ((s)->tabentry != NULL)										\
+			((PgStat_TableEntry *)((s)->tabentry))->t_tuples_deleted++;	\
+	} while (0)
 #define pgstat_reset_index_scan(s)										\
-	if ((s)->tabentry != NULL)											\
-		(s)->index_scan_counted = FALSE
+	do {																\
+		if ((s)->tabentry != NULL)										\
+			(s)->index_scan_counted = FALSE;							\
+	} while (0)
 #define pgstat_count_index_scan(s)										\
-	if ((s)->tabentry != NULL && !(s)->index_scan_counted) {			\
-		((PgStat_TableEntry *)((s)->tabentry))->t_numscans++;			\
-		(s)->index_scan_counted = TRUE;									\
-	}
+	do {																\
+		if ((s)->tabentry != NULL && !(s)->index_scan_counted) {		\
+			((PgStat_TableEntry *)((s)->tabentry))->t_numscans++;		\
+			(s)->index_scan_counted = TRUE;								\
+		}																\
+	} while (0)
 #define pgstat_count_index_getnext(s)									\
-	if ((s)->tabentry != NULL)											\
-		((PgStat_TableEntry *)((s)->tabentry))->t_tuples_returned++
-
+	do {																\
+		if ((s)->tabentry != NULL)										\
+			((PgStat_TableEntry *)((s)->tabentry))->t_tuples_returned++; \
+	} while (0)
 #define pgstat_count_buffer_read(s,r)									\
-	if ((s)->tabentry != NULL)											\
-		((PgStat_TableEntry *)((s)->tabentry))->t_blocks_fetched++;		\
-	else {																\
-		if (!(s)->no_stats) {											\
-			pgstat_initstats((s), (r));									\
-			if ((s)->tabentry != NULL)									\
-				((PgStat_TableEntry *)((s)->tabentry))->t_blocks_fetched++; \
+	do {																\
+		if ((s)->tabentry != NULL)										\
+			((PgStat_TableEntry *)((s)->tabentry))->t_blocks_fetched++;	\
+		else {															\
+			if (!(s)->no_stats) {										\
+				pgstat_initstats((s), (r));								\
+				if ((s)->tabentry != NULL)								\
+					((PgStat_TableEntry *)((s)->tabentry))->t_blocks_fetched++; \
+			}															\
 		}																\
-	}
+	} while (0)
 #define pgstat_count_buffer_hit(s,r)									\
-	if ((s)->tabentry != NULL)											\
-		((PgStat_TableEntry *)((s)->tabentry))->t_blocks_hit++;			\
-	else {																\
-		if (!(s)->no_stats) {											\
-			pgstat_initstats((s), (r));									\
-			if ((s)->tabentry != NULL)									\
-				((PgStat_TableEntry *)((s)->tabentry))->t_blocks_hit++;	\
+	do {																\
+		if ((s)->tabentry != NULL)										\
+			((PgStat_TableEntry *)((s)->tabentry))->t_blocks_hit++;		\
+		else {															\
+			if (!(s)->no_stats) {										\
+				pgstat_initstats((s), (r));								\
+				if ((s)->tabentry != NULL)								\
+					((PgStat_TableEntry *)((s)->tabentry))->t_blocks_hit++; \
+			}															\
 		}																\
-	}
+	} while (0)
 
 
 extern void		pgstat_count_xact_commit(void);
