@@ -3,7 +3,7 @@
 # pg_upgrade: update a database without needing a full dump/reload cycle.
 # CAUTION: read the manual page before trying to use this!
 
-# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_upgrade,v 1.13 1999/09/28 18:04:18 momjian Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_upgrade,v 1.14 2000/02/23 15:46:12 momjian Exp $
 #
 # NOTE: we must be sure to update the version-checking code a few dozen lines
 # below for each new PostgreSQL release.
@@ -75,7 +75,7 @@ SRCVERSION=`cat ./$OLDDIR/PG_VERSION`
 # This code will need to be updated/reviewed for each new PostgreSQL release.
 
 # MYVERSION is the expected output database version
-MYVERSION="6.6"
+MYVERSION="7.0"
 
 if [ "$DESTVERSION" != "$MYVERSION" ]
 then	echo "$0 is for PostgreSQL version $MYVERSION, but ./data/PG_VERSION contains $DESTVERSION." 1>&2
@@ -91,7 +91,7 @@ fi
 
 case "$SRCVERSION" in
     6.5) ;;
-    6.6) ;;
+    7.0) ;;
     *)	echo "Sorry, `basename $0` cannot upgrade database version $SRCVERSION to $DESTVERSION." 1>&2
 	echo "The on-disk structure of tables has changed." 1>&2
 	echo "You will need to dump and restore using pg_dump." 1>&2
