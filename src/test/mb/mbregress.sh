@@ -1,5 +1,5 @@
 #! /bin/sh
-# $Header: /cvsroot/pgsql/src/test/mb/mbregress.sh,v 1.4 2000/02/27 10:20:13 ishii Exp $
+# $Header: /cvsroot/pgsql/src/test/mb/mbregress.sh,v 1.5 2000/05/16 02:14:14 tgl Exp $
 
 if echo '\c' | grep -s c >/dev/null 2>&1
 then
@@ -33,7 +33,7 @@ do
 		unset PGCLIENTENCODING
 	else
 		destroydb $i >/dev/null 2>&1
-		createdb -E `echo $i|tr "[a-z]" "[A-Z]"` $i >/dev/null
+		createdb -E `echo $i | tr 'abcdefghijklmnopqrstuvwxyz' 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'` $i >/dev/null
 		$PSQL $i < sql/${i}.sql > results/${i}.out 2>&1
 	fi
 

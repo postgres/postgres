@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/regress.sh,v 1.49 2000/04/07 13:40:45 thomas Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/regress.sh,v 1.50 2000/05/16 02:14:15 tgl Exp $
 #
 if [ $# -eq 0 ]; then
 	echo "Syntax: $0 <hostname> [extra-tests]"
@@ -69,7 +69,7 @@ dropdb $HOSTLOC regression
 
 echo "=============== creating new regression database...   ================="
 if [ -n "$MULTIBYTE" ];then
-	mbtests=`echo $MULTIBYTE | tr "[A-Z]" "[a-z]"`
+	mbtests=`echo $MULTIBYTE | tr 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' 'abcdefghijklmnopqrstuvwxyz'`
 	PGCLIENTENCODING="$MULTIBYTE"
 	export PGCLIENTENCODING
 	ENCODINGOPT="-E $MULTIBYTE"

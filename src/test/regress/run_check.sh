@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/run_check.sh,v 1.13 2000/04/08 01:54:47 tgl Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/run_check.sh,v 1.14 2000/05/16 02:14:15 tgl Exp $
 
 # ----------
 # Check call syntax
@@ -219,7 +219,7 @@ PGDATESTYLE="Postgres,US"; export PGDATESTYLE
 # ----------
 echo "=============== Creating regression database...        ================"
 if [ -n "$MULTIBYTE" ];then
-    mbtests=`echo $MULTIBYTE | tr "[A-Z]" "[a-z]"`
+    mbtests=`echo $MULTIBYTE | tr 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' 'abcdefghijklmnopqrstuvwxyz'`
     PGCLIENTENCODING="$MULTIBYTE"
     export PGCLIENTENCODING
     ENCODINGOPT="-E $MULTIBYTE"

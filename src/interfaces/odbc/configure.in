@@ -116,7 +116,7 @@ AC_ARG_WITH(template,
 		GUESS=`grep "$host_no_ver" $TEMPLATEDIR/.similar | sed 's/.*=//' | tail -1`
 		if test "$GUESS"
 		then   TEMPLATE="$GUESS"
-		else   TEMPLATE=`uname -s | tr A-Z a-z`
+		else   TEMPLATE=`uname -s | tr 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' 'abcdefghijklmnopqrstuvwxyz'`
 		fi
 	])
 AC_MSG_RESULT($TEMPLATE)

@@ -91,7 +91,7 @@ AC_ARG_WITH(template,
     [
 
 # lowercase $host
-host="`echo $host | tr '[[A-Z]]' '[[a-z]]'`"
+host="`echo $host | tr 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' 'abcdefghijklmnopqrstuvwxyz'`"
 
 # First, try for a template exactly matching $host
 if test -f "template/$host"
@@ -118,7 +118,7 @@ else
     then TEMPLATE="$GUESS"
     else
 	# Last chance ... maybe uname -s will match an entry.
-	TEMPLATE=`uname -s | tr '[[A-Z]]' '[[a-z]]'` 
+	TEMPLATE=`uname -s | tr 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' 'abcdefghijklmnopqrstuvwxyz'`
     fi
 fi
     ])
@@ -613,22 +613,8 @@ AC_PATH_PROG(tar, tar)
 AC_PATH_PROG(split, split)
 AC_PATH_PROG(etags, etags)
 AC_PATH_PROG(xargs, xargs)
-AC_PATH_PROGS(TR, trbsd tr, NOT_FOUND)
 AC_PATH_PROGS(GZCAT, gzcat zcat, gzcat)
 AC_CHECK_PROGS(PERL, perl,)
-
-dnl Check tr flags to convert from lower to upper case
-TRSTRINGS="`echo ABCdef | $TR '[[a-z]]' '[[A-Z]]' 2>/dev/null | grep ABCDEF`"
-TRCLASS="`echo ABCdef | $TR '[[:lower:]]' '[[:upper:]]' 2>/dev/null | grep ABCDEF`"
-
-if test "$TRSTRINGS" = "ABCDEF"; then
-	TRARGS="'[[a-z]]' '[[A-Z]]'"
-elif test "$TRCLASS" = "ABCDEF"; then
-	TRARGS="'[[:lower:]]' '[[:upper:]]'"
-else
-	AC_MSG_ERROR("Can\'t find method to convert from upper to lower case with tr")
-fi
-AC_SUBST(TRARGS)
 
 dnl Changes to look for YACC.  We have three choices (in order of pref.)
 dnl (1) We specify in YACC and YFLAGS what we want
