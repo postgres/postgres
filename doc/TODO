@@ -2,7 +2,7 @@
 TODO list for PostgreSQL
 ========================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Tue Nov 30 13:20:21 EST 2004
+Last updated:		Tue Nov 30 14:32:10 EST 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -120,12 +120,6 @@ Administration
 	  multiple servers, you need multi-master replication like pgcluster.
 
 	o Allow replication over unreliable or non-persistent links
-* Make log_min_duration_statement output when the duration is reached rather
-  than when the statement completes
-
-  This prints long queries while they are running, making trouble shooting
-  easier.  Also, it eliminates the need for log_statement because it
-  would now be the same as a log_min_duration_statement of zero.
 
 
 Data Types
