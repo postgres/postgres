@@ -474,8 +474,8 @@ WARN::function declared to return type EMP does not retrieve (EMP.*)
 	 <entry>include/postgres.h</entry>
 	</row>
 	<row>
-	 <entry>int28</entry>
-	 <entry>(int28 *)</entry>
+	 <entry>int2vector</entry>
+	 <entry>(int2vector *)</entry>
 	 <entry>include/postgres.h</entry>
 	</row>
 	<row>
@@ -509,8 +509,8 @@ WARN::function declared to return type EMP does not retrieve (EMP.*)
 	 <entry>include/postgres.h</entry>
 	</row>
 	<row>
-	 <entry>oid8</entry>
-	 <entry>(oid8 *)</entry>
+	 <entry>oidvector</entry>
+	 <entry>(oidvector *)</entry>
 	 <entry>include/postgres.h</entry>
 	</row>
 	<row>

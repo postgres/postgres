@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.1 1999/07/22 15:11:03 thomas Exp $
+.\" $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.2 2000/01/11 01:40:04 tgl Exp $
 .TH "SYSTEM CATALOGS" INTRO 03/13/94 PostgreSQL PostgreSQL
 .SH "Section 7 - System Catalogs"
 .de LS
@@ -192,8 +192,8 @@ pg_class
 			   0=magnetic disk
 			   1=sony WORM jukebox
 			   2=main memory */
-     int28      relkey	/* - unused */
-     oid8       relkeyop	/* - unused */
+     int2vector relkey		/* - unused */
+     oidvector  relkeyop	/* - unused */
      aclitem    relacl[1]	/* access control lists */
 .fi
 .nf M
@@ -229,9 +229,9 @@ pg_inherits
     oid         indproc	/* function to compute index key from
 				   attribute(s) in heap
 				   0=not a functional index */
-    int28       indkey	/* attribute numbers of key 
+    int2vector  indkey	/* attribute numbers of key 
 			   attribute(s) */
-    oid8        indclass	/* opclass of each key */
+    oidvector   indclass	/* opclass of each key */
     bool        indisclustered	/* is the index clustered?
 				   - unused */
     bool        indisarchived	/* is the index archival?
@@ -304,7 +304,7 @@ pg_proc
     bool        proretset	/* does the function return a set?
 				   - unused */
     oid         prorettype	/* return type */
-    oid8        proargtypes	/* argument types */
+    oidvector   proargtypes	/* argument types */
     int4        probyte_pct	/* % of argument size (in bytes) that
 				   needs to be examined in order to
 				   compute the function */ 
