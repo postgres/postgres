@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Apr 19 13:03:08 EDT 2004
+Last updated:		Tue Apr 20 00:26:26 EDT 2004
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -472,7 +472,7 @@ Source Code
 * Research interaction of setitimer() and sleep() used by statement_timeout
 * -Add checks for fclose() failure (Tom)
 * -Change CVS ID to PostgreSQL
-* Exit postmaster if postgresql.conf can not be opened
+* -Exit postmaster if postgresql.conf can not be opened
 * Rename /scripts directory because they are all C programs now
 * Allow the regression tests to start postmaster with -i so the tests
   can be run on systems that don't support unix-domain sockets
