@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/ecpg-ref.sgml,v 1.10 2001/09/03 12:57:50 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/ecpg-ref.sgml,v 1.11 2001/09/14 10:24:35 ishii Exp $
 Postgres documentation
 -->
 
@@ -224,7 +224,7 @@ EXEC SQL END DECLARE SECTION;
       on a separate line.  As of version 2.1.0 multiple variables may
       be declared on a single line:
       <programlisting>
-char  foo(16), bar(16);
+char  foo[16], bar[16];
       </programlisting>
      </para>
     </note>
