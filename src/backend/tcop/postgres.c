@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.146 2000/02/22 09:55:18 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.147 2000/03/01 02:39:46 ishii Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1470,10 +1470,10 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 #ifdef MULTIBYTE
 	/* set default client encoding */
 	if (Verbose)
-		puts("\treset_client_encoding()..");
+		TPRINTF(TRACE_VERBOSE, "reset_client_encoding()..");
 	reset_client_encoding();
 	if (Verbose)
-		puts("\treset_client_encoding() done.");
+		TPRINTF(TRACE_VERBOSE, "reset_client_encoding() done.");
 #endif
 
 	on_shmem_exit(remove_all_temp_relations, NULL);
@@ -1503,7 +1503,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.146 $ $Date: 2000/02/22 09:55:18 $\n");
+		puts("$Revision: 1.147 $ $Date: 2000/03/01 02:39:46 $\n");
 	}
 
 	/*
