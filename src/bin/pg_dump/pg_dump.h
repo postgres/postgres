@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.h,v 1.107 2003/12/06 03:00:16 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.h,v 1.108 2004/03/03 21:28:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,7 +59,7 @@ typedef int		DumpId;
 
 typedef enum
 {
-	/* When modifying this enum, update priority table in pg_dump_sort.c! */
+	/* When modifying this enum, update priority tables in pg_dump_sort.c! */
 	DO_NAMESPACE,
 	DO_TYPE,
 	DO_FUNC,
@@ -76,7 +76,9 @@ typedef enum
 	DO_FK_CONSTRAINT,			/* see note for ConstraintInfo */
 	DO_PROCLANG,
 	DO_CAST,
-	DO_TABLE_DATA
+	DO_TABLE_DATA,
+	DO_TABLE_TYPE,
+	DO_BLOBS
 } DumpableObjectType;
 
 typedef struct _dumpableObject
@@ -84,6 +86,8 @@ typedef struct _dumpableObject
 	DumpableObjectType objType;
 	CatalogId	catId;			/* zero if not a cataloged object */
 	DumpId		dumpId;			/* assigned by AssignDumpId() */
+	char	   *name;			/* object name (should never be NULL) */
+	struct _namespaceInfo *namespace;	/* containing namespace, or NULL */
 	DumpId	   *dependencies;	/* dumpIds of objects this one depends on */
 	int			nDeps;			/* number of valid dependencies */
 	int			allocDeps;		/* allocated size of dependencies[] */
@@ -92,7 +96,6 @@ typedef struct _dumpableObject
 typedef struct _namespaceInfo
 {
 	DumpableObject dobj;
-	char	   *nspname;
 	char	   *usename;		/* name of owner, or empty string */
 	char	   *nspacl;
 	bool		dump;			/* true if need to dump definition */
@@ -101,9 +104,10 @@ typedef struct _namespaceInfo
 typedef struct _typeInfo
 {
 	DumpableObject dobj;
-	char	   *typname;		/* name as seen in catalog */
-	/* Note: format_type might produce something different than typname */
-	NamespaceInfo *typnamespace;	/* link to containing namespace */
+	/*
+	 * Note: dobj.name is the pg_type.typname entry.  format_type() might
+	 * produce something different than typname
+	 */
 	char	   *usename;		/* name of owner, or empty string */
 	Oid			typinput;
 	Oid			typelem;
@@ -120,8 +124,6 @@ typedef struct _typeInfo
 typedef struct _funcInfo
 {
 	DumpableObject dobj;
-	char	   *proname;
-	NamespaceInfo *pronamespace;	/* link to containing namespace */
 	char	   *usename;		/* name of owner, or empty string */
 	Oid			lang;
 	int			nargs;
@@ -141,8 +143,6 @@ typedef struct _aggInfo
 typedef struct _oprInfo
 {
 	DumpableObject dobj;
-	char	   *oprname;
-	NamespaceInfo *oprnamespace;	/* link to containing namespace */
 	char	   *usename;
 	Oid			oprcode;
 } OprInfo;
@@ -150,16 +150,12 @@ typedef struct _oprInfo
 typedef struct _opclassInfo
 {
 	DumpableObject dobj;
-	char	   *opcname;
-	NamespaceInfo *opcnamespace;	/* link to containing namespace */
 	char	   *usename;
 } OpclassInfo;
 
 typedef struct _convInfo
 {
 	DumpableObject dobj;
-	char	   *conname;
-	NamespaceInfo *connamespace;	/* link to containing namespace */
 	char	   *usename;
 } ConvInfo;
 
@@ -169,8 +165,6 @@ typedef struct _tableInfo
 	 * These fields are collected for every table in the database.
 	 */
 	DumpableObject dobj;
-	char	   *relname;
-	NamespaceInfo *relnamespace;	/* link to containing namespace */
 	char	   *usename;		/* name of owner, or empty string */
 	char	   *relacl;
 	char		relkind;
@@ -240,7 +234,6 @@ typedef struct _tableDataInfo
 typedef struct _indxInfo
 {
 	DumpableObject dobj;
-	char	   *indexname;
 	TableInfo  *indextable;		/* link to table the index is for */
 	char	   *indexdef;
 	int			indnkeys;
@@ -253,7 +246,6 @@ typedef struct _indxInfo
 typedef struct _ruleInfo
 {
 	DumpableObject dobj;
-	char	   *rulename;
 	TableInfo  *ruletable;		/* link to table the rule is for */
 	char		ev_type;
 	bool		is_instead;
@@ -263,7 +255,6 @@ typedef struct _triggerInfo
 {
 	DumpableObject dobj;
 	TableInfo  *tgtable;		/* link to table the trigger is for */
-	char	   *tgname;
 	char	   *tgfname;
 	int			tgtype;
 	int			tgnargs;
@@ -284,7 +275,6 @@ typedef struct _triggerInfo
 typedef struct _constraintInfo
 {
 	DumpableObject dobj;
-	char	   *conname;
 	TableInfo  *contable;		/* NULL if domain constraint */
 	TypeInfo   *condomain;		/* NULL if table constraint */
 	char		contype;
@@ -297,7 +287,6 @@ typedef struct _constraintInfo
 typedef struct _procLangInfo
 {
 	DumpableObject dobj;
-	char	   *lanname;
 	bool		lanpltrusted;
 	Oid			lanplcallfoid;
 	Oid			lanvalidator;
@@ -368,7 +357,8 @@ extern void exit_nicely(void);
 extern void parseOidArray(const char *str, Oid *array, int arraysize);
 
 extern void sortDumpableObjects(DumpableObject **objs, int numObjs);
-extern void sortDumpableObjectsByType(DumpableObject **objs, int numObjs);
+extern void sortDumpableObjectsByTypeName(DumpableObject **objs, int numObjs);
+extern void sortDumpableObjectsByTypeOid(DumpableObject **objs, int numObjs);
 
 /*
  * version specific routines

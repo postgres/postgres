@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump_sort.c,v 1.3 2003/12/07 05:44:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump_sort.c,v 1.4 2004/03/03 21:28:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,12 +20,12 @@
 static char *modulename = gettext_noop("sorter");
 
 /*
- * Sort priority for object types.  Objects are sorted by priority,
- * and within an equal priority level by OID.  (This is a relatively
- * crude hack to provide semi-reasonable behavior for old databases
- * without full dependency info.)
+ * Sort priority for object types when dumping a pre-7.3 database.
+ * Objects are sorted by priority levels, and within an equal priority level
+ * by OID.  (This is a relatively crude hack to provide semi-reasonable
+ * behavior for old databases without full dependency info.)
  */
-static const int objectTypePriority[] =
+static const int oldObjectTypePriority[] =
 {
 	1,				/* DO_NAMESPACE */
 	2,				/* DO_TYPE */
@@ -35,19 +35,49 @@ static const int objectTypePriority[] =
 	4,				/* DO_OPCLASS */
 	5,				/* DO_CONVERSION */
 	6,				/* DO_TABLE */
-	7,				/* DO_ATTRDEF */
-	10,				/* DO_INDEX */
-	11,				/* DO_RULE */
-	12,				/* DO_TRIGGER */
-	9,				/* DO_CONSTRAINT */
-	13,				/* DO_FK_CONSTRAINT */
+	8,				/* DO_ATTRDEF */
+	12,				/* DO_INDEX */
+	13,				/* DO_RULE */
+	14,				/* DO_TRIGGER */
+	11,				/* DO_CONSTRAINT */
+	15,				/* DO_FK_CONSTRAINT */
 	2,				/* DO_PROCLANG */
 	2,				/* DO_CAST */
-	8				/* DO_TABLE_DATA */
+	9,				/* DO_TABLE_DATA */
+	7,				/* DO_TABLE_TYPE */
+	10				/* DO_BLOBS */
+};
+
+/*
+ * Sort priority for object types when dumping newer databases.
+ * Objects are sorted by type, and within a type by name.
+ */
+static const int newObjectTypePriority[] =
+{
+	1,				/* DO_NAMESPACE */
+	3,				/* DO_TYPE */
+	4,				/* DO_FUNC */
+	5,				/* DO_AGG */
+	6,				/* DO_OPERATOR */
+	7,				/* DO_OPCLASS */
+	9,				/* DO_CONVERSION */
+	10,				/* DO_TABLE */
+	12,				/* DO_ATTRDEF */
+	16,				/* DO_INDEX */
+	17,				/* DO_RULE */
+	18,				/* DO_TRIGGER */
+	15,				/* DO_CONSTRAINT */
+	19,				/* DO_FK_CONSTRAINT */
+	2,				/* DO_PROCLANG */
+	8,				/* DO_CAST */
+	13,				/* DO_TABLE_DATA */
+	11,				/* DO_TABLE_TYPE */
+	14				/* DO_BLOBS */
 };
 
 
-static int	DOTypeCompare(const void *p1, const void *p2);
+static int	DOTypeNameCompare(const void *p1, const void *p2);
+static int	DOTypeOidCompare(const void *p1, const void *p2);
 static bool TopoSort(DumpableObject **objs,
 					 int numObjs,
 					 DumpableObject **ordering,
@@ -67,27 +97,79 @@ static void describeDumpableObject(DumpableObject *obj,
 
 
 /*
- * Sort the given objects into a type/OID-based ordering
+ * Sort the given objects into a type/name-based ordering
  *
  * Normally this is just the starting point for the dependency-based
  * ordering.
  */
 void
-sortDumpableObjectsByType(DumpableObject **objs, int numObjs)
+sortDumpableObjectsByTypeName(DumpableObject **objs, int numObjs)
 {
 	if (numObjs > 1)
-		qsort((void *) objs, numObjs, sizeof(DumpableObject *), DOTypeCompare);
+		qsort((void *) objs, numObjs, sizeof(DumpableObject *),
+			  DOTypeNameCompare);
 }
 
 static int
-DOTypeCompare(const void *p1, const void *p2)
+DOTypeNameCompare(const void *p1, const void *p2)
 {
 	DumpableObject *obj1 = *(DumpableObject **) p1;
 	DumpableObject *obj2 = *(DumpableObject **) p2;
 	int			cmpval;
 
-	cmpval = objectTypePriority[obj1->objType] -
-		objectTypePriority[obj2->objType];
+	/* Sort by type */
+	cmpval = newObjectTypePriority[obj1->objType] -
+		newObjectTypePriority[obj2->objType];
+
+	if (cmpval != 0)
+		return cmpval;
+
+	/*
+	 * Sort by namespace.  Note that all objects of the same type should
+	 * either have or not have a namespace link, so we needn't be fancy
+	 * about cases where one link is null and the other not.
+	 */
+	if (obj1->namespace && obj2->namespace)
+	{
+		cmpval = strcmp(obj1->namespace->dobj.name,
+						obj2->namespace->dobj.name);
+		if (cmpval != 0)
+			return cmpval;
+	}
+
+	/* Sort by name */
+	cmpval = strcmp(obj1->name, obj2->name);
+	if (cmpval != 0)
+		return cmpval;
+
+	/* Probably shouldn't get here, but if we do, sort by OID */
+	return oidcmp(obj1->catId.oid, obj2->catId.oid);
+}
+
+
+/*
+ * Sort the given objects into a type/OID-based ordering
+ *
+ * This is used with pre-7.3 source databases as a crude substitute for the
+ * lack of dependency information.
+ */
+void
+sortDumpableObjectsByTypeOid(DumpableObject **objs, int numObjs)
+{
+	if (numObjs > 1)
+		qsort((void *) objs, numObjs, sizeof(DumpableObject *),
+			  DOTypeOidCompare);
+}
+
+static int
+DOTypeOidCompare(const void *p1, const void *p2)
+{
+	DumpableObject *obj1 = *(DumpableObject **) p1;
+	DumpableObject *obj2 = *(DumpableObject **) p2;
+	int			cmpval;
+
+	cmpval = oldObjectTypePriority[obj1->objType] -
+		oldObjectTypePriority[obj2->objType];
 
 	if (cmpval != 0)
 		return cmpval;
@@ -839,93 +921,79 @@ describeDumpableObject(DumpableObject *obj, char *buf, int bufsize)
 		case DO_NAMESPACE:
 			snprintf(buf, bufsize,
 					 "SCHEMA %s  (ID %d OID %u)",
-					 ((NamespaceInfo *) obj)->nspname,
-					 obj->dumpId, obj->catId.oid);
+					 obj->name, obj->dumpId, obj->catId.oid);
 			return;
 		case DO_TYPE:
 			snprintf(buf, bufsize,
 					 "TYPE %s  (ID %d OID %u)",
-					 ((TypeInfo *) obj)->typname,
-					 obj->dumpId, obj->catId.oid);
+					 obj->name, obj->dumpId, obj->catId.oid);
 			return;
 		case DO_FUNC:
 			snprintf(buf, bufsize,
 					 "FUNCTION %s  (ID %d OID %u)",
-					 ((FuncInfo *) obj)->proname,
-					 obj->dumpId, obj->catId.oid);
+					 obj->name, obj->dumpId, obj->catId.oid);
 			return;
 		case DO_AGG:
 			snprintf(buf, bufsize,
 					 "AGGREGATE %s  (ID %d OID %u)",
-					 ((AggInfo *) obj)->aggfn.proname,
-					 obj->dumpId, obj->catId.oid);
+					 obj->name, obj->dumpId, obj->catId.oid);
 			return;
 		case DO_OPERATOR:
 			snprintf(buf, bufsize,
 					 "OPERATOR %s  (ID %d OID %u)",
-					 ((OprInfo *) obj)->oprname,
-					 obj->dumpId, obj->catId.oid);
+					 obj->name, obj->dumpId, obj->catId.oid);
 			return;
 		case DO_OPCLASS:
 			snprintf(buf, bufsize,
 					 "OPERATOR CLASS %s  (ID %d OID %u)",
-					 ((OpclassInfo *) obj)->opcname,
-					 obj->dumpId, obj->catId.oid);
+					 obj->name, obj->dumpId, obj->catId.oid);
 			return;
 		case DO_CONVERSION:
 			snprintf(buf, bufsize,
 					 "CONVERSION %s  (ID %d OID %u)",
-					 ((ConvInfo *) obj)->conname,
-					 obj->dumpId, obj->catId.oid);
+					 obj->name, obj->dumpId, obj->catId.oid);
 			return;
 		case DO_TABLE:
 			snprintf(buf, bufsize,
 					 "TABLE %s  (ID %d OID %u)",
-					 ((TableInfo *) obj)->relname,
-					 obj->dumpId, obj->catId.oid);
+					 obj->name, obj->dumpId, obj->catId.oid);
 			return;
 		case DO_ATTRDEF:
 			snprintf(buf, bufsize,
 					 "ATTRDEF %s.%s  (ID %d OID %u)",
-					 ((AttrDefInfo *) obj)->adtable->relname,
+					 ((AttrDefInfo *) obj)->adtable->dobj.name,
 					 ((AttrDefInfo *) obj)->adtable->attnames[((AttrDefInfo *) obj)->adnum - 1],
 					 obj->dumpId, obj->catId.oid);
 			return;
 		case DO_INDEX:
 			snprintf(buf, bufsize,
 					 "INDEX %s  (ID %d OID %u)",
-					 ((IndxInfo *) obj)->indexname,
-					 obj->dumpId, obj->catId.oid);
+					 obj->name, obj->dumpId, obj->catId.oid);
 			return;
 		case DO_RULE:
 			snprintf(buf, bufsize,
 					 "RULE %s  (ID %d OID %u)",
-					 ((RuleInfo *) obj)->rulename,
-					 obj->dumpId, obj->catId.oid);
+					 obj->name, obj->dumpId, obj->catId.oid);
 			return;
 		case DO_TRIGGER:
 			snprintf(buf, bufsize,
 					 "TRIGGER %s  (ID %d OID %u)",
-					 ((TriggerInfo *) obj)->tgname,
-					 obj->dumpId, obj->catId.oid);
+					 obj->name, obj->dumpId, obj->catId.oid);
 			return;
 		case DO_CONSTRAINT:
 			snprintf(buf, bufsize,
 					 "CONSTRAINT %s  (ID %d OID %u)",
-					 ((ConstraintInfo *) obj)->conname,
-					 obj->dumpId, obj->catId.oid);
+					 obj->name, obj->dumpId, obj->catId.oid);
 			return;
 		case DO_FK_CONSTRAINT:
 			snprintf(buf, bufsize,
 					 "FK CONSTRAINT %s  (ID %d OID %u)",
-					 ((ConstraintInfo *) obj)->conname,
-					 obj->dumpId, obj->catId.oid);
+					 obj->name, obj->dumpId, obj->catId.oid);
 			return;
 		case DO_PROCLANG:
 			snprintf(buf, bufsize,
 					 "PROCEDURAL LANGUAGE %s  (ID %d OID %u)",
-					 ((ProcLangInfo *) obj)->lanname,
-					 obj->dumpId, obj->catId.oid);
+					 obj->name, obj->dumpId, obj->catId.oid);
 			return;
 		case DO_CAST:
 			snprintf(buf, bufsize,
@@ -937,8 +1005,17 @@ describeDumpableObject(DumpableObject *obj, char *buf, int bufsize)
 		case DO_TABLE_DATA:
 			snprintf(buf, bufsize,
 					 "TABLE DATA %s  (ID %d OID %u)",
-					 ((TableDataInfo *) obj)->tdtable->relname,
-					 obj->dumpId, obj->catId.oid);
+					 obj->name, obj->dumpId, obj->catId.oid);
+			return;
+		case DO_TABLE_TYPE:
+			snprintf(buf, bufsize,
+					 "TABLE TYPE %s  (ID %d OID %u)",
+					 obj->name, obj->dumpId, obj->catId.oid);
+			return;
+		case DO_BLOBS:
+			snprintf(buf, bufsize,
+					 "BLOBS  (ID %d)",
+					 obj->dumpId);
 			return;
 	}
 	/* shouldn't get here */

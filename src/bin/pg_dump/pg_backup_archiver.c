@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.83 2004/02/24 03:35:19 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.84 2004/03/03 21:28:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,6 +49,8 @@ static ArchiveHandle *_allocAH(const char *FileSpec, const ArchiveFormat fmt,
 		 const int compression, ArchiveMode mode);
 static int	_printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isData);
 
+static void fixPriorBlobRefs(ArchiveHandle *AH, TocEntry *blobte,
+							 RestoreOptions *ropt);
 static void _doSetFixedOutputState(ArchiveHandle *AH);
 static void _doSetSessionAuth(ArchiveHandle *AH, const char *user);
 static void _reconnectToDB(ArchiveHandle *AH, const char *dbname, const char *user);
@@ -279,7 +281,7 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 				/*
 				 * If we can output the data, then restore it.
 				 */
-				if (AH->PrintTocDataPtr !=NULL && (reqs & REQ_DATA) != 0)
+				if (AH->PrintTocDataPtr != NULL && (reqs & REQ_DATA) != 0)
 				{
 #ifndef HAVE_LIBZ
 					if (AH->compression != 0)
@@ -331,6 +333,24 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 
 						(*AH->PrintTocDataPtr) (AH, te, ropt);
 
+						/*
+						 * If we just restored blobs, fix references in
+						 * previously-loaded tables; otherwise, if we
+						 * previously restored blobs, fix references in
+						 * this table.  Note that in standard cases the BLOBS
+						 * entry comes after all TABLE DATA entries, but
+						 * we should cope with other orders in case the
+						 * user demands reordering.
+						 */
+						if (strcmp(te->desc, "BLOBS") == 0)
+							fixPriorBlobRefs(AH, te, ropt);
+						else if (AH->createdBlobXref &&
+								 strcmp(te->desc, "TABLE DATA") == 0)
+						{
+							ahlog(AH, 1, "fixing up large-object cross-reference for \"%s\"\n", te->tag);
+							FixupBlobRefs(AH, te);
+						}
+
 						_enableTriggersIfNecessary(AH, te, ropt);
 					}
 				}
@@ -344,41 +364,6 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 		}
 		te = te->next;
 	}		/* end loop over TOC entries */
-
-	/*
-	 * Now use blobs_xref (if used) to fixup any refs for tables that we
-	 * loaded
-	 */
-	if (_canRestoreBlobs(AH) && AH->createdBlobXref)
-	{
-		/* NULL parameter means disable ALL user triggers */
-		_disableTriggersIfNecessary(AH, NULL, ropt);
-
-		te = AH->toc->next;
-		while (te != AH->toc)
-		{
-			/* Is it table data? */
-			if (strcmp(te->desc, "TABLE DATA") == 0)
-			{
-				ahlog(AH, 2, "checking whether we loaded \"%s\"\n", te->tag);
-
-				reqs = _tocEntryRequired(te, ropt);
-
-				if ((reqs & REQ_DATA) != 0)		/* We loaded the data */
-				{
-					ahlog(AH, 1, "fixing up large-object cross-reference for \"%s\"\n", te->tag);
-					FixupBlobRefs(AH, te);
-				}
-			}
-			else
-				ahlog(AH, 2, "ignoring large-object cross-references for %s %s\n", te->desc, te->tag);
-
-			te = te->next;
-		}
-
-		/* NULL parameter means enable ALL user triggers */
-		_enableTriggersIfNecessary(AH, NULL, ropt);
-	}
 
 	/*
 	 * Clean up & we're done.
@@ -396,6 +381,41 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 			PQfinish(AH->blobConnection);
 			AH->blobConnection = NULL;
 		}
+	}
+}
+
+/*
+ * After restoring BLOBS, fix all blob references in previously-restored
+ * tables.  (Normally, the BLOBS entry should appear after all TABLE DATA
+ * entries, so this will in fact handle all blob references.)
+ */
+static void
+fixPriorBlobRefs(ArchiveHandle *AH, TocEntry *blobte, RestoreOptions *ropt)
+{
+	TocEntry   *te;
+	teReqs		reqs;
+
+	if (AH->createdBlobXref)
+	{
+		/* NULL parameter means disable ALL user triggers */
+		_disableTriggersIfNecessary(AH, NULL, ropt);
+
+		for (te = AH->toc->next; te != blobte; te = te->next)
+		{
+			if (strcmp(te->desc, "TABLE DATA") == 0)
+			{
+				reqs = _tocEntryRequired(te, ropt);
+
+				if ((reqs & REQ_DATA) != 0)		/* We loaded the data */
+				{
+					ahlog(AH, 1, "fixing up large-object cross-reference for \"%s\"\n", te->tag);
+					FixupBlobRefs(AH, te);
+				}
+			}
+		}
+
+		/* NULL parameter means enable ALL user triggers */
+		_enableTriggersIfNecessary(AH, NULL, ropt);
 	}
 }
 
@@ -702,6 +722,9 @@ EndRestoreBlobs(ArchiveHandle *AH)
 
 	if (AH->blobTxActive)
 		CommitTransactionXref(AH);
+
+	if (AH->createdBlobXref)
+		CreateBlobXrefIndex(AH);
 
 	ahlog(AH, 1, "restored %d large objects\n", AH->blobCount);
 }
@@ -2148,7 +2171,7 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isDat
 			 pfx, te->tag, te->desc,
 			 te->namespace ? te->namespace : "-",
 			 te->owner);
-	if (AH->PrintExtraTocPtr !=NULL)
+	if (AH->PrintExtraTocPtr != NULL)
 		(*AH->PrintExtraTocPtr) (AH, te);
 	ahprintf(AH, "--\n\n");
 

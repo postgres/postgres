@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/common.c,v 1.80 2003/12/08 16:39:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/common.c,v 1.81 2004/03/03 21:28:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -368,9 +368,9 @@ flagInhAttrs(TableInfo *tblinfo, int numTables,
 					pconstr = &(parent->checkexprs[l]);
 					if (strcmp(pconstr->condef, constr->condef) != 0)
 						continue;
-					if (strcmp(pconstr->conname, constr->conname) == 0 ||
-						(pconstr->conname[0] == '$' &&
-						 constr->conname[0] == '$'))
+					if (strcmp(pconstr->dobj.name, constr->dobj.name) == 0 ||
+						(pconstr->dobj.name[0] == '$' &&
+						 constr->dobj.name[0] == '$'))
 					{
 						constr->coninherited = true;
 						break;
@@ -395,6 +395,8 @@ void
 AssignDumpId(DumpableObject *dobj)
 {
 	dobj->dumpId = ++lastDumpId;
+	dobj->name = NULL;			/* must be set later */
+	dobj->namespace = NULL;		/* may be set later */
 	dobj->dependencies = NULL;
 	dobj->nDeps = 0;
 	dobj->allocDeps = 0;
@@ -725,7 +727,7 @@ findParentsByOid(TableInfo *self,
 				{
 					write_msg(NULL, "failed sanity check, parent OID %u of table \"%s\" (OID %u) not found\n",
 							  inhinfo[i].inhparent,
-							  self->relname,
+							  self->dobj.name,
 							  oid);
 					exit_nicely();
 				}

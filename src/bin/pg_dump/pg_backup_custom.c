@@ -19,7 +19,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_custom.c,v 1.28 2003/12/06 03:00:11 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_custom.c,v 1.29 2004/03/03 21:28:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -279,8 +279,9 @@ _PrintExtraToc(ArchiveHandle *AH, TocEntry *te)
 {
 	lclTocEntry *ctx = (lclTocEntry *) te->formatData;
 
-	ahprintf(AH, "-- Data Pos: " INT64_FORMAT "\n",
-			 (int64) ctx->dataPos);
+	if (AH->public.verbose)
+		ahprintf(AH, "-- Data Pos: " INT64_FORMAT "\n",
+				 (int64) ctx->dataPos);
 }
 
 /*
@@ -417,8 +418,8 @@ _EndBlobs(ArchiveHandle *AH, TocEntry *te)
 }
 
 /*
- * Print data for a gievn TOC entry
-*/
+ * Print data for a given TOC entry
+ */
 static void
 _PrintTocData(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt)
 {
@@ -497,8 +498,6 @@ _PrintTocData(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt)
 						 blkType);
 			break;
 	}
-
-	ahprintf(AH, "\n\n");
 }
 
 /*

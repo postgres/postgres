@@ -2,7 +2,7 @@
  *	Definitions for pg_backup_db.c
  *
  *	IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_db.h,v 1.9 2003/11/29 19:52:05 pgsql Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_db.h,v 1.10 2004/03/03 21:28:54 tgl Exp $
  */
 
 #define BLOB_XREF_TABLE "pg_dump_blob_xref"		/* MUST be lower case */
@@ -12,6 +12,7 @@ extern int	ExecuteSqlCommand(ArchiveHandle *AH, PQExpBuffer qry, char *desc, boo
 extern int	ExecuteSqlCommandBuf(ArchiveHandle *AH, void *qry, size_t bufLen);
 
 extern void CreateBlobXrefTable(ArchiveHandle *AH);
+extern void CreateBlobXrefIndex(ArchiveHandle *AH);
 extern void InsertBlobXref(ArchiveHandle *AH, Oid old, Oid new);
 extern void StartTransaction(ArchiveHandle *AH);
 extern void StartTransactionXref(ArchiveHandle *AH);

@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.41 2003/12/08 16:39:05 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.42 2004/03/03 21:28:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -309,7 +309,7 @@ _PrintExtraToc(ArchiveHandle *AH, TocEntry *te)
 {
 	lclTocEntry *ctx = (lclTocEntry *) te->formatData;
 
-	if (ctx->filename != NULL)
+	if (AH->public.verbose && ctx->filename != NULL)
 		ahprintf(AH, "-- File: %s\n", ctx->filename);
 }
 
