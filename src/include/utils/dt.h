@@ -8,7 +8,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dt.h,v 1.38 1999/03/14 16:03:16 momjian Exp $
+ * $Id: dt.h,v 1.39 1999/04/15 02:24:23 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -284,6 +284,20 @@ extern int day_tab[2][13];
 #define IS_VALID_JULIAN(y,m,d) ((y > JULIAN_MINYEAR) \
  || ((y == JULIAN_MINYEAR) && ((m > JULIAN_MINMONTH) \
   || ((m == JULIAN_MINMONTH) && (d >= JULIAN_MINDAY)))))
+
+#define UTIME_MINYEAR (1901)
+#define UTIME_MINMONTH (12)
+#define UTIME_MINDAY (14)
+#define UTIME_MAXYEAR (2038)
+#define UTIME_MAXMONTH (01)
+#define UTIME_MAXDAY (18)
+
+#define IS_VALID_UTIME(y,m,d) (((y > UTIME_MINYEAR) \
+ || ((y == UTIME_MINYEAR) && ((m > UTIME_MINMONTH) \
+  || ((m == UTIME_MINMONTH) && (d >= UTIME_MINDAY))))) \
+ && ((y < UTIME_MAXYEAR) \
+ || ((y == UTIME_MAXYEAR) && ((m < UTIME_MAXMONTH) \
+  || ((m == UTIME_MAXMONTH) && (d <= UTIME_MAXDAY))))))
 
 /*
  * dt.c prototypes
