@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.152 2003/03/30 21:48:37 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.153 2003/05/01 00:57:05 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -5563,10 +5563,10 @@ SELECT TIMESTAMP 'now';
 	<entry><literal>area(box '((0,0),(1,1))')</literal></entry>
        </row>
        <row>
-	<entry><literal><function>box</function>(<type>box</>, <type>box</>)</literal></entry>
+	<entry><literal><function>box_intersect</function>(<type>box</>, <type>box</>)</literal></entry>
 	<entry><type>box</type></entry>
 	<entry>intersection box</entry>
-	<entry><literal>box(box '((0,0),(1,1))',box '((0.5,0.5),(2,2))')</literal></entry>
+	<entry><literal>box_intersect(box '((0,0),(1,1))',box '((0.5,0.5),(2,2))')</literal></entry>
        </row>
        <row>
 	<entry><literal><function>center</function>(<replaceable>object</>)</literal></entry>
