@@ -4,7 +4,7 @@
  * (currently mule internal code (mic) is used)
  * Tatsuo Ishii
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/mb/mbutils.c,v 1.40 2003/04/27 17:31:25 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/mb/mbutils.c,v 1.41 2003/04/27 18:01:46 tgl Exp $
  */
 #include "postgres.h"
 
@@ -105,6 +105,17 @@ SetClientEncoding(int encoding, bool doit)
 		}
 		return 0;
 	}
+
+	/*
+	 * If we're not inside a transaction then we can't do catalog lookups,
+	 * so fail.  After backend startup, this could only happen if we
+	 * are re-reading postgresql.conf due to SIGHUP --- so basically this
+	 * just constrains the ability to change client_encoding on the fly
+	 * from postgresql.conf.  Which would probably be a stupid thing to do
+	 * anyway.
+	 */
+	if (!IsTransactionState())
+		return -1;
 
 	/*
 	 * Look up the conversion functions.
