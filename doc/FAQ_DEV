@@ -27,6 +27,7 @@
    11) What is configure all about?
    12) How do I add a new port?
    13) What is CommandCounterIncrement()?
+   13) Why don't we use threads in the backend?
      _________________________________________________________________
    
   1) What tools are available for developers?
@@ -34,23 +35,22 @@
    Aside from the User documentation mentioned in the regular FAQ, there
    are several development tools available. First, all the files in the
    /tools directory are designed for developers.
-        RELEASE_CHANGES         changes we have to make for each release
-        SQL_keywords            standard SQL'92 keywords
-        backend                 description/flowchart of the backend directorie
-s
-        ccsym                   find standard defines made by your compiler
-        entab                   converts tabs to spaces, used by pgindent
-        find_static             finds functions that could be made static
-        find_typedef            get a list of typedefs in the source code
-        make_ctags              make vi 'tags' file in each directory
-        make_diff               make *.orig and diffs of source
-        make_etags              make emacs 'etags' files
-        make_keywords.README    make comparison of our keywords and SQL'92
-        make_mkid               make mkid ID files
-        mkldexport              create AIX exports file
-        pgindent                indents C source files
-        pginclude               scripts for adding/removing include files
-        unused_oids             in pgsql/src/include/catalog
+    RELEASE_CHANGES     changes we have to make for each release
+    SQL_keywords        standard SQL'92 keywords
+    backend         description/flowchart of the backend directories
+    ccsym           find standard defines made by your compiler
+    entab           converts tabs to spaces, used by pgindent
+    find_static     finds functions that could be made static
+    find_typedef        get a list of typedefs in the source code
+    make_ctags      make vi 'tags' file in each directory
+    make_diff       make *.orig and diffs of source
+    make_etags      make emacs 'etags' files
+    make_keywords.README    make comparison of our keywords and SQL'92
+    make_mkid       make mkid ID files
+    mkldexport      create AIX exports file
+    pgindent        indents C source files
+    pginclude       scripts for adding/removing include files
+    unused_oids     in pgsql/src/include/catalog
 
    Let me note some of these. If you point your browser at the
    file:/usr/local/src/pgsql/src/tools/backend/index.html directory, you
@@ -71,9 +71,9 @@ s
    support this via tags or etags files.
    
    Third, you need to get id-utils from:
-        ftp://alpha.gnu.org/gnu/id-utils-3.2d.tar.gz
-        ftp://tug.org/gnu/id-utils-3.2d.tar.gz
-        ftp://ftp.enst.fr/pub/gnu/gnits/id-utils-3.2d.tar.gz
+    ftp://alpha.gnu.org/gnu/id-utils-3.2d.tar.gz
+    ftp://tug.org/gnu/id-utils-3.2d.tar.gz
+    ftp://ftp.enst.fr/pub/gnu/gnits/id-utils-3.2d.tar.gz
 
    By running tools/make_mkid, an archive of source symbols can be
    created that can be rapidly queried like grep or edited. Others prefer
@@ -85,40 +85,39 @@ s
    Our standard format is to indent each code level with one tab, where
    each tab is four spaces. You will need to set your editor to display
    tabs as four spaces:
-        vi in ~/.exrc:
-                        set tabstop=4
-                set sw=4
-        more:
-                more -x4
-        less:
-                less -x4
-        emacs:
-                M-x set-variable tab-width
-            or
-                ; Cmd to set tab stops &etc for working with PostgreSQL code
+    vi in ~/.exrc:
+            set tabstop=4
+            set sw=4
+    more:
+            more -x4
+    less:
+            less -x4
+    emacs:
+        M-x set-variable tab-width
+        or
+        ; Cmd to set tab stops & indenting for working with PostgreSQL code
              (c-add-style "pgsql"
-                                  '("bsd"
+                      '("bsd"
                                  (indent-tabs-mode . t)
                                  (c-basic-offset   . 4)
                                  (tab-width . 4)
-                                             (c-offsets-alist .
+                                 (c-offsets-alist .
                                             ((case-label . +))))
                        t) ; t = set this mode on
 
-            and add this to your autoload list (modify file path in macro):
+        and add this to your autoload list (modify file path in macro):
 
-                (setq auto-mode-alist
-                      (cons '("\\`/usr/local/src/pgsql/.*\\.[chyl]\\'" . pgsql-
-c-mode)
-                        auto-mode-alist))
-            or
-                /*
-                 * Local variables:
-                 *  tab-width: 4
-                 *  c-indent-level: 4
-                 *  c-basic-offset: 4
-                 * End:
-                 */
+        (setq auto-mode-alist
+              (cons '("\\`/usr/local/src/pgsql/.*\\.[chyl]\\'" . pgsql-c-mode)
+            auto-mode-alist))
+        or
+            /*
+             * Local variables:
+             *  tab-width: 4
+             *  c-indent-level: 4
+             *  c-basic-offset: 4
+             * End:
+             */
 
    pgindent will the format code by specifying flags to your operating
    system's utility indent.
@@ -174,8 +173,7 @@ c-mode)
           a typical code snipped that loops through a List containing Var
           *'s and processes each one:
           
-
-    List *i, *list;
+List *i, *list;
 
     foreach(i, list)
     {
@@ -207,17 +205,15 @@ c-mode)
           
    You can print nodes easily inside gdb. First, to disable output
    truncation when you use the gdb print command:
-
-        (gdb) set print elements 0
+(gdb) set print elements 0
 
    Instead of printing values in gdb format, you can use the next two
    commands to print out List, Node, and structure contents in a verbose
    format that is easier to understand. List's are unrolled into nodes,
    and nodes are printed in detail. The first prints in a short format,
    and the second in a long format:
-
-        (gdb) call print(any_pointer)
-        (gdb) call pprint(any_pointer)
+(gdb) call print(any_pointer)
+    (gdb) call pprint(any_pointer)
 
    The output appears in the postmaster log file, or on your screen if
    you are running a backend directly without a postmaster.
@@ -292,11 +288,11 @@ c-mode)
    tables in columns of type Name. Name is a fixed-length,
    null-terminated type of NAMEDATALEN bytes. (The default value for
    NAMEDATALEN is 32 bytes.)
-        typedef struct nameData
-        {
-            char        data[NAMEDATALEN];
-        } NameData;
-        typedef NameData *Name;
+typedef struct nameData
+    {
+        char        data[NAMEDATALEN];
+    } NameData;
+    typedef NameData *Name;
 
    Table, column, type, function, and view names that come into the
    backend via user queries are stored as variable-length,
@@ -311,8 +307,8 @@ c-mode)
   9) How do I efficiently access information in tables from the backend code?
   
    You first need to find the tuples(rows) you are interested in. There
-   are two ways. First, SearchSysCache() and related functions allow
-   you to query the system catalogs. This is the preferred way to access
+   are two ways. First, SearchSysCache() and related functions allow you
+   to query the system catalogs. This is the preferred way to access
    system tables, because the first call to the cache loads the needed
    rows, and future requests can return the results without accessing the
    base table. The caches use system table indexes to look up tuples. A
@@ -321,13 +317,14 @@ c-mode)
    src/backend/utils/cache/lsyscache.c contains many column-specific
    cache lookup functions.
    
-   The rows returned are cache-owned versions of the heap rows.  Therefore,
-   you must not modify or delete the tuple returned by SearchSysCache().
-   What you *should* do is release it with ReleaseSysCache() when you are
-   done using it; this informs the cache that it can discard that tuple
-   if necessary.  If you neglect to call ReleaseSysCache(), then the cache
-   entry will remain locked in the cache until end of transaction, which is
-   tolerable but not very desirable.
+   The rows returned are cache-owned versions of the heap rows.
+   Therefore, you must not modify or delete the tuple returned by
+   SearchSysCache(). What you should do is release it with
+   ReleaseSysCache() when you are done using it; this informs the cache
+   that it can discard that tuple if necessary. If you neglect to call
+   ReleaseSysCache(), then the cache entry will remain locked in the
+   cache until end of transaction, which is tolerable but not very
+   desirable.
    
    If you can't use the system cache, you will need to retrieve the data
    directly from the heap table, using the buffer cache that is shared by
@@ -344,28 +341,26 @@ c-mode)
    While scans automatically lock/unlock rows from the buffer cache, with
    heap_fetch(), you must pass a Buffer pointer, and ReleaseBuffer() it
    when completed.
+   
+   Once you have the row, you can get data that is common to all tuples,
+   like t_self and t_oid, by merely accessing the HeapTuple structure
+   entries. If you need a table-specific column, you should take the
+   HeapTuple pointer, and use the GETSTRUCT() macro to access the
+   table-specific start of the tuple. You then cast the pointer as a
+   Form_pg_proc pointer if you are accessing the pg_proc table, or
+   Form_pg_type if you are accessing pg_type. You can then access the
+   columns by using a structure pointer:
+((Form_pg_class) GETSTRUCT(tuple))->relnatts
 
-   Once you have the row, you can get data that is common
-   to all tuples, like t_self and t_oid, by merely accessing the
-   HeapTuple structure entries. If you need a table-specific column, you
-   should take the HeapTuple pointer, and use the GETSTRUCT() macro to
-   access the table-specific start of the tuple. You then cast the
-   pointer as a Form_pg_proc pointer if you are accessing the pg_proc
-   table, or Form_pg_type if you are accessing pg_type. You can then
-   access the columns by using a structure pointer:
-
-        ((Form_pg_class) GETSTRUCT(tuple))->relnatts
-
-   You must not directly change live tuples in this way. The best way
-   is to use heap_modifytuple() and pass it your original tuple, and the
-   values you want changed. It returns a palloc'ed tuple, which you
-   pass to heap_replace(). You can delete tuples by passing the tuple's
-   t_self to heap_destroy(). You use t_self for heap_update() too.
-
-   Remember, tuples can be either system cache copies, which may go away
-   after you call ReleaseSysCache(), or read directly from disk buffers,
-   which go away when you heap_getnext(), heap_endscan, or ReleaseBuffer(),
-   in the heap_fetch() case. Or it may be a palloc'ed tuple, that you must
+   You must not directly change live tuples in this way. The best way is
+   to use heap_modifytuple() and pass it your original tuple, and the
+   values you want changed. It returns a palloc'ed tuple, which you pass
+   to heap_replace(). You can delete tuples by passing the tuple's t_self
+   to heap_destroy(). You use t_self for heap_update() too. Remember,
+   tuples can be either system cache copies, which may go away after you
+   call ReleaseSysCache(), or read directly from disk buffers, which go
+   away when you heap_getnext(), heap_endscan, or ReleaseBuffer(), in the
+   heap_fetch() case. Or it may be a palloc'ed tuple, that you must
    pfree() when finished.
    
   10) What is elog()?
@@ -429,3 +424,12 @@ c-mode)
    to be broken into pieces so each piece can see rows modified by
    previous pieces. CommandCounterIncrement() increments the Command
    Counter, creating a new part of the transaction.
+   
+  14) Why don't we use threads in the backend?
+  
+   There are several reasons threads are not used:
+     * Historically, threads were unsupported and buggy.
+     * An error in one backend can corrupt other backends.
+     * Speed improvements using threads are small compared to the
+       remaining backend startup time.
+     * The backend code would be more complex.
