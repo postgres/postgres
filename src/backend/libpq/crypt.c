@@ -1,23 +1,23 @@
 /*-------------------------------------------------------------------------
  *
  * crypt.c
- *	Look into pg_shadow and check the encrypted password with
- *	the one passed in from the frontend.
+ *	  Look into the password file and check the encrypted password with
+ *	  the one passed in from the frontend.
  *
- * Modification History
+ * Original coding by Todd A. Brandys
  *
- * Dec 17, 1997 - Todd A. Brandys
- *	Orignal Version Completed.
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: crypt.c,v 1.39 2001/10/25 05:49:30 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/libpq/crypt.c,v 1.40 2001/11/01 18:10:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
+#include "postgres.h"
 
 #include <errno.h>
 #include <unistd.h>
 
-#include "postgres.h"
 #include "libpq/crypt.h"
 #include "libpq/libpq.h"
 #include "miscadmin.h"
@@ -82,45 +82,45 @@ crypt_openpwdfile(void)
 	pwdfile = AllocateFile(filename, "r");
 
 	if (pwdfile == NULL && errno != ENOENT)
-		elog(DEBUG, "could not open %s: %s", filename, strerror(errno));
+		elog(DEBUG, "could not open %s: %m", filename);
 
 	pfree(filename);
 
 	return pwdfile;
 }
 
-/*-------------------------------------------------------------------------*/
-
+/*
+ * Compare two password-file lines on the basis of their usernames.
+ *
+ * Can also be used to compare just a username against a password-file
+ * line (for bsearch).
+ */
 static int
 compar_user(const void *user_a, const void *user_b)
 {
-
-	int			min,
-				value;
 	char	   *login_a;
 	char	   *login_b;
+	int			len_a,
+				len_b,
+				result;
 
 	login_a = *((char **) user_a);
 	login_b = *((char **) user_b);
 
 	/*
-	 * We only really want to compare the user logins which are first.	We
-	 * look for the first SEPSTR char getting the number of chars there
-	 * are before it. We only need to compare to the min count from the
-	 * two strings.
+	 * We only really want to compare the user logins which are first
+	 * and are terminated by CRYPT_PWD_FILE_SEPSTR.  (NB: this code
+	 * effectively assumes that CRYPT_PWD_FILE_SEPSTR is just one char.)
 	 */
-	min = strcspn(login_a, CRYPT_PWD_FILE_SEPSTR);
-	value = strcspn(login_b, CRYPT_PWD_FILE_SEPSTR);
-	if (value < min)
-		min = value;
+	len_a = strcspn(login_a, CRYPT_PWD_FILE_SEPSTR);
+	len_b = strcspn(login_b, CRYPT_PWD_FILE_SEPSTR);
 
-	/*
-	 * We add one to min so that the separator character is included in
-	 * the comparison.	Why?  I believe this will prevent logins that are
-	 * proper prefixes of other logins from being 'masked out'.  Being
-	 * conservative!
-	 */
-	return strncmp(login_a, login_b, min + 1);
+	result = strncmp(login_a, login_b, Min(len_a, len_b));
+
+	if (result == 0)			/* one could be a prefix of the other */
+		result = (len_a - len_b);
+
+	return result;
 }
 
 /*-------------------------------------------------------------------------*/
@@ -131,7 +131,7 @@ crypt_loadpwdfile(void)
 	char	   *filename;
 	int			result;
 	FILE	   *pwd_file;
-	char		buffer[256];
+	char		buffer[1024];
 
 	filename = crypt_getpwdreloadfilename();
 	result = unlink(filename);
@@ -145,9 +145,9 @@ crypt_loadpwdfile(void)
 	 */
 	if (!pwd_cache || result == 0)
 	{
+		/* free the old data only if this is a reload */
 		if (pwd_cache)
-		{						/* free the old data only if this is a
-								 * reload */
+		{
 			while (pwd_cache_count--)
 				free((void *) pwd_cache[pwd_cache_count]);
 			free((void *) pwd_cache);
@@ -161,7 +161,7 @@ crypt_loadpwdfile(void)
 		/*
 		 * Here is where we load the data from pg_pwd.
 		 */
-		while (fgets(buffer, 256, pwd_file) != NULL)
+		while (fgets(buffer, sizeof(buffer), pwd_file) != NULL)
 		{
 			/*
 			 * We must remove the return char at the end of the string, as
@@ -170,7 +170,9 @@ crypt_loadpwdfile(void)
 			if (buffer[(result = strlen(buffer) - 1)] == '\n')
 				buffer[result] = '\0';
 
-			pwd_cache = (char **) realloc((void *) pwd_cache, sizeof(char *) * (pwd_cache_count + 1));
+			pwd_cache = (char **)
+				realloc((void *) pwd_cache,
+						sizeof(char *) * (pwd_cache_count + 1));
 			pwd_cache[pwd_cache_count++] = strdup(buffer);
 		}
 		FreeFile(pwd_file);
@@ -187,7 +189,6 @@ crypt_loadpwdfile(void)
 static void
 crypt_parsepwdentry(char *buffer, char **pwd, char **valdate)
 {
-
 	char	   *parse = buffer;
 	int			count,
 				i;
@@ -208,7 +209,7 @@ crypt_parsepwdentry(char *buffer, char **pwd, char **valdate)
 	parse += (count + 1);
 
 	/*
-	 * store a copy of date login becomes invalid
+	 * store a copy of the date login becomes invalid
 	 */
 	count = strcspn(parse, CRYPT_PWD_FILE_SEPSTR);
 	*valdate = (char *) palloc(count + 1);
@@ -222,32 +223,26 @@ crypt_parsepwdentry(char *buffer, char **pwd, char **valdate)
 static int
 crypt_getloginfo(const char *user, char **passwd, char **valuntil)
 {
-	char	   *pwd,
-			   *valdate;
-	void	   *fakeout;
-
-	*passwd = NULL;
-	*valuntil = NULL;
 	crypt_loadpwdfile();
 
 	if (pwd_cache)
 	{
 		char	  **pwd_entry;
-		char		user_search[NAMEDATALEN + 2];
 
-		snprintf(user_search, NAMEDATALEN + 2, "%s\t", user);
-		fakeout = (void *) &user_search;
-		if ((pwd_entry = (char **) bsearch((void *) &fakeout, (void *) pwd_cache, pwd_cache_count, sizeof(char *), compar_user)))
+		pwd_entry = (char **) bsearch((void *) &user,
+									  (void *) pwd_cache,
+									  pwd_cache_count,
+									  sizeof(char *),
+									  compar_user);
+		if (pwd_entry)
 		{
-			crypt_parsepwdentry(*pwd_entry, &pwd, &valdate);
-			*passwd = pwd;
-			*valuntil = valdate;
+			crypt_parsepwdentry(*pwd_entry, passwd, valuntil);
 			return STATUS_OK;
 		}
-
-		return STATUS_OK;
 	}
 
+	*passwd = NULL;
+	*valuntil = NULL;
 	return STATUS_ERROR;
 }
 
@@ -256,13 +251,10 @@ crypt_getloginfo(const char *user, char **passwd, char **valuntil)
 int
 md5_crypt_verify(const Port *port, const char *user, const char *pgpass)
 {
-
 	char	   *passwd,
 			   *valuntil,
 			   *crypt_pwd;
 	int			retval = STATUS_ERROR;
-	AbsoluteTime vuntil,
-				current;
 
 	if (crypt_getloginfo(user, &passwd, &valuntil) == STATUS_ERROR)
 		return STATUS_ERROR;
@@ -270,9 +262,9 @@ md5_crypt_verify(const Port *port, const char *user, const char *pgpass)
 	if (passwd == NULL || *passwd == '\0')
 	{
 		if (passwd)
-			pfree((void *) passwd);
+			pfree(passwd);
 		if (valuntil)
-			pfree((void *) valuntil);
+			pfree(valuntil);
 		return STATUS_ERROR;
 	}
 
@@ -342,8 +334,11 @@ md5_crypt_verify(const Port *port, const char *user, const char *pgpass)
 	if (strcmp(pgpass, crypt_pwd) == 0)
 	{
 		/*
-		 * check here to be sure we are not past valuntil
+		 * Password OK, now check to be sure we are not past valuntil
 		 */
+		AbsoluteTime vuntil,
+					current;
+
 		if (!valuntil || strcmp(valuntil, "\\N") == 0)
 			vuntil = INVALID_ABSTIME;
 		else
