@@ -116,9 +116,10 @@ which is a rich resource for many topics.
 <Term>Mailing Lists</Term>
 <ListItem>
 <Para>
-The <ULink url="mailto:questions@postgresql.org"><ProductName>Postgres</ProductName> Questions</ULink>
-mailing list is a good place to have user questions answered. Other mailing lists are available; consult
-the web page for details.
+The <ULink url="http://www.PostgreSQL.ORG/mhonarc/pgsql-general/">pgsql-general</ULink>
+mailing list is a good place to have user questions answered.
+Other mailing lists are available; consult the Info Central section of the
+PostgreSQL web site for details.
 </Para>
 </ListItem>
 </VarListEntry>
@@ -135,11 +136,13 @@ for help, either through the documentation or through the mailing lists.
 Consider contributing your
 knowledge back. If you learn something which is not in the documentation, 
 write it up and contribute it.
-If you add features to the code, contribute it. 
-Even those without a lot of experience can provide
-corrections and minor changes in the documentation, and that is a good way to start.
+If you add features to the code, contribute it.</Para>
+
+<Para>
+Even those without a lot of experience can provide corrections and
+minor changes in the documentation, and that is a good way to start.
 The 
-<ULink url="mailto:docs@postgresql.org"><ProductName>Postgres</ProductName> Documentation</ULink>
+<ULink url="http://www.PostgreSQL.ORG/mhonarc/pgsql-docs/">pgsql-docs</ULink>
 mailing list is the place to get going.
 </Para>
 </ListItem>
