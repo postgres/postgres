@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.231 2003/10/31 19:33:17 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.232 2003/10/31 19:49:40 momjian Exp $
 -->
 
 <appendix id="release">
@@ -746,19 +746,9 @@ required for those wishing to migrate data from any previous release.</para>
     SELECT * FROM tab WHERE col IN array_val
    </para>
    </listitem>
-<listitem><para>Allow polymorphic SQL functions (Joe)</para>
-   <para>
-    bjm ??
-   </para>
-   </listitem>
 <listitem><para>New array functions array_append(), array_cat(), array_lower(),
   array_prepend(), array_to_string(), array_upper(), string_to_array() (Joe)</para></listitem>
-<listitem><para>Allow user defined aggregates to use polymorphic functions (Joe)</para>
-   <para>
-    bjm ??
-   </para>
-   </listitem>
-<listitem><para>Allow polymorphic user defined aggregates  (Joe)</para></listitem>
+<listitem><para>Allow user defined aggregates to use polymorphic functions (Joe)</para></listitem>
 <listitem><para>Allow assignments to empty arrays (Joe)</para></listitem>
 <listitem><para>Allow 60 in seconds fields of timestamp, time, interval input values (Tom)</para>
    <para>
@@ -819,6 +809,11 @@ zero-row record variable (Tom)</para></listitem>
    </para>
    </listitem>
 <listitem><para>Allow polymorphic PL/pgSQL functions (Tom, Joe)</para></listitem>
+<listitem><para>Allow polymorphic SQL functions (Joe)</para>
+   <para>
+    bjm ??
+   </para>
+   </listitem>
 <listitem><para>Improved compiled function caching mechanism in PL/pgSQL with full
   support for polymorphism (Joe)</para></listitem>
 <listitem><para>Add new $0 parameter in PL/pgSQL representing the function's actual
