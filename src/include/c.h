@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/c.h,v 1.172 2004/09/16 16:58:38 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/c.h,v 1.173 2004/09/23 13:16:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,10 +75,13 @@
 #include <SupportDefs.h>
 #endif
 
-#if (defined(WIN32) || defined(__CYGWIN__)) && \
-	!defined(_MSC_VER) && !defined(__BORLANDC__)
+#if defined(WIN32) || defined(__CYGWIN__)
+#if	!defined(_MSC_VER) && !defined(__BORLANDC__)
 /* We have to redefine some system functions after they are included above */
 #include "pg_config_os.h"
+#else
+#include <windows.h>	/* We don't have a port file for MSC/BCC */
+#endif
 #endif
 
 /* Must be before gettext() games below */
