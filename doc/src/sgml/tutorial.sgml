@@ -5,6 +5,14 @@
 -
 - -->
 <!doctype book PUBLIC "-//Davenport//DTD DocBook V3.0//EN" [
+
+<!entity about    SYSTEM "about.sgml">
+<!entity history  SYSTEM "history.sgml">
+<!entity info     SYSTEM "info.sgml">
+<!entity legal    SYSTEM "legal.sgml">
+<!entity notation SYSTEM "notation.sgml">
+<!entity y2k      SYSTEM "y2k.sgml">
+
 <!entity intro    SYSTEM "intro.sgml">
 <!entity arch     SYSTEM "arch.sgml">
 <!entity start    SYSTEM "start.sgml">
