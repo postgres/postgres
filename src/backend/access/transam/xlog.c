@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.47 2000/12/30 06:52:34 vadim Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.48 2001/01/09 06:24:32 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,6 +40,7 @@
 #include "miscadmin.h"
 
 int			XLOGbuffers = 8;
+int			XLOGfiles = 0;	/* how many files to pre-allocate */
 XLogRecPtr	MyLastRecPtr = {0, 0};
 uint32		CritSectionCount = 0;
 bool		InRecovery = false;
@@ -181,6 +182,18 @@ typedef struct BkpBlock
 #define XLogSegSize		(16*1024*1024)
 #define XLogLastSeg		(0xffffffff / XLogSegSize)
 #define XLogFileSize	(XLogLastSeg * XLogSegSize)
+
+#define NextLogSeg(_logId, _logSeg)		\
+{\
+	if (_logSeg >= XLogLastSeg)\
+	{\
+		_logId++;\
+		_logSeg = 0;\
+	}\
+	else\
+		_logSeg++;\
+}
+
 
 #define XLogFileName(path, log, seg)	\
 			snprintf(path, MAXPGPATH, "%s%c%08X%08X",	\
@@ -856,8 +869,8 @@ XLogWrite(char *buffer)
 			UpdateControlFile();
 			SpinRelease(ControlFileLockId);
 			if (!usexistent)	/* there was no file */
-				elog(LOG, "XLogWrite: had to create new log file - "
-					"you probably should do checkpoints more often");
+				elog(LOG, "XLogWrite: new log file created - "
+					"try to increase WAL_FILES");
 		}
 
 		if (logFile < 0)
@@ -1186,7 +1199,7 @@ ReadRecord(XLogRecPtr *RecPtr, char *buffer)
 		tmpRecPtr.xrecoff += SizeOfXLogPHD;
 	}
 	else if (!XRecOffIsValid(RecPtr->xrecoff))
-		elog(STOP, "ReadRecord: invalid record offset in (%u, %u)",
+		elog(STOP, "ReadRecord: invalid record offset at (%u, %u)",
 			 RecPtr->xlogid, RecPtr->xrecoff);
 
 	if (readFile >= 0 && (RecPtr->xlogid != readId ||
@@ -1232,15 +1245,21 @@ ReadRecord(XLogRecPtr *RecPtr, char *buffer)
 	record = (XLogRecord *) ((char *) readBuf + RecPtr->xrecoff % BLCKSZ);
 
 got_record:;
+	if (record->xl_len == 0)
+	{
+		elog(emode, "ReadRecord: record with zero len at (%u, %u)",
+			RecPtr->xlogid, RecPtr->xrecoff);
+		goto next_record_is_invalid;
+	}
 	if (record->xl_len > _INTL_MAXLOGRECSZ)
 	{
-		elog(emode, "ReadRecord: too long record len %u in (%u, %u)",
+		elog(emode, "ReadRecord: too long record len %u at (%u, %u)",
 			record->xl_len, RecPtr->xlogid, RecPtr->xrecoff);
 		goto next_record_is_invalid;
 	}
 	if (record->xl_rmid > RM_MAX_ID)
 	{
-		elog(emode, "ReadRecord: invalid resource managed id %u in (%u, %u)",
+		elog(emode, "ReadRecord: invalid resource managed id %u at (%u, %u)",
 			 record->xl_rmid, RecPtr->xlogid, RecPtr->xrecoff);
 		goto next_record_is_invalid;
 	}
@@ -1841,8 +1860,6 @@ StartupXLOG()
 		elog(STOP, "Invalid redo in checkPoint record");
 	if (checkPoint.undo.xrecoff == 0)
 		checkPoint.undo = RecPtr;
-	if (XLByteLT(RecPtr, checkPoint.undo))
-		elog(STOP, "Invalid undo in checkPoint record");
 
 	if (XLByteLT(checkPoint.undo, RecPtr) || 
 		XLByteLT(checkPoint.redo, RecPtr))
@@ -1969,6 +1986,23 @@ StartupXLOG()
 		CreateCheckPoint(true);
 		XLogCloseRelationCache();
 	}
+
+	if (XLOGfiles > 0)		/* pre-allocate log files */
+	{
+		uint32	_logId = logId,
+				_logSeg = logSeg;
+		int		lf, i;
+		bool	usexistent;
+
+		for (i = 1; i <= XLOGfiles; i++)
+		{
+			NextLogSeg(_logId, _logSeg);
+			usexistent = false;
+			lf = XLogFileInit(_logId, _logSeg, &usexistent);
+			close(lf);
+		}
+	}
+
 	InRecovery = false;
 
 	ControlFile->state = DB_IN_PRODUCTION;
@@ -2117,47 +2151,69 @@ CreateCheckPoint(bool shutdown)
 
 	SpinAcquire(ControlFileLockId);
 	if (shutdown)
-		ControlFile->state = DB_SHUTDOWNED;
-	else	/* create new log file */
 	{
-		if (recptr.xrecoff % XLogSegSize >= 
+		/* probably should delete extra log files */
+		ControlFile->state = DB_SHUTDOWNED;
+	}
+	else	/* create new log file(s) */
+	{
+		int		lf;
+		bool	usexistent = true;
+
+		_logId = recptr.xlogid;
+		_logSeg = (recptr.xrecoff - 1) / XLogSegSize;
+		if (XLOGfiles > 0)
+		{
+			struct timeval	delay;
+			int				i;
+
+			for (i = 1; i <= XLOGfiles; i++)
+			{
+				usexistent = true;
+				NextLogSeg(_logId, _logSeg);
+				lf = XLogFileInit(_logId, _logSeg, &usexistent);
+				close(lf);
+				/*
+				 * Give up ControlFileLockId for 1/50 sec to let other
+				 * backends switch to new log file in XLogWrite()
+				 */
+				SpinRelease(ControlFileLockId);
+				delay.tv_sec = 0;
+				delay.tv_usec = 20000;
+				(void) select(0, NULL, NULL, NULL, &delay);
+				SpinAcquire(ControlFileLockId);
+			}
+		}
+		else if ((recptr.xrecoff - 1) % XLogSegSize >= 
 			(uint32) (0.75 * XLogSegSize))
 		{
-			int		lf;
-			bool	usexistent = true;
-
-			_logId = recptr.xlogid;
-			_logSeg = recptr.xrecoff / XLogSegSize;
-			if (_logSeg >= XLogLastSeg)
-			{
-				_logId++;
-				_logSeg = 0;
-			}
-			else
-				_logSeg++;
+			NextLogSeg(_logId, _logSeg);
 			lf = XLogFileInit(_logId, _logSeg, &usexistent);
 			close(lf);
 		}
 	}
 
 	ControlFile->checkPoint = MyLastRecPtr;
-
-	_logId = ControlFile->logId;
-	_logSeg = ControlFile->logSeg - 1;
 	strcpy(archdir, ControlFile->archdir);
-
 	ControlFile->time = time(NULL);
 	UpdateControlFile();
 	SpinRelease(ControlFileLockId);
 
 	/*
 	 * Delete offline log files. Get oldest online
-	 * log file from undo rec if it's valid.
+	 * log file from redo or undo record, whatever
+	 * is older.
 	 */
-	if (checkPoint.undo.xrecoff != 0)
+	if (checkPoint.undo.xrecoff != 0 && 
+		XLByteLT(checkPoint.undo, checkPoint.redo))
 	{
 		_logId = checkPoint.undo.xlogid;
 		_logSeg = checkPoint.undo.xrecoff / XLogSegSize;
+	}
+	else
+	{
+		_logId = checkPoint.redo.xlogid;
+		_logSeg = checkPoint.redo.xrecoff / XLogSegSize;
 	}
 	if (_logId || _logSeg)
 	{
