@@ -767,6 +767,8 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 			case Types.BINARY:
 			case Types.VARBINARY:
 				return getBytes(columnIndex);
+			case Types.ARRAY:
+				return getArray(columnIndex);
 			default:
 				String type = field.getPGType();
 				// if the backend doesn't know the type then coerce to String
