@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/spin.c,v 1.9 1997/09/18 14:20:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/spin.c,v 1.10 1997/09/22 04:20:53 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -116,7 +116,7 @@ ex_try_again:
 			printf("OUT: ");
 			PRINT_LOCK(slckP);
 #endif
-			return;
+			break;
 		case SHAREDLOCK:
 		case EXCLUSIVELOCK:
 			S_UNLOCK(&(slckP->locklock));
