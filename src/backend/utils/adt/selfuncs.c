@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.175 2005/03/27 23:53:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.176 2005/04/01 20:31:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -118,6 +118,7 @@ typedef struct
 	RelOptInfo *rel;			/* Relation, or NULL if not identifiable */
 	HeapTuple	statsTuple;		/* pg_statistic tuple, or NULL if none */
 	/* NB: if statsTuple!=NULL, it must be freed when caller is done */
+	Oid			vartype;		/* exposed type of expression */
 	Oid			atttype;		/* type to pass to get_attstatsslot */
 	int32		atttypmod;		/* typmod to pass to get_attstatsslot */
 	bool		isunique;		/* true if matched to a unique index */
@@ -546,7 +547,7 @@ scalarineqsel(Query *root, Oid operator, bool isgt,
 					 */
 					if (convert_to_scalar(constval, consttype, &val,
 										  values[i - 1], values[i],
-										  vardata->atttype,
+										  vardata->vartype,
 										  &low, &high))
 					{
 						if (high <= low)
@@ -862,23 +863,18 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype)
 	}
 
 	/*
-	 * The var, on the other hand, might be a binary-compatible type;
-	 * particularly a domain.  Try to fold it if it's not recognized
-	 * immediately.
-	 */
-	vartype = vardata.atttype;
-	if (vartype != consttype)
-		vartype = getBaseType(vartype);
-
-	/*
-	 * We should now be able to recognize the var's datatype.  Choose the
-	 * index opclass from which we must draw the comparison operators.
+	 * Similarly, the exposed type of the left-hand side should be one
+	 * of those we know.  (Do not look at vardata.atttype, which might be
+	 * something binary-compatible but different.)  We can use it to choose
+	 * the index opclass from which we must draw the comparison operators.
 	 *
 	 * NOTE: It would be more correct to use the PATTERN opclasses than the
 	 * simple ones, but at the moment ANALYZE will not generate statistics
 	 * for the PATTERN operators.  But our results are so approximate
 	 * anyway that it probably hardly matters.
 	 */
+	vartype = vardata.vartype;
+
 	switch (vartype)
 	{
 		case TEXTOID:
@@ -2304,21 +2300,19 @@ convert_to_scalar(Datum value, Oid valuetypid, double *scaledvalue,
 				  double *scaledlobound, double *scaledhibound)
 {
 	/*
-	 * In present usage, we can assume that the valuetypid exactly matches
-	 * the declared input type of the operator we are invoked for (because
-	 * constant-folding will ensure that any Const passed to the operator
-	 * has been reduced to the correct type).  However, the boundstypid is
-	 * the type of some variable that might be only binary-compatible with
-	 * the declared type; for example it might be a domain type.  So we
-	 * ignore it and work with the valuetypid only.
+	 * Both the valuetypid and the boundstypid should exactly match
+	 * the declared input type(s) of the operator we are invoked for,
+	 * so we just error out if either is not recognized.
 	 *
-	 * XXX What's really going on here is that we assume that the scalar
-	 * representations of binary-compatible types are enough alike that we
-	 * can use a histogram generated with one type's operators to estimate
-	 * selectivity for the other's.  This is outright wrong in some cases ---
-	 * in particular signed versus unsigned interpretation could trip us up.
-	 * But it's useful enough in the majority of cases that we do it anyway.
-	 * Should think about more rigorous ways to do it.
+	 * XXX The histogram we are interpolating between points of could belong
+	 * to a column that's only binary-compatible with the declared type.
+	 * In essence we are assuming that the semantics of binary-compatible
+	 * types are enough alike that we can use a histogram generated with one
+	 * type's operators to estimate selectivity for the other's.  This is
+	 * outright wrong in some cases --- in particular signed versus unsigned
+	 * interpretation could trip us up.  But it's useful enough in the
+	 * majority of cases that we do it anyway.  Should think about more
+	 * rigorous ways to do it.
 	 */
 	switch (valuetypid)
 	{
@@ -2340,8 +2334,8 @@ convert_to_scalar(Datum value, Oid valuetypid, double *scaledvalue,
 		case REGCLASSOID:
 		case REGTYPEOID:
 			*scaledvalue = convert_numeric_to_scalar(value, valuetypid);
-			*scaledlobound = convert_numeric_to_scalar(lobound, valuetypid);
-			*scaledhibound = convert_numeric_to_scalar(hibound, valuetypid);
+			*scaledlobound = convert_numeric_to_scalar(lobound, boundstypid);
+			*scaledhibound = convert_numeric_to_scalar(hibound, boundstypid);
 			return true;
 
 			/*
@@ -2354,8 +2348,8 @@ convert_to_scalar(Datum value, Oid valuetypid, double *scaledvalue,
 		case NAMEOID:
 			{
 				unsigned char *valstr = convert_string_datum(value, valuetypid);
-				unsigned char *lostr = convert_string_datum(lobound, valuetypid);
-				unsigned char *histr = convert_string_datum(hibound, valuetypid);
+				unsigned char *lostr = convert_string_datum(lobound, boundstypid);
+				unsigned char *histr = convert_string_datum(hibound, boundstypid);
 
 				convert_string_to_scalar(valstr, scaledvalue,
 										 lostr, scaledlobound,
@@ -2390,8 +2384,8 @@ convert_to_scalar(Datum value, Oid valuetypid, double *scaledvalue,
 		case TIMEOID:
 		case TIMETZOID:
 			*scaledvalue = convert_timevalue_to_scalar(value, valuetypid);
-			*scaledlobound = convert_timevalue_to_scalar(lobound, valuetypid);
-			*scaledhibound = convert_timevalue_to_scalar(hibound, valuetypid);
+			*scaledlobound = convert_timevalue_to_scalar(lobound, boundstypid);
+			*scaledhibound = convert_timevalue_to_scalar(hibound, boundstypid);
 			return true;
 
 			/*
@@ -2401,8 +2395,8 @@ convert_to_scalar(Datum value, Oid valuetypid, double *scaledvalue,
 		case CIDROID:
 		case MACADDROID:
 			*scaledvalue = convert_network_to_scalar(value, valuetypid);
-			*scaledlobound = convert_network_to_scalar(lobound, valuetypid);
-			*scaledhibound = convert_network_to_scalar(hibound, valuetypid);
+			*scaledlobound = convert_network_to_scalar(lobound, boundstypid);
+			*scaledhibound = convert_network_to_scalar(hibound, boundstypid);
 			return true;
 	}
 	/* Don't know how to convert */
@@ -2948,6 +2942,8 @@ get_join_variables(Query *root, List *args,
  *		subquery, not one in the current query).
  *	statsTuple: the pg_statistic entry for the variable, if one exists;
  *		otherwise NULL.
+ *	vartype: exposed type of the expression; this should always match
+ *		the declared input type of the operator we are estimating for.
  *	atttype, atttypmod: type data to pass to get_attstatsslot().  This is
  *		commonly the same as the exposed type of the variable argument,
  *		but can be different in binary-compatible-type cases.
@@ -2964,6 +2960,9 @@ examine_variable(Query *root, Node *node, int varRelid,
 
 	/* Make sure we don't return dangling pointers in vardata */
 	MemSet(vardata, 0, sizeof(VariableStatData));
+
+	/* Save the exposed type of the expression */
+	vardata->vartype = exprType(node);
 
 	/* Look inside any binary-compatible relabeling */
 
@@ -3153,7 +3152,7 @@ get_variable_numdistinct(VariableStatData *vardata)
 		stats = (Form_pg_statistic) GETSTRUCT(vardata->statsTuple);
 		stadistinct = stats->stadistinct;
 	}
-	else if (vardata->atttype == BOOLOID)
+	else if (vardata->vartype == BOOLOID)
 	{
 		/*
 		 * Special-case boolean columns: presumably, two distinct values.
