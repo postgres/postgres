@@ -7,7 +7,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.77 2000/01/15 02:59:27 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.78 2000/01/15 22:43:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -680,11 +680,10 @@ InsertOneValue(Oid objectid, char *value, int i)
 		values[i] = fmgr(ap->am_typ.typinput,
 						 value,
 						 ap->am_typ.typelem,
-						 -1);	/* shouldn't have char() or varchar()
-								 * types during boostrapping but just to
-								 * be safe */
+						 -1);
 		prt = fmgr(ap->am_typ.typoutput, values[i],
-				   ap->am_typ.typelem);
+				   ap->am_typ.typelem,
+				   -1);
 		if (!Quiet)
 			printf("%s ", prt);
 		pfree(prt);

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.47 2000/01/15 02:59:38 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.48 2000/01/15 22:43:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -600,6 +600,7 @@ getattstatistics(Oid relid, AttrNumber attnum, Oid opid, Oid typid,
 	HeapTuple	tuple;
 	HeapTuple	typeTuple;
 	FmgrInfo	inputproc;
+	Oid			typelem;
 
 	rel = heap_openr(StatisticRelationName, AccessShareLock);
 
@@ -630,6 +631,7 @@ getattstatistics(Oid relid, AttrNumber attnum, Oid opid, Oid typid,
 		elog(ERROR, "getattstatistics: Cache lookup failed for type %u",
 			 typid);
 	fmgr_info(((Form_pg_type) GETSTRUCT(typeTuple))->typinput, &inputproc);
+	typelem = ((Form_pg_type) GETSTRUCT(typeTuple))->typelem;
 
 	/* Values are variable-length fields, so cannot access as struct fields.
 	 * Must do it the hard way with heap_getattr.
@@ -649,7 +651,7 @@ getattstatistics(Oid relid, AttrNumber attnum, Oid opid, Oid typid,
 		{
 			char *strval = textout(val);
 			*commonval = (Datum)
-				(*fmgr_faddr(&inputproc)) (strval, typid, typmod);
+				(*fmgr_faddr(&inputproc)) (strval, typelem, typmod);
 			pfree(strval);
 		}
 	}
@@ -669,7 +671,7 @@ getattstatistics(Oid relid, AttrNumber attnum, Oid opid, Oid typid,
 		{
 			char *strval = textout(val);
 			*loval = (Datum)
-				(*fmgr_faddr(&inputproc)) (strval, typid, typmod);
+				(*fmgr_faddr(&inputproc)) (strval, typelem, typmod);
 			pfree(strval);
 		}
 	}
@@ -689,7 +691,7 @@ getattstatistics(Oid relid, AttrNumber attnum, Oid opid, Oid typid,
 		{
 			char *strval = textout(val);
 			*hival = (Datum)
-				(*fmgr_faddr(&inputproc)) (strval, typid, typmod);
+				(*fmgr_faddr(&inputproc)) (strval, typelem, typmod);
 			pfree(strval);
 		}
 	}

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.50 1999/12/09 15:56:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.51 2000/01/15 22:43:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -669,21 +669,21 @@ array_out(ArrayType *v, Oid element_type)
 			switch (typlen)
 			{
 				case 1:
-					values[i] = (*fmgr_faddr(&outputproc)) (*p, typelem);
+					values[i] = (*fmgr_faddr(&outputproc)) (*p, typelem, -1);
 					break;
 				case 2:
-					values[i] = (*fmgr_faddr(&outputproc)) (*(int16 *) p, typelem);
+					values[i] = (*fmgr_faddr(&outputproc)) (*(int16 *) p, typelem, -1);
 					break;
 				case 3:
 				case 4:
-					values[i] = (*fmgr_faddr(&outputproc)) (*(int32 *) p, typelem);
+					values[i] = (*fmgr_faddr(&outputproc)) (*(int32 *) p, typelem, -1);
 					break;
 			}
 			p += typlen;
 		}
 		else
 		{
-			values[i] = (*fmgr_faddr(&outputproc)) (p, typelem);
+			values[i] = (*fmgr_faddr(&outputproc)) (p, typelem, -1);
 			if (typlen > 0)
 				p += typlen;
 			else

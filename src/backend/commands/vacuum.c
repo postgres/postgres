@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.134 2000/01/10 04:09:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.135 2000/01/15 22:43:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -516,9 +516,15 @@ vc_vacone(Oid relid, bool analyze, List *va_cols)
 								 ObjectIdGetDatum(stats->attr->atttypid),
 											0, 0, 0);
 			if (HeapTupleIsValid(typetuple))
+			{
 				stats->outfunc = ((Form_pg_type) GETSTRUCT(typetuple))->typoutput;
+				stats->typelem = ((Form_pg_type) GETSTRUCT(typetuple))->typelem;
+			}
 			else
+			{
 				stats->outfunc = InvalidOid;
+				stats->typelem = InvalidOid;
+			}
 		}
 		vacrelstats->va_natts = attr_cnt;
 		/* delete existing pg_statistic rows for relation */
@@ -2488,13 +2494,13 @@ vc_updstats(Oid relid, int num_pages, int num_tuples, bool hasindex,
 					/* hack: this code knows float4 is pass-by-ref */
 					values[i++] = PointerGetDatum(&nullratio);	/* stanullfrac */
 					values[i++] = PointerGetDatum(&bestratio);	/* stacommonfrac */
-					out_string = (*fmgr_faddr(&out_function)) (stats->best, stats->attr->atttypid, stats->attr->atttypmod);
+					out_string = (*fmgr_faddr(&out_function)) (stats->best, stats->typelem, stats->attr->atttypmod);
 					values[i++] = PointerGetDatum(textin(out_string)); /* stacommonval */
 					pfree(out_string);
-					out_string = (*fmgr_faddr(&out_function)) (stats->min, stats->attr->atttypid, stats->attr->atttypmod);
+					out_string = (*fmgr_faddr(&out_function)) (stats->min, stats->typelem, stats->attr->atttypmod);
 					values[i++] = PointerGetDatum(textin(out_string)); /* staloval */
 					pfree(out_string);
-					out_string = (char *) (*fmgr_faddr(&out_function)) (stats->max, stats->attr->atttypid, stats->attr->atttypmod);
+					out_string = (char *) (*fmgr_faddr(&out_function)) (stats->max, stats->typelem, stats->attr->atttypmod);
 					values[i++] = PointerGetDatum(textin(out_string)); /* stahival */
 					pfree(out_string);
 

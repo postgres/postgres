@@ -3,7 +3,7 @@
  *			  procedural language (PL)
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.17 2000/01/10 17:14:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.18 2000/01/15 22:43:23 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -65,7 +65,6 @@ typedef struct pltcl_proc_desc
 	char	   *proname;
 	FmgrInfo	result_in_func;
 	Oid			result_in_elem;
-	int			result_in_len;
 	int			nargs;
 	FmgrInfo	arg_out_func[FUNC_MAX_ARGS];
 	Oid			arg_out_elem[FUNC_MAX_ARGS];
@@ -501,8 +500,7 @@ pltcl_func_handler(FmgrInfo *proinfo,
 		}
 
 		fmgr_info(typeStruct->typinput, &(prodesc->result_in_func));
-		prodesc->result_in_elem = (Oid) (typeStruct->typelem);
-		prodesc->result_in_len = typeStruct->typlen;
+		prodesc->result_in_elem = typeStruct->typelem;
 
 		/************************************************************
 		 * Get the required information for output conversion
@@ -721,7 +719,7 @@ pltcl_func_handler(FmgrInfo *proinfo,
 	retval = (Datum) (*fmgr_faddr(&prodesc->result_in_func))
 		(pltcl_safe_interp->result,
 		 prodesc->result_in_elem,
-		 prodesc->result_in_len);
+		 -1);
 
 	memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
 	return retval;
@@ -1140,10 +1138,7 @@ pltcl_trigger_handler(FmgrInfo *proinfo)
 		modvalues[attnum - 1] = (Datum) (*fmgr_faddr(&finfo))
 			(ret_values[i++],
 			 typelem,
-			 (!VARLENA_FIXED_SIZE(tupdesc->attrs[attnum - 1]))
-			 ? tupdesc->attrs[attnum - 1]->attlen
-			 : tupdesc->attrs[attnum - 1]->atttypmod
-			);
+			 tupdesc->attrs[attnum - 1]->atttypmod);
 	}
 
 

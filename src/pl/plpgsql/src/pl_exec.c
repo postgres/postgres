@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.16 2000/01/05 18:23:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.17 2000/01/15 22:43:25 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -129,7 +129,8 @@ static void exec_move_row(PLpgSQL_execstate * estate,
 static Datum exec_cast_value(Datum value, Oid valtype,
 				Oid reqtype,
 				FmgrInfo *reqinput,
-				int16 reqtypmod,
+				Oid reqtypelem,
+				int32 reqtypmod,
 				bool *isnull);
 static void exec_set_found(PLpgSQL_execstate * estate, bool state);
 
@@ -388,7 +389,10 @@ plpgsql_exec_function(PLpgSQL_function * func,
 	if (!estate.retistuple)
 	{
 		estate.retval = exec_cast_value(estate.retval, estate.rettype,
-							  func->fn_rettype, &(func->fn_retinput), -1,
+										func->fn_rettype,
+										&(func->fn_retinput),
+										func->fn_rettypelem,
+										-1,
 										isNull);
 
 		/* ----------
@@ -1160,6 +1164,7 @@ exec_stmt_fori(PLpgSQL_execstate * estate, PLpgSQL_stmt_fori * stmt)
 
 	value = exec_cast_value(value, valtype, var->datatype->typoid,
 							&(var->datatype->typinput),
+							var->datatype->typelem,
 							var->datatype->atttypmod, &isnull);
 	if (isnull)
 		elog(ERROR, "lower bound of FOR loop cannot be NULL");
@@ -1173,6 +1178,7 @@ exec_stmt_fori(PLpgSQL_execstate * estate, PLpgSQL_stmt_fori * stmt)
 	value = exec_eval_expr(estate, stmt->upper, &isnull, &valtype);
 	value = exec_cast_value(value, valtype, var->datatype->typoid,
 							&(var->datatype->typinput),
+							var->datatype->typelem,
 							var->datatype->atttypmod, &isnull);
 	if (isnull)
 		elog(ERROR, "upper bound of FOR loop cannot be NULL");
@@ -1560,7 +1566,10 @@ exec_stmt_raise(PLpgSQL_execstate * estate, PLpgSQL_stmt_raise * stmt)
 						typeStruct = (Form_pg_type) GETSTRUCT(typetup);
 
 						fmgr_info(typeStruct->typoutput, &finfo_output);
-						extval = (char *) (*fmgr_faddr(&finfo_output)) (var->value, &(var->isnull), var->datatype->atttypmod);
+						extval = (char *) (*fmgr_faddr(&finfo_output))
+							(var->value,
+							 typeStruct->typelem,
+							 var->datatype->atttypmod);
 					}
 					plpgsql_dstring_append(&ds, extval);
 					break;
@@ -1697,7 +1706,8 @@ exec_prepare_plan(PLpgSQL_execstate * estate,
 				break;
 
 			default:
-				elog(ERROR, "unknown parameter dtype %d in exec_run_select()", estate->datums[expr->params[i]]);
+				elog(ERROR, "unknown parameter dtype %d in exec_run_select()",
+					 estate->datums[expr->params[i]]->dtype);
 		}
 	}
 
@@ -1873,7 +1883,7 @@ exec_assign_value(PLpgSQL_execstate * estate,
 	char	   *nulls;
 	bool		attisnull;
 	Oid			atttype;
-	int4		atttypmod;
+	int32		atttypmod;
 	HeapTuple	typetup;
 	Form_pg_type typeStruct;
 	FmgrInfo	finfo_input;
@@ -1888,7 +1898,9 @@ exec_assign_value(PLpgSQL_execstate * estate,
 			var = (PLpgSQL_var *) target;
 			var->value = exec_cast_value(value, valtype, var->datatype->typoid,
 										 &(var->datatype->typinput),
-									   var->datatype->atttypmod, isNull);
+										 var->datatype->typelem,
+										 var->datatype->atttypmod,
+										 isNull);
 
 			if (isNull && var->notnull)
 				elog(ERROR, "NULL assignment to variable '%s' declared NOT NULL", var->refname);
@@ -1967,7 +1979,9 @@ exec_assign_value(PLpgSQL_execstate * estate,
 
 				attisnull = *isNull;
 				values[i] = exec_cast_value(value, valtype,
-						   atttype, &finfo_input, atttypmod, &attisnull);
+											atttype, &finfo_input,
+											typeStruct->typelem,
+											atttypmod, &attisnull);
 				if (attisnull)
 					nulls[i] = 'n';
 				else
@@ -2138,7 +2152,8 @@ exec_run_select(PLpgSQL_execstate * estate,
 				break;
 
 			default:
-				elog(ERROR, "unknown parameter dtype %d in exec_eval_expr()", estate->datums[expr->params[i]]);
+				elog(ERROR, "unknown parameter dtype %d in exec_eval_expr()",
+					 estate->datums[expr->params[i]]->dtype);
 		}
 	}
 	nulls[i] = '\0';
@@ -2372,7 +2387,8 @@ static Datum
 exec_cast_value(Datum value, Oid valtype,
 				Oid reqtype,
 				FmgrInfo *reqinput,
-				int16 reqtypmod,
+				Oid reqtypelem,
+				int32 reqtypmod,
 				bool *isnull)
 {
 	if (!*isnull)
@@ -2382,7 +2398,7 @@ exec_cast_value(Datum value, Oid valtype,
 		 * that of the variable, convert it.
 		 * ----------
 		 */
-		if (valtype != reqtype || reqtypmod > 0)
+		if (valtype != reqtype || reqtypmod != -1)
 		{
 			HeapTuple	typetup;
 			Form_pg_type typeStruct;
@@ -2396,8 +2412,14 @@ exec_cast_value(Datum value, Oid valtype,
 			typeStruct = (Form_pg_type) GETSTRUCT(typetup);
 
 			fmgr_info(typeStruct->typoutput, &finfo_output);
-			extval = (char *) (*fmgr_faddr(&finfo_output)) (value, &isnull, -1);
-			value = (Datum) (*fmgr_faddr(reqinput)) (extval, &isnull, reqtypmod);
+			extval = (char *) (*fmgr_faddr(&finfo_output))
+				(value,
+				 typeStruct->typelem,
+				 -1);
+			value = (Datum) (*fmgr_faddr(reqinput)) (extval,
+													 reqtypelem,
+													 reqtypmod);
+			pfree(extval);
 		}
 	}
 

@@ -3,7 +3,7 @@
  *			  out of its tuple
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.38 2000/01/15 02:59:38 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.39 2000/01/15 22:43:24 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1604,7 +1604,6 @@ get_const_expr(Const *constval, deparse_context *context)
 	FmgrInfo	finfo_output;
 	char	   *extval;
 	char	   *valptr;
-	bool		isnull = FALSE;
 
 	typetup = SearchSysCacheTuple(TYPEOID,
 								  ObjectIdGetDatum(constval->consttype),
@@ -1629,7 +1628,8 @@ get_const_expr(Const *constval, deparse_context *context)
 
 	fmgr_info(typeStruct->typoutput, &finfo_output);
 	extval = (char *) (*fmgr_faddr(&finfo_output)) (constval->constvalue,
-													&isnull, -1);
+													typeStruct->typelem,
+													-1);
 
 	switch (constval->consttype)
 	{

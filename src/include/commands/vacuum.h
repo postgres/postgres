@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: vacuum.h,v 1.24 1999/08/25 12:18:31 ishii Exp $
+ * $Id: vacuum.h,v 1.25 2000/01/15 22:43:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -86,6 +86,7 @@ typedef struct
 				f_cmpgt;
 	Oid			op_cmplt;
 	regproc		outfunc;
+	Oid			typelem;
 	bool		initialized;
 } VacAttrStats;
 

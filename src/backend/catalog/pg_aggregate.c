@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.27 2000/01/10 17:14:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.28 2000/01/15 22:43:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -262,7 +262,9 @@ AggNameGetInitVal(char *aggName, Oid basetype, int xfuncno, bool *isNull)
 	HeapTuple	tup;
 	Relation	aggRel;
 	int			initValAttno;
-	Oid			transtype;
+	Oid			transtype,
+				typinput,
+				typelem;
 	text	   *textInitVal;
 	char	   *strInitVal,
 			   *initVal;
@@ -320,7 +322,11 @@ AggNameGetInitVal(char *aggName, Oid basetype, int xfuncno, bool *isNull)
 		pfree(strInitVal);
 		elog(ERROR, "AggNameGetInitVal: cache lookup failed on aggregate transition function return type");
 	}
-	initVal = fmgr(((Form_pg_type) GETSTRUCT(tup))->typinput, strInitVal, -1);
+	typinput = ((Form_pg_type) GETSTRUCT(tup))->typinput;
+	typelem = ((Form_pg_type) GETSTRUCT(tup))->typelem;
+
+	initVal = fmgr(typinput, strInitVal, typelem, -1);
+
 	pfree(strInitVal);
 	return initVal;
 }

@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.15 2000/01/10 17:14:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.16 2000/01/15 22:43:25 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -191,6 +191,7 @@ plpgsql_compile(Oid fn_oid, int functype)
 			{
 				function->fn_retbyval = typeStruct->typbyval;
 				function->fn_rettyplen = typeStruct->typlen;
+				function->fn_rettypelem = typeStruct->typelem;
 				fmgr_info(typeStruct->typinput, &(function->fn_retinput));
 			}
 
@@ -259,6 +260,7 @@ plpgsql_compile(Oid fn_oid, int functype)
 					var->datatype->typname = strdup(nameout(&(typeStruct->typname)));
 					var->datatype->typoid = procStruct->proargtypes[i];
 					fmgr_info(typeStruct->typinput, &(var->datatype->typinput));
+					var->datatype->typelem = typeStruct->typelem;
 					var->datatype->typbyval = typeStruct->typbyval;
 					var->datatype->atttypmod = -1;
 					var->isconst = true;
@@ -621,6 +623,7 @@ plpgsql_parse_word(char *word)
 		typ->typname = strdup(nameout(&(typeStruct->typname)));
 		typ->typoid = typeTup->t_data->t_oid;
 		fmgr_info(typeStruct->typinput, &(typ->typinput));
+		typ->typelem = typeStruct->typelem;
 		typ->typbyval = typeStruct->typbyval;
 		typ->atttypmod = -1;
 
@@ -944,6 +947,7 @@ plpgsql_parse_wordtype(char *word)
 		typ->typname = strdup(nameout(&(typeStruct->typname)));
 		typ->typoid = typeTup->t_data->t_oid;
 		fmgr_info(typeStruct->typinput, &(typ->typinput));
+		typ->typelem = typeStruct->typelem;
 		typ->typbyval = typeStruct->typbyval;
 		typ->atttypmod = -1;
 
@@ -1088,6 +1092,7 @@ plpgsql_parse_dblwordtype(char *string)
 	typ->typname = strdup(nameout(&(typeStruct->typname)));
 	typ->typoid = typetup->t_data->t_oid;
 	fmgr_info(typeStruct->typinput, &(typ->typinput));
+	typ->typelem = typeStruct->typelem;
 	typ->typbyval = typeStruct->typbyval;
 	typ->atttypmod = attrStruct->atttypmod;
 
@@ -1216,6 +1221,7 @@ plpgsql_parse_wordrowtype(char *string)
 		var->datatype->typname = strdup(NameStr(typeStruct->typname));
 		var->datatype->typoid = typetup->t_data->t_oid;
 		fmgr_info(typeStruct->typinput, &(var->datatype->typinput));
+		var->datatype->typelem = typeStruct->typelem;
 		var->datatype->typbyval = typeStruct->typbyval;
 		var->datatype->atttypmod = attrStruct->atttypmod;
 		var->isconst = false;
