@@ -27,7 +27,7 @@
 # Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.176 2002/10/18 22:05:35 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.177 2002/11/25 21:41:46 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -667,11 +667,6 @@ EOF
     if [ ! -f "$PGDATA"/global/pg_pwd ]; then
         echo
         echo "The password file wasn't generated. Please report this problem." 1>&2
-        exit_nicely
-    fi
-    if [ ! -f "$PGDATA"/global/pg_group ]; then
-        echo
-        echo "The group file wasn't generated. Please report this problem." 1>&2
         exit_nicely
     fi
     echo "ok"
