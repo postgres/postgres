@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.323 2003/03/27 16:39:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.324 2003/03/27 16:43:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -5730,6 +5730,7 @@ dumpIndexes(Archive *fout, TableInfo *tblinfo, int numTables)
 	int			i_indexdef;
 	int			i_contype;
 	int			i_indkey;
+	int			i_indisclustered;
 	int			i_indnkeys;
 
 	for (i = 0; i < numTables; i++)
@@ -5759,7 +5760,7 @@ dumpIndexes(Archive *fout, TableInfo *tblinfo, int numTables)
 							  "SELECT i.indexrelid as indexreloid, "
 					   "coalesce(c.conname, t.relname) as indexrelname, "
 				 "pg_catalog.pg_get_indexdef(i.indexrelid) as indexdef, "
-							  "i.indkey, "
+							  "i.indkey, i.indisclustered, "
 							  "t.relnatts as indnkeys, "
 							  "coalesce(c.contype, '0') as contype "
 							  "FROM pg_catalog.pg_index i "
@@ -5779,7 +5780,7 @@ dumpIndexes(Archive *fout, TableInfo *tblinfo, int numTables)
 							  "SELECT i.indexrelid as indexreloid, "
 							  "t.relname as indexrelname, "
 							"pg_get_indexdef(i.indexrelid) as indexdef, "
-							  "i.indkey, "
+							  "i.indkey, false as indisclustered, "
 							  "t.relnatts as indnkeys, "
 							  "CASE WHEN i.indisprimary THEN 'p'::char "
 							  "ELSE '0'::char END as contype "
@@ -5804,6 +5805,7 @@ dumpIndexes(Archive *fout, TableInfo *tblinfo, int numTables)
 		i_indexdef = PQfnumber(res, "indexdef");
 		i_contype = PQfnumber(res, "contype");
 		i_indkey = PQfnumber(res, "indkey");
+		i_indisclustered = PQfnumber(res, "indisclustered");
 		i_indnkeys = PQfnumber(res, "indnkeys");
 
 		for (j = 0; j < ntups; j++)
@@ -5812,6 +5814,7 @@ dumpIndexes(Archive *fout, TableInfo *tblinfo, int numTables)
 			const char *indexrelname = PQgetvalue(res, j, i_indexrelname);
 			const char *indexdef = PQgetvalue(res, j, i_indexdef);
 			char		contype = *(PQgetvalue(res, j, i_contype));
+			bool	indisclustered = (PQgetvalue(res, j, i_indisclustered)[0] == 't');
 
 			resetPQExpBuffer(q);
 			resetPQExpBuffer(delq);
@@ -5864,6 +5867,13 @@ dumpIndexes(Archive *fout, TableInfo *tblinfo, int numTables)
 								  fmtId(tbinfo->relname));
 				appendPQExpBuffer(delq, "DROP CONSTRAINT %s;\n",
 								  fmtId(indexrelname));
+				/* If the index is clustered, we need to record that. */
+				if (indisclustered) {
+					appendPQExpBuffer(q, "\nALTER TABLE %s CLUSTER", 
+								 fmtId(tbinfo->relname));
+					appendPQExpBuffer(q, " ON %s;\n", 
+								 fmtId(indexrelname));
+				}
 
 				ArchiveEntry(fout, indexreloid,
 							 indexrelname,
@@ -5881,6 +5891,14 @@ dumpIndexes(Archive *fout, TableInfo *tblinfo, int numTables)
 			{
 				/* Plain secondary index */
 				appendPQExpBuffer(q, "%s;\n", indexdef);
+
+				/* If the index is clustered, we need to record that. */
+				if (indisclustered) {
+					appendPQExpBuffer(q, "\nALTER TABLE %s CLUSTER", 
+								 fmtId(tbinfo->relname));
+					appendPQExpBuffer(q, " ON %s;\n", 
+								 fmtId(indexrelname));
+				}
 
 				/*
 				 * DROP must be fully qualified in case same name appears
