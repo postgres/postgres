@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.242 2004/02/23 20:45:58 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.243 2004/03/01 17:58:39 neilc Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1562,11 +1562,13 @@ SET ENABLE_SEQSCAN TO OFF;
       <term><varname>default_statistics_target</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
-        Sets the default statistics target for table columns that have not
-        had a column-specific target set via <command>ALTER TABLE SET
-        STATISTICS</>.  Larger values increase the time needed to do
-        <command>ANALYZE</>, but may improve the quality of the planner's
-        estimates. The default is 10.
+        Sets the default statistics target for table columns that have
+        not had a column-specific target set via <command>ALTER TABLE
+        SET STATISTICS</>.  Larger values increase the time needed to
+        do <command>ANALYZE</>, but may improve the quality of the
+        planner's estimates. The default is 10. For more information
+        on the use of statistics by the <productname>PostgreSQL</>
+        query planner, refer to <xref linkend="planner-stats">.
        </para>
       </listitem>
      </varlistentry>
