@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.114 2003/12/20 18:24:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.115 2004/08/04 16:05:13 dennis Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -345,7 +345,7 @@ pg_krb5_recvauth(Port *port)
 static void
 auth_failed(Port *port, int status)
 {
-	const char *authmethod = "Unknown auth method:";
+	const char *errstr;
 
 	/*
 	 * If we failed due to EOF from client, just quit; there's no point in
@@ -363,36 +363,38 @@ auth_failed(Port *port, int status)
 	switch (port->auth_method)
 	{
 		case uaReject:
-			authmethod = "Rejected host:";
+			errstr = gettext("Rejected host: authentication failed for user \"%s\"");
 			break;
 		case uaKrb4:
-			authmethod = "Kerberos4";
+			errstr = gettext("Kerberos4 authentication failed for user \"%s\"");
 			break;
 		case uaKrb5:
-			authmethod = "Kerberos5";
+			errstr = gettext("Kerberos5 authentication failed for user \"%s\"");
 			break;
 		case uaTrust:
-			authmethod = "Trusted";
+			errstr = gettext("Trusted authentication failed for user \"%s\"");
 			break;
 		case uaIdent:
-			authmethod = "IDENT";
+			errstr = gettext("IDENT authentication failed for user \"%s\"");
 			break;
 		case uaMD5:
 		case uaCrypt:
 		case uaPassword:
-			authmethod = "Password";
+			errstr = gettext("Password authentication failed for user \"%s\"");
 			break;
 #ifdef USE_PAM
 		case uaPAM:
-			authmethod = "PAM";
+			errstr = gettext("PAM authentication failed for user \"%s\"");
 			break;
 #endif   /* USE_PAM */
+		default :
+			errstr = gettext("Unknown auth method: authentication failed for user \"%s\"");
+			break;
 	}
 
 	ereport(FATAL,
 			(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
-			 errmsg("%s authentication failed for user \"%s\"",
-					authmethod, port->user_name)));
+			 errmsg(errstr, port->user_name)));
 	/* doesn't return */
 }
 
