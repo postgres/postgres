@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.39 2000/08/13 02:50:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.40 2000/10/25 21:48:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -371,24 +371,40 @@ clause_selectivity(Query *root,
 		return s1;
 	if (IsA(clause, Var))
 	{
+		Var		   *var = (Var *) clause;
 
 		/*
-		 * we have a bool Var.	This is exactly equivalent to the clause:
-		 * reln.attribute = 't' so we compute the selectivity as if that
-		 * is what we have. The magic #define constants are a hack.  I
-		 * didn't want to have to do system cache look ups to find out all
-		 * of that info.
+		 * We probably shouldn't ever see an uplevel Var here, but if we
+		 * do, return the default selectivity...
 		 */
-		Index		varno = ((Var *) clause)->varno;
+		if (var->varlevelsup == 0 &&
+			(varRelid == 0 || varRelid == (int) var->varno))
+		{
+			RangeTblEntry *rte = rt_fetch(var->varno, root->rtable);
 
-		if (varRelid == 0 || varRelid == (int) varno)
-			s1 = restriction_selectivity(F_EQSEL,
-										 BooleanEqualOperator,
-										 getrelid(varno, root->rtable),
-										 ((Var *) clause)->varattno,
-										 BoolGetDatum(true),
-										 SEL_CONSTANT | SEL_RIGHT);
-		/* an outer-relation bool var is taken as always true... */
+			if (rte->subquery)
+			{
+				/*
+				 * XXX not smart about subquery references...
+				 * any way to do better?
+				 */
+				s1 = 0.5;
+			}
+			else
+			{
+				/*
+				 * A Var at the top of a clause must be a bool Var.
+				 * This is equivalent to the clause reln.attribute = 't',
+				 * so we compute the selectivity as if that is what we have.
+				 */
+				s1 = restriction_selectivity(F_EQSEL,
+											 BooleanEqualOperator,
+											 rte->relid,
+											 var->varattno,
+											 BoolGetDatum(true),
+											 SEL_CONSTANT | SEL_RIGHT);
+			}
+		}
 	}
 	else if (IsA(clause, Param))
 	{
