@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.64 2003/01/03 18:05:02 inoue Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.65 2003/01/13 04:28:55 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -123,82 +123,99 @@ CloseArchive(Archive *AHX)
 }
 
 /*
- *      Adjust lo type in contrib for 7.3 or later.
- *	There must be a cast between lo and oid.	
+ *	This function repairs a slip when upgrading PG cast
+ *	mechanism from 7.2 or earlier to 7.3 or later.
+ *	The casts between lo and oid are needed when retrieving
+ *	lo type data in FixupBlobRefs and so adjust lo type in
+ *	contrib before processing FixupBlobRefs.
  */
 static void
 Adjust_lo_type(ArchiveHandle *AH)
 {
 	PGresult   *res;
+	int	nTuples;
 
 	/*
-	 *	The cast function lo(oid) should be immutable.
-	 *	If it's volatile it should be changed to
-	 *	be immutable and the cast (oid as lo)
-	 *	should be created. 
+	 *	First check the existence of the cast oid as lo.
 	 */
-	res = PQexec(AH->blobConnection, "begin;"
-			"update pg_proc set provolatile = 'i'"
+	res = PQexec(AH->blobConnection, "select 1 from pg_cast where"
+		" castsource in (select oid from pg_type where typname = 'oid')"
+		" and casttarget in (select oid from pg_type where typname = 'lo')");
+
+	if (!res || PQresultStatus(res) != PGRES_TUPLES_OK)
+		die_horribly(AH, modulename, "error while checking the cast oid as lo\n");
+	nTuples = PQntuples(res);
+	PQclear(res);
+	if (nTuples == 0)
+	{
+		/*
+	 	 *	Check the existence of the cast function lo(oid)
+		 *	and change it to be IMMUTABLE.
+	 	 */
+		res = PQexec(AH->blobConnection, "update pg_proc set provolatile = 'i'"
 			" where proname = 'lo'"
 			" and pronargs = 1"
-			" and provolatile = 'v'"
 			" and prorettype in (select oid from pg_type where typname = 'lo')"
 			" and proargtypes[0] in (select oid from pg_type where typname = 'oid')");
 
-	if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
-		die_horribly(AH, modulename, "could not adjust lo(oid) function");
-	if (strcmp(PQcmdTuples(res), "1") == 0)
-	{
+		if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
+			die_horribly(AH, modulename, "could not adjust lo(oid) function\n");
+		nTuples = atoi(PQcmdTuples(res));
 		PQclear(res);
-		/* create cast */
-		res = PQexec(AH->blobConnection, "create cast"
-			" (oid as lo) with function lo(oid) as implicit;commit");
-		if (!res)
-			die_horribly(AH, modulename, "couldn't create cast (oid as lo)");
+		if (nTuples == 1)
+		{
+			/*
+			 *	The cast function lo(oid) exists and
+			 *	then create the correspoding cast.
+			 */
+			res = PQexec(AH->blobConnection, "create cast"
+				" (oid as lo) with function lo(oid) as implicit");
+			if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
+				die_horribly(AH, modulename, "couldn't create cast (oid as lo)\n");
+			PQclear(res);
+		}
 	}
-	else
-	{
-		PQclear(res);
-		/* The change is needless */
-		res = PQexec(AH->blobConnection, "rollback");
-		if (!res)
-			die_horribly(AH, modulename, "rollback error");
-	}
-	PQclear(res);
 
-	/*	
-	 *	The cast function oid(lo) should be immutable.
-	 *	If it's volatile it should be changed to
-	 *	be immutable and the cast (lo as oid)
-	 *	should be created. 
+	/*
+	 *	Also check the existence of the cast lo as oid.
 	 */
-	res = PQexec(AH->blobConnection, "begin;"
-			"update pg_proc set provolatile = 'i'"
+	res = PQexec(AH->blobConnection, "select 1 from pg_cast where"
+		" castsource in (select oid from pg_type where typname = 'lo')"
+		" and casttarget in (select oid from pg_type where typname = 'oid')");
+
+	if (!res || PQresultStatus(res) != PGRES_TUPLES_OK)
+		die_horribly(AH, modulename, "error while checking the cast lo as oid\n");
+	nTuples = PQntuples(res);
+	PQclear(res);
+	if (nTuples == 0)
+	{
+		/*
+	 	 *	Check the existence of the cast function oid(lo)
+		 *	and change it to be IMMUTABLE.
+	 	 */
+		res = PQexec(AH->blobConnection, "update pg_proc set provolatile = 'i'"
 			" where proname = 'oid'"
-			" and provolatile = 'v'"
 			" and pronargs = 1"
 			" and prorettype in (select oid from pg_type where typname = 'oid')"
 			" and proargtypes[0] in (select oid from pg_type where typname = 'lo')");
-	if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
-		die_horribly(AH, modulename, "could not adjust oid(lo) function");
-	if (strcmp(PQcmdTuples(res), "1") == 0)
-	{
+
+		if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
+			die_horribly(AH, modulename, "could not adjust oid(lo) function\n");
+		nTuples = atoi(PQcmdTuples(res));
 		PQclear(res);
-		/* create cast */
-		res = PQexec(AH->blobConnection, "create cast"
-			" (lo as oid) with function oid(lo) as implicit;commit");
-		if (!res)
-			die_horribly(AH, modulename, "couldn't create cast (lo as oid)");
+		if (nTuples == 1)
+		{
+			/*
+			 *	The cast function oid(lo) exists and
+			 *	then create the correspoding cast.
+			 */
+			res = PQexec(AH->blobConnection, "create cast"
+				" (lo as oid) with function oid(lo) as implicit");
+			if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
+				die_horribly(AH, modulename, "couldn't create cast (lo as oid)\n");
+			PQclear(res);
+		}
 	}
-	else
-	{
-		PQclear(res);
-		/* the change is needless */
-		res = PQexec(AH->blobConnection, "rollback");
-		if (!res)
-			die_horribly(AH, modulename, "rollback error");
-	}
-	PQclear(res);
 }
 
 /* Public */
