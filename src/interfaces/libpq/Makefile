@@ -7,14 +7,15 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.11 1996/11/04 04:00:53 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.12 1996/11/04 06:32:59 bryanh Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR= ..
 include ../Makefile.global
 
-INCLUDE_OPT= -I../include -I.
+# We need the backend directory here for its fmgr.h
+INCLUDE_OPT= -I../include -I../backend
 
 CFLAGS+= $(INCLUDE_OPT) -DPOSTPORT='"$(POSTPORT)"'
 
@@ -24,7 +25,7 @@ endif
 
 # dllist.c is found in backend/lib
 VPATH:= $(VPATH):../backend/lib
-
+ 
 OBJS= fe-auth.o fe-connect.o fe-exec.o fe-misc.o fe-lobj.o \
          ../backend/lib/dllist.o pqsignal.o 
 ifeq ($(PORTNAME), next)
@@ -48,14 +49,19 @@ else
 endif
 	$(RANLIB) libpq.a
 
-libpq.so.1: $(OBJS)
-	$(CC) $(LDFLAGS) -shared $(OBJS) -o libpq.so.1
+fe-lobj.o:: ../backend/fmgr.h
 
-# If dllist.o is out of date, we will not cause it to get remade.  We
-# only make it if it doesn't exist.
+# The following rules cause dependencies in the backend directory to 
+# get made if they don't exist, but don't cause them to get remade if they
+# are out of date.
+../backend/fmgr.h:
+	$(MAKE) -C ../backend fmgr.h
 
 ../backend/lib/dllist.o:
 	$(MAKE) -C ../backend/lib dllist.o
+
+libpq.so.1: $(OBJS)
+	$(CC) $(LDFLAGS) -shared $(OBJS) -o libpq.so.1
 
 postgres.h: ../include/postgres.h
 # Note: ../backend/include/postgres.h needs to be named something different
