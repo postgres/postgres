@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.209 2004/06/16 01:26:36 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.210 2004/06/24 19:57:14 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -7406,6 +7406,60 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
     columns do not have OIDs of their own.
    </para>
 
+   <indexterm zone="functions-misc">
+    <primary>pg_cancel_backend</primary>
+   </indexterm>
+
+   <indexterm zone="functions-misc">
+    <primary>pg_terminate_backend</primary>
+   </indexterm>
+
+   <indexterm zone="functions-misc">
+    <primary>signal</primary>
+    <secondary sortas="backend">backend processes</secondary>
+   </indexterm>
+
+   <para>
+    The functions shown in <xref
+    linkend="functions-misc-signal-table"> send control signals to
+    other server processes.  Use of these functions is restricted
+    to superusers.
+   </para>
+
+   <table id="functions-misc-signal-table">
+    <title>Backend Signalling Functions</title>
+    <tgroup cols="3">
+     <thead>
+      <row><entry>Name</entry> <entry>Return Type</entry> <entry>Description</entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry>
+	<literal><function>pg_cancel_backend</function>(<parameter>pid</parameter>)</literal>
+	</entry>
+       <entry><type>int</type></entry>
+       <entry>Cancel a backend's current query</entry>
+      </row>
+      <row>
+       <entry>
+	<literal><function>pg_terminate_backend</function>(<parameter>pid</parameter>)</literal>
+       </entry>
+       <entry><type>int</type></entry>
+       <entry>Terminate a backend process</entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+   <para>
+    These functions return 1 if successful, 0 if not successful.
+    The process ID (<literal>pid</literal>) of an active backend can be found
+    from the <structfield>procpid</structfield> column in the
+    <structname>pg_stat_activity</structname> view, or by listing the postgres
+    processes on the server.
+   </para>
   </sect1>
 
  <sect1 id="functions-array">
