@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/createuser/Attic/createuser.sh,v 1.12 1999/07/30 18:09:49 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/createuser/Attic/createuser.sh,v 1.13 1999/09/27 16:44:56 momjian Exp $
 #
 # Note - this should NOT be setuid.
 #
@@ -215,10 +215,15 @@ then
 	fi
 fi
 
+if [ "$CANCREATE" = "t" -o "$CANADDUSER" = "t" ]
+then	CANCATUPD="t"
+else	CANCATUPD="f"
+fi
+
 QUERY="insert into pg_shadow \
         (usename, usesysid, usecreatedb, usetrace, usesuper, usecatupd) \
        values \
-         ('$NEWUSER', $SYSID, '$CANCREATE', 'f', '$CANADDUSER','f')"
+         ('$NEWUSER', $SYSID, '$CANCREATE', 'f', '$CANADDUSER','$CANCATUPD')"
 
 RES=`$PSQL -c "$QUERY" template1`
 

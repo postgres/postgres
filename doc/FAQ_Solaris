@@ -3,7 +3,7 @@ Frequently Asked Questions (FAQ) for PostgreSQL  V6.5
 Sun Solaris Specific
 TO BE READ IN CONJUNCTION WITH THE NORMAL FAQ
 =======================================================
-last updated:        Thu Sep 2 11:40:00 CET 1999
+last updated:        Thu Sep 21 9:30:00 CET 1999
 
 current maintainer:  Marc Liyanage (liyanage@access.ch)
 original author:     Marc Liyanage (liyanage@access.ch)
@@ -18,6 +18,10 @@ Contents:
      to run postmaster?
 1.4) Why am I getting "Can't tell what username to use" errors
      when I try to run initdb?
+
+A)   Contributors
+
+
 
 Notes:
 
@@ -125,7 +129,7 @@ maximum segment size kernel parameter is set too low. The solution
 is to put something like the following line into /etc/system and
 reboot the system.
 
-set shmsys:shminfo_shmmax=0xffffffff
+set shmsys:shminfo_shmmax=0x7fffffff
 
 Excellent info regarding shared memory under Solaris can be found here:
 http://www.sunworld.com/swol-09-1997/swol-09-insidesolaris.html
@@ -140,3 +144,22 @@ Put something like this into the .bash_profile startup script
 of the postgres user (see also step 17 in the INSTALL file):
 
 export USER=postgres
+
+
+
+
+
+
+
+
+
+----------------------------------------------------------------------
+Section A:  Contributors
+----------------------------------------------------------------------
+
+- Jose Luis Rodriguez Garcia
+  Suggested to change the shmmax parameter in 1.3 from 0xffffffff to 0x7fffffff
+  because the value is a signed integer in Solaris versions prior to 2.6.
+
+
+

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: user.c,v 1.34 1999/09/18 19:06:41 tgl Exp $
+ * $Id: user.c,v 1.35 1999/09/27 16:44:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -172,12 +172,14 @@ DefineUser(CreateUserStmt *stmt, CommandDest dest)
 	snprintf(sql, SQL_LENGTH,
 			 "insert into %s (usename,usesysid,usecreatedb,usetrace,"
 			 "usesuper,usecatupd,passwd,valuntil) "
-			 "values('%s',%d,'%c','f','%c','f',%s%s%s,%s%s%s)",
+			 "values('%s',%d,'%c','f','%c','%c',%s%s%s,%s%s%s)",
 			 ShadowRelationName,
 			 stmt->user,
 			 max_id + 1,
 			 (stmt->createdb && *stmt->createdb) ? 't' : 'f',
 			 (stmt->createuser && *stmt->createuser) ? 't' : 'f',
+			 ((stmt->createdb && *stmt->createdb) ||
+			  (stmt->createuser && *stmt->createuser)) ? 't' : 'f',
 			 havepassword ? "'" : "",
 			 havepassword ? stmt->password : "NULL",
 			 havepassword ? "'" : "",
