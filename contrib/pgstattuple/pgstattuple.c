@@ -1,5 +1,5 @@
 /*
- * $Header: /cvsroot/pgsql/contrib/pgstattuple/pgstattuple.c,v 1.10 2003/06/12 08:02:53 momjian Exp $
+ * $Header: /cvsroot/pgsql/contrib/pgstattuple/pgstattuple.c,v 1.11 2003/08/01 02:21:17 tgl Exp $
  *
  * Copyright (c) 2001,2002	Tatsuo Ishii
  *
@@ -200,14 +200,14 @@ pgstattuple_real(Relation rel)
 	for (i = 0; i < NCOLUMNS; i++)
 		values[i] = (char *) palloc(NCHARS * sizeof(char));
 	i = 0;
-	snprintf(values[i++], NCHARS, "%lld", table_len);
-	snprintf(values[i++], NCHARS, "%lld", tuple_count);
-	snprintf(values[i++], NCHARS, "%lld", tuple_len);
+	snprintf(values[i++], NCHARS, INT64_FORMAT, table_len);
+	snprintf(values[i++], NCHARS, INT64_FORMAT, tuple_count);
+	snprintf(values[i++], NCHARS, INT64_FORMAT, tuple_len);
 	snprintf(values[i++], NCHARS, "%.2f", tuple_percent);
-	snprintf(values[i++], NCHARS, "%lld", dead_tuple_count);
-	snprintf(values[i++], NCHARS, "%lld", dead_tuple_len);
+	snprintf(values[i++], NCHARS, INT64_FORMAT, dead_tuple_count);
+	snprintf(values[i++], NCHARS, INT64_FORMAT, dead_tuple_len);
 	snprintf(values[i++], NCHARS, "%.2f", dead_tuple_percent);
-	snprintf(values[i++], NCHARS, "%lld", free_space);
+	snprintf(values[i++], NCHARS, INT64_FORMAT, free_space);
 	snprintf(values[i++], NCHARS, "%.2f", free_percent);
 
 	/* build a tuple */
