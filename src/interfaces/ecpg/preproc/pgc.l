@@ -1,5 +1,6 @@
 /* Copyright comment! */
 %{
+#include <sys/types.h>
 #include "type.h"
 #include "y.tab.h"
 
