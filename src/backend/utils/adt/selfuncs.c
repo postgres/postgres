@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.119.2.7 2003/12/07 04:11:26 joe Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.119.2.8 2004/02/02 03:07:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -173,8 +173,6 @@ static void get_join_vars(List *args, Var **var1, Var **var2);
 static Selectivity prefix_selectivity(Query *root, Var *var, Oid vartype,
 									  Const *prefix);
 static Selectivity pattern_selectivity(Const *patt, Pattern_Type ptype);
-static bool string_lessthan(const char *str1, const char *str2,
-				Oid datatype);
 static Oid	find_operator(const char *opname, Oid datatype);
 static Datum string_to_datum(const char *str, Oid datatype);
 static Const *string_to_const(const char *str, Oid datatype);
@@ -3404,23 +3402,22 @@ locale_is_like_safe(void)
  * string it is a prefix of.  If successful, return a palloc'd string
  * in the form of a Const pointer; else return NULL.
  *
- * To work correctly in non-ASCII locales with weird collation orders,
- * we cannot simply increment "foo" to "fop" --- we have to check whether
- * we actually produced a string greater than the given one.  If not,
- * increment the righthand byte again and repeat.  If we max out the righthand
- * byte, truncate off the last character and start incrementing the next.
- * For example, if "z" were the last character in the sort order, then we
- * could produce "foo" as a string greater than "fonz".
+ * The key requirement here is that given a prefix string, say "foo",
+ * we must be able to generate another string "fop" that is greater
+ * than all strings "foobar" starting with "foo".
  *
- * This could be rather slow in the worst case, but in most cases we won't
- * have to try more than one or two strings before succeeding.
+ * If we max out the righthand byte, truncate off the last character
+ * and start incrementing the next.  For example, if "z" were the last
+ * character in the sort order, then we could produce "foo" as a
+ * string greater than "fonz".
  *
- * XXX this is actually not sufficient, since it only copes with the case
- * where individual characters collate in an order different from their
- * numeric code assignments.  It does not handle cases where there are
- * cross-character effects, such as specially sorted digraphs, multiple
- * sort passes, etc.  For now, we just shut down the whole thing in locales
- * that do such things :-(
+ * This could be rather slow in the worst case, but in most cases we
+ * won't have to try more than one or two strings before succeeding.
+ *
+ * NOTE: at present this assumes we are in the C locale, so that simple
+ * bytewise comparison applies.  However, we might be in a multibyte
+ * encoding such as UTF-8, so we do have to watch out for generating
+ * invalid encoding sequences.
  */
 Const *
 make_greater_string(const Const *str_const)
@@ -3467,13 +3464,20 @@ make_greater_string(const Const *str_const)
 		/*
 		 * Try to generate a larger string by incrementing the last byte.
 		 */
-		if (*lastchar < (unsigned char) 255)
+		while (*lastchar < (unsigned char) 255)
 		{
 			Const	   *workstr_const;
 
 			(*lastchar)++;
+
 			if (datatype != BYTEAOID)
+			{
+				/* do not generate invalid encoding sequences */
+				if (pg_verifymbstr((const unsigned char *) workstr,
+								   len) != NULL)
+					continue;
 				workstr_const = string_to_const(workstr, datatype);
+			}
 			else
 				workstr_const = string_to_bytea_const(workstr, len);
 
@@ -3502,57 +3506,6 @@ make_greater_string(const Const *str_const)
 		pfree(workstr);
 
 	return (Const *) NULL;
-}
-
-/*
- * Test whether two strings are "<" according to the rules of the given
- * datatype.  We do this the hard way, ie, actually calling the type's
- * "<" operator function, to ensure we get the right result...
- */
-static bool
-string_lessthan(const char *str1, const char *str2, Oid datatype)
-{
-	Datum		datum1 = string_to_datum(str1, datatype);
-	Datum		datum2 = string_to_datum(str2, datatype);
-	bool		result;
-
-	switch (datatype)
-	{
-		case TEXTOID:
-			result = DatumGetBool(DirectFunctionCall2(text_lt,
-													  datum1, datum2));
-			break;
-
-		case BPCHAROID:
-			result = DatumGetBool(DirectFunctionCall2(bpcharlt,
-													  datum1, datum2));
-			break;
-
-		case VARCHAROID:
-			result = DatumGetBool(DirectFunctionCall2(varcharlt,
-													  datum1, datum2));
-			break;
-
-		case NAMEOID:
-			result = DatumGetBool(DirectFunctionCall2(namelt,
-													  datum1, datum2));
-			break;
-
-		case BYTEAOID:
-			result = DatumGetBool(DirectFunctionCall2(bytealt,
-													  datum1, datum2));
-			break;
-
-		default:
-			elog(ERROR, "string_lessthan: unexpected datatype %u", datatype);
-			result = false;
-			break;
-	}
-
-	pfree(DatumGetPointer(datum1));
-	pfree(DatumGetPointer(datum2));
-
-	return result;
 }
 
 /* See if there is a binary op of the given name for the given datatype */
