@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execdebug.h,v 1.7 1999/02/13 23:21:22 momjian Exp $
+ * $Id: execdebug.h,v 1.8 1999/02/23 07:39:40 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,9 @@
  *		debugging defines.
  *
  *		If you want certain debugging behaviour, then #define
- *		the variable to 1, else #undef it. -cim 10/26/89
+ *		the variable to 1. No need to explicitly #undef by default,
+ *		since we can use -D compiler options to enable features.
+ *		- thomas 1999-02-20
  * ----------------------------------------------------------------
  */
 
@@ -28,8 +30,8 @@
  *		will print a message every time we call ExecStoreTuple.
  *		-cim 3/20/91
  * ----------------
- */
 #undef EXEC_DEBUGSTORETUP
+ */
 
 /* ----------------
  *		EXEC_TUPLECOUNT is a #define which causes the
@@ -38,23 +40,23 @@
  *		you might want to undefine this if you are doing work
  *		on the decs  - cim 10/20/89
  * ----------------
- */
 #undef EXEC_TUPLECOUNT
+ */
 
 /* ----------------
  *		EXEC_SHOWBUFSTATS controls whether or not buffer statistics
  *		are shown for each query.  -cim 2/9/89
  * ----------------
- */
 #undef EXEC_SHOWBUFSTATS
+ */
 
 /* ----------------
  *		EXEC_CONTEXTDEBUG turns on the printing of debugging information
  *		by CXT_printf() calls regarding which memory context is the
  *		CurrentMemoryContext for palloc() calls.
  * ----------------
- */
 #undef EXEC_CONTEXTDEBUG
+ */
 
 /* ----------------
  *		EXEC_RETURNSIZE is a compile flag governing the
@@ -72,57 +74,57 @@
  *			  the first few bytes of the data so again, it's
  *			  not likely to matter.
  * ----------------
- */
 #undef EXEC_RETURNSIZE
+ */
 
 /* ----------------
  *		EXEC_UTILSDEBUG is a flag which turns on debugging of the
  *		executor utilities by EU_printf() in eutils.c
  * ----------------
- */
 #undef EXEC_UTILSDEBUG
+ */
 
 /* ----------------
  *		EXEC_NESTLOOPDEBUG is a flag which turns on debugging of the
  *		nest loop node by NL_printf() and ENL_printf() in nestloop.c
  * ----------------
- */
 #undef EXEC_NESTLOOPDEBUG
+ */
 
 /* ----------------
  *		EXEC_PROCDEBUG is a flag which turns on debugging of
  *		ExecProcNode() by PN_printf() in procnode.c
  * ----------------
- */
 #undef EXEC_PROCDEBUG
+ */
 
 /* ----------------
  *		EXEC_EVALDEBUG is a flag which turns on debugging of
  *		ExecEval and ExecTargetList() stuff by EV_printf() in qual.c
  * ----------------
- */
 #undef EXEC_EVALDEBUG
+ */
 
 /* ----------------
  *		EXEC_SCANDEBUG is a flag which turns on debugging of
  *		the ExecSeqScan() stuff by S_printf() in seqscan.c
  * ----------------
- */
 #undef EXEC_SCANDEBUG
+ */
 
 /* ----------------
  *		EXEC_SORTDEBUG is a flag which turns on debugging of
  *		the ExecSort() stuff by SO_printf() in sort.c
  * ----------------
- */
 #undef EXEC_SORTDEBUG
+ */
 
 /* ----------------
  *		EXEC_MERGEJOINDEBUG is a flag which turns on debugging of
  *		the ExecMergeJoin() stuff by MJ_printf() in mergejoin.c
  * ----------------
- */
 #undef EXEC_MERGEJOINDEBUG
+ */
 
 /* ----------------
  *		EXEC_MERGEJOINPFREE is a flag which causes merge joins
@@ -131,16 +133,16 @@
  *		at the cost of doing deallocation of stuff only at the
  *		end of the transaction
  * ----------------
- */
 #undef EXEC_MERGEJOINPFREE
+ */
 
 /* ----------------
  *		EXEC_DEBUGINTERACTIVE is a flag which enables the
  *		user to issue "DEBUG" commands from an interactive
  *		backend.
  * ----------------
- */
 #undef EXEC_DEBUGINTERACTIVE
+ */
 
 /* ----------------
  *		EXEC_DEBUGVARIABLEFILE is string, which if defined will
@@ -155,8 +157,8 @@
  *		they can't affect the first query.. this hack should be
  *		replaced by something better sometime. -cim 11/2/89
  * ----------------
- */
 #undef EXEC_DEBUGVARIABLEFILE
+ */
 
 /* ----------------------------------------------------------------
  *		#defines controlled by above definitions
@@ -221,7 +223,7 @@ extern int	NIndexTupleInserted;
  * ----------------
  */
 #ifdef EXEC_UTILSDEBUG
-#define EU_nodeDisplay(l)				nodeDisplay(l, 0)
+#define EU_nodeDisplay(l)				nodeDisplay(l)
 #define EU_printf(s)					printf(s)
 #define EU1_printf(s, a)				printf(s, a)
 #define EU2_printf(s, a)				printf(s, a, b)
@@ -242,7 +244,7 @@ extern int	NIndexTupleInserted;
  * ----------------
  */
 #ifdef EXEC_NESTLOOPDEBUG
-#define NL_nodeDisplay(l)				nodeDisplay(l, 0)
+#define NL_nodeDisplay(l)				nodeDisplay(l)
 #define NL_printf(s)					printf(s)
 #define NL1_printf(s, a)				printf(s, a)
 #define NL4_printf(s, a, b, c, d)		printf(s, a, b, c, d)
@@ -272,7 +274,7 @@ extern int	NIndexTupleInserted;
  * ----------------
  */
 #ifdef EXEC_EVALDEBUG
-#define EV_nodeDisplay(l)				nodeDisplay(l, 0)
+#define EV_nodeDisplay(l)				nodeDisplay(l)
 #define EV_printf(s)					printf(s)
 #define EV1_printf(s, a)				printf(s, a)
 #define EV5_printf(s, a, b, c, d, e)	printf(s, a, b, c, d, e)
@@ -288,7 +290,7 @@ extern int	NIndexTupleInserted;
  * ----------------
  */
 #ifdef EXEC_SCANDEBUG
-#define S_nodeDisplay(l)				nodeDisplay(l, 0)
+#define S_nodeDisplay(l)				nodeDisplay(l)
 #define S_printf(s)						printf(s)
 #define S1_printf(s, p)					printf(s, p)
 #else
@@ -302,7 +304,7 @@ extern int	NIndexTupleInserted;
  * ----------------
  */
 #ifdef EXEC_SORTDEBUG
-#define SO_nodeDisplay(l)				nodeDisplay(l, 0)
+#define SO_nodeDisplay(l)				nodeDisplay(l)
 #define SO_printf(s)					printf(s)
 #define SO1_printf(s, p)				printf(s, p)
 #else
@@ -316,11 +318,14 @@ extern int	NIndexTupleInserted;
  * ----------------
  */
 #ifdef EXEC_MERGEJOINDEBUG
-#define MJ_nodeDisplay(l)				nodeDisplay(l, 0)
+
+#include "nodes/print.h"
+
+#define MJ_nodeDisplay(l)				nodeDisplay(l)
 #define MJ_printf(s)					printf(s)
 #define MJ1_printf(s, p)				printf(s, p)
 #define MJ2_printf(s, p1, p2)			printf(s, p1, p2)
-#define MJ_debugtup(tuple, type)		debugtup(tuple, type)
+#define MJ_debugtup(tuple, type)		debugtup(tuple, type, NULL)
 #define MJ_dump(context, state)			ExecMergeTupleDump(econtext, state)
 #define MJ_DEBUG_QUAL(clause, res) \
   MJ2_printf("  ExecQual(%s, econtext) returns %s\n", \
@@ -349,27 +354,6 @@ extern int	NIndexTupleInserted;
  *		DO NOT DEFINE THESE EVER OR YOU WILL BURN!
  * ----------------------------------------------------------------
  */
-/* ----------------
- *		DOESNOTWORK is currently placed around memory manager
- *		code that is known to cause problems.  Code in between
- *		is likely not converted and probably won't work anyways.
- * ----------------
- */
-#undef DOESNOTWORK
-
-/* ----------------
- *		PERHAPSNEVER is placed around the "scan attribute"
- *		support code for the rule manager because for now we
- *		do things inefficiently.  The correct solution to our
- *		problem is to add code to the parser/planner to save
- *		attribute information for the rule manager rather than
- *		have the executor have to grope through the entire plan
- *		for it so if we ever decide to make things better,
- *		we should probably delete the stuff in between PERHAPSNEVER..
- * ----------------
- */
-#undef PERHAPSNEVER
-
 /* ----------------
  *		NOTYET is placed around any code not yet implemented
  *		in the executor.  Only remove these when actually implementing
