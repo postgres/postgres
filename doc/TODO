@@ -2,7 +2,7 @@
 TODO list for PostgreSQL
 ========================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Mon Mar 14 23:01:08 EST 2005
+Last updated:		Tue Mar 15 00:31:22 EST 2005
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -715,6 +715,9 @@ Cache
   Allow the background writer to more efficiently write dirty buffers
   from the end of the LRU cache and use a clock sweep algorithm to
   write other dirty buffers to reduced checkpoint I/O
+
+* Allow sequential scans to take advantage of other concurrent
+  sequentiqal scans, also called "Synchronised Scanning"
 
 Vacuum
 ======
