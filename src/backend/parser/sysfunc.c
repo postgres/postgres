@@ -30,8 +30,13 @@ char *Sysfunc_system_date(void)
 	
 	time(&cur_time_secs);
 	cur_time_expanded = localtime(&cur_time_secs);
+#if defined(EUROPEAN_DATES) || defined(EUROPEAN_STYLE)
+	sprintf(buf, "%02.2d-%02.2d-%04.4d", cur_time_expanded->tm_mday,
+			cur_time_expanded->tm_mon+1, cur_time_expanded->tm_year+1900);
+#else
 	sprintf(buf, "%02.2d-%02.2d-%04.4d", cur_time_expanded->tm_mon+1,
 			cur_time_expanded->tm_mday, cur_time_expanded->tm_year+1900);
+#endif
 	return &buf[0];
 }
 

@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.2 1996/07/31 17:19:49 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.3 1996/08/19 13:51:55 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -116,6 +116,11 @@ endif
 # statically link in libc for linux
 ifeq ($(PORTNAME), linux)
 LDADD+= -lc
+endif
+
+# the following is special for Reliant UNIX SVR4 (formerly SINIX)
+ifeq ($(PORTNAME), svr4)
+LDFLAGS+= -LD-Blargedynsym
 endif
 
 postgres: $(POSTGRES_DEPEND) $(OBJS) $(EXPORTS)

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: ipc.h,v 1.5 1996/08/04 21:03:23 scrappy Exp $
+ * $Id: ipc.h,v 1.6 1996/08/19 13:52:20 scrappy Exp $
  *
  * NOTES
  *    This file is very architecture-specific.  This stuff should actually
@@ -125,6 +125,7 @@ extern int S_LOCK_FREE(slock_t *lock);
     defined(PORTNAME_i386_solaris) || \
     defined(PORTNAME_sparc_solaris) || \
     defined(PORTNAME_ultrix4) || \
+    defined(PORTNAME_svr4) || \
     defined(WIN32)
 union semun {
     int val;
