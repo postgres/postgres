@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.23 1999/05/25 22:04:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.24 1999/06/07 14:28:22 vadim Exp $
  *
  *	NOTES
  *	   Postgres btree pages look like ordinary relation pages.	The opaque
@@ -265,10 +265,10 @@ _bt_getroot(Relation rel, int access)
 	}
 	else
 	{
-		rootbuf = _bt_getbuf(rel, metad->btm_root, access);
+		rootblkno = metad->btm_root;
+		_bt_relbuf(rel, metabuf, BT_READ);	/* done with the meta page */
 
-		/* done with the meta page */
-		_bt_relbuf(rel, metabuf, BT_READ);
+		rootbuf = _bt_getbuf(rel, rootblkno, access);
 	}
 
 	/*
