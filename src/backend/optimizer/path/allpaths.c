@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.4 1996/11/10 03:00:55 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.5 1997/02/19 12:58:01 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,9 @@
 #include "optimizer/cost.h"
 
 #include "commands/creatinh.h"
+
+#include "optimizer/geqo_gene.h"
+#include "optimizer/geqo.h"
 
 static void find_rel_paths(Query *root, List *rels);
 static List *find_join_paths(Query *root, List *outer_rels, int levels_left);
@@ -157,6 +160,19 @@ find_join_paths(Query *root, List *outer_rels, int levels_left)
     List *x;
     List *new_rels;
     Rel *rel;
+
+    /*******************************************
+     * genetic query optimizer entry point     *
+     *    <utesch@aut.tu-freiberg.de>          *
+     *******************************************/
+
+#ifdef GEQO
+    return lcons(geqo(root), NIL); /* returns *one* Rel, so lcons it */
+#endif
+ 
+     /*******************************************
+      * rest will be deprecated in case of GEQO * 
+      *******************************************/
 
     /*
      * Determine all possible pairs of relations to be joined at this level.

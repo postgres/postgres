@@ -256,6 +256,18 @@
 /* #define OLD_REWRITE        */
 /* #define NOTYET             */
 
+/* Genetic Query Optimization (GEQO):
+ * 
+ * The GEQO module in PostgreSQL is intended for the solution of the
+ * query optimization problem by means of a Genetic Algorithm (GA).
+ * It allows the handling of large JOIN queries through non-exhaustive
+ * search.
+ * For further information see README.GEQO <utesch@aut.tu-freiberg.de>.
+ */
+#define GEQO /* backend/optimizer/path/allpaths.c */
+
+
+
 
 /* Undocumented "features"? */
 #define FASTBUILD /* access/nbtree/nbtsort.c */
