@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.15 2003/08/04 00:43:32 momjian Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.16 2003/08/08 13:16:20 petere Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -163,6 +163,9 @@ ECPGnoticeReceiver(void *arg, const PGresult *result)
 	struct sqlca_t *sqlca = ECPGget_sqlca();
 
 	int			sqlcode;
+
+	if (sqlstate == NULL)
+		sqlstate = ECPG_SQLSTATE_ECPG_INTERNAL_ERROR;
 
 	/* these are not warnings */
 	if (strncmp(sqlstate, "00", 2) == 0)

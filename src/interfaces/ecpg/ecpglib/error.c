@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/error.c,v 1.6 2003/08/04 00:43:32 momjian Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/error.c,v 1.7 2003/08/08 13:16:20 petere Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -159,18 +159,29 @@ void
 ECPGraise_backend(int line, PGresult *result, PGconn *conn, int compat)
 {
 	struct sqlca_t *sqlca = ECPGget_sqlca();
+	char	   *sqlstate;
+	char	   *message;
+
+	if (result)
+	{
+		sqlstate = PQresultErrorField(result, 'C');
+		if (sqlstate == NULL)
+			sqlstate = ECPG_SQLSTATE_ECPG_INTERNAL_ERROR;
+		message = PQresultErrorField(result, 'M');
+	}
+	else
+	{
+		sqlstate = ECPG_SQLSTATE_ECPG_INTERNAL_ERROR;
+		message = PQerrorMessage(conn);
+	}
 
 	/* copy error message */
 	snprintf(sqlca->sqlerrm.sqlerrmc, sizeof(sqlca->sqlerrm.sqlerrmc),
-			 "'%s' in line %d.",
-		 result ? PQresultErrorField(result, 'M') : PQerrorMessage(conn),
-			 line);
+			 "'%s' in line %d.", message, line);
 	sqlca->sqlerrm.sqlerrml = strlen(sqlca->sqlerrm.sqlerrmc);
 
 	/* copy SQLSTATE */
-	strncpy(sqlca->sqlstate,
-			result ? PQresultErrorField(result, 'C') : ECPG_SQLSTATE_ECPG_INTERNAL_ERROR,
-			sizeof(sqlca->sqlstate));
+	strncpy(sqlca->sqlstate, sqlstate, sizeof(sqlca->sqlstate));
 
 	/* assign SQLCODE for backward compatibility */
 	if (strncmp(sqlca->sqlstate, "23505", sizeof(sqlca->sqlstate)) == 0)
