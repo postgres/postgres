@@ -3,6 +3,7 @@
 #include <errno.h>
 #include <math.h>
 #include <ctype.h>
+#include <limits.h>
 
 #include <ecpgtype.h>
 #include <compatlib.h>
@@ -11,7 +12,7 @@
 #include <pgtypes_numeric.h>
 #include <sqltypes.h>
 
-char	   *ECPGalloc(long, int);
+char       *ECPGalloc(long, int);
 
 static int
 deccall2(decimal * arg1, decimal * arg2, int (*ptr) (numeric *, numeric *))
@@ -659,41 +660,50 @@ static struct
 }	value;
 
 /**
- * initialize the struct, wich holds the different forms
+ * initialize the struct, which holds the different forms
  * of the long value
  */
 static void
-initValue(long lng_val)
+initValue (long lng_val)
 {
-	int			i,
-				div,
-				dig;
-	char		tmp[2] = " ";
+  int i, j;
+  long l, dig;
 
-	/* set some obvious things */
-	value.val = lng_val >= 0 ? lng_val : lng_val * (-1);
-	value.sign = lng_val >= 0 ? '+' : '-';
-	value.maxdigits = log10(2) * (8 * sizeof(long) - 1);
+  /* set some obvious things */
+  value.val = lng_val >= 0 ? lng_val : lng_val * (-1);
+  value.sign = lng_val >= 0 ? '+' : '-';
+  value.maxdigits = log10 (2) * (8 * sizeof (long) - 1);
 
-	/* determine the number of digits */
-	for (i = 0; i <= value.maxdigits; i++)
-	{
-		if ((int) (value.val / pow(10, i)) != 0)
-			value.digits = i + 1;
-	}
-	value.remaining = value.digits;
+  /* determine the number of digits */
+  i = 0;
+  l = 1;
+  do
+    {
+      i++;
+      l *= 10;
+    }
+  while ((l - 1) < value.val && l <= LONG_MAX / 10);
 
-	/* convert the long to string */
-	value.val_string = (char *) malloc(value.digits + 1);
-	for (i = value.digits; i > 0; i--)
-	{
-		div = pow(10, i);
-		dig = (value.val % div) / (div / 10);
-		tmp[0] = (char) (dig + 48);
-		strcat(value.val_string, tmp);
-	}
-	/* safety-net */
-	value.val_string[value.digits] = '\0';
+  if (l <= LONG_MAX/10) 
+  {
+	  value.digits = i;
+	  l /= 10;
+  }
+  else
+	  value.digits = i + 1;
+
+  value.remaining = value.digits;
+
+  /* convert the long to string */
+  value.val_string = (char *) malloc (value.digits + 1);
+  dig = value.val;
+  for (i = value.digits, j = 0; i > 0; i--, j++)
+    {
+	value.val_string[j] = dig/l + '0';
+	dig = dig % l;
+	l /= 10; 
+    }
+  value.val_string[value.digits] = '\0';
 }
 
 /* return the position oft the right-most dot in some string */
