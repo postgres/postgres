@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/clog.c,v 1.1 2001/08/25 18:52:41 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/clog.c,v 1.2 2001/08/25 23:24:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,8 @@
 #include <fcntl.h>
 #include <dirent.h>
 #include <errno.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <unistd.h>
 
 #include "access/clog.h"
@@ -882,6 +884,7 @@ ScanCLOGDirectory(int cutoffPage, bool doDeletions)
 				found = true;
 				if (doDeletions)
 				{
+					elog(LOG, "removing commit log file %s", clde->d_name);
 					snprintf(path, MAXPGPATH, "%s/%s", ClogDir, clde->d_name);
 					unlink(path);
 				}
