@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.21 1997/09/13 03:10:11 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.22 1997/09/23 22:53:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1522,6 +1522,8 @@ double		x;
 /* we want the math symbol */
 #undef class
 #endif							/* CLASS_CONFICT */
+
+#include <float.h>
 
 static int
 isinf(x)
