@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Feb 19 17:34:12 EST 2002
+Last updated:		Tue Feb 19 17:41:17 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -464,6 +464,8 @@ SOURCE CODE
 * Add optional CRC checksum to heap and index pages
 * Change representation of whole-tuple parameters to functions
 * Evaluate AIX cs() spinlock macro for performance optimizations (Tatsuo)
+* Clarify use of 'application' and 'command' tags in SGML docs
+
 
 ---------------------------------------------------------------------------
 
