@@ -75,6 +75,8 @@ miscutil -
 mysql -
 	utility to convert MySQL schema dumps to SQL92 and PostgreSQL
 	by Thomas Lockhart <lockhart@alumni.caltech.edu>
+	   Max Rudensky <fonin@ziet.zhitomir.ua>
+	   Valentine Danilchuk <valdan@ziet.zhitomir.ua>
 
 noupdate -
 	trigger to prevent updates on single columns
