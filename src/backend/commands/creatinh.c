@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.69 2000/12/22 23:12:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.70 2001/01/05 02:58:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,6 +25,7 @@
 #include "commands/creatinh.h"
 #include "miscadmin.h"
 #include "optimizer/clauses.h"
+#include "utils/acl.h"
 #include "utils/syscache.h"
 #include "utils/temprel.h"
 
@@ -383,6 +384,12 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 		/* Permanent rels cannot inherit from temporary ones */
 		if (!istemp && is_temp_rel_name(name))
 			elog(ERROR, "CREATE TABLE: cannot inherit from temp relation \"%s\"", name);
+
+		/* We should have an UNDER permission flag for this, but for now,
+		 * demand that creator of a child table own the parent.
+		 */
+		if (!pg_ownercheck(GetUserId(), name, RELNAME))
+			elog(ERROR, "you do not own table \"%s\"", name);
 
 		parentOids = lappendi(parentOids, relation->rd_id);
 		setRelhassubclassInRelation(relation->rd_id, true);
