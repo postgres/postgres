@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.10 1997/02/19 20:10:38 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.11 1997/02/28 13:25:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,9 +67,10 @@ identifier	{letter}{letter_or_digit}*
 
 self		[,()\[\].;$\:\+\-\*\/\<\>\=\|]
 op_and_self	[\~\!\@\#\%\^\&\|\`\?\$\:\+\-\*\/\<\>\=]
+op_and_self2	[\~\!\@\#\%\^\&\|\`\?\$\:\*\/\<\>\=]
 op_only		[\~\!\@\#\%\^\&\`\?]
 
-operator	({op_and_self}{op_and_self}+)|{op_only}+
+operator	({op_and_self}{op_and_self2}+)|{op_only}+
     /* we used to allow double-quoted strings, but SQL doesn't */
     /* so we won't either*/
 quote           '
