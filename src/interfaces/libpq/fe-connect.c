@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.163 2001/03/23 04:49:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.164 2001/03/31 23:14:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -916,7 +916,7 @@ connectDBStart(PGconn *conn)
 	 *
 	 * Ewan Mellor <eem21@cam.ac.uk>.
 	 */
-#if (!defined(WIN32) || defined(WIN32_NON_BLOCKING_CONNECTIONS)) && !defined(USE_SSL)
+#if ((!defined(WIN32) && !defined(__CYGWIN__)) || defined(WIN32_NON_BLOCKING_CONNECTIONS)) && !defined(USE_SSL)
 	if (connectMakeNonblocking(conn) == 0)
 		goto connect_errReturn;
 #endif
@@ -1036,7 +1036,7 @@ connectDBStart(PGconn *conn)
 	 * This makes the connection non-blocking, for all those cases which
 	 * forced us not to do it above.
 	 */
-#if (defined(WIN32) && !defined(WIN32_NON_BLOCKING_CONNECTIONS)) || defined(USE_SSL)
+#if ((defined(WIN32) || defined(__CYGWIN__)) && !defined(WIN32_NON_BLOCKING_CONNECTIONS)) || defined(USE_SSL)
 	if (connectMakeNonblocking(conn) == 0)
 		goto connect_errReturn;
 #endif
