@@ -26,7 +26,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.62 1999/11/21 04:16:15 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.63 1999/12/09 04:36:57 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -411,10 +411,6 @@ fi
 echo
 
 PGSQL_OPT="-o /dev/null -O -F -Q -D$PGDATA"
-
-# If the COPY is first, the VACUUM generates an error, so we vacuum first
-echo "Vacuuming template1"
-echo "vacuum" | postgres $PGSQL_OPT template1 > /dev/null
 
 # Create the initial pg_pwd (flat-file copy of pg_shadow)
 echo "COPY pg_shadow TO '$PGDATA/pg_pwd' USING DELIMITERS '\\t'" | \
