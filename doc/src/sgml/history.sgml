@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/history.sgml,v 1.23 2003/11/29 19:51:37 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/history.sgml,v 1.24 2005/01/08 01:44:05 tgl Exp $
 -->
 
 <sect1 id="history">
@@ -128,10 +128,11 @@ $PostgreSQL: pgsql/doc/src/sgml/history.sgml,v 1.23 2003/11/29 19:51:37 pgsql Ex
 
     <listitem>
      <para>
-      In addition to the monitor program, a new program
+      A new program
       (<application>psql</application>) was provided for interactive
       SQL queries, which used <acronym>GNU</acronym>
-      <application>Readline</application>.
+      <application>Readline</application>.  This largely superseded
+      the old <application>monitor</> program.
      </para>
     </listitem>
 

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/start.sgml,v 1.37 2004/12/17 04:50:32 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/start.sgml,v 1.38 2005/01/08 01:44:08 tgl Exp $
 -->
 
  <chapter id="tutorial-start">
@@ -146,7 +146,7 @@ $PostgreSQL: pgsql/doc/src/sgml/start.sgml,v 1.37 2004/12/17 04:50:32 tgl Exp $
    <para>
     Possibly, your site administrator has already created a database
     for your use.  He should have told you what the name of your
-    database is.  In this case you can omit this step and skip ahead
+    database is.  In that case you can omit this step and skip ahead
     to the next section.
    </para>
 
@@ -194,8 +194,28 @@ No such file or directory
    </para>
 
    <para>
-    If you do not have the privileges required to create a database,
-    you will see the following:
+    Another response could be this:
+<screen>
+createdb: could not connect to database template1: FATAL:  user "joe" does not
+exist
+</screen>
+    where your own login name is mentioned.  This will happen if the
+    administrator has not created a <productname>PostgreSQL</> user account
+    for you.  (<productname>PostgreSQL</> user accounts are distinct from
+    operating system user accounts.)  If you are the administrator, see
+    <xref linkend="user-manag"> for help creating accounts.  You will need to
+    become the operating system user under which <productname>PostgreSQL</>
+    was installed (usually <literal>postgres</>) to create the first user
+    account.  It could also be that you were assigned a
+    <productname>PostgreSQL</> user name that is different from your
+    operating system user name; in that case you need to use the <option>-U</>
+    switch or set the <envar>PGUSER</> environment variable to specify your
+    <productname>PostgreSQL</> user name.
+   </para>
+
+   <para>
+    If you have a user account but it does not have the privileges required to
+    create a database, you will see the following:
 <screen>
 createdb: database creation failed: ERROR:  permission denied to create database
 </screen>
@@ -340,10 +360,10 @@ mydb=#
    </para>
 
    <para>
-    If you have encountered problems starting <command>psql</command>
+    If you encounter problems starting <command>psql</command>
     then go back to the previous section.  The diagnostics of
-    <command>psql</command> and <command>createdb</command> are
-    similar, and if the latter worked the former should work as well.
+    <command>createdb</command> and <command>psql</command> are
+    similar, and if the former worked the latter should work as well.
    </para>
 
    <para>

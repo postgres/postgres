@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/query.sgml,v 1.41 2004/12/17 04:50:32 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/query.sgml,v 1.42 2005/01/08 01:44:08 tgl Exp $
 -->
 
  <chapter id="tutorial-sql">
@@ -293,7 +293,7 @@ COPY weather FROM '/home/user/weather.txt';
 <programlisting>
 SELECT * FROM weather;
 </programlisting>
-    (here <literal>*</literal> means <quote>all columns</quote>).
+    Here <literal>*</literal> is a shorthand for <quote>all columns</quote>.
      <footnote>
       <para>
        While <literal>SELECT *</literal> is useful for off-the-cuff
@@ -301,6 +301,11 @@ SELECT * FROM weather;
        since adding a column to the table would change the results.
       </para>
      </footnote>
+    So the same result would be had with:
+<programlisting>
+SELECT city, temp_lo, temp_hi, prcp, date FROM weather;
+</programlisting>
+
     The output should be:
 
 <screen>
@@ -314,8 +319,8 @@ SELECT * FROM weather;
    </para>
 
    <para>
-    You may specify any arbitrary expressions in the select list.  For 
-    example, you can do:
+    You can write expressions, not just simple column references, in the
+    select list.  For example, you can do:
 <programlisting>
 SELECT city, (temp_hi+temp_lo)/2 AS temp_avg, date FROM weather;
 </programlisting>
@@ -333,15 +338,18 @@ SELECT city, (temp_hi+temp_lo)/2 AS temp_avg, date FROM weather;
    </para>
 
    <para>
-    Arbitrary Boolean operators (<literal>AND</literal>,
+    A query can be <quote>qualified</> by adding a <literal>WHERE</>
+    clause that specifies which rows are wanted.  The <literal>WHERE</>
+    clause contains a Boolean (truth value) expression, and only rows for
+    which the Boolean expression is true are returned.  The usual
+    Boolean operators (<literal>AND</literal>,
     <literal>OR</literal>, and <literal>NOT</literal>) are allowed in
-    the qualification of a query.  For example, the following
+    the qualification.  For example, the following
     retrieves the weather of San Francisco on rainy days:
 
 <programlisting>
 SELECT * FROM weather
-    WHERE city = 'San Francisco'
-    AND prcp > 0.0;
+    WHERE city = 'San Francisco' AND prcp &gt; 0.0;
 </programlisting>
     Result:
 <screen>
@@ -354,16 +362,43 @@ SELECT * FROM weather
 
    <para>
     <indexterm><primary>ORDER BY</primary></indexterm>
+
+    You can request that the results of a query
+    be returned in sorted order:
+
+<programlisting>
+SELECT * FROM weather
+    ORDER BY city;
+</programlisting>
+
+<screen>
+     city      | temp_lo | temp_hi | prcp |    date
+---------------+---------+---------+------+------------
+ Hayward       |      37 |      54 |      | 1994-11-29
+ San Francisco |      43 |      57 |    0 | 1994-11-29
+ San Francisco |      46 |      50 | 0.25 | 1994-11-27
+</screen>
+
+    In this example, the sort order isn't fully specified, and so you
+    might get the San Francisco rows in either order.  But you'd always
+    get the results shown above if you do
+
+<programlisting>
+SELECT * FROM weather
+    ORDER BY city, temp_lo;
+</programlisting>
+   </para>
+
+   <para>
     <indexterm><primary>DISTINCT</primary></indexterm>
     <indexterm><primary>duplicate</primary></indexterm>
 
-    As a final note, you can request that the results of a query can
-    be returned in sorted order or with duplicate rows removed:
+    You can request that duplicate rows be removed from the result of
+    a query:
 
 <programlisting>
 SELECT DISTINCT city
-    FROM weather
-    ORDER BY city;
+    FROM weather;
 </programlisting>
 
 <screen>
@@ -374,8 +409,26 @@ SELECT DISTINCT city
 (2 rows)
 </screen>
 
-    <literal>DISTINCT</literal> and <literal>ORDER BY</literal> can be
-    used separately, of course.
+    Here again, the result row ordering might vary.
+    You can ensure consistent results by using <literal>DISTINCT</literal> and
+    <literal>ORDER BY</literal> together:
+     <footnote>
+      <para>
+       In some database systems, including older versions of
+       <productname>PostgreSQL</productname>, the implementation of
+       <literal>DISTINCT</literal> automatically orders the rows and
+       so <literal>ORDER BY</literal> is redundant.  But this is not
+       required by the SQL standard, and current
+       <productname>PostgreSQL</productname> doesn't guarantee that
+       <literal>DISTINCT</literal> causes the rows to be ordered.
+      </para>
+     </footnote>
+
+<programlisting>
+SELECT DISTINCT city
+    FROM weather
+    ORDER BY city;
+</programlisting>
    </para>
   </sect1>
 

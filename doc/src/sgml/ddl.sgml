@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.35 2004/12/23 05:37:39 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.36 2005/01/08 01:44:05 tgl Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -395,7 +395,28 @@ CREATE TABLE products (
    evaluated whenever the default value is inserted
    (<emphasis>not</emphasis> when the table is created).  A common example
    is that a timestamp column may have a default of <literal>now()</>,
-   so that it gets set to the time of row insertion.
+   so that it gets set to the time of row insertion.  Another common
+   example is generating a <quote>serial number</> for each row.
+   In <productname>PostgreSQL</productname> this is typically done by
+   something like
+<programlisting>
+CREATE TABLE products (
+    product_no integer <emphasis>DEFAULT nextval('products_product_no_seq')</emphasis>,
+    ...
+);
+</programlisting>
+   where the <literal>nextval()</> function supplies successive values
+   from a <firstterm>sequence object</> (see <xref
+   linkend="functions-sequence">). This arrangement is sufficiently common
+   that there's a special shorthand for it:
+<programlisting>
+CREATE TABLE products (
+    product_no <emphasis>SERIAL</emphasis>,
+    ...
+);
+</programlisting>
+   The <literal>SERIAL</> shorthand is discussed further in <xref
+   linkend="datatype-serial">.
   </para>
  </sect1>
 
@@ -1136,6 +1157,12 @@ WHERE c.altitude &gt; 500 and c.tableoid = p.oid;
  capitals | Madison   |      845
 </programlisting>
    
+  </para>
+
+  <para>
+   A table can inherit from more than one parent table, in which case it has
+   the union of the columns defined by the parent tables (plus any columns
+   declared specifically for the child table).
   </para>
 
   <para>
