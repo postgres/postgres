@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.159 2002/11/21 18:19:51 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.160 2002/12/04 21:43:07 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -988,10 +988,10 @@ env PGOPTIONS='-c geqo=off' psql
       <listitem>
        <para>
         These flags enable various debugging output to be sent to the
-	server log.  For each executed query, print either the query text,
-	the resulting parse tree, the query rewriter output, or the execution
-	plan. <option>DEBUG_PRETTY_PRINT</option> indents these displays
-	to produce a more readable but much longer output format.
+        server log. For each executed query, print the resulting parse
+        tree, the query rewriter output, or the execution plan.
+        <option>DEBUG_PRETTY_PRINT</option> indents these displays to
+        produce a more readable but much longer output format.
        </para>
       </listitem>
      </varlistentry>
