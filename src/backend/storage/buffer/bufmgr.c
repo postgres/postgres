@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.135 2003/03/28 20:17:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.136 2003/05/10 19:04:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,6 +68,7 @@ static void WaitIO(BufferDesc *buf);
 static void StartBufferIO(BufferDesc *buf, bool forInput);
 static void TerminateBufferIO(BufferDesc *buf);
 static void ContinueBufferIO(BufferDesc *buf, bool forInput);
+static void buffer_write_error_callback(void *arg);
 
 /*
  * Macro : BUFFER_IS_BROKEN
@@ -699,14 +700,24 @@ BufferSync(void)
 {
 	int			i;
 	BufferDesc *bufHdr;
-	Buffer		buffer;
-	int			status;
-	RelFileNode rnode;
-	XLogRecPtr	recptr;
-	Relation	reln = NULL;
+	ErrorContextCallback errcontext;
+
+	/* Setup error traceback support for ereport() */
+	errcontext.callback = buffer_write_error_callback;
+	errcontext.arg = NULL;
+	errcontext.previous = error_context_stack;
+	error_context_stack = &errcontext;
 
 	for (i = 0, bufHdr = BufferDescriptors; i < NBuffers; i++, bufHdr++)
 	{
+		Buffer		buffer;
+		int			status;
+		RelFileNode rnode;
+		XLogRecPtr	recptr;
+		Relation	reln;
+
+		errcontext.arg = bufHdr;
+
 		LWLockAcquire(BufMgrLock, LW_EXCLUSIVE);
 
 		if (!(bufHdr->flags & BM_VALID))
@@ -834,6 +845,8 @@ BufferSync(void)
 			RelationDecrementReferenceCount(reln);
 	}
 
+	/* Pop the error context stack */
+	error_context_stack = errcontext.previous;
 }
 
 /*
@@ -1011,11 +1024,18 @@ BufferReplace(BufferDesc *bufHdr)
 	Relation	reln;
 	XLogRecPtr	recptr;
 	int			status;
+	ErrorContextCallback errcontext;
 
 	/* To check if block content changed while flushing. - vadim 01/17/97 */
 	bufHdr->flags &= ~BM_JUST_DIRTIED;
 
 	LWLockRelease(BufMgrLock);
+
+	/* Setup error traceback support for ereport() */
+	errcontext.callback = buffer_write_error_callback;
+	errcontext.arg = bufHdr;
+	errcontext.previous = error_context_stack;
+	error_context_stack = &errcontext;
 
 	/*
 	 * No need to lock buffer context - no one should be able to end
@@ -1042,6 +1062,9 @@ BufferReplace(BufferDesc *bufHdr)
 	/* drop relcache refcnt incremented by RelationNodeCacheGetRelation */
 	if (reln != (Relation) NULL)
 		RelationDecrementReferenceCount(reln);
+
+	/* Pop the error context stack */
+	error_context_stack = errcontext.previous;
 
 	LWLockAcquire(BufMgrLock, LW_EXCLUSIVE);
 
@@ -1380,12 +1403,20 @@ FlushRelationBuffers(Relation rel, BlockNumber firstDelBlock)
 	BufferDesc *bufHdr;
 	XLogRecPtr	recptr;
 	int			status;
+	ErrorContextCallback errcontext;
+
+	/* Setup error traceback support for ereport() */
+	errcontext.callback = buffer_write_error_callback;
+	errcontext.arg = NULL;
+	errcontext.previous = error_context_stack;
+	error_context_stack = &errcontext;
 
 	if (rel->rd_istemp)
 	{
 		for (i = 0; i < NLocBuffer; i++)
 		{
 			bufHdr = &LocalBufferDescriptors[i];
+			errcontext.arg = bufHdr;
 			if (RelFileNodeEquals(bufHdr->tag.rnode, rel->rd_node))
 			{
 				if (bufHdr->flags & BM_DIRTY || bufHdr->cntxDirty)
@@ -1395,6 +1426,7 @@ FlushRelationBuffers(Relation rel, BlockNumber firstDelBlock)
 									   (char *) MAKE_PTR(bufHdr->data));
 					if (status == SM_FAIL)
 					{
+						error_context_stack = errcontext.previous;
 						elog(WARNING, "FlushRelationBuffers(%s (local), %u): block %u is dirty, could not flush it",
 							 RelationGetRelationName(rel), firstDelBlock,
 							 bufHdr->tag.blockNum);
@@ -1405,6 +1437,7 @@ FlushRelationBuffers(Relation rel, BlockNumber firstDelBlock)
 				}
 				if (LocalRefCount[i] > 0)
 				{
+					error_context_stack = errcontext.previous;
 					elog(WARNING, "FlushRelationBuffers(%s (local), %u): block %u is referenced (%ld)",
 						 RelationGetRelationName(rel), firstDelBlock,
 						 bufHdr->tag.blockNum, LocalRefCount[i]);
@@ -1414,6 +1447,10 @@ FlushRelationBuffers(Relation rel, BlockNumber firstDelBlock)
 					bufHdr->tag.rnode.relNode = InvalidOid;
 			}
 		}
+
+		/* Pop the error context stack */
+		error_context_stack = errcontext.previous;
+
 		return 0;
 	}
 
@@ -1422,6 +1459,7 @@ FlushRelationBuffers(Relation rel, BlockNumber firstDelBlock)
 	for (i = 0; i < NBuffers; i++)
 	{
 		bufHdr = &BufferDescriptors[i];
+		errcontext.arg = bufHdr;
 		if (RelFileNodeEquals(bufHdr->tag.rnode, rel->rd_node))
 		{
 			if (bufHdr->flags & BM_DIRTY || bufHdr->cntxDirty)
@@ -1483,6 +1521,7 @@ FlushRelationBuffers(Relation rel, BlockNumber firstDelBlock)
 			if (!(bufHdr->flags & BM_FREE))
 			{
 				LWLockRelease(BufMgrLock);
+				error_context_stack = errcontext.previous;
 				elog(WARNING, "FlushRelationBuffers(%s, %u): block %u is referenced (private %ld, global %d)",
 					 RelationGetRelationName(rel), firstDelBlock,
 					 bufHdr->tag.blockNum,
@@ -1493,7 +1532,12 @@ FlushRelationBuffers(Relation rel, BlockNumber firstDelBlock)
 				BufTableDelete(bufHdr);
 		}
 	}
+
 	LWLockRelease(BufMgrLock);
+
+	/* Pop the error context stack */
+	error_context_stack = errcontext.previous;
+
 	return 0;
 }
 
@@ -2082,4 +2126,18 @@ BufferGetFileNode(Buffer buffer)
 		bufHdr = &BufferDescriptors[buffer - 1];
 
 	return (bufHdr->tag.rnode);
+}
+
+/*
+ * Error context callback for errors occurring during buffer writes.
+ */
+static void
+buffer_write_error_callback(void *arg)
+{
+	BufferDesc *bufHdr = (BufferDesc *) arg;
+
+	if (bufHdr != NULL)
+		errcontext("writing block %u of relation %u/%u",
+				   bufHdr->tag.blockNum,
+				   bufHdr->tag.rnode.tblNode, bufHdr->tag.rnode.relNode);
 }
