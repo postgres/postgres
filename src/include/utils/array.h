@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/array.h,v 1.49 2004/08/29 04:13:10 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/array.h,v 1.50 2004/09/16 03:15:54 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,8 +81,8 @@ typedef struct ArrayMetaState
  *
  * ARR_LBOUND returns a pointer to an array of array lower bounds.
  *
- * That is: if the third axis of an array has elements 5 through 10, then
- * ARR_DIMS(a)[2] == 6 and ARR_LBOUND(a)[2] == 5.
+ * That is: if the third axis of an array has elements 5 through 8, then
+ * ARR_DIMS(a)[2] == 4 and ARR_LBOUND(a)[2] == 5.
  *
  * Unlike C, the default lower bound is 1.
  */
@@ -176,7 +176,7 @@ extern Datum makeMdArrayResult(ArrayBuildState *astate, int ndims,
 
 extern int	ArrayGetOffset(int n, int *dim, int *lb, int *indx);
 extern int	ArrayGetOffset0(int n, int *tup, int *scale);
-extern int	ArrayGetNItems(int n, int *a);
+extern int	ArrayGetNItems(int ndims, int *dims);
 extern void mda_get_range(int n, int *span, int *st, int *endp);
 extern void mda_get_prod(int n, int *range, int *prod);
 extern void mda_get_offset_values(int n, int *dist, int *prod, int *span);

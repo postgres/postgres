@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.111 2004/09/02 20:05:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.112 2004/09/16 03:15:52 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -896,7 +896,7 @@ array_out(PG_FUNCTION_ARGS)
 				k,
 				indx[MAXDIM];
 	int			ndim,
-			   *dim,
+			   *dims,
 			   *lb;
 	ArrayMetaState *my_extra;
 
@@ -937,9 +937,9 @@ array_out(PG_FUNCTION_ARGS)
 	typioparam = my_extra->typioparam;
 
 	ndim = ARR_NDIM(v);
-	dim = ARR_DIMS(v);
+	dims = ARR_DIMS(v);
 	lb = ARR_LBOUND(v);
-	nitems = ArrayGetNItems(ndim, dim);
+	nitems = ArrayGetNItems(ndim, dims);
 
 	if (nitems == 0)
 	{
@@ -968,11 +968,12 @@ array_out(PG_FUNCTION_ARGS)
 	values = (char **) palloc(nitems * sizeof(char *));
 	needquotes = (bool *) palloc(nitems * sizeof(bool));
 	p = ARR_DATA_PTR(v);
-	overall_length = 1;			/* [TRH] don't forget to count \0 at end. */
+	overall_length = 1;			/* don't forget to count \0 at end. */
+
 	for (i = 0; i < nitems; i++)
 	{
 		Datum		itemvalue;
-		bool		nq;
+		bool		needquote;
 
 		itemvalue = fetch_att(p, typbyval, typlen);
 		values[i] = DatumGetCString(FunctionCall3(&my_extra->proc,
@@ -983,28 +984,32 @@ array_out(PG_FUNCTION_ARGS)
 		p = (char *) att_align(p, typalign);
 
 		/* count data plus backslashes; detect chars needing quotes */
-		nq = (values[i][0] == '\0');	/* force quotes for empty string */
-		for (tmp = values[i]; *tmp; tmp++)
+		if (values[i][0] == '\0')
+			needquote = true; /* force quotes for empty string */
+		else
+			needquote = false;
+
+		for (tmp = values[i]; *tmp != '\0'; tmp++)
 		{
 			char		ch = *tmp;
 
 			overall_length += 1;
 			if (ch == '"' || ch == '\\')
 			{
-				nq = true;
+				needquote = true;
 #ifndef TCL_ARRAYS
 				overall_length += 1;
 #endif
 			}
 			else if (ch == '{' || ch == '}' || ch == typdelim ||
 					 isspace((unsigned char) ch))
-				nq = true;
+				needquote = true;
 		}
 
-		needquotes[i] = nq;
+		needquotes[i] = needquote;
 
 		/* Count the pair of double quotes, if needed */
-		if (nq)
+		if (needquote)
 			overall_length += 2;
 
 		/* and the comma */
@@ -1014,7 +1019,10 @@ array_out(PG_FUNCTION_ARGS)
 	/*
 	 * count total number of curly braces in output string
 	 */
-	for (i = j = 0, k = 1; i < ndim; k *= dim[i++], j += k);
+	for (i = j = 0, k = 1; i < ndim; i++)
+		k *= dims[i], j += k;
+
+	dims_str[0] = '\0';
 
 	/* add explicit dimensions if required */
 	if (needdims)
@@ -1023,7 +1031,7 @@ array_out(PG_FUNCTION_ARGS)
 
 		for (i = 0; i < ndim; i++)
 		{
-			sprintf(ptr, "[%d:%d]", lb[i], lb[i] + dim[i] - 1);
+			sprintf(ptr, "[%d:%d]", lb[i], lb[i] + dims[i] - 1);
 			ptr += strlen(ptr);
 		}
 		*ptr++ = *ASSGN;
@@ -1039,7 +1047,8 @@ array_out(PG_FUNCTION_ARGS)
 	if (needdims)
 		APPENDSTR(dims_str);
 	APPENDCHAR('{');
-	for (i = 0; i < ndim; indx[i++] = 0);
+	for (i = 0; i < ndim; i++)
+		indx[i] = 0;
 	j = 0;
 	k = 0;
 	do
@@ -1071,7 +1080,7 @@ array_out(PG_FUNCTION_ARGS)
 
 		for (i = ndim - 1; i >= 0; i--)
 		{
-			indx[i] = (indx[i] + 1) % dim[i];
+			indx[i] = (indx[i] + 1) % dims[i];
 			if (indx[i])
 			{
 				APPENDCHAR(typdelim);

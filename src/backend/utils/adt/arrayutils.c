@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayutils.c,v 1.16 2004/08/29 04:12:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayutils.c,v 1.17 2004/09/16 03:15:52 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,16 +50,16 @@ ArrayGetOffset0(int n, int *tup, int *scale)
 
 /* Convert array dimensions into number of elements */
 int
-ArrayGetNItems(int n, int *a)
+ArrayGetNItems(int ndim, int *dims)
 {
 	int			i,
 				ret;
 
-	if (n <= 0)
+	if (ndim <= 0)
 		return 0;
 	ret = 1;
-	for (i = 0; i < n; i++)
-		ret *= a[i];
+	for (i = 0; i < ndim; i++)
+		ret *= dims[i];
 	return ret;
 }
 
