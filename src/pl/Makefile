@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/pl/Makefile,v 1.5 2000/03/25 19:26:49 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/pl/Makefile,v 1.6 2000/03/27 22:39:13 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -21,8 +21,8 @@ ifeq ($(USE_TCL), true)
 	$(MAKE) -C tcl $@
 endif
 ifeq ($(USE_PERL), true)
-	$(MAKE) $(MFLAGS) plperl/Makefile
-	$(MAKE) $(MFLAGS) -C plperl $@
+	-$(MAKE) $(MFLAGS) plperl/Makefile
+	-$(MAKE) $(MFLAGS) -C plperl $@
 endif
 
 plperl/Makefile: plperl/Makefile.PL
