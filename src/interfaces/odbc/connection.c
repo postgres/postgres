@@ -1403,7 +1403,7 @@ CC_lookup_pg_version(ConnectionClass *self)
 HSTMT hstmt;
 StatementClass *stmt;
 RETCODE result;
-char *szVersion = "0.0";
+char	szVersion[32];
 int	major, minor;
 static char *func = "CC_lookup_pg_version";
 
@@ -1439,6 +1439,7 @@ static char *func = "CC_lookup_pg_version";
 
 	/* Extract the Major and Minor numbers from the string. */
 	/* This assumes the string starts 'Postgresql X.X' */
+	strcpy(szVersion, "0.0");
 	if (sscanf(self->pg_version, "%*s %d.%d", &major, &minor) >= 2) {
 		sprintf(szVersion, "%d.%d", major, minor);
 		self->pg_version_major = major;
