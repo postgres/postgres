@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.22 1998/01/08 04:58:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.23 1998/01/08 06:18:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -327,29 +327,13 @@ bpcharcmp(char *arg1, char *arg2)
  *	Comparison Functions used for varchar
  *****************************************************************************/
 
-static int
-vcTruelen(char *arg)
-{
-	char	   *s = VARDATA(arg);
-	int			i;
-	int			len;
-
-	len = VARSIZE(arg) - VARHDRSZ;
-	for (i = 0; i < len; i++)
-	{
-		if (*s++ == '\0')
-			break;
-	}
-	return i;
-}
-
 int32
 varcharlen(char *arg)
 {
 	if (!PointerIsValid(arg))
 		elog(ERROR, "Bad (null) varchar() external representation", NULL);
 
-	return(vcTruelen(arg));
+	return(VARSIZE(arg) - VARHDRSZ);
 }
 
 bool
@@ -360,8 +344,9 @@ varchareq(char *arg1, char *arg2)
 
 	if (arg1 == NULL || arg2 == NULL)
 		return ((bool) 0);
-	len1 = vcTruelen(arg1);
-	len2 = vcTruelen(arg2);
+
+	len1 = VARSIZE(arg1) - VARHDRSZ;
+	len2 = VARSIZE(arg2) - VARHDRSZ;
 
 	if (len1 != len2)
 		return 0;
@@ -377,8 +362,8 @@ varcharne(char *arg1, char *arg2)
 
 	if (arg1 == NULL || arg2 == NULL)
 		return ((bool) 0);
-	len1 = vcTruelen(arg1);
-	len2 = vcTruelen(arg2);
+	len1 = VARSIZE(arg1) - VARHDRSZ;
+	len2 = VARSIZE(arg2) - VARHDRSZ;
 
 	if (len1 != len2)
 		return 1;
@@ -395,8 +380,8 @@ varcharlt(char *arg1, char *arg2)
 
 	if (arg1 == NULL || arg2 == NULL)
 		return ((bool) 0);
-	len1 = vcTruelen(arg1);
-	len2 = vcTruelen(arg2);
+	len1 = VARSIZE(arg1) - VARHDRSZ;
+	len2 = VARSIZE(arg2) - VARHDRSZ;
 
 	cmp = strncmp(VARDATA(arg1), VARDATA(arg2), Min(len1, len2));
 	if (cmp == 0)
@@ -414,8 +399,8 @@ varcharle(char *arg1, char *arg2)
 
 	if (arg1 == NULL || arg2 == NULL)
 		return ((bool) 0);
-	len1 = vcTruelen(arg1);
-	len2 = vcTruelen(arg2);
+	len1 = VARSIZE(arg1) - VARHDRSZ;
+	len2 = VARSIZE(arg2) - VARHDRSZ;
 
 	cmp = strncmp(VARDATA(arg1), VARDATA(arg2), Min(len1, len2));
 	if (0 == cmp)
@@ -433,8 +418,8 @@ varchargt(char *arg1, char *arg2)
 
 	if (arg1 == NULL || arg2 == NULL)
 		return ((bool) 0);
-	len1 = vcTruelen(arg1);
-	len2 = vcTruelen(arg2);
+	len1 = VARSIZE(arg1) - VARHDRSZ;
+	len2 = VARSIZE(arg2) - VARHDRSZ;
 
 	cmp = strncmp(VARDATA(arg1), VARDATA(arg2), Min(len1, len2));
 	if (cmp == 0)
@@ -452,8 +437,8 @@ varcharge(char *arg1, char *arg2)
 
 	if (arg1 == NULL || arg2 == NULL)
 		return ((bool) 0);
-	len1 = vcTruelen(arg1);
-	len2 = vcTruelen(arg2);
+	len1 = VARSIZE(arg1) - VARHDRSZ;
+	len2 = VARSIZE(arg2) - VARHDRSZ;
 
 	cmp = strncmp(VARDATA(arg1), VARDATA(arg2), Min(len1, len2));
 	if (0 == cmp)
@@ -470,8 +455,8 @@ varcharcmp(char *arg1, char *arg2)
 				len2;
 	int			cmp;
 
-	len1 = vcTruelen(arg1);
-	len2 = vcTruelen(arg2);
+	len1 = VARSIZE(arg1) - VARHDRSZ;
+	len2 = VARSIZE(arg2) - VARHDRSZ;
 	cmp = (strncmp(VARDATA(arg1), VARDATA(arg2), Min(len1, len2)));
 	if ((0 == cmp) && (len1 != len2))
 		return (int32) (len1 < len2 ? -1 : 1);
@@ -536,7 +521,7 @@ hashvarchar(struct varlena * key)
 	int			loop;
 
 	keydata = VARDATA(key);
-	keylen = vcTruelen((char *) key);
+	keylen = VARSIZE(key) - VARHDRSZ;
 
 #define HASHC	n = *keydata++ + 65599 * n
 
