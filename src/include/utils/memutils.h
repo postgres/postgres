@@ -15,7 +15,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: memutils.h,v 1.30 1999/07/15 15:21:41 momjian Exp $
+ * $Id: memutils.h,v 1.31 1999/08/24 20:11:19 tgl Exp $
  *
  * NOTES
  *	  some of the information in this file will be moved to
@@ -101,6 +101,12 @@ extern void OrderedElemPushInto(OrderedElem elem, OrderedSet Set);
  *		reallocated.  In addition, an allocation set may be reset which
  *		will cause all memory allocated within it to be freed.
  *
+ *		XXX The following material about allocation modes is all OUT OF DATE.
+ *		aset.c currently implements only one allocation strategy,
+ *		DynamicAllocMode, and that's the only one anyone ever requests anyway.
+ *		If we ever did have more strategies, the new ones might or might
+ *		not look like what is described here...
+ *
  *		Allocations may occur in four different modes.	The mode of
  *		allocation does not affect the behavior of allocations except in
  *		terms of performance.  The allocation mode is set at the time of
@@ -146,7 +152,7 @@ typedef Pointer AllocPointer;
  *		Mode of allocation for an allocation set.
  *
  * Note:
- *		See above for a description of the various nodes.
+ *		See above for a description of the various modes.
  */
 typedef enum AllocMode
 {
@@ -158,22 +164,41 @@ typedef enum AllocMode
 
 #define DefaultAllocMode		DynamicAllocMode
 
+typedef struct AllocSetData *AllocSet;
+typedef struct AllocBlockData *AllocBlock;
+typedef struct AllocChunkData *AllocChunk;
+
+/*
+ * AllocSet
+ *		Allocation set.
+ */
+typedef struct AllocSetData
+{
+	AllocBlock	blocks;			/* head of list of blocks in this set */
+#define ALLOCSET_NUM_FREELISTS	8
+	AllocChunk	freelist[ALLOCSET_NUM_FREELISTS]; /* free chunk lists */
+	/* Note: this will change in the future to support other modes */
+} AllocSetData;
+
 /*
  * AllocBlock
- *		Small pieces of memory are taken from bigger blocks of
- *		memory with a size aligned to a power of two. These
- *		pieces are not free's separately, instead they are reused
- *		for the next allocation of a fitting size.
+ *		An AllocBlock is the unit of memory that is obtained by aset.c
+ *		from malloc().  It contains one or more AllocChunks, which are
+ *		the units requested by palloc() and freed by pfree().  AllocChunks
+ *		cannot be returned to malloc() individually, instead they are put
+ *		on freelists by pfree() and re-used by the next palloc() that has
+ *		a matching request size.
+ *
+ *		AllocBlockData is the header data for a block --- the usable space
+ *		within the block begins at the next alignment boundary.
  */
 typedef struct AllocBlockData
 {
-	struct AllocSetData *aset;
-	struct AllocBlockData *next;
-	char	   *freeptr;
-	char	   *endptr;
+	AllocSet	aset;			/* aset that owns this block */
+	AllocBlock	next;			/* next block in aset's blocks list */
+	char	   *freeptr;		/* start of free space in this block */
+	char	   *endptr;			/* end of space in this block */
 } AllocBlockData;
-
-typedef AllocBlockData *AllocBlock;
 
 /*
  * AllocChunk
@@ -183,25 +208,9 @@ typedef struct AllocChunkData
 {
 	/* aset is the owning aset if allocated, or the freelist link if free */
 	void	   *aset;
-	/* size is always the chunk size */
+	/* size is always the size of the usable space in the chunk */
 	Size		size;
 } AllocChunkData;
-
-typedef AllocChunkData *AllocChunk;
-
-/*
- * AllocSet
- *		Allocation set.
- */
-typedef struct AllocSetData
-{
-	struct AllocBlockData *blocks;
-#define ALLOCSET_NUM_FREELISTS	8
-	struct AllocChunkData *freelist[ALLOCSET_NUM_FREELISTS];
-	/* Note: this will change in the future to support other modes */
-} AllocSetData;
-
-typedef AllocSetData *AllocSet;
 
 /*
  * AllocPointerIsValid
