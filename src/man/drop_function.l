@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/drop_function.l,v 1.3 1998/01/11 22:17:28 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/drop_function.l,v 1.4 1998/06/23 17:52:35 momjian Exp $
 .TH "DROP FUNCTION" SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
 drop function - remove a user-defined C function 
@@ -22,7 +22,7 @@ function with the given name and argument types will be removed.
 drop function sqrt(int4)
 .fi
 .SH "SEE ALSO"
-create function(l).
+create_function(l).
 .SH BUGS
 No checks are made to ensure that types, operators or access methods
 that rely on the function have been removed first.

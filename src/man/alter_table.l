@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/alter_table.l,v 1.5 1998/03/31 04:44:19 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/alter_table.l,v 1.6 1998/06/23 17:52:29 momjian Exp $
 .TH "ALTER TABLE" SQL 09/25/97 PostgreSQL
 .SH NAME
 alter table - add attributes to a class, or rename an attribute or class
@@ -30,7 +30,7 @@ after this command is executed.
 .PP
 The new attributes and their types are specified
 in the same style and with the the same restrictions as in
-.IR "create table" (l).
+.IR "create_table" (l).
 .PP
 In order to add an attribute to each class in an entire inheritance
 hierarchy, use the
@@ -99,6 +99,6 @@ alter table emp rename column sports to hobbies
 alter table person * rename column last_name to family_name
 .fi
 .SH "SEE ALSO"
-create table (l),
+create_table (l),
 update (l).
 

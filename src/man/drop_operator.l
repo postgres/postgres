@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/drop_operator.l,v 1.3 1998/01/11 22:17:30 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/drop_operator.l,v 1.4 1998/06/23 17:52:36 momjian Exp $
 .TH "DROP OPERATOR" SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
 drop operator - remove an operator from the system
@@ -41,4 +41,4 @@ drop operator ! (none, bool)
 drop operator ! (int4, none)
 .fi
 .SH "SEE ALSO"
-create operator(l).
+create_operator(l).

@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/create_table.l,v 1.18 1998/04/27 03:41:33 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/create_table.l,v 1.19 1998/06/23 17:52:32 momjian Exp $
 .TH "CREATE TABLE" SQL 09/25/97 PostgreSQL
 .SH NAME
 create table - create a new class
@@ -146,4 +146,4 @@ create table component
 The \fBforeign key\fP and \fBreferences\fP keywords are parsed but not yet
 implemented in PostgreSQL 6.3.1.
 .SH "SEE ALSO"
-drop table(l).
+drop_table(l).

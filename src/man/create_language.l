@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/create_language.l,v 1.2 1998/01/11 22:17:14 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/create_language.l,v 1.3 1998/06/23 17:52:31 momjian Exp $
 .TH "CREATE LANGUAGE" SQL 11/05/95 PostgreSQL PostgreSQL
 .SH "NAME"
 create language - define a new language for functions
@@ -19,7 +19,7 @@ privilege to register a new language.
 The lanname is the name of the new procedural language. It is converted
 to lower case before the new entry in the pg_language system catalog
 is inserted. Note that this case translation is also done on
-create function(l) and drop language(l). Thus, the language name
+create_function(l) and drop_language(l). Thus, the language name
 is case insensitive. A procedural language cannot override one of the
 builtin languages of Postgres.
 .PP
@@ -60,7 +60,7 @@ It's up to the call handler to fetch the pg_proc entry
 and to analyze the argument and return types of the called procedure.
 the
 .IR "as"
-clause from the create function(l) of the procedure will be found in
+clause from the create_function(l) of the procedure will be found in
 the prosrc attribute of the pg_proc entry. This may be the source text
 in the procedural language itself (like for PL/Tcl), a pathname to a
 file or anything else that tells the call handler what to do in detail.
@@ -109,7 +109,7 @@ plsample_call_handler(
 
 .fi
 Only a few thousand lines of code have to be added instead of the dots
-to complete the PL call handler. See create function(l) how to compile
+to complete the PL call handler. See create_function(l) how to compile
 it into a loadable module. The following commands then register the
 sample procedural language.
 .nf
@@ -125,7 +125,7 @@ create procedural language 'plsample'
 .fi
 .SH "SEE ALSO"
 .PP
-create function(l), drop language(l).
+create_function(l), drop_language(l).
 .SH "RESTRICTIONS"
 Since the call handler for a procedural language must be
 registered with Postgres in the 'C' language, it inherits

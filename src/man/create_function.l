@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/create_function.l,v 1.8 1998/04/26 04:09:37 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/create_function.l,v 1.9 1998/06/23 17:52:31 momjian Exp $
 .TH "CREATE FUNCTION" SQL 11/05/95 PostgreSQL PostgreSQL
 .SH "NAME"
 create function - define a new function
@@ -34,7 +34,7 @@ or
 (The
 .IR "plname"
 is the language name of a created procedural language. See
-create language(l) for details.)
+create_language(l) for details.)
 (The
 .IR "arg is"
 clause may be left out if the function has no arguments, or
@@ -389,7 +389,7 @@ select function hobbies (EMP) returns set of HOBBIES
 	language 'sql'
 .SH "SEE ALSO"
 .PP
-information(1), load(l), drop function(l), create language(l).
+information(1), load(l), drop_function(l), create_language(l).
 .SH "NOTES"
 .SH "Name Space Conflicts"
 More than one function may be defined with the same name, as long as

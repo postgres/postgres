@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/drop_trigger.l,v 1.3 1998/01/11 22:17:32 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/drop_trigger.l,v 1.4 1998/06/23 17:52:36 momjian Exp $
 .TH "DROP TRIGGER" SQL 09/26/97 PostgreSQL
 .SH NAME
 drop trigger - destroy existing trigger
@@ -20,4 +20,4 @@ trigger.
 drop trigger empverify on emp
 .fi
 .SH "SEE ALSO"
-create trigger(l).
+create_trigger(l).

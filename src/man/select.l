@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/select.l,v 1.7 1998/06/17 22:59:26 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/select.l,v 1.8 1998/06/23 17:52:37 momjian Exp $
 .TH SELECT SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
 select - retrieve instances from a class
@@ -119,7 +119,7 @@ select 1.1 * emp.salary as salary
 .SH "SEE ALSO"
 insert(l),
 close(l),
-create table(l),
+create_table(l),
 fetch(l),
 update(l).
 .SH BUGS

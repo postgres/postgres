@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/insert.l,v 1.9 1998/01/11 22:17:39 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/insert.l,v 1.10 1998/06/23 17:52:37 momjian Exp $
 .TH INSERT SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
 insert - insert tuples to a relation
@@ -110,7 +110,7 @@ insert into tictactoe (game, board)
     values (3,'{{,,},{,,},{,,}}')
 .fi
 .SH "SEE ALSO"
-create table(l),
-create type(l),
+create_table(l),
+create_type(l),
 update(l),
 select(l)

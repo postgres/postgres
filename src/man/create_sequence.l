@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/create_sequence.l,v 1.3 1998/01/11 22:17:17 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/create_sequence.l,v 1.4 1998/06/23 17:52:32 momjian Exp $
 .TH "CREATE SEQUENCE" SQL 04/01/97 PostgreSQL PostgreSQL
 .SH NAME
 create sequence - create a new sequence number generator
@@ -109,4 +109,4 @@ select nextval ('seq');
 insert into table _table_ values (nextval ('seq'),...);
 .fi
 .SH "SEE ALSO"
-drop sequence(l).
+drop_sequence(l).

@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/create_aggregate.l,v 1.5 1998/01/11 22:17:11 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/create_aggregate.l,v 1.6 1998/06/23 17:52:31 momjian Exp $
 .TH "CREATE AGGREGATE" SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
 create aggregate - define a new aggregate
@@ -90,5 +90,5 @@ create aggregate avg (sfunc1 = int4add, basetype = int4,
      finalfunc = int4div, initcond1 = "0", initcond2 = "0")
 .fi
 .SH "SEE ALSO"
-create function(l),
-remove aggregate(l).
+create_function(l),
+drop_aggregate(l).

@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/create_trigger.l,v 1.3 1998/01/11 22:17:20 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/create_trigger.l,v 1.4 1998/06/23 17:52:33 momjian Exp $
 .TH "CREATE TRIGGER" SQL 09/25/97 PostgreSQL
 .SH NAME
 create trigger - create a new trigger
@@ -47,4 +47,4 @@ Refer to the SPI and trigger programming guides for more information.
 .SH EXAMPLES
 Examples are included in the contrib area of the source distribution.
 .SH "SEE ALSO"
-drop trigger(l).
+drop_trigger(l).

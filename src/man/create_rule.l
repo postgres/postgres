@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/create_rule.l,v 1.7 1998/04/26 04:09:42 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/create_rule.l,v 1.8 1998/06/23 17:52:32 momjian Exp $
 .TH "CREATE RULE" SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
 create rule - define a new rule
@@ -199,8 +199,8 @@ create rule example_5 is
 	do update newset salary = 5000
 .fi
 .SH "SEE ALSO"
-drop rule(l),
-create view(l).
+drop_rule(l),
+create_view(l).
 .SH BUGS
 .PP
 .BR "instead"

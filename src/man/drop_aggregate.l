@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/drop_aggregate.l,v 1.4 1998/01/11 22:17:27 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/drop_aggregate.l,v 1.5 1998/06/23 17:52:35 momjian Exp $
 .TH "DROP AGGREGATE" SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
 drop aggregate - remove the definition of an aggregate
@@ -21,4 +21,4 @@ aggregate.
 drop aggregate avg int4
 .fi
 .SH "SEE ALSO"
-create aggregate(l).
+create_aggregate(l).

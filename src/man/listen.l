@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/listen.l,v 1.4 1998/06/23 15:43:18 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/listen.l,v 1.5 1998/06/23 17:52:37 momjian Exp $
 .TH "LISTEN" SQL 03/12/94 PostgreSQL PostgreSQL
 .SH NAME
 listen - listen for notification on a relation
@@ -30,7 +30,7 @@ notification corresponds.  If this code is not included in
 the application, the event notification will be queued and 
 never be processed.
 .SH "SEE ALSO"
-create rule(l),
+create_rule(l),
 notify(l),
 select(l),
 libpq.

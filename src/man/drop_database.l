@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/drop_database.l,v 1.2 1998/01/11 22:17:27 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/drop_database.l,v 1.3 1998/06/23 17:52:35 momjian Exp $
 .TH "DROP DATABASE" SQL 01/23/93 PostgreSQL PostgreSQL
 .SH NAME
 drop database - destroy an existing database
@@ -16,7 +16,7 @@ database administrator (see
 .IR createdb (l)
 for details).
 .SH "SEE ALSO"
-create database(l),
+create_database(l),
 destroydb(1).
 .SH BUGS
 This query should 

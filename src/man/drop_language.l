@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/drop_language.l,v 1.2 1998/01/11 22:17:29 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/drop_language.l,v 1.3 1998/06/23 17:52:35 momjian Exp $
 .TH "DROP LANGUAGE" SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
 drop language - remove a user-defined procedural language
@@ -21,7 +21,7 @@ name
 drop procedural language 'plsample';
 .fi
 .SH "SEE ALSO"
-create language(l).
+create_language(l).
 .SH BUGS
 No checks are made if functions or trigger procedures registered
 in this language still exist. To reenable them without having to

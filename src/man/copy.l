@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/copy.l,v 1.4 1998/01/11 22:17:11 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/copy.l,v 1.5 1998/06/23 17:52:30 momjian Exp $
 .TH COPY SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
 copy - copy data to or from a class from or to a Unix file.
@@ -139,7 +139,7 @@ Note that variable length attributes are preceded by the attribute's
 length; arrays are simply contiguous streams of the array element
 type.
 .SH "SEE ALSO"
-insert(l), create table(l), vacuum(l), libpq.
+insert(l), create_table(l), vacuum(l), libpq.
 .SH BUGS
 Files used as arguments to the
 .BR copy
