@@ -49,8 +49,6 @@ WHERE p1.typtype != 'c' AND
      p1.typreceive = 0 OR p1.typsend = 0);
 
 -- Check for bogus typinput routines
--- The first OR subclause detects bogus non-array cases,
--- the second one detects bogus array cases.
 -- FIXME: ought to check prorettype, but there are special cases that make it
 -- hard: prorettype might be binary-compatible with the type but not the same,
 -- and for array types array_in's result has nothing to do with anything.
@@ -59,7 +57,7 @@ SELECT p1.oid, p1.typname, p2.oid, p2.proname
 FROM pg_type AS p1, pg_proc AS p2
 WHERE p1.typinput = p2.oid AND p1.typtype = 'b' AND
     (p2.pronargs != 1 OR p2.proretset) AND
-    (p2.pronargs != 3 OR p2.proretset OR p1.typelem = 0);
+    (p2.pronargs != 3 OR p2.proretset OR p2.proargtypes[2] != 23);
 
 -- Check for bogus typoutput routines
 -- The first OR subclause detects bogus non-array cases,
@@ -73,8 +71,6 @@ WHERE p1.typoutput = p2.oid AND p1.typtype = 'b' AND
     (p2.pronargs != 2 OR p2.proretset OR p1.typelem = 0);
 
 -- Check for bogus typreceive routines
--- The first OR subclause detects bogus non-array cases,
--- the second one detects bogus array cases.
 -- FIXME: ought to check prorettype, but there are special cases that make it
 -- hard: prorettype might be binary-compatible with the type but not the same,
 -- and for array types array_in's result has nothing to do with anything.
@@ -83,7 +79,7 @@ SELECT p1.oid, p1.typname, p2.oid, p2.proname
 FROM pg_type AS p1, pg_proc AS p2
 WHERE p1.typreceive = p2.oid AND p1.typtype = 'b' AND
     (p2.pronargs != 1 OR p2.proretset) AND
-    (p2.pronargs != 3 OR p2.proretset OR p1.typelem = 0);
+    (p2.pronargs != 3 OR p2.proretset OR p2.proargtypes[2] != 23);
 
 -- Check for bogus typsend routines
 -- The first OR subclause detects bogus non-array cases,
@@ -102,7 +98,8 @@ WHERE p1.typsend = p2.oid AND p1.typtype = 'b' AND
 
 SELECT p1.oid, p1.relname
 FROM pg_class as p1
-WHERE (p1.relkind != 'r' AND p1.relkind != 'i' AND p1.relkind != 's');
+WHERE (p1.relkind != 'r' AND p1.relkind != 'i' AND
+       p1.relkind != 's' AND p1.relkind != 'S');
 
 -- Indexes should have an access method, others not.
 
