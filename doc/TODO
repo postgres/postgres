@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Nov  8 12:40:57 EST 2002
+Last updated:		Fri Nov  8 12:42:14 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -64,7 +64,7 @@ Data Types
 * Add function to return compressed length of TOAST data values (Tom)
 * Allow INET subnet tests using non-constants
 * Add now("transaction|statement|clock") functionality
-* -Add GUC variables to control floating number output digits
+* -Add GUC variables to control floating number output digits (Pedro Ferreira)
 
 * CONVERSION
 	o Allow better handling of numeric constants, type conversion 
