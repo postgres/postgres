@@ -377,6 +377,7 @@ ECPGexecute(struct statement * stmt)
 		char	   *tobeinserted = NULL;
 		char	   *p;
 		char		buff[20];
+		int		hostvarl = 0;
 
 		/*
 		 * Some special treatment is needed for records since we want
@@ -701,7 +702,7 @@ ECPGexecute(struct statement * stmt)
 			return false;
 
 		strcpy(newcopy, copiedquery);
-		if ((p = next_insert(newcopy)) == NULL)
+		if ((p = next_insert(newcopy + hostvarl)) == NULL)
 		{
 
 			/*
@@ -714,6 +715,7 @@ ECPGexecute(struct statement * stmt)
 		else
 		{
 			strcpy(p, tobeinserted);
+			hostvarl = strlen(newcopy);
 
 			/*
 			 * The strange thing in the second argument is the rest of the
@@ -993,7 +995,7 @@ ECPGdo(int lineno, const char *connection_name, char *query,...)
  *
  * Copyright (c) 2000, Christof Petig <christof.petig@wtal.de>
  *
- * $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/execute.c,v 1.11 2000/09/26 11:41:43 meskes Exp $
+ * $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/execute.c,v 1.12 2000/10/02 16:15:53 momjian Exp $
  */
 
 PGconn	   *ECPG_internal_get_connection(char *name);

@@ -55,7 +55,7 @@ ENHANCEMENTS
 
 URGENT
 
-* Add OUTER joins, left and right[outer](Thomas, Bruce)
+* -Add OUTER joins, left and right[outer](Tom, Thomas)
 * Allow long tuples by chaining or auto-storing outside db (TOAST)(Jan)
 * Fix memory leak for expressions[memory](Tom?) 
 
