@@ -14,6 +14,10 @@
 #define TERMIOS_H_LOCATION <sys/termios.h>
 #endif
 
+#if !defined(nextstep)
+#define USE_VALUES_H
+#endif
+
 #define HAVE_MEMMOVE
 
 #if defined(aix)
@@ -138,16 +142,29 @@
    typedef unsigned char slock_t;
 #endif
 
-/* does anybody use this? */
-#if defined(next)
+#if defined(nextstep)
+# include <sys/ioctl.h>
 # if defined(__STRICT_ANSI__)
 #  define isascii(c)  ((unsigned)(c)<=0177)
 # endif
-#  define USE_LIMITS_H
-#  define JMP_BUF
+  extern char* strdup (const char* string);
+# ifndef _POSIX_SOURCE
+  typedef unsigned short mode_t;
+  typedef int sigset_t;
+#  define SIG_BLOCK	00
+#  define SIG_UNBLOCK	01
+#  define SIG_SETMASK	02
+#  define NO_SIGACTION
+#  define NO_SETSID
+#  define NO_SIGPROCMASK
 #  define NEED_SIG_JMP
-#  define SB_PAD 56
-   typedef struct mutex    slock_t;
+# endif
+
+# define USE_LIMITS_H
+# define JMP_BUF
+# define SB_PAD 56
+# define NO_WAITPID
+  typedef struct mutex slock_t;
 #endif
 
 #if defined(sequent) 

@@ -7,12 +7,13 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.8 1997/01/08 10:33:46 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.9 1997/01/13 03:54:15 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
+#include "config.h"
 
 #include <math.h>
 #ifdef WIN32
@@ -24,7 +25,9 @@
 #  include <machine/limits.h>
 #  define MAXINT	INT_MAX
 # else
-#  include <values.h>
+#  ifdef USE_VALUES_H
+#   include <values.h>
+#  endif
 # endif 
 #endif 
 

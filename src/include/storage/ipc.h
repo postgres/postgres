@@ -6,20 +6,20 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: ipc.h,v 1.11 1996/12/04 03:06:29 bryanh Exp $
+ * $Id: ipc.h,v 1.12 1997/01/13 03:54:48 bryanh Exp $
  *
  * NOTES
  *    This file is very architecture-specific.  This stuff should actually
  *    be factored into the port/ directories.
  *
+ * Some files that would normally need to include only sys/ipc.h must 
+ * instead included this file because on Ultrix, sys/ipc.h is not designed
+ * to be included multiple times.  This file (by virtue of the ifndef IPC_H)
+ * is.
  *-------------------------------------------------------------------------
  */
 #ifndef	IPC_H
 #define IPC_H
-
-#ifndef	_IPC_
-#define _IPC_
-#endif
 
 #include <sys/types.h>
 #include <sys/ipc.h>   /* For IPC_PRIVATE */
