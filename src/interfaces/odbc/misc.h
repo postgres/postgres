@@ -76,6 +76,17 @@
 #define DIRSEPARATOR	"\\"
 #endif
 
+#ifdef WIN32
+#define PG_BINARY	O_BINARY
+#define	PG_BINARY_R	"rb"
+#define	PG_BINARY_W	"wb"
+#else
+#define	PG_BINARY	0
+#define	PG_BINARY_R	"r"
+#define	PG_BINARY_W	"w"
+#endif
+
+
 void remove_newlines(char *string);
 char *strncpy_null(char *dst, const char *src, int len);
 char *trim(char *string);

@@ -49,16 +49,6 @@ typedef UInt4 Oid;
 #define DRIVER_FILE_NAME		"libpsqlodbc.so"
 #endif
 
-#ifdef WIN32
-#define PG_BINARY	O_BINARY
-#define	PG_BINARY_R	"rb"
-#define	PG_BINARY_W	"wb"
-#else
-#define	PG_BINARY	0
-#define	PG_BINARY_R	"r"
-#define	PG_BINARY_W	"w"
-#endif
-
 /* Limits */
 #ifdef WIN32
 #define BLCKSZ                      4096

@@ -26,7 +26,7 @@
 
 #include <sys/types.h>
 #include <string.h>
-#include "psqlodbc.h"
+#include "misc.h"
 #include "gpps.h"
 
 #ifndef TRUE
