@@ -102,6 +102,7 @@
    Why?
    4.22) How do I create a column that will default to the current time?
    4.23) Why are my subqueries using IN so slow?
+   4.24) How do I do an outer join?
    
                             Extending PostgreSQL
                                       
@@ -992,6 +993,21 @@ BYTEA           bytea           variable-length array of bytes
         WHERE EXISTS (SELECT col2 FROM TAB2 WHERE col1 = col2)
 
    We hope to fix this limitation in a future release.
+   
+    4.24) How do I do an outer join?
+    
+   PostgreSQL does not support outer joins in the current release. They
+   can be simulated using UNION and NOT IN. For example, when joining
+   tab1 and tab2, the following query does an outer join of the two
+   tables:
+        SELECT tab1.col1, tab2.col2
+        FROM tab1, tab2
+        WHERE tab1.col1 = tab2.col1
+        UNION ALL
+        SELECT tab1.col1, NULL
+        FROM tab1
+        WHERE tab1.col1 NOT IN (SELECT tab2.col1 FROM tab2)
+        ORDER BY tab1.col1
      _________________________________________________________________
    
                             Extending PostgreSQL
