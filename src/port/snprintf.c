@@ -83,7 +83,7 @@ typedef unsigned long ulong_long;
  * causing nast effects.
  **************************************************************/
 
-/*static char _id[] = "$PostgreSQL: pgsql/src/port/snprintf.c,v 1.5 2005/02/22 03:56:22 momjian Exp $";*/
+/*static char _id[] = "$PostgreSQL: pgsql/src/port/snprintf.c,v 1.6 2005/02/22 04:57:24 momjian Exp $";*/
 static char *end;
 static int	SnprfOverflow;
 
@@ -469,6 +469,7 @@ performpr:
 		dopr_outch(ch);
 nochar:
 	/* nothing */
+	; /* semicolon required because a goto has to be attached to a statement */
 	}
 	*output = '\0';
 }
