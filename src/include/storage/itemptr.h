@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: itemptr.h,v 1.17 2001/03/22 04:01:06 momjian Exp $
+ * $Id: itemptr.h,v 1.18 2001/03/30 05:25:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,15 +20,29 @@
 /*
  * ItemPointer:
  *
- * this is a pointer to an item on another disk page in the same file.
+ * This is a pointer to an item within a disk page of a known file
+ * (for example, a cross-link from an index to its parent table).
  * blkid tells us which block, posid tells us which entry in the linp
  * (ItemIdData) array we want.
+ *
+ * Note: because there is an item pointer in each tuple header and index
+ * tuple header on disk, it's very important not to waste space with
+ * structure padding bytes.  The struct is designed to be six bytes long
+ * (it contains three int16 fields) but a few compilers will pad it to
+ * eight bytes unless coerced.  We apply appropriate persuasion where
+ * possible, and to cope with unpersuadable compilers, we try to use
+ * "SizeOfIptrData" rather than "sizeof(ItemPointerData)" when computing
+ * on-disk sizes.
  */
 typedef struct ItemPointerData
 {
 	BlockIdData ip_blkid;
 	OffsetNumber ip_posid;
-} ItemPointerData;
+}
+#ifdef __arm__
+__attribute__((packed))		/* Appropriate whack upside the head for ARM */
+#endif
+	ItemPointerData;
 
 #define SizeOfIptrData	\
 	(offsetof(ItemPointerData, ip_posid) + sizeof(OffsetNumber))
