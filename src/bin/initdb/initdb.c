@@ -39,7 +39,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.53 2004/08/29 05:06:52 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.54 2004/09/02 17:58:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -126,7 +126,7 @@ char	   *authtrust_warning = \
 "# CAUTION: Configuring the system for local \"trust\" authentication allows\n"
 "# any local user to connect as any PostgreSQL user, including the database\n"
 "# superuser. If you do not trust all your local users, use another\n"
-"# authenication method.\n";
+"# authentication method.\n";
 char	   *authwarning = NULL;
 
 /*
