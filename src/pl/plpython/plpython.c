@@ -29,7 +29,7 @@
  * MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.56 2004/09/13 20:09:30 tgl Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.57 2004/09/19 23:38:21 tgl Exp $
  *
  *********************************************************************
  */
@@ -976,7 +976,6 @@ PLy_procedure_create(FunctionCallInfo fcinfo, Oid tgreloid,
 					 HeapTuple procTup, char *key)
 {
 	char		procName[NAMEDATALEN + 256];
-
 	Form_pg_proc procStruct;
 	PLyProcedure *volatile proc;
 	char	   *volatile procSource = NULL;
@@ -1035,14 +1034,28 @@ PLy_procedure_create(FunctionCallInfo fcinfo, Oid tgreloid,
 			if (!HeapTupleIsValid(rvTypeTup))
 				elog(ERROR, "cache lookup failed for type %u",
 					 procStruct->prorettype);
-
 			rvTypeStruct = (Form_pg_type) GETSTRUCT(rvTypeTup);
-			if (rvTypeStruct->typtype != 'c')
-				PLy_output_datum_func(&proc->result, rvTypeTup);
-			else
+
+			/* Disallow pseudotype result */
+			if (rvTypeStruct->typtype == 'p')
+			{
+				if (procStruct->prorettype == TRIGGEROID)
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("trigger functions may only be called as triggers")));
+				else
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("plpython functions cannot return type %s",
+							   format_type_be(procStruct->prorettype))));
+			}
+
+			if (rvTypeStruct->typtype == 'c')
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					errmsg("tuple return types are not supported yet")));
+					errmsg("plpython functions cannot return tuples yet")));
+			else
+				PLy_output_datum_func(&proc->result, rvTypeTup);
 
 			ReleaseSysCache(rvTypeTup);
 		}
@@ -1075,6 +1088,13 @@ PLy_procedure_create(FunctionCallInfo fcinfo, Oid tgreloid,
 				elog(ERROR, "cache lookup failed for type %u",
 					 procStruct->proargtypes[i]);
 			argTypeStruct = (Form_pg_type) GETSTRUCT(argTypeTup);
+
+			/* Disallow pseudotype argument */
+			if (argTypeStruct->typtype == 'p')
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("plpython functions cannot take type %s",
+								format_type_be(procStruct->proargtypes[i]))));
 
 			if (argTypeStruct->typtype != 'c')
 				PLy_input_datum_func(&(proc->args[i]),
