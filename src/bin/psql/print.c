@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/print.c,v 1.42 2003/08/04 23:59:40 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/print.c,v 1.43 2003/08/14 18:49:42 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -18,6 +18,10 @@
 
 #ifndef WIN32
 #include <sys/ioctl.h>			/* for ioctl() */
+#endif
+
+#ifdef HAVE_TERMIOS_H
+#include <termios.h>
 #endif
 
 #include "pqsignal.h"
