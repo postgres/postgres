@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.168 2004/04/07 18:17:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.169 2004/05/11 02:21:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -343,6 +343,9 @@ subquery_planner(Query *parse, double tuple_fraction)
 
 			plan->extParam = bms_add_members(plan->extParam,
 											 initplan->plan->extParam);
+			/* allParam must include all members of extParam */
+			plan->allParam = bms_add_members(plan->allParam,
+											 plan->extParam);
 			initplan_cost += initplan->plan->total_cost;
 		}
 

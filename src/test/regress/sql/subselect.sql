@@ -93,3 +93,67 @@ select count(*) from
 select count(distinct ss.ten) from
   (select ten from tenk1 a
    where unique1 IN (select distinct hundred from tenk1 b)) ss;
+
+--
+-- Test case to catch problems with multiply nested sub-SELECTs not getting
+-- recalculated properly.  Per bug report from Didier Moens.
+--
+
+CREATE TABLE orderstest (
+    approver_ref integer,
+    po_ref integer,
+    ordercancelled boolean
+);
+
+INSERT INTO orderstest VALUES (1, 1, false);
+INSERT INTO orderstest VALUES (66, 5, false);
+INSERT INTO orderstest VALUES (66, 6, false);
+INSERT INTO orderstest VALUES (66, 7, false);
+INSERT INTO orderstest VALUES (66, 1, true);
+INSERT INTO orderstest VALUES (66, 8, false);
+INSERT INTO orderstest VALUES (66, 1, false);
+INSERT INTO orderstest VALUES (77, 1, false);
+INSERT INTO orderstest VALUES (1, 1, false);
+INSERT INTO orderstest VALUES (66, 1, false);
+INSERT INTO orderstest VALUES (1, 1, false);
+
+CREATE VIEW orders_view AS
+SELECT *,
+(SELECT CASE
+   WHEN ord.approver_ref=1 THEN '---' ELSE 'Approved'
+ END) AS "Approved",
+(SELECT CASE
+ WHEN ord.ordercancelled
+ THEN 'Cancelled'
+ ELSE
+  (SELECT CASE
+		WHEN ord.po_ref=1
+		THEN
+		 (SELECT CASE
+				WHEN ord.approver_ref=1
+				THEN '---'
+				ELSE 'Approved'
+			END)
+		ELSE 'PO'
+	END) 
+END) AS "Status",
+(CASE
+ WHEN ord.ordercancelled
+ THEN 'Cancelled'
+ ELSE
+  (CASE
+		WHEN ord.po_ref=1
+		THEN
+		 (CASE
+				WHEN ord.approver_ref=1
+				THEN '---'
+				ELSE 'Approved'
+			END)
+		ELSE 'PO'
+	END) 
+END) AS "Status_OK"
+FROM orderstest ord;
+
+SELECT * FROM orders_view;
+
+DROP TABLE orderstest cascade;
