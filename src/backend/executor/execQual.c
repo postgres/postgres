@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.122 2003/01/10 21:08:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.123 2003/01/12 04:03:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2324,8 +2324,13 @@ ExecCleanTargetListLength(List *targetlist)
 /* ----------------------------------------------------------------
  *		ExecTargetList
  *
- *		Evaluates a targetlist with respect to the current
- *		expression context and return a tuple.
+ *		Evaluates a targetlist with respect to the given
+ *		expression context and returns a tuple.
+ *
+ * The caller must pass workspace for the values and nulls arrays
+ * as well as the itemIsDone array.  This convention saves palloc'ing
+ * workspace on each call, and some callers may find it useful to examine
+ * the values array directly.
  *
  * As with ExecEvalExpr, the caller should pass isDone = NULL if not
  * prepared to deal with sets of result tuples.  Otherwise, a return
@@ -2335,21 +2340,15 @@ ExecCleanTargetListLength(List *targetlist)
  */
 static HeapTuple
 ExecTargetList(List *targetlist,
-			   int nodomains,
 			   TupleDesc targettype,
-			   Datum *values,
 			   ExprContext *econtext,
+			   Datum *values,
+			   char *nulls,
+			   ExprDoneCond *itemIsDone,
 			   ExprDoneCond *isDone)
 {
 	MemoryContext oldContext;
-
-#define NPREALLOCDOMAINS 64
-	char		nullsArray[NPREALLOCDOMAINS];
-	ExprDoneCond itemIsDoneArray[NPREALLOCDOMAINS];
-	char	   *nulls;
-	ExprDoneCond *itemIsDone;
 	List	   *tl;
-	HeapTuple	newTuple;
 	bool		isNull;
 	bool		haveDoneSets;
 	static struct tupleDesc NullTupleDesc;		/* we assume this inits to
@@ -2379,30 +2378,8 @@ ExecTargetList(List *targetlist,
 		targettype = &NullTupleDesc;
 
 	/*
-	 * allocate an array of char's to hold the "null" information only if
-	 * we have a really large targetlist.  otherwise we use the stack.
-	 *
-	 * We also allocate another array that holds the isDone status for each
-	 * targetlist item. The isDone status is needed so that we can iterate,
-	 * generating multiple tuples, when one or more tlist items return
-	 * sets.  (We expect the caller to call us again if we return
-	 * isDone = ExprMultipleResult.)
-	 */
-	if (nodomains > NPREALLOCDOMAINS)
-	{
-		nulls = (char *) palloc(nodomains * sizeof(char));
-		itemIsDone = (ExprDoneCond *) palloc(nodomains * sizeof(ExprDoneCond));
-	}
-	else
-	{
-		nulls = nullsArray;
-		itemIsDone = itemIsDoneArray;
-	}
-
-	/*
 	 * evaluate all the expressions in the target list
 	 */
-
 	if (isDone)
 		*isDone = ExprSingleResult;		/* until proven otherwise */
 
@@ -2451,8 +2428,7 @@ ExecTargetList(List *targetlist,
 			 */
 			*isDone = ExprEndResult;
 			MemoryContextSwitchTo(oldContext);
-			newTuple = NULL;
-			goto exit;
+			return NULL;
 		}
 		else
 		{
@@ -2511,8 +2487,7 @@ ExecTargetList(List *targetlist,
 				}
 
 				MemoryContextSwitchTo(oldContext);
-				newTuple = NULL;
-				goto exit;
+				return NULL;
 			}
 		}
 	}
@@ -2522,20 +2497,7 @@ ExecTargetList(List *targetlist,
 	 */
 	MemoryContextSwitchTo(oldContext);
 
-	newTuple = (HeapTuple) heap_formtuple(targettype, values, nulls);
-
-exit:
-
-	/*
-	 * free the status arrays if we palloc'd them
-	 */
-	if (nodomains > NPREALLOCDOMAINS)
-	{
-		pfree(nulls);
-		pfree(itemIsDone);
-	}
-
-	return newTuple;
+	return heap_formtuple(targettype, values, nulls);
 }
 
 /* ----------------------------------------------------------------
@@ -2555,11 +2517,7 @@ TupleTableSlot *
 ExecProject(ProjectionInfo *projInfo, ExprDoneCond *isDone)
 {
 	TupleTableSlot *slot;
-	List	   *targetlist;
-	int			len;
 	TupleDesc	tupType;
-	Datum	   *tupValue;
-	ExprContext *econtext;
 	HeapTuple	newTuple;
 
 	/*
@@ -2572,21 +2530,17 @@ ExecProject(ProjectionInfo *projInfo, ExprDoneCond *isDone)
 	 * get the projection info we want
 	 */
 	slot = projInfo->pi_slot;
-	targetlist = projInfo->pi_targetlist;
-	len = projInfo->pi_len;
 	tupType = slot->ttc_tupleDescriptor;
-
-	tupValue = projInfo->pi_tupValue;
-	econtext = projInfo->pi_exprContext;
 
 	/*
 	 * form a new result tuple (if possible --- result can be NULL)
 	 */
-	newTuple = ExecTargetList(targetlist,
-							  len,
+	newTuple = ExecTargetList(projInfo->pi_targetlist,
 							  tupType,
-							  tupValue,
-							  econtext,
+							  projInfo->pi_exprContext,
+							  projInfo->pi_tupValues,
+							  projInfo->pi_tupNulls,
+							  projInfo->pi_itemIsDone,
 							  isDone);
 
 	/*

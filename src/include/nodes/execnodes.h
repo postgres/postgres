@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.90 2003/01/10 23:54:24 tgl Exp $
+ * $Id: execnodes.h,v 1.91 2003/01/12 04:03:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -170,27 +170,34 @@ typedef struct ReturnSetInfo
 /* ----------------
  *		ProjectionInfo node information
  *
- *		This is all the information needed to perform projections
- *		on a tuple.  Nodes which need to do projections create one
- *		of these.  In theory, when a node wants to perform a projection
+ *		This is all the information needed to perform projections ---
+ *		that is, form new tuples by evaluation of targetlist expressions.
+ *		Nodes which need to do projections create one of these.
+ *		In theory, when a node wants to perform a projection
  *		it should just update this information as necessary and then
  *		call ExecProject().  -cim 6/3/91
  *
+ *		ExecProject() evaluates the tlist, forms a tuple, and stores it
+ *		in the given slot.  As a side-effect, the actual datum values and
+ *		null indicators are placed in the work arrays tupValues/tupNulls.
+ *
  *		targetlist		target list for projection
- *		len				length of target list
- *		tupValue		array of pointers to projection results
- *		exprContext		expression context for ExecTargetList
+ *		exprContext		expression context in which to evaluate targetlist
  *		slot			slot to place projection result in
+ *		tupValues		array of computed values
+ *		tupNull			array of null indicators
+ *		itemIsDone		workspace for ExecProject
  * ----------------
  */
 typedef struct ProjectionInfo
 {
 	NodeTag		type;
 	List	   *pi_targetlist;
-	int			pi_len;
-	Datum	   *pi_tupValue;
 	ExprContext *pi_exprContext;
 	TupleTableSlot *pi_slot;
+	Datum	   *pi_tupValues;
+	char	   *pi_tupNulls;
+	ExprDoneCond *pi_itemIsDone;
 } ProjectionInfo;
 
 /* ----------------
@@ -495,8 +502,16 @@ typedef struct SubPlanState
 	bool		needShutdown;	/* TRUE = need to shutdown subplan */
 	HeapTuple	curTuple;		/* copy of most recent tuple from subplan */
 	/* these are used when hashing the subselect's output: */
+	ProjectionInfo *projLeft;	/* for projecting lefthand exprs */
+	ProjectionInfo *projRight;	/* for projecting subselect output */
 	TupleHashTable hashtable;	/* hash table for no-nulls subselect rows */
 	TupleHashTable hashnulls;	/* hash table for rows with null(s) */
+	bool		havehashrows;	/* TRUE if hashtable is not empty */
+	bool		havenullrows;	/* TRUE if hashnulls is not empty */
+	MemoryContext tablecxt;		/* memory context containing tables */
+	ExprContext *innerecontext;	/* working context for comparisons */
+	AttrNumber *keyColIdx;		/* control data for hash tables */
+	FmgrInfo   *eqfunctions;	/* comparison functions for hash tables */
 } SubPlanState;
 
 /* ----------------

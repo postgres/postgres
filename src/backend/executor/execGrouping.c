@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execGrouping.c,v 1.1 2003/01/10 23:54:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execGrouping.c,v 1.2 2003/01/12 04:03:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,17 +23,14 @@
 
 /*****************************************************************************
  *		Utility routines for grouping tuples together
- *
- * These routines actually implement SQL's notion of "distinct/not distinct".
- * Two tuples match if they are not distinct in all the compared columns,
- * i.e., the column values are either both null, or both non-null and equal.
  *****************************************************************************/
 
 /*
  * execTuplesMatch
  *		Return true if two tuples match in all the indicated fields.
- *		This is used to detect group boundaries in nodeGroup and nodeAgg,
- *		and to decide whether two tuples are distinct or not in nodeUnique.
+ *
+ * This actually implements SQL's notion of "not distinct".  Two nulls
+ * match, a null and a not-null don't match.
  *
  * tuple1, tuple2: the tuples to compare
  * tupdesc: tuple descriptor applying to both tuples
@@ -112,11 +109,88 @@ execTuplesMatch(HeapTuple tuple1,
 	return result;
 }
 
+/*
+ * execTuplesUnequal
+ *		Return true if two tuples are definitely unequal in the indicated
+ *		fields.
+ *
+ * Nulls are neither equal nor unequal to anything else.  A true result
+ * is obtained only if there are non-null fields that compare not-equal.
+ *
+ * Parameters are identical to execTuplesMatch.
+ */
+bool
+execTuplesUnequal(HeapTuple tuple1,
+				  HeapTuple tuple2,
+				  TupleDesc tupdesc,
+				  int numCols,
+				  AttrNumber *matchColIdx,
+				  FmgrInfo *eqfunctions,
+				  MemoryContext evalContext)
+{
+	MemoryContext oldContext;
+	bool		result;
+	int			i;
+
+	/* Reset and switch into the temp context. */
+	MemoryContextReset(evalContext);
+	oldContext = MemoryContextSwitchTo(evalContext);
+
+	/*
+	 * We cannot report a match without checking all the fields, but we
+	 * can report a non-match as soon as we find unequal fields.  So,
+	 * start comparing at the last field (least significant sort key).
+	 * That's the most likely to be different if we are dealing with
+	 * sorted input.
+	 */
+	result = false;
+
+	for (i = numCols; --i >= 0;)
+	{
+		AttrNumber	att = matchColIdx[i];
+		Datum		attr1,
+					attr2;
+		bool		isNull1,
+					isNull2;
+
+		attr1 = heap_getattr(tuple1,
+							 att,
+							 tupdesc,
+							 &isNull1);
+
+		if (isNull1)
+			continue;			/* can't prove anything here */
+
+		attr2 = heap_getattr(tuple2,
+							 att,
+							 tupdesc,
+							 &isNull2);
+
+		if (isNull2)
+			continue;			/* can't prove anything here */
+
+		/* Apply the type-specific equality function */
+
+		if (!DatumGetBool(FunctionCall2(&eqfunctions[i],
+										attr1, attr2)))
+		{
+			result = true;		/* they are unequal */
+			break;
+		}
+	}
+
+	MemoryContextSwitchTo(oldContext);
+
+	return result;
+}
+
 
 /*
  * execTuplesMatchPrepare
- *		Look up the equality functions needed for execTuplesMatch.
- *		The result is a palloc'd array.
+ *		Look up the equality functions needed for execTuplesMatch or
+ *		execTuplesUnequal.
+ *
+ * The result is a palloc'd array.
  */
 FmgrInfo *
 execTuplesMatchPrepare(TupleDesc tupdesc,
@@ -266,8 +340,13 @@ BuildTupleHashTable(int numCols, AttrNumber *keyColIdx,
  * Find or create a hashtable entry for the tuple group containing the
  * given tuple.
  *
- * On return, *isnew is true if the entry is newly created, false if it
- * existed already.  Any extra space in a new entry has been zeroed.
+ * If isnew is NULL, we do not create new entries; we return NULL if no
+ * match is found.
+ *
+ * If isnew isn't NULL, then a new entry is created if no existing entry
+ * matches.  On return, *isnew is true if the entry is newly created,
+ * false if it existed already.  Any extra space in a new entry has been
+ * zeroed.
  */
 TupleHashEntry
 LookupTupleHashEntry(TupleHashTable hashtable, TupleTableSlot *slot,
@@ -318,26 +397,30 @@ LookupTupleHashEntry(TupleHashTable hashtable, TupleTableSlot *slot,
 							hashtable->eqfunctions,
 							hashtable->tempcxt))
 		{
+			if (isnew)
+				*isnew = false;
 			MemoryContextSwitchTo(oldContext);
-			*isnew = false;
 			return entry;
 		}
 	}
 
-	/* Not there, so build a new one */
-	MemoryContextSwitchTo(hashtable->tablecxt);
+	/* Not there, so build a new one if requested */
+	if (isnew)
+	{
+		MemoryContextSwitchTo(hashtable->tablecxt);
 
-	entry = (TupleHashEntry) palloc0(hashtable->entrysize);
+		entry = (TupleHashEntry) palloc0(hashtable->entrysize);
 
-	entry->hashkey = hashkey;
-	entry->firstTuple = heap_copytuple(tuple);
+		entry->hashkey = hashkey;
+		entry->firstTuple = heap_copytuple(tuple);
 
-	entry->next = hashtable->buckets[bucketno];
-	hashtable->buckets[bucketno] = entry;
+		entry->next = hashtable->buckets[bucketno];
+		hashtable->buckets[bucketno] = entry;
+
+		*isnew = true;
+	}
 
 	MemoryContextSwitchTo(oldContext);
-
-	*isnew = true;
 
 	return entry;
 }

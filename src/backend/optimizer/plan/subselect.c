@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.63 2003/01/10 21:08:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.64 2003/01/12 04:03:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -197,9 +197,9 @@ make_subplan(SubLink *slink, List *lefthand)
 	 * NOTE: if you change these numbers, also change cost_qual_eval_walker()
 	 * in path/costsize.c.
 	 *
-	 * XXX If an ALL/ANY subplan is uncorrelated, we may decide to
-	 * materialize its result below.  In that case it would've been better
-	 * to specify full retrieval.  At present, however, we can only detect
+	 * XXX If an ALL/ANY subplan is uncorrelated, we may decide to hash or
+	 * materialize its result below.  In that case it would've been better to
+	 * specify full retrieval.  At present, however, we can only detect
 	 * correlation or lack of it after we've made the subplan :-(. Perhaps
 	 * detection of correlation should be done as a separate step.
 	 * Meanwhile, we don't want to be too optimistic about the percentage
@@ -525,10 +525,17 @@ subplan_is_hashable(SubLink *slink, SubPlan *node)
 	if (subquery_size > SortMem * 1024L)
 		return false;
 	/*
-	 * The combining operators must be hashable and strict.  (Without
-	 * strictness, behavior in the presence of nulls is too unpredictable.
-	 * We actually must assume even more than plain strictness, see
-	 * nodeSubplan.c for details.)
+	 * The combining operators must be hashable, strict, and self-commutative.
+	 * The need for hashability is obvious, since we want to use hashing.
+	 * Without strictness, behavior in the presence of nulls is too
+	 * unpredictable.  (We actually must assume even more than plain
+	 * strictness, see nodeSubplan.c for details.)  And commutativity ensures
+	 * that the left and right datatypes are the same; this allows us to
+	 * assume that the combining operators are equality for the righthand
+	 * datatype, so that they can be used to compare righthand tuples as
+	 * well as comparing lefthand to righthand tuples.  (This last restriction
+	 * could be relaxed by using two different sets of operators with the
+	 * hash table, but there is no obvious usefulness to that at present.)
 	 */
 	foreach(opids, slink->operOids)
 	{
@@ -542,7 +549,8 @@ subplan_is_hashable(SubLink *slink, SubPlan *node)
 		if (!HeapTupleIsValid(tup))
 			elog(ERROR, "cache lookup failed for operator %u", opid);
 		optup = (Form_pg_operator) GETSTRUCT(tup);
-		if (!optup->oprcanhash || !func_strict(optup->oprcode))
+		if (!optup->oprcanhash || optup->oprcom != opid ||
+			!func_strict(optup->oprcode))
 		{
 			ReleaseSysCache(tup);
 			return false;

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: executor.h,v 1.86 2003/01/10 23:54:24 tgl Exp $
+ * $Id: executor.h,v 1.87 2003/01/12 04:03:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,6 +40,13 @@ extern bool ExecSupportsMarkRestore(NodeTag plantype);
  * prototypes from functions in execGrouping.c
  */
 extern bool execTuplesMatch(HeapTuple tuple1,
+				HeapTuple tuple2,
+				TupleDesc tupdesc,
+				int numCols,
+				AttrNumber *matchColIdx,
+				FmgrInfo *eqfunctions,
+				MemoryContext evalContext);
+extern bool execTuplesUnequal(HeapTuple tuple1,
 				HeapTuple tuple2,
 				TupleDesc tupdesc,
 				int numCols,
@@ -214,6 +221,9 @@ extern void ExecAssignResultType(PlanState *planstate,
 extern void ExecAssignResultTypeFromOuterPlan(PlanState *planstate);
 extern void ExecAssignResultTypeFromTL(PlanState *planstate);
 extern TupleDesc ExecGetResultType(PlanState *planstate);
+extern ProjectionInfo *ExecBuildProjectionInfo(List *targetList,
+											   ExprContext *econtext,
+											   TupleTableSlot *slot);
 extern void ExecAssignProjectionInfo(PlanState *planstate);
 extern void ExecFreeExprContext(PlanState *planstate);
 extern TupleDesc ExecGetScanType(ScanState *scanstate);

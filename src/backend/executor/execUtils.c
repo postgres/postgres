@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.94 2002/12/18 00:14:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.95 2003/01/12 04:03:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -476,28 +476,50 @@ ExecGetResultType(PlanState *planstate)
 }
 
 /* ----------------
+ *		ExecBuildProjectionInfo
+ *
+ * Build a ProjectionInfo node for evaluating the given tlist in the given
+ * econtext, and storing the result into the tuple slot.  (Caller must have
+ * ensured that tuple slot has a descriptor matching the tlist!)  Note that
+ * the given tlist should be a list of ExprState nodes, not Expr nodes.
+ * ----------------
+ */
+ProjectionInfo *
+ExecBuildProjectionInfo(List *targetList,
+						ExprContext *econtext,
+						TupleTableSlot *slot)
+{
+	ProjectionInfo *projInfo = makeNode(ProjectionInfo);
+	int			len;
+
+	len = ExecTargetListLength(targetList);
+
+	projInfo->pi_targetlist = targetList;
+	projInfo->pi_exprContext = econtext;
+	projInfo->pi_slot = slot;
+	if (len > 0)
+	{
+		projInfo->pi_tupValues = (Datum *) palloc(len * sizeof(Datum));
+		projInfo->pi_tupNulls = (char *) palloc(len * sizeof(char));
+		projInfo->pi_itemIsDone = (ExprDoneCond *) palloc(len * sizeof(ExprDoneCond));
+	}
+
+	return projInfo;
+}
+
+/* ----------------
  *		ExecAssignProjectionInfo
-		  forms the projection information from the node's targetlist
+ *
+ * forms the projection information from the node's targetlist
  * ----------------
  */
 void
 ExecAssignProjectionInfo(PlanState *planstate)
 {
-	ProjectionInfo *projInfo;
-	List	   *targetList;
-	int			len;
-
-	targetList = planstate->targetlist;
-	len = ExecTargetListLength(targetList);
-
-	projInfo = makeNode(ProjectionInfo);
-	projInfo->pi_targetlist = targetList;
-	projInfo->pi_len = len;
-	projInfo->pi_tupValue = (len <= 0) ? NULL : (Datum *) palloc(sizeof(Datum) * len);
-	projInfo->pi_exprContext = planstate->ps_ExprContext;
-	projInfo->pi_slot = planstate->ps_ResultTupleSlot;
-
-	planstate->ps_ProjInfo = projInfo;
+	planstate->ps_ProjInfo =
+		ExecBuildProjectionInfo(planstate->targetlist,
+								planstate->ps_ExprContext,
+								planstate->ps_ResultTupleSlot);
 }
 
 
