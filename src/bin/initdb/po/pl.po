@@ -1,4 +1,3 @@
-# pl_PL.po
 # INITDB Translated Messages into the Polish Language (ISO-8859-2)
 #
 # Copyright (c) 2005 toczek, xxxtoczekxxx@wp.pl
@@ -9,9 +8,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: initdb-cs\n"
 "POT-Creation-Date: 2005-01-08 13:03+0000\n"
-"PO-Revision-Date: 2005-01-09 03:00+0000\n"
+"PO-Revision-Date: 2005-01-12 15:24+0100\n"
 "Last-Translator: toczek <xxxtoczekxxx@wp.pl>\n"
-"Language-Team:  none <none@none.com>\n"
+"Language-Team:\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO-8859-2\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -120,20 +119,20 @@ msgstr ""
 
 #: initdb.c:1084
 msgid "selecting default max_connections ... "
-msgstr "wybieranie standardowej warto¶ci max_connections ..."
+msgstr "wybieranie standardowej warto¶ci max_connections ... "
 
 #: initdb.c:1120
 msgid "selecting default shared_buffers ... "
-msgstr "wybieranie standardowej warto¶ci shared_buffers ..."
+msgstr "wybieranie standardowej warto¶ci shared_buffers ... "
 
 #: initdb.c:1153
 msgid "creating configuration files ... "
-msgstr "tworzenie plików konfiguracyjnych ..."
+msgstr "tworzenie plików konfiguracyjnych ... "
 
 #: initdb.c:1254
 #, c-format
 msgid "creating template1 database in %s/base/1 ... "
-msgstr "tworzenie bazy template1 w folderze %s/base/1 ..."
+msgstr "tworzenie bazy template1 w folderze %s/base/1 ... "
 
 #: initdb.c:1270
 #, c-format
@@ -176,7 +175,7 @@ msgstr "%s: Plik z has³em nie zosta³ stworzony. Proszê zg³osiæ ten problem.\n"
 
 #: initdb.c:1474
 msgid "enabling unlimited row size for system tables ... "
-msgstr "umo¿liwnienie nieskoñczonego rozmiaru wierza w tabeli systemowej ..."
+msgstr "umo¿liwienie nieskoñczonego rozmiaru wiersza w tabeli systemowej ... "
 
 #: initdb.c:1547
 msgid "initializing pg_depend ... "
@@ -188,7 +187,7 @@ msgstr "tworzenie widoków systemowych ... "
 
 #: initdb.c:1611
 msgid "loading pg_description ... "
-msgstr "³adowanie pg_decription ..."
+msgstr "³adowanie pg_decription ... "
 
 #: initdb.c:1650
 msgid "creating conversions ... "
@@ -234,7 +233,7 @@ msgid ""
 "%s initializes a PostgreSQL database cluster.\n"
 "\n"
 msgstr ""
-"%s Przygotowywanie bazy danych PostgreSQL.\n"
+"%s Przygotowanie bazy danych PostgreSQL.\n"
 "\n"
 
 #: initdb.c:2060
@@ -256,7 +255,7 @@ msgstr ""
 
 #: initdb.c:2063
 msgid " [-D, --pgdata=]DATADIR     location for this database cluster\n"
-msgstr " [-D, --pgdata=]KATALOG-DOCELOWY	  lokalizacja dla bazy danych\n"
+msgstr " [-D, --pgdata=]KATALOG-DOCELOWY     lokalizacja bazy danych\n"
 
 #: initdb.c:2064
 msgid "  -E, --encoding=ENCODING   set default encoding for new databases\n"
@@ -278,9 +277,8 @@ msgid ""
 msgstr ""
 "  --lc-collate, --lc-ctype, --lc-messages=LOCALE\n"
 "  --lc-monetary, --lc-numeric, --lc-time=LOCALE\n"
-"                            przygotowanie klastra bazy danych z podamymi regu³ami jêzykowymi\n"
-"							 dla poszczególnych kategorii (pobierane\n"
-"							 ze ¶rpdowiska)\n"
+"                            przygotowanie klastra bazy danych z podamymi\n"
+"                            regu³ami jêzykowymi dla poszczególnych kategori\n"
 
 #: initdb.c:2071
 msgid "  --no-locale               equivalent to --locale=C\n"
@@ -296,19 +294,19 @@ msgstr ""
 
 #: initdb.c:2073
 msgid "  -U, --username=NAME       database superuser name\n"
-msgstr "  -U, --username=IMIE	   w³a¶ciciel bazy danych\n"
+msgstr "  -U, --username=NAZWA       w³a¶ciciel bazy danych\n"
 
 #: initdb.c:2074
 msgid ""
 "  -W, --pwprompt            prompt for a password for the new superuser\n"
 msgstr ""
-"  -W, --pwprompt 			 pro¶ o has³o dla w³a¶ciciela bazy danych\n"
+"  -W, --pwprompt            pro¶ o has³o dla w³a¶ciciela bazy danych\n"
 
 #: initdb.c:2075
 msgid ""
 "  --pwfile=FILE             read password for the new superuser from file\n"
 msgstr ""
-"  --pwfile=PLIK			 czytaj has³o dla w³a¶ciciela bazy z pliku\n"
+"  --pwfile=PLIK            czytaj has³o dla w³a¶ciciela bazy z pliku\n"
 
 #: initdb.c:2076
 msgid "  -?, --help                show this help, then exit\n"
@@ -328,7 +326,7 @@ msgstr ""
 
 #: initdb.c:2079
 msgid "  -d, --debug               generate lots of debugging output\n"
-msgstr " -d, --debug				tworzenie informacji debugger'a\n"
+msgstr "  -d, --debug				wy¶wietlanie informacji debugger'a\n"
 
 #: initdb.c:2080
 msgid "  -s, --show                show internal settings\n"
@@ -391,9 +389,9 @@ msgid ""
 "next time you run initdb.\n"
 msgstr ""
 "\n"
-"UWAGA: ustawianie metody autoryzacji \"trust\" dla po³±czeñ\n"
-"Zmieniæ j± mo¿esz edytuj±c plik pg_hba.conf lub u¿ywaj±c opcji -A\n"
-"przy uruchomieniu initdb.\n"
+"UWAGA: metoda autoryzacji ustawiona jako \"trust\" dla po³±czeñ.\n"
+"Metodê autoryzacji mo¿esz zmieniæ edytuj±c plik pg_hba.conf\n"
+"lub u¿ywaj±c opcji -A przy uruchomieniu initdb.\n"
 
 #: initdb.c:2272
 #, c-format
@@ -416,9 +414,9 @@ msgid ""
 "environment variable PGDATA.\n"
 msgstr ""
 "%s: nie ustawiony katalog danych\n"
-"Musisz podaæ katalog gdzie dane dla bazy danych bêd± trzymane.\n"
-"Mo¿esz tego dokonaæ albo u¿ywaj±c opcji -D albo przy pomocy\n"
-"zmiennej PGDATA.\n"
+"Musisz podaæ katalog gdzie dane bazy danych bêd± przechowywane.\n"
+"Mo¿esz tego dokonaæ u¿ywaj±c opcjê -D lub przy pomocy\n"
+"zmiennej ¶rodowiskowej PGDATA.\n"
 
 #: initdb.c:2329
 #, c-format
@@ -525,9 +523,9 @@ msgid ""
 "with an argument other than \"%s\".\n"
 msgstr ""
 "%s: katalog \"%s\" istnieje ale nie jest pusty\n"
-"Je¶li chcesz stworzyæ now± bazê danych usuñ ten katalog, wyczy¶æ \n"
-"katalog \"%s\" lub uruchom program %s\n"
-"z innym parametrem ni¿ \"%s\".\n"
+"Je¶li chcesz stworzyæ now± bazê danych usuñ ten katalog,\n"
+"wyczy¶æ katalog \"%s\" lub uruchom program %s\n"
+"z innym parametrem okre¶laj±cym katalog ni¿ \"%s\".\n"
 
 #: initdb.c:2545
 #, c-format
@@ -551,7 +549,7 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"Powodzenie. Teraz mo¿esz uruchomiæ serwer bazy danych u¿ywaj±c:\n"
+"Utworzono. Teraz mo¿esz uruchomiæ serwer bazy danych u¿ywaj±c:\n"
 "\n"
 "    %s%s%s%spostmaster -D %s%s%s\n"
 "lub\n"
@@ -591,5 +589,4 @@ msgstr "proces potomny zosta³ przerwany przez sygna³ %d"
 #: ../../port/exec.c:591
 #, c-format
 msgid "child process exited with unrecognized status %d"
-msgstr "proces potomny zakoñczy³ dzia³anie z nieznanym stanem %d "
-
+msgstr "proces potomny zakoñczy³ dzia³anie z nieznanym stanem %d"
