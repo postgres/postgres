@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: primnodes.h,v 1.18 1998/02/10 16:04:27 momjian Exp $
+ * $Id: primnodes.h,v 1.19 1998/02/13 03:45:29 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -86,7 +86,7 @@ typedef struct Fjoin
  */
 typedef enum OpType
 {
-	OP_EXPR, FUNC_EXPR, OR_EXPR, AND_EXPR, NOT_EXPR
+	OP_EXPR, FUNC_EXPR, OR_EXPR, AND_EXPR, NOT_EXPR, SUBPLAN_EXPR
 } OpType;
 
 typedef struct Expr
@@ -94,7 +94,7 @@ typedef struct Expr
 	NodeTag		type;
 	Oid			typeOid;		/* oid of the type of this expr */
 	OpType		opType;			/* type of the op */
-	Node	   *oper;			/* could be Oper or Func */
+	Node	   *oper;			/* could be Oper or Func or SubPlan */
 	List	   *args;			/* list of argument nodes */
 } Expr;
 

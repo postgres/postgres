@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.12 1997/09/08 21:52:40 momjian Exp $
+ * $Id: execnodes.h,v 1.13 1998/02/13 03:45:22 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,16 +80,17 @@ typedef struct RelationInfo
  */
 typedef struct ExprContext
 {
-	NodeTag		type;
-	TupleTableSlot *ecxt_scantuple;
-	TupleTableSlot *ecxt_innertuple;
-	TupleTableSlot *ecxt_outertuple;
-	Relation	ecxt_relation;
-	Index		ecxt_relid;
-	ParamListInfo ecxt_param_list_info;
-	List	   *ecxt_range_table;
-	Datum	   *ecxt_values;	/* precomputed values for aggreg */
-	char	   *ecxt_nulls;		/* null flags for aggreg  values */
+	NodeTag				type;
+	TupleTableSlot	   *ecxt_scantuple;
+	TupleTableSlot	   *ecxt_innertuple;
+	TupleTableSlot	   *ecxt_outertuple;
+	Relation			ecxt_relation;
+	Index				ecxt_relid;
+	ParamListInfo		ecxt_param_list_info;
+	ParamExecData	   *ecxt_param_exec_vals;	/* this is for subselects */
+	List			   *ecxt_range_table;
+	Datum			   *ecxt_values;	/* precomputed values for aggreg */
+	char			   *ecxt_nulls;		/* null flags for aggreg  values */
 } ExprContext;
 
 /* ----------------
@@ -193,18 +194,19 @@ typedef struct JunkFilter
  */
 typedef struct EState
 {
-	NodeTag		type;
-	ScanDirection es_direction;
-	List	   *es_range_table;
-	RelationInfo *es_result_relation_info;
-	Relation	es_into_relation_descriptor;
-	ParamListInfo es_param_list_info;
-	int			es_BaseId;
-	TupleTable	es_tupleTable;
-	JunkFilter *es_junkFilter;
-	int		   *es_refcount;
-	uint32		es_processed;	/* # of tuples processed */
-	Oid			es_lastoid;		/* last oid processed (by INSERT) */
+	NodeTag				type;
+	ScanDirection		es_direction;
+	List			   *es_range_table;
+	RelationInfo	   *es_result_relation_info;
+	Relation			es_into_relation_descriptor;
+	ParamListInfo		es_param_list_info;
+	ParamExecData	   *es_param_exec_vals;	/* this is for subselects */
+	int					es_BaseId;
+	TupleTable			es_tupleTable;
+	JunkFilter		   *es_junkFilter;
+	int				   *es_refcount;
+	uint32				es_processed;	/* # of tuples processed */
+	Oid					es_lastoid;		/* last oid processed (by INSERT) */
 } EState;
 
 /* ----------------
@@ -292,7 +294,8 @@ typedef struct CommonState
 typedef struct ResultState
 {
 	CommonState cstate;			/* its first field is NodeTag */
-	int			rs_done;
+	bool		rs_done;
+	bool		rs_checkqual;
 } ResultState;
 
 /* ----------------

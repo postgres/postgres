@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.23 1998/01/17 04:53:38 momjian Exp $
+ * $Id: nodes.h,v 1.24 1998/02/13 03:45:23 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,6 +47,7 @@ typedef enum NodeTag
 	T_Choose,
 	T_Tee,
 	T_Group,
+	T_SubPlan,
 
 	/*---------------------
 	 * TAGS FOR PRIMITIVE NODES (primnodes.h)
