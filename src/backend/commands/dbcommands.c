@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.107 2002/11/02 18:41:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.108 2002/12/02 05:20:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -561,7 +561,10 @@ AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
 		else
 			a = GUCArrayDelete(a, stmt->variable);
 
-		repl_val[Anum_pg_database_datconfig - 1] = PointerGetDatum(a);
+		if (a)
+			repl_val[Anum_pg_database_datconfig - 1] = PointerGetDatum(a);
+		else
+			repl_null[Anum_pg_database_datconfig - 1] = 'n';
 	}
 
 	newtuple = heap_modifytuple(tuple, rel, repl_val, repl_null, repl_repl);

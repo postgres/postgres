@@ -5,7 +5,7 @@
  * command, configuration file, and command line options.
  * See src/backend/utils/misc/README for more information.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.107 2002/11/21 00:42:19 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.108 2002/12/02 05:20:47 tgl Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -2754,7 +2754,7 @@ assign_defaultxactisolevel(const char *newval, bool doit, bool interactive)
 
 /*
  * Handle options fetched from pg_database.datconfig or pg_shadow.useconfig.
- * The array parameter must be an array of TEXT.
+ * The array parameter must be an array of TEXT (it must not be NULL).
  */
 void
 ProcessGUCArray(ArrayType *array, GucSource source)
@@ -2809,7 +2809,10 @@ ProcessGUCArray(ArrayType *array, GucSource source)
 }
 
 
-
+/*
+ * Add an entry to an option array.  The array parameter may be NULL
+ * to indicate the current table entry is NULL.
+ */
 ArrayType *
 GUCArrayAdd(ArrayType *array, const char *name, const char *value)
 {
@@ -2880,7 +2883,11 @@ GUCArrayAdd(ArrayType *array, const char *name, const char *value)
 }
 
 
-
+/*
+ * Delete an entry from an option array.  The array parameter may be NULL
+ * to indicate the current table entry is NULL.  Also, if the return value
+ * is NULL then a null should be stored.
+ */
 ArrayType *
 GUCArrayDelete(ArrayType *array, const char *name)
 {
@@ -2889,16 +2896,17 @@ GUCArrayDelete(ArrayType *array, const char *name)
 	int			index;
 
 	Assert(name);
-	Assert(array);
 
 	/* test if the option is valid */
 	set_config_option(name, NULL,
 					  superuser() ? PGC_SUSET : PGC_USERSET,
 					  PGC_S_SESSION, false, false);
 
-	newarray = construct_array(NULL, 0,
-							   TEXTOID,
-							   -1, false, 'i');
+	/* if array is currently null, then surely nothing to delete */
+	if (!array)
+		return NULL;
+
+	newarray = NULL;
 	index = 1;
 
 	for (i = 1; i <= ARR_DIMS(array)[0]; i++)
@@ -2917,18 +2925,28 @@ GUCArrayDelete(ArrayType *array, const char *name)
 			continue;
 		val = DatumGetCString(DirectFunctionCall1(textout, d));
 
+		/* ignore entry if it's what we want to delete */
 		if (strncmp(val, name, strlen(name)) == 0
 			&& val[strlen(name)] == '=')
 			continue;
 
-		isnull = false;
-		newarray = array_set(newarray, 1, &index,
-							 d,
-							 -1 /* varlenarray */ ,
-							 -1 /* TEXT's typlen */ ,
-							 false /* TEXT's typbyval */ ,
-							 'i' /* TEXT's typalign */ ,
-							 &isnull);
+		/* else add it to the output array */
+		if (newarray)
+		{
+			isnull = false;
+			newarray = array_set(newarray, 1, &index,
+								 d,
+								 -1 /* varlenarray */ ,
+								 -1 /* TEXT's typlen */ ,
+								 false /* TEXT's typbyval */ ,
+								 'i' /* TEXT's typalign */ ,
+								 &isnull);
+		}
+		else
+			newarray = construct_array(&d, 1,
+									   TEXTOID,
+									   -1, false, 'i');
+
 		index++;
 	}
 
