@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.116.2.2 2004/05/25 19:11:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.116.2.3 2004/09/18 01:23:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -168,6 +168,9 @@ next_token(FILE *fp, char *buf, const int bufsz)
  *	 Tokenize file and handle file inclusion and comma lists. We have
  *	 to  break	apart  the	commas	to	expand	any  file names then
  *	 reconstruct with commas.
+ *
+ * The result is always a palloc'd string.  If it's zero-length then
+ * we have reached EOL.
  */
 static char *
 next_token_expand(FILE *file)
@@ -333,6 +336,8 @@ tokenize_file(FILE *file)
 		{
 			/* we are at real or logical EOL, so force a new line List */
 			next_line = NIL;
+			/* Don't forget to pfree the next_token_expand result */
+			pfree(buf);
 		}
 
 		/* Advance line number whenever we reach EOL */
