@@ -314,8 +314,8 @@ AC_PATH_PROG(ipcrm, ipcrm)
 AC_PATH_PROGS(TR, trbsd tr, NOT_FOUND)
 
 dnl Check tr flags to convert from lower to upper case
-TRSTRINGS=`echo ABCdef | $TR "'[[a-z]]' '[[A-Z]]'" | grep ABCDEF`
-TRCLASS=`echo ABCdef | $TR "[[:lower:]]" "[[:upper:]]" | grep ABCDEF`
+TRSTRINGS=`echo ABCdef | $TR '[a-z]' '[A-Z]' 2>/dev/null | grep ABCDEF`
+TRCLASS=`echo ABCdef | $TR '[:lower:]' '[:upper:]' 2>/dev/null | grep ABCDEF`
 
 if test "$TRSTRINGS" = "ABCDEF"; then
   TRARGS="'[[a-z]]' '[[A-Z]]'"
@@ -413,7 +413,7 @@ AC_CHECK_FUNCS(isinf tzset getrusage vfork memmove sigsetjmp kill sysconf)
 AC_CHECK_FUNCS(sigprocmask waitpid setsid random fcvt)
 AC_CHECK_FUNC(inet_aton, AC_DEFINE(HAVE_INET_ATON), INET_ATON='inet_aton.o')
 AC_CHECK_FUNC(strerror, AC_DEFINE(HAVE_STRERROR), STRERROR='strerror.o')
-eC_CHECK_FUNC(strerror, AC_DEFINE(HAVE_STRERROR), STRERROR2='../../backend/port/strerror.o')
+AC_CHECK_FUNC(strerror, AC_DEFINE(HAVE_STRERROR), STRERROR2='../../backend/port/strerror.o')
 AC_CHECK_FUNC(strdup, AC_DEFINE(HAVE_STRDUP), STRDUP='../../utils/strdup.o')
 AC_SUBST(STRDUP)
 AC_SUBST(INET_ATON)
