@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/backup.sgml,v 2.6 2001/03/14 22:20:02 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/backup.sgml,v 2.7 2001/03/19 16:19:26 petere Exp $ -->
 <chapter id="backup">
  <title>Backup and Restore</title>
 
@@ -87,7 +87,7 @@ pg_dump <replaceable class="parameter">dbname</replaceable> &gt; <replaceable cl
    </para>
   </important>
 
-  <sect2>
+  <sect2 id="backup-dump-restore">
    <title>Restoring the dump</title>
 
    <para>
@@ -144,7 +144,7 @@ pg_dump -h <replaceable>host1</> <replaceable>dbname</> | psql -h <replaceable>h
 
   </sect2>
 
-  <sect2>
+  <sect2 id="backup-dump-all">
    <title>Using <command>pg_dumpall</></title>
 
    <para>
@@ -179,7 +179,7 @@ pg_dumpall &gt; <replaceable>outfile</>
    </para>
   </sect2>
 
-  <sect2>
+  <sect2 id="backup-dump-large">
    <title>Large Databases</title>
 
    <note>
@@ -271,7 +271,7 @@ pg_dump -Fc <replaceable class="parameter">dbname</replaceable> > <replaceable c
 
   </sect2>
 
-  <sect2>
+  <sect2 id="backup-dump-caveats">
    <title>Caveats</title>
 
    <para>
