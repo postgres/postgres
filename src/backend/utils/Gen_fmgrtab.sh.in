@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh.in,v 1.12 1998/10/28 19:38:47 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh.in,v 1.13 1999/01/25 00:44:53 tgl Exp $
 #
 # NOTES
 #    Passes any -D options on to cpp prior to generating the list
@@ -83,7 +83,7 @@ cat > $HFILE <<FuNkYfMgRsTuFf
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: Gen_fmgrtab.sh.in,v 1.12 1998/10/28 19:38:47 tgl Exp $
+ * $Id: Gen_fmgrtab.sh.in,v 1.13 1999/01/25 00:44:53 tgl Exp $
  *
  * NOTES
  *	******************************
@@ -197,7 +197,7 @@ cat > $TABCFILE <<FuNkYfMgRtAbStUfF
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh.in,v 1.12 1998/10/28 19:38:47 tgl Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh.in,v 1.13 1999/01/25 00:44:53 tgl Exp $
  *
  * NOTES
  *
@@ -250,36 +250,38 @@ cat >> $TABCFILE <<FuNkYfMgRtAbStUfF
 #endif /* WIN32 */
 };
 
-static int fmgr_nbuiltins = (sizeof(fmgr_builtins) / sizeof(FmgrCall)) - 1;
+/* Note FMGR_NBUILTINS excludes the guardian entry, which is probably
+ * not really needed at all ...
+ */
+#define FMGR_NBUILTINS  ((sizeof(fmgr_builtins) / sizeof(FmgrCall)) - 1)
 
 FmgrCall *fmgr_isbuiltin(Oid id)
 {
-    register int i = 0;
     int	low = 0;
-    int	high = fmgr_nbuiltins;
+    int	high = FMGR_NBUILTINS - 1;
 
-    low = 0;
-    high = fmgr_nbuiltins;
-    while (low <= high) {
-	i = low + (high - low) / 2;
-	if (id == fmgr_builtins[i].proid)
-	    break;
-	else if (id > fmgr_builtins[i].proid)
-	    low = i + 1;
-	else
-	    high = i - 1;
-    }
-    if (id == fmgr_builtins[i].proid)
-	return(&fmgr_builtins[i]);
-    return((FmgrCall *) NULL);
+    /* Loop invariant: low is the first index that could contain target
+     * entry, and high is the last index that could contain it.
+     */
+	while (low <= high) {
+		int i = (high + low) / 2;
+		FmgrCall * ptr = &fmgr_builtins[i];
+		if (id == ptr->proid)
+			return ptr;
+		else if (id > ptr->proid)
+			low = i + 1;
+		else
+			high = i - 1;
+	}
+	return (FmgrCall *) NULL;
 }
 
 func_ptr fmgr_lookupByName(char *name) 
 {
     int i;
-    for (i=0;i<fmgr_nbuiltins;i++) {
-	if (strcmp(name,fmgr_builtins[i].funcName) == 0)
-		return(fmgr_builtins[i].func);
+    for (i=0; i<FMGR_NBUILTINS; i++) {
+		if (strcmp(name,fmgr_builtins[i].funcName) == 0)
+			return(fmgr_builtins[i].func);
     }
     return((func_ptr) NULL);
 }
