@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.35 1997/07/23 17:42:25 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.36 1997/07/28 23:53:54 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -783,15 +783,17 @@ clearTableInfo(TableInfo *tblinfo, int numTables)
     for(i=0;i<numTables;++i) {
 
         if(tblinfo[i].oid) free (tblinfo[i].oid);
-        if(tblinfo[i].relname) free (tblinfo[i].relname);
         if(tblinfo[i].relarch) free (tblinfo[i].relarch);
         if(tblinfo[i].relacl) free (tblinfo[i].relacl);
-        if(tblinfo[i].sequence) free (tblinfo[i].sequence);
         if(tblinfo[i].usename) free (tblinfo[i].usename);
 
         /* skip archive tables */
         if (isArchiveName(tblinfo[i].relname))
+        {
+	    if(tblinfo[i].relname) free (tblinfo[i].relname);
             continue;
+        }
+	if(tblinfo[i].relname) free (tblinfo[i].relname);
         
         if ( tblinfo[i].sequence )
             continue;
