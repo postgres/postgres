@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.116 2003/06/17 07:28:22 meskes Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.117 2003/06/20 15:16:06 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -179,12 +179,12 @@ xcstop			\*+\/
 xcinside		[^*/]+
 
 digit			[0-9]
-letter			[\200-\377_A-Za-z]
-letter_or_digit [\200-\377_A-Za-z0-9]
+ident_start		[A-Za-z\200-\377_]
+ident_cont		[A-Za-z\200-\377_0-9\$]
 
-identifier		{letter}{letter_or_digit}*
+identifier		{ident_start}{ident_cont}*
 
-array			({letter_or_digit}|[\+\-\*\%\/\(\)])*
+array			({ident_cont}|[\+\-\*\%\/\(\)])*
 typecast		"::"
 
 /*
@@ -197,8 +197,8 @@ typecast		"::"
  * If you change either set, adjust the character lists appearing in the
  * rule for "operator"!
  */
-self			[,()\[\].;$\:\+\-\*\/\%\^\<\>\=]
-op_chars		[\~\!\@\#\^\&\|\`\?\$\+\-\*\/\%\<\>\=]
+self			[,()\[\].;\:\+\-\*\/\%\^\<\>\=]
+op_chars		[\~\!\@\#\^\&\|\`\?\+\-\*\/\%\<\>\=]
 operator		{op_chars}+
 
 /* we no longer allow unary minus in numbers.
@@ -474,7 +474,7 @@ cppline			{space}*#(.*\\{space})+.*
 
 							for (ic = nchars-2; ic >= 0; ic--)
 							{
-								if (strchr("~!@#^&|`?$%", yytext[ic]))
+								if (strchr("~!@#^&|`?%", yytext[ic]))
 									break;
 							}
 							if (ic >= 0)
@@ -493,7 +493,7 @@ cppline			{space}*#(.*\\{space})+.*
 							 * that the "self" rule would have.
 							 */
 							if (nchars == 1 &&
-								strchr(",()[].;$:+-*/%^<>=", yytext[0]))
+								strchr(",()[].;:+-*/%^<>=", yytext[0]))
 								return yytext[0];
 						}
 
@@ -862,7 +862,7 @@ cppline			{space}*#(.*\\{space})+.*
 						else
 						   BEGIN(xskip);
 					}
-<C,xskip>{informix_special}{endif}{space}*	{
+<C,xskip>{informix_special}{endif}{space}*";"	{
 					  /* are we simulating Informix? */
 					  if (compat == ECPG_COMPAT_INFORMIX)
 					  {
