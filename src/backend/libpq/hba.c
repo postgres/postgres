@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.116 2003/10/25 03:48:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.116.2.1 2003/12/05 15:50:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -381,6 +381,10 @@ user_group_bsearch_cmp(const void *user, const void *list)
 static List **
 get_group_line(const char *group)
 {
+	/* On some versions of Solaris, bsearch of zero items dumps core */
+	if (group_length == 0)
+		return NULL;
+
 	return (List **) bsearch((void *) group,
 							 (void *) group_sorted,
 							 group_length,
@@ -392,9 +396,13 @@ get_group_line(const char *group)
 /*
  * Lookup a user name in the pg_shadow file
  */
-List	  **
+List **
 get_user_line(const char *user)
 {
+	/* On some versions of Solaris, bsearch of zero items dumps core */
+	if (user_length == 0)
+		return NULL;
+
 	return (List **) bsearch((void *) user,
 							 (void *) user_sorted,
 							 user_length,
