@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.49 2002/08/27 18:57:26 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.50 2002/09/06 21:58:36 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -661,6 +661,15 @@ CREATE DATABASE foo WITH TEMPLATE = template0;
     </listitem>
 
    </itemizedlist>
+  </para>
+
+  <para>
+   Members of tar archives are limited to a size less than 8 GB.
+   (This is an inherent limitation of the tar file format.)  Therefore
+   this format cannot be used if the textual representation of a table
+   exceeds that size.  The total size of a tar archive and any of the
+   other output formats is not limited, except possibly by the
+   operating system.
   </para>
  </refsect1>
 

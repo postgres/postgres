@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.28 2002/09/04 20:31:34 momjian Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.29 2002/09/06 21:58:36 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,6 +72,17 @@ typedef struct
 	off_t		fileLen;
 	ArchiveHandle *AH;
 } TAR_MEMBER;
+
+/*
+ * Maximum file size for a tar member: The limit inherent in the
+ * format is 2^33-1 bytes (nearly 8 GB).  But we don't want to exceed
+ * what we can represent by an off_t.
+ */
+#ifdef INT64_IS_BUSTED
+#define MAX_TAR_MEMBER_FILELEN INT_MAX
+#else
+#define MAX_TAR_MEMBER_FILELEN (((int64) 1 << Min(33, sizeof(off_t)*8 - 1)) - 1)
+#endif
 
 typedef struct
 {
@@ -1006,6 +1017,8 @@ _tarAddFile(ArchiveHandle *AH, TAR_MEMBER *th)
 	 */
 	fseeko(tmp, 0, SEEK_END);
 	th->fileLen = ftello(tmp);
+	if (th->fileLen > MAX_TAR_MEMBER_FILELEN)
+		die_horribly(AH, modulename, "archive member too large for tar format\n");
 	fseeko(tmp, 0, SEEK_SET);
 
 	_tarWriteHeader(th);
@@ -1219,6 +1232,23 @@ _tarGetHeader(ArchiveHandle *AH, TAR_MEMBER *th)
 	return 1;
 }
 
+
+/*
+ * Utility routine to print possibly larger than 32 bit integers in a
+ * portable fashion.  Filled with zeros.
+ */
+static void print_val(char *s, uint64 val, unsigned int base, size_t len)
+{
+        int i;
+        for (i = len; i > 0; i--)
+        {
+                int digit = val % base;
+                s[i - 1] = '0' + digit;
+                val = val / base;
+        }
+}
+
+
 static void
 _tarWriteHeader(TAR_MEMBER *th)
 {
@@ -1235,34 +1265,30 @@ _tarWriteHeader(TAR_MEMBER *th)
 	sprintf(&h[100], "100600 ");
 
 	/* User ID 8 */
-	sprintf(&h[108], " 04000 ");
+	sprintf(&h[108], "004000 ");
 
 	/* Group 8 */
-	sprintf(&h[116], " 02000 ");
+	sprintf(&h[116], "002000 ");
 
-	/* File size 12 */
-	/* FIXME: This goes only up to 2^30. -- What about larger files? */
-	sprintf(&h[124], "%10o ", (unsigned int) th->fileLen);
+	/* File size 12 - 11 digits, 1 space, no NUL */
+	print_val(&h[124], th->fileLen, 8, 11);
+	sprintf(&h[135], " ");
 
 	/* Mod Time 12 */
-	sprintf(&h[136], "%10o ", (int) time(NULL));
+	sprintf(&h[136], "%011o ", (int) time(NULL));
 
 	/* Checksum 8 */
-	sprintf(&h[148], "%6o ", lastSum);
+	sprintf(&h[148], "%06o ", lastSum);
 
-	/* Type 1 */
-	/* sprintf(&h[156], "%c", LF_NORMAL); */
+	/* Type - regular file */
 	sprintf(&h[156], "0");
 
 	/* Link tag 100 (NULL) */
 
-	/* Magic 8 */
-	sprintf(&h[257], "ustar  ");
+	/* Magic 6 + Version 2 */
+	sprintf(&h[257], "ustar00");
 
-	/*
-	 * GNU Version... sprintf(&h[257], "ustar"); sprintf(&h[263], "00");
-	 */
-
+#if 0
 	/* User 32 */
 	sprintf(&h[265], "%.31s", "");		/* How do I get username reliably?
 										 * Do I need to? */
@@ -1272,15 +1298,15 @@ _tarWriteHeader(TAR_MEMBER *th)
 										 * I need to? */
 
 	/* Maj Dev 8 */
-	/* sprintf(&h[329], "%6o ", 0); */
+	sprintf(&h[329], "%6o ", 0);
 
-	/* Min Dev */
-	/* sprintf(&h[337], "%6o ", 0); */
-
+	/* Min Dev 8 */
+	sprintf(&h[337], "%6o ", 0);
+#endif
 
 	while ((sum = _tarChecksum(h)) != lastSum)
 	{
-		sprintf(&h[148], "%6o ", sum);
+		sprintf(&h[148], "%06o ", sum);
 		lastSum = sum;
 	}
 
