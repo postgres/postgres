@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: namespace.h,v 1.6 2002/04/06 06:59:24 tgl Exp $
+ * $Id: namespace.h,v 1.7 2002/04/09 20:35:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,6 +46,8 @@ extern FuncCandidateList FuncnameGetCandidates(List *names, int nargs);
 extern Oid	QualifiedNameGetCreationNamespace(List *names, char **objname_p);
 
 extern RangeVar *makeRangeVarFromNameList(List *names);
+
+extern char *NameListToString(List *names);
 
 extern bool isTempNamespace(Oid namespaceId);
 

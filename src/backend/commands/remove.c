@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.72 2002/03/29 19:06:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.73 2002/04/09 20:35:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,7 @@
 
 #include "access/heapam.h"
 #include "catalog/catname.h"
+#include "catalog/namespace.h"
 #include "catalog/pg_language.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
@@ -357,60 +358,38 @@ RemoveDomain(List *names, int behavior)
  *		...
  */
 void
-RemoveFunction(char *functionName,		/* function name to be removed */
+RemoveFunction(List *functionName,		/* function name to be removed */
 			   List *argTypes)	/* list of TypeName nodes */
 {
-	int			nargs = length(argTypes);
+	Oid			funcOid;
 	Relation	relation;
 	HeapTuple	tup;
-	Oid			argList[FUNC_MAX_ARGS];
-	int			i;
 
-	if (nargs > FUNC_MAX_ARGS)
-		elog(ERROR, "functions cannot have more than %d arguments",
-			 FUNC_MAX_ARGS);
-	MemSet(argList, 0, FUNC_MAX_ARGS * sizeof(Oid));
-	for (i = 0; i < nargs; i++)
-	{
-		TypeName   *t = (TypeName *) lfirst(argTypes);
-
-		argList[i] = LookupTypeName(t);
-		if (!OidIsValid(argList[i]))
-		{
-			char      *typnam = TypeNameToString(t);
-
-			if (strcmp(typnam, "opaque") == 0)
-				argList[i] = InvalidOid;
-			else
-				elog(ERROR, "Type \"%s\" does not exist", typnam);
-		}
-
-		argTypes = lnext(argTypes);
-	}
+	funcOid = LookupFuncNameTypeNames(functionName, argTypes, 
+									  true, "RemoveFunction");
 
 	relation = heap_openr(ProcedureRelationName, RowExclusiveLock);
 
-	tup = SearchSysCache(PROCNAME,
-						 PointerGetDatum(functionName),
-						 Int32GetDatum(nargs),
-						 PointerGetDatum(argList),
-						 0);
+	tup = SearchSysCache(PROCOID,
+						 ObjectIdGetDatum(funcOid),
+						 0, 0, 0);
+	if (!HeapTupleIsValid(tup))	/* should not happen */
+		elog(ERROR, "RemoveFunction: couldn't find tuple for function %s",
+			 NameListToString(functionName));
 
-	if (!HeapTupleIsValid(tup))
-		func_error("RemoveFunction", functionName, nargs, argList, NULL);
-
-	if (!pg_proc_ownercheck(tup->t_data->t_oid, GetUserId()))
+	if (!pg_proc_ownercheck(funcOid, GetUserId()))
 		elog(ERROR, "RemoveFunction: function '%s': permission denied",
-			 functionName);
+			 NameListToString(functionName));
 
 	if (((Form_pg_proc) GETSTRUCT(tup))->prolang == INTERNALlanguageId)
 	{
 		/* "Helpful" WARNING when removing a builtin function ... */
-		elog(WARNING, "Removing built-in function \"%s\"", functionName);
+		elog(WARNING, "Removing built-in function \"%s\"",
+			 NameListToString(functionName));
 	}
 
 	/* Delete any comments associated with this function */
-	DeleteComments(tup->t_data->t_oid, RelationGetRelid(relation));
+	DeleteComments(funcOid, RelationGetRelid(relation));
 
 	simple_heap_delete(relation, &tup->t_self);
 
@@ -420,7 +399,7 @@ RemoveFunction(char *functionName,		/* function name to be removed */
 }
 
 void
-RemoveAggregate(char *aggName, TypeName *aggType)
+RemoveAggregate(List *aggName, TypeName *aggType)
 {
 	Relation	relation;
 	HeapTuple	tup;
@@ -443,7 +422,7 @@ RemoveAggregate(char *aggName, TypeName *aggType)
 	relation = heap_openr(AggregateRelationName, RowExclusiveLock);
 
 	tup = SearchSysCache(AGGNAME,
-						 PointerGetDatum(aggName),
+						 PointerGetDatum(strVal(llast(aggName))),
 						 ObjectIdGetDatum(basetypeID),
 						 0, 0);
 
@@ -453,11 +432,11 @@ RemoveAggregate(char *aggName, TypeName *aggType)
 	if (!pg_aggr_ownercheck(tup->t_data->t_oid, GetUserId()))
 	{
 		if (basetypeID == InvalidOid)
-			elog(ERROR, "RemoveAggregate: aggregate '%s' for all types: permission denied",
-				 aggName);
+			elog(ERROR, "RemoveAggregate: aggregate %s for all types: permission denied",
+				 NameListToString(aggName));
 		else
-			elog(ERROR, "RemoveAggregate: aggregate '%s' for type %s: permission denied",
-				 aggName, format_type_be(basetypeID));
+			elog(ERROR, "RemoveAggregate: aggregate %s for type %s: permission denied",
+				 NameListToString(aggName), format_type_be(basetypeID));
 	}
 
 	/* Remove any comments related to this aggregate */

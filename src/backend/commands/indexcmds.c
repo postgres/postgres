@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.67 2002/04/05 00:31:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.68 2002/04/09 20:35:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,7 +36,7 @@
 #include "utils/syscache.h"
 
 
-#define IsFuncIndex(ATTR_LIST) (((IndexElem*)lfirst(ATTR_LIST))->args != NIL)
+#define IsFuncIndex(ATTR_LIST) (((IndexElem*)lfirst(ATTR_LIST))->funcname != NIL)
 
 /* non-export function prototypes */
 static void CheckPredicate(List *predList, List *rangeTable, Oid baseRelOid);
@@ -297,7 +297,7 @@ FuncIndexArgs(IndexInfo *indexInfo,
 	 * that.  So, check to make sure that the selected function has
 	 * exact-match or binary-compatible input types.
 	 */
-	fdresult = func_get_detail(funcIndex->name, funcIndex->args,
+	fdresult = func_get_detail(funcIndex->funcname, funcIndex->args,
 							   nargs, argTypes,
 							   &funcid, &rettype, &retset,
 							   &true_typeids);
@@ -307,7 +307,8 @@ FuncIndexArgs(IndexInfo *indexInfo,
 			elog(ERROR, "DefineIndex: functional index must use a real function, not a type coercion"
 				 "\n\tTry specifying the index opclass you want to use, instead");
 		else
-			func_error("DefineIndex", funcIndex->name, nargs, argTypes, NULL);
+			func_error("DefineIndex", funcIndex->funcname, nargs, argTypes,
+					   NULL);
 	}
 
 	if (retset)
@@ -316,7 +317,7 @@ FuncIndexArgs(IndexInfo *indexInfo,
 	for (i = 0; i < nargs; i++)
 	{
 		if (!IsBinaryCompatible(argTypes[i], true_typeids[i]))
-			func_error("DefineIndex", funcIndex->name, nargs, argTypes,
+			func_error("DefineIndex", funcIndex->funcname, nargs, argTypes,
 					   "Index function must be binary-compatible with table datatype");
 	}
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.39 2001/03/22 03:59:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.40 2002/04/09 20:35:50 tgl Exp $
  *
  * NOTES
  *	  XXX a few of the following functions are duplicated to handle
@@ -231,6 +231,36 @@ length(List *l)
 		i++;
 	}
 	return i;
+}
+
+/*
+ *	llast
+ *
+ *	Get the last element of l ... error if empty list
+ */
+void *
+llast(List *l)
+{
+	if (l == NIL)
+		elog(ERROR, "llast: empty list");
+	while (lnext(l) != NIL)
+		l = lnext(l);
+	return lfirst(l);
+}
+
+/*
+ *	llasti
+ *
+ *	As above, but for integer lists
+ */
+int
+llasti(List *l)
+{
+	if (l == NIL)
+		elog(ERROR, "llasti: empty list");
+	while (lnext(l) != NIL)
+		l = lnext(l);
+	return lfirsti(l);
 }
 
 /*

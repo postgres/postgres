@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.112 2002/03/29 19:06:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.113 2002/04/09 20:35:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -129,7 +129,8 @@ transformExpr(ParseState *pstate, Node *expr)
 				/* handle qualification, if any */
 				foreach(fields, pref->fields)
 				{
-					result = ParseFuncOrColumn(pstate, strVal(lfirst(fields)),
+					result = ParseFuncOrColumn(pstate,
+											   makeList1(lfirst(fields)),
 											   makeList1(result),
 											   false, false, true);
 				}
@@ -158,7 +159,8 @@ transformExpr(ParseState *pstate, Node *expr)
 				/* handle qualification, if any */
 				foreach(fields, efs->fields)
 				{
-					result = ParseFuncOrColumn(pstate, strVal(lfirst(fields)),
+					result = ParseFuncOrColumn(pstate,
+											   makeList1(lfirst(fields)),
 											   makeList1(result),
 											   false, false, true);
 				}
@@ -728,7 +730,8 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 				rv = makeNode(RangeVar);
 				rv->relname = name1;
 				rv->inhOpt = INH_DEFAULT;
-				node = ParseFuncOrColumn(pstate, name2,
+				node = ParseFuncOrColumn(pstate,
+										 makeList1(makeString(name2)),
 										 makeList1(rv),
 										 false, false, true);
 			}
@@ -761,7 +764,8 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 				rv->schemaname = name1;
 				rv->relname = name2;
 				rv->inhOpt = INH_DEFAULT;
-				node = ParseFuncOrColumn(pstate, name3,
+				node = ParseFuncOrColumn(pstate,
+										 makeList1(makeString(name3)),
 										 makeList1(rv),
 										 false, false, true);
 			}
@@ -801,7 +805,8 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 				rv->schemaname = name2;
 				rv->relname = name3;
 				rv->inhOpt = INH_DEFAULT;
-				node = ParseFuncOrColumn(pstate, name4,
+				node = ParseFuncOrColumn(pstate,
+										 makeList1(makeString(name4)),
 										 makeList1(rv),
 										 false, false, true);
 			}

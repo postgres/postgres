@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.175 2002/04/05 11:56:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.176 2002/04/09 20:35:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1587,8 +1587,7 @@ _copyFuncCall(FuncCall *from)
 {
 	FuncCall   *newnode = makeNode(FuncCall);
 
-	if (from->funcname)
-		newnode->funcname = pstrdup(from->funcname);
+	Node_Copy(from, newnode, funcname);
 	Node_Copy(from, newnode, args);
 	newnode->agg_star = from->agg_star;
 	newnode->agg_distinct = from->agg_distinct;
@@ -1719,6 +1718,7 @@ _copyIndexElem(IndexElem *from)
 
 	if (from->name)
 		newnode->name = pstrdup(from->name);
+	Node_Copy(from, newnode, funcname);
 	Node_Copy(from, newnode, args);
 	if (from->class)
 		newnode->class = pstrdup(from->class);
@@ -1940,8 +1940,7 @@ _copyFuncWithArgs(FuncWithArgs *from)
 {
 	FuncWithArgs *newnode = makeNode(FuncWithArgs);
 
-	if (from->funcname)
-		newnode->funcname = pstrdup(from->funcname);
+	Node_Copy(from, newnode, funcname);
 	Node_Copy(from, newnode, funcargs);
 
 	return newnode;
@@ -2052,13 +2051,10 @@ _copyCommentStmt(CommentStmt *from)
 	CommentStmt *newnode = makeNode(CommentStmt);
 
 	newnode->objtype = from->objtype;
-	if (from->objschema)
-		newnode->objschema = pstrdup(from->objschema);
-	newnode->objname = pstrdup(from->objname);
-	if (from->objproperty)
-		newnode->objproperty = pstrdup(from->objproperty);
-	Node_Copy(from, newnode, objlist);
-	newnode->comment = pstrdup(from->comment);
+	Node_Copy(from, newnode, objname);
+	Node_Copy(from, newnode, objargs);
+	if (from->comment)
+		newnode->comment = pstrdup(from->comment);
 
 	return newnode;
 }
@@ -2114,7 +2110,7 @@ _copyRemoveAggrStmt(RemoveAggrStmt *from)
 {
 	RemoveAggrStmt *newnode = makeNode(RemoveAggrStmt);
 
-	newnode->aggname = pstrdup(from->aggname);
+	Node_Copy(from, newnode, aggname);
 	Node_Copy(from, newnode, aggtype);
 
 	return newnode;
@@ -2125,7 +2121,7 @@ _copyRemoveFuncStmt(RemoveFuncStmt *from)
 {
 	RemoveFuncStmt *newnode = makeNode(RemoveFuncStmt);
 
-	newnode->funcname = pstrdup(from->funcname);
+	Node_Copy(from, newnode, funcname);
 	Node_Copy(from, newnode, args);
 
 	return newnode;
@@ -2370,8 +2366,7 @@ _copyCreateTrigStmt(CreateTrigStmt *from)
 	if (from->trigname)
 		newnode->trigname = pstrdup(from->trigname);
 	Node_Copy(from, newnode, relation);
-	if (from->funcname)
-		newnode->funcname = pstrdup(from->funcname);
+	Node_Copy(from, newnode, funcname);
 	Node_Copy(from, newnode, args);
 	newnode->before = from->before;
 	newnode->row = from->row;
@@ -2411,8 +2406,7 @@ _copyCreatePLangStmt(CreatePLangStmt *from)
 
 	if (from->plname)
 		newnode->plname = pstrdup(from->plname);
-	if (from->plhandler)
-		newnode->plhandler = pstrdup(from->plhandler);
+	Node_Copy(from, newnode, plhandler);
 	if (from->plcompiler)
 		newnode->plcompiler = pstrdup(from->plcompiler);
 	newnode->pltrusted = from->pltrusted;

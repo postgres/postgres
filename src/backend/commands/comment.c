@@ -7,7 +7,7 @@
  * Copyright (c) 1999-2001, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.38 2002/03/29 19:06:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.39 2002/04/09 20:35:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 #include "access/heapam.h"
 #include "catalog/catname.h"
 #include "catalog/indexing.h"
+#include "catalog/namespace.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_description.h"
 #include "catalog/pg_namespace.h"
@@ -40,87 +41,74 @@
 #include "utils/syscache.h"
 
 
-/*------------------------------------------------------------------
+/*
  * Static Function Prototypes --
  *
  * The following protoypes are declared static so as not to conflict
  * with any other routines outside this module. These routines are
  * called by the public function CommentObject() routine to create
  * the appropriate comment for the specific object type.
- *------------------------------------------------------------------
  */
 
-static void CommentRelation(int objtype, char * schemaname, char *relation,
-							char *comment);
-static void CommentAttribute(char * schemaname, char *relation,
-							 char *attrib, char *comment);
-static void CommentDatabase(char *database, char *comment);
-static void CommentRewrite(char *rule, char *comment);
-static void CommentType(char *type, char *comment);
-static void CommentAggregate(char *aggregate, List *arguments, char *comment);
-static void CommentProc(char *function, List *arguments, char *comment);
-static void CommentOperator(char *opname, List *arguments, char *comment);
-static void CommentTrigger(char *trigger, char *schemaname, char *relation,
-						   char *comments);
+static void CommentRelation(int objtype, List *relname, char *comment);
+static void CommentAttribute(List *qualname, char *comment);
+static void CommentDatabase(List *qualname, char *comment);
+static void CommentRule(List *qualname, char *comment);
+static void CommentType(List *typename, char *comment);
+static void CommentAggregate(List *aggregate, List *arguments, char *comment);
+static void CommentProc(List *function, List *arguments, char *comment);
+static void CommentOperator(List *qualname, List *arguments, char *comment);
+static void CommentTrigger(List *qualname, char *comment);
 
 
-/*------------------------------------------------------------------
+/*
  * CommentObject --
  *
  * This routine is used to add the associated comment into
- * pg_description for the object specified by the paramters handed
- * to this routine. If the routine cannot determine an Oid to
- * associated with the parameters handed to this routine, an
- * error is thrown. Otherwise the comment is added to pg_description
- * by calling the CreateComments() routine. If the comment string is
- * empty, CreateComments() will drop any comments associated with
- * the object.
- *------------------------------------------------------------------
-*/
-
+ * pg_description for the object specified by the given SQL command.
+ */
 void
-CommentObject(int objtype, char *schemaname, char *objname, char *objproperty,
-			  List *objlist, char *comment)
+CommentObject(CommentStmt *stmt)
 {
-	switch (objtype)
+	switch (stmt->objtype)
 	{
 		case INDEX:
 		case SEQUENCE:
 		case TABLE:
 		case VIEW:
-			CommentRelation(objtype, schemaname, objname, comment);
+			CommentRelation(stmt->objtype, stmt->objname, stmt->comment);
 			break;
 		case COLUMN:
-			CommentAttribute(schemaname, objname, objproperty, comment);
+			CommentAttribute(stmt->objname, stmt->comment);
 			break;
 		case DATABASE:
-			CommentDatabase(objname, comment);
+			CommentDatabase(stmt->objname, stmt->comment);
 			break;
 		case RULE:
-			CommentRewrite(objname, comment);
+			CommentRule(stmt->objname, stmt->comment);
 			break;
 		case TYPE_P:
-			CommentType(objname, comment);
+			CommentType(stmt->objname, stmt->comment);
 			break;
 		case AGGREGATE:
-			CommentAggregate(objname, objlist, comment);
+			CommentAggregate(stmt->objname, stmt->objargs, stmt->comment);
 			break;
 		case FUNCTION:
-			CommentProc(objname, objlist, comment);
+			CommentProc(stmt->objname, stmt->objargs, stmt->comment);
 			break;
 		case OPERATOR:
-			CommentOperator(objname, objlist, comment);
+			CommentOperator(stmt->objname, stmt->objargs, stmt->comment);
 			break;
 		case TRIGGER:
-			CommentTrigger(objname, schemaname, objproperty, comment);
+			CommentTrigger(stmt->objname, stmt->comment);
 			break;
 		default:
 			elog(ERROR, "An attempt was made to comment on a unknown type: %d",
-				 objtype);
+				 stmt->objtype);
 	}
 }
 
-/*------------------------------------------------------------------
+/*
  * CreateComments --
  *
  * Create a comment for the specified object descriptor.  Inserts a new
@@ -128,9 +116,7 @@ CommentObject(int objtype, char *schemaname, char *objname, char *objproperty,
  *
  * If the comment given is null or an empty string, instead delete any
  * existing comment for the specified key.
- *------------------------------------------------------------------
  */
-
 void
 CreateComments(Oid oid, Oid classoid, int32 subid, char *comment)
 {
@@ -254,15 +240,13 @@ CreateComments(Oid oid, Oid classoid, int32 subid, char *comment)
 	heap_close(description, NoLock);
 }
 
-/*------------------------------------------------------------------
+/*
  * DeleteComments --
  *
  * This routine is used to purge all comments associated with an object,
  * regardless of their objsubid.  It is called, for example, when a relation
  * is destroyed.
- *------------------------------------------------------------------
  */
-
 void
 DeleteComments(Oid oid, Oid classoid)
 {
@@ -316,7 +300,7 @@ DeleteComments(Oid oid, Oid classoid)
 	heap_close(description, NoLock);
 }
 
-/*------------------------------------------------------------------
+/*
  * CommentRelation --
  *
  * This routine is used to add/drop a comment from a relation, where
@@ -324,20 +308,14 @@ DeleteComments(Oid oid, Oid classoid)
  * finds the relation name by searching the system cache, locating
  * the appropriate tuple, and inserting a comment using that
  * tuple's oid. Its parameters are the relation name and comments.
- *------------------------------------------------------------------
  */
-
 static void
-CommentRelation(int reltype, char *schemaname, char *relname, char *comment)
+CommentRelation(int objtype, List *relname, char *comment)
 {
 	Relation	relation;
-	RangeVar   *tgtrel = makeNode(RangeVar);
-	
-	
-	tgtrel->relname = relname;
-	tgtrel->schemaname = schemaname;
-	/* FIXME SCHEMA: Can we add comments to temp relations? */
-	tgtrel->istemp = false;
+	RangeVar   *tgtrel;
+
+	tgtrel = makeRangeVarFromNameList(relname);
 
 	/*
 	 * Open the relation.  We do this mainly to acquire a lock that
@@ -349,27 +327,32 @@ CommentRelation(int reltype, char *schemaname, char *relname, char *comment)
 
 	/* Check object security */
 	if (!pg_class_ownercheck(RelationGetRelid(relation), GetUserId()))
-		elog(ERROR, "you are not permitted to comment on class '%s'", relname);
+		elog(ERROR, "you are not permitted to comment on class '%s'",
+			 RelationGetRelationName(relation));
 
 	/* Next, verify that the relation type matches the intent */
 
-	switch (reltype)
+	switch (objtype)
 	{
 		case INDEX:
 			if (relation->rd_rel->relkind != RELKIND_INDEX)
-				elog(ERROR, "relation '%s' is not an index", relname);
+				elog(ERROR, "relation '%s' is not an index",
+					 RelationGetRelationName(relation));
 			break;
 		case TABLE:
 			if (relation->rd_rel->relkind != RELKIND_RELATION)
-				elog(ERROR, "relation '%s' is not a table", relname);
+				elog(ERROR, "relation '%s' is not a table",
+					 RelationGetRelationName(relation));
 			break;
 		case VIEW:
 			if (relation->rd_rel->relkind != RELKIND_VIEW)
-				elog(ERROR, "relation '%s' is not a view", relname);
+				elog(ERROR, "relation '%s' is not a view",
+					 RelationGetRelationName(relation));
 			break;
 		case SEQUENCE:
 			if (relation->rd_rel->relkind != RELKIND_SEQUENCE)
-				elog(ERROR, "relation '%s' is not a sequence", relname);
+				elog(ERROR, "relation '%s' is not a sequence",
+					 RelationGetRelationName(relation));
 			break;
 	}
 
@@ -381,7 +364,7 @@ CommentRelation(int reltype, char *schemaname, char *relname, char *comment)
 	relation_close(relation, NoLock);
 }
 
-/*------------------------------------------------------------------
+/*
  * CommentAttribute --
  *
  * This routine is used to add/drop a comment from an attribute
@@ -390,34 +373,40 @@ CommentRelation(int reltype, char *schemaname, char *relname, char *comment)
  * attribute. If successful, a comment is added/dropped, else an
  * elog() exception is thrown.	The parameters are the relation
  * and attribute names, and the comments
- *------------------------------------------------------------------
-*/
-
+ */
 static void
-CommentAttribute(char *schemaname, char *relname, char *attrname, char *comment)
+CommentAttribute(List *qualname, char *comment)
 {
-	RangeVar   *rel = makeNode(RangeVar);
+	int			nnames;
+	List	   *relname;
+	char	   *attrname;
+	RangeVar   *rel;
 	Relation	relation;
 	AttrNumber	attnum;
 
-	/* Open the containing relation to ensure it won't go away meanwhile */
+	/* Separate relname and attr name */
+	nnames = length(qualname);
+	if (nnames < 2)
+		elog(ERROR, "CommentAttribute: must specify relation.attribute");
+	relname = ltruncate(nnames-1, listCopy(qualname));
+	attrname = strVal(nth(nnames-1, qualname));
 
-	rel->relname = relname;
-	rel->schemaname = schemaname;
-	rel->istemp = false;
+	/* Open the containing relation to ensure it won't go away meanwhile */
+	rel = makeRangeVarFromNameList(relname);
 	relation = heap_openrv(rel, AccessShareLock);
 
 	/* Check object security */
 
 	if (!pg_class_ownercheck(RelationGetRelid(relation), GetUserId()))
-		elog(ERROR, "you are not permitted to comment on class '%s'", relname);
+		elog(ERROR, "you are not permitted to comment on class '%s'",
+			 RelationGetRelationName(relation));
 
 	/* Now, fetch the attribute number from the system cache */
 
 	attnum = get_attnum(RelationGetRelid(relation), attrname);
 	if (attnum == InvalidAttrNumber)
 		elog(ERROR, "'%s' is not an attribute of class '%s'",
-			 attrname, relname);
+			 attrname, RelationGetRelationName(relation));
 
 	/* Create the comment using the relation's oid */
 
@@ -429,7 +418,7 @@ CommentAttribute(char *schemaname, char *relname, char *attrname, char *comment)
 	heap_close(relation, NoLock);
 }
 
-/*------------------------------------------------------------------
+/*
  * CommentDatabase --
  *
  * This routine is used to add/drop any user-comments a user might
@@ -437,23 +426,26 @@ CommentAttribute(char *schemaname, char *relname, char *attrname, char *comment)
  * security for owner permissions, and, if succesful, will then
  * attempt to find the oid of the database specified. Once found,
  * a comment is added/dropped using the CreateComments() routine.
- *------------------------------------------------------------------
-*/
-
+ */
 static void
-CommentDatabase(char *database, char *comment)
+CommentDatabase(List *qualname, char *comment)
 {
+	char	   *database;
 	Relation	pg_database;
 	ScanKeyData entry;
 	HeapScanDesc scan;
 	HeapTuple	dbtuple;
 	Oid			oid;
 
+	if (length(qualname) != 1)
+		elog(ERROR, "CommentDatabase: database name may not be qualified");
+	database = strVal(lfirst(qualname));
+
 	/* First find the tuple in pg_database for the database */
 
 	pg_database = heap_openr(DatabaseRelationName, AccessShareLock);
 	ScanKeyEntryInitialize(&entry, 0, Anum_pg_database_datname,
-						   F_NAMEEQ, NameGetDatum(database));
+						   F_NAMEEQ, CStringGetDatum(database));
 	scan = heap_beginscan(pg_database, 0, SnapshotNow, 1, &entry);
 	dbtuple = heap_getnext(scan, 0);
 
@@ -479,24 +471,28 @@ CommentDatabase(char *database, char *comment)
 	heap_close(pg_database, AccessShareLock);
 }
 
-/*------------------------------------------------------------------
- * CommentRewrite --
+/*
+ * CommentRule --
  *
  * This routine is used to add/drop any user-comments a user might
  * have regarding a specified RULE. The rule is specified by name
  * and, if found, and the user has appropriate permissions, a
  * comment will be added/dropped using the CreateComments() routine.
- *------------------------------------------------------------------
-*/
-
+ */
 static void
-CommentRewrite(char *rule, char *comment)
+CommentRule(List *qualname, char *comment)
 {
+	char	   *rule;
 	HeapTuple	tuple;
 	Oid			reloid;
 	Oid			ruleoid;
 	Oid			classoid;
 	int32		aclcheck;
+
+	/* XXX this is gonna change soon */
+	if (length(qualname) != 1)
+		elog(ERROR, "CommentRule: rule name may not be qualified");
+	rule = strVal(lfirst(qualname));
 
 	/* Find the rule's pg_rewrite tuple, get its OID and its table's OID */
 
@@ -528,7 +524,7 @@ CommentRewrite(char *rule, char *comment)
 	CreateComments(ruleoid, classoid, 0, comment);
 }
 
-/*------------------------------------------------------------------
+/*
  * CommentType --
  *
  * This routine is used to add/drop any user-comments a user might
@@ -536,42 +532,43 @@ CommentRewrite(char *rule, char *comment)
  * and, if found, and the user has appropriate permissions, a
  * comment will be added/dropped using the CreateComments() routine.
  * The type's name and the comments are the paramters to this routine.
- *------------------------------------------------------------------
-*/
-
+ */
 static void
-CommentType(char *type, char *comment)
+CommentType(List *typename, char *comment)
 {
+	TypeName   *tname;
 	Oid			oid;
+
+	/* XXX a bit of a crock; should accept TypeName in COMMENT syntax */
+	tname = makeNode(TypeName);
+	tname->names = typename;
+	tname->typmod = -1;
 
 	/* Find the type's oid */
 
-	/* XXX WRONG: need to deal with qualified type names */
-	oid = typenameTypeId(makeTypeName(type));
+	oid = typenameTypeId(tname);
 
 	/* Check object security */
 
 	if (!pg_type_ownercheck(oid, GetUserId()))
-		elog(ERROR, "you are not permitted to comment on type '%s'",
-			 type);
+		elog(ERROR, "you are not permitted to comment on type %s",
+			 TypeNameToString(tname));
 
 	/* Call CreateComments() to create/drop the comments */
 
 	CreateComments(oid, RelOid_pg_type, 0, comment);
 }
 
-/*------------------------------------------------------------------
+/*
  * CommentAggregate --
  *
  * This routine is used to allow a user to provide comments on an
  * aggregate function. The aggregate function is determined by both
  * its name and its argument type, which, with the comments are
  * the three parameters handed to this routine.
- *------------------------------------------------------------------
-*/
-
+ */
 static void
-CommentAggregate(char *aggregate, List *arguments, char *comment)
+CommentAggregate(List *aggregate, List *arguments, char *comment)
 {
 	TypeName   *aggtype = (TypeName *) lfirst(arguments);
 	Oid			baseoid,
@@ -587,7 +584,7 @@ CommentAggregate(char *aggregate, List *arguments, char *comment)
 	/* Now, attempt to find the actual tuple in pg_aggregate */
 
 	oid = GetSysCacheOid(AGGNAME,
-						 PointerGetDatum(aggregate),
+						 PointerGetDatum(strVal(lfirst(aggregate))), /* XXX */
 						 ObjectIdGetDatum(baseoid),
 						 0, 0);
 	if (!OidIsValid(oid))
@@ -598,11 +595,11 @@ CommentAggregate(char *aggregate, List *arguments, char *comment)
 	if (!pg_aggr_ownercheck(oid, GetUserId()))
 	{
 		if (baseoid == InvalidOid)
-			elog(ERROR, "you are not permitted to comment on aggregate '%s' for all types",
-				 aggregate);
+			elog(ERROR, "you are not permitted to comment on aggregate %s for all types",
+				 NameListToString(aggregate));
 		else
-			elog(ERROR, "you are not permitted to comment on aggregate '%s' for type %s",
-				 aggregate, format_type_be(baseoid));
+			elog(ERROR, "you are not permitted to comment on aggregate %s for type %s",
+				 NameListToString(aggregate), format_type_be(baseoid));
 	}
 
 	/* pg_aggregate doesn't have a hard-coded OID, so must look it up */
@@ -615,7 +612,7 @@ CommentAggregate(char *aggregate, List *arguments, char *comment)
 	CreateComments(oid, classoid, 0, comment);
 }
 
-/*------------------------------------------------------------------
+/*
  * CommentProc --
  *
  * This routine is used to allow a user to provide comments on an
@@ -623,64 +620,29 @@ CommentAggregate(char *aggregate, List *arguments, char *comment)
  * its name and its argument list. The argument list is expected to
  * be a series of parsed nodes pointed to by a List object. If the
  * comments string is empty, the associated comment is dropped.
- *------------------------------------------------------------------
-*/
-
+ */
 static void
-CommentProc(char *function, List *arguments, char *comment)
+CommentProc(List *function, List *arguments, char *comment)
 {
-	Oid			oid,
-				argoids[FUNC_MAX_ARGS];
-	int			i,
-				argcount;
+	Oid			oid;
 
-	/* First, initialize function's argument list with their type oids */
+	/* Look up the procedure */
 
-	MemSet(argoids, 0, FUNC_MAX_ARGS * sizeof(Oid));
-	argcount = length(arguments);
-	if (argcount > FUNC_MAX_ARGS)
-		elog(ERROR, "functions cannot have more than %d arguments",
-			 FUNC_MAX_ARGS);
-	for (i = 0; i < argcount; i++)
-	{
-		TypeName   *t = (TypeName *) lfirst(arguments);
-
-		argoids[i] = LookupTypeName(t);
-		if (!OidIsValid(argoids[i]))
-		{
-			char      *typnam = TypeNameToString(t);
-
-			if (strcmp(typnam, "opaque") == 0)
-				argoids[i] = InvalidOid;
-			else
-				elog(ERROR, "Type \"%s\" does not exist", typnam);
-		}
-
-		arguments = lnext(arguments);
-	}
-
-	/* Now, find the corresponding oid for this procedure */
-
-	oid = GetSysCacheOid(PROCNAME,
-						 PointerGetDatum(function),
-						 Int32GetDatum(argcount),
-						 PointerGetDatum(argoids),
-						 0);
-	if (!OidIsValid(oid))
-		func_error("CommentProc", function, argcount, argoids, NULL);
+	oid = LookupFuncNameTypeNames(function, arguments,
+								  true, "CommentProc");
 
 	/* Now, validate the user's ability to comment on this function */
 
 	if (!pg_proc_ownercheck(oid, GetUserId()))
-		elog(ERROR, "you are not permitted to comment on function '%s'",
-			 function);
+		elog(ERROR, "you are not permitted to comment on function %s",
+			 NameListToString(function));
 
 	/* Call CreateComments() to create/drop the comments */
 
 	CreateComments(oid, RelOid_pg_proc, 0, comment);
 }
 
-/*------------------------------------------------------------------
+/*
  * CommentOperator --
  *
  * This routine is used to allow a user to provide comments on an
@@ -694,12 +656,11 @@ CommentProc(char *function, List *arguments, char *comment)
  * NOTE: we actually attach the comment to the procedure that underlies
  * the operator.  This is a feature, not a bug: we want the same comment
  * to be visible for both operator and function.
- *------------------------------------------------------------------
-*/
-
+ */
 static void
-CommentOperator(char *opername, List *arguments, char *comment)
+CommentOperator(List *qualname, List *arguments, char *comment)
 {
+	char	   *opername = strVal(lfirst(qualname)); /* XXX */
 	TypeName   *typenode1 = (TypeName *) lfirst(arguments);
 	TypeName   *typenode2 = (TypeName *) lsecond(arguments);
 	char		oprtype = 0;
@@ -760,21 +721,22 @@ CommentOperator(char *opername, List *arguments, char *comment)
 	CreateComments(oid, RelOid_pg_proc, 0, comment);
 }
 
-/*------------------------------------------------------------------
+/*
  * CommentTrigger --
  *
  * This routine is used to allow a user to provide comments on a
  * trigger event. The trigger for commenting is determined by both
  * its name and the relation to which it refers. The arguments to this
- * function are the trigger name, the relation name, and the comments
- * to add/drop.
- *------------------------------------------------------------------
-*/
-
+ * function are the trigger name and relation name (merged into a qualified
+ * name), and the comment to add/drop.
+ */
 static void
-CommentTrigger(char *trigger, char *schemaname, char *relname, char *comment)
+CommentTrigger(List *qualname, char *comment)
 {
-	RangeVar   *rel = makeNode(RangeVar);
+	int			nnames;
+	List	   *relname;
+	char	   *trigname;
+	RangeVar   *rel;
 	Relation	pg_trigger,
 				relation;
 	HeapTuple	triggertuple;
@@ -782,16 +744,22 @@ CommentTrigger(char *trigger, char *schemaname, char *relname, char *comment)
 	ScanKeyData entry[2];
 	Oid			oid;
 
-	/* First, validate the user's action */
+	/* Separate relname and trig name */
+	nnames = length(qualname);
+	if (nnames < 2)
+		elog(ERROR, "CommentTrigger: must specify relation and trigger");
+	relname = ltruncate(nnames-1, listCopy(qualname));
+	trigname = strVal(nth(nnames-1, qualname));
 
-	rel->relname = relname;
-	rel->schemaname = schemaname;
-	rel->istemp = false;
+	/* Open the owning relation to ensure it won't go away meanwhile */
+	rel = makeRangeVarFromNameList(relname);
 	relation = heap_openrv(rel, AccessShareLock);
 
+	/* Check object security */
+
 	if (!pg_class_ownercheck(RelationGetRelid(relation), GetUserId()))
-		elog(ERROR, "you are not permitted to comment on trigger '%s' %s '%s'",
-			 trigger, "defined for relation", relname);
+		elog(ERROR, "you are not permitted to comment on trigger '%s' for relation '%s'",
+			 trigname, RelationGetRelationName(relation));
 
 	/* Fetch the trigger oid from pg_trigger  */
 
@@ -801,15 +769,15 @@ CommentTrigger(char *trigger, char *schemaname, char *relname, char *comment)
 						   ObjectIdGetDatum(RelationGetRelid(relation)));
 	ScanKeyEntryInitialize(&entry[1], 0x0, Anum_pg_trigger_tgname,
 						   F_NAMEEQ,
-						   NameGetDatum(trigger));
+						   CStringGetDatum(trigname));
 	scan = heap_beginscan(pg_trigger, 0, SnapshotNow, 2, entry);
 	triggertuple = heap_getnext(scan, 0);
 
 	/* If no trigger exists for the relation specified, notify user */
 
 	if (!HeapTupleIsValid(triggertuple))
-		elog(ERROR, "trigger '%s' defined for relation '%s' does not exist",
-			 trigger, relname);
+		elog(ERROR, "trigger '%s' for relation '%s' does not exist",
+			 trigname, RelationGetRelationName(relation));
 
 	oid = triggertuple->t_data->t_oid;
 

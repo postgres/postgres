@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.124 2002/04/06 06:59:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.125 2002/04/09 20:35:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,7 +54,7 @@ static int match_argtypes(int nargs,
 static FieldSelect *setup_field_select(Node *input, char *attname, Oid relid);
 static FuncCandidateList func_select_candidate(int nargs, Oid *input_typeids,
 								  FuncCandidateList candidates);
-static int	agg_get_candidates(char *aggname, Oid typeId,
+static int	agg_get_candidates(List *aggname, Oid typeId,
 							   FuncCandidateList *candidates);
 static Oid	agg_select_candidate(Oid typeid, FuncCandidateList candidates);
 
@@ -64,22 +64,22 @@ static Oid	agg_select_candidate(Oid typeid, FuncCandidateList candidates);
  *
  *	For historical reasons, Postgres tries to treat the notations tab.col
  *	and col(tab) as equivalent: if a single-argument function call has an
- *	argument of complex type and the function name matches any attribute
- *	of the type, we take it as a column projection.
+ *	argument of complex type and the (unqualified) function name matches
+ *	any attribute of the type, we take it as a column projection.
  *
  *	Hence, both cases come through here.  The is_column parameter tells us
  *	which syntactic construct is actually being dealt with, but this is
  *	intended to be used only to deliver an appropriate error message,
  *	not to affect the semantics.  When is_column is true, we should have
- *	a single argument (the putative table), function name equal to the
- *	column name, and no aggregate decoration.
+ *	a single argument (the putative table), unqualified function name
+ *	equal to the column name, and no aggregate decoration.
  *
  *	In the function-call case, the argument expressions have been transformed
  *	already.  In the column case, we may get either a transformed expression
  *	or a RangeVar node as argument.
  */
 Node *
-ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
+ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 				  bool agg_star, bool agg_distinct, bool is_column)
 {
 	Oid			rettype;
@@ -113,23 +113,28 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 	{
 		first_arg = lfirst(fargs);
 		if (first_arg == NULL)	/* should not happen */
-			elog(ERROR, "Function '%s' does not allow NULL input", funcname);
+			elog(ERROR, "Function '%s' does not allow NULL input",
+				 NameListToString(funcname));
 	}
 
 	/*
 	 * check for column projection: if function has one argument, and that
-	 * argument is of complex type, then the function could be a projection.
+	 * argument is of complex type, and function name is not qualified,
+	 * then the "function call" could be a projection.  We also check
+	 * that there wasn't any aggregate decoration.
 	 */
-	/* We only have one parameter, and it's not got aggregate decoration */
-	if (nargs == 1 && !must_be_agg)
+	if (nargs == 1 && !must_be_agg && length(funcname) == 1)
 	{
+		char	   *cname = strVal(lfirst(funcname));
+
 		/* Is it a not-yet-transformed RangeVar node? */
 		if (IsA(first_arg, RangeVar))
 		{
 			/* First arg is a relation. This could be a projection. */
 			refname = ((RangeVar *) first_arg)->relname;
 
-			retval = qualifiedNameToVar(pstate, refname, funcname, true);
+			/* XXX WRONG: ignores possible qualification of argument */
+			retval = qualifiedNameToVar(pstate, refname, cname, true);
 			if (retval)
 				return retval;
 		}
@@ -140,9 +145,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 			 * ParseComplexProjection can't handle the projection, we have
 			 * to keep going.
 			 */
-			retval = ParseComplexProjection(pstate,
-											funcname,
-											first_arg);
+			retval = ParseComplexProjection(pstate, cname, first_arg);
 			if (retval)
 				return retval;
 		}
@@ -175,7 +178,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 
 		/* try for exact match first... */
 		if (SearchSysCacheExists(AGGNAME,
-								 PointerGetDatum(funcname),
+								 PointerGetDatum(strVal(llast(funcname))),
 								 ObjectIdGetDatum(basetype),
 								 0, 0))
 			return (Node *) ParseAgg(pstate, funcname, basetype,
@@ -183,7 +186,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 
 		/* check for aggregate-that-accepts-any-type (eg, COUNT) */
 		if (SearchSysCacheExists(AGGNAME,
-								 PointerGetDatum(funcname),
+								 PointerGetDatum(strVal(llast(funcname))),
 								 ObjectIdGetDatum(0),
 								 0, 0))
 			return (Node *) ParseAgg(pstate, funcname, 0,
@@ -211,7 +214,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 			{
 				/* Multiple possible matches --- give up */
 				elog(ERROR, "Unable to select an aggregate function %s(%s)",
-					 funcname, format_type_be(basetype));
+					 NameListToString(funcname), format_type_be(basetype));
 			}
 		}
 
@@ -222,7 +225,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 			 * function could not have been meant.
 			 */
 			elog(ERROR, "There is no aggregate function %s(%s)",
-				 funcname, format_type_be(basetype));
+				 NameListToString(funcname), format_type_be(basetype));
 		}
 	}
 
@@ -275,7 +278,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 				 */
 				if (is_column)
 					elog(ERROR, "No such attribute %s.%s",
-						 refname, funcname);
+						 refname, strVal(lfirst(funcname)));
 				else
 				{
 					elog(ERROR, "Cannot pass result of sub-select or join %s to a function",
@@ -329,7 +332,8 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 		 * give an error message that is appropriate for that case.
 		 */
 		if (is_column)
-			elog(ERROR, "Attribute \"%s\" not found", funcname);
+			elog(ERROR, "Attribute \"%s\" not found",
+				 strVal(lfirst(funcname)));
 		/* Else generate a detailed complaint */
 		func_error(NULL, funcname, nargs, oid_array,
 				   "Unable to identify a function that satisfies the "
@@ -373,7 +377,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 
 
 static int
-agg_get_candidates(char *aggname,
+agg_get_candidates(List *aggname,
 				   Oid typeId,
 				   FuncCandidateList *candidates)
 {
@@ -388,7 +392,7 @@ agg_get_candidates(char *aggname,
 	ScanKeyEntryInitialize(&aggKey[0], 0,
 						   Anum_pg_aggregate_aggname,
 						   F_NAMEEQ,
-						   NameGetDatum(aggname));
+						   NameGetDatum(strVal(llast(aggname))));
 
 	pg_aggregate_desc = heap_openr(AggregateRelationName, AccessShareLock);
 	pg_aggregate_scan = systable_beginscan(pg_aggregate_desc,
@@ -862,7 +866,7 @@ func_select_candidate(int nargs,
  *	 d) if the answer is zero, try the next array from vector #1
  */
 FuncDetailCode
-func_get_detail(char *funcname,
+func_get_detail(List *funcname,
 				List *fargs,
 				int nargs,
 				Oid *argtypes,
@@ -875,7 +879,7 @@ func_get_detail(char *funcname,
 	FuncCandidateList best_candidate;
 
 	/* Get list of possible candidates from namespace search */
-	function_typeids = FuncnameGetCandidates(makeList1(makeString(funcname)), nargs);
+	function_typeids = FuncnameGetCandidates(funcname, nargs);
 
 	/*
 	 * See if there is an exact match
@@ -917,15 +921,11 @@ func_get_detail(char *funcname,
 		if (nargs == 1)
 		{
 			Oid			targetType;
+			TypeName   *tn = makeNode(TypeName);
 
-			/* XXX WRONG: need to search searchpath for name; but little
-			 * point in fixing before we revise this code for qualified
-			 * funcnames too.
-			 */
-			targetType = GetSysCacheOid(TYPENAMENSP,
-										PointerGetDatum(funcname),
-										ObjectIdGetDatum(PG_CATALOG_NAMESPACE),
-										0, 0);
+			tn->names = funcname;
+			tn->typmod = -1;
+			targetType = LookupTypeName(tn);
 			if (OidIsValid(targetType) &&
 				!ISCOMPLEX(targetType))
 			{
@@ -1409,7 +1409,7 @@ ParseComplexProjection(ParseState *pstate,
  * argument types
  */
 void
-func_error(const char *caller, const char *funcname,
+func_error(const char *caller, List *funcname,
 		   int nargs, const Oid *argtypes,
 		   const char *msg)
 {
@@ -1439,13 +1439,87 @@ func_error(const char *caller, const char *funcname,
 	if (caller == NULL)
 	{
 		elog(ERROR, "Function '%s(%s)' does not exist%s%s",
-			 funcname, p,
+			 NameListToString(funcname), p,
 			 ((msg != NULL) ? "\n\t" : ""), ((msg != NULL) ? msg : ""));
 	}
 	else
 	{
 		elog(ERROR, "%s: function '%s(%s)' does not exist%s%s",
-			 caller, funcname, p,
+			 caller, NameListToString(funcname), p,
 			 ((msg != NULL) ? "\n\t" : ""), ((msg != NULL) ? msg : ""));
 	}
+}
+
+/*
+ * LookupFuncName
+ *		Given a possibly-qualified function name and a set of argument types,
+ *		look up the function.  Returns InvalidOid if no such function.
+ *
+ * If the function name is not schema-qualified, it is sought in the current
+ * namespace search path.
+ */
+Oid
+LookupFuncName(List *funcname, int nargs, const Oid *argtypes)
+{
+	FuncCandidateList clist;
+
+	clist = FuncnameGetCandidates(funcname, nargs);
+
+	while (clist)
+	{
+		if (memcmp(argtypes, clist->args, nargs * sizeof(Oid)) == 0)
+			return clist->oid;
+		clist = clist->next;
+	}
+
+	return InvalidOid;
+}
+
+/*
+ * LookupFuncNameTypeNames
+ *		Like LookupFuncName, but the argument types are specified by a
+ *		list of TypeName nodes.  Also, if we fail to find the function
+ *		and caller is not NULL, then an error is reported via func_error.
+ *
+ * "opaque" is accepted as a typename only if opaqueOK is true.
+ */
+Oid
+LookupFuncNameTypeNames(List *funcname, List *argtypes, bool opaqueOK,
+						const char *caller)
+{
+	Oid		funcoid;
+	Oid		argoids[FUNC_MAX_ARGS];
+	int		argcount;
+	int		i;
+
+	MemSet(argoids, 0, FUNC_MAX_ARGS * sizeof(Oid));
+	argcount = length(argtypes);
+	if (argcount > FUNC_MAX_ARGS)
+		elog(ERROR, "functions cannot have more than %d arguments",
+			 FUNC_MAX_ARGS);
+
+	for (i = 0; i < argcount; i++)
+	{
+		TypeName   *t = (TypeName *) lfirst(argtypes);
+
+		argoids[i] = LookupTypeName(t);
+		if (!OidIsValid(argoids[i]))
+		{
+			char      *typnam = TypeNameToString(t);
+
+			if (opaqueOK && strcmp(typnam, "opaque") == 0)
+				argoids[i] = InvalidOid;
+			else
+				elog(ERROR, "Type \"%s\" does not exist", typnam);
+		}
+
+		argtypes = lnext(argtypes);
+	}
+
+	funcoid = LookupFuncName(funcname, argcount, argoids);
+
+	if (!OidIsValid(funcoid) && caller != NULL)
+		func_error(caller, funcname, argcount, argoids, NULL);
+
+	return funcoid;
 }

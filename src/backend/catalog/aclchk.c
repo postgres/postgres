@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.61 2002/03/31 06:26:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.62 2002/04/09 20:35:46 tgl Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -283,51 +283,6 @@ ExecuteGrantStmt_Table(GrantStmt *stmt)
 }
 
 
-static Oid
-find_function_with_arglist(char *name, List *arguments)
-{
-	Oid		oid;
-	Oid		argoids[FUNC_MAX_ARGS];
-	int		i;
-	int16	argcount;
-
-	MemSet(argoids, 0, FUNC_MAX_ARGS * sizeof(Oid));
-	argcount = length(arguments);
-	if (argcount > FUNC_MAX_ARGS)
-		elog(ERROR, "functions cannot have more than %d arguments",
-			 FUNC_MAX_ARGS);
-
-	for (i = 0; i < argcount; i++)
-	{
-		TypeName   *t = (TypeName *) lfirst(arguments);
-
-		argoids[i] = LookupTypeName(t);
-		if (!OidIsValid(argoids[i]))
-		{
-			char      *typnam = TypeNameToString(t);
-
-			if (strcmp(typnam, "opaque") == 0)
-				argoids[i] = InvalidOid;
-			else
-				elog(ERROR, "Type \"%s\" does not exist", typnam);
-		}
-
-		arguments = lnext(arguments);
-	}
-
-	oid = GetSysCacheOid(PROCNAME,
-						 PointerGetDatum(name),
-						 Int16GetDatum(argcount),
-						 PointerGetDatum(argoids),
-						 0);
-
-	if (!OidIsValid(oid))
-		func_error(NULL, name, argcount, argoids, NULL);
-
-	return oid;
-}
-
-
 static void
 ExecuteGrantStmt_Function(GrantStmt *stmt)
 {
@@ -365,7 +320,8 @@ ExecuteGrantStmt_Function(GrantStmt *stmt)
 		char		nulls[Natts_pg_proc];
 		char		replaces[Natts_pg_proc];
 
-		oid = find_function_with_arglist(func->funcname, func->funcargs);
+		oid = LookupFuncNameTypeNames(func->funcname, func->funcargs,
+									  true, "GRANT");
 		relation = heap_openr(ProcedureRelationName, RowExclusiveLock);
 		tuple = SearchSysCache(PROCOID, ObjectIdGetDatum(oid), 0, 0, 0);
 		if (!HeapTupleIsValid(tuple))

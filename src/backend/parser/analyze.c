@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.227 2002/04/05 11:56:51 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.228 2002/04/09 20:35:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,7 @@
 #include "catalog/pg_type.h"
 #include "nodes/makefuncs.h"
 #include "parser/analyze.h"
+#include "parser/gramparse.h"
 #include "parser/parsetree.h"
 #include "parser/parse_agg.h"
 #include "parser/parse_clause.h"
@@ -859,7 +860,7 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 		snamenode->val.type = T_String;
 		snamenode->val.val.str = qstring;
 		funccallnode = makeNode(FuncCall);
-		funccallnode->funcname = "nextval";
+		funccallnode->funcname = SystemFuncName("nextval");
 		funccallnode->args = makeList1(snamenode);
 		funccallnode->agg_star = false;
 		funccallnode->agg_distinct = false;
@@ -1197,7 +1198,7 @@ transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
 			foreach(columns, index->indexParams)
 			{
 				iparam = (IndexElem *) lfirst(columns);
-				if (strcmp(key->name, iparam->name) == 0)
+				if (iparam->name && strcmp(key->name, iparam->name) == 0)
 					elog(ERROR, "%s: column \"%s\" appears twice in %s constraint",
 						 cxt->stmtType, key->name,
 						 index->primary ? "PRIMARY KEY" : "UNIQUE");
@@ -1206,6 +1207,7 @@ transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
 			/* OK, add it to the index definition */
 			iparam = makeNode(IndexElem);
 			iparam->name = pstrdup(key->name);
+			iparam->funcname = NIL;
 			iparam->args = NIL;
 			iparam->class = NULL;
 			index->indexParams = lappend(index->indexParams, iparam);
@@ -1281,7 +1283,9 @@ transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
 		if (index->idxname == NULL && index->indexParams != NIL)
 		{
 			iparam = lfirst(index->indexParams);
-			index->idxname = CreateIndexName((cxt->relation)->relname, iparam->name,
+			index->idxname = CreateIndexName(cxt->relation->relname,
+											 iparam->name ? iparam->name :
+											 strVal(llast(iparam->funcname)),
 											 "key", cxt->alist);
 		}
 		if (index->idxname == NULL)		/* should not happen */
@@ -1292,7 +1296,7 @@ transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
 			 cxt->stmtType,
 			 (strcmp(cxt->stmtType, "ALTER TABLE") == 0) ? "ADD " : "",
 			 (index->primary ? "PRIMARY KEY" : "UNIQUE"),
-			 index->idxname, (cxt->relation)->relname);
+			 index->idxname, cxt->relation->relname);
 	}
 }
 
@@ -1365,6 +1369,7 @@ transformFKConstraints(ParseState *pstate, CreateStmtContext *cxt)
 					IndexElem  *ielem = lfirst(attr);
 					Ident	   *pkattr = (Ident *) makeNode(Ident);
 
+					Assert(ielem->name); /* no func index here */
 					pkattr->name = pstrdup(ielem->name);
 					fkconstraint->pk_attrs = lappend(fkconstraint->pk_attrs,
 													 pkattr);
@@ -1417,7 +1422,8 @@ transformFKConstraints(ParseState *pstate, CreateStmtContext *cxt)
 						{
 							IndexElem  *indparm = lfirst(indparms);
 
-							if (strcmp(indparm->name, pkattr->name) == 0)
+							if (indparm->name &&
+								strcmp(indparm->name, pkattr->name) == 0)
 							{
 								found = true;
 								break;
@@ -1470,7 +1476,7 @@ transformFKConstraints(ParseState *pstate, CreateStmtContext *cxt)
 		fk_trigger = (CreateTrigStmt *) makeNode(CreateTrigStmt);
 		fk_trigger->trigname = fkconstraint->constr_name;
 		fk_trigger->relation = cxt->relation;
-		fk_trigger->funcname = "RI_FKey_check_ins";
+		fk_trigger->funcname = SystemFuncName("RI_FKey_check_ins");
 		fk_trigger->before = false;
 		fk_trigger->row = true;
 		fk_trigger->actions[0] = 'i';
@@ -1542,21 +1548,21 @@ transformFKConstraints(ParseState *pstate, CreateStmtContext *cxt)
 				>> FKCONSTR_ON_DELETE_SHIFT)
 		{
 			case FKCONSTR_ON_KEY_NOACTION:
-				fk_trigger->funcname = "RI_FKey_noaction_del";
+				fk_trigger->funcname = SystemFuncName("RI_FKey_noaction_del");
 				break;
 			case FKCONSTR_ON_KEY_RESTRICT:
 				fk_trigger->deferrable = false;
 				fk_trigger->initdeferred = false;
-				fk_trigger->funcname = "RI_FKey_restrict_del";
+				fk_trigger->funcname = SystemFuncName("RI_FKey_restrict_del");
 				break;
 			case FKCONSTR_ON_KEY_CASCADE:
-				fk_trigger->funcname = "RI_FKey_cascade_del";
+				fk_trigger->funcname = SystemFuncName("RI_FKey_cascade_del");
 				break;
 			case FKCONSTR_ON_KEY_SETNULL:
-				fk_trigger->funcname = "RI_FKey_setnull_del";
+				fk_trigger->funcname = SystemFuncName("RI_FKey_setnull_del");
 				break;
 			case FKCONSTR_ON_KEY_SETDEFAULT:
-				fk_trigger->funcname = "RI_FKey_setdefault_del";
+				fk_trigger->funcname = SystemFuncName("RI_FKey_setdefault_del");
 				break;
 			default:
 				elog(ERROR, "Only one ON DELETE action can be specified for FOREIGN KEY constraint");
@@ -1614,21 +1620,21 @@ transformFKConstraints(ParseState *pstate, CreateStmtContext *cxt)
 				>> FKCONSTR_ON_UPDATE_SHIFT)
 		{
 			case FKCONSTR_ON_KEY_NOACTION:
-				fk_trigger->funcname = "RI_FKey_noaction_upd";
+				fk_trigger->funcname = SystemFuncName("RI_FKey_noaction_upd");
 				break;
 			case FKCONSTR_ON_KEY_RESTRICT:
 				fk_trigger->deferrable = false;
 				fk_trigger->initdeferred = false;
-				fk_trigger->funcname = "RI_FKey_restrict_upd";
+				fk_trigger->funcname = SystemFuncName("RI_FKey_restrict_upd");
 				break;
 			case FKCONSTR_ON_KEY_CASCADE:
-				fk_trigger->funcname = "RI_FKey_cascade_upd";
+				fk_trigger->funcname = SystemFuncName("RI_FKey_cascade_upd");
 				break;
 			case FKCONSTR_ON_KEY_SETNULL:
-				fk_trigger->funcname = "RI_FKey_setnull_upd";
+				fk_trigger->funcname = SystemFuncName("RI_FKey_setnull_upd");
 				break;
 			case FKCONSTR_ON_KEY_SETDEFAULT:
-				fk_trigger->funcname = "RI_FKey_setdefault_upd";
+				fk_trigger->funcname = SystemFuncName("RI_FKey_setdefault_upd");
 				break;
 			default:
 				elog(ERROR, "Only one ON UPDATE action can be specified for FOREIGN KEY constraint");

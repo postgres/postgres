@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.300 2002/04/05 11:56:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.301 2002/04/09 20:35:51 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -175,8 +175,9 @@ static bool set_name_needs_quotes(const char *name);
 
 %type <str>		relation_name, copy_file_name, copy_delimiter, copy_null,
 		database_name, access_method_clause, access_method, attr_name,
-		class, index_name, name, function_name, file_name,
-		func_name, handler_name
+		class, index_name, name, function_name, file_name
+
+%type <list>	func_name, handler_name
 
 %type <range>	qualified_name, OptConstrFromTable
 
@@ -1859,9 +1860,9 @@ opt_trusted:  TRUSTED			{ $$ = TRUE; }
  * Work around by using name and dotted_name separately.
  */
 handler_name: name
-				{ $$ = $1; }
+				{ $$ = makeList1(makeString($1)); }
 			| dotted_name
-				{ $$ = strVal(lfirst($1)); /* XXX changing soon */ }
+				{ $$ = $1; }
 		;
 
 opt_lancompiler: LANCOMPILER Sconst { $$ = $2; }
@@ -2081,7 +2082,7 @@ DefineStmt:  CREATE AGGREGATE func_name definition
 				{
 					DefineStmt *n = makeNode(DefineStmt);
 					n->defType = AGGREGATE;
-					n->defnames = makeList1(makeString($3)); /* XXX */
+					n->defnames = $3;
 					n->definition = $4;
 					$$ = (Node *)n;
 				}
@@ -2199,54 +2200,21 @@ TruncateStmt:  TRUNCATE opt_table qualified_name
  *
  *****************************************************************************/
  
-CommentStmt:	COMMENT ON comment_type name IS comment_text
+CommentStmt:	COMMENT ON comment_type any_name IS comment_text
 			{
 				CommentStmt *n = makeNode(CommentStmt);
 				n->objtype = $3;
 				n->objname = $4;
-				n->objproperty = NULL;
-				n->objlist = NULL;
+				n->objargs = NIL;
 				n->comment = $6;
-				$$ = (Node *) n;
-			}
-		| COMMENT ON COLUMN ColId '.' attr_name IS comment_text
-			{
-				/*
-				 * We can't use qualified_name here as the '.' causes a shift/red; 
-				 * with ColId we do not test for NEW and OLD as table names, but it is OK
-				 * as they would fail anyway as COMMENT cannot appear in a RULE.
-				 * ColumnRef is also innapropriate as we don't take subscripts
-				 * or '*' and have a very precise number of elements (2 or 3)
-				 * so we do it from scratch.
-				 */
-				CommentStmt *n = makeNode(CommentStmt);
-				n->objtype = COLUMN;
-				n->objschema = NULL;
-				n->objname = $4;
-				n->objproperty = $6;
-				n->objlist = NULL;
-				n->comment = $8;
-				$$ = (Node *) n;
-			}
-		| COMMENT ON COLUMN ColId '.' ColId '.' attr_name IS comment_text
-			{
-				CommentStmt *n = makeNode(CommentStmt);
-				n->objtype = COLUMN;
-				n->objschema = $4;
-				n->objname = $6;
-				n->objproperty = $8;
-				n->objlist = NULL;
-				n->comment = $10;
 				$$ = (Node *) n;
 			}
 		| COMMENT ON AGGREGATE func_name '(' aggr_argtype ')' IS comment_text
 			{
 				CommentStmt *n = makeNode(CommentStmt);
 				n->objtype = AGGREGATE;
-				n->objschema = NULL;
 				n->objname = $4;
-				n->objproperty = NULL;
-				n->objlist = makeList1($6);
+				n->objargs = makeList1($6);
 				n->comment = $9;
 				$$ = (Node *) n;
 			}
@@ -2254,10 +2222,8 @@ CommentStmt:	COMMENT ON comment_type name IS comment_text
 			{
 				CommentStmt *n = makeNode(CommentStmt);
 				n->objtype = FUNCTION;
-				n->objschema = NULL;
 				n->objname = $4;
-				n->objproperty = NULL;
-				n->objlist = $5;
+				n->objargs = $5;
 				n->comment = $7;
 				$$ = (Node *) n;
 			}
@@ -2265,28 +2231,24 @@ CommentStmt:	COMMENT ON comment_type name IS comment_text
 			{
 				CommentStmt *n = makeNode(CommentStmt);
 				n->objtype = OPERATOR;
-				n->objschema = NULL;
-				n->objname = $4;
-				n->objproperty = NULL;
-				n->objlist = $6;
+				n->objname = makeList1(makeString($4));	/* XXX */
+				n->objargs = $6;
 				n->comment = $9;
 				$$ = (Node *) n;
 			}
-		| COMMENT ON TRIGGER name ON qualified_name IS comment_text
+		| COMMENT ON TRIGGER name ON any_name IS comment_text
 			{
 				CommentStmt *n = makeNode(CommentStmt);
 				n->objtype = TRIGGER;
-				/* NOTE: schemaname here refers to the table in objproperty */
-				n->objschema = $6->schemaname;
-				n->objname = $4;
-				n->objproperty = $6->relname;
-				n->objlist = NULL;
+				n->objname = lappend($6, makeString($4));
+				n->objargs = NIL;
 				n->comment = $8;
 				$$ = (Node *) n;
 			}
 		;
 
-comment_type:	DATABASE { $$ = DATABASE; }
+comment_type:	COLUMN { $$ = COLUMN; }
+		| DATABASE { $$ = DATABASE; }
 		| INDEX { $$ = INDEX; }
 		| RULE { $$ = RULE; }
 		| SEQUENCE { $$ = SEQUENCE; }
@@ -2650,7 +2612,8 @@ index_list:  index_list ',' index_elem			{ $$ = lappend($1, $3); }
 func_index:  func_name '(' name_list ')' opt_class
 				{
 					$$ = makeNode(IndexElem);
-					$$->name = $1;
+					$$->name = NULL;
+					$$->funcname = $1;
 					$$->args = $3;
 					$$->class = $5;
 				}
@@ -2660,6 +2623,7 @@ index_elem:  attr_name opt_class
 				{
 					$$ = makeNode(IndexElem);
 					$$->name = $1;
+					$$->funcname = NIL;
 					$$->args = NIL;
 					$$->class = $2;
 				}
@@ -2726,7 +2690,7 @@ ProcedureStmt:	CREATE opt_or_replace FUNCTION func_name func_args
 				{
 					ProcedureStmt *n = makeNode(ProcedureStmt);
 					n->replace = $2;
-					n->funcname = makeList1(makeString($4)); /* XXX */
+					n->funcname = $4;
 					n->argTypes = $5;
 					n->returnType = $7;
 					n->withClause = $12;
@@ -4680,7 +4644,7 @@ row_expr: '(' row_descriptor ')' IN select_with_parens
 					FuncCall *n = makeNode(FuncCall);
 					List *largs = $2;
 					List *rargs = $6;
-					n->funcname = xlateSqlFunc("overlaps");
+					n->funcname = SystemFuncName("overlaps");
 					if (length(largs) == 1)
 						largs = lappend(largs, $2);
 					else if (length(largs) != 2)
@@ -4755,7 +4719,7 @@ a_expr:  c_expr
 		| a_expr AT TIME ZONE c_expr
 				{
 					FuncCall *n = makeNode(FuncCall);
-					n->funcname = "timezone";
+					n->funcname = SystemFuncName("timezone");
 					n->args = makeList2($5, $1);
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
@@ -4820,7 +4784,7 @@ a_expr:  c_expr
 		| a_expr LIKE a_expr ESCAPE a_expr
 				{
 					FuncCall *n = makeNode(FuncCall);
-					n->funcname = "like_escape";
+					n->funcname = SystemFuncName("like_escape");
 					n->args = makeList2($3, $5);
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
@@ -4831,7 +4795,7 @@ a_expr:  c_expr
 		| a_expr NOT LIKE a_expr ESCAPE a_expr
 				{
 					FuncCall *n = makeNode(FuncCall);
-					n->funcname = "like_escape";
+					n->funcname = SystemFuncName("like_escape");
 					n->args = makeList2($4, $6);
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
@@ -4842,7 +4806,7 @@ a_expr:  c_expr
 		| a_expr ILIKE a_expr ESCAPE a_expr
 				{
 					FuncCall *n = makeNode(FuncCall);
-					n->funcname = "like_escape";
+					n->funcname = SystemFuncName("like_escape");
 					n->args = makeList2($3, $5);
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
@@ -4853,7 +4817,7 @@ a_expr:  c_expr
 		| a_expr NOT ILIKE a_expr ESCAPE a_expr
 				{
 					FuncCall *n = makeNode(FuncCall);
-					n->funcname = "like_escape";
+					n->funcname = SystemFuncName("like_escape");
 					n->args = makeList2($4, $6);
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
@@ -5300,7 +5264,7 @@ c_expr:  columnref
 		| CURRENT_USER opt_empty_parentheses
 				{
 					FuncCall *n = makeNode(FuncCall);
-					n->funcname = "current_user";
+					n->funcname = SystemFuncName("current_user");
 					n->args = NIL;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
@@ -5309,7 +5273,7 @@ c_expr:  columnref
 		| SESSION_USER opt_empty_parentheses
 				{
 					FuncCall *n = makeNode(FuncCall);
-					n->funcname = "session_user";
+					n->funcname = SystemFuncName("session_user");
 					n->args = NIL;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
@@ -5318,7 +5282,7 @@ c_expr:  columnref
 		| USER opt_empty_parentheses
 				{
 					FuncCall *n = makeNode(FuncCall);
-					n->funcname = "current_user";
+					n->funcname = SystemFuncName("current_user");
 					n->args = NIL;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
@@ -5327,7 +5291,7 @@ c_expr:  columnref
 		| EXTRACT '(' extract_list ')'
 				{
 					FuncCall *n = makeNode(FuncCall);
-					n->funcname = "date_part";
+					n->funcname = SystemFuncName("date_part");
 					n->args = $3;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
@@ -5337,7 +5301,7 @@ c_expr:  columnref
 				{
 					/* position(A in B) is converted to position(B, A) */
 					FuncCall *n = makeNode(FuncCall);
-					n->funcname = "position";
+					n->funcname = SystemFuncName("position");
 					n->args = $3;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
@@ -5349,7 +5313,7 @@ c_expr:  columnref
 					 * substring(A, B, C) - thomas 2000-11-28
 					 */
 					FuncCall *n = makeNode(FuncCall);
-					n->funcname = "substring";
+					n->funcname = SystemFuncName("substring");
 					n->args = $3;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
@@ -5361,7 +5325,7 @@ c_expr:  columnref
 					 * - thomas 1997-07-19
 					 */
 					FuncCall *n = makeNode(FuncCall);
-					n->funcname = "btrim";
+					n->funcname = SystemFuncName("btrim");
 					n->args = $4;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
@@ -5370,7 +5334,7 @@ c_expr:  columnref
 		| TRIM '(' LEADING trim_list ')'
 				{
 					FuncCall *n = makeNode(FuncCall);
-					n->funcname = "ltrim";
+					n->funcname = SystemFuncName("ltrim");
 					n->args = $4;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
@@ -5379,7 +5343,7 @@ c_expr:  columnref
 		| TRIM '(' TRAILING trim_list ')'
 				{
 					FuncCall *n = makeNode(FuncCall);
-					n->funcname = "rtrim";
+					n->funcname = SystemFuncName("rtrim");
 					n->args = $4;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
@@ -5388,7 +5352,7 @@ c_expr:  columnref
 		| TRIM '(' trim_list ')'
 				{
 					FuncCall *n = makeNode(FuncCall);
-					n->funcname = "btrim";
+					n->funcname = SystemFuncName("btrim");
 					n->args = $3;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
@@ -5798,18 +5762,10 @@ class:					ColId			{ $$ = $1; };
 index_name:				ColId			{ $$ = $1; };
 file_name:				Sconst			{ $$ = $1; };
 
-/* func_name will soon return a List ... but not yet */
-/*
 func_name: function_name
-			{ $$ = makeList1(makeString($1)); }
+			{ $$ = makeList1(makeString(xlateSqlFunc($1))); }
 		| dotted_name
 			{ $$ = $1; }
-		;
-*/
-func_name: function_name
-			{ $$ = $1; }
-		| dotted_name
-			{ $$ = strVal(lfirst($1)); }
 		;
 
 
@@ -5942,9 +5898,9 @@ type_name:  IDENT						{ $$ = $1; }
 
 /* Function identifier --- names that can be function names.
  */
-function_name:  IDENT					{ $$ = xlateSqlFunc($1); }
-		| unreserved_keyword			{ $$ = xlateSqlFunc($1); }
-		| func_name_keyword				{ $$ = xlateSqlFunc($1); }
+function_name:  IDENT					{ $$ = $1; }
+		| unreserved_keyword			{ $$ = $1; }
+		| func_name_keyword				{ $$ = $1; }
 		;
 
 /* Column label --- allowed labels in "AS" clauses.
@@ -6459,6 +6415,8 @@ makeSetOp(SetOperation op, bool all, Node *larg, Node *rarg)
 /* xlateSqlFunc()
  * Convert alternate function names to internal Postgres functions.
  *
+ * NOTE: these conversions are only applied to unqualified function names.
+ *
  * Do not convert "float", since that is handled elsewhere
  *  for FLOAT(p) syntax.
  *
@@ -6481,6 +6439,8 @@ xlateSqlFunc(char *name)
 
 /* xlateSqlType()
  * Convert alternate type names to internal Postgres types.
+ *
+ * NOTE: these conversions are only applied to unqualified type names.
  *
  * NB: do NOT put "char" -> "bpchar" here, because that renders it impossible
  * to refer to our single-byte char type, even with quotes.  (Without quotes,
@@ -6521,6 +6481,14 @@ xlateSqlType(char *name)
 		return name;
 } /* xlateSqlType() */
 
+/* SystemFuncName()
+ *	Build a properly-qualified reference to a built-in function.
+ */
+List *
+SystemFuncName(char *name)
+{
+	return makeList2(makeString("pg_catalog"), makeString(name));
+}
 
 void parser_init(Oid *typev, int nargs)
 {

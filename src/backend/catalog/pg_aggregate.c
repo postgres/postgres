@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.42 2002/03/29 19:06:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.43 2002/04/09 20:35:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,7 @@
 #include "access/heapam.h"
 #include "catalog/catname.h"
 #include "catalog/indexing.h"
+#include "catalog/namespace.h"
 #include "catalog/pg_aggregate.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
@@ -33,8 +34,8 @@
 void
 AggregateCreate(const char *aggName,
 				Oid aggNamespace,
-				char *aggtransfnName,
-				char *aggfinalfnName,
+				List *aggtransfnName,
+				List *aggfinalfnName,
 				Oid aggBaseType,
 				Oid aggTransType,
 				const char *agginitval)
@@ -79,19 +80,18 @@ AggregateCreate(const char *aggName,
 	}
 	else
 		nargs = 1;
-	tup = SearchSysCache(PROCNAME,
-						 PointerGetDatum(aggtransfnName),
-						 Int32GetDatum(nargs),
-						 PointerGetDatum(fnArgs),
-						 0);
+	transfn = LookupFuncName(aggtransfnName, nargs, fnArgs);
+	if (!OidIsValid(transfn))
+		func_error("AggregateCreate", aggtransfnName, nargs, fnArgs, NULL);
+	tup = SearchSysCache(PROCOID,
+						 ObjectIdGetDatum(transfn),
+						 0, 0, 0);
 	if (!HeapTupleIsValid(tup))
 		func_error("AggregateCreate", aggtransfnName, nargs, fnArgs, NULL);
-	transfn = tup->t_data->t_oid;
-	Assert(OidIsValid(transfn));
 	proc = (Form_pg_proc) GETSTRUCT(tup);
 	if (proc->prorettype != aggTransType)
 		elog(ERROR, "return type of transition function %s is not %s",
-			 aggtransfnName, typeidTypeName(aggTransType));
+			 NameListToString(aggtransfnName), typeidTypeName(aggTransType));
 
 	/*
 	 * If the transfn is strict and the initval is NULL, make sure input
@@ -111,15 +111,14 @@ AggregateCreate(const char *aggName,
 	{
 		fnArgs[0] = aggTransType;
 		fnArgs[1] = 0;
-		tup = SearchSysCache(PROCNAME,
-							 PointerGetDatum(aggfinalfnName),
-							 Int32GetDatum(1),
-							 PointerGetDatum(fnArgs),
-							 0);
+		finalfn = LookupFuncName(aggfinalfnName, 1, fnArgs);
+		if (!OidIsValid(finalfn))
+			func_error("AggregateCreate", aggfinalfnName, 1, fnArgs, NULL);
+		tup = SearchSysCache(PROCOID,
+							 ObjectIdGetDatum(finalfn),
+							 0, 0, 0);
 		if (!HeapTupleIsValid(tup))
 			func_error("AggregateCreate", aggfinalfnName, 1, fnArgs, NULL);
-		finalfn = tup->t_data->t_oid;
-		Assert(OidIsValid(finalfn));
 		proc = (Form_pg_proc) GETSTRUCT(tup);
 		finaltype = proc->prorettype;
 		ReleaseSysCache(tup);

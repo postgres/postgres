@@ -12,7 +12,7 @@
 #ifndef COMMENT_H
 #define COMMENT_H
 
-#include "nodes/pg_list.h"
+#include "nodes/parsenodes.h"
 
 /*------------------------------------------------------------------
  * Function Prototypes --
@@ -25,8 +25,7 @@
  *------------------------------------------------------------------
  */
 
-extern void CommentObject(int objtype, char * schemaname, char *objname,
-							char *objproperty, List *objlist, char *comment);
+extern void CommentObject(CommentStmt *stmt);
 
 extern void DeleteComments(Oid oid, Oid classoid);
 

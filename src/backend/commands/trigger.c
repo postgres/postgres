@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.111 2002/04/01 22:36:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.112 2002/04/09 20:35:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,6 +26,7 @@
 #include "commands/trigger.h"
 #include "executor/executor.h"
 #include "miscadmin.h"
+#include "parser/parse_func.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
@@ -163,18 +164,19 @@ CreateTrigger(CreateTrigStmt *stmt)
 	 * Find and validate the trigger function.
 	 */
 	MemSet(fargtypes, 0, FUNC_MAX_ARGS * sizeof(Oid));
-	tuple = SearchSysCache(PROCNAME,
-						   PointerGetDatum(stmt->funcname),
-						   Int32GetDatum(0),
-						   PointerGetDatum(fargtypes),
-						   0);
+	funcoid = LookupFuncName(stmt->funcname, 0, fargtypes);
+	if (!OidIsValid(funcoid))
+		elog(ERROR, "CreateTrigger: function %s() does not exist",
+			 NameListToString(stmt->funcname));
+	tuple = SearchSysCache(PROCOID,
+						   ObjectIdGetDatum(funcoid),
+						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "CreateTrigger: function %s() does not exist",
-			 stmt->funcname);
+			 NameListToString(stmt->funcname));
 	if (((Form_pg_proc) GETSTRUCT(tuple))->prorettype != 0)
 		elog(ERROR, "CreateTrigger: function %s() must return OPAQUE",
-			 stmt->funcname);
-	funcoid = tuple->t_data->t_oid;
+			 NameListToString(stmt->funcname));
 	funclang = ((Form_pg_proc) GETSTRUCT(tuple))->prolang;
 	ReleaseSysCache(tuple);
 

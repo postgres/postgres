@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.6 2002/04/06 06:59:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.7 2002/04/09 20:35:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,6 +28,7 @@
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_shadow.h"
+#include "lib/stringinfo.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "storage/backendid.h"
@@ -367,7 +368,7 @@ FuncnameGetCandidates(List *names, int nargs)
 	}
 
 	/* Search syscache by name and nargs only */
-	catlist = SearchSysCacheList(PROCNAME, 2,
+	catlist = SearchSysCacheList(PROCNAMENSP, 2,
 								 CStringGetDatum(funcname),
 								 Int16GetDatum(nargs),
 								 0, 0);
@@ -562,6 +563,29 @@ makeRangeVarFromNameList(List *names)
 	}
 
 	return rel;
+}
+
+/*
+ * NameListToString
+ *		Utility routine to convert a qualified-name list into a string.
+ *		Used primarily to form error messages.
+ */
+char *
+NameListToString(List *names)
+{
+	StringInfoData string;
+	List		*l;
+
+	initStringInfo(&string);
+
+	foreach(l, names)
+	{
+		if (l != names)
+			appendStringInfoChar(&string, '.');
+		appendStringInfo(&string, "%s", strVal(lfirst(l)));
+	}
+
+	return string.data;
 }
 
 /*

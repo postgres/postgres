@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.123 2002/04/05 11:56:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.124 2002/04/09 20:35:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -769,7 +769,7 @@ _equalPrivGrantee(PrivGrantee *a, PrivGrantee *b)
 static bool
 _equalFuncWithArgs(FuncWithArgs *a, FuncWithArgs *b)
 {
-	return equalstr(a->funcname, b->funcname)
+	return equal(a->funcname, b->funcname)
 		&& equal(a->funcargs, b->funcargs);
 }
 
@@ -877,13 +877,9 @@ _equalCommentStmt(CommentStmt *a, CommentStmt *b)
 {
 	if (a->objtype != b->objtype)
 		return false;
-	if (!equalstr(a->objname, b->objname))
+	if (!equal(a->objname, b->objname))
 		return false;
-	if (!equalstr(a->objschema, b->objschema))
-		return false;
-	if (!equalstr(a->objproperty, b->objproperty))
-		return false;
-	if (!equal(a->objlist, b->objlist))
+	if (!equal(a->objargs, b->objargs))
 		return false;
 	if (!equalstr(a->comment, b->comment))
 		return false;
@@ -953,7 +949,7 @@ _equalProcedureStmt(ProcedureStmt *a, ProcedureStmt *b)
 static bool
 _equalRemoveAggrStmt(RemoveAggrStmt *a, RemoveAggrStmt *b)
 {
-	if (!equalstr(a->aggname, b->aggname))
+	if (!equal(a->aggname, b->aggname))
 		return false;
 	if (!equal(a->aggtype, b->aggtype))
 		return false;
@@ -964,7 +960,7 @@ _equalRemoveAggrStmt(RemoveAggrStmt *a, RemoveAggrStmt *b)
 static bool
 _equalRemoveFuncStmt(RemoveFuncStmt *a, RemoveFuncStmt *b)
 {
-	if (!equalstr(a->funcname, b->funcname))
+	if (!equal(a->funcname, b->funcname))
 		return false;
 	if (!equal(a->args, b->args))
 		return false;
@@ -1207,7 +1203,7 @@ _equalCreateTrigStmt(CreateTrigStmt *a, CreateTrigStmt *b)
 		return false;
 	if (!equal(a->relation, b->relation))
 		return false;
-	if (!equalstr(a->funcname, b->funcname))
+	if (!equal(a->funcname, b->funcname))
 		return false;
 	if (!equal(a->args, b->args))
 		return false;
@@ -1253,7 +1249,7 @@ _equalCreatePLangStmt(CreatePLangStmt *a, CreatePLangStmt *b)
 {
 	if (!equalstr(a->plname, b->plname))
 		return false;
-	if (!equalstr(a->plhandler, b->plhandler))
+	if (!equal(a->plhandler, b->plhandler))
 		return false;
 	if (!equalstr(a->plcompiler, b->plcompiler))
 		return false;
@@ -1463,7 +1459,7 @@ _equalIdent(Ident *a, Ident *b)
 static bool
 _equalFuncCall(FuncCall *a, FuncCall *b)
 {
-	if (!equalstr(a->funcname, b->funcname))
+	if (!equal(a->funcname, b->funcname))
 		return false;
 	if (!equal(a->args, b->args))
 		return false;
@@ -1600,6 +1596,8 @@ static bool
 _equalIndexElem(IndexElem *a, IndexElem *b)
 {
 	if (!equalstr(a->name, b->name))
+		return false;
+	if (!equal(a->funcname, b->funcname))
 		return false;
 	if (!equal(a->args, b->args))
 		return false;

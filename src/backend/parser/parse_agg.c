@@ -8,12 +8,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.47 2002/03/21 16:00:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.48 2002/04/09 20:35:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
+#include "catalog/namespace.h"
 #include "catalog/pg_aggregate.h"
 #include "optimizer/clauses.h"
 #include "optimizer/tlist.h"
@@ -187,7 +188,7 @@ parseCheckAggregates(ParseState *pstate, Query *qry, Node *qual)
 
 
 Aggref *
-ParseAgg(ParseState *pstate, char *aggname, Oid basetype,
+ParseAgg(ParseState *pstate, List *aggname, Oid basetype,
 		 List *args, bool agg_star, bool agg_distinct)
 {
 	HeapTuple	aggtuple;
@@ -195,7 +196,7 @@ ParseAgg(ParseState *pstate, char *aggname, Oid basetype,
 	Aggref	   *aggref;
 
 	aggtuple = SearchSysCache(AGGNAME,
-							  PointerGetDatum(aggname),
+							  PointerGetDatum(strVal(llast(aggname))),
 							  ObjectIdGetDatum(basetype),
 							  0, 0);
 	/* shouldn't happen --- caller should have checked already */
@@ -218,7 +219,7 @@ ParseAgg(ParseState *pstate, char *aggname, Oid basetype,
 	 */
 
 	aggref = makeNode(Aggref);
-	aggref->aggname = pstrdup(aggname);
+	aggref->aggname = pstrdup(strVal(llast(aggname)));
 	aggref->basetype = aggform->aggbasetype;
 	aggref->aggtype = aggform->aggfinaltype;
 	aggref->target = lfirst(args);
@@ -237,7 +238,7 @@ ParseAgg(ParseState *pstate, char *aggname, Oid basetype,
  * basetype
  */
 void
-agg_error(char *caller, char *aggname, Oid basetypeID)
+agg_error(const char *caller, List *aggname, Oid basetypeID)
 {
 	/*
 	 * basetypeID that is Invalid (zero) means aggregate over all types.
@@ -246,8 +247,8 @@ agg_error(char *caller, char *aggname, Oid basetypeID)
 
 	if (basetypeID == InvalidOid)
 		elog(ERROR, "%s: aggregate '%s' for all types does not exist",
-			 caller, aggname);
+			 caller, NameListToString(aggname));
 	else
 		elog(ERROR, "%s: aggregate '%s' for type %s does not exist",
-			 caller, aggname, format_type_be(basetypeID));
+			 caller, NameListToString(aggname), format_type_be(basetypeID));
 }

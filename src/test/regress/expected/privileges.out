@@ -205,7 +205,7 @@ GRANT USAGE ON FUNCTION testfunc1(int) TO regressuser3; -- semantic error
 ERROR:  invalid privilege type USAGE for function object
 GRANT ALL PRIVILEGES ON FUNCTION testfunc1(int) TO regressuser4;
 GRANT ALL PRIVILEGES ON FUNCTION testfunc_nosuch(int) TO regressuser4;
-ERROR:  Function 'testfunc_nosuch(int4)' does not exist
+ERROR:  GRANT: function 'testfunc_nosuch(int4)' does not exist
 SET SESSION AUTHORIZATION regressuser2;
 SELECT testfunc1(5), testfunc2(5); -- ok
  testfunc1 | testfunc2 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.68 2002/04/05 00:31:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.69 2002/04/09 20:35:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -271,11 +271,11 @@ ProcedureCreate(const char *procedureName,
 	tupDesc = rel->rd_att;
 
 	/* Check for pre-existing definition */
-	oldtup = SearchSysCache(PROCNAME,
+	oldtup = SearchSysCache(PROCNAMENSP,
 							PointerGetDatum(procedureName),
 							UInt16GetDatum(parameterCount),
 							PointerGetDatum(typev),
-							0);
+							ObjectIdGetDatum(procNamespace));
 
 	if (HeapTupleIsValid(oldtup))
 	{

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_list.h,v 1.26 2001/11/05 17:46:34 momjian Exp $
+ * $Id: pg_list.h,v 1.27 2002/04/09 20:35:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,6 +109,8 @@ typedef struct List
  * function prototypes in nodes/list.c
  */
 extern int	length(List *list);
+extern void *llast(List *list);
+extern int	llasti(List *list);
 extern List *nconc(List *list1, List *list2);
 extern List *lcons(void *datum, List *list);
 extern List *lconsi(int datum, List *list);

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.168 2002/04/05 11:56:54 momjian Exp $
+ * $Id: parsenodes.h,v 1.169 2002/04/09 20:35:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -304,7 +304,7 @@ typedef struct Ident
 typedef struct FuncCall
 {
 	NodeTag		type;
-	char	   *funcname;		/* name of function */
+	List	   *funcname;		/* qualified name of function */
 	List	   *args;			/* the arguments (list of exprs) */
 	bool		agg_star;		/* argument was really '*' */
 	bool		agg_distinct;	/* arguments were labeled DISTINCT */
@@ -390,15 +390,16 @@ typedef struct RangeSubselect
 /*
  * IndexElem - index parameters (used in CREATE INDEX)
  *
- * For a plain index, each 'name' is an attribute name in the heap relation,
- * and 'args' is NIL.  For a functional index, only one IndexElem is allowed.
- * It has name = name of function and args = list of attribute names that
- * are the function's arguments.
+ * For a plain index, each 'name' is an attribute name in the heap relation;
+ * 'funcname' and 'args' are NIL.  For a functional index, only one IndexElem
+ * is allowed.  It has name = NULL, funcname = name of function and args =
+ * list of attribute names that are the function's arguments.
  */
 typedef struct IndexElem
 {
 	NodeTag		type;
-	char	   *name;			/* name of attribute to index, or function */
+	char	   *name;			/* name of attribute to index, or NULL */
+	List	   *funcname;		/* qualified name of function */
 	List	   *args;			/* list of names of function arguments */
 	char	   *class;			/* name of desired opclass; NULL = default */
 } IndexElem;
@@ -780,7 +781,7 @@ typedef struct PrivGrantee
 typedef struct FuncWithArgs
 {
 	NodeTag		type;
-	char	   *funcname;
+	List	   *funcname;		/* qualified name of function */
 	List	   *funcargs;		/* list of Typename nodes */
 } FuncWithArgs;
 
@@ -919,10 +920,10 @@ typedef struct FkConstraint
 typedef struct CreateTrigStmt
 {
 	NodeTag		type;
-	char	   *trigname;		/* TRIGGER' name */
-	RangeVar   *relation;		/* triggered relation */
-	char	   *funcname;		/* function to call (or NULL) */
-	List	   *args;			/* list of (T_String) Values or NULL */
+	char	   *trigname;		/* TRIGGER's name */
+	RangeVar   *relation;		/* relation trigger is on */
+	List	   *funcname;		/* qual. name of function to call */
+	List	   *args;			/* list of (T_String) Values or NIL */
 	bool		before;			/* BEFORE/AFTER */
 	bool		row;			/* ROW/STATEMENT */
 	char		actions[4];		/* Insert, Update, Delete */
@@ -954,7 +955,7 @@ typedef struct CreatePLangStmt
 {
 	NodeTag		type;
 	char	   *plname;			/* PL name */
-	char	   *plhandler;		/* PL call handler function */
+	List	   *plhandler;		/* PL call handler function (qual. name) */
 	char	   *plcompiler;		/* lancompiler text */
 	bool		pltrusted;		/* PL is trusted */
 } CreatePLangStmt;
@@ -1097,12 +1098,9 @@ typedef struct CommentStmt
 {
 	NodeTag		type;
 	int			objtype;		/* Object's type */
-	char	   *objschema;		/* Schema where object is defined,
-								 * if object is schema specific */
-	char	   *objname;		/* Name of the object */
-	char	   *objproperty;	/* Property Id (such as column) */
-	List	   *objlist;		/* Arguments for VAL objects */
-	char	   *comment;		/* The comment to insert */
+	List	   *objname;		/* Qualified name of the object */
+	List	   *objargs;		/* Arguments if needed (eg, for functions) */
+	char	   *comment;		/* Comment to insert, or NULL to remove */
 } CommentStmt;
 
 /* ----------------------
@@ -1154,7 +1152,7 @@ typedef struct ProcedureStmt
 {
 	NodeTag		type;
 	bool		replace;		/* T => replace if already exists */
-	List	   *funcname;		/* name of function to create */
+	List	   *funcname;		/* qualified name of function to create */
 	List	   *argTypes;		/* list of argument types (TypeName nodes) */
 	TypeName   *returnType;		/* the return type */
 	List	   *withClause;		/* a list of DefElem */
@@ -1169,7 +1167,7 @@ typedef struct ProcedureStmt
 typedef struct RemoveAggrStmt
 {
 	NodeTag		type;
-	char	   *aggname;		/* aggregate to drop */
+	List	   *aggname;		/* aggregate to drop */
 	TypeName   *aggtype;		/* TypeName for input datatype, or NULL */
 } RemoveAggrStmt;
 
@@ -1180,7 +1178,7 @@ typedef struct RemoveAggrStmt
 typedef struct RemoveFuncStmt
 {
 	NodeTag		type;
-	char	   *funcname;		/* function to drop */
+	List	   *funcname;		/* function to drop */
 	List	   *args;			/* types of the arguments */
 } RemoveFuncStmt;
 

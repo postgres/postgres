@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.64 2002/03/29 19:06:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.65 2002/04/09 20:35:47 tgl Exp $
  *
  * NOTES
  *	  these routines moved here from commands/define.c and somewhat cleaned up.
@@ -27,6 +27,7 @@
 #include "parser/parse_func.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
+#include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
 
@@ -42,13 +43,13 @@ static Oid OperatorShellMake(const char *operatorName,
 static void OperatorDef(const char *operatorName,
 			Oid leftTypeId,
 			Oid rightTypeId,
-			const char *procedureName,
+			List *procedureName,
 			uint16 precedence,
 			bool isLeftAssociative,
 			const char *commutatorName,
 			const char *negatorName,
-			const char *restrictionName,
-			const char *joinName,
+			List *restrictionName,
+			List *joinName,
 			bool canHash,
 			const char *leftSortName,
 			const char *rightSortName);
@@ -373,13 +374,13 @@ static void
 OperatorDef(const char *operatorName,
 			Oid leftTypeId,
 			Oid rightTypeId,
-			const char *procedureName,
+			List *procedureName,
 			uint16 precedence,
 			bool isLeftAssociative,
 			const char *commutatorName,
 			const char *negatorName,
-			const char *restrictionName,
-			const char *joinName,
+			List *restrictionName,
+			List *joinName,
 			bool canHash,
 			const char *leftSortName,
 			const char *rightSortName)
@@ -398,6 +399,7 @@ OperatorDef(const char *operatorName,
 	const char *name[4];
 	Oid			typeId[FUNC_MAX_ARGS];
 	int			nargs;
+	Oid			procOid;
 	NameData	oname;
 	TupleDesc	tupDesc;
 	ScanKeyData opKey[3];
@@ -456,19 +458,12 @@ OperatorDef(const char *operatorName,
 		typeId[1] = rightTypeId;
 		nargs = 2;
 	}
-	tup = SearchSysCache(PROCNAME,
-						 PointerGetDatum(procedureName),
-						 Int32GetDatum(nargs),
-						 PointerGetDatum(typeId),
-						 0);
-	if (!HeapTupleIsValid(tup))
+	procOid = LookupFuncName(procedureName, nargs, typeId);
+	if (!OidIsValid(procOid))
 		func_error("OperatorDef", procedureName, nargs, typeId, NULL);
 
-	values[Anum_pg_operator_oprcode - 1] = ObjectIdGetDatum(tup->t_data->t_oid);
-	values[Anum_pg_operator_oprresult - 1] = ObjectIdGetDatum(((Form_pg_proc)
-											GETSTRUCT(tup))->prorettype);
-
-	ReleaseSysCache(tup);
+	values[Anum_pg_operator_oprcode - 1] = ObjectIdGetDatum(procOid);
+	values[Anum_pg_operator_oprresult - 1] = ObjectIdGetDatum(get_func_rettype(procOid));
 
 	/*
 	 * find restriction estimator
@@ -483,11 +478,7 @@ OperatorDef(const char *operatorName,
 		typeId[2] = 0;			/* args list (opaque type) */
 		typeId[3] = INT4OID;	/* varRelid */
 
-		restOid = GetSysCacheOid(PROCNAME,
-								 PointerGetDatum(restrictionName),
-								 Int32GetDatum(4),
-								 PointerGetDatum(typeId),
-								 0);
+		restOid = LookupFuncName(restrictionName, 4, typeId);
 		if (!OidIsValid(restOid))
 			func_error("OperatorDef", restrictionName, 4, typeId, NULL);
 
@@ -508,11 +499,7 @@ OperatorDef(const char *operatorName,
 		typeId[1] = OIDOID;		/* operator OID */
 		typeId[2] = 0;			/* args list (opaque type) */
 
-		joinOid = GetSysCacheOid(PROCNAME,
-								 PointerGetDatum(joinName),
-								 Int32GetDatum(3),
-								 PointerGetDatum(typeId),
-								 0);
+		joinOid = LookupFuncName(joinName, 3, typeId);
 		if (!OidIsValid(joinOid))
 			func_error("OperatorDef", joinName, 3, typeId, NULL);
 
@@ -950,13 +937,13 @@ OperatorCreate(const char *operatorName,
 	OperatorDef(operatorName,
 				leftTypeId,
 				rightTypeId,
-				procedureName,
+				makeList1(makeString((char*) procedureName)), /* XXX */
 				precedence,
 				isLeftAssociative,
 				commutatorName,
 				negatorName,
-				restrictionName,
-				joinName,
+				restrictionName ? makeList1(makeString((char*) restrictionName)) : NIL,	/* XXX */
+				joinName ? makeList1(makeString((char*) joinName)) : NIL, /* XXX */
 				canHash,
 				leftSortName,
 				rightSortName);

@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.152 2002/03/29 19:06:09 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.153 2002/04/09 20:35:50 tgl Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -160,7 +160,7 @@ static void
 _outFuncCall(StringInfo str, FuncCall *node)
 {
 	appendStringInfo(str, "FUNCTION ");
-	_outToken(str, node->funcname);
+	_outNode(str, node->funcname);
 	appendStringInfo(str, " :args ");
 	_outNode(str, node->args);
 	appendStringInfo(str, " :agg_star %s :agg_distinct %s ",
@@ -213,6 +213,8 @@ _outIndexElem(StringInfo str, IndexElem *node)
 {
 	appendStringInfo(str, " INDEXELEM :name ");
 	_outToken(str, node->name);
+	appendStringInfo(str, " :funcname ");
+	_outNode(str, node->funcname);
 	appendStringInfo(str, " :args ");
 	_outNode(str, node->args);
 	appendStringInfo(str, " :class ");

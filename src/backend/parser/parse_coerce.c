@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.68 2002/03/20 19:44:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.69 2002/04/09 20:35:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -657,7 +657,8 @@ PreferredType(CATEGORY category, Oid type)
  *		Look for a coercion function between two types.
  *
  * A coercion function must be named after (the internal name of) its
- * result type, and must accept exactly the specified input type.
+ * result type, and must accept exactly the specified input type.  We
+ * also require it to be defined in the same namespace as its result type.
  *
  * This routine is also used to look for length-coercion functions, which
  * are similar but accept a second argument.  secondArgType is the type
@@ -669,14 +670,19 @@ PreferredType(CATEGORY category, Oid type)
 static Oid
 find_coercion_function(Oid targetTypeId, Oid inputTypeId, Oid secondArgType)
 {
-	char	   *funcname;
+	Type		targetType;
+	char	   *typname;
+	Oid			typnamespace;
 	Oid			oid_array[FUNC_MAX_ARGS];
 	int			nargs;
 	HeapTuple	ftup;
 	Form_pg_proc pform;
 	Oid			funcid;
 
-	funcname = typeidTypeName(targetTypeId);
+	targetType = typeidType(targetTypeId);
+	typname = NameStr(((Form_pg_type) GETSTRUCT(targetType))->typname);
+	typnamespace = ((Form_pg_type) GETSTRUCT(targetType))->typnamespace;
+
 	MemSet(oid_array, 0, FUNC_MAX_ARGS * sizeof(Oid));
 	oid_array[0] = inputTypeId;
 	if (OidIsValid(secondArgType))
@@ -687,22 +693,27 @@ find_coercion_function(Oid targetTypeId, Oid inputTypeId, Oid secondArgType)
 	else
 		nargs = 1;
 
-	ftup = SearchSysCache(PROCNAME,
-						  PointerGetDatum(funcname),
-						  Int32GetDatum(nargs),
+	ftup = SearchSysCache(PROCNAMENSP,
+						  CStringGetDatum(typname),
+						  Int16GetDatum(nargs),
 						  PointerGetDatum(oid_array),
-						  0);
+						  ObjectIdGetDatum(typnamespace));
 	if (!HeapTupleIsValid(ftup))
+	{
+		ReleaseSysCache(targetType);
 		return InvalidOid;
+	}
 	/* Make sure the function's result type is as expected, too */
 	pform = (Form_pg_proc) GETSTRUCT(ftup);
 	if (pform->prorettype != targetTypeId)
 	{
 		ReleaseSysCache(ftup);
+		ReleaseSysCache(targetType);
 		return InvalidOid;
 	}
 	funcid = ftup->t_data->t_oid;
 	ReleaseSysCache(ftup);
+	ReleaseSysCache(targetType);
 	return funcid;
 }
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.82 2002/04/05 11:56:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.83 2002/04/09 20:35:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -498,48 +498,34 @@ FigureColnameInternal(Node *node, char **name)
 			return 2;
 		case T_ColumnRef:
 			{
-				List	   *fields = ((ColumnRef *) node)->fields;
+				char	 *cname = strVal(llast(((ColumnRef *) node)->fields));
 
-				while (lnext(fields) != NIL)
-					fields = lnext(fields);
-				if (strcmp(strVal(lfirst(fields)), "*") != 0)
+				if (strcmp(cname, "*") != 0)
 				{
-					*name = strVal(lfirst(fields));
+					*name = cname;
 					return 2;
 				}
 			}
 			break;
 		case T_ExprFieldSelect:
 			{
-				List	   *fields = ((ExprFieldSelect *) node)->fields;
+				char	 *fname = strVal(llast(((ExprFieldSelect *) node)->fields));
 
-				if (fields)
+				if (strcmp(fname, "*") != 0)
 				{
-					while (lnext(fields) != NIL)
-						fields = lnext(fields);
-					if (strcmp(strVal(lfirst(fields)), "*") != 0)
-					{
-						*name = strVal(lfirst(fields));
-						return 2;
-					}
+					*name = fname;
+					return 2;
 				}
 			}
 			break;
 		case T_FuncCall:
-			*name = ((FuncCall *) node)->funcname;
+			*name = strVal(llast(((FuncCall *) node)->funcname));
 			return 2;
 		case T_A_Const:
 			if (((A_Const *) node)->typename != NULL)
 			{
-				List	   *names = ((A_Const *) node)->typename->names;
-
-				if (names != NIL)
-				{
-					while (lnext(names) != NIL)
-						names = lnext(names);
-					*name = strVal(lfirst(names));
-					return 1;
-				}
+				*name = strVal(llast(((A_Const *) node)->typename->names));
+				return 1;
 			}
 			break;
 		case T_TypeCast:
@@ -549,15 +535,8 @@ FigureColnameInternal(Node *node, char **name)
 			{
 				if (((TypeCast *) node)->typename != NULL)
 				{
-					List	   *names = ((TypeCast *) node)->typename->names;
-
-					if (names != NIL)
-					{
-						while (lnext(names) != NIL)
-							names = lnext(names);
-						*name = strVal(lfirst(names));
-						return 1;
-					}
+					*name = strVal(llast(((TypeCast *) node)->typename->names));
+					return 1;
 				}
 			}
 			break;

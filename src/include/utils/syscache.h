@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: syscache.h,v 1.42 2002/04/06 06:59:25 tgl Exp $
+ * $Id: syscache.h,v 1.43 2002/04/09 20:35:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,7 +49,7 @@
 #define NAMESPACEOID	18
 #define OPERNAME		19
 #define OPEROID			20
-#define PROCNAME		21
+#define PROCNAMENSP		21
 #define PROCOID			22
 #define RELNAMENSP		23
 #define RELOID			24

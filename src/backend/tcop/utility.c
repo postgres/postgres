@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.145 2002/04/01 04:35:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.146 2002/04/09 20:35:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -345,12 +345,7 @@ ProcessUtility(Node *parsetree,
 			break;
 
 		case T_CommentStmt:
-			{
-				CommentStmt *stmt = (CommentStmt *) parsetree;
-
-				CommentObject(stmt->objtype, stmt->objschema, stmt->objname,
-							  stmt->objproperty, stmt->objlist, stmt->comment);
-			}
+			CommentObject((CommentStmt *) parsetree);
 			break;
 
 		case T_CopyStmt:

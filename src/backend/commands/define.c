@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.73 2002/04/05 00:31:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.74 2002/04/09 20:35:47 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -60,9 +60,10 @@
 #include "utils/syscache.h"
 
 
-static Oid	findTypeIOFunction(const char *procname, bool isOutput);
+static Oid	findTypeIOFunction(List *procname, bool isOutput);
 static char *defGetString(DefElem *def);
 static double defGetNumeric(DefElem *def);
+static List *defGetQualifiedName(DefElem *def);
 static TypeName *defGetTypeName(DefElem *def);
 static int	defGetTypeLength(DefElem *def);
 
@@ -474,8 +475,8 @@ DefineAggregate(List *names, List *parameters)
 {
 	char	   *aggName;
 	Oid			aggNamespace;
-	char	   *transfuncName = NULL;
-	char	   *finalfuncName = NULL;
+	List	   *transfuncName = NIL;
+	List	   *finalfuncName = NIL;
 	TypeName   *baseType = NULL;
 	TypeName   *transType = NULL;
 	char	   *initval = NULL;
@@ -495,11 +496,11 @@ DefineAggregate(List *names, List *parameters)
 		 * spellings for sfunc, stype, initcond.
 		 */
 		if (strcasecmp(defel->defname, "sfunc") == 0)
-			transfuncName = defGetString(defel);
+			transfuncName = defGetQualifiedName(defel);
 		else if (strcasecmp(defel->defname, "sfunc1") == 0)
-			transfuncName = defGetString(defel);
+			transfuncName = defGetQualifiedName(defel);
 		else if (strcasecmp(defel->defname, "finalfunc") == 0)
-			finalfuncName = defGetString(defel);
+			finalfuncName = defGetQualifiedName(defel);
 		else if (strcasecmp(defel->defname, "basetype") == 0)
 			baseType = defGetTypeName(defel);
 		else if (strcasecmp(defel->defname, "stype") == 0)
@@ -522,7 +523,7 @@ DefineAggregate(List *names, List *parameters)
 		elog(ERROR, "Define: \"basetype\" unspecified");
 	if (transType == NULL)
 		elog(ERROR, "Define: \"stype\" unspecified");
-	if (transfuncName == NULL)
+	if (transfuncName == NIL)
 		elog(ERROR, "Define: \"sfunc\" unspecified");
 
 	/*
@@ -800,10 +801,10 @@ DefineType(List *names, List *parameters)
 	int16		internalLength = -1;	/* int2 */
 	int16		externalLength = -1;	/* int2 */
 	Oid			elemType = InvalidOid;
-	char	   *inputName = NULL;
-	char	   *outputName = NULL;
-	char	   *sendName = NULL;
-	char	   *receiveName = NULL;
+	List	   *inputName = NIL;
+	List	   *outputName = NIL;
+	List	   *sendName = NIL;
+	List	   *receiveName = NIL;
 	char	   *defaultValue = NULL;
 	bool		byValue = false;
 	char		delimiter = DEFAULT_TYPDELIM;
@@ -838,13 +839,13 @@ DefineType(List *names, List *parameters)
 		else if (strcasecmp(defel->defname, "externallength") == 0)
 			externalLength = defGetTypeLength(defel);
 		else if (strcasecmp(defel->defname, "input") == 0)
-			inputName = defGetString(defel);
+			inputName = defGetQualifiedName(defel);
 		else if (strcasecmp(defel->defname, "output") == 0)
-			outputName = defGetString(defel);
+			outputName = defGetQualifiedName(defel);
 		else if (strcasecmp(defel->defname, "send") == 0)
-			sendName = defGetString(defel);
+			sendName = defGetQualifiedName(defel);
 		else if (strcasecmp(defel->defname, "receive") == 0)
-			receiveName = defGetString(defel);
+			receiveName = defGetQualifiedName(defel);
 		else if (strcasecmp(defel->defname, "delimiter") == 0)
 		{
 			char	   *p = defGetString(defel);
@@ -909,9 +910,9 @@ DefineType(List *names, List *parameters)
 	/*
 	 * make sure we have our required definitions
 	 */
-	if (inputName == NULL)
+	if (inputName == NIL)
 		elog(ERROR, "Define: \"input\" unspecified");
-	if (outputName == NULL)
+	if (outputName == NIL)
 		elog(ERROR, "Define: \"output\" unspecified");
 
 	/* Convert I/O proc names to OIDs */
@@ -989,7 +990,7 @@ DefineType(List *names, List *parameters)
 }
 
 static Oid
-findTypeIOFunction(const char *procname, bool isOutput)
+findTypeIOFunction(List *procname, bool isOutput)
 {
 	Oid			argList[FUNC_MAX_ARGS];
 	int			nargs;
@@ -1001,11 +1002,7 @@ findTypeIOFunction(const char *procname, bool isOutput)
 	 */
 	MemSet(argList, 0, FUNC_MAX_ARGS * sizeof(Oid));
 
-	procOid = GetSysCacheOid(PROCNAME,
-							 PointerGetDatum(procname),
-							 Int32GetDatum(1),
-							 PointerGetDatum(argList),
-							 0);
+	procOid = LookupFuncName(procname, 1, argList);
 
 	if (!OidIsValid(procOid))
 	{
@@ -1028,11 +1025,7 @@ findTypeIOFunction(const char *procname, bool isOutput)
 			argList[1] = OIDOID;
 			argList[2] = INT4OID;
 		}
-		procOid = GetSysCacheOid(PROCNAME,
-								 PointerGetDatum(procname),
-								 Int32GetDatum(nargs),
-								 PointerGetDatum(argList),
-								 0);
+		procOid = LookupFuncName(procname, nargs, argList);
 
 		if (!OidIsValid(procOid))
 			func_error("TypeCreate", procname, 1, argList, NULL);
@@ -1092,6 +1085,26 @@ defGetNumeric(DefElem *def)
 				 def->defname);
 	}
 	return 0;					/* keep compiler quiet */
+}
+
+static List *
+defGetQualifiedName(DefElem *def)
+{
+	if (def->arg == NULL)
+		elog(ERROR, "Define: \"%s\" requires a parameter",
+			 def->defname);
+	switch (nodeTag(def->arg))
+	{
+		case T_TypeName:
+			return ((TypeName *) def->arg)->names;
+		case T_String:
+			/* Allow quoted name for backwards compatibility */
+			return makeList1(def->arg);
+		default:
+			elog(ERROR, "Define: argument of \"%s\" must be a name",
+				 def->defname);
+	}
+	return NIL;					/* keep compiler quiet */
 }
 
 static TypeName *

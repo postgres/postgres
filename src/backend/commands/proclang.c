@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/proclang.c,v 1.29 2002/02/18 23:11:11 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/proclang.c,v 1.30 2002/04/09 20:35:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,12 +18,15 @@
 #include "access/heapam.h"
 #include "catalog/catname.h"
 #include "catalog/indexing.h"
+#include "catalog/namespace.h"
 #include "catalog/pg_language.h"
 #include "catalog/pg_proc.h"
 #include "commands/proclang.h"
 #include "fmgr.h"
 #include "miscadmin.h"
+#include "parser/parse_func.h"
 #include "utils/builtins.h"
+#include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
 
@@ -50,15 +53,13 @@ void
 CreateProceduralLanguage(CreatePLangStmt *stmt)
 {
 	char		languageName[NAMEDATALEN];
-	HeapTuple	procTup;
-
+	Oid			procOid;
 	Oid			typev[FUNC_MAX_ARGS];
 	char		nulls[Natts_pg_language];
 	Datum		values[Natts_pg_language];
 	Relation	rel;
 	HeapTuple	tup;
 	TupleDesc	tupDesc;
-
 	int			i;
 
 	/*
@@ -83,18 +84,14 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 	 * Lookup the PL handler function and check that it is of return type
 	 * Opaque
 	 */
-	memset(typev, 0, sizeof(typev));
-	procTup = SearchSysCache(PROCNAME,
-							 PointerGetDatum(stmt->plhandler),
-							 Int32GetDatum(0),
-							 PointerGetDatum(typev),
-							 0);
-	if (!HeapTupleIsValid(procTup))
+	MemSet(typev, 0, sizeof(typev));
+	procOid = LookupFuncName(stmt->plhandler, 0, typev);
+	if (!OidIsValid(procOid))
 		elog(ERROR, "PL handler function %s() doesn't exist",
-			 stmt->plhandler);
-	if (((Form_pg_proc) GETSTRUCT(procTup))->prorettype != InvalidOid)
+			 NameListToString(stmt->plhandler));
+	if (get_func_rettype(procOid) != InvalidOid)
 		elog(ERROR, "PL handler function %s() isn't of return type Opaque",
-			 stmt->plhandler);
+			 NameListToString(stmt->plhandler));
 
 	/*
 	 * Insert the new language into pg_language
@@ -109,12 +106,10 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 	values[i++] = PointerGetDatum(languageName);
 	values[i++] = BoolGetDatum(true);	/* lanispl */
 	values[i++] = BoolGetDatum(stmt->pltrusted);
-	values[i++] = ObjectIdGetDatum(procTup->t_data->t_oid);
+	values[i++] = ObjectIdGetDatum(procOid);
 	values[i++] = DirectFunctionCall1(textin,
 									  CStringGetDatum(stmt->plcompiler));
 	nulls[i] = 'n';				/* lanacl */
-
-	ReleaseSysCache(procTup);
 
 	rel = heap_openr(LanguageRelationName, RowExclusiveLock);
 
