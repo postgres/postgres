@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.149 2001/05/15 03:49:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.150 2001/05/16 22:36:03 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -228,7 +228,6 @@ ConstructTupleDescriptor(Relation heapRelation,
 
 		if (!AttrNumberIsForUserDefinedAttr(atnum))
 		{
-
 			/*
 			 * here we are indexing on a system attribute (-1...-n)
 			 */
@@ -236,7 +235,6 @@ ConstructTupleDescriptor(Relation heapRelation,
 		}
 		else
 		{
-
 			/*
 			 * here we are indexing on a normal attribute (1...n)
 			 */

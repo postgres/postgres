@@ -2336,7 +2336,7 @@ SQLStatistics(
 				 */
 				set_tuplefield_int2(&row->tuple[6], (Int2)
 					(atoi(isclustered) ? SQL_INDEX_CLUSTERED :
-					(!strncmp(ishash, "hash", 4)) ? SQL_INDEX_HASHED : SQL_INDEX_OTHER);
+					(!strncmp(ishash, "hash", 4)) ? SQL_INDEX_HASHED : SQL_INDEX_OTHER));
 				set_tuplefield_int2(&row->tuple[7], (Int2) (i + 1));
 
 				if (fields_vector[i] == OID_ATTNUM)
