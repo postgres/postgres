@@ -10,16 +10,13 @@
  * didn't really belong there.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-print.c,v 1.38 2000/05/29 21:25:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-print.c,v 1.39 2001/01/06 17:43:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include <signal.h>
-#include "libpq-fe.h"
-#include "libpq-int.h"
-#include "pqsignal.h"
 
 #ifdef WIN32
 #include "win32.h"
@@ -36,17 +33,9 @@
 #endif
 #endif
 
-#ifdef TIOCGWINSZ
-static struct winsize screen_size;
-
-#else
-static struct winsize
-{
-	int			ws_row;
-	int			ws_col;
-}			screen_size;
-
-#endif
+#include "libpq-fe.h"
+#include "libpq-int.h"
+#include "pqsignal.h"
 
 
 static void do_field(const PQprintOpt *po, const PGresult *res,
@@ -103,6 +92,15 @@ PQprint(FILE *fout,
 		int			usePipe = 0;
 		pqsigfunc	oldsigpipehandler = NULL;
 		char	   *pagerenv;
+#ifdef TIOCGWINSZ
+		struct winsize screen_size;
+#else
+		struct winsize
+		{
+			int			ws_row;
+			int			ws_col;
+		}			screen_size;
+#endif
 
 		nTups = PQntuples(res);
 		if (!(fieldNames = (const char **) calloc(nFields, sizeof(char *))))
@@ -151,17 +149,21 @@ PQprint(FILE *fout,
 #endif
 			)
 		{
-			/* try to pipe to the pager program if possible */
+			/*
+			 * If we think there'll be more than one screen of output,
+			 * try to pipe to the pager program.
+			 */
 #ifdef TIOCGWINSZ
 			if (ioctl(fileno(stdout), TIOCGWINSZ, &screen_size) == -1 ||
 				screen_size.ws_col == 0 ||
 				screen_size.ws_row == 0)
 			{
-#endif
 				screen_size.ws_row = 24;
 				screen_size.ws_col = 80;
-#ifdef TIOCGWINSZ
 			}
+#else
+			screen_size.ws_row = 24;
+			screen_size.ws_col = 80;
 #endif
 			pagerenv = getenv("PAGER");
 			if (pagerenv != NULL &&
