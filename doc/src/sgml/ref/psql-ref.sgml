@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.72 2002/08/16 20:34:06 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.73 2002/08/23 01:27:44 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -835,6 +835,15 @@ testdb=>
         <literal>\df+</literal> is used, additional information about
         each function, including language and description, is shown.
         </para>
+
+        <note>
+        <para>
+        To reduce clutter, <literal>\df</> does not show datatype I/O
+	functions.  This is implemented by ignoring functions that accept
+	or return type <type>cstring</>.
+        </para>
+        </note>
+
         </listitem>
       </varlistentry>
 
