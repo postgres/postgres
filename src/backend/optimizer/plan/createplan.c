@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.68 1999/08/09 06:20:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.69 1999/08/10 02:58:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -426,55 +426,55 @@ create_nestloop_node(NestPath *best_path,
 					 Plan *inner_node,
 					 List *inner_tlist)
 {
-	NestLoop   *join_node = (NestLoop *) NULL;
+	NestLoop   *join_node;
 
 	if (IsA(inner_node, IndexScan))
 	{
-
 		/*
 		 * An index is being used to reduce the number of tuples scanned
-		 * in the inner relation. There will never be more than one index
-		 * used in the inner scan path, so we need only consider the first
-		 * set of qualifications in indxqual.
+		 * in the inner relation.  If there are join clauses being used
+		 * with the index, we must update their outer-rel var nodes to
+		 * refer to the outer relation.
 		 *
-		 * But there may be more than one clause in this "first set" in the
-		 * case of multi-column indices. - vadim 03/18/97
-		 */
-
-		List	   *inner_indxqual = lfirst(((IndexScan *) inner_node)->indxqual);
-		List	   *inner_qual;
-		bool		found = false;
-
-		foreach(inner_qual, inner_indxqual)
-		{
-			if (!qual_clause_p((Node *) lfirst(inner_qual)))
-			{
-				found = true;
-				break;
-			}
-		}
-
-		/*
-		 * If we have in fact found a join index qualification, remove
-		 * these index clauses from the nestloop's join clauses and reset
-		 * the inner(index) scan's qualification so that the var nodes
-		 * refer to the proper outer join relation attributes.
+		 * We can also remove those join clauses from the list of clauses
+		 * that have to be checked as qpquals at the join node, but only
+		 * if there's just one indexscan in the inner path (otherwise,
+		 * several different sets of clauses are being ORed together).
 		 *
-		 * XXX Removing index clauses doesn't work properly: 1.
-		 * fix_indxqual_references may change varattno-s in
-		 * inner_indxqual; 2. clauses may be commuted I havn't time to fix
-		 * it at the moment.   - vadim 04/24/97
+		 * Note: if the index is lossy, the same clauses may also be getting
+		 * checked as qpquals in the indexscan.  We can still remove them
+		 * from the nestloop's qpquals, but we gotta update the outer-rel
+		 * vars in the indexscan's qpquals too...
+		 *
+		 * XXX as of 8/99, removal of redundant joinclauses doesn't work
+		 * all the time, since it will fail to recognize clauses that have
+		 * been commuted in the indexqual.  I hope to make this problem go
+		 * away soon by not commuting indexqual clauses --- tgl.
 		 */
-		if (found)
-		{
-			List	   *new_inner_qual;
+		IndexScan  *innerscan = (IndexScan *) inner_node;
+		List	   *indxqualorig = innerscan->indxqualorig;
 
-			clauses = set_difference(clauses, inner_indxqual);	/* XXX */
+		/* No work needed if indxqual refers only to its own relation... */
+		if (NumRelids((Node *) indxqualorig) > 1)
+		{
+			/* Remove redundant tests from my clauses, if possible.
+			 * Note we must compare against indxqualorig not the "fixed"
+			 * indxqual (which has index attnos instead of relation attnos).
+			 */
+			if (length(indxqualorig) == 1) /* single indexscan? */
+				clauses = set_difference(clauses, lfirst(indxqualorig));
+
 			/* only refs to outer vars get changed in the inner indexqual */
-			new_inner_qual = join_references(inner_indxqual,
-											 outer_tlist,
-											 NIL);
-			((IndexScan *) inner_node)->indxqual = lcons(new_inner_qual, NIL);
+			innerscan->indxqualorig = join_references(indxqualorig,
+													  outer_tlist,
+													  NIL);
+			innerscan->indxqual = join_references(innerscan->indxqual,
+												  outer_tlist,
+												  NIL);
+			if (NumRelids((Node *) inner_node->qual) > 1)
+				inner_node->qual = join_references(inner_node->qual,
+												   outer_tlist,
+												   NIL);
 		}
 	}
 	else if (IsA_Join(inner_node))
@@ -512,10 +512,10 @@ create_mergejoin_node(MergePath *best_path,
 			   *mergeclauses;
 	MergeJoin  *join_node;
 
-
 	/*
-	 * Separate the mergeclauses from the other join qualification clauses
-	 * and set those clauses to contain references to lower attributes.
+	 * Remove the mergeclauses from the list of join qual clauses,
+	 * leaving the list of quals that must be checked as qpquals.
+	 * Set those clauses to contain INNER/OUTER var references.
 	 */
 	qpqual = join_references(set_difference(clauses,
 											best_path->path_mergeclauses),
@@ -571,14 +571,6 @@ create_mergejoin_node(MergePath *best_path,
 	return join_node;
 }
 
-/*
- * create_hashjoin_node--						XXX HASH
- *
- *	  Returns a new hashjoin node.
- *
- *	  XXX hash join ops are totally bogus -- how the hell do we choose
- *		these??  at runtime?  what about a hash index?
- */
 static HashJoin *
 create_hashjoin_node(HashPath *best_path,
 					 List *tlist,
@@ -595,8 +587,16 @@ create_hashjoin_node(HashPath *best_path,
 	Var		   *innerhashkey;
 
 	/*
-	 * Separate the hashclauses from the other join qualification clauses
-	 * and set those clauses to contain references to lower attributes.
+	 * NOTE: there will always be exactly one hashclause in the list
+	 * best_path->path_hashclauses (cf. hash_inner_and_outer()).
+	 * We represent it as a list anyway for convenience with routines
+	 * that want to work on lists of clauses.
+	 */
+
+	/*
+	 * Remove the hashclauses from the list of join qual clauses,
+	 * leaving the list of quals that must be checked as qpquals.
+	 * Set those clauses to contain INNER/OUTER var references.
 	 */
 	qpqual = join_references(set_difference(clauses,
 											best_path->path_hashclauses),
@@ -611,8 +611,12 @@ create_hashjoin_node(HashPath *best_path,
 											   outer_tlist,
 											   inner_tlist));
 
+	/* Now the righthand op of the sole hashclause is the inner hash key. */
 	innerhashkey = get_rightop(lfirst(hashclauses));
 
+	/*
+	 * Build the hash node and hash join node.
+	 */
 	hash_node = make_hash(inner_tlist, innerhashkey, inner_node);
 	join_node = make_hashjoin(tlist,
 							  qpqual,
@@ -791,7 +795,7 @@ switch_outer(List *clauses)
 		Assert(is_opclause((Node *) clause));
 		op = (Node *) get_rightop(clause);
 		Assert(op != (Node *) NULL);
-		if (IsA(op, ArrayRef))
+		if (IsA(op, ArrayRef))	/* I think this test is dead code ... tgl */
 			op = ((ArrayRef *) op)->refexpr;
 		Assert(IsA(op, Var));
 		if (var_is_outer((Var *) op))
