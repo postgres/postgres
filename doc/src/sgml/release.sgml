@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.163.2.13 2003/07/23 04:09:52 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.163.2.14 2003/07/23 22:59:39 momjian Exp $
 -->
 
 <appendix id="release">
@@ -32,7 +32,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.163.2.13 2003/07/23 04:09:
 
     <para>
 <literallayout>
-Fix rare possibility of recovery failure after a system crash (Tom)
+Prevent rare possibility of server startup failure (Tom)
 Fix bugs in interval-to-time conversion (Tom)
 Add constraint names in a few places in pg_dump (Rod)
 Improve performance of functions with many parameters (Tom)

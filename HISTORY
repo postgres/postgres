@@ -15,7 +15,7 @@
 
                                   Changes
 
-   Fix rare possibility of recovery failure after a system crash (Tom)
+   Prevent rare possibility of server startup failure (Tom)
    Fix bugs in interval-to-time conversion (Tom)
    Add constraint names in a few places in pg_dump (Rod)
    Improve performance of functions with many parameters (Tom)
