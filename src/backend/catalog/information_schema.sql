@@ -4,7 +4,7 @@
  *
  * Copyright 2002, PostgreSQL Global Development Group
  *
- * $Id: information_schema.sql,v 1.8 2003/06/11 09:23:55 petere Exp $
+ * $Id: information_schema.sql,v 1.9 2003/06/17 18:00:48 petere Exp $
  */
 
 
@@ -78,13 +78,14 @@ CREATE VIEW check_constraints AS
            CAST(con.consrc AS character_data) AS check_clause
     FROM pg_namespace rs,
          pg_constraint con
-           LEFT OUTER JOIN pg_class c on (c.oid = con.conrelid)
-           LEFT OUTER JOIN pg_type t on (t.oid = con.contypid),
+           LEFT OUTER JOIN pg_class c ON (c.oid = con.conrelid)
+           LEFT OUTER JOIN pg_type t ON (t.oid = con.contypid),
          pg_user u
     WHERE rs.oid = con.connamespace
           AND u.usesysid = coalesce(c.relowner, t.typowner)
           AND u.usename = current_user
-          AND con.contype = 'c';
+          AND con.contype = 'c'
+          AND c.relkind = 'r';
 
 GRANT SELECT ON check_constraints TO PUBLIC;
 
@@ -106,9 +107,15 @@ CREATE VIEW column_domain_usage AS
     FROM pg_type t, pg_namespace nt, pg_class c, pg_namespace nc,
          pg_attribute a, pg_user u
 
-    WHERE t.typnamespace = nt.oid AND t.typtype = 'd'
-          AND c.relnamespace = nc.oid AND a.attrelid = c.oid
-          AND a.atttypid = t.oid AND t.typowner = u.usesysid
+    WHERE t.typnamespace = nt.oid
+          AND c.relnamespace = nc.oid
+          AND a.attrelid = c.oid
+          AND a.atttypid = t.oid
+          AND t.typowner = u.usesysid
+          AND t.typtype = 'd'
+          AND c.relkind IN ('r', 'v')
+          AND a.attnum > 0
+          AND NOT a.attisdropped
           AND u.usename = current_user;
 
 GRANT SELECT ON column_domain_usage TO PUBLIC;
@@ -119,21 +126,68 @@ GRANT SELECT ON column_domain_usage TO PUBLIC;
  * COLUMN_PRIVILEGES
  */
 
--- PostgreSQL does not have column privileges, so this view is empty.
--- (Table privileges do not also count as column privileges.)
-
 CREATE VIEW column_privileges AS
-    SELECT CAST(null AS sql_identifier) AS grantor,
-           CAST(null AS sql_identifier) AS grantee,
-           CAST(null AS sql_identifier) AS table_catalog,
-           CAST(null AS sql_identifier) AS table_schema,
-           CAST(null AS sql_identifier) AS table_name,
-           CAST(null AS sql_identifier) AS column_name,
-           CAST(null AS character_data) AS privilege_type,
-           CAST(null AS character_data) AS is_grantable
-    WHERE false;
+    SELECT CAST(u_grantor.usename AS sql_identifier) AS grantor,
+           CAST(u_grantee.usename AS sql_identifier) AS grantee,
+           CAST(current_database() AS sql_identifier) AS table_catalog,
+           CAST(nc.nspname AS sql_identifier) AS table_schema,
+           CAST(c.relname AS sql_identifier) AS table_name,
+           CAST(a.attname AS sql_identifier) AS column_name,
+           CAST(pr.type AS character_data) AS privilege_type,
+           CAST(
+             CASE WHEN aclcontains(c.relacl,
+                                   makeaclitem(u_grantee.usesysid, 0, u_grantor.usesysid, pr.type, true))
+                  THEN 'YES' ELSE 'NO' END AS character_data) AS is_grantable
+
+    FROM pg_attribute a,
+         pg_class c,
+         pg_namespace nc,
+         pg_user u_grantor,
+         (SELECT usesysid, usename FROM pg_user UNION SELECT 0, 'PUBLIC') AS u_grantee,
+         (SELECT 'SELECT' UNION SELECT 'DELETE' UNION SELECT 'INSERT' UNION SELECT 'UPDATE'
+          UNION SELECT 'REFERENCES' UNION SELECT 'TRIGGER') AS pr (type)
+
+    WHERE a.attrelid = c.oid
+          AND c.relnamespace = nc.oid
+          AND a.attnum > 0
+          AND NOT a.attisdropped
+          AND c.relkind IN ('r', 'v')
+          AND aclcontains(c.relacl,
+                          makeaclitem(u_grantee.usesysid, 0, u_grantor.usesysid, pr.type, false))
+          AND (u_grantor.usename = current_user
+               OR u_grantee.usename = current_user
+               OR u_grantee.usename = 'PUBLIC');
 
 GRANT SELECT ON column_privileges TO PUBLIC;
+
+
+/*
+ * 20.17
+ * COLUMN_UDT_USAGE view
+ */
+
+CREATE VIEW column_udt_usage AS
+    SELECT CAST(current_database() AS sql_identifier) AS udt_catalog,
+           CAST(coalesce(nbt.nspname, nt.nspname) AS sql_identifier) AS udt_schema,
+           CAST(coalesce(bt.typname, t.typname) AS sql_identifier) AS udt_name,
+           CAST(current_database() AS sql_identifier) AS table_catalog,
+           CAST(nc.nspname AS sql_identifier) AS table_schema,
+           CAST(c.relname AS sql_identifier) AS table_name,
+           CAST(a.attname AS sql_identifier) AS column_name
+
+    FROM pg_attribute a, pg_class c, pg_namespace nc, pg_user u,
+         (pg_type t JOIN pg_namespace nt ON (t.typnamespace = nt.oid))
+           LEFT JOIN (pg_type bt JOIN pg_namespace nbt ON (bt.typnamespace = nbt.oid))
+           ON (t.typtype = 'd' AND t.typbasetype = bt.oid)
+
+    WHERE a.attrelid = c.oid
+          AND a.atttypid = t.oid
+          AND u.usesysid = coalesce(bt.typowner, t.typowner)
+          AND nc.oid = c.relnamespace
+          AND a.attnum > 0 AND NOT a.attisdropped AND c.relkind in ('r', 'v')
+          AND u.usename = current_user;
+
+GRANT SELECT ON column_udt_usage TO PUBLIC;
 
 
 /*
@@ -305,9 +359,6 @@ GRANT SELECT ON columns TO PUBLIC;
  * CONSTRAINT_COLUMN_USAGE view
  */
 
--- FIXME: This only works for check constraints so far; for the others
--- we need a built-in way to convert arrays to virtual tables.
-
 CREATE VIEW constraint_column_usage AS
     SELECT CAST(current_database() AS sql_identifier) AS table_catalog,
            CAST(tblschema AS sql_identifier) AS table_schema,
@@ -318,6 +369,7 @@ CREATE VIEW constraint_column_usage AS
            CAST(cstrname AS sql_identifier) AS constraint_name
 
     FROM (
+        /* check constraints */
         SELECT DISTINCT nr.nspname, r.relname, r.relowner, a.attname, nc.nspname, c.conname
           FROM pg_namespace nr, pg_class r, pg_attribute a, pg_depend d, pg_namespace nc, pg_constraint c
           WHERE nr.oid = r.relnamespace
@@ -329,6 +381,33 @@ CREATE VIEW constraint_column_usage AS
             AND d.objid = c.oid
             AND c.connamespace = nc.oid
             AND c.contype = 'c'
+            AND r.relkind = 'r'
+            AND a.attnum > 0
+            AND NOT a.attisdropped
+
+        UNION
+
+        /* unique/primary key/foreign key constraints */
+        SELECT nr.nspname, r.relname, r.relowner, a.attname, nc.nspname, c.conname
+          FROM pg_namespace nr, pg_class r, pg_attribute a, pg_namespace nc, pg_constraint c,
+            (select 1 union select 2 union select 3 union select 4 union select 5 union
+             select 6 union select 7 union select 8 union select 9 union select 10 union
+             select 11 union select 12 union select 13 union select 14 union select 15 union
+             select 16 union select 17 union select 18 union select 19 union select 20 union
+             select 21 union select 22 union select 23 union select 24 union select 25 union
+             select 26 union select 27 union select 28 union select 29 union select 30 union
+             select 31 union select 32) AS pos(n)
+          WHERE nr.oid = r.relnamespace
+            AND r.oid = a.attrelid
+            AND r.oid = c.conrelid
+            AND nc.oid = c.connamespace
+            AND (CASE WHEN c.contype = 'f' THEN c.confkey[pos.n] = a.attnum
+                      ELSE c.conkey[pos.n] = a.attnum END)
+            AND a.attnum > 0
+            AND NOT a.attisdropped
+            AND c.contype IN ('p', 'u', 'f')
+            AND r.relkind = 'r'
+
       ) AS x (tblschema, tblname, tblowner, colname, cstrschema, cstrname),
       pg_user u
 
@@ -357,6 +436,7 @@ CREATE VIEW constraint_table_usage AS
     WHERE c.connamespace = nc.oid AND r.relnamespace = nr.oid
           AND ( (c.contype = 'f' AND c.confrelid = r.oid)
              OR (c.contype IN ('p', 'u') AND c.conrelid = r.oid) )
+          AND r.relkind = 'r'
           AND r.relowner = u.usesysid AND u.usename = current_user;
 
 GRANT SELECT ON constraint_table_usage TO PUBLIC;
@@ -386,6 +466,33 @@ CREATE VIEW domain_constraints AS
           AND t.oid = con.contypid;
 
 GRANT SELECT ON domain_constraints TO PUBLIC;
+
+
+/*
+ * 20.25
+ * DOMAIN_UDT_USAGE view
+ */
+
+CREATE VIEW domain_udt_usage AS
+    SELECT CAST(current_database() AS sql_identifier) AS udt_catalog,
+           CAST(nbt.nspname AS sql_identifier) AS udt_schema,
+           CAST(bt.typname AS sql_identifier) AS udt_name,
+           CAST(current_database() AS sql_identifier) AS domain_catalog,
+           CAST(nt.nspname AS sql_identifier) AS domain_schema,
+           CAST(t.typname AS sql_identifier) AS domain_name
+
+    FROM pg_type t, pg_namespace nt,
+         pg_type bt, pg_namespace nbt,
+         pg_user u
+
+    WHERE t.typnamespace = nt.oid
+          AND t.typbasetype = bt.oid
+          AND bt.typnamespace = nbt.oid
+          AND t.typtype = 'd'
+          AND bt.typowner = u.usesysid
+          AND u.usename = current_user;
+
+GRANT SELECT ON domain_udt_usage TO PUBLIC;
 
 
 /*
@@ -485,6 +592,46 @@ CREATE VIEW domains AS
           AND t.typtype = 'd';
 
 GRANT SELECT ON domains TO PUBLIC;
+
+
+/*
+ * 20.30
+ * KEY_COLUMN_USAGE view
+ */
+
+CREATE VIEW key_column_usage AS
+    SELECT CAST(current_database() AS sql_identifier) AS constraint_catalog,
+           CAST(nc.nspname AS sql_identifier) AS constraint_schema,
+           CAST(c.conname AS sql_identifier) AS constraint_name,
+           CAST(current_database() AS sql_identifier) AS table_catalog,
+           CAST(nr.nspname AS sql_identifier) AS table_schema,
+           CAST(r.relname AS sql_identifier) AS table_name,
+           CAST(a.attname AS sql_identifier) AS column_name,
+           CAST(pos.n AS cardinal_number) AS ordinal_position
+
+    FROM pg_namespace nr, pg_class r, pg_attribute a, pg_namespace nc, pg_constraint c,
+         pg_user u,
+         (select 1 union select 2 union select 3 union select 4 union select 5 union
+          select 6 union select 7 union select 8 union select 9 union select 10 union
+          select 11 union select 12 union select 13 union select 14 union select 15 union
+          select 16 union select 17 union select 18 union select 19 union select 20 union
+          select 21 union select 22 union select 23 union select 24 union select 25 union
+          select 26 union select 27 union select 28 union select 29 union select 30 union
+          select 31 union select 32) AS pos(n)
+
+    WHERE nr.oid = r.relnamespace
+          AND r.oid = a.attrelid
+          AND r.oid = c.conrelid
+          AND nc.oid = c.connamespace
+          AND c.conkey[pos.n] = a.attnum
+          AND a.attnum > 0
+          AND NOT a.attisdropped
+          AND c.contype IN ('p', 'u', 'f')
+          AND r.relkind = 'r'
+          AND r.relowner = u.usesysid
+          AND u.usename = current_user;
+
+GRANT SELECT ON key_column_usage TO PUBLIC;
 
 
 /*
@@ -593,6 +740,7 @@ CREATE VIEW referential_constraints AS
           AND con.confkey = pkc.conkey
           AND pkc.connamespace = npkc.oid
           AND c.relowner = u.usesysid
+          AND c.relkind = 'r'
           AND u.usename = current_user;
 
 GRANT SELECT ON referential_constraints TO PUBLIC;
@@ -932,6 +1080,7 @@ CREATE VIEW table_constraints AS
 
     WHERE nc.oid = c.connamespace AND nr.oid = r.relnamespace
           AND c.conrelid = r.oid AND r.relowner = u.usesysid
+          AND r.relkind = 'r'
           AND u.usename = current_user;
 
 -- FIMXE: Not-null constraints are missing here.
@@ -965,6 +1114,7 @@ CREATE VIEW table_privileges AS
           UNION SELECT 'REFERENCES' UNION SELECT 'TRIGGER') AS pr (type)
 
     WHERE c.relnamespace = nc.oid
+          AND c.relkind IN ('r', 'v')
           AND aclcontains(c.relacl,
                           makeaclitem(u_grantee.usesysid, 0, u_grantor.usesysid, pr.type, false))
           AND (u_grantor.usename = current_user
@@ -1015,6 +1165,68 @@ GRANT SELECT ON tables TO PUBLIC;
 
 
 /*
+ * 20.59
+ * TRIGGERED_UPDATE_COLUMNS view
+ */
+
+-- PostgreSQL doesn't allow the specification of individual triggered
+-- update columns, so this view is empty.
+
+CREATE VIEW triggered_update_columns AS
+    SELECT CAST(current_database() AS sql_identifier) AS trigger_catalog,
+           CAST(null AS sql_identifier) AS trigger_schema,
+           CAST(null AS sql_identifier) AS trigger_name,
+           CAST(current_database() AS sql_identifier) AS event_object_catalog,
+           CAST(null AS sql_identifier) AS event_object_schema,
+           CAST(null AS sql_identifier) AS event_object_table,
+           CAST(null AS sql_identifier) AS event_object_column
+    WHERE false;
+
+GRANT SELECT ON triggered_update_columns TO PUBLIC;
+
+
+/*
+ * 20.62
+ * TRIGGERS view
+ */
+
+CREATE VIEW triggers AS
+    SELECT CAST(current_database() AS sql_identifier) AS trigger_catalog,
+           CAST(n.nspname AS sql_identifier) AS trigger_schema,
+           CAST(t.tgname AS sql_identifier) AS trigger_name,
+           CAST(em.text AS character_data) AS event_manipulation,
+           CAST(current_database() AS sql_identifier) AS event_object_catalog,
+           CAST(n.nspname AS sql_identifier) AS event_object_schema,
+           CAST(c.relname AS sql_identifier) AS event_object_table,
+           CAST(null AS cardinal_number) AS action_order,
+           CAST(null AS character_data) AS action_condition,
+           CAST(
+             substring(pg_get_triggerdef(t.oid) from
+                       position('EXECUTE PROCEDURE' in substring(pg_get_triggerdef(t.oid) from 48)) + 47)
+             AS character_data) AS action_statement,
+           CAST(
+             CASE WHEN t.tgtype & 1 = 1 THEN 'ROW' ELSE 'STATEMENT' END
+             AS character_data) AS action_orientation,
+           CAST(
+             CASE WHEN t.tgtype & 2 = 2 THEN 'BEFORE' ELSE 'AFTER' END
+             AS character_data) AS condition_timing,
+           CAST(null AS sql_identifier) AS condition_reference_old_table,
+           CAST(null AS sql_identifier) AS condition_reference_new_table
+
+    FROM pg_namespace n, pg_class c, pg_trigger t, pg_user u,
+         (SELECT 4, 'INSERT' UNION SELECT 8, 'DELETE' UNION SELECT 16, 'UPDATE') AS em (num, text)
+
+    WHERE n.oid = c.relnamespace
+          AND c.oid = t.tgrelid
+          AND c.relowner = u.usesysid
+          AND t.tgtype & em.num <> 0
+          AND NOT t.tgisconstraint
+          AND u.usename = current_user;
+
+GRANT SELECT ON triggers TO PUBLIC;
+
+
+/*
  * 20.63
  * USAGE_PRIVILEGES view
  */
@@ -1042,6 +1254,81 @@ CREATE VIEW usage_privileges AS
           AND t.typtype = 'd';
 
 GRANT SELECT ON usage_privileges TO PUBLIC;
+
+
+/*
+ * 20.65
+ * VIEW_COLUMN_USAGE
+ */
+
+CREATE VIEW view_column_usage AS
+    SELECT DISTINCT
+           CAST(current_database() AS sql_identifier) AS view_catalog,
+           CAST(nv.nspname AS sql_identifier) AS view_schema,
+           CAST(v.relname AS sql_identifier) AS view_name,
+           CAST(current_database() AS sql_identifier) AS table_catalog,
+           CAST(nt.nspname AS sql_identifier) AS table_schema,
+           CAST(t.relname AS sql_identifier) AS table_name,
+           CAST(a.attname AS sql_identifier) AS column_name
+
+    FROM pg_user, pg_namespace nv, pg_class v, pg_depend dv,
+         pg_depend dt, pg_class t, pg_namespace nt,
+         pg_attribute a, pg_user u
+
+    WHERE nv.oid = v.relnamespace
+          AND v.relkind = 'v'
+          AND v.oid = dv.refobjid
+          AND dv.refclassid = (SELECT oid FROM pg_class WHERE relname = 'pg_class')
+          AND dv.classid = (SELECT oid FROM pg_class WHERE relname = 'pg_rewrite')
+          AND dv.deptype = 'i'
+          AND dv.objid = dt.objid
+          AND dv.refobjid <> dt.refobjid
+          AND dt.classid = (SELECT oid FROM pg_class WHERE relname = 'pg_rewrite')
+          AND dt.refclassid = (SELECT oid FROM pg_class WHERE relname = 'pg_class')
+          AND dt.refobjid = t.oid
+          AND t.relnamespace = nt.oid
+          AND t.relkind IN ('r', 'v')
+          AND t.oid = a.attrelid
+          AND dt.refobjsubid = a.attnum
+          AND t.relowner = u.usesysid AND u.usename = current_user;
+
+GRANT SELECT ON view_column_usage TO PUBLIC;
+
+
+/*
+ * 20.66
+ * VIEW_TABLE_USAGE
+ */
+
+CREATE VIEW view_table_usage AS
+    SELECT DISTINCT
+           CAST(current_database() AS sql_identifier) AS view_catalog,
+           CAST(nv.nspname AS sql_identifier) AS view_schema,
+           CAST(v.relname AS sql_identifier) AS view_name,
+           CAST(current_database() AS sql_identifier) AS table_catalog,
+           CAST(nt.nspname AS sql_identifier) AS table_schema,
+           CAST(t.relname AS sql_identifier) AS table_name
+
+    FROM pg_user, pg_namespace nv, pg_class v, pg_depend dv,
+         pg_depend dt, pg_class t, pg_namespace nt,
+         pg_user u
+
+    WHERE nv.oid = v.relnamespace
+          AND v.relkind = 'v'
+          AND v.oid = dv.refobjid
+          AND dv.refclassid = (SELECT oid FROM pg_class WHERE relname = 'pg_class')
+          AND dv.classid = (SELECT oid FROM pg_class WHERE relname = 'pg_rewrite')
+          AND dv.deptype = 'i'
+          AND dv.objid = dt.objid
+          AND dv.refobjid <> dt.refobjid
+          AND dt.classid = (SELECT oid FROM pg_class WHERE relname = 'pg_rewrite')
+          AND dt.refclassid = (SELECT oid FROM pg_class WHERE relname = 'pg_class')
+          AND dt.refobjid = t.oid
+          AND t.relnamespace = nt.oid
+          AND t.relkind IN ('r', 'v')
+          AND t.relowner = u.usesysid AND u.usename = current_user;
+
+GRANT SELECT ON view_table_usage TO PUBLIC;
 
 
 /*
