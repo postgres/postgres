@@ -5,40 +5,40 @@ import java.sql.*;
 /*
  * Converts to and from the postgresql bytea datatype used by the backend.
  *
- * $Id: PGbytea.java,v 1.3 2001/11/19 22:33:39 momjian Exp $
+ * $Id: PGbytea.java,v 1.4 2002/01/05 22:26:23 barry Exp $
  */
 
 public class PGbytea
 {
 
 	/*
-	 * Converts a PG bytea string (i.e. the text representation
+	 * Converts a PG bytea raw value (i.e. the raw binary representation
 	 * of the bytea data type) into a java byte[]
 	 */
-	public static byte[] toBytes(String s) throws SQLException
+	public static byte[] toBytes(byte[] s) throws SQLException
 	{
 		if (s == null)
 			return null;
-		int slength = s.length();
+                int slength = s.length;
 		byte[] buf = new byte[slength];
 		int bufpos = 0;
 		int thebyte;
-		char nextchar;
-		char secondchar;
+		byte nextbyte;
+		byte secondbyte;
 		for (int i = 0; i < slength; i++)
 		{
-			nextchar = s.charAt(i);
-			if (nextchar == '\\')
+			nextbyte = s[i];
+			if (nextbyte == (byte)'\\')
 			{
-				secondchar = s.charAt(++i);
-				if (secondchar == '\\')
+				secondbyte = s[++i];
+				if (secondbyte == (byte)'\\')
 				{
 					//escaped \
 					buf[bufpos++] = (byte)'\\';
 				}
 				else
 				{
-					thebyte = (secondchar - 48) * 64 + (s.charAt(++i) - 48) * 8 + (s.charAt(++i) - 48);
+					thebyte = (secondbyte - 48) * 64 + (s[++i] - 48) * 8 + (s[++i] - 48);
 					if (thebyte > 127)
 						thebyte -= 256;
 					buf[bufpos++] = (byte)thebyte;
@@ -46,7 +46,7 @@ public class PGbytea
 			}
 			else
 			{
-				buf[bufpos++] = (byte)nextchar;
+				buf[bufpos++] = nextbyte;
 			}
 		}
 		byte[] l_return = new byte[bufpos];

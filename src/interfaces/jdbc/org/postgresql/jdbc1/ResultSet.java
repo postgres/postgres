@@ -404,7 +404,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 				//Version 7.2 supports the bytea datatype for byte arrays
 				if (fields[columnIndex - 1].getPGType().equals("bytea"))
 				{
-					return PGbytea.toBytes(getString(columnIndex));
+					return PGbytea.toBytes(this_row[columnIndex - 1]);
 				}
 				else
 				{
