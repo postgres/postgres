@@ -16,7 +16,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$Id: inet_net_ntop.c,v 1.3 1998/10/22 13:16:25 momjian Exp $";
+static const char rcsid[] = "$Id: inet_net_ntop.c,v 1.4 1999/01/01 04:17:13 momjian Exp $";
 
 #endif
 
@@ -189,7 +189,6 @@ inet_net_ntop_ipv4(const u_char *src, int bits, char *dst, size_t size)
 	char *odst = dst;
 	char *t;
 	size_t len = 4;
-	u_int m;
 	int b, tb;
 
 	if (bits < 0 || bits > 32)

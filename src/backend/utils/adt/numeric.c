@@ -5,7 +5,7 @@
  *
  *	1998 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.2 1998/12/30 20:46:05 wieck Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.3 1999/01/01 04:17:13 momjian Exp $
  *
  * ----------
  */
@@ -16,7 +16,7 @@
 #include <ctype.h>
 #include <float.h>
 #include <math.h>
-#include <nan.h>
+/*#include <nan.h> BSD/OS does not have this */
 #include <errno.h>
 #include <sys/types.h>
 
@@ -1723,7 +1723,11 @@ numeric_float8(Numeric num)
 	if (NUMERIC_IS_NAN(num))
 	{
 		result = (float64)palloc(sizeof(float64data));
+#ifdef NAN
 		*result = NAN;
+#else
+		*result = num;
+#endif
 		return result;
 	}
 
@@ -1773,7 +1777,11 @@ numeric_float4(Numeric num)
 	if (NUMERIC_IS_NAN(num))
 	{
 		result = (float32)palloc(sizeof(float32data));
+#ifdef NAN
 		*result = NAN;
+#else
+		*result = num;
+#endif
 		return result;
 	}
 

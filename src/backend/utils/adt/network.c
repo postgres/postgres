@@ -3,7 +3,7 @@
  *	is for IP V4 CIDR notation, but prepared for V6: just
  *	add the necessary bits where the comments indicate.
  *
- *	$Id: network.c,v 1.4 1998/10/29 16:13:07 tgl Exp $
+ *	$Id: network.c,v 1.5 1999/01/01 04:17:13 momjian Exp $
  *	Jon Postel RIP 16 Oct 1998
  */
 
@@ -389,8 +389,7 @@ network_network(inet *ip)
 {
 	text	   *ret;
 	int			len;
-	char	   *ptr,
-				tmp[sizeof("255.255.255.255/32")];
+	char	   	tmp[sizeof("255.255.255.255/32")];
 
 	if (ip_family(ip) == AF_INET)
 	{
