@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.96 2002/08/04 06:44:47 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.97 2002/09/01 00:58:06 tgl Exp $
  *
  * NOTES
  *
@@ -1734,15 +1734,6 @@ istinterval(char *i_string,
 /*****************************************************************************
  *
  *****************************************************************************/
-
-Datum
-int4reltime(PG_FUNCTION_ARGS)
-{
-	int32		timevalue = PG_GETARG_INT32(0);
-
-	/* Just coerce it directly to RelativeTime ... */
-	PG_RETURN_RELATIVETIME((RelativeTime) timevalue);
-}
 
 /*
  * timeofday -

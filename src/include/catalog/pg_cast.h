@@ -1,8 +1,17 @@
 /*-------------------------------------------------------------------------
  *
- * $Header: /cvsroot/pgsql/src/include/catalog/pg_cast.h,v 1.1 2002/07/18 23:11:30 petere Exp $
+ * pg_cast.h
+ *	  definition of the system "type casts" relation (pg_cast)
+ *	  along with the relation's initial contents.
+ *
  *
  * Copyright (c) 2002, PostgreSQL Global Development Group
+ *
+ * $Id: pg_cast.h,v 1.2 2002/09/01 00:58:06 tgl Exp $
+ *
+ * NOTES
+ *	  the genbki.sh script reads this file and generates .bki
+ *	  information from the DATA() statements.
  *
  *-------------------------------------------------------------------------
  */
@@ -11,10 +20,10 @@
 
 CATALOG(pg_cast)
 {
-	Oid			castsource;
-	Oid			casttarget;
+	Oid			castsource;		/* source datatype for cast */
+	Oid			casttarget;		/* destination datatype for cast */
 	Oid			castfunc;		/* 0 = binary compatible */
-	bool		castimplicit;
+	bool		castimplicit;	/* allow implicit casting? */
 } FormData_pg_cast;
 
 typedef FormData_pg_cast *Form_pg_cast;
@@ -115,7 +124,10 @@ DATA(insert ( 1562 1560    0 t ));
  * This list can be obtained from the following query as long as the
  * naming convention of the cast functions remains the same:
  *
- * select p.proargtypes[0] as source, p.prorettype as target, p.oid as func, p.proimplicit as implicit from pg_proc p, pg_type t where p.pronargs=1 and p.proname = t.typname and p.prorettype = t.oid order by 1, 2;
+ * select p.proargtypes[0] as source, p.prorettype as target, p.oid as func,
+ * p.proimplicit as implicit
+ * from pg_proc p, pg_type t where p.pronargs=1 and p.proname = t.typname
+ * and p.prorettype = t.oid order by 1, 2;
  */
 DATA(insert (   18   25  946 t ));
 DATA(insert (   18 1042  860 t ));
@@ -139,7 +151,6 @@ DATA(insert (   23   21  314 t ));
 DATA(insert (   23   25  112 t ));
 DATA(insert (   23  700  318 t ));
 DATA(insert (   23  701  316 t ));
-/*xDATA(insert (   23  703 1200 f ));*/
 DATA(insert (   23 1043 1619 f ));
 DATA(insert (   23 1700 1740 t ));
 DATA(insert (   25   18  944 t ));
@@ -159,7 +170,7 @@ DATA(insert (   25 1114 2022 f ));
 DATA(insert (   25 1184 1191 f ));
 DATA(insert (   25 1186 1263 f ));
 DATA(insert (   25 1266  938 f ));
-DATA(insert (   26   25  114 f ));
+DATA(insert (   26   25  114 t ));
 DATA(insert (  601  600 1532 f ));
 DATA(insert (  602  600 1533 f ));
 DATA(insert (  602  604 1449 f ));
@@ -176,7 +187,7 @@ DATA(insert (  700   23  319 f ));
 DATA(insert (  700   25  841 t ));
 DATA(insert (  700  701  311 t ));
 DATA(insert (  700 1700 1742 t ));
-DATA(insert (  701   20  483 f ));
+DATA(insert (  701   20  483 t ));
 DATA(insert (  701   21  237 f ));
 DATA(insert (  701   23  317 f ));
 DATA(insert (  701   25  840 t ));
