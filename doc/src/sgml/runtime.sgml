@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.187 2003/06/25 01:13:24 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.188 2003/06/27 18:20:50 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -2839,14 +2839,15 @@ $ <userinput>postmaster -o '-S 1024 -s'</userinput>
 options "SHMALL=8192"
 options "SHMMAX=\(SHMALL*PAGE_SIZE\)"
 </programlisting>
-         For those running 4.1 or later, just make the above changes,
-         recompile the kernel, and reboot.
+         For those running 4.3 or later, you will probably need to increase
+         <varname>KERNEL_VIRTUAL_MB</> above the default <literal>248</>.
+         Once all changes have been made, recompile the kernel, and reboot.
         </para>
        </formalpara>
 
        <para>
-        For those running earlier releases, use <command>bpatch</> to
-        find the <varname>sysptsize</> value in the current
+        For those running 4.0 and earlier releases, use <command>bpatch</>
+        to find the <varname>sysptsize</> value in the current
         kernel. This is computed dynamically at boot time.
 <screen>
 $ <userinput>bpatch -r sysptsize</>
