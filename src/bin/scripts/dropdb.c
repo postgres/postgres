@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/dropdb.c,v 1.10 2004/05/25 01:00:27 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/dropdb.c,v 1.11 2004/06/01 02:54:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,7 +51,8 @@ main(int argc, char *argv[])
 	PGresult   *result;
 
 	progname = get_progname(argv[0]);
-	init_nls(argv[0]);
+	set_pglocale(argv[0], "pgscripts");
+
 	handle_help_version_opts(argc, argv, "dropdb", help);
 
 	while ((c = getopt_long(argc, argv, "h:p:U:Weqi", long_options, &optindex)) != -1)
