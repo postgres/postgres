@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/interfaces/Makefile,v 1.44 2001/03/05 09:39:52 peter Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/Makefile,v 1.45 2001/03/09 21:50:27 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -47,5 +47,5 @@ all install installdirs uninstall dep depend distprep:
 clean:
 	@for dir in $(DIRS); do $(MAKE) -C $$dir $@; done
 
-distclean maintainer-clean: clean
+distclean maintainer-clean:
 	@for dir in $(ALLDIRS); do $(MAKE) -C $$dir $@; done
