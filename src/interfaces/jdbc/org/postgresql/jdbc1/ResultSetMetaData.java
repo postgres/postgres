@@ -136,9 +136,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData
   }
   
   /**
-   * Can you put a NULL in this column?  I think this is always
-   * true in 6.1's case.  It would only be false if the field had
-   * been defined NOT NULL (system catalogs could be queried?)
+   * Indicates the nullability of values in the designated column.
    *
    * @param column the first column is 1, the second is 2...
    * @return one of the columnNullable values
@@ -146,9 +144,14 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData
    */
   public int isNullable(int column) throws SQLException
   {
-    return columnNullable;	// We can always put NULL in
+	/*
+	 * TODO This needs a real implementation, taking into account columns
+	 * defined with NOT NULL or PRIMARY KEY, CHECK constraints, views, 
+	 * functions etc.
+	 */
+    return columnNullableUnknown;
   }
-  
+
   /**
    * Is the column a signed number? In PostgreSQL, all numbers
    * are signed, so this is trivial.  However, strings are not
