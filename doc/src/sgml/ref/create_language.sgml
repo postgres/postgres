@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_language.sgml,v 1.22 2002/04/21 19:02:39 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_language.sgml,v 1.23 2002/05/18 15:44:47 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -125,7 +125,7 @@ CREATE [ TRUSTED ] [ PROCEDURAL ] LANGUAGE <replaceable class="parameter">langna
      <msgmain>
       <msgtext>
 <screen>
-CREATE
+CREATE LANGUAGE
 </screen>
       </msgtext>
      </msgmain>

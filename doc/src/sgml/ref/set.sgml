@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.60 2002/05/17 01:19:16 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.61 2002/05/18 15:44:47 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -401,7 +401,7 @@ SELECT setseed(<replaceable>value</replaceable>);
     
    <variablelist>
     <varlistentry>
-     <term><computeroutput>SET VARIABLE</computeroutput></term>
+     <term><computeroutput>SET</computeroutput></term>
      <listitem>
       <para>
        Message returned if successful.

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_constraint.sgml,v 1.7 2002/04/23 02:07:15 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_constraint.sgml,v 1.8 2002/05/18 15:44:47 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -101,7 +101,7 @@ CREATE CONSTRAINT TRIGGER <replaceable class="parameter">name</replaceable>
     <variablelist>
      <varlistentry>
       <term><computeroutput>
-CREATE CONSTRAINT
+CREATE TRIGGER
        </computeroutput></term>
       <listitem>
        <para>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_operator.sgml,v 1.28 2002/04/23 02:07:15 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_operator.sgml,v 1.29 2002/05/18 15:44:47 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -176,7 +176,7 @@ CREATE OPERATOR <replaceable>name</replaceable> ( PROCEDURE = <replaceable class
     <variablelist>
      <varlistentry>
       <term><computeroutput>
-CREATE
+CREATE OPERATOR
        </computeroutput></term>
       <listitem>
        <para>

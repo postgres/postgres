@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_view.sgml,v 1.17 2002/04/23 02:07:16 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_view.sgml,v 1.18 2002/05/18 15:44:47 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -81,7 +81,7 @@ class="PARAMETER">column name list</replaceable> ) ] AS SELECT <replaceable clas
     <variablelist>
      <varlistentry>
       <term><computeroutput>
-CREATE
+CREATE VIEW
        </computeroutput></term>
       <listitem>
        <para>

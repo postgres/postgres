@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_language.sgml,v 1.13 2001/12/08 03:24:36 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_language.sgml,v 1.14 2002/05/18 15:44:47 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -58,7 +58,7 @@ DROP [ PROCEDURAL ] LANGUAGE <replaceable class="PARAMETER">name</replaceable>
     <variablelist>
      <varlistentry>
       <term><computeroutput>
-DROP
+DROP LANGUAGE
        </computeroutput></term>
       <listitem>
        <para>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_trigger.sgml,v 1.25 2002/04/24 02:49:50 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_trigger.sgml,v 1.26 2002/05/18 15:44:47 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -98,7 +98,7 @@ CREATE TRIGGER <replaceable class="PARAMETER">name</replaceable> { BEFORE | AFTE
     <variablelist>
      <varlistentry>
       <term><computeroutput>
-CREATE
+CREATE TRIGGER
        </computeroutput></term>
       <listitem>
        <para>

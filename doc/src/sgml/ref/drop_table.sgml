@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_table.sgml,v 1.14 2002/04/23 02:07:16 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_table.sgml,v 1.15 2002/05/18 15:44:47 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -56,7 +56,7 @@ DROP TABLE <replaceable class="PARAMETER">name</replaceable> [, ...]
     <variablelist>
      <varlistentry>
       <term><computeroutput>
-DROP
+DROP TABLE
        </computeroutput></term>
       <listitem>
        <para>

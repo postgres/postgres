@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_operator.sgml,v 1.15 2002/04/23 02:07:16 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_operator.sgml,v 1.16 2002/05/18 15:44:47 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -76,7 +76,7 @@ DROP OPERATOR <replaceable class="PARAMETER">id</replaceable> ( <replaceable cla
     <variablelist>
      <varlistentry>
       <term><computeroutput>
-DROP
+DROP OPERATOR
        </computeroutput></term>
       <listitem>
        <para>

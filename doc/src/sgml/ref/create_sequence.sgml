@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_sequence.sgml,v 1.27 2002/04/23 02:07:16 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_sequence.sgml,v 1.28 2002/05/18 15:44:47 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -161,7 +161,7 @@ CREATE [ TEMPORARY | TEMP ] SEQUENCE <replaceable class="parameter">seqname</rep
     <variablelist>
      <varlistentry>
       <term><computeroutput>
-CREATE
+CREATE SEQUENCE
        </computeroutput></term>
       <listitem>
        <para>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_schema.sgml,v 1.1 2002/04/25 21:47:07 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_schema.sgml,v 1.2 2002/05/18 15:44:47 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -75,7 +75,7 @@ CREATE SCHEMA AUTHORIZATION <replaceable class="parameter">username</replaceable
     <variablelist>
      <varlistentry>
       <term><computeroutput>
-CREATE
+CREATE SCHEMA
        </computeroutput></term>
       <listitem>
        <para>

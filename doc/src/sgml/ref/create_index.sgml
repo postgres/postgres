@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_index.sgml,v 1.30 2002/04/23 02:07:15 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_index.sgml,v 1.31 2002/05/18 15:44:47 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -174,7 +174,7 @@ CREATE [ UNIQUE ] INDEX <replaceable class="parameter">index_name</replaceable> 
     <variablelist>
      <varlistentry>
       <term><computeroutput>
-CREATE
+CREATE INDEX
        </computeroutput></term>
       <listitem>
        <para>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.44 2002/04/24 02:40:45 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.45 2002/05/18 15:44:47 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -141,7 +141,7 @@ ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
 
     <variablelist>
      <varlistentry>
-      <term><computeroutput>ALTER</computeroutput></term>
+      <term><computeroutput>ALTER TABLE</computeroutput></term>
       <listitem>
        <para>
 	Message returned from column or table renaming.

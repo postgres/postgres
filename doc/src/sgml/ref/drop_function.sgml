@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_function.sgml,v 1.19 2002/04/23 02:07:16 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_function.sgml,v 1.20 2002/05/18 15:44:47 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -65,7 +65,7 @@ DROP FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceable
     <variablelist>
      <varlistentry>
       <term><computeroutput>
-DROP
+DROP FUNCTION
        </computeroutput></term>
       <listitem>
        <para>

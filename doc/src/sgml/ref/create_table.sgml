@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.54 2002/04/23 02:07:16 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.55 2002/05/18 15:44:47 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -503,7 +503,7 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
     <msg>
      <msgmain>
       <msgtext>
-       <simpara><computeroutput>CREATE</computeroutput></simpara>
+       <simpara><computeroutput>CREATE TABLE</computeroutput></simpara>
       </msgtext>
      </msgmain>
     </msg>

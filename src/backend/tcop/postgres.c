@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.266 2002/05/17 18:32:52 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.267 2002/05/18 15:44:47 petere Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1688,7 +1688,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.266 $ $Date: 2002/05/17 18:32:52 $\n");
+		puts("$Revision: 1.267 $ $Date: 2002/05/18 15:44:47 $\n");
 	}
 
 	/*
@@ -2168,7 +2168,7 @@ CreateCommandTag(Node *parsetree)
 			break;
 
 		case T_ClosePortalStmt:
-			tag = "CLOSE";
+			tag = "CLOSE CURSOR";
 			break;
 
 		case T_FetchStmt:
@@ -2183,19 +2183,41 @@ CreateCommandTag(Node *parsetree)
 			break;
 
 		case T_CreateSchemaStmt:
-			tag = "CREATE";
+			tag = "CREATE SCHEMA";
 			break;
 
 		case T_CreateStmt:
-			tag = "CREATE";
+			tag = "CREATE TABLE";
 			break;
 
 		case T_DropStmt:
-			tag = "DROP";
+			switch (((DropStmt *) parsetree)->removeType)
+			{
+				case DROP_TABLE:
+					tag = "DROP TABLE";
+					break;
+				case DROP_SEQUENCE:
+					tag = "DROP SEQUENCE";
+					break;
+				case DROP_VIEW:
+					tag = "DROP VIEW";
+					break;
+				case DROP_INDEX:
+					tag = "DROP INDEX";
+					break;
+				case DROP_TYPE:
+					tag = "DROP TYPE";
+					break;
+				case DROP_DOMAIN:
+					tag = "DROP DOMAIN";
+					break;
+				default:
+					tag = "???";
+			}
 			break;
 
 		case T_TruncateStmt:
-			tag = "TRUNCATE";
+			tag = "TRUNCATE TABLE";
 			break;
 
 		case T_CommentStmt:
@@ -2207,11 +2229,14 @@ CreateCommandTag(Node *parsetree)
 			break;
 
 		case T_RenameStmt:
-			tag = "ALTER";
+			if (((RenameStmt *)parsetree)->renameType == RENAME_TRIGGER)
+				tag = "ALTER TRIGGER";
+			else
+				tag = "ALTER TABLE";
 			break;
 
 		case T_AlterTableStmt:
-			tag = "ALTER";
+			tag = "ALTER TABLE";
 			break;
 
 		case T_GrantStmt:
@@ -2222,39 +2247,52 @@ CreateCommandTag(Node *parsetree)
 			break;
 
 		case T_DefineStmt:
-			tag = "CREATE";
+			switch (((DefineStmt *) parsetree)->defType)
+			{
+				case AGGREGATE:
+					tag = "CREATE AGGREGATE";
+					break;
+				case OPERATOR:
+					tag = "CREATE OPERATOR";
+					break;
+				case TYPE_P:
+					tag = "CREATE TYPE";
+					break;
+				default:
+					tag = "???";
+			}
 			break;
 
-		case T_ViewStmt:		/* CREATE VIEW */
-			tag = "CREATE";
+		case T_ViewStmt:
+			tag = "CREATE VIEW";
 			break;
 
-		case T_CreateFunctionStmt:	/* CREATE FUNCTION */
-			tag = "CREATE";
+		case T_CreateFunctionStmt:
+			tag = "CREATE FUNCTION";
 			break;
 
-		case T_IndexStmt:		/* CREATE INDEX */
-			tag = "CREATE";
+		case T_IndexStmt:
+			tag = "CREATE INDEX";
 			break;
 
-		case T_RuleStmt:		/* CREATE RULE */
-			tag = "CREATE";
+		case T_RuleStmt:
+			tag = "CREATE RULE";
 			break;
 
 		case T_CreateSeqStmt:
-			tag = "CREATE";
+			tag = "CREATE SEQUENCE";
 			break;
 
 		case T_RemoveAggrStmt:
-			tag = "DROP";
+			tag = "DROP AGGREGATE";
 			break;
 
 		case T_RemoveFuncStmt:
-			tag = "DROP";
+			tag = "DROP FUNCTION";
 			break;
 
 		case T_RemoveOperStmt:
-			tag = "DROP";
+			tag = "DROP OPERATOR";
 			break;
 
 		case T_CreatedbStmt:
@@ -2307,31 +2345,41 @@ CreateCommandTag(Node *parsetree)
 #endif
 
 		case T_VariableSetStmt:
-			tag = "SET VARIABLE";
+			tag = "SET";
 			break;
 
 		case T_VariableShowStmt:
-			tag = "SHOW VARIABLE";
+			tag = "SHOW";
 			break;
 
 		case T_VariableResetStmt:
-			tag = "RESET VARIABLE";
+			tag = "RESET";
 			break;
 
 		case T_CreateTrigStmt:
-			tag = "CREATE";
+			tag = "CREATE TRIGGER";
 			break;
 
 		case T_DropPropertyStmt:
-			tag = "DROP";
+			switch (((DropPropertyStmt *) parsetree)->removeType)
+			{
+				case DROP_TRIGGER:
+					tag = "DROP TRIGGER";
+					break;
+				case DROP_RULE:
+					tag = "DROP RULE";
+					break;
+				default:
+					tag = "???";
+			}
 			break;
 
 		case T_CreatePLangStmt:
-			tag = "CREATE";
+			tag = "CREATE LANGUAGE";
 			break;
 
 		case T_DropPLangStmt:
-			tag = "DROP";
+			tag = "DROP LANGUAGE";
 			break;
 
 		case T_CreateUserStmt:

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_aggregate.sgml,v 1.17 2002/04/23 02:07:16 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_aggregate.sgml,v 1.18 2002/05/18 15:44:47 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -69,7 +69,7 @@ DROP AGGREGATE <replaceable class="PARAMETER">name</replaceable> ( <replaceable 
     <variablelist>
      <varlistentry>
       <term><computeroutput>
-DROP
+DROP AGGREGATE
        </computeroutput></term>
       <listitem>
        <para>

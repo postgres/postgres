@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_sequence.sgml,v 1.13 2002/04/23 02:07:16 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_sequence.sgml,v 1.14 2002/05/18 15:44:47 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -57,7 +57,7 @@ DROP SEQUENCE <replaceable class="PARAMETER">name</replaceable> [, ...]
     <variablelist>
      <varlistentry>
       <term><computeroutput>
-DROP
+DROP SEQUENCE
        </computeroutput></term>
       <listitem>
        <para>

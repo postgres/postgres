@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_type.sgml,v 1.16 2002/04/23 02:07:16 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_type.sgml,v 1.17 2002/05/18 15:44:47 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -56,7 +56,7 @@ DROP TYPE <replaceable class="PARAMETER">typename</replaceable> [, ...]
     <variablelist>
      <varlistentry>
       <term><computeroutput>
-DROP
+DROP TYPE
        </computeroutput></term>
       <listitem>
        <para>

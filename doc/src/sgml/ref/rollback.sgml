@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/rollback.sgml,v 1.12 2002/04/21 19:02:39 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/rollback.sgml,v 1.13 2002/05/18 15:44:47 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -48,7 +48,7 @@ ROLLBACK [ WORK | TRANSACTION ]
     <variablelist>
      <varlistentry>
       <term><computeroutput>
-ABORT
+ROLLBACK
        </computeroutput></term>
       <listitem>
        <para>

@@ -78,7 +78,7 @@ ALTER TRIGGER <replaceable class="PARAMETER">trigger</replaceable> ON <replaceab
 
     <variablelist>
      <varlistentry>
-      <term><computeroutput>ALTER</computeroutput></term>
+      <term><computeroutput>ALTER TRIGGER</computeroutput></term>
       <listitem>
        <para>
 	Message returned from trigger renaming.

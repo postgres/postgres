@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.52 2002/04/15 05:22:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.53 2002/05/18 15:44:48 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -227,7 +227,7 @@ ProcessQuery(Query *parsetree,
 
 		/* Set completion tag.  SQL calls this operation DECLARE CURSOR */
 		if (completionTag)
-			strcpy(completionTag, "DECLARE");
+			strcpy(completionTag, "DECLARE CURSOR");
 
 		return;
 	}

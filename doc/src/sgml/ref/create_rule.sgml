@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.35 2002/04/19 23:13:53 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.36 2002/05/18 15:44:47 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -121,7 +121,7 @@ NOTHING
     <variablelist>
      <varlistentry>
       <term><computeroutput>
-CREATE
+CREATE RULE
        </computeroutput></term>
       <listitem>
        <para>
