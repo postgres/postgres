@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/advanced.sgml,v 1.25 2001/11/21 05:53:40 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/advanced.sgml,v 1.26 2001/11/23 21:08:51 tgl Exp $
 -->
 
  <chapter id="tutorial-advanced">
@@ -132,7 +132,7 @@ ERROR:  &lt;unnamed&gt; referential integrity violation - key referenced from we
    <para>
     The behavior of foreign keys can be finely tuned to your
     application.  We will not go beyond this simple example in this
-    tutorial and refer you to the <citetitle>Reference
+    tutorial, but just refer you to the <citetitle>Reference
     Manual</citetitle> for more information.  Making correct use of
     foreign keys will definitely improve the quality of your database
     applications, so you are strongly encouraged to learn about them.

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/start.sgml,v 1.19 2001/11/21 06:09:45 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/start.sgml,v 1.20 2001/11/23 21:08:51 tgl Exp $
 -->
 
  <chapter id="tutorial-start">
@@ -160,7 +160,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/start.sgml,v 1.19 2001/11/21 06:09:45 thoma
 <screen>
 CREATE DATABASE
 </screen>
-    Is so, this step was successful and you can skip over the
+    If so, this step was successful and you can skip over the
     remainder of this section.
    </para>
 
@@ -173,7 +173,7 @@ createdb: command not found
     installed at all or the search path was not set correctly.  Try
     calling the command with an absolute path instead:
 <screen>
-<prompt>$</prompt> <userinput>/usr/local/pgsql/bin/createdb</userinput>
+<prompt>$</prompt> <userinput>/usr/local/pgsql/bin/createdb mydb</userinput>
 </screen>
     The path at your site might be different.  Contact your site
     administrator or check back in the installation instructions to
@@ -249,7 +249,7 @@ createdb: database creation failed
 <screen>
 <prompt>$</prompt> <userinput>dropdb mydb</userinput>
 </screen>
-    (In this case, the database name does not default to the user
+    (For this command, the database name does not default to the user
     account name.  You always need to specify it.)  This action
     physically removes all files associated with the database and
     cannot be undone, so this should only be done with a great deal of

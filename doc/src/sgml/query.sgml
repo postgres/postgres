@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/query.sgml,v 1.21 2001/11/19 05:37:53 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/query.sgml,v 1.22 2001/11/23 21:08:51 tgl Exp $
 -->
 
  <chapter id="tutorial-sql">
@@ -15,8 +15,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/query.sgml,v 1.21 2001/11/19 05:37:53 tgl E
     way a complete tutorial on <acronym>SQL</acronym>.  Numerous books
     have been written on <acronym>SQL92</acronym>, including <xref
     linkend="MELT93"> and <xref linkend="DATE97">.
-    You should be aware that some language
-    features are extensions to the standard.
+    You should be aware that some <productname>PostgreSQL</productname>
+    language features are extensions to the standard.
    </para>
 
    <para>
@@ -44,7 +44,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/query.sgml,v 1.21 2001/11/19 05:37:53 tgl E
 
     The <literal>\i</literal> command reads in commands from the
     specified file. The <literal>-s</literal> option puts you in
-    single step mode which pauses before sending a query to the
+    single step mode which pauses before sending each query to the
     server.  The commands used in this section are in the file
     <filename>basics.sql</filename>.
    </para>
@@ -78,11 +78,12 @@ $Header: /cvsroot/pgsql/doc/src/sgml/query.sgml,v 1.21 2001/11/19 05:37:53 tgl E
     <indexterm><primary>column</primary></indexterm>
 
     Each table is a named collection of <firstterm>rows</firstterm>.
-    Each row has the same set of named <firstterm>columns</firstterm>,
+    Each row of a given table has the same set of named
+    <firstterm>columns</firstterm>,
     and each column is of a specific data type.  Whereas columns have
     a fixed order in each row, it is important to remember that SQL
     does not guarantee the order of the rows within the table in any
-    way (unless they are explicitly sorted).
+    way (although they can be explicitly sorted for display).
    </para>
 
    <para>
@@ -200,7 +201,10 @@ DROP TABLE <replaceable>tablename</replaceable>;
 INSERT INTO weather VALUES ('San Francisco', 46, 50, 0.25, '1994-11-27');
 </programlisting>
 
-    Note that all data types use rather obvious input formats.  The
+    Note that all data types use rather obvious input formats.
+    Constants that are not simple numeric values usually must be
+    surrounded by single quotes (<literal>'</>), as in the example.
+    The
     <type>date</type> column is actually quite flexible in what it
     accepts, but for this tutorial we will stick to the unambiguous
     format shown here.
@@ -223,7 +227,7 @@ INSERT INTO weather (city, temp_lo, temp_hi, prcp, date)
     VALUES ('San Francisco', 43, 57, 0.0, '1994-11-29');
 </programlisting>
     You can list the columns in a different order if you wish or
-    even omit some columns, e.g., unknown precipitation:
+    even omit some columns, e.g., if the precipitation is unknown:
 <programlisting>
 INSERT INTO weather (date, city, temp_hi, temp_lo)
     VALUES ('1994-11-29', 'Hayward', 54, 37);
@@ -654,7 +658,9 @@ SELECT city, max(temp_lo)
 (2 rows)
 </screen>
 
-    which gives us one output row per city.  We can filter these grouped
+    which gives us one output row per city.  Each aggregate result is
+    computed over the table rows matching that city.
+    We can filter these grouped
     rows using <literal>HAVING</literal>:
 
 <programlisting>
@@ -671,8 +677,9 @@ SELECT city, max(temp_lo)
 (1 row)
 </screen>
 
-    which gives us the same results for only the cities that have some
-    below-forty readings.  Finally, if we only care about cities whose
+    which gives us the same results for only the cities that have all
+    <literal>temp_lo</> values below forty.  Finally, if we only care about
+    cities whose
     names begin with <quote><literal>S</literal></quote>, we might do
 
 <programlisting>
