@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/oid.c,v 1.42 2000/12/22 21:36:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/oid.c,v 1.43 2000/12/28 01:51:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,14 +67,21 @@ oidin_subr(const char *funcname, const char *s, char **endloc)
 	result = (Oid) cvt;
 
 	/*
-	 * Cope with possibility that unsigned long is wider than Oid.
+	 * Cope with possibility that unsigned long is wider than Oid,
+	 * in which case strtoul will not raise an error for some values
+	 * that are out of the range of Oid.
+	 *
+	 * For backwards compatibility, we want to accept inputs that
+	 * are given with a minus sign, so allow the input value if it
+	 * matches after either signed or unsigned extension to long.
 	 *
 	 * To ensure consistent results on 32-bit and 64-bit platforms,
 	 * make sure the error message is the same as if strtoul() had
 	 * returned ERANGE.
 	 */
-#if OID_MAX < ULONG_MAX
-	if (cvt > (unsigned long) OID_MAX)
+#if OID_MAX != ULONG_MAX
+	if (cvt != (unsigned long) result &&
+	    cvt != (unsigned long) ((int) result))
 		elog(ERROR, "%s: error reading \"%s\": %s",
 			 funcname, s, strerror(ERANGE));
 #endif
