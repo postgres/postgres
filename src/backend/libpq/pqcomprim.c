@@ -163,7 +163,6 @@ pqPutString(const char *s, FILE *f)
 
 	fputc('\0', f);				/* important to send an ending \0 since
 								 * backend expects it */
-	fflush(f);
 
 	return 0;
 }
