@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Apr 15 16:51:11 EDT 2002
+Last updated:		Wed Apr 17 16:35:06 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -51,6 +51,7 @@ PERMISSIONS
   permissions on the socket file (Peter E)
 * -Allow permissions for functions (Peter E)
 
+
 ADMIN
 -----
 
@@ -66,7 +67,7 @@ ADMIN
 * Allow logging of query durations
 * -Prevent SIGHUP and 'pg_ctl reload' from changing command line
   specified parameters to postgresql.conf defaults (Peter E)
-
+* Allow easy display of usernames in a group
 
 DATA TYPES
 ----------
@@ -128,6 +129,7 @@ VIEWS / RULES
 * Allow RULE recompilation
 * -Remove brackets as multi-statement rule grouping, must use parens (Bruce)
 * Prevent aggregates from being used in rule WHERE clauses
+
 
 INDEXES
 -------
@@ -246,6 +248,7 @@ COMMANDS
 	  without using PL/PgSQL EXECUTE, needs cached plan invalidation
         o Fix PL/pgSQL RENAME to work on variables other than OLD/NEW
 
+
 CLIENTS
 -------
 
@@ -322,6 +325,7 @@ DEPENDENCY CHECKING
 * Make foreign keys easier to identify
 * Flush cached query plans when their underlying catalog data changes
 
+
 TRANSACTIONS
 ------------
 
@@ -373,6 +377,7 @@ VACUUM
 * Reduce lock time by moving tuples with read lock, then write
   lock and truncate table [vacuum]
 * Provide automatic running of vacuum in the background (Tom)
+
 
 LOCKING
 -------
