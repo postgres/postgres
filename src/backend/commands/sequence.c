@@ -499,18 +499,22 @@ init_params(CreateSeqStmt *seq, SequenceTupleForm new)
 		elog(ERROR, "DefineSequence: can't INCREMENT by 0");
 
 	if (max_value == (DefElem *) NULL)	/* MAXVALUE */
+	{
 		if (new->increment_by > 0)
 			new->max_value = SEQ_MAXVALUE;		/* ascending seq */
 		else
 			new->max_value = -1;/* descending seq */
+	}
 	else
 		new->max_value = get_param(max_value);
 
 	if (min_value == (DefElem *) NULL)	/* MINVALUE */
+	{
 		if (new->increment_by > 0)
 			new->min_value = 1; /* ascending seq */
 		else
 			new->min_value = SEQ_MINVALUE;		/* descending seq */
+	}
 	else
 		new->min_value = get_param(min_value);
 
@@ -519,10 +523,12 @@ init_params(CreateSeqStmt *seq, SequenceTupleForm new)
 			 new->min_value, new->max_value);
 
 	if (last_value == (DefElem *) NULL) /* START WITH */
+	{
 		if (new->increment_by > 0)
 			new->last_value = new->min_value;	/* ascending seq */
 		else
 			new->last_value = new->max_value;	/* descending seq */
+	}
 	else
 		new->last_value = get_param(last_value);
 

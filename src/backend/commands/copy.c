@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.44 1998/02/26 04:30:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.45 1998/03/30 16:45:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1160,6 +1160,7 @@ CopyAttributeOut(FILE *fp, char *string, char *delim)
 			(c == '\\' && !is_array))
 			fputc('\\', fp);
 		else if (c == '\\' && is_array)
+		{
 			if (*(string + 1) == '\\')
 			{
 				/* translate \\ to \\\\ */
@@ -1174,6 +1175,7 @@ CopyAttributeOut(FILE *fp, char *string, char *delim)
 				fputc('\\', fp);
 				fputc('\\', fp);
 			}
+		}
 		fputc(*string, fp);
 	}
 }

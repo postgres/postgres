@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.75 1998/02/26 04:34:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.76 1998/03/30 16:47:11 momjian Exp $
  *
  * NOTES
  *
@@ -60,7 +60,6 @@
 #include <sys/socket.h>
 #ifdef HAVE_LIMITS_H
 #include <limits.h>
-#define MAXINT		   INT_MAX
 #else
 #include <values.h>
 #endif
@@ -100,6 +99,10 @@
 #else
 #define FORK() vfork()
 #endif
+#endif
+
+#if !defined(MAXINT)
+#define MAXINT		   INT_MAX
 #endif
 
 #define INVALID_SOCK	(-1)

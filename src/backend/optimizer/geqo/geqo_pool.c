@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_pool.c,v 1.5 1998/02/26 04:32:23 momjian Exp $
+ * $Id: geqo_pool.c,v 1.6 1998/03/30 16:46:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,8 +34,6 @@
 #include "optimizer/pathnode.h"
 #include "optimizer/clauses.h"
 #include "optimizer/cost.h"
-
-#include "lib/qsort.h"
 
 #include "optimizer/geqo_gene.h"
 #include "optimizer/geqo.h"
@@ -127,8 +125,7 @@ random_init_pool(Query *root, Pool *pool, int strt, int stp)
 void
 sort_pool(Pool *pool)
 {
-	pg_qsort(pool->data, pool->size, sizeof(Chromosome), compare);
-
+	qsort(pool->data, pool->size, sizeof(Chromosome), compare);
 }
 
 /*

@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.66 1998/03/16 05:41:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.67 1998/03/30 16:47:32 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -1591,10 +1591,12 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 					findx++;
 				}
 				if (TRIGGER_FOR_UPDATE(tgtype))
+				{
 					if (findx > 0)
 						strcat(query, " OR UPDATE");
 					else
 						strcat(query, " UPDATE");
+				}
 				sprintf(query, "%s ON %s FOR EACH ROW EXECUTE PROCEDURE %s (",
 						query, tblinfo[i].relname, tgfunc);
 				for (findx = 0; findx < tgnargs; findx++)
@@ -2508,6 +2510,7 @@ dumpTables(FILE *fout, TableInfo *tblinfo, int numTables,
 			{
 				ACLlist = ParseACL(tblinfo[i].relacl, &l);
 				if (ACLlist == (ACL *) NULL)
+				{
 					if (l == 0)
 						continue;
 					else
@@ -2516,6 +2519,7 @@ dumpTables(FILE *fout, TableInfo *tblinfo, int numTables,
 								tblinfo[i].relname);
 						exit_nicely(g_conn);
 					}
+				}
 
 				/* Revoke Default permissions for PUBLIC */
 				fprintf(fout,

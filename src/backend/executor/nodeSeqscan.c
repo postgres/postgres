@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSeqscan.c,v 1.8 1997/11/20 23:21:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSeqscan.c,v 1.9 1998/03/30 16:46:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -128,8 +128,7 @@ ExecSeqScan(SeqScan *node)
 	 * else, scan the relation
 	 * ----------------
 	 */
-	outerPlan = outerPlan((Plan *) node);
-	if (outerPlan)
+	if ((outerPlan = outerPlan((Plan *) node)) != NULL)
 	{
 		slot = ExecProcNode(outerPlan, (Plan *) node);
 	}
@@ -375,8 +374,7 @@ ExecSeqReScan(SeqScan *node, ExprContext *exprCtxt, Plan *parent)
 	scanstate = node->scanstate;
 	estate = node->plan.state;
 
-	outerPlan = outerPlan((Plan *) node);
-	if (outerPlan)
+	if ((outerPlan = outerPlan((Plan *) node)) != NULL)
 	{
 		/* we are scanning a subplan */
 		outerPlan = outerPlan((Plan *) node);

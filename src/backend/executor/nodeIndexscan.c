@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.16 1998/02/26 12:13:11 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.17 1998/03/30 16:46:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,7 +91,6 @@ IndexNext(IndexScan *node)
 	IndexScanDesc scandesc;
 	Relation	heapRelation;
 	RetrieveIndexResult result;
-	ItemPointer iptr;
 	HeapTuple	tuple;
 	TupleTableSlot *slot;
 	Buffer		buffer = InvalidBuffer;
@@ -116,58 +115,47 @@ IndexNext(IndexScan *node)
 	 * ----------------
 	 */
 
-	for (;;)
+	/* ----------------
+	 *	if scanning this index succeeded then return the
+	 *	appropriate heap tuple.. else return NULL.
+	 * ----------------
+	 */
+	while ((result = index_getnext(scandesc, direction)) != NULL)
 	{
-		result = index_getnext(scandesc, direction);
-		/* ----------------
-		 *	if scanning this index succeeded then return the
-		 *	appropriate heap tuple.. else return NULL.
-		 * ----------------
-		 */
-		if (result)
+		tuple = heap_fetch(heapRelation, false, &result->heap_iptr, &buffer);
+		/* be tidy */
+		pfree(result);
+
+		if (tuple != NULL)
 		{
-			iptr = &result->heap_iptr;
-			tuple = heap_fetch(heapRelation,
-							   false,
-							   iptr,
-							   &buffer);
-			/* be tidy */
-			pfree(result);
-
-			if (tuple == NULL)
-			{
-				/* ----------------
-				 *	 we found a deleted tuple, so keep on scanning..
-				 * ----------------
-				 */
-				if (BufferIsValid(buffer))
-					ReleaseBuffer(buffer);
-				continue;
-			}
-
 			/* ----------------
-			 *	store the scanned tuple in the scan tuple slot of
-			 *	the scan state.  Eventually we will only do this and not
-			 *	return a tuple.  Note: we pass 'false' because tuples
-			 *	returned by amgetnext are pointers onto disk pages and
-			 *	were not created with palloc() and so should not be pfree()'d.
-			 * ----------------
-			 */
+		 	 *	store the scanned tuple in the scan tuple slot of
+		 	 *	the scan state.  Eventually we will only do this and not
+		 	 *	return a tuple.  Note: we pass 'false' because tuples
+		 	 *	returned by amgetnext are pointers onto disk pages and
+		 	 *	were not created with palloc() and so should not be pfree()'d.
+		 	 * ----------------
+		 	 */
 			ExecStoreTuple(tuple,		/* tuple to store */
-						   slot,/* slot to store in */
-						   buffer,		/* buffer associated with tuple  */
-						   false);		/* don't pfree */
-
+							slot,		/* slot to store in */
+							buffer,		/* buffer associated with tuple  */
+							false);		/* don't pfree */
+	
 			return slot;
 		}
-
-		/* ----------------
-		 *	if we get here it means the index scan failed so we
-		 *	are at the end of the scan..
-		 * ----------------
-		 */
-		return ExecClearTuple(slot);
+		else
+		{
+			if (BufferIsValid(buffer))
+				ReleaseBuffer(buffer);
+		}
 	}
+
+	/* ----------------
+	 *	if we get here it means the index scan failed so we
+	 *	are at the end of the scan..
+	 * ----------------
+	 */
+	return ExecClearTuple(slot);
 }
 
 /* ----------------------------------------------------------------
@@ -194,14 +182,11 @@ IndexNext(IndexScan *node)
 TupleTableSlot *
 ExecIndexScan(IndexScan *node)
 {
-	TupleTableSlot *returnTuple;
-
 	/* ----------------
 	 *	use IndexNext as access method
 	 * ----------------
 	 */
-	returnTuple = ExecScan(&node->scan, IndexNext);
-	return returnTuple;
+	return ExecScan(&node->scan, IndexNext);
 }
 
 /* ----------------------------------------------------------------
@@ -377,7 +362,6 @@ ExecEndIndexScan(IndexScan *node)
 	{
 		if (scanKeys[i] != NULL)
 			pfree(scanKeys[i]);
-
 	}
 
 	/* ----------------

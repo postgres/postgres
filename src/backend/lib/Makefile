@@ -4,7 +4,7 @@
 #    Makefile for lib (miscellaneous stuff)
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/lib/Makefile,v 1.9 1997/12/20 00:23:48 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/lib/Makefile,v 1.10 1998/03/30 16:46:24 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -15,7 +15,7 @@ INCLUDE_OPT = -I..
 
 CFLAGS+=$(INCLUDE_OPT)
 
-OBJS = bit.o fstack.o hasht.o lispsort.o qsort.o stringinfo.o dllist.o
+OBJS = bit.o fstack.o hasht.o lispsort.o stringinfo.o dllist.o
 
 all: SUBSYS.o
 

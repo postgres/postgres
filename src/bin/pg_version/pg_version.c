@@ -7,14 +7,14 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_version/Attic/pg_version.c,v 1.8 1997/09/08 02:33:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_version/Attic/pg_version.c,v 1.9 1998/03/30 16:47:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <stdlib.h>
 #include <stdio.h>
 
-#include <version.h>			/* interface to SetPgVersion */
+#include "version.h"			/* interface to SetPgVersion */
 
 
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.28 1998/03/20 03:44:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.29 1998/03/30 16:47:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,8 +78,8 @@ _LOArrayRange(int st[], int endp[], int bsize, int srcfd,
 static void
 _ReadArray(int st[], int endp[], int bsize, int srcfd, int destfd,
 		   ArrayType *array, int isDestLO, bool *isNull);
-static ArrayCastAndSet(char *src, bool typbyval, int typlen, char *dest);
-static SanityCheckInput(int ndim, int n, int dim[], int lb[], int indx[]);
+static int  ArrayCastAndSet(char *src, bool typbyval, int typlen, char *dest);
+static int  SanityCheckInput(int ndim, int n, int dim[], int lb[], int indx[]);
 static int	array_read(char *destptr, int eltsize, int nitems, char *srcptr);
 static char *array_seek(char *ptr, int eltsize, int nitems);
 
@@ -1033,6 +1033,7 @@ array_clip(ArrayType *array,
 			pfree(buff);
 		}
 		if (isDestLO)
+		{
 			if (ARR_IS_CHUNKED(array))
 			{
 				_ReadChunkArray(lowerIndx, upperIndx, len, fd, (char *) newfd, array,
@@ -1042,6 +1043,7 @@ array_clip(ArrayType *array,
 			{
 				_ReadArray(lowerIndx, upperIndx, len, fd, newfd, array, 1, isNull);
 			}
+		}
 #ifdef LOARRAY
 		LOclose(fd);
 		LOclose(newfd);

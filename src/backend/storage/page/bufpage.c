@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.14 1998/02/11 19:11:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.15 1998/03/30 16:47:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,8 +23,6 @@
 #include "utils/palloc.h"
 #include "utils/memutils.h"
 #include "storage/bufpage.h"
-
-#include "lib/qsort.h"
 
 static void
 PageIndexTupleDeleteAdjustLinePointers(PageHeader phdr,
@@ -330,7 +328,7 @@ PageRepairFragmentation(Page page)
 		}
 
 		/* sort itemIdSortData array... */
-		pg_qsort((char *) itemidbase, nused, sizeof(struct itemIdSortData),
+		qsort((char *) itemidbase, nused, sizeof(struct itemIdSortData),
 				 itemidcompare);
 
 		/* compactify page */

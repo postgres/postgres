@@ -2,7 +2,7 @@
  * Routines for handling of 'SET var TO',
  *	'SHOW var' and 'RESET var' statements.
  *
- * $Id: variable.c,v 1.4 1998/02/26 04:31:05 momjian Exp $
+ * $Id: variable.c,v 1.5 1998/03/30 16:45:59 momjian Exp $
  *
  */
 
@@ -444,13 +444,15 @@ parse_timezone(const char *value)
 	{
 		/* Not yet tried to save original value from environment? */
 		if (defaultTZ == NULL)
+		{
 			/* found something? then save it for later */
 			if ((defaultTZ = getenv("TZ")) != NULL)
 				strcpy(TZvalue, defaultTZ);
 
-		/* found nothing so mark with an invalid pointer */
+			/* found nothing so mark with an invalid pointer */
 			else
 				defaultTZ = (char *) -1;
+		}
 
 		strcpy(tzbuf, "TZ=");
 		strcat(tzbuf, tok);

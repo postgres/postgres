@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/predmig.c,v 1.9 1998/02/26 04:32:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/predmig.c,v 1.10 1998/03/30 16:46:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,6 @@
 #include "optimizer/cost.h"
 #include "optimizer/keys.h"
 #include "optimizer/tlist.h"
-#include "lib/qsort.h"
 
 #define is_clause(node) (get_cinfo(node))		/* a stream node
 												 * represents a clause
@@ -698,7 +697,7 @@ xfunc_stream_qsort(Stream root, Stream bottom)
 		nodearray[i] = tmp;
 
 	/* sort the array */
-	pg_qsort(nodearray, num, sizeof(LispValue), xfunc_stream_compare);
+	qsort(nodearray, num, sizeof(LispValue), xfunc_stream_compare);
 
 	/* paste together the array elements */
 	output = nodearray[num - 1];

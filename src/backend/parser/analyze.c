@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.72 1998/03/30 16:36:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.73 1998/03/30 16:47:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -583,11 +583,13 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 			elog(ERROR, "parser: internal error; unrecognized deferred node", NULL);
 
 		if (constraint->contype == CONSTR_PRIMARY)
+		{
 			if (have_pkey)
 				elog(ERROR, "CREATE TABLE/PRIMARY KEY multiple primary keys"
 					 " for table %s are not legal", stmt->relname);
 			else
 				have_pkey = TRUE;
+		}
 		else if (constraint->contype != CONSTR_UNIQUE)
 			elog(ERROR, "parser: internal error; unrecognized deferred constraint", NULL);
 

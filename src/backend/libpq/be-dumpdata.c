@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-dumpdata.c,v 1.14 1998/02/26 04:31:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-dumpdata.c,v 1.15 1998/03/30 16:46:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -305,10 +305,12 @@ be_printtup(HeapTuple tuple, TupleDesc typeinfo)
 		lengths[i] = typeinfo->attrs[i]->attlen;
 
 		if (lengths[i] == -1)	/* variable length attribute */
+		{
 			if (!isnull)
 				lengths[i] = VARSIZE(attr) - VARHDRSZ;
 			else
 				lengths[i] = 0;
+		}
 
 		if (!isnull && OidIsValid(typoutput))
 		{
