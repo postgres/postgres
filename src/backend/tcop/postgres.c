@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.113 1999/05/13 07:28:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.114 1999/05/22 02:55:58 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -215,7 +215,7 @@ InteractiveBackend(char *inBuf)
 	 *	display a prompt and obtain input from the user
 	 * ----------------
 	 */
-	printf("> ");
+	printf("backend> ");
 	fflush(stdout);
 
 	for (;;)
@@ -1485,7 +1485,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.113 $ $Date: 1999/05/13 07:28:46 $\n");
+		puts("$Revision: 1.114 $ $Date: 1999/05/22 02:55:58 $\n");
 	}
 
 	/* ----------------
