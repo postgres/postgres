@@ -7,15 +7,15 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/Makefile,v 1.12 1998/04/06 00:27:50 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/Makefile,v 1.13 1998/04/06 03:23:01 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR= ..
 include ../Makefile.global
 
-DIRS = pg_id pg_version psql pg_dump pg_passwd cleardbdir createuser \
-	destroydb initdb initlocation
+DIRS = pg_id pg_version psql pg_dump pg_passwd cleardbdir createdb \
+	createuser destroydb destroyuser initdb initlocation ipcclean
 
 #
 # TCL/TK programs
