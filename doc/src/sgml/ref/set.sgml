@@ -534,7 +534,7 @@ SET TIME ZONE { '<REPLACEABLE CLASS="PARAMETER">timezone</REPLACEABLE>' | LOCAL 
       </term>
       <listitem>
        <para>
-	Sets the isolation level for transactions.
+	Sets the isolation level for the current transaction.
 	
 	<variablelist>
 	 <varlistentry>
@@ -543,7 +543,7 @@ SET TIME ZONE { '<REPLACEABLE CLASS="PARAMETER">timezone</REPLACEABLE>' | LOCAL 
 	  </term>
 	  <listitem>
 	   <para>
-		Sets the isolation level for transactions to
+		Sets the isolation level for the current transaction to
 		'SERIALIZABLE' or 'READ COMMITTED'.
 	   </para>
 	  </listitem>
@@ -556,7 +556,7 @@ SET TIME ZONE { '<REPLACEABLE CLASS="PARAMETER">timezone</REPLACEABLE>' | LOCAL 
 	  </term>
 	  <listitem>
 	   <para>
-		Sets the isolation level for transactions to
+		Sets the isolation level for the current transaction to
 		'SERIALIZABLE' or 'COMMITTED'.
 	   </para>
 	  </listitem>

@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/set.l,v 1.19 1999/06/03 20:42:18 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/set.l,v 1.20 1999/06/03 20:44:28 momjian Exp $
 .TH SET SQL 05/14/97 PostgreSQL PostgreSQL
 .SH NAME
 set - set run-time parameters for session
@@ -82,7 +82,7 @@ The default is unlimited.
 sets your timezone.
 .PP
 .I TRANSACTION ISOLATION LEVEL
-sets the transaction isolation level to
+sets the current transaction's isolation level to
 .IR SERIALIZABLE
 or
 .IR READ COMMITTED .
