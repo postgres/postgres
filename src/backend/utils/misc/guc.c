@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.168 2003/11/13 05:34:58 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.169 2003/11/13 14:57:15 wieck Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -73,6 +73,7 @@ extern int	CheckPointTimeout;
 extern int	CommitDelay;
 extern int	CommitSiblings;
 extern char *preload_libraries_string;
+extern int	BufferStrategyStatInterval;
 
 #ifdef HAVE_SYSLOG
 extern char *Syslog_facility;
@@ -1188,6 +1189,15 @@ static struct config_int ConfigureNamesInt[] =
 		},
 		&log_min_duration_statement,
 		-1, -1, INT_MAX / 1000, NULL, NULL
+	},
+
+	{
+		{"buffer_strategy_status_interval", PGC_POSTMASTER, RESOURCES_MEM,
+			gettext_noop("Interval to report buffer strategy status in seconds"),
+			NULL
+		},
+		&BufferStrategyStatInterval,
+		0, 0, 600, NULL, NULL
 	},
 
 	/* End-of-list marker */

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: buf_internals.h,v 1.63 2003/11/13 05:34:58 wieck Exp $
+ * $Id: buf_internals.h,v 1.64 2003/11/13 14:57:15 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,17 +72,29 @@ typedef struct buftag
 	(a)->rnode = (xx_reln)->rd_node \
 )
 
+#define BUFFERTAG_EQUALS(a,xx_reln,xx_blockNum) \
+( \
+	(a)->rnode.tblNode == (xx_reln)->rd_node.tblNode && \
+	(a)->rnode.relNode == (xx_reln)->rd_node.relNode && \
+	(a)->blockNum == (xx_blockNum) \
+)
+#define BUFFERTAGS_EQUAL(a,b) \
+( \
+	(a)->rnode.tblNode == (b)->rnode.tblNode && \
+	(a)->rnode.relNode == (b)->rnode.relNode && \
+	(a)->blockNum == (b)->blockNum \
+)
+
 /*
  *	BufferDesc -- shared buffer cache metadata for a single
  *				  shared buffer descriptor.
  */
 typedef struct sbufdesc
 {
-	Buffer		freeNext;		/* links for freelist chain */
-	Buffer		freePrev;
+	Buffer		bufNext;		/* link in freelist chain */
 	SHMEM_OFFSET data;			/* pointer to data in buf pool */
 
-	/* tag and id must be together for table lookup (still true?) */
+	/* tag and id must be together for table lookup */
 	BufferTag	tag;			/* file/block identifier */
 	int			buf_id;			/* buffer's index number (from 0) */
 
@@ -106,6 +118,7 @@ typedef struct sbufdesc
 } BufferDesc;
 
 #define BufferDescriptorGetBuffer(bdesc) ((bdesc)->buf_id + 1)
+
 
 /*
  * Each backend has its own BufferLocks[] array holding flag bits
@@ -167,14 +180,19 @@ extern long int LocalBufferFlushCount;
 /*freelist.c*/
 extern void PinBuffer(BufferDesc *buf);
 extern void UnpinBuffer(BufferDesc *buf);
-extern BufferDesc *GetFreeBuffer(void);
-extern void InitFreeList(bool init);
+extern BufferDesc *StrategyBufferLookup(BufferTag *tagPtr, bool recheck);
+extern BufferDesc *StrategyGetBuffer(void);
+extern void StrategyReplaceBuffer(BufferDesc *buf, Relation rnode, BlockNumber blockNum);
+extern void StrategyInvalidateBuffer(BufferDesc *buf);
+extern void StrategyHintVacuum(bool vacuum_active);
+extern int StrategyDirtyBufferList(int *buffer_dirty, int max_buffers);
+extern void StrategyInitialize(bool init);
 
 /* buf_table.c */
-extern void InitBufTable(void);
-extern BufferDesc *BufTableLookup(BufferTag *tagPtr);
-extern bool BufTableDelete(BufferDesc *buf);
-extern bool BufTableInsert(BufferDesc *buf);
+extern void InitBufTable(int size);
+extern int BufTableLookup(BufferTag *tagPtr);
+extern bool BufTableInsert(BufferTag *tagPtr, Buffer buf_id);
+extern bool BufTableDelete(BufferTag *tagPtr);
 
 /* bufmgr.c */
 extern BufferDesc *BufferDescriptors;
