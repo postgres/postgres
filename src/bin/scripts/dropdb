@@ -11,11 +11,11 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/dropdb,v 1.11 2001/02/18 18:34:01 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/dropdb,v 1.12 2001/09/22 04:28:12 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
-CMDNAME=`basename $0`
+CMDNAME=`basename "$0"`
 PATHNAME=`echo $0 | sed "s,$CMDNAME\$,,"`
 
 PSQLOPT=

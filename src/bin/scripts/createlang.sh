@@ -7,11 +7,11 @@
 # Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createlang.sh,v 1.29 2001/08/13 21:34:54 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createlang.sh,v 1.30 2001/09/22 04:28:12 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
-CMDNAME=`basename $0`
+CMDNAME=`basename "$0"`
 PATHNAME=`echo $0 | sed "s,$CMDNAME\$,,"`
 
 PSQLOPT=

@@ -12,11 +12,11 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createdb,v 1.16 2001/09/06 04:57:29 ishii Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createdb,v 1.17 2001/09/22 04:28:12 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
-CMDNAME=`basename $0`
+CMDNAME=`basename "$0"`
 PATHNAME=`echo $0 | sed "s,$CMDNAME\$,,"`
 
 MB=

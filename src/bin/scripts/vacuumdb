@@ -12,11 +12,11 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/vacuumdb,v 1.17 2001/07/10 22:09:29 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/vacuumdb,v 1.18 2001/09/22 04:28:12 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
-CMDNAME=`basename $0`
+CMDNAME=`basename "$0"`
 PATHNAME=`echo $0 | sed "s,$CMDNAME\$,,"`
 
 PSQLOPT=
