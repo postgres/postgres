@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu May 10 18:36:37 EDT 2001
+Last updated:		Thu May 10 19:35:42 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -52,7 +52,7 @@ ADMIN
   lock use [privileges]
 * Permission to DELETE table also allows UPDATE
 * Allow elog() to return error codes, module name, file name, line
-  number, not just messages [elog]
+  number, not just messages (Peter E) [elog]
 * Allow international error message support and add error codes [elog]
 * Remove unused files during database vacuum or postmaster startup
 * Add table name mapping for numeric file names
@@ -219,7 +219,7 @@ EXOTIC FEATURES
 
 * Add sql3 recursive unions
 * Add the concept of dataspaces/tablespaces [tablespaces]
-* Allow SQL92 schemas
+* Allow SQL92 schemas (Tom)
 * Allow queries across multiple databases
 * Add pre-parsing phase that converts non-ANSI features to supported features
 * SQL*Net listener that makes PostgreSQL appear as an Oracle database 
