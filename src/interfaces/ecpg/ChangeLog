@@ -1882,6 +1882,15 @@ Mon Dec  6 21:27:34 CET 2004
 	
 	- Fixed bug in parsing of typedef'ed array sizes.
 	- Synced parser.
+	
+Thu Dec 23 09:26:08 CET 2004
+
+	- Added PGTYPEStimestamp_add_interval written by Dave Cramer.
+	- Fixed parsing of defines to make sure they used more than once.	
+	
+Mon Jan 10 13:55:32 CET 2005
+	
+	- Fixed segfault in adjust_informix due to missing varchar type.
 	- Set ecpg version to 3.2.0.
 	- Set compat library version to 1.2.
 	- Set ecpg library version to 4.2.
