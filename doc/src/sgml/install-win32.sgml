@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.17 2003/11/29 19:51:37 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.18 2004/09/27 19:43:17 momjian Exp $
 -->
 
 <chapter id="install-win32">
@@ -12,33 +12,43 @@ $PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.17 2003/11/29 19:51:37 pg
 
  <para>
   Although <productname>PostgreSQL</productname> is written for
-  Unix-like operating systems, the C client library
+  Unix-like operating systems and compiles under
+  <productname>MinGW</productname>, the C client library
   (<application>libpq</application>) and the interactive terminal
-  (<application>psql</application>) can be compiled natively under
-  Windows.  The makefiles included in the source distribution are
-  written for <productname>Microsoft Visual C++</productname> and will
-  probably not work with other systems.  It should be possible to
-  compile the libraries manually in other cases.
+  (<application>psql</application>) can be compiled using other Windows
+  tool sets. Makefiles are included in the source distribution for
+  <productname>Microsoft Visual C++</productname> and
+  <productname>Borland C++</productname>. It should be possible to
+  compile the libraries manually for other configurations.
  </para>
 
  <tip>
   <para>
-   If you are using Windows 98 or newer you can build and use all of
-   <productname>PostgreSQL</productname> <quote>the Unix way</quote>
-   if you install the <productname>Cygwin</productname> toolkit first.
-   In that case see <xref linkend="installation">.
+   If you are using a Windows NT-based operating system or newer you can
+   build and use all of <productname>PostgreSQL</productname> <quote>the
+   Unix way</quote> if you install the <productname>MinGW</productname>
+   toolkit first. In that case see <xref linkend="installation">.
   </para>
  </tip>
 
  <para>
-  To build everything that you can on
-  <productname>Windows</productname>, change into the
+  To build everything that you can on <productname>Windows</productname>
+  using <productname>Microsoft Visual C++</productname>, change into the
   <filename>src</filename> directory and type the command
 <screen>
 <userinput>nmake /f win32.mak</userinput>
 </screen>
   This assumes that you have <productname>Visual C++</productname> in
   your path.
+ </para>
+
+ <para>
+  To build everything using using <productname>Borland
+  C++</productname>, change into the <filename>src</filename> directory
+  and type the command
+<screen>
+<userinput>make -DCFG=Release /f bcc32.mak</userinput>
+</screen>
  </para>
 
  <para>
@@ -95,10 +105,11 @@ $PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.17 2003/11/29 19:51:37 pg
  </para>
 
  <para>
-  If you plan to do development using <application>libpq</application> on this machine, you will
-  have to add the <filename>src\include</filename> and
-  <filename>src\interfaces\libpq</filename> subdirectories of the
-  source tree to the include path in your compilers settings.
+  If you plan to do development using <application>libpq</application>
+  on this machine, you will have to add the
+  <filename>src\include</filename> and
+  <filename>src\interfaces\libpq</filename> subdirectories of the source
+  tree to the include path in your compilers settings.
  </para>
 
  <para>
