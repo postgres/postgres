@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.106 2003/07/26 13:50:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.107 2003/07/26 15:22:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -440,15 +440,16 @@ ClientAuthentication(Port *port)
 								NI_NUMERICHOST);
 
 #ifdef USE_SSL
-#define EREPORT_SSL_STATUS	(port->ssl ? "on" : "off")
-#else
-#define EREPORT_SSL_STATUS	"off"
-#endif
-
 				ereport(FATAL,
 						(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
 						 errmsg("no pg_hba.conf entry for host \"%s\", user \"%s\", database \"%s\", SSL \"%s\"",
-								hostinfo, port->user_name, port->database_name, EREPORT_SSL_STATUS)));
+								hostinfo, port->user_name, port->database_name, port->ssl ? "on" : "off")));
+#else
+				ereport(FATAL,
+						(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
+						 errmsg("no pg_hba.conf entry for host \"%s\", user \"%s\", database \"%s\"",
+								hostinfo, port->user_name, port->database_name)));
+#endif
 				break;
 			}
 
