@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteSupport.c,v 1.3 1996/11/08 05:58:06 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteSupport.c,v 1.4 1996/11/24 05:46:12 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,7 +56,7 @@ RuleIdGetActionInfo(Oid ruleoid, bool *instead_flag, Query **parseTrees)
 				     ObjectIdGetDatum(ruleoid),
 				     0,0,0);
     if (ruletuple == NULL)
-	elog(WARN, "rule %d isn't in rewrite system relation");
+	elog(WARN, "rule %ud isn't in rewrite system relation", ruleoid);
 
     ruleaction = heap_getattr(ruletuple,
 			      InvalidBuffer,
