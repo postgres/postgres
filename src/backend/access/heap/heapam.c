@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.158 2003/11/29 19:51:40 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.159 2003/12/14 00:34:47 neilc Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -2110,7 +2110,8 @@ heap_xlog_clean(bool redo, XLogRecPtr lsn, XLogRecord *record)
 
 	if (XLByteLE(lsn, PageGetLSN(page)))
 	{
-		UnlockAndReleaseBuffer(buffer);
+		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+		ReleaseBuffer(buffer);
 		return;
 	}
 
@@ -2135,7 +2136,8 @@ heap_xlog_clean(bool redo, XLogRecPtr lsn, XLogRecord *record)
 
 	PageSetLSN(page, lsn);
 	PageSetSUI(page, ThisStartUpID);	/* prev sui */
-	UnlockAndWriteBuffer(buffer);
+	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+	WriteBuffer(buffer);
 }
 
 static void
@@ -2170,7 +2172,8 @@ heap_xlog_delete(bool redo, XLogRecPtr lsn, XLogRecord *record)
 	{
 		if (XLByteLE(lsn, PageGetLSN(page)))	/* changes are applied */
 		{
-			UnlockAndReleaseBuffer(buffer);
+			LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+			ReleaseBuffer(buffer);
 			return;
 		}
 	}
@@ -2199,7 +2202,8 @@ heap_xlog_delete(bool redo, XLogRecPtr lsn, XLogRecord *record)
 		htup->t_ctid = xlrec->target.tid;
 		PageSetLSN(page, lsn);
 		PageSetSUI(page, ThisStartUpID);
-		UnlockAndWriteBuffer(buffer);
+		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+		WriteBuffer(buffer);
 		return;
 	}
 
@@ -2249,7 +2253,8 @@ heap_xlog_insert(bool redo, XLogRecPtr lsn, XLogRecord *record)
 
 		if (XLByteLE(lsn, PageGetLSN(page)))	/* changes are applied */
 		{
-			UnlockAndReleaseBuffer(buffer);
+			LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+			ReleaseBuffer(buffer);
 			return;
 		}
 
@@ -2282,7 +2287,8 @@ heap_xlog_insert(bool redo, XLogRecPtr lsn, XLogRecord *record)
 			elog(PANIC, "heap_insert_redo: failed to add tuple");
 		PageSetLSN(page, lsn);
 		PageSetSUI(page, ThisStartUpID);		/* prev sui */
-		UnlockAndWriteBuffer(buffer);
+		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+		WriteBuffer(buffer);
 		return;
 	}
 
@@ -2332,7 +2338,8 @@ heap_xlog_update(bool redo, XLogRecPtr lsn, XLogRecord *record, bool move)
 	{
 		if (XLByteLE(lsn, PageGetLSN(page)))	/* changes are applied */
 		{
-			UnlockAndReleaseBuffer(buffer);
+			LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+			ReleaseBuffer(buffer);
 			if (samepage)
 				return;
 			goto newt;
@@ -2378,7 +2385,8 @@ heap_xlog_update(bool redo, XLogRecPtr lsn, XLogRecord *record, bool move)
 			goto newsame;
 		PageSetLSN(page, lsn);
 		PageSetSUI(page, ThisStartUpID);
-		UnlockAndWriteBuffer(buffer);
+		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+		WriteBuffer(buffer);
 		goto newt;
 	}
 
@@ -2421,7 +2429,8 @@ newsame:;
 
 		if (XLByteLE(lsn, PageGetLSN(page)))	/* changes are applied */
 		{
-			UnlockAndReleaseBuffer(buffer);
+			LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+			ReleaseBuffer(buffer);
 			return;
 		}
 
@@ -2474,7 +2483,8 @@ newsame:;
 			elog(PANIC, "heap_update_redo: failed to add tuple");
 		PageSetLSN(page, lsn);
 		PageSetSUI(page, ThisStartUpID);		/* prev sui */
-		UnlockAndWriteBuffer(buffer);
+		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+		WriteBuffer(buffer);
 		return;
 	}
 
@@ -2523,7 +2533,8 @@ _heap_unlock_tuple(void *data)
 		elog(PANIC, "_heap_unlock_tuple: invalid xmax in rollback");
 	htup->t_infomask &= ~HEAP_XMAX_UNLOGGED;
 	htup->t_infomask |= HEAP_XMAX_INVALID;
-	UnlockAndWriteBuffer(buffer);
+	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+	WriteBuffer(buffer);
 	return;
 }
 

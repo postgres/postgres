@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.8 2003/11/29 19:51:40 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.9 2003/12/14 00:34:47 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,7 +69,8 @@ forget_matching_split(Relation reln, RelFileNode node,
 	btitem = (BTItem) PageGetItem(page, PageGetItemId(page, offnum));
 	rightblk = ItemPointerGetBlockNumber(&(btitem->bti_itup.t_tid));
 	Assert(ItemPointerGetOffsetNumber(&(btitem->bti_itup.t_tid)) == P_HIKEY);
-	UnlockAndReleaseBuffer(buffer);
+	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+	ReleaseBuffer(buffer);
 
 	foreach(l, incomplete_splits)
 	{
@@ -137,7 +138,8 @@ _bt_restore_meta(Relation reln, XLogRecPtr lsn,
 
 	PageSetLSN(metapg, lsn);
 	PageSetSUI(metapg, ThisStartUpID);
-	UnlockAndWriteBuffer(metabuf);
+	LockBuffer(metabuf, BUFFER_LOCK_UNLOCK);
+	WriteBuffer(metabuf);
 }
 
 static void
@@ -184,7 +186,10 @@ btree_xlog_insert(bool redo, bool isleaf, bool ismeta,
 		if (redo)
 		{
 			if (XLByteLE(lsn, PageGetLSN(page)))
-				UnlockAndReleaseBuffer(buffer);
+			{
+				LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+				ReleaseBuffer(buffer);
+			}
 			else
 			{
 				if (PageAddItem(page, (Item) datapos, datalen,
@@ -194,7 +199,8 @@ btree_xlog_insert(bool redo, bool isleaf, bool ismeta,
 
 				PageSetLSN(page, lsn);
 				PageSetSUI(page, ThisStartUpID);
-				UnlockAndWriteBuffer(buffer);
+				LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+				WriteBuffer(buffer);
 			}
 		}
 		else
@@ -203,7 +209,10 @@ btree_xlog_insert(bool redo, bool isleaf, bool ismeta,
 				elog(PANIC, "btree_insert_undo: bad page LSN");
 
 			if (!P_ISLEAF(pageop))
-				UnlockAndReleaseBuffer(buffer);
+			{
+				LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+				ReleaseBuffer(buffer);
+			}
 			else
 				elog(PANIC, "btree_insert_undo: unimplemented");
 		}
@@ -275,7 +284,8 @@ btree_xlog_split(bool redo, bool onleft, bool isroot,
 
 		PageSetLSN(page, lsn);
 		PageSetSUI(page, ThisStartUpID);
-		UnlockAndWriteBuffer(buffer);
+		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+		WriteBuffer(buffer);
 	}
 	else
 	{
@@ -310,7 +320,8 @@ btree_xlog_split(bool redo, bool onleft, bool isroot,
 
 		PageSetLSN(page, lsn);
 		PageSetSUI(page, ThisStartUpID);
-		UnlockAndWriteBuffer(buffer);
+		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+		WriteBuffer(buffer);
 	}
 	else
 	{
@@ -334,7 +345,10 @@ btree_xlog_split(bool redo, bool onleft, bool isroot,
 				elog(PANIC, "btree_split_redo: uninitialized next right page");
 
 			if (XLByteLE(lsn, PageGetLSN(page)))
-				UnlockAndReleaseBuffer(buffer);
+			{
+				LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+				ReleaseBuffer(buffer);
+			}
 			else
 			{
 				pageop = (BTPageOpaque) PageGetSpecialPointer(page);
@@ -342,7 +356,8 @@ btree_xlog_split(bool redo, bool onleft, bool isroot,
 
 				PageSetLSN(page, lsn);
 				PageSetSUI(page, ThisStartUpID);
-				UnlockAndWriteBuffer(buffer);
+				LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+				WriteBuffer(buffer);
 			}
 		}
 	}
@@ -385,7 +400,8 @@ btree_xlog_delete(bool redo, XLogRecPtr lsn, XLogRecord *record)
 
 	if (XLByteLE(lsn, PageGetLSN(page)))
 	{
-		UnlockAndReleaseBuffer(buffer);
+		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+		ReleaseBuffer(buffer);
 		return;
 	}
 
@@ -407,7 +423,8 @@ btree_xlog_delete(bool redo, XLogRecPtr lsn, XLogRecord *record)
 
 	PageSetLSN(page, lsn);
 	PageSetSUI(page, ThisStartUpID);
-	UnlockAndWriteBuffer(buffer);
+	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+	WriteBuffer(buffer);
 }
 
 static void
@@ -445,7 +462,10 @@ btree_xlog_delete_page(bool redo, bool ismeta,
 		if (PageIsNew((PageHeader) page))
 			elog(PANIC, "btree_delete_page_redo: uninitialized parent page");
 		if (XLByteLE(lsn, PageGetLSN(page)))
-			UnlockAndReleaseBuffer(buffer);
+		{
+			LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+			ReleaseBuffer(buffer);
+		}
 		else
 		{
 			OffsetNumber poffset;
@@ -472,7 +492,8 @@ btree_xlog_delete_page(bool redo, bool ismeta,
 
 			PageSetLSN(page, lsn);
 			PageSetSUI(page, ThisStartUpID);
-			UnlockAndWriteBuffer(buffer);
+			LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+			WriteBuffer(buffer);
 		}
 	}
 
@@ -486,7 +507,10 @@ btree_xlog_delete_page(bool redo, bool ismeta,
 		if (PageIsNew((PageHeader) page))
 			elog(PANIC, "btree_delete_page_redo: uninitialized right sibling");
 		if (XLByteLE(lsn, PageGetLSN(page)))
-			UnlockAndReleaseBuffer(buffer);
+		{
+			LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+			ReleaseBuffer(buffer);
+		}
 		else
 		{
 			pageop = (BTPageOpaque) PageGetSpecialPointer(page);
@@ -494,7 +518,8 @@ btree_xlog_delete_page(bool redo, bool ismeta,
 
 			PageSetLSN(page, lsn);
 			PageSetSUI(page, ThisStartUpID);
-			UnlockAndWriteBuffer(buffer);
+			LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+			WriteBuffer(buffer);
 		}
 	}
 
@@ -510,7 +535,10 @@ btree_xlog_delete_page(bool redo, bool ismeta,
 			if (PageIsNew((PageHeader) page))
 				elog(PANIC, "btree_delete_page_redo: uninitialized left sibling");
 			if (XLByteLE(lsn, PageGetLSN(page)))
-				UnlockAndReleaseBuffer(buffer);
+			{
+				LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+				ReleaseBuffer(buffer);
+			}
 			else
 			{
 				pageop = (BTPageOpaque) PageGetSpecialPointer(page);
@@ -518,7 +546,8 @@ btree_xlog_delete_page(bool redo, bool ismeta,
 
 				PageSetLSN(page, lsn);
 				PageSetSUI(page, ThisStartUpID);
-				UnlockAndWriteBuffer(buffer);
+				LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+				WriteBuffer(buffer);
 			}
 		}
 	}
@@ -543,7 +572,8 @@ btree_xlog_delete_page(bool redo, bool ismeta,
 
 		PageSetLSN(page, lsn);
 		PageSetSUI(page, ThisStartUpID);
-		UnlockAndWriteBuffer(buffer);
+		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+		WriteBuffer(buffer);
 	}
 	else
 	{
@@ -606,7 +636,8 @@ btree_xlog_newroot(bool redo, XLogRecPtr lsn, XLogRecord *record)
 
 	PageSetLSN(page, lsn);
 	PageSetSUI(page, ThisStartUpID);
-	UnlockAndWriteBuffer(buffer);
+	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+	WriteBuffer(buffer);
 
 	_bt_restore_meta(reln, lsn,
 					 xlrec->rootblk, xlrec->level,
@@ -668,7 +699,8 @@ btree_xlog_newpage(bool redo, XLogRecPtr lsn, XLogRecord *record)
 
 	PageSetLSN(page, lsn);
 	PageSetSUI(page, ThisStartUpID);
-	UnlockAndWriteBuffer(buffer);
+	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+	WriteBuffer(buffer);
 }
 
 

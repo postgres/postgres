@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/buf_init.c,v 1.58 2003/11/29 19:51:56 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/buf_init.c,v 1.59 2003/12/14 00:34:47 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,17 +34,6 @@
 #include "utils/hsearch.h"
 #include "utils/memutils.h"
 
-
-/*
- *	if BMTRACE is defined, we trace the last 200 buffer allocations and
- *	deallocations in a circular buffer in shared memory.
- */
-#ifdef	BMTRACE
-bmtrace    *TraceBuf;
-long	   *CurTraceBuf;
-
-#define BMT_LIMIT		200
-#endif   /* BMTRACE */
 int			ShowPinTrace = 0;
 
 int			Data_Descriptors;
@@ -137,16 +126,6 @@ InitBufferPool(void)
 	 * problems.
 	 */
 	LWLockAcquire(BufMgrLock, LW_EXCLUSIVE);
-
-#ifdef BMTRACE
-	CurTraceBuf = (long *) ShmemInitStruct("Buffer trace",
-							(BMT_LIMIT * sizeof(bmtrace)) + sizeof(long),
-										   &foundDescs);
-	if (!foundDescs)
-		MemSet(CurTraceBuf, 0, (BMT_LIMIT * sizeof(bmtrace)) + sizeof(long));
-
-	TraceBuf = (bmtrace *) & (CurTraceBuf[1]);
-#endif
 
 	BufferDescriptors = (BufferDesc *)
 		ShmemInitStruct("Buffer Descriptors",
@@ -255,10 +234,6 @@ BufferShmemSize(void)
 
 	/* size of buffer hash table */
 	size += hash_estimate_size(NBuffers, sizeof(BufferLookupEnt));
-
-#ifdef BMTRACE
-	size += (BMT_LIMIT * sizeof(bmtrace)) + sizeof(long);
-#endif
 
 	return size;
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.148 2003/12/01 16:53:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.149 2003/12/14 00:34:47 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -84,7 +84,7 @@ static Buffer ReadBufferInternal(Relation reln, BlockNumber blockNum,
 				   bool bufferLockHeld);
 static BufferDesc *BufferAlloc(Relation reln, BlockNumber blockNum,
 			bool *foundPtr);
-static int	BufferReplace(BufferDesc *bufHdr);
+static bool BufferReplace(BufferDesc *bufHdr);
 
 #ifdef NOT_USED
 void		PrintBufferDescs(void);
@@ -108,13 +108,6 @@ static void write_buffer(Buffer buffer, bool unpin);
  *		opened already.
  *
  * Note: a side effect of a P_NEW call is to update reln->rd_nblocks.
- */
-
-#undef ReadBuffer				/* conflicts with macro when BUFMGR_DEBUG
-								 * defined */
-
-/*
- * ReadBuffer
  */
 Buffer
 ReadBuffer(Relation reln, BlockNumber blockNum)
@@ -363,15 +356,10 @@ BufferAlloc(Relation reln,
 			 * This is never going to happen, don't worry about it.
 			 */
 			*foundPtr = FALSE;
-		}
-#ifdef BMTRACE
-		_bm_trace((reln->rd_rel->relisshared ? 0 : MyDatabaseId), RelationGetRelid(reln), blockNum, BufferDescriptorGetBuffer(buf), BMT_ALLOCFND);
-#endif   /* BMTRACE */
-
-		if (!(*foundPtr))
 			StartBufferIO(buf, true);
-		LWLockRelease(BufMgrLock);
+		}
 
+		LWLockRelease(BufMgrLock);
 		return buf;
 	}
 
@@ -402,7 +390,7 @@ BufferAlloc(Relation reln,
 
 		if (buf->flags & BM_DIRTY || buf->cntxDirty)
 		{
-			bool		smok;
+			bool	replace_ok;
 
 			/*
 			 * skip write error buffers
@@ -436,9 +424,9 @@ BufferAlloc(Relation reln,
 			 * Write the buffer out, being careful to release BufMgrLock
 			 * before starting the I/O.
 			 */
-			smok = BufferReplace(buf);
+			replace_ok = BufferReplace(buf);
 
-			if (smok == FALSE)
+			if (replace_ok == false)
 			{
 				ereport(WARNING,
 						(errcode(ERRCODE_IO_ERROR),
@@ -465,8 +453,8 @@ BufferAlloc(Relation reln,
 						 buf->tag.blockNum,
 						 buf->tag.rnode.tblNode, buf->tag.rnode.relNode);
 				}
-				else
-					buf->flags &= ~BM_DIRTY;
+
+				buf->flags &= ~BM_DIRTY;
 				buf->cntxDirty = false;
 			}
 
@@ -523,13 +511,14 @@ BufferAlloc(Relation reln,
 					WaitIO(buf2);
 					inProgress = (buf2->flags & BM_IO_IN_PROGRESS);
 				}
+
 				if (BUFFER_IS_BROKEN(buf2))
+				{
 					*foundPtr = FALSE;
-
-				if (!(*foundPtr))
 					StartBufferIO(buf2, true);
-				LWLockRelease(BufMgrLock);
+				}
 
+				LWLockRelease(BufMgrLock);
 				return buf2;
 			}
 		}
@@ -557,10 +546,6 @@ BufferAlloc(Relation reln,
 		StartBufferIO(buf, true);
 	else
 		ContinueBufferIO(buf, true);
-
-#ifdef BMTRACE
-	_bm_trace((reln->rd_rel->relisshared ? 0 : MyDatabaseId), RelationGetRelid(reln), blockNum, BufferDescriptorGetBuffer(buf), BMT_ALLOCNOTFND);
-#endif   /* BMTRACE */
 
 	LWLockRelease(BufMgrLock);
 
@@ -602,15 +587,11 @@ write_buffer(Buffer buffer, bool release)
  *
  *		Marks buffer contents as dirty (actual write happens later).
  *
- * Assume that buffer is pinned.  Assume that reln is
- *		valid.
+ * Assume that buffer is pinned.  Assume that reln is valid.
  *
  * Side Effects:
  *		Pin count is decremented.
  */
-
-#undef WriteBuffer
-
 void
 WriteBuffer(Buffer buffer)
 {
@@ -627,8 +608,6 @@ WriteNoReleaseBuffer(Buffer buffer)
 	write_buffer(buffer, false);
 }
 
-
-#undef ReleaseAndReadBuffer
 /*
  * ReleaseAndReadBuffer -- combine ReleaseBuffer() and ReadBuffer()
  *		to save a lock release/acquire.
@@ -638,7 +617,7 @@ WriteNoReleaseBuffer(Buffer buffer)
  * Since the passed buffer must be pinned, it's OK to examine its block
  * number without getting the lock first.
  *
- * Note: it is OK to pass buffer = InvalidBuffer, indicating that no old
+ * Note: it is OK to pass buffer == InvalidBuffer, indicating that no old
  * buffer actually needs to be released.  This case is the same as ReadBuffer,
  * but can save some tests in the caller.
  *
@@ -1092,11 +1071,12 @@ BufferGetBlockNumber(Buffer buffer)
 /*
  * BufferReplace
  *
- * Write out the buffer corresponding to 'bufHdr'
+ * Write out the buffer corresponding to 'bufHdr'. Returns 'true' if
+ * the buffer was successfully written out, 'false' otherwise.
  *
  * BufMgrLock must be held at entry, and the buffer must be pinned.
  */
-static int
+static bool
 BufferReplace(BufferDesc *bufHdr)
 {
 	Relation	reln;
@@ -1147,11 +1127,11 @@ BufferReplace(BufferDesc *bufHdr)
 	LWLockAcquire(BufMgrLock, LW_EXCLUSIVE);
 
 	if (status == SM_FAIL)
-		return FALSE;
+		return false;
 
 	BufferFlushCount++;
 
-	return TRUE;
+	return true;
 }
 
 /*
@@ -1167,7 +1147,7 @@ RelationGetNumberOfBlocks(Relation relation)
 	 * new or temp, because no one else should be modifying it.  Otherwise
 	 * we need to ask the smgr for the current physical file length.
 	 *
-	 * Don't call smgr on a view, either.
+	 * Don't call smgr on a view or a composite type, either.
 	 */
 	if (relation->rd_rel->relkind == RELKIND_VIEW)
 		relation->rd_nblocks = 0;
@@ -1175,6 +1155,7 @@ RelationGetNumberOfBlocks(Relation relation)
 		relation->rd_nblocks = 0;
 	else if (!relation->rd_isnew && !relation->rd_istemp)
 		relation->rd_nblocks = smgrnblocks(DEFAULT_SMGR, relation);
+
 	return relation->rd_nblocks;
 }
 
@@ -1623,8 +1604,6 @@ FlushRelationBuffers(Relation rel, BlockNumber firstDelBlock)
 	return 0;
 }
 
-#undef ReleaseBuffer
-
 /*
  * ReleaseBuffer -- remove the pin on a buffer without
  *		marking it dirty.
@@ -1736,151 +1715,6 @@ refcount = %ld, file: %s, line: %d\n",
 	return b;
 }
 #endif
-
-#ifdef BMTRACE
-
-/*
- *	trace allocations and deallocations in a circular buffer in
- *	shared memory.	check the buffer before doing the allocation,
- *	and die if there's anything fishy.
- */
-
-void
-_bm_trace(Oid dbId, Oid relId, int blkNo, int bufNo, int allocType)
-{
-	long		start,
-				cur;
-	bmtrace    *tb;
-
-	start = *CurTraceBuf;
-
-	if (start > 0)
-		cur = start - 1;
-	else
-		cur = BMT_LIMIT - 1;
-
-	for (;;)
-	{
-		tb = &TraceBuf[cur];
-		if (tb->bmt_op != BMT_NOTUSED)
-		{
-			if (tb->bmt_buf == bufNo)
-			{
-				if ((tb->bmt_op == BMT_DEALLOC)
-					|| (tb->bmt_dbid == dbId && tb->bmt_relid == relId
-						&& tb->bmt_blkno == blkNo))
-					goto okay;
-
-				/* die holding the buffer lock */
-				_bm_die(dbId, relId, blkNo, bufNo, allocType, start, cur);
-			}
-		}
-
-		if (cur == start)
-			goto okay;
-
-		if (cur == 0)
-			cur = BMT_LIMIT - 1;
-		else
-			cur--;
-	}
-
-okay:
-	tb = &TraceBuf[start];
-	tb->bmt_pid = MyProcPid;
-	tb->bmt_buf = bufNo;
-	tb->bmt_dbid = dbId;
-	tb->bmt_relid = relId;
-	tb->bmt_blkno = blkNo;
-	tb->bmt_op = allocType;
-
-	*CurTraceBuf = (start + 1) % BMT_LIMIT;
-}
-
-void
-_bm_die(Oid dbId, Oid relId, int blkNo, int bufNo,
-		int allocType, long start, long cur)
-{
-	FILE	   *fp;
-	bmtrace    *tb;
-	int			i;
-
-	tb = &TraceBuf[cur];
-
-	if ((fp = AllocateFile("/tmp/death_notice", "w")) == NULL)
-		elog(FATAL, "buffer alloc trace error and can't open log file");
-
-	fprintf(fp, "buffer alloc trace detected the following error:\n\n");
-	fprintf(fp, "    buffer %d being %s inconsistently with a previous %s\n\n",
-		 bufNo, (allocType == BMT_DEALLOC ? "deallocated" : "allocated"),
-			(tb->bmt_op == BMT_DEALLOC ? "deallocation" : "allocation"));
-
-	fprintf(fp, "the trace buffer contains:\n");
-
-	i = start;
-	for (;;)
-	{
-		tb = &TraceBuf[i];
-		if (tb->bmt_op != BMT_NOTUSED)
-		{
-			fprintf(fp, "     [%3d]%spid %d buf %2d for <%u,%u,%u> ",
-					i, (i == cur ? " ---> " : "\t"),
-					tb->bmt_pid, tb->bmt_buf,
-					tb->bmt_dbid, tb->bmt_relid, tb->bmt_blkno);
-
-			switch (tb->bmt_op)
-			{
-				case BMT_ALLOCFND:
-					fprintf(fp, "allocate (found)\n");
-					break;
-
-				case BMT_ALLOCNOTFND:
-					fprintf(fp, "allocate (not found)\n");
-					break;
-
-				case BMT_DEALLOC:
-					fprintf(fp, "deallocate\n");
-					break;
-
-				default:
-					fprintf(fp, "unknown op type %d\n", tb->bmt_op);
-					break;
-			}
-		}
-
-		i = (i + 1) % BMT_LIMIT;
-		if (i == start)
-			break;
-	}
-
-	fprintf(fp, "\noperation causing error:\n");
-	fprintf(fp, "\tpid %d buf %d for <%d,%u,%d> ",
-			getpid(), bufNo, dbId, relId, blkNo);
-
-	switch (allocType)
-	{
-		case BMT_ALLOCFND:
-			fprintf(fp, "allocate (found)\n");
-			break;
-
-		case BMT_ALLOCNOTFND:
-			fprintf(fp, "allocate (not found)\n");
-			break;
-
-		case BMT_DEALLOC:
-			fprintf(fp, "deallocate\n");
-			break;
-
-		default:
-			fprintf(fp, "unknown op type %d\n", allocType);
-			break;
-	}
-
-	FreeFile(fp);
-
-	kill(getpid(), SIGILL);
-}
-#endif   /* BMTRACE */
 
 /*
  * SetBufferCommitInfoNeedsSave

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/sequence.c,v 1.105 2003/11/29 19:51:47 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/sequence.c,v 1.106 2003/12/14 00:34:47 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1104,7 +1104,8 @@ seq_redo(XLogRecPtr lsn, XLogRecord *record)
 
 	PageSetLSN(page, lsn);
 	PageSetSUI(page, ThisStartUpID);
-	UnlockAndWriteBuffer(buffer);
+	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+	WriteBuffer(buffer);
 }
 
 void

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlogutils.c,v 1.27 2003/11/29 19:51:40 pgsql Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlogutils.c,v 1.28 2003/12/14 00:34:47 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,13 +60,15 @@ XLogIsOwnerOfTuple(RelFileNode hnode, ItemPointer iptr,
 	if (PageIsNew((PageHeader) page) ||
 		ItemPointerGetOffsetNumber(iptr) > PageGetMaxOffsetNumber(page))
 	{
-		UnlockAndReleaseBuffer(buffer);
+		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+		ReleaseBuffer(buffer);
 		return (0);
 	}
 	lp = PageGetItemId(page, ItemPointerGetOffsetNumber(iptr));
 	if (!ItemIdIsUsed(lp) || ItemIdDeleted(lp))
 	{
-		UnlockAndReleaseBuffer(buffer);
+		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+		ReleaseBuffer(buffer);
 		return (0);
 	}
 
@@ -76,11 +78,13 @@ XLogIsOwnerOfTuple(RelFileNode hnode, ItemPointer iptr,
 	if (!TransactionIdEquals(HeapTupleHeaderGetXmin(htup), xid) ||
 		HeapTupleHeaderGetCmin(htup) != cid)
 	{
-		UnlockAndReleaseBuffer(buffer);
+		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+		ReleaseBuffer(buffer);
 		return (-1);
 	}
 
-	UnlockAndReleaseBuffer(buffer);
+	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+	ReleaseBuffer(buffer);
 	return (1);
 }
 
@@ -112,21 +116,24 @@ XLogIsValidTuple(RelFileNode hnode, ItemPointer iptr)
 	if (PageIsNew((PageHeader) page) ||
 		ItemPointerGetOffsetNumber(iptr) > PageGetMaxOffsetNumber(page))
 	{
-		UnlockAndReleaseBuffer(buffer);
+		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+		ReleaseBuffer(buffer);
 		return (false);
 	}
 
 	if (PageGetSUI(page) != ThisStartUpID)
 	{
 		Assert(PageGetSUI(page) < ThisStartUpID);
-		UnlockAndReleaseBuffer(buffer);
+		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+		ReleaseBuffer(buffer);
 		return (true);
 	}
 
 	lp = PageGetItemId(page, ItemPointerGetOffsetNumber(iptr));
 	if (!ItemIdIsUsed(lp) || ItemIdDeleted(lp))
 	{
-		UnlockAndReleaseBuffer(buffer);
+		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+		ReleaseBuffer(buffer);
 		return (false);
 	}
 
@@ -141,12 +148,14 @@ XLogIsValidTuple(RelFileNode hnode, ItemPointer iptr)
 			 TransactionIdDidAbort(HeapTupleHeaderGetXvac(htup))) ||
 			TransactionIdDidAbort(HeapTupleHeaderGetXmin(htup)))
 		{
-			UnlockAndReleaseBuffer(buffer);
+			LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+			ReleaseBuffer(buffer);
 			return (false);
 		}
 	}
 
-	UnlockAndReleaseBuffer(buffer);
+	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+	ReleaseBuffer(buffer);
 	return (true);
 }
 

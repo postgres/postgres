@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/buf_internals.h,v 1.65 2003/11/29 22:41:13 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/storage/buf_internals.h,v 1.66 2003/12/14 00:34:47 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,14 +33,13 @@ extern int	ShowPinTrace;
  * Flags for buffer descriptors
  */
 #define BM_DIRTY				(1 << 0)
-#define BM_PRIVATE				(1 << 1)
-#define BM_VALID				(1 << 2)
-#define BM_DELETED				(1 << 3)
-#define BM_FREE					(1 << 4)
-#define BM_IO_IN_PROGRESS		(1 << 5)
-#define BM_IO_ERROR				(1 << 6)
-#define BM_JUST_DIRTIED			(1 << 7)
-#define BM_PIN_COUNT_WAITER		(1 << 8)
+#define BM_VALID				(1 << 1)
+#define BM_DELETED				(1 << 2)
+#define BM_FREE					(1 << 3)
+#define BM_IO_IN_PROGRESS		(1 << 4)
+#define BM_IO_ERROR				(1 << 5)
+#define BM_JUST_DIRTIED			(1 << 6)
+#define BM_PIN_COUNT_WAITER		(1 << 7)
 
 typedef bits16 BufFlags;
 
@@ -135,32 +134,6 @@ typedef struct
 	BufferTag	key;
 	Buffer		id;
 } BufferLookupEnt;
-
-/*
- *	mao tracing buffer allocation
- */
-
-/*#define BMTRACE*/
-
-#ifdef BMTRACE
-
-typedef struct _bmtrace
-{
-	int			bmt_pid;
-	int			bmt_buf;
-	Oid			bmt_dbid;
-	Oid			bmt_relid;
-	BlockNumber bmt_blkno;
-	int			bmt_op;
-
-#define BMT_NOTUSED		0
-#define BMT_ALLOCFND	1
-#define BMT_ALLOCNOTFND 2
-#define BMT_DEALLOC		3
-
-}	bmtrace;
-#endif   /* BMTRACE */
-
 
 /* counters in buf_init.c */
 extern long int ReadBufferCount;
