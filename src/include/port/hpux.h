@@ -9,7 +9,7 @@
 #define HAS_TEST_AND_SET
 typedef struct
 {
-	int			sem[4];
+	int			sema[4];
 } slock_t;
 
 #ifndef			BIG_ENDIAN

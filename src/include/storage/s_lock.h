@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.50 1998/09/21 02:25:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.51 1998/10/01 01:53:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -243,16 +243,20 @@ tas(slock_t *s_lock)
  * HP-UX (PA-RISC)
  *
  * Note that slock_t on PA-RISC is a structure instead of char
- * (see storage/ipc.h).
+ * (see include/port/hpux.h).
  *
  * a "set" slock_t has a single word cleared.  a "clear" slock_t has
  * all words set to non-zero. tas() in tas.s
  */
-static const slock_t clear_lock =
-{{-1, -1, -1, -1}};
 
-#define S_UNLOCK(lock)	(*(lock) = clear_lock)	/* struct assignment */
+#define S_UNLOCK(lock) \
+{ \
+	volatile slock_t *lock_ = (volatile slock_t *) (lock); \
+	lock_->sema[0] = lock_->sema[1] = lock_->sema[2] = lock_->sema[3] = -1; \
+}
+
 #define S_LOCK_FREE(lock)	( *(int *) (((long) (lock) + 15) & ~15) != 0)
+
 #endif	 /* __hpux */
 
 
@@ -322,9 +326,10 @@ static const slock_t clear_lock =
 extern void s_lock(volatile slock_t *lock, const char *file, const int line);
 
 #define S_LOCK(lock) \
-	if (TAS((volatile slock_t *) lock)) {\
-		s_lock((volatile slock_t *) lock, __FILE__, __LINE__); \
-	} else
+	do { \
+		if (TAS((volatile slock_t *) lock)) \
+			s_lock((volatile slock_t *) lock, __FILE__, __LINE__); \
+	} while (0)
 #endif	 /* S_LOCK */
 
 #if !defined(S_LOCK_FREE)
