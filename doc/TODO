@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Nov 21 22:10:10 EST 2001
+Last updated:		Thu Nov 22 12:18:38 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -166,6 +166,7 @@ COMMANDS
 * PL/PgSQL does not handle quoted mixed-case identifiers
 * Change PL/PgSQL to use palloc() instead of malloc()
 * Add untrusted version of plpython
+* Add plsh server-side shell language (Peter E)
 * -Allow GRANT/REVOKE to handle multiple user/group names
 * -Allow CREATEUSER/CREATEDB ordering in CREATE/ALTER USER (Vince)
 * Disallow TRUNCATE on tables that are involved in referential constraints
