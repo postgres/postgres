@@ -674,8 +674,11 @@ AC_CHECK_LIB(resolv,   main)
 AC_CHECK_LIB([[unix]], main)
 AC_SEARCH_LIBS(crypt,  crypt)
 AC_CHECK_LIB(bind,     __inet_ntoa)
-dnl only consider libz to be present if we find <zlib.h> as well
-AC_CHECK_HEADER(zlib.h, [
+dnl Only consider libz to be present if we find <zlib.h> as well;
+dnl furthermore, check that <zlib.h> defines z_streamp (versions before
+dnl about 1.0.4 did not).  While we could work around the lack of z_streamp,
+dnl it seems unwise to encourage people to use such old zlib versions...
+AC_EGREP_HEADER(z_streamp, zlib.h, [
 AC_CHECK_LIB(z,        inflate)
 ])
 
