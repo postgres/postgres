@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.30 2002/08/19 15:08:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.31 2002/08/22 04:51:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -332,6 +332,10 @@ TruncateRelation(const RangeVar *relation)
 {
 	Relation	rel;
 	Oid			relid;
+ 	ScanKeyData key;
+ 	Relation	fkeyRel;
+ 	SysScanDesc	fkeyScan;
+	HeapTuple	tuple;
 
 	/* Grab exclusive lock in preparation for truncate */
 	rel = heap_openrv(relation, AccessExclusiveLock);
@@ -355,6 +359,36 @@ TruncateRelation(const RangeVar *relation)
 
 	if (!pg_class_ownercheck(relid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, RelationGetRelationName(rel));
+
+	/*
+	 * Don't allow truncate on tables which are referenced
+	 * by foreign keys
+	 */
+	fkeyRel = heap_openr(ConstraintRelationName, AccessShareLock);
+
+	ScanKeyEntryInitialize(&key, 0,
+						   Anum_pg_constraint_confrelid,
+						   F_OIDEQ,
+						   ObjectIdGetDatum(relid));
+
+	fkeyScan = systable_beginscan(fkeyRel, 0, false,
+								  SnapshotNow, 1, &key);
+
+	/*
+	 * First foriegn key found with us as the reference
+	 * should throw an error.
+	 */
+	while (HeapTupleIsValid(tuple = systable_getnext(fkeyScan)))
+	{
+		Form_pg_constraint con = (Form_pg_constraint) GETSTRUCT(tuple);
+
+		if (con->contype == 'f')
+			elog(ERROR, "TRUNCATE cannot be used as other tables reference this one via foreign key constraint %s",
+				 NameStr(con->conname));
+	}
+
+	systable_endscan(fkeyScan);
+	heap_close(fkeyRel, AccessShareLock);
 
 	/* Keep the lock until transaction commit */
 	heap_close(rel, NoLock);

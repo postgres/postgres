@@ -1,0 +1,38 @@
+-- Test basic TRUNCATE functionality.
+CREATE TABLE truncate_a (col1 integer primary key);
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index 'truncate_a_pkey' for table 'truncate_a'
+INSERT INTO truncate_a VALUES (1);
+INSERT INTO truncate_a VALUES (2);
+SELECT * FROM truncate_a;
+ col1 
+------
+    1
+    2
+(2 rows)
+
+TRUNCATE truncate_a;
+SELECT * FROM truncate_a;
+ col1 
+------
+(0 rows)
+
+-- Test foreign constraint check
+CREATE TABLE truncate_b(col1 integer references truncate_a);
+NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+INSERT INTO truncate_a VALUES (1);
+SELECT * FROM truncate_a;
+ col1 
+------
+    1
+(1 row)
+
+TRUNCATE truncate_a;
+ERROR:  TRUNCATE cannot be used as other tables reference this one via foreign key constraint $1
+SELECT * FROM truncate_a;
+ col1 
+------
+    1
+(1 row)
+
+DROP TABLE truncate_b;
+DROP TABLE truncate_a;
