@@ -191,7 +191,11 @@ RETCODE result;
         break;
 
     case SQL_DBMS_VER: /* ODBC 1.0 */
-		p = DBMS_VERSION;
+		/* The ODBC spec wants ##.##.#### ...whatever... so prepend the driver */
+		/* version number to the dbms version string */
+		p = POSTGRESDRIVERVERSION;
+		strcat(p, " ");
+		strcat(p, conn->pg_version);
         break;
 
     case SQL_DEFAULT_TXN_ISOLATION: /* ODBC 1.0 */
@@ -337,7 +341,11 @@ RETCODE result;
 
     case SQL_MAX_ROW_SIZE: /* ODBC 2.0 */
 		len = 4;
-        value = MAX_ROW_SIZE;
+		if (conn->pg_version_number >= (float) 7.1) { /* Large Rowa in 7.1+ */
+			value = MAX_ROW_SIZE;
+		} else { /* Without the Toaster we're limited to the blocksize */
+			value = BLCKSZ;
+		}
         break;
 
     case SQL_MAX_ROW_SIZE_INCLUDES_LONG: /* ODBC 2.0 */
@@ -350,7 +358,11 @@ RETCODE result;
     case SQL_MAX_STATEMENT_LEN: /* ODBC 2.0 */
         /* maybe this should be 0? */
 		len = 4;
-        value = MAX_STATEMENT_LEN;
+		if (conn->pg_version_number >= (float) 7.0) { /* Long Queries in 7.0+ */
+			value = MAX_STATEMENT_LEN;
+		} else { /* Prior to 7.0 we used 2*BLCKSZ */
+			value = (2*BLCKSZ);
+		}
         break;
 
     case SQL_MAX_TABLE_NAME_LEN: /* ODBC 1.0 */
@@ -419,13 +431,17 @@ RETCODE result;
 
 	case SQL_OJ_CAPABILITIES: /* ODBC 2.01 */
 		len = 4;
-		value = (SQL_OJ_LEFT |
-				SQL_OJ_RIGHT |
-				SQL_OJ_FULL |
-				SQL_OJ_NESTED |
-				SQL_OJ_NOT_ORDERED |
-				SQL_OJ_INNER |
-				SQL_OJ_ALL_COMPARISON_OPS);
+		if (conn->pg_version_number >= (float) 7.1) { /* OJs in 7.1+ */
+			value = (SQL_OJ_LEFT |
+					SQL_OJ_RIGHT |
+					SQL_OJ_FULL |
+					SQL_OJ_NESTED |
+					SQL_OJ_NOT_ORDERED |
+					SQL_OJ_INNER |
+					SQL_OJ_ALL_COMPARISON_OPS);
+		} else { /* OJs not in <7.1 */
+			value = 0;
+		}
 		break;
 
     case SQL_ORDER_BY_COLUMNS_IN_SELECT: /* ODBC 2.0 */
@@ -433,7 +449,11 @@ RETCODE result;
         break;
 
     case SQL_OUTER_JOINS: /* ODBC 1.0 */
-		p = "Y";
+		if (conn->pg_version_number >= (float) 7.1) { /* OJs in 7.1+ */
+			p = "Y";
+		} else { /* OJs not in <7.1 */
+			p = "N";
+		}
         break;
 
     case SQL_OWNER_TERM: /* ODBC 1.0 */

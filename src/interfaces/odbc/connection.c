@@ -699,6 +699,7 @@ static char *func="CC_connect";
 	*/
 	CC_send_settings(self);
 	CC_lookup_lo(self);		/* a hack to get the oid of our large object oid type */
+	CC_lookup_pg_version(self);	/* Get PostgreSQL version for SQLGetInfo use */
 
 	CC_clear_error(self);	/* clear any initial command errors */
 	self->status = CONN_CONNECTED;
@@ -1360,6 +1361,62 @@ static char *func = "CC_lookup_lo";
 
 	mylog("Got the large object oid: %d\n", self->lobj_type);
 	qlog("    [ Large Object oid = %d ]\n", self->lobj_type);
+
+	result = SQLFreeStmt(hstmt, SQL_DROP);
+}
+
+/*	This function gets the version of PostgreSQL that we're connected to.
+    This is used to return the correct info in SQLGetInfo
+	DJP - 25-1-2001
+*/
+void
+CC_lookup_pg_version(ConnectionClass *self) 
+{
+HSTMT hstmt;
+StatementClass *stmt;
+RETCODE result;
+char *szVersion = "0.0";
+static char *func = "CC_lookup_pg_version";
+
+	mylog( "%s: entering...\n", func);
+
+/*	This function must use the local odbc API functions since the odbc state 
+	has not transitioned to "connected" yet.
+*/
+	result = SQLAllocStmt( self, &hstmt);
+	if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
+		return;
+	}
+	stmt = (StatementClass *) hstmt;
+
+	result = SQLExecDirect(hstmt, "select version()", SQL_NTS);
+	if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
+		SQLFreeStmt(hstmt, SQL_DROP);
+		return;
+	}
+
+	result = SQLFetch(hstmt);
+	if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
+		SQLFreeStmt(hstmt, SQL_DROP);
+		return;
+	}
+
+	result = SQLGetData(hstmt, 1, SQL_C_CHAR, self->pg_version, MAX_INFO_STRING, NULL);
+	if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
+		SQLFreeStmt(hstmt, SQL_DROP);
+		return;
+	}
+
+	/* There's proably a nicer way of doing this... */
+	/* Extract the Major and Minor numbers from the string. */
+	/* This assumes the string starts 'Postgresql X.X' */
+	sprintf(szVersion, "%c.%c", self->pg_version[11], self->pg_version[13]);
+	self->pg_version_number = (float) atof(szVersion);
+
+	mylog("Got the PostgreSQL version string: '%s'\n", self->pg_version);
+	mylog("Extracted PostgreSQL version number: '%1.1f'\n", self->pg_version_number);
+	qlog("    [ PostgreSQL version string = '%s' ]\n", self->pg_version);
+	qlog("    [ PostgreSQL version number = '%1.1f' ]\n", self->pg_version_number);
 
 	result = SQLFreeStmt(hstmt, SQL_DROP);
 }

@@ -221,6 +221,8 @@ struct ConnectionClass_ {
 	DriverToDataSourceProc  DriverToDataSource;
 	char			transact_status;		/* Is a transaction is currently in progress */
 	char			errormsg_created;		/* has an informative error msg been created?  */
+	char			pg_version[MAX_INFO_STRING];	/* Version of PostgreSQL we're connected to - DJP 25-1-2001 */
+	float			pg_version_number;
 };
 
 
@@ -255,6 +257,7 @@ char *CC_create_errormsg(ConnectionClass *self);
 int CC_send_function(ConnectionClass *conn, int fnid, void *result_buf, int *actual_result_len, int result_is_int, LO_ARG *argv, int nargs);
 char CC_send_settings(ConnectionClass *self);
 void CC_lookup_lo(ConnectionClass *conn);
+void CC_lookup_pg_version(ConnectionClass *conn);
 void CC_log_error(char *func, char *desc, ConnectionClass *self);
 
 
