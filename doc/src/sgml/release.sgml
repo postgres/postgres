@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.235 2003/11/01 01:56:29 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.236 2003/11/04 20:54:13 tgl Exp $
 -->
 
 <appendix id="release">
@@ -17,9 +17,9 @@ $Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.235 2003/11/01 01:56:29 pe
   <para>
    In previous releases, IN/NOT IN subqueries were joined to the
    upper query by sequentially scanning the subquery looking for
-   a join.  The 7.4 code uses the same sophisticated techniques
+   a match.  The 7.4 code uses the same sophisticated techniques
    used by ordinary joins and so is much faster.  An IN
-   will now usually as fast as or faster than an equivalent EXISTS
+   will now usually be as fast as or faster than an equivalent EXISTS
    subquery; this reverses the conventional wisdom that applied to 
    previous releases.
   </para>
@@ -27,24 +27,25 @@ $Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.235 2003/11/01 01:56:29 pe
 
 <listitem><para> Improved GROUP BY processing by using hash buckets</para>
   <para>
-   In previous releases, GROUP BY values were accumulated and sorted
-   to obtain group-by counts;  the 7.4 code places GROUP BY values in 
-   hash buckets so sorting is not required, or reverts to the old
-   behavior if the group-by buckets will not fit in memory.
+   In previous releases, rows to be grouped had to be sorted first.
+   The 7.4 code can do GROUP BY without sorting, by accumulating results
+   into a hash table with one entry per group.  It will still use the sort
+   technique if the hash table is estimated to be too large to fit in
+   <varname>sort_mem</>, however.
   </para>
 </listitem>
 
 <listitem><para> New multi-key hash join capability</para>
    <para>
-    In previous releases, hash joins could only occur on single-column
-    joins.  This release allows multi-column hash joins.
+    In previous releases, hash joins could only occur on single keys.
+    This release allows multi-column hash joins.
    </para>
 </listitem>
 
 <listitem><para> ANSI joins are now better optimized</para>
    <para>
     Prior releases evaluated ANSI join syntax only in the order
-    specified by the query;  7.4 allows full optimization of
+    implied by the syntax. 7.4 allows full optimization of
     queries using ANSI join syntax, meaning the optimizer considers
     all possible join orderings and chooses the most efficient.
     Outer joins, however, must still follow the declared ordering.
@@ -64,16 +65,16 @@ $Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.235 2003/11/01 01:56:29 pe
 <listitem><para> Function-inlining for simple SQL functions</para>
    <para>
     Simple SQL functions can now be inlined by including their SQL
-    in the main query.  This improves performance by preventing
-    repeated calls to the SQL function --- this allows simple
-    SQL functions to behave like macros.
+    in the main query.  This improves performance by eliminating
+    per-call overhead --- that is, simple SQL functions now behave
+    like macros.
    </para>
 </listitem>
 
 <listitem><para> Full support for IPv6 connections and IPv6 address
 data types</para>
    <para>
-    Prior releases allowed only IPv4 connections and IP data types only
+    Prior releases allowed only IPv4 connections, and the IP data types only
     supported IPv4 addresses. This release adds full IPv6 support in
     both of these areas.
    </para>
@@ -88,32 +89,23 @@ reliability</para>
 </listitem>
 
 <listitem><para> Allow free space map to efficiently reuse empty index
-pages, and other free space management improvements.</para>
+pages, and other free space management improvements</para>
    <para>
-    In prior releases, index pages that were left empty because of
+    In prior releases, B-tree index pages that were left empty because of
     deleted rows could only be reused by rows with index values similar
     to the original rows indexed on that page. In 7.4, VACUUM records
-    empty index pages and allows them to be used for any future index 
+    empty index pages and allows them to be reused for any future index 
     rows.
    </para>
 </listitem>
 
-<listitem><para>Implement information schema</para>
+<listitem><para>Implement SQL-standard information schema</para>
 </listitem>
 
-<listitem><para>Support for read-only transactions </para>
+<listitem><para>Support read-only transactions </para>
 </listitem>
 
 <listitem><para>Make cursors comply more closely with the SQL standard
-</para>
-</listitem>
-
-<listitem><para> New client-to-server protocol adds error codes, more status
-information, faster startup, better support for binary data transmission, parameter
-values separated from SQL commands, prepared statements available at the
-protocol level, clean recovery from COPY failures, and cleaner startup
-packets.  The older protocol is still supported by both servers and
-clients.
 </para>
 </listitem>
           
@@ -122,12 +114,22 @@ also called holdable cursors
 </para>
 </listitem>
 
+<listitem><para> New client-to-server protocol </para>
+    <para>
+     The new protocol adds error codes, more status information, faster
+     startup, better support for binary data transmission, parameter values
+     separated from SQL commands, prepared statements available at the
+     protocol level, and cleaner recovery from COPY failures.
+     The older protocol is still supported by both servers and clients.
+    </para>
+</listitem>
+
 <listitem><para> libpq and ecpg are now fully thread-safe with
 --enable-thread-safety</para>
    <para>
     While prior libpq releases already supported threads, this release
     improves thread safety by fixing some non-thread-safe code that
-    was used in the database connection routines.
+    was used during database connection startup.
   </para>
 </listitem>
 
@@ -163,12 +165,17 @@ required for those wishing to migrate data from any previous release.</para>
           <para>
 	   Server-side autocommit was causing too many problems with
 	   languages and applications that wanted to control their own 
-	   autocommit behavior so autocommit was removed from the server
-	   and added to individual client API's as appropriate.
+	   autocommit behavior, so autocommit was removed from the server
+	   and added to individual client APIs as appropriate.
           </para>
      </listitem>
      <listitem><para> Error message wording has changed substantially in this release,
-       and error codes have been added.</para></listitem>
+       and error codes have been added.</para>
+          <para>
+	   Significant effort was invested to make the messages more
+	   consistent and user-oriented.
+          </para>
+     </listitem>
      <listitem><para> ANSI inner joins may behave differently because they are now better optimized</para></listitem>
      <listitem><para> A number of server variables have been renamed for
      clarity, primarily those related to logging</para></listitem>
@@ -185,10 +192,10 @@ required for those wishing to migrate data from any previous release.</para>
 	    command, not the actual number of rows FETCHed or MOVEd.
            </para>
      </listitem>
-     <listitem><para> COPY now can process carriage-return and
-           carriage-return/line-feed end-of-line terminated files.</para></listitem>
+     <listitem><para> COPY now can process files that use carriage-return or
+           carriage-return/line-feed end-of-line sequences.</para></listitem>
      <listitem><para>Literal carriage-returns and line-feeds are no
-       longer accepted as data values;  use \r and \n instead.</para></listitem>
+       longer accepted in data values;  use \r and \n instead.</para></listitem>
      <listitem><para> Trailing spaces are now trimmed when converting
 	from <type>CHAR(n)</type> to
        <type>VARCHAR(n)</type> / <type>TEXT</type></para></listitem>
@@ -197,9 +204,8 @@ required for those wishing to migrate data from any previous release.</para>
         <para>
 	 In prior releases, a date of <literal>10/20/03</> was
 	 interpreted as a date in October even if the
-	 <varname>DateStyle</> specified the day should be first. In
-	 7.4, <varname>DateStyle</> is honored when converting such
-	 values and will throw an error if the date is invalid for the
+	 <varname>DateStyle</> specified the day should be first.
+	 7.4 will throw an error if the date is invalid for the
 	 current <varname>DateStyle</>.
         </para>
      </listitem>
@@ -216,8 +222,8 @@ required for those wishing to migrate data from any previous release.</para>
 	    <literal>'now'</literal> was interpreted at
 	    <command>INSERT</> time and not at table creation time, but
 	    this work around didn't cover all cases.  Release 7.4
-	    now requires that defaults be defined properly using the
-	    <function>now()</> or the special value
+	    now requires that defaults be defined properly using
+	    <function>now()</> or
 	    <function>CURRENT_TIMESTAMP</>. These will work in all
 	    situations.
            </para>
@@ -232,10 +238,10 @@ required for those wishing to migrate data from any previous release.</para>
      <listitem><para> Dollar sign (<literal>$</>) can be a non-first character in identifiers</para>
         <para>
 	 This was done to improve compatibility with other database
-	 systems.
+	 systems, and to avoid syntax problems when parameter placeholders
+	 ($n) are written adjacent to operators.
         </para>
      </listitem>
-     <listitem><para>Syntax errors now reported as 'syntax error' rather than 'parse error' (Tom)</para></listitem>
 </itemizedlist></para></sect2>
 
 <sect2><title> Server Operation Changes</title>
@@ -244,9 +250,8 @@ required for those wishing to migrate data from any previous release.</para>
   Roeckx, Andrew Dunstan)</para></listitem>
 <listitem><para>Fix SSL to handle errors cleanly (Nathan Mueller)</para>
    <para>
-    In prior releases, certain rare SSL API error reports were not
+    In prior releases, certain SSL API error reports were not
     handled correctly.  This release fixes those problems.
-    gracefully.
    </para>
    </listitem>
 <listitem><para>SSL protocol security and performance improvements (Sean Chittenden)</para>
@@ -260,7 +265,8 @@ required for those wishing to migrate data from any previous release.</para>
     This allows easier debugging of deadlock situations.
    </para>
    </listitem>
-<listitem><para>Update <filename>/tmp</filename> socket mod. times regularly to avoid their removal (Tom)</para>
+<listitem><para>Update <filename>/tmp</filename> socket modification times
+regularly to avoid their removal (Tom)</para>
    <para>
     This should help prevent <filename>/tmp</filename> directory cleaner
     administration scripts from removing server socket files.
@@ -277,18 +283,17 @@ required for those wishing to migrate data from any previous release.</para>
 <listitem><para>Allow btree index compaction and empty page reuse (Tom)</para></listitem>
 <listitem><para>Fix inconsistent index lookups during split of first root page (Tom)</para>
    <para>
-    In prior releases, when a single-page index split into two page,
-    there was a brief period when another database session would miss
-    seeing an index entry. This failure was possible primarly on
-    multi-cpu machines.  This release fixes that rare failure case.
+    In prior releases, when a single-page index split into two pages,
+    there was a brief period when another database session could miss
+    seeing an index entry.  This release fixes that rare failure case.
    </para>
    </listitem>
 <listitem><para>Improve free space map allocation logic (Tom)</para></listitem>
 <listitem><para>Preserve free space information between postmaster restarts (Tom)</para>
    <para>
     In prior releases, the free space map was not saved when the
-    postmaster was stopped, so newly started servers has no free space
-    information. This release saves the free space map, which is loaded
+    postmaster was stopped, so newly started servers had no free space
+    information. This release saves the free space map, and reloads it
     when the server is restarted.
    </para>
    </listitem>
@@ -300,7 +305,8 @@ required for those wishing to migrate data from any previous release.</para>
 <listitem><para>Add transaction status, tableid, columnid to backend protocol (Tom)</para></listitem>
 <listitem><para>Add new binary I/O protocol (Tom)</para></listitem>
 <listitem><para>Remove autocommit server setting; move to client applications (Tom)</para></listitem>
-<listitem><para>New error message wording, error codes, and three levels of error detail (Tom)</para></listitem>
+<listitem><para>New error message wording, error codes, and three levels of
+error detail (Tom, Joe, Peter)</para></listitem>
 </itemizedlist></sect2>
 
 <sect2><title>Performance Changes</title>
@@ -338,7 +344,7 @@ required for those wishing to migrate data from any previous release.</para>
    </listitem>
 <listitem><para>Improve optimizer cost computations, particularly for subqueries (Tom)</para></listitem>
 <listitem><para>Avoid sort when subquery ORDER BY matches upper query (Tom)</para></listitem>
-<listitem><para>Assume WHERE a.x = b.y and b.y = 42 also means a.x = 42 (Tom)</para></listitem>
+<listitem><para>Deduce that WHERE a.x = b.y and b.y = 42 also means a.x = 42 (Tom)</para></listitem>
 <listitem><para>Allow hash/merge joins on complex joins (Tom)</para></listitem>
 <listitem><para>Allow hash joins for more data types (Tom)</para></listitem>
 <listitem><para>Allow join optimization of ANSI inner joins, disable with join_collapse_limit (Tom)</para></listitem>
@@ -347,7 +353,7 @@ required for those wishing to migrate data from any previous release.</para>
 <listitem><para>Use bit-mapped relation sets in the optimizer (Tom)</para></listitem>
 <listitem><para>Improve backend startup time (Tom)</para>
    <para>
-    The new network protocol requires fewer network packets to start a
+    The new client/server protocol requires fewer network packets to start a
     database session.
    </para>
    </listitem>
@@ -381,7 +387,7 @@ required for those wishing to migrate data from any previous release.</para>
 <itemizedlist>
 <listitem><para>Rename server parameter server_min_messages to log_min_messages (Bruce)</para>
    <para>
-    This was done so most parameters that control the server logs being
+    This was done so most parameters that control the server logs begin
     with <literal>log_</>.
    </para>
 </listitem>
@@ -438,20 +444,20 @@ required for those wishing to migrate data from any previous release.</para>
 <listitem><para>postgres --describe-config now dumps server config variables (Aizaz Ahmed, Peter)</para>
    <para>
     This option is useful for administration tools that need to know the
-    configuration variable names and their minimum, maximums, defaults,
+    configuration variable names and their minimums, maximums, defaults,
     and descriptions.
    </para>
    </listitem>
+<listitem><para>Add new columns in pg_settings: context, type, source, min_val, max_val (Joe)</para></listitem>
 <listitem><para>Make default shared_buffers 1000 and max_connections 100, if possible (Tom)</para>
    <para>
     Prior versions defaulted to 64 shared buffers so PostgreSQL would
-    start on even old computers. This release tests the amount of shared
-    memory supported by the hardware and sizes it accordingly. Of
-    course, users are still encouraged to evaluate their resource load
-    and size shared_buffers accordingly.
+    start on even very old systems. This release tests the amount of shared
+    memory allowed by the platform and selects more reasonable default values
+    if possible.  Of course, users are still encouraged to evaluate their
+    resource load and size shared_buffers accordingly.
    </para>
    </listitem>
-<listitem><para>Add new columns in pg_settings: context, type, source, min_val, max_val (Joe)</para></listitem>
 <listitem><para>New pg_hba.conf 'hostnossl' to prevent SSL connections (Jon Jensen)</para>
    <para>
     In prior releases, there was no way to prevent SSL connections if
@@ -466,9 +472,6 @@ required for those wishing to migrate data from any previous release.</para>
 <itemizedlist>
 
 <listitem><para>New SQL-standard information schema (Peter)</para>
-   <para>
-    bjm
-   </para>
    </listitem>
 <listitem><para>Add read-only transactions (Peter)</para></listitem>
 <listitem><para>Add server variable regex_flavor to control regular expression
@@ -500,7 +503,7 @@ required for those wishing to migrate data from any previous release.</para>
    </listitem>
 <listitem><para>Allow UPDATE ... SET col = DEFAULT (Rod)</para>
    <para>
-    This allows UPDATE to set a column to its default value.
+    This allows UPDATE to set a column to its declared default value.
    </para>
    </listitem>
 <listitem><para>Allow expressions to be used in LIMIT/OFFSET (Tom)</para>
@@ -593,14 +596,14 @@ required for those wishing to migrate data from any previous release.</para>
 <listitem><para>Allow cursors outside transactions using WITH HOLD (Neil)</para>
    <para>
     In previous releases, cursors were removed at the end of the
-    transaction. Using WITH HOLD, the current release allows transaction
-    to remain outside their own transaction.
+    transaction. Using WITH HOLD, the current release allows cursors
+    to remain readable after the creating transaction.
    </para>
    </listitem>
 <listitem><para>MOVE/FETCH 0 now does nothing (Bruce)</para>
    <para>
     In previous releases, MOVE 0 moved to the end of the cursor, and
-    FETCH 0 fetched all remaning rows.
+    FETCH 0 fetched all remaining rows.
    </para>
    </listitem>
 <listitem><para>Cause MOVE/FETCH to return the number of rows moved/fetched, or zero if at the beginning/end of cursor,
@@ -663,11 +666,11 @@ required for those wishing to migrate data from any previous release.</para>
 <listitem><para>Allow pg_ctl to better handle non-standard ports (Greg)</para></listitem>
 <listitem><para>Functional indexes have been generalized into expressional indexes (Tom)</para>
    <para>
-    In prior releases, only columns could be used in functional indexes.
-    This release allows any type of expression.
+    In prior releases, functional indexes only supported a simple function
+    applied to one or more column names.
+    This release allows any type of scalar expression.
    </para>
    </listitem>
-<listitem><para>Syntax errors now reported as 'syntax error' rather than 'parse error' (Tom)</para></listitem>
 <listitem><para>Have SHOW TRANSACTION_ISOLATION match input to SET TRANSACTION_ISOLATION (Tom)</para></listitem>
 <listitem><para>Have COMMENT ON DATABASE on non-local database generate a warning (Rod)</para>
    <para>
@@ -687,7 +690,7 @@ required for those wishing to migrate data from any previous release.</para>
 <listitem><para>pg_dump --use-set-session-authorization and --no-reconnect now do nothing,
   all dumps use SET SESSION AUTHORIZATION  </para>
      <para>
-      pg_dump now no longer reconnects to switch users, but instead uses
+      pg_dump no longer reconnects to switch users, but instead always uses
       SET SESSION AUTHORIZATION. This should reduce password prompting
       during restores.
      </para>
@@ -705,7 +708,7 @@ required for those wishing to migrate data from any previous release.</para>
 <listitem><para>New extra_float_digits server parameter to control float precision display
   (Pedro Ferreira, Tom)  </para>
      <para>
-      This controls precision output which was causing regression
+      This controls output precision which was causing regression
       testing problems.
      </para>
      </listitem>
@@ -727,7 +730,7 @@ required for those wishing to migrate data from any previous release.</para>
 <listitem><para>Trap division by zero in case the operating system doesn't prevent it (Tom)</para></listitem>
 <listitem><para>Change the NUMERIC data type internally to base 10000 (Tom)</para></listitem>
 <listitem><para>New hostmask() function (Greg Wickham)</para></listitem>
-<listitem><para>Fixes for to_char() (Karel)</para></listitem>
+<listitem><para>Fixes for to_char() and to_timestamp() (Karel)</para></listitem>
 <listitem><para>Allow functions that can take any argument data type and return
   any data type, using ANYELEMENT and ANYARRAY (Joe)  </para>
      <para>
@@ -737,12 +740,13 @@ required for those wishing to migrate data from any previous release.</para>
      </listitem>
 <listitem><para>Arrays may now be specified as ARRAY[1,2,3], ARRAY[['a','b'],['c','d']],
   or ARRAY[ARRAY[ARRAY[2]]] (Joe)</para></listitem>
-<listitem><para>Allow proper comparisons for arrays (Joe)</para></listitem>
+<listitem><para>Allow proper comparisons for arrays, including ORDER BY and
+DISTINCT support (Joe)</para></listitem>
+<listitem><para>Allow indexes on array columns (Joe)</para></listitem>
 <listitem><para>Allow array concatenation with '||' (Joe)</para></listitem>
-<listitem><para>Allow indexes on array columns, and used in ORDER BY and DISTINCT (Joe)</para></listitem>
-<listitem><para>Allow WHERE qualification 'expr &gt;oper&lt; ANY/SOME/ALL (array-expr)' (Joe)</para>
+<listitem><para>Allow WHERE qualification 'expr &lt;oper&gt; ANY/SOME/ALL (array-expr)' (Joe)</para>
    <para>
-    This allows arrays to behave like subqueries or a list of values:
+    This allows arrays to behave like a list of values, for purposes like
     SELECT * FROM tab WHERE col IN array_val
    </para>
    </listitem>
@@ -778,7 +782,8 @@ required for those wishing to migrate data from any previous release.</para>
    </listitem>
 <listitem><para>Make initcap() more compatible with Oracle (Mike Nolan)</para>
    <para>
-    bjm ??
+    initcap() now uppercases a letter appearing after any non-alphanumeric
+    character, rather than only after whitespace.
    </para>
    </listitem>
 <listitem><para>Allow only DateStyle field order for date values not in ISO format (Greg)</para></listitem>
@@ -786,7 +791,12 @@ required for those wishing to migrate data from any previous release.</para>
   backward compatibility (Tom)</para></listitem>
 <listitem><para>'now' will no longer work as a column default, use now() (change required for 
   prepared statements) (Tom)</para></listitem>
-<listitem><para>Assume NaN value to be larger than any other value in MIN()/MAX() (Tom)</para></listitem>
+<listitem><para>Treat NaN as larger than any other value in MIN()/MAX() (Tom)</para>
+   <para>
+    NaN was already sorted after ordinary numeric values for most purposes,
+    but MIN() and MAX() didn't get this right.
+   </para>
+   </listitem>
 <listitem><para>Prevent interval from suppressing ':00' seconds display</para></listitem>
 <listitem><para>New pg_get_triggerdef(prettyprint) and pg_constraint_is_visible() functions</para></listitem>
 <listitem><para>Allow time to be specified as '040506' or '0405' (Tom)</para></listitem>
@@ -818,7 +828,7 @@ zero-row record variable (Tom)</para></listitem>
   support for polymorphism (Joe)</para></listitem>
 <listitem><para>Add new $0 parameter in PL/pgSQL representing the function's actual
   return type (Joe)</para></listitem>
-<listitem><para>Allow pltcl and plpython use the same trigger on multiple tables (Tom)</para></listitem>
+<listitem><para>Allow pltcl and plpython to use the same trigger on multiple tables (Tom)</para></listitem>
 <listitem><para>Fixed PL/Tcl's spi_prepare to accept full qualified type names in
   the parameter type list (Jan)</para></listitem>
 </itemizedlist></sect2>
@@ -852,7 +862,7 @@ zero-row record variable (Tom)</para></listitem>
 <listitem><para>Enhance HTML mode to be more standards-compliant (Greg)</para></listitem>
 <listitem><para>New '\set AUTOCOMMIT off' capability (Tom)</para>
    <para>
-    This takes the place of the remove server variable 'autocommit'.
+    This takes the place of the removed server variable 'autocommit'.
    </para>
    </listitem>
 <listitem><para>New '\set VERBOSITY' to control error detail (Tom)</para>
@@ -889,7 +899,7 @@ zero-row record variable (Tom)</para></listitem>
 <listitem><para>Allow thread-safe libpq with --enable-thread-safety (Lee Kindness, Philip Yarra)</para></listitem>
 <listitem><para>Allow pqInternalNotice() to accept a format string and args instead of
   just a preformatted message (Tom, Sean Chittenden)</para></listitem>
-<listitem><para>Allow control SSL negotiation with sslmode values "disable", "allow", 
+<listitem><para>Control SSL negotiation with sslmode values "disable", "allow", 
   "prefer", and "require" (Jon Jensen)</para></listitem>
 <listitem><para>Allow new error codes and levels of text (Tom)</para></listitem>
 <listitem><para>Allow access to the underlying table and column of a query result (Tom)</para>
