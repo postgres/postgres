@@ -1,0 +1,233 @@
+$PostgreSQL: pgsql/src/backend/access/transam/README,v 1.1 2004/08/01 20:57:59 tgl Exp $
+
+The Transaction System
+----------------------
+
+PostgreSQL's transaction system is a three-layer system.  The bottom layer
+implements low-level transactions and subtransactions, on top of which rests
+the mainloop's control code, which in turn implements user-visible
+transactions and savepoints.
+
+The middle layer of code is called by postgres.c before and after the
+processing of each query:
+
+		StartTransactionCommand
+		CommitTransactionCommand
+		AbortCurrentTransaction
+
+Meanwhile, the user can alter the system's state by issuing the SQL commands
+BEGIN, COMMIT, ROLLBACK, SAVEPOINT, ROLLBACK TO or RELEASE.  The traffic cop
+redirects these calls to the toplevel routines
+
+		BeginTransactionBlock
+		EndTransactionBlock
+		UserAbortTransactionBlock
+		DefineSavepoint
+		RollbackToSavepoint
+		ReleaseSavepoint
+
+respectively.  Depending on the current state of the system, these functions
+call low level functions to activate the real transaction system:
+
+		StartTransaction
+		CommitTransaction
+		AbortTransaction
+		CleanupTransaction
+		StartSubTransaction
+		CommitSubTransaction
+		AbortSubTransaction
+		CleanupSubTransaction
+
+Additionally, within a transaction, CommandCounterIncrement is called to
+increment the command counter, which allows future commands to "see" the
+effects of previous commands within the same transaction.  Note that this is
+done automatically by CommitTransactionCommand after each query inside a
+transaction block, but some utility functions also do it internally to allow
+some operations (usually in the system catalogs) to be seen by future
+operations in the same utility command (for example, in DefineRelation it is
+done after creating the heap so the pg_class row is visible, to be able to
+lock it).
+
+
+For example, consider the following sequence of user commands:
+
+1)		BEGIN
+2)		SELECT * FROM foo
+3)		INSERT INTO foo VALUES (...)
+4)		COMMIT
+
+In the main processing loop, this results in the following function call
+sequence:
+
+	 /	StartTransactionCommand;
+	/	ProcessUtility;				<< BEGIN
+1) <			BeginTransactionBlock;
+	\	CommitTransactionCommand;
+	 \		StartTransaction;
+
+	/	StartTransactionCommand;
+2) /		ProcessQuery;				<< SELECT * FROM foo
+   \		CommitTransactionCommand;
+	\		CommandCounterIncrement;
+
+	/	StartTransactionCommand;
+3) /		ProcessQuery;				<< INSERT INTO foo VALUES (...)
+   \		CommitTransactionCommand;
+	\		CommandCounterIncrement;
+
+	 /	StartTransactionCommand;
+	/	ProcessUtility;				<< COMMIT
+4) <			EndTransactionBlock;
+	\			CommitTransaction;
+	 \	CommitTransactionCommand;
+
+The point of this example is to demonstrate the need for
+StartTransactionCommand and CommitTransactionCommand to be state smart -- they
+should call CommandCounterIncrement between the calls to BeginTransactionBlock
+and EndTransactionBlock and outside these calls they need to do normal start,
+commit or abort processing.
+
+Furthermore, suppose the "SELECT * FROM foo" caused an abort condition.	In
+this case AbortCurrentTransaction is called, and the transaction is put in
+aborted state.  In this state, any user input is ignored except for
+transaction-termination statements, or ROLLBACK TO <savepoint> commands.
+
+Transaction aborts can occur in two ways:
+
+1)	system dies from some internal cause  (syntax error, etc)
+2)	user types ROLLBACK
+
+The reason we have to distinguish them is illustrated by the following two
+situations:
+
+	case 1					case 2
+	------					------
+1) user types BEGIN			1) user types BEGIN
+2) user does something			2) user does something
+3) user does not like what		3) system aborts for some reason
+   she sees and types ABORT		   (syntax error, etc)
+
+In case 1, we want to abort the transaction and return to the default state.
+In case 2, there may be more commands coming our way which are part of the
+same transaction block; we have to ignore these commands until we see a COMMIT
+or ROLLBACK.
+
+Internal aborts are handled by AbortCurrentTransaction, while user aborts are
+handled by UserAbortTransactionBlock.  Both of them rely on AbortTransaction
+to do all the real work.  The only difference is what state we enter after
+AbortTransaction does its work:
+
+* AbortCurrentTransaction leaves us in TBLOCK_ABORT,
+* UserAbortTransactionBlock leaves us in TBLOCK_ENDABORT
+
+Low-level transaction abort handling is divided in two phases:
+* AbortTransaction executes as soon as we realize the transaction has
+  failed.  It should release all shared resources (locks etc) so that we do
+  not delay other backends unnecessarily.
+* CleanupTransaction executes when we finally see a user COMMIT
+  or ROLLBACK command; it cleans things up and gets us out of the transaction
+  internally.  In particular, we mustn't destroy TopTransactionContext until
+  this point.
+
+Also, note that when a transaction is committed, we don't close it right away.
+Rather it's put in TBLOCK_END state, which means that when
+CommitTransactionCommand is called after the query has finished processing,
+the transaction has to be closed.  The distinction is subtle but important,
+because it means that control will leave the xact.c code with the transaction
+open, and the main loop will be able to keep processing inside the same
+transaction.  So, in a sense, transaction commit is also handled in two
+phases, the first at EndTransactionBlock and the second at
+CommitTransactionCommand (which is where CommitTransaction is actually
+called).
+
+The rest of the code in xact.c are routines to support the creation and
+finishing of transactions and subtransactions.  For example, AtStart_Memory
+takes care of initializing the memory subsystem at main transaction start.
+
+
+Subtransaction handling
+-----------------------
+
+Subtransactions are implemented using a stack of TransactionState structures,
+each of which has a pointer to its parent transaction's struct.  When a new
+subtransaction is to be opened, PushTransaction is called, which creates a new
+TransactionState, with its parent link pointing to the current transaction.
+StartSubTransaction is in charge of initializing the new TransactionState to
+sane values, and properly initializing other subsystems (AtSubStart routines).
+
+When closing a subtransaction, either CommitSubTransaction has to be called
+(if the subtransaction is committing), or AbortSubTransaction and
+CleanupSubTransaction (if it's aborting).  In either case, PopTransaction is
+called so the system returns to the parent transaction.
+
+One important point regarding subtransaction handling is that several may need
+to be closed in response to a single user command.  That's because savepoints
+have names, and we allow to commit or rollback a savepoint by name, which is
+not necessarily the one that was last opened.  In the case of subtransaction
+commit this is not a problem, and we close all the involved subtransactions
+right away by calling CommitTransactionToLevel, which in turn calls
+CommitSubTransaction and PopTransaction as many times as needed.
+
+In the case of subtransaction abort (when the user issues ROLLBACK TO
+<savepoint>), things are not so easy.  We have to keep the subtransactions
+open and return control to the main loop.  So what RollbackToSavepoint does is
+abort the innermost subtransaction and put it in TBLOCK_SUBENDABORT state, and
+put the rest in TBLOCK_SUBABORT_PENDING state.  Then we return control to the
+main loop, which will in turn return control to us by calling
+CommitTransactionCommand.  At this point we can close all subtransactions that
+are marked with the "abort pending" state.  When that's done, the outermost
+subtransaction is created again, to conform to SQL's definition of ROLLBACK TO.
+
+Other subsystems are allowed to start "internal" subtransactions, which are
+handled by BeginInternalSubtransaction.  This is to allow implementing
+exception handling, e.g. in PL/pgSQL.  ReleaseCurrentSubTransaction and
+RollbackAndReleaseCurrentSubTransaction allows the subsystem to close said
+subtransactions.  The main difference between this and the savepoint/release
+path is that BeginInternalSubtransaction is allowed when no explicit
+transaction block has been established, while DefineSavepoint is not.
+
+
+pg_clog and pg_subtrans
+-----------------------
+
+pg_clog and pg_subtrans are permanent (on-disk) storage of transaction related
+information.  There is a limited number of pages of each kept in memory, so
+in many cases there is no need to actually read from disk.  However, if
+there's a long running transaction or a backend sitting idle with an open
+transaction, it may be necessary to be able to read and write this information
+from disk.  They also allow information to be permanent across server restarts.
+
+pg_clog records the commit status for each transaction.  A transaction can be
+in progress, committed, aborted, or "sub-committed".  This last state means
+that it's a subtransaction that's no longer running, but its parent has not
+updated its state yet (either it is still running, or the backend crashed
+without updating its status).  A sub-committed transaction's status will be
+updated again to the final value as soon as the parent commits or aborts, or
+when the parent is detected to be aborted.
+
+Savepoints are implemented using subtransactions.  A subtransaction is a
+transaction inside a transaction; it gets its own TransactionId, but its
+commit or abort status is not only dependent on whether it committed itself,
+but also whether its parent transaction committed.  To implement multiple
+savepoints in a transaction we allow unlimited transaction nesting depth, so
+any particular subtransaction's commit state is dependent on the commit status
+of each and every ancestor transaction.
+
+The "subtransaction parent" (pg_subtrans) mechanism records, for each
+transaction, the TransactionId of its parent transaction.  This information is
+stored as soon as the subtransaction is created.  Top-level transactions do
+not have a parent, so they leave their pg_subtrans entries set to the default
+value of zero (InvalidTransactionId).
+
+pg_subtrans is used to check whether the transaction in question is still
+running --- the main Xid of a transaction is recorded in the PGPROC struct,
+but since we allow arbitrary nesting of subtransactions, we can't fit all Xids
+in shared memory, so we have to store them on disk.  Note, however, that for
+each transaction we keep a "cache" of Xids that are known to be part of the
+transaction tree, so we can skip looking at pg_subtrans unless we know the
+cache has been overflowed.  See storage/ipc/sinval.c for the gory details.
+
+slru.c is the supporting mechanism for both pg_clog and pg_subtrans.  It
+implements the LRU policy for in-memory buffer pages.  The high-level routines
+for pg_clog are implemented in transam.c, while the low-level functions are in
+clog.c.  pg_subtrans is contained completely in subtrans.c.

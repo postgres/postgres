@@ -3,138 +3,14 @@
  * xact.c
  *	  top level transaction system support routines
  *
+ * See src/backend/access/transam/README for more information.
+ *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.175 2004/08/01 17:32:13 tgl Exp $
- *
- * NOTES
- *		Transaction aborts can now occur two ways:
- *
- *		1)	system dies from some internal cause  (syntax error, etc..)
- *		2)	user types ABORT
- *
- *		These two cases used to be treated identically, but now
- *		we need to distinguish them.  Why?	consider the following
- *		two situations:
- *
- *				case 1							case 2
- *				------							------
- *		1) user types BEGIN				1) user types BEGIN
- *		2) user does something			2) user does something
- *		3) user does not like what		3) system aborts for some reason
- *		   she sees and types ABORT
- *
- *		In case 1, we want to abort the transaction and return to the
- *		default state.	In case 2, there may be more commands coming
- *		our way which are part of the same transaction block and we have
- *		to ignore these commands until we see a COMMIT transaction or
- *		ROLLBACK.
- *
- *		Internal aborts are now handled by AbortTransactionBlock(), just as
- *		they always have been, and user aborts are now handled by
- *		UserAbortTransactionBlock().  Both of them rely on AbortTransaction()
- *		to do all the real work.  The only difference is what state we
- *		enter after AbortTransaction() does its work:
- *
- *		* AbortTransactionBlock() leaves us in TBLOCK_ABORT and
- *		* UserAbortTransactionBlock() leaves us in TBLOCK_ENDABORT
- *
- *		Low-level transaction abort handling is divided into two phases:
- *		* AbortTransaction() executes as soon as we realize the transaction
- *		  has failed.  It should release all shared resources (locks etc)
- *		  so that we do not delay other backends unnecessarily.
- *		* CleanupTransaction() executes when we finally see a user COMMIT
- *		  or ROLLBACK command; it cleans things up and gets us out of
- *		  the transaction internally.  In particular, we mustn't destroy
- *		  TopTransactionContext until this point.
- *
- *	 NOTES
- *		The essential aspects of the transaction system are:
- *
- *				o  transaction id generation
- *				o  transaction log updating
- *				o  memory cleanup
- *				o  cache invalidation
- *				o  lock cleanup
- *
- *		Hence, the functional division of the transaction code is
- *		based on which of the above things need to be done during
- *		a start/commit/abort transaction.  For instance, the
- *		routine AtCommit_Memory() takes care of all the memory
- *		cleanup stuff done at commit time.
- *
- *		The code is layered as follows:
- *
- *				StartTransaction
- *				CommitTransaction
- *				AbortTransaction
- *				CleanupTransaction
- *
- *		are provided to do the lower level work like recording
- *		the transaction status in the log and doing memory cleanup.
- *		above these routines are another set of functions:
- *
- *				StartTransactionCommand
- *				CommitTransactionCommand
- *				AbortCurrentTransaction
- *
- *		These are the routines used in the postgres main processing
- *		loop.  They are sensitive to the current transaction block state
- *		and make calls to the lower level routines appropriately.
- *
- *		Support for transaction blocks is provided via the functions:
- *
- *				BeginTransactionBlock
- *				CommitTransactionBlock
- *				AbortTransactionBlock
- *
- *		These are invoked only in response to a user "BEGIN WORK", "COMMIT",
- *		or "ROLLBACK" command.	The tricky part about these functions
- *		is that they are called within the postgres main loop, in between
- *		the StartTransactionCommand() and CommitTransactionCommand().
- *
- *		For example, consider the following sequence of user commands:
- *
- *		1)		begin
- *		2)		select * from foo
- *		3)		insert into foo (bar = baz)
- *		4)		commit
- *
- *		in the main processing loop, this results in the following
- *		transaction sequence:
- *
- *			/	StartTransactionCommand();
- *		1) /	ProcessUtility();				<< begin
- *		   \		BeginTransactionBlock();
- *			\	CommitTransactionCommand();
- *
- *			/	StartTransactionCommand();
- *		2) <	ProcessQuery();					<< select * from foo
- *			\	CommitTransactionCommand();
- *
- *			/	StartTransactionCommand();
- *		3) <	ProcessQuery();					<< insert into foo (bar = baz)
- *			\	CommitTransactionCommand();
- *
- *			/	StartTransactionCommand();
- *		4) /	ProcessUtility();				<< commit
- *		   \		CommitTransactionBlock();
- *			\	CommitTransactionCommand();
- *
- *		The point of this example is to demonstrate the need for
- *		StartTransactionCommand() and CommitTransactionCommand() to
- *		be state smart -- they should do nothing in between the calls
- *		to BeginTransactionBlock() and EndTransactionBlock() and
- *		outside these calls they need to do normal start/commit
- *		processing.
- *
- *		Furthermore, suppose the "select * from foo" caused an abort
- *		condition.	We would then want to abort the transaction and
- *		ignore all subsequent commands up to the "commit".
- *		-cim 3/23/90
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.176 2004/08/01 20:57:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
