@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.110 2003/01/27 00:46:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.111 2003/04/04 20:40:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -302,7 +302,11 @@ createdb(const CreatedbStmt *stmt)
 	}
 
 	/* Copy the template database to the new location */
+#ifndef WIN32
 	snprintf(buf, sizeof(buf), "cp -r '%s' '%s'", src_loc, target_dir);
+#else
+	snprintf(buf, sizeof(buf), "xcopy /e /i /q '%s' '%s'", src_loc, target_dir);
+#endif
 
 	if (system(buf) != 0)
 	{
@@ -751,7 +755,11 @@ remove_dbdirs(const char *nominal_loc, const char *alt_loc)
 		}
 	}
 
+#ifndef WIN32
 	snprintf(buf, sizeof(buf), "rm -rf '%s'", target_dir);
+#else
+	snprintf(buf, sizeof(buf), "rmdir /s /q \"%s\"", target_dir);
+#endif
 
 	if (system(buf) != 0)
 	{

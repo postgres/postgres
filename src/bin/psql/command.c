@@ -3,7 +3,7 @@
  *
  * Copyright 2000-2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.94 2003/03/20 06:43:35 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.95 2003/04/04 20:40:45 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -65,8 +65,6 @@ static char *unescape(const unsigned char *source, size_t len);
 static bool do_edit(const char *filename_arg, PQExpBuffer query_buf);
 static bool do_connect(const char *new_dbname, const char *new_user);
 static bool do_shell(const char *command);
-
-
 
 /*----------
  * HandleSlashCmds:
@@ -1515,7 +1513,11 @@ editFile(const char *fname)
 	sys = malloc(strlen(editorName) + strlen(fname) + 10 + 1);
 	if (!sys)
 		return false;
-	sprintf(sys, "exec  %s '%s'", editorName, fname);
+	sprintf(sys, 
+#ifndef WIN32
+		"exec "
+#endif
+		"%s '%s'", editorName, fname);
 	result = system(sys);
 	if (result == -1)
 		psql_error("could not start editor %s\n", editorName);
@@ -1944,7 +1946,11 @@ do_shell(const char *command)
 			else
 				exit(EXIT_FAILURE);
 		}
-		sprintf(sys, "exec %s", shellName);
+		sprintf(sys, 
+#ifndef WIN32
+			"exec "
+#endif
+			"%s", shellName);
 		result = system(sys);
 		free(sys);
 	}
