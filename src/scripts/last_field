@@ -1,4 +1,0 @@
-{
-	i=split($1, a, "/")
-	print a[i]
-}

@@ -67,7 +67,6 @@ then
 else
 	TEMPLATE=DO_NOT_CHANGE_THIS_INVALID_FILENAME
 fi
-export TEMPLATE
 
 if test ! -f $TEMPLATE
 then
@@ -98,8 +97,10 @@ EOT
 		echo "You must choose an appropriate template file."
 		exit
 	fi
-	TEMPLATE=template/$TEMPLATE export TEMPLATE
+	TEMPLATE=template/$TEMPLATE 
 fi
+export TEMPLATE
+echo ""
 
 AROPT=`grep AROPT $TEMPLATE | awk -F: '{print $2}'`
 SHARED_LIB=`grep SHARED_LIB $TEMPLATE | awk -F: '{print $2}'`
@@ -112,9 +113,6 @@ DL_LIB=`grep DL_LIB $TEMPLATE | awk -F: '{print $2}'`
 YACC=`grep YACC $TEMPLATE | awk -F: '{print $2}'`
 YFLAGS=`grep YFLAGS $TEMPLATE | awk -F: '{print $2}'`
 
-export AROPT SHARED_LIB CFLAGS SRCH_INC SRCH_LIB USE_LOCALE DLSUFFIX
-export DL_LIB YACC YFLAGS
-
 
 dnl We now need to check for additional directories (include
 dnl and library directories.
@@ -125,30 +123,43 @@ echo "you don't know the answers to these questions, then just
 echo "hit enter and we will try and figure it out.  If things
 echo "don't compile because of missing libraries or include
 echo "files, then you probably need to enter something here.
+echo "enter 'none' or new directories to override default"
 echo ""
-$ECHO_N "Additional directories to search for include files { none }: $ECHO_C"
+$ECHO_N "Additional directories to search for include files { $SRCH_INC }: $ECHO_C"
 read a
-if test "$a." != "." 
+if test "$a." = "none." 
 then
-	SRCH_INC=$a
-	CPPFLAGS=`echo "$SRCH_INC" | sed 's@  *@ @g; s@^\([^ ]\)@-I\1@; s@ \([^ ]\)@ -I\1@g'`
-else
 	SRCH_INC=
 	CPPFLAGS=
-fi
-export SRCH_INC CPPFLAGS
-
-$ECHO_N "Additional directories to search for library files { none }: $ECHO_C"
-read a
-if test "$a." != "."
-then
-	SRCH_LIB=$a
-	LDFLAGS=`echo "$SRCH_LIB" | sed 's@  *@ @g; s@^\([^ ]\)@-L\1@; s@ \([^ ]\)@ -L\1@g'`
 else
+	if test "$a." = "."
+	then
+		a=$SRCH_INC
+	fi
+	CPPFLAGS=`echo "$a" | sed 's@  *@ @g; s@^\([[^ ]]\)@-I\1@; s@ \([[^ ]]\)@ -I\1@g'`
+
+fi
+export CPPFLAGS
+echo setting CPPFLAGS=$CPPFLAGS
+echo ""
+
+$ECHO_N "Additional directories to search for library files { $SRCH_LIB }: $ECHO_C"
+read a
+if test "$a." = "none."
+then
 	SRCH_LIB=
 	LDFLAGS=
+else
+	if test "$a." = "."
+	then
+		a=$SRCH_LIB
+	fi
+	LDFLAGS=`echo "$a" | sed 's@  *@ @g; s@^\([[^ ]]\)@-L\1@; s@ \([[^ ]]\)@ -L\1@g'`
+
 fi
-export SRCH_LIB LDFLAGS
+export LDFLAGS
+echo setting LDFLAGS=$LDFLAGS
+echo ""
 echo "**************************************************************"
 
 dnl We have read the default value of USE_LOCALE from the template 
@@ -257,26 +268,24 @@ dnl ****************************************************************
 HAVECXX='HAVE_Cplusplus=false'
 AC_SUBST(HAVECXX)
 
-dnl AC_PROG_INSTALL was broken on my machine (NAT), so here's an
-dnl alternative, built from the various portname options
-AC_PATH_PROG(INSTALL, install, , /usr/bin:/usr/ucb:/home/tools/bin)
-AC_PATH_PROG(BSDINST, bsdinst, ,/usr/bin/X11:/usr/X11/bin:/sbin:/opt/X11/bin:/usr/X11R6/bin)
-AC_PATH_PROG(INSTALLBSD, installbsd, , /bin:/usr/bin:/usr/ucb)
-  INSTLOPTS="-m 444"
-  INSTL_EXE_OPTS="-m 555"
-  INSTL_LIB_OPTS="-m 664"
-if test -f "$INSTALLBSD"; then
-  INSTALL=$INSTALLBSD
-elif test -f "$INSTALL"; then
-  INSTLOPTS="-c $INSTLOPTS"
-  INSTL_EXE_OPTS="-c $INSTL_EXE_OPTS"
-  INSTL_LIB_OPTS="-c $INSTL_LIB_OPTS"
-elif test -f "$BSDINST"; then
-  INSTALL=$BSDINST
-else
-  echo "- No Install Script found - aborting."
-  exit 0;
+AC_PATH_PROGS(INSTALL, installbsd install bsdinst, NONE, $PATH)
+if test $INSTALL = "NONE"
+then
+   echo "- No Install Script found - aborting."
+   exit 0;
 fi
+
+INSTLOPTS="-m 444"
+INSTL_EXE_OPTS="-m 555"
+INSTL_LIB_OPTS="-m 664"
+
+if test "`echo $INSTALL | awk '{ i=split($1, a, "/"); print a[[i]] }'`." = "install."
+then
+	INSTLOPTS="-c $INSTLOPTS"
+	INSTL_EXE_OPTS="-c $INSTL_EXE_OPTS"
+	INSTL_LIB_OPTS="-c $INSTL_LIB_OPTS"
+fi
+
 echo "- Using $INSTALL"
 AC_SUBST(INSTALL)
 AC_SUBST(INSTLOPTS)
