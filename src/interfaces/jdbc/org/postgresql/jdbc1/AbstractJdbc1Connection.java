@@ -9,7 +9,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Connection.java,v 1.27.2.2 2004/02/10 01:58:48 jurka Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Connection.java,v 1.27.2.3 2004/06/22 09:37:03 jurka Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -208,11 +208,21 @@ public abstract class AbstractJdbc1Connection implements BaseConnection
 			throw new PSQLException ("postgresql.con.failed", PSQLState.CONNECTION_UNABLE_TO_CONNECT, e);
 		}
 
-	    //Now do the protocol work
-		if (haveMinimumCompatibleVersion("7.4")) {
-			openConnectionV3(host,port,info,database,url,d,password);
-		} else {
-			openConnectionV2(host,port,info,database,url,d,password);
+		try {
+			//Now do the protocol work
+			if (haveMinimumCompatibleVersion("7.4")) {
+				openConnectionV3(host,port,info,database,url,d,password);
+			} else {
+				openConnectionV2(host,port,info,database,url,d,password);
+			}
+		} catch (SQLException sqle) {
+			// if we fail to completely establish a connection,
+			// close down the socket to not leak resources.
+			try {
+				pgStream.close();
+			} catch (IOException ioe) { }
+
+			throw sqle;
 		}
 	  }
 
@@ -305,6 +315,7 @@ public abstract class AbstractJdbc1Connection implements BaseConnection
 							//if the error length is > than 30000 we assume this is really a v2 protocol 
 							//server so try again with a v2 connection
 							//need to create a new connection and try again
+							pgStream.close();
 							try
 							{
 								pgStream = new PGStream(p_host, p_port);
