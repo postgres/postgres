@@ -16,8 +16,13 @@ CXXFLAGS_SL = -fpic
 else
 CXXFLAGS_SL = -K PIC
 endif
+ifeq ($(GCC), yes)
+SO_FLAGS = -shared
+else
+SO_FLAGS = -G
+endif
 
 %.so: %.o
-	$(LD) -G -Bdynamic -o $@ $<
+	$(CC) $(SO_FLAGS) -Bdynamic -o $@ $<
 
 sqlmansect = 5sql
