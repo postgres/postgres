@@ -1,5 +1,5 @@
 # Macros that test various C library quirks
-# $Header: /cvsroot/pgsql/config/c-library.m4,v 1.3 2000/10/02 03:55:15 momjian Exp $
+# $Header: /cvsroot/pgsql/config/c-library.m4,v 1.4 2000/10/02 03:58:31 momjian Exp $
 
 
 # PGAC_VAR_INT_TIMEZONE
@@ -60,10 +60,8 @@ fi])# PGAC_UNION_SEMUN
 # char sun_path[108]; }. (Requires test for <sys/un.h>!)
 AC_DEFUN([PGAC_STRUCT_SOCKADDR_UN],
 [AC_CACHE_CHECK([for struct sockaddr_un], pgac_cv_struct_sockaddr_un,
-[AC_TRY_COMPILE([#ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
-#endif],
-[AC_TRY_COMPILE([#ifdef HAVE_SYS_UN_H
+[AC_TRY_COMPILE([#include <sys/types.h>
+#ifdef HAVE_SYS_UN_H
 #include <sys/un.h>
 #endif],
                 [struct sockaddr_un un;],
