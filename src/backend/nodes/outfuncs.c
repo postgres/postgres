@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: outfuncs.c,v 1.56 1998/12/17 13:09:52 scrappy Exp $
+ *  $Id: outfuncs.c,v 1.57 1998/12/18 14:45:08 wieck Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -69,7 +69,8 @@ _outIntList(StringInfo str, List *list)
 static void
 _outCreateStmt(StringInfo str, CreateStmt *node)
 {
-	appendStringInfo(str, " CREATE :relname %s :columns ", node->relname);
+	appendStringInfo(str, " CREATE :relname %s :columns ", 
+		stringStringInfo(node->relname));
 
 	_outNode(str, node->tableElts);
 	appendStringInfo(str, " :inhRelnames ");
@@ -83,7 +84,9 @@ _outIndexStmt(StringInfo str, IndexStmt *node)
 {
 	appendStringInfo(str, 
 			" INDEX :idxname %s :relname %s :accessMethod %s :indexParams ",
-			node->idxname, node->relname, node->accessMethod);
+			stringStringInfo(node->idxname),
+			stringStringInfo(node->relname),
+			stringStringInfo(node->accessMethod));
 
 	_outNode(str, node->indexParams);
 	appendStringInfo(str, " :withClause ");
@@ -109,7 +112,8 @@ _outSelectStmt(StringInfo str, SelectStmt *node)
 static void
 _outFuncCall(StringInfo str, FuncCall *node)
 {
-	appendStringInfo(str, "FUNCTION %s :args ", node->funcname);
+	appendStringInfo(str, "FUNCTION %s :args ",
+			stringStringInfo(node->funcname));
 	_outNode(str, node->args);
 }
 
@@ -118,11 +122,13 @@ _outFuncCall(StringInfo str, FuncCall *node)
 static void
 _outColumnDef(StringInfo str, ColumnDef *node)
 {
-	appendStringInfo(str, " COLUMNDEF :colname %s :typename ", node->colname);
+	appendStringInfo(str, " COLUMNDEF :colname %s :typename ",
+			stringStringInfo(node->colname));
 	_outNode(str, node->typename);
 
 	appendStringInfo(str, " :is_not_null %s :defval %s :constraints ",
-			node->is_not_null ? "true" : "false", node->defval);
+			node->is_not_null ? "true" : "false", 
+			stringStringInfo(node->defval));
 	_outNode(str, node->constraints);
 }
 
@@ -131,7 +137,7 @@ _outTypeName(StringInfo str, TypeName *node)
 {
 	appendStringInfo(str, 
 			" TYPENAME :name %s :timezone %s :setof %s typmod %d :arrayBounds ",
-			node->name, 
+			stringStringInfo(node->name), 
 			node->timezone ? "true" : "false",
 			node->setof ? "true" : "false",
 			node->typmod);
@@ -143,10 +149,12 @@ _outTypeName(StringInfo str, TypeName *node)
 static void
 _outIndexElem(StringInfo str, IndexElem *node)
 {
-	appendStringInfo(str, " INDEXELEM :name %s :args ", node->name);
+	appendStringInfo(str, " INDEXELEM :name %s :args ",
+			stringStringInfo(node->name));
 	_outNode(str, node->args);
 
-	appendStringInfo(str, " :class %s :typename ", node->class);
+	appendStringInfo(str, " :class %s :typename ", 
+			stringStringInfo(node->class));
 	_outNode(str, node->typename);
 }
 
@@ -161,20 +169,20 @@ _outQuery(StringInfo str, Query *node)
 		{
 			case T_CreateStmt:
 				appendStringInfo(str, " :create %s ",
-						((CreateStmt *) (node->utilityStmt))->relname);
+						stringStringInfo(((CreateStmt *) (node->utilityStmt))->relname));
 				_outNode(str, node->utilityStmt);
 				break;
 
 			case T_IndexStmt:
 				appendStringInfo(str, " :index %s on %s ",
-					((IndexStmt *) (node->utilityStmt))->idxname,
-					((IndexStmt *) (node->utilityStmt))->relname);
+					stringStringInfo(((IndexStmt *) (node->utilityStmt))->idxname),
+					stringStringInfo(((IndexStmt *) (node->utilityStmt))->relname));
 				_outNode(str, node->utilityStmt);
 				break;
 
 			case T_NotifyStmt:
 				appendStringInfo(str, " :utility %s ",
-						((NotifyStmt *) (node->utilityStmt))->relname);
+						stringStringInfo(((NotifyStmt *) (node->utilityStmt))->relname));
 				break;
 
 			default:
@@ -183,18 +191,19 @@ _outQuery(StringInfo str, Query *node)
 	}
 	else
 	{
-		appendStringInfo(str, " :utility %s", NULL);
+		appendStringInfo(str, " :utility <>");
 	}
 
 	appendStringInfo(str, 
 			" :resultRelation %d :into %s :isPortal %s :isBinary %s :unionall %s ",
 			node->resultRelation,
-			node->into,
+			stringStringInfo(node->into),
 			node->isPortal ? "true" : "false",
 			node->isBinary ? "true" : "false",
 			node->unionall ? "true" : "false");
 
-	appendStringInfo(str, " :unique %s :sortClause ", node->uniqueFlag);
+	appendStringInfo(str, " :unique %s :sortClause ", 
+			stringStringInfo(node->uniqueFlag));
 	_outNode(str, node->sortClause);
 
 	appendStringInfo(str, " :rtable ");
@@ -563,7 +572,7 @@ _outResdom(StringInfo str, Resdom *node)
 			node->restypmod);
 
 	appendStringInfo(str, " :resname \"%s\" :reskey %d :reskeyop %u :resjunk %d",
-			node->resname,
+			stringStringInfo(node->resname),
 			node->reskey,
 			node->reskeyop,
 			node->resjunk);
@@ -620,7 +629,7 @@ _outExpr(StringInfo str, Expr *node)
 			opstr = "subp";
 			break;
 	}
-	appendStringInfo(str, " :opType %s :oper ", opstr);
+	appendStringInfo(str, " :opType %s :oper ", stringStringInfo(opstr));
 	_outNode(str, node->oper);
 
 	appendStringInfo(str, " :args ");
@@ -675,7 +684,7 @@ _outAggreg(StringInfo str, Aggreg *node)
 {
 	appendStringInfo(str, 
 			" AGGREG :aggname %s :basetype %u :aggtype %u :target ",
-			node->aggname,
+			stringStringInfo(node->aggname),
 			node->basetype,
 			node->aggtype);
 	_outNode(str, node->target);
@@ -802,7 +811,7 @@ _outParam(StringInfo str, Param *node)
 			" PARAM :paramkind %d :paramid %d :paramname %s :paramtype %u ",
 			node->paramkind,
 			node->paramid,
-			node->paramname,
+			stringStringInfo(node->paramname),
 			node->paramtype);
 
 	appendStringInfo(str, " :param_tlist ");
@@ -887,8 +896,8 @@ _outRangeTblEntry(StringInfo str, RangeTblEntry *node)
 {
 	appendStringInfo(str, 
 			" RTE :relname %s :refname %s :relid %u :inh %s :inFromCl %s :skipAcl %s",
-			node->relname,
-			node->refname,
+			stringStringInfo(node->relname),
+			stringStringInfo(node->refname),
 			node->relid,
 			node->inh ? "true" : "false",
 			node->inFromCl ? "true" : "false",
@@ -1297,7 +1306,7 @@ _outAExpr(StringInfo str, A_Expr *node)
 			break;
 		default:
 #endif
-			appendStringInfo(str, node->opname);
+			appendStringInfo(str, stringStringInfo(node->opname));
 #ifdef PARSEDEBUG
 			break;
 	}
@@ -1310,21 +1319,17 @@ _outAExpr(StringInfo str, A_Expr *node)
 static void
 _outValue(StringInfo str, Value *value)
 {
-	char		buf[500];
-
 	switch (value->type)
 	{
 		case T_String:
-			sprintf(buf, " \"%s\" ", value->val.str);
-			appendStringInfo(str, buf);
+			appendStringInfo(str, " \"%s\" ", 
+					stringStringInfo(value->val.str));
 			break;
 		case T_Integer:
-			sprintf(buf, " %ld ", value->val.ival);
-			appendStringInfo(str, buf);
+			appendStringInfo(str, " %ld ", value->val.ival);
 			break;
 		case T_Float:
-			sprintf(buf, " %f ", value->val.dval);
-			appendStringInfo(str, buf);
+			appendStringInfo(str, " %f ", value->val.dval);
 			break;
 		default:
 			break;
@@ -1335,20 +1340,14 @@ _outValue(StringInfo str, Value *value)
 static void
 _outIdent(StringInfo str, Ident *node)
 {
-	char		buf[500];
-
-	sprintf(buf, " IDENT \"%s\" ", node->name);
-	appendStringInfo(str, buf);
+	appendStringInfo(str, " IDENT \"%s\" ", stringStringInfo(node->name));
 	return;
 }
 
 static void
 _outAConst(StringInfo str, A_Const *node)
 {
-	char		buf[500];
-
-	sprintf(buf, "CONST ");
-	appendStringInfo(str, buf);
+	appendStringInfo(str, "CONST ");
 	_outValue(str, &(node->val));
 	return;
 }
@@ -1356,46 +1355,37 @@ _outAConst(StringInfo str, A_Const *node)
 static void
 _outConstraint(StringInfo str, Constraint *node)
 {
-	char		buf[500];
-
-	sprintf(buf," %s :type",
-		((node->name != NULL)? node->name: "<>"));
-	appendStringInfo(str, buf);
+	appendStringInfo(str," %s :type",
+		stringStringInfo(node->name));
 
 	switch (node->contype)
 	{
 		case CONSTR_PRIMARY:
-			sprintf(buf," PRIMARY KEY ");
-			appendStringInfo(str, buf);
+			appendStringInfo(str, " PRIMARY KEY ");
 			_outNode(str, node->keys);
 			break;
 
 		case CONSTR_CHECK:
-			sprintf(buf," CHECK ");
-			appendStringInfo(str, buf);
-			appendStringInfo(str, node->def);
+			appendStringInfo(str, " CHECK %s",
+					stringStringInfo(node->def));
 			break;
 
 		case CONSTR_DEFAULT:
-			sprintf(buf," DEFAULT ");
-			appendStringInfo(str, buf);
-			appendStringInfo(str, node->def);
+			appendStringInfo(str, " DEFAULT %s",
+					stringStringInfo(node->def));
 			break;
 
 		case CONSTR_NOTNULL:
-			sprintf(buf," NOT NULL ");
-			appendStringInfo(str, buf);
+			appendStringInfo(str, " NOT NULL ");
 			break;
 
 		case CONSTR_UNIQUE:
-			sprintf(buf," UNIQUE ");
-			appendStringInfo(str, buf);
+			appendStringInfo(str, " UNIQUE ");
 			_outNode(str, node->keys);
 			break;
 
 		default:
-			sprintf(buf,"<unrecognized constraint>");
-			appendStringInfo(str, buf);
+			appendStringInfo(str, "<unrecognized constraint>");
 			break;
 	}
 	return;
@@ -1404,13 +1394,9 @@ _outConstraint(StringInfo str, Constraint *node)
 static void
 _outCaseExpr(StringInfo str, CaseExpr *node)
 {
-	char		buf[500];
-
-	sprintf(buf, "CASE ");
-	appendStringInfo(str, buf);
+	appendStringInfo(str, "CASE ");
 	_outNode(str, node->args);
-	sprintf(buf, " :default ");
-	appendStringInfo(str, buf);
+	appendStringInfo(str, " :default ");
 	_outNode(str, node->defresult);
 	return;
 }
@@ -1418,13 +1404,9 @@ _outCaseExpr(StringInfo str, CaseExpr *node)
 static void
 _outCaseWhen(StringInfo str, CaseWhen *node)
 {
-	char		buf[500];
-
-	sprintf(buf, " WHEN ");
-	appendStringInfo(str, buf);
+	appendStringInfo(str, " WHEN ");
 	_outNode(str, node->expr);
-	sprintf(buf, " :then ");
-	appendStringInfo(str, buf);
+	appendStringInfo(str, " :then ");
 	_outNode(str, node->result);
 	return;
 }

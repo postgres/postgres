@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: stringinfo.h,v 1.8 1998/12/14 08:11:17 scrappy Exp $
+ * $Id: stringinfo.h,v 1.9 1998/12/18 14:45:09 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,5 +43,11 @@ extern StringInfo makeStringInfo(void);
  * similar to 'strcat' but reallocates more space if necessary...
  */
 extern void appendStringInfo(StringInfo str, const char *fmt,...);
+
+/*------------------------
+ * nullStringInfo
+ * return the string itself or "<>" if it is NULL
+ */
+#define stringStringInfo(s) (((s) == NULL) ? "<>" : (s))
 
 #endif	 /* STRINGINFO_H */

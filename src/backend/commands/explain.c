@@ -4,7 +4,7 @@
  *
  * Copyright (c) 1994-5, Regents of the University of California
  *
- *	  $Id: explain.c,v 1.29 1998/12/14 08:11:00 scrappy Exp $
+ *	  $Id: explain.c,v 1.30 1998/12/18 14:45:07 wieck Exp $
  *
  */
 #include <stdio.h>
@@ -144,8 +144,7 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 {
 	List			*l;
 	Relation	relation;
-	char			*pname,
-						buf[1000];
+	char			*pname;
 	int				i;
 
 	if (plan == NULL)
@@ -216,7 +215,8 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 				{
 					appendStringInfo(str, ", ");
 				}
-				appendStringInfo(str, (RelationGetRelationName(relation))->data);
+				appendStringInfo(str, 
+					stringStringInfo((RelationGetRelationName(relation))->data));
 			}
 		case T_SeqScan:
 			if (((Scan *) plan)->scanrelid > 0)
@@ -226,10 +226,10 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 				appendStringInfo(str, " on ");
 				if (strcmp(rte->refname, rte->relname) != 0)
 				{
-					snprintf(buf, 1000, "%s ", rte->relname);
-					appendStringInfo(str, buf);
+					appendStringInfo(str, "%s ",
+						stringStringInfo(rte->relname));
 				}
-				appendStringInfo(str, rte->refname);
+				appendStringInfo(str, stringStringInfo(rte->refname));
 			}
 			break;
 		default:
