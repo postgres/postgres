@@ -641,7 +641,7 @@ starts 'checking host system type...'
 **************************************************************
 EOT
 	TEMPLATE=generic
-	GUESS=`grep $host_os template/.similar 2>/dev/null`
+	GUESS=`grep "$host_os=" template/.similar 2>/dev/null`
 	if test $GUESS
 	then
 		TEMPLATE=`echo $GUESS | sed 's/.*=//'`
