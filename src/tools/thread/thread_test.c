@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/tools/thread/thread_test.c,v 1.26 2004/04/27 17:22:41 momjian Exp $
+ *	$PostgreSQL: pgsql/src/tools/thread/thread_test.c,v 1.27 2004/04/27 18:36:31 momjian Exp $
  *
  *	This program tests to see if your standard libc functions use
  *	pthread_setspecific()/pthread_getspecific() to be thread-safe.
@@ -49,6 +49,12 @@ main(int argc, char *argv[])
 void		func_call_1(void);
 void		func_call_2(void);
 
+#define		TEMP_FILENAME_1	"/tmp/thread_test.1.XXXXX"
+#define		TEMP_FILENAME_2	"/tmp/thread_test.2.XXXXX"
+
+char	   *temp_filename_1;
+char	   *temp_filename_2;
+
 pthread_mutex_t init_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 volatile int thread1_done = 0;
@@ -90,6 +96,14 @@ main(int argc, char *argv[])
 		return 1;
 	}
 
+	/* Make temp filenames, might not have strdup() */
+	temp_filename_1 = malloc(strlen(TEMP_FILENAME_1) + 1);
+	strcpy(temp_filename_1, TEMP_FILENAME_1);
+	mktemp(temp_filename_1);
+	temp_filename_2 = malloc(strlen(TEMP_FILENAME_2) + 1);
+	strcpy(temp_filename_2, TEMP_FILENAME_2);
+	mktemp(temp_filename_2);
+	
 #if !defined(HAVE_GETADDRINFO) && !defined(HAVE_GETHOSTBYNAME_R)
 	if (gethostname(myhostname, MAXHOSTNAMELEN) != 0)
 	{
@@ -195,10 +209,10 @@ func_call_1(void)
 	void	   *p;
 #endif
 
-	unlink("/tmp/thread_test.1");
+	unlink(temp_filename_1);
 	/* create, then try to fail on exclusive create open */
-	if (open("/tmp/thread_test.1", O_RDWR | O_CREAT, 0600) < 0 ||
-		open("/tmp/thread_test.1", O_RDWR | O_CREAT | O_EXCL, 0600) >= 0)
+	if (open(temp_filename_1, O_RDWR | O_CREAT, 0600) < 0 ||
+		open(temp_filename_1, O_RDWR | O_CREAT | O_EXCL, 0600) >= 0)
 	{
 		fprintf(stderr, "Could not create file in /tmp or\n");
 		fprintf(stderr, "Could not generate failure for create file in /tmp **\nexiting\n");
@@ -215,10 +229,10 @@ func_call_1(void)
 	if (errno != EEXIST)
 	{
 		fprintf(stderr, "errno not thread-safe **\nexiting\n");
-		unlink("/tmp/thread_test.1");
+		unlink(temp_filename_1);
 		exit(1);
 	}
-	unlink("/tmp/thread_test.1");
+	unlink(temp_filename_1);
 
 #ifndef HAVE_STRERROR_R
 	strerror_p1 = strerror(EACCES);
@@ -266,9 +280,9 @@ func_call_2(void)
 	void	   *p;
 #endif
 
-	unlink("/tmp/thread_test.2");
+	unlink(temp_filename_2);
 	/* open non-existant file */
-	if (open("/tmp/thread_test.2", O_RDONLY, 0600) >= 0)
+	if (open(temp_filename_2, O_RDONLY, 0600) >= 0)
 	{
 		fprintf(stderr, "Read-only open succeeded without create **\nexiting\n");
 		exit(1);
@@ -284,10 +298,10 @@ func_call_2(void)
 	if (errno != ENOENT)
 	{
 		fprintf(stderr, "errno not thread-safe **\nexiting\n");
-		unlink("/tmp/thread_test.A");
+		unlink(temp_filename_2);
 		exit(1);
 	}
-	unlink("/tmp/thread_test.2");
+	unlink(temp_filename_2);
 
 #ifndef HAVE_STRERROR_R
 	strerror_p2 = strerror(EINVAL);
