@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.55 2002/09/04 20:31:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.56 2002/11/18 01:17:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -161,6 +161,8 @@ ProcessQuery(Query *parsetree,
 			/* If binary portal, switch to alternate output format */
 			if (dest == Remote && parsetree->isBinary)
 				dest = RemoteInternal;
+			/* Check for invalid context (must be in transaction block) */
+			RequireTransactionChain((void *) parsetree, "DECLARE CURSOR");
 		}
 		else if (parsetree->into != NULL)
 		{
