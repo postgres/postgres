@@ -31,7 +31,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.63 2002/09/26 05:23:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.64 2002/09/26 05:39:03 momjian Exp $
  *
  **********************************************************************/
 
@@ -1647,7 +1647,6 @@ pltcl_SPI_exec(ClientData cdata, Tcl_Interp *interp,
 			pltcl_set_tuple_values(interp, arrayname, 0, tuples[0], tupdesc);
 		sprintf(buf, "%d", ntuples);
 		Tcl_SetResult(interp, buf, TCL_VOLATILE);
-		SPI_freetuptable(SPI_tuptable);
 		memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
 		return TCL_OK;
 	}
@@ -1669,18 +1668,14 @@ pltcl_SPI_exec(ClientData cdata, Tcl_Interp *interp,
 			continue;
 		if (loop_rc == TCL_RETURN)
 		{
-			SPI_freetuptable(SPI_tuptable);
 			memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
 			return TCL_RETURN;
 		}
 		if (loop_rc == TCL_BREAK)
 			break;
-		SPI_freetuptable(SPI_tuptable);
 		memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
 		return TCL_ERROR;
 	}
-
-	SPI_freetuptable(SPI_tuptable);
 
 	/************************************************************
 	 * Finally return the number of tuples
@@ -2212,7 +2207,6 @@ pltcl_SPI_execp(ClientData cdata, Tcl_Interp *interp,
 	{
 		if (ntuples > 0)
 			pltcl_set_tuple_values(interp, arrayname, 0, tuples[0], tupdesc);
-		SPI_freetuptable(SPI_tuptable);
 		memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
 		sprintf(buf, "%d", ntuples);
 		Tcl_SetResult(interp, buf, TCL_VOLATILE);
@@ -2235,18 +2229,14 @@ pltcl_SPI_execp(ClientData cdata, Tcl_Interp *interp,
 			continue;
 		if (loop_rc == TCL_RETURN)
 		{
-			SPI_freetuptable(SPI_tuptable);
 			memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
 			return TCL_RETURN;
 		}
 		if (loop_rc == TCL_BREAK)
 			break;
-		SPI_freetuptable(SPI_tuptable);
 		memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
 		return TCL_ERROR;
 	}
-
-	SPI_freetuptable(SPI_tuptable);
 
 	/************************************************************
 	 * Finally return the number of tuples

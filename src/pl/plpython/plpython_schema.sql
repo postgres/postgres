@@ -20,7 +20,7 @@ CREATE TABLE taxonomy (
 
 CREATE TABLE entry (
 	accession text not null primary key,
-	eid serial unique,
+	eid serial,
 	txid int2 not null references taxonomy(id)
 	) ;
 
