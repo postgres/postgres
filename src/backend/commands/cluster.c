@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.66 2001/06/22 19:16:21 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.67 2001/07/12 20:35:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,13 +45,13 @@ static void rebuildheap(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex);
  * cluster
  *
  * STILL TO DO:
- *	 Create a list of all the other indicies on this relation. Because
+ *	 Create a list of all the other indexes on this relation. Because
  *	 the cluster will wreck all the tids, I'll need to destroy bogus
- *	 indicies. The user will have to re-create them. Not nice, but
+ *	 indexes. The user will have to re-create them. Not nice, but
  *	 I'm not a nice guy. The alternative is to try some kind of post
  *	 destroy re-build. This may be possible. I'll check out what the
  *	 index create functiond want in the way of paramaters. On the other
- *	 hand, re-creating n indicies may blow out the space.
+ *	 hand, re-creating n indexes may blow out the space.
  */
 void
 cluster(char *oldrelname, char *oldindexname)
