@@ -1,19 +1,27 @@
-update version number in configure.in
-README
-HISTORY
-register.txt
-doc/Machine-specific FAQ's
-doc/bug.template
-update pgaccess
-update src/interfaces/jdbc/postgresql/jdbc1/DatabaseMetaData.java
-update src/interfaces/jdbc/postgresql/jdbc2/DatabaseMetaData.java
-update pg_upgrade to handle new version, or disable
-update doc/src/sgml/release.sgml 
-update doc/src/sgml/install.sgml 
-update interfaces/libpq/libpq.rc
-update documentation
-	command-line arg printout from inside the program
-	man pages
-	sgml docs
-update VERSION numbers of interfaces
-update ports list
+* Version numbers
+    configure.in
+    doc/src/sgml/version.sgml
+    bump interface version numbers
+    update src/interfaces/libpq/libpq.rc
+
+* Release notes
+    update doc/src/sgml/release.sgml 
+    re-generate HISTORY
+
+* Documentation
+    document all new features
+    help output from inside the programs
+    reference/man pages
+
+* Ports
+    update ports list in doc/src/sgml/installation.sgml 
+    platform-specific FAQ's
+
+* Miscellaneous files
+    README
+    register.txt
+    doc/bug.template
+
+* Update pgaccess
+
+* Update pg_upgrade to handle new version, or disable
