@@ -1266,7 +1266,9 @@ ctype_length(Int2 ctype)
 
 		case SQL_C_BINARY:
 		case SQL_C_CHAR:
+#ifdef	UNICODE_SUPPORT
 		case SQL_C_WCHAR:
+#endif /* UNICODE_SUPPORT */
 			return 0;
 
 		default:				/* should never happen */

@@ -15,6 +15,9 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
+#ifndef	TRUE
+#define	TRUE	1
+#endif
 
 pg_CS CS_Table[] =
 {
