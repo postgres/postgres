@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/conversioncmds.c,v 1.1 2002/07/11 07:39:27 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/conversioncmds.c,v 1.2 2002/07/25 10:07:11 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -90,7 +90,7 @@ CreateConversionCommand(CreateConversionStmt *stmt)
  * DROP CONVERSION
  */
 void
-DropConversionCommand(List *name)
+DropConversionCommand(List *name, DropBehavior behavior)
 {
 	Oid			namespaceId;
 	char		*conversion_name;
@@ -108,5 +108,5 @@ DropConversionCommand(List *name)
 	 * none existing conversion
 	 * not ower of this conversion
 	 */
-	ConversionDrop(conversion_name, namespaceId, GetUserId());
+	ConversionDrop(conversion_name, namespaceId, GetUserId(), behavior);
 }

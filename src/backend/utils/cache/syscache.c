@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.83 2002/07/20 05:16:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.84 2002/07/25 10:07:12 ishii Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -206,6 +206,16 @@ static const struct cachedesc cacheinfo[] = {
 			0,
 			0
 	}},
+	{ConversionRelationName, /* CONDEFAULT */
+		ConversionDefaultIndex,
+		0,
+		4,
+		{
+			Anum_pg_conversion_connamespace,
+			Anum_pg_conversion_conforencoding,
+			Anum_pg_conversion_contoencoding,
+			ObjectIdAttributeNumber,
+	}},
 	{ConversionRelationName, /* CONNAMENSP */
 		ConversionNameNspIndex,
 		0,
@@ -213,6 +223,16 @@ static const struct cachedesc cacheinfo[] = {
 		{
 			Anum_pg_conversion_conname,
 			Anum_pg_conversion_connamespace,
+			0,
+			0
+	}},
+	{ConversionRelationName, /* CONOID */
+		ConversionOidIndex,
+		0,
+		1,
+		{
+			ObjectIdAttributeNumber,
+			0,
 			0,
 			0
 	}},

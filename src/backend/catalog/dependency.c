@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/dependency.c,v 1.5 2002/07/18 23:11:27 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/dependency.c,v 1.6 2002/07/25 10:07:10 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,7 @@
 #include "catalog/indexing.h"
 #include "catalog/pg_attrdef.h"
 #include "catalog/pg_constraint.h"
+#include "catalog/pg_conversion.h"
 #include "catalog/pg_depend.h"
 #include "catalog/pg_language.h"
 #include "catalog/pg_namespace.h"
@@ -52,6 +53,7 @@ typedef enum ObjectClasses
 	OCLASS_PROC,				/* pg_proc */
 	OCLASS_TYPE,				/* pg_type */
 	OCLASS_CONSTRAINT,			/* pg_constraint */
+	OCLASS_CONVERSION,			/* pg_conversion */
 	OCLASS_DEFAULT,				/* pg_attrdef */
 	OCLASS_LANGUAGE,			/* pg_language */
 	OCLASS_OPERATOR,			/* pg_operator */
@@ -581,6 +583,10 @@ doDeletion(const ObjectAddress *object)
 			RemoveConstraintById(object->objectId);
 			break;
 
+		case OCLASS_CONVERSION:
+			RemoveConversionById(object->objectId);
+			break;
+
 		case OCLASS_DEFAULT:
 			RemoveAttrDefaultById(object->objectId);
 			break;
@@ -989,6 +995,7 @@ init_object_classes(void)
 	object_classes[OCLASS_PROC] = RelOid_pg_proc;
 	object_classes[OCLASS_TYPE] = RelOid_pg_type;
 	object_classes[OCLASS_CONSTRAINT] = get_system_catalog_relid(ConstraintRelationName);
+	object_classes[OCLASS_CONVERSION] = get_system_catalog_relid(ConversionRelationName);
 	object_classes[OCLASS_DEFAULT] = get_system_catalog_relid(AttrDefaultRelationName);
 	object_classes[OCLASS_LANGUAGE] = get_system_catalog_relid(LanguageRelationName);
 	object_classes[OCLASS_OPERATOR] = get_system_catalog_relid(OperatorRelationName);
@@ -1038,6 +1045,11 @@ getObjectClass(const ObjectAddress *object)
 	{
 		Assert(object->objectSubId == 0);
 		return OCLASS_CONSTRAINT;
+	}
+	if (object->classId == object_classes[OCLASS_CONVERSION])
+	{
+		Assert(object->objectSubId == 0);
+		return OCLASS_CONVERSION;
 	}
 	if (object->classId == object_classes[OCLASS_DEFAULT])
 	{
@@ -1162,6 +1174,22 @@ getObjectDescription(const ObjectAddress *object)
 
 			systable_endscan(rcscan);
 			heap_close(conDesc, AccessShareLock);
+			break;
+		}
+
+		case OCLASS_CONVERSION:
+		{
+			HeapTuple		conTup;
+
+			conTup = SearchSysCache(CONOID,
+									 ObjectIdGetDatum(object->objectId),
+									 0, 0, 0);
+			if (!HeapTupleIsValid(conTup))
+				elog(ERROR, "getObjectDescription: Conversion %u does not exist",
+					 object->objectId);
+			appendStringInfo(&buffer, "conversion %s",
+							 NameStr(((Form_pg_conversion) GETSTRUCT(conTup))->conname));
+			ReleaseSysCache(conTup);
 			break;
 		}
 

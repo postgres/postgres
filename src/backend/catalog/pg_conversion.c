@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_conversion.c,v 1.2 2002/07/16 06:58:44 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_conversion.c,v 1.3 2002/07/25 10:07:10 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,11 +16,15 @@
 
 #include "access/heapam.h"
 #include "catalog/catname.h"
+#include "catalog/dependency.h"
 #include "catalog/indexing.h"
+#include "catalog/pg_class.h"
 #include "catalog/pg_conversion.h"
 #include "catalog/namespace.h"
 #include "utils/builtins.h"
+#include "utils/lsyscache.h"
 #include "utils/syscache.h"
+#include "utils/catcache.h"
 #include "mb/pg_wchar.h"
 #include "utils/fmgroids.h"
 #include "utils/acl.h"
@@ -28,6 +32,8 @@
 
 /* ----------------
  * ConversionCreate
+ *
+ * Add a new tuple to pg_coversion.
  * ---------------
  */
 Oid	ConversionCreate(const char *conname, Oid connamespace,
@@ -43,6 +49,8 @@ Oid	ConversionCreate(const char *conname, Oid connamespace,
 	Datum		values[Natts_pg_conversion];
 	NameData	cname;
 	Oid			oid;
+	ObjectAddress	myself,
+					referenced;
 
 	/* sanity checks */
 	if (!conname)
@@ -85,7 +93,10 @@ Oid	ConversionCreate(const char *conname, Oid connamespace,
 	values[Anum_pg_conversion_conforencoding - 1] = Int32GetDatum(conforencoding);
 	values[Anum_pg_conversion_contoencoding - 1] = Int32GetDatum(contoencoding);
 	values[Anum_pg_conversion_conproc - 1] = ObjectIdGetDatum(conproc);
-	values[Anum_pg_conversion_condefault - 1] = BoolGetDatum(def);
+	if (def == true)
+		values[Anum_pg_conversion_condefault - 1] = BoolGetDatum(def);
+	else
+		nulls[Anum_pg_conversion_condefault - 1] = 'n';
 
 	tup = heap_formtuple(tupDesc, values, nulls);
 
@@ -103,6 +114,17 @@ Oid	ConversionCreate(const char *conname, Oid connamespace,
 		CatalogCloseIndices(Num_pg_conversion_indices, idescs);
 	}
 
+	myself.classId = get_system_catalog_relid(ConversionRelationName);
+	myself.objectId = HeapTupleGetOid(tup);
+	myself.objectSubId = 0;
+
+	/* dependency on conversion procedure */
+	referenced.classId = RelOid_pg_proc;
+	referenced.objectId = conproc;
+	referenced.objectSubId = 0;
+	recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+
+	heap_freetuple(tup);
 	heap_close(rel, RowExclusiveLock);
 
 	return oid;
@@ -110,9 +132,12 @@ Oid	ConversionCreate(const char *conname, Oid connamespace,
 
 /* ----------------
  * ConversionDrop
+ *
+ * Drop a conversion and do dependency check.
  * ---------------
  */
-void	ConversionDrop(const char *conname, Oid connamespace, int32 conowner)
+void	ConversionDrop(const char *conname, Oid connamespace,
+					   int32 conowner, DropBehavior behavior)
 {
 	Relation	rel;
 	TupleDesc	tupDesc;
@@ -120,6 +145,8 @@ void	ConversionDrop(const char *conname, Oid connamespace, int32 conowner)
 	HeapScanDesc scan;
 	ScanKeyData scanKeyData;
 	Form_pg_conversion body;
+	ObjectAddress	object;
+	Oid	myoid;
 
 	/* sanity checks */
 	if (!conname)
@@ -132,7 +159,7 @@ void	ConversionDrop(const char *conname, Oid connamespace, int32 conowner)
 						   ObjectIdGetDatum(connamespace));
 
 	/* open pg_conversion */
-	rel = heap_openr(ConversionRelationName, RowExclusiveLock);
+	rel = heap_openr(ConversionRelationName, AccessShareLock);
 	tupDesc = rel->rd_att;
 
 	scan = heap_beginscan(rel, SnapshotNow,
@@ -155,8 +182,53 @@ void	ConversionDrop(const char *conname, Oid connamespace, int32 conowner)
 	if (!superuser() && ((Form_pg_conversion)GETSTRUCT(tuple))->conowner != GetUserId())
 		elog(ERROR, "permission denied");
 
-	simple_heap_delete(rel, &tuple->t_self);
+	myoid = HeapTupleGetOid(tuple);
+	heap_endscan(scan);
+ 	heap_close(rel, AccessShareLock);
 
+	/*
+	 * Do the deletion
+	 */
+	object.classId = get_system_catalog_relid(ConversionRelationName);
+	object.objectId = myoid;
+	object.objectSubId = 0;
+
+	performDeletion(&object, behavior);
+}
+
+/* ----------------
+ * RemoveConversionById
+ *
+ * Remove a tuple from pg_conversion by Oid. This function is soley
+ * called inside catalog/dependency.c
+ * --------------- */
+void
+RemoveConversionById(Oid conversionOid)
+{
+	Relation	rel;
+	TupleDesc	tupDesc;
+	HeapTuple	tuple;
+	HeapScanDesc scan;
+	ScanKeyData scanKeyData;
+
+	ScanKeyEntryInitialize(&scanKeyData,
+						   0,
+						   ObjectIdAttributeNumber,
+						   F_OIDEQ,
+						   ObjectIdGetDatum(conversionOid));
+
+	/* open pg_conversion */
+	rel = heap_openr(ConversionRelationName, RowExclusiveLock);
+	tupDesc = rel->rd_att;
+
+	scan = heap_beginscan(rel, SnapshotNow,
+							  1, &scanKeyData);
+
+	/* search for the target tuple */
+	if (HeapTupleIsValid(tuple = heap_getnext(scan, ForwardScanDirection)))
+		simple_heap_delete(rel, &tuple->t_self);
+	else
+		elog(ERROR, "Conversion %u does not exist", conversionOid);
 	heap_endscan(scan);
 	heap_close(rel, RowExclusiveLock);
 }
@@ -164,9 +236,11 @@ void	ConversionDrop(const char *conname, Oid connamespace, int32 conowner)
 /* ----------------
  * FindDefaultConversion
  *
- * find default conversion proc by for_encoding and to_encoding in this name space
+ * Find "default" conversion proc by for_encoding and to_encoding in this name space.
+ * If found, returns the procedure's oid, otherwise InvalidOid.
  * ---------------
  */
+#ifdef NOT_USED
 Oid FindDefaultConversion(Oid name_space, int4 for_encoding, int4 to_encoding)
 {
 	Relation rel;
@@ -205,11 +279,44 @@ Oid FindDefaultConversion(Oid name_space, int4 for_encoding, int4 to_encoding)
 	heap_close(rel, AccessShareLock);
 	return proc;
 }
+#endif
+
+Oid FindDefaultConversion(Oid name_space, int4 for_encoding, int4 to_encoding)
+{
+	CatCList	*catlist;
+	HeapTuple	tuple;
+	Form_pg_conversion body;
+	Oid proc = InvalidOid;
+	int	i;
+
+	/* Check we have usage rights in target namespace */
+	if (pg_namespace_aclcheck(name_space, GetUserId(), ACL_USAGE) != ACLCHECK_OK)
+		return proc;
+
+	catlist = SearchSysCacheList(CONDEFAULT, 3,
+							   ObjectIdGetDatum(name_space),
+							   Int32GetDatum(for_encoding),
+							   Int32GetDatum(to_encoding),
+							   0);
+
+	for (i = 0; i < catlist->n_members; i++)
+	{
+		tuple = &catlist->members[i]->tuple;
+		body = (Form_pg_conversion)GETSTRUCT(tuple);
+		if (body->condefault == TRUE)
+		{
+			proc = body->conproc;
+			break;
+		}
+	}
+	ReleaseSysCacheList(catlist);
+	return proc;
+}
 
 /* ----------------
  * FindConversionByName
  *
- * find conversion proc by possibly qualified conversion name.
+ * Find conversion proc by possibly qualified conversion name.
  * ---------------
  */
 Oid FindConversionByName(List *name)

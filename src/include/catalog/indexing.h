@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: indexing.h,v 1.72 2002/07/22 20:23:19 petere Exp $
+ * $Id: indexing.h,v 1.73 2002/07/25 10:07:12 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -179,8 +179,7 @@ DECLARE_INDEX(pg_constraint_conname_nsp_index on pg_constraint using btree(conna
 /* This following index is not used for a cache and is not unique */
 DECLARE_INDEX(pg_constraint_conrelid_index on pg_constraint using btree(conrelid oid_ops));
 DECLARE_UNIQUE_INDEX(pg_constraint_oid_index on pg_constraint using btree(oid oid_ops));
-/* This following index is not used for a cache and is not unique */
-DECLARE_INDEX(pg_conversion_default_index on pg_conversion using btree(connamespace oid_ops, conforencoding int4_ops, contoencoding int4_ops));
+DECLARE_UNIQUE_INDEX(pg_conversion_default_index on pg_conversion using btree(connamespace oid_ops, conforencoding int4_ops, contoencoding int4_ops, oid oid_ops));
 DECLARE_UNIQUE_INDEX(pg_conversion_name_nsp_index on pg_conversion using btree(conname name_ops, connamespace oid_ops));
 DECLARE_UNIQUE_INDEX(pg_conversion_oid_index on pg_conversion using btree(oid oid_ops));
 DECLARE_UNIQUE_INDEX(pg_database_datname_index on pg_database using btree(datname name_ops));

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.164 2002/07/18 23:11:28 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.165 2002/07/25 10:07:11 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -318,8 +318,7 @@ ProcessUtility(Node *parsetree,
 							break;
 
 						case DROP_CONVERSION:
-							/* does its own permissions checks */
-							DropConversionCommand(names);
+							DropConversionCommand(names, stmt->behavior);
 							break;
 
 						case DROP_SCHEMA:

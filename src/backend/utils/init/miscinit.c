@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.93 2002/06/20 20:29:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.94 2002/07/25 10:07:12 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -184,56 +184,6 @@ SetDataDir(const char *dir)
 		free(DataDir);
 	DataDir = new;
 }
-
-
-/* ----------------------------------------------------------------
- *				MULTIBYTE stub code
- *
- * Even if MULTIBYTE is not enabled, these functions are necessary
- * since pg_proc.h has references to them.
- * ----------------------------------------------------------------
- */
-
-#ifndef MULTIBYTE
-
-Datum
-getdatabaseencoding(PG_FUNCTION_ARGS)
-{
-	return DirectFunctionCall1(namein, CStringGetDatum("SQL_ASCII"));
-}
-
-Datum
-pg_client_encoding(PG_FUNCTION_ARGS)
-{
-	return DirectFunctionCall1(namein, CStringGetDatum("SQL_ASCII"));
-}
-
-Datum
-PG_encoding_to_char(PG_FUNCTION_ARGS)
-{
-	return DirectFunctionCall1(namein, CStringGetDatum("SQL_ASCII"));
-}
-
-Datum
-PG_char_to_encoding(PG_FUNCTION_ARGS)
-{
-	PG_RETURN_INT32(0);
-}
-
-Datum
-pg_convert(PG_FUNCTION_ARGS)
-{
-	elog(ERROR, "convert is not supported. To use convert, you need to enable multibyte capability");
-	return DirectFunctionCall1(textin, CStringGetDatum(""));
-}
-
-Datum
-pg_convert2(PG_FUNCTION_ARGS)
-{
-	elog(ERROR, "convert is not supported. To use convert, you need to enable multibyte capability");
-	return DirectFunctionCall1(textin, CStringGetDatum(""));
-}
-#endif
 
 /* ----------------------------------------------------------------
  *				CYR_RECODE support
