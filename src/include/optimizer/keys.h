@@ -6,12 +6,15 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: keys.h,v 1.5 1997/09/08 21:53:18 momjian Exp $
+ * $Id: keys.h,v 1.6 1997/11/26 01:13:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef KEYS_H
 #define KEYS_H
+
+#include "nodes/nodes.h"
+#include "nodes/relation.h"
 
 extern bool match_indexkey_operand(int indexkey, Var *operand, Rel *rel);
 extern Var *extract_subkey(JoinKey *jk, int which_subkey);

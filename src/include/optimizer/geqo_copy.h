@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_copy.h,v 1.4 1997/09/08 21:53:10 momjian Exp $
+ * $Id: geqo_copy.h,v 1.5 1997/11/26 01:13:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,7 @@
 #ifndef GEQO_COPY_H
 #define GEQO_COPY_H
 
+#include "optimizer/geqo_gene.h"
 
 extern void geqo_copy(Chromosome *chromo1, Chromosome *chromo2, int string_length);
 

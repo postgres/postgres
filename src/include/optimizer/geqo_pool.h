@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_pool.h,v 1.4 1997/09/08 21:53:15 momjian Exp $
+ * $Id: geqo_pool.h,v 1.5 1997/11/26 01:13:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,7 @@
 #ifndef GEQO_POOL_H
 #define GEQO_POOL_H
 
+#include "optimizer/geqo_gene.h"
 
 extern Pool *alloc_pool(int pool_size, int string_length);
 extern void free_pool(Pool *pool);

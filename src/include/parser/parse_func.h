@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_func.h,v 1.1 1997/11/25 22:06:56 momjian Exp $
+ * $Id: parse_func.h,v 1.2 1997/11/26 01:14:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,56 +42,40 @@ typedef struct _CandidateList
 	struct _CandidateList *next;
 }		   *CandidateList;
 
-Node *ParseFunc(ParseState *pstate, char *funcname, List *fargs,
+extern Node *ParseFunc(ParseState *pstate, char *funcname, List *fargs,
 	int *curr_resno);
-
-Oid funcid_get_rettype(Oid funcid);
-
-CandidateList func_get_candidates(char *funcname, int nargs);
-
-bool can_coerce(int nargs, Oid *input_typeids, Oid *func_typeids);
-
-int match_argtypes(int nargs,
+extern Oid funcid_get_rettype(Oid funcid);
+extern CandidateList func_get_candidates(char *funcname, int nargs);
+extern bool can_coerce(int nargs, Oid *input_typeids, Oid *func_typeids);
+extern int match_argtypes(int nargs,
 				   Oid *input_typeids,
 				   CandidateList function_typeids,
 				   CandidateList *candidates);
-
-Oid * func_select_candidate(int nargs,
+extern Oid * func_select_candidate(int nargs,
 						  Oid *input_typeids,
 						  CandidateList candidates);
-
-bool func_get_detail(char *funcname,
+extern bool func_get_detail(char *funcname,
 					int nargs,
 					Oid *oid_array,
 					Oid *funcid,	/* return value */
 					Oid *rettype,	/* return value */
 					bool *retset,	/* return value */
 					Oid **true_typeids);
-
-Oid ** argtype_inherit(int nargs, Oid *oid_array);
-
-int findsupers(Oid relid, Oid **supervec);
-
-Oid **genxprod(InhPaths *arginh, int nargs);
-
-void make_arguments(int nargs,
+extern Oid ** argtype_inherit(int nargs, Oid *oid_array);
+extern int findsupers(Oid relid, Oid **supervec);
+extern Oid **genxprod(InhPaths *arginh, int nargs);
+extern void make_arguments(int nargs,
 				   List *fargs,
 				   Oid *input_typeids,
 				   Oid *function_typeids);
 
-List *setup_tlist(char *attname, Oid relid);
-
-List *setup_base_tlist(Oid typeid);
-
-Node *ParseComplexProjection(ParseState *pstate,
+extern List *setup_tlist(char *attname, Oid relid);
+extern List *setup_base_tlist(Oid typeid);
+extern Node *ParseComplexProjection(ParseState *pstate,
 						   char *funcname,
 						   Node *first_arg,
 						   bool *attisset);
-	
-void func_error(char *caller, char *funcname, int nargs, Oid *argtypes);
-
-				   
-
+extern void func_error(char *caller, char *funcname, int nargs, Oid *argtypes);
 
 #endif							/* PARSE_FUNC_H */
 

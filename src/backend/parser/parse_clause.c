@@ -7,49 +7,23 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.1 1997/11/25 22:05:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.2 1997/11/26 01:11:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include "postgres.h"
 #include "access/heapam.h"
+#include "catalog/pg_type.h"
 #include "parser/parse_clause.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_node.h"
 #include "parser/parse_oper.h"
 #include "parser/parse_relation.h"
 #include "parser/parse_target.h"
-#include "catalog/pg_type.h"
-
-#ifdef 0
-#include "nodes/nodes.h"
-#include "nodes/params.h"
-#include "nodes/primnodes.h"
-#include "nodes/parsenodes.h"
-#include "nodes/relation.h"
-#include "parse.h"				/* for AND, OR, etc. */
-#include "catalog/pg_aggregate.h"
-#include "catalog/pg_proc.h"
-#include "utils/elog.h"
-#include "utils/builtins.h"		/* namecmp(), textout() */
-#include "utils/lsyscache.h"
-#include "utils/palloc.h"
-#include "utils/mcxt.h"
-#include "utils/syscache.h"
-#include "utils/acl.h"
-#include "nodes/makefuncs.h"	/* for makeResdom(), etc. */
-#include "nodes/nodeFuncs.h"
-#include "commands/sequence.h"
-
-#include "optimizer/clauses.h"
-
-#include "miscadmin.h"
-
-#include "port-protos.h"		/* strdup() */
-#endif
 
 /*
  * parseFromClause -

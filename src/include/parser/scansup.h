@@ -6,9 +6,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: scansup.h,v 1.3 1997/09/08 02:38:16 momjian Exp $
+ * $Id: scansup.h,v 1.4 1997/11/26 01:14:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
+#ifndef SCANSUP_H
+#define SCANSUP_H
+
 extern char *scanstr(char *s);
+
+#endif							/* SCANSUP_H */

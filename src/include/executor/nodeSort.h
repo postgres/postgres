@@ -6,12 +6,16 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeSort.h,v 1.4 1997/09/08 21:52:12 momjian Exp $
+ * $Id: nodeSort.h,v 1.5 1997/11/26 01:13:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef NODESORT_H
 #define NODESORT_H
+
+#include "executor/tuptable.h"
+#include "nodes/execnodes.h"
+#include "nodes/plannodes.h"
 
 extern TupleTableSlot *ExecSort(Sort *node);
 extern bool ExecInitSort(Sort *node, EState *estate, Plan *parent);

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_node.h,v 1.1 1997/11/25 22:06:57 momjian Exp $
+ * $Id: parse_node.h,v 1.2 1997/11/26 01:14:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,27 +41,20 @@ typedef struct ParseState
 	RangeTblEntry *p_target_rangetblentry;
 } ParseState;
 
-ParseState *make_parsestate(void);
-
-Node *make_operand(char *opname,
+extern ParseState *make_parsestate(void);
+extern Node *make_operand(char *opname,
 			 Node *tree,
 			 Oid orig_typeId,
 			 Oid true_typeId);
-
-void disallow_setop(char *op, Type optype, Node *operand);
-
-Expr *make_op(char *opname, Node *ltree, Node *rtree);
-
-Var *make_var(ParseState *pstate, char *refname, char *attrname, Oid *type_id);
-
-ArrayRef   *make_array_ref(Node *expr,
+extern void disallow_setop(char *op, Type optype, Node *operand);
+extern Expr *make_op(char *opname, Node *ltree, Node *rtree);
+extern Var *make_var(ParseState *pstate, char *refname, char *attrname, Oid *type_id);
+extern ArrayRef   *make_array_ref(Node *expr,
 			   List *indirection);
-
-ArrayRef   *make_array_set(Expr *target_expr,
+extern ArrayRef   *make_array_set(Expr *target_expr,
 						   List *upperIndexpr,
 						   List *lowerIndexpr,
 						   Expr *expr);
-
-Const *make_const(Value *value);
+extern Const *make_const(Value *value);
 			   
 #endif							/* PARSE_NODE_H */

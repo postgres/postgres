@@ -6,12 +6,16 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: joininfo.h,v 1.4 1997/09/08 21:53:18 momjian Exp $
+ * $Id: joininfo.h,v 1.5 1997/11/26 01:13:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef JOININFO_H
 #define JOININFO_H
+
+#include "nodes/nodes.h"
+#include "nodes/relation.h"
+#include "nodes/primnodes.h"
 
 extern JInfo *joininfo_member(List *join_relids, List *joininfo_list);
 extern JInfo *find_joininfo_node(Rel *this_rel, List *join_relids);

@@ -5,13 +5,17 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeTee.h,v 1.4 1997/09/08 21:52:13 momjian Exp $
+ * $Id: nodeTee.h,v 1.5 1997/11/26 01:13:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #ifndef NODETEE_H
 #define NODETEE_H
+
+#include "executor/tuptable.h"
+#include "nodes/execnodes.h"
+#include "nodes/plannodes.h"
 
 extern TupleTableSlot *ExecTee(Tee *node, Plan *parent);
 extern bool ExecInitTee(Tee *node, EState *estate, Plan *parent);

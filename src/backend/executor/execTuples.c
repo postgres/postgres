@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.11 1997/11/25 21:59:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.12 1997/11/26 01:10:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -988,7 +988,7 @@ ExecTypeFromTL(List *targetList)
 							   resdom->resno,
 							   resdom->resname,
 			/* fix for SELECT NULL ... */
-						  get_id_typname(restype ? restype : UNKNOWNOID),
+						  typeidTypeName(restype ? restype : UNKNOWNOID),
 							   0,
 							   false);
 
@@ -1021,7 +1021,7 @@ ExecTypeFromTL(List *targetList)
 			TupleDescInitEntry(typeInfo,
 							   fjRes->resno,
 							   fjRes->resname,
-							   get_id_typname(restype),
+							   typeidTypeName(restype),
 							   0,
 							   false);
 /*
@@ -1044,7 +1044,7 @@ ExecTypeFromTL(List *targetList)
 				TupleDescInitEntry(typeInfo,
 								   fjRes->resno,
 								   fjRes->resname,
-								   get_id_typname(restype),
+								   typeidTypeName(restype),
 								   0,
 								   false);
 

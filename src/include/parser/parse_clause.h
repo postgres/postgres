@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_clause.h,v 1.1 1997/11/25 22:06:54 momjian Exp $
+ * $Id: parse_clause.h,v 1.2 1997/11/26 01:14:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,19 +19,14 @@
 #include <nodes/primnodes.h>
 #include <parser/parse_node.h>
 
-void parseFromClause(ParseState *pstate, List *frmList);
-
-void makeRangeTable(ParseState *pstate, char *relname, List *frmList);
-
-Node *transformWhereClause(ParseState *pstate, Node *a_expr);
-
-TargetEntry *find_targetlist_entry(ParseState *pstate,
+extern void parseFromClause(ParseState *pstate, List *frmList);
+extern void makeRangeTable(ParseState *pstate, char *relname, List *frmList);
+extern Node *transformWhereClause(ParseState *pstate, Node *a_expr);
+extern TargetEntry *find_targetlist_entry(ParseState *pstate,
 			SortGroupBy *sortgroupby, List *tlist);
-
-List *transformGroupClause(ParseState *pstate, List *grouplist,
+extern List *transformGroupClause(ParseState *pstate, List *grouplist,
 			List *targetlist);
-
-List *transformSortClause(ParseState *pstate,
+extern List *transformSortClause(ParseState *pstate,
 					List *orderlist, List *targetlist,
 					char *uniqueFlag);
 

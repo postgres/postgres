@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_recombination.h,v 1.4 1997/09/08 21:53:16 momjian Exp $
+ * $Id: geqo_recombination.h,v 1.5 1997/11/26 01:13:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,7 @@
 #ifndef GEQO_RECOMBINATION_H
 #define GEQO_RECOMBINATION_H
 
+#include "optimizer/geqo_gene.h"
 
 extern void init_tour(Gene *tour, int num_gene);
 

@@ -6,12 +6,15 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: clauseinfo.h,v 1.4 1997/09/08 21:53:03 momjian Exp $
+ * $Id: clauseinfo.h,v 1.5 1997/11/26 01:13:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef CLAUSEINFO_H
 #define CLAUSEINFO_H
+
+#include "nodes/pg_list.h"
+#include "nodes/relation.h"
 
 extern bool valid_or_clause(CInfo *clauseinfo);
 extern List *get_actual_clauses(List *clauseinfo_list);

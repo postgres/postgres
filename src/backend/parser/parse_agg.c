@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.1 1997/11/25 22:05:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.2 1997/11/26 01:11:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,23 +26,6 @@
 #include "parser/parse_node.h"
 #include "parser/parse_target.h"
 #include "utils/syscache.h"
-
-#ifdef 0
-#include "nodes/nodes.h"
-#include "nodes/params.h"
-#include "parse.h"				/* for AND, OR, etc. */
-#include "catalog/pg_type.h"	/* for INT4OID, etc. */
-#include "catalog/pg_proc.h"
-#include "utils/elog.h"
-#include "utils/builtins.h"		/* namecmp(), textout() */
-#include "utils/lsyscache.h"
-#include "utils/palloc.h"
-#include "utils/mcxt.h"
-#include "utils/acl.h"
-#include "nodes/makefuncs.h"	/* for makeResdom(), etc. */
-#include "commands/sequence.h"
-
-#endif
 
 /*
  * AddAggToParseState -

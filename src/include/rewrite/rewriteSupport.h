@@ -6,13 +6,15 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rewriteSupport.h,v 1.5 1997/09/08 21:54:11 momjian Exp $
+ * $Id: rewriteSupport.h,v 1.6 1997/11/26 01:14:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef REWRITESUPPORT_H
 #define REWRITESUPPORT_H
 
+#include "access/attnum.h"
+#include "nodes/pg_list.h"
 
 extern int	IsDefinedRewriteRule(char *ruleName);
 

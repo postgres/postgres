@@ -11,6 +11,7 @@
 
 #include "access/tupdesc.h"
 #include "access/htup.h"
+#include "nodes/parsenodes.h"
 #include "utils/rel.h"
 
 typedef uint32 TriggerEvent;

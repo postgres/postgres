@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_gene.h,v 1.4 1997/09/08 21:53:11 momjian Exp $
+ * $Id: geqo_gene.h,v 1.5 1997/11/26 01:13:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,11 +22,13 @@
 #ifndef GEQO_GENE_H
 #define GEQO_GENE_H
 
+#include "nodes/nodes.h"
+#include "nodes/relation.h"
+#include "optimizer/geqo_gene.h"
 
 /* we presume that int instead of Relid
    is o.k. for Gene; so don't change it! */
-typedef
-int Gene;
+typedef int Gene;
 
 typedef struct Chromosome
 {

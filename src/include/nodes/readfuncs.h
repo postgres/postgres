@@ -6,12 +6,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: readfuncs.h,v 1.4 1997/09/08 02:37:28 momjian Exp $
+ * $Id: readfuncs.h,v 1.5 1997/11/26 01:13:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef READFUNCS_H
 #define READFUNCS_H
+
+#include "nodes/nodes.h"
 
 /*
  * prototypes for functions in read.c (the lisp token parser)

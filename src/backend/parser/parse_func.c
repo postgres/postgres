@@ -7,14 +7,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.1 1997/11/25 22:05:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.2 1997/11/26 01:11:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <string.h>
+
 #include "postgres.h"
-#include "fmgr.h"
-#include "miscadmin.h"
 #include "access/genam.h"
 #include "access/heapam.h"
 #include "access/itup.h"
@@ -25,7 +24,9 @@
 #include "catalog/pg_inherits.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
+#include "fmgr.h"
 #include "lib/dllist.h"
+#include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/relation.h"
 #include "parser/parse_agg.h"
@@ -40,28 +41,6 @@
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
-
-#ifdef 0
-#include "utils/datum.h"
-
-#include "utils/elog.h"
-#include "utils/palloc.h"
-
-#include "nodes/pg_list.h"
-#include "nodes/parsenodes.h"
-
-#include "catalog/pg_operator.h"
-#include "catalog/catname.h"
-
-#include "access/skey.h"
-#include "access/tupdesc.h"
-#include "access/htup.h"
-#include "access/genam.h"
-#include "access/itup.h"
-#include "access/tupmacs.h"
-
-#include "storage/buf.h"
-#endif
 
 #define ISCOMPLEX(type) (typeidTypeRelid(type) ? true : false)
 

@@ -7,12 +7,16 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: paths.h,v 1.4 1997/09/08 21:53:25 momjian Exp $
+ * $Id: paths.h,v 1.5 1997/11/26 01:13:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef PATHS_H
 #define PATHS_H
+
+#include "nodes/nodes.h"
+#include "nodes/parsenodes.h"
+#include "nodes/relation.h"
 
 /*
  * allpaths.h

@@ -9,6 +9,8 @@
 #ifndef SEQUENCE_H
 #define SEQUENCE_H
 
+#include "nodes/parsenodes.h"
+
 /*
  * Columns of a sequnece relation
  */

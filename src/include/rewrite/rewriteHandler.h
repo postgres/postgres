@@ -6,13 +6,15 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rewriteHandler.h,v 1.4 1997/09/08 21:54:07 momjian Exp $
+ * $Id: rewriteHandler.h,v 1.5 1997/11/26 01:14:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef REWRITEHANDLER_H
 #define REWRITEHANDLER_H
 
+#include "nodes/nodes.h"
+#include "nodes/parsenodes.h"
 
 struct _rewrite_meta_knowledge
 {

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.1 1997/11/25 22:05:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.2 1997/11/26 01:11:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,32 +15,18 @@
 #include <string.h>
 
 #include "postgres.h"
-#include "fmgr.h"
 #include "access/heapam.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_type.h"
+#include "fmgr.h"
 #include "nodes/makefuncs.h"
 #include "parser/parse_expr.h"
-#include "parser/parse_oper.h"
 #include "parser/parse_node.h"
+#include "parser/parse_oper.h"
 #include "parser/parse_relation.h"
 #include "parser/parse_type.h"
 #include "utils/builtins.h"
 #include "utils/syscache.h"
-
-#ifdef 0
-#include "access/tupmacs.h"
-#include "utils/elog.h"
-#include "utils/palloc.h"
-#include "utils/acl.h"			/* for ACL_NO_PRIV_WARNING */
-#include "utils/rel.h"			/* Relation stuff */
-
-#include "utils/syscache.h"
-
-#include "nodes/pg_list.h"
-#include "nodes/primnodes.h"
-#include "nodes/parsenodes.h"
-#endif
 
 /*
  * make_parsestate() --

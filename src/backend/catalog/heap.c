@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.34 1997/11/25 21:58:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.35 1997/11/26 01:10:46 momjian Exp $
  *
  * INTERFACE ROUTINES
  *		heap_creatr()			- Create an uncataloged heap relation
@@ -1528,7 +1528,7 @@ start:;
 		{
 			if (*cast != 0)
 				elog(WARN, "DEFAULT: const type mismatched");
-			sprintf(cast, ":: %s", get_id_typname(atp->atttypid));
+			sprintf(cast, ":: %s", typeidTypeName(atp->atttypid));
 			goto start;
 		}
 	}

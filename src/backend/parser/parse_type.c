@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.1 1997/11/25 22:05:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.2 1997/11/26 01:11:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,45 +15,10 @@
 #include "postgres.h"
 #include "fmgr.h"
 
-#include <catalog/pg_type.h>
-#include <parser/parse_target.h>
-#include <parser/parse_type.h>
+#include "catalog/pg_type.h"
+#include "parser/parse_target.h"
+#include "parser/parse_type.h"
 #include "utils/syscache.h"
-
-#ifdef 0
-#include "lib/dllist.h"
-#include "utils/datum.h"
-
-#include "utils/builtins.h"
-#include "utils/elog.h"
-#include "utils/palloc.h"
-
-#include "nodes/pg_list.h"
-#include "nodes/parsenodes.h"
-#include "catalog/catname.h"
-
-#include "catalog/pg_inherits.h"
-#include "catalog/pg_operator.h"
-#include "catalog/pg_proc.h"
-#include "catalog/indexing.h"
-#include "catalog/catname.h"
-
-#include "access/skey.h"
-#include "access/relscan.h"
-#include "access/tupdesc.h"
-#include "access/htup.h"
-#include "access/heapam.h"
-#include "access/genam.h"
-#include "access/itup.h"
-#include "access/tupmacs.h"
-
-#include "storage/buf.h"
-#include "storage/bufmgr.h"
-#include "utils/lsyscache.h"
-#include "storage/lmgr.h"
-
-#include "port-protos.h"		/* strdup() */
-#endif
 
 /* check to see if a type id is valid,
  * returns true if it is. By using this call before calling

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_relation.h,v 1.1 1997/11/25 22:07:02 momjian Exp $
+ * $Id: parse_relation.h,v 1.2 1997/11/26 01:14:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,37 +20,25 @@
 #include <parser/parse_node.h>
 #include <utils/rel.h>
 
-RangeTblEntry *refnameRangeTableEntry(List *rtable, char *refname);
-
-int refnameRangeTablePosn(List *rtable, char *refname);
-
-RangeTblEntry *colnameRangeTableEntry(ParseState *pstate, char *colname);
-
-RangeTblEntry *addRangeTableEntry(ParseState *pstate,
+extern RangeTblEntry *refnameRangeTableEntry(List *rtable, char *refname);
+extern int refnameRangeTablePosn(List *rtable, char *refname);
+extern RangeTblEntry *colnameRangeTableEntry(ParseState *pstate, char *colname);
+extern RangeTblEntry *addRangeTableEntry(ParseState *pstate,
 								   char *relname,
 								   char *refname,
 								   bool inh,
 								   bool inFromCl);
-
-List *expandAll(ParseState *pstate, char *relname, char *refname,
+extern List *expandAll(ParseState *pstate, char *relname, char *refname,
 						int *this_resno);
-
-int attnameAttNum(Relation rd, char *a);
-
-bool attnameIsSet(Relation rd, char *name);
-
-char *attnumAttName(Relation rd, int attrno);
-
-int attnumAttNelems(Relation rd, int attid);
-
-Oid attnameTypeId(Oid relid, char *attrname);
-
-Oid attnumTypeId(Relation rd, int attid);
-
-void handleTargetColname(ParseState *pstate, char **resname,
+extern int attnameAttNum(Relation rd, char *a);
+extern bool attnameIsSet(Relation rd, char *name);
+extern char *attnumAttName(Relation rd, int attrno);
+extern int attnumAttNelems(Relation rd, int attid);
+extern Oid attnameTypeId(Oid relid, char *attrname);
+extern Oid attnumTypeId(Relation rd, int attid);
+extern void handleTargetColname(ParseState *pstate, char **resname,
 					char *refname, char *colname);
-
-void checkTargetTypes(ParseState *pstate, char *target_colname,
+extern void checkTargetTypes(ParseState *pstate, char *target_colname,
 				 char *refname, char *colname);
 
 #endif							/* PARSE_RANGE_H */

@@ -6,12 +6,17 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: cost.h,v 1.5 1997/09/08 21:53:09 momjian Exp $
+ * $Id: cost.h,v 1.6 1997/11/26 01:13:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef COST_H
 #define COST_H
+
+#include "nodes/nodes.h"
+#include "nodes/parsenodes.h"
+#include "nodes/pg_list.h"
+#include "nodes/relation.h"
 
 /*
  * prototypes for costsize.c--

@@ -6,12 +6,16 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tlist.h,v 1.5 1997/09/08 21:53:31 momjian Exp $
+ * $Id: tlist.h,v 1.6 1997/11/26 01:13:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef TLIST_H
 #define TLIST_H
+
+#include "nodes/nodes.h"
+#include "nodes/parsenodes.h"
+#include "nodes/relation.h"
 
 extern int	exec_tlist_length(List *targelist);
 extern TargetEntry *tlistentry_member(Var *var, List *targetlist);
