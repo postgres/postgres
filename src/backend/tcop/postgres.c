@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.286 2002/08/29 23:39:05 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.287 2002/08/30 22:18:06 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -860,7 +860,7 @@ static void
 start_xact_command(void)
 {
 	elog(DEBUG1, "StartTransactionCommand");
-	StartTransactionCommand();
+	StartTransactionCommand(false);
 }
 
 static void
@@ -872,7 +872,7 @@ finish_xact_command(void)
 	/* Now commit the command */
 	elog(DEBUG1, "CommitTransactionCommand");
 
-	CommitTransactionCommand();
+	CommitTransactionCommand(false);
 
 #ifdef SHOW_MEMORY_STATS
 	/* Print mem stats at each commit for leak tracking */
@@ -1664,7 +1664,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.286 $ $Date: 2002/08/29 23:39:05 $\n");
+		puts("$Revision: 1.287 $ $Date: 2002/08/30 22:18:06 $\n");
 	}
 
 	/*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.130 2002/08/06 02:36:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.131 2002/08/30 22:18:05 tgl Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -220,9 +220,14 @@ TransactionState CurrentTransactionState = &CurrentTransactionStateData;
 int			DefaultXactIsoLevel = XACT_READ_COMMITTED;
 int			XactIsoLevel;
 
+bool		autocommit = true;
+
 int			CommitDelay = 0;	/* precommit delay in microseconds */
 int			CommitSiblings = 5; /* number of concurrent xacts needed to
 								 * sleep */
+
+
+static bool suppressChain = false;
 
 static void (*_RollbackFunc) (void *) = NULL;
 static void *_RollbackData = NULL;
@@ -1149,12 +1154,23 @@ CleanupTransaction(void)
 
 /* --------------------------------
  *		StartTransactionCommand
+ *
+ * preventChain, if true, forces autocommit behavior at the next
+ * CommitTransactionCommand call.
  * --------------------------------
  */
 void
-StartTransactionCommand(void)
+StartTransactionCommand(bool preventChain)
 {
 	TransactionState s = CurrentTransactionState;
+
+	/*
+	 * Remember if caller wants to prevent autocommit-off chaining.
+	 * This is only allowed if not already in a transaction block.
+	 */
+	suppressChain = preventChain;
+	if (preventChain && s->blockState != TBLOCK_DEFAULT)
+		elog(ERROR, "StartTransactionCommand: can't prevent chain");
 
 	switch (s->blockState)
 	{
@@ -1231,21 +1247,41 @@ StartTransactionCommand(void)
 
 /* --------------------------------
  *		CommitTransactionCommand
+ *
+ * forceCommit = true forces autocommit behavior even when autocommit is off.
  * --------------------------------
  */
 void
-CommitTransactionCommand(void)
+CommitTransactionCommand(bool forceCommit)
 {
 	TransactionState s = CurrentTransactionState;
 
 	switch (s->blockState)
 	{
 			/*
-			 * if we aren't in a transaction block, we just do our usual
-			 * transaction commit
+			 * If we aren't in a transaction block, and we are doing
+			 * autocommit, just do our usual transaction commit.  But
+			 * if we aren't doing autocommit, start a transaction block
+			 * automatically by switching to INPROGRESS state.  (We handle
+			 * this choice here, and not earlier, so that an explicit BEGIN
+			 * issued in autocommit-off mode won't issue strange warnings.)
+			 *
+			 * Autocommit mode is forced by either a true forceCommit parameter
+			 * to me, or a true preventChain parameter to the preceding
+			 * StartTransactionCommand call.  This is needed so that commands
+			 * like VACUUM can ensure that the right things happen.
 			 */
 		case TBLOCK_DEFAULT:
-			CommitTransaction();
+			if (autocommit || forceCommit || suppressChain)
+				CommitTransaction();
+			else
+			{
+				BeginTransactionBlock();
+				Assert(s->blockState == TBLOCK_INPROGRESS);
+				/* This code must match the TBLOCK_INPROGRESS case below: */
+				CommandCounterIncrement();
+				MemoryContextResetAndDeleteChildren(TransactionCommandContext);
+			}
 			break;
 
 			/*
@@ -1406,7 +1442,10 @@ BeginTransactionBlock(void)
 	s->blockState = TBLOCK_BEGIN;
 
 	/*
-	 * do begin processing
+	 * do begin processing.  NOTE: if you put anything here, check that
+	 * it behaves properly in both autocommit-on and autocommit-off modes.
+	 * In the latter case we will already have done some work in the new
+	 * transaction.
 	 */
 
 	/*

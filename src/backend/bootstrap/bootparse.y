@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.50 2002/07/20 05:16:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.51 2002/08/30 22:18:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,7 +55,7 @@
 static void
 do_start()
 {
-	StartTransactionCommand();
+	StartTransactionCommand(true);
 	elog(DEBUG3, "start transaction");
 }
 
@@ -63,7 +63,7 @@ do_start()
 static void
 do_end()
 {
-	CommitTransactionCommand();
+	CommitTransactionCommand(true);
 	elog(DEBUG3, "commit transaction");
 	if (isatty(0))
 	{

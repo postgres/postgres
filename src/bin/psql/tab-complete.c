@@ -3,7 +3,7 @@
  *
  * Copyright 2000-2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.59 2002/08/30 18:15:23 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.60 2002/08/30 22:18:07 tgl Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -246,6 +246,7 @@ psql_completion(char *text, int start, int end)
 		"australian_timezones",
 		"password_encryption",
 		"transform_null_equals",
+		"autocommit",
 
 		"default_statistics_target",
 		"geqo_threshold",

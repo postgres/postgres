@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.130 2002/08/30 16:50:49 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.131 2002/08/30 22:18:05 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1135,6 +1135,29 @@ env PGOPTIONS='-c geqo=off' psql
 
    <para>
     <variablelist>
+     <varlistentry>
+      <term><varname>AUTOCOMMIT</varname> (<type>bool</type>)</term>
+      <indexterm><primary>autocommit</></>
+      <listitem>
+       <para>
+        If set to true, <productname>PostgreSQL</productname> will
+	automatically do a <command>COMMIT</> after each successful command
+	that is not inside an explicit transaction block (that is, unless a
+	<command>BEGIN</> with no matching <command>COMMIT</> has been
+	given).
+	If set to false, <productname>PostgreSQL</productname> will commit
+	the effects of commands only on receiving an explicit
+	<command>COMMIT</> command.  This mode can also be thought of as
+	implicitly issuing <command>BEGIN</> whenever a command is received
+	and <productname>PostgreSQL</productname> is not already inside
+	a transaction block.
+	The default is true, for compatibility with historical
+	<productname>PostgreSQL</productname> behavior.  But for maximum
+	compatibility with the SQL specification, set it to false.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry>
       <term><varname>AUSTRALIAN_TIMEZONES</varname> (<type>bool</type>)</term>
       <indexterm><primary>Australian time zones</></>

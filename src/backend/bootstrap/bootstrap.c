@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.138 2002/08/17 15:12:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.139 2002/08/30 22:18:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -448,7 +448,7 @@ BootstrapMain(int argc, char *argv[])
 	SetProcessingMode(BootstrapProcessing);
 
 	/* clean up processing */
-	StartTransactionCommand();
+	StartTransactionCommand(true);
 	cleanup();
 
 	/* not reached, here to make compiler happy */
@@ -821,7 +821,7 @@ cleanup()
 	}
 	if (boot_reldesc != NULL)
 		closerel(NULL);
-	CommitTransactionCommand();
+	CommitTransactionCommand(true);
 	proc_exit(Warnings);
 }
 

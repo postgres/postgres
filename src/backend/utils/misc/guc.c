@@ -5,7 +5,7 @@
  * command, configuration file, and command line options.
  * See src/backend/utils/misc/README for more information.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.88 2002/08/30 16:50:50 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.89 2002/08/30 22:18:07 tgl Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -58,6 +58,7 @@ extern int	PreAuthDelay;
 extern int	AuthenticationTimeout;
 extern int	StatementTimeout;
 extern int	CheckPointTimeout;
+extern bool autocommit;
 extern int	CommitDelay;
 extern int	CommitSiblings;
 extern bool FixBTree;
@@ -486,6 +487,10 @@ static struct config_bool
 	{
 		{ "db_user_namespace", PGC_SIGHUP }, &Db_user_namespace,
 		false, NULL, NULL
+	},
+	{
+		{ "autocommit", PGC_USERSET }, &autocommit, 
+		true, NULL, NULL
 	},
 
 	{
