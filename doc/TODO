@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sun Aug 17 22:52:44 EDT 2003
+Last updated:		Sun Aug 24 18:57:19 EDT 2003
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -195,7 +195,7 @@ Commands
 * -Have SELECT '13 minutes'::interval display zero seconds in ISO datestyle
 * Prevent COMMENT ON DATABASE from using a database name
 * Add GUC variable to prevent waiting on locks
-* Add TRUNCATE ... CASCADE
+* Allow TRUNCATE ... CASCADE/RESTRICT
 * Allow PREPARE of cursors
 
 
@@ -488,7 +488,7 @@ Source Code
 * Acquire lock on a relation before building a relcache entry for it
 * Research interaction of setitimer() and sleep() used by statement_timeout
 * Add checks for fclose() failure
-* Change CVS $Id: TODO,v 1.1123 2003/08/18 02:52:45 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1123 2003/08/18 02:52:45 momjian Exp $
+* Change CVS $Id: TODO,v 1.1124 2003/08/24 22:57:21 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1124 2003/08/24 22:57:21 momjian Exp $
 * Exit postmaster if postgresql.conf can not be opened
 * Rename /scripts directory because they are all C programs now
 * Allow the regression tests to start postmaster with -i so the tests
