@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.102 1999/02/13 23:20:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.103 1999/04/14 23:47:19 tgl Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -2321,7 +2321,8 @@ dumpOprs(FILE *fout, OprInfo *oprinfo, int numOperators,
 	char		negator[MAXQUERYLEN];
 	char		restrictor[MAXQUERYLEN];
 	char		join[MAXQUERYLEN];
-	char		sortop[MAXQUERYLEN];
+	char		sort1[MAXQUERYLEN];
+	char		sort2[MAXQUERYLEN];
 
 	for (i = 0; i < numOperators; i++)
 	{
@@ -2347,49 +2348,48 @@ dumpOprs(FILE *fout, OprInfo *oprinfo, int numOperators,
 		if (strcmp(oprinfo[i].oprkind, "r") == 0 ||
 			strcmp(oprinfo[i].oprkind, "b") == 0)
 		{
-			sprintf(leftarg, ", LEFTARG = %s ",
+			sprintf(leftarg, ",\n\tLEFTARG = %s ",
 			  fmtId(findTypeByOid(tinfo, numTypes, oprinfo[i].oprleft), false));
 		}
 		if (strcmp(oprinfo[i].oprkind, "l") == 0 ||
 			strcmp(oprinfo[i].oprkind, "b") == 0)
 		{
-			sprintf(rightarg, ", RIGHTARG = %s ",
+			sprintf(rightarg, ",\n\tRIGHTARG = %s ",
 			 fmtId(findTypeByOid(tinfo, numTypes, oprinfo[i].oprright), false));
 		}
 		if (strcmp(oprinfo[i].oprcom, "0") == 0)
 			commutator[0] = '\0';
 		else
-			sprintf(commutator, ", COMMUTATOR = %s ",
+			sprintf(commutator, ",\n\tCOMMUTATOR = %s ",
 				 findOprByOid(oprinfo, numOperators, oprinfo[i].oprcom));
 
 		if (strcmp(oprinfo[i].oprnegate, "0") == 0)
 			negator[0] = '\0';
 		else
-			sprintf(negator, ", NEGATOR = %s ",
+			sprintf(negator, ",\n\tNEGATOR = %s ",
 			  findOprByOid(oprinfo, numOperators, oprinfo[i].oprnegate));
 
 		if (strcmp(oprinfo[i].oprrest, "-") == 0)
 			restrictor[0] = '\0';
 		else
-			sprintf(restrictor, ", RESTRICT = %s ", oprinfo[i].oprrest);
+			sprintf(restrictor, ",\n\tRESTRICT = %s ", oprinfo[i].oprrest);
 
 		if (strcmp(oprinfo[i].oprjoin, "-") == 0)
 			join[0] = '\0';
 		else
-			sprintf(join, ", JOIN = %s ", oprinfo[i].oprjoin);
+			sprintf(join, ",\n\tJOIN = %s ", oprinfo[i].oprjoin);
 
 		if (strcmp(oprinfo[i].oprlsortop, "0") == 0)
-			sortop[0] = '\0';
+			sort1[0] = '\0';
 		else
-		{
-			sprintf(sortop, ", SORT = %s ",
-					findOprByOid(oprinfo, numOperators,
-								 oprinfo[i].oprlsortop));
-			if (strcmp(oprinfo[i].oprrsortop, "0") != 0)
-				sprintf(sortop, "%s , %s", sortop,
-						findOprByOid(oprinfo, numOperators,
-									 oprinfo[i].oprlsortop));
-		}
+			sprintf(sort1, ",\n\tSORT1 = %s ",
+				findOprByOid(oprinfo, numOperators, oprinfo[i].oprlsortop));
+
+		if (strcmp(oprinfo[i].oprrsortop, "0") == 0)
+			sort2[0] = '\0';
+		else
+			sprintf(sort2, ",\n\tSORT2 = %s ",
+				findOprByOid(oprinfo, numOperators, oprinfo[i].oprrsortop));
 
 		becomeUser(fout, oprinfo[i].usename);
 
@@ -2403,7 +2403,7 @@ dumpOprs(FILE *fout, OprInfo *oprinfo, int numOperators,
 
 		sprintf(q,
 				"CREATE OPERATOR %s "
-				"(PROCEDURE = %s %s %s %s %s %s %s %s %s);\n ",
+				"(PROCEDURE = %s %s%s%s%s%s%s%s%s%s);\n",
 				oprinfo[i].oprname,
 				oprinfo[i].oprcode,
 				leftarg,
@@ -2411,9 +2411,10 @@ dumpOprs(FILE *fout, OprInfo *oprinfo, int numOperators,
 				commutator,
 				negator,
 				restrictor,
-			 (strcmp(oprinfo[i].oprcanhash, "t") == 0) ? ", HASHES" : "",
+				(strcmp(oprinfo[i].oprcanhash, "t") == 0) ? ",\n\tHASHES" : "",
 				join,
-				sortop);
+				sort1,
+				sort2);
 
 		fputs(q, fout);
 	}
