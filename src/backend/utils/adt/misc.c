@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/misc.c,v 1.29 2003/06/27 14:45:30 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/misc.c,v 1.30 2003/06/27 17:07:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,7 @@
 #include <sys/file.h>
 #include <time.h>
 
+#include "commands/dbcommands.h"
 #include "miscadmin.h"
 #include "utils/builtins.h"
 
