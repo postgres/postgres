@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/common.h,v 1.36 2004/07/11 00:54:55 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/common.h,v 1.37 2004/07/11 13:29:15 momjian Exp $
  */
 #ifndef COMMON_H
 #define COMMON_H
@@ -61,17 +61,5 @@ extern const char *session_username(void);
 extern char parse_char(char **buf);
 
 extern char *expand_tilde(char **filename);
-
-/*
- *	WIN32 treats Control-Z as EOF in files opened in text mode.
- *	Therefore, we open files in binary mode on Win32 so we can read
- *	literal control-Z.  The other affect is that we see CRLF, but
- *	that is OK because we can already handle those cleanly.
- */
-#ifndef WIN32
-#define R_TEXTFILE	"r"
-#else
-#define R_TEXTFILE	"rb"
-#endif
 
 #endif   /* COMMON_H */

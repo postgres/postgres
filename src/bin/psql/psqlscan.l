@@ -31,7 +31,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/psql/psqlscan.l,v 1.4 2004/07/11 00:54:55 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/psql/psqlscan.l,v 1.5 2004/07/11 13:29:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1284,7 +1284,7 @@ psql_scan_slash_option(PsqlScanState state,
 				char		buf[512];
 				size_t		result;
 
-				fd = popen(cmd, R_TEXTFILE);
+				fd = popen(cmd, PG_BINARY_R);
 				if (!fd)
 				{
 					psql_error("%s: %s\n", cmd, strerror(errno));

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.118 2004/07/11 00:54:55 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.119 2004/07/11 13:29:15 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -1197,7 +1197,7 @@ do_edit(const char *filename_arg, PQExpBuffer query_buf)
 	if (!error)
 	{
 #endif
-		stream = fopen(fname, R_TEXTFILE);
+		stream = fopen(fname, PG_BINARY_R);
 		if (!stream)
 		{
 			psql_error("%s: %s\n", fname, strerror(errno));
@@ -1262,7 +1262,7 @@ process_file(char *filename)
 	if (!filename)
 		return false;
 
-	fd = fopen(filename, R_TEXTFILE);
+	fd = fopen(filename, PG_BINARY_R);
 
 	if (!fd)
 	{

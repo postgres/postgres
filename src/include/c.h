@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/c.h,v 1.165 2004/05/21 05:08:03 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/c.h,v 1.166 2004/07/11 13:29:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -671,6 +671,13 @@ typedef NameData *Name;
  * ----------------------------------------------------------------
  */
 
+/*
+ *	NOTE:  this is also used for opening text files.
+ *  WIN32 treats Control-Z as EOF in files opened in text mode.
+ *  Therefore, we open files in binary mode on Win32 so we can read
+ *  literal control-Z.  The other affect is that we see CRLF, but
+ *  that is OK because we can already handle those cleanly.
+ */
 #if defined(__CYGWIN__) || defined(WIN32)
 #define PG_BINARY	O_BINARY
 #define PG_BINARY_R "rb"
