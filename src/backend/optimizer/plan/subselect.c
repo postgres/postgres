@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.88 2004/02/03 17:34:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.89 2004/05/11 13:15:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1063,6 +1063,13 @@ finalize_plan(Plan *plan, List *rtable,
 							  &context);
 			break;
 
+		case T_Limit:
+			finalize_primnode(((Limit *) plan)->limitOffset,
+							  &context);
+			finalize_primnode(((Limit *) plan)->limitCount,
+							  &context);
+			break;
+
 		case T_Hash:
 		case T_Agg:
 		case T_SeqScan:
@@ -1070,7 +1077,6 @@ finalize_plan(Plan *plan, List *rtable,
 		case T_Sort:
 		case T_Unique:
 		case T_SetOp:
-		case T_Limit:
 		case T_Group:
 			break;
 
