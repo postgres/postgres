@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.101 2005/01/11 05:14:10 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.102 2005/01/23 00:03:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,8 @@ static char *modulename = gettext_noop("archiver");
 
 static ArchiveHandle *_allocAH(const char *FileSpec, const ArchiveFormat fmt,
 		 const int compression, ArchiveMode mode);
-static void _getObjectDescription(PQExpBuffer buf, TocEntry *te);
+static void _getObjectDescription(PQExpBuffer buf, TocEntry *te,
+								  ArchiveHandle *AH);
 static void _printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isData, bool acl_pass);
 
 
@@ -2373,7 +2374,7 @@ _selectTablespace(ArchiveHandle *AH, const char *tablespace)
  * information used is all that's available in older dump files.
  */
 static void
-_getObjectDescription(PQExpBuffer buf, TocEntry *te)
+_getObjectDescription(PQExpBuffer buf, TocEntry *te, ArchiveHandle *AH)
 {
 	const char *type = te->desc;
 
@@ -2393,8 +2394,22 @@ _getObjectDescription(PQExpBuffer buf, TocEntry *te)
 		strcmp(type, "TABLE") == 0 ||
 		strcmp(type, "TYPE") == 0)
 	{
-		appendPQExpBuffer(buf, "%s %s", type, fmtId(te->namespace));
-		appendPQExpBuffer(buf, ".%s", fmtId(te->tag));
+		appendPQExpBuffer(buf, "%s ", type);
+		if (te->namespace && te->namespace[0])			/* is null pre-7.3 */
+			appendPQExpBuffer(buf, "%s.", fmtId(te->namespace));
+		/*
+		 * Pre-7.3 pg_dump would sometimes (not always) put
+		 * a fmtId'd name into te->tag for an index.
+		 * This check is heuristic, so make its scope as
+		 * narrow as possible.
+		 */
+		if (AH->version < K_VERS_1_7 &&
+			te->tag[0] == '"' &&
+			te->tag[strlen(te->tag)-1] == '"' &&
+			strcmp(type, "INDEX") == 0)
+			appendPQExpBuffer(buf, "%s", te->tag);
+		else
+			appendPQExpBuffer(buf, "%s", fmtId(te->tag));
 		return;
 	}
 
@@ -2553,7 +2568,7 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isDat
 			PQExpBuffer temp = createPQExpBuffer();
 
 			appendPQExpBuffer(temp, "ALTER ");
-			_getObjectDescription(temp, te);
+			_getObjectDescription(temp, te, AH);
 			appendPQExpBuffer(temp, " OWNER TO %s;", fmtId(te->owner));
 			ahprintf(AH, "%s\n\n", temp->data);
 			destroyPQExpBuffer(temp);
