@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: analyze.c,v 1.154 2000/08/11 23:45:27 tgl Exp $
+ *	$Id: analyze.c,v 1.155 2000/08/22 12:59:04 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,10 @@
 #include "utils/fmgroids.h"
 #include "utils/relcache.h"
 #include "utils/syscache.h"
+
+#ifdef MULTIBYTE
+#include "mb/pg_wchar.h"
+#endif
 
 void		CheckSelectForUpdate(Query *qry);	/* no points for style... */
 
@@ -549,6 +553,13 @@ makeObjectName(char *name1, char *name2, char *typename)
 		else
 			name2chars--;
 	}
+
+#ifdef MULTIBYTE
+	if (name1)
+		name1chars = pg_mbcliplen(name1, name1chars, name1chars);
+	if (name2)
+		name2chars = pg_mbcliplen(name2, name2chars, name2chars);
+#endif
 
 	/* Now construct the string using the chosen lengths */
 	name = palloc(name1chars + name2chars + overhead + 1);
