@@ -2255,7 +2255,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 
 								tmask |= DTK_TIME_M;
 #ifdef HAVE_INT64_TIMESTAMP
-								dt2time((time * 86400000000), &tm->tm_hour, &tm->tm_min, &tm->tm_sec, fsec);
+								dt2time((time * INT64CONST(86400000000)), &tm->tm_hour, &tm->tm_min, &tm->tm_sec, fsec);
 #else
 								dt2time((time * 86400), &tm->tm_hour, &tm->tm_min, &tm->tm_sec, fsec);
 #endif

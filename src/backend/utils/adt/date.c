@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.97 2004/05/21 05:08:01 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.98 2004/05/31 18:53:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1461,7 +1461,7 @@ interval_time(PG_FUNCTION_ARGS)
 	}
 	else if (result < 0)
 	{
-		days = (-result + INT64CONST(86400000000 - 1)) / INT64CONST(86400000000);
+		days = (-result + INT64CONST(86400000000) - 1) / INT64CONST(86400000000);
 		result += days * INT64CONST(86400000000);
 	}
 #else
