@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.308 2002/11/23 03:59:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.309 2002/11/29 16:38:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3226,6 +3226,7 @@ dumpOneDomain(Archive *fout, TypeInfo *tinfo)
 					  "WHERE contypid = '%s'::pg_catalog.oid",
 					  tinfo->oid);
 
+	PQclear(res);
 	res = PQexec(g_conn, chkquery->data);
 	if (!res ||
 		PQresultStatus(res) != PGRES_TUPLES_OK)
@@ -3269,6 +3270,7 @@ dumpOneDomain(Archive *fout, TypeInfo *tinfo)
 	destroyPQExpBuffer(q);
 	destroyPQExpBuffer(delq);
 	destroyPQExpBuffer(query);
+	destroyPQExpBuffer(chkquery);
 }
 
 /*
