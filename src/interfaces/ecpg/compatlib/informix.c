@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <ctype.h>
 
 #include <ecpg_informix.h>
 #include <pgtypes_error.h>
