@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tqual.h,v 1.14 1998/09/01 04:39:35 momjian Exp $
+ * $Id: tqual.h,v 1.15 1998/11/27 19:33:35 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,14 +42,14 @@ extern CommandId HeapSpecialCommandId;
  */
 #define HeapTupleSatisfiesVisibility(tuple, snapshot) \
 ( \
-	TransactionIdEquals((tuple)->t_xmax, AmiTransactionId) ? \
+	TransactionIdEquals((tuple)->t_data->t_xmax, AmiTransactionId) ? \
 		false \
 	: \
 	( \
 		(IsSnapshotSelf(snapshot) || heapisoverride()) ? \
-			HeapTupleSatisfiesItself(tuple) \
+			HeapTupleSatisfiesItself((tuple)->t_data) \
 		: \
-			HeapTupleSatisfiesNow(tuple) \
+			HeapTupleSatisfiesNow((tuple)->t_data) \
 	) \
 )
 
@@ -71,8 +71,8 @@ extern CommandId HeapSpecialCommandId;
 	) \
 )
 
-extern bool HeapTupleSatisfiesItself(HeapTuple tuple);
-extern bool HeapTupleSatisfiesNow(HeapTuple tuple);
+extern bool HeapTupleSatisfiesItself(HeapTupleHeader tuple);
+extern bool HeapTupleSatisfiesNow(HeapTupleHeader tuple);
 
 extern void setheapoverride(bool on);
 

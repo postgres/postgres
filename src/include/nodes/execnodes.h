@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.18 1998/09/01 04:36:35 momjian Exp $
+ * $Id: execnodes.h,v 1.19 1998/11/27 19:33:33 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -396,15 +396,16 @@ typedef struct CommonScanState
  */
 typedef struct IndexScanState
 {
-	CommonState cstate;			/* its first field is NodeTag */
-	int			iss_NumIndices;
-	int			iss_IndexPtr;
-	int			iss_MarkIndexPtr;
-	ScanKey    *iss_ScanKeys;
-	int		   *iss_NumScanKeys;
-	Pointer		iss_RuntimeKeyInfo;
-	RelationPtr iss_RelationDescs;
-	IndexScanDescPtr iss_ScanDescs;
+	CommonState 		cstate;			/* its first field is NodeTag */
+	int					iss_NumIndices;
+	int					iss_IndexPtr;
+	int					iss_MarkIndexPtr;
+	ScanKey			   *iss_ScanKeys;
+	int				   *iss_NumScanKeys;
+	Pointer				iss_RuntimeKeyInfo;
+	RelationPtr			iss_RelationDescs;
+	IndexScanDescPtr	iss_ScanDescs;
+	HeapTupleData		iss_htup;
 } IndexScanState;
 
 

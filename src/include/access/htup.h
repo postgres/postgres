@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: htup.h,v 1.10 1998/09/01 04:34:14 momjian Exp $
+ * $Id: htup.h,v 1.11 1998/11/27 19:33:31 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,10 +26,8 @@
  * to avoid wasting space, the attributes should be layed out in such a
  * way to reduce structure padding.
  */
-typedef struct HeapTupleData
+typedef struct HeapTupleHeaderData
 {
-	unsigned int t_len;			/* length of entire tuple */
-
 	Oid			t_oid;			/* OID of this tuple -- 4 bytes */
 
 	CommandId	t_cmin;			/* insert CID stamp -- 4 bytes each */
@@ -38,7 +36,7 @@ typedef struct HeapTupleData
 	TransactionId t_xmin;		/* insert XID stamp -- 4 bytes each */
 	TransactionId t_xmax;		/* delete XID stamp */
 
-	ItemPointerData t_ctid;		/* current TID of this tuple */
+	ItemPointerData t_ctid;		/* current TID of this or newer tuple */
 
 	int16		t_natts;		/* number of attributes */
 
@@ -50,10 +48,9 @@ typedef struct HeapTupleData
 	/* bit map of domains */
 
 	/* MORE DATA FOLLOWS AT END OF STRUCT */
-} HeapTupleData;
+} HeapTupleHeaderData;
 
-typedef HeapTupleData *HeapTuple;
-
+typedef HeapTupleHeaderData *HeapTupleHeader;
 
 #define SelfItemPointerAttributeNumber			(-1)
 #define ObjectIdAttributeNumber					(-2)
@@ -66,11 +63,33 @@ typedef HeapTupleData *HeapTuple;
 /* If you make any changes above, the order off offsets in this must change */
 extern long heap_sysoffset[];
 
+/*
+ * This new HeapTuple for version >= 6.5 and this is why it was changed:
+ *
+ * 1. t_len moved off on-disk tuple data - ItemIdData is used to get len;
+ * 2. t_ctid above is not self tuple TID now - it may point to
+ *    updated version of tuple (required by MVCC);
+ * 3. someday someone let tuple to cross block boundaries - 
+ *    he have to add something below...
+ */
+typedef struct HeapTupleData
+{
+	uint32				t_len;		/* length of *t_data */
+	ItemPointerData		t_self;		/* SelfItemPointer */
+	HeapTupleHeader		t_data;		/* */
+} HeapTupleData;
+	
+typedef HeapTupleData *HeapTuple;
+
+#define	HEAPTUPLESIZE	DOUBLEALIGN(sizeof(HeapTupleData))
+ 
+ 
 /* ----------------
  *		support macros
  * ----------------
  */
-#define GETSTRUCT(TUP) (((char *)(TUP)) + ((HeapTuple)(TUP))->t_hoff)
+#define GETSTRUCT(TUP) (((char *)((HeapTuple)(TUP))->t_data) + \
+						((HeapTuple)(TUP))->t_data->t_hoff)
 
 
 /*
@@ -101,9 +120,9 @@ extern long heap_sysoffset[];
 #define HEAP_XACT_MASK			0x0F00	/* */
 
 #define HeapTupleNoNulls(tuple) \
-		(!(((HeapTuple) (tuple))->t_infomask & HEAP_HASNULL))
+		(!(((HeapTuple) (tuple))->t_data->t_infomask & HEAP_HASNULL))
 
 #define HeapTupleAllFixed(tuple) \
-		(!(((HeapTuple) (tuple))->t_infomask & HEAP_HASVARLENA))
+		(!(((HeapTuple) (tuple))->t_data->t_infomask & HEAP_HASVARLENA))
 
 #endif	 /* HTUP_H */

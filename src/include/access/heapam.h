@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heapam.h,v 1.38 1998/10/08 18:30:22 momjian Exp $
+ * $Id: heapam.h,v 1.39 1998/11/27 19:33:31 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -89,6 +89,10 @@ typedef HeapAccessStatisticsData *HeapAccessStatistics;
  *
  * ----------------
  */
+
+extern Datum nocachegetattr(HeapTuple tup, int attnum,
+			   TupleDesc att, bool *isnull);
+
 #if !defined(DISABLE_COMPLEX_MACRO)
 
 #define fastgetattr(tup, attnum, tupleDesc, isnull) \
@@ -101,7 +105,7 @@ typedef HeapAccessStatisticsData *HeapAccessStatistics;
 		 (attnum) == 1) ? \
 		( \
 			(Datum)fetchatt(&((tupleDesc)->attrs[(attnum)-1]), \
-				(char *) (tup) + (tup)->t_hoff + \
+				(char *) (tup)->t_data + (tup)->t_data->t_hoff + \
 				( \
 					((attnum) != 1) ? \
 						(tupleDesc)->attrs[(attnum)-1]->attcacheoff \
@@ -115,7 +119,7 @@ typedef HeapAccessStatisticsData *HeapAccessStatistics;
 	) \
 	: \
 	( \
-		att_isnull((attnum)-1, (tup)->t_bits) ? \
+		att_isnull((attnum)-1, (tup)->t_data->t_bits) ? \
 		( \
 			((isnull) ? (*(isnull) = true) : (dummyret)NULL), \
 			(Datum)NULL \
@@ -128,9 +132,6 @@ typedef HeapAccessStatisticsData *HeapAccessStatistics;
 )
 
 #else							/* !defined(DISABLE_COMPLEX_MACRO) */
-
-extern Datum nocachegetattr(HeapTuple tup, int attnum,
-			   TupleDesc att, bool *isnull);
 
 static Datum
 fastgetattr(HeapTuple tup, int attnum, TupleDesc tupleDesc,
@@ -146,7 +147,7 @@ fastgetattr(HeapTuple tup, int attnum, TupleDesc tupleDesc,
 			   (attnum) == 1) ?
 			  (
 			   (Datum) fetchatt(&((tupleDesc)->attrs[(attnum) - 1]),
-								(char *) (tup) + (tup)->t_hoff +
+								(char *) (tup)->t_data + (tup)->t_data->t_hoff +
 								(
 								 ((attnum) != 1) ?
 							(tupleDesc)->attrs[(attnum) - 1]->attcacheoff
@@ -160,7 +161,7 @@ fastgetattr(HeapTuple tup, int attnum, TupleDesc tupleDesc,
 			  )
 			 :
 			 (
-			  att_isnull((attnum) - 1, (tup)->t_bits) ?
+			  att_isnull((attnum) - 1, (tup)->t_data->t_bits) ?
 			  (
 			   ((isnull) ? (*(isnull) = true) : (dummyret) NULL),
 			   (Datum) NULL
@@ -205,7 +206,7 @@ fastgetattr(HeapTuple tup, int attnum, TupleDesc tupleDesc,
 	AssertMacro((tup) != NULL && \
 		(attnum) > FirstLowInvalidHeapAttributeNumber && \
 		(attnum) != 0), \
-	((attnum) > (int) (tup)->t_natts) ? \
+	((attnum) > (int) (tup)->t_data->t_natts) ? \
 	( \
 		((isnull) ? (*(isnull) = true) : (dummyret)NULL), \
 		(Datum)NULL \
@@ -221,13 +222,12 @@ fastgetattr(HeapTuple tup, int attnum, TupleDesc tupleDesc,
 			((isnull) ? (*(isnull) = false) : (dummyret)NULL), \
 			((attnum) == SelfItemPointerAttributeNumber) ? \
 			( \
-				(Datum)((char *)(tup) + \
-					heap_sysoffset[-SelfItemPointerAttributeNumber-1]) \
+				(Datum)((char *)&((tup)->t_self)) \
 			) \
 			: \
 			( \
 				(Datum)*(unsigned int *) \
-					((char *)(tup) + heap_sysoffset[-(attnum)-1]) \
+					((char *)(tup)->t_data + heap_sysoffset[-(attnum)-1]) \
 			) \
 		) \
 	) \
@@ -251,7 +251,7 @@ extern HeapScanDesc heap_beginscan(Relation relation, int atend,
 extern void heap_rescan(HeapScanDesc scan, bool scanFromEnd, ScanKey key);
 extern void heap_endscan(HeapScanDesc scan);
 extern HeapTuple heap_getnext(HeapScanDesc scandesc, int backw);
-extern HeapTuple heap_fetch(Relation relation, Snapshot snapshot, ItemPointer tid, Buffer *userbuf);
+extern void heap_fetch(Relation relation, Snapshot snapshot, HeapTuple tup, Buffer *userbuf);
 extern Oid	heap_insert(Relation relation, HeapTuple tup);
 extern int	heap_delete(Relation relation, ItemPointer tid);
 extern int heap_replace(Relation relation, ItemPointer otid,
@@ -270,6 +270,7 @@ extern bool heap_sysattrbyval(AttrNumber attno);
 extern Datum nocachegetattr(HeapTuple tup, int attnum,
 			   TupleDesc att, bool *isnull);
 extern HeapTuple heap_copytuple(HeapTuple tuple);
+extern void heap_copytuple_with_tuple(HeapTuple src, HeapTuple dest);
 extern HeapTuple heap_formtuple(TupleDesc tupleDescriptor,
 			   Datum *value, char *nulls);
 extern HeapTuple heap_modifytuple(HeapTuple tuple,
