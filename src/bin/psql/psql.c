@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.118 1997/11/30 17:46:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.119 1997/12/05 01:13:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -558,7 +558,7 @@ tableDesc(PsqlSettings *pset, char *table, FILE *fout)
 	}
 	else
 	{
-		for (i = strlen(table); i >= 0; i--)
+		for (i = 0; table[i]; i++)
 			if (isupper(table[i]))
 				table[i] = tolower(table[i]);
 	}
@@ -708,7 +708,7 @@ objectDescription(PsqlSettings *pset, char *object, FILE *fout)
 	}
 	else
 	{
-		for (i = strlen(object); i >= 0; i--)
+		for (i = 0; object[i]; i++)
 			if (isupper(object[i]))
 				object[i] = tolower(object[i]);
 	}

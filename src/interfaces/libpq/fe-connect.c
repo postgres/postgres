@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.52 1997/12/04 20:32:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.53 1997/12/05 01:13:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -444,7 +444,7 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions, cons
 				*(conn->dbName + strlen(conn->dbName) - 1) = '\0';
 			}
 			else
-				for (i = strlen(conn->dbName); i >= 0; i--)
+				for (i = 0; conn->dbName[i]; i++)
 					if (isupper(conn->dbName[i]))
 						conn->dbName[i] = tolower(conn->dbName[i]);
 		}
