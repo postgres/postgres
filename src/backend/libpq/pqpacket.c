@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/pqpacket.c,v 1.15 1998/02/26 04:31:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/pqpacket.c,v 1.16 1998/07/09 03:28:46 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,7 @@
  * Set up a packet read for the postmaster event loop.
  */
 
-void		PacketReceiveSetup(Packet *pkt, void (*iodone) (), char *arg)
+void		PacketReceiveSetup(Packet *pkt, PacketDoneProc iodone, void *arg)
 {
 	pkt->nrtodo = sizeof(pkt->len);
 	pkt->ptr = (char *) &pkt->len;
@@ -94,8 +94,8 @@ PacketReceiveFragment(Packet *pkt, int sock)
 			if (pkt->iodone == NULL)
 				return STATUS_ERROR;
 
-			(*pkt->iodone) (pkt->arg, pkt->len - sizeof(pkt->len),
-							(char *) &pkt->pkt);
+			return (*pkt->iodone) (pkt->arg, pkt->len - sizeof(pkt->len),
+								   (void *) &pkt->pkt);
 		}
 
 		return STATUS_OK;
@@ -107,7 +107,7 @@ PacketReceiveFragment(Packet *pkt, int sock)
 	if (errno == EINTR)
 		return STATUS_OK;
 
-	fprintf(stderr, "read() system call failed\n");
+	perror("PacketReceiveFragment: read() failed");
 
 	return STATUS_ERROR;
 }
@@ -117,8 +117,9 @@ PacketReceiveFragment(Packet *pkt, int sock)
  * Set up a packet write for the postmaster event loop.
  */
 
-void		PacketSendSetup(Packet *pkt, int nbytes, void (*iodone) (), char *arg)
+void		PacketSendSetup(Packet *pkt, int nbytes, PacketDoneProc iodone, void *arg)
 {
+	pkt->len = (PacketLen) nbytes;
 	pkt->nrtodo = nbytes;
 	pkt->ptr = (char *) &pkt->pkt;
 	pkt->iodone = iodone;
@@ -153,7 +154,8 @@ PacketSendFragment(Packet *pkt, int sock)
 			if (pkt->iodone == NULL)
 				return STATUS_ERROR;
 
-			(*pkt->iodone) (pkt->arg);
+			return (*pkt->iodone) (pkt->arg, pkt->len,
+								   (void *) &pkt->pkt);
 		}
 
 		return STATUS_OK;
@@ -165,7 +167,7 @@ PacketSendFragment(Packet *pkt, int sock)
 	if (errno == EINTR)
 		return STATUS_OK;
 
-	fprintf(stderr, "write() system call failed\n");
+	perror("PacketSendFragment: write() failed");
 
 	return STATUS_ERROR;
 }

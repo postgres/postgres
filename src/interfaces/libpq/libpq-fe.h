@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.30 1998/06/16 07:29:49 momjian Exp $
+ * $Id: libpq-fe.h,v 1.31 1998/07/09 03:29:09 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -174,8 +174,11 @@ extern		"C"
 		int			sock;		/* Unix FD for socket, -1 if not connected */
 		SockAddr	laddr;		/* Local address */
 		SockAddr	raddr;		/* Remote address */
+		int			raddr_len;	/* Length of remote address */
 
 		/* Miscellaneous stuff */
+		int			be_pid;		/* PID of backend --- needed for cancels */
+		int			be_key;		/* key of backend --- needed for cancels */
 		char		salt[2];	/* password salt received from backend */
 		PGlobjfuncs *lobjfuncs; /* private state for large-object access fns */
 
@@ -273,6 +276,8 @@ extern		"C"
 #define PQsetdb(M_PGHOST,M_PGPORT,M_PGOPT,M_PGTTY,M_DBNAME)   PQsetdbLogin(M_PGHOST, M_PGPORT, M_PGOPT, M_PGTTY, M_DBNAME, NULL, NULL)
 	/* close the current connection and free the PGconn data structure */
 	extern void PQfinish(PGconn *conn);
+	/* issue a cancel request */
+	extern int	PQrequestCancel(PGconn *conn);
 
 	/*
 	 * close the current connection and restablish a new one with the same
@@ -305,7 +310,6 @@ extern		"C"
 	/* Routines for managing an asychronous query */
 	extern int	PQisBusy(PGconn *conn);
 	extern void PQconsumeInput(PGconn *conn);
-	extern int	PQrequestCancel(PGconn *conn);
 	/* Routines for copy in/out */
 	extern int	PQgetline(PGconn *conn, char *string, int length);
 	extern void PQputline(PGconn *conn, const char *string);

@@ -11,7 +11,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.26 1998/06/09 17:13:06 momjian Exp $
+ * $Id: miscadmin.h,v 1.27 1998/07/09 03:28:55 scrappy Exp $
  *
  * NOTES
  *	  some of the information in this file will be moved to
@@ -41,6 +41,8 @@ extern bool	QueryCancel;
 extern char *DataDir;
 
 extern int	MyProcPid;
+
+extern long	MyCancelKey;
 
 extern char OutputFileName[];
 

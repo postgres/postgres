@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.92 1998/06/27 14:06:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.93 1998/07/09 03:28:47 scrappy Exp $
  *
  * NOTES
  *
@@ -206,7 +206,6 @@ static	int			orgsigmask = sigblock(0);
  */
 
 static unsigned int random_seed = 0;
-long MyCancelKey = 0;
 
 extern char *optarg;
 extern int	optind,
@@ -228,7 +227,8 @@ static void ExitPostmaster(int status);
 static void usage(const char *);
 static int ServerLoop(void);
 static int BackendStartup(Port *port);
-static void readStartupPacket(char *arg, PacketLen len, char *pkt);
+static int readStartupPacket(void *arg, PacketLen len, void *pkt);
+static int processCancelRequest(Port *port, PacketLen len, void *pkt);
 static int initMasks(fd_set *rmask, fd_set *wmask);
 static long PostmasterRandom(void);
 static void RandomSalt(char *salt);
@@ -518,6 +518,10 @@ PostmasterMain(int argc, char *argv[])
 	if (silentflag)
 		pmdaemonize();
 
+	/*
+	 * Set up signal handlers for the postmaster process.
+	 */
+
 	pqsignal(SIGINT, pmdie);
 	pqsignal(SIGCHLD, reaper);
 	pqsignal(SIGTTIN, SIG_IGN);
@@ -657,14 +661,14 @@ ServerLoop(void)
 			(port = ConnCreate(ServerSock_UNIX)) != NULL)
 			PacketReceiveSetup(&port->pktInfo,
 							   readStartupPacket,
-							   (char *) port);
+							   (void *) port);
 
 		if (ServerSock_INET != INVALID_SOCK &&
 			FD_ISSET(ServerSock_INET, &rmask) &&
 			(port = ConnCreate(ServerSock_INET)) != NULL)
 			PacketReceiveSetup(&port->pktInfo,
 							   readStartupPacket,
-							   (char *) port);
+							   (void *) port);
 
 		/* Build up new masks for select(). */
 
@@ -790,14 +794,36 @@ initMasks(fd_set *rmask, fd_set *wmask)
  * Called when the startup packet has been read.
  */
 
-static void
-readStartupPacket(char *arg, PacketLen len, char *pkt)
+static int
+readStartupPacket(void *arg, PacketLen len, void *pkt)
 {
 	Port	   *port;
 	StartupPacket *si;
 
 	port = (Port *) arg;
 	si = (StartupPacket *) pkt;
+
+	/* The first field is either a protocol version number or
+	 * a special request code.
+	 */
+
+	port->proto = ntohl(si->protoVersion);
+
+	if (port->proto == CANCEL_REQUEST_CODE)
+		return processCancelRequest(port, len, pkt);
+
+	/* Could add additional special packet types here */
+
+	/* Check we can handle the protocol the frontend is using. */
+
+	if (PG_PROTOCOL_MAJOR(port->proto) < PG_PROTOCOL_MAJOR(PG_PROTOCOL_EARLIEST) ||
+		PG_PROTOCOL_MAJOR(port->proto) > PG_PROTOCOL_MAJOR(PG_PROTOCOL_LATEST) ||
+		(PG_PROTOCOL_MAJOR(port->proto) == PG_PROTOCOL_MAJOR(PG_PROTOCOL_LATEST) &&
+		 PG_PROTOCOL_MINOR(port->proto) > PG_PROTOCOL_MINOR(PG_PROTOCOL_LATEST)))
+	{
+		PacketSendError(&port->pktInfo, "Unsupported frontend protocol.");
+		return STATUS_OK;		/* don't close the connection yet */
+	}
 
 	/*
 	 * Get the parameters from the startup packet as C strings.  The
@@ -815,31 +841,74 @@ readStartupPacket(char *arg, PacketLen len, char *pkt)
 	if (port->database[0] == '\0')
 		StrNCpy(port->database, si->user, sizeof(port->database) - 1);
 
-	/* Check we can handle the protocol the frontend is using. */
-
-	port->proto = ntohl(si->protoVersion);
-
-	if (PG_PROTOCOL_MAJOR(port->proto) < PG_PROTOCOL_MAJOR(PG_PROTOCOL_EARLIEST) ||
-		PG_PROTOCOL_MAJOR(port->proto) > PG_PROTOCOL_MAJOR(PG_PROTOCOL_LATEST) ||
-		(PG_PROTOCOL_MAJOR(port->proto) == PG_PROTOCOL_MAJOR(PG_PROTOCOL_LATEST) &&
-		 PG_PROTOCOL_MINOR(port->proto) > PG_PROTOCOL_MINOR(PG_PROTOCOL_LATEST)))
-	{
-		PacketSendError(&port->pktInfo, "Unsupported frontend protocol.");
-		return;
-	}
-
 	/* Check a user name was given. */
 
 	if (port->user[0] == '\0')
 	{
 		PacketSendError(&port->pktInfo,
 					"No Postgres username specified in startup packet.");
-		return;
+		return STATUS_OK;		/* don't close the connection yet */
 	}
 
 	/* Start the authentication itself. */
 
 	be_recvauth(port);
+
+	return STATUS_OK;			/* don't close the connection yet */
+}
+
+
+/*
+ * The client has sent a cancel request packet, not a normal
+ * start-a-new-backend packet.  Perform the necessary processing.
+ * Note that in any case, we return STATUS_ERROR to close the
+ * connection immediately.  Nothing is sent back to the client.
+ */
+
+static int
+processCancelRequest(Port *port, PacketLen len, void *pkt)
+{
+	CancelRequestPacket	*canc = (CancelRequestPacket *) pkt;
+	int			backendPID;
+	long		cancelAuthCode;
+	Dlelem	   *curr;
+	Backend    *bp;
+
+	backendPID = (int) ntohl(canc->backendPID);
+	cancelAuthCode = (long) ntohl(canc->cancelAuthCode);
+
+	/* See if we have a matching backend */
+
+	for (curr = DLGetHead(BackendList); curr; curr = DLGetSucc(curr))
+	{
+		bp = (Backend *) DLE_VAL(curr);
+		if (bp->pid == backendPID)
+		{
+			if (bp->cancel_key == cancelAuthCode)
+			{
+				/* Found a match; signal that backend to cancel current op */
+				if (DebugLvl)
+					fprintf(stderr, "%s: processCancelRequest: sending SIGINT to process %d\n",
+							progname, bp->pid);
+				kill(bp->pid, SIGINT);
+			}
+			else
+			{
+				/* Right PID, wrong key: no way, Jose */
+				if (DebugLvl)
+					fprintf(stderr, "%s: processCancelRequest: bad key in cancel request for process %d\n",
+							progname, bp->pid);
+			}
+			return STATUS_ERROR;
+		}
+	}
+
+	/* No matching backend */
+	if (DebugLvl)
+		fprintf(stderr, "%s: processCancelRequest: bad PID in cancel request for process %d\n",
+				progname, backendPID);
+
+	return STATUS_ERROR;
 }
 
 
@@ -1221,6 +1290,8 @@ DoBackend(Port *port)
 	char		dbbuf[ARGV_SIZE + 1];
 	int			ac = 0;
 	int			i;
+	struct timeval	now;
+	struct timezone	tz;
 
 	/*
 	 *	Let's clean up ourselves as the postmaster child
@@ -1254,7 +1325,16 @@ DoBackend(Port *port)
 	if (NetServer)
 		StreamClose(ServerSock_INET);
 	StreamClose(ServerSock_UNIX);
-	
+
+	/*
+	 * Don't want backend to be able to see the postmaster random number
+	 * generator state.  We have to clobber the static random_seed *and*
+	 * start a new random sequence in the random() library function.
+	 */
+	random_seed = 0;
+	gettimeofday(&now, &tz);
+	srandom(now.tv_usec);
+
 	/* Now, on to standard postgres stuff */
 	
 	MyProcPid = getpid();

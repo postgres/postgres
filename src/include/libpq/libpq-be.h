@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-be.h,v 1.10 1998/02/26 04:41:49 momjian Exp $
+ * $Id: libpq-be.h,v 1.11 1998/07/09 03:29:00 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,16 +68,20 @@ typedef enum
 	WritingPacket
 } PacketState;
 
+typedef int (*PacketDoneProc) (void * arg, PacketLen pktlen, void * pktdata);
+
 typedef struct Packet
 {
 	PacketState state;			/* What's in progress. */
 	PacketLen	len;			/* Actual length */
 	int			nrtodo;			/* Bytes still to transfer */
 	char	   *ptr;			/* Buffer pointer */
-	void		(*iodone) ();	/* I/O complete callback */
-	char	   *arg;			/* Argument to callback */
+	PacketDoneProc	iodone;		/* I/O complete callback */
+	void	   *arg;			/* Argument to callback */
 
-	/* A union of all the different packets. */
+	/* We declare the data buffer as a union of the allowed packet types,
+	 * mainly to ensure that enough space is allocated for the largest one.
+	 */
 
 	union
 	{
@@ -89,6 +93,7 @@ typedef struct Packet
 		/* These are incoming and have a packet length prepended. */
 
 		StartupPacket si;
+		CancelRequestPacket canc;
 		PasswordPacketV0 pwv0;
 		PasswordPacket pw;
 	}			pkt;
@@ -126,16 +131,15 @@ typedef struct Port
 
 extern FILE *Pfout,
 		   *Pfin;
-extern int	PQAsyncNotifyWaiting;
 extern ProtocolVersion FrontendProtocol;
 
 
 /*
  * prototypes for functions in pqpacket.c
  */
-void		PacketReceiveSetup(Packet *pkt, void (*iodone) (), char *arg);
+void		PacketReceiveSetup(Packet *pkt, PacketDoneProc iodone, void *arg);
 int			PacketReceiveFragment(Packet *pkt, int sock);
-void		PacketSendSetup(Packet *pkt, int nbytes, void (*iodone) (), char *arg);
+void		PacketSendSetup(Packet *pkt, int nbytes, PacketDoneProc iodone, void *arg);
 int			PacketSendFragment(Packet *pkt, int sock);
 void		PacketSendError(Packet *pkt, char *errormsg);
 

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqcomm.h,v 1.25 1998/05/06 23:50:32 momjian Exp $
+ * $Id: pqcomm.h,v 1.26 1998/07/09 03:29:01 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -120,6 +120,25 @@ typedef uint32 AuthRequest;
 #define STARTUP_PASSWORD_MSG	14		/* Password follows */
 
 typedef ProtocolVersion MsgType;
+
+
+/* A client can also send a cancel-current-operation request to the postmaster.
+ * This is uglier than sending it directly to the client's backend, but it
+ * avoids depending on out-of-band communication facilities.
+ */
+
+/* The cancel request code must not match any protocol version number
+ * we're ever likely to use.  This random choice should do.
+ */
+#define CANCEL_REQUEST_CODE	PG_PROTOCOL(1234,5678)
+
+typedef struct CancelRequestPacket
+{
+	/* Note that each field is stored in network byte order! */
+	MsgType	cancelRequestCode;		/* code to identify a cancel request */
+	uint32	backendPID;				/* PID of client's backend */
+	uint32	cancelAuthCode;			/* secret key to authorize cancel */
+} CancelRequestPacket;
 
 
 /* in pqcompriv.c */

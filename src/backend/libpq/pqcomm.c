@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.47 1998/06/27 04:53:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.48 1998/07/09 03:28:46 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,6 @@
  *		pq_getinserv	- initialize address from host and service name
  *		pq_connect		- create remote input / output connection
  *		pq_accept		- accept remote input / output connection
- *		pq_async_notify - receive notification from backend.
  *
  * NOTES
  *		These functions are used by both frontend applications and
@@ -79,7 +78,6 @@
 FILE	   *Pfout,
 		   *Pfin;
 FILE	   *Pfdebug;			/* debugging libpq */
-int			PQAsyncNotifyWaiting;		/* for async. notification */
 
 /* --------------------------------
  *		pq_init - open portal file descriptors
@@ -160,9 +158,7 @@ pq_close()
 		fclose(Pfout);
 		Pfout = NULL;
 	}
-	PQAsyncNotifyWaiting = 0;
 	PQnotifies_init();
-	pq_unregoob();
 }
 
 /* --------------------------------
@@ -418,29 +414,6 @@ pq_putint(int i, int b)
 	}
 }
 
-/* ---
- *	   pq_sendoob - send a string over the out-of-band channel
- *	   pq_recvoob - receive a string over the oob channel
- *	NB: Fortunately, the out-of-band channel doesn't conflict with
- *		buffered I/O because it is separate from regular com. channel.
- * ---
- */
-int
-pq_sendoob(char *msg, int len)
-{
-	int			fd = fileno(Pfout);
-
-	return send(fd, msg, len, MSG_OOB);
-}
-
-int
-pq_recvoob(char *msgPtr, int len)
-{
-	int			fd = fileno(Pfout);
-
-	return recv(fd, msgPtr, len, MSG_OOB);
-}
-
 /* --------------------------------
  *		pq_getinaddr - initialize address from host and port number
  * --------------------------------
@@ -508,55 +481,6 @@ pq_getinserv(struct sockaddr_in * sin, char *host, char *serv)
 }
 
 /*
- * register an out-of-band listener proc--at most one allowed.
- * This is used for receiving async. notification from the backend.
- */
-void
-pq_regoob(void (*fptr) ())
-{
-	int			fd = fileno(Pfout);
-
-#if defined(hpux)
-	ioctl(fd, FIOSSAIOOWN, MyProcPid);
-#elif defined(sco)
-	ioctl(fd, SIOCSPGRP, MyProcPid);
-#else
-	fcntl(fd, F_SETOWN, MyProcPid);
-#endif							/* hpux */
-	pqsignal(SIGURG, fptr);
-}
-
-void
-pq_unregoob()
-{
-	pqsignal(SIGURG, SIG_DFL);
-}
-
-
-void
-pq_async_notify()
-{
-	char		msg[20];
-
-	/* int len = sizeof(msg); */
-	int			len = 20;
-
-	if (pq_recvoob(msg, len) >= 0)
-	{
-		/* debugging */
-		printf("received notification: %s\n", msg);
-		PQAsyncNotifyWaiting = 1;
-		/* PQappendNotify(msg+1); */
-	}
-	else
-	{
-		extern int	errno;
-
-		printf("SIGURG but no data: len = %d, err=%d\n", len, errno);
-	}
-}
-
-/*
  * Streams -- wrapper around Unix socket system calls
  *
  *
@@ -620,7 +544,7 @@ StreamServerPort(char *hostName, short portName, int *fdP)
 		pqdebug("%s", PQerrormsg);
 		return (STATUS_ERROR);
 	}
-	bzero(&saddr, sizeof(saddr));
+	MemSet((char *) &saddr, 0, sizeof(saddr));
 	saddr.sa.sa_family = family;
 	if (family == AF_UNIX)
 	{

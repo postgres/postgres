@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.28 1998/06/13 04:27:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.29 1998/07/09 03:28:45 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,13 +40,13 @@
 #include <libpq/crypt.h>
 
 
-static void sendAuthRequest(Port *port, AuthRequest areq, void (*handler) ());
-static void handle_done_auth(Port *port);
-static void handle_krb4_auth(Port *port);
-static void handle_krb5_auth(Port *port);
-static void handle_password_auth(Port *port);
-static void readPasswordPacket(char *arg, PacketLen len, char *pkt);
-static void pg_passwordv0_recvauth(char *arg, PacketLen len, char *pkt);
+static void sendAuthRequest(Port *port, AuthRequest areq, PacketDoneProc handler);
+static int	handle_done_auth(void *arg, PacketLen len, void *pkt);
+static int	handle_krb4_auth(void *arg, PacketLen len, void *pkt);
+static int	handle_krb5_auth(void *arg, PacketLen len, void *pkt);
+static int	handle_password_auth(void *arg, PacketLen len, void *pkt);
+static int	readPasswordPacket(void *arg, PacketLen len, void *pkt);
+static int	pg_passwordv0_recvauth(void *arg, PacketLen len, void *pkt);
 static int	checkPassword(Port *port, char *user, char *password);
 static int	old_be_recvauth(Port *port);
 static int	map_old_to_new(Port *port, UserAuth old, int status);
@@ -327,8 +327,8 @@ pg_krb5_recvauth(Port *port)
  * Handle a v0 password packet.
  */
 
-static void
-pg_passwordv0_recvauth(char *arg, PacketLen len, char *pkt)
+static int
+pg_passwordv0_recvauth(void *arg, PacketLen len, void *pkt)
 {
 	Port	   *port;
 	PasswordPacketV0 *pp;
@@ -393,6 +393,8 @@ pg_passwordv0_recvauth(char *arg, PacketLen len, char *pkt)
 		if (map_old_to_new(port, uaPassword, status) != STATUS_OK)
 			auth_failed(port);
 	}
+
+	return (STATUS_OK);			/* don't close the connection yet */
 }
 
 
@@ -433,7 +435,7 @@ be_recvauth(Port *port)
 	else
 	{
 		AuthRequest areq;
-		void		(*auth_handler) ();
+		PacketDoneProc auth_handler;
 
 		/* Keep the compiler quiet. */
 
@@ -499,7 +501,7 @@ be_recvauth(Port *port)
  */
 
 static void
-sendAuthRequest(Port *port, AuthRequest areq, void (*handler) ())
+sendAuthRequest(Port *port, AuthRequest areq, PacketDoneProc handler)
 {
 	char	   *dp,
 			   *sp;
@@ -527,7 +529,7 @@ sendAuthRequest(Port *port, AuthRequest areq, void (*handler) ())
 		i += 2;
 	}
 
-	PacketSendSetup(&port->pktInfo, i, handler, (char *) port);
+	PacketSendSetup(&port->pktInfo, i, handler, (void *) port);
 }
 
 
@@ -535,8 +537,8 @@ sendAuthRequest(Port *port, AuthRequest areq, void (*handler) ())
  * Called when we have told the front end that it is authorised.
  */
 
-static void
-handle_done_auth(Port *port)
+static int
+handle_done_auth(void *arg, PacketLen len, void *pkt)
 {
 
 	/*
@@ -544,7 +546,7 @@ handle_done_auth(Port *port)
 	 * start.
 	 */
 
-	return;
+	return STATUS_OK;
 }
 
 
@@ -553,13 +555,17 @@ handle_done_auth(Port *port)
  * authentication.
  */
 
-static void
-handle_krb4_auth(Port *port)
+static int
+handle_krb4_auth(void *arg, PacketLen len, void *pkt)
 {
+	Port	   *port = (Port *) arg;
+
 	if (pg_krb4_recvauth(port) != STATUS_OK)
 		auth_failed(port);
 	else
 		sendAuthRequest(port, AUTH_REQ_OK, handle_done_auth);
+
+	return STATUS_OK;
 }
 
 
@@ -568,13 +574,17 @@ handle_krb4_auth(Port *port)
  * authentication.
  */
 
-static void
-handle_krb5_auth(Port *port)
+static int
+handle_krb5_auth(void *arg, PacketLen len, void *pkt)
 {
+	Port	   *port = (Port *) arg;
+
 	if (pg_krb5_recvauth(port) != STATUS_OK)
 		auth_failed(port);
 	else
 		sendAuthRequest(port, AUTH_REQ_OK, handle_done_auth);
+
+	return STATUS_OK;
 }
 
 
@@ -583,12 +593,16 @@ handle_krb5_auth(Port *port)
  * authentication.
  */
 
-static void
-handle_password_auth(Port *port)
+static int
+handle_password_auth(void *arg, PacketLen len, void *pkt)
 {
+	Port	   *port = (Port *) arg;
+
 	/* Set up the read of the password packet. */
 
-	PacketReceiveSetup(&port->pktInfo, readPasswordPacket, (char *) port);
+	PacketReceiveSetup(&port->pktInfo, readPasswordPacket, (void *) port);
+
+	return STATUS_OK;
 }
 
 
@@ -596,13 +610,11 @@ handle_password_auth(Port *port)
  * Called when we have received the password packet.
  */
 
-static void
-readPasswordPacket(char *arg, PacketLen len, char *pkt)
+static int
+readPasswordPacket(void *arg, PacketLen len, void *pkt)
 {
 	char		password[sizeof(PasswordPacket) + 1];
-	Port	   *port;
-
-	port = (Port *) arg;
+	Port	   *port = (Port *) arg;
 
 	/* Silently truncate a password that is too big. */
 
@@ -615,6 +627,8 @@ readPasswordPacket(char *arg, PacketLen len, char *pkt)
 		auth_failed(port);
 	else
 		sendAuthRequest(port, AUTH_REQ_OK, handle_done_auth);
+
+	return (STATUS_OK);			/* don't close the connection yet */
 }
 
 
@@ -662,7 +676,7 @@ old_be_recvauth(Port *port)
 
 		case STARTUP_PASSWORD_MSG:
 			PacketReceiveSetup(&port->pktInfo, pg_passwordv0_recvauth,
-							   (char *) port);
+							   (void *) port);
 
 			return STATUS_OK;
 

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dbcommands.h,v 1.1 1997/11/24 05:32:51 momjian Exp $
+ * $Id: dbcommands.h,v 1.2 1998/07/09 03:28:56 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,8 +17,7 @@
  * Originally from tmp/daemon.h. The functions declared in daemon.h does not
  * exist; hence removed.		-- AY 7/29/94
  */
-#define SIGKILLDAEMON1	SIGINT
-#define SIGKILLDAEMON2	SIGTERM
+#define SIGKILLDAEMON1	SIGTERM
 
 extern void createdb(char *dbname, char *dbpath);
 extern void destroydb(char *dbname);

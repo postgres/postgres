@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.146 1998/06/16 07:29:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.147 1998/07/09 03:28:53 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -291,14 +291,26 @@ PSQLexec(PsqlSettings *pset, char *query)
  * If interactive, we enable a SIGINT signal catcher that sends
  * a cancel request to the backend.
  * Note that sending the cancel directly from the signal handler
- * is safe only because the cancel is sent as an OOB message.
- * If it were inline data, then we'd risk inserting it into the
- * middle of a normal data message by doing this.
- * (It's probably not too cool to write on stderr, for that matter...
- *  but for debugging purposes we'll risk that.)
+ * is safe only because PQrequestCancel is carefully written to
+ * make it so.  We have to be very careful what else we do in the
+ * signal handler.
+ * Writing on stderr is potentially dangerous, if the signal interrupted
+ * some stdio operation on stderr.  On Unix we can avoid trouble by using
+ * write() instead; on Windows that's probably not workable, but we can
+ * at least avoid trusting printf by using the more primitive fputs.
  */
 
 static PGconn * cancelConn = NULL; /* connection to try cancel on */
+
+static void
+safe_write_stderr (const char * s)
+{
+#ifdef WIN32
+	fputs(s, stderr);
+#else
+	write(fileno(stderr), s, strlen(s));
+#endif
+}
 
 static void
 handle_sigint (SIGNAL_ARGS)
@@ -307,11 +319,13 @@ handle_sigint (SIGNAL_ARGS)
 		exit(1);				/* accept signal if no connection */
 	/* Try to send cancel request */
 	if (PQrequestCancel(cancelConn))
-		fprintf(stderr, "\nCANCEL request sent\n");
+	{
+		safe_write_stderr("\nCANCEL request sent\n");
+	}
 	else
 	{
-		fprintf(stderr, "\nCannot send cancel request:\n%s\n",
-				PQerrorMessage(cancelConn));
+		safe_write_stderr("\nCannot send cancel request:\n");
+		safe_write_stderr(PQerrorMessage(cancelConn));
 	}
 }
 

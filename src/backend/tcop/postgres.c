@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.78 1998/06/27 04:53:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.79 1998/07/09 03:28:48 scrappy Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -724,7 +724,7 @@ pg_exec_query_dest(char *query_string,	/* string to execute */
 /* --------------------------------
  *		signal handler routines used in PostgresMain()
  *
- *		handle_warn() is used to catch kill(getpid(),1) which
+ *		handle_warn() is used to catch kill(getpid(), SIGHUP) which
  *		occurs when elog(ERROR) is called.
  *
  *		quickdie() occurs when signalled by the postmaster.
@@ -777,7 +777,7 @@ FloatExceptionHandler(SIGNAL_ARGS)
 }
 
 
-/* signal handler for query cancel */
+/* signal handler for query cancel signal from postmaster */
 static void
 QueryCancelHandler(SIGNAL_ARGS)
 {
@@ -787,12 +787,9 @@ QueryCancelHandler(SIGNAL_ARGS)
 void
 CancelQuery(void)
 {
-	char dummy;
-
-	/* throw it away */
-	while (pq_recvoob(&dummy, 1) > 0)
-		;
-	/* QueryCancel reset in longjump after elog() call */
+	/* QueryCancel flag will be reset in main loop, which we reach by
+	 * longjmp from elog().
+	 */
 	elog(ERROR, "Query was cancelled.");
 }
 
@@ -1261,7 +1258,6 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 		}
 		pq_init(Portfd);
 		whereToSendOutput = Remote;
-		pq_regoob(QueryCancelHandler); /* we do it here so the backend it connected */	
 	}
 	else
 		whereToSendOutput = Debug;
@@ -1288,13 +1284,31 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 #endif
 
 	/* ----------------
+	 *  Set up handler for cancel-request signal, and
+	 *	send this backend's cancellation info to the frontend.
+	 *	This should not be done until we are sure startup is successful.
+	 * ----------------
+	 */
+
+	pqsignal(SIGINT, QueryCancelHandler);
+
+	if (whereToSendOutput == Remote &&
+		PG_PROTOCOL_MAJOR(FrontendProtocol) >= 2)
+	{
+		pq_putnchar("K", 1);
+		pq_putint((int32) MyProcPid, sizeof(int32));
+		pq_putint((int32) MyCancelKey, sizeof(int32));
+		/* Need not flush since ReadyForQuery will do it. */
+	}
+
+	/* ----------------
 	 *	if an exception is encountered, processing resumes here
 	 *	so we abort the current transaction and start a new one.
 	 *	This must be done after we initialize the slave backends
 	 *	so that the slaves signal the master to abort the transaction
 	 *	rather than calling AbortCurrentTransaction() themselves.
 	 *
-	 *	Note:  elog(ERROR) causes a kill(getpid(),1) to occur sending
+	 *	Note:  elog(ERROR) causes a kill(getpid(), SIGHUP) to occur sending
 	 *		   us back here.
 	 * ----------------
 	 */
@@ -1325,7 +1339,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface");
-		puts("$Revision: 1.78 $ $Date: 1998/06/27 04:53:43 $");
+		puts("$Revision: 1.79 $ $Date: 1998/07/09 03:28:48 $");
 	}
 
 	/* ----------------
@@ -1431,7 +1445,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 				break;
 
 			default:
-				elog(ERROR, "unknown frontend message was recieved");
+				elog(ERROR, "unknown frontend message was received");
 		}
 
 		/* ----------------

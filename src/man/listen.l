@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/listen.l,v 1.6 1998/06/24 13:21:27 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/listen.l,v 1.7 1998/07/09 03:29:09 scrappy Exp $
 .TH "LISTEN" SQL 03/12/94 PostgreSQL PostgreSQL
 .SH NAME
 listen - listen for notification on a relation
@@ -21,9 +21,7 @@ is cleared.
 .PP
 This event notification is performed through the Libpq protocol
 and frontend application interface.  The application program 
-must explicitly poll a Libpq global variable, 
-.IR PQAsyncNotifyWaiting ,
-and call the routine
+must call the routine
 .IR PQnotifies
 in order to find out the name of the class to which a given 
 notification corresponds.  If this code is not included in 

@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/notify.l,v 1.4 1998/06/24 13:21:27 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/notify.l,v 1.5 1998/07/09 03:29:11 scrappy Exp $
 .TH "NOTIFY" SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
 notify - signal all frontends and backends listening on a class
@@ -32,11 +32,14 @@ does is indicate that some backend wishes its peers to examine
 .IR class_name
 in some application-specific way.
 .PP
+In fact,
+.IR class_name
+need not be the name of an SQL class at all.  It is best thought of
+as a condition name that the application programmer selects.
+.PP
 This event notification is performed through the Libpq protocol
 and frontend application interface.  The application program
-must explicitly poll a Libpq global variable,
-.IR PQAsyncNotifyWaiting ,
-and call the routine
+must call the routine
 .IR PQnotifies
 in order to find out the name of the class to which a given
 notification corresponds.  If this code is not included in 

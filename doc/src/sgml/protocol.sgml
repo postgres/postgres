@@ -4,7 +4,7 @@
 <FirstName>Phil</FirstName>
 <Surname>Thompson</Surname>
 </Author>
-<Date>1998-05-04</Date>
+<Date>1998-07-07</Date>
 </DocInfo>
 <Title>Frontend/Backend Protocol</Title>
 
@@ -54,8 +54,10 @@ invalid database name).
 
 <Para>
 Subsequent communications are query and result packets exchanged between the
-frontend and the backend.  The postmaster takes no further part in the
-communication.
+frontend and the backend.  The postmaster takes no further part in ordinary
+query/result communication.  (However, the postmaster is involved when the
+frontend wishes to cancel a query currently being executed by its backend.
+Further details about that appear below.)
 
 <Para>
 When the frontend wishes to disconnect it sends an appropriate packet and
@@ -183,6 +185,20 @@ The possible messages from the backend during this phase are:
 <VariableList>
 <VarListEntry>
 <Term>
+	BackendKeyData
+</Term>
+<ListItem>
+<Para>
+		This message is issued after successful backend startup.
+		It provides secret-key data that the frontend must save
+		if it wants to be able to issue cancel requests later.
+		The frontend should not respond to this message, but should
+		continue listening for a ReadyForQuery message.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
 	ReadyForQuery
 </Term>
 <ListItem>
@@ -217,6 +233,14 @@ The possible messages from the backend during this phase are:
 </VarListEntry>
 </VariableList>
 </Para>
+
+<Para>
+The ReadyForQuery message is the same one that the backend will issue after
+each query cycle.  Depending on the coding needs of the frontend, it is
+reasonable to consider ReadyForQuery as starting a query cycle (and then
+BackendKeyData indicates successful conclusion of the startup phase),
+or to consider ReadyForQuery as ending the startup phase and each subsequent
+query cycle.
 
 
 <Sect2>
@@ -453,7 +477,7 @@ NotificationResponse messages at any time; see below.
 <Para>
 If a frontend issues a listen(l) command, then the backend will send a
 NotificationResponse message (not to be confused with NoticeResponse!)
-whenever a notify(l) command is executed for the same relation name.
+whenever a notify(l) command is executed for the same notification name.
 
 <Para>
 Notification responses are permitted at any point in the protocol (after
@@ -470,8 +494,8 @@ NotificationResponse messages even when it is not engaged in a query.
 </Term>
 <ListItem>
 <Para>
-		A notify(l) command has been executed for a relation for
-		which a previous listen(l) command was executed.  Notifications
+		A notify(l) command has been executed for a name for which
+		a previous listen(l) command was executed.  Notifications
 		may be sent at any time.
 </Para>
 </ListItem>
@@ -479,29 +503,77 @@ NotificationResponse messages even when it is not engaged in a query.
 </VariableList>
 </Para>
 
+<Para>
+It may be worth pointing out that the names used in listen and notify
+commands need not have anything to do with names of relations (tables)
+in the SQL database.  Notification names are simply arbitrarily chosen
+condition names.
+
 
 <Sect2>
 <Title>Cancelling Requests in Progress</Title>
 
 <Para>
 During the processing of a query, the frontend may request cancellation of the
-query by sending a single byte of OOB (out-of-band) data.  The contents of the
-data byte should be zero (although the backend does not currently check this).
-If the cancellation is effective, it results in the current command being
-terminated with an error message.  Note that the backend makes no specific
-reply to the cancel request itself.  If the cancel request is ineffective
-(say, because it arrived after processing was complete) then it will have
-no visible effect at all.  Thus, the frontend must continue with its normal
-processing of query cycle responses after issuing a cancel request.
+query by sending an appropriate request to the postmaster.  The cancel request
+is not sent directly to the backend for reasons of implementation efficiency:
+we don't want to have the backend constantly checking for new input from
+the frontend during query processing.  Cancel requests should be relatively
+infrequent, so we make them slightly cumbersome in order to avoid a penalty
+in the normal case.
+
+<Para>
+To issue a cancel request, the frontend opens a new connection to the
+postmaster and sends a CancelRequest message, rather than the StartupPacket
+message that would ordinarily be sent across a new connection.  The postmaster
+will process this request and then close the connection.  For security
+reasons, no direct reply is made to the cancel request message.
+
+<Para>
+A CancelRequest message will be ignored unless it contains the same key data
+(PID and secret key) passed to the frontend during connection startup.  If the
+request matches the PID and secret key for a currently executing backend, the
+postmaster signals the backend to abort processing of the current query.
+
+<Para>
+The cancellation signal may or may not have any effect --- for example, if it
+arrives after the backend has finished processing the query, then it will have
+no effect.  If the cancellation is effective, it results in the current
+command being terminated early with an error message.
+
+<Para>
+The upshot of all this is that for reasons of both security and efficiency,
+the frontend has no direct way to tell whether a cancel request has succeeded.
+It must continue to wait for the backend to respond to the query.  Issuing a
+cancel simply improves the odds that the current query will finish soon,
+and improves the odds that it will fail with an error message instead of
+succeeding.
+
+<Para>
+Since the cancel request is sent to the postmaster and not across the
+regular frontend/backend communication link, it is possible for the cancel
+request to be issued by any process, not just the frontend whose query is
+to be canceled.  This may have some benefits of flexibility in building
+multiple-process applications.  It also introduces a security risk, in that
+unauthorized persons might try to cancel queries.  The security risk is
+addressed by requiring a dynamically generated secret key to be supplied
+in cancel requests.
 
 
 <Sect2>
 <Title>Termination</Title>
 
 <Para>
-The frontend sends a Terminate message and immediately closes the connection.
-On receipt of the message, the backend immediately closes the connection and
-terminates.
+The normal, graceful termination procedure is that the frontend sends a
+Terminate message and immediately closes the connection.  On receipt of the
+message, the backend immediately closes the connection and terminates.
+
+<Para>
+An ungraceful termination may occur due to software failure (i.e., core dump)
+at either end.  If either frontend or backend sees an unexpected closure of
+the connection, it should clean up and terminate.  The frontend has the option
+of launching a new backend by recontacting the postmaster, if it doesn't want
+to terminate itself.
 
 
 <Sect1>
@@ -829,6 +901,52 @@ AuthenticationEncryptedPassword (B)
 </VarListEntry>
 <VarListEntry>
 <Term>
+BackendKeyData (B)
+</Term>
+<ListItem>
+<Para>
+
+<VariableList>
+<VarListEntry>
+<Term>
+	Byte1('K')
+</Term>
+<ListItem>
+<Para>
+		Identifies the message as cancellation key data.
+		The frontend must save these values if it wishes to be
+		able to issue CancelRequest messages later.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+	Int32
+</Term>
+<ListItem>
+<Para>
+		The process ID of this backend.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+	Int32
+</Term>
+<ListItem>
+<Para>
+		The secret key of this backend.
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+
+
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
 BinaryRow (B)
 </Term>
 <ListItem>
@@ -891,6 +1009,63 @@ BinaryRow (B)
 </ListItem>
 </VarListEntry>
 </VariableList>
+
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+CancelRequest (F)
+</Term>
+<ListItem>
+<Para>
+
+<VariableList>
+<VarListEntry>
+<Term>
+	Int32(16)
+</Term>
+<ListItem>
+<Para>
+		The size of the packet in bytes.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+	Int32(80877102)
+</Term>
+<ListItem>
+<Para>
+		The cancel request code.  The value is chosen to contain
+		"1234" in the most significant 16 bits, and "5678" in the
+		least 16 significant bits.  (To avoid confusion, this code
+		must not be the same as any protocol version number.)
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+	Int32
+</Term>
+<ListItem>
+<Para>
+		The process ID of the target backend.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+	Int32
+</Term>
+<ListItem>
+<Para>
+		The secret key for the target backend.
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+
 
 </Para>
 </ListItem>
@@ -1086,31 +1261,6 @@ EncryptedPasswordPacket (F)
 <ListItem>
 <Para>
 		The encrypted (using crypt()) password.
-</Para>
-</ListItem>
-</VarListEntry>
-</VariableList>
-
-
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
-ReadyForQuery (B)
-</Term>
-<ListItem>
-<Para>
-
-<VariableList>
-<VarListEntry>
-<Term>
-	Byte1('Z')
-</Term>
-<ListItem>
-<Para>
-		Identifies the message type.  ReadyForQuery is sent
-		whenever the backend is ready for a new query cycle.
 </Para>
 </ListItem>
 </VarListEntry>
@@ -1443,6 +1593,31 @@ Query (F)
 <ListItem>
 <Para>
 		The query string itself.
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+
+
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+ReadyForQuery (B)
+</Term>
+<ListItem>
+<Para>
+
+<VariableList>
+<VarListEntry>
+<Term>
+	Byte1('Z')
+</Term>
+<ListItem>
+<Para>
+		Identifies the message type.  ReadyForQuery is sent
+		whenever the backend is ready for a new query cycle.
 </Para>
 </ListItem>
 </VarListEntry>

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq.h,v 1.16 1998/06/16 07:29:41 momjian Exp $
+ * $Id: libpq.h,v 1.17 1998/07/09 03:29:01 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -126,8 +126,7 @@ extern size_t portals_array_size;
  */
 typedef struct PQNotifyList
 {
-	char		relname[NAMEDATALEN];	/* name of relation containing
-										 * data */
+	char		relname[NAMEDATALEN];	/* listen/notify name */
 	int			be_pid;			/* process id of backend */
 	int			valid;			/* has this already been handled by user. */
 /*	  SLNode Node; */
@@ -268,8 +267,6 @@ extern int	pq_getint(int b);
 extern void pq_putstr(char *s);
 extern void pq_putnchar(char *s, int n);
 extern void pq_putint(int i, int b);
-extern int	pq_sendoob(char *msg, int len);
-extern int	pq_recvoob(char *msgPtr, int len);
 extern int	pq_getinaddr(struct sockaddr_in * sin, char *host, int port);
 extern int	pq_getinserv(struct sockaddr_in * sin, char *host, char *serv);
 
@@ -281,10 +278,7 @@ extern int
 pq_connect(char *dbname, char *user, char *args, char *hostName,
 		   char *debugTty, char *execFile, short portName);
 extern int	StreamOpen(char *hostName, short portName, Port *port);
-extern void pq_regoob(void (*fptr) ());
-extern void pq_unregoob(void);
-extern void pq_async_notify(void);
-extern void StreamDoUnlink();
+extern void StreamDoUnlink(void);
 extern int StreamServerPort(char *hostName, short portName, int *fdP);
 extern int StreamConnection(int server_fd, Port *port);
 extern void StreamClose(int sock);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.34 1998/06/27 04:53:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.35 1998/07/09 03:28:44 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,11 +21,11 @@
  *	  2.a  If the process is the same as the backend process that issued
  *		   notification (we are notifying something that we are listening),
  *		   signal the corresponding frontend over the comm channel.
- *	  2.b  For all other listening processes, we send kill(2) to wake up
+ *	  2.b  For all other listening processes, we send kill(SIGUSR2) to wake up
  *		   the listening backend.
- * 3. Upon receiving a kill(2) signal from another backend process notifying
- *	  that one of the relation that we are listening is being notified,
- *	  we can be in either of two following states:
+ * 3. Upon receiving a kill(SIGUSR2) signal from another backend process
+ *	  notifying that one of the relation that we are listening is being
+ *	  notified, we can be in either of two following states:
  *	  3.a  We are sleeping, wake up and signal our frontend.
  *	  3.b  We are in middle of another transaction, wait until the end of
  *		   of the current transaction and signal our frontend.
@@ -46,7 +46,7 @@
  *	  (which takes place after commit) to all listeners on this relation.
  *
  * 3. Async. notification results in all backends listening on relation
- *	  to be woken up, by a process signal kill(2), with name of relation
+ *	  to be woken up, by a process signal kill(SIGUSR2), with name of relation
  *	  passed in shared memory.
  *
  * 4. Each backend notifies its respective frontend over the comm

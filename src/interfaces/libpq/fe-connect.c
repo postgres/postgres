@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.72 1998/07/07 18:00:09 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.73 1998/07/09 03:29:07 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -499,13 +499,11 @@ connectDB(PGconn *conn)
 {
 	PGresult   *res;
 	struct hostent *hp;
-
 	StartupPacket sp;
 	AuthRequest areq;
 	int			laddrlen = sizeof(SockAddr);
 	int			portno,
-				family,
-				len;
+				family;
 	char		beresp;
 	int			on = 1;
 
@@ -561,11 +559,11 @@ connectDB(PGconn *conn)
 				(char *) hp->h_addr,
 				hp->h_length);
 		conn->raddr.in.sin_port = htons((unsigned short) (portno));
-		len = sizeof(struct sockaddr_in);
+		conn->raddr_len = sizeof(struct sockaddr_in);
 	}
 #ifndef WIN32
 	else
-		len = UNIXSOCK_PATH(conn->raddr.un, portno);
+		conn->raddr_len = UNIXSOCK_PATH(conn->raddr.un, portno);
 #endif
 	
 
@@ -577,7 +575,7 @@ connectDB(PGconn *conn)
 					   errno, strerror(errno));
 		goto connect_errReturn;
 	}
-	if (connect(conn->sock, &conn->raddr.sa, len) < 0)
+	if (connect(conn->sock, &conn->raddr.sa, conn->raddr_len) < 0)
 	{
 		(void) sprintf(conn->errorMessage,
 					   "connectDB() failed: Is the postmaster running and accepting%s connections at '%s' on port '%s'?\n",
@@ -724,7 +722,7 @@ connectDB(PGconn *conn)
 	 * A ReadyForQuery message indicates that startup is successful,
 	 * but we might also get an Error message indicating failure.
 	 * (Notice messages indicating nonfatal warnings are also allowed
-	 * by the protocol.)
+	 * by the protocol, as is a BackendKeyData message.)
 	 * Easiest way to handle this is to let PQgetResult() read the messages.
 	 * We just have to fake it out about the state of the connection.
 	 */
@@ -993,6 +991,99 @@ PQreset(PGconn *conn)
 		conn->status = connectDB(conn);
 	}
 }
+
+
+/*
+ * PQrequestCancel: attempt to request cancellation of the current operation.
+ *
+ * The return value is TRUE if the cancel request was successfully
+ * dispatched, FALSE if not (in which case errorMessage is set).
+ * Note: successful dispatch is no guarantee that there will be any effect at
+ * the backend.  The application must read the operation result as usual.
+ *
+ * CAUTION: we want this routine to be safely callable from a signal handler
+ * (for example, an application might want to call it in a SIGINT handler).
+ * This means we cannot use any C library routine that might be non-reentrant.
+ * malloc/free are often non-reentrant, and anything that might call them is
+ * just as dangerous.  We avoid sprintf here for that reason.  Building up
+ * error messages with strcpy/strcat is tedious but should be quite safe.
+ */
+
+int
+PQrequestCancel(PGconn *conn)
+{
+	int			tmpsock = -1;
+	struct {
+		uint32				packetlen;
+		CancelRequestPacket	cp;
+	}			crp;
+
+	/* Check we have an open connection */
+	if (!conn)
+		return FALSE;
+
+	if (conn->sock < 0)
+	{
+		strcpy(conn->errorMessage,
+			   "PQrequestCancel() -- connection is not open\n");
+		return FALSE;
+	}
+
+	/*
+	 * We need to open a temporary connection to the postmaster.
+	 * Use the information saved by connectDB to do this with
+	 * only kernel calls.
+	 */
+	if ((tmpsock = socket(conn->raddr.sa.sa_family, SOCK_STREAM, 0)) < 0)
+	{
+		strcpy(conn->errorMessage, "PQrequestCancel() -- socket() failed: ");
+		goto cancel_errReturn;
+	}
+	if (connect(tmpsock, &conn->raddr.sa, conn->raddr_len) < 0)
+	{
+		strcpy(conn->errorMessage, "PQrequestCancel() -- connect() failed: ");
+		goto cancel_errReturn;
+	}
+	/*
+	 * We needn't set nonblocking I/O or NODELAY options here.
+	 */
+
+	/* Create and send the cancel request packet. */
+
+	crp.packetlen = htonl((uint32) sizeof(crp));
+	crp.cp.cancelRequestCode = (MsgType) htonl(CANCEL_REQUEST_CODE);
+	crp.cp.backendPID = htonl(conn->be_pid);
+	crp.cp.cancelAuthCode = htonl(conn->be_key);
+
+	if (send(tmpsock, (char*) &crp, sizeof(crp), 0) != (int) sizeof(crp))
+	{
+		strcpy(conn->errorMessage, "PQrequestCancel() -- send() failed: ");
+		goto cancel_errReturn;
+	}
+
+	/* Sent it, done */
+#ifdef WIN32
+	closesocket(tmpsock);
+#else
+	close(tmpsock);
+#endif
+
+	return TRUE;
+
+cancel_errReturn:
+	strcat(conn->errorMessage, strerror(errno));
+	strcat(conn->errorMessage, "\n");
+	if (tmpsock >= 0)
+	{
+#ifdef WIN32
+		closesocket(tmpsock);
+#else
+		close(tmpsock);
+#endif
+	}
+	return FALSE;
+}
+
 
 /*
  * PacketSend() -- send a single-packet message.
