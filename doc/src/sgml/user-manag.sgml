@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/user-manag.sgml,v 1.28 2005/02/25 02:34:56 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/user-manag.sgml,v 1.29 2005/03/25 16:38:58 tgl Exp $
 -->
 
 <chapter id="user-manag">
@@ -260,42 +260,37 @@ SELECT groname FROM pg_group;
 
   <para>
    When an object is created, it is assigned an owner. The
-   owner is the user that executed the creation statement. To change
-   the owner of a table, index, sequence, or view, use the
-   <command>ALTER TABLE</command> command. By default, only an owner
-   (or a superuser) can do anything with the object. In order to allow
+   owner is normally the user that executed the creation statement.
+   For most kinds of objects, the initial state is that only the owner
+   (or a superuser) can do anything with the object. To allow
    other users to use it, <firstterm>privileges</firstterm> must be
    granted.
-  </para>
-
-  <para>
-   There are several different privileges: <literal>SELECT</>,
+   There are several different kinds of privilege: <literal>SELECT</>,
    <literal>INSERT</>, <literal>UPDATE</>, <literal>DELETE</>,
    <literal>RULE</>, <literal>REFERENCES</>, <literal>TRIGGER</>,
    <literal>CREATE</>, <literal>TEMPORARY</>, <literal>EXECUTE</>,
-   <literal>USAGE</>, and <literal>ALL PRIVILEGES</>. For more
+   and <literal>USAGE</>. For more
    information on the different types of privileges supported by
    <productname>PostgreSQL</productname>, see the
    <xref linkend="sql-grant" endterm="sql-grant-title"> reference page.
-   The right to modify or
-   destroy an object is always the privilege of the owner only. To
-   assign privileges, the <command>GRANT</command> command is
+  </para>
+
+  <para>
+   To assign privileges, the <command>GRANT</command> command is
    used. So, if <literal>joe</literal> is an existing user, and
    <literal>accounts</literal> is an existing table, the privilege to
    update the table can be granted with
-
 <programlisting>
 GRANT UPDATE ON accounts TO joe;
 </programlisting>
-   The user executing this command must be the owner of the table. To
-   grant a privilege to a group, use
+   To grant a privilege to a group, use
 <programlisting>
 GRANT SELECT ON accounts TO GROUP staff;
 </programlisting>
-   The special <quote>user</quote> name <literal>PUBLIC</literal> can
+   The special name <literal>PUBLIC</literal> can
    be used to grant a privilege to every user on the system. Writing
    <literal>ALL</literal> in place of a specific privilege specifies that all
-   privileges will be granted.
+   privileges that apply to the object will be granted.
   </para>
 
   <para>
@@ -304,12 +299,20 @@ GRANT SELECT ON accounts TO GROUP staff;
 <programlisting>
 REVOKE ALL ON accounts FROM PUBLIC;
 </programlisting>
-   The special privileges of the table owner (i.e., the right to do
-   <command>DROP</>, <command>GRANT</>, <command>REVOKE</>, etc)
-   are always implicit in being the owner,
-   and cannot be granted or revoked.  But the table owner can choose
+  </para>
+
+  <para>
+   The special privileges of an object's owner (i.e., the right to modify
+   or destroy the object) are always implicit in being the owner,
+   and cannot be granted or revoked.  But the owner can choose
    to revoke his own ordinary privileges, for example to make a
    table read-only for himself as well as others.
+  </para>
+
+  <para>
+   An object can be assigned to a new owner with an <command>ALTER</command>
+   command of the appropriate kind for the object.  Only superusers can do
+   this.
   </para>
  </sect1>
 
