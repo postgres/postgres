@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Jun 26 00:03:19 EDT 2001
+Last updated:		Tue Jun 26 00:04:44 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -193,6 +193,11 @@ CLIENTS
 * add XML interface capability
 * Remove <=6.3 version compatibility in ODBC?
 * Fix libpq to properly handle socket failures under native MS Win32 [libpq]
+* JDBC
+	* Comprehensive test suite. This may be available already.
+	* Updateable resultSet
+	* Improved DatabaseMetaData
+	* Compatible blob support
 
 REFERENTIAL INTEGRITY
 
