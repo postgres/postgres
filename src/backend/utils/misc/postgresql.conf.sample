@@ -63,7 +63,7 @@
 #vacuum_cost_page_hit = 1	# 0-10000 credits
 #vacuum_cost_page_miss = 10	# 0-10000 credits
 #vacuum_cost_page_dirty = 20	# 0-10000 credits
-#vacuum_cost_limit = 200		# 0-10000 credits
+#vacuum_cost_limit = 200	# 0-10000 credits
 #vacuum_cost_naptime = 50	# 0-1000 milliseconds
 
 # - Background writer -
@@ -230,7 +230,7 @@
 #extra_float_digits = 0		# min -15, max 2
 #client_encoding = sql_ascii	# actually, defaults to database encoding
 
-# These settings are initialized by initdb -- they may be changed
+# These settings are initialized by initdb -- they might be changed
 #lc_messages = 'C'		# locale for system error message strings
 #lc_monetary = 'C'		# locale for monetary formatting
 #lc_numeric = 'C'		# locale for number formatting
