@@ -6,7 +6,7 @@
 # programming.  'make install-all-headers' installs the whole contents
 # of src/include.
 #
-# $Header: /cvsroot/pgsql/src/include/Makefile,v 1.10 2001/08/28 14:20:28 petere Exp $
+# $Header: /cvsroot/pgsql/src/include/Makefile,v 1.11 2003/11/25 19:09:02 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -26,8 +26,10 @@ install: all installdirs remove-old-headers
 	$(INSTALL_DATA) $(srcdir)/libpq/libpq-fs.h $(DESTDIR)$(includedir)/libpq
 	$(INSTALL_DATA) pg_config.h    $(DESTDIR)$(includedir)
 	$(INSTALL_DATA) pg_config_os.h $(DESTDIR)$(includedir)
+	$(INSTALL_DATA) $(srcdir)/pg_config_manual.h $(DESTDIR)$(includedir)
 # These headers are needed by the not-so-public headers of the interfaces.
 	$(INSTALL_DATA) $(srcdir)/c.h            $(DESTDIR)$(includedir_internal)
+	$(INSTALL_DATA) $(srcdir)/port.h         $(DESTDIR)$(includedir_internal)
 	$(INSTALL_DATA) $(srcdir)/postgres_fe.h  $(DESTDIR)$(includedir_internal)
 	$(INSTALL_DATA) $(srcdir)/libpq/pqcomm.h $(DESTDIR)$(includedir_internal)/libpq
 	$(INSTALL_DATA) $(srcdir)/lib/dllist.h   $(DESTDIR)$(includedir_internal)/lib
