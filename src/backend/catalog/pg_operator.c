@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.36 1999/05/10 00:44:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.37 1999/05/25 16:08:09 momjian Exp $
  *
  * NOTES
  *	  these routines moved here from commands/define.c and somewhat cleaned up.
@@ -36,15 +36,15 @@
 #endif
 
 static Oid OperatorGetWithOpenRelation(Relation pg_operator_desc,
-									   const char *operatorName,
-									   Oid leftObjectId,
-									   Oid rightObjectId,
-									   bool *defined);
+							const char *operatorName,
+							Oid leftObjectId,
+							Oid rightObjectId,
+							bool *defined);
 
 static Oid OperatorGet(char *operatorName,
-					   char *leftTypeName,
-					   char *rightTypeName,
-					   bool *defined);
+			char *leftTypeName,
+			char *rightTypeName,
+			bool *defined);
 
 static Oid OperatorShellMakeWithOpenRelation(Relation pg_operator_desc,
 								  char *operatorName,
@@ -135,6 +135,7 @@ OperatorGetWithOpenRelation(Relation pg_operator_desc,
 	if (HeapTupleIsValid(tup))
 	{
 		regproc		oprcode = ((Form_pg_operator) GETSTRUCT(tup))->oprcode;
+
 		operatorObjectId = tup->t_data->t_oid;
 		*defined = RegProcedureIsValid(oprcode);
 	}
@@ -259,7 +260,7 @@ OperatorShellMakeWithOpenRelation(Relation pg_operator_desc,
 
 	/* ----------------
 	 *	initialize *values with the operator name and input data types.
-	 *  Note that oprcode is set to InvalidOid, indicating it's a shell.
+	 *	Note that oprcode is set to InvalidOid, indicating it's a shell.
 	 * ----------------
 	 */
 	i = 0;
@@ -356,9 +357,9 @@ OperatorShellMake(char *operatorName,
 	 * ----------------
 	 */
 	operatorObjectId = OperatorShellMakeWithOpenRelation(pg_operator_desc,
-										  operatorName,
-										  leftObjectId,
-										  rightObjectId);
+														 operatorName,
+														 leftObjectId,
+														 rightObjectId);
 	/* ----------------
 	 *	close the operator relation and return the oid.
 	 * ----------------
@@ -506,8 +507,9 @@ OperatorDef(char *operatorName,
 		elog(ERROR, "OperatorDef: operator \"%s\" already defined",
 			 operatorName);
 
-	/* At this point, if operatorObjectId is not InvalidOid then
-	 * we are filling in a previously-created shell.
+	/*
+	 * At this point, if operatorObjectId is not InvalidOid then we are
+	 * filling in a previously-created shell.
 	 */
 
 	/* ----------------
@@ -580,7 +582,7 @@ OperatorDef(char *operatorName,
 
 	values[Anum_pg_operator_oprcode - 1] = ObjectIdGetDatum(tup->t_data->t_oid);
 	values[Anum_pg_operator_oprresult - 1] = ObjectIdGetDatum(((Form_pg_proc)
-						  GETSTRUCT(tup))->prorettype);
+											GETSTRUCT(tup))->prorettype);
 
 	/* ----------------
 	 *	find restriction
@@ -648,7 +650,8 @@ OperatorDef(char *operatorName,
 	values[i++] = ObjectIdGetDatum(leftTypeId);
 	values[i++] = ObjectIdGetDatum(rightTypeId);
 
-	++i;						/* Skip "oprresult", it was filled in above */
+	++i;						/* Skip "oprresult", it was filled in
+								 * above */
 
 	/*
 	 * Set up the other operators.	If they do not currently exist, create
@@ -663,16 +666,16 @@ OperatorDef(char *operatorName,
 	{
 		if (name[j])
 		{
-			char   *otherLeftTypeName = NULL;
-			char   *otherRightTypeName = NULL;
-			Oid		otherLeftTypeId = InvalidOid;
-			Oid		otherRightTypeId = InvalidOid;
-			Oid		other_oid = InvalidOid;
-			bool	otherDefined = false;
+			char	   *otherLeftTypeName = NULL;
+			char	   *otherRightTypeName = NULL;
+			Oid			otherLeftTypeId = InvalidOid;
+			Oid			otherRightTypeId = InvalidOid;
+			Oid			other_oid = InvalidOid;
+			bool		otherDefined = false;
 
 			switch (j)
 			{
-				case 0:			/* commutator has reversed arg types */
+				case 0: /* commutator has reversed arg types */
 					otherLeftTypeName = rightTypeName;
 					otherRightTypeName = leftTypeName;
 					otherLeftTypeId = rightTypeId;
@@ -683,7 +686,7 @@ OperatorDef(char *operatorName,
 											&otherDefined);
 					commutatorId = other_oid;
 					break;
-				case 1:			/* negator has same arg types */
+				case 1: /* negator has same arg types */
 					otherLeftTypeName = leftTypeName;
 					otherRightTypeName = rightTypeName;
 					otherLeftTypeId = leftTypeId;
@@ -694,7 +697,7 @@ OperatorDef(char *operatorName,
 											&otherDefined);
 					negatorId = other_oid;
 					break;
-				case 2:			/* left sort op takes left-side data type */
+				case 2: /* left sort op takes left-side data type */
 					otherLeftTypeName = leftTypeName;
 					otherRightTypeName = leftTypeName;
 					otherLeftTypeId = leftTypeId;
@@ -704,7 +707,8 @@ OperatorDef(char *operatorName,
 											otherRightTypeName,
 											&otherDefined);
 					break;
-				case 3:			/* right sort op takes right-side data type */
+				case 3: /* right sort op takes right-side data
+								 * type */
 					otherLeftTypeName = rightTypeName;
 					otherRightTypeName = rightTypeName;
 					otherLeftTypeId = rightTypeId;
@@ -737,8 +741,10 @@ OperatorDef(char *operatorName,
 			}
 			else
 			{
-				/* self-linkage to this operator; will fix below.
-				 * Note that only self-linkage for commutation makes sense.
+
+				/*
+				 * self-linkage to this operator; will fix below. Note
+				 * that only self-linkage for commutation makes sense.
 				 */
 				if (j != 0)
 					elog(ERROR,
@@ -804,15 +810,14 @@ OperatorDef(char *operatorName,
 
 	/*
 	 * If a commutator and/or negator link is provided, update the other
-	 * operator(s) to point at this one, if they don't already have a link.
-	 * This supports an alternate style of operator definition wherein the
-	 * user first defines one operator without giving negator or
-	 * commutator, then defines the other operator of the pair with the
-	 * proper commutator or negator attribute.  That style doesn't require
-	 * creation of a shell, and it's the only style that worked right before
-	 * Postgres version 6.5.
-	 * This code also takes care of the situation where the new operator
-	 * is its own commutator.
+	 * operator(s) to point at this one, if they don't already have a
+	 * link. This supports an alternate style of operator definition
+	 * wherein the user first defines one operator without giving negator
+	 * or commutator, then defines the other operator of the pair with the
+	 * proper commutator or negator attribute.	That style doesn't require
+	 * creation of a shell, and it's the only style that worked right
+	 * before Postgres version 6.5. This code also takes care of the
+	 * situation where the new operator is its own commutator.
 	 */
 	if (selfCommutator)
 		commutatorId = operatorObjectId;
@@ -869,7 +874,8 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 
 	tup = heap_getnext(pg_operator_scan, 0);
 
-	/* if the commutator and negator are the same operator, do one update.
+	/*
+	 * if the commutator and negator are the same operator, do one update.
 	 * XXX this is probably useless code --- I doubt it ever makes sense
 	 * for commutator and negator to be the same thing...
 	 */
@@ -1008,7 +1014,7 @@ OperatorCreate(char *operatorName,
 	if (!leftTypeName && !rightTypeName)
 		elog(ERROR, "OperatorCreate: at least one of leftarg or rightarg must be defined");
 
-	if (! (leftTypeName && rightTypeName))
+	if (!(leftTypeName && rightTypeName))
 	{
 		/* If it's not a binary op, these things mustn't be set: */
 		if (commutatorName)

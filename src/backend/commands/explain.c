@@ -4,7 +4,7 @@
  *
  * Copyright (c) 1994-5, Regents of the University of California
  *
- *	  $Id: explain.c,v 1.36 1999/05/09 23:31:45 tgl Exp $
+ *	  $Id: explain.c,v 1.37 1999/05/25 16:08:23 momjian Exp $
  *
  */
 #include <stdio.h>
@@ -34,7 +34,7 @@ typedef struct ExplainState
 } ExplainState;
 
 static char *Explain_PlanToString(Plan *plan, ExplainState *es);
-static void printLongNotice(const char * header, const char * message);
+static void printLongNotice(const char *header, const char *message);
 static void ExplainOneQuery(Query *query, bool verbose, CommandDest dest);
 
 
@@ -46,8 +46,8 @@ static void ExplainOneQuery(Query *query, bool verbose, CommandDest dest);
 void
 ExplainQuery(Query *query, bool verbose, CommandDest dest)
 {
-	List	*rewritten;
-	List	*l;
+	List	   *rewritten;
+	List	   *l;
 
 	/* rewriter and planner may not work in aborted state? */
 	if (IsAbortedTransactionBlockState())
@@ -145,10 +145,10 @@ ExplainOneQuery(Query *query, bool verbose, CommandDest dest)
 static void
 explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 {
-	List			*l;
+	List	   *l;
 	Relation	relation;
-	char			*pname;
-	int				i;
+	char	   *pname;
+	int			i;
 
 	if (plan == NULL)
 	{
@@ -208,15 +208,13 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 		case T_IndexScan:
 			appendStringInfo(str, " using ");
 			i = 0;
-			foreach (l, ((IndexScan *) plan)->indxid)
+			foreach(l, ((IndexScan *) plan)->indxid)
 			{
 				relation = RelationIdCacheGetRelation((int) lfirst(l));
 				if (++i > 1)
-				{
 					appendStringInfo(str, ", ");
-				}
-				appendStringInfo(str, 
-					stringStringInfo((RelationGetRelationName(relation))->data));
+				appendStringInfo(str,
+								 stringStringInfo((RelationGetRelationName(relation))->data));
 			}
 		case T_SeqScan:
 			if (((Scan *) plan)->scanrelid > 0)
@@ -227,7 +225,7 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 				if (strcmp(rte->refname, rte->relname) != 0)
 				{
 					appendStringInfo(str, "%s ",
-						stringStringInfo(rte->relname));
+									 stringStringInfo(rte->relname));
 				}
 				appendStringInfo(str, stringStringInfo(rte->refname));
 			}
@@ -238,7 +236,7 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 	if (es->printCost)
 	{
 		appendStringInfo(str, "  (cost=%.2f rows=%d width=%d)",
-				plan->cost, plan->plan_size, plan->plan_width);
+						 plan->cost, plan->plan_size, plan->plan_width);
 	}
 	appendStringInfo(str, "\n");
 
@@ -248,18 +246,14 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 		List	   *saved_rtable = es->rtable;
 		List	   *lst;
 
-		for (i = 0; i < indent; i++) 
-		{
+		for (i = 0; i < indent; i++)
 			appendStringInfo(str, "  ");
-		}
 		appendStringInfo(str, "  InitPlan\n");
 		foreach(lst, plan->initPlan)
 		{
 			es->rtable = ((SubPlan *) lfirst(lst))->rtable;
 			for (i = 0; i < indent; i++)
-			{
 				appendStringInfo(str, "  ");
-			}
 			appendStringInfo(str, "    ->  ");
 			explain_outNode(str, ((SubPlan *) lfirst(lst))->plan, indent + 2, es);
 		}
@@ -270,9 +264,7 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 	if (outerPlan(plan))
 	{
 		for (i = 0; i < indent; i++)
-		{
 			appendStringInfo(str, "  ");
-		}
 		appendStringInfo(str, "  ->  ");
 		explain_outNode(str, outerPlan(plan), indent + 3, es);
 	}
@@ -281,9 +273,7 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 	if (innerPlan(plan))
 	{
 		for (i = 0; i < indent; i++)
-		{
 			appendStringInfo(str, "  ");
-		}
 		appendStringInfo(str, "  ->  ");
 		explain_outNode(str, innerPlan(plan), indent + 3, es);
 	}
@@ -295,17 +285,13 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 		List	   *lst;
 
 		for (i = 0; i < indent; i++)
-		{
 			appendStringInfo(str, "  ");
-		}
 		appendStringInfo(str, "  SubPlan\n");
 		foreach(lst, plan->subPlan)
 		{
 			es->rtable = ((SubPlan *) lfirst(lst))->rtable;
 			for (i = 0; i < indent; i++)
-			{
 				appendStringInfo(str, "  ");
-			}
 			appendStringInfo(str, "    ->  ");
 			explain_outNode(str, ((SubPlan *) lfirst(lst))->plan, indent + 4, es);
 		}
@@ -336,9 +322,7 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 				es->rtable = nth(whichplan, appendplan->unionrtables);
 
 			for (i = 0; i < indent; i++)
-			{
 				appendStringInfo(str, "  ");
-			}
 			appendStringInfo(str, "    ->  ");
 
 			explain_outNode(str, subnode, indent + 4, es);
@@ -353,7 +337,7 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 static char *
 Explain_PlanToString(Plan *plan, ExplainState *es)
 {
-	StringInfoData	str;
+	StringInfoData str;
 
 	/* see stringinfo.h for an explanation of this maneuver */
 	initStringInfo(&str);
@@ -367,9 +351,9 @@ Explain_PlanToString(Plan *plan, ExplainState *es)
  * This is a crock ... there shouldn't be an upper limit to what you can elog().
  */
 static void
-printLongNotice(const char * header, const char * message)
+printLongNotice(const char *header, const char *message)
 {
-	int		len = strlen(message);
+	int			len = strlen(message);
 
 	elog(NOTICE, "%.20s%.*s", header, ELOG_MAXLEN - 64, message);
 	len -= ELOG_MAXLEN - 64;

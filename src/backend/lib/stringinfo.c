@@ -8,7 +8,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	  $Id: stringinfo.c,v 1.15 1999/04/25 03:19:25 tgl Exp $
+ *	  $Id: stringinfo.c,v 1.16 1999/05/25 16:08:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,17 +67,18 @@ initStringInfo(StringInfo str)
 static void
 enlargeStringInfo(StringInfo str, int needed)
 {
-	int		newlen;
-	char   *newdata;
+	int			newlen;
+	char	   *newdata;
 
 	needed += str->len + 1;		/* total space required now */
 	if (needed <= str->maxlen)
 		return;					/* got enough space already */
 
 	/*
-	 * We don't want to allocate just a little more space with each append;
-	 * for efficiency, double the buffer size each time it overflows.
-	 * Actually, we might need to more than double it if 'needed' is big...
+	 * We don't want to allocate just a little more space with each
+	 * append; for efficiency, double the buffer size each time it
+	 * overflows. Actually, we might need to more than double it if
+	 * 'needed' is big...
 	 */
 	newlen = 2 * str->maxlen;
 	while (needed > newlen)
@@ -86,7 +87,7 @@ enlargeStringInfo(StringInfo str, int needed)
 	newdata = palloc(newlen);
 	if (newdata == NULL)
 		elog(ERROR,
-			 "enlargeStringInfo: Out of memory (%d bytes requested)", newlen);
+		"enlargeStringInfo: Out of memory (%d bytes requested)", newlen);
 
 	/* OK, transfer data into new buffer, and release old buffer */
 	memcpy(newdata, str->data, str->len + 1);
@@ -107,11 +108,11 @@ enlargeStringInfo(StringInfo str, int needed)
  * generated in a single call (not on the total string length).
  */
 void
-appendStringInfo(StringInfo str, const char *fmt, ...)
+appendStringInfo(StringInfo str, const char *fmt,...)
 {
-	va_list	args;
-	char	buffer[1024];
-	int		buflen;
+	va_list		args;
+	char		buffer[1024];
+	int			buflen;
 
 	Assert(str != NULL);
 
@@ -164,7 +165,8 @@ appendBinaryStringInfo(StringInfo str, const char *data, int datalen)
 	memcpy(str->data + str->len, data, datalen);
 	str->len += datalen;
 
-	/* Keep a trailing null in place, even though it's probably useless
+	/*
+	 * Keep a trailing null in place, even though it's probably useless
 	 * for binary data...
 	 */
 	str->data[str->len] = '\0';

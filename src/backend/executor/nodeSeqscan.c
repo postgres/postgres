@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSeqscan.c,v 1.17 1999/02/13 23:15:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSeqscan.c,v 1.18 1999/05/25 16:08:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,11 +68,11 @@ SeqNext(SeqScan *node)
 
 	/*
 	 * Check if we are evaluating PlanQual for tuple of this relation.
-	 * Additional checking is not good, but no other way for now.
-	 * We could introduce new nodes for this case and handle
-	 * SeqScan --> NewNode switching in Init/ReScan plan...
+	 * Additional checking is not good, but no other way for now. We could
+	 * introduce new nodes for this case and handle SeqScan --> NewNode
+	 * switching in Init/ReScan plan...
 	 */
-	if (estate->es_evTuple != NULL && 
+	if (estate->es_evTuple != NULL &&
 		estate->es_evTuple[node->scanrelid - 1] != NULL)
 	{
 		slot->ttc_buffer = InvalidBuffer;
@@ -83,10 +83,11 @@ SeqNext(SeqScan *node)
 			return (slot);
 		}
 		slot->val = estate->es_evTuple[node->scanrelid - 1];
+
 		/*
-		 * Note that unlike IndexScan, SeqScan never use keys
-		 * in heap_beginscan (and this is very bad) - so, here
-		 * we have not check are keys ok or not.
+		 * Note that unlike IndexScan, SeqScan never use keys in
+		 * heap_beginscan (and this is very bad) - so, here we have not
+		 * check are keys ok or not.
 		 */
 		/* Flag for the next call that no more tuples */
 		estate->es_evTupleNull[node->scanrelid - 1] = true;
@@ -401,10 +402,11 @@ ExecSeqReScan(SeqScan *node, ExprContext *exprCtxt, Plan *parent)
 		outerPlan = outerPlan((Plan *) node);
 		ExecReScan(outerPlan, exprCtxt, parent);
 	}
-	else	/* otherwise, we are scanning a relation */
+	else
+/* otherwise, we are scanning a relation */
 	{
 		/* If this is re-scanning of PlanQual ... */
-		if (estate->es_evTuple != NULL && 
+		if (estate->es_evTuple != NULL &&
 			estate->es_evTuple[node->scanrelid - 1] != NULL)
 		{
 			estate->es_evTupleNull[node->scanrelid - 1] = false;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.46 1999/05/12 15:01:39 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.47 1999/05/25 16:09:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,13 +35,13 @@
 
 static void set_join_tlist_references(Join *join);
 static void set_nonamescan_tlist_references(SeqScan *nonamescan);
-static void set_noname_tlist_references(Noname *noname);
+static void set_noname_tlist_references(Noname * noname);
 static Node *replace_clause_joinvar_refs(Node *clause,
-										 List *outer_tlist,
-										 List *inner_tlist);
+							List *outer_tlist,
+							List *inner_tlist);
 static Var *replace_joinvar_refs(Var *var,
-								 List *outer_tlist,
-								 List *inner_tlist);
+					 List *outer_tlist,
+					 List *inner_tlist);
 static List *tlist_noname_references(Oid nonameid, List *tlist);
 static bool OperandIsInner(Node *opnd, int inner_relid);
 static List *pull_agg_clause(Node *clause);
@@ -114,11 +114,12 @@ set_join_tlist_references(Join *join)
 	foreach(entry, qptlist)
 	{
 		TargetEntry *xtl = (TargetEntry *) lfirst(entry);
-		Node *joinvar = replace_clause_joinvar_refs(xtl->expr,
-													outer_tlist,
-													inner_tlist);
+		Node	   *joinvar = replace_clause_joinvar_refs(xtl->expr,
+														  outer_tlist,
+														  inner_tlist);
+
 		new_join_targetlist = lappend(new_join_targetlist,
-									  makeTargetEntry(xtl->resdom, joinvar));
+								  makeTargetEntry(xtl->resdom, joinvar));
 	}
 
 	((Plan *) join)->targetlist = new_join_targetlist;
@@ -144,7 +145,7 @@ set_nonamescan_tlist_references(SeqScan *nonamescan)
 	Noname	   *noname = (Noname *) ((Plan *) nonamescan)->lefttree;
 
 	((Plan *) nonamescan)->targetlist = tlist_noname_references(noname->nonameid,
-							  ((Plan *) nonamescan)->targetlist);
+									  ((Plan *) nonamescan)->targetlist);
 	set_noname_tlist_references(noname);
 }
 
@@ -160,7 +161,7 @@ set_nonamescan_tlist_references(SeqScan *nonamescan)
  *
  */
 static void
-set_noname_tlist_references(Noname *noname)
+set_noname_tlist_references(Noname * noname)
 {
 	Plan	   *source = ((Plan *) noname)->lefttree;
 
@@ -168,7 +169,7 @@ set_noname_tlist_references(Noname *noname)
 	{
 		set_tlist_references(source);
 		((Plan *) noname)->targetlist = copy_vars(((Plan *) noname)->targetlist,
-					  (source)->targetlist);
+												  (source)->targetlist);
 	}
 	else
 		elog(ERROR, "calling set_noname_tlist_references with empty lefttree");
@@ -235,9 +236,9 @@ index_outerjoin_references(List *inner_indxqual,
 		if (OperandIsInner((Node *) get_rightop(clause), inner_relid))
 		{
 			Var		   *joinvar = (Var *)
-				replace_clause_joinvar_refs((Node *) get_leftop(clause),
-											outer_tlist,
-											NIL);
+			replace_clause_joinvar_refs((Node *) get_leftop(clause),
+										outer_tlist,
+										NIL);
 
 			temp = make_opclause(replace_opid((Oper *) ((Expr *) clause)->oper),
 								 joinvar,
@@ -248,9 +249,9 @@ index_outerjoin_references(List *inner_indxqual,
 		{
 			/* inner scan on left */
 			Var		   *joinvar = (Var *)
-				replace_clause_joinvar_refs((Node *) get_rightop(clause),
-											outer_tlist,
-											NIL);
+			replace_clause_joinvar_refs((Node *) get_rightop(clause),
+										outer_tlist,
+										NIL);
 
 			temp = make_opclause(replace_opid((Oper *) ((Expr *) clause)->oper),
 								 get_leftop(clause),
@@ -290,8 +291,9 @@ replace_clause_joinvar_refs(Node *clause,
 		return NULL;
 	if (IsA(clause, Var))
 	{
-		Var	   *temp = replace_joinvar_refs((Var *) clause,
-											outer_tlist, inner_tlist);
+		Var		   *temp = replace_joinvar_refs((Var *) clause,
+												outer_tlist, inner_tlist);
+
 		if (temp != NULL)
 			return (Node *) temp;
 		else
@@ -344,32 +346,32 @@ replace_clause_joinvar_refs(Node *clause,
 	else if (is_funcclause(clause))
 	{
 		return (Node *) make_funcclause(
-			(Func *) ((Expr *) clause)->oper,
-			(List *) replace_clause_joinvar_refs(
-				(Node *) ((Expr *) clause)->args,
-				outer_tlist,
-				inner_tlist));
+										(Func *) ((Expr *) clause)->oper,
+									(List *) replace_clause_joinvar_refs(
+										(Node *) ((Expr *) clause)->args,
+															 outer_tlist,
+														   inner_tlist));
 	}
 	else if (not_clause(clause))
 	{
 		return (Node *) make_notclause((Expr *)
-				replace_clause_joinvar_refs(
-					(Node *) get_notclausearg((Expr *) clause),
-					outer_tlist,
-					inner_tlist));
+									   replace_clause_joinvar_refs(
+							  (Node *) get_notclausearg((Expr *) clause),
+															 outer_tlist,
+														   inner_tlist));
 	}
 	else if (is_opclause(clause))
 	{
 		return (Node *) make_opclause(
-			replace_opid((Oper *) ((Expr *) clause)->oper),
-			(Var *) replace_clause_joinvar_refs(
-				(Node *) get_leftop((Expr *) clause),
-				outer_tlist,
-				inner_tlist),
-			(Var *) replace_clause_joinvar_refs(
-				(Node *) get_rightop((Expr *) clause),
-				outer_tlist,
-				inner_tlist));
+						  replace_opid((Oper *) ((Expr *) clause)->oper),
+									  (Var *) replace_clause_joinvar_refs(
+									(Node *) get_leftop((Expr *) clause),
+															 outer_tlist,
+															inner_tlist),
+									  (Var *) replace_clause_joinvar_refs(
+								   (Node *) get_rightop((Expr *) clause),
+															 outer_tlist,
+														   inner_tlist));
 	}
 	else if (IsA(clause, List))
 	{
@@ -379,25 +381,26 @@ replace_clause_joinvar_refs(Node *clause,
 		foreach(subclause, (List *) clause)
 		{
 			t_list = lappend(t_list,
-							 replace_clause_joinvar_refs(lfirst(subclause),
-														 outer_tlist,
-														 inner_tlist));
+						   replace_clause_joinvar_refs(lfirst(subclause),
+													   outer_tlist,
+													   inner_tlist));
 		}
 		return (Node *) t_list;
 	}
 	else if (is_subplan(clause))
 	{
 		/* This is a tad wasteful of space, but it works... */
-		Expr *newclause = (Expr *) copyObject(clause);
+		Expr	   *newclause = (Expr *) copyObject(clause);
+
 		newclause->args = (List *)
 			replace_clause_joinvar_refs((Node *) newclause->args,
 										outer_tlist,
 										inner_tlist);
 		((SubPlan *) newclause->oper)->sublink->oper = (List *)
 			replace_clause_joinvar_refs(
-				(Node *) ((SubPlan *) newclause->oper)->sublink->oper,
-				outer_tlist,
-				inner_tlist);
+				   (Node *) ((SubPlan *) newclause->oper)->sublink->oper,
+										outer_tlist,
+										inner_tlist);
 		return (Node *) newclause;
 	}
 	else if (IsA(clause, CaseExpr))
@@ -406,7 +409,8 @@ replace_clause_joinvar_refs(Node *clause,
 		CaseExpr   *newnode = makeNode(CaseExpr);
 
 		newnode->casetype = oldnode->casetype;
-		newnode->arg = oldnode->arg; /* XXX should always be null anyway ... */
+		newnode->arg = oldnode->arg;	/* XXX should always be null
+										 * anyway ... */
 		newnode->args = (List *)
 			replace_clause_joinvar_refs((Node *) oldnode->args,
 										outer_tlist,
@@ -494,7 +498,7 @@ replace_joinvar_refs(Var *var, List *outer_tlist, List *inner_tlist)
  */
 static List *
 tlist_noname_references(Oid nonameid,
-					  List *tlist)
+						List *tlist)
 {
 	List	   *t_list = NIL;
 	TargetEntry *noname = (TargetEntry *) NULL;
@@ -512,13 +516,13 @@ tlist_noname_references(Oid nonameid,
 			oattno = 0;
 
 		noname = makeTargetEntry(xtl->resdom,
-							   (Node *) makeVar(nonameid,
-												xtl->resdom->resno,
-												xtl->resdom->restype,
-												xtl->resdom->restypmod,
-												0,
-												nonameid,
-												oattno));
+								 (Node *) makeVar(nonameid,
+												  xtl->resdom->resno,
+												  xtl->resdom->restype,
+												  xtl->resdom->restypmod,
+												  0,
+												  nonameid,
+												  oattno));
 
 		t_list = lappend(t_list, noname);
 	}
@@ -573,11 +577,12 @@ replace_tlist_with_subplan_refs(List *tlist,
 								Index subvarno,
 								List *subplanTargetList)
 {
-	List   *t;
+	List	   *t;
 
 	foreach(t, tlist)
 	{
 		TargetEntry *entry = (TargetEntry *) lfirst(t);
+
 		replace_vars_with_subplan_refs((Node *) get_expr(entry),
 									   subvarno, subplanTargetList);
 	}
@@ -609,19 +614,20 @@ replace_vars_with_subplan_refs(Node *clause,
 		return;
 	if (IsA(clause, Var))
 	{
+
 		/*
 		 * Ha! A Var node!
 		 *
 		 * It could be that this varnode has been created by make_groupplan
-		 * and is already set up to reference the subplan target list.
-		 * We recognize that case by varno = 1, varnoold = -1,
-		 * varattno = varoattno, and varlevelsup = 0.  (Probably ought to
-		 * have an explicit flag, but this should do for now.)
+		 * and is already set up to reference the subplan target list. We
+		 * recognize that case by varno = 1, varnoold = -1, varattno =
+		 * varoattno, and varlevelsup = 0.	(Probably ought to have an
+		 * explicit flag, but this should do for now.)
 		 */
-		Var			*var = (Var *) clause;
+		Var		   *var = (Var *) clause;
 		TargetEntry *subplanVar;
 
-		if (var->varno == (Index) 1 && 
+		if (var->varno == (Index) 1 &&
 			var->varnoold == ((Index) -1) &&
 			var->varattno == var->varoattno &&
 			var->varlevelsup == 0)
@@ -629,7 +635,7 @@ replace_vars_with_subplan_refs(Node *clause,
 
 		/* Otherwise it had better be in the subplan list. */
 		subplanVar = match_varid(var, subplanTargetList);
-		if (! subplanVar)
+		if (!subplanVar)
 			elog(ERROR, "replace_vars_with_subplan_refs: variable not in target list");
 
 		/*
@@ -656,10 +662,11 @@ replace_vars_with_subplan_refs(Node *clause,
 	}
 	else if (IsA(clause, Expr))
 	{
+
 		/*
-		 * Recursively scan the arguments of an expression.
-		 * NOTE: this must come after is_subplan() case since
-		 * subplan is a kind of Expr node.
+		 * Recursively scan the arguments of an expression. NOTE: this
+		 * must come after is_subplan() case since subplan is a kind of
+		 * Expr node.
 		 */
 		foreach(t, ((Expr *) clause)->args)
 			replace_vars_with_subplan_refs(lfirst(t),
@@ -671,6 +678,7 @@ replace_vars_with_subplan_refs(Node *clause,
 	else if (IsA(clause, ArrayRef))
 	{
 		ArrayRef   *aref = (ArrayRef *) clause;
+
 		foreach(t, aref->refupperindexpr)
 			replace_vars_with_subplan_refs(lfirst(t),
 										   subvarno, subplanTargetList);
@@ -687,6 +695,7 @@ replace_vars_with_subplan_refs(Node *clause,
 		foreach(t, ((CaseExpr *) clause)->args)
 		{
 			CaseWhen   *when = (CaseWhen *) lfirst(t);
+
 			replace_vars_with_subplan_refs(when->expr,
 										   subvarno, subplanTargetList);
 			replace_vars_with_subplan_refs(when->result,
@@ -767,15 +776,16 @@ set_agg_tlist_references(Agg *aggNode)
 	all_quals_ok = true;
 	foreach(ql, aggNode->plan.qual)
 	{
-		Node *qual = lfirst(ql);
-		List *qualaggs;
+		Node	   *qual = lfirst(ql);
+		List	   *qualaggs;
 
 		replace_vars_with_subplan_refs(qual,
 									   (Index) 0,
 									   subplanTargetList);
 		qualaggs = pull_agg_clause(qual);
 		if (qualaggs == NIL)
-			all_quals_ok = false; /* this qual clause has no agg functions! */
+			all_quals_ok = false;		/* this qual clause has no agg
+										 * functions! */
 		else
 			aggNode->aggs = nconc(qualaggs, aggNode->aggs);
 	}
@@ -800,7 +810,7 @@ pull_agg_clause(Node *clause)
 		return pull_agg_clause(((Iter *) clause)->iterexpr);
 	else if (is_subplan(clause))
 	{
-		SubLink *sublink = ((SubPlan *) ((Expr *) clause)->oper)->sublink;
+		SubLink    *sublink = ((SubPlan *) ((Expr *) clause)->oper)->sublink;
 
 		/*
 		 * Only the lefthand side of the sublink should be checked for
@@ -814,10 +824,11 @@ pull_agg_clause(Node *clause)
 	}
 	else if (IsA(clause, Expr))
 	{
+
 		/*
-		 * Recursively scan the arguments of an expression.
-		 * NOTE: this must come after is_subplan() case since
-		 * subplan is a kind of Expr node.
+		 * Recursively scan the arguments of an expression. NOTE: this
+		 * must come after is_subplan() case since subplan is a kind of
+		 * Expr node.
 		 */
 		foreach(t, ((Expr *) clause)->args)
 			agg_list = nconc(pull_agg_clause(lfirst(t)), agg_list);
@@ -830,6 +841,7 @@ pull_agg_clause(Node *clause)
 	else if (IsA(clause, ArrayRef))
 	{
 		ArrayRef   *aref = (ArrayRef *) clause;
+
 		foreach(t, aref->refupperindexpr)
 			agg_list = nconc(pull_agg_clause(lfirst(t)), agg_list);
 		foreach(t, aref->reflowerindexpr)
@@ -842,6 +854,7 @@ pull_agg_clause(Node *clause)
 		foreach(t, ((CaseExpr *) clause)->args)
 		{
 			CaseWhen   *when = (CaseWhen *) lfirst(t);
+
 			agg_list = nconc(agg_list, pull_agg_clause(when->expr));
 			agg_list = nconc(agg_list, pull_agg_clause(when->result));
 		}
@@ -951,7 +964,7 @@ del_agg_clause(Node *clause)
  * GROUP BY clauses and checks for subplans in the havingQual that are being
  * passed ungrouped variables as parameters.  In other contexts, ungrouped
  * vars in the havingQual will be detected by the parser (see parse_agg.c,
- * exprIsAggOrGroupCol()).  But that routine currently does not check subplans,
+ * exprIsAggOrGroupCol()).	But that routine currently does not check subplans,
  * because the necessary info is not computed until the planner runs.
  * This ought to be cleaned up someday.
  *
@@ -962,7 +975,7 @@ del_agg_clause(Node *clause)
 
 void
 check_having_for_ungrouped_vars(Node *clause, List *groupClause,
-						List *targetList)
+								List *targetList)
 {
 	List	   *t;
 
@@ -971,8 +984,10 @@ check_having_for_ungrouped_vars(Node *clause, List *groupClause,
 
 	if (IsA(clause, Var))
 	{
-		/* Ignore vars elsewhere in the having clause, since the
-		 * parser already checked 'em.
+
+		/*
+		 * Ignore vars elsewhere in the having clause, since the parser
+		 * already checked 'em.
 		 */
 	}
 	else if (single_node(clause))
@@ -986,20 +1001,21 @@ check_having_for_ungrouped_vars(Node *clause, List *groupClause,
 	}
 	else if (is_subplan(clause))
 	{
+
 		/*
-		 * The args list of the subplan node represents attributes from outside
-		 * passed into the sublink.
+		 * The args list of the subplan node represents attributes from
+		 * outside passed into the sublink.
 		 */
 		foreach(t, ((Expr *) clause)->args)
 		{
-			bool contained_in_group_clause = false;
+			bool		contained_in_group_clause = false;
 			List	   *gl;
 
 			foreach(gl, groupClause)
 			{
 				if (var_equal(lfirst(t),
-							  get_groupclause_expr((GroupClause *) 
-							  					lfirst(gl), targetList)))
+							  get_groupclause_expr((GroupClause *)
+												lfirst(gl), targetList)))
 				{
 					contained_in_group_clause = true;
 					break;
@@ -1012,23 +1028,25 @@ check_having_for_ungrouped_vars(Node *clause, List *groupClause,
 	}
 	else if (IsA(clause, Expr))
 	{
+
 		/*
-		 * Recursively scan the arguments of an expression.
-		 * NOTE: this must come after is_subplan() case since
-		 * subplan is a kind of Expr node.
+		 * Recursively scan the arguments of an expression. NOTE: this
+		 * must come after is_subplan() case since subplan is a kind of
+		 * Expr node.
 		 */
 		foreach(t, ((Expr *) clause)->args)
 			check_having_for_ungrouped_vars(lfirst(t), groupClause,
-														targetList);
+											targetList);
 	}
 	else if (IsA(clause, List))
 	{
+
 		/*
 		 * Recursively scan AND subclauses (see NOTE above).
 		 */
 		foreach(t, ((List *) clause))
 			check_having_for_ungrouped_vars(lfirst(t), groupClause,
-														targetList);
+											targetList);
 	}
 	else if (IsA(clause, Aggref))
 	{
@@ -1045,24 +1063,25 @@ check_having_for_ungrouped_vars(Node *clause, List *groupClause,
 		 */
 		foreach(t, aref->refupperindexpr)
 			check_having_for_ungrouped_vars(lfirst(t), groupClause,
-														targetList);
+											targetList);
 		foreach(t, aref->reflowerindexpr)
 			check_having_for_ungrouped_vars(lfirst(t), groupClause,
-														targetList);
+											targetList);
 		check_having_for_ungrouped_vars(aref->refexpr, groupClause,
-														targetList);
+										targetList);
 		check_having_for_ungrouped_vars(aref->refassgnexpr, groupClause,
-														targetList);
+										targetList);
 	}
 	else if (case_clause(clause))
 	{
 		foreach(t, ((CaseExpr *) clause)->args)
 		{
 			CaseWhen   *when = (CaseWhen *) lfirst(t);
+
 			check_having_for_ungrouped_vars(when->expr, groupClause,
-														targetList);
+											targetList);
 			check_having_for_ungrouped_vars(when->result, groupClause,
-														targetList);
+											targetList);
 		}
 		check_having_for_ungrouped_vars(((CaseExpr *) clause)->defresult,
 										groupClause, targetList);

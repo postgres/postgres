@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.52 1999/05/13 15:55:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.53 1999/05/25 16:11:21 momjian Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -50,7 +50,7 @@
 #include "utils/trace.h"
 #include "utils/ps_status.h"
 
-static int WaitOnLock(LOCKMETHOD lockmethod, LOCK *lock, LOCKMODE lockmode);
+static int	WaitOnLock(LOCKMETHOD lockmethod, LOCK *lock, LOCKMODE lockmode);
 
 /*
  * lockDebugRelation can be used to trace unconditionally a single relation,
@@ -658,22 +658,22 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag, LOCKMODE lockmode)
 	 */
 	if (lockMethodTable->ctl->conflictTab[lockmode] & lock->waitMask)
 	{
-		int		i = 1;
+		int			i = 1;
 
 		/*
-		 * If I don't hold locks or my locks don't conflict 
-		 * with waiters then force to sleep.
+		 * If I don't hold locks or my locks don't conflict with waiters
+		 * then force to sleep.
 		 */
 		if (result->nHolding > 0)
 		{
-			for ( ; i <= lockMethodTable->ctl->numLockModes; i++)
+			for (; i <= lockMethodTable->ctl->numLockModes; i++)
 			{
-				if (result->holders[i] > 0 && 
+				if (result->holders[i] > 0 &&
 					lockMethodTable->ctl->conflictTab[i] & lock->waitMask)
-					break;	/* conflict */
+					break;		/* conflict */
 			}
 		}
-	
+
 		if (result->nHolding == 0 || i > lockMethodTable->ctl->numLockModes)
 		{
 			XID_PRINT("LockAcquire: higher priority proc waiting",
@@ -718,17 +718,18 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag, LOCKMODE lockmode)
 			return FALSE;
 		}
 #endif
+
 		/*
 		 * Construct bitmask of locks we hold before going to sleep.
 		 */
 		MyProc->holdLock = 0;
 		if (result->nHolding > 0)
 		{
-			int		i,
-					tmpMask = 2;
+			int			i,
+						tmpMask = 2;
 
-			for (i = 1; i <= lockMethodTable->ctl->numLockModes; 
-					i++, tmpMask <<= 1)
+			for (i = 1; i <= lockMethodTable->ctl->numLockModes;
+				 i++, tmpMask <<= 1)
 			{
 				if (result->holders[i] > 0)
 					MyProc->holdLock |= tmpMask;
@@ -1166,14 +1167,15 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag, LOCKMODE lockmode)
 		wakeupNeeded = false;
 	else
 #endif
-	/*
-	 * Above is not valid any more (due to MVCC lock modes). 
-	 * Actually we should compare activeHolders[lockmode] with 
-	 * number of waiters holding lock of this type and try to
-	 * wakeup only if these numbers are equal (and lock released 
-	 * conflicts with locks requested by waiters). For the moment
-	 * we only check the last condition.
-	 */
+
+		/*
+		 * Above is not valid any more (due to MVCC lock modes). Actually
+		 * we should compare activeHolders[lockmode] with number of
+		 * waiters holding lock of this type and try to wakeup only if
+		 * these numbers are equal (and lock released conflicts with locks
+		 * requested by waiters). For the moment we only check the last
+		 * condition.
+		 */
 	if (lockMethodTable->ctl->conflictTab[lockmode] & lock->waitMask)
 		wakeupNeeded = true;
 
@@ -1238,14 +1240,12 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag, LOCKMODE lockmode)
 	}
 
 	if (wakeupNeeded)
-	{
 		ProcLockWakeup(&(lock->waitProcs), lockmethod, lock);
-	}
 	else
 	{
 		if (((LOCKDEBUG(LOCK_LOCKMETHOD(*(lock))) >= 1) \
-			 && (lock->tag.relId >= lockDebugOidMin)) \
-			|| \
+			 &&(lock->tag.relId >= lockDebugOidMin)) \
+			||\
 			(lockDebugRelation && (lock->tag.relId == lockDebugRelation)))
 			TPRINTF(TRACE_ALL, "LockRelease: no wakeup needed");
 	}
@@ -1309,7 +1309,7 @@ LockReleaseAll(LOCKMETHOD lockmethod, SHM_QUEUE *lockQueue)
 
 	for (;;)
 	{
-		bool	wakeupNeeded = false;
+		bool		wakeupNeeded = false;
 
 		/*
 		 * Sometimes the queue appears to be messed up.
@@ -1377,7 +1377,7 @@ LockReleaseAll(LOCKMETHOD lockmethod, SHM_QUEUE *lockQueue)
 				goto next_item;
 			}
 			TPRINTF(TRACE_USERLOCKS,
-				"LockReleaseAll: releasing user lock [%u] [%d,%d,%d]",
+					"LockReleaseAll: releasing user lock [%u] [%d,%d,%d]",
 					lock->tag.objId.blkno,
 				  xidLook->tag.lock, xidLook->tag.pid, xidLook->tag.xid);
 		}
@@ -1391,7 +1391,7 @@ LockReleaseAll(LOCKMETHOD lockmethod, SHM_QUEUE *lockQueue)
 			if (xidLook->tag.pid != 0)
 			{
 				TPRINTF(TRACE_LOCKS,
-				  "LockReleaseAll: skiping user lock [%u] [%d,%d,%d]",
+					 "LockReleaseAll: skiping user lock [%u] [%d,%d,%d]",
 						lock->tag.objId.blkno,
 				  xidLook->tag.lock, xidLook->tag.pid, xidLook->tag.xid);
 				nleft++;
@@ -1415,10 +1415,11 @@ LockReleaseAll(LOCKMETHOD lockmethod, SHM_QUEUE *lockQueue)
 					   &&(lock->activeHolders[i] >= 0));
 				if (!lock->activeHolders[i])
 					lock->mask &= BITS_OFF[i];
+
 				/*
 				 * Read comments in LockRelease
 				 */
-				if (!wakeupNeeded && xidLook->holders[i] > 0 && 
+				if (!wakeupNeeded && xidLook->holders[i] > 0 &&
 					lockMethodTable->ctl->conflictTab[i] & lock->waitMask)
 					wakeupNeeded = true;
 			}
@@ -1521,7 +1522,7 @@ LockShmemSize(int maxBackends)
 	int			size = 0;
 
 	size += MAXALIGN(sizeof(PROC_HDR)); /* ProcGlobal */
-	size += MAXALIGN(maxBackends * sizeof(PROC)); /* each MyProc */
+	size += MAXALIGN(maxBackends * sizeof(PROC));		/* each MyProc */
 	size += MAXALIGN(maxBackends * sizeof(LOCKMETHODCTL));		/* each
 																 * lockMethodTable->ctl */
 
@@ -1535,8 +1536,9 @@ LockShmemSize(int maxBackends)
 							   SHMEM_XIDTAB_KEYSIZE,
 							   SHMEM_XIDTAB_DATASIZE);
 
-	/* Since the lockHash entry count above is only an estimate,
-	 * add 10% safety margin.
+	/*
+	 * Since the lockHash entry count above is only an estimate, add 10%
+	 * safety margin.
 	 */
 	size += size / 10;
 
@@ -1569,21 +1571,21 @@ LockingDisabled()
 bool
 DeadLockCheck(void *proc, LOCK *findlock)
 {
-	XIDLookupEnt		   *xidLook = NULL;
-	XIDLookupEnt		   *tmp = NULL;
-	PROC				   *thisProc = (PROC*) proc,
-						   *waitProc;
-	SHM_QUEUE			   *lockQueue = &(thisProc->lockQueue);
-	SHMEM_OFFSET			end = MAKE_OFFSET(lockQueue);
-	LOCK				   *lock;
-	PROC_QUEUE			   *waitQueue;
-	int						i,
-							j;
-	bool					first_run = (thisProc == MyProc),
-							done;
+	XIDLookupEnt *xidLook = NULL;
+	XIDLookupEnt *tmp = NULL;
+	PROC	   *thisProc = (PROC *) proc,
+			   *waitProc;
+	SHM_QUEUE  *lockQueue = &(thisProc->lockQueue);
+	SHMEM_OFFSET end = MAKE_OFFSET(lockQueue);
+	LOCK	   *lock;
+	PROC_QUEUE *waitQueue;
+	int			i,
+				j;
+	bool		first_run = (thisProc == MyProc),
+				done;
 
-	static PROC			   *checked_procs[MAXBACKENDS];
-	static int				nprocs;
+	static PROC *checked_procs[MAXBACKENDS];
+	static int	nprocs;
 
 	/* initialize at start of recursion */
 	if (first_run)
@@ -1606,39 +1608,38 @@ DeadLockCheck(void *proc, LOCK *findlock)
 
 		LOCK_PRINT("DeadLockCheck", lock, 0);
 
-		if (lock->tag.relId == 0)	/* user' lock */
+		if (lock->tag.relId == 0)		/* user' lock */
 			goto nxtl;
 
 		/*
-		 * waitLock is always in lockQueue of waiting proc,
-		 * if !first_run then upper caller will handle waitProcs
-		 * queue of waitLock.
+		 * waitLock is always in lockQueue of waiting proc, if !first_run
+		 * then upper caller will handle waitProcs queue of waitLock.
 		 */
 		if (thisProc->waitLock == lock && !first_run)
 			goto nxtl;
 
 		/*
-		 * If we found proc holding findlock and sleeping on some my 
-		 * other lock then we have to check does it block me or
-		 * another waiters.
+		 * If we found proc holding findlock and sleeping on some my other
+		 * lock then we have to check does it block me or another waiters.
 		 */
 		if (lock == findlock && !first_run)
 		{
-			LOCKMETHODCTL  *lockctl = 
-							LockMethodTable[DEFAULT_LOCKMETHOD]->ctl;
-			int				lm;
+			LOCKMETHODCTL *lockctl =
+			LockMethodTable[DEFAULT_LOCKMETHOD]->ctl;
+			int			lm;
 
 			Assert(xidLook->nHolding > 0);
 			for (lm = 1; lm <= lockctl->numLockModes; lm++)
 			{
-				if (xidLook->holders[lm] > 0 && 
+				if (xidLook->holders[lm] > 0 &&
 					lockctl->conflictTab[lm] & findlock->waitMask)
 					return true;
 			}
+
 			/*
 			 * Else - get the next lock from thisProc's lockQueue
 			 */
-			goto nxtl;	
+			goto nxtl;
 		}
 
 		waitQueue = &(lock->waitProcs);
@@ -1653,10 +1654,10 @@ DeadLockCheck(void *proc, LOCK *findlock)
 				waitProc = (PROC *) MAKE_PTR(waitProc->links.prev);
 				continue;
 			}
-			if (lock == findlock)	/* first_run also true */
+			if (lock == findlock)		/* first_run also true */
 			{
-				LOCKMETHODCTL  *lockctl = 
-						LockMethodTable[DEFAULT_LOCKMETHOD]->ctl;
+				LOCKMETHODCTL *lockctl =
+				LockMethodTable[DEFAULT_LOCKMETHOD]->ctl;
 
 				/*
 				 * If me blocked by his holdlock...
@@ -1670,17 +1671,19 @@ DeadLockCheck(void *proc, LOCK *findlock)
 					waitProc = (PROC *) MAKE_PTR(waitProc->links.prev);
 					continue;
 				}
+
 				/*
-				 * If he isn't blocked by me and we request non-conflicting 
-				 * lock modes - no deadlock here because of he isn't
-				 * blocked by me in any sence (explicitle or implicitly). 
-				 * Note that we don't do like test if !first_run
-				 * (when thisProc is holder and non-waiter on lock) and so
-				 * we call DeadLockCheck below for every waitProc in
-				 * thisProc->lockQueue, even for waitProc-s un-blocked
-				 * by thisProc. Should we? This could save us some time...
+				 * If he isn't blocked by me and we request
+				 * non-conflicting lock modes - no deadlock here because
+				 * of he isn't blocked by me in any sence (explicitle or
+				 * implicitly). Note that we don't do like test if
+				 * !first_run (when thisProc is holder and non-waiter on
+				 * lock) and so we call DeadLockCheck below for every
+				 * waitProc in thisProc->lockQueue, even for waitProc-s
+				 * un-blocked by thisProc. Should we? This could save us
+				 * some time...
 				 */
-				if (!(lockctl->conflictTab[waitProc->token] & MyProc->holdLock) && 
+				if (!(lockctl->conflictTab[waitProc->token] & MyProc->holdLock) &&
 					!(lockctl->conflictTab[waitProc->token] & (1 << MyProc->token)))
 				{
 					waitProc = (PROC *) MAKE_PTR(waitProc->links.prev);
@@ -1689,7 +1692,8 @@ DeadLockCheck(void *proc, LOCK *findlock)
 			}
 
 			/*
-			 * Look in lockQueue of this waitProc, if didn't do this before.
+			 * Look in lockQueue of this waitProc, if didn't do this
+			 * before.
 			 */
 			for (j = 0; j < nprocs; j++)
 			{
@@ -1703,9 +1707,9 @@ DeadLockCheck(void *proc, LOCK *findlock)
 
 				if (DeadLockCheck(waitProc, findlock))
 				{
-					LOCKMETHODCTL  *lockctl = 
-							LockMethodTable[DEFAULT_LOCKMETHOD]->ctl;
-					int				holdLock;
+					LOCKMETHODCTL *lockctl =
+					LockMethodTable[DEFAULT_LOCKMETHOD]->ctl;
+					int			holdLock;
 
 					/*
 					 * Ok, but is waitProc waiting for me (thisProc) ?
@@ -1715,14 +1719,16 @@ DeadLockCheck(void *proc, LOCK *findlock)
 						Assert(first_run);
 						holdLock = thisProc->holdLock;
 					}
-					else	/* should we cache holdLock ? */
+					else
+/* should we cache holdLock ? */
 					{
-						int	lm, tmpMask = 2;
+						int			lm,
+									tmpMask = 2;
 
 						Assert(xidLook->nHolding > 0);
-						for (holdLock = 0, lm = 1; 
-								lm <= lockctl->numLockModes; 
-								lm++, tmpMask <<= 1)
+						for (holdLock = 0, lm = 1;
+							 lm <= lockctl->numLockModes;
+							 lm++, tmpMask <<= 1)
 						{
 							if (xidLook->holders[lm] > 0)
 								holdLock |= tmpMask;
@@ -1731,6 +1737,7 @@ DeadLockCheck(void *proc, LOCK *findlock)
 					}
 					if (lockctl->conflictTab[waitProc->token] & holdLock)
 					{
+
 						/*
 						 * Last attempt to avoid deadlock - try to wakeup
 						 * myself.
@@ -1751,6 +1758,7 @@ DeadLockCheck(void *proc, LOCK *findlock)
 						}
 						return true;
 					}
+
 					/*
 					 * Hell! Is he blocked by any (other) holder ?
 					 */
@@ -1760,21 +1768,24 @@ DeadLockCheck(void *proc, LOCK *findlock)
 											 waitProc->xid,
 											 NULL) != STATUS_OK)
 					{
+
 						/*
 						 * Blocked by others - no deadlock...
 						 */
 #ifdef DEADLOCK_DEBUG
-						LOCK_PRINT("DeadLockCheck: blocked by others", 
-										lock, waitProc->token);
+						LOCK_PRINT("DeadLockCheck: blocked by others",
+								   lock, waitProc->token);
 #endif
 						waitProc = (PROC *) MAKE_PTR(waitProc->links.prev);
 						continue;
 					}
+
 					/*
 					 * Well - wakeup this guy! This is the case of
-					 * implicit blocking: thisProc blocked someone who blocked
-					 * waitProc by the fact that he (someone) is already
-					 * waiting for lock (we do this for anti-starving).
+					 * implicit blocking: thisProc blocked someone who
+					 * blocked waitProc by the fact that he/someone is
+					 * already waiting for lock.  We do this for
+					 * anti-starving.
 					 */
 					GrantLock(lock, waitProc->token);
 					waitQueue->size--;
@@ -1785,7 +1796,7 @@ DeadLockCheck(void *proc, LOCK *findlock)
 			waitProc = (PROC *) MAKE_PTR(waitProc->links.prev);
 		}
 
-nxtl:;
+nxtl:	;
 		if (done)
 			break;
 		SHMQueueFirst(&xidLook->queue, (Pointer *) &tmp, &tmp->queue);
@@ -1832,7 +1843,7 @@ LockOwners(LOCKMETHOD lockmethod, LOCKTAG *locktag)
 	if (is_user_lock)
 	{
 		TPRINTF(TRACE_USERLOCKS, "LockOwners: user lock tag [%u]",
-				locktag->objId.blkno;,
+				locktag->objId.blkno;
 	}
 #endif
 
@@ -1981,6 +1992,7 @@ LockOwners(LOCKMETHOD lockmethod, LOCKTAG *locktag)
 
 	return array;
 }
+
 #endif
 
 #ifdef DEADLOCK_DEBUG

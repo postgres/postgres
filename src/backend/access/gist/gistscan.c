@@ -68,7 +68,7 @@ gistbeginscan(Relation r,
 	/*
 	 * Let index_beginscan does its work...
 	 *
-	RelationSetLockForRead(r);
+	 * RelationSetLockForRead(r);
 	 */
 
 	s = RelationGetIndexScan(r, fromEnd, nkeys, key);

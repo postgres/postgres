@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.49 1999/02/13 23:22:42 momjian Exp $
+ * $Id: libpq-fe.h,v 1.50 1999/05/25 16:15:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,10 +36,11 @@ extern		"C"
 	typedef enum
 	{
 		PGRES_EMPTY_QUERY = 0,
-		PGRES_COMMAND_OK,		/* a query command that doesn't return anything
-								 * was executed properly by the backend */
-		PGRES_TUPLES_OK,		/* a query command that returns tuples
-								 * was executed properly by the backend,
+		PGRES_COMMAND_OK,		/* a query command that doesn't return
+								 * anything was executed properly by the
+								 * backend */
+		PGRES_TUPLES_OK,		/* a query command that returns tuples was
+								 * executed properly by the backend,
 								 * PGresult contains the result tuples */
 		PGRES_COPY_OUT,			/* Copy Out data transfer in progress */
 		PGRES_COPY_IN,			/* Copy In data transfer in progress */
@@ -52,7 +53,7 @@ extern		"C"
 /* String descriptions of the ExecStatusTypes.
  * NB: direct use of this array is now deprecated; call PQresStatus() instead.
  */
-	extern const char * const pgresStatus[];
+	extern const char *const pgresStatus[];
 
 /* PGconn encapsulates a connection to the backend.
  * The contents of this struct are not supposed to be known to applications.
@@ -76,21 +77,21 @@ extern		"C"
 	{
 		char		relname[NAMEDATALEN];		/* name of relation
 												 * containing data */
-		int			be_pid;						/* process id of backend */
+		int			be_pid;		/* process id of backend */
 	} PGnotify;
 
 /* PQnoticeProcessor is the function type for the notice-message callback.
  */
-	typedef void (*PQnoticeProcessor) (void * arg, const char * message);
+	typedef void (*PQnoticeProcessor) (void *arg, const char *message);
 
 /* Print options for PQprint() */
-  
-  	/*
-  	 * We can't use the conventional "bool", because we are designed to be
-  	 * included in a user's program, and user may already have that type
-  	 * defined.  Pqbool, on the other hand, is unlikely to be used.
-  	 */
-  	typedef char pqbool;
+
+	/*
+	 * We can't use the conventional "bool", because we are designed to be
+	 * included in a user's program, and user may already have that type
+	 * defined.  Pqbool, on the other hand, is unlikely to be used.
+	 */
+	typedef char pqbool;
 
 	typedef struct _PQprintOpt
 	{
@@ -115,16 +116,16 @@ extern		"C"
 	typedef struct _PQconninfoOption
 	{
 		char	   *keyword;	/* The keyword of the option			*/
-		char	   *envvar;	/* Fallback environment variable name	*/
+		char	   *envvar;		/* Fallback environment variable name	*/
 		char	   *compiled;	/* Fallback compiled in default value	*/
 		char	   *val;		/* Options value						*/
 		char	   *label;		/* Label for field in connect dialog	*/
 		char	   *dispchar;	/* Character to display for this field	*/
-								/* in a connect dialog. Values are:		*/
-								/* ""	Display entered value as is  */
-								/* "*"	Password field - hide value  */
-								/* "D"	Debug options - don't 	 */
-								/* create a field by default	*/
+		/* in a connect dialog. Values are:		*/
+		/* ""	Display entered value as is  */
+		/* "*"	Password field - hide value  */
+		/* "D"	Debug options - don't 	 */
+		/* create a field by default	*/
 		int			dispsize;	/* Field size in characters for dialog	*/
 	} PQconninfoOption;
 
@@ -154,8 +155,8 @@ extern		"C"
 	extern PGconn *PQconnectdb(const char *conninfo);
 	extern PGconn *PQsetdbLogin(const char *pghost, const char *pgport,
 								const char *pgoptions, const char *pgtty,
-								const char *dbName,
-								const char *login, const char *pwd);
+											const char *dbName,
+									 const char *login, const char *pwd);
 #define PQsetdb(M_PGHOST,M_PGPORT,M_PGOPT,M_PGTTY,M_DBNAME)  \
 	PQsetdbLogin(M_PGHOST, M_PGPORT, M_PGOPT, M_PGTTY, M_DBNAME, NULL, NULL)
 
@@ -193,8 +194,8 @@ extern		"C"
 
 	/* Override default notice processor */
 	extern void PQsetNoticeProcessor(PGconn *conn,
-									 PQnoticeProcessor proc,
-									 void *arg);
+												 PQnoticeProcessor proc,
+												 void *arg);
 
 /* === in fe-exec.c === */
 
@@ -222,12 +223,12 @@ extern		"C"
 	 * use
 	 */
 	extern PGresult *PQfn(PGconn *conn,
-						  int fnid,
-						  int *result_buf,
-						  int *result_len,
-						  int result_is_int,
-						  PQArgBlock *args,
-						  int nargs);
+									  int fnid,
+									  int *result_buf,
+									  int *result_len,
+									  int result_is_int,
+									  PQArgBlock *args,
+									  int nargs);
 
 	/* Accessor functions for PGresult objects */
 	extern ExecStatusType PQresultStatus(PGresult *res);
@@ -251,39 +252,40 @@ extern		"C"
 	/* Delete a PGresult */
 	extern void PQclear(PGresult *res);
 
-	/* Make an empty PGresult with given status (some apps find this useful).
-	 * If conn is not NULL and status indicates an error, the conn's
-	 * errorMessage is copied.
+	/*
+	 * Make an empty PGresult with given status (some apps find this
+	 * useful). If conn is not NULL and status indicates an error, the
+	 * conn's errorMessage is copied.
 	 */
-	extern PGresult * PQmakeEmptyPGresult(PGconn *conn, ExecStatusType status);
+	extern PGresult *PQmakeEmptyPGresult(PGconn *conn, ExecStatusType status);
 
 /* === in fe-print.c === */
 
-	extern void PQprint(FILE *fout,			/* output stream */
-						PGresult *res,
-						PQprintOpt *ps);	/* option structure */
+	extern void PQprint(FILE *fout,		/* output stream */
+									PGresult *res,
+									PQprintOpt *ps);	/* option structure */
 
 	/*
 	 * PQdisplayTuples() is a better version of PQprintTuples(), but both
 	 * are obsoleted by PQprint().
 	 */
 	extern void PQdisplayTuples(PGresult *res,
-								FILE *fp,			/* where to send the
-													 * output */
-								int fillAlign,		/* pad the fields with
-													 * spaces */
-								const char *fieldSep,	/* field separator */
-								int printHeader,	/* display headers? */
-								int quiet);
+											FILE *fp,	/* where to send the
+														 * output */
+											int fillAlign,		/* pad the fields with
+																 * spaces */
+											const char *fieldSep,		/* field separator */
+											int printHeader,	/* display headers? */
+											int quiet);
 
 	extern void PQprintTuples(PGresult *res,
-							  FILE *fout,			/* output stream */
-							  int printAttName,		/* print attribute names
-													 * or not */
-							  int terseOutput,		/* delimiter bars or
-													 * not? */
-							  int width);			/* width of column, if
-													 * 0, use variable width */
+										  FILE *fout,	/* output stream */
+										  int printAttName,		/* print attribute names
+																 * or not */
+										  int terseOutput,		/* delimiter bars or
+																 * not? */
+										  int width);	/* width of column, if
+														 * 0, use variable width */
 
 	/* Determine length of multibyte encoded char at *s */
 	extern int	PQmblen(unsigned char *s);

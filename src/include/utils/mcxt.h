@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: mcxt.h,v 1.14 1999/03/22 16:45:28 momjian Exp $
+ * $Id: mcxt.h,v 1.15 1999/05/25 16:14:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,7 @@ extern MemoryContext TopMemoryContext;
 
 
 /*
- * MaxAllocSize 
+ * MaxAllocSize
  *		Arbitrary limit on size of allocations.
  *
  * Note:

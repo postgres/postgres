@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/scankey.c,v 1.13 1999/02/13 23:14:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/scankey.c,v 1.14 1999/05/25 16:06:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,7 @@
 #include <access/skey.h>
 
 /*
- * ScanKeyEntryIsLegal 
+ * ScanKeyEntryIsLegal
  *		True iff the scan key entry is legal.
  */
 #define ScanKeyEntryIsLegal(entry) \
@@ -28,7 +28,7 @@
 )
 
 /*
- * ScanKeyEntrySetIllegal 
+ * ScanKeyEntrySetIllegal
  *		Marks a scan key entry as illegal.
  */
 void
@@ -43,7 +43,7 @@ ScanKeyEntrySetIllegal(ScanKey entry)
 }
 
 /*
- * ScanKeyEntryInitialize 
+ * ScanKeyEntryInitialize
  *		Initializes an scan key entry.
  *
  * Note:

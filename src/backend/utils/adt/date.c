@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.31 1999/03/14 16:44:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.32 1999/05/25 16:11:56 momjian Exp $
  *
  * NOTES
  *	 This code is actually (almost) unused.
@@ -988,6 +988,7 @@ isreltime(char *str)
 
 	return 0;
 }	/* isreltime() */
+
 #endif
 
 #ifdef NOT_USED

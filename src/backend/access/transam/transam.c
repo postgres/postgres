@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.25 1999/03/30 01:37:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.26 1999/05/25 16:07:45 momjian Exp $
  *
  * NOTES
  *	  This file contains the high level access-method interface to the
@@ -221,7 +221,7 @@ TransactionLogUpdate(TransactionId transactionId,		/* trans id to update */
 	/*
 	 * update (invalidate) our single item TransactionLogTest cache.
 	 *
-	if (status != XID_COMMIT)
+	 * if (status != XID_COMMIT)
 	 *
 	 * What's the hell ?! Why != XID_COMMIT ?!
 	 */
@@ -374,7 +374,7 @@ TransRecover(Relation logRelation)
  */
 
 /*
- * InitializeTransactionLog 
+ * InitializeTransactionLog
  *		Initializes transaction logging.
  */
 void
@@ -484,7 +484,7 @@ InitializeTransactionLog(void)
  */
 
 /*
- * TransactionIdDidCommit 
+ * TransactionIdDidCommit
  *		True iff transaction associated with the identifier did commit.
  *
  * Note:
@@ -500,7 +500,7 @@ TransactionIdDidCommit(TransactionId transactionId)
 }
 
 /*
- * TransactionIdDidAborted 
+ * TransactionIdDidAborted
  *		True iff transaction associated with the identifier did abort.
  *
  * Note:
@@ -541,7 +541,7 @@ TransactionIdIsInProgress(TransactionId transactionId)
  */
 
 /*
- * TransactionIdCommit 
+ * TransactionIdCommit
  *		Commits the transaction associated with the identifier.
  *
  * Note:
@@ -557,7 +557,7 @@ TransactionIdCommit(TransactionId transactionId)
 }
 
 /*
- * TransactionIdAbort 
+ * TransactionIdAbort
  *		Aborts the transaction associated with the identifier.
  *
  * Note:

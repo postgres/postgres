@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.48 1999/02/13 23:14:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.49 1999/05/25 16:06:42 momjian Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -487,7 +487,7 @@ BuildDescForRelation(List *schema, char *relname)
 		{
 			/* array of XXX is _XXX */
 			snprintf(typename, NAMEDATALEN,
-							 "_%.*s", NAMEDATALEN - 2, entry->typename->name);
+					 "_%.*s", NAMEDATALEN - 2, entry->typename->name);
 			attdim = length(arry);
 		}
 		else

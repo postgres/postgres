@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.98 1999/05/09 02:22:16 tgl Exp $
+ * $Id: pg_proc.h,v 1.99 1999/05/25 16:13:47 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -295,7 +295,7 @@ DATA(insert OID = 138 (  box_center		   PGUID 11 f t f 1 f 600 "603" 100 1 0 100
 DESCR("center of");
 DATA(insert OID = 139 (  areasel		   PGUID 11 f t f 5 f 701 "26 26 21 0 23" 100 0 0 100  areasel - ));
 DESCR("selectivity");
-DATA(insert OID = 140 (  areajoinsel	   PGUID 11 f t f 5 f 701 "26 26 21 26 21" 100 0 0 100  areajoinsel - ));
+DATA(insert OID = 140 (  areajoinsel	   PGUID 11 f t f 5 f 701 "26 26 21 26 21" 100 0 0 100	areajoinsel - ));
 DESCR("selectivity");
 DATA(insert OID = 141 (  int4mul		   PGUID 11 f t f 2 f 23 "23 23" 100 0 0 100  int4mul - ));
 DESCR("multiply");
@@ -1077,9 +1077,9 @@ DESCR("convert text to int2");
 DATA(insert OID = 819 (  text_int4		   PGUID 11 f t f 1 f 23 "25" 100 0 0 100  text_int4 -));
 DESCR("convert text to int4");
 
-DATA(insert OID = 838 (  text_float8	   PGUID 11 f t f 1 f 701 "25" 100 0 0 100  text_float8 -));
+DATA(insert OID = 838 (  text_float8	   PGUID 11 f t f 1 f 701 "25" 100 0 0 100	text_float8 -));
 DESCR("convert text to float8");
-DATA(insert OID = 839 (  text_float4	   PGUID 11 f t f 1 f 700 "25" 100 0 0 100  text_float4 -));
+DATA(insert OID = 839 (  text_float4	   PGUID 11 f t f 1 f 700 "25" 100 0 0 100	text_float4 -));
 DESCR("convert text to float4");
 DATA(insert OID = 840 (  float8_text	   PGUID 11 f t f 1 f  25 "701" 100 0 0 100  float8_text -));
 DESCR("convert float8 to text");
@@ -1300,11 +1300,11 @@ DATA(insert OID = 1037 (  aclcontains	   PGUID 11 f t f 2 f 16 "1034 1033" 100 0
 DESCR("matches regex., case-sensitive");
 DATA(insert OID = 1038 (  seteval		   PGUID 11 f t f 1 f 23 "26" 100 0 0 100  seteval - ));
 DESCR("");
-DATA(insert OID = 1044 (  bpcharin		   PGUID 11 f t f 3 f 1042 "0 0 23" 100 0 0 100	bpcharin - ));
+DATA(insert OID = 1044 (  bpcharin		   PGUID 11 f t f 3 f 1042 "0 0 23" 100 0 0 100 bpcharin - ));
 DESCR("(internal)");
 DATA(insert OID = 1045 (  bpcharout		   PGUID 11 f t f 1 f 23 "0" 100 0 0 100  bpcharout - ));
 DESCR("(internal)");
-DATA(insert OID = 1046 (  varcharin		   PGUID 11 f t f 3 f 1043 "0 0 23" 100 0 0 100	varcharin - ));
+DATA(insert OID = 1046 (  varcharin		   PGUID 11 f t f 3 f 1043 "0 0 23" 100 0 0 100 varcharin - ));
 DESCR("(internal)");
 DATA(insert OID = 1047 (  varcharout	   PGUID 11 f t f 1 f 23 "0" 100 0 0 100  varcharout - ));
 DESCR("(internal)");
@@ -2030,9 +2030,9 @@ DESCR("is line vertical?");
 DATA(insert OID = 1603 (  isparallel		PGUID 11 f t f 2 f	16 "628 628" 100 0 0 100  line_parallel - ));
 DESCR("are lines parallel?");
 
-DATA(insert OID = 1604 (  float8	   PGUID 11 f t f 1 f 701 "25" 100 0 0 100  text_float8 - ));
+DATA(insert OID = 1604 (  float8	   PGUID 11 f t f 1 f 701 "25" 100 0 0 100	text_float8 - ));
 DESCR("convert text to float8");
-DATA(insert OID = 1605 (  float4	   PGUID 11 f t f 1 f 700 "25" 100 0 0 100  text_float4 - ));
+DATA(insert OID = 1605 (  float4	   PGUID 11 f t f 1 f 700 "25" 100 0 0 100	text_float4 - ));
 DESCR("convert text to float4");
 DATA(insert OID = 1606 (  text		   PGUID 11 f t f 1 f  25 "701" 100 0 0 100  float8_text - ));
 DESCR("convert float8 to text");
@@ -2041,11 +2041,11 @@ DESCR("convert float4 to text");
 
 DATA(insert OID = 1619 (  varchar	   PGUID 11 f t f 1 f 1043 "23" 100 0 0 100  int4_text - ));
 DESCR("convert int4 to varchar");
-DATA(insert OID = 1620 (  int4		   PGUID 11 f t f 1 f   23 "1043" 100 0 0 100  text_int4 - ));
+DATA(insert OID = 1620 (  int4		   PGUID 11 f t f 1 f	23 "1043" 100 0 0 100  text_int4 - ));
 DESCR("convert varchar to int4");
-DATA(insert OID = 1621 (  text		   PGUID 11 f t f 1 f  25 "20" 100 0 0 100  int8_text - ));
+DATA(insert OID = 1621 (  text		   PGUID 11 f t f 1 f  25 "20" 100 0 0 100	int8_text - ));
 DESCR("convert int8 to text");
-DATA(insert OID = 1622 (  int8		   PGUID 11 f t f 1 f  20 "25" 100 0 0 100  text_int8 - ));
+DATA(insert OID = 1622 (  int8		   PGUID 11 f t f 1 f  20 "25" 100 0 0 100	text_int8 - ));
 DESCR("convert text to int8");
 DATA(insert OID = 1623 (  varchar	   PGUID 11 f t f 1 f 1043 "20" 100 0 0 100  int8_text - ));
 DESCR("convert int8 to varchar");
@@ -2116,21 +2116,21 @@ DESCR("(internal)");
 DATA(insert OID = 437 (  macaddr_out		PGUID 11 f t f 1 f 23 "0" 100 0 0 100  macaddr_out - ));
 DESCR("(internal)");
 
-DATA(insert OID = 830 (  macaddr_eq		   PGUID 11 f t f 2 f 16 "829 829" 100 0 0 100  macaddr_eq - ));
+DATA(insert OID = 830 (  macaddr_eq		   PGUID 11 f t f 2 f 16 "829 829" 100 0 0 100	macaddr_eq - ));
 DESCR("equal");
-DATA(insert OID = 831 (  macaddr_lt		   PGUID 11 f t f 2 f 16 "829 829" 100 0 0 100  macaddr_lt - ));
+DATA(insert OID = 831 (  macaddr_lt		   PGUID 11 f t f 2 f 16 "829 829" 100 0 0 100	macaddr_lt - ));
 DESCR("less-than");
-DATA(insert OID = 832 (  macaddr_le		   PGUID 11 f t f 2 f 16 "829 829" 100 0 0 100  macaddr_le - ));
+DATA(insert OID = 832 (  macaddr_le		   PGUID 11 f t f 2 f 16 "829 829" 100 0 0 100	macaddr_le - ));
 DESCR("less-than-or-equal");
-DATA(insert OID = 833 (  macaddr_gt		   PGUID 11 f t f 2 f 16 "829 829" 100 0 0 100  macaddr_gt - ));
+DATA(insert OID = 833 (  macaddr_gt		   PGUID 11 f t f 2 f 16 "829 829" 100 0 0 100	macaddr_gt - ));
 DESCR("greater-than");
-DATA(insert OID = 834 (  macaddr_ge		   PGUID 11 f t f 2 f 16 "829 829" 100 0 0 100  macaddr_ge - ));
+DATA(insert OID = 834 (  macaddr_ge		   PGUID 11 f t f 2 f 16 "829 829" 100 0 0 100	macaddr_ge - ));
 DESCR("greater-than-or-equal");
-DATA(insert OID = 835 (  macaddr_ne		   PGUID 11 f t f 2 f 16 "829 829" 100 0 0 100  macaddr_ne - ));
+DATA(insert OID = 835 (  macaddr_ne		   PGUID 11 f t f 2 f 16 "829 829" 100 0 0 100	macaddr_ne - ));
 DESCR("not equal");
-DATA(insert OID = 836 (  macaddr_cmp	   PGUID 11 f t f 2 f 23 "829 829" 100 0 0 100  macaddr_cmp - ));
+DATA(insert OID = 836 (  macaddr_cmp	   PGUID 11 f t f 2 f 23 "829 829" 100 0 0 100	macaddr_cmp - ));
 DESCR("less-equal-greater");
-DATA(insert OID = 837 (  macaddr_manuf	   PGUID 11 f t f 1 f 25 "829" 100 0 0 100  macaddr_manuf - ));
+DATA(insert OID = 837 (  macaddr_manuf	   PGUID 11 f t f 1 f 25 "829" 100 0 0 100	macaddr_manuf - ));
 DESCR("MAC manufacturer");
 
 /* for inet type support */
@@ -2140,33 +2140,33 @@ DATA(insert OID = 911 (  inet_out			PGUID 11 f t f 1 f 23 "0" 100 0 0 100  inet_
 DESCR("(internal)");
 
 /* for cidr type support */
-DATA(insert OID = 1267 (  cidr_in           PGUID 11 f t f 1 f 650 "0" 100 0 0 100  cidr_in - ));
+DATA(insert OID = 1267 (  cidr_in			PGUID 11 f t f 1 f 650 "0" 100 0 0 100	cidr_in - ));
 DESCR("(internal)");
 DATA(insert OID = 1416 (  cidr_out			PGUID 11 f t f 1 f 23 "0" 100 0 0 100  cidr_out - ));
 DESCR("(internal)");
 
 /* these are used for both inet and cidr */
-DATA(insert OID = 920 (  network_eq		   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100  network_eq - ));
+DATA(insert OID = 920 (  network_eq		   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100	network_eq - ));
 DESCR("equal");
-DATA(insert OID = 921 (  network_lt		   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100  network_lt - ));
+DATA(insert OID = 921 (  network_lt		   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100	network_lt - ));
 DESCR("less-than");
-DATA(insert OID = 922 (  network_le		   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100  network_le - ));
+DATA(insert OID = 922 (  network_le		   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100	network_le - ));
 DESCR("less-than-or-equal");
-DATA(insert OID = 923 (  network_gt		   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100  network_gt - ));
+DATA(insert OID = 923 (  network_gt		   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100	network_gt - ));
 DESCR("greater-than");
-DATA(insert OID = 924 (  network_ge		   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100  network_ge - ));
+DATA(insert OID = 924 (  network_ge		   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100	network_ge - ));
 DESCR("greater-than-or-equal");
-DATA(insert OID = 925 (  network_ne		   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100  network_ne - ));
+DATA(insert OID = 925 (  network_ne		   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100	network_ne - ));
 DESCR("not equal");
-DATA(insert OID = 926 (  network_cmp	   	   PGUID 11 f t f 2 f 23 "869 869" 100 0 0 100  network_cmp - ));
+DATA(insert OID = 926 (  network_cmp		   PGUID 11 f t f 2 f 23 "869 869" 100 0 0 100	network_cmp - ));
 DESCR("less-equal-greater");
-DATA(insert OID = 927 (  network_sub	   	   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100  network_sub - ));
+DATA(insert OID = 927 (  network_sub		   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100	network_sub - ));
 DESCR("is-subnet");
-DATA(insert OID = 928 (  network_subeq  	   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100  network_subeq - ));
+DATA(insert OID = 928 (  network_subeq		   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100	network_subeq - ));
 DESCR("is-subnet-or-equal");
-DATA(insert OID = 929 (  network_sup	   	   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100  network_sup - ));
+DATA(insert OID = 929 (  network_sup		   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100	network_sup - ));
 DESCR("is-supernet");
-DATA(insert OID = 930 (  network_supeq  	   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100  network_supeq - ));
+DATA(insert OID = 930 (  network_supeq		   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100	network_supeq - ));
 DESCR("is-supernet-or-equal");
 
 /* inet/cidr versions */
@@ -2200,33 +2200,33 @@ DATA(insert OID = 1702 ( numeric_out			PGUID 11 f t f 1 f 23 "0" 100 0 0 100  nu
 DESCR("(internal)");
 DATA(insert OID = 1703 ( numeric				PGUID 11 f t f 2 f 1700 "1700 23" 100 0 0 100  numeric - ));
 DESCR("(internal)");
-DATA(insert OID = 1704 ( numeric_abs			PGUID 11 f t f 1 f 1700 "1700" 100 0 0 100  numeric_abs - ));
+DATA(insert OID = 1704 ( numeric_abs			PGUID 11 f t f 1 f 1700 "1700" 100 0 0 100	numeric_abs - ));
 DESCR("absolute value");
-DATA(insert OID = 1705 ( abs					PGUID 11 f t f 1 f 1700 "1700" 100 0 0 100  numeric_abs - ));
+DATA(insert OID = 1705 ( abs					PGUID 11 f t f 1 f 1700 "1700" 100 0 0 100	numeric_abs - ));
 DESCR("absolute value");
-DATA(insert OID = 1706 ( numeric_sign			PGUID 11 f t f 1 f 1700 "1700" 100 0 0 100  numeric_sign - ));
+DATA(insert OID = 1706 ( numeric_sign			PGUID 11 f t f 1 f 1700 "1700" 100 0 0 100	numeric_sign - ));
 DESCR("sign of value");
-DATA(insert OID = 1707 ( sign					PGUID 11 f t f 1 f 1700 "1700" 100 0 0 100  numeric_sign - ));
+DATA(insert OID = 1707 ( sign					PGUID 11 f t f 1 f 1700 "1700" 100 0 0 100	numeric_sign - ));
 DESCR("sign of value");
 DATA(insert OID = 1708 ( numeric_round			PGUID 11 f t f 2 f 1700 "1700 23" 100 0 0 100  numeric_round - ));
 DESCR("value rounded to 'scale'");
 DATA(insert OID = 1709 ( round					PGUID 11 f t f 2 f 1700 "1700 23" 100 0 0 100  numeric_round - ));
 DESCR("value rounded to 'scale'");
-DATA(insert OID = 1710 ( round					PGUID 14 f t f 1 f 1700 "1700" 100 0 0 100  "select numeric_round($1,0)" - ));
+DATA(insert OID = 1710 ( round					PGUID 14 f t f 1 f 1700 "1700" 100 0 0 100	"select numeric_round($1,0)" - ));
 DESCR("value rounded to 'scale' of zero");
 DATA(insert OID = 1711 ( numeric_trunc			PGUID 11 f t f 2 f 1700 "1700 23" 100 0 0 100  numeric_trunc - ));
 DESCR("value truncated to 'scale'");
 DATA(insert OID = 1712 ( trunc					PGUID 11 f t f 2 f 1700 "1700 23" 100 0 0 100  numeric_trunc - ));
 DESCR("value truncated to 'scale'");
-DATA(insert OID = 1713 ( trunc					PGUID 14 f t f 1 f 1700 "1700" 100 0 0 100  "select numeric_trunc($1,0)" - ));
+DATA(insert OID = 1713 ( trunc					PGUID 14 f t f 1 f 1700 "1700" 100 0 0 100	"select numeric_trunc($1,0)" - ));
 DESCR("value truncated to 'scale' of zero");
-DATA(insert OID = 1714 ( numeric_ceil			PGUID 11 f t f 1 f 1700 "1700" 100 0 0 100  numeric_ceil - ));
+DATA(insert OID = 1714 ( numeric_ceil			PGUID 11 f t f 1 f 1700 "1700" 100 0 0 100	numeric_ceil - ));
 DESCR("smallest integer >= value");
-DATA(insert OID = 1715 ( ceil					PGUID 11 f t f 1 f 1700 "1700" 100 0 0 100  numeric_ceil - ));
+DATA(insert OID = 1715 ( ceil					PGUID 11 f t f 1 f 1700 "1700" 100 0 0 100	numeric_ceil - ));
 DESCR("smallest integer >= value");
-DATA(insert OID = 1716 ( numeric_floor			PGUID 11 f t f 1 f 1700 "1700" 100 0 0 100  numeric_floor - ));
+DATA(insert OID = 1716 ( numeric_floor			PGUID 11 f t f 1 f 1700 "1700" 100 0 0 100	numeric_floor - ));
 DESCR("largest integer <= value");
-DATA(insert OID = 1717 ( floor					PGUID 11 f t f 1 f 1700 "1700" 100 0 0 100  numeric_floor - ));
+DATA(insert OID = 1717 ( floor					PGUID 11 f t f 1 f 1700 "1700" 100 0 0 100	numeric_floor - ));
 DESCR("largest integer <= value");
 DATA(insert OID = 1718 ( numeric_eq				PGUID 11 f t f 2 f 16 "1700 1700" 100 0 0 100  numeric_eq - ));
 DESCR("equal");
@@ -2252,17 +2252,17 @@ DATA(insert OID = 1728 ( numeric_mod			PGUID 11 f t f 2 f 1700 "1700 1700" 100 0
 DESCR("modulus");
 DATA(insert OID = 1729 ( mod					PGUID 11 f t f 2 f 1700 "1700 1700" 100 0 0 100  numeric_mod - ));
 DESCR("modulus");
-DATA(insert OID = 1730 ( numeric_sqrt			PGUID 11 f t f 1 f 1700 "1700" 100 0 0 100  numeric_sqrt - ));
+DATA(insert OID = 1730 ( numeric_sqrt			PGUID 11 f t f 1 f 1700 "1700" 100 0 0 100	numeric_sqrt - ));
 DESCR("square root");
-DATA(insert OID = 1731 ( sqrt					PGUID 11 f t f 1 f 1700 "1700" 100 0 0 100  numeric_sqrt - ));
+DATA(insert OID = 1731 ( sqrt					PGUID 11 f t f 1 f 1700 "1700" 100 0 0 100	numeric_sqrt - ));
 DESCR("square root");
-DATA(insert OID = 1732 ( numeric_exp			PGUID 11 f t f 1 f 1700 "1700" 100 0 0 100  numeric_exp - ));
+DATA(insert OID = 1732 ( numeric_exp			PGUID 11 f t f 1 f 1700 "1700" 100 0 0 100	numeric_exp - ));
 DESCR("e raised to the power of n");
-DATA(insert OID = 1733 ( exp					PGUID 11 f t f 1 f 1700 "1700" 100 0 0 100  numeric_exp - ));
+DATA(insert OID = 1733 ( exp					PGUID 11 f t f 1 f 1700 "1700" 100 0 0 100	numeric_exp - ));
 DESCR("e raised to the power of n");
-DATA(insert OID = 1734 ( numeric_ln				PGUID 11 f t f 1 f 1700 "1700" 100 0 0 100  numeric_ln - ));
+DATA(insert OID = 1734 ( numeric_ln				PGUID 11 f t f 1 f 1700 "1700" 100 0 0 100	numeric_ln - ));
 DESCR("natural logarithm of n");
-DATA(insert OID = 1735 ( ln						PGUID 11 f t f 1 f 1700 "1700" 100 0 0 100  numeric_ln - ));
+DATA(insert OID = 1735 ( ln						PGUID 11 f t f 1 f 1700 "1700" 100 0 0 100	numeric_ln - ));
 DESCR("natural logarithm of n");
 DATA(insert OID = 1736 ( numeric_log			PGUID 11 f t f 2 f 1700 "1700 1700" 100 0 0 100  numeric_log - ));
 DESCR("logarithm base m of n");
@@ -2296,9 +2296,9 @@ DATA(insert OID = 1750 ( numeric_float8			PGUID 11 f t f 1 f 701 "1700" 100 0 0 
 DESCR("(internal)");
 DATA(insert OID = 1751 ( float8					PGUID 11 f t f 1 f 701 "1700" 100 0 0 100  numeric_float8 - ));
 DESCR("(internal)");
-DATA(insert OID = 1764 ( numeric_inc			PGUID 11 f t f 1 f 1700 "1700" 100 0 0 100  numeric_inc - ));
+DATA(insert OID = 1764 ( numeric_inc			PGUID 11 f t f 1 f 1700 "1700" 100 0 0 100	numeric_inc - ));
 DESCR("increment by one");
-DATA(insert OID = 1765 ( numeric_dec			PGUID 11 f t f 1 f 1700 "1700" 100 0 0 100  numeric_dec - ));
+DATA(insert OID = 1765 ( numeric_dec			PGUID 11 f t f 1 f 1700 "1700" 100 0 0 100	numeric_dec - ));
 DESCR("decrement by one");
 DATA(insert OID = 1766 ( numeric_smaller		PGUID 11 f t f 2 f 1700 "1700 1700" 100 0 0 100  numeric_smaller - ));
 DESCR("smaller of two numbers");

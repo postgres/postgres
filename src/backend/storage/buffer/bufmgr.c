@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.51 1999/05/10 00:45:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.52 1999/05/25 16:10:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -86,6 +86,7 @@ static void WaitIO(BufferDesc *buf, SPINLOCK spinlock);
 #ifndef HAS_TEST_AND_SET
 static void SignalIO(BufferDesc *buf);
 extern long *NWaitIOBackendP;	/* defined in buf_init.c */
+
 #endif	 /* HAS_TEST_AND_SET */
 
 static Buffer ReadBufferWithBufferLock(Relation relation, BlockNumber blockNum,
@@ -95,7 +96,7 @@ static BufferDesc *BufferAlloc(Relation reln, BlockNumber blockNum,
 static int	FlushBuffer(Buffer buffer, bool release);
 static void BufferSync(void);
 static int	BufferReplace(BufferDesc *bufHdr, bool bufferLockHeld);
-void PrintBufferDescs(void);
+void		PrintBufferDescs(void);
 
 /* not static but used by vacuum only ... */
 int			BlowawayRelationBuffers(Relation rel, BlockNumber block);
@@ -161,7 +162,7 @@ extern int	ShowPinTrace;
 								 * defined */
 
 /*
- * ReadBuffer 
+ * ReadBuffer
  *
  */
 Buffer
@@ -1116,7 +1117,7 @@ WaitIO(BufferDesc *buf, SPINLOCK spinlock)
 }
 
 /*
- * SignalIO 
+ * SignalIO
  */
 static void
 SignalIO(BufferDesc *buf)
@@ -1217,7 +1218,7 @@ BufferPoolCheckLeak()
 			BufferDesc *buf = &(BufferDescriptors[i - 1]);
 
 			elog(NOTICE,
-			"Buffer Leak: [%03d] (freeNext=%d, freePrev=%d, \
+				 "Buffer Leak: [%03d] (freeNext=%d, freePrev=%d, \
 relname=%s, blockNum=%d, flags=0x%x, refcount=%d %d)",
 				 i - 1, buf->freeNext, buf->freePrev,
 				 buf->sb_relname, buf->tag.blockNum, buf->flags,
@@ -1246,7 +1247,7 @@ FlushBufferPool(int StableMainMemoryFlag)
 }
 
 /*
- * BufferGetBlockNumber 
+ * BufferGetBlockNumber
  *		Returns the block number associated with a buffer.
  *
  * Note:
@@ -1266,7 +1267,7 @@ BufferGetBlockNumber(Buffer buffer)
 
 #ifdef NOT_USED
 /*
- * BufferGetRelation 
+ * BufferGetRelation
  *		Returns the relation desciptor associated with a buffer.
  *
  * Note:
@@ -1299,6 +1300,7 @@ BufferGetRelation(Buffer buffer)
 
 	return relation;
 }
+
 #endif
 
 /*
@@ -1363,7 +1365,7 @@ BufferReplace(BufferDesc *bufHdr, bool bufferLockHeld)
 }
 
 /*
- * RelationGetNumberOfBlocks 
+ * RelationGetNumberOfBlocks
  *		Returns the buffer descriptor associated with a page in a relation.
  *
  * Note:
@@ -1375,7 +1377,7 @@ BlockNumber
 RelationGetNumberOfBlocks(Relation relation)
 {
 	return ((relation->rd_myxactonly) ? relation->rd_nblocks :
-	 smgrnblocks(DEFAULT_SMGR, relation));
+			smgrnblocks(DEFAULT_SMGR, relation));
 }
 
 /* ---------------------------------------------------------------------
@@ -1941,8 +1943,8 @@ UnlockBuffers()
 	{
 		if (BufferLocks[i] == 0)
 			continue;
-		
-		Assert(BufferIsValid(i+1));
+
+		Assert(BufferIsValid(i + 1));
 		buf = &(BufferDescriptors[i]);
 
 #ifdef HAS_TEST_AND_SET
@@ -1976,7 +1978,7 @@ UnlockBuffers()
 }
 
 void
-LockBuffer (Buffer buffer, int mode)
+LockBuffer(Buffer buffer, int mode)
 {
 	BufferDesc *buf;
 
@@ -1984,31 +1986,31 @@ LockBuffer (Buffer buffer, int mode)
 	if (BufferIsLocal(buffer))
 		return;
 
-	buf = &(BufferDescriptors[buffer-1]);
+	buf = &(BufferDescriptors[buffer - 1]);
 
 #ifdef HAS_TEST_AND_SET
-		S_LOCK(&(buf->cntx_lock));
+	S_LOCK(&(buf->cntx_lock));
 #else
-		IpcSemaphoreLock(WaitCLSemId, 0, IpcExclusiveLock);
+	IpcSemaphoreLock(WaitCLSemId, 0, IpcExclusiveLock);
 #endif
 
 	if (mode == BUFFER_LOCK_UNLOCK)
 	{
-		if (BufferLocks[buffer-1] & BL_R_LOCK)
+		if (BufferLocks[buffer - 1] & BL_R_LOCK)
 		{
 			Assert(buf->r_locks > 0);
 			Assert(!(buf->w_lock));
-			Assert(!(BufferLocks[buffer-1] & (BL_W_LOCK | BL_RI_LOCK)))
-			(buf->r_locks)--;
-			BufferLocks[buffer-1] &= ~BL_R_LOCK;
+			Assert(!(BufferLocks[buffer - 1] & (BL_W_LOCK | BL_RI_LOCK)))
+				(buf->r_locks)--;
+			BufferLocks[buffer - 1] &= ~BL_R_LOCK;
 		}
-		else if (BufferLocks[buffer-1] & BL_W_LOCK)
+		else if (BufferLocks[buffer - 1] & BL_W_LOCK)
 		{
 			Assert(buf->w_lock);
 			Assert(buf->r_locks == 0 && !buf->ri_lock);
-			Assert(!(BufferLocks[buffer-1] & (BL_R_LOCK | BL_RI_LOCK)))
-			buf->w_lock = false;
-			BufferLocks[buffer-1] &= ~BL_W_LOCK;
+			Assert(!(BufferLocks[buffer - 1] & (BL_R_LOCK | BL_RI_LOCK)))
+				buf->w_lock = false;
+			BufferLocks[buffer - 1] &= ~BL_W_LOCK;
 		}
 		else
 			elog(ERROR, "UNLockBuffer: buffer %u is not locked", buffer);
@@ -2017,7 +2019,7 @@ LockBuffer (Buffer buffer, int mode)
 	{
 		unsigned	i = 0;
 
-		Assert(!(BufferLocks[buffer-1] & (BL_R_LOCK | BL_W_LOCK | BL_RI_LOCK)));
+		Assert(!(BufferLocks[buffer - 1] & (BL_R_LOCK | BL_W_LOCK | BL_RI_LOCK)));
 		while (buf->ri_lock || buf->w_lock)
 		{
 #ifdef HAS_TEST_AND_SET
@@ -2027,23 +2029,23 @@ LockBuffer (Buffer buffer, int mode)
 #else
 			IpcSemaphoreUnlock(WaitCLSemId, 0, IpcExclusiveLock);
 			s_lock_sleep(i++)
-			IpcSemaphoreLock(WaitCLSemId, 0, IpcExclusiveLock);
+				IpcSemaphoreLock(WaitCLSemId, 0, IpcExclusiveLock);
 #endif
 		}
 		(buf->r_locks)++;
-		BufferLocks[buffer-1] |= BL_R_LOCK;
+		BufferLocks[buffer - 1] |= BL_R_LOCK;
 	}
 	else if (mode == BUFFER_LOCK_EXCLUSIVE)
 	{
 		unsigned	i = 0;
-		
-		Assert(!(BufferLocks[buffer-1] & (BL_R_LOCK | BL_W_LOCK | BL_RI_LOCK)));
+
+		Assert(!(BufferLocks[buffer - 1] & (BL_R_LOCK | BL_W_LOCK | BL_RI_LOCK)));
 		while (buf->r_locks > 0 || buf->w_lock)
 		{
 			if (buf->r_locks > 3)
 			{
-				if (!(BufferLocks[buffer-1] & BL_RI_LOCK))
-					BufferLocks[buffer-1] |= BL_RI_LOCK;
+				if (!(BufferLocks[buffer - 1] & BL_RI_LOCK))
+					BufferLocks[buffer - 1] |= BL_RI_LOCK;
 				buf->ri_lock = true;
 			}
 #ifdef HAS_TEST_AND_SET
@@ -2053,24 +2055,24 @@ LockBuffer (Buffer buffer, int mode)
 #else
 			IpcSemaphoreUnlock(WaitCLSemId, 0, IpcExclusiveLock);
 			s_lock_sleep(i++)
-			IpcSemaphoreLock(WaitCLSemId, 0, IpcExclusiveLock);
+				IpcSemaphoreLock(WaitCLSemId, 0, IpcExclusiveLock);
 #endif
 		}
 		buf->w_lock = true;
-		BufferLocks[buffer-1] |= BL_W_LOCK;
-		if (BufferLocks[buffer-1] & BL_RI_LOCK)
+		BufferLocks[buffer - 1] |= BL_W_LOCK;
+		if (BufferLocks[buffer - 1] & BL_RI_LOCK)
 		{
 			buf->ri_lock = false;
-			BufferLocks[buffer-1] &= ~BL_RI_LOCK;
+			BufferLocks[buffer - 1] &= ~BL_RI_LOCK;
 		}
 	}
 	else
 		elog(ERROR, "LockBuffer: unknown lock mode %d", mode);
 
 #ifdef HAS_TEST_AND_SET
-		S_UNLOCK(&(buf->cntx_lock));
+	S_UNLOCK(&(buf->cntx_lock));
 #else
-		IpcSemaphoreUnlock(WaitCLSemId, 0, IpcExclusiveLock);
+	IpcSemaphoreUnlock(WaitCLSemId, 0, IpcExclusiveLock);
 #endif
 
 }

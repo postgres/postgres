@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.35 1999/04/16 04:59:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.36 1999/05/25 16:08:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,13 +75,13 @@ static int	map_old_to_new(Port *port, UserAuth old, int status);
 static int
 pg_krb4_recvauth(Port *port)
 {
-	long					krbopts = 0;	/* one-way authentication */
-	KTEXT_ST			clttkt;
-	char					instance[INST_SZ+1],
-								version[KRB_SENDAUTH_VLEN+1];
-	AUTH_DAT			auth_data;
-	Key_schedule	key_sched;
-	int						status;
+	long		krbopts = 0;	/* one-way authentication */
+	KTEXT_ST	clttkt;
+	char		instance[INST_SZ + 1],
+				version[KRB_SENDAUTH_VLEN + 1];
+	AUTH_DAT	auth_data;
+	Key_schedule key_sched;
+	int			status;
 
 	strcpy(instance, "*");		/* don't care, but arg gets expanded
 								 * anyway */
@@ -99,7 +99,7 @@ pg_krb4_recvauth(Port *port)
 	if (status != KSUCCESS)
 	{
 		snprintf(PQerrormsg, ERROR_MSG_LENGTH,
-				"pg_krb4_recvauth: kerberos error: %s\n", krb_err_txt[status]);
+		  "pg_krb4_recvauth: kerberos error: %s\n", krb_err_txt[status]);
 		fputs(PQerrormsg, stderr);
 		pqdebug("%s", PQerrormsg);
 		return STATUS_ERROR;
@@ -107,7 +107,7 @@ pg_krb4_recvauth(Port *port)
 	if (strncmp(version, PG_KRB4_VERSION, KRB_SENDAUTH_VLEN))
 	{
 		snprintf(PQerrormsg, ERROR_MSG_LENGTH,
-				"pg_krb4_recvauth: protocol version != \"%s\"\n", PG_KRB4_VERSION);
+				 "pg_krb4_recvauth: protocol version != \"%s\"\n", PG_KRB4_VERSION);
 		fputs(PQerrormsg, stderr);
 		pqdebug("%s", PQerrormsg);
 		return STATUS_ERROR;
@@ -115,8 +115,8 @@ pg_krb4_recvauth(Port *port)
 	if (strncmp(port->user, auth_data.pname, SM_USER))
 	{
 		snprintf(PQerrormsg, ERROR_MSG_LENGTH,
-				"pg_krb4_recvauth: name \"%s\" != \"%s\"\n",
-				port->user, auth_data.pname);
+				 "pg_krb4_recvauth: name \"%s\" != \"%s\"\n",
+				 port->user, auth_data.pname);
 		fputs(PQerrormsg, stderr);
 		pqdebug("%s", PQerrormsg);
 		return STATUS_ERROR;
@@ -129,7 +129,7 @@ static int
 pg_krb4_recvauth(Port *port)
 {
 	snprintf(PQerrormsg, ERROR_MSG_LENGTH,
-			"pg_krb4_recvauth: Kerberos not implemented on this server.\n");
+		 "pg_krb4_recvauth: Kerberos not implemented on this server.\n");
 	fputs(PQerrormsg, stderr);
 	pqdebug("%s", PQerrormsg);
 
@@ -223,7 +223,7 @@ pg_krb5_recvauth(Port *port)
 	if (code = krb5_parse_name(servbuf, &server))
 	{
 		snprintf(PQerrormsg, ERROR_MSG_LENGTH,
-			  "pg_krb5_recvauth: Kerberos error %d in krb5_parse_name\n", code);
+		"pg_krb5_recvauth: Kerberos error %d in krb5_parse_name\n", code);
 		com_err("pg_krb5_recvauth", code, "in krb5_parse_name");
 		return STATUS_ERROR;
 	}
@@ -256,7 +256,7 @@ pg_krb5_recvauth(Port *port)
 							 (krb5_authenticator **) NULL))
 	{
 		snprintf(PQerrormsg, ERROR_MSG_LENGTH,
-				"pg_krb5_recvauth: Kerberos error %d in krb5_recvauth\n", code);
+		 "pg_krb5_recvauth: Kerberos error %d in krb5_recvauth\n", code);
 		com_err("pg_krb5_recvauth", code, "in krb5_recvauth");
 		krb5_free_principal(server);
 		return STATUS_ERROR;
@@ -271,7 +271,7 @@ pg_krb5_recvauth(Port *port)
 	if ((code = krb5_unparse_name(client, &kusername)))
 	{
 		snprintf(PQerrormsg, ERROR_MSG_LENGTH,
-			"pg_krb5_recvauth: Kerberos error %d in krb5_unparse_name\n", code);
+				 "pg_krb5_recvauth: Kerberos error %d in krb5_unparse_name\n", code);
 		com_err("pg_krb5_recvauth", code, "in krb5_unparse_name");
 		krb5_free_principal(client);
 		return STATUS_ERROR;
@@ -280,7 +280,7 @@ pg_krb5_recvauth(Port *port)
 	if (!kusername)
 	{
 		snprintf(PQerrormsg, ERROR_MSG_LENGTH,
-				"pg_krb5_recvauth: could not decode username\n");
+				 "pg_krb5_recvauth: could not decode username\n");
 		fputs(PQerrormsg, stderr);
 		pqdebug("%s", PQerrormsg);
 		return STATUS_ERROR;
@@ -289,7 +289,7 @@ pg_krb5_recvauth(Port *port)
 	if (strncmp(username, kusername, SM_USER))
 	{
 		snprintf(PQerrormsg, ERROR_MSG_LENGTH,
-				"pg_krb5_recvauth: name \"%s\" != \"%s\"\n", port->user, kusername);
+				 "pg_krb5_recvauth: name \"%s\" != \"%s\"\n", port->user, kusername);
 		fputs(PQerrormsg, stderr);
 		pqdebug("%s", PQerrormsg);
 		pfree(kusername);
@@ -304,7 +304,7 @@ static int
 pg_krb5_recvauth(Port *port)
 {
 	snprintf(PQerrormsg, ERROR_MSG_LENGTH,
-			"pg_krb5_recvauth: Kerberos not implemented on this server.\n");
+		 "pg_krb5_recvauth: Kerberos not implemented on this server.\n");
 	fputs(PQerrormsg, stderr);
 	pqdebug("%s", PQerrormsg);
 
@@ -359,7 +359,7 @@ pg_passwordv0_recvauth(void *arg, PacketLen len, void *pkt)
 	if (user == NULL || password == NULL)
 	{
 		snprintf(PQerrormsg, ERROR_MSG_LENGTH,
-				"pg_password_recvauth: badly formed password packet.\n");
+				 "pg_password_recvauth: badly formed password packet.\n");
 		fputs(PQerrormsg, stderr);
 		pqdebug("%s", PQerrormsg);
 
@@ -405,7 +405,7 @@ pg_passwordv0_recvauth(void *arg, PacketLen len, void *pkt)
 void
 auth_failed(Port *port)
 {
-	char	buffer[512];
+	char		buffer[512];
 	const char *authmethod = "Unknown auth method:";
 
 	switch (port->auth_method)
@@ -449,9 +449,9 @@ be_recvauth(Port *port)
 
 	/*
 	 * Get the authentication method to use for this frontend/database
-	 * combination.  Note: a failure return indicates a problem with
-	 * the hba config file, not with the request.  hba.c should have
-	 * dropped an error message into the postmaster logfile if it failed.
+	 * combination.  Note: a failure return indicates a problem with the
+	 * hba config file, not with the request.  hba.c should have dropped
+	 * an error message into the postmaster logfile if it failed.
 	 */
 
 	if (hba_getauthmethod(&port->raddr, port->user, port->database,
@@ -470,27 +470,28 @@ be_recvauth(Port *port)
 	{
 		/* Handle new style authentication. */
 
-		AuthRequest		areq = AUTH_REQ_OK;
-		PacketDoneProc	auth_handler = NULL;
+		AuthRequest areq = AUTH_REQ_OK;
+		PacketDoneProc auth_handler = NULL;
 
 		switch (port->auth_method)
 		{
 			case uaReject:
+
 				/*
-				 * This could have come from an explicit "reject" entry
-				 * in pg_hba.conf, but more likely it means there was no
-				 * matching entry.  Take pity on the poor user and issue
-				 * a helpful error message.  NOTE: this is not a security
-				 * breach, because all the info reported here is known
-				 * at the frontend and must be assumed known to bad guys.
+				 * This could have come from an explicit "reject" entry in
+				 * pg_hba.conf, but more likely it means there was no
+				 * matching entry.	Take pity on the poor user and issue a
+				 * helpful error message.  NOTE: this is not a security
+				 * breach, because all the info reported here is known at
+				 * the frontend and must be assumed known to bad guys.
 				 * We're merely helping out the less clueful good guys.
 				 * NOTE 2: libpq-be.h defines the maximum error message
 				 * length as 99 characters.  It probably wouldn't hurt
-				 * anything to increase it, but there might be some
-				 * client out there that will fail.  So, be terse.
+				 * anything to increase it, but there might be some client
+				 * out there that will fail.  So, be terse.
 				 */
 				{
-					char buffer[512];
+					char		buffer[512];
 					const char *hostinfo = "localhost";
 
 					if (port->raddr.sa.sa_family == AF_INET)

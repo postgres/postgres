@@ -1,18 +1,18 @@
 #include "postgres.h"
 #include "executor/spi.h"
 #include "commands/trigger.h"
-#include <ctype.h>	/* tolower */
-#include <stdio.h>	/* debugging */
+#include <ctype.h>				/* tolower */
+#include <stdio.h>				/* debugging */
 
 /*
  * Trigger function takes 2 arguments:
- 		1. relation in which to store the substrings
- 		2. field to extract substrings from
+		1. relation in which to store the substrings
+		2. field to extract substrings from
 
    The relation in which to insert *must* have the following layout:
 
-   		string		varchar(#)
-   		id			oid
+		string		varchar(#)
+		id			oid
 
 	Example:
 
@@ -24,9 +24,9 @@ create index title_fti_idx on title_fti (string);
 
 create trigger title_fti_trigger after update or insert or delete on product
 for each row execute procedure fti(title_fti, title);
-                                   ^^^^^^^^^
+								   ^^^^^^^^^
 								   where to store index in
-								              ^^^^^
+											  ^^^^^
 											  which column to index
 
 ofcourse don't forget to create an index on title_idx, column string, else
@@ -39,8 +39,8 @@ select p.* from product p, title_fti f1, title_fti f2 where
 */
 
 /*
-    march 4 1998 Changed breakup() to return less substrings. Only breakup
-	             in word parts which are in turn shortened from the start
+	march 4 1998 Changed breakup() to return less substrings. Only breakup
+				 in word parts which are in turn shortened from the start
 				 of the word (ie. word, ord, rd)
 				 Did allocation of substring buffer outside of breakup()
 	oct. 5 1997, fixed a bug in string breakup (where there are more nonalpha
@@ -62,14 +62,14 @@ select p.* from product p, title_fti f1, title_fti f2 where
    */
 
 HeapTuple	fti(void);
-char *breakup(char*, char*);
-bool is_stopword(char*);
+char	   *breakup(char *, char *);
+bool		is_stopword(char *);
 
-bool new_tuple = false;
+bool		new_tuple = false;
 
 
 /* THIS LIST MUST BE IN SORTED ORDER, A BINARY SEARCH IS USED!!!! */
-char *StopWords[] = { 		/* list of words to skip in indexing */
+char	   *StopWords[] = {		/* list of words to skip in indexing */
 #ifdef SAMPLE_STOP_WORDS
 	"no"
 	"the",
@@ -88,7 +88,7 @@ typedef struct
 static EPlan *InsertPlans = NULL;
 static EPlan *DeletePlans = NULL;
 static int	nInsertPlans = 0;
-static int  nDeletePlans = 0;
+static int	nDeletePlans = 0;
 
 static EPlan *find_plan(char *ident, EPlan ** eplan, int *nplans);
 
@@ -96,28 +96,28 @@ static EPlan *find_plan(char *ident, EPlan ** eplan, int *nplans);
 HeapTuple
 fti()
 {
-	Trigger		*trigger;	/* to get trigger name */
-	int			nargs;		/* # of arguments */
-	char		**args;		/* arguments */
-	char		*relname;	/* triggered relation name */
-	Relation	rel;		/* triggered relation */
-	char		*indexname;	/* name of table for substrings */
+	Trigger    *trigger;		/* to get trigger name */
+	int			nargs;			/* # of arguments */
+	char	  **args;			/* arguments */
+	char	   *relname;		/* triggered relation name */
+	Relation	rel;			/* triggered relation */
+	char	   *indexname;		/* name of table for substrings */
 	HeapTuple	rettuple = NULL;
-	TupleDesc	tupdesc;	/* tuple description */
-	bool		isinsert=false;
-	bool		isdelete=false;
+	TupleDesc	tupdesc;		/* tuple description */
+	bool		isinsert = false;
+	bool		isdelete = false;
 	int			ret;
 	char		query[8192];
 	Oid			oid;
-	/*
-	  FILE		*debug;
-	  */
 
 	/*
-	  debug = fopen("/dev/xconsole", "w");
-	  fprintf(debug, "FTI: entered function\n");
-	  fflush(debug);
-	  */
+	 * FILE		 *debug;
+	 */
+
+	/*
+	 * debug = fopen("/dev/xconsole", "w"); fprintf(debug, "FTI: entered
+	 * function\n"); fflush(debug);
+	 */
 
 	if (!CurrentTriggerData)
 		elog(ERROR, "Full Text Indexing: triggers are not initialized");
@@ -127,47 +127,53 @@ fti()
 		elog(ERROR, "Full Text Indexing: must be fired AFTER event");
 
 	if (TRIGGER_FIRED_BY_INSERT(CurrentTriggerData->tg_event))
-		isinsert=true;
+		isinsert = true;
 	if (TRIGGER_FIRED_BY_UPDATE(CurrentTriggerData->tg_event))
-	{ isdelete=true;isinsert=true;}
+	{
+		isdelete = true;
+		isinsert = true;
+	}
 	if (TRIGGER_FIRED_BY_DELETE(CurrentTriggerData->tg_event))
-		isdelete=true;
+		isdelete = true;
 
 	trigger = CurrentTriggerData->tg_trigger;
 	rel = CurrentTriggerData->tg_relation;
 	relname = SPI_getrelname(rel);
-	rettuple=CurrentTriggerData->tg_trigtuple;
-	if (isdelete&&isinsert) /* is an UPDATE */
-		rettuple=CurrentTriggerData->tg_newtuple;
+	rettuple = CurrentTriggerData->tg_trigtuple;
+	if (isdelete && isinsert)	/* is an UPDATE */
+		rettuple = CurrentTriggerData->tg_newtuple;
 
-	CurrentTriggerData = NULL; /* invalidate 'normal' calls to this function */
+	CurrentTriggerData = NULL;	/* invalidate 'normal' calls to this
+								 * function */
 
-	if ((ret = SPI_connect()) <0)
-		elog(ERROR,"Full Text Indexing: SPI_connect failed, returned %d\n",ret);
-		
+	if ((ret = SPI_connect()) < 0)
+		elog(ERROR, "Full Text Indexing: SPI_connect failed, returned %d\n", ret);
+
 	nargs = trigger->tgnargs;
 	if (nargs != 2)
 		elog(ERROR, "Full Text Indexing: trigger can only have 2 arguments");
-		
+
 	args = trigger->tgargs;
 	indexname = args[0];
-	tupdesc = rel->rd_att;	/* what the tuple looks like (?) */
+	tupdesc = rel->rd_att;		/* what the tuple looks like (?) */
 
 	/* get oid of current tuple, needed by all, so place here */
 	oid = rettuple->t_data->t_oid;
 	if (!OidIsValid(oid))
-	    elog(ERROR,"Full Text Indexing: oid of current tuple is NULL");
+		elog(ERROR, "Full Text Indexing: oid of current tuple is NULL");
 
-	if (isdelete) {
-		void *pplan;
-		Oid *argtypes;
-		Datum values[1];
-		EPlan *plan;
+	if (isdelete)
+	{
+		void	   *pplan;
+		Oid		   *argtypes;
+		Datum		values[1];
+		EPlan	   *plan;
 
 		sprintf(query, "D%s$%s", args[0], args[1]);
 		plan = find_plan(query, &DeletePlans, &nDeletePlans);
-		if (plan->nplans <= 0) {
-			argtypes = (Oid *)palloc(sizeof(Oid));
+		if (plan->nplans <= 0)
+		{
+			argtypes = (Oid *) palloc(sizeof(Oid));
 
 			argtypes[0] = OIDOID;
 
@@ -181,7 +187,7 @@ fti()
 				elog(ERROR, "Full Text Indexing: SPI_saveplan returned NULL "
 					 "in delete");
 
-			plan->splan = (void **)malloc(sizeof(void*));
+			plan->splan = (void **) malloc(sizeof(void *));
 			*(plan->splan) = pplan;
 			plan->nplans = 1;
 		}
@@ -192,26 +198,29 @@ fti()
 		if (ret != SPI_OK_DELETE)
 			elog(ERROR, "Full Text Indexing: error executing plan in delete");
 	}
-	
-	if (isinsert) {
-		char *substring, *column;
-		void *pplan;
-		Oid  *argtypes;
-		Datum values[2];
-		int  colnum;
+
+	if (isinsert)
+	{
+		char	   *substring,
+				   *column;
+		void	   *pplan;
+		Oid		   *argtypes;
+		Datum		values[2];
+		int			colnum;
 		struct varlena *data;
-		EPlan *plan;
+		EPlan	   *plan;
 
 		sprintf(query, "I%s$%s", args[0], args[1]);
 		plan = find_plan(query, &InsertPlans, &nInsertPlans);
 
 		/* no plan yet, so allocate mem for argtypes */
-		if (plan->nplans <= 0) {
-			argtypes = (Oid *)palloc(2*sizeof(Oid));
+		if (plan->nplans <= 0)
+		{
+			argtypes = (Oid *) palloc(2 * sizeof(Oid));
 
-			argtypes[0]	=	VARCHAROID; /*create table t_name
-										        (string varchar, */
-			argtypes[1]	=	OIDOID;     /*       id     oid);    */
+			argtypes[0] = VARCHAROID;	/* create table t_name (string
+										 * varchar, */
+			argtypes[1] = OIDOID;		/* id	  oid);    */
 
 			/* prepare plan to gain speed */
 			sprintf(query, "INSERT INTO %s (string, id) VALUES ($1, $2)",
@@ -226,45 +235,49 @@ fti()
 				elog(ERROR, "Full Text Indexing: SPI_saveplan returned NULL"
 					 " in insert");
 
-			plan->splan = (void **)malloc(sizeof(void*));
+			plan->splan = (void **) malloc(sizeof(void *));
 			*(plan->splan) = pplan;
 			plan->nplans = 1;
 		}
-		
-		
+
+
 		/* prepare plan for query */
-		colnum=SPI_fnumber(tupdesc, args[1]);
+		colnum = SPI_fnumber(tupdesc, args[1]);
 		if (colnum == SPI_ERROR_NOATTRIBUTE)
 			elog(ERROR, "Full Text Indexing: column '%s' of '%s' not found",
 				 args[1], args[0]);
-		
+
 		/* Get the char* representation of the column with name args[1] */
 		column = SPI_getvalue(rettuple, tupdesc, colnum);
-		
-		if (column) { /* make sure we don't try to index NULL's */
-			char *buff;
-			char *string = column;
-			
-			while(*string != '\0') { /* placed 'really' inline. */
-				*string = tolower(*string); /* some compilers will choke */
-				string++;					/* on 'inline' keyword */
+
+		if (column)
+		{						/* make sure we don't try to index NULL's */
+			char	   *buff;
+			char	   *string = column;
+
+			while (*string != '\0')
+			{					/* placed 'really' inline. */
+				*string = tolower(*string);		/* some compilers will
+												 * choke */
+				string++;		/* on 'inline' keyword */
 			}
 
-			data = (struct varlena*)palloc(sizeof(int32)+strlen(column)+1);
+			data = (struct varlena *) palloc(sizeof(int32) + strlen(column) +1);
 			buff = palloc(strlen(column) + 1);
-			/* saves lots of calls in while-loop and in breakup()*/
+			/* saves lots of calls in while-loop and in breakup() */
 
-			new_tuple=true;
-			while ((substring = breakup(column, buff))) {
-				int l;
+			new_tuple = true;
+			while ((substring = breakup(column, buff)))
+			{
+				int			l;
 
 				l = strlen(substring);
 
-				data->vl_len = l+sizeof(int32);
+				data->vl_len = l + sizeof(int32);
 				memcpy(VARDATA(data), substring, l);
 				values[0] = PointerGetDatum(data);
 				values[1] = oid;
-				
+
 				ret = SPI_execp(*(plan->splan), values, NULL, 0);
 				if (ret != SPI_OK_INSERT)
 					elog(ERROR, "Full Text Indexing: error executing plan "
@@ -279,76 +292,83 @@ fti()
 	return (rettuple);
 }
 
-char *breakup(char *string, char *substring)
+char *
+breakup(char *string, char *substring)
 {
 	static char *last_start;
 	static char *cur_pos;
 
 	if (new_tuple)
 	{
-		cur_pos=last_start=&string[strlen(string)-1];
-		new_tuple=false; /* don't initialize this next time */
+		cur_pos = last_start = &string[strlen(string) - 1];
+		new_tuple = false;		/* don't initialize this next time */
 	}
 
-	while (cur_pos > string) /* don't read before start of 'string' */
+	while (cur_pos > string)	/* don't read before start of 'string' */
 	{
-		/* skip pieces at the end of a string that are not
-		   alfa-numeric (ie. 'string$%^&', last_start first points to
-		   '&', and after this to 'g' */
-		if (!isalnum((int)*last_start)) {
-			while (!isalnum((int)*last_start) &&
+
+		/*
+		 * skip pieces at the end of a string that are not alfa-numeric
+		 * (ie. 'string$%^&', last_start first points to '&', and after
+		 * this to 'g'
+		 */
+		if (!isalnum((int) *last_start))
+		{
+			while (!isalnum((int) *last_start) &&
 				   last_start > string)
 				last_start--;
-			cur_pos=last_start;
+			cur_pos = last_start;
 		}
 
-		cur_pos--; /* substrings are at minimum 2 characters long */
+		cur_pos--;				/* substrings are at minimum 2 characters
+								 * long */
 
-		if (isalnum((int)*cur_pos))
+		if (isalnum((int) *cur_pos))
 		{
 			/* Houston, we have a substring! :) */
 			memcpy(substring, cur_pos, last_start - cur_pos + 1);
-			substring[last_start-cur_pos+1]='\0';
-			if (!is_stopword(substring)) return substring;
+			substring[last_start - cur_pos + 1] = '\0';
+			if (!is_stopword(substring))
+				return substring;
 		}
 		else
 		{
-			last_start=cur_pos-1;
+			last_start = cur_pos - 1;
 			cur_pos = last_start;
 		}
 	}
 
-	return NULL; /* we've processed all of 'string' */
+	return NULL;				/* we've processed all of 'string' */
 }
 
 /* copied from src/backend/parser/keywords.c and adjusted for our situation*/
 bool
 is_stopword(char *text)
 {
-	char **StopLow;		/* for list of stop-words */
-	char **StopHigh;
-	char **StopMiddle;
-    unsigned int         difference;
+	char	  **StopLow;		/* for list of stop-words */
+	char	  **StopHigh;
+	char	  **StopMiddle;
+	unsigned int difference;
 
-	StopLow = &StopWords[0];		/* initialize stuff for binary search */
+	StopLow = &StopWords[0];	/* initialize stuff for binary search */
 	StopHigh = endof(StopWords);
 
 	if (lengthof(StopWords) == 0)
 		return false;
-		
-    while (StopLow <= StopHigh)
-    {
-        StopMiddle = StopLow + (StopHigh - StopLow) / 2;
-        difference = strcmp(*StopMiddle, text);
-        if (difference == 0)
-            return (true);
-        else if (difference < 0)
-            StopLow = StopMiddle + 1;
-        else
-            StopHigh = StopMiddle - 1;
-    }
 
-    return (false);
+	while (StopLow <= StopHigh)
+	{
+		StopMiddle = StopLow + (StopHigh - StopLow) / 2;
+		difference = strcmp(*StopMiddle, text);
+		if (difference == 0)
+			return (true);
+		else if (difference < 0)
+			StopLow = StopMiddle + 1;
+		else
+			StopHigh = StopMiddle - 1;
+	}
+
+	return (false);
 }
 
 /* for caching of query plans, stolen from contrib/spi/\*.c */

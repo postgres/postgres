@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.29 1999/04/28 22:17:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.30 1999/05/25 16:11:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,17 +60,17 @@ static char CommandInfo[32] = {0};
  * ----------------
  */
 static void
-donothingReceive (HeapTuple tuple, TupleDesc typeinfo, DestReceiver* self)
+donothingReceive(HeapTuple tuple, TupleDesc typeinfo, DestReceiver * self)
 {
 }
 
 static void
-donothingSetup (DestReceiver* self, TupleDesc typeinfo)
+donothingSetup(DestReceiver * self, TupleDesc typeinfo)
 {
 }
 
 static void
-donothingCleanup (DestReceiver* self)
+donothingCleanup(DestReceiver * self)
 {
 }
 
@@ -149,9 +149,11 @@ BeginCommand(char *pname,
 			if (operation == CMD_SELECT && !isIntoRel)
 			{
 				StringInfoData buf;
+
 				pq_beginmessage(&buf);
-				pq_sendbyte(&buf, 'T');	/* tuple descriptor message type */
-				pq_sendint(&buf, natts, 2);	/* # of attributes in tuples */
+				pq_sendbyte(&buf, 'T'); /* tuple descriptor message type */
+				pq_sendint(&buf, natts, 2);		/* # of attributes in
+												 * tuples */
 
 				for (i = 0; i < natts; ++i)
 				{
@@ -215,35 +217,35 @@ BeginCommand(char *pname,
  *		DestToFunction - return appropriate receiver function set for dest
  * ----------------
  */
-DestReceiver*
+DestReceiver *
 DestToFunction(CommandDest dest)
 {
 	switch (dest)
 	{
-		case Remote:
+			case Remote:
 			/* printtup wants a dynamically allocated DestReceiver */
 			return printtup_create_DR();
 			break;
 
 		case RemoteInternal:
-			return & printtup_internalDR;
+			return &printtup_internalDR;
 			break;
 
 		case Local:
-			return & be_printtupDR;
+			return &be_printtupDR;
 			break;
 
 		case Debug:
-			return & debugtupDR;
+			return &debugtupDR;
 			break;
 
 		case SPI:
-			return & spi_printtupDR;
+			return &spi_printtupDR;
 			break;
 
 		case None:
 		default:
-			return & donothingDR;
+			return &donothingDR;
 			break;
 	}
 
@@ -251,7 +253,7 @@ DestToFunction(CommandDest dest)
 	 * never gets here, but DECstation lint appears to be stupid...
 	 */
 
-	return & donothingDR;
+	return &donothingDR;
 }
 
 /* ----------------
@@ -330,13 +332,13 @@ NullCommand(CommandDest dest)
 {
 	switch (dest)
 	{
-		case RemoteInternal:
-		case Remote:
+			case RemoteInternal:
+			case Remote:
 			/* ----------------
 			 *		tell the fe that we saw an empty query string
 			 * ----------------
 			 */
-			pq_putbytes("I", 2); /* note we send I and \0 */
+			pq_putbytes("I", 2);/* note we send I and \0 */
 			break;
 
 		case Local:
@@ -362,8 +364,8 @@ ReadyForQuery(CommandDest dest)
 {
 	switch (dest)
 	{
-		case RemoteInternal:
-		case Remote:
+			case RemoteInternal:
+			case Remote:
 			if (PG_PROTOCOL_MAJOR(FrontendProtocol) >= 2)
 				pq_putbytes("Z", 1);
 			/* Flush output at end of cycle in any case. */
@@ -383,7 +385,7 @@ UpdateCommandInfo(int operation, Oid lastoid, uint32 tuples)
 {
 	switch (operation)
 	{
-		case CMD_INSERT:
+			case CMD_INSERT:
 			if (tuples > 1)
 				lastoid = InvalidOid;
 			sprintf(CommandInfo, " %u %u", lastoid, tuples);

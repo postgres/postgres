@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteRemove.c,v 1.23 1999/05/10 00:45:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteRemove.c,v 1.24 1999/05/25 16:10:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,7 +42,7 @@ RewriteGetRuleEventRel(char *rulename)
 							   0, 0, 0);
 	if (!HeapTupleIsValid(htup))
 		elog(ERROR, "Rule or view '%s' not found",
-			 ((!strncmp(rulename, "_RET", 4))? (rulename+4): rulename));
+		  ((!strncmp(rulename, "_RET", 4)) ? (rulename + 4) : rulename));
 	eventrel = ((Form_pg_rewrite) GETSTRUCT(htup))->ev_class;
 	htup = SearchSysCacheTuple(RELOID,
 							   PointerGetDatum(eventrel),

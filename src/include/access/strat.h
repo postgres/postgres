@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: strat.h,v 1.12 1999/02/13 23:20:58 momjian Exp $
+ * $Id: strat.h,v 1.13 1999/05/25 16:13:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,6 +25,7 @@ typedef struct StrategyTransformMapData
 	StrategyNumber strategy[1]; /* VARIABLE LENGTH ARRAY */
 } StrategyTransformMapData;		/* VARIABLE LENGTH
 
+								 *
 								 *
 								 *
 								 *
@@ -70,7 +71,7 @@ typedef struct StrategyEvaluationData
 typedef StrategyEvaluationData *StrategyEvaluation;
 
 /*
- * StrategyTransformMapIsValid 
+ * StrategyTransformMapIsValid
  *		Returns true iff strategy transformation map is valid.
  */
 #define StrategyTransformMapIsValid(transform) PointerIsValid(transform)

@@ -1,17 +1,17 @@
-/* dllinit.c -- Portable DLL initialization. 
+/* dllinit.c -- Portable DLL initialization.
    Copyright (C) 1998 Free Software Foundation, Inc.
    Contributed by Mumit Khan (khan@xraylith.wisc.edu).
 
-   I've used DllMain as the DLL "main" since that's the most common 
+   I've used DllMain as the DLL "main" since that's the most common
    usage. MSVC and Mingw32 both default to DllMain as the standard
-   callback from the linker entry point. Cygwin32 b19+ uses essentially 
+   callback from the linker entry point. Cygwin32 b19+ uses essentially
    the same, albeit slightly differently implemented, scheme. Please
-   see DECLARE_CYGWIN_DLL macro in <cygwin32/cygwin_dll.h> for more 
+   see DECLARE_CYGWIN_DLL macro in <cygwin32/cygwin_dll.h> for more
    info on how Cygwin32 uses the callback function.
 
-   The real entry point is typically always defined by the runtime 
-   library, and usually never overridden by (casual) user. What you can 
-   override however is the callback routine that the entry point calls, 
+   The real entry point is typically always defined by the runtime
+   library, and usually never overridden by (casual) user. What you can
+   override however is the callback routine that the entry point calls,
    and this file provides such a callback function, DllMain.
 
    Mingw32: The default entry point for mingw32 is DllMainCRTStartup
@@ -40,17 +40,17 @@
 #undef WIN32_LEAN_AND_MEAN
 #include <stdio.h>
 
-BOOL APIENTRY DllMain (HINSTANCE hInst, DWORD reason, 
-                       LPVOID reserved /* Not used. */ );
+BOOL APIENTRY DllMain(HINSTANCE hInst, DWORD reason,
+		LPVOID reserved /* Not used. */ );
 
 #ifdef __CYGWIN32__
 
 #include <cygwin/cygwin_dll.h>
-DECLARE_CYGWIN_DLL( DllMain );
+DECLARE_CYGWIN_DLL(DllMain);
 /* save hInstance from DllMain */
-HINSTANCE __hDllInstance_base;
+HINSTANCE	__hDllInstance_base;
 
-#endif /* __CYGWIN32__ */
+#endif	 /* __CYGWIN32__ */
 
 struct _reent *_impure_ptr;
 
@@ -59,47 +59,46 @@ extern struct _reent *__imp_reent_data;
 /*
  *----------------------------------------------------------------------
  *
- * DllMain 
+ * DllMain
  *
- *	This routine is called by the Mingw32, Cygwin32 or VC++ C run 
- *	time library init code, or the Borland DllEntryPoint routine. It 
- *	is responsible for initializing various dynamically loaded 
+ *	This routine is called by the Mingw32, Cygwin32 or VC++ C run
+ *	time library init code, or the Borland DllEntryPoint routine. It
+ *	is responsible for initializing various dynamically loaded
  *	libraries.
  *
  * Results:
- *      TRUE on sucess, FALSE on failure.
+ *		TRUE on sucess, FALSE on failure.
  *
  * Side effects:
  *
  *----------------------------------------------------------------------
  */
-BOOL APIENTRY
-DllMain (
-	 HINSTANCE hInst /* Library instance handle. */ ,
-	 DWORD reason /* Reason this function is being called. */ ,
-	 LPVOID reserved /* Not used. */ )
+BOOL		APIENTRY
+DllMain(
+		HINSTANCE hInst /* Library instance handle. */ ,
+		DWORD reason /* Reason this function is being called. */ ,
+		LPVOID reserved /* Not used. */ )
 {
 
 #ifdef __CYGWIN32__
-  __hDllInstance_base = hInst;
-#endif /* __CYGWIN32__ */
+	__hDllInstance_base = hInst;
+#endif	 /* __CYGWIN32__ */
 
-  _impure_ptr = __imp_reent_data;
-  
-  switch (reason)
-    {
-    case DLL_PROCESS_ATTACH:
-      break;
+	_impure_ptr = __imp_reent_data;
 
-    case DLL_PROCESS_DETACH:
-      break;
+	switch (reason)
+	{
+		case DLL_PROCESS_ATTACH:
+			break;
 
-    case DLL_THREAD_ATTACH:
-      break;
+		case DLL_PROCESS_DETACH:
+			break;
 
-    case DLL_THREAD_DETACH:
-      break;
-    }
-  return TRUE;
+		case DLL_THREAD_ATTACH:
+			break;
+
+		case DLL_THREAD_DETACH:
+			break;
+	}
+	return TRUE;
 }
-

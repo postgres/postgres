@@ -3,7 +3,7 @@
  *			  procedural language (PL)
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.9 1999/04/20 02:19:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.10 1999/05/25 16:15:19 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1041,9 +1041,8 @@ pltcl_trigger_handler(FmgrInfo *proinfo)
 	if (SPI_finish() != SPI_OK_FINISH)
 		elog(ERROR, "pltcl: SPI_finish() failed");
 
-	if (strcmp(pltcl_safe_interp->result, "OK") == 0) {
+	if (strcmp(pltcl_safe_interp->result, "OK") == 0)
 		return rettup;
-	}
 	if (strcmp(pltcl_safe_interp->result, "SKIP") == 0)
 	{
 		return (HeapTuple) NULL;;

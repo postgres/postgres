@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.24 1999/03/23 16:50:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.25 1999/05/25 16:08:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -467,6 +467,7 @@ ExecSetSlotPolicy(TupleTableSlot *slot, /* slot to change */
 
 	return old_shouldFree;
 }
+
 #endif
 
 /* --------------------------------
@@ -650,6 +651,7 @@ ExecInitMarkedTupleSlot(EState *estate, MergeJoinState *mergestate)
 	INIT_SLOT_ALLOC;
 	mergestate->mj_MarkedTupleSlot = (TupleTableSlot *) slot;
 }
+
 #endif
 
 /* ----------------

@@ -12,7 +12,7 @@ HeapTuple	noup(void);
  * noup () -- revoke permission on column
  *
  * Though it's called without args You have to specify referenced
- * table/column while creating trigger:  
+ * table/column while creating trigger:
  * EXECUTE PROCEDURE noup ('col').
  */
 
@@ -98,8 +98,8 @@ noup()
 		 */
 		if (!isnull)
 		{
-	
-			elog(WARN, "%s: update not allowed", args[i] );
+
+			elog(WARN, "%s: update not allowed", args[i]);
 			SPI_finish();
 			return NULL;
 		}

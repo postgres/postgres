@@ -7,16 +7,18 @@ int			unlisten(char *relname);
 int			max(int x, int y);
 int			min(int x, int y);
 int			assert_enable(int val);
+
 #ifdef ASSERT_CHECKING_TEST
 int			assert_test(int val);
+
 #endif
 
 #endif
 
 /*
  * Local variables:
- *  tab-width: 4
- *  c-indent-level: 4
- *  c-basic-offset: 4
+ *	tab-width: 4
+ *	c-indent-level: 4
+ *	c-basic-offset: 4
  * End:
  */

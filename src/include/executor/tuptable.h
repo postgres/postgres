@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tuptable.h,v 1.11 1999/02/23 07:36:31 thomas Exp $
+ * $Id: tuptable.h,v 1.12 1999/05/25 16:13:58 momjian Exp $
  *
  * NOTES
  *	  The tuple table interface is getting pretty ugly.
@@ -51,13 +51,13 @@
  */
 typedef struct TupleTableSlot
 {
-	NodeTag			type;
-	HeapTuple		val;
-	bool			ttc_shouldFree;
-	bool			ttc_descIsNew;
-	TupleDesc		ttc_tupleDescriptor;
-	Buffer			ttc_buffer;
-	int				ttc_whichplan;
+	NodeTag		type;
+	HeapTuple	val;
+	bool		ttc_shouldFree;
+	bool		ttc_descIsNew;
+	TupleDesc	ttc_tupleDescriptor;
+	Buffer		ttc_buffer;
+	int			ttc_whichplan;
 } TupleTableSlot;
 
 /* ----------------

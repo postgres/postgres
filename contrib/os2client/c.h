@@ -1,5 +1,5 @@
-#undef PORTNAME 
-#define PORTNAME OS2 
+#undef PORTNAME
+#define PORTNAME OS2
 /*-------------------------------------------------------------------------
  *
  * c.h--
@@ -9,7 +9,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.1 1998/10/31 04:10:53 scrappy Exp $
+ * $Id: c.h,v 1.2 1999/05/25 16:06:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,7 +65,8 @@
 #ifndef __cplusplus
 #ifndef bool
 typedef char bool;
-#endif   /* ndef bool */
+
+#endif	 /* ndef bool */
 #endif	 /* not C++ */
 typedef bool *BoolPtr;
 

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: sinvaladt.h,v 1.12 1999/02/19 06:06:39 tgl Exp $
+ * $Id: sinvaladt.h,v 1.13 1999/05/25 16:14:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,8 +70,7 @@ typedef struct SISeg
 	Offset		endEntryChain;	/* (offset relative to B)		*/
 	int			numEntries;
 	int			maxNumEntries;
-	ProcState	procState[MAXBACKENDS];			/* reflects the
-												 * invalidation state */
+	ProcState	procState[MAXBACKENDS]; /* reflects the invalidation state */
 	/* here starts the entry section, controlled by offsets */
 } SISeg;
 

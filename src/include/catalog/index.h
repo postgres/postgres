@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: index.h,v 1.15 1999/02/13 23:21:03 momjian Exp $
+ * $Id: index.h,v 1.16 1999/05/25 16:13:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,7 +39,7 @@ extern void index_create(char *heapRelationName,
 			 Node *predicate,
 			 bool islossy,
 			 bool unique,
-             bool primary);
+			 bool primary);
 
 extern void index_destroy(Oid indexId);
 

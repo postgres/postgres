@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.36 1999/04/20 03:51:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.37 1999/05/25 16:08:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -400,8 +400,8 @@ TypeCreate(char *typeName,
 		procname = procs[j];
 
 		/*
-		 * First look for a 1-argument func with all argtypes 0.
-		 * This is valid for all four kinds of procedure.
+		 * First look for a 1-argument func with all argtypes 0. This is
+		 * valid for all four kinds of procedure.
 		 */
 		MemSet(argList, 0, 8 * sizeof(Oid));
 
@@ -413,20 +413,23 @@ TypeCreate(char *typeName,
 
 		if (!HeapTupleIsValid(tup))
 		{
+
 			/*
-			 * For array types, the input procedures may take 3 args
-			 * (data value, element OID, atttypmod); the pg_proc
-			 * argtype signature is 0,0,INT4OID.  The output procedures
-			 * may take 2 args (data value, element OID).
+			 * For array types, the input procedures may take 3 args (data
+			 * value, element OID, atttypmod); the pg_proc argtype
+			 * signature is 0,0,INT4OID.  The output procedures may take 2
+			 * args (data value, element OID).
 			 */
 			if (OidIsValid(elementObjectId))
 			{
-				int nargs;
+				int			nargs;
+
 				if (j % 2)
 				{
 					/* output proc */
 					nargs = 2;
-				} else
+				}
+				else
 				{
 					/* input proc */
 					nargs = 3;

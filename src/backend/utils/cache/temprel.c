@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/temprel.c,v 1.2 1999/02/13 23:19:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/temprel.c,v 1.3 1999/05/25 16:12:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,16 +47,16 @@ static List *temp_rels = NIL;
 
 typedef struct TempTable
 {
-	char 		*user_relname;
+	char	   *user_relname;
 	HeapTuple	pg_class_tuple;
-} TempTable;
+}			TempTable;
 
 
 void
 create_temp_relation(char *relname, HeapTuple pg_class_tuple)
 {
 	MemoryContext oldcxt;
-	TempTable	*temp_rel;
+	TempTable  *temp_rel;
 
 	oldcxt = MemoryContextSwitchTo((MemoryContext) CacheCxt);
 
@@ -65,7 +65,7 @@ create_temp_relation(char *relname, HeapTuple pg_class_tuple)
 
 	/* save user-supplied name */
 	strcpy(temp_rel->user_relname, relname);
-            
+
 	temp_rel->pg_class_tuple = heap_copytuple(pg_class_tuple);
 
 	temp_rels = lcons(temp_rel, temp_rels);
@@ -76,24 +76,25 @@ create_temp_relation(char *relname, HeapTuple pg_class_tuple)
 void
 remove_all_temp_relations(void)
 {
-	List *l, *next;
+	List	   *l,
+			   *next;
 
 	l = temp_rels;
 	while (l != NIL)
 	{
-		TempTable	*temp_rel = lfirst(l);
+		TempTable  *temp_rel = lfirst(l);
 		Form_pg_class classtuple;
 
-		classtuple = (Form_pg_class)GETSTRUCT(temp_rel->pg_class_tuple);
+		classtuple = (Form_pg_class) GETSTRUCT(temp_rel->pg_class_tuple);
 
-		next = lnext(l); /* do this first, l is deallocated */
+		next = lnext(l);		/* do this first, l is deallocated */
 
 		if (classtuple->relkind != RELKIND_INDEX)
 		{
-			char relname[NAMEDATALEN];
+			char		relname[NAMEDATALEN];
 
 			/* safe from deallocation */
-			strcpy(relname, temp_rel->user_relname); 
+			strcpy(relname, temp_rel->user_relname);
 			heap_destroy_with_catalog(relname);
 		}
 		else
@@ -109,15 +110,16 @@ remove_temp_relation(Oid relid)
 {
 
 	MemoryContext oldcxt;
-	List		*l, *prev;
-	
+	List	   *l,
+			   *prev;
+
 	oldcxt = MemoryContextSwitchTo((MemoryContext) CacheCxt);
 
 	prev = NIL;
 	l = temp_rels;
 	while (l != NIL)
 	{
-		TempTable	*temp_rel = lfirst(l);
+		TempTable  *temp_rel = lfirst(l);
 
 		if (temp_rel->pg_class_tuple->t_data->t_oid == relid)
 		{
@@ -152,11 +154,11 @@ remove_temp_relation(Oid relid)
 HeapTuple
 get_temp_rel_by_name(char *user_relname)
 {
-	List *l;
+	List	   *l;
 
 	foreach(l, temp_rels)
 	{
-		TempTable	*temp_rel = lfirst(l);
+		TempTable  *temp_rel = lfirst(l);
 
 		if (strcmp(temp_rel->user_relname, user_relname) == 0)
 			return temp_rel->pg_class_tuple;

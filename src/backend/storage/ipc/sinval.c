@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.13 1999/02/13 23:18:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.14 1999/05/25 16:11:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,7 +87,7 @@ InitSharedInvalidationState(void)
 }
 
 /*
- * RegisterSharedInvalid 
+ * RegisterSharedInvalid
  *	Returns a new local cache invalidation state containing a new entry.
  *
  * Note:
@@ -147,7 +147,7 @@ RegisterSharedInvalid(int cacheId,		/* XXX */
 }
 
 /*
- * InvalidateSharedInvalid 
+ * InvalidateSharedInvalid
  *	Processes all entries in a shared cache invalidation state.
  */
 /****************************************************************************/

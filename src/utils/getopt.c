@@ -51,7 +51,7 @@ char	   *optarg;				/* argument associated with option */
 #define EMSG	""
 
 /*
- * getopt 
+ * getopt
  *	Parse argc/argv argument vector.
  */
 int

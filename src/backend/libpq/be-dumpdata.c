@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: be-dumpdata.c,v 1.23 1999/05/10 00:45:08 momjian Exp $
+ *	$Id: be-dumpdata.c,v 1.24 1999/05/25 16:08:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -130,8 +130,8 @@ static u_int be_portalcnt = 0;
 PortalEntry *
 be_newportal(void)
 {
-	PortalEntry	*entry;
-	char				buf[PortalNameLength];
+	PortalEntry *entry;
+	char		buf[PortalNameLength];
 
 	/* ----------------
 	 *	generate a new name
@@ -208,7 +208,7 @@ be_typeinit(PortalEntry *entry,
  * ----------------
  */
 void
-be_printtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver* self)
+be_printtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver * self)
 {
 	int			i;
 	Datum		attr;

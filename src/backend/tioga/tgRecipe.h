@@ -11,7 +11,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tgRecipe.h,v 1.8 1999/02/13 23:18:55 momjian Exp $
+ * $Id: tgRecipe.h,v 1.9 1999/05/25 16:11:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,7 @@ typedef struct
 				y;
 } Point;						/* this should match whatever is in
 
+								 *
 								 *
 								 *
 								 *
@@ -114,7 +115,7 @@ typedef struct _tgrecipe
 {
 	TgElement	elmValue;		/* "inherits" TgElement attributes. */
 	Arr_TgNodePtr *allNodes;	/* array of all nodes for this recipe. */
-	Arr_TgNodePtr *rootNodes;	/* array of root nodes for this recipe. 
+	Arr_TgNodePtr *rootNodes;	/* array of root nodes for this recipe.
 								 * root nodes are nodes with no parents */
 	Arr_TgNodePtr *eyes;		/* array of pointers for the browser nodes
 								 * recipe, execution of recipe starts by

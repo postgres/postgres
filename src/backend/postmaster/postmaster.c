@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.104 1999/05/22 17:47:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.105 1999/05/25 16:10:40 momjian Exp $
  *
  * NOTES
  *
@@ -164,16 +164,16 @@ static IpcMemoryKey ipc_key;
 
 static int	MaxBackends = DEF_MAXBACKENDS;
 
- /* 
-  * MaxBackends is the actual limit on the number of backends we will start.
-  * The default is established by configure, but it can be readjusted 
-  * from 1..MAXBACKENDS with the postmaster -N switch.
-  * Note that a larger MaxBackends value will increase the size of the
-  * shared memory area as well as cause the postmaster to grab more
-  * kernel semaphores, even if you never actually use that many backends.
+ /*
+  * MaxBackends is the actual limit on the number of backends we will
+  * start. The default is established by configure, but it can be
+  * readjusted from 1..MAXBACKENDS with the postmaster -N switch. Note
+  * that a larger MaxBackends value will increase the size of the shared
+  * memory area as well as cause the postmaster to grab more kernel
+  * semaphores, even if you never actually use that many backends.
   */
 
-static int	NextBackendTag = MAXINT;		/* XXX why count down not up? */
+static int	NextBackendTag = MAXINT;	/* XXX why count down not up? */
 static char *progname = (char *) NULL;
 static char **real_argv;
 static int	real_argc;
@@ -184,8 +184,10 @@ static int	real_argc;
 static char Execfile[MAXPATHLEN] = "";
 
 static int	ServerSock_INET = INVALID_SOCK;		/* stream socket server */
+
 #ifndef __CYGWIN32__
 static int	ServerSock_UNIX = INVALID_SOCK;		/* stream socket server */
+
 #endif
 
 /*
@@ -254,7 +256,7 @@ static int	initMasks(fd_set *rmask, fd_set *wmask);
 static long PostmasterRandom(void);
 static void RandomSalt(char *salt);
 static void SignalChildren(SIGNAL_ARGS);
-static int CountChildren(void);
+static int	CountChildren(void);
 
 #ifdef CYR_RECODE
 void		GetCharSetByHost(char *, int, char *);
@@ -474,9 +476,10 @@ PostmasterMain(int argc, char *argv[])
 				 */
 				break;
 			case 'N':
+
 				/*
-				 * The max number of backends to start.
-				 * Can't set to less than 1 or more than compiled-in limit.
+				 * The max number of backends to start. Can't set to less
+				 * than 1 or more than compiled-in limit.
 				 */
 				MaxBackends = atoi(optarg);
 				if (MaxBackends < 1)
@@ -793,11 +796,12 @@ ServerLoop(void)
 									"Sorry, too many clients already");
 				else
 				{
+
 					/*
 					 * If the backend start fails then keep the connection
 					 * open to report it.  Otherwise, pretend there is an
-					 * error to close the connection which will now be managed
-					 * by the backend.
+					 * error to close the connection which will now be
+					 * managed by the backend.
 					 */
 					if (BackendStartup(port) != STATUS_OK)
 						PacketSendError(&port->pktInfo,
@@ -1337,11 +1341,12 @@ BackendStartup(Port *port)
 	}
 
 	/*
-	 * Flush stdio channels just before fork, to avoid double-output problems.
-	 * Ideally we'd use fflush(NULL) here, but there are still a few non-ANSI
-	 * stdio libraries out there (like SunOS 4.1.x) that coredump if we do.
-	 * Presently stdout and stderr are the only stdio output channels used
-	 * by the postmaster, so fflush'ing them should be sufficient.
+	 * Flush stdio channels just before fork, to avoid double-output
+	 * problems. Ideally we'd use fflush(NULL) here, but there are still a
+	 * few non-ANSI stdio libraries out there (like SunOS 4.1.x) that
+	 * coredump if we do. Presently stdout and stderr are the only stdio
+	 * output channels used by the postmaster, so fflush'ing them should
+	 * be sufficient.
 	 */
 	fflush(stdout);
 	fflush(stderr);
@@ -1372,7 +1377,9 @@ BackendStartup(Port *port)
 				port->sock);
 
 	/* Generate a new backend tag for every backend we start */
-	/* XXX theoretically this could wrap around, if you have the patience
+
+	/*
+	 * XXX theoretically this could wrap around, if you have the patience
 	 * to start 2^31 backends ...
 	 */
 	NextBackendTag -= 1;
@@ -1549,10 +1556,10 @@ DoBackend(Port *port)
 	}
 
 	/*
-	 * Pass any backend switches specified with -o in the postmaster's
-	 * own command line.  We assume these are secure.
-	 * (It's OK to mangle ExtraOptions since we are now in the child process;
-	 * this won't change the postmaster's copy.)
+	 * Pass any backend switches specified with -o in the postmaster's own
+	 * command line.  We assume these are secure. (It's OK to mangle
+	 * ExtraOptions since we are now in the child process; this won't
+	 * change the postmaster's copy.)
 	 */
 	split_opts(av, &ac, ExtraOptions);
 
@@ -1561,8 +1568,8 @@ DoBackend(Port *port)
 	av[ac++] = protobuf;
 
 	/*
-	 * Tell the backend it is being called from the postmaster,
-	 * and which database to use.  -p marks the end of secure switches.
+	 * Tell the backend it is being called from the postmaster, and which
+	 * database to use.  -p marks the end of secure switches.
 	 */
 	av[ac++] = "-p";
 
@@ -1700,7 +1707,7 @@ static int
 CountChildren(void)
 {
 	Dlelem	   *curr;
-	Backend	   *bp;
+	Backend    *bp;
 	int			mypid = getpid();
 	int			cnt = 0;
 

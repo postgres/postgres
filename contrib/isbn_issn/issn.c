@@ -1,7 +1,7 @@
 /*
  *	PostgreSQL type definitions for ISSNs.
  *
- *	$Id: issn.c,v 1.1 1998/08/17 03:35:05 scrappy Exp $
+ *	$Id: issn.c,v 1.2 1999/05/25 16:05:42 momjian Exp $
  */
 
 #include <stdio.h>
@@ -16,8 +16,8 @@
 
 typedef struct issn
 {
-	char	num[9];
-	char	pad[7];
+	char		num[9];
+	char		pad[7];
 }			issn;
 
 /*
@@ -50,13 +50,15 @@ issn_in(char *str)
 	char	   *cp;
 	int			count;
 
-	if (strlen(str) != 9) {
+	if (strlen(str) != 9)
+	{
 		elog(ERROR, "issn_in: invalid ISSN \"%s\"", str);
 		return (NULL);
 	}
-	if (issn_sum(str) != 0) {
+	if (issn_sum(str) != 0)
+	{
 		elog(ERROR, "issn_in: purported ISSN \"%s\" failed checksum",
-		     str);
+			 str);
 		return (NULL);
 	}
 
@@ -75,28 +77,40 @@ issn_in(char *str)
 int4
 issn_sum(char *str)
 {
-	int4 sum = 0, dashes = 0, val;
-	int i;
+	int4		sum = 0,
+				dashes = 0,
+				val;
+	int			i;
 
-	for (i = 0; str[i] && i < 9; i++) {
-		switch(str[i]) {
-		case '-':
-			if (++dashes > 1)
+	for (i = 0; str[i] && i < 9; i++)
+	{
+		switch (str[i])
+		{
+			case '-':
+				if (++dashes > 1)
+					return 12;
+				continue;
+
+			case '0':
+			case '1':
+			case '2':
+			case '3':
+			case '4':
+			case '5':
+			case '6':
+			case '7':
+			case '8':
+			case '9':
+				val = str[i] - '0';
+				break;
+
+			case 'X':
+			case 'x':
+				val = 10;
+				break;
+
+			default:
 				return 12;
-			continue;
-
-		case '0': case '1': case '2': case '3':
-		case '4': case '5': case '6': case '7':
-		case '8': case '9':
-			val = str[i] - '0';
-			break;
-
-		case 'X': case 'x':
-			val = 10;
-			break;
-
-		default:
-			return 12;
 		}
 
 		sum += val * (8 - (i - dashes));

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/keys.c,v 1.19 1999/02/20 18:01:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/keys.c,v 1.20 1999/05/25 16:09:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,7 +54,7 @@ static bool equal_indexkey_var(int index_key, Var *var);
  *
  */
 bool
-match_indexkey_operand(int indexkey, Var *operand, RelOptInfo *rel)
+match_indexkey_operand(int indexkey, Var *operand, RelOptInfo * rel)
 {
 	if (IsA(operand, Var) &&
 		(lfirsti(rel->relids) == operand->varno) &&
@@ -112,7 +112,7 @@ extract_join_key(JoinKey *jk, int outer_or_inner)
  *
  *	See the top of optimizer/path/pathkeys.c for a description of pathkeys.
  *	Each pathkey is ordered by its join order, so they not pre-ordered to
- *	match.  We must search them ourselves.
+ *	match.	We must search them ourselves.
  *
  *	This gets called a lot, so it is optimized.
  */
@@ -128,31 +128,33 @@ pathkeys_match(List *keys1, List *keys2, int *better_key)
 		 key1 != NIL && key2 != NIL;
 		 key1 = lnext(key1), key2 = lnext(key2))
 	{
-		List *i;
+		List	   *i;
 
 		if (key1_subsetof_key2)
 			foreach(i, lfirst(key1))
+		{
+			Var		   *subkey = lfirst(i);
+
+			if (!member(subkey, lfirst(key2)))
 			{
-				Var	*subkey = lfirst(i);
-				if (!member(subkey, lfirst(key2)))
-				{
-					key1_subsetof_key2 = false;
-					break;
-				}
+				key1_subsetof_key2 = false;
+				break;
 			}
+		}
 
 		if (key2_subsetof_key1)
 			foreach(i, lfirst(key2))
+		{
+			Var		   *subkey = lfirst(i);
+
+			if (!member(subkey, lfirst(key1)))
 			{
-				Var	*subkey = lfirst(i);
-				if (!member(subkey, lfirst(key1)))
-				{
-					key2_subsetof_key1 = false;
-					break;
-				}
+				key2_subsetof_key1 = false;
+				break;
 			}
+		}
 		if (!key1_subsetof_key2 && !key2_subsetof_key1)
-			break;	/* no need to continue comparisons. */
+			break;				/* no need to continue comparisons. */
 	}
 
 	if (!key1_subsetof_key2 && !key2_subsetof_key1)

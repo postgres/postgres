@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/Attic/palloc.c,v 1.11 1999/02/13 23:20:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/Attic/palloc.c,v 1.12 1999/05/25 16:12:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,7 +36,7 @@
 char *
 pstrdup(char *string)
 {
-	char		*nstr;
+	char	   *nstr;
 	int			len;
 
 	nstr = palloc(len = strlen(string) + 1);
@@ -44,4 +44,3 @@ pstrdup(char *string)
 
 	return nstr;
 }
-

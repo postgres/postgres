@@ -6,6 +6,6 @@ typedef unsigned char slock_t;
 #define O_DIROPEN	0x100000	/* should be in sys/fcntl.h */
 #endif
 
-#define tzname _tzname /* should be in time.h?*/
+#define tzname _tzname			/* should be in time.h? */
 #define USE_POSIX_TIME
-#define HAVE_INT_TIMEZONE /* has int _timezone */
+#define HAVE_INT_TIMEZONE		/* has int _timezone */

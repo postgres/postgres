@@ -66,7 +66,7 @@ static void init_params(CreateSeqStmt *seq, Form_pg_sequence new);
 static int	get_param(DefElem *def);
 
 /*
- * DefineSequence 
+ * DefineSequence
  *				Creates a new sequence relation
  */
 void
@@ -218,8 +218,8 @@ nextval(struct varlena * seqin)
 		return elm->last;
 	}
 
-	seq = read_info("nextval", elm, &buf);		/* lock page' buffer and read
-												 * tuple */
+	seq = read_info("nextval", elm, &buf);		/* lock page' buffer and
+												 * read tuple */
 
 	next = result = seq->last_value;
 	incby = seq->increment_by;
@@ -327,8 +327,8 @@ setval(struct varlena * seqin, int4 next)
 
 	/* open and AccessShareLock sequence */
 	elm = init_sequence("setval", seqname);
-	seq = read_info("setval", elm, &buf);		/* lock page' buffer and read
-												 * tuple */
+	seq = read_info("setval", elm, &buf);		/* lock page' buffer and
+												 * read tuple */
 
 	if (seq->cache_value != 1)
 	{
@@ -361,11 +361,11 @@ setval(struct varlena * seqin, int4 next)
 static Form_pg_sequence
 read_info(char *caller, SeqTable elm, Buffer *buf)
 {
-	PageHeader		page;
-	ItemId			lp;
-	HeapTupleData	tuple;
+	PageHeader	page;
+	ItemId		lp;
+	HeapTupleData tuple;
 	sequence_magic *sm;
-	Form_pg_sequence	seq;
+	Form_pg_sequence seq;
 
 	if (RelationGetNumberOfBlocks(elm->rel) != 1)
 		elog(ERROR, "%s.%s: invalid number of blocks in sequence",
@@ -464,7 +464,7 @@ init_sequence(char *caller, char *name)
 
 
 /*
- * CloseSequences 
+ * CloseSequences
  *				is calling by xact mgr at commit/abort.
  */
 void

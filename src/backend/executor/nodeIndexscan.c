@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.35 1999/05/10 00:45:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.36 1999/05/25 16:08:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,13 +91,14 @@ IndexNext(IndexScan *node)
 	IndexScanDesc scandesc;
 	Relation	heapRelation;
 	RetrieveIndexResult result;
-	HeapTuple		tuple;
+	HeapTuple	tuple;
 	TupleTableSlot *slot;
 	Buffer		buffer = InvalidBuffer;
 	int			numIndices;
 
- 	bool		bBackward;
- 	int		indexNumber;
+	bool		bBackward;
+	int			indexNumber;
+
 	/* ----------------
 	 *	extract necessary information from index scan node
 	 * ----------------
@@ -114,14 +115,14 @@ IndexNext(IndexScan *node)
 
 	/*
 	 * Check if we are evaluating PlanQual for tuple of this relation.
-	 * Additional checking is not good, but no other way for now.
-	 * We could introduce new nodes for this case and handle
-	 * IndexScan --> NewNode switching in Init/ReScan plan...
+	 * Additional checking is not good, but no other way for now. We could
+	 * introduce new nodes for this case and handle IndexScan --> NewNode
+	 * switching in Init/ReScan plan...
 	 */
-	if (estate->es_evTuple != NULL && 
+	if (estate->es_evTuple != NULL &&
 		estate->es_evTuple[node->scan.scanrelid - 1] != NULL)
 	{
-		int		iptr;
+		int			iptr;
 
 		slot->ttc_buffer = InvalidBuffer;
 		slot->ttc_shouldFree = false;
@@ -138,7 +139,7 @@ IndexNext(IndexScan *node)
 						 scanstate->cstate.cs_ExprContext))
 				break;
 		}
-		if (iptr == numIndices)	/* would not be returned by indices */
+		if (iptr == numIndices) /* would not be returned by indices */
 			slot->val = NULL;
 		/* Flag for the next call that no more tuples */
 		estate->es_evTupleNull[node->scan.scanrelid - 1] = true;
@@ -153,26 +154,26 @@ IndexNext(IndexScan *node)
 	 *	appropriate heap tuple.. else return NULL.
 	 * ----------------
 	 */
- 	bBackward = ScanDirectionIsBackward(direction);
- 	if (bBackward)
-  	{
- 		indexNumber = numIndices - indexstate->iss_IndexPtr - 1;
- 		if (indexNumber < 0)
- 		{
- 			indexNumber = 0;
- 			indexstate->iss_IndexPtr = numIndices - 1;
- 		}
- 	}
- 	else
- 	{
- 		if ((indexNumber = indexstate->iss_IndexPtr) < 0)
- 		{
- 			indexNumber = 0;
- 			indexstate->iss_IndexPtr = 0;
- 		}
- 	}
- 	while (indexNumber < numIndices)
- 	{
+	bBackward = ScanDirectionIsBackward(direction);
+	if (bBackward)
+	{
+		indexNumber = numIndices - indexstate->iss_IndexPtr - 1;
+		if (indexNumber < 0)
+		{
+			indexNumber = 0;
+			indexstate->iss_IndexPtr = numIndices - 1;
+		}
+	}
+	else
+	{
+		if ((indexNumber = indexstate->iss_IndexPtr) < 0)
+		{
+			indexNumber = 0;
+			indexstate->iss_IndexPtr = 0;
+		}
+	}
+	while (indexNumber < numIndices)
+	{
 		scandesc = scanDescs[indexstate->iss_IndexPtr];
 		while ((result = index_getnext(scandesc, direction)) != NULL)
 		{
@@ -224,14 +225,14 @@ IndexNext(IndexScan *node)
 			if (BufferIsValid(buffer))
 				ReleaseBuffer(buffer);
 		}
- 		if (indexNumber < numIndices)
- 		{
- 			indexNumber++;
- 			if (bBackward)
- 				indexstate->iss_IndexPtr--;
- 			else
- 				indexstate->iss_IndexPtr++;
- 		}
+		if (indexNumber < numIndices)
+		{
+			indexNumber++;
+			if (bBackward)
+				indexstate->iss_IndexPtr--;
+			else
+				indexstate->iss_IndexPtr++;
+		}
 	}
 	/* ----------------
 	 *	if we get here it means the index scan failed so we
@@ -323,7 +324,7 @@ ExecIndexReScan(IndexScan *node, ExprContext *exprCtxt, Plan *parent)
 	indexstate->iss_IndexPtr = -1;
 
 	/* If this is re-scanning of PlanQual ... */
-	if (estate->es_evTuple != NULL && 
+	if (estate->es_evTuple != NULL &&
 		estate->es_evTuple[node->scan.scanrelid - 1] != NULL)
 	{
 		estate->es_evTupleNull[node->scan.scanrelid - 1] = false;
@@ -703,7 +704,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 		run_keys = (n_keys <= 0) ? NULL :
 			(int *) palloc(n_keys * sizeof(int));
 
-		CXT1_printf("ExecInitIndexScan: context is %d\n",CurrentMemoryContext);
+		CXT1_printf("ExecInitIndexScan: context is %d\n", CurrentMemoryContext);
 
 		/* ----------------
 		 *	for each opclause in the given qual,

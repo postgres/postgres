@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.55 1999/05/18 21:34:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.56 1999/05/25 16:09:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,18 +42,18 @@
 
 
 #define NONAME_SORT		1
-#define NONAME_MATERIAL	2
+#define NONAME_MATERIAL 2
 
 static List *switch_outer(List *clauses);
 static Oid *generate_merge_input_sortorder(List *pathkeys,
-										   MergeOrder *mergeorder);
+							   MergeOrder *mergeorder);
 static Scan *create_scan_node(Path *best_path, List *tlist);
 static Join *create_join_node(JoinPath *best_path, List *tlist);
 static SeqScan *create_seqscan_node(Path *best_path, List *tlist,
 					List *scan_clauses);
 static IndexScan *create_indexscan_node(IndexPath *best_path, List *tlist,
 					  List *scan_clauses);
-static NestLoop *create_nestloop_node(NestPath *best_path, List *tlist,
+static NestLoop *create_nestloop_node(NestPath * best_path, List *tlist,
 					 List *clauses, Plan *outer_node, List *outer_tlist,
 					 Plan *inner_node, List *inner_tlist);
 static MergeJoin *create_mergejoin_node(MergePath *best_path, List *tlist,
@@ -64,7 +64,7 @@ static HashJoin *create_hashjoin_node(HashPath *best_path, List *tlist,
 					 Plan *inner_node, List *inner_tlist);
 static Node *fix_indxqual_references(Node *clause, Path *index_path);
 static Noname *make_noname(List *tlist, List *pathkeys, Oid *operators,
-		  Plan *plan_node, int nonametype);
+			Plan *plan_node, int nonametype);
 static IndexScan *make_indexscan(List *qptlist, List *qpqual, Index scanrelid,
 			   List *indxid, List *indxqual, List *indxqualorig);
 static NestLoop *make_nestloop(List *qptlist, List *qpqual, Plan *lefttree,
@@ -133,7 +133,7 @@ create_plan(Path *best_path)
 		pages = 1;
 	plan_node->plan_tupperpage = tuples / pages;
 
-#ifdef NOT_USED						/* fix xfunc */
+#ifdef NOT_USED					/* fix xfunc */
 	/* sort clauses by cost/(1-selectivity) -- JMH 2/26/92 */
 	if (XfuncMode != XFUNC_OFF)
 	{
@@ -197,7 +197,7 @@ create_scan_node(Path *best_path, List *tlist)
 }
 
 /*
- * create_join_node 
+ * create_join_node
  *	  Create a join path for 'best_path' and(recursively) paths for its
  *	  inner and outer paths.
  *
@@ -263,7 +263,7 @@ create_join_node(JoinPath *best_path, List *tlist)
 
 	/*
 	 * * Expensive function pullups may have pulled local predicates *
-	 * into this path node.  Put them in the qpqual of the plan node. * 
+	 * into this path node.  Put them in the qpqual of the plan node. *
 	 * JMH, 6/15/92
 	 */
 	if (get_loc_restrictinfo(best_path) != NIL)
@@ -400,11 +400,11 @@ create_indexscan_node(IndexPath *best_path,
 	fixed_indxqual = (List *) fix_indxqual_references((Node *) indxqual, (Path *) best_path);
 
 	scan_node = make_indexscan(tlist,
-					   qpqual,
-					   lfirsti(best_path->path.parent->relids),
-					   best_path->indexid,
-					   fixed_indxqual,
-					   indxqual);
+							   qpqual,
+							   lfirsti(best_path->path.parent->relids),
+							   best_path->indexid,
+							   fixed_indxqual,
+							   indxqual);
 
 	scan_node->scan.plan.cost = best_path->path.path_cost;
 
@@ -418,7 +418,7 @@ create_indexscan_node(IndexPath *best_path,
  *****************************************************************************/
 
 static NestLoop *
-create_nestloop_node(NestPath *best_path,
+create_nestloop_node(NestPath * best_path,
 					 List *tlist,
 					 List *clauses,
 					 Plan *outer_node,
@@ -471,7 +471,7 @@ create_nestloop_node(NestPath *best_path,
 
 			clauses = set_difference(clauses, inner_indxqual);	/* XXX */
 			new_inner_qual = index_outerjoin_references(inner_indxqual,
-										   outer_node->targetlist,
+												  outer_node->targetlist,
 									   ((Scan *) inner_node)->scanrelid);
 			((IndexScan *) inner_node)->indxqual = lcons(new_inner_qual, NIL);
 		}
@@ -479,10 +479,10 @@ create_nestloop_node(NestPath *best_path,
 	else if (IsA_Join(inner_node))
 	{
 		inner_node = (Plan *) make_noname(inner_tlist,
-										NIL,
-										NULL,
-										inner_node,
-										NONAME_MATERIAL);
+										  NIL,
+										  NULL,
+										  inner_node,
+										  NONAME_MATERIAL);
 	}
 
 	join_node = make_nestloop(tlist,
@@ -535,8 +535,9 @@ create_mergejoin_node(MergePath *best_path,
 	if (best_path->outersortkeys)
 	{
 		Oid		   *outer_order = generate_merge_input_sortorder(
-								best_path->outersortkeys,
-								best_path->jpath.path.pathorder->ord.merge);
+												best_path->outersortkeys,
+							 best_path->jpath.path.pathorder->ord.merge);
+
 		outer_node = (Plan *) make_noname(outer_tlist,
 										  best_path->outersortkeys,
 										  outer_order,
@@ -547,8 +548,9 @@ create_mergejoin_node(MergePath *best_path,
 	if (best_path->innersortkeys)
 	{
 		Oid		   *inner_order = generate_merge_input_sortorder(
-								best_path->innersortkeys,
-								best_path->jpath.path.pathorder->ord.merge);
+												best_path->innersortkeys,
+							 best_path->jpath.path.pathorder->ord.merge);
+
 		inner_node = (Plan *) make_noname(inner_tlist,
 										  best_path->innersortkeys,
 										  inner_order,
@@ -595,17 +597,17 @@ create_hashjoin_node(HashPath *best_path,
 	 * and set those clauses to contain references to lower attributes.
 	 */
 	qpqual = join_references(set_difference(clauses,
-									   best_path->path_hashclauses),
-						outer_tlist,
-						inner_tlist);
+											best_path->path_hashclauses),
+							 outer_tlist,
+							 inner_tlist);
 
 	/*
 	 * Now set the references in the hashclauses and rearrange them so
 	 * that the outer variable is always on the left.
 	 */
 	hashclauses = switch_outer(join_references(best_path->path_hashclauses,
-									 outer_tlist,
-									 inner_tlist));
+											   outer_tlist,
+											   inner_tlist));
 
 	innerhashkey = get_rightop(lfirst(hashclauses));
 
@@ -671,20 +673,22 @@ fix_indxqual_references(Node *clause, Path *index_path)
 			 is_funcclause((Node *) get_leftop((Expr *) clause)) &&
 	((Func *) ((Expr *) get_leftop((Expr *) clause))->oper)->funcisindex)
 	{
-		/* This looks pretty seriously wrong to me, but I'm not sure what it's
-		 * supposed to be doing ... tgl 5/99
+
+		/*
+		 * This looks pretty seriously wrong to me, but I'm not sure what
+		 * it's supposed to be doing ... tgl 5/99
 		 */
 		Var		   *newvar = makeVar((Index) lfirsti(index_path->parent->relids),
-				1,				/* func indices have one key */
-				((Func *) ((Expr *) clause)->oper)->functype,
-				-1,
-				0,
-				(Index) lfirsti(index_path->parent->relids),
-				0);
+									 1, /* func indices have one key */
+							((Func *) ((Expr *) clause)->oper)->functype,
+									 -1,
+									 0,
+							 (Index) lfirsti(index_path->parent->relids),
+									 0);
 
 		return ((Node *) make_opclause((Oper *) ((Expr *) clause)->oper,
-									newvar,
-									get_rightop((Expr *) clause)));
+									   newvar,
+									   get_rightop((Expr *) clause)));
 
 	}
 	else if (IsA(clause, Expr))
@@ -696,6 +700,7 @@ fix_indxqual_references(Node *clause, Path *index_path)
 		foreach(i, expr->args)
 		{
 			Node	   *subclause = lfirst(i);
+
 			new_subclauses = lappend(new_subclauses,
 									 fix_indxqual_references(subclause,
 															 index_path));
@@ -711,6 +716,7 @@ fix_indxqual_references(Node *clause, Path *index_path)
 		foreach(i, (List *) clause)
 		{
 			Node	   *subclause = lfirst(i);
+
 			new_subclauses = lappend(new_subclauses,
 									 fix_indxqual_references(subclause,
 															 index_path));
@@ -768,15 +774,17 @@ switch_outer(List *clauses)
 	foreach(i, clauses)
 	{
 		clause = lfirst(i);
-		Assert(is_opclause((Node*) clause));
+		Assert(is_opclause((Node *) clause));
 		op = (Node *) get_rightop(clause);
-		Assert(op != (Node*) NULL);
+		Assert(op != (Node *) NULL);
 		if (IsA(op, ArrayRef))
 			op = ((ArrayRef *) op)->refexpr;
 		Assert(IsA(op, Var));
 		if (var_is_outer((Var *) op))
 		{
-			/* Duplicate just enough of the structure to allow commuting
+
+			/*
+			 * Duplicate just enough of the structure to allow commuting
 			 * the clause without changing the original list.  Could use
 			 * copyObject, but a complete deep copy is overkill.
 			 */
@@ -812,13 +820,14 @@ static Oid *
 generate_merge_input_sortorder(List *pathkeys, MergeOrder *mergeorder)
 {
 	int			listlength = length(pathkeys);
-	Oid		   *result = (Oid*) palloc(sizeof(Oid) * (listlength+1));
+	Oid		   *result = (Oid *) palloc(sizeof(Oid) * (listlength + 1));
 	Oid		   *nextsortop = result;
 	List	   *p;
 
 	foreach(p, pathkeys)
 	{
-		Var		   *pkey = (Var*) lfirst((List*) lfirst(p));
+		Var		   *pkey = (Var *) lfirst((List *) lfirst(p));
+
 		Assert(IsA(pkey, Var));
 		if (pkey->vartype == mergeorder->left_type)
 			*nextsortop++ = mergeorder->left_operator;
@@ -826,7 +835,7 @@ generate_merge_input_sortorder(List *pathkeys, MergeOrder *mergeorder)
 			*nextsortop++ = mergeorder->right_operator;
 		else
 			elog(ERROR,
-				 "generate_merge_input_sortorder: can't handle data type %d",
+			 "generate_merge_input_sortorder: can't handle data type %d",
 				 pkey->vartype);
 	}
 	*nextsortop++ = InvalidOid;
@@ -859,12 +868,13 @@ set_noname_tlist_operators(List *tlist, List *pathkeys, Oid *operators)
 		resdom = tlist_member((Var *) pathkey, tlist);
 		if (resdom)
 		{
+
 			/*
-			 * Order the resdom pathkey and replace the operator OID for each
-			 * key with the regproc OID.
+			 * Order the resdom pathkey and replace the operator OID for
+			 * each key with the regproc OID.
 			 */
 			resdom->reskey = keyno;
-			resdom->reskeyop = get_opcode(operators[keyno-1]);
+			resdom->reskeyop = get_opcode(operators[keyno - 1]);
 		}
 		keyno += 1;
 	}
@@ -878,7 +888,7 @@ set_noname_tlist_operators(List *tlist, List *pathkeys, Oid *operators)
  */
 
 static void
-copy_costsize (Plan *dest, Plan *src)
+copy_costsize(Plan *dest, Plan *src)
 {
 	if (src)
 	{
@@ -915,10 +925,10 @@ copy_costsize (Plan *dest, Plan *src)
  */
 static Noname *
 make_noname(List *tlist,
-		  List *pathkeys,
-		  Oid *operators,
-		  Plan *plan_node,
-		  int nonametype)
+			List *pathkeys,
+			Oid *operators,
+			Plan *plan_node,
+			int nonametype)
 {
 	List	   *noname_tlist;
 	Noname	   *retval = NULL;
@@ -931,22 +941,22 @@ make_noname(List *tlist,
 	{
 		case NONAME_SORT:
 			retval = (Noname *) make_seqscan(tlist,
-										   NIL,
-										   _NONAME_RELATION_ID_,
-										   (Plan *) make_sort(noname_tlist,
-											_NONAME_RELATION_ID_,
-											plan_node,
-											length(pathkeys)));
+											 NIL,
+											 _NONAME_RELATION_ID_,
+										 (Plan *) make_sort(noname_tlist,
+													_NONAME_RELATION_ID_,
+															plan_node,
+													  length(pathkeys)));
 			break;
 
 		case NONAME_MATERIAL:
 			retval = (Noname *) make_seqscan(tlist,
-										   NIL,
-										   _NONAME_RELATION_ID_,
-									   (Plan *) make_material(noname_tlist,
-											_NONAME_RELATION_ID_,
-											plan_node,
-											length(pathkeys)));
+											 NIL,
+											 _NONAME_RELATION_ID_,
+									 (Plan *) make_material(noname_tlist,
+													_NONAME_RELATION_ID_,
+															plan_node,
+													  length(pathkeys)));
 			break;
 
 		default:
@@ -1014,8 +1024,9 @@ make_nestloop(List *qptlist,
 	NestLoop   *node = makeNode(NestLoop);
 	Plan	   *plan = &node->join;
 
-	/* this cost estimate is entirely bogus...
-	 * hopefully it will be overwritten by caller.
+	/*
+	 * this cost estimate is entirely bogus... hopefully it will be
+	 * overwritten by caller.
 	 */
 	plan->cost = (lefttree ? lefttree->cost : 0) +
 		(righttree ? righttree->cost : 0);
@@ -1039,8 +1050,9 @@ make_hashjoin(List *tlist,
 	HashJoin   *node = makeNode(HashJoin);
 	Plan	   *plan = &node->join;
 
-	/* this cost estimate is entirely bogus...
-	 * hopefully it will be overwritten by caller.
+	/*
+	 * this cost estimate is entirely bogus... hopefully it will be
+	 * overwritten by caller.
 	 */
 	plan->cost = (lefttree ? lefttree->cost : 0) +
 		(righttree ? righttree->cost : 0);
@@ -1082,8 +1094,9 @@ make_mergejoin(List *tlist,
 	MergeJoin  *node = makeNode(MergeJoin);
 	Plan	   *plan = &node->join;
 
-	/* this cost estimate is entirely bogus...
-	 * hopefully it will be overwritten by caller.
+	/*
+	 * this cost estimate is entirely bogus... hopefully it will be
+	 * overwritten by caller.
 	 */
 	plan->cost = (lefttree ? lefttree->cost : 0) +
 		(righttree ? righttree->cost : 0);
@@ -1142,7 +1155,7 @@ make_agg(List *tlist, Plan *lefttree)
 {
 	Agg		   *node = makeNode(Agg);
 
-	copy_costsize(& node->plan, lefttree);
+	copy_costsize(&node->plan, lefttree);
 	node->plan.state = (EState *) NULL;
 	node->plan.qual = NULL;
 	node->plan.targetlist = tlist;
@@ -1162,7 +1175,7 @@ make_group(List *tlist,
 {
 	Group	   *node = makeNode(Group);
 
-	copy_costsize(& node->plan, (Plan *) lefttree);
+	copy_costsize(&node->plan, (Plan *) lefttree);
 	node->plan.state = (EState *) NULL;
 	node->plan.qual = NULL;
 	node->plan.targetlist = tlist;

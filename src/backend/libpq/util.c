@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: util.c,v 1.8 1999/02/13 23:15:49 momjian Exp $
+ *	$Id: util.c,v 1.9 1999/05/25 16:09:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,7 @@
  *		PQuntrace		- turn off pqdebug() tracing
  */
 
-#include <stdio.h>			
+#include <stdio.h>
 #include <string.h>
 
 #include <postgres.h>

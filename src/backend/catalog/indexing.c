@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.37 1999/05/10 00:44:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.38 1999/05/25 16:08:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,15 +46,15 @@
  */
 
 char	   *Name_pg_attr_indices[Num_pg_attr_indices] = {AttributeNameIndex,
-			AttributeNumIndex,
-			AttributeRelidIndex};
+	AttributeNumIndex,
+AttributeRelidIndex};
 char	   *Name_pg_proc_indices[Num_pg_proc_indices] = {ProcedureNameIndex,
-			ProcedureOidIndex,
-			ProcedureSrcIndex};
+	ProcedureOidIndex,
+ProcedureSrcIndex};
 char	   *Name_pg_type_indices[Num_pg_type_indices] = {TypeNameIndex,
-			TypeOidIndex};
+TypeOidIndex};
 char	   *Name_pg_class_indices[Num_pg_class_indices] = {ClassNameIndex,
-			ClassOidIndex};
+ClassOidIndex};
 char	   *Name_pg_attrdef_indices[Num_pg_attrdef_indices] = {AttrDefaultIndex};
 
 char	   *Name_pg_relcheck_indices[Num_pg_relcheck_indices] = {RelCheckIndex};
@@ -63,9 +63,9 @@ char	   *Name_pg_trigger_indices[Num_pg_trigger_indices] = {TriggerRelidIndex};
 
 
 static HeapTuple CatalogIndexFetchTuple(Relation heapRelation,
-										Relation idesc,
-										ScanKey skey,
-										int16 num_keys);
+					   Relation idesc,
+					   ScanKey skey,
+					   int16 num_keys);
 
 
 /*
@@ -126,13 +126,13 @@ CatalogIndexInsert(Relation *idescs,
 
 		index_tup = SearchSysCacheTupleCopy(INDEXRELID,
 									  ObjectIdGetDatum(idescs[i]->rd_id),
-											 0, 0, 0);
+											0, 0, 0);
 		Assert(index_tup);
 		index_form = (Form_pg_index) GETSTRUCT(index_tup);
 
 		if (index_form->indproc != InvalidOid)
 		{
-			int fatts;
+			int			fatts;
 
 			/*
 			 * Compute the number of attributes we are indexing upon.
@@ -152,7 +152,7 @@ CatalogIndexInsert(Relation *idescs,
 			natts = RelationGetDescr(idescs[i])->natts;
 			finfoP = (FuncIndexInfo *) NULL;
 		}
-		
+
 		FormIndexDatum(natts,
 					   (AttrNumber *) index_form->indkey,
 					   heapTuple,
@@ -229,11 +229,11 @@ CatalogIndexFetchTuple(Relation heapRelation,
 					   ScanKey skey,
 					   int16 num_keys)
 {
-	IndexScanDesc		sd;
+	IndexScanDesc sd;
 	RetrieveIndexResult indexRes;
-	HeapTupleData		tuple;
-	HeapTuple			result = NULL;
-	Buffer				buffer;
+	HeapTupleData tuple;
+	HeapTuple	result = NULL;
+	Buffer		buffer;
 
 	sd = index_beginscan(idesc, false, num_keys, skey);
 	tuple.t_data = NULL;
@@ -462,7 +462,7 @@ ClassNameIndexScan(Relation heapRelation, char *relName)
 	 */
 	if ((tuple = get_temp_rel_by_name(relName)) != NULL)
 		return heap_copytuple(tuple);
-		
+
 	ScanKeyEntryInitialize(&skey[0],
 						   (bits16) 0x0,
 						   (AttrNumber) 1,

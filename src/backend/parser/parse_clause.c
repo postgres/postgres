@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.35 1999/05/22 02:55:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.36 1999/05/25 16:10:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,13 +41,14 @@ static TargetEntry *
 
 static void parseFromClause(ParseState *pstate, List *frmList, Node **qual);
 
-Attr *makeAttr(char *relname, char *attname);
+Attr	   *makeAttr(char *relname, char *attname);
 
 #ifdef ENABLE_OUTER_JOINS
-Node *transformUsingClause(ParseState *pstate, List *onList, char *lname, char *rname);
+Node	   *transformUsingClause(ParseState *pstate, List *onList, char *lname, char *rname);
+
 #endif
 
-char *transformTableEntry(ParseState *pstate, RangeVar *r);
+char	   *transformTableEntry(ParseState *pstate, RangeVar *r);
 
 
 /*
@@ -67,16 +68,14 @@ makeRangeTable(ParseState *pstate, char *relname, List *frmList, Node **qual)
 		return;
 
 	if ((refnameRangeTablePosn(pstate, relname, &sublevels_up) == 0)
-	 || (sublevels_up != 0))
+		|| (sublevels_up != 0))
 		rte = addRangeTableEntry(pstate, relname, relname, FALSE, FALSE);
 	else
 		rte = refnameRangeTableEntry(pstate, relname);
 
 	/* This could only happen for multi-action rules */
 	if (pstate->p_target_relation != NULL)
-	{
 		heap_close(pstate->p_target_relation);
-	}
 
 	pstate->p_target_rangetblentry = rte;
 	pstate->p_target_relation = heap_open(rte->relid);
@@ -102,7 +101,8 @@ transformWhereClause(ParseState *pstate, Node *a_expr, Node *o_expr)
 
 	if ((a_expr != NULL) && (o_expr != NULL))
 	{
-		A_Expr *a = makeNode(A_Expr);
+		A_Expr	   *a = makeNode(A_Expr);
+
 		a->oper = AND;
 		a->opname = NULL;
 		a->lexpr = o_expr;
@@ -110,12 +110,12 @@ transformWhereClause(ParseState *pstate, Node *a_expr, Node *o_expr)
 		expr = a;
 	}
 	else if (o_expr != NULL)
-		expr = (A_Expr *)o_expr;
+		expr = (A_Expr *) o_expr;
 	else
-		expr = (A_Expr *)a_expr;
+		expr = (A_Expr *) a_expr;
 
 	pstate->p_in_where_clause = true;
-	qual = transformExpr(pstate, (Node *)expr, EXPR_COLUMN_FIRST);
+	qual = transformExpr(pstate, (Node *) expr, EXPR_COLUMN_FIRST);
 	pstate->p_in_where_clause = false;
 
 	if (exprType(qual) != BOOLOID)
@@ -130,6 +130,7 @@ Attr *
 makeAttr(char *relname, char *attname)
 {
 	Attr	   *a = makeNode(Attr);
+
 	a->relname = relname;
 	a->paramNo = NULL;
 	a->attrs = lcons(makeString(attname), NIL);
@@ -149,30 +150,34 @@ transformUsingClause(ParseState *pstate, List *onList, char *lname, char *rname)
 	List	   *on;
 	Node	   *qual;
 
-	foreach (on, onList)
+	foreach(on, onList)
 	{
 		qual = lfirst(on);
 
-		/* Ident node means it is just a column name from a real USING clause... */
+		/*
+		 * Ident node means it is just a column name from a real USING
+		 * clause...
+		 */
 		if (IsA(qual, Ident))
 		{
-			Ident	   *i = (Ident *)qual;
+			Ident	   *i = (Ident *) qual;
 			Attr	   *lattr = makeAttr(lname, i->name);
 			Attr	   *rattr = makeAttr(rname, i->name);
-			A_Expr *e = makeNode(A_Expr);
+			A_Expr	   *e = makeNode(A_Expr);
 
 			e->oper = OP;
 			e->opname = "=";
-			e->lexpr = (Node *)lattr;
-			e->rexpr = (Node *)rattr;
+			e->lexpr = (Node *) lattr;
+			e->rexpr = (Node *) rattr;
 
 			if (expr != NULL)
 			{
-				A_Expr *a = makeNode(A_Expr);
+				A_Expr	   *a = makeNode(A_Expr);
+
 				a->oper = AND;
 				a->opname = NULL;
-				a->lexpr = (Node *)expr;
-				a->rexpr = (Node *)e;
+				a->lexpr = (Node *) expr;
+				a->rexpr = (Node *) e;
 				expr = a;
 			}
 			else
@@ -184,21 +189,21 @@ transformUsingClause(ParseState *pstate, List *onList, char *lname, char *rname)
 		{
 			if (expr != NULL)
 			{
-				A_Expr *a = makeNode(A_Expr);
+				A_Expr	   *a = makeNode(A_Expr);
+
 				a->oper = AND;
 				a->opname = NULL;
-				a->lexpr = (Node *)expr;
-				a->rexpr = (Node *)qual;
+				a->lexpr = (Node *) expr;
+				a->rexpr = (Node *) qual;
 				expr = a;
 			}
 			else
-			{
-				expr = (A_Expr *)qual;
-			}
+				expr = (A_Expr *) qual;
 		}
 	}
-	return ((Node *)transformExpr(pstate, (Node *)expr, EXPR_COLUMN_FIRST));
+	return ((Node *) transformExpr(pstate, (Node *) expr, EXPR_COLUMN_FIRST));
 }
+
 #endif
 
 char *
@@ -213,15 +218,14 @@ transformTableEntry(ParseState *pstate, RangeVar *r)
 		refname = relname;
 
 	/*
-	 * marks this entry to indicate it comes from the FROM clause. In
-	 * SQL, the target list can only refer to range variables
-	 * specified in the from clause but we follow the more powerful
-	 * POSTQUEL semantics and automatically generate the range
-	 * variable if not specified. However there are times we need to
-	 * know whether the entries are legitimate.
+	 * marks this entry to indicate it comes from the FROM clause. In SQL,
+	 * the target list can only refer to range variables specified in the
+	 * from clause but we follow the more powerful POSTQUEL semantics and
+	 * automatically generate the range variable if not specified. However
+	 * there are times we need to know whether the entries are legitimate.
 	 *
-	 * eg. select * from foo f where f.x = 1; will generate wrong answer
-	 * if we expand * to foo.x.
+	 * eg. select * from foo f where f.x = 1; will generate wrong answer if
+	 * we expand * to foo.x.
 	 */
 
 	rte = addRangeTableEntry(pstate, relname, refname, baserel->inh, TRUE);
@@ -253,7 +257,8 @@ parseFromClause(ParseState *pstate, List *frmList, Node **qual)
 
 	foreach(fl, frmList)
 	{
-		Node   *n = lfirst(fl);
+		Node	   *n = lfirst(fl);
+
 		/*
 		 * marks this entry to indicate it comes from the FROM clause. In
 		 * SQL, the target list can only refer to range variables
@@ -266,34 +271,36 @@ parseFromClause(ParseState *pstate, List *frmList, Node **qual)
 		 * if we expand * to foo.x.
 		 */
 		if (IsA(n, RangeVar))
-		{
-			transformTableEntry(pstate, (RangeVar *)n);
-		}
+			transformTableEntry(pstate, (RangeVar *) n);
 		else if (IsA(n, JoinExpr))
 		{
-			JoinExpr   *j = (JoinExpr *)n;
+			JoinExpr   *j = (JoinExpr *) n;
+
 #ifdef ENABLE_OUTER_JOINS
-			char	   *lname = transformTableEntry(pstate, (RangeVar *)j->larg);
+			char	   *lname = transformTableEntry(pstate, (RangeVar *) j->larg);
+
 #endif
 			char	   *rname;
 
-			if (IsA((Node *)j->rarg, RangeVar))
-				rname = transformTableEntry(pstate, (RangeVar *)j->rarg);
+			if (IsA((Node *) j->rarg, RangeVar))
+				rname = transformTableEntry(pstate, (RangeVar *) j->rarg);
 			else
 				elog(ERROR, "Nested JOINs are not yet supported");
 
 #ifdef ENABLE_OUTER_JOINS
 			if (j->jointype == INNER_P)
 			{
-				/* This is an inner join, so rip apart the join node
-				 * and transform into a traditional FROM list.
-				 * NATURAL JOIN and USING clauses both change the shape
-				 * of the result. Need to generate a list of result columns
-				 * to use for target list expansion and validation.
-				 * Not doing this yet though!
+
+				/*
+				 * This is an inner join, so rip apart the join node and
+				 * transform into a traditional FROM list. NATURAL JOIN
+				 * and USING clauses both change the shape of the result.
+				 * Need to generate a list of result columns to use for
+				 * target list expansion and validation. Not doing this
+				 * yet though!
 				 */
 				if (IsA(j->quals, List))
-					j->quals = lcons(transformUsingClause(pstate, (List *)j->quals, lname, rname), NIL);
+					j->quals = lcons(transformUsingClause(pstate, (List *) j->quals, lname, rname), NIL);
 
 				Assert(qual != NULL);
 
@@ -302,19 +309,19 @@ parseFromClause(ParseState *pstate, List *frmList, Node **qual)
 				else
 					elog(ERROR, "Multiple JOIN/ON clauses not handled (internal error)");
 
-				/* if we are transforming this node back into a FROM list,
+				/*
+				 * if we are transforming this node back into a FROM list,
 				 * then we will need to replace the node with two nodes.
 				 * Will need access to the previous list item to change
-				 * the link pointer to reference these new nodes.
-				 * Try accumulating and returning a new list.
-				 * - thomas 1999-01-08
-				 * Not doing this yet though!
+				 * the link pointer to reference these new nodes. Try
+				 * accumulating and returning a new list. - thomas
+				 * 1999-01-08 Not doing this yet though!
 				 */
 
 			}
 			else if ((j->jointype == LEFT)
-			 || (j->jointype == RIGHT)
-			 || (j->jointype == FULL))
+					 || (j->jointype == RIGHT)
+					 || (j->jointype == FULL))
 				elog(ERROR, "OUTER JOIN is not implemented");
 			else
 				elog(ERROR, "Unrecognized JOIN clause; tag is %d (internal error)",
@@ -545,7 +552,7 @@ transformGroupClause(ParseState *pstate, List *grouplist, List *targetlist)
 									 resdom->restype, false));
 		if (glist == NIL)
 		{
-			int		groupref = length(glist) + 1;
+			int			groupref = length(glist) + 1;
 
 			restarget->resdom->resgroupref = groupref;
 			grpcl->tleGroupref = groupref;
@@ -561,12 +568,12 @@ transformGroupClause(ParseState *pstate, List *grouplist, List *targetlist)
 				GroupClause *gcl = (GroupClause *) lfirst(i);
 
 				if (equal(get_groupclause_expr(gcl, targetlist),
-							restarget->expr))
+						  restarget->expr))
 					break;
 			}
 			if (i == NIL)		/* not in grouplist already */
 			{
-				int		groupref = length(glist) + 1;
+				int			groupref = length(glist) + 1;
 
 				restarget->resdom->resgroupref = groupref;
 				grpcl->tleGroupref = groupref;
@@ -749,21 +756,22 @@ transformUnionClause(List *unionClause, List *targetlist)
 		/* recursion */
 		qlist = parse_analyze(unionClause, NULL);
 
-		foreach (qlist_item, qlist)
+		foreach(qlist_item, qlist)
 		{
 			Query	   *query = (Query *) lfirst(qlist_item);
 			List	   *prev_target = targetlist;
 			List	   *next_target;
-			int			prev_len = 0, next_len = 0;
+			int			prev_len = 0,
+						next_len = 0;
 
 			foreach(prev_target, targetlist)
 				if (!((TargetEntry *) lfirst(prev_target))->resdom->resjunk)
-					prev_len++;
+				prev_len++;
 
 			foreach(next_target, query->targetList)
 				if (!((TargetEntry *) lfirst(next_target))->resdom->resjunk)
-					next_len++;
-						
+				next_len++;
+
 			if (prev_len != next_len)
 				elog(ERROR, "Each UNION clause must have the same number of columns");
 

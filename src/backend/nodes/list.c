@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.20 1999/02/22 17:29:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.21 1999/05/25 16:09:08 momjian Exp $
  *
  * NOTES
  *	  XXX a few of the following functions are duplicated to handle
@@ -96,7 +96,7 @@ lconsi(int datum, List *list)
  *	lappend
  *
  *	Add obj to the end of list, or make a new list if 'list' is NIL
- *	
+ *
  * MORE EXPENSIVE THAN lcons
  */
 List *
@@ -161,6 +161,7 @@ nreverse(List *list)
 	lnext(list) = lnext(rlist);
 	return list;
 }
+
 #endif
 
 /*
@@ -307,6 +308,7 @@ append(List *l1, List *l2)
 	lnext(p) = newlist2;
 	return newlist;
 }
+
 #endif
 
 #ifdef NOT_USED
@@ -331,6 +333,7 @@ intAppend(List *l1, List *l2)
 	lnext(p) = newlist2;
 	return newlist;
 }
+
 #endif
 
 /*
@@ -435,7 +438,7 @@ member(void *l1, List *l2)
 
 	foreach(i, l2)
 		if (equal((Node *) l1, (Node *) lfirst(i)))
-			return true;
+		return true;
 	return false;
 }
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/test/examples/Attic/testlo2.c,v 1.11 1999/05/20 09:30:36 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/test/examples/Attic/testlo2.c,v 1.12 1999/05/25 16:15:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,9 +79,7 @@ pickout(PGconn *conn, Oid lobjId, int start, int len)
 
 	lobj_fd = lo_open(conn, lobjId, INV_READ);
 	if (lobj_fd < 0)
-	{
 		fprintf(stderr, "can't open large object %u", lobjId);
-	}
 
 	lo_lseek(conn, lobj_fd, start, SEEK_SET);
 	buf = malloc(len + 1);
@@ -109,9 +107,7 @@ overwrite(PGconn *conn, Oid lobjId, int start, int len)
 
 	lobj_fd = lo_open(conn, lobjId, INV_READ);
 	if (lobj_fd < 0)
-	{
 		fprintf(stderr, "can't open large object %u", lobjId);
-	}
 
 	lo_lseek(conn, lobj_fd, start, SEEK_SET);
 	buf = malloc(len + 1);
@@ -150,9 +146,7 @@ exportFile(PGconn *conn, Oid lobjId, char *filename)
 	 */
 	lobj_fd = lo_open(conn, lobjId, INV_READ);
 	if (lobj_fd < 0)
-	{
 		fprintf(stderr, "can't open large object %u", lobjId);
-	}
 
 	/*
 	 * open the file to be written to

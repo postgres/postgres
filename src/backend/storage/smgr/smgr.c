@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.23 1999/04/23 19:37:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.24 1999/05/25 16:11:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,6 +79,7 @@ static bool smgrwo[] = {
 	false,						/* main memory */
 #endif
 };
+
 #endif
 
 static int	NSmgr = lengthof(smgrsw);
@@ -408,4 +409,5 @@ smgriswo(int16 smgrno)
 
 	return smgrwo[smgrno];
 }
+
 #endif

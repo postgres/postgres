@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.31 1999/02/13 23:14:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.32 1999/05/25 16:07:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,7 +57,7 @@ static bool StrategyTermIsValid(StrategyTerm term,
  */
 
 /*
- * StrategyMapGetScanKeyEntry 
+ * StrategyMapGetScanKeyEntry
  *		Returns a scan key entry of a index strategy mapping member.
  *
  * Note:
@@ -75,7 +75,7 @@ StrategyMapGetScanKeyEntry(StrategyMap map,
 }
 
 /*
- * IndexStrategyGetStrategyMap 
+ * IndexStrategyGetStrategyMap
  *		Returns an index strategy mapping of an index strategy.
  *
  * Note:
@@ -97,7 +97,7 @@ IndexStrategyGetStrategyMap(IndexStrategy indexStrategy,
 }
 
 /*
- * AttributeNumberGetIndexStrategySize 
+ * AttributeNumberGetIndexStrategySize
  *		Computes the size of an index strategy.
  */
 Size
@@ -294,8 +294,8 @@ RelationGetStrategy(Relation relation,
 	Assert(RegProcedureIsValid(procedure));
 
 	strategyMap = IndexStrategyGetStrategyMap(RelationGetIndexStrategy(relation),
-									evaluation->maxStrategy,
-									attributeNumber);
+											  evaluation->maxStrategy,
+											  attributeNumber);
 
 	/* get a strategy number for the procedure ignoring flags for now */
 	for (index = 0; index < evaluation->maxStrategy; index += 1)
@@ -526,7 +526,7 @@ OperatorRelationFillScanKeyEntry(Relation operatorRelation,
 
 
 /*
- * IndexSupportInitialize 
+ * IndexSupportInitialize
  *		Initializes an index strategy and associated support procedures.
  */
 void

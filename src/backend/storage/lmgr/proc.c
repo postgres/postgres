@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.55 1999/05/13 15:55:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.56 1999/05/25 16:11:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@
  *		This is so that we can support more backends. (system-wide semaphore
  *		sets run out pretty fast.)				  -ay 4/95
  *
- * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.55 1999/05/13 15:55:44 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.56 1999/05/25 16:11:23 momjian Exp $
  */
 #include <sys/time.h>
 #include <unistd.h>
@@ -150,18 +150,20 @@ InitProcGlobal(IPCKey key, int maxBackends)
 		for (i = 0; i < MAX_PROC_SEMS / PROC_NSEMS_PER_SET; i++)
 			ProcGlobal->freeSemMap[i] = 0;
 
-		/* Arrange to delete semas on exit --- set this up now so that
-		 * we will clean up if pre-allocation fails...
+		/*
+		 * Arrange to delete semas on exit --- set this up now so that we
+		 * will clean up if pre-allocation fails...
 		 */
 		on_shmem_exit(ProcFreeAllSemaphores, NULL);
 
-		/* Pre-create the semaphores for the first maxBackends processes,
+		/*
+		 * Pre-create the semaphores for the first maxBackends processes,
 		 * unless we are running as a standalone backend.
 		 */
 		if (key != PrivateIPCKey)
 		{
 			for (i = 0;
-				 i < (maxBackends+PROC_NSEMS_PER_SET-1) / PROC_NSEMS_PER_SET;
+				 i < (maxBackends + PROC_NSEMS_PER_SET - 1) / PROC_NSEMS_PER_SET;
 				 i++)
 			{
 				IPCKey		semKey = ProcGlobal->currKey + i;
@@ -266,10 +268,11 @@ InitProcess(IPCKey key)
 
 		ProcGetNewSemKeyAndNum(&semKey, &semNum);
 
-		/* Note: because of the pre-allocation done in InitProcGlobal,
-		 * this call should always attach to an existing semaphore.
-		 * It will (try to) create a new group of semaphores only if
-		 * the postmaster tries to start more backends than it said it would.
+		/*
+		 * Note: because of the pre-allocation done in InitProcGlobal,
+		 * this call should always attach to an existing semaphore. It
+		 * will (try to) create a new group of semaphores only if the
+		 * postmaster tries to start more backends than it said it would.
 		 */
 		semId = IpcSemaphoreCreate(semKey,
 								   PROC_NSEMS_PER_SET,
@@ -489,7 +492,7 @@ ProcQueueInit(PROC_QUEUE *queue)
  */
 int
 ProcSleep(PROC_QUEUE *waitQueue,/* lock->waitProcs */
-		  LOCKMETHODCTL *lockctl,
+		  LOCKMETHODCTL * lockctl,
 		  int token,			/* lockmode */
 		  LOCK *lock)
 {
@@ -534,23 +537,22 @@ ProcSleep(PROC_QUEUE *waitQueue,/* lock->waitProcs */
 		}
 		/* if he waits for me */
 		else if (lockctl->conflictTab[proc->token] & MyProc->holdLock)
-		{
 			break;
-		}
 		/* if conflicting locks requested */
 		else if (lockctl->conflictTab[proc->token] & myMask)
 		{
+
 			/*
-			 * If I request non self-conflicting lock and there
-			 * are others requesting the same lock just before me -
-			 * stay here.
+			 * If I request non self-conflicting lock and there are others
+			 * requesting the same lock just before me - stay here.
 			 */
 			if (!selfConflict && prevSame)
 				break;
 		}
+
 		/*
-		 * Last attempt to don't move any more: if we don't conflict
-		 * with rest waiters in queue.
+		 * Last attempt to don't move any more: if we don't conflict with
+		 * rest waiters in queue.
 		 */
 		else if (!(lockctl->conflictTab[token] & waitMask))
 			break;
@@ -558,7 +560,7 @@ ProcSleep(PROC_QUEUE *waitQueue,/* lock->waitProcs */
 		prevSame = (proc->token == token);
 		(aheadHolders[proc->token])++;
 		if (aheadHolders[proc->token] == lock->holders[proc->token])
-			waitMask &= ~ (1 << proc->token);
+			waitMask &= ~(1 << proc->token);
 		proc = (PROC *) MAKE_PTR(proc->links.prev);
 	}
 
@@ -885,7 +887,7 @@ ProcGetNewSemKeyAndNum(IPCKey *key, int *semNum)
 {
 	int			i;
 	int32	   *freeSemMap = ProcGlobal->freeSemMap;
-	int32		fullmask = (1 << (PROC_NSEMS_PER_SET+1)) - 1;
+	int32		fullmask = (1 << (PROC_NSEMS_PER_SET + 1)) - 1;
 
 	/*
 	 * we hold ProcStructLock when entering this routine. We scan through
@@ -906,8 +908,8 @@ ProcGetNewSemKeyAndNum(IPCKey *key, int *semNum)
 			{
 
 				/*
-				 * a free semaphore found. Mark it as allocated.
-				 * Also set the bit indicating whole set is allocated.
+				 * a free semaphore found. Mark it as allocated. Also set
+				 * the bit indicating whole set is allocated.
 				 */
 				freeSemMap[i] |= mask + (1 << PROC_NSEMS_PER_SET);
 
@@ -938,9 +940,10 @@ ProcFreeSem(IpcSemaphoreKey semKey, int semNum)
 	mask = ~(1 << semNum);
 	freeSemMap[i] &= mask;
 
-	/* Formerly we'd release a semaphore set if it was now completely unused,
-	 * but now we keep the semaphores to ensure we won't run out when
-	 * starting new backends --- cf. InitProcGlobal.  Note that the
+	/*
+	 * Formerly we'd release a semaphore set if it was now completely
+	 * unused, but now we keep the semaphores to ensure we won't run out
+	 * when starting new backends --- cf. InitProcGlobal.  Note that the
 	 * PROC_NSEMS_PER_SET+1'st bit of the freeSemMap entry remains set to
 	 * indicate it is still allocated; ProcFreeAllSemaphores() needs that.
 	 */

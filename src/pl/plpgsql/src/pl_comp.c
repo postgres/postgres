@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.6 1999/05/10 00:46:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.7 1999/05/25 16:15:17 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1060,7 +1060,7 @@ plpgsql_parse_dblwordtype(char *string)
 	 * ----------
 	 */
 	attrtup = SearchSysCacheTuple(ATTNAME,
-								  ObjectIdGetDatum(classtup->t_data->t_oid),
+							   ObjectIdGetDatum(classtup->t_data->t_oid),
 								  PointerGetDatum(word2), 0, 0);
 	if (!HeapTupleIsValid(attrtup))
 	{
@@ -1174,7 +1174,7 @@ plpgsql_parse_wordrowtype(char *string)
 		 * ----------
 		 */
 		attrtup = SearchSysCacheTuple(ATTNUM,
-									  ObjectIdGetDatum(classtup->t_data->t_oid),
+							   ObjectIdGetDatum(classtup->t_data->t_oid),
 									  (Datum) (i + 1), 0, 0);
 		if (!HeapTupleIsValid(attrtup))
 		{

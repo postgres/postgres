@@ -9,7 +9,7 @@
  * didn't really belong there.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-print.c,v 1.22 1999/05/03 19:10:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-print.c,v 1.23 1999/05/25 16:15:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -520,7 +520,7 @@ PQmblen(unsigned char *s)
 	return 1;
 }
 
-#endif	/* MULTIBYTE */
+#endif	 /* MULTIBYTE */
 
 static void
 do_field(PQprintOpt *po, PGresult *res,
@@ -556,6 +556,7 @@ do_field(PQprintOpt *po, PGresult *res,
 	if (!skipit)
 	{
 		char		ch = 0;
+
 #ifdef MULTIBYTE
 		int			len;
 
@@ -567,10 +568,11 @@ do_field(PQprintOpt *po, PGresult *res,
 #endif
 		{
 			ch = *p;
+
 			/*
-			 * Consensus on pgsql-interfaces (as of Aug 1998) seems to be that
-			 * the print functions ought not insert backslashes.  If you like
-			 * them, you can re-enable this next bit.
+			 * Consensus on pgsql-interfaces (as of Aug 1998) seems to be
+			 * that the print functions ought not insert backslashes.  If
+			 * you like them, you can re-enable this next bit.
 			 */
 #ifdef GRATUITOUS_BACKSLASHES
 			if ((fs_len == 1 && (ch == *(po->fieldSep))) ||
@@ -587,9 +589,10 @@ do_field(PQprintOpt *po, PGresult *res,
 				fieldNotNum[j] = 1;
 		}
 		*o = '\0';
+
 		/*
 		 * Above loop will believe E in first column is numeric; also, we
-		 * insist on a digit in the last column for a numeric.  This test
+		 * insist on a digit in the last column for a numeric.	This test
 		 * is still not bulletproof but it handles most cases.
 		 */
 		if (po->align &&

@@ -23,6 +23,7 @@ extern int	assertTest(int val);
 
 #ifdef ASSERT_CHECKING_TEST
 extern int	assertEnable(int val);
+
 #endif
 
 int
@@ -68,14 +69,15 @@ assert_test(int val)
 {
 	return assertTest(val);
 }
+
 #endif
 
 /* end of file */
 
 /*
  * Local variables:
- *  tab-width: 4
- *  c-indent-level: 4
- *  c-basic-offset: 4
+ *	tab-width: 4
+ *	c-indent-level: 4
+ *	c-basic-offset: 4
  * End:
  */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.28 1999/05/22 17:47:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.29 1999/05/25 16:12:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,7 +40,7 @@
 #include "storage/ipc.h"		/* for proc_exit */
 
 /*
- * EnableAbortEnvVarName 
+ * EnableAbortEnvVarName
  *		Enables system abort iff set to a non-empty string in environment.
  */
 #define EnableAbortEnvVarName	"POSTGRESABORT"
@@ -69,7 +69,7 @@ unsigned char RecodeBackTable[128];
  */
 
 /*
- * ExitPostgres 
+ * ExitPostgres
  *		Exit POSTGRES with a status code.
  *
  * Note:
@@ -89,7 +89,7 @@ ExitPostgres(ExitStatus status)
 }
 
 /*
- * AbortPostgres 
+ * AbortPostgres
  *		Abort POSTGRES dumping core.
  *
  * Note:
@@ -138,6 +138,7 @@ StatusPostmasterExit(int status)
 	/* someday, do some real cleanup and then call the LISP exit */
 	proc_exit(status);
 }
+
 #endif
 
 
@@ -149,7 +150,7 @@ static ProcessingMode Mode = NoProcessing;
 
 #ifdef NOT_USED
 /*
- * IsNoProcessingMode 
+ * IsNoProcessingMode
  *		True iff processing mode is NoProcessing.
  */
 bool
@@ -157,10 +158,11 @@ IsNoProcessingMode()
 {
 	return (bool) (Mode == NoProcessing);
 }
+
 #endif
 
 /*
- * IsBootstrapProcessingMode 
+ * IsBootstrapProcessingMode
  *		True iff processing mode is BootstrapProcessing.
  */
 bool
@@ -170,7 +172,7 @@ IsBootstrapProcessingMode()
 }
 
 /*
- * IsInitProcessingMode 
+ * IsInitProcessingMode
  *		True iff processing mode is InitProcessing.
  */
 bool
@@ -180,7 +182,7 @@ IsInitProcessingMode()
 }
 
 /*
- * IsNormalProcessingMode 
+ * IsNormalProcessingMode
  *		True iff processing mode is NormalProcessing.
  */
 bool
@@ -190,7 +192,7 @@ IsNormalProcessingMode()
 }
 
 /*
- * SetProcessingMode 
+ * SetProcessingMode
  *		Sets mode of processing as specified.
  *
  * Exceptions:

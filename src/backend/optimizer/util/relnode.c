@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.15 1999/02/18 00:49:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.16 1999/05/25 16:10:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,7 @@
 RelOptInfo *
 get_base_rel(Query *root, int relid)
 {
-	Relids	relids;
+	Relids		relids;
 	RelOptInfo *rel;
 
 	relids = lconsi(relid, NIL);
@@ -63,6 +63,7 @@ get_base_rel(Query *root, int relid)
 		 */
 		if (relid < 0)
 		{
+
 			/*
 			 * If the relation is a materialized relation, assume
 			 * constants for sizes.
@@ -75,6 +76,7 @@ get_base_rel(Query *root, int relid)
 			bool		hasindex;
 			int			pages,
 						tuples;
+
 			/*
 			 * Otherwise, retrieve relation characteristics from the
 			 * system catalogs.

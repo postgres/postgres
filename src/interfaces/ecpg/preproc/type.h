@@ -30,7 +30,7 @@ struct ECPGtype *ECPGmake_simple_type(enum ECPGttype, long);
 struct ECPGtype *ECPGmake_varchar_type(enum ECPGttype, long);
 struct ECPGtype *ECPGmake_array_type(struct ECPGtype *, long);
 struct ECPGtype *ECPGmake_struct_type(struct ECPGstruct_member *, enum ECPGttype type);
-struct ECPGstruct_member * ECPGstruct_member_dup(struct ECPGstruct_member *);
+struct ECPGstruct_member *ECPGstruct_member_dup(struct ECPGstruct_member *);
 
 /* Frees a type. */
 void		ECPGfree_struct_member(struct ECPGstruct_member *);
@@ -71,7 +71,7 @@ enum WHEN_TYPE
 
 struct when
 {
-	enum WHEN_TYPE	code;
+	enum WHEN_TYPE code;
 	char	   *command;
 	char	   *str;
 };
@@ -85,10 +85,10 @@ struct index
 
 struct this_type
 {
-	enum ECPGttype 	type_enum;
-	char	   	*type_str;
-	int		type_dimension;
-	int		type_index;
+	enum ECPGttype type_enum;
+	char	   *type_str;
+	int			type_dimension;
+	int			type_index;
 };
 
 struct _include_path
@@ -109,8 +109,8 @@ struct cursor
 
 struct typedefs
 {
-	char       *name;
-	struct this_type  *type;
+	char	   *name;
+	struct this_type *type;
 	struct ECPGstruct_member *struct_member_list;
 	struct typedefs *next;
 };

@@ -58,15 +58,16 @@ ExecSubPlan(SubPlan *node, List *pvar, ExprContext *econtext)
 	ExecReScan(plan, (ExprContext *) NULL, plan);
 
 	/*
-	 * For all sublink types except EXPR_SUBLINK, the result type is boolean,
-	 * and we have a fairly clear idea of how to combine multiple subitems
-	 * and deal with NULL values or an empty subplan result.
+	 * For all sublink types except EXPR_SUBLINK, the result type is
+	 * boolean, and we have a fairly clear idea of how to combine multiple
+	 * subitems and deal with NULL values or an empty subplan result.
 	 *
 	 * For EXPR_SUBLINK, the result type is whatever the combining operator
 	 * returns.  We have no way to deal with more than one column in the
-	 * subplan result --- hopefully the parser forbids that.  More seriously,
-	 * it's unclear what to do with NULL values or an empty subplan result.
-	 * For now, we error out, but should something else happen?
+	 * subplan result --- hopefully the parser forbids that.  More
+	 * seriously, it's unclear what to do with NULL values or an empty
+	 * subplan result. For now, we error out, but should something else
+	 * happen?
 	 */
 
 	for (slot = ExecProcNode(plan, plan);
@@ -105,14 +106,14 @@ ExecSubPlan(SubPlan *node, List *pvar, ExprContext *econtext)
 			}
 			if (subLinkType != EXPR_SUBLINK)
 			{
-				if ((! (bool) result && !(sublink->useor)) ||
+				if ((!(bool) result && !(sublink->useor)) ||
 					((bool) result && sublink->useor))
 					break;
 			}
 			i++;
 		}
 
-		if (subLinkType == ALL_SUBLINK && ! (bool) result)
+		if (subLinkType == ALL_SUBLINK && !(bool) result)
 			break;
 		if (subLinkType == ANY_SUBLINK && (bool) result)
 			break;
@@ -120,7 +121,7 @@ ExecSubPlan(SubPlan *node, List *pvar, ExprContext *econtext)
 
 	if (!found)
 	{
-		/* deal with empty subplan result.  Note default result is 'false' */
+		/* deal with empty subplan result.	Note default result is 'false' */
 		if (subLinkType == ALL_SUBLINK)
 			result = (Datum) true;
 		else if (subLinkType == EXPR_SUBLINK)

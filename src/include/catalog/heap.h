@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heap.h,v 1.18 1999/02/13 23:21:03 momjian Exp $
+ * $Id: heap.h,v 1.19 1999/05/25 16:13:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,7 @@
 
 extern Oid	RelnameFindRelid(char *relname);
 extern Relation heap_create(char *relname, TupleDesc att,
-							bool isnoname, bool istemp);
+			bool isnoname, bool istemp);
 
 extern Oid heap_create_with_catalog(char *relname,
 						 TupleDesc tupdesc, char relkind, bool istemp);

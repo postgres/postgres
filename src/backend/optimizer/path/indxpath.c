@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.54 1999/03/18 19:59:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.55 1999/05/25 16:09:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,32 +45,32 @@
 #include "utils/lsyscache.h"
 
 
-static void match_index_orclauses(RelOptInfo *rel, RelOptInfo *index, int indexkey,
+static void match_index_orclauses(RelOptInfo * rel, RelOptInfo * index, int indexkey,
 					  int xclass, List *restrictinfo_list);
 static bool match_index_to_operand(int indexkey, Expr *operand,
-					   RelOptInfo *rel, RelOptInfo *index);
-static List *match_index_orclause(RelOptInfo *rel, RelOptInfo *index, int indexkey,
+					   RelOptInfo * rel, RelOptInfo * index);
+static List *match_index_orclause(RelOptInfo * rel, RelOptInfo * index, int indexkey,
 			 int xclass, List *or_clauses, List *other_matching_indices);
-static List *group_clauses_by_indexkey(RelOptInfo *rel, RelOptInfo *index,
-					int *indexkeys, Oid *classes, List *restrictinfo_list);
-static List *group_clauses_by_ikey_for_joins(RelOptInfo *rel, RelOptInfo *index,
+static List *group_clauses_by_indexkey(RelOptInfo * rel, RelOptInfo * index,
+				  int *indexkeys, Oid *classes, List *restrictinfo_list);
+static List *group_clauses_by_ikey_for_joins(RelOptInfo * rel, RelOptInfo * index,
 								int *indexkeys, Oid *classes, List *join_cinfo_list, List *restr_cinfo_list);
-static RestrictInfo *match_clause_to_indexkey(RelOptInfo *rel, RelOptInfo *index, int indexkey,
-						 int xclass, RestrictInfo *restrictInfo, bool join);
+static RestrictInfo *match_clause_to_indexkey(RelOptInfo * rel, RelOptInfo * index, int indexkey,
+					 int xclass, RestrictInfo * restrictInfo, bool join);
 static bool pred_test(List *predicate_list, List *restrictinfo_list,
 		  List *joininfo_list);
 static bool one_pred_test(Expr *predicate, List *restrictinfo_list);
 static bool one_pred_clause_expr_test(Expr *predicate, Node *clause);
 static bool one_pred_clause_test(Expr *predicate, Node *clause);
 static bool clause_pred_clause_test(Expr *predicate, Node *clause);
-static List *indexable_joinclauses(RelOptInfo *rel, RelOptInfo *index,
+static List *indexable_joinclauses(RelOptInfo * rel, RelOptInfo * index,
 					  List *joininfo_list, List *restrictinfo_list);
-static List *index_innerjoin(Query *root, RelOptInfo *rel,
-				List *clausegroup_list, RelOptInfo *index);
-static List *create_index_path_group(Query *root, RelOptInfo *rel, RelOptInfo *index,
-				   List *clausegroup_list, bool join);
+static List *index_innerjoin(Query *root, RelOptInfo * rel,
+				List *clausegroup_list, RelOptInfo * index);
+static List *create_index_path_group(Query *root, RelOptInfo * rel, RelOptInfo * index,
+						List *clausegroup_list, bool join);
 static List *add_index_paths(List *indexpaths, List *new_indexpaths);
-static bool function_index_operand(Expr *funcOpnd, RelOptInfo *rel, RelOptInfo *index);
+static bool function_index_operand(Expr *funcOpnd, RelOptInfo * rel, RelOptInfo * index);
 
 
 /* find_index_paths()
@@ -100,10 +100,10 @@ static bool function_index_operand(Expr *funcOpnd, RelOptInfo *rel, RelOptInfo *
  */
 List *
 create_index_paths(Query *root,
-				 RelOptInfo *rel,
-				 List *indices,
-				 List *restrictinfo_list,
-				 List *joininfo_list)
+				   RelOptInfo * rel,
+				   List *indices,
+				   List *restrictinfo_list,
+				   List *joininfo_list)
 {
 	List	   *scanclausegroups = NIL;
 	List	   *scanpaths = NIL;
@@ -127,11 +127,11 @@ create_index_paths(Query *root,
 
 		/*
 		 * 1. Try matching the index against subclauses of an 'or' clause.
-		 * The fields of the restrictinfo nodes are marked with lists of the
-		 * matching indices.  No path are actually created.  We currently
-		 * only look to match the first key.  We don't find multi-key
-		 * index cases where an AND matches the first key, and the OR
-		 * matches the second key.
+		 * The fields of the restrictinfo nodes are marked with lists of
+		 * the matching indices.  No path are actually created.  We
+		 * currently only look to match the first key.	We don't find
+		 * multi-key index cases where an AND matches the first key, and
+		 * the OR matches the second key.
 		 */
 		match_index_orclauses(rel,
 							  index,
@@ -144,7 +144,7 @@ create_index_paths(Query *root,
 		 * restriction clauses, then create pathnodes corresponding to
 		 * each group of usable clauses.
 		 */
- 		scanclausegroups = group_clauses_by_indexkey(rel,
+		scanclausegroups = group_clauses_by_indexkey(rel,
 													 index,
 													 index->indexkeys,
 													 index->classlist,
@@ -153,10 +153,10 @@ create_index_paths(Query *root,
 		scanpaths = NIL;
 		if (scanclausegroups != NIL)
 			scanpaths = create_index_path_group(root,
-										   rel,
-										   index,
-										   scanclausegroups,
-										   false);
+												rel,
+												index,
+												scanclausegroups,
+												false);
 
 		/*
 		 * 3. If this index can be used with any join clause, then create
@@ -171,12 +171,12 @@ create_index_paths(Query *root,
 		if (joinclausegroups != NIL)
 		{
 			joinpaths = create_index_path_group(root, rel,
-										   index,
-										   joinclausegroups,
-										   true);
+												index,
+												joinclausegroups,
+												true);
 			rel->innerjoin = nconc(rel->innerjoin,
 								   index_innerjoin(root, rel,
-												   joinclausegroups, index));
+											   joinclausegroups, index));
 		}
 
 		/*
@@ -217,8 +217,8 @@ create_index_paths(Query *root,
  *
  */
 static void
-match_index_orclauses(RelOptInfo *rel,
-					  RelOptInfo *index,
+match_index_orclauses(RelOptInfo * rel,
+					  RelOptInfo * index,
 					  int indexkey,
 					  int xclass,
 					  List *restrictinfo_list)
@@ -238,9 +238,9 @@ match_index_orclauses(RelOptInfo *rel,
 			 * 'index' to the existing list where appropriate.
 			 */
 			restrictinfo->indexids = match_index_orclause(rel, index, indexkey,
-									 xclass,
-									 restrictinfo->clause->args,
-									 restrictinfo->indexids);
+														  xclass,
+											  restrictinfo->clause->args,
+												 restrictinfo->indexids);
 		}
 	}
 }
@@ -253,8 +253,8 @@ match_index_orclauses(RelOptInfo *rel,
 static bool
 match_index_to_operand(int indexkey,
 					   Expr *operand,
-					   RelOptInfo *rel,
-					   RelOptInfo *index)
+					   RelOptInfo * rel,
+					   RelOptInfo * index)
 {
 	bool		result;
 
@@ -296,8 +296,8 @@ match_index_to_operand(int indexkey,
  * match the third, g,h match the fourth, etc.
  */
 static List *
-match_index_orclause(RelOptInfo *rel,
-					 RelOptInfo *index,
+match_index_orclause(RelOptInfo * rel,
+					 RelOptInfo * index,
 					 int indexkey,
 					 int xclass,
 					 List *or_clauses,
@@ -325,8 +325,9 @@ match_index_orclause(RelOptInfo *rel,
 
 		if (is_opclause(clause))
 		{
-			Expr   *left = (Expr *) get_leftop((Expr *) clause);
-			Expr   *right = (Expr *) get_rightop((Expr *) clause);
+			Expr	   *left = (Expr *) get_leftop((Expr *) clause);
+			Expr	   *right = (Expr *) get_rightop((Expr *) clause);
+
 			if (left && right &&
 				op_class(((Oper *) ((Expr *) clause)->oper)->opno,
 						 xclass, index->relam) &&
@@ -335,7 +336,7 @@ match_index_orclause(RelOptInfo *rel,
 				 (IsA(left, Const) &&
 				  match_index_to_operand(indexkey, right, rel, index))))
 				lfirst(matching_indices) = lcons(index,
-												 lfirst(matching_indices));
+											   lfirst(matching_indices));
 		}
 
 		matching_indices = lnext(matching_indices);
@@ -386,8 +387,8 @@ match_index_orclause(RelOptInfo *rel,
  *
  */
 static List *
-group_clauses_by_indexkey(RelOptInfo *rel,
-						  RelOptInfo *index,
+group_clauses_by_indexkey(RelOptInfo * rel,
+						  RelOptInfo * index,
 						  int *indexkeys,
 						  Oid *classes,
 						  List *restrictinfo_list)
@@ -448,8 +449,8 @@ group_clauses_by_indexkey(RelOptInfo *rel,
  *
  */
 static List *
-group_clauses_by_ikey_for_joins(RelOptInfo *rel,
-								RelOptInfo *index,
+group_clauses_by_ikey_for_joins(RelOptInfo * rel,
+								RelOptInfo * index,
 								int *indexkeys,
 								Oid *classes,
 								List *join_cinfo_list,
@@ -570,11 +571,11 @@ group_clauses_by_ikey_for_joins(RelOptInfo *rel,
  *
  */
 static RestrictInfo *
-match_clause_to_indexkey(RelOptInfo *rel,
-						 RelOptInfo *index,
+match_clause_to_indexkey(RelOptInfo * rel,
+						 RelOptInfo * index,
 						 int indexkey,
 						 int xclass,
-						 RestrictInfo *restrictInfo,
+						 RestrictInfo * restrictInfo,
 						 bool join)
 {
 	Expr	   *clause = restrictInfo->clause;
@@ -597,6 +598,7 @@ match_clause_to_indexkey(RelOptInfo *rel,
 	 */
 	if (!join)
 	{
+
 		/*
 		 * Check for standard s-argable clause
 		 */
@@ -647,10 +649,10 @@ match_clause_to_indexkey(RelOptInfo *rel,
 						restrict_op = oprid(newop);
 
 						isIndexable = (op_class(restrict_op, xclass, index->relam) &&
-							 IndexScanableOperand(leftop,
-												  indexkey,
-												  rel,
-												  index));
+									   IndexScanableOperand(leftop,
+															indexkey,
+															rel,
+															index));
 
 						if (isIndexable)
 							((Oper *) ((Expr *) clause)->oper)->opno = restrict_op;
@@ -1181,7 +1183,7 @@ clause_pred_clause_test(Expr *predicate, Node *clause)
  *
  */
 static List *
-indexable_joinclauses(RelOptInfo *rel, RelOptInfo *index,
+indexable_joinclauses(RelOptInfo * rel, RelOptInfo * index,
 					  List *joininfo_list, List *restrictinfo_list)
 {
 	JoinInfo   *joininfo = (JoinInfo *) NULL;
@@ -1196,11 +1198,11 @@ indexable_joinclauses(RelOptInfo *rel, RelOptInfo *index,
 		if (joininfo->jinfo_restrictinfo == NIL)
 			continue;
 		clausegroups = group_clauses_by_ikey_for_joins(rel,
-											index,
-											index->indexkeys,
-											index->classlist,
+													   index,
+													   index->indexkeys,
+													   index->classlist,
 											joininfo->jinfo_restrictinfo,
-											restrictinfo_list);
+													   restrictinfo_list);
 
 		if (clausegroups != NIL)
 		{
@@ -1253,8 +1255,8 @@ extract_restrict_clauses(List *clausegroup)
  *
  */
 static List *
-index_innerjoin(Query *root, RelOptInfo *rel, List *clausegroup_list,
-				RelOptInfo *index)
+index_innerjoin(Query *root, RelOptInfo * rel, List *clausegroup_list,
+				RelOptInfo * index)
 {
 	List	   *clausegroup = NIL;
 	List	   *cg_list = NIL;
@@ -1289,9 +1291,9 @@ index_innerjoin(Query *root, RelOptInfo *rel, List *clausegroup_list,
 		pathnode->path.pathtype = T_IndexScan;
 		pathnode->path.parent = rel;
 		pathnode->path.pathorder = makeNode(PathOrder);
-	    pathnode->path.pathorder->ordtype = SORTOP_ORDER;
-	    pathnode->path.pathorder->ord.sortop = index->ordering;
-	    pathnode->path.pathkeys = NIL;
+		pathnode->path.pathorder->ordtype = SORTOP_ORDER;
+		pathnode->path.pathorder->ord.sortop = index->ordering;
+		pathnode->path.pathkeys = NIL;
 
 		pathnode->indexid = index->relids;
 		pathnode->indexkeys = index->indexkeys;
@@ -1300,27 +1302,25 @@ index_innerjoin(Query *root, RelOptInfo *rel, List *clausegroup_list,
 		pathnode->path.joinid = ((RestrictInfo *) lfirst(clausegroup))->restrictinfojoinid;
 
 		pathnode->path.path_cost = cost_index((Oid) lfirsti(index->relids),
-											   (int) temp_pages,
-											   temp_selec,
-											   rel->pages,
-											   rel->tuples,
-											   index->pages,
-											   index->tuples,
-											   true);
+											  (int) temp_pages,
+											  temp_selec,
+											  rel->pages,
+											  rel->tuples,
+											  index->pages,
+											  index->tuples,
+											  true);
 
 		/*
 		 * copy restrictinfo list into path for expensive function
 		 * processing -- JMH, 7/7/92
 		 */
 		pathnode->path.loc_restrictinfo = set_difference(copyObject((Node *) rel->restrictinfo),
-						   clausegroup);
+														 clausegroup);
 
-#ifdef NOT_USED						/* fix xfunc */
+#ifdef NOT_USED					/* fix xfunc */
 		/* add in cost for expensive functions!  -- JMH, 7/7/92 */
 		if (XfuncMode != XFUNC_OFF)
-		{
 			((Path *) pathnode)->path_cost += xfunc_get_path_cost((Path *) pathnode);
-		}
 #endif
 		cg_list = lappend(cg_list, pathnode);
 	}
@@ -1343,10 +1343,10 @@ index_innerjoin(Query *root, RelOptInfo *rel, List *clausegroup_list,
  */
 static List *
 create_index_path_group(Query *root,
-					   RelOptInfo *rel,
-					   RelOptInfo *index,
-					   List *clausegroup_list,
-					   bool join)
+						RelOptInfo * rel,
+						RelOptInfo * index,
+						List *clausegroup_list,
+						bool join)
 {
 	List	   *clausegroup = NIL;
 	List	   *ip_list = NIL;
@@ -1366,7 +1366,7 @@ create_index_path_group(Query *root,
 			restrictinfo = (RestrictInfo *) lfirst(j);
 			if (!(is_joinable((Node *) restrictinfo->clause) &&
 				  equal_path_merge_ordering(index->ordering,
-											restrictinfo->mergejoinorder)))
+										  restrictinfo->mergejoinorder)))
 				temp = false;
 		}
 
@@ -1386,7 +1386,7 @@ add_index_paths(List *indexpaths, List *new_indexpaths)
 }
 
 static bool
-function_index_operand(Expr *funcOpnd, RelOptInfo *rel, RelOptInfo *index)
+function_index_operand(Expr *funcOpnd, RelOptInfo * rel, RelOptInfo * index)
 {
 	Oid			heapRelid = (Oid) lfirsti(rel->relids);
 	Func	   *function;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.115 1999/05/22 17:47:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.116 1999/05/25 16:11:40 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -141,7 +141,7 @@ static bool IsEmptyQuery = false;
 char		relname[80];		/* current relation name */
 
 /* note: these declarations had better match tcopprot.h */
-DLLIMPORT sigjmp_buf	Warn_restart;
+DLLIMPORT sigjmp_buf Warn_restart;
 bool		InError;
 
 extern int	NBuffers;
@@ -389,7 +389,8 @@ List *
 pg_parse_and_plan(char *query_string,	/* string to execute */
 				  Oid *typev,	/* argument types */
 				  int nargs,	/* number of arguments */
-				  List **queryListP,	/* returned pointer to the parse trees */
+				  List **queryListP,	/* returned pointer to the parse
+										 * trees */
 				  CommandDest dest,		/* where results should go */
 				  bool aclOverride)
 {
@@ -404,17 +405,17 @@ pg_parse_and_plan(char *query_string,	/* string to execute */
 	if (DebugPrintQuery)
 	{
 		if (DebugPrintQuery > 3)
-		{			  
+		{
 			/* Print the query string as is if query debug level > 3 */
-			TPRINTF(TRACE_QUERY, "query: %s", query_string); 
+			TPRINTF(TRACE_QUERY, "query: %s", query_string);
 		}
 		else
 		{
 			/* Print condensed query string to fit in one log line */
 			char		buff[MAX_QUERY_SIZE + 1];
 			char		c,
-						*s,
-						*d;
+					   *s,
+					   *d;
 			int			n,
 						is_space = 1;
 
@@ -462,21 +463,24 @@ pg_parse_and_plan(char *query_string,	/* string to execute */
 	/* ----------------
 	 *	(2) rewrite the queries, as necessary
 	 *
-	 *  rewritten queries are collected in new_list.  Note there may be
-	 *  more or fewer than in the original list.
+	 *	rewritten queries are collected in new_list.  Note there may be
+	 *	more or fewer than in the original list.
 	 * ----------------
 	 */
 	new_list = NIL;
-	foreach (querytree_list_item, querytree_list)
+	foreach(querytree_list_item, querytree_list)
 	{
 		querytree = (Query *) lfirst(querytree_list_item);
 
 		if (DebugPrintParse || DebugPPrintParse)
 		{
-			if (DebugPPrintParse) {
+			if (DebugPPrintParse)
+			{
 				TPRINTF(TRACE_PRETTY_PARSE, "parser outputs:");
 				nodeDisplay(querytree);
-			} else {
+			}
+			else
+			{
 				TPRINTF(TRACE_PARSE, "parser outputs:");
 				printf("\n%s\n\n", nodeToString(querytree));
 			}
@@ -502,7 +506,7 @@ pg_parse_and_plan(char *query_string,	/* string to execute */
 	 */
 	if (aclOverride)
 	{
-		foreach (querytree_list_item, querytree_list)
+		foreach(querytree_list_item, querytree_list)
 		{
 			List	   *l;
 
@@ -522,19 +526,22 @@ pg_parse_and_plan(char *query_string,	/* string to execute */
 
 	if (DebugPrintRewrittenParsetree || DebugPPrintRewrittenParsetree)
 	{
-		if (DebugPPrintRewrittenParsetree) {
+		if (DebugPPrintRewrittenParsetree)
+		{
 			TPRINTF(TRACE_PRETTY_REWRITTEN, "after rewriting:");
 
-			foreach (querytree_list_item, querytree_list)
+			foreach(querytree_list_item, querytree_list)
 			{
 				querytree = (Query *) lfirst(querytree_list_item);
 				nodeDisplay(querytree);
 				printf("\n");
 			}
-		} else {
+		}
+		else
+		{
 			TPRINTF(TRACE_REWRITTEN, "after rewriting:");
 
-			foreach (querytree_list_item, querytree_list)
+			foreach(querytree_list_item, querytree_list)
 			{
 				querytree = (Query *) lfirst(querytree_list_item);
 				printf("\n%s\n\n", nodeToString(querytree));
@@ -542,7 +549,7 @@ pg_parse_and_plan(char *query_string,	/* string to execute */
 		}
 	}
 
-	foreach (querytree_list_item, querytree_list)
+	foreach(querytree_list_item, querytree_list)
 	{
 		querytree = (Query *) lfirst(querytree_list_item);
 
@@ -594,16 +601,20 @@ pg_parse_and_plan(char *query_string,	/* string to execute */
 			 */
 			if (DebugPrintPlan || DebugPPrintPlan)
 			{
-				if (DebugPPrintPlan) {
+				if (DebugPPrintPlan)
+				{
 					TPRINTF(TRACE_PRETTY_PLAN, "plan:");
 					nodeDisplay(plan);
-				} else {
+				}
+				else
+				{
 					TPRINTF(TRACE_PLAN, "plan:");
 					printf("\n%s\n\n", nodeToString(plan));
 				}
 			}
 #endif
 		}
+
 		/*
 		 * If the command is an utility append a null plan. This is needed
 		 * to keep the plan_list aligned with the querytree_list or the
@@ -670,14 +681,16 @@ pg_exec_query_dest(char *query_string,	/* string to execute */
 
 	/* OK, do it to it! */
 
-	/* NOTE: we do not use "foreach" here because we want to be sure
-	 * the list pointers have been advanced before the query is executed.
-	 * We need to do that because VACUUM has a nasty little habit of doing
+	/*
+	 * NOTE: we do not use "foreach" here because we want to be sure the
+	 * list pointers have been advanced before the query is executed. We
+	 * need to do that because VACUUM has a nasty little habit of doing
 	 * CommitTransactionCommand at startup, and that will release the
 	 * memory holding our parse/plan lists :-(.  This needs a better
 	 * solution --- currently, the code will crash if someone submits
 	 * "vacuum; something-else" in a single query string.  But memory
-	 * allocation needs redesigned anyway, so this will have to do for now.
+	 * allocation needs redesigned anyway, so this will have to do for
+	 * now.
 	 */
 
 	while (querytree_list)
@@ -717,10 +730,13 @@ pg_exec_query_dest(char *query_string,	/* string to execute */
 			 */
 			if (DebugPrintPlan || DebugPPrintPlan)
 			{
-				if (DebugPPrintPlan) {
+				if (DebugPPrintPlan)
+				{
 					TPRINTF(TRACE_PRETTY_PLAN, "plan:");
 					nodeDisplay(plan);
-				} else {
+				}
+				else
+				{
 					TPRINTF(TRACE_PLAN, "plan:");
 					printf("\n%s\n\n", nodeToString(plan));
 				}
@@ -730,7 +746,7 @@ pg_exec_query_dest(char *query_string,	/* string to execute */
 			SetQuerySnapshot();
 
 			/*
-			 *	 execute the plan
+			 * execute the plan
 			 */
 			if (ShowExecutorStats)
 				ResetUsage();
@@ -762,13 +778,13 @@ pg_exec_query_dest(char *query_string,	/* string to execute */
 /* --------------------------------
  *		signal handler routines used in PostgresMain()
  *
- *		handle_warn() catches SIGQUIT.  It forces control back to the main
+ *		handle_warn() catches SIGQUIT.	It forces control back to the main
  *		loop, just as if an internal error (elog(ERROR,...)) had occurred.
  *		elog() used to actually use kill(2) to induce a SIGQUIT to get here!
  *		But that's not 100% reliable on some systems, so now it does its own
- *		siglongjmp() instead. 
+ *		siglongjmp() instead.
  *		We still provide the signal catcher so that an error quit can be
- *		forced externally.  This should be done only with great caution,
+ *		forced externally.	This should be done only with great caution,
  *		however, since an asynchronous signal could leave the system in
  *		who-knows-what inconsistent state.
  *
@@ -832,6 +848,7 @@ QueryCancelHandler(SIGNAL_ARGS)
 void
 CancelQuery(void)
 {
+
 	/*
 	 * QueryCancel flag will be reset in main loop, which we reach by
 	 * longjmp from elog().
@@ -1150,7 +1167,8 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 				{
 					IsUnderPostmaster = true;
 					DBName = optarg;
-					secure = false;	/* subsequent switches are NOT secure */
+					secure = false;		/* subsequent switches are NOT
+										 * secure */
 				}
 				break;
 
@@ -1238,7 +1256,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 				break;
 
 			case 'x':
-#ifdef NOT_USED						/* planner/xfunc.h */
+#ifdef NOT_USED					/* planner/xfunc.h */
 
 				/*
 				 * control joey hellerstein's expensive function
@@ -1326,7 +1344,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 		fprintf(stderr, "%s does not know where to find the database system "
 				"data.  You must specify the directory that contains the "
 				"database system either by specifying the -D invocation "
-				"option or by setting the PGDATA environment variable.\n\n",
+			 "option or by setting the PGDATA environment variable.\n\n",
 				argv[0]);
 		proc_exit(1);
 	}
@@ -1479,10 +1497,13 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	pqsignal(SIGINT, QueryCancelHandler);		/* cancel current query */
 	pqsignal(SIGQUIT, handle_warn);		/* handle error */
 	pqsignal(SIGTERM, die);
-	pqsignal(SIGPIPE, SIG_IGN);	/* ignore failure to write to frontend */
-	/* Note: if frontend closes connection, we will notice it and exit cleanly
-	 * when control next returns to outer loop.  This seems safer than forcing
-	 * exit in the midst of output during who-knows-what operation...
+	pqsignal(SIGPIPE, SIG_IGN); /* ignore failure to write to frontend */
+
+	/*
+	 * Note: if frontend closes connection, we will notice it and exit
+	 * cleanly when control next returns to outer loop.  This seems safer
+	 * than forcing exit in the midst of output during who-knows-what
+	 * operation...
 	 */
 	pqsignal(SIGUSR1, quickdie);
 	pqsignal(SIGUSR2, Async_NotifyHandler);		/* flush also sinval cache */
@@ -1493,6 +1514,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 		PG_PROTOCOL_MAJOR(FrontendProtocol) >= 2)
 	{
 		StringInfoData buf;
+
 		pq_beginmessage(&buf);
 		pq_sendbyte(&buf, 'K');
 		pq_sendint(&buf, (int32) MyProcPid, sizeof(int32));
@@ -1504,7 +1526,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.115 $ $Date: 1999/05/22 17:47:49 $\n");
+		puts("$Revision: 1.116 $ $Date: 1999/05/25 16:11:40 $\n");
 	}
 
 	/* ----------------
@@ -1542,14 +1564,14 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 		/* ----------------
 		 *	 (1) tell the frontend we're ready for a new query.
 		 *
-		 *   Note: this includes fflush()'ing the last of the prior output.
+		 *	 Note: this includes fflush()'ing the last of the prior output.
 		 * ----------------
 		 */
 		ReadyForQuery(whereToSendOutput);
 
 		/* ----------------
 		 *	 (2) deal with pending asynchronous NOTIFY from other backends,
-		 *   and enable async.c's signal handler to execute NOTIFY directly.
+		 *	 and enable async.c's signal handler to execute NOTIFY directly.
 		 * ----------------
 		 */
 		QueryCancel = false;	/* forget any earlier CANCEL signal */

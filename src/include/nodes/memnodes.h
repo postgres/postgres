@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: memnodes.h,v 1.11 1999/03/07 23:03:31 tgl Exp $
+ * $Id: memnodes.h,v 1.12 1999/05/25 16:14:09 momjian Exp $
  *
  * XXX the typedefs in this file are different from the other ???nodes.h;
  *	  they are pointers to structures instead of the structures themselves.
@@ -23,7 +23,7 @@
 #include <nodes/nodes.h>
 
 /*
- * MemoryContext 
+ * MemoryContext
  *		A logical context in which memory allocations occur.
  *
  * The types of memory contexts can be thought of as members of the
@@ -95,7 +95,7 @@ typedef struct PortalHeapMemoryData
 }		   *PortalHeapMemory;
 
 /*
- * MemoryContextIsValid 
+ * MemoryContextIsValid
  *		True iff memory context is valid.
  */
 #define MemoryContextIsValid(context) \

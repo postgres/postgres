@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.20 1999/05/23 21:41:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.21 1999/05/25 16:10:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,8 +33,8 @@
 
 static bool contain_agg_clause(Node *clause);
 static bool exprIsAggOrGroupCol(Node *expr, List *groupClause, List *tlist);
-static bool tleIsAggOrGroupCol(TargetEntry *tle, List *groupClause, 
-													List *tlist);
+static bool tleIsAggOrGroupCol(TargetEntry *tle, List *groupClause,
+				   List *tlist);
 
 /*
  * contain_agg_clause
@@ -106,7 +106,7 @@ exprIsAggOrGroupCol(Node *expr, List *groupClause, List *tlist)
 	List	   *gl;
 
 	if (expr == NULL || IsA(expr, Const) ||
-		IsA(expr, Param) || IsA(expr, Aggref) || 
+		IsA(expr, Param) ||IsA(expr, Aggref) ||
 		IsA(expr, SubLink))		/* can't handle currently !!! */
 		return TRUE;
 
@@ -190,11 +190,11 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 	Assert(pstate->p_hasAggs || qry->groupClause);
 
 	/*
-	 * Aggregates must never appear in WHERE clauses.
-	 * (Note this check should appear first to deliver an appropriate
-	 * error message; otherwise we are likely to generate the generic
-	 * "illegal use of aggregates in target list" message, which is
-	 * outright misleading if the problem is in WHERE.)
+	 * Aggregates must never appear in WHERE clauses. (Note this check
+	 * should appear first to deliver an appropriate error message;
+	 * otherwise we are likely to generate the generic "illegal use of
+	 * aggregates in target list" message, which is outright misleading if
+	 * the problem is in WHERE.)
 	 */
 	if (contain_agg_clause(qry->qual))
 		elog(ERROR, "Aggregates not allowed in WHERE clause");
@@ -219,7 +219,7 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 
 	if (!exprIsAggOrGroupCol(qry->havingQual, qry->groupClause, qry->targetList))
 		elog(ERROR,
-			 "Illegal use of aggregates or non-group column in HAVING clause");
+		"Illegal use of aggregates or non-group column in HAVING clause");
 }
 
 
@@ -313,7 +313,7 @@ ParseAgg(ParseState *pstate, char *aggname, Oid basetype,
 		basetype = aggform->aggbasetype;
 		vartype = exprType(lfirst(target));
 		if ((basetype != vartype)
-			&& (! IS_BINARY_COMPATIBLE(basetype, vartype)))
+			&& (!IS_BINARY_COMPATIBLE(basetype, vartype)))
 		{
 			Type		tp1,
 						tp2;
@@ -321,8 +321,8 @@ ParseAgg(ParseState *pstate, char *aggname, Oid basetype,
 			tp1 = typeidType(basetype);
 			tp2 = typeidType(vartype);
 			elog(ERROR, "Aggregate type mismatch"
-						"\n\t%s() works on %s, not on %s",
-						 aggname, typeTypeName(tp1), typeTypeName(tp2));
+				 "\n\t%s() works on %s, not on %s",
+				 aggname, typeTypeName(tp1), typeTypeName(tp2));
 		}
 	}
 

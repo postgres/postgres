@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.25 1999/05/13 07:28:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.26 1999/05/25 16:08:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -107,9 +107,9 @@ init_execution_state(FunctionCachePtr fcache,
 	preves = (execution_state *) NULL;
 
 	planTree_list = pg_parse_and_plan(fcache->src, fcache->argOidVect,
-									  nargs, &queryTree_list, None, FALSE);
+									nargs, &queryTree_list, None, FALSE);
 
-	foreach (qtl_item, queryTree_list)
+	foreach(qtl_item, queryTree_list)
 	{
 		Query	   *queryTree = lfirst(qtl_item);
 		Plan	   *planTree = lfirst(planTree_list);
@@ -199,7 +199,7 @@ postquel_getnext(execution_state *es)
 
 	feature = (LAST_POSTQUEL_COMMAND(es)) ? EXEC_RETONE : EXEC_RUN;
 
-	return ExecutorRun(es->qd, es->estate, feature, (Node *)NULL, (Node *)NULL);
+	return ExecutorRun(es->qd, es->estate, feature, (Node *) NULL, (Node *) NULL);
 }
 
 static void

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.43 1999/05/17 06:38:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.44 1999/05/25 16:11:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -712,9 +712,9 @@ mdtruncate(Relation reln, int nblocks)
 
 #ifndef LET_OS_MANAGE_FILESIZE
 	int			curnblk,
-					i,
-					oldsegno,
-					newsegno;
+				i,
+				oldsegno,
+				newsegno;
 	char		fname[NAMEDATALEN];
 	char		tname[NAMEDATALEN + 10];
 
@@ -724,13 +724,15 @@ mdtruncate(Relation reln, int nblocks)
 
 	StrNCpy(fname, RelationGetRelationName(reln)->data, NAMEDATALEN);
 
-	if (newsegno < oldsegno) {
-		for (i = (newsegno + 1);; i++) {
+	if (newsegno < oldsegno)
+	{
+		for (i = (newsegno + 1);; i++)
+		{
 			sprintf(tname, "%s.%d", fname, i);
 			if (FileNameUnlink(tname) < 0)
 				break;
 		}
-        }
+	}
 #endif
 
 	fd = RelationGetFile(reln);

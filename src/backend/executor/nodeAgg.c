@@ -45,7 +45,7 @@ typedef struct AggFuncInfo
 	FmgrInfo	finalfn;
 } AggFuncInfo;
 
-static Datum aggGetAttr(TupleTableSlot *tuple, Aggref *aggref, bool *isNull);
+static Datum aggGetAttr(TupleTableSlot *tuple, Aggref * aggref, bool *isNull);
 
 
 /* ---------------------------------------
@@ -121,7 +121,8 @@ ExecAgg(Agg *node)
 	 */
 
 	/*
-	 * We loop retrieving groups until we find one matching node->plan.qual
+	 * We loop retrieving groups until we find one matching
+	 * node->plan.qual
 	 */
 	do
 	{
@@ -133,7 +134,7 @@ ExecAgg(Agg *node)
 		econtext = aggstate->csstate.cstate.cs_ExprContext;
 
 		nagg = length(node->aggs);
-		
+
 		value1 = node->aggstate->csstate.cstate.cs_ExprContext->ecxt_values;
 		nulls = node->aggstate->csstate.cstate.cs_ExprContext->ecxt_nulls;
 
@@ -163,7 +164,7 @@ ExecAgg(Agg *node)
 						finalfn_oid;
 
 			aggref->aggno = ++aggno;
-			
+
 			/* ---------------------
 			 *	find transfer functions of all the aggregates and initialize
 			 *	their initial values
@@ -172,7 +173,7 @@ ExecAgg(Agg *node)
 			aggname = aggref->aggname;
 			aggTuple = SearchSysCacheTuple(AGGNAME,
 										   PointerGetDatum(aggname),
-										   ObjectIdGetDatum(aggref->basetype),
+									  ObjectIdGetDatum(aggref->basetype),
 										   0, 0);
 			if (!HeapTupleIsValid(aggTuple))
 				elog(ERROR, "ExecAgg: cache lookup failed for aggregate \"%s\"(%s)",
@@ -195,9 +196,9 @@ ExecAgg(Agg *node)
 				fmgr_info(xfn2_oid, &aggFuncInfo[aggno].xfn2);
 				aggFuncInfo[aggno].xfn2_oid = xfn2_oid;
 				value2[aggno] = (Datum) AggNameGetInitVal((char *) aggname,
-													  aggp->aggbasetype,
-													  2,
-													  &isNull2);
+													   aggp->aggbasetype,
+														  2,
+														  &isNull2);
 				/* ------------------------------------------
 				 * If there is a second transition function, its initial
 				 * value must exist -- as it does not depend on data values,
@@ -213,9 +214,9 @@ ExecAgg(Agg *node)
 				fmgr_info(xfn1_oid, &aggFuncInfo[aggno].xfn1);
 				aggFuncInfo[aggno].xfn1_oid = xfn1_oid;
 				value1[aggno] = (Datum) AggNameGetInitVal((char *) aggname,
-													  aggp->aggbasetype,
-													  1,
-													  &isNull1);
+													   aggp->aggbasetype,
+														  1,
+														  &isNull1);
 
 				/* ------------------------------------------
 				 * If the initial value for the first transition function
@@ -245,6 +246,7 @@ ExecAgg(Agg *node)
 			outerslot = ExecProcNode(outerPlan, (Plan *) node);
 			if (TupIsNull(outerslot))
 			{
+
 				/*
 				 * when the outerplan doesn't return a single tuple,
 				 * create a dummy heaptuple anyway because we still need
@@ -299,27 +301,29 @@ ExecAgg(Agg *node)
 				{
 					if (noInitValue[aggno])
 					{
+
 						/*
-						 * value1 has not been initialized.
-						 * This is the first non-NULL input value.
-						 * We use it as the initial value for value1.
+						 * value1 has not been initialized. This is the
+						 * first non-NULL input value. We use it as the
+						 * initial value for value1.
 						 *
-						 * But we can't just use it straight, we have to
-						 * make a copy of it since the tuple from which it
-						 * came will be freed on the next iteration of the
+						 * But we can't just use it straight, we have to make
+						 * a copy of it since the tuple from which it came
+						 * will be freed on the next iteration of the
 						 * scan.  This requires finding out how to copy
 						 * the Datum.  We assume the datum is of the agg's
-						 * basetype, or at least binary compatible with it.
+						 * basetype, or at least binary compatible with
+						 * it.
 						 */
-						Type	aggBaseType = typeidType(aggref->basetype);
-						int		attlen = typeLen(aggBaseType);
-						bool	byVal = typeByVal(aggBaseType);
+						Type		aggBaseType = typeidType(aggref->basetype);
+						int			attlen = typeLen(aggBaseType);
+						bool		byVal = typeByVal(aggBaseType);
 
 						if (byVal)
 							value1[aggno] = newVal;
 						else
 						{
-							if (attlen == -1) /* variable length */
+							if (attlen == -1)	/* variable length */
 								attlen = VARSIZE((struct varlena *) newVal);
 							value1[aggno] = (Datum) palloc(attlen);
 							memcpy((char *) (value1[aggno]), (char *) newVal,
@@ -330,13 +334,14 @@ ExecAgg(Agg *node)
 					}
 					else
 					{
+
 						/*
 						 * apply the transition functions.
 						 */
 						args[0] = value1[aggno];
 						args[1] = newVal;
-						value1[aggno] =	(Datum) fmgr_c(&aggfns->xfn1,
-										   (FmgrValues *) args, &isNull1);
+						value1[aggno] = (Datum) fmgr_c(&aggfns->xfn1,
+										  (FmgrValues *) args, &isNull1);
 						Assert(!isNull1);
 					}
 				}
@@ -344,8 +349,8 @@ ExecAgg(Agg *node)
 				if (aggfns->xfn2.fn_addr != NULL)
 				{
 					args[0] = value2[aggno];
-					value2[aggno] =	(Datum) fmgr_c(&aggfns->xfn2,
-									 (FmgrValues *) args, &isNull2);
+					value2[aggno] = (Datum) fmgr_c(&aggfns->xfn2,
+										  (FmgrValues *) args, &isNull2);
 					Assert(!isNull2);
 				}
 			}
@@ -395,7 +400,7 @@ ExecAgg(Agg *node)
 				else
 					elog(NOTICE, "ExecAgg: no valid transition functions??");
 				value1[aggno] = (Datum) fmgr_c(&aggfns->finalfn,
-									   (FmgrValues *) args, &(nulls[aggno]));
+								   (FmgrValues *) args, &(nulls[aggno]));
 			}
 			else if (aggfns->xfn1.fn_addr != NULL)
 			{
@@ -441,10 +446,11 @@ ExecAgg(Agg *node)
 		 * As long as the retrieved group does not match the
 		 * qualifications it is ignored and the next group is fetched
 		 */
-		if(node->plan.qual != NULL)
-			 qual_result = ExecQual(fix_opids(node->plan.qual), econtext);
-		else qual_result = false;
-		
+		if (node->plan.qual != NULL)
+			qual_result = ExecQual(fix_opids(node->plan.qual), econtext);
+		else
+			qual_result = false;
+
 		if (oneTuple)
 			pfree(oneTuple);
 	}
@@ -466,7 +472,7 @@ ExecInitAgg(Agg *node, EState *estate, Plan *parent)
 	AggState   *aggstate;
 	Plan	   *outerPlan;
 	ExprContext *econtext;
-	
+
 	/*
 	 * assign the node's execution state
 	 */
@@ -478,7 +484,7 @@ ExecInitAgg(Agg *node, EState *estate, Plan *parent)
 	aggstate = makeNode(AggState);
 	node->aggstate = aggstate;
 	aggstate->agg_done = FALSE;
-	
+
 	/*
 	 * assign node's base id and create expression context
 	 */
@@ -494,7 +500,7 @@ ExecInitAgg(Agg *node, EState *estate, Plan *parent)
 	ExecInitResultTupleSlot(estate, &aggstate->csstate.cstate);
 
 	econtext = aggstate->csstate.cstate.cs_ExprContext;
-	econtext->ecxt_values =	(Datum *) palloc(sizeof(Datum) * length(node->aggs));
+	econtext->ecxt_values = (Datum *) palloc(sizeof(Datum) * length(node->aggs));
 	MemSet(econtext->ecxt_values, 0, sizeof(Datum) * length(node->aggs));
 	econtext->ecxt_nulls = (char *) palloc(sizeof(char) * length(node->aggs));
 	MemSet(econtext->ecxt_nulls, 0, sizeof(char) * length(node->aggs));
@@ -538,8 +544,8 @@ int
 ExecCountSlotsAgg(Agg *node)
 {
 	return ExecCountSlotsNode(outerPlan(node)) +
-			ExecCountSlotsNode(innerPlan(node)) +
-			AGG_NSLOTS;
+	ExecCountSlotsNode(innerPlan(node)) +
+	AGG_NSLOTS;
 }
 
 /* ------------------------
@@ -576,7 +582,7 @@ ExecEndAgg(Agg *node)
  */
 static Datum
 aggGetAttr(TupleTableSlot *slot,
-		   Aggref *aggref,
+		   Aggref * aggref,
 		   bool *isNull)
 {
 	Datum		result;
@@ -622,10 +628,11 @@ aggGetAttr(TupleTableSlot *slot,
 		return (Datum) tempSlot;
 	}
 
-	result = heap_getattr(heapTuple, /* tuple containing attribute */
-					 attnum,	/* attribute number of desired attribute */
-					 tuple_type,/* tuple descriptor of tuple */
-					 isNull);	/* return: is attribute null? */
+	result = heap_getattr(heapTuple,	/* tuple containing attribute */
+						  attnum,		/* attribute number of desired
+										 * attribute */
+						  tuple_type,	/* tuple descriptor of tuple */
+						  isNull);		/* return: is attribute null? */
 
 	/* ----------------
 	 *	return null if att is null

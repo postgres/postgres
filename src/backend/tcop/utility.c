@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.60 1999/05/22 19:49:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.61 1999/05/25 16:11:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -616,7 +616,7 @@ ProcessUtility(Node *parsetree,
 				PS_SET_STATUS(commandTag = "LOAD");
 				CHECK_IF_ABORTED();
 
-				closeAllVfds();	/* probably not necessary... */
+				closeAllVfds(); /* probably not necessary... */
 				load_file(stmt->filename);
 			}
 			break;
@@ -653,6 +653,7 @@ ProcessUtility(Node *parsetree,
 			break;
 
 #ifdef NOT_USED
+
 			/*
 			 * ******************************** Tioga-related statements *******************************
 			 */

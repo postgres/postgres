@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.96 1999/05/03 19:10:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.97 1999/05/25 16:15:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -503,7 +503,7 @@ connectDB(PGconn *conn)
 	struct hostent *hp;
 	StartupPacket sp;
 	AuthRequest areq;
-	SOCKET_SIZE_TYPE	laddrlen;
+	SOCKET_SIZE_TYPE laddrlen;
 	int			portno,
 				family;
 	char		beresp;
@@ -586,7 +586,7 @@ connectDB(PGconn *conn)
 					   strerror(errno),
 					   (family == AF_INET) ? " (with -i)" : "",
 					   conn->pghost ? conn->pghost : "localhost",
-					   (family == AF_INET) ? "TCP/IP port" : "Unix socket",
+					 (family == AF_INET) ? "TCP/IP port" : "Unix socket",
 					   conn->pgport);
 		goto connect_errReturn;
 	}

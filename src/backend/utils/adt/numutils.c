@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/numutils.c,v 1.29 1999/02/13 23:19:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/numutils.c,v 1.30 1999/05/25 16:12:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,17 +55,17 @@ pg_atoi(char *s, int size, int c)
 
 	Assert(s);
 
-  	errno = 0;
+	errno = 0;
 
 	/*
-	 * Some versions of strtol treat the empty string as an error.  This
+	 * Some versions of strtol treat the empty string as an error.	This
 	 * code will explicitly return 0 for an empty string.
 	 */
 
-	if (s == (char *)NULL)
+	if (s == (char *) NULL)
 		elog(ERROR, "pg_atoi: NULL pointer!");
 	else if (*s == 0)
-		l = (long)0;
+		l = (long) 0;
 	else
 		l = strtol(s, &badp, 10);
 	if (errno)					/* strtol must set ERANGE */

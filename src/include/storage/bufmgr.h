@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufmgr.h,v 1.25 1999/02/13 23:22:04 momjian Exp $
+ * $Id: bufmgr.h,v 1.26 1999/05/25 16:14:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,7 +55,7 @@ typedef bits16 BufferLock;
 #define BufferDescriptorGetBuffer(bdesc) ((bdesc)->buf_id + 1)
 
 /*
- * BufferIsPinned 
+ * BufferIsPinned
  *		True iff the buffer is pinned (and therefore valid)
  *
  * Note:
@@ -76,13 +76,13 @@ extern int	ShowPinTrace;
 /*
  * Buffer context lock modes
  */
-#define	BUFFER_LOCK_UNLOCK		0
-#define	BUFFER_LOCK_SHARE		1
-#define	BUFFER_LOCK_EXCLUSIVE	2
+#define BUFFER_LOCK_UNLOCK		0
+#define BUFFER_LOCK_SHARE		1
+#define BUFFER_LOCK_EXCLUSIVE	2
 
 
 /*
- * BufferIsValid 
+ * BufferIsValid
  *		True iff the refcnt of the local buffer is > 0
  * Note:
  *		BufferIsValid(InvalidBuffer) is False.
@@ -117,7 +117,7 @@ extern int	ShowPinTrace;
 )
 
 /*
- * BufferGetBlock 
+ * BufferGetBlock
  *		Returns a reference to a disk page image associated with a buffer.
  *
  * Note:

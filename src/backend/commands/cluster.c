@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.38 1999/02/13 23:15:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.39 1999/05/25 16:08:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -236,17 +236,17 @@ copy_heap(Oid OIDOldHeap)
 static void
 copy_index(Oid OIDOldIndex, Oid OIDNewHeap)
 {
-	Relation			OldIndex,
-								NewHeap;
-	HeapTuple			Old_pg_index_Tuple,
-								Old_pg_index_relation_Tuple,
-								pg_proc_Tuple;
+	Relation	OldIndex,
+				NewHeap;
+	HeapTuple	Old_pg_index_Tuple,
+				Old_pg_index_relation_Tuple,
+				pg_proc_Tuple;
 	Form_pg_index Old_pg_index_Form;
 	Form_pg_class Old_pg_index_relation_Form;
-	Form_pg_proc	pg_proc_Form;
-	char					*NewIndexName;
-	AttrNumber		*attnumP;
-	int						natts;
+	Form_pg_proc pg_proc_Form;
+	char	   *NewIndexName;
+	AttrNumber *attnumP;
+	int			natts;
 	FuncIndexInfo *finfo;
 
 	NewHeap = heap_open(OIDNewHeap);
@@ -259,14 +259,14 @@ copy_index(Oid OIDOldIndex, Oid OIDNewHeap)
 	 */
 	Old_pg_index_Tuple = SearchSysCacheTuple(INDEXRELID,
 							ObjectIdGetDatum(RelationGetRelid(OldIndex)),
-							0, 0, 0);
+											 0, 0, 0);
 
 	Assert(Old_pg_index_Tuple);
 	Old_pg_index_Form = (Form_pg_index) GETSTRUCT(Old_pg_index_Tuple);
 
 	Old_pg_index_relation_Tuple = SearchSysCacheTuple(RELOID,
 							ObjectIdGetDatum(RelationGetRelid(OldIndex)),
-							0, 0, 0);
+													  0, 0, 0);
 
 	Assert(Old_pg_index_relation_Tuple);
 	Old_pg_index_relation_Form = (Form_pg_class) GETSTRUCT(Old_pg_index_relation_Tuple);
@@ -296,7 +296,7 @@ copy_index(Oid OIDOldIndex, Oid OIDNewHeap)
 
 		pg_proc_Tuple = SearchSysCacheTuple(PROOID,
 							ObjectIdGetDatum(Old_pg_index_Form->indproc),
-								0, 0, 0);
+											0, 0, 0);
 
 		Assert(pg_proc_Tuple);
 		pg_proc_Form = (Form_pg_proc) GETSTRUCT(pg_proc_Tuple);
@@ -319,7 +319,7 @@ copy_index(Oid OIDOldIndex, Oid OIDNewHeap)
 				 (uint16) 0, (Datum) NULL, NULL,
 				 Old_pg_index_Form->indislossy,
 				 Old_pg_index_Form->indisunique,
-                 Old_pg_index_Form->indisprimary);
+				 Old_pg_index_Form->indisprimary);
 
 	heap_close(OldIndex);
 	heap_close(NewHeap);
@@ -329,14 +329,14 @@ copy_index(Oid OIDOldIndex, Oid OIDNewHeap)
 static void
 rebuildheap(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex)
 {
-	Relation			LocalNewHeap,
-						LocalOldHeap,
-						LocalOldIndex;
-	IndexScanDesc		ScanDesc;
-	RetrieveIndexResult	ScanResult;
-	HeapTupleData		LocalHeapTuple;
-	Buffer				LocalBuffer;
-	Oid					OIDNewHeapInsert;
+	Relation	LocalNewHeap,
+				LocalOldHeap,
+				LocalOldIndex;
+	IndexScanDesc ScanDesc;
+	RetrieveIndexResult ScanResult;
+	HeapTupleData LocalHeapTuple;
+	Buffer		LocalBuffer;
+	Oid			OIDNewHeapInsert;
 
 	/*
 	 * Open the relations I need. Scan through the OldHeap on the OldIndex

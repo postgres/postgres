@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.50 1999/03/14 20:17:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.51 1999/05/25 16:06:35 momjian Exp $
  *
  * NOTES
  *	  The old interface functions have been converted to macros
@@ -124,7 +124,7 @@ DataFill(char *data,
 			*bitP |= bitmask;
 		}
 
-		data = (char *)att_align((long)data, att[i]->attlen, att[i]->attalign);
+		data = (char *) att_align((long) data, att[i]->attlen, att[i]->attalign);
 		switch (att[i]->attlen)
 		{
 			case -1:
@@ -151,7 +151,7 @@ DataFill(char *data,
 						att[i]->attlen);
 				break;
 		}
-		data = (char *)att_addlength((long)data, att[i]->attlen, value[i]);
+		data = (char *) att_addlength((long) data, att[i]->attlen, value[i]);
 	}
 }
 
@@ -210,7 +210,7 @@ heap_attisnull(HeapTuple tup, int attnum)
 int
 heap_sysattrlen(AttrNumber attno)
 {
-	HeapTupleHeader	f = NULL;
+	HeapTupleHeader f = NULL;
 
 	switch (attno)
 	{
@@ -301,6 +301,7 @@ heap_getsysattr(HeapTuple tup, Buffer b, int attnum)
 	}
 	return (Datum) NULL;
 }
+
 #endif
 
 /* ----------------
@@ -328,11 +329,11 @@ nocachegetattr(HeapTuple tuple,
 			   TupleDesc tupleDesc,
 			   bool *isnull)
 {
-	char			   *tp;						/* ptr to att in tuple */
-	HeapTupleHeader		tup = tuple->t_data;
-	bits8			   *bp = tup->t_bits;		/* ptr to att in tuple */
-	Form_pg_attribute  *att = tupleDesc->attrs;
-	int					slow = 0;				/* do we have to walk nulls? */
+	char	   *tp;				/* ptr to att in tuple */
+	HeapTupleHeader tup = tuple->t_data;
+	bits8	   *bp = tup->t_bits;		/* ptr to att in tuple */
+	Form_pg_attribute *att = tupleDesc->attrs;
+	int			slow = 0;		/* do we have to walk nulls? */
 
 
 #if IN_MACRO
@@ -376,6 +377,7 @@ nocachegetattr(HeapTuple tuple,
 	}
 	else
 	{
+
 		/*
 		 * there's a null somewhere in the tuple
 		 */
@@ -404,12 +406,13 @@ nocachegetattr(HeapTuple tuple,
 			int			finalbit = attnum & 0x07;
 
 			/* check for nulls "before" final bit of last byte */
-			if ((~ bp[byte]) & ((1 << finalbit) - 1))
+			if ((~bp[byte]) & ((1 << finalbit) - 1))
 				slow = 1;
 			else
 			{
 				/* check for nulls in any "earlier" bytes */
-				int		i;
+				int			i;
+
 				for (i = 0; i < byte; i++)
 				{
 					if (bp[i] != 0xFF)
@@ -439,6 +442,7 @@ nocachegetattr(HeapTuple tuple,
 		else if (!HeapTupleAllFixed(tuple))
 		{
 			int			j;
+
 			/*
 			 * In for(), we make this <= and not < because we want to test
 			 * if we can go past it in initializing offsets.
@@ -456,9 +460,9 @@ nocachegetattr(HeapTuple tuple,
 
 	/*
 	 * If slow is zero, and we got here, we know that we have a tuple with
-	 * no nulls or varlenas before the target attribute.
-	 * If possible, we also want to initialize the remainder of the
-	 * attribute cached offset values.
+	 * no nulls or varlenas before the target attribute. If possible, we
+	 * also want to initialize the remainder of the attribute cached
+	 * offset values.
 	 */
 	if (!slow)
 	{
@@ -570,7 +574,7 @@ heap_copytuple(HeapTuple tuple)
 	newTuple->t_len = tuple->t_len;
 	newTuple->t_self = tuple->t_self;
 	newTuple->t_data = (HeapTupleHeader) ((char *) newTuple + HEAPTUPLESIZE);
-	memmove((char *) newTuple->t_data, 
+	memmove((char *) newTuple->t_data,
 			(char *) tuple->t_data, (int) tuple->t_len);
 	return newTuple;
 }
@@ -589,11 +593,11 @@ heap_copytuple_with_tuple(HeapTuple src, HeapTuple dest)
 		dest->t_data = NULL;
 		return;
 	}
-	
+
 	dest->t_len = src->t_len;
 	dest->t_self = src->t_self;
 	dest->t_data = (HeapTupleHeader) palloc(src->t_len);
-	memmove((char *) dest->t_data, 
+	memmove((char *) dest->t_data,
 			(char *) src->t_data, (int) src->t_len);
 	return;
 }
@@ -657,14 +661,14 @@ heap_formtuple(TupleDesc tupleDescriptor,
 			   Datum *value,
 			   char *nulls)
 {
-	HeapTuple		tuple;			/* return tuple */
-	HeapTupleHeader	td;				/* tuple data */
-	int				bitmaplen;
-	long			len;
-	int				hoff;
-	bool			hasnull = false;
-	int				i;
-	int				numberOfAttributes = tupleDescriptor->natts;
+	HeapTuple	tuple;			/* return tuple */
+	HeapTupleHeader td;			/* tuple data */
+	int			bitmaplen;
+	long		len;
+	int			hoff;
+	bool		hasnull = false;
+	int			i;
+	int			numberOfAttributes = tupleDescriptor->natts;
 
 	len = offsetof(HeapTupleHeaderData, t_bits);
 
@@ -760,9 +764,9 @@ heap_modifytuple(HeapTuple tuple,
 		if (repl[attoff] == ' ')
 		{
 			value[attoff] = heap_getattr(tuple,
-							 AttrOffsetGetAttrNumber(attoff),
-							 RelationGetDescr(relation),
-							 &isNull);
+										 AttrOffsetGetAttrNumber(attoff),
+										 RelationGetDescr(relation),
+										 &isNull);
 			nulls[attoff] = (isNull) ? 'n' : ' ';
 
 		}
@@ -790,12 +794,12 @@ heap_modifytuple(HeapTuple tuple,
 	infomask = newTuple->t_data->t_infomask;
 	memmove((char *) &newTuple->t_data->t_oid,	/* XXX */
 			(char *) &tuple->t_data->t_oid,
-			((char *) &tuple->t_data->t_hoff - 
-				(char *) &tuple->t_data->t_oid));		/* XXX */
+			((char *) &tuple->t_data->t_hoff -
+			 (char *) &tuple->t_data->t_oid));	/* XXX */
 	newTuple->t_data->t_infomask = infomask;
 	newTuple->t_data->t_natts = numberOfAttributes;
 	newTuple->t_self = tuple->t_self;
-	
+
 	return newTuple;
 }
 
@@ -809,10 +813,10 @@ heap_addheader(uint32 natts,	/* max domain index */
 			   int structlen,	/* its length */
 			   char *structure) /* pointer to the struct */
 {
-	HeapTuple		tuple;
-	HeapTupleHeader	td;				/* tuple data */
-	long			len;
-	int				hoff;
+	HeapTuple	tuple;
+	HeapTupleHeader td;			/* tuple data */
+	long		len;
+	int			hoff;
 
 	AssertArg(natts > 0);
 

@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Id: fd.c,v 1.39 1999/05/09 00:52:07 tgl Exp $
+ *	  $Id: fd.c,v 1.40 1999/05/25 16:11:03 momjian Exp $
  *
  * NOTES:
  *
@@ -103,11 +103,11 @@ typedef struct vfd
 	unsigned short fdstate;		/* bitflags for VFD's state */
 
 /* these are the assigned bits in fdstate: */
-#define FD_DIRTY		(1 << 0)	/* written to, but not yet fsync'd */
-#define FD_TEMPORARY	(1 << 1)	/* should be unlinked when closed */
+#define FD_DIRTY		(1 << 0)/* written to, but not yet fsync'd */
+#define FD_TEMPORARY	(1 << 1)/* should be unlinked when closed */
 
 	File		nextFree;		/* link to next free VFD, if in freelist */
-	File		lruMoreRecently; /* doubly linked recency-of-use list */
+	File		lruMoreRecently;/* doubly linked recency-of-use list */
 	File		lruLessRecently;
 	long		seekPos;		/* current logical file position */
 	char	   *fileName;		/* name of file, or NULL for unused VFD */
@@ -118,7 +118,7 @@ typedef struct vfd
 
 /*
  * Virtual File Descriptor array pointer and size.	This grows as
- * needed.  'File' values are indexes into this array.
+ * needed.	'File' values are indexes into this array.
  * Note that VfdCache[0] is not a usable VFD, just a list header.
  */
 static Vfd *VfdCache;
@@ -139,7 +139,7 @@ static int	nfile = 0;
 #define MAX_ALLOCATED_FILES  32
 
 static int	numAllocatedFiles = 0;
-static FILE * allocatedFiles[MAX_ALLOCATED_FILES];
+static FILE *allocatedFiles[MAX_ALLOCATED_FILES];
 
 /*
  * Number of temporary files opened during the current transaction;
@@ -348,7 +348,7 @@ LruInsert(File file)
 	if (FileIsNotOpen(file))
 	{
 
-		while (nfile+numAllocatedFiles >= pg_nofile())
+		while (nfile + numAllocatedFiles >= pg_nofile())
 			ReleaseLruFile();
 
 		/*
@@ -434,12 +434,13 @@ AllocateVfd()
 
 	if (VfdCache[0].nextFree == 0)
 	{
+
 		/*
 		 * The free list is empty so it is time to increase the size of
 		 * the array.  We choose to double it each time this happens.
 		 * However, there's not much point in starting *real* small.
 		 */
-		Size newCacheSize = SizeVfdCache * 2;
+		Size		newCacheSize = SizeVfdCache * 2;
 
 		if (newCacheSize < 32)
 			newCacheSize = 32;
@@ -532,8 +533,9 @@ FileAccess(File file)
 			   file, VfdCache[file].fileName));
 
 	/*
-	 * Is the file open?  If not, open it and put it at the head of the LRU
-	 * ring (possibly closing the least recently used file to get an FD).
+	 * Is the file open?  If not, open it and put it at the head of the
+	 * LRU ring (possibly closing the least recently used file to get an
+	 * FD).
 	 */
 
 	if (FileIsNotOpen(file))
@@ -589,7 +591,7 @@ fileNameOpenFile(FileName fileName,
 	file = AllocateVfd();
 	vfdP = &VfdCache[file];
 
-	while (nfile+numAllocatedFiles >= pg_nofile())
+	while (nfile + numAllocatedFiles >= pg_nofile())
 		ReleaseLruFile();
 
 tryAgain:
@@ -659,10 +661,13 @@ PathNameOpenFile(FileName fileName, int fileFlags, int fileMode)
 File
 OpenTemporaryFile(void)
 {
-	char tempfilename[64];
-	File file;
+	char		tempfilename[64];
+	File		file;
 
-	/* Generate a tempfile name that's unique within the current transaction */
+	/*
+	 * Generate a tempfile name that's unique within the current
+	 * transaction
+	 */
 	snprintf(tempfilename, sizeof(tempfilename),
 			 "pg_temp%d.%ld", (int) getpid(), tempFileCounter++);
 
@@ -723,9 +728,7 @@ FileClose(File file)
 	 * Delete the file if it was temporary
 	 */
 	if (VfdCache[file].fdstate & FD_TEMPORARY)
-	{
 		unlink(VfdCache[file].fileName);
-	}
 
 	/*
 	 * Return the Vfd slot to the free list
@@ -817,9 +820,7 @@ FileSeek(File file, long offset, int whence)
 		}
 	}
 	else
-	{
 		VfdCache[file].seekPos = lseek(VfdCache[file].fd, offset, whence);
-	}
 	return VfdCache[file].seekPos;
 }
 
@@ -893,7 +894,7 @@ FileNameUnlink(char *filename)
 /*
  * Routines that want to use stdio (ie, FILE*) should use AllocateFile
  * rather than plain fopen().  This lets fd.c deal with freeing FDs if
- * necessary to open the file.  When done, call FreeFile rather than fclose.
+ * necessary to open the file.	When done, call FreeFile rather than fclose.
  *
  * Note that files that will be open for any significant length of time
  * should NOT be handled this way, since they cannot share kernel file
@@ -929,21 +930,19 @@ TryAgain:
 		}
 	}
 	else
-	{
 		allocatedFiles[numAllocatedFiles++] = file;
-	}
 	return file;
 }
 
 void
 FreeFile(FILE *file)
 {
-	int i;
+	int			i;
 
 	DO_DB(elog(DEBUG, "FreeFile: Allocated %d.", numAllocatedFiles));
 
 	/* Remove file from list of allocated files, if it's present */
-	for (i = numAllocatedFiles; --i >= 0; )
+	for (i = numAllocatedFiles; --i >= 0;)
 	{
 		if (allocatedFiles[i] == file)
 		{
@@ -971,7 +970,7 @@ closeAllVfds()
 
 	if (SizeVfdCache > 0)
 	{
-		Assert(FileIsNotOpen(0));	/* Make sure ring not corrupted */
+		Assert(FileIsNotOpen(0));		/* Make sure ring not corrupted */
 		for (i = 1; i < SizeVfdCache; i++)
 		{
 			if (!FileIsNotOpen(i))
@@ -995,7 +994,7 @@ AtEOXact_Files(void)
 
 	if (SizeVfdCache > 0)
 	{
-		Assert(FileIsNotOpen(0));	/* Make sure ring not corrupted */
+		Assert(FileIsNotOpen(0));		/* Make sure ring not corrupted */
 		for (i = 1; i < SizeVfdCache; i++)
 		{
 			if ((VfdCache[i].fdstate & FD_TEMPORARY) &&
@@ -1005,12 +1004,11 @@ AtEOXact_Files(void)
 	}
 
 	while (numAllocatedFiles > 0)
-	{
 		FreeFile(allocatedFiles[0]);
-	}
 
-	/* Reset the tempfile name counter to 0; not really necessary,
-	 * but helps keep the names from growing unreasonably long.
+	/*
+	 * Reset the tempfile name counter to 0; not really necessary, but
+	 * helps keep the names from growing unreasonably long.
 	 */
 	tempFileCounter = 0;
 }
@@ -1018,7 +1016,7 @@ AtEOXact_Files(void)
 
 /*
  * Operations on BufFiles --- a very incomplete emulation of stdio
- * atop virtual Files.  Currently, we only support the buffered-I/O
+ * atop virtual Files.	Currently, we only support the buffered-I/O
  * aspect of stdio: a read or write of the low-level File occurs only
  * when the buffer is filled or emptied.  This is an even bigger win
  * for virtual Files than ordinary kernel files, since reducing the
@@ -1032,12 +1030,13 @@ AtEOXact_Files(void)
  * by elog(ERROR).
  */
 
-struct BufFile {
-	File	file;				/* the underlying virtual File */
-	bool	dirty;				/* does buffer need to be written? */
-	int		pos;				/* next read/write position in buffer */
-	int		nbytes;				/* total # of valid bytes in buffer */
-	char	buffer[BLCKSZ];
+struct BufFile
+{
+	File		file;			/* the underlying virtual File */
+	bool		dirty;			/* does buffer need to be written? */
+	int			pos;			/* next read/write position in buffer */
+	int			nbytes;			/* total # of valid bytes in buffer */
+	char		buffer[BLCKSZ];
 };
 
 
@@ -1046,10 +1045,10 @@ struct BufFile {
  *
  * This is comparable to fdopen() in stdio.
  */
-BufFile *
+BufFile    *
 BufFileCreate(File file)
 {
-	BufFile	   *bfile = (BufFile *) palloc(sizeof(BufFile));
+	BufFile    *bfile = (BufFile *) palloc(sizeof(BufFile));
 
 	bfile->file = file;
 	bfile->dirty = false;
@@ -1065,7 +1064,7 @@ BufFileCreate(File file)
  * Like fclose(), this also implicitly FileCloses the underlying File.
  */
 void
-BufFileClose(BufFile *file)
+BufFileClose(BufFile * file)
 {
 	/* flush any unwritten data */
 	BufFileFlush(file);
@@ -1080,10 +1079,10 @@ BufFileClose(BufFile *file)
  * Like fread() except we assume 1-byte element size.
  */
 size_t
-BufFileRead(BufFile *file, void *ptr, size_t size)
+BufFileRead(BufFile * file, void *ptr, size_t size)
 {
-	size_t nread = 0;
-	size_t nthistime;
+	size_t		nread = 0;
+	size_t		nthistime;
 
 	if (file->dirty)
 	{
@@ -1126,10 +1125,10 @@ BufFileRead(BufFile *file, void *ptr, size_t size)
  * Like fwrite() except we assume 1-byte element size.
  */
 size_t
-BufFileWrite(BufFile *file, void *ptr, size_t size)
+BufFileWrite(BufFile * file, void *ptr, size_t size)
 {
-	size_t nwritten = 0;
-	size_t nthistime;
+	size_t		nwritten = 0;
+	size_t		nthistime;
 
 	while (size > 0)
 	{
@@ -1170,7 +1169,7 @@ BufFileWrite(BufFile *file, void *ptr, size_t size)
  * Like fflush()
  */
 int
-BufFileFlush(BufFile *file)
+BufFileFlush(BufFile * file)
 {
 	if (file->dirty)
 	{
@@ -1188,7 +1187,7 @@ BufFileFlush(BufFile *file)
  * the new file offset (or -1 in case of error).
  */
 long
-BufFileSeek(BufFile *file, long offset, int whence)
+BufFileSeek(BufFile * file, long offset, int whence)
 {
 	if (BufFileFlush(file) < 0)
 		return -1L;

@@ -4,7 +4,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	  $Id: psort.c,v 1.51 1999/05/09 00:53:22 tgl Exp $
+ *	  $Id: psort.c,v 1.52 1999/05/25 16:12:59 momjian Exp $
  *
  * NOTES
  *		Sorts the first relation into the second relation.
@@ -55,9 +55,9 @@
 #include "utils/rel.h"
 
 static bool createfirstrun(Sort *node);
-static bool createrun(Sort *node, BufFile *file);
-static void destroytape(BufFile *file);
-static void dumptuples(BufFile *file, Sort *node);
+static bool createrun(Sort *node, BufFile * file);
+static void destroytape(BufFile * file);
+static void dumptuples(BufFile * file, Sort *node);
 static BufFile *gettape(void);
 static void initialrun(Sort *node);
 static void inittapes(Sort *node);
@@ -320,15 +320,11 @@ initialrun(Sort *node)
 		tp->tp_dummy--;
 		PS(node)->TotalDummy--;
 		if (tp->tp_dummy < (tp + 1)->tp_dummy)
-		{
 			tp++;
-		}
-		else 
+		else
 		{
 			if (tp->tp_dummy != 0)
-			{
 				tp = PS(node)->Tape;
-			}
 			else
 			{
 				PS(node)->Level++;
@@ -337,13 +333,13 @@ initialrun(Sort *node)
 					 tp - PS(node)->Tape < PS(node)->TapeRange; tp++)
 				{
 					PS(node)->TotalDummy += (tp->tp_dummy = baseruns
-						 + (tp + 1)->tp_fib
-						 - tp->tp_fib);
+											 + (tp + 1)->tp_fib
+											 - tp->tp_fib);
 					tp->tp_fib = baseruns
 						+ (tp + 1)->tp_fib;
 				}
-				tp = PS(node)->Tape;/* D4 */
-			}						/* D3 */
+				tp = PS(node)->Tape;	/* D4 */
+			}					/* D3 */
 		}
 		if (extrapasses)
 		{
@@ -354,9 +350,7 @@ initialrun(Sort *node)
 				continue;
 			}
 			else
-			{
 				break;
-			}
 		}
 		if ((bool) createrun(node, tp->tp_file) == false)
 			extrapasses = 1 + (PS(node)->Tuples != NULL);
@@ -479,7 +473,7 @@ createfirstrun(Sort *node)
  *				Tuples contains the tuples for the following run upon exit
  */
 static bool
-createrun(Sort *node, BufFile *file)
+createrun(Sort *node, BufFile * file)
 {
 	HeapTuple	lasttuple;
 	HeapTuple	tup;
@@ -554,9 +548,7 @@ createrun(Sort *node, BufFile *file)
 			memtuples[t_last] = tup;
 		}
 		else
-		{
 			puttuple(&PS(node)->Tuples, tup, 0, &PS(node)->treeContext);
-		}
 	}
 	if (lasttuple != NULL)
 	{
@@ -627,7 +619,7 @@ merge(Sort *node, struct tape * dest)
 	struct tape *lasttp;		/* (TAPE[P]) */
 	struct tape *tp;
 	struct leftist *tuples;
-	BufFile	   *destfile;
+	BufFile    *destfile;
 	int			times;			/* runs left to merge */
 	int			outdummy;		/* complete dummy runs */
 	short		fromtape;
@@ -644,10 +636,9 @@ merge(Sort *node, struct tape * dest)
 	tp->tp_fib += times;
 	/* Tape[].tp_fib (A[]) is set to proper exit values */
 
-	if (PS(node)->TotalDummy < PS(node)->TapeRange)	/* no complete dummy runs */
-	{
+	if (PS(node)->TotalDummy < PS(node)->TapeRange)		/* no complete dummy
+														 * runs */
 		outdummy = 0;
-	}
 	else
 	{
 		outdummy = PS(node)->TotalDummy;		/* a large positive number */
@@ -729,7 +720,7 @@ merge(Sort *node, struct tape * dest)
  * dumptuples	- stores all the tuples in tree into file
  */
 static void
-dumptuples(BufFile *file, Sort *node)
+dumptuples(BufFile * file, Sort *node)
 {
 	struct leftist *tp;
 	struct leftist *newp;
@@ -812,7 +803,7 @@ psort_grabtuple(Sort *node, bool *should_free)
 			 * file
 			 */
 			BufFileSeek(PS(node)->psort_grab_file,
-						PS(node)->psort_current - sizeof(tlendummy), SEEK_SET);
+				  PS(node)->psort_current - sizeof(tlendummy), SEEK_SET);
 			GETLEN(tuplen, PS(node)->psort_grab_file);
 			if (PS(node)->psort_current < tuplen)
 				elog(ERROR, "psort_grabtuple: too big last tuple len in backward scan");
@@ -845,7 +836,7 @@ psort_grabtuple(Sort *node, bool *should_free)
 			PS(node)->psort_current -= tuplen;
 			/* move to position of end tlen of prev tuple */
 			BufFileSeek(PS(node)->psort_grab_file,
-						PS(node)->psort_current - sizeof(tlendummy), SEEK_SET);
+				  PS(node)->psort_current - sizeof(tlendummy), SEEK_SET);
 			GETLEN(tuplen, PS(node)->psort_grab_file);
 			if (PS(node)->psort_current < tuplen + sizeof(tlendummy))
 				elog(ERROR, "psort_grabtuple: too big tuple len in backward scan");
@@ -1005,7 +996,7 @@ gettape()
  *		destroytape		- unlinks the tape
  */
 static void
-destroytape(BufFile *file)
+destroytape(BufFile * file)
 {
 	BufFileClose(file);
 }

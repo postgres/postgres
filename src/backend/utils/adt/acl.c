@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.35 1999/05/12 12:47:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.36 1999/05/25 16:11:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,7 @@ static char *aclparse(char *s, AclItem *aip, unsigned *modechg);
 /*
  * getid
  *		Consumes the first alphanumeric string (identifier) found in string
- *		's', ignoring any leading white space.  If it finds a double quote
+ *		's', ignoring any leading white space.	If it finds a double quote
  *		it returns the word inside the quotes.
  *
  * RETURNS:
@@ -48,7 +48,7 @@ getid(char *s, char *n)
 {
 	unsigned	len;
 	char	   *id;
-	int		in_quotes = 0;
+	int			in_quotes = 0;
 
 	Assert(s && n);
 
@@ -63,7 +63,7 @@ getid(char *s, char *n)
 
 	for (id = s, len = 0; isalnum(*s) || *s == '_' || in_quotes; ++len, ++s)
 	{
-		if (in_quotes && *s == '"') 
+		if (in_quotes && *s == '"')
 		{
 			len--;
 			in_quotes = 0;

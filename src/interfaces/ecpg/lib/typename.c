@@ -8,7 +8,7 @@ ECPGtype_name(enum ECPGttype typ)
 {
 	switch (typ)
 	{
-		case ECPGt_char:
+			case ECPGt_char:
 			return "char";
 		case ECPGt_unsigned_char:
 			return "unsigned char";

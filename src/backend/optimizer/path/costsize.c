@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.36 1999/05/01 19:47:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.37 1999/05/25 16:09:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,7 @@
 extern int	NBuffers;
 
 static int	compute_attribute_width(TargetEntry *tlistentry);
-static double relation_byte_size (int tuples, int width);
+static double relation_byte_size(int tuples, int width);
 static double base_log(double x, double b);
 static int	compute_targetlist_width(List *targetlist);
 
@@ -134,9 +134,10 @@ cost_index(Oid indexid,
 	if (!_enable_indexscan_ && !is_injoin)
 		temp += _disable_cost_;
 
-	/* We want to be sure we estimate the cost of an index scan
-	 * as more than the cost of a sequential scan (when selec == 1.0),
-	 * even if we don't have good stats.  So, disbelieve zero index size.
+	/*
+	 * We want to be sure we estimate the cost of an index scan as more
+	 * than the cost of a sequential scan (when selec == 1.0), even if we
+	 * don't have good stats.  So, disbelieve zero index size.
 	 */
 	if (expected_indexpages <= 0)
 		expected_indexpages = 1;
@@ -146,11 +147,11 @@ cost_index(Oid indexid,
 	/* expected index relation pages */
 	temp += expected_indexpages;
 
-	/* expected base relation pages
-	 * XXX this isn't really right, since we will access the table
-	 * nonsequentially and might have to fetch the same page
-	 * more than once.  This calculation assumes the buffer cache
-	 * will prevent that from happening...
+	/*
+	 * expected base relation pages XXX this isn't really right, since we
+	 * will access the table nonsequentially and might have to fetch the
+	 * same page more than once.  This calculation assumes the buffer
+	 * cache will prevent that from happening...
 	 */
 	temp += ceil(((double) selec) * ((double) relpages));
 
@@ -192,8 +193,10 @@ cost_sort(List *pathkeys, int tuples, int width)
 	if (!_enable_sort_)
 		temp += _disable_cost_;
 
-	/* We want to be sure the cost of a sort is never estimated as zero,
-	 * even if passed-in tuple count is zero.  Besides, mustn't do log(0)...
+	/*
+	 * We want to be sure the cost of a sort is never estimated as zero,
+	 * even if passed-in tuple count is zero.  Besides, mustn't do
+	 * log(0)...
 	 */
 	if (tuples <= 0)
 		tuples = 1;
@@ -344,10 +347,11 @@ cost_hashjoin(Cost outercost,
 	if (!_enable_hashjoin_)
 		temp += _disable_cost_;
 
-	/* Bias against putting larger relation on inside.
+	/*
+	 * Bias against putting larger relation on inside.
 	 *
-	 * Code used to use "outerpages < innerpages" but that has
-	 * poor resolution when both relations are small.
+	 * Code used to use "outerpages < innerpages" but that has poor
+	 * resolution when both relations are small.
 	 */
 	if (relation_byte_size(outersize, outerwidth) <
 		relation_byte_size(innersize, innerwidth))
@@ -362,7 +366,8 @@ cost_hashjoin(Cost outercost,
 	/* cost of main-memory hashtable */
 	temp += (innerpages < NBuffers) ? innerpages : NBuffers;
 
-	/* if inner relation is too big then we will need to "batch" the join,
+	/*
+	 * if inner relation is too big then we will need to "batch" the join,
 	 * which implies writing and reading most of the tuples to disk an
 	 * extra time.
 	 */
@@ -385,7 +390,7 @@ cost_hashjoin(Cost outercost,
  * Returns the size.
  */
 int
-compute_rel_size(RelOptInfo *rel)
+compute_rel_size(RelOptInfo * rel)
 {
 	Cost		temp;
 	int			temp1;
@@ -408,7 +413,7 @@ compute_rel_size(RelOptInfo *rel)
  * Returns the width of the tuple as a fixnum.
  */
 int
-compute_rel_width(RelOptInfo *rel)
+compute_rel_width(RelOptInfo * rel)
 {
 	return compute_targetlist_width(get_actual_tlist(rel->targetlist));
 }
@@ -470,11 +475,11 @@ compute_joinrel_size(JoinPath *joinpath)
 	temp *= ((Path *) joinpath->innerjoinpath)->parent->size;
 
 	temp = temp * product_selec(joinpath->pathinfo);
-	if (temp >= (MAXINT-1)/2)
+	if (temp >= (MAXINT - 1) / 2)
 	{
 		/* if we exceed (MAXINT-1)/2, we switch to log scale */
 		/* +1 prevents log(0) */
-		temp1 = ceil(log(temp + 1 - (MAXINT-1)/2) + (MAXINT-1)/2);
+		temp1 = ceil(log(temp + 1 - (MAXINT - 1) / 2) + (MAXINT - 1) / 2);
 	}
 	else
 		temp1 = ceil((double) temp);
@@ -485,13 +490,13 @@ compute_joinrel_size(JoinPath *joinpath)
 
 /*
  * relation_byte_size
- *    Estimate the storage space in bytes for a given number of tuples
- *    of a given width (size in bytes).
- *    To avoid overflow with big relations, result is a double.
+ *	  Estimate the storage space in bytes for a given number of tuples
+ *	  of a given width (size in bytes).
+ *	  To avoid overflow with big relations, result is a double.
  */
 
 static double
-relation_byte_size (int tuples, int width)
+relation_byte_size(int tuples, int width)
 {
 	return ((double) tuples) * ((double) (width + sizeof(HeapTupleData)));
 }

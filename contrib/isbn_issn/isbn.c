@@ -1,7 +1,7 @@
 /*
  *	PostgreSQL type definitions for ISBNs.
  *
- *	$Id: isbn.c,v 1.1 1998/08/17 03:35:04 scrappy Exp $
+ *	$Id: isbn.c,v 1.2 1999/05/25 16:05:40 momjian Exp $
  */
 
 #include <stdio.h>
@@ -16,8 +16,8 @@
 
 typedef struct isbn
 {
-	char	num[13];
-	char	pad[3];
+	char		num[13];
+	char		pad[3];
 }			isbn;
 
 /*
@@ -50,13 +50,15 @@ isbn_in(char *str)
 	char	   *cp;
 	int			count;
 
-	if (strlen(str) != 13) {
+	if (strlen(str) != 13)
+	{
 		elog(ERROR, "isbn_in: invalid ISBN \"%s\"", str);
 		return (NULL);
 	}
-	if (isbn_sum(str) != 0) {
+	if (isbn_sum(str) != 0)
+	{
 		elog(ERROR, "isbn_in: purported ISBN \"%s\" failed checksum",
-		     str);
+			 str);
 		return (NULL);
 	}
 
@@ -84,28 +86,40 @@ isbn_in(char *str)
 int4
 isbn_sum(char *str)
 {
-	int4 sum = 0, dashes = 0, val;
-	int i;
+	int4		sum = 0,
+				dashes = 0,
+				val;
+	int			i;
 
-	for (i = 0; str[i] && i < 13; i++) {
-		switch(str[i]) {
-		case '-':
-			if (++dashes > 3)
+	for (i = 0; str[i] && i < 13; i++)
+	{
+		switch (str[i])
+		{
+			case '-':
+				if (++dashes > 3)
+					return 12;
+				continue;
+
+			case '0':
+			case '1':
+			case '2':
+			case '3':
+			case '4':
+			case '5':
+			case '6':
+			case '7':
+			case '8':
+			case '9':
+				val = str[i] - '0';
+				break;
+
+			case 'X':
+			case 'x':
+				val = 10;
+				break;
+
+			default:
 				return 12;
-			continue;
-
-		case '0': case '1': case '2': case '3':
-		case '4': case '5': case '6': case '7':
-		case '8': case '9':
-			val = str[i] - '0';
-			break;
-
-		case 'X': case 'x':
-			val = 10;
-			break;
-
-		default:
-			return 12;
 		}
 
 		sum += val * (i + 1 - dashes);

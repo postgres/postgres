@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tupmacs.h,v 1.9 1999/03/25 03:49:26 tgl Exp $
+ * $Id: tupmacs.h,v 1.10 1999/05/25 16:13:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,7 +63,7 @@
 )
 
 /* att_align aligns the given offset as needed for a datum of length attlen
- * and alignment requirement attalign.  In practice we don't need the length.
+ * and alignment requirement attalign.	In practice we don't need the length.
  * The attalign cases are tested in what is hopefully something like their
  * frequency of occurrence.
  */
@@ -89,5 +89,5 @@
 		(cur_offset) + VARSIZE(DatumGetPointer(attval)) \
 	) \
 )
-	
+
 #endif

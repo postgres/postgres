@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.21 1999/03/07 23:03:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.22 1999/05/25 16:12:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -175,8 +175,10 @@ hash_create(int nelem, HASHCTL *info, int flags)
 
 	if (flags & HASH_SHARED_MEM)
 	{
-		/* ctl structure is preallocated for shared memory tables.
-		 * Note that HASH_DIRSIZE had better be set as well.
+
+		/*
+		 * ctl structure is preallocated for shared memory tables. Note
+		 * that HASH_DIRSIZE had better be set as well.
 		 */
 
 		hashp->hctl = (HHDR *) info->hctl;
@@ -296,9 +298,9 @@ init_htab(HTAB *hashp, int nelem)
 	hctl = hashp->hctl;
 
 	/*
-	 * Divide number of elements by the fill factor to determine a
-	 * desired number of buckets.  Allocate space for the next greater
-	 * power of two number of buckets
+	 * Divide number of elements by the fill factor to determine a desired
+	 * number of buckets.  Allocate space for the next greater power of
+	 * two number of buckets
 	 */
 	nelem = (nelem - 1) / hctl->ffactor + 1;
 
@@ -308,14 +310,15 @@ init_htab(HTAB *hashp, int nelem)
 	hctl->high_mask = (nbuckets << 1) - 1;
 
 	/*
-	 * Figure number of directory segments needed, round up to a power of 2
+	 * Figure number of directory segments needed, round up to a power of
+	 * 2
 	 */
 	nsegs = (nbuckets - 1) / hctl->ssize + 1;
 	nsegs = 1 << my_log2(nsegs);
 
 	/*
-	 * Make sure directory is big enough.
-	 * If pre-allocated directory is too small, choke (caller screwed up).
+	 * Make sure directory is big enough. If pre-allocated directory is
+	 * too small, choke (caller screwed up).
 	 */
 	if (nsegs > hctl->dsize)
 	{
@@ -371,12 +374,12 @@ init_htab(HTAB *hashp, int nelem)
 long
 hash_estimate_size(long num_entries, long keysize, long datasize)
 {
-	long	size = 0;
-	long	nBuckets,
-			nSegments,
-			nDirEntries,
-			nRecordAllocs,
-			recordSize;
+	long		size = 0;
+	long		nBuckets,
+				nSegments,
+				nDirEntries,
+				nRecordAllocs,
+				recordSize;
 
 	/* estimate number of buckets wanted */
 	nBuckets = 1L << my_log2((num_entries - 1) / DEF_FFACTOR + 1);
@@ -388,7 +391,7 @@ hash_estimate_size(long num_entries, long keysize, long datasize)
 		nDirEntries <<= 1;		/* dir_alloc doubles dsize at each call */
 
 	/* fixed control info */
-	size += MAXALIGN(sizeof(HHDR));	/* but not HTAB, per above */
+	size += MAXALIGN(sizeof(HHDR));		/* but not HTAB, per above */
 	/* directory */
 	size += MAXALIGN(nDirEntries * sizeof(SEG_OFFSET));
 	/* segments */
@@ -665,8 +668,10 @@ hash_search(HTAB *hashp,
 	 */
 	if (++hctl->nkeys / (hctl->max_bucket + 1) > hctl->ffactor)
 	{
-		/* NOTE: failure to expand table is not a fatal error,
-		 * it just means we have to run at higher fill factor than we wanted.
+
+		/*
+		 * NOTE: failure to expand table is not a fatal error, it just
+		 * means we have to run at higher fill factor than we wanted.
 		 */
 		expand_table(hashp);
 	}
@@ -778,7 +783,7 @@ expand_table(HTAB *hashp)
 	{
 		/* Allocate new segment if necessary -- could fail if dir full */
 		if (new_segnum >= hctl->dsize)
-			if (! dir_realloc(hashp))
+			if (!dir_realloc(hashp))
 				return 0;
 		if (!(hashp->dir[new_segnum] = seg_alloc(hashp)))
 			return 0;
@@ -872,7 +877,7 @@ seg_alloc(HTAB *hashp)
 	SEG_OFFSET	segOffset;
 
 	segp = (SEGMENT) hashp->alloc((unsigned long)
-								  sizeof(BUCKET_INDEX) * hashp->hctl->ssize);
+							  sizeof(BUCKET_INDEX) * hashp->hctl->ssize);
 
 	if (!segp)
 		return 0;
@@ -917,8 +922,9 @@ bucket_alloc(HTAB *hashp)
 	lastIndex = hashp->hctl->freeBucketIndex;
 	hashp->hctl->freeBucketIndex = tmpIndex;
 
-	/* initialize each bucket to point to the one behind it.
-	 * NOTE: loop sets last bucket incorrectly; we fix below.
+	/*
+	 * initialize each bucket to point to the one behind it. NOTE: loop
+	 * sets last bucket incorrectly; we fix below.
 	 */
 	for (i = 0; i < BUCKET_ALLOC_INCR; i++)
 	{

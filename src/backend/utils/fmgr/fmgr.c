@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.27 1999/05/10 04:02:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.28 1999/05/25 16:12:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,8 +81,10 @@ fmgr_pl(char *arg0,...)
 static char *
 fmgr_untrusted(char *arg0,...)
 {
-	/* Currently these are unsupported.  Someday we might do something like
-	 * forking a subprocess to execute 'em.
+
+	/*
+	 * Currently these are unsupported.  Someday we might do something
+	 * like forking a subprocess to execute 'em.
 	 */
 	elog(ERROR, "Untrusted functions not supported.");
 	return NULL;				/* keep compiler happy */
@@ -96,9 +98,11 @@ fmgr_untrusted(char *arg0,...)
 static char *
 fmgr_sql(char *arg0,...)
 {
+
 	/*
-	 * XXX It'd be really nice to support SQL functions anywhere that builtins
-	 * are supported.  What would we have to do?  What pitfalls are there?
+	 * XXX It'd be really nice to support SQL functions anywhere that
+	 * builtins are supported.	What would we have to do?  What pitfalls
+	 * are there?
 	 */
 	elog(ERROR, "SQL-language function not supported in this context.");
 	return NULL;				/* keep compiler happy */
@@ -215,14 +219,18 @@ fmgr_info(Oid procedureId, FmgrInfo *finfo)
 
 	if ((fcp = fmgr_isbuiltin(procedureId)) != NULL)
 	{
-		/* Fast path for builtin functions: don't bother consulting pg_proc */
+
+		/*
+		 * Fast path for builtin functions: don't bother consulting
+		 * pg_proc
+		 */
 		finfo->fn_addr = fcp->func;
 		finfo->fn_nargs = fcp->nargs;
 	}
 	else
 	{
 		procedureTuple = SearchSysCacheTuple(PROOID,
-											 ObjectIdGetDatum(procedureId),
+										   ObjectIdGetDatum(procedureId),
 											 0, 0, 0);
 		if (!HeapTupleIsValid(procedureTuple))
 		{
@@ -240,14 +248,16 @@ fmgr_info(Oid procedureId, FmgrInfo *finfo)
 		switch (language)
 		{
 			case INTERNALlanguageId:
+
 				/*
-				 * For an ordinary builtin function, we should never get here
-				 * because the isbuiltin() search above will have succeeded.
-				 * However, if the user has done a CREATE FUNCTION to create
-				 * an alias for a builtin function, we end up here.  In that
-				 * case we have to look up the function by name.  The name
-				 * of the internal function is stored in prosrc (it doesn't
-				 * have to be the same as the name of the alias!)
+				 * For an ordinary builtin function, we should never get
+				 * here because the isbuiltin() search above will have
+				 * succeeded. However, if the user has done a CREATE
+				 * FUNCTION to create an alias for a builtin function, we
+				 * end up here.  In that case we have to look up the
+				 * function by name.  The name of the internal function is
+				 * stored in prosrc (it doesn't have to be the same as the
+				 * name of the alias!)
 				 */
 				prosrc = textout(&(procedureStruct->prosrc));
 				finfo->fn_addr = fmgr_lookupByName(prosrc);

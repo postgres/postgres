@@ -52,12 +52,12 @@ struct sqlca sqlca =
 
 static struct connection
 {
-	char	*name;
-	PGconn	*connection;
-	bool	committed;
-	int	autocommit;
+	char	   *name;
+	PGconn	   *connection;
+	bool		committed;
+	int			autocommit;
 	struct connection *next;
-}		*all_connections = NULL, *actual_connection = NULL;
+}		   *all_connections = NULL, *actual_connection = NULL;
 
 struct variable
 {
@@ -77,7 +77,7 @@ struct variable
 
 struct statement
 {
-	int	    lineno;
+	int			lineno;
 	char	   *command;
 	struct connection *connection;
 	struct variable *inlist;
@@ -86,16 +86,16 @@ struct statement
 
 struct prepared_statement
 {
-	char 				*name;
-	struct statement 		*stmt;
-	struct prepared_statement	*next;
-}	*prep_stmts = NULL;
+	char	   *name;
+	struct statement *stmt;
+	struct prepared_statement *next;
+}		   *prep_stmts = NULL;
 
 struct auto_mem
 {
-	void *pointer;
+	void	   *pointer;
 	struct auto_mem *next;
-}	*auto_allocs = NULL;
+}		   *auto_allocs = NULL;
 
 static int	simple_debug = 0;
 static FILE *debugstream = NULL;
@@ -105,23 +105,23 @@ register_error(long code, char *fmt,...)
 {
 	va_list		args;
 	struct auto_mem *am;
-	
+
 	sqlca.sqlcode = code;
 	va_start(args, fmt);
 	vsprintf(sqlca.sqlerrm.sqlerrmc, fmt, args);
 	va_end(args);
 	sqlca.sqlerrm.sqlerrml = strlen(sqlca.sqlerrm.sqlerrmc);
-	
+
 	/* free all memory we have allocated for the user */
 	for (am = auto_allocs; am;)
 	{
 		struct auto_mem *act = am;
-	
-		am = am->next;	
+
+		am = am->next;
 		free(act->pointer);
 		free(act);
 	}
-	
+
 	auto_allocs = NULL;
 }
 
@@ -129,10 +129,10 @@ static struct connection *
 get_connection(const char *connection_name)
 {
 	struct connection *con = all_connections;
-	
+
 	if (connection_name == NULL || strcmp(connection_name, "CURRENT") == 0)
 		return actual_connection;
-		
+
 	for (; con && strcmp(connection_name, con->name) != 0; con = con->next);
 	if (con)
 		return con;
@@ -161,7 +161,7 @@ ECPGfinish(struct connection * act)
 
 		if (actual_connection == act)
 			actual_connection = all_connections;
-			
+
 		free(act->name);
 		free(act);
 	}
@@ -180,7 +180,7 @@ ecpg_alloc(long size, int lineno)
 		register_error(ECPG_OUT_OF_MEMORY, "Out of memory in line %d", lineno);
 		return NULL;
 	}
-	
+
 	memset(new, '\0', size);
 	return (new);
 }
@@ -204,7 +204,7 @@ static void
 add_mem(void *ptr, int lineno)
 {
 	struct auto_mem *am = (struct auto_mem *) ecpg_alloc(sizeof(struct auto_mem), lineno);
-	
+
 	am->next = auto_allocs;
 	auto_allocs = am;
 }
@@ -251,7 +251,7 @@ quote_strings(char *arg, int lineno)
 	char	   *res = (char *) ecpg_alloc(2 * strlen(arg) + 1, lineno);
 	int			i,
 				ri;
-	bool 			string = false;
+	bool		string = false;
 
 	if (!res)
 		return (res);
@@ -277,7 +277,7 @@ quote_strings(char *arg, int lineno)
 }
 
 /*
- * create a list of variables 
+ * create a list of variables
  * The variables are listed with input variables preceeding outputvariables
  * The end of each group is marked by an end marker.
  * per variable we list:
@@ -291,11 +291,11 @@ quote_strings(char *arg, int lineno)
  * ind_type - type of indicator variable
  * ind_value - pointer to indicator variable
  * ind_varcharsize - empty
- * ind_arraysize -  arraysize of indicator array
+ * ind_arraysize -	arraysize of indicator array
  * ind_offset - indicator offset
  */
 static bool
-create_statement(int lineno, struct connection *connection, struct statement ** stmt, char *query, va_list ap)
+create_statement(int lineno, struct connection * connection, struct statement ** stmt, char *query, va_list ap)
 {
 	struct variable **list = &((*stmt)->inlist);
 	enum ECPGttype type;
@@ -325,8 +325,8 @@ create_statement(int lineno, struct connection *connection, struct statement ** 
 
 			var->type = type;
 			var->pointer = va_arg(ap, void *);
-			
-			/* if variable is NULL, the statement hasn't been prepared */			
+
+			/* if variable is NULL, the statement hasn't been prepared */
 			if (var->pointer == NULL)
 			{
 				ECPGlog("create_statement: invalid statement name\n");
@@ -334,16 +334,16 @@ create_statement(int lineno, struct connection *connection, struct statement ** 
 				free(var);
 				return false;
 			}
-			
+
 			var->varcharsize = va_arg(ap, long);
 			var->arrsize = va_arg(ap, long);
 			var->offset = va_arg(ap, long);
 
 			if (var->arrsize == 0 || var->varcharsize == 0)
-				var->value = *((void **)(var->pointer));
+				var->value = *((void **) (var->pointer));
 			else
 				var->value = var->pointer;
-			
+
 			var->ind_type = va_arg(ap, enum ECPGttype);
 			var->ind_value = va_arg(ap, void *);
 			var->ind_varcharsize = va_arg(ap, long);
@@ -366,16 +366,16 @@ create_statement(int lineno, struct connection *connection, struct statement ** 
 }
 
 static void
-free_variable(struct variable *var)
+free_variable(struct variable * var)
 {
-	struct variable	*var_next;
+	struct variable *var_next;
 
-	if( var == (struct variable *)NULL ) 
-		return; 
+	if (var == (struct variable *) NULL)
+		return;
 	var_next = var->next;
 	free(var);
 
-	while(var_next)
+	while (var_next)
 	{
 		var = var_next;
 		var_next = var->next;
@@ -384,9 +384,9 @@ free_variable(struct variable *var)
 }
 
 static void
-free_statement(struct statement *stmt)
+free_statement(struct statement * stmt)
 {
-	if( stmt == (struct statement *)NULL ) 
+	if (stmt == (struct statement *) NULL)
 		return;
 	free_variable(stmt->inlist);
 	free_variable(stmt->outlist);
@@ -396,20 +396,20 @@ free_statement(struct statement *stmt)
 static char *
 next_insert(char *text)
 {
-	char *ptr = text;
-	bool string = false;
-	
+	char	   *ptr = text;
+	bool		string = false;
+
 	for (; *ptr != '\0' && (*ptr != '?' || string); ptr++)
 		if (*ptr == '\'')
 			string = string ? false : true;
-			
+
 	return (*ptr == '\0') ? NULL : ptr;
 }
 
 static bool
 ECPGexecute(struct statement * stmt)
 {
-	bool	    status = false;
+	bool		status = false;
 	char	   *copiedquery;
 	PGresult   *results;
 	PGnotify   *notify;
@@ -626,7 +626,7 @@ ECPGexecute(struct statement * stmt)
 			strcat(newcopy,
 				   copiedquery
 				   + (p - newcopy)
-				   + sizeof("?") - 1 /* don't count the '\0' */);
+				   + sizeof("?") - 1 /* don't count the '\0' */ );
 		}
 
 		/*
@@ -675,7 +675,7 @@ ECPGexecute(struct statement * stmt)
 		ECPGlog("ECPGexecute line %d: error: %s", stmt->lineno,
 				PQerrorMessage(stmt->connection->connection));
 		register_error(ECPG_PGSQL, "Postgres error: %s line %d.",
-			PQerrorMessage(stmt->connection->connection), stmt->lineno);
+			 PQerrorMessage(stmt->connection->connection), stmt->lineno);
 	}
 	else
 	{
@@ -729,39 +729,39 @@ ECPGexecute(struct statement * stmt)
 
 					/*
 					 * allocate memory for NULL pointers
-					 */					 
+					 */
 					if ((var->arrsize == 0 || var->varcharsize == 0) && var->value == NULL)
 					{
-					    int len = 0;
-					    
-					    switch(var->type)
-					    {
-						case ECPGt_char:
-						case ECPGt_unsigned_char:
-							var->varcharsize = 0;
-							/* check strlen for each tuple */
-							for (act_tuple = 0; act_tuple < ntuples; act_tuple++)
-							{
-								int len = strlen(PQgetvalue(results, act_tuple, act_field)) + 1;
-								
-								if (len > var->varcharsize)
-									var->varcharsize = len;
-							}
-							var->offset *= var->varcharsize;
-							len = var->offset * ntuples;
-							break;
-						case ECPGt_varchar:
-							len = ntuples * (var->varcharsize + sizeof (int));
-							break;							                    
-						default:
-							len = var->offset * ntuples;
-							break;
-					    }
-					    var->value = (void *) ecpg_alloc(len, stmt->lineno);
-                                            *((void **) var->pointer) = var->value;
-                                            add_mem(var->value, stmt->lineno);
+						int			len = 0;
+
+						switch (var->type)
+						{
+							case ECPGt_char:
+							case ECPGt_unsigned_char:
+								var->varcharsize = 0;
+								/* check strlen for each tuple */
+								for (act_tuple = 0; act_tuple < ntuples; act_tuple++)
+								{
+									int			len = strlen(PQgetvalue(results, act_tuple, act_field)) + 1;
+
+									if (len > var->varcharsize)
+										var->varcharsize = len;
+								}
+								var->offset *= var->varcharsize;
+								len = var->offset * ntuples;
+								break;
+							case ECPGt_varchar:
+								len = ntuples * (var->varcharsize + sizeof(int));
+								break;
+							default:
+								len = var->offset * ntuples;
+								break;
+						}
+						var->value = (void *) ecpg_alloc(len, stmt->lineno);
+						*((void **) var->pointer) = var->value;
+						add_mem(var->value, stmt->lineno);
 					}
-									
+
 					for (act_tuple = 0; act_tuple < ntuples && status; act_tuple++)
 					{
 						pval = PQgetvalue(results, act_tuple, act_field);
@@ -1034,7 +1034,7 @@ ECPGexecute(struct statement * stmt)
 			default:
 				ECPGlog("ECPGexecute line %d: Got something else, postgres error.\n",
 						stmt->lineno);
-				register_error(ECPG_PGSQL, "Postgres error: %s line %d.", 
+				register_error(ECPG_PGSQL, "Postgres error: %s line %d.",
 							   PQerrorMessage(stmt->connection->connection), stmt->lineno);
 				status = false;
 				break;
@@ -1067,7 +1067,7 @@ ECPGdo(int lineno, const char *connection_name, char *query,...)
 		register_error(ECPG_NO_CONN, "No such connection %s in line %d.", connection_name ? connection_name : "NULL", lineno);
 		return (false);
 	}
-		
+
 	va_start(args, query);
 	if (create_statement(lineno, con, &stmt, query, args) == false)
 		return (false);
@@ -1096,7 +1096,7 @@ ECPGstatus(int lineno, const char *connection_name)
 		register_error(ECPG_NO_CONN, "No such connection %s in line %d", connection_name ? connection_name : "NULL", lineno);
 		return (false);
 	}
-		
+
 	/* are we connected? */
 	if (con->connection == NULL)
 	{
@@ -1113,7 +1113,7 @@ ECPGtrans(int lineno, const char *connection_name, const char *transaction)
 {
 	PGresult   *res;
 	struct connection *con = get_connection(connection_name);
-	
+
 	if (con == NULL)
 	{
 		register_error(ECPG_NO_CONN, "No such connection %s in line %d", connection_name ? connection_name : "NULL", lineno);
@@ -1135,15 +1135,15 @@ ECPGtrans(int lineno, const char *connection_name, const char *transaction)
 	if (strcmp(transaction, "commit") == 0 || strcmp(transaction, "rollback") == 0)
 	{
 		struct prepared_statement *this;
-			
+
 		con->committed = true;
 
 		/* deallocate all prepared statements */
 		for (this = prep_stmts; this != NULL; this = this->next)
 		{
-			bool b = ECPGdeallocate(lineno, this->name);
-		
-			if (!b) 
+			bool		b = ECPGdeallocate(lineno, this->name);
+
+			if (!b)
 				return false;
 		}
 	}
@@ -1193,7 +1193,7 @@ ECPGsetcommit(int lineno, const char *mode, const char *connection_name)
 		register_error(ECPG_NO_CONN, "No such connection %s in line %d", connection_name ? connection_name : "NULL", lineno);
 		return false;
 	}
-	
+
 	return true;
 }
 
@@ -1251,7 +1251,7 @@ ECPGconnect(int lineno, const char *dbname, const char *user, const char *passwd
 		register_error(ECPG_CONNECT, "connect: could not open database %s.", dbname ? dbname : "NULL");
 		return false;
 	}
-	
+
 	this->committed = true;
 	this->autocommit = autocommit;
 
@@ -1276,7 +1276,7 @@ ECPGdisconnect(int lineno, const char *connection_name)
 	else
 	{
 		con = get_connection(connection_name);
-		
+
 		if (con == NULL)
 		{
 			ECPGlog("disconnect: not connected to connection %s\n", connection_name ? connection_name : "NULL");
@@ -1333,27 +1333,27 @@ isvarchar(unsigned char c)
 {
 	if (isalnum(c))
 		return true;
-	
+
 	if (c == '_' || c == '>' || c == '-' || c == '.')
 		return true;
-		
+
 	if (c >= 128)
 		return true;
-		
-	return(false);
+
+	return (false);
 }
 
 static void
 replace_variables(char *text)
 {
-	char *ptr = text;
-	bool string = false;
-	
+	char	   *ptr = text;
+	bool		string = false;
+
 	for (; *ptr != '\0'; ptr++)
 	{
 		if (*ptr == '\'')
 			string = string ? false : true;
-			
+
 		if (!string && *ptr == ':')
 		{
 			*ptr = '?';
@@ -1369,21 +1369,21 @@ ECPGprepare(int lineno, char *name, char *variable)
 {
 	struct statement *stmt;
 	struct prepared_statement *this;
-	
+
 	/* check if we already have prepared this statement */
-	for (this = prep_stmts; this != NULL && strcmp(this->name, name) != 0; this = this->next);		
+	for (this = prep_stmts; this != NULL && strcmp(this->name, name) != 0; this = this->next);
 	if (this)
 	{
-		bool b = ECPGdeallocate(lineno, name);
-		
-		if (!b) 
+		bool		b = ECPGdeallocate(lineno, name);
+
+		if (!b)
 			return false;
 	}
-	
+
 	this = (struct prepared_statement *) ecpg_alloc(sizeof(struct prepared_statement), lineno);
 	if (!this)
 		return false;
-		
+
 	stmt = (struct statement *) ecpg_alloc(sizeof(struct statement), lineno);
 	if (!stmt)
 	{
@@ -1393,13 +1393,13 @@ ECPGprepare(int lineno, char *name, char *variable)
 
 	/* create statement */
 	stmt->lineno = lineno;
-       	stmt->connection = NULL;
-        stmt->command = ecpg_strdup(variable, lineno);
-        stmt->inlist = stmt->outlist = NULL;
-        
-        /* if we have C variables in our statment replace them with '?' */
-        replace_variables(stmt->command);                	
-        
+	stmt->connection = NULL;
+	stmt->command = ecpg_strdup(variable, lineno);
+	stmt->inlist = stmt->outlist = NULL;
+
+	/* if we have C variables in our statment replace them with '?' */
+	replace_variables(stmt->command);
+
 	/* add prepared statement to our list */
 	this->name = ecpg_strdup(name, lineno);
 	this->stmt = stmt;
@@ -1417,10 +1417,11 @@ ECPGprepare(int lineno, char *name, char *variable)
 bool
 ECPGdeallocate(int lineno, char *name)
 {
-	struct prepared_statement *this, *prev;
+	struct prepared_statement *this,
+			   *prev;
 
 	/* check if we really have prepared this statement */
-	for (this = prep_stmts, prev = NULL; this != NULL && strcmp(this->name, name) != 0; prev = this, this = this->next);		
+	for (this = prep_stmts, prev = NULL; this != NULL && strcmp(this->name, name) != 0; prev = this, this = this->next);
 	if (this)
 	{
 		/* okay, free all the resources */
@@ -1431,7 +1432,7 @@ ECPGdeallocate(int lineno, char *name)
 			prev->next = this->next;
 		else
 			prep_stmts = this->next;
-		
+
 		return true;
 	}
 	ECPGlog("deallocate_prepare: invalid statement name %s\n", name);
@@ -1444,8 +1445,7 @@ char *
 ECPGprepared_statement(char *name)
 {
 	struct prepared_statement *this;
-	
+
 	for (this = prep_stmts; this != NULL && strcmp(this->name, name) != 0; this = this->next);
 	return (this) ? this->stmt->command : NULL;
 }
-

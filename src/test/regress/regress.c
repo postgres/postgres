@@ -1,5 +1,5 @@
 /*
- * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.31 1999/05/03 19:10:48 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.32 1999/05/25 16:15:26 momjian Exp $
  */
 
 #include <float.h>				/* faked on sunos */
@@ -390,11 +390,11 @@ funny_dup17()
 	if (SPI_processed > 0)
 	{
 		selected = int4in(
-				   SPI_getvalue(
-								SPI_tuptable->vals[0],
-								SPI_tuptable->tupdesc,
-								1
-								)
+						  SPI_getvalue(
+									   SPI_tuptable->vals[0],
+									   SPI_tuptable->tupdesc,
+									   1
+									   )
 			);
 	}
 

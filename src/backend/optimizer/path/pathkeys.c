@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.9 1999/05/17 00:26:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.10 1999/05/25 16:09:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,9 +26,9 @@
 #include "optimizer/ordering.h"
 
 static int match_pathkey_joinkeys(List *pathkey, List *joinkeys,
-						int outer_or_inner);
+					   int outer_or_inner);
 static List *new_join_pathkey(List *pathkeys, List *join_rel_tlist,
-							  List *joinclauses);
+				 List *joinclauses);
 
 
 /*--------------------
@@ -41,7 +41,7 @@ static List *new_join_pathkey(List *pathkeys, List *join_rel_tlist,
  *	of generating the relation and the resulting ordering of the tuples.
  *	Sequential scan Paths have NIL pathkeys, indicating no known ordering.
  *	Index scans have Path.pathkeys that represent the chosen index.
- *	A single-key index pathkeys would be { {tab1_indexkey1} }.  For a
+ *	A single-key index pathkeys would be { {tab1_indexkey1} }.	For a
  *	multi-key index pathkeys would be { {tab1_indexkey1}, {tab1_indexkey2} },
  *	indicating major sort by indexkey1 and minor sort by indexkey2.
  *
@@ -70,12 +70,12 @@ static List *new_join_pathkey(List *pathkeys, List *join_rel_tlist,
  *	executor might have to split the join into multiple batches.
  *
  *	NestJoin does not perform sorting, and allows non-equijoins, so it does
- *	not allow useful pathkeys.  (But couldn't we use the outer path's order?)
+ *	not allow useful pathkeys.	(But couldn't we use the outer path's order?)
  *
  *	-- bjm
  *--------------------
  */
- 
+
 /****************************************************************************
  *		KEY COMPARISONS
  ****************************************************************************/
@@ -111,11 +111,11 @@ static List *new_join_pathkey(List *pathkeys, List *join_rel_tlist,
  */
 bool
 order_joinkeys_by_pathkeys(List *pathkeys,
-							List *joinkeys,
-							List *joinclauses,
-							int outer_or_inner,
-							List **matchedJoinKeysPtr,
-							List **matchedJoinClausesPtr)
+						   List *joinkeys,
+						   List *joinclauses,
+						   int outer_or_inner,
+						   List **matchedJoinKeysPtr,
+						   List **matchedJoinClausesPtr)
 {
 	List	   *matched_joinkeys = NIL;
 	List	   *matched_joinclauses = NIL;
@@ -123,9 +123,10 @@ order_joinkeys_by_pathkeys(List *pathkeys,
 	List	   *i = NIL;
 	int			matched_joinkey_index = -1;
 	int			matched_keys = 0;
+
 	/*
-	 *	Reorder the joinkeys by picking out one that matches each pathkey,
-	 *	and create a new joinkey/joinclause list in pathkey order
+	 * Reorder the joinkeys by picking out one that matches each pathkey,
+	 * and create a new joinkey/joinclause list in pathkey order
 	 */
 	foreach(i, pathkeys)
 	{
@@ -138,34 +139,36 @@ order_joinkeys_by_pathkeys(List *pathkeys,
 			matched_keys++;
 			if (matchedJoinKeysPtr)
 			{
-				JoinKey	   *joinkey = nth(matched_joinkey_index, joinkeys);
+				JoinKey    *joinkey = nth(matched_joinkey_index, joinkeys);
+
 				matched_joinkeys = lappend(matched_joinkeys, joinkey);
 			}
-			
+
 			if (matchedJoinClausesPtr)
 			{
 				Expr	   *joinclause = nth(matched_joinkey_index,
 											 joinclauses);
+
 				Assert(joinclauses);
 				matched_joinclauses = lappend(matched_joinclauses, joinclause);
 			}
 		}
 		else
-			/*	A pathkey could not be matched. */
+			/* A pathkey could not be matched. */
 			break;
 	}
 
 	/*
-	 *	Did we fail to match all the joinkeys?
-	 *	Extra pathkeys are no problem.
+	 * Did we fail to match all the joinkeys? Extra pathkeys are no
+	 * problem.
 	 */
 	if (matched_keys != length(joinkeys))
 	{
-			if (matchedJoinKeysPtr)
-				*matchedJoinKeysPtr = NIL;
-			if (matchedJoinClausesPtr)
-				*matchedJoinClausesPtr = NIL;
-			return false;
+		if (matchedJoinKeysPtr)
+			*matchedJoinKeysPtr = NIL;
+		if (matchedJoinClausesPtr)
+			*matchedJoinClausesPtr = NIL;
+		return false;
 	}
 
 	if (matchedJoinKeysPtr)
@@ -190,7 +193,8 @@ match_pathkey_joinkeys(List *pathkey,
 {
 	Var		   *key;
 	int			pos;
-	List	   *i, *x;
+	List	   *i,
+			   *x;
 	JoinKey    *jk;
 
 	foreach(i, pathkey)
@@ -232,9 +236,9 @@ match_pathkey_joinkeys(List *pathkey,
  */
 Path *
 get_cheapest_path_for_joinkeys(List *joinkeys,
-								 PathOrder *ordering,
-								 List *paths,
-								 int outer_or_inner)
+							   PathOrder *ordering,
+							   List *paths,
+							   int outer_or_inner)
 {
 	Path	   *matched_path = NULL;
 	List	   *i;
@@ -243,7 +247,7 @@ get_cheapest_path_for_joinkeys(List *joinkeys,
 	{
 		Path	   *path = (Path *) lfirst(i);
 		int			better_sort;
-		
+
 		if (order_joinkeys_by_pathkeys(path->pathkeys, joinkeys, NIL,
 									   outer_or_inner, NULL, NULL) &&
 			pathorder_match(ordering, path->pathorder, &better_sort) &&
@@ -274,8 +278,8 @@ get_cheapest_path_for_joinkeys(List *joinkeys,
  */
 List *
 make_pathkeys_from_joinkeys(List *joinkeys,
-							  List *tlist,
-							  int outer_or_inner)
+							List *tlist,
+							int outer_or_inner)
 {
 	List	   *pathkeys = NIL;
 	List	   *jk;
@@ -284,7 +288,8 @@ make_pathkeys_from_joinkeys(List *joinkeys,
 	{
 		JoinKey    *jkey = (JoinKey *) lfirst(jk);
 		Var		   *key;
-		List	   *p, *p2;
+		List	   *p,
+				   *p2;
 		bool		found = false;
 
 		key = (Var *) extract_join_key(jkey, outer_or_inner);
@@ -292,17 +297,19 @@ make_pathkeys_from_joinkeys(List *joinkeys,
 		/* check to see if it is in the target list */
 		if (matching_tlist_var(key, tlist))
 		{
+
 			/*
-			 * Include it in the pathkeys list if we haven't already done so
+			 * Include it in the pathkeys list if we haven't already done
+			 * so
 			 */
 			foreach(p, pathkeys)
 			{
 				List	   *pathkey = lfirst(p);
-	
+
 				foreach(p2, pathkey)
 				{
 					Var		   *pkey = lfirst(p2);
-	
+
 					if (equal(key, pkey))
 					{
 						found = true;
@@ -371,7 +378,7 @@ new_join_pathkeys(List *outer_pathkeys,
  *
  *	  Note that each returned pathkey is the var node found in
  *	  'join_rel_tlist' rather than the joinclause var node.
- *	  (Is this important?)  Also, we return a fully copied list
+ *	  (Is this important?)	Also, we return a fully copied list
  *	  that does not share any subnodes with existing data structures.
  *	  (Is that important, either?)
  *
@@ -393,7 +400,7 @@ new_join_pathkey(List *pathkey,
 		Expr	   *tlist_key;
 
 		Assert(key);
-									
+
 		tlist_key = matching_tlist_var(key, join_rel_tlist);
 		if (tlist_key && !member(tlist_key, new_pathkey))
 			new_pathkey = lcons(copyObject(tlist_key), new_pathkey);
@@ -404,8 +411,8 @@ new_join_pathkey(List *pathkey,
 			Expr	   *tlist_other_var;
 
 			tlist_other_var = matching_tlist_var(
-								other_join_clause_var(key, joinclause),
-								join_rel_tlist);
+								  other_join_clause_var(key, joinclause),
+												 join_rel_tlist);
 			if (tlist_other_var && !member(tlist_other_var, new_pathkey))
 				new_pathkey = lcons(copyObject(tlist_other_var), new_pathkey);
 		}

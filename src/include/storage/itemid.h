@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: itemid.h,v 1.8 1999/02/13 23:22:06 momjian Exp $
+ * $Id: itemid.h,v 1.9 1999/05/25 16:14:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,13 +57,13 @@ typedef struct ItemIdData *ItemId;
    ((itemId)->lp_flags)
 
 /*
- * ItemIdIsValid 
+ * ItemIdIsValid
  *		True iff disk item identifier is valid.
  */
 #define ItemIdIsValid(itemId)	PointerIsValid(itemId)
 
 /*
- * ItemIdIsUsed 
+ * ItemIdIsUsed
  *		True iff disk item identifier is in use.
  *
  * Note:

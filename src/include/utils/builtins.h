@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.78 1999/05/03 19:10:31 momjian Exp $
+ * $Id: builtins.h,v 1.79 1999/05/25 16:14:52 momjian Exp $
  *
  * NOTES
  *	  This should normally only be included by fmgr.h.
@@ -63,7 +63,7 @@ extern int8 charmul(int8 arg1, int8 arg2);
 extern int8 chardiv(int8 arg1, int8 arg2);
 extern bool cideq(int8 arg1, int8 arg2);
 extern int8 text_char(text *arg1);
-extern text* char_text(int8 arg1);
+extern text *char_text(int8 arg1);
 
 /* int.c */
 extern int32 int2in(char *num);
@@ -164,7 +164,7 @@ extern void ltoa(int32 l, char *a);
  */
 extern int32 btint2cmp(int16 a, int16 b);
 extern int32 btint4cmp(int32 a, int32 b);
-extern int32 btint8cmp(int64 *a, int64 *b);
+extern int32 btint8cmp(int64 * a, int64 * b);
 extern int32 btint24cmp(int16 a, int32 b);
 extern int32 btint42cmp(int32 a, int16 b);
 extern int32 btfloat4cmp(float32 a, float32 b);
@@ -524,50 +524,50 @@ extern text *translate(text *string, char from, char to);
 /* acl.c */
 
 /* inet_net_ntop.c */
-char *inet_net_ntop(int af, const void *src, int bits, char *dst, size_t size);
-char *inet_cidr_ntop(int af, const void *src, int bits, char *dst, size_t size);
+char	   *inet_net_ntop(int af, const void *src, int bits, char *dst, size_t size);
+char	   *inet_cidr_ntop(int af, const void *src, int bits, char *dst, size_t size);
 
 /* inet_net_pton.c */
-int inet_net_pton(int af, const char *src, void *dst, size_t size);
+int			inet_net_pton(int af, const char *src, void *dst, size_t size);
 
 /* network.c */
 inet	   *inet_in(char *str);
-char	   *inet_out(inet * addr);
+char	   *inet_out(inet *addr);
 inet	   *cidr_in(char *str);
 char	   *cidr_out(inet *addr);
-bool		network_lt(inet * a1, inet * a2);
-bool		network_le(inet * a1, inet * a2);
-bool		network_eq(inet * a1, inet * a2);
-bool		network_ge(inet * a1, inet * a2);
-bool		network_gt(inet * a1, inet * a2);
-bool		network_ne(inet * a1, inet * a2);
-bool		network_sub(inet * a1, inet * a2);
-bool		network_subeq(inet * a1, inet * a2);
-bool		network_sup(inet * a1, inet * a2);
-bool		network_supeq(inet * a1, inet * a2);
-int4		network_cmp(inet * a1, inet * a2);
+bool		network_lt(inet *a1, inet *a2);
+bool		network_le(inet *a1, inet *a2);
+bool		network_eq(inet *a1, inet *a2);
+bool		network_ge(inet *a1, inet *a2);
+bool		network_gt(inet *a1, inet *a2);
+bool		network_ne(inet *a1, inet *a2);
+bool		network_sub(inet *a1, inet *a2);
+bool		network_subeq(inet *a1, inet *a2);
+bool		network_sup(inet *a1, inet *a2);
+bool		network_supeq(inet *a1, inet *a2);
+int4		network_cmp(inet *a1, inet *a2);
 
-text	   *network_network(inet * addr);
-text	   *network_netmask(inet * addr);
-int4		network_masklen(inet * addr);
-text	   *network_broadcast(inet * addr);
-text	   *network_host(inet * addr);
+text	   *network_network(inet *addr);
+text	   *network_netmask(inet *addr);
+int4		network_masklen(inet *addr);
+text	   *network_broadcast(inet *addr);
+text	   *network_host(inet *addr);
 
 /* mac.c */
 macaddr    *macaddr_in(char *str);
-char	   *macaddr_out(macaddr * addr);
-bool		macaddr_lt(macaddr * a1, macaddr * a2);
-bool		macaddr_le(macaddr * a1, macaddr * a2);
-bool		macaddr_eq(macaddr * a1, macaddr * a2);
-bool		macaddr_ge(macaddr * a1, macaddr * a2);
-bool		macaddr_gt(macaddr * a1, macaddr * a2);
-bool		macaddr_ne(macaddr * a1, macaddr * a2);
-int4		macaddr_cmp(macaddr * a1, macaddr * a2);
-text	   *macaddr_manuf(macaddr * addr);
+char	   *macaddr_out(macaddr *addr);
+bool		macaddr_lt(macaddr *a1, macaddr *a2);
+bool		macaddr_le(macaddr *a1, macaddr *a2);
+bool		macaddr_eq(macaddr *a1, macaddr *a2);
+bool		macaddr_ge(macaddr *a1, macaddr *a2);
+bool		macaddr_gt(macaddr *a1, macaddr *a2);
+bool		macaddr_ne(macaddr *a1, macaddr *a2);
+int4		macaddr_cmp(macaddr *a1, macaddr *a2);
+text	   *macaddr_manuf(macaddr *addr);
 
 /* numeric.c */
 Numeric		numeric_in(char *str, int dummy, int32 typmod);
-char		*numeric_out(Numeric num);
+char	   *numeric_out(Numeric num);
 Numeric		numeric(Numeric num, int32 typmod);
 Numeric		numeric_abs(Numeric num);
 Numeric		numeric_sign(Numeric num);
@@ -604,7 +604,3 @@ float64		numeric_float8(Numeric num);
 
 
 #endif	 /* BUILTINS_H */
-
-
-
-

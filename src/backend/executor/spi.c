@@ -3,7 +3,7 @@
  * spi.c
  *				Server Programming Interface
  *
- * $Id: spi.c,v 1.37 1999/05/13 07:28:30 tgl Exp $
+ * $Id: spi.c,v 1.38 1999/05/25 16:08:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,9 +19,9 @@ static _SPI_connection *_SPI_current = NULL;
 static int	_SPI_connected = -1;
 static int	_SPI_curid = -1;
 
-DLLIMPORT uint32 	SPI_processed = 0;
+DLLIMPORT uint32 SPI_processed = 0;
 DLLIMPORT SPITupleTable *SPI_tuptable;
-DLLIMPORT int			SPI_result;
+DLLIMPORT int SPI_result;
 
 static int	_SPI_execute(char *src, int tcount, _SPI_plan *plan);
 static int	_SPI_pquery(QueryDesc *queryDesc, EState *state, int tcount);
@@ -49,8 +49,8 @@ extern void ShowUsage(void);
 int
 SPI_connect()
 {
-	char					pname[64];
-	PortalVariableMemory	pvmem;
+	char		pname[64];
+	PortalVariableMemory pvmem;
 
 	/*
 	 * It's possible on startup and after commit/abort. In future we'll
@@ -345,8 +345,8 @@ SPI_modifytuple(Relation rel, HeapTuple tuple, int natts, int *attnum,
 		mtuple = heap_formtuple(rel->rd_att, v, n);
 		infomask = mtuple->t_data->t_infomask;
 		memmove(&(mtuple->t_data->t_oid), &(tuple->t_data->t_oid),
-				((char *) &(tuple->t_data->t_hoff) - 
-					(char *) &(tuple->t_data->t_oid)));
+				((char *) &(tuple->t_data->t_hoff) -
+				 (char *) &(tuple->t_data->t_oid)));
 		mtuple->t_data->t_infomask = infomask;
 		mtuple->t_data->t_natts = numberOfAttributes;
 	}
@@ -411,8 +411,8 @@ SPI_getvalue(HeapTuple tuple, TupleDesc tupdesc, int fnumber)
 	val = heap_getattr(tuple, fnumber, tupdesc, &isnull);
 	if (isnull)
 		return NULL;
-	if (! getTypeOutAndElem((Oid) tupdesc->attrs[fnumber - 1]->atttypid,
-							&foutoid, &typelem))
+	if (!getTypeOutAndElem((Oid) tupdesc->attrs[fnumber - 1]->atttypid,
+						   &foutoid, &typelem))
 	{
 		SPI_result = SPI_ERROR_NOOUTFUNC;
 		return NULL;
@@ -549,13 +549,13 @@ SPI_pfree(void *pointer)
 /* =================== private functions =================== */
 
 /*
- * spi_printtup 
+ * spi_printtup
  *		store tuple retrieved by Executor into SPITupleTable
  *		of current SPI procedure
  *
  */
 void
-spi_printtup(HeapTuple tuple, TupleDesc tupdesc, DestReceiver* self)
+spi_printtup(HeapTuple tuple, TupleDesc tupdesc, DestReceiver * self)
 {
 	SPITupleTable *tuptable;
 	MemoryContext oldcxt;
@@ -633,12 +633,13 @@ _SPI_execute(char *src, int tcount, _SPI_plan *plan)
 
 	_SPI_current->qtlist = queryTree_list;
 
-	foreach (queryTree_list_item, queryTree_list)
+	foreach(queryTree_list_item, queryTree_list)
 	{
 		queryTree = (Query *) lfirst(queryTree_list_item);
 		planTree = lfirst(planTree_list);
 		planTree_list = lnext(planTree_list);
-		islastquery = (planTree_list == NIL); /* assume lists are same len */
+		islastquery = (planTree_list == NIL);	/* assume lists are same
+												 * len */
 
 		if (queryTree->commandType == CMD_UTILITY)
 		{
@@ -658,7 +659,7 @@ _SPI_execute(char *src, int tcount, _SPI_plan *plan)
 			if (plan == NULL)
 			{
 				ProcessUtility(queryTree->utilityStmt, None);
-				if (! islastquery)
+				if (!islastquery)
 					CommandCounterIncrement();
 				else
 					return res;
@@ -717,17 +718,18 @@ _SPI_execute_plan(_SPI_plan *plan, Datum *Values, char *Nulls, int tcount)
 	_SPI_current->tuptable = NULL;
 	_SPI_current->qtlist = NULL;
 
-	foreach (queryTree_list_item, queryTree_list)
+	foreach(queryTree_list_item, queryTree_list)
 	{
 		queryTree = (Query *) lfirst(queryTree_list_item);
 		planTree = lfirst(planTree_list);
 		planTree_list = lnext(planTree_list);
-		islastquery = (planTree_list == NIL); /* assume lists are same len */
+		islastquery = (planTree_list == NIL);	/* assume lists are same
+												 * len */
 
 		if (queryTree->commandType == CMD_UTILITY)
 		{
 			ProcessUtility(queryTree->utilityStmt, None);
-			if (! islastquery)
+			if (!islastquery)
 				CommandCounterIncrement();
 			else
 				return SPI_OK_UTILITY;
@@ -777,7 +779,7 @@ _SPI_pquery(QueryDesc *queryDesc, EState *state, int tcount)
 	char	   *intoName = NULL;
 	int			res;
 	Const		tcount_const;
-	Node		*count = NULL;
+	Node	   *count = NULL;
 
 	switch (operation)
 	{
@@ -833,18 +835,18 @@ _SPI_pquery(QueryDesc *queryDesc, EState *state, int tcount)
 		 * ----------------
 		 */
 		memset(&tcount_const, 0, sizeof(tcount_const));
-		tcount_const.type		   = T_Const;
-		tcount_const.consttype	  = INT4OID;
-		tcount_const.constlen	   = sizeof(int4);
-		tcount_const.constvalue	 = (Datum)tcount;
-		tcount_const.constisnull	= FALSE;
-		tcount_const.constbyval	 = TRUE;
-		tcount_const.constisset	 = FALSE;
-		tcount_const.constiscast	= FALSE;
- 
-		count = (Node *)&tcount_const;
+		tcount_const.type = T_Const;
+		tcount_const.consttype = INT4OID;
+		tcount_const.constlen = sizeof(int4);
+		tcount_const.constvalue = (Datum) tcount;
+		tcount_const.constisnull = FALSE;
+		tcount_const.constbyval = TRUE;
+		tcount_const.constisset = FALSE;
+		tcount_const.constiscast = FALSE;
+
+		count = (Node *) &tcount_const;
 	}
- 
+
 	if (state == NULL)			/* plan preparation */
 		return res;
 #ifdef SPI_EXECUTOR_STATS
@@ -922,7 +924,7 @@ _SPI_procmem()
 }
 
 /*
- * _SPI_begin_call 
+ * _SPI_begin_call
  *
  */
 static int

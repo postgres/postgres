@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nbtree.h,v 1.24 1999/03/28 20:32:34 vadim Exp $
+ * $Id: nbtree.h,v 1.25 1999/05/25 16:13:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,7 +42,7 @@ typedef struct BTPageOpaqueData
 {
 	BlockNumber btpo_prev;
 	BlockNumber btpo_next;
-	BlockNumber	btpo_parent;
+	BlockNumber btpo_parent;
 	uint16		btpo_flags;
 
 #define BTP_LEAF		(1 << 0)

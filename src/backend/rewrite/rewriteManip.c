@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.30 1999/05/12 15:01:55 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.31 1999/05/25 16:10:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,26 +41,27 @@ OffsetVarNodes(Node *node, int offset, int sublevels_up)
 	if (node == NULL)
 		return;
 
-	switch(nodeTag(node)) {
+	switch (nodeTag(node))
+	{
 		case T_TargetEntry:
 			{
-				TargetEntry	*tle = (TargetEntry *)node;
+				TargetEntry *tle = (TargetEntry *) node;
 
 				OffsetVarNodes(
-						(Node *)(tle->expr),
-						offset,
-						sublevels_up);
+							   (Node *) (tle->expr),
+							   offset,
+							   sublevels_up);
 			}
 			break;
 
 		case T_Aggref:
 			{
-				Aggref	*aggref = (Aggref *)node;
+				Aggref	   *aggref = (Aggref *) node;
 
 				OffsetVarNodes(
-						(Node *)(aggref->target),
-						offset,
-						sublevels_up);
+							   (Node *) (aggref->target),
+							   offset,
+							   sublevels_up);
 			}
 			break;
 
@@ -69,54 +70,55 @@ OffsetVarNodes(Node *node, int offset, int sublevels_up)
 
 		case T_Expr:
 			{
-				Expr	*exp = (Expr *)node;
+				Expr	   *exp = (Expr *) node;
 
 				OffsetVarNodes(
-						(Node *)(exp->args),
-						offset,
-						sublevels_up);
+							   (Node *) (exp->args),
+							   offset,
+							   sublevels_up);
 			}
 			break;
 
 		case T_Iter:
 			{
-				Iter	*iter = (Iter *)node;
+				Iter	   *iter = (Iter *) node;
 
 				OffsetVarNodes(
-						(Node *)(iter->iterexpr),
-						offset,
-						sublevels_up);
+							   (Node *) (iter->iterexpr),
+							   offset,
+							   sublevels_up);
 			}
 			break;
 
 		case T_ArrayRef:
 			{
-				ArrayRef	*ref = (ArrayRef *)node;
+				ArrayRef   *ref = (ArrayRef *) node;
 
 				OffsetVarNodes(
-						(Node *)(ref->refupperindexpr),
-						offset,
-						sublevels_up);
+							   (Node *) (ref->refupperindexpr),
+							   offset,
+							   sublevels_up);
 				OffsetVarNodes(
-						(Node *)(ref->reflowerindexpr),
-						offset,
-						sublevels_up);
+							   (Node *) (ref->reflowerindexpr),
+							   offset,
+							   sublevels_up);
 				OffsetVarNodes(
-						(Node *)(ref->refexpr),
-						offset,
-						sublevels_up);
+							   (Node *) (ref->refexpr),
+							   offset,
+							   sublevels_up);
 				OffsetVarNodes(
-						(Node *)(ref->refassgnexpr),
-						offset,
-						sublevels_up);
+							   (Node *) (ref->refassgnexpr),
+							   offset,
+							   sublevels_up);
 			}
 			break;
 
 		case T_Var:
 			{
-				Var	*var = (Var *)node;
+				Var		   *var = (Var *) node;
 
-				if (var->varlevelsup == sublevels_up) {
+				if (var->varlevelsup == sublevels_up)
+				{
 					var->varno += offset;
 					var->varnoold += offset;
 				}
@@ -131,98 +133,104 @@ OffsetVarNodes(Node *node, int offset, int sublevels_up)
 
 		case T_List:
 			{
-				List	*l;
+				List	   *l;
 
-				foreach (l, (List *)node)
+				foreach(l, (List *) node)
 					OffsetVarNodes(
-							(Node *)lfirst(l),
-							offset,
-							sublevels_up);
+								   (Node *) lfirst(l),
+								   offset,
+								   sublevels_up);
 			}
 			break;
 
 		case T_SubLink:
 			{
-				SubLink	*sub = (SubLink *)node;
-				List *tmp_oper, *tmp_lefthand;
+				SubLink    *sub = (SubLink *) node;
+				List	   *tmp_oper,
+						   *tmp_lefthand;
 
-				/* We also have to adapt the variables used in sub->lefthand
-				 * and sub->oper */
+				/*
+				 * We also have to adapt the variables used in
+				 * sub->lefthand and sub->oper
+				 */
 				OffsetVarNodes(
-						(Node *)(sub->lefthand),
-						offset,
-						sublevels_up);
+							   (Node *) (sub->lefthand),
+							   offset,
+							   sublevels_up);
 
 				OffsetVarNodes(
-						(Node *)(sub->subselect),
-						offset,
-						sublevels_up + 1);
+							   (Node *) (sub->subselect),
+							   offset,
+							   sublevels_up + 1);
 
 				/***S*I***/
-				/* Make sure the first argument of sub->oper points to the
-				 * same var as sub->lefthand does otherwise we will
-				 * run into troubles using aggregates (aggno will not be
-				 * set correctly) */
-				tmp_lefthand = sub->lefthand;				
+
+				/*
+				 * Make sure the first argument of sub->oper points to the
+				 * same var as sub->lefthand does otherwise we will run
+				 * into troubles using aggregates (aggno will not be set
+				 * correctly)
+				 */
+				tmp_lefthand = sub->lefthand;
 				foreach(tmp_oper, sub->oper)
-				  {				    
-				    lfirst(((Expr *) lfirst(tmp_oper))->args) = 
-				      lfirst(tmp_lefthand);
-				    tmp_lefthand = lnext(tmp_lefthand);
-				  }	
+				{
+					lfirst(((Expr *) lfirst(tmp_oper))->args) =
+						lfirst(tmp_lefthand);
+					tmp_lefthand = lnext(tmp_lefthand);
+				}
 			}
 			break;
 
 		case T_Query:
 			{
-				Query	*qry = (Query *)node;
+				Query	   *qry = (Query *) node;
 
 				OffsetVarNodes(
-						(Node *)(qry->targetList),
-						offset,
-						sublevels_up);
+							   (Node *) (qry->targetList),
+							   offset,
+							   sublevels_up);
 
 				OffsetVarNodes(
-						(Node *)(qry->qual),
-						offset,
-						sublevels_up);
+							   (Node *) (qry->qual),
+							   offset,
+							   sublevels_up);
 
 				OffsetVarNodes(
-						(Node *)(qry->havingQual),
-						offset,
-						sublevels_up);
+							   (Node *) (qry->havingQual),
+							   offset,
+							   sublevels_up);
 			}
 			break;
 
 		case T_CaseExpr:
 			{
-				CaseExpr	*exp = (CaseExpr *)node;
+				CaseExpr   *exp = (CaseExpr *) node;
 
 				OffsetVarNodes(
-						(Node *)(exp->args),
-						offset,
-						sublevels_up);
+							   (Node *) (exp->args),
+							   offset,
+							   sublevels_up);
 
 				OffsetVarNodes(
-						(Node *)(exp->defresult),
-						offset,
-						sublevels_up);
+							   (Node *) (exp->defresult),
+							   offset,
+							   sublevels_up);
 			}
 			break;
 
 		case T_CaseWhen:
 			{
-				CaseWhen	*exp = (CaseWhen *)node;
+				CaseWhen   *exp = (CaseWhen *) node;
 
 				OffsetVarNodes(
-						(Node *)(exp->expr),
-						offset,
-						sublevels_up);
+							   (Node *) (exp->expr),
+							   offset,
+							   sublevels_up);
 
 				OffsetVarNodes(
-						(Node *)(exp->result),
-						offset,
-						sublevels_up);
+							   (Node *) (exp->result),
+							   offset,
+							   sublevels_up);
 			}
 			break;
 
@@ -245,28 +253,29 @@ ChangeVarNodes(Node *node, int rt_index, int new_index, int sublevels_up)
 	if (node == NULL)
 		return;
 
-	switch(nodeTag(node)) {
+	switch (nodeTag(node))
+	{
 		case T_TargetEntry:
 			{
-				TargetEntry	*tle = (TargetEntry *)node;
+				TargetEntry *tle = (TargetEntry *) node;
 
 				ChangeVarNodes(
-						(Node *)(tle->expr),
-						rt_index,
-						new_index,
-						sublevels_up);
+							   (Node *) (tle->expr),
+							   rt_index,
+							   new_index,
+							   sublevels_up);
 			}
 			break;
 
 		case T_Aggref:
 			{
-				Aggref	*aggref = (Aggref *)node;
+				Aggref	   *aggref = (Aggref *) node;
 
 				ChangeVarNodes(
-						(Node *)(aggref->target),
-						rt_index,
-						new_index,
-						sublevels_up);
+							   (Node *) (aggref->target),
+							   rt_index,
+							   new_index,
+							   sublevels_up);
 			}
 			break;
 
@@ -275,61 +284,62 @@ ChangeVarNodes(Node *node, int rt_index, int new_index, int sublevels_up)
 
 		case T_Expr:
 			{
-				Expr	*exp = (Expr *)node;
+				Expr	   *exp = (Expr *) node;
 
 				ChangeVarNodes(
-						(Node *)(exp->args),
-						rt_index,
-						new_index,
-						sublevels_up);
+							   (Node *) (exp->args),
+							   rt_index,
+							   new_index,
+							   sublevels_up);
 			}
 			break;
 
 		case T_Iter:
 			{
-				Iter	*iter = (Iter *)node;
+				Iter	   *iter = (Iter *) node;
 
 				ChangeVarNodes(
-						(Node *)(iter->iterexpr),
-						rt_index,
-						new_index,
-						sublevels_up);
+							   (Node *) (iter->iterexpr),
+							   rt_index,
+							   new_index,
+							   sublevels_up);
 			}
 			break;
 
 		case T_ArrayRef:
 			{
-				ArrayRef	*ref = (ArrayRef *)node;
+				ArrayRef   *ref = (ArrayRef *) node;
 
 				ChangeVarNodes(
-						(Node *)(ref->refupperindexpr),
-						rt_index,
-						new_index,
-						sublevels_up);
+							   (Node *) (ref->refupperindexpr),
+							   rt_index,
+							   new_index,
+							   sublevels_up);
 				ChangeVarNodes(
-						(Node *)(ref->reflowerindexpr),
-						rt_index,
-						new_index,
-						sublevels_up);
+							   (Node *) (ref->reflowerindexpr),
+							   rt_index,
+							   new_index,
+							   sublevels_up);
 				ChangeVarNodes(
-						(Node *)(ref->refexpr),
-						rt_index,
-						new_index,
-						sublevels_up);
+							   (Node *) (ref->refexpr),
+							   rt_index,
+							   new_index,
+							   sublevels_up);
 				ChangeVarNodes(
-						(Node *)(ref->refassgnexpr),
-						rt_index,
-						new_index,
-						sublevels_up);
+							   (Node *) (ref->refassgnexpr),
+							   rt_index,
+							   new_index,
+							   sublevels_up);
 			}
 			break;
 
 		case T_Var:
 			{
-				Var	*var = (Var *)node;
+				Var		   *var = (Var *) node;
 
 				if (var->varlevelsup == sublevels_up &&
-						var->varno == rt_index) {
+					var->varno == rt_index)
+				{
 					var->varno = new_index;
 					var->varnoold = new_index;
 				}
@@ -344,106 +354,110 @@ ChangeVarNodes(Node *node, int rt_index, int new_index, int sublevels_up)
 
 		case T_List:
 			{
-				List	*l;
+				List	   *l;
 
-				foreach (l, (List *)node)
+				foreach(l, (List *) node)
 					ChangeVarNodes(
-							(Node *)lfirst(l),
-							rt_index,
-							new_index,
-							sublevels_up);
+								   (Node *) lfirst(l),
+								   rt_index,
+								   new_index,
+								   sublevels_up);
 			}
 			break;
 
 		case T_SubLink:
 			{
-				SubLink	*sub = (SubLink *)node;
-				List *tmp_oper, *tmp_lefthand;
-				
-				ChangeVarNodes(
-						(Node *)(sub->lefthand),
-						rt_index,
-						new_index,
-						sublevels_up);
+				SubLink    *sub = (SubLink *) node;
+				List	   *tmp_oper,
+						   *tmp_lefthand;
 
 				ChangeVarNodes(
-						(Node *)(sub->subselect),
-						rt_index,
-						new_index,
-						sublevels_up + 1);
-				
+							   (Node *) (sub->lefthand),
+							   rt_index,
+							   new_index,
+							   sublevels_up);
+
+				ChangeVarNodes(
+							   (Node *) (sub->subselect),
+							   rt_index,
+							   new_index,
+							   sublevels_up + 1);
+
 				/***S*I***/
-				/* Make sure the first argument of sub->oper points to the
-				 * same var as sub->lefthand does otherwise we will
-				 * run into troubles using aggregates (aggno will not be
-				 * set correctly) */
+
+				/*
+				 * Make sure the first argument of sub->oper points to the
+				 * same var as sub->lefthand does otherwise we will run
+				 * into troubles using aggregates (aggno will not be set
+				 * correctly)
+				 */
 				tmp_lefthand = sub->lefthand;
 				foreach(tmp_oper, sub->oper)
-				  {				    
-				    lfirst(((Expr *) lfirst(tmp_oper))->args) = 
-				      lfirst(tmp_lefthand);
-				    tmp_lefthand = lnext(tmp_lefthand);
-				  }	
+				{
+					lfirst(((Expr *) lfirst(tmp_oper))->args) =
+						lfirst(tmp_lefthand);
+					tmp_lefthand = lnext(tmp_lefthand);
+				}
 			}
 			break;
 
 		case T_Query:
 			{
-				Query	*qry = (Query *)node;
+				Query	   *qry = (Query *) node;
 
 				ChangeVarNodes(
-						(Node *)(qry->targetList),
-						rt_index,
-						new_index,
-						sublevels_up);
+							   (Node *) (qry->targetList),
+							   rt_index,
+							   new_index,
+							   sublevels_up);
 
 				ChangeVarNodes(
-						(Node *)(qry->qual),
-						rt_index,
-						new_index,
-						sublevels_up);
+							   (Node *) (qry->qual),
+							   rt_index,
+							   new_index,
+							   sublevels_up);
 
 				ChangeVarNodes(
-						(Node *)(qry->havingQual),
-						rt_index,
-						new_index,
-						sublevels_up);
+							   (Node *) (qry->havingQual),
+							   rt_index,
+							   new_index,
+							   sublevels_up);
 			}
 			break;
 
 		case T_CaseExpr:
 			{
-				CaseExpr	*exp = (CaseExpr *)node;
+				CaseExpr   *exp = (CaseExpr *) node;
 
 				ChangeVarNodes(
-						(Node *)(exp->args),
-						rt_index,
-						new_index,
-						sublevels_up);
+							   (Node *) (exp->args),
+							   rt_index,
+							   new_index,
+							   sublevels_up);
 
 				ChangeVarNodes(
-						(Node *)(exp->defresult),
-						rt_index,
-						new_index,
-						sublevels_up);
+							   (Node *) (exp->defresult),
+							   rt_index,
+							   new_index,
+							   sublevels_up);
 			}
 			break;
 
 		case T_CaseWhen:
 			{
-				CaseWhen	*exp = (CaseWhen *)node;
+				CaseWhen   *exp = (CaseWhen *) node;
 
 				ChangeVarNodes(
-						(Node *)(exp->expr),
-						rt_index,
-						new_index,
-						sublevels_up);
+							   (Node *) (exp->expr),
+							   rt_index,
+							   new_index,
+							   sublevels_up);
 
 				ChangeVarNodes(
-						(Node *)(exp->result),
-						rt_index,
-						new_index,
-						sublevels_up);
+							   (Node *) (exp->result),
+							   rt_index,
+							   new_index,
+							   sublevels_up);
 			}
 			break;
 
@@ -513,7 +527,7 @@ AddNotHavingQual(Query *parsetree, Node *havingQual)
 	/***S*I***/
 	/* INTERSECT want's the original, but we need to copy - Jan */
 	/* copy = (Node *) make_notclause((Expr *)havingQual); */
-	copy = (Node *)make_notclause( (Expr *)copyObject(havingQual));
+	copy = (Node *) make_notclause((Expr *) copyObject(havingQual));
 
 	AddHavingQual(parsetree, copy);
 }
@@ -529,7 +543,7 @@ AddNotQual(Query *parsetree, Node *qual)
 	/***S*I***/
 	/* INTERSECT want's the original, but we need to copy - Jan */
 	/* copy = (Node *) make_notclause((Expr *)qual); */
-	copy = (Node *) make_notclause((Expr *)copyObject(qual));
+	copy = (Node *) make_notclause((Expr *) copyObject(qual));
 
 	AddQual(parsetree, copy);
 }
@@ -538,24 +552,24 @@ AddNotQual(Query *parsetree, Node *qual)
 void
 AddGroupClause(Query *parsetree, List *group_by, List *tlist)
 {
-	List			*l;
-	List			*tl;
-	GroupClause		*groupclause;
-	TargetEntry		*tle;
-	int				new_resno;
+	List	   *l;
+	List	   *tl;
+	GroupClause *groupclause;
+	TargetEntry *tle;
+	int			new_resno;
 
 	new_resno = length(parsetree->targetList);
 
-	foreach (l, group_by)
+	foreach(l, group_by)
 	{
-		groupclause = (GroupClause *)copyObject(lfirst(l));
+		groupclause = (GroupClause *) copyObject(lfirst(l));
 		tle = NULL;
 		foreach(tl, tlist)
 		{
-			if (((TargetEntry *)lfirst(tl))->resdom->resgroupref ==
-						groupclause->tleGroupref)
+			if (((TargetEntry *) lfirst(tl))->resdom->resgroupref ==
+				groupclause->tleGroupref)
 			{
-				tle = (TargetEntry *)copyObject(lfirst(tl));
+				tle = (TargetEntry *) copyObject(lfirst(tl));
 				break;
 			}
 		}
@@ -567,7 +581,7 @@ AddGroupClause(Query *parsetree, List *group_by, List *tlist)
 		tle->resdom->resgroupref = length(parsetree->groupClause) + 1;
 		groupclause->tleGroupref = tle->resdom->resgroupref;
 
-		parsetree->targetList  = lappend(parsetree->targetList, tle);
+		parsetree->targetList = lappend(parsetree->targetList, tle);
 		parsetree->groupClause = lappend(parsetree->groupClause, groupclause);
 	}
 }
@@ -604,6 +618,7 @@ FixResdomTypes(List *tlist)
 		}
 	}
 }
+
 #endif
 
 static Node *
@@ -735,10 +750,10 @@ FixNew(RewriteInfo *info, Query *parsetree)
 {
 	ResolveNew(info, parsetree->targetList,
 			   (Node **) &(info->rule_action->targetList), 0);
-	ResolveNew(info, parsetree->targetList, 
-	           (Node **) &info->rule_action->qual, 0);
-	ResolveNew(info, parsetree->targetList, 
-	           (Node **) &(info->rule_action->groupClause), 0);
+	ResolveNew(info, parsetree->targetList,
+			   (Node **) &info->rule_action->qual, 0);
+	ResolveNew(info, parsetree->targetList,
+			   (Node **) &(info->rule_action->groupClause), 0);
 }
 
 static void
@@ -797,7 +812,7 @@ nodeHandleRIRAttributeRule(Node **nodePtr,
 			break;
 		case T_ArrayRef:
 			{
-				ArrayRef	   *ref = (ArrayRef *) node;
+				ArrayRef   *ref = (ArrayRef *) node;
 
 				nodeHandleRIRAttributeRule((Node **) (&(ref->refupperindexpr)), rtable,
 										   targetlist, rt_index, attr_num,
@@ -972,7 +987,7 @@ nodeHandleViewRule(Node **nodePtr,
 			break;
 		case T_ArrayRef:
 			{
-				ArrayRef	   *ref = (ArrayRef *) node;
+				ArrayRef   *ref = (ArrayRef *) node;
 
 				nodeHandleViewRule((Node **) (&(ref->refupperindexpr)),
 								   rtable, targetlist,
@@ -1006,6 +1021,7 @@ nodeHandleViewRule(Node **nodePtr,
 						*nodePtr = make_null(((Var *) node)->vartype);
 					else
 					{
+
 						/*
 						 * This is a hack: The varlevelsup of the orignal
 						 * variable and the new one should be the same.
@@ -1026,7 +1042,7 @@ nodeHandleViewRule(Node **nodePtr,
 							((Var *) *nodePtr)->varlevelsup = this_varlevelsup;
 						else
 							nodeHandleViewRule(&n, rtable, targetlist,
-										   rt_index, modified, sublevels_up);
+									   rt_index, modified, sublevels_up);
 					}
 					*modified = TRUE;
 				}
@@ -1048,17 +1064,18 @@ nodeHandleViewRule(Node **nodePtr,
 			{
 				SubLink    *sublink = (SubLink *) node;
 				Query	   *query = (Query *) sublink->subselect;
-				List *tmp_lefthand, *tmp_oper;
-				
+				List	   *tmp_lefthand,
+						   *tmp_oper;
+
 
 				nodeHandleViewRule((Node **) &(query->qual), rtable, targetlist,
 								   rt_index, modified, sublevels_up + 1);
 
 				/***S*H*D***/
 				nodeHandleViewRule((Node **) &(query->havingQual), rtable, targetlist,
-						   rt_index, modified, sublevels_up + 1);
+								   rt_index, modified, sublevels_up + 1);
 				nodeHandleViewRule((Node **) &(query->targetList), rtable, targetlist,
-						   rt_index, modified, sublevels_up + 1);
+								   rt_index, modified, sublevels_up + 1);
 
 
 				/*
@@ -1076,21 +1093,19 @@ nodeHandleViewRule(Node **nodePtr,
 				 */
 				pfree(lfirst(((Expr *) lfirst(sublink->oper))->args));
 				lfirst(((Expr *) lfirst(sublink->oper))->args) =
-							lfirst(sublink->lefthand);
+					lfirst(sublink->lefthand);
 
 
 				/***S*I***/
 				/* INTERSECT want's this - Jan */
+
 				/*
- 				tmp_lefthand = sublink->lefthand;				
- 				foreach(tmp_oper, sublink->oper)
- 				  {				    
- 				    lfirst(((Expr *) lfirst(tmp_oper))->args) = 
- 				      lfirst(tmp_lefthand);
- 				    tmp_lefthand = lnext(tmp_lefthand);
- 				  }								
-				*/
-  			}
+				 * tmp_lefthand = sublink->lefthand; foreach(tmp_oper,
+				 * sublink->oper) { lfirst(((Expr *)
+				 * lfirst(tmp_oper))->args) = lfirst(tmp_lefthand);
+				 * tmp_lefthand = lnext(tmp_lefthand); }
+				 */
+			}
 			break;
 		default:
 			/* ignore the others */
@@ -1119,5 +1134,5 @@ HandleViewRule(Query *parsetree,
 	nodeHandleViewRule((Node **) (&(parsetree->groupClause)), rtable, targetlist, rt_index,
 					   modified, 0);
 }
-#endif
 
+#endif

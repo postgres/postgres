@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.2 1999/02/13 23:16:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.3 1999/05/25 16:10:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,7 @@
  *
  */
 bool
-valid_or_clause(RestrictInfo *restrictinfo)
+valid_or_clause(RestrictInfo * restrictinfo)
 {
 	if (restrictinfo != NULL &&
 		!single_node((Node *) restrictinfo->clause) &&
@@ -117,7 +117,7 @@ get_relattvals(List *restrictinfo_list,
 }
 
 /*
- * get_joinvars 
+ * get_joinvars
  *	  Given a list of join restrictinfo nodes to be used with the index
  *	  of an inner join relation, return three lists consisting of:
  *				the attributes corresponding to the inner join relation
@@ -184,7 +184,7 @@ get_opnos(List *restrictinfo_list)
 	{
 		temp = (RestrictInfo *) lfirst(i);
 		result = lappendi(result,
-					 (((Oper *) temp->clause->oper)->opno));
+						  (((Oper *) temp->clause->oper)->opno));
 	}
 	return result;
 }

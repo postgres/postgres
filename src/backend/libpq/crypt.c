@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * crypt.c
- *	Look into pg_shadow and check the encrypted password with 
+ *	Look into pg_shadow and check the encrypted password with
  *	the one passed in from the frontend.
  *
  * Modification History
@@ -9,7 +9,7 @@
  * Dec 17, 1997 - Todd A. Brandys
  *	Orignal Version Completed.
  *
- * $Id: crypt.c,v 1.16 1999/05/09 00:54:30 tgl Exp $
+ * $Id: crypt.c,v 1.17 1999/05/25 16:08:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,8 +38,8 @@ char *
 crypt_getpwdfilename()
 {
 
-	static char	*pfnam = NULL;
-	int					bufsize;
+	static char *pfnam = NULL;
+	int			bufsize;
 
 	bufsize = strlen(DataDir) + strlen(CRYPT_PWD_FILE) + 2;
 	pfnam = (char *) palloc(bufsize);
@@ -54,9 +54,9 @@ char *
 crypt_getpwdreloadfilename()
 {
 
-	static char	*rpfnam = NULL;
-	char				*pwdfilename;
-	int					bufsize;
+	static char *rpfnam = NULL;
+	char	   *pwdfilename;
+	int			bufsize;
 
 	pwdfilename = crypt_getpwdfilename();
 	bufsize = strlen(pwdfilename) + strlen(CRYPT_PWD_RELOAD_SUFX) + 1;
@@ -147,9 +147,7 @@ crypt_loadpwdfile()
 		{						/* free the old data only if this is a
 								 * reload */
 			while (pwd_cache_count--)
-			{
 				pfree((void *) pwd_cache[pwd_cache_count]);
-			}
 			pfree((void *) pwd_cache);
 			pwd_cache = NULL;
 			pwd_cache_count = 0;
@@ -226,9 +224,9 @@ int
 crypt_getloginfo(const char *user, char **passwd, char **valuntil)
 {
 
-	char	*pwd,
-				*valdate;
-	void	*fakeout;
+	char	   *pwd,
+			   *valdate;
+	void	   *fakeout;
 
 	*passwd = NULL;
 	*valuntil = NULL;
@@ -236,8 +234,8 @@ crypt_getloginfo(const char *user, char **passwd, char **valuntil)
 
 	if (pwd_cache)
 	{
-		char  **pwd_entry;
-		char	user_search[NAMEDATALEN + 2];
+		char	  **pwd_entry;
+		char		user_search[NAMEDATALEN + 2];
 
 		snprintf(user_search, NAMEDATALEN + 2, "%s\t", user);
 		fakeout = (void *) &user_search;
@@ -261,28 +259,22 @@ int
 crypt_verify(Port *port, const char *user, const char *pgpass)
 {
 
-	char					*passwd,
-								*valuntil,
-								*crypt_pwd;
-	int						retval = STATUS_ERROR;
-	AbsoluteTime	vuntil,
-								current;
+	char	   *passwd,
+			   *valuntil,
+			   *crypt_pwd;
+	int			retval = STATUS_ERROR;
+	AbsoluteTime vuntil,
+				current;
 
 	if (crypt_getloginfo(user, &passwd, &valuntil) == STATUS_ERROR)
-	{
 		return STATUS_ERROR;
-	}
 
 	if (passwd == NULL || *passwd == '\0')
 	{
 		if (passwd)
-		{
 			pfree((void *) passwd);
-		}
 		if (valuntil)
-		{
 			pfree((void *) valuntil);
-		}
 		return STATUS_ERROR;
 	}
 
@@ -291,38 +283,29 @@ crypt_verify(Port *port, const char *user, const char *pgpass)
 	 * authentication method being used for this connection.
 	 */
 
-	crypt_pwd = 
-			(port->auth_method == uaCrypt ? crypt(passwd, port->salt) : passwd);
+	crypt_pwd =
+		(port->auth_method == uaCrypt ? crypt(passwd, port->salt) : passwd);
 
 	if (!strcmp(pgpass, crypt_pwd))
 	{
+
 		/*
 		 * check here to be sure we are not past valuntil
 		 */
 		if (!valuntil || strcmp(valuntil, "\\N") == 0)
-		{
 			vuntil = INVALID_ABSTIME;
-		}
 		else
-		{
 			vuntil = nabstimein(valuntil);
-		}
 		current = GetCurrentAbsoluteTime();
 		if (vuntil != INVALID_ABSTIME && vuntil < current)
-		{
 			retval = STATUS_ERROR;
-		}
 		else
-		{
 			retval = STATUS_OK;
-		}
 	}
 
 	pfree((void *) passwd);
 	if (valuntil)
-	{
 		pfree((void *) valuntil);
-	}
 
 	return retval;
 }

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeNestloop.h,v 1.9 1999/02/13 23:21:27 momjian Exp $
+ * $Id: nodeNestloop.h,v 1.10 1999/05/25 16:13:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,6 @@ extern bool ExecInitNestLoop(NestLoop *node, EState *estate, Plan *parent);
 extern int	ExecCountSlotsNestLoop(NestLoop *node);
 extern void ExecEndNestLoop(NestLoop *node);
 extern void ExecReScanNestLoop(NestLoop *node, ExprContext *exprCtxt,
-								Plan *parent);
+				   Plan *parent);
 
 #endif	 /* NODENESTLOOP_H */

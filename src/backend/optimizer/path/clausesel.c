@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.19 1999/05/16 19:45:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.20 1999/05/25 16:09:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -132,7 +132,7 @@ set_rest_selec(Query *root, List *restrictinfo_list)
 		if (cost_clause <= 0 || valid_or_clause(clausenode))
 		{
 			clausenode->selectivity = compute_clause_selec(root,
-									 (Node *) clausenode->clause,
+											 (Node *) clausenode->clause,
 									 lcons(makeFloat(cost_clause), NIL));
 		}
 	}
@@ -256,7 +256,7 @@ compute_selec(Query *root, List *clauses, List *or_selectivities)
 	else if (not_clause((Node *) clause))
 	{
 		/* negate this baby */
-		return 1 - compute_selec(root, ((Expr *)clause)->args, or_selectivities);
+		return 1 - compute_selec(root, ((Expr *) clause)->args, or_selectivities);
 	}
 	else if (is_subplan((Node *) clause))
 	{

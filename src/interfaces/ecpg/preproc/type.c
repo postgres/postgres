@@ -123,7 +123,7 @@ get_type(enum ECPGttype typ)
 {
 	switch (typ)
 	{
-		case ECPGt_char:
+			case ECPGt_char:
 			return ("ECPGt_char");
 			break;
 		case ECPGt_unsigned_char:
@@ -161,14 +161,15 @@ get_type(enum ECPGttype typ)
 		case ECPGt_NO_INDICATOR:		/* no indicator */
 			return ("ECPGt_NO_INDICATOR");
 			break;
-		case ECPGt_char_variable:			/* string that should not be quoted */
+		case ECPGt_char_variable:		/* string that should not be
+										 * quoted */
 			return ("ECPGt_char_variable");
 			break;
 		default:
 			sprintf(errortext, "illegal variable type %d\n", typ);
 			yyerror(errortext);
 	}
-	
+
 	return NULL;
 }
 
@@ -208,16 +209,16 @@ ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * typ, const char *in
 			switch (typ->u.element->typ)
 			{
 				case ECPGt_array:
-					yyerror("No nested arrays allowed (except strings)");	/* array of array */
+					yyerror("No nested arrays allowed (except strings)");		/* array of array */
 					break;
 				case ECPGt_struct:
 				case ECPGt_union:
-					ECPGdump_a_struct(o, name, ind_name, typ->size, typ->u.element, ind_typ->u.element, NULL, prefix, ind_prefix); 
+					ECPGdump_a_struct(o, name, ind_name, typ->size, typ->u.element, ind_typ->u.element, NULL, prefix, ind_prefix);
 					break;
-				default:					
+				default:
 					if (!IS_SIMPLE_TYPE(typ->u.element->typ))
 						yyerror("Internal error: unknown datatype, please inform pgsql-bugs@postgresql.org");
-	
+
 					ECPGdump_a_simple(o, name, typ->u.element->typ,
 						  typ->u.element->size, typ->size, NULL, prefix);
 					if (ind_typ->typ == ECPGt_NO_INDICATOR)
@@ -227,17 +228,17 @@ ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * typ, const char *in
 						if (ind_typ->typ != ECPGt_array)
 						{
 							fprintf(stderr, "Indicator for an array has to be array too.\n");
-						        exit(INDICATOR_NOT_ARRAY);
-						}                	
+							exit(INDICATOR_NOT_ARRAY);
+						}
 						ECPGdump_a_simple(o, ind_name, ind_typ->u.element->typ,
-									  ind_typ->u.element->size, ind_typ->size, NULL, prefix);
+										  ind_typ->u.element->size, ind_typ->size, NULL, prefix);
 					}
 			}
 			break;
 		case ECPGt_struct:
 			ECPGdump_a_struct(o, name, ind_name, 1, typ, ind_typ, NULL, prefix, ind_prefix);
 			break;
-		case ECPGt_union: /* cannot dump a complete union */
+		case ECPGt_union:		/* cannot dump a complete union */
 			yyerror("Type of union has to be specified");
 			break;
 		case ECPGt_char_variable:
@@ -364,12 +365,12 @@ ECPGfree_type(struct ECPGtype * typ)
 {
 	if (!IS_SIMPLE_TYPE(typ->typ))
 	{
-		switch(typ->typ)
+		switch (typ->typ)
 		{
-			case ECPGt_array:
+				case ECPGt_array:
 				switch (typ->u.element->typ)
 				{
-					case ECPGt_array:
+						case ECPGt_array:
 						yyerror("internal error, found multi-dimensional array\n");
 						break;
 					case ECPGt_struct:
@@ -378,7 +379,7 @@ ECPGfree_type(struct ECPGtype * typ)
 						ECPGfree_struct_member(typ->u.element->u.members);
 						free(typ->u.members);
 						break;
-					default:					
+					default:
 						if (!IS_SIMPLE_TYPE(typ->u.element->typ))
 							yyerror("Internal error: unknown datatype, please inform pgsql-bugs@postgresql.org");
 

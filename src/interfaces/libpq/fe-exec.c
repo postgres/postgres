@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.79 1999/05/12 04:38:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.80 1999/05/25 16:15:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,7 +75,7 @@ static int	getNotice(PGconn *conn);
  * doesn't tell us up front how many tuples will be returned.)
  * All other subsidiary storage for a PGresult is kept in PGresult_data blocks
  * of size PGRESULT_DATA_BLOCKSIZE.  The overhead at the start of each block
- * is just a link to the next one, if any.  Free-space management info is
+ * is just a link to the next one, if any.	Free-space management info is
  * kept in the owning PGresult.
  * A query returning a small amount of data will thus require three malloc
  * calls: one for the PGresult, one for the tuples pointer array, and one
@@ -90,10 +90,10 @@ static int	getNotice(PGconn *conn);
  * PGRESULT_DATA_BLOCKSIZE: size of a standard allocation block, in bytes
  * PGRESULT_ALIGN_BOUNDARY: assumed alignment requirement for binary data
  * PGRESULT_SEP_ALLOC_THRESHOLD: objects bigger than this are given separate
- *   blocks, instead of being crammed into a regular allocation block.
+ *	 blocks, instead of being crammed into a regular allocation block.
  * Requirements for correct function are:
  * PGRESULT_ALIGN_BOUNDARY must be a multiple of the alignment requirements
- *		of all machine data types.  (Currently this is set from configure
+ *		of all machine data types.	(Currently this is set from configure
  *		tests, so it should be OK automatically.)
  * PGRESULT_SEP_ALLOC_THRESHOLD + PGRESULT_BLOCK_OVERHEAD <=
  *			PGRESULT_DATA_BLOCKSIZE
@@ -110,7 +110,7 @@ static int	getNotice(PGconn *conn);
 #define MAX(a,b)  ((a) > (b) ? (a) : (b))
 
 #define PGRESULT_DATA_BLOCKSIZE		2048
-#define PGRESULT_ALIGN_BOUNDARY		MAXIMUM_ALIGNOF /* from configure */
+#define PGRESULT_ALIGN_BOUNDARY		MAXIMUM_ALIGNOF		/* from configure */
 #define PGRESULT_BLOCK_OVERHEAD		MAX(sizeof(PGresult_data), PGRESULT_ALIGN_BOUNDARY)
 #define PGRESULT_SEP_ALLOC_THRESHOLD	(PGRESULT_DATA_BLOCKSIZE / 2)
 
@@ -126,7 +126,7 @@ static int	getNotice(PGconn *conn);
  * and the Perl5 interface, so maybe it's not so unreasonable.
  */
 
-PGresult *
+PGresult   *
 PQmakeEmptyPGresult(PGconn *conn, ExecStatusType status)
 {
 	PGresult   *result;
@@ -180,21 +180,23 @@ PQmakeEmptyPGresult(PGconn *conn, ExecStatusType status)
 void *
 pqResultAlloc(PGresult *res, int nBytes, int isBinary)
 {
-	char		   *space;
-	PGresult_data  *block;
+	char	   *space;
+	PGresult_data *block;
 
-	if (! res)
+	if (!res)
 		return NULL;
 
 	if (nBytes <= 0)
 		return res->null_field;
 
-	/* If alignment is needed, round up the current position to an
+	/*
+	 * If alignment is needed, round up the current position to an
 	 * alignment boundary.
 	 */
 	if (isBinary)
 	{
-		int offset = res->curOffset % PGRESULT_ALIGN_BOUNDARY;
+		int			offset = res->curOffset % PGRESULT_ALIGN_BOUNDARY;
+
 		if (offset)
 		{
 			res->curOffset += PGRESULT_ALIGN_BOUNDARY - offset;
@@ -211,20 +213,24 @@ pqResultAlloc(PGresult *res, int nBytes, int isBinary)
 		return space;
 	}
 
-	/* If the requested object is very large, give it its own block; this
-	 * avoids wasting what might be most of the current block to start a new
-	 * block.  (We'd have to special-case requests bigger than the block size
-	 * anyway.)  The object is always given binary alignment in this case.
+	/*
+	 * If the requested object is very large, give it its own block; this
+	 * avoids wasting what might be most of the current block to start a
+	 * new block.  (We'd have to special-case requests bigger than the
+	 * block size anyway.)	The object is always given binary alignment in
+	 * this case.
 	 */
 	if (nBytes >= PGRESULT_SEP_ALLOC_THRESHOLD)
 	{
 		block = (PGresult_data *) malloc(nBytes + PGRESULT_BLOCK_OVERHEAD);
-		if (! block)
+		if (!block)
 			return NULL;
 		space = block->space + PGRESULT_BLOCK_OVERHEAD;
 		if (res->curBlock)
 		{
-			/* Tuck special block below the active block, so that we don't
+
+			/*
+			 * Tuck special block below the active block, so that we don't
 			 * have to waste the free space in the active block.
 			 */
 			block->next = res->curBlock->next;
@@ -235,14 +241,14 @@ pqResultAlloc(PGresult *res, int nBytes, int isBinary)
 			/* Must set up the new block as the first active block. */
 			block->next = NULL;
 			res->curBlock = block;
-			res->spaceLeft = 0;	/* be sure it's marked full */
+			res->spaceLeft = 0; /* be sure it's marked full */
 		}
 		return space;
 	}
 
 	/* Otherwise, start a new block. */
 	block = (PGresult_data *) malloc(PGRESULT_DATA_BLOCKSIZE);
-	if (! block)
+	if (!block)
 		return NULL;
 	block->next = res->curBlock;
 	res->curBlock = block;
@@ -272,7 +278,8 @@ pqResultAlloc(PGresult *res, int nBytes, int isBinary)
 char *
 pqResultStrdup(PGresult *res, const char *str)
 {
-	char	*space = (char*) pqResultAlloc(res, strlen(str)+1, FALSE);
+	char	   *space = (char *) pqResultAlloc(res, strlen(str) + 1, FALSE);
+
 	if (space)
 		strcpy(space, str);
 	return space;
@@ -300,13 +307,14 @@ pqSetResultError(PGresult *res, const char *msg)
 void
 PQclear(PGresult *res)
 {
-	PGresult_data  *block;
+	PGresult_data *block;
 
 	if (!res)
 		return;
 
 	/* Free all the subsidiary blocks */
-	while ((block = res->curBlock) != NULL) {
+	while ((block = res->curBlock) != NULL)
+	{
 		res->curBlock = block->next;
 		free(block);
 	}
@@ -343,6 +351,7 @@ addTuple(PGresult *res, PGresAttValue *tup)
 {
 	if (res->ntups >= res->tupArrSize)
 	{
+
 		/*
 		 * Try to grow the array.
 		 *
@@ -351,19 +360,19 @@ addTuple(PGresult *res, PGresAttValue *tup)
 		 * While ANSI says that realloc() should act like malloc() in that
 		 * case, some old C libraries (like SunOS 4.1.x) coredump instead.
 		 * On failure realloc is supposed to return NULL without damaging
-		 * the existing allocation.
-		 * Note that the positions beyond res->ntups are garbage, not
-		 * necessarily NULL.
+		 * the existing allocation. Note that the positions beyond
+		 * res->ntups are garbage, not necessarily NULL.
 		 */
-		int newSize = (res->tupArrSize > 0) ? res->tupArrSize * 2 : 128;
-		PGresAttValue ** newTuples;
+		int			newSize = (res->tupArrSize > 0) ? res->tupArrSize * 2 : 128;
+		PGresAttValue **newTuples;
+
 		if (res->tuples == NULL)
 			newTuples = (PGresAttValue **)
 				malloc(newSize * sizeof(PGresAttValue *));
 		else
 			newTuples = (PGresAttValue **)
 				realloc(res->tuples, newSize * sizeof(PGresAttValue *));
-		if (! newTuples)
+		if (!newTuples)
 			return FALSE;		/* malloc or realloc failed */
 		res->tupArrSize = newSize;
 		res->tuples = newTuples;
@@ -537,7 +546,7 @@ parseInput(PGconn *conn)
 				case 'C':		/* command complete */
 					if (conn->result == NULL)
 						conn->result = PQmakeEmptyPGresult(conn,
-														   PGRES_COMMAND_OK);
+													   PGRES_COMMAND_OK);
 					if (pqGets(conn->result->cmdStatus, CMDSTATUS_LEN, conn))
 						return;
 					conn->asyncStatus = PGASYNC_READY;
@@ -567,7 +576,7 @@ parseInput(PGconn *conn)
 					}
 					if (conn->result == NULL)
 						conn->result = PQmakeEmptyPGresult(conn,
-														   PGRES_EMPTY_QUERY);
+													  PGRES_EMPTY_QUERY);
 					conn->asyncStatus = PGASYNC_READY;
 					break;
 				case 'K':		/* secret key data from the backend */
@@ -653,7 +662,7 @@ parseInput(PGconn *conn)
 					sprintf(conn->errorMessage,
 					"unknown protocol character '%c' read from backend.  "
 					"(The protocol character is the first character the "
-					"backend sends in response to a query it receives).\n",
+							"backend sends in response to a query it receives).\n",
 							id);
 					/* Discard the unexpected message; good idea?? */
 					conn->inStart = conn->inEnd;
@@ -724,12 +733,13 @@ getRowDescriptions(PGconn *conn)
 			PQclear(result);
 			return EOF;
 		}
+
 		/*
 		 * Since pqGetInt treats 2-byte integers as unsigned, we need to
 		 * coerce the special value "-1" to signed form.  (-1 is sent for
 		 * variable-length fields.)  Formerly, libpq effectively did a
-		 * sign-extension on the 2-byte value by storing it in a signed short.
-		 * Now we only coerce the single value 65535 == -1; values
+		 * sign-extension on the 2-byte value by storing it in a signed
+		 * short. Now we only coerce the single value 65535 == -1; values
 		 * 32768..65534 are taken as valid field lengths.
 		 */
 		if (typlen == 0xFFFF)
@@ -825,7 +835,7 @@ getAnotherTuple(PGconn *conn, int binary)
 				vlen = 0;
 			if (tup[i].value == NULL)
 			{
-				tup[i].value = (char *) pqResultAlloc(result, vlen+1, binary);
+				tup[i].value = (char *) pqResultAlloc(result, vlen + 1, binary);
 				if (tup[i].value == NULL)
 					goto outOfMemory;
 			}
@@ -850,7 +860,7 @@ getAnotherTuple(PGconn *conn, int binary)
 	}
 
 	/* Success!  Store the completed tuple in the result */
-	if (! addTuple(result, tup))
+	if (!addTuple(result, tup))
 		goto outOfMemory;
 	/* and reset for a new message */
 	conn->curTuple = NULL;
@@ -928,23 +938,25 @@ PQgetResult(PGconn *conn)
 			res = NULL;			/* query is complete */
 			break;
 		case PGASYNC_READY:
+
 			/*
-			 * conn->result is the PGresult to return.  If it is NULL
-			 * (which probably shouldn't happen) we assume there is
-			 * an appropriate error message in conn->errorMessage.
+			 * conn->result is the PGresult to return.	If it is NULL
+			 * (which probably shouldn't happen) we assume there is an
+			 * appropriate error message in conn->errorMessage.
 			 */
 			res = conn->result;
-			conn->result = NULL;		/* handing over ownership to caller */
+			conn->result = NULL;/* handing over ownership to caller */
 			conn->curTuple = NULL;		/* just in case */
 			if (!res)
-			{
 				res = PQmakeEmptyPGresult(conn, PGRES_FATAL_ERROR);
-			}
 			else
 			{
-				/* Make sure PQerrorMessage agrees with result; it could be
-				 * that we have done other operations that changed
-				 * errorMessage since the result's error message was saved.
+
+				/*
+				 * Make sure PQerrorMessage agrees with result; it could
+				 * be that we have done other operations that changed
+				 * errorMessage since the result's error message was
+				 * saved.
 				 */
 				strcpy(conn->errorMessage, PQresultErrorMessage(res));
 			}
@@ -1186,13 +1198,13 @@ PQgetline(PGconn *conn, char *s, int maxlen)
  * then return to normal processing.
  *
  * RETURNS:
- *   -1    if the end-of-copy-data marker has been recognized
- *   0     if no data is available
- *   >0    the number of bytes returned.
+ *	 -1    if the end-of-copy-data marker has been recognized
+ *	 0	   if no data is available
+ *	 >0    the number of bytes returned.
  * The data returned will not extend beyond a newline character.  If possible
  * a whole line will be returned at one time.  But if the buffer offered by
  * the caller is too small to hold a line sent by the backend, then a partial
- * data line will be returned.  This can be detected by testing whether the
+ * data line will be returned.	This can be detected by testing whether the
  * last returned byte is '\n' or not.
  * The returned string is *not* null-terminated.
  */
@@ -1200,18 +1212,17 @@ PQgetline(PGconn *conn, char *s, int maxlen)
 int
 PQgetlineAsync(PGconn *conn, char *buffer, int bufsize)
 {
-    int		avail;
+	int			avail;
 
 	if (!conn || conn->asyncStatus != PGASYNC_COPY_OUT)
 		return -1;				/* we are not doing a copy... */
 
 	/*
-	 * Move data from libpq's buffer to the caller's.
-	 * We want to accept data only in units of whole lines,
-	 * not partial lines.  This ensures that we can recognize
-	 * the terminator line "\\.\n".  (Otherwise, if it happened
-	 * to cross a packet/buffer boundary, we might hand the first
-	 * one or two characters off to the caller, which we shouldn't.)
+	 * Move data from libpq's buffer to the caller's. We want to accept
+	 * data only in units of whole lines, not partial lines.  This ensures
+	 * that we can recognize the terminator line "\\.\n".  (Otherwise, if
+	 * it happened to cross a packet/buffer boundary, we might hand the
+	 * first one or two characters off to the caller, which we shouldn't.)
 	 */
 
 	conn->inCursor = conn->inStart;
@@ -1219,7 +1230,8 @@ PQgetlineAsync(PGconn *conn, char *buffer, int bufsize)
 	avail = bufsize;
 	while (avail > 0 && conn->inCursor < conn->inEnd)
 	{
-		char c = conn->inBuffer[conn->inCursor++];
+		char		c = conn->inBuffer[conn->inCursor++];
+
 		*buffer++ = c;
 		--avail;
 		if (c == '\n')
@@ -1227,7 +1239,7 @@ PQgetlineAsync(PGconn *conn, char *buffer, int bufsize)
 			/* Got a complete line; mark the data removed from libpq */
 			conn->inStart = conn->inCursor;
 			/* Is it the endmarker line? */
-			if (bufsize-avail == 3 && buffer[-3] == '\\' && buffer[-2] == '.')
+			if (bufsize - avail == 3 && buffer[-3] == '\\' && buffer[-2] == '.')
 				return -1;
 			/* No, return the data line to the caller */
 			return bufsize - avail;
@@ -1235,13 +1247,13 @@ PQgetlineAsync(PGconn *conn, char *buffer, int bufsize)
 	}
 
 	/*
-	 * We don't have a complete line.
-	 * We'd prefer to leave it in libpq's buffer until the rest arrives,
-	 * but there is a special case: what if the line is longer than the
-	 * buffer the caller is offering us?  In that case we'd better hand over
-	 * a partial line, else we'd get into an infinite loop.
-	 * Do this in a way that ensures we can't misrecognize a terminator
-	 * line later: leave last 3 characters in libpq buffer.
+	 * We don't have a complete line. We'd prefer to leave it in libpq's
+	 * buffer until the rest arrives, but there is a special case: what if
+	 * the line is longer than the buffer the caller is offering us?  In
+	 * that case we'd better hand over a partial line, else we'd get into
+	 * an infinite loop. Do this in a way that ensures we can't
+	 * misrecognize a terminator line later: leave last 3 characters in
+	 * libpq buffer.
 	 */
 	if (avail == 0 && bufsize > 3)
 	{
@@ -1737,13 +1749,13 @@ PQoidStatus(PGresult *res)
 
 	/*----------
 	 * The cmdStatus string looks like
-	 *     INSERT oid count\0
+	 *	   INSERT oid count\0
 	 * In order to be able to return an ordinary C string without
 	 * damaging the result for PQcmdStatus or PQcmdTuples, we copy
 	 * the oid part of the string to just after the null, so that
 	 * cmdStatus looks like
-	 *     INSERT oid count\0oid\0
-	 *                       ^ our return value points here
+	 *	   INSERT oid count\0oid\0
+	 *						 ^ our return value points here
 	 * Pretty klugy eh?  This routine should've just returned an Oid value.
 	 *----------
 	 */
@@ -1802,7 +1814,7 @@ PQcmdTuples(PGresult *res)
 			if (res->conn)
 			{
 				sprintf(res->conn->errorMessage,
-						"PQcmdTuples (INSERT) -- there's no # of tuples\n");
+					 "PQcmdTuples (INSERT) -- there's no # of tuples\n");
 				DONOTICE(res->conn, res->conn->errorMessage);
 			}
 			return "";

@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.76 1999/05/10 00:44:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.77 1999/05/25 16:08:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,111 +70,138 @@ static int	CountTuples(Relation relation);
 
 static int	lineno;
 
-/* 
+/*
  * Internal communications functions
  */
 inline void CopySendData(void *databuf, int datasize, FILE *fp);
 inline void CopySendString(char *str, FILE *fp);
 inline void CopySendChar(char c, FILE *fp);
 inline void CopyGetData(void *databuf, int datasize, FILE *fp);
-inline int CopyGetChar(FILE *fp);
-inline int CopyGetEof(FILE *fp);
-inline int CopyPeekChar(FILE *fp);
+inline int	CopyGetChar(FILE *fp);
+inline int	CopyGetEof(FILE *fp);
+inline int	CopyPeekChar(FILE *fp);
 inline void CopyDonePeek(FILE *fp, int c, int pickup);
 
 /*
  * CopySendData sends output data either to the file
- *  specified by fp or, if fp is NULL, using the standard
- *  backend->frontend functions
+ *	specified by fp or, if fp is NULL, using the standard
+ *	backend->frontend functions
  *
  * CopySendString does the same for null-terminated strings
  * CopySendChar does the same for single characters
  *
  * NB: no data conversion is applied by these functions
  */
-inline void CopySendData(void *databuf, int datasize, FILE *fp) {
-  if (!fp)
-	  pq_putbytes((char*) databuf, datasize);
-  else
-	  fwrite(databuf, datasize, 1, fp);
-}
-    
-inline void CopySendString(char *str, FILE *fp) {
-  CopySendData(str,strlen(str),fp);
+inline void
+CopySendData(void *databuf, int datasize, FILE *fp)
+{
+	if (!fp)
+		pq_putbytes((char *) databuf, datasize);
+	else
+		fwrite(databuf, datasize, 1, fp);
 }
 
-inline void CopySendChar(char c, FILE *fp) {
-  CopySendData(&c,1,fp);
+inline void
+CopySendString(char *str, FILE *fp)
+{
+	CopySendData(str, strlen(str), fp);
+}
+
+inline void
+CopySendChar(char c, FILE *fp)
+{
+	CopySendData(&c, 1, fp);
 }
 
 /*
  * CopyGetData reads output data either from the file
- *  specified by fp or, if fp is NULL, using the standard
- *  backend->frontend functions
+ *	specified by fp or, if fp is NULL, using the standard
+ *	backend->frontend functions
  *
  * CopyGetChar does the same for single characters
  * CopyGetEof checks if it's EOF on the input
  *
  * NB: no data conversion is applied by these functions
  */
-inline void CopyGetData(void *databuf, int datasize, FILE *fp) {
-  if (!fp)
-    pq_getbytes((char*) databuf, datasize); 
-  else 
-    fread(databuf, datasize, 1, fp);
+inline void
+CopyGetData(void *databuf, int datasize, FILE *fp)
+{
+	if (!fp)
+		pq_getbytes((char *) databuf, datasize);
+	else
+		fread(databuf, datasize, 1, fp);
 }
 
-inline int CopyGetChar(FILE *fp) {
-  if (!fp) 
-  {
-	  unsigned char ch;
-	  if (pq_getbytes((char*) &ch, 1))
-		  return EOF;
-	  return ch;
-  }
-  else
-    return getc(fp);
+inline int
+CopyGetChar(FILE *fp)
+{
+	if (!fp)
+	{
+		unsigned char ch;
+
+		if (pq_getbytes((char *) &ch, 1))
+			return EOF;
+		return ch;
+	}
+	else
+		return getc(fp);
 }
 
-inline int CopyGetEof(FILE *fp) {
-  if (!fp)
-    return 0; /* Never return EOF when talking to frontend ? */
-  else
-    return feof(fp);
+inline int
+CopyGetEof(FILE *fp)
+{
+	if (!fp)
+		return 0;				/* Never return EOF when talking to
+								 * frontend ? */
+	else
+		return feof(fp);
 }
 
 /*
  * CopyPeekChar reads a byte in "peekable" mode.
  * after each call to CopyPeekChar, a call to CopyDonePeek _must_
  * follow.
- * CopyDonePeek will either take the peeked char off the steam 
+ * CopyDonePeek will either take the peeked char off the steam
  * (if pickup is != 0) or leave it on the stream (if pickup == 0)
  */
-inline int CopyPeekChar(FILE *fp) {
-  if (!fp) 
-    return pq_peekbyte();
-  else
-    return getc(fp);
+inline int
+CopyPeekChar(FILE *fp)
+{
+	if (!fp)
+		return pq_peekbyte();
+	else
+		return getc(fp);
 }
 
-inline void CopyDonePeek(FILE *fp, int c, int pickup) {
-  if (!fp) {
-    if (pickup) {
-      /* We want to pick it up - just receive again into dummy buffer */
-      char c;
-      pq_getbytes(&c, 1);
-    }
-    /* If we didn't want to pick it up, just leave it where it sits */
-  }
-  else {
-    if (!pickup) {
-      /* We don't want to pick it up - so put it back in there */
-      ungetc(c,fp);
-    }
-    /* If we wanted to pick it up, it's already there */
-  }
+inline void
+CopyDonePeek(FILE *fp, int c, int pickup)
+{
+	if (!fp)
+	{
+		if (pickup)
+		{
+
+			/*
+			 * We want to pick it up - just receive again into dummy
+			 * buffer
+			 */
+			char		c;
+
+			pq_getbytes(&c, 1);
+		}
+		/* If we didn't want to pick it up, just leave it where it sits */
+	}
+	else
+	{
+		if (!pickup)
+		{
+			/* We don't want to pick it up - so put it back in there */
+			ungetc(c, fp);
+		}
+		/* If we wanted to pick it up, it's already there */
+	}
 }
-    
+
 
 
 /*
@@ -317,7 +344,7 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
 		else if (!from)
 		{
 			if (!binary)
-				CopySendData("\\.\n",3,fp);
+				CopySendData("\\.\n", 3, fp);
 			if (IsUnderPostmaster)
 				pq_endcopyout(false);
 		}
@@ -395,8 +422,8 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 
 		if (oids && !binary)
 		{
-		        CopySendString(oidout(tuple->t_data->t_oid),fp);
-			CopySendChar(delim[0],fp);
+			CopySendString(oidout(tuple->t_data->t_oid), fp);
+			CopySendChar(delim[0], fp);
 		}
 
 		for (i = 0; i < attr_count; i++)
@@ -466,8 +493,8 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 					}
 				}
 			}
-			CopySendData((char *) tuple->t_data + tuple->t_data->t_hoff, 
-					length, fp);
+			CopySendData((char *) tuple->t_data + tuple->t_data->t_hoff,
+						 length, fp);
 		}
 	}
 
@@ -521,7 +548,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 	Node	  **indexPred = NULL;
 	TupleDesc	rtupdesc;
 	ExprContext *econtext = NULL;
-	EState		*estate = makeNode(EState);	/* for ExecConstraints() */
+	EState	   *estate = makeNode(EState);		/* for ExecConstraints() */
 
 #ifndef OMIT_PARTIAL_INDEX
 	TupleTable	tupleTable;
@@ -566,11 +593,11 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 				itupdescArr[i] = RelationGetDescr(index_rels[i]);
 				pgIndexTup = SearchSysCacheTuple(INDEXRELID,
 					   ObjectIdGetDatum(RelationGetRelid(index_rels[i])),
-										0, 0, 0);
+												 0, 0, 0);
 				Assert(pgIndexTup);
 				pgIndexP[i] = (Form_pg_index) GETSTRUCT(pgIndexTup);
 				for (attnumP = &(pgIndexP[i]->indkey[0]), natts = 0;
-					 natts < INDEX_MAX_KEYS && *attnumP != InvalidAttrNumber;
+				 natts < INDEX_MAX_KEYS && *attnumP != InvalidAttrNumber;
 					 attnumP++, natts++);
 				if (pgIndexP[i]->indproc != InvalidOid)
 				{
@@ -777,7 +804,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 					}
 					else if (nulls[i] != 'n')
 					{
-						ptr = (char *)att_align(ptr, attr[i]->attlen, attr[i]->attalign);
+						ptr = (char *) att_align(ptr, attr[i]->attlen, attr[i]->attalign);
 						values[i] = (Datum) ptr;
 						ptr = att_addlength(ptr, attr[i]->attlen, ptr);
 					}
@@ -888,7 +915,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 	pfree(index_nulls);
 	pfree(idatum);
 	pfree(byval);
-	
+
 	if (!binary)
 	{
 		pfree(in_functions);
@@ -903,7 +930,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 		{
 			if (index_rels[i] == NULL)
 				continue;
-			if ((index_rels[i])->rd_rel->relam != BTREE_AM_OID && 
+			if ((index_rels[i])->rd_rel->relam != BTREE_AM_OID &&
 				(index_rels[i])->rd_rel->relam != HASH_AM_OID)
 				UnlockRelation(index_rels[i], AccessExclusiveLock);
 			index_close(index_rels[i]);
@@ -1022,12 +1049,12 @@ GetIndexRelations(Oid main_relation_oid,
 	{
 
 		index_relation_oid = (Oid) DatumGetInt32(heap_getattr(tuple, 2,
-											 tupDesc, &isnull));
+													  tupDesc, &isnull));
 		if (index_relation_oid == main_relation_oid)
 		{
 			scan->index_rel_oid = (Oid) DatumGetInt32(heap_getattr(tuple,
-												 Anum_pg_index_indexrelid,
-												 tupDesc, &isnull));
+												Anum_pg_index_indexrelid,
+													  tupDesc, &isnull));
 			(*n_indices)++;
 			scan->next = (RelationList *) palloc(sizeof(RelationList));
 			scan = scan->next;
@@ -1047,7 +1074,7 @@ GetIndexRelations(Oid main_relation_oid,
 	{
 		(*index_rels)[i] = index_open(scan->index_rel_oid);
 		/* comments in execUtils.c */
-		if ((*index_rels)[i] != NULL && 
+		if ((*index_rels)[i] != NULL &&
 			((*index_rels)[i])->rd_rel->relam != BTREE_AM_OID &&
 			((*index_rels)[i])->rd_rel->relam != HASH_AM_OID)
 			LockRelation((*index_rels)[i], AccessExclusiveLock);
@@ -1176,26 +1203,29 @@ CopyReadAttribute(FILE *fp, bool *isnull, char *delim)
 						if (ISOCTAL(c))
 						{
 							val = (val << 3) + VALUE(c);
-							CopyDonePeek(fp, c, 1); /* Pick up the character! */
+							CopyDonePeek(fp, c, 1);		/* Pick up the
+														 * character! */
 							c = CopyPeekChar(fp);
-							if (ISOCTAL(c)) {
-							        CopyDonePeek(fp,c,1); /* pick up! */
+							if (ISOCTAL(c))
+							{
+								CopyDonePeek(fp, c, 1); /* pick up! */
 								val = (val << 3) + VALUE(c);
 							}
 							else
 							{
-							        if (CopyGetEof(fp)) {
-								        CopyDonePeek(fp,c,1); /* pick up */
+								if (CopyGetEof(fp))
+								{
+									CopyDonePeek(fp, c, 1);		/* pick up */
 									return NULL;
 								}
-								CopyDonePeek(fp,c,0); /* Return to stream! */
+								CopyDonePeek(fp, c, 0); /* Return to stream! */
 							}
 						}
 						else
 						{
 							if (CopyGetEof(fp))
 								return NULL;
-							CopyDonePeek(fp,c,0); /* Return to stream! */
+							CopyDonePeek(fp, c, 0);		/* Return to stream! */
 						}
 						c = val & 0377;
 					}

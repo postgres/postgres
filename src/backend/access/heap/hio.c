@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Id: hio.c,v 1.19 1999/05/07 01:22:53 vadim Exp $
+ *	  $Id: hio.c,v 1.20 1999/05/25 16:07:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,11 +39,11 @@ RelationPutHeapTuple(Relation relation,
 					 Buffer buffer,
 					 HeapTuple tuple)
 {
-	Page			pageHeader;
-	OffsetNumber	offnum;
-	unsigned int	len;
-	ItemId			itemId;
-	Item			item;
+	Page		pageHeader;
+	OffsetNumber offnum;
+	unsigned int len;
+	ItemId		itemId;
+	Item		item;
 
 	/* ----------------
 	 *	increment access statistics
@@ -62,13 +62,13 @@ RelationPutHeapTuple(Relation relation,
 	itemId = PageGetItemId((Page) pageHeader, offnum);
 	item = PageGetItem((Page) pageHeader, itemId);
 
-	ItemPointerSet(&((HeapTupleHeader) item)->t_ctid, 
-					BufferGetBlockNumber(buffer), offnum);
+	ItemPointerSet(&((HeapTupleHeader) item)->t_ctid,
+				   BufferGetBlockNumber(buffer), offnum);
 
 	/*
 	 * Let the caller do this!
 	 *
-	WriteBuffer(buffer);
+	 * WriteBuffer(buffer);
 	 */
 
 	/* return an accurate tuple */
@@ -111,8 +111,8 @@ RelationPutHeapTupleAtEnd(Relation relation, HeapTuple tuple)
 	Item		item;
 
 	/*
-	 * Lock relation for extention. We can use LockPage here as long as 
-	 * in all other places we use page-level locking for indices only.
+	 * Lock relation for extention. We can use LockPage here as long as in
+	 * all other places we use page-level locking for indices only.
 	 * Alternatevely, we could define pseudo-table as we do for
 	 * transactions with XactLockTable.
 	 */
@@ -132,6 +132,7 @@ RelationPutHeapTupleAtEnd(Relation relation, HeapTuple tuple)
 	{
 		buffer = ReadBuffer(relation, lastblock);
 		pageHeader = (Page) BufferGetPage(buffer);
+
 		/*
 		 * There was IF instead of ASSERT here ?!
 		 */

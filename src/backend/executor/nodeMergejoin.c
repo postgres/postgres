@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.26 1999/05/10 00:45:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.27 1999/05/25 16:08:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -103,7 +103,7 @@ static bool MergeCompare(List *eqQual, List *compareQual, ExprContext *econtext)
  * ----------------------------------------------------------------
  */
 static List *
-MJFormSkipQual(List *qualList, char * replaceopname)
+MJFormSkipQual(List *qualList, char *replaceopname)
 {
 	List	   *qualCopy;
 	List	   *qualcdr;
@@ -148,14 +148,14 @@ MJFormSkipQual(List *qualList, char * replaceopname)
 		 * ----------------
 		 */
 		optup = get_operator_tuple(op->opno);
-		if (!HeapTupleIsValid(optup))		/* shouldn't happen */
+		if (!HeapTupleIsValid(optup))	/* shouldn't happen */
 			elog(ERROR, "MJFormSkipQual: operator %u not found", op->opno);
 		opform = (Form_pg_operator) GETSTRUCT(optup);
 		oprleft = opform->oprleft;
 		oprright = opform->oprright;
 
 		/* ----------------
-		 *	 Now look up the matching "<" or ">" operator.  If there isn't one,
+		 *	 Now look up the matching "<" or ">" operator.	If there isn't one,
 		 *	 whoever marked the "=" operator mergejoinable was a loser.
 		 * ----------------
 		 */
@@ -166,7 +166,7 @@ MJFormSkipQual(List *qualList, char * replaceopname)
 									CharGetDatum('b'));
 		if (!HeapTupleIsValid(optup))
 			elog(ERROR,
-				 "MJFormSkipQual: mergejoin operator %u has no matching %s op",
+			"MJFormSkipQual: mergejoin operator %u has no matching %s op",
 				 op->opno, replaceopname);
 		opform = (Form_pg_operator) GETSTRUCT(optup);
 

@@ -1,6 +1,6 @@
 /* ************************************************************************
  *
- * Varray.c 
+ * Varray.c
  *
  *	  routines to provide a generic set of functions to handle variable sized
  * arrays.	  originally by Jiang Wu

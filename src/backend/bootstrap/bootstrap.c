@@ -7,7 +7,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.59 1999/05/10 00:44:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.60 1999/05/25 16:07:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -182,7 +182,7 @@ static char *relname;			/* current relation name */
 Form_pg_attribute attrtypes[MAXATTR];	/* points to attribute info */
 static char *values[MAXATTR];	/* cooresponding attribute values */
 int			numattr;			/* number of attributes for cur. rel */
-extern bool	disableFsync;			/* do not fsync the database */
+extern bool disableFsync;		/* do not fsync the database */
 
 int			DebugMode;
 static GlobalMemory nogc = (GlobalMemory) NULL; /* special no-gc mem
@@ -587,7 +587,9 @@ DefineAttr(char *name, char *type, int attnum)
 			printf("<%s %s> ", attrtypes[attnum]->attname.data, type);
 		attrtypes[attnum]->attnum = 1 + attnum; /* fillatt */
 		attlen = attrtypes[attnum]->attlen = Procid[typeoid].len;
-		/* Cheat like mad to fill in these items from the length only.
+
+		/*
+		 * Cheat like mad to fill in these items from the length only.
 		 * This only has to work for types used in the system catalogs...
 		 */
 		switch (attlen)

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: page.h,v 1.5 1999/02/13 23:22:09 momjian Exp $
+ * $Id: page.h,v 1.6 1999/05/25 16:14:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,7 +16,7 @@
 typedef Pointer Page;
 
 /*
- * PageIsValid 
+ * PageIsValid
  *		True iff page is valid.
  */
 #define PageIsValid(page) PointerIsValid(page)

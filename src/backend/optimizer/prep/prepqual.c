@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepqual.c,v 1.14 1999/02/15 01:06:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepqual.c,v 1.15 1999/05/25 16:09:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,8 +106,9 @@ find_nots(Expr *qual)
 
 	if (is_opclause((Node *) qual))
 	{
-		Expr   *left = (Expr *) get_leftop(qual);
-		Expr   *right = (Expr *) get_rightop(qual);
+		Expr	   *left = (Expr *) get_leftop(qual);
+		Expr	   *right = (Expr *) get_rightop(qual);
+
 		if (right)
 			return make_clause(qual->opType, qual->oper,
 							   lcons(find_nots(left),
@@ -162,8 +163,9 @@ normalize(Expr *qual)
 
 	if (is_opclause((Node *) qual))
 	{
-		Expr   *left = (Expr *) get_leftop(qual);
-		Expr   *right = (Expr *) get_rightop(qual);
+		Expr	   *left = (Expr *) get_leftop(qual);
+		Expr	   *right = (Expr *) get_rightop(qual);
+
 		if (right)
 			return make_clause(qual->opType, qual->oper,
 							   lcons(normalize(left),
@@ -229,8 +231,9 @@ qual_cleanup(Expr *qual)
 
 	if (is_opclause((Node *) qual))
 	{
-		Expr   *left = (Expr *) get_leftop(qual);
-		Expr   *right = (Expr *) get_rightop(qual);
+		Expr	   *left = (Expr *) get_leftop(qual);
+		Expr	   *right = (Expr *) get_rightop(qual);
+
 		if (right)
 			return (List *) make_clause(qual->opType, qual->oper,
 										lcons(qual_cleanup(left),
@@ -295,8 +298,9 @@ pull_args(Expr *qual)
 
 	if (is_opclause((Node *) qual))
 	{
-		Expr   *left = (Expr *) get_leftop(qual);
-		Expr   *right = (Expr *) get_rightop(qual);
+		Expr	   *left = (Expr *) get_leftop(qual);
+		Expr	   *right = (Expr *) get_rightop(qual);
+
 		if (right)
 			return make_clause(qual->opType, qual->oper,
 							   lcons(pull_args(left),
@@ -485,7 +489,7 @@ or_normalize(List *orlist)
 	{
 		return (or_normalize(lcons(distribute_args(lfirst(new_orlist),
 										 ((Expr *) distributable)->args),
-								lnext(new_orlist))));
+								   lnext(new_orlist))));
 	}
 	else
 		return orlist;
@@ -537,8 +541,9 @@ remove_ands(Expr *qual)
 		return NIL;
 	if (is_opclause((Node *) qual))
 	{
-		Expr   *left = (Expr *) get_leftop(qual);
-		Expr   *right = (Expr *) get_rightop(qual);
+		Expr	   *left = (Expr *) get_leftop(qual);
+		Expr	   *right = (Expr *) get_rightop(qual);
+
 		if (right)
 			return (List *) make_clause(qual->opType, qual->oper,
 										lcons(remove_ands(left),

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.61 1999/05/10 00:46:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.62 1999/05/25 16:12:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -396,7 +396,7 @@ scan_pg_rel_ind(RelationBuildDescInfo buildinfo)
 	switch (buildinfo.infotype)
 	{
 		case INFO_RELID:
-			return_tuple = ClassOidIndexScan(pg_class_desc,buildinfo.i.info_id);
+			return_tuple = ClassOidIndexScan(pg_class_desc, buildinfo.i.info_id);
 			break;
 
 		case INFO_RELNAME:
@@ -707,20 +707,20 @@ RelationBuildRuleLock(Relation relation)
 
 		rule->event = (int) heap_getattr(pg_rewrite_tuple,
 							 Anum_pg_rewrite_ev_type, pg_rewrite_tupdesc,
-							   &isnull) - 48;
+										 &isnull) - 48;
 		rule->attrno = (int) heap_getattr(pg_rewrite_tuple,
 							 Anum_pg_rewrite_ev_attr, pg_rewrite_tupdesc,
-							   &isnull);
+										  &isnull);
 		rule->isInstead = !!heap_getattr(pg_rewrite_tuple,
-						   Anum_pg_rewrite_is_instead, pg_rewrite_tupdesc,
-						   &isnull);
+						  Anum_pg_rewrite_is_instead, pg_rewrite_tupdesc,
+										 &isnull);
 
 		ruleaction = heap_getattr(pg_rewrite_tuple,
-						 Anum_pg_rewrite_ev_action, pg_rewrite_tupdesc,
-						 &isnull);
+						   Anum_pg_rewrite_ev_action, pg_rewrite_tupdesc,
+								  &isnull);
 		rule_evqual_string = heap_getattr(pg_rewrite_tuple,
-						 Anum_pg_rewrite_ev_qual, pg_rewrite_tupdesc,
-						 &isnull);
+							 Anum_pg_rewrite_ev_qual, pg_rewrite_tupdesc,
+										  &isnull);
 
 		ruleaction = PointerGetDatum(textout((struct varlena *) DatumGetPointer(ruleaction)));
 		rule_evqual_string = PointerGetDatum(textout((struct varlena *) DatumGetPointer(rule_evqual_string)));
@@ -851,9 +851,7 @@ RelationBuildDesc(RelationBuildDescInfo buildinfo)
 	 * ----------------
 	 */
 	if (OidIsValid(relam))
-	{
 		relation->rd_am = (Form_pg_am) AccessMethodObjectIdGetForm(relam);
-	}
 
 	/* ----------------
 	 *	initialize the tuple descriptor (relation->rd_att).
@@ -1331,13 +1329,13 @@ RelationForgetRelation(Oid rid)
 			MemoryContext oldcxt;
 			List	   *curr;
 			List	   *prev = NIL;
-	
+
 			oldcxt = MemoryContextSwitchTo((MemoryContext) CacheCxt);
-	
+
 			foreach(curr, newlyCreatedRelns)
 			{
 				Relation	reln = lfirst(curr);
-	
+
 				Assert(reln != NULL && reln->rd_myxactonly);
 				if (RelationGetRelid(reln) == rid)
 					break;
@@ -1353,7 +1351,7 @@ RelationForgetRelation(Oid rid)
 			pfree(curr);
 			MemoryContextSwitchTo(oldcxt);
 		}
-	
+
 		RelationFlushRelation(&relation, false);
 	}
 }
@@ -1378,6 +1376,7 @@ RelationIdInvalidateRelationCacheByRelationId(Oid relationId)
 	 */
 	if (PointerIsValid(relation) && !relation->rd_myxactonly)
 	{
+
 		/*
 		 * The boolean onlyFlushReferenceCountZero in RelationFlushReln()
 		 * should be set to true when we are incrementing the command
@@ -1484,8 +1483,8 @@ RelationRegisterRelation(Relation relation)
 
 	/*
 	 * we've just created the relation. It is invisible to anyone else
-	 * before the transaction is committed. Setting rd_myxactonly allows us
-	 * to use the local buffer manager for select/insert/etc before the
+	 * before the transaction is committed. Setting rd_myxactonly allows
+	 * us to use the local buffer manager for select/insert/etc before the
 	 * end of transaction. (We also need to keep track of relations
 	 * created during a transaction and does the necessary clean up at the
 	 * end of the transaction.)				- ay 3/95
@@ -1634,7 +1633,7 @@ AttrDefaultFetch(Relation relation)
 	Relation	adrel;
 	Relation	irel;
 	ScanKeyData skey;
-	HeapTupleData	tuple;
+	HeapTupleData tuple;
 	Form_pg_attrdef adform;
 	IndexScanDesc sd;
 	RetrieveIndexResult indexRes;
@@ -1722,7 +1721,7 @@ RelCheckFetch(Relation relation)
 	Relation	rcrel;
 	Relation	irel;
 	ScanKeyData skey;
-	HeapTupleData	tuple;
+	HeapTupleData tuple;
 	IndexScanDesc sd;
 	RetrieveIndexResult indexRes;
 	Name		rcname;

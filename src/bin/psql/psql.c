@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.178 1999/05/12 23:26:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.179 1999/05/25 16:13:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -89,7 +89,8 @@ char	   *__progname = "psql";
 
 #ifdef MULTIBYTE
 /* flag to indicate if PGCLIENTENCODING has been set by a user */
-static	char	   *has_client_encoding = 0;
+static char *has_client_encoding = 0;
+
 #endif
 
 /* This prompt string is assumed to have at least 3 characters by code in MainLoop().
@@ -133,7 +134,7 @@ typedef struct _psqlSettings
 	bool		notty;			/* input or output is not a tty */
 	bool		pipe;			/* queryFout is from a popen() */
 	bool		echoQuery;		/* echo the query before sending it */
-	bool		echoAllQueries;		/* echo all queries before sending it*/
+	bool		echoAllQueries; /* echo all queries before sending it */
 	bool		quiet;			/* run quietly, no messages, no promt */
 	bool		singleStep;		/* prompt before for each query */
 	bool		singleLineMode; /* query terminated by newline */
@@ -149,8 +150,9 @@ typedef struct _psqlSettings
  * of passing them around through many function parameter lists seems
  * worse.
  */
-static FILE * cur_cmd_source = NULL; /* current source of command input */
-static bool cur_cmd_interactive = false; /* is it an interactive source? */
+static FILE *cur_cmd_source = NULL;		/* current source of command input */
+static bool cur_cmd_interactive = false;		/* is it an interactive
+												 * source? */
 
 
 #ifdef TIOCGWINSZ
@@ -176,7 +178,7 @@ static int tableList(PsqlSettings *pset, bool deep_tablelist,
 static int	tableDesc(PsqlSettings *pset, char *table, FILE *fout);
 static int	objectDescription(PsqlSettings *pset, char *object);
 static int	rightsList(PsqlSettings *pset);
-static void emitNtimes (FILE *fout, const char *str, int N);
+static void emitNtimes(FILE *fout, const char *str, int N);
 static void prompt_for_password(char *username, char *password);
 
 static char *gets_noreadline(char *prompt, FILE *source);
@@ -184,7 +186,7 @@ static char *gets_readline(char *prompt, FILE *source);
 static char *gets_fromFile(char *prompt, FILE *source);
 static int	listAllDbs(PsqlSettings *pset);
 static bool SendQuery(PsqlSettings *pset, const char *query,
-					  FILE *copy_in_stream, FILE *copy_out_stream);
+		  FILE *copy_in_stream, FILE *copy_out_stream);
 static int	HandleSlashCmds(PsqlSettings *pset, char *line, char *query);
 static int	MainLoop(PsqlSettings *pset, char *query, FILE *source);
 static FILE *setFout(PsqlSettings *pset, char *fname);
@@ -314,12 +316,12 @@ PSQLexec(PsqlSettings *pset, char *query)
 {
 	PGresult   *res;
 
-        if (pset->echoAllQueries)
-        {
-                fprintf(stderr, "QUERY: %s\n", query);
-                fprintf(stderr, "\n");
-                fflush(stderr);
-        }
+	if (pset->echoAllQueries)
+	{
+		fprintf(stderr, "QUERY: %s\n", query);
+		fprintf(stderr, "\n");
+		fflush(stderr);
+	}
 
 	res = PQexec(pset->db, query);
 	if (!res)
@@ -489,8 +491,11 @@ tableList(PsqlSettings *pset, bool deep_tablelist, char info_type,
 				perror("malloc");
 
 			/* load table table */
-			/* Put double quotes around the table name to allow for mixed-case
-			 * and whitespaces in the table name. - BGA 1998-11-14
+
+			/*
+			 * Put double quotes around the table name to allow for
+			 * mixed-case and whitespaces in the table name. - BGA
+			 * 1998-11-14
 			 */
 			for (i = 0; i < nColumns; i++)
 			{
@@ -532,7 +537,7 @@ tableList(PsqlSettings *pset, bool deep_tablelist, char info_type,
 				fprintf(fout, "\n");
 			}
 			fprintf(fout, " +------------------+----------------------------------+----------+\n");
-                        fprintf(fout, "\n") ;
+			fprintf(fout, "\n");
 			PQclear(res);
 		}
 		if (usePipe)
@@ -623,10 +628,11 @@ rightsList(PsqlSettings *pset)
 
 		/* choose column widths */
 		maxCol1Len = strlen("Relation");
-        maxCol2Len = strlen("Grant/Revoke Permissions");
+		maxCol2Len = strlen("Grant/Revoke Permissions");
 		for (i = 0; i < PQntuples(res); i++)
 		{
-			int l = strlen(PQgetvalue(res, i, 0));
+			int			l = strlen(PQgetvalue(res, i, 0));
+
 			if (l > maxCol1Len)
 				maxCol1Len = l;
 			l = strlen(PQgetvalue(res, i, 1));
@@ -638,17 +644,17 @@ rightsList(PsqlSettings *pset)
 
 		fprintf(fout, "Database    = %s\n", PQdb(pset->db));
 		fprintf(fout, " +");
-		emitNtimes(fout, "-", maxCol1Len+2);
+		emitNtimes(fout, "-", maxCol1Len + 2);
 		fprintf(fout, "+");
-		emitNtimes(fout, "-", maxCol2Len+2);
+		emitNtimes(fout, "-", maxCol2Len + 2);
 		fprintf(fout, "+\n");
 		fprintf(fout, " | %-*s | %-*s |\n",
 				maxCol1Len, "Relation",
 				maxCol2Len, "Grant/Revoke Permissions");
 		fprintf(fout, " +");
-		emitNtimes(fout, "-", maxCol1Len+2);
+		emitNtimes(fout, "-", maxCol1Len + 2);
 		fprintf(fout, "+");
-		emitNtimes(fout, "-", maxCol2Len+2);
+		emitNtimes(fout, "-", maxCol2Len + 2);
 		fprintf(fout, "+\n");
 
 		/* next, print out the instances */
@@ -660,9 +666,9 @@ rightsList(PsqlSettings *pset)
 		}
 
 		fprintf(fout, " +");
-		emitNtimes(fout, "-", maxCol1Len+2);
+		emitNtimes(fout, "-", maxCol1Len + 2);
 		fprintf(fout, "+");
-		emitNtimes(fout, "-", maxCol2Len+2);
+		emitNtimes(fout, "-", maxCol2Len + 2);
 		fprintf(fout, "+\n");
 
 		PQclear(res);
@@ -681,12 +687,13 @@ rightsList(PsqlSettings *pset)
 	}
 }
 
-static void emitNtimes (FILE *fout, const char *str, int N)
+static void
+emitNtimes(FILE *fout, const char *str, int N)
 {
-	int i;
-	for (i = 0; i < N; i++) {
+	int			i;
+
+	for (i = 0; i < N; i++)
 		fputs(str, fout);
-	}
 }
 
 /*
@@ -783,8 +790,8 @@ tableDesc(PsqlSettings *pset, char *table, FILE *fout)
 		}
 
 		/*
-		 * Extract the veiw name and veiw definition from pg_views.
-                 * -Ryan 2/14/99
+		 * Extract the veiw name and veiw definition from pg_views. -Ryan
+		 * 2/14/99
 		 */
 
 		descbuf[0] = '\0';
@@ -793,22 +800,23 @@ tableDesc(PsqlSettings *pset, char *table, FILE *fout)
 		strcat(descbuf, "WHERE viewname like '");
 		strcat(descbuf, table);
 		strcat(descbuf, "' ");
-		if(!(res2 = PSQLexec(pset, descbuf)))
-		  return -1;
+		if (!(res2 = PSQLexec(pset, descbuf)))
+			return -1;
 
 		/*
 		 * Display the information
 		 */
-		if(PQntuples(res2)) {
-		  /*
-		   * display the query.
-o		   * -Ryan 2/14/99
-		   */
-		  fprintf(fout, "View    = %s\n", table);
-		  fprintf(fout, "Query   = %s\n", PQgetvalue(res2, 0, 1));
-		} else {
-		  fprintf(fout, "Table    = %s\n", table);
+		if (PQntuples(res2))
+		{
+
+			/*
+			 * display the query. o			 * -Ryan 2/14/99
+			 */
+			fprintf(fout, "View    = %s\n", table);
+			fprintf(fout, "Query   = %s\n", PQgetvalue(res2, 0, 1));
 		}
+		else
+			fprintf(fout, "Table    = %s\n", table);
 		PQclear(res2);
 
 		fprintf(fout, "+----------------------------------+----------------------------------+-------+\n");
@@ -1130,11 +1138,11 @@ gets_fromFile(char *prompt, FILE *source)
 		return NULL;
 	}
 
-	line[MAX_QUERY_BUFFER - 1] = '\0'; /* this is unnecessary, I think */
-	if (strlen(line) == MAX_QUERY_BUFFER-1)
+	line[MAX_QUERY_BUFFER - 1] = '\0';	/* this is unnecessary, I think */
+	if (strlen(line) == MAX_QUERY_BUFFER - 1)
 	{
 		fprintf(stderr, "line read exceeds maximum length.  Truncating at %d\n",
-				MAX_QUERY_BUFFER-1);
+				MAX_QUERY_BUFFER - 1);
 	}
 	return line;
 }
@@ -1240,7 +1248,7 @@ SendQuery(PsqlSettings *pset, const char *query,
 					success = handleCopyIn(pset->db, false, copy_in_stream);
 				else
 					success = handleCopyIn(pset->db,
-										   cur_cmd_interactive && !pset->quiet,
+									 cur_cmd_interactive && !pset->quiet,
 										   cur_cmd_source);
 				break;
 			case PGRES_NONFATAL_ERROR:
@@ -1508,8 +1516,8 @@ do_copy(const char *args, PsqlSettings *pset)
 			bool		success;/* The query succeeded at the backend */
 
 			success = SendQuery(pset, query,
-								from ? copystream : (FILE*) NULL,
-								!from ? copystream : (FILE*) NULL);
+								from ? copystream : (FILE *) NULL,
+								!from ? copystream : (FILE *) NULL);
 			fclose(copystream);
 			if (!pset->quiet)
 			{
@@ -1553,14 +1561,19 @@ do_connect(const char *new_dbname,
 		pwparam = PQpass(olddb);
 
 #ifdef MULTIBYTE
-		/* PGCLIENTENCODING may be set by the previous connection.
-		   if a user does not explicitly set PGCLIENTENCODING,
-		   we should discard PGCLIENTENCODING so that
-		   libpq could get the backend encoding as the default
-		   PGCLIENTENCODING value. -- 1998/12/12 Tatsuo Ishii */
-		   
-		if (!has_client_encoding) {
-		        static const char ev[] = "PGCLIENTENCODING=";
+
+		/*
+		 * PGCLIENTENCODING may be set by the previous connection. if a
+		 * user does not explicitly set PGCLIENTENCODING, we should
+		 * discard PGCLIENTENCODING so that libpq could get the backend
+		 * encoding as the default PGCLIENTENCODING value. -- 1998/12/12
+		 * Tatsuo Ishii
+		 */
+
+		if (!has_client_encoding)
+		{
+			static const char ev[] = "PGCLIENTENCODING=";
+
 			putenv(ev);
 		}
 #endif
@@ -2451,6 +2464,7 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 	bool		was_bslash;		/* backslash */
 	int			paren_level;
 	char	   *query_start;
+
 	/* Stack the prior command source */
 	FILE	   *prev_cmd_source = cur_cmd_source;
 	bool		prev_cmd_interactive = cur_cmd_interactive;
@@ -2583,13 +2597,15 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 		else
 		{
 			int			i;
+
 			/*
-			 * The current character is at line[i], the prior character
-			 * at line[i - prevlen], the next character at line[i + thislen].
+			 * The current character is at line[i], the prior character at
+			 * line[i - prevlen], the next character at line[i + thislen].
 			 */
 #ifdef MULTIBYTE
 			int			prevlen = 0;
 			int			thislen = (len > 0) ? PQmblen(line) : 0;
+
 #define ADVANCE_I  (prevlen = thislen, i += thislen, thislen = PQmblen(line+i))
 #else
 #define prevlen 1
@@ -2713,18 +2729,19 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 			/* handle \p\g and other backslash combinations */
 			while (query_start[0] != '\0')
 			{
-				char	hold_char;
+				char		hold_char;
 
 #ifndef WIN32
 				/* I believe \w \dos\system\x would cause a problem */
 				/* do we have '\p\g' or '\p  \g' ? */
 				if (strlen(query_start) > 2 &&
-					query_start[2 + strspn(query_start + 2, " \t")] == '\\')
+				 query_start[2 + strspn(query_start + 2, " \t")] == '\\')
 				{
 					hold_char = query_start[2 + strspn(query_start + 2, " \t")];
 					query_start[2 + strspn(query_start + 2, " \t")] = '\0';
 				}
-				else /* spread over #endif */
+				else
+/* spread over #endif */
 #endif
 					hold_char = '\0';
 
@@ -2815,10 +2832,11 @@ main(int argc, char **argv)
 	int			c;
 
 	char	   *home = NULL;	/* Used to store $HOME */
-	char       *version = NULL;     /* PostgreSQL version */
+	char	   *version = NULL; /* PostgreSQL version */
 
-	/* initialize cur_cmd_source in case we do not use MainLoop ...
-	 * some systems fail if we try to use a static initializer for this :-(
+	/*
+	 * initialize cur_cmd_source in case we do not use MainLoop ... some
+	 * systems fail if we try to use a static initializer for this :-(
 	 */
 	cur_cmd_source = stdin;
 	cur_cmd_interactive = false;
@@ -2969,10 +2987,10 @@ main(int argc, char **argv)
 		printf("  Please read the file COPYRIGHT for copyright terms "
 			   "of POSTGRESQL\n");
 
-                if ( (version = selectVersion(&settings)) != NULL ) 
-	                printf("[%s]\n", version); 
+		if ((version = selectVersion(&settings)) != NULL)
+			printf("[%s]\n", version);
 
-	        printf("\n");
+		printf("\n");
 		printf("   type \\? for help on slash commands\n");
 		printf("   type \\q to quit\n");
 		printf("   type \\g or terminate with semicolon to execute query\n");
@@ -3082,7 +3100,7 @@ handleCopyOut(PGconn *conn, FILE *copystream)
 		}
 	}
 	fflush(copystream);
-	return ! PQendcopy(conn);
+	return !PQendcopy(conn);
 }
 
 
@@ -3138,7 +3156,7 @@ handleCopyIn(PGconn *conn, const bool mustprompt, FILE *copystream)
 		}
 		PQputline(conn, "\n");
 	}
-	return ! PQendcopy(conn);
+	return !PQendcopy(conn);
 }
 
 
@@ -3246,23 +3264,24 @@ static char *
 selectVersion(PsqlSettings *pset)
 {
 #define PGVERSIONBUFSZ 128
-	static char version[PGVERSIONBUFSZ+1];
+	static char version[PGVERSIONBUFSZ + 1];
 	PGresult   *res;
 	char	   *query = "select version();";
 
-	if (!(res = PQexec(pset->db, query))) return(NULL);
+	if (!(res = PQexec(pset->db, query)))
+		return (NULL);
 
 	if (PQresultStatus(res) == PGRES_COMMAND_OK ||
-	    PQresultStatus(res) == PGRES_TUPLES_OK  ) 
+		PQresultStatus(res) == PGRES_TUPLES_OK)
 	{
-		strncpy(version, PQgetvalue(res,0,0), PGVERSIONBUFSZ);
+		strncpy(version, PQgetvalue(res, 0, 0), PGVERSIONBUFSZ);
 		version[PGVERSIONBUFSZ] = '\0';
 		PQclear(res);
-		return(version);
-        }
-	else 
+		return (version);
+	}
+	else
 	{
 		PQclear(res);
-		return(NULL);
+		return (NULL);
 	}
 }

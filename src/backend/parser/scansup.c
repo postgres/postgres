@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scansup.c,v 1.12 1999/02/13 23:17:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scansup.c,v 1.13 1999/05/25 16:10:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,8 +51,10 @@ scanstr(char *s)
 	{
 		if (s[i] == '\'')
 		{
-			/* Note: if scanner is working right, unescaped quotes can only
-			 * appear in pairs, so there should be another character.
+
+			/*
+			 * Note: if scanner is working right, unescaped quotes can
+			 * only appear in pairs, so there should be another character.
 			 */
 			i++;
 			newStr[j] = s[i];

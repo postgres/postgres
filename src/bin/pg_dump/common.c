@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.29 1999/02/13 23:20:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.30 1999/05/25 16:13:05 momjian Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -101,7 +101,7 @@ findOprByOid(OprInfo *oprinfo, int numOprs, const char *oid)
 
 
 /*
- * findParentsByOid 
+ * findParentsByOid
  *	  given the oid of a class, return the names of its parent classes
  * and assign the number of parents to the last argument.
  *
@@ -146,7 +146,7 @@ findParentsByOid(TableInfo *tblinfo, int numTables,
 					fprintf(stderr,
 							"failed sanity check, parent oid %s of table %s (oid %s) was not found\n",
 							inhinfo[i].inhparent,
-							(selfInd >= 0) ? tblinfo[selfInd].relname : "",
+						  (selfInd >= 0) ? tblinfo[selfInd].relname : "",
 							oid);
 					exit(2);
 				}
@@ -495,8 +495,8 @@ findFuncByName(FuncInfo *finfo, int numFuncs, const char *name)
  *	checks input string for non-lowercase characters
  *	returns pointer to input string or string surrounded by double quotes
  *
- *  Note that the returned string should be used immediately since it
- *  uses a static buffer to hold the string. Non-reentrant but faster?
+ *	Note that the returned string should be used immediately since it
+ *	uses a static buffer to hold the string. Non-reentrant but faster?
  */
 const char *
 fmtId(const char *rawid, bool force_quotes)
@@ -504,7 +504,7 @@ fmtId(const char *rawid, bool force_quotes)
 	const char *cp;
 	static char id[MAXQUERYLEN];
 
-	if (! force_quotes)
+	if (!force_quotes)
 		for (cp = rawid; *cp != '\0'; cp++)
 			if (!(islower(*cp) || isdigit(*cp) || (*cp == '_')))
 				break;

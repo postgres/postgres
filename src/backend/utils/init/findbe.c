@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * findbe.c 
+ * findbe.c
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/Attic/findbe.c,v 1.13 1999/02/13 23:20:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/Attic/findbe.c,v 1.14 1999/05/25 16:12:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

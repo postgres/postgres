@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.31 1999/05/17 17:03:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.32 1999/05/25 16:10:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -93,7 +93,7 @@ matching_tlist_var(Var *var, List *targetlist)
  * CREATES:  new var_node iff no matching var_node exists in targetlist
  */
 void
-add_var_to_tlist(RelOptInfo *rel, Var *var)
+add_var_to_tlist(RelOptInfo * rel, Var *var)
 {
 	Expr	   *oldvar;
 
@@ -114,8 +114,8 @@ add_var_to_tlist(RelOptInfo *rel, Var *var)
 									 var->varoattno);
 
 		rel->targetlist = lappend(tlist,
-					create_tl_element(newvar,
-									  length(tlist) + 1));
+								  create_tl_element(newvar,
+													length(tlist) + 1));
 
 	}
 }
@@ -203,6 +203,7 @@ tlist_member(Var *var, List *tlist)
 		foreach(i, tlist)
 		{
 			TargetEntry *tle = (TargetEntry *) lfirst(i);
+
 			if (var_equal(var, get_expr(tle)))
 				return tle->resdom;
 		}
@@ -222,6 +223,7 @@ tlist_resdom(List *tlist, Resdom *resnode)
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(i);
 		Resdom	   *resdom = tle->resdom;
+
 		/* Since resnos are supposed to be unique */
 		if (resnode->resno == resdom->resno)
 			return resdom;
@@ -362,7 +364,7 @@ flatten_tlist(List *tlist)
 		TargetEntry *temp_entry = (TargetEntry *) lfirst(temp);
 
 		tlist_vars = nconc(tlist_vars,
-						   pull_var_clause((Node *) get_expr(temp_entry)));
+						 pull_var_clause((Node *) get_expr(temp_entry)));
 	}
 
 	foreach(temp, tlist_vars)
@@ -411,8 +413,8 @@ flatten_tlist_vars(List *full_tlist, List *flat_tlist)
 		TargetEntry *tle = lfirst(x);
 
 		result = lappend(result, makeTargetEntry(tle->resdom,
-							   		flatten_tlistentry((Node *) get_expr(tle),
-												  		flat_tlist)));
+							   flatten_tlistentry((Node *) get_expr(tle),
+												  flat_tlist)));
 	}
 
 	return result;
@@ -456,10 +458,11 @@ flatten_tlistentry(Node *tlistentry, List *flat_tlist)
 	}
 	else if (IsA(tlistentry, Expr))
 	{
+
 		/*
-		 * Recursively scan the arguments of an expression.
-		 * NOTE: this must come after is_subplan() case since
-		 * subplan is a kind of Expr node.
+		 * Recursively scan the arguments of an expression. NOTE: this
+		 * must come after is_subplan() case since subplan is a kind of
+		 * Expr node.
 		 */
 		foreach(temp, ((Expr *) tlistentry)->args)
 			lfirst(temp) = flatten_tlistentry(lfirst(temp), flat_tlist);
@@ -467,8 +470,10 @@ flatten_tlistentry(Node *tlistentry, List *flat_tlist)
 	}
 	else if (IsA(tlistentry, Aggref))
 	{
-		/* XXX shouldn't this be recursing into the agg's target?
-		 * Seems to work though, so will leave it alone ... tgl 5/99
+
+		/*
+		 * XXX shouldn't this be recursing into the agg's target? Seems to
+		 * work though, so will leave it alone ... tgl 5/99
 		 */
 		return tlistentry;
 	}
@@ -481,7 +486,7 @@ flatten_tlistentry(Node *tlistentry, List *flat_tlist)
 		foreach(temp, aref->reflowerindexpr)
 			lfirst(temp) = flatten_tlistentry(lfirst(temp), flat_tlist);
 		aref->refexpr = flatten_tlistentry(aref->refexpr, flat_tlist);
-		aref->refassgnexpr = flatten_tlistentry(aref->refassgnexpr,flat_tlist);
+		aref->refassgnexpr = flatten_tlistentry(aref->refassgnexpr, flat_tlist);
 
 		return tlistentry;
 	}
@@ -491,7 +496,8 @@ flatten_tlistentry(Node *tlistentry, List *flat_tlist)
 
 		foreach(temp, cexpr->args)
 		{
-			CaseWhen *cwhen = (CaseWhen *) lfirst(temp);
+			CaseWhen   *cwhen = (CaseWhen *) lfirst(temp);
+
 			cwhen->expr = flatten_tlistentry(cwhen->expr, flat_tlist);
 			cwhen->result = flatten_tlistentry(cwhen->result, flat_tlist);
 		}
@@ -521,18 +527,18 @@ get_expr(TargetEntry *tle)
 Var *
 get_groupclause_expr(GroupClause *groupClause, List *targetList)
 {
-	List		*l;
-	TargetEntry	*tle;
+	List	   *l;
+	TargetEntry *tle;
 
 	foreach(l, targetList)
 	{
-		tle = (TargetEntry *)lfirst(l);
+		tle = (TargetEntry *) lfirst(l);
 		if (tle->resdom->resgroupref == groupClause->tleGroupref)
 			return get_expr(tle);
 	}
 
-	elog(ERROR, 
-		"get_groupclause_expr: GROUP BY expression not found in targetlist");
+	elog(ERROR,
+	"get_groupclause_expr: GROUP BY expression not found in targetlist");
 	return NULL;
 }
 

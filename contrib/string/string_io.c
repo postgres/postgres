@@ -352,14 +352,15 @@ c_charin(char *str)
 {
 	return (string_input(str, 1, 0, NULL));
 }
+
 #endif
 
 /* end of file */
 
 /*
  * Local variables:
- *  tab-width: 4
- *  c-indent-level: 4
- *  c-basic-offset: 4
+ *	tab-width: 4
+ *	c-indent-level: 4
+ *	c-basic-offset: 4
  * End:
  */

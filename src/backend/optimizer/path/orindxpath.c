@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/orindxpath.c,v 1.23 1999/03/08 14:01:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/orindxpath.c,v 1.24 1999/05/25 16:09:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,10 +31,9 @@
 #include "parser/parsetree.h"
 
 
-static void
-best_or_subclause_indices(Query *root, RelOptInfo *rel, List *subclauses,
-List *indices, List **indexids, Cost *cost, Cost *selec);
-static void best_or_subclause_index(Query *root, RelOptInfo *rel, Expr *subclause,
+static void best_or_subclause_indices(Query *root, RelOptInfo * rel, List *subclauses,
+				List *indices, List **indexids, Cost *cost, Cost *selec);
+static void best_or_subclause_index(Query *root, RelOptInfo * rel, Expr *subclause,
 				   List *indices, int *indexid, Cost *cost, Cost *selec);
 
 
@@ -50,7 +49,7 @@ static void best_or_subclause_index(Query *root, RelOptInfo *rel, Expr *subclaus
  */
 List *
 create_or_index_paths(Query *root,
-					  RelOptInfo *rel, List *clauses)
+					  RelOptInfo * rel, List *clauses)
 {
 	List	   *t_list = NIL;
 	List	   *clist;
@@ -88,7 +87,7 @@ create_or_index_paths(Query *root,
 				IndexPath  *pathnode = makeNode(IndexPath);
 				List	   *indexids = NIL;
 				Cost		cost;
-				Cost	    selec;
+				Cost		selec;
 
 				best_or_subclause_indices(root,
 										  rel,
@@ -101,14 +100,15 @@ create_or_index_paths(Query *root,
 				pathnode->path.pathtype = T_IndexScan;
 				pathnode->path.parent = rel;
 				pathnode->path.pathorder = makeNode(PathOrder);
-			    pathnode->path.pathorder->ordtype = SORTOP_ORDER;
-			    /*
-				 *	This is an IndexScan, but it does index lookups based
-				 *	on the order of the fields specified in the WHERE clause,
-				 *	not in any order, so the sortop is NULL.
+				pathnode->path.pathorder->ordtype = SORTOP_ORDER;
+
+				/*
+				 * This is an IndexScan, but it does index lookups based
+				 * on the order of the fields specified in the WHERE
+				 * clause, not in any order, so the sortop is NULL.
 				 */
-			    pathnode->path.pathorder->ord.sortop = NULL;
-			    pathnode->path.pathkeys = NIL;
+				pathnode->path.pathorder->ord.sortop = NULL;
+				pathnode->path.pathkeys = NIL;
 
 				pathnode->indexqual = lcons(clausenode, NIL);
 				pathnode->indexid = indexids;
@@ -119,14 +119,12 @@ create_or_index_paths(Query *root,
 				 * processing	 -- JMH, 7/7/92
 				 */
 				pathnode->path.loc_restrictinfo = set_difference(copyObject((Node *) rel->restrictinfo),
-								   lcons(clausenode, NIL));
+												 lcons(clausenode, NIL));
 
-#ifdef NOT_USED						/* fix xfunc */
+#ifdef NOT_USED					/* fix xfunc */
 				/* add in cost for expensive functions!  -- JMH, 7/7/92 */
 				if (XfuncMode != XFUNC_OFF)
-				{
 					((Path *) pathnode)->path_cost += xfunc_get_path_cost((Path) pathnode);
-				}
 #endif
 				clausenode->selectivity = (Cost) selec;
 				t_list = lappend(t_list, pathnode);
@@ -158,18 +156,18 @@ create_or_index_paths(Query *root,
  */
 static void
 best_or_subclause_indices(Query *root,
-						  RelOptInfo *rel,
+						  RelOptInfo * rel,
 						  List *subclauses,
 						  List *indices,
 						  List **indexids,		/* return value */
-						  Cost *cost,			/* return value */
-						  Cost *selec)			/* return value */
+						  Cost *cost,	/* return value */
+						  Cost *selec)	/* return value */
 {
-	List		*slist;
+	List	   *slist;
 
 	*selec = (Cost) 0.0;
 	*cost = (Cost) 0.0;
-	
+
 	foreach(slist, subclauses)
 	{
 		int			best_indexid;
@@ -207,7 +205,7 @@ best_or_subclause_indices(Query *root,
  */
 static void
 best_or_subclause_index(Query *root,
-						RelOptInfo *rel,
+						RelOptInfo * rel,
 						Expr *subclause,
 						List *indices,
 						int *retIndexid,		/* return value */

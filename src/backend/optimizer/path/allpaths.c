@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.44 1999/02/22 05:26:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.45 1999/05/25 16:09:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,10 +45,10 @@ int32		_use_geqo_rels_ = GEQO_RELS;
 
 static void set_base_rel_pathlist(Query *root, List *rels);
 static RelOptInfo *make_one_rel_by_joins(Query *root, List *rels,
-										 int levels_needed);
+					  int levels_needed);
 
 #ifdef OPTIMIZER_DEBUG
-static void debug_print_rel(Query *root, RelOptInfo *rel);
+static void debug_print_rel(Query *root, RelOptInfo * rel);
 
 #endif
 
@@ -76,6 +76,7 @@ make_one_rel(Query *root, List *rels)
 
 	if (levels_needed <= 1)
 	{
+
 		/*
 		 * Unsorted single relation, no more processing is required.
 		 */
@@ -83,6 +84,7 @@ make_one_rel(Query *root, List *rels)
 	}
 	else
 	{
+
 		/*
 		 * This means that joins or sorts are required. set selectivities
 		 * of clauses that have not been set by an index.
@@ -117,17 +119,17 @@ set_base_rel_pathlist(Query *root, List *rels)
 		sequential_scan_list = lcons(create_seqscan_path(rel), NIL);
 
 		rel_index_scan_list = create_index_paths(root,
-											   rel,
-											   find_relation_indices(root, rel),
-											   rel->restrictinfo,
-											   rel->joininfo);
+												 rel,
+										find_relation_indices(root, rel),
+												 rel->restrictinfo,
+												 rel->joininfo);
 
 		or_index_scan_list = create_or_index_paths(root, rel, rel->restrictinfo);
 
 		rel->pathlist = add_pathlist(rel,
 									 sequential_scan_list,
 									 nconc(rel_index_scan_list,
-											or_index_scan_list));
+										   or_index_scan_list));
 
 		set_cheapest(rel, rel->pathlist);
 
@@ -171,13 +173,14 @@ make_one_rel_by_joins(Query *root, List *rels, int levels_needed)
 	 *******************************************/
 	if ((_use_geqo_) && length(root->base_rel_list) >= _use_geqo_rels_)
 		return geqo(root);
-	
+
 	/*******************************************
 	 * rest will be deprecated in case of GEQO *
 	 *******************************************/
 
 	while (--levels_needed)
 	{
+
 		/*
 		 * Determine all possible pairs of relations to be joined at this
 		 * level.  Determine paths for joining these relation pairs and
@@ -193,6 +196,7 @@ make_one_rel_by_joins(Query *root, List *rels, int levels_needed)
 		root->join_rel_list = rels = joined_rels;
 
 #ifdef NOT_USED
+
 		/*
 		 * * for each expensive predicate in each path in each distinct
 		 * rel, * consider doing pullup  -- JMH
@@ -351,7 +355,7 @@ print_path(Query *root, Path *path, int indent)
 }
 
 static void
-debug_print_rel(Query *root, RelOptInfo *rel)
+debug_print_rel(Query *root, RelOptInfo * rel)
 {
 	List	   *l;
 

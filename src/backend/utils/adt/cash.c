@@ -9,7 +9,7 @@
  * workings can be found in the book "Software Solutions in C" by
  * Dale Schumacher, Academic Press, ISBN: 0-12-632360-7.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.27 1998/10/12 04:07:44 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.28 1999/05/25 16:11:52 momjian Exp $
  */
 
 #include <stdio.h>
@@ -681,8 +681,8 @@ cash_words_out(Cash *value)
 	Cash		m1;
 	Cash		m2;
 	Cash		m3;
-	text		*result;
-	
+	text	   *result;
+
 	/* work with positive numbers */
 	if (*value < 0)
 	{

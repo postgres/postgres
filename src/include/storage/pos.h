@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pos.h,v 1.6 1999/02/13 23:22:09 momjian Exp $
+ * $Id: pos.h,v 1.7 1999/05/25 16:14:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,28 +32,28 @@ typedef PositionIdData *PositionId;
  */
 
 /*
- * PositionIdIsValid 
+ * PositionIdIsValid
  *		True iff the position identifier is valid.
  */
 #define PositionIdIsValid(positionId) \
 	PointerIsValid(positionId)
 
 /*
- * PositionIdSetInvalid 
+ * PositionIdSetInvalid
  *		Make an invalid position.
  */
 #define PositionIdSetInvalid(positionId) \
 	*(positionId) = (bits16) 0
 
 /*
- * PositionIdSet 
+ * PositionIdSet
  *		Sets a position identifier to the specified value.
  */
 #define PositionIdSet(positionId, offsetNumber) \
 	*(positionId) = (offsetNumber)
 
 /*
- * PositionIdGetOffsetNumber 
+ * PositionIdGetOffsetNumber
  *		Retrieve the offset number from a position identifier.
  */
 #define PositionIdGetOffsetNumber(positionId) \

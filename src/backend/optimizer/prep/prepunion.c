@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.30 1999/02/18 00:49:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.31 1999/05/25 16:09:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -223,8 +223,8 @@ plan_inherit_queries(Query *parse, Index rt_index)
 	List	   *union_relids = NIL;
 
 	union_relids = find_all_inheritors(lconsi(rt_entry->relid,
-								   NIL),
-							NIL);
+											  NIL),
+									   NIL);
 
 	/*
 	 * Remove the flag for this relation, since we're about to handle it

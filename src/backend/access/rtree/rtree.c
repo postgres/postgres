@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.31 1999/02/13 23:14:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.32 1999/05/25 16:07:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -307,7 +307,7 @@ rtinsert(Relation r, Datum *datum, char *nulls, ItemPointer ht_ctid, Relation he
 	/*
 	 * Notes in ExecUtils:ExecOpenIndices()
 	 *
-	RelationSetLockForWrite(r);
+	 * RelationSetLockForWrite(r);
 	 */
 
 	res = rtdoinsert(r, itup, &rtState);
@@ -947,10 +947,10 @@ rtdelete(Relation r, ItemPointer tid)
 	Page		page;
 
 	/*
-	 * Notes in ExecUtils:ExecOpenIndices()
-	 * Also note that only vacuum deletes index tuples now...
+	 * Notes in ExecUtils:ExecOpenIndices() Also note that only vacuum
+	 * deletes index tuples now...
 	 *
-	RelationSetLockForWrite(r);
+	 * RelationSetLockForWrite(r);
 	 */
 
 	blkno = ItemPointerGetBlockNumber(tid);

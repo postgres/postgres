@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hashjoin.h,v 1.11 1999/05/18 21:33:04 tgl Exp $
+ * $Id: hashjoin.h,v 1.12 1999/05/25 16:13:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,7 +21,7 @@
  *				hash-join hash table structures
  *
  * Each active hashjoin has a HashJoinTable control block which is
- * palloc'd in the executor's context.  All other storage needed for
+ * palloc'd in the executor's context.	All other storage needed for
  * the hashjoin is kept in a private "named portal", one for each hashjoin.
  * This makes it easy and fast to release the storage when we don't need it
  * anymore.
@@ -41,9 +41,10 @@
 
 typedef struct HashJoinTupleData
 {
-	struct HashJoinTupleData *next;	/* link to next tuple in same bucket */
-	HeapTupleData	htup;		/* tuple header */
-} HashJoinTupleData;
+	struct HashJoinTupleData *next;		/* link to next tuple in same
+										 * bucket */
+	HeapTupleData htup;			/* tuple header */
+}			HashJoinTupleData;
 
 typedef HashJoinTupleData *HashJoinTuple;
 
@@ -51,40 +52,45 @@ typedef struct HashTableData
 {
 	int			nbuckets;		/* buckets in use during this batch */
 	int			totalbuckets;	/* total number of (virtual) buckets */
-	HashJoinTuple  *buckets;	/* buckets[i] is head of list of tuples */
+	HashJoinTuple *buckets;		/* buckets[i] is head of list of tuples */
 	/* buckets array is per-batch storage, as are all the tuples */
 
 	int			nbatch;			/* number of batches; 0 means 1-pass join */
 	int			curbatch;		/* current batch #, or 0 during 1st pass */
 
-	/* all these arrays are allocated for the life of the hash join,
-	 * but only if nbatch > 0:
+	/*
+	 * all these arrays are allocated for the life of the hash join, but
+	 * only if nbatch > 0:
 	 */
-	BufFile	  **innerBatchFile;	/* buffered virtual temp file per batch */
-	BufFile	  **outerBatchFile;	/* buffered virtual temp file per batch */
-	long	   *outerBatchSize; /* count of tuples in each outer batch file */
-	long	   *innerBatchSize; /* count of tuples in each inner batch file */
+	BufFile   **innerBatchFile; /* buffered virtual temp file per batch */
+	BufFile   **outerBatchFile; /* buffered virtual temp file per batch */
+	long	   *outerBatchSize; /* count of tuples in each outer batch
+								 * file */
+	long	   *innerBatchSize; /* count of tuples in each inner batch
+								 * file */
 
-	/* During 1st scan of inner relation, we get tuples from executor.
-	 * If nbatch > 0 then tuples that don't belong in first nbuckets logical
-	 * buckets get dumped into inner-batch temp files.
-	 * The same statements apply for the 1st scan of the outer relation,
-	 * except we write tuples to outer-batch temp files.
-	 * If nbatch > 0 then we do the following for each batch:
-	 *  1. Read tuples from inner batch file, load into hash buckets.
-	 *  2. Read tuples from outer batch file, match to hash buckets and output.
+	/*
+	 * During 1st scan of inner relation, we get tuples from executor. If
+	 * nbatch > 0 then tuples that don't belong in first nbuckets logical
+	 * buckets get dumped into inner-batch temp files. The same statements
+	 * apply for the 1st scan of the outer relation, except we write
+	 * tuples to outer-batch temp files. If nbatch > 0 then we do the
+	 * following for each batch: 1. Read tuples from inner batch file,
+	 * load into hash buckets. 2. Read tuples from outer batch file, match
+	 * to hash buckets and output.
 	 */
 
-	/* Ugly kluge: myPortal ought to be declared as type Portal (ie, PortalD*)
-	 * but if we try to include utils/portal.h here, we end up with a
-	 * circular dependency of include files!  Until the various node.h files
-	 * are restructured in a cleaner way, we have to fake it.  The most
-	 * reliable fake seems to be to declare myPortal as void * and then
-	 * cast it to the right things in nodeHash.c.
+	/*
+	 * Ugly kluge: myPortal ought to be declared as type Portal (ie,
+	 * PortalD*) but if we try to include utils/portal.h here, we end up
+	 * with a circular dependency of include files!  Until the various
+	 * node.h files are restructured in a cleaner way, we have to fake it.
+	 * The most reliable fake seems to be to declare myPortal as void *
+	 * and then cast it to the right things in nodeHash.c.
 	 */
-	void		   *myPortal;	/* where to keep working storage */
-	MemoryContext	hashCxt;	/* context for whole-hash-join storage */
-	MemoryContext	batchCxt;	/* context for this-batch-only storage */
+	void	   *myPortal;		/* where to keep working storage */
+	MemoryContext hashCxt;		/* context for whole-hash-join storage */
+	MemoryContext batchCxt;		/* context for this-batch-only storage */
 } HashTableData;
 
 typedef HashTableData *HashJoinTable;

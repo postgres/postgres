@@ -33,7 +33,7 @@
  * The DestReceiver object returned by DestToFunction may be a statically
  * allocated object (for destination types that require no local state)
  * or can be a palloc'd object that has DestReceiver as its first field
- * and contains additional fields (see printtup.c for an example).  These
+ * and contains additional fields (see printtup.c for an example).	These
  * additional fields are then accessible to the DestReceiver functions
  * by casting the DestReceiver* pointer passed to them.
  * The palloc'd object is pfree'd by the DestReceiver's cleanup function.
@@ -44,7 +44,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dest.h,v 1.18 1999/02/13 23:22:11 momjian Exp $
+ * $Id: dest.h,v 1.19 1999/05/25 16:14:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,22 +78,23 @@ typedef enum
  */
 typedef struct _DestReceiver DestReceiver;
 
-struct _DestReceiver {
+struct _DestReceiver
+{
 	/* Called for each tuple to be output: */
-	void (*receiveTuple) (HeapTuple tuple, TupleDesc typeinfo,
-						  DestReceiver* self);
+	void		(*receiveTuple) (HeapTuple tuple, TupleDesc typeinfo,
+											 DestReceiver * self);
 	/* Initialization and teardown: */
-	void (*setup) (DestReceiver* self, TupleDesc typeinfo);
-	void (*cleanup) (DestReceiver* self);
+	void		(*setup) (DestReceiver * self, TupleDesc typeinfo);
+	void		(*cleanup) (DestReceiver * self);
 	/* Private fields might appear beyond this point... */
 };
 
 /* The primary destination management functions */
 
 extern void BeginCommand(char *pname, int operation, TupleDesc attinfo,
-						 bool isIntoRel, bool isIntoPortal, char *tag,
-						 CommandDest dest);
-extern DestReceiver* DestToFunction(CommandDest dest);
+			 bool isIntoRel, bool isIntoPortal, char *tag,
+			 CommandDest dest);
+extern DestReceiver *DestToFunction(CommandDest dest);
 extern void EndCommand(char *commandTag, CommandDest dest);
 
 /* Additional functions that go with destination management, more or less. */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/Attic/freefuncs.c,v 1.16 1999/05/12 15:01:33 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/Attic/freefuncs.c,v 1.17 1999/05/25 16:09:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -297,12 +297,12 @@ _freeHashJoin(HashJoin *node)
 /* ----------------
  *		FreeNonameFields
  *
- *		This function frees the fields of the Noname node.  It is used by
+ *		This function frees the fields of the Noname node.	It is used by
  *		all the free functions for classes which inherit node Noname.
  * ----------------
  */
 static void
-FreeNonameFields(Noname *node)
+FreeNonameFields(Noname * node)
 {
 	return;
 }
@@ -313,7 +313,7 @@ FreeNonameFields(Noname *node)
  * ----------------
  */
 static void
-_freeNoname(Noname *node)
+_freeNoname(Noname * node)
 {
 	/* ----------------
 	 *	free node superclass fields
@@ -562,7 +562,7 @@ _freeConst(Const *node)
 	 * ----------------
 	 */
 	if (!node->constbyval)
-		pfree((void *)node->constvalue);
+		pfree((void *) node->constvalue);
 
 	pfree(node);
 }
@@ -609,7 +609,7 @@ _freeFunc(Func *node)
  * ----------------
  */
 static void
-_freeAggref(Aggref *node)
+_freeAggref(Aggref * node)
 {
 	/* ----------------
 	 *	free remainder of node
@@ -644,7 +644,7 @@ _freeSubLink(SubLink *node)
  * ----------------
  */
 static void
-_freeCaseExpr(CaseExpr *node)
+_freeCaseExpr(CaseExpr * node)
 {
 	/* ----------------
 	 *	free remainder of node
@@ -662,7 +662,7 @@ _freeCaseExpr(CaseExpr *node)
  * ----------------
  */
 static void
-_freeCaseWhen(CaseWhen *node)
+_freeCaseWhen(CaseWhen * node)
 {
 	/* ----------------
 	 *	free remainder of node
@@ -709,7 +709,7 @@ _freeArrayRef(ArrayRef *node)
  * ----------------
  */
 static void
-_freeRelOptInfo(RelOptInfo *node)
+_freeRelOptInfo(RelOptInfo * node)
 {
 	/* ----------------
 	 *	free remainder of node
@@ -757,8 +757,8 @@ FreePathFields(Path *node)
 	else
 		freeObject(node->pathorder->ord.merge);
 
-	pfree(node->pathorder);	/* is it an object, but we don't have
-								   separate free for it */
+	pfree(node->pathorder);		/* is it an object, but we don't have
+								 * separate free for it */
 
 	freeObject(node->pathkeys);
 
@@ -812,7 +812,7 @@ _freeIndexPath(IndexPath *node)
  * ----------------
  */
 static void
-FreeNestPathFields(NestPath *node)
+FreeNestPathFields(NestPath * node)
 {
 	freeObject(node->pathinfo);
 	freeObject(node->outerjoinpath);
@@ -824,7 +824,7 @@ FreeNestPathFields(NestPath *node)
  * ----------------
  */
 static void
-_freeNestPath(NestPath *node)
+_freeNestPath(NestPath * node)
 {
 	/* ----------------
 	 *	free the node superclass fields
@@ -933,7 +933,7 @@ _freeMergeOrder(MergeOrder *node)
  * ----------------
  */
 static void
-_freeRestrictInfo(RestrictInfo *node)
+_freeRestrictInfo(RestrictInfo * node)
 {
 	/* ----------------
 	 *	free remainder of node
@@ -950,7 +950,7 @@ _freeRestrictInfo(RestrictInfo *node)
 /* ----------------
  *		FreeJoinMethodFields
  *
- *		This function frees the fields of the JoinMethod node.  It is used by
+ *		This function frees the fields of the JoinMethod node.	It is used by
  *		all the free functions for classes which inherit node JoinMethod.
  * ----------------
  */
@@ -979,7 +979,7 @@ _freeJoinMethod(JoinMethod *node)
  * ----------------
  */
 static void
-_freeHashInfo(HashInfo *node)
+_freeHashInfo(HashInfo * node)
 {
 	/* ----------------
 	 *	free remainder of node
@@ -995,7 +995,7 @@ _freeHashInfo(HashInfo *node)
  * ----------------
  */
 static void
-_freeMergeInfo(MergeInfo *node)
+_freeMergeInfo(MergeInfo * node)
 {
 	/* ----------------
 	 *	free remainder of node
@@ -1012,7 +1012,7 @@ _freeMergeInfo(MergeInfo *node)
  * ----------------
  */
 static void
-_freeJoinInfo(JoinInfo *node)
+_freeJoinInfo(JoinInfo * node)
 {
 	/* ----------------
 	 *	free remainder of node
@@ -1066,7 +1066,7 @@ _freeRangeTblEntry(RangeTblEntry *node)
 }
 
 static void
-_freeRowMark(RowMark *node)
+_freeRowMark(RowMark * node)
 {
 	pfree(node);
 }
@@ -1142,7 +1142,7 @@ _freeValue(Value *node)
 {
 	switch (node->type)
 	{
-		case T_String:
+			case T_String:
 			pfree(node->val.str);
 			break;
 		default:
@@ -1165,6 +1165,7 @@ freeObject(void *node)
 
 	switch (nodeTag(node))
 	{
+
 			/*
 			 * PLAN NODES
 			 */

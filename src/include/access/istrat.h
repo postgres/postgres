@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: istrat.h,v 1.12 1999/02/13 23:20:55 momjian Exp $
+ * $Id: istrat.h,v 1.13 1999/05/25 16:13:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,14 +17,14 @@
 #include <access/strat.h>
 
 /*
- * StrategyNumberIsValid 
+ * StrategyNumberIsValid
  *		True iff the strategy number is valid.
  */
 #define StrategyNumberIsValid(strategyNumber) \
 	((bool) ((strategyNumber) != InvalidStrategy))
 
 /*
- * StrategyNumberIsInBounds 
+ * StrategyNumberIsInBounds
  *		True iff strategy number is within given bounds.
  *
  * Note:
@@ -36,13 +36,13 @@
 			(strategyNumber) <= (maxStrategyNumber)))
 
 /*
- * StrategyMapIsValid 
+ * StrategyMapIsValid
  *		True iff the index strategy mapping is valid.
  */
 #define StrategyMapIsValid(map) PointerIsValid(map)
 
 /*
- * IndexStrategyIsValid 
+ * IndexStrategyIsValid
  *		True iff the index strategy is valid.
  */
 #define IndexStrategyIsValid(s) PointerIsValid(s)

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: block.h,v 1.8 1999/02/13 23:22:02 momjian Exp $
+ * $Id: block.h,v 1.9 1999/05/25 16:14:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,21 +61,21 @@ typedef BlockIdData *BlockId;	/* block identifier */
  */
 
 /*
- * BlockNumberIsValid 
+ * BlockNumberIsValid
  *		True iff blockNumber is valid.
  */
 #define BlockNumberIsValid(blockNumber) \
 	((bool) ((int32) (blockNumber) != InvalidBlockNumber))
 
 /*
- * BlockIdIsValid 
+ * BlockIdIsValid
  *		True iff the block identifier is valid.
  */
 #define BlockIdIsValid(blockId) \
 	((bool) PointerIsValid(blockId))
 
 /*
- * BlockIdSet 
+ * BlockIdSet
  *		Sets a block identifier to the specified value.
  */
 #define BlockIdSet(blockId, blockNumber) \
@@ -86,7 +86,7 @@ typedef BlockIdData *BlockId;	/* block identifier */
 )
 
 /*
- * BlockIdCopy 
+ * BlockIdCopy
  *		Copy a block identifier.
  */
 #define BlockIdCopy(toBlockId, fromBlockId) \
@@ -98,7 +98,7 @@ typedef BlockIdData *BlockId;	/* block identifier */
 )
 
 /*
- * BlockIdEquals 
+ * BlockIdEquals
  *		Check for block number equality.
  */
 #define BlockIdEquals(blockId1, blockId2) \
@@ -106,7 +106,7 @@ typedef BlockIdData *BlockId;	/* block identifier */
 	 (blockId1)->bi_lo == (blockId2)->bi_lo)
 
 /*
- * BlockIdGetBlockNumber 
+ * BlockIdGetBlockNumber
  *		Retrieve the block number from a block identifier.
  */
 #define BlockIdGetBlockNumber(blockId) \

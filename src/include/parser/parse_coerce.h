@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_coerce.h,v 1.10 1999/05/22 04:12:29 momjian Exp $
+ * $Id: parse_coerce.h,v 1.11 1999/05/25 16:14:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,8 +67,8 @@ typedef enum CATEGORY
  * This allows us to cheat and directly exchange values without
  *	going through the trouble of calling a conversion function.
  * Remove equivalencing of FLOAT8 and DATETIME. They really are not
- *  close enough in behavior, with the DATETIME reserved values
- *  and special formatting. - thomas 1999-01-24
+ *	close enough in behavior, with the DATETIME reserved values
+ *	and special formatting. - thomas 1999-01-24
  */
 #define IS_BINARY_COMPATIBLE(a,b) \
 		  (((a) == BPCHAROID && (b) == TEXTOID) \
@@ -122,6 +122,6 @@ extern CATEGORY TypeCategory(Oid type);
 
 extern bool can_coerce_type(int nargs, Oid *input_typeids, Oid *func_typeids);
 extern Node *coerce_type(ParseState *pstate, Node *node, Oid inputTypeId,
-						 Oid targetTypeId, int32 atttypmod);
+			Oid targetTypeId, int32 atttypmod);
 
 #endif	 /* PARSE_COERCE_H */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashpage.c,v 1.19 1999/02/13 23:14:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashpage.c,v 1.20 1999/05/25 16:06:58 momjian Exp $
  *
  * NOTES
  *	  Postgres hash pages look like ordinary relation pages.  The opaque
@@ -321,7 +321,7 @@ _hash_setpagelock(Relation rel,
 	{
 		switch (access)
 		{
-			case HASH_WRITE:
+				case HASH_WRITE:
 				LockPage(rel, blkno, ExclusiveLock);
 				break;
 			case HASH_READ:
@@ -345,7 +345,7 @@ _hash_unsetpagelock(Relation rel,
 	{
 		switch (access)
 		{
-			case HASH_WRITE:
+				case HASH_WRITE:
 				UnlockPage(rel, blkno, ExclusiveLock);
 				break;
 			case HASH_READ:

@@ -60,8 +60,8 @@ check_primary_key()
 	/*
 	 * Some checks first...
 	 */
-#ifdef  DEBUG_QUERY       
-        elog(NOTICE,"Check_primary_key Enter Function"); 
+#ifdef	DEBUG_QUERY
+	elog(NOTICE, "Check_primary_key Enter Function");
 #endif
 	/* Called by trigger manager ? */
 	if (!CurrentTriggerData)
@@ -228,7 +228,7 @@ check_foreign_key()
 	Trigger    *trigger;		/* to get trigger name */
 	int			nargs;			/* # of args specified in CREATE TRIGGER */
 	char	  **args;			/* arguments: as described above */
-        char	  **args_temp ;
+	char	  **args_temp;
 	int			nrefs;			/* number of references (== # of plans) */
 	char		action;			/* 'R'estrict | 'S'etnull | 'C'ascade */
 	int			nkeys;			/* # of key columns */
@@ -244,13 +244,15 @@ check_foreign_key()
 	bool		isequal = true; /* are keys in both tuples equal (in
 								 * UPDATE) */
 	char		ident[2 * NAMEDATALEN]; /* to identify myself */
-        int 		is_update=0;
+	int			is_update = 0;
 	int			ret;
 	int			i,
 				r;
-#ifdef DEBUG_QUERY                                
-   	elog(NOTICE,"Check_foreign_key Enter Function"); 
+
+#ifdef DEBUG_QUERY
+	elog(NOTICE, "Check_foreign_key Enter Function");
 #endif
+
 	/*
 	 * Some checks first...
 	 */
@@ -275,12 +277,12 @@ check_foreign_key()
 	 * key in tg_newtuple is the same as in tg_trigtuple then nothing to
 	 * do.
 	 */
-        is_update=0; 
+	is_update = 0;
 	if (TRIGGER_FIRED_BY_UPDATE(CurrentTriggerData->tg_event))
-        {
+	{
 		newtuple = CurrentTriggerData->tg_newtuple;
-                is_update=1;
-        }        
+		is_update = 1;
+	}
 	trigger = CurrentTriggerData->tg_trigger;
 	nargs = trigger->tgnargs;
 	args = trigger->tgargs;
@@ -288,7 +290,7 @@ check_foreign_key()
 	if (nargs < 5)				/* nrefs, action, key, Relation, key - at
 								 * least */
 		elog(ERROR, "check_foreign_key: too short %d (< 5) list of arguments", nargs);
-                
+
 	nrefs = pg_atoi(args[0], sizeof(int), 0);
 	if (nrefs < 1)
 		elog(ERROR, "check_foreign_key: %d (< 1) number of references specified", nrefs);
@@ -386,7 +388,7 @@ check_foreign_key()
 		if (plan->nplans <= 0)	/* Get typeId of column */
 			argtypes[i] = SPI_gettypeid(tupdesc, fnumber);
 	}
-        args_temp = args;
+	args_temp = args;
 	nargs -= nkeys;
 	args += nkeys;
 
@@ -397,13 +399,14 @@ check_foreign_key()
 	{
 		void	   *pplan;
 		char		sql[8192];
-                char 	**args2 = args ;
+		char	  **args2 = args;
 
 		plan->splan = (void **) malloc(nrefs * sizeof(void *));
 
 		for (r = 0; r < nrefs; r++)
 		{
 			relname = args2[0];
+
 			/*
 			 * For 'R'estrict action we construct SELECT query - SELECT 1
 			 * FROM _referencing_relation_ WHERE Fkey1 = $1 [AND Fkey2 =
@@ -417,50 +420,59 @@ check_foreign_key()
 			 * For 'C'ascade action we construct DELETE query - DELETE
 			 * FROM _referencing_relation_ WHERE Fkey1 = $1 [AND Fkey2 =
 			 * $2 [...]] - to delete all referencing tuples.
-                        */
-                        /*Max : Cascade with UPDATE query i create update query that
-                           updates new key values in referenced tables
-                        */
-                         
-                         
-			else if (action == 'c'){
-                           if (is_update == 1)
-			    {
-				int	   fn;
-				char	   *nv;
-				int        k ;
-				sprintf(sql, "update %s set ", relname);
-				for (k = 1; k <= nkeys; k++)
+			 */
+
+			/*
+			 * Max : Cascade with UPDATE query i create update query that
+			 * updates new key values in referenced tables
+			 */
+
+
+			else if (action == 'c')
+			{
+				if (is_update == 1)
 				{
-                                    int is_char_type =0;
-                                    char *type;
-                                    
-				    fn = SPI_fnumber(tupdesc, args_temp[k-1]);
-				    nv = SPI_getvalue(newtuple, tupdesc, fn);
-                                    type=SPI_gettype(tupdesc,fn);
-                                
-                                    if ( (strcmp(type,"text") && strcmp (type,"varchar")  &&
-                                          strcmp(type,"char") && strcmp (type,"bpchar")   &&
-                                          strcmp(type,"date") && strcmp (type,"datetime")) == 0 )
-                                         is_char_type=1;
-#ifdef  DEBUG_QUERY                                    
-                                    elog(NOTICE,"Check_foreign_key Debug value %s type %s %d", 
-                                       		nv,type,is_char_type);
+					int			fn;
+					char	   *nv;
+					int			k;
+
+					sprintf(sql, "update %s set ", relname);
+					for (k = 1; k <= nkeys; k++)
+					{
+						int			is_char_type = 0;
+						char	   *type;
+
+						fn = SPI_fnumber(tupdesc, args_temp[k - 1]);
+						nv = SPI_getvalue(newtuple, tupdesc, fn);
+						type = SPI_gettype(tupdesc, fn);
+
+						if ((strcmp(type, "text") && strcmp(type, "varchar") &&
+						strcmp(type, "char") && strcmp(type, "bpchar") &&
+							 strcmp(type, "date") && strcmp(type, "datetime")) == 0)
+							is_char_type = 1;
+#ifdef	DEBUG_QUERY
+						elog(NOTICE, "Check_foreign_key Debug value %s type %s %d",
+							 nv, type, is_char_type);
 #endif
-                                    /* is_char_type =1 i set ' ' for define a new value
-                                    */            
-				    sprintf(sql + strlen(sql), " %s = %s%s%s %s ",
-					args2[k], (is_char_type>0) ? "'" :"" ,
-                                        nv, (is_char_type >0) ? "'" :"",(k < nkeys) ? ", " : "");
-                                    is_char_type=0;    
+
+						/*
+						 * is_char_type =1 i set ' ' for define a new
+						 * value
+						 */
+						sprintf(sql + strlen(sql), " %s = %s%s%s %s ",
+								args2[k], (is_char_type > 0) ? "'" : "",
+								nv, (is_char_type > 0) ? "'" : "", (k < nkeys) ? ", " : "");
+						is_char_type = 0;
+					}
+					strcat(sql, " where ");
+
 				}
-				strcat(sql, " where ");
-                                
-			    }
-			    else /* DELETE */
-				sprintf(sql, "delete from %s where ", relname);
-                            
-                        }           
+				else
+/* DELETE */
+					sprintf(sql, "delete from %s where ", relname);
+
+			}
+
 			/*
 			 * For 'S'etnull action we construct UPDATE query - UPDATE
 			 * _referencing_relation_ SET Fkey1 null [, Fkey2 null [...]]
@@ -500,15 +512,15 @@ check_foreign_key()
 				elog(ERROR, "check_foreign_key: SPI_saveplan returned %d", SPI_result);
 
 			plan->splan[r] = pplan;
-                        
+
 			args2 += nkeys + 1; /* to the next relation */
 		}
 		plan->nplans = nrefs;
-#ifdef  DEBUG_QUERY                                    
-                elog(NOTICE,"Check_foreign_key Debug Query is :  %s ", sql);
+#ifdef	DEBUG_QUERY
+		elog(NOTICE, "Check_foreign_key Debug Query is :  %s ", sql);
 #endif
 	}
-        
+
 	/*
 	 * If UPDATE and key is not changed ...
 	 */

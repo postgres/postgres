@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.80 1999/05/18 21:34:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.81 1999/05/25 16:09:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,7 +92,7 @@ CopyPlanFields(Plan *from, Plan *newnode)
 	newnode->chgParam = listCopy(from->chgParam);
 	Node_Copy(from, newnode, initPlan);
 	if (from->subPlan != NULL)
-		newnode->subPlan = SS_pull_subplan((Node*) newnode->qual);
+		newnode->subPlan = SS_pull_subplan((Node *) newnode->qual);
 	else
 		newnode->subPlan = NULL;
 	newnode->nParamExec = from->nParamExec;
@@ -138,10 +138,12 @@ _copyResult(Result *from)
 	 */
 	Node_Copy(from, newnode, resconstantqual);
 
-	/* We must add subplans in resconstantqual to the new plan's subPlan list
+	/*
+	 * We must add subplans in resconstantqual to the new plan's subPlan
+	 * list
 	 */
 	newnode->plan.subPlan = nconc(newnode->plan.subPlan,
-								  SS_pull_subplan(newnode->resconstantqual));
+							  SS_pull_subplan(newnode->resconstantqual));
 
 	return newnode;
 }
@@ -369,7 +371,7 @@ _copyHashJoin(HashJoin *from)
  * ----------------
  */
 static void
-CopyNonameFields(Noname *from, Noname *newnode)
+CopyNonameFields(Noname * from, Noname * newnode)
 {
 	newnode->nonameid = from->nonameid;
 	newnode->keycount = from->keycount;
@@ -382,7 +384,7 @@ CopyNonameFields(Noname *from, Noname *newnode)
  * ----------------
  */
 static Noname *
-_copyNoname(Noname *from)
+_copyNoname(Noname * from)
 {
 	Noname	   *newnode = makeNode(Noname);
 
@@ -466,9 +468,10 @@ _copyAgg(Agg *from)
 
 	CopyPlanFields((Plan *) from, (Plan *) newnode);
 
-	/* Cannot copy agg list; it must be rebuilt to point to subnodes of
+	/*
+	 * Cannot copy agg list; it must be rebuilt to point to subnodes of
 	 * new node.
-	 */ 
+	 */
 	set_agg_tlist_references(newnode);
 
 	return newnode;
@@ -859,7 +862,7 @@ _copyFunc(Func *from)
  * ----------------
  */
 static Aggref *
-_copyAggref(Aggref *from)
+_copyAggref(Aggref * from)
 {
 	Aggref	   *newnode = makeNode(Aggref);
 
@@ -904,7 +907,7 @@ _copySubLink(SubLink *from)
  * ----------------
  */
 static CaseExpr *
-_copyCaseExpr(CaseExpr *from)
+_copyCaseExpr(CaseExpr * from)
 {
 	CaseExpr   *newnode = makeNode(CaseExpr);
 
@@ -926,7 +929,7 @@ _copyCaseExpr(CaseExpr *from)
  * ----------------
  */
 static CaseWhen *
-_copyCaseWhen(CaseWhen *from)
+_copyCaseWhen(CaseWhen * from)
 {
 	CaseWhen   *newnode = makeNode(CaseWhen);
 
@@ -1170,7 +1173,7 @@ _copyIndexPath(IndexPath *from)
  * ----------------
  */
 static void
-CopyNestPathFields(NestPath *from, NestPath *newnode)
+CopyNestPathFields(NestPath * from, NestPath * newnode)
 {
 	Node_Copy(from, newnode, pathinfo);
 	Node_Copy(from, newnode, outerjoinpath);
@@ -1182,7 +1185,7 @@ CopyNestPathFields(NestPath *from, NestPath *newnode)
  * ----------------
  */
 static NestPath *
-_copyNestPath(NestPath *from)
+_copyNestPath(NestPath * from)
 {
 	NestPath   *newnode = makeNode(NestPath);
 
@@ -1316,7 +1319,7 @@ _copyMergeOrder(MergeOrder *from)
  * ----------------
  */
 static RestrictInfo *
-_copyRestrictInfo(RestrictInfo *from)
+_copyRestrictInfo(RestrictInfo * from)
 {
 	RestrictInfo *newnode = makeNode(RestrictInfo);
 
@@ -1371,9 +1374,9 @@ _copyJoinMethod(JoinMethod *from)
  * ----------------
  */
 static HashInfo *
-_copyHashInfo(HashInfo *from)
+_copyHashInfo(HashInfo * from)
 {
-	HashInfo	   *newnode = makeNode(HashInfo);
+	HashInfo   *newnode = makeNode(HashInfo);
 
 	/* ----------------
 	 *	copy remainder of node
@@ -1390,9 +1393,9 @@ _copyHashInfo(HashInfo *from)
  * ----------------
  */
 static MergeInfo *
-_copyMergeInfo(MergeInfo *from)
+_copyMergeInfo(MergeInfo * from)
 {
-	MergeInfo	   *newnode = makeNode(MergeInfo);
+	MergeInfo  *newnode = makeNode(MergeInfo);
 
 	/* ----------------
 	 *	copy remainder of node
@@ -1409,7 +1412,7 @@ _copyMergeInfo(MergeInfo *from)
  * ----------------
  */
 static JoinInfo *
-_copyJoinInfo(JoinInfo *from)
+_copyJoinInfo(JoinInfo * from)
 {
 	JoinInfo   *newnode = makeNode(JoinInfo);
 
@@ -1493,9 +1496,9 @@ _copyRangeTblEntry(RangeTblEntry *from)
 }
 
 static RowMark *
-_copyRowMark(RowMark *from)
+_copyRowMark(RowMark * from)
 {
-	RowMark *newnode = makeNode(RowMark);
+	RowMark    *newnode = makeNode(RowMark);
 
 	newnode->rti = from->rti;
 	newnode->info = from->info;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.50 1999/03/20 02:07:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.51 1999/05/25 16:08:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,7 +66,7 @@ bool		execConstByVal;
 int			execConstLen;
 
 /* static functions decls */
-static Datum ExecEvalAggref(Aggref *aggref, ExprContext *econtext, bool *isNull);
+static Datum ExecEvalAggref(Aggref * aggref, ExprContext *econtext, bool *isNull);
 static Datum ExecEvalArrayRef(ArrayRef *arrayRef, ExprContext *econtext,
 				 bool *isNull, bool *isDone);
 static Datum ExecEvalAnd(Expr *andExpr, ExprContext *econtext, bool *isNull);
@@ -190,7 +190,7 @@ ExecEvalArrayRef(ArrayRef *arrayRef,
  * ----------------------------------------------------------------
  */
 static Datum
-ExecEvalAggref(Aggref *aggref, ExprContext *econtext, bool *isNull)
+ExecEvalAggref(Aggref * aggref, ExprContext *econtext, bool *isNull)
 {
 	*isNull = econtext->ecxt_nulls[aggref->aggno];
 	return econtext->ecxt_values[aggref->aggno];
@@ -232,7 +232,7 @@ ExecEvalVar(Var *variable, ExprContext *econtext, bool *isNull)
 	int16		len;
 
 	/*
-	 *	get the slot we want
+	 * get the slot we want
 	 */
 	switch (variable->varno)
 	{
@@ -251,7 +251,7 @@ ExecEvalVar(Var *variable, ExprContext *econtext, bool *isNull)
 	}
 
 	/*
-	 *	 extract tuple information from the slot
+	 * extract tuple information from the slot
 	 */
 	heapTuple = slot->val;
 	tuple_type = slot->ttc_tupleDescriptor;
@@ -270,7 +270,7 @@ ExecEvalVar(Var *variable, ExprContext *econtext, bool *isNull)
 	 * the entire tuple, we give back a whole slot so that callers know
 	 * what the tuple looks like.
 	 */
-	if (attnum == InvalidAttrNumber)
+		if (attnum == InvalidAttrNumber)
 	{
 		TupleTableSlot *tempSlot;
 		TupleDesc	td;
@@ -299,26 +299,25 @@ ExecEvalVar(Var *variable, ExprContext *econtext, bool *isNull)
 						  isNull);		/* return: is attribute null? */
 
 	/*
-	 *	return null if att is null
+	 * return null if att is null
 	 */
 	if (*isNull)
 		return (Datum) NULL;
 
 	/*
-	 *	 get length and type information..
-	 *	 ??? what should we do about variable length attributes
-	 *	 - variable length attributes have their length stored
-	 *	   in the first 4 bytes of the memory pointed to by the
-	 *	   returned value.. If we can determine that the type
-	 *	   is a variable length type, we can do the right thing.
-	 *	   -cim 9/15/89
+	 * get length and type information.. ??? what should we do about
+	 * variable length attributes - variable length attributes have their
+	 * length stored in the first 4 bytes of the memory pointed to by the
+	 * returned value.. If we can determine that the type is a variable
+	 * length type, we can do the right thing. -cim 9/15/89
 	 */
 	if (attnum < 0)
 	{
+
 		/*
-		 *	If this is a pseudo-att, we get the type and fake the length.
-		 *	There ought to be a routine to return the real lengths, so
-		 *	we'll mark this one ... XXX -mao
+		 * If this is a pseudo-att, we get the type and fake the length.
+		 * There ought to be a routine to return the real lengths, so
+		 * we'll mark this one ... XXX -mao
 		 */
 		len = heap_sysattrlen(attnum);	/* XXX see -mao above */
 		byval = heap_sysattrbyval(attnum);		/* XXX see -mao above */
@@ -609,11 +608,11 @@ ExecEvalFuncArgs(FunctionCachePtr fcache,
 	i = 0;
 	foreach(arg, argList)
 	{
+
 		/*
-		 *	 evaluate the expression, in general functions cannot take
-		 *	 sets as arguments but we make an exception in the case of
-		 *	 nested dot expressions.  We have to watch out for this case
-		 *	 here.
+		 * evaluate the expression, in general functions cannot take sets
+		 * as arguments but we make an exception in the case of nested dot
+		 * expressions.  We have to watch out for this case here.
 		 */
 		argV[i] = (Datum)
 			ExecEvalExpr((Node *) lfirst(arg),
@@ -671,10 +670,10 @@ ExecMakeFunctionResult(Node *node,
 	}
 
 	/*
-	 *	arguments is a list of expressions to evaluate
-	 *	before passing to the function manager.
-	 *	We collect the results of evaluating the expressions
-	 *	into a datum array (argV) and pass this array to arrayFmgr()
+	 * arguments is a list of expressions to evaluate before passing to
+	 * the function manager. We collect the results of evaluating the
+	 * expressions into a datum array (argV) and pass this array to
+	 * arrayFmgr()
 	 */
 	if (fcache->nargs != 0)
 	{
@@ -743,8 +742,8 @@ ExecMakeFunctionResult(Node *node,
 	}
 
 	/*
-	 *	 now return the value gotten by calling the function manager,
-	 *	 passing the function the evaluated parameter values.
+	 * now return the value gotten by calling the function manager,
+	 * passing the function the evaluated parameter values.
 	 */
 	if (fcache->language == SQLlanguageId)
 	{
@@ -843,12 +842,12 @@ ExecEvalOper(Expr *opClause, ExprContext *econtext, bool *isNull)
 	bool		isDone;
 
 	/*
-	 *	an opclause is a list (op args).  (I think)
+	 * an opclause is a list (op args).  (I think)
 	 *
-	 *	we extract the oid of the function associated with
-	 *	the op and then pass the work onto ExecMakeFunctionResult
-	 *	which evaluates the arguments and returns the result of
-	 *	calling the function on the evaluated arguments.
+	 * we extract the oid of the function associated with the op and then
+	 * pass the work onto ExecMakeFunctionResult which evaluates the
+	 * arguments and returns the result of calling the function on the
+	 * evaluated arguments.
 	 */
 	op = (Oper *) opClause->oper;
 	argList = opClause->args;
@@ -865,8 +864,8 @@ ExecEvalOper(Expr *opClause, ExprContext *econtext, bool *isNull)
 	}
 
 	/*
-	 *	call ExecMakeFunctionResult() with a dummy isDone that we ignore.
-	 *	We don't have operator whose arguments are sets.
+	 * call ExecMakeFunctionResult() with a dummy isDone that we ignore.
+	 * We don't have operator whose arguments are sets.
 	 */
 	return ExecMakeFunctionResult((Node *) op, argList, econtext, isNull, &isDone);
 }
@@ -887,14 +886,14 @@ ExecEvalFunc(Expr *funcClause,
 	FunctionCachePtr fcache;
 
 	/*
-	 *	an funcclause is a list (func args).  (I think)
+	 * an funcclause is a list (func args).  (I think)
 	 *
-	 *	we extract the oid of the function associated with
-	 *	the func node and then pass the work onto ExecMakeFunctionResult
-	 *	which evaluates the arguments and returns the result of
-	 *	calling the function on the evaluated arguments.
+	 * we extract the oid of the function associated with the func node and
+	 * then pass the work onto ExecMakeFunctionResult which evaluates the
+	 * arguments and returns the result of calling the function on the
+	 * evaluated arguments.
 	 *
-	 *	this is nearly identical to the ExecEvalOper code.
+	 * this is nearly identical to the ExecEvalOper code.
 	 */
 	func = (Func *) funcClause->oper;
 	argList = funcClause->args;
@@ -939,21 +938,21 @@ ExecEvalNot(Expr *notclause, ExprContext *econtext, bool *isNull)
 	clause = lfirst(notclause->args);
 
 	/*
-	 *	We don't iterate over sets in the quals, so pass in an isDone
-	 *	flag, but ignore it.
+	 * We don't iterate over sets in the quals, so pass in an isDone flag,
+	 * but ignore it.
 	 */
 	expr_value = ExecEvalExpr(clause, econtext, isNull, &isDone);
 
 	/*
-	 *	if the expression evaluates to null, then we just
-	 *	cascade the null back to whoever called us.
+	 * if the expression evaluates to null, then we just cascade the null
+	 * back to whoever called us.
 	 */
 	if (*isNull)
 		return expr_value;
 
 	/*
-	 *	evaluation of 'not' is simple.. expr is false, then
-	 *	return 'true' and vice versa.
+	 * evaluation of 'not' is simple.. expr is false, then return 'true'
+	 * and vice versa.
 	 */
 	if (DatumGetInt32(expr_value) == 0)
 		return (Datum) true;
@@ -978,22 +977,19 @@ ExecEvalOr(Expr *orExpr, ExprContext *econtext, bool *isNull)
 	clauses = orExpr->args;
 
 	/*
-	 *	we use three valued logic functions here...
-	 *	we evaluate each of the clauses in turn,
-	 *	as soon as one is true we return that
-	 *	value.	If none is true and  none of the
-	 *	clauses evaluate to NULL we return
-	 *	the value of the last clause evaluated (which
-	 *	should be false) with *isNull set to false else
-	 *	if none is true and at least one clause evaluated
-	 *	to NULL we set *isNull flag to true -
+	 * we use three valued logic functions here... we evaluate each of the
+	 * clauses in turn, as soon as one is true we return that value.  If
+	 * none is true and  none of the clauses evaluate to NULL we return
+	 * the value of the last clause evaluated (which should be false) with
+	 * *isNull set to false else if none is true and at least one clause
+	 * evaluated to NULL we set *isNull flag to true -
 	 */
 	foreach(clause, clauses)
 	{
 
 		/*
-		 *	We don't iterate over sets in the quals, so pass in an isDone
-		 *	flag, but ignore it.
+		 * We don't iterate over sets in the quals, so pass in an isDone
+		 * flag, but ignore it.
 		 */
 		const_value = ExecEvalExpr((Node *) lfirst(clause),
 								   econtext,
@@ -1001,34 +997,32 @@ ExecEvalOr(Expr *orExpr, ExprContext *econtext, bool *isNull)
 								   &isDone);
 
 		/*
-		 *	if the expression evaluates to null, then we
-		 *	remember it in the local IsNull flag, if none of the
-		 *	clauses are true then we need to set *isNull
-		 *	to true again.
+		 * if the expression evaluates to null, then we remember it in the
+		 * local IsNull flag, if none of the clauses are true then we need
+		 * to set *isNull to true again.
 		 */
 		if (*isNull)
 		{
 			IsNull = *isNull;
 
 			/*
-			 * Many functions don't (or can't!) check if an argument is NULL
-			 * or NOT_NULL and may return TRUE (1) with *isNull TRUE
-			 * (an_int4_column <> 1: int4ne returns TRUE for NULLs).
-			 * Not having time to fix the function manager I want to fix OR:
-			 * if we had 'x <> 1 OR x isnull' then when x is NULL
-			 * TRUE was returned by the 'x <> 1' clause ...
-			 * but ExecQualClause says that the qualification should *fail*
-			 * if isnull is TRUE for any value returned by ExecEvalExpr.
-			 * So, force this rule here:
-			 * if isnull is TRUE then the clause failed.
-			 * Note: nullvalue() & nonnullvalue() always sets isnull to FALSE for NULLs.
-			 * - vadim 09/22/97
+			 * Many functions don't (or can't!) check if an argument is
+			 * NULL or NOT_NULL and may return TRUE (1) with *isNull TRUE
+			 * (an_int4_column <> 1: int4ne returns TRUE for NULLs). Not
+			 * having time to fix the function manager I want to fix OR:
+			 * if we had 'x <> 1 OR x isnull' then when x is NULL TRUE was
+			 * returned by the 'x <> 1' clause ... but ExecQualClause says
+			 * that the qualification should *fail* if isnull is TRUE for
+			 * any value returned by ExecEvalExpr. So, force this rule
+			 * here: if isnull is TRUE then the clause failed. Note:
+			 * nullvalue() & nonnullvalue() always sets isnull to FALSE
+			 * for NULLs. - vadim 09/22/97
 			 */
 			const_value = 0;
 		}
 
 		/*
-		 *	 if we have a true result, then we return it.
+		 * if we have a true result, then we return it.
 		 */
 		if (DatumGetInt32(const_value) != 0)
 			return const_value;
@@ -1057,18 +1051,16 @@ ExecEvalAnd(Expr *andExpr, ExprContext *econtext, bool *isNull)
 	clauses = andExpr->args;
 
 	/*
-	 *	we evaluate each of the clauses in turn,
-	 *	as soon as one is false we return that
-	 *	value.	If none are false or NULL then we return
-	 *	the value of the last clause evaluated, which
-	 *	should be true.
+	 * we evaluate each of the clauses in turn, as soon as one is false we
+	 * return that value.  If none are false or NULL then we return the
+	 * value of the last clause evaluated, which should be true.
 	 */
 	foreach(clause, clauses)
 	{
 
 		/*
-		 *	We don't iterate over sets in the quals, so pass in an isDone
-		 *	flag, but ignore it.
+		 * We don't iterate over sets in the quals, so pass in an isDone
+		 * flag, but ignore it.
 		 */
 		const_value = ExecEvalExpr((Node *) lfirst(clause),
 								   econtext,
@@ -1076,17 +1068,16 @@ ExecEvalAnd(Expr *andExpr, ExprContext *econtext, bool *isNull)
 								   &isDone);
 
 		/*
-		 *	if the expression evaluates to null, then we
-		 *	remember it in IsNull, if none of the clauses after
-		 *	this evaluates to false we will have to set *isNull
-		 *	to true again.
+		 * if the expression evaluates to null, then we remember it in
+		 * IsNull, if none of the clauses after this evaluates to false we
+		 * will have to set *isNull to true again.
 		 */
 		if (*isNull)
 			IsNull = *isNull;
 
 		/*
-		 *	 if we have a false result, then we return it, since the
-		 *	 conjunction must be false.
+		 * if we have a false result, then we return it, since the
+		 * conjunction must be false.
 		 */
 		if (DatumGetInt32(const_value) == 0)
 			return const_value;
@@ -1106,7 +1097,7 @@ ExecEvalAnd(Expr *andExpr, ExprContext *econtext, bool *isNull)
  * ----------------------------------------------------------------
  */
 static Datum
-ExecEvalCase(CaseExpr *caseExpr, ExprContext *econtext, bool *isNull)
+ExecEvalCase(CaseExpr * caseExpr, ExprContext *econtext, bool *isNull)
 {
 	List	   *clauses;
 	List	   *clause;
@@ -1117,17 +1108,16 @@ ExecEvalCase(CaseExpr *caseExpr, ExprContext *econtext, bool *isNull)
 	clauses = caseExpr->args;
 
 	/*
-	 *	we evaluate each of the WHEN clauses in turn,
-	 *	as soon as one is true we return the corresponding
-	 *	result.	If none are true then we return the value
-	 *	of the default clause, or NULL.
+	 * we evaluate each of the WHEN clauses in turn, as soon as one is
+	 * true we return the corresponding result. If none are true then we
+	 * return the value of the default clause, or NULL.
 	 */
 	foreach(clause, clauses)
 	{
 
 		/*
-		 *	We don't iterate over sets in the quals, so pass in an isDone
-		 *	flag, but ignore it.
+		 * We don't iterate over sets in the quals, so pass in an isDone
+		 * flag, but ignore it.
 		 */
 
 		wclause = lfirst(clause);
@@ -1137,8 +1127,8 @@ ExecEvalCase(CaseExpr *caseExpr, ExprContext *econtext, bool *isNull)
 								   &isDone);
 
 		/*
-		 *	 if we have a true test, then we return the result,
-		 *	 since the case statement is satisfied.
+		 * if we have a true test, then we return the result, since the
+		 * case statement is satisfied.
 		 */
 		if (DatumGetInt32(const_value) != 0)
 		{
@@ -1159,9 +1149,7 @@ ExecEvalCase(CaseExpr *caseExpr, ExprContext *econtext, bool *isNull)
 								   &isDone);
 	}
 	else
-	{
 		*isNull = true;
-	}
 
 	return const_value;
 }
@@ -1204,8 +1192,8 @@ ExecEvalExpr(Node *expression,
 		*isDone = true;
 
 	/*
-	 *	here we dispatch the work to the appropriate type
-	 *	of function given the type of our expression.
+	 * here we dispatch the work to the appropriate type of function given
+	 * the type of our expression.
 	 */
 	if (expression == NULL)
 	{
@@ -1287,7 +1275,7 @@ ExecEvalExpr(Node *expression,
 	}
 
 	return retDatum;
-} /* ExecEvalExpr() */
+}	/* ExecEvalExpr() */
 
 
 /* ----------------------------------------------------------------
@@ -1325,16 +1313,15 @@ ExecQualClause(Node *clause, ExprContext *econtext)
 		ExecEvalExpr(clause, econtext, &isNull, &isDone);
 
 	/*
-	 *	this is interesting behaviour here.  When a clause evaluates
-	 *	to null, then we consider this as passing the qualification.
-	 *	it seems kind of like, if the qual is NULL, then there's no
-	 *	qual..
+	 * this is interesting behaviour here.	When a clause evaluates to
+	 * null, then we consider this as passing the qualification. it seems
+	 * kind of like, if the qual is NULL, then there's no qual..
 	 */
 	if (isNull)
 		return true;
 
 	/*
-	 *	remember, we return true when the qualification fails..
+	 * remember, we return true when the qualification fails..
 	 */
 	if (DatumGetInt32(expr_value) == 0)
 		return true;
@@ -1356,7 +1343,7 @@ ExecQual(List *qual, ExprContext *econtext)
 	bool		result;
 
 	/*
-	 *	debugging stuff
+	 * debugging stuff
 	 */
 	EV_printf("ExecQual: qual is ");
 	EV_nodeDisplay(qual);
@@ -1365,18 +1352,18 @@ ExecQual(List *qual, ExprContext *econtext)
 	IncrProcessed();
 
 	/*
-	 *	return true immediately if no qual
+	 * return true immediately if no qual
 	 */
 	if (qual == NIL)
 		return true;
 
 	/*
-	 *	a "qual" is a list of clauses.	To evaluate the
-	 *	qual, we evaluate each of the clauses in the list.
+	 * a "qual" is a list of clauses.  To evaluate the qual, we evaluate
+	 * each of the clauses in the list.
 	 *
-	 *	ExecQualClause returns true when we know the qualification
-	 *	*failed* so we just pass each clause in qual to it until
-	 *	we know the qual failed or there are no more clauses.
+	 * ExecQualClause returns true when we know the qualification *failed* so
+	 * we just pass each clause in qual to it until we know the qual
+	 * failed or there are no more clauses.
 	 */
 	result = false;
 
@@ -1388,9 +1375,9 @@ ExecQual(List *qual, ExprContext *econtext)
 	}
 
 	/*
-	 *	if result is true, then it means a clause failed so we
-	 *	return false.  if result is false then it means no clause
-	 *	failed so we return true.
+	 * if result is true, then it means a clause failed so we return
+	 * false.  if result is false then it means no clause failed so we
+	 * return true.
 	 */
 	if (result == true)
 		return false;
@@ -1447,48 +1434,46 @@ ExecTargetList(List *targetlist,
 	bool		isNull;
 
 	/*
-	 *	debugging stuff
+	 * debugging stuff
 	 */
 	EV_printf("ExecTargetList: tl is ");
 	EV_nodeDisplay(targetlist);
 	EV_printf("\n");
 
 	/*
-	 * Return a dummy tuple if the targetlist is empty.
-	 * the dummy tuple is necessary to differentiate
-	 * between passing and failing the qualification.
+	 * Return a dummy tuple if the targetlist is empty. the dummy tuple is
+	 * necessary to differentiate between passing and failing the
+	 * qualification.
 	 */
 	if (targetlist == NIL)
 	{
+
 		/*
-		 *		I now think that the only time this makes
-		 *		any sense is when we run a delete query.  Then
-		 *		we need to return something other than nil
-		 *		so we know to delete the tuple associated
-		 *		with the saved tupleid.. see what ExecutePlan
-		 *		does with the returned tuple.. -cim 9/21/89
+		 * I now think that the only time this makes any sense is when we
+		 * run a delete query.	Then we need to return something other
+		 * than nil so we know to delete the tuple associated with the
+		 * saved tupleid.. see what ExecutePlan does with the returned
+		 * tuple.. -cim 9/21/89
 		 *
-		 *		It could also happen in queries like:
-		 *			retrieve (foo.all) where bar.a = 3
+		 * It could also happen in queries like: retrieve (foo.all) where
+		 * bar.a = 3
 		 *
-		 *		is this a new phenomenon? it might cause bogus behavior
-		 *		if we try to free this tuple later!! I put a hook in
-		 *		ExecProject to watch out for this case -mer 24 Aug 1992
+		 * is this a new phenomenon? it might cause bogus behavior if we try
+		 * to free this tuple later!! I put a hook in ExecProject to watch
+		 * out for this case -mer 24 Aug 1992
 		 *
-		 *		We must return dummy tuple!!! Try 
-		 *		select t1.x from t1, t2 where t1.y = 1 and t2.y = 1
-		 *		- t2 scan target list will be empty and so no one tuple
-		 *		will be returned! But Mer was right - dummy tuple
-		 *		must be palloced...	- vadim 03/01/1999
+		 * We must return dummy tuple!!! Try select t1.x from t1, t2 where
+		 * t1.y = 1 and t2.y = 1 - t2 scan target list will be empty and
+		 * so no one tuple will be returned! But Mer was right - dummy
+		 * tuple must be palloced... - vadim 03/01/1999
 		 */
 		*isDone = true;
 		return (HeapTuple) palloc(1);
 	}
 
 	/*
-	 *	allocate an array of char's to hold the "null" information
-	 *	only if we have a really large targetlist.	otherwise we use
-	 *	the stack.
+	 * allocate an array of char's to hold the "null" information only if
+	 * we have a really large targetlist.  otherwise we use the stack.
 	 */
 	if (nodomains > 64)
 	{
@@ -1502,20 +1487,21 @@ ExecTargetList(List *targetlist,
 	}
 
 	/*
-	 *	evaluate all the expressions in the target list
+	 * evaluate all the expressions in the target list
 	 */
 	EV_printf("ExecTargetList: setting target list values\n");
 
 	*isDone = true;
 	foreach(tl, targetlist)
 	{
+
 		/*
-		 *	  remember, a target list is a list of lists:
+		 * remember, a target list is a list of lists:
 		 *
-		 *		((<resdom | fjoin> expr) (<resdom | fjoin> expr) ...)
+		 * ((<resdom | fjoin> expr) (<resdom | fjoin> expr) ...)
 		 *
-		 *	  tl is a pointer to successive cdr's of the targetlist
-		 *	  tle is a pointer to the target list entry in tl
+		 * tl is a pointer to successive cdr's of the targetlist tle is a
+		 * pointer to the target list entry in tl
 		 */
 		tle = lfirst(tl);
 
@@ -1572,7 +1558,7 @@ ExecTargetList(List *targetlist,
 				 curNode < nNodes;
 				 curNode++, fjTlist = lnext(fjTlist))
 			{
-#ifdef NOT_USED						/* what is this?? */
+#ifdef NOT_USED					/* what is this?? */
 				Node	   *outernode = lfirst(fjTlist);
 
 				fjRes = (Resdom *) outernode->iterexpr;
@@ -1590,19 +1576,19 @@ ExecTargetList(List *targetlist,
 	}
 
 	/*
-	 *	form the new result tuple (in the "normal" context)
+	 * form the new result tuple (in the "normal" context)
 	 */
 	newTuple = (HeapTuple) heap_formtuple(targettype, values, null_head);
 
 	/*
-	 *	free the nulls array if we allocated one..
+	 * free the nulls array if we allocated one..
 	 */
 	if (nodomains > 64)
 	{
 		pfree(null_head);
 		pfree(fjIsNull);
 	}
-	
+
 	return newTuple;
 }
 
@@ -1631,13 +1617,13 @@ ExecProject(ProjectionInfo *projInfo, bool *isDone)
 	HeapTuple	newTuple;
 
 	/*
-	 *	sanity checks
+	 * sanity checks
 	 */
 	if (projInfo == NULL)
 		return (TupleTableSlot *) NULL;
 
 	/*
-	 *	get the projection info we want
+	 * get the projection info we want
 	 */
 	slot = projInfo->pi_slot;
 	targetlist = projInfo->pi_targetlist;
@@ -1648,7 +1634,7 @@ ExecProject(ProjectionInfo *projInfo, bool *isDone)
 	econtext = projInfo->pi_exprContext;
 
 	/*
-	 *	form a new (result) tuple
+	 * form a new (result) tuple
 	 */
 	newTuple = ExecTargetList(targetlist,
 							  len,
@@ -1658,11 +1644,10 @@ ExecProject(ProjectionInfo *projInfo, bool *isDone)
 							  isDone);
 
 	/*
-	 *	store the tuple in the projection slot and return the slot.
+	 * store the tuple in the projection slot and return the slot.
 	 *
-	 *	If there's no projection target list we don't want to pfree
-	 *	the bogus tuple that ExecTargetList passes back to us.
-	 *		 -mer 24 Aug 1992
+	 * If there's no projection target list we don't want to pfree the bogus
+	 * tuple that ExecTargetList passes back to us. -mer 24 Aug 1992
 	 */
 	return (TupleTableSlot *)
 		ExecStoreTuple(newTuple,/* tuple to store */
@@ -1670,4 +1655,3 @@ ExecProject(ProjectionInfo *projInfo, bool *isDone)
 					   InvalidBuffer,	/* tuple has no buffer */
 					   true);
 }
-

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/mcxt.c,v 1.13 1999/03/22 16:45:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/mcxt.c,v 1.14 1999/05/25 16:12:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,7 +54,7 @@ static OrderedSetData ActiveGlobalMemorySetData;		/* uninitialized */
 #define PSIZESPACE(LEN) ((LEN) + sizeof (int32))
 
 /*
- * AllocSizeIsValid 
+ * AllocSizeIsValid
  *		True iff 0 < size and size <= MaxAllocSize.
  */
 #define AllocSizeIsValid(size)	(0 < (size) && (size) <= MaxAllocSize)
@@ -64,7 +64,7 @@ static OrderedSetData ActiveGlobalMemorySetData;		/* uninitialized */
  *****************************************************************************/
 
 /*
- * CurrentMemoryContext 
+ * CurrentMemoryContext
  *		Memory context for general global allocations.
  */
 DLLIMPORT MemoryContext CurrentMemoryContext = NULL;
@@ -106,14 +106,14 @@ static struct MemoryContextMethodsData GlobalContextMethodsData = {
 static struct GlobalMemoryData TopGlobalMemoryData = {
 	T_GlobalMemory,				/* NodeTag				tag		  */
 	&GlobalContextMethodsData,	/* ContextMethods		method	  */
-	{ NULL, { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL }},
-								/* free AllocSet   */
+	{NULL, {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL}},
+	/* free AllocSet   */
 	"TopGlobal",				/* char* name	   */
 	{0}							/* uninitialized OrderedElemData elemD */
 };
 
 /*
- * TopMemoryContext 
+ * TopMemoryContext
  *		Memory context for general global allocations.
  *
  * Note:
@@ -131,7 +131,7 @@ MemoryContext TopMemoryContext = (MemoryContext) &TopGlobalMemoryData;
  */
 
 /*
- * EnableMemoryContext 
+ * EnableMemoryContext
  *		Enables/disables memory management and global contexts.
  *
  * Note:
@@ -207,7 +207,7 @@ EnableMemoryContext(bool on)
 }
 
 /*
- * MemoryContextAlloc 
+ * MemoryContextAlloc
  *		Returns pointer to aligned allocated memory in the given context.
  *
  * Note:
@@ -231,7 +231,7 @@ MemoryContextAlloc(MemoryContext context, Size size)
 }
 
 /*
- * MemoryContextFree 
+ * MemoryContextFree
  *		Frees allocated memory referenced by pointer in the given context.
  *
  * Note:
@@ -252,7 +252,7 @@ MemoryContextFree(MemoryContext context, Pointer pointer)
 }
 
 /*
- * MemoryContextRelloc 
+ * MemoryContextRelloc
  *		Returns pointer to aligned allocated memory in the given context.
  *
  * Note:
@@ -278,7 +278,7 @@ MemoryContextRealloc(MemoryContext context,
 }
 
 /*
- * MemoryContextGetName 
+ * MemoryContextGetName
  *		Returns pointer to aligned allocated memory in the given context.
  *
  * Note:
@@ -301,7 +301,7 @@ MemoryContextGetName(MemoryContext context)
 #endif
 
 /*
- * PointerGetAllocSize 
+ * PointerGetAllocSize
  *		Returns size of aligned allocated memory given pointer to it.
  *
  * Note:
@@ -324,7 +324,7 @@ PointerGetAllocSize(Pointer pointer)
 #endif
 
 /*
- * MemoryContextSwitchTo 
+ * MemoryContextSwitchTo
  *		Returns the current context; installs the given context.
  *
  * Note:
@@ -351,7 +351,7 @@ MemoryContextSwitchTo(MemoryContext context)
  * External Functions
  */
 /*
- * CreateGlobalMemory 
+ * CreateGlobalMemory
  *		Returns new global memory context.
  *
  * Note:
@@ -385,7 +385,7 @@ CreateGlobalMemory(char *name)	/* XXX MemoryContextName */
 }
 
 /*
- * GlobalMemoryDestroy 
+ * GlobalMemoryDestroy
  *		Destroys given global memory context.
  *
  * Exceptions:
@@ -413,7 +413,7 @@ GlobalMemoryDestroy(GlobalMemory context)
  *****************************************************************************/
 
 /*
- * GlobalMemoryAlloc 
+ * GlobalMemoryAlloc
  *		Returns pointer to aligned space in the global context.
  *
  * Exceptions:
@@ -426,7 +426,7 @@ GlobalMemoryAlloc(GlobalMemory this, Size size)
 }
 
 /*
- * GlobalMemoryFree 
+ * GlobalMemoryFree
  *		Frees allocated memory in the global context.
  *
  * Exceptions:
@@ -441,7 +441,7 @@ GlobalMemoryFree(GlobalMemory this,
 }
 
 /*
- * GlobalMemoryRealloc 
+ * GlobalMemoryRealloc
  *		Returns pointer to aligned space in the global context.
  *
  * Note:
@@ -461,7 +461,7 @@ GlobalMemoryRealloc(GlobalMemory this,
 }
 
 /*
- * GlobalMemoryGetName 
+ * GlobalMemoryGetName
  *		Returns name string for context.
  *
  * Exceptions:
@@ -474,7 +474,7 @@ GlobalMemoryGetName(GlobalMemory this)
 }
 
 /*
- * GlobalMemoryDump 
+ * GlobalMemoryDump
  *		Dumps global memory context for debugging.
  *
  * Exceptions:
@@ -499,7 +499,7 @@ GlobalMemoryDump(GlobalMemory this)
 }
 
 /*
- * DumpGlobalMemories 
+ * DumpGlobalMemories
  *		Dumps all global memory contexts for debugging.
  *
  * Exceptions:

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.72 1999/05/12 15:02:04 wieck Exp $
+ * $Id: parsenodes.h,v 1.73 1999/05/25 16:14:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,8 +60,8 @@ typedef struct Query
 								 * BY */
 	Node	   *havingQual;		/* qualification of each group */
 
-        /***S*I***/
-	List	   *intersectClause;	
+	/***S*I***/
+	List	   *intersectClause;
 
 	List	   *unionClause;	/* unions are linked under the previous
 								 * query */
@@ -590,7 +590,7 @@ typedef struct LockStmt
 	NodeTag		type;
 	char	   *relname;		/* relation to lock */
 	int			mode;			/* lock mode */
-} LockStmt;
+}			LockStmt;
 
 /*****************************************************************************
  *		Optimizable Statements
@@ -614,7 +614,7 @@ typedef struct InsertStmt
 	List	   *unionClause;	/* union subselect parameters */
 	bool		unionall;		/* union without unique sort */
 	/***S*I***/
-	List	   *intersectClause;  
+	List	   *intersectClause;
 	List	   *forUpdate;		/* FOR UPDATE clause */
 } InsertStmt;
 
@@ -748,7 +748,7 @@ typedef struct CaseExpr
 	Node	   *arg;			/* implicit equality comparison argument */
 	List	   *args;			/* the arguments (list of WHEN clauses) */
 	Node	   *defresult;		/* the default result (ELSE clause) */
-} CaseExpr;
+}			CaseExpr;
 
 /*
  * CaseWhen - an argument to a CASE expression
@@ -758,7 +758,7 @@ typedef struct CaseWhen
 	NodeTag		type;
 	Node	   *expr;			/* comparison expression */
 	Node	   *result;			/* substitution result */
-} CaseWhen;
+}			CaseWhen;
 
 /*
  * ColumnDef - column definition (used in various creates)
@@ -896,7 +896,7 @@ typedef struct JoinExpr
 	RangeVar   *larg;
 	Node	   *rarg;
 	List	   *quals;
-} JoinExpr;
+}			JoinExpr;
 
 
 /****************************************************************************
@@ -964,14 +964,14 @@ typedef struct GroupClause
 	Index		tleGroupref;	/* reference into targetlist */
 } GroupClause;
 
-#define	ROW_MARK_FOR_UPDATE		(1 << 0)
-#define	ROW_ACL_FOR_UPDATE		(1 << 1)
+#define ROW_MARK_FOR_UPDATE		(1 << 0)
+#define ROW_ACL_FOR_UPDATE		(1 << 1)
 
 typedef struct RowMark
 {
-	NodeTag	type;
-	Index	rti;		/* index in Query->rtable */
-	bits8	info;		/* as above */
-} RowMark;
+	NodeTag		type;
+	Index		rti;			/* index in Query->rtable */
+	bits8		info;			/* as above */
+}			RowMark;
 
 #endif	 /* PARSENODES_H */

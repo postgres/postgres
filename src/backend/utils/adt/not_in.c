@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/not_in.c,v 1.15 1999/03/15 03:24:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/not_in.c,v 1.16 1999/05/25 16:12:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,18 +47,16 @@ int4notin(int32 not_in_arg, char *relation_and_attr)
 	int			attrid;
 	char	   *relation,
 			   *attribute;
-	char		my_copy[NAMEDATALEN*2+2];
+	char		my_copy[NAMEDATALEN * 2 + 2];
 	Datum		value;
 
 	strncpy(my_copy, relation_and_attr, sizeof(my_copy));
-	my_copy[sizeof(my_copy)-1] = '\0';
+	my_copy[sizeof(my_copy) - 1] = '\0';
 
 	relation = (char *) strtok(my_copy, ".");
 	attribute = (char *) strtok(NULL, ".");
 	if (attribute == NULL)
-	{
 		elog(ERROR, "int4notin: must provide relationname.attributename");
-	}
 
 	/* Open the relation and get a relation descriptor */
 

@@ -10,7 +10,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: array.h,v 1.17 1999/05/03 23:48:25 tgl Exp $
+ * $Id: array.h,v 1.18 1999/05/25 16:14:49 momjian Exp $
  *
  * NOTES
  *	  XXX the data array should be LONGALIGN'd -- notice that the array
@@ -127,8 +127,8 @@ extern char *array_assgn(ArrayType *array, int n, int *upperIndx,
 			int *lowerIndx, ArrayType *newArr, int reftype,
 			int len, bool *isNull);
 extern ArrayType *array_map(ArrayType *v, Oid type,
-							char * (*fn)(),
-							Oid retType, int nargs, ...);
+		  char *(*fn) (),
+		  Oid retType, int nargs,...);
 extern int	array_eq(ArrayType *array1, ArrayType *array2);
 extern int _LOtransfer(char **destfd, int size, int nitems, char **srcfd,
 			int isSrcLO, int isDestLO);

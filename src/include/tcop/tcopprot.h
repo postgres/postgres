@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tcopprot.h,v 1.19 1999/05/13 07:29:22 tgl Exp $
+ * $Id: tcopprot.h,v 1.20 1999/05/25 16:14:48 momjian Exp $
  *
  * OLD COMMENTS
  *	  This file was created so that other c files could get the two
@@ -22,7 +22,7 @@
 #include "executor/execdesc.h"
 #include "parser/parse_node.h"
 
-/*  Autoconf's test for HAVE_SIGSETJMP fails on Linux 2.0.x because the test
+/*	Autoconf's test for HAVE_SIGSETJMP fails on Linux 2.0.x because the test
  *	explicitly disallows sigsetjmp being a #define, which is how it
  *	is declared in Linux. So, to avoid compiler warnings about
  *	sigsetjmp() being redefined, let's not redefine unless necessary.
@@ -36,13 +36,13 @@
 #define sigsetjmp(x,y)	setjmp(x)
 #define siglongjmp longjmp
 #endif
-extern DLLIMPORT sigjmp_buf	Warn_restart;
+extern DLLIMPORT sigjmp_buf Warn_restart;
 extern bool InError;
 
 #ifndef BOOTSTRAP_INCLUDE
 extern List *pg_parse_and_plan(char *query_string, Oid *typev, int nargs,
-							   List **queryListP, CommandDest dest,
-							   bool aclOverride);
+				  List **queryListP, CommandDest dest,
+				  bool aclOverride);
 extern void pg_exec_query(char *query_string);
 extern void pg_exec_query_acl_override(char *query_string);
 extern void

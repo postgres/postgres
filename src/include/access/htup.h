@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: htup.h,v 1.14 1999/03/28 20:32:30 vadim Exp $
+ * $Id: htup.h,v 1.15 1999/05/25 16:13:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,7 +48,7 @@ typedef struct HeapTupleHeaderData
 	/* bit map of domains */
 
 	/* MORE DATA FOLLOWS AT END OF STRUCT */
-} HeapTupleHeaderData;
+}			HeapTupleHeaderData;
 
 typedef HeapTupleHeaderData *HeapTupleHeader;
 
@@ -68,22 +68,22 @@ extern long heap_sysoffset[];
  *
  * 1. t_len moved off on-disk tuple data - ItemIdData is used to get len;
  * 2. t_ctid above is not self tuple TID now - it may point to
- *    updated version of tuple (required by MVCC);
- * 3. someday someone let tuple to cross block boundaries - 
- *    he have to add something below...
+ *	  updated version of tuple (required by MVCC);
+ * 3. someday someone let tuple to cross block boundaries -
+ *	  he have to add something below...
  */
 typedef struct HeapTupleData
 {
-	uint32				t_len;		/* length of *t_data */
-	ItemPointerData		t_self;		/* SelfItemPointer */
-	HeapTupleHeader		t_data;		/* */
+	uint32		t_len;			/* length of *t_data */
+	ItemPointerData t_self;		/* SelfItemPointer */
+	HeapTupleHeader t_data;		/* */
 } HeapTupleData;
-	
+
 typedef HeapTupleData *HeapTuple;
 
-#define	HEAPTUPLESIZE	DOUBLEALIGN(sizeof(HeapTupleData))
- 
- 
+#define HEAPTUPLESIZE	DOUBLEALIGN(sizeof(HeapTupleData))
+
+
 /* ----------------
  *		support macros
  * ----------------
@@ -118,8 +118,10 @@ typedef HeapTupleData *HeapTuple;
 #define HEAP_XMAX_INVALID		0x0800	/* t_xmax invalid/aborted */
 #define HEAP_MARKED_FOR_UPDATE	0x1000	/* marked for UPDATE */
 #define HEAP_UPDATED			0x2000	/* this is UPDATEd version of row */
-#define HEAP_MOVED_OFF			0x4000	/* removed or moved to another place by vacuum */
-#define HEAP_MOVED_IN			0x8000	/* moved from another place by vacuum */
+#define HEAP_MOVED_OFF			0x4000	/* removed or moved to another
+										 * place by vacuum */
+#define HEAP_MOVED_IN			0x8000	/* moved from another place by
+										 * vacuum */
 
 #define HEAP_XACT_MASK			0xFF00	/* */
 

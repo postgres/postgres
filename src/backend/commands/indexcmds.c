@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.3 1999/05/10 00:44:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.4 1999/05/25 16:08:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,7 +53,7 @@ static void NormIndexAttrs(List *attList, AttrNumber *attNumP,
 static char *GetDefaultOpClass(Oid atttypid);
 
 /*
- * DefineIndex 
+ * DefineIndex
  *		Creates a new index.
  *
  * 'attributeList' is a list of IndexElem specifying either a functional
@@ -164,7 +164,7 @@ DefineIndex(char *heapRelationName,
 		if (nargs > INDEX_MAX_KEYS)
 		{
 			elog(ERROR,
-				 "Too many args to function, limit of %d", INDEX_MAX_KEYS);
+			   "Too many args to function, limit of %d", INDEX_MAX_KEYS);
 		}
 
 		FIsetnArgs(&fInfo, nargs);
@@ -207,7 +207,7 @@ DefineIndex(char *heapRelationName,
 
 
 /*
- * ExtendIndex 
+ * ExtendIndex
  *		Extends a partial index.
  *
  * Exceptions:
@@ -304,7 +304,7 @@ ExtendIndex(char *indexRelationName, Expr *predicate, List *rangetable)
 	predInfo->oldPred = oldPred;
 
 	attributeNumberA = (AttrNumber *) palloc(numberOfAttributes *
-							  sizeof attributeNumberA[0]);
+											 sizeof attributeNumberA[0]);
 	classObjectId = (Oid *) palloc(numberOfAttributes * sizeof classObjectId[0]);
 
 
@@ -501,7 +501,7 @@ NormIndexAttrs(List *attList,	/* list of IndexElem's */
 			/* we just set the type name because that is all we need */
 			attribute->typename = makeNode(TypeName);
 			attribute->typename->name = nameout(&((Form_pg_type) GETSTRUCT(tuple))->typname);
-			
+
 			/* we all need the typmod for the char and varchar types. */
 			attribute->typename->typmod = attform->atttypmod;
 		}
@@ -547,7 +547,7 @@ GetDefaultOpClass(Oid atttypid)
 }
 
 /*
- * RemoveIndex 
+ * RemoveIndex
  *		Deletes an index.
  *
  * Exceptions:

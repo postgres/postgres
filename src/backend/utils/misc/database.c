@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.23 1999/02/13 23:20:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.24 1999/05/25 16:12:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -188,7 +188,7 @@ GetRawDatabaseInfo(char *name, int4 *owner, Oid *db_id, char *path, int *encodin
 	int			nbytes;
 	int			max,
 				i;
-	HeapTupleData	tup;
+	HeapTupleData tup;
 	Page		pg;
 	PageHeader	ph;
 	char	   *dbfname;

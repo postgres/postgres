@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.20 1999/05/17 17:03:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.21 1999/05/25 16:09:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -211,8 +211,8 @@ replace_matching_resname(List *new_tlist, List *old_tlist)
 	 * locks.
 	 *
 	 * So, copy all these entries to the end of the target list and set their
-	 * 'resjunk' value to true to show that these are special attributes and
-	 * have to be treated specially by the executor!
+	 * 'resjunk' value to true to show that these are special attributes
+	 * and have to be treated specially by the executor!
 	 */
 	foreach(temp, old_tlist)
 	{
@@ -231,28 +231,27 @@ replace_matching_resname(List *new_tlist, List *old_tlist)
 		}
 
 		/*
-		 * Also it is possible that the parser or rewriter added
-		 * some junk attributes to hold GROUP BY expressions which
-		 * are not part of the result attributes.
-		 * We can simply identify them by looking at the resgroupref
-		 * in the TLE's resdom, which is a unique number telling which
-		 * TLE belongs to which GroupClause.
+		 * Also it is possible that the parser or rewriter added some junk
+		 * attributes to hold GROUP BY expressions which are not part of
+		 * the result attributes. We can simply identify them by looking
+		 * at the resgroupref in the TLE's resdom, which is a unique
+		 * number telling which TLE belongs to which GroupClause.
 		 */
 		if (old_tle->resdom->resgroupref > 0)
 		{
-			bool			already_there = FALSE;
-			TargetEntry 	*new_tle;
-			Resdom	   		*newresno;
+			bool		already_there = FALSE;
+			TargetEntry *new_tle;
+			Resdom	   *newresno;
 
 			/*
 			 * Check if the tle is already in the new list
 			 */
 			foreach(i, t_list)
 			{
-				new_tle = (TargetEntry *)lfirst(i);
+				new_tle = (TargetEntry *) lfirst(i);
 
-				if (new_tle->resdom->resgroupref == 
-									old_tle->resdom->resgroupref)
+				if (new_tle->resdom->resgroupref ==
+					old_tle->resdom->resgroupref)
 				{
 					already_there = TRUE;
 					break;
@@ -349,8 +348,8 @@ new_relation_targetlist(Oid relid, Index rt_index, NodeTag node_type)
 					TargetEntry *temp_list = NULL;
 
 					temp_var = makeVar(rt_index, attno, atttype,
-								get_atttypmod(relid, attno),
-								0, rt_index, attno);
+									   get_atttypmod(relid, attno),
+									   0, rt_index, attno);
 
 					temp_list = makeTargetEntry(makeResdom(attno,
 														   atttype,

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/Attic/enbl.c,v 1.6 1999/02/13 23:19:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/Attic/enbl.c,v 1.7 1999/05/25 16:12:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,7 +15,7 @@
 #include "utils/module.h"		/* where the declarations go */
 
 /*
- * BypassEnable 
+ * BypassEnable
  *		False iff enable/disable processing is required given on and "*countP."
  *
  * Note:

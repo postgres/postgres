@@ -362,9 +362,9 @@ RelationBuildTriggers(Relation relation)
 	Form_pg_trigger pg_trigger;
 	Relation	irel;
 	ScanKeyData skey;
-	HeapTupleData	tuple;
-	IndexScanDesc	sd;
-	RetrieveIndexResult	indexRes;
+	HeapTupleData tuple;
+	IndexScanDesc sd;
+	RetrieveIndexResult indexRes;
 	Buffer		buffer;
 	struct varlena *val;
 	bool		isnull;
@@ -659,14 +659,14 @@ ExecARInsertTriggers(Relation rel, HeapTuple trigtuple)
 bool
 ExecBRDeleteTriggers(EState *estate, ItemPointer tupleid)
 {
-	Relation		rel = estate->es_result_relation_info->ri_RelationDesc;
-	TriggerData	   *SaveTriggerData;
-	int				ntrigs = rel->trigdesc->n_before_row[TRIGGER_EVENT_DELETE];
-	Trigger		  **trigger = rel->trigdesc->tg_before_row[TRIGGER_EVENT_DELETE];
-	HeapTuple		trigtuple;
-	HeapTuple		newtuple = NULL;
+	Relation	rel = estate->es_result_relation_info->ri_RelationDesc;
+	TriggerData *SaveTriggerData;
+	int			ntrigs = rel->trigdesc->n_before_row[TRIGGER_EVENT_DELETE];
+	Trigger   **trigger = rel->trigdesc->tg_before_row[TRIGGER_EVENT_DELETE];
+	HeapTuple	trigtuple;
+	HeapTuple	newtuple = NULL;
 	TupleTableSlot *newSlot;
-	int				i;
+	int			i;
 
 	trigtuple = GetTupleForTrigger(estate, tupleid, &newSlot);
 	if (trigtuple == NULL)
@@ -697,7 +697,7 @@ ExecBRDeleteTriggers(EState *estate, ItemPointer tupleid)
 void
 ExecARDeleteTriggers(EState *estate, ItemPointer tupleid)
 {
-	Relation		rel = estate->es_result_relation_info->ri_RelationDesc;
+	Relation	rel = estate->es_result_relation_info->ri_RelationDesc;
 	TriggerData *SaveTriggerData;
 	int			ntrigs = rel->trigdesc->n_after_row[TRIGGER_EVENT_DELETE];
 	Trigger   **trigger = rel->trigdesc->tg_after_row[TRIGGER_EVENT_DELETE];
@@ -727,23 +727,23 @@ ExecARDeleteTriggers(EState *estate, ItemPointer tupleid)
 HeapTuple
 ExecBRUpdateTriggers(EState *estate, ItemPointer tupleid, HeapTuple newtuple)
 {
-	Relation		rel = estate->es_result_relation_info->ri_RelationDesc;
-	TriggerData	   *SaveTriggerData;
-	int				ntrigs = rel->trigdesc->n_before_row[TRIGGER_EVENT_UPDATE];
-	Trigger		  **trigger = rel->trigdesc->tg_before_row[TRIGGER_EVENT_UPDATE];
-	HeapTuple		trigtuple;
-	HeapTuple		oldtuple;
-	HeapTuple		intuple = newtuple;
+	Relation	rel = estate->es_result_relation_info->ri_RelationDesc;
+	TriggerData *SaveTriggerData;
+	int			ntrigs = rel->trigdesc->n_before_row[TRIGGER_EVENT_UPDATE];
+	Trigger   **trigger = rel->trigdesc->tg_before_row[TRIGGER_EVENT_UPDATE];
+	HeapTuple	trigtuple;
+	HeapTuple	oldtuple;
+	HeapTuple	intuple = newtuple;
 	TupleTableSlot *newSlot;
-	int				i;
+	int			i;
 
 	trigtuple = GetTupleForTrigger(estate, tupleid, &newSlot);
 	if (trigtuple == NULL)
 		return NULL;
 
 	/*
-	 * In READ COMMITTED isolevel it's possible that newtuple
-	 * was changed due to concurrent update.
+	 * In READ COMMITTED isolevel it's possible that newtuple was changed
+	 * due to concurrent update.
 	 */
 	if (newSlot != NULL)
 		intuple = newtuple = ExecRemoveJunk(estate->es_junkFilter, newSlot);
@@ -772,7 +772,7 @@ ExecBRUpdateTriggers(EState *estate, ItemPointer tupleid, HeapTuple newtuple)
 void
 ExecARUpdateTriggers(EState *estate, ItemPointer tupleid, HeapTuple newtuple)
 {
-	Relation		rel = estate->es_result_relation_info->ri_RelationDesc;
+	Relation	rel = estate->es_result_relation_info->ri_RelationDesc;
 	TriggerData *SaveTriggerData;
 	int			ntrigs = rel->trigdesc->n_after_row[TRIGGER_EVENT_UPDATE];
 	Trigger   **trigger = rel->trigdesc->tg_after_row[TRIGGER_EVENT_UPDATE];
@@ -799,22 +799,22 @@ ExecARUpdateTriggers(EState *estate, ItemPointer tupleid, HeapTuple newtuple)
 	return;
 }
 
-extern	TupleTableSlot *EvalPlanQual(EState *estate, Index rti, ItemPointer tid);
+extern TupleTableSlot *EvalPlanQual(EState *estate, Index rti, ItemPointer tid);
 
 static HeapTuple
 GetTupleForTrigger(EState *estate, ItemPointer tid, TupleTableSlot **newSlot)
 {
-	Relation		relation = estate->es_result_relation_info->ri_RelationDesc;
-	HeapTupleData	tuple;
-	HeapTuple		result;
-	Buffer			buffer;
+	Relation	relation = estate->es_result_relation_info->ri_RelationDesc;
+	HeapTupleData tuple;
+	HeapTuple	result;
+	Buffer		buffer;
 
 	if (newSlot != NULL)
 	{
-		int		test;
+		int			test;
 
 		/*
-		 *	mark tuple for update
+		 * mark tuple for update
 		 */
 		*newSlot = NULL;
 		tuple.t_self = *tid;
@@ -824,7 +824,7 @@ ltrmark:;
 		{
 			case HeapTupleSelfUpdated:
 				ReleaseBuffer(buffer);
-				return(NULL);
+				return (NULL);
 
 			case HeapTupleMayBeUpdated:
 				break;
@@ -835,9 +835,9 @@ ltrmark:;
 					elog(ERROR, "Can't serialize access due to concurrent update");
 				else if (!(ItemPointerEquals(&(tuple.t_self), tid)))
 				{
-					TupleTableSlot *epqslot = EvalPlanQual(estate, 
-						estate->es_result_relation_info->ri_RangeTableIndex, 
-						&(tuple.t_self));
+					TupleTableSlot *epqslot = EvalPlanQual(estate,
+					 estate->es_result_relation_info->ri_RangeTableIndex,
+														&(tuple.t_self));
 
 					if (!(TupIsNull(epqslot)))
 					{
@@ -846,23 +846,23 @@ ltrmark:;
 						goto ltrmark;
 					}
 				}
-				/* 
-				 * if tuple was deleted or PlanQual failed
-				 * for updated tuple - we have not process
-				 * this tuple!
+
+				/*
+				 * if tuple was deleted or PlanQual failed for updated
+				 * tuple - we have not process this tuple!
 				 */
-				return(NULL);
+				return (NULL);
 
 			default:
 				ReleaseBuffer(buffer);
 				elog(ERROR, "Unknown status %u from heap_mark4update", test);
-				return(NULL);
+				return (NULL);
 		}
 	}
 	else
 	{
-		PageHeader		dp;
-		ItemId			lp;
+		PageHeader	dp;
+		ItemId		lp;
 
 		buffer = ReadBuffer(relation, ItemPointerGetBlockNumber(tid));
 

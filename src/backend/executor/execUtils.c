@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.44 1999/03/20 01:13:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.45 1999/05/25 16:08:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -402,7 +402,7 @@ ExecFreeExprContext(CommonState *commonstate)
 void
 ExecFreeTypeInfo(CommonState *commonstate)
 {
-	TupleDesc tupDesc;
+	TupleDesc	tupDesc;
 
 	tupDesc = commonstate->cs_ResultTupleSlot->ttc_tupleDescriptor;
 	if (tupDesc == NULL)
@@ -498,12 +498,12 @@ ExecAssignScanTypeFromOuterPlan(Plan *node, CommonScanState *csstate)
  *		Routines dealing with the structure 'attribute' which conatains
  *		the type information about attributes in a tuple:
  *
- *		ExecMakeTypeInfo(noType) 
+ *		ExecMakeTypeInfo(noType)
  *				returns pointer to array of 'noType' structure 'attribute'.
- *		ExecSetTypeInfo(index, typeInfo, attNum, attLen) 
+ *		ExecSetTypeInfo(index, typeInfo, attNum, attLen)
  *				sets the element indexed by 'index' in typeInfo with
  *				the values: attNum, attLen.
- *		ExecFreeTypeInfo(typeInfo) 
+ *		ExecFreeTypeInfo(typeInfo)
  *				frees the structure 'typeInfo'.
  * ----------------------------------------------------------------
  */
@@ -677,7 +677,7 @@ ExecGetIndexKeyInfo(Form_pg_index indexTuple,
 	 */
 	numKeys = 0;
 	for (i = 0; i < INDEX_MAX_KEYS &&
-				indexTuple->indkey[i] != InvalidAttrNumber; i++)
+		 indexTuple->indkey[i] != InvalidAttrNumber; i++)
 		numKeys++;
 
 	/* ----------------
@@ -711,7 +711,7 @@ ExecGetIndexKeyInfo(Form_pg_index indexTuple,
 	 */
 	CXT1_printf("ExecGetIndexKeyInfo: context is %d\n", CurrentMemoryContext);
 
-	attKeys = (AttrNumber *)palloc(numKeys * sizeof(AttrNumber));
+	attKeys = (AttrNumber *) palloc(numKeys * sizeof(AttrNumber));
 
 	for (i = 0; i < numKeys; i++)
 		attKeys[i] = indexTuple->indkey[i];
@@ -917,19 +917,20 @@ ExecOpenIndices(Oid resultRelationOid,
 			if (indexDesc != NULL)
 			{
 				relationDescs[i++] = indexDesc;
+
 				/*
-				 * Hack for not btree and hash indices: they use relation level
-				 * exclusive locking on updation (i.e. - they are not ready 
-				 * for MVCC) and so we have to exclusively lock indices here
-				 * to prevent deadlocks if we will scan them - index_beginscan
-				 * places AccessShareLock, indices update methods don't use 
-				 * locks at all. We release this lock in ExecCloseIndices.
-				 * Note, that hashes use page level locking - i.e. are not
-				 * deadlock-free, - let's them be on their way -:))
-				 *		vadim 03-12-1998
+				 * Hack for not btree and hash indices: they use relation
+				 * level exclusive locking on updation (i.e. - they are
+				 * not ready for MVCC) and so we have to exclusively lock
+				 * indices here to prevent deadlocks if we will scan them
+				 * - index_beginscan places AccessShareLock, indices
+				 * update methods don't use locks at all. We release this
+				 * lock in ExecCloseIndices. Note, that hashes use page
+				 * level locking - i.e. are not deadlock-free, - let's
+				 * them be on their way -:)) vadim 03-12-1998
 				 */
-				if (indexDesc->rd_rel->relam != BTREE_AM_OID && 
-						indexDesc->rd_rel->relam != HASH_AM_OID)
+				if (indexDesc->rd_rel->relam != BTREE_AM_OID &&
+					indexDesc->rd_rel->relam != HASH_AM_OID)
 					LockRelation(indexDesc, AccessExclusiveLock);
 			}
 		}
@@ -1014,15 +1015,17 @@ ExecCloseIndices(RelationInfo *resultRelationInfo)
 	{
 		if (relationDescs[i] == NULL)
 			continue;
+
 		/*
 		 * Notes in ExecOpenIndices.
 		 */
-		if (relationDescs[i]->rd_rel->relam != BTREE_AM_OID && 
-				relationDescs[i]->rd_rel->relam != HASH_AM_OID)
+		if (relationDescs[i]->rd_rel->relam != BTREE_AM_OID &&
+			relationDescs[i]->rd_rel->relam != HASH_AM_OID)
 			UnlockRelation(relationDescs[i], AccessExclusiveLock);
 
 		index_close(relationDescs[i]);
 	}
+
 	/*
 	 * XXX should free indexInfo array here too.
 	 */
@@ -1210,7 +1213,7 @@ ExecInsertIndexTuples(TupleTableSlot *slot,
 		result = index_insert(relationDescs[i], /* index relation */
 							  datum,	/* array of heaptuple Datums */
 							  nulls,	/* info on nulls */
-							  &(heapTuple->t_self),	/* tid of heap tuple */
+							  &(heapTuple->t_self),		/* tid of heap tuple */
 							  heapRelation);
 
 		/* ----------------

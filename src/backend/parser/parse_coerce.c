@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.15 1999/05/22 04:12:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.16 1999/05/25 16:10:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,7 @@
 Oid			DemoteType(Oid inType);
 Oid			PromoteTypeToNext(Oid inType);
 
-static Oid PreferredType(CATEGORY category, Oid type);
+static Oid	PreferredType(CATEGORY category, Oid type);
 
 
 /* coerce_type()
@@ -36,7 +36,7 @@ static Oid PreferredType(CATEGORY category, Oid type);
  */
 Node *
 coerce_type(ParseState *pstate, Node *node, Oid inputTypeId, Oid targetTypeId,
-		int32 atttypmod)
+			int32 atttypmod)
 {
 	Node	   *result = NULL;
 	Oid			infunc;
@@ -60,6 +60,7 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId, Oid targetTypeId,
 		 */
 		else if (inputTypeId != UNKNOWNOID)
 		{
+
 			/*
 			 * We already know there is a function which will do this, so
 			 * let's use it
@@ -77,22 +78,22 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId, Oid targetTypeId,
 			{
 				Const	   *con = (Const *) node;
 
-				val = (Datum) textout((struct varlena *)con->constvalue);
+				val = (Datum) textout((struct varlena *) con->constvalue);
 				infunc = typeidInfunc(targetTypeId);
 				con = makeNode(Const);
 				con->consttype = targetTypeId;
 				con->constlen = typeLen(typeidType(targetTypeId));
 
 				/*
-				 *	Use "-1" for varchar() type.
-				 *	For char(), we need to pad out the type with the proper
-				 *	number of spaces.  This was a major problem for
-				 *  DEFAULT string constants to char() types.
+				 * Use "-1" for varchar() type. For char(), we need to pad
+				 * out the type with the proper number of spaces.  This
+				 * was a major problem for DEFAULT string constants to
+				 * char() types.
 				 */
 				con->constvalue = (Datum) fmgr(infunc,
 											   val,
-											   typeidTypElem(targetTypeId),
-								(targetTypeId != BPCHAROID) ? -1 : atttypmod);
+											 typeidTypElem(targetTypeId),
+						   (targetTypeId != BPCHAROID) ? -1 : atttypmod);
 				con->constisnull = false;
 				con->constbyval = typeByVal(typeidType(targetTypeId));
 				con->constisset = false;
@@ -150,6 +151,7 @@ can_coerce_type(int nargs, Oid *input_typeids, Oid *func_typeids)
 			/* don't know what to do for the input type? then quit... */
 			else if (input_typeids[i] == InvalidOid)
 				return false;
+
 			/*
 			 * if not unknown input type, try for explicit conversion
 			 * using functions...
@@ -298,7 +300,7 @@ PreferredType(CATEGORY category, Oid type)
 		case (NETWORK_TYPE):
 			result = INETOID;
 			break;
-		
+
 		case (GEOMETRIC_TYPE):
 		case (USER_TYPE):
 			result = type;

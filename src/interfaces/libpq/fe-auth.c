@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.28 1999/05/10 00:46:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.29 1999/05/25 16:15:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,7 +92,7 @@ static struct authsvc authsvcs[] = {
 	{"password", STARTUP_PASSWORD_MSG, 0}
 };
 
-static int n_authsvcs = sizeof(authsvcs) / sizeof(struct authsvc);
+static int	n_authsvcs = sizeof(authsvcs) / sizeof(struct authsvc);
 
 #ifdef KRB4
 /*----------------------------------------------------------------
@@ -144,8 +144,8 @@ pg_krb4_init()
 static char *
 pg_krb4_authname(char *PQerrormsg)
 {
-	char		instance[INST_SZ+1];
-	char		realm[REALM_SZ+1];
+	char		instance[INST_SZ + 1];
+	char		realm[REALM_SZ + 1];
 	int			status;
 	static char name[SNAME_SZ + 1] = "";
 
@@ -299,7 +299,7 @@ pg_krb5_init(void)
 	if (code = krb5_cc_resolve(tktbuf, &ccache))
 	{
 		(void) sprintf(PQerrormsg,
-				  "pg_krb5_init: Kerberos error %d in krb5_cc_resolve\n", code);
+		   "pg_krb5_init: Kerberos error %d in krb5_cc_resolve\n", code);
 		com_err("pg_krb5_init", code, "in krb5_cc_resolve");
 		return (krb5_ccache) NULL;
 	}
@@ -328,14 +328,14 @@ pg_krb5_authname(const char *PQerrormsg)
 	if (code = krb5_cc_get_principal(ccache, &principal))
 	{
 		(void) sprintf(PQerrormsg,
-		"pg_krb5_authname: Kerberos error %d in krb5_cc_get_principal\n", code);
+					   "pg_krb5_authname: Kerberos error %d in krb5_cc_get_principal\n", code);
 		com_err("pg_krb5_authname", code, "in krb5_cc_get_principal");
 		return (char *) NULL;
 	}
 	if (code = krb5_unparse_name(principal, &authname))
 	{
 		(void) sprintf(PQerrormsg,
-			"pg_krb5_authname: Kerberos error %d in krb5_unparse_name\n", code);
+					   "pg_krb5_authname: Kerberos error %d in krb5_unparse_name\n", code);
 		com_err("pg_krb5_authname", code, "in krb5_unparse_name");
 		krb5_free_principal(principal);
 		return (char *) NULL;
@@ -384,7 +384,7 @@ pg_krb5_sendauth(const char *PQerrormsg, int sock,
 	if (code = krb5_cc_get_principal(ccache, &client))
 	{
 		(void) sprintf(PQerrormsg,
-		"pg_krb5_sendauth: Kerberos error %d in krb5_cc_get_principal\n", code);
+					   "pg_krb5_sendauth: Kerberos error %d in krb5_cc_get_principal\n", code);
 		com_err("pg_krb5_sendauth", code, "in krb5_cc_get_principal");
 		return STATUS_ERROR;
 	}
@@ -411,7 +411,7 @@ pg_krb5_sendauth(const char *PQerrormsg, int sock,
 	if (code = krb5_parse_name(servbuf, &server))
 	{
 		(void) sprintf(PQerrormsg,
-			  "pg_krb5_sendauth: Kerberos error %d in krb5_parse_name\n", code);
+		"pg_krb5_sendauth: Kerberos error %d in krb5_parse_name\n", code);
 		com_err("pg_krb5_sendauth", code, "in krb5_parse_name");
 		krb5_free_principal(client);
 		return STATUS_ERROR;
@@ -443,7 +443,7 @@ pg_krb5_sendauth(const char *PQerrormsg, int sock,
 		else
 		{
 			(void) sprintf(PQerrormsg,
-				"pg_krb5_sendauth: Kerberos error %d in krb5_sendauth\n", code);
+						   "pg_krb5_sendauth: Kerberos error %d in krb5_sendauth\n", code);
 			com_err("pg_krb5_sendauth", code, "in krb5_sendauth");
 		}
 	}
@@ -544,7 +544,7 @@ fe_sendauth(AuthRequest areq, PGconn *conn, const char *hostname,
  * Set/return the authentication service currently selected for use by the
  * frontend. (You can only use one in the frontend, obviously.)
  */
-static int pg_authsvc = -1;
+static int	pg_authsvc = -1;
 
 void
 fe_setauthsvc(const char *name, char *PQerrormsg)
@@ -618,7 +618,7 @@ fe_getauthname(char *PQerrormsg)
 		default:
 			(void) sprintf(PQerrormsg,
 				   "fe_getauthname: invalid authentication system: %d\n",
-						authsvc);
+						   authsvc);
 			break;
 	}
 

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: planmain.h,v 1.25 1999/05/12 15:02:22 wieck Exp $
+ * $Id: planmain.h,v 1.26 1999/05/25 16:14:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,20 +51,20 @@ extern void add_missing_vars_to_tlist(Query *root, List *tlist);
  */
 extern void set_tlist_references(Plan *plan);
 extern List *join_references(List *clauses, List *outer_tlist,
-							 List *inner_tlist);
+				List *inner_tlist);
 extern List *index_outerjoin_references(List *inner_indxqual,
 						   List *outer_tlist, Index inner_relid);
 extern void replace_tlist_with_subplan_refs(List *tlist,
-											Index subvarno,
-											List *subplanTargetList);
+								Index subvarno,
+								List *subplanTargetList);
 extern void replace_vars_with_subplan_refs(Node *clause,
-										   Index subvarno,
-										   List *subplanTargetList);
+							   Index subvarno,
+							   List *subplanTargetList);
 extern bool set_agg_tlist_references(Agg *aggNode);
 extern void del_agg_tlist_references(List *tlist);
 extern void check_having_for_ungrouped_vars(Node *clause,
-											List *groupClause,
-											List *targetList);
+								List *groupClause,
+								List *targetList);
 extern void transformKeySetQuery(Query *origNode);
 
 #endif	 /* PLANMAIN_H */

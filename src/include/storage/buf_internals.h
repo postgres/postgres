@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: buf_internals.h,v 1.28 1999/02/13 23:22:03 momjian Exp $
+ * $Id: buf_internals.h,v 1.29 1999/05/25 16:14:38 momjian Exp $
  *
  * NOTE
  *		If BUFFERPAGE0 is defined, then 0 will be used as a
@@ -106,17 +106,17 @@ struct sbufdesc
 	bool		w_lock;			/* context exclusively locked */
 
 	char		sb_dbname[NAMEDATALEN]; /* name of db in which buf belongs */
-	char		sb_relname[NAMEDATALEN];/* name of reln */
+	char		sb_relname[NAMEDATALEN];		/* name of reln */
 };
 
 /*
  * Buffer lock infos in BufferLocks below.
  * We have to free these locks in elog(ERROR)...
  */
-#define	BL_IO_IN_PROGRESS	(1 << 0)	/* unimplemented */
-#define	BL_R_LOCK			(1 << 1)
-#define	BL_RI_LOCK			(1 << 2)
-#define	BL_W_LOCK			(1 << 3)
+#define BL_IO_IN_PROGRESS	(1 << 0)	/* unimplemented */
+#define BL_R_LOCK			(1 << 1)
+#define BL_RI_LOCK			(1 << 2)
+#define BL_W_LOCK			(1 << 3)
 
 /*
  *	mao tracing buffer allocation

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.39 1999/04/02 04:51:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.40 1999/05/25 16:11:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,7 +106,7 @@ ShmemIndexReset(void)
 }
 
 /*
- *	CreateSharedRegion() 
+ *	CreateSharedRegion()
  *
  *	This routine is called once by the postmaster to
  *	initialize the shared buffer pool.	Assume there is
@@ -348,10 +348,10 @@ ShmemInitHash(char *name,		/* table string name for shmem index */
 	long	   *location;
 
 	/*
-	 * Hash tables allocated in shared memory have a fixed directory;
-	 * it can't grow or other backends wouldn't be able to find it.
-	 * The segbase is for calculating pointer values.
-	 * The shared memory allocator must be specified too.
+	 * Hash tables allocated in shared memory have a fixed directory; it
+	 * can't grow or other backends wouldn't be able to find it. The
+	 * segbase is for calculating pointer values. The shared memory
+	 * allocator must be specified too.
 	 */
 	infoP->dsize = infoP->max_dsize = DEF_DIRSIZE;
 	infoP->segbase = (long *) ShmemBase;
@@ -360,7 +360,7 @@ ShmemInitHash(char *name,		/* table string name for shmem index */
 
 	/* look it up in the shmem index */
 	location = ShmemInitStruct(name,
-							   sizeof(HHDR) + DEF_DIRSIZE * sizeof(SEG_OFFSET),
+						 sizeof(HHDR) + DEF_DIRSIZE * sizeof(SEG_OFFSET),
 							   &found);
 
 	/*
@@ -379,7 +379,7 @@ ShmemInitHash(char *name,		/* table string name for shmem index */
 
 	/* Now provide the header and directory pointers */
 	infoP->hctl = (long *) location;
-	infoP->dir = (long *) (((char*) location) + sizeof(HHDR));
+	infoP->dir = (long *) (((char *) location) + sizeof(HHDR));
 
 	return hash_create(init_size, infoP, hash_flags);
 }
@@ -636,13 +636,13 @@ TransactionIdIsInProgress(TransactionId xid)
 Snapshot
 GetSnapshotData(bool serializable)
 {
-	Snapshot		snapshot = (Snapshot) malloc(sizeof(SnapshotData));
-	ShmemIndexEnt  *result;
-	PROC		   *proc;
-	TransactionId	cid = GetCurrentTransactionId();
-	TransactionId	xid;
-	uint32			count = 0;
-	uint32			have = 32;
+	Snapshot	snapshot = (Snapshot) malloc(sizeof(SnapshotData));
+	ShmemIndexEnt *result;
+	PROC	   *proc;
+	TransactionId cid = GetCurrentTransactionId();
+	TransactionId xid;
+	uint32		count = 0;
+	uint32		have = 32;
 
 	Assert(ShmemIndex);
 
@@ -670,7 +670,7 @@ GetSnapshotData(bool serializable)
 			strncmp(result->key, "PID ", 4) != 0)
 			continue;
 		proc = (PROC *) MAKE_PTR(result->location);
-		xid = proc->xid;	/* we don't use spin-locking in xact.c ! */
+		xid = proc->xid;		/* we don't use spin-locking in xact.c ! */
 		if (proc == MyProc || xid < FirstTransactionId)
 			continue;
 		if (xid < snapshot->xmin)
@@ -697,18 +697,18 @@ GetSnapshotData(bool serializable)
 
 /*
  * GetXmaxRecent -- returns oldest transaction that was running
- * 					when all current transaction was started.
- * 					It's used by vacuum to decide what deleted
- * 					tuples must be preserved in a table.
+ *					when all current transaction was started.
+ *					It's used by vacuum to decide what deleted
+ *					tuples must be preserved in a table.
  *
  * And yet another strange func for this place...	- vadim 03/18/99
  */
 void
 GetXmaxRecent(TransactionId *XmaxRecent)
 {
-	ShmemIndexEnt  *result;
-	PROC		   *proc;
-	TransactionId	xmin;
+	ShmemIndexEnt *result;
+	PROC	   *proc;
+	TransactionId xmin;
 
 	Assert(ShmemIndex);
 
@@ -728,7 +728,7 @@ GetXmaxRecent(TransactionId *XmaxRecent)
 			strncmp(result->key, "PID ", 4) != 0)
 			continue;
 		proc = (PROC *) MAKE_PTR(result->location);
-		xmin = proc->xmin;	/* we don't use spin-locking in xact.c ! */
+		xmin = proc->xmin;		/* we don't use spin-locking in xact.c ! */
 		if (proc == MyProc || xmin < FirstTransactionId)
 			continue;
 		if (xmin < *XmaxRecent)

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_eval.c,v 1.37 1999/05/17 00:25:34 tgl Exp $
+ * $Id: geqo_eval.c,v 1.38 1999/05/25 16:09:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,7 +56,7 @@ static MemoryContext geqo_eval_context;
 
 /*
  * geqo_eval_startup:
- *   Must be called during geqo_main startup (before geqo_eval may be called)
+ *	 Must be called during geqo_main startup (before geqo_eval may be called)
  *
  * The main thing we need to do here is prepare a private memory context for
  * allocation of temp storage used while constructing a path in geqo_eval().
@@ -70,9 +70,10 @@ void
 geqo_eval_startup(void)
 {
 #define GEQO_PORTAL_NAME	"<geqo workspace>"
-	Portal geqo_portal = GetPortalByName(GEQO_PORTAL_NAME);
+	Portal		geqo_portal = GetPortalByName(GEQO_PORTAL_NAME);
 
-	if (!PortalIsValid(geqo_portal)) {
+	if (!PortalIsValid(geqo_portal))
+	{
 		/* First time through (within current transaction, that is) */
 		geqo_portal = CreatePortal(GEQO_PORTAL_NAME);
 		Assert(PortalIsValid(geqo_portal));
@@ -89,15 +90,18 @@ geqo_eval_startup(void)
 Cost
 geqo_eval(Query *root, Gene *tour, int num_gene)
 {
-	MemoryContext	oldcxt;
-	RelOptInfo	   *joinrel;
-	Cost			fitness;
-	List		   *savelist;
+	MemoryContext oldcxt;
+	RelOptInfo *joinrel;
+	Cost		fitness;
+	List	   *savelist;
 
 	/* preserve root->join_rel_list, which gimme_tree changes */
 	savelist = root->join_rel_list;
 
-	/* create a temporary allocation context for the path construction work */
+	/*
+	 * create a temporary allocation context for the path construction
+	 * work
+	 */
 	oldcxt = MemoryContextSwitchTo(geqo_eval_context);
 	StartPortalAllocMode(DefaultAllocMode, 0);
 
@@ -118,7 +122,7 @@ geqo_eval(Query *root, Gene *tour, int num_gene)
 }
 
 /*
- * gimme_tree 
+ * gimme_tree
  *	  this program presumes that only LEFT-SIDED TREES are considered!
  *
  * 'old_rel' is the preceding join
@@ -126,7 +130,7 @@ geqo_eval(Query *root, Gene *tour, int num_gene)
  * Returns a new join relation incorporating all joins in a left-sided tree.
  */
 RelOptInfo *
-gimme_tree(Query *root, Gene *tour, int rel_count, int num_gene, RelOptInfo *old_rel)
+gimme_tree(Query *root, Gene *tour, int rel_count, int num_gene, RelOptInfo * old_rel)
 {
 	RelOptInfo *inner_rel;		/* current relation */
 	int			base_rel_index;
@@ -139,7 +143,7 @@ gimme_tree(Query *root, Gene *tour, int rel_count, int num_gene, RelOptInfo *old
 		/* tour[0] = 3; tour[1] = 1; tour[2] = 2 */
 		base_rel_index = (int) tour[rel_count];
 
-		inner_rel = (RelOptInfo *) nth(base_rel_index-1, root->base_rel_list);
+		inner_rel = (RelOptInfo *) nth(base_rel_index - 1, root->base_rel_list);
 
 		if (rel_count == 0)
 		{						/* processing first join with
@@ -151,15 +155,17 @@ gimme_tree(Query *root, Gene *tour, int rel_count, int num_gene, RelOptInfo *old
 		{						/* tree main part */
 			if (!(new_rels = make_rels_by_clause_joins(root, old_rel,
 													   old_rel->joininfo,
-													   inner_rel->relids)))
+													 inner_rel->relids)))
 			{
 				new_rels = make_rels_by_clauseless_joins(old_rel,
-														 lcons(inner_rel,NIL));
-				/* we don't do bushy plans in geqo, do we?  bjm 02/18/1999
-				new_rels = append(new_rels,
-								  make_rels_by_clauseless_joins(old_rel,
-													 lcons(old_rel,NIL));
-				*/
+												  lcons(inner_rel, NIL));
+
+				/*
+				 * we don't do bushy plans in geqo, do we?  bjm 02/18/1999
+				 * new_rels = append(new_rels,
+				 * make_rels_by_clauseless_joins(old_rel,
+				 * lcons(old_rel,NIL));
+				 */
 			}
 
 			/* process new_rel->pathlist */
@@ -202,5 +208,5 @@ gimme_tree(Query *root, Gene *tour, int rel_count, int num_gene, RelOptInfo *old
 		}
 	}
 
-	return old_rel;			/* tree finished ... */
+	return old_rel;				/* tree finished ... */
 }

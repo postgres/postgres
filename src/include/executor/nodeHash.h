@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeHash.h,v 1.12 1999/05/18 21:33:05 tgl Exp $
+ * $Id: nodeHash.h,v 1.13 1999/05/25 16:13:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,11 +27,11 @@ extern void ExecEndHash(Hash *node);
 extern HashJoinTable ExecHashTableCreate(Hash *node);
 extern void ExecHashTableDestroy(HashJoinTable hashtable);
 extern void ExecHashTableInsert(HashJoinTable hashtable, ExprContext *econtext,
-								Var *hashkey);
+					Var *hashkey);
 extern int ExecHashGetBucket(HashJoinTable hashtable, ExprContext *econtext,
-							 Var *hashkey);
+				  Var *hashkey);
 extern HeapTuple ExecScanHashBucket(HashJoinState *hjstate, List *hjclauses,
-									ExprContext *econtext);
+				   ExprContext *econtext);
 extern void ExecHashTableReset(HashJoinTable hashtable, long ntuples);
 extern void ExecReScanHash(Hash *node, ExprContext *exprCtxt, Plan *parent);
 

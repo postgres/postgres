@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/freelist.c,v 1.14 1999/02/13 23:17:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/freelist.c,v 1.15 1999/05/25 16:10:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,7 +55,7 @@ extern SPINLOCK BufMgrLock;
 
 
 /*
- * AddBufferToFreelist 
+ * AddBufferToFreelist
  *
  * In theory, this is the only routine that needs to be changed
  * if the buffer replacement strategy changes.	Just change

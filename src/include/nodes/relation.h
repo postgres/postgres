@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relation.h,v 1.30 1999/05/12 15:02:08 wieck Exp $
+ * $Id: relation.h,v 1.31 1999/05/25 16:14:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -84,7 +84,7 @@ typedef struct RelOptInfo
 	/* materialization information */
 	List	   *targetlist;
 	List	   *pathlist;		/* Path structures */
-	struct Path *cheapestpath;	
+	struct Path *cheapestpath;
 	bool		pruneable;
 
 	/* used solely by indices: */
@@ -100,7 +100,7 @@ typedef struct RelOptInfo
 	List	   *restrictinfo;	/* RestrictInfo structures */
 	List	   *joininfo;		/* JoinInfo structures */
 	List	   *innerjoin;
-} RelOptInfo;
+}			RelOptInfo;
 
 extern Var *get_expr(TargetEntry *foo);
 extern Var *get_groupclause_expr(GroupClause *groupClause, List *targetList);
@@ -129,7 +129,7 @@ typedef struct PathOrder
 	{
 		Oid		   *sortop;
 		MergeOrder *merge;
-	} ord;
+	}			ord;
 } PathOrder;
 
 typedef struct Path
@@ -141,12 +141,12 @@ typedef struct Path
 
 	NodeTag		pathtype;
 
-	PathOrder	*pathorder;
+	PathOrder  *pathorder;
 
-	List	    *pathkeys;	/* This is a List of List of Var nodes.
-							 * See the top of optimizer/path/pathkeys.c
-							 * for more information.
-							 */							   
+	List	   *pathkeys;		/* This is a List of List of Var nodes.
+								 * See the top of
+								 * optimizer/path/pathkeys.c for more
+								 * information. */
 	Cost		outerjoincost;
 	Relids		joinid;
 	List	   *loc_restrictinfo;
@@ -157,7 +157,8 @@ typedef struct IndexPath
 	Path		path;
 	List	   *indexid;
 	List	   *indexqual;
-	int		   *indexkeys;	/* to transform heap attnos into index ones */
+	int		   *indexkeys;		/* to transform heap attnos into index
+								 * ones */
 } IndexPath;
 
 typedef struct NestPath
@@ -166,7 +167,7 @@ typedef struct NestPath
 	List	   *pathinfo;
 	Path	   *outerjoinpath;
 	Path	   *innerjoinpath;
-} NestPath;
+}			NestPath;
 
 typedef NestPath JoinPath;
 
@@ -222,7 +223,7 @@ typedef struct RestrictInfo
 	/* hashjoin only */
 	Oid			hashjoinoperator;
 	Relids		restrictinfojoinid;
-} RestrictInfo;
+}			RestrictInfo;
 
 typedef struct JoinMethod
 {
@@ -235,13 +236,13 @@ typedef struct HashInfo
 {
 	JoinMethod	jmethod;
 	Oid			hashop;
-} HashInfo;
+}			HashInfo;
 
 typedef struct MergeInfo
 {
 	JoinMethod	jmethod;
 	MergeOrder *m_ordering;
-} MergeInfo;
+}			MergeInfo;
 
 typedef struct JoinInfo
 {
@@ -250,7 +251,7 @@ typedef struct JoinInfo
 	List	   *jinfo_restrictinfo;
 	bool		mergejoinable;
 	bool		hashjoinable;
-} JoinInfo;
+}			JoinInfo;
 
 typedef struct Iter
 {
@@ -261,10 +262,10 @@ typedef struct Iter
 } Iter;
 
 /*
- *  Stream:
+ *	Stream:
  *	A stream represents a root-to-leaf path in a plan tree (i.e. a tree of
  *	JoinPaths and Paths).  The stream includes pointers to all Path nodes,
- *	as well as to any clauses that reside above Path nodes.	This structure
+ *	as well as to any clauses that reside above Path nodes. This structure
  *	is used to make Path nodes and clauses look similar, so that Predicate
  *	Migration can run.
  *

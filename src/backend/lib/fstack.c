@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/lib/Attic/fstack.c,v 1.10 1999/02/13 23:15:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/lib/Attic/fstack.c,v 1.11 1999/05/25 16:08:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,20 +20,20 @@
  */
 
 /*
- * FixedItemIsValid 
+ * FixedItemIsValid
  *		True iff item is valid.
  */
 #define FixedItemIsValid(item)	PointerIsValid(item)
 
 /*
- * FixedStackGetItemBase 
+ * FixedStackGetItemBase
  *		Returns base of enclosing structure.
  */
 #define FixedStackGetItemBase(stack, item) \
 		((Pointer)((char *)(item) - (stack)->offset))
 
 /*
- * FixedStackGetItem 
+ * FixedStackGetItem
  *		Returns item of given pointer to enclosing structure.
  */
 #define FixedStackGetItem(stack, pointer) \
@@ -84,7 +84,7 @@ FixedStackPush(FixedStack stack, Pointer pointer)
 
 #ifdef USE_ASSERT_CHECKING
 /*
- * FixedStackContains 
+ * FixedStackContains
  *		True iff ordered stack contains given element.
  *
  * Note:

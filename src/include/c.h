@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.54 1999/04/02 05:10:14 tgl Exp $
+ * $Id: c.h,v 1.55 1999/05/25 16:13:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,14 +61,15 @@
  * ----------------------------------------------------------------
  */
 /*
- * bool 
+ * bool
  *		Boolean value, either true or false.
  *
  */
 #ifndef __cplusplus
 #ifndef bool
 typedef char bool;
-#endif   /* ndef bool */
+
+#endif	 /* ndef bool */
 #endif	 /* not C++ */
 #define false	((bool) 0)
 #define true	((bool) 1)
@@ -83,7 +84,7 @@ typedef bool *BoolPtr;
 #endif	 /* FALSE */
 
 /*
- * NULL 
+ * NULL
  *		Null pointer.
  */
 #ifndef NULL
@@ -105,9 +106,9 @@ typedef bool *BoolPtr;
  */
 
 /*
- * CppAsString 
+ * CppAsString
  *		Convert the argument to a string, using the C preprocessor.
- * CppConcat 
+ * CppConcat
  *		Concatenate two arguments together, using the C preprocessor.
  *
  * Note: the standard Autoconf macro AC_C_STRINGIZE actually only checks
@@ -139,7 +140,7 @@ typedef bool *BoolPtr;
  * dummyret is used to set return values in macros that use ?: to make
  * assignments.  gcc wants these to be void, other compilers like char
  */
-#ifdef __GNUC__				/* GNU cc */
+#ifdef __GNUC__					/* GNU cc */
 #define dummyret	void
 #else
 #define dummyret	char
@@ -151,7 +152,7 @@ typedef bool *BoolPtr;
  */
 
 /*
- * Pointer 
+ * Pointer
  *		Variable holding address of any memory resident object.
  *
  *		XXX Pointer arithmetic is done with this, so it can't be void *
@@ -160,7 +161,7 @@ typedef bool *BoolPtr;
 typedef char *Pointer;
 
 /*
- * intN 
+ * intN
  *		Signed integer, EXACTLY N BITS IN SIZE,
  *		used for numerical computations and the
  *		frontend/backend protocol.
@@ -170,7 +171,7 @@ typedef signed short int16;		/* == 16 bits */
 typedef signed int int32;		/* == 32 bits */
 
 /*
- * uintN 
+ * uintN
  *		Unsigned integer, EXACTLY N BITS IN SIZE,
  *		used for numerical computations and the
  *		frontend/backend protocol.
@@ -180,7 +181,7 @@ typedef unsigned short uint16;	/* == 16 bits */
 typedef unsigned int uint32;	/* == 32 bits */
 
 /*
- * floatN 
+ * floatN
  *		Floating point number, AT LEAST N BITS IN SIZE,
  *		used for numerical computations.
  *
@@ -193,7 +194,7 @@ typedef float *float32;
 typedef double *float64;
 
 /*
- * boolN 
+ * boolN
  *		Boolean value, AT LEAST N BITS IN SIZE.
  */
 typedef uint8 bool8;			/* >= 8 bits */
@@ -201,7 +202,7 @@ typedef uint16 bool16;			/* >= 16 bits */
 typedef uint32 bool32;			/* >= 32 bits */
 
 /*
- * bitsN 
+ * bitsN
  *		Unit of bitwise operation, AT LEAST N BITS IN SIZE.
  */
 typedef uint8 bits8;			/* >= 8 bits */
@@ -209,7 +210,7 @@ typedef uint16 bits16;			/* >= 16 bits */
 typedef uint32 bits32;			/* >= 32 bits */
 
 /*
- * wordN 
+ * wordN
  *		Unit of storage, AT LEAST N BITS IN SIZE,
  *		used to fetch/store data.
  */
@@ -218,13 +219,13 @@ typedef uint16 word16;			/* >= 16 bits */
 typedef uint32 word32;			/* >= 32 bits */
 
 /*
- * Size 
+ * Size
  *		Size of any memory resident object, as returned by sizeof.
  */
 typedef size_t Size;
 
 /*
- * Index 
+ * Index
  *		Index into any memory resident array.
  *
  * Note:
@@ -239,7 +240,7 @@ typedef struct
 } IntArray;
 
 /*
- * Offset 
+ * Offset
  *		Offset into any memory resident array.
  *
  * Note:
@@ -253,7 +254,7 @@ typedef signed int Offset;
  * ----------------------------------------------------------------
  */
 /*
- * datum.h 
+ * datum.h
  *		POSTGRES abstract data type datum representation definitions.
  *
  * Note:
@@ -288,133 +289,133 @@ typedef Datum *DatumPtr;
 #define SET_4_BYTES(value)	(((Datum) (value)) & 0xffffffff)
 
 /*
- * DatumGetChar 
+ * DatumGetChar
  *		Returns character value of a datum.
  */
 
 #define DatumGetChar(X) ((char) GET_1_BYTE(X))
 
 /*
- * CharGetDatum 
+ * CharGetDatum
  *		Returns datum representation for a character.
  */
 
 #define CharGetDatum(X) ((Datum) SET_1_BYTE(X))
 
 /*
- * Int8GetDatum 
+ * Int8GetDatum
  *		Returns datum representation for an 8-bit integer.
  */
 
 #define Int8GetDatum(X) ((Datum) SET_1_BYTE(X))
 
 /*
- * DatumGetUInt8 
+ * DatumGetUInt8
  *		Returns 8-bit unsigned integer value of a datum.
  */
 
 #define DatumGetUInt8(X) ((uint8) GET_1_BYTE(X))
 
 /*
- * UInt8GetDatum 
+ * UInt8GetDatum
  *		Returns datum representation for an 8-bit unsigned integer.
  */
 
 #define UInt8GetDatum(X) ((Datum) SET_1_BYTE(X))
 
 /*
- * DatumGetInt16 
+ * DatumGetInt16
  *		Returns 16-bit integer value of a datum.
  */
 
 #define DatumGetInt16(X) ((int16) GET_2_BYTES(X))
 
 /*
- * Int16GetDatum 
+ * Int16GetDatum
  *		Returns datum representation for a 16-bit integer.
  */
 
 #define Int16GetDatum(X) ((Datum) SET_2_BYTES(X))
 
 /*
- * DatumGetUInt16 
+ * DatumGetUInt16
  *		Returns 16-bit unsigned integer value of a datum.
  */
 
 #define DatumGetUInt16(X) ((uint16) GET_2_BYTES(X))
 
 /*
- * UInt16GetDatum 
+ * UInt16GetDatum
  *		Returns datum representation for a 16-bit unsigned integer.
  */
 
 #define UInt16GetDatum(X) ((Datum) SET_2_BYTES(X))
 
 /*
- * DatumGetInt32 
+ * DatumGetInt32
  *		Returns 32-bit integer value of a datum.
  */
 
 #define DatumGetInt32(X) ((int32) GET_4_BYTES(X))
 
 /*
- * Int32GetDatum 
+ * Int32GetDatum
  *		Returns datum representation for a 32-bit integer.
  */
 
 #define Int32GetDatum(X) ((Datum) SET_4_BYTES(X))
 
 /*
- * DatumGetUInt32 
+ * DatumGetUInt32
  *		Returns 32-bit unsigned integer value of a datum.
  */
 
 #define DatumGetUInt32(X) ((uint32) GET_4_BYTES(X))
 
 /*
- * UInt32GetDatum 
+ * UInt32GetDatum
  *		Returns datum representation for a 32-bit unsigned integer.
  */
 
 #define UInt32GetDatum(X) ((Datum) SET_4_BYTES(X))
 
 /*
- * DatumGetObjectId 
+ * DatumGetObjectId
  *		Returns object identifier value of a datum.
  */
 
 #define DatumGetObjectId(X) ((Oid) GET_4_BYTES(X))
 
 /*
- * ObjectIdGetDatum 
+ * ObjectIdGetDatum
  *		Returns datum representation for an object identifier.
  */
 
 #define ObjectIdGetDatum(X) ((Datum) SET_4_BYTES(X))
 
 /*
- * DatumGetPointer 
+ * DatumGetPointer
  *		Returns pointer value of a datum.
  */
 
 #define DatumGetPointer(X) ((Pointer) X)
 
 /*
- * PointerGetDatum 
+ * PointerGetDatum
  *		Returns datum representation for a pointer.
  */
 
 #define PointerGetDatum(X) ((Datum) X)
 
 /*
- * DatumGetName 
+ * DatumGetName
  *		Returns name value of a datum.
  */
 
 #define DatumGetName(X) ((Name) DatumGetPointer((Datum) X))
 
 /*
- * NameGetDatum 
+ * NameGetDatum
  *		Returns datum representation for a name.
  */
 
@@ -422,7 +423,7 @@ typedef Datum *DatumPtr;
 
 
 /*
- * DatumGetFloat32 
+ * DatumGetFloat32
  *		Returns 32-bit floating point value of a datum.
  *		This is really a pointer, of course.
  */
@@ -430,7 +431,7 @@ typedef Datum *DatumPtr;
 #define DatumGetFloat32(X) ((float32) DatumGetPointer((Datum) X))
 
 /*
- * Float32GetDatum 
+ * Float32GetDatum
  *		Returns datum representation for a 32-bit floating point number.
  *		This is really a pointer, of course.
  */
@@ -438,7 +439,7 @@ typedef Datum *DatumPtr;
 #define Float32GetDatum(X) PointerGetDatum((Pointer) X)
 
 /*
- * DatumGetFloat64 
+ * DatumGetFloat64
  *		Returns 64-bit floating point value of a datum.
  *		This is really a pointer, of course.
  */
@@ -446,7 +447,7 @@ typedef Datum *DatumPtr;
 #define DatumGetFloat64(X) ((float64) DatumGetPointer(X))
 
 /*
- * Float64GetDatum 
+ * Float64GetDatum
  *		Returns datum representation for a 64-bit floating point number.
  *		This is really a pointer, of course.
  */
@@ -458,19 +459,19 @@ typedef Datum *DatumPtr;
  * ----------------------------------------------------------------
  */
 /*
- * BoolIsValid 
+ * BoolIsValid
  *		True iff bool is valid.
  */
 #define BoolIsValid(boolean)	((boolean) == false || (boolean) == true)
 
 /*
- * PointerIsValid 
+ * PointerIsValid
  *		True iff pointer is valid.
  */
 #define PointerIsValid(pointer) (bool)((void*)(pointer) != NULL)
 
 /*
- * PointerIsInBounds 
+ * PointerIsInBounds
  *		True iff pointer is within given bounds.
  *
  * Note:
@@ -481,7 +482,7 @@ typedef Datum *DatumPtr;
 		((min) <= (pointer) && (pointer) < (max))
 
 /*
- * PointerIsAligned 
+ * PointerIsAligned
  *		True iff pointer is properly aligned to point to the given type.
  */
 #define PointerIsAligned(pointer, type) \
@@ -492,7 +493,7 @@ typedef Datum *DatumPtr;
  * ----------------------------------------------------------------
  */
 /*
- * offsetof 
+ * offsetof
  *		Offset of a structure/union field within that structure/union.
  *
  *		XXX This is supposed to be part of stddef.h, but isn't on
@@ -503,13 +504,13 @@ typedef Datum *DatumPtr;
 #endif	 /* offsetof */
 
 /*
- * lengthof 
+ * lengthof
  *		Number of elements in an array.
  */
 #define lengthof(array) (sizeof (array) / sizeof ((array)[0]))
 
 /*
- * endof 
+ * endof
  *		Address of the element one past the last in an array.
  */
 #define endof(array)	(&array[lengthof(array)])
@@ -537,7 +538,7 @@ typedef struct Exception
  */
 
 /*
- * Trap 
+ * Trap
  *		Generates an exception if the given condition is true.
  *
  */
@@ -583,7 +584,7 @@ extern int	assert_enabled;
 #endif	 /* USE_ASSERT_CHECKING */
 
 /*
- * LogTrap 
+ * LogTrap
  *		Generates an exception with a message if the given condition is true.
  *
  */
@@ -634,25 +635,25 @@ extern int	assertTest(int val);
  * ----------------------------------------------------------------
  */
 /*
- * Max 
+ * Max
  *		Return the maximum of two numbers.
  */
 #define Max(x, y)		((x) > (y) ? (x) : (y))
 
 /*
- * Min 
+ * Min
  *		Return the minimum of two numbers.
  */
 #define Min(x, y)		((x) < (y) ? (x) : (y))
 
 /*
- * Abs 
+ * Abs
  *		Return the absolute value of the argument.
  */
 #define Abs(x)			((x) >= 0 ? (x) : -(x))
 
 /*
- * StrNCpy 
+ * StrNCpy
  *		Does string copy, and forces terminating NULL
  */
 /* we do this so if the macro is used in an if action, it will work */
@@ -772,24 +773,26 @@ extern char *form(const char *fmt,...);
 #endif
 #ifdef BUILDING_DLL
 #define DLLIMPORT __declspec (dllexport)
-#else /* not BUILDING_DLL */
+#else							/* not BUILDING_DLL */
 #define DLLIMPORT __declspec (dllimport)
 #endif
-#else /* not CYGWIN */
+#else							/* not CYGWIN */
 #define DLLIMPORT
 #endif
 
 /* Provide prototypes for routines not present in a particular machine's
- * standard C library.  It'd be better to put these in config.h, but
+ * standard C library.	It'd be better to put these in config.h, but
  * in config.h we haven't yet included anything that defines size_t...
  */
 
 #ifndef HAVE_SNPRINTF
-extern int snprintf(char *str, size_t count, const char *fmt, ...);
+extern int	snprintf(char *str, size_t count, const char *fmt,...);
+
 #endif
 
 #ifndef HAVE_VSNPRINTF
-extern int vsnprintf(char *str, size_t count, const char *fmt, va_list args);
+extern int	vsnprintf(char *str, size_t count, const char *fmt, va_list args);
+
 #endif
 
 /* ----------------

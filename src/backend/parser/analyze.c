@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: analyze.c,v 1.107 1999/05/23 21:41:14 tgl Exp $
+ *	$Id: analyze.c,v 1.108 1999/05/25 16:10:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,8 +45,8 @@ static Query *transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt);
 static Query *transformCursorStmt(ParseState *pstate, SelectStmt *stmt);
 static Query *transformCreateStmt(ParseState *pstate, CreateStmt *stmt);
 
-static void		transformForUpdate(Query *qry, List *forUpdate);
-void			CheckSelectForUpdate(Query *qry);
+static void transformForUpdate(Query *qry, List *forUpdate);
+void		CheckSelectForUpdate(Query *qry);
 
 List	   *extras_before = NIL;
 List	   *extras_after = NIL;
@@ -62,9 +62,9 @@ List	   *extras_after = NIL;
 List *
 parse_analyze(List *pl, ParseState *parentParseState)
 {
-	List *result = NIL;
+	List	   *result = NIL;
 	ParseState *pstate;
-	Query *parsetree;
+	Query	   *parsetree;
 
 	while (pl != NIL)
 	{
@@ -76,7 +76,7 @@ parse_analyze(List *pl, ParseState *parentParseState)
 		while (extras_before != NIL)
 		{
 			result = lappend(result,
-							 transformStmt(pstate, lfirst(extras_before)));
+						   transformStmt(pstate, lfirst(extras_before)));
 			if (pstate->p_target_relation != NULL)
 				heap_close(pstate->p_target_relation);
 			extras_before = lnext(extras_before);
@@ -192,8 +192,8 @@ transformStmt(ParseState *pstate, Node *parseTree)
 			if (!((SelectStmt *) parseTree)->portalname)
 			{
 				result = transformSelectStmt(pstate, (SelectStmt *) parseTree);
-				result->limitOffset = ((SelectStmt *)parseTree)->limitOffset;
-				result->limitCount = ((SelectStmt *)parseTree)->limitCount;
+				result->limitOffset = ((SelectStmt *) parseTree)->limitOffset;
+				result->limitCount = ((SelectStmt *) parseTree)->limitCount;
 			}
 			else
 				result = transformCursorStmt(pstate, (SelectStmt *) parseTree);
@@ -276,8 +276,8 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 		int			ndef = pstate->p_target_relation->rd_att->constr->num_defval;
 
 		/*
-		 * if stmt->cols == NIL then makeTargetNames returns list of all attrs.
-		 * May have to shorten icolumns list...
+		 * if stmt->cols == NIL then makeTargetNames returns list of all
+		 * attrs. May have to shorten icolumns list...
 		 */
 		if (stmt->cols == NIL)
 		{
@@ -286,16 +286,18 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 
 			foreach(extrl, icolumns)
 			{
+
 				/*
-				 * decrements first, so if we started with zero items
-				 * it will now be negative
+				 * decrements first, so if we started with zero items it
+				 * will now be negative
 				 */
 				if (--i <= 0)
 					break;
 			}
+
 			/*
-			 * this an index into the targetList,
-			 * so make sure we had one to start...
+			 * this an index into the targetList, so make sure we had one
+			 * to start...
 			 */
 			if (i >= 0)
 			{
@@ -303,9 +305,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 				lnext(extrl) = NIL;
 			}
 			else
-			{
 				icolumns = NIL;
-			}
 		}
 
 		while (ndef-- > 0)
@@ -378,15 +378,18 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 
 	/*
 	 * The INSERT INTO ... SELECT ... could have a UNION in child, so
-	 * unionClause may be false
-,	 */
-  	qry->unionall = stmt->unionall;	
+	 * unionClause may be false ,
+	 */
+	qry->unionall = stmt->unionall;
 
- 	/***S*I***/
- 	/* Just hand through the unionClause and intersectClause. 
- 	 * We will handle it in the function Except_Intersect_Rewrite() */
- 	qry->unionClause = stmt->unionClause;
- 	qry->intersectClause = stmt->intersectClause;	
+	/***S*I***/
+
+	/*
+	 * Just hand through the unionClause and intersectClause. We will
+	 * handle it in the function Except_Intersect_Rewrite()
+	 */
+	qry->unionClause = stmt->unionClause;
+	qry->intersectClause = stmt->intersectClause;
 
 	/*
 	 * If there is a havingQual but there are no aggregates, then there is
@@ -508,9 +511,12 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 	Constraint *constraint;
 	List	   *keys;
 	Ident	   *key;
-	List	   *blist = NIL;	/* "before list" of things to do before creating the table */
-	List	   *ilist = NIL;	/* "index list" of things to do after creating the table */
-	IndexStmt  *index, *pkey = NULL;
+	List	   *blist = NIL;	/* "before list" of things to do before
+								 * creating the table */
+	List	   *ilist = NIL;	/* "index list" of things to do after
+								 * creating the table */
+	IndexStmt  *index,
+			   *pkey = NULL;
 	IndexElem  *iparam;
 
 	q = makeNode(Query);
@@ -532,15 +538,15 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 
 				if (column->is_sequence)
 				{
-					char		  *sname;
-					char		  *cstring;
+					char	   *sname;
+					char	   *cstring;
 					CreateSeqStmt *sequence;
 
 					sname = makeTableName(stmt->relname, column->colname, "seq", NULL);
 					if (sname == NULL)
 						elog(ERROR, "CREATE TABLE/SERIAL implicit sequence name must be less than %d characters"
 							 "\n\tSum of lengths of '%s' and '%s' must be less than %d",
-							 NAMEDATALEN, stmt->relname, column->colname, (NAMEDATALEN-5));
+							 NAMEDATALEN, stmt->relname, column->colname, (NAMEDATALEN - 5));
 
 					constraint = makeNode(Constraint);
 					constraint->contype = CONSTR_DEFAULT;
@@ -560,7 +566,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 					if (constraint->name == NULL)
 						elog(ERROR, "CREATE TABLE/SERIAL implicit index name must be less than %d characters"
 							 "\n\tSum of lengths of '%s' and '%s' must be less than %d",
-							 NAMEDATALEN, stmt->relname, column->colname, (NAMEDATALEN-5));
+							 NAMEDATALEN, stmt->relname, column->colname, (NAMEDATALEN - 5));
 					column->constraints = lappend(column->constraints, constraint);
 
 					sequence = makeNode(CreateSeqStmt);
@@ -582,8 +588,11 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 						switch (constraint->contype)
 						{
 							case CONSTR_NULL:
-								/* We should mark this explicitly,
-								 * so we can tell if NULL and NOT NULL are both specified
+
+								/*
+								 * We should mark this explicitly, so we
+								 * can tell if NULL and NOT NULL are both
+								 * specified
 								 */
 								if (column->is_not_null)
 									elog(ERROR, "CREATE TABLE/(NOT) NULL conflicting declaration"
@@ -611,7 +620,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 								if (constraint->name == NULL)
 									elog(ERROR, "CREATE TABLE/PRIMARY KEY implicit index name must be less than %d characters"
 										 "\n\tLength of '%s' must be less than %d",
-										 NAMEDATALEN, stmt->relname, (NAMEDATALEN-6));
+										 NAMEDATALEN, stmt->relname, (NAMEDATALEN - 6));
 								if (constraint->keys == NIL)
 									constraint->keys = lappend(constraint->keys, column);
 								dlist = lappend(dlist, constraint);
@@ -623,7 +632,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 								if (constraint->name == NULL)
 									elog(ERROR, "CREATE TABLE/UNIQUE implicit index name must be less than %d characters"
 										 "\n\tLength of '%s' must be less than %d",
-										 NAMEDATALEN, stmt->relname, (NAMEDATALEN-5));
+										 NAMEDATALEN, stmt->relname, (NAMEDATALEN - 5));
 								if (constraint->keys == NIL)
 									constraint->keys = lappend(constraint->keys, column);
 								dlist = lappend(dlist, constraint);
@@ -636,7 +645,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 								if (constraint->name == NULL)
 									elog(ERROR, "CREATE TABLE/CHECK implicit constraint name must be less than %d characters"
 										 "\n\tSum of lengths of '%s' and '%s' must be less than %d",
-										 NAMEDATALEN, stmt->relname, column->colname, (NAMEDATALEN-1));
+										 NAMEDATALEN, stmt->relname, column->colname, (NAMEDATALEN - 1));
 								break;
 
 							default:
@@ -657,8 +666,8 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 							constraint->name = makeTableName(stmt->relname, "pkey", NULL);
 						if (constraint->name == NULL)
 							elog(ERROR, "CREATE TABLE/PRIMARY KEY implicit index name must be less than %d characters"
-								 "\n\tLength of '%s' must be less than %d",
-								 NAMEDATALEN, stmt->relname, (NAMEDATALEN-5));
+							   "\n\tLength of '%s' must be less than %d",
+								 NAMEDATALEN, stmt->relname, (NAMEDATALEN - 5));
 						dlist = lappend(dlist, constraint);
 						break;
 
@@ -704,12 +713,12 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 		constraint = lfirst(dlist);
 		Assert(nodeTag(constraint) == T_Constraint);
 		Assert((constraint->contype == CONSTR_PRIMARY)
-		 || (constraint->contype == CONSTR_UNIQUE));
+			   || (constraint->contype == CONSTR_UNIQUE));
 
 		index = makeNode(IndexStmt);
 
 		index->unique = TRUE;
-		index->primary = (constraint->contype == CONSTR_PRIMARY ? TRUE:FALSE);
+		index->primary = (constraint->contype == CONSTR_PRIMARY ? TRUE : FALSE);
 		if (index->primary)
 		{
 			if (pkey != NULL)
@@ -719,21 +728,17 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 		}
 
 		if (constraint->name != NULL)
-		{
 			index->idxname = constraint->name;
-		}
 		else if (constraint->contype == CONSTR_PRIMARY)
 		{
 			index->idxname = makeTableName(stmt->relname, "pkey", NULL);
 			if (index->idxname == NULL)
 				elog(ERROR, "CREATE TABLE/PRIMARY KEY implicit index name must be less than %d characters"
 					 "\n\tLength of '%s' must be less than %d",
-					 NAMEDATALEN, stmt->relname, (NAMEDATALEN-5));
+					 NAMEDATALEN, stmt->relname, (NAMEDATALEN - 5));
 		}
 		else
-		{
 			index->idxname = NULL;
-		}
 
 		index->relname = stmt->relname;
 		index->accessMethod = "btree";
@@ -793,16 +798,20 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 		ilist = NIL;
 		while (dlist != NIL)
 		{
-			int keep = TRUE;
+			int			keep = TRUE;
 
 			index = lfirst(dlist);
 
-			/* has a single column argument, so might be a conflicting index... */
+			/*
+			 * has a single column argument, so might be a conflicting
+			 * index...
+			 */
 			if ((index != pkey)
-			 && (length(index->indexParams) == 1))
+				&& (length(index->indexParams) == 1))
 			{
-				char *pname = ((IndexElem *) lfirst(index->indexParams))->name;
-				char *iname = ((IndexElem *) lfirst(index->indexParams))->name;
+				char	   *pname = ((IndexElem *) lfirst(index->indexParams))->name;
+				char	   *iname = ((IndexElem *) lfirst(index->indexParams))->name;
+
 				/* same names? then don't keep... */
 				keep = (strcmp(iname, pname) != 0);
 			}
@@ -818,7 +827,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 	{
 		index = lfirst(dlist);
 		elog(NOTICE, "CREATE TABLE/%s will create implicit index '%s' for table '%s'",
-			 (index->primary? "PRIMARY KEY": "UNIQUE"),
+			 (index->primary ? "PRIMARY KEY" : "UNIQUE"),
 			 index->idxname, stmt->relname);
 		dlist = lnext(dlist);
 	}
@@ -828,7 +837,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 	extras_after = ilist;
 
 	return q;
-} /* transformCreateStmt() */
+}	/* transformCreateStmt() */
 
 /*
  * transformIndexStmt -
@@ -1006,11 +1015,14 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 	 */
 	qry->unionall = stmt->unionall;
 
- 	/***S*I***/
- 	/* Just hand through the unionClause and intersectClause. 
- 	 * We will handle it in the function Except_Intersect_Rewrite() */
- 	qry->unionClause = stmt->unionClause;
- 	qry->intersectClause = stmt->intersectClause;
+	/***S*I***/
+
+	/*
+	 * Just hand through the unionClause and intersectClause. We will
+	 * handle it in the function Except_Intersect_Rewrite()
+	 */
+	qry->unionClause = stmt->unionClause;
+	qry->intersectClause = stmt->intersectClause;
 
 	/*
 	 * If there is a havingQual but there are no aggregates, then there is
@@ -1092,91 +1104,92 @@ transformCursorStmt(ParseState *pstate, SelectStmt *stmt)
  * The built up list is handed back in **select_list.
  * If one of the SelectStmt Nodes has the 'unionall' flag
  * set to true *unionall_present hands back 'true' */
-void 
+void
 create_select_list(Node *ptr, List **select_list, bool *unionall_present)
 {
-  if(IsA(ptr, SelectStmt)) {
-    *select_list = lappend(*select_list, ptr);    
-    if(((SelectStmt *)ptr)->unionall == TRUE) *unionall_present = TRUE;    
-    return;    
-  }
-  
-  /* Recursively call for all arguments. A NOT expr has no lexpr! */
-  if (((A_Expr *)ptr)->lexpr != NULL) 
-     create_select_list(((A_Expr *)ptr)->lexpr, select_list, unionall_present);
-  create_select_list(((A_Expr *)ptr)->rexpr, select_list, unionall_present);
+	if (IsA(ptr, SelectStmt))
+	{
+		*select_list = lappend(*select_list, ptr);
+		if (((SelectStmt *) ptr)->unionall == TRUE)
+			*unionall_present = TRUE;
+		return;
+	}
+
+	/* Recursively call for all arguments. A NOT expr has no lexpr! */
+	if (((A_Expr *) ptr)->lexpr != NULL)
+		create_select_list(((A_Expr *) ptr)->lexpr, select_list, unionall_present);
+	create_select_list(((A_Expr *) ptr)->rexpr, select_list, unionall_present);
 }
 
 /* Changes the A_Expr Nodes to Expr Nodes and exchanges ANDs and ORs.
- * The reason for the exchange is easy: We implement INTERSECTs and EXCEPTs 
+ * The reason for the exchange is easy: We implement INTERSECTs and EXCEPTs
  * by rewriting these queries to semantically equivalent queries that use
- * IN and NOT IN subselects. To be able to use all three operations 
- * (UNIONs INTERSECTs and EXCEPTs) in one complex query we have to 
+ * IN and NOT IN subselects. To be able to use all three operations
+ * (UNIONs INTERSECTs and EXCEPTs) in one complex query we have to
  * translate the queries into Disjunctive Normal Form (DNF). Unfortunately
  * there is no function 'dnfify' but there is a function 'cnfify'
  * which produces DNF when we exchange ANDs and ORs before calling
  * 'cnfify' and exchange them back in the result.
  *
  * If an EXCEPT or INTERSECT is present *intersect_present
- * hands back 'true' */ 
-Node *A_Expr_to_Expr(Node *ptr, bool *intersect_present)
+ * hands back 'true' */
+Node *
+A_Expr_to_Expr(Node *ptr, bool *intersect_present)
 {
-  Node *result = NULL;
-  
-  switch(nodeTag(ptr))
-    {
-    case T_A_Expr:
-      {
-	A_Expr *a = (A_Expr *)ptr;
-	
-	switch (a->oper)
-	  {
-	  case AND:
-	    {
-	      Expr *expr = makeNode(Expr);
-	      Node	   *lexpr = A_Expr_to_Expr(((A_Expr *)ptr)->lexpr, intersect_present);
-	      Node	   *rexpr = A_Expr_to_Expr(((A_Expr *)ptr)->rexpr, intersect_present);
+	Node	   *result = NULL;
 
-	      *intersect_present = TRUE;
-	      
-	      expr->typeOid = BOOLOID;
-	      expr->opType = OR_EXPR;
-	      expr->args = makeList(lexpr, rexpr, -1);
-	      result = (Node *) expr;
-	      break;	      
-	    }	  	  
-	  case OR:
-	    {
-	      Expr *expr = makeNode(Expr);
-	      Node	   *lexpr = A_Expr_to_Expr(((A_Expr *)ptr)->lexpr, intersect_present);
-	      Node	   *rexpr = A_Expr_to_Expr(((A_Expr *)ptr)->rexpr, intersect_present);
+	switch (nodeTag(ptr))
+	{
+		case T_A_Expr:
+			{
+				A_Expr	   *a = (A_Expr *) ptr;
 
-	      expr->typeOid = BOOLOID;
-	      expr->opType = AND_EXPR;
-	      expr->args = makeList(lexpr, rexpr, -1);
-	      result = (Node *) expr;
-	      break;	      
-	    }
-	  case NOT:
-	    {
-	      Expr *expr = makeNode(Expr);
-	      Node	   *rexpr = A_Expr_to_Expr(((A_Expr *)ptr)->rexpr, intersect_present);
+				switch (a->oper)
+				{
+					case AND:
+						{
+							Expr	   *expr = makeNode(Expr);
+							Node	   *lexpr = A_Expr_to_Expr(((A_Expr *) ptr)->lexpr, intersect_present);
+							Node	   *rexpr = A_Expr_to_Expr(((A_Expr *) ptr)->rexpr, intersect_present);
 
-	      expr->typeOid = BOOLOID;
-	      expr->opType = NOT_EXPR;
-	      expr->args = makeList(rexpr, -1);
-	      result = (Node *) expr;
-	      break;	      
-	    }
-	  }	
-	break;	
-      }
-    default:
-      {
-	result = ptr;
-      }      
-    }
-  return result;  
+							*intersect_present = TRUE;
+
+							expr->typeOid = BOOLOID;
+							expr->opType = OR_EXPR;
+							expr->args = makeList(lexpr, rexpr, -1);
+							result = (Node *) expr;
+							break;
+						}
+					case OR:
+						{
+							Expr	   *expr = makeNode(Expr);
+							Node	   *lexpr = A_Expr_to_Expr(((A_Expr *) ptr)->lexpr, intersect_present);
+							Node	   *rexpr = A_Expr_to_Expr(((A_Expr *) ptr)->rexpr, intersect_present);
+
+							expr->typeOid = BOOLOID;
+							expr->opType = AND_EXPR;
+							expr->args = makeList(lexpr, rexpr, -1);
+							result = (Node *) expr;
+							break;
+						}
+					case NOT:
+						{
+							Expr	   *expr = makeNode(Expr);
+							Node	   *rexpr = A_Expr_to_Expr(((A_Expr *) ptr)->rexpr, intersect_present);
+
+							expr->typeOid = BOOLOID;
+							expr->opType = NOT_EXPR;
+							expr->args = makeList(rexpr, -1);
+							result = (Node *) expr;
+							break;
+						}
+				}
+				break;
+			}
+		default:
+				result = ptr;
+	}
+	return result;
 }
 
 void
@@ -1196,7 +1209,7 @@ static void
 transformForUpdate(Query *qry, List *forUpdate)
 {
 	List	   *rowMark = NULL;
-	RowMark	   *newrm;
+	RowMark    *newrm;
 	List	   *l;
 	Index		i;
 
@@ -1205,37 +1218,37 @@ transformForUpdate(Query *qry, List *forUpdate)
 	if (lfirst(forUpdate) == NULL)		/* all tables */
 	{
 		i = 1;
-		foreach (l, qry->rtable)
+		foreach(l, qry->rtable)
 		{
 			newrm = makeNode(RowMark);
 			newrm->rti = i++;
-			newrm->info = ROW_MARK_FOR_UPDATE|ROW_ACL_FOR_UPDATE;
+			newrm->info = ROW_MARK_FOR_UPDATE | ROW_ACL_FOR_UPDATE;
 			rowMark = lappend(rowMark, newrm);
 		}
 		qry->rowMark = nconc(qry->rowMark, rowMark);
 		return;
 	}
 
-	foreach (l, forUpdate)
+	foreach(l, forUpdate)
 	{
-		List   *l2;
-		List   *l3;
+		List	   *l2;
+		List	   *l3;
 
 		i = 1;
-		foreach (l2, qry->rtable)
+		foreach(l2, qry->rtable)
 		{
-			if (strcmp(((RangeTblEntry*)lfirst(l2))->refname, lfirst(l)) == 0)
+			if (strcmp(((RangeTblEntry *) lfirst(l2))->refname, lfirst(l)) == 0)
 			{
-				foreach (l3, rowMark)
+				foreach(l3, rowMark)
 				{
-					if (((RowMark*)lfirst(l3))->rti == i)	/* duplicate */
+					if (((RowMark *) lfirst(l3))->rti == i)		/* duplicate */
 						break;
 				}
 				if (l3 == NULL)
 				{
 					newrm = makeNode(RowMark);
 					newrm->rti = i;
-					newrm->info = ROW_MARK_FOR_UPDATE|ROW_ACL_FOR_UPDATE;
+					newrm->info = ROW_MARK_FOR_UPDATE | ROW_ACL_FOR_UPDATE;
 					rowMark = lappend(rowMark, newrm);
 				}
 				break;

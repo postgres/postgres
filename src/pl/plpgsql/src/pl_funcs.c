@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.4 1999/05/10 00:46:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.5 1999/05/25 16:15:18 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -328,8 +328,8 @@ plpgsql_ns_rename(char *oldname, char *newname)
 char *
 plpgsql_tolower(char *s)
 {
-	char   *ret;
-	char   *cp;
+	char	   *ret;
+	char	   *cp;
 
 	ret = palloc(strlen(s) + 1);
 	cp = ret;

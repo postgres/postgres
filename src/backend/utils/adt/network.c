@@ -3,7 +3,7 @@
  *	is for IP V4 CIDR notation, but prepared for V6: just
  *	add the necessary bits where the comments indicate.
  *
- *	$Id: network.c,v 1.8 1999/04/15 02:20:50 thomas Exp $
+ *	$Id: network.c,v 1.9 1999/05/25 16:12:11 momjian Exp $
  *	Jon Postel RIP 16 Oct 1998
  */
 
@@ -52,7 +52,7 @@ network_in(char *src, int type)
 
 	if (!src)
 		return NULL;
-		
+
 	dst = palloc(VARHDRSZ + sizeof(inet_struct));
 	if (dst == NULL)
 		elog(ERROR, "unable to allocate memory in network_in()");
@@ -60,7 +60,7 @@ network_in(char *src, int type)
 	/* First, try for an IP V4 address: */
 	ip_family(dst) = AF_INET;
 	bits = inet_net_pton(ip_family(dst), src, &ip_v4addr(dst),
-			type ? ip_addrsize(dst) : -1);
+						 type ? ip_addrsize(dst) : -1);
 	if ((bits < 0) || (bits > 32))
 		/* Go for an IPV6 address here, before faulting out: */
 		elog(ERROR, "could not parse \"%s\"", src);
@@ -102,10 +102,10 @@ inet_out(inet *src)
 		/* It's an IP V4 address: */
 		if (ip_type(src))
 			dst = inet_cidr_ntop(AF_INET, &ip_v4addr(src), ip_bits(src),
-						  tmp, sizeof(tmp));
+								 tmp, sizeof(tmp));
 		else
 			dst = inet_net_ntop(AF_INET, &ip_v4addr(src), ip_bits(src),
-						  tmp, sizeof(tmp));
+								tmp, sizeof(tmp));
 
 		if (dst == NULL)
 			elog(ERROR, "unable to print address (%s)", strerror(errno));
@@ -222,7 +222,7 @@ network_sub(inet *a1, inet *a2)
 {
 	if (!PointerIsValid(a1) || !PointerIsValid(a2))
 		return FALSE;
-		
+
 	if ((ip_family(a1) == AF_INET) && (ip_family(a2) == AF_INET))
 	{
 		return ((ip_bits(a1) > ip_bits(a2))
@@ -370,7 +370,7 @@ network_broadcast(inet *ip)
 	if (ip_family(ip) == AF_INET)
 	{
 		/* It's an IP V4 address: */
-		int addr;
+		int			addr;
 		unsigned long mask = 0xffffffff;
 
 		if (ip_bits(ip) < 32)
@@ -402,7 +402,7 @@ network_network(inet *ip)
 {
 	text	   *ret;
 	int			len;
-	char	   	tmp[sizeof("255.255.255.255/32")];
+	char		tmp[sizeof("255.255.255.255/32")];
 
 	if (!PointerIsValid(ip))
 		return NULL;
@@ -410,8 +410,8 @@ network_network(inet *ip)
 	if (ip_family(ip) == AF_INET)
 	{
 		/* It's an IP V4 address: */
-		int	addr = htonl(ntohl(ip_v4addr(ip)) & (0xffffffff << (32 - ip_bits(ip))));
-  
+		int			addr = htonl(ntohl(ip_v4addr(ip)) & (0xffffffff << (32 - ip_bits(ip))));
+
 		if (inet_cidr_ntop(AF_INET, &addr, ip_bits(ip), tmp, sizeof(tmp)) == NULL)
 			elog(ERROR, "unable to print network (%s)", strerror(errno));
 

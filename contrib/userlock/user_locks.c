@@ -29,7 +29,7 @@ user_lock(unsigned int id1, unsigned int id2, LOCKMODE lockmode)
 	LOCKTAG		tag;
 
 	memset(&tag, 0, sizeof(LOCKTAG));
-	tag.dbId  = MyDatabaseId;
+	tag.dbId = MyDatabaseId;
 	tag.relId = 0;
 	tag.tupleId.ip_blkid.bi_hi = id2 >> 16;
 	tag.tupleId.ip_blkid.bi_lo = id2 & 0xffff;
@@ -44,7 +44,7 @@ user_unlock(unsigned int id1, unsigned int id2, LOCKMODE lockmode)
 	LOCKTAG		tag;
 
 	memset(&tag, 0, sizeof(LOCKTAG));
-	tag.dbId  = MyDatabaseId;
+	tag.dbId = MyDatabaseId;
 	tag.relId = 0;
 	tag.tupleId.ip_blkid.bi_hi = id2 >> 16;
 	tag.tupleId.ip_blkid.bi_lo = id2 & 0xffff;
@@ -99,8 +99,8 @@ user_unlock_all()
 
 /*
  * Local variables:
- *  tab-width: 4
- *  c-indent-level: 4
- *  c-basic-offset: 4
+ *	tab-width: 4
+ *	c-indent-level: 4
+ *	c-basic-offset: 4
  * End:
  */

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: portal.h,v 1.12 1999/02/13 23:22:27 momjian Exp $
+ * $Id: portal.h,v 1.13 1999/05/25 16:14:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,7 +53,7 @@ struct PortalD
 };
 
 /*
- * PortalIsValid 
+ * PortalIsValid
  *		True iff portal is valid.
  */
 #define PortalIsValid(p) PointerIsValid(p)

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.19 1999/02/13 23:14:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.20 1999/05/25 16:07:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -260,7 +260,7 @@ VariableRelationPutNextOid(Oid *oidP)
  *		In the version 2 transaction system, transaction id's are
  *		restricted in several ways.
  *
- *		-- Old comments removed 
+ *		-- Old comments removed
  *
  *		Second, since we may someday preform compression of the data
  *		in the log and time relations, we cause the numbering of the

@@ -43,8 +43,8 @@ array_iterator(Oid elemtype, Oid proc, int and, ArrayType *array, Datum value)
 	int			ndim,
 			   *dim;
 	char	   *p;
-	FmgrInfo finf;    /*Tobias Gabele Jan 18 1999*/
-	
+	FmgrInfo	finf;			/* Tobias Gabele Jan 18 1999 */
+
 
 	/* Sanity checks */
 	if ((array == (ArrayType *) NULL)
@@ -75,9 +75,9 @@ array_iterator(Oid elemtype, Oid proc, int and, ArrayType *array, Datum value)
 
 	/* Lookup the function entry point */
 	proc_fn = (func_ptr) NULL;
-        fmgr_info(proc,&finf); /*Tobias Gabele Jan 18 1999*/
-        proc_fn=finf.fn_addr;  /*Tobias Gabele Jan 18 1999*/
-        pronargs=finf.fn_nargs; /*Tobias Gabele Jan 18 1999*/
+	fmgr_info(proc, &finf);		/* Tobias Gabele Jan 18 1999 */
+	proc_fn = finf.fn_addr;		/* Tobias Gabele Jan 18 1999 */
+	pronargs = finf.fn_nargs;	/* Tobias Gabele Jan 18 1999 */
 	if ((proc_fn == NULL) || (pronargs != 2))
 	{
 		elog(ERROR, "array_iterator: fmgr_info lookup failed for oid %d", proc);
@@ -110,38 +110,26 @@ array_iterator(Oid elemtype, Oid proc, int and, ArrayType *array, Datum value)
 		{
 			result = (int) (*proc_fn) (p, value);
 			if (typlen > 0)
-			{
 				p += typlen;
-			}
 			else
-			{
 				p += INTALIGN(*(int32 *) p);
-			}
 		}
 		if (result)
 		{
 			if (!and)
-			{
 				return (1);
-			}
 		}
 		else
 		{
 			if (and)
-			{
 				return (0);
-			}
 		}
 	}
 
 	if (and && result)
-	{
 		return (1);
-	}
 	else
-	{
 		return (0);
-	}
 }
 
 /*
@@ -344,7 +332,7 @@ int32
 array_oideq(ArrayType *array, Oid value)
 {
 	return array_iterator((Oid) 26,		/* oid */
-						  (Oid) 184,		/* oideq */
+						  (Oid) 184,	/* oideq */
 						  0,	/* logical or */
 						  array, (Datum) value);
 }

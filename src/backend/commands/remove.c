@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.32 1999/02/13 23:15:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.33 1999/05/25 16:08:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,7 +36,7 @@
 #endif
 
 /*
- * RemoveOperator 
+ * RemoveOperator
  *		Deletes an operator.
  *
  * Exceptions:
@@ -288,7 +288,7 @@ RemoveType(char *typeName)		/* type name to be removed */
 }
 
 /*
- * RemoveFunction 
+ * RemoveFunction
  *		Deletes a function.
  *
  * Exceptions:

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/char.c,v 1.21 1999/02/13 23:19:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/char.c,v 1.22 1999/05/25 16:11:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -163,10 +163,10 @@ text_char(text *arg1)
 text *
 char_text(int8 arg1)
 {
-	text *result;
+	text	   *result;
 
-	result = palloc(VARHDRSZ+1);
-	VARSIZE(result) = VARHDRSZ+1;
+	result = palloc(VARHDRSZ + 1);
+	VARSIZE(result) = VARHDRSZ + 1;
 	*(VARDATA(result)) = arg1;
 
 	return result;

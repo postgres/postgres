@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/ordering.c,v 1.15 1999/02/13 23:16:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/ordering.c,v 1.16 1999/05/25 16:09:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,7 @@
 #include "optimizer/ordering.h"
 
 static bool sortops_order_match(Oid *ordering1, Oid *ordering2,
-								int *better_sort);
+					int *better_sort);
 
 /*
  * equal_path_ordering
@@ -31,12 +31,12 @@ pathorder_match(PathOrder *path_ordering1,
 				PathOrder *path_ordering2,
 				int *better_sort)
 {
-	
+
 	*better_sort = 0;
 
 	if (path_ordering1 == path_ordering2)
 		return true;
-	
+
 	if (!path_ordering2)
 	{
 		*better_sort = 1;
@@ -51,15 +51,13 @@ pathorder_match(PathOrder *path_ordering1,
 
 	if (path_ordering1->ordtype == MERGE_ORDER &&
 		path_ordering2->ordtype == MERGE_ORDER)
-	{
 		return equal(path_ordering1->ord.merge, path_ordering2->ord.merge);
-	}
 	else if (path_ordering1->ordtype == SORTOP_ORDER &&
 			 path_ordering2->ordtype == SORTOP_ORDER)
 	{
 		return sortops_order_match(path_ordering1->ord.sortop,
-									path_ordering2->ord.sortop,
-									better_sort);
+								   path_ordering2->ord.sortop,
+								   better_sort);
 	}
 	else if (path_ordering1->ordtype == MERGE_ORDER &&
 			 path_ordering2->ordtype == SORTOP_ORDER)
@@ -112,7 +110,7 @@ equal_path_merge_ordering(Oid *path_ordering,
  */
 bool
 equal_merge_ordering(MergeOrder *merge_ordering1,
-						   MergeOrder *merge_ordering2)
+					 MergeOrder *merge_ordering2)
 {
 	return equal(merge_ordering1, merge_ordering2);
 }
@@ -133,7 +131,7 @@ sortops_order_match(Oid *ordering1, Oid *ordering2, int *better_sort)
 	int			i = 0;
 
 	*better_sort = 0;
-	
+
 	if (ordering1 == ordering2)
 		return true;
 
@@ -142,13 +140,13 @@ sortops_order_match(Oid *ordering1, Oid *ordering2, int *better_sort)
 		*better_sort = 1;
 		return true;
 	}
-	
+
 	if (!ordering1)
 	{
 		*better_sort = 2;
 		return true;
 	}
-	
+
 	while (ordering1[i] != 0 && ordering2[i] != 0)
 	{
 		if (ordering1[i] != ordering2[i])
@@ -167,6 +165,6 @@ sortops_order_match(Oid *ordering1, Oid *ordering2, int *better_sort)
 		*better_sort = 2;
 		return true;
 	}
-	
+
 	return ordering1[i] == 0 && ordering2[i] == 0;
 }

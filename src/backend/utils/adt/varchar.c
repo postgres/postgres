@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.45 1999/05/19 17:53:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.46 1999/05/25 16:12:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -82,7 +82,7 @@ bpcharin(char *s, int dummy, int32 atttypmod)
 		len = atttypmod - VARHDRSZ;
 
 	if (len > BLCKSZ - 128)
-		elog(ERROR, "bpcharin: length of char() must be less than %d",BLCKSZ-128);
+		elog(ERROR, "bpcharin: length of char() must be less than %d", BLCKSZ - 128);
 
 	result = (char *) palloc(atttypmod);
 	VARSIZE(result) = atttypmod;
@@ -152,7 +152,7 @@ bpchar(char *s, int32 len)
 	rlen = len - VARHDRSZ;
 
 	if (rlen > BLCKSZ - 128)
-		elog(ERROR, "bpchar: length of char() must be less than %d",BLCKSZ-128);
+		elog(ERROR, "bpchar: length of char() must be less than %d", BLCKSZ - 128);
 
 #ifdef STRINGDEBUG
 	printf("bpchar- convert string length %d (%d) ->%d (%d)\n",
@@ -163,13 +163,15 @@ bpchar(char *s, int32 len)
 	VARSIZE(result) = len;
 	r = VARDATA(result);
 #ifdef MULTIBYTE
-	/* truncate multi-byte string in a way not to break
-	   multi-byte boundary */
-	if (VARSIZE(s) > len) {
-		slen = pg_mbcliplen(VARDATA(s), VARSIZE(s)-VARHDRSZ, rlen);
-        } else {
+
+	/*
+	 * truncate multi-byte string in a way not to break multi-byte
+	 * boundary
+	 */
+	if (VARSIZE(s) > len)
+		slen = pg_mbcliplen(VARDATA(s), VARSIZE(s) - VARHDRSZ, rlen);
+	else
 		slen = VARSIZE(s) - VARHDRSZ;
-        }
 #else
 	slen = VARSIZE(s) - VARHDRSZ;
 #endif
@@ -206,7 +208,7 @@ bpchar(char *s, int32 len)
  * Converts an array of char() type to a specific internal length.
  * len is the length specified in () plus VARHDRSZ bytes.
  */
-ArrayType *
+ArrayType  *
 _bpchar(ArrayType *v, int32 len)
 {
 	return array_map(v, BPCHAROID, bpchar, BPCHAROID, 1, len);
@@ -331,7 +333,7 @@ varcharin(char *s, int dummy, int32 atttypmod)
 		len = atttypmod;		/* clip the string at max length */
 
 	if (len > BLCKSZ - 128)
-		elog(ERROR, "varcharin: length of char() must be less than %d",BLCKSZ-128);
+		elog(ERROR, "varcharin: length of char() must be less than %d", BLCKSZ - 128);
 
 	result = (char *) palloc(len);
 	VARSIZE(result) = len;
@@ -390,15 +392,18 @@ varchar(char *s, int32 slen)
 	/* only reach here if we need to truncate string... */
 
 #ifdef MULTIBYTE
-	/* truncate multi-byte string in a way not to break
-	   multi-byte boundary */
+
+	/*
+	 * truncate multi-byte string in a way not to break multi-byte
+	 * boundary
+	 */
 	len = pg_mbcliplen(VARDATA(s), slen - VARHDRSZ, slen - VARHDRSZ);
 	slen = len + VARHDRSZ;
 #else
 	len = slen - VARHDRSZ;
 #endif
 
-	if (len > BLCKSZ-128)
+	if (len > BLCKSZ - 128)
 		elog(ERROR, "varchar: length of varchar() must be less than BLCKSZ-128");
 
 	result = (char *) palloc(slen);
@@ -412,7 +417,7 @@ varchar(char *s, int32 slen)
  * Converts an array of varchar() type to the specified size.
  * len is the length specified in () plus VARHDRSZ bytes.
  */
-ArrayType *
+ArrayType  *
 _varchar(ArrayType *v, int32 len)
 {
 	return array_map(v, VARCHAROID, varchar, VARCHAROID, 1, len);

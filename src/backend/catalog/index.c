@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.74 1999/05/17 00:27:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.75 1999/05/25 16:08:06 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -60,8 +60,8 @@
 #define NTUPLES_PER_PAGE(natts) (BLCKSZ/((natts)*AVG_TUPLE_SIZE))
 
 /* non-export function prototypes */
-static Oid	GetHeapRelationOid(char *heapRelationName, char *indexRelationName,
-								bool istemp);
+static Oid GetHeapRelationOid(char *heapRelationName, char *indexRelationName,
+				   bool istemp);
 static TupleDesc BuildFuncTupleDesc(FuncIndexInfo *funcInfo);
 static TupleDesc ConstructTupleDescriptor(Oid heapoid, Relation heapRelation,
 						 List *attributeList,
@@ -77,7 +77,7 @@ static void
 static void UpdateIndexRelation(Oid indexoid, Oid heapoid,
 					FuncIndexInfo *funcInfo, int natts,
 					AttrNumber *attNums, Oid *classOids, Node *predicate,
-					List *attributeList, bool islossy, bool unique, bool primary);
+		   List *attributeList, bool islossy, bool unique, bool primary);
 static void DefaultBuild(Relation heapRelation, Relation indexRelation,
 			 int numberOfAttributes, AttrNumber *attributeNumber,
 			 IndexStrategy indexStrategy, uint16 parameterCount,
@@ -126,11 +126,11 @@ GetHeapRelationOid(char *heapRelationName, char *indexRelationName, bool istemp)
 	Oid			indoid;
 	Oid			heapoid;
 
-	
+
 	indoid = RelnameFindRelid(indexRelationName);
 
 	if ((!istemp && OidIsValid(indoid)) ||
-	    (istemp && get_temp_rel_by_name(indexRelationName) != NULL))
+		(istemp && get_temp_rel_by_name(indexRelationName) != NULL))
 		elog(ERROR, "Cannot create index: '%s' already exists",
 			 indexRelationName);
 
@@ -139,7 +139,7 @@ GetHeapRelationOid(char *heapRelationName, char *indexRelationName, bool istemp)
 	if (!OidIsValid(heapoid))
 		elog(ERROR, "Cannot create index on '%s': relation does not exist",
 			 heapRelationName);
-			 
+
 	return heapoid;
 }
 
@@ -356,7 +356,7 @@ ConstructTupleDescriptor(Oid heapoid,
 }
 
 /* ----------------------------------------------------------------
- * AccessMethodObjectIdGetForm 
+ * AccessMethodObjectIdGetForm
  *		Returns the formated access method tuple given its object identifier.
  *
  * XXX ADD INDEXING
@@ -482,7 +482,7 @@ UpdateRelationRelation(Relation indexRelation, char *temp_relname)
 
 	if (temp_relname)
 		create_temp_relation(temp_relname, tuple);
-	
+
 	/*
 	 * During normal processing, we need to make sure that the system
 	 * catalog indices are correct.  Bootstrap (initdb) time doesn't
@@ -571,7 +571,7 @@ AppendAttributeTuples(Relation indexRelation, int numatts)
 	value[Anum_pg_attribute_attcacheoff - 1] = Int32GetDatum(-1);
 
 	init_tuple = heap_addheader(Natts_pg_attribute,
-				    ATTRIBUTE_TUPLE_SIZE,
+								ATTRIBUTE_TUPLE_SIZE,
 							 (char *) (indexRelation->rd_att->attrs[0]));
 
 	hasind = false;
@@ -611,7 +611,7 @@ AppendAttributeTuples(Relation indexRelation, int numatts)
 		 */
 		memmove(GETSTRUCT(cur_tuple),
 				(char *) indexTupDesc->attrs[i],
-			        ATTRIBUTE_TUPLE_SIZE);
+				ATTRIBUTE_TUPLE_SIZE);
 
 		value[Anum_pg_attribute_attnum - 1] = Int16GetDatum(i + 1);
 
@@ -657,7 +657,7 @@ UpdateIndexRelation(Oid indexoid,
 					List *attributeList,
 					bool islossy,
 					bool unique,
-                    bool primary)
+					bool primary)
 {
 	Form_pg_index indexForm;
 	IndexElem  *IndexKey;
@@ -686,7 +686,7 @@ UpdateIndexRelation(Oid indexoid,
 	predLen = VARSIZE(predText);
 	itupLen = predLen + sizeof(FormData_pg_index);
 	indexForm = (Form_pg_index) palloc(itupLen);
-	memset (indexForm, 0, sizeof(FormData_pg_index));
+	memset(indexForm, 0, sizeof(FormData_pg_index));
 
 	memmove((char *) &indexForm->indpred, (char *) predText, predLen);
 
@@ -939,7 +939,7 @@ index_create(char *heapRelationName,
 			 Node *predicate,
 			 bool islossy,
 			 bool unique,
-             bool primary)
+			 bool primary)
 {
 	Relation	heapRelation;
 	Relation	indexRelation;
@@ -948,15 +948,15 @@ index_create(char *heapRelationName,
 	Oid			indexoid;
 	PredInfo   *predInfo;
 	bool		istemp = (get_temp_rel_by_name(heapRelationName) != NULL);
-	char		*temp_relname = NULL;
-	
+	char	   *temp_relname = NULL;
+
 	/* ----------------
 	 *	check parameters
 	 * ----------------
 	 */
 	if (numatts < 1)
 		elog(ERROR, "must index at least one attribute");
-		
+
 	/* ----------------
 	 *	  get heap relation oid and open the heap relation
 	 *	  XXX ADD INDEXING
@@ -987,25 +987,27 @@ index_create(char *heapRelationName,
 	/* invalidate cache so possible non-temp index is masked by temp */
 	if (istemp)
 	{
-		Oid relid = RelnameFindRelid(indexRelationName);
+		Oid			relid = RelnameFindRelid(indexRelationName);
 
 		if (relid != InvalidOid)
 		{
+
 			/*
-			 *	This is heavy-handed, but appears necessary bjm 1999/02/01
-			 *	SystemCacheRelationFlushed(relid) is not enough either.
+			 * This is heavy-handed, but appears necessary bjm 1999/02/01
+			 * SystemCacheRelationFlushed(relid) is not enough either.
 			 */
 			RelationForgetRelation(relid);
 			ResetSystemCache();
 		}
 	}
-	
+
 	/* save user relation name because heap_create changes it */
 	if (istemp)
 	{
-		temp_relname = pstrdup(indexRelationName); /* save original value */
+		temp_relname = pstrdup(indexRelationName);		/* save original value */
 		indexRelationName = palloc(NAMEDATALEN);
-		strcpy(indexRelationName, temp_relname); /* heap_create will change this */
+		strcpy(indexRelationName, temp_relname);		/* heap_create will
+														 * change this */
 	}
 
 	/* ----------------
@@ -1122,8 +1124,8 @@ index_destroy(Oid indexId)
 	Relation	relationRelation;
 	Relation	attributeRelation;
 	HeapTuple	tuple;
- 	int16		attnum;
- 	
+	int16		attnum;
+
 	Assert(OidIsValid(indexId));
 
 	/* Open now to obtain lock by referencing table?  bjm */
@@ -1166,7 +1168,7 @@ index_destroy(Oid indexId)
 
 	/* does something only if it is a temp index */
 	remove_temp_relation(indexId);
-		
+
 	/* ----------------
 	 * fix INDEX relation
 	 * ----------------

@@ -2,7 +2,7 @@
  * Routines for handling of 'SET var TO',
  *	'SHOW var' and 'RESET var' statements.
  *
- * $Id: variable.c,v 1.19 1999/02/18 06:00:44 momjian Exp $
+ * $Id: variable.c,v 1.20 1999/05/25 16:08:28 momjian Exp $
  *
  */
 
@@ -45,10 +45,12 @@ static bool parse_ksqo(const char *);
 static bool show_XactIsoLevel(void);
 static bool reset_XactIsoLevel(void);
 static bool parse_XactIsoLevel(const char *);
+
 #ifdef QUERY_LIMIT
 static bool show_query_limit(void);
 static bool reset_query_limit(void);
 static bool parse_query_limit(const char *);
+
 #endif
 
 extern Cost _cpu_page_wight_;
@@ -545,41 +547,41 @@ reset_timezone()
 static bool
 parse_query_limit(const char *value)
 {
-  int32 limit;
+	int32		limit;
 
-  if (value == NULL) {
-    reset_query_limit();
-    return(TRUE);
-  }
-  /* why is pg_atoi's arg not declared "const char *" ? */
-  limit = pg_atoi((char *) value, sizeof(int32), '\0');
-  if (limit <= -1) {
-    elog(ERROR, "Bad value for # of query limit (%s)", value);
-  }
-  ExecutorLimit(limit);
-  return(TRUE);
+	if (value == NULL)
+	{
+		reset_query_limit();
+		return (TRUE);
+	}
+	/* why is pg_atoi's arg not declared "const char *" ? */
+	limit = pg_atoi((char *) value, sizeof(int32), '\0');
+	if (limit <= -1)
+		elog(ERROR, "Bad value for # of query limit (%s)", value);
+	ExecutorLimit(limit);
+	return (TRUE);
 }
 
 static bool
 show_query_limit(void)
 {
-  int limit;
+	int			limit;
 
-  limit = ExecutorGetLimit();
-  if (limit == ALL_TUPLES) {
-    elog(NOTICE, "No query limit is set");
-  } else {
-    elog(NOTICE, "query limit is %d",limit);
-  }
-  return(TRUE);
+	limit = ExecutorGetLimit();
+	if (limit == ALL_TUPLES)
+		elog(NOTICE, "No query limit is set");
+	else
+		elog(NOTICE, "query limit is %d", limit);
+	return (TRUE);
 }
 
 static bool
 reset_query_limit(void)
 {
-  ExecutorLimit(ALL_TUPLES);
-  return(TRUE);
+	ExecutorLimit(ALL_TUPLES);
+	return (TRUE);
 }
+
 #endif
 
 /*-----------------------------------------------------------------------*/
@@ -685,10 +687,10 @@ ResetPGVariable(const char *name)
 
 
 /*-----------------------------------------------------------------------
-KSQO code will one day be unnecessary when the optimizer makes use of 
+KSQO code will one day be unnecessary when the optimizer makes use of
 indexes when multiple ORs are specified in the where clause.
 See optimizer/prep/prepkeyset.c for more on this.
-	daveh@insightdist.com    6/16/98
+	daveh@insightdist.com	 6/16/98
 -----------------------------------------------------------------------*/
 static bool
 parse_ksqo(const char *value)
@@ -732,7 +734,7 @@ reset_ksqo()
 static bool
 parse_XactIsoLevel(const char *value)
 {
-	
+
 	if (value == NULL)
 	{
 		reset_XactIsoLevel();
@@ -770,7 +772,7 @@ show_XactIsoLevel()
 static bool
 reset_XactIsoLevel()
 {
-	
+
 	if (SerializableSnapshot != NULL)
 	{
 		elog(ERROR, "SET TRANSACTION ISOLATION LEVEL must be called before any query");

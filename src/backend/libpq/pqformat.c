@@ -15,14 +15,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: pqformat.c,v 1.3 1999/04/25 21:50:56 tgl Exp $
+ *	$Id: pqformat.c,v 1.4 1999/05/25 16:09:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 /*
  * INTERFACE ROUTINES
  * Message assembly and output:
- *		pq_beginmessage	- initialize StringInfo buffer
+ *		pq_beginmessage - initialize StringInfo buffer
  *		pq_sendbyte		- append a raw byte to a StringInfo buffer
  *		pq_sendint		- append a binary integer to a StringInfo buffer
  *		pq_sendbytes	- append raw data to a StringInfo buffer
@@ -126,6 +126,7 @@ pq_sendcountedtext(StringInfo buf, const char *str, int slen)
 {
 #ifdef MULTIBYTE
 	const char *p;
+
 	p = (const char *) pg_server_to_client((unsigned char *) str, slen);
 	if (p != str)				/* actual conversion has been done? */
 	{
@@ -147,9 +148,11 @@ pq_sendcountedtext(StringInfo buf, const char *str, int slen)
 void
 pq_sendstring(StringInfo buf, const char *str)
 {
-	int slen = strlen(str);
+	int			slen = strlen(str);
+
 #ifdef MULTIBYTE
 	const char *p;
+
 	p = (const char *) pg_server_to_client((unsigned char *) str, slen);
 	if (p != str)				/* actual conversion has been done? */
 	{
@@ -157,7 +160,7 @@ pq_sendstring(StringInfo buf, const char *str)
 		slen = strlen(str);
 	}
 #endif
-	appendBinaryStringInfo(buf, str, slen+1);
+	appendBinaryStringInfo(buf, str, slen + 1);
 }
 
 /* --------------------------------
@@ -167,9 +170,9 @@ pq_sendstring(StringInfo buf, const char *str)
 void
 pq_sendint(StringInfo buf, int i, int b)
 {
-	unsigned char	n8;
-	uint16			n16;
-	uint32			n32;
+	unsigned char n8;
+	uint16		n16;
+	uint32		n32;
 
 	switch (b)
 	{
@@ -225,9 +228,11 @@ pq_endmessage(StringInfo buf)
 int
 pq_puttextmessage(char msgtype, const char *str)
 {
-	int slen = strlen(str);
+	int			slen = strlen(str);
+
 #ifdef MULTIBYTE
 	const char *p;
+
 	p = (const char *) pg_server_to_client((unsigned char *) str, slen);
 	if (p != str)				/* actual conversion has been done? */
 	{
@@ -235,7 +240,7 @@ pq_puttextmessage(char msgtype, const char *str)
 		slen = strlen(str);
 	}
 #endif
-	return pq_putmessage(msgtype, str, slen+1);
+	return pq_putmessage(msgtype, str, slen + 1);
 }
 
 /* --------------------------------
@@ -247,10 +252,10 @@ pq_puttextmessage(char msgtype, const char *str)
 int
 pq_getint(int *result, int b)
 {
-	int				status;
-	unsigned char	n8;
-	uint16			n16;
-	uint32			n32;
+	int			status;
+	unsigned char n8;
+	uint16		n16;
+	uint32		n32;
 
 	switch (b)
 	{
@@ -269,8 +274,10 @@ pq_getint(int *result, int b)
 							 ntoh_l(n32) : ntohl(n32));
 			break;
 		default:
-			/* if we elog(ERROR) here, we will lose sync with the frontend,
-			 * so just complain to postmaster log instead...
+
+			/*
+			 * if we elog(ERROR) here, we will lose sync with the
+			 * frontend, so just complain to postmaster log instead...
 			 */
 			fprintf(stderr, "pq_getint: unsupported size %d\n", b);
 			status = EOF;
@@ -293,23 +300,26 @@ int
 pq_getstr(char *s, int maxlen)
 {
 	int			c;
+
 #ifdef MULTIBYTE
 	char	   *p;
+
 #endif
 
 	c = pq_getstring(s, maxlen);
 
 #ifdef MULTIBYTE
-	p = (char*) pg_client_to_server((unsigned char *) s, strlen(s));
+	p = (char *) pg_client_to_server((unsigned char *) s, strlen(s));
 	if (p != s)					/* actual conversion has been done? */
 	{
-		int newlen = strlen(p);
+		int			newlen = strlen(p);
+
 		if (newlen < maxlen)
 			strcpy(s, p);
 		else
 		{
 			strncpy(s, p, maxlen);
-			s[maxlen-1] = '\0';
+			s[maxlen - 1] = '\0';
 		}
 	}
 #endif

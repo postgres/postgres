@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/Attic/s_lock.c,v 1.18 1999/03/14 16:03:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/Attic/s_lock.c,v 1.19 1999/05/25 16:11:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -100,7 +100,8 @@ s_lock(volatile slock_t *lock, const char *file, const int line)
 
 #if defined(__m68k__)
 static void
-tas_dummy()	/* really means: extern int tas(slock_t **lock); */
+			tas_dummy()			/* really means: extern int tas(slock_t
+								 * **lock); */
 {
 	__asm__("		\n\
 .global		_tas		\n\
@@ -163,7 +164,8 @@ fail:				\n\
 	j       $31		\n\
 	");
 }
-#endif	/* __mips */
+
+#endif	 /* __mips */
 
 #else							/* defined(__GNUC__) */
 /***************************************************************************

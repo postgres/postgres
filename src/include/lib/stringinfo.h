@@ -9,7 +9,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: stringinfo.h,v 1.11 1999/04/25 03:19:27 tgl Exp $
+ * $Id: stringinfo.h,v 1.12 1999/05/25 16:13:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,7 +55,7 @@ typedef StringInfoData *StringInfo;
  *
  * NOTE: some routines build up a string using StringInfo, and then
  * release the StringInfoData but return the data string itself to their
- * caller.  At that point the data string looks like a plain palloc'd
+ * caller.	At that point the data string looks like a plain palloc'd
  * string.
  *-------------------------
  */
@@ -82,7 +82,7 @@ extern void initStringInfo(StringInfo str);
  * CAUTION: the current implementation has a 1K limit on the amount of text
  * generated in a single call (not on the total string length).
  */
-extern void appendStringInfo(StringInfo str, const char *fmt, ...);
+extern void appendStringInfo(StringInfo str, const char *fmt,...);
 
 /*------------------------
  * appendStringInfoChar
@@ -97,7 +97,7 @@ extern void appendStringInfoChar(StringInfo str, char ch);
  * if necessary.
  */
 extern void appendBinaryStringInfo(StringInfo str,
-								   const char *data, int datalen);
+					   const char *data, int datalen);
 
 /*------------------------
  * stringStringInfo

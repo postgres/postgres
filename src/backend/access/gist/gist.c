@@ -344,7 +344,7 @@ gistinsert(Relation r, Datum *datum, char *nulls, ItemPointer ht_ctid, Relation 
 	/*
 	 * Notes in ExecUtils:ExecOpenIndices()
 	 *
-	RelationSetLockForWrite(r);
+	 * RelationSetLockForWrite(r);
 	 */
 
 	res = gistdoinsert(r, itup, &giststate);
@@ -1106,10 +1106,10 @@ gistdelete(Relation r, ItemPointer tid)
 	Page		page;
 
 	/*
-	 * Notes in ExecUtils:ExecOpenIndices()
-	 * Also note that only vacuum deletes index tuples now...
+	 * Notes in ExecUtils:ExecOpenIndices() Also note that only vacuum
+	 * deletes index tuples now...
 	 *
-	RelationSetLockForWrite(r);
+	 * RelationSetLockForWrite(r);
 	 */
 
 	blkno = ItemPointerGetBlockNumber(tid);

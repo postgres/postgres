@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_pool.c,v 1.11 1999/02/13 23:16:12 momjian Exp $
+ * $Id: geqo_pool.c,v 1.12 1999/05/25 16:09:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,7 +109,7 @@ random_init_pool(Query *root, Pool *pool, int strt, int stp)
 																 * "geqo_recombination.c"
 																 * */
 
-		pool->data[i].worth = geqo_eval(root, chromo[i].string, pool->string_length);		/* "from geqo_eval.c" */
+		pool->data[i].worth = geqo_eval(root, chromo[i].string, pool->string_length);	/* "from geqo_eval.c" */
 	}
 }
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.23 1999/05/07 01:23:02 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.24 1999/05/25 16:11:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,7 +76,7 @@ static MASK LockConflicts[] = {
 
 /* AccessExclusiveLock */
 	(1 << ExclusiveLock) | (1 << ShareRowExclusiveLock) | (1 << ShareLock) |
-	(1 << RowExclusiveLock) | (1 << RowShareLock) | (1 << AccessExclusiveLock) | 
+	(1 << RowExclusiveLock) | (1 << RowShareLock) | (1 << AccessExclusiveLock) |
 	(1 << AccessShareLock),
 
 };
@@ -92,7 +92,7 @@ static int	LockPrios[] = {
 	7
 };
 
-LOCKMETHOD	LockTableId = (LOCKMETHOD) NULL;
+LOCKMETHOD LockTableId = (LOCKMETHOD) NULL;
 LOCKMETHOD	LongTermTableId = (LOCKMETHOD) NULL;
 
 /*
@@ -104,12 +104,14 @@ InitLockTable()
 	int			lockmethod;
 
 	lockmethod = LockMethodTableInit("LockTable",
-						  LockConflicts, LockPrios, MAX_LOCKMODES - 1);
+							LockConflicts, LockPrios, MAX_LOCKMODES - 1);
 	LockTableId = lockmethod;
+
 	if (!(LockTableId))
 		elog(ERROR, "InitLockTable: couldnt initialize lock table");
 
 #ifdef USER_LOCKS
+
 	/*
 	 * Allocate another tableId for long-term locks
 	 */
@@ -125,7 +127,7 @@ InitLockTable()
 }
 
 /*
- * RelationInitLockInfo 
+ * RelationInitLockInfo
  *		Initializes the lock information in a relation descriptor.
  */
 void
@@ -322,10 +324,10 @@ XactLockTableWait(TransactionId xid)
 	LockAcquire(LockTableId, &tag, ShareLock);
 
 	TransactionIdFlushCache();
+
 	/*
-	 * Transaction was committed/aborted/crashed - 
-	 * we have to update pg_log if transaction is still
-	 * marked as running.
+	 * Transaction was committed/aborted/crashed - we have to update
+	 * pg_log if transaction is still marked as running.
 	 */
 	if (!TransactionIdDidCommit(xid) && !TransactionIdDidAbort(xid))
 		TransactionIdAbort(xid);

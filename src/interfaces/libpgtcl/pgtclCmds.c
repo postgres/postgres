@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.42 1999/05/10 00:46:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.43 1999/05/25 16:15:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,7 @@
 #define DIGIT(c)		((c) - '0')
 
 /*
- * translate_escape() 
+ * translate_escape()
  *
  * This function performs in-place translation of a single C-style
  * escape sequence pointed by p. Curly braces { } and double-quote
@@ -132,7 +132,7 @@ translate_escape(char *p, int isArray)
 }
 
 /*
- * tcl_value() 
+ * tcl_value()
  *
  * This function does in-line conversion of a value returned by libpq
  * into a tcl string or into a tcl list if the value looks like the
@@ -219,7 +219,7 @@ tcl_value(char *value)
 	return value;
 }
 
-#endif						/* TCL_ARRAYS */
+#endif	 /* TCL_ARRAYS */
 
 
 /**********************************
@@ -241,12 +241,13 @@ Pg_conndefaults(ClientData cData, Tcl_Interp * interp, int argc, char **argv)
 {
 	PQconninfoOption *option;
 	Tcl_DString result;
-	char ibuf[32];
+	char		ibuf[32];
 
 	Tcl_DStringInit(&result);
 	for (option = PQconndefaults(); option->keyword != NULL; option++)
 	{
-		char * val = option->val ? option->val : "";
+		char	   *val = option->val ? option->val : "";
+
 		sprintf(ibuf, "%d", option->dispsize);
 		Tcl_DStringStartSublist(&result);
 		Tcl_DStringAppendElement(&result, option->keyword);
@@ -359,7 +360,7 @@ Pg_connect(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 		conn = PQsetdb(pghost, pgport, pgoptions, pgtty, dbName);
 	}
 
-    if (PQstatus(conn) == CONNECTION_OK)
+	if (PQstatus(conn) == CONNECTION_OK)
 	{
 		PgSetConnectionId(interp, conn);
 		return TCL_OK;
@@ -367,7 +368,7 @@ Pg_connect(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 	else
 	{
 		Tcl_AppendResult(interp, "Connection to database failed\n",
-			PQerrorMessage(conn), 0);
+						 PQerrorMessage(conn), 0);
 		PQfinish(conn);
 		return TCL_ERROR;
 	}
@@ -452,6 +453,7 @@ Pg_exec(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 		int			rId = PgSetResultId(interp, argv[1], result);
 
 		ExecStatusType rStat = PQresultStatus(result);
+
 		if (rStat == PGRES_COPY_IN || rStat == PGRES_COPY_OUT)
 		{
 			connid->res_copyStatus = RES_COPY_INPROGRESS;
@@ -473,11 +475,11 @@ Pg_exec(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 
  syntax:
 
- 	pg_result result ?option?
+	pg_result result ?option?
 
  the options are:
 
- 	-status		the status of the result
+	-status		the status of the result
 
 	-error		the error message, if the status indicates error; otherwise
 				an empty string
@@ -491,11 +493,11 @@ Pg_exec(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 	-numAttrs	returns the number of attributes returned by the query
 
 	-assign arrayName
- 				assign the results to an array, using subscripts of the form
- 				(tupno,attributeName)
+				assign the results to an array, using subscripts of the form
+				(tupno,attributeName)
 
 	-assignbyidx arrayName ?appendstr?
- 				assign the results to an array using the first field's value
+				assign the results to an array using the first field's value
 				as a key.
 				All but the first field of each tuple are stored, using
 				subscripts of the form (field0value,attributeNameappendstr)
@@ -504,17 +506,17 @@ Pg_exec(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 				returns the values of the tuple in a list
 
 	-tupleArray tupleNumber arrayName
- 				stores the values of the tuple in array arrayName, indexed
+				stores the values of the tuple in array arrayName, indexed
 				by the attributes returned
 
 	-attributes
- 				returns a list of the name/type pairs of the tuple attributes
+				returns a list of the name/type pairs of the tuple attributes
 
 	-lAttributes
- 				returns a list of the {name type len} entries of the tuple
+				returns a list of the {name type len} entries of the tuple
 				attributes
 
-    -clear		clear the result buffer. Do not reuse after this
+	-clear		clear the result buffer. Do not reuse after this
 
  **********************************/
 int
@@ -526,12 +528,12 @@ Pg_result(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 	int			tupno;
 	char	   *arrVar;
 	char		nameBuffer[256];
-    const char *appendstr;
+	const char *appendstr;
 
 	if (argc < 3 || argc > 5)
 	{
 		Tcl_AppendResult(interp, "Wrong # of arguments\n", 0);
-		goto Pg_result_errReturn; /* append help info */
+		goto Pg_result_errReturn;		/* append help info */
 	}
 
 	result = PgGetResultId(interp, argv[1]);
@@ -550,7 +552,7 @@ Pg_result(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 	}
 	else if (strcmp(opt, "-error") == 0)
 	{
-		Tcl_SetResult(interp, (char*) PQresultErrorMessage(result),
+		Tcl_SetResult(interp, (char *) PQresultErrorMessage(result),
 					  TCL_STATIC);
 		return TCL_OK;
 	}
@@ -588,11 +590,10 @@ Pg_result(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 
 		/*
 		 * this assignment assigns the table of result tuples into a giant
-		 * array with the name given in the argument.
-		 * The indices of the array are of the form (tupno,attrName).
-		 * Note we expect field names not to
-		 * exceed a few dozen characters, so truncating to prevent buffer
-		 * overflow shouldn't be a problem.
+		 * array with the name given in the argument. The indices of the
+		 * array are of the form (tupno,attrName). Note we expect field
+		 * names not to exceed a few dozen characters, so truncating to
+		 * prevent buffer overflow shouldn't be a problem.
 		 */
 		for (tupno = 0; tupno < PQntuples(result); tupno++)
 		{
@@ -616,7 +617,7 @@ Pg_result(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 	{
 		if (argc != 4 && argc != 5)
 		{
-			Tcl_AppendResult(interp, "-assignbyidx option requires an array name and optionally an append string",0);
+			Tcl_AppendResult(interp, "-assignbyidx option requires an array name and optionally an append string", 0);
 			return TCL_ERROR;
 		}
 		arrVar = argv[3];
@@ -624,25 +625,27 @@ Pg_result(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 
 		/*
 		 * this assignment assigns the table of result tuples into a giant
-		 * array with the name given in the argument.  The indices of the array
-		 * are of the form (field0Value,attrNameappendstr).
-		 * Here, we still assume PQfname won't exceed 200 characters,
-		 * but we dare not make the same assumption about the data in field 0
-		 * nor the append string.
+		 * array with the name given in the argument.  The indices of the
+		 * array are of the form (field0Value,attrNameappendstr). Here, we
+		 * still assume PQfname won't exceed 200 characters, but we dare
+		 * not make the same assumption about the data in field 0 nor the
+		 * append string.
 		 */
 		for (tupno = 0; tupno < PQntuples(result); tupno++)
 		{
-			const char *field0 = 
+			const char *field0 =
 #ifdef TCL_ARRAYS
-								 tcl_value(PQgetvalue(result, tupno, 0));
+			tcl_value(PQgetvalue(result, tupno, 0));
+
 #else
-								 PQgetvalue(result, tupno, 0);
+			PQgetvalue(result, tupno, 0);
+
 #endif
-			char *workspace = malloc(strlen(field0) + strlen(appendstr) + 210);
+			char	   *workspace = malloc(strlen(field0) + strlen(appendstr) + 210);
 
 			for (i = 1; i < PQnfields(result); i++)
 			{
-				sprintf(workspace, "%s,%.200s%s", field0, PQfname(result,i),
+				sprintf(workspace, "%s,%.200s%s", field0, PQfname(result, i),
 						appendstr);
 				if (Tcl_SetVar2(interp, arrVar, workspace,
 #ifdef TCL_ARRAYS
@@ -676,9 +679,7 @@ Pg_result(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 		}
 #ifdef TCL_ARRAYS
 		for (i = 0; i < PQnfields(result); i++)
-		{
 			Tcl_AppendElement(interp, tcl_value(PQgetvalue(result, tupno, i)));
-		}
 #else
 		for (i = 0; i < PQnfields(result); i++)
 			Tcl_AppendElement(interp, PQgetvalue(result, tupno, i));
@@ -739,7 +740,7 @@ Pg_result(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 	else
 	{
 		Tcl_AppendResult(interp, "Invalid option\n", 0);
-		goto Pg_result_errReturn; /* append help info */
+		goto Pg_result_errReturn;		/* append help info */
 	}
 
 
@@ -1298,7 +1299,7 @@ Pg_select(ClientData cData, Tcl_Interp * interp, int argc, char **argv)
 	if (PQresultStatus(result) != PGRES_TUPLES_OK)
 	{
 		/* query failed, or it wasn't SELECT */
-		Tcl_SetResult(interp, (char*) PQresultErrorMessage(result),
+		Tcl_SetResult(interp, (char *) PQresultErrorMessage(result),
 					  TCL_VOLATILE);
 		PQclear(result);
 		return TCL_ERROR;
@@ -1374,7 +1375,7 @@ Pg_select(ClientData cData, Tcl_Interp * interp, int argc, char **argv)
  */
 
 static int
-Pg_have_listener (Pg_ConnectionId *connid, const char * relname)
+Pg_have_listener(Pg_ConnectionId * connid, const char *relname)
 {
 	Pg_TclNotifies *notifies;
 	Tcl_HashEntry *entry;
@@ -1388,7 +1389,7 @@ Pg_have_listener (Pg_ConnectionId *connid, const char * relname)
 		if (interp == NULL)
 			continue;			/* ignore deleted interpreter */
 
-		entry = Tcl_FindHashEntry(&notifies->notify_hash, (char*) relname);
+		entry = Tcl_FindHashEntry(&notifies->notify_hash, (char *) relname);
 		if (entry == NULL)
 			continue;			/* no pg_listen in this interpreter */
 
@@ -1491,14 +1492,15 @@ Pg_listen(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 
 	if (callback)
 	{
+
 		/*
 		 * Create or update a callback for a relation
 		 */
-		int alreadyHadListener = Pg_have_listener(connid, caserelname);
+		int			alreadyHadListener = Pg_have_listener(connid, caserelname);
 
 		entry = Tcl_CreateHashEntry(&notifies->notify_hash, caserelname, &new);
 		/* If update, free the old callback string */
-		if (! new)
+		if (!new)
 			ckfree((char *) Tcl_GetHashValue(entry));
 		/* Store the new callback string */
 		Tcl_SetHashValue(entry, callback);
@@ -1509,10 +1511,11 @@ Pg_listen(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 		/*
 		 * Send a LISTEN command if this is the first listener.
 		 */
-		if (! alreadyHadListener)
+		if (!alreadyHadListener)
 		{
-			char   *cmd = (char *)
-				ckalloc((unsigned) (strlen(origrelname) + 8));
+			char	   *cmd = (char *)
+			ckalloc((unsigned) (strlen(origrelname) + 8));
+
 			sprintf(cmd, "LISTEN %s", origrelname);
 			result = PQexec(conn, cmd);
 			ckfree(cmd);
@@ -1533,6 +1536,7 @@ Pg_listen(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 	}
 	else
 	{
+
 		/*
 		 * Remove a callback for a relation
 		 */
@@ -1545,15 +1549,17 @@ Pg_listen(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 		}
 		ckfree((char *) Tcl_GetHashValue(entry));
 		Tcl_DeleteHashEntry(entry);
+
 		/*
-		 * Send an UNLISTEN command if that was the last listener.
-		 * Note: we don't attempt to turn off the notify mechanism
-		 * if no LISTENs remain active; not worth the trouble.
+		 * Send an UNLISTEN command if that was the last listener. Note:
+		 * we don't attempt to turn off the notify mechanism if no LISTENs
+		 * remain active; not worth the trouble.
 		 */
-		if (! Pg_have_listener(connid, caserelname))
+		if (!Pg_have_listener(connid, caserelname))
 		{
-			char   *cmd = (char *)
-				ckalloc((unsigned) (strlen(origrelname) + 10));
+			char	   *cmd = (char *)
+			ckalloc((unsigned) (strlen(origrelname) + 10));
+
 			sprintf(cmd, "UNLISTEN %s", origrelname);
 			result = PQexec(conn, cmd);
 			ckfree(cmd);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.44 1999/05/10 00:44:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.45 1999/05/25 16:08:17 momjian Exp $
  *
  * NOTES
  *	  The PortalExecutorHeapMemory crap needs to be eliminated
@@ -117,18 +117,18 @@ PerformPortalFetch(char *name,
 	}
 
 	/* ----------------
-	 *  Create a const node from the given count value
+	 *	Create a const node from the given count value
 	 * ----------------
 	 */
 	memset(&limcount, 0, sizeof(limcount));
-	limcount.type       = T_Const;
-	limcount.consttype  = INT4OID;
-	limcount.constlen   = sizeof(int4);
-	limcount.constvalue = (Datum)count;
-	limcount.constisnull    = FALSE;
+	limcount.type = T_Const;
+	limcount.consttype = INT4OID;
+	limcount.constlen = sizeof(int4);
+	limcount.constvalue = (Datum) count;
+	limcount.constisnull = FALSE;
 	limcount.constbyval = TRUE;
 	limcount.constisset = FALSE;
-	limcount.constiscast    = FALSE;
+	limcount.constiscast = FALSE;
 
 
 	/* ----------------
@@ -193,8 +193,8 @@ PerformPortalFetch(char *name,
 	 */
 	PortalExecutorHeapMemory = (MemoryContext) PortalGetHeapMemory(portal);
 
-	ExecutorRun(queryDesc, PortalGetState(portal), feature, 
-				(Node *)NULL, (Node *)&limcount);
+	ExecutorRun(queryDesc, PortalGetState(portal), feature,
+				(Node *) NULL, (Node *) &limcount);
 
 	if (dest == None)			/* MOVE */
 		pfree(queryDesc);
@@ -211,7 +211,7 @@ PerformPortalFetch(char *name,
 	 * ----------------
 	 */
 	MemoryContextSwitchTo(
-				(MemoryContext) PortalGetHeapMemory(GetPortalByName(NULL)));
+			 (MemoryContext) PortalGetHeapMemory(GetPortalByName(NULL)));
 }
 
 /* --------------------------------
@@ -503,7 +503,7 @@ PerformAddAttribute(char *relationName,
 	heap_replace(rel, &reltup->t_self, reltup, NULL);
 
 	{
-		HeapTuple temptup;
+		HeapTuple	temptup;
 
 		if ((temptup = get_temp_rel_by_name(relationName)) != NULL)
 			((Form_pg_class) GETSTRUCT(temptup))->relnatts = maxatts;
@@ -519,7 +519,7 @@ PerformAddAttribute(char *relationName,
 }
 
 void
-LockTableCommand(LockStmt *lockstmt)
+LockTableCommand(LockStmt * lockstmt)
 {
 	Relation	rel;
 	int			aclresult;

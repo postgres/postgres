@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: command.h,v 1.12 1999/02/13 23:21:18 momjian Exp $
+ * $Id: command.h,v 1.13 1999/05/25 16:13:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,7 @@
 extern MemoryContext PortalExecutorHeapMemory;
 
 /*
- * PerformPortalFetch 
+ * PerformPortalFetch
  *		Performs the POSTQUEL function FETCH.  Fetches count (or all if 0)
  * tuples in portal with name in the forward direction iff goForward.
  *
@@ -30,7 +30,7 @@ extern void PerformPortalFetch(char *name, bool forward, int count,
 				   char *tag, CommandDest dest);
 
 /*
- * PerformPortalClose 
+ * PerformPortalClose
  *		Performs the POSTQUEL function CLOSE.
  */
 extern void PerformPortalClose(char *name, CommandDest dest);
@@ -38,12 +38,12 @@ extern void PerformPortalClose(char *name, CommandDest dest);
 extern void PortalCleanup(Portal portal);
 
 /*
- * PerformAddAttribute 
+ * PerformAddAttribute
  *		Performs the POSTQUEL function ADD.
  */
 extern void PerformAddAttribute(char *relationName, char *userName,
 					bool inh, ColumnDef *colDef);
 
-extern void LockTableCommand(LockStmt *lockstmt);
+extern void LockTableCommand(LockStmt * lockstmt);
 
 #endif	 /* COMMAND_H */

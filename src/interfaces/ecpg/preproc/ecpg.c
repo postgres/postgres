@@ -157,12 +157,13 @@ main(int argc, char *const argv[])
 				struct cursor *ptr;
 				struct _defines *defptr;
 				struct typedefs *typeptr;
-				
+
 				/* remove old cursor definitions if any are still there */
 				for (ptr = cur; ptr != NULL;)
 				{
 					struct cursor *this = ptr;
-					struct arguments *l1, *l2;
+					struct arguments *l1,
+							   *l2;
 
 					free(ptr->command);
 					free(ptr->connection);
@@ -191,7 +192,7 @@ main(int argc, char *const argv[])
 					defptr = defptr->next;
 					free(this);
 				}
-				
+
 				/* and old typedefs */
 				for (typeptr = types; typeptr != NULL;)
 				{
@@ -203,7 +204,7 @@ main(int argc, char *const argv[])
 					typeptr = typeptr->next;
 					free(this);
 				}
-				
+
 				/* initialize lex */
 				lex_init();
 

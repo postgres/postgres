@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.24 1999/02/13 23:19:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.25 1999/05/25 16:12:23 momjian Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -421,11 +421,11 @@ InitCatalogCache()
 			Assert(!PointerIsValid((Pointer) SysCache[cacheId]));
 
 			SysCache[cacheId] = InitSysCache(cacheinfo[cacheId].name,
-							 cacheinfo[cacheId].indname,
-							 cacheId,
-							 cacheinfo[cacheId].nkeys,
-							 cacheinfo[cacheId].key,
-							 cacheinfo[cacheId].iScanFunc);
+											 cacheinfo[cacheId].indname,
+											 cacheId,
+											 cacheinfo[cacheId].nkeys,
+											 cacheinfo[cacheId].key,
+										   cacheinfo[cacheId].iScanFunc);
 			if (!PointerIsValid((char *) SysCache[cacheId]))
 			{
 				elog(ERROR,
@@ -492,11 +492,11 @@ SearchSysCacheTuple(int cacheId,/* cache selection code */
 	if (!PointerIsValid(SysCache[cacheId]))
 	{
 		SysCache[cacheId] = InitSysCache(cacheinfo[cacheId].name,
-						 cacheinfo[cacheId].indname,
-						 cacheId,
-						 cacheinfo[cacheId].nkeys,
-						 cacheinfo[cacheId].key,
-						 cacheinfo[cacheId].iScanFunc);
+										 cacheinfo[cacheId].indname,
+										 cacheId,
+										 cacheinfo[cacheId].nkeys,
+										 cacheinfo[cacheId].key,
+										 cacheinfo[cacheId].iScanFunc);
 		if (!PointerIsValid(SysCache[cacheId]))
 			elog(ERROR,
 				 "InitCatalogCache: Can't init cache %s(%d)",

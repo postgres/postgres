@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.36 1999/02/21 01:41:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.37 1999/05/25 16:11:07 momjian Exp $
  *
  * NOTES
  *
@@ -680,7 +680,7 @@ struct ipcdummy
 	SLock		slocks[MAX_SPINS + 1];
 };
 
-#define	SLOCKMEMORYSIZE		sizeof(struct ipcdummy)
+#define SLOCKMEMORYSIZE		sizeof(struct ipcdummy)
 
 void
 CreateAndInitSLockMemory(IPCKey key)
@@ -747,4 +747,5 @@ IpcConfigTip(void)
 	fprintf(stderr, "shared memory or System V IPC semaphore configuration.\n");
 	fprintf(stderr, "See the FAQ for more detailed information\n");
 }
+
 #endif

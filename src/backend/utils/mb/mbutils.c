@@ -3,14 +3,14 @@
  * client encoding and server internal encoding.
  * (currently mule internal code (mic) is used)
  * Tatsuo Ishii
- * $Id: mbutils.c,v 1.5 1999/02/02 18:51:23 momjian Exp $ */
+ * $Id: mbutils.c,v 1.6 1999/05/25 16:12:43 momjian Exp $ */
 
 #include <stdio.h>
 #include <string.h>
 
 #include "mb/pg_wchar.h"
 
-static int client_encoding = -1;
+static int	client_encoding = -1;
 static void (*client_to_mic) ();/* something to MIC */
 static void (*client_from_mic) ();		/* MIC to something */
 static void (*server_to_mic) ();/* something to MIC */
@@ -213,16 +213,14 @@ pg_mbcliplen(const unsigned char *mbstr, int len, int limit)
 	int			clen = 0;
 	int			l;
 
-	while (*mbstr &&  len > 0)
+	while (*mbstr && len > 0)
 	{
 		l = pg_mblen(mbstr);
-		if ((clen + l) > limit) {
+		if ((clen + l) > limit)
 			break;
-		}
 		clen += l;
-		if (clen == limit) {
+		if (clen == limit)
 			break;
-		}
 		len -= l;
 		mbstr += l;
 	}

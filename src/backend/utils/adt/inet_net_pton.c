@@ -16,7 +16,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$Id: inet_net_pton.c,v 1.7 1999/02/03 21:17:27 momjian Exp $";
+static const char rcsid[] = "$Id: inet_net_pton.c,v 1.8 1999/05/25 16:12:05 momjian Exp $";
 
 #endif
 
@@ -58,8 +58,8 @@ static int	inet_cidr_pton_ipv4(const char *src, u_char *dst, size_t size);
  *	Paul Vixie (ISC), June 1996
  *
  * Changes:
- *  I added the inet_cidr_pton function (also from Paul) and changed
- *  the names to reflect their current use.
+ *	I added the inet_cidr_pton function (also from Paul) and changed
+ *	the names to reflect their current use.
  *
  */
 int
@@ -67,10 +67,10 @@ inet_net_pton(int af, const char *src, void *dst, size_t size)
 {
 	switch (af)
 	{
-		case AF_INET:
+			case AF_INET:
 			return size == -1 ?
-					inet_net_pton_ipv4(src, dst) :
-					inet_cidr_pton_ipv4(src, dst, size);
+			inet_net_pton_ipv4(src, dst) :
+			inet_cidr_pton_ipv4(src, dst, size);
 		default:
 			errno = EAFNOSUPPORT;
 			return (-1);
@@ -108,14 +108,16 @@ inet_cidr_pton_ipv4(const char *src, u_char *dst, size_t size)
 
 	ch = *src++;
 	if (ch == '0' && (src[0] == 'x' || src[0] == 'X')
-	    && isascii(src[1]) && isxdigit(src[1])) {
+		&& isascii(src[1]) && isxdigit(src[1]))
+	{
 		/* Hexadecimal: Eat nybble string. */
 		if (size <= 0)
 			goto emsgsize;
 		dirty = 0;
 		tmp = 0;
-		src++;	/* skip x or X. */
-		while ((ch = *src++) != '\0' && isascii(ch) && isxdigit(ch)) {
+		src++;					/* skip x or X. */
+		while ((ch = *src++) != '\0' && isascii(ch) && isxdigit(ch))
+		{
 			if (isupper(ch))
 				ch = tolower(ch);
 			n = strchr(xdigits, ch) - xdigits;
@@ -124,14 +126,16 @@ inet_cidr_pton_ipv4(const char *src, u_char *dst, size_t size)
 				tmp = n;
 			else
 				tmp = (tmp << 4) | n;
-			if (++dirty == 2) {
+			if (++dirty == 2)
+			{
 				if (size-- <= 0)
 					goto emsgsize;
 				*dst++ = (u_char) tmp;
 				dirty = 0;
 			}
 		}
-		if (dirty) {  /* Odd trailing nybble? */
+		if (dirty)
+		{						/* Odd trailing nybble? */
 			if (size-- <= 0)
 				goto emsgsize;
 			*dst++ = (u_char) (tmp << 4);
@@ -234,27 +238,30 @@ emsgsize:
 /*
  * int
  * inet_net_pton(af, src, dst, *bits)
- *  convert network address from presentation to network format.
- *  accepts inet_pton()'s input for this "af" plus trailing "/CIDR".
- *  "dst" is assumed large enough for its "af".  "bits" is set to the
- *  /CIDR prefix length, which can have defaults (like /32 for IPv4).
+ *	convert network address from presentation to network format.
+ *	accepts inet_pton()'s input for this "af" plus trailing "/CIDR".
+ *	"dst" is assumed large enough for its "af".  "bits" is set to the
+ *	/CIDR prefix length, which can have defaults (like /32 for IPv4).
  * return:
- *  -1 if an error occurred (inspect errno; ENOENT means bad format).
- *  0 if successful conversion occurred.
- * note: 
- *  192.5.5.1/28 has a nonzero host part, which means it isn't a network
- *  as called for by inet_cidr_pton() but it can be a host address with
- *  an included netmask.
+ *	-1 if an error occurred (inspect errno; ENOENT means bad format).
+ *	0 if successful conversion occurred.
+ * note:
+ *	192.5.5.1/28 has a nonzero host part, which means it isn't a network
+ *	as called for by inet_cidr_pton() but it can be a host address with
+ *	an included netmask.
  * author:
- *  Paul Vixie (ISC), October 1998
+ *	Paul Vixie (ISC), October 1998
  */
 static int
 inet_net_pton_ipv4(const char *src, u_char *dst)
 {
 	static const char digits[] = "0123456789";
 	const u_char *odst = dst;
-	int n, ch, tmp, bits;
-	size_t size = 4;
+	int			n,
+				ch,
+				tmp,
+				bits;
+	size_t		size = 4;
 
 	/* Get the mantissa. */
 	while (ch = *src++, (isascii(ch) && isdigit(ch)))
@@ -283,7 +290,7 @@ inet_net_pton_ipv4(const char *src, u_char *dst)
 	if (ch == '/' && isascii(src[0]) && isdigit(src[0]) && dst > odst)
 	{
 		/* CIDR width specifier.  Nothing can follow it. */
-		ch = *src++;	/* Skip over the /. */
+		ch = *src++;			/* Skip over the /. */
 		bits = 0;
 		do
 		{
@@ -325,11 +332,11 @@ inet_net_pton_ipv4(const char *src, u_char *dst)
 
 	return bits;
 
- enoent:
+enoent:
 	errno = ENOENT;
 	return (-1);
 
- emsgsize:
+emsgsize:
 	errno = EMSGSIZE;
 	return (-1);
 }

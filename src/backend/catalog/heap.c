@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.84 1999/05/22 04:12:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.85 1999/05/25 16:08:03 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -70,8 +70,8 @@
 #endif
 
 static void AddNewRelationTuple(Relation pg_class_desc,
-				   Relation new_rel_desc, Oid new_rel_oid, unsigned natts,
-				   char relkind, char *temp_relname);
+				  Relation new_rel_desc, Oid new_rel_oid, unsigned natts,
+					char relkind, char *temp_relname);
 static void AddToNoNameRelList(Relation r);
 static void DeleteAttributeTuples(Relation rel);
 static void DeleteRelationTuple(Relation rel);
@@ -185,7 +185,7 @@ heap_create(char *relname,
 	bool		nailme = false;
 	int			natts = tupDesc->natts;
 	static unsigned int uniqueId = 0;
-	
+
 	extern GlobalMemory CacheCxt;
 	MemoryContext oldcxt;
 
@@ -240,23 +240,21 @@ heap_create(char *relname,
 		nailme = true;
 	}
 	else
-	{
 		relid = newoid();
-	}
 
 	if (isnoname)
 	{
 		Assert(!relname);
 		relname = palloc(NAMEDATALEN);
 		snprintf(relname, NAMEDATALEN, "pg_noname.%d.%u",
-			(int) MyProcPid, uniqueId++);
+				 (int) MyProcPid, uniqueId++);
 	}
 
 	if (istemp)
 	{
 		/* replace relname of caller */
 		snprintf(relname, NAMEDATALEN, "pg_temp.%d.%u",
-			(int) MyProcPid, uniqueId++);
+				 (int) MyProcPid, uniqueId++);
 	}
 
 	/* ----------------
@@ -272,7 +270,7 @@ heap_create(char *relname,
 
 	/*
 	 * create a new tuple descriptor from the one passed in
-	*/
+	 */
 	rel->rd_att = CreateTupleDescCopyConstr(tupDesc);
 
 	/* ----------------
@@ -321,7 +319,7 @@ heap_create(char *relname,
 	 * ----------------
 	 */
 
-	rel->rd_nonameunlinked = TRUE; /* change once table is created */
+	rel->rd_nonameunlinked = TRUE;		/* change once table is created */
 	rel->rd_fd = (File) smgrcreate(DEFAULT_SMGR, rel);
 	rel->rd_nonameunlinked = FALSE;
 
@@ -479,8 +477,8 @@ RelnameFindRelid(char *relname)
 	if (!IsBootstrapProcessingMode())
 	{
 		tuple = SearchSysCacheTuple(RELNAME,
-								  PointerGetDatum(relname),
-								  0, 0, 0);
+									PointerGetDatum(relname),
+									0, 0, 0);
 		if (HeapTupleIsValid(tuple))
 			relid = tuple->t_data->t_oid;
 		else
@@ -488,10 +486,10 @@ RelnameFindRelid(char *relname)
 	}
 	else
 	{
-		Relation pg_class_desc;
+		Relation	pg_class_desc;
 		ScanKeyData key;
 		HeapScanDesc pg_class_scan;
-		
+
 		pg_class_desc = heap_openr(RelationRelationName);
 
 		/* ----------------
@@ -504,7 +502,7 @@ RelnameFindRelid(char *relname)
 							   (AttrNumber) Anum_pg_class_relname,
 							   (RegProcedure) F_NAMEEQ,
 							   (Datum) relname);
-	
+
 		/* ----------------
 		 *	begin the scan
 		 * ----------------
@@ -514,14 +512,14 @@ RelnameFindRelid(char *relname)
 									   SnapshotNow,
 									   1,
 									   &key);
-	
+
 		/* ----------------
 		 *	get a tuple.  if the tuple is NULL then it means we
 		 *	didn't find an existing relation.
 		 * ----------------
 		 */
 		tuple = heap_getnext(pg_class_scan, 0);
-	
+
 		if (HeapTupleIsValid(tuple))
 			relid = tuple->t_data->t_oid;
 		else
@@ -594,7 +592,7 @@ AddNewAttributeTuples(Oid new_rel_oid,
 							 (char *) *dpp);
 
 		heap_insert(rel, tup);
-			
+
 		if (hasindex)
 			CatalogIndexInsert(idescs, Num_pg_attr_indices, rel, tup);
 
@@ -643,11 +641,11 @@ AddNewAttributeTuples(Oid new_rel_oid,
  */
 static void
 AddNewRelationTuple(Relation pg_class_desc,
-				   Relation new_rel_desc,
-				   Oid new_rel_oid,
-				   unsigned natts,
-				   char relkind,
-				   char *temp_relname)
+					Relation new_rel_desc,
+					Oid new_rel_oid,
+					unsigned natts,
+					char relkind,
+					char *temp_relname)
 {
 	Form_pg_class new_rel_reltup;
 	HeapTuple	tup;
@@ -678,12 +676,12 @@ AddNewRelationTuple(Relation pg_class_desc,
 	 * the table has been proven to be small by VACUUM or CREATE INDEX.
 	 * (NOTE: if user does CREATE TABLE, then CREATE INDEX, then loads
 	 * the table, he still loses until he vacuums, because CREATE INDEX
-	 * will set reltuples to zero.  Can't win 'em all.  Maintaining the
+	 * will set reltuples to zero.	Can't win 'em all.	Maintaining the
 	 * stats on-the-fly would solve the problem, but the overhead of that
 	 * would likely cost more than it'd save.)
 	 * ----------------
 	 */
-	new_rel_reltup->relpages = 10; /* bogus estimates */
+	new_rel_reltup->relpages = 10;		/* bogus estimates */
 	new_rel_reltup->reltuples = 1000;
 
 	new_rel_reltup->relowner = GetUserId();
@@ -716,9 +714,10 @@ AddNewRelationTuple(Relation pg_class_desc,
 
 	if (temp_relname)
 		create_temp_relation(temp_relname, tup);
-	
+
 	if (!isBootstrap)
 	{
+
 		/*
 		 * First, open the catalog indices and insert index tuples for the
 		 * new relation.
@@ -730,7 +729,7 @@ AddNewRelationTuple(Relation pg_class_desc,
 		/* now restore processing mode */
 		SetProcessingMode(NormalProcessing);
 	}
-	
+
 	pfree(tup);
 }
 
@@ -788,8 +787,8 @@ heap_create_with_catalog(char *relname,
 	Relation	new_rel_desc;
 	Oid			new_rel_oid;
 	int			natts = tupdesc->natts;
-	char		*temp_relname = NULL;
-	
+	char	   *temp_relname = NULL;
+
 	/* ----------------
 	 *	sanity checks
 	 * ----------------
@@ -804,33 +803,34 @@ heap_create_with_catalog(char *relname,
 
 	/* temp tables can mask non-temp tables */
 	if ((!istemp && RelnameFindRelid(relname)) ||
-	   (istemp && get_temp_rel_by_name(relname) != NULL))
+		(istemp && get_temp_rel_by_name(relname) != NULL))
 		elog(ERROR, "Relation '%s' already exists", relname);
 
 	/* invalidate cache so non-temp table is masked by temp */
 	if (istemp)
 	{
-		Oid relid = RelnameFindRelid(relname);
+		Oid			relid = RelnameFindRelid(relname);
 
 		if (relid != InvalidOid)
 		{
+
 			/*
-			 *	This is heavy-handed, but appears necessary bjm 1999/02/01
-			 *	SystemCacheRelationFlushed(relid) is not enough either.
+			 * This is heavy-handed, but appears necessary bjm 1999/02/01
+			 * SystemCacheRelationFlushed(relid) is not enough either.
 			 */
 			RelationForgetRelation(relid);
 			ResetSystemCache();
-		}	
+		}
 	}
-	
+
 	/* save user relation name because heap_create changes it */
 	if (istemp)
 	{
-		temp_relname = pstrdup(relname); /* save original value */
+		temp_relname = pstrdup(relname);		/* save original value */
 		relname = palloc(NAMEDATALEN);
-		strcpy(relname, temp_relname); /* heap_create will change this */
+		strcpy(relname, temp_relname);	/* heap_create will change this */
 	}
-	
+
 	/* ----------------
 	 *	ok, relation does not already exist so now we
 	 *	create an uncataloged relation and pull its relation oid
@@ -838,7 +838,7 @@ heap_create_with_catalog(char *relname,
 	 *
 	 *	Note: The call to heap_create() does all the "real" work
 	 *	of creating the disk file for the relation.
-	 *  This changes relname for noname and temp tables.
+	 *	This changes relname for noname and temp tables.
 	 * ----------------
 	 */
 	new_rel_desc = heap_create(relname, tupdesc, false, istemp);
@@ -866,11 +866,11 @@ heap_create_with_catalog(char *relname,
 	pg_class_desc = heap_openr(RelationRelationName);
 
 	AddNewRelationTuple(pg_class_desc,
-					   new_rel_desc,
-					   new_rel_oid,
-					   natts,
-					   relkind,
-					   temp_relname);
+						new_rel_desc,
+						new_rel_oid,
+						natts,
+						relkind,
+						temp_relname);
 
 	StoreConstraints(new_rel_desc);
 
@@ -1320,7 +1320,7 @@ heap_destroy_with_catalog(char *relname)
 
 	if (istemp)
 		remove_temp_relation(rid);
-		
+
 	/* ----------------
 	 *	delete type tuple.	here we want to see the effects
 	 *	of the deletions we just did, so we use setheapoverride().
@@ -1334,7 +1334,7 @@ heap_destroy_with_catalog(char *relname)
 	 *	delete relation tuple
 	 * ----------------
 	 */
-	 /* must delete fake tuple in cache */
+	/* must delete fake tuple in cache */
 	DeleteRelationTuple(rel);
 
 	/*
@@ -1516,10 +1516,12 @@ StoreAttrDefault(Relation rel, AttrDefault *attrdef)
 	extern GlobalMemory CacheCxt;
 
 start:
-	/* Surround table name with double quotes to allow mixed-case and
+
+	/*
+	 * Surround table name with double quotes to allow mixed-case and
 	 * whitespaces in names. - BGA 1998-11-14
 	 */
-	snprintf(str, MAX_PARSE_BUFFER, 
+	snprintf(str, MAX_PARSE_BUFFER,
 			 "select %s%s from \"%.*s\"", attrdef->adsrc, cast,
 			 NAMEDATALEN, rel->rd_rel->relname.data);
 	setheapoverride(true);
@@ -1539,16 +1541,16 @@ start:
 	if (type != atp->atttypid)
 	{
 		if (IS_BINARY_COMPATIBLE(type, atp->atttypid))
-			; /* use without change */
+			;					/* use without change */
 		else if (can_coerce_type(1, &(type), &(atp->atttypid)))
-			expr = coerce_type(NULL, (Node *)expr, type, atp->atttypid,
-														 atp->atttypmod);
+			expr = coerce_type(NULL, (Node *) expr, type, atp->atttypid,
+							   atp->atttypmod);
 		else if (IsA(expr, Const))
 		{
 			if (*cast != 0)
 				elog(ERROR, "DEFAULT clause const type '%s' mismatched with column type '%s'",
 					 typeidTypeName(type), typeidTypeName(atp->atttypid));
-			snprintf(cast, 2*NAMEDATALEN, ":: %s", typeidTypeName(atp->atttypid));
+			snprintf(cast, 2 * NAMEDATALEN, ":: %s", typeidTypeName(atp->atttypid));
 			goto start;
 		}
 		else
@@ -1598,12 +1600,13 @@ StoreRelCheck(Relation rel, ConstrCheck *check)
 	char		nulls[4] = {' ', ' ', ' ', ' '};
 	extern GlobalMemory CacheCxt;
 
-	/* Check for table's existance. Surround table name with double-quotes
+	/*
+	 * Check for table's existance. Surround table name with double-quotes
 	 * to allow mixed-case and whitespace names. - thomas 1998-11-12
 	 */
-	snprintf(str, MAX_PARSE_BUFFER, 
-			"select 1 from \"%.*s\" where %s",
-			NAMEDATALEN, rel->rd_rel->relname.data, check->ccsrc);
+	snprintf(str, MAX_PARSE_BUFFER,
+			 "select 1 from \"%.*s\" where %s",
+			 NAMEDATALEN, rel->rd_rel->relname.data, check->ccsrc);
 	setheapoverride(true);
 	planTree_list = pg_parse_and_plan(str, NULL, 0,
 									  &queryTree_list, None, FALSE);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.36 1999/05/12 15:01:33 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.37 1999/05/25 16:09:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -283,7 +283,7 @@ _equalFunc(Func *a, Func *b)
  * RestrictInfo is a subclass of Node.
  */
 static bool
-_equalRestrictInfo(RestrictInfo *a, RestrictInfo *b)
+_equalRestrictInfo(RestrictInfo * a, RestrictInfo * b)
 {
 	Assert(IsA(a, RestrictInfo));
 	Assert(IsA(b, RestrictInfo));
@@ -307,7 +307,7 @@ _equalRestrictInfo(RestrictInfo *a, RestrictInfo *b)
  * RelOptInfo is a subclass of Node.
  */
 static bool
-_equalRelOptInfo(RelOptInfo *a, RelOptInfo *b)
+_equalRelOptInfo(RelOptInfo * a, RelOptInfo * b)
 {
 	Assert(IsA(a, RelOptInfo));
 	Assert(IsA(b, RelOptInfo));
@@ -392,7 +392,7 @@ _equalIndexPath(IndexPath *a, IndexPath *b)
 }
 
 static bool
-_equalNestPath(NestPath *a, NestPath *b)
+_equalNestPath(NestPath * a, NestPath * b)
 {
 	Assert(IsA_JoinPath(a));
 	Assert(IsA_JoinPath(b));
@@ -477,7 +477,7 @@ _equalMergeOrder(MergeOrder *a, MergeOrder *b)
 }
 
 static bool
-_equalHashInfo(HashInfo *a, HashInfo *b)
+_equalHashInfo(HashInfo * a, HashInfo * b)
 {
 	Assert(IsA(a, HashInfo));
 	Assert(IsA(b, HashInfo));
@@ -524,7 +524,7 @@ _equalSubPlan(SubPlan *a, SubPlan *b)
 }
 
 static bool
-_equalJoinInfo(JoinInfo *a, JoinInfo *b)
+_equalJoinInfo(JoinInfo * a, JoinInfo * b)
 {
 	Assert(IsA(a, JoinInfo));
 	Assert(IsA(b, JoinInfo));
@@ -574,10 +574,13 @@ _equalQuery(Query *a, Query *b)
 		return false;
 	if (a->resultRelation != b->resultRelation)
 		return false;
-	if (a->into && b->into) {
+	if (a->into && b->into)
+	{
 		if (strcmp(a->into, b->into) != 0)
 			return false;
-	} else {
+	}
+	else
+	{
 		if (a->into != b->into)
 			return false;
 	}
@@ -593,10 +596,13 @@ _equalQuery(Query *a, Query *b)
 		return false;
 	if (a->hasSubLinks != b->hasSubLinks)
 		return false;
-	if (a->uniqueFlag && b->uniqueFlag) {
+	if (a->uniqueFlag && b->uniqueFlag)
+	{
 		if (strcmp(a->uniqueFlag, b->uniqueFlag) != 0)
 			return false;
-	} else {
+	}
+	else
+	{
 		if (a->uniqueFlag != b->uniqueFlag)
 			return false;
 	}
@@ -623,10 +629,10 @@ _equalQuery(Query *a, Query *b)
 	if (!equal(a->limitCount, b->limitCount))
 		return false;
 
-	/* We do not check the internal-to-the-planner fields
-	 * base_rel_list and join_rel_list.  They might not be
-	 * set yet, and in any case they should be derivable
-	 * from the other fields.
+	/*
+	 * We do not check the internal-to-the-planner fields base_rel_list
+	 * and join_rel_list.  They might not be set yet, and in any case they
+	 * should be derivable from the other fields.
 	 */
 	return true;
 }
@@ -634,17 +640,23 @@ _equalQuery(Query *a, Query *b)
 static bool
 _equalRangeTblEntry(RangeTblEntry *a, RangeTblEntry *b)
 {
-	if (a->relname && b->relname) {
+	if (a->relname && b->relname)
+	{
 		if (strcmp(a->relname, b->relname) != 0)
 			return false;
-	} else {
+	}
+	else
+	{
 		if (a->relname != b->relname)
 			return false;
 	}
-	if (a->refname && b->refname) {
+	if (a->refname && b->refname)
+	{
 		if (strcmp(a->refname, b->refname) != 0)
 			return false;
-	} else {
+	}
+	else
+	{
 		if (a->refname != b->refname)
 			return false;
 	}

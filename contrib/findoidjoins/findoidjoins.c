@@ -9,7 +9,8 @@
 #include <libpq-fe.h>
 #include "pginterface.h"
 
-PGresult *attres, *relres;
+PGresult   *attres,
+		   *relres;
 
 int
 main(int argc, char **argv)
@@ -55,7 +56,7 @@ main(int argc, char **argv)
 		");
 	doquery("FETCH ALL IN c_relations");
 	relres = get_result();
-	
+
 	set_result(attres);
 	while (fetch(typname, relname, attname) != END_OF_TUPLES)
 	{
@@ -65,17 +66,17 @@ main(int argc, char **argv)
 		{
 			unset_result(relres);
 			if (strcmp(typname, "oid") == 0)
-				sprintf(query,"\
+				sprintf(query, "\
 					DECLARE c_matches BINARY CURSOR FOR \
-					SELECT	count(*)
-					FROM	%s t1, %s t2 \
-					WHERE	t1.%s = t2.oid", relname, relname2, attname);
+					SELECT	count(*) \
+						FROM % s t1, %s t2 \
+					WHERE t1.% s = t2.oid ", relname, relname2, attname);
 			else
-				sprintf(query,"\
+				sprintf(query, "\
 					DECLARE c_matches BINARY CURSOR FOR \
-					SELECT	count(*)
-					FROM	%s t1, %s t2 \
-					WHERE	RegprocToOid(t1.%s) = t2.oid", relname, relname2, attname);
+					SELECT	count(*) \
+								FROM % s t1, %s t2 \
+								WHERE RegprocToOid(t1.% s) = t2.oid ", relname, relname2, attname);
 
 			doquery(query);
 			doquery("FETCH ALL IN c_matches");
@@ -96,7 +97,7 @@ main(int argc, char **argv)
 	doquery("CLOSE c_attributes");
 	PQclear(attres);
 	unset_result(attres);
-	
+
 	doquery("COMMIT WORK");
 
 	disconnectdb();

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/rel.c,v 1.4 1999/02/13 23:19:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/rel.c,v 1.5 1999/05/25 16:12:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +29,7 @@
  */
 
 /*
- * RelationGetIndexStrategy 
+ * RelationGetIndexStrategy
  *		Returns index strategy for a relation.
  *
  * Note:
@@ -43,7 +43,7 @@ RelationGetIndexStrategy(Relation relation)
 }
 
 /*
- * RelationSetIndexSupport 
+ * RelationSetIndexSupport
  *		Sets index strategy and support info for a relation.
  *
  * Note:

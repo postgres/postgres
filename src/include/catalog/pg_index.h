@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_index.h,v 1.11 1999/02/13 23:21:10 momjian Exp $
+ * $Id: pg_index.h,v 1.12 1999/05/25 16:13:45 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -53,8 +53,8 @@ CATALOG(pg_index)
 	bool		indhaskeytype;	/* does key type != attribute type? */
 	bool		indisunique;	/* is this a unique index? */
 	bool		indisprimary;	/* is this index for primary key */
-	Oid			indreference;	/* oid of index of referenced relation 
-								 * (ie - this index for foreign key */
+	Oid			indreference;	/* oid of index of referenced relation (ie
+								 * - this index for foreign key */
 	text		indpred;		/* query plan for partial index predicate */
 } FormData_pg_index;
 

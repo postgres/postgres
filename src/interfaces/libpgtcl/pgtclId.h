@@ -9,7 +9,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pgtclId.h,v 1.10 1999/02/13 23:22:39 momjian Exp $
+ * $Id: pgtclId.h,v 1.11 1999/05/25 16:15:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,7 @@ extern void PgSetConnectionId(Tcl_Interp * interp, PGconn *conn);
 #endif
 
 extern PGconn *PgGetConnectionId(Tcl_Interp * interp, char *id,
-								 Pg_ConnectionId **);
+				  Pg_ConnectionId **);
 extern		PgDelConnectionId(DRIVER_DEL_PROTO);
 extern int	PgOutputProc(DRIVER_OUTPUT_PROTO);
 extern		PgInputProc(DRIVER_INPUT_PROTO);
@@ -56,6 +56,7 @@ extern void PgNotifyInterpDelete(ClientData clientData, Tcl_Interp * interp);
 
 #if HAVE_TCL_GETFILEPROC
 extern Tcl_File PgGetFileProc(ClientData cData, int direction);
+
 #endif
 
 extern Tcl_ChannelType Pg_ConnType;

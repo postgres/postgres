@@ -6,15 +6,15 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  *	 DESCRIPTION
- *		This code provides support for a tee node, which allows 
- * 		multiple parent in a megaplan.
+ *		This code provides support for a tee node, which allows
+ *		multiple parent in a megaplan.
  *
  *	 INTERFACE ROUTINES
  *		ExecTee
  *		ExecInitTee
  *		ExecEndTee
  *
- *  $Id: nodeTee.c,v 1.1 1999/03/23 16:50:49 momjian Exp $
+ *	$Id: nodeTee.c,v 1.2 1999/05/25 16:08:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,12 +46,12 @@
 bool
 ExecInitTee(Tee *node, EState *currentEstate, Plan *parent)
 {
-	TeeState	*teeState;
-	Plan			*outerPlan;
-	int				len;
+	TeeState   *teeState;
+	Plan	   *outerPlan;
+	int			len;
 	Relation	bufferRel;
 	TupleDesc	tupType;
-	EState		*estate;
+	EState	   *estate;
 
 	/*
 	 * it is possible that the Tee has already been initialized since it
@@ -167,7 +167,7 @@ ExecInitTee(Tee *node, EState *currentEstate, Plan *parent)
 		else
 			bufferRel = heap_open(
 					heap_create_with_catalog(teeState->tee_bufferRelname,
-										 tupType, RELKIND_RELATION, false));
+									  tupType, RELKIND_RELATION, false));
 	}
 	else
 	{
@@ -176,7 +176,7 @@ ExecInitTee(Tee *node, EState *currentEstate, Plan *parent)
 				newoid());
 		bufferRel = heap_open(
 					heap_create_with_catalog(teeState->tee_bufferRelname,
-										 tupType, RELKIND_RELATION, false));
+									  tupType, RELKIND_RELATION, false));
 	}
 
 	teeState->tee_bufferRel = bufferRel;
@@ -339,6 +339,7 @@ ExecTee(Tee *node, Plan *parent)
 		slot = ExecProcNode(childNode, (Plan *) node);
 		if (!TupIsNull(slot))
 		{
+
 			/*
 			 * heap_insert changes something...
 			 */

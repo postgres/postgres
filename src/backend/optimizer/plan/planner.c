@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.53 1999/05/17 17:03:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.54 1999/05/25 16:09:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,10 +56,10 @@
 #include "parser/parse_oper.h"
 
 static List *make_subplanTargetList(Query *parse, List *tlist,
-									AttrNumber **groupColIdx);
+					   AttrNumber **groupColIdx);
 static Plan *make_groupplan(List *group_tlist, bool tuplePerGroup,
-							List *groupClause, AttrNumber *grpColIdx,
-							Plan *subplan);
+			   List *groupClause, AttrNumber *grpColIdx,
+			   Plan *subplan);
 static bool need_sortplan(List *sortcls, Plan *plan);
 static Plan *make_sortplan(List *tlist, List *sortcls, Plan *plannode);
 
@@ -113,12 +113,12 @@ union_planner(Query *parse)
 
 	if (parse->unionClause)
 	{
-	  result_plan = (Plan *) plan_union_queries(parse);
-	  /* XXX do we need to do this? bjm 12/19/97 */	  	  
-	  tlist = preprocess_targetlist(tlist,
-					parse->commandType,
-					parse->resultRelation,
-					parse->rtable);
+		result_plan = (Plan *) plan_union_queries(parse);
+		/* XXX do we need to do this? bjm 12/19/97 */
+		tlist = preprocess_targetlist(tlist,
+									  parse->commandType,
+									  parse->resultRelation,
+									  parse->rtable);
 	}
 	else if ((rt_index = first_inherit_rt_entry(rangetable)) != -1)
 	{
@@ -127,78 +127,80 @@ union_planner(Query *parse)
 		result_plan = (Plan *) plan_inherit_queries(parse, rt_index);
 		/* XXX do we need to do this? bjm 12/19/97 */
 		tlist = preprocess_targetlist(tlist,
-					      parse->commandType,
-					      parse->resultRelation,
-					      parse->rtable);
+									  parse->commandType,
+									  parse->resultRelation,
+									  parse->rtable);
 	}
 	else
 	{
-	  List  **vpm = NULL;
-	  List	*sub_tlist;
+		List	  **vpm = NULL;
+		List	   *sub_tlist;
 
-	  /* Preprocess targetlist in case we are inside an INSERT/UPDATE. */
-	  tlist = preprocess_targetlist(tlist,
-									parse->commandType,
-									parse->resultRelation,
-									parse->rtable);
+		/* Preprocess targetlist in case we are inside an INSERT/UPDATE. */
+		tlist = preprocess_targetlist(tlist,
+									  parse->commandType,
+									  parse->resultRelation,
+									  parse->rtable);
 
-	  /* Add row-mark targets for UPDATE
-	   * (should this be done in preprocess_targetlist?)
-	   */
-	  if (parse->rowMark != NULL)
-	  {
-	  	List		   *l;
-
-		foreach (l, parse->rowMark)
+		/*
+		 * Add row-mark targets for UPDATE (should this be done in
+		 * preprocess_targetlist?)
+		 */
+		if (parse->rowMark != NULL)
 		{
-			RowMark		   *rowmark = (RowMark*) lfirst(l);
-			TargetEntry	   *ctid;
-			Resdom		   *resdom;
-			Var			   *var;
-			char		   *resname;
+			List	   *l;
 
-			if (!(rowmark->info & ROW_MARK_FOR_UPDATE))
-				continue;
+			foreach(l, parse->rowMark)
+			{
+				RowMark    *rowmark = (RowMark *) lfirst(l);
+				TargetEntry *ctid;
+				Resdom	   *resdom;
+				Var		   *var;
+				char	   *resname;
 
-			resname = (char*) palloc(32);
-			sprintf(resname, "ctid%u", rowmark->rti);
-			resdom = makeResdom(length(tlist) + 1,
-								TIDOID,
-								-1,
-								resname,
-								0,
-								0,
-								true);
+				if (!(rowmark->info & ROW_MARK_FOR_UPDATE))
+					continue;
 
-			var = makeVar(rowmark->rti, -1, TIDOID, 
-						  -1, 0, rowmark->rti, -1);
+				resname = (char *) palloc(32);
+				sprintf(resname, "ctid%u", rowmark->rti);
+				resdom = makeResdom(length(tlist) + 1,
+									TIDOID,
+									-1,
+									resname,
+									0,
+									0,
+									true);
 
-			ctid = makeTargetEntry(resdom, (Node *) var);
-			tlist = lappend(tlist, ctid);
+				var = makeVar(rowmark->rti, -1, TIDOID,
+							  -1, 0, rowmark->rti, -1);
+
+				ctid = makeTargetEntry(resdom, (Node *) var);
+				tlist = lappend(tlist, ctid);
+			}
 		}
-	  }
 
-	  /* Generate appropriate target list for subplan; may be different
-	   * from tlist if grouping or aggregation is needed.
-	   */
-	  sub_tlist = make_subplanTargetList(parse, tlist, &groupColIdx);
+		/*
+		 * Generate appropriate target list for subplan; may be different
+		 * from tlist if grouping or aggregation is needed.
+		 */
+		sub_tlist = make_subplanTargetList(parse, tlist, &groupColIdx);
 
-	  /* Generate the (sub) plan */
-	  if (parse->rtable != NULL)
-	  {
-	      vpm = (List **) palloc(length(parse->rtable) * sizeof(List *));
-	      memset(vpm, 0, length(parse->rtable) * sizeof(List *));
-	  }
-	  PlannerVarParam = lcons(vpm, PlannerVarParam);
-	  result_plan = query_planner(parse,
-								  parse->commandType,
-								  sub_tlist,
-								  (List *) parse->qual);
-	  PlannerVarParam = lnext(PlannerVarParam);
-	  if (vpm != NULL)
-	    pfree(vpm);		 
+		/* Generate the (sub) plan */
+		if (parse->rtable != NULL)
+		{
+			vpm = (List **) palloc(length(parse->rtable) * sizeof(List *));
+			memset(vpm, 0, length(parse->rtable) * sizeof(List *));
+		}
+		PlannerVarParam = lcons(vpm, PlannerVarParam);
+		result_plan = query_planner(parse,
+									parse->commandType,
+									sub_tlist,
+									(List *) parse->qual);
+		PlannerVarParam = lnext(PlannerVarParam);
+		if (vpm != NULL)
+			pfree(vpm);
 	}
-	
+
 	/*
 	 * If we have a GROUP BY clause, insert a group node (with the
 	 * appropriate sort node.)
@@ -216,7 +218,8 @@ union_planner(Query *parse)
 		 */
 		tuplePerGroup = parse->hasAggs;
 
-		/* If there are aggregates then the Group node should just return
+		/*
+		 * If there are aggregates then the Group node should just return
 		 * the same (simplified) tlist as the subplan, which we indicate
 		 * to make_groupplan by passing NIL.  If there are no aggregates
 		 * then the Group node had better compute the final tlist.
@@ -235,7 +238,7 @@ union_planner(Query *parse)
 	 */
 	if (parse->havingQual)
 	{
-		List  **vpm = NULL;
+		List	  **vpm = NULL;
 
 		if (parse->rtable != NULL)
 		{
@@ -249,15 +252,20 @@ union_planner(Query *parse)
 
 		if (parse->hasSubLinks)
 		{
-			/* There is a subselect in the havingQual, so we have to process it
-			 * using the same function as for a subselect in 'where'
+
+			/*
+			 * There is a subselect in the havingQual, so we have to
+			 * process it using the same function as for a subselect in
+			 * 'where'
 			 */
 			parse->havingQual =
 				(Node *) SS_process_sublinks(parse->havingQual);
-			/* Check for ungrouped variables passed to subplans.
-			 * (Probably this should be done by the parser, but right now
-			 * the parser is not smart enough to tell which level the vars
-			 * belong to?)
+
+			/*
+			 * Check for ungrouped variables passed to subplans. (Probably
+			 * this should be done by the parser, but right now the parser
+			 * is not smart enough to tell which level the vars belong
+			 * to?)
 			 */
 			check_having_for_ungrouped_vars(parse->havingQual,
 											parse->groupClause,
@@ -269,7 +277,7 @@ union_planner(Query *parse)
 
 		PlannerVarParam = lnext(PlannerVarParam);
 		if (vpm != NULL)
-			pfree(vpm);		
+			pfree(vpm);
 	}
 
 	/*
@@ -283,22 +291,22 @@ union_planner(Query *parse)
 		result_plan->qual = (List *) parse->havingQual;
 
 		/*
-		 * Update vars to refer to subplan result tuples,
-		 * find Aggrefs, make sure there is an Aggref in every HAVING clause.
+		 * Update vars to refer to subplan result tuples, find Aggrefs,
+		 * make sure there is an Aggref in every HAVING clause.
 		 */
-		if (! set_agg_tlist_references((Agg *) result_plan))
+		if (!set_agg_tlist_references((Agg *) result_plan))
 			elog(ERROR, "SELECT/HAVING requires aggregates to be valid");
 
 		/*
 		 * Check that we actually found some aggregates, else executor
 		 * will die unpleasantly.  (The rewrite module currently has bugs
-		 * that allow hasAggs to be incorrectly set 'true' sometimes.
-		 * It's not easy to recover here, since we've already made decisions
+		 * that allow hasAggs to be incorrectly set 'true' sometimes. It's
+		 * not easy to recover here, since we've already made decisions
 		 * assuming there will be an Agg node.)
 		 */
 		if (((Agg *) result_plan)->aggs == NIL)
 			elog(ERROR, "union_planner: query is marked hasAggs, but I don't see any");
-	}		  
+	}
 
 	/*
 	 * For now, before we hand back the plan, check to see if there is a
@@ -363,7 +371,7 @@ union_planner(Query *parse)
  *		SELECT a+1, ... GROUP BY a+1
  * Note, however, that other varnodes in the parent's targetlist (and
  * havingQual, if any) will still need to be updated to refer to outputs
- * of the subplan.  This routine is quite large enough already, so we do
+ * of the subplan.	This routine is quite large enough already, so we do
  * that later.
  *---------------
  */
@@ -384,13 +392,15 @@ make_subplanTargetList(Query *parse,
 
 	*groupColIdx = NULL;
 
-	/* If we're not grouping or aggregating, nothing to do here;
+	/*
+	 * If we're not grouping or aggregating, nothing to do here;
 	 * query_planner should receive the unmodified target list.
 	 */
 	if (!parse->hasAggs && !parse->groupClause && !parse->havingQual)
 		return tlist;
 
-	/* If grouping, make a working copy of groupClause list (which we use
+	/*
+	 * If grouping, make a working copy of groupClause list (which we use
 	 * just to verify that we found all the groupClause items in tlist).
 	 * Also allocate space to remember where the group columns are in the
 	 * subplan tlist.
@@ -403,14 +413,14 @@ make_subplanTargetList(Query *parse,
 		*groupColIdx = grpColIdx;
 	}
 
-	sub_tlist = new_unsorted_tlist(tlist);	/* make a modifiable copy */
+	sub_tlist = new_unsorted_tlist(tlist);		/* make a modifiable copy */
 
 	/*
 	 * Step 1: build grpColIdx by finding targetlist items that match
 	 * GroupBy entries.  If there are aggregates, remove non-GroupBy items
 	 * from sub_tlist, and reset its resnos accordingly.  When we leave an
-	 * expression in the subplan tlist, modify the parent tlist to copy the
-	 * value from the subplan output rather than re-evaluating it.
+	 * expression in the subplan tlist, modify the parent tlist to copy
+	 * the value from the subplan output rather than re-evaluating it.
 	 */
 	prnt_tlist = tlist;			/* scans parent tlist in sync with sl */
 	foreach(sl, sub_tlist)
@@ -434,23 +444,28 @@ make_subplanTargetList(Query *parse,
 				resdom->reskey = keyno;
 				resdom->reskeyop = get_opcode(grpcl->grpOpoid);
 				grpColIdx[keyno - 1] = next_resno;
-				/* Remove groupclause from our list of unmatched groupclauses.
-				 * NB: this depends on having used a shallow listCopy() above.
+
+				/*
+				 * Remove groupclause from our list of unmatched
+				 * groupclauses. NB: this depends on having used a shallow
+				 * listCopy() above.
 				 */
-				glc = lremove((void*) grpcl, glc);
+				glc = lremove((void *) grpcl, glc);
 				break;
 			}
 		}
 
-		if (! foundGroupClause)
+		if (!foundGroupClause)
 		{
+
 			/*
 			 * Non-GroupBy entry: remove it from subplan if there are
-			 * aggregates in query - it will be evaluated by Aggregate plan.
-			 * But do not remove simple-Var entries; we'd just have to add
-			 * them back anyway, and we risk confusing INSERT/UPDATE.
+			 * aggregates in query - it will be evaluated by Aggregate
+			 * plan. But do not remove simple-Var entries; we'd just have
+			 * to add them back anyway, and we risk confusing
+			 * INSERT/UPDATE.
 			 */
-			if (parse->hasAggs && ! IsA(te->expr, Var))
+			if (parse->hasAggs && !IsA(te->expr, Var))
 				keepInSubPlan = false;
 		}
 
@@ -458,15 +473,16 @@ make_subplanTargetList(Query *parse,
 		{
 			/* Assign new sequential resnos to subplan tlist items */
 			resdom->resno = next_resno++;
-			if (! IsA(parentte->expr, Var))
+			if (!IsA(parentte->expr, Var))
 			{
-				/* Since the item is being computed in the subplan,
-				 * we can just make a Var node to reference it in the
-				 * outer plan, rather than recomputing it there.
-				 * Note we use varnoold = -1 as a flag to let
-				 * replace_vars_with_subplan_refs know it needn't change
-				 * this Var node.
-				 * If it's only a Var anyway, we leave it alone for now;
+
+				/*
+				 * Since the item is being computed in the subplan, we can
+				 * just make a Var node to reference it in the outer plan,
+				 * rather than recomputing it there. Note we use varnoold
+				 * = -1 as a flag to let replace_vars_with_subplan_refs
+				 * know it needn't change this Var node. If it's only a
+				 * Var anyway, we leave it alone for now;
 				 * replace_vars_with_subplan_refs will fix it later.
 				 */
 				parentte->expr = (Node *) makeVar(1, resdom->resno,
@@ -477,9 +493,11 @@ make_subplanTargetList(Query *parse,
 		}
 		else
 		{
-			/* Remove this tlist item from the subplan, but remember the
-			 * vars it needs.  The outer tlist item probably needs changes,
-			 * but that will happen later.
+
+			/*
+			 * Remove this tlist item from the subplan, but remember the
+			 * vars it needs.  The outer tlist item probably needs
+			 * changes, but that will happen later.
 			 */
 			sub_tlist = lremove(te, sub_tlist);
 			extravars = nconc(extravars, pull_var_clause(te->expr));
@@ -493,8 +511,8 @@ make_subplanTargetList(Query *parse,
 		elog(ERROR, "make_subplanTargetList: GROUP BY attribute not found in target list");
 
 	/*
-	 * Add subplan targets for any variables needed by removed tlist entries
-	 * that aren't otherwise mentioned in the subplan target list.
+	 * Add subplan targets for any variables needed by removed tlist
+	 * entries that aren't otherwise mentioned in the subplan target list.
 	 * We'll also need targets for any variables seen only in HAVING.
 	 */
 	extravars = nconc(extravars, pull_var_clause(parse->havingQual));
@@ -505,9 +523,11 @@ make_subplanTargetList(Query *parse,
 
 		if (tlist_member(v, sub_tlist) == NULL)
 		{
-			/* Make sure sub_tlist element is a fresh object not shared with
-			 * any other structure; not sure if anything will break if it is
-			 * shared, but better to be safe...
+
+			/*
+			 * Make sure sub_tlist element is a fresh object not shared
+			 * with any other structure; not sure if anything will break
+			 * if it is shared, but better to be safe...
 			 */
 			sub_tlist = lappend(sub_tlist,
 								create_tl_element((Var *) copyObject(v),
@@ -535,9 +555,9 @@ make_groupplan(List *group_tlist,
 	/*
 	 * Make the targetlist for the Sort node; it always just references
 	 * each of the corresponding target items of the subplan.  We need to
-	 * ensure that simple Vars in the subplan's target list are recognizable
-	 * by replace_vars_with_subplan_refs when it's applied to the Sort/Group
-	 * target list, so copy up their varnoold/varoattno.
+	 * ensure that simple Vars in the subplan's target list are
+	 * recognizable by replace_vars_with_subplan_refs when it's applied to
+	 * the Sort/Group target list, so copy up their varnoold/varoattno.
 	 */
 	sort_tlist = NIL;
 	foreach(sl, subplan->targetlist)
@@ -548,7 +568,8 @@ make_groupplan(List *group_tlist,
 
 		if (IsA(te->expr, Var))
 		{
-			Var	   *subvar = (Var *) te->expr;
+			Var		   *subvar = (Var *) te->expr;
+
 			newvar = makeVar(1, resdom->resno,
 							 resdom->restype, resdom->restypmod,
 							 0, subvar->varnoold, subvar->varoattno);
@@ -561,8 +582,8 @@ make_groupplan(List *group_tlist,
 		}
 
 		sort_tlist = lappend(sort_tlist,
-							 makeTargetEntry((Resdom *) copyObject(resdom),
-											 (Node *) newvar));
+						   makeTargetEntry((Resdom *) copyObject(resdom),
+										   (Node *) newvar));
 	}
 
 	/*
@@ -575,20 +596,19 @@ make_groupplan(List *group_tlist,
 	sortplan->plan.cost = subplan->cost;		/* XXX assume no cost */
 
 	/*
-	 * If the caller gave us a target list, use it after fixing the variables.
-	 * If not, we need the same sort of "repeater" tlist as for the Sort node.
+	 * If the caller gave us a target list, use it after fixing the
+	 * variables. If not, we need the same sort of "repeater" tlist as for
+	 * the Sort node.
 	 */
 	if (group_tlist)
 	{
-		group_tlist = copyObject(group_tlist); /* necessary?? */
+		group_tlist = copyObject(group_tlist);	/* necessary?? */
 		replace_tlist_with_subplan_refs(group_tlist,
 										(Index) 0,
 										subplan->targetlist);
 	}
 	else
-	{
 		group_tlist = copyObject(sort_tlist);
-	}
 
 	/*
 	 * Make the Group node
@@ -686,7 +706,7 @@ pg_checkretval(Oid rettype, List *queryTreeList)
 	int			i;
 
 	/* find the final query */
-	parse = (Query *) nth(length(queryTreeList)-1, queryTreeList);
+	parse = (Query *) nth(length(queryTreeList) - 1, queryTreeList);
 
 	/*
 	 * test 1:	if the last query is a utility invocation, then there had
@@ -787,7 +807,7 @@ pg_checkretval(Oid rettype, List *queryTreeList)
 		tlist = lnext(tlist);
 		tletype = exprType(thenode);
 
-#ifdef NOT_USED						/* fix me */
+#ifdef NOT_USED					/* fix me */
 		/* this is tedious */
 		if (IsA(thenode, Var))
 			tletype = (Oid) ((Var *) thenode)->vartype;
@@ -830,11 +850,12 @@ pg_checkretval(Oid rettype, List *queryTreeList)
 static TargetEntry *
 get_matching_tle(Plan *plan, Resdom *resdom)
 {
-	List		*i;
-	TargetEntry	*tle;
+	List	   *i;
+	TargetEntry *tle;
 
-	foreach (i, plan->targetlist) {
-		tle = (TargetEntry *)lfirst(i);
+	foreach(i, plan->targetlist)
+	{
+		tle = (TargetEntry *) lfirst(i);
 		if (tle->resdom->resno == resdom->resno)
 			return tle;
 	}
@@ -853,50 +874,45 @@ static bool
 need_sortplan(List *sortcls, Plan *plan)
 {
 	Relation	indexRel;
-	IndexScan	*indexScan;
-	Oid		indexId;
-	List		*i;
+	IndexScan  *indexScan;
+	Oid			indexId;
+	List	   *i;
 	HeapTuple	htup;
-	Form_pg_index	index_tup;
-	int		key_no = 0;
+	Form_pg_index index_tup;
+	int			key_no = 0;
 
 	/* ----------
 	 * Must be an IndexScan
 	 * ----------
 	 */
-	if (nodeTag(plan) != T_IndexScan) {
+	if (nodeTag(plan) != T_IndexScan)
 		return TRUE;
-	}
 
-	indexScan = (IndexScan *)plan;
+	indexScan = (IndexScan *) plan;
 
 	/* ----------
 	 * Should not have left- or righttree
 	 * ----------
 	 */
-	if (plan->lefttree != NULL) {
+	if (plan->lefttree != NULL)
 		return TRUE;
-	}
-	if (plan->righttree != NULL) {
+	if (plan->righttree != NULL)
 		return TRUE;
-	}
 
 	/* ----------
 	 * Must be a single index scan
 	 * ----------
 	 */
-	if (length(indexScan->indxid) != 1) {
+	if (length(indexScan->indxid) != 1)
 		return TRUE;
-	}
 
 	/* ----------
 	 * Indices can only have up to 8 attributes. So an ORDER BY using
 	 * more that 8 attributes could never be satisfied by an index.
 	 * ----------
 	 */
-	if (length(sortcls) > 8) {
+	if (length(sortcls) > 8)
 		return TRUE;
-	}
 
 	/* ----------
 	 * The choosen Index must be a btree
@@ -905,7 +921,8 @@ need_sortplan(List *sortcls, Plan *plan)
 	indexId = lfirsti(indexScan->indxid);
 
 	indexRel = index_open(indexId);
-	if (strcmp(nameout(&(indexRel->rd_am->amname)), "btree") != 0) {
+	if (strcmp(nameout(&(indexRel->rd_am->amname)), "btree") != 0)
+	{
 		heap_close(indexRel);
 		return TRUE;
 	}
@@ -916,34 +933,36 @@ need_sortplan(List *sortcls, Plan *plan)
 	 * ----------
 	 */
 	htup = SearchSysCacheTuple(INDEXRELID,
-			ObjectIdGetDatum(indexId), 0, 0, 0);
-	if (!HeapTupleIsValid(htup)) {
+							   ObjectIdGetDatum(indexId), 0, 0, 0);
+	if (!HeapTupleIsValid(htup))
 		elog(ERROR, "cache lookup for index %u failed", indexId);
-	}
 	index_tup = (Form_pg_index) GETSTRUCT(htup);
 
 	/* ----------
 	 * Check if all the sort clauses match the attributes in the index
 	 * ----------
 	 */
-	foreach (i, sortcls) {
-		SortClause	*sortcl;
-		Resdom		*resdom;
-		TargetEntry	*tle;
-		Var		*var;
+	foreach(i, sortcls)
+	{
+		SortClause *sortcl;
+		Resdom	   *resdom;
+		TargetEntry *tle;
+		Var		   *var;
 
 		sortcl = (SortClause *) lfirst(i);
 
 		resdom = sortcl->resdom;
 		tle = get_matching_tle(plan, resdom);
-		if (tle == NULL) {
+		if (tle == NULL)
+		{
 			/* ----------
 			 * Could this happen?
 			 * ----------
 			 */
 			return TRUE;
 		}
-		if (nodeTag(tle->expr) != T_Var) {
+		if (nodeTag(tle->expr) != T_Var)
+		{
 			/* ----------
 			 * The target list expression isn't a var, so it
 			 * cannot be the indexed attribute
@@ -951,9 +970,10 @@ need_sortplan(List *sortcls, Plan *plan)
 			 */
 			return TRUE;
 		}
-		var = (Var *)(tle->expr);
+		var = (Var *) (tle->expr);
 
-		if (var->varno != indexScan->scan.scanrelid) {
+		if (var->varno != indexScan->scan.scanrelid)
+		{
 			/* ----------
 			 * This Var isn't from the scan relation. So it isn't
 			 * that of the index
@@ -962,7 +982,8 @@ need_sortplan(List *sortcls, Plan *plan)
 			return TRUE;
 		}
 
-		if (var->varattno != index_tup->indkey[key_no]) {
+		if (var->varattno != index_tup->indkey[key_no])
+		{
 			/* ----------
 			 * It isn't the indexed attribute.
 			 * ----------
@@ -970,7 +991,8 @@ need_sortplan(List *sortcls, Plan *plan)
 			return TRUE;
 		}
 
-		if (oprid(oper("<", resdom->restype, resdom->restype, FALSE)) != sortcl->opoid) {
+		if (oprid(oper("<", resdom->restype, resdom->restype, FALSE)) != sortcl->opoid)
+		{
 			/* ----------
 			 * Sort order isn't in ascending order.
 			 * ----------
@@ -987,4 +1009,3 @@ need_sortplan(List *sortcls, Plan *plan)
 	 */
 	return FALSE;
 }
-

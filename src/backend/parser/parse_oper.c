@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.24 1999/05/10 00:45:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.25 1999/05/25 16:10:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,8 +27,8 @@
 #include "storage/bufmgr.h"
 #include "utils/syscache.h"
 
-static Oid * oper_select_candidate(int nargs, Oid *input_typeids,
-							CandidateList candidates);
+static Oid *oper_select_candidate(int nargs, Oid *input_typeids,
+					  CandidateList candidates);
 static int binary_oper_get_candidates(char *opname,
 						   Oid leftTypeId,
 						   Oid rightTypeId,
@@ -227,9 +227,7 @@ oper_select_candidate(int nargs,
 		}
 		/* otherwise, don't bother keeping this one... */
 		else
-		{
 			last_candidate->next = NULL;
-		}
 	}
 
 	if (ncandidates <= 1)
@@ -281,18 +279,14 @@ oper_select_candidate(int nargs,
 			ncandidates++;
 		}
 		else
-		{
 			last_candidate->next = NULL;
-		}
 	}
 
 	if (ncandidates <= 1)
 	{
 		if (!can_coerce_type(1, &input_typeids[0], &candidates->args[0])
-		 || ((nargs > 1) && !can_coerce_type(1, &input_typeids[1], &candidates->args[1])))
-		{
+			|| ((nargs > 1) && !can_coerce_type(1, &input_typeids[1], &candidates->args[1])))
 			ncandidates = 0;
-		}
 		return (ncandidates == 1) ? candidates->args : NULL;
 	}
 
@@ -349,9 +343,7 @@ oper_select_candidate(int nargs,
 					slot_type = current_type;
 				}
 				else if (current_category != slot_category)
-				{
 					return NULL;
-				}
 				else if (current_type != slot_type)
 				{
 					if (IsPreferredType(slot_category, current_type))
@@ -366,9 +358,7 @@ oper_select_candidate(int nargs,
 			}
 
 			if (slot_type != InvalidOid)
-			{
 				input_typeids[i] = slot_type;
-			}
 		}
 		else
 		{
@@ -656,9 +646,7 @@ right_oper(char *op, Oid arg)
 										  CharGetDatum('r'));
 			}
 			else
-			{
 				tup = NULL;
-			}
 
 			if (!HeapTupleIsValid(tup))
 			{
@@ -717,9 +705,7 @@ left_oper(char *op, Oid arg)
 										  CharGetDatum('l'));
 			}
 			else
-			{
 				tup = NULL;
-			}
 
 			if (!HeapTupleIsValid(tup))
 			{

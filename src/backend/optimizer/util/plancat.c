@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.29 1999/05/10 00:45:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.30 1999/05/25 16:09:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -461,6 +461,7 @@ VersionGetParents(Oid verrelid)
 	heap_close(relation);
 	return list;
 }
+
 #endif
 
 
@@ -545,6 +546,7 @@ IndexSelectivity(Oid indexrelid,
 	select = 1.0;
 	for (n = 0; n < nIndexKeys; ++n)
 	{
+
 		/*
 		 * Find the AM class for this key.
 		 *
@@ -579,7 +581,7 @@ IndexSelectivity(Oid indexrelid,
 
 		amopTuple = SearchSysCacheTuple(AMOPOPID,
 										ObjectIdGetDatum(indclass),
-								  		ObjectIdGetDatum(operatorObjectIds[n]),
+								  ObjectIdGetDatum(operatorObjectIds[n]),
 										ObjectIdGetDatum(relam),
 										0);
 		if (!HeapTupleIsValid(amopTuple))

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.35 1999/05/03 00:38:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.36 1999/05/25 16:09:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -154,7 +154,7 @@ query_planner(Query *root,
 					else
 						return (Plan *) scan;
 				}
- 				break;
+				break;
 			default:
 				return (Plan *) NULL;
 		}
@@ -195,9 +195,9 @@ query_planner(Query *root,
 	 * tree.  -- Wei
 	 *
 	 * Note: formerly there was a test here to skip the flatten call if we
-	 * expected union_planner to insert a Group or Agg node above our result.
-	 * However, now union_planner tells us exactly what it wants returned,
-	 * and we just do it.  Much cleaner.
+	 * expected union_planner to insert a Group or Agg node above our
+	 * result. However, now union_planner tells us exactly what it wants
+	 * returned, and we just do it.  Much cleaner.
 	 */
 	else
 	{
@@ -207,6 +207,7 @@ query_planner(Query *root,
 	}
 
 #ifdef NOT_USED
+
 	/*
 	 * Destructively modify the query plan's targetlist to add fjoin lists
 	 * to flatten functions that return sets of base types
@@ -251,7 +252,7 @@ subplanner(Query *root,
 
 	final_rel = make_one_rel(root, root->base_rel_list);
 
-#ifdef NOT_USED						/* fix xfunc */
+#ifdef NOT_USED					/* fix xfunc */
 
 	/*
 	 * Perform Predicate Migration on each path, to optimize and correctly

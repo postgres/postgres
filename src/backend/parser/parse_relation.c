@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.21 1999/05/22 04:12:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.22 1999/05/25 16:10:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -446,8 +446,8 @@ checkTargetTypes(ParseState *pstate, char *target_colname,
 		if (can_coerce_type(1, &attrtype_id, &attrtype_target))
 		{
 			Node	   *expr = coerce_type(pstate, expr, attrtype_id,
-											attrtype_target,
-			get_atttypmod(pstate->p_target_relation->rd_id, resdomno_target));
+										   attrtype_target,
+										   get_atttypmod(pstate->p_target_relation->rd_id, resdomno_target));
 
 			elog(ERROR, "Type %s(%d) can be coerced to match target column %s(%d)",
 				 colname, get_atttypmod(rte->relid, resdomno_id),

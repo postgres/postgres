@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hsearch.h,v 1.11 1999/02/22 06:16:46 tgl Exp $
+ * $Id: hsearch.h,v 1.12 1999/05/25 16:14:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,7 @@
  * Constants
  *
  * A hash table has a top-level "directory", each of whose entries points
- * to a "segment" of ssize bucket headers.  The maximum number of hash
+ * to a "segment" of ssize bucket headers.	The maximum number of hash
  * buckets is thus dsize * ssize (but dsize may be expansible).  Of course,
  * the number of records in the table can be larger, but we don't want a
  * whole lot of records per bucket or performance goes down.
@@ -27,11 +27,11 @@
  * expanded because it must stay at a fixed address.
  */
 #define DEF_SEGSIZE			   256
-#define DEF_SEGSIZE_SHIFT	   8			/* log2(SEGSIZE)  */
+#define DEF_SEGSIZE_SHIFT	   8/* log2(SEGSIZE)  */
 #define DEF_DIRSIZE			   256
-#define DEF_FFACTOR			   1			/* default fill factor */
+#define DEF_FFACTOR			   1/* default fill factor */
 
-#define PRIME1				   37			/* for the hash function */
+#define PRIME1				   37		/* for the hash function */
 #define PRIME2				   1048583
 
 
@@ -64,7 +64,8 @@ typedef struct hashhdr
 	long		nsegs;			/* Number of allocated segments */
 	long		keysize;		/* hash key length in bytes */
 	long		datasize;		/* elem data length in bytes */
-	long		max_dsize;		/* 'dsize' limit if directory is fixed size */
+	long		max_dsize;		/* 'dsize' limit if directory is fixed
+								 * size */
 	BUCKET_INDEX freeBucketIndex;
 	/* index of first free bucket */
 #ifdef HASH_STATISTICS

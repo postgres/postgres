@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.40 1999/02/13 23:15:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.41 1999/05/25 16:08:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,7 +39,7 @@ static List *MergeAttributes(List *schema, List *supers, List **supconstr);
 static void StoreCatalogInheritance(Oid relationId, List *supers);
 
 /* ----------------------------------------------------------------
- *		DefineRelation 
+ *		DefineRelation
  *				Creates a new relation.
  * ----------------------------------------------------------------
  */
@@ -90,10 +90,10 @@ DefineRelation(CreateStmt *stmt, char relkind)
 
 	if (constraints != NIL)
 	{
-		List				*entry;
-		int					nconstr = length(constraints),
-								ncheck = 0,
-								i;
+		List	   *entry;
+		int			nconstr = length(constraints),
+					ncheck = 0,
+					i;
 		ConstrCheck *check = (ConstrCheck *) palloc(nconstr * sizeof(ConstrCheck));
 
 		foreach(entry, constraints)
@@ -107,9 +107,9 @@ DefineRelation(CreateStmt *stmt, char relkind)
 					for (i = 0; i < ncheck; i++)
 					{
 						if (strcmp(check[i].ccname, cdef->name) == 0)
-							elog(ERROR, 
-								"DefineRelation: name (%s) of CHECK constraint duplicated", 
-								cdef->name);
+							elog(ERROR,
+								 "DefineRelation: name (%s) of CHECK constraint duplicated",
+								 cdef->name);
 					}
 					check[ncheck].ccname = cdef->name;
 				}
@@ -145,7 +145,7 @@ DefineRelation(CreateStmt *stmt, char relkind)
 }
 
 /*
- * RemoveRelation 
+ * RemoveRelation
  *		Deletes a new relation.
  *
  * Exceptions:
@@ -164,7 +164,7 @@ RemoveRelation(char *name)
 
 
 /*
- * MergeAttributes 
+ * MergeAttributes
  *		Returns new schema given initial schema and supers.
  *
  *
@@ -276,8 +276,8 @@ MergeAttributes(List *schema, List *supers, List **supconstr)
 			 */
 			attributeName = (attribute->attname).data;
 			tuple = SearchSysCacheTuple(TYPOID,
-									ObjectIdGetDatum(attribute->atttypid),
-									0, 0, 0);
+								   ObjectIdGetDatum(attribute->atttypid),
+										0, 0, 0);
 			Assert(HeapTupleIsValid(tuple));
 			attributeType = (((Form_pg_type) GETSTRUCT(tuple))->typname).data;
 
@@ -365,7 +365,7 @@ MergeAttributes(List *schema, List *supers, List **supconstr)
 }
 
 /*
- * StoreCatalogInheritance 
+ * StoreCatalogInheritance
  *		Updates the system catalogs with proper inheritance information.
  */
 static void
@@ -411,9 +411,9 @@ StoreCatalogInheritance(Oid relationId, List *supers)
 		 */
 		idList = lappendi(idList, tuple->t_data->t_oid);
 
-		datum[0] = ObjectIdGetDatum(relationId);			/* inhrel */
-		datum[1] = ObjectIdGetDatum(tuple->t_data->t_oid);	/* inhparent */
-		datum[2] = Int16GetDatum(seqNumber);				/* inhseqno */
+		datum[0] = ObjectIdGetDatum(relationId);		/* inhrel */
+		datum[1] = ObjectIdGetDatum(tuple->t_data->t_oid);		/* inhparent */
+		datum[2] = Int16GetDatum(seqNumber);	/* inhseqno */
 
 		nullarr[0] = ' ';
 		nullarr[1] = ' ';
@@ -467,8 +467,8 @@ StoreCatalogInheritance(Oid relationId, List *supers)
 				break;
 
 			lnext(current) = lconsi(((Form_pg_inherits)
-						GETSTRUCT(tuple))->inhparent,
-					   NIL);
+									 GETSTRUCT(tuple))->inhparent,
+									NIL);
 
 			current = lnext(current);
 		}

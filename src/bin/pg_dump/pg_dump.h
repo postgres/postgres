@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_dump.h,v 1.37 1998/12/13 23:41:32 thomas Exp $
+ * $Id: pg_dump.h,v 1.38 1999/05/25 16:13:09 momjian Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -211,7 +211,7 @@ extern IndInfo *getIndices(int *numIndices);
 extern void dumpTypes(FILE *fout, FuncInfo *finfo, int numFuncs,
 		  TypeInfo *tinfo, int numTypes);
 extern void dumpProcLangs(FILE *fout, FuncInfo *finfo, int numFuncs,
-		  TypeInfo *tinfo, int numTypes);
+			  TypeInfo *tinfo, int numTypes);
 extern void dumpFuncs(FILE *fout, FuncInfo *finfo, int numFuncs,
 		  TypeInfo *tinfo, int numTypes);
 extern void dumpAggs(FILE *fout, AggInfo *agginfo, int numAggregates,

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.18 1999/05/03 00:38:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.19 1999/05/25 16:10:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -102,10 +102,11 @@ contain_var_clause(Node *clause)
 	}
 	else if (IsA(clause, Expr))
 	{
+
 		/*
-		 * Recursively scan the arguments of an expression.
-		 * NOTE: this must come after is_subplan() case since
-		 * subplan is a kind of Expr node.
+		 * Recursively scan the arguments of an expression. NOTE: this
+		 * must come after is_subplan() case since subplan is a kind of
+		 * Expr node.
 		 */
 		foreach(temp, ((Expr *) clause)->args)
 		{
@@ -139,6 +140,7 @@ contain_var_clause(Node *clause)
 		foreach(temp, ((CaseExpr *) clause)->args)
 		{
 			CaseWhen   *when = (CaseWhen *) lfirst(temp);
+
 			if (contain_var_clause(when->expr))
 				return TRUE;
 			if (contain_var_clause(when->result))
@@ -188,10 +190,11 @@ pull_var_clause(Node *clause)
 	}
 	else if (IsA(clause, Expr))
 	{
+
 		/*
-		 * Recursively scan the arguments of an expression.
-		 * NOTE: this must come after is_subplan() case since
-		 * subplan is a kind of Expr node.
+		 * Recursively scan the arguments of an expression. NOTE: this
+		 * must come after is_subplan() case since subplan is a kind of
+		 * Expr node.
 		 */
 		foreach(temp, ((Expr *) clause)->args)
 			retval = nconc(retval, pull_var_clause(lfirst(temp)));
@@ -214,6 +217,7 @@ pull_var_clause(Node *clause)
 		foreach(temp, ((CaseExpr *) clause)->args)
 		{
 			CaseWhen   *when = (CaseWhen *) lfirst(temp);
+
 			retval = nconc(retval, pull_var_clause(when->expr));
 			retval = nconc(retval, pull_var_clause(when->result));
 		}

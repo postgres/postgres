@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.39 1999/05/01 16:09:45 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.40 1999/05/25 16:07:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -99,13 +99,13 @@ l1:
 		/* key on the page before trying to compare it */
 		if (!PageIsEmpty(page) && offset <= maxoff)
 		{
-			TupleDesc		itupdesc;
-			BTItem			cbti;
-			HeapTupleData	htup;
-			BTPageOpaque 	opaque;
-			Buffer			nbuf;
-			BlockNumber 	blkno;
-			bool			chtup = true;
+			TupleDesc	itupdesc;
+			BTItem		cbti;
+			HeapTupleData htup;
+			BTPageOpaque opaque;
+			Buffer		nbuf;
+			BlockNumber blkno;
+			bool		chtup = true;
 
 			itupdesc = RelationGetDescr(rel);
 			nbuf = InvalidBuffer;
@@ -122,15 +122,16 @@ l1:
 			 */
 			while (_bt_isequal(itupdesc, page, offset, natts, itup_scankey))
 			{					/* they're equal */
+
 				/*
-				 * Have to check is inserted heap tuple deleted one
-				 * (i.e. just moved to another place by vacuum)!
+				 * Have to check is inserted heap tuple deleted one (i.e.
+				 * just moved to another place by vacuum)!
 				 */
 				if (chtup)
 				{
 					htup.t_self = btitem->bti_itup.t_tid;
 					heap_fetch(heapRel, SnapshotDirty, &htup, &buffer);
-					if (htup.t_data	== NULL)	/* YES! */
+					if (htup.t_data == NULL)	/* YES! */
 						break;
 					/* Live tuple was inserted */
 					ReleaseBuffer(buffer);
@@ -139,11 +140,11 @@ l1:
 				cbti = (BTItem) PageGetItem(page, PageGetItemId(page, offset));
 				htup.t_self = cbti->bti_itup.t_tid;
 				heap_fetch(heapRel, SnapshotDirty, &htup, &buffer);
-				if (htup.t_data	!= NULL)	/* it is a duplicate */
+				if (htup.t_data != NULL)		/* it is a duplicate */
 				{
-					TransactionId xwait = 
-						(TransactionIdIsValid(SnapshotDirty->xmin)) ? 
-						SnapshotDirty->xmin : SnapshotDirty->xmax;
+					TransactionId xwait =
+					(TransactionIdIsValid(SnapshotDirty->xmin)) ?
+					SnapshotDirty->xmin : SnapshotDirty->xmax;
 
 					/*
 					 * If this tuple is being updated by other transaction
@@ -156,7 +157,7 @@ l1:
 							_bt_relbuf(rel, nbuf, BT_READ);
 						_bt_relbuf(rel, buf, BT_WRITE);
 						XactLockTableWait(xwait);
-						goto l1;	/* continue from the begin */
+						goto l1;/* continue from the begin */
 					}
 					elog(ERROR, "Cannot insert a duplicate key into a unique index");
 				}
@@ -571,10 +572,10 @@ _bt_insertonpg(Relation rel,
 		 * reasoning).
 		 */
 
-l_spl:;
+l_spl:	;
 		if (stack == (BTStack) NULL)
 		{
-			if (!is_root)	/* if this page was not root page */
+			if (!is_root)		/* if this page was not root page */
 			{
 				elog(DEBUG, "btree: concurrent ROOT page split");
 				stack = (BTStack) palloc(sizeof(BTStackData));
@@ -1144,8 +1145,8 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 	lpage = BufferGetPage(lbuf);
 	rpage = BufferGetPage(rbuf);
 
-	((BTPageOpaque) PageGetSpecialPointer(lpage))->btpo_parent = 
-	((BTPageOpaque) PageGetSpecialPointer(rpage))->btpo_parent = 
+	((BTPageOpaque) PageGetSpecialPointer(lpage))->btpo_parent =
+		((BTPageOpaque) PageGetSpecialPointer(rpage))->btpo_parent =
 		rootbknum;
 
 	/*

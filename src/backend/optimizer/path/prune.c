@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/prune.c,v 1.37 1999/02/18 00:49:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/prune.c,v 1.38 1999/05/25 16:09:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,7 @@
 #include "utils/elog.h"
 
 
-static List *merge_rel_with_same_relids(RelOptInfo *rel, Relids unjoined_relids);
+static List *merge_rel_with_same_relids(RelOptInfo * rel, Relids unjoined_relids);
 
 /*
  * merge_rels_with_same_relids
@@ -59,7 +59,7 @@ merge_rels_with_same_relids(List *rel_list)
  *
  */
 static List *
-merge_rel_with_same_relids(RelOptInfo *rel, Relids unjoined_relids)
+merge_rel_with_same_relids(RelOptInfo * rel, Relids unjoined_relids)
 {
 	List	   *i = NIL;
 	List	   *result = NIL;
@@ -69,9 +69,10 @@ merge_rel_with_same_relids(RelOptInfo *rel, Relids unjoined_relids)
 		RelOptInfo *unjoined_rel = (RelOptInfo *) lfirst(i);
 
 		if (same(rel->relids, unjoined_rel->relids))
+
 			/*
-			 *	This are on the same relations,
-			 *	so get the best of their pathlists.
+			 * This are on the same relations, so get the best of their
+			 * pathlists.
 			 */
 			rel->pathlist = add_pathlist(rel,
 										 rel->pathlist,
@@ -92,7 +93,7 @@ rels_set_cheapest(List *rel_list)
 {
 	List	   *x = NIL;
 	RelOptInfo *rel = (RelOptInfo *) NULL;
-	JoinPath	*cheapest;
+	JoinPath   *cheapest;
 
 	foreach(x, rel_list)
 	{

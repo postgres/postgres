@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.39 1999/02/22 19:55:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.40 1999/05/25 16:12:36 momjian Exp $
  *
  * NOTES
  *		InitPostgres() is the function called from PostgresMain
@@ -143,7 +143,7 @@ InitMyDatabaseInfo(char *name)
 
 
 /*
- * DoChdirAndInitDatabaseNameAndPath 
+ * DoChdirAndInitDatabaseNameAndPath
  *		Set current directory to the database directory for the database
  *		named <name>.
  *		Also set global variables DatabasePath and DatabaseName to those
@@ -415,7 +415,7 @@ InitStdio()
 }
 
 /* --------------------------------
- * InitPostgres 
+ * InitPostgres
  *		Initialize POSTGRES.
  *
  * Note:

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.22 1999/03/23 05:41:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.23 1999/05/25 16:11:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,7 +41,7 @@
 
 static char *CreateOperationTag(int operationType);
 static void ProcessQueryDesc(QueryDesc *queryDesc, Node *limoffset,
-												   Node *limcount);
+				 Node *limcount);
 
 
 /* ----------------------------------------------------------------
@@ -374,5 +374,5 @@ ProcessQuery(Query *parsetree,
 	}
 	else
 		ProcessQueryDesc(queryDesc, parsetree->limitOffset,
-									parsetree->limitCount);
+						 parsetree->limitCount);
 }

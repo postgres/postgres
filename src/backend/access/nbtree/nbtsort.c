@@ -5,7 +5,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Id: nbtsort.c,v 1.38 1999/05/09 00:53:19 tgl Exp $
+ *	  $Id: nbtsort.c,v 1.39 1999/05/25 16:07:34 momjian Exp $
  *
  * NOTES
  *
@@ -552,16 +552,16 @@ _bt_spoolinit(Relation index, int ntapes, bool isunique)
 	btspool->bts_tape = 0;
 	btspool->isunique = isunique;
 
-	btspool->bts_itape =(BTTapeBlock **) palloc(sizeof(BTTapeBlock *) * ntapes);
-	btspool->bts_otape =(BTTapeBlock **) palloc(sizeof(BTTapeBlock *) * ntapes);
+	btspool->bts_itape = (BTTapeBlock **) palloc(sizeof(BTTapeBlock *) * ntapes);
+	btspool->bts_otape = (BTTapeBlock **) palloc(sizeof(BTTapeBlock *) * ntapes);
 	if (btspool->bts_itape == (BTTapeBlock **) NULL ||
 		btspool->bts_otape == (BTTapeBlock **) NULL)
 		elog(ERROR, "_bt_spoolinit: out of memory");
 
 	for (i = 0; i < ntapes; ++i)
 	{
-		btspool->bts_itape[i] =	_bt_tapecreate();
-		btspool->bts_otape[i] =	_bt_tapecreate();
+		btspool->bts_itape[i] = _bt_tapecreate();
+		btspool->bts_otape[i] = _bt_tapecreate();
 	}
 
 	_bt_isortcmpinit(index, btspool);

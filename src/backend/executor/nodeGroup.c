@@ -13,7 +13,7 @@
  *	  columns. (ie. tuples from the same group are consecutive)
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeGroup.c,v 1.25 1999/02/13 23:15:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeGroup.c,v 1.26 1999/05/25 16:08:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -193,8 +193,8 @@ ExecGroupOneTuple(Group *node)
 			grpstate->grp_done = TRUE;
 			return NULL;
 		}
-		grpstate->grp_firstTuple = firsttuple = 
-						heap_copytuple(outerslot->val);
+		grpstate->grp_firstTuple = firsttuple =
+			heap_copytuple(outerslot->val);
 	}
 
 	/*

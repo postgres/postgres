@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.42 1999/03/28 20:31:56 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.43 1999/05/25 16:07:04 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -117,7 +117,7 @@ initscan(HeapScanDesc scan,
 		 *	relation is empty
 		 * ----------------
 		 */
-		scan->rs_ntup.t_data = scan->rs_ctup.t_data = 
+		scan->rs_ntup.t_data = scan->rs_ctup.t_data =
 		scan->rs_ptup.t_data = NULL;
 		scan->rs_nbuf = scan->rs_cbuf = scan->rs_pbuf = InvalidBuffer;
 	}
@@ -216,15 +216,15 @@ heapgettup(Relation relation,
 		   int nkeys,
 		   ScanKey key)
 {
-	ItemId			lpp;
-	Page			dp;
-	int				page;
-	int				pages;
-	int				lines;
-	OffsetNumber	lineoff;
-	int				linesleft;
-	ItemPointer		tid = (tuple->t_data == NULL) ? 
-							(ItemPointer) NULL : &(tuple->t_self);
+	ItemId		lpp;
+	Page		dp;
+	int			page;
+	int			pages;
+	int			lines;
+	OffsetNumber lineoff;
+	int			linesleft;
+	ItemPointer tid = (tuple->t_data == NULL) ?
+	(ItemPointer) NULL : &(tuple->t_self);
 
 	/* ----------------
 	 *	increment access statistics
@@ -290,8 +290,8 @@ heapgettup(Relation relation,
 			return;
 		}
 		*buffer = RelationGetBufferWithBuffer(relation,
-										   ItemPointerGetBlockNumber(tid),
-										   *buffer);
+										  ItemPointerGetBlockNumber(tid),
+											  *buffer);
 
 		if (!BufferIsValid(*buffer))
 			elog(ERROR, "heapgettup: failed ReadBuffer");
@@ -439,7 +439,8 @@ heapgettup(Relation relation,
 			}
 			else
 			{
-				++lpp;			/* move forward in this page's ItemId array */
+				++lpp;			/* move forward in this page's ItemId
+								 * array */
 				++lineoff;
 			}
 		}
@@ -816,6 +817,7 @@ heap_getnext(HeapScanDesc scandesc, int backw)
 		}
 		else
 		{						/* NONTUP */
+
 			/*
 			 * Don't release scan->rs_cbuf at this point, because
 			 * heapgettup doesn't increase PrivateRefCount if it is
@@ -897,6 +899,7 @@ heap_getnext(HeapScanDesc scandesc, int backw)
 		}
 		else
 		{						/* NONTUP */
+
 			/*
 			 * Don't release scan->rs_cbuf at this point, because
 			 * heapgettup doesn't increase PrivateRefCount if it is
@@ -966,11 +969,11 @@ heap_fetch(Relation relation,
 		   HeapTuple tuple,
 		   Buffer *userbuf)
 {
-	ItemId			lp;
-	Buffer			buffer;
-	PageHeader		dp;
-	ItemPointer		tid = &(tuple->t_self);
-	OffsetNumber	offnum;
+	ItemId		lp;
+	Buffer		buffer;
+	PageHeader	dp;
+	ItemPointer tid = &(tuple->t_self);
+	OffsetNumber offnum;
 
 	AssertMacro(PointerIsValid(userbuf));		/* see comments above */
 
@@ -1093,9 +1096,7 @@ heap_insert(Relation relation, HeapTuple tup)
 	RelationPutHeapTupleAtEnd(relation, tup);
 
 	if (IsSystemRelationName(RelationGetRelationName(relation)->data))
-	{
 		RelationInvalidateHeapTuple(relation, tup);
-	}
 
 	return tup->t_data->t_oid;
 }
@@ -1106,11 +1107,11 @@ heap_insert(Relation relation, HeapTuple tup)
 int
 heap_delete(Relation relation, ItemPointer tid, ItemPointer ctid)
 {
-	ItemId			lp;
-	HeapTupleData	tp;
-	PageHeader		dp;
-	Buffer			buffer;
-	int				result;
+	ItemId		lp;
+	HeapTupleData tp;
+	PageHeader	dp;
+	Buffer		buffer;
+	int			result;
 
 	/* increment access statistics */
 	IncrHeapAccessStat(local_delete);
@@ -1130,10 +1131,10 @@ heap_delete(Relation relation, ItemPointer tid, ItemPointer ctid)
 	tp.t_data = (HeapTupleHeader) PageGetItem((Page) dp, lp);
 	tp.t_len = ItemIdGetLength(lp);
 	tp.t_self = *tid;
-	
+
 l1:
 	result = HeapTupleSatisfiesUpdate(&tp);
-	
+
 	if (result == HeapTupleInvisible)
 	{
 		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
@@ -1142,7 +1143,7 @@ l1:
 	}
 	else if (result == HeapTupleBeingUpdated)
 	{
-		TransactionId	xwait = tp.t_data->t_xmax;
+		TransactionId xwait = tp.t_data->t_xmax;
 
 		/* sleep untill concurrent transaction ends */
 		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
@@ -1177,8 +1178,8 @@ l1:
 	/* store transaction information of xact deleting the tuple */
 	TransactionIdStore(GetCurrentTransactionId(), &(tp.t_data->t_xmax));
 	tp.t_data->t_cmax = GetCurrentCommandId();
-	tp.t_data->t_infomask &= ~(HEAP_XMAX_COMMITTED | 
-							   HEAP_XMAX_INVALID | HEAP_MARKED_FOR_UPDATE);
+	tp.t_data->t_infomask &= ~(HEAP_XMAX_COMMITTED |
+							 HEAP_XMAX_INVALID | HEAP_MARKED_FOR_UPDATE);
 
 	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 
@@ -1194,14 +1195,14 @@ l1:
  *	heap_replace	- replace a tuple
  */
 int
-heap_replace(Relation relation, ItemPointer otid, HeapTuple newtup, 
-				ItemPointer ctid)
+heap_replace(Relation relation, ItemPointer otid, HeapTuple newtup,
+			 ItemPointer ctid)
 {
-	ItemId			lp;
-	HeapTupleData	oldtup;
-	PageHeader		dp;
-	Buffer			buffer;
-	int				result;
+	ItemId		lp;
+	HeapTupleData oldtup;
+	PageHeader	dp;
+	Buffer		buffer;
+	int			result;
 
 	/* increment access statistics */
 	IncrHeapAccessStat(local_replace);
@@ -1223,7 +1224,7 @@ heap_replace(Relation relation, ItemPointer otid, HeapTuple newtup,
 
 l2:
 	result = HeapTupleSatisfiesUpdate(&oldtup);
-	
+
 	if (result == HeapTupleInvisible)
 	{
 		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
@@ -1232,7 +1233,7 @@ l2:
 	}
 	else if (result == HeapTupleBeingUpdated)
 	{
-		TransactionId	xwait = oldtup.t_data->t_xmax;
+		TransactionId xwait = oldtup.t_data->t_xmax;
 
 		/* sleep untill concurrent transaction ends */
 		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
@@ -1275,19 +1276,20 @@ l2:
 	/* logically delete old item */
 	TransactionIdStore(GetCurrentTransactionId(), &(oldtup.t_data->t_xmax));
 	oldtup.t_data->t_cmax = GetCurrentCommandId();
-	oldtup.t_data->t_infomask &= ~(HEAP_XMAX_COMMITTED | 
-								   HEAP_XMAX_INVALID | HEAP_MARKED_FOR_UPDATE);
+	oldtup.t_data->t_infomask &= ~(HEAP_XMAX_COMMITTED |
+							 HEAP_XMAX_INVALID | HEAP_MARKED_FOR_UPDATE);
 
 	/* insert new item */
 	if ((unsigned) DOUBLEALIGN(newtup->t_len) <= PageGetFreeSpace((Page) dp))
 		RelationPutHeapTuple(relation, buffer, newtup);
 	else
 	{
+
 		/*
-		 * New item won't fit on same page as old item, have to look
-		 * for a new place to put it. Note that we have to unlock
-		 * current buffer context - not good but RelationPutHeapTupleAtEnd
-		 * uses extend lock.
+		 * New item won't fit on same page as old item, have to look for a
+		 * new place to put it. Note that we have to unlock current buffer
+		 * context - not good but RelationPutHeapTupleAtEnd uses extend
+		 * lock.
 		 */
 		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 		RelationPutHeapTupleAtEnd(relation, newtup);
@@ -1295,8 +1297,8 @@ l2:
 	}
 
 	/*
-	 * New item in place, now record address of new tuple in
-	 * t_ctid of old one.
+	 * New item in place, now record address of new tuple in t_ctid of old
+	 * one.
 	 */
 	oldtup.t_data->t_ctid = newtup->t_self;
 
@@ -1316,10 +1318,10 @@ l2:
 int
 heap_mark4update(Relation relation, HeapTuple tuple, Buffer *buffer)
 {
-	ItemPointer		tid = &(tuple->t_self);
-	ItemId			lp;
-	PageHeader		dp;
-	int				result;
+	ItemPointer tid = &(tuple->t_self);
+	ItemId		lp;
+	PageHeader	dp;
+	int			result;
 
 	/* increment access statistics */
 	IncrHeapAccessStat(local_mark4update);
@@ -1336,10 +1338,10 @@ heap_mark4update(Relation relation, HeapTuple tuple, Buffer *buffer)
 	lp = PageGetItemId(dp, ItemPointerGetOffsetNumber(tid));
 	tuple->t_data = (HeapTupleHeader) PageGetItem((Page) dp, lp);
 	tuple->t_len = ItemIdGetLength(lp);
-	
+
 l3:
 	result = HeapTupleSatisfiesUpdate(tuple);
-	
+
 	if (result == HeapTupleInvisible)
 	{
 		LockBuffer(*buffer, BUFFER_LOCK_UNLOCK);
@@ -1348,7 +1350,7 @@ l3:
 	}
 	else if (result == HeapTupleBeingUpdated)
 	{
-		TransactionId	xwait = tuple->t_data->t_xmax;
+		TransactionId xwait = tuple->t_data->t_xmax;
 
 		/* sleep untill concurrent transaction ends */
 		LockBuffer(*buffer, BUFFER_LOCK_UNLOCK);

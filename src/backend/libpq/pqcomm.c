@@ -28,7 +28,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: pqcomm.c,v 1.71 1999/05/21 01:25:06 tgl Exp $
+ *	$Id: pqcomm.c,v 1.72 1999/05/25 16:09:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,7 +53,7 @@
  *
  * message-level I/O (and COPY OUT cruft):
  *		pq_putmessage	- send a normal message (suppressed in COPY OUT mode)
- *		pq_startcopyout	- inform libpq that a COPY OUT transfer is beginning
+ *		pq_startcopyout - inform libpq that a COPY OUT transfer is beginning
  *		pq_endcopyout	- end a COPY OUT transfer
  *
  *------------------------
@@ -90,7 +90,7 @@
 #define SOMAXCONN 5				/* from Linux listen(2) man page */
 #endif	 /* SOMAXCONN */
 
-extern FILE * debug_port; /* in util.c */
+extern FILE *debug_port;		/* in util.c */
 
 /*
  * Buffers for low-level I/O
@@ -99,11 +99,13 @@ extern FILE * debug_port; /* in util.c */
 #define PQ_BUFFER_SIZE 8192
 
 static unsigned char PqSendBuffer[PQ_BUFFER_SIZE];
-static int PqSendPointer;	/* Next index to store a byte in PqSendBuffer */
+static int	PqSendPointer;		/* Next index to store a byte in
+								 * PqSendBuffer */
 
 static unsigned char PqRecvBuffer[PQ_BUFFER_SIZE];
-static int PqRecvPointer;	/* Next index to read a byte from PqRecvBuffer */
-static int PqRecvLength;	/* End of data available in PqRecvBuffer */
+static int	PqRecvPointer;		/* Next index to read a byte from
+								 * PqRecvBuffer */
+static int	PqRecvLength;		/* End of data available in PqRecvBuffer */
 
 /*
  * Message status
@@ -121,7 +123,7 @@ pq_init(void)
 	PqSendPointer = PqRecvPointer = PqRecvLength = 0;
 	DoingCopyOut = false;
 	if (getenv("LIBPQ_DEBUG"))
-	  debug_port = stderr;
+		debug_port = stderr;
 }
 
 /* --------------------------------
@@ -187,8 +189,10 @@ StreamServerPort(char *hostName, short portName, int *fdP)
 				family;
 	size_t		len;
 	int			one = 1;
+
 #ifdef HAVE_FCNTL_SETLK
 	int			lock_fd;
+
 #endif
 
 	family = ((hostName != NULL) ? AF_INET : AF_UNIX);
@@ -204,19 +208,20 @@ StreamServerPort(char *hostName, short portName, int *fdP)
 	}
 
 #ifdef ONLY_REUSE_INET_SOCKETS
-	if (family == AF_INET) {
+	if (family == AF_INET)
+	{
 #endif
 
-	if ((setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (char *) &one,
-					sizeof(one))) == -1)
-	{
-		snprintf(PQerrormsg, ERROR_MSG_LENGTH, 
-				 "FATAL: StreamServerPort: setsockopt(SO_REUSEADDR) failed: %s\n",
-				 strerror(errno));
-		fputs(PQerrormsg, stderr);
-		pqdebug("%s", PQerrormsg);
-		return STATUS_ERROR;
-	}
+		if ((setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (char *) &one,
+						sizeof(one))) == -1)
+		{
+			snprintf(PQerrormsg, ERROR_MSG_LENGTH,
+					 "FATAL: StreamServerPort: setsockopt(SO_REUSEADDR) failed: %s\n",
+					 strerror(errno));
+			fputs(PQerrormsg, stderr);
+			pqdebug("%s", PQerrormsg);
+			return STATUS_ERROR;
+		}
 
 #ifdef ONLY_REUSE_INET_SOCKETS
 	}
@@ -240,9 +245,10 @@ StreamServerPort(char *hostName, short portName, int *fdP)
 		if ((lock_fd = open(sock_path, O_WRONLY | O_NONBLOCK | O_BINARY, 0666)) >= 0)
 #endif
 		{
-			struct flock	lck;
-			
-			lck.l_whence = SEEK_SET; lck.l_start = lck.l_len = 0;
+			struct flock lck;
+
+			lck.l_whence = SEEK_SET;
+			lck.l_start = lck.l_len = 0;
 			lck.l_type = F_WRLCK;
 			if (fcntl(lock_fd, F_SETLK, &lck) == 0)
 			{
@@ -253,7 +259,7 @@ StreamServerPort(char *hostName, short portName, int *fdP)
 				TPRINTF(TRACE_VERBOSE, "flock failed for %s", sock_path);
 			close(lock_fd);
 		}
-#endif /* HAVE_FCNTL_SETLK */
+#endif	 /* HAVE_FCNTL_SETLK */
 	}
 	else
 	{
@@ -277,9 +283,7 @@ StreamServerPort(char *hostName, short portName, int *fdP)
 					 sock_path);
 		}
 		else
-		{
 			strcat(PQerrormsg, "\tIf not, wait a few seconds and retry.\n");
-		}
 		fputs(PQerrormsg, stderr);
 		pqdebug("%s", PQerrormsg);
 		return STATUS_ERROR;
@@ -300,14 +304,15 @@ StreamServerPort(char *hostName, short portName, int *fdP)
 		if ((lock_fd = open(sock_path, O_WRONLY | O_NONBLOCK | O_BINARY, 0666)) >= 0)
 #endif
 		{
-			struct flock	lck;
-			
-			lck.l_whence = SEEK_SET; lck.l_start = lck.l_len = 0;
+			struct flock lck;
+
+			lck.l_whence = SEEK_SET;
+			lck.l_start = lck.l_len = 0;
 			lck.l_type = F_WRLCK;
 			if (fcntl(lock_fd, F_SETLK, &lck) != 0)
 				TPRINTF(TRACE_VERBOSE, "flock error for %s", sock_path);
 		}
-#endif /* HAVE_FCNTL_SETLK */
+#endif	 /* HAVE_FCNTL_SETLK */
 	}
 
 	listen(fd, SOMAXCONN);
@@ -339,7 +344,7 @@ StreamServerPort(char *hostName, short portName, int *fdP)
 int
 StreamConnection(int server_fd, Port *port)
 {
-	SOCKET_SIZE_TYPE	addrlen;
+	SOCKET_SIZE_TYPE addrlen;
 
 	/* accept connection (and fill in the client (remote) address) */
 	addrlen = sizeof(port->raddr);
@@ -419,8 +424,8 @@ pq_recvbuf(void)
 		if (PqRecvLength > PqRecvPointer)
 		{
 			/* still some unread data, left-justify it in the buffer */
-			memmove(PqRecvBuffer, PqRecvBuffer+PqRecvPointer,
-					PqRecvLength-PqRecvPointer);
+			memmove(PqRecvBuffer, PqRecvBuffer + PqRecvPointer,
+					PqRecvLength - PqRecvPointer);
 			PqRecvLength -= PqRecvPointer;
 			PqRecvPointer = 0;
 		}
@@ -431,16 +436,19 @@ pq_recvbuf(void)
 	/* Can fill buffer from PqRecvLength and upwards */
 	for (;;)
 	{
-		int r = recv(MyProcPort->sock, PqRecvBuffer + PqRecvLength,
-					 PQ_BUFFER_SIZE - PqRecvLength, 0);
+		int			r = recv(MyProcPort->sock, PqRecvBuffer + PqRecvLength,
+							 PQ_BUFFER_SIZE - PqRecvLength, 0);
+
 		if (r < 0)
 		{
 			if (errno == EINTR)
 				continue;		/* Ok if interrupted */
-			/* We would like to use elog() here, but dare not because elog
-			 * tries to write to the client, which will cause problems
-			 * if we have a hard communications failure ...
-			 * So just write the message to the postmaster log.
+
+			/*
+			 * We would like to use elog() here, but dare not because elog
+			 * tries to write to the client, which will cause problems if
+			 * we have a hard communications failure ... So just write the
+			 * message to the postmaster log.
 			 */
 			fprintf(stderr, "pq_recvbuf: recv() failed: %s\n",
 					strerror(errno));
@@ -499,7 +507,7 @@ pq_peekbyte(void)
 int
 pq_getbytes(char *s, size_t len)
 {
-	size_t amount;
+	size_t		amount;
 
 	while (len > 0)
 	{
@@ -539,8 +547,8 @@ pq_getstring(char *s, size_t len)
 	int			c;
 
 	/*
-	 * Keep on reading until we get the terminating '\0',
-	 * discarding any bytes we don't have room for.
+	 * Keep on reading until we get the terminating '\0', discarding any
+	 * bytes we don't have room for.
 	 */
 
 	while ((c = pq_getbyte()) != EOF && c != '\0')
@@ -570,7 +578,7 @@ pq_getstring(char *s, size_t len)
 int
 pq_putbytes(const char *s, size_t len)
 {
-	size_t amount;
+	size_t		amount;
 
 	while (len > 0)
 	{
@@ -602,19 +610,24 @@ pq_flush(void)
 
 	while (bufptr < bufend)
 	{
-		int r = send(MyProcPort->sock, bufptr, bufend - bufptr, 0);
+		int			r = send(MyProcPort->sock, bufptr, bufend - bufptr, 0);
+
 		if (r <= 0)
 		{
 			if (errno == EINTR)
 				continue;		/* Ok if we were interrupted */
-			/* We would like to use elog() here, but cannot because elog
+
+			/*
+			 * We would like to use elog() here, but cannot because elog
 			 * tries to write to the client, which would cause a recursive
 			 * flush attempt!  So just write it out to the postmaster log.
 			 */
 			fprintf(stderr, "pq_flush: send() failed: %s\n",
 					strerror(errno));
-			/* We drop the buffered data anyway so that processing
-			 * can continue, even though we'll probably quit soon.
+
+			/*
+			 * We drop the buffered data anyway so that processing can
+			 * continue, even though we'll probably quit soon.
 			 */
 			PqSendPointer = 0;
 			return EOF;
@@ -661,7 +674,7 @@ pq_putmessage(char msgtype, const char *s, size_t len)
 }
 
 /* --------------------------------
- *		pq_startcopyout	- inform libpq that a COPY OUT transfer is beginning
+ *		pq_startcopyout - inform libpq that a COPY OUT transfer is beginning
  * --------------------------------
  */
 void
@@ -682,7 +695,7 @@ pq_startcopyout(void)
 void
 pq_endcopyout(bool errorAbort)
 {
-	if (! DoingCopyOut)
+	if (!DoingCopyOut)
 		return;
 	if (errorAbort)
 		pq_putbytes("\n\n\\.\n", 5);

@@ -1037,9 +1037,9 @@ int			endc;				/* name ended by endc,']' */
  == static char othercase(int ch);
  */
 #ifdef MULTIBYTE
-static unsigned char		/* if no counterpart, return ch */
+static unsigned char			/* if no counterpart, return ch */
 #else
-static char		/* if no counterpart, return ch */
+static char						/* if no counterpart, return ch */
 #endif
 othercase(ch)
 int			ch;
@@ -1047,20 +1047,20 @@ int			ch;
 	assert(pg_isalpha(ch));
 	if (pg_isupper(ch))
 #ifdef MULTIBYTE
-		return (unsigned char)tolower(ch);
+		return (unsigned char) tolower(ch);
 #else
 		return tolower(ch);
 #endif
 	else if (pg_islower(ch))
 #ifdef MULTIBYTE
-		return (unsigned char)toupper(ch);
+		return (unsigned char) toupper(ch);
 #else
 		return toupper(ch);
 #endif
 	else
 /* peculiar, but could happen */
 #ifdef MULTIBYTE
-		return (unsigned char)ch;
+		return (unsigned char) ch;
 #else
 		return ch;
 #endif

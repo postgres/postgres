@@ -51,11 +51,13 @@
  * here called long_long (or ulong_long for unsigned).
  */
 #ifdef HAVE_LONG_LONG_INT_64
-typedef long long			long_long;
-typedef unsigned long long	ulong_long;
+typedef long long long_long;
+typedef unsigned long long ulong_long;
+
 #else
-typedef long				long_long;
-typedef unsigned long		ulong_long;
+typedef long long_long;
+typedef unsigned long ulong_long;
+
 #endif
 
 /*
@@ -80,7 +82,7 @@ typedef unsigned long		ulong_long;
  * causing nast effects.
  **************************************************************/
 
-/*static char _id[] = "$Id: snprintf.c,v 1.21 1999/02/21 03:49:08 scrappy Exp $";*/
+/*static char _id[] = "$Id: snprintf.c,v 1.22 1999/05/25 16:10:28 momjian Exp $";*/
 static char *end;
 static int	SnprfOverflow;
 
@@ -92,7 +94,7 @@ int
 snprintf(char *str, size_t count, const char *fmt,...)
 {
 	int			len;
-	va_list			args;
+	va_list		args;
 
 	va_start(args, fmt);
 	len = vsnprintf(str, count, fmt, args);
@@ -120,11 +122,11 @@ vsnprintf(char *str, size_t count, const char *fmt, va_list args)
  * dopr(): poor man's version of doprintf
  */
 
-static void fmtstr (char *value, int ljust, int len, int zpad, int maxwidth);
-static void fmtnum (long_long value, int base, int dosign, int ljust, int len, int zpad);
-static void fmtfloat (double value, char type, int ljust, int len, int precision, int pointflag);
-static void dostr (char *str, int cut);
-static void dopr_outch (int c);
+static void fmtstr(char *value, int ljust, int len, int zpad, int maxwidth);
+static void fmtnum(long_long value, int base, int dosign, int ljust, int len, int zpad);
+static void fmtfloat(double value, char type, int ljust, int len, int precision, int pointflag);
+static void dostr(char *str, int cut);
+static void dopr_outch(int c);
 
 static char *output;
 
@@ -408,7 +410,7 @@ fmtnum(long_long value, int base, int dosign, int ljust, int len, int zpad)
 }
 
 static void
-fmtfloat (double value, char type, int ljust, int len, int precision, int pointflag)
+fmtfloat(double value, char type, int ljust, int len, int precision, int pointflag)
 {
 	char		fmt[32];
 	char		convert[512];

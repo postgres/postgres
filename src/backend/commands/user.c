@@ -5,11 +5,11 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: user.c,v 1.27 1999/04/02 06:16:36 tgl Exp $
+ * $Id: user.c,v 1.28 1999/05/25 16:08:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <stdio.h>				
+#include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -35,7 +35,7 @@
 
 static void CheckPgUserAclNotNull(void);
 
-#define	SQL_LENGTH	512
+#define SQL_LENGTH	512
 
 /*---------------------------------------------------------------------
  * UpdatePgPwdFile
@@ -49,9 +49,9 @@ void
 UpdatePgPwdFile(char *sql, CommandDest dest)
 {
 
-	char	*filename,
-				*tempname;
-	int		bufsize;
+	char	   *filename,
+			   *tempname;
+	int			bufsize;
 
 	/*
 	 * Create a temporary filename to be renamed later.  This prevents the
@@ -68,9 +68,9 @@ UpdatePgPwdFile(char *sql, CommandDest dest)
 	 * SEPCHAR character as the delimiter between fields.  Then rename the
 	 * file to its final name.
 	 */
-	snprintf(sql, SQL_LENGTH, 
-			"copy %s to '%s' using delimiters %s", 
-			ShadowRelationName, tempname, CRYPT_PWD_FILE_SEPCHAR);
+	snprintf(sql, SQL_LENGTH,
+			 "copy %s to '%s' using delimiters %s",
+			 ShadowRelationName, tempname, CRYPT_PWD_FILE_SEPCHAR);
 	pg_exec_query_dest(sql, dest, false);
 	rename(tempname, filename);
 	pfree((void *) tempname);
@@ -94,19 +94,19 @@ UpdatePgPwdFile(char *sql, CommandDest dest)
 void
 DefineUser(CreateUserStmt *stmt, CommandDest dest)
 {
-	char			   *pg_shadow,
-						sql[SQL_LENGTH];
-	Relation			pg_shadow_rel;
-	TupleDesc			pg_shadow_dsc;
-	HeapScanDesc		scan;
-	HeapTuple			tuple;
-	Datum				datum;
-	bool				exists = false,
-						n,
-						inblock,
-						havepassword,
-						havevaluntil;
-	int					max_id = -1;
+	char	   *pg_shadow,
+				sql[SQL_LENGTH];
+	Relation	pg_shadow_rel;
+	TupleDesc	pg_shadow_dsc;
+	HeapScanDesc scan;
+	HeapTuple	tuple;
+	Datum		datum;
+	bool		exists = false,
+				n,
+				inblock,
+				havepassword,
+				havevaluntil;
+	int			max_id = -1;
 
 	havepassword = stmt->password && stmt->password[0];
 	havevaluntil = stmt->validUntil && stmt->validUntil[0];
@@ -161,21 +161,21 @@ DefineUser(CreateUserStmt *stmt, CommandDest dest)
 		UnlockRelation(pg_shadow_rel, AccessExclusiveLock);
 		heap_close(pg_shadow_rel);
 		UserAbortTransactionBlock();
-		elog(ERROR, 
-				"defineUser: user \"%s\" has already been created", stmt->user);
+		elog(ERROR,
+		 "defineUser: user \"%s\" has already been created", stmt->user);
 		return;
 	}
 
 	/*
 	 * Build the insert statement to be executed.
 	 *
-	 * XXX Ugly as this code is, it still fails to cope with ' or \
-	 * in any of the provided strings.
+	 * XXX Ugly as this code is, it still fails to cope with ' or \ in any of
+	 * the provided strings.
 	 */
-	snprintf(sql, SQL_LENGTH, 
+	snprintf(sql, SQL_LENGTH,
 			 "insert into %s (usename,usesysid,usecreatedb,usetrace,"
 			 "usesuper,usecatupd,passwd,valuntil) "
-			 "values('%s',%d,'%c','t','%c','t',%s%s%s,%s%s%s)", 
+			 "values('%s',%d,'%c','t','%c','t',%s%s%s,%s%s%s)",
 			 ShadowRelationName,
 			 stmt->user,
 			 max_id + 1,
@@ -216,12 +216,12 @@ extern void
 AlterUser(AlterUserStmt *stmt, CommandDest dest)
 {
 
-	char			*pg_shadow,
-						sql[SQL_LENGTH];
+	char	   *pg_shadow,
+				sql[SQL_LENGTH];
 	Relation	pg_shadow_rel;
 	TupleDesc	pg_shadow_dsc;
 	HeapTuple	tuple;
-	bool			inblock;
+	bool		inblock;
 
 	if (stmt->password)
 		CheckPgUserAclNotNull();
@@ -272,34 +272,32 @@ AlterUser(AlterUserStmt *stmt, CommandDest dest)
 	snprintf(sql, SQL_LENGTH, "update %s set", ShadowRelationName);
 
 	if (stmt->password)
-	{
 		snprintf(sql, SQL_LENGTH, "%s passwd = '%s'", pstrdup(sql), stmt->password);
-	}
 
 	if (stmt->createdb)
 	{
 		snprintf(sql, SQL_LENGTH, "%s %susecreatedb='%s'",
-				pstrdup(sql), stmt->password ? "," : "",
-				*stmt->createdb ? "t" : "f");
+				 pstrdup(sql), stmt->password ? "," : "",
+				 *stmt->createdb ? "t" : "f");
 	}
 
 	if (stmt->createuser)
 	{
 		snprintf(sql, SQL_LENGTH, "%s %susesuper='%s'",
-				pstrdup(sql), (stmt->password || stmt->createdb) ? "," : "",
-				*stmt->createuser ? "t" : "f");
+			 pstrdup(sql), (stmt->password || stmt->createdb) ? "," : "",
+				 *stmt->createuser ? "t" : "f");
 	}
 
 	if (stmt->validUntil)
 	{
 		snprintf(sql, SQL_LENGTH, "%s %svaluntil='%s'",
-				pstrdup(sql),
-				(stmt->password || stmt->createdb || stmt->createuser) ? "," : "",
-				stmt->validUntil);
+				 pstrdup(sql),
+		(stmt->password || stmt->createdb || stmt->createuser) ? "," : "",
+				 stmt->validUntil);
 	}
 
 	snprintf(sql, SQL_LENGTH, "%s where usename = '%s'",
-				pstrdup(sql), stmt->user);
+			 pstrdup(sql), stmt->user);
 
 	pg_exec_query_dest(sql, dest, false);
 
@@ -393,8 +391,8 @@ RemoveUser(char *user, CommandDest dest)
 			datum = heap_getattr(tuple, Anum_pg_database_datname, pg_dsc, &n);
 			if (memcmp((void *) datum, "template1", 9))
 			{
-				dbase = 
-						(char **) repalloc((void *) dbase, sizeof(char *) * (ndbase + 1));
+				dbase =
+					(char **) repalloc((void *) dbase, sizeof(char *) * (ndbase + 1));
 				dbase[ndbase] = (char *) palloc(NAMEDATALEN + 1);
 				memcpy((void *) dbase[ndbase], (void *) datum, NAMEDATALEN);
 				dbase[ndbase++][NAMEDATALEN] = '\0';
@@ -435,8 +433,8 @@ RemoveUser(char *user, CommandDest dest)
 	/*
 	 * Remove the user from the pg_shadow table
 	 */
-	snprintf(sql, SQL_LENGTH, 
-			"delete from %s where usename = '%s'", ShadowRelationName, user);
+	snprintf(sql, SQL_LENGTH,
+		"delete from %s where usename = '%s'", ShadowRelationName, user);
 	pg_exec_query_dest(sql, dest, false);
 
 	UpdatePgPwdFile(sql, dest);

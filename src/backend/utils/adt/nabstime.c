@@ -4,7 +4,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	  $Id: nabstime.c,v 1.54 1999/04/26 04:42:49 ishii Exp $
+ *	  $Id: nabstime.c,v 1.55 1999/05/25 16:12:09 momjian Exp $
  *
  */
 #include <stdio.h>
@@ -64,13 +64,18 @@ GetCurrentAbsoluteTime(void)
 		CDayLight = (tm->tm_isdst > 0);
 
 #ifdef NOT_USED
+
 		/*
 		 * XXX is there a better way to get local timezone string w/o
 		 * tzname? - tgl 97/03/18
 		 */
 		strftime(CTZName, MAXTZLEN, "%Z", tm);
 #endif
-		/* XXX FreeBSD man pages indicate that this should work - thomas 1998-12-12 */
+
+		/*
+		 * XXX FreeBSD man pages indicate that this should work - thomas
+		 * 1998-12-12
+		 */
 		strcpy(CTZName, tm->tm_zone);
 
 #elif defined(HAVE_INT_TIMEZONE)
@@ -79,10 +84,10 @@ GetCurrentAbsoluteTime(void)
 		CDayLight = tm->tm_isdst;
 		CTimeZone =
 #ifdef __CYGWIN32__
-		(tm->tm_isdst ? (_timezone - 3600) : _timezone);
+			(tm->tm_isdst ? (_timezone - 3600) : _timezone);
 #else
-		(tm->tm_isdst ? (timezone - 3600) : timezone);
-#endif 
+			(tm->tm_isdst ? (timezone - 3600) : timezone);
+#endif
 		strcpy(CTZName, tzname[tm->tm_isdst]);
 #else
 #error USE_POSIX_TIME defined but no time zone available
@@ -91,8 +96,9 @@ GetCurrentAbsoluteTime(void)
 		CTimeZone = tb.timezone * 60;
 		CDayLight = (tb.dstflag != 0);
 
-		/* XXX does this work to get the local timezone string in V7?
-		 * - tgl 97/03/18
+		/*
+		 * XXX does this work to get the local timezone string in V7? -
+		 * tgl 97/03/18
 		 */
 		strftime(CTZName, MAXTZLEN, "%Z", localtime(&now));
 #endif
@@ -389,6 +395,7 @@ AbsoluteTimeIsAfter(AbsoluteTime time1, AbsoluteTime time2)
 
 	return time1 > time2;
 }
+
 #endif
 
 /* abstime_finite()

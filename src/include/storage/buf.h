@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: buf.h,v 1.5 1999/02/13 23:22:03 momjian Exp $
+ * $Id: buf.h,v 1.6 1999/05/25 16:14:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,19 +19,19 @@
 typedef long Buffer;
 
 /*
- * BufferIsInvalid 
+ * BufferIsInvalid
  *		True iff the buffer is invalid.
  */
 #define BufferIsInvalid(buffer) ((buffer) == InvalidBuffer)
 
 /*
- * BufferIsUnknown 
+ * BufferIsUnknown
  *		True iff the buffer is unknown.
  */
 #define BufferIsUnknown(buffer) ((buffer) == UnknownBuffer)
 
 /*
- * BufferIsLocal 
+ * BufferIsLocal
  *		True iff the buffer is local (not visible to other servers).
  */
 #define BufferIsLocal(buffer)	((buffer) < 0)

@@ -23,7 +23,7 @@
 #include "utils/builtins.h"		/* where the function declarations go */
 #include "mb/pg_wchar.h"
 
-static int	like(pg_wchar *text, pg_wchar *p);
+static int	like(pg_wchar * text, pg_wchar * p);
 
 /*
  *	interface routines called by the function manager
@@ -38,7 +38,7 @@ static int	like(pg_wchar *text, pg_wchar *p);
 		 charlen   - the length of the string
 */
 static bool
-fixedlen_like(char *s, struct varlena *p, int charlen)
+fixedlen_like(char *s, struct varlena * p, int charlen)
 {
 	pg_wchar   *sterm,
 			   *pterm;
@@ -83,7 +83,7 @@ fixedlen_like(char *s, struct varlena *p, int charlen)
 }
 
 bool
-namelike(NameData *n, struct varlena *p)
+namelike(NameData *n, struct varlena * p)
 {
 	if (!n)
 		return FALSE;
@@ -91,13 +91,13 @@ namelike(NameData *n, struct varlena *p)
 }
 
 bool
-namenlike(NameData *s, struct varlena *p)
+namenlike(NameData *s, struct varlena * p)
 {
 	return !namelike(s, p);
 }
 
 bool
-textlike(struct varlena *s, struct varlena *p)
+textlike(struct varlena * s, struct varlena * p)
 {
 	if (!s)
 		return FALSE;
@@ -105,13 +105,13 @@ textlike(struct varlena *s, struct varlena *p)
 }
 
 bool
-textnlike(struct varlena *s, struct varlena *p)
+textnlike(struct varlena * s, struct varlena * p)
 {
 	return !textlike(s, p);
 }
 
 
-/*	$Revision: 1.23 $
+/*	$Revision: 1.24 $
 **	"like.c" A first attempt at a LIKE operator for Postgres95.
 **
 **	Originally written by Rich $alz, mirror!rs, Wed Nov 26 19:03:17 EST 1986.
@@ -146,11 +146,11 @@ textnlike(struct varlena *s, struct varlena *p)
 **	Match text and p, return LIKE_TRUE, LIKE_FALSE, or LIKE_ABORT.
 */
 static int
-DoMatch(pg_wchar *text, pg_wchar *p)
+DoMatch(pg_wchar * text, pg_wchar * p)
 {
 	int			matched;
 
-	for (; *p && *text; text++, p++)
+	for (; *p && *text; text ++, p++)
 	{
 		switch (*p)
 		{
@@ -159,7 +159,7 @@ DoMatch(pg_wchar *text, pg_wchar *p)
 				p++;
 				/* FALLTHROUGH */
 			default:
-				if (*text != *p)
+				if (*text !=*p)
 					return LIKE_FALSE;
 				break;
 			case '_':
@@ -177,16 +177,16 @@ DoMatch(pg_wchar *text, pg_wchar *p)
 				{
 					/* Optimization to prevent most recursion */
 					if ((*text == *p ||
-					     *p == '\\' || *p == '%' || *p == '_') &&
+						 *p == '\\' || *p == '%' || *p == '_') &&
 						(matched = DoMatch(text, p)) != LIKE_FALSE)
 						return matched;
-					text++;
+					text	  ++;
 				}
 				return LIKE_ABORT;
 		}
 	}
 
-	if (*text != '\0')
+	if (*text !='\0')
 		return LIKE_ABORT;
 	else
 	{
@@ -203,7 +203,7 @@ DoMatch(pg_wchar *text, pg_wchar *p)
 **	User-level routine.  Returns TRUE or FALSE.
 */
 static int
-like(pg_wchar *text, pg_wchar *p)
+like(pg_wchar * text, pg_wchar * p)
 {
 	if (p[0] == '%' && p[1] == '\0')
 		return TRUE;

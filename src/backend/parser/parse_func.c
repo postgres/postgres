@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.45 1999/05/22 04:12:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.46 1999/05/25 16:10:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,9 +77,9 @@ static int match_argtypes(int nargs,
 static List *setup_tlist(char *attname, Oid relid);
 static List *setup_base_tlist(Oid typeid);
 static Oid *func_select_candidate(int nargs, Oid *input_typeids,
-				CandidateList candidates);
-static int agg_get_candidates(char *aggname, Oid typeId, CandidateList *candidates);
-static Oid agg_select_candidate(Oid typeid, CandidateList candidates);
+					  CandidateList candidates);
+static int	agg_get_candidates(char *aggname, Oid typeId, CandidateList *candidates);
+static Oid	agg_select_candidate(Oid typeid, CandidateList candidates);
 
 #define ISCOMPLEX(type) (typeidTypeRelid(type) ? true : false)
 
@@ -91,7 +91,7 @@ typedef struct _SuperQE
 } SuperQE;
 
 /*
- ** ParseNestedFuncOrColumn 
+ ** ParseNestedFuncOrColumn
  **    Given a nested dot expression (i.e. (relation func ... attr), build up
  ** a tree with of Iter and Func nodes.
  */
@@ -139,12 +139,12 @@ agg_get_candidates(char *aggname,
 				   Oid typeId,
 				   CandidateList *candidates)
 {
-	CandidateList		current_candidate;
-	Relation			pg_aggregate_desc;
-	HeapScanDesc		pg_aggregate_scan;
-	HeapTuple			tup;
-	Form_pg_aggregate	agg;
-	int					ncandidates = 0;
+	CandidateList current_candidate;
+	Relation	pg_aggregate_desc;
+	HeapScanDesc pg_aggregate_scan;
+	HeapTuple	tup;
+	Form_pg_aggregate agg;
+	int			ncandidates = 0;
 
 	static ScanKeyData aggKey[1] = {
 	{0, Anum_pg_aggregate_aggname, F_NAMEEQ}};
@@ -157,7 +157,7 @@ agg_get_candidates(char *aggname,
 	pg_aggregate_desc = heap_openr(AggregateRelationName);
 	pg_aggregate_scan = heap_beginscan(pg_aggregate_desc,
 									   0,
-									   SnapshotSelf,     /* ??? */
+									   SnapshotSelf,	/* ??? */
 									   1,
 									   aggKey);
 
@@ -185,12 +185,12 @@ agg_get_candidates(char *aggname,
 static Oid
 agg_select_candidate(Oid typeid, CandidateList candidates)
 {
-	CandidateList	current_candidate;
-	CandidateList	last_candidate;
-	Oid				current_typeid;
-	int				ncandidates;
-	CATEGORY		category,
-					current_category;
+	CandidateList current_candidate;
+	CandidateList last_candidate;
+	Oid			current_typeid;
+	int			ncandidates;
+	CATEGORY	category,
+				current_category;
 
 /*
  * Look for candidates which allow coersion and have a preferred type.
@@ -227,13 +227,11 @@ agg_select_candidate(Oid typeid, CandidateList candidates)
 		}
 		/* otherwise, don't bother keeping this one around... */
 		else if (last_candidate != NULL)
-		{
 			last_candidate->next = NULL;
-		}
 	}
 
 	return ((ncandidates == 1) ? candidates->args[0] : 0);
-}   /* agg_select_candidate() */
+}	/* agg_select_candidate() */
 
 
 /*
@@ -352,13 +350,14 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 		}
 		else
 		{
+
 			/*
 			 * Parsing aggregates.
 			 */
-			Type			tp;
-			Oid				basetype;
-			int				ncandidates;
-			CandidateList	candidates;
+			Type		tp;
+			Oid			basetype;
+			int			ncandidates;
+			CandidateList candidates;
 
 			/*
 			 * the aggregate COUNT is a special case, ignore its base
@@ -378,14 +377,13 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 										 fargs, precedence);
 
 			/*
-			 * No exact match yet, so see if there is another entry
-			 * in the aggregate table which is compatible.
-			 * - thomas 1998-12-05
+			 * No exact match yet, so see if there is another entry in the
+			 * aggregate table which is compatible. - thomas 1998-12-05
 			 */
 			ncandidates = agg_get_candidates(funcname, basetype, &candidates);
 			if (ncandidates > 0)
 			{
-				Oid		type;
+				Oid			type;
 
 				type = agg_select_candidate(basetype, candidates);
 				if (OidIsValid(type))
@@ -399,7 +397,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 				}
 				else
 				{
-					elog(ERROR,"Unable to select an aggregate function %s(%s)",
+					elog(ERROR, "Unable to select an aggregate function %s(%s)",
 						 funcname, typeidTypeName(basetype));
 				}
 			}
@@ -407,18 +405,16 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 			/*
 			 * See if this is a single argument function with the function
 			 * name also a type name and the input argument and type name
-			 * binary compatible...
-			 * This means that you are trying for a type conversion which does not
-			 * need to take place, so we'll just pass through the argument itself.
-			 * (make this clearer with some extra brackets - thomas 1998-12-05)
+			 * binary compatible... This means that you are trying for a
+			 * type conversion which does not need to take place, so we'll
+			 * just pass through the argument itself. (make this clearer
+			 * with some extra brackets - thomas 1998-12-05)
 			 */
 			if ((HeapTupleIsValid(tp = SearchSysCacheTuple(TYPNAME,
-														   PointerGetDatum(funcname),
+											   PointerGetDatum(funcname),
 														   0, 0, 0)))
 				&& IS_BINARY_COMPATIBLE(typeTypeId(tp), basetype))
-			{
 				return ((Node *) lfirst(fargs));
-			}
 		}
 	}
 
@@ -440,6 +436,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 
 		if (nodeTag(pair) == T_Ident && ((Ident *) pair)->isRel)
 		{
+
 			/*
 			 * a relation
 			 */
@@ -551,9 +548,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 	if (attisset)
 	{
 		if (!strcmp(funcname, "*"))
-		{
 			funcnode->func_tlist = expandAll(pstate, relname, refname, curr_resno);
-		}
 		else
 		{
 			funcnode->func_tlist = setup_tlist(funcname, argrelid);
@@ -581,13 +576,13 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 		seqrel = textout((text *) DatumGetPointer(seq->constvalue));
 		/* Do we have nextval('"Aa"')? */
 		if (strlen(seqrel) >= 2 &&
-			seqrel[0] == '\"' && seqrel[strlen(seqrel)-1] == '\"')
+			seqrel[0] == '\"' && seqrel[strlen(seqrel) - 1] == '\"')
 		{
 			/* strip off quotes, keep case */
-			seqrel = pstrdup(seqrel+1);
-			seqrel[strlen(seqrel)-1] = '\0';
+			seqrel = pstrdup(seqrel + 1);
+			seqrel[strlen(seqrel) - 1] = '\0';
 			pfree(DatumGetPointer(seq->constvalue));
-			seq->constvalue = (Datum)textin(seqrel);
+			seq->constvalue = (Datum) textin(seqrel);
 		}
 		else
 		{
@@ -669,7 +664,7 @@ func_get_candidates(char *funcname, int nargs)
 	Relation	heapRelation;
 	Relation	idesc;
 	ScanKeyData skey;
-	HeapTupleData	tuple;
+	HeapTupleData tuple;
 	IndexScanDesc sd;
 	RetrieveIndexResult indexRes;
 	Form_pg_proc pgProcP;
@@ -837,9 +832,7 @@ func_select_candidate(int nargs,
 			ncandidates++;
 		}
 		else
-		{
 			last_candidate->next = NULL;
-		}
 	}
 
 	if (ncandidates == 1)
@@ -870,9 +863,7 @@ func_select_candidate(int nargs,
 				}
 				else if ((current_category != slot_category)
 						 && IS_BUILTIN_TYPE(current_type))
-				{
 					return NULL;
-				}
 				else if (current_type != slot_type)
 				{
 					if (IsPreferredType(slot_category, current_type))
@@ -881,16 +872,12 @@ func_select_candidate(int nargs,
 						candidates = current_candidate;
 					}
 					else if (IsPreferredType(slot_category, slot_type))
-					{
-						 candidates->next = current_candidate->next;
-					}
+						candidates->next = current_candidate->next;
 				}
 			}
 
 			if (slot_type != InvalidOid)
-			{
 				input_typeids[i] = slot_type;
-			}
 		}
 		else
 		{
@@ -979,7 +966,7 @@ func_get_detail(char *funcname,
 					ftup = SearchSysCacheTuple(PRONAME,
 											   PointerGetDatum(funcname),
 											   Int32GetDatum(nargs),
-											   PointerGetDatum(*true_typeids),
+										  PointerGetDatum(*true_typeids),
 											   0);
 					Assert(HeapTupleIsValid(ftup));
 				}
@@ -991,8 +978,8 @@ func_get_detail(char *funcname,
 				else if (ncandidates > 1)
 				{
 					*true_typeids = func_select_candidate(nargs,
-														  current_input_typeids,
-														  current_function_typeids);
+												   current_input_typeids,
+											   current_function_typeids);
 
 					/* couldn't decide, so quit */
 					if (*true_typeids == NULL)
@@ -1006,9 +993,9 @@ func_get_detail(char *funcname,
 					else
 					{
 						ftup = SearchSysCacheTuple(PRONAME,
-												   PointerGetDatum(funcname),
+											   PointerGetDatum(funcname),
 												   Int32GetDatum(nargs),
-												   PointerGetDatum(*true_typeids),
+										  PointerGetDatum(*true_typeids),
 												   0);
 						Assert(HeapTupleIsValid(ftup));
 					}
@@ -1304,9 +1291,9 @@ make_arguments(ParseState *pstate,
 		if (input_typeids[i] == UNKNOWNOID && function_typeids[i] != InvalidOid)
 		{
 			lfirst(current_fargs) = parser_typecast2(lfirst(current_fargs),
-								 input_typeids[i],
-								 typeidType(function_typeids[i]),
-								 -1);
+													 input_typeids[i],
+										 typeidType(function_typeids[i]),
+													 -1);
 		}
 
 		/* types don't match? then force coersion using a function call... */
@@ -1321,7 +1308,7 @@ make_arguments(ParseState *pstate,
 }
 
 /*
- ** setup_tlist 
+ ** setup_tlist
  **		Build a tlist that says which attribute to project to.
  **		This routine is called by ParseFuncOrColumn() to set up a target list
  **		on a tuple parameter or return value.  Due to a bug in 4.0,
@@ -1359,7 +1346,7 @@ setup_tlist(char *attname, Oid relid)
 }
 
 /*
- ** setup_base_tlist 
+ ** setup_base_tlist
  **		Build a tlist that extracts a base type from the tuple
  **		returned by the executor.
  */

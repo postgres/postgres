@@ -7,7 +7,7 @@ a modification datetime stamp in a record when that record is UPDATEd.
 
 Credits
 This is 95%+ based on autoinc.c, which I used as a starting point as I do
-not really know what I am doing.  I also had help from 
+not really know what I am doing.  I also had help from
 Jan Wieck <jwieck@debis.com> who told me about the datetime_in("now") function.
 OH, me, I'm Terry Mackintosh <terry@terrym.com>
 */
@@ -17,17 +17,18 @@ OH, me, I'm Terry Mackintosh <terry@terrym.com>
 
 HeapTuple	moddatetime(void);
 
-HeapTuple moddatetime()
+HeapTuple
+moddatetime()
 {
-	Trigger		*trigger;		/* to get trigger name */
+	Trigger    *trigger;		/* to get trigger name */
 	int			nargs;			/* # of arguments */
 	int			attnum;			/* positional number of field to change */
-	Datum			newdt;			/* The current datetime. */
-	char			**args;			/* arguments */
-	char			*relname;		/* triggered relation name */
-	Relation		rel;				/* triggered relation */
+	Datum		newdt;			/* The current datetime. */
+	char	  **args;			/* arguments */
+	char	   *relname;		/* triggered relation name */
+	Relation	rel;			/* triggered relation */
 	HeapTuple	rettuple = NULL;
-	TupleDesc	tupdesc;			/* tuple description */
+	TupleDesc	tupdesc;		/* tuple description */
 
 	if (!CurrentTriggerData)
 		elog(ERROR, "moddatetime: triggers are not initialized.");
@@ -65,28 +66,31 @@ HeapTuple moddatetime()
 	/* Get the current datetime. */
 	newdt = datetime_in("now");
 
-	/* This gets the position in the turple of the field we want.
-		args[0] being the name of the field to update, as passed in
-		from the trigger.
-	*/
+	/*
+	 * This gets the position in the turple of the field we want. args[0]
+	 * being the name of the field to update, as passed in from the
+	 * trigger.
+	 */
 	attnum = SPI_fnumber(tupdesc, args[0]);
 
-	/* This is were we check to see if the feild we are suppost to update even
-		exits.  The above function must return -1 if name not found?
-	*/
+	/*
+	 * This is were we check to see if the feild we are suppost to update
+	 * even exits.	The above function must return -1 if name not found?
+	 */
 	if (attnum < 0)
 		elog(ERROR, "moddatetime (%s): there is no attribute %s", relname,
-			args[0]);
-			
-	/* OK, this is where we make sure the datetime field that we are 
-		modifying is really a datetime field.
-		Hay, error checking, what a novel idea !-)
-	*/
-	if (SPI_gettypeid(tupdesc, attnum) != DATETIMEOID )
+			 args[0]);
+
+	/*
+	 * OK, this is where we make sure the datetime field that we are
+	 * modifying is really a datetime field. Hay, error checking, what a
+	 * novel idea !-)
+	 */
+	if (SPI_gettypeid(tupdesc, attnum) != DATETIMEOID)
 		elog(ERROR, "moddatetime (%s): attribute %s must be of DATETIME type",
 			 relname, args[0]);
 
-/* 1 is the number of items in the arrays attnum and newdt. 
+/* 1 is the number of items in the arrays attnum and newdt.
 	attnum is the positional number of the field to be updated.
 	newdt is the new datetime stamp.
 	NOTE that attnum and newdt are not arrays, but then a 1 ellement array

@@ -27,7 +27,7 @@
  *				   SeqScan (emp.all)
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeResult.c,v 1.10 1999/03/20 01:13:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeResult.c,v 1.11 1999/05/25 16:08:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -263,8 +263,8 @@ ExecEndResult(Result *node)
 	 *		  is freed at end-transaction time.  -cim 6/2/91
 	 * ----------------
 	 */
-	ExecFreeExprContext(&resstate->cstate); /* XXX - new for us - er1p */
-	ExecFreeTypeInfo(&resstate->cstate); /* XXX - new for us - er1p */
+	ExecFreeExprContext(&resstate->cstate);		/* XXX - new for us - er1p */
+	ExecFreeTypeInfo(&resstate->cstate);		/* XXX - new for us - er1p */
 	ExecFreeProjectionInfo(&resstate->cstate);
 
 	/* ----------------
@@ -278,7 +278,8 @@ ExecEndResult(Result *node)
 	 * ----------------
 	 */
 	ExecClearTuple(resstate->cstate.cs_ResultTupleSlot);
-	pfree(resstate); node->resstate = NULL; /* XXX - new for us - er1p */
+	pfree(resstate);
+	node->resstate = NULL;		/* XXX - new for us - er1p */
 }
 
 void

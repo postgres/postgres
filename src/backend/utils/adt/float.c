@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.41 1999/04/20 00:26:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.42 1999/05/25 16:12:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -955,12 +955,12 @@ i2tof(int16 num)
 text *
 float8_text(float64 num)
 {
-	text   *result;
-	int		len;
-	char   *str;
+	text	   *result;
+	int			len;
+	char	   *str;
 
 	str = float8out(num);
-	len = (strlen(str)+VARHDRSZ);
+	len = (strlen(str) + VARHDRSZ);
 
 	result = palloc(len);
 
@@ -978,9 +978,9 @@ float8_text(float64 num)
 float64
 text_float8(text *string)
 {
-	float64	result;
-	int		len;
-	char   *str;
+	float64		result;
+	int			len;
+	char	   *str;
 
 	len = (VARSIZE(string) - VARHDRSZ);
 	str = palloc(len + 1);
@@ -1000,12 +1000,12 @@ text_float8(text *string)
 text *
 float4_text(float32 num)
 {
-	text   *result;
-	int		len;
-	char   *str;
+	text	   *result;
+	int			len;
+	char	   *str;
 
 	str = float4out(num);
-	len = (strlen(str)+VARHDRSZ);
+	len = (strlen(str) + VARHDRSZ);
 
 	result = palloc(len);
 
@@ -1023,9 +1023,9 @@ float4_text(float32 num)
 float32
 text_float4(text *string)
 {
-	float32	result;
-	int		len;
-	char   *str;
+	float32		result;
+	int			len;
+	char	   *str;
 
 	len = (VARSIZE(string) - VARHDRSZ);
 	str = palloc(len + 1);
@@ -1154,7 +1154,8 @@ dpow(float64 arg1, float64 arg2)
 #endif
 	*result = (float64data) pow(tmp1, tmp2);
 #ifndef finite
-	if (errno != 0)			/* on some machines both EDOM & ERANGE can occur */
+	if (errno != 0)				/* on some machines both EDOM & ERANGE can
+								 * occur */
 #else
 	if (!finite(*result))
 #endif

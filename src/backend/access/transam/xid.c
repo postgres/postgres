@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: xid.c,v 1.21 1999/02/13 23:14:49 momjian Exp $
+ *	$Id: xid.c,v 1.22 1999/05/25 16:07:52 momjian Exp $
  *
  * OLD COMMENTS
  * XXX WARNING

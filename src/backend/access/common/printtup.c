@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.45 1999/05/10 00:44:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.46 1999/05/25 16:06:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,9 +25,9 @@
 #include "libpq/pqformat.h"
 #include "utils/syscache.h"
 
-static void printtup_setup(DestReceiver* self, TupleDesc typeinfo);
-static void printtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver* self);
-static void printtup_cleanup(DestReceiver* self);
+static void printtup_setup(DestReceiver * self, TupleDesc typeinfo);
+static void printtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver * self);
+static void printtup_cleanup(DestReceiver * self);
 
 /* ----------------------------------------------------------------
  *		printtup / debugtup support
@@ -43,7 +43,7 @@ static void printtup_cleanup(DestReceiver* self);
  * ----------------
  */
 int
-getTypeOutAndElem(Oid type, Oid* typOutput, Oid* typElem)
+getTypeOutAndElem(Oid type, Oid *typOutput, Oid *typElem)
 {
 	HeapTuple	typeTuple;
 
@@ -54,6 +54,7 @@ getTypeOutAndElem(Oid type, Oid* typOutput, Oid* typElem)
 	if (HeapTupleIsValid(typeTuple))
 	{
 		Form_pg_type pt = (Form_pg_type) GETSTRUCT(typeTuple);
+
 		*typOutput = (Oid) pt->typoutput;
 		*typElem = (Oid) pt->typelem;
 		return OidIsValid(*typOutput);
@@ -70,27 +71,29 @@ getTypeOutAndElem(Oid type, Oid* typOutput, Oid* typElem)
  *		Private state for a printtup destination object
  * ----------------
  */
-typedef struct {				/* Per-attribute information */
+typedef struct
+{								/* Per-attribute information */
 	Oid			typoutput;		/* Oid for the attribute's type output fn */
 	Oid			typelem;		/* typelem value to pass to the output fn */
 	FmgrInfo	finfo;			/* Precomputed call info for typoutput */
-} PrinttupAttrInfo;
+}			PrinttupAttrInfo;
 
-typedef struct {
-	DestReceiver		pub;		/* publicly-known function pointers */
-	TupleDesc			attrinfo;	/* The attr info we are set up for */
-	int					nattrs;
-	PrinttupAttrInfo   *myinfo;		/* Cached info about each attr */
-} DR_printtup;
+typedef struct
+{
+	DestReceiver pub;			/* publicly-known function pointers */
+	TupleDesc	attrinfo;		/* The attr info we are set up for */
+	int			nattrs;
+	PrinttupAttrInfo *myinfo;	/* Cached info about each attr */
+}			DR_printtup;
 
 /* ----------------
  *		Initialize: create a DestReceiver for printtup
  * ----------------
  */
-DestReceiver*
+DestReceiver *
 printtup_create_DR()
 {
-	DR_printtup* self = (DR_printtup*) palloc(sizeof(DR_printtup));
+	DR_printtup *self = (DR_printtup *) palloc(sizeof(DR_printtup));
 
 	self->pub.receiveTuple = printtup;
 	self->pub.setup = printtup_setup;
@@ -100,42 +103,43 @@ printtup_create_DR()
 	self->nattrs = 0;
 	self->myinfo = NULL;
 
-	return (DestReceiver*) self;
+	return (DestReceiver *) self;
 }
 
 static void
-printtup_setup(DestReceiver* self, TupleDesc typeinfo)
+printtup_setup(DestReceiver * self, TupleDesc typeinfo)
 {
 	/* ----------------
 	 * We could set up the derived attr info at this time, but we postpone it
 	 * until the first call of printtup, for 3 reasons:
 	 * 1. We don't waste time (compared to the old way) if there are no
-	 *    tuples at all to output.
+	 *	  tuples at all to output.
 	 * 2. Checking in printtup allows us to handle the case that the tuples
-	 *    change type midway through (although this probably can't happen in
-	 *    the current executor).
+	 *	  change type midway through (although this probably can't happen in
+	 *	  the current executor).
 	 * 3. Right now, ExecutorRun passes a NULL for typeinfo anyway :-(
 	 * ----------------
 	 */
 }
 
 static void
-printtup_prepare_info(DR_printtup* myState, TupleDesc typeinfo, int numAttrs)
+printtup_prepare_info(DR_printtup * myState, TupleDesc typeinfo, int numAttrs)
 {
-	int i;
+	int			i;
 
 	if (myState->myinfo)
-		pfree(myState->myinfo);	/* get rid of any old data */
+		pfree(myState->myinfo); /* get rid of any old data */
 	myState->myinfo = NULL;
 	myState->attrinfo = typeinfo;
 	myState->nattrs = numAttrs;
 	if (numAttrs <= 0)
 		return;
-	myState->myinfo = (PrinttupAttrInfo*)
+	myState->myinfo = (PrinttupAttrInfo *)
 		palloc(numAttrs * sizeof(PrinttupAttrInfo));
 	for (i = 0; i < numAttrs; i++)
 	{
-		PrinttupAttrInfo* thisState = myState->myinfo + i;
+		PrinttupAttrInfo *thisState = myState->myinfo + i;
+
 		if (getTypeOutAndElem((Oid) typeinfo->attrs[i]->atttypid,
 							  &thisState->typoutput, &thisState->typelem))
 			fmgr_info(thisState->typoutput, &thisState->finfo);
@@ -147,9 +151,9 @@ printtup_prepare_info(DR_printtup* myState, TupleDesc typeinfo, int numAttrs)
  * ----------------
  */
 static void
-printtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver* self)
+printtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver * self)
 {
-	DR_printtup *myState = (DR_printtup*) self;
+	DR_printtup *myState = (DR_printtup *) self;
 	StringInfoData buf;
 	int			i,
 				j,
@@ -178,7 +182,7 @@ printtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver* self)
 	k = 1 << 7;
 	for (i = 0; i < tuple->t_data->t_natts; ++i)
 	{
-		if (! heap_attisnull(tuple, i + 1))
+		if (!heap_attisnull(tuple, i + 1))
 			j |= k;				/* set bit if not null */
 		k >>= 1;
 		if (k == 0)				/* end of byte? */
@@ -197,7 +201,8 @@ printtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver* self)
 	 */
 	for (i = 0; i < tuple->t_data->t_natts; ++i)
 	{
-		PrinttupAttrInfo* thisState = myState->myinfo + i;
+		PrinttupAttrInfo *thisState = myState->myinfo + i;
+
 		attr = heap_getattr(tuple, i + 1, typeinfo, &isnull);
 		if (isnull)
 			continue;
@@ -223,9 +228,10 @@ printtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver* self)
  * ----------------
  */
 static void
-printtup_cleanup(DestReceiver* self)
+printtup_cleanup(DestReceiver * self)
 {
-	DR_printtup* myState = (DR_printtup*) self;
+	DR_printtup *myState = (DR_printtup *) self;
+
 	if (myState->myinfo)
 		pfree(myState->myinfo);
 	pfree(myState);
@@ -274,7 +280,7 @@ showatts(char *name, TupleDesc tupleDesc)
  * ----------------
  */
 void
-debugtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver* self)
+debugtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver * self)
 {
 	int			i;
 	Datum		attr;
@@ -310,7 +316,7 @@ debugtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver* self)
  * ----------------
  */
 void
-printtup_internal(HeapTuple tuple, TupleDesc typeinfo, DestReceiver* self)
+printtup_internal(HeapTuple tuple, TupleDesc typeinfo, DestReceiver * self)
 {
 	StringInfoData buf;
 	int			i,
@@ -334,7 +340,7 @@ printtup_internal(HeapTuple tuple, TupleDesc typeinfo, DestReceiver* self)
 	k = 1 << 7;
 	for (i = 0; i < tuple->t_data->t_natts; ++i)
 	{
-		if (! heap_attisnull(tuple, i + 1))
+		if (!heap_attisnull(tuple, i + 1))
 			j |= k;				/* set bit if not null */
 		k >>= 1;
 		if (k == 0)				/* end of byte? */

@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.10 1999/05/10 00:46:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.11 1999/05/25 16:15:17 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -102,14 +102,14 @@ static int exec_stmt_execsql(PLpgSQL_execstate * estate,
 				  PLpgSQL_stmt_execsql * stmt);
 
 static void exec_prepare_plan(PLpgSQL_execstate * estate,
-				PLpgSQL_expr * expr);
-static bool exec_simple_check_node(Node * node);
+				  PLpgSQL_expr * expr);
+static bool exec_simple_check_node(Node *node);
 static void exec_simple_check_plan(PLpgSQL_expr * expr);
 static void exec_eval_clear_fcache(Node *node);
-static Datum exec_eval_simple_expr(PLpgSQL_execstate * estate, 
-				PLpgSQL_expr * expr, 
-				bool *isNull, 
-				Oid *rettype);
+static Datum exec_eval_simple_expr(PLpgSQL_execstate * estate,
+					  PLpgSQL_expr * expr,
+					  bool *isNull,
+					  Oid *rettype);
 
 static void exec_assign_expr(PLpgSQL_execstate * estate,
 				 PLpgSQL_datum * target,
@@ -1656,7 +1656,7 @@ exec_stmt_raise(PLpgSQL_execstate * estate, PLpgSQL_stmt_raise * stmt)
  */
 static void
 exec_prepare_plan(PLpgSQL_execstate * estate,
-				PLpgSQL_expr * expr)
+				  PLpgSQL_expr * expr)
 {
 	PLpgSQL_var *var;
 	PLpgSQL_rec *rec;
@@ -2164,10 +2164,10 @@ exec_run_select(PLpgSQL_execstate * estate,
  * ----------
  */
 static Datum
-exec_eval_simple_expr(PLpgSQL_execstate * estate, 
-					PLpgSQL_expr * expr, 
-					bool *isNull, 
-					Oid *rettype)
+exec_eval_simple_expr(PLpgSQL_execstate * estate,
+					  PLpgSQL_expr * expr,
+					  bool *isNull,
+					  Oid *rettype)
 {
 	Datum		retval;
 	PLpgSQL_var *var;
@@ -2180,7 +2180,7 @@ exec_eval_simple_expr(PLpgSQL_execstate * estate,
 	int			i;
 	bool		isnull;
 	bool		isdone;
-	ExprContext	*econtext;
+	ExprContext *econtext;
 	ParamListInfo paramLI;
 
 	/* ----------
@@ -2189,7 +2189,7 @@ exec_eval_simple_expr(PLpgSQL_execstate * estate,
 	 */
 	econtext = makeNode(ExprContext);
 	paramLI = (ParamListInfo) palloc((expr->nparams + 1) *
-							sizeof(ParamListInfoData));
+									 sizeof(ParamListInfoData));
 	econtext->ecxt_param_list_info = paramLI;
 
 	/* ----------
@@ -2200,7 +2200,7 @@ exec_eval_simple_expr(PLpgSQL_execstate * estate,
 	for (i = 0; i < expr->nparams; i++, paramLI++)
 	{
 		paramLI->kind = PARAM_NUM;
-		paramLI->id   = i + 1;
+		paramLI->id = i + 1;
 
 		switch (estate->datums[expr->params[i]]->dtype)
 		{
@@ -2269,9 +2269,9 @@ exec_eval_simple_expr(PLpgSQL_execstate * estate,
 	 */
 	SPI_push();
 	retval = ExecEvalExpr(expr->plan_simple_expr,
-							econtext,
-							isNull,
-							&isdone);
+						  econtext,
+						  isNull,
+						  &isdone);
 	SPI_pop();
 
 	/* ----------
@@ -2414,39 +2414,45 @@ exec_cast_value(Datum value, Oid valtype,
  * ----------
  */
 static bool
-exec_simple_check_node(Node * node)
+exec_simple_check_node(Node *node)
 {
 	switch (nodeTag(node))
 	{
-		case T_Expr:	{
-							Expr	*expr = (Expr *)node;
-							List	*l;
+			case T_Expr:
+			{
+				Expr	   *expr = (Expr *) node;
+				List	   *l;
 
-							switch (expr->opType)
-							{
-								case OP_EXPR:
-								case FUNC_EXPR:
-								case OR_EXPR:
-								case AND_EXPR:
-								case NOT_EXPR:	break;
+				switch (expr->opType)
+				{
+					case OP_EXPR:
+					case FUNC_EXPR:
+					case OR_EXPR:
+					case AND_EXPR:
+					case NOT_EXPR:
+						break;
 
-								default:		return FALSE;
-							}
+					default:
+						return FALSE;
+				}
 
-							foreach (l, expr->args)
-							{
-								if (!exec_simple_check_node(lfirst(l)))
-									return FALSE;
-							}
+				foreach(l, expr->args)
+				{
+					if (!exec_simple_check_node(lfirst(l)))
+						return FALSE;
+				}
 
-							return TRUE;
-						}
+				return TRUE;
+			}
 
-		case T_Param:	return TRUE;
+		case T_Param:
+			return TRUE;
 
-		case T_Const:	return TRUE;
+		case T_Const:
+			return TRUE;
 
-		default:		return FALSE;
+		default:
+			return FALSE;
 	}
 }
 
@@ -2460,21 +2466,21 @@ exec_simple_check_node(Node * node)
 static void
 exec_simple_check_plan(PLpgSQL_expr * expr)
 {
-	_SPI_plan	*spi_plan = (_SPI_plan *)expr->plan;
-	Plan		*plan;
-	TargetEntry	*tle;
+	_SPI_plan  *spi_plan = (_SPI_plan *) expr->plan;
+	Plan	   *plan;
+	TargetEntry *tle;
 
 	expr->plan_simple_expr = NULL;
 
 	/* ----------
 	 * 1. We can only evaluate queries that resulted in one single
-	 *    execution plan
+	 *	  execution plan
 	 * ----------
 	 */
 	if (spi_plan->ptlist == NULL || length(spi_plan->ptlist) != 1)
 		return;
 
-	plan = (Plan *)lfirst(spi_plan->ptlist);
+	plan = (Plan *) lfirst(spi_plan->ptlist);
 
 	/* ----------
 	 * 2. It must be a RESULT plan --> no scan's required
@@ -2492,7 +2498,7 @@ exec_simple_check_plan(PLpgSQL_expr * expr)
 
 	/* ----------
 	 * 4. Don't know if all these can break us, so let SPI handle
-	 *    those plans
+	 *	  those plans
 	 * ----------
 	 */
 	if (plan->qual != NULL || plan->lefttree != NULL || plan->righttree != NULL)
@@ -2500,10 +2506,10 @@ exec_simple_check_plan(PLpgSQL_expr * expr)
 
 	/* ----------
 	 * 5. Check that all the nodes in the expression are one of
-	 *    Expr, Param or Const.
+	 *	  Expr, Param or Const.
 	 * ----------
 	 */
-	tle = (TargetEntry *)lfirst(plan->targetlist);
+	tle = (TargetEntry *) lfirst(plan->targetlist);
 	if (!exec_simple_check_node(tle->expr))
 		return;
 
@@ -2516,18 +2522,22 @@ exec_simple_check_plan(PLpgSQL_expr * expr)
 
 	switch (nodeTag(tle->expr))
 	{
-		case T_Expr:	expr->plan_simple_type = 
-									((Expr *)(tle->expr))->typeOid;
-						break;
+		case T_Expr:
+			expr->plan_simple_type =
+				((Expr *) (tle->expr))->typeOid;
+			break;
 
-		case T_Param:	expr->plan_simple_type = 
-									((Param *)(tle->expr))->paramtype;
-						break;
+		case T_Param:
+			expr->plan_simple_type =
+				((Param *) (tle->expr))->paramtype;
+			break;
 
-		case T_Const:	expr->plan_simple_type = ((Const *)(tle->expr))->consttype;
-						break;
+		case T_Const:
+			expr->plan_simple_type = ((Const *) (tle->expr))->consttype;
+			break;
 
-		default:		expr->plan_simple_type = InvalidOid;
+		default:
+			expr->plan_simple_type = InvalidOid;
 	}
 
 	return;
@@ -2544,26 +2554,29 @@ exec_simple_check_plan(PLpgSQL_expr * expr)
 static void
 exec_eval_clear_fcache(Node *node)
 {
-	Expr	*expr;
-	List	*l;
+	Expr	   *expr;
+	List	   *l;
 
 	if (nodeTag(node) != T_Expr)
 		return;
 
-	expr = (Expr *)node;
+	expr = (Expr *) node;
 
-	switch(expr->opType)
+	switch (expr->opType)
 	{
-		case OP_EXPR:	((Oper *)(expr->oper))->op_fcache = NULL;
-						break;
+		case OP_EXPR:
+			((Oper *) (expr->oper))->op_fcache = NULL;
+			break;
 
-		case FUNC_EXPR:	((Func *)(expr->oper))->func_fcache = NULL;
-						break;
+		case FUNC_EXPR:
+			((Func *) (expr->oper))->func_fcache = NULL;
+			break;
 
-		default:		break;
+		default:
+			break;
 	}
 
-	foreach (l, expr->args)
+	foreach(l, expr->args)
 		exec_eval_clear_fcache(lfirst(l));
 }
 

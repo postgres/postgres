@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.46 1999/04/25 19:27:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.47 1999/05/25 16:08:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,17 +31,17 @@
  *	  relname to a list of outstanding NOTIFY requests.  Actual processing
  *	  happens if and only if we reach transaction commit.  At that time (in
  *	  routine AtCommit_Notify) we scan pg_listener for matching relnames.
- *    If the listenerPID in a matching tuple is ours, we just send a notify
+ *	  If the listenerPID in a matching tuple is ours, we just send a notify
  *	  message to our own front end.  If it is not ours, and "notification"
  *	  is not already nonzero, we set notification to our own PID and send a
  *	  SIGUSR2 signal to the receiving process (indicated by listenerPID).
  *	  BTW: if the signal operation fails, we presume that the listener backend
- *    crashed without removing this tuple, and remove the tuple for it.
+ *	  crashed without removing this tuple, and remove the tuple for it.
  *
  * 4. Upon receipt of a SIGUSR2 signal, the signal handler can call inbound-
  *	  notify processing immediately if this backend is idle (ie, it is
  *	  waiting for a frontend command and is not within a transaction block).
- *    Otherwise the handler may only set a flag, which will cause the
+ *	  Otherwise the handler may only set a flag, which will cause the
  *	  processing to occur just before we next go idle.
  *
  * 5. Inbound-notify processing consists of scanning pg_listener for tuples
@@ -53,7 +53,7 @@
  *
  * Note that the system's use of pg_listener is confined to very short
  * intervals at the end of a transaction that contains NOTIFY statements,
- * or during the transaction caused by an inbound SIGUSR2.  So the fact that
+ * or during the transaction caused by an inbound SIGUSR2.	So the fact that
  * pg_listener is a global resource shouldn't cause too much performance
  * problem.  But application authors ought to be discouraged from doing
  * LISTEN or UNLISTEN near the start of a long transaction --- that would
@@ -109,8 +109,8 @@ extern CommandDest whereToSendOutput;
 
 /*
  * State for outbound notifies consists of a list of all relnames NOTIFYed
- * in the current transaction.  We do not actually perform a NOTIFY until
- * and unless the transaction commits.  pendingNotifies is NULL if no
+ * in the current transaction.	We do not actually perform a NOTIFY until
+ * and unless the transaction commits.	pendingNotifies is NULL if no
  * NOTIFYs have been done in the current transaction.
  */
 static Dllist *pendingNotifies = NULL;
@@ -125,8 +125,8 @@ static Dllist *pendingNotifies = NULL;
  * does not grok "volatile", you'd be best advised to compile this file
  * with all optimization turned off.
  */
-static volatile int	notifyInterruptEnabled = 0;
-static volatile int	notifyInterruptOccurred = 0;
+static volatile int notifyInterruptEnabled = 0;
+static volatile int notifyInterruptOccurred = 0;
 
 /* True if we've registered an on_shmem_exit cleanup (or at least tried to). */
 static int	unlistenExitRegistered = 0;
@@ -142,7 +142,7 @@ static void ClearPendingNotifies(void);
 
 /*
  *--------------------------------------------------------------
- * Async_Notify 
+ * Async_Notify
  *
  *		This is executed by the SQL notify command.
  *
@@ -164,28 +164,29 @@ Async_Notify(char *relname)
 
 	/*
 	 * We allocate list memory from the global malloc pool to ensure that
-	 * it will live until we want to use it.  This is probably not necessary
-	 * any longer, since we will use it before the end of the transaction.
-	 * DLList only knows how to use malloc() anyway, but we could probably
-	 * palloc() the strings...
+	 * it will live until we want to use it.  This is probably not
+	 * necessary any longer, since we will use it before the end of the
+	 * transaction. DLList only knows how to use malloc() anyway, but we
+	 * could probably palloc() the strings...
 	 */
 	if (!pendingNotifies)
 		pendingNotifies = DLNewList();
 	notifyName = strdup(relname);
 	DLAddHead(pendingNotifies, DLNewElem(notifyName));
+
 	/*
 	 * NOTE: we could check to see if pendingNotifies already has an entry
-	 * for relname, and thus avoid making duplicate entries.  However, most
-	 * apps probably don't notify the same name multiple times per transaction,
-	 * so we'd likely just be wasting cycles to make such a check.
-	 * AsyncExistsPendingNotify() doesn't really care whether the list
-	 * contains duplicates...
+	 * for relname, and thus avoid making duplicate entries.  However,
+	 * most apps probably don't notify the same name multiple times per
+	 * transaction, so we'd likely just be wasting cycles to make such a
+	 * check. AsyncExistsPendingNotify() doesn't really care whether the
+	 * list contains duplicates...
 	 */
 }
 
 /*
  *--------------------------------------------------------------
- * Async_Listen 
+ * Async_Listen
  *
  *		This is executed by the SQL listen command.
  *
@@ -274,7 +275,7 @@ Async_Listen(char *relname, int pid)
 	/*
 	 * now that we are listening, make sure we will unlisten before dying.
 	 */
-	if (! unlistenExitRegistered)
+	if (!unlistenExitRegistered)
 	{
 		if (on_shmem_exit(Async_UnlistenOnExit, (caddr_t) NULL) < 0)
 			elog(NOTICE, "Async_Listen: out of shmem_exit slots");
@@ -284,7 +285,7 @@ Async_Listen(char *relname, int pid)
 
 /*
  *--------------------------------------------------------------
- * Async_Unlisten 
+ * Async_Unlisten
  *
  *		This is executed by the SQL unlisten command.
  *
@@ -326,14 +327,16 @@ Async_Unlisten(char *relname, int pid)
 		UnlockRelation(lRel, AccessExclusiveLock);
 		heap_close(lRel);
 	}
-	/* We do not complain about unlistening something not being listened;
+
+	/*
+	 * We do not complain about unlistening something not being listened;
 	 * should we?
 	 */
 }
 
 /*
  *--------------------------------------------------------------
- * Async_UnlistenAll 
+ * Async_UnlistenAll
  *
  *		Unlisten all relations for this backend.
  *
@@ -379,7 +382,7 @@ Async_UnlistenAll()
 
 /*
  *--------------------------------------------------------------
- * Async_UnlistenOnExit 
+ * Async_UnlistenOnExit
  *
  *		Clean up the pg_listener table at backend exit.
  *
@@ -398,11 +401,12 @@ Async_UnlistenAll()
 static void
 Async_UnlistenOnExit()
 {
+
 	/*
-	 * We need to start/commit a transaction for the unlisten,
-	 * but if there is already an active transaction we had better
-	 * abort that one first.  Otherwise we'd end up committing changes
-	 * that probably ought to be discarded.
+	 * We need to start/commit a transaction for the unlisten, but if
+	 * there is already an active transaction we had better abort that one
+	 * first.  Otherwise we'd end up committing changes that probably
+	 * ought to be discarded.
 	 */
 	AbortOutOfAnyTransaction();
 	/* Now we can do the unlisten */
@@ -413,7 +417,7 @@ Async_UnlistenOnExit()
 
 /*
  *--------------------------------------------------------------
- * AtCommit_Notify 
+ * AtCommit_Notify
  *
  *		This is called at transaction commit.
  *
@@ -450,12 +454,14 @@ AtCommit_Notify()
 	int32		listenerPID;
 
 	if (!pendingNotifies)
-		return;					/* no NOTIFY statements in this transaction */
+		return;					/* no NOTIFY statements in this
+								 * transaction */
 
-	/* NOTIFY is disabled if not normal processing mode.
-	 * This test used to be in xact.c, but it seems cleaner to do it here.
+	/*
+	 * NOTIFY is disabled if not normal processing mode. This test used to
+	 * be in xact.c, but it seems cleaner to do it here.
 	 */
-	if (! IsNormalProcessingMode())
+	if (!IsNormalProcessingMode())
 	{
 		ClearPendingNotifies();
 		return;
@@ -487,10 +493,13 @@ AtCommit_Notify()
 
 			if (listenerPID == MyProcPid)
 			{
-				/* Self-notify: no need to bother with table update.
+
+				/*
+				 * Self-notify: no need to bother with table update.
 				 * Indeed, we *must not* clear the notification field in
-				 * this path, or we could lose an outside notify, which'd be
-				 * bad for applications that ignore self-notify messages.
+				 * this path, or we could lose an outside notify, which'd
+				 * be bad for applications that ignore self-notify
+				 * messages.
 				 */
 				TPRINTF(TRACE_NOTIFY, "AtCommit_Notify: notifying self");
 				NotifyMyFrontEnd(relname, listenerPID);
@@ -499,23 +508,27 @@ AtCommit_Notify()
 			{
 				TPRINTF(TRACE_NOTIFY, "AtCommit_Notify: notifying pid %d",
 						listenerPID);
+
 				/*
-				 * If someone has already notified this listener,
-				 * we don't bother modifying the table, but we do still send
-				 * a SIGUSR2 signal, just in case that backend missed the
-				 * earlier signal for some reason.  It's OK to send the signal
-				 * first, because the other guy can't read pg_listener until
-				 * we unlock it.
+				 * If someone has already notified this listener, we don't
+				 * bother modifying the table, but we do still send a
+				 * SIGUSR2 signal, just in case that backend missed the
+				 * earlier signal for some reason.	It's OK to send the
+				 * signal first, because the other guy can't read
+				 * pg_listener until we unlock it.
 				 */
 #ifdef HAVE_KILL
 				if (kill(listenerPID, SIGUSR2) < 0)
 				{
-					/* Get rid of pg_listener entry if it refers to a PID
+
+					/*
+					 * Get rid of pg_listener entry if it refers to a PID
 					 * that no longer exists.  Presumably, that backend
 					 * crashed without deleting its pg_listener entries.
-					 * This code used to only delete the entry if errno==ESRCH,
-					 * but as far as I can see we should just do it for any
-					 * failure (certainly at least for EPERM too...)
+					 * This code used to only delete the entry if
+					 * errno==ESRCH, but as far as I can see we should
+					 * just do it for any failure (certainly at least for
+					 * EPERM too...)
 					 */
 					heap_delete(lRel, &lTuple->t_self, NULL);
 				}
@@ -536,6 +549,7 @@ AtCommit_Notify()
 	}
 
 	heap_endscan(sRel);
+
 	/*
 	 * We do not do RelationUnsetLockForWrite(lRel) here, because the
 	 * transaction is about to be committed anyway.
@@ -549,7 +563,7 @@ AtCommit_Notify()
 
 /*
  *--------------------------------------------------------------
- * AtAbort_Notify 
+ * AtAbort_Notify
  *
  *		This is called at transaction abort.
  *
@@ -569,7 +583,7 @@ AtAbort_Notify()
 
 /*
  *--------------------------------------------------------------
- * Async_NotifyHandler 
+ * Async_NotifyHandler
  *
  *		This is the signal handler for SIGUSR2.
  *
@@ -588,25 +602,30 @@ AtAbort_Notify()
 void
 Async_NotifyHandler(SIGNAL_ARGS)
 {
+
 	/*
-	 * Note: this is a SIGNAL HANDLER.  You must be very wary what you do here.
-	 * Some helpful soul had this routine sprinkled with TPRINTFs, which would
-	 * likely lead to corruption of stdio buffers if they were ever turned on.
+	 * Note: this is a SIGNAL HANDLER.	You must be very wary what you do
+	 * here. Some helpful soul had this routine sprinkled with TPRINTFs,
+	 * which would likely lead to corruption of stdio buffers if they were
+	 * ever turned on.
 	 */
 
 	if (notifyInterruptEnabled)
 	{
-		/* I'm not sure whether some flavors of Unix might allow another
-		 * SIGUSR2 occurrence to recursively interrupt this routine.
-		 * To cope with the possibility, we do the same sort of dance that
-		 * EnableNotifyInterrupt must do --- see that routine for comments.
+
+		/*
+		 * I'm not sure whether some flavors of Unix might allow another
+		 * SIGUSR2 occurrence to recursively interrupt this routine. To
+		 * cope with the possibility, we do the same sort of dance that
+		 * EnableNotifyInterrupt must do --- see that routine for
+		 * comments.
 		 */
 		notifyInterruptEnabled = 0;		/* disable any recursive signal */
 		notifyInterruptOccurred = 1;	/* do at least one iteration */
 		for (;;)
 		{
 			notifyInterruptEnabled = 1;
-			if (! notifyInterruptOccurred)
+			if (!notifyInterruptOccurred)
 				break;
 			notifyInterruptEnabled = 0;
 			if (notifyInterruptOccurred)
@@ -621,14 +640,18 @@ Async_NotifyHandler(SIGNAL_ARGS)
 	}
 	else
 	{
-		/* In this path it is NOT SAFE to do much of anything, except this: */
+
+		/*
+		 * In this path it is NOT SAFE to do much of anything, except
+		 * this:
+		 */
 		notifyInterruptOccurred = 1;
 	}
 }
 
 /*
  * --------------------------------------------------------------
- * EnableNotifyInterrupt 
+ * EnableNotifyInterrupt
  *
  *		This is called by the PostgresMain main loop just before waiting
  *		for a frontend command.  If we are truly idle (ie, *not* inside
@@ -652,26 +675,27 @@ EnableNotifyInterrupt(void)
 	 * notifyInterruptOccurred and then set notifyInterruptEnabled, we
 	 * could fail to respond promptly to a signal that happens in between
 	 * those two steps.  (A very small time window, perhaps, but Murphy's
-	 * Law says you can hit it...)  Instead, we first set the enable flag,
-	 * then test the occurred flag.  If we see an unserviced interrupt
-	 * has occurred, we re-clear the enable flag before going off to do
-	 * the service work.  (That prevents re-entrant invocation of
-	 * ProcessIncomingNotify() if another interrupt occurs.)
-	 * If an interrupt comes in between the setting and clearing of
-	 * notifyInterruptEnabled, then it will have done the service
-	 * work and left notifyInterruptOccurred zero, so we have to check
-	 * again after clearing enable.  The whole thing has to be in a loop
-	 * in case another interrupt occurs while we're servicing the first.
-	 * Once we get out of the loop, enable is set and we know there is no
+	 * Law says you can hit it...)	Instead, we first set the enable flag,
+	 * then test the occurred flag.  If we see an unserviced interrupt has
+	 * occurred, we re-clear the enable flag before going off to do the
+	 * service work.  (That prevents re-entrant invocation of
+	 * ProcessIncomingNotify() if another interrupt occurs.) If an
+	 * interrupt comes in between the setting and clearing of
+	 * notifyInterruptEnabled, then it will have done the service work and
+	 * left notifyInterruptOccurred zero, so we have to check again after
+	 * clearing enable.  The whole thing has to be in a loop in case
+	 * another interrupt occurs while we're servicing the first. Once we
+	 * get out of the loop, enable is set and we know there is no
 	 * unserviced interrupt.
 	 *
 	 * NB: an overenthusiastic optimizing compiler could easily break this
-	 * code.  Hopefully, they all understand what "volatile" means these days.
+	 * code.  Hopefully, they all understand what "volatile" means these
+	 * days.
 	 */
 	for (;;)
 	{
 		notifyInterruptEnabled = 1;
-		if (! notifyInterruptOccurred)
+		if (!notifyInterruptOccurred)
 			break;
 		notifyInterruptEnabled = 0;
 		if (notifyInterruptOccurred)
@@ -686,7 +710,7 @@ EnableNotifyInterrupt(void)
 
 /*
  * --------------------------------------------------------------
- * DisableNotifyInterrupt 
+ * DisableNotifyInterrupt
  *
  *		This is called by the PostgresMain main loop just after receiving
  *		a frontend command.  Signal handler execution of inbound notifies
@@ -702,7 +726,7 @@ DisableNotifyInterrupt(void)
 
 /*
  * --------------------------------------------------------------
- * ProcessIncomingNotify 
+ * ProcessIncomingNotify
  *
  *		Deal with arriving NOTIFYs from other backends.
  *		This is called either directly from the SIGUSR2 signal handler,
@@ -777,6 +801,7 @@ ProcessIncomingNotify(void)
 		}
 	}
 	heap_endscan(sRel);
+
 	/*
 	 * We do not do RelationUnsetLockForWrite(lRel) here, because the
 	 * transaction is about to be committed anyway.
@@ -785,7 +810,10 @@ ProcessIncomingNotify(void)
 
 	CommitTransactionCommand();
 
-	/* Must flush the notify messages to ensure frontend gets them promptly. */
+	/*
+	 * Must flush the notify messages to ensure frontend gets them
+	 * promptly.
+	 */
 	pq_flush();
 
 	PS_SET_STATUS("idle");
@@ -800,20 +828,22 @@ NotifyMyFrontEnd(char *relname, int32 listenerPID)
 	if (whereToSendOutput == Remote)
 	{
 		StringInfoData buf;
+
 		pq_beginmessage(&buf);
 		pq_sendbyte(&buf, 'A');
 		pq_sendint(&buf, listenerPID, sizeof(int32));
 		pq_sendstring(&buf, relname);
 		pq_endmessage(&buf);
-		/* NOTE: we do not do pq_flush() here.  For a self-notify, it will
+
+		/*
+		 * NOTE: we do not do pq_flush() here.	For a self-notify, it will
 		 * happen at the end of the transaction, and for incoming notifies
-		 * ProcessIncomingNotify will do it after finding all the notifies.
+		 * ProcessIncomingNotify will do it after finding all the
+		 * notifies.
 		 */
 	}
 	else
-	{
 		elog(NOTICE, "NOTIFY for %s", relname);
-	}
 }
 
 /* Does pendingNotifies include the given relname?
@@ -847,10 +877,12 @@ ClearPendingNotifies()
 
 	if (pendingNotifies)
 	{
-		/* Since the referenced strings are malloc'd, we have to scan the
+
+		/*
+		 * Since the referenced strings are malloc'd, we have to scan the
 		 * list and delete them individually.  If we used palloc for the
-		 * strings then we could just do DLFreeList to get rid of both
-		 * the list nodes and the list base...
+		 * strings then we could just do DLFreeList to get rid of both the
+		 * list nodes and the list base...
 		 */
 		while ((p = DLRemHead(pendingNotifies)) != NULL)
 		{

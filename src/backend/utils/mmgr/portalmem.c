@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.18 1999/02/13 23:20:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.19 1999/05/25 16:12:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,7 +50,7 @@
  *
  *		Here is an old comment taken from nodes/memnodes.h
  *
- * MemoryContext 
+ * MemoryContext
  *		A logical context in which memory allocations occur.
  *
  * The types of memory contexts can be thought of as members of the
@@ -517,7 +517,7 @@ DumpPortals()
  * ----------------------------------------------------------------
  */
 /*
- * EnablePortalManager 
+ * EnablePortalManager
  *		Enables/disables the portal management module.
  */
 void
@@ -579,7 +579,7 @@ EnablePortalManager(bool on)
 }
 
 /*
- * GetPortalByName 
+ * GetPortalByName
  *		Returns a portal given a portal name; returns blank portal given
  * NULL; returns invalid portal if portal not found.
  *
@@ -606,7 +606,7 @@ GetPortalByName(char *name)
 }
 
 /*
- * BlankPortalAssignName 
+ * BlankPortalAssignName
  *		Returns former blank portal as portal with given name.
  *
  * Side effect:
@@ -659,7 +659,7 @@ BlankPortalAssignName(char *name)		/* XXX PortalName */
 }
 
 /*
- * PortalSetQuery 
+ * PortalSetQuery
  *		Attaches a "query" to portal.
  *
  * Exceptions:
@@ -686,7 +686,7 @@ PortalSetQuery(Portal portal,
 }
 
 /*
- * PortalGetQueryDesc 
+ * PortalGetQueryDesc
  *		Returns query attached to portal.
  *
  * Exceptions:
@@ -703,7 +703,7 @@ PortalGetQueryDesc(Portal portal)
 }
 
 /*
- * PortalGetState 
+ * PortalGetState
  *		Returns state attached to portal.
  *
  * Exceptions:
@@ -720,7 +720,7 @@ PortalGetState(Portal portal)
 }
 
 /*
- * CreatePortal 
+ * CreatePortal
  *		Returns a new portal given a name.
  *
  * Note:
@@ -784,7 +784,7 @@ CreatePortal(char *name)		/* XXX PortalName */
 }
 
 /*
- * PortalDestroy 
+ * PortalDestroy
  *		Destroys portal.
  *
  * Exceptions:
@@ -813,22 +813,22 @@ PortalDestroy(Portal *portalP)
 	AllocSetReset(&portal->variable.setData);	/* XXX log */
 
 	/*
-	 * In the case of a transaction abort it is possible that
-	 * we get called while one of the memory contexts of the portal
-	 * we're destroying is the current memory context.
-	 * 
-	 * Don't know how to handle that cleanly because it is required
-	 * to be in that context right now. This portal struct remains
-	 * allocated in the PortalMemory context until backend dies.
+	 * In the case of a transaction abort it is possible that we get
+	 * called while one of the memory contexts of the portal we're
+	 * destroying is the current memory context.
 	 *
-	 * Not happy with that, but it's better to loose some bytes of
-	 * memory than to have the backend dump core.
+	 * Don't know how to handle that cleanly because it is required to be in
+	 * that context right now. This portal struct remains allocated in the
+	 * PortalMemory context until backend dies.
+	 *
+	 * Not happy with that, but it's better to loose some bytes of memory
+	 * than to have the backend dump core.
 	 *
 	 * --- Feb. 04, 1999 Jan Wieck
 	 */
-	if (CurrentMemoryContext == (MemoryContext)PortalGetHeapMemory(portal))
+	if (CurrentMemoryContext == (MemoryContext) PortalGetHeapMemory(portal))
 		return;
-	if (CurrentMemoryContext == (MemoryContext)PortalGetVariableMemory(portal))
+	if (CurrentMemoryContext == (MemoryContext) PortalGetVariableMemory(portal))
 		return;
 
 	if (portal != BlankPortal)
@@ -836,7 +836,7 @@ PortalDestroy(Portal *portalP)
 }
 
 /* ----------------
- *		PortalResetHeapMemory 
+ *		PortalResetHeapMemory
  *				Resets portal's heap memory context.
  *
  * Someday, Reset, Start, and End can be optimized by keeping a global
@@ -873,7 +873,7 @@ PortalResetHeapMemory(Portal portal)
 }
 
 /*
- * StartPortalAllocMode 
+ * StartPortalAllocMode
  *		Starts a new block of portal heap allocation using mode and limit;
  *		the current block is disabled until EndPortalAllocMode is called.
  *
@@ -904,7 +904,7 @@ StartPortalAllocMode(AllocMode mode, Size limit)
 	/* allocate and initialize new block */
 	context->block = MemoryContextAlloc(
 			  (MemoryContext) PortalHeapMemoryGetVariableMemory(context),
-						   sizeof(HeapMemoryBlockData));
+										sizeof(HeapMemoryBlockData));
 
 	/* XXX careful, context->block has never been stacked => bad state */
 
@@ -912,7 +912,7 @@ StartPortalAllocMode(AllocMode mode, Size limit)
 }
 
 /*
- * EndPortalAllocMode 
+ * EndPortalAllocMode
  *		Ends current block of portal heap allocation; previous block is
  *		reenabled.
  *
@@ -944,7 +944,7 @@ EndPortalAllocMode()
 }
 
 /*
- * PortalGetVariableMemory 
+ * PortalGetVariableMemory
  *		Returns variable memory context for a given portal.
  *
  * Exceptions:
@@ -958,7 +958,7 @@ PortalGetVariableMemory(Portal portal)
 }
 
 /*
- * PortalGetHeapMemory 
+ * PortalGetHeapMemory
  *		Returns heap memory context for a given portal.
  *
  * Exceptions:
@@ -972,7 +972,7 @@ PortalGetHeapMemory(Portal portal)
 }
 
 /*
- * PortalVariableMemoryGetPortal 
+ * PortalVariableMemoryGetPortal
  *		Returns portal containing given variable memory context.
  *
  * Exceptions:
@@ -986,7 +986,7 @@ PortalVariableMemoryGetPortal(PortalVariableMemory context)
 }
 
 /*
- * PortalHeapMemoryGetPortal 
+ * PortalHeapMemoryGetPortal
  *		Returns portal containing given heap memory context.
  *
  * Exceptions:
@@ -1000,7 +1000,7 @@ PortalHeapMemoryGetPortal(PortalHeapMemory context)
 }
 
 /*
- * PortalVariableMemoryGetHeapMemory 
+ * PortalVariableMemoryGetHeapMemory
  *		Returns heap memory context associated with given variable memory.
  *
  * Exceptions:
@@ -1019,7 +1019,7 @@ PortalVariableMemoryGetHeapMemory(PortalVariableMemory context)
 #endif
 
 /*
- * PortalHeapMemoryGetVariableMemory 
+ * PortalHeapMemoryGetVariableMemory
  *		Returns variable memory context associated with given heap memory.
  *
  * Exceptions:

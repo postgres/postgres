@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.18 1999/05/10 00:45:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.19 1999/05/25 16:11:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -144,9 +144,7 @@ SIAssignBackendId(SISeg *segInOutP, BackendTag backendTag)
 	for (index++; index < MAXBACKENDS; index++)
 	{
 		if (segInOutP->procState[index].tag == backendTag)
-		{
 			elog(FATAL, "SIAssignBackendId: tag %d found twice", backendTag);
-		}
 	}
 
 	Assert(stateP);
@@ -187,7 +185,7 @@ SISetDeadProcess(SISeg *segP, int backendId)
 }
 
 /*
- * CleanupInvalidationState 
+ * CleanupInvalidationState
  * Note:
  *		This is a temporary hack.  ExitBackend should call this instead
  *		of exit (via on_shmem_exit).

@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/chunk.c,v 1.19 1999/02/13 23:19:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/chunk.c,v 1.20 1999/05/25 16:11:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -115,7 +115,7 @@ _ChunkArray(int fd,
 }
 
 /*--------------------------------------------------------------------------
- * GetChunkSize 
+ * GetChunkSize
  *		  given an access pattern and array dimensionality etc, this program
  *		returns the dimensions of the chunk in "d"
  *-----------------------------------------------------------------------
@@ -160,7 +160,7 @@ GetChunkSize(FILE *fd,
 }
 
 /*-------------------------------------------------------------------------
- * _FindBestChunk 
+ * _FindBestChunk
  *		  This routine does most of the number crunching to compute the
  *		  optimal chunk shape.
  * Called by GetChunkSize
@@ -213,7 +213,7 @@ _FindBestChunk(int size,
 }
 
 /*----------------------------------------------------------------------
- * get_next 
+ * get_next
  *	 Called by _GetBestChunk to get the next tuple in the lexicographic order
  *---------------------------------------------------------------------
  */
@@ -420,7 +420,7 @@ seek_and_read(int pos, int size, char *buff, int fp, int from)
 #endif	 /* LOARRAY */
 
 /*----------------------------------------------------------------------------
- * _ReadChunkArray 
+ * _ReadChunkArray
  *		  returns the subarray specified bu the range indices "st" and "endp"
  *		  from the chunked array stored in file "fp"
  *---------------------------------------------------------------------------
@@ -620,7 +620,7 @@ _ReadChunkArray(int *st,
 }
 
 /*------------------------------------------------------------------------
- * _ReadChunkArray1El 
+ * _ReadChunkArray1El
  *		 returns one element of the chunked array as specified by the index "st"
  *		 the chunked file descriptor is "fp"
  *-------------------------------------------------------------------------

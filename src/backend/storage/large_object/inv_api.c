@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.52 1999/05/10 00:45:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.53 1999/05/25 16:11:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -131,7 +131,7 @@ inv_create(int flags)
 	if (RelnameFindRelid(indname) != InvalidOid)
 	{
 		elog(ERROR,
-			 "internal error: %s already exists -- cannot create large obj",
+		  "internal error: %s already exists -- cannot create large obj",
 			 indname);
 	}
 
@@ -437,13 +437,13 @@ inv_tell(LargeObjectDesc *obj_desc)
 int
 inv_read(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 {
-	HeapTupleData	tuple;
-	int				nread;
-	int				off;
-	int				ncopy;
-	Datum			d;
+	HeapTupleData tuple;
+	int			nread;
+	int			off;
+	int			ncopy;
+	Datum		d;
 	struct varlena *fsblock;
-	bool			isNull;
+	bool		isNull;
 
 	Assert(PointerIsValid(obj_desc));
 	Assert(buf != NULL);
@@ -499,9 +499,9 @@ inv_read(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 int
 inv_write(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 {
-	HeapTupleData	tuple;
-	int				nwritten;
-	int				tuplen;
+	HeapTupleData tuple;
+	int			nwritten;
+	int			tuplen;
 
 	Assert(PointerIsValid(obj_desc));
 	Assert(buf != NULL);
@@ -549,10 +549,12 @@ inv_write(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 			}
 			else
 				tuplen = inv_wrold(obj_desc, buf, nbytes - nwritten, &tuple, buffer);
-				/* inv_wrold() has already issued WriteBuffer()
-				   which has decremented local reference counter
-				   (LocalRefCount). So we should not call
-				   ReleaseBuffer() here. -- Tatsuo 99/2/4 */
+
+			/*
+			 * inv_wrold() has already issued WriteBuffer() which has
+			 * decremented local reference counter (LocalRefCount). So we
+			 * should not call ReleaseBuffer() here. -- Tatsuo 99/2/4
+			 */
 		}
 
 		/* move pointers past the amount we just wrote */
@@ -626,25 +628,26 @@ inv_fetchtup(LargeObjectDesc *obj_desc, HeapTuple tuple, Buffer *buffer)
 		|| obj_desc->offset < obj_desc->lowbyte
 		|| !ItemPointerIsValid(&(obj_desc->htid)))
 	{
- 		ScanKeyData skey;
+		ScanKeyData skey;
 
 		ScanKeyEntryInitialize(&skey, 0x0, 1, F_INT4GE,
-				       Int32GetDatum(obj_desc->offset));
+							   Int32GetDatum(obj_desc->offset));
 
 		/* initialize scan key if not done */
 		if (obj_desc->iscan == (IndexScanDesc) NULL)
 		{
+
 			/*
 			 * As scan index may be prematurely closed (on commit), we
 			 * must use object current offset (was 0) to reinitialize the
 			 * entry [ PA ].
 			 */
 			obj_desc->iscan = index_beginscan(obj_desc->index_r,
-								(bool) 0, (uint16) 1,
-								&skey);
-		} else {
- 			index_rescan(obj_desc->iscan, false, &skey);
-        	}
+											  (bool) 0, (uint16) 1,
+											  &skey);
+		}
+		else
+			index_rescan(obj_desc->iscan, false, &skey);
 		do
 		{
 			res = index_getnext(obj_desc->iscan, ForwardScanDirection);
@@ -671,15 +674,14 @@ inv_fetchtup(LargeObjectDesc *obj_desc, HeapTuple tuple, Buffer *buffer)
 		} while (tuple->t_data == NULL);
 
 		/* remember this tid -- we may need it for later reads/writes */
- 		ItemPointerCopy(&(tuple->t_self), &obj_desc->htid);
+		ItemPointerCopy(&(tuple->t_self), &obj_desc->htid);
 	}
 	else
 	{
 		tuple->t_self = obj_desc->htid;
 		heap_fetch(obj_desc->heap_r, SnapshotNow, tuple, buffer);
- 		if (tuple->t_data == NULL) {
+		if (tuple->t_data == NULL)
 			elog(ERROR, "inv_fetchtup: heap_fetch failed");
- 		}
 	}
 
 	/*
@@ -751,11 +753,13 @@ inv_wrnew(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 
 	nblocks = RelationGetNumberOfBlocks(hr);
 
-	if (nblocks > 0) {
+	if (nblocks > 0)
+	{
 		buffer = ReadBuffer(hr, nblocks - 1);
 		page = BufferGetPage(buffer);
 	}
-	else {
+	else
+	{
 		buffer = ReadBuffer(hr, P_NEW);
 		page = BufferGetPage(buffer);
 		PageInit(page, BufferGetPageSize(buffer), 0);
@@ -794,7 +798,7 @@ inv_wrnew(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 
 	ntup = inv_newtuple(obj_desc, buffer, page, buf, nwritten);
 	inv_indextup(obj_desc, ntup);
-	pfree (ntup);
+	pfree(ntup);
 
 	/* new tuple is inserted */
 	WriteBuffer(buffer);
@@ -874,11 +878,13 @@ inv_wrold(LargeObjectDesc *obj_desc,
 
 		nblocks = RelationGetNumberOfBlocks(hr);
 
-		if (nblocks > 0) {
+		if (nblocks > 0)
+		{
 			newbuf = ReadBuffer(hr, nblocks - 1);
 			newpage = BufferGetPage(newbuf);
 		}
-		else {
+		else
+		{
 			newbuf = ReadBuffer(hr, P_NEW);
 			newpage = BufferGetPage(newbuf);
 			PageInit(newpage, BufferGetPageSize(newbuf), 0);
@@ -966,7 +972,7 @@ inv_wrold(LargeObjectDesc *obj_desc,
 
 	/* index the new tuple */
 	inv_indextup(obj_desc, ntup);
-	pfree (ntup);
+	pfree(ntup);
 
 	/*
 	 * move the scandesc forward so we don't reread the newly inserted
@@ -1002,7 +1008,7 @@ inv_newtuple(LargeObjectDesc *obj_desc,
 			 char *dbuf,
 			 int nwrite)
 {
-	HeapTuple	ntup = (HeapTuple) palloc (sizeof(HeapTupleData));
+	HeapTuple	ntup = (HeapTuple) palloc(sizeof(HeapTupleData));
 	PageHeader	ph;
 	int			tupsize;
 	int			hoff;
@@ -1227,7 +1233,7 @@ _inv_getsize(Relation hreln, TupleDesc hdesc, Relation ireln)
 {
 	IndexScanDesc iscan;
 	RetrieveIndexResult res;
-	HeapTupleData	tuple;
+	HeapTupleData tuple;
 	Datum		d;
 	long		size;
 	bool		isNull;

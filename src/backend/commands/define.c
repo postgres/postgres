@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.28 1999/04/09 22:35:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.29 1999/05/25 16:08:22 momjian Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -203,7 +203,7 @@ interpret_AS_clause(const char *languageName, const char *as,
 
 
 /*
- * CreateFunction 
+ * CreateFunction
  *	 Execute a CREATE FUNCTION utility statement.
  *
  */
@@ -574,7 +574,7 @@ DefineAggregate(char *aggName, List *parameters)
 }
 
 /*
- * DefineType 
+ * DefineType
  *		Registers a new type.
  *
  */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.43 1999/04/13 17:18:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.44 1999/05/25 16:07:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -706,7 +706,7 @@ _bt_next(IndexScanDesc scan, ScanDirection dir)
 	so = (BTScanOpaque) scan->opaque;
 	current = &(scan->currentItemData);
 
-	Assert (BufferIsValid(so->btso_curbuf));
+	Assert(BufferIsValid(so->btso_curbuf));
 
 	/* we still have the buffer pinned and locked */
 	buf = so->btso_curbuf;
@@ -733,8 +733,8 @@ _bt_next(IndexScanDesc scan, ScanDirection dir)
 			return res;
 		}
 
-	} while (keysok >= so->numberOfFirstKeys || 
-		 (keysok == -1 && ScanDirectionIsBackward(dir)));
+	} while (keysok >= so->numberOfFirstKeys ||
+			 (keysok == -1 && ScanDirectionIsBackward(dir)));
 
 	ItemPointerSetInvalid(current);
 	so->btso_curbuf = InvalidBuffer;
@@ -776,8 +776,8 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	BTScanOpaque so;
 	ScanKeyData skdata;
 	Size		keysok;
-	int		i;
-	int		nKeyIndex = -1;
+	int			i;
+	int			nKeyIndex = -1;
 
 	rel = scan->relation;
 	so = (BTScanOpaque) scan->opaque;
@@ -795,27 +795,27 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 
 		if (ScanDirectionIsBackward(dir))
 		{
-			for (i=0; i<so->numberOfKeys; i++)
+			for (i = 0; i < so->numberOfKeys; i++)
 			{
 				if (so->keyData[i].sk_attno != 1)
 					break;
-				strat = _bt_getstrat(rel, so->keyData[i].sk_attno, 
-					so->keyData[i].sk_procedure);
+				strat = _bt_getstrat(rel, so->keyData[i].sk_attno,
+									 so->keyData[i].sk_procedure);
 				if (strat == BTLessStrategyNumber ||
-				    strat == BTLessEqualStrategyNumber||
-				    strat == BTEqualStrategyNumber)
+					strat == BTLessEqualStrategyNumber ||
+					strat == BTEqualStrategyNumber)
 				{
 					nKeyIndex = i;
 					break;
 				}
 			}
 		}
-		else 
+		else
 		{
 			strat = _bt_getstrat(rel, 1, so->keyData[0].sk_procedure);
 
 			if (strat == BTLessStrategyNumber ||
-			    strat == BTLessEqualStrategyNumber)
+				strat == BTLessEqualStrategyNumber)
 				;
 			else
 				nKeyIndex = 0;
@@ -850,7 +850,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	}
 	proc = index_getprocid(rel, 1, BTORDER_PROC);
 	ScanKeyEntryInitialize(&skdata, so->keyData[nKeyIndex].sk_flags,
-				1, proc, so->keyData[nKeyIndex].sk_argument);
+						   1, proc, so->keyData[nKeyIndex].sk_argument);
 
 	stack = _bt_search(rel, 1, &skdata, &buf);
 	_bt_freestack(stack);
@@ -1104,9 +1104,10 @@ _bt_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 
 	rel = scan->relation;
 	current = &(scan->currentItemData);
+
 	/*
-	 * Don't use ItemPointerGetOffsetNumber or you risk to get
-	 * assertion due to ability of ip_posid to be equal 0.
+	 * Don't use ItemPointerGetOffsetNumber or you risk to get assertion
+	 * due to ability of ip_posid to be equal 0.
 	 */
 	offnum = current->ip_posid;
 	page = BufferGetPage(*bufP);

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pagenum.h,v 1.7 1999/02/13 23:22:09 momjian Exp $
+ * $Id: pagenum.h,v 1.8 1999/05/25 16:14:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,7 +21,7 @@ typedef uint32 LogicalPageNumber;
 #define InvalidLogicalPageNumber		0
 
 /*
- * LogicalPageNumberIsValid 
+ * LogicalPageNumberIsValid
  *		True iff the logical page number is valid.
  */
 #define LogicalPageNumberIsValid(pageNumber) \

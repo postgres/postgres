@@ -206,28 +206,30 @@ on_error_continue()
 **		get_result
 **
 */
-PGresult   *get_result()
+PGresult   *
+get_result()
 {
-	char *cmdstatus = PQcmdStatus(res);
-	
+	char	   *cmdstatus = PQcmdStatus(res);
+
 	was_get_unset_result = TRUE;
 
 	/* we have to store the fetch location somewhere */
 	cmdstatus[0] = NUL;
-	memcpy(&cmdstatus[1],&tuple, sizeof(tuple));
+	memcpy(&cmdstatus[1], &tuple, sizeof(tuple));
 
 	return res;
 }
-	
+
 /*
 **
 **		set_result
 **
 */
-void        set_result(PGresult *newres)
+void
+set_result(PGresult *newres)
 {
 
-	char *cmdstatus = PQcmdStatus(res);
+	char	   *cmdstatus = PQcmdStatus(res);
 
 	if (newres == NULL)
 		halt("set_result called with null result pointer\n");
@@ -256,9 +258,10 @@ void        set_result(PGresult *newres)
 **		unset_result
 **
 */
-void       unset_result(PGresult *oldres)
+void
+unset_result(PGresult *oldres)
 {
-	char *cmdstatus = PQcmdStatus(oldres);
+	char	   *cmdstatus = PQcmdStatus(oldres);
 
 	if (oldres == NULL)
 		halt("unset_result called with null result pointer\n");
@@ -277,8 +280,8 @@ void       unset_result(PGresult *oldres)
 **		reset_fetch
 **
 */
-void        reset_fetch()
+void
+reset_fetch()
 {
 	tuple = 0;
 }
-

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/genam.c,v 1.16 1999/02/13 23:14:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/genam.c,v 1.17 1999/05/25 16:07:12 momjian Exp $
  *
  * NOTES
  *	  many of the old access method routines have been turned into
@@ -270,5 +270,5 @@ IndexScanRestorePosition(IndexScanDesc scan)
 
 	scan->flags = 0x0;			/* XXX should have a symbolic name */
 }
-#endif
 
+#endif

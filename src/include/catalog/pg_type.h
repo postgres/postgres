@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.61 1999/05/10 04:02:07 momjian Exp $
+ * $Id: pg_type.h,v 1.62 1999/05/25 16:13:48 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -54,19 +54,20 @@ CATALOG(pg_type) BOOTSTRAP
 	/*
 	 * typbyval determines whether internal Postgres routines pass a value
 	 * of this type by value or by reference.  Only char, short, and int-
-	 * equivalent items can be passed by value, so if the type is not
-	 * 1, 2, or 4 bytes long, Postgres does not have the option of passing
-	 * by value and so typbyval had better be FALSE.  Variable-length types
-	 * are always passed by reference.
-	 * Note that typbyval can be false even if the length would allow
-	 * pass-by-value; this is currently true for type float4, for example.
+	 * equivalent items can be passed by value, so if the type is not 1,
+	 * 2, or 4 bytes long, Postgres does not have the option of passing by
+	 * value and so typbyval had better be FALSE.  Variable-length types
+	 * are always passed by reference. Note that typbyval can be false
+	 * even if the length would allow pass-by-value; this is currently
+	 * true for type float4, for example.
 	 */
 	char		typtype;
 
 	/*
-	 * typtype is 'b' for a basic type and 'c' for a catalog type (ie a class).
-	 * If typtype is 'c', typrelid is the OID of the class' entry in pg_class.
-	 * (Why do we need an entry in pg_type for classes, anyway?)
+	 * typtype is 'b' for a basic type and 'c' for a catalog type (ie a
+	 * class). If typtype is 'c', typrelid is the OID of the class' entry
+	 * in pg_class. (Why do we need an entry in pg_type for classes,
+	 * anyway?)
 	 */
 	bool		typisdefined;
 	char		typdelim;
@@ -301,7 +302,7 @@ DESCR("money '$d,ddd.cc'");
 DATA(insert OID = 791 (  _money    PGUID  -1 -1 f b t \054 0  790 array_in array_out array_in array_out i _null_ ));
 
 /* OIDS 800 - 899 */
-DATA(insert OID = 829 ( macaddr	   PGUID  6 -1 f b t \054 0	0 macaddr_in macaddr_out macaddr_in macaddr_out i _null_ ));
+DATA(insert OID = 829 ( macaddr    PGUID  6 -1 f b t \054 0 0 macaddr_in macaddr_out macaddr_in macaddr_out i _null_ ));
 DESCR("MAC address");
 DATA(insert OID = 869 ( inet	   PGUID  -1 -1 f b t \054 0 0 inet_in inet_out inet_in inet_out i _null_ ));
 DESCR("Host address");
@@ -344,7 +345,7 @@ DATA(insert OID = 1027 (  _polygon	 PGUID -1  -1 f b t \054 0 604 array_in array
 DATA(insert OID = 1033 (  aclitem	 PGUID 8   -1 f b t \054 0 0 aclitemin aclitemout aclitemin aclitemout i _null_ ));
 DESCR("access control list");
 DATA(insert OID = 1034 (  _aclitem	 PGUID -1 -1 f b t \054 0 1033 array_in array_out array_in array_out i _null_ ));
-DATA(insert OID = 1040 (  _macaddr   PGUID -1 -1 f b t \054 0  829 array_in array_out array_in array_out i _null_ ));
+DATA(insert OID = 1040 (  _macaddr	 PGUID -1 -1 f b t \054 0  829 array_in array_out array_in array_out i _null_ ));
 DATA(insert OID = 1041 (  _inet    PGUID -1 -1 f b t \054 0  869 array_in array_out array_in array_out i _null_ ));
 DATA(insert OID = 651  (  _cidr    PGUID -1 -1 f b t \054 0  650 array_in array_out array_in array_out i _null_ ));
 DATA(insert OID = 1042 ( bpchar		 PGUID -1  -1 f b t \054 0	18 bpcharin bpcharout bpcharin bpcharout i _null_ ));

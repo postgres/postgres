@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.28 1999/05/12 17:04:46 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.29 1999/05/25 16:10:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -238,12 +238,12 @@ DefineQueryRewrite(RuleStmt *stmt)
 	 */
 	if (event_type == CMD_SELECT)
 	{
-		TargetEntry		*tle;
-		Resdom			*resdom;
-		Form_pg_attribute	attr;
-		char			*attname;
+		TargetEntry *tle;
+		Resdom	   *resdom;
+		Form_pg_attribute attr;
+		char	   *attname;
 		int			i;
-		char			expected_name[NAMEDATALEN + 5];
+		char		expected_name[NAMEDATALEN + 5];
 
 		/*
 		 * So there cannot be INSTEAD NOTHING, ...
@@ -259,6 +259,7 @@ DefineQueryRewrite(RuleStmt *stmt)
 		 */
 		if (length(action) > 1)
 			elog(ERROR, "multiple action rules on select currently not supported");
+
 		/*
 		 * ... the one action must be a SELECT, ...
 		 */
@@ -269,8 +270,8 @@ DefineQueryRewrite(RuleStmt *stmt)
 			elog(ERROR, "event qualifications not supported for rules on select");
 
 		/*
-		 * ... the targetlist of the SELECT action must
-		 * exactly match the event relation, ...
+		 * ... the targetlist of the SELECT action must exactly match the
+		 * event relation, ...
 		 */
 		event_relation = heap_openr(event_obj->relname);
 		if (event_relation == NULL)
@@ -279,8 +280,9 @@ DefineQueryRewrite(RuleStmt *stmt)
 		if (event_relation->rd_att->natts != length(query->targetList))
 			elog(ERROR, "select rules target list must match event relations structure");
 
-		for (i = 1; i <= event_relation->rd_att->natts; i++) {
-			tle = (TargetEntry *)nth(i - 1, query->targetList);
+		for (i = 1; i <= event_relation->rd_att->natts; i++)
+		{
+			tle = (TargetEntry *) nth(i - 1, query->targetList);
 			resdom = tle->resdom;
 			attr = event_relation->rd_att->attrs[i - 1];
 			attname = nameout(&(attr->attname));
@@ -289,19 +291,20 @@ DefineQueryRewrite(RuleStmt *stmt)
 				elog(ERROR, "select rules target entry %d has different column name from %s", i, attname);
 
 			if (attr->atttypid != resdom->restype)
-				elog(ERROR, "select rules target entry %d has different type from attribute %s", i,  attname);
+				elog(ERROR, "select rules target entry %d has different type from attribute %s", i, attname);
 
 			if (attr->atttypmod != resdom->restypmod)
-				elog(ERROR, "select rules target entry %d has different size from attribute %s", i,  attname);
+				elog(ERROR, "select rules target entry %d has different size from attribute %s", i, attname);
 		}
 
 		/*
-		 * ... there must not be another ON SELECT
-		 * rule already ...
+		 * ... there must not be another ON SELECT rule already ...
 		 */
-		if (event_relation->rd_rules != NULL) {
-			for (i = 0; i < event_relation->rd_rules->numLocks; i++) {
-				RewriteRule	*rule;
+		if (event_relation->rd_rules != NULL)
+		{
+			for (i = 0; i < event_relation->rd_rules->numLocks; i++)
+			{
+				RewriteRule *rule;
 
 				rule = event_relation->rd_rules->rules[i];
 				if (rule->event == CMD_SELECT)
@@ -333,9 +336,10 @@ DefineQueryRewrite(RuleStmt *stmt)
 		 * ... and finally the rule must be named _RETviewname.
 		 */
 		sprintf(expected_name, "_RET%s", event_obj->relname);
-		if (strcmp(expected_name, stmt->rulename) != 0) {
+		if (strcmp(expected_name, stmt->rulename) != 0)
+		{
 			elog(ERROR, "view rule for %s must be named %s",
-				event_obj->relname, expected_name);
+				 event_obj->relname, expected_name);
 		}
 	}
 

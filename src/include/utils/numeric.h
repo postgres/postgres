@@ -5,7 +5,7 @@
  *
  *	1998 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/include/utils/numeric.h,v 1.4 1999/02/13 23:22:26 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/include/utils/numeric.h,v 1.5 1999/05/25 16:14:56 momjian Exp $
  *
  * ----------
  */
@@ -24,10 +24,10 @@
 #define NUMERIC_DEFAULT_PRECISION	30
 #define NUMERIC_DEFAULT_SCALE		6
 
-#define	NUMERIC_MAX_DISPLAY_SCALE	NUMERIC_MAX_PRECISION
-#define	NUMERIC_MIN_DISPLAY_SCALE	NUMERIC_DEFAULT_SCALE + 4
+#define NUMERIC_MAX_DISPLAY_SCALE	NUMERIC_MAX_PRECISION
+#define NUMERIC_MIN_DISPLAY_SCALE	NUMERIC_DEFAULT_SCALE + 4
 
-#define	NUMERIC_MAX_RESULT_SCALE	(NUMERIC_MAX_PRECISION * 2)
+#define NUMERIC_MAX_RESULT_SCALE	(NUMERIC_MAX_PRECISION * 2)
 #define NUMERIC_MIN_RESULT_SCALE	(NUMERIC_DEFAULT_PRECISION + 4)
 
 #define NUMERIC_UNPACKED_DATASIZE	(NUMERIC_MAX_PRECISION * 2 + 4)
@@ -38,12 +38,12 @@
  * ----------
  */
 #define NUMERIC_SIGN_MASK	0xC000
-#define	NUMERIC_POS			0x0000
+#define NUMERIC_POS			0x0000
 #define NUMERIC_NEG			0x4000
 #define NUMERIC_NAN			0xC000
 #define NUMERIC_SIGN(n)		((n)->n_sign_dscale & NUMERIC_SIGN_MASK)
 #define NUMERIC_DSCALE(n)	((n)->n_sign_dscale & ~NUMERIC_SIGN_MASK)
-#define NUMERIC_IS_NAN(n)	(NUMERIC_SIGN(n) != NUMERIC_POS && 			\
+#define NUMERIC_IS_NAN(n)	(NUMERIC_SIGN(n) != NUMERIC_POS &&			\
 								NUMERIC_SIGN(n) != NUMERIC_NEG)
 
 
@@ -51,17 +51,17 @@
  * The Numeric data type stored in the database
  * ----------
  */
-typedef struct NumericData {
-	int32			varlen;			/* Variable size		*/
-	int16			n_weight;		/* Weight of 1st digit	*/
-	uint16			n_rscale;		/* Result scale			*/
-	uint16			n_sign_dscale;	/* Sign + display scale	*/
-	unsigned char	n_data[1];		/* Digit data			*/
-} NumericData;
+typedef struct NumericData
+{
+	int32		varlen;			/* Variable size		*/
+	int16		n_weight;		/* Weight of 1st digit	*/
+	uint16		n_rscale;		/* Result scale			*/
+	uint16		n_sign_dscale;	/* Sign + display scale */
+	unsigned char n_data[1];	/* Digit data			*/
+}			NumericData;
 typedef NumericData *Numeric;
 
 #define NUMERIC_HDRSZ	(sizeof(int32) + sizeof(uint16) * 3)
 
 
-#endif /* _PG_NUMERIC_H_ */
-
+#endif	 /* _PG_NUMERIC_H_ */

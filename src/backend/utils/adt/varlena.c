@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.47 1999/02/13 23:19:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.48 1999/05/25 16:12:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -314,7 +314,7 @@ textcat(text *t1, text *t2)
  *	- string length
  *
  * If the starting position is zero or less, then return from the start of the string
- *  adjusting the length to be consistant with the "negative start" per SQL92.
+ *	adjusting the length to be consistant with the "negative start" per SQL92.
  * If the length is less than zero, return the remaining string.
  *
  * Note that the arguments operate on octet length,
@@ -352,11 +352,14 @@ text_substr(text *string, int32 m, int32 n)
 		m = 1;
 		n = 0;
 	}
-	/* starting position before the start of the string?
-	 * then offset into the string per SQL92 spec... */
+
+	/*
+	 * starting position before the start of the string? then offset into
+	 * the string per SQL92 spec...
+	 */
 	else if (m < 1)
 	{
-		n += (m-1);
+		n += (m - 1);
 		m = 1;
 	}
 
@@ -588,10 +591,10 @@ text_ge(text *arg1, text *arg2)
 text *
 text_larger(text *arg1, text *arg2)
 {
-	text *result;
-	text *temp;
+	text	   *result;
+	text	   *temp;
 
-	temp = ((text_cmp(arg1, arg2) <= 0)? arg2: arg1);
+	temp = ((text_cmp(arg1, arg2) <= 0) ? arg2 : arg1);
 
 	/* Make a copy */
 
@@ -604,10 +607,10 @@ text_larger(text *arg1, text *arg2)
 text *
 text_smaller(text *arg1, text *arg2)
 {
-	text *result;
-	text *temp;
+	text	   *result;
+	text	   *temp;
 
-	temp = ((text_cmp(arg1, arg2) > 0)? arg2: arg1);
+	temp = ((text_cmp(arg1, arg2) > 0) ? arg2 : arg1);
 
 	/* Make a copy */
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.22 1999/02/22 06:16:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.23 1999/05/25 16:10:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,6 +61,7 @@ BufferBlock BufferBlocks;
 
 #ifndef HAS_TEST_AND_SET
 long	   *NWaitIOBackendP;
+
 #endif
 
 extern IpcSemaphoreId WaitIOSemId;
@@ -238,14 +239,14 @@ InitBufferPool(IPCKey key)
 		WaitIOSemId = IpcSemaphoreCreate(IPCKeyGetWaitIOSemaphoreKey(key),
 										 1, IPCProtection, 0, 1, &status);
 		WaitCLSemId = IpcSemaphoreCreate(IPCKeyGetWaitCLSemaphoreKey(key),
-										 1, IPCProtection, 
-										 IpcSemaphoreDefaultStartValue, 
+										 1, IPCProtection,
+										 IpcSemaphoreDefaultStartValue,
 										 1, &status);
 	}
 #endif
 	PrivateRefCount = (long *) calloc(NBuffers, sizeof(long));
 	LastRefCount = (long *) calloc(NBuffers, sizeof(long));
-	BufferLocks = (bits8*) calloc (NBuffers, sizeof(bits8));
+	BufferLocks = (bits8 *) calloc(NBuffers, sizeof(bits8));
 	CommitInfoNeedsSave = (long *) calloc(NBuffers, sizeof(long));
 }
 

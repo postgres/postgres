@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.24 1999/05/17 18:24:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.25 1999/05/25 16:08:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -142,7 +142,7 @@ renameatt(char *relname,
 		}
 	}
 
-	
+
 	if ((relid = RelnameFindRelid(relname)) == InvalidOid)
 		elog(ERROR, "renameatt: relation \"%s\" nonexistent", relname);
 
@@ -201,7 +201,7 @@ renameatt(char *relname,
 void
 renamerel(char *oldrelname, char *newrelname)
 {
-	int		i;
+	int			i;
 	Relation	relrelation;	/* for RELATION relation */
 	HeapTuple	oldreltup;
 	char		oldpath[MAXPGPATH],
@@ -237,7 +237,7 @@ renamerel(char *oldrelname, char *newrelname)
 	{
 		sprintf(toldpath, "%s.%d", oldpath, i);
 		sprintf(tnewpath, "%s.%d", newpath, i);
-		if(rename(toldpath, tnewpath) < 0)
+		if (rename(toldpath, tnewpath) < 0)
 			break;
 	}
 

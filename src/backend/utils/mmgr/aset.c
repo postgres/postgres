@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/aset.c,v 1.15 1999/05/22 23:19:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/aset.c,v 1.16 1999/05/25 16:12:51 momjian Exp $
  *
  * NOTE:
  *	This is a new (Feb. 05, 1999) implementation of the allocation set
@@ -51,7 +51,7 @@
  */
 
 #define ALLOC_MINBITS		4	/* smallest chunk size is 16 bytes */
-#define	ALLOC_SMALLCHUNK_LIMIT	(1 << (ALLOCSET_NUM_FREELISTS-2+ALLOC_MINBITS))
+#define ALLOC_SMALLCHUNK_LIMIT	(1 << (ALLOCSET_NUM_FREELISTS-2+ALLOC_MINBITS))
 /* Size of largest chunk that we use a fixed size for */
 
 /*--------------------
@@ -65,8 +65,8 @@
  *--------------------
  */
 
-#define	ALLOC_MIN_BLOCK_SIZE	8192
-#define	ALLOC_MAX_BLOCK_SIZE	(8 * 1024 * 1024)
+#define ALLOC_MIN_BLOCK_SIZE	8192
+#define ALLOC_MAX_BLOCK_SIZE	(8 * 1024 * 1024)
 
 
 #define ALLOC_BLOCKHDRSZ	MAXALIGN(sizeof(AllocBlockData))
@@ -91,12 +91,12 @@
 static inline int
 AllocSetFreeIndex(Size size)
 {
-	int idx = 0;
+	int			idx = 0;
 
 	if (size > 0)
 	{
 		size = (size - 1) >> ALLOC_MINBITS;
-		while (size != 0 && idx < ALLOCSET_NUM_FREELISTS-1)
+		while (size != 0 && idx < ALLOCSET_NUM_FREELISTS - 1)
 		{
 			idx++;
 			size >>= 1;
@@ -105,7 +105,7 @@ AllocSetFreeIndex(Size size)
 
 	return idx;
 }
-			
+
 
 /*
  * Public routines
@@ -119,7 +119,7 @@ AllocSetFreeIndex(Size size)
  */
 
 /*
- * AllocSetInit 
+ * AllocSetInit
  *		Initializes given allocation set.
  *
  * Note:
@@ -147,7 +147,7 @@ AllocSetInit(AllocSet set, AllocMode mode, Size limit)
 
 
 /*
- * AllocSetReset 
+ * AllocSetReset
  *		Frees memory which is allocated in the given set.
  *
  * Exceptions:
@@ -156,8 +156,8 @@ AllocSetInit(AllocSet set, AllocMode mode, Size limit)
 void
 AllocSetReset(AllocSet set)
 {
-	AllocBlock		block = set->blocks;
-	AllocBlock		next;
+	AllocBlock	block = set->blocks;
+	AllocBlock	next;
 
 	AssertArg(AllocSetIsValid(set));
 
@@ -172,7 +172,7 @@ AllocSetReset(AllocSet set)
 }
 
 /*
- * AllocSetContains 
+ * AllocSetContains
  *		True iff allocation set contains given allocation element.
  *
  * Exceptions:
@@ -189,7 +189,7 @@ AllocSetContains(AllocSet set, AllocPointer pointer)
 }
 
 /*
- * AllocSetAlloc 
+ * AllocSetAlloc
  *		Returns pointer to allocated memory of given size; memory is added
  *		to the set.
  *
@@ -200,22 +200,22 @@ AllocSetContains(AllocSet set, AllocPointer pointer)
 AllocPointer
 AllocSetAlloc(AllocSet set, Size size)
 {
-	AllocBlock		block;
-	AllocChunk		chunk;
-	AllocChunk		freeref = NULL;
-	int				fidx;
-	Size			chunk_size;
-	Size			blksize;
+	AllocBlock	block;
+	AllocChunk	chunk;
+	AllocChunk	freeref = NULL;
+	int			fidx;
+	Size		chunk_size;
+	Size		blksize;
 
 	AssertArg(AllocSetIsValid(set));
 
 	/*
-	 * Lookup in the corresponding free list if there is a
-	 * free chunk we could reuse
+	 * Lookup in the corresponding free list if there is a free chunk we
+	 * could reuse
 	 *
 	 */
 	fidx = AllocSetFreeIndex(size);
-	for (chunk = set->freelist[fidx]; chunk; chunk = (AllocChunk)chunk->aset)
+	for (chunk = set->freelist[fidx]; chunk; chunk = (AllocChunk) chunk->aset)
 	{
 		if (chunk->size >= size)
 			break;
@@ -223,18 +223,18 @@ AllocSetAlloc(AllocSet set, Size size)
 	}
 
 	/*
-	 * If one is found, remove it from the free list, make it again
-	 * a member of the alloc set and return it's data address.
+	 * If one is found, remove it from the free list, make it again a
+	 * member of the alloc set and return it's data address.
 	 *
 	 */
 	if (chunk != NULL)
 	{
 		if (freeref == NULL)
-			set->freelist[fidx] = (AllocChunk)chunk->aset;
+			set->freelist[fidx] = (AllocChunk) chunk->aset;
 		else
 			freeref->aset = chunk->aset;
 
-		chunk->aset = (void *)set;
+		chunk->aset = (void *) set;
 		return AllocChunkGetPointer(chunk);
 	}
 
@@ -248,8 +248,8 @@ AllocSetAlloc(AllocSet set, Size size)
 	Assert(chunk_size >= size);
 
 	/*
-	 * If there is enough room in the active allocation block,
-	 * always allocate the chunk there.
+	 * If there is enough room in the active allocation block, always
+	 * allocate the chunk there.
 	 */
 
 	if ((block = set->blocks) != NULL)
@@ -261,8 +261,8 @@ AllocSetAlloc(AllocSet set, Size size)
 	}
 
 	/*
-	 * Otherwise, if requested size exceeds smallchunk limit,
-	 * allocate an entire separate block for this allocation
+	 * Otherwise, if requested size exceeds smallchunk limit, allocate an
+	 * entire separate block for this allocation
 	 *
 	 */
 	if (block == NULL && size > ALLOC_SMALLCHUNK_LIMIT)
@@ -272,9 +272,9 @@ AllocSetAlloc(AllocSet set, Size size)
 		if (block == NULL)
 			elog(FATAL, "Memory exhausted in AllocSetAlloc()");
 		block->aset = set;
-		block->freeptr = block->endptr = ((char *)block) + blksize;
+		block->freeptr = block->endptr = ((char *) block) + blksize;
 
-		chunk = (AllocChunk) (((char *)block) + ALLOC_BLOCKHDRSZ);
+		chunk = (AllocChunk) (((char *) block) + ALLOC_BLOCKHDRSZ);
 		chunk->aset = set;
 		chunk->size = chunk_size;
 
@@ -310,8 +310,11 @@ AllocSetAlloc(AllocSet set, Size size)
 		{
 			/* Get size of prior block */
 			blksize = set->blocks->endptr - ((char *) set->blocks);
-			/* Special case: if very first allocation was for a large chunk,
-			 * could have a funny-sized top block.  Do something reasonable.
+
+			/*
+			 * Special case: if very first allocation was for a large
+			 * chunk, could have a funny-sized top block.  Do something
+			 * reasonable.
 			 */
 			if (blksize < ALLOC_MIN_BLOCK_SIZE)
 				blksize = ALLOC_MIN_BLOCK_SIZE;
@@ -321,12 +324,13 @@ AllocSetAlloc(AllocSet set, Size size)
 				blksize = ALLOC_MAX_BLOCK_SIZE;
 			/* Try to allocate it */
 			block = (AllocBlock) malloc(blksize);
+
 			/*
 			 * We could be asking for pretty big blocks here, so cope if
 			 * malloc fails.  But give up if there's less than a meg or so
 			 * available...
 			 */
-			while (block == NULL && blksize > 1024*1024)
+			while (block == NULL && blksize > 1024 * 1024)
 			{
 				blksize >>= 1;
 				block = (AllocBlock) malloc(blksize);
@@ -336,8 +340,8 @@ AllocSetAlloc(AllocSet set, Size size)
 		if (block == NULL)
 			elog(FATAL, "Memory exhausted in AllocSetAlloc()");
 		block->aset = set;
-		block->freeptr = ((char *)block) + ALLOC_BLOCKHDRSZ;
-		block->endptr = ((char *)block) + blksize;
+		block->freeptr = ((char *) block) + ALLOC_BLOCKHDRSZ;
+		block->endptr = ((char *) block) + blksize;
 		block->next = set->blocks;
 
 		set->blocks = block;
@@ -346,8 +350,8 @@ AllocSetAlloc(AllocSet set, Size size)
 	/*
 	 * OK, do the allocation
 	 */
-	chunk = (AllocChunk)(block->freeptr);
-	chunk->aset = (void *)set;
+	chunk = (AllocChunk) (block->freeptr);
+	chunk->aset = (void *) set;
 	chunk->size = chunk_size;
 	block->freeptr += (chunk_size + ALLOC_CHUNKHDRSZ);
 	Assert(block->freeptr <= block->endptr);
@@ -356,7 +360,7 @@ AllocSetAlloc(AllocSet set, Size size)
 }
 
 /*
- * AllocSetFree 
+ * AllocSetFree
  *		Frees allocated memory; memory is removed from the set.
  *
  * Exceptions:
@@ -367,8 +371,8 @@ AllocSetAlloc(AllocSet set, Size size)
 void
 AllocSetFree(AllocSet set, AllocPointer pointer)
 {
-	int				fidx;
-	AllocChunk		chunk;
+	int			fidx;
+	AllocChunk	chunk;
 
 	/* AssertArg(AllocSetIsValid(set)); */
 	/* AssertArg(AllocPointerIsValid(pointer)); */
@@ -377,12 +381,12 @@ AllocSetFree(AllocSet set, AllocPointer pointer)
 	chunk = AllocPointerGetChunk(pointer);
 	fidx = AllocSetFreeIndex(chunk->size);
 
-	chunk->aset = (void *)set->freelist[fidx];
+	chunk->aset = (void *) set->freelist[fidx];
 	set->freelist[fidx] = chunk;
 }
 
 /*
- * AllocSetRealloc 
+ * AllocSetRealloc
  *		Returns new pointer to allocated memory of given size; this memory
  *		is added to the set.  Memory associated with given pointer is copied
  *		into the new memory, and the old memory is freed.
@@ -404,8 +408,8 @@ AllocSetRealloc(AllocSet set, AllocPointer pointer, Size size)
 	AssertArg(AllocSetContains(set, pointer));
 
 	/*
-	 * Chunk sizes are aligned to power of 2 on AllocSetAlloc().
-	 * Maybe the allocated area already is >= the new size.
+	 * Chunk sizes are aligned to power of 2 on AllocSetAlloc(). Maybe the
+	 * allocated area already is >= the new size.
 	 *
 	 */
 	oldsize = AllocPointerGetSize(pointer);
@@ -425,7 +429,7 @@ AllocSetRealloc(AllocSet set, AllocPointer pointer, Size size)
 }
 
 /*
- * AllocSetDump 
+ * AllocSetDump
  *		Displays allocated set.
  */
 void

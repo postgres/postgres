@@ -5,8 +5,10 @@
 /* variables */
 
 extern int	braces_open,
-			autocommit, struct_level;
-extern char *yytext, errortext[128];
+			autocommit,
+			struct_level;
+extern char *yytext,
+			errortext[128];
 extern int	yylineno,
 			yyleng;
 extern FILE *yyin,
@@ -36,9 +38,9 @@ extern void yyerror(char *);
 /* return codes */
 
 #define OK			 0
-#define PARSE_ERROR 		-1
+#define PARSE_ERROR			-1
 #define ILLEGAL_OPTION		-2
-#define INDICATOR_NOT_ARRAY	-3
+#define INDICATOR_NOT_ARRAY -3
 
 #define NO_INCLUDE_FILE ENOENT
 #define OUT_OF_MEMORY	ENOMEM

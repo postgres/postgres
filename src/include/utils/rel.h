@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rel.h,v 1.22 1999/02/13 23:22:29 momjian Exp $
+ * $Id: rel.h,v 1.23 1999/05/25 16:14:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,7 +52,7 @@ typedef struct RelationData
 	bool		rd_myxactonly;	/* uses the local buffer mgr */
 	bool		rd_isnailed;	/* rel is nailed in cache */
 	bool		rd_isnoname;	/* rel has no name */
-	bool		rd_nonameunlinked; /* noname rel already unlinked */
+	bool		rd_nonameunlinked;		/* noname rel already unlinked */
 	Form_pg_am	rd_am;			/* AM tuple */
 	Form_pg_class rd_rel;		/* RELATION tuple */
 	Oid			rd_id;			/* relations's object id */
@@ -77,13 +77,13 @@ typedef Relation *RelationPtr;
 #define InvalidRelation ((Relation)NULL)
 
 /*
- * RelationIsValid 
+ * RelationIsValid
  *		True iff relation descriptor is valid.
  */
 #define RelationIsValid(relation) PointerIsValid(relation)
 
 /*
- * RelationGetSystemPort 
+ * RelationGetSystemPort
  *		Returns system port of a relation.
  *
  * Note:
@@ -92,14 +92,14 @@ typedef Relation *RelationPtr;
 #define RelationGetSystemPort(relation) ((relation)->rd_fd)
 
 /*
- * RelationGetLockInfo 
+ * RelationGetLockInfo
  *		Returns the lock information structure in the reldesc
  *
  */
 #define RelationGetLockInfo(relation) ((relation)->lockInfo)
 
 /*
- * RelationHasReferenceCountZero 
+ * RelationHasReferenceCountZero
  *		True iff relation reference count is zero.
  *
  * Note:
@@ -109,25 +109,25 @@ typedef Relation *RelationPtr;
 		((bool)((relation)->rd_refcnt == 0))
 
 /*
- * RelationSetReferenceCount 
+ * RelationSetReferenceCount
  *		Sets relation reference count.
  */
 #define RelationSetReferenceCount(relation,count) ((relation)->rd_refcnt = count)
 
 /*
- * RelationIncrementReferenceCount 
+ * RelationIncrementReferenceCount
  *		Increments relation reference count.
  */
 #define RelationIncrementReferenceCount(relation) ((relation)->rd_refcnt += 1);
 
 /*
- * RelationDecrementReferenceCount 
+ * RelationDecrementReferenceCount
  *		Decrements relation reference count.
  */
 #define RelationDecrementReferenceCount(relation) ((relation)->rd_refcnt -= 1)
 
 /*
- * RelationGetForm 
+ * RelationGetForm
  *		Returns relation attribute values for a relation.
  *
  * Note:
@@ -137,7 +137,7 @@ typedef Relation *RelationPtr;
 
 
 /*
- * RelationGetRelid 
+ * RelationGetRelid
  *
  *	returns the object id of the relation
  *
@@ -145,7 +145,7 @@ typedef Relation *RelationPtr;
 #define RelationGetRelid(relation) ((relation)->rd_id)
 
 /*
- * RelationGetFile 
+ * RelationGetFile
  *
  *	  Returns the open File decscriptor
  */
@@ -153,21 +153,21 @@ typedef Relation *RelationPtr;
 
 
 /*
- * RelationGetRelationName 
+ * RelationGetRelationName
  *
  *	  Returns a Relation Name
  */
 #define RelationGetRelationName(relation) (&(relation)->rd_rel->relname)
 
 /*
- * RelationGetRelationName 
+ * RelationGetRelationName
  *
  *	  Returns a the number of attributes.
  */
 #define RelationGetNumberOfAttributes(relation) ((relation)->rd_rel->relnatts)
 
 /*
- * RelationGetDescr 
+ * RelationGetDescr
  *		Returns tuple descriptor for a relation.
  *
  * Note:

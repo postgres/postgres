@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: psort.h,v 1.18 1999/05/09 00:53:18 tgl Exp $
+ * $Id: psort.h,v 1.19 1999/05/25 16:14:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,7 @@ struct tape
 {
 	int			tp_dummy;		/* (D) */
 	int			tp_fib;			/* (A) */
-	BufFile	   *tp_file;		/* (TAPE) */
+	BufFile    *tp_file;		/* (TAPE) */
 	struct tape *tp_prev;
 };
 
@@ -56,7 +56,7 @@ typedef struct Psortstate
 
 	struct leftist *Tuples;
 
-	BufFile	   *psort_grab_file;
+	BufFile    *psort_grab_file;
 	long		psort_current;	/* could be file offset, or array index */
 	long		psort_saved;	/* could be file offset, or array index */
 	bool		using_tape_files;

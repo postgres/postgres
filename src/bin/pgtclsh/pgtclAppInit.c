@@ -1,5 +1,5 @@
 /*
- * pgtclAppInit.c 
+ * pgtclAppInit.c
  *
  *		a skeletal Tcl_AppInit that provides pgtcl initialization
  *	  to create a tclsh that can talk to pglite backends
@@ -30,7 +30,7 @@ int		   *tclDummyMathPtr = (int *) matherr;
 /*
  *----------------------------------------------------------------------
  *
- * main 
+ * main
  *
  *		This is the main program for the application.
  *
@@ -56,7 +56,7 @@ main(int argc, char **argv)
 /*
  *----------------------------------------------------------------------
  *
- * Tcl_AppInit 
+ * Tcl_AppInit
  *
  *		This procedure performs application-specific initialization.
  *		Most applications, especially those that incorporate additional

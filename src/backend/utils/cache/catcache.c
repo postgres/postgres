@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.40 1999/05/10 00:46:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.41 1999/05/25 16:12:22 momjian Exp $
  *
  * Notes:
  *		XXX This needs to use exception.h to handle recovery when
@@ -196,6 +196,7 @@ CatalogCacheInitializeCache(struct catcache * cache,
 
 		if (cache->cc_key[i] > 0)
 		{
+
 			/*
 			 * Yoiks.  The implementation of the hashing code and the
 			 * implementation of int28's are at loggerheads.  The right
@@ -277,7 +278,7 @@ CatalogCacheSetId(CatCache *cacheInOutP, int id)
 #endif
 
 /* ----------------
- * comphash 
+ * comphash
  *		Compute a hash value, somehow.
  *
  * XXX explain algorithm here.

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.44 1999/05/10 00:46:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.45 1999/05/25 16:12:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,7 +55,7 @@ static int	Err_file = -1;
 static int	ElogDebugIndentLevel = 0;
 
 /*
- * elog 
+ * elog
  *		Old error logging function.
  */
 void
@@ -167,7 +167,7 @@ elog(int lev, const char *fmt,...)
 	 * front-end program, write to it first.  This is important because
 	 * there's a bug in the socket code on ultrix.  If the front end has
 	 * gone away (so the channel to it has been closed at the other end),
-	 * then writing here can cause this backend to exit without warning 
+	 * then writing here can cause this backend to exit without warning
 	 * that is, write() does an exit(). In this case, our only hope of
 	 * finding out what's going on is if Err_file was set to some disk
 	 * log.  This is a major pain.
@@ -190,26 +190,32 @@ elog(int lev, const char *fmt,...)
 	if (IsUnderPostmaster && lev > DEBUG)
 	{
 		/* notices are not errors, handle 'em differently */
-		char msgtype;
+		char		msgtype;
+
 		if (lev == NOTICE)
 			msgtype = 'N';
 		else
 		{
-			/* Abort any COPY OUT in progress when an error is detected.
-			 * This hack is necessary because of poor design of copy protocol.
+
+			/*
+			 * Abort any COPY OUT in progress when an error is detected.
+			 * This hack is necessary because of poor design of copy
+			 * protocol.
 			 */
 			pq_endcopyout(true);
 			msgtype = 'E';
 		}
 		/* exclude the timestamp from msg sent to frontend */
 		pq_puttextmessage(msgtype, line + TIMESTAMP_SIZE);
+
 		/*
 		 * This flush is normally not necessary, since postgres.c will
 		 * flush out waiting data when control returns to the main loop.
 		 * But it seems best to leave it here, so that the client has some
-		 * clue what happened if the backend dies before getting back to the
-		 * main loop ... error/notice messages should not be a performance-
-		 * critical path anyway, so an extra flush won't hurt much ...
+		 * clue what happened if the backend dies before getting back to
+		 * the main loop ... error/notice messages should not be a
+		 * performance- critical path anyway, so an extra flush won't hurt
+		 * much ...
 		 */
 		pq_flush();
 	}

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/Attic/mm.c,v 1.15 1999/03/06 21:17:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/Attic/mm.c,v 1.16 1999/05/25 16:11:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -569,15 +569,15 @@ MMShmemSize()
 	 * first compute space occupied by the (dbid,relid,blkno) hash table
 	 */
 	size += hash_estimate_size(MMNBUFFERS,
-				   0, /* MMHashEntry includes key */
-				   sizeof(MMHashEntry));
+							   0,		/* MMHashEntry includes key */
+							   sizeof(MMHashEntry));
 
 	/*
 	 * now do the same for the rel hash table
 	 */
 	size += hash_estimate_size(MMNRELATIONS,
-				   0, /* MMRelHashEntry includes key */
-				   sizeof(MMRelHashEntry));
+							   0,		/* MMRelHashEntry includes key */
+							   sizeof(MMRelHashEntry));
 
 	/*
 	 * finally, add in the memory block we use directly

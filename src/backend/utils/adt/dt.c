@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.70 1999/05/01 17:14:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.71 1999/05/25 16:12:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,9 +34,9 @@
 
 static int	DecodeDate(char *str, int fmask, int *tmask, struct tm * tm);
 static int DecodeNumber(int flen, char *field,
-			 int fmask, int *tmask, struct tm * tm, double *fsec, int *is2digits);
+	int fmask, int *tmask, struct tm * tm, double *fsec, int *is2digits);
 static int DecodeNumberField(int len, char *str,
-				  int fmask, int *tmask, struct tm * tm, double *fsec, int *is2digits);
+	int fmask, int *tmask, struct tm * tm, double *fsec, int *is2digits);
 static int	DecodeSpecial(int field, char *lowtoken, int *val);
 static int DecodeTime(char *str, int fmask, int *tmask,
 		   struct tm * tm, double *fsec);
@@ -55,9 +55,9 @@ static int	tm2timespan(struct tm * tm, double fsec, TimeSpan *span);
 #define USE_DATE_CACHE 1
 #define ROUND_ALL 0
 
-int	day_tab[2][13] = {
+int			day_tab[2][13] = {
 	{31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, 0},
-	{31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, 0}};
+{31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, 0}};
 
 
 char	   *months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
@@ -2090,7 +2090,7 @@ static datetkn datetktbl[] = {
 	{"idlw", TZ, NEG(72)},		/* Intl. Date Line, West */
 	{LATE, RESERV, DTK_LATE},	/* "infinity" reserved for "late time" */
 	{INVALID, RESERV, DTK_INVALID},
-								/* "invalid" reserved for invalid time */
+	/* "invalid" reserved for invalid time */
 	{"ist", TZ, 12},			/* Israel */
 	{"it", TZ, 21},				/* Iran Time */
 	{"jan", MONTH, 1},
@@ -2438,7 +2438,7 @@ datetime2tm(DateTime dt, int *tzp, struct tm * tm, double *fsec, char **tzn)
 
 			*tzp = -(tm->tm_gmtoff);	/* tm_gmtoff is Sun/DEC-ism */
 			if (tzn != NULL)
-				*tzn = (char *)tm->tm_zone;
+				*tzn = (char *) tm->tm_zone;
 #elif defined(HAVE_INT_TIMEZONE)
 #ifdef __CYGWIN__
 			*tzp = (tm->tm_isdst ? (_timezone - 3600) : _timezone);
@@ -2833,8 +2833,10 @@ DecodeDateTime(char **field, int *ftype, int nf,
 			case DTK_NUMBER:
 				flen = strlen(field[i]);
 
-				/* long numeric string and either no date or no time read yet?
-				 * then interpret as a concatenated date or time... */
+				/*
+				 * long numeric string and either no date or no time read
+				 * yet? then interpret as a concatenated date or time...
+				 */
 				if ((flen > 4) && !((fmask & DTK_DATE_M) && (fmask & DTK_TIME_M)))
 				{
 					if (DecodeNumberField(flen, field[i], fmask, &tmask, tm, fsec, &is2digits) != 0)
@@ -2926,10 +2928,14 @@ DecodeDateTime(char **field, int *ftype, int nf,
 #ifdef DATEDEBUG
 						printf("DecodeDateTime- month field %s value is %d\n", field[i], val);
 #endif
-						/* already have a (numeric) month? then see if we can substitute... */
-						if ((fmask & DTK_M(MONTH)) && (! haveTextMonth)
-						  && (!(fmask & DTK_M(DAY)))
-						  && ((tm->tm_mon >= 1) && (tm->tm_mon <= 31)))
+
+						/*
+						 * already have a (numeric) month? then see if we
+						 * can substitute...
+						 */
+						if ((fmask & DTK_M(MONTH)) && (!haveTextMonth)
+							&& (!(fmask & DTK_M(DAY)))
+							&& ((tm->tm_mon >= 1) && (tm->tm_mon <= 31)))
 						{
 							tm->tm_mday = tm->tm_mon;
 							tmask = DTK_M(DAY);
@@ -2942,7 +2948,11 @@ DecodeDateTime(char **field, int *ftype, int nf,
 						break;
 
 					case DTZMOD:
-						/* daylight savings time modifier (solves "MET DST" syntax) */
+
+						/*
+						 * daylight savings time modifier (solves "MET
+						 * DST" syntax)
+						 */
 						tmask |= DTK_M(DTZ);
 						tm->tm_isdst = 1;
 						if (tzp == NULL)
@@ -3010,7 +3020,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 		if (tm->tm_year > 0)
 			tm->tm_year = -(tm->tm_year - 1);
 		else
-			elog(ERROR,"Inconsistant use of year %04d and 'BC'", tm->tm_year);
+			elog(ERROR, "Inconsistant use of year %04d and 'BC'", tm->tm_year);
 	}
 	else if (is2digits)
 	{
@@ -3039,18 +3049,22 @@ DecodeDateTime(char **field, int *ftype, int nf,
 		if ((fmask & DTK_DATE_M) != DTK_DATE_M)
 			return ((fmask & DTK_TIME_M) == DTK_TIME_M) ? 1 : -1;
 
-		/* check for valid day of month, now that we know for sure the month and year... */
+		/*
+		 * check for valid day of month, now that we know for sure the
+		 * month and year...
+		 */
 		if ((tm->tm_mday < 1)
 		 || (tm->tm_mday > day_tab[isleap(tm->tm_year)][tm->tm_mon - 1]))
 			return -1;
 
 		/* timezone not specified? then find local timezone if possible */
 		if (((fmask & DTK_DATE_M) == DTK_DATE_M)
-		 && (tzp != NULL) && (!(fmask & DTK_M(TZ))))
+			&& (tzp != NULL) && (!(fmask & DTK_M(TZ))))
 		{
+
 			/*
-			 * daylight savings time modifier but no standard timezone? then
-			 * error
+			 * daylight savings time modifier but no standard timezone?
+			 * then error
 			 */
 			if (fmask & DTK_M(DTZMOD))
 				return -1;
@@ -3066,7 +3080,8 @@ DecodeDateTime(char **field, int *ftype, int nf,
 				tm->tm_mon += 1;
 
 #if defined(HAVE_TM_ZONE)
-				*tzp = -(tm->tm_gmtoff);	/* tm_gmtoff is Sun/DEC-ism */
+				*tzp = -(tm->tm_gmtoff);		/* tm_gmtoff is
+												 * Sun/DEC-ism */
 #elif defined(HAVE_INT_TIMEZONE)
 #ifdef __CYGWIN__
 				*tzp = ((tm->tm_isdst > 0) ? (_timezone - 3600) : _timezone);
@@ -3077,7 +3092,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 #error USE_POSIX_TIME is defined but neither HAVE_TM_ZONE or HAVE_INT_TIMEZONE are defined
 #endif
 
-#else  /* !USE_POSIX_TIME */
+#else							/* !USE_POSIX_TIME */
 				*tzp = CTimeZone;
 #endif
 			}
@@ -3214,8 +3229,8 @@ DecodeTimeOnly(char **field, int *ftype, int nf, int *dtype, struct tm * tm, dou
 		tm->tm_hour += 12;
 
 	if (((tm->tm_hour < 0) || (tm->tm_hour > 23))
-	 || ((tm->tm_min < 0) || (tm->tm_min > 59))
-	 || ((tm->tm_sec < 0) || ((tm->tm_sec + *fsec) >= 60)))
+		|| ((tm->tm_min < 0) || (tm->tm_min > 59))
+		|| ((tm->tm_sec < 0) || ((tm->tm_sec + *fsec) >= 60)))
 		return -1;
 
 	if ((fmask & DTK_TIME_M) != DTK_TIME_M)
@@ -3344,7 +3359,7 @@ DecodeDate(char *str, int fmask, int *tmask, struct tm * tm)
 		if (tm->tm_year > 0)
 			tm->tm_year = -(tm->tm_year - 1);
 		else
-			elog(ERROR,"Inconsistant use of year %04d and 'BC'", tm->tm_year);
+			elog(ERROR, "Inconsistant use of year %04d and 'BC'", tm->tm_year);
 	}
 	else if (is2digits)
 	{
@@ -3449,11 +3464,12 @@ DecodeNumber(int flen, char *str, int fmask,
 			   &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
 
 	}
-	/* Enough digits to be unequivocal year?
-	 * Used to test for 4 digits or more,
-	 * but we now test first for a three-digit doy
-	 * so anything bigger than two digits had better be
-	 * an explicit year. - thomas 1999-01-09
+
+	/*
+	 * Enough digits to be unequivocal year? Used to test for 4 digits or
+	 * more, but we now test first for a three-digit doy so anything
+	 * bigger than two digits had better be an explicit year. - thomas
+	 * 1999-01-09
 	 */
 	else if (flen > 2)
 	{
@@ -3464,7 +3480,7 @@ DecodeNumber(int flen, char *str, int fmask,
 
 		/* already have a year? then see if we can substitute... */
 		if ((fmask & DTK_M(YEAR)) && (!(fmask & DTK_M(DAY)))
-		  && ((tm->tm_year >= 1) && (tm->tm_year <= 31)))
+			&& ((tm->tm_year >= 1) && (tm->tm_year <= 31)))
 		{
 			tm->tm_mday = tm->tm_year;
 			*tmask = DTK_M(DAY);
@@ -3543,7 +3559,7 @@ DecodeNumber(int flen, char *str, int fmask,
  */
 static int
 DecodeNumberField(int len, char *str, int fmask,
-				  int *tmask, struct tm * tm, double *fsec, int *is2digits)
+				int *tmask, struct tm * tm, double *fsec, int *is2digits)
 {
 	char	   *cp;
 

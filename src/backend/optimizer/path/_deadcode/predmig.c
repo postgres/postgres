@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/_deadcode/Attic/predmig.c,v 1.1 1999/02/18 19:58:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/_deadcode/Attic/predmig.c,v 1.2 1999/05/25 16:09:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -257,7 +257,7 @@ xfunc_llel_chains(Stream root, Stream bottom)
 			 */
 			Assert(xfunc_num_relids(pathstream) > xfunc_num_relids(tmpstream));
 			progress = xfunc_prdmig_pullup(origstream, tmpstream,
-									(JoinPath) get_pathptr(pathstream));
+									 (JoinPath) get_pathptr(pathstream));
 		}
 		if (get_downstream(tmpstream))
 			pathstream = (Stream) xfunc_get_downjoin((Stream) get_downstream(tmpstream));
@@ -269,7 +269,7 @@ xfunc_llel_chains(Stream root, Stream bottom)
 }
 
 /*
- ** xfunc_complete_stream 
+ ** xfunc_complete_stream
  **   Given a stream composed of join nodes only, make a copy containing the
  ** join nodes along with the associated restriction nodes.
  */
@@ -313,7 +313,7 @@ xfunc_complete_stream(Stream stream)
 static bool
 xfunc_prdmig_pullup(Stream origstream, Stream pullme, JoinPath joinpath)
 {
-	RestrictInfo	restrictinfo = get_cinfo(pullme);
+	RestrictInfo restrictinfo = get_cinfo(pullme);
 	bool		progress = false;
 	Stream		upjoin,
 				orignode,
@@ -347,10 +347,10 @@ xfunc_prdmig_pullup(Stream origstream, Stream pullme, JoinPath joinpath)
 		else
 			whichchild = INNER;
 		restrictinfo = xfunc_pullup((Path) get_pathptr((Stream) get_downstream(upjoin)),
-								  (JoinPath) get_pathptr(upjoin),
-								  restrictinfo,
-								  whichchild,
-								  get_clausetype(orignode));
+									(JoinPath) get_pathptr(upjoin),
+									restrictinfo,
+									whichchild,
+									get_clausetype(orignode));
 		set_pathptr(pullme, get_pathptr(upjoin));
 		/* pullme has been moved into locrestrictinfo */
 		set_clausetype(pullme, XFUNC_LOCPRD);
@@ -390,7 +390,7 @@ xfunc_prdmig_pullup(Stream origstream, Stream pullme, JoinPath joinpath)
 }
 
 /*
- ** xfunc_form_groups 
+ ** xfunc_form_groups
  **    A group is a pair of stream nodes a,b such that a is constrained to
  ** precede b (for instance if a and b are both joins), but rank(a) > rank(b).
  ** In such a situation, Monma and Sidney prove that no clauses should end
@@ -487,10 +487,10 @@ xfunc_form_groups(Query *queryInfo, Stream root, Stream bottom)
 }
 
 
-/* -------------------			   UTILITY FUNCTIONS	 ------------------------- */
+/* -------------------				 UTILITY FUNCTIONS	   ------------------------- */
 
 /*
- ** xfunc_free_stream 
+ ** xfunc_free_stream
  **   walk down a stream and pfree it
  */
 static void
@@ -525,7 +525,7 @@ xfunc_add_clauses(Stream current)
 	foreach(temp, get_loc_restrictinfo((Path) get_pathptr(current)))
 	{
 		topnode = xfunc_streaminsert((RestrictInfo) lfirst(temp), topnode,
-							   XFUNC_LOCPRD);
+									 XFUNC_LOCPRD);
 	}
 
 	/* and add in the join clauses */
@@ -536,7 +536,7 @@ xfunc_add_clauses(Stream current)
 		{
 			if (!equal(get_clause((RestrictInfo) lfirst(temp)), primjoin))
 				topnode = xfunc_streaminsert((RestrictInfo) lfirst(temp), topnode,
-									   XFUNC_JOINPRD);
+											 XFUNC_JOINPRD);
 		}
 	}
 	return topnode;
@@ -623,7 +623,7 @@ xfunc_num_relids(Stream node)
 }
 
 /*
- ** xfunc_get_downjoin 
+ ** xfunc_get_downjoin
  **    Given a stream node, find the next lowest node which points to a
  ** join predicate or a scan node.
  */
@@ -642,7 +642,7 @@ xfunc_get_downjoin(Stream node)
 }
 
 /*
- ** xfunc_get_upjoin 
+ ** xfunc_get_upjoin
  **   same as above, but upwards.
  */
 static StreamPtr
@@ -660,7 +660,7 @@ xfunc_get_upjoin(Stream node)
 }
 
 /*
- ** xfunc_stream_qsort 
+ ** xfunc_stream_qsort
  **   Given a stream, sort by group rank the elements in the stream from the
  ** node "bottom" up.  DESTRUCTIVELY MODIFIES STREAM!  Returns new root.
  */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.32 1999/05/10 00:45:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.33 1999/05/25 16:08:57 momjian Exp $
  *
  * NOTES
  *	  This should be moved to a more appropriate place.  It is here
@@ -131,8 +131,8 @@ lo_close(int fd)
 int
 lo_read(int fd, char *buf, int len)
 {
- 	MemoryContext currentContext;
- 	int status;
+	MemoryContext currentContext;
+	int			status;
 
 	if (fd < 0 || fd >= MAX_LOBJ_FDS)
 	{
@@ -144,19 +144,19 @@ lo_read(int fd, char *buf, int len)
 		elog(ERROR, "lo_read: invalid large obj descriptor (%d)", fd);
 		return -3;
 	}
- 	currentContext = MemoryContextSwitchTo((MemoryContext) fscxt);
+	currentContext = MemoryContextSwitchTo((MemoryContext) fscxt);
 
 	status = inv_read(cookies[fd], buf, len);
 
 	MemoryContextSwitchTo(currentContext);
- 	return(status);
+	return (status);
 }
 
 int
 lo_write(int fd, char *buf, int len)
 {
- 	MemoryContext currentContext;
- 	int status;
+	MemoryContext currentContext;
+	int			status;
 
 	if (fd < 0 || fd >= MAX_LOBJ_FDS)
 	{
@@ -168,12 +168,12 @@ lo_write(int fd, char *buf, int len)
 		elog(ERROR, "lo_write: invalid large obj descriptor (%d)", fd);
 		return -3;
 	}
- 	currentContext = MemoryContextSwitchTo((MemoryContext) fscxt);
+	currentContext = MemoryContextSwitchTo((MemoryContext) fscxt);
 
 	status = inv_write(cookies[fd], buf, len);
 
 	MemoryContextSwitchTo(currentContext);
- 	return(status);
+	return (status);
 }
 
 
@@ -374,9 +374,7 @@ lo_export(Oid lobjId, text *filename)
 	 */
 	lobj = inv_open(lobjId, INV_READ);
 	if (lobj == NULL)
-	{
 		elog(ERROR, "lo_export: can't open inv object %u", lobjId);
-	}
 
 	/*
 	 * open the file to be written to

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.29 1999/02/22 05:26:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.30 1999/05/25 16:09:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,7 +40,7 @@
 extern int	Quiet;
 
 static void add_restrict_and_join_to_rel(Query *root, List *clause);
-static void add_join_info_to_rels(Query *root, RestrictInfo *restrictinfo,
+static void add_join_info_to_rels(Query *root, RestrictInfo * restrictinfo,
 					  Relids join_relids);
 static void add_vars_to_targetlist(Query *root, List *vars, Relids join_relids);
 
@@ -183,6 +183,7 @@ add_restrict_and_join_to_rel(Query *root, List *clause)
 
 	if (length(relids) == 1)
 	{
+
 		/*
 		 * There is only one relation participating in 'clause', so
 		 * 'clause' must be a restriction clause.
@@ -207,11 +208,13 @@ add_restrict_and_join_to_rel(Query *root, List *clause)
 	}
 	else
 	{
+
 		/*
 		 * 'clause' is a join clause, since there is more than one atom in
 		 * the relid list.
 		 */
 		if (is_funcclause((Node *) clause))
+
 			/*
 			 * XXX If we have a func clause set selectivity to 1/3, really
 			 * need a true selectivity function.
@@ -237,8 +240,8 @@ add_restrict_and_join_to_rel(Query *root, List *clause)
  *
  */
 static void
-add_join_info_to_rels(Query *root, RestrictInfo *restrictinfo,
-						Relids join_relids)
+add_join_info_to_rels(Query *root, RestrictInfo * restrictinfo,
+					  Relids join_relids)
 {
 	List	   *join_relid;
 
@@ -247,7 +250,7 @@ add_join_info_to_rels(Query *root, RestrictInfo *restrictinfo,
 	{
 		JoinInfo   *joininfo;
 		Relids		unjoined_relids = NIL;
-		List 		*rel;
+		List	   *rel;
 
 		/* Get the relids not equal to the current relid */
 		foreach(rel, join_relids)
@@ -259,7 +262,7 @@ add_join_info_to_rels(Query *root, RestrictInfo *restrictinfo,
 		joininfo = find_joininfo_node(get_base_rel(root, lfirsti(join_relid)),
 									  unjoined_relids);
 		joininfo->jinfo_restrictinfo = lcons(copyObject((void *) restrictinfo),
-											 joininfo->jinfo_restrictinfo);
+										   joininfo->jinfo_restrictinfo);
 	}
 }
 
@@ -375,7 +378,7 @@ mergejoinop(Expr *clause)
 				rightOp;
 	bool		sortable;
 
-	if (!is_opclause((Node*) clause))
+	if (!is_opclause((Node *) clause))
 		return NULL;
 
 	left = get_leftop(clause);
@@ -384,7 +387,7 @@ mergejoinop(Expr *clause)
 	/* caution: is_opclause accepts more than I do, so check it */
 	if (!right)
 		return NULL;			/* unary opclauses need not apply */
-	if (!IsA(left, Var) || !IsA(right, Var))
+	if (!IsA(left, Var) ||!IsA(right, Var))
 		return NULL;
 
 	opno = ((Oper *) clause->oper)->opno;
@@ -422,7 +425,7 @@ hashjoinop(Expr *clause)
 	Var		   *left,
 			   *right;
 
-	if (!is_opclause((Node*) clause))
+	if (!is_opclause((Node *) clause))
 		return InvalidOid;
 
 	left = get_leftop(clause);
@@ -431,7 +434,7 @@ hashjoinop(Expr *clause)
 	/* caution: is_opclause accepts more than I do, so check it */
 	if (!right)
 		return InvalidOid;		/* unary opclauses need not apply */
-	if (!IsA(left, Var) || !IsA(right, Var))
+	if (!IsA(left, Var) ||!IsA(right, Var))
 		return InvalidOid;
 
 	return op_hashjoinable(((Oper *) clause->oper)->opno,

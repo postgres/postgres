@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipci.c,v 1.23 1999/03/06 21:17:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipci.c,v 1.24 1999/05/25 16:11:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,7 +25,7 @@
 #include "miscadmin.h"			/* for DebugLvl */
 
 /*
- * SystemPortAddressCreateMemoryKey 
+ * SystemPortAddressCreateMemoryKey
  *		Returns a memory key given a port address.
  */
 IPCKey
@@ -37,7 +37,7 @@ SystemPortAddressCreateIPCKey(SystemPortAddress address)
 }
 
 /*
- * CreateSharedMemoryAndSemaphores 
+ * CreateSharedMemoryAndSemaphores
  *		Creates and initializes shared memory and semaphores.
  */
 /**************************************************
@@ -75,8 +75,8 @@ CreateSharedMemoryAndSemaphores(IPCKey key, int maxBackends)
 
 	/*
 	 * Size of the primary shared-memory block is estimated via
-	 * moderately-accurate estimates for the big hogs, plus 100K for
-	 * the stuff that's too small to bother with estimating.
+	 * moderately-accurate estimates for the big hogs, plus 100K for the
+	 * stuff that's too small to bother with estimating.
 	 */
 	size = BufferShmemSize() + LockShmemSize(maxBackends);
 #ifdef STABLE_MEMORY_STORAGE
@@ -113,7 +113,7 @@ CreateSharedMemoryAndSemaphores(IPCKey key, int maxBackends)
 
 
 /*
- * AttachSharedMemoryAndSemaphores 
+ * AttachSharedMemoryAndSemaphores
  *		Attachs existant shared memory and semaphores.
  */
 void

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rewriteManip.h,v 1.14 1999/05/12 15:02:28 wieck Exp $
+ * $Id: rewriteManip.h,v 1.15 1999/05/25 16:14:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,7 +25,7 @@ void		AddQual(Query *parsetree, Node *qual);
 void		AddHavingQual(Query *parsetree, Node *havingQual);
 
 void		AddNotQual(Query *parsetree, Node *qual);
-void            AddNotHavingQual(Query *parsetree, Node *havingQual);
+void		AddNotHavingQual(Query *parsetree, Node *havingQual);
 void		AddGroupClause(Query *parsetree, List *group_by, List *tlist);
 
 void		FixNew(RewriteInfo *info, Query *parsetree);

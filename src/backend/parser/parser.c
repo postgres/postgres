@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.38 1999/05/13 07:28:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.39 1999/05/25 16:10:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,7 @@
 
 #if defined(FLEX_SCANNER)
 extern void DeleteBuffer(void);
+
 #endif	 /* FLEX_SCANNER */
 
 char	   *parseString;		/* the char* which holds the string to be
@@ -31,6 +32,7 @@ List	   *parsetree;			/* result of parsing is left here */
 #ifdef SETS_FIXED
 static void fixupsets();
 static void define_sets();
+
 #endif
 
 /*

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.39 1999/05/23 21:42:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.40 1999/05/25 16:10:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,10 +64,12 @@ MakeTargetEntryIdent(ParseState *pstate,
 
 	if (pstate->p_is_insert && !resjunk)
 	{
-		/* Assign column name of destination column to the new TLE.
-		 * XXX this is probably WRONG in INSERT ... SELECT case,
-		 * since handling of GROUP BY and so forth probably should use
-		 * the source table's names not the destination's names.
+
+		/*
+		 * Assign column name of destination column to the new TLE. XXX
+		 * this is probably WRONG in INSERT ... SELECT case, since
+		 * handling of GROUP BY and so forth probably should use the
+		 * source table's names not the destination's names.
 		 */
 		if (pstate->p_insert_columns != NIL)
 		{
@@ -123,8 +125,8 @@ MakeTargetEntryIdent(ParseState *pstate,
 			if (can_coerce_type(1, &attrtype_id, &attrtype_target))
 			{
 				expr = coerce_type(pstate, node, attrtype_id,
-									attrtype_target,
-			get_atttypmod(pstate->p_target_relation->rd_id, resdomno_target));
+								   attrtype_target,
+								   get_atttypmod(pstate->p_target_relation->rd_id, resdomno_target));
 				expr = transformExpr(pstate, expr, EXPR_COLUMN_FIRST);
 				tent = MakeTargetEntryExpr(pstate, *resname, expr, false, false);
 				expr = tent->expr;
@@ -248,7 +250,7 @@ MakeTargetEntryExpr(ParseState *pstate,
 				if (!HeapTupleIsValid(expr))
 					elog(ERROR, "Attribute '%s' is of type '%s'"
 						 " but expression is of type '%s'"
-						 "\n\tYou will need to rewrite or cast the expression",
+					"\n\tYou will need to rewrite or cast the expression",
 						 colname,
 						 typeidTypeName(attrtype),
 						 typeidTypeName(type_id));
@@ -326,20 +328,20 @@ static TargetEntry *
 MakeTargetEntryCase(ParseState *pstate,
 					ResTarget *res)
 {
-	TargetEntry	*tent;
-	CaseExpr	*expr;
-	Resdom		*resnode;
-	int			 resdomno;
-	Oid			 type_id;
-	int32		 type_mod;
+	TargetEntry *tent;
+	CaseExpr   *expr;
+	Resdom	   *resnode;
+	int			resdomno;
+	Oid			type_id;
+	int32		type_mod;
 
-	expr = (CaseExpr *)transformExpr(pstate, (Node *)res->val, EXPR_COLUMN_FIRST);
+	expr = (CaseExpr *) transformExpr(pstate, (Node *) res->val, EXPR_COLUMN_FIRST);
 
 	type_id = expr->casetype;
 	type_mod = -1;
 	handleTargetColname(pstate, &res->name, NULL, NULL);
 	if (res->name == NULL)
-		res->name = FigureColname((Node *)expr, res->val);
+		res->name = FigureColname((Node *) expr, res->val);
 
 	resdomno = pstate->p_last_resno++;
 	resnode = makeResdom((AttrNumber) resdomno,
@@ -352,7 +354,7 @@ MakeTargetEntryCase(ParseState *pstate,
 
 	tent = makeNode(TargetEntry);
 	tent->resdom = resnode;
-	tent->expr = (Node *)expr;
+	tent->expr = (Node *) expr;
 
 	return tent;
 }	/* MakeTargetEntryCase() */
@@ -435,7 +437,7 @@ MakeTargetEntryComplex(ParseState *pstate,
 	else
 	{
 		/* this is not an array assignment */
-		char	  *colname = res->name;
+		char	   *colname = res->name;
 
 		if (colname == NULL)
 		{
@@ -564,7 +566,7 @@ transformTargetList(ParseState *pstate, List *targetlist)
 
 					identname = ((Ident *) res->val)->name;
 					tent = MakeTargetEntryIdent(pstate,
-						(Node *) res->val, &res->name, NULL, identname, false);
+												(Node *) res->val, &res->name, NULL, identname, false);
 					break;
 				}
 			case T_ParamNo:
@@ -619,7 +621,7 @@ transformTargetList(ParseState *pstate, List *targetlist)
 									att->relname, &pstate->p_last_resno);
 							else
 								lnext(tail_p_target) = expandAll(pstate, att->relname, att->relname,
-											  &pstate->p_last_resno);
+												  &pstate->p_last_resno);
 							expand_star = true;
 						}
 					}
@@ -668,9 +670,7 @@ CoerceTargetExpr(ParseState *pstate,
 				 Oid attrtype)
 {
 	if (can_coerce_type(1, &type_id, &attrtype))
-	{
 		expr = coerce_type(pstate, expr, type_id, attrtype, -1);
-	}
 
 #ifndef DISABLE_STRING_HACKS
 
@@ -818,6 +818,7 @@ ExpandAllTables(ParseState *pstate)
 	rtable = pstate->p_rtable;
 	if (pstate->p_is_rule)
 	{
+
 		/*
 		 * skip first two entries, "*new*" and "*current*"
 		 */
@@ -876,7 +877,7 @@ FigureColname(Node *expr, Node *resval)
 {
 	switch (nodeTag(expr))
 	{
-		case T_Aggref:
+			case T_Aggref:
 			return (char *) ((Aggref *) expr)->aggname;
 		case T_Expr:
 			if (((Expr *) expr)->opType == FUNC_EXPR)
@@ -887,7 +888,8 @@ FigureColname(Node *expr, Node *resval)
 			break;
 		case T_CaseExpr:
 			{
-				char *name;
+				char	   *name;
+
 				name = FigureColname(((CaseExpr *) expr)->defresult, resval);
 				if (!strcmp(name, "?column?"))
 					name = "case";

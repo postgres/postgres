@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tqual.h,v 1.20 1999/02/13 23:22:33 momjian Exp $
+ * $Id: tqual.h,v 1.21 1999/05/25 16:14:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,11 +18,11 @@
 
 typedef struct SnapshotData
 {
-	TransactionId	xmin;			/* XID < xmin are visible to me */
-	TransactionId	xmax;			/* XID >= xmax are invisible to me */
-	uint32			xcnt;			/* # of xact below */
-	TransactionId  *xip;			/* array of xacts in progress */
-	ItemPointerData	tid;			/* required for Dirty snapshot -:( */
+	TransactionId xmin;			/* XID < xmin are visible to me */
+	TransactionId xmax;			/* XID >= xmax are invisible to me */
+	uint32		xcnt;			/* # of xact below */
+	TransactionId *xip;			/* array of xacts in progress */
+	ItemPointerData tid;		/* required for Dirty snapshot -:( */
 }			SnapshotData;
 
 typedef SnapshotData *Snapshot;
@@ -30,9 +30,9 @@ typedef SnapshotData *Snapshot;
 #define SnapshotNow					((Snapshot) 0x0)
 #define SnapshotSelf				((Snapshot) 0x1)
 
-extern	Snapshot					SnapshotDirty;
-extern	Snapshot					QuerySnapshot;
-extern	Snapshot					SerializableSnapshot;
+extern Snapshot SnapshotDirty;
+extern Snapshot QuerySnapshot;
+extern Snapshot SerializableSnapshot;
 
 #define IsSnapshotNow(snapshot)		((Snapshot) snapshot == SnapshotNow)
 #define IsSnapshotSelf(snapshot)	((Snapshot) snapshot == SnapshotSelf)
@@ -42,7 +42,7 @@ extern TransactionId HeapSpecialTransactionId;
 extern CommandId HeapSpecialCommandId;
 
 /*
- * HeapTupleSatisfiesVisibility 
+ * HeapTupleSatisfiesVisibility
  *		True iff heap tuple satsifies a time qual.
  *
  * Note:
@@ -87,22 +87,22 @@ extern CommandId HeapSpecialCommandId;
 	) \
 )
 
-#define	HeapTupleMayBeUpdated		0
-#define	HeapTupleInvisible			1
+#define HeapTupleMayBeUpdated		0
+#define HeapTupleInvisible			1
 #define HeapTupleSelfUpdated		2
 #define HeapTupleUpdated			3
 #define HeapTupleBeingUpdated		4
 
-extern bool		HeapTupleSatisfiesItself(HeapTupleHeader tuple);
-extern bool		HeapTupleSatisfiesNow(HeapTupleHeader tuple);
-extern bool		HeapTupleSatisfiesDirty(HeapTupleHeader tuple);
-extern bool		HeapTupleSatisfiesSnapshot(HeapTupleHeader tuple, Snapshot snapshot);
-extern int		HeapTupleSatisfiesUpdate(HeapTuple tuple);
+extern bool HeapTupleSatisfiesItself(HeapTupleHeader tuple);
+extern bool HeapTupleSatisfiesNow(HeapTupleHeader tuple);
+extern bool HeapTupleSatisfiesDirty(HeapTupleHeader tuple);
+extern bool HeapTupleSatisfiesSnapshot(HeapTupleHeader tuple, Snapshot snapshot);
+extern int	HeapTupleSatisfiesUpdate(HeapTuple tuple);
 
 extern void setheapoverride(bool on);
 
 extern Snapshot GetSnapshotData(bool serializable);
-extern void		SetQuerySnapshot(void);
-extern void		FreeXactSnapshot(void);
+extern void SetQuerySnapshot(void);
+extern void FreeXactSnapshot(void);
 
 #endif	 /* TQUAL_H */

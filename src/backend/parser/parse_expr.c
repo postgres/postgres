@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.47 1999/05/22 04:12:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.48 1999/05/25 16:10:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -152,7 +152,7 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 						 */
 						idx = lnext(idx);
 					}
-					result = (Node *) make_array_ref((Node *)param, pno->indirection);
+					result = (Node *) make_array_ref((Node *) param, pno->indirection);
 				}
 				else
 					result = (Node *) param;
@@ -251,7 +251,8 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 			{
 
 				/*
-				 * look for a column name or a relation name (the default behavior)
+				 * look for a column name or a relation name (the default
+				 * behavior)
 				 */
 				result = transformIdent(pstate, expr, precedence);
 				break;
@@ -343,28 +344,31 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 					if (c->arg != NULL)
 					{
 						/* shorthand form was specified, so expand... */
-						A_Expr *a = makeNode(A_Expr);
+						A_Expr	   *a = makeNode(A_Expr);
+
 						a->oper = OP;
 						a->opname = "=";
 						a->lexpr = c->arg;
 						a->rexpr = w->expr;
-						w->expr = (Node *)a;
+						w->expr = (Node *) a;
 					}
 					lfirst(args) = transformExpr(pstate, (Node *) w, precedence);
 				}
 
-				/* It's not shorthand anymore, so drop the implicit argument.
-				 * This is necessary to keep the executor from seeing an
-				 * untransformed expression...
+				/*
+				 * It's not shorthand anymore, so drop the implicit
+				 * argument. This is necessary to keep the executor from
+				 * seeing an untransformed expression...
 				 */
 				c->arg = NULL;
 
 				/* transform the default clause */
 				if (c->defresult == NULL)
 				{
-					A_Const *n = makeNode(A_Const);
+					A_Const    *n = makeNode(A_Const);
+
 					n->val.type = T_Null;
-					c->defresult = (Node *)n;
+					c->defresult = (Node *) n;
 				}
 				c->defresult = transformExpr(pstate, (Node *) c->defresult, precedence);
 
@@ -380,7 +384,7 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 					wtype = exprType(w->result);
 					/* move on to next one if no new information... */
 					if (wtype && (wtype != UNKNOWNOID)
-					 && (wtype != ptype))
+						&& (wtype != ptype))
 					{
 						/* so far, only nulls so take anything... */
 						if (!ptype)
@@ -388,15 +392,23 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 							ptype = wtype;
 							pcategory = TypeCategory(ptype);
 						}
-						/* both types in different categories? then not much hope... */
+
+						/*
+						 * both types in different categories? then not
+						 * much hope...
+						 */
 						else if ((TypeCategory(wtype) != pcategory)
-							|| ((TypeCategory(wtype) == USER_TYPE)
-							 && (TypeCategory(c->casetype) == USER_TYPE)))
+								 || ((TypeCategory(wtype) == USER_TYPE)
+							&& (TypeCategory(c->casetype) == USER_TYPE)))
 						{
-							elog(ERROR,"CASE/WHEN types '%s' and '%s' not matched",
+							elog(ERROR, "CASE/WHEN types '%s' and '%s' not matched",
 								 typeidTypeName(c->casetype), typeidTypeName(wtype));
 						}
-						/* new one is preferred and can convert? then take it... */
+
+						/*
+						 * new one is preferred and can convert? then take
+						 * it...
+						 */
 						else if (IsPreferredType(pcategory, wtype)
 								 && can_coerce_type(1, &ptype, &wtype))
 						{
@@ -409,21 +421,24 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 				/* Convert default result clause, if necessary */
 				if (c->casetype != ptype)
 				{
-					if (! c->casetype)
+					if (!c->casetype)
 					{
-						/* default clause is NULL,
-						 * so assign preferred type from WHEN clauses... */
+
+						/*
+						 * default clause is NULL, so assign preferred
+						 * type from WHEN clauses...
+						 */
 						c->casetype = ptype;
 					}
 					else if (can_coerce_type(1, &c->casetype, &ptype))
 					{
 						c->defresult = coerce_type(pstate, c->defresult,
-													c->casetype, ptype, -1);
+												 c->casetype, ptype, -1);
 						c->casetype = ptype;
 					}
 					else
 					{
-						elog(ERROR,"CASE/ELSE unable to convert to type %s",
+						elog(ERROR, "CASE/ELSE unable to convert to type %s",
 							 typeidTypeName(ptype));
 					}
 				}
@@ -431,11 +446,15 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 				/* Convert when clauses, if not null and if necessary */
 				foreach(args, c->args)
 				{
-					Oid		wtype;
+					Oid			wtype;
 
 					w = lfirst(args);
 					wtype = exprType(w->result);
-					/* only bother with conversion if not NULL and different type... */
+
+					/*
+					 * only bother with conversion if not NULL and
+					 * different type...
+					 */
 					if (wtype && (wtype != ptype))
 					{
 						if (can_coerce_type(1, &wtype, &ptype))
@@ -445,7 +464,7 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 						}
 						else
 						{
-							elog(ERROR,"CASE/WHEN unable to convert to type %s",
+							elog(ERROR, "CASE/WHEN unable to convert to type %s",
 								 typeidTypeName(ptype));
 						}
 					}
@@ -461,14 +480,18 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 
 				w->expr = transformExpr(pstate, (Node *) w->expr, precedence);
 				if (exprType(w->expr) != BOOLOID)
-					elog(ERROR,"WHEN clause must have a boolean result");
+					elog(ERROR, "WHEN clause must have a boolean result");
 
-				/* result is NULL for NULLIF() construct - thomas 1998-11-11 */
+				/*
+				 * result is NULL for NULLIF() construct - thomas
+				 * 1998-11-11
+				 */
 				if (w->result == NULL)
 				{
-					A_Const *n = makeNode(A_Const);
+					A_Const    *n = makeNode(A_Const);
+
 					n->val.type = T_Null;
-					w->result = (Node *)n;
+					w->result = (Node *) n;
 				}
 				w->result = transformExpr(pstate, (Node *) w->result, precedence);
 				result = expr;
@@ -530,7 +553,7 @@ transformIdent(ParseState *pstate, Node *expr, int precedence)
 		att->relname = rte->refname;
 		att->attrs = lcons(makeString(ident->name), NIL);
 		column_result = (Node *) ParseNestedFuncOrColumn(pstate, att,
-									&pstate->p_last_resno, precedence);
+									  &pstate->p_last_resno, precedence);
 	}
 
 	/* try to find the ident as a relation */
@@ -602,11 +625,13 @@ exprType(Node *expr)
 			break;
 		case T_SubLink:
 			{
-				SubLink *sublink = (SubLink *) expr;
+				SubLink    *sublink = (SubLink *) expr;
+
 				if (sublink->subLinkType == EXPR_SUBLINK)
 				{
 					/* return the result type of the combining operator */
-					Expr *op_expr = (Expr *) lfirst(sublink->oper);
+					Expr	   *op_expr = (Expr *) lfirst(sublink->oper);
+
 					type = op_expr->typeOid;
 				}
 				else

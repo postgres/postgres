@@ -1,4 +1,4 @@
-/* $Id: pg_wchar.h,v 1.7 1999/03/24 06:53:28 ishii Exp $ */
+/* $Id: pg_wchar.h,v 1.8 1999/05/25 16:14:04 momjian Exp $ */
 
 #ifndef PG_WCHAR_H
 #define PG_WCHAR_H
@@ -61,7 +61,7 @@ typedef unsigned int pg_wchar;
 #define LC_ISO8859_5	0x8d	/* ISO8859 Latin 5 */
 #define LC_JISX0201K	0x89	/* Japanese 1 byte kana */
 #define LC_JISX0201R	0x8a	/* Japanese 1 byte Roman */
-#define LC_KOI8_R	0x8c	/* Cyrillic KOI8-R */
+#define LC_KOI8_R	0x8c		/* Cyrillic KOI8-R */
 #define LC_GB2312_80	0x91	/* Chinese */
 #define LC_JISX0208 0x92		/* Japanese Kanji */
 #define LC_KS5601	0x93		/* Korean */

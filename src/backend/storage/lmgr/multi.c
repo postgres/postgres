@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Attic/multi.c,v 1.28 1999/03/28 20:32:25 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Attic/multi.c,v 1.29 1999/05/25 16:11:22 momjian Exp $
  *
  * NOTES:
  *	 (1) The lock.c module assumes that the caller here is doing
@@ -170,6 +170,7 @@ MultiLockTuple(LockInfo lockinfo, ItemPointer tidPtr, LOCKMODE lockmode)
 	tag.tupleId = *tidPtr;
 	return MultiAcquire(MultiTableId, &tag, lockmode, TUPLE_LEVEL);
 }
+
 #endif
 
 /*

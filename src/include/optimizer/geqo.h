@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo.h,v 1.14 1999/05/17 00:25:32 tgl Exp $
+ * $Id: geqo.h,v 1.15 1999/05/25 16:14:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,10 +57,10 @@
  /* should be 1.5 <= SELECTION_BIAS <= 2.0 */
 
 /* parameter values set in geqo_params.c */
-extern int			PoolSize;
-extern int			Generations;
-extern long			RandomSeed;
-extern double		SelectionBias;
+extern int	PoolSize;
+extern int	Generations;
+extern long RandomSeed;
+extern double SelectionBias;
 
 /* routines in geqo_main.c */
 extern RelOptInfo *geqo(Query *root);
@@ -72,6 +72,6 @@ extern void geqo_params(int string_length);
 extern void geqo_eval_startup(void);
 extern Cost geqo_eval(Query *root, Gene *tour, int num_gene);
 extern RelOptInfo *gimme_tree(Query *root, Gene *tour, int rel_count,
-							  int num_gene, RelOptInfo *old_rel);
+		   int num_gene, RelOptInfo * old_rel);
 
 #endif	 /* GEQO_H */

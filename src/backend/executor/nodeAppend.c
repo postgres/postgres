@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAppend.c,v 1.18 1999/02/21 03:48:40 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAppend.c,v 1.19 1999/05/25 16:08:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -151,7 +151,7 @@ exec_append_initialize_next(Append *node)
 		if (appendstate->as_junkFilter_list)
 		{
 			estate->es_junkFilter = (JunkFilter *) nth(whichplan,
-								   appendstate->as_junkFilter_list);
+										appendstate->as_junkFilter_list);
 		}
 		if (appendstate->as_result_relation_info_list)
 		{

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.28 1999/05/13 07:28:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.29 1999/05/25 16:08:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -226,11 +226,11 @@ ProcedureCreate(char *procedureName,
 	 * function name (the 'prosrc' value) is a known builtin function.
 	 *
 	 * NOTE: in Postgres versions before 6.5, the SQL name of the created
-	 * function could not be different from the internal name, and 'prosrc'
-	 * wasn't used.  So there is code out there that does CREATE FUNCTION
-	 * xyz AS '' LANGUAGE 'internal'.  To preserve some modicum of
-	 * backwards compatibility, accept an empty 'prosrc' value as meaning
-	 * the supplied SQL function name.
+	 * function could not be different from the internal name, and
+	 * 'prosrc' wasn't used.  So there is code out there that does CREATE
+	 * FUNCTION xyz AS '' LANGUAGE 'internal'.	To preserve some modicum
+	 * of backwards compatibility, accept an empty 'prosrc' value as
+	 * meaning the supplied SQL function name.
 	 */
 
 	if (strcmp(languageName, "internal") == 0)
@@ -239,7 +239,7 @@ ProcedureCreate(char *procedureName,
 			prosrc = procedureName;
 		if (fmgr_lookupByName(prosrc) == (func_ptr) NULL)
 			elog(ERROR,
-				 "ProcedureCreate: there is no builtin function named \"%s\"",
+			"ProcedureCreate: there is no builtin function named \"%s\"",
 				 prosrc);
 	}
 

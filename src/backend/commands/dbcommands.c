@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.34 1999/05/10 00:44:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.35 1999/05/25 16:08:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,8 +47,8 @@ createdb(char *dbname, char *dbpath, int encoding, CommandDest dest)
 	Oid			db_id;
 	int4		user_id;
 	char		buf[512];
-	char		*lp,
-					loc[512];
+	char	   *lp,
+				loc[512];
 
 	/*
 	 * If this call returns, the database does not exist and we're allowed
@@ -80,13 +80,13 @@ createdb(char *dbname, char *dbpath, int encoding, CommandDest dest)
 		elog(ERROR, "Unable to create database directory '%s'", lp);
 
 	snprintf(buf, 512, "%s %s%cbase%ctemplate1%c* %s",
-			COPY_CMD, DataDir, SEP_CHAR, SEP_CHAR, SEP_CHAR, lp);
+			 COPY_CMD, DataDir, SEP_CHAR, SEP_CHAR, SEP_CHAR, lp);
 	system(buf);
 
-	snprintf(buf, 512, 
-			"insert into pg_database (datname, datdba, encoding, datpath)"
-			" values ('%s', '%d', '%d', '%s');", dbname, user_id, encoding,
-			loc);
+	snprintf(buf, 512,
+		   "insert into pg_database (datname, datdba, encoding, datpath)"
+		  " values ('%s', '%d', '%d', '%s');", dbname, user_id, encoding,
+			 loc);
 
 	pg_exec_query_dest(buf, dest, false);
 }
@@ -96,9 +96,9 @@ destroydb(char *dbname, CommandDest dest)
 {
 	int4		user_id;
 	Oid			db_id;
-	char		*path,
-					dbpath[MAXPGPATH + 1],
-					buf[512];
+	char	   *path,
+				dbpath[MAXPGPATH + 1],
+				buf[512];
 
 	/*
 	 * If this call returns, the database exists and we're allowed to
@@ -122,9 +122,9 @@ destroydb(char *dbname, CommandDest dest)
 	 * remove the pg_database tuple FIRST, this may fail due to
 	 * permissions problems
 	 */
-	snprintf(buf, 512, 
-			"delete from pg_database where pg_database.oid = \'%u\'::oid", db_id);
-	pg_exec_query_dest(buf ,dest, false);
+	snprintf(buf, 512,
+	"delete from pg_database where pg_database.oid = \'%u\'::oid", db_id);
+	pg_exec_query_dest(buf, dest, false);
 
 	/* drop pages for this database that are in the shared buffer cache */
 	DropBuffers(db_id);
@@ -294,13 +294,13 @@ static void
 stop_vacuum(char *dbpath, char *dbname)
 {
 	char		filename[256];
-	FILE		*fp;
+	FILE	   *fp;
 	int			pid;
 
 	if (strchr(dbpath, SEP_CHAR) != 0)
 	{
-		snprintf(filename, 256, "%s%cbase%c%s%c%s.vacuum", 
-				DataDir, SEP_CHAR, SEP_CHAR, dbname, SEP_CHAR, dbname);
+		snprintf(filename, 256, "%s%cbase%c%s%c%s.vacuum",
+				 DataDir, SEP_CHAR, SEP_CHAR, dbname, SEP_CHAR, dbname);
 	}
 	else
 		snprintf(filename, 256, "%s%c%s.vacuum", dbpath, SEP_CHAR, dbname);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/exc.c,v 1.24 1999/02/13 23:19:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/exc.c,v 1.25 1999/05/25 16:12:26 momjian Exp $
  *
  * NOTE
  *	  XXX this code needs improvement--check for state violations and
@@ -48,7 +48,7 @@ extern char *ProgramName;
  */
 
 /*
- * EnableExceptionHandling 
+ * EnableExceptionHandling
  *		Enables/disables the exception handling system.
  *
  * Note:

@@ -3,7 +3,7 @@
  * spi.c
  *				Server Programming Interface private declarations
  *
- * $Header: /cvsroot/pgsql/src/include/executor/spi_priv.h,v 1.3 1999/05/13 07:28:58 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/include/executor/spi_priv.h,v 1.4 1999/05/25 16:13:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,4 +35,4 @@ typedef struct
 #define _SPI_CPLAN_PROCXT	1
 #define _SPI_CPLAN_TOPCXT	2
 
-#endif /* SPI_PRIV_H */
+#endif	 /* SPI_PRIV_H */

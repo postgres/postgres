@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/mergeutils.c,v 1.21 1999/04/03 00:18:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/mergeutils.c,v 1.22 1999/05/25 16:09:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,7 @@
  *
  * 'restrictinfo_list' is the list of restrictinfo nodes
  * 'inner_relids' is the list of relids in the inner join relation
- *   (used to determine whether a join var is inner or outer)
+ *	 (used to determine whether a join var is inner or outer)
  *
  * Returns the new list of mergeinfo nodes.
  *
@@ -56,6 +56,7 @@ group_clauses_by_order(List *restrictinfo_list,
 
 		if (merge_ordering)
 		{
+
 			/*
 			 * Create a new mergeinfo node and add it to 'mergeinfo_list'
 			 * if one does not yet exist for this merge ordering.
@@ -63,8 +64,8 @@ group_clauses_by_order(List *restrictinfo_list,
 			Expr	   *clause = restrictinfo->clause;
 			Var		   *leftop = get_leftop(clause);
 			Var		   *rightop = get_rightop(clause);
-			PathOrder	*pathorder;
-			MergeInfo	*xmergeinfo;
+			PathOrder  *pathorder;
+			MergeInfo  *xmergeinfo;
 			JoinKey    *jmkeys;
 
 			pathorder = makeNode(PathOrder);
@@ -91,9 +92,9 @@ group_clauses_by_order(List *restrictinfo_list,
 			}
 
 			xmergeinfo->jmethod.clauses = lcons(clause,
-												xmergeinfo->jmethod.clauses);
+											xmergeinfo->jmethod.clauses);
 			xmergeinfo->jmethod.jmkeys = lcons(jmkeys,
-											   xmergeinfo->jmethod.jmkeys);
+											 xmergeinfo->jmethod.jmkeys);
 		}
 	}
 	return mergeinfo_list;
@@ -108,7 +109,7 @@ group_clauses_by_order(List *restrictinfo_list,
  * Returns the node if it exists.
  *
  */
-MergeInfo *
+MergeInfo  *
 match_order_mergeinfo(PathOrder *ordering, List *mergeinfo_list)
 {
 	MergeOrder *xmergeorder;
@@ -116,12 +117,12 @@ match_order_mergeinfo(PathOrder *ordering, List *mergeinfo_list)
 
 	foreach(xmergeinfo, mergeinfo_list)
 	{
-		MergeInfo	   *mergeinfo = (MergeInfo *) lfirst(xmergeinfo);
+		MergeInfo  *mergeinfo = (MergeInfo *) lfirst(xmergeinfo);
 
 		xmergeorder = mergeinfo->m_ordering;
 
 		if ((ordering->ordtype == MERGE_ORDER &&
-		 equal_merge_ordering(ordering->ord.merge, xmergeorder)) ||
+			 equal_merge_ordering(ordering->ord.merge, xmergeorder)) ||
 			(ordering->ordtype == SORTOP_ORDER &&
 		   equal_path_merge_ordering(ordering->ord.sortop, xmergeorder)))
 		{

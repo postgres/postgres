@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.20 1999/05/10 00:45:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.21 1999/05/25 16:10:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -172,6 +172,7 @@ typeidOutfunc(Oid type_id)
 	outfunc = type->typoutput;
 	return outfunc;
 }
+
 #endif
 
 Oid

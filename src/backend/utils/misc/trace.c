@@ -132,10 +132,10 @@ tprintf(int flag, const char *fmt,...)
  * Print a timestamp and a message to stdout or to syslog.
  */
 int
-tprintf1(const char *fmt, ... )
+tprintf1(const char *fmt,...)
 {
 	va_list		ap;
-	char		line[ELOG_MAXLEN+TIMESTAMP_SIZE+1];
+	char		line[ELOG_MAXLEN + TIMESTAMP_SIZE + 1];
 
 	va_start(ap, fmt);
 #ifdef ELOG_TIMESTAMPS
@@ -145,10 +145,11 @@ tprintf1(const char *fmt, ... )
 	va_end(ap);
 
 #ifdef USE_SYSLOG
-	write_syslog(LOG_INFO, line+TIMESTAMP_SIZE);
+	write_syslog(LOG_INFO, line + TIMESTAMP_SIZE);
 #endif
 
-	if (UseSyslog <= 1) {
+	if (UseSyslog <= 1)
+	{
 		puts(line);
 		fflush(stdout);
 	}
@@ -193,7 +194,7 @@ eprintf(const char *fmt,...)
 void
 write_syslog(int level, char *line)
 {
-	static int openlog_done = 0;
+	static int	openlog_done = 0;
 
 	if (UseSyslog >= 1)
 	{
@@ -348,9 +349,10 @@ read_pg_options(SIGNAL_ARGS)
 	char	   *s,
 			   *p;
 
-	if (!DataDir) {
-	    fprintf(stderr, "read_pg_options: DataDir not defined\n");
-	    return;
+	if (!DataDir)
+	{
+		fprintf(stderr, "read_pg_options: DataDir not defined\n");
+		return;
 	}
 
 	snprintf(buffer, BUF_SIZE - 1, "%s/%s", DataDir, "pg_options");

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.42 1999/05/10 00:45:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.43 1999/05/25 16:11:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -200,7 +200,7 @@ array_in(char *string,			/* input array in external form */
 		/* array not a large object */
 		dataPtr = (char *) _ReadArrayStr(p, nitems, ndim, dim, &inputproc, typelem,
 							typmod, typdelim, typlen, typbyval, typalign,
-								   &nbytes);
+										 &nbytes);
 		nbytes += ARR_OVERHEAD(ndim);
 		retval = (ArrayType *) palloc(nbytes);
 		MemSet(retval, 0, nbytes);
@@ -246,7 +246,7 @@ array_in(char *string,			/* input array in external form */
 }
 
 /*-----------------------------------------------------------------------------
- * _ArrayCount 
+ * _ArrayCount
  *	 Counts the number of dimensions and the *dim array for an array string.
  *		 The syntax for array input is C-like nested curly braces
  *-----------------------------------------------------------------------------
@@ -1284,19 +1284,19 @@ array_assgn(ArrayType *array,
  * Map an arbitrary function to an array and return a new array with
  * same dimensions and the source elements transformed by fn().
  */
-ArrayType *
+ArrayType  *
 array_map(ArrayType *v,
 		  Oid type,
-		  char * (*fn)(),
+		  char *(*fn) (),
 		  Oid retType,
 		  int nargs,
 		  ...)
 {
-	ArrayType   *result;
-	void		*args[4];
-	char		**values;
-	char		*elt;
-	int			*dim;
+	ArrayType  *result;
+	void	   *args[4];
+	char	  **values;
+	char	   *elt;
+	int		   *dim;
 	int			ndim;
 	int			nitems;
 	int			i;
@@ -1308,26 +1308,23 @@ array_map(ArrayType *v,
 	char		typdelim;
 	Oid			typelem;
 	Oid			proc;
-	char	 	typalign;
-	char		*s;
-	char		*p;
+	char		typalign;
+	char	   *s;
+	char	   *p;
 	va_list		ap;
 
 	/* Large objects not yet supported */
-	if (ARR_IS_LO(v) == true) {
+	if (ARR_IS_LO(v) == true)
 		elog(ERROR, "array_map: large objects not supported");
-	}
 
 	/* Check nargs */
-	if ((nargs < 0) || (nargs > 4)) {
+	if ((nargs < 0) || (nargs > 4))
 		elog(ERROR, "array_map: invalid nargs: %d", nargs);
-	}
 
 	/* Copy extra args to local variable */
 	va_start(ap, nargs);
-	for (i=0; i<nargs; i++) {
+	for (i = 0; i < nargs; i++)
 		args[i] = (void *) va_arg(ap, char *);
-	}
 	va_end(ap);
 
 	/* Lookup source and result types. Unneeded variables are reused. */
@@ -1336,14 +1333,13 @@ array_map(ArrayType *v,
 	system_cache_lookup(retType, false, &typlen, &typbyval,
 						&typdelim, &typelem, &proc, &typalign);
 
-	ndim   = ARR_NDIM(v);
-	dim    = ARR_DIMS(v);
+	ndim = ARR_NDIM(v);
+	dim = ARR_DIMS(v);
 	nitems = getNitems(ndim, dim);
 
 	/* Check for empty array */
-	if (nitems <= 0) {
+	if (nitems <= 0)
 		return v;
-	}
 
 	/* Allocate temporary array for new values */
 	values = (char **) palloc(nitems * sizeof(char *));
@@ -1351,64 +1347,74 @@ array_map(ArrayType *v,
 
 	/* Loop over source data */
 	s = (char *) ARR_DATA_PTR(v);
-	for (i=0; i<nitems; i++) {
+	for (i = 0; i < nitems; i++)
+	{
 		/* Get source element */
-		if (inp_typbyval) {
-			switch (inp_typlen) {
-			case 1:
-				elt = (char *) ((int) (*(char *) s));
-				break;
-			case 2:
-				elt = (char *) ((int) (*(int16 *) s));
-				break;
-			case 3:
-			case 4:
-			default:
-				elt = (char *) (*(int32 *) s);
-				break;
+		if (inp_typbyval)
+		{
+			switch (inp_typlen)
+			{
+				case 1:
+					elt = (char *) ((int) (*(char *) s));
+					break;
+				case 2:
+					elt = (char *) ((int) (*(int16 *) s));
+					break;
+				case 3:
+				case 4:
+				default:
+					elt = (char *) (*(int32 *) s);
+					break;
 			}
 			s += inp_typlen;
-		} else {
+		}
+		else
+		{
 			elt = s;
-			if (inp_typlen > 0) {
+			if (inp_typlen > 0)
 				s += inp_typlen;
-			} else {
+			else
 				s += INTALIGN(*(int32 *) s);
-			}
 		}
 
 		/*
-		 * Apply the given function to source elt and extra args.
-		 * nargs is the number of extra args taken by fn().
+		 * Apply the given function to source elt and extra args. nargs is
+		 * the number of extra args taken by fn().
 		 */
-		switch (nargs) {
-		case 0:
-			p = (char *) (*fn) (elt);
-			break;
-		case 1:
-			p = (char *) (*fn) (elt, args[0]);
-			break;
-		case 2:
-			p = (char *) (*fn) (elt, args[0], args[1]);
-			break;
-		case 3:
-			p = (char *) (*fn) (elt, args[0], args[1], args[2]);
-			break;
-		case 4:
-		default:
-			p = (char *) (*fn) (elt, args[0], args[1], args[2], args[3]);
-			break;
+		switch (nargs)
+		{
+			case 0:
+				p = (char *) (*fn) (elt);
+				break;
+			case 1:
+				p = (char *) (*fn) (elt, args[0]);
+				break;
+			case 2:
+				p = (char *) (*fn) (elt, args[0], args[1]);
+				break;
+			case 3:
+				p = (char *) (*fn) (elt, args[0], args[1], args[2]);
+				break;
+			case 4:
+			default:
+				p = (char *) (*fn) (elt, args[0], args[1], args[2], args[3]);
+				break;
 		}
 
 		/* Update values and total result size */
-		if (typbyval) {
+		if (typbyval)
+		{
 			values[i] = (char *) p;
 			nbytes += typlen;
-		} else {
-			int len;
+		}
+		else
+		{
+			int			len;
+
 			len = ((typlen > 0) ? typlen : INTALIGN(*(int32 *) p));
 			/* Needed because _CopyArrayEls tries to pfree items */
-			if (p == elt) {
+			if (p == elt)
+			{
 				p = (char *) palloc(len);
 				memcpy(p, elt, len);
 			}

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: off.h,v 1.6 1999/02/13 23:22:08 momjian Exp $
+ * $Id: off.h,v 1.7 1999/05/25 16:14:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,7 +32,7 @@ typedef uint16 OffsetNumber;
  */
 
 /*
- * OffsetNumberIsValid 
+ * OffsetNumberIsValid
  *		True iff the offset number is valid.
  */
 #define OffsetNumberIsValid(offsetNumber) \
@@ -40,8 +40,8 @@ typedef uint16 OffsetNumber;
 			 (offsetNumber <= MaxOffsetNumber)))
 
 /*
- * OffsetNumberNext 
- * OffsetNumberPrev 
+ * OffsetNumberNext
+ * OffsetNumberPrev
  *		Increments/decrements the argument.  These macros look pointless
  *		but they help us disambiguate the different manipulations on
  *		OffsetNumbers (e.g., sometimes we substract one from an

@@ -338,9 +338,7 @@ SS_replace_correlation_vars(Node *expr)
 		}
 	}
 	else if (IsA(expr, Iter))
-	{
 		((Iter *) expr)->iterexpr = SS_replace_correlation_vars(((Iter *) expr)->iterexpr);
-	}
 	else if (single_node(expr))
 		return expr;
 	else if (or_clause(expr) || and_clause(expr) || is_opclause(expr) ||
@@ -398,9 +396,7 @@ SS_process_sublinks(Node *expr)
 		((Expr *) expr)->args = (List *)
 			SS_process_sublinks((Node *) ((Expr *) expr)->args);
 	else if (IsA(expr, SubLink))/* got it! */
-	{
 		expr = _make_subplan((SubLink *) expr);
-	}
 
 	return expr;
 }
@@ -529,13 +525,13 @@ SS_pull_subplan(Node *expr)
 		return SS_pull_subplan(((Aggref *) expr)->target);
 	else if (IsA(expr, ArrayRef))
 	{
-		result = SS_pull_subplan((Node *)((ArrayRef *) expr)->refupperindexpr);
+		result = SS_pull_subplan((Node *) ((ArrayRef *) expr)->refupperindexpr);
 		result = nconc(result,
-				SS_pull_subplan((Node*) ((ArrayRef *) expr)->reflowerindexpr));
+		 SS_pull_subplan((Node *) ((ArrayRef *) expr)->reflowerindexpr));
 		result = nconc(result,
 					   SS_pull_subplan(((ArrayRef *) expr)->refexpr));
 		result = nconc(result,
-					   SS_pull_subplan(((ArrayRef *) expr)->refassgnexpr));
+					 SS_pull_subplan(((ArrayRef *) expr)->refassgnexpr));
 	}
 	else if (IsA(expr, TargetEntry))
 		return SS_pull_subplan(((TargetEntry *) expr)->expr);

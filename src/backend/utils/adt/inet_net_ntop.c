@@ -16,7 +16,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$Id: inet_net_ntop.c,v 1.5 1999/05/25 05:29:38 momjian Exp $";
+static const char rcsid[] = "$Id: inet_net_ntop.c,v 1.6 1999/05/25 16:12:04 momjian Exp $";
 
 #endif
 
@@ -40,9 +40,9 @@ static const char rcsid[] = "$Id: inet_net_ntop.c,v 1.5 1999/05/25 05:29:38 momj
 #endif
 
 static char *inet_net_ntop_ipv4(const u_char *src, int bits,
-								char *dst, size_t size);
+				   char *dst, size_t size);
 static char *inet_cidr_ntop_ipv4(const u_char *src, int bits,
-								char *dst, size_t size);
+					char *dst, size_t size);
 
 /*
  * char *
@@ -59,7 +59,7 @@ inet_cidr_ntop(int af, const void *src, int bits, char *dst, size_t size)
 {
 	switch (af)
 	{
-		case AF_INET:
+			case AF_INET:
 			return (inet_cidr_ntop_ipv4(src, bits, dst, size));
 		default:
 			errno = EAFNOSUPPORT;
@@ -162,7 +162,7 @@ inet_net_ntop(int af, const void *src, int bits, char *dst, size_t size)
 {
 	switch (af)
 	{
-		case AF_INET:
+			case AF_INET:
 			return (inet_net_ntop_ipv4(src, bits, dst, size));
 		default:
 			errno = EAFNOSUPPORT;
@@ -186,10 +186,11 @@ inet_net_ntop(int af, const void *src, int bits, char *dst, size_t size)
 static char *
 inet_net_ntop_ipv4(const u_char *src, int bits, char *dst, size_t size)
 {
-	char *odst = dst;
-	char *t;
-	size_t len = 4;
-	int b, tb;
+	char	   *odst = dst;
+	char	   *t;
+	size_t		len = 4;
+	int			b,
+				tb;
 
 	if (bits < 0 || bits > 32)
 	{
@@ -218,7 +219,7 @@ inet_net_ntop_ipv4(const u_char *src, int bits, char *dst, size_t size)
 			*dst++ = '.';
 			*dst = '\0';
 		}
-		size -= (size_t)(dst - t);
+		size -= (size_t) (dst - t);
 	}
 
 	/* don't print masklen if 32 bits */
@@ -232,7 +233,7 @@ inet_net_ntop_ipv4(const u_char *src, int bits, char *dst, size_t size)
 
 	return (odst);
 
- emsgsize:
+emsgsize:
 	errno = EMSGSIZE;
 	return (NULL);
 }

@@ -18,11 +18,11 @@
 */
 
 int			add_one(int arg);
-Point	   *makepoint(Point *pointx, Point *pointy );
+Point	   *makepoint(Point *pointx, Point *pointy);
 text	   *copytext(text *t);
 
-bool c_overpaid(TupleTableSlot *t,	  /* the current instance of EMP */
-				int4 limit);
+bool c_overpaid(TupleTableSlot *t,	/* the current instance of EMP */
+		   int4 limit);
 
 
 
@@ -33,9 +33,9 @@ add_one(int arg)
 }
 
 Point *
-makepoint(Point *pointx, Point *pointy )
+makepoint(Point *pointx, Point *pointy)
 {
-	Point	  *new_point = (Point *) palloc(sizeof(Point));
+	Point	   *new_point = (Point *) palloc(sizeof(Point));
 
 	new_point->x = pointx->x;
 	new_point->y = pointy->y;
@@ -67,7 +67,7 @@ copytext(text *t)
 }
 
 bool
-c_overpaid(TupleTableSlot *t,	 /* the current instance of EMP */
+c_overpaid(TupleTableSlot *t,	/* the current instance of EMP */
 		   int4 limit)
 {
 	bool		isnull = false;
