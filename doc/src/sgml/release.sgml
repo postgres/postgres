@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.83 2001/02/13 22:05:47 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.84 2001/02/15 13:31:44 momjian Exp $
 -->
 
  <appendix id="release">
@@ -228,7 +228,7 @@ New SQL function setval(seq,val,bool) for use in pg_dump (Philip)
 Require DROP VIEW to remove views, no DROP TABLE (Mark)
 Allow DROP VIEW view1, view2 (Mark)
 Allow multiple objects in DROP INDEX, DROP RULE, and DROP TYPE (Tom)
-Allow automatic conversion to Unicode (Tatsuo)
+Allow automatic conversion to/from Unicode (Tatsuo, Eiji)
 New /contrib/pgcrypto hashing functions (Marko Kreen)
 New pg_dumpall --globals-only option (Peter E)
 New CHECKPOINT command for WAL which creates new WAL log file (Vadim)
