@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Oct  3 15:32:30 EDT 2002
+Last updated:		Thu Oct  3 22:28:32 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -88,6 +88,7 @@ Data Types
 * Allow INET subnet tests using non-constants
 * -Allow bytea to handle LIKE with non-TEXT patterns
 * -to_char(0,'FM999.99') returns a period, to_char(1,'FM999.99') doesn't (Karel)
+* Add floor(float8) and other missing functions
 
 * CONVERSION
 	o -Store binary-compatible type information in the system
@@ -270,6 +271,7 @@ Commands
 	o Add PL/PgSQL PROCEDURES that can return multiple values
 	o Add table function support to pltcl, plperl, plpython
 	o Make PL/PgSQL %TYPE schema-aware 
+
 
 Clients
 =======
@@ -466,6 +468,7 @@ Optimizer / Executor
 * Improve ability to display optimizer analysis using OPTIMIZER_DEBUG
 * Use CHECK constraints to improve optimizer decisions
 * Check GUC geqo_threshold to see if it is still accurate
+
 
 Miscellaneous
 =============
