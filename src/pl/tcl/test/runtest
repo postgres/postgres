@@ -21,7 +21,7 @@ psql -q -n -e $DBNAME <test_queries.sql > test.out 2>&1
 if diff test.expected test.out >/dev/null 2>&1 ; then
     echo "    Tests passed O.K."
 else
-    echo "    Tests faild - look at diffs between"
+    echo "    Tests failed - look at diffs between"
     echo "    test.expected and test.out"
 fi
 

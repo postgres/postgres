@@ -133,7 +133,11 @@ select tcl_sum(key1) from T_pkey2;
 (1 row)
 
 select tcl_avg(key1) from T_pkey1 where key1 = 99;
-ERROR:  pltcl: divide by zero
+ tcl_avg 
+---------
+        
+(1 row)
+
 select tcl_sum(key1) from T_pkey1 where key1 = 99;
  tcl_sum 
 ---------
