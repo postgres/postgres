@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.88 1999/06/16 11:01:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.89 1999/07/08 02:46:37 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -254,7 +254,7 @@ heap_create(char *relname,
 	{
 		/* replace relname of caller */
 		snprintf(relname, NAMEDATALEN, "pg_temp.%d.%u",
-				 (int) MyProcPid, uniqueId++);
+				 MyProcPid, uniqueId++);
 	}
 
 	/* ----------------

@@ -94,6 +94,8 @@ TYPES
 * Allow array on int8[]
 * Remove Money type, add money formatting for decimal type
 * Fix typein/out functions to not be user-callable
+* Add non-large-object binary field
+* Add index on NUMERIC type
 
 VIEWS
 
@@ -161,7 +163,7 @@ MISC
 * Show location of syntax error in query
 * Redesign the function call interface to handle NULLs better(Jan)
 * Document/trigger/rule so changes to pg_shadow create pg_pwd
-* Missing optimizer selectivities for date, etc.
+* Missing optimizer selectivities for date, r-tree, etc.
 * Overhaul mdmgr/smgr to fix double unlinking and double opens, cleanup
 * Overhaul bufmgr/lockmgr/transaction manager
 * Tables that start with xinv confused to be large objects
@@ -221,7 +223,8 @@ MISC
 * fix memory leak in cache code when non-existant table is referenced
 * In WHERE x=3 AND x=y, add y=3
 * pass atttypmod through parser in more cases(Bruce)
-* remov
+* remove duplicate type in/out functions for disk and net
+
 SOURCE CODE
 -----------
 * Add use of 'const' for varibles in source tree

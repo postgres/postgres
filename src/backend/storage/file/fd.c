@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Id: fd.c,v 1.42 1999/05/26 12:55:51 momjian Exp $
+ *	  $Id: fd.c,v 1.43 1999/07/08 02:46:39 momjian Exp $
  *
  * NOTES:
  *
@@ -670,7 +670,7 @@ OpenTemporaryFile(void)
 	 * transaction
 	 */
 	snprintf(tempfilename, sizeof(tempfilename),
-			 "pg_temp%d.%ld", (int) getpid(), tempFileCounter++);
+			 "pg_sorttemp%d.%ld", MyProcPid, tempFileCounter++);
 
 	/* Open the file */
 #ifndef __CYGWIN32__
