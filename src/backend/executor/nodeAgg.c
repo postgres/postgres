@@ -238,8 +238,8 @@ ExecAgg(Agg *node)
 		tupValue = 	projInfo->pi_tupValue;
 		
 		/* initially, set all the values to NULL */
-		null_array = malloc(nagg);
-		for (i=0;i<nagg;i++)
+		null_array = malloc(tupType->natts);
+		for (i=0;i<tupType->natts;i++)
 		    null_array[i] = 'n';
 		oneTuple = heap_formtuple(tupType, tupValue, null_array);
 		free(null_array);
