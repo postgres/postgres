@@ -298,7 +298,7 @@ get_typedef(char *name)
 }
 
 void
-adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dimension, int type_index, bool pointer)
+adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dimension, int type_index, int pointer_len)
 {
 	if (type_index >= 0)
 	{
@@ -318,8 +318,19 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 
 		*dimension = type_dimension;
 	}
+	
+	if (pointer_len>2)
+	{	sprintf(errortext, "No multilevel (more than 2) pointer supported %d",pointer_len);
+	    mmerror(ET_FATAL, errortext);
+//		mmerror(ET_FATAL, "No multilevel (more than 2) pointer supported %d",pointer_len);
+	}
+	if (pointer_len>1 && type_enum!=ECPGt_char && type_enum!=ECPGt_unsigned_char)
+		mmerror(ET_FATAL, "No pointer to pointer supported for this type");
 
-	if (*length >= 0 && *dimension >= 0 && pointer)
+	if (pointer_len>1 && (*length >= 0 || *dimension >= 0))
+		mmerror(ET_FATAL, "No multi-dimensional array support");
+
+	if (*length >= 0 && *dimension >= 0 && pointer_len)
 		mmerror(ET_FATAL, "No multi-dimensional array support");
 
 	switch (type_enum)
@@ -327,7 +338,7 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 		case ECPGt_struct:
 		case ECPGt_union:
 			/* pointer has to get dimension 0 */
-			if (pointer)
+			if (pointer_len)
 			{
 				*length = *dimension;
 				*dimension = 0;
@@ -339,7 +350,7 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 			break;
 		case ECPGt_varchar:
 			/* pointer has to get dimension 0 */
-			if (pointer)
+			if (pointer_len)
 				*dimension = 0;
 
 			/* one index is the string length */
@@ -352,8 +363,15 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 			break;
 		case ECPGt_char:
 		case ECPGt_unsigned_char:
+			/* char ** */
+			if (pointer_len==2)
+			{
+				*length = *dimension = 0;
+				break;
+			}
+			
 			/* pointer has to get length 0 */
-			if (pointer)
+			if (pointer_len==1)
 				*length = 0;
 
 			/* one index is the string length */
@@ -362,11 +380,10 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 				*length = (*dimension < 0) ? 1 : *dimension;
 				*dimension = -1;
 			}
-
 			break;
 		default:
 			/* a pointer has dimension = 0 */
-			if (pointer)
+			if (pointer_len)
 			{
 				*length = *dimension;
 				*dimension = 0;

@@ -1,0 +1,33 @@
+#include <stdio.h>
+exec sql include sqlca;
+#include <stdlib.h>
+
+int main()
+{  
+   exec sql begin declare section;
+   char **cpp=0;
+   int *ipointer=0;
+   exec sql end declare section;
+   int i;
+
+   if (getenv("SQLOPT")) ECPGdebug(1,stderr);
+
+   exec sql whenever sqlerror do sqlprint();
+   exec sql connect to template1;
+   
+   exec sql allocate descriptor mydesc;
+   exec sql select tablename into descriptor mydesc from pg_tables;
+   exec sql get descriptor mydesc value 1 :cpp=DATA, :ipointer=INDICATOR;
+
+   printf("Result ");
+   for (i=0;i<sqlca.sqlerrd[2];++i)
+   {  if (ipointer[i]) printf("NULL, ");
+      else printf("'%s', ",cpp[i]); 
+   }
+   ECPGfree_auto_mem();
+   printf("\n");
+
+   exec sql deallocate descriptor mydesc;
+   exec sql disconnect;
+   return 0;
+}
