@@ -10,14 +10,13 @@ This must become a chapter on array behavior. Volunteers? - thomas 1998-01-12
 </Para>
 
 <Para>
-     <ProductName>Postgres</ProductName> allows attributes of an instance to be defined
-     as  fixed-length  or  variable-length multi-dimensional
-     arrays. Arrays of any base type  or  user-defined  type
-     can  be created. To illustrate their use, we first create a 
-     class with arrays of base types.
+     <ProductName>Postgres</ProductName> allows attributes of a class
+     to be defined as variable-length multi-dimensional
+     arrays. Arrays of any built-in type  or  user-defined  type
+     can  be created.  To illustrate their use, we create this class:
      
 <ProgramListing>
-CREATE TABLE SAL_EMP (
+CREATE TABLE sal_emp (
     name            text,
     pay_by_quarter  int4[],
     schedule        text[][]
@@ -26,10 +25,10 @@ CREATE TABLE SAL_EMP (
 </Para>
 
 <Para>
-     The above query will create a class named SAL_EMP  with
+     The above query will create a class named <FirstTerm>sal_emp</FirstTerm>  with
      a  <FirstTerm>text</FirstTerm>  string (name), a one-dimensional array of <FirstTerm>int4</FirstTerm>
      (pay_by_quarter),  which  represents   the   employee's
-     salary by quarter and a two-dimensional array of <FirstTerm>text</FirstTerm>
+     salary by quarter, and a two-dimensional array of <FirstTerm>text</FirstTerm>
      (schedule),  which  represents  the  employee's  weekly
      schedule.   Now  we  do  some  <FirstTerm>INSERTS</FirstTerm>s; note that when
      appending to an array, we  enclose  the  values  within
@@ -37,20 +36,18 @@ CREATE TABLE SAL_EMP (
      this is not unlike the syntax for  initializing  structures.
      
 <ProgramListing>
-INSERT INTO SAL_EMP
+INSERT INTO sal_emp
     VALUES ('Bill',
     '{10000, 10000, 10000, 10000}',
     '{{"meeting", "lunch"}, {}}');
 
-INSERT INTO SAL_EMP
+INSERT INTO sal_emp
     VALUES ('Carol',
     '{20000, 25000, 25000, 25000}',
     '{{"talk", "consult"}, {"meeting"}}');
 </ProgramListing>
 
-     By  default,  <ProductName>Postgres</ProductName>  uses  the "one-based" numbering
-     convention for arrays -- that is, an array  of  n  elements starts with array[1] and ends with array[n].
-     Now,  we  can  run  some queries on SAL_EMP.  First, we
+     Now,  we  can  run  some queries on sal_emp.  First, we
      show how to access a single element of an  array  at  a
      time.   This query retrieves the names of the employees
      whose pay changed in the second quarter:
@@ -63,6 +60,10 @@ SELECT name FROM sal_emp WHERE pay_by_quarter[1] &lt;&gt; pay_by_quarter[2];
  Carol
 (1 row)
 </ProgramListing>
+
+     <ProductName>Postgres</ProductName>  uses  the "one-based" numbering
+     convention for arrays --- that is, an array  of  n  elements starts with
+     array[1] and ends with array[n].
 </Para>
 
 <Para>
@@ -82,8 +83,10 @@ SELECT pay_by_quarter[3] FROM sal_emp;
 
 <Para>
      We  can  also  access  arbitrary slices of an array, or
-     subarrays.  This query  retrieves  the  first  item  on
-     Bill's schedule for the first two days of the week.
+     subarrays.  An array slice is denoted by writing
+     "lower subscript : upper subscript" for one or more array
+     dimensions.  This query  retrieves  the  first  item  on
+     Bill's schedule for the first two days of the week:
      
 <ProgramListing>
 SELECT schedule[1:2][1:1] FROM sal_emp WHERE name = 'Bill';
@@ -93,6 +96,59 @@ SELECT schedule[1:2][1:1] FROM sal_emp WHERE name = 'Bill';
  {{"meeting"},{""}}
 (1 row)
 </ProgramListing>
+
+     We could also have written
+
+<ProgramListing>
+SELECT schedule[1:2][1] FROM sal_emp WHERE name = 'Bill';
+</ProgramListing>
+
+     with the same result.
+</Para>
+
+<Para>
+     An array value can be replaced completely:
+
+<ProgramListing>
+UPDATE sal_emp SET pay_by_quarter = '{25000,25000,27000,27000}'
+    WHERE name = 'Carol';
+</ProgramListing>
+
+     or updated at a single entry:
+
+<ProgramListing>
+UPDATE sal_emp SET pay_by_quarter[4] = 15000
+    WHERE name = 'Bill';
+</ProgramListing>
+
+     or updated in a slice:
+
+<ProgramListing>
+UPDATE sal_emp SET pay_by_quarter[1:2] = '{27000,27000}'
+    WHERE name = 'Carol';
+</ProgramListing>
+</Para>
+
+<Para>
+     It is not currently possible to resize an array value except by
+     complete replacement; for example, we couldn't change a four-
+     element array value to a five-element value with a single
+     assignment to array[5].
+</Para>
+
+<Para>
+     The syntax for CREATE TABLE allows fixed-length arrays to be
+     defined:
+
+<ProgramListing>
+CREATE TABLE tictactoe (
+    squares   int4[3][3]
+);
+</ProgramListing>
+
+     However, the current implementation does not enforce the array
+     size limits --- the behavior is the same as for arrays of
+     unspecified length.
 </Para>
 
 </Chapter>
