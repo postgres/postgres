@@ -302,10 +302,10 @@ ECPGdeallocate_desc(int line, const char *name)
 bool
 ECPGallocate_desc(int line, const char *name)
 {
-	struct descriptor *new = (struct descriptor *) malloc(sizeof(struct descriptor));
+	struct descriptor *new = (struct descriptor *) ecpg_alloc(sizeof(struct descriptor), line);
 
 	new->next = all_descriptors;
-	new->name = malloc(strlen(name) + 1);
+	new->name = ecpg_alloc(strlen(name) + 1, line);
 	new->result = PQmakeEmptyPGresult(NULL, 0);
 	strcpy(new->name, name);
 	all_descriptors = new;

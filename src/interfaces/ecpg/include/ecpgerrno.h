@@ -43,4 +43,19 @@
 #define ECPG_TRANS			-401
 #define ECPG_CONNECT			-402
 
+/* backend notices, starting at 600 */
+#define ECPG_NOTICE_UNRECOGNIZED       -600
+               /* NOTICE:  (transaction aborted): queries ignored until END */
+               /* NOTICE:  current transaction is aborted, queries ignored until end of transaction block */
+#define ECPG_NOTICE_QUERY_IGNORED      -601
+               /* NOTICE:  PerformPortalClose: portal "*" not found */
+#define ECPG_NOTICE_UNKNOWN_PORTAL     -602
+               /* NOTICE:  BEGIN: already a transaction in progress */
+#define ECPG_NOTICE_IN_TRANSACTION     -603
+               /* NOTICE:  AbortTransaction and not in in-progress state */
+               /* NOTICE:  COMMIT: no transaction in progress */
+#define ECPG_NOTICE_NO_TRANSACTION     -604
+               /* NOTICE:  BlankPortalAssignName: portal * already exists */
+#define ECPG_NOTICE_PORTAL_EXISTS      -605
+                                        
 #endif	 /* !_ECPG_ERROR_H */

@@ -933,5 +933,12 @@ Mon Sep  4 14:10:38 PDT 2000
 Mon Sep 18 13:55:11 PDT 2000
 
 	- Added int8 support based on a patch by Martijn Schoemaker <martijn@osp.nl>
+
+Mit Sep 20 12:40:27 PDT 2000
+
+	- Added patch by Christof Petig <christof.petig@wtal.de> to process
+	  backend NOTICEs.
+	- Added patch by Christof Petig <christof.petig@wtal.de> to cache
+	  type information.
 	- Set ecpg version to 2.8.0. 
 	- Set library version to 3.2.0.

@@ -1,0 +1,94 @@
+// $Id: test_notice.pgc,v 1.1 2000/09/20 13:25:52 meskes Exp $
+
+exec sql include sqlca;
+
+#include <stdio.h>
+
+void printwarning(void)
+{
+   if (sqlca.sqlwarn[0]) printf("sqlca.sqlwarn: %c",sqlca.sqlwarn[0]);
+   else return;
+
+   if (sqlca.sqlwarn[1]) putchar('1');
+   if (sqlca.sqlwarn[2]) putchar('2');
+
+   putchar('\n');
+}
+
+int main(int argc, char **argv)
+{
+   exec sql begin declare section;
+ 	  int index,payload;
+   exec sql end declare section;
+   FILE *dbgs; 
+
+   /* actually this will print 'sql error' if a warning occurs */
+   exec sql whenever sqlwarning do printwarning();
+
+   if ((dbgs = fopen("log", "w")) != NULL)
+   	ECPGdebug(1, dbgs);
+   
+   exec sql connect to mm;
+   if (sqlca.sqlcode) printf("%d %ld:%s\n",__LINE__,sqlca.sqlcode,sqlca.sqlerrm.sqlerrmc);
+
+   exec sql create table test (
+        "index" numeric(3) primary key,
+        "payload" int4 NOT NULL);
+   if (sqlca.sqlcode) printf("%d %ld:%s\n",__LINE__,sqlca.sqlcode,sqlca.sqlerrm.sqlerrmc);
+
+   exec sql commit work;
+   if (sqlca.sqlcode) printf("%d %ld:%s\n",__LINE__,sqlca.sqlcode,sqlca.sqlerrm.sqlerrmc);
+   
+   exec sql begin work;
+   if (sqlca.sqlcode) printf("%d %ld:%s\n",__LINE__,sqlca.sqlcode,sqlca.sqlerrm.sqlerrmc);
+   
+   exec sql begin work;
+   if (sqlca.sqlcode!=ECPG_NOTICE_IN_TRANSACTION) printf("%d %ld:%s\n",__LINE__,sqlca.sqlcode,sqlca.sqlerrm.sqlerrmc);
+   
+   exec sql commit;
+   if (sqlca.sqlcode) printf("%d %ld:%s\n",__LINE__,sqlca.sqlcode,sqlca.sqlerrm.sqlerrmc);
+   
+   exec sql commit;
+   if (sqlca.sqlcode!=ECPG_NOTICE_NO_TRANSACTION) printf("%d %ld:%s\n",__LINE__,sqlca.sqlcode,sqlca.sqlerrm.sqlerrmc);
+   
+   exec sql rollback;
+   if (sqlca.sqlcode!=ECPG_NOTICE_NO_TRANSACTION) printf("%d %ld:%s\n",__LINE__,sqlca.sqlcode,sqlca.sqlerrm.sqlerrmc);
+   
+   sqlca.sqlcode=0;
+   exec sql declare x cursor for select * from test;
+   if (sqlca.sqlcode) printf("%d %ld:%s\n",__LINE__,sqlca.sqlcode,sqlca.sqlerrm.sqlerrmc);
+   
+   exec sql open x;
+   if (sqlca.sqlcode) printf("%d %ld:%s\n",__LINE__,sqlca.sqlcode,sqlca.sqlerrm.sqlerrmc);
+   
+   exec sql open x;
+   if (sqlca.sqlcode!=ECPG_NOTICE_PORTAL_EXISTS) printf("%d %ld:%s\n",__LINE__,sqlca.sqlcode,sqlca.sqlerrm.sqlerrmc);
+   
+   exec sql close x;
+   if (sqlca.sqlcode) printf("%d %ld:%s\n",__LINE__,sqlca.sqlcode,sqlca.sqlerrm.sqlerrmc);
+   
+   exec sql close x;
+   if (sqlca.sqlcode!=ECPG_NOTICE_UNKNOWN_PORTAL) printf("%d %ld:%s\n",__LINE__,sqlca.sqlcode,sqlca.sqlerrm.sqlerrmc);
+   
+   exec sql update test set nonexistent=2;
+   if (sqlca.sqlcode!=ECPG_PGSQL) printf("%d %ld:%s\n",__LINE__,sqlca.sqlcode,sqlca.sqlerrm.sqlerrmc);
+   
+   exec sql select payload into :payload from test where index=1;
+   if (sqlca.sqlcode!=ECPG_NOTICE_QUERY_IGNORED) printf("%d %ld:%s\n",__LINE__,sqlca.sqlcode,sqlca.sqlerrm.sqlerrmc);
+   
+   exec sql rollback;
+   if (sqlca.sqlcode) printf("%d %ld:%s\n",__LINE__,sqlca.sqlcode,sqlca.sqlerrm.sqlerrmc);
+   
+   // this will raise a warning
+   exec sql drop table test;
+   if (sqlca.sqlcode) printf("%d %ld:%s\n",__LINE__,sqlca.sqlcode,sqlca.sqlerrm.sqlerrmc);
+   exec sql commit work;
+   if (sqlca.sqlcode) printf("%d %ld:%s\n",__LINE__,sqlca.sqlcode,sqlca.sqlerrm.sqlerrmc);
+   
+   exec sql disconnect;
+   if (sqlca.sqlcode) printf("%d %ld:%s\n",__LINE__,sqlca.sqlcode,sqlca.sqlerrm.sqlerrmc);
+
+   if (dbgs != NULL)
+                fclose(dbgs);   
+   return 0;
+}

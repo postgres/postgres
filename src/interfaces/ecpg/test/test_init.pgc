@@ -1,0 +1,61 @@
+exec sql include sqlca;
+
+int fa() { return 2; }
+int fb(int x) { return x; }
+int fc(const char *x) { return *x; }
+int fd(const char *x,int i) { return (*x)*i; }
+enum e { ENUM0, ENUM1 };
+int fe(enum e x) { return (int)x; }
+struct sa { int member; };
+
+void sqlmeldung(char *meldung, short trans)
+{
+}
+
+#define NO 0
+#define YES 1
+
+#ifdef _cplusplus
+namespace N
+{ static const int i=2;
+};
+#endif
+
+int main()
+{ struct sa x,*y;
+exec sql begin declare section;
+int a=2;
+int b=2+2;
+int d=x.member;
+int g=fb(2);
+int i=3^1;
+int j=1?1:2;
+
+/*int e=y->member; /* compile error */
+/*int c=10>>2; /* compile error */
+/*bool h=2||1; /* compile error */
+exec sql end declare section;
+
+/* not working */
+int f=fa();
+
+#ifdef _cplusplus
+exec sql begin declare section;
+int k=N::i; /* compile error */
+exec sql end declare section;
+#endif
+
+exec sql whenever sqlerror do fa();
+exec sql select now();
+exec sql whenever sqlerror do fb(20);
+exec sql select now();
+exec sql whenever sqlerror do fc("50");
+exec sql select now();
+exec sql whenever sqlerror do fd("50",1);
+exec sql select now();
+exec sql whenever sqlerror do fe(ENUM0);
+exec sql select now();
+/* ex ec sql whenever sqlerror do sqlmeldung(NULL,NO); */
+exec sql select now();
+return 0;
+}
