@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.80 2003/01/12 22:35:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.81 2003/01/15 19:35:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,32 +60,24 @@ static void check_hashjoinable(RestrictInfo *restrictinfo);
  * add_base_rels_to_query
  *
  *	  Scan the query's jointree and create baserel RelOptInfos for all
- *	  the base relations (ie, table and subquery RTEs) appearing in the
- *	  jointree.  Also, create otherrel RelOptInfos for join RTEs.
- *
- * The return value is a list of all the baserel indexes (but not join RTE
- * indexes) included in the scanned jointree.  This is actually just an
- * internal convenience for marking join otherrels properly; no outside
- * caller uses the result.
+ *	  the base relations (ie, table, subquery, and function RTEs)
+ *	  appearing in the jointree.
  *
  * At the end of this process, there should be one baserel RelOptInfo for
  * every non-join RTE that is used in the query.  Therefore, this routine
  * is the only place that should call build_base_rel.  But build_other_rel
- * will be used again later to build rels for inheritance children.
+ * will be used later to build rels for inheritance children.
  */
-List *
+void
 add_base_rels_to_query(Query *root, Node *jtnode)
 {
-	List	   *result = NIL;
-
 	if (jtnode == NULL)
-		return NIL;
+		return;
 	if (IsA(jtnode, RangeTblRef))
 	{
 		int			varno = ((RangeTblRef *) jtnode)->rtindex;
 
 		build_base_rel(root, varno);
-		result = makeListi1(varno);
 	}
 	else if (IsA(jtnode, FromExpr))
 	{
@@ -94,29 +86,15 @@ add_base_rels_to_query(Query *root, Node *jtnode)
 
 		foreach(l, f->fromlist)
 		{
-			result = nconc(result,
-						   add_base_rels_to_query(root, lfirst(l)));
+			add_base_rels_to_query(root, lfirst(l));
 		}
 	}
 	else if (IsA(jtnode, JoinExpr))
 	{
 		JoinExpr   *j = (JoinExpr *) jtnode;
-		RelOptInfo *jrel;
 
-		result = add_base_rels_to_query(root, j->larg);
-		result = nconc(result,
-					   add_base_rels_to_query(root, j->rarg));
-		/* the join's own rtindex is NOT added to result */
-		jrel = build_other_rel(root, j->rtindex);
-
-		/*
-		 * Mark the join's otherrel with outerjoinset = list of baserel
-		 * ids included in the join.  Note we must copy here because
-		 * result list is destructively modified by nconcs at higher
-		 * levels.
-		 */
-		jrel->outerjoinset = listCopy(result);
-
+		add_base_rels_to_query(root, j->larg);
+		add_base_rels_to_query(root, j->rarg);
 		/*
 		 * Safety check: join RTEs should not be SELECT FOR UPDATE targets
 		 */
@@ -126,7 +104,6 @@ add_base_rels_to_query(Query *root, Node *jtnode)
 	else
 		elog(ERROR, "add_base_rels_to_query: unexpected node type %d",
 			 nodeTag(jtnode));
-	return result;
 }
 
 
@@ -154,11 +131,6 @@ build_base_rel_tlists(Query *root, List *tlist)
  * add_vars_to_targetlist
  *	  For each variable appearing in the list, add it to the owning
  *	  relation's targetlist if not already present.
- *
- * Note that join alias variables will be attached to the otherrel for
- * the join RTE.  They will later be transferred to the tlist of
- * the corresponding joinrel.  We will also cause entries to be made
- * for the Vars that the alias will eventually depend on.
  */
 static void
 add_vars_to_targetlist(Query *root, List *vars)
@@ -171,19 +143,6 @@ add_vars_to_targetlist(Query *root, List *vars)
 		RelOptInfo *rel = find_base_rel(root, var->varno);
 
 		add_var_to_tlist(rel, var);
-
-		if (rel->reloptkind == RELOPT_OTHER_JOIN_REL)
-		{
-			/* Var is an alias */
-			Node	   *expansion;
-			List	   *varsused;
-
-			expansion = flatten_join_alias_vars((Node *) var,
-												root->rtable, true);
-			varsused = pull_var_clause(expansion, false);
-			add_vars_to_targetlist(root, varsused);
-			freeList(varsused);
-		}
 	}
 }
 
@@ -398,6 +357,8 @@ distribute_qual_to_rels(Query *root, Node *clause,
 	restrictinfo->subclauseindices = NIL;
 	restrictinfo->eval_cost.startup = -1; /* not computed until needed */
 	restrictinfo->this_selec = -1;		/* not computed until needed */
+	restrictinfo->left_relids = NIL; /* set below, if join clause */
+	restrictinfo->right_relids = NIL;
 	restrictinfo->mergejoinoperator = InvalidOid;
 	restrictinfo->left_sortop = InvalidOid;
 	restrictinfo->right_sortop = InvalidOid;
@@ -416,41 +377,11 @@ distribute_qual_to_rels(Query *root, Node *clause,
 	clause_get_relids_vars(clause, &relids, &vars);
 
 	/*
-	 * The clause might contain some join alias vars; if so, we want to
-	 * remove the join otherrelids from relids and add the referent joins'
-	 * scope lists instead (thus ensuring that the clause can be evaluated
-	 * no lower than that join node).  We rely here on the marking done
-	 * earlier by add_base_rels_to_query.
-	 *
-	 * We can combine this step with a cross-check that the clause contains
-	 * no relids not within its scope.	If the first crosscheck succeeds,
-	 * the clause contains no aliases and we needn't look more closely.
+	 * Cross-check: clause should contain no relids not within its scope.
+	 * Otherwise the parser messed up.
 	 */
 	if (!is_subseti(relids, qualscope))
-	{
-		Relids		newrelids = NIL;
-		List	   *relid;
-
-		foreach(relid, relids)
-		{
-			RelOptInfo *rel = find_other_rel(root, lfirsti(relid));
-
-			if (rel && rel->outerjoinset)
-			{
-				/* this relid is for a join RTE */
-				newrelids = set_unioni(newrelids, rel->outerjoinset);
-			}
-			else
-			{
-				/* this relid is for a true baserel */
-				newrelids = lappendi(newrelids, lfirsti(relid));
-			}
-		}
-		relids = newrelids;
-		/* Now repeat the crosscheck */
-		if (!is_subseti(relids, qualscope))
-			elog(ERROR, "JOIN qualification may not refer to other relations");
-	}
+		elog(ERROR, "JOIN qualification may not refer to other relations");
 
 	/*
 	 * If the clause is variable-free, we force it to be evaluated at its
@@ -575,7 +506,27 @@ distribute_qual_to_rels(Query *root, Node *clause,
 		/*
 		 * 'clause' is a join clause, since there is more than one rel in
 		 * the relid list.	Set additional RestrictInfo fields for
-		 * joining.
+		 * joining.  First, does it look like a normal join clause, i.e.,
+		 * a binary operator relating expressions that come from distinct
+		 * relations?  If so we might be able to use it in a join algorithm.
+		 */
+		if (is_opclause(clause) && length(((OpExpr *) clause)->args) == 2)
+		{
+			List	   *left_relids;
+			List	   *right_relids;
+
+			left_relids = pull_varnos(get_leftop((Expr *) clause));
+			right_relids = pull_varnos(get_rightop((Expr *) clause));
+			if (left_relids && right_relids &&
+				nonoverlap_setsi(left_relids, right_relids))
+			{
+				restrictinfo->left_relids = left_relids;
+				restrictinfo->right_relids = right_relids;
+			}
+		}
+
+		/*
+		 * Now check for hash or mergejoinable operators.
 		 *
 		 * We don't bother setting the hashjoin info if we're not going
 		 * to need it.	We do want to know about mergejoinable ops in all
@@ -675,11 +626,6 @@ void
 process_implied_equality(Query *root, Node *item1, Node *item2,
 						 Oid sortop1, Oid sortop2)
 {
-	Index		irel1;
-	Index		irel2;
-	RelOptInfo *rel1;
-	List	   *restrictlist;
-	List	   *itm;
 	Oid			ltype,
 				rtype;
 	Operator	eq_operator;
@@ -687,50 +633,14 @@ process_implied_equality(Query *root, Node *item1, Node *item2,
 	Expr	   *clause;
 
 	/*
-	 * Currently, since check_mergejoinable only accepts Var = Var
-	 * clauses, we should only see Var nodes here.	Would have to work a
-	 * little harder to locate the right rel(s) if more-general mergejoin
-	 * clauses were accepted.
+	 * Forget it if this equality is already recorded.
+	 *
+	 * Note: if only a single relation is involved, we may fall through
+	 * here and end up rejecting the equality later on in qual_is_redundant.
+	 * This is a tad slow but should be okay.
 	 */
-	Assert(IsA(item1, Var));
-	irel1 = ((Var *) item1)->varno;
-	Assert(IsA(item2, Var));
-	irel2 = ((Var *) item2)->varno;
-
-	/*
-	 * If both vars belong to same rel, we need to look at that rel's
-	 * baserestrictinfo list.  If different rels, each will have a
-	 * joininfo node for the other, and we can scan either list.
-	 */
-	rel1 = find_base_rel(root, irel1);
-	if (irel1 == irel2)
-		restrictlist = rel1->baserestrictinfo;
-	else
-	{
-		JoinInfo   *joininfo = find_joininfo_node(rel1,
-												  makeListi1(irel2));
-
-		restrictlist = joininfo->jinfo_restrictinfo;
-	}
-
-	/*
-	 * Scan to see if equality is already known.
-	 */
-	foreach(itm, restrictlist)
-	{
-		RestrictInfo *restrictinfo = (RestrictInfo *) lfirst(itm);
-		Node	   *left,
-				   *right;
-
-		if (restrictinfo->mergejoinoperator == InvalidOid)
-			continue;			/* ignore non-mergejoinable clauses */
-		/* We now know the restrictinfo clause is a binary opclause */
-		left = (Node *) get_leftop(restrictinfo->clause);
-		right = (Node *) get_rightop(restrictinfo->clause);
-		if ((equal(item1, left) && equal(item2, right)) ||
-			(equal(item2, left) && equal(item1, right)))
-			return;				/* found a matching clause */
-	}
+	if (exprs_known_equal(root, item1, item2))
+		return;
 
 	/*
 	 * This equality is new information, so construct a clause
@@ -770,6 +680,8 @@ process_implied_equality(Query *root, Node *item1, Node *item2,
 	ReleaseSysCache(eq_operator);
 
 	/*
+	 * Push the new clause into all the appropriate restrictinfo lists.
+	 *
 	 * Note: we mark the qual "pushed down" to ensure that it can never be
 	 * taken for an original JOIN/ON clause.
 	 */
@@ -779,44 +691,45 @@ process_implied_equality(Query *root, Node *item1, Node *item2,
 }
 
 /*
- * vars_known_equal
- *	  Detect whether two Vars are known equal due to equijoin clauses.
+ * exprs_known_equal
+ *	  Detect whether two expressions are known equal due to equijoin clauses.
  *
  * This is not completely accurate since we avoid adding redundant restriction
  * clauses to individual base rels (see qual_is_redundant).  However, after
- * the implied-equality-deduction phase, it is complete for Vars of different
- * rels; that's sufficient for planned uses.
+ * the implied-equality-deduction phase, it is complete for expressions
+ * involving Vars of multiple rels; that's sufficient for planned uses.
  */
 bool
-vars_known_equal(Query *root, Var *var1, Var *var2)
+exprs_known_equal(Query *root, Node *item1, Node *item2)
 {
-	Index		irel1;
-	Index		irel2;
+	List	   *relids;
 	RelOptInfo *rel1;
 	List	   *restrictlist;
 	List	   *itm;
 
-	/*
-	 * Would need more work here if we wanted to check for known equality
-	 * of general clauses: there might be multiple base rels involved.
-	 */
-	Assert(IsA(var1, Var));
-	irel1 = var1->varno;
-	Assert(IsA(var2, Var));
-	irel2 = var2->varno;
+	/* Get list of relids referenced in the two expressions */
+	relids = set_unioni(pull_varnos(item1), pull_varnos(item2));
 
 	/*
-	 * If both vars belong to same rel, we need to look at that rel's
-	 * baserestrictinfo list.  If different rels, each will have a
-	 * joininfo node for the other, and we can scan either list.
+	 * If there are no Vars at all, say "true".  This prevents
+	 * process_implied_equality from trying to store "const = const"
+	 * deductions.
 	 */
-	rel1 = find_base_rel(root, irel1);
-	if (irel1 == irel2)
+	if (relids == NIL)
+		return true;
+
+	/*
+	 * If the exprs involve a single rel, we need to look at that rel's
+	 * baserestrictinfo list.  If multiple rels, any one will have a
+	 * joininfo node for the rest, and we can scan any of 'em.
+	 */
+	rel1 = find_base_rel(root, lfirsti(relids));
+	relids = lnext(relids);
+	if (relids == NIL)
 		restrictlist = rel1->baserestrictinfo;
 	else
 	{
-		JoinInfo   *joininfo = find_joininfo_node(rel1,
-												  makeListi1(irel2));
+		JoinInfo   *joininfo = find_joininfo_node(rel1, relids);
 
 		restrictlist = joininfo->jinfo_restrictinfo;
 	}
@@ -833,10 +746,10 @@ vars_known_equal(Query *root, Var *var1, Var *var2)
 		if (restrictinfo->mergejoinoperator == InvalidOid)
 			continue;			/* ignore non-mergejoinable clauses */
 		/* We now know the restrictinfo clause is a binary opclause */
-		left = (Node *) get_leftop(restrictinfo->clause);
-		right = (Node *) get_rightop(restrictinfo->clause);
-		if ((equal(var1, left) && equal(var2, right)) ||
-			(equal(var2, left) && equal(var1, right)))
+		left = get_leftop(restrictinfo->clause);
+		right = get_rightop(restrictinfo->clause);
+		if ((equal(item1, left) && equal(item2, right)) ||
+			(equal(item2, left) && equal(item1, right)))
 			return true;		/* found a matching clause */
 	}
 
@@ -862,7 +775,7 @@ qual_is_redundant(Query *root,
 	List	   *olditem;
 	Node	   *newleft;
 	Node	   *newright;
-	List	   *equalvars;
+	List	   *equalexprs;
 	bool		someadded;
 
 	/*
@@ -898,15 +811,15 @@ qual_is_redundant(Query *root,
 		return false;
 
 	/*
-	 * Now, we want to develop a list of Vars that are known equal to the
+	 * Now, we want to develop a list of exprs that are known equal to the
 	 * left side of the new qual.  We traverse the old-quals list
-	 * repeatedly to transitively expand the Vars list.  If at any point
-	 * we find we can reach the right-side Var of the new qual, we are
-	 * done.  We give up when we can't expand the equalvars list any more.
+	 * repeatedly to transitively expand the exprs list.  If at any point
+	 * we find we can reach the right-side expr of the new qual, we are
+	 * done.  We give up when we can't expand the equalexprs list any more.
 	 */
-	newleft = (Node *) get_leftop(restrictinfo->clause);
-	newright = (Node *) get_rightop(restrictinfo->clause);
-	equalvars = makeList1(newleft);
+	newleft = get_leftop(restrictinfo->clause);
+	newright = get_rightop(restrictinfo->clause);
+	equalexprs = makeList1(newleft);
 	do
 	{
 		someadded = false;
@@ -915,22 +828,22 @@ qual_is_redundant(Query *root,
 		while (olditem)
 		{
 			RestrictInfo *oldrinfo = (RestrictInfo *) lfirst(olditem);
-			Node	   *oldleft = (Node *) get_leftop(oldrinfo->clause);
-			Node	   *oldright = (Node *) get_rightop(oldrinfo->clause);
+			Node	   *oldleft = get_leftop(oldrinfo->clause);
+			Node	   *oldright = get_rightop(oldrinfo->clause);
 			Node	   *newguy = NULL;
 
 			/* must advance olditem before lremove possibly pfree's it */
 			olditem = lnext(olditem);
 
-			if (member(oldleft, equalvars))
+			if (member(oldleft, equalexprs))
 				newguy = oldright;
-			else if (member(oldright, equalvars))
+			else if (member(oldright, equalexprs))
 				newguy = oldleft;
 			else
 				continue;
 			if (equal(newguy, newright))
 				return true;	/* we proved new clause is redundant */
-			equalvars = lcons(newguy, equalvars);
+			equalexprs = lcons(newguy, equalexprs);
 			someadded = true;
 
 			/*
@@ -956,39 +869,28 @@ qual_is_redundant(Query *root,
  *	  info fields in the restrictinfo.
  *
  *	  Currently, we support mergejoin for binary opclauses where
- *	  both operands are simple Vars and the operator is a mergejoinable
- *	  operator.
+ *	  the operator is a mergejoinable operator.  The arguments can be
+ *	  anything --- as long as there are no volatile functions in them.
  */
 static void
 check_mergejoinable(RestrictInfo *restrictinfo)
 {
 	Expr	   *clause = restrictinfo->clause;
-	Var		   *left,
-			   *right;
 	Oid			opno,
 				leftOp,
 				rightOp;
 
 	if (!is_opclause(clause))
 		return;
-
-	left = get_leftop(clause);
-	right = get_rightop(clause);
-
-	/* caution: is_opclause accepts more than I do, so check it */
-	if (!right)
-		return;					/* unary opclauses need not apply */
-	if (!IsA(left, Var) ||
-		!IsA(right, Var))
+	if (length(((OpExpr *) clause)->args) != 2)
 		return;
 
 	opno = ((OpExpr *) clause)->opno;
 
 	if (op_mergejoinable(opno,
-						 left->vartype,
-						 right->vartype,
 						 &leftOp,
-						 &rightOp))
+						 &rightOp) &&
+		!contain_volatile_functions((Node *) clause))
 	{
 		restrictinfo->mergejoinoperator = opno;
 		restrictinfo->left_sortop = leftOp;
@@ -1002,34 +904,23 @@ check_mergejoinable(RestrictInfo *restrictinfo)
  *	  info fields in the restrictinfo.
  *
  *	  Currently, we support hashjoin for binary opclauses where
- *	  both operands are simple Vars and the operator is a hashjoinable
- *	  operator.
+ *	  the operator is a hashjoinable operator.  The arguments can be
+ *	  anything --- as long as there are no volatile functions in them.
  */
 static void
 check_hashjoinable(RestrictInfo *restrictinfo)
 {
 	Expr	   *clause = restrictinfo->clause;
-	Var		   *left,
-			   *right;
 	Oid			opno;
 
 	if (!is_opclause(clause))
 		return;
-
-	left = get_leftop(clause);
-	right = get_rightop(clause);
-
-	/* caution: is_opclause accepts more than I do, so check it */
-	if (!right)
-		return;					/* unary opclauses need not apply */
-	if (!IsA(left, Var) ||
-		!IsA(right, Var))
+	if (length(((OpExpr *) clause)->args) != 2)
 		return;
 
 	opno = ((OpExpr *) clause)->opno;
 
-	if (op_hashjoinable(opno,
-						left->vartype,
-						right->vartype))
+	if (op_hashjoinable(opno) &&
+		!contain_volatile_functions((Node *) clause))
 		restrictinfo->hashjoinoperator = opno;
 }

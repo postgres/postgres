@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.54 2002/12/12 15:49:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.55 2003/01/15 19:35:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -266,12 +266,12 @@ addRangeClause(RangeQueryClause **rqlist, Node *clause,
 
 	if (varonleft)
 	{
-		var = (Node *) get_leftop((Expr *) clause);
+		var = get_leftop((Expr *) clause);
 		is_lobound = !isLTsel;	/* x < something is high bound */
 	}
 	else
 	{
-		var = (Node *) get_rightop((Expr *) clause);
+		var = get_rightop((Expr *) clause);
 		is_lobound = isLTsel;	/* something < x is low bound */
 	}
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xoper.sgml,v 1.21 2003/01/06 01:20:40 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xoper.sgml,v 1.22 2003/01/15 19:35:35 tgl Exp $
 -->
 
  <Chapter Id="xoper">
@@ -375,6 +375,27 @@ table1.column1 OP table2.column2
      equality operators that are (or could be) implemented by <function>memcmp()</function>.
     </para>
 
+    <note>
+    <para>
+     The function underlying a hashjoinable operator must be marked
+     immutable or stable.  If it is volatile, the system will never
+     attempt to use the operator for a hash join.
+    </para>
+    </note>
+
+    <note>
+    <para>
+     If a hashjoinable operator has an underlying function that is marked
+     strict, the
+     function must also be complete: that is, it should return TRUE or
+     FALSE, never NULL, for any two non-NULL inputs.  If this rule is
+     not followed, hash-optimization of <literal>IN</> operations may
+     generate wrong results.  (Specifically, <literal>IN</> might return
+     FALSE where the correct answer per spec would be NULL; or it might
+     yield an error complaining that it wasn't prepared for a NULL result.)
+    </para>
+    </note>
+
    </sect2>
 
    <sect2>
@@ -471,6 +492,14 @@ table1.column1 OP table2.column2
       </listitem>
      </itemizedlist>
     </para>
+
+    <note>
+    <para>
+     The function underlying a mergejoinable operator must be marked
+     immutable or stable.  If it is volatile, the system will never
+     attempt to use the operator for a merge join.
+    </para>
+    </note>
 
     <note>
     <para>

@@ -251,8 +251,10 @@ Optimizer Data Structures
 
 RelOptInfo      - a relation or joined relations
 
- RestrictInfo   - restriction clauses, like "x = 3"
- JoinInfo       - join clauses, including the relids needed for the join
+ RestrictInfo   - WHERE clauses, like "x = 3" or "y = z"
+                  (note the same structure is used for restriction and
+                   join clauses)
+ JoinInfo       - join clauses associated with a particular pair of relations
 
  Path           - every way to generate a RelOptInfo(sequential,index,joins)
   SeqScan       - a plain Path node with pathtype = T_SeqScan

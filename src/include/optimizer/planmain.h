@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: planmain.h,v 1.64 2002/12/12 15:49:41 tgl Exp $
+ * $Id: planmain.h,v 1.65 2003/01/15 19:35:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,8 +32,6 @@ extern SubqueryScan *make_subqueryscan(List *qptlist, List *qpqual,
 extern Append *make_append(List *appendplans, bool isTarget, List *tlist);
 extern Sort *make_sort(Query *root, List *tlist,
 		  Plan *lefttree, int keycount);
-extern Sort *make_sort_from_pathkeys(Query *root, List *tlist,
-						Plan *lefttree, List *pathkeys);
 extern Agg *make_agg(Query *root, List *tlist, List *qual,
 					 AggStrategy aggstrategy,
 					 int numGroupCols, AttrNumber *grpColIdx,
@@ -54,12 +52,12 @@ extern Result *make_result(List *tlist, Node *resconstantqual, Plan *subplan);
 /*
  * prototypes for plan/initsplan.c
  */
-extern List *add_base_rels_to_query(Query *root, Node *jtnode);
+extern void add_base_rels_to_query(Query *root, Node *jtnode);
 extern void build_base_rel_tlists(Query *root, List *tlist);
 extern Relids distribute_quals_to_rels(Query *root, Node *jtnode);
 extern void process_implied_equality(Query *root, Node *item1, Node *item2,
 						 Oid sortop1, Oid sortop2);
-extern bool vars_known_equal(Query *root, Var *var1, Var *var2);
+extern bool exprs_known_equal(Query *root, Node *item1, Node *item2);
 
 /*
  * prototypes for plan/setrefs.c

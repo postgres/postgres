@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.125 2003/01/12 22:35:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.126 2003/01/15 19:35:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1754,8 +1754,8 @@ mergejoinscansel(Query *root, Node *clause,
 	if (!is_opclause(clause))
 		return;					/* shouldn't happen */
 	opno = ((OpExpr *) clause)->opno;
-	left = get_leftop((Expr *) clause);
-	right = get_rightop((Expr *) clause);
+	left = (Var *) get_leftop((Expr *) clause);
+	right = (Var *) get_rightop((Expr *) clause);
 	if (!right)
 		return;					/* shouldn't happen */
 
@@ -1766,8 +1766,6 @@ mergejoinscansel(Query *root, Node *clause,
 
 	/* Verify mergejoinability and get left and right "<" operators */
 	if (!op_mergejoinable(opno,
-						  left->vartype,
-						  right->vartype,
 						  &lsortop,
 						  &rsortop))
 		return;					/* shouldn't happen */
@@ -1893,17 +1891,6 @@ estimate_num_groups(Query *root, List *groupClauses, double input_rows)
 
 		varshere = pull_var_clause(groupexpr, false);
 		/*
-		 * Replace any JOIN alias Vars with the underlying Vars.  (This
-		 * is not really right for FULL JOIN ...)
-		 */
-		if (root->hasJoinRTEs)
-		{
-			varshere = (List *) flatten_join_alias_vars((Node *) varshere,
-														root->rtable,
-														true);
-			varshere = pull_var_clause((Node *) varshere, false);
-		}
-		/*
 		 * If we find any variable-free GROUP BY item, then either it is
 		 * a constant (and we can ignore it) or it contains a volatile
 		 * function; in the latter case we punt and assume that each input
@@ -1963,7 +1950,7 @@ estimate_num_groups(Query *root, List *groupClauses, double input_rows)
 			l2 = lnext(l2);
 
 			if (var->varno != varinfo->var->varno &&
-				vars_known_equal(root, var, varinfo->var))
+				exprs_known_equal(root, (Node *) var, (Node *) varinfo->var))
 			{
 				/* Found a match */
 				if (varinfo->ndistinct <= ndistinct)

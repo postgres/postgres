@@ -416,6 +416,15 @@ WHERE p1.oprcode = p2.oid AND
      (p1.oprleft != p2.proargtypes[0] AND p2.proargtypes[0] != 0) OR
      p1.oprright != 0);
 
+-- If the operator is mergejoinable or hashjoinable, its underlying function
+-- should not be volatile.
+
+SELECT p1.oid, p1.oprname, p2.oid, p2.proname
+FROM pg_operator AS p1, pg_proc AS p2
+WHERE p1.oprcode = p2.oid AND
+    (p1.oprlsortop != 0 OR p1.oprcanhash) AND
+    p2.provolatile = 'v';
+
 -- If oprrest is set, the operator must return boolean,
 -- and it must link to a proc with the right signature
 -- to be a restriction selectivity estimator.
@@ -490,7 +499,8 @@ WHERE a.aggfnoid = p.oid AND
      a.aggtranstype != p2.prorettype OR
      a.aggtranstype != p2.proargtypes[0] OR
      NOT ((p2.pronargs = 2 AND p.proargtypes[0] = p2.proargtypes[1]) OR
-          (p2.pronargs = 1 AND p.proargtypes[0] = '"any"'::regtype)));
+          (p2.pronargs = 1 AND p.proargtypes[0] = '"any"'::regtype)))
+ORDER BY 1;
 
 -- Cross-check finalfn (if present) against its entry in pg_proc.
 -- FIXME: what about binary-compatible types?

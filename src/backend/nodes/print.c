@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.58 2002/12/12 15:49:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.59 2003/01/15 19:35:39 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -370,10 +370,10 @@ print_expr(Node *expr, List *rtable)
 		{
 			char	   *opname;
 
-			print_expr((Node *) get_leftop(e), rtable);
+			print_expr(get_leftop(e), rtable);
 			opname = get_opname(((OpExpr *) e)->opno);
 			printf(" %s ", ((opname != NULL) ? opname : "(invalid operator)"));
-			print_expr((Node *) get_rightop(e), rtable);
+			print_expr(get_rightop(e), rtable);
 		}
 		else
 			printf("an expr");

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.88 2002/12/05 04:04:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.89 2003/01/15 19:35:44 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -315,11 +315,11 @@ get_opname(Oid opno)
 /*
  * op_mergejoinable
  *
- *		Returns the left and right sort operators and types corresponding to a
- *		mergejoinable operator, or nil if the operator is not mergejoinable.
+ *		Returns the left and right sort operators corresponding to a
+ *		mergejoinable operator, or false if the operator is not mergejoinable.
  */
 bool
-op_mergejoinable(Oid opno, Oid ltype, Oid rtype, Oid *leftOp, Oid *rightOp)
+op_mergejoinable(Oid opno, Oid *leftOp, Oid *rightOp)
 {
 	HeapTuple	tp;
 	bool		result = false;
@@ -332,9 +332,7 @@ op_mergejoinable(Oid opno, Oid ltype, Oid rtype, Oid *leftOp, Oid *rightOp)
 		Form_pg_operator optup = (Form_pg_operator) GETSTRUCT(tp);
 
 		if (optup->oprlsortop &&
-			optup->oprrsortop &&
-			optup->oprleft == ltype &&
-			optup->oprright == rtype)
+			optup->oprrsortop)
 		{
 			*leftOp = optup->oprlsortop;
 			*rightOp = optup->oprrsortop;
@@ -391,14 +389,13 @@ op_mergejoin_crossops(Oid opno, Oid *ltop, Oid *gtop,
 /*
  * op_hashjoinable
  *
- * Returns the hash operator corresponding to a hashjoinable operator,
- * or InvalidOid if the operator is not hashjoinable.
+ * Returns true if the operator is hashjoinable.
  */
-Oid
-op_hashjoinable(Oid opno, Oid ltype, Oid rtype)
+bool
+op_hashjoinable(Oid opno)
 {
 	HeapTuple	tp;
-	Oid			result = InvalidOid;
+	bool		result = false;
 
 	tp = SearchSysCache(OPEROID,
 						ObjectIdGetDatum(opno),
@@ -407,10 +404,7 @@ op_hashjoinable(Oid opno, Oid ltype, Oid rtype)
 	{
 		Form_pg_operator optup = (Form_pg_operator) GETSTRUCT(tp);
 
-		if (optup->oprcanhash &&
-			optup->oprleft == ltype &&
-			optup->oprright == rtype)
-			result = opno;
+		result = optup->oprcanhash;
 		ReleaseSysCache(tp);
 	}
 	return result;

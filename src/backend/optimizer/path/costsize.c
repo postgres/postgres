@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.99 2003/01/12 22:35:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.100 2003/01/15 19:35:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -752,7 +752,6 @@ cost_mergejoin(Path *path, Query *root,
 	Cost		cpu_per_tuple;
 	QualCost	restrict_qual_cost;
 	RestrictInfo *firstclause;
-	Var		   *leftvar;
 	double		outer_rows,
 				inner_rows;
 	double		ntuples;
@@ -779,9 +778,7 @@ cost_mergejoin(Path *path, Query *root,
 						 &firstclause->left_mergescansel,
 						 &firstclause->right_mergescansel);
 
-	leftvar = get_leftop(firstclause->clause);
-	Assert(IsA(leftvar, Var));
-	if (VARISRELMEMBER(leftvar->varno, outer_path->parent))
+	if (is_subseti(firstclause->left_relids, outer_path->parent->relids))
 	{
 		/* left side of clause is outer */
 		outerscansel = firstclause->left_mergescansel;
@@ -935,14 +932,9 @@ cost_hashjoin(Path *path, Query *root,
 	foreach(hcl, hashclauses)
 	{
 		RestrictInfo *restrictinfo = (RestrictInfo *) lfirst(hcl);
-		Var		   *left,
-				   *right;
 		Selectivity thisbucketsize;
 
 		Assert(IsA(restrictinfo, RestrictInfo));
-		/* these must be OK, since check_hashjoinable accepted the clause */
-		left = get_leftop(restrictinfo->clause);
-		right = get_rightop(restrictinfo->clause);
 
 		/*
 		 * First we have to figure out which side of the hashjoin clause is the
@@ -952,27 +944,30 @@ cost_hashjoin(Path *path, Query *root,
 		 * a large query, we cache the bucketsize estimate in the RestrictInfo
 		 * node to avoid repeated lookups of statistics.
 		 */
-		if (VARISRELMEMBER(right->varno, inner_path->parent))
+		if (is_subseti(restrictinfo->right_relids, inner_path->parent->relids))
 		{
 			/* righthand side is inner */
 			thisbucketsize = restrictinfo->right_bucketsize;
 			if (thisbucketsize < 0)
 			{
 				/* not cached yet */
-				thisbucketsize = estimate_hash_bucketsize(root, right,
+				thisbucketsize = estimate_hash_bucketsize(root,
+									(Var *) get_rightop(restrictinfo->clause),
 														  virtualbuckets);
 				restrictinfo->right_bucketsize = thisbucketsize;
 			}
 		}
 		else
 		{
-			Assert(VARISRELMEMBER(left->varno, inner_path->parent));
+			Assert(is_subseti(restrictinfo->left_relids,
+							  inner_path->parent->relids));
 			/* lefthand side is inner */
 			thisbucketsize = restrictinfo->left_bucketsize;
 			if (thisbucketsize < 0)
 			{
 				/* not cached yet */
-				thisbucketsize = estimate_hash_bucketsize(root, left,
+				thisbucketsize = estimate_hash_bucketsize(root,
+									(Var *) get_leftop(restrictinfo->clause),
 														  virtualbuckets);
 				restrictinfo->left_bucketsize = thisbucketsize;
 			}
@@ -1088,7 +1083,7 @@ estimate_hash_bucketsize(Query *root, Var *var, int nbuckets)
 	 * Lookup info about var's relation and attribute; if none available,
 	 * return default estimate.
 	 */
-	if (!IsA(var, Var))
+	if (var == NULL || !IsA(var, Var))
 		return 0.1;
 
 	relid = getrelid(var->varno, root->rtable);

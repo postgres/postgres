@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.130 2002/12/16 21:30:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.131 2003/01/15 19:35:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,15 +85,15 @@ static Relids indexable_outerrelids(RelOptInfo *rel, IndexOptInfo *index);
 static Path *make_innerjoin_index_path(Query *root,
 									   RelOptInfo *rel, IndexOptInfo *index,
 									   List *clausegroup);
-static bool match_index_to_operand(int indexkey, Var *operand,
+static bool match_index_to_operand(int indexkey, Node *operand,
 					   RelOptInfo *rel, IndexOptInfo *index);
 static bool function_index_operand(Expr *funcOpnd, RelOptInfo *rel,
 					   IndexOptInfo *index);
 static bool match_special_index_operator(Expr *clause, Oid opclass,
 							 bool indexkey_on_left);
-static List *prefix_quals(Var *leftop, Oid expr_op,
+static List *prefix_quals(Node *leftop, Oid expr_op,
 			 Const *prefix, Pattern_Prefix_Status pstatus);
-static List *network_prefix_quals(Var *leftop, Oid expr_op, Datum rightop);
+static List *network_prefix_quals(Node *leftop, Oid expr_op, Datum rightop);
 static Oid	find_operator(const char *opname, Oid datatype);
 static Datum string_to_datum(const char *str, Oid datatype);
 static Const *string_to_const(const char *str, Oid datatype);
@@ -713,7 +713,7 @@ match_clause_to_indexkey(RelOptInfo *rel,
 						 Oid opclass,
 						 Expr *clause)
 {
-	Var		   *leftop,
+	Node	   *leftop,
 			   *rightop;
 
 	/* Clause must be a binary opclause. */
@@ -730,7 +730,7 @@ match_clause_to_indexkey(RelOptInfo *rel,
 	 * Anything that is a "pseudo constant" expression will do.
 	 */
 	if (match_index_to_operand(indexkey, leftop, rel, index) &&
-		is_pseudo_constant_clause((Node *) rightop))
+		is_pseudo_constant_clause(rightop))
 	{
 		if (is_indexable_operator(clause, opclass, true))
 			return true;
@@ -745,7 +745,7 @@ match_clause_to_indexkey(RelOptInfo *rel,
 	}
 
 	if (match_index_to_operand(indexkey, rightop, rel, index) &&
-		is_pseudo_constant_clause((Node *) leftop))
+		is_pseudo_constant_clause(leftop))
 	{
 		if (is_indexable_operator(clause, opclass, false))
 			return true;
@@ -801,7 +801,7 @@ match_join_clause_to_indexkey(RelOptInfo *rel,
 							  Oid opclass,
 							  Expr *clause)
 {
-	Var		   *leftop,
+	Node	   *leftop,
 			   *rightop;
 
 	/* Clause must be a binary opclause. */
@@ -820,12 +820,12 @@ match_join_clause_to_indexkey(RelOptInfo *rel,
 	 */
 	if (match_index_to_operand(indexkey, leftop, rel, index))
 	{
-		List	   *othervarnos = pull_varnos((Node *) rightop);
+		List	   *othervarnos = pull_varnos(rightop);
 		bool		isIndexable;
 
 		isIndexable =
 			!intMember(lfirsti(rel->relids), othervarnos) &&
-			!contain_volatile_functions((Node *) rightop) &&
+			!contain_volatile_functions(rightop) &&
 			is_indexable_operator(clause, opclass, true);
 		freeList(othervarnos);
 		return isIndexable;
@@ -833,12 +833,12 @@ match_join_clause_to_indexkey(RelOptInfo *rel,
 
 	if (match_index_to_operand(indexkey, rightop, rel, index))
 	{
-		List	   *othervarnos = pull_varnos((Node *) leftop);
+		List	   *othervarnos = pull_varnos(leftop);
 		bool		isIndexable;
 
 		isIndexable =
 			!intMember(lfirsti(rel->relids), othervarnos) &&
-			!contain_volatile_functions((Node *) leftop) &&
+			!contain_volatile_functions(leftop) &&
 			is_indexable_operator(clause, opclass, false);
 		freeList(othervarnos);
 		return isIndexable;
@@ -1622,7 +1622,7 @@ make_innerjoin_index_path(Query *root,
  */
 static bool
 match_index_to_operand(int indexkey,
-					   Var *operand,
+					   Node *operand,
 					   RelOptInfo *rel,
 					   IndexOptInfo *index)
 {
@@ -1633,7 +1633,7 @@ match_index_to_operand(int indexkey,
 	 * eval_const_expressions() will have simplified if more than one.
 	 */
 	if (operand && IsA(operand, RelabelType))
-		operand = (Var *) ((RelabelType *) operand)->arg;
+		operand = (Node *) ((RelabelType *) operand)->arg;
 
 	if (index->indproc == InvalidOid)
 	{
@@ -1641,8 +1641,8 @@ match_index_to_operand(int indexkey,
 		 * Simple index.
 		 */
 		if (operand && IsA(operand, Var) &&
-			lfirsti(rel->relids) == operand->varno &&
-			indexkey == operand->varattno)
+			lfirsti(rel->relids) == ((Var *) operand)->varno &&
+			indexkey == ((Var *) operand)->varattno)
 			return true;
 		else
 			return false;
@@ -1764,7 +1764,7 @@ match_special_index_operator(Expr *clause, Oid opclass,
 							 bool indexkey_on_left)
 {
 	bool		isIndexable = false;
-	Var		   *leftop,
+	Node	   *leftop,
 			   *rightop;
 	Oid			expr_op;
 	Const	   *patt = NULL;
@@ -1944,8 +1944,8 @@ expand_indexqual_conditions(List *indexquals)
 		Expr	   *clause = (Expr *) lfirst(q);
 
 		/* we know these will succeed */
-		Var		   *leftop = get_leftop(clause);
-		Var		   *rightop = get_rightop(clause);
+		Node	   *leftop = get_leftop(clause);
+		Node	   *rightop = get_rightop(clause);
 		Oid			expr_op = ((OpExpr *) clause)->opno;
 		Const	   *patt = (Const *) rightop;
 		Const	   *prefix = NULL;
@@ -2033,7 +2033,7 @@ expand_indexqual_conditions(List *indexquals)
  * operators.
  */
 static List *
-prefix_quals(Var *leftop, Oid expr_op,
+prefix_quals(Node *leftop, Oid expr_op,
 			 Const *prefix_const, Pattern_Prefix_Status pstatus)
 {
 	List	   *result;
@@ -2143,7 +2143,7 @@ prefix_quals(Var *leftop, Oid expr_op,
  * operator.
  */
 static List *
-network_prefix_quals(Var *leftop, Oid expr_op, Datum rightop)
+network_prefix_quals(Node *leftop, Oid expr_op, Datum rightop)
 {
 	bool		is_eq;
 	char	   *opr1name;

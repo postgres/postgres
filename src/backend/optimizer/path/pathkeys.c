@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.43 2002/12/17 01:18:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.44 2003/01/15 19:35:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,27 +53,23 @@ makePathKeyItem(Node *key, Oid sortop)
  *	  The given clause has a mergejoinable operator, so its two sides
  *	  can be considered equal after restriction clause application; in
  *	  particular, any pathkey mentioning one side (with the correct sortop)
- *	  can be expanded to include the other as well.  Record the vars and
+ *	  can be expanded to include the other as well.  Record the exprs and
  *	  associated sortops in the query's equi_key_list for future use.
  *
  * The query's equi_key_list field points to a list of sublists of PathKeyItem
- * nodes, where each sublist is a set of two or more vars+sortops that have
+ * nodes, where each sublist is a set of two or more exprs+sortops that have
  * been identified as logically equivalent (and, therefore, we may consider
  * any two in a set to be equal).  As described above, we will subsequently
  * use direct pointers to one of these sublists to represent any pathkey
  * that involves an equijoined variable.
- *
- * This code would actually work fine with expressions more complex than
- * a single Var, but currently it won't see any because check_mergejoinable
- * won't accept such clauses as mergejoinable.
  */
 void
 add_equijoined_keys(Query *root, RestrictInfo *restrictinfo)
 {
 	Expr	   *clause = restrictinfo->clause;
-	PathKeyItem *item1 = makePathKeyItem((Node *) get_leftop(clause),
+	PathKeyItem *item1 = makePathKeyItem(get_leftop(clause),
 										 restrictinfo->left_sortop);
-	PathKeyItem *item2 = makePathKeyItem((Node *) get_rightop(clause),
+	PathKeyItem *item2 = makePathKeyItem(get_rightop(clause),
 										 restrictinfo->right_sortop);
 	List	   *newset,
 			   *cursetlink;
@@ -717,13 +713,13 @@ cache_mergeclause_pathkeys(Query *root, RestrictInfo *restrictinfo)
 
 	if (restrictinfo->left_pathkey == NIL)
 	{
-		key = (Node *) get_leftop(restrictinfo->clause);
+		key = get_leftop(restrictinfo->clause);
 		item = makePathKeyItem(key, restrictinfo->left_sortop);
 		restrictinfo->left_pathkey = make_canonical_pathkey(root, item);
 	}
 	if (restrictinfo->right_pathkey == NIL)
 	{
-		key = (Node *) get_rightop(restrictinfo->clause);
+		key = get_rightop(restrictinfo->clause);
 		item = makePathKeyItem(key, restrictinfo->right_sortop);
 		restrictinfo->right_pathkey = make_canonical_pathkey(root, item);
 	}
@@ -852,32 +848,24 @@ make_pathkeys_for_mergeclauses(Query *root,
 	foreach(i, mergeclauses)
 	{
 		RestrictInfo *restrictinfo = (RestrictInfo *) lfirst(i);
-		Node	   *key;
 		List	   *pathkey;
 
 		cache_mergeclause_pathkeys(root, restrictinfo);
 
-		key = (Node *) get_leftop(restrictinfo->clause);
-		if (IsA(key, Var) &&
-			VARISRELMEMBER(((Var *) key)->varno, rel))
+		if (is_subseti(restrictinfo->left_relids, rel->relids))
 		{
 			/* Rel is left side of mergeclause */
 			pathkey = restrictinfo->left_pathkey;
 		}
+		else if (is_subseti(restrictinfo->right_relids, rel->relids))
+		{
+			/* Rel is right side of mergeclause */
+			pathkey = restrictinfo->right_pathkey;
+		}
 		else
 		{
-			key = (Node *) get_rightop(restrictinfo->clause);
-			if (IsA(key, Var) &&
-				VARISRELMEMBER(((Var *) key)->varno, rel))
-			{
-				/* Rel is right side of mergeclause */
-				pathkey = restrictinfo->right_pathkey;
-			}
-			else
-			{
-				elog(ERROR, "make_pathkeys_for_mergeclauses: can't identify which side of mergeclause to use");
-				pathkey = NIL;	/* keep compiler quiet */
-			}
+			elog(ERROR, "make_pathkeys_for_mergeclauses: can't identify which side of mergeclause to use");
+			pathkey = NIL;	/* keep compiler quiet */
 		}
 
 		/*

@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.72 2002/11/21 00:42:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.73 2003/01/15 19:35:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -117,7 +117,7 @@ query_planner(Query *root, List *tlist, double tuple_fraction,
 	/*
 	 * Construct RelOptInfo nodes for all base relations in query.
 	 */
-	(void) add_base_rels_to_query(root, (Node *) root->jointree);
+	add_base_rels_to_query(root, (Node *) root->jointree);
 
 	/*
 	 * Examine the targetlist and qualifications, adding entries to

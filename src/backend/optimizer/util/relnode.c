@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.42 2003/01/12 22:35:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.43 2003/01/15 19:35:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -110,9 +110,9 @@ build_other_rel(Query *root, int relid)
 	/* No existing RelOptInfo for this other rel, so make a new one */
 	rel = make_base_rel(root, relid);
 
-	/* if it's not a join rel, must be a child rel */
-	if (rel->reloptkind == RELOPT_BASEREL)
-		rel->reloptkind = RELOPT_OTHER_CHILD_REL;
+	/* presently, must be an inheritance child rel */
+	Assert(rel->reloptkind == RELOPT_BASEREL);
+	rel->reloptkind = RELOPT_OTHER_CHILD_REL;
 
 	/* and add it to the list */
 	root->other_rel_list = lcons(rel, root->other_rel_list);
@@ -146,8 +146,6 @@ make_base_rel(Query *root, int relid)
 	rel->pages = 0;
 	rel->tuples = 0;
 	rel->subplan = NULL;
-	rel->joinrti = 0;
-	rel->joinrteids = NIL;
 	rel->baserestrictinfo = NIL;
 	rel->baserestrictcost.startup = 0;
 	rel->baserestrictcost.per_tuple = 0;
@@ -173,10 +171,6 @@ make_base_rel(Query *root, int relid)
 		case RTE_SUBQUERY:
 		case RTE_FUNCTION:
 			/* Subquery or function --- nothing to do here */
-			break;
-		case RTE_JOIN:
-			/* Join --- must be an otherrel */
-			rel->reloptkind = RELOPT_OTHER_JOIN_REL;
 			break;
 		default:
 			elog(ERROR, "make_base_rel: unsupported RTE kind %d",
@@ -218,47 +212,6 @@ find_base_rel(Query *root, int relid)
 	elog(ERROR, "find_base_rel: no relation entry for relid %d", relid);
 
 	return NULL;				/* keep compiler quiet */
-}
-
-/*
- * find_other_rel
- *	  Find an otherrel entry, if one exists for the given relid.
- *	  Return NULL if no entry.
- */
-RelOptInfo *
-find_other_rel(Query *root, int relid)
-{
-	List	   *rels;
-
-	foreach(rels, root->other_rel_list)
-	{
-		RelOptInfo *rel = (RelOptInfo *) lfirst(rels);
-
-		if (lfirsti(rel->relids) == relid)
-			return rel;
-	}
-	return NULL;
-}
-
-/*
- * find_other_rel_for_join
- *	  Look for an otherrel for a join RTE matching the given baserel set.
- *	  Return NULL if no entry.
- */
-RelOptInfo *
-find_other_rel_for_join(Query *root, List *relids)
-{
-	List	   *rels;
-
-	foreach(rels, root->other_rel_list)
-	{
-		RelOptInfo *rel = (RelOptInfo *) lfirst(rels);
-
-		if (rel->reloptkind == RELOPT_OTHER_JOIN_REL
-			&& sameseti(relids, rel->outerjoinset))
-			return rel;
-	}
-	return NULL;
 }
 
 /*
@@ -310,7 +263,6 @@ build_join_rel(Query *root,
 {
 	List	   *joinrelids;
 	RelOptInfo *joinrel;
-	RelOptInfo *joinrterel;
 	List	   *restrictlist;
 	List	   *new_outer_tlist;
 	List	   *new_inner_tlist;
@@ -360,9 +312,6 @@ build_join_rel(Query *root,
 	joinrel->pages = 0;
 	joinrel->tuples = 0;
 	joinrel->subplan = NULL;
-	joinrel->joinrti = 0;
-	joinrel->joinrteids = nconc(listCopy(outer_rel->joinrteids),
-								inner_rel->joinrteids);
 	joinrel->baserestrictinfo = NIL;
 	joinrel->baserestrictcost.startup = 0;
 	joinrel->baserestrictcost.per_tuple = 0;
@@ -370,15 +319,6 @@ build_join_rel(Query *root,
 	joinrel->joininfo = NIL;
 	joinrel->index_outer_relids = NIL;
 	joinrel->index_inner_paths = NIL;
-
-	/* Is there a join RTE matching this join? */
-	joinrterel = find_other_rel_for_join(root, joinrelids);
-	if (joinrterel)
-	{
-		/* Yes, remember its RT index */
-		joinrel->joinrti = lfirsti(joinrterel->relids);
-		joinrel->joinrteids = lconsi(joinrel->joinrti, joinrel->joinrteids);
-	}
 
 	/*
 	 * Create a new tlist by removing irrelevant elements from both tlists
@@ -399,23 +339,6 @@ build_join_rel(Query *root,
 	new_inner_tlist = new_join_tlist(inner_rel->targetlist,
 									 length(new_outer_tlist) + 1);
 	joinrel->targetlist = nconc(new_outer_tlist, new_inner_tlist);
-
-	/*
-	 * If there are any alias variables attached to the matching join RTE,
-	 * attach them to the tlist too, so that they will be evaluated for
-	 * use at higher plan levels.
-	 */
-	if (joinrterel)
-	{
-		List	   *jrtetl;
-
-		foreach(jrtetl, joinrterel->targetlist)
-		{
-			TargetEntry *jrtete = lfirst(jrtetl);
-
-			add_var_to_tlist(joinrel, (Var *) jrtete->expr);
-		}
-	}
 
 	/*
 	 * Construct restrict and join clause lists for the new joinrel. (The

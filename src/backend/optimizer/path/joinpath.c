@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.74 2002/11/30 05:21:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.75 2003/01/15 19:35:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -774,10 +774,9 @@ hash_inner_and_outer(Query *root,
 	foreach(i, restrictlist)
 	{
 		RestrictInfo *restrictinfo = (RestrictInfo *) lfirst(i);
-		Var		   *left,
-				   *right;
 
-		if (restrictinfo->hashjoinoperator == InvalidOid)
+		if (restrictinfo->left_relids == NIL ||
+			restrictinfo->hashjoinoperator == InvalidOid)
 			continue;			/* not hashjoinable */
 
 		/*
@@ -787,26 +786,16 @@ hash_inner_and_outer(Query *root,
 		if (isouterjoin && restrictinfo->ispusheddown)
 			continue;
 
-		/* these must be OK, since check_hashjoinable accepted the clause */
-		left = get_leftop(restrictinfo->clause);
-		right = get_rightop(restrictinfo->clause);
-
 		/*
 		 * Check if clause is usable with these input rels.
-		 *
-		 * Since we currently accept only var-op-var clauses as hashjoinable,
-		 * we need only check the membership of the vars to determine whether
-		 * a particular clause can be used with this pair of sub-relations.
-		 * This code would need to be upgraded if we wanted to allow
-		 * more-complex expressions in hash joins.
 		 */
-		if (VARISRELMEMBER(left->varno, outerrel) &&
-			VARISRELMEMBER(right->varno, innerrel))
+		if (is_subseti(restrictinfo->left_relids, outerrel->relids) &&
+			is_subseti(restrictinfo->right_relids, innerrel->relids))
 		{
 			/* righthand side is inner */
 		}
-		else if (VARISRELMEMBER(left->varno, innerrel) &&
-				 VARISRELMEMBER(right->varno, outerrel))
+		else if (is_subseti(restrictinfo->left_relids, innerrel->relids) &&
+				 is_subseti(restrictinfo->right_relids, outerrel->relids))
 		{
 			/* lefthand side is inner */
 		}
@@ -874,9 +863,6 @@ select_mergejoin_clauses(RelOptInfo *joinrel,
 	foreach(i, restrictlist)
 	{
 		RestrictInfo *restrictinfo = (RestrictInfo *) lfirst(i);
-		Expr	   *clause;
-		Var		   *left,
-				   *right;
 
 		/*
 		 * If processing an outer join, only use its own join clauses in
@@ -896,11 +882,13 @@ select_mergejoin_clauses(RelOptInfo *joinrel,
 			switch (jointype)
 			{
 				case JOIN_RIGHT:
-					if (restrictinfo->mergejoinoperator == InvalidOid)
+					if (restrictinfo->left_relids == NIL ||
+						restrictinfo->mergejoinoperator == InvalidOid)
 						return NIL;		/* not mergejoinable */
 					break;
 				case JOIN_FULL:
-					if (restrictinfo->mergejoinoperator == InvalidOid)
+					if (restrictinfo->left_relids == NIL ||
+						restrictinfo->mergejoinoperator == InvalidOid)
 						elog(ERROR, "FULL JOIN is only supported with mergejoinable join conditions");
 					break;
 				default:
@@ -909,19 +897,27 @@ select_mergejoin_clauses(RelOptInfo *joinrel,
 			}
 		}
 
-		if (restrictinfo->mergejoinoperator == InvalidOid)
+		if (restrictinfo->left_relids == NIL ||
+			restrictinfo->mergejoinoperator == InvalidOid)
 			continue;			/* not mergejoinable */
 
-		clause = restrictinfo->clause;
-		/* these must be OK, since check_mergejoinable accepted the clause */
-		left = get_leftop(clause);
-		right = get_rightop(clause);
+		/*
+		 * Check if clause is usable with these input rels.
+		 */
+		if (is_subseti(restrictinfo->left_relids, outerrel->relids) &&
+			is_subseti(restrictinfo->right_relids, innerrel->relids))
+		{
+			/* righthand side is inner */
+		}
+		else if (is_subseti(restrictinfo->left_relids, innerrel->relids) &&
+				 is_subseti(restrictinfo->right_relids, outerrel->relids))
+		{
+			/* lefthand side is inner */
+		}
+		else
+			continue;			/* no good for these input relations */
 
-		if ((VARISRELMEMBER(left->varno, outerrel) &&
-			 VARISRELMEMBER(right->varno, innerrel)) ||
-			(VARISRELMEMBER(left->varno, innerrel) &&
-			 VARISRELMEMBER(right->varno, outerrel)))
-			result_list = lcons(restrictinfo, result_list);
+		result_list = lcons(restrictinfo, result_list);
 	}
 
 	return result_list;

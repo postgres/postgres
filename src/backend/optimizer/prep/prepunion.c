@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.85 2003/01/12 22:35:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.86 2003/01/15 19:35:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -837,9 +837,7 @@ adjust_inherited_attrs_mutator(Node *node,
 	}
 
 	/*
-	 * We have to process RestrictInfo nodes specially: we do NOT want to
-	 * copy the original subclauseindices list, since the new rel may have
-	 * different indices.  The list will be rebuilt during later planning.
+	 * We have to process RestrictInfo nodes specially.
 	 */
 	if (IsA(node, RestrictInfo))
 	{
@@ -849,10 +847,41 @@ adjust_inherited_attrs_mutator(Node *node,
 		/* Copy all flat-copiable fields */
 		memcpy(newinfo, oldinfo, sizeof(RestrictInfo));
 
+		/* Recursively fix the clause itself */
 		newinfo->clause = (Expr *)
 			adjust_inherited_attrs_mutator((Node *) oldinfo->clause, context);
 
+		/*
+		 * We do NOT want to copy the original subclauseindices list, since
+		 * the new rel will have different indices.  The list will be rebuilt
+		 * when needed during later planning.
+		 */
 		newinfo->subclauseindices = NIL;
+
+		/*
+		 * Adjust left/right relids lists too.
+		 */
+		if (intMember(context->old_rt_index, oldinfo->left_relids))
+		{
+			newinfo->left_relids = listCopy(oldinfo->left_relids);
+			newinfo->left_relids = lremovei(context->old_rt_index,
+											newinfo->left_relids);
+			newinfo->left_relids = lconsi(context->new_rt_index,
+										  newinfo->left_relids);
+		}
+		else
+			newinfo->left_relids = oldinfo->left_relids;
+		if (intMember(context->old_rt_index, oldinfo->right_relids))
+		{
+			newinfo->right_relids = listCopy(oldinfo->right_relids);
+			newinfo->right_relids = lremovei(context->old_rt_index,
+											 newinfo->right_relids);
+			newinfo->right_relids = lconsi(context->new_rt_index,
+										   newinfo->right_relids);
+		}
+		else
+			newinfo->right_relids = oldinfo->right_relids;
+
 		newinfo->eval_cost.startup = -1; /* reset these too */
 		newinfo->this_selec = -1;
 		newinfo->left_pathkey = NIL;	/* and these */
@@ -869,6 +898,7 @@ adjust_inherited_attrs_mutator(Node *node,
 	 * NOTE: we do not need to recurse into sublinks, because they should
 	 * already have been converted to subplans before we see them.
 	 */
+	Assert(!IsA(node, SubLink));
 
 	/*
 	 * BUT: although we don't need to recurse into subplans, we do need to

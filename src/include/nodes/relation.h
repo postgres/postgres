@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relation.h,v 1.75 2003/01/12 22:35:29 tgl Exp $
+ * $Id: relation.h,v 1.76 2003/01/15 19:35:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,7 +50,7 @@ typedef struct QualCost
  *		Per-relation information for planning/optimization
  *
  * For planning purposes, a "base rel" is either a plain relation (a table)
- * or the output of a sub-SELECT that appears in the range table.
+ * or the output of a sub-SELECT or function that appears in the range table.
  * In either case it is uniquely identified by an RT index.  A "joinrel"
  * is the joining of two or more base rels.  A joinrel is identified by
  * the set of RT indexes for its component baserels.  We create RelOptInfo
@@ -63,14 +63,10 @@ typedef struct QualCost
  *
  * We also have "other rels", which are like base rels in that they refer to
  * single RT indexes; but they are not part of the join tree, and are stored
- * in other_rel_list not base_rel_list.  An otherrel is created for each
- * join RTE as an aid in processing Vars that refer to the join's outputs,
- * but it serves no other purpose in planning.	It is important not to
- * confuse this otherrel with the joinrel that represents the matching set
- * of base relations.
+ * in other_rel_list not base_rel_list.
  *
- * A second category of otherrels are those made for child relations of an
- * inheritance scan (SELECT FROM foo*).  The parent table's RTE and
+ * Currently the only kind of otherrels are those made for child relations
+ * of an inheritance scan (SELECT FROM foo*).  The parent table's RTE and
  * corresponding baserel represent the whole result of the inheritance scan.
  * The planner creates separate RTEs and associated RelOptInfos for each child
  * table (including the parent table, in its capacity as a member of the
@@ -79,6 +75,10 @@ typedef struct QualCost
  * RTEs and otherrels are used to plan the scans of the individual tables in
  * the inheritance set; then the parent baserel is given an Append plan
  * comprising the best plans for the individual child tables.
+ *
+ * At one time we also made otherrels to represent join RTEs, for use in
+ * handling join alias Vars.  Currently this is not needed because all join
+ * alias Vars are expanded to non-aliased form during preprocess_expression.
  *
  * Parts of this data structure are specific to various scan and join
  * mechanisms.	It didn't seem worth creating new node types for them.
@@ -114,15 +114,7 @@ typedef struct QualCost
  *		set_base_rel_pathlist processes the object.
  *
  *		For otherrels that are inheritance children, these fields are filled
- *		in just as for a baserel.  In otherrels for join RTEs, these fields
- *		are empty --- the only useful field of a join otherrel is its
- *		outerjoinset.
- *
- * If the relation is a join relation it will have these fields set:
- *
- *		joinrti - RT index of corresponding JOIN RTE, if any; 0 if none
- *		joinrteids - List of RT indexes of JOIN RTEs included in this join
- *					 (including joinrti)
+ *		in just as for a baserel.
  *
  * The presence of the remaining fields depends on the restrictions
  * and joins that the relation participates in:
@@ -135,8 +127,7 @@ typedef struct QualCost
  *		outerjoinset - For a base rel: if the rel appears within the nullable
  *					side of an outer join, the list of all relids
  *					participating in the highest such outer join; else NIL.
- *					For a join otherrel: the list of all baserel relids
- *					syntactically within the join.	Otherwise, unused.
+ *					Otherwise, unused.
  *		joininfo  - List of JoinInfo nodes, containing info about each join
  *					clause in which this relation participates
  *		index_outer_relids - only used for base rels; list of outer relids
@@ -170,7 +161,6 @@ typedef enum RelOptKind
 {
 	RELOPT_BASEREL,
 	RELOPT_JOINREL,
-	RELOPT_OTHER_JOIN_REL,
 	RELOPT_OTHER_CHILD_REL
 } RelOptKind;
 
@@ -201,10 +191,6 @@ typedef struct RelOptInfo
 	long		pages;
 	double		tuples;
 	struct Plan *subplan;		/* if subquery */
-
-	/* information about a join rel (not set for base rels!) */
-	Index		joinrti;
-	List	   *joinrteids;
 
 	/* used by various scans and joins: */
 	List	   *baserestrictinfo;		/* RestrictInfo structures (if
@@ -273,15 +259,6 @@ typedef struct IndexOptInfo
 	Relids		outer_relids;	/* other relids in usable join clauses */
 	List	   *inner_paths;	/* List of InnerIndexscanInfo nodes */
 } IndexOptInfo;
-
-
-/*
- * A Var is considered to belong to a relation if it's either from one
- * of the actual base rels making up the relation, or it's a join alias
- * var that is included in the relation.
- */
-#define VARISRELMEMBER(varno,rel) (intMember((varno), (rel)->relids) || \
-								   intMember((varno), (rel)->joinrteids))
 
 
 /*
@@ -582,6 +559,15 @@ typedef struct RestrictInfo
 	/* cache space for costs (currently only used for join clauses) */
 	QualCost	eval_cost;		/* eval cost of clause; -1 if not yet set */
 	Selectivity this_selec;		/* selectivity; -1 if not yet set */
+
+	/*
+	 * If the clause looks useful for joining --- that is, it is a binary
+	 * opclause with nonoverlapping sets of relids referenced in the left
+	 * and right sides --- then these two fields are set to lists of the
+	 * referenced relids.  Otherwise they are both NIL.
+	 */
+	List	   *left_relids;	/* relids in left side of join clause */
+	List	   *right_relids;	/* relids in right side of join clause */
 
 	/* valid if clause is mergejoinable, else InvalidOid: */
 	Oid			mergejoinoperator;		/* copy of clause operator */

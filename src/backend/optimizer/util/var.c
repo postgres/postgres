@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.43 2003/01/10 21:08:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.44 2003/01/15 19:35:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,16 @@
 #include "optimizer/clauses.h"
 #include "optimizer/var.h"
 #include "parser/parsetree.h"
+
+
+/* macros borrowed from expression_tree_mutator */
+
+#define FLATCOPY(newnode, node, nodetype)  \
+	( (newnode) = makeNode(nodetype), \
+	  memcpy((newnode), (node), sizeof(nodetype)) )
+
+#define MUTATE(newfield, oldfield, fieldtype, mutator, context)  \
+		( (newfield) = (fieldtype) mutator((Node *) (oldfield), (context)) )
 
 
 typedef struct
@@ -42,7 +52,7 @@ typedef struct
 typedef struct
 {
 	List	   *rtable;
-	bool		force;
+	int			sublevels_up;
 } flatten_join_alias_vars_context;
 
 static bool pull_varnos_walker(Node *node,
@@ -314,26 +324,16 @@ pull_var_clause_walker(Node *node, pull_var_clause_context *context)
  *	  relation variables instead.  This allows quals involving such vars to be
  *	  pushed down.
  *
- * If force is TRUE then we will reduce all JOIN alias Vars to non-alias Vars
- * or expressions thereof (there may be COALESCE and/or type conversions
- * involved).  If force is FALSE we will not expand a Var to a non-Var
- * expression.	This is a hack to avoid confusing mergejoin planning, which
- * currently cannot cope with non-Var join items --- we leave the join vars
- * as Vars till after planning is done, then expand them during setrefs.c.
- *
- * Upper-level vars (with varlevelsup > 0) are ignored; normally there
- * should not be any by the time this routine is called.
- *
- * Does not examine subqueries, therefore must only be used after reduction
- * of sublinks to subplans!
+ * NOTE: this is used on not-yet-planned expressions.  We do not expect it
+ * to be applied directly to a Query node.
  */
 Node *
-flatten_join_alias_vars(Node *node, List *rtable, bool force)
+flatten_join_alias_vars(Node *node, List *rtable)
 {
 	flatten_join_alias_vars_context context;
 
 	context.rtable = rtable;
-	context.force = force;
+	context.sublevels_up = 0;
 
 	return flatten_join_alias_vars_mutator(node, &context);
 }
@@ -350,21 +350,31 @@ flatten_join_alias_vars_mutator(Node *node,
 		RangeTblEntry *rte;
 		Node	   *newvar;
 
-		if (var->varlevelsup != 0)
+		if (var->varlevelsup != context->sublevels_up)
 			return node;		/* no need to copy, really */
 		rte = rt_fetch(var->varno, context->rtable);
 		if (rte->rtekind != RTE_JOIN)
 			return node;
 		Assert(var->varattno > 0);
 		newvar = (Node *) nth(var->varattno - 1, rte->joinaliasvars);
-		if (IsA(newvar, Var) ||context->force)
-		{
-			/* expand it; recurse in case join input is itself a join */
-			return flatten_join_alias_vars_mutator(newvar, context);
-		}
-		/* we don't want to force expansion of this alias Var */
-		return node;
+		/* expand it; recurse in case join input is itself a join */
+		return flatten_join_alias_vars_mutator(newvar, context);
 	}
+	if (IsA(node, Query))
+	{
+		/* Recurse into RTE subquery or not-yet-planned sublink subquery */
+		Query	   *query = (Query *) node;
+		Query	   *newnode;
+
+		FLATCOPY(newnode, query, Query);
+		context->sublevels_up++;
+		query_tree_mutator(newnode, flatten_join_alias_vars_mutator,
+						   (void *) context, QTW_IGNORE_JOINALIASES);
+		context->sublevels_up--;
+		return (Node *) newnode;
+	}
+	/* Already-planned tree not supported */
+	Assert(!is_subplan(node));
 	return expression_tree_mutator(node, flatten_join_alias_vars_mutator,
 								   (void *) context);
 }

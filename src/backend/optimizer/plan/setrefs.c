@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.88 2003/01/13 18:10:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.89 2003/01/15 19:35:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -278,8 +278,7 @@ fix_expr_references_walker(Node *node, void *context)
  * Note: this same transformation has already been applied to the quals
  * of the join by createplan.c.  It's a little odd to do it here for the
  * targetlist and there for the quals, but it's easier that way.  (Look
- * at switch_outer() and the handling of nestloop inner indexscans to
- * see why.)
+ * at the handling of nestloop inner indexscans to see why.)
  *
  * Because the quals are reference-adjusted sooner, we cannot do equal()
  * comparisons between qual and tlist var nodes during the time between
@@ -379,8 +378,7 @@ set_uppernode_references(Plan *plan, Index subvarno)
  *	   Creates a new set of targetlist entries or join qual clauses by
  *	   changing the varno/varattno values of variables in the clauses
  *	   to reference target list values from the outer and inner join
- *	   relation target lists.  Also, any join alias variables in the
- *	   clauses are expanded into references to their component variables.
+ *	   relation target lists.
  *
  * This is used in two different scenarios: a normal join clause, where
  * all the Vars in the clause *must* be replaced by OUTER or INNER references;
@@ -428,7 +426,6 @@ join_references_mutator(Node *node,
 	{
 		Var		   *var = (Var *) node;
 		Resdom	   *resdom;
-		Node	   *newnode;
 
 		/* First look for the var in the input tlists */
 		resdom = tlist_member((Node *) var, context->outer_tlist);
@@ -453,20 +450,6 @@ join_references_mutator(Node *node,
 		/* Return the Var unmodified, if it's for acceptable_rel */
 		if (var->varno == context->acceptable_rel)
 			return (Node *) copyObject(var);
-
-		/*
-		 * Perhaps it's a join alias that can be resolved to input vars?
-		 * We try this last since it's relatively slow.
-		 */
-		newnode = flatten_join_alias_vars((Node *) var,
-										  context->rtable,
-										  true);
-		if (!equal(newnode, (Node *) var))
-		{
-			/* Must now resolve the input vars... */
-			newnode = join_references_mutator(newnode, context);
-			return newnode;
-		}
 
 		/* No referent found for Var */
 		elog(ERROR, "join_references: variable not in subplan target lists");

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.129 2003/01/13 00:29:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.130 2003/01/15 19:35:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,18 +49,15 @@ static FunctionScan *create_functionscan_plan(Path *best_path,
 static NestLoop *create_nestloop_plan(Query *root,
 					 NestPath *best_path, List *tlist,
 					 List *joinclauses, List *otherclauses,
-					 Plan *outer_plan, List *outer_tlist,
-					 Plan *inner_plan, List *inner_tlist);
+					 Plan *outer_plan, Plan *inner_plan);
 static MergeJoin *create_mergejoin_plan(Query *root,
 					  MergePath *best_path, List *tlist,
 					  List *joinclauses, List *otherclauses,
-					  Plan *outer_plan, List *outer_tlist,
-					  Plan *inner_plan, List *inner_tlist);
+					  Plan *outer_plan, Plan *inner_plan);
 static HashJoin *create_hashjoin_plan(Query *root,
 					 HashPath *best_path, List *tlist,
 					 List *joinclauses, List *otherclauses,
-					 Plan *outer_plan, List *outer_tlist,
-					 Plan *inner_plan, List *inner_tlist);
+					 Plan *outer_plan, Plan *inner_plan);
 static void fix_indxqual_references(List *indexquals, IndexPath *index_path,
 						List **fixed_indexquals,
 						List **recheck_indexquals);
@@ -70,7 +67,7 @@ static void fix_indxqual_sublist(List *indexqual, int baserelid,
 static Node *fix_indxqual_operand(Node *node, int baserelid,
 					 IndexOptInfo *index,
 					 Oid *opclass);
-static List *switch_outer(List *clauses);
+static List *get_switched_clauses(List *clauses, List *outerrelids);
 static List *order_qual_clauses(Query *root, List *clauses);
 static void copy_path_costsize(Plan *dest, Path *src);
 static void copy_plan_costsize(Plan *dest, Plan *src);
@@ -98,6 +95,9 @@ static MergeJoin *make_mergejoin(List *tlist,
 			   List *mergeclauses,
 			   Plan *lefttree, Plan *righttree,
 			   JoinType jointype);
+static Sort *make_sort_from_pathkeys(Query *root, Plan *lefttree,
+									 List *relids, List *pathkeys);
+
 
 /*
  * create_plan
@@ -246,18 +246,13 @@ create_join_plan(Query *root, JoinPath *best_path)
 {
 	List	   *join_tlist = best_path->path.parent->targetlist;
 	Plan	   *outer_plan;
-	List	   *outer_tlist;
 	Plan	   *inner_plan;
-	List	   *inner_tlist;
 	List	   *joinclauses;
 	List	   *otherclauses;
 	Join	   *plan;
 
 	outer_plan = create_plan(root, best_path->outerjoinpath);
-	outer_tlist = outer_plan->targetlist;
-
 	inner_plan = create_plan(root, best_path->innerjoinpath);
-	inner_tlist = inner_plan->targetlist;
 
 	if (IS_OUTER_JOIN(best_path->jointype))
 	{
@@ -280,9 +275,7 @@ create_join_plan(Query *root, JoinPath *best_path)
 												  joinclauses,
 												  otherclauses,
 												  outer_plan,
-												  outer_tlist,
-												  inner_plan,
-												  inner_tlist);
+												  inner_plan);
 			break;
 		case T_HashJoin:
 			plan = (Join *) create_hashjoin_plan(root,
@@ -291,9 +284,7 @@ create_join_plan(Query *root, JoinPath *best_path)
 												 joinclauses,
 												 otherclauses,
 												 outer_plan,
-												 outer_tlist,
-												 inner_plan,
-												 inner_tlist);
+												 inner_plan);
 			break;
 		case T_NestLoop:
 			plan = (Join *) create_nestloop_plan(root,
@@ -302,9 +293,7 @@ create_join_plan(Query *root, JoinPath *best_path)
 												 joinclauses,
 												 otherclauses,
 												 outer_plan,
-												 outer_tlist,
-												 inner_plan,
-												 inner_tlist);
+												 inner_plan);
 			break;
 		default:
 			elog(ERROR, "create_join_plan: unknown node type: %d",
@@ -672,10 +661,9 @@ create_functionscan_plan(Path *best_path, List *tlist, List *scan_clauses)
  *
  * A cleaner solution would be to not call join_references() here at all,
  * but leave it for setrefs.c to do at the end of plan tree construction.
- * But that would make switch_outer() much more complicated, and some care
- * would be needed to get setrefs.c to do the right thing with nestloop
- * inner indexscan quals.  So, we do subplan reference adjustment here for
- * quals of join nodes (and *only* for quals of join nodes).
+ * But some care would be needed to get setrefs.c to do the right thing with
+ * nestloop inner indexscan quals.  So, we do subplan reference adjustment
+ * here for quals of join nodes (and *only* for quals of join nodes).
  *
  *****************************************************************************/
 
@@ -686,10 +674,10 @@ create_nestloop_plan(Query *root,
 					 List *joinclauses,
 					 List *otherclauses,
 					 Plan *outer_plan,
-					 List *outer_tlist,
-					 Plan *inner_plan,
-					 List *inner_tlist)
+					 Plan *inner_plan)
 {
+	List	   *outer_tlist = outer_plan->targetlist;
+	List	   *inner_tlist = inner_plan->targetlist;
 	NestLoop   *join_plan;
 
 	if (IsA(inner_plan, IndexScan))
@@ -797,44 +785,45 @@ create_mergejoin_plan(Query *root,
 					  List *joinclauses,
 					  List *otherclauses,
 					  Plan *outer_plan,
-					  List *outer_tlist,
-					  Plan *inner_plan,
-					  List *inner_tlist)
+					  Plan *inner_plan)
 {
+	List	   *outer_tlist = outer_plan->targetlist;
+	List	   *inner_tlist = inner_plan->targetlist;
 	List	   *mergeclauses;
 	MergeJoin  *join_plan;
 
-	mergeclauses = get_actual_clauses(best_path->path_mergeclauses);
-
 	/*
 	 * Remove the mergeclauses from the list of join qual clauses, leaving
-	 * the list of quals that must be checked as qpquals. Set those
-	 * clauses to contain INNER/OUTER var references.
+	 * the list of quals that must be checked as qpquals.
 	 */
-	joinclauses = join_references(set_difference(joinclauses, mergeclauses),
+	mergeclauses = get_actual_clauses(best_path->path_mergeclauses);
+	joinclauses = set_difference(joinclauses, mergeclauses);
+
+	/*
+	 * Rearrange mergeclauses, if needed, so that the outer variable
+	 * is always on the left.
+	 */
+	mergeclauses = get_switched_clauses(best_path->path_mergeclauses,
+										best_path->jpath.outerjoinpath->parent->relids);
+
+	/*
+	 * Fix all the join clauses to contain INNER/OUTER var references.
+	 */
+	joinclauses = join_references(joinclauses,
 								  root->rtable,
 								  outer_tlist,
 								  inner_tlist,
 								  (Index) 0);
-
-	/*
-	 * Fix the additional qpquals too.
-	 */
 	otherclauses = join_references(otherclauses,
 								   root->rtable,
 								   outer_tlist,
 								   inner_tlist,
 								   (Index) 0);
-
-	/*
-	 * Now set the references in the mergeclauses and rearrange them so
-	 * that the outer variable is always on the left.
-	 */
-	mergeclauses = switch_outer(join_references(mergeclauses,
-												root->rtable,
-												outer_tlist,
-												inner_tlist,
-												(Index) 0));
+	mergeclauses = join_references(mergeclauses,
+								   root->rtable,
+								   outer_tlist,
+								   inner_tlist,
+								   (Index) 0);
 
 	/*
 	 * Create explicit sort nodes for the outer and inner join paths if
@@ -843,15 +832,15 @@ create_mergejoin_plan(Query *root,
 	if (best_path->outersortkeys)
 		outer_plan = (Plan *)
 			make_sort_from_pathkeys(root,
-									outer_tlist,
 									outer_plan,
+									best_path->jpath.outerjoinpath->parent->relids,
 									best_path->outersortkeys);
 
 	if (best_path->innersortkeys)
 		inner_plan = (Plan *)
 			make_sort_from_pathkeys(root,
-									inner_tlist,
 									inner_plan,
+									best_path->jpath.innerjoinpath->parent->relids,
 									best_path->innersortkeys);
 
 	/*
@@ -877,47 +866,48 @@ create_hashjoin_plan(Query *root,
 					 List *joinclauses,
 					 List *otherclauses,
 					 Plan *outer_plan,
-					 List *outer_tlist,
-					 Plan *inner_plan,
-					 List *inner_tlist)
+					 Plan *inner_plan)
 {
+	List	   *outer_tlist = outer_plan->targetlist;
+	List	   *inner_tlist = inner_plan->targetlist;
 	List	   *hashclauses;
 	HashJoin   *join_plan;
 	Hash	   *hash_plan;
 	List	   *innerhashkeys;
 	List	   *hcl;
 
-	hashclauses = get_actual_clauses(best_path->path_hashclauses);
-
 	/*
 	 * Remove the hashclauses from the list of join qual clauses, leaving
-	 * the list of quals that must be checked as qpquals. Set those
-	 * clauses to contain INNER/OUTER var references.
+	 * the list of quals that must be checked as qpquals.
 	 */
-	joinclauses = join_references(set_difference(joinclauses, hashclauses),
+	hashclauses = get_actual_clauses(best_path->path_hashclauses);
+	joinclauses = set_difference(joinclauses, hashclauses);
+
+	/*
+	 * Rearrange hashclauses, if needed, so that the outer variable
+	 * is always on the left.
+	 */
+	hashclauses = get_switched_clauses(best_path->path_hashclauses,
+									   best_path->jpath.outerjoinpath->parent->relids);
+
+	/*
+	 * Fix all the join clauses to contain INNER/OUTER var references.
+	 */
+	joinclauses = join_references(joinclauses,
 								  root->rtable,
 								  outer_tlist,
 								  inner_tlist,
 								  (Index) 0);
-
-	/*
-	 * Fix the additional qpquals too.
-	 */
 	otherclauses = join_references(otherclauses,
 								   root->rtable,
 								   outer_tlist,
 								   inner_tlist,
 								   (Index) 0);
-
-	/*
-	 * Now set the references in the hashclauses and rearrange them so
-	 * that the outer variable is always on the left.
-	 */
-	hashclauses = switch_outer(join_references(hashclauses,
-											   root->rtable,
-											   outer_tlist,
-											   inner_tlist,
-											   (Index) 0));
+	hashclauses = join_references(hashclauses,
+								  root->rtable,
+								  outer_tlist,
+								  inner_tlist,
+								  (Index) 0);
 
 	/*
 	 * Extract the inner hash keys (right-hand operands of the hashclauses)
@@ -1154,27 +1144,26 @@ fix_indxqual_operand(Node *node, int baserelid, IndexOptInfo *index,
 }
 
 /*
- * switch_outer
- *	  Given a list of merge or hash joinclauses, rearrange the elements within
- *	  the clauses so the outer join variable is on the left and the inner is
- *	  on the right.  The original list is not touched; a modified list
- *	  is returned.
+ * get_switched_clauses
+ *	  Given a list of merge or hash joinclauses (as RestrictInfo nodes),
+ *	  extract the bare clauses, and rearrange the elements within the
+ *	  clauses, if needed, so the outer join variable is on the left and
+ *	  the inner is on the right.  The original data structure is not touched;
+ *	  a modified list is returned.
  */
 static List *
-switch_outer(List *clauses)
+get_switched_clauses(List *clauses, List *outerrelids)
 {
 	List	   *t_list = NIL;
 	List	   *i;
 
 	foreach(i, clauses)
 	{
-		OpExpr	   *clause = (OpExpr *) lfirst(i);
-		Var		   *op;
+		RestrictInfo *restrictinfo = (RestrictInfo *) lfirst(i);
+		OpExpr	   *clause = (OpExpr *) restrictinfo->clause;
 
 		Assert(is_opclause(clause));
-		op = get_rightop((Expr *) clause);
-		Assert(op && IsA(op, Var));
-		if (var_is_outer(op))
+		if (is_subseti(restrictinfo->right_relids, outerrelids))
 		{
 			/*
 			 * Duplicate just enough of the structure to allow commuting
@@ -1554,17 +1543,24 @@ make_sort(Query *root, List *tlist, Plan *lefttree, int keycount)
  * make_sort_from_pathkeys
  *	  Create sort plan to sort according to given pathkeys
  *
- *	  'tlist' is the target list of the input plan
  *	  'lefttree' is the node which yields input tuples
+ *	  'relids' is the set of relids represented by the input node
  *	  'pathkeys' is the list of pathkeys by which the result is to be sorted
  *
  * We must convert the pathkey information into reskey and reskeyop fields
  * of resdom nodes in the sort plan's target list.
+ *
+ * If the pathkeys include expressions that aren't simple Vars, we will
+ * usually need to add resjunk items to the input plan's targetlist to
+ * compute these expressions (since the Sort node itself won't do it).
+ * If the input plan type isn't one that can do projections, this means
+ * adding a Result node just to do the projection.
  */
-Sort *
-make_sort_from_pathkeys(Query *root, List *tlist,
-						Plan *lefttree, List *pathkeys)
+static Sort *
+make_sort_from_pathkeys(Query *root, Plan *lefttree,
+						List *relids, List *pathkeys)
 {
+	List	   *tlist = lefttree->targetlist;
 	List	   *sort_tlist;
 	List	   *i;
 	int			numsortkeys = 0;
@@ -1582,7 +1578,8 @@ make_sort_from_pathkeys(Query *root, List *tlist,
 		/*
 		 * We can sort by any one of the sort key items listed in this
 		 * sublist.  For now, we take the first one that corresponds to an
-		 * available Var in the sort_tlist.
+		 * available Var in the sort_tlist.  If there isn't any, use the
+		 * first one that is an expression in the input's vars.
 		 *
 		 * XXX if we have a choice, is there any way of figuring out which
 		 * might be cheapest to execute?  (For example, int4lt is likely
@@ -1599,8 +1596,52 @@ make_sort_from_pathkeys(Query *root, List *tlist,
 				break;
 		}
 		if (!resdom)
-			elog(ERROR, "make_sort_from_pathkeys: cannot find tlist item to sort");
-
+		{
+			/* No matching Var; look for an expression */
+			foreach(j, keysublist)
+			{
+				pathkey = lfirst(j);
+				if (is_subseti(pull_varnos(pathkey->key), relids))
+					break;
+			}
+			if (!j)
+				elog(ERROR, "make_sort_from_pathkeys: cannot find pathkey item to sort");
+			/*
+			 * Do we need to insert a Result node?
+			 *
+			 * Currently, the only non-projection-capable plan type
+			 * we can see here is Append.
+			 */
+			if (IsA(lefttree, Append))
+			{
+				tlist = new_unsorted_tlist(tlist);
+				lefttree = (Plan *) make_result(tlist, NULL, lefttree);
+			}
+			/*
+			 * Add resjunk entry to input's tlist
+			 */
+			resdom = makeResdom(length(tlist) + 1,
+								exprType(pathkey->key),
+								exprTypmod(pathkey->key),
+								NULL,
+								true);
+			tlist = lappend(tlist,
+							makeTargetEntry(resdom,
+											(Expr *) pathkey->key));
+			lefttree->targetlist = tlist; /* just in case NIL before */
+			/*
+			 * Add one to sort node's tlist too.  This will be identical
+			 * except we are going to set the sort key info in it.
+			 */
+			resdom = makeResdom(length(sort_tlist) + 1,
+								exprType(pathkey->key),
+								exprTypmod(pathkey->key),
+								NULL,
+								true);
+			sort_tlist = lappend(sort_tlist,
+								 makeTargetEntry(resdom,
+												 (Expr *) pathkey->key));
+		}
 		/*
 		 * The resdom might be already marked as a sort key, if the
 		 * pathkeys contain duplicate entries.	(This can happen in

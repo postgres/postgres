@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.138 2003/01/13 18:10:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.139 2003/01/15 19:35:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -560,20 +560,6 @@ is_simple_subquery(Query *subquery)
 		return false;
 
 	/*
-	 * Don't pull up a subquery that has any sublinks in its targetlist,
-	 * either.  As of PG 7.3 this creates problems because the pulled-up
-	 * expressions may go into join alias lists, and the sublinks would
-	 * not get fixed because we do flatten_join_alias_vars() too late.
-	 * Eventually we should do a complete flatten_join_alias_vars as the
-	 * first step of preprocess_expression, and then we could probably
-	 * support this.  (BUT: it might be a bad idea anyway, due to possibly
-	 * causing multiple evaluations of an expensive sublink.)
-	 */
-	if (subquery->hasSubLinks &&
-		contain_subplans((Node *) subquery->targetList))
-		return false;
-
-	/*
 	 * Hack: don't try to pull up a subquery with an empty jointree.
 	 * query_planner() will correctly generate a Result plan for a
 	 * jointree that's totally empty, but I don't think the right things
@@ -751,6 +737,14 @@ static Node *
 preprocess_expression(Query *parse, Node *expr, int kind)
 {
 	/*
+	 * If the query has any join RTEs, replace join alias variables with
+	 * base-relation variables. We must do this before sublink processing,
+	 * else sublinks expanded out from join aliases wouldn't get processed.
+	 */
+	if (parse->hasJoinRTEs)
+		expr = flatten_join_alias_vars(expr, parse->rtable);
+
+	/*
 	 * Simplify constant expressions.
 	 *
 	 * Note that at this point quals have not yet been converted to
@@ -782,15 +776,6 @@ preprocess_expression(Query *parse, Node *expr, int kind)
 	/* Replace uplevel vars with Param nodes */
 	if (PlannerQueryLevel > 1)
 		expr = SS_replace_correlation_vars(expr);
-
-	/*
-	 * If the query has any join RTEs, try to replace join alias variables
-	 * with base-relation variables, to allow quals to be pushed down. We
-	 * must do this after sublink processing, since it does not recurse
-	 * into sublinks.
-	 */
-	if (parse->hasJoinRTEs)
-		expr = flatten_join_alias_vars(expr, parse->rtable, false);
 
 	return expr;
 }

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: clauses.h,v 1.58 2002/12/14 00:17:59 tgl Exp $
+ * $Id: clauses.h,v 1.59 2003/01/15 19:35:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,8 +25,8 @@
 
 extern Expr *make_opclause(Oid opno, Oid opresulttype, bool opretset,
 						   Expr *leftop, Expr *rightop);
-extern Var *get_leftop(Expr *clause);
-extern Var *get_rightop(Expr *clause);
+extern Node *get_leftop(Expr *clause);
+extern Node *get_rightop(Expr *clause);
 
 extern Expr *make_funcclause(Oid funcid, Oid funcresulttype, bool funcretset,
 							 CoercionForm funcformat, List *funcargs);

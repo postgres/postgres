@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.121 2003/01/10 21:08:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.122 2003/01/15 19:35:44 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -112,17 +112,13 @@ make_opclause(Oid opno, Oid opresulttype, bool opretset,
  *
  * Returns the left operand of a clause of the form (op expr expr)
  *		or (op expr)
- *
- * NB: for historical reasons, the result is declared Var *, even
- * though many callers can cope with results that are not Vars.
- * The result really ought to be declared Expr * or Node *.
  */
-Var *
+Node *
 get_leftop(Expr *clause)
 {
 	OpExpr *expr = (OpExpr *) clause;
 
-	if (expr->args != NULL)
+	if (expr->args != NIL)
 		return lfirst(expr->args);
 	else
 		return NULL;
@@ -134,12 +130,12 @@ get_leftop(Expr *clause)
  * Returns the right operand in a clause of the form (op expr expr).
  * NB: result will be NULL if applied to a unary op clause.
  */
-Var *
+Node *
 get_rightop(Expr *clause)
 {
 	OpExpr *expr = (OpExpr *) clause;
 
-	if (expr->args != NULL && lnext(expr->args) != NULL)
+	if (expr->args != NIL && lnext(expr->args) != NIL)
 		return lfirst(lnext(expr->args));
 	else
 		return NULL;
