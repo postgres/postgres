@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Apr 23 16:26:13 EDT 2002
+Last updated:		Thu Apr 25 16:20:14 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -12,8 +12,8 @@ A dash (-) marks changes that will appear in the upcoming 7.3 release.
 Bracketed items "[]" have more detailed.
 
 
-URGENT
-------
+Urgent
+======
 
 * Add replication of distributed databases [replication]
 	o automatic failover
@@ -28,8 +28,8 @@ URGENT
 * Point-in-time data recovery using backup and write-ahead log
 
 
-REPORTING
----------
+Reporting
+=========
 
 * Allow elog() to return error codes, module name, file name, line
   number, not just messages (Peter E)
@@ -38,8 +38,8 @@ REPORTING
 * Show location of syntax error in query [yacc]
 
 
-PERMISSIONS
------------
+Permissions
+===========
 
 * Improve control over user privileges, including table creation and
   lock use [privileges] (Karel, others)
@@ -52,8 +52,8 @@ PERMISSIONS
 * -Allow permissions for functions (Peter E)
 
 
-ADMIN
------
+Administration
+==============
 
 * Incremental backups
 * -Make it easier to create a database owned by someone who can't createdb,
@@ -69,8 +69,8 @@ ADMIN
   specified parameters to postgresql.conf defaults (Peter E)
 * Allow easy display of usernames in a group
 
-DATA TYPES
-----------
+Data Types
+==========
 
 * -Add domain capability (Rod Taylor)
 * Add IPv6 capability to INET/CIDR types
@@ -104,8 +104,8 @@ DATA TYPES
 	o Auto-delete large objects when referencing row is deleted
 
 
-MULTI-LANGUAGE SUPPORT
-----------------------
+Multi-Language Support
+======================
 
 * Add NCHAR (as distinguished from ordinary varchar),
 * Allow LOCALE on a per-column basis, default to ASCII
@@ -117,8 +117,8 @@ MULTI-LANGUAGE SUPPORT
 * Make octet_length_client the same as octet_length() (?)
 
 
-VIEWS / RULES
--------------
+Views / Rules
+=============
 
 * Automatically create rules on views so they are updateable, per SQL92 [view]
 * Add the functionality for WITH CHECK OPTION clause of CREATE VIEW
@@ -131,8 +131,8 @@ VIEWS / RULES
 * Prevent aggregates from being used in rule WHERE clauses
 
 
-INDEXES
--------
+Indexes
+=======
 
 * Allow CREATE INDEX zman_index ON test (date_trunc( 'day', zman ) datetime_ops)
   fails index can't store constant parameters
@@ -166,8 +166,8 @@ INDEXES
 * Test hash index performance and recommend or discourage usage
 
 
-COMMANDS
---------
+Commands
+========
 
 * Add SIMILAR TO to allow character classes, 'pg_[a-c]%'
 * Add BETWEEN ASYMMETRIC/SYMMETRIC (Christopher)
@@ -251,8 +251,8 @@ COMMANDS
         o Fix PL/pgSQL RENAME to work on variables other than OLD/NEW
 
 
-CLIENTS
--------
+Clients
+=======
 
 * Have pg_dump use LEFT OUTER JOIN in multi-table SELECTs
   or multiple SELECTS to avoid bad system catalog entries
@@ -296,8 +296,8 @@ CLIENTS
 	o Updatable cursors support
 
 
-REFERENTIAL INTEGRITY
----------------------
+Referential Integrity
+=====================
 
 * Add MATCH PARTIAL referential integrity [foreign]
 * Add deferred trigger queue file (Jan)
@@ -312,8 +312,8 @@ REFERENTIAL INTEGRITY
 * Fix foreign key constraints to not error on intermediate db states (Stephan)
 
 
-DEPENDENCY CHECKING
--------------------
+Dependency Checking
+===================
 
 * Add pg_depend table for dependency recording; use sysrelid, oid,
   depend_sysrelid, depend_oid, name
@@ -329,16 +329,16 @@ DEPENDENCY CHECKING
 * Flush cached query plans when their underlying catalog data changes
 
 
-TRANSACTIONS
-------------
+Transactions
+============
 
 * Allow autocommit so always in a transaction block
 * Overhaul bufmgr/lockmgr/transaction manager
 * Allow savepoints / nested transactions [transactions]
 
 
-EXOTIC FEATURES
----------------
+Exotic Features
+===============
 
 * Add sql3 recursive unions
 * Add the concept of dataspaces/tablespaces [tablespaces]
@@ -354,8 +354,8 @@ PERFORMANCE
 ===========
 
 
-FSYNC
------
+Fsync
+=====
 
 * Delay fsync() when other backends are about to commit too [fsync]
 	o Determine optimal commit_delay value
@@ -363,8 +363,8 @@ FSYNC
 	o Allow multiple blocks to be written to WAL with one write()
 
 
-CACHE
------
+Cache
+=====
 * Cache most recent query plan(s) (Neil) [prepare]
 * Shared catalog cache, reduce lseek()'s by caching table size in shared area
 * Add free-behind capability for large sequential scans (Bruce)
@@ -373,8 +373,8 @@ CACHE
 * Make blind writes go through the file descriptor cache
 
 
-VACUUM
-------
+Vacuum
+======
 
 * Improve speed with indexes (perhaps recreate index instead) [vacuum]
 * Reduce lock time by moving tuples with read lock, then write
@@ -382,8 +382,8 @@ VACUUM
 * Provide automatic running of vacuum in the background (Tom)
 
 
-LOCKING
--------
+Locking
+=======
 
 * Make locking of shared data structures more fine-grained
 * Add code to detect an SMP machine and handle spinlocks accordingly
@@ -392,8 +392,8 @@ LOCKING
 * Research use of sched_yield() for spinlock acquisition failure
 
 
-STARTUP TIME
-------------
+Startup Time
+============
 
 * Experiment with multi-threaded backend [thread]
 * Add connection pooling [pool]
@@ -406,8 +406,8 @@ STARTUP TIME
 * -Cache system catalog information in per-database files (Tom)
 
 
-WRITE-AHEAD LOG
----------------
+Write-Ahead Log
+===============
 
 * Have after-change WAL write()'s write only modified data to kernel
 * Reduce number of after-change WAL writes; they exist only to gaurd against
@@ -421,8 +421,8 @@ WRITE-AHEAD LOG
   that are too frequent
 
 
-OPTIMIZER / EXECUTOR
---------------------
+Optimizer / Executor
+====================
 
 * Improve Subplan list handling
 * Allow Subplans to use efficient joins(hash, merge) with upper variable
@@ -443,8 +443,8 @@ OPTIMIZER / EXECUTOR
 * Add utility to compute accurate random_page_cost value
 * Improve ability to display optimizer analysis using OPTIMIZER_DEBUG
 
-MISCELLANEOUS
--------------
+Miscellaneous
+=============
 
 * Do async I/O for faster random read-ahead of data
 * Get faster regex() code from Henry Spencer <henry@zoo.utoronto.ca>
@@ -456,7 +456,7 @@ MISCELLANEOUS
 * -Use faster flex flags for performance improvement (Peter E)
 * Add BSD-licensed qsort() for Solaris
 
-SOURCE CODE
+Source Code
 ===========
 
 * Add use of 'const' for variables in source tree
