@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.198 2002/09/22 19:42:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.199 2002/09/22 23:03:58 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1168,13 +1168,8 @@ setRelhasindex(Oid relid, bool hasindex, bool isprimary, Oid reltoastidxid)
 	}
 
 	if (!HeapTupleIsValid(tuple))
-	{
-		if (pg_class_scan)
-			heap_endscan(pg_class_scan);
-		heap_close(pg_class, RowExclusiveLock);
 		elog(ERROR, "setRelhasindex: cannot find relation %u in pg_class",
 			 relid);
-	}
 
 	/*
 	 * Update fields in the pg_class tuple.
@@ -1319,11 +1314,7 @@ UpdateStats(Oid relid, double reltuples)
 	HeapTuple	tuple;
 	HeapTuple	newtup;
 	BlockNumber relpages;
-	int			i;
 	Form_pg_class rd_rel;
-	Datum		values[Natts_pg_class];
-	char		nulls[Natts_pg_class];
-	char		replace[Natts_pg_class];
 	HeapScanDesc pg_class_scan = NULL;
 	bool		in_place_upd;
 
@@ -1375,13 +1366,8 @@ UpdateStats(Oid relid, double reltuples)
 	}
 
 	if (!HeapTupleIsValid(tuple))
-	{
-		if (pg_class_scan)
-			heap_endscan(pg_class_scan);
-		heap_close(pg_class, RowExclusiveLock);
 		elog(ERROR, "UpdateStats: cannot find relation %u in pg_class",
 			 relid);
-	}
 
 	/*
 	 * Figure values to insert.
@@ -1417,56 +1403,56 @@ UpdateStats(Oid relid, double reltuples)
 	}
 
 	/*
-	 * We shouldn't have to do this, but we do...  Modify the reldesc in
-	 * place with the new values so that the cache contains the latest
-	 * copy.
+	 * Update statistics in pg_class, if they changed.  (Avoiding an
+	 * unnecessary update is not just a tiny performance improvement;
+	 * it also reduces the window wherein concurrent CREATE INDEX commands
+	 * may conflict.)
 	 */
-	whichRel->rd_rel->relpages = (int32) relpages;
-	whichRel->rd_rel->reltuples = reltuples;
+	rd_rel = (Form_pg_class) GETSTRUCT(tuple);
 
-	/*
-	 * Update statistics in pg_class.
-	 */
-	if (in_place_upd)
+	if (rd_rel->relpages != (int32) relpages ||
+		rd_rel->reltuples != (float4) reltuples)
 	{
-		/*
-		 * At bootstrap time, we don't need to worry about concurrency or
-		 * visibility of changes, so we cheat.	Also cheat if REINDEX.
-		 */
-		rd_rel = (Form_pg_class) GETSTRUCT(tuple);
-		LockBuffer(pg_class_scan->rs_cbuf, BUFFER_LOCK_EXCLUSIVE);
-		rd_rel->relpages = (int32) relpages;
-		rd_rel->reltuples = reltuples;
-		LockBuffer(pg_class_scan->rs_cbuf, BUFFER_LOCK_UNLOCK);
-		WriteNoReleaseBuffer(pg_class_scan->rs_cbuf);
-		if (!IsBootstrapProcessingMode())
-			CacheInvalidateHeapTuple(pg_class, tuple);
-	}
-	else
-	{
-		/* During normal processing, must work harder. */
-
-		for (i = 0; i < Natts_pg_class; i++)
+		if (in_place_upd)
 		{
-			nulls[i] = ' ';
-			replace[i] = ' ';
-			values[i] = (Datum) NULL;
+			/*
+			 * At bootstrap time, we don't need to worry about concurrency or
+			 * visibility of changes, so we cheat.	Also cheat if REINDEX.
+			 */
+			LockBuffer(pg_class_scan->rs_cbuf, BUFFER_LOCK_EXCLUSIVE);
+			rd_rel->relpages = (int32) relpages;
+			rd_rel->reltuples = (float4) reltuples;
+			LockBuffer(pg_class_scan->rs_cbuf, BUFFER_LOCK_UNLOCK);
+			WriteNoReleaseBuffer(pg_class_scan->rs_cbuf);
+			if (!IsBootstrapProcessingMode())
+				CacheInvalidateHeapTuple(pg_class, tuple);
 		}
-
-		replace[Anum_pg_class_relpages - 1] = 'r';
-		values[Anum_pg_class_relpages - 1] = Int32GetDatum((int32) relpages);
-		replace[Anum_pg_class_reltuples - 1] = 'r';
-		values[Anum_pg_class_reltuples - 1] = Float4GetDatum((float4) reltuples);
-		newtup = heap_modifytuple(tuple, pg_class, values, nulls, replace);
-		simple_heap_update(pg_class, &tuple->t_self, newtup);
-		CatalogUpdateIndexes(pg_class, newtup);
-		heap_freetuple(newtup);
+		else
+		{
+			/* During normal processing, must work harder. */
+			newtup = heap_copytuple(tuple);
+			rd_rel = (Form_pg_class) GETSTRUCT(newtup);
+			rd_rel->relpages = (int32) relpages;
+			rd_rel->reltuples = (float4) reltuples;
+			simple_heap_update(pg_class, &tuple->t_self, newtup);
+			CatalogUpdateIndexes(pg_class, newtup);
+			heap_freetuple(newtup);
+		}
 	}
 
 	if (!pg_class_scan)
 		heap_freetuple(tuple);
 	else
 		heap_endscan(pg_class_scan);
+
+	/*
+	 * We shouldn't have to do this, but we do...  Modify the reldesc in
+	 * place with the new values so that the cache contains the latest
+	 * copy.  (XXX is this really still necessary?  The relcache will get
+	 * fixed at next CommandCounterIncrement, so why bother here?)
+	 */
+	whichRel->rd_rel->relpages = (int32) relpages;
+	whichRel->rd_rel->reltuples = (float4) reltuples;
 
 	heap_close(pg_class, RowExclusiveLock);
 	relation_close(whichRel, NoLock);
