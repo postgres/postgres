@@ -73,6 +73,7 @@ then
 fi
 
 PORTNAME=${os}
+CPU=${host_cpu}
 AC_LINK_FILES(backend/port/dynloader/${os}.c, backend/port/dynloader.c)
 AC_LINK_FILES(backend/port/dynloader/${os}.h, include/dynloader.h)
 AC_LINK_FILES(include/port/${os}.h, include/os.h)
@@ -419,6 +420,7 @@ echo "- setting LDFLAGS=$LDFLAGS"
 
 AC_SUBST(ELF_SYS)
 AC_SUBST(PORTNAME)
+AC_SUBST(CPU)
 AC_SUBST(SRCDIR)
 AC_SUBST(LDFLAGS)
 AC_SUBST(CPPFLAGS)
@@ -576,11 +578,25 @@ AC_CHECK_LIB(PW,       main)
 dnl Checks for header files.
 AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
-AC_CHECK_HEADERS(limits.h unistd.h termios.h values.h sys/select.h)
-AC_CHECK_HEADERS(sys/resource.h netdb.h arpa/inet.h getopt.h)
-AC_CHECK_HEADERS(readline.h history.h dld.h crypt.h endian.h float.h)
-AC_CHECK_HEADERS(readline/readline.h readline/history.h ieeefp.h fp_class.h)
-AC_CHECK_HEADERS(netinet/in.h string.h strings.h)
+AC_CHECK_HEADERS(arpa/inet.h)
+AC_CHECK_HEADERS(crypt.h)
+AC_CHECK_HEADERS(dld.h)
+AC_CHECK_HEADERS(endian.h)
+AC_CHECK_HEADERS(float.h)
+AC_CHECK_HEADERS(fp_class.h)
+AC_CHECK_HEADERS(getopt.h)
+AC_CHECK_HEADERS(history.h)
+AC_CHECK_HEADERS(ieeefp.h)
+AC_CHECK_HEADERS(limits.h)
+AC_CHECK_HEADERS(netdb.h)
+AC_CHECK_HEADERS(netinet/in.h)
+AC_CHECK_HEADERS(readline.h)
+AC_CHECK_HEADERS(readline/history.h)
+AC_CHECK_HEADERS(readline/readline.h)
+AC_CHECK_HEADERS(sys/select.h)
+AC_CHECK_HEADERS(termios.h)
+AC_CHECK_HEADERS(unistd.h)
+AC_CHECK_HEADERS(values.h)
 dnl ODBC headers...
 AC_CHECK_HEADERS(sys/param.h pwd.h)
 dnl
@@ -648,24 +664,13 @@ AC_TRY_LINK([#include <fcntl.h>],
 	    [AC_DEFINE(HAVE_FCNTL_SETLK) AC_MSG_RESULT(yes)],
 	    AC_MSG_RESULT(no))
 
-AC_MSG_CHECKING(for good DBL_MIN)
-AC_TRY_RUN([#include <stdlib.h>
-#include <math.h>
-#ifdef HAVE_FLOAT_H
-# include <float.h>
-#endif
-main() { double d = DBL_MIN; if (d != DBL_MIN) exit(-1); else exit(0); }],
-	AC_MSG_RESULT(yes),
-	[AC_DEFINE(HAVE_DBL_MIN_PROBLEM) AC_MSG_RESULT(no)],
-	AC_MSG_RESULT(assuming ok on target machine))
-
 dnl Checks for library functions.
 AC_FUNC_MEMCMP
 AC_TYPE_SIGNAL
 AC_FUNC_VPRINTF
-AC_CHECK_FUNCS(tzset memmove sigsetjmp kill sysconf fpclass)
-AC_CHECK_FUNCS(fp_class fp_class_d class)
+AC_CHECK_FUNCS(memmove sigsetjmp sysconf)
 AC_CHECK_FUNCS(sigprocmask waitpid setsid fcvt)
+AC_CHECK_FUNCS(fpclass fp_class fp_class_d class)
 dnl We use our snprintf.c emulation if either snprintf() or vsnprintf()
 dnl is missing.  Yes, there are machines that have only one.
 dnl We may also decide to use snprintf.c if snprintf() is present but does
