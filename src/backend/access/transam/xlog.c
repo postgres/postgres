@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.26 2000/11/16 05:50:59 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.27 2000/11/16 06:16:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1276,6 +1276,7 @@ BootStrapXLOG()
 	CheckPoint	checkPoint;
 
 #ifdef XLOG
+	bool        usexistent = false;
 	XLogPageHeader page = (XLogPageHeader) buffer;
 	XLogRecord *record;
 
