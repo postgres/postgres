@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.111 2002/08/14 02:45:09 ishii Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.112 2002/08/16 23:01:18 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -5522,6 +5522,11 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
        <entry>Get CREATE INDEX command for index</entry>
       </row>
       <row>
+       <entry><function>pg_get_constraintdef</function>(<parameter>constraintOID</parameter>)</entry>
+       <entry><type>text</type></entry>
+       <entry>Get definition of a constraint</entry>
+      </row>
+      <row>
        <entry><function>pg_get_userbyid</function>(<parameter>userid</parameter>)</entry>
        <entry><type>name</type></entry>
        <entry>Get user name given ID</entry>
@@ -5543,15 +5548,24 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
    </indexterm>
 
    <indexterm zone="functions-misc">
+    <primary>pg_get_constraintdef</primary>
+   </indexterm>
+
+   <indexterm zone="functions-misc">
     <primary>pg_get_userbyid</primary>
    </indexterm>
 
    <para>
     These functions extract information from the system catalogs.
-    <function>pg_get_viewdef()</function>, <function>pg_get_ruledef()</function>, and
-    <function>pg_get_indexdef()</function> respectively reconstruct the creating
-    command for a view, rule, or index.  (Note that this is a decompiled
+    <function>pg_get_viewdef()</function>,
+    <function>pg_get_ruledef()</function>,
+    <function>pg_get_indexdef()</function>, and
+    <function>pg_get_constraintdef()</function> respectively reconstruct the
+    creating command for a view, rule, index, or constraint.
+    (Note that this is a decompiled
     reconstruction, not the verbatim text of the command.)
+    At present <function>pg_get_constraintdef()</function> only works for
+    foreign-key constraints.
     <function>pg_get_userbyid()</function> extracts a user's name given a
     <structfield>usesysid</structfield> value.
    </para>

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.254 2002/08/15 02:51:27 momjian Exp $
+ * $Id: pg_proc.h,v 1.255 2002/08/16 23:01:20 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2174,6 +2174,8 @@ DATA(insert OID = 1642 (  pg_get_userbyid	   PGNSP PGUID 12 f f t f s 1 19 "23" 
 DESCR("user name by UID (with fallback)");
 DATA(insert OID = 1643 (  pg_get_indexdef	   PGNSP PGUID 12 f f t f s 1 25 "26"  pg_get_indexdef - _null_ ));
 DESCR("index description");
+DATA(insert OID = 1387 (  pg_get_constraintdef PGNSP PGUID 12 f f t f s 1 25 "26"  pg_get_constraintdef - _null_ ));
+DESCR("constraint description");
 DATA(insert OID = 1716 (  pg_get_expr		   PGNSP PGUID 12 f f t f s 2 25 "25 26"	pg_get_expr - _null_ ));
 DESCR("deparse an encoded expression");
 

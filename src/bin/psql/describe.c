@@ -3,7 +3,7 @@
  *
  * Copyright 2000-2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.61 2002/08/15 16:36:06 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.62 2002/08/16 23:01:19 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -914,9 +914,11 @@ describeOneTableDetails(const char *schemaname,
 		PGresult   *result1 = NULL,
 				   *result2 = NULL,
 				   *result3 = NULL,
-				   *result4 = NULL;
-		int			index_count = 0,
-					check_count = 0,
+				   *result4 = NULL,
+				   *result5 = NULL;
+		int			check_count = 0,
+					index_count = 0,
+					foreignkey_count = 0,
 					rule_count = 0,
 					trigger_count = 0;
 		int			count_footers = 0;
@@ -968,13 +970,18 @@ describeOneTableDetails(const char *schemaname,
 				rule_count = PQntuples(result3);
 		}
 
-		/* count triggers */
+		/* count triggers (but ignore foreign-key triggers) */
 		if (tableinfo.triggers)
 		{
 			printfPQExpBuffer(&buf,
 					"SELECT t.tgname\n"
 					"FROM pg_catalog.pg_trigger t\n"
-					"WHERE t.tgrelid = '%s'",
+					"WHERE t.tgrelid = '%s' "
+					"and (not tgisconstraint "
+					" OR NOT EXISTS"
+					"  (SELECT 1 FROM pg_catalog.pg_depend d "
+					"   JOIN pg_catalog.pg_constraint c ON (d.refclassid = c.tableoid AND d.refobjid = c.oid) "
+					"   WHERE d.classid = t.tableoid AND d.objid = t.oid AND d.deptype = 'i' AND c.contype = 'f'))",
 					oid);
 			result4 = PSQLexec(buf.data);
 			if (!result4)
@@ -983,7 +990,23 @@ describeOneTableDetails(const char *schemaname,
 				trigger_count = PQntuples(result4);
 		}
 
-		footers = xmalloc((index_count + check_count + rule_count + trigger_count + 1)
+ 		/* count foreign-key constraints (there are none if no triggers) */
+		if (tableinfo.triggers)
+		{
+			printfPQExpBuffer(&buf,
+ 					"SELECT conname,\n"
+ 					"  pg_catalog.pg_get_constraintdef(oid) as condef\n"
+					"FROM pg_catalog.pg_constraint r\n"
+					"WHERE r.conrelid = '%s' AND r.contype = 'f'",
+					oid);
+			result5 = PSQLexec(buf.data);
+			if (!result5)
+				goto error_return;
+			else
+				foreignkey_count = PQntuples(result5);
+		}
+
+		footers = xmalloc((index_count + check_count + rule_count + trigger_count + foreignkey_count + 1)
 						  * sizeof(*footers));
 
 		/* print indexes */
@@ -1041,6 +1064,27 @@ describeOneTableDetails(const char *schemaname,
 			footers[count_footers++] = xstrdup(buf.data);
 		}
 
+		/* print foreign key constraints */
+		for (i = 0; i < foreignkey_count; i++)
+		{
+			char	   *s = _("Foreign Key constraints");
+
+			if (i == 0)
+				printfPQExpBuffer(&buf, _("%s: %s %s"),
+								  s,
+								  PQgetvalue(result5, i, 0),
+								  PQgetvalue(result5, i, 1));
+			else
+				printfPQExpBuffer(&buf, _("%*s  %s %s"),
+								  (int) strlen(s), "",
+								  PQgetvalue(result5, i, 0),
+								  PQgetvalue(result5, i, 1));
+			if (i < foreignkey_count - 1)
+				appendPQExpBuffer(&buf, ",");
+
+			footers[count_footers++] = xstrdup(buf.data);
+		}
+
 		/* print rules */
 		for (i = 0; i < rule_count; i++)
 		{
@@ -1078,6 +1122,7 @@ describeOneTableDetails(const char *schemaname,
 		PQclear(result2);
 		PQclear(result3);
 		PQclear(result4);
+		PQclear(result5);
 	}
 
 	printTable(title.data, headers,

@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.115 2002/08/16 20:55:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.116 2002/08/16 23:01:19 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -40,10 +40,14 @@
 #include <unistd.h>
 #include <fcntl.h>
 
+#include "access/genam.h"
+#include "catalog/catname.h"
 #include "catalog/heap.h"
 #include "catalog/index.h"
+#include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_cast.h"
+#include "catalog/pg_constraint.h"
 #include "catalog/pg_index.h"
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_operator.h"
@@ -60,6 +64,8 @@
 #include "parser/parsetree.h"
 #include "rewrite/rewriteManip.h"
 #include "rewrite/rewriteSupport.h"
+#include "utils/array.h"
+#include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 
 
@@ -116,6 +122,8 @@ static char *query_getviewrule = "SELECT * FROM pg_catalog.pg_rewrite WHERE ev_c
  * ----------
  */
 static text *pg_do_getviewdef(Oid viewoid);
+static void decompile_column_index_array(Datum column_index_array, Oid relId,
+										 StringInfo buf);
 static void make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc);
 static void make_viewdef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc);
 static void get_query_def(Query *query, StringInfo buf, List *parentnamespace,
@@ -525,6 +533,214 @@ pg_get_indexdef(PG_FUNCTION_ARGS)
 	ReleaseSysCache(ht_am);
 
 	PG_RETURN_TEXT_P(indexdef);
+}
+
+
+/*
+ * pg_get_constraintdef
+ *
+ * Returns the definition for the constraint, ie, everything that needs to
+ * appear after "ALTER TABLE ... ADD CONSTRAINT <constraintname>".
+ *
+ * XXX The present implementation only works for foreign-key constraints, but
+ * it could and should handle anything pg_constraint stores.
+ */
+Datum
+pg_get_constraintdef(PG_FUNCTION_ARGS)
+{
+	Oid				constraintId = PG_GETARG_OID(0);
+	text		   *result;
+	StringInfoData	buf;
+	int				len;
+	Relation		conDesc;
+	SysScanDesc		conscan;
+	ScanKeyData		skey[1];
+	HeapTuple		tup;
+	Form_pg_constraint	conForm;
+
+	/*
+	 * Fetch the pg_constraint row.  There's no syscache for pg_constraint
+	 * so we must do it the hard way.
+	 */
+	conDesc = heap_openr(ConstraintRelationName, AccessShareLock);
+
+	ScanKeyEntryInitialize(&skey[0], 0x0,
+						   ObjectIdAttributeNumber, F_OIDEQ,
+						   ObjectIdGetDatum(constraintId));
+
+	conscan = systable_beginscan(conDesc, ConstraintOidIndex, true,
+								 SnapshotNow, 1, skey);
+
+	tup = systable_getnext(conscan);
+	if (!HeapTupleIsValid(tup))
+		elog(ERROR, "Failed to find constraint with OID %u", constraintId);
+	conForm = (Form_pg_constraint) GETSTRUCT(tup);
+
+	initStringInfo(&buf);
+
+	switch (conForm->contype)
+	{
+		case CONSTRAINT_FOREIGN:
+		{
+			Datum			val;
+			bool			isnull;
+			const char	   *string;
+
+			/* Start off the constraint definition */
+			appendStringInfo(&buf, "FOREIGN KEY (");
+
+			/* Fetch and build referencing-column list */
+			val = heap_getattr(tup, Anum_pg_constraint_conkey,
+							   RelationGetDescr(conDesc), &isnull);
+			if (isnull)
+				elog(ERROR, "pg_get_constraintdef: Null conkey for constraint %u",
+					 constraintId);
+
+			decompile_column_index_array(val, conForm->conrelid, &buf);
+
+			/* add foreign relation name */
+			appendStringInfo(&buf, ") REFERENCES %s(",
+							 generate_relation_name(conForm->confrelid));
+
+			/* Fetch and build referenced-column list */
+			val = heap_getattr(tup, Anum_pg_constraint_confkey,
+							   RelationGetDescr(conDesc), &isnull);
+			if (isnull)
+				elog(ERROR, "pg_get_constraintdef: Null confkey for constraint %u",
+					 constraintId);
+
+			decompile_column_index_array(val, conForm->confrelid, &buf);
+
+			appendStringInfo(&buf, ")");
+
+			/* Add match type */
+			switch (conForm->confmatchtype)
+			{
+				case FKCONSTR_MATCH_FULL:
+					string = " MATCH FULL";
+					break;
+				case FKCONSTR_MATCH_PARTIAL:
+					string = " MATCH PARTIAL";
+					break;
+				case FKCONSTR_MATCH_UNSPECIFIED:
+					string = "";
+					break;
+				default:
+					elog(ERROR, "pg_get_constraintdef: Unknown confmatchtype '%c' for constraint %u",
+						 conForm->confmatchtype, constraintId);
+					string = ""; /* keep compiler quiet */
+					break;
+			}
+			appendStringInfo(&buf, "%s", string);
+
+			/* Add ON UPDATE and ON DELETE clauses */
+			switch (conForm->confupdtype)
+			{
+				case FKCONSTR_ACTION_NOACTION:
+					string = "NO ACTION";
+					break;
+				case FKCONSTR_ACTION_RESTRICT:
+					string = "RESTRICT";
+					break;
+				case FKCONSTR_ACTION_CASCADE:
+					string = "CASCADE";
+					break;
+				case FKCONSTR_ACTION_SETNULL:
+					string = "SET NULL";
+					break;
+				case FKCONSTR_ACTION_SETDEFAULT:
+					string = "SET DEFAULT";
+					break;
+				default:
+					elog(ERROR, "pg_get_constraintdef: Unknown confupdtype '%c' for constraint %u",
+						 conForm->confupdtype, constraintId);
+					string = ""; /* keep compiler quiet */
+					break;
+			}
+			appendStringInfo(&buf, " ON UPDATE %s", string);
+
+			switch (conForm->confdeltype)
+			{
+				case FKCONSTR_ACTION_NOACTION:
+					string = "NO ACTION";
+					break;
+				case FKCONSTR_ACTION_RESTRICT:
+					string = "RESTRICT";
+					break;
+				case FKCONSTR_ACTION_CASCADE:
+					string = "CASCADE";
+					break;
+				case FKCONSTR_ACTION_SETNULL:
+					string = "SET NULL";
+					break;
+				case FKCONSTR_ACTION_SETDEFAULT:
+					string = "SET DEFAULT";
+					break;
+				default:
+					elog(ERROR, "pg_get_constraintdef: Unknown confdeltype '%c' for constraint %u",
+						 conForm->confdeltype, constraintId);
+					string = ""; /* keep compiler quiet */
+					break;
+			}
+			appendStringInfo(&buf, " ON DELETE %s", string);
+
+			break;
+		}
+
+			/*
+			 * XXX Add more code here for other contypes
+			 */
+		default:
+			elog(ERROR, "pg_get_constraintdef: unsupported constraint type '%c'",
+				 conForm->contype);
+			break;
+	}
+
+	/* Record the results */
+	len = buf.len + VARHDRSZ;
+	result = (text *) palloc(len);
+	VARATT_SIZEP(result) = len;
+	memcpy(VARDATA(result), buf.data, buf.len);
+
+	/* Cleanup */
+	pfree(buf.data);
+	systable_endscan(conscan);
+	heap_close(conDesc, AccessShareLock);
+
+	PG_RETURN_TEXT_P(result);
+}
+
+
+/*
+ * Convert an int16[] Datum into a comma-separated list of column names
+ * for the indicated relation; append the list to buf.
+ */
+static void
+decompile_column_index_array(Datum column_index_array, Oid relId,
+							 StringInfo buf)
+{
+	Datum	   *keys;
+	int			nKeys;
+	int			j;
+
+	/* Extract data from array of int16 */
+	deconstruct_array(DatumGetArrayTypeP(column_index_array),
+					  true, 2, 's',
+					  &keys, &nKeys);
+
+	for (j = 0; j < nKeys; j++)
+	{
+		char	   *colName;
+
+		colName	= get_attname(relId, DatumGetInt16(keys[j]));
+
+		if (j == 0)
+			appendStringInfo(buf, "%s",
+							 quote_identifier(colName));
+		else
+			appendStringInfo(buf, ", %s",
+							 quote_identifier(colName));
+	}
 }
 
 

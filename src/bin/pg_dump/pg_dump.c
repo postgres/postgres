@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.283 2002/08/16 21:03:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.284 2002/08/16 23:01:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -108,6 +108,7 @@ static void dumpACL(Archive *fout, const char *type, const char *name,
 					const char *tag, const char *nspname,
 					const char *usename, const char *acl, const char *objoid);
 
+static void dumpConstraints(Archive *fout, TableInfo *tblinfo, int numTables);
 static void dumpTriggers(Archive *fout, TableInfo *tblinfo, int numTables);
 static void dumpRules(Archive *fout, TableInfo *tblinfo, int numTables);
 static void formatStringLiteral(PQExpBuffer buf, const char *str,
@@ -608,6 +609,7 @@ main(int argc, char **argv)
 	if (!dataOnly)				/* dump indexes and triggers at the end
 								 * for performance */
 	{
+		dumpConstraints(g_fout, tblinfo, numTables);
 		dumpTriggers(g_fout, tblinfo, numTables);
 		dumpRules(g_fout, tblinfo, numTables);
 	}
@@ -5814,6 +5816,117 @@ dumpOneSequence(Archive *fout, TableInfo *tbinfo,
 	destroyPQExpBuffer(delqry);
 }
 
+/*
+ * dumpConstraints
+ *
+ * Dump out constraints after all table creation statements in
+ * an alter table format.  Currently handles foreign keys only.
+ *
+ * XXX Potentially wrap in a 'SET CONSTRAINTS OFF' block so that
+ * the current table data is not processed
+ */
+static void
+dumpConstraints(Archive *fout, TableInfo *tblinfo, int numTables)
+{
+	int			i,
+				j;
+	PQExpBuffer query;
+	PQExpBuffer delqry;
+	PGresult   *res;
+	int			i_condef,
+				i_conoid,
+				i_conname;
+	int			ntups;
+
+	/* pg_constraint was created in 7.3, so nothing to do if older */
+	if (g_fout->remoteVersion < 70300)
+		return;
+
+	query = createPQExpBuffer();
+	delqry = createPQExpBuffer();
+
+	for (i = 0; i < numTables; i++)
+	{
+		TableInfo	   *tbinfo = &tblinfo[i];
+
+		if (tbinfo->ntrig == 0 || !tbinfo->dump)
+			continue;
+
+		if (g_verbose)
+			write_msg(NULL, "dumping triggers for table %s\n",
+					  tbinfo->relname);
+
+		/* select table schema to ensure regproc name is qualified if needed */
+		selectSourceSchema(tbinfo->relnamespace->nspname);
+
+		resetPQExpBuffer(query);
+		appendPQExpBuffer(query,
+						  "SELECT oid, conname, "
+						  "pg_catalog.pg_get_constraintdef(oid) as condef "
+						  "FROM pg_catalog.pg_constraint "
+						  "WHERE conrelid = '%s'::pg_catalog.oid "
+						  "AND contype = 'f'",
+						  tbinfo->oid);
+		res = PQexec(g_conn, query->data);
+		if (!res ||
+			PQresultStatus(res) != PGRES_TUPLES_OK)
+		{
+			write_msg(NULL, "query to obtain list of foreign key definitions failed: %s", PQerrorMessage(g_conn));
+			exit_nicely();
+		}
+		ntups = PQntuples(res);
+
+		i_conoid = PQfnumber(res, "oid");
+		i_conname = PQfnumber(res, "conname");
+		i_condef = PQfnumber(res, "condef");
+	
+		for (j = 0; j < ntups; j++)
+		{
+			const char *conOid = PQgetvalue(res, j, i_conoid);
+			const char *conName = PQgetvalue(res, j, i_conname);
+			const char *conDef = PQgetvalue(res, j, i_condef);
+
+			resetPQExpBuffer(query);
+			appendPQExpBuffer(query, "ALTER TABLE ONLY %s ",
+							  fmtId(tbinfo->relname, force_quotes));
+			appendPQExpBuffer(query, "ADD CONSTRAINT %s %s;\n",
+							  fmtId(conName, force_quotes),
+							  conDef);
+
+			/* DROP must be fully qualified in case same name appears in pg_catalog */
+			resetPQExpBuffer(delqry);
+			appendPQExpBuffer(delqry, "ALTER TABLE ONLY %s.",
+							  fmtId(tbinfo->relnamespace->nspname, force_quotes));
+			appendPQExpBuffer(delqry, "%s ",
+							  fmtId(tbinfo->relname, force_quotes));
+			appendPQExpBuffer(delqry, "DROP CONSTRAINT %s;\n",
+							  fmtId(conName, force_quotes));
+
+			ArchiveEntry(fout, conOid,
+						 conName,
+						 tbinfo->relnamespace->nspname,
+						 tbinfo->usename,
+						 "CONSTRAINT", NULL,
+						 query->data, delqry->data,
+						 NULL, NULL, NULL);
+
+			resetPQExpBuffer(query);
+			appendPQExpBuffer(query, "CONSTRAINT %s ",
+							  fmtId(conName, force_quotes));
+			appendPQExpBuffer(query, "ON %s",
+							  fmtId(tbinfo->relname, force_quotes));
+
+			dumpComment(fout, query->data,
+						tbinfo->relnamespace->nspname, tbinfo->usename,
+						conOid, "pg_constraint", 0, NULL);
+		}
+
+		PQclear(res);
+	}
+
+	destroyPQExpBuffer(query);
+	destroyPQExpBuffer(delqry);
+}
 
 static void
 dumpTriggers(Archive *fout, TableInfo *tblinfo, int numTables)
@@ -5854,6 +5967,7 @@ dumpTriggers(Archive *fout, TableInfo *tblinfo, int numTables)
 		resetPQExpBuffer(query);
 		if (g_fout->remoteVersion >= 70300)
 		{
+			/* We ignore triggers that are tied to a foreign-key constraint */
 			appendPQExpBuffer(query,
 							  "SELECT tgname, "
 							  "tgfoid::pg_catalog.regproc as tgfname, "
@@ -5861,8 +5975,13 @@ dumpTriggers(Archive *fout, TableInfo *tblinfo, int numTables)
 							  "tgisconstraint, tgconstrname, tgdeferrable, "
 							  "tgconstrrelid, tginitdeferred, oid, "
 							  "tgconstrrelid::pg_catalog.regclass as tgconstrrelname "
-							  "from pg_catalog.pg_trigger "
-							  "where tgrelid = '%s'::pg_catalog.oid",
+							  "from pg_catalog.pg_trigger t "
+							  "where tgrelid = '%s'::pg_catalog.oid "
+							  "and (not tgisconstraint "
+							  " OR NOT EXISTS"
+							  "  (SELECT 1 FROM pg_catalog.pg_depend d "
+							  "   JOIN pg_catalog.pg_constraint c ON (d.refclassid = c.tableoid AND d.refobjid = c.oid) "
+							  "   WHERE d.classid = t.tableoid AND d.objid = t.oid AND d.deptype = 'i' AND c.contype = 'f'))",
 							  tbinfo->oid);
 		}
 		else
@@ -5886,7 +6005,11 @@ dumpTriggers(Archive *fout, TableInfo *tblinfo, int numTables)
 			exit_nicely();
 		}
 		ntups = PQntuples(res);
-		if (ntups != tbinfo->ntrig)
+		/*
+		 * We may have less triggers than recorded due to constraint triggers
+		 * which are dumped by dumpConstraints
+		 */
+		if (ntups > tbinfo->ntrig)
 		{
 			write_msg(NULL, "expected %d triggers on table \"%s\" but found %d\n",
 					  tbinfo->ntrig, tbinfo->relname, ntups);
