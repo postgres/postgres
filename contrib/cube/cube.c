@@ -15,8 +15,6 @@
 
 #include "cubedata.h"
 
-#define max(a,b)		((a) >	(b) ? (a) : (b))
-#define min(a,b)		((a) <= (b) ? (a) : (b))
 #define abs(a)			((a) <	(0) ? (-a) : (a))
 
 extern int	cube_yyparse();
@@ -590,8 +588,8 @@ cube_union(NDBOX * a, NDBOX * b)
 	 */
 	for (i = 0; i < b->dim; i++)
 	{
-		result->x[i] = min(b->x[i], b->x[i + b->dim]);
-		result->x[i + a->dim] = max(b->x[i], b->x[i + b->dim]);
+		result->x[i] = Min(b->x[i], b->x[i + b->dim]);
+		result->x[i + a->dim] = Max(b->x[i], b->x[i + b->dim]);
 	}
 	for (i = b->dim; i < a->dim; i++)
 	{
@@ -603,8 +601,8 @@ cube_union(NDBOX * a, NDBOX * b)
 	for (i = 0; i < a->dim; i++)
 	{
 		result->x[i] =
-			min(min(a->x[i], a->x[i + a->dim]), result->x[i]);
-		result->x[i + a->dim] = max(max(a->x[i],
+			Min(Min(a->x[i], a->x[i + a->dim]), result->x[i]);
+		result->x[i + a->dim] = Max(Max(a->x[i],
 							   a->x[i + a->dim]), result->x[i + a->dim]);
 	}
 
@@ -648,8 +646,8 @@ cube_inter(NDBOX * a, NDBOX * b)
 	 */
 	for (i = 0; i < b->dim; i++)
 	{
-		result->x[i] = min(b->x[i], b->x[i + b->dim]);
-		result->x[i + a->dim] = max(b->x[i], b->x[i + b->dim]);
+		result->x[i] = Min(b->x[i], b->x[i + b->dim]);
+		result->x[i + a->dim] = Max(b->x[i], b->x[i + b->dim]);
 	}
 	for (i = b->dim; i < a->dim; i++)
 	{
@@ -661,8 +659,8 @@ cube_inter(NDBOX * a, NDBOX * b)
 	for (i = 0; i < a->dim; i++)
 	{
 		result->x[i] =
-			max(min(a->x[i], a->x[i + a->dim]), result->x[i]);
-		result->x[i + a->dim] = min(max(a->x[i],
+			Max(Min(a->x[i], a->x[i + a->dim]), result->x[i]);
+		result->x[i + a->dim] = Min(Max(a->x[i],
 							   a->x[i + a->dim]), result->x[i + a->dim]);
 	}
 
@@ -720,8 +718,8 @@ cube_over_left(NDBOX * a, NDBOX * b)
 	if ((a == NULL) || (b == NULL))
 		return (FALSE);
 
-	return (min(a->x[a->dim - 1], a->x[2 * a->dim - 1]) <=
-			min(b->x[b->dim - 1], b->x[2 * b->dim - 1]) &&
+	return (Min(a->x[a->dim - 1], a->x[2 * a->dim - 1]) <=
+			Min(b->x[b->dim - 1], b->x[2 * b->dim - 1]) &&
 			!cube_left(a, b) && !cube_right(a, b));
 }
 
@@ -733,8 +731,8 @@ cube_over_right(NDBOX * a, NDBOX * b)
 	if ((a == NULL) || (b == NULL))
 		return (FALSE);
 
-	return (min(a->x[a->dim - 1], a->x[2 * a->dim - 1]) >=
-			min(b->x[b->dim - 1], b->x[2 * b->dim - 1]) &&
+	return (Min(a->x[a->dim - 1], a->x[2 * a->dim - 1]) >=
+			Min(b->x[b->dim - 1], b->x[2 * b->dim - 1]) &&
 			!cube_left(a, b) && !cube_right(a, b));
 }
 
@@ -747,8 +745,8 @@ cube_left(NDBOX * a, NDBOX * b)
 	if ((a == NULL) || (b == NULL))
 		return (FALSE);
 
-	return (min(a->x[a->dim - 1], a->x[2 * a->dim - 1]) <
-			min(b->x[0], b->x[b->dim]));
+	return (Min(a->x[a->dim - 1], a->x[2 * a->dim - 1]) <
+			Min(b->x[0], b->x[b->dim]));
 }
 
 /* return 'true' if the projection of 'a' is
@@ -759,8 +757,8 @@ cube_right(NDBOX * a, NDBOX * b)
 	if ((a == NULL) || (b == NULL))
 		return (FALSE);
 
-	return (min(a->x[0], a->x[a->dim]) >
-			min(b->x[b->dim - 1], b->x[2 * b->dim - 1]));
+	return (Min(a->x[0], a->x[a->dim]) >
+			Min(b->x[b->dim - 1], b->x[2 * b->dim - 1]));
 }
 
 /* make up a metric in which one box will be 'lower' than the other
@@ -771,25 +769,25 @@ cube_cmp(NDBOX * a, NDBOX * b)
 	int			i;
 	int			dim;
 
-	dim = min(a->dim, b->dim);
+	dim = Min(a->dim, b->dim);
 
 	/* compare the common dimensions */
 	for (i = 0; i < dim; i++)
 	{
-		if (min(a->x[i], a->x[a->dim + i]) >
-			min(b->x[i], b->x[b->dim + i]))
+		if (Min(a->x[i], a->x[a->dim + i]) >
+			Min(b->x[i], b->x[b->dim + i]))
 			return 1;
-		if (min(a->x[i], a->x[a->dim + i]) <
-			min(b->x[i], b->x[b->dim + i]))
+		if (Min(a->x[i], a->x[a->dim + i]) <
+			Min(b->x[i], b->x[b->dim + i]))
 			return -1;
 	}
 	for (i = 0; i < dim; i++)
 	{
-		if (max(a->x[i], a->x[a->dim + i]) >
-			max(b->x[i], b->x[b->dim + i]))
+		if (Max(a->x[i], a->x[a->dim + i]) >
+			Max(b->x[i], b->x[b->dim + i]))
 			return 1;
-		if (max(a->x[i], a->x[a->dim + i]) <
-			max(b->x[i], b->x[b->dim + i]))
+		if (Max(a->x[i], a->x[a->dim + i]) <
+			Max(b->x[i], b->x[b->dim + i]))
 			return -1;
 	}
 
@@ -798,16 +796,16 @@ cube_cmp(NDBOX * a, NDBOX * b)
 	{
 		for (i = dim; i < a->dim; i++)
 		{
-			if (min(a->x[i], a->x[a->dim + i]) > 0)
+			if (Min(a->x[i], a->x[a->dim + i]) > 0)
 				return 1;
-			if (min(a->x[i], a->x[a->dim + i]) < 0)
+			if (Min(a->x[i], a->x[a->dim + i]) < 0)
 				return -1;
 		}
 		for (i = dim; i < a->dim; i++)
 		{
-			if (max(a->x[i], a->x[a->dim + i]) > 0)
+			if (Max(a->x[i], a->x[a->dim + i]) > 0)
 				return 1;
-			if (max(a->x[i], a->x[a->dim + i]) < 0)
+			if (Max(a->x[i], a->x[a->dim + i]) < 0)
 				return -1;
 		}
 
@@ -821,16 +819,16 @@ cube_cmp(NDBOX * a, NDBOX * b)
 	{
 		for (i = dim; i < b->dim; i++)
 		{
-			if (min(b->x[i], b->x[b->dim + i]) > 0)
+			if (Min(b->x[i], b->x[b->dim + i]) > 0)
 				return -1;
-			if (min(b->x[i], b->x[b->dim + i]) < 0)
+			if (Min(b->x[i], b->x[b->dim + i]) < 0)
 				return 1;
 		}
 		for (i = dim; i < b->dim; i++)
 		{
-			if (max(b->x[i], b->x[b->dim + i]) > 0)
+			if (Max(b->x[i], b->x[b->dim + i]) > 0)
 				return -1;
-			if (max(b->x[i], b->x[b->dim + i]) < 0)
+			if (Max(b->x[i], b->x[b->dim + i]) < 0)
 				return 1;
 		}
 
@@ -911,13 +909,13 @@ cube_contains(NDBOX * a, NDBOX * b)
 	}
 
 	/* Can't care less about the excess dimensions of (a), if any */
-	for (i = 0; i < min(a->dim, b->dim); i++)
+	for (i = 0; i < Min(a->dim, b->dim); i++)
 	{
-		if (min(a->x[i], a->x[a->dim + i]) >
-			min(b->x[i], b->x[b->dim + i]))
+		if (Min(a->x[i], a->x[a->dim + i]) >
+			Min(b->x[i], b->x[b->dim + i]))
 			return (FALSE);
-		if (max(a->x[i], a->x[a->dim + i]) <
-			max(b->x[i], b->x[b->dim + i]))
+		if (Max(a->x[i], a->x[a->dim + i]) <
+			Max(b->x[i], b->x[b->dim + i]))
 			return (FALSE);
 	}
 
@@ -961,20 +959,20 @@ cube_overlap(NDBOX * a, NDBOX * b)
 	/* compare within the dimensions of (b) */
 	for (i = 0; i < b->dim; i++)
 	{
-		if (min(a->x[i], a->x[a->dim + i]) >
-			max(b->x[i], b->x[b->dim + i]))
+		if (Min(a->x[i], a->x[a->dim + i]) >
+			Max(b->x[i], b->x[b->dim + i]))
 			return (FALSE);
-		if (max(a->x[i], a->x[a->dim + i]) <
-			min(b->x[i], b->x[b->dim + i]))
+		if (Max(a->x[i], a->x[a->dim + i]) <
+			Min(b->x[i], b->x[b->dim + i]))
 			return (FALSE);
 	}
 
 	/* compare to zero those dimensions in (a) absent in (b) */
 	for (i = b->dim; i < a->dim; i++)
 	{
-		if (min(a->x[i], a->x[a->dim + i]) > 0)
+		if (Min(a->x[i], a->x[a->dim + i]) > 0)
 			return (FALSE);
-		if (max(a->x[i], a->x[a->dim + i]) < 0)
+		if (Max(a->x[i], a->x[a->dim + i]) < 0)
 			return (FALSE);
 	}
 
@@ -1031,11 +1029,11 @@ distance_1D(double a1, double a2, double b1, double b2)
 {
 	/* interval (a) is entirely on the left of (b) */
 	if ((a1 <= b1) && (a2 <= b1) && (a1 <= b2) && (a2 <= b2))
-		return (min(b1, b2) - max(a1, a2));
+		return (Min(b1, b2) - Max(a1, a2));
 
 	/* interval (a) is entirely on the right of (b) */
 	if ((a1 > b1) && (a2 > b1) && (a1 > b2) && (a2 > b2))
-		return (min(a1, a2) - max(b1, b2));
+		return (Min(a1, a2) - Max(b1, b2));
 
 	/* the rest are all sorts of intersections */
 	return (0.0);
@@ -1074,7 +1072,7 @@ cube_ll_coord(NDBOX * a, int4 n)
 	result = (double *) palloc(sizeof(double));
 	*result = 0;
 	if (a->dim >= n && n > 0)
-		*result = min(a->x[n - 1], a->x[a->dim + n - 1]);
+		*result = Min(a->x[n - 1], a->x[a->dim + n - 1]);
 	return result;
 }
 
@@ -1087,7 +1085,7 @@ cube_ur_coord(NDBOX * a, int4 n)
 	result = (double *) palloc(sizeof(double));
 	*result = 0;
 	if (a->dim >= n && n > 0)
-		*result = max(a->x[n - 1], a->x[a->dim + n - 1]);
+		*result = Max(a->x[n - 1], a->x[a->dim + n - 1]);
 	return result;
 }
 

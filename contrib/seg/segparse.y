@@ -38,7 +38,7 @@
   } bnd;
   char * text;
 }
-%token <text> FLOAT
+%token <text> SEGFLOAT
 %token <text> RANGE
 %token <text> PLUMIN
 %token <text> EXTENSION
@@ -105,13 +105,13 @@ range:
       ;
 
 boundary:
-          FLOAT {
+          SEGFLOAT {
              $$.ext = '\0';
 	     $$.sigd = significant_digits($1);
              $$.val = seg_atof($1);
 	  }
       | 
-	  EXTENSION FLOAT {
+	  EXTENSION SEGFLOAT {
              $$.ext = $1[0];
 	     $$.sigd = significant_digits($2);
              $$.val = seg_atof($2);
@@ -119,7 +119,7 @@ boundary:
       ;
 
 deviation:
-          FLOAT {
+          SEGFLOAT {
              $$.ext = '\0';
 	     $$.sigd = significant_digits($1);
              $$.val = seg_atof($1);

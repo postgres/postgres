@@ -39,7 +39,7 @@ float        ({integer}|{real})([eE]{integer})?
 
 %%
 
-{float}      yylval = yytext; return FLOAT;
+{float}      yylval = yytext; return CUBEFLOAT;
 \[           yylval = "("; return O_BRACKET;
 \]           yylval = ")"; return C_BRACKET;
 \(           yylval = "("; return O_PAREN;

@@ -41,7 +41,7 @@ float        ({integer}|{real})([eE]{integer})?
 
 {range}      yylval.text = yytext; return RANGE;
 {plumin}     yylval.text = yytext; return PLUMIN;
-{float}      yylval.text = yytext; return FLOAT;
+{float}      yylval.text = yytext; return SEGFLOAT;
 \<           yylval.text = "<"; return EXTENSION;
 \>           yylval.text = ">"; return EXTENSION;
 \~           yylval.text = "~"; return EXTENSION;

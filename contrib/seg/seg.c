@@ -14,8 +14,6 @@
 
 #include "segdata.h"
 
-#define max(a,b)		((a) >	(b) ? (a) : (b))
-#define min(a,b)		((a) <= (b) ? (a) : (b))
 #define abs(a)			((a) <	(0) ? (-a) : (a))
 
 /*
@@ -924,7 +922,7 @@ restore(char *result, float val, int n)
 	 * put a cap on the number of siugnificant digits to avoid nonsense in
 	 * the output
 	 */
-	n = min(n, FLT_DIG);
+	n = Min(n, FLT_DIG);
 
 	/* remember the sign */
 	sign = (val < 0 ? 1 : 0);
@@ -946,7 +944,7 @@ restore(char *result, float val, int n)
 	if (exp == 0)
 	{
 		/* use the supplied mantyssa with sign */
-		strcpy((char *) index(result, 'e'), "");
+		strcpy((char *) strchr(result, 'e'), "");
 	}
 	else
 	{

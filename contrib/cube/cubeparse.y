@@ -28,7 +28,7 @@ static NDBOX * write_point_as_box(char *s, int dim);
 %}
 
 /* BISON Declarations */
-%token FLOAT O_PAREN C_PAREN O_BRACKET C_BRACKET COMMA
+%token CUBEFLOAT O_PAREN C_PAREN O_BRACKET C_BRACKET COMMA
 %start box
 
 /* Grammar follows */
@@ -128,13 +128,13 @@ paren_list:
       ;
 
 list:
-          FLOAT {
+          CUBEFLOAT {
 			 /* alloc enough space to be sure whole list will fit */
              $$ = palloc(scanbuflen + 1);
 			 strcpy($$, $1);
 	  }
       | 
-	  list COMMA FLOAT {
+	  list COMMA CUBEFLOAT {
              $$ = $1;
 	     strcat($$, ",");
 	     strcat($$, $3);
