@@ -21,7 +21,7 @@ ERROR:  parser: parse error at or near ";"
 QUERY: drop table nonesuch;
 ERROR:  Relation nonesuch Does Not Exist!
 QUERY: alter table rename;
-ERROR:  parser: parse error at or near "rename"
+ERROR:  parser: parse error at or near ";"
 QUERY: alter table nonesuch rename to newnonesuch;
 ERROR:  renamerel: relation "nonesuch" does not exist
 QUERY: alter table nonesuch rename to stud_emp;
