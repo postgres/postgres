@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/Attic/aclchk.c,v 1.6 1997/01/23 19:33:31 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/Attic/aclchk.c,v 1.7 1997/03/12 20:48:17 scrappy Exp $
  *
  * NOTES
  *    See acl.h.
@@ -17,7 +17,7 @@
 #include <string.h>
 #include "postgres.h"
 
-#include "utils/acl.h"		/* where declarations for this file goes */
+#include "utils/acl.h"		/* where declarations for this file go */
 #include "access/heapam.h"
 #include "access/htup.h"
 #include "access/tupmacs.h"
@@ -54,6 +54,15 @@
 #undef	Name_pg_group
 #define	Name_pg_group			"pggroup"
 #endif
+
+/* warning messages, now more explicit. */
+/* should correspond to the order of the ACLCHK_* result codes above. */
+char *aclcheck_error_strings[] = {
+  "No error.",
+  "Permission denied.",
+  "Table does not exist.",
+  "Must be table owner."
+};
 
 #ifdef ACLDEBUG_TRACE
 static
@@ -268,10 +277,10 @@ aclcheck(Acl *acl, AclId id, AclIdType idtype, AclMode mode)
      * the system never creates an empty ACL.
      */
     if (num < 1) {
-#ifdef ACLDEBUG_TRACE
+#ifdef ACLDEBUG_TRACE || 1
 	elog(DEBUG, "aclcheck: zero-length ACL, returning 1");
 #endif
-	return(1);
+	return ACLCHECK_OK;
     }
 
     switch (idtype) {
@@ -284,7 +293,7 @@ aclcheck(Acl *acl, AclId id, AclIdType idtype, AclMode mode)
 		elog(DEBUG, "aclcheck: found %d/%d",
 		     aip->ai_id, aip->ai_mode);
 #endif
-		return((aip->ai_mode & mode) ? 1 : 0);
+		return((aip->ai_mode & mode) ? ACLCHECK_OK : ACLCHECK_NO_PRIV);
 	    }
 	}
 	for (found_group = 0;
@@ -304,7 +313,7 @@ aclcheck(Acl *acl, AclId id, AclIdType idtype, AclMode mode)
 		    elog(DEBUG, "aclcheck: found %d/%d",
 			 aip->ai_id, aip->ai_mode);
 #endif
-		    return(0);
+		    return ACLCHECK_NO_PRIV;
 		}
 #endif
 	    }
@@ -313,7 +322,7 @@ aclcheck(Acl *acl, AclId id, AclIdType idtype, AclMode mode)
 #ifdef ACLDEBUG_TRACE
 	    elog(DEBUG,"aclcheck: all groups ok");
 #endif
-	    return(1);
+	    return ACLCHECK_OK;
 	}
 	break;
     case ACL_IDTYPE_GID:
@@ -329,7 +338,7 @@ aclcheck(Acl *acl, AclId id, AclIdType idtype, AclMode mode)
 		elog(DEBUG, "aclcheck: found %d/%d",
 		     aip->ai_id, aip->ai_mode);
 #endif
-		return((aip->ai_mode & mode) ? 1 : 0);
+		return((aip->ai_mode & mode) ? ACLCHECK_OK : ACLCHECK_NO_PRIV);
 	    }
 	}
 	break;
@@ -343,7 +352,7 @@ aclcheck(Acl *acl, AclId id, AclIdType idtype, AclMode mode)
 #ifdef ACLDEBUG_TRACE
     elog(DEBUG, "aclcheck: using world=%d", aidat->ai_mode);
 #endif
-    return((aidat->ai_mode & mode) ? 1 : 0);
+    return((aidat->ai_mode & mode) ? ACLCHECK_OK : ACLCHECK_NO_PRIV);
 }
 
 int32
@@ -370,7 +379,7 @@ pg_aclcheck(char *relname, char *usename, AclMode mode)
 	   pg_database table, there is still additional permissions checking
 	   in dbcommands.c */
 	if (mode & ACL_AP)
-	    return (1);
+	    return ACLCHECK_OK;
     }
 
     /*
@@ -383,7 +392,7 @@ pg_aclcheck(char *relname, char *usename, AclMode mode)
 	!((Form_pg_user) GETSTRUCT(htp))->usecatupd) {
 	elog(DEBUG, "pg_aclcheck: catalog update to \"%-.*s\": permission denied",
 	     NAMEDATALEN, relname);
-	return(0);
+	return ACLCHECK_NO_PRIV;
     }
 	
     /*
@@ -394,7 +403,7 @@ pg_aclcheck(char *relname, char *usename, AclMode mode)
 	elog(DEBUG, "pg_aclcheck: \"%-.*s\" is superuser",
 	     NAMEDATALEN, usename);
 #endif
-	return(1);
+	return ACLCHECK_OK;
     }
 	
 #ifndef ACLDEBUG
@@ -403,7 +412,7 @@ pg_aclcheck(char *relname, char *usename, AclMode mode)
     if (!HeapTupleIsValid(htp)) {
 	elog(WARN, "pg_aclcheck: class \"%-.*s\" not found",
 	     NAMEDATALEN, relname);
-	return(1);
+	/* an elog(WARN) kills us, so no need to return anything. */
     }
     if (!heap_attisnull(htp, Anum_pg_class_relacl)) {
 	relation = heap_openr(RelationRelationName);
@@ -436,7 +445,7 @@ pg_aclcheck(char *relname, char *usename, AclMode mode)
 	if (!RelationIsValid(relation)) {
 	    elog(NOTICE, "pg_checkacl: could not open \"%-.*s\"??",
 		 RelationRelationName);
-	    return(1);
+	    return ACLCHECK_NO_CLASS;
 	}
 	fmgr_info(NameEqualRegProcedure,
 		  &relkey[0].sk_func,
@@ -494,8 +503,8 @@ pg_ownercheck(char *usename,
     switch (cacheid) {
     case OPROID:
 	if (!HeapTupleIsValid(htp))
-	    elog(WARN, "pg_ownercheck: operator %d not found",
-		 (int) value);
+	    elog(WARN, "pg_ownercheck: operator %ld not found",
+		 PointerGetDatum(value));
 	owner_id = ((OperatorTupleForm) GETSTRUCT(htp))->oprowner;
 	break;
     case PRONAME:

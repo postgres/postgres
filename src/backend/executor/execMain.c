@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.10 1997/01/22 05:26:27 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.11 1997/03/12 20:47:41 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -289,7 +289,7 @@ ExecCheckPerms(CmdType operation,
     HeapTuple htp;
     List *lp;
     List *qvars, *tvars;
-    int32 ok = 1;
+    int32 ok = 1, aclcheck_result = -1;
     char *opstr;
     NameData rname;
     char *userName;
@@ -317,21 +317,21 @@ ExecCheckPerms(CmdType operation,
 	    if (intMember(resultRelation, qvars) ||
 		intMember(resultRelation, tvars)) {
 		/* result relation is scanned */
-		ok = CHECK(ACL_RD);
+		ok = ((aclcheck_result = CHECK(ACL_RD)) == ACLCHECK_OK);
 		opstr = "read";
 		if (!ok)
 		    break;
 	    }
 	    switch (operation) {
 	    case CMD_INSERT:
-		ok = CHECK(ACL_AP) ||
-		    CHECK(ACL_WR);
+		ok = ((aclcheck_result = CHECK(ACL_AP)) == ACLCHECK_OK) ||
+		     ((aclcheck_result = CHECK(ACL_WR)) == ACLCHECK_OK);
 		opstr = "append";
 		break;
 	    case CMD_NOTIFY: /* what does this mean?? -- jw, 1/6/94 */
 	    case CMD_DELETE:
 	    case CMD_UPDATE:
-		ok = CHECK(ACL_WR);
+		ok = ((aclcheck_result = CHECK(ACL_WR)) == ACLCHECK_OK);
 		opstr = "write";
 		break;
 	    default:
@@ -340,7 +340,7 @@ ExecCheckPerms(CmdType operation,
 	    }
 	} else {
 	    /* XXX NOTIFY?? */
-	    ok = CHECK(ACL_RD);
+	    ok = ((aclcheck_result = CHECK(ACL_RD)) == ACLCHECK_OK);
 	    opstr = "read";
 	}
 	if (!ok)
@@ -352,7 +352,7 @@ ExecCheckPerms(CmdType operation,
 	elog(WARN, "%s on \"%-.*s\": permission denied", opstr, 
 	     NAMEDATALEN, rname.data);
 */	    
-	elog(WARN, "%s %s", rname.data, ACL_NO_PRIV_WARNING);
+	elog(WARN, "%s: %s", rname.data, aclcheck_error_strings[aclcheck_result]);
     }
 }
 

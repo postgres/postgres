@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.21 1997/01/10 17:46:33 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.22 1997/03/12 20:47:32 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -102,13 +102,15 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
     Relation rel;
     extern char *UserName;    /* defined in global.c */
     const AclMode required_access = from ? ACL_WR : ACL_RD;
+    int result;
 
     rel = heap_openr(relname);
     if (rel == NULL) elog(WARN, "COPY command failed.  Class %s "
                           "does not exist.", relname);
-    
-    if (!pg_aclcheck(relname, UserName, required_access))
-        elog(WARN, "%s %s", relname, ACL_NO_PRIV_WARNING);
+
+    result = pg_aclcheck(relname, UserName, required_access);
+    if(result != ACLCHECK_OK)
+        elog(WARN, "%s: %s", relname, aclcheck_error_strings[result]);
         /* Above should not return */
     else if (!superuser() && !pipe)
         elog(WARN, "You must have Postgres superuser privilege to do a COPY "

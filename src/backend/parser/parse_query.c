@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/Attic/parse_query.c,v 1.14 1997/02/14 23:02:29 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/Attic/parse_query.c,v 1.15 1997/03/12 20:47:57 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -133,7 +133,7 @@ addRangeTableEntry(ParseState *pstate,
     relation = heap_openr(relname);
     if (relation == NULL) {
 	elog(WARN,"%s: %s",
-	     relname, ACL_NO_PRIV_WARNING);
+	     relname, aclcheck_error_strings[ACLCHECK_NO_CLASS]);
     }
 
     /*
