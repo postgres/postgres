@@ -1,0 +1,51 @@
+PostgreSQL type extensions for IP and MAC addresses.
+---------------------------------------------------
+
+I needed to record IP and MAC level ethernet addresses in a data
+base, and I really didn't want to store them as plain strings, with
+no enforced error checking, so I put together the accompanying code
+as my first experiment with adding a data type to PostgreSQL.  I
+then thought that this might be useful to others, both directly and
+as a very simple example of how to do this sort of thing, so here
+it is, in the hope that it will be useful.
+
+IP addresses are implemented as an 8 byte struct (this may well be
+more than is useful, but I figured that since it has to be at least 5,
+it might as well round well) that contains the four bytes of address
+and a mask width.  Thus, a node address looks like '158.37.96.15/32'
+(or just '158.37.96.15', which is understood to mean the same thing).
+This address happens to be part of a subnet where I work;
+'158.37.96.0/24', which itself is a part of the larger subnet
+allocated to our institution, which is '158.37.96.0/21', which again,
+if you go by the book, is part of the class "B" net '158.37.0.0/16'.
+
+Input and output functions are supplied, along with the "normal" <,
+<=, =, >=, > and <> operators, which all do what you expect, and the
+similarity operator ~~, which checks whether two given addresses are
+either the same, or, failing that, whether one is a subnet
+specification and the other an address (or a smaller subnet) within
+that.  Good for picking out records with addresses in a given subnet:
+note that '158.37.96.0/21' spans '158.37.96.0' to '158.37.103.255',
+which is not all that easily handled in its external representation.
+
+MAC level ethernet addresses are also implemented as an 8 byte struct
+(I wish I knew what alignment needs are actually present -- I'm just
+not taking any chances here) that contains the address as unsigned
+chars.  Several input forms are accepted: the following are all the
+same address: '08002b:010203', '08002b-010203', '0800.2b01.0203',
+'08-00-2b-01-02-03' and '08:00:2b:01:02:03'.  Upper and lower case is
+accepted for the digits 'a' through 'f'.  Output is always in the
+latter of the given forms.
+
+Input and output functions are supplied, along with the = and <>
+operators, which do what you expect, and the similarity operator ~~,
+which checks whether two given addresses belong to hardware from the
+same manufacturer (first three bytes the same, that is).  As an extra
+feature, a function macaddr_manuf() is defined, which returns the name
+of the manufacturer as a string.
+
+To install: fix the path names in the SQL files and the Makefile if
+you need to, then make, make install, slurp the SQL files into psql or
+whatever, and you're off.  Enjoy!
+
+Bergen, Norway, 1998-01-11, Tom Ivar Helbekkmo (tih@Hamartun.Priv.NO).
