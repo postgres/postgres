@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.5 1996/08/06 16:16:45 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.6 1996/08/10 00:22:44 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,7 +35,8 @@ strdup(const char *string)
 {
     char *nstr;
 
-    nstr = strcpy((char *)malloc(strlen(string)+1), string);
+  if ((nstr = malloc(strlen(string)+1)) != NULL)
+      strcpy(nstr, string);
     return nstr;
 }
 #endif
@@ -133,7 +134,7 @@ PQsetdb(const char *pghost, const char* pgport, const char* pgoptions, const cha
       conn->dbName = strdup(tmp);
     } else {
       char errorMessage[ERROR_MSG_LENGTH];
-      if (tmp = fe_getauthname(errorMessage)) {
+      if ((tmp = fe_getauthname(errorMessage)) != 0) {
         conn->dbName = strdup(tmp);
         free(tmp);
       } else {
