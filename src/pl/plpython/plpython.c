@@ -29,7 +29,7 @@
  * MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.21 2002/09/04 20:31:48 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.22 2002/09/04 22:51:23 petere Exp $
  *
  *********************************************************************
  */
@@ -381,7 +381,7 @@ plpython_call_handler(PG_FUNCTION_ARGS)
 {
 	DECLARE_EXC();
 	Datum		retval;
-	bool		is_trigger;
+	volatile bool is_trigger;
 	PLyProcedure *volatile proc = NULL;
 
 	enter();

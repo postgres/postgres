@@ -1,6 +1,6 @@
 /****************************************************************************
  * pending.c
- * $Id: pending.c,v 1.2 2002/09/04 20:31:06 momjian Exp $
+ * $Id: pending.c,v 1.3 2002/09/04 22:49:22 petere Exp $
  *
  * This file contains a trigger for Postgresql-7.x to record changes to tables
  * to a pending table for mirroring.
@@ -67,7 +67,7 @@ recordchange(PG_FUNCTION_ARGS)
 	HeapTuple	afterTuple = NULL;
 	HeapTuple	retTuple = NULL;
 	char	   *tblname;
-	char		op;
+	char		op = 0;
 
 	if (fcinfo->context != NULL)
 	{
