@@ -10,7 +10,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/catalog/Attic/genbki.sh,v 1.27 2002/04/27 21:24:33 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/catalog/Attic/genbki.sh,v 1.28 2002/07/31 17:19:51 tgl Exp $
 #
 # NOTES
 #    non-essential whitespace is removed from the generated file.
@@ -126,12 +126,11 @@ for dir in $INCLUDE_DIRS; do
     fi
 done
 
-# Get INDEX_MAX_KEYS and DEFAULT_ATTSTATTARGET from pg_config.h
+# Get INDEX_MAX_KEYS from pg_config.h
 # (who needs consistency?)
 for dir in $INCLUDE_DIRS; do
     if [ -f "$dir/pg_config.h" ]; then
         INDEXMAXKEYS=`grep '^#define[ 	]*INDEX_MAX_KEYS' $dir/pg_config.h | $AWK '{ print $3 }'`
-        DEFAULTATTSTATTARGET=`grep '^#define[ 	]*DEFAULT_ATTSTATTARGET' $dir/pg_config.h | $AWK '{ print $3 }'`
         break
     fi
 done
@@ -194,7 +193,6 @@ sed -e "s/;[ 	]*$//g" \
     -e "s/PGUID/1/g" \
     -e "s/NAMEDATALEN/$NAMEDATALEN/g" \
     -e "s/PGNSP/$PG_CATALOG_NAMESPACE/g" \
-    -e "s/DEFAULT_ATTSTATTARGET/$DEFAULTATTSTATTARGET/g" \
     -e "s/INDEX_MAX_KEYS\*2/$INDEXMAXKEYS2/g" \
     -e "s/INDEX_MAX_KEYS\*4/$INDEXMAXKEYS4/g" \
     -e "s/INDEX_MAX_KEYS/$INDEXMAXKEYS/g" \

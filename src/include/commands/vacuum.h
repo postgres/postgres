@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: vacuum.h,v 1.44 2002/06/20 20:29:49 momjian Exp $
+ * $Id: vacuum.h,v 1.45 2002/07/31 17:19:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,6 +33,9 @@ typedef struct VacRUsage
 	struct timeval tv;
 	struct rusage ru;
 } VacRUsage;
+
+/* Default statistics target (GUC parameter) */
+extern int	default_statistics_target;
 
 
 /* in commands/vacuum.c */

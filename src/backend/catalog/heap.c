@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.213 2002/07/24 19:11:07 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.214 2002/07/31 17:19:51 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -441,7 +441,7 @@ AddNewAttributeTuples(Oid new_rel_oid,
 		/* Fill in the correct relation OID */
 		(*dpp)->attrelid = new_rel_oid;
 		/* Make sure these are OK, too */
-		(*dpp)->attstattarget = DEFAULT_ATTSTATTARGET;
+		(*dpp)->attstattarget = -1;
 		(*dpp)->attcacheoff = -1;
 
 		tup = heap_addheader(Natts_pg_attribute,

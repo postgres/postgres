@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.24 2002/07/20 05:16:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.25 2002/07/31 17:19:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1668,7 +1668,7 @@ AlterTableAddColumn(Oid myrelid,
 	attribute->attrelid = myrelid;
 	namestrcpy(&(attribute->attname), colDef->colname);
 	attribute->atttypid = HeapTupleGetOid(typeTuple);
-	attribute->attstattarget = DEFAULT_ATTSTATTARGET;
+	attribute->attstattarget = -1;
 	attribute->attlen = tform->typlen;
 	attribute->attcacheoff = -1;
 	attribute->atttypmod = colDef->typename->typmod;
@@ -2184,12 +2184,18 @@ AlterTableAlterColumnFlags(Oid myrelid,
 		newtarget = intVal(flagValue);
 
 		/*
-		 * Limit target to sane range (should we raise an error instead?)
+		 * Limit target to a sane range
 		 */
-		if (newtarget < 0)
-			newtarget = 0;
+		if (newtarget < -1)
+		{
+			elog(ERROR, "ALTER TABLE: statistics target %d is too low",
+				 newtarget);
+		}
 		else if (newtarget > 1000)
+		{
+			elog(WARNING, "ALTER TABLE: lowering statistics target to 1000");
 			newtarget = 1000;
+		}
 	}
 	else if (*flagType == 'M')
 	{

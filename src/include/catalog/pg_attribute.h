@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_attribute.h,v 1.94 2002/07/24 19:11:12 petere Exp $
+ * $Id: pg_attribute.h,v 1.95 2002/07/31 17:19:54 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -58,7 +58,8 @@ CATALOG(pg_attribute) BOOTSTRAP BKI_WITHOUT_OIDS
 	 * attstattarget is the target number of statistics datapoints to
 	 * collect during VACUUM ANALYZE of this column.  A zero here
 	 * indicates that we do not wish to collect any stats about this
-	 * column.
+	 * column. A "-1" here indicates that no value has been explicitly
+	 * set for this column, so ANALYZE should use the default setting.
 	 */
 	int4		attstattarget;
 
@@ -210,7 +211,7 @@ typedef FormData_pg_attribute *Form_pg_attribute;
  * ----------------
  */
 #define Schema_pg_type \
-{ 1247, {"typname"},	   19, DEFAULT_ATTSTATTARGET, NAMEDATALEN,	1, 0, -1, -1, false, 'p', false, 'i', false, false }, \
+{ 1247, {"typname"},	   19, -1, NAMEDATALEN,	1, 0, -1, -1, false, 'p', false, 'i', false, false }, \
 { 1247, {"typnamespace"},  26, 0,	4,	2, 0, -1, -1, true, 'p', false, 'i', false, false }, \
 { 1247, {"typowner"},	   23, 0,	4,	3, 0, -1, -1, true, 'p', false, 'i', false, false }, \
 { 1247, {"typlen"},		   21, 0,	2,	4, 0, -1, -1, true, 'p', false, 's', false, false }, \
@@ -232,7 +233,7 @@ typedef FormData_pg_attribute *Form_pg_attribute;
 { 1247, {"typdefault"},    25, 0,  -1, 20, 0, -1, -1, false, 'x', false, 'i', false, false }
 
 
-DATA(insert ( 1247 typname			19 DEFAULT_ATTSTATTARGET NAMEDATALEN   1 0 -1 -1 f p f i f f));
+DATA(insert ( 1247 typname			19 -1 NAMEDATALEN   1 0 -1 -1 f p f i f f));
 DATA(insert ( 1247 typnamespace		26 0  4   2 0 -1 -1 t p f i f f));
 DATA(insert ( 1247 typowner			23 0  4   3 0 -1 -1 t p f i f f));
 DATA(insert ( 1247 typlen			21 0  2   4 0 -1 -1 t p f s f f));
@@ -289,7 +290,7 @@ DATA(insert ( 1262 tableoid			26 0  4  -7 0 -1 -1 t p f i f f));
  * ----------------
  */
 #define Schema_pg_proc \
-{ 1255, {"proname"},			19, DEFAULT_ATTSTATTARGET, NAMEDATALEN,  1, 0, -1, -1, false, 'p', false, 'i', false, false }, \
+{ 1255, {"proname"},			19, -1, NAMEDATALEN,  1, 0, -1, -1, false, 'p', false, 'i', false, false }, \
 { 1255, {"pronamespace"},		26, 0,	4,	2, 0, -1, -1, true, 'p', false, 'i', false, false }, \
 { 1255, {"proowner"},			23, 0,	4,	3, 0, -1, -1, true, 'p', false, 'i', false, false }, \
 { 1255, {"prolang"},			26, 0,	4,	4, 0, -1, -1, true, 'p', false, 'i', false, false }, \
@@ -305,7 +306,7 @@ DATA(insert ( 1262 tableoid			26 0  4  -7 0 -1 -1 t p f i f f));
 { 1255, {"probin"},				17, 0, -1, 14, 0, -1, -1, false, 'x', false, 'i', false, false }, \
 { 1255, {"proacl"},			  1034, 0, -1, 15, 0, -1, -1, false, 'x', false, 'i', false, false }
 
-DATA(insert ( 1255 proname			19 DEFAULT_ATTSTATTARGET NAMEDATALEN   1 0 -1 -1 f p f i f f));
+DATA(insert ( 1255 proname			19 -1 NAMEDATALEN   1 0 -1 -1 f p f i f f));
 DATA(insert ( 1255 pronamespace		26 0  4   2 0 -1 -1 t p f i f f));
 DATA(insert ( 1255 proowner			23 0  4   3 0 -1 -1 t p f i f f));
 DATA(insert ( 1255 prolang			26 0  4   4 0 -1 -1 t p f i f f));
@@ -332,8 +333,8 @@ DATA(insert ( 1255 tableoid			26 0  4  -7 0 -1 -1 t p f i f f));
  *		pg_shadow
  * ----------------
  */
-DATA(insert ( 1260 usename			19	DEFAULT_ATTSTATTARGET NAMEDATALEN	1 0 -1 -1 f p f i f f));
-DATA(insert ( 1260 usesysid			23	DEFAULT_ATTSTATTARGET	4	2 0 -1 -1 t p f i f f));
+DATA(insert ( 1260 usename			19	-1 NAMEDATALEN	1 0 -1 -1 f p f i f f));
+DATA(insert ( 1260 usesysid			23	-1	4	2 0 -1 -1 t p f i f f));
 DATA(insert ( 1260 usecreatedb		16	0	1	3 0 -1 -1 t p f c f f));
 DATA(insert ( 1260 usesuper			16	0	1	4 0 -1 -1 t p f c f f));
 DATA(insert ( 1260 usecatupd		16	0	1	5 0 -1 -1 t p f c f f));
@@ -352,8 +353,8 @@ DATA(insert ( 1260 tableoid			26 0  4  -7 0 -1 -1 t p f i f f));
  *		pg_group
  * ----------------
  */
-DATA(insert ( 1261 groname			19 DEFAULT_ATTSTATTARGET NAMEDATALEN  1 0 -1 -1 f p f i f f));
-DATA(insert ( 1261 grosysid			23 DEFAULT_ATTSTATTARGET  4   2 0 -1 -1 t p f i f f));
+DATA(insert ( 1261 groname			19 -1 NAMEDATALEN  1 0 -1 -1 f p f i f f));
+DATA(insert ( 1261 grosysid			23 -1  4   2 0 -1 -1 t p f i f f));
 DATA(insert ( 1261 grolist		  1007 0 -1   3 0 -1 -1 f x f i f f));
 DATA(insert ( 1261 ctid				27 0  6  -1 0 -1 -1 f p f i f f));
 /* no OIDs in pg_group */
@@ -368,8 +369,8 @@ DATA(insert ( 1261 tableoid			26 0  4  -7 0 -1 -1 t p f i f f));
  * ----------------
  */
 #define Schema_pg_attribute \
-{ 1249, {"attrelid"},	  26, DEFAULT_ATTSTATTARGET,	4,	1, 0, -1, -1, true, 'p', false, 'i', false, false }, \
-{ 1249, {"attname"},	  19, DEFAULT_ATTSTATTARGET, NAMEDATALEN,	2, 0, -1, -1, false, 'p', false, 'i', false, false }, \
+{ 1249, {"attrelid"},	  26, -1,	4,	1, 0, -1, -1, true, 'p', false, 'i', false, false }, \
+{ 1249, {"attname"},	  19, -1, NAMEDATALEN,	2, 0, -1, -1, false, 'p', false, 'i', false, false }, \
 { 1249, {"atttypid"},	  26, 0,	4,	3, 0, -1, -1, true, 'p', false, 'i', false, false }, \
 { 1249, {"attstattarget"}, 23, 0,	4,	4, 0, -1, -1, true, 'p', false, 'i', false, false }, \
 { 1249, {"attlen"},		  21, 0,	2,	5, 0, -1, -1, true, 'p', false, 's', false, false }, \
@@ -384,8 +385,8 @@ DATA(insert ( 1261 tableoid			26 0  4  -7 0 -1 -1 t p f i f f));
 { 1249, {"attnotnull"},  16, 0, 1, 14, 0, -1, -1, true, 'p', false, 'c', false, false }, \
 { 1249, {"atthasdef"},	 16, 0, 1, 15, 0, -1, -1, true, 'p', false, 'c', false, false }
 
-DATA(insert ( 1249 attrelid			26 DEFAULT_ATTSTATTARGET  4   1 0 -1 -1 t p f i f f));
-DATA(insert ( 1249 attname			19 DEFAULT_ATTSTATTARGET NAMEDATALEN  2 0 -1 -1 f p f i f f));
+DATA(insert ( 1249 attrelid			26 -1  4   1 0 -1 -1 t p f i f f));
+DATA(insert ( 1249 attname			19 -1 NAMEDATALEN  2 0 -1 -1 f p f i f f));
 DATA(insert ( 1249 atttypid			26 0  4   3 0 -1 -1 t p f i f f));
 DATA(insert ( 1249 attstattarget	23 0  4   4 0 -1 -1 t p f i f f));
 DATA(insert ( 1249 attlen			21 0  2   5 0 -1 -1 t p f s f f));
@@ -412,7 +413,7 @@ DATA(insert ( 1249 tableoid			26 0  4  -7 0 -1 -1 t p f i f f));
  * ----------------
  */
 #define Schema_pg_class \
-{ 1259, {"relname"},	   19, DEFAULT_ATTSTATTARGET, NAMEDATALEN,	1, 0, -1, -1, false, 'p', false, 'i', false, false }, \
+{ 1259, {"relname"},	   19, -1, NAMEDATALEN,	1, 0, -1, -1, false, 'p', false, 'i', false, false }, \
 { 1259, {"relnamespace"},  26, 0,	4,	2, 0, -1, -1, true, 'p', false, 'i', false, false }, \
 { 1259, {"reltype"},	   26, 0,	4,	3, 0, -1, -1, true, 'p', false, 'i', false, false }, \
 { 1259, {"relowner"},	   23, 0,	4,	4, 0, -1, -1, true, 'p', false, 'i', false, false }, \
@@ -437,7 +438,7 @@ DATA(insert ( 1249 tableoid			26 0  4  -7 0 -1 -1 t p f i f f));
 { 1259, {"relhassubclass"},16, 0,	1, 23, 0, -1, -1, true, 'p', false, 'c', false, false }, \
 { 1259, {"relacl"},		 1034, 0,  -1, 24, 0, -1, -1, false, 'x', false, 'i', false, false }
 
-DATA(insert ( 1259 relname			19 DEFAULT_ATTSTATTARGET NAMEDATALEN   1 0 -1 -1 f p f i f f));
+DATA(insert ( 1259 relname			19 -1 NAMEDATALEN   1 0 -1 -1 f p f i f f));
 DATA(insert ( 1259 relnamespace		26 0  4   2 0 -1 -1 t p f i f f));
 DATA(insert ( 1259 reltype			26 0  4   3 0 -1 -1 t p f i f f));
 DATA(insert ( 1259 relowner			23 0  4   4 0 -1 -1 t p f i f f));

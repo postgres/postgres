@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.46 2002/07/12 18:43:12 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.47 2002/07/31 17:19:50 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -218,6 +218,8 @@ ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
       This form
       sets the per-column statistics-gathering target for subsequent
       <xref linkend="sql-analyze" endterm="sql-analyze-title"> operations.
+      The target can be set in the range 0 to 1000; alternatively, set it
+      to -1 to revert to using the system default statistics target.
      </para>
     </listitem>
    </varlistentry>

@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.49 2002/07/30 05:24:56 tgl Exp $
+ $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.50 2002/07/31 17:19:49 tgl Exp $
  -->
 
 <chapter id="catalogs">
@@ -672,8 +672,9 @@
        of statistics accumulated for this column by
        <command>ANALYZE</command>.
        A zero value indicates that no statistics should be collected.
-       The exact meaning of positive values is data type-dependent.
-       For scalar data types, <structfield>attstattarget</structfield>
+       A negative value says to use the system default statistics target.
+       The exact meaning of positive values is datatype-dependent.
+       For scalar datatypes, <structfield>attstattarget</structfield>
        is both the target number of <quote>most common values</quote>
        to collect, and the target number of histogram bins to create.
       </entry>

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_dump.h,v 1.92 2002/07/30 21:56:04 tgl Exp $
+ * $Id: pg_dump.h,v 1.93 2002/07/31 17:19:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -122,6 +122,7 @@ typedef struct _tableInfo
 	char	  **attnames;		/* the attribute names */
 	char	  **atttypnames;	/* attribute type names */
 	int		   *atttypmod;		/* type-specific type modifiers */
+	int		   *attstattarget;	/* attribute statistics targets */
 	/*
 	 * Note: we need to store per-attribute notnull and default stuff for
 	 * all interesting tables so that we can tell which constraints were

@@ -95,6 +95,7 @@
 #cpu_index_tuple_cost = 0.001
 #cpu_operator_cost = 0.0025
 
+#default_statistics_target = 10	# range 1-1000
 
 #
 #	GEQO Optimizer Parameters

@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.277 2002/07/30 21:56:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.278 2002/07/31 17:19:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2344,6 +2344,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 	int			i_attname;
 	int			i_atttypname;
 	int			i_atttypmod;
+	int			i_attstattarget;
 	int			i_attnotnull;
 	int			i_atthasdef;
 	PGresult   *res;
@@ -2384,7 +2385,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 
 		if (g_fout->remoteVersion >= 70300)
 		{
-			appendPQExpBuffer(q, "SELECT attnum, attname, atttypmod, "
+			appendPQExpBuffer(q, "SELECT attnum, attname, atttypmod, attstattarget, "
 							  "attnotnull, atthasdef, "
 							  "pg_catalog.format_type(atttypid,atttypmod) as atttypname "
 							  "from pg_catalog.pg_attribute a "
@@ -2395,7 +2396,12 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 		}
 		else if (g_fout->remoteVersion >= 70100)
 		{
-			appendPQExpBuffer(q, "SELECT attnum, attname, atttypmod, "
+			/*
+			 * attstattarget doesn't exist in 7.1.  It does exist in 7.2,
+			 * but we don't dump it because we can't tell whether it's been
+			 * explicitly set or was just a default.
+			 */
+			appendPQExpBuffer(q, "SELECT attnum, attname, atttypmod, -1 as attstattarget, "
 							  "attnotnull, atthasdef, "
 							  "format_type(atttypid,atttypmod) as atttypname "
 							  "from pg_attribute a "
@@ -2407,7 +2413,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 		else
 		{
 			/* format_type not available before 7.1 */
-			appendPQExpBuffer(q, "SELECT attnum, attname, atttypmod, "
+			appendPQExpBuffer(q, "SELECT attnum, attname, atttypmod, -1 as attstattarget, "
 							  "attnotnull, atthasdef, "
 							  "(select typname from pg_type where oid = atttypid) as atttypname "
 							  "from pg_attribute a "
@@ -2430,6 +2436,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 		i_attname = PQfnumber(res, "attname");
 		i_atttypname = PQfnumber(res, "atttypname");
 		i_atttypmod = PQfnumber(res, "atttypmod");
+		i_attstattarget = PQfnumber(res, "attstattarget");
 		i_attnotnull = PQfnumber(res, "attnotnull");
 		i_atthasdef = PQfnumber(res, "atthasdef");
 
@@ -2437,6 +2444,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 		tblinfo[i].attnames = (char **) malloc(ntups * sizeof(char *));
 		tblinfo[i].atttypnames = (char **) malloc(ntups * sizeof(char *));
 		tblinfo[i].atttypmod = (int *) malloc(ntups * sizeof(int));
+		tblinfo[i].attstattarget = (int *) malloc(ntups * sizeof(int));
 		tblinfo[i].notnull = (bool *) malloc(ntups * sizeof(bool));
 		tblinfo[i].adef_expr = (char **) malloc(ntups * sizeof(char *));
 		tblinfo[i].inhAttrs = (bool *) malloc(ntups * sizeof(bool));
@@ -2449,6 +2457,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 			tblinfo[i].attnames[j] = strdup(PQgetvalue(res, j, i_attname));
 			tblinfo[i].atttypnames[j] = strdup(PQgetvalue(res, j, i_atttypname));
 			tblinfo[i].atttypmod[j] = atoi(PQgetvalue(res, j, i_atttypmod));
+			tblinfo[i].attstattarget[j] = atoi(PQgetvalue(res, j, i_attstattarget));
 			tblinfo[i].notnull[j] = (PQgetvalue(res, j, i_attnotnull)[0] == 't');
 			tblinfo[i].adef_expr[j] = NULL;	/* fix below */
 			if (PQgetvalue(res, j, i_atthasdef)[0] == 't')
@@ -5144,6 +5153,24 @@ dumpOneTable(Archive *fout, TableInfo *tbinfo, TableInfo *g_tblinfo)
 			appendPQExpBuffer(q, " WITHOUT OIDS");
 
 		appendPQExpBuffer(q, ";\n");
+
+		/*
+		 * Dump per-column statistics information. We only issue an ALTER TABLE
+		 * statement if the attstattarget entry for this column is non-negative
+		 * (i.e. it's not the default value)
+		 */
+		for (j = 0; j  < tbinfo->numatts; j++)
+		{
+			if (tbinfo->attstattarget[j] >= 0)
+			{
+				appendPQExpBuffer(q, "ALTER TABLE %s ",
+								  fmtId(tbinfo->relname, force_quotes));
+				appendPQExpBuffer(q, "ALTER COLUMN %s ",
+								  fmtId(tbinfo->attnames[j], force_quotes));
+				appendPQExpBuffer(q, "SET STATISTICS %d;\n",
+								  tbinfo->attstattarget[j]);
+			}
+		}
 	}
 
 	ArchiveEntry(fout, objoid, tbinfo->relname,

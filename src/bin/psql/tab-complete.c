@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.52 2002/07/30 16:35:05 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.53 2002/07/31 17:19:53 tgl Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -246,6 +246,7 @@ psql_completion(char *text, int start, int end)
 		"password_encryption",
 		"transform_null_equals",
 
+		"default_statistics_target",
 		"geqo_threshold",
 		"geqo_pool_size",
 		"geqo_effort",

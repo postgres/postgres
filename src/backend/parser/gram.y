@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.351 2002/07/30 16:55:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.352 2002/07/31 17:19:51 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1134,14 +1134,14 @@ AlterTableStmt:
 					n->name = $6;
 					$$ = (Node *)n;
 				}
-			/* ALTER TABLE <relation> ALTER [COLUMN] <colname> SET STATISTICS <Iconst> */
-			| ALTER TABLE relation_expr ALTER opt_column ColId SET STATISTICS Iconst
+			/* ALTER TABLE <relation> ALTER [COLUMN] <colname> SET STATISTICS <IntegerOnly> */
+			| ALTER TABLE relation_expr ALTER opt_column ColId SET STATISTICS IntegerOnly
 				{
 					AlterTableStmt *n = makeNode(AlterTableStmt);
 					n->subtype = 'S';
 					n->relation = $3;
 					n->name = $6;
-					n->def = (Node *) makeInteger($9);
+					n->def = (Node *) $9;
 					$$ = (Node *)n;
 				}
 			/* ALTER TABLE <relation> ALTER [COLUMN] <colname> SET STORAGE <storagemode> */

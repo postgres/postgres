@@ -5,7 +5,7 @@
  * command, configuration file, and command line options.
  * See src/backend/utils/misc/README for more information.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.76 2002/07/30 16:20:03 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.77 2002/07/31 17:19:52 tgl Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -26,6 +26,7 @@
 #include "catalog/pg_type.h"
 #include "commands/async.h"
 #include "commands/variable.h"
+#include "commands/vacuum.h"
 #include "executor/executor.h"
 #include "fmgr.h"
 #include "libpq/auth.h"
@@ -491,6 +492,10 @@ static struct config_bool
 static struct config_int
 			ConfigureNamesInt[] =
 {
+	{
+		{ "default_statistics_target", PGC_USERSET }, &default_statistics_target,
+		10, 1, 1000, NULL, NULL
+	},
 	{
 		{ "geqo_threshold", PGC_USERSET }, &geqo_rels,
 		DEFAULT_GEQO_RELS, 2, INT_MAX, NULL, NULL

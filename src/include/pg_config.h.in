@@ -8,7 +8,7 @@
  * or in pg_config.h afterwards.  Of course, if you edit pg_config.h, then your
  * changes will be overwritten the next time you run configure.
  *
- * $Id: pg_config.h.in,v 1.25 2002/07/20 05:16:59 momjian Exp $
+ * $Id: pg_config.h.in,v 1.26 2002/07/31 17:19:54 tgl Exp $
  */
 
 #ifndef PG_CONFIG_H
@@ -164,11 +164,6 @@
  */
 #define INDEX_MAX_KEYS		16
 #define FUNC_MAX_ARGS		INDEX_MAX_KEYS
-
-/*
- * System default value for pg_attribute.attstattarget
- */
-#define DEFAULT_ATTSTATTARGET	10
 
 /*
  * Define this to make libpgtcl's "pg_result -assign" command process C-style

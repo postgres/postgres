@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/analyze.sgml,v 1.8 2002/04/23 02:07:15 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/analyze.sgml,v 1.9 2002/07/31 17:19:51 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -157,7 +157,9 @@ ANALYZE [ VERBOSE ] [ <replaceable class="PARAMETER">table</replaceable> [ (<rep
   </para>
 
   <para>
-   The extent of analysis can be controlled by adjusting the per-column
+   The extent of analysis can be controlled by adjusting the
+   <literal>default_statistics_target</> parameter variable, or on a
+   column-by-column basis by setting the per-column
    statistics target with <command>ALTER TABLE ALTER COLUMN SET
    STATISTICS</command> (see
    <xref linkend="sql-altertable" endterm="sql-altertable-title">).  The
@@ -165,8 +167,8 @@ ANALYZE [ VERBOSE ] [ <replaceable class="PARAMETER">table</replaceable> [ (<rep
    list and the maximum number of bins in the histogram.  The default
    target value is 10, but this can be adjusted up or down to trade off
    accuracy of planner estimates against the time taken for
-   <command>ANALYZE</command> and the
-   amount of space occupied in <literal>pg_statistic</literal>.
+   <command>ANALYZE</command> and the amount of space occupied
+   in <literal>pg_statistic</literal>.
    In particular, setting the statistics target to zero disables collection of
    statistics for that column.  It may be useful to do that for columns that
    are never used as part of the WHERE, GROUP BY, or ORDER BY clauses of

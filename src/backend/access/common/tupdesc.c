@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.81 2002/07/20 05:16:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.82 2002/07/31 17:19:51 tgl Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -375,7 +375,7 @@ TupleDescInitEntry(TupleDesc desc,
 	else
 		MemSet(NameStr(att->attname), 0, NAMEDATALEN);
 
-	att->attstattarget = 0;
+	att->attstattarget = -1;
 	att->attcacheoff = -1;
 	att->atttypmod = typmod;
 
