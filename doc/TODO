@@ -49,6 +49,9 @@ PARSER
 * -select * from pg_class where oid in (0,-1)
 * have INTERSECT/EXCEPT prevent duplicates unless ALL is specified
 * prevent primary key of nine columns(see TODO.detail/primary)
+* SELECT COUNT('asdf') FROM pg_class WHERE oid=12 crashes
+* SELECT DISTINCT ON col1 col1 col2 FROM tab1 is broken
+	(see TODO.detail/distinct)
 
 VIEWS
 

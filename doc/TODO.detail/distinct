@@ -1,0 +1,483 @@
+From owner-pgsql-sql@hub.org Sat Jul 10 16:31:14 1999
+Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id QAA03701
+	for <maillist@candle.pha.pa.us>; Sat, 10 Jul 1999 16:31:13 -0400 (EDT)
+Received: from hub.org (hub.org [209.167.229.1]) by renoir.op.net (o1/$ Revision: 1.18 $) with ESMTP id QAA10295 for <maillist@candle.pha.pa.us>; Sat, 10 Jul 1999 16:29:57 -0400 (EDT)
+Received: from hub.org (hub.org [209.167.229.1])
+	by hub.org (8.9.3/8.9.3) with ESMTP id QAA13874;
+	Sat, 10 Jul 1999 16:23:11 -0400 (EDT)
+	(envelope-from owner-pgsql-sql@hub.org)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Sat, 10 Jul 1999 16:21:15 +0000 (EDT)
+Received: (from majordom@localhost)
+	by hub.org (8.9.3/8.9.3) id QAA13331
+	for pgsql-sql-outgoing; Sat, 10 Jul 1999 16:21:14 -0400 (EDT)
+	(envelope-from owner-pgsql-sql@postgreSQL.org)
+X-Authentication-Warning: hub.org: majordom set sender to owner-pgsql-sql@postgreSQL.org using -f
+Received: from ra.sai.msu.su (ra.sai.msu.su [158.250.29.2])
+	by hub.org (8.9.3/8.9.3) with ESMTP id QAA13055;
+	Sat, 10 Jul 1999 16:16:42 -0400 (EDT)
+	(envelope-from oleg@sai.msu.su)
+Received: from ra (ra [158.250.29.2])
+	by ra.sai.msu.su (8.9.1/8.9.1) with SMTP id AAA06017;
+	Sun, 11 Jul 1999 00:16:40 +0400 (MSD)
+Date: Sun, 11 Jul 1999 00:16:39 +0400 (MSD)
+From: Oleg Bartunov <oleg@sai.msu.su>
+X-Sender: megera@ra
+Reply-To: Oleg Bartunov <oleg@sai.msu.su>
+To: hackers@postgreSQL.org
+cc: pgsql-sql@postgreSQL.org
+Subject: [SQL] SELECT DISTINCT question
+Message-ID: <Pine.GSO.3.96.SK.990711000908.2043R-100000@ra>
+Organization: Sternberg Astronomical Institute (Moscow University)
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Sender: owner-pgsql-sql@postgreSQL.org
+Precedence: bulk
+Status: RO
+
+I got a problem with query:
+
+select distinct (date), bytes  from access_log;
+
+which works but not as I expect. I thought this query will select
+all rows with distinct values of 'date' column, but it get
+distinct pairs 'date, bytes' . From documnetation I see
+
+"DISTINCT will eliminate all duplicate rows from the selection. 
+DISTINCT ON column will eliminate all duplicates in the specified column; 
+this is equivalent to using GROUP BY column. 
+ALL will return all candidate rows, including duplicates."
+       
+discovery=> select distinct on date,bytes  from access_log;
+ERROR:  parser: parse error at or near ","
+
+	Regards,
+
+		Oleg
+_____________________________________________________________
+Oleg Bartunov, sci.researcher, hostmaster of AstroNet,
+Sternberg Astronomical Institute, Moscow University (Russia)
+Internet: oleg@sai.msu.su, http://www.sai.msu.su/~megera/
+phone: +007(095)939-16-83, +007(095)939-23-83
+
+
+
+
+From owner-pgsql-sql@hub.org Sat Jul 10 18:01:17 1999
+Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id SAA04878
+	for <maillist@candle.pha.pa.us>; Sat, 10 Jul 1999 18:01:16 -0400 (EDT)
+Received: from hub.org (hub.org [209.167.229.1]) by renoir.op.net (o1/$ Revision: 1.18 $) with ESMTP id RAA12755 for <maillist@candle.pha.pa.us>; Sat, 10 Jul 1999 17:35:02 -0400 (EDT)
+Received: from hub.org (hub.org [209.167.229.1])
+	by hub.org (8.9.3/8.9.3) with ESMTP id RAA24997;
+	Sat, 10 Jul 1999 17:28:17 -0400 (EDT)
+	(envelope-from owner-pgsql-sql@hub.org)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Sat, 10 Jul 1999 17:23:39 +0000 (EDT)
+Received: (from majordom@localhost)
+	by hub.org (8.9.3/8.9.3) id RAA24524
+	for pgsql-sql-outgoing; Sat, 10 Jul 1999 17:23:38 -0400 (EDT)
+	(envelope-from owner-pgsql-sql@postgreSQL.org)
+X-Authentication-Warning: hub.org: majordom set sender to owner-pgsql-sql@postgreSQL.org using -f
+Received: from sss.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2] (may be forged))
+	by hub.org (8.9.3/8.9.3) with ESMTP id RAA24227;
+	Sat, 10 Jul 1999 17:19:43 -0400 (EDT)
+	(envelope-from tgl@sss.pgh.pa.us)
+Received: from sss.sss.pgh.pa.us (localhost [127.0.0.1])
+	by sss.sss.pgh.pa.us (8.9.1/8.9.1) with ESMTP id RAA05709;
+	Sat, 10 Jul 1999 17:18:28 -0400 (EDT)
+To: Oleg Bartunov <oleg@sai.msu.su>
+cc: hackers@postgreSQL.org, pgsql-sql@postgreSQL.org
+Subject: [SQL] Re: [HACKERS] SELECT DISTINCT question 
+In-reply-to: Your message of Sun, 11 Jul 1999 00:16:39 +0400 (MSD) 
+             <Pine.GSO.3.96.SK.990711000908.2043R-100000@ra> 
+Date: Sat, 10 Jul 1999 17:18:28 -0400
+Message-ID: <5707.931641508@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Sender: owner-pgsql-sql@postgreSQL.org
+Precedence: bulk
+Status: RO
+
+Oleg Bartunov <oleg@sai.msu.su> writes:
+> discovery=> select distinct on date,bytes  from access_log;
+> ERROR:  parser: parse error at or near ","
+
+The syntax for SELECT DISTINCT ON is just as brain-damaged as the
+functionality itself: there's no comma after the column name.
+You want
+
+select distinct on date  date,bytes  from access_log;
+
+The reason the functionality is brain-damaged is that there's no way to
+know which tuple out of the set of tuples with a given "date" value will
+be the one returned.
+
+SELECT DISTINCT ON is not in SQL92, and I think it shouldn't be in
+Postgres either...
+
+			regards, tom lane
+
+
+From owner-pgsql-sql@hub.org Sun Jul 11 12:01:23 1999
+Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id MAA26263
+	for <maillist@candle.pha.pa.us>; Sun, 11 Jul 1999 12:01:22 -0400 (EDT)
+Received: from hub.org (hub.org [209.167.229.1]) by renoir.op.net (o1/$ Revision: 1.18 $) with ESMTP id LAA14891 for <maillist@candle.pha.pa.us>; Sun, 11 Jul 1999 11:56:47 -0400 (EDT)
+Received: from hub.org (hub.org [209.167.229.1])
+	by hub.org (8.9.3/8.9.3) with ESMTP id LAA09165;
+	Sun, 11 Jul 1999 11:51:27 -0400 (EDT)
+	(envelope-from owner-pgsql-sql@hub.org)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Sun, 11 Jul 1999 11:49:46 +0000 (EDT)
+Received: (from majordom@localhost)
+	by hub.org (8.9.3/8.9.3) id LAA08263
+	for pgsql-sql-outgoing; Sun, 11 Jul 1999 11:49:45 -0400 (EDT)
+	(envelope-from owner-pgsql-sql@postgreSQL.org)
+X-Authentication-Warning: hub.org: majordom set sender to owner-pgsql-sql@postgreSQL.org using -f
+Received: from trends.net (root@clio.trends.ca [209.47.148.2])
+	by hub.org (8.9.3/8.9.3) with ESMTP id LAA05079;
+	Sun, 11 Jul 1999 11:41:38 -0400 (EDT)
+	(envelope-from oleg@sai.msu.su)
+Received: from ra.sai.msu.su (ra.sai.msu.su [158.250.29.2])
+	by trends.net (8.8.8/8.8.8) with ESMTP id CAA21557;
+	Sun, 11 Jul 1999 02:23:01 -0400 (EDT)
+Received: from ra (ra [158.250.29.2])
+	by ra.sai.msu.su (8.9.1/8.9.1) with SMTP id KAA18412;
+	Sun, 11 Jul 1999 10:09:24 +0400 (MSD)
+Date: Sun, 11 Jul 1999 10:09:24 +0400 (MSD)
+From: Oleg Bartunov <oleg@sai.msu.su>
+X-Sender: megera@ra
+To: Tom Lane <tgl@sss.pgh.pa.us>
+cc: hackers@postgreSQL.org, pgsql-sql@postgreSQL.org
+Subject: Re: [SQL] Re: [HACKERS] SELECT DISTINCT question 
+In-Reply-To: <5707.931641508@sss.pgh.pa.us>
+Message-ID: <Pine.GSO.3.96.SK.990711100405.2043V-100000@ra>
+Organization: Sternberg Astronomical Institute (Moscow University)
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Sender: owner-pgsql-sql@postgreSQL.org
+Precedence: bulk
+Status: RO
+
+On Sat, 10 Jul 1999, Tom Lane wrote:
+
+> Date: Sat, 10 Jul 1999 17:18:28 -0400
+> From: Tom Lane <tgl@sss.pgh.pa.us>
+> To: Oleg Bartunov <oleg@sai.msu.su>
+> Cc: hackers@postgreSQL.org, pgsql-sql@postgreSQL.org
+> Subject: [SQL] Re: [HACKERS] SELECT DISTINCT question 
+> 
+> Oleg Bartunov <oleg@sai.msu.su> writes:
+> > discovery=> select distinct on date,bytes  from access_log;
+> > ERROR:  parser: parse error at or near ","
+> 
+> The syntax for SELECT DISTINCT ON is just as brain-damaged as the
+> functionality itself: there's no comma after the column name.
+> You want
+> 
+> select distinct on date  date,bytes  from access_log;
+> 
+
+thanks, this works. But why parser complains about such query:
+
+discovery=> select distinct on a.date  a.date, a.bytes  from access_log a;
+ERROR:  parser: parse error at or near "."
+
+In this query I could just omit '.', but in more complex query 
+I probably could need one.
+
+> The reason the functionality is brain-damaged is that there's no way to
+> know which tuple out of the set of tuples with a given "date" value will
+> be the one returned.
+> 
+> SELECT DISTINCT ON is not in SQL92, and I think it shouldn't be in
+> Postgres either...
+
+
+I'm not an SQL expert, but if it works and this feature is in standard
+but only syntax is diffrent, why just not to use standard
+
+select distinct(date), bytes  from access_log;
+
+Or I'm missing here ?
+
+
+	Regards,
+		Oleg
+> 
+> 			regards, tom lane
+> 
+
+_____________________________________________________________
+Oleg Bartunov, sci.researcher, hostmaster of AstroNet,
+Sternberg Astronomical Institute, Moscow University (Russia)
+Internet: oleg@sai.msu.su, http://www.sai.msu.su/~megera/
+phone: +007(095)939-16-83, +007(095)939-23-83
+
+
+
+From owner-pgsql-hackers@hub.org Sun Jul 11 12:01:26 1999
+Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id MAA26269
+	for <maillist@candle.pha.pa.us>; Sun, 11 Jul 1999 12:01:25 -0400 (EDT)
+Received: from hub.org (hub.org [209.167.229.1]) by renoir.op.net (o1/$ Revision: 1.18 $) with ESMTP id LAA15017 for <maillist@candle.pha.pa.us>; Sun, 11 Jul 1999 11:59:07 -0400 (EDT)
+Received: from hub.org (hub.org [209.167.229.1])
+	by hub.org (8.9.3/8.9.3) with ESMTP id LAA09118;
+	Sun, 11 Jul 1999 11:51:21 -0400 (EDT)
+	(envelope-from owner-pgsql-hackers@hub.org)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Sun, 11 Jul 1999 11:49:44 +0000 (EDT)
+Received: (from majordom@localhost)
+	by hub.org (8.9.3/8.9.3) id LAA06345
+	for pgsql-hackers-outgoing; Sun, 11 Jul 1999 11:46:14 -0400 (EDT)
+	(envelope-from owner-pgsql-hackers@postgreSQL.org)
+X-Authentication-Warning: hub.org: majordom set sender to owner-pgsql-hackers@postgreSQL.org using -f
+Received: from trends.net (root@clio.trends.ca [209.47.148.2])
+	by hub.org (8.9.3/8.9.3) with ESMTP id LAA05079;
+	Sun, 11 Jul 1999 11:41:38 -0400 (EDT)
+	(envelope-from oleg@sai.msu.su)
+Received: from ra.sai.msu.su (ra.sai.msu.su [158.250.29.2])
+	by trends.net (8.8.8/8.8.8) with ESMTP id CAA21557;
+	Sun, 11 Jul 1999 02:23:01 -0400 (EDT)
+Received: from ra (ra [158.250.29.2])
+	by ra.sai.msu.su (8.9.1/8.9.1) with SMTP id KAA18412;
+	Sun, 11 Jul 1999 10:09:24 +0400 (MSD)
+Date: Sun, 11 Jul 1999 10:09:24 +0400 (MSD)
+From: Oleg Bartunov <oleg@sai.msu.su>
+X-Sender: megera@ra
+To: Tom Lane <tgl@sss.pgh.pa.us>
+cc: hackers@postgreSQL.org, pgsql-sql@postgreSQL.org
+Subject: Re: [SQL] Re: [HACKERS] SELECT DISTINCT question 
+In-Reply-To: <5707.931641508@sss.pgh.pa.us>
+Message-ID: <Pine.GSO.3.96.SK.990711100405.2043V-100000@ra>
+Organization: Sternberg Astronomical Institute (Moscow University)
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Sender: owner-pgsql-hackers@postgreSQL.org
+Precedence: bulk
+Status: RO
+
+On Sat, 10 Jul 1999, Tom Lane wrote:
+
+> Date: Sat, 10 Jul 1999 17:18:28 -0400
+> From: Tom Lane <tgl@sss.pgh.pa.us>
+> To: Oleg Bartunov <oleg@sai.msu.su>
+> Cc: hackers@postgreSQL.org, pgsql-sql@postgreSQL.org
+> Subject: [SQL] Re: [HACKERS] SELECT DISTINCT question 
+> 
+> Oleg Bartunov <oleg@sai.msu.su> writes:
+> > discovery=> select distinct on date,bytes  from access_log;
+> > ERROR:  parser: parse error at or near ","
+> 
+> The syntax for SELECT DISTINCT ON is just as brain-damaged as the
+> functionality itself: there's no comma after the column name.
+> You want
+> 
+> select distinct on date  date,bytes  from access_log;
+> 
+
+thanks, this works. But why parser complains about such query:
+
+discovery=> select distinct on a.date  a.date, a.bytes  from access_log a;
+ERROR:  parser: parse error at or near "."
+
+In this query I could just omit '.', but in more complex query 
+I probably could need one.
+
+> The reason the functionality is brain-damaged is that there's no way to
+> know which tuple out of the set of tuples with a given "date" value will
+> be the one returned.
+> 
+> SELECT DISTINCT ON is not in SQL92, and I think it shouldn't be in
+> Postgres either...
+
+
+I'm not an SQL expert, but if it works and this feature is in standard
+but only syntax is diffrent, why just not to use standard
+
+select distinct(date), bytes  from access_log;
+
+Or I'm missing here ?
+
+
+	Regards,
+		Oleg
+> 
+> 			regards, tom lane
+> 
+
+_____________________________________________________________
+Oleg Bartunov, sci.researcher, hostmaster of AstroNet,
+Sternberg Astronomical Institute, Moscow University (Russia)
+Internet: oleg@sai.msu.su, http://www.sai.msu.su/~megera/
+phone: +007(095)939-16-83, +007(095)939-23-83
+
+
+
+From owner-pgsql-sql@hub.org Sun Jul 11 12:01:16 1999
+Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id MAA26248
+	for <maillist@candle.pha.pa.us>; Sun, 11 Jul 1999 12:01:15 -0400 (EDT)
+Received: from hub.org (hub.org [209.167.229.1]) by renoir.op.net (o1/$ Revision: 1.18 $) with ESMTP id LAA14635 for <maillist@candle.pha.pa.us>; Sun, 11 Jul 1999 11:52:26 -0400 (EDT)
+Received: from hub.org (hub.org [209.167.229.1])
+	by hub.org (8.9.3/8.9.3) with ESMTP id LAA07748;
+	Sun, 11 Jul 1999 11:47:08 -0400 (EDT)
+	(envelope-from owner-pgsql-sql@hub.org)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Sun, 11 Jul 1999 11:44:34 +0000 (EDT)
+Received: (from majordom@localhost)
+	by hub.org (8.9.3/8.9.3) id LAA05445
+	for pgsql-sql-outgoing; Sun, 11 Jul 1999 11:44:33 -0400 (EDT)
+	(envelope-from owner-pgsql-sql@postgreSQL.org)
+X-Authentication-Warning: hub.org: majordom set sender to owner-pgsql-sql@postgreSQL.org using -f
+Received: from sss.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2] (may be forged))
+	by hub.org (8.9.3/8.9.3) with ESMTP id LAA04477;
+	Sun, 11 Jul 1999 11:40:31 -0400 (EDT)
+	(envelope-from tgl@sss.pgh.pa.us)
+Received: from sss.sss.pgh.pa.us (localhost [127.0.0.1])
+	by sss.sss.pgh.pa.us (8.9.1/8.9.1) with ESMTP id LAA15131;
+	Sun, 11 Jul 1999 11:38:44 -0400 (EDT)
+To: Oleg Bartunov <oleg@sai.msu.su>
+cc: hackers@postgreSQL.org, pgsql-sql@postgreSQL.org
+Subject: Re: [SQL] Re: [HACKERS] SELECT DISTINCT question 
+In-reply-to: Your message of Sun, 11 Jul 1999 10:09:24 +0400 (MSD) 
+             <Pine.GSO.3.96.SK.990711100405.2043V-100000@ra> 
+Date: Sun, 11 Jul 1999 11:38:43 -0400
+Message-ID: <15129.931707523@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Sender: owner-pgsql-sql@postgreSQL.org
+Precedence: bulk
+Status: RO
+
+Oleg Bartunov <oleg@sai.msu.su> writes:
+> thanks, this works. But why parser complains about such query:
+
+> discovery=> select distinct on a.date  a.date, a.bytes  from access_log a;
+> ERROR:  parser: parse error at or near "."
+
+Probably the grammar specifies just <column name> and not anything
+more complex after DISTINCT ON.  It'd be risky to try to accept a
+general expression after ON, due to the silly decision to leave out
+any terminating punctuation.
+
+>> SELECT DISTINCT ON is not in SQL92, and I think it shouldn't be in
+>> Postgres either...
+
+> I'm not an SQL expert, but if it works and this feature is in standard
+> but only syntax is diffrent,
+
+No, there is no feature in SQL that allows DISTINCT on a subset of
+columns, period.  This is not merely a matter of syntax, it's a
+fundamental semantic issue.
+
+> why just not to use standard
+>
+> select distinct(date), bytes  from access_log;
+>
+> Or I'm missing here ?
+
+I don't think that does what you expect it to (hint: the
+parentheses are redundant).
+
+			regards, tom lane
+
+
+From owner-pgsql-sql@hub.org Tue Jul 13 18:02:01 1999
+Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id SAA07953
+	for <maillist@candle.pha.pa.us>; Tue, 13 Jul 1999 18:02:00 -0400 (EDT)
+Received: from hub.org (hub.org [209.167.229.1]) by renoir.op.net (o1/$ Revision: 1.18 $) with ESMTP id RAA14528 for <maillist@candle.pha.pa.us>; Tue, 13 Jul 1999 17:46:12 -0400 (EDT)
+Received: from hub.org (hub.org [209.167.229.1])
+	by hub.org (8.9.3/8.9.3) with ESMTP id RAA96029;
+	Tue, 13 Jul 1999 17:42:37 -0400 (EDT)
+	(envelope-from owner-pgsql-sql@hub.org)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Tue, 13 Jul 1999 17:33:35 +0000 (EDT)
+Received: (from majordom@localhost)
+	by hub.org (8.9.3/8.9.3) id RAA94598
+	for pgsql-sql-outgoing; Tue, 13 Jul 1999 17:33:33 -0400 (EDT)
+	(envelope-from owner-pgsql-sql@postgreSQL.org)
+X-Authentication-Warning: hub.org: majordom set sender to owner-pgsql-sql@postgreSQL.org using -f
+Received: from sss.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2])
+	by hub.org (8.9.3/8.9.3) with ESMTP id RAA94565;
+	Tue, 13 Jul 1999 17:33:19 -0400 (EDT)
+	(envelope-from tgl@sss.pgh.pa.us)
+Received: from sss.sss.pgh.pa.us (localhost [127.0.0.1])
+	by sss.sss.pgh.pa.us (8.9.1/8.9.1) with ESMTP id RAA24415;
+	Tue, 13 Jul 1999 17:31:49 -0400 (EDT)
+To: Hannu Krosing <hannu@trust.ee>
+cc: hackers@postgreSQL.org, pgsql-sql@postgreSQL.org
+Subject: [SQL] Re: [HACKERS] SELECT DISTINCT question 
+In-reply-to: Your message of Tue, 13 Jul 1999 23:50:57 +0300 
+             <378BA6B1.2B226DDB@trust.ee> 
+Date: Tue, 13 Jul 1999 17:31:48 -0400
+Message-ID: <24413.931901508@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Sender: owner-pgsql-sql@postgreSQL.org
+Precedence: bulk
+Status: ROr
+
+Hannu Krosing <hannu@trust.ee> writes:
+>> "DISTINCT will eliminate all duplicate rows from the selection.
+>> DISTINCT ON column will eliminate all duplicates in the specified column;
+>> this is equivalent to using GROUP BY column."
+
+> If it is equivalent to GROUP BY then it should allow only aggregates 
+> in non-distinct columns, like:
+> select distinct on date date, sum(bytes) from access_log;
+> If it does not, then it should be files as a bug imho.
+
+It does not.  Whether that is a bug is hard to say, since there is no
+standard I know of that says what it *is* supposed to do.
+
+If you look at the select_distinct_on regress test outputs, I bet you
+will be even less happy:
+
+QUERY: SELECT DISTINCT ON string4 two, string4, ten
+	   FROM tmp
+   ORDER BY two using <, string4 using <, ten using <;
+two|string4|ten
+---+-------+---
+  0|AAAAxx |  0
+  0|HHHHxx |  0
+  0|OOOOxx |  0
+  0|VVVVxx |  0
+  1|AAAAxx |  1
+  1|HHHHxx |  1
+  1|OOOOxx |  1
+  1|VVVVxx |  1
+(8 rows)
+
+That's not exactly my idea of "distinct" values of string4 ---
+but apparently whoever made up the regress test thought it was OK!
+
+Can anyone defend this feature or provide a coherent definition
+of what it's supposed to be doing?  My urge to rip it out is
+growing stronger and stronger...
+
+			regards, tom lane
+
+
+From tgl@sss.pgh.pa.us Thu Sep 23 17:27:49 1999
+Received: from sss.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id RAA25975
+	for <maillist@candle.pha.pa.us>; Thu, 23 Sep 1999 17:27:48 -0400 (EDT)
+Received: from sss.sss.pgh.pa.us (localhost [127.0.0.1])
+	by sss.sss.pgh.pa.us (8.9.1/8.9.1) with ESMTP id RAA15769;
+	Thu, 23 Sep 1999 17:27:38 -0400 (EDT)
+To: Bruce Momjian <maillist@candle.pha.pa.us>
+cc: Hannu Krosing <hannu@trust.ee>, hackers@postgreSQL.org,
+        pgsql-sql@postgreSQL.org
+Subject: Re: [SQL] Re: [HACKERS] SELECT DISTINCT question 
+In-reply-to: Your message of Thu, 23 Sep 1999 13:18:18 -0400 (EDT) 
+             <199909231718.NAA19629@candle.pha.pa.us> 
+Date: Thu, 23 Sep 1999 17:27:37 -0400
+Message-ID: <15767.938122057@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Status: ROr
+
+Bruce Momjian <maillist@candle.pha.pa.us> writes:
+> Tom, any status on this DISTINCT ON ripout?
+
+I haven't done anything about it, if that's what you mean.
+
+I didn't get any indication of whether anyone else agreed with me
+(maybe the lack of loud complaints should be taken as consent?)
+
+			regards, tom lane
+
