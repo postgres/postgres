@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.183 2004/10/22 17:20:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.184 2004/11/09 21:42:53 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -76,7 +76,8 @@ static Expr *simplify_function(Oid funcid, Oid result_type, List *args,
 				  bool allow_inline,
 				  eval_const_expressions_context *context);
 static Expr *evaluate_function(Oid funcid, Oid result_type, List *args,
-				  HeapTuple func_tuple);
+				  HeapTuple func_tuple,
+				  eval_const_expressions_context *context);
 static Expr *inline_function(Oid funcid, Oid result_type, List *args,
 				HeapTuple func_tuple,
 				eval_const_expressions_context *context);
@@ -1151,7 +1152,7 @@ eval_const_expressions(Node *node)
 	return eval_const_expressions_mutator(node, &context);
 }
 
-/*
+/*--------------------
  * estimate_expression_value
  *
  * This function attempts to estimate the value of an expression for
@@ -1159,11 +1160,11 @@ eval_const_expressions(Node *node)
  * eval_const_expressions(): we will perform constant reductions that are
  * not necessarily 100% safe, but are reasonable for estimation purposes.
  *
- * Currently the only such transform is to substitute values for Params,
- * when a bound Param value has been made available by the caller of planner().
- * In future we might consider other things, such as reducing now() to current
- * time.  (XXX seems like there could be a lot of scope for ideas here...
- * but we might need more volatility classifications ...)
+ * Currently the extra steps that are taken in this mode are:
+ * 1. Substitute values for Params, where a bound Param value has been made
+ *    available by the caller of planner().
+ * 2. Fold stable, as well as immutable, functions to constants.
+ *--------------------
  */
 Node *
 estimate_expression_value(Node *node)
@@ -1909,7 +1910,8 @@ simplify_function(Oid funcid, Oid result_type, List *args,
 	if (!HeapTupleIsValid(func_tuple))
 		elog(ERROR, "cache lookup failed for function %u", funcid);
 
-	newexpr = evaluate_function(funcid, result_type, args, func_tuple);
+	newexpr = evaluate_function(funcid, result_type, args,
+								func_tuple, context);
 
 	if (!newexpr && allow_inline)
 		newexpr = inline_function(funcid, result_type, args,
@@ -1925,14 +1927,16 @@ simplify_function(Oid funcid, Oid result_type, List *args,
  *
  * We can do this if the function is strict and has any constant-null inputs
  * (just return a null constant), or if the function is immutable and has all
- * constant inputs (call it and return the result as a Const node).
+ * constant inputs (call it and return the result as a Const node).  In
+ * estimation mode we are willing to pre-evaluate stable functions too.
  *
  * Returns a simplified expression if successful, or NULL if cannot
  * simplify the function.
  */
 static Expr *
 evaluate_function(Oid funcid, Oid result_type, List *args,
-				  HeapTuple func_tuple)
+				  HeapTuple func_tuple,
+				  eval_const_expressions_context *context)
 {
 	Form_pg_proc funcform = (Form_pg_proc) GETSTRUCT(func_tuple);
 	bool		has_nonconst_input = false;
@@ -1967,12 +1971,25 @@ evaluate_function(Oid funcid, Oid result_type, List *args,
 		return (Expr *) makeNullConst(result_type);
 
 	/*
-	 * Otherwise, can simplify only if the function is immutable and all
-	 * inputs are constants. (For a non-strict function, constant NULL
-	 * inputs are treated the same as constant non-NULL inputs.)
+	 * Otherwise, can simplify only if all inputs are constants. (For a
+	 * non-strict function, constant NULL inputs are treated the same as
+	 * constant non-NULL inputs.)
 	 */
-	if (funcform->provolatile != PROVOLATILE_IMMUTABLE ||
-		has_nonconst_input)
+	if (has_nonconst_input)
+		return NULL;
+
+	/*
+	 * Ordinarily we are only allowed to simplify immutable functions.
+	 * But for purposes of estimation, we consider it okay to simplify
+	 * functions that are merely stable; the risk that the result might
+	 * change from planning time to execution time is worth taking in
+	 * preference to not being able to estimate the value at all.
+	 */
+	if (funcform->provolatile == PROVOLATILE_IMMUTABLE)
+		/* okay */ ;
+	else if (context->estimate && funcform->provolatile == PROVOLATILE_STABLE)
+		/* okay */ ;
+	else
 		return NULL;
 
 	/*
