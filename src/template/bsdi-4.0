@@ -1,11 +1,11 @@
 AROPT:cq
 CFLAGS:-O2 -m486 -pipe
-SHARED_LIB:
+SHARED_LIB:-fpic
 ALL:
 SRCH_INC:/usr/local/include
 SRCH_LIB:/usr/local/lib
 USE_LOCALE:no
-DLSUFFIX:.o
+DLSUFFIX:.so
 YFLAGS:-d
 YACC:
 CC:gcc2
