@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_ctl-ref.sgml,v 1.19 2003/03/20 05:00:14 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_ctl-ref.sgml,v 1.20 2003/03/20 17:37:46 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -210,7 +210,7 @@ PostgreSQL documentation
        <para>
 	Wait for the start or shutdown to complete.  Times out after
 	60 seconds.  This is the default for shutdowns. A successful 
-        shutdown is indicated by removal of the <acronym>PID</scronym> 
+        shutdown is indicated by removal of the <acronym>PID</acronym> 
         file. For starting up, a successful <command>psql -l</command> 
         indicates success. <command>pg_ctl</command> will attempt to 
         use the proper port for psql. If the environment variable 
