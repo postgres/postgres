@@ -1,0 +1,236 @@
+ <chapter>
+  <title>Index Cost Estimation Functions</title>
+
+  <note>
+   <title>Author</title>
+
+   <para>
+    Written by <ulink url="mailto:tgl@sss.pgh.pa.us">Tom Lane</ulink>
+    on 2000-01-24.
+   </para>
+  </note>
+
+<!--
+I have written the attached bit of doco about the new index cost
+estimator procedure definition, but I am not sure where to put it.
+There isn't (AFAICT) any existing documentation about how to make
+a new kind of index, which would be the proper place for it.
+May I impose on you to find/make a place for this and mark it up
+properly?
+
+Also, doc/src/graphics/catalogs.ag needs to be updated, but I have
+no idea how.  (The amopselect and amopnpages fields of pg_amop
+are gone; pg_am has a new field amcostestimate.)
+
+			regards, tom lane
+-->
+
+  <para>
+   Every index access method must provide a cost estimation function for
+   use by the planner/optimizer.  The procedure OID of this function is
+   given in the <literal>amcostestimate</literal> field of the access
+   method's <literal>pg_am</literal> entry.
+
+   <note>
+    <para>
+     Prior to Postgres 7.0, a different scheme was used for registering
+     index-specific cost estimation functions.
+    </para>
+   </note>
+  </para>
+
+  <para>
+   The amcostestimate function is given a list of WHERE clauses that have
+   been determined to be usable with the index.  It must return estimates
+   of the cost of accessing the index and the selectivity of the WHERE
+   clauses (that is, the fraction of main-table tuples that will be
+   retrieved during the index scan).  For simple cases, nearly all the
+   work of the cost estimator can be done by calling standard routines
+   in the optimizer; the point of having an amcostestimate function is
+   to allow index access methods to provide index-type-specific knowledge,
+   in case it is possible to improve on the standard estimates.
+  </para>
+
+  <para>
+   Each amcostestimate function must have the signature:
+
+   <programlisting>
+void
+amcostestimate (Query *root,
+                RelOptInfo *rel,
+                IndexOptInfo *index,
+                List *indexQuals,
+                Cost *indexAccessCost,
+                Selectivity *indexSelectivity);
+   </programlisting>
+
+   The first four parameters are inputs:
+
+   <variablelist>
+    <varlistentry>
+     <term>root</term>
+     <listitem>
+      <para>
+       The query being processed.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>rel</term>
+     <listitem>
+      <para>
+       The relation the index is on.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>index</term>
+     <listitem>
+      <para>
+       The index itself.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>indexQuals</term>
+     <listitem>
+      <para>
+       List of index qual clauses (implicitly ANDed);
+       a NIL list indicates no qualifiers are available.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+
+  <para>
+   The last two parameters are pass-by-reference outputs:
+
+   <variablelist>
+    <varlistentry>
+     <term>*indexAccessCost</term>
+     <listitem>
+      <para>
+       Set to cost of index processing.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>*indexSelectivity</term>
+     <listitem>
+      <para>
+       Set to index selectivity
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+
+  <para>
+   Note that cost estimate functions must be written in C, not in SQL or
+   any available procedural language, because they must access internal
+   data structures of the planner/optimizer.
+  </para>
+
+  <para>
+   The indexAccessCost should be computed in the units used by
+   src/backend/optimizer/path/costsize.c: a disk block fetch has cost 1.0,
+   and the cost of processing one index tuple should usually be taken as
+   cpu_index_page_weight (which is a user-adjustable optimizer parameter).
+   The access cost should include all disk and CPU costs associated with
+   scanning the index itself, but NOT the cost of retrieving or processing
+   the main-table tuples that are identified by the index.
+  </para>
+
+  <para>
+   The indexSelectivity should be set to the estimated fraction of the main
+   table tuples that will be retrieved during the index scan.  In the case
+   of a lossy index, this will typically be higher than the fraction of
+   tuples that actually pass the given qual conditions.
+  </para>
+
+  <procedure>
+   <title>Cost Estimation</title>
+   <para>
+    A typical cost estimator will proceed as follows:
+   </para>
+
+   <step>
+    <para>
+     Estimate and return the fraction of main-table tuples that will be visited
+     based on the given qual conditions.  In the absence of any index-type-specific
+     knowledge, use the standard optimizer function clauselist_selec():
+
+     <programlisting>
+*indexSelectivity = clauselist_selec(root, indexQuals);
+     </programlisting>
+    </para>
+   </step>
+
+   <step>
+    <para>
+     Estimate the number of index tuples that will be visited during the
+     scan.  For many index types this is the same as indexSelectivity times
+     the number of tuples in the index, but it might be more.  (Note that the
+     index's size in pages and tuples is available from the IndexOptInfo struct.)
+    </para>
+   </step>
+
+   <step>
+    <para>
+     Estimate the number of index pages that will be retrieved during the scan.
+     This might be just indexSelectivity times the index's size in pages.
+    </para>
+   </step>
+
+   <step>
+    <para>
+     Compute the index access cost as
+
+     <programlisting>
+*indexAccessCost = numIndexPages + cpu_index_page_weight * numIndexTuples;
+     </programlisting>
+    </para>
+   </step>
+  </procedure>
+
+  <para>
+   Examples of cost estimator functions can be found in
+   <filename>src/backend/utils/adt/selfuncs.c</filename>.
+  </para>
+
+  <para>
+   By convention, the <literal>pg_proc</literal> entry for an
+   <literal>amcostestimate</literal> function should show
+
+   <programlisting>
+prorettype = 0
+pronargs = 6
+proargtypes = 0 0 0 0 0 0
+   </programlisting>
+
+   We use zero ("opaque") for all the arguments since none of them have types
+   that are known in pg_type.
+  </para>
+ </chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode:sgml
+sgml-omittag:nil
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+sgml-parent-document:nil
+sgml-default-dtd-file:"./reference.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:("/usr/lib/sgml/CATALOG")
+sgml-local-ecat-files:nil
+End:
+-->
