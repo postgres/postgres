@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/Attic/dbcommands.c,v 1.10 1997/11/07 06:37:55 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/Attic/dbcommands.c,v 1.11 1997/11/10 15:17:44 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,6 +74,11 @@ createdb(char *dbname, char *dbpath)
 
 	lp = ExpandDatabasePath(loc);
 
+	if (lp == NULL)
+		elog(WARN,"Unable to locate path '%s'"
+			"\n\tThis may be due to a missing environment variable"
+			" in the server",loc);
+
 	if (mkdir(lp,S_IRWXU) != 0)
 		elog(WARN,"Unable to create database directory %s",lp);
 
@@ -101,11 +106,6 @@ destroydb(char *dbname)
 	char	   *path;
 	char		dbpath[MAXPGPATH+1];
 	char		buf[512];
-	char		loc[512];
-	text	   *dbtext;
-
-	Relation	dbrel;
-	HeapTuple	dbtup;
 
 	/*
 	 * If this call returns, the database exists and we're allowed to
@@ -121,34 +121,11 @@ destroydb(char *dbname)
 	/* stop the vacuum daemon */
 	stop_vacuum(dbpath, dbname);
 
-#if FALSE
-	dbrel = heap_openr(DatabaseRelationName);
-	if (!RelationIsValid(dbrel))
-		elog(FATAL, "%s: cannot open relation \"%-.*s\"",
-			 "destroydb", DatabaseRelationName);
-
-	dbtup = get_pg_dbtup("destroydb", dbname, dbrel);
-
-	if (!HeapTupleIsValid(dbtup))
-		elog(NOTICE,"destroydb: pg_database entry not found %s",dbname);
-
-	dbtext = (text *) heap_getattr(dbtup, InvalidBuffer,
-								 Anum_pg_database_datpath,
-								 RelationGetTupleDescriptor(dbrel),
-								 (char *) NULL);
-	memcpy(loc, VARDATA(dbtext), (VARSIZE(dbtext)-VARHDRSZ));
-	*(loc+(VARSIZE(dbtext)-VARHDRSZ)) = '\0';
-
-#if FALSE
-	if (*loc != SEP_CHAR)
-	{
-		sprintf(buf, "%s/base/%s", DataDir, loc);
-		strcpy(loc, buf);
-	}
-#endif
-
-	heap_close(dbrel);
-#endif
+	path = ExpandDatabasePath(dbpath);
+    if (path == NULL)
+		elog(WARN,"Unable to locate path '%s'"
+			"\n\tThis may be due to a missing environment variable"
+			" in the server",dbpath);
 
 	/*
 	 * remove the pg_database tuple FIRST, this may fail due to
@@ -162,7 +139,6 @@ destroydb(char *dbname)
 	 * remove the data directory. If the DELETE above failed, this will
 	 * not be reached
 	 */
-	path = ExpandDatabasePath(dbpath);
 
 	sprintf(buf, "rm -r %s", path);
 	system(buf);
