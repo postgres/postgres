@@ -53,7 +53,7 @@ PARSER
 * SELECT COUNT('asdf') FROM pg_class WHERE oid=12 crashes
 * SELECT DISTINCT ON col1 col1 col2 FROM tab1 is broken [distinct]
 * -When using aggregates + GROUP BY, no rows in should yield no rows out(Tom)
-* Allow HAVING to use comparisons that have no aggregates, for portability
+* -Allow HAVING to use comparisons that have no aggregates(Tom)
 
 VIEWS
 
