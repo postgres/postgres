@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.86 2002/01/14 17:55:57 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.87 2002/02/18 05:44:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1041,7 +1041,7 @@ XLogWrite(XLogwrtRqst WriteRqst)
 
 			if (!use_existent)	/* there was no precreated file */
 				elog(LOG, "XLogWrite: new log file created - "
-					 "consider increasing WAL_FILES");
+					 "consider increasing 'wal_files' in postgresql.conf.");
 
 			/* update pg_control, unless someone else already did */
 			LWLockAcquire(ControlFileLock, LW_EXCLUSIVE);
