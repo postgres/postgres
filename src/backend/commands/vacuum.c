@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.34 1997/06/06 03:41:16 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.35 1997/06/07 05:18:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -313,9 +313,10 @@ vc_getrels(NameData *VacRelP)
 	}
 
 	/* don't vacuum large objects for now - something breaks when we do */
-	if ( (strlen(rname) > 4) && rname[0] == 'x' &&
+	if ( (strlen(rname) > 5) && rname[0] == 'x' &&
 		rname[1] == 'i' && rname[2] == 'n' &&
-		(rname[3] == 'v' || rname[3] == 'x'))
+		(rname[3] == 'v' || rname[3] == 'x') &&
+		rname[4] >= '0' && rname[4] <= '9')
 	{
 	    elog (NOTICE, "Rel %.*s: can't vacuum LargeObjects now", 
 			NAMEDATALEN, rname);
