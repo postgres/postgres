@@ -6,7 +6,6 @@
 
  */
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
@@ -316,7 +315,7 @@ void sql_exec_dumpdb(PGconn *conn)
   /* get the oid and database name from the system pg_database table */
   sprintf(todo, "select oid,datname from pg_database");
 
-  sql_exec(conn, todo, NULL);
+  sql_exec(conn, todo, 0);
 }
 
 /* display all tables in whatever db we are connected to.  don't display the
@@ -333,7 +332,7 @@ void sql_exec_dumptable(PGconn *conn, int systables)
   else
     sprintf(todo, "select relfilenode,relname from pg_class where relname not like 'pg_%%' order by relname");
 
-  sql_exec(conn, todo, NULL);
+  sql_exec(conn, todo, 0);
 }
 
 /* display the oid for a given tablename for whatever db we are connected
