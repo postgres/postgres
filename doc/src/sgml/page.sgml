@@ -22,91 +22,69 @@ refers to data that is stored in <productname>Postgres</productname> tables.
 </para>
 
 <para>
-The following table shows how pages in both normal <productname>Postgres</productname> tables
+<xref linkend="page-table"> shows how pages in both normal <productname>Postgres</productname> tables
  and <productname>Postgres</productname> indexes
 (e.g., a B-tree index) are structured.
+</para>
 
-<table tocentry="1">
+<table tocentry="1" id="page-table">
 <title>Sample Page Layout</title>
 <titleabbrev>Page Layout</titleabbrev>
-<tgroup cols="1">
+<tgroup cols="2">
 <thead>
 <row>
 <entry>
 Item
 </entry>
-<entry>
-Description
-</entry>
+<entry>Description</entry>
 </row>
 </thead>
 
 <tbody>
 
 <row>
-<entry>
-itemPointerData
-</entry>
+<entry>itemPointerData</entry>
 </row>
 
 <row>
-<entry>
-filler
-</entry>
+<entry>filler</entry>
 </row>
 
 <row>
-<entry>
-itemData...
-</entry>
+<entry>itemData...</entry>
 </row>
 
 <row>
-<entry>
-Unallocated Space
-</entry>
+<entry>Unallocated Space</entry>
 </row>
 
 <row>
-<entry>
-ItemContinuationData
-</entry>
+<entry>ItemContinuationData</entry>
 </row>
 
 <row>
-<entry>
-Special Space
-</entry>
+<entry>Special Space</entry>
 </row>
 
 <row>
-<entry>
-``ItemData 2''
-</entry>
+<entry><quote>ItemData 2</quote></entry>
 </row>
 
 <row>
-<entry>
-``ItemData 1''
-</entry>
+<entry><quote>ItemData 1</quote></entry>
 </row>
 
 <row>
-<entry>
-ItemIdData
-</entry>
+<entry>ItemIdData</entry>
 </row>
 
 <row>
-<entry>
-PageHeaderData
-</entry>
+<entry>PageHeaderData</entry>
 </row>
 
 </tbody>
 </tgroup>
 </table>
-</para>
 
 <!--
 .\" Running

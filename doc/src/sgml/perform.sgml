@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.10 2001/09/18 01:59:05 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.11 2001/10/09 18:46:00 petere Exp $
 -->
 
  <chapter id="performance-tips">
@@ -256,9 +256,10 @@ Hash Join  (cost=181.22..564.83 rows=49 width=296)
     along with the same estimated costs that a plain EXPLAIN shows.
     For example, we might get a result like this:
 
-    <programlisting>
-regression=# explain analyze select * from tenk1 t1, tenk2 t2 where t1.unique1 &lt; 50
-regression-# and t1.unique2 = t2.unique2;
+<screen>
+regression=# explain analyze
+regression-# select * from tenk1 t1, tenk2 t2
+regression-#          where t1.unique1 &lt; 50 and t1.unique2 = t2.unique2;
 NOTICE:  QUERY PLAN:
 
 Nested Loop  (cost=0.00..330.41 rows=49 width=296) (actual time=1.31..28.90 rows=50 loops=1)
@@ -267,7 +268,7 @@ Nested Loop  (cost=0.00..330.41 rows=49 width=296) (actual time=1.31..28.90 rows
   -&gt;  Index Scan using tenk2_unique2 on tenk2 t2
                (cost=0.00..3.01 rows=1 width=148) (actual time=0.28..0.31 rows=1 loops=50)
 Total runtime: 30.67 msec
-    </programlisting>
+</screen>
 
     Note that the <quote>actual time</quote> values are in milliseconds of
     real time, whereas the <quote>cost</quote> estimates are expressed in
@@ -277,7 +278,7 @@ Total runtime: 30.67 msec
 
    <para>
     In some query plans, it is possible for a subplan node to be executed more
-    than once.  For example, the inner indexscan is executed once per outer
+    than once.  For example, the inner index scan is executed once per outer
     tuple in the above nested-loop plan.  In such cases, the
     <quote>loops</quote> value reports the
     total number of executions of the node, and the actual time and rows

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/stylesheet.dsl,v 1.13 2001/10/04 22:30:14 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/stylesheet.dsl,v 1.14 2001/10/09 18:46:00 petere Exp $ -->
 <!DOCTYPE style-sheet PUBLIC "-//James Clark//DTD DSSSL Style Sheet//EN" [
 
 <!-- must turn on one of these with -i on the jade command line -->
@@ -36,7 +36,24 @@
 (element lineannotation ($italic-seq$))
 (element structfield ($mono-seq$))
 (element structname ($mono-seq$))
+(element symbol ($mono-seq$))
 (element type ($mono-seq$))
+
+
+;; The rules in the default stylesheet for productname format it as
+;; a paragraph.  This may be suitable for productname directly
+;; within *info, but it's nonsense when productname is used
+;; inline, as we do.
+(mode set-titlepage-recto-mode
+  (element (para productname) ($charseq$)))
+(mode set-titlepage-verso-mode
+  (element (para productname) ($charseq$)))
+(mode book-titlepage-recto-mode
+  (element (para productname) ($charseq$)))
+(mode book-titlepage-verso-mode
+  (element (para productname) ($charseq$)))
+;; Add more here if needed...
+
 
 <![ %output-html; [
 ;; customize the html stylesheet
@@ -116,24 +133,16 @@
 (define bop-footnotes           #t)
 (define %hyphenation%
   (if tex-backend #t #f))
+(define %refentry-new-page%     #t)
+(define %refentry-keep%         #f)
 
 (define %graphic-default-extension%
   (cond (tex-backend "eps")
         (rtf-backend "ai"))) ;; ApplixWare?
 
-;; The rules in the default stylesheet for productname format it as
-;; a paragraph.  This may be suitable for productname directly
-;; within *info, but it's nonsense when productname is used
-;; inline, as we do.
-(mode set-titlepage-recto-mode
-  (element (para productname) ($charseq$)))
-(mode set-titlepage-verso-mode
-  (element (para productname) ($charseq$)))
-(mode book-titlepage-recto-mode
-  (element (para productname) ($charseq$)))
-(mode book-titlepage-verso-mode
-  (element (para productname) ($charseq$)))
-;; Add more here if needed...
+(define %footnote-ulinks%
+  (and tex-backend
+       (>= (string->number "1.73") 1.73)))
 
 ;; Format legalnotice justified and with space between paragraphs.
 (mode book-titlepage-verso-mode
@@ -146,6 +155,67 @@
       space-before: (* 0.8 %para-sep%)
       space-after: (* 0.8 %para-sep%)
       (process-children))))
+
+
+;; Fix spacing bug in variablelists
+(define (process-listitem-content)
+  (if (absolute-first-sibling?)
+      (make sequence
+        (process-children-trim))
+      (next-match)))
+
+
+;; Default stylesheets format simplelists are tables.  This just
+;; spells trouble for Jade.
+
+(define %simplelist-indent% 1em)
+
+(define (my-simplelist-vert members)
+  (make display-group
+    space-before: %para-sep%
+    space-after: %para-sep%
+    start-indent: (+ %simplelist-indent% (inherited-start-indent))
+    (process-children)))
+
+(element simplelist
+  (let ((type (attribute-string (normalize "type")))
+        (cols (if (attribute-string (normalize "columns"))
+                  (if (> (string->number (attribute-string (normalize "columns"))) 0)
+                      (string->number (attribute-string (normalize "columns")))
+                      1)
+                  1))
+        (members (select-elements (children (current-node)) (normalize "member"))))
+    (cond
+       ((equal? type (normalize "inline"))
+	(if (equal? (gi (parent (current-node)))
+		    (normalize "para"))
+	    (process-children)
+	    (make paragraph
+	      space-before: %para-sep%
+	      space-after: %para-sep%
+	      start-indent: (inherited-start-indent))))
+       ((equal? type (normalize "vert"))
+        (my-simplelist-vert members))
+       ((equal? type (normalize "horiz"))
+        (simplelist-table 'row    cols members)))))
+ 
+(element member
+  (let ((type (inherited-attribute-string (normalize "type"))))
+    (cond
+     ((equal? type (normalize "inline"))
+      (make sequence
+	(process-children)
+	(if (not (last-sibling?))
+	    (literal ", ")
+	    (literal ""))))
+      ((equal? type (normalize "vert"))
+       (make paragraph
+	 space-before: 0pt
+	 space-after: 0pt))
+      ((equal? type (normalize "horiz"))
+       (make paragraph
+	 quadding: 'start
+	 (process-children))))))
 
 ]]> <!-- %output-print -->
 

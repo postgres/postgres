@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.47 2001/09/13 15:55:23 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.48 2001/10/09 18:46:00 petere Exp $
 -->
 
 <chapter id="sql-syntax">
@@ -12,7 +12,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.47 2001/09/13 15:55:23 pete
 
   <abstract>
    <para>
-    A description of the general syntax of SQL.
+    This chapter describes the syntax of SQL.
    </para>
   </abstract>
 
@@ -179,8 +179,8 @@ UPDATE "my_table" SET "a" = 5;
     each other.
     <footnote>
      <para>
-      <productname>Postgres</productname>' folding of unquoted names to lower
-      case is incompatible with the SQL standard, which says that unquoted
+      The folding of unquoted names to lower case in <productname>PostgreSQL</>
+      is incompatible with the SQL standard, which says that unquoted
       names should be folded to upper case.  Thus, <literal>foo</literal>
       should be equivalent to <literal>"FOO"</literal> not
       <literal>"foo"</literal> according to the standard.  If you want to
@@ -815,8 +815,8 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
     </listitem>
 
     <listitem>
-     <para>
 <synopsis>( <replaceable>expression</replaceable> )</synopsis>
+     <para>
       Parentheses are used to group subexpressions and override precedence.
      </para>
     </listitem>
@@ -1039,7 +1039,7 @@ SELECT (5 !) - 6;
    <table tocentry="1">
     <title>Operator Precedence (decreasing)</title>
 
-    <tgroup cols="2">
+    <tgroup cols="3">
      <thead>
       <row>
        <entry>Operator/Element</entry>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.65 2001/10/03 05:24:22 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.66 2001/10/09 18:45:59 petere Exp $
 -->
 
  <chapter id="datatype">
@@ -168,8 +168,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.65 2001/10/03 05:24:22 th
       </row>
 
       <row>
-       <entry><type>numeric(<replaceable>p</replaceable>,<replaceable>s</replaceable>)</type></entry>
-       <entry><type>decimal(<replaceable>p</replaceable>,<replaceable>s</replaceable>)</type></entry>
+       <entry><type>numeric(<replaceable>p</replaceable>, <replaceable>s</replaceable>)</type></entry>
+       <entry><type>decimal(<replaceable>p</replaceable>, <replaceable>s</replaceable>)</type></entry>
        <entry>exact numeric with selectable precision</entry>
       </row>
 
@@ -648,30 +648,33 @@ NUMERIC
      In the current implementation, specifying
 
 <programlisting>
-CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceable class="parameter">colname</replaceable> SERIAL);
+CREATE TABLE <replaceable class="parameter">tablename</replaceable> (
+    <replaceable class="parameter">colname</replaceable> SERIAL
+);
 </programlisting>
 
      is equivalent to specifying:
 
 <programlisting>
 CREATE SEQUENCE <replaceable class="parameter">tablename</replaceable>_<replaceable class="parameter">colname</replaceable>_seq;
-CREATE TABLE <replaceable class="parameter">tablename</replaceable>
-    (<replaceable class="parameter">colname</replaceable> integer DEFAULT nextval('<replaceable class="parameter">tablename</replaceable>_<replaceable class="parameter">colname</replaceable>_seq') UNIQUE NOT NULL);
+CREATE TABLE <replaceable class="parameter">tablename</replaceable> (
+    <replaceable class="parameter">colname</replaceable> integer DEFAULT nextval('<replaceable class="parameter">tablename</replaceable>_<replaceable class="parameter">colname</replaceable>_seq') UNIQUE NOT NULL
+);
 </programlisting>
 
      Thus, we have created an integer column and arranged for its default
      values to be assigned from a sequence generator.  UNIQUE and NOT NULL
      constraints are applied to ensure that explicitly-inserted values
      will never be duplicates, either.
+    </para>
 
-     <caution>
+     <important>
       <para>
        The implicit sequence created for the <type>serial</type> type will
        <emphasis>not</emphasis> be automatically removed when the
        table is dropped.
       </para>
-     </caution>
-    </para>
+     </important>
 
     <para>
      The type names <type>serial</type> and <type>serial4</type> are
@@ -974,7 +977,7 @@ SELECT b, char_length(b) FROM test2;
    <para>
     <table tocentry="1">
      <title>Date/Time Types</title>
-     <tgroup cols="4">
+     <tgroup cols="6">
       <thead>
        <row>
 	<entry>Type</entry>
@@ -2563,18 +2566,25 @@ SELECT * FROM test1 WHERE a;
      The <type>macaddr</> type stores MAC addresses, i.e., Ethernet
      card hardware addresses (although MAC addresses are used for
      other purposes as well).  Input is accepted in various customary
-     formats, including <literal>'08002b:010203'</>,
-     <literal>'08002b-010203'</>, <literal>'0800.2b01.0203'</>,
-     <literal>'08-00-2b-01-02-03'</>, and
-     <literal>'08:00:2b:01:02:03'</>, which would all specify the same
+     formats, including
+
+     <simplelist>
+      <member><literal>'08002b:010203'</></member>
+      <member><literal>'08002b-010203'</></member>
+      <member><literal>'0800.2b01.0203'</></member>
+      <member><literal>'08-00-2b-01-02-03'</></member>
+      <member><literal>'08:00:2b:01:02:03'</></member>
+     </simplelist>
+
+     which would all specify the same
      address.  Upper and lower case is accepted for the digits
      <literal>a</> through <literal>f</>.  Output is always in the
-     latter of the given forms.
+     last of the shown forms.
     </para>
 
     <para>
      The directory <filename class="directory">contrib/mac</filename>
-     in the <productname>Postgres</productname> source distribution
+     in the <productname>PostgreSQL</productname> source distribution
      contains tools that can be used to map MAC addresses to hardware
      manufacturer names.
     </para>

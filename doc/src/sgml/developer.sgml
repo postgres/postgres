@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/Attic/developer.sgml,v 1.5 2001/06/02 18:25:16 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/Attic/developer.sgml,v 1.6 2001/10/09 18:45:59 petere Exp $ -->
 <!-- PostgreSQL Developer's Guide -->
 
 <book id="developer">
@@ -9,10 +9,10 @@
   &legal;
 
   <abstract>
-   <simpara>
+   <para>
     This document contains assorted information that can be of use to
     <productname>PostgreSQL</> developers.
-   </simpara>
+   </para>
   </abstract>
  </bookinfo>
  
@@ -25,10 +25,10 @@
  &page;
  &geqo;
  &nls;
-<![%single-book;[
- &biblio;
-]]>
 <!-- appendices -->
  &cvs;
  &docguide;
+<![%single-book;[
+ &biblio;
+]]>
 </book>

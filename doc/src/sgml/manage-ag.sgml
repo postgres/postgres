@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/manage-ag.sgml,v 2.15 2001/09/13 15:55:23 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/manage-ag.sgml,v 2.16 2001/10/09 18:46:00 petere Exp $
 -->
 
 <chapter id="managing-databases">
@@ -175,7 +175,10 @@ CREATE DATABASE <replaceable>name</> WITH LOCATION = '<replaceable>location</>'
      risk. To allow it, you must compile <productname>Postgres</> with
      the C preprocessor macro <literal>ALLOW_ABSOLUTE_DBPATHS</>
      defined. One way to do this is to run the compilation step like
-     this: <userinput>gmake CPPFLAGS=-DALLOW_ABSOLUTE_DBPATHS all</>.
+     this:
+<programlisting>
+gmake CPPFLAGS=-DALLOW_ABSOLUTE_DBPATHS all
+</programlisting>
     </para>
    </note>
 

@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.41 2001/10/04 22:25:48 petere Exp $
+#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.42 2001/10/09 18:45:59 petere Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -123,6 +123,9 @@ $(addsuffix .tex, $(ALLBOOKS)): %.tex: %.sgml $(ALLSGML) stylesheet.dsl
 # TeX transforms '--' into en-dashes.  This hack should go away when
 # OpenJade is fixed (ver. 1.4?)
 	$(PERL) -pi -e 's/\-\-/\\mbox{}-\\mbox{}-\\mbox{}/g' $@
+	$(PERL) -pi -e 's/\<\</\\mbox{}<\\mbox{}<\\mbox{}/g' $@
+	$(PERL) -pi -e 's/\>\>/\\mbox{}>\\mbox{}>\\mbox{}/g' $@
+	$(PERL) -pi -e "s/\'\'/\\\\mbox{}'\\\\mbox{}'\\\\mbox{}/g" $@
 
 %.dvi: %.tex
 	jadetex $<

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.46 2001/09/13 15:55:24 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.47 2001/10/09 18:46:00 petere Exp $
 Postgres documentation
 -->
 
@@ -2078,20 +2078,22 @@ affect a column or a table.
 -->
     <para>
      table constraint definition:
-     <synopsis>
-[ CONSTRAINT <replaceable>constraint_name</replaceable> ] CHECK ( VALUE <replaceable>condition</replaceable> ) 
+<synopsis>
+[ CONSTRAINT <replaceable>constraint_name</replaceable> ]
+      CHECK ( VALUE <replaceable>condition</replaceable> ) 
       [ {INITIALLY DEFERRED | INITIALLY IMMEDIATE} ]
       [ [ NOT ] DEFERRABLE ]
-     </synopsis>
+</synopsis>
     </para>
 
     <para>
      column constraint definition:
-    <synopsis>
-[ CONSTRAINT <replaceable>constraint_name</replaceable> ] CHECK ( VALUE <replaceable>condition</replaceable> ) 
+<synopsis>
+[ CONSTRAINT <replaceable>constraint_name</replaceable> ]
+      CHECK ( VALUE <replaceable>condition</replaceable> ) 
       [ {INITIALLY DEFERRED | INITIALLY IMMEDIATE} ]
       [ [ NOT ] DEFERRABLE ]
-    </synopsis>
+</synopsis>
     </para>
 <!--
    <para>

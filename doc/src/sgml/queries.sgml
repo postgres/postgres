@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/queries.sgml,v 1.9 2001/09/09 17:21:59 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/queries.sgml,v 1.10 2001/10/09 18:46:00 petere Exp $ -->
 
 <chapter id="queries">
  <title>Queries</title>
@@ -535,7 +535,10 @@ FROM FDT WHERE
    </para>
 
 <synopsis>
-SELECT <replaceable>select_list</replaceable> FROM ... <optional>WHERE ...</optional> GROUP BY <replaceable>grouping_column_reference</replaceable> <optional>, <replaceable>grouping_column_reference</replaceable></optional>...
+SELECT <replaceable>select_list</replaceable>
+    FROM ...
+    <optional>WHERE ...</optional>
+    GROUP BY <replaceable>grouping_column_reference</replaceable> <optional>, <replaceable>grouping_column_reference</replaceable></optional>...
 </synopsis>
 
    <para>
@@ -845,7 +848,9 @@ SELECT DISTINCT ON (<replaceable>expression</replaceable> <optional>, <replaceab
   <para>
    The ORDER BY clause specifies the sort order:
 <synopsis>
-SELECT <replaceable>select_list</replaceable> FROM <replaceable>table_expression</replaceable> ORDER BY <replaceable>column1</replaceable> <optional>ASC | DESC</optional> <optional>, <replaceable>column2</replaceable> <optional>ASC | DESC</optional> ...</optional>
+SELECT <replaceable>select_list</replaceable>
+    FROM <replaceable>table_expression</replaceable>
+    ORDER BY <replaceable>column1</replaceable> <optional>ASC | DESC</optional> <optional>, <replaceable>column2</replaceable> <optional>ASC | DESC</optional> ...</optional>
 </synopsis>
    <replaceable>column1</replaceable>, etc., refer to select list
    columns.  These can be either the output name of a column (see
@@ -902,7 +907,10 @@ SELECT a AS b FROM table1 ORDER BY a;
   </indexterm>
 
 <synopsis>
-SELECT <replaceable>select_list</replaceable> FROM <replaceable>table_expression</replaceable> <optional>ORDER BY <replaceable>sort_spec</replaceable></optional> <optional>LIMIT { <replaceable>number</replaceable> | ALL }</optional> <optional>OFFSET <replaceable>number</replaceable></optional>
+SELECT <replaceable>select_list</replaceable>
+    FROM <replaceable>table_expression</replaceable>
+    <optional>ORDER BY <replaceable>sort_spec</replaceable></optional>
+    <optional>LIMIT { <replaceable>number</replaceable> | ALL }</optional> <optional>OFFSET <replaceable>number</replaceable></optional>
 </synopsis>
 
   <para>

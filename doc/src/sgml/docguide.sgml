@@ -1,6 +1,6 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/docguide.sgml,v 1.34 2001/09/21 18:37:05 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/docguide.sgml,v 1.35 2001/10/09 18:45:59 petere Exp $ -->
 
-<appendix label="DG2" id="docguide">
+<appendix id="docguide">
  <title>Documentation</title>
 
  <para>
@@ -46,12 +46,12 @@
    </listitem>
    <listitem>
     <para>
-     <citetitle>User's Guide</citetitle>: documents the query language environment
+     <citetitle>User's Guide</citetitle>: documents the SQL implementation
     </para>
    </listitem>
    <listitem>
     <para>
-     <citetitle>Reference Manual</citetitle>: documents the query language
+     <citetitle>Reference Manual</citetitle>: reference pages for programs and SQL commands
     </para>
    </listitem>
    <listitem>
@@ -146,7 +146,7 @@
     </varlistentry>
 
     <varlistentry>
-     <term><ulink url="http://openjade.sourceforge.net">Jade</ulink></term>
+     <term><ulink url="http://openjade.sourceforge.net">OpenJade</ulink></term>
      <listitem>
       <para>
        This is the base package of <acronym>SGML</acronym> processing.
@@ -161,7 +161,7 @@
     </varlistentry>
 
     <varlistentry>
-     <term><ulink url="http://nwalsh.com/docbook/dsssl/index.html">Norm Walsh's Modular DocBook Stylesheets</ulink></term>
+     <term><ulink url="http://docbook.sourceforge.net/projects/dsssl/index.html">DocBook DSSSL Stylesheets</ulink></term>
      <listitem>
       <para>
        These contain the processing instructions for converting the
@@ -183,21 +183,23 @@
     </varlistentry>
 
     <varlistentry>
-     <term>JadeTeX</term>
+     <term><ulink url="http://jadetex.sourceforge.net">JadeTeX</ulink></term>
      <listitem>
       <para>
        If you want to, you can also install
        <productname>JadeTeX</productname> to use
        <productname>TeX</productname> as a formatting backend for
-       <productname>Jade</productname>.  This will generate printed
-       output that is inferior to what you get from the
-       <acronym>RTF</acronym> backend.  Tables are a particular
-       problem area.  Also, there is no opportunity to manually polish
-       the results.  Still, it works all right, especially for simpler
-       documents that don't use tables, and as both
-       <productname>JadeTeX</productname> and the style sheets are
-       under continuous improvement, it will certainly get better over
-       time.
+       <productname>Jade</productname>.
+       <application>JadeTeX</application> can create Postscript or
+       <acronym>PDF</acronym> files (the latter with bookmarks).
+      </para>
+
+      <para>
+       However, the output from <application>JadeTeX</application> is
+       inferior to what you get from the <acronym>RTF</acronym>
+       backend.  Particular problem areas are tables and various
+       artifacts of vertical and horizontal spacing.  Also, there is
+       no opportunity to manually polish the results.
       </para>
      </listitem>
     </varlistentry>
@@ -226,7 +228,7 @@
     (or <filename>jade</filename>).  Possibly
     <filename>sgml-tools</filename> will be needed as well.  If your
     distributor does not provide these then you should be able to make
-    use of the packages from some large, reasonably compatible vendor.
+    use of the packages from some other, reasonably compatible vendor.
    </para>
   </sect2>
 
@@ -309,34 +311,60 @@ apt-get install docbook-stylesheets
    </para>
 
    <sect3>
-    <title>Installing Jade</title>
+    <title>Installing OpenJade</title>
 
-    <para>
-     The installation of OpenJade offers a GNU-style
-     <literal>./configure; make; make install</literal> build process.
-     Details can be found in the OpenJade source distribution. In a
-     nutshell:
+    <procedure>
+      <step>
+       <para>
+        The installation of OpenJade offers a GNU-style
+        <literal>./configure; make; make install</literal> build
+        process.  Details can be found in the OpenJade source
+        distribution. In a nutshell:
 <synopsis>
 ./configure --enable-default-catalog=/usr/local/share/sgml/catalog
 make
 make install
 </synopsis>
-     Be sure to remember where you put the <quote>default
-     catalog</quote>; you will need it below.  You can also leave it
-     off, but then you will have to set the environment variable
-     <envar>SGML_CATALOG_FILES</envar> to point to the file whenever
-     you use <application>jade</application> later on.
-    </para>
+        Be sure to remember where you put the <quote>default
+        catalog</quote>; you will need it below.  You can also leave
+        it off, but then you will have to set the environment variable
+        <envar>SGML_CATALOG_FILES</envar> to point to the file
+        whenever you use <application>jade</application> later on.
+        (This method is also an option if OpenJade is already
+        installed and you want to install the rest of the toolchain
+        locally.)
+       </para>
+      </step>
 
-    <para>
-     Additionally, you should install the files
-     <filename>dsssl.dtd</filename>, <filename>fot.dtd</filename>,
-     <filename>style-sheet.dtd</filename>, and
-     <filename>catalog</filename> from the <filename>dsssl</filename>
-     directory somewhere, perhaps into
-     <filename>/usr/local/share/sgml/dsssl</filename>.  (Or just copy
-     the entire directory.)
-    </para>
+      <step id="doc-openjade-install">
+       <para>
+        Additionally, you should install the files
+        <filename>dsssl.dtd</filename>, <filename>fot.dtd</filename>,
+        <filename>style-sheet.dtd</filename>, and
+        <filename>catalog</filename> from the
+        <filename>dsssl</filename> directory somewhere, perhaps into
+        <filename>/usr/local/share/sgml/dsssl</filename>.  It's
+        probably easiest to copy the entire directory:
+<synopsis>
+cp -R dsssl /usr/local/share/sgml
+</synopsis>
+       </para>
+      </step>
+
+      <step>
+       <para>
+        Finally, create the file
+        <filename>/usr/local/share/sgml/catalog</filename> and add
+        this line to it:
+<programlisting>
+CATALOG "dsssl/catalog"
+</programlisting>
+        (This is a relative path reference to the file installed in
+        <xref linkend="doc-openjade-install">.  Be sure to adjust it
+        if you chose your installation layout differently.)
+       </para>
+      </step>
+     </procedure>
    </sect3>
 
    <sect3>
@@ -353,24 +381,30 @@ make install
 
      <step>
       <para>
-       Unpack the archive.
+       Create the directory
+       <filename>/usr/local/share/sgml/docbook31</filename> and change
+       to it. (The exact location is irrelevant, but this one is
+       reasonable within the layout we are following here.)
 <screen>
-<prompt>$ </prompt><userinput>unzip -a docbk31.zip</userinput>
+<prompt>$ </prompt><userinput>mkdir /usr/local/share/sgml/docbook31</userinput>
+<prompt>$ </prompt><userinput>cd /usr/local/share/sgml/docbook31</userinput>
 </screen>
       </para>
      </step>
 
      <step>
       <para>
-       Place the files into the directory
-       <filename>/usr/local/share/sgml/docbook31</filename>. (The
-       exact location is irrelevant, but this one is fairly standard.)
+       Unpack the archive.
+<screen>
+<prompt>$ </prompt><userinput>unzip -a ...../docbk31.zip</userinput>
+</screen>
+       (The archive will unpack its files into the current directory.)
       </para>
      </step>
 
      <step>
       <para>
-       Create a file
+       Edit the file
        <filename>/usr/local/share/sgml/catalog</filename> (or whatever
        you told jade during installation) and put a line like this
        into it:
@@ -378,7 +412,9 @@ make install
 CATALOG "docbook31/docbook.cat"
 </programlisting>
       </para>
+     </step>
 
+     <step>
       <para>
        Optionally, you can edit the file
        <filename>docbook.cat</filename> and comment out or remove the
@@ -394,20 +430,53 @@ CATALOG "docbook31/docbook.cat"
        url="http://www.oasis-open.org/cover/ISOEnts.zip">ISO 8879
        character entities</ulink> archive, unpack it, and put the
        files in the same directory you put the DocBook files in.
+<screen>
+<prompt>$ </prompt><userinput>cd /usr/local/share/sgml/docbook31</userinput>
+<prompt>$ </prompt><userinput>unzip ...../ISOEnts.zip</userinput>
+</screen>
+      </para>
+     </step>
+
+     <step>
+      <para>
+       Run the following command in the directory with the DocBook and ISO files:
+<programlisting>
+perl -pi -e 's/iso-(.*).gml/ISO\1/g' docbook.cat
+</programlisting>
+       (This fixes a mixup between the names used in the DocBook
+       catalog file and the actual names of the ISO character entity
+       files.)
       </para>
      </step>
     </procedure>
    </sect3>
 
    <sect3>
-    <title>Installing Norman Walsh's <acronym>DSSSL</acronym> Style Sheets</title>
+    <title>Installing the DocBook <acronym>DSSSL</acronym> Style Sheets</title>
 
     <para>
-     To install the style sheets, simply unzip the distribution kit in
-     a suitable place, for example
-     <filename>/usr/local/share/sgml/stylesheets</filename>.  (The
-     archive will automatically create a <filename>docbook</filename>
-     subdirectory.)
+     To install the style sheets, unzip and untar the distribution and
+     move it to a suitable place, for example
+     <filename>/usr/local/share/sgml</filename>.  (The archive will
+     automatically create a subdirectory.)
+<screen>
+<prompt>$</prompt> <userinput>gunzip docbook-dsssl-1.<replaceable>xx</>.tar.gz</userinput>
+<prompt>$</prompt> <userinput>tar -C /usr/local/share/sgml -xf docbook-dsssl-1.<replaceable>xx</>.tar</userinput>
+</screen>
+    </para>
+
+    <para>
+     The usual catalog entry in
+     <filename>/usr/local/share/sgml/catalog</filename> can also be
+     made:
+<programlisting>
+CATALOG "docbook-dsssl--1.<replaceable>xx</>/catalog
+</programlisting>
+     Because stylesheets change rather often, and it's sometimes
+     beneficial to try out alternative versions,
+     <productname>PostgreSQL</productname> doesn't use this catalog
+     entry.  See <xref linkend="doc-build"> for information about how
+     to select the stylesheets instead.
     </para>
    </sect3>
 
@@ -431,45 +500,34 @@ CATALOG "docbook31/docbook.cat"
      <productname>hyperref</productname>,
      <productname>minitoc</productname>,
      <productname>url</productname> and
-     <productname>ot2enc</productname>, and of course
-     <productname>JadeTeX</productname> itself.  All of these can be
-     found on your friendly neighborhood <ulink
+     <productname>ot2enc</productname>.  All of these can be found on
+     your friendly neighborhood <ulink
      url="http://www.ctan.org"><acronym>CTAN</acronym></ulink> site.
+     The installation of the <application>TeX</application> base
+     system is far beyond the scope of this introduction.  Binary
+     packages should be available for any system that can run
+     <application>TeX</application>.
     </para>
 
     <para>
-     <productname>JadeTeX</productname> does not at the time of
-     writing come with much of an installation guide, but there is a
-     <filename>makefile</filename> that shows what is needed.  It
-     also includes a directory <filename>cooked</filename>, wherein
-     you'll find some of the macro packages it needs, but not all, and
-     not complete -- at least last we looked.
+     Before you can use <application>JadeTeX</application> with the
+     <productname>PostgreSQL</productname> documentation sources, you
+     will need to increase the size of
+     <application>TeX</application>'s internal data structures.
+     Details on this can be found in the <application>JadeTeX</application>
+     installation insructions.
     </para>
 
     <para>
-     Before building the <filename>jadetex.fmt</filename> format file,
-     you'll probably want to edit the <filename>jadetex.ltx</filename>
-     file, to change the configuration of
-     <productname>Babel</productname> to suit your locality.  The line
-     to change looks something like
-<programlisting>
-\RequirePackage[german,french,english]{babel}[1997/01/23]
-</programlisting>
-     and you should obviously list only the languages you actually need,
-     and have configured <productname>Babel</productname> for.
-    </para>
-
-    <para>
-     It is quite likely that when you use
-     <productname>JadeTeX</productname> with
-     <productname>PostgreSQL</productname> documentation sources, that
-     <productname>TeX</productname> will stop during the second run,
-     and tell you that its capacity has been exceeded.  This is, as
-     far as we can tell, because of the way
-     <productname>JadeTeX</productname> generates cross referencing
-     information.  <productname>TeX</productname> can, of course, be
-     compiled with larger data structure sizes.  The details of this
-     will vary according to your installation.
+     Once that is finished you can install <application>JadeTeX</application>:
+<screen>
+<prompt>$</prompt> <userinput>gunzip jadetex-<replaceable>xxx</replaceable>.tar.gz</userinput>
+<prompt>$</prompt> <userinput>tar xf jadetex-<replaceable>xxx</replaceable>.tar</userinput>
+<prompt>$</prompt> <userinput>cd jadetex</userinput>
+<prompt>$</prompt> <userinput>make install</userinput>
+<prompt>$</prompt> <userinput>mktexlsr</userinput>
+</screen>
+     The last two need to be done as <systemitem>root</systemitem>.
     </para>
 
    </sect3>
@@ -1003,8 +1061,7 @@ exit
     most common toolset is the
     <productname>Emacs</productname>/<productname>XEmacs</productname>
     editor with appropriate editing mode.  On some systems
-    (e.g., RedHat Linux) these tools are provided in a typical full
-    installation.
+    these tools are provided in a typical full installation.
    </para>
 
    <sect2>

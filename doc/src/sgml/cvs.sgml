@@ -1,10 +1,10 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/cvs.sgml,v 1.18 2001/09/23 01:16:35 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/cvs.sgml,v 1.19 2001/10/09 18:45:59 petere Exp $
 CVS code repository
 Thomas Lockhart
 -->
 
-<appendix label="DG1" id="cvs">
+<appendix id="cvs">
  <docinfo>
   <authorgroup>
    <author>

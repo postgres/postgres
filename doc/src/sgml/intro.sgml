@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/intro.sgml,v 1.15 2001/10/04 22:27:58 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/intro.sgml,v 1.16 2001/10/09 18:46:00 petere Exp $
 -->
 
  <preface id="preface">
@@ -49,7 +49,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/intro.sgml,v 1.15 2001/10/04 22:27:58 peter
     concepts in such a way that  users  can  easily
     extend the system:
 
-    <itemizedlist>
+    <itemizedlist spacing="compact">
      <listitem>
       <simpara>inheritance</>
      </listitem>
@@ -65,7 +65,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/intro.sgml,v 1.15 2001/10/04 22:27:58 peter
    <para>
     Other features provide additional power and flexibility:
 
-    <itemizedlist>
+    <itemizedlist spacing="compact">
      <listitem>
       <simpara>constraints</simpara>
      </listitem>

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.75 2001/09/28 20:48:17 thomas Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.76 2001/10/09 18:46:00 petere Exp $ -->
 
 <chapter id="functions">
  <title>Functions and Operators</title>
@@ -1549,7 +1549,7 @@
 
 
   <sect1 id="functions-formatting">
-   <title>Multi-type Formatting Functions</title>
+   <title>Data Type Formatting Functions</title>
 
    <indexterm zone="functions-formatting">
     <primary>formatting</primary>
@@ -2280,7 +2280,7 @@
     <table id="operators-datetime-table">
      <title>Date/Time Operators</title>
 
-     <tgroup cols="4">
+     <tgroup cols="3">
       <thead>
        <row>
         <entry>Name</entry>
@@ -2354,7 +2354,7 @@
 
     <table id="functions-datetime-table">
      <title>Date/Time Functions</title>
-     <tgroup cols="4">
+     <tgroup cols="5">
       <thead>
        <row>
 	<entry>Name</entry>
@@ -3657,7 +3657,12 @@ END
  3
 </computeroutput>
 
-<prompt>=&gt;</prompt> <userinput>SELECT a, CASE WHEN a=1 THEN 'one' WHEN a=2 THEN 'two' ELSE 'other' END FROM test;</userinput>
+<prompt>=&gt;</prompt> <userinput>SELECT a,
+          CASE WHEN a=1 THEN 'one'
+               WHEN a=2 THEN 'two'
+               ELSE 'other'
+          END
+    FROM test;</userinput>
 <computeroutput>
  a | case
 ---+-------
@@ -3699,7 +3704,12 @@ END
     The example above can be written using the simple
     <token>CASE</token> syntax:
 <screen>
-<prompt>=&gt;</prompt> <userinput>SELECT a, CASE a WHEN 1 THEN 'one' WHEN 2 THEN 'two' ELSE 'other' END FROM test;</userinput>
+<prompt>=&gt;</prompt> <userinput>SELECT a,
+          CASE a WHEN 1 THEN 'one'
+                 WHEN 2 THEN 'two'
+                 ELSE 'other'
+          END
+    FROM test;</userinput>
 <computeroutput>
  a | case
 ---+-------

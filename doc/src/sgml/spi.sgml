@@ -173,20 +173,8 @@ XXX thomas 1997-12-24
 <TITLE>Algorithm
 </TITLE>
 <PARA><FUNCTION>SPI_connect</FUNCTION> performs the following:
-</PARA>
-<VARIABLELIST>
-<VARLISTENTRY>
-<TERM>&bull;
-</TERM>
-<LISTITEM>
-<PARA>
   Initializes the SPI internal
    structures for query execution and memory management.
-</PARA>
-</LISTITEM>
-</VARLISTENTRY>
-</VARIABLELIST>
-<PARA>
 </PARA>
 </REFSECT1>
 <!--
@@ -296,22 +284,10 @@ SPI_finish(void)
 <TITLE>Algorithm
 </TITLE>
 <PARA><FUNCTION>SPI_finish</FUNCTION> performs the following:
-</PARA>
-<VARIABLELIST>
-<VARLISTENTRY>
-<TERM>&bull;
-</TERM>
-<LISTITEM>
-<PARA>
    Disconnects your procedure from the SPI manager and frees all memory
    allocations made by your procedure via <Function>palloc</Function> since
  the <Function>SPI_connect</Function>. 
    These allocations can't be used any more! See Memory management.
-</PARA>
-</LISTITEM>
-</VARLISTENTRY>
-</VARIABLELIST>
-<PARA>
 </PARA>
 </REFSECT1>
 <!--
@@ -526,21 +502,9 @@ You may pass many queries in one string or query string may be
 <TITLE>Algorithm
 </TITLE>
 <PARA><FUNCTION>SPI_exec</FUNCTION> performs the following:
-</PARA>
-<VARIABLELIST>
-<VARLISTENTRY>
-<TERM>&bull;
-</TERM>
-<LISTITEM>
-<PARA>
    Disconnects your procedure from the SPI manager and frees all memory
    allocations made by your procedure via <Function>palloc</Function> since the <Function>SPI_connect</Function>. 
    These allocations can't be used any more! See Memory management.
-</PARA>
-</LISTITEM>
-</VARLISTENTRY>
-</VARIABLELIST>
-<PARA>
 </PARA>
 </REFSECT1>
 <!--
@@ -710,19 +674,7 @@ The plan returned by <Function>SPI_prepare</Function> may be used only in curren
 <TITLE>Algorithm
 </TITLE>
 <PARA><FUNCTION>SPI_prepare</FUNCTION> performs the following:
-</PARA>
-<VARIABLELIST>
-<VARLISTENTRY>
-<TERM>&bull;
-</TERM>
-<LISTITEM>
-<PARA>
 TBD
-</PARA>
-</LISTITEM>
-</VARLISTENTRY>
-</VARIABLELIST>
-<PARA>
 </PARA>
 </REFSECT1>
 -->
@@ -865,19 +817,7 @@ Execution plan location. NULL if unsuccessful.
 <TITLE>Algorithm
 </TITLE>
 <PARA><FUNCTION>SPI_saveplan</FUNCTION> performs the following:
-</PARA>
-<VARIABLELIST>
-<VARLISTENTRY>
-<TERM>&bull;
-</TERM>
-<LISTITEM>
-<PARA>
 TBD
-</PARA>
-</LISTITEM>
-</VARLISTENTRY>
-</VARIABLELIST>
-<PARA>
 </PARA>
 </REFSECT1>
 -->
@@ -1074,19 +1014,7 @@ assumes that all values (if any) are NOT NULL.
 <TITLE>Algorithm
 </TITLE>
 <PARA><FUNCTION>SPI_execp</FUNCTION> performs the following:
-</PARA>
-<VARIABLELIST>
-<VARLISTENTRY>
-<TERM>&bull;
-</TERM>
-<LISTITEM>
-<PARA>
 TBD
-</PARA>
-</LISTITEM>
-</VARLISTENTRY>
-</VARIABLELIST>
-<PARA>
 </PARA>
 </REFSECT1>
 -->

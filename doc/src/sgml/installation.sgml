@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.59 2001/10/01 15:33:21 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.60 2001/10/09 18:46:00 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -49,11 +49,11 @@ su - postgres
    The following prerequisites exist for building <productname>PostgreSQL</>:
    <itemizedlist>
     <listitem>
-     <indexterm>
-      <primary>make</primary>
-     </indexterm>
-
      <para>
+      <indexterm>
+       <primary>make</primary>
+      </indexterm>
+
       <acronym>GNU</> <application>make</> is required; other
       <application>make</> programs will <emphasis>not</> work.
       <acronym>GNU</> <application>make</> is often installed under
@@ -82,11 +82,11 @@ su - postgres
     </listitem>
 
     <listitem>
-     <indexterm>
-      <primary>readline</primary>
-     </indexterm>
-
      <para>
+      <indexterm>
+       <primary>readline</primary>
+      </indexterm>
+
       The <acronym>GNU</> <productname>Readline</> library for comfortable
       line editing and command history retrieval will automatically be used
       if found. You might wish to install it before proceeding, but it is not
@@ -98,17 +98,17 @@ su - postgres
     </listitem>
 
     <listitem>
-     <indexterm>
-      <primary>flex</primary>
-     </indexterm>
-     <indexterm>
-      <primary>bison</primary>
-     </indexterm>
-     <indexterm>
-      <primary>yacc</primary>
-     </indexterm>
-
      <para>
+      <indexterm>
+       <primary>flex</primary>
+      </indexterm>
+      <indexterm>
+       <primary>bison</primary>
+      </indexterm>
+      <indexterm>
+       <primary>yacc</primary>
+      </indexterm>
+
       <application>Flex</> and <application>Bison</> are
       <emphasis>not</> required when building from a released source
       package because the output files are pre-generated. You will
@@ -123,11 +123,12 @@ su - postgres
     </listitem>
 
     <listitem>
-     <indexterm>
-      <primary>installation</primary>
-      <secondary>on Windows</secondary>
-     </indexterm>
      <para>
+      <indexterm>
+       <primary>installation</primary>
+       <secondary>on Windows</secondary>
+      </indexterm>
+
       To build on <productname>Windows NT</> or <productname>Windows
       2000</> you need the <productname>Cygwin</> and
       <productname>cygipc</> packages. See the file
@@ -208,11 +209,11 @@ su - postgres
    </step>
 
    <step>
-    <indexterm>
-     <primary>pg_dumpall</primary>
-    </indexterm>
-
     <para>
+     <indexterm>
+      <primary>pg_dumpall</primary>
+     </indexterm>
+
      To dump your database installation, type:
 <screen>
 <userinput>pg_dumpall &gt; <replaceable>outputfile</></userinput>

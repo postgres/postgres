@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/charset.sgml,v 2.11 2001/10/04 22:26:27 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/charset.sgml,v 2.12 2001/10/09 18:45:59 petere Exp $ -->
 
 <chapter id="charset">
  <title>Localization</>
@@ -293,7 +293,7 @@ perl: warning: Falling back to the standard locale ("C").
      values in the following table:
 
      <table tocentry="1">
-      <title><productname>Postgres</productname> Character Set Encodings</title>
+      <title>Character Set Encodings</title>
       <titleabbrev>Encodings</titleabbrev>
       <tgroup cols="2">
        <thead>
@@ -451,7 +451,7 @@ $ psql -l
      and frontend for some encodings.
 
      <table tocentry="1">
-      <title><productname>Postgres</productname> Client/Server Character Set Encodings</title>
+      <title>Client/Server Character Set Encodings</title>
       <titleabbrev>Communication Encodings</titleabbrev>
       <tgroup cols="2">
        <thead>
@@ -618,38 +618,47 @@ RESET CLIENT_ENCODING;
      These are good sources to start learning about various kinds of encoding
      systems.
 
-     <itemizedlist>
-      <listitem>
-       <para>
-	<ulink url="ftp://ftp.ora.com/pub/examples/nutshell/ujip/doc/cjk.inf"
-        >ftp://ftp.ora.com/pub/examples/nutshell/ujip/doc/cjk.inf</ulink>
-	Detailed explanations of <literal>EUC_JP</literal>, <literal>EUC_CN</literal>, <literal>EUC_KR</literal>, <literal>EUC_TW</literal>
-	appear in section 3.2.
-       </para>
-      </listitem>
+     <variablelist>
+      <varlistentry>
+       <term><ulink url="ftp://ftp.ora.com/pub/examples/nutshell/ujip/doc/cjk.inf"
+        >ftp://ftp.ora.com/pub/examples/nutshell/ujip/doc/cjk.inf</ulink></term>
 
-      <listitem>
-       <para>
-	Unicode: <ulink url="http://www.unicode.org/">http://www.unicode.org/</ulink>
-	The homepage of Unicode.
-       </para>
-      </listitem>
+       <listitem>
+        <para>
+         Detailed explanations of <literal>EUC_JP</literal>,
+         <literal>EUC_CN</literal>, <literal>EUC_KR</literal>,
+         <literal>EUC_TW</literal> appear in section 3.2.
+        </para>
+       </listitem>
+      </varlistentry>
 
-      <listitem>
-       <para>
-	<literal>RFC 2044</literal>
-	<literal>UTF</literal>-8 is defined here.
-       </para>
-      </listitem>
-     </itemizedlist>
+      <varlistentry>
+       <term><ulink url="http://www.unicode.org/">http://www.unicode.org/</ulink></term>
+
+       <listitem>
+        <para>
+         The web site of the Unicode Consortium
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term>RFC 2044</term>
+
+       <listitem>
+        <para>
+	 <acronym>UTF</acronym>-8 is defined here.
+        </para>
+       </listitem>
+      </varlistentry>
+     </variablelist>
     </para>
    </sect2>
 
    <sect2>
     <title>History</title>
 
-    <para>
-     <programlisting>
+<literallayout class="monospaced">
 Dec 7, 2000
 	* An automatic encoding translation between Unicode and other
 	  encodings are implemented
@@ -728,8 +737,7 @@ Mar 10, 1998 PL2 released
 	* fix problems concerning 8-bit single byte characters
 
 Mar 1, 1998 PL1 released
-     </programlisting>
-    </para>
+</literallayout>
    </sect2>
 
    <sect2>

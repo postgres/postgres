@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/lobj.sgml,v 1.22 2001/09/16 22:53:52 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/lobj.sgml,v 1.23 2001/10/09 18:46:00 petere Exp $
 -->
 
  <chapter id="largeObjects">
@@ -326,10 +326,6 @@ SELECT lo_export(image.raster, '/tmp/motd') from image
  *    test using large objects with libpq
  *
  * Copyright (c) 1994, Regents of the University of California
- *
- *
- * IDENTIFICATION
- *    /usr/local/devel/pglite/cvs/src/doc/manual.me,v 1.16 1995/09/01 23:55:00 jolly Exp
  *
  *--------------------------------------------------------------
  */

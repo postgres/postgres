@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/sources.sgml,v 2.3 2000/09/29 20:21:34 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/sources.sgml,v 2.4 2001/10/09 18:46:00 petere Exp $
 -->
 
  <chapter id="source">
@@ -18,10 +18,14 @@ $Header: /cvsroot/pgsql/doc/src/sgml/sources.sgml,v 2.3 2000/09/29 20:21:34 pete
     to your <filename>~/.emacs</filename> 
     initialization file:
 
-    <programlisting>
+<programlisting>
 ;; check for files with a path containing "postgres" or "pgsql"
-(setq auto-mode-alist (cons '("\\(postgres\\|pgsql\\).*\\.[ch]\\'" . pgsql-c-mode) auto-mode-alist))
-(setq auto-mode-alist (cons '("\\(postgres\\|pgsql\\).*\\.cc\\'" . pgsql-c-mode) auto-mode-alist))
+(setq auto-mode-alist
+  (cons '("\\(postgres\\|pgsql\\).*\\.[ch]\\'" . pgsql-c-mode)
+        auto-mode-alist))
+(setq auto-mode-alist
+  (cons '("\\(postgres\\|pgsql\\).*\\.cc\\'" . pgsql-c-mode)
+        auto-mode-alist))
 
 (defun pgsql-c-mode ()
   ;; sets up formatting for Postgres C code
@@ -31,7 +35,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/sources.sgml,v 2.3 2000/09/29 20:21:34 pete
   (c-set-style "bsd")             ; set c-basic-offset to 4, plus other stuff
   (c-set-offset 'case-label '+)   ; tweak case indent to match PG custom
   (setq indent-tabs-mode t))      ; make sure we keep tabs when indenting
-    </programlisting>
+</programlisting>
    </para>
 
    <para>
@@ -39,25 +43,25 @@ $Header: /cvsroot/pgsql/doc/src/sgml/sources.sgml,v 2.3 2000/09/29 20:21:34 pete
     <filename>~/.vimrc</filename> or equivalent file should contain
     the following:
 
-    <programlisting>
+<programlisting>
 set tabstop=4
-    </programlisting>
+</programlisting>
 
     or equivalently from within vi, try
 
-    <programlisting>
+<programlisting>
 :set ts=4
-    </programlisting>
+</programlisting>
    </para>
 
    <para>
     The text browsing tools <application>more</application> and
     <application>less</application> can be invoked as
 
-    <programlisting>
+<programlisting>
 more -x4
 less -x4
-    </programlisting>
+</programlisting>
    </para>
   </sect1>
  </chapter>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.88 2001/10/01 22:44:31 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.89 2001/10/09 18:46:00 petere Exp $
 -->
 
 <Chapter Id="runtime">
@@ -459,9 +459,9 @@ psql: could not connect to server: Connection refused
    </para>
 
    <para>
-    One way to set these options is to create a file
-    <filename>postgresql.conf</filename> in the data directory (e.g.,
-    <filename>/usr/local/pgsql/data</filename>). An example of what
+    One way to set these options is to edit the file
+    <filename>postgresql.conf</filename> in the data directory.
+    (A default file is installed there.)  An example of what
     this file could look like is:
 <programlisting>
 # This is a comment

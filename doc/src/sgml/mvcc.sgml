@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.18 2001/09/13 15:55:23 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.19 2001/10/09 18:46:00 petere Exp $
 -->
 
  <chapter id="mvcc">
@@ -102,10 +102,11 @@ $Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.18 2001/09/13 15:55:23 petere
     <indexterm>
      <primary>isolation levels</primary>
     </indexterm>
-    The four isolation levels and the corresponding behaviors are described below.
+    The four transaction isolation levels and the corresponding
+    behaviors are described in <xref linkend="mvcc-isolevel-table">.
 
-    <table tocentry="1">
-     <title><acronym>ANSI</acronym>/<acronym>ISO</acronym> <acronym>SQL</acronym> Isolation Levels</title>
+    <table tocentry="1" id="mvcc-isolevel-table">
+     <title><acronym>SQL</acronym> Transaction Isolation Levels</title>
      <titleabbrev>Isolation Levels</titleabbrev>
      <tgroup cols="4">
       <thead>

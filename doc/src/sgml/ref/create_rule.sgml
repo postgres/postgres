@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.27 2001/09/14 08:19:55 ishii Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.28 2001/10/09 18:46:00 petere Exp $
 Postgres documentation
 -->
 
@@ -225,29 +225,25 @@ CREATE
     select command will cause <productname>Postgres</productname> to 
     report an error because the query cycled too many times:
 
-    <example>
-     <title>Example of a circular rewrite rule combination:</title>
-     <programlisting>
+<programlisting>
 CREATE RULE "_RETemp" AS
     ON SELECT TO emp
     DO INSTEAD 
 	SELECT * FROM toyemp;
-     </programlisting>
 
-     <programlisting>
 CREATE RULE "_RETtoyemp" AS
     ON SELECT TO toyemp
     DO INSTEAD 
 	SELECT * FROM emp;
-     </programlisting>
-     <para>
+</programlisting>
+
       This attempt to select from EMP will cause
       <productname>Postgres</productname> to issue an error
       because the queries cycled too many times:
-      <programlisting>
+
+ <programlisting>
 SELECT * FROM emp;
-      </programlisting></para>
-    </example>
+</programlisting>
    </para>
 
    <para>
