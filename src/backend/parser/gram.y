@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.255 2001/10/01 04:19:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.256 2001/10/02 21:39:35 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -151,7 +151,7 @@ static void doNegateFloat(Value *v);
 %type <list>	createdb_opt_list, createdb_opt_item
 
 %type <ival>	opt_lock, lock_type
-%type <boolean>	opt_force
+%type <boolean>	opt_force, opt_or_replace
 
 %type <list>	user_list
 
@@ -321,13 +321,13 @@ static void doNegateFloat(Value *v);
 		VALUES, VARCHAR, VARYING, VIEW,
 		WHEN, WHERE, WITH, WORK, YEAR_P, ZONE
 
-/* Keywords (in SQL3 reserved words) */
+/* Keywords (in SQL99 reserved words) */
 %token	CHAIN, CHARACTERISTICS,
 		DEFERRABLE, DEFERRED,
 		IMMEDIATE, INITIALLY, INOUT,
 		OFF, OUT,
 		PATH_P, PENDANT,
-		RESTRICT,
+		REPLACE, RESTRICT,
         TRIGGER,
 		WITHOUT
 
@@ -2497,32 +2497,31 @@ RecipeStmt:  EXECUTE RECIPE recipe_name
 /*****************************************************************************
  *
  *		QUERY:
- *				define function <fname>
+ *				create [or replace] function <fname>
  *						[(<type-1> { , <type-n>})]
  *						returns <type-r>
  *						as <filename or code in language as appropriate>
- *						language <lang> [with
- *						[  arch_pct = <percentage | pre-defined>]
- *						[, disk_pct = <percentage | pre-defined>]
- *						[, byte_pct = <percentage | pre-defined>]
- *						[, perbyte_cpu = <int | pre-defined>]
- *						[, percall_cpu = <int | pre-defined>]
- *						[, iscachable] ]
+ *						language <lang> [with parameters]
  *
  *****************************************************************************/
 
-ProcedureStmt:	CREATE FUNCTION func_name func_args
+ProcedureStmt:	CREATE opt_or_replace FUNCTION func_name func_args
 			 RETURNS func_return AS func_as LANGUAGE ColId_or_Sconst opt_with
 				{
 					ProcedureStmt *n = makeNode(ProcedureStmt);
-					n->funcname = $3;
-					n->argTypes = $4;
-					n->returnType = (Node *)$6;
-					n->withClause = $11;
-					n->as = $8;
-					n->language = $10;
+					n->replace = $2;
+					n->funcname = $4;
+					n->argTypes = $5;
+					n->returnType = (Node *) $7;
+					n->withClause = $12;
+					n->as = $9;
+					n->language = $11;
 					$$ = (Node *)n;
 				};
+
+opt_or_replace:  OR REPLACE						{ $$ = TRUE; }
+		| /*EMPTY*/								{ $$ = FALSE; }
+		;
 
 opt_with:  WITH definition						{ $$ = $2; }
 		| /*EMPTY*/								{ $$ = NIL; }
@@ -5682,6 +5681,7 @@ TokenId:  ABSOLUTE						{ $$ = "absolute"; }
 		| REINDEX						{ $$ = "reindex"; }
 		| RELATIVE						{ $$ = "relative"; }
 		| RENAME						{ $$ = "rename"; }
+		| REPLACE						{ $$ = "replace"; }
 		| RESTRICT						{ $$ = "restrict"; }
 		| RETURNS						{ $$ = "returns"; }
 		| REVOKE						{ $$ = "revoke"; }

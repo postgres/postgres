@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.59 2001/09/08 01:10:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.60 2001/10/02 21:39:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,6 +41,7 @@ static void checkretval(Oid rettype, List *queryTreeList);
  */
 Oid
 ProcedureCreate(char *procedureName,
+				bool replace,
 				bool returnsSet,
 				char *returnTypeName,
 				char *languageName,
@@ -58,10 +59,12 @@ ProcedureCreate(char *procedureName,
 	int			i;
 	Relation	rel;
 	HeapTuple	tup;
+	HeapTuple	oldtup;
 	bool		defined;
 	uint16		parameterCount;
 	char		nulls[Natts_pg_proc];
 	Datum		values[Natts_pg_proc];
+	char		replaces[Natts_pg_proc];
 	Oid			languageObjectId;
 	Oid			typeObjectId;
 	List	   *x;
@@ -119,15 +122,6 @@ ProcedureCreate(char *procedureName,
 
 		typev[parameterCount++] = toid;
 	}
-
-	/* Check for duplicate definition */
-	if (SearchSysCacheExists(PROCNAME,
-							 PointerGetDatum(procedureName),
-							 UInt16GetDatum(parameterCount),
-							 PointerGetDatum(typev),
-							 0))
-		elog(ERROR, "function %s already exists with same argument types",
-			 procedureName);
 
 	if (languageObjectId == SQLlanguageId)
 	{
@@ -260,13 +254,14 @@ ProcedureCreate(char *procedureName,
 	}
 
 	/*
-	 * All seems OK; prepare the tuple to be inserted into pg_proc.
+	 * All seems OK; prepare the data to be inserted into pg_proc.
 	 */
 
 	for (i = 0; i < Natts_pg_proc; ++i)
 	{
 		nulls[i] = ' ';
 		values[i] = (Datum) NULL;
+		replaces[i] = 'r';
 	}
 
 	i = 0;
@@ -293,14 +288,49 @@ ProcedureCreate(char *procedureName,
 									  CStringGetDatum(probin));
 
 	rel = heap_openr(ProcedureRelationName, RowExclusiveLock);
-
 	tupDesc = rel->rd_att;
-	tup = heap_formtuple(tupDesc,
-						 values,
-						 nulls);
 
-	heap_insert(rel, tup);
+	/* Check for pre-existing definition */
+	oldtup = SearchSysCache(PROCNAME,
+							PointerGetDatum(procedureName),
+							UInt16GetDatum(parameterCount),
+							PointerGetDatum(typev),
+							0);
 
+	if (HeapTupleIsValid(oldtup))
+	{
+		/* There is one; okay to replace it? */
+		Form_pg_proc	oldproc = (Form_pg_proc) GETSTRUCT(oldtup);
+
+		if (!replace)
+			elog(ERROR, "function %s already exists with same argument types",
+				 procedureName);
+		if (GetUserId() != oldproc->proowner && !superuser())
+			elog(ERROR, "ProcedureCreate: you do not have permission to replace function %s",
+				 procedureName);
+		/*
+		 * Not okay to change the return type of the existing proc, since
+		 * existing rules, views, etc may depend on the return type.
+		 */
+		if (typeObjectId != oldproc->prorettype ||
+			returnsSet != oldproc->proretset)
+			elog(ERROR, "ProcedureCreate: cannot change return type of existing function."
+				 "\n\tUse DROP FUNCTION first.");
+
+		/* Okay, do it... */
+ 		tup = heap_modifytuple(oldtup, rel, values, nulls, replaces);
+ 	   	simple_heap_update(rel, &tup->t_self, tup);
+
+		ReleaseSysCache(oldtup);
+	}
+	else
+	{
+		/* Creating a new procedure */
+		tup = heap_formtuple(tupDesc, values, nulls);
+		heap_insert(rel, tup);
+	}
+
+	/* Need to update indices for either the insert or update case */
 	if (RelationGetForm(rel)->relhasindex)
 	{
 		Relation	idescs[Num_pg_proc_indices];
@@ -309,9 +339,12 @@ ProcedureCreate(char *procedureName,
 		CatalogIndexInsert(idescs, Num_pg_proc_indices, rel, tup);
 		CatalogCloseIndices(Num_pg_proc_indices, idescs);
 	}
-	heap_close(rel, RowExclusiveLock);
+
 	retval = tup->t_data->t_oid;
 	heap_freetuple(tup);
+
+	heap_close(rel, RowExclusiveLock);
+
 	return retval;
 }
 

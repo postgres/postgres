@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.26 2001/09/03 12:57:49 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.27 2001/10/02 21:39:35 tgl Exp $
 -->
 
 <refentry id="SQL-CREATEFUNCTION">
@@ -15,12 +15,12 @@ $Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.26 2001/09/03 
 
  <refsynopsisdiv>
 <synopsis>
-CREATE FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceable class="parameter">argtype</replaceable> [, ...] ] )
+CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceable class="parameter">argtype</replaceable> [, ...] ] )
     RETURNS <replaceable class="parameter">rettype</replaceable>
     AS '<replaceable class="parameter">definition</replaceable>'
     LANGUAGE <replaceable class="parameter">langname</replaceable>
     [ WITH ( <replaceable class="parameter">attribute</replaceable> [, ...] ) ]
-CREATE FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceable class="parameter">argtype</replaceable> [, ...] ] )
+CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceable class="parameter">argtype</replaceable> [, ...] ] )
     RETURNS <replaceable class="parameter">rettype</replaceable>
     AS '<replaceable class="parameter">obj_file</replaceable>', '<replaceable class="parameter">link_symbol</replaceable>'
     LANGUAGE <replaceable class="parameter">langname</replaceable>
@@ -33,6 +33,8 @@ CREATE FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceab
 
   <para>
    <command>CREATE FUNCTION</command> defines a new function.
+   <command>CREATE OR REPLACE FUNCTION</command> will either create
+   a new function, or replace an existing definition.
 
    <variablelist>
     <title>Parameters</title>
@@ -203,11 +205,6 @@ CREATE FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceab
    </para>
 
    <para>
-    Use <command>DROP FUNCTION</command>
-    to remove user-defined functions.
-   </para>
-
-   <para>
     The full <acronym>SQL</acronym> type syntax is allowed for
     input arguments and return value. However, some details of the
     type specification (e.g., the precision field for
@@ -248,6 +245,29 @@ CREATE FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceab
     the same object file, the file is only loaded once.  To unload and
     reload the file (perhaps during development), use the <xref
     linkend="sql-load"> command.
+   </para>
+
+   <para>
+    Use <command>DROP FUNCTION</command>
+    to remove user-defined functions.
+   </para>
+
+   <para>
+    To update the definition of an existing function, use
+    <command>CREATE OR REPLACE FUNCTION</command>.  Note that it is
+    not possible to change the name or argument types of a function
+    this way (if you tried, you'd just be creating a new, distinct
+    function).  Also, <command>CREATE OR REPLACE FUNCTION</command>
+    will not let you change the return type of an existing function.
+    To do that, you must drop and re-create the function.
+   </para>
+
+   <para>
+    If you drop and then re-create a function, the new function is not
+    the same entity as the old; you will break existing rules, views,
+    triggers, etc that referred to the old function.  Use 
+    <command>CREATE OR REPLACE FUNCTION</command> to change a function
+    definition without breaking objects that refer to the function.
    </para>
 
  </refsect1>

@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.156 2001/09/18 01:59:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.157 2001/10/02 21:39:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2071,6 +2071,7 @@ _copyProcedureStmt(ProcedureStmt *from)
 {
 	ProcedureStmt *newnode = makeNode(ProcedureStmt);
 
+	newnode->replace = from->replace;
 	newnode->funcname = pstrdup(from->funcname);
 	Node_Copy(from, newnode, argTypes);
 	Node_Copy(from, newnode, returnType);

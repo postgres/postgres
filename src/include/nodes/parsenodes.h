@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.144 2001/09/18 01:59:06 tgl Exp $
+ * $Id: parsenodes.h,v 1.145 2001/10/02 21:39:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -514,6 +514,7 @@ typedef struct IndexStmt
 typedef struct ProcedureStmt
 {
 	NodeTag		type;
+	bool		replace;		/* T => replace if already exists */
 	char	   *funcname;		/* name of function to create */
 	List	   *argTypes;		/* list of argument types (TypeName nodes) */
 	Node	   *returnType;		/* the return type (a TypeName node) */

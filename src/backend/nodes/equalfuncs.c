@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.104 2001/09/18 01:59:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.105 2001/10/02 21:39:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -941,6 +941,8 @@ _equalIndexStmt(IndexStmt *a, IndexStmt *b)
 static bool
 _equalProcedureStmt(ProcedureStmt *a, ProcedureStmt *b)
 {
+	if (a->replace != b->replace)
+		return false;
 	if (!equalstr(a->funcname, b->funcname))
 		return false;
 	if (!equal(a->argTypes, b->argTypes))

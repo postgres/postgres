@@ -202,7 +202,7 @@ make_name(void)
 %token DEFERRABLE, DEFERRED,
                IMMEDIATE, INITIALLY,
                PENDANT,
-               RESTRICT,
+               REPLACE, RESTRICT,
                TRIGGER
 
 /* Keywords (in SQL92 non-reserved words) */
@@ -338,7 +338,7 @@ make_name(void)
 %type  <str>	constraints_set_mode comment_type comment_cl comment_ag
 %type  <str>	CreateGroupStmt AlterGroupStmt DropGroupStmt key_delete
 %type  <str>	opt_force key_update CreateSchemaStmt PosIntStringConst
-%type  <str>    IntConst PosIntConst grantee_list func_type
+%type  <str>    IntConst PosIntConst grantee_list func_type opt_or_replace
 %type  <str>    select_limit opt_for_update_clause CheckPointStmt
 
 %type  <str>	ECPGWhenever ECPGConnect connection_target ECPGOpen
@@ -1881,25 +1881,23 @@ RecipeStmt:  EXECUTE RECIPE recipe_name
 /*****************************************************************************
  *
  *		QUERY:
- *				define function <fname>
- *                                              [(<type-1> { , <type-n>})]
- *                                              returns <type-r>
- *                                              as <filename or code in language as appropriate>
- *                                              language <lang> [with
- *                                              [  arch_pct = <percentage | pre-defined>]
- *						[, disk_pct = <percentage | pre-defined>]
- *						[, byte_pct = <percentage | pre-defined>]
- *						[, perbyte_cpu = <int | pre-defined>]
- *						[, percall_cpu = <int | pre-defined>]
- *						[, iscachable]
+ *				create [or replace] function <fname>
+ *						[(<type-1> { , <type-n>})]
+ *						returns <type-r>
+ *						as <filename or code in language as appropriate>
+ *						language <lang> [with parameters]
  *
  *****************************************************************************/
 
-ProcedureStmt:	CREATE FUNCTION func_name func_args
+ProcedureStmt:	CREATE opt_or_replace FUNCTION func_name func_args
 			 RETURNS func_return AS func_as LANGUAGE ColId_or_Sconst opt_with
 				{
-					$$ = cat_str(10, make_str("create function"), $3, $4, make_str("returns"), $6, make_str("as"), $8, make_str("language"), $10, $11);
+					$$ = cat_str(12, make_str("create"), $2, make_str("function"), $4, $5, make_str("returns"), $7, make_str("as"), $9, make_str("language"), $11, $12);
 				}
+
+opt_or_replace:  OR REPLACE				{ $$ = make_str("or replace"); }
+		| /*EMPTY*/						{ $$ = EMPTY; }
+		;
 
 opt_with:  WITH definition			{ $$ = cat2_str(make_str("with"), $2); }
 		| /*EMPTY*/			{ $$ = EMPTY; }
@@ -5043,6 +5041,7 @@ TokenId:  ABSOLUTE			{ $$ = make_str("absolute"); }
 	| REINDEX			{ $$ = make_str("reindex"); }
 	| RELATIVE			{ $$ = make_str("relative"); }
 	| RENAME			{ $$ = make_str("rename"); }
+	| REPLACE			{ $$ = make_str("replace"); }
 	| RESTRICT			{ $$ = make_str("restrict"); }
 	| RETURNS			{ $$ = make_str("returns"); }
 	| REVOKE			{ $$ = make_str("revoke"); }

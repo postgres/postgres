@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.38 2001/09/08 01:10:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.39 2001/10/02 21:39:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,6 +51,7 @@ SetDefine(char *querystr, char *typename)
 	char		repl[Natts_pg_proc];
 
 	setoid = ProcedureCreate(procname,	/* changed below, after oid known */
+							 false,		/* don't replace */
 							 true,		/* returnsSet */
 							 typename,	/* returnTypeName */
 							 "sql",		/* languageName */

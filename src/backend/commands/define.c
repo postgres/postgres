@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.60 2001/09/08 01:10:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.61 2001/10/02 21:39:35 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -324,6 +324,7 @@ CreateFunction(ProcedureStmt *stmt)
 	 * to do so, go ahead and create the function.
 	 */
 	ProcedureCreate(stmt->funcname,
+					stmt->replace,
 					returnsSet,
 					prorettype,
 					languageName,
