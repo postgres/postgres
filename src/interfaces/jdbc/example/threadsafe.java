@@ -145,7 +145,7 @@ public class threadsafe
 	// manner. (DateStyles are PostgreSQL's way of handling different methods
 	// of representing dates in the Date data type.)
 	PreparedStatement ps = db.prepareStatement("insert into basic1 values (?,?)");
-	for(int i=2;i<200;i++) {
+	for(int i=2;i<2000;i++) {
 	  ps.setInt(1,4);		// "column a" = 5
 	  ps.setInt(2,i);		// "column b" = i
 	  ps.executeUpdate();	// executeUpdate because insert returns no data
@@ -212,7 +212,7 @@ public class threadsafe
 	// manner. (DateStyles are PostgreSQL's way of handling different methods
 	// of representing dates in the Date data type.)
 	PreparedStatement ps = db.prepareStatement("insert into basic2 values (?,?)");
-	for(int i=2;i<200;i++) {
+	for(int i=2;i<2000;i++) {
 	  ps.setInt(1,4);		// "column a" = 5
 	  ps.setInt(2,i);		// "column b" = i
 	  ps.executeUpdate();	// executeUpdate because insert returns no data

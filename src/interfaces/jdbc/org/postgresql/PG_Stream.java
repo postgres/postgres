@@ -23,6 +23,9 @@ public class PG_Stream
   private InputStream pg_input;
   private BufferedOutputStream pg_output;
   
+    BytePoolDim1 bytePoolDim1 = new BytePoolDim1();
+    BytePoolDim2 bytePoolDim2 = new BytePoolDim2();
+    
   /**
    * Constructor:  Connect to the PostgreSQL back end and return
    * a stream connection.
@@ -70,7 +73,7 @@ public class PG_Stream
    */
   public void SendInteger(int val, int siz) throws IOException
   {
-    byte[] buf = new byte[siz];
+    byte[] buf = bytePoolDim1.allocByte(siz);
     
     while (siz-- > 0)
       {
@@ -94,7 +97,7 @@ public class PG_Stream
    */
   public void SendIntegerReverse(int val, int siz) throws IOException
   {
-    byte[] buf = new byte[siz];
+    byte[] buf = bytePoolDim1.allocByte(siz);
     int p=0;
     while (siz-- > 0)
       {
@@ -236,15 +239,27 @@ public class PG_Stream
       return n;
   }
 
-    public String ReceiveString(int maxsize) throws SQLException {
-        return ReceiveString(maxsize, null);
-    }
-  
   /**
    * Receives a null-terminated string from the backend.  Maximum of
    * maxsiz bytes - if we don't see a null, then we assume something
    * has gone wrong.
    *
+   * @param maxsiz maximum length of string
+   * @return string from back end
+   * @exception SQLException if an I/O error occurs
+   */
+  public String ReceiveString(int maxsiz) throws SQLException
+  {
+    byte[] rst = bytePoolDim1.allocByte(maxsiz);
+    return ReceiveString(rst, maxsiz, null);
+  }
+
+  /**
+   * Receives a null-terminated string from the backend.  Maximum of
+   * maxsiz bytes - if we don't see a null, then we assume something
+   * has gone wrong.
+   *
+   * @param maxsiz maximum length of string
    * @param encoding the charset encoding to use.
    * @param maxsiz maximum length of string in bytes
    * @return string from back end
@@ -252,7 +267,25 @@ public class PG_Stream
    */
   public String ReceiveString(int maxsiz, String encoding) throws SQLException
   {
-    byte[] rst = new byte[maxsiz];
+    byte[] rst = bytePoolDim1.allocByte(maxsiz);
+    return ReceiveString(rst, maxsiz, encoding);
+  }
+  
+  /**
+   * Receives a null-terminated string from the backend.  Maximum of
+   * maxsiz bytes - if we don't see a null, then we assume something
+   * has gone wrong.
+   *
+   * @param rst byte array to read the String into. rst.length must 
+   *        equal to or greater than maxsize. 
+   * @param maxsiz maximum length of string in bytes
+   * @param encoding the charset encoding to use.
+   * @return string from back end
+   * @exception SQLException if an I/O error occurs
+   */
+  public String ReceiveString(byte rst[], int maxsiz, String encoding) 
+      throws SQLException
+  {
     int s = 0;
     
     try
@@ -262,9 +295,10 @@ public class PG_Stream
 	    int c = pg_input.read();
 	    if (c < 0)
 	      throw new PSQLException("postgresql.stream.eof");
-	    else if (c == 0)
-	      break;
-	    else
+ 	    else if (c == 0) {
+ 		rst[s] = 0;
+ 		break;
+ 	    } else
 	      rst[s++] = (byte)c;
 	  }
 	if (s >= maxsiz)
@@ -299,7 +333,7 @@ public class PG_Stream
   {
     int i, bim = (nf + 7)/8;
     byte[] bitmask = Receive(bim);
-    byte[][] answer = new byte[nf][0];
+    byte[][] answer = bytePoolDim2.allocByte(nf);
     
     int whichbit = 0x80;
     int whichbyte = 0;
@@ -337,7 +371,7 @@ public class PG_Stream
    */
   private byte[] Receive(int siz) throws SQLException
   {
-    byte[] answer = new byte[siz];
+      byte[] answer = bytePoolDim1.allocByte(siz);
     Receive(answer,0,siz);
     return answer;
   }
@@ -395,4 +429,152 @@ public class PG_Stream
     pg_input.close();
     connection.close();
   }
+
+  /**
+   * Deallocate all resources that has been associated with any previous
+   * query.
+   */
+  public void deallocate(){
+      bytePoolDim1.deallocate();
+      bytePoolDim2.deallocate();
+  }
 }
+
+/**
+ * A simple and fast object pool implementation that can pool objects 
+ * of any type. This implementation is not thread safe, it is up to the users
+ * of this class to assure thread safety. 
+ */
+class ObjectPool {
+    int cursize = 0;
+    int maxsize = 16;
+    Object arr[] = new Object[maxsize];
+    
+    public void add(Object o){
+	if(cursize >= maxsize){
+	    Object newarr[] = new Object[maxsize*2];
+	    System.arraycopy(arr, 0, newarr, 0, maxsize);
+	    maxsize = maxsize * 2;
+	    arr = newarr;
+	}
+	arr[cursize++] = o;
+    }
+    
+    public Object remove(){
+	return arr[--cursize];
+    }
+    public boolean isEmpty(){
+	return cursize == 0;
+    }
+    public int size(){
+	return cursize;
+    }
+    public void addAll(ObjectPool pool){
+	int srcsize = pool.size();
+	if(srcsize == 0)
+	    return;
+	int totalsize = srcsize + cursize;
+	if(totalsize > maxsize){
+	    Object newarr[] = new Object[totalsize*2];
+	    System.arraycopy(arr, 0, newarr, 0, cursize);
+	    maxsize = maxsize = totalsize * 2;
+	    arr = newarr;
+	}
+	System.arraycopy(pool.arr, 0, arr, cursize, srcsize);
+	cursize = totalsize;
+    }
+    public void clear(){
+	    cursize = 0;
+    }
+}
+
+/**
+ * A simple and efficient class to pool one dimensional byte arrays
+ * of different sizes.
+ */
+class BytePoolDim1 {
+    int maxsize = 256;
+    ObjectPool notusemap[] = new ObjectPool[maxsize];
+    ObjectPool inusemap[] = new ObjectPool[maxsize];
+    byte binit[][] = new byte[maxsize][0];
+
+    public BytePoolDim1(){
+	for(int i = 0; i < maxsize; i++){
+	    binit[i] = new byte[i];
+	    inusemap[i] = new ObjectPool();
+	    notusemap[i] = new ObjectPool();
+	}
+    }
+
+    public byte[] allocByte(int size){
+	if(size > maxsize){
+	    return new byte[size];
+	}
+
+	ObjectPool not_usel = notusemap[size];
+	ObjectPool in_usel = inusemap[size];
+	byte b[] = null;
+
+	if(!not_usel.isEmpty()) {
+	    Object o = not_usel.remove();
+	    b = (byte[]) o;
+	} else 
+	    b = new byte[size];
+	in_usel.add(b);
+	    
+	return b;
+    }
+	
+    public void deallocate(){
+	for(int i = 0; i < maxsize; i++){
+	    notusemap[i].addAll(inusemap[i]);
+	    inusemap[i].clear();
+	}
+
+    }
+}
+
+
+  
+/**
+ * A simple and efficient class to pool two dimensional byte arrays
+ * of different sizes.
+ */
+class BytePoolDim2 {
+    int maxsize = 32;
+    ObjectPool notusemap[] = new ObjectPool[maxsize];
+    ObjectPool inusemap[] = new ObjectPool[maxsize];
+
+    public BytePoolDim2(){
+	for(int i = 0; i < maxsize; i++){
+	    inusemap[i] = new ObjectPool();
+	    notusemap[i] = new ObjectPool();
+	}
+    }
+
+    public byte[][] allocByte(int size){
+	if(size > maxsize){
+	    return new byte[size][0];
+	}
+	ObjectPool not_usel = notusemap[size];
+	ObjectPool in_usel =  inusemap[size];
+
+	byte b[][] = null;
+
+	if(!not_usel.isEmpty()) {
+	    Object o = not_usel.remove();
+	    b = (byte[][]) o;
+	} else 
+	    b = new byte[size][0];
+	in_usel.add(b);
+	return b;
+    }
+	
+    public void deallocate(){
+	for(int i = 0; i < maxsize; i++){
+	    notusemap[i].addAll(inusemap[i]);
+	    inusemap[i].clear();
+	}
+    }
+}
+

@@ -179,7 +179,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    */
   public String getDatabaseProductVersion() throws SQLException
   {
-    return ("7.0.2");
+      return connection.this_driver.getVersion();
   }
   
   /**
@@ -203,7 +203,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    */
   public String getDriverVersion() throws SQLException
   {
-    return Integer.toString(connection.this_driver.getMajorVersion())+"."+Integer.toString(connection.this_driver.getMinorVersion());
+      return connection.this_driver.getVersion();
   }
   
   /**
@@ -453,14 +453,14 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
   
   /**
    * Is "ALTER TABLE" with a drop column supported?
-   * Yes for PostgreSQL 6.1
+   * Peter 10/10/2000 This was set to true, but 7.1devel doesn't support it!
    *
    * @return true if so
    * @exception SQLException if a database access error occurs
    */
   public boolean supportsAlterTableWithDropColumn() throws SQLException
   {
-    return true;
+      return false;
   }
   
   /**

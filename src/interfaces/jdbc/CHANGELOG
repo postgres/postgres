@@ -1,3 +1,20 @@
+Tue Oct 10 13:12:00 BST 2000 peter@retep.org.uk
+	- DatabaseMetaData.supportsAlterTableWithDropColumn() as psql doesn't
+	  support dropping of individual columns
+	- Merged in some last patches. Only 1 left, which may not be compatible
+	  with jdbc1
+	- Merged in my old retepsql project. Makefile now includes it.
+	
+Mon Oct 02 12:30:00 BST 2000 peter@retep.org.uk
+	- Merged in byte[] array allocation changes submitted by Gunnar R|nning
+	  <gunnar@candleweb.no>
+	
+Mon Sep 25 14:22:00 BST 2000 peter@retep.org.uk
+	- Removed the DriverClass kludge. Now the org.postgresql.Driver class
+	  is compiled from a template file, and now has both the connection
+	  class (ie jdbc1/jdbc2) and the current version's from Makefile.global
+	- 
+	
 Thu Jul 20 16:30:00 BST 2000 petermount@it.maidstone.gov.uk
 	- Fixed DatabaseMetaData.getTableTypes()
 

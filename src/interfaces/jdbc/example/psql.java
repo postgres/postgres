@@ -15,6 +15,7 @@ public class psql
   Connection	   db;		// The connection to the database
   Statement	   st;		// Our statement to run queries with
   DatabaseMetaData dbmd;	// This defines the structure of the database
+  boolean done = false;         // Added by CWJ to permit \q command
   
   public psql(String args[]) throws ClassNotFoundException, FileNotFoundException, IOException, SQLException
   {
@@ -44,11 +45,11 @@ public class psql
     input.eolIsSignificant(false);	// treat eol's as spaces
     input.wordChars(32,126);
     input.whitespaceChars(59,59);
-    input.quoteChar(39);
+    // input.quoteChar(39); *** CWJ: messes up literals in query string ***
     
     // Now the main loop.
     int tt=0,lineno=1;
-    while(tt!=StreamTokenizer.TT_EOF) {
+    while(tt!=StreamTokenizer.TT_EOF && ! done) { // done added by CWJ to permit \q command
       System.out.print("["+lineno+"] ");
       System.out.flush();
       
@@ -164,7 +165,9 @@ public class psql
 	//
 	displayResult(dbmd.getTables(null,null,"%",types));
       }
-    } else
+    } else if(line.equals("\\q")) // Added by CWJ to permit \q command
+        done = true;
+    else
       throw new SQLException("Unsupported \\ command: "+line);
   }
   

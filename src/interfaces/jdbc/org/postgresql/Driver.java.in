@@ -26,10 +26,6 @@ import org.postgresql.util.PSQLException;
  */
 public class Driver implements java.sql.Driver 
 {
-  // These should be in sync with the backend that the driver was
-  // distributed with
-  static final int MAJORVERSION = 7;
-  static final int MINORVERSION = 0;
     
   static 
   {
@@ -117,10 +113,8 @@ public class Driver implements java.sql.Driver
     if((props = parseURL(url,info))==null)
       return null;
     
-    DriverManager.println("Using "+DriverClass.connectClass);
-    
     try {
-	org.postgresql.Connection con = (org.postgresql.Connection)(Class.forName(DriverClass.connectClass).newInstance());
+	org.postgresql.Connection con = (org.postgresql.Connection)(Class.forName("%JDBCCONNECTCLASS%").newInstance());
 	con.openConnection (host(), port(), props, database(), url, this);
 	return (java.sql.Connection)con;
     } catch(ClassNotFoundException ex) {
@@ -198,7 +192,7 @@ public class Driver implements java.sql.Driver
    */
   public int getMajorVersion()
   {
-    return MAJORVERSION;
+    return %MAJORVERSION%;
   }
   
   /**
@@ -208,9 +202,17 @@ public class Driver implements java.sql.Driver
    */
   public int getMinorVersion()
   {
-    return MINORVERSION;
+    return %MINORVERSION%;
   }
   
+    /**
+     * Returns the VERSION variable from Makefile.global
+     */
+    public static String getVersion()
+    {
+	return "%VERSION%";
+    }
+    
   /**
    * Report whether the driver is a genuine JDBC compliant driver.  A
    * driver may only report "true" here if it passes the JDBC compliance

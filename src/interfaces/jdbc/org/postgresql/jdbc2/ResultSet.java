@@ -730,6 +730,11 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
     
     if (columnIndex < 1 || columnIndex > fields.length)
       throw new PSQLException("postgresql.res.colrange");
+    
+    wasNullFlag = (this_row[columnIndex - 1] == null);
+    if(wasNullFlag)
+      return null;
+    
     field = fields[columnIndex - 1];
     
     // some fields can be null, mainly from those returned by MetaData methods

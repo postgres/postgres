@@ -4,10 +4,15 @@
 #    Makefile for Java JDBC interface
 #
 # IDENTIFICATION
-#    $Id: Makefile,v 1.24 2000/09/12 04:58:46 momjian Exp $
+#    $Id: Makefile,v 1.25 2000/10/12 08:55:23 peter Exp $
 #
 #-------------------------------------------------------------------------
 
+subdir		= src/interfaces
+top_builddir	= ../../..
+include		$(top_builddir)/src/Makefile.global
+
+CP		= cp
 FIND		= find
 IDL2JAVA	= idltojava -fno-cpp -fno-tie
 JAR		= jar
@@ -16,6 +21,9 @@ JAVAC		= javac -g
 JAVADOC		= javadoc
 RM		= rm -f
 TOUCH		= touch
+
+BUILDDRIVER	= sh utils/buildDriver
+CHANGELOG	= perl utils/changelog.pl
 
 # This defines how to compile a java class
 .java.class:
@@ -28,9 +36,18 @@ TOUCH		= touch
 # postgresql to org/postgresql
 PGBASE		= org/postgresql
 
+# New for 7.1: The jar filename
+JARFILE		= postgresql.jar
+
+# Yet another attempt to check the version. In theory, any JVM that fails
+# this is breaking the versioning specifications released by Javasoft.
+#
+all:	utils/CheckVersion.class
+	@$(MAKE) `$(JAVA) utils.CheckVersion`
+
 # For 6.5.3 and 7.0+, we need to select the correct JDBC API, so prompt
 # for the version.
-all:	
+huho:	
 	@echo ------------------------------------------------------------
 	@echo Due to problems with some JVMs that dont return a meaningful
 	@echo version number, we have had to make the choice of what jdbc
@@ -38,15 +55,20 @@ all:
 	@echo
 	@echo If you are using JDK1.1.x, you will need the JDBC1.2 driver.
 	@echo To compile, type:
-	@echo "  make jdbc1 jar"
+	@echo "  make jdbc1"
 	@echo
 	@echo "If you are using JDK1.2 (aka Java2) you need the JDBC2."
 	@echo To compile, type:
-	@echo "  make jdbc2 jar"
+	@echo "  make jdbc2"
+	@echo
+	@echo "If you are using the Java2 Enterprise Edition, you can use"
+	@echo "either the standard driver above, or compile the standard"
+	@echo "extensions version of the driver. Type:"
+	@echo "  make enterprise"
 	@echo
 	@echo Once you have done this, a postgresql.jar file will be
 	@echo produced. This file will only work with that particular
-	@echo JVM.
+	@echo version of virtual machine.
 	@echo
 	@echo ------------------------------------------------------------
 
@@ -76,6 +98,10 @@ msg:
 	@echo
 	@echo "To make the tests, type:"
 	@echo "  make tests"
+	@echo
+	@echo "To build the GUI Shell, type:"
+	@echo "  make retepsql"
+	@echo
 	@echo ------------------------------------------------------------
 	@echo
 
@@ -93,7 +119,6 @@ doc:
 # the jar file.
 OBJ_COMMON=	$(PGBASE)/Connection.class \
 		$(PGBASE)/Driver.class \
-		$(PGBASE)/DriverClass.class \
 		$(PGBASE)/Field.class \
 		$(PGBASE)/PG_Stream.class \
 		$(PGBASE)/ResultSet.class \
@@ -136,53 +161,79 @@ OBJ_JDBC2=	$(PGBASE)/jdbc2/ResultSet.class \
 		$(PGBASE)/jdbc2/Statement.class \
 		$(PGBASE)/largeobject/PGblob.class
 
+# These files are unique to the JDBC2 Enterprise driver
+OBJ_ENTER=	$(OBJ_JDBC2) \
+		$(PGBASE)/PostgresqlDataSource.class \
+		$(PGBASE)/xa/ClientConnection.class \
+		$(PGBASE)/xa/TwoPhaseConnection.class \
+		$(PGBASE)/xa/TxConnection.class \
+		$(PGBASE)/xa/XAConnectionImpl.class \
+		$(PGBASE)/xa/XADataSourceImpl.class
+
 # This rule builds the JDBC1 compliant driver
 jdbc1:
-	(echo "package org.postgresql;" ;\
-	 echo "public class DriverClass {" ;\
-	 echo "public static String connectClass=\"org.postgresql.jdbc1.Connection\";" ;\
-	 echo "}" \
-	) >$(PGBASE)/DriverClass.java
+	$(BUILDDRIVER) $(VERSION) org.postgresql.jdbc1.Connection JDBC1.1 $(PGBASE)/Driver.java
 	-$(RM) postgresql.jar
 	@$(MAKE) jdbc1real
 
 # This rule does the real work for JDBC1.2, however do not call it directly.
 # This is because the JDBC driver relies on the org.postgresql.DriverClass
 # class to determine the driver version.
-jdbc1real: $(PGBASE)/DriverClass.class \
-	$(OBJ_COMMON) $(OBJ_JDBC1) postgresql.jar msg
+jdbc1real: $(OBJ_COMMON) $(OBJ_JDBC1) $(JARFILE) msg
 
 # This rule builds the JDBC2 compliant driver
-jdbc2:	
-	(echo "package org.postgresql;" ;\
-	 echo "public class DriverClass {" ;\
-	 echo "public static String connectClass=\"org.postgresql.jdbc2.Connection\";" ;\
-	 echo "}" \
-	) >$(PGBASE)/DriverClass.java
+jdbc2:
+	@$(MAKE) jdbc2internal msg
+
+# This allows us to build the jdbc2 driver without displaying the msg
+# refer to the retepsql rule to see why.
+jdbc2internal:
+	$(BUILDDRIVER) $(VERSION) org.postgresql.jdbc2.Connection Java2 $(PGBASE)/Driver.java
 	-$(RM) postgresql.jar
 	@$(MAKE) jdbc2real
 
 # This rule does the real work for JDBC2, however do not call it directly.
 # This is because the JDBC driver relies on the org.postgresql.DriverClass
 # class to determine the driver version.
-jdbc2real: $(PGBASE)/DriverClass.class \
-	$(OBJ_COMMON) $(OBJ_JDBC2) postgresql.jar msg
+jdbc2real: $(OBJ_COMMON) $(OBJ_JDBC2) $(JARFILE)
 
-# If you have problems with this rule, replace the $( ) with ` ` as some
-# shells (mainly sh under Solaris) doesn't recognise $( )
+# This rule builds the enterprise edition of the driver
+enterprise:
+	$(BUILDDRIVER) $(VERSION) org.postgresql.jdbc2.Connection Enterprise $(PGBASE)/Driver.java
+	-$(RM) postgresql.jar
+	@$(MAKE) enterprisereal
+
+# This rule does the real work for JDBC2 Enterprise Edition, however do not
+# call it directly. This is because the JDBC driver relies on the
+# org.postgresql.DriverClass class to determine the driver version.
+enterprisereal: $(OBJ_COMMON) $(OBJ_ENTER) $(JARFILE)
+
+# We use the old `cmd` notation here as some older shells (mainly sh under
+# Solaris) don't recognise the newer $(cmd) syntax.
 #
-postgresql.jar: $(OBJ) $(OBJ_COMMON)
+$(JARFILE): $(OBJ) $(OBJ_COMMON)
 	$(JAR) -c0f $@ `$(FIND) $(PGBASE) -name "*.class" -print` \
 		$(wildcard $(PGBASE)/*.properties)
 
 # This rule removes any temporary and compiled files from the source tree.
+#
 clean:
 	$(FIND) . -name "*~" -exec $(RM) {} \;
 	$(FIND) . -name "*.class" -exec $(RM) {} \;
-	$(FIND) . -name "*.html" -exec $(RM) {} \;
 	-$(RM) -rf stock example/corba/stock.built
-	-$(RM) postgresql.jar org/postgresql/DriverClass.java
+	-$(RM) postgresql.jar org/postgresql/Driver.java
 	-$(RM) -rf Package-postgresql *output
+	-$(RM) retepsql.jar manifest
+
+# New for 7.1
+install:	$(JARFILE)
+	$(CP) $(JARFILE) $(libdir)
+
+# This converts CHANGELOG into an html format - used by peter@retep.org.uk
+# to produce an online version
+changelog: changelog.html
+changelog.html: CHANGELOG
+	$(CHANGELOG) $< >$@
 
 #######################################################################
 # This helps make workout what classes are from what source files
@@ -310,4 +361,61 @@ example/corba/stock.built: example/corba/stock.idl
 
 # tip: we cant use $(wildcard stock/*.java) in the above rule as a race
 #      condition occurs, where javac is passed no arguments
+#######################################################################
+#
+# JPGSql	This isn't really an example, but an entire frontend
+#		for PostgreSQL via Java & JDBC.
+#
+# Requirements:	Java2 platform (JDK1.2.x or 1.3)
+#
+retepsql:	jdbc2internal postgresql.jar
+	-$(RM) retepsql.jar
+	@$(MAKE) retepsql.jar
+	@echo
+	@echo "The retepsql application has now been built. To run, simply"
+	@echo "type:"
+	@echo
+	@echo "  java -jar retepsql.jar"
+	@echo
+	@echo "Note: Some operating systems recognise .jar as an executable,"
+	@echo "      so on those (and Windows is one of them), you can simply"
+	@echo "      double click the jar file to start it."
+
+# All my classes have this prefix
+RETEP=		uk/org/retep
+
+# These classes form part of my personal swing library. I have placed these
+# into the public domain, so there are no license issues... enjoy...
+RETEPUTILS=	$(RETEP)/swing/SwingApplication.class \
+		$(RETEP)/swing/SwingApplication.class \
+
+# This is my postgresql frontend. As it's never been released before, I've
+# decided not only to publish it under the same licence as the JDBC driver,
+# but also to put it along side the driver. To me it makes sense as it's the
+# best example I have on showing how to use the driver ;-)
+RETEPSQL=	$(RETEP)/sql/DBConnection.class \
+		$(RETEP)/sql/RetepSQL.class \
+
+# Some ancilary files which are included in the jar file
+RETEPSQLAUX=	$(RETEP)/icons/ \
+
+# The big rule, this builds the jpgsql.jar file which contains the entire
+# application. DONT call this rule directly, but use the retepsql one, as
+# it ensures that jdbc is also compiled first.
+#
+# Note: We include the postgresql.jar contents in this as well. Also the
+# manifest entry MUST be immediately after $@ (note the -m option to jar).
+#
+retepsql.jar:	$(RETEPUTILS) \
+		$(RETEPSQL)
+	(echo "Manifest-Version: 1.0"; \
+	 echo "Created-By: 1.2 (Sun Microsystems Inc.)"; \
+	 echo "Main-Class: uk.org.retep.sql.RetepSQL"; \
+	) >manifest
+	$(JAR) -c0fm $@ manifest \
+		`$(FIND) $(PGBASE) -name "*.class" -print` \
+		$(wildcard $(PGBASE)/*.properties) \
+		`$(FIND) $(RETEP) -name "*.class" -print` \
+		$(RETEPSQLAUX)
+
 #######################################################################

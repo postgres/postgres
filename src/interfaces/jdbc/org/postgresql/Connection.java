@@ -10,7 +10,7 @@ import org.postgresql.largeobject.*;
 import org.postgresql.util.*;
 
 /**
- * $Id: Connection.java,v 1.8 2000/10/09 16:48:16 momjian Exp $
+ * $Id: Connection.java,v 1.9 2000/10/12 08:55:24 peter Exp $
  *
  * This abstract class is used by org.postgresql.Driver to open either the JDBC1 or
  * JDBC2 versions of the Connection class.
@@ -81,6 +81,11 @@ public abstract class Connection
     // The PID an cancellation key we get from the backend process
     public int pid;
     public int ckey;
+
+    // This receive_sbuf should be used by the different methods
+    // that call pg_stream.ReceiveString() in this Connection, so 
+    // so we avoid uneccesary new allocations. 
+    byte receive_sbuf[] = new byte[8192];
     
     /**
      * This is called by Class.forName() from within org.postgresql.Driver
@@ -165,7 +170,7 @@ public abstract class Connection
 		// "User authentication failed"
 		//
 		throw new SQLException(pg_stream.ReceiveString
-                                       (4096, getEncoding()));
+                                       (receive_sbuf, 4096, getEncoding()));
 		
 	      case 'R':
 		// Get the type of request
@@ -236,7 +241,7 @@ public abstract class Connection
 	case 'E':
 	case 'N':
            throw new SQLException(pg_stream.ReceiveString
-                                  (4096, getEncoding()));
+                                  (receive_sbuf, 4096, getEncoding()));
         default:
           throw new PSQLException("postgresql.con.setup");
       }
@@ -248,7 +253,7 @@ public abstract class Connection
 	   break;
 	case 'E':
 	case 'N':
-           throw new SQLException(pg_stream.ReceiveString(4096));
+           throw new SQLException(pg_stream.ReceiveString(receive_sbuf, 4096, getEncoding()));
         default:
           throw new PSQLException("postgresql.con.setup");
       }
@@ -322,6 +327,12 @@ public abstract class Connection
     {
 	// added Oct 7 1998 to give us thread safety.
 	synchronized(pg_stream) {
+ 	    // Deallocate all resources in the stream associated
+  	    // with a previous request.
+  	    // This will let the driver reuse byte arrays that has already
+  	    // been allocated instead of allocating new ones in order
+  	    // to gain performance improvements.
+  	    pg_stream.deallocate();	    
 	    
 	    Field[] fields = null;
 	    Vector tuples = new Vector();
@@ -353,7 +364,7 @@ public abstract class Connection
 		{
 		    pg_stream.SendChar('Q');
 		    buf = sql.getBytes();
-		    pg_stream.Send(buf);
+		    pg_stream.Send(sql.getBytes());
 		    pg_stream.SendChar(0);
 		    pg_stream.flush();
 		} catch (IOException e) {
@@ -370,7 +381,7 @@ public abstract class Connection
 			{
 			case 'A':	// Asynchronous Notify
 			    pid = pg_stream.ReceiveInteger(4);
-			    msg = pg_stream.ReceiveString(8192);
+			    msg = pg_stream.ReceiveString(receive_sbuf,8192,getEncoding());
 			    break;
 			case 'B':	// Binary Data Transfer
 			    if (fields == null)
@@ -381,7 +392,7 @@ public abstract class Connection
 				tuples.addElement(tup);
 			    break;
 			case 'C':	// Command Status
-			    recv_status = pg_stream.ReceiveString(8192);
+			    recv_status = pg_stream.ReceiveString(receive_sbuf,8192,getEncoding());
 				
 				// Now handle the update count correctly.
 				if(recv_status.startsWith("INSERT") || recv_status.startsWith("UPDATE") || recv_status.startsWith("DELETE")) {
@@ -423,7 +434,7 @@ public abstract class Connection
 				tuples.addElement(tup);
 			    break;
 			case 'E':	// Error Message
-			    msg = pg_stream.ReceiveString(4096);
+			    msg = pg_stream.ReceiveString(receive_sbuf,4096,getEncoding());
 			    final_error = new SQLException(msg);
 			    hfr = true;
 			    break;
@@ -438,10 +449,10 @@ public abstract class Connection
 				hfr = true;
 			    break;
 			case 'N':	// Error Notification
-			    addWarning(pg_stream.ReceiveString(4096));
+			    addWarning(pg_stream.ReceiveString(receive_sbuf,4096,getEncoding()));
 			    break;
 			case 'P':	// Portal Name
-			    String pname = pg_stream.ReceiveString(8192);
+			    String pname = pg_stream.ReceiveString(receive_sbuf,8192,getEncoding());
 			    break;
 			case 'T':	// MetaData Field Description
 			    if (fields != null)
@@ -474,7 +485,7 @@ public abstract class Connection
 	
 	for (i = 0 ; i < nf ; ++i)
 	    {
-		String typname = pg_stream.ReceiveString(8192);
+		String typname = pg_stream.ReceiveString(receive_sbuf,8192,getEncoding());
 		int typid = pg_stream.ReceiveIntegerR(4);
 		int typlen = pg_stream.ReceiveIntegerR(2);
 		int typmod = pg_stream.ReceiveIntegerR(4);

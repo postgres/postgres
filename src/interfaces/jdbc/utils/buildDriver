@@ -1,0 +1,47 @@
+#!/bin/sh
+#
+# $Id: buildDriver,v 1.1 2000/10/12 08:55:28 peter Exp $
+#
+# This script generates the org/postgresql/Driver.java file from the template
+# org/postgresql/Driver.java.in
+#
+# We do this because we need to include the version number from Makefile.global
+# and some other goodies.
+#
+# This used to be in Makefile, but as it's now done three times, it's better
+# to have it as a separate script.
+#
+# If you have any problems, please let us know ;-)
+#
+# Syntax: buildDriver version class
+#
+# Where:
+#	version	The version string from Makefile.global
+#	class	The class implementing java.sql.Connection
+#	edition	The driver edition being built
+#	source	The file to build. We assume that ${source}.in exists
+#
+
+VERSION=$1
+CLASS=$2
+EDITION=$3
+SOURCE=$4
+
+#---------------------------------------------------------------------------
+# Extract the version. This will work until version x.9 (and assuming we don't
+# have 7.10 etc). We only handle 1 digit for MINORVERSION to handle things like
+# 7.1devel etc
+#
+MAJORVERSION=`echo $VERSION | cut -f1 -d'.'`
+MINORVERSION=`echo $VERSION | cut -f2 -d'.' | cut -c1`
+
+#---------------------------------------------------------------------------
+# Now finally build the driver
+sed \
+	-e "s/%JDBCCONNECTCLASS%/$CLASS/g" \
+	-e "s/%VERSION%/$VERSION $EDITION/g" \
+	-e "s/%MAJORVERSION%/$MAJORVERSION/g" \
+	-e "s/%MINORVERSION%/$MINORVERSION/g" \
+	<${SOURCE}.in \
+	>$SOURCE
+#---------------------------------------------------------------------------
