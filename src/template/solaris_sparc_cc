@@ -1,6 +1,6 @@
 AROPT:crs
-CFLAGS:-Xa -v -D__sparc__ -D__sun__ -DDISABLE_COMPLEX_MACRO
-SHARED_LIB:-K PIC
+CFLAGS:-Xa -v -D__sparc__ -D__sun__
+SHARED_LIB:-KPIC
 ALL:
 SRCH_INC:
 SRCH_LIB:

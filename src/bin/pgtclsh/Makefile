@@ -5,7 +5,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/pgtclsh/Attic/Makefile,v 1.28 2000/06/27 00:31:40 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/pgtclsh/Attic/Makefile,v 1.29 2000/06/30 16:10:47 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -16,9 +16,9 @@ include ../../Makefile.global
 #
 # Include definitions from the tclConfig.sh file
 #
-include Makefile.tcldefs
+-include Makefile.tcldefs
 ifeq ($(USE_TK), true)
-include Makefile.tkdefs
+-include Makefile.tkdefs
 endif
 
 CFLAGS+= $(X_CFLAGS) -I$(LIBPGTCLDIR)

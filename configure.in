@@ -696,7 +696,7 @@ if test "$PORTNAME" != "aix" -a "$PORTNAME" != "alpha"
 then
 	AC_CHECK_LIB(bsd,      main)
 fi
-AC_CHECK_LIB(util,     main)
+AC_CHECK_LIB(util,     setproctitle)
 AC_CHECK_LIB(m,        main)
 AC_CHECK_LIB(dl,       main)
 AC_CHECK_LIB(socket,   main)
@@ -709,9 +709,9 @@ AC_CHECK_LIB(ln,       main)
 AC_CHECK_LIB(ld,       main)
 AC_CHECK_LIB(compat,   main)
 AC_CHECK_LIB(BSD,      main)
-AC_CHECK_LIB(crypt,    main)
 AC_CHECK_LIB(gen,      main)
 AC_CHECK_LIB(PW,       main)
+AC_SEARCH_LIBS(crypt,  crypt)
 
 dnl Checks for header files.
 AC_HEADER_STDC

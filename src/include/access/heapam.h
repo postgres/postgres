@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heapam.h,v 1.53 2000/06/18 22:44:23 tgl Exp $
+ * $Id: heapam.h,v 1.54 2000/06/30 16:10:49 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -100,91 +100,50 @@ extern Datum nocachegetattr(HeapTuple tup, int attnum,
 
 #if !defined(DISABLE_COMPLEX_MACRO)
 
-#define fastgetattr(tup, attnum, tupleDesc, isnull) \
-( \
-	AssertMacro((attnum) > 0), \
-	((isnull) ? (*(isnull) = false) : (dummyret)NULL), \
-	HeapTupleNoNulls(tup) ? \
-	( \
-		((tupleDesc)->attrs[(attnum)-1]->attcacheoff != -1 || \
-		 (attnum) == 1) ? \
-		( \
-			(Datum)fetchatt(&((tupleDesc)->attrs[(attnum)-1]), \
-				(char *) (tup)->t_data + (tup)->t_data->t_hoff + \
-				( \
-					((attnum) != 1) ? \
-						(tupleDesc)->attrs[(attnum)-1]->attcacheoff \
-					: \
-						0 \
-				) \
-			) \
-		) \
-		: \
-			nocachegetattr((tup), (attnum), (tupleDesc), (isnull)) \
-	) \
-	: \
-	( \
-		att_isnull((attnum)-1, (tup)->t_data->t_bits) ? \
-		( \
-			((isnull) ? (*(isnull) = true) : (dummyret)NULL), \
-			(Datum)NULL \
-		) \
-		: \
-		( \
-			nocachegetattr((tup), (attnum), (tupleDesc), (isnull)) \
-		) \
-	) \
+#define fastgetattr(tup, attnum, tupleDesc, isnull)					\
+(																	\
+	AssertMacro((attnum) > 0),										\
+	((isnull) ? (*(isnull) = false) : (dummyret)NULL),				\
+	HeapTupleNoNulls(tup) ?											\
+	(																\
+		((tupleDesc)->attrs[(attnum)-1]->attcacheoff != -1 ||		\
+		 (attnum) == 1) ?											\
+		(															\
+			(Datum)fetchatt(&((tupleDesc)->attrs[(attnum)-1]),		\
+				(char *) (tup)->t_data + (tup)->t_data->t_hoff +	\
+				(													\
+					((attnum) != 1) ?								\
+						(tupleDesc)->attrs[(attnum)-1]->attcacheoff	\
+					:												\
+						0											\
+				)													\
+			)														\
+		)															\
+		:															\
+			nocachegetattr((tup), (attnum), (tupleDesc), (isnull))	\
+	)																\
+	:																\
+	(																\
+		att_isnull((attnum)-1, (tup)->t_data->t_bits) ?				\
+		(															\
+			((isnull) ? (*(isnull) = true) : (dummyret)NULL),		\
+			(Datum)NULL												\
+		)															\
+		:															\
+		(															\
+			nocachegetattr((tup), (attnum), (tupleDesc), (isnull))	\
+		)															\
+	)																\
 )
 
-#else							/* !defined(DISABLE_COMPLEX_MACRO) */
+#else /* defined(DISABLE_COMPLEX_MACRO) */
 
-static Datum
+extern Datum
 fastgetattr(HeapTuple tup, int attnum, TupleDesc tupleDesc,
-			bool *isnull)
-{
-	return (
-			(attnum) > 0 ?
-			(
-			 ((isnull) ? (*(isnull) = false) : (dummyret) NULL),
-			 HeapTupleNoNulls(tup) ?
-			 (
-			  ((tupleDesc)->attrs[(attnum) - 1]->attcacheoff != -1 ||
-			   (attnum) == 1) ?
-			  (
-			   (Datum) fetchatt(&((tupleDesc)->attrs[(attnum) - 1]),
-						 (char *) (tup)->t_data + (tup)->t_data->t_hoff +
-								(
-								 ((attnum) != 1) ?
-							(tupleDesc)->attrs[(attnum) - 1]->attcacheoff
-								 :
-								 0
-								 )
-								)
-			   )
-			  :
-			  nocachegetattr((tup), (attnum), (tupleDesc), (isnull))
-			  )
-			 :
-			 (
-			  att_isnull((attnum) - 1, (tup)->t_data->t_bits) ?
-			  (
-			   ((isnull) ? (*(isnull) = true) : (dummyret) NULL),
-			   (Datum) NULL
-			   )
-			  :
-			  (
-			   nocachegetattr((tup), (attnum), (tupleDesc), (isnull))
-			   )
-			  )
-			 )
-			:
-			(
-			 (Datum) NULL
-			 )
-	);
-}
+			bool *isnull);
 
-#endif
+#endif /* defined(DISABLE_COMPLEX_MACRO) */
+
 
 /* ----------------
  *		heap_getattr
@@ -206,36 +165,36 @@ fastgetattr(HeapTuple tup, int attnum, TupleDesc tupleDesc,
  *
  * ----------------
  */
-#define heap_getattr(tup, attnum, tupleDesc, isnull) \
-( \
-	AssertMacro((tup) != NULL && \
-		(attnum) > FirstLowInvalidHeapAttributeNumber && \
-		(attnum) != 0), \
-	((attnum) > (int) (tup)->t_data->t_natts) ? \
-	( \
-		((isnull) ? (*(isnull) = true) : (dummyret)NULL), \
-		(Datum)NULL \
-	) \
-	: \
-	( \
-		((attnum) > 0) ? \
-		( \
-			fastgetattr((tup), (attnum), (tupleDesc), (isnull)) \
-		) \
-		: \
-		( \
-			((isnull) ? (*(isnull) = false) : (dummyret)NULL), \
-			((attnum) == SelfItemPointerAttributeNumber) ? \
-			( \
-				(Datum)((char *)&((tup)->t_self)) \
-			) \
-			: \
-			( \
-				(Datum)*(unsigned int *) \
-					((char *)(tup)->t_data + heap_sysoffset[-(attnum)-1]) \
-			) \
-		) \
-	) \
+#define heap_getattr(tup, attnum, tupleDesc, isnull)						\
+(																			\
+	AssertMacro((tup) != NULL &&											\
+		(attnum) > FirstLowInvalidHeapAttributeNumber &&					\
+		(attnum) != 0),														\
+	((attnum) > (int) (tup)->t_data->t_natts) ?								\
+	(																		\
+		((isnull) ? (*(isnull) = true) : (dummyret)NULL),					\
+		(Datum)NULL															\
+	)																		\
+	:																		\
+	(																		\
+		((attnum) > 0) ?													\
+		(																	\
+			fastgetattr((tup), (attnum), (tupleDesc), (isnull))				\
+		)																	\
+		:																	\
+		(																	\
+			((isnull) ? (*(isnull) = false) : (dummyret)NULL),				\
+			((attnum) == SelfItemPointerAttributeNumber) ?					\
+			(																\
+				(Datum)((char *)&((tup)->t_self))							\
+			)																\
+			:																\
+			(																\
+				(Datum)*(unsigned int *)									\
+					((char *)(tup)->t_data + heap_sysoffset[-(attnum)-1])	\
+			)																\
+		)																	\
+	)																		\
 )
 
 extern HeapAccessStatistics heap_access_stats;	/* in stats.c */
