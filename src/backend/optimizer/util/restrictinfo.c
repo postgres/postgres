@@ -8,13 +8,14 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.25 2004/01/05 23:39:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.26 2004/02/27 21:48:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include "optimizer/clauses.h"
+#include "optimizer/cost.h"
 #include "optimizer/paths.h"
 #include "optimizer/restrictinfo.h"
 #include "optimizer/var.h"
@@ -27,7 +28,7 @@ static RestrictInfo *make_restrictinfo_internal(Expr *clause,
 static Expr *make_sub_restrictinfos(Expr *clause,
 									bool is_pushed_down,
 									bool valid_everywhere);
-static bool join_clause_is_redundant(Query *root,
+static RestrictInfo *join_clause_is_redundant(Query *root,
 						 RestrictInfo *rinfo,
 						 List *reference_list,
 						 JoinType jointype);
@@ -317,17 +318,42 @@ remove_redundant_join_clauses(Query *root, List *restrictinfo_list,
 {
 	List	   *result = NIL;
 	List	   *item;
+	QualCost	cost;
+
+	/*
+	 * If there are any redundant clauses, we want to eliminate the ones
+	 * that are more expensive in favor of the ones that are less so.
+	 * Run cost_qual_eval() to ensure the eval_cost fields are set up.
+	 */
+	cost_qual_eval(&cost, restrictinfo_list);
+
+	/*
+	 * We don't have enough knowledge yet to be able to estimate the number
+	 * of times a clause might be evaluated, so it's hard to weight the
+	 * startup and per-tuple costs appropriately.  For now just weight 'em
+	 * the same.
+	 */
+#define CLAUSECOST(r)  ((r)->eval_cost.startup + (r)->eval_cost.per_tuple)
 
 	foreach(item, restrictinfo_list)
 	{
 		RestrictInfo *rinfo = (RestrictInfo *) lfirst(item);
+		RestrictInfo *prevrinfo;
 
-		/* drop it if redundant with any prior clause */
-		if (join_clause_is_redundant(root, rinfo, result, jointype))
-			continue;
-
-		/* otherwise, add it to result list */
-		result = lappend(result, rinfo);
+		/* is it redundant with any prior clause? */
+		prevrinfo = join_clause_is_redundant(root, rinfo, result, jointype);
+		if (prevrinfo == NULL)
+		{
+			/* no, so add it to result list */
+			result = lappend(result, rinfo);
+		}
+		else if (CLAUSECOST(rinfo) < CLAUSECOST(prevrinfo))
+		{
+			/* keep this one, drop the previous one */
+			result = lremove(prevrinfo, result);
+			result = lappend(result, rinfo);
+		}
+		/* else, drop this one */
 	}
 
 	return result;
@@ -361,7 +387,7 @@ select_nonredundant_join_clauses(Query *root,
 		RestrictInfo *rinfo = (RestrictInfo *) lfirst(item);
 
 		/* drop it if redundant with any reference clause */
-		if (join_clause_is_redundant(root, rinfo, reference_list, jointype))
+		if (join_clause_is_redundant(root, rinfo, reference_list, jointype) != NULL)
 			continue;
 
 		/* otherwise, add it to result list */
@@ -373,7 +399,8 @@ select_nonredundant_join_clauses(Query *root,
 
 /*
  * join_clause_is_redundant
- *		Returns true if rinfo is redundant with any clause in reference_list.
+ *		If rinfo is redundant with any clause in reference_list,
+ *		return one such clause; otherwise return NULL.
  *
  * This is the guts of both remove_redundant_join_clauses and
  * select_nonredundant_join_clauses.  See the docs above for motivation.
@@ -398,27 +425,30 @@ select_nonredundant_join_clauses(Query *root,
  * then they're not really redundant, because one constrains the
  * joined rows after addition of null fill rows, and the other doesn't.
  */
-static bool
+static RestrictInfo *
 join_clause_is_redundant(Query *root,
 						 RestrictInfo *rinfo,
 						 List *reference_list,
 						 JoinType jointype)
 {
+	List	   *refitem;
+
 	/* always consider exact duplicates redundant */
-	/* XXX would it be sufficient to use ptrMember here? */
-	if (member(rinfo, reference_list))
-		return true;
+	foreach(refitem, reference_list)
+	{
+		RestrictInfo *refrinfo = (RestrictInfo *) lfirst(refitem);
+
+		if (equal(rinfo, refrinfo))
+			return refrinfo;
+	}
 
 	/* check for redundant merge clauses */
 	if (rinfo->mergejoinoperator != InvalidOid)
 	{
-		bool		redundant = false;
-		List	   *refitem;
-
 		/* do the cheap test first: is it a "var = const" clause? */
 		if (bms_is_empty(rinfo->left_relids) ||
 			bms_is_empty(rinfo->right_relids))
-			return false;		/* var = const, so not redundant */
+			return NULL;		/* var = const, so not redundant */
 
 		cache_mergeclause_pathkeys(root, rinfo);
 
@@ -426,21 +456,22 @@ join_clause_is_redundant(Query *root,
 		{
 			RestrictInfo *refrinfo = (RestrictInfo *) lfirst(refitem);
 
-			if (refrinfo->mergejoinoperator != InvalidOid &&
-				rinfo->left_pathkey == refrinfo->left_pathkey &&
-				rinfo->right_pathkey == refrinfo->right_pathkey &&
-				(rinfo->is_pushed_down == refrinfo->is_pushed_down ||
-				 !IS_OUTER_JOIN(jointype)))
+			if (refrinfo->mergejoinoperator != InvalidOid)
 			{
-				redundant = true;
-				break;
+				cache_mergeclause_pathkeys(root, refrinfo);
+
+				if (rinfo->left_pathkey == refrinfo->left_pathkey &&
+					rinfo->right_pathkey == refrinfo->right_pathkey &&
+					(rinfo->is_pushed_down == refrinfo->is_pushed_down ||
+					 !IS_OUTER_JOIN(jointype)))
+				{
+					/* Yup, it's redundant */
+					return refrinfo;
+				}
 			}
 		}
-
-		if (redundant)
-			return true;		/* var = var, so redundant */
 	}
 
 	/* otherwise, not redundant */
-	return false;
+	return NULL;
 }
