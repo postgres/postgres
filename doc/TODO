@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sat Jun  9 23:47:57 EDT 2001
+Last updated:		Tue Jun 12 10:50:11 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -99,7 +99,7 @@ INDEXES
 * UNIQUE INDEX on base column not honored on inserts from inherited table
   INSERT INTO inherit_table (unique_index_col) VALUES (dup) should fail
   [inheritance]
-* Prevent pg_attribute from having duplicate oids for indexes (Tom)
+* -Prevent pg_attribute from having duplicate oids for indexes (Tom)
 * Add UNIQUE capability to non-btree indexes
 * Certain indexes will not shrink, e.g. oid indexes with many inserts (Vadim)
 * Have UPDATE/DELETE clean out indexes
@@ -120,11 +120,11 @@ INDEXES
 
 SYSTEM TABLES
 
-* Add unique indexes to pg_shadow.usename and pg_shadow.usesysid or
+* -Add unique indexes to pg_shadow.usename and pg_shadow.usesysid or
   switch to pg_shadow.oid as user id
-* Add unique indexes on pg_database
+* -Add unique indexes on pg_database
 * Check all system tables and add unique indexes as needed
-* Remove pg_listener index
+* -Remove pg_listener index
 * -Remove unused pg_variable, pg_inheritproc, pg_ipl tables (Bruce)
 * Add pg_depend table to track object dependencies
 
