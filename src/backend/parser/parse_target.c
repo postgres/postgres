@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.71 2001/09/10 14:53:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.72 2001/09/17 01:06:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,7 +26,7 @@
 
 
 static List *ExpandAllTables(ParseState *pstate);
-static char *FigureColname(Node *expr, Node *resval);
+static char *FigureColname(Node *node);
 
 
 /*
@@ -64,12 +64,11 @@ transformTargetEntry(ParseState *pstate,
 
 	if (colname == NULL)
 	{
-
 		/*
 		 * Generate a suitable column name for a column without any
 		 * explicit 'AS ColumnName' clause.
 		 */
-		colname = FigureColname(expr, node);
+		colname = FigureColname(node);
 	}
 
 	resnode = makeResdom((AttrNumber) pstate->p_last_resno++,
@@ -455,21 +454,21 @@ ExpandAllTables(ParseState *pstate)
  *	  list, we have to guess a suitable name.  The SQL spec provides some
  *	  guidance, but not much...
  *
+ * Note that the argument is the *untransformed* parse tree for the target
+ * item.  This is a shade easier to work with than the transformed tree.
  */
 static char *
-FigureColname(Node *expr, Node *resval)
+FigureColname(Node *node)
 {
-	/* Some of these are easiest to do with the untransformed node */
-	switch (nodeTag(resval))
+	if (node == NULL)
+		return "?column?";
+	switch (nodeTag(node))
 	{
-		case T_TypeCast: 
-			return( ( ((Ident *) ((TypeCast *) resval)->arg)->name));
-			
 		case T_Ident:
-			return ((Ident *) resval)->name;
+			return ((Ident *) node)->name;
 		case T_Attr:
 			{
-				List	   *attrs = ((Attr *) resval)->attrs;
+				List	   *attrs = ((Attr *) node)->attrs;
 
 				if (attrs)
 				{
@@ -479,23 +478,15 @@ FigureColname(Node *expr, Node *resval)
 				}
 			}
 			break;
-		default:
-			break;
-	}
-	/* Otherwise, work with the transformed node */
-	switch (nodeTag(expr))
-	{
-		case T_Expr:
-			if (((Expr *) expr)->opType == FUNC_EXPR && IsA(resval, FuncCall))
-				return ((FuncCall *) resval)->funcname;
-			break;
-		case T_Aggref:
-			return ((Aggref *) expr)->aggname;
+		case T_FuncCall:
+			return ((FuncCall *) node)->funcname;
+		case T_TypeCast: 
+			return FigureColname(((TypeCast *) node)->arg);
 		case T_CaseExpr:
 			{
 				char	   *name;
 
-				name = FigureColname(((CaseExpr *) expr)->defresult, resval);
+				name = FigureColname(((CaseExpr *) node)->defresult);
 				if (strcmp(name, "?column?") == 0)
 					name = "case";
 				return name;
@@ -504,6 +495,5 @@ FigureColname(Node *expr, Node *resval)
 		default:
 			break;
 	}
-
 	return "?column?";
 }
