@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.8 1997/04/04 08:53:08 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.9 1997/04/20 21:49:17 scrappy Exp $
  *
  * NOTES
  *   This code is actually (almost) unused.
@@ -216,19 +216,19 @@ char *tintervalout(TimeInterval interval)
     char	*i_str, *p;
     
     i_str = (char	*) palloc( T_INTERVAL_LEN );  /* ['...' '...'] */
-    (void) strcpy(i_str,"['");
+    (void) strcpy(i_str,"[\"");
     if (interval->status == T_INTERVAL_INVAL)
 	(void) strcat(i_str,INVALID_INTERVAL_STR);
     else {
 	p = nabstimeout(interval->data[0]);
 	(void) strcat(i_str,p);
 	pfree(p);
-	(void) strcat(i_str,"' '");
+	(void) strcat(i_str,"\" \"");
 	p = nabstimeout(interval->data[1]);
 	(void) strcat(i_str,p);
 	pfree(p);
     }
-    (void) strcat(i_str,"']\0");
+    (void) strcat(i_str,"\"]\0");
     return(i_str);
 }
 
