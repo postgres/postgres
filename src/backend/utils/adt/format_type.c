@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/format_type.c,v 1.17 2001/10/03 18:32:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/format_type.c,v 1.18 2001/10/04 17:52:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -201,7 +201,7 @@ format_type_internal(Oid type_oid, int32 typemod, bool allow_invalid)
 			break;
 
 		case TIMEOID:
-			if (with_typemod && typemod > 0)
+			if (with_typemod)
 				buf = psnprintf(50, "time(%d) without time zone",
 								typemod);
 			else
@@ -209,7 +209,7 @@ format_type_internal(Oid type_oid, int32 typemod, bool allow_invalid)
 			break;
 
 		case TIMETZOID:
-			if (with_typemod && typemod > 0)
+			if (with_typemod)
 				buf = psnprintf(50, "time(%d) with time zone",
 								typemod);
 			else
@@ -217,7 +217,7 @@ format_type_internal(Oid type_oid, int32 typemod, bool allow_invalid)
 			break;
 
 		case TIMESTAMPOID:
-			if (with_typemod && typemod > 0)
+			if (with_typemod)
 				buf = psnprintf(50, "timestamp(%d) without time zone",
 								typemod);
 			else
@@ -225,7 +225,7 @@ format_type_internal(Oid type_oid, int32 typemod, bool allow_invalid)
 			break;
 
 		case TIMESTAMPTZOID:
-			if (with_typemod && typemod > 0)
+			if (with_typemod)
 				buf = psnprintf(50, "timestamp(%d) with time zone",
 								typemod);
 			else

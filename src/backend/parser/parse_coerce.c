@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.62 2001/10/03 05:29:12 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.63 2001/10/04 17:52:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -284,10 +284,9 @@ coerce_type_typmod(ParseState *pstate, Node *node,
 	Oid			oid_array[FUNC_MAX_ARGS];
 
 	/*
-	 * We assume that only typmod values greater than 0 indicate a forced
-	 * conversion is necessary.
+	 * A negative typmod is assumed to mean that no coercion is wanted.
 	 */
-	if ((atttypmod <= 0) || (atttypmod == exprTypmod(node)))
+	if (atttypmod < 0 || atttypmod == exprTypmod(node))
 		return node;
 
 	funcname = typeidTypeName(targetTypeId);
