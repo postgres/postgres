@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.1.1.1 1996/07/09 06:21:59 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.2 1996/07/09 06:35:38 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -146,8 +146,8 @@ mdunlink(Relation reln)
     int i;
     MdfdVec *v, *ov;
     MemoryContext oldcxt;
-    char fname[20];	/* XXX should have NAMESIZE defined */
-    char tname[20];
+    char fname[NAMEDATALEN];	
+    char tname[NAMEDATALEN+10]; /* leave room for overflow suffixes*/
 
  /* On Windows NT you can't unlink a file if it is open so we have
  ** to do this.
@@ -157,8 +157,8 @@ mdunlink(Relation reln)
 #endif /* WIN32 */
  
 
-    memset(fname,0,20); 
-    strncpy(fname, RelationGetRelationName(reln)->data, 16);
+    memset(fname,0, NAMEDATALEN);
+    strncpy(fname, RelationGetRelationName(reln)->data, NAMEDATALEN);
 
     if (FileNameUnlink(fname) < 0)
 	return (SM_FAIL);
