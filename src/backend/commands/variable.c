@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.38 2000/06/22 22:31:17 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.39 2000/07/14 15:35:44 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,6 +43,9 @@ static bool show_timezone(void);
 static bool reset_timezone(void);
 static bool parse_timezone(char *);
 
+static bool show_DefaultXactIsoLevel(void);
+static bool reset_DefaultXactIsoLevel(void);
+static bool parse_DefaultXactIsoLevel(char *);
 static bool show_XactIsoLevel(void);
 static bool reset_XactIsoLevel(void);
 static bool parse_XactIsoLevel(char *);
@@ -435,6 +438,68 @@ reset_timezone()
 /* SET TRANSACTION */
 
 static bool
+parse_DefaultXactIsoLevel(char *value)
+{
+#if 0
+	TransactionState s = CurrentTransactionState;
+#endif
+
+	if (value == NULL)
+	{
+		reset_DefaultXactIsoLevel();
+		return TRUE;
+	}
+
+#if 0
+	if (s->state != TRANS_DEFAULT)
+	{
+		elog(ERROR, "ALTER SESSION/SET TRANSACTION ISOLATION LEVEL"
+			 " can not be called within a transaction");
+		return TRUE;
+	}
+#endif
+
+	if (strcasecmp(value, "SERIALIZABLE") == 0)
+		DefaultXactIsoLevel = XACT_SERIALIZABLE;
+	else if (strcasecmp(value, "COMMITTED") == 0)
+		DefaultXactIsoLevel = XACT_READ_COMMITTED;
+	else
+		elog(ERROR, "Bad TRANSACTION ISOLATION LEVEL (%s)", value);
+
+	return TRUE;
+}
+
+static bool
+show_DefaultXactIsoLevel()
+{
+
+	if (DefaultXactIsoLevel == XACT_SERIALIZABLE)
+		elog(NOTICE, "Default TRANSACTION ISOLATION LEVEL is SERIALIZABLE");
+	else
+		elog(NOTICE, "Default TRANSACTION ISOLATION LEVEL is READ COMMITTED");
+	return TRUE;
+}
+
+static bool
+reset_DefaultXactIsoLevel()
+{
+#if 0
+	TransactionState s = CurrentTransactionState;
+
+	if (s->state != TRANS_DEFAULT)
+	{
+		elog(ERROR, "ALTER SESSION/SET TRANSACTION ISOLATION LEVEL"
+			 " can not be called within a transaction");
+		return TRUE;
+	}
+#endif
+
+	DefaultXactIsoLevel = XACT_READ_COMMITTED;
+
+	return TRUE;
+}
+
+static bool
 parse_XactIsoLevel(char *value)
 {
 
@@ -535,6 +600,8 @@ SetPGVariable(const char *name, const char *value)
         parse_date(pstrdup(value));
     else if (strcasecmp(name, "timezone")==0)
         parse_timezone(pstrdup(value));
+    else if (strcasecmp(name, "DefaultXactIsoLevel")==0)
+        parse_DefaultXactIsoLevel(pstrdup(value));
     else if (strcasecmp(name, "XactIsoLevel")==0)
         parse_XactIsoLevel(pstrdup(value));
 #ifdef MULTIBYTE
@@ -557,6 +624,8 @@ GetPGVariable(const char *name)
         show_date();
     else if (strcasecmp(name, "timezone")==0)
         show_timezone();
+    else if (strcasecmp(name, "DefaultXactIsoLevel")==0)
+        show_DefaultXactIsoLevel();
     else if (strcasecmp(name, "XactIsoLevel")==0)
         show_XactIsoLevel();
 #ifdef MULTIBYTE
@@ -581,8 +650,10 @@ ResetPGVariable(const char *name)
         reset_date();
     else if (strcasecmp(name, "timezone")==0)
         reset_timezone();
+    else if (strcasecmp(name, "DefaultXactIsoLevel")==0)
+			reset_DefaultXactIsoLevel();
     else if (strcasecmp(name, "XactIsoLevel")==0)
-        reset_XactIsoLevel();
+			reset_XactIsoLevel();
 #ifdef MULTIBYTE
     else if (strcasecmp(name, "client_encoding")==0)
         reset_client_encoding();
