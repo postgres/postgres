@@ -1617,8 +1617,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    * </ol>
    *
    * <p>The valid values for the types parameter are:
-   * "TABLE", "INDEX", "LARGE OBJECT", "SEQUENCE", "SYSTEM TABLE" and
-   * "SYSTEM INDEX"
+   * "TABLE", "INDEX", "SEQUENCE", "SYSTEM TABLE" and "SYSTEM INDEX"
    *
    * @param catalog a catalog name; For postgresql, this is ignored, and
    * should be set to null
@@ -1706,9 +1705,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
   //
   // IMPORTANT: the query must be enclosed in ( )
   private static final String getTableTypes[][] = {
-    {"TABLE",		"(relkind='r' and relname !~ '^pg_' and relname !~ '^xinv')"},
-    {"INDEX",		"(relkind='i' and relname !~ '^pg_' and relname !~ '^xinx')"},
-    {"LARGE OBJECT",	"(relkind='r' and relname ~ '^xinv')"},
+    {"TABLE",		"(relkind='r' and relname !~ '^pg_')"},
+    {"INDEX",		"(relkind='i' and relname !~ '^pg_')"},
     {"SEQUENCE",	"(relkind='S' and relname !~ '^pg_')"},
     {"SYSTEM TABLE",	"(relkind='r' and relname ~ '^pg_')"},
     {"SYSTEM INDEX",	"(relkind='i' and relname ~ '^pg_')"}
