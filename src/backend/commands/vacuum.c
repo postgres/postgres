@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.144 2000/03/17 02:36:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.145 2000/04/06 00:29:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1510,6 +1510,8 @@ vc_repair_frag(VRelStats *vacrelstats, Relation onerel,
 				ItemPointerSetInvalid(&Ctid);
 				for (ti = 0; ti < num_vtmove; ti++)
 				{
+					VPageDescr	destvpd = vtmove[ti].vpd;
+
 					/* Get tuple from chain */
 					tuple.t_self = vtmove[ti].tid;
 					Cbuf = ReadBuffer(onerel,
@@ -1521,7 +1523,7 @@ vc_repair_frag(VRelStats *vacrelstats, Relation onerel,
 					tuple.t_data = (HeapTupleHeader) PageGetItem(Cpage, Citemid);
 					tuple_len = tuple.t_len = ItemIdGetLength(Citemid);
 					/* Get page to move in */
-					cur_buffer = ReadBuffer(onerel, vtmove[ti].vpd->vpd_blkno);
+					cur_buffer = ReadBuffer(onerel, destvpd->vpd_blkno);
 
 					/*
 					 * We should LockBuffer(cur_buffer) but don't, at the
@@ -1530,9 +1532,24 @@ vc_repair_frag(VRelStats *vacrelstats, Relation onerel,
 					 * to get t_infomask of inserted heap tuple !!!
 					 */
 					ToPage = BufferGetPage(cur_buffer);
-					/* if this page was not used before - clean it */
+					/*
+					 * If this page was not used before - clean it.
+					 *
+					 * This path is different from the other callers of
+					 * vc_vacpage, because we have already incremented the
+					 * vpd's vpd_offsets_used field to account for the
+					 * tuple(s) we expect to move onto the page.  Therefore
+					 * vc_vacpage's check for vpd_offsets_used == 0 is wrong.
+					 * But since that's a good debugging check for all other
+					 * callers, we work around it here rather than remove it.
+					 */
 					if (!PageIsEmpty(ToPage) && vtmove[ti].cleanVpd)
-						vc_vacpage(ToPage, vtmove[ti].vpd);
+					{
+						int sv_offsets_used = destvpd->vpd_offsets_used;
+						destvpd->vpd_offsets_used = 0;
+						vc_vacpage(ToPage, destvpd);
+						destvpd->vpd_offsets_used = sv_offsets_used;
+					}
 					heap_copytuple_with_tuple(&tuple, &newtup);
 					RelationInvalidateHeapTuple(onerel, &tuple);
 					TransactionIdStore(myXID, (TransactionId *) &(newtup.t_data->t_cmin));
@@ -1543,17 +1560,16 @@ vc_repair_frag(VRelStats *vacrelstats, Relation onerel,
 										 InvalidOffsetNumber, LP_USED);
 					if (newoff == InvalidOffsetNumber)
 					{
-						elog(ERROR, "\
-moving chain: failed to add item with len = %u to page %u",
-							 tuple_len, vtmove[ti].vpd->vpd_blkno);
+						elog(ERROR, "moving chain: failed to add item with len = %u to page %u",
+							 tuple_len, destvpd->vpd_blkno);
 					}
 					newitemid = PageGetItemId(ToPage, newoff);
 					pfree(newtup.t_data);
 					newtup.t_datamcxt = NULL;
 					newtup.t_data = (HeapTupleHeader) PageGetItem(ToPage, newitemid);
-					ItemPointerSet(&(newtup.t_self), vtmove[ti].vpd->vpd_blkno, newoff);
-					if (((int) vtmove[ti].vpd->vpd_blkno) > last_move_dest_block)
-						last_move_dest_block = vtmove[ti].vpd->vpd_blkno;
+					ItemPointerSet(&(newtup.t_self), destvpd->vpd_blkno, newoff);
+					if (((int) destvpd->vpd_blkno) > last_move_dest_block)
+						last_move_dest_block = destvpd->vpd_blkno;
 
 					/*
 					 * Set t_ctid pointing to itself for last tuple in
