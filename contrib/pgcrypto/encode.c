@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: encode.c,v 1.4 2001/03/22 03:59:10 momjian Exp $
+ * $Id: encode.c,v 1.5 2001/05/13 02:17:09 momjian Exp $
  */
 
 #include "postgres.h"
@@ -349,7 +349,7 @@ hex_dec_len(uint srclen)
 uint
 b64_enc_len(uint srclen)
 {
-	return srclen + (srclen / 3) + (srclen / (76 / 2));
+	return srclen + (srclen + 2 / 3) + (srclen / (76 / 2)) + 2;
 }
 
 uint
