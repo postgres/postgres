@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.130 2004/06/03 02:08:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.131 2004/07/11 04:57:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3521,18 +3521,17 @@ EncodeDateTime(struct pg_tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, 
 			if (fsec != 0)
 			{
 				sprintf((str + strlen(str)), ":%02d.%06d", tm->tm_sec, fsec);
+				TrimTrailingZeros(str);
+			}
 #else
 			if ((fsec != 0) && (tm->tm_year > 0))
 			{
 				sprintf((str + strlen(str)), ":%09.6f", tm->tm_sec + fsec);
-#endif
 				TrimTrailingZeros(str);
 			}
+#endif
 			else
 				sprintf((str + strlen(str)), ":%02d", tm->tm_sec);
-
-			if (tm->tm_year <= 0)
-				sprintf((str + strlen(str)), " BC");
 
 			/*
 			 * tzp == NULL indicates that we don't want *any* time zone
@@ -3546,6 +3545,9 @@ EncodeDateTime(struct pg_tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, 
 				min = ((abs(*tzp) / 60) % 60);
 				sprintf((str + strlen(str)), ((min != 0) ? "%+03d:%02d" : "%+03d"), hour, min);
 			}
+
+			if (tm->tm_year <= 0)
+				sprintf((str + strlen(str)), " BC");
 			break;
 
 		case USE_SQL_DATES:
@@ -3571,18 +3573,17 @@ EncodeDateTime(struct pg_tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, 
 			if (fsec != 0)
 			{
 				sprintf((str + strlen(str)), ":%02d.%06d", tm->tm_sec, fsec);
+				TrimTrailingZeros(str);
+			}
 #else
 			if ((fsec != 0) && (tm->tm_year > 0))
 			{
 				sprintf((str + strlen(str)), ":%09.6f", tm->tm_sec + fsec);
-#endif
 				TrimTrailingZeros(str);
 			}
+#endif
 			else
 				sprintf((str + strlen(str)), ":%02d", tm->tm_sec);
-
-			if (tm->tm_year <= 0)
-				sprintf((str + strlen(str)), " BC");
 
 			if ((tzp != NULL) && (tm->tm_isdst >= 0))
 			{
@@ -3595,6 +3596,9 @@ EncodeDateTime(struct pg_tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, 
 					sprintf((str + strlen(str)), ((min != 0) ? "%+03d:%02d" : "%+03d"), hour, min);
 				}
 			}
+
+			if (tm->tm_year <= 0)
+				sprintf((str + strlen(str)), " BC");
 			break;
 
 		case USE_GERMAN_DATES:
@@ -3617,18 +3621,17 @@ EncodeDateTime(struct pg_tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, 
 			if (fsec != 0)
 			{
 				sprintf((str + strlen(str)), ":%02d.%06d", tm->tm_sec, fsec);
+				TrimTrailingZeros(str);
+			}
 #else
 			if ((fsec != 0) && (tm->tm_year > 0))
 			{
 				sprintf((str + strlen(str)), ":%09.6f", tm->tm_sec + fsec);
-#endif
 				TrimTrailingZeros(str);
 			}
+#endif
 			else
 				sprintf((str + strlen(str)), ":%02d", tm->tm_sec);
-
-			if (tm->tm_year <= 0)
-				sprintf((str + strlen(str)), " BC");
 
 			if ((tzp != NULL) && (tm->tm_isdst >= 0))
 			{
@@ -3641,6 +3644,9 @@ EncodeDateTime(struct pg_tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, 
 					sprintf((str + strlen(str)), ((min != 0) ? "%+03d:%02d" : "%+03d"), hour, min);
 				}
 			}
+
+			if (tm->tm_year <= 0)
+				sprintf((str + strlen(str)), " BC");
 			break;
 
 		case USE_POSTGRES_DATES:
@@ -3671,20 +3677,20 @@ EncodeDateTime(struct pg_tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, 
 			if (fsec != 0)
 			{
 				sprintf((str + strlen(str)), ":%02d.%06d", tm->tm_sec, fsec);
+				TrimTrailingZeros(str);
+			}
 #else
 			if ((fsec != 0) && (tm->tm_year > 0))
 			{
 				sprintf((str + strlen(str)), ":%09.6f", tm->tm_sec + fsec);
-#endif
 				TrimTrailingZeros(str);
 			}
+#endif
 			else
 				sprintf((str + strlen(str)), ":%02d", tm->tm_sec);
 
 			sprintf((str + strlen(str)), " %04d",
 				 ((tm->tm_year > 0) ? tm->tm_year : -(tm->tm_year - 1)));
-			if (tm->tm_year <= 0)
-				sprintf((str + strlen(str)), " BC");
 
 			if ((tzp != NULL) && (tm->tm_isdst >= 0))
 			{
@@ -3704,11 +3710,14 @@ EncodeDateTime(struct pg_tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, 
 					sprintf((str + strlen(str)), ((min != 0) ? " %+03d:%02d" : " %+03d"), hour, min);
 				}
 			}
+
+			if (tm->tm_year <= 0)
+				sprintf((str + strlen(str)), " BC");
 			break;
 	}
 
 	return TRUE;
-}	/* EncodeDateTime() */
+}
 
 
 /* EncodeInterval()

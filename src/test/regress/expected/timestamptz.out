@@ -180,7 +180,7 @@ SELECT '' AS "64", d1 FROM TIMESTAMPTZ_TBL;
     | Fri Feb 14 17:32:01 1997 PST
     | Sat Feb 15 17:32:01 1997 PST
     | Sun Feb 16 17:32:01 1997 PST
-    | Tue Feb 16 17:32:01 0097 BC PST
+    | Tue Feb 16 17:32:01 0097 PST BC
     | Sat Feb 16 17:32:01 0097 PST
     | Thu Feb 16 17:32:01 0597 PST
     | Tue Feb 16 17:32:01 1097 PST
@@ -266,7 +266,7 @@ SELECT '' AS "15", d1 FROM TIMESTAMPTZ_TBL
 ----+---------------------------------
     | -infinity
     | Wed Dec 31 16:00:00 1969 PST
-    | Tue Feb 16 17:32:01 0097 BC PST
+    | Tue Feb 16 17:32:01 0097 PST BC
     | Sat Feb 16 17:32:01 0097 PST
     | Thu Feb 16 17:32:01 0597 PST
     | Tue Feb 16 17:32:01 1097 PST
@@ -332,7 +332,7 @@ SELECT '' AS "63", d1 FROM TIMESTAMPTZ_TBL
     | Fri Feb 14 17:32:01 1997 PST
     | Sat Feb 15 17:32:01 1997 PST
     | Sun Feb 16 17:32:01 1997 PST
-    | Tue Feb 16 17:32:01 0097 BC PST
+    | Tue Feb 16 17:32:01 0097 PST BC
     | Sat Feb 16 17:32:01 0097 PST
     | Thu Feb 16 17:32:01 0597 PST
     | Tue Feb 16 17:32:01 1097 PST
@@ -364,7 +364,7 @@ SELECT '' AS "16", d1 FROM TIMESTAMPTZ_TBL
     | -infinity
     | Wed Dec 31 16:00:00 1969 PST
     | Thu Jan 02 00:00:00 1997 PST
-    | Tue Feb 16 17:32:01 0097 BC PST
+    | Tue Feb 16 17:32:01 0097 PST BC
     | Sat Feb 16 17:32:01 0097 PST
     | Thu Feb 16 17:32:01 0597 PST
     | Tue Feb 16 17:32:01 1097 PST
