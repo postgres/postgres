@@ -1,4 +1,21 @@
+#-------------------------------------------------------
+#
+# $Id: Changes,v 1.7 1998/06/01 16:41:18 mergl Exp $
+#
+# Copyright (c) 1997, 1998  Edmund Mergl
+#
+#-------------------------------------------------------
+
 Revision history for Perl extension Pg.
+
+
+1.7.4   May 28 1998
+	- applied patches from 
+	  Brook Milligan <brook@trillium.NMSU.Edu>:
+	  o changed Makefile.PL to look for include files
+	    and libs in the source tree, except when the
+	    environment variable POSTGRES_HOME is set.
+	  o bug-fix in test.pl
 
 1.7.3   Mar 28 1998
 	- linking again with the shared version of libpq 

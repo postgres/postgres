@@ -2,9 +2,9 @@
 
 #-------------------------------------------------------
 #
-# $Id: example.newstyle,v 1.4 1998/04/14 21:14:50 mergl Exp $
+# $Id: example.newstyle,v 1.5 1998/06/01 16:41:27 mergl Exp $
 #
-# Copyright (c) 1997  Edmund Mergl
+# Copyright (c) 1997, 1998  Edmund Mergl
 #
 #-------------------------------------------------------
 
@@ -122,7 +122,7 @@ cmp_ne("", $port);
 ######################### create and insert into table
 # 8-19
 
-$result = $conn->exec("CREATE TABLE person (id int4, name char16)");
+$result = $conn->exec("CREATE TABLE person (id int4, name char(16))");
 cmp_eq(PGRES_COMMAND_OK, $result->resultStatus);
 cmp_eq("CREATE", $result->cmdStatus);
 
@@ -143,7 +143,7 @@ $ret = 0;
 while (-1 != $ret) {
     $ret = $conn->getline($string, 256);
     last if $string eq "\\.";
-    cmp_eq("$i	Edmund Mergl", $string);
+    cmp_eq("$i	Edmund Mergl    ", $string);
     $i ++;
 }
 
@@ -190,8 +190,8 @@ for ($k = 0; $k < $result->nfields; $k++) {
         cmp_eq(4, $fsize);
     } else {
         cmp_eq("name", $fname);
-        cmp_eq(20, $ftype);
-        cmp_eq(16, $fsize);
+        cmp_eq(1042, $ftype);
+        cmp_eq(-1, $fsize);
     }
     $fnumber = $result->fnumber($fname);
     cmp_eq($k, $fnumber);
@@ -201,7 +201,7 @@ $string = "";
 while (@row = $result->fetchrow) {
     $string = join(" ", @row);
 }
-cmp_eq("5 Edmund Mergl", $string);
+cmp_eq("5 Edmund Mergl    ", $string);
 
 ######################### PQnotifies
 # 43-46

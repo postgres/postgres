@@ -1,15 +1,15 @@
 #-------------------------------------------------------
 #
-# $Id: README,v 1.6 1998/04/14 21:14:37 mergl Exp $
+# $Id: README,v 1.7 1998/06/01 16:41:19 mergl Exp $
 #
-# Copyright (c) 1997  Edmund Mergl
+# Copyright (c) 1997, 1998  Edmund Mergl
 #
 #-------------------------------------------------------
 
 DESCRIPTION:
 ------------
 
-This is version 1.7.3 of pgsql_perl5 (previously called pg95perl5).
+This is version 1.7.4 of pgsql_perl5 (previously called pg95perl5).
 
 Pgsql_perl5 is an interface between Larry Wall's language perl version 5 and 
 the database PostgreSQL (previously Postgres95). This has been done by using 
@@ -63,13 +63,16 @@ PLATFORMS:
 INSTALLATION:
 -------------
 
-Using dynamic loading for perl extensions, the preferred method is to unpack 
-the tar file outside the perl source tree. This assumes, that you already 
-have installed perl5.
+Since the perl5 interface is always contained in the source tree of PostgreSQL, 
+it is usually build together with PostgreSQL itself. This can be obtained by 
+adding the option '--with-perl' to the configure command. 
 
-The Makefile checks the environment variable POSTGRES_HOME as well some 
-standard locations, to find the root directory of your Postgres installation. 
- 
+In case you need to build the perl interface stand alone, you need to set the 
+environment variable POSTGRES_HOME, pointing to the PostgreSQL home-directory. 
+Also PostgreSQL needs to be installed having the include files in 
+$POSTGRES_HOME/include and the libs in $POSTGRES_HOME/lib. Then you have to 
+build the module as any standard perl-module with the following commands: 
+
 1.   perl Makefile.PL
 2.   make
 3.   make test
@@ -117,7 +120,6 @@ HP users: if you get error messages like:
           Dan Lauterbach <danla@dimensional.com>
 
 
-
 DOCUMENTATION:
 --------------
 
@@ -127,6 +129,6 @@ installation to read the documentation.
 
 ---------------------------------------------------------------------------
 
-   Edmund Mergl <E.Mergl@bawue.de>                       March 28, 1998
+   Edmund Mergl <E.Mergl@bawue.de>                            May 28, 1998
 
 ---------------------------------------------------------------------------

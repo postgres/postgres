@@ -2,9 +2,9 @@
 
 #-------------------------------------------------------
 #
-# $Id: example.oldstyle,v 1.4 1998/04/14 21:14:52 mergl Exp $
+# $Id: example.oldstyle,v 1.5 1998/06/01 16:41:27 mergl Exp $
 #
-# Copyright (c) 1997  Edmund Mergl
+# Copyright (c) 1997, 1998  Edmund Mergl
 #
 #-------------------------------------------------------
 
@@ -126,7 +126,7 @@ cmp_ne("", $port);
 ######################### create and insert into table
 # 8-19
 
-$result = PQexec($conn, "CREATE TABLE person (id int4, name char16)");
+$result = PQexec($conn, "CREATE TABLE person (id int4, name char(16))");
 cmp_eq(PGRES_COMMAND_OK, PQresultStatus($result));
 cmp_eq("CREATE", PQcmdStatus($result));
 PQclear($result);
@@ -150,7 +150,7 @@ $ret = 0;
 while (-1 != $ret) {
     $ret = PQgetline($conn, $string, 256);
     last if $string eq "\\.";
-    cmp_eq("$i	Edmund Mergl", $string);
+    cmp_eq("$i	Edmund Mergl    ", $string);
     $i++;
 }
 
@@ -201,8 +201,8 @@ for ($k = 0; $k < PQnfields($result); $k++) {
         cmp_eq(4, $fsize);
     } else { 
         cmp_eq("name", $fname);
-        cmp_eq(20, $ftype);
-        cmp_eq(16, $fsize);
+        cmp_eq(1042, $ftype);
+        cmp_eq(-1, $fsize);
     }
     $fnumber = PQfnumber($result, $fname);
     cmp_eq($k, $fnumber);
@@ -214,7 +214,7 @@ for ($k = 0; $k < PQntuples($result); $k++) {
         $string .= PQgetvalue($result, $k, $l) . " ";
     }
     $i = $k + 1;
-    cmp_eq("$i Edmund Mergl ", $string);
+    cmp_eq("$i Edmund Mergl     ", $string);
 }
 
 PQclear($result);
