@@ -13,15 +13,16 @@ parallel	group1
 	test	oid
 	test	float4
 	test	float8
+	test	numeric
 endparallel
 
-test	strings		# Depends on things setup during char, varchar and text.
+test	strings		# Depends on things setup during char, varchar and text
+test	numerology	# Depends on int2, int4, int8, float4, float8
 
 # ----------
 # The second group of parallel test
 # ----------
 parallel	group2
-	test	numerology
 	test	point
  	test	lseg
  	test	box
@@ -127,6 +128,5 @@ parallel	group6
 	test	limit
 	test	plpgsql		# Cannot run concurrently to rules
 	test	temp
-	test	numeric
 endparallel
 
