@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue May 22 08:10:27 EDT 2001
+Last updated:		Tue May 22 09:20:25 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -23,7 +23,7 @@ PARSER
 
 MISC
 
-* Plpgsql does not handle quoted mixed-case identifiers
+* PL/PgSQL does not handle quoted mixed-case identifiers
 
 ENHANCEMENTS
 ------------
