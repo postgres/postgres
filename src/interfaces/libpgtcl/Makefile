@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile,v 1.16 1997/09/27 19:35:04 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile,v 1.17 1997/10/28 15:13:10 vadim Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -25,22 +25,32 @@ ifdef KRBVERS
 CFLAGS+= $(KRBFLAGS)
 endif
 
-shlib             := 
+# Shared library stuff
+
 install-shlib-dep :=
+shlib             := 
 
 ifeq ($(PORTNAME), linux)
   ifdef LINUX_ELF
-    ifeq ($(CC), gcc)
-      CFLAGS += -fpic -fPIC
-    endif
-    shlib             := libpgtcl.so.1
-    install-shlib-dep := install-shlib
-    LDFLAGS           += -L $(SRCDIR)/interfaces/libpq -lpq
+    install-shlib-dep	:= install-shlib
+    shlib		:= libpgtcl.so.1
+    CFLAGS		+= $(CFLAGS_SL)
+    LDFLAGS_SL		= -shared -L $(SRCDIR)/interfaces/libpq -lpq
   endif
 endif
 
+ifeq ($(PORTNAME), BSD44_derived)
+  install-shlib-dep	:= install-shlib
+  shlib			:= libpgtcl.so.1.0
+  LDFLAGS_SL		= -x -Bshareable -Bforcearchive
+  CFLAGS		+= $(CFLAGS_SL)
+endif
+
 ifeq ($(PORTNAME), i386_solaris)
-  CFLAGS+= -fPIC
+  install-shlib-dep	:= install-shlib
+  shlib			:= libpgtcl.so.1
+  LDFLAGS_SL		= -G -z text
+  CFLAGS		+= $(CFLAGS_SL)
 endif
 
 OBJS= pgtcl.o pgtclCmds.o pgtclId.o
@@ -56,10 +66,9 @@ else
 endif
 	$(RANLIB) libpgtcl.a
 
-libpgtcl.so.1: $(OBJS)
-	$(CC) $(LDFLAGS) -shared $(OBJS) -o libpgtcl.so.1
-	rm -f libpgtcl.so
-	ln -s libpgtcl.so.1 libpgtcl.so
+$(shlib): $(OBJS)
+	$(LD) $(LDFLAGS_SL) -o $@ $(OBJS) 
+	ln -sf $@ libpgtcl.so
 
 .PHONY: beforeinstall-headers install-headers
 .PHONY: install install-libpgtcl
@@ -75,12 +84,11 @@ beforeinstall-headers:
 install-libpgtcl: libpgtcl.a
 	$(INSTALL) $(INSTL_LIB_OPTS) libpgtcl.a $(DESTDIR)$(LIBDIR)/libpgtcl.a
 
-install-shlib: libpgtcl.so.1
-	$(INSTALL) $(INSTL_LIB_OPTS) libpgtcl.so.1 \
-		$(DESTDIR)$(LIBDIR)/libpgtcl.so.1
-	rm -f $(DESTDIR)$(LIBDIR)/libpgtcl.so
-	ln -s libpgtcl.so.1 $(DESTDIR)$(LIBDIR)/libpgtcl.so
+install-shlib: $(shlib)
+	$(INSTALL) $(INSTL_LIB_OPTS) $(shlib) \
+		$(DESTDIR)$(LIBDIR)/$(shlib)
+	ln -sf $(shlib) $(DESTDIR)$(LIBDIR)/libpgtcl.so
 
 .PHONY: clean
 clean: 
-	rm -f $(OBJS)
+	rm -f $(OBJS) $(shlib) libpgtcl.a libpgtcl.so
