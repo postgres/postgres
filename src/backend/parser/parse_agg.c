@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.21 1999/05/25 16:10:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.22 1999/06/19 03:48:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,144 +32,111 @@
 #include "utils/lsyscache.h"
 
 static bool contain_agg_clause(Node *clause);
-static bool exprIsAggOrGroupCol(Node *expr, List *groupClause, List *tlist);
-static bool tleIsAggOrGroupCol(TargetEntry *tle, List *groupClause,
-				   List *tlist);
+static bool contain_agg_clause_walker(Node *node, void *context);
+static bool exprIsAggOrGroupCol(Node *expr, List *groupClauses);
+static bool exprIsAggOrGroupCol_walker(Node *node, List *groupClauses);
 
 /*
  * contain_agg_clause
- *	  Recursively find aggref nodes from a clause.
+ *	  Recursively find aggref nodes within a clause.
  *
  *	  Returns true if any aggregate found.
+ *
+ * NOTE: we assume that the given clause has been transformed suitably for
+ * parser output.  This means we can use the planner's expression_tree_walker,
+ * except that we have to process SubLink nodes specially, since they haven't
+ * been turned into SubPlan nodes yet.
  */
 static bool
 contain_agg_clause(Node *clause)
 {
-	if (clause == NULL)
-		return FALSE;
-	else if (IsA(clause, Aggref))
-		return TRUE;
-	else if (IsA(clause, Iter))
-		return contain_agg_clause(((Iter *) clause)->iterexpr);
-	else if (single_node(clause))
-		return FALSE;
-	else if (or_clause(clause) || and_clause(clause))
+	return contain_agg_clause_walker(clause, NULL);
+}
+
+static bool
+contain_agg_clause_walker(Node *node, void *context)
+{
+	if (node == NULL)
+		return false;
+	if (IsA(node, Aggref))
+		return true;			/* abort the tree traversal and return true */
+	if (IsA(node, SubLink))
 	{
-		List	   *temp;
-
-		foreach(temp, ((Expr *) clause)->args)
-			if (contain_agg_clause(lfirst(temp)))
-			return TRUE;
-		return FALSE;
+		/* Examine the lefthand side, but not the oper list nor the subquery */
+		SubLink    *sublink = (SubLink *) node;
+		return contain_agg_clause_walker((Node *) sublink->lefthand, context);
 	}
-	else if (is_funcclause(clause))
-	{
-		List	   *temp;
-
-		foreach(temp, ((Expr *) clause)->args)
-			if (contain_agg_clause(lfirst(temp)))
-			return TRUE;
-		return FALSE;
-	}
-	else if (IsA(clause, ArrayRef))
-	{
-		List	   *temp;
-
-		foreach(temp, ((ArrayRef *) clause)->refupperindexpr)
-			if (contain_agg_clause(lfirst(temp)))
-			return TRUE;
-		foreach(temp, ((ArrayRef *) clause)->reflowerindexpr)
-			if (contain_agg_clause(lfirst(temp)))
-			return TRUE;
-		if (contain_agg_clause(((ArrayRef *) clause)->refexpr))
-			return TRUE;
-		if (contain_agg_clause(((ArrayRef *) clause)->refassgnexpr))
-			return TRUE;
-		return FALSE;
-	}
-	else if (not_clause(clause))
-		return contain_agg_clause((Node *) get_notclausearg((Expr *) clause));
-	else if (is_opclause(clause))
-		return (contain_agg_clause((Node *) get_leftop((Expr *) clause)) ||
-			  contain_agg_clause((Node *) get_rightop((Expr *) clause)));
-
-	return FALSE;
+	return expression_tree_walker(node, contain_agg_clause_walker, context);
 }
 
 /*
  * exprIsAggOrGroupCol -
- *	  returns true if the expression does not contain non-group columns.
+ *	  returns true if the expression does not contain non-group columns,
+ *	  other than within the arguments of aggregate functions.
+ *
+ * NOTE: we assume that the given clause has been transformed suitably for
+ * parser output.  This means we can use the planner's expression_tree_walker,
+ * except that we have to process SubLink nodes specially, since they haven't
+ * been turned into SubPlan nodes yet.
+ *
+ * NOTE: in the case of a SubLink, we do not descend into the subquery.  This
+ * means we will fail to detect ungrouped columns that appear as outer-level
+ * variables within a subquery.  That seems unreasonably hard to handle here.
+ * Instead, we expect the planner to check for ungrouped columns after it's
+ * found all the outer-level references inside the subquery and converted
+ * them into a list of parameters for the subquery.
  */
 static bool
-exprIsAggOrGroupCol(Node *expr, List *groupClause, List *tlist)
+exprIsAggOrGroupCol(Node *expr, List *groupClauses)
 {
-	List	   *gl;
-
-	if (expr == NULL || IsA(expr, Const) ||
-		IsA(expr, Param) ||IsA(expr, Aggref) ||
-		IsA(expr, SubLink))		/* can't handle currently !!! */
-		return TRUE;
-
-	foreach(gl, groupClause)
-	{
-		GroupClause *grpcl = lfirst(gl);
-
-		if (equal(expr, get_groupclause_expr(grpcl, tlist)))
-			return TRUE;
-	}
-
-	if (IsA(expr, Expr))
-	{
-		List	   *temp;
-
-		foreach(temp, ((Expr *) expr)->args)
-			if (!exprIsAggOrGroupCol(lfirst(temp), groupClause, tlist))
-			return FALSE;
-		return TRUE;
-	}
-
-	return FALSE;
+	/* My walker returns TRUE if it finds a subexpression that is NOT
+	 * acceptable (since we can abort the recursion at that point).
+	 * So, invert its result.
+	 */
+	return ! exprIsAggOrGroupCol_walker(expr, groupClauses);
 }
 
-/*
- * tleIsAggOrGroupCol -
- *	  returns true if the TargetEntry is Agg or GroupCol.
- */
 static bool
-tleIsAggOrGroupCol(TargetEntry *tle, List *groupClause, List *tlist)
+exprIsAggOrGroupCol_walker(Node *node, List *groupClauses)
 {
-	Node	   *expr = tle->expr;
 	List	   *gl;
 
-	if (expr == NULL || IsA(expr, Const) ||IsA(expr, Param))
-		return TRUE;
-
-	foreach(gl, groupClause)
+	if (node == NULL)
+		return false;
+	if (IsA(node, Aggref))
+		return false;			/* OK; do not examine argument of aggregate */
+	if (IsA(node, Const) || IsA(node, Param))
+		return false;			/* constants are always acceptable */
+	/* Now check to see if expression as a whole matches any GROUP BY item.
+	 * We need to do this at every recursion level so that we recognize
+	 * GROUPed-BY expressions.
+	 */
+	foreach(gl, groupClauses)
 	{
-		GroupClause *grpcl = lfirst(gl);
-
-		if (tle->resdom->resgroupref == grpcl->tleGroupref)
-		{
-			if (contain_agg_clause((Node *) expr))
-				elog(ERROR, "Aggregates not allowed in GROUP BY clause");
-			return TRUE;
-		}
+		if (equal(node, lfirst(gl)))
+			return false;		/* acceptable, do not descend more */
 	}
-
-	if (IsA(expr, Aggref))
-		return TRUE;
-
-	if (IsA(expr, Expr))
+	/* If we have an ungrouped Var, we have a failure --- unless it is an
+	 * outer-level Var.  In that case it's a constant as far as this query
+	 * level is concerned, and we can accept it.  (If it's ungrouped as far
+	 * as the upper query is concerned, that's someone else's problem...)
+	 */
+	if (IsA(node, Var))
 	{
-		List	   *temp;
-
-		foreach(temp, ((Expr *) expr)->args)
-			if (!exprIsAggOrGroupCol(lfirst(temp), groupClause, tlist))
-			return FALSE;
-		return TRUE;
+		if (((Var *) node)->varlevelsup == 0)
+			return true;		/* found an ungrouped local variable */
+		return false;			/* outer-level Var is acceptable */
 	}
-
-	return FALSE;
+	/* Otherwise, recurse. */
+	if (IsA(node, SubLink))
+	{
+		/* Examine the lefthand side, but not the oper list nor the subquery */
+		SubLink    *sublink = (SubLink *) node;
+		return exprIsAggOrGroupCol_walker((Node *) sublink->lefthand,
+										  groupClauses);
+	}
+	return expression_tree_walker(node, exprIsAggOrGroupCol_walker,
+								  (void *) groupClauses);
 }
 
 /*
@@ -184,6 +151,7 @@ tleIsAggOrGroupCol(TargetEntry *tle, List *groupClause, List *tlist)
 void
 parseCheckAggregates(ParseState *pstate, Query *qry)
 {
+	List	   *groupClauses = NIL;
 	List	   *tl;
 
 	/* This should only be called if we found aggregates or grouping */
@@ -200,6 +168,24 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 		elog(ERROR, "Aggregates not allowed in WHERE clause");
 
 	/*
+	 * No aggregates allowed in GROUP BY clauses, either.
+	 *
+	 * While we are at it, build a list of the acceptable GROUP BY expressions
+	 * for use by exprIsAggOrGroupCol() (this avoids repeated scans of the
+	 * targetlist within the recursive routines...)
+	 */
+	foreach(tl, qry->groupClause)
+	{
+		GroupClause *grpcl = lfirst(tl);
+		Node		*expr;
+
+		expr = (Node *) get_groupclause_expr(grpcl, qry->targetList);
+		if (contain_agg_clause(expr))
+			elog(ERROR, "Aggregates not allowed in GROUP BY clause");
+		groupClauses = lcons(expr, groupClauses);
+	}
+
+	/*
 	 * The target list can only contain aggregates, group columns and
 	 * functions thereof.
 	 */
@@ -207,19 +193,21 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 	{
 		TargetEntry *tle = lfirst(tl);
 
-		if (!tleIsAggOrGroupCol(tle, qry->groupClause, qry->targetList))
+		if (!exprIsAggOrGroupCol(tle->expr, groupClauses))
 			elog(ERROR,
 				 "Illegal use of aggregates or non-group column in target list");
 	}
 
 	/*
-	 * the expression specified in the HAVING clause has the same
+	 * The expression specified in the HAVING clause has the same
 	 * restriction as those in the target list.
 	 */
-
-	if (!exprIsAggOrGroupCol(qry->havingQual, qry->groupClause, qry->targetList))
+	if (!exprIsAggOrGroupCol(qry->havingQual, groupClauses))
 		elog(ERROR,
-		"Illegal use of aggregates or non-group column in HAVING clause");
+			 "Illegal use of aggregates or non-group column in HAVING clause");
+
+	/* Release the list storage (but not the pointed-to expressions!) */
+	freeList(groupClauses);
 }
 
 
