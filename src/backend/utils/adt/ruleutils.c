@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.134 2003/02/03 21:15:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.135 2003/02/13 05:10:39 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -546,9 +546,6 @@ pg_get_indexdef(PG_FUNCTION_ARGS)
  *
  * Returns the definition for the constraint, ie, everything that needs to
  * appear after "ALTER TABLE ... ADD CONSTRAINT <constraintname>".
- *
- * XXX The present implementation only works for foreign-key constraints, but
- * it could and should handle anything pg_constraint stores.
  */
 Datum
 pg_get_constraintdef(PG_FUNCTION_ARGS)
@@ -698,10 +695,53 @@ pg_get_constraintdef(PG_FUNCTION_ARGS)
 
 				break;
 			}
+		case CONSTRAINT_PRIMARY:
+		case CONSTRAINT_UNIQUE:
+			{
+				Datum		val;
+				bool		isnull;
 
-			/*
-			 * XXX Add more code here for other contypes
-			 */
+				/* Start off the constraint definition */
+				if (conForm->contype == CONSTRAINT_PRIMARY)
+					appendStringInfo(&buf, "PRIMARY KEY (");
+				else
+					appendStringInfo(&buf, "UNIQUE (");
+
+				/* Fetch and build target column list */
+				val = heap_getattr(tup, Anum_pg_constraint_conkey,
+								   RelationGetDescr(conDesc), &isnull);
+				if (isnull)
+					elog(ERROR, "pg_get_constraintdef: Null conkey for constraint %u",
+						 constraintId);
+
+				decompile_column_index_array(val, conForm->conrelid, &buf);
+
+				appendStringInfo(&buf, ")");
+
+				break;
+			}
+		case CONSTRAINT_CHECK:
+			{
+				Datum		val;
+				bool		isnull;
+
+				/* Start off the constraint definition */
+				/* The consrc for CHECK constraints always seems to be
+				   bracketed, so we don't add extra brackets here. */
+				appendStringInfo(&buf, "CHECK ");
+
+				/* Fetch constraint source */
+				val = heap_getattr(tup, Anum_pg_constraint_consrc,
+								   RelationGetDescr(conDesc), &isnull);
+				if (isnull)
+					elog(ERROR, "pg_get_constraintdef: Null consrc for constraint %u",
+						 constraintId);
+
+				/* Append the constraint source */
+				appendStringInfo(&buf, DatumGetCString(DirectFunctionCall1(textout, val))); 
+
+				break;
+			}
 		default:
 			elog(ERROR, "pg_get_constraintdef: unsupported constraint type '%c'",
 				 conForm->contype);
