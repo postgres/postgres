@@ -27,11 +27,6 @@
 #define vsnprintf(a,b,c,d) _vsnprintf(a,b,c,d)
 #define snprintf _snprintf
 
-/*
- * crypt not available (yet)
- */
-#define crypt(a,b) ((char *) a)
-
 #undef EAGAIN					/* doesn't apply on sockets */
 #undef EINTR
 #define EINTR WSAEINTR
