@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.96 2002/04/26 01:24:08 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.97 2002/05/13 19:22:06 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -4534,7 +4534,7 @@ SELECT has_table_privilege('myschema.mytable', 'select');
 
     <tbody>
      <row>
-      <entry>AVG(<replaceable class="parameter">expression</replaceable>)</entry>
+      <entry>avg(<replaceable class="parameter">expression</replaceable>)</entry>
       <entry>the average (arithmetic mean) of all input values</entry>
       <entry>
        <indexterm>
