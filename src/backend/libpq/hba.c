@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.87.2.4 2003/04/13 04:07:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.87.2.5 2004/11/17 19:54:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -281,7 +281,7 @@ tokenize_inc_file(const char *inc_filename)
 		{
 			if (strlen(comma_str))
 			{
-				comma_str = repalloc(comma_str, strlen(comma_str) + 1);
+				comma_str = repalloc(comma_str, strlen(comma_str) + 1 + 1);
 				strcat(comma_str, MULTI_VALUE_SEP);
 			}
 			comma_str = repalloc(comma_str,
