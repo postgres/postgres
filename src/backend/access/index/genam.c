@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/genam.c,v 1.23 2000/01/26 05:55:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/genam.c,v 1.24 2000/03/14 23:52:01 tgl Exp $
  *
  * NOTES
  *	  many of the old access method routines have been turned into
@@ -113,6 +113,9 @@ RelationGetIndexScan(Relation relation,
 	ItemPointerSetInvalid(&scan->previousMarkData);
 	ItemPointerSetInvalid(&scan->currentMarkData);
 	ItemPointerSetInvalid(&scan->nextMarkData);
+
+	/* mark cached function lookup data invalid; it will be set on first use */
+	scan->fn_getnext.fn_oid = InvalidOid;
 
 	if (numberOfKeys > 0)
 		scan->keyData = (ScanKey) palloc(sizeof(ScanKeyData) * numberOfKeys);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.40 2000/01/26 05:55:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.41 2000/03/14 23:52:01 tgl Exp $
  *
  * INTERFACE ROUTINES
  *		index_open		- open an index relation by relationId
@@ -329,17 +329,28 @@ RetrieveIndexResult
 index_getnext(IndexScanDesc scan,
 			  ScanDirection direction)
 {
-	RegProcedure procedure;
 	RetrieveIndexResult result;
 
 	SCAN_CHECKS;
-	GET_SCAN_PROCEDURE(getnext, amgettuple);
+
+	/* ----------------
+	 *	Look up the access procedure only once per scan.
+	 * ----------------
+	 */
+	if (scan->fn_getnext.fn_oid == InvalidOid)
+	{
+		RegProcedure procedure;
+
+		GET_SCAN_PROCEDURE(getnext, amgettuple);
+		fmgr_info(procedure, &scan->fn_getnext);
+	}
 
 	/* ----------------
 	 *	have the am's gettuple proc do all the work.
 	 * ----------------
 	 */
-	result = (RetrieveIndexResult) fmgr(procedure, scan, direction);
+	result = (RetrieveIndexResult)
+		(*fmgr_faddr(&scan->fn_getnext)) (scan, direction);
 
 	return result;
 }
