@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.378 2003/11/29 21:40:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.379 2003/12/01 22:15:37 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -2282,7 +2282,8 @@ PostgresMain(int argc, char *argv[], const char *username)
 														 * global or static,
 														 * when fork */
 
-					sscanf(optarg, "%d,%d,%d,%p,", &MyProcPort->sock, &PMcanAcceptConnections,
+					sscanf(optarg, "%d,%d,%lu,%p,",
+						   &MyProcPort->sock, &PMcanAcceptConnections,
 						   &UsedShmemSegID, &UsedShmemSegAddr);
 					/* Grab dbname as last param */
 					for (i = 0, p = optarg - 1; i < 4 && p; i++)

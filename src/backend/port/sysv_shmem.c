@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/sysv_shmem.c,v 1.26 2003/11/29 19:51:54 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/sysv_shmem.c,v 1.27 2003/12/01 22:15:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,12 +34,14 @@
 #include "storage/ipc.h"
 #include "storage/pg_shmem.h"
 
+
+typedef key_t IpcMemoryKey;		/* shared memory key passed to shmget(2) */
 typedef int IpcMemoryId;		/* shared memory ID returned by shmget(2) */
 
 #define IPCProtection	(0600)	/* access/modify by user only */
 
 
-IpcMemoryKey UsedShmemSegID = 0;
+unsigned long UsedShmemSegID = 0;
 void	   *UsedShmemSegAddr = NULL;
 
 static void *InternalIpcMemoryCreate(IpcMemoryKey memKey, uint32 size);
@@ -90,8 +92,8 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, uint32 size)
 		 */
 		ereport(FATAL,
 				(errmsg("could not create shared memory segment: %m"),
-			errdetail("Failed system call was shmget(key=%d, size=%u, 0%o).",
-					  (int) memKey, size,
+			errdetail("Failed system call was shmget(key=%lu, size=%u, 0%o).",
+					  (unsigned long) memKey, size,
 					  IPC_CREAT | IPC_EXCL | IPCProtection),
 				 (errno == EINVAL) ?
 				 errhint("This error usually means that PostgreSQL's request for a shared memory "
@@ -247,9 +249,10 @@ PGSharedMemoryCreate(uint32 size, bool makePrivate, int port)
 	/* If Exec case, just attach and return the pointer */
 	if (ExecBackend && UsedShmemSegAddr != NULL && !makePrivate)
 	{
-		if ((hdr = PGSharedMemoryAttach(UsedShmemSegID, &shmid)) == NULL)
-			elog(FATAL, "could not attach to proper memory at fixed address: shmget(key=%d, addr=%p) failed: %m",
-				 (int) UsedShmemSegID, UsedShmemSegAddr);
+		hdr = PGSharedMemoryAttach((IpcMemoryKey) UsedShmemSegID, &shmid);
+		if (hdr == NULL)
+			elog(FATAL, "could not attach to proper memory at fixed address: shmget(key=%lu, addr=%p) failed: %m",
+				 UsedShmemSegID, UsedShmemSegAddr);
 		return hdr;
 	}
 
@@ -331,7 +334,7 @@ PGSharedMemoryCreate(uint32 size, bool makePrivate, int port)
 
 	/* Save info for possible future use */
 	UsedShmemSegAddr = memAddress;
-	UsedShmemSegID = NextShmemSegID;
+	UsedShmemSegID = (unsigned long) NextShmemSegID;
 
 	return hdr;
 }

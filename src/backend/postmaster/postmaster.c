@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.350 2003/11/29 19:51:55 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.351 2003/12/01 22:15:37 tgl Exp $
  *
  * NOTES
  *
@@ -2558,8 +2558,10 @@ BackendFork(Port *port)
 #ifdef EXEC_BACKEND
 	Assert(UsedShmemSegID != 0 && UsedShmemSegAddr != NULL);
 	/* database name at the end because it might contain commas */
-	snprintf(pbuf, NAMEDATALEN + 256, "%d,%d,%d,%p,%s", port->sock, canAcceptConnections(),
-			 UsedShmemSegID, UsedShmemSegAddr, port->database_name);
+	snprintf(pbuf, sizeof(pbuf), "%d,%d,%lu,%p,%s",
+			 port->sock, canAcceptConnections(),
+			 UsedShmemSegID, UsedShmemSegAddr,
+			 port->database_name);
 	av[ac++] = pbuf;
 #else
 	av[ac++] = port->database_name;
@@ -2902,8 +2904,8 @@ SSDataBase(int xlop)
 #ifdef EXEC_BACKEND
 		Assert(UsedShmemSegID != 0 && UsedShmemSegAddr != NULL);
 		/* database name at the end because it might contain commas */
-		snprintf(pbuf, NAMEDATALEN + 256, "%d,%p,%s", UsedShmemSegID,
-				 UsedShmemSegAddr, "template1");
+		snprintf(pbuf, sizeof(pbuf), "%lu,%p,%s",
+				 UsedShmemSegID, UsedShmemSegAddr, "template1");
 		av[ac++] = pbuf;
 #else
 		av[ac++] = "template1";

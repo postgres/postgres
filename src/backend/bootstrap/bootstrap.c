@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.168 2003/11/29 19:51:41 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.169 2003/12/01 22:15:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -290,7 +290,9 @@ BootstrapMain(int argc, char *argv[])
 #ifdef EXEC_BACKEND
 					char	   *p;
 
-					sscanf(optarg, "%d,%p,", &UsedShmemSegID, &UsedShmemSegAddr);
+					sscanf(optarg, "%lu,%p,",
+						   &UsedShmemSegID,
+						   &UsedShmemSegAddr);
 					p = strchr(optarg, ',');
 					if (p)
 						p = strchr(p + 1, ',');

@@ -17,14 +17,12 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/pg_shmem.h,v 1.9 2003/11/29 22:41:13 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/storage/pg_shmem.h,v 1.10 2003/12/01 22:15:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef PG_SHMEM_H
 #define PG_SHMEM_H
-
-typedef uint32 IpcMemoryKey;	/* shared memory key passed to shmget(2) */
 
 typedef struct PGShmemHeader	/* standard header for all Postgres shmem */
 {
@@ -37,7 +35,7 @@ typedef struct PGShmemHeader	/* standard header for all Postgres shmem */
 
 
 #ifdef EXEC_BACKEND
-extern IpcMemoryKey UsedShmemSegID;
+extern unsigned long UsedShmemSegID;
 extern void *UsedShmemSegAddr;
 #endif
 
