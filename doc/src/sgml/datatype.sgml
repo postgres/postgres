@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.67 2001/10/30 20:13:44 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.68 2001/11/08 23:36:55 petere Exp $
 -->
 
  <chapter id="datatype">
@@ -1440,17 +1440,17 @@ SELECT b, char_length(b) FROM test2;
       <literal>BC</literal>, followed by an optional time zone. (See below.)
       Thus
 
-      <programlisting>
+<programlisting>
 1999-01-08 04:05:06
-      </programlisting>
+</programlisting>
 
       is a valid <type>timestamp without time zone</type> value that
       is <acronym>ISO</acronym>-compliant.
       In addition, the wide-spread format
 
-      <programlisting>
+<programlisting>
 January 8 04:05:06 1999 PST
-      </programlisting>
+</programlisting>
       is supported.
      </para>
 
@@ -1476,16 +1476,16 @@ January 8 04:05:06 1999 PST
       <literal>BC</literal>, followed by an optional time zone. (See below.)
       Thus
 
-      <programlisting>
+<programlisting>
 1999-01-08 04:05:06 -8:00
-      </programlisting>
+</programlisting>
 
       is a valid <type>timestamp</type> value that is <acronym>ISO</acronym>-compliant.
       In addition, the wide-spread format
 
-      <programlisting>
+<programlisting>
 January 8 04:05:06 1999 PST
-      </programlisting>
+</programlisting>
       is supported.
      </para>
 
@@ -1532,10 +1532,10 @@ January 8 04:05:06 1999 PST
       <para>
        <type>interval</type>s can be specified with the following syntax:
 
-      <programlisting>
+<programlisting>
   Quantity Unit [Quantity Unit...] [Direction]
 @ Quantity Unit [Direction]
-      </programlisting>
+</programlisting>
 
       where: <literal>Quantity</literal> is ..., <literal>-1</literal>,
       <literal>0</literal>, <literal>1</literal>, <literal>2</literal>, ...;
@@ -1856,9 +1856,9 @@ January 8 04:05:06 1999 PST
       <listitem>
        <para>
 	The <acronym>SQL92</acronym> qualifier on
-	<programlisting>
+<programlisting>
 <replaceable>timestamp</replaceable> AT TIME ZONE '<replaceable>zone</replaceable>'
-	</programlisting>
+</programlisting>
 	where <replaceable>zone</replaceable> can be specified as a
 	text time zone (e.g. <literal>'PST'</literal>) or as an
 	interval (e.g. <literal>INTERVAL '-08:00'</literal>).
@@ -1867,7 +1867,6 @@ January 8 04:05:06 1999 PST
      </itemizedlist>
     </para>
 
-    <para>
      <note>
       <para>
        If an invalid time zone is specified,
@@ -1882,7 +1881,6 @@ January 8 04:05:06 1999 PST
        Australian time zones, not American ones.
       </para>
      </note>
-    </para>
 
    </sect2>
 
