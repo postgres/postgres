@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.61 2003/11/09 21:30:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.62 2003/11/14 18:19:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,6 +64,7 @@ do_end()
 {
 	CommitTransactionCommand();
 	elog(DEBUG4, "commit transaction");
+	CHECK_FOR_INTERRUPTS();		/* allow SIGINT to kill bootstrap run */
 	if (isatty(0))
 	{
 		printf("bootstrap> ");
