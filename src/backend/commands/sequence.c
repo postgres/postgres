@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.92 2003/03/20 03:34:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.93 2003/03/20 05:18:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,19 +23,6 @@
 #include "miscadmin.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
-
-
-#ifndef INT64_IS_BUSTED
-#ifdef HAVE_LL_CONSTANTS
-#define SEQ_MAXVALUE	((int64) 0x7FFFFFFFFFFFFFFFLL)
-#else
-#define SEQ_MAXVALUE	((int64) 0x7FFFFFFFFFFFFFFF)
-#endif
-#else							/* INT64_IS_BUSTED */
-#define SEQ_MAXVALUE	((int64) 0x7FFFFFFF)
-#endif   /* INT64_IS_BUSTED */
-
-#define SEQ_MINVALUE	(-SEQ_MAXVALUE)
 
 /*
  * We don't want to log each fetching of a value from a sequence,

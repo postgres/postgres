@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.319 2003/03/10 22:28:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.320 2003/03/20 05:18:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,6 +51,8 @@ int optreset;
 #include "catalog/pg_proc.h"
 #include "catalog/pg_trigger.h"
 #include "catalog/pg_type.h"
+
+#include "commands/sequence.h"
 
 #include "libpq-fe.h"
 #include "libpq/libpq-fs.h"
@@ -5986,9 +5988,11 @@ dumpOneSequence(Archive *fout, TableInfo *tbinfo,
 	PGresult   *res;
 	char	   *last,
 			   *incby,
-			   *maxv,
-			   *minv,
+			   *maxv = NULL,
+			   *minv = NULL,
 			   *cache;
+	char		bufm[100],
+				bufx[100];
 	bool		cycled,
 				called;
 	PQExpBuffer query = createPQExpBuffer();
@@ -5997,9 +6001,21 @@ dumpOneSequence(Archive *fout, TableInfo *tbinfo,
 	/* Make sure we are in proper schema */
 	selectSourceSchema(tbinfo->relnamespace->nspname);
 
+	snprintf(bufm, sizeof(bufm), INT64_FORMAT, SEQ_MINVALUE);
+	snprintf(bufx, sizeof(bufx), INT64_FORMAT, SEQ_MAXVALUE);
+
 	appendPQExpBuffer(query,
-			"SELECT sequence_name, last_value, increment_by, max_value, "
-				  "min_value, cache_value, is_cycled, is_called from %s",
+			"SELECT sequence_name, last_value, increment_by, "
+					"CASE WHEN increment_by > 0 AND max_value = %s THEN NULL "
+					"     WHEN increment_by < 0 AND max_value = -1 THEN NULL "
+					"     ELSE max_value "
+					"END AS max_value, "
+					"CASE WHEN increment_by > 0 AND min_value = 1 THEN NULL "
+					"     WHEN increment_by < 0 AND min_value = %s THEN NULL "
+					"     ELSE min_value "
+					"END AS min_value, "
+					"cache_value, is_cycled, is_called from %s",
+					  bufx, bufm,
 					  fmtId(tbinfo->relname));
 
 	res = PQexec(g_conn, query->data);
@@ -6028,8 +6044,10 @@ dumpOneSequence(Archive *fout, TableInfo *tbinfo,
 
 	last = PQgetvalue(res, 0, 1);
 	incby = PQgetvalue(res, 0, 2);
-	maxv = PQgetvalue(res, 0, 3);
-	minv = PQgetvalue(res, 0, 4);
+	if (!PQgetisnull(res, 0, 3))
+		maxv = PQgetvalue(res, 0, 3);
+	if (!PQgetisnull(res, 0, 4))
+		minv = PQgetvalue(res, 0, 4);
 	cache = PQgetvalue(res, 0, 5);
 	cycled = (strcmp(PQgetvalue(res, 0, 6), "t") == 0);
 	called = (strcmp(PQgetvalue(res, 0, 7), "t") == 0);
@@ -6060,12 +6078,23 @@ dumpOneSequence(Archive *fout, TableInfo *tbinfo,
 
 		resetPQExpBuffer(query);
 		appendPQExpBuffer(query,
-				   "CREATE SEQUENCE %s\n    START %s\n    INCREMENT %s\n"
-				   "    MAXVALUE %s\n    MINVALUE %s\n    CACHE %s%s;\n",
+				   "CREATE SEQUENCE %s\n    START WITH %s\n    INCREMENT BY %s\n",
 						  fmtId(tbinfo->relname),
-						  (called ? minv : last),
-						  incby, maxv, minv, cache,
-						  (cycled ? "\n    CYCLE" : ""));
+						  (called ? minv : last), incby);
+
+		if (maxv)
+			appendPQExpBuffer(query, "    MAXVALUE %s\n", maxv);
+		else
+			appendPQExpBuffer(query, "    NO MAXVALUE\n");
+
+		if (minv)
+			appendPQExpBuffer(query, "    MINVALUE %s\n", minv);
+		else
+			appendPQExpBuffer(query, "    NO MINVALUE\n");
+
+		appendPQExpBuffer(query,
+				   "    CACHE %s%s;\n",
+						  cache, (cycled ? "\n    CYCLE" : ""));
 
 		ArchiveEntry(fout, tbinfo->oid, tbinfo->relname,
 					 tbinfo->relnamespace->nspname, tbinfo->usename,

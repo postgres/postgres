@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: sequence.h,v 1.21 2002/06/20 20:29:49 momjian Exp $
+ * $Id: sequence.h,v 1.22 2003/03/20 05:18:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,5 +88,18 @@ extern void DefineSequence(CreateSeqStmt *stmt);
 extern void seq_redo(XLogRecPtr lsn, XLogRecord *rptr);
 extern void seq_undo(XLogRecPtr lsn, XLogRecord *rptr);
 extern void seq_desc(char *buf, uint8 xl_info, char *rec);
+
+/* Set the upper and lower bounds of a sequence */
+#ifndef INT64_IS_BUSTED
+#ifdef HAVE_LL_CONSTANTS
+#define SEQ_MAXVALUE	((int64) 0x7FFFFFFFFFFFFFFFLL)
+#else
+#define SEQ_MAXVALUE	((int64) 0x7FFFFFFFFFFFFFFF)
+#endif
+#else							/* INT64_IS_BUSTED */
+#define SEQ_MAXVALUE	((int64) 0x7FFFFFFF)
+#endif   /* INT64_IS_BUSTED */
+
+#define SEQ_MINVALUE	(-SEQ_MAXVALUE)
 
 #endif   /* SEQUENCE_H */
