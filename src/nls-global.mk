@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/src/nls-global.mk,v 1.4 2001/11/29 18:59:28 petere Exp $
+# $Header: /cvsroot/pgsql/src/nls-global.mk,v 1.5 2002/08/21 20:42:24 petere Exp $
 
 # Common rules for Native Language Support (NLS)
 #
@@ -32,8 +32,8 @@ else
 LANGUAGES = $(AVAIL_LANGUAGES)
 endif
 
-PO_FILES = $(addsuffix .po, $(LANGUAGES))
-MO_FILES = $(addsuffix .mo, $(LANGUAGES))
+PO_FILES = $(addprefix po/, $(addsuffix .po, $(LANGUAGES)))
+MO_FILES = $(addprefix po/, $(addsuffix .mo, $(LANGUAGES)))
 
 ifdef XGETTEXT
 XGETTEXT += --foreign-user -ctranslator
@@ -42,17 +42,17 @@ endif
 
 all-po: $(MO_FILES)
 
-distprep: $(srcdir)/$(CATALOG_NAME).pot
+distprep: $(srcdir)/po/$(CATALOG_NAME).pot
 
 %.mo: %.po
 	$(MSGFMT) -o $@ $<
 
 ifdef XGETTEXT
 ifeq ($(word 1,$(GETTEXT_FILES)),+)
-$(srcdir)/$(CATALOG_NAME).pot: $(word 2, $(GETTEXT_FILES))
+$(srcdir)/po/$(CATALOG_NAME).pot: $(word 2, $(GETTEXT_FILES))
 	$(XGETTEXT) -D $(srcdir) -n $(addprefix -k, $(GETTEXT_TRIGGERS)) -f $<
 else
-$(srcdir)/$(CATALOG_NAME).pot: $(GETTEXT_FILES)
+$(srcdir)/po/$(CATALOG_NAME).pot: $(GETTEXT_FILES)
 # Change to srcdir explicitly, don't rely on $^.  That way we get
 # consistent #: file references in the po files.
 	$(XGETTEXT) -D $(srcdir) -n $(addprefix -k, $(GETTEXT_TRIGGERS)) $(GETTEXT_FILES)
@@ -65,7 +65,7 @@ endif # not XGETTEXT
 
 install-po: all-po installdirs-po
 	for lang in $(LANGUAGES); do \
-	  $(INSTALL_DATA) $$lang.mo $(DESTDIR)$(localedir)/$$lang/LC_MESSAGES/$(CATALOG_NAME).mo || exit 1; \
+	  $(INSTALL_DATA) po/$$lang.mo $(DESTDIR)$(localedir)/$$lang/LC_MESSAGES/$(CATALOG_NAME).mo || exit 1; \
 	done
 
 installdirs-po:
@@ -77,10 +77,10 @@ uninstall-po:
 
 clean-po:
 	rm -f $(MO_FILES)
-	@rm -f $(addsuffix .po.old, $(AVAIL_LANGUAGES))
+	@rm -f $(addsuffix .old, $(PO_FILES))
 
 maintainer-clean-po: clean-po
-	rm -f $(srcdir)/$(CATALOG_NAME).pot
+	rm -f $(srcdir)/po/$(CATALOG_NAME).pot
 
 
 maintainer-check-po: $(PO_FILES)
@@ -89,20 +89,20 @@ maintainer-check-po: $(PO_FILES)
 	done
 
 
-init-po: $(srcdir)/$(CATALOG_NAME).pot
+init-po: $(srcdir)/po/$(CATALOG_NAME).pot
 
 
-update-po: $(srcdir)/$(CATALOG_NAME).pot
+update-po: $(srcdir)/po/$(CATALOG_NAME).pot
 ifdef MSGMERGE
 	@for lang in $(LANGUAGES); do \
 	  echo "merging $$lang:"; \
-	  if $(MSGMERGE) $(srcdir)/$$lang.po $< -o $$lang.po.new; \
+	  if $(MSGMERGE) $(srcdir)/po/$$lang.po $< -o po/$$lang.po.new; \
 	  then \
-	    mv $(srcdir)/$$lang.po $$lang.po.old; \
-	    mv $$lang.po.new $(srcdir)/$$lang.po; \
+	    mv $(srcdir)/po/$$lang.po po/$$lang.po.old; \
+	    mv po/$$lang.po.new $(srcdir)/po/$$lang.po; \
 	  else \
 	    echo "msgmerge for $$lang failed"; \
-	    rm -f $$lang.po.new; \
+	    rm -f po/$$lang.po.new; \
 	  fi; \
 	done
 else
@@ -120,3 +120,4 @@ maintainer-check: maintainer-check-po
 
 .PHONY: all-po install-po installdirs-po uninstall-po clean-po \
         maintainer-clean-po maintainer-check-po init-po update-po
+.SILENT: installdirs-po

@@ -2,7 +2,7 @@
 # Peter Eisentraut <peter_e@gmx.net>, 2001.
 # Dennis Björklund <db@zigo.dhs.org>, 2002.
 #
-# $Header: /cvsroot/pgsql/src/bin/psql/Attic/sv.po,v 1.4 2002/08/06 21:13:44 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/psql/po/sv.po,v 1.1 2002/08/21 20:42:26 petere Exp $
 #
 # Use these quotes: "%s"
 #

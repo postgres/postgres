@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.84 2002/08/10 17:59:28 petere Exp $
+# $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.85 2002/08/21 20:42:24 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -31,9 +31,6 @@ endif
 
 all: submake-libpgport postgres $(POSTGRES_IMP)
 	$(MAKE) -C utils/mb/conversion_procs $@
-ifeq ($(enable_nls), yes)
-	$(MAKE) -C po all
-endif
 
 ifneq ($(PORTNAME), win)
 
@@ -111,9 +108,7 @@ distprep:
 	$(MAKE) -C parser	gram.c parse.h scan.c
 	$(MAKE) -C bootstrap	bootparse.c bootstrap_tokens.h bootscanner.c
 	$(MAKE) -C utils/misc	guc-file.c
-ifeq ($(enable_nls), yes)
-	$(MAKE) -C po $@
-endif
+
 
 ##########################################################################
 
@@ -127,9 +122,6 @@ endif
 	$(INSTALL_DATA) $(srcdir)/libpq/pg_hba.conf.sample $(DESTDIR)$(datadir)/pg_hba.conf.sample
 	$(INSTALL_DATA) $(srcdir)/libpq/pg_ident.conf.sample $(DESTDIR)$(datadir)/pg_ident.conf.sample
 	$(INSTALL_DATA) $(srcdir)/utils/misc/postgresql.conf.sample $(DESTDIR)$(datadir)/postgresql.conf.sample
-ifeq ($(enable_nls), yes)
-	$(MAKE) -C po $@
-endif
 	$(MAKE) -C utils/mb $@
 	$(MAKE) -C utils/mb/conversion_procs $@
 
@@ -153,9 +145,7 @@ endif
 ifeq ($(MAKE_EXPORTS), true)
 	$(mkinstalldirs) $(DESTDIR)$(pkglibdir)
 endif
-ifeq ($(enable_nls), yes)
-	$(MAKE) -C po $@
-endif
+
 
 ##########################################################################
 
@@ -173,9 +163,6 @@ endif
 	rm -f $(DESTDIR)$(datadir)/pg_hba.conf.sample \
 	      $(DESTDIR)$(datadir)/pg_ident.conf.sample \
 	      $(DESTDIR)$(datadir)/postgresql.conf.sample
-ifeq ($(enable_nls), yes)
-	$(MAKE) -C po $@
-endif
 
 
 ##########################################################################
@@ -190,9 +177,6 @@ ifeq ($(MAKE_DLL), true)
 endif
 endif
 	for i in $(DIRS); do $(MAKE) -C $$i clean || exit; done
-ifeq ($(enable_nls), yes)
-	$(MAKE) -C po $@
-endif
 
 distclean: clean
 	rm -f port/tas.s port/dynloader.c port/pg_sema.c port/pg_shmem.c
@@ -205,7 +189,6 @@ maintainer-clean: distclean
 	      $(srcdir)/parser/scan.c \
 	      $(srcdir)/parser/parse.h \
 	      $(srcdir)/utils/misc/guc-file.c
-	$(MAKE) -C po maintainer-clean
 
 
 ##########################################################################

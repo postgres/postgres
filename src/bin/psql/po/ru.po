@@ -1,7 +1,7 @@
 # PSQL Translated Messages in Russian Language (KOI8-R)
 # Serguei A. Mokhov <stgunya@yahoo.com>, August-September 2001.
 #
-# $Header: /cvsroot/pgsql/src/bin/psql/Attic/ru.po,v 1.5 2002/06/20 20:29:42 momjian Exp $
+# $Header: /cvsroot/pgsql/src/bin/psql/po/Attic/ru.po,v 1.1 2002/08/21 20:42:26 petere Exp $
 #
 msgid ""
 msgstr ""
