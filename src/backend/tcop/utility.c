@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.76 1999/12/20 01:19:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.77 2000/01/13 18:26:10 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -592,7 +592,7 @@ ProcessUtility(Node *parsetree,
 
 				PS_SET_STATUS(commandTag = "CREATE DATABASE");
 				CHECK_IF_ABORTED();
-				createdb(stmt->dbname, stmt->dbpath, stmt->encoding, dest);
+				createdb(stmt->dbname, stmt->dbpath, stmt->encoding);
 			}
 			break;
 
@@ -602,7 +602,7 @@ ProcessUtility(Node *parsetree,
 
 				PS_SET_STATUS(commandTag = "DROP DATABASE");
 				CHECK_IF_ABORTED();
-				dropdb(stmt->dbname, dest);
+				dropdb(stmt->dbname);
 			}
 			break;
 

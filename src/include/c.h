@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.62 1999/12/20 00:51:21 tgl Exp $
+ * $Id: c.h,v 1.63 2000/01/13 18:26:15 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -767,7 +767,6 @@ extern char *vararg_format(const char *fmt,...);
 
 /* These are for things that are one way on Unix and another on NT */
 #define NULL_DEV		"/dev/null"
-#define COPY_CMD		"cp"
 #define SEP_CHAR		'/'
 
 /* defines for dynamic linking on Win32 platform */

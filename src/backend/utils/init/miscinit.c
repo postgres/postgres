@@ -7,10 +7,12 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.38 2000/01/09 12:15:57 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.39 2000/01/13 18:26:11 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
+#include "postgres.h"
+
 #include <sys/param.h>
 #include <sys/types.h>
 #include <signal.h>
@@ -19,177 +21,21 @@
 #include <unistd.h>
 #include <grp.h>
 #include <pwd.h>
+#include <stdlib.h>
 
-#include "postgres.h"
 #include "catalog/catname.h"
 #include "catalog/pg_shadow.h"
 #include "miscadmin.h"
 #include "utils/syscache.h"
 
 
-/*
- * EnableAbortEnvVarName
- *		Enables system abort iff set to a non-empty string in environment.
- */
-#define EnableAbortEnvVarName	"POSTGRESABORT"
-
-extern char *getenv(const char *name);	/* XXX STDLIB */
-
-/*	from globals.c */
-extern char *UserName;
-
 #ifdef CYR_RECODE
 unsigned char RecodeForwTable[128];
 unsigned char RecodeBackTable[128];
-
 #endif
 
+ProcessingMode Mode = InitProcessing;
 
-/*
- * Define USE_ENVIRONMENT to get PGDATA, etc. from environment variables.
- * This is the default on UNIX platforms.
- */
-#define USE_ENVIRONMENT
-
-/* ----------------------------------------------------------------
- *				some of the 19 ways to leave postgres
- * ----------------------------------------------------------------
- */
-
-/*
- * ExitPostgres
- *		Exit POSTGRES with a status code.
- *
- * Note:
- *		This function never returns.
- *		...
- *
- * Side effects:
- *		...
- *
- * Exceptions:
- *		none
- */
-void
-ExitPostgres(ExitStatus status)
-{
-	proc_exit(status);
-}
-
-/*
- * AbortPostgres
- *		Abort POSTGRES dumping core.
- *
- * Note:
- *		This function never returns.
- *		...
- *
- * Side effects:
- *		Core is dumped iff EnableAbortEnvVarName is set to a non-empty string.
- *		...
- *
- * Exceptions:
- *		none
- */
-#ifdef NOT_USED
-void
-AbortPostgres()
-{
-	char	   *abortValue = getenv(EnableAbortEnvVarName);
-
-	if (PointerIsValid(abortValue) && abortValue[0] != '\0')
-		abort();
-	else
-		proc_exit(FatalExitStatus);
-}
-
-
-/* ----------------
- *		StatusBackendExit
- * ----------------
- */
-void
-StatusBackendExit(int status)
-{
-	/* someday, do some real cleanup and then call the LISP exit */
-	/* someday, call StatusPostmasterExit if running without postmaster */
-	proc_exit(status);
-}
-
-/* ----------------
- *		StatusPostmasterExit
- * ----------------
- */
-void
-StatusPostmasterExit(int status)
-{
-	/* someday, do some real cleanup and then call the LISP exit */
-	proc_exit(status);
-}
-
-#endif
-
-
-/* ----------------------------------------------------------------
- *		processing mode support stuff (used to be in pmod.c)
- * ----------------------------------------------------------------
- */
-static ProcessingMode Mode = InitProcessing;
-
-/*
- * IsBootstrapProcessingMode
- *		True iff processing mode is BootstrapProcessing.
- */
-bool
-IsBootstrapProcessingMode()
-{
-	return (bool) (Mode == BootstrapProcessing);
-}
-
-/*
- * IsInitProcessingMode
- *		True iff processing mode is InitProcessing.
- */
-bool
-IsInitProcessingMode()
-{
-	return (bool) (Mode == InitProcessing);
-}
-
-/*
- * IsNormalProcessingMode
- *		True iff processing mode is NormalProcessing.
- */
-bool
-IsNormalProcessingMode()
-{
-	return (bool) (Mode == NormalProcessing);
-}
-
-/*
- * SetProcessingMode
- *		Sets mode of processing as specified.
- *
- * Exceptions:
- *		BadArg if called with invalid mode.
- *
- * Note:
- *		Mode is InitProcessing before the first time this is called.
- */
-void
-SetProcessingMode(ProcessingMode mode)
-{
-	AssertArg(mode == BootstrapProcessing || mode == InitProcessing || 
-				mode == NormalProcessing);
-
-	Mode = mode;
-}
-
-ProcessingMode
-GetProcessingMode()
-{
-	return Mode;
-}
 
 /* ----------------------------------------------------------------
  *				database path / name support stuff
@@ -197,22 +43,26 @@ GetProcessingMode()
  */
 
 void
-SetDatabasePath(char *path)
+SetDatabasePath(const char *path)
 {
-	/* use malloc since this is done before memory contexts are set up */
-	if (DatabasePath)
-		free(DatabasePath);
-	DatabasePath = malloc(strlen(path) + 1);
-	strcpy(DatabasePath, path);
+    free(DatabasePath);
+	/* use strdup since this is done before memory contexts are set up */
+    if (path)
+    {
+        DatabasePath = strdup(path);
+        AssertState(DatabasePath);
+    }
 }
 
 void
-SetDatabaseName(char *name)
+SetDatabaseName(const char *name)
 {
-	if (DatabaseName)
-		free(DatabaseName);
-	DatabaseName = malloc(strlen(name) + 1);
-	strcpy(DatabaseName, name);
+    free(DatabaseName);
+    if (name)
+    {
+        DatabaseName = strdup(name);
+        AssertState(DatabaseName);
+    }
 }
 
 #ifndef MULTIBYTE
@@ -431,7 +281,7 @@ static Oid	UserId = InvalidOid;
 int
 GetUserId()
 {
-	Assert(OidIsValid(UserId));
+	AssertState(OidIsValid(UserId));
 	return UserId;
 }
 
@@ -441,7 +291,7 @@ SetUserId()
 	HeapTuple	userTup;
 	char	   *userName;
 
-	Assert(!OidIsValid(UserId));/* only once */
+	AssertState(!OidIsValid(UserId));/* only once */
 
 	/*
 	 * Don't do scans if we're bootstrapping, none of the system catalogs

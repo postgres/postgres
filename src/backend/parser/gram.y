@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.123 1999/12/16 17:24:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.124 2000/01/13 18:26:07 petere Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -131,7 +131,8 @@ static Node *doNegate(Node *n);
 		RuleActionStmtOrEmpty, ConstraintsSetStmt,
                 CreateGroupStmt, AlterGroupStmt, DropGroupStmt
 
-%type <str>		opt_database1, opt_database2, location, encoding
+%type <str>		createdb_opt_location
+%type <ival>    createdb_opt_encoding
 
 %type <ival>	opt_lock, lock_type
 %type <boolean>	opt_lmode
@@ -156,7 +157,7 @@ static Node *doNegate(Node *n);
 		all_Op, MathOp, opt_name, opt_unique,
 		OptUseOp, opt_class, SpecialRuleRelation
 
-%type <str>		opt_level
+%type <str>		opt_level, opt_encoding
 %type <str>		privileges, operation_commalist, grantee
 %type <chr>		operation, TriggerOneEvent
 
@@ -709,7 +710,7 @@ VariableSetStmt:  SET ColId TO var_value
 					n->value = $5;
 					$$ = (Node *) n;
 				}
-		| SET NAMES encoding
+		| SET NAMES opt_encoding
 				{
 #ifdef MULTIBYTE
 					VariableSetStmt *n = makeNode(VariableSetStmt);
@@ -717,7 +718,7 @@ VariableSetStmt:  SET ColId TO var_value
 					n->value = $3;
 					$$ = (Node *) n;
 #else
-					elog(ERROR, "SET NAMES is not supported");
+					elog(ERROR, "SET NAMES is not supported.");
 #endif
 				}
 		;
@@ -734,6 +735,11 @@ zone_value:  Sconst			{ $$ = $1; }
 		| DEFAULT			{ $$ = NULL; }
 		| LOCAL				{ $$ = NULL; }
 		;
+
+opt_encoding:  Sconst       { $$ = $1; }
+        | DEFAULT           { $$ = NULL; }
+        | /*EMPTY*/         { $$ = NULL; }
+        ;
 
 VariableShowStmt:  SHOW ColId
 				{
@@ -2508,31 +2514,24 @@ LoadStmt:  LOAD file_name
 
 /*****************************************************************************
  *
- *		QUERY:
- *				createdb dbname
+ *		CREATE DATABASE
+ *
  *
  *****************************************************************************/
 
-CreatedbStmt:  CREATE DATABASE database_name WITH opt_database1 opt_database2
-				{
-					CreatedbStmt *n = makeNode(CreatedbStmt);
-					if ($5 == NULL && $6 == NULL) {
-						elog(ERROR, "CREATE DATABASE WITH requires at least an option");
-					}
+CreatedbStmt:  CREATE DATABASE database_name WITH createdb_opt_location createdb_opt_encoding
+               {
+                   CreatedbStmt *n;
+
+                   if ($5 == NULL && $6 == -1)
+                       elog(ERROR, "CREATE DATABASE WITH requires at least one option.");
+
+                    n = makeNode(CreatedbStmt);
 					n->dbname = $3;
 					n->dbpath = $5;
 #ifdef MULTIBYTE
-					if ($6 != NULL) {
-						n->encoding = pg_char_to_encoding($6);
-						if (n->encoding < 0) {
-							elog(ERROR, "invalid encoding name %s", $6);
-						}
-					} else {
-						n->encoding = GetTemplateEncoding();
-					}
+                    n->encoding = $6;
 #else
-					if ($6 != NULL)
-						elog(ERROR, "WITH ENCODING is not supported");
 					n->encoding = 0;
 #endif
 					$$ = (Node *)n;
@@ -2551,28 +2550,57 @@ CreatedbStmt:  CREATE DATABASE database_name WITH opt_database1 opt_database2
 				}
 		;
 
-opt_database1:  LOCATION '=' location			{ $$ = $3; }
+createdb_opt_location:  LOCATION '=' Sconst		{ $$ = $3; }
+        | LOCATION '=' DEFAULT                  { $$ = NULL; }
 		| /*EMPTY*/								{ $$ = NULL; }
 		;
 
-opt_database2:  ENCODING '=' encoding			{ $$ = $3; }
-		| /*EMPTY*/								{ $$ = NULL; }
-		;
+createdb_opt_encoding:
+        ENCODING '=' Sconst
+        {
+#ifdef MULTIBYTE
+            int i;
+            i = pg_char_to_encoding($3);
+            if (i == -1)
+                elog(ERROR, "%s is not a valid encoding name.", $3);
+            $$ = i;
+#else
+            elog(ERROR, "WITH ENCODING is not supported.");
+#endif
+        }
+        | ENCODING '=' Iconst
+        {
+#ifdef MULTIBYTE
+            if (!pg_get_encent_by_encoding($3))
+                elog(ERROR, "%d is not a valid encoding code.", $3);
+            $$ = $3;
+#else
+            elog(ERROR, "WITH ENCODING is not supported.");
+#endif
+        }
+        | ENCODING '=' DEFAULT
+        {
+#ifdef MULTIBYTE
+            $$ = GetTemplateEncoding();
+#else
+            $$ = -1;
+#endif
+        }
+        | /*EMPTY*/
+        {
+#ifdef MULTIBYTE
+            $$ = GetTemplateEncoding();
+#else
+            $$= -1;
+#endif
+        }
+        ;
 
-location:  Sconst								{ $$ = $1; }
-		| DEFAULT								{ $$ = NULL; }
-		| /*EMPTY*/								{ $$ = NULL; }
-		;
-
-encoding:  Sconst								{ $$ = $1; }
-		| DEFAULT								{ $$ = NULL; }
-		| /*EMPTY*/								{ $$ = NULL; }
-		;
 
 /*****************************************************************************
  *
- *		QUERY:
- *				dropdb dbname
+ *		DROP DATABASE
+ *
  *
  *****************************************************************************/
 

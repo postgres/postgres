@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: elog.h,v 1.13 1999/09/27 15:48:12 vadim Exp $
+ * $Id: elog.h,v 1.14 2000/01/13 18:26:17 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,13 @@
 #define	LOG		DEBUG
 #define NOIND	(-3)			/* debug message, don't indent as far */
 
+#ifndef __GNUC__
 extern void elog(int lev, const char *fmt, ...);
+#else
+/* This extension allows gcc to check the format string for consistency with
+   the supplied arguments. */
+extern void elog(int lev, const char *fmt, ...) __attribute__ ((format (printf, 2, 3)));
+#endif
 
 #ifndef PG_STANDALONE
 extern int	DebugFileOpen(void);

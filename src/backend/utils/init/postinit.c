@@ -7,22 +7,8 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.54 1999/12/22 00:07:16 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.55 2000/01/13 18:26:11 petere Exp $
  *
- * NOTES
- *		InitPostgres() is the function called from PostgresMain
- *		which does all non-trival initialization, mainly by calling
- *		all the other initialization functions.  InitPostgres()
- *		is only used within the "postgres" backend and so that routine
- *		is in tcop/postgres.c  InitPostgres() is needed in cinterface.a
- *		because things like the bootstrap backend program need it. Hence
- *		you find that in this file...
- *
- *		If you feel the need to add more initialization code, it should be
- *		done in InitPostgres() or someplace lower.	Do not start
- *		putting stuff in PostgresMain - if you do then someone
- *		will have to clean it up later, and it's not going to be me!
- *		-cim 10/3/90
  *
  *-------------------------------------------------------------------------
  */
@@ -55,193 +41,13 @@
 
 void		BaseInit(void);
 
-static void VerifySystemDatabase(void);
-static void VerifyMyDatabase(void);
-static void ReverifyMyDatabase(char *name);
+static void ReverifyMyDatabase(const char *name);
 static void InitCommunication(void);
-static void InitMyDatabaseInfo(char *name);
-static void InitUserid(void);
-
 
 static IPCKey PostgresIpcKey;
 
-/* ----------------------------------------------------------------
- *						InitPostgres support
- * ----------------------------------------------------------------
- */
+/*** InitPostgres support ***/
 
-/* --------------------------------
- *	InitMyDatabaseInfo() -- Find and record the OID of the database we are
- *						  to open.
- *
- *		The database's oid forms half of the unique key for the system
- *		caches and lock tables.  We therefore want it initialized before
- *		we open any relations, since opening relations puts things in the
- *		cache.	To get around this problem, this code opens and scans the
- *		pg_database relation by hand.
- *
- *		This algorithm relies on the fact that first attribute in the
- *		pg_database relation schema is the database name.  It also knows
- *		about the internal format of tuples on disk and the length of
- *		the datname attribute.	It knows the location of the pg_database
- *		file.
- *		Actually, the code looks as though it is using the pg_database
- *		tuple definition to locate the database name, so the above statement
- *		seems to be no longer correct. - thomas 1997-11-01
- *
- *		This code is called from InitPostgres(), before we chdir() to the
- *		local database directory and before we open any relations.
- *		Used to be called after the chdir(), but we now want to confirm
- *		the location of the target database using pg_database info.
- *		- thomas 1997-11-01
- * --------------------------------
- */
-static void
-InitMyDatabaseInfo(char *name)
-{
-	char	   *path,
-				myPath[MAXPGPATH];
-
-	SetDatabaseName(name);
-	GetRawDatabaseInfo(name, &MyDatabaseId, myPath);
-
-	if (!OidIsValid(MyDatabaseId))
-		elog(FATAL,
-			 "Database %s does not exist in %s",
-			 DatabaseName,
-			 DatabaseRelationName);
-
-	path = ExpandDatabasePath(myPath);
-	SetDatabasePath(path);
-}	/* InitMyDatabaseInfo() */
-
-
-/*
- * DoChdirAndInitDatabaseNameAndPath
- *		Set current directory to the database directory for the database
- *		named <name>.
- *		Also set global variables DatabasePath and DatabaseName to those
- *		values.  Also check for proper version of database system and
- *		database.  Exit program via elog() if anything doesn't check out.
- *
- * Arguments:
- *		Path and name are invalid if it invalid as a string.
- *		Path is "badly formatted" if it is not a string containing a path
- *		to a writable directory.
- *		Name is "badly formatted" if it contains more than 16 characters or if
- *		it is a bad file name (e.g., it contains a '/' or an 8-bit character).
- *
- * Exceptions:
- *		BadState if called more than once.
- *		BadArg if both path and name are "badly formatted" or invalid.
- *		BadArg if path and name are both "inconsistent" and valid.
- *
- *		This routine is inappropriate in bootstrap mode, since the directories
- *		and version files need not exist yet if we're in bootstrap mode.
- */
-static void
-VerifySystemDatabase()
-{
-	char	   *reason;
-	/* Failure reason returned by some function.  NULL if no failure */
-	int			fd;
-	char		errormsg[MAXPGPATH+100];
-
-	errormsg[0] = '\0';
-
-#ifndef __CYGWIN32__
-	if ((fd = open(DataDir, O_RDONLY, 0)) == -1)
-#else
-	if ((fd = open(DataDir, O_RDONLY | O_DIROPEN, 0)) == -1)
-#endif
-		snprintf(errormsg, sizeof(errormsg),
-				 "Database system does not exist.  "
-				 "PGDATA directory '%s' not found.\n\tNormally, you "
-				 "create a database system by running initdb.",
-				 DataDir);
-	else
-	{
-		close(fd);
-		ValidatePgVersion(DataDir, &reason);
-		if (reason != NULL)
-			snprintf(errormsg, sizeof(errormsg),
-					 "InitPostgres could not validate that the database"
-					 " system version is compatible with this level of"
-					 " Postgres.\n\tYou may need to run initdb to create"
-					 " a new database system.\n\t%s", reason);
-	}
-	if (errormsg[0] != '\0')
-		elog(FATAL, errormsg);
-	/* Above does not return */
-}	/* VerifySystemDatabase() */
-
-
-static void
-VerifyMyDatabase()
-{
-	const char *name;
-	const char *myPath;
-
-	/* Failure reason returned by some function.  NULL if no failure */
-	char	   *reason;
-	int			fd;
-	char		errormsg[MAXPGPATH+100];
-
-	name = DatabaseName;
-	myPath = DatabasePath;
-
-#ifndef __CYGWIN32__
-	if ((fd = open(myPath, O_RDONLY, 0)) == -1)
-#else
-	if ((fd = open(myPath, O_RDONLY | O_DIROPEN, 0)) == -1)
-#endif
-		snprintf(errormsg, sizeof(errormsg),
-				 "Database '%s' does not exist."
-				 "\n\tWe know this because the directory '%s' does not exist."
-				 "\n\tYou can create a database with the SQL command"
-				 " CREATE DATABASE.\n\tTo see what databases exist,"
-				 " look at the subdirectories of '%s/base/'.",
-				 name, myPath, DataDir);
-	else
-	{
-		close(fd);
-		ValidatePgVersion(myPath, &reason);
-		if (reason != NULL)
-			snprintf(errormsg, sizeof(errormsg),
-					 "InitPostgres could not validate that the database"
-					 " version is compatible with this level of Postgres"
-					 "\n\teven though the database system as a whole"
-					 " appears to be at a compatible level."
-					 "\n\tYou may need to recreate the database with SQL"
-					 " commands DROP DATABASE and CREATE DATABASE."
-					 "\n\t%s", reason);
-		else
-		{
-
-			/*
-			 * The directories and PG_VERSION files are in order.
-			 */
-			int			rc;		/* return code from some function we call */
-
-#ifdef FILEDEBUG
-			printf("Try changing directory for database %s to %s\n", name, myPath);
-#endif
-
-			rc = chdir(myPath);
-			if (rc < 0)
-				snprintf(errormsg, sizeof(errormsg),
-						 "InitPostgres unable to change "
-						 "current directory to '%s', errno = %s (%d).",
-						 myPath, strerror(errno), errno);
-			else
-				errormsg[0] = '\0';
-		}
-	}
-
-	if (errormsg[0] != '\0')
-		elog(FATAL, errormsg);
-	/* Above does not return */
-}	/* VerifyMyDatabase() */
 
 /* --------------------------------
  *		ReverifyMyDatabase
@@ -266,7 +72,7 @@ VerifyMyDatabase()
  * --------------------------------
  */
 static void
-ReverifyMyDatabase(char *name)
+ReverifyMyDatabase(const char *name)
 {
 	Relation	pgdbrel;
 	HeapScanDesc pgdbscan;
@@ -324,18 +130,7 @@ ReverifyMyDatabase(char *name)
 	heap_close(pgdbrel, AccessShareLock);
 }
 
-/* --------------------------------
- *		InitUserid
- *
- *		initializes crap associated with the user id.
- * --------------------------------
- */
-static void
-InitUserid()
-{
-	setuid(geteuid());
-	SetUserId();
-}
+
 
 /* --------------------------------
  *		InitCommunication
@@ -416,6 +211,8 @@ InitCommunication()
 	}
 }
 
+
+
 /* --------------------------------
  * InitPostgres
  *		Initialize POSTGRES.
@@ -431,14 +228,9 @@ int			lockingOff = 0;		/* backend -L switch */
 /*
  */
 void
-InitPostgres(char *name)		/* database name */
+InitPostgres(const char *dbname)
 {
-	bool		bootstrap;		/* true if BootstrapProcessing */
-
-	/*
-	 * See if we're running in BootstrapProcessing mode
-	 */
-	bootstrap = IsBootstrapProcessingMode();
+	bool		bootstrap = IsBootstrapProcessingMode();
 
 	/* ----------------
 	 *	initialize the backend local portal stack used by
@@ -449,9 +241,7 @@ InitPostgres(char *name)		/* database name */
 	 */
 	be_portalinit();
 
-	/*
-	 * initialize the local buffer manager
-	 */
+	/* initialize the local buffer manager */
 	InitLocalBuffer();
 
 #ifndef XLOG
@@ -459,32 +249,72 @@ InitPostgres(char *name)		/* database name */
 		on_shmem_exit(FlushBufferPool, (caddr_t) NULL);
 #endif
 
+    SetDatabaseName(dbname);
 	/* ----------------
 	 *	initialize the database id used for system caches and lock tables
 	 * ----------------
 	 */
 	if (bootstrap)
 	{
-		SetDatabasePath(ExpandDatabasePath(name));
-		SetDatabaseName(name);
+		SetDatabasePath(ExpandDatabasePath(dbname));
 		LockDisable(true);
 	}
 	else
 	{
-		VerifySystemDatabase();
-		InitMyDatabaseInfo(name);
-		VerifyMyDatabase();
+        char *reason;
+        char *fullpath,
+              datpath[MAXPGPATH];
+
+        /* Verify if DataDir is ok */
+        if (access(DataDir, F_OK) == -1)
+            elog(FATAL, "Database system not found. Data directory '%s' does not exist.",
+                 DataDir);
+
+        ValidatePgVersion(DataDir, &reason);
+        if (reason != NULL)
+            elog(FATAL, reason);
+
+        /*-----------------
+         * Find oid and path of the database we're about to open. Since we're
+         * not yet up and running we have to use the hackish GetRawDatabaseInfo.
+         *
+         * OLD COMMENTS:
+         *		The database's oid forms half of the unique key for the system
+         *		caches and lock tables.  We therefore want it initialized before
+         *		we open any relations, since opening relations puts things in the
+         *		cache.	To get around this problem, this code opens and scans the
+         *		pg_database relation by hand.
+         */
+
+        GetRawDatabaseInfo(dbname, &MyDatabaseId, datpath);
+
+        if (!OidIsValid(MyDatabaseId))
+            elog(FATAL,
+                 "Database \"%s\" does not exist in the system catalog.",
+                 dbname);
+
+        fullpath = ExpandDatabasePath(datpath);
+        if (!fullpath)
+            elog(FATAL, "Database path could not be resolved.");
+
+        /* Verify the database path */
+
+        if (access(fullpath, F_OK) == -1)
+            elog(FATAL, "Database \"%s\" does not exist. The data directory '%s' is missing.",
+                 dbname, fullpath);
+
+        ValidatePgVersion(fullpath, &reason);
+        if (reason != NULL)
+            elog(FATAL, "%s", reason);
+
+        if(chdir(fullpath) == -1)
+            elog(FATAL, "Unable to change directory to '%s': %s", fullpath, strerror(errno));
+
+        SetDatabasePath(fullpath);
 	}
 
 	/*
 	 * Code after this point assumes we are in the proper directory!
-	 *
-	 * So, how do we implement alternate locations for databases? There are
-	 * two possible locations for tables and we need to look in
-	 * DataDir/pg_database to find the true location of an individual
-	 * database. We can brute-force it as done in InitMyDatabaseInfo(), or
-	 * we can be patient and wait until we open pg_database gracefully.
-	 * Will try that, but may not work... - thomas 1997-11-01
 	 */
 
 	/*
@@ -549,12 +379,14 @@ InitPostgres(char *name)		/* database name */
 	/* start a new transaction here before access to db */
 	if (!bootstrap)
 		StartTransactionCommand();
+
 	/*
 	 * Set ourselves to the proper user id and figure out our postgres
 	 * user id.  If we ever add security so that we check for valid
 	 * postgres users, we might do it here.
 	 */
-	InitUserid();
+	setuid(geteuid());
+	SetUserId();
 
 	if (lockingOff)
 		LockDisable(true);
@@ -565,7 +397,7 @@ InitPostgres(char *name)		/* database name */
 	 * infrastructure is up, so just do it at the end.
 	 */
 	if (!bootstrap)
-		ReverifyMyDatabase(name);
+		ReverifyMyDatabase(dbname);
 }
 
 void

@@ -7,99 +7,42 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.33 1999/12/16 22:19:55 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.34 2000/01/13 18:26:13 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <unistd.h>
-#include <fcntl.h>
-
 #include "postgres.h"
 
+#include <errno.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
 #include "access/xact.h"
+#include "catalog/catname.h"
 #include "catalog/pg_database.h"
 #include "miscadmin.h"
 #include "utils/syscache.h"
 
-#ifdef NOT_USED
-/* GetDatabaseInfo()
- * Pull database information from pg_database.
+
+/*
+ * ExpandDatabasePath resolves a proposed database path (obtained from
+ * pg_database.datpath) to a full absolute path for further consumption.
+ * NULL means an error, which the caller should process. One reason for
+ * such an error would be an absolute alternative path when no absolute
+ * paths are alllowed.
  */
-int
-GetDatabaseInfo(char *name, int4 *owner, char *path)
-{
-	Oid			dbowner,
-				dbid;
-	char		dbpath[MAXPGPATH];
-	text	   *dbtext;
-
-	Relation	dbrel;
-	HeapTuple	dbtup;
-	HeapTuple	tup;
-	HeapScanDesc scan;
-	ScanKeyData scanKey;
-
-	dbrel = heap_openr(DatabaseRelationName, AccessShareLock);
-
-	ScanKeyEntryInitialize(&scanKey, 0, Anum_pg_database_datname,
-						   F_NAMEEQ, NameGetDatum(name));
-
-	scan = heap_beginscan(dbrel, 0, SnapshotNow, 1, &scanKey);
-	if (!HeapScanIsValid(scan))
-		elog(ERROR, "GetDatabaseInfo: cannot begin scan of %s", DatabaseRelationName);
-
-	/*
-	 * Since we're going to close the relation, copy the tuple.
-	 */
-	tup = heap_getnext(scan, 0);
-
-	if (HeapTupleIsValid(tup))
-		dbtup = heap_copytuple(tup);
-	else
-		dbtup = tup;
-
-	heap_endscan(scan);
-
-	if (!HeapTupleIsValid(dbtup))
-	{
-		elog(NOTICE, "GetDatabaseInfo: %s entry not found %s",
-			 DatabaseRelationName, name);
-		heap_close(dbrel, AccessShareLock);
-		return TRUE;
-	}
-
-	dbowner = (Oid) heap_getattr(dbtup,
-								 Anum_pg_database_datdba,
-								 RelationGetDescr(dbrel),
-								 (char *) NULL);
-	dbid = dbtup->t_oid;
-
-	dbtext = (text *) heap_getattr(dbtup,
-								   Anum_pg_database_datpath,
-								   RelationGetDescr(dbrel),
-								   (char *) NULL);
-
-	memcpy(dbpath, VARDATA(dbtext), (VARSIZE(dbtext) - VARHDRSZ));
-	*(dbpath + (VARSIZE(dbtext) - VARHDRSZ)) = '\0';
-
-	heap_close(dbrel, AccessShareLock);
-
-	owner = palloc(sizeof(Oid));
-	*owner = dbowner;
-	path = pstrdup(dbpath);		/* doesn't do the right thing! */
-
-	return FALSE;
-}	/* GetDatabaseInfo() */
-
-#endif
 
 char *
-ExpandDatabasePath(char *dbpath)
+ExpandDatabasePath(const char *dbpath)
 {
 	char		buf[MAXPGPATH];
-	char	   *cp;
-	char	   *envvar;
+	const char *cp;
 	int			len;
+
+    AssertArg(dbpath);
+    Assert(DataDir);
 
 	if (strlen(dbpath) >= MAXPGPATH)
 		return NULL;			/* ain't gonna fit nohow */
@@ -120,17 +63,14 @@ ExpandDatabasePath(char *dbpath)
 	/* path delimiter somewhere? then has leading environment variable */
 	else if ((cp = strchr(dbpath, SEP_CHAR)) != NULL)
 	{
+        const char	   *envvar;
+
 		len = cp - dbpath;
 		strncpy(buf, dbpath, len);
 		buf[len] = '\0';
 		envvar = getenv(buf);
-
-		/*
-		 * problem getting environment variable? let calling routine
-		 * handle it
-		 */
 		if (envvar == NULL)
-			return envvar;
+			return NULL;
 
 		snprintf(buf, sizeof(buf), "%s%cbase%c%s",
 				 envvar, SEP_CHAR, SEP_CHAR, (cp + 1));
@@ -142,8 +82,27 @@ ExpandDatabasePath(char *dbpath)
 				 DataDir, SEP_CHAR, SEP_CHAR, dbpath);
 	}
 
+    /* check for illegal characters in dbpath */
+    for(cp = buf; *cp; cp++)
+    {
+        /* The following characters will not be allowed anywhere in the database
+           path. (Do not include the slash here.) */
+        char illegal_dbpath_chars[] =
+            "\001\002\003\004\005\006\007\010"
+            "\011\012\013\014\015\016\017\020"
+            "\021\022\023\024\025\026\027\030"
+            "\031\032\033\034\035\036\037"
+            "'.";
+
+        const char *cx;
+        for (cx = illegal_dbpath_chars; *cx; cx++)
+            if (*cp == *cx)
+                return NULL;
+    }
+
 	return pstrdup(buf);
 }	/* ExpandDatabasePath() */
+
 
 
 /* --------------------------------
@@ -161,10 +120,9 @@ ExpandDatabasePath(char *dbpath)
  * --------------------------------
  */
 void
-GetRawDatabaseInfo(char *name, Oid *db_id, char *path)
+GetRawDatabaseInfo(const char *name, Oid *db_id, char *path)
 {
 	int			dbfd;
-	int			fileflags;
 	int			nbytes;
 	int			max,
 				i;
@@ -174,16 +132,15 @@ GetRawDatabaseInfo(char *name, Oid *db_id, char *path)
 	char	   *dbfname;
 	Form_pg_database tup_db;
 
-	dbfname = (char *) palloc(strlen(DataDir) + strlen("pg_database") + 2);
-	sprintf(dbfname, "%s%cpg_database", DataDir, SEP_CHAR);
-	fileflags = O_RDONLY;
+	dbfname = (char *) palloc(strlen(DataDir) + strlen(DatabaseRelationName) + 2);
+	sprintf(dbfname, "%s%c%s", DataDir, SEP_CHAR, DatabaseRelationName);
 
 #ifndef __CYGWIN32__
 	if ((dbfd = open(dbfname, O_RDONLY, 0)) < 0)
 #else
 	if ((dbfd = open(dbfname, O_RDONLY | O_BINARY, 0)) < 0)
 #endif
-		elog(FATAL, "Cannot open %s", dbfname);
+		elog(FATAL, "cannot open %s: %s", dbfname, strerror(errno));
 
 	pfree(dbfname);
 

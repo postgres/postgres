@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.32 1999/11/24 16:52:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.33 2000/01/13 18:26:04 petere Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -357,23 +357,6 @@ pg_aclcheck(char *relname, char *usename, AclMode mode)
 		elog(ERROR, "pg_aclcheck: user \"%s\" not found",
 			 usename);
 	id = (AclId) ((Form_pg_shadow) GETSTRUCT(tuple))->usesysid;
-
-	/*
-	 * for the 'pg_database' relation, check the usecreatedb field before
-	 * checking normal permissions
-	 */
-	if (strcmp(DatabaseRelationName, relname) == 0 &&
-		(((Form_pg_shadow) GETSTRUCT(tuple))->usecreatedb))
-	{
-
-		/*
-		 * note that even though the user can now append to the
-		 * pg_database table, there is still additional permissions
-		 * checking in dbcommands.c
-		 */
-		if ((mode & ACL_WR) || (mode & ACL_AP))
-			return ACLCHECK_OK;
-	}
 
 	/*
 	 * Deny anyone permission to update a system catalog unless

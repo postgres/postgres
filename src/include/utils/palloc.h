@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: palloc.h,v 1.10 1999/07/14 01:20:30 momjian Exp $
+ * $Id: palloc.h,v 1.11 2000/01/13 18:26:18 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,6 +32,6 @@
 #endif	 /* PALLOC_IS_MALLOC */
 
 /* like strdup except uses palloc */
-extern char *pstrdup(char *pointer);
+extern char *pstrdup(const char *pointer);
 
 #endif	 /* PALLOC_H */

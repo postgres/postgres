@@ -7,102 +7,155 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.48 1999/12/20 01:11:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.49 2000/01/13 18:26:05 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <signal.h>
-#include <sys/stat.h>
-#include <unistd.h>
-
 #include "postgres.h"
+#include "commands/dbcommands.h"
+
+#include <errno.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #include "access/heapam.h"
+#include "access/htup.h"
+#include "access/skey.h"
+#include "access/xact.h"
 #include "catalog/catname.h"
+#include "catalog/indexing.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_shadow.h"
 #include "commands/comment.h"
-#include "commands/dbcommands.h"
 #include "miscadmin.h"
-#include "storage/sinval.h"
-#include "tcop/tcopprot.h"
+#include "storage/bufmgr.h"        /* for DropBuffers */
+#include "storage/fd.h"            /* for closeAllVfds */
+#include "storage/sinval.h"        /* for DatabaseHasActiveBackends */
+#include "utils/builtins.h"
+#include "utils/elog.h"
+#include "utils/palloc.h"
+#include "utils/rel.h"
 #include "utils/syscache.h"
 
 
 /* non-export function prototypes */
-static void check_permissions(char *command, char *dbpath, char *dbname,
-				  Oid *dbIdP, int4 *userIdP);
-static HeapTuple get_pg_dbtup(char *command, char *dbname, Relation dbrel);
-static void stop_vacuum(char *dbpath, char *dbname);
+static bool
+get_user_info(const char *name, int4 *use_sysid, bool *use_super, bool *use_createdb);
+
+static bool
+get_db_info(const char *name, char *dbpath, Oid *dbIdP, int4 *ownerIdP);
+
+
+
+/*
+ * CREATE DATABASE
+ */
 
 void
-createdb(char *dbname, char *dbpath, int encoding, CommandDest dest)
+createdb(const char *dbname, const char *dbpath, int encoding)
 {
-	Oid			db_id;
+	char		buf[2 * MAXPGPATH + 100];
+	char	   *loc;
 	int4		user_id;
-	char		buf[MAXPGPATH + 100];
-	char	   *lp,
-				loc[MAXPGPATH];
+    bool        use_super, use_createdb;
 
-    /* no single quotes in dbname */
-    if (strchr(dbname, '\'') != NULL)
-        elog(ERROR, "Single quotes are not allowed in database names.");
-    if (dbpath && strchr(dbpath, '\'') != NULL)
-        elog(ERROR, "Single quotes are not allowed in database paths.");
+	Relation	pg_database_rel;
+	HeapTuple	tuple;
+    TupleDesc   pg_database_dsc;
 
-	/*
-	 * If this call returns, the database does not exist and we're allowed
-	 * to create databases.
-	 */
-	check_permissions("createdb", dbpath, dbname, &db_id, &user_id);
+    Datum       new_record[Natts_pg_database];
+    char        new_record_nulls[Natts_pg_database] = { ' ', ' ', ' ', ' ' };
 
-	/* close virtual file descriptors so we can do system() calls */
+
+    if (!get_user_info(GetPgUserName(), &user_id, &use_super, &use_createdb))
+        elog(ERROR, "Current user name is invalid.");
+
+    if (!use_createdb && !use_super)
+        elog(ERROR, "CREATE DATABASE: Permission denied.");
+
+    if (get_db_info(dbname, NULL, NULL, NULL))
+        elog(ERROR, "CREATE DATABASE: Database \"%s\" already exists.", dbname);
+
+	/* close virtual file descriptors so the kernel has more available for
+       the system() calls */
 	closeAllVfds();
 
-	/* Make directory name for this new database */
-	if ((dbpath != NULL) && (strcmp(dbpath, dbname) != 0))
-	{
-		if (*(dbpath + strlen(dbpath) - 1) == SEP_CHAR)
-			*(dbpath + strlen(dbpath) - 1) = '\0';
-		snprintf(loc, sizeof(loc), "%s%c%s", dbpath, SEP_CHAR, dbname);
-	}
-	else
-		strcpy(loc, dbname);
+	/* Generate directory name for the new database */
+    if (dbpath == NULL)
+        dbpath = dbname;
 
-	lp = ExpandDatabasePath(loc);
+	loc = ExpandDatabasePath(dbpath);
 
-	if (lp == NULL)
-		elog(ERROR, "The path '%s' is invalid.\n"
-			 "This may be due to a missing environment variable"
-			 " on the server.", loc);
-
-    /* no single quotes in expanded path */
-    if (strchr(lp, '\'') != NULL)
-        elog(ERROR, "Single quotes are not allowed in database paths.");
+	if (loc == NULL)
+		elog(ERROR,
+             "The database path '%s' is invalid. "
+			 "This may be due to a character that is not allowed or because the chosen "
+             "path isn't permitted for databases.", dbpath);
 
     /* don't call this in a transaction block */
 	if (IsTransactionBlock())
-        elog(ERROR, "createdb: May not be called in a transaction block.");
+        elog(ERROR, "CREATE DATABASE: May not be called in a transaction block.");
     else            
 		BeginTransactionBlock();
 
-	snprintf(buf, sizeof(buf),
-             "INSERT INTO pg_database (datname, datdba, encoding, datpath)"
-             " VALUES ('%s', '%d', '%d', '%s')", dbname, user_id, encoding, loc);
+    /*
+     * Insert a new tuple into pg_database
+     */
+	pg_database_rel = heap_openr(DatabaseRelationName, AccessExclusiveLock);
+	pg_database_dsc = RelationGetDescr(pg_database_rel);
 
-	pg_exec_query_dest(buf, dest, false);
+    /* Form tuple */
+    new_record[Anum_pg_database_datname-1] = NameGetDatum(dbname);
+    new_record[Anum_pg_database_datdba-1] = Int32GetDatum(user_id);
+    new_record[Anum_pg_database_encoding-1] = Int32GetDatum(encoding);
+    new_record[Anum_pg_database_datpath-1] = PointerGetDatum(textin((char *)dbpath));
 
-	if (mkdir(lp, S_IRWXU) != 0) {
+    tuple = heap_formtuple(pg_database_dsc, new_record, new_record_nulls);
+
+    /*
+     * Update table
+     */
+    heap_insert(pg_database_rel, tuple);
+
+    /*
+     * Update indexes (there aren't any currently)
+     */
+#ifdef Num_pg_database_indices
+    if (RelationGetForm(pg_database_rel)->relhasindex) {
+        Relation idescs[Num_pg_database_indices];
+      
+        CatalogOpenIndices(Num_pg_database_indices, 
+                           Name_pg_database_indices, idescs);
+        CatalogIndexInsert(idescs, Num_pg_database_indices, pg_database_rel, 
+                           tuple);
+        CatalogCloseIndices(Num_pg_database_indices, idescs);
+    }
+#endif
+
+	heap_close(pg_database_rel, NoLock);
+
+    /* Copy the template database to the new location */
+
+	if (mkdir(loc, S_IRWXU) != 0) {
 		UserAbortTransactionBlock();
-		elog(ERROR, "Unable to create database directory '%s'.", lp);
+		elog(ERROR, "CREATE DATABASE: Unable to create database directory '%s': %s", loc, strerror(errno));
     }
 
-	snprintf(buf, sizeof(buf), "%s %s%cbase%ctemplate1%c* '%s'",
-			 COPY_CMD, DataDir, SEP_CHAR, SEP_CHAR, SEP_CHAR, lp);
+	snprintf(buf, sizeof(buf), "cp %s%cbase%ctemplate1%c* '%s'",
+			 DataDir, SEP_CHAR, SEP_CHAR, SEP_CHAR, loc);
 	if (system(buf) != 0) {
-        rmdir(lp);
+        int ret;
+        snprintf(buf, sizeof(buf), "rm -rf '%s'", loc);
+        ret = system(buf);
 		UserAbortTransactionBlock();
-        elog(ERROR, "Could not initialize database directory.");
+        if (ret == 0)
+            elog(ERROR, "CREATE DATABASE: Could not initialize database directory.");
+        else
+            elog(ERROR, "CREATE DATABASE: Could not initialize database directory. Delete failed as well.");
     }
 
 	if (IsTransactionBlock())
@@ -111,45 +164,56 @@ createdb(char *dbname, char *dbpath, int encoding, CommandDest dest)
 
 
 
+/*
+ * DROP DATABASE
+ */
+
 void
-dropdb(char *dbname, CommandDest dest)
+dropdb(const char *dbname)
 {
-	int4		user_id;
+	int4		user_id, db_owner;
+    bool        use_super;
 	Oid			db_id;
 	char	   *path,
 				dbpath[MAXPGPATH],
 				buf[MAXPGPATH + 100];
+
 	Relation	pgdbrel;
 	HeapScanDesc pgdbscan;
 	ScanKeyData	key;
 	HeapTuple	tup;
 
-    /* no single quotes in dbname */
-    if (strchr(dbname, '\'') != NULL)
-        elog(ERROR, "Single quotes are not allowed in database names.");
+    AssertArg(dbname);
 
-	/*
-	 * If this call returns, the database exists and we're allowed to
-	 * remove it.
-	 */
-	check_permissions("dropdb", dbpath, dbname, &db_id, &user_id);
+	if (strcmp(dbname, "template1") == 0)
+		elog(ERROR, "DROP DATABASE: May not be executed on the template database.");
 
-	/* do as much checking as we can... */
-	if (!OidIsValid(db_id))
-		elog(FATAL, "pg_database instance has an invalid OID");
+	if (strcmp(dbname, DatabaseName) == 0)
+		elog(ERROR, "DROP DATABASE: Cannot be executed on the currently open database.");
+
+    if (!get_user_info(GetPgUserName(), &user_id, &use_super, NULL))
+        elog(ERROR, "Current user name is invalid.");
+
+    if (!get_db_info(dbname, dbpath, &db_id, &db_owner))
+        elog(ERROR, "DROP DATABASE: Database \"%s\" does not exist.", dbname);
+
+    if (user_id != db_owner && !use_super)
+        elog(ERROR, "DROP DATABASE: Permission denied.");
+
+	/* close virtual file descriptors so the kernel has more available for
+       the system() calls */
+	closeAllVfds();
 
 	path = ExpandDatabasePath(dbpath);
 	if (path == NULL)
-		elog(ERROR, "The path '%s' is invalid.\n"
-			 "This may be due to a missing environment variable"
-			 " on the server.", path);
-
-	/* stop the vacuum daemon (dead code...) */
-	stop_vacuum(dbpath, dbname);
+		elog(ERROR,
+             "The database path '%s' is invalid. "
+			 "This may be due to a character that is not allowed or because the chosen "
+             "path isn't permitted for databases.", path);
 
     /* don't call this in a transaction block */
 	if (IsTransactionBlock())
-        elog(ERROR, "dropdb: May not be called in a transaction block.");
+        elog(ERROR, "DROP DATABASE: May not be called in a transaction block.");
     else            
 		BeginTransactionBlock();
 
@@ -170,8 +234,7 @@ dropdb(char *dbname, CommandDest dest)
 	if (DatabaseHasActiveBackends(db_id)) {
 		heap_close(pgdbrel, AccessExclusiveLock);
         UserAbortTransactionBlock();
-		elog(ERROR, "Database '%s' has running backends, can't drop it.",
-			 dbname);
+		elog(ERROR, "DROP DATABASE: Database \"%s\" is being accessed by other users.", dbname);
     }
 
 	/*
@@ -187,19 +250,16 @@ dropdb(char *dbname, CommandDest dest)
 	{
 		heap_close(pgdbrel, AccessExclusiveLock);
         UserAbortTransactionBlock();
-		elog(ERROR, "Database '%s', OID %u, not found in pg_database",
-			 dbname, db_id);
+        /* This error should never come up since the existence of the
+           database is checked earlier */
+		elog(ERROR, "DROP DATABASE: Database \"%s\" doesn't exist despite earlier reports to the contrary.",
+			 dbname);
 	}
 
-	/*** Delete any comments associated with the database ***/
-	
+	/* Delete any comments associated with the database */
 	DeleteComments(db_id);
 
-	/*
-	 * Houston, we have launch commit...
-	 *
-	 * Remove the database's tuple from pg_database.
-	 */
+	/* Remove the database's tuple from pg_database */
 	heap_delete(pgdbrel, &tup->t_self, NULL);
 
 	heap_endscan(pgdbscan);
@@ -222,7 +282,7 @@ dropdb(char *dbname, CommandDest dest)
 	 */
 	snprintf(buf, sizeof(buf), "rm -rf '%s'", path);
 	if (system(buf)!=0)
-        elog(NOTICE, "The database directory '%s' could not be removed.", path);
+        elog(NOTICE, "DROP DATABASE: The database directory '%s' could not be removed.", path);
 
 	if (IsTransactionBlock())
 		EndTransactionBlock();
@@ -230,186 +290,103 @@ dropdb(char *dbname, CommandDest dest)
 
 
 
-static HeapTuple
-get_pg_dbtup(char *command, char *dbname, Relation dbrel)
+/*
+ * Helper functions
+ */
+
+static bool
+get_db_info(const char *name, char *dbpath, Oid *dbIdP, int4 *ownerIdP)
 {
-	HeapTuple	dbtup;
-	HeapTuple	tup;
-	HeapScanDesc scan;
+	Relation	relation;
+	HeapTuple	tuple;
 	ScanKeyData scanKey;
+    HeapScanDesc scan;
+
+    AssertArg(name);
+
+	relation = heap_openr(DatabaseRelationName, AccessExclusiveLock/*???*/);
 
 	ScanKeyEntryInitialize(&scanKey, 0, Anum_pg_database_datname,
-						   F_NAMEEQ, NameGetDatum(dbname));
+						   F_NAMEEQ, NameGetDatum(name));
 
-	scan = heap_beginscan(dbrel, 0, SnapshotNow, 1, &scanKey);
+	scan = heap_beginscan(relation, 0, SnapshotNow, 1, &scanKey);
 	if (!HeapScanIsValid(scan))
-		elog(ERROR, "%s: cannot begin scan of pg_database", command);
+		elog(ERROR, "Cannot begin scan of %s.", DatabaseRelationName);
 
-	/*
-	 * since we want to return the tuple out of this proc, and we're going
-	 * to close the relation, copy the tuple and return the copy.
-	 */
-	tup = heap_getnext(scan, 0);
+	tuple = heap_getnext(scan, 0);
 
-	if (HeapTupleIsValid(tup))
-		dbtup = heap_copytuple(tup);
+	if (HeapTupleIsValid(tuple))
+	{
+        text	   *tmptext;
+        bool        isnull;
+    
+        /* oid of the database */
+        if (dbIdP)
+            *dbIdP = tuple->t_data->t_oid;
+        /* uid of the owner */
+        if (ownerIdP)
+        {
+            *ownerIdP = (int4) heap_getattr(tuple,
+                                            Anum_pg_database_datdba,
+                                            RelationGetDescr(relation),
+                                            &isnull);
+            if (isnull)
+                *ownerIdP = -1; /* hopefully no one has that id already ;) */
+        }
+        /* database path (as registered in pg_database) */
+        if (dbpath)
+        {
+            tmptext = (text *) heap_getattr(tuple,
+                                            Anum_pg_database_datpath,
+                                            RelationGetDescr(relation),
+                                            &isnull);
+
+            if (!isnull)
+            {
+                Assert(VARSIZE(tmptext) - VARHDRSZ < MAXPGPATH);
+
+                strncpy(dbpath, VARDATA(tmptext), VARSIZE(tmptext) - VARHDRSZ);
+                *(dbpath + VARSIZE(tmptext) - VARHDRSZ) = '\0';
+            }
+            else
+                strcpy(dbpath, "");
+        }
+	}
 	else
-		dbtup = tup;
+    {
+        if (dbIdP)
+            *dbIdP = InvalidOid;
+    }
 
 	heap_endscan(scan);
-	return dbtup;
+
+	/* We will keep the lock on the relation until end of transaction. */
+	heap_close(relation, NoLock);
+
+    return HeapTupleIsValid(tuple);
 }
 
-/*
- *	check_permissions() -- verify that the user is permitted to do this.
- *
- *	If the user is not allowed to carry out this operation, this routine
- *	elog(ERROR, ...)s, which will abort the xact.  As a side effect, the
- *	user's pg_user tuple OID is returned in userIdP and the target database's
- *	OID is returned in dbIdP.
- */
 
-static void
-check_permissions(char *command,
-				  char *dbpath,
-				  char *dbname,
-				  Oid *dbIdP,
-				  int4 *userIdP)
+
+static bool
+get_user_info(const char * name, int4 *use_sysid, bool *use_super, bool *use_createdb)
 {
-	Relation	dbrel;
-	HeapTuple	dbtup,
-				utup;
-	int4		dbowner = 0;
-	char		use_createdb;
-	bool		dbfound;
-	bool		use_super;
-	char	   *userName;
-	text	   *dbtext;
-	char		path[MAXPGPATH];
+    HeapTuple   utup;
 
-	userName = GetPgUserName();
+	AssertArg(name);
 	utup = SearchSysCacheTuple(SHADOWNAME,
-							   PointerGetDatum(userName),
+							   PointerGetDatum(name),
 							   0, 0, 0);
-	Assert(utup);
-	*userIdP = ((Form_pg_shadow) GETSTRUCT(utup))->usesysid;
-	use_super = ((Form_pg_shadow) GETSTRUCT(utup))->usesuper;
-	use_createdb = ((Form_pg_shadow) GETSTRUCT(utup))->usecreatedb;
 
-	/* Check to make sure user has permission to use createdb */
-	if (!use_createdb)
-	{
-		elog(ERROR, "user '%s' is not allowed to create/drop databases",
-			 userName);
-	}
+    if (!HeapTupleIsValid(utup))
+        return false;
 
-	/* Make sure we are not mucking with the template database */
-	if (!strcmp(dbname, "template1"))
-		elog(ERROR, "%s: cannot be executed on the template database", command);
+    if (use_sysid)
+        *use_sysid =    ((Form_pg_shadow) GETSTRUCT(utup))->usesysid;
+    if (use_super)
+        *use_super =    ((Form_pg_shadow) GETSTRUCT(utup))->usesuper;
+    if (use_createdb)
+        *use_createdb = ((Form_pg_shadow) GETSTRUCT(utup))->usecreatedb;
 
-	/* Check to make sure database is not the currently open database */
-	if (!strcmp(dbname, DatabaseName))
-		elog(ERROR, "%s: cannot be executed on an open database", command);
-
-	/* Check to make sure database is owned by this user */
-
-	/*
-	 * Acquire exclusive lock on pg_database from the beginning, even though
-	 * we only need read access right here, to avoid potential deadlocks
-	 * from upgrading our lock later.  (Is this still necessary?  Could we
-	 * use something weaker than exclusive lock?)
-	 */
-	dbrel = heap_openr(DatabaseRelationName, AccessExclusiveLock);
-
-	dbtup = get_pg_dbtup(command, dbname, dbrel);
-	dbfound = HeapTupleIsValid(dbtup);
-
-	if (dbfound)
-	{
-		dbowner = (int4) heap_getattr(dbtup,
-									  Anum_pg_database_datdba,
-									  RelationGetDescr(dbrel),
-									  (char *) NULL);
-		*dbIdP = dbtup->t_data->t_oid;
-		dbtext = (text *) heap_getattr(dbtup,
-									   Anum_pg_database_datpath,
-									   RelationGetDescr(dbrel),
-									   (char *) NULL);
-
-		strncpy(path, VARDATA(dbtext), (VARSIZE(dbtext) - VARHDRSZ));
-		*(path + VARSIZE(dbtext) - VARHDRSZ) = '\0';
-	}
-	else
-		*dbIdP = InvalidOid;
-
-	/* We will keep the lock on dbrel until end of transaction. */
-	heap_close(dbrel, NoLock);
-
-	/*
-	 * Now be sure that the user is allowed to do this.
-	 */
-
-	if (dbfound && !strcmp(command, "createdb"))
-	{
-
-		elog(ERROR, "createdb: database '%s' already exists", dbname);
-
-	}
-	else if (!dbfound && !strcmp(command, "dropdb"))
-	{
-
-		elog(ERROR, "dropdb: database '%s' does not exist", dbname);
-
-	}
-	else if (dbfound && !strcmp(command, "dropdb")
-			 && dbowner != *userIdP && use_super == false)
-	{
-
-		elog(ERROR, "%s: database '%s' is not owned by you", command, dbname);
-
-	}
-
-	if (dbfound && !strcmp(command, "dropdb"))
-		strcpy(dbpath, path);
-}	/* check_permissions() */
-
-/*
- *	stop_vacuum -- stop the vacuum daemon on the database, if one is running.
- *
- *	This is currently dead code, since we don't *have* vacuum daemons.
- *	If you want to re-enable it, think about the interlock against deleting
- *	a database out from under running backends, in dropdb() above.
- */
-static void
-stop_vacuum(char *dbpath, char *dbname)
-{
-#ifdef NOT_USED
-	char		filename[MAXPGPATH];
-	FILE	   *fp;
-	int			pid;
-
-	if (strchr(dbpath, SEP_CHAR) != 0)
-	{
-		snprintf(filename, sizeof(filename), "%s%cbase%c%s%c%s.vacuum",
-				 DataDir, SEP_CHAR, SEP_CHAR, dbname, SEP_CHAR, dbname);
-	}
-	else
-		snprintf(filename, sizeof(filename), "%s%c%s.vacuum",
-				 dbpath, SEP_CHAR, dbname);
-
-#ifndef __CYGWIN32__
-	if ((fp = AllocateFile(filename, "r")) != NULL)
-#else
-	if ((fp = AllocateFile(filename, "rb")) != NULL)
-#endif
-	{
-		fscanf(fp, "%d", &pid);
-		FreeFile(fp);
-		if (kill(pid, SIGKILLDAEMON1) < 0)
-		{
-			elog(ERROR, "can't kill vacuum daemon (pid %d) on '%s'",
-				 pid, dbname);
-		}
-	}
-#endif
+    return true;
 }
