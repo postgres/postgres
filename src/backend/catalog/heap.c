@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.100 1999/10/03 23:55:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.101 1999/10/04 02:12:26 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -43,15 +43,16 @@
 #include "catalog/pg_ipl.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_relcheck.h"
+#include "catalog/pg_type.h"
 #include "commands/trigger.h"
 #include "optimizer/clauses.h"
 #include "optimizer/planmain.h"
 #include "optimizer/tlist.h"
 #include "optimizer/var.h"
 #include "parser/parse_clause.h"
-#include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_relation.h"
+#include "parser/parse_target.h"
 #include "rewrite/rewriteRemove.h"
 #include "storage/smgr.h"
 #include "tcop/tcopprot.h"
@@ -1668,9 +1669,7 @@ static void
 StoreAttrDefault(Relation rel, AttrNumber attnum, char *adbin,
 				 bool updatePgAttribute)
 {
-	Form_pg_attribute atp = rel->rd_att->attrs[attnum - 1];
 	Node	   *expr;
-	Oid			type;
 	RangeTblEntry *rte;
 	char	   *adsrc;
 	Relation	adrel;
@@ -1683,20 +1682,10 @@ StoreAttrDefault(Relation rel, AttrNumber attnum, char *adbin,
 	HeapTuple	atttup;
 	Form_pg_attribute attStruct;
 
+	/*
+	 * Need to construct source equivalent of given node-string.
+	 */
 	expr = stringToNode(adbin);
-	type = exprType(expr);
-
-	if (type != atp->atttypid)
-	{
-		/*
-		 * Check that it will be possible to coerce the expression
-		 * to the column's type.  We store the expression without
-		 * coercion, however, to avoid premature coercion in cases like
-		 * CREATE TABLE tbl (fld datetime DEFAULT 'now');
-		 */
-		coerce_type(NULL, expr, type, atp->atttypid, atp->atttypmod);
-	}
-
 	/*
 	 * deparse_expression needs a RangeTblEntry list, so make one
 	 */
@@ -1904,6 +1893,7 @@ AddRelationRawConstraints(Relation rel,
 	{
 		RawColumnDefault *colDef = (RawColumnDefault *) lfirst(listptr);
 		Node	   *expr;
+		Oid			type_id;
 
 		Assert(colDef->raw_default != NULL);
 		/*
@@ -1915,6 +1905,34 @@ AddRelationRawConstraints(Relation rel,
 		 */
 		if (contain_var_clause(expr))
 			elog(ERROR, "Cannot use attribute(s) in DEFAULT clause");
+		/*
+		 * Check that it will be possible to coerce the expression
+		 * to the column's type.  We store the expression without
+		 * coercion, however, to avoid premature coercion in cases like
+		 *
+		 * CREATE TABLE tbl (fld datetime DEFAULT 'now');
+		 *
+		 * NB: this should match the code in updateTargetListEntry()
+		 * that will actually do the coercion, to ensure we don't accept
+		 * an unusable default expression.
+		 */
+		type_id = exprType(expr);
+		if (type_id != InvalidOid)
+		{
+			Form_pg_attribute atp = rel->rd_att->attrs[colDef->attnum - 1];
+
+			if (type_id != atp->atttypid)
+			{
+				if (CoerceTargetExpr(NULL, expr,
+									 type_id, atp->atttypid) == NULL)
+					elog(ERROR, "Attribute '%s' is of type '%s'"
+						 " but default expression is of type '%s'"
+						 "\n\tYou will need to rewrite or cast the expression",
+						 atp->attname.data,
+						 typeidTypeName(atp->atttypid),
+						 typeidTypeName(type_id));
+			}
+		}
 		/*
 		 * Might as well try to reduce any constant expressions.
 		 */
@@ -1981,6 +1999,12 @@ AddRelationRawConstraints(Relation rel,
 		 * Transform raw parsetree to executable expression.
 		 */
 		expr = transformExpr(pstate, cdef->raw_expr, EXPR_COLUMN_FIRST);
+		/*
+		 * Make sure it yields a boolean result.
+		 */
+		if (exprType(expr) != BOOLOID)
+			elog(ERROR, "CHECK '%s' does not yield boolean result",
+				 ccname);
 		/*
 		 * Make sure no outside relations are referred to.
 		 */
