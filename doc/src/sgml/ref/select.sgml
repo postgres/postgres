@@ -498,6 +498,27 @@ SELECT actors.name
     <date>1998-09-24</date>
    </refsect2info>
    <title>
+    <acronym>Extensions</acronym>
+   </title>
+
+   <para>
+<productname>Postgres</productname> allows one to omit 
+the <command>FROM</command> clause from a query. This feature
+was retained from the original PostQuel query language:
+  <programlisting>
+SELECT distributors.* WHERE name = 'Westwood';
+
+    did|name
+    ---+----------------
+    108|Westward
+  </programlisting>
+   </para>
+
+  <refsect2 id="R2-SQL-SELECT-5">
+   <refsect2info>
+    <date>1998-09-24</date>
+   </refsect2info>
+   <title>
     <acronym>SQL92</acronym>
    </title>
    <para>
