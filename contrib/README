@@ -217,5 +217,9 @@ vacuumlo -
 	by Peter T Mount <peter@retep.org.uk>
 
 xml -
+	Storing XML in PostgreSQL (obsolete version)
+	by John Gray <jgray@azuli.co.uk>
+
+xml2 -
 	Storing XML in PostgreSQL
 	by John Gray <jgray@azuli.co.uk>

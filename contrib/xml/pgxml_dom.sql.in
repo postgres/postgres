@@ -1,0 +1,10 @@
+-- SQL for XML parser
+
+-- Adjust this setting to control where the objects get created.
+SET search_path TO public;
+
+CREATE OR REPLACE FUNCTION pgxml_parse(text) RETURNS boolean
+    AS 'MODULE_PATHNAME' LANGUAGE c STRICT;
+
+CREATE OR REPLACE FUNCTION pgxml_xpath(text, text, text, text) RETURNS text
+    AS 'MODULE_PATHNAME' LANGUAGE c STRICT;

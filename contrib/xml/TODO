@@ -1,0 +1,78 @@
+PGXML TODO List
+===============
+
+Some of these items still require much more thought! Since the first
+release, the XPath support has improved (because I'm no longer using a
+homemade algorithm!).
+
+1. Performance considerations
+
+At present each document is parsed to produce the DOM tree on every query.
+
+Pros: 
+	Easy
+	No persistent memory or storage allocation for parsed trees
+		(libxml docs suggest representation of a document might
+		 be 4 times the size of the text)
+
+Cons:
+	Slow/ CPU intensive to parse.
+	Makes it difficult for PLs to apply libxml manipulations to create
+		new documents or amend existing ones.
+
+
+2. XQuery 
+
+I'm not sure if the addition of XQuery would be best as a function or
+as a new front-end parser. This is one to think about, but with a
+decent implementation of XPath, one of the prerequisites is covered.
+
+3. DOM Interfaces
+
+Expose more aspects of the DOM to user functions/ PLs. This would
+allow a procedure in a PL to run some queries and then use exposed
+interfaces to libxml to create an XML document out of the query
+results. I accept the argument that this might be more properly
+performed on the client side.
+
+4. Returning sets of documents from XPath queries.
+
+Although the current implementation allows you to amalgamate the
+returned results into a single document, it's quite possible that
+you'd like to use the returned set of nodes as a source for FROM.
+ 
+Is there a good way to optimise/index the results of certain XPath
+operations to make them faster?:
+
+select docid, pgxml_xpath(document,'//site/location/text()','','') as location 
+where pgxml_xpath(document,'//site/name/text()','','') = 'Church Farm';
+
+and with multiple element occurences in a document?
+
+select d.docid, pgxml_xpath(d.document,'//site/location/text()','','') 
+from docstore d, 
+pgxml_xpaths('docstore','document','//feature/type/text()','docid') ft 
+where ft.key = d.docid and ft.value ='Limekiln';
+
+pgxml_xpaths params are relname, attrname, xpath, returnkey. It would
+return a set of two-element tuples (key,value) consisting of the value of
+returnkey, and the cdata value of the xpath. The XML document would be
+defined by relname and attrname.
+
+The pgxml_xpaths function could be the basis of a functional index,
+which could speed up the above query very substantially, working
+through the normal query planner mechanism.
+
+5. Return type support.
+
+Better support for returning e.g. numeric or boolean values. I need to
+get to grips with the returned data from libxml first.
+
+ 
+John Gray <jgray@azuli.co.uk> 16 August 2001
+
+
+
+
+
+
