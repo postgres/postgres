@@ -1,22 +1,25 @@
-This directory contains libpq++, the C++ language interface to POSTGRESQL.
-libpq++ is implemented on of the libpq library.  Users would benefit
-from reading the chapter on libpq in the PostgreSQL users manual
-before using libpq++.
 
-The initial version of this implementation was done by William Wanders
-(wwanders@sci.kun.nl)
+Based on the original work by William Wanders (wwanders@sci.kun.nl)
+and Jolly Chen (jolly@cs.berkeley.edu), this is the first set of
+changes to libpq++ since ~1997.  Pgenv has been removed, deprecated 
+functions removed and/or updated and error handling rewritten, 
+however for the most part it remains as a wrapper around libpq.
+The documentation on libpq is recommended reading to understand 
+the function of libpq++.
 
-This is only a preliminary attempt at providing something useful for
-people who would like to use C++ to build frontend applications to
-PostgreSQL.  The API provided herein is subject to change in later
-versions of PostgreSQL.
+The API provided herein is subject to change in later versions of 
+PostgreSQL.
 
 For details on how to to use libpq++, see the man page in the man/
-subdirectory and the test programs in the examples/ subdirectory. 
+subdirectory and the test programs in the examples/ subdirectory.
 
-libpq++ has been tested with g++, version 2.7.0
+** PgConnection has been changed to accept either the environment
+variables or conninfo style strings.  See the PQconnectdb in the
+documentation on libpq for details.
 
-- Jolly Chen
-jolly@cs.berkeley.edu
+libpq++ has only been tested with g++, version 2.7.2.1
 
-Tue Sep  5 11:09:51 PDT 1995
+Vince Vielhaber (vev@michvhf.com)
+Tue May 18 08:30:00 EDT 1999
+
+

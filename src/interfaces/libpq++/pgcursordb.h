@@ -12,6 +12,9 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
+ *
+ *  $Id: pgcursordb.h,v 1.2 1999/05/23 01:04:01 momjian Exp $
+ *
  *-------------------------------------------------------------------------
  */
  
@@ -19,6 +22,7 @@
 #define PGCURSOR_H
 
 #include "pgtransdb.h"
+
 
 
 // ****************************************************************
@@ -32,11 +36,10 @@
 // operations, like fetch, forward, etc.
 class PgCursor : public PgTransaction {
 public:
-  PgCursor(const char* dbName, const char* cursor);	// use reasonable defaults
+  PgCursor(const char* conninfo, const char* cursor);	// use reasonable & environment defaults
   // connect to the database with given environment and database name
-  PgCursor(const PgEnv& env, const char* dbName, const char* cursor);
   PgCursor(const PgConnection&, const char* cursor);
-  virtual ~PgCursor();	// close connection and clean up
+  ~PgCursor();	// close connection and clean up
   
   // Commands associated with cursor interface
   int Declare(const string& query, int binary = 0);	// Declare a cursor with given name

@@ -12,6 +12,9 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
+ *
+ *  $Id: pgtransdb.h,v 1.2 1999/05/23 01:04:03 momjian Exp $
+ *
  *-------------------------------------------------------------------------
  */
  
@@ -19,7 +22,6 @@
 #define PGTRANSDB_H
 
 #include "pgdatabase.h"
-
 
 // ****************************************************************
 //
@@ -31,11 +33,10 @@
 // the object is destroyed.
 class PgTransaction : public PgDatabase {
 public:
-  PgTransaction(const char* dbName);	// use reasonable defaults
+  PgTransaction(const char* conninfo);	// use reasonable & environment defaults
   // connect to the database with given environment and database name
-  PgTransaction(const PgEnv& env, const char* dbName);
   PgTransaction(const PgConnection&);
-  virtual ~PgTransaction();	// close connection and clean up
+  ~PgTransaction();	// close connection and clean up
   
 protected:
   ExecStatusType BeginTransaction();

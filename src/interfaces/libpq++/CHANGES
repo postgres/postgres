@@ -1,0 +1,33 @@
+
+5/18/1999 - vv
+---------
+
+*	Rewrote libpq++.H
+*	Added CVS IDs
+*	Incremented shared library version to 3.0
+*	Cleaned up makefiles
+*	Made examples use the installed versions of the library and header
+
+
+4/26/1999 - vv
+---------
+
+*	Changed PrintTuples and DisplayTuples in PgDatabase to use PQprint()
+
+
+
+4/14/1999 - vv
+---------
+
+*	Changed connection routines to use PQconnectdb()
+*	Connect now returns CONNECTION_OK or CONNECTION_BAD
+*	Eliminated pgEnv
+*	Changed error handler to return proper messages
+*	New function LOid() returns Large Object ID
+*	New function Status() returns Large Object Status
+
+
+
+
+
+

@@ -9,13 +9,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/pgcursordb.cc,v 1.1 1997/02/13 10:00:30 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
  
  #include "pgcursordb.h"
+
+static char rcsid[] = "$Id: pgcursordb.cc,v 1.2 1999/05/23 01:04:01 momjian Exp $";
+
  
  
 // ****************************************************************
@@ -24,13 +25,9 @@
 //
 // ****************************************************************
 // Make a connection to the specified database with default environment
-PgCursor::PgCursor(const char* dbName, const char* cursor)
-   : PgTransaction(dbName), pgCursor(cursor)
-{}
-
-// Make a connection to the specified database with the given environment
-PgCursor::PgCursor(const PgEnv& env, const char* dbName, const char* cursor)
-   : PgTransaction(env, dbName), pgCursor(cursor)
+// See PQconnectdb() for conninfo usage
+PgCursor::PgCursor(const char* conninfo, const char* cursor)
+   : PgTransaction(conninfo), pgCursor(cursor)
 {}
 
 // Do not make a connection to the backend -- just query

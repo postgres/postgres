@@ -6,12 +6,12 @@
 # Copyright (c) 1994, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/Makefile.in,v 1.11 1999/01/17 06:19:39 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/Makefile.in,v 1.12 1999/05/23 01:03:57 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
 NAME= pq++
-SO_MAJOR_VERSION= 2
+SO_MAJOR_VERSION= 3
 SO_MINOR_VERSION= 0
 
 SRCDIR= @top_srcdir@
@@ -42,20 +42,16 @@ ifdef KRBVERS
 CXXFLAGS+= $(KRBFLAGS)
 endif
 
-OBJS = pgenv.o pgconnection.o pgtransdb.o pgcursordb.o pglobject.o
+OBJS = pgconnection.o pgdatabase.o pgtransdb.o pgcursordb.o pglobject.o 
 
-ifeq ($(PORTNAME), win)
-SHLIB_LINK+= -L../libpq -lpq -lstdc++
-else
 SHLIB_LINK= -L../libpq -lpq
-endif
 
 # Shared library stuff, also default 'all' target
 include $(SRCDIR)/Makefile.shlib
 
 
 # Pull shared-lib CFLAGS into CXXFLAGS
-CXXFLAGS+= $(CFLAGS)
+CXXFLAGS+= $(CFLAGS) -Wno-unused
 
 
 .PHONY: examples
@@ -68,9 +64,8 @@ install: install-headers install-lib $(install-shlib-dep)
 
 LIBPGXXDIR = libpq++
 LIBPGXXHEADERDIR = $(HEADERDIR)/$(LIBPGXXDIR)
-MAINHEADER = libpq++.h
-LIBPGXXHEADERS = pgenv.h \
-		 pgconnection.h \
+MAINHEADER = libpq++.H
+LIBPGXXHEADERS = pgconnection.h \
 		 pgdatabase.h \
 		 pgtransdb.h \
 		 pgcursordb.h \
@@ -91,9 +86,6 @@ beforeinstall-headers:
 clean:
 	rm -f libpq++.a $(shlib) $(OBJS)
 	$(MAKE) -C examples clean
-ifeq ($(PORTNAME), win)
-	rm -f pq++.def
-endif
 
 dep depend:
 	$(CXX) -MM $(CXXFLAGS) *.cc >depend

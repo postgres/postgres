@@ -1,3 +1,4 @@
+
 /*-------------------------------------------------------------------------
  *
  * libpq++.H
@@ -12,9 +13,6 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *   IDENTIFICATION
- *
- * $Id: libpq++.H,v 1.3 1996/11/12 11:42:27 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,156 +22,167 @@
 
 #include <stdio.h>
 #include <strings.h>
+#include <string>
 
 extern "C" {
 #include "config.h"
 #include "postgres.h"
 #include "libpq-fe.h"
-#include "fe-auth.h"
 }
 
-// ****************************************************************
-//
-// PGenv - the environment for setting up a connection to postgres
-//
-// ****************************************************************
-class PGenv {
-  friend class PGconnection;
-  char* pgauth;
-  char* pghost;
-  char* pgport;
-  char* pgoption;
-  char* pgtty;
-public:
-  PGenv();  // default ctor will use reasonable defaults
-            // will use environment  variables PGHOST, PGPORT,
-	    // PGOPTION, PGTTY
-  PGenv(char* auth, char* host, char* port, char* option, char* tty);
-   void setValues(char* auth, char* host, char* port, char* option, char* tty);
-   ~PGenv();
-};
+static char rcsid[] = "$Id: libpq++.H,v 1.4 1999/05/23 01:03:58 momjian Exp $";
+
 
 // ****************************************************************
 //
-// PGconnection - a connection made to a postgres backend
+// PgConnection - a connection made to a postgres backend
 //
 // ****************************************************************
-class PGconnection {
-  friend class PGdatabase;
-  friend class PGlobj;
-  PGenv* env; 
-  PGconn* conn; 
-  PGresult* result;
+class PgConnection {
+protected:
+  PGconn* pgConn;	// Connection Structures
+  PGresult* pgResult;	// Query Result
+  int pgCloseConnection; // Flag indicating whether the connection should be closed
+  ConnStatusType Connect(const char* conninfo);
+  string IntToString(int);
+  PgConnection();
   
-  char errorMessage[ERROR_MSG_LENGTH];
 public:
-   PGconnection(); // use reasonable defaults
-   PGconnection(PGenv* env, char* dbName); // connect to the database with 
-                                    // given environment and database name
-   ConnStatusType status();
-   char* errormessage() {return errorMessage;};
+  PgConnection(const char* conninfo); // use reasonable and environment defaults 
+  ~PgConnection(); // close connection and clean up
+  
+  ConnStatusType Status();
+  int ConnectionBad();
+  const char* ErrorMessage();
   
   // returns the database name of the connection
-    char* dbName() {return PQdb(conn);}; 
+  const char* DBName(); 
+  
+  ExecStatusType Exec(const char* query);  // send a query to the backend
+  int ExecCommandOk(const char* query);    // send a command and check if it's
+  int ExecTuplesOk(const char* query);     // send a command and check if tuple
+  PGnotify* Notifies();
+};
 
-    ExecStatusType exec(char* query);  // send a query to the backend
-    PGnotify* notifies() {exec(" "); return PQnotifies(conn);};
-    ~PGconnection(); // close connection and clean up
+// ****************************************************************
+//
+// PgDatabase - a class for accessing databases
+//
+// ****************************************************************
+class PgDatabase : public PgConnection {
 protected:
-  ConnStatusType connect(PGenv* env, char* dbName);
-};
+  PgDatabase() : PgConnection() {}	// Do not connect
 
-// ****************************************************************
-//
-// PGdatabase - a class for accessing databases
-//
-// ****************************************************************
-class PGdatabase : public PGconnection {
 public:
-  PGdatabase() : PGconnection() {}; // use reasonable defaults
-  // connect to the database with 
-  PGdatabase(PGenv* env, char* dbName) : PGconnection(env, dbName) {};
+  // connect to the database with conninfo
+  PgDatabase(const char *conninfo) : PgConnection(conninfo) {};
+  ~PgDatabase() {}; // close connection and clean up
   // query result access
-  int ntuples()
-    {return PQntuples(result);};
-  int nfields()
-    {return PQnfields(result);};
-  char* fieldname(int field_num)
-    {return PQfname(result, field_num);};
-  int fieldnum(char* field_name)
-    {return PQfnumber(result, field_name);};
-  Oid fieldtype(int field_num)
-    {return PQftype(result, field_num);};
-  Oid fieldtype(char* field_name)
-    {return PQftype(result, fieldnum(field_name));};
-  int2 fieldsize(int field_num)
-    {return PQfsize(result, field_num);};
-  int2 fieldsize(char* field_name)
-    {return PQfsize(result, fieldnum(field_name));};
-  char* getvalue(int tup_num, int field_num)
-    {return PQgetvalue(result, tup_num, field_num);};
-  char* getvalue(int tup_num, char* field_name)
-    {return PQgetvalue(result, tup_num, fieldnum(field_name));};
-  int getlength(int tup_num, int field_num)
-    {return PQgetlength(result, tup_num, field_num);};
-  int getlength(int tup_num, char* field_name)
-    {return PQgetlength(result, tup_num, fieldnum(field_name));};
-  void printtuples(FILE *out, int fillAlign, char *fieldSep,
-		   int printHeader, int quiet)
-    {PQdisplayTuples(result, out, fillAlign, fieldSep, printHeader, quiet);};
+  int Tuples();
+  int Fields();
+  const char* FieldName(int field_num);
+  int FieldNum(const char *field_name);
+  Oid FieldType(int field_num);
+  Oid FieldType(const char *field_name);
+  short FieldSize(int field_num);
+  short FieldSize(const char *field_name);
+  const char* GetValue(int tup_num, int field_num);
+  const char* GetValue(int tup_num, const char *field_name);
+  int GetLength(int tup_num, int field_num);
+  int GetLength(int tup_num, const char* field_name);
+  void DisplayTuples(FILE *out = 0, int fillAlign = 1, 
+        const char* fieldSep = "|",int printHeader = 1, int quiet = 0) ;
+  void PrintTuples(FILE *out = 0, int printAttName = 1, 
+        int terseOutput = 0, int width = 0) ;
+
   // copy command related access
-  int getline(char* string, int length)
-    {return PQgetline(conn, string, length);};
-  void putline(char* string)
-    {PQputline(conn, string);};
-  const char *OidStatus()
-  {
-    return PQoidStatus(result);
-  }
-  int endcopy()
-    {return PQendcopy(conn);};
-  ~PGdatabase() {}; // close connection and clean up
+  int GetLine(char* string, int length);
+  void PutLine(const char* string);
+  const char *OidStatus();
+  int EndCopy();
 };
+
+
 
 // ****************************************************************
 //
-// PGlobj - a class for accessing Large Object in a database
+// PGLargeObject - a class for accessing Large Object in a database
 //
 // ****************************************************************
-class PGlobj : public PGconnection {
-  int fd;
-  Oid object;
+class PgLargeObject : public PgConnection {
 public:
-  PGlobj();          // use reasonable defaults and create large object
-  PGlobj(Oid lobjId); // use reasonable defaults and open large object
-  PGlobj(PGenv* env, char* dbName);            // create large object
-  PGlobj(PGenv* env, char* dbName, Oid lobjId); // open large object
-   int read(char* buf, int len)
-    {return lo_read(conn, fd, buf, len);};
-   int write(char* buf, int len)
-    {return lo_write(conn, fd, buf, len);};
-   int lseek(int offset, int whence)
-    {return lo_lseek(conn, fd, offset, whence);};
-   int tell()
-    {return lo_tell(conn, fd);};
-   int unlink();
-   int import(char* filename);
-   int export(char* filename);
-   ~PGlobj(); // close connection and clean up
+  PgLargeObject(const char* conninfo = 0);   // use reasonable defaults and create large object
+  PgLargeObject(Oid lobjId, const char* conninfo = 0); // use reasonable defaults and open large object
+  ~PgLargeObject(); // close connection and clean up
+
+  void Create();
+  void Open();
+  void Close();
+  int Read(char* buf, int len);
+  int Write(const char* buf, int len);
+  int Lseek(int offset, int whence);
+  int Tell();
+  int Unlink();
+  Oid LOid();
+  Oid Import(const char* filename);
+  int Export(const char* filename);
+  string Status();
 };
 
-//
-// these are the environment variables used for getting defaults
-//
 
-#define ENV_DEFAULT_AUTH   "PGAUTH"
-#define ENV_DEFAULT_DBASE  "PGDATABASE"
-#define ENV_DEFAULT_HOST   "PGHOST"
-#define ENV_DEFAULT_OPTION "PGOPTION"
-#define ENV_DEFAULT_PORT   "PGPORT"
-#define ENV_DEFAULT_TTY    "PGTTY"
+// ****************************************************************
+//
+// PgTransaction - a class for running transactions against databases
+//
+// ****************************************************************
+class PgTransaction : public PgDatabase {
+protected:
+  ExecStatusType BeginTransaction();
+  ExecStatusType EndTransaction();
+  PgTransaction() : PgDatabase() {}	// Do not connect
+
+public:
+  PgTransaction(const char* conninfo);  // use reasonable & environment defaults
+  // connect to the database with given environment and database name
+  PgTransaction(const PgConnection&);
+  virtual ~PgTransaction();     // close connection and clean up
+
+};
+
+
+// ****************************************************************
+//
+// PgCursor - a class for querying databases using a cursor
+//
+// ****************************************************************
+class PgCursor : public PgTransaction {
+protected:
+  int Fetch(const string& num, const string& dir);
+  string pgCursor;
+  PgCursor() : PgTransaction() {}	// Do not connect
+
+public:
+  PgCursor(const char* dbName, const char* cursor);     // use reasonable & environment defaults
+  // connect to the database with given environment and database name
+  PgCursor(const PgConnection&, const char* cursor);
+  virtual ~PgCursor();  // close connection and clean up
+
+  // Commands associated with cursor interface
+  int Declare(const string& query, int binary = 0);     // Declare a cursor with given name
+  int Fetch(const char* dir = "FORWARD");               // Fetch ALL tuples in given direction
+  int Fetch(unsigned num, const char* dir = "FORWARD"); // Fetch specified amount of tuples
+  int Close();  // Close the cursor
+
+  // Accessors to the cursor name
+  const char* Cursor();
+  void Cursor(const string& cursor);
+};
+
+
 
 // buffer size
 #define BUFSIZE 1024
 
 #endif /* LIBPQXX_H */
+
+

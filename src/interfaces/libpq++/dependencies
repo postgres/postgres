@@ -2,13 +2,11 @@
 # Dependencies for libpq++ C++ library for Postgres SQL
 # 
 # Author: Leo Shuster (lsh@lubrizol.com)
+# Updated 18 May 1999 by Vince Vielhaber (vev@michvhf.com)
 ###########################################################################
-pgenv.o ::	pgenv.cc \
-		pgenv.h
 
 pgconnection.o :: pgconnection.cc \
 		  pgconnection.h \
-		  pgenv.h \
 		  $(LIBPQDIR)/libpq-fe.h \
 		  $(LIBPQDIR)/fe-auth.h
 
@@ -16,7 +14,6 @@ pgtransdb.o    :: pgtransdb.cc \
 		  pgtransdb.h \
 		  pgdatabase.h \
 		  pgconnection.h \
-                  pgenv.h \
                   $(LIBPQDIR)/libpq-fe.h \
                   $(LIBPQDIR)/fe-auth.h
                   
@@ -24,13 +21,11 @@ pgcursordb.o    :: pgcursordb.cc \
 		   pgcursordb.h \
 		   pgdatabase.h \
 		   pgconnection.h \
-                   pgenv.h \
                    $(LIBPQDIR)/libpq-fe.h \
                    $(LIBPQDIR)/fe-auth.h
 
 pglobject.o ::	pglobject.cc \
 		pglobject.h \
 		pgconnection.h \
-		pgenv.h \
 		$(LIBPQDIR)/libpq-fe.h \
 		$(LIBPQHEADERDIR)/libpq-fs.h

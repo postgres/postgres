@@ -9,7 +9,7 @@
 
 #include <iostream.h>
 #include <iomanip.h>
-#include <libpq++.h>
+#include <libpq++.H>
 
 int main()
 {
@@ -19,7 +19,7 @@ int main()
   // or, failing that, using hardwired constants.
   // Create a cursor database query object.
   // All queries using cursor will be performed through this object.
-  const char* dbName = "template1";
+  const char* dbName = "dbname=template1";
   PgCursor cData(dbName, "myportal");
 
   // check to see that the backend connection was successfully made

@@ -8,7 +8,7 @@
 
 #include <iostream.h>
 #include <iomanip.h>
-#include <libpq++.h>
+#include <libpq++.H>
 
 int main()
 {
@@ -16,7 +16,7 @@ int main()
   // When no parameters are given then the system will
   // try to use reasonable defaults by looking up environment variables 
   // or, failing that, using hardwired constants
-  const char* dbName = "template1";
+  const char* dbName = "dbname=template1";
   PgTransaction data(dbName);
 
   // check to see that the backend connection was successfully made

@@ -9,14 +9,13 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/pgtransdb.cc,v 1.1 1997/02/13 10:00:36 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
  
  #include "pgtransdb.h"
  
+static char rcsid[] = "$Id: pgtransdb.cc,v 1.2 1999/05/23 01:04:03 momjian Exp $";
  
 // ****************************************************************
 //
@@ -24,24 +23,9 @@
 //
 // ****************************************************************
 // Make a connection to the specified database with default environment
-PgTransaction::PgTransaction(const char* dbName)
-   : PgDatabase(dbName)
-{
-	BeginTransaction();
-}
-
-// Make a connection to the specified database with the given environment
-PgTransaction::PgTransaction(const PgEnv& env, const char* dbName)
-   : PgDatabase(env, dbName)
-{
-	BeginTransaction();
-}
-
-// Do not make a connection to the backend -- just query
-// Connection should not be closed after the object destructs since some
-// other object is using the connection
-PgTransaction::PgTransaction(const PgConnection& conn) 
-   : PgDatabase(conn) 
+// See PQconnectdb() for conninfo usage. 
+PgTransaction::PgTransaction(const char* conninfo)
+   : PgDatabase(conninfo)
 {
 	BeginTransaction();
 }

@@ -27,7 +27,7 @@ tuple 1: got
  *
  */
 #include <iostream.h>
-#include <libpq++.h>
+#include <libpq++.H>
 #include <stdlib.h>
 extern "C" {
 #include "postgres.h"		// for Postgres types
@@ -39,7 +39,7 @@ main()
   // Begin, by connecting to the backend using hardwired constants
   // and a test database created by the user prior to the invokation
   // of this test program.  Connect using cursor interface.
-  char* dbName = getenv("USER"); // change this to the name of your test database
+  char* dbName = "dbname=template1"; // change this to the name of your test database
   PgCursor data(dbName, "mycursor");
 
   // check to see that the backend connection was successfully made

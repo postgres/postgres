@@ -9,18 +9,18 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq++/examples/Attic/testlibpq0.cc,v 1.3 1997/02/13 10:00:42 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq++/examples/Attic/testlibpq0.cc,v 1.4 1999/05/23 01:04:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include <iostream.h>
-#include <libpq++.h>
+#include <libpq++.H>
 
 int main()
 {
   // Open the connection to the database and make sure it's OK
-  PgDatabase data("template1");
+  PgDatabase data("dbname=template1");
   if ( data.ConnectionBad() ) {
       cout << "Connection was unsuccessful..." << endl
            << "Error message returned: " << data.ErrorMessage() << endl;

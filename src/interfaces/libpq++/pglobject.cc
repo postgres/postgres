@@ -9,8 +9,6 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/pglobject.cc,v 1.3 1997/02/13 10:00:34 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,7 +19,7 @@ extern "C" {
 
 #include "pglobject.h"
 
-
+static char rcsid[] = "$Id: pglobject.cc,v 1.4 1999/05/23 01:04:03 momjian Exp $";
 
 // ****************************************************************
 //
@@ -30,8 +28,9 @@ extern "C" {
 // ****************************************************************
 // default constructor
 // creates a large object in the default database
-PgLargeObject::PgLargeObject(const char* dbName)
-	: PgConnection(dbName)
+// See PQconnectdb() for conninfo usage
+PgLargeObject::PgLargeObject(const char* conninfo)
+	: PgConnection(conninfo)
 {
   Init();
   Create();
@@ -40,33 +39,15 @@ PgLargeObject::PgLargeObject(const char* dbName)
 
 // constructor
 // open an existing large object in the default database
-PgLargeObject::PgLargeObject(Oid lobjId, const char* dbName) 
-	: PgConnection(dbName)
+// See PQconnectdb() for conninfo usage
+PgLargeObject::PgLargeObject(Oid lobjId, const char* conninfo) 
+	: PgConnection(conninfo)
 {
-  Init(lobjId);
-  if ( !pgObject )
-       Create();
-  Open();
-}
 
-// constructor
-// create a large object in the given database
-PgLargeObject::PgLargeObject(const PgEnv& env, const char* dbName)
-	: PgConnection(env, dbName)
-{
-  Init();
-  Create();
-  Open();
-}
-
-// constructor
-// open an existing large object in the given database
-PgLargeObject::PgLargeObject(const PgEnv& env, const char* dbName, Oid lobjId)
-	: PgConnection(env, dbName)
-{
   Init(lobjId);
-  if ( !pgObject )
-       Create();
+  if ( !pgObject ) {
+	Create();
+  }
   Open();
 }
 
@@ -93,7 +74,9 @@ void PgLargeObject::Create()
   
   // Check for possible errors
   if (!pgObject)
-      SetErrorMessage( "PgLargeObject: can't create large object" );
+	loStatus = "PgLargeObject: can't create large object" ;
+  else
+	loStatus = "PgLargeObject: created large object" ;
 }
 
 // PgLargeObject::open
@@ -106,9 +89,9 @@ void PgLargeObject::Open()
   // Check for possible errors
   string objStr( IntToString(pgObject) );
   if (pgFd < 0)
-      SetErrorMessage( "PgLargeObject: can't open large object " + objStr );
+      loStatus = "PgLargeObject: can't open large object " + objStr ;
   else
-      SetErrorMessage( "PgLargeObject: created and opened large object " + objStr );
+      loStatus = "PgLargeObject: created and opened large object " + objStr ;
 }
 
 // PgLargeObject::unlink
@@ -127,3 +110,53 @@ int PgLargeObject::Unlink()
   // Return the status
   return temp;
 }
+
+
+
+void PgLargeObject::Close()
+{ 
+  if (pgFd >= 0) lo_close(pgConn, pgFd); 
+}
+
+
+int PgLargeObject::Read(char* buf, int len)
+{ 
+  return lo_read(pgConn, pgFd, buf, len); 
+}
+
+
+int PgLargeObject::Write(const char* buf, int len)
+{ 
+  return lo_write(pgConn, pgFd, (char*)buf, len); 
+}
+
+
+int PgLargeObject::LSeek(int offset, int whence)
+{ 
+  return lo_lseek(pgConn, pgFd, offset, whence); 
+}
+
+
+int PgLargeObject::Tell()
+{ 
+  return lo_tell(pgConn, pgFd); 
+}
+
+
+Oid PgLargeObject::Import(const char* filename) 
+{ 
+  return pgObject = lo_import(pgConn, (char*)filename); 
+}
+
+
+int PgLargeObject::Export(const char* filename) 
+{ 
+  return lo_export(pgConn, pgObject, (char*)filename); 
+}
+
+
+string PgLargeObject::Status() 
+{ 
+  return loStatus; 
+}
+
