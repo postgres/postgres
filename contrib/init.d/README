@@ -1,0 +1,8 @@
+	postgresql -> This is a Linux distribution independent (or so I
+hope) init.d/rc.d script that makes use of pg_ctl. There is currently a
+few in ./contrib/linux of the pgsql source tree, but they are RedHat
+specific. This one is simple and self contained. 
+
+---------------------------------------------------------------------------
+|   Ryan Kirkpatrick  |  Boulder, Colorado  |  http://www.rkirkpat.net/   |
+---------------------------------------------------------------------------

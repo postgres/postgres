@@ -1,0 +1,44 @@
+#! /bin/sh
+#
+# PostgreSQL	Start the pgsql RDMBS.	
+
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+DAEMON=/home/postgres/bin/pg_ctl
+NAME=postmaster
+FILE=postgresql
+ARGS="-w -D /home/postgres/data -o -i -o -F"
+USER="postgres:postgres"
+LOG="/home/postgres/server.log"
+DESC="PostgreSQL RDBMS"
+
+test -f $DAEMON || exit 0
+
+set -e
+
+case "$1" in
+  start)
+	echo -n "Starting $DESC: "
+	su - postgres sh -c "$DAEMON start $ARGS >& $LOG"
+	echo "$NAME."
+	;;
+  stop)
+	echo -n "Stopping $DESC: "
+	su - postgres sh -c "$DAEMON stop >& /dev/null"
+	echo "$NAME."
+	;;
+  restart)
+	/etc/init.d/$FILE stop
+	sleep 5
+	/etc/init.d/$FILE start
+	;;
+  status)
+	su - postgres $DAEMON status
+	;;
+  *)
+	N=/etc/init.d/$FILE
+	echo "Usage: $N {start|stop|restart|status}" >&2
+	exit 1
+	;;
+esac
+
+exit 0

@@ -47,6 +47,11 @@ fulltextindex -
 	Full text indexing using triggers
 	by Maarten Boekhold <maartenb@dutepp0.et.tudelft.nl>
 
+init.d - 
+	Scripts for starting and stopping the PostgreSQL server on
+	a non-Linux systems
+	by Ryan Kirkpatrick <pgsql@rkirkpat.net>
+	
 intarray -
 	Index support for arrays of int4, using GiST
 	by Teodor Sigaev <teodor@stack.net> and Oleg Bartunov
@@ -77,8 +82,16 @@ miscutil -
 	PostgreSQL assert checking and various utility functions
 	by Massimo Dal Zotto <dz@cs.unitn.it>
 
+mysql -
+	utility to convert MySQL schema dumps to SQL92 and PostgreSQL
+	by Thomas Lockhart <lockhart@alumni.caltech.edu>
+
 noupdate -
 	trigger to prevent updates on single columns
+
+oid2name - 
+	maps numeric files to table names
+	by B Palmer <bpalmer@crimelabs.net>
 
 pg_dumplo -
 	Dump large objects
@@ -91,6 +104,14 @@ pgbench -
 pgcrypto -
 	Cryptographic hash functions
 	by Marko Kreen <marko@l-t.ee>
+
+retep -
+	tools to build retep tools packages
+	by Peter T Mount <peter@retep.org.uk>
+
+rserv -
+	replication server
+	by Vadim B. Mikheev <vadim4o@email.com>
 
 seg -
 	Confidence-interval datatype (GiST indexing example)
