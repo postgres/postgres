@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.13 1997/01/10 20:16:22 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.14 1997/08/18 20:51:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -131,9 +131,8 @@ printatt(unsigned attributeId,
 	 AttributeTupleForm attributeP,
 	 char *value)
 {
-    printf("\t%2d: %.*s%s%s%s\t(typeid = %u, len = %d, byval = %c)\n",
+    printf("\t%2d: %s%s%s%s\t(typeid = %u, len = %d, byval = %c)\n",
 	   attributeId,
-	   NAMEDATALEN,		/* attname is a char16 */
 	   attributeP->attname.data,
 	   value != NULL ? " = \"" : "",
 	   value != NULL ? value : "",

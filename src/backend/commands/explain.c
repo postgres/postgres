@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.9 1997/04/05 06:42:32 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.10 1997/08/18 20:52:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -177,7 +177,7 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
     case T_IndexScan:
 	if (((Scan*)plan)->scanrelid > 0) {
 	    RangeTblEntry *rte = nth(((Scan*)plan)->scanrelid-1, es->rtable);
-	    sprintf(buf, " on %.*s", NAMEDATALEN, rte->refname);
+	    sprintf(buf, " on %s", rte->refname);
 	    appendStringInfo(str, buf);
 	}
 	break;

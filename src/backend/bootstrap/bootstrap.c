@@ -7,7 +7,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.19 1997/08/12 22:52:04 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.20 1997/08/18 20:51:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -510,8 +510,8 @@ boot_openrel(char *relname)
         
         if (DebugMode) {
             AttributeTupleForm at = attrtypes[i];
-            printf("create attribute %d name %.*s len %d num %d type %d\n",
-                   i, NAMEDATALEN, at->attname.data, at->attlen, at->attnum, 
+            printf("create attribute %d name %s len %d num %d type %d\n",
+                   i, at->attname.data, at->attlen, at->attnum, 
                    at->atttypid
                    );
             fflush(stdout);
@@ -572,16 +572,14 @@ DefineAttr(char *name, char *type, int attnum)
     if (Typ != (struct typmap **)NULL) {
         attrtypes[attnum]->atttypid = Ap->am_oid;
         namestrcpy(&attrtypes[attnum]->attname, name);
-        if (!Quiet) printf("<%.*s %s> ", NAMEDATALEN, 
-                           attrtypes[attnum]->attname.data, type);
+        if (!Quiet) printf("<%s %s> ", attrtypes[attnum]->attname.data, type);
         attrtypes[attnum]->attnum = 1 + attnum; /* fillatt */
         attlen = attrtypes[attnum]->attlen = Ap->am_typ.typlen;
         attrtypes[attnum]->attbyval = Ap->am_typ.typbyval;
     } else {
         attrtypes[attnum]->atttypid = Procid[t].oid;
         namestrcpy(&attrtypes[attnum]->attname,name);
-        if (!Quiet) printf("<%.*s %s> ", NAMEDATALEN,
-                           attrtypes[attnum]->attname.data, type);
+        if (!Quiet) printf("<%s %s> ", attrtypes[attnum]->attname.data, type);
         attrtypes[attnum]->attnum = 1 + attnum; /* fillatt */
         attlen = attrtypes[attnum]->attlen = Procid[t].len;
         attrtypes[attnum]->attbyval = (attlen==1) || (attlen==2)||(attlen==4);
@@ -775,7 +773,7 @@ gettype(char *type)
             }
         }
         if (DebugMode)
-            printf("bootstrap.c: External Type: %.*s\n", NAMEDATALEN, type);
+            printf("bootstrap.c: External Type: %s\n", type);
         rdesc = heap_openr(TypeRelationName);
         sdesc = heap_beginscan(rdesc, 0, NowTimeQual, 0, (ScanKey)NULL);
         i = 0;

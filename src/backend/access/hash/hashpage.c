@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/hash/hashpage.c,v 1.8 1997/08/12 22:51:37 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/hash/hashpage.c,v 1.9 1997/08/18 20:51:34 momjian Exp $
  *
  * NOTES
  *    Postgres hash pages look like ordinary relation pages.  The opaque
@@ -195,8 +195,8 @@ _hash_getbuf(Relation rel, BlockNumber blkno, int access)
 	_hash_setpagelock(rel, blkno, access);
 	break;
     default:
-	elog(WARN, "_hash_getbuf: invalid access (%d) on new blk: %.*s",
-	     access, NAMEDATALEN, RelationGetRelationName(rel));
+	elog(WARN, "_hash_getbuf: invalid access (%d) on new blk: %s",
+	     access, RelationGetRelationName(rel));
 	break;
     }
     buf = ReadBuffer(rel, blkno);
@@ -221,8 +221,8 @@ _hash_relbuf(Relation rel, Buffer buf, int access)
 	_hash_unsetpagelock(rel, blkno, access);
 	break;
     default:
-	elog(WARN, "_hash_relbuf: invalid access (%d) on blk %x: %.*s",
-	     access, blkno, NAMEDATALEN, RelationGetRelationName(rel));
+	elog(WARN, "_hash_relbuf: invalid access (%d) on blk %x: %s",
+	     access, blkno, RelationGetRelationName(rel));
     }
     
     ReleaseBuffer(buf);
@@ -279,8 +279,8 @@ _hash_chgbufaccess(Relation rel,
 	_hash_relbuf(rel, *bufp, from_access);
 	break;
     default:
-	elog(WARN, "_hash_chgbufaccess: invalid access (%d) on blk %x: %.*s",
-	     from_access, blkno, NAMEDATALEN, RelationGetRelationName(rel));
+	elog(WARN, "_hash_chgbufaccess: invalid access (%d) on blk %x: %s",
+	     from_access, blkno, RelationGetRelationName(rel));
 	break;
     }
     *bufp = _hash_getbuf(rel, blkno, to_access);
@@ -325,8 +325,8 @@ _hash_setpagelock(Relation rel,
 	    RelationSetSingleRLockPage(rel, &iptr);
 	    break;
 	default:
-	    elog(WARN, "_hash_setpagelock: invalid access (%d) on blk %x: %.*s",
-		 access, blkno, NAMEDATALEN, RelationGetRelationName(rel));
+	    elog(WARN, "_hash_setpagelock: invalid access (%d) on blk %x: %s",
+		 access, blkno, RelationGetRelationName(rel));
 	    break;
 	}
     }
@@ -350,8 +350,8 @@ _hash_unsetpagelock(Relation rel,
 	    RelationUnsetSingleRLockPage(rel, &iptr);
 	    break;
 	default:
-	    elog(WARN, "_hash_unsetpagelock: invalid access (%d) on blk %x: %.*s",
-		 access, blkno, NAMEDATALEN, RelationGetRelationName(rel));
+	    elog(WARN, "_hash_unsetpagelock: invalid access (%d) on blk %x: %s",
+		 access, blkno, RelationGetRelationName(rel));
 	    break;
 	}
     }

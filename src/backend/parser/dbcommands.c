@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/Attic/dbcommands.c,v 1.4 1997/08/18 02:14:44 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/Attic/dbcommands.c,v 1.5 1997/08/18 20:53:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -170,8 +170,8 @@ check_permissions(char *command,
     
     /* Check to make sure user has permission to use createdb */
     if (!use_createdb) {
-        elog(WARN, "user \"%-.*s\" is not allowed to create/destroy databases",
-             NAMEDATALEN, userName);
+        elog(WARN, "user \"%s\" is not allowed to create/destroy databases",
+             userName);
     }
     
     /* Make sure we are not mucking with the template database */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.12 1997/08/03 02:34:19 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.13 1997/08/18 20:51:31 momjian Exp $
  *
  * NOTES
  *    some of the executor utility code such as "ExecTypeFromTL" should be
@@ -347,18 +347,11 @@ BuildDescForRelation(List *schema, char *relname)
 	arry = entry->typename->arrayBounds;
 	attisset = entry->typename->setof;
 
-	if (arry != NIL) {
-	    char buf[20];
-	    
+	strNcpy(typename, entry->typename->name,NAMEDATALEN-1);
+	if (arry != NIL)
 	    attdim = length(arry);
-	    
-	    /* array of XXX is _XXX (inherited from release 3) */
-	    sprintf(buf, "_%.*s", NAMEDATALEN, entry->typename->name);
-	    strcpy(typename, buf);
-	} else {
-	    strcpy(typename, entry->typename->name);
+	else
 	    attdim = 0;
-	}
 	
 	if (! TupleDescInitEntry(desc, attnum, attname, 
 				 typename, attdim, attisset)) {
@@ -372,8 +365,8 @@ BuildDescForRelation(List *schema, char *relname)
 	    if (!strcmp(typename, relname)) {
 		TupleDescMakeSelfReference(desc, attnum, relname);
 	    } else
-		elog(WARN, "DefineRelation: no such type %.*s", 
-		     NAMEDATALEN, typename);
+		elog(WARN, "DefineRelation: no such type %s", 
+		     typename);
 	}
 
 	/*

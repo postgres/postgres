@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-dumpdata.c,v 1.4 1996/11/10 03:00:23 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-dumpdata.c,v 1.5 1997/08/18 20:52:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -189,7 +189,7 @@ be_typeinit(PortalEntry *entry,
     if (natts > 0) {
 	group->types = pbuf_addTypes(natts);
 	for (i = 0; i < natts; ++i) {
-	    strncpy(group->types[i].name, attrs[i]->attname.data, NAMEDATALEN); 
+	    strncpy(group->types[i].name, attrs[i]->attname.data, NAMEDATALEN);
 	    group->types[i].adtid = attrs[i]->atttypid;
 	    group->types[i].adtsize = attrs[i]->attlen;
 	}

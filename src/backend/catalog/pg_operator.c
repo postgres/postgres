@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.10 1997/08/12 22:52:11 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.11 1997/08/18 20:52:04 momjian Exp $
  *
  * NOTES
  *    these routines moved here from commands/define.c and somewhat cleaned up.
@@ -483,8 +483,8 @@ OperatorDef(char *operatorName,
 				    rightTypeName);
     
     if (OidIsValid(operatorObjectId) && !definedOK)
-	elog(WARN, "OperatorDef: operator \"%-.*s\" already defined",
-	     NAMEDATALEN, operatorName); 
+	elog(WARN, "OperatorDef: operator \"%s\" already defined",
+	     operatorName); 
     
     if (leftTypeName)
 	leftTypeId = TypeGet(leftTypeName, &leftDefined);

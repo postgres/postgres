@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.32 1997/08/12 22:53:17 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.33 1997/08/18 20:53:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1374,10 +1374,10 @@ make_targetlist_expr(ParseState *pstate,
 						 attrlen);
 	      } else {
 		  /* currently, we can't handle casting of expressions */
-		  elog(WARN, "parser: attribute '%s' is of type '%.*s' but expression is of type '%.*s'",
+		  elog(WARN, "parser: attribute '%s' is of type '%s' but expression is of type '%s'",
 		       colname,
-		       NAMEDATALEN, get_id_typname(attrtype),
-		       NAMEDATALEN, get_id_typname(type_id));
+		       get_id_typname(attrtype),
+		       get_id_typname(type_id));
 	      }
 	  }
 

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/name.c,v 1.4 1997/08/12 20:16:01 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/name.c,v 1.5 1997/08/18 20:53:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +29,8 @@
  *	namein	- converts "..." to internal representation
  *
  *	Note:
- *		Currently if strlen(s) < NAMEDATALEN, the extra chars are nulls
+ *		[Old] Currently if strlen(s) < NAMEDATALEN, the extra chars are nulls
+ *              Now, always NULL terminated
  */
 NameData *namein(char *s)
 {

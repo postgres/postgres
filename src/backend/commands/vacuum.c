@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.38 1997/08/12 22:52:29 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.39 1997/08/18 20:52:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -318,8 +318,8 @@ vc_getrels(NameData *VacRelP)
 		(rname[3] == 'v' || rname[3] == 'x') &&
 		rname[4] >= '0' && rname[4] <= '9')
 	{
-	    elog (NOTICE, "Rel %.*s: can't vacuum LargeObjects now", 
-			NAMEDATALEN, rname);
+	    elog (NOTICE, "Rel %s: can't vacuum LargeObjects now", 
+			rname);
 	    ReleaseBuffer(buf);
 	    continue;
 	}
@@ -446,8 +446,8 @@ vc_vacone (Oid relid, bool analyze, List *va_cols)
     	    List *le;
     	    
     	    if ( length (va_cols) > attr_cnt )
-    	    	elog (WARN, "vacuum: too many attributes specified for relation %.*s",
-    	    		NAMEDATALEN, (RelationGetRelationName(onerel))->data);
+    	    	elog (WARN, "vacuum: too many attributes specified for relation %s",
+    	    		(RelationGetRelationName(onerel))->data);
     	    attnums = (int*) palloc (attr_cnt * sizeof (int));
     	    foreach (le, va_cols)
     	    {
@@ -462,8 +462,8 @@ vc_vacone (Oid relid, bool analyze, List *va_cols)
     	    	    attnums[tcnt++] = i;
     	    	else
     	    	{
-    	    	    elog (WARN, "vacuum: there is no attribute %s in %.*s",
-    	    	    	col, NAMEDATALEN, (RelationGetRelationName(onerel))->data);
+    	    	    elog (WARN, "vacuum: there is no attribute %s in %s",
+    	    	    	col, (RelationGetRelationName(onerel))->data);
     	    	}
     	    }
     	    attr_cnt = tcnt;
@@ -657,8 +657,8 @@ vc_scanheap (VRelStats *vacrelstats, Relation onerel,
 	vpc->vpd_noff = 0;
 
 	if (PageIsNew(page)) {
-	    elog (NOTICE, "Rel %.*s: Uninitialized page %u - fixing",
-		NAMEDATALEN, relname, blkno);
+	    elog (NOTICE, "Rel %s: Uninitialized page %u - fixing",
+		relname, blkno);
 	    PageInit (page, BufferGetPageSize (buf), 0);
 	    vpc->vpd_free = ((PageHeader)page)->pd_upper - ((PageHeader)page)->pd_lower;
 	    frsize += (vpc->vpd_free - sizeof (ItemIdData));
@@ -718,8 +718,8 @@ vc_scanheap (VRelStats *vacrelstats, Relation onerel,
 		}
 		else
 		{
-		    elog (NOTICE, "Rel %.*s: TID %u/%u: InsertTransactionInProgress %u - can't shrink relation",
-			NAMEDATALEN, relname, blkno, offnum, htup->t_xmin);
+		    elog (NOTICE, "Rel %s: TID %u/%u: InsertTransactionInProgress %u - can't shrink relation",
+			relname, blkno, offnum, htup->t_xmin);
 		    do_shrinking = false;
 		}
 	    }
@@ -743,8 +743,8 @@ vc_scanheap (VRelStats *vacrelstats, Relation onerel,
 		}
 		else
 		{
-		    elog (NOTICE, "Rel %.*s: TID %u/%u: DeleteTransactionInProgress %u - can't shrink relation",
-			NAMEDATALEN, relname, blkno, offnum, htup->t_xmax);
+		    elog (NOTICE, "Rel %s: TID %u/%u: DeleteTransactionInProgress %u - can't shrink relation",
+			relname, blkno, offnum, htup->t_xmax);
 		    do_shrinking = false;
 		}
 	    }
@@ -754,9 +754,9 @@ vc_scanheap (VRelStats *vacrelstats, Relation onerel,
 	     */
 	    if ( !TransactionIdIsValid((TransactionId)htup->t_xmin) )
 	    {
-		elog (NOTICE, "Rel %.*s: TID %u/%u: INSERT_TRANSACTION_ID IS INVALID. \
+		elog (NOTICE, "Rel %s: TID %u/%u: INSERT_TRANSACTION_ID IS INVALID. \
 DELETE_TRANSACTION_ID_VALID %d, TUPGONE %d.", 
-			NAMEDATALEN, relname, blkno, offnum, 
+			relname, blkno, offnum, 
 			TransactionIdIsValid((TransactionId)htup->t_xmax),
 			tupgone);
 	    }
@@ -769,8 +769,8 @@ DELETE_TRANSACTION_ID_VALID %d, TUPGONE %d.",
 	    if ( !ItemPointerIsValid (itemptr) || 
 	    		BlockIdGetBlockNumber(&(itemptr->ip_blkid)) != blkno )
 	    {
-	    	elog (NOTICE, "Rel %.*s: TID %u/%u: TID IN TUPLEHEADER %u/%u IS NOT THE SAME. TUPGONE %d.", 
-	    		NAMEDATALEN, relname, blkno, offnum,
+	    	elog (NOTICE, "Rel %s: TID %u/%u: TID IN TUPLEHEADER %u/%u IS NOT THE SAME. TUPGONE %d.", 
+	    		relname, blkno, offnum,
 	    		BlockIdGetBlockNumber(&(itemptr->ip_blkid)), 
 	    		itemptr->ip_posid, tupgone);
 	    }
@@ -780,14 +780,14 @@ DELETE_TRANSACTION_ID_VALID %d, TUPGONE %d.",
 	     */
 	    if ( htup->t_len != itemid->lp_len )
 	    {
-	    	elog (NOTICE, "Rel %.*s: TID %u/%u: TUPLE_LEN IN PAGEHEADER %u IS NOT THE SAME AS IN TUPLEHEADER %u. TUPGONE %d.", 
-	    		NAMEDATALEN, relname, blkno, offnum, 
+	    	elog (NOTICE, "Rel %s: TID %u/%u: TUPLE_LEN IN PAGEHEADER %u IS NOT THE SAME AS IN TUPLEHEADER %u. TUPGONE %d.", 
+	    		relname, blkno, offnum, 
 	    		itemid->lp_len, htup->t_len, tupgone);
 	    }
 	    if ( !OidIsValid(htup->t_oid) )
 	    {
-	    	elog (NOTICE, "Rel %.*s: TID %u/%u: OID IS INVALID. TUPGONE %d.", 
-	    		NAMEDATALEN, relname, blkno, offnum, tupgone);
+	    	elog (NOTICE, "Rel %s: TID %u/%u: OID IS INVALID. TUPGONE %d.", 
+	    		relname, blkno, offnum, tupgone);
 	    }
 	    
 	    if (tupgone) {
@@ -890,9 +890,9 @@ DELETE_TRANSACTION_ID_VALID %d, TUPGONE %d.",
 
     getrusage(RUSAGE_SELF, &ru1);
     
-    elog (MESSAGE_LEVEL, "Rel %.*s: Pages %u: Changed %u, Reapped %u, Empty %u, New %u; \
+    elog (MESSAGE_LEVEL, "Rel %s: Pages %u: Changed %u, Reapped %u, Empty %u, New %u; \
 Tup %u: Vac %u, Crash %u, UnUsed %u, MinLen %u, MaxLen %u; Re-using: Free/Avail. Space %u/%u; EndEmpty/Avail. Pages %u/%u. Elapsed %u/%u sec.",
-	NAMEDATALEN, relname, 
+	relname, 
 	nblocks, nchpg, Vvpl->vpl_npages, nempg, nnepg,
 	ntups, nvac, ncrash, nunused, min_tlen, max_tlen, 
 	frsize, frsusf, nemend, Fvpl->vpl_npages,
@@ -1246,9 +1246,9 @@ failed to add item with len = %u to page %u (free space %u, nusd %u, noff %u)",
 
     getrusage(RUSAGE_SELF, &ru1);
     
-    elog (MESSAGE_LEVEL, "Rel %.*s: Pages: %u --> %u; Tuple(s) moved: %u. \
+    elog (MESSAGE_LEVEL, "Rel %s: Pages: %u --> %u; Tuple(s) moved: %u. \
 Elapsed %u/%u sec.",
-		NAMEDATALEN, (RelationGetRelationName(onerel))->data, 
+		(RelationGetRelationName(onerel))->data, 
 		nblocks, blkno, nmoved,
 		ru1.ru_stime.tv_sec - ru0.ru_stime.tv_sec, 
 		ru1.ru_utime.tv_sec - ru0.ru_utime.tv_sec);
@@ -1371,8 +1371,8 @@ vc_vacheap (VRelStats *vacrelstats, Relation onerel, VPageList Vvpl)
     {
 	Assert ( vacrelstats->npages >= Vvpl->vpl_nemend );
 	nblocks = vacrelstats->npages - Vvpl->vpl_nemend;
-	elog (MESSAGE_LEVEL, "Rel %.*s: Pages: %u --> %u.",
-		NAMEDATALEN, (RelationGetRelationName(onerel))->data, 
+	elog (MESSAGE_LEVEL, "Rel %s: Pages: %u --> %u.",
+		(RelationGetRelationName(onerel))->data, 
 		vacrelstats->npages, nblocks);
 
 	/* 
@@ -1451,14 +1451,14 @@ vc_scanoneind (Relation indrel, int nhtups)
 
     getrusage(RUSAGE_SELF, &ru1);
 
-    elog (MESSAGE_LEVEL, "Ind %.*s: Pages %u; Tuples %u. Elapsed %u/%u sec.",
-	NAMEDATALEN, indrel->rd_rel->relname.data, nipages, nitups, 
+    elog (MESSAGE_LEVEL, "Ind %s: Pages %u; Tuples %u. Elapsed %u/%u sec.",
+	indrel->rd_rel->relname.data, nipages, nitups, 
 	ru1.ru_stime.tv_sec - ru0.ru_stime.tv_sec, 
 	ru1.ru_utime.tv_sec - ru0.ru_utime.tv_sec);
 
     if ( nitups != nhtups )
-    	elog (NOTICE, "Ind %.*s: NUMBER OF INDEX' TUPLES (%u) IS NOT THE SAME AS HEAP' (%u)",
-    		NAMEDATALEN, indrel->rd_rel->relname.data, nitups, nhtups);
+    	elog (NOTICE, "Ind %s: NUMBER OF INDEX' TUPLES (%u) IS NOT THE SAME AS HEAP' (%u)",
+    		indrel->rd_rel->relname.data, nitups, nhtups);
 
 } /* vc_scanoneind */
 
@@ -1508,8 +1508,8 @@ vc_vaconeind(VPageList vpl, Relation indrel, int nhtups)
 #endif
 	    if ( vp->vpd_noff == 0 ) 
 	    {				/* this is EmptyPage !!! */
-	    	elog (NOTICE, "Ind %.*s: pointer to EmptyPage (blk %u off %u) - fixing",
-			NAMEDATALEN, indrel->rd_rel->relname.data,
+	    	elog (NOTICE, "Ind %s: pointer to EmptyPage (blk %u off %u) - fixing",
+			indrel->rd_rel->relname.data,
 	    		vp->vpd_blkno, ItemPointerGetOffsetNumber(heapptr));
 	    }
 	    ++nvac;
@@ -1530,14 +1530,14 @@ vc_vaconeind(VPageList vpl, Relation indrel, int nhtups)
 
     getrusage(RUSAGE_SELF, &ru1);
 
-    elog (MESSAGE_LEVEL, "Ind %.*s: Pages %u; Tuples %u: Deleted %u. Elapsed %u/%u sec.",
-	NAMEDATALEN, indrel->rd_rel->relname.data, nipages, nitups, nvac,
+    elog (MESSAGE_LEVEL, "Ind %s: Pages %u; Tuples %u: Deleted %u. Elapsed %u/%u sec.",
+	indrel->rd_rel->relname.data, nipages, nitups, nvac,
 	ru1.ru_stime.tv_sec - ru0.ru_stime.tv_sec, 
 	ru1.ru_utime.tv_sec - ru0.ru_utime.tv_sec);
 
     if ( nitups != nhtups )
-    	elog (NOTICE, "Ind %.*s: NUMBER OF INDEX' TUPLES (%u) IS NOT THE SAME AS HEAP' (%u)",
-    		NAMEDATALEN, indrel->rd_rel->relname.data, nitups, nhtups);
+    	elog (NOTICE, "Ind %s: NUMBER OF INDEX' TUPLES (%u) IS NOT THE SAME AS HEAP' (%u)",
+    		indrel->rd_rel->relname.data, nitups, nhtups);
 
 } /* vc_vaconeind */
 

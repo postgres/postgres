@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.10 1997/08/12 22:52:20 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.11 1997/08/18 20:52:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -549,7 +549,7 @@ MakeArchiveName(Oid relationId)
      *  of the relation they archive.  Create a string containing
      *  this name and find the reldesc for the archive relation.
      */
-    arch = palloc(NAMEDATALEN); 
+    arch = palloc(NAMEDATALEN);
     sprintf(arch, "a,%d",relationId);
 
     return arch;

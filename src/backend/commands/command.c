@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.8 1997/08/12 22:52:18 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.9 1997/08/18 20:52:11 momjian Exp $
  *
  * NOTES
  *    The PortalExecutorHeapMemory crap needs to be eliminated
@@ -117,8 +117,8 @@ PerformPortalFetch(char *name,
      */
     portal = GetPortalByName(name);
     if (! PortalIsValid(portal)) {
-	elog(NOTICE, "PerformPortalFetch: portal \"%-.*s\" not found",
-	     NAMEDATALEN, name);
+	elog(NOTICE, "PerformPortalFetch: portal \"%s\" not found",
+	     name);
 	return;
     }
     
@@ -202,8 +202,8 @@ PerformPortalClose(char *name, CommandDest dest)
      */
     portal = GetPortalByName(name);
     if (! PortalIsValid(portal)) {
-	elog(NOTICE, "PerformPortalClose: portal \"%-.*s\" not found",
-	     NAMEDATALEN, name);
+	elog(NOTICE, "PerformPortalClose: portal \"%s\" not found",
+	     name);
 	return;
     }
     
@@ -272,8 +272,8 @@ PerformAddAttribute(char *relationName,
      * normally, only the owner of a class can change its schema.
      */
     if (IsSystemRelationName(relationName))
-	elog(WARN, "PerformAddAttribute: class \"%-.*s\" is a system catalog",
-	     NAMEDATALEN, relationName);
+	elog(WARN, "PerformAddAttribute: class \"%s\" is a system catalog",
+	     relationName);
 #ifndef NO_SECURITY
     if (!pg_ownercheck(userName, relationName, RELNAME))
 	elog(WARN, "PerformAddAttribute: you do not own class \"%s\"",
@@ -296,8 +296,8 @@ PerformAddAttribute(char *relationName,
 	    
 	    relrdesc = heap_openr(relationName);
 	    if (!RelationIsValid(relrdesc)) {
-		elog(WARN, "PerformAddAttribute: unknown relation: \"%-.*s\"",
-		     NAMEDATALEN, relationName);
+		elog(WARN, "PerformAddAttribute: unknown relation: \"%s\"",
+		     relationName);
 	    }
 	    myrelid = relrdesc->rd_id;
 	    heap_close(relrdesc);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.5 1996/12/26 17:46:56 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.6 1997/08/18 20:52:43 momjian Exp $
  *
  * NOTES
  *    Every (plan) node in POSTGRES has an associated "out" routine which
@@ -501,7 +501,7 @@ _outResdom(StringInfo str, Resdom *node)
     appendStringInfo(str,buf);
     sprintf(buf, " :reslen %d", node->reslen);
     appendStringInfo(str,buf);
-    sprintf(buf, " :resname \"%.*s\"", NAMEDATALEN,
+    sprintf(buf, " :resname \"%s\"",
 	    ((node->resname) ? ((char *) node->resname) : "null"));
     appendStringInfo(str,buf);
     sprintf(buf, " :reskey %d", node->reskey);
@@ -643,7 +643,7 @@ _outAggreg(StringInfo str, Aggreg *node)
     
     sprintf(buf, "AGGREG");
     appendStringInfo(str,buf);
-    sprintf(buf, " :aggname \"%.*s\"", NAMEDATALEN, (char*)node->aggname);
+    sprintf(buf, " :aggname \"%s\"", (char*)node->aggname);
     appendStringInfo(str,buf);
     sprintf(buf, " :basetype %u", node->basetype);
     appendStringInfo(str,buf);
@@ -789,7 +789,7 @@ _outParam(StringInfo str, Param *node)
     appendStringInfo(str,buf);
     sprintf(buf, " :paramid %hd", node->paramid);
     appendStringInfo(str,buf);
-    sprintf(buf, " :paramname \"%.*s\"", NAMEDATALEN, node->paramname);
+    sprintf(buf, " :paramname \"%s\"", node->paramname);
     appendStringInfo(str,buf);
     sprintf(buf, " :paramtype %u", node->paramtype);
     appendStringInfo(str,buf);
@@ -932,14 +932,14 @@ _outRangeTblEntry(StringInfo str, RangeTblEntry *node)
     sprintf(buf, "RTE");
     appendStringInfo(str,buf);
 
-    sprintf(buf, " :relname \"%.*s\"", NAMEDATALEN,
+    sprintf(buf, " :relname \"%s\"",
 	    ((node->relname) ? ((char *) node->relname) : "null"));
     appendStringInfo(str,buf);
 
     sprintf(buf, " :inh %d ", node->inh);
     appendStringInfo(str,buf);
   
-    sprintf(buf, " :refname \"%.*s\"", NAMEDATALEN,
+    sprintf(buf, " :refname \"%s\"",
 	    ((node->refname) ? ((char *) node->refname) : "null"));
     appendStringInfo(str,buf);
 

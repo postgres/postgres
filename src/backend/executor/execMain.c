@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.14 1997/08/12 22:52:33 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.15 1997/08/18 20:52:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -308,9 +308,9 @@ ExecCheckPerms(CmdType operation,
 	if (!HeapTupleIsValid(htp))
 	    elog(WARN, "ExecCheckPerms: bogus RT relid: %d",
 		 relid);
-	strncpy(rname.data,
+	strNcpy(rname.data,
 		((Form_pg_class) GETSTRUCT(htp))->relname.data,
-		NAMEDATALEN);
+		NAMEDATALEN-1);
 	if (i == resultRelation) {	/* this is the result relation */
 	    qvars = pull_varnos(parseTree->qual);
 	    tvars = pull_varnos((Node*)parseTree->targetList);
@@ -348,10 +348,6 @@ ExecCheckPerms(CmdType operation,
 	++i;
     }
     if (!ok) {
-/*
-	elog(WARN, "%s on \"%-.*s\": permission denied", opstr, 
-	     NAMEDATALEN, rname.data);
-*/	    
 	elog(WARN, "%s: %s", rname.data, aclcheck_error_strings[aclcheck_result]);
     }
 }

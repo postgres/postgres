@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.9 1997/06/13 03:24:26 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.10 1997/08/18 20:52:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -491,7 +491,7 @@ ExecSetTypeInfo(int index,
     att->attrelid  = 0;				/* dummy value */
     
     if (attName != (char *) NULL)
-	strncpy(att->attname.data, attName, NAMEDATALEN);
+	strNcpy(att->attname.data, attName, NAMEDATALEN-1);
     else
 	memset(att->attname.data,0,NAMEDATALEN);
     

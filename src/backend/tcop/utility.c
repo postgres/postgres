@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.19 1997/08/18 02:14:52 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.20 1997/08/18 20:53:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -171,8 +171,8 @@ ProcessUtility(Node *parsetree,
             foreach (arg, args) {
                 relname = strVal(lfirst(arg));
                 if (IsSystemRelationName(relname))
-                    elog(WARN, "class \"%-.*s\" is a system catalog",
-                         NAMEDATALEN, relname);
+                    elog(WARN, "class \"%s\" is a system catalog",
+                         relname);
                 rel = heap_openr (relname);
                 if ( RelationIsValid (rel) )
                 {
@@ -188,8 +188,8 @@ ProcessUtility(Node *parsetree,
                 }
 #ifndef NO_SECURITY
                 if (!pg_ownercheck(userName, relname, RELNAME))
-                    elog(WARN, "you do not own class \"%-.*s\"",
-                         NAMEDATALEN, relname);
+                    elog(WARN, "you do not own class \"%s\"",
+                         relname);
 #endif
             }
             foreach (arg, args) {
@@ -318,8 +318,8 @@ ProcessUtility(Node *parsetree,
 	    foreach (i, stmt->relNames) {
 		relname = strVal(lfirst(i));
 		if (!pg_ownercheck(userName, relname, RELNAME))
-		    elog(WARN, "you do not own class \"%-.*s\"",
-			 NAMEDATALEN, relname);
+		    elog(WARN, "you do not own class \"%s\"",
+			 relname);
 	    }
 #endif
 	    foreach (i, stmt->relNames) {

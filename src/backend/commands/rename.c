@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.6 1997/08/12 22:52:27 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.7 1997/08/18 20:52:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,13 +78,13 @@ renameatt(char *relname,
      * normally, only the owner of a class can change its schema.
      */
     if (IsSystemRelationName(relname))
-	elog(WARN, "renameatt: class \"%-.*s\" is a system catalog",
-	     NAMEDATALEN, relname);
+	elog(WARN, "renameatt: class \"%s\" is a system catalog",
+	     relname);
 #ifndef NO_SECURITY
     if (!IsBootstrapProcessingMode() &&
 	!pg_ownercheck(userName, relname, RELNAME))
-	elog(WARN, "renameatt: you do not own class \"%-.*s\"",
-	     NAMEDATALEN, relname);
+	elog(WARN, "renameatt: you do not own class \"%s\"",
+	     relname);
 #endif
     
     /*
@@ -102,8 +102,8 @@ renameatt(char *relname,
 	
 	relrdesc = heap_openr(relname);
 	if (!RelationIsValid(relrdesc)) {
-	    elog(WARN, "renameatt: unknown relation: \"%-.*s\"",
-		 NAMEDATALEN, relname);
+	    elog(WARN, "renameatt: unknown relation: \"%s\"",
+		 relname);
 	}
 	myrelid = relrdesc->rd_id;
 	heap_close(relrdesc);
@@ -139,8 +139,8 @@ renameatt(char *relname,
     reltup = ClassNameIndexScan(relrdesc, relname);
     if (!PointerIsValid(reltup)) {
 	heap_close(relrdesc);
-	elog(WARN, "renameatt: relation \"%-.*s\" nonexistent",
-	     NAMEDATALEN, relname);
+	elog(WARN, "renameatt: relation \"%s\" nonexistent",
+	     relname);
 	return;
     }
     heap_close(relrdesc);
@@ -149,20 +149,20 @@ renameatt(char *relname,
     oldatttup = AttributeNameIndexScan(attrdesc, reltup->t_oid, oldattname);
     if (!PointerIsValid(oldatttup)) {
 	heap_close(attrdesc);
-	elog(WARN, "renameatt: attribute \"%-.*s\" nonexistent",
-	     NAMEDATALEN, oldattname);
+	elog(WARN, "renameatt: attribute \"%s\" nonexistent",
+	     oldattname);
     }
     if (((AttributeTupleForm ) GETSTRUCT(oldatttup))->attnum < 0) {
-	elog(WARN, "renameatt: system attribute \"%-.*s\" not renamed",
-	     NAMEDATALEN, oldattname);
+	elog(WARN, "renameatt: system attribute \"%s\" not renamed",
+	     oldattname);
     }
     
     newatttup = AttributeNameIndexScan(attrdesc, reltup->t_oid, newattname);
     if (PointerIsValid(newatttup)) {
 	pfree(oldatttup);
 	heap_close(attrdesc);
-	elog(WARN, "renameatt: attribute \"%-.*s\" exists", 
-	     NAMEDATALEN, newattname);
+	elog(WARN, "renameatt: attribute \"%s\" exists", 
+	     newattname);
     }
     
     namestrcpy(&(((AttributeTupleForm)(GETSTRUCT(oldatttup)))->attname),
@@ -207,13 +207,13 @@ renamerel(char oldrelname[], char newrelname[])
     Relation	idescs[Num_pg_class_indices];
     
     if (IsSystemRelationName(oldrelname)) {
-	elog(WARN, "renamerel: system relation \"%-.*s\" not renamed",
-	     NAMEDATALEN, oldrelname);
+	elog(WARN, "renamerel: system relation \"%s\" not renamed",
+	     oldrelname);
 	return;
     }
     if (IsSystemRelationName(newrelname)) {
-	elog(WARN, "renamerel: Illegal class name: \"%-.*s\" -- pg_ is reserved for system catalogs",
-	     NAMEDATALEN, newrelname);
+	elog(WARN, "renamerel: Illegal class name: \"%s\" -- pg_ is reserved for system catalogs",
+	     newrelname);
 	return;
     }
     
@@ -222,16 +222,16 @@ renamerel(char oldrelname[], char newrelname[])
     
     if (!PointerIsValid(oldreltup)) {
 	heap_close(relrdesc);
-	elog(WARN, "renamerel: relation \"%-.*s\" does not exist",
-	     NAMEDATALEN, oldrelname);
+	elog(WARN, "renamerel: relation \"%s\" does not exist",
+	     oldrelname);
     }
     
     newreltup = ClassNameIndexScan(relrdesc, newrelname);
     if (PointerIsValid(newreltup)) {
 	pfree(oldreltup);
 	heap_close(relrdesc);
-	elog(WARN, "renamerel: relation \"%-.*s\" exists", 
-	     NAMEDATALEN, newrelname);
+	elog(WARN, "renamerel: relation \"%s\" exists", 
+	     newrelname);
     }
     
     /* rename the directory first, so if this fails the rename's not done */

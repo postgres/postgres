@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/catalog/catalog.c,v 1.6 1997/01/10 20:16:34 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/catalog/catalog.c,v 1.7 1997/08/18 20:51:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,7 @@ relpath(char relname[])
     
     if (IsSharedSystemRelationName(relname)) {
 	path = (char *) palloc(strlen(DataDir) + sizeof(NameData) + 2);
-	sprintf(path, "%s/%.*s", DataDir, NAMEDATALEN, relname);
+	sprintf(path, "%s/%s", DataDir, relname);
 	return (path);
     }
     return(relname);

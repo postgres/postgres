@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.9 1997/06/03 06:23:24 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.10 1997/08/18 20:52:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -393,8 +393,8 @@ RemoveFunction(char *functionName, /* function name to be removed */
     /* ok, function has been found */
     
     if (the_proc->prolang == INTERNALlanguageId)
-	elog(WARN, "RemoveFunction: function \"%-.*s\" is built-in",
-	     NAMEDATALEN, functionName);
+	elog(WARN, "RemoveFunction: function \"%s\" is built-in",
+	     functionName);
     
     ItemPointerCopy(&tup->t_ctid, &itemPointerData);
     heap_delete(relation, &itemPointerData);

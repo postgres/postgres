@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.12 1997/08/12 22:54:41 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.13 1997/08/18 20:53:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -284,7 +284,7 @@ BuildDescInfoError(RelationBuildDescInfo buildinfo)
 	sprintf(errBuf, "(relation id %d)", buildinfo.i.info_id);
 	break;
     case INFO_RELNAME:
-	sprintf(errBuf, "(relation name %.*s)", NAMEDATALEN, buildinfo.i.info_name);
+	sprintf(errBuf, "(relation name %s)", buildinfo.i.info_name);
 	break;
     }
     
@@ -1282,8 +1282,8 @@ RelationForgetRelation (Oid rid)
     	    prev = curr;
     	}
     	if ( curr == NIL )
-    	    elog (FATAL, "Local relation %.*s not found in list",
-    	    	NAMEDATALEN, (RelationGetRelationName(relation))->data);
+    	    elog (FATAL, "Local relation %s not found in list",
+    	    	(RelationGetRelationName(relation))->data);
     	if ( prev == NIL )
     	    newlyCreatedRelns = lnext (newlyCreatedRelns);
     	else
