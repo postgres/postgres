@@ -63,6 +63,7 @@
 #include "px-crypt.h"
 
 /* for ntohl/htonl */
+#include <sys/types.h>
 #include <netinet/in.h>
 
 #define _PASSWORD_EFMT1 '_'
