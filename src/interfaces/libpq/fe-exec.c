@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.133 2003/04/25 19:45:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.134 2003/04/26 20:22:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1027,6 +1027,8 @@ parseInput(PGconn *conn)
 					conn->asyncStatus = PGASYNC_READY;
 					break;
 				case 'Z':		/* backend is ready for new query */
+					if (pqGetc(&conn->xact_status, conn))
+						return;
 					conn->asyncStatus = PGASYNC_IDLE;
 					break;
 				case 'I':		/* empty query */
@@ -1222,11 +1224,15 @@ getRowDescriptions(PGconn *conn)
 	/* get type info */
 	for (i = 0; i < nfields; i++)
 	{
+		int			tableid;
+		int			columnid;
 		int			typid;
 		int			typlen;
 		int			atttypmod;
 
 		if (pqGets(&conn->workBuffer, conn) ||
+			pqGetInt(&tableid, 4, conn) ||
+			pqGetInt(&columnid, 2, conn) ||
 			pqGetInt(&typid, 4, conn) ||
 			pqGetInt(&typlen, 2, conn) ||
 			pqGetInt(&atttypmod, 4, conn))
@@ -1237,8 +1243,9 @@ getRowDescriptions(PGconn *conn)
 
 		/*
 		 * Since pqGetInt treats 2-byte integers as unsigned, we need to
-		 * coerce the result to signed form.
+		 * coerce these results to signed form.
 		 */
+		columnid = (int) ((int16) columnid);
 		typlen = (int) ((int16) typlen);
 
 		result->attDescs[i].name = pqResultStrdup(result,
@@ -1246,6 +1253,7 @@ getRowDescriptions(PGconn *conn)
 		result->attDescs[i].typid = typid;
 		result->attDescs[i].typlen = typlen;
 		result->attDescs[i].atttypmod = atttypmod;
+		/* XXX todo: save tableid/columnid too */
 	}
 
 	/* Success! */
@@ -2289,9 +2297,10 @@ PQfn(PGconn *conn,
 					continue;
 				break;
 			case 'Z':			/* backend is ready for new query */
+				if (pqGetc(&conn->xact_status, conn))
+					continue;
 				/* consume the message and exit */
 				conn->inStart += 5 + msgLength;
-				/* XXX expect additional fields here */
 				/* if we saved a result object (probably an error), use it */
 				if (conn->result)
 					return prepareAsyncResult(conn);

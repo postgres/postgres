@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: xact.h,v 1.49 2003/01/10 22:03:30 petere Exp $
+ * $Id: xact.h,v 1.50 2003/04/26 20:22:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,9 +29,35 @@
 
 extern int	DefaultXactIsoLevel;
 extern int	XactIsoLevel;
+
+/* Xact read-only state */
 extern bool	DefaultXactReadOnly;
 extern bool	XactReadOnly;
 
+/*
+ *	transaction states - transaction state from server perspective
+ */
+typedef enum TransState
+{
+	TRANS_DEFAULT,
+	TRANS_START,
+	TRANS_INPROGRESS,
+	TRANS_COMMIT,
+	TRANS_ABORT
+} TransState;
+
+/*
+ *	transaction block states - transaction state of client queries
+ */
+typedef enum TBlockState
+{
+	TBLOCK_DEFAULT,
+	TBLOCK_BEGIN,
+	TBLOCK_INPROGRESS,
+	TBLOCK_END,
+	TBLOCK_ABORT,
+	TBLOCK_ENDABORT
+} TBlockState;
 
 /* ----------------
  *		transaction state structure
@@ -43,33 +69,17 @@ typedef struct TransactionStateData
 	CommandId	commandId;
 	AbsoluteTime startTime;
 	int			startTimeUsec;
-	int			state;
-	int			blockState;
+	TransState	state;
+	TBlockState	blockState;
 } TransactionStateData;
 
 typedef TransactionStateData *TransactionState;
 
-/*
- *	transaction states - transaction state from server perspective
- *	
- *	Syntax error could cause transaction to abort, but client code thinks
- *	it is still in a transaction, so we have to wait for COMMIT/ROLLBACK.
- */
-#define TRANS_DEFAULT			0
-#define TRANS_START				1
-#define TRANS_INPROGRESS		2
-#define TRANS_COMMIT			3
-#define TRANS_ABORT				4
 
-/*
- *	transaction block states - transaction state of client queries
+/* ----------------
+ *		transaction-related XLOG entries
+ * ----------------
  */
-#define TBLOCK_DEFAULT			0
-#define TBLOCK_BEGIN			1
-#define TBLOCK_INPROGRESS		2
-#define TBLOCK_END				3
-#define TBLOCK_ABORT			4
-#define TBLOCK_ENDABORT			5
 
 /*
  * XLOG allows to store some information in high 4 bits of log
@@ -115,6 +125,7 @@ extern void AbortCurrentTransaction(void);
 extern void BeginTransactionBlock(void);
 extern void EndTransactionBlock(void);
 extern bool IsTransactionBlock(void);
+extern char TransactionBlockStatusCode(void);
 extern void UserAbortTransactionBlock(void);
 extern void AbortOutOfAnyTransaction(void);
 extern void PreventTransactionChain(void *stmtNode, const char *stmtType);

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.53 2003/04/22 00:08:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.54 2003/04/26 20:22:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,7 @@
 #include "postgres.h"
 
 #include "access/printtup.h"
+#include "access/xact.h"
 #include "executor/tstoreReceiver.h"
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
@@ -177,6 +178,7 @@ NullCommand(CommandDest dest)
  *
  *		The ReadyForQuery message is sent in protocol versions 2.0 and up
  *		so that the FE can tell when we are done processing a query string.
+ *		In versions 3.0 and up, it also carries a transaction state indicator.
  *
  *		Note that by flushing the stdio buffer here, we can avoid doing it
  *		most other places and thus reduce the number of separate packets sent.
@@ -189,7 +191,15 @@ ReadyForQuery(CommandDest dest)
 	{
 		case RemoteInternal:
 		case Remote:
-			if (PG_PROTOCOL_MAJOR(FrontendProtocol) >= 2)
+			if (PG_PROTOCOL_MAJOR(FrontendProtocol) >= 3)
+			{
+				StringInfoData buf;
+
+				pq_beginmessage(&buf, 'Z');
+				pq_sendbyte(&buf, TransactionBlockStatusCode());
+				pq_endmessage(&buf);
+			}
+			else if (PG_PROTOCOL_MAJOR(FrontendProtocol) >= 2)
 				pq_putemptymessage('Z');
 			/* Flush output at end of cycle in any case. */
 			pq_flush();

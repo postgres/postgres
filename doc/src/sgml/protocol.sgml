@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/protocol.sgml,v 1.31 2003/04/25 19:45:08 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/protocol.sgml,v 1.32 2003/04/26 20:22:57 tgl Exp $ -->
 
 <chapter id="protocol">
  <title>Frontend/Backend Protocol</title>
@@ -3871,13 +3871,18 @@ string sent in the older protocol always did.
 </para>
 
 <para>
+The ReadyForQuery ('<literal>Z</>') message includes a transaction status
+indicator.
+</para>
+
+<para>
 COPY data is now encapsulated into CopyData and CopyDone messages.  There
 is a well-defined way to recover from errors during COPY.  The special
 <quote><literal>\.</></quote> last line is not needed anymore, and is not sent
 during COPY OUT.
 (It is still recognized as a terminator during COPY IN, but its use is
 deprecated and will eventually be removed.)  Binary COPY is supported.
-The CopyInResponse and CopyOutResponse messages carry a field indicating
+The CopyInResponse and CopyOutResponse messages include a field indicating
 whether the COPY operation is text or binary.
 </para>
 
@@ -3886,6 +3891,11 @@ The backend sends ParameterStatus ('<literal>S</>') messages during connection
 startup for all parameters it considers interesting to the client library.
 Subsequently, a ParameterStatus message is sent whenever the active value
 changes for any of these parameters.
+</para>
+
+<para>
+The RowDescription ('<literal>T</>') message carries new table OID and column
+number fields for each column of the described row.
 </para>
 
 <para>

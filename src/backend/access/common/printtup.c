@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.66 2003/04/22 00:08:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.67 2003/04/26 20:22:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -98,6 +98,7 @@ printtup_setup(DestReceiver *self, int operation,
 	{
 		Form_pg_attribute *attrs = typeinfo->attrs;
 		int			natts = typeinfo->natts;
+		int			proto = PG_PROTOCOL_MAJOR(FrontendProtocol);
 		int			i;
 		StringInfoData buf;
 
@@ -107,11 +108,19 @@ printtup_setup(DestReceiver *self, int operation,
 		for (i = 0; i < natts; ++i)
 		{
 			pq_sendstring(&buf, NameStr(attrs[i]->attname));
+			/* column ID info appears in protocol 3.0 and up */
+			if (proto >= 3)
+			{
+				/* XXX not yet implemented, send zeroes */
+				pq_sendint(&buf, 0, 4);
+				pq_sendint(&buf, 0, 2);
+			}
 			pq_sendint(&buf, (int) attrs[i]->atttypid,
 					   sizeof(attrs[i]->atttypid));
 			pq_sendint(&buf, attrs[i]->attlen,
 					   sizeof(attrs[i]->attlen));
-			if (PG_PROTOCOL_MAJOR(FrontendProtocol) >= 2)
+			/* typmod appears in protocol 2.0 and up */
+			if (proto >= 2)
 				pq_sendint(&buf, attrs[i]->atttypmod,
 						   sizeof(attrs[i]->atttypmod));
 		}
