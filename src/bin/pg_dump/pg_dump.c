@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.241.2.2 2002/05/28 15:40:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.241.2.3 2004/03/20 18:12:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2403,6 +2403,7 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs, const char *tablename)
 			else
 				tblinfo[i].pkIndexOid = NULL;
 
+			PQclear(res2);
 		}
 		else
 			tblinfo[i].pkIndexOid = NULL;
@@ -2442,6 +2443,7 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs, const char *tablename)
 				write_msg(NULL, "out of memory\n");
 				exit_nicely();
 			}
+			PQclear(res2);
 		}
 		else
 			tblinfo[i].primary_key_name = NULL;
@@ -2588,6 +2590,7 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs, const char *tablename)
 				else
 					tgfunc = strdup(finfo[findx].proname);
 
+				resetPQExpBuffer(delqry);
 				appendPQExpBuffer(delqry, "DROP TRIGGER %s ", fmtId(tgname, force_quotes));
 				appendPQExpBuffer(delqry, "ON %s;\n",
 								fmtId(tblinfo[i].relname, force_quotes));
