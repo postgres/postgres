@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.10 1996/11/30 18:05:57 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.11 1997/01/10 09:51:38 vadim Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1597,7 +1597,7 @@ DefaultBuild(Relation heapRelation,
 	indexTuple->t_tid = heapTuple->t_ctid;
 	
 	insertResult = index_insert(indexRelation, datum, nullv, 
-				    &(heapTuple->t_ctid), false);
+				    &(heapTuple->t_ctid), heapRelation);
 
 	if (insertResult) pfree(insertResult);
 	pfree(indexTuple);

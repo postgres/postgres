@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.7 1996/11/26 02:45:05 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.8 1997/01/10 09:51:40 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -184,7 +184,7 @@ CatalogIndexInsert(Relation *idescs,
 			   finfoP);
 	    
 	    indexRes = index_insert(idescs[i], &datum, nulls, 
-				    &(heapTuple->t_ctid), false);
+				    &(heapTuple->t_ctid), heapRelation);
 	    if (indexRes) pfree(indexRes);
 	}
 }
