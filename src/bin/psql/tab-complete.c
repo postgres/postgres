@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.29 2001/03/30 04:50:47 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.30 2001/04/14 22:55:02 petere Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -60,9 +60,10 @@
 #include "common.h"
 #include "settings.h"
 
-#ifndef HAVE_FILENAME_COMPLETION_FUNCTION_DECL
-char	   *filename_completion_function(char *, int);
+extern char *filename_completion_function();
 
+#ifdef HAVE_RL_COMPLETION_MATCHES
+#define completion_matches(x, y) rl_completion_matches((x), ((rl_compentry_func_t *)(y)))
 #endif
 
 #define BUF_SIZE 2048
@@ -100,7 +101,7 @@ void
 initialize_readline(void)
 {
 	rl_readline_name = pset.progname;
-	rl_attempted_completion_function = psql_completion;
+	rl_attempted_completion_function = (void *)psql_completion;
 
 	rl_basic_word_break_characters = "\t\n@$><=;|&{( ";
 

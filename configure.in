@@ -879,35 +879,18 @@ AC_CHECK_FUNC(rint,
 # Readline versions < 2.1 don't have rl_completion_append_character
 AC_MSG_CHECKING([for rl_completion_append_character])
 AC_TRY_LINK([#include <stdio.h>
-#ifdef HAVE_READLINE_H
-# include <readline.h>
-#endif
 #ifdef HAVE_READLINE_READLINE_H
 # include <readline/readline.h>
-#endif],
+#elif defined(HAVE_READLINE_H)
+# include <readline.h>
+#endif
+],
 [rl_completion_append_character = 'x';],
 [AC_MSG_RESULT(yes)
 AC_DEFINE(HAVE_RL_COMPLETION_APPEND_CHARACTER)],
 [AC_MSG_RESULT(no)])
 
-
-# Check whether readline's filename_completion_function is declared.
-# Some prehistoric versions of readline, in particular those shipped
-# with earlier Cygwins don't have this declared, although it's in the
-# library.
-AC_MSG_CHECKING([whether filename_completion_function is declared])
-if test "$ac_cv_header_readline_h" = yes; then
-    _readline_header='readline.h'
-elif test "$ac_cv_header_readline_readline_h" = yes; then
-    _readline_header='readline/readline.h'
-else
-    _readline_header='xxx'
-fi
-AC_EGREP_HEADER([filename_completion_function], [$_readline_header],
-[AC_DEFINE(HAVE_FILENAME_COMPLETION_FUNCTION_DECL)
-AC_MSG_RESULT(yes)],
-[AC_MSG_RESULT(no)])
-
+AC_CHECK_FUNCS([rl_completion_matches])
 
 
 dnl Cannot use AC_CHECK_FUNC because finite may be a macro

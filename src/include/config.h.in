@@ -8,7 +8,7 @@
  * or in config.h afterwards.  Of course, if you edit config.h, then your
  * changes will be overwritten the next time you run configure.
  *
- * $Id: config.h.in,v 1.161 2001/03/23 18:42:12 tgl Exp $
+ * $Id: config.h.in,v 1.162 2001/04/14 22:55:02 petere Exp $
  */
 
 #ifndef CONFIG_H
@@ -573,8 +573,8 @@ extern int fdatasync(int fildes);
 /* Set to 1 if your libreadline defines rl_completion_append_character */
 #undef HAVE_RL_COMPLETION_APPEND_CHARACTER
 
-/* Set to 1 if filename_completion_function is declared in the readline header */
-#undef HAVE_FILENAME_COMPLETION_FUNCTION_DECL
+/* Set to 1 if you have rl_completion_matches */
+#undef HAVE_RL_COMPLETION_MATCHES
 
 /* Set to 1 if you have getopt_long() (GNU long options) */
 #undef HAVE_GETOPT_LONG
