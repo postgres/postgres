@@ -114,7 +114,7 @@ COMMANDS
 * Allow CLUSTER on all tables at once, and improve CLUSTER
 * Generate error on CREATE OPERATOR of ~~, ~ and and ~*
 * Add SIMILAR TO to allow character classes, 'pg_[a-c]%'
-* Auto-destroy sequence on DROP of table with SERIAL
+* Auto-destroy sequence on DROP of table with SERIAL(Ryan)
 * Allow LOCK TABLE tab1, tab2, tab3 so all tables locked in unison
 * Allow INSERT/UPDATE of system-generated oid value for a row
 * Allow ESCAPE '\' at the end of LIKE for ANSI compliance
@@ -135,7 +135,9 @@ CLIENTS
 MISC
 
 * Increase identifier length(NAMEDATALEN) if small performance hit
-* Allow row re-use without vacuum, maybe?(Vadim)
+* Allow row re-use without vacuum(Vadim)
+* Create a background process for each database that runs while
+  database is idle, finding superceeded rows, gathering stats and vacuuming
 * Add UNIQUE capability to non-btree indexes
 * Certain indexes will not shrink, i.e. oid indexes with many inserts
 * Restore unused oid's on backend exit if no one else has gotten oids
@@ -143,7 +145,8 @@ MISC
 * Allow WHERE restriction on ctid
 * Allow cursors to be DECLAREd/OPENed/CLOSEed outside transactions
 * Allow PQrequestCancel() to terminate when in waiting-for-lock state
-* Transaction log, so re-do log can be on a separate disk
+* Transaction log, so re-do log can be on a separate disk by
+  logging SQL queries, or before/after row images
 * Populate backend status area and write program to dump status data
 * Make oid use unsigned int more reliably, pg_atoi()
 * Allow subqueries in target list
@@ -177,6 +180,7 @@ INDEXES
 * Allow LIMIT ability on single-table queries that have no ORDER BY to use
   a matching index
 * Improve LIMIT processing by using index to limit rows processed
+* Have optimizer take LIMIT into account when considering index scans
 
 CACHE
 
@@ -199,6 +203,11 @@ MISC
 * Create more system table indexes for faster cache lookups
 * Improve Subplan list handling
 * Allow Subplans to use efficient joins(hash, merge) with upper variable
+* use fmgr_info()/fmgr_faddr() instead of fmgr() calls in high-traffic
+  places, like GROUP BY, UNIQUE, index processing, etc.
+* improve dynamic memory allocation by introducing tuple-context memory
+  allocation
+* add pooled memory allocation where allocations are freed only as a group
 
 
 SOURCE CODE
@@ -227,6 +236,7 @@ Developers who have claimed items are:
 	* Michael is Michael Meskes <meskes@postgresql.org>
 	* Oleg is Oleg Bartunov <oleg@sai.msu.su>
 	* Peter is Peter T Mount <peter@retep.org.uk>
+	* Ryan is Ryan Bradetich <rbrad@hpb50023.boi.hp.com>
 	* Stefan Simkovics <ssimkovi@rainbow.studorg.tuwien.ac.at>
 	* Tatsuo is Tatsuo Ishii <t-ishii@sra.co.jp>
 	* Tom is Tom Lane <tgl@sss.pgh.pa.us>

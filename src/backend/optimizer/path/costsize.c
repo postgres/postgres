@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.38 1999/05/25 22:41:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.39 1999/07/07 09:11:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,7 +51,7 @@ bool		_enable_nestloop_ = true;
 bool		_enable_mergejoin_ = true;
 bool		_enable_hashjoin_ = true;
 
-Cost		_cpu_page_wight_ = _CPU_PAGE_WEIGHT_;
+Cost		_cpu_page_weight_ = _CPU_PAGE_WEIGHT_;
 Cost		_cpu_index_page_wight_ = _CPU_INDEX_PAGE_WEIGHT_;
 
 /*
@@ -93,7 +93,7 @@ cost_seqscan(int relid, int relpages, int reltuples)
 	else
 	{
 		temp += relpages;
-		temp += _cpu_page_wight_ * reltuples;
+		temp += _cpu_page_weight_ * reltuples;
 	}
 	Assert(temp >= 0);
 	return temp;
@@ -159,7 +159,7 @@ cost_index(Oid indexid,
 	temp += _cpu_index_page_wight_ * selec * indextuples;
 
 	/* per heap tuples */
-	temp += _cpu_page_wight_ * selec * reltuples;
+	temp += _cpu_page_weight_ * selec * reltuples;
 
 	Assert(temp >= 0);
 	return temp;
@@ -213,7 +213,7 @@ cost_sort(List *pathkeys, int tuples, int width)
 	 * could be base_log(tuples, NBuffers), but we are only doing 2-way
 	 * merges
 	 */
-	temp += _cpu_page_wight_ * tuples * base_log((double) tuples, 2.0);
+	temp += _cpu_page_weight_ * tuples * base_log((double) tuples, 2.0);
 
 	Assert(temp > 0);
 
@@ -236,7 +236,7 @@ cost_result(int tuples, int width)
 	Cost		temp = 0;
 
 	temp = temp + page_size(tuples, width);
-	temp = temp + _cpu_page_wight_ * tuples;
+	temp = temp + _cpu_page_weight_ * tuples;
 	Assert(temp >= 0);
 	return temp;
 }
@@ -310,7 +310,7 @@ cost_mergejoin(Cost outercost,
 		temp += cost_sort(outersortkeys, outersize, outerwidth);
 	if (innersortkeys)			/* do we need to sort? */
 		temp += cost_sort(innersortkeys, innersize, innerwidth);
-	temp += _cpu_page_wight_ * (outersize + innersize);
+	temp += _cpu_page_weight_ * (outersize + innersize);
 
 	Assert(temp >= 0);
 
@@ -361,7 +361,7 @@ cost_hashjoin(Cost outercost,
 	temp += outercost + innercost;
 
 	/* cost of computing hash function: must do it once per tuple */
-	temp += _cpu_page_wight_ * (outersize + innersize);
+	temp += _cpu_page_weight_ * (outersize + innersize);
 
 	/* cost of main-memory hashtable */
 	temp += (innerpages < NBuffers) ? innerpages : NBuffers;
