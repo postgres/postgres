@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.108 2002/11/05 17:11:46 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.109 2002/11/05 17:31:36 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1511,14 +1511,6 @@ gunzip -c user.ps.gz \
         <entry>4.2</entry>
        </row>
        <row>
-	<entry><systemitem class="osname">Digital Unix</></entry>
-	<entry><systemitem>Alpha</></entry>
-	<entry>7.3</entry>
-	<entry>2002-11-04,
-	 Alessio Bragadini (<email>alessio@albourne.com</email>)</entry>
-        <entry></entry>
-       </row>
-       <row>
 	<entry><systemitem class="osname">FreeBSD</></entry>
 	<entry><systemitem>Alpha</></entry>
 	<entry>7.2</entry>
@@ -1722,21 +1714,20 @@ gunzip -c user.ps.gz \
 	 Martin Renters (<email>martin@datafax.com</email>)</entry>
 	<entry>2.8; see also <filename>doc/FAQ_Solaris</filename></entry>
        </row>
-      <row>
-       <entry><systemitem class="osname">SunOS 4</></entry>
-       <entry><systemitem>Sparc</></entry>
-       <entry>7.2</entry>
-       <entry>2001-12-04, Tatsuo Ishii (<email>t-ishii@sra.co.jp</email>)</entry>
-       <entry></entry>
-      </row>
+       <row>
+        <entry><systemitem class="osname">SunOS 4</></entry>
+        <entry><systemitem>Sparc</></entry>
+        <entry>7.2</entry>
+        <entry>2001-12-04, Tatsuo Ishii (<email>t-ishii@sra.co.jp</email>)</entry>
+        <entry></entry>
+       </row>
        <row>
 	<entry><systemitem class="osname">Tru64 UNIX</></entry>
 	<entry><systemitem>Alpha</></entry>
-	<entry>7.2</entry>
-	<entry>2001-11-26,
-	 Alessio Bragadini (<email>alessio@albourne.com</email>),
-         Bernd Tegge (<email>tegge@repas-aeg.de</email>)</entry>
-        <entry>5.0; 4.0g with cc and gcc</entry>
+	<entry>7.3</entry>
+	<entry>2002-11-05,
+	 Alessio Bragadini (<email>alessio@albourne.com</email>)</entry>
+        <entry></entry>
        </row>
        <row>
 	<entry><systemitem class="osname">UnixWare</></entry>
