@@ -7,12 +7,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.37 1999/11/24 16:52:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.38 2000/01/09 12:15:57 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <sys/param.h>
 #include <sys/types.h>
+#include <signal.h>
 #include <sys/stat.h>
 #include <sys/file.h>
 #include <unistd.h>
@@ -461,4 +462,157 @@ SetUserId()
 			 userName,
 			 ShadowRelationName);
 	UserId = (Oid) ((Form_pg_shadow) GETSTRUCT(userTup))->usesysid;
+}
+
+/*-------------------------------------------------------------------------
+ *
+ * posmaster pid file stuffs. $DATADIR/postmaster.pid is created when:
+ *
+ *	(1) postmaster starts. In this case pid > 0.
+ *	(2) postgres starts in standalone mode. In this case
+ *	    pid < 0
+ *
+ * to gain an interlock.
+ * 
+ *	SetPidFname(datadir)
+ *		Remember the the pid file name. This is neccesary
+ *		UnlinkPidFile() is called from proc_exit().
+ *
+ *	GetPidFname(datadir)
+ *		Get the pid file name. SetPidFname() should be called
+ *		before GetPidFname() gets called.
+ *
+ *	UnlinkPidFile()
+ *		This is called from proc_exit() and unlink the pid file.
+ *
+ *	SetPidFile(pid_t pid)
+ *		Create the pid file. On failure, it checks if the process
+ *		actually exists or not. SetPidFname() should be called
+ *		in prior to calling SetPidFile().
+ *
+ *-------------------------------------------------------------------------
+ */
+
+/*
+ * Path to pid file. proc_exit() remember it to unlink the file.
+ */
+static char PidFile[MAXPGPATH];
+
+/*
+ * Remove the pid file. This function is called from proc_exit.
+ */
+void UnlinkPidFile(void)
+{
+	unlink(PidFile);
+}
+
+/*
+ * Set path to the pid file
+ */
+void SetPidFname(char * datadir)
+{
+	snprintf(PidFile, sizeof(PidFile), "%s/%s", datadir, PIDFNAME);
+}
+
+/*
+ * Get path to the pid file
+ */
+char *GetPidFname(void)
+{
+	return(PidFile);
+}
+
+/*
+ * Create the pid file
+ */
+int SetPidFile(pid_t pid)
+{
+	int fd;
+	char *pidfile;
+	char pidstr[32];
+	int len;
+	pid_t post_pid;
+	int is_postgres = 0;
+
+	/*
+	 * Creating pid file
+	 */
+	pidfile = GetPidFname();
+	fd = open(pidfile, O_RDWR | O_CREAT | O_EXCL, 0600);
+	if (fd < 0) {
+		/*
+		 * Couldn't create the pid file. Probably
+		 * it already exists. Read the file to see if the process
+		 * actually exists
+		 */
+		fd = open(pidfile, O_RDONLY, 0600);
+		if (fd < 0) {
+			fprintf(stderr, "Can't open pid file: %s\n", pidfile);
+			fprintf(stderr, "Please check the permission and try again.\n");
+			return(-1);
+		}
+		if ((len = read(fd, pidstr, sizeof(pidstr)-1)) < 0) {
+			fprintf(stderr, "Can't read pid file: %s\n", pidfile);
+			fprintf(stderr, "Please check the permission and try again.\n");
+			close(fd);
+			return(-1);
+		}
+		close(fd);
+
+		/*
+		 * Check to see if the process actually exists
+		 */
+		pidstr[len] = '\0';
+		post_pid = (pid_t)atoi(pidstr);
+
+		/* if pid < 0, the pid is for postgres, not postmatser */
+		if (post_pid < 0) {
+			is_postgres++;
+			post_pid = -post_pid;
+		}
+
+		if (post_pid == 0 || (post_pid > 0 && kill(post_pid, 0) < 0)) {
+			/*
+			 * No, the process did not exist. Unlink
+			 * the file and try to create it
+			 */
+			if (unlink(pidfile) < 0) {
+				fprintf(stderr, "Can't remove pid file: %s\n", pidfile);
+				fprintf(stderr, "The file seems accidently left, but I couldn't remove it.\n");
+				fprintf(stderr, "Please remove the file by hand and try again.\n");
+				return(-1);
+			}
+			fd = open(pidfile, O_RDWR | O_CREAT | O_EXCL, 0600);
+			if (fd < 0) {
+				fprintf(stderr, "Can't create pid file: %s\n", pidfile);
+				fprintf(stderr, "Please check the permission and try again.\n");
+				return(-1);
+			}
+		} else {
+			/*
+			 * Another postmaster is running
+			 */
+			fprintf(stderr, "Can't create pid file: %s\n", pidfile);
+			if (is_postgres) {
+			  fprintf(stderr, "Is another postgres (pid: %d) running?\n", post_pid);
+			}
+			else
+			{
+			  fprintf(stderr, "Is another postmaster (pid: %s) running?\n", pidstr);
+			}
+			return(-1);
+		}
+	}
+
+	sprintf(pidstr, "%d", pid);
+	if (write(fd, pidstr, strlen(pidstr)) != strlen(pidstr)) {
+		fprintf(stderr,"Write to pid file failed\n");
+		fprintf(stderr, "Please check the permission and try again.\n");
+		close(fd);
+		unlink(pidfile);
+		return(-1);
+	}
+	close(fd);
+
+	return(0);
 }
