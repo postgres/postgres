@@ -42,7 +42,7 @@ mmerror(enum errortype type, char * error)
 {
     switch(type)
     {
-	case ET_WARN: 
+	case ET_NOTICE: 
 		fprintf(stderr, "%s:%d: WARNING: %s\n", input_filename, yylineno, error); 
 		break;
 	case ET_ERROR:
@@ -1124,7 +1124,7 @@ columnDef:  ColId Typename ColQualList opt_collate
 					if (strlen($4) > 0)
 					{
 						sprintf(errortext, "CREATE TABLE/COLLATE %s not yet implemented; clause ignored", $4);
-						mmerror(ET_WARN, errortext);
+						mmerror(ET_NOTICE, errortext);
 					}
 					$$ = cat_str(4, $1, $2, $3, $4);
 				}
@@ -1133,7 +1133,7 @@ columnDef:  ColId Typename ColQualList opt_collate
 			if (strlen($4) > 0)
 			{
 				sprintf(errortext, "CREATE TABLE/COLLATE %s not yet implemented; clause ignored", $4);
-				mmerror(ET_WARN, errortext);
+				mmerror(ET_NOTICE, errortext);
 			}
 			$$ = cat_str(4, $1, make_str(" serial "), $3, $4);
 		}
@@ -1248,7 +1248,7 @@ key_match:  MATCH FULL
 		}
 		| MATCH PARTIAL		
 		{
-			mmerror(ET_WARN, "FOREIGN KEY/MATCH PARTIAL not yet implemented");
+			mmerror(ET_NOTICE, "FOREIGN KEY/MATCH PARTIAL not yet implemented");
 			$$ = make_str("match partial");
 		}
 		| /*EMPTY*/
@@ -1651,7 +1651,7 @@ direction:	FORWARD		{ $$ = make_str("forward"); }
 		| BACKWARD	{ $$ = make_str("backward"); }
 		| RELATIVE      { $$ = make_str("relative"); }
                 | ABSOLUTE	{
-					mmerror(ET_WARN, "FETCH/ABSOLUTE not supported, backend will use RELATIVE");
+					mmerror(ET_NOTICE, "FETCH/ABSOLUTE not supported, backend will use RELATIVE");
 					$$ = make_str("absolute");
 				}
 		;
@@ -3512,7 +3512,7 @@ c_expr:  attr
 					if (atol($3) != 0)
 					{
 						sprintf(errortext, "CURRENT_TIME(%s) precision not implemented; backend will use zero instead", $3);
-						mmerror(ET_WARN, errortext);
+						mmerror(ET_NOTICE, errortext);
 					}
 
 					$$ = make_str("current_time");
@@ -3524,7 +3524,7 @@ c_expr:  attr
 					if (atol($3) != 0)
 					{
 						sprintf(errortext, "CURRENT_TIMESTAMP(%s) precision not implemented; backend will use zero instead", $3);
-						mmerror(ET_WARN, errortext);
+						mmerror(ET_NOTICE, errortext);
 					}
 
 					$$ = make_str("current_timestamp");
@@ -3664,7 +3664,7 @@ case_expr:  CASE case_arg when_clause_list case_default END_TRANS
                                 {
 					$$ = cat_str(5, make_str("nullif("), $3, make_str(","), $5, make_str(")"));
 
-					mmerror(ET_WARN, "NULLIF() not yet fully implemented");
+					mmerror(ET_NOTICE, "NULLIF() not yet fully implemented");
                                 }
                 | COALESCE '(' expr_list ')'
                                 {

@@ -18,7 +18,7 @@ CREATE DATABASE name \[ WITH LOCATION = 'dbpath' \]
 " {} "CREATEDB" {italic} "
        Message returned if the command completes successfully. 
 
-" {} "WARN: createdb: database \"name\" already exists." {italic} "
+" {} "NOTICE: createdb: database \"name\" already exists." {italic} "
        This occurs if database specified already exists. 
 
 " {} "ERROR: Unable to create database directory directory" {italic} "

@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.69 2000/12/03 20:45:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.70 2000/12/15 20:01:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -392,7 +392,7 @@ cppline			{space}*#(.*\\{line_end})*.*
                                                         literalbuf, NAMEDATALEN-1, literalbuf);
                                                 literalbuf[NAMEDATALEN-1] = '\0';
 #endif
- 						mmerror(ET_WARN, errortext);
+ 						mmerror(ET_NOTICE, errortext);
                                         }
 
 					yylval.str = mm_strdup(literalbuf);
@@ -554,7 +554,7 @@ cppline			{space}*#(.*\\{line_end})*.*
                                                         lower_text, NAMEDATALEN-1, lower_text);
                                                 lower_text[NAMEDATALEN-1] = '\0';
 #endif
- 						mmerror(ET_WARN, errortext);
+ 						mmerror(ET_NOTICE, errortext);
                                                 yytext[NAMEDATALEN-1] = '\0';
 					}
 

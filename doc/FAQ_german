@@ -515,7 +515,7 @@
     
      * überprüfe, daß keine Binaries vorheriger Versionen in Deinem Pfad
        (PATH-Variable) sind. (Wenn Du die Meldung siehst:
-       WARN:heap_modifytuple: repl is \ 9, ist das das Problem.)
+       NOTICE:heap_modifytuple: repl is \ 9, ist das das Problem.)
      * überprüfe, daß der Pfad richtig gesetzt ist
      * überprüfe, ob der User postgres der Eigentümer der entsprechenden
        Dateien ist
