@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: executor.h,v 1.13 1997/09/08 21:51:51 momjian Exp $
+ * $Id: executor.h,v 1.14 1997/09/27 14:37:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,8 +80,9 @@ ExecEvalParam(Param *expression, ExprContext *econtext,
 
 /* stop here */
 extern char *
-GetAttributeByName(TupleTableSlot *slot, char *attname,
-				   bool *isNull);
+GetAttributeByNum(TupleTableSlot *slot, AttrNumber attrno, bool *isNull);
+extern char *
+GetAttributeByName(TupleTableSlot *slot, char *attname, bool *isNull);
 extern Datum
 ExecEvalExpr(Node *expression, ExprContext *econtext, bool *isNull,
 			 bool *isDone);

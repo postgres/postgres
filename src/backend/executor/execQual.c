@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.18 1997/09/22 04:19:36 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.19 1997/09/27 14:37:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -506,8 +506,11 @@ ExecEvalParam(Param *expression, ExprContext *econtext, bool *isNull)
  *		to use this.  Ex: overpaid(EMP) might call GetAttributeByNum().
  * ----------------
  */
-#ifdef NOT_USED
-static char *
+/*
+ * This gets called from external functions, so don't make it static
+ * or remove it
+ */
+char *
 GetAttributeByNum(TupleTableSlot *slot,
 				  AttrNumber attrno,
 				  bool *isNull)
@@ -538,8 +541,6 @@ GetAttributeByNum(TupleTableSlot *slot,
 		return (char *) NULL;
 	return (char *) retval;
 }
-
-#endif
 
 /* XXX char16 name for catalogs */
 #ifdef NOT_USED
