@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/contrib/Makefile,v 1.21 2001/05/31 18:27:18 tgl Exp $
+# $Header: /cvsroot/pgsql/contrib/Makefile,v 1.22 2001/06/18 17:20:56 momjian Exp $
 
 subdir = contrib
 top_builddir = ..
@@ -8,6 +8,7 @@ WANTED_DIRS = \
 		array		\
 		cube		\
 		dbase		\
+		dblink		\
 		earthdistance	\
 		findoidjoins	\
 		fulltextindex	\
