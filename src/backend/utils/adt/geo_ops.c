@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.34 1998/08/15 06:45:10 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.35 1998/08/16 04:06:55 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -768,13 +768,12 @@ box_diagonal(BOX *box)
  **
  ***********************************************************************/
 
-#define LINEDEBUG
 LINE *
 line_in(char *str)
 {
 	LINE	   *line;
 
-#if LINEDEBUG
+#ifdef ENABLE_LINE_TYPE
 	LSEG		lseg;
 	int			isopen;
 	char	   *s;
@@ -783,7 +782,7 @@ line_in(char *str)
 	if (!PointerIsValid(str))
 		elog(ERROR, " Bad (null) line external representation", NULL);
 
-#if LINEDEBUG
+#ifdef ENABLE_LINE_TYPE
 	if ((!path_decode(TRUE, 2, str, &isopen, &s, &(lseg.p[0])))
 		|| (*s != '\0'))
 		elog(ERROR, "Bad line external representation '%s'", str);
@@ -802,12 +801,14 @@ char *
 line_out(LINE *line)
 {
 	char *result;
-	LSEG		lseg;
+#ifdef ENABLE_LINE_TYPE
+	LSEG lseg;
+#endif
 
 	if (!PointerIsValid(line))
 		return (NULL);
 
-#if LINEDEBUG
+#ifdef ENABLE_LINE_TYPE
 	if (FPzero(line->B))
 	{							/* vertical */
 		/* use "x = C" */
