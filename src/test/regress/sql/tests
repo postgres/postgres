@@ -27,6 +27,7 @@ horology
 inet
 comments
 oidjoins
+type_sanity
 opr_sanity
 create_function_1
 create_type
