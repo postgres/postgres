@@ -1,7 +1,7 @@
 #ifndef _ECPG_DATETIME_H
 #define _ECPG_DATETIME_H
 
-#include <compatlib.h>
+#include <ecpg_informix.h>
 
 typedef timestamp dtime_t;
 typedef interval intrvl_t;

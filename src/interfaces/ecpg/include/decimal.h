@@ -1,7 +1,7 @@
 #ifndef _ECPG_DECIMAL_H
 #define _ECPG_DECIMAL_H
 
-#include <compatlib.h>
+#include <ecpg_informix.h>
 
 typedef decimal dec_t;
 
