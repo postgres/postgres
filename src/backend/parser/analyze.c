@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.278 2003/07/03 19:07:30 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.279 2003/07/16 17:25:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1788,6 +1788,15 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt,
 			sub_qry = getInsertSelectQuery(top_subqry, NULL);
 
 			/*
+			 * If the sub_qry is a setop, we cannot attach any qualifications
+			 * to it, because the planner won't notice them.  This could
+			 * perhaps be relaxed someday, but for now, we may as well reject
+			 * such a rule immediately.
+			 */
+			if (sub_qry->setOperations != NULL && stmt->whereClause != NULL)
+				elog(ERROR, "Conditional UNION/INTERSECT/EXCEPT statements are not implemented");
+
+			/*
 			 * Validate action's use of OLD/NEW, qual too
 			 */
 			has_old =
@@ -1841,6 +1850,13 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt,
 			 */
 			if (has_old || (has_new && stmt->event == CMD_UPDATE))
 			{
+				/*
+				 * If sub_qry is a setop, manipulating its jointree will do
+				 * no good at all, because the jointree is dummy.  (This
+				 * should be a can't-happen case because of prior tests.)
+				 */
+				if (sub_qry->setOperations != NULL)
+					elog(ERROR, "Conditional UNION/INTERSECT/EXCEPT statements are not implemented");
 				/* hack so we can use addRTEtoQuery() */
 				sub_pstate->p_rtable = sub_qry->rtable;
 				sub_pstate->p_joinlist = sub_qry->jointree->fromlist;

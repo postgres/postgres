@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.122 2003/07/03 16:34:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.123 2003/07/16 17:25:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -148,18 +148,31 @@ rewriteRuleAction(Query *parsetree,
 	 * As above, the action's jointree must not share substructure with the
 	 * main parsetree's.
 	 */
-	if (sub_action->jointree != NULL)
+	if (sub_action->commandType != CMD_UTILITY)
 	{
 		bool		keeporig;
 		List	   *newjointree;
 
+		Assert(sub_action->jointree != NULL);
 		keeporig = (!rangeTableEntry_used((Node *) sub_action->jointree,
 										  rt_index, 0)) &&
 			(rangeTableEntry_used(rule_qual, rt_index, 0) ||
 		  rangeTableEntry_used(parsetree->jointree->quals, rt_index, 0));
 		newjointree = adjustJoinTreeList(parsetree, !keeporig, rt_index);
-		sub_action->jointree->fromlist =
-			nconc(newjointree, sub_action->jointree->fromlist);
+		if (newjointree != NIL)
+		{
+			/*
+			 * If sub_action is a setop, manipulating its jointree will do
+			 * no good at all, because the jointree is dummy.  (Perhaps
+			 * someday we could push the joining and quals down to the
+			 * member statements of the setop?)
+			 */
+			if (sub_action->setOperations != NULL)
+				elog(ERROR, "Conditional UNION/INTERSECT/EXCEPT statements are not implemented");
+
+			sub_action->jointree->fromlist =
+				nconc(newjointree, sub_action->jointree->fromlist);
+		}
 	}
 
 	/*

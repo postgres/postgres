@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.97 2003/06/29 23:05:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.98 2003/07/16 17:25:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -84,6 +84,14 @@ plan_set_operations(Query *parse)
 	Query	   *leftmostQuery;
 
 	Assert(topop && IsA(topop, SetOperationStmt));
+
+	/* check for unsupported stuff */
+	Assert(parse->utilityStmt == NULL);
+	Assert(parse->jointree->fromlist == NIL);
+	Assert(parse->jointree->quals == NULL);
+	Assert(parse->groupClause == NIL);
+	Assert(parse->havingQual == NULL);
+	Assert(parse->distinctClause == NIL);
 
 	/*
 	 * Find the leftmost component Query.  We need to use its column names
