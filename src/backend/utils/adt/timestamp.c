@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.108 2004/06/03 02:08:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.109 2004/06/03 17:57:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -166,12 +166,26 @@ Datum
 timestamp_recv(PG_FUNCTION_ARGS)
 {
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
+	Timestamp	timestamp;
+	struct pg_tm	tt,
+			   *tm = &tt;
+	fsec_t		fsec;
 
 #ifdef HAVE_INT64_TIMESTAMP
-	PG_RETURN_TIMESTAMP((Timestamp) pq_getmsgint64(buf));
+	timestamp = (Timestamp) pq_getmsgint64(buf);
 #else
-	PG_RETURN_TIMESTAMP((Timestamp) pq_getmsgfloat8(buf));
+	timestamp = (Timestamp) pq_getmsgfloat8(buf);
 #endif
+
+	/* rangecheck: see if timestamp_out would like it */
+	if (TIMESTAMP_NOT_FINITE(timestamp))
+		/* ok */;
+	else if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL) != 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("timestamp out of range")));
+
+	PG_RETURN_TIMESTAMP(timestamp);
 }
 
 /*
@@ -393,12 +407,28 @@ Datum
 timestamptz_recv(PG_FUNCTION_ARGS)
 {
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
+	TimestampTz	timestamp;
+	int			tz;
+	struct pg_tm	tt,
+			   *tm = &tt;
+	fsec_t		fsec;
+	char	   *tzn;
 
 #ifdef HAVE_INT64_TIMESTAMP
-	PG_RETURN_TIMESTAMPTZ((TimestampTz) pq_getmsgint64(buf));
+	timestamp = (TimestampTz) pq_getmsgint64(buf);
 #else
-	PG_RETURN_TIMESTAMPTZ((TimestampTz) pq_getmsgfloat8(buf));
+	timestamp = (TimestampTz) pq_getmsgfloat8(buf);
 #endif
+
+	/* rangecheck: see if timestamptz_out would like it */
+	if (TIMESTAMP_NOT_FINITE(timestamp))
+		/* ok */;
+	else if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn) != 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("timestamp out of range")));
+
+	PG_RETURN_TIMESTAMPTZ(timestamp);
 }
 
 /*
@@ -933,13 +963,8 @@ dt2time(Timestamp jd, int *hour, int *min, int *sec, fsec_t *fsec)
 int
 timestamp2tm(Timestamp dt, int *tzp, struct pg_tm *tm, fsec_t *fsec, char **tzn)
 {
-#ifdef HAVE_INT64_TIMESTAMP
-	int			date;
-	int64		time;
-#else
-	double		date;
-	double		time;
-#endif
+	Timestamp	date;
+	Timestamp	time;
 	pg_time_t	utime;
 
 	/*
@@ -950,7 +975,7 @@ timestamp2tm(Timestamp dt, int *tzp, struct pg_tm *tm, fsec_t *fsec, char **tzn)
 	if (HasCTZSet && (tzp != NULL))
 	{
 #ifdef HAVE_INT64_TIMESTAMP
-		dt -= (CTimeZone * INT64CONST(1000000));
+		dt -= CTimeZone * INT64CONST(1000000);
 #else
 		dt -= CTimeZone;
 #endif
@@ -975,12 +1000,12 @@ timestamp2tm(Timestamp dt, int *tzp, struct pg_tm *tm, fsec_t *fsec, char **tzn)
 	}
 #endif
 
-	/* Julian day routine does not work for negative Julian days */
-	if (date < -POSTGRES_EPOCH_JDATE)
-		return -1;
-
 	/* add offset to go from J2000 back to standard Julian date */
 	date += POSTGRES_EPOCH_JDATE;
+
+	/* Julian day routine does not work for negative Julian days */
+	if (date < 0 || date > (Timestamp) INT_MAX)
+		return -1;
 
 	j2date((int) date, &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
 	dt2time(time, &tm->tm_hour, &tm->tm_min, &tm->tm_sec, fsec);
