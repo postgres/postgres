@@ -1,16 +1,20 @@
-/* $Id: getrusage.c,v 1.8 1998/06/19 02:55:04 momjian Exp $ */
-
-#include <math.h>				/* for pow() prototype */
+/* $Id: getrusage.c,v 1.9 1998/07/13 16:39:07 momjian Exp $ */
 
 #include <errno.h>
 #include "rusagestub.h"
 
-#if 0							/* this is from univel port ... how does
-								 * compiler define? */
- /* same for solaris_i386 port ... how does compiler define? */
- /* same for sco port ... how does compiler define? */
- /* same for solaris_sparc port ... how does compiler define? */
- /* same for svr4 port ... how does compiler define? */
+/* This code works on:
+ *		univel
+ *		solaris_i386
+ *		sco
+ *		solaris_sparc
+ *		svr4
+ *		hpux 9.*
+ * which currently is all the supported platforms that don't have a
+ * native version of getrusage().  So, if configure decides to compile
+ * this file at all, we just use this version unconditionally.
+ */
+
 int
 getrusage(int who, struct rusage * rusage)
 {
@@ -51,14 +55,3 @@ getrusage(int who, struct rusage * rusage)
 	rusage->ru_stime.tv_usec = TICK_TO_USEC(u, tick_rate);
 	return (0);
 }
-
-#endif
-
-#if 0							/* this is for hpux port ... how does
-								 * compiler define? */
-getrusage(int who, struct rusage * ru)
-{
-	return (syscall(SYS_GETRUSAGE, who, ru));
-}
-
-#endif
