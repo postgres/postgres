@@ -3,15 +3,15 @@
 
  <para>
   Managing database users and their privileges is in concept similar
-  to that of Unix operating systems, but then again not identical
-  enough to not warrant explanation.
+  to managing users of a Unix operating system, but the details are not
+  identical.
  </para>
 
  <sect1 id="database-users">
   <title>Database Users</title>
 
   <para>
-   Database users are conceptually completely separate from any
+   Database users are conceptually completely separate from
    operating system users. In practice it might be convenient to
    maintain a correspondence, but this is not required. Database user
    names are global across a database cluster installation (and not
@@ -28,7 +28,7 @@ CREATE USER <replaceable>name</replaceable>
 
   <para>
    For convenience, the shell scripts <filename>createuser</filename>
-   and <filename>dropuser</filename> are wrappers around these SQL
+   and <filename>dropuser</filename> are provided as wrappers around these SQL
    commands.
   </para>
 
@@ -39,8 +39,8 @@ CREATE USER <replaceable>name</replaceable>
    <command>initdb</command>) it will have the same name as the
    operating system user that initialized the area (and is presumably
    being used as the user that runs the server). Customarily, this user
-   will be called <systemitem>postgres</systemitem>. In order to create more
-   users you have to first connect as this initial user.
+   will be named <systemitem>postgres</systemitem>. In order to create more
+   users you first have to connect as this initial user.
   </para>
 
   <para>
@@ -53,7 +53,7 @@ CREATE USER <replaceable>name</replaceable>
    determined by the client authentication setup, as explained in
    <xref linkend="client-authentication">. (Thus, a client is not
    necessarily limited to connect as the user with the same name as
-   its operating system user in the same way a person is not
+   its operating system user, in the same way a person is not
    constrained in its login name by her real name.)
   </para>
 
@@ -94,15 +94,17 @@ CREATE USER <replaceable>name</replaceable>
       <listitem>
        <para>
         A password is only significant if password authentication is
-        used for client authentication. Database passwords a separate
-        from any operating system passwords. Specify a password upon
-        user creating as in <literal>CREATE USER name WITH PASSWORD
+        used for client authentication. Database passwords are separate
+        from operating system passwords. Specify a password upon
+        user creation with <literal>CREATE USER name PASSWORD
         'string'</literal>.
        </para>
       </listitem>
      </varlistentry>
     </variablelist>
 
+    A user's attributes can be modified after creation with
+    <command>ALTER USER</command>.
     See the reference pages for <command>CREATE USER</command> and
     <command>ALTER USER</command> for details.
    </para>
@@ -113,12 +115,13 @@ CREATE USER <replaceable>name</replaceable>
   <title>Groups</title>
 
   <para>
-   As in Unix, groups are a way of logically grouping users. To create
-   a group, use
+   As in Unix, groups are a way of logically grouping users to ease
+   management of permissions: permissions can be granted to, or revoked
+   from, a group as a whole.  To create a group, use
 <synopsis>
 CREATE GROUP <replaceable>name</replaceable>
 </synopsis>
-   To add users to or remove users from a group, respectively, user
+   To add users to or remove users from a group, use
 <synopsis>
 ALTER GROUP <replaceable>name</replaceable> ADD USER <replaceable>uname1</replaceable>, ...
 ALTER GROUP <replaceable>name</replaceable> DROP USER <replaceable>uname1</replaceable>, ...
@@ -158,7 +161,7 @@ GRANT SELECT ON accounts TO GROUP staff;
 </programlisting>
    The special <quote>user</quote> name <literal>PUBLIC</literal> can
    be used to grant a privilege to every user on the system. Using
-   <literal>ALL</literal> in place of a privilege specifies that all
+   <literal>ALL</literal> in place of a specific privilege specifies that all
    privileges will be granted.
   </para>
 
@@ -168,8 +171,8 @@ GRANT SELECT ON accounts TO GROUP staff;
 <programlisting>
 REVOKE ALL ON accounts FROM PUBLIC;
 </programlisting>
-   The set of privileges held by the table owner is always implicit
-   and cannot be revoked.
+   The special privileges of the table owner are always implicit
+   and cannot be granted or revoked.
   </para>
  </sect1>
 
