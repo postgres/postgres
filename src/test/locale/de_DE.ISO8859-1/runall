@@ -1,0 +1,67 @@
+#! /bin/sh
+
+PATH=..:$PATH
+
+echo "Testing PostgreSQL compilation..."
+if ! test-pgsql-locale; then
+   exit 1
+fi
+
+LC_CTYPE=de_DE.ISO8859-1
+LC_COLLATE=$LC_CTYPE
+export LC_CTYPE LC_COLLATE
+
+echo "Testing LC_CTYPE..."
+if ! test-ctype > de-ctype.out; then
+   exit 1
+fi
+diff expected/de-ctype.out de-ctype.out
+
+echo "Testing LC_COLLATE..."
+perl ../sort-test.pl test-de-sort.in > test-de-sort.out
+diff expected/test-de-sort.out test-de-sort.out
+
+### If you have Python - uncomment the following two lines
+#python ../sort-test.py test-de-sort.in > test-de-sort.out
+#diff expected/test-de-sort.out test-de-sort.out
+
+abort() {
+   [ "$1" ] && echo "$*"
+   exit 1
+}
+
+for f in char varchar text; do
+   if echo $f | grep -q char; then
+      ftype="$f(30)"
+   else
+      ftype="$f"
+   fi
+   echo "Testing PgSQL: sort on $ftype type..."
+
+   dropdb testlocale >/dev/null 2>&1
+   createdb testlocale || abort "createdb failed"
+   psql -d testlocale -c "CREATE TABLE wordlist (name_en char(20), name_de $ftype);"  >/dev/null 2>&1 || abort "createtable failed"
+   psql testlocale < test-de.sql.in > test-de-$f.sql.out 2>/dev/null || abort "test query failed"
+   diff expected/test-de-$f.sql.out test-de-$f.sql.out
+done
+
+for f in char varchar text; do
+   if echo $f | grep -q char; then
+      ftype="$f(30)"
+   else
+      ftype="$f"
+   fi
+   echo "Testing PgSQL: upper () on $ftype type..."
+
+   dropdb testlocale >/dev/null 2>&1
+   createdb testlocale || abort "createdb failed"
+   psql -d testlocale -c "CREATE TABLE wordlist (name_en char(20), name_de $ftype);"  >/dev/null 2>&1 || abort "createtable failed"
+   psql testlocale < test-de-upper.sql.in > test-de-upper-$f.sql.out 2>/dev/null || abort "test query failed"
+   diff expected/test-de-upper-$f.sql.out test-de-upper-$f.sql.out
+done
+
+echo "Testing PgSQL: select on regexp..."
+psql testlocale < test-de-select.sql.in > test-de-select.sql.out 2>/dev/null || abort "select query failed"
+diff expected/test-de-select.sql.out test-de-select.sql.out
+dropdb testlocale || abort "dropdb failed"
+echo "Finished."
