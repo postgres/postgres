@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/contrib/Makefile,v 1.35 2002/08/17 04:06:48 tgl Exp $
+# $Header: /cvsroot/pgsql/contrib/Makefile,v 1.36 2002/08/30 01:44:00 tgl Exp $
 
 subdir = contrib
 top_builddir = ..
@@ -17,6 +17,7 @@ WANTED_DIRS = \
 		findoidjoins	\
 		fulltextindex	\
 		fuzzystrmatch	\
+		intagg		\
 		intarray	\
 		isbn_issn	\
 		lo		\
