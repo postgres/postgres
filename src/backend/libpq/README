@@ -1,0 +1,446 @@
+Date: Wed, 18 Feb 1998 19:44:52 +0000
+From: Phil Thompson <phil@river-bank.demon.co.uk>
+To: "Thomas G. Lockhart" <lockhart@alumni.caltech.edu>
+Subject: [DOCS] Re: [HACKERS] Frontend/Backend Protocol
+
+1. Introduction
+
+This document describes V1.0 of the protocol used between PostgreSQL frontends
+and backends.  It is a message based protocol running over TCP.  V6.3 of
+PostgreSQL introduced version numbers into the protocol.  This was done in such
+a way as to still allow connections from earlier versions of frontends, but
+this document does not cover the protocol used by those earlier versions.
+
+This document does not cover how different frontend interfaces may use the
+protocol to implement certain features, eg. the way in which libpq passes
+certain environment variables after the connection is established.
+
+
+2. Overview
+
+The three major components are the frontend (running on the client) and the
+postmaster and backend (running on the server).  The postmaster and backend
+have different roles but may be implemented by the same executable.
+
+A frontend sends a startup packet to the postmaster.  This includes the names
+of the user and the database the user wants to connect to.  The postmaster then
+uses this, and the information in the pg_hba.conf(5) file to determine what
+further authentication information it requires the frontend to send (if any)
+and responds to the frontend accordingly.
+
+The frontend then sends any required authentication information.  Once the
+postmaster validates this it responds to the frontend that it is authenticated
+and hands over to a backend.
+
+Subsequent communications are query and result packets exchanged between the
+frontend and the backend.  The postmaster takes no further part in the
+communication.
+
+When the frontend wishes to disconnect it sends an appropriate packet and
+closes the connection without waiting for a response for the backend.
+
+Packets are sent as a data stream.  The first byte determines what should be
+expected in the rest of the packet.  The exception is packets send from a
+frontend to the postmaster, which comprise a packet length then the packet
+itself.  The difference is historical.
+
+
+3. Protocol
+
+This section describes the message flow.  There are four different types of
+flows depending on the state of the connection.
+
+3.1 Authentication
+
+The frontend sends a StartupPacket.  The postmaster uses this and the contents
+of the pg_hba.conf(5) file to determine what authentication method the frontend
+must use.  The postmaster then responds with one of the following messages.
+
+	ErrorResponse
+		The postmaster then immediately closes the connection.
+
+	AuthenticationOk
+		The postmaster then hands over to the backend.  The postmaster
+		takes no further part in the communication.
+
+	AuthenticationKerberosV4
+		The frontend must then take part in a Kerberos V4
+		authentication dialog (not described here) with the postmaster.
+		If this is succesful, the postmaster responds with an
+		AuthenticationOk, otherwise it responds with an ErrorResponse.
+
+	AuthenticationKerberosV5
+		The frontend must then take part in a Kerberos V5
+		authentication dialog (not described here) with the postmaster.
+		If this is succesful, the postmaster responds with an
+		AuthenticationOk, otherwise it responds with an ErrorResponse.
+
+	AuthenticationUnencryptedPassword
+		The frontend must then send an UnencryptedPasswordPacket.
+		If this is the correct password, the postmaster responds with
+		an AuthenticationOk, otherwise it responds with an
+		ErrorResponse.
+
+	AuthenticationEncryptedPassword
+		The frontend must then send an EncryptedPasswordPacket.
+		If this is the correct password, the postmaster responds with
+		an AuthenticationOk, otherwise it responds with an
+		ErrorResponse.
+
+If the frontend does not support the authentication method requested by the
+postmaster, then it should immediately close the connection.
+
+3.2 Query
+
+The frontend sends a Query message to the backend.  The response sent by the
+backend depends on the contents of the query.  The possible responses are as
+follows.
+
+	CompletedResponse
+		The query completed normally.
+
+	CopyInResponse
+		The backend is ready to copy data from the frontend to a
+		relation.  The frontend should then send a CopyDataRows
+		message.  The backend will then respond with a
+		CompletedResponse message with a tag of "COPY".
+
+	CopyOutResponse
+		The backend is ready to copy data from a relation to the
+		frontend.  It then sends a CopyDataRows message, and then a
+		CompletedResponse message with a tag of "COPY".
+
+	CursorResponse
+		The query was either an insert(l), delete(l), update(l),
+		fetch(l) or a select(l) command.  If the transaction has been
+		aborted then the backend sends a CompletedResponse message with
+		a tag of "*ABORT STATE*".  Otherwise the following responses
+		are sent.
+
+		For an insert(l) command, the backend then sends a
+		CompletedResponse message with a tag of "INSERT <oid> <rows>"
+		where <rows> is the number of rows inserted, and <oid> is the
+		object ID of the inserted row if <rows> is 1, otherwise <oid>
+		is 0.
+
+		For a delete(l) command, the backend then sends a
+		CompletedResponse message with a tag of "DELETE <rows>" where
+		<rows> is the number of rows deleted.
+
+		For an update(l) command, the backend then sends a
+		CompletedResponse message with a tag of "UPDATE <rows>" where
+		<rows> is the number of rows deleted.
+
+		For a fetch(l) or select(l) command, the backend sends a
+		RowDescription message.  This is then followed by an AsciiRow
+		or BinaryRow message (depending on if a binary cursor was
+		specified) for each row being returned to the frontend.
+		Finally, the backend sends a CompletedResponse message with a
+		tag of "SELECT".
+
+	EmptyQueryResponse
+		The query was empty.
+
+	ErrorResponse
+		An error has occured.
+
+	NoticeResponse
+		A warning message has been issued in relation to the query.
+		Notices are in addition to other responses, ie. the backend
+		will send another response message immediately afterwards.
+
+	NotificationResponse
+		A notify(l) command has been executed for a relation for
+		which a previous listen(l) command was executed.  Notifications
+		are in addition to other responses, ie. the backend will send
+		another response message immediately afterwards.
+
+A frontend must be prepared to accept ErrorResponse and NoticeResponse
+messages whenever it is expecting any other type of message.
+
+3.3 Function Call
+
+The frontend sends a FunctionCall message to the backend.  The response sent by
+the backend depends on the result of the function call.  The possible responses
+are as follows.
+
+	ErrorResponse
+		An error has occured.
+
+	FunctionResultResponse
+		The function call was executed and returned a result.
+
+	FunctionVoidResponse
+		The function call was executed and returned no result.
+
+	NoticeResponse
+		A warning message has been issued in relation to the function
+		call.  Notices are in addition to other responses, ie. the
+		backend will send another response message immediately
+		afterwards.
+
+A frontend must be prepared to accept ErrorResponse and NoticeResponse
+messages whenever it is expecting any other type of message.
+
+3.4 Termination
+
+The frontend sends a Terminate message and immediately closes the connection.
+On receipt of the message, the backend immediately closes the connection and
+terminates.
+
+
+4. Message Data Types
+
+This section describes the base data types used in messages.
+
+	Int<n>(i)
+		An <n> bit integer in network byte order.  If i is specified it
+		is the literal value.  Eg. Int16, Int32(42).
+
+	LimString<n>(s)
+		A character array of exactly <n> bytes interpreted as a '\0'
+		terminated string.  The '\0' is omitted if there is
+		insufficient room.  If s is specified it is the literal value.
+		Eg. LimString32, LimString64("user").
+
+	String(s)
+		A conventional C '\0' terminated string with no length
+		limitation.  A frontend should always read the full string
+		even though it may have to discard characters if it's buffers
+		aren't big enough.  If s is specified it is the literal value.
+		Eg. String, String("user").
+
+	Byte<n>(c)
+		Exactly <n> bytes.  If c is specified it is the literal
+		value.  Eg. Byte, Byte1('\n').
+
+
+5. Messages Formats
+
+This section describes the detailed format of each message.  Each can be sent
+by either a frontend (F), a postmaster/backend (B), or both (F & B).
+
+AsciiRow (B)
+	Byte1('D')
+		Identifies the message, in the context in which it is sent (see
+		CopyInResponse), as an ASCII row.
+	Byte<n>
+		A bit map with one bit for each field in the row.  The 1st
+		field corresponds to bit 7 of the 1st byte, the 2nd field
+		corresponds to bit 6 of the 1st byte, the 8th field corresponds
+		to bit 0 of the 1st byte, the 9th field corresponds to bit 8 of
+		the 2nd byte, and so on.  The bit is set if the value of the
+		corresponding field is not NULL.
+
+	Then, for each field, there is the following.
+		Int32
+			Specifies the size of the value of the field, including
+			this size.
+		Byte<n>
+			Specifies the value of the field itself in ASCII
+			characters.  <n> is the above size minus 4.
+
+AuthenticationOk (B)
+	Byte1('R')
+		Identifies the message as an authentication request.
+	Int32(0)
+		Specifies that the authentication was succesful.
+
+AuthenticationKerberosV4 (B)
+	Byte1('R')
+		Identifies the message as an authentication request.
+	Int32(1)
+		Specifies that Kerberos V4 authentication is required.
+
+AuthenticationKerberosV5 (B)
+	Byte1('R')
+		Identifies the message as an authentication request.
+	Int32(2)
+		Specifies that Kerberos V5 authentication is required.
+
+AuthenticationUnencryptedPassword (B)
+	Byte1('R')
+		Identifies the message as an authentication request.
+	Int32(3)
+		Specifies that an unencrypted password is required.
+
+AuthenticationEncryptedPassword (B)
+	Byte1('R')
+		Identifies the message as an authentication request.
+	Int32(4)
+		Specifies that an encrypted password is required.
+	Byte2
+		The salt to use when encrypting the password.
+
+BinaryRow (B)
+	Byte1('B')
+		Identifies the message, in the context in which it is sent (see
+		CopyOutResponse), as a binary row.
+	Byte<n>
+		A bit map with one bit for each field in the row.  The 1st
+		field corresponds to bit 7 of the 1st byte, the 2nd field
+		corresponds to bit 6 of the 1st byte, the 8th field corresponds
+		to bit 0 of the 1st byte, the 9th field corresponds to bit 8 of
+		the 2nd byte, and so on.  The bit is set if the value of the
+		corresponding field is not NULL.
+
+	Then, for each field, there is the following.
+		Int32
+			Specifies the size of the value of the field, excluding
+			this size.
+		Byte<n>
+			Specifies the value of the field itself in binary
+			format.  <n> is the above size.
+
+CompletedResponse (B)
+	Byte1('C')
+		Identifies the message as a completed response.
+	String
+		The command tag.  This is usually (but not always) a single
+		word that identifies which SQL command was completed.
+
+CopyDataRows (B & F)
+	This is a stream of rows where each row is terminated by a Char1('\n').
+	This is then followed by the sequence Char1('\\'), Char1('.'),
+	Char1('\n').
+
+CopyInResponse (B)
+	Byte1('D')
+		Identifies the message, in the context in which it is sent (see
+		AsciiRow), as a copy in started response.
+
+CopyOutResponse (B)
+	Byte1('B')
+		Identifies the message, in the context in which it is sent (see
+		BinaryRow), as a copy out started response.
+
+CursorResponse (B)
+	Byte1('P')
+		Identifies the message as a cursor response.
+	String
+		The name of the cursor.  This will be "blank" if the cursor is
+		implicit.
+
+EmptyQueryResponse (B)
+	Byte1('I')
+		Identifies the message as an empty query response.
+	String("")
+		Unused.
+
+EncryptedPasswordPacket (F)
+	Int32
+		The size of the packet in bytes.
+	String
+		The encrypted (using crypt()) password.
+
+ErrorResponse (B)
+	Byte1('E')
+		Identifies the message as an error.
+	String
+		The error message itself.
+
+FunctionCall (F)
+	Byte1('F')
+		Identifies the message as a function call.
+	String("")
+		Unused.
+	Int32
+		Specifies the object ID of the function to call.
+	Int32
+		Specifies the number of arguments being supplied to the
+		function.
+
+	Then, for each argument, there is the following.
+		Int32
+			Specifies the size of the value of the argument,
+			excluding this size.
+		Byte<n>
+			Specifies the value of the field itself in binary
+			format.  <n> is the above size.
+
+FunctionResultResponse (B)
+	Byte1('V')
+		Identifies the message as a function call result.
+	Byte1('G')
+		Specifies that an actual result was returned.
+	Int32
+		Specifies the size of the value of the result, excluding this
+		size.
+	Byte<n>
+		Specifies the value of the result itself in binary format.
+		<n> is the above size.
+	Byte1('0')
+		Unused.  (Strictly speaking, FunctionResultResponse and
+		FunctionVoidResponse are the same thing but with some optional
+		parts to the message.)
+
+FunctionVoidResponse (B)
+	Byte1('V')
+		Identifies the message as a function call result.
+	Byte1('0')
+		Specifies that no actual result was returned.
+
+NoticeResponse (B)
+	Byte1('N')
+		Identifies the message as a notice.
+	String
+		The notice message itself.
+
+NotificationResponse (B)
+	Byte1('A')
+		Identifies the message as a notification response.
+	Int32
+		The process ID of the backend process.
+	String
+		The name of the relation that the notify has been raised on.
+
+Query (F)
+	Byte1('Q')
+		Identifies the message as query.
+	String
+		The query itself.
+
+RowDescription (B)
+	Byte1('T')
+		Identifies the message as a row description.
+	Int16
+		Specifies the number of fields in a row (and may be zero).
+
+	Then, for each field, there is the following.
+		String
+			Specifies the field name.
+		Int32
+			Specifies the object ID of the field type.
+		Int16
+			Specifies the type size.
+
+StartupPacket (F)
+	Int32(296)
+		The size of the packet in bytes.
+	Int32
+		The protocol version number.  The most significant 16 bits are
+		the major version number.  The least 16 significant bits are
+		the minor version number.
+	LimString64
+		The database name, defaults to the user name if omitted.
+	LimString32
+		The user name.
+	LimString64
+		Any additional command line arguments to be passed to the
+		backend by the postmaster.
+	LimString64
+		Unused.
+	LimString64
+		The optional tty the backend should use for debugging messages.
+
+Terminate (F)
+	Byte1('X')
+		Identifies the message as a termination.
+
+UnencryptedPasswordPacket (F)
+	Int32
+		The size of the packet in bytes.
+	String
+		The unencrypted password.
+
+--------------1B9BA35856C95E22453E911A--

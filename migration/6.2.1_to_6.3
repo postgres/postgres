@@ -1,5 +1,10 @@
 This migration requires a complete dump of the 6.2 or 6.2.1 database and a
 restore of the database in 6.3.
 
+In addition, 6.3 has separate permissions for views, rather than relying
+on the permissions set on the underlying tables.  For this reason, you will
+have to set permissions on your views if you want anything but the default
+permissions.
+
 Those migrating from earlier 1.* releases should first upgrade to 1.09
 because the COPY output format was improved from the 1.02 release.
