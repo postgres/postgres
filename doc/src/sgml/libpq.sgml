@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.61 2001/04/30 22:21:22 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.62 2001/05/01 10:48:57 petere Exp $
 -->
 
  <chapter id="libpq">
@@ -696,6 +696,8 @@ SSL *PQgetssl(const PGconn *conn);
 Once a connection to a database server has been successfully
 established, the functions described here are used to perform
 SQL queries and commands.
+</para>
+
 <sect2 id="libpq-exec-main">
   <title>Main Routines</title>
 <itemizedlist>
@@ -731,6 +733,7 @@ definition of struct PGresult is not even provided in libpq-fe.h.  If you
 have old code that accesses PGresult fields directly, you can keep using it
 by including libpq-int.h too, but you are encouraged to fix the code
 soon.)
+</para>
 
 <itemizedlist>
 <listitem>
