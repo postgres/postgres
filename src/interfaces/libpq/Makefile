@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.43 2000/10/17 17:43:13 petere Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.44 2000/10/20 03:45:35 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -17,7 +17,7 @@ NAME= pq
 SO_MAJOR_VERSION= 2
 SO_MINOR_VERSION= 1
 
-override CFLAGS += -DFRONTEND -I$(srcdir) -DSYSCONFDIR='"$(sysconfdir)"'
+CFLAGS += -DFRONTEND -I$(srcdir) -DSYSCONFDIR='"$(sysconfdir)"'
 
 OBJS= fe-auth.o fe-connect.o fe-exec.o fe-misc.o fe-print.o fe-lobj.o \
       pqexpbuffer.o dllist.o pqsignal.o $(SNPRINTF) $(INET_ATON)
