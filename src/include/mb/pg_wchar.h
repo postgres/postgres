@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/include/mb/pg_wchar.h,v 1.52 2004/09/17 21:59:57 petere Exp $ */
+/* $PostgreSQL: pgsql/src/include/mb/pg_wchar.h,v 1.53 2004/12/02 22:14:38 momjian Exp $ */
 
 #ifndef PG_WCHAR_H
 #define PG_WCHAR_H
@@ -178,6 +178,7 @@ typedef enum pg_enc
 	PG_ISO_8859_7,				/* ISO-8859-7 */
 	PG_ISO_8859_8,				/* ISO-8859-8 */
 	PG_WIN1250,					/* windows-1250 */
+	PG_WIN1252,					/* windows-1252 */
 
 	/* followings are for client encoding only */
 	PG_SJIS,					/* Shift JIS (Winindows-932) */
