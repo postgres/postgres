@@ -1,0 +1,90 @@
+.pgaw:Help.f.t insert end "CREATE AGGREGATE" {bold} " allows a user or programmer to extend Postgres functionality by defining new aggregate functions. Some aggregate functions for base types such as \
+min\(int4\) and avg(float8) are already provided in the base distribution. If one defines new types or needs an aggregate function not already provided then CREATE AGGREGATE can be used to provide \
+the desired features. 
+
+An aggregate function can require up to three functions, two state transition functions, sfunc1 and sfunc2: 
+    sfunc1( internal-state1, next-data_item ) ---> next-internal-state1
+    sfunc2( internal-state2 ) ---> next-internal-state2   
+
+and a final calculation function, ffunc: 
+
+    ffunc(internal-state1, internal-state2) ---> aggregate-value   
+
+Postgres creates up to two temporary variables (referred to here as temp1 and temp2) to hold intermediate results used as arguments to the transition functions. 
+
+These transition functions are required to have the following properties: 
+
+       The arguments to sfunc1 must be temp1 of type sfunc1_return_type and column_value of type data_type. The return value must be of type sfunc1_return_type and will be used as
+       the first argument in the next call to sfunc1. 
+
+       The argument and return value of sfunc2 must be temp2 of type sfunc2_return_type. 
+
+       The arguments to the final-calculation-function must be temp1 and temp2 and its return value must be a Postgres base type (not necessarily data_type which had been specified for
+       BASETYPE). 
+
+       FINALFUNC should be specified if and only if both state-transition functions are specified. 
+
+An aggregate function may also require one or two initial conditions, one for each transition function. These are specified and stored in the database as fields of type text. 
+
+" {} "Synopsis" {bold} "
+" {} "
+CREATE AGGREGATE name \[ AS \]
+    ( BASETYPE    = data_type
+    \[ , SFUNC1    = sfunc1
+      , STYPE1    = sfunc1_return_type \]
+    \[ , SFUNC2    = sfunc2
+      , STYPE2    = sfunc2_return_type \]
+    \[ , FINALFUNC = ffunc \]
+    \[ , INITCOND1 = initial_condition1 \]
+    \[ , INITCOND2 = initial_condition2 \]
+    )
+
+" {code} "Inputs" {bold} "
+
+" {} "name" {italic} "
+       The name of an aggregate function to create. 
+
+" {} "data_type" {italic} "
+       The fundamental data type on which this aggregate function operates. 
+
+" {} "sfunc1" {italic} "
+       The state transition function to be called for every non-NULL field from the source column. It takes a variable of type sfunc1_return_type as the first argument and that field as the
+       second argument. 
+
+" {} "sfunc1_return_type" {italic} "
+       The return type of the first transition function. 
+
+" {} "sfunc2" {italic} "
+       The state transition function to be called for every non-NULL field from the source column. It takes a variable of type sfunc2_return_type as the only argument and returns a variable
+       of the same type. 
+
+" {} "sfunc2_return_type" {italic} "
+       The return type of the second transition function. 
+
+" {} "ffunc" {italic} "
+       The final function called after traversing all input fields. This function must take two arguments of types sfunc1_return_type and sfunc2_return_type. 
+
+" {} "initial_condition1" {italic} "
+       The initial value for the first transition function argument. 
+
+" {} "initial_condition2" {italic} "
+       The initial value for the second transition function argument. 
+
+" {} "Outputs" {bold} "
+
+" {} "CREATE" {italic} "
+
+       Message returned if the command completes successfully.
+
+" {} "Usage" {bold} "
+
+Refer to the chapter on aggregate functions in the PostgreSQL Programmer's Guide on aggregate functions for complete examples of usage. 
+
+" {} "Notes" {bold} "
+
+Use " {} "DROP AGGREGATE" {bold} " to drop aggregate functions. 
+
+It is possible to specify aggregate functions that have varying combinations of state and final functions. For example, the count aggregate requires SFUNC2 (an incrementing function) but not \
+SFUNC1 or FINALFUNC, whereas the sum aggregate requires SFUNC1 (an addition function) but not SFUNC2 or FINALFUNC and the avg aggregate requires both of the above state \
+functions as well as a FINALFUNC (a division function) to produce its answer. In any case, at least one state function must be defined, and any SFUNC2 must have a corresponding \
+INITCOND2."

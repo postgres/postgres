@@ -1,0 +1,48 @@
+.pgaw:Help.f.t configure -tabs {130 300 450}
+.pgaw:Help.f.t insert end \
+"Data types\n\n" {title} \
+"Postgres has a rich set of native data types available to users. Users may add new types to Postgres using the DEFINE TYPE command described elsewhere. 
+
+In the context of data types, the following sections will discuss SQL standards compliance, porting issues, and usage. Some Postgres types correspond directly to SQL92-compatible types. In other cases, data types defined by SQL92 syntax are mapped directly into native Postgres types. Many of the built-in types have obvious external formats. However, several types are either unique to Postgres, such as open and closed paths, or have several possibilities for formats, such as the date and time types. 
+
+" {} \
+"Postgres Type\tSQL92 or SQL3 Type\tDescription\n" {bold} \
+"bool\tboolean\tlogical boolean (true/false)
+box\t\trectangular box in 2D plane\tchar(n)
+character(n)\t\tfixed-length character string
+cidr\t\tIP version 4 network or host address
+circle\t\tcircle in 2D plane
+date\tdate\tcalendar date without time of day
+float4/8\tfloat(p)\tfloating-point number with precision p
+float8\treal, double precision\tdouble-precision floating-point number
+inet\t\tIP version 4 network or host address
+int2\tsmallint\tsigned two-byte integer
+int4\tint, integer\tsigned 4-byte integer
+int4\tdecimal(p,s)\texact numeric for p <= 9, s = 0
+int4\tnumeric(p,s)\texact numeric for p == 9, s = 0
+int8\t\tsigned 8-byte integer
+line\t\tinfinite line in 2D plane
+lseg\t\tline segment in 2D plane
+money\tdecimal(9,2)\tUS-style currency
+path\t\topen and closed geometric path in 2D plane
+point\t\tgeometric point in 2D plane
+polygon\t\tclosed geometric path in 2D plane
+serial\t\tunique id for indexing and cross-reference
+time\ttime\ttime of day
+timespan\tinterval\tgeneral-use time span
+timestamp\ttimestamp with time zone\tdate/time
+varchar(n)\tcharacter varying(n)\tvariable-length character string
+
+Note:  The cidr and inet types are designed to handle any IP type but only ipv4 is handled in the current implementation. Everything here that talks about ipv4 will apply to ipv6 in a future release.
+
+" {} \
+"Postgres Function Constants
+
+Postgres Function\tSQL92 Constant\tDescription" {bold} \
+"
+getpgusername()\tcurrent_user\tuser name in current session
+date('now')\tcurrent_date\tdate of current transaction
+time('now')\tcurrent_time\ttime of current transaction
+timestamp('now')\tcurrent_timestamp\tdate and time of current transaction
+" {}
+

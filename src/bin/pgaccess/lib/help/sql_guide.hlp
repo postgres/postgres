@@ -1,0 +1,62 @@
+.pgaw:Help.f.t configure -tabs {170 400}
+.pgaw:Help.f.t insert end \
+"SQL guide\n" {title} \
+"
+" {} "ABORT" {link abort} "	Aborts the current transaction
+" {} "ALTER TABLE" {link alter_table} "	Modifies table properties
+" {} "ALTER USER" {link alter_user} "	Modifies user account information 
+" {} "BEGIN" {link begin} "	Begins a transaction in chained mode 
+" {} "CLOSE" {link close} "	Close a cursor 
+" {} "CLUSTER" {link cluster} "	Gives storage clustering advice to the backend 
+" {} "COMMIT" {link commit} "	Commits the current transaction 
+" {} "COPY" {link copy} "	Copies data between files and tables 
+" {} "CREATE AGGREGATE" {link create_aggregate} "	Defines a new aggregate function 
+" {} "CREATE DATABASE" {link create_database} "	Creates a new database 
+" {} "CREATE FUNCTION" {link create_function} "	Defines a new function 
+" {} "CREATE INDEX" {link create_index} "	Constructs a secondary index 
+" {} "CREATE LANGUAGE" {link create_language} "	Defines a new language for functions 
+" {} "CREATE OPERATOR" {link create_operator} "	Defines a new user operator 
+" {} "CREATE RULE" {link create_rule} "	Defines a new rule 
+" {} "CREATE SEQUENCE" {link create_sequence} "	Creates a new sequence number generator 
+" {} \
+"CREATE TABLE" {link create_table} "	Creates a new table 
+" {} "CREATE TABLE AS" {link create_table_as} "	Creates a new table 
+" {} "CREATE TRIGGER" {link create_trigger} "	Creates a new trigger 
+" {} "CREATE TYPE" {link create_type} "	Defines a new base data type 
+" {} "CREATE USER" {link create_user} "	Creates account information for a new user 
+" {} "CREATE VIEW" {link create_view} "	Constructs a virtual table 
+" {} "DECLARE" {link declare} "	Defines a cursor for table access 
+" {} "DELETE" {link delete} "	Deletes rows from a table 
+" {} "DROP AGGREGATE" {link drop_aggregate} "	Removes the definition of an aggregate function 
+" {} "DROP DATABASE" {link drop_database} "	Destroys an existing database 
+" {} "DROP FUNCTION" {link drop_function} "	Removes a user-defined C function 
+" {} "DROP INDEX" {link drop_index} "	Removes an index from a database 
+" {} "DROP LANGUAGE" {link drop_language} "	Removes a user-defined procedural language 
+" {} "DROP OPERATOR" {link drop_operator} "	Removes an operator from the database 
+" {} "DROP RULE" {link drop_rule} "	Removes an existing rule from the database 
+" {} "DROP SEQUENCE" {link drop_sequence} "	Removes an existing sequence 
+" {} "DROP TABLE" {link drop_table} "	Removes existing tables from a database 
+" {} "DROP TRIGGER" {link drop_trigger} "	Removes the definition of a trigger 
+" {} "DROP TYPE" {link drop_type} "	Removes a user-defined type from the system catalogs 
+" {} "DROP USER" {link drop_user} "	Removes an user account information 
+" {} "DROP VIEW" {link drop_view} "	Removes an existing view from a database 
+" {} "EXPLAIN" {link explain} "	Shows statement execution details
+" {} "FETCH" {link fetch} "	Gets rows using a cursor
+" {} "GRANT" {link grant} "	Grants access privilege to a user, a group or all users 
+" {} "INSERT" {link insert} "	Inserts new rows into a table
+" {} "LISTEN" {link listen} "	Listen for notification on a notify condition
+" {} "LOAD" {link load} "	Dynamically loads an object file 
+" {} "LOCK" {link lock} "	Explicit lock of a table inside a transaction 
+" {} "MOVE" {link move} "	Moves cursor position
+" {} "NOTIFY" {link notify} "	Signals all frontends and backends listening on a notify condition
+" {} "RESET" {link reset} "	Restores run-time parameters for session to default values 
+" {} "REVOKE" {link revoke} "	Revokes access privilege from a user, a group or all users. 
+" {} "ROLLBACK" {link rollback} "	Aborts the current transaction 
+" {} "SELECT" {link select} "	Retrieve rows from a table or view. 
+" {} "SELECT INTO" {link select_into} "	Create a new table from an existing table or view 
+" {} "SET" {link set} "	Set run-time parameters for session 
+" {} "SHOW" {link show} "	Shows run-time parameters for session 
+" {} "UNLISTEN" {link unlisten} "	Stop listening for notification
+" {} "UPDATE" {link update} "	Replaces values of columns in a table
+" {} "VACUUM" {link vacuum} "	Clean and analyze a Postgres database
+"

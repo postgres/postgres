@@ -1,0 +1,49 @@
+.pgaw:Help.f.t insert end \
+"Inheritance" {title} "
+
+Let's create two classes. The capitals class contains state capitals which are also cities. Naturally, the capitals class should inherit from cities. 
+
+" {} "CREATE TABLE cities (
+	name            text,
+	population      float,
+	altitude        int            -- (in ft)
+	);
+
+CREATE TABLE capitals (
+	state           char2
+	) INHERITS (cities);
+" {code} "
+In this case, an instance of capitals inherits all attributes (name, population, and altitude) from its parent, cities. The type of the attribute name is text, a native Postgres type for variable length ASCII strings. The type of the attribute population is float, a native Postgres type for double precision floating point numbers. State capitals have an extra attribute, state, that shows their state. In Postgres, a class can inherit from zero or more other classes, and a query can reference either all instances of a class or all instances of a class plus all of its descendants. 
+
+" {} "Note" {italic} ": The inheritance hierarchy is a actually a directed acyclic graph.
+
+For example, the following query finds all the cities that are situated at an attitude of 500ft or higher: 
+
+" {} "SELECT name, altitude FROM cities WHERE altitude > 500;
+
++----------+----------+
+|name      | altitude |
++----------+----------+
+|Las Vegas | 2174     |
++----------+----------+
+|Mariposa  | 1953     |
++----------+----------+
+" {code} "
+On the other hand, to find the names of all cities, including state capitals, that are located at an altitude over 500ft, the query is: 
+
+" {} "SELECT c.name, c.altitude	FROM cities* c WHERE c.altitude > 500;
+
+" {code} "which returns:" {} " 
+
++----------+----------+
+|name      | altitude |
++----------+----------+
+|Las Vegas | 2174     |
++----------+----------+
+|Mariposa  | 1953     |
++----------+----------+
+|Madison   | 845      |
++----------+----------+
+" {code} "
+Here the \"*\" after cities indicates that the query should be run over cities and all classes below cities in the inheritance hierarchy. Many of the commands that we have already discussed -- select, update and delete -- support this \"*\" notation, as do others, like alter.
+" {}

@@ -59,6 +59,7 @@ Irix linking fix from Yu Cao <yucao@falcon.kla-tencor.com>
 Repair logic error in LIKE: should not return LIKE_ABORT
    when reach end of pattern before end of text(Tom)
 Repair incorrect cleanup of heap memory allocation during transaction abort(Tom)
+Updated version of pgaccess 0.98
 </programlisting>
 </para>
 </sect2>

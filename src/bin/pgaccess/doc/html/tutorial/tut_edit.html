@@ -1,0 +1,39 @@
+<html><head><title>PgAccess Tutorial</title></head>
+<body bgcolor="#C0C0C0">
+<h1>PgAccess Tutorial - Editing a table</h1>
+<img src="sel_tbl.jpg" border=1 align=right>
+<h2>Adding records</h2>
+Once you have a table, you can begin to add entries to it.  In the main
+PgAccess window, when you click the <em>Tables</em> button, you should see the
+new table appear in the list of tables.  Highlighting the table name by clicking
+on it and clicking on the <em>Open</em> button will open that table in another
+window, as shown below.<p>
+The most straighforward way to add records to a table is to type the information
+directly into the fields.  Two records have been entered in the table shown.  As
+is common with this user interface, clicking the mouse while the pointer is in a 
+field will allow keyboard entry to that field.  This type of entry is adequate
+when the information arrives infrequently in small parcels, for instance in
+keeping a table of contact information about other researchers.  However, what
+do you do when someone emails you the entire reference list for their doctoral
+dissertation?<p>
+This is best handled using the SQL <em>COPY</em> command. 
+First, the information will have to be massaged into shape in what is called a
+'flat' ASCII file.  This is simply a text file in which each line is a record,
+and each field in each record is separated by a <em>delimiter</em> such as a
+tilde (~).  The fields will have to be in the same order as those in your table,
+and there will have to be the same number of fields in each record as are in the
+table, otherwise you may get unexpected data or no data at all.  Say you produce
+a text file named <samp>newref.txt</samp> that starts like this:<p>
+<samp>Cassileth, BR~Unorthodox Cancer Medicine~Cancer Investigation~~1986~4~6~591-598
+<br>...</samp><p>
+Notice that there are two consecutive tildes to allow for the fact that this
+particular entry doesn't have anything in the <b>Editor</b> field.
+You can then perform a <em>Query</em> as follows:<p>
+<samp>COPY psyref FROM '/home/jim/newref.txt' USING DELIMITERS
+'~';</samp><p>
+This will read the records from <samp>newref.txt</samp> and insert them into the
+table <samp>psyref</samp>. See the PostgreSQL documentation under the headings 
+<br><b>Tutorial|The Query Language|Populating a Class with Instances</b><p>
+<img src="addref.jpg" border=1 align=right>
+<a href="index.html#tut">Back to index</a>
+</body></html>

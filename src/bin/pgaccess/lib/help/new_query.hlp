@@ -1,0 +1,22 @@
+.pgaw:Help.f.t insert end \
+"Creating a new query" {bold} "
+
+Select the \"Queries\" tab from the main window and press\
+the \"New\" button.
+
+You will need to enter the query name and the SQL command for the query. If\
+you desire, you could use the " {} "visual query designer" {link visual_designer} "
+
+You can design dynamic queries that can include a parameter that will be\
+provided later at query execution time by using the \[parameter \"message\"\] function\
+as in the following examples :" {} "
+
+select * from people where age <= \[parameter \"Maximum age?\"\]
+select * from invoices where received_date = '\[parameter \"Invoice date?\"\]' " {code} "
+
+Before query execution a popup dialog will be displayed in order to get that\
+parameter and to substitute it in the query command.
+
+Checking the \"save this query as a view\" checkbox will create a new view from\
+the current query.
+"

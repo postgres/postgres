@@ -1,0 +1,27 @@
+.pgaw:Help.f.t insert end "CREATE VIEW" {bold} " will define a view of a table. This view is not physically materialized. Specifically, a query rewrite retrieve rule is automatically generated to support retrieve operations on \
+views. 
+
+" {} "Synopsis" {bold} "
+
+CREATE VIEW view
+    AS SELECT query
+
+" {} "Usage" {bold} "
+
+Create a view consisting of all Comedy films: 
+" {} "
+CREATE VIEW kinds AS
+    SELECT *
+    FROM films
+    WHERE kind = 'Comedy';
+
+SELECT * FROM kinds;
+
+code |title                    |did| date_prod|kind      |len
+-----+-------------------------+---+----------+----------+------
+UA502|Bananas                  |105|1971-07-13|Comedy    | 01:22
+C_701|There's a Girl in my Soup|107|1970-06-11|Comedy    | 01:36
+
+" {code} "Notes" {bold} "
+
+Use the DROP VIEW statement to drop views. "

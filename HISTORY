@@ -103,7 +103,7 @@ Detailed Change List
        when reach end of pattern before end of text(Tom)
        Repair incorrect cleanup of heap memory allocation during transaction
        abort(Tom)
-
+       Updated version of pgaccess 0.98
 
 Release 6.5.1
 

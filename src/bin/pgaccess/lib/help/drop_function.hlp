@@ -1,0 +1,22 @@
+.pgaw:Help.f.t insert end \
+"DROP FUNCTION" {bold} " will remove references to an existing C function. To execute this command the user must be the owner of the function. The input argument types to the function must be specified, as only the function with the given name and argument types will be removed. 
+
+" {} "Synopsis" {bold} "
+
+DROP FUNCTION name ( \[ type \[, ...\] \] )
+" {code} "
+Inputs 
+" {} "name" {italic} "
+	The name of an existing function. 
+
+" {} "type" {italic} "
+	The type of function parameters. 
+
+Outputs 
+" {} "DROP" {code} "
+
+Message returned if the command completes successfully. 
+
+WARN RemoveFunction: Function \"name\" (\"types\") does not exist
+
+This message is given if the function specified does not exist in the current database."

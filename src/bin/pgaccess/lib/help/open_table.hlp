@@ -1,0 +1,19 @@
+.pgaw:Help.f.t insert end \
+"Opening tables for viewing and editing" {bold} "
+
+  Select the \"Tables\" tab from the main window ,select a table from the listbox and click with the mouse on the \"Open\" button. A new table viewer window will be opened showing you the records from that table
+
+" {} "Note:" {italic} " Due to the fact that the records being displayed are kept in memory, only the first 200 records from that table will be displayed. The maximum number of records being displayed can be changed in the Database/Preference dialog.
+
+You can sort and filter the records being displayed. Go to the \"Sort field\" entry and type the name of the field. Add the desc (descending) keyword if you want records to be sorted in reverse order. If you want to sort the records based on multiple fields just separate them with commas
+
+" {} "Example:" {italic} "
+	Sort field: price
+	Sort field: price desc, customer asc
+" {code} "
+If you want to select for display just some records frm that table go to the \"Filter conditions\" entry and specify a filter criteria.
+
+" {} "Example:" {italic} "
+	Filter conditions: (price > 150) and (not sold)
+	" {code} "
+After specifying a sort field or a filter conditions, pres Enter or the \"Reload\" button."

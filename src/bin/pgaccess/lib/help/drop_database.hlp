@@ -1,0 +1,14 @@
+.pgaw:Help.f.t insert end "DROP DATABASE" {bold} " removes the catalog entries for an existing database and deletes the directory containing the data. It can only be executed by the database administrator (See the \
+CREATE DATABASE command for details). 
+
+" {} "Synopsis" {bold} "
+
+DROP DATABASE name
+
+" {} "Notes" {bold} "
+
+DROP DATABASE statement is a Postgres language extension. 
+
+       Tip: This query cannot be executed while connected to the target database. It is usually preferable to use the destroydb script instead. 
+
+Refer to the CREATE DATABASE statement for information on how to create a database. "

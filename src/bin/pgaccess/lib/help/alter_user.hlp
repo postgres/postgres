@@ -1,0 +1,49 @@
+.pgaw:Help.f.t insert end "ALTER USER" {bold} " is used to change the attributes of a user's Postgres account. Please note that \
+it is not possible to alter a user's " {} "usesysid" {bold} " via the alter user statement. Also, it is only possible for \
+the Postgres user or any user with read and modify permissions on " {} "pg_shadow" {bold} " to alter user passwords. \
+If any of the clauses of the alter user statement are omitted, the corresponding value in the " {} "pg_shadow" {bold} " table is left unchanged. \
+
+" {} "Synopsis" {bold} "
+
+ALTER USER username
+    \[ WITH PASSWORD password \]
+    \[ CREATEDB | NOCREATEDB \]
+    \[ CREATEUSER | NOCREATEUSER \]
+    \[ IN GROUP groupname \[, ...\] \]
+    \[ VALID UNTIL 'abstime' \]
+    
+
+" {code} "Inputs" {bold} "
+Refer to CREATE USER for a detailed description of each clause. 
+
+" {} "username" {italic} "
+       The Postgres account name of the user whose details are to be altered. 
+
+" {} "password" {italic} "
+       The new password to be used for this account. 
+
+" {} "groupname" {italic} "
+       The name of an access group into which this account is to be put. 
+
+" {} "abstime" {italic} "
+       The date (and, optionally, the time) at which this user's access is to be terminated. 
+
+" {} "Outputs" {bold} "
+
+" {} "ALTER USER" {italic} "
+       Message returned if the alteration was successful.
+
+" {} "ERROR: alterUser: user 'username' does not exist" {italic} "
+       Error message returned if the user specified doesn't exist.
+
+" {} "Notes" {italic} "
+
+" {} "ALTER USER" {bold} " statement is a Postgres language extension. 
+Refer to CREATE/DROP USER to create or remove a user account. 
+In the current release (v6.5), the IN GROUP clause is parsed but has no affect. When it is fully implemented, it is intended to modify the pg_group relation.
+
+" {} "Compatibility" {bold} "
+
+SQL92 
+There is no ALTER USER statement in SQL92. The standard leaves the definition of users to the \
+implementation." 

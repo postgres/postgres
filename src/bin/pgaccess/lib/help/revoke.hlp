@@ -1,0 +1,49 @@
+.pgaw:Help.f.t insert end "REVOKE" {bold} " allows creator of an object to revoke permissions granted before, from all users (via PUBLIC) or a certain user or group.
+
+" {} "Synopsis" {bold} "
+" {} "
+REVOKE privilege \[, ...\]
+    ON object \[, ...\]
+    FROM \{ PUBLIC | GROUP ER\">gBLE> | username \}
+    
+" {code} "Usage" {bold} "
+
+-- revoke insert privilege from all users on table films:
+--
+" {} "REVOKE INSERT ON films FROM PUBLIC;
+  
+
+" {code} "  
+-- revoke all privileges from user manuel on view kinds:
+--
+" {} "REVOKE ALL ON kinds FROM manuel;
+
+" {code} "Notes" {bold} "
+
+Refer to psql \\z command for further information about permissions on existing objects: 
+" {} "
+Database    = lusitania
++------------------+-------------------------------------------------+
+|  Relation        |            Grant/Revoke Permissions             |
++------------------+-------------------------------------------------+
+| mytable          | \{\"=rw\",\"miriam=arwR\",\"group todos=rw\"\}  |
++------------------+-------------------------------------------------+
+Legend:
+     uname=arwR -- privileges granted to a user
+     group gname=arwR -- privileges granted to a GROUP
+     =arwR -- privileges granted to PUBLIC
+                  
+     r -- SELECT
+     w -- UPDATE/DELETE
+     a -- INSERT
+     R -- RULE
+     arwR -- ALL
+    
+
+       Tip: Currently, to create a GROUP you have to insert data manually into table pg_group as: 
+
+                 
+       INSERT INTO pg_group VALUES ('todos');
+       CREATE USER miriam IN GROUP todos;
+       
+" {code} 

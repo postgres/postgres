@@ -1,0 +1,20 @@
+.pgaw:Help.f.t insert end "CREATE TABLE AS" {bold} " CREATE TABLE AS enables a table to be created from the contents of an existing table. It has functionality equivalent to SELECT TABLE INTO, but with perhaps a more obvious syntax. 
+
+" {} "Synopsis" {bold} "
+" {} "
+CREATE TABLE table \[ (column \[, ...\] ) \]
+     AS select_clause
+
+" {code} "Inputs" {bold} "
+
+" {} "table" {italic} "
+       The name of a new table to be created. 
+
+" {} "column" {italic} "
+       The name of a column. Multiple column names can be specified using a comma-delimited list of column names. 
+
+" {} "select_clause" {italic} "
+       A valid query statement. Refer to SELECT for a description of the allowed syntax. 
+
+" {} "Outputs" {bold} "
+Refer to CREATE TABLE and SELECT for a summary of possible output messages. "

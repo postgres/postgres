@@ -1,0 +1,58 @@
+.pgaw:Help.f.t insert end \
+"DateTime functions\n\n" {title} \
+"abstime(datetime) " {bold} "
+	Returns: abstime 
+	convert to abstime 
+
+" {} "age(datetime,datetime) " {bold} "
+	Returns: timespan 
+	preserve months and years 
+
+" {} "datetime(abstime) " {bold} "
+	Returns: datetime 
+	convert to datetime 
+
+" {} "datetime(date) " {bold} "
+	Returns: datetime 
+	convert to datetime 
+
+" {} "datetime(date,time) " {bold} "
+	Returns: datetime 
+	convert to datetime 
+
+" {} "date_part(text,datetime) " {bold} "
+	Returns: float8 
+	portion of date 
+
+" {} "date_part(text,timespan) " {bold} "
+	Returns: float8 
+	portion of time 
+
+" {} "date_trunc(text,datetime) " {bold} "
+	Returns: datetime 
+	truncate date 
+
+" {} "isfinite(abstime) " {bold} "
+	Returns: bool 
+	a finite time? 
+
+" {} "isfinite(datetime) " {bold} "
+	Returns: bool 
+	a finite time? 
+
+" {} "isfinite(timespan) " {bold} "
+	Returns: bool 
+	a finite time? 
+
+" {} "reltime(timespan) " {bold} "
+	Returns: reltime 
+	convert to reltime 
+
+" {} "timespan(reltime) " {bold} "
+	Returns: timespan 
+	convert to timespan 
+
+
+" {} \
+"PostgreSQL functions\n" {link pgfunctions} \
+"Next - geometric functions" {link geomfunc}

@@ -1,0 +1,40 @@
+.pgaw:Help.f.t insert end "UPDATE" {bold} " changes the values of the columns specified for all rows which satisfy condition. Only the columns to be modified need appear as column. 
+
+Array references use the same syntax found in SELECT. That is, either single array elements, a range of array elements or the entire array may be replaced with a single query. 
+
+You must have write access to the table in order to modify it, as well as read access to any table whose values are mentioned in the WHERE condition. 
+
+" {} "Synopsis" {bold} "
+" {} "
+UPDATE table SET column = expression \[, ...\]
+    \[ FROM fromlist \]
+    \[ WHERE condition \]
+    
+" {code} "Usage" {bold} "
+" {} "
+   --Change word \"Drama\" with \"Dramatic\" on column kind:
+   --
+   UPDATE films 
+      SET kind = 'Dramatic'
+      WHERE kind = 'Drama';
+
+   SELECT * FROM films WHERE kind = 'Dramatic' OR kind = 'Drama';
+
+   code |title        |did| date_prod|kind      |len
+   -----+-------------+---+----------+----------+------
+   BL101|The Third Man|101|1949-12-23|Dramatic  | 01:44
+   P_302|Becket       |103|1964-02-03|Dramatic  | 02:28
+   M_401|War and Peace|104|1967-02-12|Dramatic  | 05:57
+   T_601|Yojimbo      |106|1961-06-16|Dramatic  | 01:50
+   DA101|Das Boot     |110|1981-11-11|Dramatic  | 02:29
+   
+" {code} "Compatibility" {bold} "
+
+SQL92 
+
+SQL92 defines a different syntax for positioned UPDATE statement: 
+" {} "
+   UPDATE table SET column = expression \[, ...\]
+          WHERE CURRENT OF cursor
+        
+" {code} "where cursor identifies an open cursor. "

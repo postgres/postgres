@@ -1,0 +1,12 @@
+.pgaw:Help.f.t insert end \
+"The author of PgAccess\n" {title} \
+"
+   My name is Constantin Teodorescu, I'm 36 years old, I have graduated the Faculty of Computers and Automation Bucharest, ROMANIA, I have a 16 year experience in developing applications in various languages, Pascal, C, C++, Visual Basic, Delphi, Perl , Tcl/Tk and Java for different platforms. Currently working as a manager of a team that works in Unix with Java , SQL databases (Oracle, SYBASE) currently using PostgreSQL database for developing professional client/server multi-platform applications (standalone Java or Tcl/Tk ,Java applets) for different customers and various projects (accounting, invoicing, stock inventory).
+
+   In present I am the technical manager of FLEX Consulting Braila, a computer shop, software company, networking designer and consultant, ISP provider for Braila city. I'm also a columnist in the romanian technical magazine \"PC-Magazine\" and \"BYTE\".
+
+   I have discovered PostgreSQL in 1995 and from the first moment I decided to help it's development writting PgAccess, a graphical interface.
+
+   The work has been done using Visual Tcl, in my opinion the best tool for developing Tcl/Tk projects. Visual Tcl is free, more information at http://www.neuron.com/stewart/vtcl/index.html
+
+   I'm waiting for any suggestions at e-mail address teo@flex.ro"

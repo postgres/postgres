@@ -1,0 +1,7 @@
+.pgaw:Help.f.t insert end \
+"Adding new records to an existing table" {bold} "
+
+  " {} "Open a table for viewing and editing" {link open_table} " and move to the end of the displayed records using the vertical scrollbar. You will find there a single row containing only * characters. Click with the mouse on a field and start edit the new record. Move through the fields using Tab and Shift-Tab.
+  The new record will be saved into the database when you will select another record (or press on the mouse right-button).
+"  
+

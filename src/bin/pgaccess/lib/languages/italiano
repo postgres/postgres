@@ -1,0 +1,539 @@
+array set Messages {
+
+"Label" "Etichetta"
+ 
+"Save schema" "Salva lo schema"
+ 
+"Is unique ?" "E' unico ?"
+ 
+"Report builder" "Report builder"
+ 
+"Criteria" "Criterio"
+ 
+"FATAL ERROR upgrading PgAccess table" "ERRORE FATALE aggiornando le tabelle PgAccess"
+ 
+"Save this query as a view" "Salva questa query come View"
+ 
+"Page header" "Testata di pagina"
+ 
+"Query name" "Nome query"
+ 
+"Please select an object first!" "Seleziona prima un'oggetto!"
+ 
+"Fields :" "Campi :"
+ 
+"Name" "Nome"
+ 
+"File name" "Nome del file"
+ 
+"Detail record" "Dettaglio del record"
+ 
+"Auto-load the last opened database at startup" "Apertura automatica ultimo database all'avvio"
+ 
+"Maxvalue" "Valore massimo"
+ 
+"Start value" "Valore d'inizio"
+ 
+"Report fields" "Campi disponibili"
+ 
+"Test form" "Test form"
+ 
+"Error trying to connect to database '%s' on host %s \n\nPostgreSQL error message:%s" "Errore di connessione al database '%s' sull'host %s \n\nMessaggio d'errore di PostgreSQL :%s"
+ 
+"No field type ?" "Nessun tipo per il campo?"
+ 
+"User without name?" "Utente senza nome ?"
+ 
+"You have to supply a name for this schema!" "Devi specificare un nome per lo schema!"
+ 
+"Last value" "Ultimo valore"
+ 
+"Preferences" "Preferenze"
+ 
+"View '%s' already exists!\nOverwrite ?" "View '%s' esiste gia'!\nSovrascrivo ?"
+ 
+"You have to select an index!" "Devi scegliere un'indice!"
+ 
+"Field type" "Tipo campo"
+ 
+"Script name" "Nome dello Script"
+ 
+"Reload" "Ricarica"
+ 
+"Remove table %s from query?" "Rimuovere la tabella %s dalla query?"
+ 
+"SQL window" "Finestra SQL"
+ 
+"Allow user to create other users" "L'utente puo' creare altri utenti"
+ 
+"Delete current record ?" "Cancello il record corrente? "
+ 
+"List box" "Lista"
+ 
+"Save to query builder" "Salva nel query builder"
+ 
+"fixed width" "larghezza fissa"
+ 
+"Scripts" "Scripts"
+ 
+"Yes" "Si"
+ 
+"Add label" "Aggiungi etichetta"
+ 
+"Sequence created!" "Sequenza creata !"
+ 
+"Field information" "Informazioni sul campo"
+ 
+"Design" "Disegna"
+ 
+"Field" "Campo"
+ 
+"You have to supply an external file name!" "Devi specificare un nome file esterno!"
+ 
+"Increment" "Incremento"
+ 
+"No" "No"
+ 
+"Form design" "Disegna il Form"
+ 
+"You must supply a return type!" "Devi specificare il tipo di dato ritornato"
+ 
+"Remove field from result ?" "Eliminare il campo dal risultato ?"
+ 
+"There is another object (a %s) with the same name.\nPlease change it!" "Esiste un'altro oggetto (un %s) con lo stesso nome.\nCambia nome!"
+ 
+"This query has no commands?" "Questa query non ha comandi ?"
+ 
+"Execute query" "Esegui query"
+ 
+"field cannot be null" "Il campo non puo' essere nullo"
+ 
+"Help" "Aiuto"
+ 
+"Rename column" "Rinomina campo"
+ 
+"Database" "Database"
+ 
+"Information" "Informazioni"
+ 
+"Close" "Chiudi"
+ 
+"Command" "Comando"
+ 
+"Table" "Tabella"
+ 
+"verify password" "verifica password"
+ 
+"Vacuum" "Vacuum"
+ 
+"Default value" "Valore predefinito"
+ 
+"Import" "Importa"
+ 
+"Delete index" "Cancella indice"
+ 
+"Move up" "Muovi su'"
+ 
+"index properties" "proprieta' dell'indice"
+ 
+"check" "Controlla"
+ 
+"Create new table" "Crea una nuova tabella"
+ 
+"Visual query designer" "Visual query designer"
+ 
+"Delete all" "Cancella tutto"
+ 
+"You are going to delete\n\n %s \n\nProceed?" "Stai per cancellare\n\n %s\n\n Procedo?"
+ 
+"Schema name" "Nome dello schema"
+ 
+"Error executing query" "Errore eseguendo la query"
+ 
+"Report name" "Nome del report"
+ 
+"Add field" "Aggiungi campo"
+ 
+"Field name" "Nome campo"
+ 
+"FATAL ERROR searching for PgAccess system tables" "ERRORE FATALE cercando le tabelle PgAccess di sistema"
+ 
+"A big number of rows displayed in table view will take a lot of memory!" "Un numero grande di righe visualizzate richiedera' molta memoria!"
+ 
+"Preview" "Anteprima"
+ 
+"Users" "Utenti"
+ 
+"Owner" "Proprietario"
+ 
+"Form's window internal name" "Il nome interno del form"
+ 
+"Sort field" "Campo ordinato"
+ 
+"New name is the same as the old one!" "Nuovo nome uguale al precedente!"
+ 
+"Warning" "Attenzione"
+ 
+"Suggestions at" "Suggerimenti a"
+ 
+"Functions" "Funzioni"
+ 
+"Schema" "Schema"
+ 
+"Open" "Apri"
+ 
+"size" "Dimensione"
+ 
+"Delete" "Cancella"
+ 
+"Returns" "Risultati"
+ 
+"Define new user" "Definisce nuovo utente"
+ 
+"Move down" "Muovi Giù"
+ 
+"Design script" "Design script"
+ 
+"Check box" "Casella si/no"
+ 
+"FINAL WARNING" "Ultimo Warning"
+ 
+"Add table" "Nuova tabella"
+ 
+"Table viewer font" "Carattere del visualizzatore tabelle"
+ 
+"The field type is not specified!" "Il tipo del campo non e' stato specificato!"
+ 
+"Close test form" "Chiudi test form"
+ 
+"Export table" "Esporta tabelle"
+ 
+"Add new index" "Aggiungi nuovo indice"
+ 
+"Left" "Sinistra"
+ 
+"Field delimiter" "Delimitatore di campo"
+ 
+"Add formula" "Aggiungi formula"
+ 
+"Open database" "Apri il Database"
+ 
+"Return" "Risultato"
+ 
+"Changed fonts may appear in the next working session!" "I caratteri cambiati saranno visibili nella prossima sessione!"
+ 
+"Error" "Errore"
+ 
+"Enter a field name" "Inserisci un nome campo"
+ 
+"field name" "Nome Campo"
+ 
+"Forms" "Forms"
+ 
+"Cannot add column" "Non posso aggiungere una colonna"
+ 
+"Clean" "Pulisci"
+ 
+"Delete all objects ?" "Cancellare tutti gli oggetti ?"
+ 
+"Preferred language" "Lingua preferita"
+ 
+"Execute SQL" "Esegui SQL"
+ 
+"Sequences" "Sequences"
+ 
+"Button" "Bottone"
+ 
+"Language" "Lingua"
+ 
+"Query '%s' was not found!" "La query '%s' non e' stata trovata!"
+ 
+"Object" "Oggetto"
+ 
+"Font fixed" "Carattere fisso"
+ 
+"Table name" "Nome tabella"
+ 
+"Export" "Esporta"
+ 
+"Change user" "Cambia utente"
+ 
+"You must give object a new name!" "Devi dare un nuovo nome all'oggetto!"
+ 
+"Query" "Query"
+ 
+"User name" "Nome utente"
+ 
+"Font normal" "Carattere normale"
+ 
+"Import table" "Importa"
+ 
+"Toolbar" "Barra degli strumenti"
+ 
+"Radio btn" "Bottone a scelta"
+ 
+"You must supply a name for this function!" "Devi fornire un nome per questa funzione!"
+ 
+"You have to select index fields!" "Devi selezionare i campi dell'indice"
+ 
+"Constraint" "Constraint"
+ 
+"The script must have a name" "Lo script deve avere un nome"
+ 
+"Save" "Salva"
+ 
+"Exit" "Esci"
+ 
+"Inherits" "Eredita"
+ 
+"Delete field" "Cancella campo"
+ 
+"About" "Apropos"
+ 
+"Empty field name ?" "Nome del campo vuoto?"
+ 
+"All report information will be deleted.\n\nProceed ?" "Tutte le informazioni relative al report saranno cancellate.\n\n Procedo ?"
+ 
+"Host" "Host"
+ 
+"vacuuming database %s ..." "vacuuming database %s ..."
+ 
+"Indexes defined" "Indici definiti"
+
+"Owner ID" "Proprietario ID"
+ 
+"You must specify field size!" "Devi specificare la dimensione del campo!"
+ 
+"Schema '%s' already exists!" "Lo schema '%s' esiste gia'!"
+ 
+"There is another field with the same name: '%s'!\n\nReplace it ?" "C'e' un'altro campo con lo stesso nome: '%s'!\n\nSostituisco ? "
+ 
+"Contents" "Contenuto"
+ 
+"Views" "Views"
+ 
+"Variable" "Variabile"
+ 
+"Error executing query\n\n%s\n\nPostgreSQL error message:\n%s\nPostgreSQL status:%s" "Errore eseguendo la query\n\n%s\n\nErrore PostgreSQL:\n%s\nPostgreSQL status:%s"
+ 
+"Filter conditions" "Condizioni di filtro"
+ 
+"Error retrieving query definition" "Errore caricando la definizione della query"
+ 
+"Error deleting view" "Errore durante la cancellazione"
+ 
+"New" "Nuovo"
+ 
+"Tables" "Tabelle"
+ 
+"Create" "Crea"
+ 
+"Forms need an internal name, only literals, low case" "Il form ha bisogno di un nome interno, solo lettere minuscole"
+ 
+"Do you want to save the form into the database?" "Vuoi salvare il form nel database ?"
+ 
+"Schema '%s' was not found!" "Lo schema '%s' non e' stato trovato!"
+ 
+"proportional" "proporzionale"
+ 
+"Function saved!" "Funzione salvata!"
+ 
+"with OIDs" "con OIDs"
+ 
+"Table information" "Informazioni tabella"
+ 
+"Error inserting new record" "Errore inserendo il nuovo record"
+ 
+"Column name '%s' already exists in this table!" "Il campo '%s' esiste gia'!"
+ 
+"File" "File"
+ 
+"Your table has no fields!" "La tabella non ha campi !"
+ 
+"Height" "Altezza"
+ 
+"You will always get the latest version at:" "Troverai l'ultima versione su:"
+ 
+"Form must have a name" "Il form deve avere un nome"
+ 
+"Password" "Password"
+ 
+"Valid until (date)" "Valido fino a"
+ 
+"Report source" "Sorgente del report"
+ 
+"Allow user to create databases" "L'utente puo' creare database"
+ 
+"Cancel" "Abbandona"
+ 
+"Is clustered ?" "Is clustered ?"
+ 
+"Add new column" "Aggiungi nuovo campo"
+ 
+"Show SQL" "Mostra SQL"
+ 
+"New name" "Nuovo nome"
+ 
+"Table '%s' not found!" "Tabella '%s' non trovata!"
+ 
+"Form name" "Nome form"
+ 
+"Visual designer" "Visual Designer"
+ 
+"You choose to delete index\n\n %s \n\nProceed?" "Hai scelto di cancellare l'indice\n\n %s \n\nProcedo?"
+ 
+"Error retrieving from" "Errore caricando da"
+ 
+"Save query definition" "Salva la definizione della query"
+ 
+"A Tcl/Tk interface to\nPostgreSQL\nby Constantin Teodorescu" "Una interfaccia Tcl/Tk verso\nPostgreSQL\n di Constantin Teodorescu"
+ 
+"Operation completed!" "Operazione completata!"
+ 
+"Max rows displayed in table/query view" "Numero massimo di righe nella visualiz. tabella/query"
+ 
+"Passwords do not match!" "La password non corrisponde!"
+ 
+"Rename" "Rinomina"
+ 
+"Entry" "Entry"
+ 
+"Error retrieving schema definition" "Errore caricando la definizione dello schema"
+ 
+"This is an action query!\n\nExecute it?" "Questa e' una query d'azione\n\nLa eseguo?"
+ 
+"Error retrieving view definition for" "Errore caricando la definizione di"
+ 
+"options" "opzioni"
+ 
+"Sequence '%s' not found!" "Sequence '%s' non trovata!"
+ 
+"Text" "Testo"
+ 
+"Tcl error executing pg_exec %s\n\n%s" "Errore Tcl eseguendo pg_exec %s\n\n%s"
+ 
+"Width" "Larghezza"
+ 
+"You have to supply a name for this query!" "Devi specificare un nomer per la query"
+ 
+"Accessing data. Please wait ..." "Carico i dati, attendi..."
+ 
+"Report footer" "Piede del report"
+ 
+"Parameters" "Parametri"
+ 
+"Queries" "Queries"
+ 
+"Query '%s' already exists!" "La query '%s' esiste gia'!"
+ 
+"Font bold" "Carattere grassetto"
+ 
+"Query builder" "Query builder"
+ 
+"Error defining view" "Errore definendo la query"
+ 
+"Top" "Sopra"
+ 
+"You must supply a name for your table!" "Devi specificare un nome per la tabella!"
+ 
+"Page footer" "Pie' di pagina"
+ 
+"Font italic" "Carattere corsivo"
+ 
+"Field name not entered!" "Nome del campo non inserito!"
+ 
+"Index name cannot be null!" "Il nome dell'indice non puo' essere nullo!"
+ 
+"Sort" "Ordina"
+ 
+"Import-Export table" "Importa/Esporta tabella"
+ 
+"Point" "Punto"
+ 
+"type" "tipo"
+ 
+"You should supply a name for this sequence" "Tu devi fornire un nome per la sequenza"
+ 
+"Remove link ?" "Rimuovere collegamento ?"
+ 
+"You have to supply a table name!" "Devi specificare il nome tabella!"
+ 
+"Report header" "Testata del report"
+ 
+"Attributes" "Attributi"
+ 
+"Table '%s' already in schema" "Tabella '%s' esiste gia' nello schema!"
+ 
+"Username" "Nome utente"
+ 
+"Minvalue" "Valore minimo"
+ 
+"Sequence name" "Nome del sequence"
+ 
+"Define sequence" "Definisci la sequenza"
+ 
+"Function" "Funzione"
+ 
+"Sorting and filtering not (yet) available from queries!\n\nPlease enter them in the query definition!" "Ordinamento e filtri non ancora disponibili dalle query!\n\nInseriscili nella definizione della query!"
+ 
+"Reports" "Reports"
+
+"primary key" "chiave primaria"
+
+"Visual schema designer" "Ambiente sviluppo relazioni visuale"
+
+Print Stampa
+
+"Print to Postscript" "Stampa Postscript"
+
+Commands Azioni
+
+"Report preview" "Anteprima report"
+
+"The printed image in Postscript is in the file pgaccess-report.ps" "La stampa in Poscript è nel file pgaccess-report.ps"
+
+"Columns" "Campi"
+
+"Indexes" "Indici"
+
+"Permissions" "Autorita"
+
+"not null" "non nullo"
+
+"Cluster index" "Cluster indice"
+
+"index columns" "campi dello indice"
+
+"Add user" "Nuovo utente"
+
+"Change permissions" "Cambiare autorita"
+
+"select" "selezioni"
+
+"update" "update"
+
+"insert" "inserisci"
+
+"rule" "regoli"
+
+"Identification" "Identificatione"
+
+"Owner ID" "ID dello proprieta"
+
+"Has primary key ?" "Chiave primaria ?"
+
+"Has rules ?" "Regoli definiti ?"
+
+"Statistics" "Statistica"
+
+"Number of tuples" "Numero righe"
+
+"Number of pages" "Numero pagine"
+
+"Index name" "Nome indici"
+
+"Index fields" "Campi dello indice"
+
+"Table OID" "Tabella OID"
+
+}
