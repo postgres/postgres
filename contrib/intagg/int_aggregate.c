@@ -201,6 +201,10 @@ int_enum(PG_FUNCTION_ARGS)
 	if (!fcinfo->context)
 	{
 		/* Allocate a working context */
+		MemoryContext	oldcontext;
+
+		oldcontext = MemoryContextSwitchTo(fcinfo->flinfo->fn_mcxt);
+
 		pc = (CTX *) palloc(sizeof(CTX));
 
 		/* Don't copy attribute if you don't need to */
@@ -218,6 +222,7 @@ int_enum(PG_FUNCTION_ARGS)
 		}
 		pc->num = 0;
 		fcinfo->context = (Node *) pc;
+		MemoryContextSwitchTo(oldcontext);
 	}
 	else	/* use an existing one */
 		pc = (CTX *) fcinfo->context;
