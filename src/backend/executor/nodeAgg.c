@@ -256,7 +256,7 @@ ExecAgg(Agg *node)
 	for(i = 0; i < nagg; i++) {
 	    AttrNumber attnum;
 	    int2 attlen;
-	    Datum newVal = NULL;
+	    Datum newVal = (Datum) NULL;
 	    AggFuncInfo *aggfns = &aggFuncInfo[i];
 	    Datum args[2];
 	    Node *tagnode = NULL;
