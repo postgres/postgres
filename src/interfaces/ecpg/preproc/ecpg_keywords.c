@@ -35,7 +35,6 @@ static ScanKeyword ScanKeywords[] = {
 	{"go", SQL_GO},
 	{"goto", SQL_GOTO},
 	{"identified", SQL_IDENTIFIED},
-	{"immediate", SQL_IMMEDIATE},
 	{"indicator", SQL_INDICATOR},
 	{"int", SQL_INT},
 	{"long", SQL_LONG},

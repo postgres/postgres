@@ -802,7 +802,6 @@ ECPGexecute(struct statement * stmt)
 								else
 									res = 0L;
 
-								/* Again?! Yes */
 								switch (var->type)
 								{
 									case ECPGt_short:
@@ -837,7 +836,6 @@ ECPGexecute(struct statement * stmt)
 								else
 									ures = 0L;
 
-								/* Again?! Yes */
 								switch (var->type)
 								{
 									case ECPGt_unsigned_short:
@@ -872,7 +870,6 @@ ECPGexecute(struct statement * stmt)
 								else
 									dres = 0.0;
 
-								/* Again?! Yes */
 								switch (var->type)
 								{
 									case ECPGt_float:

@@ -1,8 +1,3 @@
-Tue Aug 24 15:53:28 MEST 1999
-
-	- made NULL a valid bool value
-	- check for indicator variables on NULL
-
 Wed Feb 11 10:58:13 CET 1998
 
 	- Added '-d' option to turn on debugging.
@@ -653,3 +648,29 @@ Mon Sep 27 07:40:20 CEST 1999
 	- Synced preproc.y with gram.y.
 	- Synced keyword.c.
 	- Set ecpg version to 2.6.5
+
+Tue Sep 28 17:58:37 CEST 1999
+
+	- Synced preproc.y with gram.y.
+	- Synced pgc.l with scan.l.
+
+Fri Oct  1 18:34:30 CEST 1999
+
+	- Synced preproc.y with gram.y.
+	- Synced keyword.c.
+	- Include patch by Christof Petig <christof.petig@wtal.de>:
+		- made NULL a valid bool value
+		- check for indicator variables on NULL
+
+Wed Oct  6 18:28:40 CEST 1999
+
+	- Synced preproc.y with gram.y.
+
+Thu Oct  7 15:12:58 CEST 1999
+
+	- Fixed bug that caused mixed case relation names to be converted to
+	  upper case.
+	- Synced preproc.y with gram.y.
+	- Set ecpg version to 2.6.6
+	- Set library version to 3.0.4
+

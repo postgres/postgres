@@ -60,7 +60,6 @@ static char *old;
  *  <xc> extended C-style comments - tgl 1997-07-12
  *  <xd> delimited identifiers (double-quoted identifiers) - tgl 1997-10-27
  *  <xh> hexadecimal numeric string - thomas 1997-11-16
- *  <xm> numeric strings with embedded minus sign - tgl 1997-09-05
  *  <xq> quoted strings - tgl 1997-07-30
  *
  * The "extended comment" syntax closely resembles allowable operator syntax.
@@ -75,7 +74,6 @@ static char *old;
 %x xd
 %x xdc
 %x xh
-%x xm
 %x xq
 
 /* Binary number
@@ -128,7 +126,6 @@ xcinside		[^*]*
 xcstar			[^/]
 
 digit			[0-9]
-number			[-+.0-9Ee]
 letter			[\200-\377_A-Za-z]
 letter_or_digit	[\200-\377_A-Za-z0-9]
 
@@ -140,13 +137,15 @@ self			[,()\[\].;$\:\+\-\*\/\%\^\<\>\=\|]
 op_and_self		[\~\!\@\#\^\&\|\`\?\$\:\+\-\*\/\%\<\>\=]
 operator		{op_and_self}+
 
-xmstop			-
-
-integer			[\-]?{digit}+
-decimal			[\-]?(({digit}*\.{digit}+)|({digit}+\.{digit}*))
-real			[\-]?((({digit}*\.{digit}+)|({digit}+\.{digit}*)|({digit}+))([Ee][-+]?{digit}+))
+/* we do not allow unary minus in numbers.
+ * instead we pass it verbatim to parser. there it gets
+ * coerced via doNegate() -- Leon aug 20 1999
+ */
+integer			{digit}+
+decimal			(({digit}*\.{digit}+)|({digit}+\.{digit}*))
+real			((({digit}*\.{digit}+)|({digit}+\.{digit}*)|({digit}+))([Ee][-+]?{digit}+))
 /*
-real			[\-]?(((({digit}*\.{digit}+)|({digit}+\.{digit}*))([Ee][-+]?{digit}+)?)|({digit}+[Ee][-+]?{digit}+))
+real			(((({digit}*\.{digit}+)|({digit}+\.{digit}*))([Ee][-+]?{digit}+)?)|({digit}+[Ee][-+]?{digit}+))
 */
 
 param			\${integer}
@@ -291,18 +290,7 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 					memcpy(literal+llen, yytext, yyleng+1);
 					llen += yyleng;
 				}
-<xm>{space}*	{ /* ignore */ }
-<xm>{xmstop}	{
-					BEGIN(SQL);
-					return yytext[0];
-				}
-
-
 <SQL>{typecast}			{ 	return TYPECAST; }
-<SQL>{self}/{space}*-[\.0-9]	{
-					BEGIN(xm);
-					return yytext[0];
-				}
 <SQL>{self}			{ /* 
 				   * We may find a ';' inside a structure
 				   * definition in a TYPE or VAR statement.
@@ -311,10 +299,6 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 				  if (yytext[0] == ';' && struct_level == 0)
 					 BEGIN C;
 				  return yytext[0];
-				}
-<SQL>{operator}/-[\.0-9]	{
-					yylval.str = mm_strdup((char*)yytext);
-					return Op;
 				}
 <SQL>{operator}		{
 					if (strcmp((char*)yytext,"!=") == 0)
@@ -326,106 +310,6 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 <SQL>{param}			{
 					yylval.ival = atoi((char*)&yytext[1]);
 					return PARAM;
-				}
-<SQL>{identifier}/{space}*-{number}	{
-					int i;
-					ScanKeyword		*keyword;
-					char lower_text[NAMEDATALEN];
-
-					BEGIN(xm);
-					/* this should leave the last byte set to '\0' */
-					strncpy(lower_text, yytext, NAMEDATALEN-1);
-					for(i = 0; lower_text[i]; i++)
-						if (isascii((unsigned char)lower_text[i]) && isupper(lower_text[i]))
-							lower_text[i] = tolower(lower_text[i]);
-
-					keyword = ScanKeywordLookup((char*)lower_text);
-					if (keyword != NULL) {
-						return keyword->value;
-					}
-					else
-					{
-						keyword = ScanECPGKeywordLookup((char*)lower_text);
-						if (keyword != NULL) {
-							return keyword->value;
-						}
-						else
-						{
-							struct _defines *ptr;
-
-							for (ptr = defines; ptr; ptr = ptr->next)
-							{
-								if (strcmp(yytext, ptr->old) == 0)
-								{
-									struct _yy_buffer *yb;
-
-									yb = mm_alloc(sizeof(struct _yy_buffer));
-
-						                        yb->buffer =  YY_CURRENT_BUFFER;
-						                        yb->lineno = yylineno;
-						                        yb->filename = mm_strdup(input_filename);
-						                        yb->next = yy_buffer;
-
-						                        yy_buffer = yb;
-
- 									yy_scan_string(ptr->new);
-									break;
-								}
-							}
-							if (ptr == NULL) 
-							{
-								yylval.str = mm_strdup((char*)yytext);
-								return IDENT;
-							}
-						}
-					}
-				}
-<C,SQL>{integer}/{space}*-{number}	{
-					char* endptr;
-
-					BEGIN(xm);
-					errno = 0;
-					yylval.ival = strtol((char *)yytext,&endptr,10);
-					if (*endptr != '\0' || errno == ERANGE)
-					{
-						errno = 0;
-#if 0
-						yylval.dval = strtod(((char *)yytext),&endptr);
-						if (*endptr != '\0' || errno == ERANGE)
-							yyerror("ERROR: Bad integer input");
-						yyerror("WARNING: Integer input is out of range; promoted to float");
-						return FCONST;
-#endif
-						yylval.str = mm_strdup((char*)yytext);
-                                                return SCONST;
-					}
-					return ICONST;
-				}
-{decimal}/{space}*-{number} {
-                                        char* endptr;
-
-                                        BEGIN(xm);
-                                        if (strlen((char *)yytext) <= 17)
-                                        {
-                                                errno = 0;
-						yylval.dval = strtod(((char *)yytext),&endptr);
-						if (*endptr != '\0' || errno == ERANGE)
-							yyerror("ERROR: Bad float8 input");
-						return FCONST;
-                                        }
-                                        yylval.str = mm_strdup((char*)yytext);
-                                        return SCONST;
-                                }
-
-<C,SQL>{real}/{space}*-{number} {
-					char* endptr;
-
-					BEGIN(xm);
-					errno = 0;
-					yylval.dval = strtod(((char *)yytext),&endptr);
-					if (*endptr != '\0' || errno == ERANGE)
-						yyerror("ERROR: Bad float8 input");
-					return FCONST;
 				}
 <C,SQL>{integer}		{
 					char* endptr;
