@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.7 1999/12/07 22:41:41 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.8 2000/04/05 21:51:11 momjian Exp $
 Postgres documentation
 -->
 
@@ -51,8 +51,6 @@ VACUUM [ VERBOSE ] ANALYZE [ <replaceable class="PARAMETER">table</replaceable> 
        <para>
 	Updates column statistics used by the optimizer to
 	determine the most efficient way to execute a query.
-	The statistics represent the disbursion of the data in each column.
-	This information is valuable when several execution paths are possible.
        </para>
       </listitem>
      </varlistentry>
@@ -158,6 +156,13 @@ NOTICE:  Index <replaceable class="PARAMETER">index</replaceable>: Pages 28;
    tuples and number of pages stored in all classes.
   </para>
 
+
+  <para>
+   <command>VACUUM ANALYZE</command> collects statistics representing the
+   disbursion of the data in each column.
+   This information is valuable when several query execution paths are possible.
+  </para>
+
   <para>
    Running <command>VACUUM</command>
    periodically will increase the speed of the database in processing user queries.
@@ -179,11 +184,12 @@ NOTICE:  Index <replaceable class="PARAMETER">index</replaceable>: Pages 28;
     query may be executed at any time, however.  In particular, after
     copying a large class into <productname>Postgres</productname> 
     or after deleting a large number of
-    records, it may be a good idea to issue a <command>VACUUM</command>
+    records, it may be a good idea to issue a <command>VACUUM ANALYZE</command>
     query.  This will update the system catalogs with the results of all
     recent changes, and allow the <productname>Postgres</productname> 
     query optimizer to make better choices in planning user queries.
    </para>
+
   </refsect2>
  </refsect1>
 
