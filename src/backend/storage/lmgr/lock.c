@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.7 1997/02/12 05:23:49 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.8 1997/02/14 04:52:59 momjian Exp $
  *
  * NOTES
  *    Outside modules can create a lock table and acquire/release
@@ -46,6 +46,7 @@
 #include "utils/memutils.h"
 #include "utils/palloc.h"
 #include "access/xact.h"
+#include "access/transam.h"
 
 /*#define LOCK_MGR_DEBUG*/
 
@@ -59,18 +60,8 @@
 
 int lockDebug = 0;
 
-#ifndef LOCK_DEBUG_OID_MIN
-/*
- * This is totally arbitrary. It is the minimum relation oid
- * which will trigger the locking debug when the -K option
- * is given to the backend. This is done to avoid tracing
- * locks on system relations.
- */
-#define LOCK_DEBUG_OID_MIN 20000
-#endif
-
 #define LOCK_PRINT(where,tag,type)\
-    if ((lockDebug >= 1) && (tag->relId >= LOCK_DEBUG_OID_MIN)) \
+    if ((lockDebug >= 1) && (tag->relId >= BootstrapObjectIdData)) \
         elog(DEBUG, \
 	     "%s: pid (%d) rel (%d) dbid (%d) tid (%d,%d) type (%d)",where, \
 	     getpid(),\
@@ -81,7 +72,7 @@ int lockDebug = 0;
 	     type);
 
 #define LOCK_DUMP(where,lock,type)\
-    if ((lockDebug >= 1) && (lock->tag.relId >= LOCK_DEBUG_OID_MIN)) \
+    if ((lockDebug >= 1) && (lock->tag.relId >= BootstrapObjectIdData)) \
         elog(DEBUG, \
 	     "%s: pid (%d) rel (%d) dbid (%d) tid (%d,%d) nHolding (%d) "\
 	     "holders (%d,%d,%d,%d,%d) type (%d)",where, \
@@ -101,7 +92,7 @@ int lockDebug = 0;
 #define XID_PRINT(where,xidentP)\
     if ((lockDebug >= 2) && \
 	(((LOCK *)MAKE_PTR(xidentP->tag.lock))->tag.relId \
-	 >= LOCK_DEBUG_OID_MIN)) \
+	 >= BootstrapObjectIdData)) \
 	elog(DEBUG,\
 	     "%s: pid (%d) xid (%d) pid (%d) lock (%x) nHolding (%d) "\
 	     "holders (%d,%d,%d,%d,%d)",\
