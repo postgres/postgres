@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: prep.h,v 1.37 2003/02/09 23:57:19 tgl Exp $
+ * $Id: prep.h,v 1.38 2003/03/05 20:01:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,7 +52,7 @@ extern Plan *plan_set_operations(Query *parse);
 
 extern List *find_all_inheritors(Oid parentrel);
 
-extern List *expand_inherted_rtentry(Query *parse, Index rti,
+extern List *expand_inherited_rtentry(Query *parse, Index rti,
 						bool dup_parent);
 
 extern Node *adjust_inherited_attrs(Node *node,

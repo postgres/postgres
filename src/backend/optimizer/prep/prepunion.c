@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.90 2003/02/09 06:56:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.91 2003/03/05 20:01:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -642,7 +642,7 @@ find_all_inheritors(Oid parentrel)
 }
 
 /*
- * expand_inherted_rtentry
+ * expand_inherited_rtentry
  *		Check whether a rangetable entry represents an inheritance set.
  *		If so, add entries for all the child tables to the query's
  *		rangetable, and return an integer list of RT indexes for the
@@ -666,7 +666,7 @@ find_all_inheritors(Oid parentrel)
  * XXX probably should convert the result type to Relids?
  */
 List *
-expand_inherted_rtentry(Query *parse, Index rti, bool dup_parent)
+expand_inherited_rtentry(Query *parse, Index rti, bool dup_parent)
 {
 	RangeTblEntry *rte = rt_fetch(rti, parse->rtable);
 	Oid			parentOID;

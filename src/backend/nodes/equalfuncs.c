@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.187 2003/02/16 02:30:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.188 2003/03/05 20:01:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -576,12 +576,14 @@ _equalQuery(Query *a, Query *b)
 	COMPARE_NODE_FIELD(limitCount);
 	COMPARE_NODE_FIELD(setOperations);
 	COMPARE_INTLIST_FIELD(resultRelations);
+	COMPARE_NODE_FIELD(in_info_list);
+	COMPARE_SCALAR_FIELD(hasJoinRTEs);
 
 	/*
-	 * We do not check the internal-to-the-planner fields: base_rel_list,
-	 * other_rel_list, join_rel_list, equi_key_list, in_info_list,
-	 * query_pathkeys, hasJoinRTEs.  They might not be set yet, and in any
-	 * case they should be derivable from the other fields.
+	 * We do not check the other planner internal fields: base_rel_list,
+	 * other_rel_list, join_rel_list, equi_key_list, query_pathkeys.
+	 * They might not be set yet, and in any case they should be derivable
+	 * from the other fields.
 	 */
 	return true;
 }

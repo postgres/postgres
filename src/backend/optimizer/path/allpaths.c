@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.97 2003/02/15 20:12:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.98 2003/03/05 20:01:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -115,7 +115,7 @@ set_base_rel_pathlists(Query *root)
 			/* RangeFunction --- generate a separate plan for it */
 			set_function_pathlist(root, rel, rte);
 		}
-		else if ((inheritlist = expand_inherted_rtentry(root, rti, true))
+		else if ((inheritlist = expand_inherited_rtentry(root, rti, true))
 				 != NIL)
 		{
 			/* Relation is root of an inheritance tree, process specially */

@@ -96,3 +96,26 @@ SELECT relname, d.* FROM ONLY d, pg_class where d.tableoid = pg_class.oid;
 -- Confirm PRIMARY KEY adds NOT NULL constraint to child table
 CREATE TEMP TABLE z (b TEXT, PRIMARY KEY(aa, b)) inherits (a);
 INSERT INTO z VALUES (NULL, 'text'); -- should fail
+
+-- Check UPDATE with inherited target and an inherited source table
+create temp table foo(f1 int, f2 int);
+create temp table foo2(f3 int) inherits (foo);
+create temp table bar(f1 int, f2 int);
+create temp table bar2(f3 int) inherits (bar);
+
+insert into foo values(1,1);
+insert into foo values(3,3);
+insert into foo2 values(2,2,2);
+insert into foo2 values(3,3,3);
+insert into bar values(1,1);
+insert into bar values(2,2);
+insert into bar values(3,3);
+insert into bar values(4,4);
+insert into bar2 values(1,1,1);
+insert into bar2 values(2,2,2);
+insert into bar2 values(3,3,3);
+insert into bar2 values(4,4,4);
+
+update bar set f2 = f2 + 100 where f1 in (select f1 from foo);
+
+SELECT relname, bar.* FROM bar, pg_class where bar.tableoid = pg_class.oid;

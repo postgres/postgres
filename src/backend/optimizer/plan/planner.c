@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.149 2003/03/05 18:38:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.150 2003/03/05 20:01:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -276,8 +276,8 @@ subquery_planner(Query *parse, double tuple_fraction)
 	 * grouping_planner.
 	 */
 	if (parse->resultRelation &&
-	 (lst = expand_inherted_rtentry(parse, parse->resultRelation, false))
-		!= NIL)
+		(lst = expand_inherited_rtentry(parse, parse->resultRelation,
+										false)) != NIL)
 		plan = inheritance_planner(parse, lst);
 	else
 		plan = grouping_planner(parse, tuple_fraction);
