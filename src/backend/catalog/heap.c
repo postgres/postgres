@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.67 1998/11/27 19:51:48 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.68 1998/12/13 23:50:58 thomas Exp $
  *
  * INTERFACE ROUTINES
  *		heap_create()			- Create an uncataloged heap relation
@@ -1434,6 +1434,7 @@ StoreAttrDefault(Relation rel, AttrDefault *attrdef)
 	TargetEntry *te;
 	Resdom	   *resdom;
 	Node	   *expr;
+	Oid			type;
 	char	   *adbin;
 	MemoryContext oldcxt;
 	Relation	adrel;
@@ -1460,7 +1461,9 @@ start:;
 	te = (TargetEntry *) lfirst(query->targetList);
 	resdom = te->resdom;
 	expr = te->expr;
+	type = exprType(expr);
 
+#if 0
 	if (IsA(expr, Const))
 	{
 		if (((Const *) expr)->consttype != atp->atttypid)
@@ -1474,6 +1477,26 @@ start:;
 	else if ((exprType(expr) != atp->atttypid)
 			 && !IS_BINARY_COMPATIBLE(exprType(expr), atp->atttypid))
 		elog(ERROR, "DEFAULT: type mismatched");
+#endif
+
+	if (type != atp->atttypid)
+	{
+		if (IS_BINARY_COMPATIBLE(type, atp->atttypid))
+			; /* use without change */
+		else if (can_coerce_type(1, &(type), &(atp->atttypid)))
+			expr = coerce_type(NULL, (Node *)expr, type, atp->atttypid);
+		else if (IsA(expr, Const))
+		{
+			if (*cast != 0)
+				elog(ERROR, "DEFAULT clause const type '%s' mismatched with column type '%s'",
+					 typeidTypeName(type), typeidTypeName(atp->atttypid));
+			sprintf(cast, ":: %s", typeidTypeName(atp->atttypid));
+			goto start;
+		}
+		else
+			elog(ERROR, "DEFAULT clause type '%s' mismatched with column type '%s'",
+				 typeidTypeName(type), typeidTypeName(atp->atttypid));
+	}
 
 	adbin = nodeToString(expr);
 	oldcxt = MemoryContextSwitchTo((MemoryContext) CacheCxt);
