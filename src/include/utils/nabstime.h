@@ -6,19 +6,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nabstime.h,v 1.1 1996/08/28 01:59:13 scrappy Exp $
+ * $Id: nabstime.h,v 1.2 1996/11/01 09:19:11 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef NABSTIME_H
 #define NABSTIME_H
 
-#include <sys/types.h>
 #include <time.h>
-#if !defined(PORTNAME_irix5)
-#include <sys/timeb.h>
-#endif
-#include "miscadmin.h"	/* for SystemTime */
 
 /* ----------------------------------------------------------------
  *		time types + support macros

@@ -6,14 +6,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: itemptr.h,v 1.2 1996/10/19 04:01:41 scrappy Exp $
+ * $Id: itemptr.h,v 1.3 1996/11/01 09:19:00 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef	ITEMPTR_H
 #define ITEMPTR_H
 
-#include "storage/block.h" 
+#include "storage/block.h"
 #include "storage/off.h"
 
 /*
