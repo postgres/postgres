@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.27 2000/11/16 06:16:00 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.28 2000/11/20 05:18:39 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,7 +42,7 @@ void		CreateCheckPoint(bool shutdown);
 
 char		XLogDir[MAXPGPATH];
 char		ControlFilePath[MAXPGPATH];
-int			XLOGbuffers = 0;
+int			XLOGbuffers = 8;
 XLogRecPtr	MyLastRecPtr = {0, 0};
 bool		StopIfError = false;
 bool		InRecovery = false;

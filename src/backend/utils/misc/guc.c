@@ -4,7 +4,7 @@
  * Support for grand unified configuration scheme, including SET
  * command, configuration file, and command line options.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.21 2000/11/15 18:36:05 petere Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.22 2000/11/20 05:18:39 vadim Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -270,7 +270,7 @@ ConfigureNamesInt[] =
 	 300, 30, 1800},
 
 	{"wal_buffers", PGC_POSTMASTER,         &XLOGbuffers,
-	 4, 4, INT_MAX},
+	 8, 4, INT_MAX},
 
 	{"wal_debug", PGC_POSTMASTER,         &XLOG_DEBUG,
 	 0, 0, 16},
