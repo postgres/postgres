@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.100 2001/01/24 19:42:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.101 2001/01/27 04:42:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -279,7 +279,13 @@ pull_up_subqueries(Query *parse, Node *jtnode)
 			/*
 			 * First, recursively pull up the subquery's subqueries,
 			 * so that this routine's processing is complete for its
-			 * jointree and rangetable.
+			 * jointree and rangetable.  NB: if the same subquery is
+			 * referenced from multiple jointree items (which can't happen
+			 * normally, but might after rule rewriting), then we will invoke
+			 * this processing multiple times on that subquery.  OK because
+			 * nothing will happen after the first time.  We do have to be
+			 * careful to copy everything we pull up, however, or risk
+			 * having chunks of structure multiply linked.
 			 */
 			subquery->jointree = (FromExpr *)
 				pull_up_subqueries(subquery, (Node *) subquery->jointree);
@@ -288,7 +294,8 @@ pull_up_subqueries(Query *parse, Node *jtnode)
 			 * no adjustments will be needed in the subquery's rtable).
 			 */
 			rtoffset = length(parse->rtable);
-			parse->rtable = nconc(parse->rtable, subquery->rtable);
+			parse->rtable = nconc(parse->rtable,
+								  copyObject(subquery->rtable));
 			/*
 			 * Make copies of the subquery's jointree and targetlist
 			 * with varnos adjusted to match the merged rangetable.
