@@ -12014,6 +12014,7 @@ esac
 case $host_os in mingw*)
 LIBOBJS="$LIBOBJS copydir.$ac_objext"
 LIBOBJS="$LIBOBJS gettimeofday.$ac_objext"
+LIBOBJS="$LIBOBJS kill.$ac_objext"
 LIBOBJS="$LIBOBJS open.$ac_objext"
 LIBOBJS="$LIBOBJS rand.$ac_objext" ;;
 esac

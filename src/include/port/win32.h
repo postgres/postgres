@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.23 2004/04/22 03:51:24 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.24 2004/05/27 13:08:54 momjian Exp $ */
 
 /* undefine and redefine after #include */
 #undef mkdir
@@ -116,10 +116,10 @@ void pg_queue_signal(int signum);
 #define SIG_ERR ((pqsigfunc)-1)
 #define SIG_IGN ((pqsigfunc)1)
 
-#ifndef FRONTEND
-#define kill(pid,sig)   pqkill(pid,sig)
-extern int pqkill(int pid, int sig);
+#define kill(pid,sig)   pgkill(pid,sig)
+extern int pgkill(int pid, int sig);
 
+#ifndef FRONTEND
 #define pg_usleep(t) pgwin32_backend_usleep(t)
 void pgwin32_backend_usleep(long microsec);
 #endif
