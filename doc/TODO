@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Jul  4 10:59:00 EDT 2001
+Last updated:		Fri Jul  6 14:23:02 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -88,7 +88,7 @@ VIEWS
 * Automatically create rules on views so they are updateable, per SQL92 [view]
 * Add the functionality for WITH CHECK OPTION clause of CREATE VIEW
 * Allow NOTIFY in rules involving conditionals
-* Evaluate INSERT rules at end of query, rather than beginning
+* -Evaluate INSERT rules at end of query, rather than beginning (Jan)
 
 INDEXES
 
