@@ -33,13 +33,14 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.58 2004/11/18 21:35:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.59 2004/11/20 19:07:40 tgl Exp $
  *
  **********************************************************************/
 
 #include "postgres.h"
 
 /* system stuff */
+#include <ctype.h>
 #include <fcntl.h>
 #include <unistd.h>
 
@@ -281,6 +282,21 @@ plperl_safe_init(void)
 }
 
 
+/*
+ * Perl likes to put a newline after its error messages; clean up such
+ */
+static char *
+strip_trailing_ws(const char *msg)
+{
+	char   *res = pstrdup(msg);
+	int		len = strlen(res);
+
+	while (len > 0 && isspace((unsigned char) res[len-1]))
+		res[--len] = '\0';
+	return res;
+}
+
+
 static HV *
 plperl_hash_from_tuple(HeapTuple tuple, TupleDesc tupdesc)
 {
@@ -496,7 +512,7 @@ plperl_get_elem(HV *hash, char *key)
 {
 	SV **svp = hv_fetch(hash, key, strlen(key), FALSE);
 	if (!svp)
-		elog(ERROR, "plperl: key '%s' not found", key);
+		elog(ERROR, "plperl: key \"%s\" not found", key);
 	return SvTYPE(*svp) == SVt_NULL ? NULL : SvPV(*svp, PL_na);
 }
 
@@ -533,7 +549,7 @@ plperl_modify_tuple(HV *hvTD, TriggerData *tdata, HeapTuple otup, Oid fn_oid)
 	plkeys = plperl_get_keys(hvNew);
 	natts = av_len(plkeys) + 1;
 	if (natts != tupdesc->natts)
-		elog(ERROR, "plperl: $_TD->{new} has an incorrect number of keys.");
+		elog(ERROR, "plperl: $_TD->{new} has an incorrect number of keys");
 
 	modattrs = palloc0(natts * sizeof(int));
 	modvalues = palloc0(natts * sizeof(Datum));
@@ -550,7 +566,7 @@ plperl_modify_tuple(HV *hvTD, TriggerData *tdata, HeapTuple otup, Oid fn_oid)
 		attn = modattrs[i] = SPI_fnumber(tupdesc, platt);
 
 		if (attn == SPI_ERROR_NOATTRIBUTE)
-			elog(ERROR, "plperl: invalid attribute `%s' in tuple.", platt);
+			elog(ERROR, "plperl: invalid attribute \"%s\" in tuple", platt);
 		atti = attn - 1;
 
 		plval = plperl_get_elem(hvNew, platt);
@@ -581,7 +597,7 @@ plperl_modify_tuple(HV *hvTD, TriggerData *tdata, HeapTuple otup, Oid fn_oid)
 	pfree(modvalues);
 	pfree(modnulls);
 	if (rtup == NULL)
-		elog(ERROR, "plperl: SPI_modifytuple failed -- error:  %d", SPI_result);
+		elog(ERROR, "plperl: SPI_modifytuple failed -- error: %d", SPI_result);
 
 	return rtup;
 }
@@ -690,7 +706,8 @@ plperl_create_sub(char *s, bool trusted)
 		PUTBACK;
 		FREETMPS;
 		LEAVE;
-		elog(ERROR, "creation of function failed: %s", SvPV(ERRSV, PL_na));
+		elog(ERROR, "creation of function failed: %s",
+			 strip_trailing_ws(SvPV(ERRSV, PL_na)));
 	}
 
 	/*
@@ -816,7 +833,8 @@ plperl_call_perl_func(plperl_proc_desc *desc, FunctionCallInfo fcinfo)
 		PUTBACK;
 		FREETMPS;
 		LEAVE;
-		elog(ERROR, "error from function: %s", SvPV(ERRSV, PL_na));
+		elog(ERROR, "error from function: %s",
+			 strip_trailing_ws(SvPV(ERRSV, PL_na)));
 	}
 
 	retval = newSVsv(POPs);
@@ -860,7 +878,7 @@ plperl_call_perl_trigger_func(plperl_proc_desc *desc, FunctionCallInfo fcinfo, S
 		PUTBACK;
 		FREETMPS;
 		LEAVE;
-		elog(ERROR, "plperl: didn't get a return item from function");
+		elog(ERROR, "didn't get a return item from trigger function");
 	}
 
 	if (SvTRUE(ERRSV))
@@ -869,7 +887,8 @@ plperl_call_perl_trigger_func(plperl_proc_desc *desc, FunctionCallInfo fcinfo, S
 		PUTBACK;
 		FREETMPS;
 		LEAVE;
-		elog(ERROR, "plperl: error from function: %s", SvPV(ERRSV, PL_na));
+		elog(ERROR, "error from trigger function: %s",
+			 strip_trailing_ws(SvPV(ERRSV, PL_na)));
 	}
 
 	retval = newSVsv(POPs);
