@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.62 2001/08/10 18:57:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.63 2001/08/16 20:38:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,7 @@
 #include "miscadmin.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
+#include "utils/int8.h"
 #ifdef MULTIBYTE
 #include "mb/pg_wchar.h"
 #endif
@@ -29,8 +30,17 @@
 
 #define SEQ_MAGIC	  0x1717
 
-#define SEQ_MAXVALUE	((int4)0x7FFFFFFF)
-#define SEQ_MINVALUE	-(SEQ_MAXVALUE)
+#ifndef INT64_IS_BUSTED
+#ifdef HAVE_LL_CONSTANTS
+#define SEQ_MAXVALUE	((int64) 0x7FFFFFFFFFFFFFFFLL)
+#else
+#define SEQ_MAXVALUE	((int64) 0x7FFFFFFFFFFFFFFF)
+#endif
+#else /* INT64_IS_BUSTED */
+#define SEQ_MAXVALUE	((int64) 0x7FFFFFFF)
+#endif /* INT64_IS_BUSTED */
+
+#define SEQ_MINVALUE	(-SEQ_MAXVALUE)
 
 /*
  * We don't want to log each fetching values from sequences,
@@ -48,10 +58,10 @@ typedef struct SeqTableData
 {
 	char	   *name;
 	Oid			relid;
-	Relation	rel;
-	int4		cached;
-	int4		last;
-	int4		increment;
+	Relation	rel;			/* NULL if rel is not open in cur xact */
+	int64		cached;
+	int64		last;
+	int64		increment;
 	struct SeqTableData *next;
 } SeqTableData;
 
@@ -63,8 +73,8 @@ static char *get_seq_name(text *seqin);
 static SeqTable init_sequence(char *caller, char *name);
 static Form_pg_sequence read_info(char *caller, SeqTable elm, Buffer *buf);
 static void init_params(CreateSeqStmt *seq, Form_pg_sequence new);
-static int	get_param(DefElem *def);
-static void do_setval(char *seqname, int32 next, bool iscalled);
+static int64 get_param(DefElem *def);
+static void do_setval(char *seqname, int64 next, bool iscalled);
 
 /*
  * DefineSequence
@@ -117,44 +127,44 @@ DefineSequence(CreateSeqStmt *seq)
 				value[i - 1] = NameGetDatum(&name);
 				break;
 			case SEQ_COL_LASTVAL:
-				typnam->name = "int4";
+				typnam->name = "int8";
 				coldef->colname = "last_value";
-				value[i - 1] = Int32GetDatum(new.last_value);
+				value[i - 1] = Int64GetDatumFast(new.last_value);
 				break;
 			case SEQ_COL_INCBY:
-				typnam->name = "int4";
+				typnam->name = "int8";
 				coldef->colname = "increment_by";
-				value[i - 1] = Int32GetDatum(new.increment_by);
+				value[i - 1] = Int64GetDatumFast(new.increment_by);
 				break;
 			case SEQ_COL_MAXVALUE:
-				typnam->name = "int4";
+				typnam->name = "int8";
 				coldef->colname = "max_value";
-				value[i - 1] = Int32GetDatum(new.max_value);
+				value[i - 1] = Int64GetDatumFast(new.max_value);
 				break;
 			case SEQ_COL_MINVALUE:
-				typnam->name = "int4";
+				typnam->name = "int8";
 				coldef->colname = "min_value";
-				value[i - 1] = Int32GetDatum(new.min_value);
+				value[i - 1] = Int64GetDatumFast(new.min_value);
 				break;
 			case SEQ_COL_CACHE:
-				typnam->name = "int4";
+				typnam->name = "int8";
 				coldef->colname = "cache_value";
-				value[i - 1] = Int32GetDatum(new.cache_value);
+				value[i - 1] = Int64GetDatumFast(new.cache_value);
 				break;
 			case SEQ_COL_LOG:
-				typnam->name = "int4";
+				typnam->name = "int8";
 				coldef->colname = "log_cnt";
-				value[i - 1] = Int32GetDatum((int32) 1);
+				value[i - 1] = Int64GetDatum((int64) 1);
 				break;
 			case SEQ_COL_CYCLE:
-				typnam->name = "char";
+				typnam->name = "bool";
 				coldef->colname = "is_cycled";
-				value[i - 1] = CharGetDatum(new.is_cycled);
+				value[i - 1] = BoolGetDatum(new.is_cycled);
 				break;
 			case SEQ_COL_CALLED:
-				typnam->name = "char";
+				typnam->name = "bool";
 				coldef->colname = "is_called";
-				value[i - 1] = CharGetDatum('f');
+				value[i - 1] = BoolGetDatum(false);
 				break;
 		}
 		stmt->tableElts = lappend(stmt->tableElts, coldef);
@@ -207,7 +217,7 @@ DefineSequence(CreateSeqStmt *seq)
 		Form_pg_sequence	newseq = (Form_pg_sequence) GETSTRUCT(tuple);
 
 		/* We do not log first nextval call, so "advance" sequence here */
-		newseq->is_called = 't';
+		newseq->is_called = true;
 		newseq->log_cnt = 0;
 
 		xlrec.node = rel->rd_node;
@@ -217,7 +227,7 @@ DefineSequence(CreateSeqStmt *seq)
 		rdata[0].next = &(rdata[1]);
 
 		rdata[1].buffer = InvalidBuffer;
-		rdata[1].data = (char*) tuple->t_data;
+		rdata[1].data = (char *) tuple->t_data;
 		rdata[1].len = tuple->t_len;
 		rdata[1].next = NULL;
 
@@ -242,14 +252,14 @@ nextval(PG_FUNCTION_ARGS)
 	SeqTable	elm;
 	Buffer		buf;
 	Form_pg_sequence seq;
-	int32		incby,
+	int64		incby,
 				maxv,
 				minv,
 				cache,
 				log,
 				fetch,
 				last;
-	int32		result,
+	int64		result,
 				next,
 				rescnt = 0;
 	bool		logit = false;
@@ -266,7 +276,7 @@ nextval(PG_FUNCTION_ARGS)
 	if (elm->last != elm->cached)		/* some numbers were cached */
 	{
 		elm->last += elm->increment;
-		PG_RETURN_INT32(elm->last);
+		PG_RETURN_INT64(elm->last);
 	}
 
 	seq = read_info("nextval", elm, &buf);		/* lock page' buffer and
@@ -279,7 +289,7 @@ nextval(PG_FUNCTION_ARGS)
 	fetch = cache = seq->cache_value;
 	log = seq->log_cnt;
 
-	if (seq->is_called != 't')
+	if (!seq->is_called)
 	{
 		rescnt++;				/* last_value if not called */
 		fetch--;
@@ -294,7 +304,6 @@ nextval(PG_FUNCTION_ARGS)
 
 	while (fetch)				/* try to fetch cache [+ log ] numbers */
 	{
-
 		/*
 		 * Check MAXVALUE for ascending sequences and MINVALUE for
 		 * descending sequences
@@ -307,8 +316,8 @@ nextval(PG_FUNCTION_ARGS)
 			{
 				if (rescnt > 0)
 					break;		/* stop fetching */
-				if (seq->is_cycled != 't')
-					elog(ERROR, "%s.nextval: reached MAXVALUE (%d)",
+				if (!seq->is_cycled)
+					elog(ERROR, "%s.nextval: reached MAXVALUE (" INT64_FORMAT ")",
 						 elm->name, maxv);
 				next = minv;
 			}
@@ -323,8 +332,8 @@ nextval(PG_FUNCTION_ARGS)
 			{
 				if (rescnt > 0)
 					break;		/* stop fetching */
-				if (seq->is_cycled != 't')
-					elog(ERROR, "%s.nextval: reached MINVALUE (%d)",
+				if (!seq->is_cycled)
+					elog(ERROR, "%s.nextval: reached MINVALUE (" INT64_FORMAT ")",
 						 elm->name, minv);
 				next = maxv;
 			}
@@ -361,7 +370,7 @@ nextval(PG_FUNCTION_ARGS)
 		rdata[0].next = &(rdata[1]);
 
 		seq->last_value = next;
-		seq->is_called = 't';
+		seq->is_called = true;
 		seq->log_cnt = 0;
 		rdata[1].buffer = InvalidBuffer;
 		rdata[1].data = (char *) page + ((PageHeader) page)->pd_upper;
@@ -380,7 +389,7 @@ nextval(PG_FUNCTION_ARGS)
 
 	/* update on-disk data */
 	seq->last_value = last;		/* last fetched number */
-	seq->is_called = 't';
+	seq->is_called = true;
 	Assert(log >= 0);
 	seq->log_cnt = log;			/* how much is logged */
 	END_CRIT_SECTION();
@@ -390,7 +399,7 @@ nextval(PG_FUNCTION_ARGS)
 	if (WriteBuffer(buf) == STATUS_ERROR)
 		elog(ERROR, "%s.nextval: WriteBuffer failed", elm->name);
 
-	PG_RETURN_INT32(result);
+	PG_RETURN_INT64(result);
 }
 
 Datum
@@ -399,7 +408,7 @@ currval(PG_FUNCTION_ARGS)
 	text	   *seqin = PG_GETARG_TEXT_P(0);
 	char	   *seqname = get_seq_name(seqin);
 	SeqTable	elm;
-	int32		result;
+	int64		result;
 
 	if (pg_aclcheck(seqname, GetUserId(), ACL_SELECT) != ACLCHECK_OK)
 		elog(ERROR, "%s.currval: you don't have permissions to read sequence %s",
@@ -416,7 +425,7 @@ currval(PG_FUNCTION_ARGS)
 
 	pfree(seqname);
 
-	PG_RETURN_INT32(result);
+	PG_RETURN_INT64(result);
 }
 
 /*
@@ -433,7 +442,7 @@ currval(PG_FUNCTION_ARGS)
  * sequence.
  */
 static void
-do_setval(char *seqname, int32 next, bool iscalled)
+do_setval(char *seqname, int64 next, bool iscalled)
 {
 	SeqTable	elm;
 	Buffer		buf;
@@ -449,7 +458,7 @@ do_setval(char *seqname, int32 next, bool iscalled)
 												 * read tuple */
 
 	if ((next < seq->min_value) || (next > seq->max_value))
-		elog(ERROR, "%s.setval: value %d is out of bounds (%d,%d)",
+		elog(ERROR, "%s.setval: value " INT64_FORMAT " is out of bounds (" INT64_FORMAT "," INT64_FORMAT ")",
 			 seqname, next, seq->min_value, seq->max_value);
 
 	/* save info in local cache */
@@ -471,7 +480,7 @@ do_setval(char *seqname, int32 next, bool iscalled)
 		rdata[0].next = &(rdata[1]);
 
 		seq->last_value = next;
-		seq->is_called = 't';
+		seq->is_called = true;
 		seq->log_cnt = 0;
 		rdata[1].buffer = InvalidBuffer;
 		rdata[1].data = (char *) page + ((PageHeader) page)->pd_upper;
@@ -486,7 +495,7 @@ do_setval(char *seqname, int32 next, bool iscalled)
 	}
 	/* save info in sequence relation */
 	seq->last_value = next;		/* last fetched number */
-	seq->is_called = iscalled ? 't' : 'f';
+	seq->is_called = iscalled;
 	seq->log_cnt = (iscalled) ? 0 : 1;
 	END_CRIT_SECTION();
 
@@ -496,7 +505,6 @@ do_setval(char *seqname, int32 next, bool iscalled)
 		elog(ERROR, "%s.setval: WriteBuffer failed", seqname);
 
 	pfree(seqname);
-
 }
 
 /*
@@ -507,12 +515,12 @@ Datum
 setval(PG_FUNCTION_ARGS)
 {
 	text	   *seqin = PG_GETARG_TEXT_P(0);
-	int32		next = PG_GETARG_INT32(1);
+	int64		next = PG_GETARG_INT64(1);
 	char	   *seqname = get_seq_name(seqin);
 
 	do_setval(seqname, next, true);
 
-	PG_RETURN_INT32(next);
+	PG_RETURN_INT64(next);
 }
 
 /*
@@ -523,13 +531,13 @@ Datum
 setval_and_iscalled(PG_FUNCTION_ARGS)
 {
 	text	   *seqin = PG_GETARG_TEXT_P(0);
-	int32		next = PG_GETARG_INT32(1);
+	int64		next = PG_GETARG_INT64(1);
 	bool		iscalled = PG_GETARG_BOOL(2);
 	char	   *seqname = get_seq_name(seqin);
 
 	do_setval(seqname, next, iscalled);
 
-	PG_RETURN_INT32(next);
+	PG_RETURN_INT64(next);
 }
 
 /*
@@ -694,7 +702,7 @@ init_sequence(char *caller, char *name)
 
 /*
  * CloseSequences
- *				is calling by xact mgr at commit/abort.
+ *				is called by xact mgr at commit/abort.
  */
 void
 CloseSequences(void)
@@ -704,9 +712,9 @@ CloseSequences(void)
 
 	for (elm = seqtab; elm != (SeqTable) NULL; elm = elm->next)
 	{
-		if (elm->rel != (Relation) NULL)		/* opened in current xact */
+		rel = elm->rel;
+		if (rel != (Relation) NULL)	/* opened in current xact */
 		{
-			rel = elm->rel;
 			elm->rel = (Relation) NULL;
 			heap_close(rel, AccessShareLock);
 		}
@@ -724,7 +732,7 @@ init_params(CreateSeqStmt *seq, Form_pg_sequence new)
 	DefElem    *cache_value = NULL;
 	List	   *option;
 
-	new->is_cycled = 'f';
+	new->is_cycled = false;
 	foreach(option, seq->options)
 	{
 		DefElem    *defel = (DefElem *) lfirst(option);
@@ -743,7 +751,7 @@ init_params(CreateSeqStmt *seq, Form_pg_sequence new)
 		{
 			if (defel->arg != (Node *) NULL)
 				elog(ERROR, "DefineSequence: CYCLE ??");
-			new->is_cycled = 't';
+			new->is_cycled = true;
 		}
 		else
 			elog(ERROR, "DefineSequence: option \"%s\" not recognized",
@@ -760,7 +768,7 @@ init_params(CreateSeqStmt *seq, Form_pg_sequence new)
 		if (new->increment_by > 0)
 			new->max_value = SEQ_MAXVALUE;		/* ascending seq */
 		else
-			new->max_value = -1;/* descending seq */
+			new->max_value = -1; /* descending seq */
 	}
 	else
 		new->max_value = get_param(max_value);
@@ -776,7 +784,7 @@ init_params(CreateSeqStmt *seq, Form_pg_sequence new)
 		new->min_value = get_param(min_value);
 
 	if (new->min_value >= new->max_value)
-		elog(ERROR, "DefineSequence: MINVALUE (%d) can't be >= MAXVALUE (%d)",
+		elog(ERROR, "DefineSequence: MINVALUE (" INT64_FORMAT ") can't be >= MAXVALUE (" INT64_FORMAT ")",
 			 new->min_value, new->max_value);
 
 	if (last_value == (DefElem *) NULL) /* START WITH */
@@ -790,31 +798,40 @@ init_params(CreateSeqStmt *seq, Form_pg_sequence new)
 		new->last_value = get_param(last_value);
 
 	if (new->last_value < new->min_value)
-		elog(ERROR, "DefineSequence: START value (%d) can't be < MINVALUE (%d)",
+		elog(ERROR, "DefineSequence: START value (" INT64_FORMAT ") can't be < MINVALUE (" INT64_FORMAT ")",
 			 new->last_value, new->min_value);
 	if (new->last_value > new->max_value)
-		elog(ERROR, "DefineSequence: START value (%d) can't be > MAXVALUE (%d)",
+		elog(ERROR, "DefineSequence: START value (" INT64_FORMAT ") can't be > MAXVALUE (" INT64_FORMAT ")",
 			 new->last_value, new->max_value);
 
 	if (cache_value == (DefElem *) NULL)		/* CACHE */
 		new->cache_value = 1;
 	else if ((new->cache_value = get_param(cache_value)) <= 0)
-		elog(ERROR, "DefineSequence: CACHE (%d) can't be <= 0",
+		elog(ERROR, "DefineSequence: CACHE (" INT64_FORMAT ") can't be <= 0",
 			 new->cache_value);
 
 }
 
-static int
+static int64
 get_param(DefElem *def)
 {
 	if (def->arg == (Node *) NULL)
 		elog(ERROR, "DefineSequence: \"%s\" value unspecified", def->defname);
 
-	if (nodeTag(def->arg) == T_Integer)
-		return intVal(def->arg);
+	if (IsA(def->arg, Integer))
+		return (int64) intVal(def->arg);
 
+	/*
+	 * Values too large for int4 will be represented as Float constants
+	 * by the lexer.  Accept these if they are valid int8 strings.
+	 */
+	if (IsA(def->arg, Float))
+		return DatumGetInt64(DirectFunctionCall1(int8in,
+												 CStringGetDatum(strVal(def->arg))));
+
+	/* Shouldn't get here unless parser messed up */
 	elog(ERROR, "DefineSequence: \"%s\" value must be integer", def->defname);
-	return -1;
+	return 0;					/* not reached; keep compiler quiet */
 }
 
 void
@@ -857,8 +874,6 @@ seq_redo(XLogRecPtr lsn, XLogRecord *record)
 	PageSetLSN(page, lsn);
 	PageSetSUI(page, ThisStartUpID);
 	UnlockAndWriteBuffer(buffer);
-
-	return;
 }
 
 void

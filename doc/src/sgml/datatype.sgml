@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.57 2001/08/07 22:41:49 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.58 2001/08/16 20:38:53 tgl Exp $
 -->
 
  <chapter id="datatype">
@@ -199,8 +199,14 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.57 2001/08/07 22:41:49 pe
 
       <row>
        <entry><type>serial</type></entry>
-       <entry></entry>
+       <entry><type>serial4</type></entry>
        <entry>autoincrementing four-byte integer</entry>
+      </row>
+
+      <row>
+       <entry><type>serial8</type></entry>
+       <entry></entry>
+       <entry>autoincrementing eight-byte integer</entry>
       </row>
 
       <row>
@@ -394,10 +400,17 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.57 2001/08/07 22:41:49 pe
        </row>
 
        <row>
-	<entry>serial</entry>
+	<entry>serial4</entry>
 	<entry>4 bytes</entry>
 	<entry>Identifier or cross-reference</entry>
-	<entry>0 to +2147483647</entry>
+	<entry>1 to 2147483647</entry>
+       </row>
+
+       <row>
+	<entry>serial8</entry>
+	<entry>8 bytes</entry>
+	<entry>Identifier or cross-reference</entry>
+	<entry>1 to 9223372036854775807</entry>
        </row>
       </tbody>
      </tgroup>
@@ -413,15 +426,25 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.57 2001/08/07 22:41:49 pe
    </para>
 
    <para>
-    The <type>bigint</type> type may not be available on all platforms since
-    it relies on compiler support for eight-byte integers.
+    The <type>bigint</type> type may not function correctly on all platforms,
+    since it relies on compiler support for eight-byte integers.  On a machine
+    without such support, <type>bigint</type> acts the same
+    as <type>integer</type> (but still takes up eight bytes of storage).
    </para>
 
    <sect2 id="datatype-serial">
-    <title>The Serial Type</title>
+    <title>The Serial Types</title>
 
     <indexterm zone="datatype-serial">
      <primary>serial</primary>
+    </indexterm>
+
+    <indexterm zone="datatype-serial">
+     <primary>serial4</primary>
+    </indexterm>
+
+    <indexterm zone="datatype-serial">
+     <primary>serial8</primary>
     </indexterm>
 
     <indexterm>
@@ -435,9 +458,9 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.57 2001/08/07 22:41:49 pe
     </indexterm>
 
     <para>
-     The <type>serial</type> type is a special-case type constructed by
-     <productname>Postgres</productname> from other existing components.
-     It is typically used to create unique identifiers for table entries.
+     The <type>serial</type> datatypes are not truly types, but are a
+     notational convenience for setting up unique identifier columns
+     in tables.
      In the current implementation, specifying
 
      <programlisting>
@@ -449,9 +472,13 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
      <programlisting>
 CREATE SEQUENCE <replaceable class="parameter">tablename</replaceable>_<replaceable class="parameter">colname</replaceable>_seq;
 CREATE TABLE <replaceable class="parameter">tablename</replaceable>
-    (<replaceable class="parameter">colname</replaceable> integer DEFAULT nextval('<replaceable class="parameter">tablename</replaceable>_<replaceable class="parameter">colname</replaceable>_seq');
-CREATE UNIQUE INDEX <replaceable class="parameter">tablename</replaceable>_<replaceable class="parameter">colname</replaceable>_key on <replaceable class="parameter">tablename</replaceable> (<replaceable class="parameter">colname</replaceable>);
+    (<replaceable class="parameter">colname</replaceable> integer DEFAULT nextval('<replaceable class="parameter">tablename</replaceable>_<replaceable class="parameter">colname</replaceable>_seq') UNIQUE NOT NULL;
      </programlisting>
+
+     Thus, we have created an integer column and arranged for its default
+     values to be assigned from a sequence generator.  UNIQUE and NOT NULL
+     constraints are applied to ensure that explicitly-inserted values
+     will never be duplicates, either.
 
      <caution>
       <para>
@@ -460,7 +487,18 @@ CREATE UNIQUE INDEX <replaceable class="parameter">tablename</replaceable>_<repl
        table is dropped.
       </para>
      </caution>
+    </para>
 
+    <para>
+     The type names <type>serial</type> and <type>serial4</type> are
+     equivalent: both create <type>integer</type> columns.  The type
+     name <type>serial8</type> works just the same way, except that it
+     creates a <type>bigint</type> column.  <type>serial8</type> should
+     be used if you anticipate use of more than 2^31 identifiers over
+     the lifetime of the table.
+    </para>
+
+    <para>
      Implicit sequences supporting the <type>serial</type> are
      not automatically dropped when a table containing a serial type
      is dropped. So, the following commands executed in order will likely fail:

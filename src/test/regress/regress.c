@@ -1,5 +1,5 @@
 /*
- * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.47 2001/03/22 04:01:44 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.48 2001/08/16 20:38:56 tgl Exp $
  */
 
 #include "postgres.h"
@@ -565,6 +565,8 @@ ttdummy(PG_FUNCTION_ARGS)
 
 		newoff = DirectFunctionCall1(nextval,
 									 PointerGetDatum(seqname));
+		/* nextval now returns int64; coerce down to int32 */
+		newoff = Int32GetDatum((int32) DatumGetInt64(newoff));
 		pfree(seqname);
 	}
 

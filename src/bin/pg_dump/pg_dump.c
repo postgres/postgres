@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.221 2001/08/12 19:02:39 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.222 2001/08/16 20:38:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4019,6 +4019,8 @@ dumpTables(Archive *fout, TableInfo *tblinfo, int numTables,
 	/* First - dump SEQUENCEs */
 	if (tablename && strlen(tablename) > 0)
 	{
+		/* XXX this code only works for serial columns named "id" */
+		/* We really need dependency analysis! */
 		serialSeq = malloc(strlen(tablename) + strlen(serialSeqSuffix) + 1);
 		strcpy(serialSeq, tablename);
 		strcat(serialSeq, serialSeqSuffix);
@@ -4036,7 +4038,7 @@ dumpTables(Archive *fout, TableInfo *tblinfo, int numTables,
 				dumpACL(fout, tblinfo[i]);
 		}
 	}
-	if (tablename)
+	if (serialSeq)
 		free(serialSeq);
 
 	for (i = 0; i < numTables; i++)
@@ -4737,14 +4739,13 @@ static void
 dumpSequence(Archive *fout, TableInfo tbinfo, const bool schemaOnly, const bool dataOnly)
 {
 	PGresult   *res;
-	int4		last,
-				incby,
-				maxv,
-				minv,
-				cache;
-	char		cycled,
+	char	   *last,
+			   *incby,
+			   *maxv,
+			   *minv,
+			   *cache;
+	bool		cycled,
 				called;
-	const char *t;
 	PQExpBuffer query = createPQExpBuffer();
 	PQExpBuffer delqry = createPQExpBuffer();
 
@@ -4774,20 +4775,18 @@ dumpSequence(Archive *fout, TableInfo tbinfo, const bool schemaOnly, const bool 
 		exit_nicely();
 	}
 
-	last = atoi(PQgetvalue(res, 0, 1));
-	incby = atoi(PQgetvalue(res, 0, 2));
-	maxv = atoi(PQgetvalue(res, 0, 3));
-	minv = atoi(PQgetvalue(res, 0, 4));
-	cache = atoi(PQgetvalue(res, 0, 5));
-	t = PQgetvalue(res, 0, 6);
-	cycled = *t;
-	t = PQgetvalue(res, 0, 7);
-	called = *t;
+	last = PQgetvalue(res, 0, 1);
+	incby = PQgetvalue(res, 0, 2);
+	maxv = PQgetvalue(res, 0, 3);
+	minv = PQgetvalue(res, 0, 4);
+	cache = PQgetvalue(res, 0, 5);
+	cycled = (strcmp(PQgetvalue(res, 0, 6), "t") == 0);
+	called = (strcmp(PQgetvalue(res, 0, 7), "t") == 0);
 
 	/*
 	 * The logic we use for restoring sequences is as follows: -   Add a
 	 * basic CREATE SEQUENCE statement (use last_val for start if called
-	 * with 'f', else use min_val for start_val).
+	 * is false, else use min_val for start_val).
 	 *
 	 *	Add a 'SETVAL(seq, last_val, iscalled)' at restore-time iff
 	 *  we load data
@@ -4795,22 +4794,22 @@ dumpSequence(Archive *fout, TableInfo tbinfo, const bool schemaOnly, const bool 
 
 	if (!dataOnly)
 	{
-		PQclear(res);
-
 		resetPQExpBuffer(delqry);
-		appendPQExpBuffer(delqry, "DROP SEQUENCE %s;\n", fmtId(tbinfo.relname, force_quotes));
+		appendPQExpBuffer(delqry, "DROP SEQUENCE %s;\n",
+						  fmtId(tbinfo.relname, force_quotes));
 
 		resetPQExpBuffer(query);
 		appendPQExpBuffer(query,
-				  "CREATE SEQUENCE %s start %d increment %d maxvalue %d "
-						  "minvalue %d  cache %d %s;\n",
+						  "CREATE SEQUENCE %s start %s increment %s "
+						  "maxvalue %s minvalue %s cache %s%s;\n",
 						  fmtId(tbinfo.relname, force_quotes),
-						  (called == 't') ? minv : last,
+						  (called ? minv : last),
 						  incby, maxv, minv, cache,
-						  (cycled == 't') ? "cycle" : "");
+						  (cycled ? " cycle" : ""));
 
 		ArchiveEntry(fout, tbinfo.oid, tbinfo.relname, "SEQUENCE", NULL,
-			  query->data, delqry->data, "", tbinfo.usename, NULL, NULL);
+					 query->data, delqry->data, "", tbinfo.usename,
+					 NULL, NULL);
 	}
 
 	if (!schemaOnly)
@@ -4818,7 +4817,8 @@ dumpSequence(Archive *fout, TableInfo tbinfo, const bool schemaOnly, const bool 
 		resetPQExpBuffer(query);
 		appendPQExpBuffer(query, "SELECT setval (");
 		formatStringLiteral(query, fmtId(tbinfo.relname, force_quotes), CONV_ALL);
-		appendPQExpBuffer(query, ", %d, '%c');\n", last, called);
+		appendPQExpBuffer(query, ", %s, %s);\n",
+						  last, (called ? "true" : "false"));
 
 		ArchiveEntry(fout, tbinfo.oid, tbinfo.relname, "SEQUENCE SET", NULL,
 					 query->data, "" /* Del */ , "", "", NULL, NULL);
@@ -4833,6 +4833,8 @@ dumpSequence(Archive *fout, TableInfo tbinfo, const bool schemaOnly, const bool 
 		dumpComment(fout, query->data, tbinfo.oid,
 					"pg_class", 0, NULL);
 	}
+
+	PQclear(res);
 
 	destroyPQExpBuffer(query);
 	destroyPQExpBuffer(delqry);

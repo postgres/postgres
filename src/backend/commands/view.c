@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: view.c,v 1.56 2001/08/12 21:35:18 tgl Exp $
+ *	$Id: view.c,v 1.57 2001/08/16 20:38:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,7 +68,6 @@ DefineVirtualRelation(char *relname, List *tlist)
 			def->typename = typename;
 
 			def->is_not_null = false;
-			def->is_sequence = false;
 			def->raw_default = NULL;
 			def->cooked_default = NULL;
 			def->constraints = NIL;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.42 2001/07/16 05:07:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.43 2001/08/16 20:38:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -227,7 +227,6 @@ static ScanKeyword ScanKeywords[] = {
 	{"second", SECOND_P},
 	{"select", SELECT},
 	{"sequence", SEQUENCE},
-	{"serial", SERIAL},
 	{"serializable", SERIALIZABLE},
 	{"session", SESSION},
 	{"session_user", SESSION_USER},

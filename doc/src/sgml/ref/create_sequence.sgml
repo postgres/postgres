@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_sequence.sgml,v 1.17 2001/06/30 22:01:17 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_sequence.sgml,v 1.18 2001/08/16 20:38:53 tgl Exp $
 Postgres documentation
 -->
 
@@ -79,7 +79,7 @@ CREATE [ TEMPORARY | TEMP ] SEQUENCE <replaceable class="parameter">seqname</rep
 	The optional clause <option>MINVALUE
 	 <replaceable class="parameter">minvalue</replaceable></option>
 	determines the minimum value
-	a sequence can generate. The defaults are 1 and -2147483647 for
+	a sequence can generate. The defaults are 1 and -2^63-1 for
 	ascending and descending sequences, respectively.
        </para>
       </listitem>
@@ -92,7 +92,7 @@ CREATE [ TEMPORARY | TEMP ] SEQUENCE <replaceable class="parameter">seqname</rep
 	The optional clause <option>MAXVALUE
 	 <replaceable class="parameter">maxvalue</replaceable></option>
 	determines the maximum
-	value for the sequence. The defaults are 2147483647 and -1 for
+	value for the sequence. The defaults are 2^63-1 and -1 for
 	ascending and descending sequences, respectively.
        </para>
       </listitem>

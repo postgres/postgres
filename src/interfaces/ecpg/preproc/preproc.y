@@ -223,7 +223,7 @@ make_name(void)
 		MINVALUE, MODE, MOVE, NEW, NOCREATEDB, NOCREATEUSER,
 		NONE, NOTHING, NOTIFY, NOTNULL, OFFSET, OIDS,
 		OPERATOR, OWNER, PASSWORD, PROCEDURAL, REINDEX, RENAME, RESET,
-		RETURNS, ROW, RULE, SEQUENCE, SERIAL, SETOF, SHARE,
+		RETURNS, ROW, RULE, SEQUENCE, SETOF, SHARE,
 		SHOW, START, STATEMENT, STATISTICS, STDIN, STDOUT, SYSID TEMP,
 		TEMPLATE, TOAST, TRUNCATE, TRUSTED, UNLISTEN, UNTIL, VACUUM,
 		VALID, VERBOSE, VERSION
@@ -1107,15 +1107,6 @@ columnDef:  ColId Typename ColQualList opt_collate
 					}
 					$$ = cat_str(4, $1, $2, $3, $4);
 				}
-	| ColId SERIAL ColQualList opt_collate
-		{
-			if (strlen($4) > 0)
-			{
-				sprintf(errortext, "CREATE TABLE/COLLATE %s not yet implemented; clause ignored", $4);
-				mmerror(ET_NOTICE, errortext);
-			}
-			$$ = cat_str(4, $1, make_str(" serial "), $3, $4);
-		}
 		;
 
 ColQualList:  ColQualList ColConstraint	{ $$ = cat2_str($1,$2); }
@@ -5106,7 +5097,6 @@ ECPGColId: ident			{ $$ = $1; }
 	| NATIONAL			{ $$ = make_str("national"); }
 	| NONE				{ $$ = make_str("none"); }
 	| PATH_P			{ $$ = make_str("path_p"); }
-	| SERIAL			{ $$ = make_str("serial"); }
 	| TIME				{ $$ = make_str("time"); }
 	| TIMESTAMP			{ $$ = make_str("timestamp"); }
 	| ECPGKeywords                  { $$ = $1; }

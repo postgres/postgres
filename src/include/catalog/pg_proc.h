@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.205 2001/08/15 07:07:40 ishii Exp $
+ * $Id: pg_proc.h,v 1.206 2001/08/16 20:38:54 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2003,13 +2003,13 @@ DESCR("convert int8 to int8 (no-op)");
 
 
 /* SEQUENCEs nextval & currval functions */
-DATA(insert OID = 1574 (  nextval			PGUID 12 f t f t 1 f 23 "25" 100 0 0 100	nextval - ));
+DATA(insert OID = 1574 (  nextval			PGUID 12 f t f t 1 f 20 "25" 100 0 0 100	nextval - ));
 DESCR("sequence next value");
-DATA(insert OID = 1575 (  currval			PGUID 12 f t f t 1 f 23 "25" 100 0 0 100	currval - ));
+DATA(insert OID = 1575 (  currval			PGUID 12 f t f t 1 f 20 "25" 100 0 0 100	currval - ));
 DESCR("sequence current value");
-DATA(insert OID = 1576 (  setval			PGUID 12 f t f t 2 f 23 "25 23" 100 0 0 100  setval - ));
+DATA(insert OID = 1576 (  setval			PGUID 12 f t f t 2 f 20 "25 20" 100 0 0 100  setval - ));
 DESCR("set sequence value");
-DATA(insert OID = 1765 (  setval			PGUID 12 f t f t 3 f 23 "25 23 16" 100 0 0 100	setval_and_iscalled - ));
+DATA(insert OID = 1765 (  setval			PGUID 12 f t f t 3 f 20 "25 20 16" 100 0 0 100	setval_and_iscalled - ));
 DESCR("set sequence value and iscalled status");
 
 DATA(insert OID = 1579 (  varbit_in			PGUID 12 f t t t 1 f 1562 "0" 100 0 0 100  varbit_in - ));

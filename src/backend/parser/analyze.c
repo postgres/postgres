@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.194 2001/08/11 00:02:13 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.195 2001/08/16 20:38:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -702,6 +702,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 			   *pkey = NULL;
 	IndexElem  *iparam;
 	bool		saw_nullable;
+	bool		is_serial;
 
 	q = makeNode(Query);
 	q->commandType = CMD_UTILITY;
@@ -723,10 +724,25 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 				column = (ColumnDef *) element;
 				columns = lappend(columns, column);
 
+				/* Check for SERIAL pseudo-types */
+				is_serial = false;
+				if (strcmp(column->typename->name, "serial") == 0 ||
+					strcmp(column->typename->name, "serial4") == 0)
+				{
+					is_serial = true;
+					column->typename->name = pstrdup("int4");
+				}
+				else if (strcmp(column->typename->name, "serial8") == 0)
+				{
+					is_serial = true;
+					column->typename->name = pstrdup("int8");
+				}
+
+				/* Do necessary work on the column type declaration */
 				transformColumnType(pstate, column);
 
-				/* Special case SERIAL type? */
-				if (column->is_sequence)
+				/* Special actions for SERIAL pseudo-types */
+				if (is_serial)
 				{
 					char	   *sname;
 					char	   *qstring;
@@ -778,13 +794,18 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 					column->constraints = lappend(column->constraints,
 												  constraint);
 
+					/*
+					 * Build a CREATE SEQUENCE command to create the
+					 * sequence object, and add it to the list of things
+					 * to be done before this CREATE TABLE.
+					 */
 					sequence = makeNode(CreateSeqStmt);
 					sequence->seqname = pstrdup(sname);
 					sequence->istemp = stmt->istemp;
 					sequence->options = NIL;
 
 					elog(NOTICE, "CREATE TABLE will create implicit sequence '%s' for SERIAL column '%s.%s'",
-					  sequence->seqname, stmt->relname, column->colname);
+						 sequence->seqname, stmt->relname, column->colname);
 
 					blist = lappend(blist, sequence);
 				}

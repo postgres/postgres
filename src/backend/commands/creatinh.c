@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.79 2001/08/10 18:57:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.80 2001/08/16 20:38:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -447,7 +447,6 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 				typename->typmod = attribute->atttypmod;
 				def->typename = typename;
 				def->is_not_null = attribute->attnotnull;
-				def->is_sequence = false;
 				def->raw_default = NULL;
 				def->cooked_default = NULL;
 				def->constraints = NIL;

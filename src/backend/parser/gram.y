@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.245 2001/08/15 18:42:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.246 2001/08/16 20:38:53 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -354,7 +354,7 @@ static void doNegateFloat(Value *v);
 		NEW, NOCREATEDB, NOCREATEUSER, NONE, NOTHING, NOTIFY, NOTNULL,
 		OFFSET, OIDS, OPERATOR, OWNER, PASSWORD, PROCEDURAL,
 		REINDEX, RENAME, RESET, RETURNS, ROW, RULE,
-		SEQUENCE, SERIAL, SETOF, SHARE, SHOW, START, STATEMENT,
+		SEQUENCE, SETOF, SHARE, SHOW, START, STATEMENT,
 		STATISTICS, STDIN, STDOUT, SYSID,
 		TEMP, TEMPLATE, TOAST, TRUNCATE, TRUSTED, 
 		UNLISTEN, UNTIL, VACUUM, VALID, VERBOSE, VERSION
@@ -1255,22 +1255,6 @@ columnDef:  ColId Typename ColQualList opt_collate
 
 					$$ = (Node *)n;
 				}
-			| ColId SERIAL ColQualList opt_collate
-				{
-					ColumnDef *n = makeNode(ColumnDef);
-					n->colname = $1;
-					n->typename = makeNode(TypeName);
-					n->typename->name = xlateSqlType("integer");
-					n->typename->typmod = -1;
-					n->is_sequence = TRUE;
-					n->constraints = $3;
-
-					if ($4 != NULL)
-						elog(NOTICE,"CREATE TABLE/COLLATE %s not yet implemented"
-							 "; clause ignored", $4);
-
-					$$ = (Node *)n;
-				}
 		;
 
 ColQualList:  ColQualList ColConstraint		{ $$ = lappend($1, $2); }
@@ -1630,7 +1614,7 @@ OptSeqList:  OptSeqList OptSeqElem
 			|	{ $$ = NIL; }
 		;
 
-OptSeqElem:  CACHE IntegerOnly
+OptSeqElem:  CACHE NumericOnly
 				{
 					$$ = makeNode(DefElem);
 					$$->defname = "cache";
@@ -1642,25 +1626,25 @@ OptSeqElem:  CACHE IntegerOnly
 					$$->defname = "cycle";
 					$$->arg = (Node *)NULL;
 				}
-			| INCREMENT IntegerOnly
+			| INCREMENT NumericOnly
 				{
 					$$ = makeNode(DefElem);
 					$$->defname = "increment";
 					$$->arg = (Node *)$2;
 				}
-			| MAXVALUE IntegerOnly
+			| MAXVALUE NumericOnly
 				{
 					$$ = makeNode(DefElem);
 					$$->defname = "maxvalue";
 					$$->arg = (Node *)$2;
 				}
-			| MINVALUE IntegerOnly
+			| MINVALUE NumericOnly
 				{
 					$$ = makeNode(DefElem);
 					$$->defname = "minvalue";
 					$$->arg = (Node *)$2;
 				}
-			| START IntegerOnly
+			| START NumericOnly
 				{
 					$$ = makeNode(DefElem);
 					$$->defname = "start";
@@ -5593,7 +5577,6 @@ ColId:  IDENT							{ $$ = $1; }
 		| NATIONAL						{ $$ = "national"; }
 		| NONE							{ $$ = "none"; }
 		| PATH_P						{ $$ = "path"; }
-		| SERIAL						{ $$ = "serial"; }
 		| TIME							{ $$ = "time"; }
 		| TIMESTAMP						{ $$ = "timestamp"; }
 		;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.95 2001/08/15 18:42:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.96 2001/08/16 20:38:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -228,7 +228,6 @@ static ScanKeyword ScanKeywords[] = {
 	{"second", SECOND_P},
 	{"select", SELECT},
 	{"sequence", SEQUENCE},
-	{"serial", SERIAL},
 	{"serializable", SERIALIZABLE},
 	{"session", SESSION},
 	{"session_user", SESSION_USER},
