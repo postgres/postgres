@@ -9,7 +9,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1ResultSet.java,v 1.13 2003/06/30 21:10:55 davec Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1ResultSet.java,v 1.14 2003/08/06 05:53:13 barry Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -131,6 +131,10 @@ public abstract class AbstractJdbc1ResultSet implements BaseResultSet
 			String[] binds = new String[0];
 			// Is this the correct query???
 			String cursorName = statement.getStatementName();
+			//if cursorName is null, we are not batching (likely because the
+			//query itself can't be batched)
+			if (cursorName == null)
+				return false;
 			sql[0] = "FETCH FORWARD " + fetchSize + " FROM " + cursorName;
 			QueryExecutor.execute(sql,
 								  binds,
