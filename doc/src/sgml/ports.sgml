@@ -77,12 +77,18 @@
 	 <ulink url="mailto:stanb@awod.com">Stan Brown</ulink>)</entry>
        </row>
        <row>
-	<entry>IRIX 6.5</entry>
+	<entry>IRIX 6.5.6f</entry>
 	<entry>MIPS</entry>
-	<entry>v6.4</entry>
-	<entry>1998-12-29</entry>
-	<entry>IRIX 5.x is different
-	 (<ulink url="mdalphin@amgen.com">Mark Dalphin</ulink>)</entry>
+	<entry>v6.5.3</entry>
+	<entry>2000-02-18</entry>
+	<entry>MIPSPro 7.3.1.1m; full N32 build
+	 (<ulink url="hxpro@cinesite.co.uk">Kevin Wheatley</ulink>)</entry>
+	<!--
+       <entry>v6.4</entry>
+       <entry>1998-12-29</entry>
+       <entry>IRIX 5.x is different
+	(<ulink url="mdalphin@amgen.com">Mark Dalphin</ulink>)</entry>
+	-->
        </row>
        <row>
 	<entry>linux 2.0.x</entry>
