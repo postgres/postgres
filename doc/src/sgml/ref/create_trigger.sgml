@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_trigger.sgml,v 1.10 2000/04/07 19:20:48 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_trigger.sgml,v 1.11 2000/09/12 05:30:06 thomas Exp $
 Postgres documentation
 -->
 
@@ -63,7 +63,7 @@ CREATE TRIGGER <replaceable class="PARAMETER">name</replaceable> { BEFORE | AFTE
       </listitem>
      </varlistentry>
      <varlistentry>
-      <term><replaceable class="parameter">funcname</replaceable></term>
+      <term><replaceable class="parameter">func</replaceable></term>
       <listitem>
        <para>
 	A user-supplied function.
@@ -110,8 +110,8 @@ CREATE
   <para>
    <command>CREATE TRIGGER</command> will enter a new trigger into the current
    data base.  The trigger will be associated with the relation
-   <replaceable class="parameter">relname</replaceable> and will execute
-   the specified function <replaceable class="parameter">funcname</replaceable>.
+   <replaceable class="parameter">table</replaceable> and will execute
+   the specified function <replaceable class="parameter">func</replaceable>.
   </para>
 
   <para>
