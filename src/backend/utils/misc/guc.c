@@ -5,7 +5,7 @@
  * command, configuration file, and command line options.
  * See src/backend/utils/misc/README for more information.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.77 2002/07/31 17:19:52 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.78 2002/08/07 17:26:24 tgl Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -1015,8 +1015,8 @@ InitializeGUCOptions(void)
 
 				if (conf->assign_hook)
 					if (!(*conf->assign_hook) (conf->reset_val, true, false))
-						fprintf(stderr, "Failed to initialize %s",
-								conf->gen.name);
+						fprintf(stderr, "Failed to initialize %s to %d\n",
+								conf->gen.name, (int) conf->reset_val);
 				*conf->variable = conf->reset_val;
 				conf->session_val = conf->reset_val;
 				break;
@@ -1029,8 +1029,8 @@ InitializeGUCOptions(void)
 				Assert(conf->reset_val <= conf->max);
 				if (conf->assign_hook)
 					if (!(*conf->assign_hook) (conf->reset_val, true, false))
-						fprintf(stderr, "Failed to initialize %s",
-								conf->gen.name);
+						fprintf(stderr, "Failed to initialize %s to %d\n",
+								conf->gen.name, conf->reset_val);
 				*conf->variable = conf->reset_val;
 				conf->session_val = conf->reset_val;
 				break;
@@ -1043,8 +1043,8 @@ InitializeGUCOptions(void)
 				Assert(conf->reset_val <= conf->max);
 				if (conf->assign_hook)
 					if (!(*conf->assign_hook) (conf->reset_val, true, false))
-						fprintf(stderr, "Failed to initialize %s",
-								conf->gen.name);
+						fprintf(stderr, "Failed to initialize %s to %g\n",
+								conf->gen.name, conf->reset_val);
 				*conf->variable = conf->reset_val;
 				conf->session_val = conf->reset_val;
 				break;
@@ -1077,8 +1077,8 @@ InitializeGUCOptions(void)
 					newstr = (*conf->assign_hook) (str, true, false);
 					if (newstr == NULL)
 					{
-						fprintf(stderr, "Failed to initialize %s",
-								conf->gen.name);
+						fprintf(stderr, "Failed to initialize %s to '%s'\n",
+								conf->gen.name, str);
 					}
 					else if (newstr != str)
 					{
