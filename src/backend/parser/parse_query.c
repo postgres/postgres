@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/Attic/parse_query.c,v 1.6 1996/11/04 04:35:42 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/Attic/parse_query.c,v 1.7 1996/11/08 00:56:17 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,7 @@
 #include <string.h>
 #include "postgres.h"
 
+#include "fmgr.h"
 #include "access/heapam.h"
 #include "utils/tqual.h"
 #include "access/tupmacs.h"
@@ -27,9 +28,9 @@
 
 #include "utils/syscache.h"
 #include "catalog/pg_type.h"
+#include "catalog/pg_operator.h"
 #include "parser/catalog_utils.h"
 #include "parser/parse_query.h"
-/* #include "parser/io.h" */
 #include "utils/lsyscache.h"
 
 #include "nodes/pg_list.h"
@@ -228,7 +229,7 @@ makeTimeRange(char *datestring1,
 	      char *datestring2,
 	      int timecode)	/* 0 = snapshot , 1 = timerange */
 {
-    TimeQual	qual;
+    TimeQual	qual = NULL;
     AbsoluteTime t1,t2;
     
     switch (timecode) {
