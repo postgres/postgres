@@ -1351,6 +1351,7 @@ fi
 fi
 
 
+set -x
 
 for ac_prog in ginstall
 do
