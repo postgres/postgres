@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Attic/Makefile.in,v 1.1 1998/01/13 04:18:22 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Attic/Makefile.in,v 1.2 1998/01/13 04:20:51 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -153,7 +153,7 @@ install-libpq: libpq.a
 install-shlib: $(shlib)
 	$(INSTALL) $(INSTL_LIB_OPTS) $(shlib) $(DESTDIR)$(LIBDIR)/$(shlib)
 	rm -f $(DESTDIR)$(LIBDIR)/libpq.so
-	ln -s libpq.so.1 $(DESTDIR)$(LIBDIR)/libpq.so
+	ln -s $(shlib) $(DESTDIR)$(LIBDIR)/libpq.so
 
 depend dep:
 	$(CC) -MM $(INCLUDE_OPT) *.c >depend
