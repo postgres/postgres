@@ -3,7 +3,7 @@
  * 1996-06-05 by Arthur David Olson (arthur_david_olson@nih.gov).
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/zic.c,v 1.9 2004/07/22 01:41:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/zic.c,v 1.10 2004/08/08 05:19:44 momjian Exp $
  */
 
 #include "postgres.h"
@@ -19,7 +19,6 @@
 #include "tzfile.h"
 
 #ifdef WIN32
-#undef unlink
 #include <windows.h>
 #endif
 
