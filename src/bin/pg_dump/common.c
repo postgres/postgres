@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.30 1999/05/25 16:13:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.31 1999/05/26 21:51:13 tgl Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -502,7 +502,7 @@ const char *
 fmtId(const char *rawid, bool force_quotes)
 {
 	const char *cp;
-	static char id[MAXQUERYLEN];
+	static char id[MAX_QUERY_SIZE];
 
 	if (!force_quotes)
 		for (cp = rawid; *cp != '\0'; cp++)

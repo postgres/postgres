@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.111 1999/05/26 19:45:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.112 1999/05/26 21:51:12 tgl Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -188,7 +188,7 @@ isViewRule(char *relname)
 {
 	PGresult   *res;
 	int			ntups;
-	char		query[MAXQUERYLEN];
+	char		query[MAX_QUERY_SIZE];
 
 	res = PQexec(g_conn, "begin");
 	if (!res ||
@@ -319,11 +319,10 @@ dumpClasses_dumpData(FILE *fout, const char *classname,
 					 const TableInfo tblinfo, bool oids)
 {
 	PGresult   *res;
-	char		q[MAXQUERYLEN];
+	char		q[MAX_QUERY_SIZE];
 	int			tuple;
 	int			field;
 	char	   *expsrc;
-	char	   *expdest;
 
 	sprintf(q, "SELECT * FROM %s", fmtId(classname, force_quotes));
 	res = PQexec(g_conn, q);
@@ -348,60 +347,58 @@ dumpClasses_dumpData(FILE *fout, const char *classname,
 			strcat(q, ") ");
 			fprintf(fout, "%s", q);
 		}
-		fprintf(fout, "values (");
+		fprintf(fout, "VALUES (");
 		for (field = 0; field < PQnfields(res); field++)
 		{
 			if (field > 0)
 				fprintf(fout, ",");
 			if (PQgetisnull(res, tuple, field))
-				fprintf(fout, "NULL");
-			else
 			{
-				switch (PQftype(res, field))
-				{
-					case INT2OID:
-					case INT4OID:
-					case OIDOID:		/* int types */
-					case FLOAT4OID:
-					case FLOAT8OID:		/* float types */
-						/* These types are printed without quotes */
-						fprintf(fout, "%s",
-								PQgetvalue(res, tuple, field));
-						break;
-					default:
+				fprintf(fout, "NULL");
+				continue;
+			}
+			switch (PQftype(res, field))
+			{
+				case INT2OID:
+				case INT4OID:
+				case OIDOID:		/* int types */
+				case FLOAT4OID:
+				case FLOAT8OID:		/* float types */
+					/* These types are printed without quotes */
+					fprintf(fout, "%s",
+							PQgetvalue(res, tuple, field));
+					break;
+				default:
+					/*
+					 * All other types are printed as string literals,
+					 * with appropriate escaping of special
+					 * characters. Quote mark ' goes to '' per SQL
+					 * standard, other stuff goes to \ sequences.
+					 */
+					putc('\'', fout);
+					expsrc = PQgetvalue(res, tuple, field);
+					while (*expsrc)
+					{
+						char		ch = *expsrc++;
 
-						/*
-						 * All other types are printed as string literals,
-						 * with appropriate escaping of special
-						 * characters. Quote mark ' goes to '' per SQL
-						 * standard, other stuff goes to \ sequences.
-						 */
-						expsrc = PQgetvalue(res, tuple, field);
-						expdest = q;
-						for (; *expsrc; expsrc++)
+						if (ch == '\\' || ch == '\'')
 						{
-							char		ch = *expsrc;
-
-							if (ch == '\\' || ch == '\'')
-							{
-								*expdest++ = ch;		/* double it */
-								*expdest++ = ch;
-							}
-							else if (ch < '\040')
-							{
-								/* generate octal escape for control chars */
-								*expdest++ = '\\';
-								*expdest++ = ((ch >> 6) & 3) + '0';
-								*expdest++ = ((ch >> 3) & 7) + '0';
-								*expdest++ = (ch & 7) + '0';
-							}
-							else
-								*expdest++ = ch;
+							putc(ch, fout);			/* double these */
+							putc(ch, fout);
 						}
-						*expdest = '\0';
-						fprintf(fout, "'%s'", q);
-						break;
-				}
+						else if (ch < '\040')
+						{
+							/* generate octal escape for control chars */
+							putc('\\', fout);
+							putc(((ch >> 6) & 3) + '0', fout);
+							putc(((ch >> 3) & 7) + '0', fout);
+							putc((ch & 7) + '0', fout);
+						}
+						else
+							putc(ch, fout);
+					}
+					putc('\'', fout);
+					break;
 			}
 		}
 		fprintf(fout, ");\n");
@@ -746,7 +743,9 @@ main(int argc, char **argv)
 	}
 
 	fflush(g_fout);
-	fclose(g_fout);
+	if (g_fout != stdout)
+		fclose(g_fout);
+
 	clearTableInfo(tblinfo, numTables);
 	PQfinish(g_conn);
 	exit(0);
@@ -766,7 +765,7 @@ getTypes(int *numTypes)
 	PGresult   *res;
 	int			ntups;
 	int			i;
-	char		query[MAXQUERYLEN];
+	char		query[MAX_QUERY_SIZE];
 	TypeInfo   *tinfo;
 
 	int			i_oid;
@@ -895,7 +894,7 @@ getOperators(int *numOprs)
 	PGresult   *res;
 	int			ntups;
 	int			i;
-	char		query[MAXQUERYLEN];
+	char		query[MAX_QUERY_SIZE];
 
 	OprInfo    *oprinfo;
 
@@ -1238,7 +1237,7 @@ getAggregates(int *numAggs)
 	PGresult   *res;
 	int			ntups;
 	int			i;
-	char		query[MAXQUERYLEN];
+	char		query[MAX_QUERY_SIZE];
 	AggInfo    *agginfo;
 
 	int			i_oid;
@@ -1332,7 +1331,7 @@ getFuncs(int *numFuncs)
 	PGresult   *res;
 	int			ntups;
 	int			i;
-	char		query[MAXQUERYLEN];
+	char		query[MAX_QUERY_SIZE];
 	FuncInfo   *finfo;
 
 	int			i_oid;
@@ -1432,7 +1431,7 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 	PGresult   *res;
 	int			ntups;
 	int			i;
-	char		query[MAXQUERYLEN];
+	char		query[MAX_QUERY_SIZE];
 	TableInfo  *tblinfo;
 
 	int			i_oid;
@@ -1651,7 +1650,7 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 				int			tgnargs = atoi(PQgetvalue(res2, i2, i_tgnargs));
 				char	   *tgargs = PQgetvalue(res2, i2, i_tgargs);
 				char	   *p;
-				char		farg[MAXQUERYLEN];
+				char		farg[MAX_QUERY_SIZE];
 				int			findx;
 
 				for (findx = 0; findx < numFuncs; findx++)
@@ -1778,7 +1777,7 @@ getInherits(int *numInherits)
 	PGresult   *res;
 	int			ntups;
 	int			i;
-	char		query[MAXQUERYLEN];
+	char		query[MAX_QUERY_SIZE];
 	InhInfo    *inhinfo;
 
 	int			i_inhrel;
@@ -1840,7 +1839,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 {
 	int			i,
 				j;
-	char		q[MAXQUERYLEN];
+	char		q[MAX_QUERY_SIZE];
 	int			i_attname;
 	int			i_typname;
 	int			i_atttypmod;
@@ -1951,7 +1950,7 @@ IndInfo    *
 getIndices(int *numIndices)
 {
 	int			i;
-	char		query[MAXQUERYLEN];
+	char		query[MAX_QUERY_SIZE];
 	PGresult   *res;
 	int			ntups;
 	IndInfo    *indinfo;
@@ -2042,7 +2041,7 @@ dumpTypes(FILE *fout, FuncInfo *finfo, int numFuncs,
 		  TypeInfo *tinfo, int numTypes)
 {
 	int			i;
-	char		q[MAXQUERYLEN];
+	char		q[MAX_QUERY_SIZE];
 	int			funcInd;
 
 	for (i = 0; i < numTypes; i++)
@@ -2122,7 +2121,7 @@ dumpProcLangs(FILE *fout, FuncInfo *finfo, int numFuncs,
 			  TypeInfo *tinfo, int numTypes)
 {
 	PGresult   *res;
-	char		query[MAXQUERYLEN];
+	char		query[MAX_QUERY_SIZE];
 	int			ntups;
 	int			i_lanname;
 	int			i_lanpltrusted;
@@ -2224,7 +2223,7 @@ static void
 dumpOneFunc(FILE *fout, FuncInfo *finfo, int i,
 			TypeInfo *tinfo, int numTypes)
 {
-	char		q[MAXQUERYLEN];
+	char		q[MAX_QUERY_SIZE];
 	int			j;
 	char	   *func_def;
 	char		func_lang[NAMEDATALEN + 1];
@@ -2344,15 +2343,15 @@ dumpOprs(FILE *fout, OprInfo *oprinfo, int numOperators,
 		 TypeInfo *tinfo, int numTypes)
 {
 	int			i;
-	char		q[MAXQUERYLEN];
-	char		leftarg[MAXQUERYLEN];
-	char		rightarg[MAXQUERYLEN];
-	char		commutator[MAXQUERYLEN];
-	char		negator[MAXQUERYLEN];
-	char		restrictor[MAXQUERYLEN];
-	char		join[MAXQUERYLEN];
-	char		sort1[MAXQUERYLEN];
-	char		sort2[MAXQUERYLEN];
+	char		q[MAX_QUERY_SIZE];
+	char		leftarg[MAX_QUERY_SIZE/8];
+	char		rightarg[MAX_QUERY_SIZE/8];
+	char		commutator[MAX_QUERY_SIZE/8];
+	char		negator[MAX_QUERY_SIZE/8];
+	char		restrictor[MAX_QUERY_SIZE/8];
+	char		join[MAX_QUERY_SIZE/8];
+	char		sort1[MAX_QUERY_SIZE/8];
+	char		sort2[MAX_QUERY_SIZE/8];
 
 	for (i = 0; i < numOperators; i++)
 	{
@@ -2460,11 +2459,11 @@ dumpAggs(FILE *fout, AggInfo *agginfo, int numAggs,
 		 TypeInfo *tinfo, int numTypes)
 {
 	int			i;
-	char		q[MAXQUERYLEN];
-	char		sfunc1[MAXQUERYLEN];
-	char		sfunc2[MAXQUERYLEN];
-	char		basetype[MAXQUERYLEN];
-	char		finalfunc[MAXQUERYLEN];
+	char		q[MAX_QUERY_SIZE];
+	char		sfunc1[MAX_QUERY_SIZE];
+	char		sfunc2[MAX_QUERY_SIZE];
+	char		basetype[MAX_QUERY_SIZE];
+	char		finalfunc[MAX_QUERY_SIZE];
 	char		comma1[2],
 				comma2[2];
 
@@ -2667,10 +2666,11 @@ dumpACL(FILE *fout, TableInfo tbinfo)
 			else
 			{
 				*eqpos = '\0';	/* it's ok to clobber aclbuf */
-				if (strncmp(tok, "group ",strlen("group ")) == 0)
-					  fprintf(fout, "GROUP %s;\n",
-						fmtId(tok + sizeof("group ") - 1, force_quotes));
-				else	fprintf(fout, "%s;\n", fmtId(tok, force_quotes));
+				if (strncmp(tok, "group ", strlen("group ")) == 0)
+					fprintf(fout, "GROUP %s;\n",
+							fmtId(tok + strlen("group "), force_quotes));
+				else
+					fprintf(fout, "%s;\n", fmtId(tok, force_quotes));
 			}
 		}
 		free(priv);
@@ -2694,7 +2694,7 @@ dumpTables(FILE *fout, TableInfo *tblinfo, int numTables,
 	int			i,
 				j,
 				k;
-	char		q[MAXQUERYLEN];
+	char		q[MAX_QUERY_SIZE];
 	char	   *serialSeq = NULL;		/* implicit sequence name created
 										 * by SERIAL datatype */
 	const char *serialSeqSuffix = "_id_seq";	/* suffix for implicit
@@ -2873,9 +2873,9 @@ dumpIndices(FILE *fout, IndInfo *indinfo, int numIndices,
 				indclass;
 	int			nclass;
 
-	char		q[MAXQUERYLEN],
-				id1[MAXQUERYLEN],
-				id2[MAXQUERYLEN];
+	char		q[MAX_QUERY_SIZE],
+				id1[MAX_QUERY_SIZE],
+				id2[MAX_QUERY_SIZE];
 	PGresult   *res;
 
 	for (i = 0; i < numIndices; i++)
@@ -3213,7 +3213,7 @@ dumpSequence(FILE *fout, TableInfo tbinfo)
 	char		cycled,
 				called,
 			   *t;
-	char		query[MAXQUERYLEN];
+	char		query[MAX_QUERY_SIZE];
 
 	sprintf(query,
 			"SELECT sequence_name, last_value, increment_by, max_value, "
@@ -3310,7 +3310,7 @@ dumpRules(FILE *fout, const char *tablename,
 	int			nrules;
 	int			i,
 				t;
-	char		query[MAXQUERYLEN];
+	char		query[MAX_QUERY_SIZE];
 
 	int			i_definition;
 
