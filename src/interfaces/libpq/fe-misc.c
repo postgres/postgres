@@ -25,7 +25,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.62 2001/11/08 20:37:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.63 2001/11/27 18:21:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -854,9 +854,8 @@ libpq_gettext(const char *msgid)
 /*
  * strerror replacement for windows:
  *
- * We dont't know a fix for win9x yet, but this whould work for nt4 and win2k.
+ * We don't know a fix for win9x yet, but this should work for nt4 and win2k.
  * If you can verify this working on win9x or have a solution, let us know, ok?
- *
  */
 const char *
 winsock_strerror(DWORD eno)
@@ -885,7 +884,7 @@ winsock_strerror(DWORD eno)
 
 	/* Everything failed, just tell the user that we don't know the desc */
 
-	strcat(winsock_strerror_buf, "Socket error, no description available.");
+	strcpy(winsock_strerror_buf, "Socket error, no description available.");
 
 WSSE_GOODEXIT:
 
