@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/doc/Makefile,v 1.14 1999/12/05 21:23:00 momjian Exp $
+#    $Header: /cvsroot/pgsql/doc/Makefile,v 1.15 2000/05/17 16:57:40 momjian Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -42,7 +42,7 @@ TARGETS= $(MODULES:%=%.html)
 .PHONY: beforeinstall install all clean distclean
 
 beforeinstall::
-	if [ ! -d $(PGDOCS) ]; then mkdir $(PGDOCS); fi
+	-@if [ ! -d $(PGDOCS) ]; then mkdir $(PGDOCS); fi
 
 install::
 	$(MAKE) all
@@ -57,7 +57,7 @@ distclean::
 	$(MAKE) clean
 
 man::
-	if test ! -d $(POSTMANDIR) ; then mkdir $(POSTMANDIR) ; fi
+	-@if test ! -d $(POSTMANDIR) ; then mkdir $(POSTMANDIR) ; fi
 	$(GZCAT) man.tar.gz | (cd $(POSTMANDIR) ; $(TAR) xf - )
 
 #

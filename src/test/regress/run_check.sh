@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/run_check.sh,v 1.14 2000/05/16 02:14:15 tgl Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/run_check.sh,v 1.15 2000/05/17 16:57:41 momjian Exp $
 
 # ----------
 # Check call syntax
@@ -192,7 +192,7 @@ fi
 # him some time to pass the WAL recovery code. 
 #----------
 echo "=============== Starting regression postmaster         ================"
-postmaster -D $PGDATA -p $PGPORT $PMOPTIONS >$LOGDIR/postmaster.log 2>&1 &
+postmaster -D $PGDATA -i -p $PGPORT $PMOPTIONS >$LOGDIR/postmaster.log 2>&1 &
 PMPID=$!
 sleep 2
 
@@ -239,12 +239,14 @@ fi
 # ----------
 # Install the PL/pgSQL language in it
 # ----------
+if [ "x$hostname" != "xi386-pc-qnx" ]; then
 echo "=============== Installing PL/pgSQL...                 ================"
 createlang -L $LIBDIR $HOSTLOC plpgsql regression
 if [ $? -ne 0 -a $? -ne 2 ]; then
      echo createlang failed
 	 kill -15 $PMPID
      exit 1
+fi
 fi
 
 
@@ -254,6 +256,12 @@ fi
 echo "=============== Running regression queries...          ================"
 echo "" > regression.diffs
 echo "" > regress.out
+
+if [ "x$hostname" = "xi386-pc-qnx" ]; then
+        DIFFOPT="-b"
+else
+        DIFFOPT="-w"
+fi
 
 TESTS=./sql/run_check.tests
 lno=0
@@ -434,9 +442,9 @@ lno=0
 			fi
 		done
 
-		if [ `diff -w ${EXPECTED} results/${name}.out | wc -l` -ne 0 ]
+		if [ `diff ${DIFFOPT} ${EXPECTED} results/${name}.out | wc -l` -ne 0 ]
 		then
-			(	diff -wC3 ${EXPECTED} results/${name}.out	; \
+			(	diff ${DIFFOPT} -C3 ${EXPECTED} results/${name}.out	; \
 				echo ""										; \
 				echo "----------------------"				; \
 				echo ""										; \
