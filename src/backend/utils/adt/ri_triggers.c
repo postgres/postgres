@@ -15,10 +15,10 @@
  *	needed anymore.  Improve it someday.
  *
  *
- * Portions Copyright (c) 2000-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Copyright 1999 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.37 2002/04/16 23:08:11 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.38 2002/06/20 20:51:45 momjian Exp $
  *
  * ----------
  */

@@ -4,10 +4,10 @@
  *
  * PostgreSQL object comments utility code.
  *
- * Copyright (c) 1999-2001, PostgreSQL Global Development Group
+ * Copyright (c) 1996-2001, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.48 2002/05/21 22:05:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.49 2002/06/20 20:51:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

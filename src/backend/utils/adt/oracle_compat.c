@@ -2,14 +2,14 @@
  * oracle_compat.c
  *	Oracle compatible functions.
  *
- * Copyright (c) 1997-2001, PostgreSQL Global Development Group
+ * Copyright (c) 1996-2001, PostgreSQL Global Development Group
  *
  *	Author: Edmund Mergl <E.Mergl@bawue.de>
  *	Multibyte enhancement: Tatsuo Ishii <ishii@postgresql.org>
  *
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/oracle_compat.c,v 1.37 2002/01/08 17:03:41 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/oracle_compat.c,v 1.38 2002/06/20 20:51:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
