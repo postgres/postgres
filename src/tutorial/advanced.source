@@ -7,7 +7,7 @@
 --
 -- Copyright (c) 1994, Regents of the University of California
 --
--- $Id: advanced.source,v 1.2 1998/02/28 23:37:08 scrappy Exp $
+-- $Id: advanced.source,v 1.3 1999/07/08 15:28:51 momjian Exp $
 --
 ---------------------------------------------------------------------------
 
@@ -28,7 +28,7 @@ CREATE TABLE cities (
 );
 
 CREATE TABLE capitals (
-	state		char2
+	state		char(2)
 ) INHERITS (cities);
 
 -- now, let's populate the tables
@@ -90,7 +90,7 @@ WHERE c.altitude > 500;
 CREATE TABLE sal_emp (
 	name	text,
 	pay_by_quarter	int4[],
-	schedule	char16[][]
+	schedule	text[][]
 );
 
 -- insert instances with array attributes.  Note the use of braces
