@@ -561,6 +561,7 @@ pgsource_fetch(pgsourceobject * self, PyObject * args)
 		}
 
 		PyList_Append(reslist, rowtuple);
+		Py_DECREF(rowtuple);
 		self->current_row++;
 	}
 
