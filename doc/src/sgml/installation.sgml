@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.226 2005/01/10 09:01:04 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.227 2005/01/13 21:13:33 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1532,7 +1532,7 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
        </row>
        <row>
         <entry><systemitem class="osname">Debian GNU/Linux</></entry>
-        <entry><systemitem>Itanium</></entry>
+        <entry><systemitem>IA64</></entry>
         <entry>7.4</entry>
         <entry>No&egrave;l K&ouml;the (<email>noel@debian.org</email>), 2003-10-25</entry>
         <entry></entry>
@@ -1624,7 +1624,7 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
        </row>
        <row>
         <entry><systemitem class="osname">HP-UX</></entry>
-        <entry><systemitem>Itanium</></entry>
+        <entry><systemitem>IA64</></entry>
         <entry>8.0.0</entry>
         <entry>Tom Lane (<email>tgl@sss.pgh.pa.us</email>), 2005-01-06</entry>
         <entry>11.23, <command>gcc</> and <command>cc</>; see also <filename>doc/FAQ_HPUX</filename></entry>
@@ -1772,10 +1772,52 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
        </row>
        <row>
         <entry><systemitem class="osname">SUSE Linux</></entry>
+        <entry><systemitem>AMD64</></entry>
+        <entry>8.0.0</entry>
+        <entry>Reinhard Max (<email>max@suse.de</email>), 2005-01-03</entry>
+        <entry>9.0, 9.1, 9.2, SLES 9</entry>
+       </row>
+       <row>
+        <entry><systemitem class="osname">SUSE Linux</></entry>
+        <entry><systemitem>IA64</></entry>
+        <entry>8.0.0</entry>
+        <entry>Reinhard Max (<email>max@suse.de</email>), 2005-01-03</entry>
+        <entry>SLES 9</entry>
+       </row>
+       <row>
+        <entry><systemitem class="osname">SUSE Linux</></entry>
+        <entry><systemitem>PowerPC</></entry>
+        <entry>8.0.0</entry>
+        <entry>Reinhard Max (<email>max@suse.de</email>), 2005-01-03</entry>
+        <entry>SLES 9</entry>
+       </row>
+       <row>
+        <entry><systemitem class="osname">SUSE Linux</></entry>
+        <entry><systemitem>PowerPC 64</></entry>
+        <entry>8.0.0</entry>
+        <entry>Reinhard Max (<email>max@suse.de</email>), 2005-01-03</entry>
+        <entry>SLES 9</entry>
+       </row>
+       <row>
+        <entry><systemitem class="osname">SUSE Linux</></entry>
+        <entry><systemitem>S/390</></entry>
+        <entry>8.0.0</entry>
+        <entry>Reinhard Max (<email>max@suse.de</email>), 2005-01-03</entry>
+        <entry>SLES 9</entry>
+       </row>
+       <row>
+        <entry><systemitem class="osname">SUSE Linux</></entry>
+        <entry><systemitem>S/390x</></entry>
+        <entry>8.0.0</entry>
+        <entry>Reinhard Max (<email>max@suse.de</email>), 2005-01-03</entry>
+        <entry>SLES 9</entry>
+       </row>
+       <row>
+        <entry><systemitem class="osname">SUSE Linux</></entry>
         <entry><systemitem>x86</></entry>
         <entry>8.0.0</entry>
-        <entry>Peter Eisentraut (<email>peter_e@gmx.net</email>), 2005-01-10</entry>
-        <entry>9.1</entry>
+        <entry>Reinhard Max (<email>max@suse.de</email>), 2005-01-03</entry>
+        <entry>9.0, 9.1, 9.2, SLES 9</entry>
        </row>
        <row>
         <entry><systemitem class="osname">Tru64 UNIX</></entry>
