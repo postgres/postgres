@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.64 2000/10/07 14:39:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.65 2000/10/30 06:48:36 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,6 +36,10 @@
 #include "storage/proc.h"
 #include "tcop/tcopprot.h"
 #include "commands/copy.h"
+
+#ifdef MULTIBYTE
+#include "mb/pg_wchar.h"
+#endif
 
 extern int	errno;
 
