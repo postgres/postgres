@@ -575,6 +575,9 @@
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
 
+/* Define to 1 to use our own timezone library */
+#undef PGTZ
+
 /* Define to the name of the PostgreSQL service principal in Kerberos.
    (--with-krb-srvnam=NAME) */
 #undef PG_KRB_SRVNAM

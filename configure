@@ -12012,7 +12012,12 @@ LIBOBJS="$LIBOBJS copydir.$ac_objext"
 LIBOBJS="$LIBOBJS gettimeofday.$ac_objext"
 LIBOBJS="$LIBOBJS open.$ac_objext"
 LIBOBJS="$LIBOBJS pipe.$ac_objext"
-LIBOBJS="$LIBOBJS rand.$ac_objext" ;;
+LIBOBJS="$LIBOBJS rand.$ac_objext"
+
+cat >>confdefs.h <<\_ACEOF
+#define PGTZ 1
+_ACEOF
+ ;;
 esac
 
 # Win32 can't to rename or unlink on an open file
