@@ -7,25 +7,20 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.20 1999/05/25 16:09:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.20.2.1 1999/08/02 06:26:57 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include "catalog/pg_operator.h"
-#include "fmgr.h"
-#include "nodes/pg_list.h"
-#include "nodes/primnodes.h"
-#include "nodes/relation.h"
 #include "optimizer/clauses.h"
-#include "optimizer/restrictinfo.h"
 #include "optimizer/cost.h"
 #include "optimizer/internal.h"
-#include "optimizer/plancat.h"
-#include "parser/parsetree.h"	/* for getrelid() */
+#include "optimizer/plancat.h" 
+#include "optimizer/restrictinfo.h"
+#include "parser/parsetree.h" 
 #include "utils/lsyscache.h"
-
 
 static Cost compute_selec(Query *root, List *clauses, List *or_selectivities);
 

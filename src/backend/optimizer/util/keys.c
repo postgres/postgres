@@ -7,19 +7,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/keys.c,v 1.21 1999/05/25 22:41:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/keys.c,v 1.21.2.1 1999/08/02 06:27:07 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
-#include "nodes/pg_list.h"
-#include "nodes/nodes.h"
-#include "nodes/relation.h"
-#include "utils/elog.h"
 
-#include "optimizer/internal.h"
 #include "optimizer/keys.h"
-#include "optimizer/tlist.h"
 
 
 static Expr *matching2_tlvar(int var, List *tlist, bool (*test) ());

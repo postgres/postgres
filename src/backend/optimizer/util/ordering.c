@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/ordering.c,v 1.16 1999/05/25 16:09:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/ordering.c,v 1.16.2.1 1999/08/02 06:27:08 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,7 +15,6 @@
 
 #include "postgres.h"
 
-#include "optimizer/internal.h"
 #include "optimizer/ordering.h"
 
 static bool sortops_order_match(Oid *ordering1, Oid *ordering2,

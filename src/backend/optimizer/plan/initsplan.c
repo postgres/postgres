@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.31 1999/05/25 22:41:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.31.2.1 1999/08/02 06:27:01 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,27 +15,17 @@
 
 #include "postgres.h"
 
-#include "nodes/pg_list.h"
-#include "nodes/plannodes.h"
-#include "nodes/parsenodes.h"
-#include "nodes/relation.h"
-#include "nodes/makefuncs.h"
-
-#include "access/htup.h"
-
+#include "postgres.h"
 #include "catalog/pg_type.h"
-
-#include "utils/lsyscache.h"
-#include "utils/palloc.h"
-
-#include "optimizer/internal.h"
-#include "optimizer/planmain.h"
-#include "optimizer/joininfo.h"
-#include "optimizer/pathnode.h"
-#include "optimizer/tlist.h"
-#include "optimizer/var.h"
+#include "nodes/makefuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/cost.h"
+#include "optimizer/joininfo.h"
+#include "optimizer/pathnode.h"
+#include "optimizer/planmain.h"
+#include "optimizer/tlist.h"
+#include "optimizer/var.h"
+#include "utils/lsyscache.h"
 
 extern int	Quiet;
 

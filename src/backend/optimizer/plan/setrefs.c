@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.50 1999/06/06 17:38:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.50.2.1 1999/08/02 06:27:03 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,23 +15,14 @@
 
 #include "postgres.h"
 
-#include "nodes/pg_list.h"
-#include "nodes/plannodes.h"
-#include "nodes/primnodes.h"
-#include "nodes/relation.h"
 
-#include "utils/elog.h"
-#include "nodes/nodeFuncs.h"
+
 #include "nodes/makefuncs.h"
-
-#include "optimizer/internal.h"
+#include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
-#include "optimizer/restrictinfo.h"
-#include "optimizer/keys.h"
 #include "optimizer/planmain.h"
 #include "optimizer/tlist.h"
 #include "optimizer/var.h"
-#include "optimizer/tlist.h"
 
 static void set_join_tlist_references(Join *join);
 static void set_nonamescan_tlist_references(SeqScan *nonamescan);

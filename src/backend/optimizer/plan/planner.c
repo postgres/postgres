@@ -7,53 +7,32 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.57 1999/06/21 01:20:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.57.2.1 1999/08/02 06:27:02 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <sys/types.h>
-#include <string.h>
 
 #include "postgres.h"
 
-#include "nodes/pg_list.h"
-#include "nodes/plannodes.h"
-#include "nodes/parsenodes.h"
-#include "nodes/relation.h"
-#include "nodes/makefuncs.h"
-#include "catalog/pg_type.h"
-#include "parser/parse_expr.h"
-
-#include "utils/elog.h"
-#include "utils/lsyscache.h"
+#include "access/genam.h"
 #include "access/heapam.h"
-
-#include "optimizer/internal.h"
-#include "optimizer/planner.h"
-#include "optimizer/plancat.h"
-#include "optimizer/prep.h"
-#include "optimizer/planmain.h"
-#include "optimizer/subselect.h"
-#include "optimizer/paths.h"
-#include "optimizer/cost.h"
-
-/* DATA STRUCTURE CREATION/MANIPULATION ROUTINES */
-#include "nodes/relation.h"
-#include "optimizer/restrictinfo.h"
-#include "optimizer/joininfo.h"
-#include "optimizer/keys.h"
-#include "optimizer/ordering.h"
-#include "optimizer/pathnode.h"
+#include "catalog/pg_type.h"
+#include "executor/executor.h"
+#include "nodes/makefuncs.h"
 #include "optimizer/clauses.h"
+#include "optimizer/internal.h"
+#include "optimizer/planmain.h"
+#include "optimizer/planner.h"
+#include "optimizer/prep.h"
+#include "optimizer/subselect.h"
 #include "optimizer/tlist.h"
 #include "optimizer/var.h"
-
-#include "executor/executor.h"
-
-#include "utils/builtins.h"
-#include "utils/syscache.h"
-#include "access/genam.h"
+#include "parser/parse_expr.h"
 #include "parser/parse_oper.h"
+#include "utils/builtins.h"
+#include "utils/lsyscache.h"
+#include "utils/syscache.h"
 
 static List *make_subplanTargetList(Query *parse, List *tlist,
 					   AttrNumber **groupColIdx);

@@ -7,29 +7,20 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/orindxpath.c,v 1.25 1999/05/25 22:41:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/orindxpath.c,v 1.25.2.1 1999/08/02 06:26:58 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-#include "nodes/pg_list.h"
-#include "nodes/relation.h"
-#include "nodes/primnodes.h"
-
-#include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
-
-#include "optimizer/internal.h"
 #include "optimizer/clauses.h"
-#include "optimizer/restrictinfo.h"
-#include "optimizer/paths.h"
 #include "optimizer/cost.h"
+#include "optimizer/internal.h"
+#include "optimizer/paths.h"
 #include "optimizer/plancat.h"
-#include "optimizer/xfunc.h"
-
-#include "parser/parsetree.h"
-
+#include "optimizer/restrictinfo.h"
+#include "parser/parsetree.h" 
 
 static void best_or_subclause_indices(Query *root, RelOptInfo *rel, List *subclauses,
 				List *indices, List **indexids, Cost *cost, Cost *selec);

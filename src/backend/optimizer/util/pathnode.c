@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.42 1999/05/25 22:41:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.42.2.1 1999/08/02 06:27:08 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,19 +15,14 @@
 
 #include "postgres.h"
 
-#include "nodes/relation.h"
-#include "utils/elog.h"
-
-#include "optimizer/internal.h"
-#include "optimizer/pathnode.h"
-#include "optimizer/restrictinfo.h"
-#include "optimizer/plancat.h"
 #include "optimizer/cost.h"
 #include "optimizer/keys.h"
-#include "optimizer/xfunc.h"
 #include "optimizer/ordering.h"
-
-#include "parser/parsetree.h"	/* for getrelid() */
+#include "optimizer/pathnode.h"
+#include "optimizer/paths.h"
+#include "optimizer/plancat.h"
+#include "optimizer/restrictinfo.h"
+#include "parser/parsetree.h"
 
 static Path *better_path(Path *new_path, List *unique_paths, bool *is_new);
 

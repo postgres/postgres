@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepqual.c,v 1.15 1999/05/25 16:09:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepqual.c,v 1.15.2.1 1999/08/02 06:27:04 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,13 +15,11 @@
 
 #include "postgres.h"
 
-#include "nodes/pg_list.h"
-#include "nodes/makefuncs.h"
 
-#include "optimizer/internal.h"
+
+#include "nodes/makefuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/prep.h"
-
 #include "utils/lsyscache.h"
 
 static Expr *pull_args(Expr *qual);

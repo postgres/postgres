@@ -7,19 +7,15 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/mergeutils.c,v 1.22 1999/05/25 16:09:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/mergeutils.c,v 1.22.2.1 1999/08/02 06:26:58 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-#include "nodes/pg_list.h"
-#include "nodes/relation.h"
-
-#include "optimizer/internal.h"
-#include "optimizer/paths.h"
 #include "optimizer/clauses.h"
 #include "optimizer/ordering.h"
+#include "optimizer/paths.h"
 
 /*
  * group_clauses_by_order

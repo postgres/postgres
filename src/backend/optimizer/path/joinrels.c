@@ -7,21 +7,17 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.35 1999/05/26 12:55:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.35.2.1 1999/08/02 06:26:58 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-#include "nodes/pg_list.h"
-#include "nodes/relation.h"
-
-#include "optimizer/internal.h"
 #include "optimizer/cost.h"
-#include "optimizer/paths.h"
-#include "optimizer/tlist.h"
 #include "optimizer/joininfo.h"
 #include "optimizer/pathnode.h"
+#include "optimizer/paths.h"
+#include "optimizer/tlist.h"
 
 static List *new_joininfo_list(List *joininfo_list, Relids join_relids);
 static bool nonoverlap_sets(List *s1, List *s2);

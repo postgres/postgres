@@ -7,32 +7,21 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.33 1999/06/10 06:55:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.33.2.1 1999/08/02 06:27:05 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <string.h>
 #include <sys/types.h>
 
 #include "postgres.h"
 
-#include "nodes/nodes.h"
-#include "nodes/pg_list.h"
-#include "nodes/execnodes.h"
-#include "nodes/plannodes.h"
-#include "nodes/relation.h"
-
-#include "parser/parsetree.h"
-#include "parser/parse_clause.h"
-
-#include "utils/elog.h"
-#include "utils/lsyscache.h"
-
-#include "optimizer/internal.h"
-#include "optimizer/prep.h"
 #include "optimizer/plancat.h"
-#include "optimizer/planner.h"
 #include "optimizer/planmain.h"
+#include "optimizer/planner.h"
+#include "optimizer/prep.h"
+#include "parser/parse_clause.h"
+#include "parser/parsetree.h"
+#include "utils/lsyscache.h"
 
 static List *plan_inherit_query(Relids relids, Index rt_index,
 				   RangeTblEntry *rt_entry, Query *parse, List *tlist,

@@ -7,31 +7,17 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.46 1999/05/25 22:41:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.46.2.1 1999/08/02 06:26:56 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <string.h>
-#include <stdio.h>
-
 #include "postgres.h"
 
-#include "nodes/pg_list.h"
-#include "nodes/relation.h"
-#include "nodes/primnodes.h"
-
-#include "optimizer/internal.h"
-
-#include "optimizer/paths.h"
-#include "optimizer/pathnode.h"
-#include "optimizer/clauses.h"
-#include "optimizer/xfunc.h"
 #include "optimizer/cost.h"
-
-#include "commands/creatinh.h"
-
-#include "optimizer/geqo_gene.h"
 #include "optimizer/geqo.h"
+#include "optimizer/internal.h"
+#include "optimizer/pathnode.h"
+#include "optimizer/paths.h"
 
 #ifdef GEQO
 bool		_use_geqo_ = true;

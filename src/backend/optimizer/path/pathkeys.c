@@ -7,23 +7,18 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.10 1999/05/25 16:09:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.10.2.1 1999/08/02 06:26:59 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-#include "nodes/pg_list.h"
-#include "nodes/relation.h"
-#include "nodes/plannodes.h"
 
-#include "optimizer/internal.h"
-#include "optimizer/paths.h"
-#include "optimizer/var.h"
-#include "optimizer/keys.h"
-#include "optimizer/tlist.h"
 #include "optimizer/joininfo.h"
+#include "optimizer/keys.h"
 #include "optimizer/ordering.h"
+#include "optimizer/paths.h"
+#include "optimizer/tlist.h"
 
 static int match_pathkey_joinkeys(List *pathkey, List *joinkeys,
 					   int outer_or_inner);

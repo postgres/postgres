@@ -7,25 +7,19 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.33 1999/05/25 22:41:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.33.2.1 1999/08/02 06:27:08 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-#include "nodes/relation.h"
-#include "nodes/primnodes.h"
-#include "nodes/pg_list.h"
-#include "nodes/nodeFuncs.h"
-#include "utils/elog.h"
-#include "utils/lsyscache.h"
 
-#include "optimizer/internal.h"
-#include "optimizer/var.h"
-#include "optimizer/tlist.h"
-#include "optimizer/clauses.h"
 
 #include "nodes/makefuncs.h"
+#include "nodes/nodeFuncs.h"
+#include "optimizer/clauses.h"
+#include "optimizer/tlist.h"
+#include "optimizer/var.h"
 
 static Node *flatten_tlistentry(Node *tlistentry, List *flat_tlist);
 

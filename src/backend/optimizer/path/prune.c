@@ -7,21 +7,17 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/prune.c,v 1.39 1999/05/25 22:41:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/prune.c,v 1.39.2.1 1999/08/02 06:26:59 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-#include "nodes/pg_list.h"
-#include "nodes/relation.h"
 
-#include "optimizer/internal.h"
 #include "optimizer/cost.h"
-#include "optimizer/paths.h"
 #include "optimizer/pathnode.h"
+#include "optimizer/paths.h"
 
-#include "utils/elog.h"
 
 
 static List *merge_rel_with_same_relids(RelOptInfo *rel, Relids unjoined_relids);

@@ -7,33 +7,19 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.22 1999/05/29 01:48:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.22.2.1 1999/08/02 06:27:05 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <string.h>
 #include "postgres.h"
 
 #include "catalog/pg_type.h"
-#include "nodes/pg_list.h"
-#include "nodes/relation.h"
-#include "nodes/primnodes.h"
-#include "nodes/parsenodes.h"
-
 #include "nodes/makefuncs.h"
-
-#include "utils/builtins.h"
-#include "utils/syscache.h"
-#include "utils/lsyscache.h"
-#include "utils/palloc.h"
-#include "parser/parse_type.h"
-
-#include "parser/parsetree.h"	/* for getrelid() */
-
-#include "optimizer/internal.h"
-#include "optimizer/prep.h"
 #include "optimizer/clauses.h"
-#include "optimizer/tlist.h"
+#include "optimizer/prep.h"
+#include "parser/parsetree.h"
+#include "utils/lsyscache.h"
+#include "utils/syscache.h"
 
 static List *expand_targetlist(List *tlist, Oid relid, int command_type,
 				  Index result_relation);

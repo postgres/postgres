@@ -7,17 +7,15 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.4 1999/05/25 22:41:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.4.2.1 1999/08/02 06:27:08 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-#include "nodes/relation.h"
 #include "nodes/nodeFuncs.h"
-
-#include "optimizer/internal.h"
 #include "optimizer/clauses.h"
+#include "optimizer/internal.h" 
 #include "optimizer/restrictinfo.h"
 
 /*

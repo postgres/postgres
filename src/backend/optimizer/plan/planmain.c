@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.37 1999/06/12 19:38:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.37.2.1 1999/08/02 06:27:02 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,31 +15,14 @@
 
 #include "postgres.h"
 
-#include "nodes/pg_list.h"
-#include "nodes/plannodes.h"
-#include "nodes/parsenodes.h"
-#include "nodes/print.h"
-#include "nodes/relation.h"
-#include "nodes/makefuncs.h"
 
-#include "optimizer/planmain.h"
-#include "optimizer/subselect.h"
-#include "optimizer/internal.h"
-#include "optimizer/prep.h"
-#include "optimizer/paths.h"
 #include "optimizer/clauses.h"
-#include "optimizer/keys.h"
+#include "optimizer/paths.h"
+#include "optimizer/planmain.h"
+#include "optimizer/prep.h"
+#include "optimizer/subselect.h"
 #include "optimizer/tlist.h"
-#include "optimizer/var.h"
-#include "optimizer/xfunc.h"
-#include "optimizer/cost.h"
 
-#include "tcop/dest.h"
-#include "utils/elog.h"
-#include "utils/palloc.h"
-#include "nodes/memnodes.h"
-#include "utils/mcxt.h"
-#include "utils/lsyscache.h"
 
 static Plan *subplanner(Query *root, List *flat_tlist, List *qual);
 static Result *make_result(List *tlist, Node *resconstantqual, Plan *subplan);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.20 1999/06/19 03:41:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.20.2.1 1999/08/02 06:27:09 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,16 +15,10 @@
 
 #include "postgres.h"
 
-#include "nodes/relation.h"
-#include "nodes/primnodes.h"
-#include "nodes/plannodes.h"
-#include "nodes/nodeFuncs.h"
 
-#include "optimizer/internal.h"
 #include "optimizer/clauses.h"
 #include "optimizer/var.h"
 
-#include "parser/parsetree.h"
 
 
 static bool pull_varnos_walker(Node *node, List **listptr);

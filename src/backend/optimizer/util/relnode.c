@@ -7,19 +7,15 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.16 1999/05/25 16:10:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.16.2.1 1999/08/02 06:27:08 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-#include "nodes/relation.h"
-
 #include "optimizer/internal.h"
-#include "optimizer/pathnode.h" /* where the decls go */
+#include "optimizer/pathnode.h" 
 #include "optimizer/plancat.h"
-
-
 
 /*
  * get_base_rel
