@@ -757,7 +757,7 @@ Maximum number of indexes on a table?    unlimited
     
    The ~ operator does regular expression matching, and ~* does
    case-insensitive regular expression matching. The case-insensitive
-   variant of LIKE is called ILIKE and will appear in 7.1.
+   variant of LIKE is called ILIKE in PostgreSQL 7.1 and later.
    
     4.14) In a query, how do I detect if a field is NULL?
     
