@@ -1,5 +1,5 @@
 #! /bin/sh
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/pg_regress.sh,v 1.6 2000/10/07 14:55:16 momjian Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/pg_regress.sh,v 1.7 2000/10/07 20:23:03 petere Exp $
 
 me=`basename $0`
 : ${TMPDIR=/tmp}
@@ -87,6 +87,8 @@ export PGPORT
 dbname=regression
 hostname=`hostname` || hostname=localhost
 
+: ${GMAKE='@GMAKE@'}
+
 
 # ----------
 # Parse command line options
@@ -167,17 +169,6 @@ case $host_platform in
         DIFFFLAGS=-b;;
     *)
         DIFFFLAGS=-w;;
-esac
-
-# ----------
-# Set up the GMAKE variable correctly.
-# ----------
-
-case $host_platform in
-    *beos*)
-        GMAKE=make;;
-    *)
-        GMAKE=gmake;;
 esac
 
 
@@ -297,7 +288,7 @@ then
 
     message "creating temporary installation"
     mkdir -p "$LOGDIR" || { (exit 2); exit; }
-    ${MAKE:-$GMAKE} -C "$top_builddir" DESTDIR="$temp_install" install >"$LOGDIR/install.log" 2>&1
+    $GMAKE -C "$top_builddir" DESTDIR="$temp_install" install >"$LOGDIR/install.log" 2>&1
 
     if [ $? -ne 0 ]
     then
