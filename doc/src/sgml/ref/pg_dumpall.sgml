@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.20 2001/02/11 01:41:00 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.21 2001/03/05 18:42:57 momjian Exp $
 Postgres documentation
 -->
 
@@ -55,7 +55,7 @@ Postgres documentation
    Since <application>pg_dumpall</application> reads tables from all
    databases you will most likely have to connect as a database
    superuser in order to produce a complete dump.  Also you will need
-   superuser priviledges to execute the saves script in order to be
+   superuser privileges to execute the saved script in order to be
    allowed to add users and groups, and to create databases.
   </para>
 
@@ -146,7 +146,7 @@ Postgres documentation
    (It is not important to which database you connect here since the
    script file created by <application>pg_dumpall</application> will
    contain the appropriate commands to create and connect to the saved
-   databases.
+   databases.)
   </para>
  </refsect1>
 

@@ -428,13 +428,13 @@ FATAL 1:  SetUserId: user '<replaceable class="parameter">username</replaceable>
    The most flexible output file format is the new 'custom' format (-Fc). It allows for
    selection and reordering of all archived items, and is compressed by default. The TAR
    format (-Ft) is not compressed and it is not possible to reorder
-   data load, but it is otherwise quite flexible.
+   data when loading, but it is otherwise quite flexible.
   </para>
 
   <para>
    To reorder the items, it is first necessary to dump the contents of the archive:
    <programlisting>
-    $ pg_restore acrhive.file --list > archive.lis
+    $ pg_restore archive.file --list > archive.lis
    </programlisting>
    This file consists of a header and one line for each item, eg.
    <programlisting>

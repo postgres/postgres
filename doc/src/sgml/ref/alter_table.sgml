@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.21 2001/02/10 16:41:30 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.22 2001/03/05 18:42:55 momjian Exp $
 Postgres documentation
 -->
 
@@ -107,7 +107,7 @@ ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
       <term><replaceable class="PARAMETER">New user </replaceable></term>
       <listitem>
        <para>
-	The userid of the new owner of the table.
+	The user name of the new owner of the table.
        </para>
       </listitem>
      </varlistentry>

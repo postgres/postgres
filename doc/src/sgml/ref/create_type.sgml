@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_type.sgml,v 1.16 2001/01/13 23:58:55 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_type.sgml,v 1.17 2001/03/05 18:42:56 momjian Exp $
 Postgres documentation
 -->
 
@@ -298,7 +298,7 @@ CREATE
 
   <para>
    The <replaceable class="parameter">storage</replaceable> keyword
-   allows selection of TOAST storage method for variable-length data types
+   allows selection of The Oversized-Attribute Storage Technique (TOAST) for variable-length data types
    (only <literal>plain</literal> is allowed for fixed-length types).
    <literal>plain</literal> disables TOAST for the data type: it will always
    be stored in-line and not compressed.

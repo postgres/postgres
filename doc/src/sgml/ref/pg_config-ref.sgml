@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_config-ref.sgml,v 1.4 2000/11/11 23:01:45 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_config-ref.sgml,v 1.5 2001/03/05 18:42:56 momjian Exp $ -->
 
 <refentry id="app-pgconfig">
  <docinfo>
@@ -32,7 +32,7 @@
  <refsect1>
   <title>Description</>
   <para>
-   The <application>pg_config</> stores and provides configuration parameters
+   The <application>pg_config</> utility provides configuration parameters
    of the currently installed version of <productname>PostgreSQL</>. It is
    intended, for example, to be used by software packages that want to interface
    to <productname>PostgreSQL</> in order to find the respective header files

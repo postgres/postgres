@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.27 2000/12/25 23:15:26 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.28 2001/03/05 18:42:56 momjian Exp $
 Postgres documentation
 -->
 
@@ -78,7 +78,7 @@ pg_dump [ -h <replaceable class="parameter">host</replaceable> ]
       <term>-b</term>
       <listitem>
        <para>
-	Dump BLOB data.
+ 	Dump data and BLOB data.
        </para>
       </listitem>
      </varlistentry>
