@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lwlock.c,v 1.19 2003/12/20 17:31:21 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lwlock.c,v 1.20 2004/06/11 16:43:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -518,4 +518,24 @@ LWLockReleaseAll(void)
 
 		LWLockRelease(held_lwlocks[num_held_lwlocks - 1]);
 	}
+}
+
+
+/*
+ * LWLockHeldByMe - test whether my process currently holds a lock
+ *
+ * This is meant as debug support only.  We do not distinguish whether the
+ * lock is held shared or exclusive.
+ */
+bool
+LWLockHeldByMe(LWLockId lockid)
+{
+	int	i;
+
+	for (i = 0; i < num_held_lwlocks; i++)
+	{
+		if (held_lwlocks[i] == lockid)
+			return true;
+	}
+	return false;
 }

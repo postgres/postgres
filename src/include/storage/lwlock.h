@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/lwlock.h,v 1.11 2004/05/31 03:48:10 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/lwlock.h,v 1.12 2004/06/11 16:43:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,6 +62,7 @@ extern void LWLockAcquire(LWLockId lockid, LWLockMode mode);
 extern bool LWLockConditionalAcquire(LWLockId lockid, LWLockMode mode);
 extern void LWLockRelease(LWLockId lockid);
 extern void LWLockReleaseAll(void);
+extern bool LWLockHeldByMe(LWLockId lockid);
 
 extern int	NumLWLocks(void);
 extern int	LWLockShmemSize(void);
