@@ -255,7 +255,16 @@ AC_ARG_WITH(
    AC_DEFINE_UNQUOTED(DEF_PGPORT, "5432") AC_MSG_RESULT(5432)
 )
 
-dnl We exclude tcl support unless we override it with --with-tcl
+dnl MAXBACKENDS can be set by --with-maxbackends.  Default value is 64.
+AC_MSG_CHECKING(setting MAXBACKENDS)
+AC_ARG_WITH(
+   maxbackends,
+   [  --with-maxbackends=<n>  set maximum number of server processes ],
+   AC_DEFINE_UNQUOTED(MAXBACKENDS, ${withval}) AC_MSG_RESULT($with_maxbackends),
+   AC_DEFINE_UNQUOTED(MAXBACKENDS, 64) AC_MSG_RESULT(64)
+)
+
+dnl We exclude tcl support unless user says --with-tcl
 AC_MSG_CHECKING(setting USE_TCL)
 AC_ARG_WITH(
    tcl,

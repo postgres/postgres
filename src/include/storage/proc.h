@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: proc.h,v 1.18 1999/02/15 03:22:37 momjian Exp $
+ * $Id: proc.h,v 1.19 1999/02/19 06:06:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,19 +58,27 @@ typedef struct proc
 
 
 /*
+ * PROC_NSEMS_PER_SET is the number of semaphores in each sys-V semaphore set
+ * we allocate.  It must be *less than* 32 (or however many bits in an int
+ * on your machine), or our free-semaphores bitmap won't work.  You also must
+ * not set it higher than your kernel's SEMMSL (max semaphores per set)
+ * parameter, which is often around 25.
  * MAX_PROC_SEMS is the maximum number of per-process semaphores (those used
- * by the lock mgr) we can keep track of. PROC_NSEMS_PER_SET is the number
- * of semaphores in each (sys-V) semaphore set allocated. (Be careful not
- * to set it to greater 32. Otherwise, the bitmap will overflow.)
+ * by the lock mgr) we can keep track of.  It must be a multiple of
+ * PROC_NSEMS_PER_SET.
  */
-#define  MAX_PROC_SEMS			128
 #define  PROC_NSEMS_PER_SET		16
+#define  MAX_PROC_SEMS			(((MAXBACKENDS-1)/PROC_NSEMS_PER_SET+1)*PROC_NSEMS_PER_SET)
 
 typedef struct procglobal
 {
 	SHMEM_OFFSET freeProcs;
 	IPCKey		currKey;
 	int32		freeSemMap[MAX_PROC_SEMS / PROC_NSEMS_PER_SET];
+	/* In each freeSemMap entry, the PROC_NSEMS_PER_SET lsbs flag whether
+	 * individual semaphores are in use, and the next higher bit is set to
+	 * show that the entire set is allocated.
+	 */
 } PROC_HDR;
 
 extern PROC *MyProc;

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lmgr.h,v 1.17 1999/02/13 23:22:07 momjian Exp $
+ * $Id: lmgr.h,v 1.18 1999/02/19 06:06:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,6 +61,6 @@ extern void XactLockTableDelete(TransactionId xid);
 extern void XactLockTableWait(TransactionId xid);
 
 /* proc.c */
-extern void InitProcGlobal(IPCKey key);
+extern void InitProcGlobal(IPCKey key, int maxBackends);
 
 #endif	 /* LMGR_H */

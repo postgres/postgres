@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.37 1999/02/13 23:20:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.38 1999/02/19 06:06:10 tgl Exp $
  *
  * NOTES
  *		InitPostgres() is the function called from PostgresMain
@@ -571,7 +571,7 @@ InitPostgres(char *name)		/* database name */
 	 */
 	InitProcess(PostgresIpcKey);
 
-	if (MyBackendId > MaxBackendId || MyBackendId <= 0)
+	if (MyBackendId > MAXBACKENDS || MyBackendId <= 0)
 	{
 		elog(FATAL, "cinit2: bad backend id %d (%d)",
 			 MyBackendTag,

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.41 1999/02/13 23:18:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.42 1999/02/19 06:06:06 tgl Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -1492,8 +1492,8 @@ LockShmemSize()
 	nXidBuckets = 1 << (int) my_log2((NLOCKS_PER_XACT - 1) / DEF_FFACTOR + 1);
 	nXidSegs = 1 << (int) my_log2((nLockBuckets - 1) / DEF_SEGSIZE + 1);
 
-	size += MAXALIGN(NBACKENDS * sizeof(PROC)); /* each MyProc */
-	size += MAXALIGN(NBACKENDS * sizeof(LOCKMETHODCTL));		/* each
+	size += MAXALIGN(MAXBACKENDS * sizeof(PROC)); /* each MyProc */
+	size += MAXALIGN(MAXBACKENDS * sizeof(LOCKMETHODCTL));		/* each
 																 * lockMethodTable->ctl */
 	size += MAXALIGN(sizeof(PROC_HDR)); /* ProcGlobal */
 
@@ -1504,10 +1504,10 @@ LockShmemSize()
 		(MAXALIGN(sizeof(BUCKET_INDEX)) +
 		 MAXALIGN(sizeof(LOCK)));		/* contains hash key */
 
-	size += MAXALIGN(my_log2(NBACKENDS) * sizeof(void *));
+	size += MAXALIGN(my_log2(MAXBACKENDS) * sizeof(void *));
 	size += MAXALIGN(sizeof(HHDR));
 	size += nXidSegs * MAXALIGN(DEF_SEGSIZE * sizeof(SEGMENT));
-	size += NBACKENDS *			/* XXX not multiple of BUCKET_ALLOC_INCR? */
+	size += MAXBACKENDS *		/* XXX not multiple of BUCKET_ALLOC_INCR? */
 		(MAXALIGN(sizeof(BUCKET_INDEX)) +
 		 MAXALIGN(sizeof(XIDLookupEnt)));		/* contains hash key */
 
@@ -1552,7 +1552,7 @@ DeadLockCheck(SHM_QUEUE *lockQueue, LOCK *findlock, bool skip_check)
 	HTAB	   *xidTable;
 	bool		found;
 
-	static PROC *checked_procs[MaxBackendId];
+	static PROC *checked_procs[MAXBACKENDS];
 	static int	nprocs;
 	static bool MyNHolding;
 
@@ -1674,7 +1674,7 @@ DeadLockCheck(SHM_QUEUE *lockQueue, LOCK *findlock, bool skip_check)
 					if (j >= nprocs && lock != findlock)
 					{
 						checked_procs[nprocs++] = proc;
-						Assert(nprocs <= MaxBackendId);
+						Assert(nprocs <= MAXBACKENDS);
 
 						/*
 						 * For non-MyProc entries, we are looking only

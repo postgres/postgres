@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.101 1999/02/13 23:17:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.102 1999/02/19 06:06:00 tgl Exp $
  *
  * NOTES
  *
@@ -162,8 +162,17 @@ static IpcMemoryKey ipc_key;
   * adding to this.
   */
 
+static int	MaxBackends = MAXBACKENDS;
 
-static int	NextBackendId = MAXINT;		/* XXX why? */
+ /* 
+  * MaxBackends is the actual soft limit on the number of backends
+  * we will start.  It defaults to the hard limit established at compilation
+  * time, but can be readjusted with postmaster's xxx switch.
+  * One reason to reduce MaxBackends is to allow startup under a kernel
+  * that won't let us get MAXBACKENDS semaphores!
+  */
+
+static int	NextBackendTag = MAXINT;		/* XXX why count down not up? */
 static char *progname = (char *) NULL;
 static char **real_argv;
 static int	real_argc;
@@ -388,7 +397,7 @@ PostmasterMain(int argc, char *argv[])
 	DataDir = getenv("PGDATA"); /* default value */
 
 	opterr = 0;
-	while ((opt = getopt(nonblank_argc, argv, "A:a:B:b:D:dim:Mno:p:Ss")) != EOF)
+	while ((opt = getopt(nonblank_argc, argv, "A:a:B:b:D:dim:MN:no:p:Ss")) != EOF)
 	{
 		switch (opt)
 		{
@@ -462,6 +471,17 @@ PostmasterMain(int argc, char *argv[])
 				 * program was run as 'postgres -M' instead of
 				 * 'postmaster'
 				 */
+				break;
+			case 'N':
+				/*
+				 * The max number of backends to start.
+				 * Can't set to less than 1 or more than compiled-in limit.
+				 */
+				MaxBackends = atoi(optarg);
+				if (MaxBackends < 1)
+					MaxBackends = 1;
+				if (MaxBackends > MAXBACKENDS)
+					MaxBackends = MAXBACKENDS;
 				break;
 			case 'n':
 				/* Don't reinit shared mem after abnormal exit */
@@ -621,6 +641,8 @@ usage(const char *progname)
 	fprintf(stderr, "\t-b backend\tuse a specific backend server executable\n");
 	fprintf(stderr, "\t-d [1|2|3]\tset debugging level\n");
 	fprintf(stderr, "\t-i \t\tlisten on TCP/IP sockets as well as Unix domain socket\n");
+	fprintf(stderr, "\t-N nprocs\tset max number of backend servers (1..%d)\n",
+			MAXBACKENDS);
 	fprintf(stderr, "\t-n \t\tdon't reinitialize shared memory after abnormal exit\n");
 	fprintf(stderr, "\t-o option\tpass 'option' to each backend servers\n");
 	fprintf(stderr, "\t-p port\tspecify port for postmaster to listen on\n");
@@ -765,7 +787,7 @@ ServerLoop(void)
 			if (status == STATUS_OK && port->pktInfo.state == Idle)
 			{
 				/* Can't start backend if max backend count is exceeded. */
-				if (CountChildren() >= MaxBackendId)
+				if (CountChildren() >= MaxBackends)
 					PacketSendError(&port->pktInfo,
 									"Sorry, too many clients already");
 				else
@@ -1009,7 +1031,7 @@ static void
 reset_shared(short port)
 {
 	ipc_key = port * 1000 + shmem_seq * 100;
-	CreateSharedMemoryAndSemaphores(ipc_key);
+	CreateSharedMemoryAndSemaphores(ipc_key, MaxBackends);
 	ActiveBackends = FALSE;
 	shmem_seq += 1;
 	if (shmem_seq >= 10)
@@ -1272,7 +1294,7 @@ BackendStartup(Port *port)
 	 */
 	sprintf(envEntry[0], "POSTPORT=%d", PostPortName);
 	putenv(envEntry[0]);
-	sprintf(envEntry[1], "POSTID=%d", NextBackendId);
+	sprintf(envEntry[1], "POSTID=%d", NextBackendTag);
 	putenv(envEntry[1]);
 	sprintf(envEntry[2], "PG_USER=%s", port->user);
 	putenv(envEntry[2]);
@@ -1348,9 +1370,11 @@ BackendStartup(Port *port)
 				progname, pid, port->user, port->database,
 				port->sock);
 
-	/* adjust backend counter */
-	/* XXX Don't know why this is done, but for now backend needs it */
-	NextBackendId -= 1;
+	/* Generate a new backend tag for every backend we start */
+	/* XXX theoretically this could wrap around, if you have the patience
+	 * to start 2^31 backends ...
+	 */
+	NextBackendTag -= 1;
 
 	/*
 	 * Everything's been successful, it's safe to add this backend to our
@@ -1459,7 +1483,7 @@ DoBackend(Port *port)
 	/* OK, let's unblock our signals, all together now... */
 	sigprocmask(SIG_SETMASK, &oldsigmask, 0);
 
-	/* Close the postmater sockets */
+	/* Close the postmaster sockets */
 	if (NetServer)
 		StreamClose(ServerSock_INET);
 #ifndef __CYGWIN32__

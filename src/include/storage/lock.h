@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lock.h,v 1.21 1999/02/13 23:22:07 momjian Exp $
+ * $Id: lock.h,v 1.22 1999/02/19 06:06:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,14 +29,13 @@ typedef int MASK;
  * The following defines are used to estimate how much shared
  * memory the lock manager is going to require.
  *
- * NBACKENDS - The number of concurrently running backends
+ * MAXBACKENDS - The max number of concurrently running backends (config.h)
  * NLOCKS_PER_XACT - The number of unique locks acquired in a transaction
  * NLOCKENTS - The maximum number of lock entries in the lock table.
  * ----------------------
  */
-#define NBACKENDS MaxBackendId
-#define NLOCKS_PER_XACT 40
-#define NLOCKENTS NLOCKS_PER_XACT*NBACKENDS
+#define NLOCKS_PER_XACT	40
+#define NLOCKENTS		(NLOCKS_PER_XACT*MAXBACKENDS)
 
 typedef int LOCKMODE;
 typedef int LOCKMETHOD;

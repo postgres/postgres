@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipci.c,v 1.18 1999/02/13 23:18:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipci.c,v 1.19 1999/02/19 06:06:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,17 +44,19 @@ SystemPortAddressCreateIPCKey(SystemPortAddress address)
 
   CreateSharedMemoryAndSemaphores
   is called exactly *ONCE* by the postmaster.
-  It is *NEVER* called by the postgres backend
+  It is *NEVER* called by the postgres backend,
+  except in the case of a standalone backend.
 
   0) destroy any existing semaphores for both buffer
   and lock managers.
   1) create the appropriate *SHARED* memory segments
   for the two resource managers.
+  2) create shared semaphores as needed.
 
   **************************************************/
 
 void
-CreateSharedMemoryAndSemaphores(IPCKey key)
+CreateSharedMemoryAndSemaphores(IPCKey key, int maxBackends)
 {
 	int			size;
 
@@ -98,7 +100,7 @@ CreateSharedMemoryAndSemaphores(IPCKey key)
 	 *	do process table stuff
 	 * ----------------
 	 */
-	InitProcGlobal(key);
+	InitProcGlobal(key, maxBackends);
 	on_shmem_exit(ProcFreeAllSemaphores, NULL);
 
 	CreateSharedInvalidationState(key);
@@ -120,7 +122,7 @@ AttachSharedMemoryAndSemaphores(IPCKey key)
 	 */
 	if (key == PrivateIPCKey)
 	{
-		CreateSharedMemoryAndSemaphores(key);
+		CreateSharedMemoryAndSemaphores(key, 1);
 		return;
 	}
 

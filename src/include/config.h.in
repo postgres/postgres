@@ -8,6 +8,16 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
+/*
+ * Maximum number of backend server processes per postmaster.
+ * (Actual value is set by configure script.)
+ */
+#undef MAXBACKENDS
+
+/*
+ * Size of a disk block --- currently, this limits the size of a tuple.
+ * You can set it bigger if you need bigger tuples.
+ */
 #define BLCKSZ	8192
 
 /* 
@@ -298,7 +308,7 @@ extern void srandom(unsigned int seed);
 /* 
  * DEF_PGPORT is the TCP port number on which the Postmaster listens by
  * default.  This can be overriden by command options, environment variables,
- * and the postconfig hook. (set by build script)
+ * and the postconfig hook. (set by configure script)
  */ 
 
 #undef DEF_PGPORT 

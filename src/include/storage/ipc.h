@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: ipc.h,v 1.32 1999/02/13 23:22:05 momjian Exp $
+ * $Id: ipc.h,v 1.33 1999/02/19 06:06:33 tgl Exp $
  *
  * NOTES
  *	  This file is very architecture-specific.	This stuff should actually
@@ -201,7 +201,7 @@ typedef enum _LockId_
 
 /* ipci.c */
 extern IPCKey SystemPortAddressCreateIPCKey(SystemPortAddress address);
-extern void CreateSharedMemoryAndSemaphores(IPCKey key);
+extern void CreateSharedMemoryAndSemaphores(IPCKey key, int maxBackends);
 extern void AttachSharedMemoryAndSemaphores(IPCKey key);
 
 #endif	 /* IPC_H */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.16 1999/02/13 23:18:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.17 1999/02/19 06:06:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -119,7 +119,7 @@ SIAssignBackendId(SISeg *segInOutP, BackendTag backendTag)
 
 	stateP = NULL;
 
-	for (index = 0; index < MaxBackendId; index += 1)
+	for (index = 0; index < MAXBACKENDS; index++)
 	{
 		if (segInOutP->procState[index].tag == InvalidBackendTag ||
 			segInOutP->procState[index].tag == backendTag)
@@ -141,7 +141,7 @@ SIAssignBackendId(SISeg *segInOutP, BackendTag backendTag)
 
 	/* verify that all "procState" entries checked for matching tags */
 
-	for (index += 1; index < MaxBackendId; index += 1)
+	for (index++; index < MAXBACKENDS; index++)
 	{
 		if (segInOutP->procState[index].tag == backendTag)
 		{
@@ -565,7 +565,7 @@ SIDecProcLimit(SISeg *segP, int num)
 {
 	int			i;
 
-	for (i = 0; i < MaxBackendId; i++)
+	for (i = 0; i < MAXBACKENDS; i++)
 	{
 		/* decrement only, if there is a limit > 0	*/
 		if (segP->procState[i].limit > 0)
@@ -622,7 +622,7 @@ SISetProcStateInvalid(SISeg *segP)
 {
 	int			i;
 
-	for (i = 0; i < MaxBackendId; i++)
+	for (i = 0; i < MAXBACKENDS; i++)
 	{
 		if (segP->procState[i].limit == 0)
 		{
@@ -696,7 +696,7 @@ SIDelExpiredDataEntries(SISeg *segP)
 				h;
 
 	min = 9999999;
-	for (i = 0; i < MaxBackendId; i++)
+	for (i = 0; i < MAXBACKENDS; i++)
 	{
 		h = SIGetProcStateLimit(segP, i);
 		if (h >= 0)
@@ -740,7 +740,7 @@ SISegInit(SISeg *segP)
 	SISetEndEntryChain(segP, InvalidOffset);
 	SISetNumEntries(segP, 0);
 	SISetMaxNumEntries(segP, MAXNUMMESSAGES);
-	for (i = 0; i < MaxBackendId; i++)
+	for (i = 0; i < MAXBACKENDS; i++)
 	{
 		segP->procState[i].limit = -1;	/* no backend active  !! */
 		segP->procState[i].resetState = false;
