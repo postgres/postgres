@@ -67,8 +67,8 @@ verify_password(char *user, char *password, Port *port,
 	fgets(pw_file_line, 255, pw_file);
 	p = pw_file_line;
 
-	test_user = strsep(&p, ":");
-	test_pw = p;
+	test_user = strtok(p, ":");
+	test_pw = strtok(0, ":");
 	if(!test_user || !test_pw ||
 	   test_user[0] == '\0' || test_pw[0] == '\0') {
 	    continue;
