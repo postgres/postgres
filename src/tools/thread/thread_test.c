@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/tools/thread/thread_test.c,v 1.17 2004/04/21 20:51:54 momjian Exp $
+ *	$PostgreSQL: pgsql/src/tools/thread/thread_test.c,v 1.18 2004/04/21 20:58:56 momjian Exp $
  *
  *	This program tests to see if your standard libc functions use
  *	pthread_setspecific()/pthread_getspecific() to be thread-safe.
@@ -139,37 +139,43 @@ defines to your template/$port file before compiling this program.\n\n"
 #ifdef HAVE_STRERROR_R
 	printf("Your system has sterror_r(), so it doesn't use strerror().\n");
 #else
-	printf("Your system uses strerror().\n");
-	if (!strerror_threadsafe)
+	printf("Your system uses strerror() which is ");
+	if (strerror_threadsafe)
+		printf("thread-safe\n");
+	else
 	{
 		platform_is_threadsafe = false;
-		printf("That function is not thread-safe\n");
+		printf("not thread-safe\n");
 	}
 #endif
 
 #ifdef HAVE_GETPWUID_R
 	printf("Your system has getpwuid_r(), so it doesn't use getpwuid().\n");
 #else
-	printf("Your system uses getpwuid().\n");
-	if (!getpwuid_threadsafe)
+	printf("Your system uses getpwuid() which is ");
+	if (getpwuid_threadsafe)
+		printf("thread-safe\n");
+	else
 	{
 		platform_is_threadsafe = false;
-		printf("That function is not thread-safe\n");
+		printf("not thread-safe\n");
 	}
 #endif
 
 #ifdef HAVE_GETADDRINFO
 	printf("Your system has getaddrinfo(), so it doesn't use gethostbyname()\n"
-			"or gethostbyname_r().\n");
+			"  or gethostbyname_r().\n");
 #else
 #ifdef HAVE_GETHOSTBYNAME_R
 	printf("Your system has gethostbyname_r(), so it doesn't use gethostbyname().\n");
 #else
-	printf("Your system uses gethostbyname().\n");
-	if (!gethostbyname_threadsafe)
+	printf("Your system uses gethostbyname which is ");
+	if (gethostbyname_threadsafe)
+		printf("thread-safe\n");
+	else
 	{
 		platform_is_threadsafe = false;
-		printf("That function is not thread-safe\n");
+		printf("not thread-safe\n");
 	}
 #endif
 #endif
