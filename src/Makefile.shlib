@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.69 2003/09/14 13:33:08 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.70 2003/09/20 21:26:20 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -304,6 +304,10 @@ install-lib: install-lib-static install-lib-shared
 
 install-lib-static: lib$(NAME).a
 	$(INSTALL_STLIB) $< $(DESTDIR)$(libdir)/lib$(NAME).a
+ifeq ($(PORTNAME), darwin)
+	cd $(DESTDIR)$(libdir) && \
+	ranlib lib$(NAME).a
+endif
 
 ifeq ($(enable_shared), yes)
 install-lib-shared: $(shlib)
