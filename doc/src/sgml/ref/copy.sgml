@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.54 2003/11/29 19:51:38 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.55 2003/12/13 23:59:07 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -584,8 +584,8 @@ ZW      ZIMBABWE
   </para>
 
   <para>
-   The following syntax was used before PostgreSQL version 7.3 and is
-   still supported:
+   The following syntax was used before <productname>PostgreSQL</>
+   version 7.3 and is still supported:
 
 <synopsis>
 COPY [ BINARY ] <replaceable class="parameter">tablename</replaceable> [ WITH OIDS ]

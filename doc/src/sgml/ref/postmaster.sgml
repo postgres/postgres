@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.42 2003/11/29 19:51:39 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.43 2003/12/13 23:59:07 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -452,17 +452,17 @@ PostgreSQL documentation
    </para>
 
    <para>
-    A failure message indicating inability to bind to a port may indicate
-    that that port is already in use by some non-PostgreSQL process.
-    You may also get this error if you terminate the
-    <command>postmaster</command>
-    and immediately restart it using the same port; in this case, you must
-    simply wait a few seconds until the operating system closes the port
-    before trying again.  Finally, you may get this error if you specify
-    a port number that your operating system considers to be reserved.
-    For example, many versions of Unix consider port numbers under 1024 to
-    be <quote>trusted</quote>
-    and only permit the Unix superuser to access them.
+    A failure message indicating inability to bind to a port may
+    indicate that that port is already in use by some
+    non-<productname>PostgreSQL</productname> process.  You may also
+    get this error if you terminate the <command>postmaster</command>
+    and immediately restart it using the same port; in this case, you
+    must simply wait a few seconds until the operating system closes
+    the port before trying again.  Finally, you may get this error if
+    you specify a port number that your operating system considers to
+    be reserved.  For example, many versions of Unix consider port
+    numbers under 1024 to be <quote>trusted</quote> and only permit
+    the Unix superuser to access them.
    </para>
 
  </refsect1>

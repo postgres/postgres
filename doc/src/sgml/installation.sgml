@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.188 2003/12/11 19:56:54 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.189 2003/12/13 23:59:06 neilc Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -268,7 +268,7 @@ JAVACMD=$JAVA_HOME/bin/java
 
     <listitem>
      <para>
-      <application>Kerberos</>, <application>OpenSSL</>, or <application>PAM</>,
+      <application>Kerberos</>, <productname>OpenSSL</>, or <application>PAM</>,
       if you want to support authentication using these services.
      </para>
     </listitem>
@@ -893,11 +893,14 @@ JAVACMD=$JAVA_HOME/bin/java
        <term><option>--disable-spinlocks</option></term>
        <listitem>
         <para>
-         Allow the builds to succeed even if PostgreSQL has no CPU
-         spinlock support for the platform.  The lack of spinlock
-         support will result in poor performance; therefore, this
-         option should only be used if the build aborts and informs
-         you that the platform lacks spinlock support.
+         Allow the build to succeed even if <productname>PostgreSQL</>
+         has no CPU spinlock support for the platform.  The lack of
+         spinlock support will result in poor performance; therefore,
+         this option should only be used if the build aborts and
+         informs you that the platform lacks spinlock support. If this
+         option is required to build <productname>PostgreSQL</> on
+         your platform, please report the problem to the
+         <productname>PostgreSQL</> developers.
         </para>
        </listitem>
       </varlistentry>

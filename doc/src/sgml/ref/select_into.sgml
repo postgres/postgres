@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/select_into.sgml,v 1.26 2003/12/01 22:07:58 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/select_into.sgml,v 1.27 2003/12/13 23:59:07 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -94,17 +94,18 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="PARAMETER">expression</replac
   </para>
 
   <para>
-   Prior to PostgreSQL 7.5, the table created by <command>SELECT
-   INTO</command> always included OIDs. Furthermore, these OIDs were
-   newly generated: they were distinct from the OIDs of any of the
-   rows in the source tables of the <command>SELECT INTO</command>
-   statement. Therefore, if <command>SELECT INTO</command> was
-   frequently executed, the OID counter would be rapidly
-   incremented. As of PostgreSQL 7.5, the inclusion of OIDs in the
-   table created by <command>SELECT INTO</command> is controlled by
-   the <varname>default_with_oids</varname> configuration
-   variable. This variable currently defaults to true, but will likely
-   default to false in a future release of <productname>PostgreSQL</>.
+   Prior to <productname>PostgreSQL</> 7.5, the table created by
+   <command>SELECT INTO</command> always included OIDs. Furthermore,
+   these OIDs were newly generated: they were distinct from the OIDs
+   of any of the rows in the source tables of the <command>SELECT
+   INTO</command> statement. Therefore, if <command>SELECT
+   INTO</command> was frequently executed, the OID counter would be
+   rapidly incremented. As of <productname>PostgreSQL</> 7.5, the
+   inclusion of OIDs in the table created by <command>SELECT
+   INTO</command> is controlled by the
+   <varname>default_with_oids</varname> configuration variable. This
+   variable currently defaults to true, but will likely default to
+   false in a future release of <productname>PostgreSQL</>.
   </para>
  </refsect1>
 

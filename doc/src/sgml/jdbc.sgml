@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/jdbc.sgml,v 1.51 2003/11/29 19:51:37 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/jdbc.sgml,v 1.52 2003/12/13 23:59:06 neilc Exp $
 -->
 
  <chapter id="jdbc">
@@ -98,8 +98,8 @@ $PostgreSQL: pgsql/doc/src/sgml/jdbc.sgml,v 1.51 2003/11/29 19:51:37 pgsql Exp $
     For instance, assume we have an application that uses the
     <acronym>JDBC</acronym> driver to access a database, and that
     application is installed as
-    <filename>/usr/local/lib/myapp.jar</filename>.  The PostgreSQL
-    <acronym>JDBC</> driver installed as
+    <filename>/usr/local/lib/myapp.jar</filename>.  The
+    <productname>PostgreSQL</> <acronym>JDBC</> driver installed as
     <filename>/usr/local/pgsql/share/java/postgresql.jar</>.  To run
     the application, we would use:
 <programlisting>
@@ -119,9 +119,9 @@ java MyApp
 
    <para>
     Because Java only uses TCP/IP connections, the
-    <application>PostgreSQL</application> server must be configured to
-    accept TCP/IP connections.  This can be done by setting 
-    <literal>tcpip_socket = true</literal> in the 
+    <productname>PostgreSQL</productname> server must be configured to
+    accept TCP/IP connections.  This can be done by setting
+    <literal>tcpip_socket = true</literal> in the
     <filename>postgresql.conf</filename> file or by supplying the
     <option>-i</option> option flag when starting
     <command>postmaster</command>.
@@ -239,7 +239,7 @@ java -Djdbc.drivers=org.postgresql.Driver example.ImageViewer
    <para>
     With <acronym>JDBC</acronym>, a database is represented by a
     <acronym>URL</acronym> (Uniform Resource Locator).  With
-    <application>PostgreSQL</application>, this takes one of the
+    <productname>PostgreSQL</productname>, this takes one of the
     following forms:
 
     <itemizedlist>
@@ -720,7 +720,7 @@ st.close();
   </indexterm>
 
   <para>
-    <application>PostgreSQL</application> provides two distinct ways to 
+    <productname>PostgreSQL</productname> provides two distinct ways to 
     store binary data.  Binary data can be stored in a table using 
     the data type <type>bytea</type> or by using the Large Object
     feature which stores the binary data in a separate table in a special 
@@ -770,12 +770,11 @@ st.close();
   </para>
 
   <para>
-    To use the Large Object functionality you can use either the 
-    <classname>LargeObject</classname> class
-    provided by the <application>PostgreSQL</application> 
-    <acronym>JDBC</acronym> driver, or by using the 
-    <function>getBLOB()</function> and <function>setBLOB()</function>
-    methods.
+    To use the Large Object functionality you can use either the
+    <classname>LargeObject</classname> class provided by the
+    <productname>PostgreSQL</> <acronym>JDBC</acronym> driver, or by
+    using the <function>getBLOB()</function> and
+    <function>setBLOB()</function> methods.
   </para>
 
   <important>
@@ -800,7 +799,8 @@ st.close();
 
   <para>
    <xref linkend="jdbc-binary-data-example"> contains some examples on
-   how to process binary data using the PostgreSQL <acronym>JDBC</> driver.
+   how to process binary data using the <productname>PostgreSQL</>
+   <acronym>JDBC</> driver.
   </para>
 
   <example id="jdbc-binary-data-example">
@@ -948,7 +948,7 @@ ps.close();
 
 
  <sect1 id="jdbc-ext">
-  <title><application>PostgreSQL</application> Extensions to the
+  <title><productname>PostgreSQL</productname> Extensions to the
     <acronym>JDBC</acronym> <acronym>API</acronym></title>
 
   <para>
