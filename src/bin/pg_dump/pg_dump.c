@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.226 2001/08/27 01:09:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.227 2001/08/27 20:33:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -400,77 +400,105 @@ dumpClasses_dumpData(Archive *fout, char *oid, void *dctxv)
 
 	if (fout->remoteVersion >= 70100)
 	{
-		appendPQExpBuffer(q, "SELECT * FROM ONLY %s", fmtId(classname, force_quotes));
+		appendPQExpBuffer(q, "DECLARE _pg_dump_cursor CURSOR FOR SELECT * FROM ONLY %s", fmtId(classname, force_quotes));
 	} else {
-		appendPQExpBuffer(q, "SELECT * FROM %s", fmtId(classname, force_quotes));
+		appendPQExpBuffer(q, "DECLARE _pg_dump_cursor CURSOR FOR SELECT * FROM %s", fmtId(classname, force_quotes));
 	}
 
 	res = PQexec(g_conn, q->data);
 	if (!res ||
-		PQresultStatus(res) != PGRES_TUPLES_OK)
+		PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
 		write_msg(NULL, "dumpClasses(): SQL command failed\n");
 		write_msg(NULL, "Error message from server: %s", PQerrorMessage(g_conn));
 		write_msg(NULL, "The command was: %s\n", q->data);
 		exit_nicely();
 	}
-	for (tuple = 0; tuple < PQntuples(res); tuple++)
-	{
-		archprintf(fout, "INSERT INTO %s ", fmtId(classname, force_quotes));
-		if (attrNames == true)
+	
+	do {
+		PQclear(res);
+
+		res = PQexec(g_conn, "FETCH 100 FROM _pg_dump_cursor");
+		if (!res ||
+			PQresultStatus(res) != PGRES_TUPLES_OK)
 		{
-			resetPQExpBuffer(q);
-			appendPQExpBuffer(q, "(");
+			write_msg(NULL, "dumpClasses(): SQL command failed\n");
+			write_msg(NULL, "Error message from server: %s", PQerrorMessage(g_conn));
+			write_msg(NULL, "The command was: FETCH 100 FROM _pg_dump_cursor\n");
+			exit_nicely();
+		}
+
+		for (tuple = 0; tuple < PQntuples(res); tuple++)
+		{
+			archprintf(fout, "INSERT INTO %s ", fmtId(classname, force_quotes));
+			if (attrNames == true)
+			{
+				resetPQExpBuffer(q);
+				appendPQExpBuffer(q, "(");
+				for (field = 0; field < PQnfields(res); field++)
+				{
+					if (field > 0)
+						appendPQExpBuffer(q, ",");
+					appendPQExpBuffer(q, fmtId(PQfname(res, field), force_quotes));
+				}
+				appendPQExpBuffer(q, ") ");
+				archprintf(fout, "%s", q->data);
+			}
+			archprintf(fout, "VALUES (");
 			for (field = 0; field < PQnfields(res); field++)
 			{
 				if (field > 0)
-					appendPQExpBuffer(q, ",");
-				appendPQExpBuffer(q, fmtId(PQfname(res, field), force_quotes));
+					archprintf(fout, ",");
+				if (PQgetisnull(res, tuple, field))
+				{
+					archprintf(fout, "NULL");
+					continue;
+				}
+				switch (PQftype(res, field))
+				{
+					case INT2OID:
+					case INT4OID:
+					case OIDOID:	/* int types */
+					case FLOAT4OID:
+					case FLOAT8OID:/* float types */
+						/* These types are printed without quotes */
+						archprintf(fout, "%s",
+								   PQgetvalue(res, tuple, field));
+						break;
+					case BITOID:
+					case VARBITOID:
+						archprintf(fout, "B'%s'",
+								   PQgetvalue(res, tuple, field));
+						break;
+					default:
+	
+						/*
+						 * All other types are printed as string literals,
+						 * with appropriate escaping of special characters.
+						 */
+						resetPQExpBuffer(q);
+						formatStringLiteral(q, PQgetvalue(res, tuple, field), CONV_ALL);
+						archprintf(fout, "%s", q->data);
+						break;
+				}
 			}
-			appendPQExpBuffer(q, ") ");
-			archprintf(fout, "%s", q->data);
+			archprintf(fout, ");\n");
 		}
-		archprintf(fout, "VALUES (");
-		for (field = 0; field < PQnfields(res); field++)
-		{
-			if (field > 0)
-				archprintf(fout, ",");
-			if (PQgetisnull(res, tuple, field))
-			{
-				archprintf(fout, "NULL");
-				continue;
-			}
-			switch (PQftype(res, field))
-			{
-				case INT2OID:
-				case INT4OID:
-				case OIDOID:	/* int types */
-				case FLOAT4OID:
-				case FLOAT8OID:/* float types */
-					/* These types are printed without quotes */
-					archprintf(fout, "%s",
-							   PQgetvalue(res, tuple, field));
-					break;
-				case BITOID:
-				case VARBITOID:
-					archprintf(fout, "B'%s'",
-							   PQgetvalue(res, tuple, field));
-					break;
-				default:
 
-					/*
-					 * All other types are printed as string literals,
-					 * with appropriate escaping of special characters.
-					 */
-					resetPQExpBuffer(q);
-					formatStringLiteral(q, PQgetvalue(res, tuple, field), CONV_ALL);
-					archprintf(fout, "%s", q->data);
-					break;
-			}
-		}
-		archprintf(fout, ");\n");
+	} while( PQntuples(res) > 0 );
+	PQclear(res);
+
+	res = PQexec(g_conn, "CLOSE _pg_dump_cursor");
+	if (!res ||
+		PQresultStatus(res) != PGRES_COMMAND_OK)
+	{
+		write_msg(NULL, "dumpClasses(): SQL command failed\n");
+		write_msg(NULL, "Error message from server: %s", PQerrorMessage(g_conn));
+		write_msg(NULL, "The command was: CLOSE _pg_dump_cursor\n");
+		exit_nicely();
 	}
 	PQclear(res);
+
 	destroyPQExpBuffer(q);
 	return 1;
 }
