@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.161 2004/08/19 00:00:34 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.162 2004/08/19 16:39:13 momjian Exp $
 -->
 
  <chapter id="libpq">
@@ -137,7 +137,7 @@ PGconn *PQconnectdb(const char *conninfo);
       that is not the name of the machine at <literal>hostaddr</>.)  Also,
       <literal>host</> rather than <literal>hostaddr</> is used to identify
       the connection in <filename>$HOME/.pgpass</> (or 
-      <filename>%USERPROFILE%/.pgpass</> on Win32).
+      <filename>%USERPROFILE%\.pgpass</> on Win32).
      </para>
      <para>
       Without either a host name or host address,
