@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lmgr.h,v 1.10 1998/02/26 04:43:27 momjian Exp $
+ * $Id: lmgr.h,v 1.11 1998/06/28 21:17:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,10 +72,10 @@ extern void RelationSetWIntentLock(Relation relation);
 extern void RelationUnsetWIntentLock(Relation relation);
 
 /* single.c */
-extern bool SingleLockReln(LockInfo linfo, LOCKT lockt, int action);
+extern bool SingleLockReln(LockInfo linfo, LOCKTYPE locktype, int action);
 extern bool
 SingleLockPage(LockInfo linfo, ItemPointer tidPtr,
-			   LOCKT lockt, int action);
+			   LOCKTYPE locktype, int action);
 
 /* proc.c */
 extern void InitProcGlobal(IPCKey key);

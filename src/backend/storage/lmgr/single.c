@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Attic/single.c,v 1.5 1997/09/18 20:21:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Attic/single.c,v 1.6 1998/06/28 21:17:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,7 +32,7 @@
  * Returns: TRUE if the lock can be set, FALSE otherwise.
  */
 bool
-SingleLockReln(LockInfo linfo, LOCKT lockt, int action)
+SingleLockReln(LockInfo linfo, LOCKTYPE locktype, int action)
 {
 	LOCKTAG		tag;
 
@@ -47,9 +47,9 @@ SingleLockReln(LockInfo linfo, LOCKT lockt, int action)
 	tag.tupleId.ip_posid = InvalidOffsetNumber;
 
 	if (action == UNLOCK)
-		return (LockRelease(MultiTableId, &tag, lockt));
+		return (LockRelease(MultiTableId, &tag, locktype));
 	else
-		return (LockAcquire(MultiTableId, &tag, lockt));
+		return (LockAcquire(MultiTableId, &tag, locktype));
 }
 
 /*
@@ -63,7 +63,7 @@ SingleLockReln(LockInfo linfo, LOCKT lockt, int action)
 bool
 SingleLockPage(LockInfo linfo,
 			   ItemPointer tidPtr,
-			   LOCKT lockt,
+			   LOCKTYPE locktype,
 			   int action)
 {
 	LOCKTAG		tag;
@@ -80,7 +80,7 @@ SingleLockPage(LockInfo linfo,
 
 
 	if (action == UNLOCK)
-		return (LockRelease(MultiTableId, &tag, lockt));
+		return (LockRelease(MultiTableId, &tag, locktype));
 	else
-		return (LockAcquire(MultiTableId, &tag, lockt));
+		return (LockAcquire(MultiTableId, &tag, locktype));
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.30 1998/06/27 15:47:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.31 1998/06/28 21:17:34 momjian Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -52,7 +52,7 @@
 
 static int
 WaitOnLock(LOCKTAB *ltable, LockTableId tableId, LOCK *lock,
-		   LOCKT lockt);
+		   LOCKTYPE locktype);
 
 /*#define LOCK_MGR_DEBUG*/
 
@@ -437,7 +437,7 @@ LockTableRename(LockTableId tableId)
  *		xid.xid							current xid		0
  *		persistence						transaction		user or backend
  *
- *		The lockt parameter can have the same values for normal locks
+ *		The locktype parameter can have the same values for normal locks
  *		although probably only WRITE_LOCK can have some practical use.
  *
  *														DZ - 4 Oct 1996
@@ -445,7 +445,7 @@ LockTableRename(LockTableId tableId)
  */
 
 bool
-LockAcquire(LockTableId tableId, LOCKTAG *lockName, LOCKT lockt)
+LockAcquire(LockTableId tableId, LOCKTAG *lockName, LOCKTYPE locktype)
 {
 	XIDLookupEnt *result,
 				item;
@@ -469,7 +469,7 @@ LockAcquire(LockTableId tableId, LOCKTAG *lockName, LOCKT lockt)
 			 lockName->tupleId.ip_posid,
 			 ((lockName->tupleId.ip_blkid.bi_hi << 16) +
 			  lockName->tupleId.ip_blkid.bi_lo),
-			 lockt);
+			 locktype);
 #endif
 	}
 #endif
@@ -485,7 +485,7 @@ LockAcquire(LockTableId tableId, LOCKTAG *lockName, LOCKT lockt)
 	if (LockingIsDisabled)
 		return (TRUE);
 
-	LOCK_PRINT("Acquire", lockName, lockt);
+	LOCK_PRINT("Acquire", lockName, locktype);
 	masterLock = ltable->ctl->masterLock;
 
 	SpinAcquire(masterLock);
@@ -571,7 +571,7 @@ LockAcquire(LockTableId tableId, LOCKTAG *lockName, LOCKT lockt)
 	 * ----------------
 	 */
 	lock->nHolding++;
-	lock->holders[lockt]++;
+	lock->holders[locktype]++;
 
 	/* --------------------
 	 * If I'm the only one holding a lock, then there
@@ -582,19 +582,19 @@ LockAcquire(LockTableId tableId, LOCKTAG *lockName, LOCKT lockt)
 	 */
 	if (result->nHolding == lock->nActive)
 	{
-		result->holders[lockt]++;
+		result->holders[locktype]++;
 		result->nHolding++;
-		GrantLock(lock, lockt);
+		GrantLock(lock, locktype);
 		SpinRelease(masterLock);
 		return (TRUE);
 	}
 
 	Assert(result->nHolding <= lock->nActive);
 
-	status = LockResolveConflicts(ltable, lock, lockt, myXid);
+	status = LockResolveConflicts(ltable, lock, locktype, myXid);
 
 	if (status == STATUS_OK)
-		GrantLock(lock, lockt);
+		GrantLock(lock, locktype);
 	else if (status == STATUS_FOUND)
 	{
 #ifdef USER_LOCKS
@@ -611,7 +611,7 @@ LockAcquire(LockTableId tableId, LOCKTAG *lockName, LOCKT lockt)
 				hash_search(xidTable, (Pointer) &item, HASH_REMOVE, &found);
 			}
 			lock->nHolding--;
-			lock->holders[lockt]--;
+			lock->holders[locktype]--;
 			SpinRelease(masterLock);
 #ifdef USER_LOCKS_DEBUG
 			elog(NOTICE, "LockAcquire: user lock failed");
@@ -619,7 +619,7 @@ LockAcquire(LockTableId tableId, LOCKTAG *lockName, LOCKT lockt)
 			return (FALSE);
 		}
 #endif
-		status = WaitOnLock(ltable, tableId, lock, lockt);
+		status = WaitOnLock(ltable, tableId, lock, locktype);
 		XID_PRINT("Someone granted me the lock", result);
 	}
 
@@ -647,7 +647,7 @@ LockAcquire(LockTableId tableId, LOCKTAG *lockName, LOCKT lockt)
 int
 LockResolveConflicts(LOCKTAB *ltable,
 					 LOCK *lock,
-					 LOCKT lockt,
+					 LOCKTYPE locktype,
 					 TransactionId xid)
 {
 	XIDLookupEnt *result,
@@ -703,7 +703,7 @@ LockResolveConflicts(LOCKTAB *ltable,
 		 * do not continue and share the lock, even if we can.	bjm
 		 * ------------------------
 		 */
-		int			myprio = ltable->ctl->prio[lockt];
+		int			myprio = ltable->ctl->prio[locktype];
 		PROC_QUEUE *waitQueue = &(lock->waitProcs);
 		PROC	   *topproc = (PROC *) MAKE_PTR(waitQueue->links.prev);
 
@@ -716,15 +716,15 @@ LockResolveConflicts(LOCKTAB *ltable,
 	 * with mine, then I get the lock.
 	 *
 	 * Checking for conflict: lock->mask represents the types of
-	 * currently held locks.  conflictTable[lockt] has a bit
+	 * currently held locks.  conflictTable[locktype] has a bit
 	 * set for each type of lock that conflicts with mine.	Bitwise
 	 * compare tells if there is a conflict.
 	 * ----------------------------
 	 */
-	if (!(ltable->ctl->conflictTab[lockt] & lock->mask))
+	if (!(ltable->ctl->conflictTab[locktype] & lock->mask))
 	{
 
-		result->holders[lockt]++;
+		result->holders[locktype]++;
 		result->nHolding++;
 
 		XID_PRINT("Conflict Resolved: updated xid entry stats", result);
@@ -753,12 +753,12 @@ LockResolveConflicts(LOCKTAB *ltable,
 	 * conflict and I have to sleep.
 	 * ------------------------
 	 */
-	if (!(ltable->ctl->conflictTab[lockt] & bitmask))
+	if (!(ltable->ctl->conflictTab[locktype] & bitmask))
 	{
 
 		/* no conflict. Get the lock and go on */
 
-		result->holders[lockt]++;
+		result->holders[locktype]++;
 		result->nHolding++;
 
 		XID_PRINT("Conflict Resolved: updated xid entry stats", result);
@@ -771,11 +771,11 @@ LockResolveConflicts(LOCKTAB *ltable,
 }
 
 static int
-WaitOnLock(LOCKTAB *ltable, LockTableId tableId, LOCK *lock, LOCKT lockt)
+WaitOnLock(LOCKTAB *ltable, LockTableId tableId, LOCK *lock, LOCKTYPE locktype)
 {
 	PROC_QUEUE *waitQueue = &(lock->waitProcs);
 
-	int			prio = ltable->ctl->prio[lockt];
+	int			prio = ltable->ctl->prio[locktype];
 
 	/*
 	 * the waitqueue is ordered by priority. I insert myself according to
@@ -785,10 +785,10 @@ WaitOnLock(LOCKTAB *ltable, LockTableId tableId, LOCK *lock, LOCKT lockt)
 	 * synchronization for this queue.	That will not be true if/when
 	 * people can be deleted from the queue by a SIGINT or something.
 	 */
-	LOCK_DUMP_AUX("WaitOnLock: sleeping on lock", lock, lockt);
+	LOCK_DUMP_AUX("WaitOnLock: sleeping on lock", lock, locktype);
 	if (ProcSleep(waitQueue,
 				  ltable->ctl->masterLock,
-				  lockt,
+				  locktype,
 				  prio,
 				  lock) != NO_ERROR)
 	{
@@ -799,13 +799,13 @@ WaitOnLock(LOCKTAB *ltable, LockTableId tableId, LOCK *lock, LOCKT lockt)
 		 * -------------------
 		 */
 		lock->nHolding--;
-		lock->holders[lockt]--;
-		LOCK_DUMP_AUX("WaitOnLock: aborting on lock", lock, lockt);
+		lock->holders[locktype]--;
+		LOCK_DUMP_AUX("WaitOnLock: aborting on lock", lock, locktype);
 		SpinRelease(ltable->ctl->masterLock);
 		elog(ERROR, "WaitOnLock: error on wakeup - Aborting this transaction");
 	}
 
-	LOCK_DUMP_AUX("WaitOnLock: wakeup on lock", lock, lockt);
+	LOCK_DUMP_AUX("WaitOnLock: wakeup on lock", lock, locktype);
 	return (STATUS_OK);
 }
 
@@ -820,7 +820,7 @@ WaitOnLock(LOCKTAB *ltable, LockTableId tableId, LOCK *lock, LOCKT lockt)
  *		come along and request the lock).
  */
 bool
-LockRelease(LockTableId tableId, LOCKTAG *lockName, LOCKT lockt)
+LockRelease(LockTableId tableId, LOCKTAG *lockName, LOCKTYPE locktype)
 {
 	LOCK	   *lock = NULL;
 	SPINLOCK	masterLock;
@@ -843,7 +843,7 @@ LockRelease(LockTableId tableId, LOCKTAG *lockName, LOCKT lockt)
 			 lockName->tupleId.ip_posid,
 			 ((lockName->tupleId.ip_blkid.bi_hi << 16) +
 			  lockName->tupleId.ip_blkid.bi_lo),
-			 lockt);
+			 locktype);
 #endif
 	}
 #endif
@@ -859,7 +859,7 @@ LockRelease(LockTableId tableId, LOCKTAG *lockName, LOCKT lockt)
 	if (LockingIsDisabled)
 		return (TRUE);
 
-	LOCK_PRINT("Release", lockName, lockt);
+	LOCK_PRINT("Release", lockName, locktype);
 
 	masterLock = ltable->ctl->masterLock;
 	xidTable = ltable->xidHash;
@@ -919,9 +919,9 @@ LockRelease(LockTableId tableId, LOCKTAG *lockName, LOCKT lockt)
 		 * fix the general lock stats
 		 */
 		lock->nHolding--;
-		lock->holders[lockt]--;
+		lock->holders[locktype]--;
 		lock->nActive--;
-		lock->activeHolders[lockt]--;
+		lock->activeHolders[locktype]--;
 
 		Assert(lock->nActive >= 0);
 
@@ -992,7 +992,7 @@ LockRelease(LockTableId tableId, LOCKTAG *lockName, LOCKT lockt)
 	 * now check to see if I have any private locks.  If I do, decrement
 	 * the counts associated with them.
 	 */
-	result->holders[lockt]--;
+	result->holders[locktype]--;
 	result->nHolding--;
 
 	XID_PRINT("LockRelease updated xid stats", result);
@@ -1038,9 +1038,9 @@ LockRelease(LockTableId tableId, LOCKTAG *lockName, LOCKT lockt)
 		 * fix the general lock stats
 		 */
 		lock->nHolding--;
-		lock->holders[lockt]--;
+		lock->holders[locktype]--;
 		lock->nActive--;
-		lock->activeHolders[lockt]--;
+		lock->activeHolders[locktype]--;
 
 		Assert(lock->nActive >= 0);
 
@@ -1069,10 +1069,10 @@ LockRelease(LockTableId tableId, LOCKTAG *lockName, LOCKT lockt)
 	 * with the remaining locks.
 	 * --------------------------
 	 */
-	if (!(lock->activeHolders[lockt]))
+	if (!(lock->activeHolders[locktype]))
 	{
 		/* change the conflict mask.  No more of this lock type. */
-		lock->mask &= BITS_OFF[lockt];
+		lock->mask &= BITS_OFF[locktype];
 	}
 
 	if (wakeupNeeded)
@@ -1095,11 +1095,11 @@ LockRelease(LockTableId tableId, LOCKTAG *lockName, LOCKT lockt)
  *		the new lock holder.
  */
 void
-GrantLock(LOCK *lock, LOCKT lockt)
+GrantLock(LOCK *lock, LOCKTYPE locktype)
 {
 	lock->nActive++;
-	lock->activeHolders[lockt]++;
-	lock->mask |= BITS_ON[lockt];
+	lock->activeHolders[locktype]++;
+	lock->mask |= BITS_ON[locktype];
 }
 
 #ifdef USER_LOCKS

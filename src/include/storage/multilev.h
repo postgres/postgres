@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: multilev.h,v 1.8 1998/06/26 19:57:50 momjian Exp $
+ * $Id: multilev.h,v 1.9 1998/06/28 21:17:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,9 +50,9 @@ extern LockTableId ShortTermTableId;
  * function prototypes
  */
 extern LockTableId InitMultiLevelLocks(void);
-extern bool MultiLockReln(LockInfo linfo, LOCKT lockt);
-extern bool MultiLockTuple(LockInfo linfo, ItemPointer tidPtr, LOCKT lockt);
-extern bool MultiLockPage(LockInfo linfo, ItemPointer tidPtr, LOCKT lockt);
-extern bool MultiReleaseReln(LockInfo linfo, LOCKT lockt);
+extern bool MultiLockReln(LockInfo linfo, LOCKTYPE locktype);
+extern bool MultiLockTuple(LockInfo linfo, ItemPointer tidPtr, LOCKTYPE locktype);
+extern bool MultiLockPage(LockInfo linfo, ItemPointer tidPtr, LOCKTYPE locktype);
+extern bool MultiReleaseReln(LockInfo linfo, LOCKTYPE locktype);
 
 #endif							/* MULTILEV_H */
