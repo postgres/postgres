@@ -10,7 +10,7 @@
   alink="#0000ff">
     <H1>Foire Aux Questions (FAQ) pour PostgreSQL</H1>
 
-    <P>Dernière mise à jour&nbsp;: vendredi 11 juillet 2004 23:58:24</P>
+    <P>Dernière mise à jour&nbsp;: vendredi 14 novembre 2004 16:32:47</P>
 
     <P>Mainteneur actuel&nbsp;: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -128,11 +128,9 @@
     plusieurs bases de données&nbsp;??<BR>
      <A href="#4.25">4.25</A>) Comment puis-je renvoyer plusieurs lignes ou
     colonnes à partir d'une fonction&nbsp;?<BR>
-     <A href="#4.26">4.26</A>) Why can't I reliably create/drop
-    temporary tables in PL/PgSQL functions?<BR>
-     <A href="#4.27">4.27</A>) Quelles options de replication sont
-    disponibles&nbsp;?<BR>
-     <A href="#4.28">4.28</A>) Quelles options de cryptage sont
+     <A href="#4.26">4.26</A>) Pourquoi ne puis-je pas créer/supprimer des
+    tables temporaires dans les fonctions PL/PgSQL de façon stable&nbsp;?<BR>
+     <A href="#4.27">4.27</A>) Quelles options de cryptage sont
     disponibles&nbsp;?<BR>
      
     <H2 align="center">Etendre PostgreSQL</H2>
@@ -230,33 +228,12 @@
 
     <H4><A name="1.4">1.4</A>) Sous quels environnements non Unix PostgreSQL fonctionne-t'il&nbsp;?</H4>
 
-    <P><STRONG>Client</STRONG></P>
-
-    <P>Il est possible de compiler la bibliothèque C <I>libpq</I>,
-    psql et d'autres interfaces et applications clientes pour
-    qu'elles tournent sous des environnements MS Windows. Dans ce cas,
-    le client tourne sous MS Windows et communique par TCP/IP avec un
-    serveur tournant sous un environnement Unix supporté. Un fichier
-    <I>win32.mak</I> est inclus dans la distribution pour construire
-    une bibliothèque <I>libpq</I> <I>psql</I> Win32. PostgreSQL
-    communique aussi avec des clients <SMALL>ODBC</SMALL>.</P>
-
-    <P><STRONG>Serveur</STRONG></P>
-
-    <P>Le serveur de base de données peut tourner sous Windows NT et
-    Windows 2000 en utilisant Cygwin, la bibliothèque de portage
-    Unix/NT de Cygnus. Voir
-    <I>pgsql/doc/FAQ_MSWIN</I> dans la distribution ou la FAQ MS
-    Windows sur <A href="http://www.PostgreSQL.org/docs/faqs/text/FAQ_MSWIN">
-    http://www.PostgreSQL.org/docs/faqs/text/FAQ_MSWIN</A>.</P>
-
-    <p>Un port natif sur MS Windows NT/2000/XP est en court. Pour plus de
-    détails sur le statut actuel de PostgreSQL sur Windows, voir
-    <a href="http://techdocs.postgresql.org/guides/Windows">
-    http://techdocs.postgresql.org/guides/Windows</a> et
-    <a href="http://momjian.postgresql.org/main/writings/pgsql/win32.html">
-    http://momjian.postgresql.org/main/writings/pgsql/win32.html</a>.</p>
-
+    
+    <p>À partir de la version 8.0, PostgreSQL fonctionne nativement sur les
+    systèmes d'exploitation Microsoft Windows à base NT comme Win2000, WinXP et Win2003.
+    Un installeur est disponible sur
+    <a href="http://pgfoundry.org/projects/pginstaller">http://pgfoundry.org/projects/pginstaller</a>.</p>
+   
     <p>Il existe aussi un port sur Novell Netware sur
     <a href="http://forge.novell.com">http://forge.novell.com</a>.</p>
 
@@ -330,7 +307,7 @@
 
     <H4><A name="1.7">1.7</A>) Quelle est la dernière version&nbsp;?</H4>
 
-    <P>La dernière version de PostgreSQL est la version 7.4.3.</P>
+    <P>La dernière version de PostgreSQL est la version 7.4.5.</P>
 
     <P>Nous projetons de sortir une version majeure tous les six à huit
     mois.</P>
@@ -655,11 +632,11 @@
 
     <H4><A name="3.5">3.5</A>) Comment contrôler les connexions d'autres machines&nbsp;?</H4>
 
-    <P>Par défaut, PostgreSQL n'autorise que les connexions de la machine locale
-    utilisant les sockets de domaine Unix. D'autres machines ne seront pas
-    capables de se connecter sauf si vous configurez tcpip_sockets dans <I>postgresql.conf</I>
-    <B>et</B> activez l'authentification basée sur l'hôte en modifiant le fichier 
-    <I>$PGDATA/pg_hba.conf</I> en conséquence. Ceci autorisera les connexions TCP/IP.</P>
+    <p>Par défaut, PostgreSQL autorise seulement les connexions de la machine
+    locale en utilisant les sockets de domaine Unix ou les connexions TCP/IP.
+    D'autres machines ne seront pas capables de se connecter sauf si vous modifiez
+    listen_addresses dans postgresql.conf et activez une authentification basée
+    sur l'hôte en modifiant le fichier <i>$PGDATA/pg_hba.conf</i> en accord.</p>
 
     <H4><A name="3.6">3.6</A>) Comment régler le moteur de la base de données pour de meilleures performances&nbsp;?</H4>
 
@@ -934,23 +911,23 @@
     La taille du fichier d'une base de données PostgreSQL peut être
     estimée à 6,4&nbsp;Mo&nbsp;:</P>
 <PRE>
-    36 octets: chaque ligne (approximation)
+    32 octets: chaque ligne (approximation)
     24 octets: un champ 'entier' et un champ 'texte'
    + 4 octets: pointeur vers le tuple sur la page
    ----------------------------------------
-    64 octets par ligne
+    60 octets par ligne
 
    La taille des pages de données dans PostgreSQL est de 8192 octets (8 KO), donc :
 
    8192 octets par page
-   ----------------------   = 128 lignes par page de base de données (arrondi à l'entier inférieur)
-     64 octets par ligne
+   ----------------------   = 136 lignes par page de base de données (arrondi à l'entier inférieur)
+     60 octets par ligne
 
    100000 lignes de données
-   -------------------------  =  782 pages de base de données (arrondi à l'entier supérieur)
+   -------------------------  =  735 pages de base de données (arrondi à l'entier supérieur)
       128 lignes par page
 
-782 pages de base de données * 8192 octets par page  =  6&nbsp;406&nbsp;144&nbsp;octets (6,4&nbsp;Mo)
+735 pages de base de données * 8192 octets par page  =  6&nbsp;021&nbsp;120&nbsp;octets (6,4&nbsp;Mo)
 </PRE>
 
     <P>Les index utilisent moins d'espace, mais ils contiennent les données indexées,
@@ -1030,6 +1007,11 @@
     </UL>
     <P>
 
+    <p>Dans les versions antérieures à la 8.0, les indexs ne peuvent souvent
+    pas être utilisés sauf si les types de données correspondent exactement au
+    type de la colonne de l'index. Ceci est particulièrement vrai pour les
+    index de colonnes de type int2, int8 et numeric.</p>
+    
     <H4><A name="4.9">4.9</A>) Comment puis-je savoir si l'optimiseur évalue
      mes requêtes&nbsp;?</H4>
 
@@ -1429,19 +1411,7 @@ BYTEA           bytea           tableau d'octets (accepte les octets nuls)
     <SMALL>EXECUTE</SMALL> pour l'accès aux tables temporaires avec PL/PgSQL.
     Ceci obligera l'analyse de la requête à chaque fois.</P>
 
-    <H4><A name="4.27">4.27</A>) Quelles options de réplication sont
-    disponibles&nbsp;?</H4>
-    <P>Il existe plusieurs solutions de réplication maître/esclave. Elles
-    permettent uniquement au maître de réaliser des changements sur la base de
-    données alors que l'esclave peut seulement faire des lectures de base de données.
-    Le bas de la page <a
-    href="http://gborg.PostgreSQL.org/genpage?replication_research">
-    http://gborg.PostgreSQL.org/genpage?replication_research</a> les liste.
-    Une solution de réplication multi-maître est en cours de développement sur
-    <a
-    href="http://gborg.PostgreSQL.org/project/pgreplication/projdisplay.php">http://gborg.PostgreSQL.org/project/pgreplication/projdisplay.php</a>.</P>
-
-    <H4><A name="4.28">4.28</A>) Quelles options de cryptage sont
+    <H4><A name="4.27">4.27</A>) Quelles options de cryptage sont
     disponibles&nbsp;?
     </H4>
     <UL>

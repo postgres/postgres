@@ -1,7 +1,7 @@
 
                    Foire Aux Questions (FAQ) pour PostgreSQL
                                        
-   Dernière mise à jour : vendredi 11 juillet 2004 23:58:24
+   Dernière mise à jour : vendredi 14 novembre 2004 16:32:47
    
    Mainteneur actuel : Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -113,10 +113,9 @@
    données ??
    4.25) Comment puis-je renvoyer plusieurs lignes ou colonnes à partir
    d'une fonction ?
-   4.26) Why can't I reliably create/drop temporary tables in PL/PgSQL
-   functions?
-   4.27) Quelles options de replication sont disponibles ?
-   4.28) Quelles options de cryptage sont disponibles ?
+   4.26) Pourquoi ne puis-je pas créer/supprimer des tables temporaires
+   dans les fonctions PL/PgSQL de façon stable ?
+   4.27) Quelles options de cryptage sont disponibles ?
    
                              Etendre PostgreSQL
                                       
@@ -205,27 +204,10 @@
    
     1.4) Sous quels environnements non Unix PostgreSQL fonctionne-t'il ?
     
-   Client
-   
-   Il est possible de compiler la bibliothèque C libpq, psql et d'autres
-   interfaces et applications clientes pour qu'elles tournent sous des
-   environnements MS Windows. Dans ce cas, le client tourne sous MS
-   Windows et communique par TCP/IP avec un serveur tournant sous un
-   environnement Unix supporté. Un fichier win32.mak est inclus dans la
-   distribution pour construire une bibliothèque libpq psql Win32.
-   PostgreSQL communique aussi avec des clients ODBC.
-   
-   Serveur
-   
-   Le serveur de base de données peut tourner sous Windows NT et Windows
-   2000 en utilisant Cygwin, la bibliothèque de portage Unix/NT de
-   Cygnus. Voir pgsql/doc/FAQ_MSWIN dans la distribution ou la FAQ MS
-   Windows sur http://www.PostgreSQL.org/docs/faqs/text/FAQ_MSWIN.
-   
-   Un port natif sur MS Windows NT/2000/XP est en court. Pour plus de
-   détails sur le statut actuel de PostgreSQL sur Windows, voir
-   http://techdocs.postgresql.org/guides/Windows et
-   http://momjian.postgresql.org/main/writings/pgsql/win32.html.
+   À partir de la version 8.0, PostgreSQL fonctionne nativement sur les
+   systèmes d'exploitation Microsoft Windows à base NT comme Win2000,
+   WinXP et Win2003. Un installeur est disponible sur
+   http://pgfoundry.org/projects/pginstaller.
    
    Il existe aussi un port sur Novell Netware sur
    http://forge.novell.com.
@@ -283,7 +265,7 @@
    
     1.7) Quelle est la dernière version ?
     
-   La dernière version de PostgreSQL est la version 7.4.3.
+   La dernière version de PostgreSQL est la version 7.4.5.
    
    Nous projetons de sortir une version majeure tous les six à huit mois.
    
@@ -558,12 +540,12 @@
    
     3.5) Comment contrôler les connexions d'autres machines ?
     
-   Par défaut, PostgreSQL n'autorise que les connexions de la machine
-   locale utilisant les sockets de domaine Unix. D'autres machines ne
-   seront pas capables de se connecter sauf si vous configurez
-   tcpip_sockets dans postgresql.conf et activez l'authentification basée
-   sur l'hôte en modifiant le fichier $PGDATA/pg_hba.conf en conséquence.
-   Ceci autorisera les connexions TCP/IP.
+   Par défaut, PostgreSQL autorise seulement les connexions de la machine
+   locale en utilisant les sockets de domaine Unix ou les connexions
+   TCP/IP. D'autres machines ne seront pas capables de se connecter sauf
+   si vous modifiez listen_addresses dans postgresql.conf et activez une
+   authentification basée sur l'hôte en modifiant le fichier
+   $PGDATA/pg_hba.conf en accord.
    
     3.6) Comment régler le moteur de la base de données pour de meilleures
     performances ?
@@ -825,26 +807,26 @@ nnes
    la chaîne soit longue en moyenne de 20 octets. Le fichier texte serait
    de 2,8 Mo. La taille du fichier d'une base de données PostgreSQL peut
    être estimée à 6,4 Mo :
-    36 octets: chaque ligne (approximation)
+    32 octets: chaque ligne (approximation)
     24 octets: un champ 'entier' et un champ 'texte'
    + 4 octets: pointeur vers le tuple sur la page
    ----------------------------------------
-    64 octets par ligne
+    60 octets par ligne
 
    La taille des pages de données dans PostgreSQL est de 8192 octets (8 KO), do
 nc :
 
    8192 octets par page
-   ----------------------   = 128 lignes par page de base de données (arrondi à
+   ----------------------   = 136 lignes par page de base de données (arrondi à
  l'entier inférieur)
-     64 octets par ligne
+     60 octets par ligne
 
    100000 lignes de données
-   -------------------------  =  782 pages de base de données (arrondi à l'enti
+   -------------------------  =  735 pages de base de données (arrondi à l'enti
 er supérieur)
       128 lignes par page
 
-782 pages de base de données * 8192 octets par page  =  6 406 144 octets (6,4 M
+735 pages de base de données * 8192 octets par page  =  6 021 120 octets (6,4 M
 o)
 
    Les index utilisent moins d'espace, mais ils contiennent les données
@@ -914,6 +896,11 @@ o)
        section 4.12.
      * La locale C par défaut doit être utilisée lors de initdb.
        
+   Dans les versions antérieures à la 8.0, les indexs ne peuvent souvent
+   pas être utilisés sauf si les types de données correspondent
+   exactement au type de la colonne de l'index. Ceci est particulièrement
+   vrai pour les index de colonnes de type int2, int8 et numeric.
+   
     4.9) Comment puis-je savoir si l'optimiseur évalue mes requêtes ?
     
    Voir la page EXPLAIN du manuel.
@@ -1263,17 +1250,7 @@ CREATE TABLE test (x int, heuremodif timestamp DEFAULT CURRENT_TIMESTAMP );
    revient à utiliser EXECUTE pour l'accès aux tables temporaires avec
    PL/PgSQL. Ceci obligera l'analyse de la requête à chaque fois.
    
-    4.27) Quelles options de réplication sont disponibles ?
-    
-   Il existe plusieurs solutions de réplication maître/esclave. Elles
-   permettent uniquement au maître de réaliser des changements sur la
-   base de données alors que l'esclave peut seulement faire des lectures
-   de base de données. Le bas de la page
-   http://gborg.PostgreSQL.org/genpage?replication_research les liste.
-   Une solution de réplication multi-maître est en cours de développement
-   sur http://gborg.PostgreSQL.org/project/pgreplication/projdisplay.php.
-   
-    4.28) Quelles options de cryptage sont disponibles ?
+    4.27) Quelles options de cryptage sont disponibles ?
     
      * contrib/pgcrypto contient de nombreuses fonctions de cryptage, à
        utiliser dans des requêtes SQL.
