@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.191 2004/10/04 21:52:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.192 2004/10/16 18:57:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1528,6 +1528,9 @@ CommitTransaction(void)
 						 RESOURCE_RELEASE_BEFORE_LOCKS,
 						 true, true);
 
+	/* Check we've released all buffer pins */
+	AtEOXact_Buffers(true);
+
 	/*
 	 * Make catalog changes visible to all backends.  This has to happen
 	 * after relcache references are dropped (see comments for
@@ -1684,6 +1687,7 @@ AbortTransaction(void)
 	ResourceOwnerRelease(TopTransactionResourceOwner,
 						 RESOURCE_RELEASE_BEFORE_LOCKS,
 						 false, true);
+	AtEOXact_Buffers(false);
 	AtEOXact_Inval(false);
 	smgrDoPendingDeletes(false);
 	ResourceOwnerRelease(TopTransactionResourceOwner,

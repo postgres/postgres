@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/resowner/resowner.c,v 1.7 2004/08/30 02:54:40 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/resowner/resowner.c,v 1.8 2004/10/16 18:57:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -191,37 +191,30 @@ ResourceOwnerReleaseInternal(ResourceOwner owner,
 
 	if (phase == RESOURCE_RELEASE_BEFORE_LOCKS)
 	{
-		/* Release buffer pins */
-		if (isTopLevel)
+		/*
+		 * Release buffer pins.  Note that ReleaseBuffer will
+		 * remove the buffer entry from my list, so I just have to
+		 * iterate till there are none.
+		 *
+		 * During a commit, there shouldn't be any remaining pins ---
+		 * that would indicate failure to clean up the executor correctly ---
+		 * so issue warnings.  In the abort case, just clean up quietly.
+		 *
+		 * XXX this is fairly inefficient due to multiple BufMgrLock
+		 * grabs if there are lots of buffers to be released, but we
+		 * don't expect many (indeed none in the success case) so it's
+		 * probably not worth optimizing.
+		 *
+		 * We are however careful to release back-to-front, so as to
+		 * avoid O(N^2) behavior in ResourceOwnerForgetBuffer().
+		 */
+		while (owner->nbuffers > 0)
 		{
-			/*
-			 * For a top-level xact we are going to release all buffers,
-			 * so just do a single bufmgr call at the top of the
-			 * recursion.
-			 */
-			if (owner == TopTransactionResourceOwner)
-				AtEOXact_Buffers(isCommit);
-			/* Mark object as owning no buffers, just for sanity */
-			owner->nbuffers = 0;
+			if (isCommit)
+				PrintBufferLeakWarning(owner->buffers[owner->nbuffers - 1]);
+			ReleaseBuffer(owner->buffers[owner->nbuffers - 1]);
 		}
-		else
-		{
-			/*
-			 * Release buffers retail.	Note that ReleaseBuffer will
-			 * remove the buffer entry from my list, so I just have to
-			 * iterate till there are none.
-			 *
-			 * XXX this is fairly inefficient due to multiple BufMgrLock
-			 * grabs if there are lots of buffers to be released, but we
-			 * don't expect many (indeed none in the success case) so it's
-			 * probably not worth optimizing.
-			 *
-			 * We are however careful to release back-to-front, so as to
-			 * avoid O(N^2) behavior in ResourceOwnerForgetBuffer().
-			 */
-			while (owner->nbuffers > 0)
-				ReleaseBuffer(owner->buffers[owner->nbuffers - 1]);
-		}
+
 		/* Release relcache references */
 		if (isTopLevel)
 		{

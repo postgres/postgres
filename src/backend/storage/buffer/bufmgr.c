@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.179 2004/10/16 18:05:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.180 2004/10/16 18:57:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -851,15 +851,35 @@ ResetBufferUsage(void)
 /*
  *		AtEOXact_Buffers - clean up at end of transaction.
  *
- *		During abort, we need to release any buffer pins we're holding
- *		(this cleans up in case ereport interrupted a routine that pins a
- *		buffer).  During commit, we shouldn't need to do that, but check
- *		anyway to see if anyone leaked a buffer reference count.
+ *		As of PostgreSQL 8.0, buffer pins should get released by the
+ *		ResourceOwner mechanism.  This routine is just a debugging
+ *		cross-check that no pins remain.
  */
 void
 AtEOXact_Buffers(bool isCommit)
 {
+#ifdef USE_ASSERT_CHECKING
 	int			i;
+
+	for (i = 0; i < NBuffers; i++)
+	{
+		Assert(PrivateRefCount[i] == 0);
+	}
+
+	AtEOXact_LocalBuffers(isCommit);
+#endif
+}
+
+/*
+ * Ensure we have released all shared-buffer locks and pins during backend exit
+ */
+void
+AtProcExit_Buffers(void)
+{
+	int			i;
+
+	AbortBufferIO();
+	UnlockBuffers();
 
 	for (i = 0; i < NBuffers; i++)
 	{
@@ -867,19 +887,9 @@ AtEOXact_Buffers(bool isCommit)
 		{
 			BufferDesc *buf = &(BufferDescriptors[i]);
 
-			if (isCommit)
-				elog(WARNING,
-					 "buffer refcount leak: [%03d] "
-				"(rel=%u/%u/%u, blockNum=%u, flags=0x%x, refcount=%u %d)",
-					 i,
-					 buf->tag.rnode.spcNode, buf->tag.rnode.dbNode,
-					 buf->tag.rnode.relNode,
-					 buf->tag.blockNum, buf->flags,
-					 buf->refcount, PrivateRefCount[i]);
-
 			/*
-			 * We don't worry about updating the ResourceOwner structures;
-			 * resowner.c will clear them for itself.
+			 * We don't worry about updating ResourceOwner; if we even got
+			 * here, it suggests that ResourceOwners are messed up.
 			 */
 			PrivateRefCount[i] = 1;		/* make sure we release shared pin */
 			LWLockAcquire(BufMgrLock, LW_EXCLUSIVE);
@@ -888,8 +898,37 @@ AtEOXact_Buffers(bool isCommit)
 			Assert(PrivateRefCount[i] == 0);
 		}
 	}
+}
 
-	AtEOXact_LocalBuffers(isCommit);
+/*
+ * Helper routine to issue warnings when a buffer is unexpectedly pinned
+ */
+void
+PrintBufferLeakWarning(Buffer buffer)
+{
+	BufferDesc *buf;
+	int32		loccount;
+
+	Assert(BufferIsValid(buffer));
+	if (BufferIsLocal(buffer))
+	{
+		buf = &LocalBufferDescriptors[-buffer - 1];
+		loccount = LocalRefCount[-buffer - 1];
+	}
+	else
+	{
+		buf = &BufferDescriptors[buffer - 1];
+		loccount = PrivateRefCount[buffer - 1];
+	}
+
+	elog(WARNING,
+		 "buffer refcount leak: [%03d] "
+		 "(rel=%u/%u/%u, blockNum=%u, flags=0x%x, refcount=%u %d)",
+		 buffer,
+		 buf->tag.rnode.spcNode, buf->tag.rnode.dbNode,
+		 buf->tag.rnode.relNode,
+		 buf->tag.blockNum, buf->flags,
+		 buf->refcount, loccount);
 }
 
 /*
