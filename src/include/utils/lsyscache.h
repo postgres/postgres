@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lsyscache.h,v 1.39 2001/11/05 17:46:36 momjian Exp $
+ * $Id: lsyscache.h,v 1.40 2002/03/01 04:09:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,8 @@ extern RegProcedure get_opcode(Oid opno);
 extern char *get_opname(Oid opno);
 extern bool op_mergejoinable(Oid opno, Oid ltype, Oid rtype,
 				 Oid *leftOp, Oid *rightOp);
+extern void op_mergejoin_crossops(Oid opno, Oid *ltop, Oid *gtop,
+				 RegProcedure *ltproc, RegProcedure *gtproc);
 extern Oid	op_hashjoinable(Oid opno, Oid ltype, Oid rtype);
 extern bool op_iscachable(Oid opno);
 extern Oid	get_commutator(Oid opno);

@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.79 2001/10/25 05:49:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.80 2002/03/01 04:09:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,6 +58,7 @@
 #include "optimizer/cost.h"
 #include "optimizer/pathnode.h"
 #include "parser/parsetree.h"
+#include "utils/selfuncs.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
@@ -565,11 +566,28 @@ cost_mergejoin(Path *path, Query *root,
 	Cost		startup_cost = 0;
 	Cost		run_cost = 0;
 	Cost		cpu_per_tuple;
+	double		outer_rows,
+				inner_rows;
 	double		ntuples;
+	Selectivity	leftscan,
+				rightscan;
 	Path		sort_path;		/* dummy for result of cost_sort */
 
 	if (!enable_mergejoin)
 		startup_cost += disable_cost;
+
+	/*
+	 * A merge join will stop as soon as it exhausts either input stream.
+	 * Estimate fraction of the left and right inputs that will actually
+	 * need to be scanned.  We use only the first (most significant)
+	 * merge clause for this purpose.
+	 */
+	mergejoinscansel(root,
+					 (Node *) ((RestrictInfo *) lfirst(mergeclauses))->clause,
+					 &leftscan, &rightscan);
+
+	outer_rows = outer_path->parent->rows * leftscan;
+	inner_rows = inner_path->parent->rows * rightscan;
 
 	/* cost of source data */
 
@@ -588,12 +606,14 @@ cost_mergejoin(Path *path, Query *root,
 				  outer_path->parent->rows,
 				  outer_path->parent->width);
 		startup_cost += sort_path.startup_cost;
-		run_cost += sort_path.total_cost - sort_path.startup_cost;
+		run_cost += (sort_path.total_cost - sort_path.startup_cost)
+			* leftscan;
 	}
 	else
 	{
 		startup_cost += outer_path->startup_cost;
-		run_cost += outer_path->total_cost - outer_path->startup_cost;
+		run_cost += (outer_path->total_cost - outer_path->startup_cost)
+			* leftscan;
 	}
 
 	if (innersortkeys)			/* do we need to sort inner? */
@@ -605,30 +625,33 @@ cost_mergejoin(Path *path, Query *root,
 				  inner_path->parent->rows,
 				  inner_path->parent->width);
 		startup_cost += sort_path.startup_cost;
-		run_cost += sort_path.total_cost - sort_path.startup_cost;
+		run_cost += (sort_path.total_cost - sort_path.startup_cost)
+			* rightscan;
 	}
 	else
 	{
 		startup_cost += inner_path->startup_cost;
-		run_cost += inner_path->total_cost - inner_path->startup_cost;
+		run_cost += (inner_path->total_cost - inner_path->startup_cost)
+			* rightscan;
 	}
 
 	/*
 	 * The number of tuple comparisons needed depends drastically on the
 	 * number of equal keys in the two source relations, which we have no
-	 * good way of estimating.	Somewhat arbitrarily, we charge one tuple
+	 * good way of estimating.  (XXX could the MCV statistics help?)
+	 * Somewhat arbitrarily, we charge one tuple
 	 * comparison (one cpu_operator_cost) for each tuple in the two source
 	 * relations.  This is probably a lower bound.
 	 */
-	run_cost += cpu_operator_cost *
-		(outer_path->parent->rows + inner_path->parent->rows);
+	run_cost += cpu_operator_cost * (outer_rows + inner_rows);
 
 	/*
 	 * For each tuple that gets through the mergejoin proper, we charge
 	 * cpu_tuple_cost plus the cost of evaluating additional restriction
 	 * clauses that are to be applied at the join.	It's OK to use an
 	 * approximate selectivity here, since in most cases this is a minor
-	 * component of the cost.
+	 * component of the cost.  NOTE: it's correct to use the unscaled rows
+	 * counts here, not the scaled-down counts we obtained above.
 	 */
 	ntuples = approx_selectivity(root, mergeclauses) *
 		outer_path->parent->rows * inner_path->parent->rows;

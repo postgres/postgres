@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.59 2001/10/25 05:49:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.60 2002/03/01 04:09:26 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -367,6 +367,76 @@ op_mergejoinable(Oid opno, Oid ltype, Oid rtype, Oid *leftOp, Oid *rightOp)
 		ReleaseSysCache(tp);
 	}
 	return result;
+}
+
+/*
+ * op_mergejoin_crossops
+ *
+ *		Returns the cross-type comparison operators (ltype "<" rtype and
+ *		ltype ">" rtype) for an operator previously determined to be
+ *		mergejoinable.  Optionally, fetches the regproc ids of these
+ *		operators, as well as their operator OIDs.
+ *
+ * Raises error if operators cannot be found.  Assuming that the operator
+ * had indeed been marked mergejoinable, this indicates that whoever marked
+ * it so was mistaken.
+ */
+void
+op_mergejoin_crossops(Oid opno, Oid *ltop, Oid *gtop,
+					  RegProcedure *ltproc, RegProcedure *gtproc)
+{
+	HeapTuple	tp;
+	Form_pg_operator optup;
+	Oid			oprleft,
+				oprright;
+
+	/*
+	 * Get the declared left and right operand types of the operator.
+	 */
+	tp = SearchSysCache(OPEROID,
+						ObjectIdGetDatum(opno),
+						0, 0, 0);
+	if (!HeapTupleIsValid(tp))	/* shouldn't happen */
+		elog(ERROR, "op_mergejoin_crossops: operator %u not found", opno);
+	optup = (Form_pg_operator) GETSTRUCT(tp);
+	oprleft = optup->oprleft;
+	oprright = optup->oprright;
+	ReleaseSysCache(tp);
+
+	/*
+	 * Look up the "<" operator with the same input types.  If there isn't
+	 * one, whoever marked the "=" operator mergejoinable was a loser.
+	 */
+	tp = SearchSysCache(OPERNAME,
+						PointerGetDatum("<"),
+						ObjectIdGetDatum(oprleft),
+						ObjectIdGetDatum(oprright),
+						CharGetDatum('b'));
+	if (!HeapTupleIsValid(tp))
+		elog(ERROR, "op_mergejoin_crossops: mergejoin operator %u has no matching < operator",
+			 opno);
+	optup = (Form_pg_operator) GETSTRUCT(tp);
+	*ltop = tp->t_data->t_oid;
+	if (ltproc)
+		*ltproc = optup->oprcode;
+	ReleaseSysCache(tp);
+
+	/*
+	 * And the same for the ">" operator.
+	 */
+	tp = SearchSysCache(OPERNAME,
+						PointerGetDatum(">"),
+						ObjectIdGetDatum(oprleft),
+						ObjectIdGetDatum(oprright),
+						CharGetDatum('b'));
+	if (!HeapTupleIsValid(tp))
+		elog(ERROR, "op_mergejoin_crossops: mergejoin operator %u has no matching > operator",
+			 opno);
+	optup = (Form_pg_operator) GETSTRUCT(tp);
+	*gtop = tp->t_data->t_oid;
+	if (gtproc)
+		*gtproc = optup->oprcode;
+	ReleaseSysCache(tp);
 }
 
 /*

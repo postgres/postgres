@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.47 2001/10/28 06:25:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.48 2002/03/01 04:09:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,97 +88,62 @@ static bool MergeCompare(List *eqQual, List *compareQual, ExprContext *econtext)
 
 
 /* ----------------------------------------------------------------
- *		MJFormSkipQual
+ *		MJFormSkipQuals
  *
  *		This takes the mergeclause which is a qualification of the
- *		form ((= expr expr) (= expr expr) ...) and forms a new
- *		qualification like ((> expr expr) (> expr expr) ...) which
- *		is used by ExecMergeJoin() in order to determine if we should
- *		skip tuples.  The replacement operators are named either ">"
- *		or "<" according to the replaceopname parameter, and have the
- *		same operand data types as the "=" operators they replace.
- *		(We expect there to be such operators because the "=" operators
+ *		form ((= expr expr) (= expr expr) ...) and forms new lists
+ *		of the forms ((< expr expr) (< expr expr) ...) and
+ *		((> expr expr) (> expr expr) ...).  These lists will be used
+ *		by ExecMergeJoin() to determine if we should skip tuples.
+ *		(We expect there to be suitable operators because the "=" operators
  *		were marked mergejoinable; however, there might be a different
  *		one needed in each qual clause.)
  * ----------------------------------------------------------------
  */
-static List *
-MJFormSkipQual(List *qualList, char *replaceopname)
+static void
+MJFormSkipQuals(List *qualList, List **ltQuals, List **gtQuals)
 {
-	List	   *qualCopy;
-	List	   *qualcdr;
-	Expr	   *qual;
-	Oper	   *op;
-	HeapTuple	optup;
-	Form_pg_operator opform;
-	Oid			oprleft,
-				oprright;
+	List	   *ltcdr,
+			   *gtcdr;
 
 	/*
-	 * qualList is a list: ((op .. ..) ...)
-	 *
-	 * first we make a copy of it.	copyObject() makes a deep copy so let's
-	 * use it instead of the old fashoned lispCopy()...
+	 * Make modifiable copies of the qualList.
 	 */
-	qualCopy = (List *) copyObject((Node *) qualList);
+	*ltQuals = (List *) copyObject((Node *) qualList);
+	*gtQuals = (List *) copyObject((Node *) qualList);
 
-	foreach(qualcdr, qualCopy)
+	/*
+	 * Scan both lists in parallel, so that we can update the operators
+	 * with the minimum number of syscache searches.
+	 */
+	ltcdr = *ltQuals;
+	foreach(gtcdr, *gtQuals)
 	{
-		/*
-		 * first get the current (op .. ..) list
-		 */
-		qual = lfirst(qualcdr);
+		Expr	   *ltqual = (Expr *) lfirst(ltcdr);
+		Expr	   *gtqual = (Expr *) lfirst(gtcdr);
+		Oper	   *ltop = (Oper *) ltqual->oper;
+		Oper	   *gtop = (Oper *) gtqual->oper;
 
 		/*
-		 * now get at the op
+		 * The two ops should be identical, so use either one for lookup.
 		 */
-		op = (Oper *) qual->oper;
-		if (!IsA(op, Oper))
-			elog(ERROR, "MJFormSkipQual: op not an Oper!");
+		if (!IsA(ltop, Oper))
+			elog(ERROR, "MJFormSkipQuals: op not an Oper!");
 
 		/*
-		 * Get the declared left and right operand types of the operator.
-		 * Note we do *not* use the actual operand types, since those
-		 * might be different in scenarios with binary-compatible data
-		 * types. There should be "<" and ">" operators matching a
-		 * mergejoinable "=" operator's declared operand types, but we
-		 * might not find them if we search with the actual operand types.
+		 * Lookup the operators, and replace the data in the copied
+		 * operator nodes.
 		 */
-		optup = SearchSysCache(OPEROID,
-							   ObjectIdGetDatum(op->opno),
-							   0, 0, 0);
-		if (!HeapTupleIsValid(optup))	/* shouldn't happen */
-			elog(ERROR, "MJFormSkipQual: operator %u not found", op->opno);
-		opform = (Form_pg_operator) GETSTRUCT(optup);
-		oprleft = opform->oprleft;
-		oprright = opform->oprright;
-		ReleaseSysCache(optup);
+		op_mergejoin_crossops(ltop->opno,
+							  &ltop->opno,
+							  &gtop->opno,
+							  &ltop->opid,
+							  &gtop->opid);
+		ltop->op_fcache = NULL;
+		gtop->op_fcache = NULL;
 
-		/*
-		 * Now look up the matching "<" or ">" operator.  If there isn't
-		 * one, whoever marked the "=" operator mergejoinable was a loser.
-		 */
-		optup = SearchSysCache(OPERNAME,
-							   PointerGetDatum(replaceopname),
-							   ObjectIdGetDatum(oprleft),
-							   ObjectIdGetDatum(oprright),
-							   CharGetDatum('b'));
-		if (!HeapTupleIsValid(optup))
-			elog(ERROR,
-			"MJFormSkipQual: mergejoin operator %u has no matching %s op",
-				 op->opno, replaceopname);
-		opform = (Form_pg_operator) GETSTRUCT(optup);
-
-		/*
-		 * And replace the data in the copied operator node.
-		 */
-		op->opno = optup->t_data->t_oid;
-		op->opid = opform->oprcode;
-		op->op_fcache = NULL;
-		ReleaseSysCache(optup);
+		ltcdr = lnext(ltcdr);
 	}
-
-	return qualCopy;
 }
 
 /* ----------------------------------------------------------------
@@ -1430,7 +1395,6 @@ bool
 ExecInitMergeJoin(MergeJoin *node, EState *estate, Plan *parent)
 {
 	MergeJoinState *mergestate;
-	List	   *joinclauses;
 
 	MJ1_printf("ExecInitMergeJoin: %s\n",
 			   "initializing node");
@@ -1522,9 +1486,9 @@ ExecInitMergeJoin(MergeJoin *node, EState *estate, Plan *parent)
 	/*
 	 * form merge skip qualifications
 	 */
-	joinclauses = node->mergeclauses;
-	mergestate->mj_OuterSkipQual = MJFormSkipQual(joinclauses, "<");
-	mergestate->mj_InnerSkipQual = MJFormSkipQual(joinclauses, ">");
+	MJFormSkipQuals(node->mergeclauses,
+					&mergestate->mj_OuterSkipQual,
+					&mergestate->mj_InnerSkipQual);
 
 	MJ_printf("\nExecInitMergeJoin: OuterSkipQual is ");
 	MJ_nodeDisplay(mergestate->mj_OuterSkipQual);

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: selfuncs.h,v 1.4 2001/11/05 17:46:36 momjian Exp $
+ * $Id: selfuncs.h,v 1.5 2002/03/01 04:09:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,8 +66,12 @@ extern Datum icregexnejoinsel(PG_FUNCTION_ARGS);
 extern Datum nlikejoinsel(PG_FUNCTION_ARGS);
 extern Datum icnlikejoinsel(PG_FUNCTION_ARGS);
 
-Selectivity booltestsel(Query *root, BooleanTest *clause, int varRelid);
-Selectivity nulltestsel(Query *root, NullTest *clause, int varRelid);
+extern Selectivity booltestsel(Query *root, BooleanTest *clause, int varRelid);
+extern Selectivity nulltestsel(Query *root, NullTest *clause, int varRelid);
+
+extern void mergejoinscansel(Query *root, Node *clause,
+							 Selectivity *leftscan,
+							 Selectivity *rightscan);
 
 extern Datum btcostestimate(PG_FUNCTION_ARGS);
 extern Datum rtcostestimate(PG_FUNCTION_ARGS);

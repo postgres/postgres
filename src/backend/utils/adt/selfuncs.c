@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.103 2002/01/03 04:02:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.104 2002/03/01 04:09:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,10 +92,12 @@
 #include "parser/parsetree.h"
 #include "utils/builtins.h"
 #include "utils/date.h"
+#include "utils/datum.h"
 #include "utils/int8.h"
 #include "utils/lsyscache.h"
 #include "utils/selfuncs.h"
 #include "utils/syscache.h"
+
 
 /*
  * Note: the default selectivity estimates are not chosen entirely at random.
@@ -137,6 +139,7 @@
 	} while (0)
 
 
+static bool get_var_maximum(Query *root, Var *var, Oid sortop, Datum *max);
 static bool convert_to_scalar(Datum value, Oid valuetypid, double *scaledvalue,
 				  Datum lobound, Datum hibound, Oid boundstypid,
 				  double *scaledlobound, double *scaledhibound);
@@ -419,7 +422,9 @@ neqsel(PG_FUNCTION_ARGS)
  *
  * This is the guts of both scalarltsel and scalargtsel.  The caller has
  * commuted the clause, if necessary, so that we can treat the Var as
- * being on the left.
+ * being on the left.  The caller must also make sure that the other side
+ * of the clause is a non-null Const, and dissect same into a value and
+ * datatype.
  *
  * This routine works for any datatype (or pair of datatypes) known to
  * convert_to_scalar().  If it is applied to some other datatype,
@@ -427,11 +432,9 @@ neqsel(PG_FUNCTION_ARGS)
  */
 static double
 scalarineqsel(Query *root, Oid operator, bool isgt,
-			  Var *var, Node *other)
+			  Var *var, Datum constval, Oid consttype)
 {
 	Oid			relid;
-	Datum		constval;
-	Oid			consttype;
 	HeapTuple	statsTuple;
 	Form_pg_statistic stats;
 	FmgrInfo	opproc;
@@ -453,22 +456,6 @@ scalarineqsel(Query *root, Oid operator, bool isgt,
 	relid = getrelid(var->varno, root->rtable);
 	if (relid == InvalidOid)
 		return DEFAULT_INEQ_SEL;
-
-	/*
-	 * Can't do anything useful if the something is not a constant,
-	 * either.
-	 */
-	if (!IsA(other, Const))
-		return DEFAULT_INEQ_SEL;
-
-	/*
-	 * If the constant is NULL, assume operator is strict and return zero,
-	 * ie, operator will never return TRUE.
-	 */
-	if (((Const *) other)->constisnull)
-		return 0.0;
-	constval = ((Const *) other)->constvalue;
-	consttype = ((Const *) other)->consttype;
 
 	/* get stats for the attribute */
 	statsTuple = SearchSysCache(STATRELATT,
@@ -697,6 +684,8 @@ scalarltsel(PG_FUNCTION_ARGS)
 	int			varRelid = PG_GETARG_INT32(3);
 	Var		   *var;
 	Node	   *other;
+	Datum		constval;
+	Oid			consttype;
 	bool		varonleft;
 	bool		isgt;
 	double		selec;
@@ -709,6 +698,22 @@ scalarltsel(PG_FUNCTION_ARGS)
 	if (!get_restriction_var(args, varRelid,
 							 &var, &other, &varonleft))
 		PG_RETURN_FLOAT8(DEFAULT_INEQ_SEL);
+
+	/*
+	 * Can't do anything useful if the something is not a constant,
+	 * either.
+	 */
+	if (!IsA(other, Const))
+		PG_RETURN_FLOAT8(DEFAULT_INEQ_SEL);
+
+	/*
+	 * If the constant is NULL, assume operator is strict and return zero,
+	 * ie, operator will never return TRUE.
+	 */
+	if (((Const *) other)->constisnull)
+		PG_RETURN_FLOAT8(0.0);
+	constval = ((Const *) other)->constvalue;
+	consttype = ((Const *) other)->consttype;
 
 	/*
 	 * Force the var to be on the left to simplify logic in scalarineqsel.
@@ -730,7 +735,7 @@ scalarltsel(PG_FUNCTION_ARGS)
 		isgt = true;
 	}
 
-	selec = scalarineqsel(root, operator, isgt, var, other);
+	selec = scalarineqsel(root, operator, isgt, var, constval, consttype);
 
 	PG_RETURN_FLOAT8((float8) selec);
 }
@@ -747,6 +752,8 @@ scalargtsel(PG_FUNCTION_ARGS)
 	int			varRelid = PG_GETARG_INT32(3);
 	Var		   *var;
 	Node	   *other;
+	Datum		constval;
+	Oid			consttype;
 	bool		varonleft;
 	bool		isgt;
 	double		selec;
@@ -759,6 +766,22 @@ scalargtsel(PG_FUNCTION_ARGS)
 	if (!get_restriction_var(args, varRelid,
 							 &var, &other, &varonleft))
 		PG_RETURN_FLOAT8(DEFAULT_INEQ_SEL);
+
+	/*
+	 * Can't do anything useful if the something is not a constant,
+	 * either.
+	 */
+	if (!IsA(other, Const))
+		PG_RETURN_FLOAT8(DEFAULT_INEQ_SEL);
+
+	/*
+	 * If the constant is NULL, assume operator is strict and return zero,
+	 * ie, operator will never return TRUE.
+	 */
+	if (((Const *) other)->constisnull)
+		PG_RETURN_FLOAT8(0.0);
+	constval = ((Const *) other)->constvalue;
+	consttype = ((Const *) other)->consttype;
 
 	/*
 	 * Force the var to be on the left to simplify logic in scalarineqsel.
@@ -780,7 +803,7 @@ scalargtsel(PG_FUNCTION_ARGS)
 		isgt = false;
 	}
 
-	selec = scalarineqsel(root, operator, isgt, var, other);
+	selec = scalarineqsel(root, operator, isgt, var, constval, consttype);
 
 	PG_RETURN_FLOAT8((float8) selec);
 }
@@ -1696,6 +1719,229 @@ icnlikejoinsel(PG_FUNCTION_ARGS)
 	PG_RETURN_FLOAT8(result);
 }
 
+/*
+ * mergejoinscansel			- Scan selectivity of merge join.
+ *
+ * A merge join will stop as soon as it exhausts either input stream.
+ * Therefore, if we can estimate the ranges of both input variables,
+ * we can estimate how much of the input will actually be read.  This
+ * can have a considerable impact on the cost when using indexscans.
+ *
+ * clause should be a clause already known to be mergejoinable.
+ *
+ * *leftscan is set to the fraction of the left-hand variable expected
+ * to be scanned (0 to 1), and similarly *rightscan for the right-hand
+ * variable.
+ */
+void
+mergejoinscansel(Query *root, Node *clause,
+				 Selectivity *leftscan,
+				 Selectivity *rightscan)
+{
+	Var		   *left,
+			   *right;
+	Oid			opno,
+				lsortop,
+				rsortop,
+				ltop,
+				gtop,
+				revltop;
+	Datum		leftmax,
+				rightmax;
+	double		selec;
+
+	/* Set default results if we can't figure anything out. */
+	*leftscan = *rightscan = 1.0;
+
+	/* Deconstruct the merge clause */
+	if (!is_opclause(clause))
+		return;					/* shouldn't happen */
+	opno = ((Oper *) ((Expr *) clause)->oper)->opno;
+	left = get_leftop((Expr *) clause);
+	right = get_rightop((Expr *) clause);
+	if (!right)
+		return;					/* shouldn't happen */
+
+	/* Can't do anything if inputs are not Vars */
+	if (!IsA(left, Var) ||!IsA(right, Var))
+		return;
+
+	/* Verify mergejoinability and get left and right "<" operators */
+	if (!op_mergejoinable(opno,
+						  left->vartype,
+						  right->vartype,
+						  &lsortop,
+						  &rsortop))
+		return;					/* shouldn't happen */
+
+	/* Try to get maximum values of both vars */
+	if (!get_var_maximum(root, left, lsortop, &leftmax))
+		return;					/* no max available from stats */
+
+	if (!get_var_maximum(root, right, rsortop, &rightmax))
+		return;					/* no max available from stats */
+
+	/* Look up the "left < right" and "left > right" operators */
+	op_mergejoin_crossops(opno, &ltop, &gtop, NULL, NULL);
+
+	/* Look up the "right < left" operator */
+	revltop = get_commutator(gtop);
+	if (!OidIsValid(revltop))
+		return;					/* shouldn't happen */
+
+	/*
+	 * Now, the fraction of the left variable that will be scanned is the
+	 * fraction that's <= the right-side maximum value.  But only believe
+	 * non-default estimates, else stick with our 1.0.
+	 */
+	selec = scalarineqsel(root, ltop, false, left,
+						  rightmax, right->vartype);
+	if (selec != DEFAULT_INEQ_SEL)
+		*leftscan = selec;
+
+	/* And similarly for the right variable. */
+	selec = scalarineqsel(root, revltop, false, right,
+						  leftmax, left->vartype);
+	if (selec != DEFAULT_INEQ_SEL)
+		*rightscan = selec;
+
+	/*
+	 * Only one of the two fractions can really be less than 1.0; believe
+	 * the smaller estimate and reset the other one to exactly 1.0.
+	 */
+	if (*leftscan > *rightscan)
+		*leftscan = 1.0;
+	else
+		*rightscan = 1.0;
+}
+
+/*
+ * get_var_maximum
+ *		Estimate the maximum value of the specified variable.
+ *		If successful, store value in *max and return TRUE.
+ *		If no data available, return FALSE.
+ *
+ * sortop is the "<" comparison operator to use.  (To extract the
+ * minimum instead of the maximum, just pass the ">" operator instead.)
+ */
+static bool
+get_var_maximum(Query *root, Var *var, Oid sortop, Datum *max)
+{
+	Datum		tmax = 0;
+	bool		have_max = false;
+	Oid			relid;
+	HeapTuple	statsTuple;
+	Form_pg_statistic stats;
+	int16		typLen;
+	bool		typByVal;
+	Datum	   *values;
+	int			nvalues;
+	int			i;
+
+	relid = getrelid(var->varno, root->rtable);
+	if (relid == InvalidOid)
+		return false;
+
+	/* get stats for the attribute */
+	statsTuple = SearchSysCache(STATRELATT,
+								ObjectIdGetDatum(relid),
+								Int16GetDatum(var->varattno),
+								0, 0);
+	if (!HeapTupleIsValid(statsTuple))
+	{
+		/* no stats available, so default result */
+		return false;
+	}
+	stats = (Form_pg_statistic) GETSTRUCT(statsTuple);
+
+	get_typlenbyval(var->vartype, &typLen, &typByVal);
+
+	/*
+	 * If there is a histogram, grab the last or first value as appropriate.
+	 *
+	 * If there is a histogram that is sorted with some other operator
+	 * than the one we want, fail --- this suggests that there is data
+	 * we can't use.
+	 */
+	if (get_attstatsslot(statsTuple, var->vartype, var->vartypmod,
+						 STATISTIC_KIND_HISTOGRAM, sortop,
+						 &values, &nvalues,
+						 NULL, NULL))
+	{
+		if (nvalues > 0)
+		{
+			tmax = datumCopy(values[nvalues-1], typByVal, typLen);
+			have_max = true;
+		}
+		free_attstatsslot(var->vartype, values, nvalues, NULL, 0);
+	}
+	else
+	{
+		Oid		rsortop = get_commutator(sortop);
+
+		if (OidIsValid(rsortop) &&
+			get_attstatsslot(statsTuple, var->vartype, var->vartypmod,
+							 STATISTIC_KIND_HISTOGRAM, rsortop,
+							 &values, &nvalues,
+							 NULL, NULL))
+		{
+			if (nvalues > 0)
+			{
+				tmax = datumCopy(values[0], typByVal, typLen);
+				have_max = true;
+			}
+			free_attstatsslot(var->vartype, values, nvalues, NULL, 0);
+		}
+		else if (get_attstatsslot(statsTuple, var->vartype, var->vartypmod,
+								  STATISTIC_KIND_HISTOGRAM, InvalidOid,
+								  &values, &nvalues,
+								  NULL, NULL))
+		{
+			free_attstatsslot(var->vartype, values, nvalues, NULL, 0);
+			ReleaseSysCache(statsTuple);
+			return false;
+		}
+	}
+
+	/*
+	 * If we have most-common-values info, look for a large MCV.  This
+	 * is needed even if we also have a histogram, since the histogram
+	 * excludes the MCVs.  However, usually the MCVs will not be the
+	 * extreme values, so avoid unnecessary data copying.
+	 */
+	if (get_attstatsslot(statsTuple, var->vartype, var->vartypmod,
+						 STATISTIC_KIND_MCV, InvalidOid,
+						 &values, &nvalues,
+						 NULL, NULL))
+	{
+		bool	large_mcv = false;
+		FmgrInfo	opproc;
+
+		fmgr_info(get_opcode(sortop), &opproc);
+
+		for (i = 0; i < nvalues; i++)
+		{
+			if (!have_max)
+			{
+				tmax = values[i];
+				large_mcv = have_max = true;
+			}
+			else if (DatumGetBool(FunctionCall2(&opproc, tmax, values[i])))
+			{
+				tmax = values[i];
+				large_mcv = true;
+			}
+		}
+		if (large_mcv)
+			tmax = datumCopy(tmax, typByVal, typLen);
+		free_attstatsslot(var->vartype, values, nvalues, NULL, 0);
+	}
+
+	ReleaseSysCache(statsTuple);
+
+	*max = tmax;
+	return have_max;
+}
 
 /*
  * convert_to_scalar
