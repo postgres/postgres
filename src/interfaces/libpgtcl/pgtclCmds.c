@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.8 1996/12/19 05:02:49 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.9 1997/01/03 18:48:30 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,8 +23,6 @@
 #include "libpq/libpq-fs.h"
 #include "pgtclCmds.h"
 #include "pgtclId.h"
-
-static Tcl_HashTable notifyTable = { NULL };
 
 #ifdef TCL_ARRAYS
 #define ISOCTAL(c)	(((c) >= '0') && ((c) <= '7'))
@@ -1215,6 +1213,7 @@ Pg_select(ClientData cData, Tcl_Interp *interp, int argc, char **argv)
 int
 Pg_listen(ClientData cData, Tcl_Interp *interp, int argc, char* argv[])
 {
+    Pg_clientData *cd = (Pg_clientData *)cData;
     int new;
     char *relname;
     char *callback = NULL;
@@ -1229,21 +1228,14 @@ Pg_listen(ClientData cData, Tcl_Interp *interp, int argc, char* argv[])
     }
 
     /*
-     * Initialize the notify hash table if not already done.
-     */
-    if (notifyTable.buckets == NULL) {
-	Tcl_InitHashTable(&notifyTable, TCL_STRING_KEYS);
-    }
-
-    /*
      * Get the command arguments. Note that relname will copied by
      * Tcl_CreateHashEntry while callback must be allocated.
      */
-    if (!PgValidId(argv[1])) {
-	Tcl_AppendResult(interp, "not a valid connection\n", 0);
+    conn = (PGconn*)PgGetConnectionId(cd, argv[1]);
+    if (conn == (PGconn *)NULL) {
+	Tcl_AppendResult(interp, "First argument is not a valid connection\n", 0);
 	return TCL_ERROR;
     }
-    conn = (PGconn*)PgGetId(argv[1]);
     relname = argv[2];
     if ((argc > 3) && *argv[3]) {
 	callback = (char *) ckalloc((unsigned) (strlen(argv[3])+1));
@@ -1254,7 +1246,7 @@ Pg_listen(ClientData cData, Tcl_Interp *interp, int argc, char* argv[])
      * Set or update a callback for a relation;
      */
     if (callback) {
-	entry = Tcl_CreateHashEntry(&notifyTable, relname, &new);
+	entry = Tcl_CreateHashEntry(&(cd->notify_hash), relname, &new);
 	if (new) {
 	    /* New callback, execute a listen command on the relation */
 	    char *cmd = (char *) ckalloc((unsigned) (strlen(argv[2])+8));
@@ -1284,7 +1276,7 @@ Pg_listen(ClientData cData, Tcl_Interp *interp, int argc, char* argv[])
      * the notify hash table.
      */
     if (callback == NULL) {
-	entry = Tcl_FindHashEntry(&notifyTable, relname);
+	entry = Tcl_FindHashEntry(&(cd->notify_hash), relname);
 	if (entry == NULL) {
 	    Tcl_AppendResult(interp, "not listening on ", relname, 0);
 	    return TCL_ERROR;
@@ -1296,11 +1288,12 @@ Pg_listen(ClientData cData, Tcl_Interp *interp, int argc, char* argv[])
     return TCL_OK;
 }
 
+int
 Pg_notifies(ClientData cData, Tcl_Interp *interp, int argc, char* argv[])
 {
+    Pg_clientData *cd = (Pg_clientData *)cData;
     int count;
     char buff[12];
-    char *relname;
     char *callback;
     Tcl_HashEntry *entry;
     PGconn *conn;
@@ -1314,20 +1307,13 @@ Pg_notifies(ClientData cData, Tcl_Interp *interp, int argc, char* argv[])
     }
 
     /*
-     * Initialize the notify hash table if not already done.
-     */
-    if (notifyTable.buckets == NULL) {
-	Tcl_InitHashTable(&notifyTable, TCL_STRING_KEYS);
-    }
-
-    /*
      * Get the connection argument.
      */
-    if (!PgValidId(argv[1])) {
-	Tcl_AppendResult(interp, "not a valid connection\n", 0);
+    conn = (PGconn*)PgGetConnectionId(cd, argv[1]);
+    if (conn == (PGconn *)NULL) {
+	Tcl_AppendResult(interp, "First argument is not a valid connection\n", 0);
 	return TCL_ERROR;
     }
-    conn = (PGconn*)PgGetId(argv[1]);
 
     /* Execute an empty command to retrieve asynchronous notifications */
     result = PQexec(conn, " ");
@@ -1347,7 +1333,7 @@ Pg_notifies(ClientData cData, Tcl_Interp *interp, int argc, char* argv[])
 	if (notify == NULL) {
 	    break;
 	}
-	entry = Tcl_FindHashEntry(&notifyTable, notify->relname);
+	entry = Tcl_FindHashEntry(&(cd->notify_hash), notify->relname);
 	if (entry != NULL) {
 	    callback = Tcl_GetHashValue(entry);
 	    if (callback) {

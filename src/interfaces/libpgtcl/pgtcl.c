@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtcl.c,v 1.6 1996/12/19 05:02:47 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtcl.c,v 1.7 1997/01/03 18:48:28 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,6 +49,7 @@ Pgtcl_AtExit (ClientData cData)
 
   Tcl_DeleteHashTable(&(cd->dbh_hash));
   Tcl_DeleteHashTable(&(cd->res_hash));
+  Tcl_DeleteHashTable(&(cd->notify_hash));
 
   Tcl_DeleteExitHandler(Pgtcl_AtExit, cData);
 }
@@ -71,6 +72,7 @@ Pgtcl_Init (Tcl_Interp *interp)
   cd = (Pg_clientData *)ckalloc(sizeof(Pg_clientData));
   Tcl_InitHashTable(&(cd->dbh_hash), TCL_STRING_KEYS);
   Tcl_InitHashTable(&(cd->res_hash), TCL_STRING_KEYS);
+  Tcl_InitHashTable(&(cd->notify_hash), TCL_STRING_KEYS);
   cd->dbh_count = 0L;
   cd->res_count = 0L;
 
@@ -162,12 +164,12 @@ Pgtcl_Init (Tcl_Interp *interp)
   Tcl_CreateCommand(interp,
 		    "pg_listen",
 		    Pg_listen,
-		    (ClientData)NULL, (Tcl_CmdDeleteProc*)NULL);
+		    (ClientData)cd, (Tcl_CmdDeleteProc*)NULL);
 
   Tcl_CreateCommand(interp,
 		    "pg_notifies",
 		    Pg_notifies,
-		    (ClientData)NULL, (Tcl_CmdDeleteProc*)NULL);
+		    (ClientData)cd, (Tcl_CmdDeleteProc*)NULL);
 
   Tcl_PkgProvide(interp, "Pgtcl", "1.0");
 

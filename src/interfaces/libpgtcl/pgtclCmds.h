@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pgtclCmds.h,v 1.5 1996/12/19 05:02:51 scrappy Exp $
+ * $Id: pgtclCmds.h,v 1.6 1997/01/03 18:48:31 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,7 @@
 typedef struct Pg_clientData_s {
     Tcl_HashTable	dbh_hash;
     Tcl_HashTable	res_hash;
+    Tcl_HashTable	notify_hash;
     long		dbh_count;
     long		res_count;
 } Pg_clientData;
