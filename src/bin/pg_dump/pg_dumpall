@@ -54,11 +54,11 @@ do
 	POSTGRES_USER="`echo \" \
 		select usename \
 		from pg_shadow \
-		where usesysid = $DBUSERID; \" | \
+		where usename = $DBUSERID; \" | \
 		psql -A -q -t template1`"
 	echo "${BS}connect template1 $POSTGRES_USER"
 
-	if createdb -help|grep encoding >/dev/null
+	if pg_encoding $ENCODING >/dev/null 2>&1
 	then
 		echo "create database $DATABASE with encoding='`pg_encoding $ENCODING`';"
 	else
