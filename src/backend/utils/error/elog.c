@@ -24,12 +24,17 @@
  * the elog.c routines or something they call.	By far the most probable
  * scenario of this sort is "out of memory"; and it's also the nastiest
  * to handle because we'd likely also run out of memory while trying to
- * report this error!  Our escape hatch for this condition is to force any
- * such messages up to ERROR level if they aren't already (so that we will
- * not need to return to the outer elog.c call), and to reset the ErrorContext
- * to empty before trying to process the inner message.  Since ErrorContext
- * is guaranteed to have at least 8K of space in it (see mcxt.c), we should
- * be able to process an "out of memory" message successfully.
+ * report this error!  Our escape hatch for this case is to reset the
+ * ErrorContext to empty before trying to process the inner error.  Since
+ * ErrorContext is guaranteed to have at least 8K of space in it (see mcxt.c),
+ * we should be able to process an "out of memory" message successfully.
+ * Since we lose the prior error state due to the reset, we won't be able
+ * to return to processing the original error, but we wouldn't have anyway.
+ * (NOTE: the escape hatch is not used for recursive situations where the
+ * inner message is of less than ERROR severity; in that case we just
+ * try to process it and return normally.  Usually this will work, but if
+ * it ends up in infinite recursion, we will PANIC due to error stack
+ * overflow.)
  *
  *
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
@@ -37,7 +42,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.148 2004/08/29 05:06:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.149 2004/09/05 02:01:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -132,29 +137,58 @@ errstart(int elevel, const char *filename, int lineno,
 	ErrorData  *edata;
 	bool		output_to_server = false;
 	bool		output_to_client = false;
+	int			i;
 
 	/*
-	 * First decide whether we need to process this report at all; if it's
-	 * warning or less and not enabled for logging, just return FALSE
-	 * without starting up any error logging machinery.
-	 */
-
-	/*
-	 * Convert initialization errors into fatal errors. This is probably
-	 * redundant, because PG_exception_stack will still be null anyway.
-	 */
-	if (elevel == ERROR && IsInitProcessingMode())
-		elevel = FATAL;
-
-	/*
-	 * If we are inside a critical section, all errors become PANIC
-	 * errors.	See miscadmin.h.
+	 * Check some cases in which we want to promote an error into a more
+	 * severe error.  None of this logic applies for non-error messages.
 	 */
 	if (elevel >= ERROR)
 	{
+		/*
+		 * If we are inside a critical section, all errors become PANIC
+		 * errors.	See miscadmin.h.
+		 */
 		if (CritSectionCount > 0)
 			elevel = PANIC;
+
+		/*
+		 * Check reasons for treating ERROR as FATAL:
+		 *
+		 * 1. we have no handler to pass the error to (implies we are in the
+		 * postmaster or in backend startup).
+		 *
+		 * 2. ExitOnAnyError mode switch is set (initdb uses this).
+		 *
+		 * 3. the error occurred after proc_exit has begun to run.	(It's
+		 * proc_exit's responsibility to see that this doesn't turn into
+		 * infinite recursion!)
+		 */
+		if (elevel == ERROR)
+		{
+			if (PG_exception_stack == NULL ||
+				ExitOnAnyError ||
+				proc_exit_inprogress)
+				elevel = FATAL;
+		}
+
+		/*
+		 * If the error level is ERROR or more, errfinish is not going to
+		 * return to caller; therefore, if there is any stacked error already
+		 * in progress it will be lost.  This is more or less okay, except we
+		 * do not want to have a FATAL or PANIC error downgraded because the
+		 * reporting process was interrupted by a lower-grade error.  So check
+		 * the stack and make sure we panic if panic is warranted.
+		 */
+		for (i = 0; i <= errordata_stack_depth; i++)
+			elevel = Max(elevel, errordata[i].elevel);
 	}
+
+	/*
+	 * Now decide whether we need to process this report at all; if it's
+	 * warning or less and not enabled for logging, just return FALSE
+	 * without starting up any error logging machinery.
+	 */
 
 	/* Determine whether message is enabled for server log output */
 	if (IsPostmasterEnvironment)
@@ -210,18 +244,14 @@ errstart(int elevel, const char *filename, int lineno,
 	 * Okay, crank up a stack entry to store the info in.
 	 */
 
-	if (recursion_depth++ > 0)
+	if (recursion_depth++ > 0 && elevel >= ERROR)
 	{
 		/*
-		 * Ooops, error during error processing.  Clear ErrorContext and
-		 * force level up to ERROR or greater, as discussed at top of
-		 * file.  Adjust output decisions too.
+		 * Ooops, error during error processing.  Clear ErrorContext as
+		 * discussed at top of file.  We will not return to the original
+		 * error's reporter or handler, so we don't need it.
 		 */
 		MemoryContextReset(ErrorContext);
-		output_to_server = true;
-		if (whereToSendOutput == Remote && elevel != COMMERROR)
-			output_to_client = true;
-		elevel = Max(elevel, ERROR);
 
 		/*
 		 * If we recurse more than once, the problem might be something
@@ -300,74 +330,39 @@ errfinish(int dummy,...)
 		(*econtext->callback) (econtext->arg);
 
 	/*
-	 * If the error level is ERROR or more, we are not going to return to
-	 * caller; therefore, if there is any stacked error already in
-	 * progress it will be lost.  This is more or less okay, except we do
-	 * not want to have a FATAL or PANIC error downgraded because the
-	 * reporting process was interrupted by a lower-grade error.  So check
-	 * the stack and make sure we panic if panic is warranted.
-	 */
-	if (elevel >= ERROR)
-	{
-		int			i;
-
-		for (i = 0; i <= errordata_stack_depth; i++)
-			elevel = Max(elevel, errordata[i].elevel);
-	}
-
-	/*
-	 * Check some other reasons for treating ERROR as FATAL:
-	 *
-	 * 1. we have no handler to pass the error to (implies we are in the
-	 * postmaster or in backend startup).
-	 *
-	 * 2. ExitOnAnyError mode switch is set (initdb uses this).
-	 *
-	 * 3. the error occurred after proc_exit has begun to run.	(It's
-	 * proc_exit's responsibility to see that this doesn't turn into
-	 * infinite recursion!)
+	 * If ERROR (not more nor less) we pass it off to the current handler.
+	 * Printing it and popping the stack is the responsibility of
+	 * the handler.
 	 */
 	if (elevel == ERROR)
 	{
-		if (PG_exception_stack == NULL ||
-			ExitOnAnyError ||
-			proc_exit_inprogress)
-			elevel = FATAL;
-		else
-		{
-			/*
-			 * Otherwise we can pass the error off to the current handler.
-			 * Printing it and popping the stack is the responsibility of
-			 * the handler.
-			 *
-			 * We do some minimal cleanup before longjmp'ing so that handlers
-			 * can execute in a reasonably sane state.
-			 */
+		/*
+		 * We do some minimal cleanup before longjmp'ing so that handlers
+		 * can execute in a reasonably sane state.
+		 */
 
-			/* This is just in case the error came while waiting for input */
-			ImmediateInterruptOK = false;
+		/* This is just in case the error came while waiting for input */
+		ImmediateInterruptOK = false;
 
-			/*
-			 * Reset InterruptHoldoffCount in case we ereport'd from
-			 * inside an interrupt holdoff section.  (We assume here that
-			 * no handler will itself be inside a holdoff section.	If
-			 * necessary, such a handler could save and restore
-			 * InterruptHoldoffCount for itself, but this should make life
-			 * easier for most.)
-			 */
-			InterruptHoldoffCount = 0;
+		/*
+		 * Reset InterruptHoldoffCount in case we ereport'd from
+		 * inside an interrupt holdoff section.  (We assume here that
+		 * no handler will itself be inside a holdoff section.	If
+		 * necessary, such a handler could save and restore
+		 * InterruptHoldoffCount for itself, but this should make life
+		 * easier for most.)
+		 */
+		InterruptHoldoffCount = 0;
 
-			CritSectionCount = 0;		/* should be unnecessary, but... */
+		CritSectionCount = 0;		/* should be unnecessary, but... */
 
-			/*
-			 * Note that we leave CurrentMemoryContext set to
-			 * ErrorContext. The handler should reset it to something else
-			 * soon.
-			 */
+		/*
+		 * Note that we leave CurrentMemoryContext set to ErrorContext.
+		 * The handler should reset it to something else soon.
+		 */
 
-			recursion_depth--;
-			PG_RE_THROW();
-		}
+		recursion_depth--;
+		PG_RE_THROW();
 	}
 
 	/*
