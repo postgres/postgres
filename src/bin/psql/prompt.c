@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/prompt.c,v 1.9 2000/02/16 13:15:26 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/prompt.c,v 1.10 2000/03/08 01:38:59 momjian Exp $
  */
 #include "postgres.h"
 #include "prompt.h"
@@ -19,7 +19,7 @@
 #include <win32.h>
 #endif
 
-
+#include <sys/utsname.h>
 
 /*--------------------------
  * get_prompt
@@ -121,8 +121,17 @@ get_prompt(promptStatus_t status)
 							if (*p == 'm')
 								buf[strcspn(buf, ".")] = '\0';
 						}
-						else
+						else if (*p == 'M') 
 							buf[0] = '.';
+						else 
+						{
+							struct utsname ubuf;
+						
+							if (uname(&ubuf) < 0)
+								buf[0] = '.';
+							else 
+								strncpy(buf, ubuf.nodename, MAX_PROMPT_SIZE);	
+						}	
 					}
 					break;
 					/* DB server port number */
