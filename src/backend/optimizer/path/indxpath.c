@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.49 1999/02/15 05:28:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.50 1999/02/15 05:50:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,7 +67,7 @@ static List *indexable_joinclauses(RelOptInfo *rel, RelOptInfo *index,
 					  List *joininfo_list, List *restrictinfo_list);
 static List *index_innerjoin(Query *root, RelOptInfo *rel,
 				List *clausegroup_list, RelOptInfo *index);
-static List *create_index_paths(Query *root, RelOptInfo *rel, RelOptInfo *index,
+static List *create_index_path_group(Query *root, RelOptInfo *rel, RelOptInfo *index,
 				   List *clausegroup_list, bool join);
 static List *add_index_paths(List *indexpaths, List *new_indexpaths);
 static bool function_index_operand(Expr *funcOpnd, RelOptInfo *rel, RelOptInfo *index);
@@ -152,7 +152,7 @@ create_index_paths(Query *root,
 
 		scanpaths = NIL;
 		if (scanclausegroups != NIL)
-			scanpaths = create_index_paths(root,
+			scanpaths = create_index_path_group(root,
 										   rel,
 										   index,
 										   scanclausegroups,
@@ -170,7 +170,7 @@ create_index_paths(Query *root,
 
 		if (joinclausegroups != NIL)
 		{
-			joinpaths = create_index_paths(root, rel,
+			joinpaths = create_index_path_group(root, rel,
 										   index,
 										   joinclausegroups,
 										   true);
@@ -1330,7 +1330,7 @@ index_innerjoin(Query *root, RelOptInfo *rel, List *clausegroup_list,
 }
 
 /*
- * create_index_paths
+ * create_index_path_group
  *	  Creates a list of index path nodes for each group of clauses
  *	  (restriction or join) that can be used in conjunction with an index.
  *
@@ -1344,11 +1344,11 @@ index_innerjoin(Query *root, RelOptInfo *rel, List *clausegroup_list,
  *
  */
 static List *
-create_index_paths(Query *root,
-				   RelOptInfo *rel,
-				   RelOptInfo *index,
-				   List *clausegroup_list,
-				   bool join)
+create_index_path_group(Query *root,
+					   RelOptInfo *rel,
+					   RelOptInfo *index,
+					   List *clausegroup_list,
+					   bool join)
 {
 	List	   *clausegroup = NIL;
 	List	   *ip_list = NIL;

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo.h,v 1.11 1999/02/13 23:21:44 momjian Exp $
+ * $Id: geqo.h,v 1.12 1999/02/15 05:50:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,7 +75,6 @@ extern RelOptInfo *geqo(Query *root);
 extern void geqo_params(int string_length);
 
 extern Cost geqo_eval(Query *root, Gene *tour, int num_gene);
-double		geqo_log(double x, double b);
 extern RelOptInfo *gimme_tree(Query *root, Gene *tour, int rel_count, int num_gene, RelOptInfo *outer_rel);
 
 

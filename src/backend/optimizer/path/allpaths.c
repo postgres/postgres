@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.38 1999/02/15 05:28:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.39 1999/02/15 05:49:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -248,7 +248,10 @@ make_one_rel_by_joins(Query *root, List *rels, int levels_needed)
 		root->join_rel_list = rels = joined_rels;
 	}
 
+#ifdef NOT_USED
 	Assert(BushyPlanFlag || length(rels) == 1);
+#endif
+	Assert(length(rels) == 1);
 
 #ifdef NOT_USED
 	if (BushyPlanFlag)
