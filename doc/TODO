@@ -2,7 +2,7 @@
 TODO list for PostgreSQL
 ========================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Sat Jan  1 11:36:51 EST 2005
+Last updated:		Sat Jan  1 12:24:55 EST 2005
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -914,7 +914,7 @@ Source Code
 	  pginstaller)
 
 	  To fix UTF8, the data needs to be converted to UTF16 and then
-	  the Win32 strcoll() can be used.
+	  the Win32 wcscoll() can be used.
 
 
 * Wire Protocol Changes
