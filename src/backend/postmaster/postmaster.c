@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.7 1996/09/16 05:40:31 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.8 1996/09/26 03:17:44 momjian Exp $
  *
  * NOTES
  *
@@ -435,16 +435,15 @@ ServerLoop()
 	    fprintf(stderr, "%s: ServerLoop: select failed\n",
 		    progname);
 	    return(STATUS_ERROR);
-	    /* [TRH]
-	     * To avoid race conditions, block SIGCHLD signals while we are
-	     * handling the request. (both reaper() and ConnCreate()
-	     * manipulate the BackEnd list, and reaper() calls free() which is
-	     * usually non-reentrant.)
-	     */
-	    sigprocmask(SIG_BLOCK, &newsigmask, &oldsigmask);
-/*	    sigblock(sigmask(SIGCHLD));	*/	/* XXX[TRH] portability */
-	    
 	}
+	/* [TRH]
+	 * To avoid race conditions, block SIGCHLD signals while we are
+	 * handling the request. (both reaper() and ConnCreate()
+	 * manipulate the BackEnd list, and reaper() calls free() which is
+	 * usually non-reentrant.)
+	 */
+	sigprocmask(SIG_BLOCK, &newsigmask, &oldsigmask);
+/*	sigblock(sigmask(SIGCHLD));	*/	/* XXX[TRH] portability */
 	if (DebugLvl > 1) {
 	    fprintf(stderr, "%s: ServerLoop: %d sockets pending\n",
 		    progname, nSelected);
