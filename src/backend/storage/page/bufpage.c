@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.41 2001/11/08 04:05:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.42 2002/01/15 22:14:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,10 +18,6 @@
 #include <sys/file.h>
 
 #include "storage/bufpage.h"
-
-
-static void PageIndexTupleDeleteAdjustLinePointers(PageHeader phdr,
-									   char *location, Size size);
 
 
 /* ----------------------------------------------------------------
@@ -44,24 +40,15 @@ PageInit(Page page, Size pageSize, Size specialSize)
 	Assert(pageSize >
 		   specialSize + sizeof(PageHeaderData) - sizeof(ItemIdData));
 
+	/* Make sure all fields of page are zero, as well as unused space */
+	MemSet(p, 0, pageSize);
+
 	p->pd_lower = sizeof(PageHeaderData) - sizeof(ItemIdData);
 	p->pd_upper = pageSize - specialSize;
 	p->pd_special = pageSize - specialSize;
 	PageSetPageSize(page, pageSize);
-
-	p->pd_lsn.xlogid = p->pd_lsn.xrecoff = 0;
-	p->pd_sui = 0;
 }
 
-/*
- * WAL needs in zero-ed page data content
- */
-void
-PageZero(Page page)
-{
-	MemSet((char *) page + ((PageHeader) page)->pd_lower, 0,
-		((PageHeader) page)->pd_special - ((PageHeader) page)->pd_lower);
-}
 
 /* ----------------
  *		PageAddItem
@@ -86,16 +73,27 @@ PageAddItem(Page page,
 			OffsetNumber offsetNumber,
 			ItemIdFlags flags)
 {
+	PageHeader	phdr = (PageHeader) page;
 	int			i;
 	Size		alignedSize;
-	Offset		lower;
-	Offset		upper;
+	int			lower;
+	int			upper;
 	ItemId		itemId;
 	OffsetNumber limit;
 	bool		needshuffle = false;
 	bool		overwritemode = (flags & OverwritePageMode) != 0;
 
 	flags &= ~OverwritePageMode;
+
+	/*
+	 * Be wary about corrupted page pointers
+	 */
+	if (phdr->pd_lower < (sizeof(PageHeaderData) - sizeof(ItemIdData)) ||
+		phdr->pd_lower > phdr->pd_upper ||
+		phdr->pd_upper > phdr->pd_special ||
+		phdr->pd_special > BLCKSZ)
+		elog(ERROR, "PageAddItem: corrupted page pointers: lower = %u, upper = %u, special = %u",
+			 phdr->pd_lower, phdr->pd_upper, phdr->pd_special);
 
 	/*
 	 * Find first unallocated offsetNumber
@@ -114,7 +112,7 @@ PageAddItem(Page page,
 			}
 			if (offsetNumber < limit)
 			{
-				itemId = &((PageHeader) page)->pd_linp[offsetNumber - 1];
+				itemId = &phdr->pd_linp[offsetNumber - 1];
 				if (((*itemId).lp_flags & LP_USED) ||
 					((*itemId).lp_len != 0))
 				{
@@ -138,7 +136,7 @@ PageAddItem(Page page,
 		/* look for "recyclable" (unused & deallocated) ItemId */
 		for (offsetNumber = 1; offsetNumber < limit; offsetNumber++)
 		{
-			itemId = &((PageHeader) page)->pd_linp[offsetNumber - 1];
+			itemId = &phdr->pd_linp[offsetNumber - 1];
 			if ((((*itemId).lp_flags & LP_USED) == 0) &&
 				((*itemId).lp_len == 0))
 				break;
@@ -146,18 +144,21 @@ PageAddItem(Page page,
 	}
 
 	/*
-	 * Compute new lower and upper pointers for page, see if it'll fit
+	 * Compute new lower and upper pointers for page, see if it'll fit.
+	 *
+	 * Note: do arithmetic as signed ints, to avoid mistakes if, say,
+	 * alignedSize > pd_upper.
 	 */
 	if (offsetNumber > limit)
-		lower = (Offset) (((char *) (&((PageHeader) page)->pd_linp[offsetNumber])) - ((char *) page));
+		lower = (char *) (&phdr->pd_linp[offsetNumber]) - (char *) page;
 	else if (offsetNumber == limit || needshuffle)
-		lower = ((PageHeader) page)->pd_lower + sizeof(ItemIdData);
+		lower = phdr->pd_lower + sizeof(ItemIdData);
 	else
-		lower = ((PageHeader) page)->pd_lower;
+		lower = phdr->pd_lower;
 
 	alignedSize = MAXALIGN(size);
 
-	upper = ((PageHeader) page)->pd_upper - alignedSize;
+	upper = (int) phdr->pd_upper - (int) alignedSize;
 
 	if (lower > upper)
 		return InvalidOffsetNumber;
@@ -169,24 +170,26 @@ PageAddItem(Page page,
 	if (needshuffle)
 	{
 		/* shuffle ItemId's (Do the PageManager Shuffle...) */
-		for (i = (limit - 1); i >= offsetNumber; i--)
+		for (i = (int) limit - 1; i >= (int) offsetNumber; i--)
 		{
 			ItemId		fromitemId,
 						toitemId;
 
-			fromitemId = &((PageHeader) page)->pd_linp[i - 1];
-			toitemId = &((PageHeader) page)->pd_linp[i];
+			fromitemId = &phdr->pd_linp[i - 1];
+			toitemId = &phdr->pd_linp[i];
 			*toitemId = *fromitemId;
 		}
 	}
 
-	itemId = &((PageHeader) page)->pd_linp[offsetNumber - 1];
+	itemId = &phdr->pd_linp[offsetNumber - 1];
 	(*itemId).lp_off = upper;
 	(*itemId).lp_len = size;
 	(*itemId).lp_flags = flags;
+
 	memmove((char *) page + upper, item, size);
-	((PageHeader) page)->pd_lower = lower;
-	((PageHeader) page)->pd_upper = upper;
+
+	phdr->pd_lower = (LocationIndex) lower;
+	phdr->pd_upper = (LocationIndex) upper;
 
 	return offsetNumber;
 }
@@ -383,79 +386,76 @@ PageRepairFragmentation(Page page, OffsetNumber *unused)
 Size
 PageGetFreeSpace(Page page)
 {
-	Size		space;
+	int			space;
 
-	space = ((PageHeader) page)->pd_upper - ((PageHeader) page)->pd_lower;
+	/*
+	 * Use signed arithmetic here so that we behave sensibly if
+	 * pd_lower > pd_upper.
+	 */
+	space = (int) ((PageHeader) page)->pd_upper -
+		(int) ((PageHeader) page)->pd_lower;
 
-	if (space < sizeof(ItemIdData))
+	if (space < (int) sizeof(ItemIdData))
 		return 0;
 	space -= sizeof(ItemIdData);	/* XXX not always appropriate */
 
-	return space;
+	return (Size) space;
 }
 
-/*
- * PageRepairFragmentation un-useful for index page cleanup because
- * of it doesn't remove line pointers. This routine could be more
- * effective but ... no time -:)
- */
-void
-IndexPageCleanup(Buffer buffer)
-{
-	Page		page = (Page) BufferGetPage(buffer);
-	ItemId		lp;
-	OffsetNumber maxoff;
-	OffsetNumber i;
-
-	maxoff = PageGetMaxOffsetNumber(page);
-	for (i = 0; i < maxoff; i++)
-	{
-		lp = ((PageHeader) page)->pd_linp + i;
-		if ((*lp).lp_flags & LP_DELETE) /* marked for deletion */
-		{
-			PageIndexTupleDelete(page, i + 1);
-			maxoff--;
-		}
-	}
-}
 
 /*
- *----------------------------------------------------------------
  * PageIndexTupleDelete
- *----------------------------------------------------------------
  *
- *		This routine does the work of removing a tuple from an index page.
+ * This routine does the work of removing a tuple from an index page.
+ *
+ * Unlike heap pages, we compact out the line pointer for the removed tuple.
  */
 void
 PageIndexTupleDelete(Page page, OffsetNumber offnum)
 {
-	PageHeader	phdr;
+	PageHeader	phdr = (PageHeader) page;
 	char	   *addr;
 	ItemId		tup;
 	Size		size;
-	char	   *locn;
+	unsigned	offset;
 	int			nbytes;
 	int			offidx;
+	int			nline,
+				i;
 
-	phdr = (PageHeader) page;
+	/*
+	 * As with PageRepairFragmentation, paranoia seems justified.
+	 */
+	if (phdr->pd_lower < (sizeof(PageHeaderData) - sizeof(ItemIdData)) ||
+		phdr->pd_lower > phdr->pd_upper ||
+		phdr->pd_upper > phdr->pd_special ||
+		phdr->pd_special > BLCKSZ)
+		elog(ERROR, "PageIndexTupleDelete: corrupted page pointers: lower = %u, upper = %u, special = %u",
+			 phdr->pd_lower, phdr->pd_upper, phdr->pd_special);
+
+	nline = PageGetMaxOffsetNumber(page);
+	if ((int) offnum <= 0 || (int) offnum > nline)
+		elog(ERROR, "PageIndexTupleDelete: bad offnum %u", offnum);
 
 	/* change offset number to offset index */
 	offidx = offnum - 1;
 
 	tup = PageGetItemId(page, offnum);
 	size = ItemIdGetLength(tup);
-	size = MAXALIGN(size);
+	offset = ItemIdGetOffset(tup);
 
-	/* location of deleted tuple data */
-	locn = (char *) (page + ItemIdGetOffset(tup));
+	if (offset < phdr->pd_upper || (offset + size) > phdr->pd_special ||
+		offset != MAXALIGN(offset) || size != MAXALIGN(size))
+		elog(ERROR, "PageIndexTupleDelete: corrupted item pointer: offset = %u size = %u",
+			 offset, size);
 
 	/*
 	 * First, we want to get rid of the pd_linp entry for the index tuple.
 	 * We copy all subsequent linp's back one slot in the array.
 	 */
-
 	nbytes = phdr->pd_lower -
 		((char *) &phdr->pd_linp[offidx + 1] - (char *) phdr);
+
 	memmove((char *) &(phdr->pd_linp[offidx]),
 			(char *) &(phdr->pd_linp[offidx + 1]),
 			nbytes);
@@ -470,52 +470,28 @@ PageIndexTupleDelete(Page page, OffsetNumber offnum)
 	 */
 
 	/* beginning of tuple space */
-	addr = (char *) (page + phdr->pd_upper);
+	addr = (char *) page + phdr->pd_upper;
 
-	if (locn != addr)
-		memmove(addr + size, addr, (int) (locn - addr));
+	if (offset > phdr->pd_upper)
+		memmove(addr + size, addr, (int) (offset - phdr->pd_upper));
 
 	/* adjust free space boundary pointers */
 	phdr->pd_upper += size;
 	phdr->pd_lower -= sizeof(ItemIdData);
 
-	/* finally, we need to adjust the linp entries that remain */
+	/*
+	 * Finally, we need to adjust the linp entries that remain.
+	 *
+	 * Anything that used to be before the deleted tuple's data was moved
+	 * forward by the size of the deleted tuple.
+	 */
 	if (!PageIsEmpty(page))
-		PageIndexTupleDeleteAdjustLinePointers(phdr, locn, size);
-}
-
-/*
- *----------------------------------------------------------------
- * PageIndexTupleDeleteAdjustLinePointers
- *----------------------------------------------------------------
- *
- *		Once the line pointers and tuple data have been shifted around
- *		on the page, we need to go down the line pointer vector and
- *		adjust pointers to reflect new locations.  Anything that used
- *		to be before the deleted tuple's data was moved forward by the
- *		size of the deleted tuple.
- *
- *		This routine does the work of adjusting the line pointers.
- *		Location is where the tuple data used to lie; size is how
- *		much space it occupied.  We assume that size has been aligned
- *		as required by the time we get here.
- *
- *		This routine should never be called on an empty page.
- */
-static void
-PageIndexTupleDeleteAdjustLinePointers(PageHeader phdr,
-									   char *location,
-									   Size size)
-{
-	int			i;
-	unsigned	offset;
-
-	/* location is an index into the page... */
-	offset = (unsigned) (location - (char *) phdr);
-
-	for (i = PageGetMaxOffsetNumber((Page) phdr) - 1; i >= 0; i--)
 	{
-		if (phdr->pd_linp[i].lp_off <= offset)
-			phdr->pd_linp[i].lp_off += size;
+		nline--;				/* there's one less than when we started */
+		for (i = nline; --i >= 0; )
+		{
+			if (phdr->pd_linp[i].lp_off <= offset)
+				phdr->pd_linp[i].lp_off += size;
+		}
 	}
 }

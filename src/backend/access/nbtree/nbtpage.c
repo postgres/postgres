@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.54 2001/10/25 05:49:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.55 2002/01/15 22:14:17 tgl Exp $
  *
  *	NOTES
  *	   Postgres btree pages look like ordinary relation pages.	The opaque
@@ -399,14 +399,6 @@ _bt_wrtnorelbuf(Relation rel, Buffer buf)
 void
 _bt_pageinit(Page page, Size size)
 {
-	/*
-	 * Cargo_cult programming -- don't really need this to be zero, but
-	 * creating new pages is an infrequent occurrence and it makes me feel
-	 * good when I know they're empty.
-	 */
-
-	MemSet(page, 0, size);
-
 	PageInit(page, size, sizeof(BTPageOpaqueData));
 	((BTPageOpaque) PageGetSpecialPointer(page))->btpo_parent =
 		InvalidBlockNumber;

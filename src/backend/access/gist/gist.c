@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.86 2001/11/05 17:46:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.87 2002/01/15 22:14:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1437,7 +1437,7 @@ GISTInitBuffer(Buffer b, uint32 f)
 	pageSize = BufferGetPageSize(b);
 
 	page = BufferGetPage(b);
-	MemSet(page, 0, (int) pageSize);
+
 	PageInit(page, pageSize, sizeof(GISTPageOpaqueData));
 
 	opaque = (GISTPageOpaque) PageGetSpecialPointer(page);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashpage.c,v 1.33 2001/10/25 05:49:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashpage.c,v 1.34 2002/01/15 22:14:16 tgl Exp $
  *
  * NOTES
  *	  Postgres hash pages look like ordinary relation pages.  The opaque
@@ -301,17 +301,7 @@ _hash_chgbufaccess(Relation rel,
 void
 _hash_pageinit(Page page, Size size)
 {
-	Assert(((PageHeader) page)->pd_lower == 0);
-	Assert(((PageHeader) page)->pd_upper == 0);
-	Assert(((PageHeader) page)->pd_special == 0);
-
-	/*
-	 * Cargo-cult programming -- don't really need this to be zero, but
-	 * creating new pages is an infrequent occurrence and it makes me feel
-	 * good when I know they're empty.
-	 */
-	MemSet(page, 0, size);
-
+	Assert(PageIsNew(page));
 	PageInit(page, size, sizeof(HashPageOpaqueData));
 }
 

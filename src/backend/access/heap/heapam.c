@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.128 2001/11/05 17:46:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.129 2002/01/15 22:14:17 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -2094,10 +2094,7 @@ heap_xlog_insert(bool redo, XLogRecPtr lsn, XLogRecord *record)
 		uint32		newlen;
 
 		if (record->xl_info & XLOG_HEAP_INIT_PAGE)
-		{
 			PageInit(page, BufferGetPageSize(buffer), 0);
-			PageZero(page);
-		}
 
 		if (XLByteLE(lsn, PageGetLSN(page)))	/* changes are applied */
 		{
@@ -2262,10 +2259,7 @@ newsame:;
 		uint32		newlen;
 
 		if (record->xl_info & XLOG_HEAP_INIT_PAGE)
-		{
 			PageInit(page, BufferGetPageSize(buffer), 0);
-			PageZero(page);
-		}
 
 		if (XLByteLE(lsn, PageGetLSN(page)))	/* changes are applied */
 		{

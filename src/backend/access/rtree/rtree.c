@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.68 2001/11/05 17:46:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.69 2002/01/15 22:14:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1107,7 +1107,7 @@ RTInitBuffer(Buffer b, uint32 f)
 	pageSize = BufferGetPageSize(b);
 
 	page = BufferGetPage(b);
-	MemSet(page, 0, (int) pageSize);
+
 	PageInit(page, pageSize, sizeof(RTreePageOpaqueData));
 
 	opaque = (RTreePageOpaque) PageGetSpecialPointer(page);
