@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/psort.c,v 1.21 1997/09/08 21:49:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/psort.c,v 1.22 1997/09/15 14:28:42 vadim Exp $
  *
  * NOTES
  *		Sorts the first relation into the second relation.
@@ -128,8 +128,6 @@ psort_begin(Sort *node, int nkeys, ScanKey key)
 	bool		empty;			/* to answer: is child node empty? */
 
 	node->psortstate = (struct Psortstate *) palloc(sizeof(struct Psortstate));
-	if (node->psortstate == NULL)
-		return false;
 
 	AssertArg(nkeys >= 1);
 	AssertArg(key[0].sk_attno != 0);
@@ -648,7 +646,7 @@ dumptuples(FILE *file, Sort *node)
  *						  a NULL indicating the last tuple has been processed.
  */
 HeapTuple
-psort_grabtuple(Sort *node)
+psort_grabtuple(Sort *node, bool *should_free)
 {
 	register HeapTuple tup;
 	long		tuplen;
@@ -668,7 +666,7 @@ psort_grabtuple(Sort *node)
 
 				/* Update current merged sort file position */
 				PS(node)->psort_current += tuplen;
-
+				*should_free = true;
 				return tup;
 			}
 			else
@@ -680,7 +678,10 @@ psort_grabtuple(Sort *node)
 	else
 	{
 		if (PS(node)->psort_current < PS(node)->tupcount)
-			return PS(node)->memtuples[PS(node)->psort_current++];
+		{
+			*should_free = false;
+			return (PS(node)->memtuples[PS(node)->psort_current++]);
+		}
 		else
 			return NULL;
 	}
@@ -725,8 +726,6 @@ psort_end(Sort *node)
 	if (!node->cleaned)
 	{
 		Assert(node != (Sort *) NULL);
-/*		Assert(PS(node) != (Psortstate *) NULL); */
-
 		/*
 		 * I'm changing this because if we are sorting a relation with no
 		 * tuples, psortstate is NULL.

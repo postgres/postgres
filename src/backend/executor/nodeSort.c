@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSort.c,v 1.9 1997/09/08 21:43:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSort.c,v 1.10 1997/09/15 14:27:37 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -112,6 +112,7 @@ ExecSort(Sort *node)
 	ScanKey		sortkeys;
 	HeapTuple	heapTuple;
 	TupleTableSlot *slot;
+	bool should_free;
 
 	/* ----------------
 	 *	get state info from node
@@ -171,12 +172,7 @@ ExecSort(Sort *node)
 		 * ----------------
 		 */
 		slot = (TupleTableSlot *) sortstate->csstate.cstate.cs_ResultTupleSlot;
-		/* *** get_cs_ResultTupleSlot((CommonState) sortstate); */
-
 		slot->ttc_tupleDescriptor = ExecGetTupType(outerNode);
-#if 0
-		slot->ttc_execTupDescriptor = ExecGetExecTupDesc(outerNode);
-#endif
 		/* ----------------
 		 *	finally set the sorted flag to true
 		 * ----------------
@@ -198,26 +194,9 @@ ExecSort(Sort *node)
 	 *	at this point we grab a tuple from psort
 	 * ----------------
 	 */
-	heapTuple = psort_grabtuple(node);
+	heapTuple = psort_grabtuple(node, &should_free);
 
-	if (heapTuple == NULL)
-	{
-/*		psort_end(node); */
-		return (ExecClearTuple(slot));
-	}
-
-	ExecStoreTuple(heapTuple,	/* tuple to store */
-				   slot,		/* slot to store in */
-				   InvalidBuffer,		/* no buffer */
-				   true);		/* free the palloc'd tuple */
-/*	  printf("ExecSort: (%x)",node);print_slot(slot);printf("\n");*/
-	return slot;
-#if 0
-	return ExecStoreTuple(heapTuple,	/* tuple to store */
-						  slot, /* slot to store in */
-						  InvalidBuffer,		/* no buffer */
-						  true);/* free the palloc'd tuple */
-#endif
+	return (ExecStoreTuple(heapTuple, slot, InvalidBuffer, should_free));
 }
 
 /* ----------------------------------------------------------------
