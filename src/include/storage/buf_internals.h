@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/buf_internals.h,v 1.73 2004/08/29 05:06:58 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/storage/buf_internals.h,v 1.74 2004/10/16 18:05:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,8 +75,7 @@ typedef struct buftag
 )
 
 /*
- *	BufferDesc -- shared buffer cache metadata for a single
- *				  shared buffer descriptor.
+ *	BufferDesc -- shared descriptor/state data for a single shared buffer.
  */
 typedef struct sbufdesc
 {
@@ -107,16 +106,6 @@ typedef struct sbufdesc
 } BufferDesc;
 
 #define BufferDescriptorGetBuffer(bdesc) ((bdesc)->buf_id + 1)
-
-
-/*
- * Each backend has its own BufferLocks[] array holding flag bits
- * showing what locks it has set on each buffer.
- *
- * We have to free these locks during ereport(ERROR)...
- */
-#define BL_IO_IN_PROGRESS	(1 << 0)	/* unimplemented */
-#define BL_PIN_COUNT_LOCK	(1 << 1)
 
 /* entry for buffer lookup hashtable */
 typedef struct
@@ -206,7 +195,6 @@ extern void BufTableDelete(BufferTag *tagPtr);
 
 /* bufmgr.c */
 extern BufferDesc *BufferDescriptors;
-extern bits8 *BufferLocks;
 
 /* localbuf.c */
 extern BufferDesc *LocalBufferDescriptors;

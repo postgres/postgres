@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.178 2004/10/15 22:39:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.179 2004/10/16 18:05:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,6 +64,13 @@ bool		ShowPinTrace = false;
 long		NDirectFileRead;	/* some I/O's are direct file access.
 								 * bypass bufmgr */
 long		NDirectFileWrite;	/* e.g., I/O in psort and hashjoin. */
+
+
+/* local state for StartBufferIO and related functions */
+static BufferDesc *InProgressBuf = NULL;
+static bool IsForInput;
+/* local state for LockBufferForCleanup */
+static BufferDesc *PinCountWaitBuf = NULL;
 
 
 static void PinBuffer(BufferDesc *buf, bool fixOwner);
@@ -1650,48 +1657,38 @@ SetBufferCommitInfoNeedsSave(Buffer buffer)
  * Release buffer context locks for shared buffers.
  *
  * Used to clean up after errors.
+ *
+ * Currently, we can expect that lwlock.c's LWLockReleaseAll() took care
+ * of releasing buffer context locks per se; the only thing we need to deal
+ * with here is clearing any PIN_COUNT request that was in progress.
  */
 void
 UnlockBuffers(void)
 {
-	BufferDesc *buf;
-	int			i;
+	BufferDesc *buf = PinCountWaitBuf;
 
-	for (i = 0; i < NBuffers; i++)
+	if (buf)
 	{
-		bits8		buflocks = BufferLocks[i];
-
-		if (buflocks == 0)
-			continue;
-
-		buf = &(BufferDescriptors[i]);
-
 		HOLD_INTERRUPTS();		/* don't want to die() partway through... */
 
+		LWLockAcquire(BufMgrLock, LW_EXCLUSIVE);
+
 		/*
-		 * The buffer's cntx_lock has already been released by lwlock.c.
+		 * Don't complain if flag bit not set; it could have been
+		 * reset but we got a cancel/die interrupt before getting the
+		 * signal.
 		 */
+		if ((buf->flags & BM_PIN_COUNT_WAITER) != 0 &&
+			buf->wait_backend_id == MyBackendId)
+			buf->flags &= ~BM_PIN_COUNT_WAITER;
+		LWLockRelease(BufMgrLock);
 
-		if (buflocks & BL_PIN_COUNT_LOCK)
-		{
-			LWLockAcquire(BufMgrLock, LW_EXCLUSIVE);
-
-			/*
-			 * Don't complain if flag bit not set; it could have been
-			 * reset but we got a cancel/die interrupt before getting the
-			 * signal.
-			 */
-			if ((buf->flags & BM_PIN_COUNT_WAITER) != 0 &&
-				buf->wait_backend_id == MyBackendId)
-				buf->flags &= ~BM_PIN_COUNT_WAITER;
-			LWLockRelease(BufMgrLock);
-			ProcCancelWaitForSignal();
-		}
-
-		BufferLocks[i] = 0;
+		ProcCancelWaitForSignal();
 
 		RESUME_INTERRUPTS();
 	}
+
+	PinCountWaitBuf = NULL;
 }
 
 /*
@@ -1779,9 +1776,9 @@ void
 LockBufferForCleanup(Buffer buffer)
 {
 	BufferDesc *bufHdr;
-	bits8	   *buflock;
 
 	Assert(BufferIsValid(buffer));
+	Assert(PinCountWaitBuf == NULL);
 
 	if (BufferIsLocal(buffer))
 	{
@@ -1799,7 +1796,6 @@ LockBufferForCleanup(Buffer buffer)
 			 PrivateRefCount[buffer - 1]);
 
 	bufHdr = &BufferDescriptors[buffer - 1];
-	buflock = &(BufferLocks[buffer - 1]);
 
 	for (;;)
 	{
@@ -1822,12 +1818,12 @@ LockBufferForCleanup(Buffer buffer)
 		}
 		bufHdr->wait_backend_id = MyBackendId;
 		bufHdr->flags |= BM_PIN_COUNT_WAITER;
-		*buflock |= BL_PIN_COUNT_LOCK;
+		PinCountWaitBuf = bufHdr;
 		LWLockRelease(BufMgrLock);
 		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 		/* Wait to be signaled by UnpinBuffer() */
 		ProcWaitForSignal();
-		*buflock &= ~BL_PIN_COUNT_LOCK;
+		PinCountWaitBuf = NULL;
 		/* Loop back and try again */
 	}
 }
@@ -1835,11 +1831,9 @@ LockBufferForCleanup(Buffer buffer)
 /*
  *	Functions for IO error handling
  *
- *	Note : We assume that nested buffer IO never occur.
+ *	Note: We assume that nested buffer IO never occurs.
  *	i.e at most one io_in_progress lock is held per proc.
-*/
-static BufferDesc *InProgressBuf = NULL;
-static bool IsForInput;
+ */
 
 /*
  * Function:StartBufferIO
