@@ -1,0 +1,82 @@
+#!/bin/sh
+
+##
+# PotgreSQL RDBMS Server
+##
+
+# PostgreSQL boot time startup script for Darwin/Mac OS X. To install, change
+# the "prefix", "PGDATA", "PGUSER", and "PGLOG" variables below as
+# necessary. Next, create a new directory, "/Library/StartupItems/PostgreSQL".
+# Then copy this script and the accompanying "StartupParameters.plist" file
+# into that directory. The name of this script file *must* be the same as the
+# directory it is in. So you'll end up with these two files:
+#
+#    /Library/StartupItems/PostgreSQL/PostgreSQL
+#    /Library/StartupItems/PostgreSQLStartupParameters.plist
+#
+# Next, add this line to the /etc/hostconfig file:
+#
+# POSTGRESQLSERVER=-YES-
+#
+# The startup bundle will now be read to go. To prevent this script from
+# starting PostgreSQL at system startup, simply change that line in
+# /etc/hostconfig to:
+#
+# POSTGRESQLSERVER=-NO-
+#
+# For more information on Darwin/Mac OS X startup bundles, see this article:
+#
+#  http://www.opensource.apple.com/projects/documentation/howto/html/SystemStarter_HOWTO.html
+#
+# Created by David Wheeler, 2002.
+
+################################################################################
+## EDIT FROM HERE
+################################################################################
+
+# Installation prefix
+prefix=/usr/local/pgsql
+
+# Data directory
+PGDATA="/usr/local/pgsql/data"
+
+# Who to run pg_ctl as, should be "postgres".
+PGUSER=postgres
+
+# Where to keep a log file
+PGLOG="$PGDATA/serverlog"
+
+################################################################################
+## STOP EDITING HERE
+################################################################################
+
+# The path that is to be used for the script
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+
+# What to use to start up the postmaster
+DAEMON="$prefix/bin/pg_ctl"
+
+. /etc/rc.common
+
+StartService () {
+    if [ "${POSTGRESQLSERVER:=-NO-}" = "-YES-" ]; then
+	ConsoleMessage "Starting PostgreSQL database server"
+	sudo -u $PGUSER $DAEMON start -D "$PGDATA" -s -l $PGLOG
+    fi
+}
+
+StopService () {
+    ConsoleMessage "Stopping PostgreSQL database server"
+    sudo -u $PGUSER $DAEMON stop -D "$PGDATA" -s -m fast
+}
+
+RestartService () {
+    if [ "${POSTGRESQLSERVER:=-NO-}" = "-YES-" ]; then
+        ConsoleMessage "Restarting PostgreSQL database server"
+	sudo -u $PGUSER $DAEMON restart -D "$PGDATA" -s -m fast
+    else
+	StopService
+    fi
+}
+
+RunService "$1"

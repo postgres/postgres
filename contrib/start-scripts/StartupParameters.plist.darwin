@@ -1,0 +1,13 @@
+{
+  Description     = "PostgreSQL Database Server";
+  Provides        = ("postgres database");
+  Requires        = ("Disks", "Resolver");
+  Uses            = ("NFS", "Network Time");
+  OrderPreference = "None";
+  Messages =
+  {
+    start = "Starting PostgreSQL database server";
+    stop  = "Stopping PostgreSQL database server";
+    restart = "Restarting PostgreSQL database server";
+  };
+}
