@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.145 2004/01/27 00:45:26 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.146 2004/02/08 22:28:56 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,7 +51,6 @@
 #include "storage/proc.h"
 #include "storage/sinval.h"
 #include "storage/spin.h"
-#include "libpq/pqsignal.h"
 
 /* GUC variables */
 int			DeadlockTimeout = 1000;
@@ -1131,7 +1130,7 @@ CheckStatementTimeout(void)
 	{
 		/* Time to die */
 		statement_timeout_active = false;
-		pqkill(MyProcPid, SIGINT);
+		kill(MyProcPid, SIGINT);
 	}
 	else
 	{

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/pqsignal.c,v 1.30 2004/01/27 00:46:58 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/pqsignal.c,v 1.31 2004/02/08 22:28:56 neilc Exp $
  *
  * NOTES
  *		This shouldn't be in libpq, but the monitor and some other
@@ -39,17 +39,12 @@
  *	at all.
  * ------------------------------------------------------------------------*/
 #ifdef WIN32
-#define WIN32_LEAN_AND_MEAN
 #define _WIN32_WINNT 0x0400
 #endif
 
 #include "postgres.h"
 
-#ifndef WIN32
 #include <signal.h>
-#else
-#include <windows.h>
-#endif
 
 #include "libpq/pqsignal.h"
 
@@ -180,6 +175,7 @@ HANDLE		pgwin32_main_thread_handle;
 
 /* Signal handling thread function */
 static DWORD WINAPI pg_signal_thread(LPVOID param);
+static BOOL WINAPI pg_console_handler(DWORD dwCtrlType);
 
 /* Initialization */
 void
@@ -202,18 +198,18 @@ pgwin32_signal_initialize(void)
 	if (!DuplicateHandle(GetCurrentProcess(), GetCurrentThread(),
 						 GetCurrentProcess(), &pgwin32_main_thread_handle,
 						 0, FALSE, DUPLICATE_SAME_ACCESS))
-	{
-		fprintf(stderr, gettext("Failed to get main thread handle!\n"));
-		exit(1);
-	}
-
+		ereport(FATAL,
+				(errmsg_internal("Failed to get main thread handle!")));
+	
 	/* Create thread for handling signals */
 	signal_thread_handle = CreateThread(NULL, 0, pg_signal_thread, NULL, 0, NULL);
 	if (signal_thread_handle == NULL)
-	{
-		fprintf(stderr, gettext("Failed to create signal handler thread!\n"));
-		exit(1);
-	}
+		ereport(FATAL,
+				(errmsg_internal("Failed to create signal handler thread!")));
+
+	if (!SetConsoleCtrlHandler(pg_console_handler, TRUE)) 
+		ereport(FATAL,
+				(errmsg_internal("Failed to set console control handler!")));
 }
 
 
@@ -344,7 +340,7 @@ pg_signal_apc(ULONG_PTR param)
  */
 
 
-static void
+void
 pg_queue_signal(int signum)
 {
 	if (signum >= PG_SIGNAL_COUNT || signum < 0)
@@ -427,6 +423,22 @@ pg_signal_thread(LPVOID param)
 			CloseHandle(pipe);
 	}
 	return 0;
+}
+
+
+/* Console control handler will execute on a thread created 
+   by the OS at the time of invocation */
+static BOOL WINAPI pg_console_handler(DWORD dwCtrlType) {
+	printf("Console handler being called!\n");
+	fflush(stdout);
+	if (dwCtrlType == CTRL_C_EVENT ||
+		dwCtrlType == CTRL_BREAK_EVENT ||
+		dwCtrlType == CTRL_CLOSE_EVENT ||
+		dwCtrlType == CTRL_SHUTDOWN_EVENT) {
+		pg_queue_signal(SIGINT);
+		return TRUE;
+	}
+	return FALSE;
 }
 
 

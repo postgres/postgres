@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/async.c,v 1.108 2004/01/27 00:45:26 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/async.c,v 1.109 2004/02/08 22:28:56 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,7 +83,6 @@
 #include "commands/async.h"
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
-#include "libpq/pqsignal.h"
 #include "miscadmin.h"
 #include "storage/ipc.h"
 #include "tcop/tcopprot.h"
@@ -498,7 +497,7 @@ AtCommit_Notify(void)
 			 * for some reason.  It's OK to send the signal first, because
 			 * the other guy can't read pg_listener until we unlock it.
 			 */
-			if (pqkill(listenerPID, SIGUSR2) < 0)
+			if (kill(listenerPID, SIGUSR2) < 0)
 			{
 				/*
 				 * Get rid of pg_listener entry if it refers to a PID that

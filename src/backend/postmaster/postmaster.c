@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.364 2004/01/28 21:02:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.365 2004/02/08 22:28:56 neilc Exp $
  *
  * NOTES
  *
@@ -308,6 +308,7 @@ pid_t win32_forkexec(const char* path, char *argv[]);
 static void  win32_AddChild(pid_t pid, HANDLE handle);
 static void  win32_RemoveChild(pid_t pid);
 static pid_t win32_waitpid(int *exitstatus);
+static DWORD WINAPI win32_sigchld_waiter(LPVOID param);
 
 static pid_t  *win32_childPIDArray;
 static HANDLE *win32_childHNDArray;
@@ -850,7 +851,7 @@ PostmasterMain(int argc, char *argv[])
 	/* FIXME: [fork/exec] Ideally, we would resize these arrays with changes
 	 *  in MaxBackends, but this'll do as a first order solution.
 	 */
-	win32_childPIDArray = (HANDLE*)malloc(NUM_BACKENDARRAY_ELEMS*sizeof(pid_t));
+	win32_childPIDArray = (pid_t*)malloc(NUM_BACKENDARRAY_ELEMS*sizeof(pid_t));
 	win32_childHNDArray = (HANDLE*)malloc(NUM_BACKENDARRAY_ELEMS*sizeof(HANDLE));
 	if (!win32_childPIDArray || !win32_childHNDArray)
 		ereport(LOG,
@@ -1566,7 +1567,7 @@ processCancelRequest(Port *port, void *pkt)
 				ereport(DEBUG2,
 						(errmsg_internal("processing cancel request: sending SIGINT to process %d",
 										 backendPID)));
-				pqkill(bp->pid, SIGINT);
+				kill(bp->pid, SIGINT);
 			}
 			else
 				/* Right PID, wrong key: no way, Jose */
@@ -1738,7 +1739,7 @@ SIGHUP_handler(SIGNAL_ARGS)
 		 * will start a new one with a possibly changed config
 		 */
 		if (BgWriterPID != 0)
-			pqkill(BgWriterPID, SIGTERM);
+			kill(BgWriterPID, SIGTERM);
 	}
 
 	PG_SETMASK(&UnBlockSig);
@@ -1772,7 +1773,7 @@ pmdie(SIGNAL_ARGS)
 			 * Wait for children to end their work and ShutdownDataBase.
 			 */
 			if (BgWriterPID != 0)
-				pqkill(BgWriterPID, SIGTERM);
+				kill(BgWriterPID, SIGTERM);
 			if (Shutdown >= SmartShutdown)
 				break;
 			Shutdown = SmartShutdown;
@@ -1806,7 +1807,7 @@ pmdie(SIGNAL_ARGS)
 			 * and exit) and ShutdownDataBase when they are gone.
 			 */
 			if (BgWriterPID != 0)
-				pqkill(BgWriterPID, SIGTERM);
+				kill(BgWriterPID, SIGTERM);
 			if (Shutdown >= FastShutdown)
 				break;
 			ereport(LOG,
@@ -1854,13 +1855,13 @@ pmdie(SIGNAL_ARGS)
 			 * properly shutdown data base system.
 			 */
 			if (BgWriterPID != 0)
-				pqkill(BgWriterPID, SIGQUIT);
+				kill(BgWriterPID, SIGQUIT);
 			ereport(LOG,
 					(errmsg("received immediate shutdown request")));
 			if (ShutdownPID > 0)
-				pqkill(ShutdownPID, SIGQUIT);
+				kill(ShutdownPID, SIGQUIT);
 			if (StartupPID > 0)
-				pqkill(StartupPID, SIGQUIT);
+				kill(StartupPID, SIGQUIT);
 			if (DLGetHead(BackendList))
 				SignalChildren(SIGQUIT);
 			ExitPostmaster(0);
@@ -2130,7 +2131,7 @@ CleanupProc(int pid,
 						(errmsg_internal("sending %s to process %d",
 										 (SendStop ? "SIGSTOP" : "SIGQUIT"),
 										 (int) bp->pid)));
-				pqkill(bp->pid, (SendStop ? SIGSTOP : SIGQUIT));
+				kill(bp->pid, (SendStop ? SIGSTOP : SIGQUIT));
 			}
 		}
 		else
@@ -2225,7 +2226,7 @@ SignalChildren(int signal)
 					(errmsg_internal("sending signal %d to process %d",
 									 signal,
 									 (int) bp->pid)));
-			pqkill(bp->pid, signal);
+			kill(bp->pid, signal);
 		}
 
 		curr = next;
@@ -3491,6 +3492,8 @@ pid_t win32_forkexec(const char* path, char *argv[])
 	char *p;
 	int i;
 	char cmdLine[MAXPGPATH];
+	HANDLE childHandleCopy;
+	HANDLE waiterThread;
 
 	/* Format the cmd line */
 	snprintf(cmdLine,sizeof(cmdLine),"%s",path);
@@ -3522,7 +3525,23 @@ pid_t win32_forkexec(const char* path, char *argv[])
 	if (!IsUnderPostmaster)
 		/* We are the Postmaster creating a child... */
 		win32_AddChild(pi.dwProcessId,pi.hProcess);
-	else
+	
+	if (!DuplicateHandle(GetCurrentProcess(),
+						 pi.hProcess,
+						 GetCurrentProcess(),
+						 &childHandleCopy,
+						 0,
+						 FALSE,
+						 DUPLICATE_SAME_ACCESS)) 
+		ereport(FATAL,
+				(errmsg_internal("failed to duplicate child handle: %i",GetLastError())));
+	waiterThread = CreateThread(NULL, 64*1024, win32_sigchld_waiter, (LPVOID)childHandleCopy, 0, NULL);
+	if (!waiterThread)
+		ereport(FATAL,
+				(errmsg_internal("failed to create sigchld waiter thread: %i",GetLastError())));
+	CloseHandle(waiterThread);	
+	
+	if (IsUnderPostmaster)
 		CloseHandle(pi.hProcess);
 	CloseHandle(pi.hThread);
 
@@ -3566,8 +3585,8 @@ static void win32_RemoveChild(pid_t pid)
 
 			/* Swap last entry into the "removed" one */
 			--win32_numChildren;
-			win32_childPIDArray[win32_numChildren] = win32_childPIDArray[i];
-			win32_childHNDArray[win32_numChildren] = win32_childHNDArray[i];
+			win32_childPIDArray[i] = win32_childPIDArray[win32_numChildren];
+			win32_childHNDArray[i] = win32_childHNDArray[win32_numChildren];
 			return;
 		}
 	}
@@ -3597,8 +3616,8 @@ static pid_t win32_waitpid(int *exitstatus)
 		{
 			case WAIT_FAILED:
 				ereport(ERROR,
-						(errmsg_internal("failed to wait on %d children",
-										 win32_numChildren)));
+						(errmsg_internal("failed to wait on %d children: %i",
+										 win32_numChildren,GetLastError())));
 				/* Fall through to WAIT_TIMEOUTs return */
 
 			case WAIT_TIMEOUT:
@@ -3624,6 +3643,20 @@ static pid_t win32_waitpid(int *exitstatus)
 
 	/* No children */
 	return -1;
+}
+
+/* Note! Code belows executes on separate threads, one for
+   each child process created */
+static DWORD WINAPI win32_sigchld_waiter(LPVOID param) {
+	HANDLE procHandle = (HANDLE)param;
+
+	DWORD r = WaitForSingleObject(procHandle, INFINITE);
+	if (r == WAIT_OBJECT_0)
+		pg_queue_signal(SIGCHLD);
+	else
+		fprintf(stderr,"ERROR: Failed to wait on child process handle: %i\n",GetLastError());
+	CloseHandle(procHandle);
+	return 0;
 }
 
 #endif

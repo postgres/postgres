@@ -1,10 +1,11 @@
-/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.16 2004/01/26 22:59:54 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.17 2004/02/08 22:28:57 neilc Exp $ */
 
 /* undefine and redefine after #include */
 #undef mkdir
 
 #undef ERROR
 #include <windows.h>
+#include <winsock.h>
 #undef near
 
 /* Must be here to avoid conflicting with prototype in windows.h */
@@ -99,6 +100,13 @@ int			semget(int semKey, int semNum, int flags);
 int			semop(int semId, struct sembuf * sops, int flag);
 
 #define sleep(sec)	(Sleep(sec * 1000), /* no return value */ 0)
+
+
+#ifndef FRONTEND
+/* In libpq/pqsignal.c */
+#define kill(pid,sig)   pqkill(pid,sig)
+int pqkill(int pid, int sig);
+#endif
 
 /* Some extra signals */
 #define SIGHUP				1

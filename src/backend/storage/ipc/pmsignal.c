@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/pmsignal.c,v 1.12 2004/01/27 00:45:26 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/pmsignal.c,v 1.13 2004/02/08 22:28:56 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,6 @@
 #include "miscadmin.h"
 #include "storage/pmsignal.h"
 #include "storage/shmem.h"
-#include "libpq/pqsignal.h"
 
 
 /*
@@ -65,7 +64,7 @@ SendPostmasterSignal(PMSignalReason reason)
 	/* Atomically set the proper flag */
 	PMSignalFlags[reason] = true;
 	/* Send signal to postmaster */
-	pqkill(PostmasterPid, SIGUSR1);
+	kill(PostmasterPid, SIGUSR1);
 }
 
 /*

@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.151 2004/02/06 19:36:18 wieck Exp $
+ * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.152 2004/02/08 22:28:57 neilc Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to
@@ -74,11 +74,21 @@ extern volatile uint32 CritSectionCount;
 /* in postgres.c */
 extern void ProcessInterrupts(void);
 
+#ifndef WIN32
 #define CHECK_FOR_INTERRUPTS() \
 do { \
 	if (InterruptPending) \
 		ProcessInterrupts(); \
 } while(0)
+#else
+#define CHECK_FOR_INTERRUPTS() \
+do { \
+	WaitForSingleObjectEx(GetCurrentThread(),0,TRUE);	\
+	if (InterruptPending) \
+		ProcessInterrupts(); \
+} while (0)
+#endif
+
 
 #define HOLD_INTERRUPTS()  (InterruptHoldoffCount++)
 
