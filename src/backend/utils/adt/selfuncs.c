@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.80 2000/10/05 19:48:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.81 2000/11/10 09:38:21 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1250,7 +1250,7 @@ getattstatistics(Oid relid,
 	 * have at hand!  (For example, we might have a '>' operator rather
 	 * than the '<' operator that will appear in staop.)
 	 */
-	tuple = SearchSysCacheTuple(STATRELID,
+	tuple = SearchSysCacheTupleCopy(STATRELID,
 								ObjectIdGetDatum(relid),
 								Int16GetDatum((int16) attnum),
 								0,
@@ -1351,6 +1351,7 @@ getattstatistics(Oid relid,
 			pfree(strval);
 		}
 	}
+	heap_freetuple(tuple);
 
 	return true;
 }
