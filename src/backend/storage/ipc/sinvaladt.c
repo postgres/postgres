@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.9 1998/06/15 19:29:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.10 1998/06/18 04:20:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -147,6 +147,8 @@ SIAssignBackendId(SISeg *segInOutP, BackendTag backendTag)
 		}
 	}
 
+	Assert(stateP);
+	
 	if (stateP->tag != InvalidBackendTag)
 	{
 		if (stateP->tag == backendTag)
