@@ -6,6 +6,32 @@
 \i _int.sql
 \set ECHO all
 
+select intset(1234);
+select icount('{1234234,234234}');
+select sort('{1234234,-30,234234}');
+select sort('{1234234,-30,234234}','asc');
+select sort('{1234234,-30,234234}','desc');
+select sort_asc('{1234234,-30,234234}');
+select sort_desc('{1234234,-30,234234}');
+select uniq('{1234234,-30,-30,234234,-30}');
+select uniq(sort_asc('{1234234,-30,-30,234234,-30}'));
+select idx('{1234234,-30,-30,234234,-30}',-30);
+select subarray('{1234234,-30,-30,234234,-30}',2,3);
+select subarray('{1234234,-30,-30,234234,-30}',-1,1);
+select subarray('{1234234,-30,-30,234234,-30}',0,-1);
+
+select #'{1234234,234234}'::int[];
+select '{123,623,445}'::int[] + 1245;
+select '{123,623,445}'::int[] + 445;
+select '{123,623,445}'::int[] + '{1245,87,445}';
+select '{123,623,445}'::int[] - 623;
+select '{123,623,445}'::int[] - '{1623,623}';
+select '{123,623,445}'::int[] | 623;
+select '{123,623,445}'::int[] | 1623;
+select '{123,623,445}'::int[] | '{1623,623}';
+select '{123,623,445}'::int[] & '{1623,623}';
+
+
 --test query_int
 select '1'::query_int;
 select ' 1'::query_int;

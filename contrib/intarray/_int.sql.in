@@ -123,6 +123,81 @@ CREATE OPERATOR ~ (
    COMMUTATOR = '@', RESTRICT = contsel, JOIN = contjoinsel
 );
 
+--------------
+CREATE FUNCTION intset(int4) RETURNS _int4
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' WITH (isStrict, isCachable);
+
+CREATE FUNCTION icount(_int4) RETURNS int4
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' WITH (isStrict, isCachable);
+CREATE OPERATOR # (
+   RIGHTARG = _int4, PROCEDURE = icount
+);
+
+CREATE FUNCTION sort(_int4, text) RETURNS _int4
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' WITH (isStrict, isCachable);
+
+CREATE FUNCTION sort(_int4) RETURNS _int4
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' WITH (isStrict, isCachable);
+
+CREATE FUNCTION sort_asc(_int4) RETURNS _int4
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' WITH (isStrict, isCachable);
+
+CREATE FUNCTION sort_desc(_int4) RETURNS _int4
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' WITH (isStrict, isCachable);
+
+CREATE FUNCTION uniq(_int4) RETURNS _int4
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' WITH (isStrict, isCachable);
+
+CREATE FUNCTION idx(_int4, int4) RETURNS int4
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' WITH (isStrict, isCachable);
+CREATE OPERATOR # (
+   LEFTARG = _int4, RIGHTARG = int4, PROCEDURE = idx
+);
+
+CREATE FUNCTION subarray(_int4, int4, int4) RETURNS _int4
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' WITH (isStrict, isCachable);
+
+CREATE FUNCTION subarray(_int4, int4) RETURNS _int4
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' WITH (isStrict, isCachable);
+
+CREATE FUNCTION intarray_push_elem(_int4, int4) RETURNS _int4
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' WITH (isStrict, isCachable);
+CREATE OPERATOR + (
+   LEFTARG = _int4, RIGHTARG = int4, PROCEDURE = intarray_push_elem
+);
+
+CREATE FUNCTION intarray_push_array(_int4, _int4) RETURNS _int4
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' WITH (isStrict, isCachable);
+CREATE OPERATOR + (
+   LEFTARG = _int4, RIGHTARG = _int4, COMMUTATOR = +, PROCEDURE = intarray_push_array
+);
+
+CREATE FUNCTION intarray_del_elem(_int4, int4) RETURNS _int4
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' WITH (isStrict, isCachable);
+CREATE OPERATOR - (
+   LEFTARG = _int4, RIGHTARG = int4, PROCEDURE = intarray_del_elem
+);
+
+CREATE FUNCTION intset_union_elem(_int4, int4) RETURNS _int4
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' WITH (isStrict, isCachable);
+CREATE OPERATOR | (
+   LEFTARG = _int4, RIGHTARG = int4, PROCEDURE = intset_union_elem
+);
+
+CREATE OPERATOR | (
+   LEFTARG = _int4, RIGHTARG = _int4, COMMUTATOR = |, PROCEDURE = _int_union
+);
+
+CREATE FUNCTION intset_subtract(_int4, _int4) RETURNS _int4
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' WITH (isStrict, isCachable);
+CREATE OPERATOR - (
+   LEFTARG = _int4, RIGHTARG = _int4, PROCEDURE = intset_subtract
+);
+
+CREATE OPERATOR & (
+   LEFTARG = _int4, RIGHTARG = _int4, COMMUTATOR = &, PROCEDURE = _int_inter
+);
+--------------
 
 -- define the GiST support methods
 CREATE FUNCTION g_int_consistent(opaque,_int4,int4) RETURNS bool
