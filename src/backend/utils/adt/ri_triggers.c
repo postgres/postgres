@@ -6,7 +6,7 @@
  *
  *	1999 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.8 1999/12/07 00:13:41 wieck Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.9 1999/12/08 20:41:22 wieck Exp $
  *
  * ----------
  */
@@ -231,7 +231,8 @@ RI_FKey_check (FmgrInfo *proinfo)
 			 *    SELECT oid FROM <pktable>
 			 * ----------
 			 */
-			sprintf(querystr, "SELECT oid FROM \"%s\"", 
+			sprintf(querystr, "SELECT oid FROM \"%s\" FOR UPDATE OF \"%s\"", 
+								tgargs[RI_PK_RELNAME_ARGNO],
 								tgargs[RI_PK_RELNAME_ARGNO]);
 
 			/* ----------
@@ -378,6 +379,9 @@ RI_FKey_check (FmgrInfo *proinfo)
 					queryoids[i] = SPI_gettypeid(fk_rel->rd_att,
 									qkey.keypair[i][RI_KEYPAIR_FK_IDX]);
 				}
+				sprintf(buf, " FOR UPDATE OF \"%s\"",
+									tgargs[RI_PK_RELNAME_ARGNO]);
+				strcat(querystr, buf);
 
 				/* ----------
 				 * Prepare, save and remember the new plan.
@@ -1021,6 +1025,9 @@ RI_FKey_restrict_del (FmgrInfo *proinfo)
 					queryoids[i] = SPI_gettypeid(pk_rel->rd_att,
 									qkey.keypair[i][RI_KEYPAIR_PK_IDX]);
 				}
+				sprintf(buf, " FOR UPDATE OF \"%s\"", 
+									tgargs[RI_FK_RELNAME_ARGNO]);
+				strcat(querystr, buf);
 
 				/* ----------
 				 * Prepare, save and remember the new plan.
@@ -1234,6 +1241,9 @@ RI_FKey_restrict_upd (FmgrInfo *proinfo)
 					queryoids[i] = SPI_gettypeid(pk_rel->rd_att,
 									qkey.keypair[i][RI_KEYPAIR_PK_IDX]);
 				}
+				sprintf(buf, " FOR UPDATE OF \"%s\"", 
+									tgargs[RI_FK_RELNAME_ARGNO]);
+				strcat(querystr, buf);
 
 				/* ----------
 				 * Prepare, save and remember the new plan.
