@@ -1,9 +1,54 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.235.2.9 2003/12/02 16:14:38 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.235.2.10 2003/12/07 10:18:50 petere Exp $
 -->
 
 <appendix id="release">
  <title>Release Notes</title>
+
+ <sect1 id="release-7-4-1">
+  <title>Release 7.4.1</title>
+
+  <note>
+   <title>Release date</title>
+   <simpara>not yet</simpara>
+  </note>
+
+  <para>
+   This release contains a number of fixes for release 7.4.
+  </para>
+
+  <sect2>
+   <title>Migration to version 7.4.1</title>
+
+   <para>
+    A dump/restore is <emphasis>not</emphasis> required for those
+    running release 7.4.
+   </para>
+
+   <para>
+    If you want to install the fixes in the information schema
+    concerning the bit types, you need to reload the information
+    schema.  This is either accomplished by initializing a new cluster
+    by running <command>initdb</command>, or by running the following
+    sequence of SQL commands in each database (ideally including
+    <literal>template1</literal>) as a superuser in
+    <application>psql</application>, after installing the new release:
+<programlisting>
+DROP SCHEMA information_schema CASCADE;
+\i /usr/local/pgsql/share/information_schema.sql
+</programlisting>
+    Substitute your installation path in the second command.
+   </para>
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <para>
+    TBD
+   </para>
+  </sect2>
+ </sect1>
 
  <sect1 id="release-7-4">
   <title>Release 7.4</title>
