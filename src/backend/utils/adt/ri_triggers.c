@@ -16,9 +16,8 @@
  *
  *
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
- * Copyright 1999 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.38 2002/06/20 20:51:45 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.39 2002/06/21 02:59:38 momjian Exp $
  *
  * ----------
  */
