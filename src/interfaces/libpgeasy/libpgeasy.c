@@ -27,16 +27,15 @@
 static PGconn *conn;
 static PGresult *res = NULL;
 
+static int	tuple;		/* stores fetch location */
+
 #define ON_ERROR_STOP	0
 #define ON_ERROR_CONTINUE		1
 
-static int	on_error_state = ON_ERROR_STOP;
+static int	on_error_state = ON_ERROR_STOP;	/* halt on errors? */
 
-static int	in_result_block = FALSE;
+static int	in_result_block = FALSE;		
 static int	was_get_unset_result = FALSE;
-
-/* LOCAL VARIABLES */
-static int	tuple;
 
 /*
  *
