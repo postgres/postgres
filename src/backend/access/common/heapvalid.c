@@ -7,26 +7,42 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/common/Attic/heapvalid.c,v 1.1.1.1 1996/07/09 06:21:09 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/common/Attic/heapvalid.c,v 1.2 1996/10/19 03:12:50 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include "c.h"
 
+#include "postgres.h"
+
+#include "storage/block.h"
+#include "storage/off.h"
+#include "storage/itemptr.h"
+#include "utils/nabstime.h"
 #include "access/htup.h"
+
+#include "catalog/pg_attribute.h"
+#include "access/attnum.h"
+#include "nodes/nodes.h"
+#include "nodes/pg_list.h"
+#include "access/tupdesc.h"
+
 #include "access/skey.h"
-#include "access/heapam.h"
-#include "utils/tqual.h"
-#include "access/valid.h"	/* where the declarations go */
-#include "access/xact.h"
 
 #include "storage/buf.h"
-#include "storage/bufmgr.h"
-#include "storage/bufpage.h"
+
 #include "storage/itemid.h"
-#include "fmgr.h"
-#include "utils/elog.h"
+
+#include "storage/fd.h"
+#include "catalog/pg_am.h"
+#include "catalog/pg_class.h"
+#include "rewrite/prs2lock.h"
+#include "access/strat.h"
 #include "utils/rel.h"
+
+#include "storage/item.h"
+#include "storage/bufpage.h"
+
+#include "utils/tqual.h"
 
 /* ----------------
  *	heap_keytest
