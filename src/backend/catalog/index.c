@@ -7,19 +7,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.67 1999/01/21 22:48:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.68 1999/02/02 03:44:13 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
  *		index_create()			- Create a cataloged index relation
  *		index_destroy()			- Removes index relation from catalogs
  *
- * NOTES
- *	  Much of this code uses hardcoded sequential heap relation scans
- *	  to fetch information from the catalogs.  These should all be
- *	  rewritten to use the system caches lookup routines like
- *	  SearchSysCacheTuple, which can do efficient lookup and
- *	  caching.
  *
  *-------------------------------------------------------------------------
  */
@@ -46,10 +40,12 @@
 #include "storage/lmgr.h"
 #include "storage/smgr.h"
 #include "utils/builtins.h"
+#include "utils/catcache.h"
 #include "utils/mcxt.h"
 #include "utils/relcache.h"
 #include "utils/syscache.h"
 #include "utils/tqual.h"
+#include "utils/temprel.h"
 
 #ifndef HAVE_MEMMOVE
 #include <regex/utils.h>
@@ -64,16 +60,15 @@
 #define NTUPLES_PER_PAGE(natts) (BLCKSZ/((natts)*AVG_TUPLE_SIZE))
 
 /* non-export function prototypes */
-static Oid
-			RelationNameGetObjectId(char *relationName, Relation pg_class);
-static Oid	GetHeapRelationOid(char *heapRelationName, char *indexRelationName);
+static Oid	GetHeapRelationOid(char *heapRelationName, char *indexRelationName,
+								bool istemp);
 static TupleDesc BuildFuncTupleDesc(FuncIndexInfo *funcInfo);
 static TupleDesc ConstructTupleDescriptor(Oid heapoid, Relation heapRelation,
 						 List *attributeList,
 						 int numatts, AttrNumber *attNums);
 
 static void ConstructIndexReldesc(Relation indexRelation, Oid amoid);
-static Oid	UpdateRelationRelation(Relation indexRelation);
+static Oid	UpdateRelationRelation(Relation indexRelation, char *temp_relname);
 static void InitializeAttributeOids(Relation indexRelation,
 						int numatts,
 						Oid indexoid);
@@ -122,104 +117,29 @@ static FormData_pg_attribute sysatts[] = {
 };
 
 /* ----------------------------------------------------------------
- * RelationNameGetObjectId --
- *		Returns the object identifier for a relation given its name.
- *
- * ----------------------------------------------------------------
- */
-static Oid
-RelationNameGetObjectId(char *relationName,
-						Relation pg_class)
-{
-	HeapScanDesc pg_class_scan;
-	HeapTuple	pg_class_tuple;
-	Oid			relationObjectId;
-	ScanKeyData key;
-
-	/*
-	 * If this isn't bootstrap time, we can use the system catalogs to
-	 * speed this up.
-	 */
-
-	if (!IsBootstrapProcessingMode())
-	{
-		HeapTuple	tuple;
-
-		tuple = SearchSysCacheTuple(RELNAME,
-									PointerGetDatum(relationName),
-									0, 0, 0);
-
-		if (HeapTupleIsValid(tuple))
-			return tuple->t_data->t_oid;
-		else
-			return InvalidOid;
-	}
-
-	/* ----------------
-	 *	BOOTSTRAP TIME, do this the hard way.
-	 *	begin a scan of pg_class for the named relation
-	 * ----------------
-	 */
-	ScanKeyEntryInitialize(&key, 0, Anum_pg_class_relname,
-						   F_NAMEEQ,
-						   PointerGetDatum(relationName));
-
-	pg_class_scan = heap_beginscan(pg_class, 0, SnapshotNow, 1, &key);
-
-	/* ----------------
-	 *	if we find the named relation, fetch its relation id
-	 *	(the oid of the tuple we found).
-	 * ----------------
-	 */
-	pg_class_tuple = heap_getnext(pg_class_scan, 0);
-
-	if (!HeapTupleIsValid(pg_class_tuple))
-		relationObjectId = InvalidOid;
-	else
-		relationObjectId = pg_class_tuple->t_data->t_oid;
-
-	/* ----------------
-	 *	cleanup and return results
-	 * ----------------
-	 */
-	heap_endscan(pg_class_scan);
-
-	return relationObjectId;
-}
-
-
-/* ----------------------------------------------------------------
  *		GetHeapRelationOid
  * ----------------------------------------------------------------
  */
 static Oid
-GetHeapRelationOid(char *heapRelationName, char *indexRelationName)
+GetHeapRelationOid(char *heapRelationName, char *indexRelationName, bool istemp)
 {
-	Relation	pg_class;
 	Oid			indoid;
 	Oid			heapoid;
 
-	/* ----------------
-	 *	open pg_class and get the oid of the relation
-	 *	corresponding to the name of the index relation.
-	 * ----------------
-	 */
-	pg_class = heap_openr(RelationRelationName);
+	
+	indoid = RelnameFindRelid(indexRelationName);
 
-	indoid = RelationNameGetObjectId(indexRelationName, pg_class);
-
-	if (OidIsValid(indoid))
+	if ((!istemp && OidIsValid(indoid)) ||
+	    (istemp && get_temp_rel_by_name(indexRelationName) != NULL))
 		elog(ERROR, "Cannot create index: '%s' already exists",
 			 indexRelationName);
 
-	heapoid = RelationNameGetObjectId(heapRelationName, pg_class);
+	heapoid = RelnameFindRelid(heapRelationName);
 
 	if (!OidIsValid(heapoid))
 		elog(ERROR, "Cannot create index on '%s': relation does not exist",
 			 heapRelationName);
-
-	heap_close(pg_class);
-
+			 
 	return heapoid;
 }
 
@@ -538,7 +458,7 @@ ConstructIndexReldesc(Relation indexRelation, Oid amoid)
  * ----------------------------------------------------------------
  */
 static Oid
-UpdateRelationRelation(Relation indexRelation)
+UpdateRelationRelation(Relation indexRelation, char *temp_relname)
 {
 	Relation	pg_class;
 	HeapTuple	tuple;
@@ -561,6 +481,9 @@ UpdateRelationRelation(Relation indexRelation)
 	tuple->t_data->t_oid = RelationGetRelid(indexRelation);
 	heap_insert(pg_class, tuple);
 
+	if (temp_relname)
+		create_temp_relation(temp_relname, tuple);
+	
 	/*
 	 * During normal processing, we need to make sure that the system
 	 * catalog indices are correct.  Bootstrap (initdb) time doesn't
@@ -760,6 +683,7 @@ UpdateIndexRelation(Oid indexoid,
 	}
 	else
 		predText = (text *) fmgr(F_TEXTIN, "");
+
 	predLen = VARSIZE(predText);
 	itupLen = predLen + sizeof(FormData_pg_index);
 	indexForm = (Form_pg_index) palloc(itupLen);
@@ -1025,27 +949,28 @@ index_create(char *heapRelationName,
 	Oid			heapoid;
 	Oid			indexoid;
 	PredInfo   *predInfo;
-
+	bool		istemp = (get_temp_rel_by_name(heapRelationName) != NULL);
+	char		*temp_relname = NULL;
+	
 	/* ----------------
 	 *	check parameters
 	 * ----------------
 	 */
 	if (numatts < 1)
 		elog(ERROR, "must index at least one attribute");
-
+		
 	/* ----------------
 	 *	  get heap relation oid and open the heap relation
 	 *	  XXX ADD INDEXING
 	 * ----------------
 	 */
-	heapoid = GetHeapRelationOid(heapRelationName, indexRelationName);
+	heapoid = GetHeapRelationOid(heapRelationName, indexRelationName, istemp);
 
 	heapRelation = heap_open(heapoid);
 
 	/*
 	 * Only SELECT ... FOR UPDATE are allowed
 	 */
-
 	LockRelation(heapRelation, ShareLock);
 
 	/* ----------------
@@ -1061,12 +986,36 @@ index_create(char *heapRelationName,
 												numatts,
 												attNums);
 
+	/* invalidate cache so possible non-temp index is masked by temp */
+	if (istemp)
+	{
+		Oid relid = RelnameFindRelid(indexRelationName);
+
+		if (relid != InvalidOid)
+		{
+			/*
+			 *	This is heavy-handed, but appears necessary bjm 1999/02/01
+			 *	SystemCacheRelationFlushed(relid) is not enough either.
+			 */
+			RelationForgetRelation(relid);
+			ResetSystemCache();
+		}
+	}
+	
+	/* save user relation name because heap_create changes it */
+	if (istemp)
+	{
+		temp_relname = pstrdup(indexRelationName); /* save original value */
+		indexRelationName = palloc(NAMEDATALEN);
+		strcpy(indexRelationName, temp_relname); /* heap_create will change this */
+	}
+
 	/* ----------------
 	 *	create the index relation
 	 * ----------------
 	 */
 	indexRelation = heap_create(indexRelationName,
-								indexTupDesc);
+								indexTupDesc, false, istemp);
 
 	/* ----------------
 	 *	  construct the index relation descriptor
@@ -1081,7 +1030,7 @@ index_create(char *heapRelationName,
 	 *	  (append RELATION tuple)
 	 * ----------------
 	 */
-	indexoid = UpdateRelationRelation(indexRelation);
+	indexoid = UpdateRelationRelation(indexRelation, temp_relname);
 
 	/* ----------------
 	 * Now get the index procedure (only relevant for functional indices).
@@ -1162,9 +1111,9 @@ index_create(char *heapRelationName,
 }
 
 /* ----------------------------------------------------------------
+ *
  *		index_destroy
  *
- *		XXX break into modules like index_create
  * ----------------------------------------------------------------
  */
 void
@@ -1175,11 +1124,11 @@ index_destroy(Oid indexId)
 	Relation	relationRelation;
 	Relation	attributeRelation;
 	HeapTuple	tuple;
-	int16		attnum;
-
+ 	int16		attnum;
+ 	
 	Assert(OidIsValid(indexId));
 
-	/* why open it here?  bjm 1998/08/20 */
+	/* Open now to obtain lock by referencing table?  bjm */
 	userindexRelation = index_open(indexId);
 
 	/* ----------------
@@ -1192,7 +1141,7 @@ index_destroy(Oid indexId)
 									ObjectIdGetDatum(indexId),
 									0, 0, 0);
 
-	AssertState(HeapTupleIsValid(tuple));
+	Assert(HeapTupleIsValid(tuple));
 
 	heap_delete(relationRelation, &tuple->t_self, NULL);
 	pfree(tuple);
@@ -1217,6 +1166,9 @@ index_destroy(Oid indexId)
 	}
 	heap_close(attributeRelation);
 
+	/* does something only if it is a temp index */
+	remove_temp_relation(indexId);
+		
 	/* ----------------
 	 * fix INDEX relation
 	 * ----------------
@@ -1224,10 +1176,7 @@ index_destroy(Oid indexId)
 	tuple = SearchSysCacheTupleCopy(INDEXRELID,
 									ObjectIdGetDatum(indexId),
 									0, 0, 0);
-
-	if (!HeapTupleIsValid(tuple))
-		elog(NOTICE, "IndexRelationDestroy: %s's INDEX tuple missing",
-			 RelationGetRelationName(userindexRelation));
+	Assert(HeapTupleIsValid(tuple));
 
 	indexRelation = heap_openr(IndexRelationName);
 

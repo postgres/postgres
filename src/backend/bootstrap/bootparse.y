@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.22 1999/01/21 22:48:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.23 1999/02/02 03:44:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -164,7 +164,8 @@ Boot_CreateStmt:
 						if (DebugMode)
 							puts("creating bootstrap relation");
 						tupdesc = CreateTupleDesc(numattr,attrtypes);
-						reldesc = heap_create(LexIDStr($3), tupdesc);
+						reldesc = heap_create(LexIDStr($3), tupdesc,
+											  false, false);
 						if (DebugMode)
 							puts("bootstrap relation created ok");
 					}
@@ -175,7 +176,7 @@ Boot_CreateStmt:
 
 						tupdesc = CreateTupleDesc(numattr,attrtypes);
 						id = heap_create_with_catalog(LexIDStr($3),
-												tupdesc, RELKIND_RELATION);
+											tupdesc, RELKIND_RELATION, false);
 						if (!Quiet)
 							printf("CREATED relation %s with OID %d\n",
 								   LexIDStr($3), id);

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: psqlHelp.h,v 1.54 1998/10/14 05:10:02 momjian Exp $
+ * $Id: psqlHelp.h,v 1.55 1999/02/02 03:45:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -124,7 +124,7 @@ static struct _helpStruct QL_HELP[] = {
 	{"create table",
 		"create a new table",
 	"\
-\tCREATE TABLE class_name\n\
+\tCREATE [TEMP] TABLE class_name\n\
 \t(attr1 type1 [DEFAULT expression] [NOT NULL], ...attrN)\n\
 \t[INHERITS (class_name1, ...class_nameN)\n\
 \t[[CONSTRAINT name] CHECK condition1, ...conditionN] ]\n\
@@ -315,7 +315,7 @@ static struct _helpStruct QL_HELP[] = {
 		"retrieve tuples",
 	"\
 \tSELECT [DISTINCT [ON attrN]] expr1 [AS attr1], ...exprN\n\
-\t[INTO [TABLE] class_name]\n\
+\t[INTO [TEMP] [TABLE] class_name]\n\
 \t[FROM from_list]\n\
 \t[WHERE qual]\n\
 \t[GROUP BY group_list]\n\

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: view.c,v 1.29 1998/12/14 08:11:01 scrappy Exp $
+ *  $Id: view.c,v 1.30 1999/02/02 03:44:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -95,6 +95,7 @@ DefineVirtualRelation(char *relname, List *tlist)
 	 * nil...
 	 */
 	createStmt.relname = relname;
+	createStmt.istemp = false;
 	createStmt.tableElts = attrList;
 /*	  createStmt.tableType = NULL;*/
 	createStmt.inhRelnames = NIL;

@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.32 1999/01/25 18:02:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.33 1999/02/02 03:44:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1135,6 +1135,7 @@ modifyAggrefMakeSublink(Expr *origexp, Query *parsetree)
 	subquery->into			= NULL;
 	subquery->isPortal		= FALSE;
 	subquery->isBinary		= FALSE;
+	subquery->isTemp		= FALSE;
 	subquery->unionall		= FALSE;
 	subquery->uniqueFlag		= NULL;
 	subquery->sortClause		= NULL;
@@ -2767,7 +2768,7 @@ Except_Intersect_Rewrite (Query *parsetree)
   List	  *union_list = NIL, *sortClause;  
   List	  *left_expr, *right_expr, *resnames = NIL;
   char	  *op, *uniqueFlag, *into;
-  bool	  isBinary, isPortal;  
+  bool	  isBinary, isPortal, isTemp;  
   CmdType commandType = CMD_SELECT;
   List	  *rtable_insert = NIL;  
 
@@ -2811,7 +2812,8 @@ Except_Intersect_Rewrite (Query *parsetree)
   into = parsetree->into;
   isBinary = parsetree->isBinary;
   isPortal = parsetree->isPortal;  
-  
+  isTemp = parsetree->isTemp;
+
   /* The operator tree attached to parsetree->intersectClause is still 'raw'
    * ( = the leaf nodes are still SelectStmt nodes instead of Query nodes)
    * So step through the tree and transform the nodes using parse_analyze().
@@ -2959,6 +2961,8 @@ Except_Intersect_Rewrite (Query *parsetree)
   result->into = into;
   result->isPortal = isPortal;
   result->isBinary = isBinary;
+  result->isTemp = isTemp;
+
   /* The relation to insert into is attached to the range table
    * of the new top node */
   if (commandType == CMD_INSERT)  

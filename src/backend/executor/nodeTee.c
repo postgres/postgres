@@ -14,7 +14,7 @@
  *		ExecInitTee
  *		ExecEndTee
  *
- *  $Id: nodeTee.c,v 1.28 1999/02/01 13:33:27 vadim Exp $
+ *  $Id: nodeTee.c,v 1.29 1999/02/02 03:44:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -167,7 +167,7 @@ ExecInitTee(Tee *node, EState *currentEstate, Plan *parent)
 		else
 			bufferRel = heap_open(
 					heap_create_with_catalog(teeState->tee_bufferRelname,
-											 tupType, RELKIND_RELATION));
+										 tupType, RELKIND_RELATION, false));
 	}
 	else
 	{
@@ -176,7 +176,7 @@ ExecInitTee(Tee *node, EState *currentEstate, Plan *parent)
 				newoid());
 		bufferRel = heap_open(
 					heap_create_with_catalog(teeState->tee_bufferRelname,
-											 tupType, RELKIND_RELATION));
+										 tupType, RELKIND_RELATION, false));
 	}
 
 	teeState->tee_bufferRel = bufferRel;

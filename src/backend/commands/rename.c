@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.19 1998/12/15 12:45:58 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.20 1999/02/02 03:44:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 #include <utils/builtins.h>
 #include <catalog/catname.h>
 #include <utils/syscache.h>
+#include <catalog/heap.h>
 #include <catalog/indexing.h>
 #include <catalog/catalog.h>
 #include <commands/copy.h>
@@ -106,14 +107,8 @@ renameatt(char *relname,
 		List	   *child,
 				   *children;
 
-		reltup = SearchSysCacheTuple(RELNAME,
-									 PointerGetDatum(relname),
-									 0, 0, 0);
-
-		if (!HeapTupleIsValid(reltup))
+		if ((myrelid = RelnameFindRelid(relname)) == InvalidOid)
 			elog(ERROR, "renameatt: unknown relation: \"%s\"", relname);
-
-		myrelid = reltup->t_data->t_oid;
 
 		/* this routine is actually in the planner */
 		children = find_all_inheritors(lconsi(myrelid, NIL), NIL);
@@ -147,13 +142,9 @@ renameatt(char *relname,
 		}
 	}
 
-	reltup = SearchSysCacheTuple(RELNAME,
-								 PointerGetDatum(relname),
-								 0, 0, 0);
-	if (!HeapTupleIsValid(reltup))
+	
+	if ((relid = RelnameFindRelid(relname)) == InvalidOid)
 		elog(ERROR, "renameatt: relation \"%s\" nonexistent", relname);
-
-	relid = reltup->t_data->t_oid;
 
 	oldatttup = SearchSysCacheTupleCopy(ATTNAME,
 										ObjectIdGetDatum(relid),
@@ -211,8 +202,7 @@ void
 renamerel(char *oldrelname, char *newrelname)
 {
 	Relation	relrelation;	/* for RELATION relation */
-	HeapTuple	oldreltup,
-				newreltup;
+	HeapTuple	oldreltup;
 	char		oldpath[MAXPGPATH],
 				newpath[MAXPGPATH];
 	Relation	irelations[Num_pg_class_indices];
@@ -231,10 +221,7 @@ renamerel(char *oldrelname, char *newrelname)
 	if (!HeapTupleIsValid(oldreltup))
 		elog(ERROR, "renamerel: relation \"%s\" does not exist", oldrelname);
 
-	newreltup = SearchSysCacheTuple(RELNAME,
-									PointerGetDatum(newrelname),
-									0, 0, 0);
-	if (HeapTupleIsValid(newreltup))
+	if (RelnameFindRelid(newrelname) != InvalidOid)
 		elog(ERROR, "renamerel: relation \"%s\" exists", newrelname);
 
 	/* rename the path first, so if this fails the rename's not done */

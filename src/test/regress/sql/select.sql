@@ -72,7 +72,7 @@ SELECT onek.unique1, onek.string4
 --   ORDER BY stringu1 using <;
 	
 SELECT two, stringu1, ten, string4
-   INTO TABLE temp
+   INTO TABLE tmp
    FROM onek;
 
 --

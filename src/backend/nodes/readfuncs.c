@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.43 1999/01/24 00:28:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.44 1999/02/02 03:44:27 momjian Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -119,6 +119,10 @@ _readQuery()
 	token = lsptok(NULL, &length);		/* skip :isBinary */
 	token = lsptok(NULL, &length);		/* get isBinary */
 	local_node->isBinary = (token[0] == 't') ? true : false;
+
+	token = lsptok(NULL, &length);		/* skip :isTemp */
+	token = lsptok(NULL, &length);		/* get isTemp */
+	local_node->isTemp = (token[0] == 't') ? true : false;
 
 	token = lsptok(NULL, &length);		/* skip :unionall */
 	token = lsptok(NULL, &length);		/* get unionall */

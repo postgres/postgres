@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.55 1999/01/22 18:47:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.56 1999/02/02 03:45:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -404,7 +404,7 @@ scan_pg_rel_ind(RelationBuildDescInfo buildinfo)
 	switch (buildinfo.infotype)
 	{
 		case INFO_RELID:
-			return_tuple = ClassOidIndexScan(pg_class_desc, buildinfo.i.info_id);
+			return_tuple = ClassOidIndexScan(pg_class_desc,buildinfo.i.info_id);
 			break;
 
 		case INFO_RELNAME:
@@ -821,7 +821,6 @@ RelationBuildDesc(RelationBuildDescInfo buildinfo)
 	 */
 	if (!HeapTupleIsValid(pg_class_tuple))
 	{
-
 		MemoryContextSwitchTo(oldcxt);
 
 		return NULL;
@@ -867,8 +866,7 @@ RelationBuildDesc(RelationBuildDescInfo buildinfo)
 	 */
 	if (OidIsValid(relam))
 	{
-		relation->rd_am = (Form_pg_am)
-			AccessMethodObjectIdGetForm(relam);
+		relation->rd_am = (Form_pg_am) AccessMethodObjectIdGetForm(relam);
 	}
 
 	/* ----------------
@@ -927,7 +925,6 @@ RelationBuildDesc(RelationBuildDescInfo buildinfo)
 	 *	restore memory context and return the new reldesc.
 	 * ----------------
 	 */
-
 	RelationCacheInsert(relation);
 
 	/* -------------------
@@ -1197,8 +1194,7 @@ RelationIdGetRelation(Oid relationId)
 	buildinfo.i.info_id = relationId;
 
 	rd = RelationBuildDesc(buildinfo);
-	return
-		rd;
+	return rd;
 }
 
 /* --------------------------------
@@ -1332,8 +1328,9 @@ RelationFlushRelation(Relation *relationPtr,
 
 /* --------------------------------
  *		RelationForgetRelation -
- *		   RelationFlushRelation + if the relation is local then get rid of
- *		   the relation descriptor from the newly created relation list.
+ *		   RelationFlushRelation + if the relation is myxactonly then
+ *		   get rid of the relation descriptor from the newly created
+ *		   relation list.
  * --------------------------------
  */
 void
@@ -1342,37 +1339,39 @@ RelationForgetRelation(Oid rid)
 	Relation	relation;
 
 	RelationIdCacheLookup(rid, relation);
-	Assert(PointerIsValid(relation));
 
-	if (relation->rd_islocal)
+	if (PointerIsValid(relation))
 	{
-		MemoryContext oldcxt;
-		List	   *curr;
-		List	   *prev = NIL;
-
-		oldcxt = MemoryContextSwitchTo((MemoryContext) CacheCxt);
-
-		foreach(curr, newlyCreatedRelns)
+		if (relation->rd_myxactonly)
 		{
-			Relation	reln = lfirst(curr);
-
-			Assert(reln != NULL && reln->rd_islocal);
-			if (RelationGetRelid(reln) == rid)
-				break;
-			prev = curr;
+			MemoryContext oldcxt;
+			List	   *curr;
+			List	   *prev = NIL;
+	
+			oldcxt = MemoryContextSwitchTo((MemoryContext) CacheCxt);
+	
+			foreach(curr, newlyCreatedRelns)
+			{
+				Relation	reln = lfirst(curr);
+	
+				Assert(reln != NULL && reln->rd_myxactonly);
+				if (RelationGetRelid(reln) == rid)
+					break;
+				prev = curr;
+			}
+			if (curr == NIL)
+				elog(FATAL, "Local relation %s not found in list",
+					 (RelationGetRelationName(relation))->data);
+			if (prev == NIL)
+				newlyCreatedRelns = lnext(newlyCreatedRelns);
+			else
+				lnext(prev) = lnext(curr);
+			pfree(curr);
+			MemoryContextSwitchTo(oldcxt);
 		}
-		if (curr == NIL)
-			elog(FATAL, "Local relation %s not found in list",
-				 (RelationGetRelationName(relation))->data);
-		if (prev == NIL)
-			newlyCreatedRelns = lnext(newlyCreatedRelns);
-		else
-			lnext(prev) = lnext(curr);
-		pfree(curr);
-		MemoryContextSwitchTo(oldcxt);
+	
+		RelationFlushRelation(&relation, false);
 	}
-
-	RelationFlushRelation(&relation, false);
 }
 
 /* --------------------------------
@@ -1393,9 +1392,8 @@ RelationIdInvalidateRelationCacheByRelationId(Oid relationId)
 	 * BufferSync also? But I'll leave it for now since I don't want to
 	 * break anything.) - ay 3/95
 	 */
-	if (PointerIsValid(relation) && !relation->rd_islocal)
+	if (PointerIsValid(relation) && !relation->rd_myxactonly)
 	{
-
 		/*
 		 * The boolean onlyFlushReferenceCountZero in RelationFlushReln()
 		 * should be set to true when we are incrementing the command
@@ -1502,13 +1500,13 @@ RelationRegisterRelation(Relation relation)
 
 	/*
 	 * we've just created the relation. It is invisible to anyone else
-	 * before the transaction is committed. Setting rd_islocal allows us
+	 * before the transaction is committed. Setting rd_myxactonly allows us
 	 * to use the local buffer manager for select/insert/etc before the
 	 * end of transaction. (We also need to keep track of relations
 	 * created during a transaction and does the necessary clean up at the
 	 * end of the transaction.)				- ay 3/95
 	 */
-	relation->rd_islocal = TRUE;
+	relation->rd_myxactonly = TRUE;
 	newlyCreatedRelns = lcons(relation, newlyCreatedRelns);
 
 	MemoryContextSwitchTo(oldcxt);
@@ -1516,7 +1514,7 @@ RelationRegisterRelation(Relation relation)
 
 /*
  * RelationPurgeLocalRelation -
- *	  find all the Relation descriptors marked rd_islocal and reset them.
+ *	  find all the Relation descriptors marked rd_myxactonly and reset them.
  *	  This should be called at the end of a transaction (commit/abort) when
  *	  the "local" relations will become visible to others and the multi-user
  *	  buffer pool should be used.
@@ -1536,7 +1534,7 @@ RelationPurgeLocalRelation(bool xactCommitted)
 		List	   *l = newlyCreatedRelns;
 		Relation	reln = lfirst(l);
 
-		Assert(reln != NULL && reln->rd_islocal);
+		Assert(reln != NULL && reln->rd_myxactonly);
 
 		if (!xactCommitted)
 		{
@@ -1545,18 +1543,18 @@ RelationPurgeLocalRelation(bool xactCommitted)
 			 * remove the file if we abort. This is so that files for
 			 * tables created inside a transaction block get removed.
 			 */
-			if (reln->rd_istemp)
+			if (reln->rd_isnoname)
 			{
-				if (!(reln->rd_tmpunlinked))
+				if (!(reln->rd_nonameunlinked))
 				{
 					smgrunlink(DEFAULT_SMGR, reln);
-					reln->rd_tmpunlinked = TRUE;
+					reln->rd_nonameunlinked = TRUE;
 				}
 			}
 			else
 				smgrunlink(DEFAULT_SMGR, reln);
 		}
-		else if (!IsBootstrapProcessingMode() && !(reln->rd_istemp))
+		else if (!IsBootstrapProcessingMode() && !(reln->rd_isnoname))
 
 			/*
 			 * RelationFlushRelation () below will flush relation
@@ -1568,7 +1566,7 @@ RelationPurgeLocalRelation(bool xactCommitted)
 			 */
 			smgrclose(DEFAULT_SMGR, reln);
 
-		reln->rd_islocal = FALSE;
+		reln->rd_myxactonly = FALSE;
 
 		if (!IsBootstrapProcessingMode())
 			RelationFlushRelation(&reln, FALSE);

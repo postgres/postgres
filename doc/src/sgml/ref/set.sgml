@@ -363,7 +363,7 @@ SET TIME ZONE { '<REPLACEABLE CLASS="PARAMETER">timezone</REPLACEABLE>' | LOCAL 
 				  <listitem>
 					<para>
 					  enables the genetic optimizer algorithm
-					  for statements with 8 or more tables.
+					  for statements with 6 or more tables.
 					</para>
 				  </listitem>
 				</varlistentry>
@@ -406,7 +406,7 @@ SET TIME ZONE { '<REPLACEABLE CLASS="PARAMETER">timezone</REPLACEABLE>' | LOCAL 
 	  </para>
 	  <para>
 		This algorithm is on by default, which used GEQO for
-		statements of eight or more tables. 
+		statements of six or more tables.
 		(See the chapter on GEQO in the Programmer's Guide
 		for more information).
 	  </para>

@@ -7,7 +7,8 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.70 1998/12/15 12:45:40 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.71 1999/02/02 03:44:08 momjian Exp $
+ *
  *
  * INTERFACE ROUTINES
  *		heap_create()			- Create an uncataloged heap relation
@@ -26,6 +27,7 @@
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
+#include "miscadmin.h"
 
 #include "access/heapam.h"
 #include "catalog/catalog.h"
@@ -41,7 +43,6 @@
 #include "catalog/pg_type.h"
 #include "commands/trigger.h"
 #include "fmgr.h"
-#include "miscadmin.h"
 #include "nodes/plannodes.h"
 #include "optimizer/tlist.h"
 #include "parser/parse_expr.h"
@@ -53,11 +54,13 @@
 #include "storage/lmgr.h"
 #include "storage/smgr.h"
 #include "tcop/tcopprot.h"
+#include "utils/catcache.h"
 #include "utils/builtins.h"
 #include "utils/mcxt.h"
 #include "utils/relcache.h"
 #include "utils/syscache.h"
 #include "utils/tqual.h"
+#include "utils/temprel.h"
 
 #ifndef HAVE_MEMMOVE
 #include <regex/utils.h>
@@ -65,18 +68,17 @@
 #include <string.h>
 #endif
 
-static void AddPgRelationTuple(Relation pg_class_desc,
+static void AddNewRelationTuple(Relation pg_class_desc,
 				   Relation new_rel_desc, Oid new_rel_oid, unsigned natts,
-				   char relkind);
-static void AddToTempRelList(Relation r);
-static void DeletePgAttributeTuples(Relation rel);
-static void DeletePgRelationTuple(Relation rel);
-static void DeletePgTypeTuple(Relation rel);
-static int	RelationAlreadyExists(Relation pg_class_desc, char *relname);
+				   char relkind, char *temp_relname);
+static void AddToNoNameRelList(Relation r);
+static void DeleteAttributeTuples(Relation rel);
+static void DeleteRelationTuple(Relation rel);
+static void DeleteTypeTuple(Relation rel);
 static void RelationRemoveIndexes(Relation relation);
 static void RelationRemoveInheritance(Relation relation);
-static void RemoveFromTempRelList(Relation r);
-static void addNewRelationType(char *typeName, Oid new_rel_oid);
+static void RemoveFromNoNameRelList(Relation r);
+static void AddNewRelationType(char *typeName, Oid new_rel_oid);
 static void StoreConstraints(Relation rel);
 static void RemoveConstraints(Relation rel);
 
@@ -167,27 +169,26 @@ static TempRelList *tempRels = NULL;
  *
  *
  * if heap_create is called with "" as the name, then heap_create will create
- * a temporary name "temp_$RELOID" for the relation
+ * a temporary name "pg_noname.$PID.$SEQUENCE" for the relation
  * ----------------------------------------------------------------
  */
 Relation
-heap_create(char *name,
-			TupleDesc tupDesc)
+heap_create(char *relname,
+			TupleDesc tupDesc,
+			bool isnoname,
+			bool istemp)
 {
 	unsigned	i;
 	Oid			relid;
 	Relation	rel;
 	int			len;
 	bool		nailme = false;
-	char	   *relname = name;
-	char		tempname[NAMEDATALEN];
-	int			isTemp = 0;
 	int			natts = tupDesc->natts;
-
-/*	  Form_pg_attribute *att = tupDesc->attrs; */
-
+	static unsigned int uniqueId = 0;
+	
 	extern GlobalMemory CacheCxt;
 	MemoryContext oldcxt;
+
 
 	/* ----------------
 	 *	sanity checks
@@ -195,7 +196,7 @@ heap_create(char *name,
 	 */
 	AssertArg(natts > 0);
 
-	if (IsSystemRelationName(relname) && IsNormalProcessingMode())
+	if (relname && IsSystemRelationName(relname) && IsNormalProcessingMode())
 	{
 		elog(ERROR,
 		 "Illegal class name: %s -- pg_ is reserved for system catalogs",
@@ -218,22 +219,22 @@ heap_create(char *name,
 	 *	descriptor follows.
 	 * ----------------
 	 */
-	if (!strcmp(RelationRelationName, relname))
+	if (relname && !strcmp(RelationRelationName, relname))
 	{
 		relid = RelOid_pg_class;
 		nailme = true;
 	}
-	else if (!strcmp(AttributeRelationName, relname))
+	else if (relname && !strcmp(AttributeRelationName, relname))
 	{
 		relid = RelOid_pg_attribute;
 		nailme = true;
 	}
-	else if (!strcmp(ProcedureRelationName, relname))
+	else if (relname && !strcmp(ProcedureRelationName, relname))
 	{
 		relid = RelOid_pg_proc;
 		nailme = true;
 	}
-	else if (!strcmp(TypeRelationName, relname))
+	else if (relname && !strcmp(TypeRelationName, relname))
 	{
 		relid = RelOid_pg_type;
 		nailme = true;
@@ -241,14 +242,21 @@ heap_create(char *name,
 	else
 	{
 		relid = newoid();
+	}
 
-		if (name[0] == '\0')
-		{
-			snprintf(tempname, NAMEDATALEN, "temp_%d", relid);
-			Assert(strlen(tempname) < NAMEDATALEN);
-			relname = tempname;
-			isTemp = 1;
-		}
+	if (isnoname)
+	{
+		Assert(!relname);
+		relname = palloc(NAMEDATALEN);
+		snprintf(relname, NAMEDATALEN, "pg_noname.%d.%u",
+			(int) MyProcPid, uniqueId++);
+	}
+
+	if (istemp)
+	{
+		/* replace relname of caller */
+		snprintf(relname, NAMEDATALEN, "pg_temp.%d.%u",
+			(int) MyProcPid, uniqueId++);
 	}
 
 	/* ----------------
@@ -262,15 +270,10 @@ heap_create(char *name,
 	rel = (Relation) palloc(len);
 	MemSet((char *) rel, 0, len);
 
-	/* ----------
-	   create a new tuple descriptor from the one passed in
+	/*
+	 * create a new tuple descriptor from the one passed in
 	*/
 	rel->rd_att = CreateTupleDescCopyConstr(tupDesc);
-
-	/* ----------------
-	 *	initialize the fields of our new relation descriptor
-	 * ----------------
-	 */
 
 	/* ----------------
 	 *	nail the reldesc if this is a bootstrap create reln and
@@ -285,8 +288,11 @@ heap_create(char *name,
 
 	rel->rd_rel = (Form_pg_class) palloc(sizeof *rel->rd_rel);
 
-	MemSet((char *) rel->rd_rel, 0,
-		   sizeof *rel->rd_rel);
+	/* ----------------
+	 *	initialize the fields of our new relation descriptor
+	 * ----------------
+	 */
+	MemSet((char *) rel->rd_rel, 0, sizeof *rel->rd_rel);
 	namestrcpy(&(rel->rd_rel->relname), relname);
 	rel->rd_rel->relkind = RELKIND_UNCATALOGED;
 	rel->rd_rel->relnatts = natts;
@@ -305,31 +311,30 @@ heap_create(char *name,
 	}
 
 	/* ----------------
-	 *	remember if this is a temp relation
+	 *	remember if this is a noname relation
 	 * ----------------
 	 */
-
-	rel->rd_istemp = isTemp;
+	rel->rd_isnoname = isnoname;
 
 	/* ----------------
 	 *	have the storage manager create the relation.
 	 * ----------------
 	 */
 
-	rel->rd_tmpunlinked = TRUE; /* change once table is created */
+	rel->rd_nonameunlinked = TRUE; /* change once table is created */
 	rel->rd_fd = (File) smgrcreate(DEFAULT_SMGR, rel);
-	rel->rd_tmpunlinked = FALSE;
+	rel->rd_nonameunlinked = FALSE;
 
 	RelationRegisterRelation(rel);
 
 	MemoryContextSwitchTo(oldcxt);
 
 	/*
-	 * add all temporary relations to the tempRels list so they can be
+	 * add all noname relations to the tempRels list so they can be
 	 * properly disposed of at the end of transaction
 	 */
-	if (isTemp)
-		AddToTempRelList(rel);
+	if (isnoname)
+		AddToNoNameRelList(rel);
 
 	return rel;
 }
@@ -343,7 +348,7 @@ heap_create(char *name,
  *		1) CheckAttributeNames() is used to make certain the tuple
  *		   descriptor contains a valid set of attribute names
  *
- *		2) pg_class is opened and RelationAlreadyExists()
+ *		2) pg_class is opened and RelationFindRelid()
  *		   preforms a scan to ensure that no relation with the
  *		   same name already exists.
  *
@@ -356,7 +361,7 @@ heap_create(char *name,
  *		5) AddNewAttributeTuples() is called to register the
  *		   new relation's schema in pg_attribute.
  *
- *		6) AddPgRelationTuple() is called to register the
+ *		6) AddNewRelationTuple() is called to register the
  *		   relation itself in the catalogs.
  *
  *		7) StoreConstraints is called ()		- vadim 08/22/97
@@ -456,71 +461,78 @@ CheckAttributeNames(TupleDesc tupdesc)
 }
 
 /* --------------------------------
- *		RelationAlreadyExists
+ *		RelnameFindRelid
  *
  *		this preforms a scan of pg_class to ensure that
- *		no relation with the same name already exists.	The caller
- *		has to open pg_class and pass an open descriptor.
+ *		no relation with the same name already exists.
  * --------------------------------
  */
-static int
-RelationAlreadyExists(Relation pg_class_desc, char *relname)
+Oid
+RelnameFindRelid(char *relname)
 {
-	ScanKeyData key;
-	HeapScanDesc pg_class_scan;
-	HeapTuple	tup;
+	HeapTuple	tuple;
+	Oid			relid;
 
 	/*
 	 * If this is not bootstrap (initdb) time, use the catalog index on
 	 * pg_class.
 	 */
-
 	if (!IsBootstrapProcessingMode())
 	{
-		tup = SearchSysCacheTuple(RELNAME,
+		tuple = SearchSysCacheTuple(RELNAME,
 								  PointerGetDatum(relname),
 								  0, 0, 0);
-		if (HeapTupleIsValid(tup))
-			return true;
+		if (HeapTupleIsValid(tuple))
+			relid = tuple->t_data->t_oid;
 		else
-			return false;
+			relid = InvalidOid;
 	}
+	else
+	{
+		Relation pg_class_desc;
+		ScanKeyData key;
+		HeapScanDesc pg_class_scan;
+		
+		pg_class_desc = heap_openr(RelationRelationName);
 
-	/* ----------------
-	 *	At bootstrap time, we have to do this the hard way.  Form the
-	 *	scan key.
-	 * ----------------
-	 */
-	ScanKeyEntryInitialize(&key,
-						   0,
-						   (AttrNumber) Anum_pg_class_relname,
-						   (RegProcedure) F_NAMEEQ,
-						   (Datum) relname);
+		/* ----------------
+		 *	At bootstrap time, we have to do this the hard way.  Form the
+		 *	scan key.
+		 * ----------------
+		 */
+		ScanKeyEntryInitialize(&key,
+							   0,
+							   (AttrNumber) Anum_pg_class_relname,
+							   (RegProcedure) F_NAMEEQ,
+							   (Datum) relname);
+	
+		/* ----------------
+		 *	begin the scan
+		 * ----------------
+		 */
+		pg_class_scan = heap_beginscan(pg_class_desc,
+									   0,
+									   SnapshotNow,
+									   1,
+									   &key);
+	
+		/* ----------------
+		 *	get a tuple.  if the tuple is NULL then it means we
+		 *	didn't find an existing relation.
+		 * ----------------
+		 */
+		tuple = heap_getnext(pg_class_scan, 0);
+	
+		if (HeapTupleIsValid(tuple))
+			relid = tuple->t_data->t_oid;
+		else
+			relid = InvalidOid;
 
-	/* ----------------
-	 *	begin the scan
-	 * ----------------
-	 */
-	pg_class_scan = heap_beginscan(pg_class_desc,
-								   0,
-								   SnapshotNow,
-								   1,
-								   &key);
+		heap_endscan(pg_class_scan);
 
-	/* ----------------
-	 *	get a tuple.  if the tuple is NULL then it means we
-	 *	didn't find an existing relation.
-	 * ----------------
-	 */
-	tup = heap_getnext(pg_class_scan, 0);
-
-	/* ----------------
-	 *	end the scan and return existance of relation.
-	 * ----------------
-	 */
-	heap_endscan(pg_class_scan);
-
-	return HeapTupleIsValid(tup);
+		heap_close(pg_class_desc);
+	}
+	return relid;
 }
 
 /* --------------------------------
@@ -583,6 +595,7 @@ AddNewAttributeTuples(Oid new_rel_oid,
 							 (char *) *dpp);
 
 		heap_insert(rel, tup);
+			
 		if (hasindex)
 			CatalogIndexInsert(idescs, Num_pg_attr_indices, rel, tup);
 
@@ -623,18 +636,19 @@ AddNewAttributeTuples(Oid new_rel_oid,
 }
 
 /* --------------------------------
- *		AddPgRelationTuple
+ *		AddNewRelationTuple
  *
  *		this registers the new relation in the catalogs by
  *		adding a tuple to pg_class.
  * --------------------------------
  */
 static void
-AddPgRelationTuple(Relation pg_class_desc,
+AddNewRelationTuple(Relation pg_class_desc,
 				   Relation new_rel_desc,
 				   Oid new_rel_oid,
 				   unsigned natts,
-				   char relkind)
+				   char relkind,
+				   char *temp_relname)
 {
 	Form_pg_class new_rel_reltup;
 	HeapTuple	tup;
@@ -679,9 +693,11 @@ AddPgRelationTuple(Relation pg_class_desc,
 
 	heap_insert(pg_class_desc, tup);
 
+	if (temp_relname)
+		create_temp_relation(temp_relname, tup);
+	
 	if (!isBootstrap)
 	{
-
 		/*
 		 * First, open the catalog indices and insert index tuples for the
 		 * new relation.
@@ -690,23 +706,22 @@ AddPgRelationTuple(Relation pg_class_desc,
 		CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, idescs);
 		CatalogIndexInsert(idescs, Num_pg_class_indices, pg_class_desc, tup);
 		CatalogCloseIndices(Num_pg_class_indices, idescs);
-
 		/* now restore processing mode */
 		SetProcessingMode(NormalProcessing);
 	}
-
+	
 	pfree(tup);
 }
 
 
 /* --------------------------------
- *		addNewRelationType -
+ *		AddNewRelationType -
  *
  *		define a complex type corresponding to the new relation
  * --------------------------------
  */
 static void
-addNewRelationType(char *typeName, Oid new_rel_oid)
+AddNewRelationType(char *typeName, Oid new_rel_oid)
 {
 	Oid			new_type_oid;
 
@@ -745,38 +760,55 @@ addNewRelationType(char *typeName, Oid new_rel_oid)
 Oid
 heap_create_with_catalog(char *relname,
 						 TupleDesc tupdesc,
-						 char relkind)
+						 char relkind,
+						 bool istemp)
 {
 	Relation	pg_class_desc;
 	Relation	new_rel_desc;
 	Oid			new_rel_oid;
-
 	int			natts = tupdesc->natts;
-
+	char		*temp_relname = NULL;
+	
 	/* ----------------
 	 *	sanity checks
 	 * ----------------
 	 */
-	AssertState(IsNormalProcessingMode() || IsBootstrapProcessingMode());
+	Assert(IsNormalProcessingMode() || IsBootstrapProcessingMode());
 	if (natts == 0 || natts > MaxHeapAttributeNumber)
 		elog(ERROR, "amcreate: from 1 to %d attributes must be specified",
-			 MaxHeapAttributeNumber);
+ 			 MaxHeapAttributeNumber);
 
 	CheckAttributeNames(tupdesc);
 
-	/* ----------------
-	 *	open pg_class and see that the relation doesn't
-	 *	already exist.
-	 * ----------------
-	 */
-	pg_class_desc = heap_openr(RelationRelationName);
-
-	if (RelationAlreadyExists(pg_class_desc, relname))
-	{
-		heap_close(pg_class_desc);
+	/* temp tables can mask non-temp tables */
+	if ((!istemp && RelnameFindRelid(relname)) ||
+	   (istemp && get_temp_rel_by_name(relname) != NULL))
 		elog(ERROR, "%s relation already exists", relname);
-	}
 
+	/* invalidate cache so non-temp table is masked by temp */
+	if (istemp)
+	{
+		Oid relid = RelnameFindRelid(relname);
+
+		if (relid != InvalidOid)
+		{
+			/*
+			 *	This is heavy-handed, but appears necessary bjm 1999/02/01
+			 *	SystemCacheRelationFlushed(relid) is not enough either.
+			 */
+			RelationForgetRelation(relid);
+			ResetSystemCache();
+		}	
+	}
+	
+	/* save user relation name because heap_create changes it */
+	if (istemp)
+	{
+		temp_relname = pstrdup(relname); /* save original value */
+		relname = palloc(NAMEDATALEN);
+		strcpy(relname, temp_relname); /* heap_create will change this */
+	}
+	
 	/* ----------------
 	 *	ok, relation does not already exist so now we
 	 *	create an uncataloged relation and pull its relation oid
@@ -784,9 +816,11 @@ heap_create_with_catalog(char *relname,
 	 *
 	 *	Note: The call to heap_create() does all the "real" work
 	 *	of creating the disk file for the relation.
+	 *  This changes relname for noname and temp tables.
 	 * ----------------
 	 */
-	new_rel_desc = heap_create(relname, tupdesc);
+	new_rel_desc = heap_create(relname, tupdesc, false, istemp);
+
 	new_rel_oid = new_rel_desc->rd_att->attrs[0]->attrelid;
 
 	/* ----------------
@@ -794,7 +828,7 @@ heap_create_with_catalog(char *relname,
 	 *	we add a new system type corresponding to the new relation.
 	 * ----------------
 	 */
-	addNewRelationType(relname, new_rel_oid);
+	AddNewRelationType(relname, new_rel_oid);
 
 	/* ----------------
 	 *	now add tuples to pg_attribute for the attributes in
@@ -807,13 +841,22 @@ heap_create_with_catalog(char *relname,
 	 *	now update the information in pg_class.
 	 * ----------------
 	 */
-	AddPgRelationTuple(pg_class_desc,
+	pg_class_desc = heap_openr(RelationRelationName);
+
+	AddNewRelationTuple(pg_class_desc,
 					   new_rel_desc,
 					   new_rel_oid,
 					   natts,
-					   relkind);
+					   relkind,
+					   temp_relname);
 
 	StoreConstraints(new_rel_desc);
+
+	if (istemp)
+	{
+		pfree(relname);
+		pfree(temp_relname);
+	}
 
 	/* ----------------
 	 *	ok, the relation has been cataloged, so close our relations
@@ -990,12 +1033,12 @@ RelationRemoveIndexes(Relation relation)
 }
 
 /* --------------------------------
- *		DeletePgRelationTuple
+ *		DeleteRelationTuple
  *
  * --------------------------------
  */
 static void
-DeletePgRelationTuple(Relation rel)
+DeleteRelationTuple(Relation rel)
 {
 	Relation	pg_class_desc;
 	HeapTuple	tup;
@@ -1012,7 +1055,7 @@ DeletePgRelationTuple(Relation rel)
 	if (!HeapTupleIsValid(tup))
 	{
 		heap_close(pg_class_desc);
-		elog(ERROR, "DeletePgRelationTuple: %s relation nonexistent",
+		elog(ERROR, "DeleteRelationTuple: %s relation nonexistent",
 			 &rel->rd_rel->relname);
 	}
 
@@ -1027,12 +1070,12 @@ DeletePgRelationTuple(Relation rel)
 }
 
 /* --------------------------------
- *		DeletePgAttributeTuples
+ *		DeleteAttributeTuples
  *
  * --------------------------------
  */
 static void
-DeletePgAttributeTuples(Relation rel)
+DeleteAttributeTuples(Relation rel)
 {
 	Relation	pg_attribute_desc;
 	HeapTuple	tup;
@@ -1073,7 +1116,7 @@ DeletePgAttributeTuples(Relation rel)
 }
 
 /* --------------------------------
- *		DeletePgTypeTuple
+ *		DeleteTypeTuple
  *
  *		If the user attempts to destroy a relation and there
  *		exists attributes in other relations of type
@@ -1082,7 +1125,7 @@ DeletePgAttributeTuples(Relation rel)
  * --------------------------------
  */
 static void
-DeletePgTypeTuple(Relation rel)
+DeleteTypeTuple(Relation rel)
 {
 	Relation	pg_type_desc;
 	HeapScanDesc pg_type_scan;
@@ -1127,7 +1170,7 @@ DeletePgTypeTuple(Relation rel)
 	{
 		heap_endscan(pg_type_scan);
 		heap_close(pg_type_desc);
-		elog(ERROR, "DeletePgTypeTuple: %s type nonexistent",
+		elog(ERROR, "DeleteTypeTuple: %s type nonexistent",
 			 &rel->rd_rel->relname);
 	}
 
@@ -1171,7 +1214,7 @@ DeletePgTypeTuple(Relation rel)
 		heap_endscan(pg_attribute_scan);
 		heap_close(pg_attribute_desc);
 
-		elog(ERROR, "DeletePgTypeTuple: att of type %s exists in relation %d",
+		elog(ERROR, "DeleteTypeTuple: att of type %s exists in relation %d",
 			 &rel->rd_rel->relname, relid);
 	}
 	heap_endscan(pg_attribute_scan);
@@ -1199,6 +1242,7 @@ heap_destroy_with_catalog(char *relname)
 {
 	Relation	rel;
 	Oid			rid;
+	bool		istemp = (get_temp_rel_by_name(relname) != NULL);
 
 	/* ----------------
 	 *	first open the relation.  if the relation does exist,
@@ -1216,7 +1260,8 @@ heap_destroy_with_catalog(char *relname)
 	 *	prevent deletion of system relations
 	 * ----------------
 	 */
-	if (IsSystemRelationName(RelationGetRelationName(rel)->data))
+	/* allow temp of pg_class? Guess so. */
+	if (!istemp && IsSystemRelationName(RelationGetRelationName(rel)->data))
 		elog(ERROR, "amdestroy: cannot destroy %s relation",
 			 &rel->rd_rel->relname);
 
@@ -1248,22 +1293,26 @@ heap_destroy_with_catalog(char *relname)
 	 *	delete attribute tuples
 	 * ----------------
 	 */
-	DeletePgAttributeTuples(rel);
+	DeleteAttributeTuples(rel);
 
+	if (istemp)
+		remove_temp_relation(rid);
+		
 	/* ----------------
 	 *	delete type tuple.	here we want to see the effects
 	 *	of the deletions we just did, so we use setheapoverride().
 	 * ----------------
 	 */
 	setheapoverride(true);
-	DeletePgTypeTuple(rel);
+	DeleteTypeTuple(rel);
 	setheapoverride(false);
 
 	/* ----------------
 	 *	delete relation tuple
 	 * ----------------
 	 */
-	DeletePgRelationTuple(rel);
+	 /* must delete fake tuple in cache */
+	DeleteRelationTuple(rel);
 
 	/*
 	 * release dirty buffers of this relation
@@ -1283,16 +1332,15 @@ heap_destroy_with_catalog(char *relname)
 	 *	unlink the relation and finish up.
 	 * ----------------
 	 */
-	if (!(rel->rd_istemp) || !(rel->rd_tmpunlinked))
+	if (!(rel->rd_isnoname) || !(rel->rd_nonameunlinked))
 		smgrunlink(DEFAULT_SMGR, rel);
 
-	rel->rd_tmpunlinked = TRUE;
+	rel->rd_nonameunlinked = TRUE;
 
 	UnlockRelation(rel, AccessExclusiveLock);
 
 	heap_close(rel);
 
-	/* ok - flush the relation from the relcache */
 	RelationForgetRelation(rid);
 }
 
@@ -1306,11 +1354,11 @@ void
 heap_destroy(Relation rel)
 {
 	ReleaseRelationBuffers(rel);
-	if (!(rel->rd_istemp) || !(rel->rd_tmpunlinked))
+	if (!(rel->rd_isnoname) || !(rel->rd_nonameunlinked))
 		smgrunlink(DEFAULT_SMGR, rel);
-	rel->rd_tmpunlinked = TRUE;
+	rel->rd_nonameunlinked = TRUE;
 	heap_close(rel);
-	RemoveFromTempRelList(rel);
+	RemoveFromNoNameRelList(rel);
 }
 
 
@@ -1336,7 +1384,7 @@ heap_destroy(Relation rel)
 
 */
 void
-InitTempRelList(void)
+InitNoNameRelList(void)
 {
 	if (tempRels)
 	{
@@ -1356,10 +1404,10 @@ InitTempRelList(void)
 
    MODIFIES the global variable tempRels
 	  we don't really remove it, just mark it as NULL
-	  and DestroyTempRels will look for NULLs
+	  and DestroyNoNameRels will look for NULLs
 */
 static void
-RemoveFromTempRelList(Relation r)
+RemoveFromNoNameRelList(Relation r)
 {
 	int			i;
 
@@ -1382,7 +1430,7 @@ RemoveFromTempRelList(Relation r)
    MODIFIES the global variable tempRels
 */
 static void
-AddToTempRelList(Relation r)
+AddToNoNameRelList(Relation r)
 {
 	if (!tempRels)
 		return;
@@ -1401,7 +1449,7 @@ AddToTempRelList(Relation r)
    go through the tempRels list and destroy each of the relations
 */
 void
-DestroyTempRels(void)
+DestroyNoNameRels(void)
 {
 	int			i;
 	Relation	rel;

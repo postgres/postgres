@@ -4,7 +4,7 @@
 #    Makefile for utils/cache
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/cache/Makefile,v 1.9 1998/08/24 01:13:52 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/cache/Makefile,v 1.10 1999/02/02 03:44:54 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -13,7 +13,8 @@ include ../../../Makefile.global
 
 CFLAGS += -I../..
 
-OBJS = catcache.o inval.o rel.o relcache.o syscache.o lsyscache.o fcache.o
+OBJS = catcache.o inval.o rel.o relcache.o syscache.o lsyscache.o \
+	fcache.o temprel.o
 
 all: SUBSYS.o
 

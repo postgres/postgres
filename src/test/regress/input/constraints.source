@@ -122,22 +122,22 @@ DROP SEQUENCE INSERT_SEQ;
 
 CREATE SEQUENCE INSERT_SEQ START 4;
 
-CREATE TABLE TEMP (xd INT, yd TEXT, zd INT);
+CREATE TABLE tmp (xd INT, yd TEXT, zd INT);
 
-INSERT INTO TEMP VALUES (null, 'Y', null);
-INSERT INTO TEMP VALUES (5, '!check failed', null);
-INSERT INTO TEMP VALUES (null, 'try again', null);
-INSERT INTO INSERT_TBL(y) select yd from TEMP;
+INSERT INTO tmp VALUES (null, 'Y', null);
+INSERT INTO tmp VALUES (5, '!check failed', null);
+INSERT INTO tmp VALUES (null, 'try again', null);
+INSERT INTO INSERT_TBL(y) select yd from tmp;
 
 SELECT '' AS three, * FROM INSERT_TBL;
 
-INSERT INTO INSERT_TBL SELECT * FROM TEMP WHERE yd = 'try again';
-INSERT INTO INSERT_TBL(y,z) SELECT yd, -7 FROM TEMP WHERE yd = 'try again';
-INSERT INTO INSERT_TBL(y,z) SELECT yd, -8 FROM TEMP WHERE yd = 'try again';
+INSERT INTO INSERT_TBL SELECT * FROM tmp WHERE yd = 'try again';
+INSERT INTO INSERT_TBL(y,z) SELECT yd, -7 FROM tmp WHERE yd = 'try again';
+INSERT INTO INSERT_TBL(y,z) SELECT yd, -8 FROM tmp WHERE yd = 'try again';
 
 SELECT '' AS four, * FROM INSERT_TBL;
 
-DROP TABLE TEMP;
+DROP TABLE tmp;
 
 --
 -- Check constraints on UPDATE

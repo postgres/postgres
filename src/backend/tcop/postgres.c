@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.97 1999/01/18 00:09:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.98 1999/02/02 03:44:51 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -72,6 +72,7 @@
 #include "utils/mcxt.h"
 #include "utils/rel.h"
 #include "utils/ps_status.h"
+#include "utils/temprel.h"
 
 #if FALSE
 #include "nodes/relation.h"
@@ -1502,6 +1503,8 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!TransactionFlushEnabled())
 		on_shmem_exit(FlushBufferPool, NULL);
 
+	on_shmem_exit(remove_all_temp_relations, NULL);
+
 	/* ----------------
 	 *	Set up handler for cancel-request signal, and
 	 *	send this backend's cancellation info to the frontend.
@@ -1535,7 +1538,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.97 $ $Date: 1999/01/18 00:09:56 $\n");
+		puts("$Revision: 1.98 $ $Date: 1999/02/02 03:44:51 $\n");
 	}
 
 	/* ----------------

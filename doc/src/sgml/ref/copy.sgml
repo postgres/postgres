@@ -248,7 +248,7 @@ Specifies that output goes to a pipe or terminal.
    </para>
    <para>
     The backslash character has other special meanings.  NULL attributes are
-    output as "\N".  A literal backslash character is output as two
+    represented as "\N".  A literal backslash character is represented as two
     consecutive backslashes ("\\").  A literal tab character is represented
     as a backslash and a tab.  A literal newline character is
     represented as a backslash and a newline.  When loading text data

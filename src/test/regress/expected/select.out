@@ -173,7 +173,7 @@ unique1|string4
 (20 rows)
 
 QUERY: SELECT two, stringu1, ten, string4
-   INTO TABLE temp
+   INTO TABLE tmp
    FROM onek;
 QUERY: SELECT p.name, p.age FROM person* p;
 name   |age

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.45 1998/12/15 12:46:19 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.46 1999/02/02 03:44:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -231,7 +231,7 @@ ReadBufferWithBufferLock(Relation reln,
 	bool		isLocalBuf;
 
 	extend = (blockNum == P_NEW);
-	isLocalBuf = reln->rd_islocal;
+	isLocalBuf = reln->rd_myxactonly;
 
 	if (isLocalBuf)
 	{
@@ -1374,7 +1374,7 @@ BlockNumber
 RelationGetNumberOfBlocks(Relation relation)
 {
 	return
-	((relation->rd_islocal) ? relation->rd_nblocks :
+	((relation->rd_myxactonly) ? relation->rd_nblocks :
 	 smgrnblocks(DEFAULT_SMGR, relation));
 }
 
@@ -1395,7 +1395,7 @@ ReleaseRelationBuffers(Relation rel)
 	int			holding = 0;
 	BufferDesc *buf;
 
-	if (rel->rd_islocal)
+	if (rel->rd_myxactonly)
 	{
 		for (i = 0; i < NLocBuffer; i++)
 		{
@@ -1564,7 +1564,7 @@ BlowawayRelationBuffers(Relation rel, BlockNumber block)
 	int			i;
 	BufferDesc *buf;
 
-	if (rel->rd_islocal)
+	if (rel->rd_myxactonly)
 	{
 		for (i = 0; i < NLocBuffer; i++)
 		{

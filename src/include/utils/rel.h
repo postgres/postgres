@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rel.h,v 1.20 1998/09/01 04:39:29 momjian Exp $
+ * $Id: rel.h,v 1.21 1999/02/02 03:45:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,10 +49,10 @@ typedef struct RelationData
 	File		rd_fd;			/* open file descriptor */
 	int			rd_nblocks;		/* number of blocks in rel */
 	uint16		rd_refcnt;		/* reference count */
-	bool		rd_islocal;		/* uses the local buffer mgr */
+	bool		rd_myxactonly;	/* uses the local buffer mgr */
 	bool		rd_isnailed;	/* rel is nailed in cache */
-	bool		rd_istemp;		/* rel is a temp rel */
-	bool		rd_tmpunlinked; /* temp rel already unlinked */
+	bool		rd_isnoname;	/* rel has no name */
+	bool		rd_nonameunlinked; /* noname rel already unlinked */
 	Form_pg_am	rd_am;			/* AM tuple */
 	Form_pg_class rd_rel;		/* RELATION tuple */
 	Oid			rd_id;			/* relations's object id */

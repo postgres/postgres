@@ -1,10 +1,10 @@
 QUERY: SELECT *
-   INTO TABLE temp1
-   FROM temp
+   INTO TABLE tmp1
+   FROM tmp
    WHERE onek.unique1 < 2;
-QUERY: DROP TABLE temp1;
+QUERY: DROP TABLE tmp1;
 QUERY: SELECT *
-   INTO TABLE temp1
-   FROM temp
+   INTO TABLE tmp1
+   FROM tmp
    WHERE onek2.unique1 < 2;
-QUERY: DROP TABLE temp1;
+QUERY: DROP TABLE tmp1;

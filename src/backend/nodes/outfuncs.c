@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: outfuncs.c,v 1.61 1999/01/24 00:28:20 momjian Exp $
+ *  $Id: outfuncs.c,v 1.62 1999/02/02 03:44:26 momjian Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -69,8 +69,13 @@ _outIntList(StringInfo str, List *list)
 static void
 _outCreateStmt(StringInfo str, CreateStmt *node)
 {
-	appendStringInfo(str, " CREATE :relname %s :columns ", 
+	appendStringInfo(str, " CREATE :relname %s ", 
 		stringStringInfo(node->relname));
+
+	appendStringInfo(str, " :istemp %s ",
+			node->istemp ? "true" : "false");
+
+	appendStringInfo(str, "	:columns ");
 	_outNode(str, node->tableElts);
 
 	appendStringInfo(str, " :inhRelnames ");
@@ -197,11 +202,12 @@ _outQuery(StringInfo str, Query *node)
 	}
 
 	appendStringInfo(str, 
-			" :resultRelation %d :into %s :isPortal %s :isBinary %s :unionall %s ",
+	" :resultRelation %d :into %s :isPortal %s :isBinary %s :isTemp %s :unionall %s ",
 			node->resultRelation,
 			stringStringInfo(node->into),
 			node->isPortal ? "true" : "false",
 			node->isBinary ? "true" : "false",
+			node->isTemp ? "true" : "false",
 			node->unionall ? "true" : "false");
 
 	appendStringInfo(str, " :unique %s :sortClause ", 

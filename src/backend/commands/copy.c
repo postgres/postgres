@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.69 1999/02/01 20:25:54 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.70 1999/02/02 03:44:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -646,7 +646,6 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 		index_nulls[i] = ' ';
 		byval[i] = (bool) IsTypeByVal(attr[i]->atttypid);
 	}
-	values = (Datum *) palloc(sizeof(Datum) * attr_count);
 
 	lineno = 0;
 	while (!done)
@@ -873,13 +872,16 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 	}
 	pfree(values);
 	pfree(nulls);
+	pfree(index_nulls);
+	pfree(idatum);
+	pfree(byval);
+	
 	if (!binary)
 	{
 		pfree(in_functions);
 		pfree(elements);
 		pfree(typmod);
 	}
-	pfree(byval);
 
 	/* comments in execUtils.c */
 	if (has_index)

@@ -4,7 +4,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	  $Id: psort.c,v 1.47 1999/01/17 06:19:02 momjian Exp $
+ *	  $Id: psort.c,v 1.48 1999/02/02 03:45:12 momjian Exp $
  *
  * NOTES
  *		Sorts the first relation into the second relation.
@@ -1019,9 +1019,8 @@ gettape()
 
 	tp = (struct tapelst *) palloc((unsigned) sizeof(struct tapelst));
 
-	snprintf(uniqueName, MAXPGPATH - 1, "%spg_psort.%d.%d", 
-		 TEMPDIR, (int) MyProcPid, uniqueFileId);
-	uniqueFileId++;
+	snprintf(uniqueName, MAXPGPATH - 1, "%spg_psort.%d.%u", 
+		 TEMPDIR, (int) MyProcPid, uniqueFileId++);
 
 	tapeinit = 1;
 

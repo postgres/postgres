@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.68 1999/01/21 22:48:20 momjian Exp $
+ * $Id: parsenodes.h,v 1.69 1999/02/02 03:45:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,6 +43,7 @@ typedef struct Query
 	char	   *into;			/* portal (cursor) name */
 	bool		isPortal;		/* is this a retrieve into portal? */
 	bool		isBinary;		/* binary portal? */
+	bool		isTemp;			/* is 'into' a temp table? */
 	bool		unionall;		/* union without unique sort */
 	bool		hasAggs;		/* has aggregates in target list */
 	bool		hasSubLinks;	/* has subquery SubLink */
@@ -138,6 +139,7 @@ typedef struct CopyStmt
 typedef struct CreateStmt
 {
 	NodeTag		type;
+	bool		istemp;			/* is this a temp table? */
 	char	   *relname;		/* the relation to create */
 	List	   *tableElts;		/* column definitions list of Column */
 	List	   *inhRelnames;	/* relations to inherit from list of Value
@@ -662,6 +664,7 @@ typedef struct SelectStmt
 	List	   *sortClause;		/* sort clause (a list of SortGroupBy's) */
 	char	   *portalname;		/* the portal (cursor) to create */
 	bool		binary;			/* a binary (internal) portal? */
+	bool		istemp;			/* into is a temp table */
 	bool		unionall;		/* union without unique sort */
 	Node	   *limitOffset;	/* # of result tuples to skip */
 	Node	   *limitCount;		/* # of result tuples to return */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.56 1999/01/29 09:22:59 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.57 1999/02/02 03:44:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,7 @@
 #include "utils/palloc.h"
 #include "catalog/pg_type.h"
 #include "storage/lmgr.h"
+#include "optimizer/planmain.h"
 
 /*
  * listCopy--
@@ -1572,6 +1573,7 @@ _copyQuery(Query *from)
 		newnode->into = pstrdup(from->into);
 	newnode->isPortal = from->isPortal;
 	newnode->isBinary = from->isBinary;
+	newnode->isTemp = from->isTemp;
 	newnode->unionall = from->unionall;
 	if (from->uniqueFlag)
 		newnode->uniqueFlag = pstrdup(from->uniqueFlag);

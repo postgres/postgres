@@ -1,0 +1,29 @@
+QUERY: CREATE TABLE temptest(col int);
+QUERY: CREATE INDEX i_temptest ON temptest(col);
+QUERY: CREATE TEMP TABLE temptest(col int);
+QUERY: CREATE INDEX i_temptest ON temptest(col);
+QUERY: DROP INDEX i_temptest;
+QUERY: DROP TABLE temptest;
+QUERY: DROP INDEX i_temptest;
+QUERY: DROP TABLE temptest;
+QUERY: CREATE TABLE temptest(col int);
+QUERY: INSERT INTO temptest VALUES (1);
+QUERY: CREATE TEMP TABLE temptest(col int);
+QUERY: INSERT INTO temptest VALUES (2);
+QUERY: SELECT * FROM temptest;
+col
+---
+  2
+(1 row)
+
+QUERY: DROP TABLE temptest;
+QUERY: SELECT * FROM temptest;
+col
+---
+  1
+(1 row)
+
+QUERY: DROP TABLE temptest;
+QUERY: CREATE TEMP TABLE temptest(col int);
+QUERY: SELECT * FROM temptest;
+ERROR:  temptest: Table does not exist.

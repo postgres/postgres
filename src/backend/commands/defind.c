@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/defind.c,v 1.30 1999/01/21 22:48:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/defind.c,v 1.31 1999/02/02 03:44:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -98,15 +98,11 @@ DefineIndex(char *heapRelationName,
 	/*
 	 * compute heap relation id
 	 */
-	tuple = SearchSysCacheTuple(RELNAME,
-								PointerGetDatum(heapRelationName),
-								0, 0, 0);
-	if (!HeapTupleIsValid(tuple))
+	if ((relationId = RelnameFindRelid(heapRelationName)) == InvalidOid)
 	{
 		elog(ERROR, "DefineIndex: %s relation not found",
 			 heapRelationName);
 	}
-	relationId = tuple->t_data->t_oid;
 
 	if (unique && strcmp(accessMethodName, "btree") != 0)
 		elog(ERROR, "DefineIndex: unique indices are only available with the btree access method");

@@ -1,24 +1,24 @@
 --
 -- awk '{print $3;}' onek.data | sort -n | uniq
 --
-SELECT DISTINCT two FROM temp;
+SELECT DISTINCT two FROM tmp;
 
 --
 -- awk '{print $5;}' onek.data | sort -n | uniq
 --
-SELECT DISTINCT ten FROM temp;
+SELECT DISTINCT ten FROM tmp;
 
 --
 -- awk '{print $16;}' onek.data | sort -d | uniq
 --
-SELECT DISTINCT string4 FROM temp;
+SELECT DISTINCT string4 FROM tmp;
 
 --
 -- awk '{print $3,$16,$5;}' onek.data | sort -d | uniq |
 -- sort +0n -1 +1d -2 +2n -3
 --
 SELECT DISTINCT two, string4, ten
-   FROM temp
+   FROM tmp
    ORDER BY two using <, string4 using <, ten using <;
 
 --

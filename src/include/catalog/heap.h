@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heap.h,v 1.16 1998/09/01 04:34:41 momjian Exp $
+ * $Id: heap.h,v 1.17 1999/02/02 03:45:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,15 +15,17 @@
 
 #include <utils/rel.h>
 
-extern Relation heap_create(char *relname, TupleDesc att);
+extern Oid	RelnameFindRelid(char *relname);
+extern Relation heap_create(char *relname, TupleDesc att,
+							bool isnoname, bool istemp);
 
 extern Oid heap_create_with_catalog(char *relname,
-						 TupleDesc tupdesc, char relkind);
+						 TupleDesc tupdesc, char relkind, bool istemp);
 
 extern void heap_destroy_with_catalog(char *relname);
 extern void heap_destroy(Relation rel);
 
-extern void InitTempRelList(void);
-extern void DestroyTempRels(void);
+extern void InitNoNameRelList(void);
+extern void DestroyNoNameRels(void);
 
 #endif	 /* HEAP_H */

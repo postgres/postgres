@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.18 1998/11/27 19:52:28 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.19 1999/02/02 03:45:01 momjian Exp $
  *
  * Note - this code is real crufty...
  *
@@ -20,6 +20,7 @@
 #include "access/heapam.h"		/* XXX to support hacks below */
 #include "access/htup.h"
 #include "catalog/catalog.h"
+#include "catalog/heap.h"
 #include "storage/bufpage.h"
 #include "storage/buf.h"		/* XXX for InvalidBuffer */
 #include "storage/ipc.h"
@@ -244,31 +245,17 @@ RelationIdRegisterLocalInvalid(Oid relationId, Oid objectId)
 static void
 getmyrelids()
 {
-	HeapTuple	tuple;
+	MyRelationRelationId = RelnameFindRelid(RelationRelationName);
+	Assert(RelationRelationName != InvalidOid);
 
-	tuple = SearchSysCacheTuple(RELNAME,
-								PointerGetDatum(RelationRelationName),
-								0, 0, 0);
-	Assert(HeapTupleIsValid(tuple));
-	MyRelationRelationId = tuple->t_data->t_oid;
+	MyAttributeRelationId = RelnameFindRelid(AttributeRelationName);
+	Assert(AttributeRelationName != InvalidOid);
 
-	tuple = SearchSysCacheTuple(RELNAME,
-								PointerGetDatum(AttributeRelationName),
-								0, 0, 0);
-	Assert(HeapTupleIsValid(tuple));
-	MyAttributeRelationId = tuple->t_data->t_oid;
+	MyAMRelationId = RelnameFindRelid(AccessMethodRelationName);
+	Assert(MyAMRelationId != InvalidOid);
 
-	tuple = SearchSysCacheTuple(RELNAME,
-								PointerGetDatum(AccessMethodRelationName),
-								0, 0, 0);
-	Assert(HeapTupleIsValid(tuple));
-	MyAMRelationId = tuple->t_data->t_oid;
-
-	tuple = SearchSysCacheTuple(RELNAME,
-					   PointerGetDatum(AccessMethodOperatorRelationName),
-								0, 0, 0);
-	Assert(HeapTupleIsValid(tuple));
-	MyAMOPRelationId = tuple->t_data->t_oid;
+	MyAMOPRelationId = RelnameFindRelid(AccessMethodOperatorRelationName);
+	Assert(MyAMOPRelationId != InvalidOid);
 }
 
 /* --------------------------------
@@ -614,10 +601,6 @@ RelationInvalidateHeapTuple(Relation relation, HeapTuple tuple)
 	 */
 	RelationInvalidateHeapTuple_DEBUG1;
 
-	/* ----------------
-	 *
-	 * ----------------
-	 */
 	RelationInvalidateCatalogCacheTuple(relation,
 										tuple,
 										CacheIdRegisterLocalInvalid);
@@ -625,12 +608,4 @@ RelationInvalidateHeapTuple(Relation relation, HeapTuple tuple)
 	RelationInvalidateRelationCache(relation,
 									tuple,
 									RelationIdRegisterLocalInvalid);
-
-#ifdef NOT_USED
-	if (RefreshWhenInvalidate)
-		/* what does this do?  bjm 1998/08/20 */
-		RelationInvalidateCatalogCacheTuple(relation,
-											tuple,
-											(void (*) ()) NULL);
-#endif
 }

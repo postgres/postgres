@@ -148,11 +148,11 @@ eight|      8
 QUERY: DELETE FROM INSERT_TBL;
 QUERY: DROP SEQUENCE INSERT_SEQ;
 QUERY: CREATE SEQUENCE INSERT_SEQ START 4;
-QUERY: CREATE TABLE TEMP (xd INT, yd TEXT, zd INT);
-QUERY: INSERT INTO TEMP VALUES (null, 'Y', null);
-QUERY: INSERT INTO TEMP VALUES (5, '!check failed', null);
-QUERY: INSERT INTO TEMP VALUES (null, 'try again', null);
-QUERY: INSERT INTO INSERT_TBL(y) select yd from TEMP;
+QUERY: CREATE TABLE tmp (xd INT, yd TEXT, zd INT);
+QUERY: INSERT INTO tmp VALUES (null, 'Y', null);
+QUERY: INSERT INTO tmp VALUES (5, '!check failed', null);
+QUERY: INSERT INTO tmp VALUES (null, 'try again', null);
+QUERY: INSERT INTO INSERT_TBL(y) select yd from tmp;
 NOTICE:  insert_seq.nextval: sequence was re-created
 QUERY: SELECT '' AS three, * FROM INSERT_TBL;
 three|x|y            | z
@@ -162,10 +162,10 @@ three|x|y            | z
      |6|try again    |-6
 (3 rows)
 
-QUERY: INSERT INTO INSERT_TBL SELECT * FROM TEMP WHERE yd = 'try again';
+QUERY: INSERT INTO INSERT_TBL SELECT * FROM tmp WHERE yd = 'try again';
 ERROR:  ExecAppend: rejected due to CHECK constraint $2
-QUERY: INSERT INTO INSERT_TBL(y,z) SELECT yd, -7 FROM TEMP WHERE yd = 'try again';
-QUERY: INSERT INTO INSERT_TBL(y,z) SELECT yd, -8 FROM TEMP WHERE yd = 'try again';
+QUERY: INSERT INTO INSERT_TBL(y,z) SELECT yd, -7 FROM tmp WHERE yd = 'try again';
+QUERY: INSERT INTO INSERT_TBL(y,z) SELECT yd, -8 FROM tmp WHERE yd = 'try again';
 ERROR:  ExecAppend: rejected due to CHECK constraint insert_con
 QUERY: SELECT '' AS four, * FROM INSERT_TBL;
 four|x|y            | z
@@ -176,7 +176,7 @@ four|x|y            | z
     |7|try again    |-7
 (4 rows)
 
-QUERY: DROP TABLE TEMP;
+QUERY: DROP TABLE tmp;
 QUERY: UPDATE INSERT_TBL SET x = NULL WHERE x = 6;
 ERROR:  ExecReplace: rejected due to CHECK constraint $2
 QUERY: UPDATE INSERT_TBL SET x = 6 WHERE x = 6;

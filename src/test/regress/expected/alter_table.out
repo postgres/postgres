@@ -1,31 +1,31 @@
-QUERY: CREATE TABLE temp (initial int4);
-QUERY: ALTER TABLE temp ADD COLUMN a int4;
-QUERY: ALTER TABLE temp ADD COLUMN b name;
-QUERY: ALTER TABLE temp ADD COLUMN c text;
-QUERY: ALTER TABLE temp ADD COLUMN d float8;
-QUERY: ALTER TABLE temp ADD COLUMN e float4;
-QUERY: ALTER TABLE temp ADD COLUMN f int2;
-QUERY: ALTER TABLE temp ADD COLUMN g polygon;
-QUERY: ALTER TABLE temp ADD COLUMN h abstime;
-QUERY: ALTER TABLE temp ADD COLUMN i char;
-QUERY: ALTER TABLE temp ADD COLUMN j abstime[];
-QUERY: ALTER TABLE temp ADD COLUMN k dt;
+QUERY: CREATE TABLE tmp (initial int4);
+QUERY: ALTER TABLE tmp ADD COLUMN a int4;
+QUERY: ALTER TABLE tmp ADD COLUMN b name;
+QUERY: ALTER TABLE tmp ADD COLUMN c text;
+QUERY: ALTER TABLE tmp ADD COLUMN d float8;
+QUERY: ALTER TABLE tmp ADD COLUMN e float4;
+QUERY: ALTER TABLE tmp ADD COLUMN f int2;
+QUERY: ALTER TABLE tmp ADD COLUMN g polygon;
+QUERY: ALTER TABLE tmp ADD COLUMN h abstime;
+QUERY: ALTER TABLE tmp ADD COLUMN i char;
+QUERY: ALTER TABLE tmp ADD COLUMN j abstime[];
+QUERY: ALTER TABLE tmp ADD COLUMN k dt;
 ERROR: type name lookup of dt failed
-QUERY: ALTER TABLE temp ADD COLUMN l tid;
-QUERY: ALTER TABLE temp ADD COLUMN m xid;
-QUERY: ALTER TABLE temp ADD COLUMN n oid8;
-QUERY: ALTER TABLE temp ADD COLUMN p smgr;
-QUERY: ALTER TABLE temp ADD COLUMN q point;
-QUERY: ALTER TABLE temp ADD COLUMN r lseg;
-QUERY: ALTER TABLE temp ADD COLUMN s path;
-QUERY: ALTER TABLE temp ADD COLUMN t box;
-QUERY: ALTER TABLE temp ADD COLUMN u tinterval;
-QUERY: ALTER TABLE temp ADD COLUMN v datetime;
-QUERY: ALTER TABLE temp ADD COLUMN w timespan;
-QUERY: ALTER TABLE temp ADD COLUMN x float8[];
-QUERY: ALTER TABLE temp ADD COLUMN y float4[];
-QUERY: ALTER TABLE temp ADD COLUMN z int2[];
-QUERY: INSERT INTO temp (a, b, c, d, e, f, g, h, i, j, k, l, m, n, p, q, r, s, t, u,
+QUERY: ALTER TABLE tmp ADD COLUMN l tid;
+QUERY: ALTER TABLE tmp ADD COLUMN m xid;
+QUERY: ALTER TABLE tmp ADD COLUMN n oid8;
+QUERY: ALTER TABLE tmp ADD COLUMN p smgr;
+QUERY: ALTER TABLE tmp ADD COLUMN q point;
+QUERY: ALTER TABLE tmp ADD COLUMN r lseg;
+QUERY: ALTER TABLE tmp ADD COLUMN s path;
+QUERY: ALTER TABLE tmp ADD COLUMN t box;
+QUERY: ALTER TABLE tmp ADD COLUMN u tinterval;
+QUERY: ALTER TABLE tmp ADD COLUMN v datetime;
+QUERY: ALTER TABLE tmp ADD COLUMN w timespan;
+QUERY: ALTER TABLE tmp ADD COLUMN x float8[];
+QUERY: ALTER TABLE tmp ADD COLUMN y float4[];
+QUERY: ALTER TABLE tmp ADD COLUMN z int2[];
+QUERY: INSERT INTO tmp (a, b, c, d, e, f, g, h, i, j, k, l, m, n, p, q, r, s, t, u,
 	v, w, x, y, z)
    VALUES (4, 'name', 'text', 4.1, 4.1, 2, '(4.1,4.1,3.1,3.1)',
         'Mon May  1 00:30:30 1995', 'c', '{Mon May  1 00:30:30 1995, Monday Aug 24 14:43:07 1992, epoch}',
@@ -33,43 +33,43 @@ QUERY: INSERT INTO temp (a, b, c, d, e, f, g, h, i, j, k, l, m, n, p, q, r, s, t
 	'1 2 3 4 5 6 7 8', 'magnetic disk', '(1.1,1.1)', '(4.1,4.1,3.1,3.1)',
 	'(0,2,4.1,4.1,3.1,3.1)', '(4.1,4.1,3.1,3.1)', '["current" "infinity"]',
 	'1/3', '1,name', '{1.0,2.0,3.0,4.0}', '{1.0,2.0,3.0,4.0}', '{1,2,3,4}');
-ERROR: Relation temp does not have attribute k
-QUERY: SELECT * FROM temp;
+ERROR: Relation tmp does not have attribute k
+QUERY: SELECT * FROM tmp;
 initial|a|b|c|d|e|f|g|h|i|j|l|m|n|p|q|r|s|t|u|v|w|x|y|z
 -------+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
 (0 rows)
 
-QUERY: DROP TABLE temp;
-QUERY: CREATE TABLE temp (
+QUERY: DROP TABLE tmp;
+QUERY: CREATE TABLE tmp (
 	initial 	int4
 );
-QUERY: ALTER TABLE temp ADD COLUMN a int4;
-QUERY: ALTER TABLE temp ADD COLUMN b name;
-QUERY: ALTER TABLE temp ADD COLUMN c text;
-QUERY: ALTER TABLE temp ADD COLUMN d float8;
-QUERY: ALTER TABLE temp ADD COLUMN e float4;
-QUERY: ALTER TABLE temp ADD COLUMN f int2;
-QUERY: ALTER TABLE temp ADD COLUMN g polygon;
-QUERY: ALTER TABLE temp ADD COLUMN h abstime;
-QUERY: ALTER TABLE temp ADD COLUMN i char;
-QUERY: ALTER TABLE temp ADD COLUMN j abstime[];
-QUERY: ALTER TABLE temp ADD COLUMN k dt;
+QUERY: ALTER TABLE tmp ADD COLUMN a int4;
+QUERY: ALTER TABLE tmp ADD COLUMN b name;
+QUERY: ALTER TABLE tmp ADD COLUMN c text;
+QUERY: ALTER TABLE tmp ADD COLUMN d float8;
+QUERY: ALTER TABLE tmp ADD COLUMN e float4;
+QUERY: ALTER TABLE tmp ADD COLUMN f int2;
+QUERY: ALTER TABLE tmp ADD COLUMN g polygon;
+QUERY: ALTER TABLE tmp ADD COLUMN h abstime;
+QUERY: ALTER TABLE tmp ADD COLUMN i char;
+QUERY: ALTER TABLE tmp ADD COLUMN j abstime[];
+QUERY: ALTER TABLE tmp ADD COLUMN k dt;
 ERROR: type name lookup of dt failed
-QUERY: ALTER TABLE temp ADD COLUMN l tid;
-QUERY: ALTER TABLE temp ADD COLUMN m xid;
-QUERY: ALTER TABLE temp ADD COLUMN n oid8;
-QUERY: ALTER TABLE temp ADD COLUMN p smgr;
-QUERY: ALTER TABLE temp ADD COLUMN q point;
-QUERY: ALTER TABLE temp ADD COLUMN r lseg;
-QUERY: ALTER TABLE temp ADD COLUMN s path;
-QUERY: ALTER TABLE temp ADD COLUMN t box;
-QUERY: ALTER TABLE temp ADD COLUMN u tinterval;
-QUERY: ALTER TABLE temp ADD COLUMN v datetime;
-QUERY: ALTER TABLE temp ADD COLUMN w timespan;
-QUERY: ALTER TABLE temp ADD COLUMN x float8[];
-QUERY: ALTER TABLE temp ADD COLUMN y float4[];
-QUERY: ALTER TABLE temp ADD COLUMN z int2[];
-QUERY: INSERT INTO temp (a, b, c, d, e, f, g, h, i, j, k, l, m, n, p, q, r, s, t, u,
+QUERY: ALTER TABLE tmp ADD COLUMN l tid;
+QUERY: ALTER TABLE tmp ADD COLUMN m xid;
+QUERY: ALTER TABLE tmp ADD COLUMN n oid8;
+QUERY: ALTER TABLE tmp ADD COLUMN p smgr;
+QUERY: ALTER TABLE tmp ADD COLUMN q point;
+QUERY: ALTER TABLE tmp ADD COLUMN r lseg;
+QUERY: ALTER TABLE tmp ADD COLUMN s path;
+QUERY: ALTER TABLE tmp ADD COLUMN t box;
+QUERY: ALTER TABLE tmp ADD COLUMN u tinterval;
+QUERY: ALTER TABLE tmp ADD COLUMN v datetime;
+QUERY: ALTER TABLE tmp ADD COLUMN w timespan;
+QUERY: ALTER TABLE tmp ADD COLUMN x float8[];
+QUERY: ALTER TABLE tmp ADD COLUMN y float4[];
+QUERY: ALTER TABLE tmp ADD COLUMN z int2[];
+QUERY: INSERT INTO tmp (a, b, c, d, e, f, g, h, i, j, k, l, m, n, p, q, r, s, t, u,
 	v, w, x, y, z)
    VALUES (4, 'name', 'text', 4.1, 4.1, 2, '(4.1,4.1,3.1,3.1)',
 	'Mon May  1 00:30:30 1995', 'c', '{Mon May  1 00:30:30 1995, Monday Aug 24 14:43:07 1992, epoch}',
@@ -77,13 +77,13 @@ QUERY: INSERT INTO temp (a, b, c, d, e, f, g, h, i, j, k, l, m, n, p, q, r, s, t
 	'1 2 3 4 5 6 7 8', 'magnetic disk', '(1.1,1.1)', '(4.1,4.1,3.1,3.1)',
 	'(0,2,4.1,4.1,3.1,3.1)', '(4.1,4.1,3.1,3.1)', '["current" "infinity"]',
 	'1/3', '1,name', '{1.0,2.0,3.0,4.0}', '{1.0,2.0,3.0,4.0}', '{1,2,3,4}');
-ERROR: Relation temp does not have attribute k
-QUERY: SELECT * FROM temp;
+ERROR: Relation tmp does not have attribute k
+QUERY: SELECT * FROM tmp;
 initial|a|b|c|d|e|f|g|h|i|j|l|m|n|p|q|r|s|t|u|v|w|x|y|z
 -------+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
 (0 rows)
 
-QUERY: DROP TABLE temp;
+QUERY: DROP TABLE tmp;
 QUERY: ALTER TABLE tenk1 RENAME TO ten_k;
 QUERY: SELECT unique1 FROM ten_k WHERE unique1 < 20;
 unique1

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Id: hio.c,v 1.15 1998/12/15 12:45:14 vadim Exp $
+ *	  $Id: hio.c,v 1.16 1999/02/02 03:43:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -110,7 +110,7 @@ RelationPutHeapTupleAtEnd(Relation relation, HeapTuple tuple)
 	ItemId		itemId;
 	Item		item;
 
-	if (!relation->rd_islocal)
+	if (!relation->rd_myxactonly)
 		LockRelation(relation, ExtendLock);
 
 	/*
@@ -158,7 +158,7 @@ RelationPutHeapTupleAtEnd(Relation relation, HeapTuple tuple)
 			elog(ERROR, "Tuple is too big: size %d", len);
 	}
 
-	if (!relation->rd_islocal)
+	if (!relation->rd_myxactonly)
 		UnlockRelation(relation, ExtendLock);
 
 	offnum = PageAddItem((Page) pageHeader, (Item) tuple->t_data,

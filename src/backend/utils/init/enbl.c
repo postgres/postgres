@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/Attic/enbl.c,v 1.4 1998/09/01 03:26:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/Attic/enbl.c,v 1.5 1999/02/02 03:45:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,7 +38,7 @@ BypassEnable(int *enableCountInOutP, bool on)
 		return (bool) (*enableCountInOutP >= 2);
 	}
 
-	AssertState(*enableCountInOutP >= 1);
+	Assert(*enableCountInOutP >= 1);
 
 	*enableCountInOutP -= 1;
 

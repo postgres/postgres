@@ -19,7 +19,7 @@ SELECT
   <synopsis>
 SELECT [ALL|DISTINCT [ON <replaceable class="PARAMETER">column</replaceable>] ]
     <replaceable class="PARAMETER">expression</replaceable> [ AS <replaceable class="PARAMETER">name</replaceable> ] [, ...]
-    [ INTO [TABLE] <replaceable class="PARAMETER">new_table</replaceable> ]
+    [ INTO [TEMP] [TABLE] <replaceable class="PARAMETER">new_table</replaceable> ]
     [ FROM <replaceable class="PARAMETER">table</replaceable> [<replaceable class="PARAMETER">alias</replaceable> ] [, ...] ]
     [ WHERE <replaceable class="PARAMETER">condition</replaceable> ]
     [ GROUP BY <replaceable class="PARAMETER">column</replaceable> [, ...] ]
@@ -64,6 +64,18 @@ SELECT [ALL|DISTINCT [ON <replaceable class="PARAMETER">column</replaceable>] ]
       </listitem>
      </varlistentry>
      
+    <VARLISTENTRY>
+     <TERM>
+     TEMP
+     </TERM>
+     <LISTITEM>
+      <PARA>
+	The table is created unique to this session, and is
+	automatically dropped on session exit.
+      </PARA>
+     </LISTITEM>
+    </VARLISTENTRY>
+
      <varlistentry>
       <term>
        <replaceable class="PARAMETER">new_table</replaceable>
@@ -599,7 +611,7 @@ Create a new table from an existing table or view
   </refsynopsisdivinfo>
   <synopsis>
 SELECT [ ALL | DISTINCT ] <replaceable class="PARAMETER">expression</replaceable> [ AS <replaceable class="PARAMETER">name</replaceable> ] [, ...]
-    INTO [ TABLE ] <replaceable class="PARAMETER">new_table</replaceable> ]
+    INTO [TEMP] [ TABLE ] <replaceable class="PARAMETER">new_table</replaceable> ]
     [ FROM <replaceable class="PARAMETER">table</replaceable> [<replaceable class="PARAMETER">alias</replaceable>] [, ...] ]
     [ WHERE <replaceable class="PARAMETER">condition</replaceable> ]
     [ GROUP BY <replaceable class="PARAMETER">column</replaceable> [, ...] ]

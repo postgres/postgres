@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.49 1999/01/25 12:01:13 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.50 1999/02/02 03:44:42 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -154,13 +154,13 @@ Oid	param_type(int t); /* used in parse_expr.c */
 
 %type <str>		opt_id, opt_portal_name,
 		all_Op, MathOp, opt_name, opt_unique,
-		result, OptUseOp, opt_class, SpecialRuleRelation
+		OptUseOp, opt_class, SpecialRuleRelation
 
 %type <str>		privileges, operation_commalist, grantee
 %type <chr>		operation, TriggerOneEvent
 
 %type <list>	stmtblock, stmtmulti,
-		relation_name_list, OptTableElementList,
+		result, relation_name_list, OptTableElementList,
 		OptInherit, definition,
 		opt_with, func_args, func_args_list,
 		oper_argtypes, OptStmtList, OptStmtBlock, OptStmtMulti,
@@ -173,7 +173,7 @@ Oid	param_type(int t); /* used in parse_expr.c */
 %type <node>	func_return
 %type <boolean>	set_opt
 
-%type <boolean>	TriggerForOpt, TriggerForType
+%type <boolean>	TriggerForOpt, TriggerForType, OptTemp
 
 %type <list>	for_update_clause
 %type <list>	join_list
@@ -283,7 +283,7 @@ Oid	param_type(int t); /* used in parse_expr.c */
 		PARTIAL, POSITION, PRECISION, PRIMARY, PRIOR, PRIVILEGES, PROCEDURE, PUBLIC,
 		READ, REFERENCES, RELATIVE, REVOKE, RIGHT, ROLLBACK,
 		SCROLL, SECOND_P, SELECT, SET, SUBSTRING,
-		TABLE, THEN, TIME, TIMESTAMP, TIMEZONE_HOUR, TIMEZONE_MINUTE,
+		TABLE, TEMP, THEN, TIME, TIMESTAMP, TIMEZONE_HOUR, TIMEZONE_MINUTE,
 		TO, TRAILING, TRANSACTION, TRIM, TRUE_P,
 		UNION, UNIQUE, UPDATE, USER, USING,
 		VALUES, VARCHAR, VARYING, VIEW,
@@ -747,16 +747,21 @@ copy_delimiter:  USING DELIMITERS Sconst		{ $$ = $3; }
  *
  *****************************************************************************/
 
-CreateStmt:  CREATE TABLE relation_name '(' OptTableElementList ')'
+CreateStmt:  CREATE OptTemp TABLE relation_name '(' OptTableElementList ')'
 				OptInherit
 				{
 					CreateStmt *n = makeNode(CreateStmt);
-					n->relname = $3;
-					n->tableElts = $5;
-					n->inhRelnames = $7;
+					n->istemp = $2;
+					n->relname = $4;
+					n->tableElts = $6;
+					n->inhRelnames = $8;
 					n->constraints = NIL;
 					$$ = (Node *)n;
 				}
+		;
+
+OptTemp:  		TEMP						{ $$ = TRUE; }
+			| /*EMPTY*/						{ $$ = FALSE; }
 		;
 
 OptTableElementList:  OptTableElementList ',' OptTableElement
@@ -1236,12 +1241,13 @@ OptInherit:  INHERITS '(' relation_name_list ')'		{ $$ = $3; }
 		| /*EMPTY*/										{ $$ = NIL; }
 		;
 
-CreateAsStmt:  CREATE TABLE relation_name OptCreateAs AS SubSelect
+CreateAsStmt:  CREATE OptTemp TABLE relation_name OptCreateAs AS SubSelect
 				{
-					SelectStmt *n = (SelectStmt *)$6;
-					if ($4 != NIL)
-						mapTargetColumns($4, n->targetList);
-					n->into = $3;
+					SelectStmt *n = (SelectStmt *)$7;
+					if ($5 != NIL)
+						mapTargetColumns($5, n->targetList);
+					n->istemp = $2;
+					n->into = $4;
 					$$ = (Node *)n;
 				}
 		;
@@ -2862,8 +2868,9 @@ SubSelect:	SELECT opt_unique res_target_list2
 					 * want to create a new rule 'SubSelect1' including the
 					 * feature. If it makes troubles we will have to add 
 					 * a new rule and change this to prevent INTOs in 
-					 * Subselects again */ 
-					n->into = $4;
+					 * Subselects again */
+					n->istemp = (bool)((A_Const *)lfirst($4))->val.val.ival;
+					n->into = (char *)lnext($4);
 
 					n->fromClause = $5;
 					n->whereClause = $6;
@@ -2873,8 +2880,9 @@ SubSelect:	SELECT opt_unique res_target_list2
 				}
 		;
 
-result:  INTO opt_table relation_name			{ $$= $3; }
-		| /*EMPTY*/								{ $$ = NULL; }
+		/* easy way to return two values. Can someone improve this?  bjm */
+result:  INTO OptTemp opt_table relation_name	{ $$ = lcons(makeInteger($2), (List *)$4); }
+		| /*EMPTY*/								{ $$ = lcons(makeInteger(false), NIL); }
 		;
 
 opt_table:  TABLE								{ $$ = TRUE; }
