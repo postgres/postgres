@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.29 2000/01/26 05:56:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.30 2000/03/26 19:43:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,7 @@
  * aggregates overloading has been added.  Instead of the full
  * overload support we have for functions, aggregate overloading only
  * applies to exact basetype matches.  That is, we don't check the
- * the inheritance hierarchy
+ * inheritance hierarchy
  *
  * OLD COMMENTS:
  *		Currently, redefining aggregates using the same name is not
@@ -85,6 +85,10 @@ AggregateCreate(char *aggName,
 	if (!aggtransfn1Name && !aggtransfn2Name)
 		elog(ERROR, "AggregateCreate: aggregate must have at least one transition function");
 
+	if (aggtransfn1Name && aggtransfn2Name && !aggfinalfnName)
+		elog(ERROR, "AggregateCreate: Aggregate must have final function with both transition functions");
+
+	/* handle the aggregate's base type (input data type) */
 	tup = SearchSysCacheTuple(TYPENAME,
 							  PointerGetDatum(aggbasetypeName),
 							  0, 0, 0);
@@ -92,6 +96,17 @@ AggregateCreate(char *aggName,
 		elog(ERROR, "AggregateCreate: Type '%s' undefined", aggbasetypeName);
 	xbase = tup->t_data->t_oid;
 
+	/* make sure there is no existing agg of same name and base type */
+	tup = SearchSysCacheTuple(AGGNAME,
+							  PointerGetDatum(aggName),
+							  ObjectIdGetDatum(xbase),
+							  0, 0);
+	if (HeapTupleIsValid(tup))
+		elog(ERROR,
+			 "AggregateCreate: aggregate '%s' with base type '%s' already exists",
+			 aggName, aggbasetypeName);
+
+	/* handle transfn1 and transtype1 */
 	if (aggtransfn1Name)
 	{
 		tup = SearchSysCacheTuple(TYPENAME,
@@ -114,14 +129,14 @@ AggregateCreate(char *aggName,
 				 aggtransfn1Name, aggtransfn1typeName, aggbasetypeName);
 		if (((Form_pg_proc) GETSTRUCT(tup))->prorettype != xret1)
 			elog(ERROR, "AggregateCreate: return type of '%s' is not '%s'",
-				 aggtransfn1Name,
-				 aggtransfn1typeName);
+				 aggtransfn1Name, aggtransfn1typeName);
 		xfn1 = tup->t_data->t_oid;
 		if (!OidIsValid(xfn1) || !OidIsValid(xret1) ||
 			!OidIsValid(xbase))
-			elog(ERROR, "AggregateCreate: bogus function '%s'", aggfinalfnName);
+			elog(ERROR, "AggregateCreate: bogus function '%s'", aggtransfn1Name);
 	}
 
+	/* handle transfn2 and transtype2 */
 	if (aggtransfn2Name)
 	{
 		tup = SearchSysCacheTuple(TYPENAME,
@@ -147,47 +162,57 @@ AggregateCreate(char *aggName,
 				 aggtransfn2Name, aggtransfn2typeName);
 		xfn2 = tup->t_data->t_oid;
 		if (!OidIsValid(xfn2) || !OidIsValid(xret2))
-			elog(ERROR, "AggregateCreate: bogus function '%s'", aggfinalfnName);
+			elog(ERROR, "AggregateCreate: bogus function '%s'", aggtransfn2Name);
 	}
 
-	tup = SearchSysCacheTuple(AGGNAME,
-							  PointerGetDatum(aggName),
-							  ObjectIdGetDatum(xbase),
-							  0, 0);
-	if (HeapTupleIsValid(tup))
-		elog(ERROR,
-			 "AggregateCreate: aggregate '%s' with base type '%s' already exists",
-			 aggName, aggbasetypeName);
-
-	/* more sanity checks */
-	if (aggtransfn1Name && aggtransfn2Name && !aggfinalfnName)
-		elog(ERROR, "AggregateCreate: Aggregate must have final function with both transition functions");
-
-	if ((!aggtransfn1Name || !aggtransfn2Name) && aggfinalfnName)
-		elog(ERROR, "AggregateCreate: Aggregate cannot have final function without both transition functions");
-
+	/* handle finalfn */
 	if (aggfinalfnName)
 	{
-		fnArgs[0] = xret1;
-		fnArgs[1] = xret2;
+		int	nargs = 0;
+
+		if (OidIsValid(xret1))
+			fnArgs[nargs++] = xret1;
+		if (OidIsValid(xret2))
+			fnArgs[nargs++] = xret2;
+		fnArgs[nargs] = 0;		/* make sure slot 2 is empty if just 1 arg */
 		tup = SearchSysCacheTuple(PROCNAME,
 								  PointerGetDatum(aggfinalfnName),
-								  Int32GetDatum(2),
+								  Int32GetDatum(nargs),
 								  PointerGetDatum(fnArgs),
 								  0);
 		if (!HeapTupleIsValid(tup))
-			elog(ERROR, "AggregateCreate: '%s'('%s','%s') does not exist",
-			   aggfinalfnName, aggtransfn1typeName, aggtransfn2typeName);
+		{
+			if (nargs == 2)
+				elog(ERROR, "AggregateCreate: '%s'('%s','%s') does not exist",
+					 aggfinalfnName, aggtransfn1typeName, aggtransfn2typeName);
+			else if (OidIsValid(xret1))
+				elog(ERROR, "AggregateCreate: '%s'('%s') does not exist",
+					 aggfinalfnName, aggtransfn1typeName);
+			else
+				elog(ERROR, "AggregateCreate: '%s'('%s') does not exist",
+					 aggfinalfnName, aggtransfn2typeName);
+		}
 		ffn = tup->t_data->t_oid;
 		proc = (Form_pg_proc) GETSTRUCT(tup);
 		fret = proc->prorettype;
 		if (!OidIsValid(ffn) || !OidIsValid(fret))
 			elog(ERROR, "AggregateCreate: bogus function '%s'", aggfinalfnName);
 	}
+	else
+	{
+		/* If no finalfn, aggregate result type is type of the sole
+		 * state value (we already checked there is only one)
+		 */
+		if (OidIsValid(xret1))
+			fret = xret1;
+		else
+			fret = xret2;
+	}
+	Assert(OidIsValid(fret));
 
 	/*
 	 * If transition function 2 is defined, it must have an initial value,
-	 * whereas transition function 1 does not, which allows man and min
+	 * whereas transition function 1 need not, which allows max and min
 	 * aggregates to return NULL if they are evaluated on empty sets.
 	 */
 	if (OidIsValid(xfn2) && !agginitval2)
@@ -205,26 +230,10 @@ AggregateCreate(char *aggName,
 	values[Anum_pg_aggregate_aggtransfn1 - 1] = ObjectIdGetDatum(xfn1);
 	values[Anum_pg_aggregate_aggtransfn2 - 1] = ObjectIdGetDatum(xfn2);
 	values[Anum_pg_aggregate_aggfinalfn - 1] = ObjectIdGetDatum(ffn);
-
 	values[Anum_pg_aggregate_aggbasetype - 1] = ObjectIdGetDatum(xbase);
-	if (!OidIsValid(xfn1))
-	{
-		values[Anum_pg_aggregate_aggtranstype1 - 1] = ObjectIdGetDatum(InvalidOid);
-		values[Anum_pg_aggregate_aggtranstype2 - 1] = ObjectIdGetDatum(xret2);
-		values[Anum_pg_aggregate_aggfinaltype - 1] = ObjectIdGetDatum(xret2);
-	}
-	else if (!OidIsValid(xfn2))
-	{
-		values[Anum_pg_aggregate_aggtranstype1 - 1] = ObjectIdGetDatum(xret1);
-		values[Anum_pg_aggregate_aggtranstype2 - 1] = ObjectIdGetDatum(InvalidOid);
-		values[Anum_pg_aggregate_aggfinaltype - 1] = ObjectIdGetDatum(xret1);
-	}
-	else
-	{
-		values[Anum_pg_aggregate_aggtranstype1 - 1] = ObjectIdGetDatum(xret1);
-		values[Anum_pg_aggregate_aggtranstype2 - 1] = ObjectIdGetDatum(xret2);
-		values[Anum_pg_aggregate_aggfinaltype - 1] = ObjectIdGetDatum(fret);
-	}
+	values[Anum_pg_aggregate_aggtranstype1 - 1] = ObjectIdGetDatum(xret1);
+	values[Anum_pg_aggregate_aggtranstype2 - 1] = ObjectIdGetDatum(xret2);
+	values[Anum_pg_aggregate_aggfinaltype - 1] = ObjectIdGetDatum(fret);
 
 	if (agginitval1)
 		values[Anum_pg_aggregate_agginitval1 - 1] = PointerGetDatum(textin(agginitval1));
