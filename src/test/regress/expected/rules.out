@@ -944,14 +944,14 @@ QUERY:     CREATE RULE log_shoelace AS ON UPDATE TO shoelace_data
         DO INSERT INTO shoelace_log VALUES (
                                         NEW.sl_name,
                                         NEW.sl_avail,
-                                        getpgusername(),
+                                        'Al Bundy',
                                         'epoch'::text
                                     );
 QUERY: UPDATE shoelace_data SET sl_avail = 6 WHERE  sl_name = 'sl7';
 QUERY: SELECT * FROM shoelace_log;
-sl_name   |sl_avail|log_who|log_when
-----------+--------+-------+--------
-sl7       |       6|postgres|epoch   
+sl_name   |sl_avail|log_who |log_when
+----------+--------+--------+--------
+sl7       |       6|Al Bundy|epoch   
 (1 row)
 
 QUERY:     CREATE RULE shoelace_ins AS ON INSERT TO shoelace
@@ -1019,12 +1019,12 @@ sl6       |      20|brown     |   0.9|m       |       90
 (8 rows)
 
 QUERY: SELECT * FROM shoelace_log;
-sl_name   |sl_avail|log_who|log_when
-----------+--------+-------+--------
-sl7       |       6|postgres|epoch   
-sl3       |      10|postgres|epoch   
-sl6       |      20|postgres|epoch   
-sl8       |      21|postgres|epoch   
+sl_name   |sl_avail|log_who |log_when
+----------+--------+--------+--------
+sl7       |       6|Al Bundy|epoch   
+sl3       |      10|Al Bundy|epoch   
+sl6       |      20|Al Bundy|epoch   
+sl8       |      21|Al Bundy|epoch   
 (4 rows)
 
 QUERY:     CREATE VIEW shoelace_obsolete AS

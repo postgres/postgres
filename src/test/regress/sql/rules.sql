@@ -594,12 +594,16 @@ SELECT * FROM shoe_ready WHERE total_avail >= 2;
         log_when   datetime       -- when
     );
 
+-- Want "log_who" to be CURRENT_USER,
+-- but that is non-portable for the regression test
+-- - thomas 1999-02-21
+
     CREATE RULE log_shoelace AS ON UPDATE TO shoelace_data
         WHERE NEW.sl_avail != OLD.sl_avail
         DO INSERT INTO shoelace_log VALUES (
                                         NEW.sl_name,
                                         NEW.sl_avail,
-                                        getpgusername(),
+                                        'Al Bundy',
                                         'epoch'::text
                                     );
 
