@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.187 1999/07/19 21:06:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.188 1999/07/20 17:20:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2705,7 +2705,8 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 					char		hold_char = line[i + thislen];
 
 					line[i + thislen] = '\0';
-					if (query_start[0] != '\0')
+					if ((query_start[0] != '\0') &&
+						(strlen(query) + strlen(query_start) <= MAX_QUERY_BUFFER))
 					{
 						if (query[0] != '\0')
 						{
