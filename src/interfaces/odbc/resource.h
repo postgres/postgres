@@ -1,13 +1,9 @@
-//
-{
-	{
-		NO_DEPENDENCIES
-	}
-}
+/*
+ * {{NO_DEPENDENCIES}}
+ * Microsoft Developer Studio generated include file.
+ * Used by psqlodbc.rc
+ */
 
-//Microsoft Developer Studio generated include file.
-// Used by psqlodbc.rc
-//
 #define IDS_BADDSN						1
 #define IDS_MSGTITLE					2
 #define DLG_OPTIONS_DRV					102
