@@ -17662,12 +17662,11 @@ done
 # Note 1: test -ef might not exist, but it's more reliable than `pwd`.
 # Note 2: /bin/pwd might be better than shell's built-in at getting
 #         a symlink-free name.
-if test "$no_create" != yes; then
-  if ( test "$srcdir" -ef . ) >/dev/null 2>&1 || test "`cd $srcdir && /bin/pwd`" = "`/bin/pwd`"; then
-    :
-  else
-    vpath_build=yes
-
+if ( test "$srcdir" -ef . ) >/dev/null 2>&1 || test "`cd $srcdir && /bin/pwd`" = "`/bin/pwd`"; then
+  vpath_build=no
+else
+  vpath_build=yes
+  if test "$no_create" != yes; then
     echo $ECHO_N "preparing build tree... $ECHO_C" >&6
     pgac_abs_top_srcdir=`cd "$srcdir" && pwd`
     $SHELL "$ac_aux_dir/prep_buildtree" "$pgac_abs_top_srcdir" "." \
@@ -17678,6 +17677,7 @@ echo "$as_me: error: failed" >&2;}
 echo "${ECHO_T}done" >&6
   fi
 fi
+
 
 
 ac_config_files="$ac_config_files GNUmakefile src/Makefile.global"
