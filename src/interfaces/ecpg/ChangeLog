@@ -335,7 +335,7 @@ Thu Sep 17 08:55:33 CEST 1998
 
 Thu Sep 17 19:23:24 CEST 1998
 
-	- Added missing ´;´ in preproc.y
+	- Added missing ';' in preproc.y
 	- Set version to 2.4.2
 
 Tue Sep 29 10:22:00 CEST 1998
@@ -357,23 +357,29 @@ Thu Okt 15 10:05:04 CEST 1998
 	- Synced preproc.y with gram.y yet again.
         - Set version to 2.4.4
 
-Wed Dec  9 11:24:54 MEZ 1998
+Wed Dec  9 20:24:54 MEZ 1998
 
 	- Synced preproc.y with gram.y and the keywords.c files to add CASE
 	  statement.
 
-Tue Dec 22 14:16:11 CET 1998
+Tue Dec 22 19:16:11 CET 1998
 
 	- Synced preproc.y with gram.y for locking statements.
 	- Set version to 2.4.5
 
-Tue Jan  7 15:19:34 CET 1999
+Tue Jan  7 19:19:34 CET 1999
 
 	- Synced preproc.y with gram.y for for-update clause and changes in
 	  handling of numerics
 
-Mon Jan 18 11:22:44 CET 1999
+Mon Jan 18 19:22:44 CET 1999
 
 	- Added INTERSECT, EXCEPT and UNION for Select statements
 	- Put keywords.c in sync again after forgettimg it the last time.
-	- Set version to 2.4.6
+
+Thu Jan 21 21:29:00 CET 1999
+
+	- Fixed libecpg to not segfault if there is no connection.
+	- Set library version to 2.6.3
+	- Added 'exec sql whenever sqlwarning'.
+	- Set ecpg version to 2.4.6

@@ -38,6 +38,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"section", SQL_SECTION},
 	{"sqlerror", SQL_SQLERROR},
 	{"sqlprint", SQL_SQLPRINT},
+	{"sqlwarning", SQL_SQLWARNING},
 	{"stop", SQL_STOP},
 	{"whenever", SQL_WHENEVER},
 };

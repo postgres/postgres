@@ -886,12 +886,17 @@ ECPGtrans(int lineno, const char *transaction)
 	PGresult   *res;
 
 	ECPGlog("ECPGtrans line %d action = %s\n", lineno, transaction);
-	if ((res = PQexec(actual_connection->connection, transaction)) == NULL)
+
+	/* if we have no connection we just simulate the command */
+	if (actual_connection && actual_connection->connection)
 	{
-		register_error(ECPG_TRANS, "Error in transaction processing line %d.", lineno);
-		return FALSE;
+		if ((res = PQexec(actual_connection->connection, transaction)) == NULL)
+		{
+			register_error(ECPG_TRANS, "Error in transaction processing line %d.", lineno);
+			return FALSE;
+		}
+		PQclear(res);
 	}
-	PQclear(res);
 	if (strcmp(transaction, "commit") == 0 || strcmp(transaction, "rollback") == 0)
 		committed = 1;
 	return TRUE;

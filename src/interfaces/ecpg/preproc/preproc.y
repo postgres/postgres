@@ -45,7 +45,7 @@ output_line_number()
 /*
  * store the whenever action here
  */
-static struct when when_error, when_nf;
+static struct when when_error, when_nf, when_warn;
 
 static void
 print_action(struct when *w)
@@ -76,6 +76,12 @@ whenever_action(int mode)
 		fprintf(yyout, "\nif (sqlca.sqlcode == ECPG_NOT_FOUND) ");
 		print_action(&when_nf);
 	}
+	if (when_warn.code != W_NOTHING)
+        {
+		output_line_number();
+                fprintf(yyout, "\nif (sqlca.sqlwarn[0] == 'W') ");
+		print_action(&when_warn);
+        }
 	if (when_error.code != W_NOTHING)
         {
 		output_line_number();
@@ -517,7 +523,7 @@ output_statement(char * stmt, int mode)
 %token		SQL_DISCONNECT SQL_FOUND SQL_GO SQL_GOTO
 %token		SQL_IDENTIFIED SQL_IMMEDIATE SQL_INDICATOR SQL_OPEN SQL_RELEASE
 %token		SQL_SECTION SQL_SEMI SQL_SQLERROR SQL_SQLPRINT SQL_START
-%token		SQL_STOP SQL_WHENEVER
+%token		SQL_STOP SQL_WHENEVER SQL_SQLWARNING
 
 /* C token */
 %token		S_ANYTHING S_AUTO S_BOOL S_CHAR S_CONST S_DOUBLE S_ENUM S_EXTERN
@@ -4630,9 +4636,7 @@ ECPGSetConnection:  SET SQL_CONNECTION connection_object
                         }
 /*
  * whenever statement: decide what to do in case of error/no data found
- * according to SQL standards we miss: SQLSTATE, CONSTRAINT, SQLEXCEPTION
- * and SQLWARNING
-
+ * according to SQL standards we lack: SQLSTATE, CONSTRAINT and SQLEXCEPTION
  */
 ECPGWhenever: SQL_WHENEVER SQL_SQLERROR action {
 	when_error.code = $<action>3.code;
@@ -4643,6 +4647,11 @@ ECPGWhenever: SQL_WHENEVER SQL_SQLERROR action {
 	when_nf.code = $<action>4.code;
 	when_nf.command = $<action>4.command;
 	$$ = cat3_str(make1_str("/* exec sql whenever not found "), $4.str, make1_str("; */\n"));
+}
+	| SQL_WHENEVER SQL_SQLWARNING action {
+	when_warn.code = $<action>3.code;
+	when_warn.command = $<action>3.command;
+	$$ = cat3_str(make1_str("/* exec sql whenever sql_warning "), $3.str, make1_str("; */\n"));
 }
 
 action : SQL_CONTINUE {
