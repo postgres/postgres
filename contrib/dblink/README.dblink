@@ -65,17 +65,17 @@ Installation:
        - extracts and returns individual field results
      dblink_strtok(text,text,int) RETURNS text
        - extracts and returns individual token from delimited text
-     dblink_get_pkey(name) RETURNS setof text
+     dblink_get_pkey(text) RETURNS setof text
        - returns the field names of a relation's primary key fields
      dblink_last_oid(int) RETURNS oid
        - returns the last inserted oid
-     dblink_build_sql_insert(name,int2vector,int2,_text,_text) RETURNS text
+     dblink_build_sql_insert(text,int2vector,int2,_text,_text) RETURNS text
        - builds an insert statement using a local tuple, replacing the
          selection key field values with alternate supplied values
-     dblink_build_sql_delete(name,int2vector,int2,_text) RETURNS text
+     dblink_build_sql_delete(text,int2vector,int2,_text) RETURNS text
        - builds a delete statement using supplied values for selection
          key field values
-     dblink_build_sql_update(name,int2vector,int2,_text,_text) RETURNS text
+     dblink_build_sql_update(text,int2vector,int2,_text,_text) RETURNS text
        - builds an update statement using a local tuple, replacing the
          selection key field values with alternate supplied values
      dblink_current_query() RETURNS text
@@ -206,7 +206,7 @@ dblink_get_pkey -- returns the field names of a relation's primary
 
 Synopsis
 
-dblink_get_pkey(name relname) RETURNS setof text
+dblink_get_pkey(text relname) RETURNS setof text
 
 Inputs
 
@@ -278,16 +278,16 @@ dblink_build_sql_update -- builds an update statement using a local
 
 Synopsis
 
-dblink_build_sql_insert(name relname
+dblink_build_sql_insert(text relname
                          ,int2vector primary_key_attnums
                          ,int2 num_primary_key_atts
                          ,_text src_pk_att_vals_array
                          ,_text tgt_pk_att_vals_array) RETURNS text
-dblink_build_sql_delete(name relname
+dblink_build_sql_delete(text relname
                          ,int2vector primary_key_attnums
                          ,int2 num_primary_key_atts
                          ,_text tgt_pk_att_vals_array) RETURNS text
-dblink_build_sql_update(name relname
+dblink_build_sql_update(text relname
                          ,int2vector primary_key_attnums
                          ,int2 num_primary_key_atts
                          ,_text src_pk_att_vals_array

@@ -10,7 +10,7 @@ CREATE OR REPLACE FUNCTION dblink_strtok (text,text,int) RETURNS text
   AS 'MODULE_PATHNAME','dblink_strtok' LANGUAGE 'c'
   WITH (iscachable, isstrict);
 
-CREATE OR REPLACE FUNCTION dblink_get_pkey (name) RETURNS setof text
+CREATE OR REPLACE FUNCTION dblink_get_pkey (text) RETURNS setof text
   AS 'MODULE_PATHNAME','dblink_get_pkey' LANGUAGE 'c'
   WITH (isstrict);
 
@@ -18,15 +18,15 @@ CREATE OR REPLACE FUNCTION dblink_last_oid (int) RETURNS oid
   AS 'MODULE_PATHNAME','dblink_last_oid' LANGUAGE 'c'
   WITH (isstrict);
 
-CREATE OR REPLACE FUNCTION dblink_build_sql_insert (name, int2vector, int2, _text, _text) RETURNS text
+CREATE OR REPLACE FUNCTION dblink_build_sql_insert (text, int2vector, int2, _text, _text) RETURNS text
   AS 'MODULE_PATHNAME','dblink_build_sql_insert' LANGUAGE 'c'
   WITH (isstrict);
 
-CREATE OR REPLACE FUNCTION dblink_build_sql_delete (name, int2vector, int2, _text) RETURNS text
+CREATE OR REPLACE FUNCTION dblink_build_sql_delete (text, int2vector, int2, _text) RETURNS text
   AS 'MODULE_PATHNAME','dblink_build_sql_delete' LANGUAGE 'c'
   WITH (isstrict);
 
-CREATE OR REPLACE FUNCTION dblink_build_sql_update (name, int2vector, int2, _text, _text) RETURNS text
+CREATE OR REPLACE FUNCTION dblink_build_sql_update (text, int2vector, int2, _text, _text) RETURNS text
   AS 'MODULE_PATHNAME','dblink_build_sql_update' LANGUAGE 'c'
   WITH (isstrict);
 

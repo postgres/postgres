@@ -27,6 +27,26 @@
 
 #include "dblink.h"
 
+
+/*
+ * Internal declarations
+ */
+static dblink_results *init_dblink_results(MemoryContext fn_mcxt);
+static dblink_array_results *init_dblink_array_results(MemoryContext fn_mcxt);
+static char **get_pkey_attnames(Oid relid, int16 *numatts);
+static char *get_strtok(char *fldtext, char *fldsep, int fldnum);
+static char *get_sql_insert(Oid relid, int16 *pkattnums, int16 pknumatts, char **src_pkattvals, char **tgt_pkattvals);
+static char *get_sql_delete(Oid relid, int16 *pkattnums, int16 pknumatts, char **tgt_pkattvals);
+static char *get_sql_update(Oid relid, int16 *pkattnums, int16 pknumatts, char **src_pkattvals, char **tgt_pkattvals);
+static char *quote_literal_cstr(char *rawstr);
+static char *quote_ident_cstr(char *rawstr);
+static int16 get_attnum_pk_pos(int16 *pkattnums, int16 pknumatts, int16 key);
+static HeapTuple get_tuple_of_interest(Oid relid, int16 *pkattnums, int16 pknumatts, char **src_pkattvals);
+static Oid get_relid_from_relname(text *relname_text);
+static dblink_results	*get_res_ptr(int32 res_id_index);
+static void append_res_ptr(dblink_results *results);
+static void remove_res_ptr(dblink_results *results);
+
 /* Global */
 List	*res_id = NIL;
 int		res_id_index = 0;
@@ -281,7 +301,7 @@ PG_FUNCTION_INFO_V1(dblink_get_pkey);
 Datum
 dblink_get_pkey(PG_FUNCTION_ARGS)
 {
-	char					*relname;
+	text					*relname_text;
 	Oid						relid;
 	char					**result;
 	text					*result_text;
@@ -294,15 +314,14 @@ dblink_get_pkey(PG_FUNCTION_ARGS)
 
 	if (fcinfo->flinfo->fn_extra == NULL)
 	{
-		relname = NameStr(*PG_GETARG_NAME(0));
+		relname_text = PG_GETARG_TEXT_P(0);
 
 		/*
 		 * Convert relname to rel OID.
 		 */
-		relid = get_relid_from_relname(relname);
+		relid = get_relid_from_relname(relname_text);
 		if (!OidIsValid(relid))
-			elog(ERROR, "dblink_get_pkey: relation \"%s\" does not exist",
-				 relname);
+			elog(ERROR, "dblink_get_pkey: relation does not exist");
 
 		/*
 		 * get an array of attnums.
@@ -428,7 +447,7 @@ Datum
 dblink_build_sql_insert(PG_FUNCTION_ARGS)
 {
 	Oid			relid;
-	char		*relname;
+	text		*relname_text;
 	int16		*pkattnums;
 	int16		pknumatts;
 	char		**src_pkattvals;
@@ -446,15 +465,14 @@ dblink_build_sql_insert(PG_FUNCTION_ARGS)
 	char		*sql;
 	text		*sql_text;
 
-	relname = NameStr(*PG_GETARG_NAME(0));
+	relname_text = PG_GETARG_TEXT_P(0);
 
 	/*
 	 * Convert relname to rel OID.
 	 */
-	relid = get_relid_from_relname(relname);
+	relid = get_relid_from_relname(relname_text);
 	if (!OidIsValid(relid))
-		elog(ERROR, "dblink_get_pkey: relation \"%s\" does not exist",
-			 relname);
+		elog(ERROR, "dblink_build_sql_insert: relation does not exist");
 
 	pkattnums = (int16 *) PG_GETARG_POINTER(1);
 	pknumatts = PG_GETARG_INT16(2);
@@ -554,7 +572,7 @@ Datum
 dblink_build_sql_delete(PG_FUNCTION_ARGS)
 {
 	Oid			relid;
-	char		*relname;
+	text		*relname_text;
 	int16		*pkattnums;
 	int16		pknumatts;
 	char		**tgt_pkattvals;
@@ -567,15 +585,14 @@ dblink_build_sql_delete(PG_FUNCTION_ARGS)
 	char		*sql;
 	text		*sql_text;
 
-	relname = NameStr(*PG_GETARG_NAME(0));
+	relname_text = PG_GETARG_TEXT_P(0);
 
 	/*
 	 * Convert relname to rel OID.
 	 */
-	relid = get_relid_from_relname(relname);
+	relid = get_relid_from_relname(relname_text);
 	if (!OidIsValid(relid))
-		elog(ERROR, "dblink_get_pkey: relation \"%s\" does not exist",
-			 relname);
+		elog(ERROR, "dblink_build_sql_delete: relation does not exist");
 
 	pkattnums = (int16 *) PG_GETARG_POINTER(1);
 	pknumatts = PG_GETARG_INT16(2);
@@ -653,7 +670,7 @@ Datum
 dblink_build_sql_update(PG_FUNCTION_ARGS)
 {
 	Oid			relid;
-	char		*relname;
+	text		*relname_text;
 	int16		*pkattnums;
 	int16		pknumatts;
 	char		**src_pkattvals;
@@ -671,15 +688,14 @@ dblink_build_sql_update(PG_FUNCTION_ARGS)
 	char		*sql;
 	text		*sql_text;
 
-	relname = NameStr(*PG_GETARG_NAME(0));
+	relname_text = PG_GETARG_TEXT_P(0);
 
 	/*
 	 * Convert relname to rel OID.
 	 */
-	relid = get_relid_from_relname(relname);
+	relid = get_relid_from_relname(relname_text);
 	if (!OidIsValid(relid))
-		elog(ERROR, "dblink_get_pkey: relation \"%s\" does not exist",
-			 relname);
+		elog(ERROR, "dblink_build_sql_update: relation does not exist");
 
 	pkattnums = (int16 *) PG_GETARG_POINTER(1);
 	pknumatts = PG_GETARG_INT16(2);
@@ -841,7 +857,7 @@ dblink_replace_text(PG_FUNCTION_ARGS)
  * init_dblink_results
  *	 - create an empty dblink_results data structure
  */
-dblink_results *
+static dblink_results *
 init_dblink_results(MemoryContext fn_mcxt)
 {
 	MemoryContext oldcontext;
@@ -866,7 +882,7 @@ init_dblink_results(MemoryContext fn_mcxt)
  * init_dblink_array_results
  *	 - create an empty dblink_array_results data structure
  */
-dblink_array_results *
+static dblink_array_results *
 init_dblink_array_results(MemoryContext fn_mcxt)
 {
 	MemoryContext oldcontext;
@@ -892,7 +908,7 @@ init_dblink_array_results(MemoryContext fn_mcxt)
  * Get the primary key attnames for the given relation.
  * Return NULL, and set numatts = 0, if no primary key exists.
  */
-char **
+static char **
 get_pkey_attnames(Oid relid, int16 *numatts)
 {
 	Relation		indexRelation;
@@ -961,7 +977,7 @@ get_pkey_attnames(Oid relid, int16 *numatts)
  * return ord item (0 based)
  * based on provided field separator
  */
-char *
+static char *
 get_strtok(char *fldtext, char *fldsep, int fldnum)
 {
 	int			j = 0;
@@ -988,7 +1004,7 @@ get_strtok(char *fldtext, char *fldsep, int fldnum)
 	return pstrdup(result);
 }
 
-char *
+static char *
 get_sql_insert(Oid relid, int16 *pkattnums, int16 pknumatts, char **src_pkattvals, char **tgt_pkattvals)
 {
 	Relation		rel;
@@ -1059,7 +1075,7 @@ get_sql_insert(Oid relid, int16 *pkattnums, int16 pknumatts, char **src_pkattval
 	return (sql);
 }
 
-char *
+static char *
 get_sql_delete(Oid relid, int16 *pkattnums, int16 pknumatts, char **tgt_pkattvals)
 {
 	Relation		rel;
@@ -1112,7 +1128,7 @@ get_sql_delete(Oid relid, int16 *pkattnums, int16 pknumatts, char **tgt_pkattval
 	return (sql);
 }
 
-char *
+static char *
 get_sql_update(Oid relid, int16 *pkattnums, int16 pknumatts, char **src_pkattvals, char **tgt_pkattvals)
 {
 	Relation		rel;
@@ -1235,7 +1251,7 @@ quote_ident_cstr(char *rawstr)
 	return result;
 }
 
-int16
+static int16
 get_attnum_pk_pos(int16 *pkattnums, int16 pknumatts, int16 key)
 {
 	int		i;
@@ -1251,7 +1267,7 @@ get_attnum_pk_pos(int16 *pkattnums, int16 pknumatts, int16 key)
 	return -1;
 }
 
-HeapTuple
+static HeapTuple
 get_tuple_of_interest(Oid relid, int16 *pkattnums, int16 pknumatts, char **src_pkattvals)
 {
 	Relation		rel;
@@ -1340,17 +1356,24 @@ get_tuple_of_interest(Oid relid, int16 *pkattnums, int16 pknumatts, char **src_p
 	return NULL;
 }
 
-Oid
-get_relid_from_relname(char *relname)
+static Oid
+get_relid_from_relname(text *relname_text)
 {
 #ifdef NamespaceRelationName
-	Oid				relid;
+	RangeVar   *relvar;
+	Relation	rel;
+	Oid			relid;
 
-	relid = RelnameGetRelid(relname);
+	relvar = makeRangeVarFromNameList(textToQualifiedNameList(relname_text, "get_relid_from_relname"));
+	rel = heap_openrv(relvar, AccessShareLock);
+	relid = RelationGetRelid(rel);
+	relation_close(rel, AccessShareLock);
 #else
-	Relation		rel;
-	Oid				relid;
+	char	   *relname;
+	Relation	rel;
+	Oid			relid;
 
+	relname = DatumGetCString(DirectFunctionCall1(textout, PointerGetDatum(relname_text)));
 	rel = relation_openr(relname, AccessShareLock);
 	relid = RelationGetRelid(rel);
 	relation_close(rel, AccessShareLock);
@@ -1359,7 +1382,7 @@ get_relid_from_relname(char *relname)
 	return relid;
 }
 
-dblink_results	*
+static dblink_results	*
 get_res_ptr(int32 res_id_index)
 {
 	List	*ptr;
@@ -1385,7 +1408,7 @@ get_res_ptr(int32 res_id_index)
 /*
  * Add node to global List res_id
  */
-void
+static void
 append_res_ptr(dblink_results *results)
 {
 	res_id = lappend(res_id, results);
@@ -1395,7 +1418,7 @@ append_res_ptr(dblink_results *results)
  * Remove node from global List
  * using res_id_index
  */
-void
+static void
 remove_res_ptr(dblink_results *results)
 {
 	res_id = lremove(results, res_id);
@@ -1403,5 +1426,4 @@ remove_res_ptr(dblink_results *results)
 	if (res_id == NIL)
 		res_id_index = 0;
 }
-
 

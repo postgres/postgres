@@ -120,26 +120,6 @@ extern Datum dblink_build_sql_update(PG_FUNCTION_ARGS);
 extern Datum dblink_current_query(PG_FUNCTION_ARGS);
 extern Datum dblink_replace_text(PG_FUNCTION_ARGS);
 
-/*
- * Internal declarations
- */
-dblink_results *init_dblink_results(MemoryContext fn_mcxt);
-dblink_array_results *init_dblink_array_results(MemoryContext fn_mcxt);
-char **get_pkey_attnames(Oid relid, int16 *numatts);
-char *get_strtok(char *fldtext, char *fldsep, int fldnum);
-char *getvalue(HeapTuple tuple, TupleDesc tupdesc, int fnumber);
-char *get_sql_insert(Oid relid, int16 *pkattnums, int16 pknumatts, char **src_pkattvals, char **tgt_pkattvals);
-char *get_sql_delete(Oid relid, int16 *pkattnums, int16 pknumatts, char **tgt_pkattvals);
-char *get_sql_update(Oid relid, int16 *pkattnums, int16 pknumatts, char **src_pkattvals, char **tgt_pkattvals);
-static char *quote_literal_cstr(char *rawstr);
-static char *quote_ident_cstr(char *rawstr);
-int16 get_attnum_pk_pos(int16 *pkattnums, int16 pknumatts, int16 key);
-HeapTuple get_tuple_of_interest(Oid relid, int16 *pkattnums, int16 pknumatts, char **src_pkattvals);
-Oid get_relid_from_relname(char *relname);
-dblink_results	*get_res_ptr(int32 res_id_index);
-void append_res_ptr(dblink_results *results);
-void remove_res_ptr(dblink_results *results);
-
 extern char	*debug_query_string;
 
 #endif   /* DBLINK_H */
