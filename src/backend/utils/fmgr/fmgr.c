@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.35 2000/01/10 18:18:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.36 2000/01/10 18:27:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -447,31 +447,6 @@ fmgr_c(FmgrInfo *finfo,
 									  values->data[30]);
 			break;
 		case 32:
-			returnValue = (*user_fn) (values->data[0], values->data[1],
-									  values->data[2], values->data[3],
-									  values->data[4], values->data[5],
-									  values->data[6], values->data[7],
-									  values->data[8], values->data[9],
-									  values->data[10], values->data[11],
-									  values->data[12], values->data[13],
-									  values->data[14], values->data[15],
-									  values->data[16], values->data[17],
-									  values->data[18], values->data[19],
-									  values->data[20], values->data[21],
-									  values->data[22], values->data[23],
-									  values->data[24], values->data[25],
-									  values->data[26], values->data[27],
-									  values->data[28], values->data[29],
-									  values->data[30], values->data[31]);
-			break;
-		default:
-
-			/*
-			 * XXX Note that functions with >FUNC_MAX_ARGS arguments can only be
-			 * called from inside the system, not from the user level,
-			 * since the catalogs only store FUNC_MAX_ARGS argument types for user
-			 * type-checking!
-			 */
 			returnValue = (*user_fn) (values->data[0], values->data[1],
 									  values->data[2], values->data[3],
 									  values->data[4], values->data[5],
