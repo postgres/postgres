@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.72 2000/06/02 16:33:17 momjian Exp $
+ * $Id: c.h,v 1.73 2000/06/02 16:40:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -897,11 +897,11 @@ extern char *vararg_format(const char *fmt,...);
  */
 
 #ifdef __CYGWIN32__
-#define	PG_BINARY	0
+#define PG_BINARY	O_BINARY
 #define	PG_BINARY_R	"rb"
 #define	PG_BINARY_W	"wb"
 #else
-#define PG_BINARY	O_BINARY
+#define	PG_BINARY	0
 #define	PG_BINARY_R	"r"
 #define	PG_BINARY_W	"w"
 #endif
