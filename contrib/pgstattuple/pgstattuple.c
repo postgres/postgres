@@ -1,7 +1,7 @@
 /*
- * $Header: /cvsroot/pgsql/contrib/pgstattuple/pgstattuple.c,v 1.6 2002/05/20 23:51:40 tgl Exp $
+ * $Header: /cvsroot/pgsql/contrib/pgstattuple/pgstattuple.c,v 1.7 2002/08/23 08:19:49 ishii Exp $
  *
- * Copyright (c) 2001  Tatsuo Ishii
+ * Copyright (c) 2001,2002  Tatsuo Ishii
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose, without fee, and without a
@@ -28,6 +28,7 @@
 #include "access/heapam.h"
 #include "access/transam.h"
 #include "catalog/namespace.h"
+#include "funcapi.h"
 #include "utils/builtins.h"
 
 
@@ -37,16 +38,22 @@ extern Datum pgstattuple(PG_FUNCTION_ARGS);
 
 /* ----------
  * pgstattuple:
- * returns the percentage of dead tuples
+ * returns live/dead tuples info
  *
  * C FUNCTION definition
- * pgstattuple(NAME) returns FLOAT8
+ * pgstattuple(TEXT) returns setof pgstattuple_view
+ * see pgstattuple.sql for pgstattuple_view
  * ----------
  */
+
+#define DUMMY_TUPLE "pgstattuple_view"
+#define NCOLUMNS 9
+#define NCHARS 32
+
 Datum
 pgstattuple(PG_FUNCTION_ARGS)
 {
-	text	   *relname = PG_GETARG_TEXT_P(0);
+	text	   *relname;
 	RangeVar   *relrv;
 	Relation	rel;
 	HeapScanDesc scan;
@@ -55,7 +62,7 @@ pgstattuple(PG_FUNCTION_ARGS)
 	BlockNumber block = 0;		/* next block to count free space in */
 	BlockNumber tupblock;
 	Buffer		buffer;
-	double		table_len;
+	uint64		table_len;
 	uint64		tuple_len = 0;
 	uint64		dead_tuple_len = 0;
 	uint64		tuple_count = 0;
@@ -65,13 +72,67 @@ pgstattuple(PG_FUNCTION_ARGS)
 	uint64		free_space = 0; /* free/reusable space in bytes */
 	double		free_percent;	/* free/reusable space in % */
 
-	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname,
-														"pgstattuple"));
+	FuncCallContext	   *funcctx;
+	int					call_cntr;
+	int					max_calls;
+	TupleDesc			tupdesc;
+	TupleTableSlot	   *slot;
+	AttInMetadata	   *attinmeta;
+
+	char **values;
+	int i;
+	Datum		result;
+
+	/* stuff done only on the first call of the function */
+	if(SRF_IS_FIRSTCALL())
+	{
+		/* create a function context for cross-call persistence */
+		funcctx = SRF_FIRSTCALL_INIT();
+    
+		/* total number of tuples to be returned */
+		funcctx->max_calls = 1;
+    
+		/*
+		 * Build a tuple description for a pgstattupe_view tuple
+		 */
+		tupdesc = RelationNameGetTupleDesc(DUMMY_TUPLE);
+    
+		/* allocate a slot for a tuple with this tupdesc */
+		slot = TupleDescGetSlot(tupdesc);
+    
+		/* assign slot to function context */
+		funcctx->slot = slot;
+    
+		/*
+		 * Generate attribute metadata needed later to produce tuples from raw
+		 * C strings
+		 */
+		attinmeta = TupleDescGetAttInMetadata(tupdesc);
+		funcctx->attinmeta = attinmeta;
+	}
+
+	/* stuff done on every call of the function */
+	funcctx = SRF_PERCALL_SETUP();
+	call_cntr = funcctx->call_cntr;
+	max_calls = funcctx->max_calls;
+	slot = funcctx->slot;
+	attinmeta = funcctx->attinmeta;
+
+	/* Are we done? */
+	if (call_cntr >= max_calls)
+	{
+		SRF_RETURN_DONE(funcctx);
+	}
+
+	/* open relation */
+	relname = PG_GETARG_TEXT_P(0);
+	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname,"pgstattuple"));
 	rel = heap_openrv(relrv, AccessShareLock);
 
 	nblocks = RelationGetNumberOfBlocks(rel);
 	scan = heap_beginscan(rel, SnapshotAny, 0, NULL);
 
+	/* scan the relation */
 	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
 		if (HeapTupleSatisfiesNow(tuple->t_data))
@@ -113,7 +174,7 @@ pgstattuple(PG_FUNCTION_ARGS)
 
 	heap_close(rel, AccessShareLock);
 
-	table_len = (double) nblocks *BLCKSZ;
+	table_len = (uint64)nblocks *BLCKSZ;
 
 	if (nblocks == 0)
 	{
@@ -128,28 +189,39 @@ pgstattuple(PG_FUNCTION_ARGS)
 		free_percent = (double) free_space *100.0 / table_len;
 	}
 
-	elog(DEBUG3, "physical length: %.2fMB live tuples: %.0f (%.2fMB, %.2f%%) dead tuples: %.0f (%.2fMB, %.2f%%) free/reusable space: %.2fMB (%.2f%%) overhead: %.2f%%",
-
-		 table_len / (1024 * 1024),		/* physical length in MB */
-
-		 (double) tuple_count,	/* number of live tuples */
-		 (double) tuple_len / (1024 * 1024),		/* live tuples in MB */
-		 tuple_percent,			/* live tuples in % */
-
-		 (double) dead_tuple_count,	/* number of dead tuples */
-		 (double) dead_tuple_len / (1024 * 1024), /* dead tuples in MB */
-		 dead_tuple_percent,	/* dead tuples in % */
-
-		 (double) free_space / (1024 * 1024), /* free/available space in
-											   * MB */
-
-		 free_percent,			/* free/available space in % */
-
-	/* overhead in % */
-		 (nblocks == 0) ? 0.0 : 100.0
-		 - tuple_percent
-		 - dead_tuple_percent
-		 - free_percent);
-
-	PG_RETURN_FLOAT8(dead_tuple_percent);
+	/*
+	 * Prepare a values array for storage in our slot.
+	 * This should be an array of C strings which will
+	 * be processed later by the appropriate "in" functions.
+	 */
+	values = (char **) palloc(NCOLUMNS * sizeof(char *));
+	for (i=0;i<NCOLUMNS;i++)
+	{
+		values[i] = (char *) palloc(NCHARS * sizeof(char));
+	}
+	i = 0;
+	snprintf(values[i++], NCHARS, "%lld", table_len);
+	snprintf(values[i++], NCHARS, "%lld", tuple_count);
+	snprintf(values[i++], NCHARS, "%lld", tuple_len);
+	snprintf(values[i++], NCHARS, "%.2f", tuple_percent);
+	snprintf(values[i++], NCHARS, "%lld", dead_tuple_count);
+	snprintf(values[i++], NCHARS, "%lld", dead_tuple_len);
+	snprintf(values[i++], NCHARS, "%.2f", dead_tuple_percent);
+	snprintf(values[i++], NCHARS, "%lld", free_space);
+	snprintf(values[i++], NCHARS, "%.2f", free_percent);
+    
+	/* build a tuple */
+	tuple = BuildTupleFromCStrings(attinmeta, values);
+    
+	/* make the tuple into a datum */
+	result = TupleGetDatum(slot, tuple);
+    
+	/* Clean up */
+	for (i=0;i<NCOLUMNS;i++)
+	{
+		pfree(values[i]);
+	}
+	pfree(values);
+    
+	SRF_RETURN_NEXT(funcctx, result);
 }

@@ -1,27 +1,36 @@
-pgstattuple README			2001/10/01 Tatsuo Ishii
+pgstattuple README			2002/08/22 Tatsuo Ishii
 
 1. What is pgstattuple?
 
-   pgstattuple returns the percentage of the "dead" tuples of a
-   table. This will help users to judge if vacuum is needed.
+   pgstattuple returns the table length, percentage of the "dead"
+   tuples of a table and other info. This may help users to determine
+   whether vacuum is necessary or not. Here is an example session:
 
-   In addition, pgstattuple prints more detailed information using
-   NOTICE.
+test=# \x
+Expanded display is on.
+test=# select * from pgstattuple('pg_proc');
+-[ RECORD 1 ]------+-------
+table_len          | 458752
+tuple_count        | 1470
+tuple_len          | 438896
+tuple_percent      | 95.67
+dead_tuple_count   | 11
+dead_tuple_len     | 3157
+dead_tuple_percent | 0.69
+free_space         | 8932
+free_percent       | 1.95
 
-test=# select pgstattuple('tellers');
-NOTICE:  physical length: 0.08MB live tuples: 20 (0.00MB, 1.17%) dead tuples: 320 (0.01MB, 18.75%) free/reusable space: 0.01MB (18.06%) overhead: 62.02%
- pgstattuple 
--------------
-       18.75
-(1 row)
 
-   Above example shows tellers table includes 18.75% dead tuples.
+Here are explanations for each column:
 
-   physical length	physical size of the table in MB
-   live tuples		information on the live tuples
-   dead tuples		information on the dead tuples
-   free/reusable space	available space
-   overhead		overhead space
+table_len		-- physical table length in bytes
+tuple_count		-- number of live tuples
+tuple_len		-- total tuples length in bytes
+tuple_percent		-- live tuples in %
+dead_tuple_len		-- total dead tuples length in bytes
+dead_tuple_percent	-- dead tuples in %
+free_space		-- free space in bytes
+free_percent		-- free space in %
 
 2. Installing pgstattuple
 
@@ -31,12 +40,15 @@ NOTICE:  physical length: 0.08MB live tuples: 20 (0.00MB, 1.17%) dead tuples: 32
 
 3. Using pgstattuple
 
-   pgstattuple can be called as a function:
+   pgstattuple may be called as a SRF (set returning function) and is
+   defined as follows:
 
-   pgstattuple(TEXT) RETURNS FLOAT8
+   CREATE OR REPLACE FUNCTION pgstattuple(text) RETURNS SETOF pgstattuple_view
+     AS 'MODULE_PATHNAME', 'pgstattuple'
+     LANGUAGE 'c' WITH (isstrict);
 
-   The argument is the table name.  pgstattuple returns the percentage
-   of the "dead" tuples of a table.
+   The argument is the table name.  Note that pgstattuple never
+   returns more than 1 tuple.
 
 4. Notes
 
