@@ -6,7 +6,7 @@
 # and "pg_group" tables, which belong to the whole installation rather
 # than any one individual database.
 #
-# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_dumpall.sh,v 1.15 2002/02/11 00:18:20 tgl Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_dumpall.sh,v 1.16 2002/02/24 21:57:23 tgl Exp $
 
 CMDNAME=`basename $0`
 
@@ -146,7 +146,7 @@ if [ "$usage" ] ; then
     echo "  -p, --port=PORT        Server port number"
     echo "  -U, --username=NAME    Connect as specified database user"
     echo "  -W, --password         Force password prompts (should happen automatically)"
-    echo "Any extra options will be passed to pg_dump.  The dump will be written"
+    echo "Any other options will be passed to pg_dump.  The dump will be written"
     echo "to the standard output."
     echo
     echo "Report bugs to <pgsql-bugs@postgresql.org>."
@@ -155,13 +155,13 @@ fi
 
 
 PSQL="${PGPATH}/psql $connectopts"
-PGDUMP="${PGPATH}/pg_dump $connectopts $pgdumpextraopts -Fp"
+PGDUMP="${PGPATH}/pg_dump $connectopts $pgdumpextraopts -X use-set-session-authorization -Fp"
 
 
 echo "--"
 echo "-- pg_dumpall ($VERSION) $connectopts $pgdumpextraopts"
 echo "--"
-echo "${BS}connect template1"
+echo "${BS}connect \"template1\""
 
 #
 # Dump users (but not the user created by initdb)
@@ -189,7 +189,8 @@ echo
 echo "DELETE FROM pg_group;"
 echo
 
-$PSQL -d template1 -At -F ' ' -c 'SELECT * FROM pg_group;' | \
+$PSQL -d template1 -At -F ' ' \
+-c 'SELECT groname,grosysid,grolist FROM pg_group;' | \
 while read GRONAME GROSYSID GROLIST ; do
     echo "CREATE GROUP \"$GRONAME\" WITH SYSID ${GROSYSID};"
     raw_grolist=`echo "$GROLIST" | sed 's/^{\(.*\)}$/\1/' | tr ',' ' '`
@@ -206,25 +207,28 @@ test "$globals_only" = yes && exit 0
 # Save stdin for pg_dump password prompts.
 exec 4<&0
 
-# For each database, run pg_dump to dump the contents of that database.
+# To minimize the number of reconnections (and possibly ensuing password
+# prompts) required by the output script, we emit all CREATE DATABASE
+# commands during the initial phase of the script, and then run pg_dump
+# for each database to dump the contents of that database.
 # We skip databases marked not datallowconn, since we'd be unable to
 # connect to them anyway (and besides, we don't want to dump template0).
+
+DATABASES=""
 
 $PSQL -d template1 -At -F ' ' \
   -c "SELECT datname, coalesce(usename, (select usename from pg_shadow where usesysid=(select datdba from pg_database where datname='template0'))), pg_encoding_to_char(d.encoding), datistemplate, datpath FROM pg_database d LEFT JOIN pg_shadow u ON (datdba = usesysid) WHERE datallowconn ORDER BY 1;" | \
 while read DATABASE DBOWNER ENCODING ISTEMPLATE DBPATH; do
-    echo
-    echo "--"
-    echo "-- Database $DATABASE"
-    echo "--"
-    echo "${BS}connect template1 \"$DBOWNER\""
-
-    if [ "$cleanschema" = yes -a "$DATABASE" != template1 ] ; then
-        echo "DROP DATABASE \"$DATABASE\";"
-    fi
+    DATABASES="$DATABASES $DATABASE"
 
     if [ "$DATABASE" != template1 ] ; then
-	createdbcmd="CREATE DATABASE \"$DATABASE\" WITH TEMPLATE = template0"
+	echo
+
+	if [ "$cleanschema" = yes ] ; then
+	    echo "DROP DATABASE \"$DATABASE\";"
+	fi
+
+	createdbcmd="CREATE DATABASE \"$DATABASE\" WITH OWNER = \"$DBOWNER\" TEMPLATE = template0"
 	if [ x"$DBPATH" != x"" ] ; then
 	    createdbcmd="$createdbcmd LOCATION = '$DBPATH'"
 	fi
@@ -232,17 +236,24 @@ while read DATABASE DBOWNER ENCODING ISTEMPLATE DBPATH; do
 	    createdbcmd="$createdbcmd ENCODING = '$ENCODING'"
 	fi
 	echo "$createdbcmd;"
+	if [ x"$ISTEMPLATE" = xt ] ; then
+	    echo "UPDATE pg_database SET datistemplate = 't' WHERE datname = '$DATABASE';"
+	fi
     fi
+done
 
-    echo "${BS}connect \"$DATABASE\" \"$DBOWNER\""
+for DATABASE in $DATABASES; do
     echo "dumping database \"$DATABASE\"..." 1>&2
+    echo
+    echo "--"
+    echo "-- Database $DATABASE"
+    echo "--"
+    echo "${BS}connect \"$DATABASE\""
+
     $PGDUMP "$DATABASE" <&4
     if [ "$?" -ne 0 ] ; then
         echo "pg_dump failed on $DATABASE, exiting" 1>&2
         exit 1
-    fi
-    if [ x"$ISTEMPLATE" = xt ] ; then
-        echo "UPDATE pg_database SET datistemplate = 't' WHERE datname = '$DATABASE';"
     fi
 done
 
