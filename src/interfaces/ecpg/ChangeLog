@@ -1850,6 +1850,10 @@ Tue Jul 20 09:15:21 CEST 2004
 
 	- Synced parser and keyword list.
 	- Fixed handling of cyclic defines.
+	
+Mon Jul 26 09:04:53 CEST 2004
+
+	- SQL defines are only used in SQL space in Informix mode.
 	- Set pgtypes library version to 1.2.
 	- Set ecpg version to 3.2.0.
 	- Set compat library version to 1.2.

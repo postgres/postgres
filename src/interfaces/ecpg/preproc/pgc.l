@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.130 2004/07/20 18:06:41 meskes Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.131 2004/07/26 10:28:28 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -693,24 +693,32 @@ cppline			{space}*#(.*\\{space})+.*
 						ScanKeyword		*keyword;
 						struct _defines *ptr;
 
-						/* is it a define? */
-						for (ptr = defines; ptr; ptr = ptr->next)
+                          			if (INFORMIX_MODE)
 						{
-							if (strcmp(yytext, ptr->old) == 0 && ptr->used == NULL)
+							/* Informix uses SQL defines only in SQL space */
+							ptr = NULL;
+						}
+						else
+						{
+							/* is it a define? */
+							for (ptr = defines; ptr; ptr = ptr->next)
 							{
-								struct _yy_buffer *yb;
+								if (strcmp(yytext, ptr->old) == 0 && ptr->used == NULL)
+								{
+									struct _yy_buffer *yb;
 
-								yb = mm_alloc(sizeof(struct _yy_buffer));
+									yb = mm_alloc(sizeof(struct _yy_buffer));
 
-								yb->buffer =  YY_CURRENT_BUFFER;
-								yb->lineno = yylineno;
-								yb->filename = mm_strdup(input_filename);
-								ptr->used = yb->next = yy_buffer;
+									yb->buffer =  YY_CURRENT_BUFFER;
+									yb->lineno = yylineno;
+									yb->filename = mm_strdup(input_filename);
+									ptr->used = yb->next = yy_buffer;
 
-								yy_buffer = yb;
+									yy_buffer = yb;
 
-								yy_scan_string(ptr->new);
-								break;
+									yy_scan_string(ptr->new);
+									break;
+								}
 							}
 						}
 
