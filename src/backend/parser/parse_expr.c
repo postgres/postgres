@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.144 2003/02/10 04:44:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.145 2003/02/13 18:29:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -322,15 +322,23 @@ transformExpr(ParseState *pstate, Node *expr)
 		case T_FuncCall:
 			{
 				FuncCall   *fn = (FuncCall *) expr;
+				List	   *targs;
 				List	   *args;
 
-				/* transform the list of arguments */
-				foreach(args, fn->args)
+				/*
+				 * Transform the list of arguments.  We use a shallow
+				 * list copy and then transform-in-place to avoid O(N^2)
+				 * behavior from repeated lappend's.
+				 */
+				targs = listCopy(fn->args);
+				foreach(args, targs)
+				{
 					lfirst(args) = transformExpr(pstate,
 												 (Node *) lfirst(args));
+				}
 				result = ParseFuncOrColumn(pstate,
 										   fn->funcname,
-										   fn->args,
+										   targs,
 										   fn->agg_star,
 										   fn->agg_distinct,
 										   false);
@@ -664,12 +672,15 @@ transformExpr(ParseState *pstate, Node *expr)
 			 * taking a conservative approach, and only accepting node
 			 * types that are demonstrably necessary to accept.
 			 *********************************************/
-		case T_Expr:
 		case T_Var:
 		case T_Const:
 		case T_Param:
 		case T_Aggref:
 		case T_ArrayRef:
+		case T_FuncExpr:
+		case T_OpExpr:
+		case T_DistinctExpr:
+		case T_BoolExpr:
 		case T_FieldSelect:
 		case T_RelabelType:
 		case T_CoerceToDomain:
