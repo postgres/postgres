@@ -1,165 +1,164 @@
-====================================================
-TODO list (FAQ) for PostgreSQL
-====================================================
-last updated:		Fri Oct 17 08:18:16 EDT 1997
+TODO list for PostgreSQL
+========================
+Last updated:		Fri Oct 17 08:18:16 EDT 1997
 
-current maintainer:	Bruce Momjian (maillist@candle.pha.pa.us)
+Current maintainer:	Bruce Momjian (maillist@candle.pha.pa.us)
 
 The most recent version of this document can be viewed at
-the postgreSQL WWW site, http://www.postgreSQL.org.
+the PostgreSQL WWW site, http://www.postgreSQL.org.
 
-THE CHANGES FOR 6.2 and 6.2.1 APPEAR AT THE END OF THIS DOCUMENT
+THE CHANGES FOR 6.2 AND 6.2.1 APPEAR AT THE END OF THIS DOCUMENT
 
 Developers who have claimed items are:
-	Bruce is Bruce Momjian<maillist@candle.pha.pa.us>
-	Bryan is Bryan Henderson<bryanh@giraffe.netgate.net>
-	Dan is Dan McGuirk <mcguirk@indirect.com>
-	Daniel is Daniel Kalchev <daniel@digsys.bg>
-	Darren is Darren King <darrenk@insightdist.com>
-	Edmund is Edmund Mergl <E.Mergl@bawue.de>
-	Erich Stamberger <eberger@gewi.kfunigraz.ac.at>
-	Gerhard is Gerhard Reithofer <gerhardr@tech-edv.co.at>
-	Igor is Igor <igor@sba.miami.edu>
-	Jun is Jun Kuwamura <juk@rccm.co.jp>
-	Kurt is "Kurt J. Lidl" <lidl@va.pubnix.com>
- 	Martin is Martin S. Utesch <utesch@aut.tu-freiberg.de>
-	Oleg is Oleg Bartunov <oleg@sai.msu.su>
-	Paul is Paul M. Aoki <aoki@CS.Berkeley.EDU>
-	Patrick is Patrick van Kleef <pvk@pobox.com>
-	Raymond is Raymond Toy <toy@rtp.ericsson.se>
-	Soo-Ho Ok <shok@detc.dongeui-tc.ac.kr>
-	Stefan Simkovics <ssimkovi@rainbow.studorg.tuwien.ac.at>
-	Sven is Sven Verdoolaege <skimo@breughel.ufsia.ac.be>
-	Tatsuo is Tatsuo Ishii <t-ishii@sra.co.jp>
-	Thomas is Thomas Lockhart <tgl@mythos.jpl.nasa.gov>
-	Vadim is "Vadim B. Mikheev" <vadim@sable.krasnoyarsk.su>
-	Vivek is Vivek Khera <khera@kci.kciLink.com>
+-------------------------------------
+	* Bruce is Bruce Momjian<maillist@candle.pha.pa.us>
+	* Bryan is Bryan Henderson<bryanh@giraffe.netgate.net>
+	* Dan is Dan McGuirk <mcguirk@indirect.com>
+	* Daniel is Daniel Kalchev <daniel@digsys.bg>
+	* Darren is Darren King <darrenk@insightdist.com>
+	* Edmund is Edmund Mergl <E.Mergl@bawue.de>
+	* Erich Stamberger <eberger@gewi.kfunigraz.ac.at>
+	* Gerhard is Gerhard Reithofer <gerhardr@tech-edv.co.at>
+	* Igor is Igor <igor@sba.miami.edu>
+	* Jun is Jun Kuwamura <juk@rccm.co.jp>
+	* Kurt is "Kurt J. Lidl" <lidl@va.pubnix.com>
+ 	* Martin is Martin S. Utesch <utesch@aut.tu-freiberg.de>
+	* Oleg is Oleg Bartunov <oleg@sai.msu.su>
+	* Paul is Paul M. Aoki <aoki@CS.Berkeley.EDU>
+	* Patrick is Patrick van Kleef <pvk@pobox.com>
+	* Raymond is Raymond Toy <toy@rtp.ericsson.se>
+	* Soo-Ho Ok <shok@detc.dongeui-tc.ac.kr>
+	* Stefan Simkovics <ssimkovi@rainbow.studorg.tuwien.ac.at>
+	* Sven is Sven Verdoolaege <skimo@breughel.ufsia.ac.be>
+	* Tatsuo is Tatsuo Ishii <t-ishii@sra.co.jp>
+	* Thomas is Thomas Lockhart <tgl@mythos.jpl.nasa.gov>
+	* Vadim is "Vadim B. Mikheev" <vadim@sable.krasnoyarsk.su>
+	* Vivek is Vivek Khera <khera@kci.kciLink.com>
 
 RELIABILITY
 -----------
--Overhaul mdmgr/smgr to fix double unlinking and double opens, cleanup(Erich)
--Overhaul bufmgr/lockmgr/transaction manager(Vadim)
-Fix CLUSTER
-Remove EXTEND?
-Fix all NULL features
-	allow psql to print nulls meaningfully
-Fix compile and security of Kerberos/GSSAPI code (Daniel Kalchev?)
-COUNT on VIEW always returns zero (maybe because there is no oid for views?)
-CREATE VIEW requires super-user priviledge
-can lo_export()/lo_import() read/write anywhere, causing a security problem?
-Tables that start with xinv confused to be large objects
-Two and three dimmensional arrays display improperly, missing {}
-Add GROUP BY and HAVING to INSERT INTO table SELECT * FROM table2
-lo_unlink() crashes server
-Allow variable casts with BETWEEN 'today'::asbtime AND 'today'::abstime
-Prevent auto-table reference, like SELECT table.col WHERE col = 3 (?)
-Remove un-needed malloc() calls and replace with palloc().
-SELECT * FROM table WHERE int4_column = '1' fails
-SELECT a[1] FROM test fails, it needs test.a[1]
-SELECT COUNT(*) FROM TAB1, TAB2 fails
-SELECT SUM(2+2) FROM table dumps core
-UPDATE table SET table.value = 3 fails
-UPDATE key_table SET keyval=max(reftab.NUM)+1 WHERE tblname='reftab' fails
-INSERT INTO ... SELECT DISTINCT ... generates error on DISTINCT
-INSERT INTO table SELECT id, count(*) FROM table2 GROUP BY id generate error
+* -Overhaul mdmgr/smgr to fix double unlinking and double opens, cleanup(Erich)
+* -Overhaul bufmgr/lockmgr/transaction manager(Vadim)
+* Fix CLUSTER
+* Remove EXTEND?
+* Fix all NULL features, allow psql to print nulls meaningfully
+* Fix compile and security of Kerberos/GSSAPI code (Daniel Kalchev?)
+* COUNT on VIEW always returns zero (maybe because there is no oid for views?)
+* CREATE VIEW requires super-user priviledge
+* can lo_export()/lo_import() read/write anywhere, causing a security problem?
+* Tables that start with xinv confused to be large objects
+* Two and three dimmensional arrays display improperly, missing {}
+* Add GROUP BY and HAVING to INSERT INTO table SELECT * FROM table2
+* lo_unlink() crashes server
+* Allow variable casts with BETWEEN 'today'::asbtime AND 'today'::abstime
+* Prevent auto-table reference, like SELECT table.col WHERE col = 3 (?)
+* Remove un-needed malloc() calls and replace with palloc().
+* SELECT * FROM table WHERE int4_column = '1' fails
+* SELECT a[1] FROM test fails, it needs test.a[1]
+* SELECT COUNT(*) FROM TAB1, TAB2 fails
+* SELECT SUM(2+2) FROM table dumps core
+* UPDATE table SET table.value = 3 fails
+* UPDATE key_table SET keyval=max(reftab.NUM)+1 WHERE tblname='reftab' fails
+* INSERT INTO ... SELECT DISTINCT ... generates error on DISTINCT
+* INSERT INTO table SELECT id, count(*) FROM table2 GROUP BY id generate error
 
 ENHANCEMENTS
 ------------
-Replace table-level locking with row or page-level locking(Vadim)
-PRIMARY KEY during table creation
-Add SERIAL type
-Preserve GRANT/REVOKE/pg_group in pg_dump
-Transaction log
-More access control over who can create tables and access the database
-Add full ANSI SQL capabilities (Stefan)
-	add subselects, possibility using temporary SQL functions
-	Implement HAVING clause
-	Implement EXISTS qualifier
-	report "Not implemented" if valid syntax is supplied
-	add OUTER joins, left and right (Thomas)
-	make VIEWs updateable where possible
-	add UNIONS, INTERSECTS, SUBTRACTS
-	add temporary tables
-	add sql3 recursive unions
-	add the concept of dataspaces
-	allow conversion type casts on SELECT target fields
-	add DECIMAL, NUMERIC, DOUBLE PRECISION, BIT, BIT VARYING
-	 	NCHAR (as distinguished from ordinary varchar),
-Allow compression of large fields or a compressed field type
-Fix the rules system(Jan?,Soo-Ho)
-	robust
-	making INSTEAD rules work
-	add CONSTRAINT
-Full set of text operations and functions
-	word searches, concat,max() on text, char
-Large objects
-	overwriting blocks has problems
-	there are other problems, too.
-	Fix large object mapping scheme
-	not to stuff everything as files in a single directory
-Better interface for adding to pg_group
-Make MONEY/DECIMAL have a defined precision
-Add support for tables >2G, or test current version
-Threaded version of the server or libpq
-Allow libpq to cancel query requests
-Add REGEX internationalization
-Add other language types for built-in functions
-	expand to allow tcl, perl, java,
-	generalize the function manager switch to pass 
-		function sources to interpreter engines.
-remove time-travel feature(Vadim)
-reduce system column overhead(Vadmin)
-remove pg_time table(Vadim)
-allow row re-use without vacuum, maybe?(Vadim)
-can't vacuum large objects
-can't reduce index file size with vacuum
-Remove restriction that ORDER BY field must be in SELECT list(?)
-Allow queries about owner of tables, like:
-        SELECT u.usesysid FROM postgres.pg_user u;
-Add word index for text fields, maybe with trigrams, i.e.:
-    ' (cat | dog) & ! fox ' meaning text has cat or dog, but not fox
-Allow readline-type or editor command editing of multi-line SQL commands
-Populate backend status area and write program to dump status data
-Add ALTER TABLE DROP COLUMN feature
-Remove stale files upon startup(Vivek)
-Add command to show privileges
-Allow INSERT INTO ... SELECT to convert column types
-Add syslog functionality
-Add STDDEV/VARIANCE() function for standard deviation computation/variance
-Add table/column/function discription table indexed by oid
-add pg_type attribute to identify types that need length (bpchar, varchar)
-add UNIQUE capability to non-btree indexes
-make large objects have their own reltype
-make number of backends a config parameter, storage/sinvaladt.h:MaxBackendId
-certain indexes will not shrink, i.e. oid indexes with many inserts
-make NULL's come out at the beginning or end depending on the ORDER BY direction
-change the library/backend interface to use network byte order
-allow unix domain sockets for local connections for performance and security
-Add PAGER for psql's \dt and \d tablename
-Make timezone set-able by client applications(Thomas)
-Restore unused oid's on backend exit if no one else has gotten oids
+* Replace table-level locking with row or page-level locking(Vadim)
+* PRIMARY KEY during table creation
+* Add SERIAL type
+* Preserve GRANT/REVOKE/pg_group in pg_dump
+* Transaction log
+* More access control over who can create tables and access the database
+* Add full ANSI SQL capabilities (Stefan)
+	* add subselects, possibility using temporary SQL functions
+	* Implement HAVING clause
+	* Implement EXISTS qualifier
+	* report "Not implemented" if valid syntax is supplied
+	* add OUTER joins, left and right (Thomas)
+	* make VIEWs updateable where possible
+	* add UNIONS, INTERSECTS, SUBTRACTS
+	* add temporary tables
+	* add sql3 recursive unions
+	* add the concept of dataspaces
+	* allow conversion type casts on SELECT target fields
+	* add DECIMAL, NUMERIC, DOUBLE PRECISION, BIT, BIT VARYING
+	 	* NCHAR (as distinguished from ordinary varchar),
+* Allow compression of large fields or a compressed field type
+* Fix the rules system(Jan?,Soo-Ho)
+	* robust
+	* making INSTEAD rules work
+	* add CONSTRAINT
+* Full set of text operations and functions
+	* word searches, concat,max() on text, char
+* Large objects
+	* overwriting blocks has problems
+	* there are other problems, too.
+	* Fix large object mapping scheme
+	* not to stuff everything as files in a single directory
+* Better interface for adding to pg_group
+* Make MONEY/DECIMAL have a defined precision
+* Add support for tables >2G, or test current version
+* Threaded version of the server or libpq
+* Allow libpq to cancel query requests
+* Add REGEX internationalization
+* Add other language types for built-in functions
+	* expand to allow tcl, perl, java,
+	* generalize the function manager switch to pass 
+		* function sources to interpreter engines.
+* remove time-travel feature(Vadim)
+* reduce system column overhead(Vadmin)
+* remove pg_time table(Vadim)
+* allow row re-use without vacuum, maybe?(Vadim)
+* can't vacuum large objects
+* can't reduce index file size with vacuum
+* Remove restriction that ORDER BY field must be in SELECT list(?)
+* Allow queries about owner of tables, like:
+        * SELECT u.usesysid FROM postgres.pg_user u;
+* Add word index for text fields, maybe with trigrams, i.e.:
+    * ' (cat | dog) & ! fox ' meaning text has cat or dog, but not fox
+* Allow readline-type or editor command editing of multi-line SQL commands
+* Populate backend status area and write program to dump status data
+* Add ALTER TABLE DROP COLUMN feature
+* Remove stale files upon startup(Vivek)
+* Add command to show privileges
+* Allow INSERT INTO ... SELECT to convert column types
+* Add syslog functionality
+* Add STDDEV/VARIANCE() function for standard deviation computation/variance
+* Add table/column/function discription table indexed by oid
+* add pg_type attribute to identify types that need length (bpchar, varchar)
+* add UNIQUE capability to non-btree indexes
+* make large objects have their own reltype
+* make number of backends a config parameter, storage/sinvaladt.h:MaxBackendId
+* certain indexes will not shrink, i.e. oid indexes with many inserts
+* make NULL's come out at the beginning or end depending on the ORDER BY direction
+* change the library/backend interface to use network byte order
+* allow unix domain sockets for local connections for performance and security
+* Add PAGER for psql's \dt and \d tablename
+* Make timezone set-able by client applications(Thomas)
+* Restore unused oid's on backend exit if no one else has gotten oids
 
 PERFORMANCE
 -----------
-Use indexes in ORDER BY
-Allow LIKE/wildcard matches to use indexes if the wildcard character is not first
-Optimizing disjunctive queries
-Fix bushy-plans (Martin)
-Other optimizer bugs
-Is fsync use optimized?
-Cache most recent query plan(s?)
-Shared catalog cache, reduce lseek()'s by caching table size in shared area
-Allow compression of log and meta data
-Add FILLFACTOR to index creation
-Allow indexes to be used with OR clauses(Vadim)
-update pg_statistic table to remove operator column
+* Use indexes in ORDER BY
+* Allow LIKE/wildcard matches to use indexes if the wildcard character is not first
+* Optimizing disjunctive queries
+* Fix bushy-plans (Martin)
+* Other optimizer bugs
+* Is fsync use optimized?
+* Cache most recent query plan(s?)
+* Shared catalog cache, reduce lseek()'s by caching table size in shared area
+* Allow compression of log and meta data
+* Add FILLFACTOR to index creation
+* Allow indexes to be used with OR clauses(Vadim)
+* update pg_statistic table to remove operator column
 
 DOCUMENTATION
 -------------
-Update usermanual source(many)
-remove time-travel in documentation(Bruce)
-added features used in grammer but not in docs, like :: and CAST
-update libpq++ manual page
+* Update usermanual source(many)
+* remove time-travel in documentation(Bruce)
+* added features used in grammer but not in docs, like :: and CAST
+* update libpq++ manual page
 
 PORTABILITY
 -----------
