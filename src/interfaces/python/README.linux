@@ -1,0 +1,33 @@
+Thanks to thilo@eevolute.com for this README and the RPM
+
+
+INSTALLING PyGreSQL on Redhat Linux 5.1 or 5.2
+==============================================
+
+Things are pretty easy on Redhat Linux.  You can either get a precompiled
+RPM package from
+
+        ftp://www.eevolute.com/pub/python/
+
+or try in compile and install it yourself:
+
+bash$ make redhat       # this just compiles the module as a shared object
+cc -fpic -shared -o _pg.so -I/usr/include/python1.5 pgmodule.c -lpq
+bash$ python            # you can test it from your local directory
+Python 1.5.1 (#1, May  6 1998, 01:48:27)  [GCC 2.7.2.3] on linux-i386
+Copyright 1991-1995 Stichting Mathematisch Centrum, Amsterdam
+>>> import _pg
+>>> db = _pg.connect('thilo', 'localhost')
+>>> db.query("INSERT INTO test VALUES ('ping', 'pong')")
+18304
+>>> db.query("SELECT * FROM test")
+eins|zwei
+----+----
+ping|pong
+(1 row)
+
+bash$ su                # Yow! Seems to work - now install it properly
+bash# cp _pg.so /usr/lib/python1.5/lib-dynload 
+
+done!
+
