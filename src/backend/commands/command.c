@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.89 2000/07/14 22:17:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.90 2000/07/15 12:37:14 momjian Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -33,6 +33,18 @@
 #include "utils/acl.h"
 #include "utils/fmgroids.h"
 #include "commands/trigger.h"
+
+#include "parser/parse_expr.h"
+#include "parser/parse_clause.h"
+#include "parser/parse_relation.h"
+#include "nodes/makefuncs.h"
+#include "optimizer/planmain.h"
+#include "optimizer/clauses.h"
+#include "rewrite/rewriteSupport.h"
+#include "commands/view.h"
+#include "utils/temprel.h"
+#include "executor/spi_priv.h"
+
 #ifdef	_DROP_COLUMN_HACK__
 #include "catalog/pg_index.h"
 #include "parser/parse.h"
@@ -1067,13 +1079,158 @@ void
 AlterTableAddConstraint(const char *relationName,
 						bool inh, Node *newConstraint)
 {
+	char rulequery[41+NAMEDATALEN]; 
+	void *qplan;
+	char nulls[1]="";
+
 	if (newConstraint == NULL)
 		elog(ERROR, "ALTER TABLE / ADD CONSTRAINT passed invalid constraint.");
 
+#ifndef NO_SECURITY
+	if (!pg_ownercheck(UserName, relationName, RELNAME))
+		elog(ERROR, "ALTER TABLE: permission denied");
+#endif
+
+	/* check to see if the table to be constrained is a view. */
+	sprintf(rulequery, "select * from pg_views where viewname='%s'", relationName);
+	if (SPI_connect()!=SPI_OK_CONNECT)
+		elog(ERROR, "ALTER TABLE: Unable to determine if %s is a view - SPI_connect failure..", relationName);
+        qplan=SPI_prepare(rulequery, 0, NULL);
+	if (!qplan)
+		elog(ERROR, "ALTER TABLE: Unable to determine if %s is a view - SPI_prepare failure.", relationName);
+	qplan=SPI_saveplan(qplan);
+	if (SPI_execp(qplan, NULL, nulls, 1)!=SPI_OK_SELECT) 
+		elog(ERROR, "ALTER TABLE: Unable to determine if %s is a view - SPI_execp failure.", relationName);
+        if (SPI_processed != 0)
+                elog(ERROR, "ALTER TABLE: Cannot add constraints to views.");
+        if (SPI_finish() != SPI_OK_FINISH)
+                elog(NOTICE, "SPI_finish() failed in ALTER TABLE");
+		
 	switch (nodeTag(newConstraint))
 	{
 		case T_Constraint:
-			elog(ERROR, "ALTER TABLE / ADD CONSTRAINT is not implemented");
+			{
+				Constraint *constr=(Constraint *)newConstraint;
+				switch (constr->contype) {
+					case CONSTR_CHECK:
+					{
+						ParseState *pstate;
+						bool successful=TRUE;
+						HeapScanDesc scan;
+					        ExprContext *econtext;
+					        TupleTableSlot *slot = makeNode(TupleTableSlot);
+						HeapTuple tuple;
+					        RangeTblEntry *rte = makeNode(RangeTblEntry);
+					        List       *rtlist;
+					        List       *qual;
+						List       *constlist;
+						Relation	rel;
+						Node *expr;
+						char *name;
+						if (constr->name)
+							name=constr->name;
+						else
+							name="<unnamed>";
+
+						rel = heap_openr(relationName, AccessExclusiveLock);
+
+						/*
+						 * Scan all of the rows, looking for a false match
+						 */
+						scan = heap_beginscan(rel, false, SnapshotNow, 0, NULL);
+						AssertState(scan != NULL);
+
+						/* 
+						 *We need to make a parse state and range table to allow us
+						 * to transformExpr and fix_opids to get a version of the
+					 	 * expression we can pass to ExecQual
+						 */
+						pstate = make_parsestate(NULL);
+					        makeRangeTable(pstate, NULL);
+					        addRangeTableEntry(pstate, relationName, 
+							makeAttr(relationName, NULL), false, true,true);
+						constlist=lcons(constr, NIL);
+
+						/* Convert the A_EXPR in raw_expr into an EXPR */
+				                expr = transformExpr(pstate, constr->raw_expr, EXPR_COLUMN_FIRST);
+
+				                /*
+				                 * Make sure it yields a boolean result.
+				                 */
+				                if (exprType(expr) != BOOLOID)
+				                        elog(ERROR, "CHECK '%s' does not yield boolean result",
+                                			 name);
+
+				                /*
+				                 * Make sure no outside relations are referred to.
+				                 */
+				                if (length(pstate->p_rtable) != 1)
+                				        elog(ERROR, "Only relation '%s' can be referenced in CHECK",
+		                        	         relationName);
+
+        				        /*
+				                 * Might as well try to reduce any constant expressions.
+				                 */
+				                expr = eval_const_expressions(expr);
+
+						/* And fix the opids */
+						fix_opids(expr);
+
+						qual = lcons(expr, NIL);
+       						rte->relname = relationName;
+					        rte->ref = makeNode(Attr);
+					        rte->ref->relname = rte->relname;
+					        rte->relid = RelationGetRelid(rel);
+					        rtlist = lcons(rte, NIL);
+
+						/* 
+						 * Scan through the rows now, making the necessary things for
+						 * ExecQual, and then call it to evaluate the expression.
+						 */
+						while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
+						{
+						        slot->val = tuple;
+						        slot->ttc_shouldFree = false;
+						        slot->ttc_descIsNew = true;
+						        slot->ttc_tupleDescriptor = rel->rd_att;
+						        slot->ttc_buffer = InvalidBuffer;
+						        slot->ttc_whichplan = -1;
+
+							econtext = MakeExprContext(slot, CurrentMemoryContext);
+						        econtext->ecxt_range_table = rtlist;            /* range table */
+						        if (!ExecQual(qual, econtext, true)) {
+								successful=false;
+								break;
+						        }
+							FreeExprContext(econtext);
+						}
+
+					        pfree(slot);
+					        pfree(rtlist);
+					        pfree(rte);
+
+						heap_endscan(scan);
+						heap_close(rel, NoLock);		
+
+						if (!successful) 
+						{
+							elog(ERROR, "AlterTableAddConstraint: rejected due to CHECK constraint %s", name);
+						}
+						/* 
+						 * Call AddRelationRawConstraints to do the real adding -- It duplicates some
+						 * of the above, but does not check the validity of the constraint against
+						 * tuples already in the table.
+						 */
+						AddRelationRawConstraints(rel, NIL, constlist);
+					        pfree(constlist);
+
+						break;
+					}
+					default:
+						elog(ERROR, "ALTER TABLE / ADD CONSTRAINT is not implemented for that constraint type.");
+				}
+			}
+			break;
 		case T_FkConstraint:
 			{
 				FkConstraint *fkconstraint = (FkConstraint *) newConstraint;
@@ -1083,6 +1240,26 @@ AlterTableAddConstraint(const char *relationName,
 				Trigger		trig;
 				List	   *list;
 				int			count;
+
+				if (get_temp_rel_by_username(fkconstraint->pktable_name)!=NULL &&
+				    get_temp_rel_by_username(relationName)==NULL) {
+					elog(ERROR, "ALTER TABLE / ADD CONSTRAINT: Unable to reference temporary table from permanent table constraint.");
+				}
+
+				/* check to see if the referenced table is a view. */
+				sprintf(rulequery, "select * from pg_views where viewname='%s'", fkconstraint->pktable_name);
+				if (SPI_connect()!=SPI_OK_CONNECT)
+					elog(ERROR, "ALTER TABLE: Unable to determine if %s is a view.", relationName);
+			        qplan=SPI_prepare(rulequery, 0, NULL);
+				if (!qplan)
+					elog(ERROR, "ALTER TABLE: Unable to determine if %s is a view.", relationName);
+				qplan=SPI_saveplan(qplan);
+				if (SPI_execp(qplan, NULL, nulls, 1)!=SPI_OK_SELECT) 
+					elog(ERROR, "ALTER TABLE: Unable to determine if %s is a view.", relationName);
+			        if (SPI_processed != 0)
+			                elog(ERROR, "ALTER TABLE: Cannot add constraints to views.");
+			        if (SPI_finish() != SPI_OK_FINISH)
+			                elog(NOTICE, "SPI_finish() failed in RI_FKey_check()");
 
 				/*
 				 * Grab an exclusive lock on the pk table, so that someone
@@ -1101,7 +1278,10 @@ AlterTableAddConstraint(const char *relationName,
 				 */
 				rel = heap_openr(relationName, AccessExclusiveLock);
 				trig.tgoid = 0;
-				trig.tgname = "<unknown>";
+				if (fkconstraint->constr_name)
+					trig.tgname = fkconstraint->constr_name;
+				else
+					trig.tgname = "<unknown>";
 				trig.tgfoid = 0;
 				trig.tgtype = 0;
 				trig.tgenabled = TRUE;
@@ -1113,7 +1293,10 @@ AlterTableAddConstraint(const char *relationName,
 					 sizeof(char *) * (4 + length(fkconstraint->fk_attrs)
 									   + length(fkconstraint->pk_attrs)));
 
-				trig.tgargs[0] = "<unnamed>";
+				if (fkconstraint->constr_name)
+					trig.tgargs[0] = fkconstraint->constr_name;
+				else
+					trig.tgargs[0] = "<unknown>";
 				trig.tgargs[1] = (char *) relationName;
 				trig.tgargs[2] = fkconstraint->pktable_name;
 				trig.tgargs[3] = fkconstraint->match_type;
@@ -1446,3 +1629,4 @@ LockTableCommand(LockStmt *lockstmt)
 
 	heap_close(rel, NoLock);	/* close rel, keep lock */
 }
+
