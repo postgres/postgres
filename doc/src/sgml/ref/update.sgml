@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/update.sgml,v 1.20 2002/08/15 02:59:18 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/update.sgml,v 1.21 2003/04/26 23:56:51 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -8,204 +8,136 @@ PostgreSQL documentation
   <refentrytitle id="SQL-UPDATE-TITLE">UPDATE</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
+
  <refnamediv>
-  <refname>
-   UPDATE
-  </refname>
-  <refpurpose>
-   update rows of a table
-  </refpurpose>
+  <refname>UPDATE</refname>
+  <refpurpose>update rows of a table</refpurpose>
  </refnamediv>
+
  <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>1999-07-20</date>
-  </refsynopsisdivinfo>
-  <synopsis>
-UPDATE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> SET <replaceable class="PARAMETER">col</replaceable> = <replaceable class="PARAMETER">expression</replaceable> [, ...]
+<synopsis>
+UPDATE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> SET <replaceable class="PARAMETER">column</replaceable> = <replaceable class="PARAMETER">expression</replaceable> [, ...]
     [ FROM <replaceable class="PARAMETER">fromlist</replaceable> ]
     [ WHERE <replaceable class="PARAMETER">condition</replaceable> ]
-  </synopsis>
-
-  <refsect2 id="R2-SQL-UPDATE-1">
-   <refsect2info>
-    <date>1998-09-24</date>
-   </refsect2info>
-   <title>
-    Inputs
-   </title>
-   <para>
-
-    <variablelist>
-     <varlistentry>
-      <term><replaceable class="PARAMETER">table</replaceable></term>
-      <listitem>
-       <para>
-	The name (optionally schema-qualified) of an existing table. If
-	<literal>ONLY</> is specified, only that table is updated.  If
-	<literal>ONLY</> is not specified, the table and all its
-	descendant tables (if any) are updated. <literal>*</> can be
-	appended to the table name to indicate that descendant tables are
-	to be scanned, but in the current version, this is the default
-	behavior.  (In releases before 7.1, <literal>ONLY</> was the
-	default behavior.)  The default can be altered by changing the
-	<option>SQL_INHERITANCE</option> configuration option.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><replaceable class="PARAMETER">column</replaceable></term>
-      <listitem>
-       <para>
-	The name of a column in <replaceable class="PARAMETER">table</replaceable>.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><replaceable class="PARAMETER">expression</replaceable></term>
-      <listitem>
-       <para>
-	A valid expression or value to assign to column.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><replaceable class="PARAMETER">fromlist</replaceable></term>
-      <listitem>
-       <para>
-	A <productname>PostgreSQL</productname>
-	non-standard extension to allow columns
-	from other tables to appear in the WHERE condition.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><replaceable class="PARAMETER">condition</replaceable></term>
-      <listitem>
-       <para>
-	Refer to the SELECT statement for a further description
-	of the WHERE clause.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
-
-  <refsect2 id="R2-SQL-UPDATE-2">
-   <refsect2info>
-    <date>1998-09-24</date>
-   </refsect2info>
-   <title>
-    Outputs
-   </title>
-
-   <para>
-    <variablelist>
-     <varlistentry>
-      <term><computeroutput>
-UPDATE <replaceable class="parameter">#</replaceable>
-      </computeroutput></term>
-      <listitem>
-       <para>
-	Message returned if successful.
-	The <replaceable class="parameter">#</replaceable>
-	means the number of rows updated.
-	If <replaceable class="parameter">#</replaceable>
-	is 0 no rows are updated.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
+</synopsis>
  </refsynopsisdiv>
 
- <refsect1 id="R1-SQL-UPDATE-1">
-  <refsect1info>
-   <date>1998-09-24</date>
-  </refsect1info>
-  <title>
-   Description
-  </title>
+ <refsect1>
+  <title>Description</title>
+
   <para>
-   <command>UPDATE</command> changes the values of the columns specified for
-   all rows which satisfy condition. Only the columns 
-   to be modified need appear as columns in the statement.
+   <command>UPDATE</command> changes the values of the specified
+   columns in all rows that satisfy the condition. Only the columns to
+   be modified need appear as columns in the statement.
   </para>
 
   <para>
-   Array references use the same syntax found in
-   <xref linkend="sql-select" endterm="sql-select-title">.
-   That is, either single array elements, a range of array
-   elements or the entire array may be replaced with a single
-   query.
+   By default, <command>UPDATE</command> will update rows in the
+   specified table and all its subtables. If you wish to only update
+   the specific table mentioned, you must use the <literal>ONLY</>
+   clause.
   </para>
 
   <para>
-   You must have write access to the table in order to modify
-   it, as well as read access to any table whose values are
-   mentioned in the WHERE condition.
-  </para>
-
-  <para>
-  By default UPDATE will update tuples in the table specified 
-  and all its sub-tables. If you wish to only update the
-  specific table mentioned, you should use the ONLY clause.
+   You must have the <literal>UPDATE</literal> privilege on the table
+   to update it, as well as the <literal>SELECT</literal>
+   privilege to any table whose values are read in the <replaceable
+   class="parameter">condition</replaceable>.
   </para>
  </refsect1>
 
- <refsect1 id="R1-SQL-UPDATE-2">
-  <title>
-   Usage
-  </title>
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><replaceable class="PARAMETER">table</replaceable></term>
+    <listitem>
+     <para>
+      The name (optionally schema-qualified) of the table to update.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="PARAMETER">column</replaceable></term>
+    <listitem>
+     <para>
+      The name of a column in <replaceable class="PARAMETER">table</replaceable>.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="PARAMETER">expression</replaceable></term>
+    <listitem>
+     <para>
+      An expression or value to assign to the column.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="PARAMETER">fromlist</replaceable></term>
+    <listitem>
+     <para>
+      A list of table expressions, allowing columns from other tables
+      to appear in the <literal>WHERE</> condition.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="PARAMETER">condition</replaceable></term>
+    <listitem>
+     <para>
+      A value expression that returns a value of type
+      <type>boolean</type> that determines the rows which are to be
+      updated.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Diagnostics</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><computeroutput>UPDATE <replaceable class="parameter">count</replaceable></computeroutput></term>
+    <listitem>
+     <para>
+      Message returned if successful.  The value <replaceable
+      class="parameter">count</replaceable> is the number of rows
+      updated.  If <replaceable class="parameter">count</replaceable>
+      is 0, no rows were updated.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Examples</title>
 
   <para>
-   Change word <literal>Drama</> with <literal>Dramatic</> on column <structfield>kind</>:
+   Change the word <literal>Drama</> to <literal>Dramatic</> in the
+   column <structfield>kind</> of the table <literal>films</literal>:
 
 <programlisting>
-UPDATE films 
-SET kind = 'Dramatic' 
-WHERE kind = 'Drama';
-SELECT * 
-FROM films 
-WHERE kind = 'Dramatic' OR kind = 'Drama';
-
- code  |     title     | did | date_prod  |   kind   | len
--------+---------------+-----+------------+----------+-------
- BL101 | The Third Man | 101 | 1949-12-23 | Dramatic | 01:44
- P_302 | Becket        | 103 | 1964-02-03 | Dramatic | 02:28
- M_401 | War and Peace | 104 | 1967-02-12 | Dramatic | 05:57
- T_601 | Yojimbo       | 106 | 1961-06-16 | Dramatic | 01:50
- DA101 | Das Boot      | 110 | 1981-11-11 | Dramatic | 02:29
+UPDATE filme SET kind = 'Dramatic' WHERE kind = 'Drama';
 </programlisting>
   </para>
  </refsect1>
 
- <refsect1 id="R1-SQL-UPDATE-3">
-  <title>
-   Compatibility
-  </title>
+ <refsect1>
+  <title>Compatibility</title>
 
-  <refsect2 id="R2-SQL-UPDATE-4">
-   <refsect2info>
-    <date>1998-09-24</date>
-   </refsect2info>
-   <title>
-    SQL92
-   </title>
-   <para>
-    <acronym>SQL92</acronym> defines a different syntax for
-    the positioned UPDATE statement:
-
-    <synopsis>
-UPDATE <replaceable>table</replaceable> SET <replaceable>column</replaceable> = <replaceable>expression</replaceable> [, ...]
-    WHERE CURRENT OF <replaceable class="parameter">cursor</replaceable>
-    </synopsis>
-
-    where <replaceable class="parameter">cursor</replaceable>
-    identifies an open cursor.
-   </para>
-  </refsect2>
+  <para>
+   This command conforms to the SQL standard.  The
+   <literal>FROM</literal> clause is a PostgreSQL extension.
+  </para>
  </refsect1>
 </refentry>
 

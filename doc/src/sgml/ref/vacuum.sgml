@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.30 2003/03/25 16:15:44 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.31 2003/04/26 23:56:51 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -8,161 +8,26 @@ PostgreSQL documentation
   <refentrytitle id="sql-vacuum-title">VACUUM</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
+
  <refnamediv>
-  <refname>
-   VACUUM
-  </refname>
-  <refpurpose>
-   garbage-collect and optionally analyze a database
-  </refpurpose>
+  <refname>VACUUM</refname>
+  <refpurpose>garbage-collect and optionally analyze a database</refpurpose>
  </refnamediv>
+
  <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>2001-08-26</date>
-  </refsynopsisdivinfo>
-  <synopsis>
+<synopsis>
 VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ <replaceable class="PARAMETER">table</replaceable> ]
 VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ <replaceable class="PARAMETER">table</replaceable> [ (<replaceable class="PARAMETER">column</replaceable> [, ...] ) ] ]
-  </synopsis>
-
-  <refsect2 id="R2-SQL-VACUUM-1">
-   <refsect2info>
-    <date>2001-07-10</date>
-   </refsect2info>
-   <title>
-    Inputs
-   </title>
-
-   <para>
-    <variablelist>
-     <varlistentry>
-      <term>FULL</term>
-      <listitem>
-       <para>
-        Selects <quote>full</quote> vacuum, which may reclaim more space,
-	but takes much longer and exclusively locks the table.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term>FREEZE</term>
-      <listitem>
-       <para>
-        Selects aggressive <quote>freezing</quote> of tuples.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term>VERBOSE</term>
-      <listitem>
-       <para>
-	Prints a detailed vacuum activity report for each table.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term>ANALYZE</term>
-      <listitem>
-       <para>
-	Updates statistics used by the optimizer to
-	determine the most efficient way to execute a query.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><replaceable class="PARAMETER">table</replaceable></term>
-      <listitem>
-       <para>
-	The name (optionally schema-qualified) of a specific table to
-	vacuum. Defaults to all tables in the current database.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><replaceable class="PARAMETER">column</replaceable></term>
-      <listitem>
-       <para>
-	The name of a specific column to analyze. Defaults to all columns.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
-
-  <refsect2 id="R2-SQL-VACUUM-2">
-   <refsect2info>
-    <date>1998-10-04</date>
-   </refsect2info>
-   <title>
-    Outputs
-   </title>
-   <para>
-
-    <variablelist>
-     <varlistentry>
-      <term><computeroutput>
-<returnvalue>VACUUM</returnvalue>
-       </computeroutput></term>
-      <listitem>
-       <para>
-	The command is complete.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><computeroutput>
-INFO:  --Relation <replaceable class="PARAMETER">table</replaceable>--
-       </computeroutput></term>
-      <listitem>
-       <para>
-	The report header for <replaceable class="PARAMETER">table</replaceable>.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><computeroutput>
-INFO:  Pages 98: Changed 25, Reapped 74, Empty 0, New 0;
-         Tup 1000: Vac 3000, Crash 0, UnUsed 0, MinLen 188, MaxLen 188;
-         Re-using: Free/Avail. Space 586952/586952; EndEmpty/Avail. Pages 0/74.
-         Elapsed 0/0 sec.
-       </computeroutput></term>
-      <listitem>
-       <para>
-	The analysis for <replaceable class="PARAMETER">table</replaceable> itself.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><computeroutput>
-INFO:  Index <replaceable class="PARAMETER">index</replaceable>: Pages 28;
-         Tuples 1000: Deleted 3000. Elapsed 0/0 sec.
-       </computeroutput></term>
-      <listitem>
-       <para>
-	The analysis for an index on the target table.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
+</synopsis>
  </refsynopsisdiv>
 
- <refsect1 id="R1-SQL-VACUUM-1">
-  <refsect1info>
-   <date>2001-07-10</date>
-  </refsect1info>
-  <title>
-   Description
-  </title>
+ <refsect1>
+  <title>Description</title>
+
   <para>
    <command>VACUUM</command> reclaims storage occupied by deleted tuples.
    In normal <productname>PostgreSQL</productname> operation, tuples that
-   are deleted or obsoleted by UPDATE are not physically removed from
+   are deleted or obsoleted by an update are not physically removed from
    their table; they remain present until a <command>VACUUM</command> is
    done.  Therefore it's necessary to do <command>VACUUM</command>
    periodically, especially on frequently-updated tables.
@@ -201,32 +66,137 @@ INFO:  Index <replaceable class="PARAMETER">index</replaceable>: Pages 28;
    are no other open transactions in the same database, then it is guaranteed
    that all tuples in the database are <quote>frozen</> and will not be
    subject to transaction ID wraparound problems, no matter how long the
-   database is left un-vacuumed.
+   database is left unvacuumed.
    <command>FREEZE</command> is not recommended for routine use.  Its only
    intended usage is in connection with preparation of user-defined template
    databases, or other databases that are completely read-only and will not
    receive routine maintenance <command>VACUUM</> operations.
    See <xref linkend="maintenance"> for details.
   </para>
+ </refsect1>
 
-  <refsect2 id="R2-SQL-VACUUM-3">
-   <refsect2info>
-    <date>2001-07-10</date>
-   </refsect2info>
-   <title>
-    Notes
-   </title>
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><literal>FULL</literal></term>
+    <listitem>
+     <para>
+      Selects <quote>full</quote> vacuum, which may reclaim more
+      space, but takes much longer and exclusively locks the table.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>FREEZE</literal></term>
+    <listitem>
+     <para>
+      Selects aggressive <quote>freezing</quote> of tuples.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>VERBOSE</literal></term>
+    <listitem>
+     <para>
+      Prints a detailed vacuum activity report for each table.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>ANALYZE</literal></term>
+    <listitem>
+     <para>
+      Updates statistics used by the planner to determine the most
+      efficient way to execute a query.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="PARAMETER">table</replaceable></term>
+    <listitem>
+     <para>
+      The name (optionally schema-qualified) of a specific table to
+      vacuum. Defaults to all tables in the current database.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="PARAMETER">column</replaceable></term>
+    <listitem>
+     <para>
+      The name of a specific column to analyze. Defaults to all columns.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Diagnostics</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><computeroutput>VACUUM</computeroutput></term>
+    <listitem>
+     <para>
+      The command is complete.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><computeroutput>INFO:  --Relation <replaceable class="PARAMETER">table</replaceable>--</computeroutput></term>
+    <listitem>
+     <para>
+      The report header for <replaceable class="PARAMETER">table</replaceable>.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><computeroutput>INFO:  Pages 98: Changed 25, Reapped 74, Empty 0, New 0;
+         Tup 1000: Vac 3000, Crash 0, UnUsed 0, MinLen 188, MaxLen 188;
+         Re-using: Free/Avail. Space 586952/586952; EndEmpty/Avail. Pages 0/74.
+         Elapsed 0/0 sec.</computeroutput></term>
+    <listitem>
+     <para>
+      The analysis for <replaceable class="PARAMETER">table</replaceable> itself.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><computeroutput>INFO:  Index <replaceable class="PARAMETER">index</replaceable>: Pages 28;
+         Tuples 1000: Deleted 3000. Elapsed 0/0 sec.</computeroutput></term>
+    <listitem>
+     <para>
+      The analysis for an index on the target table.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Notes</title>
 
    <para>
     We recommend that active production databases be
-    <command>VACUUM</command>-ed frequently (at least nightly), in order to
+    vacuumed frequently (at least nightly), in order to
     remove expired rows. After adding or deleting a large number
-    of records, it may be a good idea to issue a <command>VACUUM
+    of rows, it may be a good idea to issue a <command>VACUUM
     ANALYZE</command> command for the affected table. This will update the
     system catalogs with
     the results of all recent changes, and allow the
-    <productname>PostgreSQL</productname> query optimizer to make better
-    choices in planning user queries.
+    <productname>PostgreSQL</productname> query planner to make better
+    choices in planning queries.
    </para>
 
    <para>
@@ -236,20 +206,17 @@ INFO:  Index <replaceable class="PARAMETER">index</replaceable>: Pages 28;
     to occupy less disk space.  <command>VACUUM FULL</command> will usually
     shrink the table more than a plain <command>VACUUM</command> would.
    </para>
-
-  </refsect2>
  </refsect1>
 
- <refsect1 id="R1-SQL-VACUUM-2">
-  <title>
-   Usage
-  </title>
+ <refsect1>
+  <title>Examples</title>
+
   <para>
    The following is an example from running <command>VACUUM</command> on a table
    in the regression database:
 
-   <programlisting>
-regression=> VACUUM VERBOSE ANALYZE onek;
+<programlisting>
+=> VACUUM VERBOSE ANALYZE onek;
 INFO:  --Relation onek--
 INFO:  Index onek_unique1: Pages 14; Tuples 1000: Deleted 3000.
         CPU 0.00s/0.11u sec elapsed 0.12 sec.
@@ -265,26 +232,16 @@ INFO:  Pages 94: Changed 0, Empty 0; Tup 1000: Vac 3000, Keep 0, UnUsed 0.
         Total CPU 0.05s/0.45u sec elapsed 0.59 sec.
 INFO:  Analyzing onek
 VACUUM
-   </programlisting>
+</programlisting>
   </para>
  </refsect1>
 
- <refsect1 id="R1-SQL-VACUUM-3">
-  <title>
-   Compatibility
-  </title>
+ <refsect1>
+  <title>Compatibility</title>
 
-  <refsect2 id="R2-SQL-VACUUM-4">
-   <refsect2info>
-    <date>1998-10-04</date>
-   </refsect2info>
-   <title>
-    SQL92
-   </title>
-   <para>
-    There is no <command>VACUUM</command> statement in <acronym>SQL92</acronym>.
-   </para>
-  </refsect2>
+  <para>
+   There is no <command>VACUUM</command> statement in the SQL standard.
+  </para>
  </refsect1>
 
  <refsect1>

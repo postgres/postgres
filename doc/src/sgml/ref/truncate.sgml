@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/truncate.sgml,v 1.9 2002/12/06 03:15:07 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/truncate.sgml,v 1.10 2003/04/26 23:56:51 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -8,76 +8,21 @@ PostgreSQL documentation
   <refentrytitle id="SQL-TRUNCATE-TITLE">TRUNCATE</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
+
  <refnamediv>
-  <refname>
-   TRUNCATE
-  </refname>
-  <refpurpose>
-   empty a table
-  </refpurpose>
+  <refname>TRUNCATE</refname>
+  <refpurpose>empty a table</refpurpose>
  </refnamediv>
+
  <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>1999-07-20</date>
-  </refsynopsisdivinfo>
-  <synopsis>
+<synopsis>
 TRUNCATE [ TABLE ] <replaceable class="PARAMETER">name</replaceable>
-  </synopsis>
-  
-  <refsect2 id="R2-SQL-TRUNCATE-1">
-   <refsect2info>
-    <date>1998-09-08</date>
-   </refsect2info>
-   <title>
-    Inputs
-   </title>
-   <para>
-
-    <variablelist>
-     <varlistentry>
-      <term><replaceable class="PARAMETER">name</replaceable></term>
-      <listitem>
-       <para>
-	The name (optionally schema-qualified) of the table to be truncated.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
-  
-  <refsect2 id="R2-SQL-TRUNCATE-2">
-   <refsect2info>
-    <date>1998-09-08</date>
-   </refsect2info>
-   <title>
-    Outputs
-   </title>
-   <para>
-
-    <variablelist>
-     <varlistentry>
-      <term><computeroutput>
-TRUNCATE TABLE
-       </computeroutput></term>
-      <listitem>
-       <para>
-	Message returned if the table is successfully truncated.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
+</synopsis>
  </refsynopsisdiv>
 
- <refsect1 id="R1-SQL-TRUNCATE-1">
-  <refsect1info>
-   <date>1998-09-08</date>
-  </refsect1info>
-  <title>
-   Description
-  </title>
+ <refsect1>
+  <title>Description</title>
+
   <para>
    <command>TRUNCATE</command> quickly removes all rows from a
    table. It has the same effect as an unqualified
@@ -85,36 +30,55 @@ TRUNCATE TABLE
    table it is faster. This is most useful on large tables.
   </para>
  </refsect1>
+  
+ <refsect1>
+  <title>Parameter</title>
 
- <refsect1 id="R1-SQL-TRUNCATE-2">
-  <title>
-   Usage
-  </title>
+  <variablelist>
+   <varlistentry>
+    <term><replaceable class="PARAMETER">name</replaceable></term>
+    <listitem>
+     <para>
+      The name (optionally schema-qualified) of the table to be truncated.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+  
+ <refsect1>
+  <title>Diagnostics</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><computeroutput>TRUNCATE TABLE</computeroutput></term>
+    <listitem>
+     <para>
+      Message returned if the table was successfully truncated.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Examples</title>
+
   <para>
    Truncate the table <literal>bigtable</literal>:
 
-   <programlisting>
+<programlisting>
 TRUNCATE TABLE bigtable;
-   </programlisting>
+</programlisting>
   </para>
  </refsect1>
  
- <refsect1 id="R1-SQL-TRUNCATE-3">
-  <title>
-   Compatibility
-  </title>
-  
-  <refsect2 id="R2-SQL-TRUNCATE-4">
-   <refsect2info>
-    <date>1998-09-08</date>
-   </refsect2info>
-   <title>
-    SQL92
-   </title>
-   <para>
-    There is no <command>TRUNCATE</command> in <acronym>SQL92</acronym>.
-   </para>
-  </refsect2>
+ <refsect1>
+  <title>Compatibility</title>
+
+  <para>
+   There is no <command>TRUNCATE</command> command in the SQL standard.
+  </para>
  </refsect1>
 </refentry>
 

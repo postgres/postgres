@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/grant.sgml,v 1.32 2003/01/23 23:38:53 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/grant.sgml,v 1.33 2003/04/26 23:56:51 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -43,10 +43,10 @@ GRANT { { CREATE | USAGE } [,...] | ALL [ PRIVILEGES ] }
   <title>Description</title>
 
   <para>
-   The <command>GRANT</command> command gives specific permissions on
+   The <command>GRANT</command> command gives specific privileges on
    an object (table, view, sequence, database, function, procedural language,
    or schema) to
-   one or more users or groups of users.  These permissions are added
+   one or more users or groups of users.  These privileges are added
    to those already granted, if any.
   </para>
 
@@ -55,18 +55,18 @@ GRANT { { CREATE | USAGE } [,...] | ALL [ PRIVILEGES ] }
    privileges are to be granted to all users, including those that may
    be created later.  <literal>PUBLIC</literal> may be thought of as an
    implicitly defined group that always includes all users.
-   Note that any particular user will have the sum
+   Any particular user will have the sum
    of privileges granted directly to him, privileges granted to any group he
    is presently a member of, and privileges granted to
    <literal>PUBLIC</literal>.
   </para>
 
   <para>
-   There is no need to grant privileges to the creator of an object,
-   as the creator has all privileges by default.  (The creator could,
+   There is no need to grant privileges to the owner of an object (usually the user that created it),
+   as the owner has all privileges by default.  (The owner could,
    however, choose to revoke some of his own privileges for safety.)
-   Note that the right to drop an object, or to alter it in any way is
-   not described by a grantable right; it is inherent in the creator,
+   The right to drop an object, or to alter it in any way is
+   not described by a grantable right; it is inherent in the owner,
    and cannot be granted or revoked.
   </para>
 
@@ -84,7 +84,7 @@ GRANT { { CREATE | USAGE } [,...] | ALL [ PRIVILEGES ] }
    <literal>TEMP</> table creation privilege for databases;
    <literal>EXECUTE</> privilege for functions; and
    <literal>USAGE</> privilege for languages.
-   The object creator may of course revoke these privileges.  (For maximum
+   The object owner may of course revoke these privileges.  (For maximum
    security, issue the <command>REVOKE</> in the same transaction that
    creates the object; then there is no window in which another user
    may use the object.)
@@ -252,7 +252,7 @@ GRANT { { CREATE | USAGE } [,...] | ALL [ PRIVILEGES ] }
    </para>
 
    <para>
-    It should be noted that database <firstterm>superusers</> can access
+    It should be noted that database superusers can access
     all objects regardless of object privilege settings.  This
     is comparable to the rights of <literal>root</> in a Unix system.
     As with <literal>root</>, it's unwise to operate as a superuser
@@ -267,17 +267,18 @@ GRANT { { CREATE | USAGE } [,...] | ALL [ PRIVILEGES ] }
    </para>
 
    <para>
-    Use <xref linkend="app-psql">'s <command>\dp</command> command
+    Use <xref linkend="app-psql">'s <command>\z</command> command
     to obtain information about existing privileges, for example:
 <programlisting>
-lusitania=> \dp mytable
+=> \z mytable
+
         Access privileges for database "lusitania"
  Schema |  Table  |           Access privileges
 --------+---------+---------------------------------------
  public | mytable | {=r/postgres,miriam=arwdRxt/postgres,"group todos=arw/postgres"}
 (1 row)
 </programlisting>
-    The entries shown by <command>\dp</command> are interpreted thus:
+    The entries shown by <command>\z</command> are interpreted thus:
 <programlisting>
               =xxxx -- privileges granted to PUBLIC
          uname=xxxx -- privileges granted to a user
@@ -305,14 +306,14 @@ lusitania=> \dp mytable
 
 <programlisting>
 GRANT SELECT ON mytable TO PUBLIC;
-GRANT SELECT,UPDATE,INSERT ON mytable TO GROUP todos;
+GRANT SELECT, UPDATE, INSERT ON mytable TO GROUP todos;
 </programlisting>
    </para>
 
    <para>
    If the <quote>Access privileges</> column is empty for a given object,
-it means the object has default privileges (that is, its privileges field
-is NULL).  Default privileges always include all privileges for the owner,
+it means the object has default privileges (that is, its privileges columm
+is null).  Default privileges always include all privileges for the owner,
 and may include some privileges for <literal>PUBLIC</> depending on the
 object type, as explained above.  The first <command>GRANT</> or
 <command>REVOKE</> on an object
@@ -325,7 +326,7 @@ will instantiate the default privileges (producing, for example,
   <title>Examples</title>
 
   <para>
-   Grant insert privilege to all users on table films:
+   Grant insert privilege to all users on table <literal>films</literal>:
 
 <programlisting>
 GRANT INSERT ON films TO PUBLIC;
@@ -344,37 +345,35 @@ GRANT ALL PRIVILEGES ON kinds TO manuel;
  <refsect1 id="sql-grant-compatibility">
   <title>Compatibility</title>
     
-  <refsect2>
-   <title>SQL92</title>
-
    <para>
-    The <literal>PRIVILEGES</literal> key word in <literal>ALL
-    PRIVILEGES</literal> is required.  <acronym>SQL</acronym> does not
-    support setting the privileges on more than one table per command.
+    According to the SQL standard, the <literal>PRIVILEGES</literal>
+    key word in <literal>ALL PRIVILEGES</literal> is required.  The
+    SQL standard does not support setting the privileges on more than
+    one object per command.
    </para>
 
    <para>
-    The <acronym>SQL</acronym> syntax for <literal>GRANT</literal>
-    allows setting privileges for individual columns within a table:
+    The SQL standard allows setting privileges for individual columns
+    within a table:
 
 <synopsis>
-GRANT <replaceable class="PARAMETER">privilege</replaceable> [, ...]
+GRANT <replaceable class="PARAMETER">privileges</replaceable>
     ON <replaceable class="PARAMETER">table</replaceable> [ ( <replaceable class="PARAMETER">column</replaceable> [, ...] ) ] [, ...]
     TO { PUBLIC | <replaceable class="PARAMETER">username</replaceable> [, ...] } [ WITH GRANT OPTION ]
 </synopsis>
    </para>
 
    <para>
-    <acronym>SQL</acronym> allows to grant the USAGE privilege on
-    other kinds of objects:  CHARACTER SET, COLLATION, TRANSLATION, DOMAIN.
+    The SQL standard provides for a <literal>USAGE</literal> privilege
+    on other kinds of objects: character sets, collations,
+    translations, domains.
    </para>
 
    <para>
-    The TRIGGER privilege was introduced in SQL99.  The RULE privilege
-    is a PostgreSQL extension.
+    The <literal>RULE</literal> privilege, and privileges on
+    databases, schemas, languages, and sequences are PostgreSQL
+    extensions.
    </para>
-  </refsect2>
-
  </refsect1>
 
 

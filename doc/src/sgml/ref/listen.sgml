@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/listen.sgml,v 1.15 2002/09/21 18:32:54 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/listen.sgml,v 1.16 2003/04/26 23:56:51 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -8,121 +8,54 @@ PostgreSQL documentation
   <refentrytitle id="SQL-LISTEN-TITLE">LISTEN</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
+
  <refnamediv>
-  <refname>
-   LISTEN
-  </refname>
-  <refpurpose>
-   listen for a notification
-  </refpurpose>
+  <refname>LISTEN</refname>
+  <refpurpose>listen for a notification</refpurpose>
  </refnamediv>
+
  <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>1999-07-20</date>
-  </refsynopsisdivinfo>
-  <synopsis>
+<synopsis>
 LISTEN <replaceable class="PARAMETER">name</replaceable>
-  </synopsis>
-
-  <refsect2 id="R2-SQL-LISTEN-1">
-   <refsect2info>
-    <date>1998-10-07</date>
-   </refsect2info>
-   <title>
-    Inputs
-   </title>
-   <para>
-
-    <variablelist>
-     <varlistentry>
-      <term><replaceable class="PARAMETER">name</replaceable></term>
-      <listitem>
-       <para>
-	Name of notify condition.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
-
-  <refsect2 id="R2-SQL-LISTEN-2">
-   <refsect2info>
-    <date>1998-09-24</date>
-   </refsect2info>
-   <title>
-    Outputs
-   </title>
-   <para>
-
-    <variablelist>
-     <varlistentry>
-      <term><computeroutput>
-LISTEN
-       </computeroutput></term>
-      <listitem>
-       <para>
-	Message returned upon successful completion of registration.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><computeroutput>
-WARNING:  Async_Listen: We are already listening on <replaceable class="PARAMETER">name</replaceable>
-       </computeroutput></term>
-      <listitem>
-       <para>
-	If this backend is already registered for that notify condition.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>		
-  </refsect2>
+</synopsis>
  </refsynopsisdiv>
 
- <refsect1 id="R1-SQL-LISTEN-1">
-  <refsect1info>
-   <date>1998-10-07</date>
-  </refsect1info>
-  <title>
-   Description
-  </title>
+ <refsect1>
+  <title>Description</title>
 
   <para>
-   <command>LISTEN</command> registers the current 
-   <productname>PostgreSQL</productname> backend as a
-   listener on the notify condition
-   <replaceable class="PARAMETER">name</replaceable>.
+   <command>LISTEN</command> registers the current session as a
+   listener on the notification condition <replaceable
+   class="PARAMETER">name</replaceable>.
   </para>
 
   <para>
-   Whenever the command 
-   <command>NOTIFY <replaceable class="PARAMETER">name</replaceable></command>
-   is invoked, either by this backend or another one connected to
-   the same database, all the backends currently listening on that notify
-   condition are notified, and each will in turn notify its connected
-   frontend application.  See the discussion of <command>NOTIFY</command>
-   for more information.
+   Whenever the command <command>NOTIFY <replaceable
+   class="PARAMETER">name</replaceable></command> is invoked, either
+   by this session or another one connected to the same database, all
+   the sessions currently listening on that notification condition are
+   notified, and each will in turn notify its connected client
+   application.  See the discussion of <command>NOTIFY</command> for
+   more information.
   </para>
 
   <para>
-   A backend can be unregistered for a given notify condition with the
-   <command>UNLISTEN</command> command.  Also, a backend's listen registrations
-   are automatically cleared when the backend process exits.
+   A session can be unregistered for a given notify condition with the
+   <command>UNLISTEN</command> command.  A session's listen
+   registrations are automatically cleared when the session ends.
   </para>
 
   <para>
-   The method a frontend application must use to detect notify events depends on
+   The method a client application must use to detect notification events depends on
    which <productname>PostgreSQL</productname> application programming interface it
    uses.  With the <application>libpq</> library, the application issues
    <command>LISTEN</command> as an ordinary SQL command, and then must
-   periodically call the routine <function>PQnotifies</function> to find out
-   whether any notify events have been received.  Other interfaces such as
+   periodically call the function <function>PQnotifies</function> to find out
+   whether any notification events have been received.  Other interfaces such as
    <application>libpgtcl</> provide higher-level methods for handling notify events; indeed,
    with <application>libpgtcl</> the application programmer should not even issue
    <command>LISTEN</command> or <command>UNLISTEN</command> directly.  See the
-   documentation for the library you are using for more details.
+   documentation for the interface you are using for more details.
   </para>
 
   <para>
@@ -131,64 +64,67 @@ WARNING:  Async_Listen: We are already listening on <replaceable class="PARAMETE
    discussion of the use of <command>LISTEN</command> and
    <command>NOTIFY</command>.
   </para>
-
-  <refsect2 id="R2-SQL-LISTEN-3">
-   <refsect2info>
-    <date>1998-10-07</date>
-   </refsect2info>
-   <title>
-    Notes
-   </title>
-
-   <para>
-    <replaceable class="PARAMETER">name</replaceable>
-    can be any string valid as a name;
-    it need not correspond to the name of any actual table.  If
-    <replaceable class="PARAMETER">notifyname</replaceable>
-    is enclosed in double-quotes, it need not even be a syntactically
-    valid name, but can be any string up to 63 characters long.
-   </para>
-   <para>
-    In some previous releases of
-    <productname>PostgreSQL</productname>,
-    <replaceable class="PARAMETER">name</replaceable>
-    had to be enclosed in double-quotes when it did not correspond to any existing
-    table name, even if syntactically valid as a name.  That is no longer required.
-   </para>
-  </refsect2>
  </refsect1>
 
- <refsect1 id="R1-SQL-LISTEN-2">
-  <title>
-   Usage
-  </title>
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><replaceable class="PARAMETER">name</replaceable></term>
+    <listitem>
+     <para>
+      Name of a notify condition (any identifier).
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Diagnostics</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><computeroutput>LISTEN</computeroutput></term>
+    <listitem>
+     <para>
+      Message returned upon successful completion of registration.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><computeroutput>WARNING:  Async_Listen: We are already listening on <replaceable class="PARAMETER">name</replaceable></computeroutput></term>
+    <listitem>
+     <para>
+      Message returned if this session is already registered for that notification condition.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Examples</title>
+
   <para>
    Configure and execute a listen/notify sequence from <application>psql</application>:
 <programlisting>
 LISTEN virtual;
 NOTIFY virtual;
-
 Asynchronous NOTIFY 'virtual' from backend with pid '8448' received.
 </programlisting>
   </para>
  </refsect1>
 
- <refsect1 id="R1-SQL-LISTEN-3">
-  <title>
-   Compatibility
-  </title>
+ <refsect1>
+  <title>Compatibility</title>
 
-  <refsect2 id="R2-SQL-LISTEN-4">
-   <refsect2info>
-    <date>1998-09-01</date>
-   </refsect2info>
-   <title>
-    SQL92
-   </title>
-   <para>
-    There is no <command>LISTEN</command> in <acronym>SQL92</acronym>.
-   </para>
-  </refsect2>
+  <para>
+   There is no <command>LISTEN</command> statement in the SQL
+   standard.
+  </para>
  </refsect1>
 </refentry>
 

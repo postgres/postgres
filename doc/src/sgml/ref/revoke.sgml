@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/revoke.sgml,v 1.25 2003/01/23 23:38:53 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/revoke.sgml,v 1.26 2003/04/26 23:56:51 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -53,19 +53,19 @@ REVOKE [ GRANT OPTION FOR ]
   <title>Description</title>
 
   <para>
-   <command>REVOKE</command> allows the creator of an object to revoke
-   previously granted permissions from one or more users or groups of users.
-   The key word <literal>PUBLIC</literal> refers to the implicitly defined
-   group of all users.
+   The <command>REVOKE</command> command revokes previously granted
+   privileges from one or more users or groups of users.  The key word
+   <literal>PUBLIC</literal> refers to the implicitly defined group of
+   all users.
   </para>
 
   <para>
    Note that any particular user will have the sum
    of privileges granted directly to him, privileges granted to any group he
    is presently a member of, and privileges granted to
-   <literal>PUBLIC</literal>.  Thus, for example, revoking SELECT privilege
+   <literal>PUBLIC</literal>.  Thus, for example, revoking <literal>SELECT</> privilege
    from <literal>PUBLIC</literal> does not necessarily mean that all users
-   have lost SELECT privilege on the object: those who have it granted
+   have lost <literal>SELECT</> privilege on the object: those who have it granted
    directly or via a group will still have it.
   </para>
 
@@ -138,15 +138,12 @@ REVOKE ALL PRIVILEGES ON kinds FROM manuel;
  <refsect1 id="SQL-REVOKE-compatibility">
   <title>Compatibility</title>
 
-  <refsect2>
-   <title>SQL92</title>
-
    <para>
     The compatibility notes of the <xref linkend="sql-grant" endterm="sql-grant-title"> command
     apply analogously to <command>REVOKE</command>.  The syntax summary is:
 
 <synopsis>
-REVOKE [ GRANT OPTION FOR ] { SELECT | INSERT | UPDATE | DELETE | REFERENCES }
+REVOKE [ GRANT OPTION FOR ] <replaceable class="PARAMETER">privileges</replaceable>
     ON <replaceable class="parameter">object</replaceable> [ ( <replaceable class="parameter">column</replaceable> [, ...] ) ]
     FROM { PUBLIC | <replaceable class="parameter">username</replaceable> [, ...] }
     { RESTRICT | CASCADE }
@@ -154,7 +151,6 @@ REVOKE [ GRANT OPTION FOR ] { SELECT | INSERT | UPDATE | DELETE | REFERENCES }
     One of <literal>RESTRICT</literal> or <literal>CASCADE</literal>
     is required.
    </para>
-  </refsect2>
  </refsect1>
 
  <refsect1>

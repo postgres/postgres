@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/unlisten.sgml,v 1.20 2002/09/21 18:32:54 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/unlisten.sgml,v 1.21 2003/04/26 23:56:51 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -8,93 +8,30 @@ PostgreSQL documentation
   <refentrytitle>UNLISTEN</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
+
  <refnamediv>
-  <refname>
-   UNLISTEN
-  </refname>
-  <refpurpose>
-   stop listening for a notification
-  </refpurpose>
+  <refname>UNLISTEN</refname>
+  <refpurpose>stop listening for a notification</refpurpose>
  </refnamediv>
+
  <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>1998-10-19</date>
-  </refsynopsisdivinfo>
-  <synopsis>
-UNLISTEN { <replaceable class="PARAMETER">notifyname</replaceable> | * }
-  </synopsis>
-
-  <refsect2 id="R2-SQL-UNLISTEN-1">
-   <refsect2info>
-    <date>1998-10-19</date>
-   </refsect2info>
-   <title>
-    Inputs
-   </title>
-
-   <para>
-    <variablelist>
-     <varlistentry>
-      <term><replaceable class="PARAMETER">notifyname</replaceable></term>
-      <listitem>
-       <para>
-	Name of previously registered notify condition.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><literal>*</literal></term>
-      <listitem>
-       <para>
-	All current listen registrations for this backend are cleared.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
-
-  <refsect2 id="R2-SQL-UNLISTEN-2">
-   <refsect2info>
-    <date>1998-10-19</date>
-   </refsect2info>
-   <title>
-    Outputs
-   </title>
-   <para>
-
-    <variablelist>
-     <varlistentry>
-      <term><computeroutput>
-<returnvalue>UNLISTEN</returnvalue>
-       </computeroutput></term>
-      <listitem>
-       <para>
-	Acknowledgment that statement has executed.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
+<synopsis>
+UNLISTEN { <replaceable class="PARAMETER">name</replaceable> | * }
+</synopsis>
  </refsynopsisdiv>
 
- <refsect1 id="R1-SQL-UNLISTEN-1">
-  <refsect1info>
-   <date>1998-10-19</date>
-  </refsect1info>
-  <title>
-   Description
-  </title>
+ <refsect1>
+  <title>Description</title>
 
   <para>
-   <command>UNLISTEN</command>
-   is used to remove an existing <command>NOTIFY</command> registration.
-   <command>UNLISTEN</command> cancels any existing registration of the current
-   <productname>PostgreSQL</productname> session as a listener on the notify
-   condition <replaceable class="PARAMETER">notifyname</replaceable>.
-   The special condition wildcard <literal>*</literal> cancels all listener registrations
-   for the current session.
+   <command>UNLISTEN</command> is used to remove an existing
+   registration for <command>NOTIFY</command> events.
+   <command>UNLISTEN</command> cancels any existing registration of
+   the current <productname>PostgreSQL</productname> session as a
+   listener on the notification <replaceable
+   class="PARAMETER">name</replaceable>.  The special wildcard
+   <literal>*</literal> cancels all listener registrations for the
+   current session.
   </para>
 
   <para>
@@ -103,41 +40,69 @@ UNLISTEN { <replaceable class="PARAMETER">notifyname</replaceable> | * }
    discussion of the use of <command>LISTEN</command> and
    <command>NOTIFY</command>.
   </para>
-
-  <refsect2 id="R2-SQL-UNLISTEN-3">
-   <refsect2info>
-    <date>1998-10-19</date>
-   </refsect2info>
-   <title>
-    Notes
-   </title>
-   <para>
-    <replaceable class="PARAMETER">notifyname</replaceable>
-    need not be a valid class name but can be any string valid
-    as a name up to 64 characters long.
-   </para>
-   <para>
-    The backend does not complain if you unlisten something you were not
-    listening for.
-    Each backend will automatically execute <command>UNLISTEN *</command> when
-    exiting.
-   </para>
-  </refsect2>
  </refsect1>
 
- <refsect1 id="R1-SQL-UNLISTEN-2">
-  <title>
-   Usage
-  </title>
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><replaceable class="PARAMETER">name</replaceable></term>
+    <listitem>
+     <para>
+      Name of a notification (any identifier).
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>*</literal></term>
+    <listitem>
+     <para>
+      All current listen registrations for this session are cleared.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Diagnostics</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><computeroutput>UNLISTEN</computeroutput></term>
+    <listitem>
+     <para>
+      Message returned when the command has executed.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Notes</title>
 
   <para>
-   To subscribe to an existing registration:
+   You unlisten something you were not listening for; no warning or error will appear.
+  </para>
+
+  <para>
+   At the end of each session, <command>UNLISTEN *</command> ist
+   automatically executed.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Examples</title>
+
+  <para>
+   To make a registration:
 
 <programlisting>
 LISTEN virtual;
-LISTEN
 NOTIFY virtual;
-NOTIFY
 Asynchronous NOTIFY 'virtual' from backend with pid '8448' received
 </programlisting>
   </para>
@@ -148,30 +113,18 @@ Asynchronous NOTIFY 'virtual' from backend with pid '8448' received
 
 <programlisting>
 UNLISTEN virtual;
-UNLISTEN
 NOTIFY virtual;
-NOTIFY
--- notice no NOTIFY event is received
+-- no NOTIFY event is received
 </programlisting>
   </para>
  </refsect1>
 
- <refsect1 id="R1-SQL-UNLISTEN-3">
-  <title>
-   Compatibility
-  </title>
+ <refsect1>
+  <title>Compatibility</title>
 
-  <refsect2 id="R2-SQL-UNLISTEN-4">
-   <refsect2info>
-    <date>1998-10-19</date>
-   </refsect2info>
-   <title>
-    SQL92
-   </title>
-   <para>
-    There is no <command>UNLISTEN</command> in <acronym>SQL92</acronym>.
-   </para>
-  </refsect2>
+  <para>
+   There is no <command>UNLISTEN</command> command in the SQL standard.
+  </para>
  </refsect1>
 </refentry>
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/insert.sgml,v 1.21 2003/03/25 16:15:42 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/insert.sgml,v 1.22 2003/04/26 23:56:51 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -8,246 +8,207 @@ PostgreSQL documentation
   <refentrytitle id="SQL-INSERT-TITLE">INSERT</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
+
  <refnamediv>
-  <refname>
-   INSERT
-  </refname>
-  <refpurpose>
-   create new rows in a table
-  </refpurpose>
+  <refname>INSERT</refname>
+  <refpurpose>create new rows in a table</refpurpose>
  </refnamediv>
+
  <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>2000-08-08</date>
-  </refsynopsisdivinfo>
-  <synopsis>
+<synopsis>
 INSERT INTO <replaceable class="PARAMETER">table</replaceable> [ ( <replaceable class="PARAMETER">column</replaceable> [, ...] ) ]
-    { DEFAULT VALUES | VALUES ( { <replaceable class="PARAMETER">expression</replaceable> | DEFAULT } [, ...] ) | SELECT <replaceable class="PARAMETER">query</replaceable> }
-  </synopsis>
-
-  <refsect2 id="R2-SQL-INSERT-1">
-   <title>
-    Inputs
-   </title>
-
-   <para>
-
-    <variablelist>
-     <varlistentry>
-      <term><replaceable class="PARAMETER">table</replaceable></term>
-      <listitem>
-       <para>
-	The name (optionally schema-qualified) of an existing table.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><replaceable class="PARAMETER">column</replaceable></term>
-      <listitem>
-       <para>
-	The name of a column in <replaceable class="PARAMETER">table</replaceable>.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>DEFAULT VALUES</term>
-      <listitem>
-       <para>
-	All columns will be filled by null values or by values specified
-	when the table was created using <literal>DEFAULT</> clauses.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><replaceable class="PARAMETER">expression</replaceable></term>
-      <listitem>
-       <para>
-	A valid expression or value to assign to <replaceable
-	 class="PARAMETER">column</replaceable>.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><replaceable class="PARAMETER">DEFAULT</replaceable></term>
-      <listitem>
-       <para>
-	This column will be filled in by the column DEFAULT clause, or NULL if
-	a default is not available.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><replaceable class="PARAMETER">query</replaceable></term>
-      <listitem>
-       <para>
-	A valid query. Refer to the SELECT statement for a further description
-	of valid arguments.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
-
-  <refsect2 id="R2-SQL-INSERT-2">
-   <title>
-    Outputs
-   </title>
-   <para>
-
-    <variablelist>
-     <varlistentry>
-      <term><computeroutput>
-INSERT <replaceable>oid</replaceable> 1
-       </computeroutput></term>
-      <listitem>
-       <para>
-	Message returned if only one row was inserted.
-	<returnvalue><replaceable>oid</replaceable></returnvalue>
-	is the numeric <acronym>OID</acronym> of the inserted row.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><computeroutput>
-INSERT 0 <replaceable>#</replaceable>
-       </computeroutput></term>
-      <listitem>
-       <para>
-	Message returned if more than one rows were inserted.
-	<returnvalue><replaceable>#</replaceable></returnvalue>
-	is the number of rows inserted.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
+    { DEFAULT VALUES | VALUES ( { <replaceable class="PARAMETER">expression</replaceable> | DEFAULT } [, ...] ) | <replaceable class="PARAMETER">query</replaceable> }
+</synopsis>
  </refsynopsisdiv>
 
- <refsect1 id="R1-SQL-INSERT-1">
-  <title>
-   Description
-  </title>
+ <refsect1>
+  <title>Description</title>
 
   <para>
    <command>INSERT</command> allows one to insert new rows into a
    table. One can insert
    a single row at a time or several rows as a result of a query.
+  </para>
+
+  <para>
    The columns in the target list may be listed in any order.
-  </para>
-
-  <para>
    Each column not present in the target list will be inserted
-   using a default value, either a declared DEFAULT value
-   or NULL. <productname>PostgreSQL</productname> will reject the new
-   column if a NULL is inserted into a column declared NOT NULL.
+   using a default value, either a declared default value
+   or null.
   </para>
 
   <para>
-   If the expression for each column
-   is not of the correct data type, automatic type coercion will be
-   attempted.
+   If the expression for each column is not of the correct data type,
+   automatic type conversion will be attempted.
   </para>
 
   <para>
-   You must have insert privilege to a table in order to append
-   to it, as well as select privilege on any table specified
-   in a WHERE clause.
+   You must have <literal>INSERT</literal> privilege to a table in
+   order to insert into it.  If you use the <replaceable
+   class="PARAMETER">query</replaceable> clause to insert rows from a
+   query, you also need to have <literal>SELECT</literal> privilege on
+   any table used in the query.
   </para>
  </refsect1>
 
- <refsect1 id="R1-SQL-INSERT-2">
-  <title>
-   Usage
-  </title>
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><replaceable class="PARAMETER">table</replaceable></term>
+    <listitem>
+     <para>
+      The name (optionally schema-qualified) of an existing table.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="PARAMETER">column</replaceable></term>
+    <listitem>
+     <para>
+      The name of a column in <replaceable class="PARAMETER">table</replaceable>.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>DEFAULT VALUES</literal></term>
+    <listitem>
+     <para>
+      All columns will be filled their default values.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="PARAMETER">expression</replaceable></term>
+    <listitem>
+     <para>
+      An expression or value to assign to <replaceable
+      class="PARAMETER">column</replaceable>.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>DEFAULT</literal></term>
+    <listitem>
+     <para>
+      This column will be filled with its default value.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="PARAMETER">query</replaceable></term>
+    <listitem>
+     <para>
+      A query (<command>SELECT</command> statement) that supplies the
+      rows to be inserted.  Refer to the <command>SELECT</command>
+      statement for a description of the syntax.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Diagnostics</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><computeroutput>INSERT <replaceable>oid</replaceable> 1</computeroutput></term>
+    <listitem>
+     <para>
+      Message returned if only one row was inserted.
+      <returnvalue><replaceable>oid</replaceable></returnvalue> is the
+      <acronym>OID</acronym> of the inserted row.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><computeroutput>INSERT 0 <replaceable>count</replaceable></computeroutput></term>
+    <listitem>
+     <para>
+      Message returned if more than one rows were inserted.
+      <replaceable>count</replaceable> is the number of rows inserted.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Examples</title>
+
   <para>
    Insert a single row into table <literal>films</literal>:
 
-   <programlisting>
+<programlisting>
 INSERT INTO films VALUES
-    ('UA502','Bananas',105,'1971-07-13','Comedy',INTERVAL '82 minute');
-   </programlisting>
+    ('UA502', 'Bananas', 105, '1971-07-13', 'Comedy', '82 minutes');
+</programlisting>
   </para>
 
   <para>
-   In this second example the last column <literal>len</literal> is
-   omitted and therefore it will have the default value of NULL:
+   In this second example, the last column <literal>len</literal> is
+   omitted and therefore it will have the default value of null:
 
-   <programlisting>
+<programlisting>
 INSERT INTO films (code, title, did, date_prod, kind)
-    VALUES ('T_601', 'Yojimbo', 106, DATE '1961-06-16', 'Drama');
-   </programlisting>
+    VALUES ('T_601', 'Yojimbo', 106, '1961-06-16', 'Drama');
+</programlisting>
   </para>
 
   <para>
-   In the third example, we use the DEFAULT values for the date columns
-   rather than specifying an entry.
+   The third example uses the <literal>DEFAULT</literal> clause for
+   the date columns rather than specifying a value:
 
-   <programlisting>
+<programlisting>
 INSERT INTO films VALUES
-    ('UA502','Bananas',105,DEFAULT,'Comedy',INTERVAL '82 minute');
+    ('UA502', 'Bananas', 105, DEFAULT, 'Comedy', '82 minutes');
 INSERT INTO films (code, title, did, date_prod, kind)
     VALUES ('T_601', 'Yojimbo', 106, DEFAULT, 'Drama');
-   </programlisting>
+</programlisting>
   </para>
 
   <para>
-   Insert a single row into table distributors; note that
-   only column <literal>name</literal> is specified, so the omitted
-   column <literal>did</literal> will be assigned its default value:
+   This examples inserts several rows into table
+   <literal>films</literal> from table <literal>tmp</literal>:
 
-   <programlisting>
-INSERT INTO distributors (name) VALUES ('British Lion');
-   </programlisting>
-  </para>
-
-  <para>
-   Insert several rows into table films from table <literal>tmp</literal>:
-
-   <programlisting>
+<programlisting>
 INSERT INTO films SELECT * FROM tmp;
-   </programlisting>
+</programlisting>
   </para>
 
   <para>
-   Insert into arrays:
+   This example inserts into array columns:
 
-   <programlisting>
+<programlisting>
 -- Create an empty 3x3 gameboard for noughts-and-crosses
--- (all of these queries create the same board attribute)
+-- (all of these commands create the same board)
 INSERT INTO tictactoe (game, board[1:3][1:3])
     VALUES (1,'{{"","",""},{},{"",""}}');
 INSERT INTO tictactoe (game, board[3][3])
     VALUES (2,'{}');
 INSERT INTO tictactoe (game, board)
     VALUES (3,'{{,,},{,,},{,,}}');
-   </programlisting>
+</programlisting>
   </para>
  </refsect1>
 
- <refsect1 id="R1-SQL-INSERT-3">
-  <title>
-   Compatibility
-  </title>
+ <refsect1>
+  <title>Compatibility</title>
 
-  <refsect2 id="R2-SQL-INSERT-4">
-   <title>
-    SQL92
-   </title>
-   <para>
-    <command>INSERT</command> is fully compatible with <acronym>SQL92</acronym>.
-    Possible limitations in features of the
-    <replaceable class="PARAMETER">query</replaceable>
-    clause are documented for
-    <xref linkend="sql-select" endterm="sql-select-title">.
-   </para>
-  </refsect2>
+  <para>
+   <command>INSERT</command> conforms fully to the SQL standard.
+   Possible limitations of the <replaceable
+   class="PARAMETER">query</replaceable> clause are documented under
+   <xref linkend="sql-select" endterm="sql-select-title">.
+  </para>
  </refsect1>
 </refentry>
 

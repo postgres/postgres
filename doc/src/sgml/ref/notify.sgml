@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/notify.sgml,v 1.19 2002/09/21 18:32:54 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/notify.sgml,v 1.20 2003/04/26 23:56:51 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -8,113 +8,53 @@ PostgreSQL documentation
   <refentrytitle id="sql-notify-title">NOTIFY</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
+
  <refnamediv>
-  <refname>
-   NOTIFY
-  </refname>
-  <refpurpose>
-   generate a notification
-  </refpurpose>
+  <refname>NOTIFY</refname>
+  <refpurpose>generate a notification</refpurpose>
  </refnamediv>
+
  <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>1999-07-20</date>
-  </refsynopsisdivinfo>
-  <synopsis>
+<synopsis>
 NOTIFY <replaceable class="PARAMETER">name</replaceable>        
-  </synopsis>
-
-  <refsect2 id="R2-SQL-NOTIFY-1">
-   <refsect2info>
-    <date>1998-10-07</date>
-   </refsect2info>
-   <title>
-    Inputs
-   </title>
-   <para>
-
-    <variablelist>
-     <varlistentry>
-      <term><replaceable class="PARAMETER">notifyname</replaceable></term>
-      <listitem>
-       <para>
-	Notify condition to be signaled.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
-
-  <refsect2 id="R2-SQL-NOTIFY-2">
-   <refsect2info>
-    <date>1998-10-07</date>
-   </refsect2info>
-   <title>
-    Outputs
-   </title>
-   <para>
-
-    <variablelist>
-     <varlistentry>
-      <term><computeroutput>
-NOTIFY
-       </computeroutput></term>
-      <listitem>
-       <para>
-	Acknowledgement that notify command has executed.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><replaceable>Notify events</replaceable></term>
-      <listitem>
-       <para>
-	Events are delivered to listening frontends; whether and how each frontend
-	application reacts depends on its programming.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
+</synopsis>
  </refsynopsisdiv>
 
- <refsect1 id="R1-SQL-NOTIFY-1">
-  <refsect1info>
-   <date>1998-10-07</date>
-  </refsect1info>
-  <title>
-   Description
-  </title>
+ <refsect1>
+  <title>Description</title>
+
   <para>
-   The <command>NOTIFY</command> command sends a notify event to each
-   frontend application that has previously executed
-   <command>LISTEN <replaceable class="parameter">notifyname</replaceable></command>
-   for the specified notify condition in the current database.
+   The <command>NOTIFY</command> command sends a notification event to each
+   client application that has previously executed
+   <command>LISTEN <replaceable class="parameter">name</replaceable></command>
+   for the specified notification name in the current database.
   </para>
+
   <para>
-   The information passed to the frontend for a notify event includes the notify
-   condition name and the notifying backend process's <acronym>PID</>.  It is up to the
-   database designer to define the condition names that will be used in a given
+   The information passed to the client for a notifiation event includes the notification
+   name and the notifying session's server process <acronym>PID</>.  It is up to the
+   database designer to define the notification names that will be used in a given
    database and what each one means.
   </para>
+
   <para>
-   Commonly, the notify condition name is the same as the name of some table in
-   the database, and the notify event essentially means <quote>I changed this table,
+   Commonly, the notification name is the same as the name of some table in
+   the database, and the notify event essentially means, <quote>I changed this table,
    take a look at it to see what's new</quote>.  But no such association is enforced by
    the <command>NOTIFY</command> and <command>LISTEN</command> commands.  For
-   example, a database designer could use several different condition names
+   example, a database designer could use several different notification names
    to signal different sorts of changes to a single table.
   </para>
+
   <para>
    <command>NOTIFY</command> provides a simple form of signal or
-   <acronym>IPC</> (interprocess communication) mechanism for a collection of processes
+   interprocess communication mechanism for a collection of processes
    accessing the same <productname>PostgreSQL</productname> database.
    Higher-level mechanisms can be built by using tables in the database to
-   pass additional data (beyond a mere condition name) from notifier to
+   pass additional data (beyond a mere notification name) from notifier to
    listener(s).
   </para>
+
   <para>
    When <command>NOTIFY</command> is used to signal the occurrence of changes
    to a particular table, a useful programming technique is to put the
@@ -122,86 +62,91 @@ NOTIFY
    In this way, notification happens automatically when the table is changed,
    and the application programmer can't accidentally forget to do it.
   </para>
+
   <para>
    <command>NOTIFY</command> interacts with SQL transactions in some important
    ways.  Firstly, if a <command>NOTIFY</command> is executed inside a
    transaction, the notify events are not delivered until and unless the
    transaction is committed.  This is appropriate, since if the transaction
-   is aborted we would like all the commands within it to have had no
+   is aborted, all the commands within it have had no
    effect, including <command>NOTIFY</command>.  But it can be disconcerting if one
-   is expecting the notify events to be delivered immediately.  Secondly, if
-   a listening backend receives a notify signal while it is within a transaction,
-   the notify event will not be delivered to its connected frontend until just
+   is expecting the notification events to be delivered immediately.  Secondly, if
+   a listening session receives a notification signal while it is within a transaction,
+   the notification event will not be delivered to its connected client until just
    after the transaction is completed (either committed or aborted).  Again, the
-   reasoning is that if a notify were delivered within a transaction that was
+   reasoning is that if a notification were delivered within a transaction that was
    later aborted, one would want the notification to be undone somehow---but
-   the backend cannot <quote>take back</quote> a notify once it has sent it to the frontend.
-   So notify events are only delivered between transactions.  The upshot of this
+   the server cannot <quote>take back</quote> a notification once it has sent it to the client.
+   So notification events are only delivered between transactions.  The upshot of this
    is that applications using <command>NOTIFY</command> for real-time signaling
    should try to keep their transactions short.
   </para>
+
   <para>
    <command>NOTIFY</command> behaves like Unix signals in one important
-   respect: if the same condition name is signaled multiple times in quick
-   succession, recipients may get only one notify event for several executions
+   respect: if the same notification name is signaled multiple times in quick
+   succession, recipients may get only one notification event for several executions
    of <command>NOTIFY</command>.  So it is a bad idea to depend on the number
-   of notifies received.  Instead, use <command>NOTIFY</command> to wake up
+   of notifications received.  Instead, use <command>NOTIFY</command> to wake up
    applications that need to pay attention to something, and use a database
    object (such as a sequence) to keep track of what happened or how many times
    it happened.
   </para>
-  <para>
-   It is common for a frontend that sends <command>NOTIFY</command> to be
-   listening on the same notify name itself.  In that case it will get back a
-   notify event, just like all the other listening frontends.  Depending on the
-   application logic, this could result in useless work---for example,
-   re-reading a database table to find the same updates that that frontend just
-   wrote out.  In <productname>PostgreSQL</productname> 6.4 and later, it is
-   possible to avoid such extra work by noticing whether the notifying backend
-   process's <acronym>PID</> (supplied in the notify event message) is the same as one's own
-   backend's <acronym>PID</> (available from <application>libpq</>).  When they are the same, the notify
-   event is one's own work bouncing back, and can be ignored.  (Despite what was
-   said in the preceding paragraph, this is a safe technique.
-   <productname>PostgreSQL</productname> keeps self-notifies separate from notifies
-   arriving from other backends, so you cannot miss an outside notify by ignoring
-   your own notifies.)
-  </para>
 
-  <refsect2 id="R2-SQL-NOTIFY-3">
-   <refsect2info>
-    <date>1998-10-07</date>
-   </refsect2info>
-   <title>
-    Notes
-   </title>
-   <para>
-    <replaceable class="PARAMETER">name</replaceable>
-    can be any string valid as a name;
-    it need not correspond to the name of any actual table.  If
-    <replaceable class="PARAMETER">name</replaceable>
-    is enclosed in double-quotes, it need not even be a syntactically
-    valid name, but can be any string up to 63 characters long.
-   </para>
-   <para>
-    In some previous releases of
-    <productname>PostgreSQL</productname>,
-    <replaceable class="PARAMETER">name</replaceable>
-    had to be enclosed in double-quotes when it did not correspond to any existing
-    table name, even if syntactically valid as a name.  That is no longer required.
-   </para>
-   <para>
-    In <productname>PostgreSQL</productname> releases prior to 6.4, the backend
-    <acronym>PID</> delivered in a notify message was always the <acronym>PID</> of the frontend's own
-    backend.  So it was not possible to distinguish one's own notifies from other
-    clients' notifies in those earlier releases.
-   </para>
-  </refsect2>
+  <para>
+   It is common for a client that executes <command>NOTIFY</command>
+   to be listening on the same notification name itself.  In that case
+   it will get back a notification event, just like all the other
+   listening sessions.  Depending on the application logic, this could
+   result in useless work, for example, reading a database table to
+   find the same updates that that session just wrote out.  It is
+   possible to avoid such extra work by noticing whether the notifying
+   session's server process <acronym>PID</> (supplied in the
+   notification event message) is the same as one's own session's
+   <acronym>PID</> (available from <application>libpq</>).  When they
+   are the same, the notification event is one's own work bouncing
+   back, and can be ignored.  (Despite what was said in the preceding
+   paragraph, this is a safe technique.
+   <productname>PostgreSQL</productname> keeps self-notifiications
+   separate from notifications arriving from other sessions, so you
+   cannot miss an outside notification by ignoring your own
+   notifications.)
+  </para>
  </refsect1>
 
- <refsect1 id="R1-SQL-NOTIFY-2">
-  <title>
-   Usage
-  </title>
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><replaceable class="PARAMETER">name</replaceable></term>
+    <listitem>
+     <para>
+      Name of the notification to be signaled (any identifier).
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Diagnostics</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><computeroutput>NOTIFY</computeroutput></term>
+    <listitem>
+     <para>
+      Message returned when the commmand has executed.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Examples</title>
+
   <para>
    Configure and execute a listen/notify sequence from
    <application>psql</application>:
@@ -214,23 +159,13 @@ Asynchronous NOTIFY 'virtual' from backend with pid '8448' received.
   </para>
  </refsect1>
 
- <refsect1 id="R1-SQL-NOTIFY-3">
-  <title>
-   Compatibility
-  </title>
+ <refsect1>
+  <title>Compatibility</title>
 
-  <refsect2 id="R2-SQL-NOTIFY-4">
-   <refsect2info>
-    <date>1998-09-24</date>
-   </refsect2info>
-   <title>
-    SQL92
-   </title>
-   <para>
-    There is no <command>NOTIFY</command> statement in
-    <acronym>SQL92</acronym>.
-   </para>
-  </refsect2>
+  <para>
+   There is no <command>NOTIFY</command> statement in the SQL
+   standard.
+  </para>
  </refsect1>
 </refentry>
 

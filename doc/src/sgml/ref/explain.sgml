@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/explain.sgml,v 1.25 2003/03/25 16:15:41 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/explain.sgml,v 1.26 2003/04/26 23:56:51 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -8,255 +8,212 @@ PostgreSQL documentation
   <refentrytitle id="SQL-EXPLAIN-TITLE">EXPLAIN</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
+
  <refnamediv>
-  <refname>
-   EXPLAIN
-  </refname>
-  <refpurpose>
-   show the execution plan of a statement
-  </refpurpose>
+  <refname>EXPLAIN</refname>
+  <refpurpose>show the execution plan of a statement</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>1999-07-20</date>
-  </refsynopsisdivinfo>
-  <synopsis>
-EXPLAIN [ ANALYZE ] [ VERBOSE ] <replaceable class="PARAMETER">query</replaceable>        
-  </synopsis>
-
-  <refsect2 id="R2-SQL-EXPLAIN-1">
-   <refsect2info>
-    <date>1998-09-01</date>
-   </refsect2info>
-   <title>
-    Inputs
-   </title>
-   <para>
-
-    <variablelist>
-     <varlistentry>
-      <term>ANALYZE</term>
-      <listitem>
-       <para>
-	Flag to carry out the query and show actual run times.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term>VERBOSE</term>
-      <listitem>
-       <para>
-	Flag to show detailed query plan dump.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><replaceable class="PARAMETER">query</replaceable></term>
-      <listitem>
-       <para>
-	Any <command>SELECT</>, <command>INSERT</>, <command>UPDATE</>,
-	<command>DELETE</>, <command>EXECUTE</>,
-	or <command>DECLARE CURSOR</> query.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
-
-  <refsect2 id="R2-SQL-EXPLAIN-2">
-   <refsect2info>
-    <date>1998-04-15</date>
-   </refsect2info>
-   <title>
-    Outputs
-   </title>
-   <para>
-
-    <variablelist>
-     <varlistentry>
-      <term>Query plan</term>
-      <listitem>
-       <para>
-	Explicit query plan from the <productname>PostgreSQL</productname>
-	planner.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-
-   <note>
-    <para>
-     Prior to <productname>PostgreSQL</productname> 7.3, the query
-     plan was emitted in the form of a <literal>NOTICE</literal>
-     message.  Now it appears as a query result (formatted like a
-     table with a single text column).
-    </para>
-   </note>
-  </refsect2>
+<synopsis>
+EXPLAIN [ ANALYZE ] [ VERBOSE ] <replaceable class="parameter">statement</replaceable>
+</synopsis>
  </refsynopsisdiv>
 
- <refsect1 id="R1-SQL-EXPLAIN-1">
-  <refsect1info>
-   <date>1998-04-15</date>
-  </refsect1info>
-  <title>
-   Description
-  </title>
+ <refsect1>
+  <title>Description</title>
 
   <para>
    This command displays the execution plan that the
    <productname>PostgreSQL</productname> planner generates for the
-   supplied query.  The execution plan shows how the table(s)
-   referenced by the query will be scanned---by plain sequential scan,
+   supplied statenebt.  The execution plan shows how the table(s)
+   referenced by the statement will be scanned---by plain sequential scan,
    index scan, etc.---and if multiple tables are referenced, what join
-   algorithms will be used to bring together the required tuples from
+   algorithms will be used to bring together the required row from
    each input table.
   </para>
 
   <para>
-   The most critical part of the display is the estimated query execution
+   The most critical part of the display is the estimated statement execution
    cost, which is the planner's guess at how long it will take to run the
-   query (measured in units of disk page fetches).  Actually two numbers
-   are shown: the start-up time before the first tuple can be returned, and
-   the total time to return all the tuples.  For most queries the total time
-   is what matters, but in contexts such as an EXISTS sub-query the planner
+   statement (measured in units of disk page fetches).  Actually two numbers
+   are shown: the start-up time before the first row can be returned, and
+   the total time to return all the rows.  For most queries the total time
+   is what matters, but in contexts such as a subquery in <literal>EXISTS</literal>, the planner
    will choose the smallest start-up time instead of the smallest total time
-   (since the executor will stop after getting one tuple, anyway).
-   Also, if you limit the number of tuples to return with a LIMIT clause,
+   (since the executor will stop after getting one row, anyway).
+   Also, if you limit the number of rows to return with a <literal>LIMIT</literal> clause,
    the planner makes an appropriate interpolation between the endpoint
    costs to estimate which plan is really the cheapest.
   </para>
 
-  <note>
-   <para>
-    In order to allow the <productname>PostgreSQL</productname> query
-    planner to make reasonably informed decisions when optimizing
-    queries, the <command>ANALYZE</command> statement should be run
-    to record statistics about the distribution of data within the
-    table. If you have not done this (or if the statistical distribution
-    of the data in the table has changed significantly since the last
-    time <command>ANALYZE</command> was run), the estimated costs
-    are unlikely to conform to the real properties of the query,
-    and consequently an inferior query plan may be chosen.
-   </para>
-  </note>
-
   <para>
-   The ANALYZE option causes the query to be actually executed, not only
+   The <literal>ANALYZE</literal> option causes the statement to be actually executed, not only
    planned.  The total elapsed time expended within each plan node (in
    milliseconds) and total number of rows it actually returned are added to
    the display.  This is useful for seeing whether the planner's estimates
    are close to reality.
   </para>
 
-  <caution>
+  <important>
    <para>
-    Keep in mind that the query is actually executed when ANALYZE is used.
-    Although <command>EXPLAIN</command> will discard any output that a SELECT
-    would return,
-    other side-effects of the query will happen as usual.
-    If you wish to use <command>EXPLAIN ANALYZE</command> on an INSERT,
-    UPDATE, DELETE, or EXECUTE query without letting the query affect your
-    data, use this approach:
-      <programlisting>
+    Keep in mind that the statement is actually executed when
+    <literal>ANALYZE</literal> is used.  Although
+    <command>EXPLAIN</command> will discard any output that a
+    <command>SELECT</command> would return, other side effects of the
+    statement will happen as usual.  If you wish to use
+    <command>EXPLAIN ANALYZE</command> on an
+    <command>INSERT</command>, <command>UPDATE</command>,
+    <command>DELETE</command>, or <command>EXECUTE</command> statement
+    without letting the command affect your data, use this approach:
+<programlisting>
 BEGIN;
 EXPLAIN ANALYZE ...;
 ROLLBACK;
-      </programlisting>
+</programlisting>
    </para>
-  </caution>
-
-  <para>
-   The VERBOSE option emits the full internal representation of the plan tree,
-   rather than just a summary.
-   Usually this option is only useful for debugging
-   <productname>PostgreSQL</productname>.   The VERBOSE dump is either
-   pretty-printed or not, depending on the setting of the
-   <option>EXPLAIN_PRETTY_PRINT</option> configuration parameter.
-  </para>
-
-  <refsect2 id="R2-SQL-EXPLAIN-3">
-   <refsect2info>
-    <date>1998-04-15</date>
-   </refsect2info>
-   <title>
-    Notes
-   </title>
-   <para>
-    There is only sparse documentation on the optimizer's use of cost
-    information in <productname>PostgreSQL</productname>.
-    Refer to <xref linkend="using-explain"> for more information.
-   </para>
-  </refsect2>
+  </important>
  </refsect1>
 
- <refsect1 id="R1-SQL-EXPLAIN-2">
-  <title>
-   Usage
-  </title>
+ <refsect1>
+  <title>Parameter</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><literal>ANALYZE</literal></term>
+    <listitem>
+     <para>
+      Carry out the command and show the actual run times.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>VERBOSE</literal></term>
+    <listitem>
+     <para>
+      Show the full internal representation of the plan tree, rather
+      than just a summary.  Usually this option is only useful for
+      debugging <productname>PostgreSQL</productname>.  The
+      <literal>VERBOSE</literal> output is either pretty-printed or
+      not, depending on the setting of the
+      <varname>explain_pretty_print</varname> configuration parameter.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">statement</replaceable></term>
+    <listitem>
+     <para>
+      Any <command>SELECT</>, <command>INSERT</>, <command>UPDATE</>,
+      <command>DELETE</>, <command>EXECUTE</>, or <command>DECLARE</>
+      statement, whose execution plan you wish to see.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Diagnostics</title>
 
   <para>
-   To show a query plan for a simple query on a table with a single
-   <type>int4</type> column and 10000 rows:
+   <command>EXPLAIN</command> prints the execution plan of the
+   specified statement from the <productname>PostgreSQL</productname>
+   planner.
+  </para>
+ </refsect1>
 
-   <programlisting>
+ <refsect1>
+  <title>Notes</title>
+
+  <para>
+   There is only sparse documentation on the optimizer's use of cost
+   information in <productname>PostgreSQL</productname>.  Refer to
+   <xref linkend="using-explain"> for more information.
+  </para>
+
+  <para>
+   In order to allow the <productname>PostgreSQL</productname> query
+   planner to make reasonably informed decisions when optimizing
+   queries, the <command>ANALYZE</command> statement should be run to
+   record statistics about the distribution of data within the
+   table. If you have not done this (or if the statistical
+   distribution of the data in the table has changed significantly
+   since the last time <command>ANALYZE</command> was run), the
+   estimated costs are unlikely to conform to the real properties of
+   the query, and consequently an inferior query plan may be chosen.
+  </para>
+
+  <para>
+   Prior to <productname>PostgreSQL</productname> 7.3, the plan was
+   emitted in the form of a <literal>NOTICE</literal> message.  Now it
+   appears as a query result (formatted like a table with a single
+   text column).
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Examples</title>
+
+  <para>
+   To show the plan for a simple query on a table with a single
+   <type>integer</type> column and 10000 rows:
+
+<programlisting>
 EXPLAIN SELECT * FROM foo;
-    <computeroutput>
+
                        QUERY PLAN
 ---------------------------------------------------------
  Seq Scan on foo  (cost=0.00..155.00 rows=10000 width=4)
 (1 row)
-    </computeroutput>
-   </programlisting>
+</programlisting>
   </para>
 
   <para>
-   If there is an index and we use a query with an indexable WHERE condition,
-   <command>EXPLAIN</command> will show a different plan:
+   If there is an index and we use a query with an indexable
+   <literal>WHERE</literal> condition, <command>EXPLAIN</command>
+   might show a different plan:
 
-   <programlisting>
+<programlisting>
 EXPLAIN SELECT * FROM foo WHERE i = 4;
-    <computeroutput>
+
                          QUERY PLAN
 --------------------------------------------------------------
  Index Scan using fi on foo  (cost=0.00..5.98 rows=1 width=4)
    Index Cond: (i = 4)
 (2 rows)
-    </computeroutput>
-   </programlisting>
+</programlisting>
   </para>
 
   <para>
    And here is an example of a query plan for a query
    using an aggregate function:
 
-   <programlisting>
+<programlisting>
 EXPLAIN SELECT sum(i) FROM foo WHERE i &lt; 10;
-    <computeroutput>
+
                              QUERY PLAN
 ---------------------------------------------------------------------
  Aggregate  (cost=23.93..23.93 rows=1 width=4)
    -&gt;  Index Scan using fi on foo  (cost=0.00..23.92 rows=6 width=4)
          Index Cond: (i &lt; 10)
 (3 rows)
-    </computeroutput>
-   </programlisting>
+</programlisting>
   </para>
 
   <para>
-   Here is an example of using EXPLAIN EXECUTE to display the query
-   plan for a prepared query:
+   Here is an example of using <command>EXPLAIN EXECUTE</command> to
+   display the execution plan for a prepared query:
 
-   <programlisting>
+<programlisting>
 PREPARE query(int, int) AS SELECT sum(bar) FROM test
     WHERE id &gt; $1 AND id &lt; $2
     GROUP BY foo;
 
 EXPLAIN ANALYZE EXECUTE query(100, 200);
-    <computeroutput>
+
                                                        QUERY PLAN                                                        
 -------------------------------------------------------------------------------------------------------------------------
  HashAggregate  (cost=39.53..39.53 rows=1 width=8) (actual time=0.66..0.67 rows=7 loops=1)
@@ -264,38 +221,28 @@ EXPLAIN ANALYZE EXECUTE query(100, 200);
          Index Cond: ((id &gt; $1) AND (id &lt; $2))
  Total runtime: 0.85 msec
 (4 rows)
-    </computeroutput>
-   </programlisting>
+</programlisting>
   </para>
 
   <para>
-   Note that the specific numbers shown, and even the selected query
-   strategy, may vary between <productname>PostgreSQL</productname>
-   releases due to planner improvements. In addition, the
-   <command>ANALYZE</command> command uses random sampling to estimate
-   data statistics; therefore, it is possible
-   for cost estimates to change after a fresh run of
+   Of course, the specific numbers shown here depend on the actual
+   contents of the tables involved.  Also note that the numbers, and
+   even the selected query strategy, may vary between
+   <productname>PostgreSQL</productname> releases due to planner
+   improvements. In addition, the <command>ANALYZE</command> command
+   uses random sampling to estimate data statistics; therefore, it is
+   possible for cost estimates to change after a fresh run of
    <command>ANALYZE</command>, even if the actual distribution of data
    in the table has not changed.
   </para>
  </refsect1>
 
- <refsect1 id="R1-SQL-EXPLAIN-3">
-  <title>
-   Compatibility
-  </title>
+ <refsect1>
+  <title>Compatibility</title>
 
-  <refsect2 id="R2-SQL-EXPLAIN-4">
-   <refsect2info>
-    <date>1998-09-01</date>
-   </refsect2info>
-   <title>
-    SQL92
-   </title>
-   <para>
-    There is no <command>EXPLAIN</command> statement defined in SQL92.
-   </para>
-  </refsect2>
+  <para>
+   There is no <command>EXPLAIN</command> statement defined in the SQL standard.
+  </para>
  </refsect1>
 </refentry>
 

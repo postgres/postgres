@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/prepare.sgml,v 1.3 2003/03/10 03:53:49 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/prepare.sgml,v 1.4 2003/04/26 23:56:51 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -8,197 +8,158 @@ PostgreSQL documentation
   <refentrytitle id="sql-prepare-title">PREPARE</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
+
  <refnamediv>
-  <refname>
-   PREPARE
-  </refname>
-  <refpurpose>
-   create a prepared query
-  </refpurpose>
+  <refname>PREPARE</refname>
+  <refpurpose>prepare a statement for execution</refpurpose>
  </refnamediv>
+
  <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>2002-08-12</date>
-  </refsynopsisdivinfo>
-  <synopsis>
-   PREPARE <replaceable class="PARAMETER">plan_name</replaceable> [ (<replaceable class="PARAMETER">datatype</replaceable> [, ...] ) ] AS <replaceable class="PARAMETER">query</replaceable>
-  </synopsis>
-
-  <refsect2 id="R2-SQL-PREPARE-1">
-   <refsect2info>
-    <date>2002-08-12</date>
-   </refsect2info>
-   <title>
-    Inputs
-   </title>
-
-   <para>
-    <variablelist>
-     <varlistentry>
-      <term><replaceable class="PARAMETER">plan_name</replaceable></term>
-      <listitem>
-       <para>
-		An arbitrary name given to this particular prepared query. It
-		must be unique within a single session, and is used to execute
-		or remove a previously prepared query.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><replaceable class="PARAMETER">datatype</replaceable></term>
-      <listitem>
-       <para>
-		The data-type of a parameter to the prepared query.
-		To refer to the parameters in the prepared query itself,
-		use <literal>$1</literal>, <literal>$2</literal>, etc.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><replaceable class="PARAMETER">query</replaceable></term>
-      <listitem>
-       <para>
-	Any <command>SELECT</>, <command>INSERT</>, <command>UPDATE</>,
-	or <command>DELETE</> query.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
-
-  <refsect2 id="R2-SQL-PREPARE-2">
-   <refsect2info>
-    <date>2002-08-12</date>
-   </refsect2info>
-   <title>
-    Outputs
-   </title>
-   <para>
-
-    <variablelist>
-     <varlistentry>
-      <term><computeroutput>
-		<returnvalue>PREPARE</returnvalue>
-       </computeroutput></term>
-      <listitem>
-       <para>
-		The query has been prepared successfully.
-       </para>
-      </listitem>
-     </varlistentry>
-
-    </variablelist>
-   </para>
-  </refsect2>
+<synopsis>
+PREPARE <replaceable class="PARAMETER">plan_name</replaceable> [ (<replaceable class="PARAMETER">datatype</replaceable> [, ...] ) ] AS <replaceable class="PARAMETER">statement</replaceable>
+</synopsis>
  </refsynopsisdiv>
 
- <refsect1 id="R1-SQL-PREPARE-1">
-  <refsect1info>
-   <date>2002-08-12</date>
-  </refsect1info>
-  <title>
-   Description
-  </title>
+ <refsect1>
+  <title>Description</title>
+
   <para>
-   <command>PREPARE</command> creates a prepared query. A prepared
-   query is a server-side object that can be used to optimize
+   <command>PREPARE</command> creates a prepared statement. A prepared
+   statement is a server-side object that can be used to optimize
    performance. When the <command>PREPARE</command> statement is
-   executed, the specified query is parsed, rewritten, and
-   planned. When a subsequent <command>EXECUTE</command> statement is
-   issued, the prepared query need only be executed. Thus, the
+   executed, the specified statement is parsed, rewritten, and
+   planned. When an <command>EXECUTE</command> command is subsequently
+   issued, the prepared statement need only be executed. Thus, the
    parsing, rewriting, and planning stages are only performed once,
-   instead of every time the query is executed.
+   instead of every time the statement is executed.
   </para>
 
   <para>
-   Prepared queries can take parameters: values that are
-   substituted into the query when it is executed. To specify the
-   parameters to a prepared query, include a list of data-types with
-   the <command>PREPARE</command> statement. In the query itself, you
-   can refer to the parameters by position using
+   Prepared statements can take parameters: values that are
+   substituted into the statement when it is executed. To include
+   parameters in a prepared statement, supply a list of data types in
+   the <command>PREPARE</command> statement, and, in the statement to
+   be prepared itself, refer to the parameters by position using
    <literal>$1</literal>, <literal>$2</literal>, etc. When executing
-   the query, specify the actual values for these parameters in the
-   <command>EXECUTE</command> statement -- refer to <xref
-   linkend="sql-execute" endterm="sql-execute-title">
-   for more information.
+   the statement, specify the actual values for these parameters in
+   the <command>EXECUTE</command> statement.  Refer to <xref
+   linkend="sql-execute" endterm="sql-execute-title"> for more
+   information about that.
   </para>
 
   <para>
-   Prepared queries are stored locally (in the current backend), and
-   only exist for the duration of the current database session. When
-   the client exits, the prepared query is forgotten, and so it must be
-   re-created before being used again. This also means that a single
-   prepared query cannot be used by multiple simultaneous database
-   clients; however, each client can create their own prepared query
+   Prepared statements are only stored in and for the duration of
+   the current database session. When
+   the session ends, the prepared statement is forgotten, and so it must be
+   recreated before being used again. This also means that a single
+   prepared statement cannot be used by multiple simultaneous database
+   clients; however, each client can create their own prepared statement
    to use.
   </para>
 
   <para>
-   Prepared queries have the largest performance advantage when a
-   single backend is being used to execute a large number of similar
-   queries. The performance difference will be particularly
-   significant if the queries are complex to plan or rewrite. For
+   Prepared statements have the largest performance advantage when a
+   single session is being used to execute a large number of similar
+   statements. The performance difference will be particularly
+   significant if the statements are complex to plan or rewrite, for
    example, if the query involves a join of many tables or requires
-   the application of several rules. If the query is relatively simple
+   the application of several rules. If the statement is relatively simple
    to plan and rewrite but relatively expensive to execute, the
-   performance advantage of prepared queries will be less noticeable.
+   performance advantage of prepared statements will be less noticeable.
   </para>
-
-  <refsect2 id="R2-SQL-PREPARE-3">
-   <refsect2info>
-    <date>2002-08-12</date>
-   </refsect2info>
-   <title>
-    Notes
-   </title>
-
-   <para>
-	In some situations, the query plan produced by
-	<productname>PostgreSQL</productname> for a prepared query may be
-	inferior to the plan produced if the query were submitted and
-	executed normally. This is because when the query is planned (and
-	the optimizer attempts to determine the optimal query plan), the
-	actual values of any parameters specified in the query are
-	unavailable. <productname>PostgreSQL</productname> collects
-	statistics on the distribution of data in the table, and can use
-	constant values in a query to make guesses about the likely
-	result of executing the query. Since this data is unavailable when
-	planning prepared queries with parameters, the chosen plan may be
-	sub-optimal. To examine the query plan
-	<productname>PostgreSQL</productname> has chosen for a prepared
-	query, use <command>EXPLAIN EXECUTE</command>.
-   </para>
-
-   <para>
-	For more information on query planning and the statistics
-	collected by <productname>PostgreSQL</productname> for query
-	optimization purposes, see the <xref linkend="sql-analyze"
-	endterm="sql-analyze-title"> documentation.
-   </para>
-  </refsect2>
  </refsect1>
 
- <refsect1 id="R1-SQL-PREPARE-3">
-  <title>
-   Compatibility
-  </title>
+ <refsect1>
+  <title>Parameters</title>
 
-  <refsect2 id="R2-SQL-PREPARE-4">
-   <refsect2info>
-    <date>2002-08-12</date>
-   </refsect2info>
-   <title>
-    SQL92
-   </title>
-   <para>
-	SQL92 includes a <command>PREPARE</command> statement, but it is
-    only for use in embedded SQL clients. The
-    <command>PREPARE</command> statement implemented by
-    <productname>PostgreSQL</productname> also uses a somewhat
-    different syntax.
-   </para>
-  </refsect2>
+  <variablelist>
+   <varlistentry>
+    <term><replaceable class="PARAMETER">plan_name</replaceable></term>
+    <listitem>
+     <para>
+      An arbitrary name given to this particular prepared
+      statement. It must be unique within a single session and is
+      subsequently used to execute or deallocate a previously prepared
+      statement.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="PARAMETER">datatype</replaceable></term>
+    <listitem>
+     <para>
+      The data type of a parameter to the prepared statement.  To
+      refer to the parameters in the prepared statement itself, use
+      <literal>$1</literal>, <literal>$2</literal>, etc.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="PARAMETER">statement</replaceable></term>
+    <listitem>
+     <para>
+      Any <command>SELECT</>, <command>INSERT</>, <command>UPDATE</>,
+      or <command>DELETE</> statement.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Diagnostics</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><computeroutput>PREPARE</computeroutput></term>
+    <listitem>
+     <para>
+      Message returned if the statement has been prepared successfully.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Notes</title>
+
+  <para>
+   In some situations, the query plan produced by for a prepared
+   statement may be inferior to the plan produced if the statement
+   were submitted and executed normally. This is because when the
+   statement is planned and the planer attempts to determine the
+   optimal query plan, the actual values of any parameters specified
+   in the statement are
+   unavailable. <productname>PostgreSQL</productname> collects
+   statistics on the distribution of data in the table, and can use
+   constant values in a statement to make guesses about the likely
+   result of executing the statement. Since this data is unavailable
+   when planning prepared statements with parameters, the chosen plan
+   may be suboptimal. To examine the query plan
+   <productname>PostgreSQL</productname> has chosen for a prepared
+   statement, use <command>EXPLAIN EXECUTE</command>.
+  </para>
+
+  <para>
+   For more information on query planning and the statistics collected
+   by <productname>PostgreSQL</productname> for that purpose, see
+   the <xref linkend="sql-analyze" endterm="sql-analyze-title">
+   documentation.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Compatibility</title>
+
+  <para>
+   The SQL standard includes a <command>PREPARE</command> statement,
+   but it is only for use in embedded SQL. This version of the
+   <command>PREPARE</command> statement also uses a somewhat different
+   syntax.
+  </para>
  </refsect1>
 </refentry>
 

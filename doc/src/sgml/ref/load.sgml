@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/load.sgml,v 1.16 2003/03/25 16:15:42 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/load.sgml,v 1.17 2003/04/26 23:56:51 petere Exp $
 -->
 
 <refentry id="SQL-LOAD">
@@ -23,11 +23,11 @@ LOAD '<replaceable class="PARAMETER">filename</replaceable>'
   <title>Description</title>
 
   <para>
-   Loads a shared library file into the <productname>PostgreSQL</>
-   backend's address space.  If the file had been loaded previously,
+   This command loads a shared library file into the <productname>PostgreSQL</>
+   server's address space.  If the file had been loaded previously,
    it is first unloaded.  This command is primarily useful to unload
    and reload a shared library file that has been changed since the
-   backend first loaded it.  To make use of the shared library,
+   server first loaded it.  To make use of the shared library,
    function(s) in it need to be declared using the <xref
    linkend="sql-createfunction" endterm="sql-createfunction-title">
    command.

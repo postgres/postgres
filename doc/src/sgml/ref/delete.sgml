@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/delete.sgml,v 1.16 2002/04/23 02:07:16 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/delete.sgml,v 1.17 2003/04/26 23:56:51 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -8,104 +8,27 @@ PostgreSQL documentation
   <refentrytitle id="SQL-DELETE-TITLE">DELETE</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
+
  <refnamediv>
-  <refname>
-   DELETE
-  </refname>
-  <refpurpose>
-   delete rows of a table
-  </refpurpose>
-
+  <refname>DELETE</refname>
+  <refpurpose>delete rows of a table</refpurpose>
  </refnamediv>
+
  <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>1999-07-20</date>
-  </refsynopsisdivinfo>
-  <synopsis>
+<synopsis>
 DELETE FROM [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ WHERE <replaceable class="PARAMETER">condition</replaceable> ]
-  </synopsis>
-
-  <refsect2 id="R2-SQL-DELETE-1">
-   <refsect2info>
-    <date>1998-04-15</date>
-   </refsect2info>
-   <title>
-    Inputs
-   </title>
-   <para>
-    <variablelist>
-     <varlistentry>
-      <term><replaceable class="parameter">table</replaceable></term>
-      <listitem>
-       <para>
-	The name (optionally schema-qualified) of an existing table.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><replaceable class="parameter">condition</replaceable></term>
-      <listitem>
-       <para>
-	This is an SQL selection query which returns the rows which
-	are to be deleted.
-       </para>
-       <para>
-	Refer to the SELECT statement for further description
-	of the WHERE clause.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
-
-  <refsect2 id="R2-SQL-DELETE-2">
-   <refsect2info>
-    <date>1998-04-15</date>
-   </refsect2info>
-   <title>
-    Outputs
-   </title>
-   <para>
-    <variablelist>
-     <varlistentry>
-      <term><computeroutput>
-DELETE <replaceable class="parameter">count</replaceable>
-       </computeroutput></term>
-      <listitem>
-       <para>
-	Message returned if items are successfully deleted. The
-	<replaceable class="parameter">count</replaceable> is the number
-	of rows deleted.
-       </para>
-       <para>
-	If <replaceable class="parameter">count</replaceable> is 0,
-	no rows were deleted.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
+</synopsis>
  </refsynopsisdiv>
 
- <refsect1 id="R1-SQL-DELETE-1">
-  <refsect1info>
-   <date>1998-04-15</date>
-  </refsect1info>
-  <title>
-   Description
-  </title>
+ <refsect1>
+  <title>Description</title>
 
   <para>
-   <command>DELETE</command> removes rows which satisfy the WHERE
-   clause from the specified table.
+   <command>DELETE</command> deletes rows that satisfy the
+   <literal>WHERE</literal> clause from the specified table.  If the
+   <literal>WHERE</literal> clause is absent, the effect is to delete
+   all rows in the table.  The result is a valid, but empty table.
   </para>
-
-  <para>
-   If the <firstterm>condition</firstterm> (WHERE clause) is absent,
-   the effect is to delete all rows in the table.
-   The result is a valid, but empty table.
 
    <tip>
     <para>
@@ -114,39 +37,74 @@ DELETE <replaceable class="parameter">count</replaceable>
      faster mechanism to remove all rows from a table.
     </para>
    </tip>
+
+  <para>
+   By default, <command>DELETE</command> will delete rows in the
+   specified table and all its subtables. If you wish to only delete
+   from the specific table mentioned, you must use the
+   <literal>ONLY</literal> clause.
   </para>
 
   <para>
-  By default DELETE will delete tuples in the table specified 
-  and all its sub-tables. If you wish to only update the
-  specific table mentioned, you should use the ONLY clause.
-  </para>
-
-  <para>
-   You must have write access to the table in order to modify
-   it, as well as read access to any table whose values are
-   read in the <replaceable class="parameter">condition</replaceable>.
+   You must have the <literal>DELETE</literal> privilege on the table
+   to delete from it, as well as the <literal>SELECT</literal>
+   privilege to any table whose values are read in the <replaceable
+   class="parameter">condition</replaceable>.
   </para>
  </refsect1>
 
- <refsect1 id="R1-SQL-DELETE-2">
-  <title>
-   Usage
-  </title>
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><replaceable class="parameter">table</replaceable></term>
+    <listitem>
+     <para>
+      The name (optionally schema-qualified) of an existing table.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">condition</replaceable></term>
+    <listitem>
+     <para>
+      A value expression that returns a value of type
+      <type>boolean</type> that determines the rows which are to be
+      deleted.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Diagnostics</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><computeroutput>DELETE <replaceable class="parameter">count</replaceable></computeroutput></term>
+    <listitem>
+     <para>
+      Message returned if rows are successfully deleted. The
+      <replaceable class="parameter">count</replaceable> is the number
+      of rows deleted.  If <replaceable
+      class="parameter">count</replaceable> is 0, no rows were
+      deleted.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Examples</title>
+
   <para>
-   Remove all films but musicals:
+   Delete all films but musicals:
 <programlisting>
 DELETE FROM films WHERE kind &lt;&gt; 'Musical';
-SELECT * FROM films;
-
-<computeroutput>
- code  |           title           | did | date_prod  |  kind   | len
--------+---------------------------+-----+------------+---------+-------
- UA501 | West Side Story           | 105 | 1961-01-03 | Musical | 02:32
- TC901 | The King and I            | 109 | 1956-08-11 | Musical | 02:13
- WD101 | Bed Knobs and Broomsticks | 111 |            | Musical | 01:57
-(3 rows)
-</computeroutput>
 </programlisting>
   </para>
 
@@ -154,42 +112,16 @@ SELECT * FROM films;
    Clear the table <literal>films</literal>:
 <programlisting>
 DELETE FROM films;
-SELECT * FROM films;
-
-<computeroutput>
- code | title | did | date_prod | kind | len
-------+-------+-----+-----------+------+-----
-(0 rows)
-</computeroutput>
 </programlisting>      
   </para>
  </refsect1>
 
- <refsect1 id="R1-SQL-DELETE-3">
-  <title>
-   Compatibility
-  </title>
+ <refsect1>
+  <title>Compatibility</title>
 
-  <refsect2 id="R2-SQL-DELETE-4">
-   <refsect2info>
-    <date>1998-04-15</date>
-   </refsect2info>
-   <title>
-    SQL92
-   </title>
-   <para>
-    <acronym>SQL92</acronym> allows a positioned DELETE statement:
-   
-    <synopsis>
-DELETE FROM <replaceable class="parameter">table</replaceable> WHERE
-    CURRENT OF <replaceable class="parameter">cursor</replaceable>
-    </synopsis>
-
-    where <replaceable class="parameter">cursor</replaceable>
-    identifies an open cursor.
-    Interactive cursors in <productname>PostgreSQL</productname> are read-only.
-   </para>
-  </refsect2>
+  <para>
+   This command conforms to the SQL standard.
+  </para>
  </refsect1>
 </refentry>
 

@@ -1,13 +1,9 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/start_transaction.sgml,v 1.4 2003/01/10 22:03:27 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/start_transaction.sgml,v 1.5 2003/04/26 23:56:51 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-START-TRANSACTION">
- <docinfo>
-  <date>2002-07-26</date>
- </docinfo>
-
  <refmeta>
   <refentrytitle id="SQL-START-TRANSACTION-TITLE">START TRANSACTION</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
@@ -19,58 +15,9 @@ PostgreSQL documentation
  </refnamediv>
 
  <refsynopsisdiv>
-  <synopsis>
+<synopsis>
 START TRANSACTION [ ISOLATION LEVEL { READ COMMITTED | SERIALIZABLE } ] [ READ WRITE | READ ONLY ]
-  </synopsis>
-
-  <refsect2 id="R2-SQL-START-TRANSACTION-1">
-   <refsect2info>
-    <date>1998-09-27</date>
-   </refsect2info>
-   <title>
-    Inputs
-   </title>
-
-   <para>
-    None.
-   </para>
-  </refsect2>
-
-  <refsect2 id="R2-SQL-START-TRANSACTION-2">
-   <refsect2info>
-    <date>1998-09-27</date>
-   </refsect2info>
-   <title>
-    Outputs
-   </title>
-
-   <para>
-
-    <variablelist>
-     <varlistentry>
-      <term><computeroutput>
-START TRANSACTION
-       </computeroutput></term>
-      <listitem>
-       <para>
-    Message returned if successful.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><computeroutput>
-WARNING:  BEGIN: already a transaction in progress
-       </computeroutput></term>
-      <listitem>
-       <para>
-    If there is already a transaction in progress when the
-    command is issued.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
+</synopsis>
  </refsynopsisdiv>
 
  <refsect1>
@@ -84,15 +31,50 @@ WARNING:  BEGIN: already a transaction in progress
    respects, the behavior of this command is identical to the <xref
    linkend="sql-begin" endterm="sql-begin-title"> command.
   </para>
-
  </refsect1>
 
- <refsect1 id="R1-SQL-START-TRANSACTION-3">
+ <refsect1>
+  <title>Parameters</title>
+
+  <para>
+   See under <xref linkend="sql-set-transaction"
+   endterm="sql-set-transaction-title"> about the meaning of the
+   parameters.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Diagnostics</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><computeroutput>START TRANSACTION</computeroutput></term>
+    <listitem>
+     <para>
+      Message returned if successful.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><computeroutput>WARNING:  BEGIN: already a transaction in progress</computeroutput></term>
+    <listitem>
+     <para>
+      Message returned if there was already a transaction in progress
+      when the command was issued.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
   <title>Compatibility</title>
 
   <para>
-   SQL99; but see also the compatibility section of <xref
-   linkend="sql-set-transaction" endterm="sql-set-transaction-title">.
+   This command conforms to the SQL standard; but see also the
+   compatibility section of <xref linkend="sql-set-transaction"
+   endterm="sql-set-transaction-title">.
   </para>
  </refsect1>
 </refentry>

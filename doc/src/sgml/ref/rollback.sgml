@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/rollback.sgml,v 1.13 2002/05/18 15:44:47 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/rollback.sgml,v 1.14 2003/04/26 23:56:51 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -8,129 +8,95 @@ PostgreSQL documentation
   <refentrytitle id="SQL-ROLLBACK-TITLE">ROLLBACK</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
+
  <refnamediv>
-  <refname>
-   ROLLBACK
-  </refname>
-  <refpurpose>
-   abort the current transaction
-  </refpurpose>
+  <refname>ROLLBACK</refname>
+  <refpurpose>abort the current transaction</refpurpose>
  </refnamediv>
+
  <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>1999-07-20</date>
-  </refsynopsisdivinfo>
-  <synopsis>
+<synopsis>
 ROLLBACK [ WORK | TRANSACTION ]
-  </synopsis>
-
-  <refsect2 id="R2-SQL-ROLLBACK-1">
-   <refsect2info>
-    <date>1998-09-24</date>
-   </refsect2info>
-   <title>
-    Inputs
-   </title>
-   <para>
-    None.
-   </para>
-  </refsect2>
-
-  <refsect2 id="R2-SQL-ROLLBACK-2">
-   <refsect2info>
-    <date>1998-09-24</date>
-   </refsect2info>
-   <title>
-    Outputs
-   </title>
-   <para>
-	
-    <variablelist>
-     <varlistentry>
-      <term><computeroutput>
-ROLLBACK
-       </computeroutput></term>
-      <listitem>
-       <para>
-	Message returned if successful.
-       </para>
-      </listitem>
-     </varlistentry>
-     
-     <varlistentry>
-      <term><computeroutput>
-WARNING:  ROLLBACK: no transaction in progress
-       </computeroutput></term>
-      <listitem>
-       <para>
-	If there is not any transaction currently in progress.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
+</synopsis>
  </refsynopsisdiv>
 
- <refsect1 id="R1-SQL-ROLLBACK-1">
-  <refsect1info>
-   <date>1998-09-24</date>
-  </refsect1info>
-  <title>
-   Description
-  </title>
+ <refsect1>
+  <title>Description</title>
 
   <para>
    <command>ROLLBACK</command> rolls back the current transaction and causes
    all the updates made by the transaction to be discarded.
   </para>
-
-  <refsect2 id="R2-SQL-ROLLBACK-3">
-   <refsect2info>
-    <date>1998-09-24</date>
-   </refsect2info>
-   <title>
-    Notes
-   </title>
-   <para>
-    Use <xref linkend="SQL-COMMIT" endterm="SQL-COMMIT-TITLE">
-    to successfully terminate a transaction.
-    <xref linkend="SQL-ABORT" endterm="SQL-ABORT-TITLE"> is a
-    synonym for <command>ROLLBACK</command>.
-   </para>
-  </refsect2>
  </refsect1>
 
- <refsect1 id="R1-SQL-ROLLBACK-2">
-  <title>
-   Usage
-  </title>
-  <para>
-   To abort all changes:
+ <refsect1>
+  <title>Parameters</title>
 
-   <programlisting>
-ROLLBACK WORK;
-   </programlisting>
+  <variablelist>
+   <varlistentry>
+    <term><literal>WORK</literal></term>
+    <term><literal>TRANSACTION</literal></term>
+    <listitem>
+     <para>
+      Optional key words. They have no effect.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Diagnostics</title>
+	
+  <variablelist>
+   <varlistentry>
+    <term><computeroutput>ROLLBACK</computeroutput></term>
+    <listitem>
+     <para>
+      Message returned if successful.
+     </para>
+    </listitem>
+   </varlistentry>
+     
+   <varlistentry>
+    <term><computeroutput>WARNING:  ROLLBACK: no transaction in progress</computeroutput></term>
+    <listitem>
+     <para>
+      If there is not any transaction currently in progress.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Notes</title>
+
+  <para>
+   Use <xref linkend="SQL-COMMIT" endterm="SQL-COMMIT-TITLE"> to
+   successfully terminate a transaction.
   </para>
  </refsect1>
 
- <refsect1 id="R1-SQL-ROLLBACK-3">
-  <title>
-   Compatibility
-  </title>
+ <refsect1>
+  <title>Examples</title>
 
-  <refsect2 id="R2-SQL-ROLLBACK-4">
-   <refsect2info>
-    <date>1998-09-24</date>
-   </refsect2info>
-   <title>
-    SQL92
-   </title>
-   <para>
-    <acronym>SQL92</acronym> only specifies the two forms <literal>ROLLBACK</literal>
-    and <literal>ROLLBACK WORK</literal>. Otherwise full compatibility.
-   </para>
-  </refsect2>
+  <para>
+   To abort all changes:
+<programlisting>
+ROLLBACK;
+</programlisting>
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Compatibility</title>
+
+  <para>
+   The SQL standard only specifies the two forms
+   <literal>ROLLBACK</literal> and <literal>ROLLBACK
+   WORK</literal>. Otherwise, this command is fully conforming.
+  </para>
  </refsect1>
 </refentry>
 

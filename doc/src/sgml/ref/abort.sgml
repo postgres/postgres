@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/abort.sgml,v 1.12 2003/04/15 13:25:08 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/abort.sgml,v 1.13 2003/04/26 23:56:51 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -30,6 +30,22 @@ ABORT [ WORK | TRANSACTION ]
    in behavior to the standard <acronym>SQL</acronym> command <command>ROLLBACK</command>,
    and is present only for historical reasons.
   </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><literal>WORK</literal></term>
+    <term><literal>TRANSACTION</literal></term>
+    <listitem>
+     <para>
+      Optional key words. They have no effect.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
  </refsect1>
 
  <refsect1>
@@ -71,7 +87,7 @@ ABORT [ WORK | TRANSACTION ]
   <para>
    To abort all changes:
 <programlisting>
-ABORT WORK;
+ABORT;
 </programlisting>
   </para>
  </refsect1>

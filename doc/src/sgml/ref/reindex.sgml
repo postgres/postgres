@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/reindex.sgml,v 1.16 2003/03/25 16:15:43 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/reindex.sgml,v 1.17 2003/04/26 23:56:51 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -8,124 +8,31 @@ PostgreSQL documentation
   <refentrytitle id="SQL-REINDEX-TITLE">REINDEX</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
+
  <refnamediv>
-  <refname>
-   REINDEX
-  </refname>
-  <refpurpose>
-   rebuild corrupted indexes
-  </refpurpose>
+  <refname>REINDEX</refname>
+  <refpurpose>rebuild indexes</refpurpose>
  </refnamediv>
+
  <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>2000-03-30</date>
-  </refsynopsisdivinfo>
-  <synopsis>
+<synopsis>
 REINDEX { DATABASE | TABLE | INDEX } <replaceable class="PARAMETER">name</replaceable> [ FORCE ]
-  </synopsis>
-  
-  <refsect2 id="R2-SQL-REINDEX-1">
-   <refsect2info>
-    <date>2000-03-30</date>
-   </refsect2info>
-   <title>
-    Inputs
-   </title>
-   <para>
-
-    <variablelist>
-     <varlistentry>
-      <term>DATABASE</term>
-      <listitem>
-       <para>
-	Recreate all system indexes of a specified database. Indexes on
-	user tables are not included. This form of <command>REINDEX</> can
-	only be used in standalone mode (see below).
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term>TABLE</term>
-      <listitem>
-       <para>
-	Recreate all indexes of a specified table.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term>INDEX</term>
-      <listitem>
-       <para>
-	Recreate a specified index.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><replaceable class="PARAMETER">name</replaceable></term>
-      <listitem>
-       <para>
-	The name of the specific database/table/index to be reindexed.
-	Table and index names may be schema-qualified.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term>FORCE</term>
-      <listitem>
-       <para>
-	Force rebuild of system indexes.  Without this keyword
-	<command>REINDEX</> skips system indexes that are not marked invalid.
-	FORCE is irrelevant for <command>REINDEX INDEX</>, or when reindexing
-	user indexes.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
-  
-  <refsect2 id="R2-SQL-REINDEX-2">
-   <refsect2info>
-    <date>2000-03-30</date>
-   </refsect2info>
-   <title>
-    Outputs
-   </title>
-   <para>
-
-    <variablelist>
-     <varlistentry>
-      <term><computeroutput>
-REINDEX
-       </computeroutput></term>
-      <listitem>
-       <para>
-	Message returned if the table is successfully reindexed.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
+</synopsis>
  </refsynopsisdiv>
 
- <refsect1 id="R1-SQL-REINDEX-1">
-  <refsect1info>
-   <date>2000-03-30</date>
-  </refsect1info>
-  <title>
-   Description
-  </title>
+ <refsect1>
+  <title>Description</title>
+
   <para>
    <command>REINDEX</command> rebuilds an index based on the data
    stored in the table, replacing the old copy of the index. There are
    two main reasons to use <command>REINDEX</command>:
 
-   <orderedlist>
+   <itemizedlist>
     <listitem>
      <para>
       An index has become corrupted, and no longer contains valid
-      data. Although in theory this should never be necessary, in
+      data. Although in theory this should never happen, in
       practice indexes may become corrupted due to software bugs or
       hardware failures.  <command>REINDEX</command> provides a
       recovery method.
@@ -135,146 +42,161 @@ REINDEX
     <listitem>
      <para>
       The index in question contains a lot of dead index pages that
-      are not being reclaimed. This can occur with B+-tree indexes
+      are not being reclaimed. This can occur with B-tree indexes in PostgreSQL
       under certain access patterns. <command>REINDEX</command>
       provides a way to reduce the space consumption of the index by
       writing a new version of the index without the dead pages. See
-      <xref linkend="routine-reindex"> for more information. The rest of this reference page
-      mostly discusses how to use <command>REINDEX</command> to
-      recover from index corruption.
+      <xref linkend="routine-reindex"> for more information.
      </para>
     </listitem>
-   </orderedlist>
-  </para>
-
-  <para>
-    If you suspect corruption of an index on a user table, you can
-    simply rebuild that index, or all indexes on the table, using
-    <command>REINDEX INDEX</command> or <command>REINDEX TABLE</command>.
-  </para>
-
-  <note>
-   <para>
-    Another approach to dealing with a corrupted user-table index is
-    just to drop and recreate it.  This may in fact be preferable if
-    you would like to maintain some semblance of normal operation on
-    the table meanwhile.  <command>REINDEX</> acquires exclusive lock
-    on the table, while <command>CREATE INDEX</> only locks out writes
-    not reads of the table.
-   </para>
-  </note>
-
-  <para>
-   Things are more difficult if you need to recover from corruption of an
-   index on a system table.  In this case it's important for the backend
-   doing the recovery to not have used any of the suspect indexes itself.
-   (Indeed, in this sort of scenario you may find that backends are
-   crashing immediately at start-up, due to reliance on the corrupted
-   indexes.)  To recover safely, the postmaster must be shut down and a
-   stand-alone <productname>PostgreSQL</productname> backend must be
-   started instead, giving it
-   the command-line options -O and -P (these options allow system table
-   modifications and prevent use of system indexes, respectively).  Then
-   issue <command>REINDEX DATABASE</>, <command>REINDEX TABLE</>, 
-   <command>REINDEX INDEX</>, or depending on how much you want to reconstruct.
-   If in doubt, use <command>REINDEX DATABASE FORCE</> to force reconstruction
-   of all system indexes in the database.  Then quit the standalone backend
-   and restart the postmaster.
-  </para>
-
-  <para>
-   Since this is likely the only situation when most people will ever use
-   a standalone backend, some usage notes might be in order:
-
-   <itemizedlist>
-    <listitem>
-     <para>
-      Start the backend with a command like
-<screen>
-<userinput>postgres -D $PGDATA -O -P my_database</userinput>
-</screen>
-      Provide the correct path to the database area with <option>-D</>, or
-      make sure that the environment variable <envar>PGDATA</> is set.
-      Also specify the name of the particular database you want to work in.
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      You can issue any SQL command, not only <command>REINDEX</>.
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      Be aware that the standalone backend treats newline as the command
-      entry terminator; there is no intelligence about semicolons,
-      as there is in <application>psql</>.  To continue a command
-      across multiple lines, you must type backslash just before each
-      newline except the last one.
-      Also, you won't have any of the conveniences of command-line editing
-      (no command history, for example).
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      To quit the backend, type <acronym>EOF</> (<keycombo
-      action="simul"><keycap>Control</><keycap>D</></>, usually).
-     </para>
-    </listitem>
-
    </itemizedlist>
+  </para>
 
-   See the <xref linkend="app-postgres"> reference page for more information.
+  <para>
+   If you suspect corruption of an index on a user table, you can
+   simply rebuild that index, or all indexes on the table, using
+   <command>REINDEX INDEX</command> or <command>REINDEX
+   TABLE</command>.  Another approach to dealing with a corrupted
+   user-table index is just to drop and recreate it.  This may in fact
+   be preferable if you would like to maintain some semblance of
+   normal operation on the table meanwhile.  <command>REINDEX</>
+   acquires exclusive lock on the table, while <command>CREATE
+   INDEX</> only locks out writes not reads of the table.
+  </para>
+
+  <para>
+   Things are more difficult if you need to recover from corruption of
+   an index on a system table.  In this case it's important for the
+   system to not have used any of the suspect indexes itself.
+   (Indeed, in this sort of scenario you may find that server
+   processes are crashing immediately at start-up, due to reliance on
+   the corrupted indexes.)  To recover safely, the server must be shut
+   down and a stand-alone <productname>PostgreSQL</productname> server
+   must be started instead with the command-line options
+   <option>-O</option> and <option>-P</option>.  (These options allow
+   system table modifications and prevent use of system indexes,
+   respectively.)  Then, <command>REINDEX DATABASE</>,
+   <command>REINDEX TABLE</>, or <command>REINDEX INDEX</> can be
+   issued, depending on how much you want to reconstruct.  If in
+   doubt, use <command>REINDEX DATABASE FORCE</> to force
+   reconstruction of all system indexes in the database.  Then quit
+   the standalone server session and restart the real server.
+  </para>
+
+  <para>
+   See the <xref linkend="app-postgres"> reference page for more
+   information about how to interact with the stand-alone server
+   interface.
   </para>
  </refsect1>
+  
+ <refsect1>
+  <title>Parameters</title>
 
- <refsect1 id="R1-SQL-REINDEX-2">
-  <title>
-   Usage
-  </title>
+  <variablelist>
+   <varlistentry>
+    <term><literal>DATABASE</literal></term>
+    <listitem>
+     <para>
+      Recreate all system indexes of a specified database. Indexes on
+      user tables are not included. This form of <command>REINDEX</>
+      can only be used in stand-alone mode (see above).
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>TABLE</literal></term>
+    <listitem>
+     <para>
+      Recreate all indexes of a specified table.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>INDEX</literal></term>
+    <listitem>
+     <para>
+      Recreate a specified index.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="PARAMETER">name</replaceable></term>
+    <listitem>
+     <para>
+      The name of the specific database, table, or index to be
+      reindexed.  Table and index names may be schema-qualified.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>FORCE</literal></term>
+    <listitem>
+     <para>
+      Force rebuild of system indexes.  Without this key word,
+      <command>REINDEX</> skips system indexes that are not marked
+      invalid.  <literal>FORCE</> is irrelevant for <command>REINDEX
+      INDEX</> or when reindexing user indexes.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+  
+ <refsect1>
+  <title>Diagnostics</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><computeroutput>REINDEX</computeroutput></term>
+    <listitem>
+     <para>
+      Message returned if the indexes were successfully recreated.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Examples</title>
+
   <para>
-   Recreate the indexes on the table <literal>mytable</literal>:
+   Recreate the indexes on the table <literal>my_table</literal>:
 
-   <programlisting>
-     REINDEX TABLE mytable;
-   </programlisting>
+<programlisting>
+REINDEX TABLE my_table;
+</programlisting>
   </para>
 
   <para>
    Rebuild a single index:
 
-   <programlisting>
-    REINDEX INDEX my_index;
-   </programlisting>
+<programlisting>
+REINDEX INDEX my_index;
+</programlisting>
   </para>
 
   <para>
-   Rebuild all system indexes (this will only work in a standalone backend):
+   Rebuild all system indexes (this will only work in a stand-alone
+   server session):
 
-   <programlisting>
-    REINDEX DATABASE my_database FORCE;
-   </programlisting>
+<programlisting>
+REINDEX DATABASE my_database FORCE;
+</programlisting>
   </para>
  </refsect1>
  
- <refsect1 id="R1-SQL-REINDEX-3">
-  <title>
-   Compatibility
-  </title>
-  
-  <refsect2 id="R2-SQL-REINDEX-4">
-   <refsect2info>
-    <date>2000-03-30</date>
-   </refsect2info>
-   <title>
-    SQL92
-   </title>
-   <para>
-    There is no <command>REINDEX</command> in <acronym>SQL92</acronym>.
-   </para>
-  </refsect2>
+ <refsect1>
+  <title>Compatibility</title>
+
+  <para>
+   There is no <command>REINDEX</command> command in the SQL standard.
+  </para>
  </refsect1>
 </refentry>
 

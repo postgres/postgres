@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/execute.sgml,v 1.3 2003/02/02 23:46:37 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/execute.sgml,v 1.4 2003/04/26 23:56:51 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -8,128 +8,100 @@ PostgreSQL documentation
   <refentrytitle id="sql-execute-title">EXECUTE</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
+
  <refnamediv>
-  <refname>
-   EXECUTE
-  </refname>
-  <refpurpose>
-   execute a prepared query
-  </refpurpose>
+  <refname>EXECUTE</refname>
+  <refpurpose>execute a prepared statement</refpurpose>
  </refnamediv>
+
  <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>2002-08-12</date>
-  </refsynopsisdivinfo>
-  <synopsis>
-   EXECUTE <replaceable class="PARAMETER">plan_name</replaceable> [ (<replaceable class="PARAMETER">parameter</replaceable> [, ...] ) ] [ INTO [ TEMPORARY | TEMP ] <replaceable class="PARAMETER">table</replaceable> ]
-  </synopsis>
-
-  <refsect2 id="R2-SQL-EXECUTE-1">
-   <refsect2info>
-    <date>2002-08-12</date>
-   </refsect2info>
-   <title>
-    Inputs
-   </title>
-
-   <para>
-    <variablelist>
-     <varlistentry>
-      <term><replaceable class="PARAMETER">plan_name</replaceable></term>
-      <listitem>
-       <para>
-		The name of the prepared query to execute.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><replaceable class="PARAMETER">parameter</replaceable></term>
-      <listitem>
-       <para>
-		The actual value of a parameter to the prepared query.  This
-		must be an expression yielding a value of a type compatible
-		with the data-type specified for this parameter position in
-		the <command>PREPARE</command> statement that created the
-		prepared query.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><replaceable class="PARAMETER">table</replaceable></term>
-      <listitem>
-       <para>
-        The name of the table in which to store the results of
-        executing the query (if it is a <command>SELECT</command>). If
-        no table is specified, the results are returned to the client
-        (as normal).
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
+<synopsis>
+EXECUTE <replaceable class="PARAMETER">plan_name</replaceable> [ (<replaceable class="PARAMETER">parameter</replaceable> [, ...] ) ] [ INTO [ TEMPORARY | TEMP ] <replaceable class="PARAMETER">table</replaceable> ]
+</synopsis>
  </refsynopsisdiv>
 
- <refsect1 id="R1-SQL-EXECUTE-1">
-  <refsect1info>
-   <date>2002-08-12</date>
-  </refsect1info>
-  <title>
-   Description
-  </title>
+ <refsect1>
+  <title>Description</title>
 
   <para>
    <command>EXECUTE</command> is used to execute a previously prepared
-   query. Since prepared queries only exist for the duration of a
-   session, the prepared query must have been created by a
+   statement. Since prepared statements only exist for the duration of a
+   session, the prepared statement must have been created by a
    <command>PREPARE</command> statement executed earlier in the
    current session.
   </para>
 
   <para>
-   If the <command>PREPARE</command> statement that created the query
+   If the <command>PREPARE</command> statement that created the statement
    specified some parameters, a compatible set of parameters must be
    passed to the <command>EXECUTE</command> statement, or else an
-   error is raised. Note that (unlike functions) prepared queries are
-   not overloaded based on the type or number of their parameters: the
-   name of a prepared query must be unique within a database session.
+   error is raised. Note that (unlike functions) prepared statements are
+   not overloaded based on the type or number of their parameters; the
+   name of a prepared statement must be unique within a database session.
   </para>
 
   <para>
    Like <command>SELECT INTO</command>, <command>EXECUTE</command> can
-   store the results of executing the query into a newly-created
-   table, by specifying an INTO clause. For more information on this behavior,
+   store the results of executing a query into a newly-created
+   table, by specifying an <literal>INTO</> clause. For more information on this behavior,
    see <xref linkend="sql-selectinto" endterm="sql-selectinto-title">.
   </para>
 
   <para>
-   For more information on the creation and usage of prepared queries,
+   For more information on the creation and usage of prepared statements,
    see <xref linkend="sql-prepare" endterm="sql-prepare-title">.
   </para>
  </refsect1>
 
- <refsect1 id="R1-SQL-EXECUTE-2">
-  <title>
-   Compatibility
-  </title>
+ <refsect1>
+  <title>Parameters</title>
 
-  <refsect2 id="R2-SQL-EXECUTE-2">
-   <refsect2info>
-    <date>2002-08-12</date>
-   </refsect2info>
-   <title>
-    SQL92
-   </title>
-   <para>
-	SQL92 includes an <command>EXECUTE</command> statement, but it is
-    only for use in embedded SQL clients. The
-    <command>EXECUTE</command> statement implemented by
-    <productname>PostgreSQL</productname> also uses a somewhat
-    different syntax.
-   </para>
-  </refsect2>
+  <variablelist>
+   <varlistentry>
+    <term><replaceable class="PARAMETER">plan_name</replaceable></term>
+    <listitem>
+     <para>
+      The name of the prepared statement to execute.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="PARAMETER">parameter</replaceable></term>
+    <listitem>
+     <para>
+      The actual value of a parameter to the prepared statement.  This
+      must be an expression yielding a value of a type compatible with
+      the data type specified for this parameter position in the
+      <command>PREPARE</command> command that created the prepared
+      statement.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="PARAMETER">table</replaceable></term>
+    <listitem>
+     <para>
+      The name of the table in which to store the results of executing
+      the statement (if it is a <command>SELECT</command>). If no
+      table is specified, the results are returned to the client (as
+      normal).
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Compatibility</title>
+
+  <para>
+   The SQL standard includes an <command>EXECUTE</command> statement,
+   but it is only for use in embedded SQL.  This version of the
+   <command>EXECUTE</command> statement also uses a somewhat different
+   syntax.
+  </para>
  </refsect1>
 </refentry>
 

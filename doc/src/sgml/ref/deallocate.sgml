@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/deallocate.sgml,v 1.1 2002/08/27 04:55:07 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/deallocate.sgml,v 1.2 2003/04/26 23:56:51 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -8,114 +8,79 @@ PostgreSQL documentation
   <refentrytitle id="sql-deallocate-title">DEALLOCATE</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
+
  <refnamediv>
-  <refname>
-   DEALLOCATE
-  </refname>
-  <refpurpose>
-   remove a prepared query
-  </refpurpose>
+  <refname>DEALLOCATE</refname>
+  <refpurpose>deallocate a prepared statement</refpurpose>
  </refnamediv>
+
  <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>2002-08-12</date>
-  </refsynopsisdivinfo>
-  <synopsis>
-   DEALLOCATE [ PREPARE ] <replaceable class="PARAMETER">plan_name</replaceable>
-  </synopsis>
-
-  <refsect2 id="R2-SQL-DEALLOCATE-1">
-   <refsect2info>
-    <date>2002-08-12</date>
-   </refsect2info>
-   <title>
-    Inputs
-   </title>
-
-   <para>
-    <variablelist>
-	 <varlistentry>
-	  <term>PREPARE</term>
-	  <listitem>
-	   <para>
-		This keyword is ignored.
-	   </para>
-	  </listitem>
-	  </varlistentry>
-     <varlistentry>
-      <term><replaceable class="PARAMETER">plan_name</replaceable></term>
-      <listitem>
-       <para>
-		The name of the prepared query to remove.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
-  <refsect2 id="R2-SQL-DEALLOCATE-2">
-   <refsect2info>
-    <date>2002-08-12</date>
-   </refsect2info>
-   <title>
-    Outputs
-   </title>
-   <para>
-
-    <variablelist>
-     <varlistentry>
-      <term><computeroutput>
-		<returnvalue>DEALLOCATE</returnvalue>
-       </computeroutput></term>
-      <listitem>
-       <para>
-		The prepared query was removed successfully.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
+<synopsis>
+DEALLOCATE [ PREPARE ] <replaceable class="parameter">plan_name</replaceable>
+</synopsis>
  </refsynopsisdiv>
 
- <refsect1 id="R1-SQL-DEALLOCATE-1">
-  <refsect1info>
-   <date>2002-08-12</date>
-  </refsect1info>
-  <title>
-   Description
-  </title>
+ <refsect1>
+  <title>Description</title>
 
   <para>
-   <command>DEALLOCATE</command> is used to remove a previously
-   prepared query. If you do not explicitly
-   <command>DEALLOCATE</command> a prepared query, it is removed when
-   the session ends.
+   <command>DEALLOCATE</command> is used to deallocate a previously
+   prepared SQL statement. If you do not explicitly deallocate a
+   prepared statement, it is deallocated when the session ends.
   </para>
 
   <para>
-   For more information on prepared queries, see <xref
+   For more information on prepared statements, see <xref
    linkend="sql-prepare" endterm="sql-prepare-title">.
   </para>
  </refsect1>
 
- <refsect1 id="R1-SQL-DEALLOCATE-2">
-  <title>
-   Compatibility
-  </title>
+ <refsect1>
+  <title>Parameters</title>
 
-  <refsect2 id="R2-SQL-DEALLOCATE-3">
-   <refsect2info>
-    <date>2002-08-12</date>
-   </refsect2info>
-   <title>
-    SQL92
-   </title>
-   <para>
-	SQL92 includes a <command>DEALLOCATE</command> statement, but it is
-    only for use in embedded SQL clients.
-   </para>
-  </refsect2>
+  <variablelist>
+   <varlistentry>
+    <term><literal>PREPARE</literal></term>
+    <listitem>
+     <para>
+      This key word is ignored.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">plan_name</replaceable></term>
+    <listitem>
+     <para>
+      The name of the prepared statement to deallocate.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Diagnostics</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><computeroutput>DEALLOCATE</computeroutput></term>
+    <listitem>
+     <para>
+      Message returned if the prepared statement was deallocated successfully.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Compatibility</title>
+
+  <para>
+   The SQL standard includes a <command>DEALLOCATE</command>
+   statement, but it is only for use in embedded SQL.
+  </para>
  </refsect1>
 </refentry>
 
