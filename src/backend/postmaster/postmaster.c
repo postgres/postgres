@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.257 2001/11/05 17:46:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.258 2001/11/06 18:02:48 tgl Exp $
  *
  * NOTES
  *
@@ -240,6 +240,7 @@ static void reaper(SIGNAL_ARGS);
 static void sigusr1_handler(SIGNAL_ARGS);
 static void dummy_handler(SIGNAL_ARGS);
 static void CleanupProc(int pid, int exitstatus);
+static const char *formatExitStatus(int exitstatus);
 static int	DoBackend(Port *port);
 static void ExitPostmaster(int status);
 static void usage(const char *);
@@ -1543,28 +1544,21 @@ reaper(SIGNAL_ARGS)
 		 */
 		if (pgstat_ispgstat(pid))
 		{
-			if (WIFEXITED(exitstatus))
-				elog(DEBUG, "statistics collector exited with status %d",
-					 WEXITSTATUS(exitstatus));
-			else if (WIFSIGNALED(exitstatus))
-				elog(DEBUG, "statistics collector was terminated by signal %d",
-					 WTERMSIG(exitstatus));
+			elog(DEBUG, "statistics collector process (pid %d) %s",
+				 pid, formatExitStatus(exitstatus));
 			pgstat_start();
 			continue;
 		}
 
+		/*
+		 * Check if this child was a shutdown or startup process.
+		 */
 		if (ShutdownPID > 0 && pid == ShutdownPID)
 		{
-			if (WIFEXITED(exitstatus) && WEXITSTATUS(exitstatus) != 0)
+			if (exitstatus != 0)
 			{
-				elog(DEBUG, "shutdown process %d exited with status %d",
-					 pid, WEXITSTATUS(exitstatus));
-				ExitPostmaster(1);
-			}
-			if (WIFSIGNALED(exitstatus))
-			{
-				elog(DEBUG, "shutdown process %d was terminated by signal %d",
-					 pid, WTERMSIG(exitstatus));
+				elog(DEBUG, "shutdown process (pid %d) %s",
+					 pid, formatExitStatus(exitstatus));
 				ExitPostmaster(1);
 			}
 			ExitPostmaster(0);
@@ -1572,19 +1566,12 @@ reaper(SIGNAL_ARGS)
 
 		if (StartupPID > 0 && pid == StartupPID)
 		{
-			if (WIFEXITED(exitstatus) && WEXITSTATUS(exitstatus) != 0)
+			if (exitstatus != 0)
 			{
-				elog(DEBUG, "startup process %d exited with status %d; aborting startup",
-					 pid, WEXITSTATUS(exitstatus));
+				elog(DEBUG, "startup process (pid %d) %s; aborting startup",
+					 pid, formatExitStatus(exitstatus));
 				ExitPostmaster(1);
 			}
-			if (WIFSIGNALED(exitstatus))
-			{
-				elog(DEBUG, "shutdown process %d was terminated by signal %d; aborting startup",
-					 pid, WTERMSIG(exitstatus));
-				ExitPostmaster(1);
-			}
-
 			StartupPID = 0;
 			FatalError = false; /* done with recovery */
 			if (Shutdown > NoShutdown)
@@ -1664,8 +1651,8 @@ CleanupProc(int pid,
 	Backend    *bp;
 
 	if (DebugLvl)
-		elog(DEBUG, "CleanupProc: pid %d exited with status %d",
-			 pid, exitstatus);
+		elog(DEBUG, "CleanupProc: child process (pid %d) %s",
+			 pid, formatExitStatus(exitstatus));
 
 	/*
 	 * If a backend dies in an ugly way (i.e. exit status not 0) then we
@@ -1710,12 +1697,8 @@ CleanupProc(int pid,
 	/* Make log entry unless we did so already */
 	if (!FatalError)
 	{
-		if (WIFEXITED(exitstatus))
-			elog(DEBUG, "server process (pid %d) exited with status %d",
-				 pid, WEXITSTATUS(exitstatus));
-		else if (WIFSIGNALED(exitstatus))
-			elog(DEBUG, "server process (pid %d) was terminated by signal %d",
-				 pid, WTERMSIG(exitstatus));
+		elog(DEBUG, "server process (pid %d) %s",
+			 pid, formatExitStatus(exitstatus));
 		elog(DEBUG, "terminating any other active server processes");
 	}
 
@@ -1770,6 +1753,36 @@ CleanupProc(int pid,
 	}
 
 	FatalError = true;
+}
+
+/*
+ * Convert a wait(2) exit status into a printable string.
+ *
+ * For present uses, it's okay to use a static return area here.
+ */
+static const char *
+formatExitStatus(int exitstatus)
+{
+	static char result[100];
+
+	/*
+	 * translator: these strings provide the verb phrase in the preceding
+	 * messages such as "server process (pid %d) %s"
+	 */
+	if (WIFEXITED(exitstatus))
+		snprintf(result, sizeof(result),
+				 gettext("exited with exit code %d"),
+				 WEXITSTATUS(exitstatus));
+	else if (WIFSIGNALED(exitstatus))
+		snprintf(result, sizeof(result),
+				 gettext("was terminated by signal %d"),
+				 WTERMSIG(exitstatus));
+	else
+		snprintf(result, sizeof(result),
+				 gettext("exited with unexpected status %d"),
+				 exitstatus);
+
+	return result;
 }
 
 /*
