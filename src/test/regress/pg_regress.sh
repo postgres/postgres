@@ -1,5 +1,5 @@
-#! /bin/sh
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/pg_regress.sh,v 1.25 2002/05/14 13:05:43 petere Exp $
+#! /bin/sh -x
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/pg_regress.sh,v 1.26 2002/09/02 13:27:20 ishii Exp $
 
 me=`basename $0`
 : ${TMPDIR=/tmp}
@@ -328,6 +328,12 @@ then
         (exit 2); exit
     fi
 
+    # fix conversion shared objs path
+    conv=$datadir/conversion_create.sql
+    backup=$conv.bak
+    mv $conv $backup
+    sed -e "s@\$libdir@$pkglibdir@g" $backup > $conv
+    rm $backup
 
     message "initializing database system"
     [ "$debug" = yes ] && initdb_options='--debug'
