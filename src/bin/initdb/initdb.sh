@@ -27,7 +27,7 @@
 # Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.126 2001/06/12 05:55:50 tgl Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.127 2001/06/14 19:47:25 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -497,7 +497,8 @@ echo "CREATE TRIGGER pg_sync_pg_pwd AFTER INSERT OR UPDATE OR DELETE ON pg_shado
      "FOR EACH ROW EXECUTE PROCEDURE update_pg_pwd()" \
      | "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
 
-# needs to be done before alter user
+# needs to be done before alter user, because alter user checks that
+# pg_shadow is secure ...
 echo "REVOKE ALL on pg_shadow FROM public" \
 	| "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
 
@@ -600,6 +601,46 @@ echo "CREATE VIEW pg_indexes AS \
 	    AND C.oid = X.indrelid \
             AND I.oid = X.indexrelid;" \
         | "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+
+echo "CREATE VIEW pg_stats AS \
+	SELECT \
+	    relname AS tablename, \
+	    attname AS attname, \
+	    stanullfrac AS null_frac, \
+	    stawidth AS avg_width, \
+	    stadistinct AS n_distinct, \
+	    CASE 1 \
+		WHEN stakind1 THEN stavalues1 \
+		WHEN stakind2 THEN stavalues2 \
+		WHEN stakind3 THEN stavalues3 \
+		WHEN stakind4 THEN stavalues4 \
+	    END AS most_common_vals, \
+	    CASE 1 \
+		WHEN stakind1 THEN stanumbers1 \
+		WHEN stakind2 THEN stanumbers2 \
+		WHEN stakind3 THEN stanumbers3 \
+		WHEN stakind4 THEN stanumbers4 \
+	    END AS most_common_freqs, \
+	    CASE 2 \
+		WHEN stakind1 THEN stavalues1 \
+		WHEN stakind2 THEN stavalues2 \
+		WHEN stakind3 THEN stavalues3 \
+		WHEN stakind4 THEN stavalues4 \
+	    END AS histogram_bounds, \
+	    CASE 3 \
+		WHEN stakind1 THEN stanumbers1[1] \
+		WHEN stakind2 THEN stanumbers2[1] \
+		WHEN stakind3 THEN stanumbers3[1] \
+		WHEN stakind4 THEN stanumbers4[1] \
+	    END AS correlation \
+	FROM pg_class c, pg_attribute a, pg_statistic s \
+	WHERE c.oid = s.starelid AND c.oid = a.attrelid \
+	    AND a.attnum = s.staattnum \
+	    AND has_table_privilege(c.oid, 'select');" \
+        | "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+
+echo "REVOKE ALL on pg_statistic FROM public" \
+	| "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
 
 echo "Loading pg_description."
 echo "COPY pg_description FROM STDIN" > $TEMPFILE
