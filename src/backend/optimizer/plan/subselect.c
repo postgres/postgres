@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.18 1999/06/21 01:20:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.19 1999/07/15 01:52:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -292,108 +292,129 @@ set_unioni(List *l1, List *l2)
 	return nconc(l1, set_differencei(l2, l1));
 }
 
-static List *
-_finalize_primnode(void *expr, List **subplan)
+typedef struct finalize_primnode_results {
+	List	*subplans;			/* List of subplans found in expr */
+	List	*paramids;			/* List of PARAM_EXEC paramids found */
+} finalize_primnode_results;
+
+static bool finalize_primnode_walker(Node *node,
+									 finalize_primnode_results *results);
+
+static void
+finalize_primnode(Node *expr, finalize_primnode_results *results)
 {
-	List	   *result = NULL;
+	results->subplans = NIL;	/* initialize */
+	results->paramids = NIL;
+	(void) finalize_primnode_walker(expr, results);
+}
 
-	if (expr == NULL)
-		return NULL;
+static bool
+finalize_primnode_walker(Node *node,
+						 finalize_primnode_results *results)
+{
+	if (node == NULL)
+		return false;
+	if (IsA(node, Param))
+	{
+		if (((Param *) node)->paramkind == PARAM_EXEC)
+		{
+			int		paramid = (int) ((Param *) node)->paramid;
 
-	if (IsA(expr, Param))
-	{
-		if (((Param *) expr)->paramkind == PARAM_EXEC)
-			return lconsi(((Param *) expr)->paramid, (List *) NULL);
+			if (! intMember(paramid, results->paramids))
+				results->paramids = lconsi(paramid, results->paramids);
+		}
+		return false;			/* no more to do here */
 	}
-	else if (single_node(expr))
-		return NULL;
-	else if (IsA(expr, List))
+	if (is_subplan(node))
 	{
-		List	   *le;
-
-		foreach(le, (List *) expr)
-			result = set_unioni(result,
-								_finalize_primnode(lfirst(le), subplan));
-	}
-	else if (IsA(expr, Iter))
-		return _finalize_primnode(((Iter *) expr)->iterexpr, subplan);
-	else if (or_clause(expr) || and_clause(expr) || is_opclause(expr) ||
-			 not_clause(expr) || is_funcclause(expr))
-		return _finalize_primnode(((Expr *) expr)->args, subplan);
-	else if (IsA(expr, Aggref))
-		return _finalize_primnode(((Aggref *) expr)->target, subplan);
-	else if (IsA(expr, ArrayRef))
-	{
-		result = _finalize_primnode(((ArrayRef *) expr)->refupperindexpr, subplan);
-		result = set_unioni(result,
-							_finalize_primnode(((ArrayRef *) expr)->reflowerindexpr, subplan));
-		result = set_unioni(result,
-			  _finalize_primnode(((ArrayRef *) expr)->refexpr, subplan));
-		result = set_unioni(result,
-		 _finalize_primnode(((ArrayRef *) expr)->refassgnexpr, subplan));
-	}
-	else if (IsA(expr, TargetEntry))
-		return _finalize_primnode(((TargetEntry *) expr)->expr, subplan);
-	else if (is_subplan(expr))
-	{
+		SubPlan	   *subplan = (SubPlan *) ((Expr *) node)->oper;
 		List	   *lst;
 
-		*subplan = lappend(*subplan, ((Expr *) expr)->oper);
-		foreach(lst, ((SubPlan *) ((Expr *) expr)->oper)->plan->extParam)
+		/* Add subplan to subplans list */
+		results->subplans = lappend(results->subplans, subplan);
+		/* Check extParam list for params to add to paramids */
+		foreach(lst, subplan->plan->extParam)
 		{
-			Var		   *var = nth(lfirsti(lst), PlannerParamVar);
+			int			paramid = lfirsti(lst);
+			Var		   *var = nth(paramid, PlannerParamVar);
 
 			/* note varlevelsup is absolute level number */
 			if (var->varlevelsup < PlannerQueryLevel &&
-				!intMember(lfirsti(lst), result))
-				result = lappendi(result, lfirsti(lst));
+				! intMember(paramid, results->paramids))
+				results->paramids = lconsi(paramid, results->paramids);
 		}
+		/* XXX We do NOT allow expression_tree_walker to examine the args
+		 * passed to the subplan.  Is that correct???  It's what the
+		 * old code did, but it seems mighty bogus...  tgl 7/14/99
+		 */
+		return false;			/* don't recurse into subplan args */
 	}
-	else
-		elog(ERROR, "_finalize_primnode: can't handle node %d", nodeTag(expr));
-
-	return result;
+	return expression_tree_walker(node, finalize_primnode_walker,
+								  (void *) results);
 }
 
+/* Replace correlation vars (uplevel vars) with Params. */
+
+/* XXX should replace this with use of a generalized tree rebuilder,
+ * designed along the same lines as expression_tree_walker.
+ * Not done yet.
+ */
 Node *
 SS_replace_correlation_vars(Node *expr)
 {
-
 	if (expr == NULL)
 		return NULL;
-	if (IsA(expr, List))
+	if (IsA(expr, Var))
+	{
+		if (((Var *) expr)->varlevelsup > 0)
+			expr = (Node *) _replace_var((Var *) expr);
+	}
+	else if (single_node(expr))
+		return expr;
+	else if (IsA(expr, List))
 	{
 		List	   *le;
 
 		foreach(le, (List *) expr)
 			lfirst(le) = SS_replace_correlation_vars((Node *) lfirst(le));
 	}
-	else if (IsA(expr, Var))
+	else if (IsA(expr, Expr))
 	{
-		if (((Var *) expr)->varlevelsup > 0)
-			expr = (Node *) _replace_var((Var *) expr);
-	}
-	else if (IsA(expr, Iter))
-		((Iter *) expr)->iterexpr = SS_replace_correlation_vars(((Iter *) expr)->iterexpr);
-	else if (single_node(expr))
-		return expr;
-	else if (or_clause(expr) || and_clause(expr) || is_opclause(expr) ||
-			 not_clause(expr) || is_funcclause(expr))
+		/* XXX do we need to do anything special with subplans? */
 		((Expr *) expr)->args = (List *)
 			SS_replace_correlation_vars((Node *) ((Expr *) expr)->args);
+	}
 	else if (IsA(expr, Aggref))
-		((Aggref *) expr)->target = SS_replace_correlation_vars((Node *) ((Aggref *) expr)->target);
+		((Aggref *) expr)->target = SS_replace_correlation_vars(((Aggref *) expr)->target);
+	else if (IsA(expr, Iter))
+		((Iter *) expr)->iterexpr = SS_replace_correlation_vars(((Iter *) expr)->iterexpr);
 	else if (IsA(expr, ArrayRef))
 	{
 		((ArrayRef *) expr)->refupperindexpr = (List *)
 			SS_replace_correlation_vars((Node *) ((ArrayRef *) expr)->refupperindexpr);
 		((ArrayRef *) expr)->reflowerindexpr = (List *)
 			SS_replace_correlation_vars((Node *) ((ArrayRef *) expr)->reflowerindexpr);
-		((ArrayRef *) expr)->refexpr = SS_replace_correlation_vars((Node *) ((ArrayRef *) expr)->refexpr);
+		((ArrayRef *) expr)->refexpr = SS_replace_correlation_vars(((ArrayRef *) expr)->refexpr);
 		((ArrayRef *) expr)->refassgnexpr = SS_replace_correlation_vars(((ArrayRef *) expr)->refassgnexpr);
 	}
+	else if (IsA(expr, CaseExpr))
+	{
+		CaseExpr   *caseexpr = (CaseExpr *) expr;
+		List	   *le;
+
+		foreach(le, caseexpr->args)
+		{
+			CaseWhen   *when = (CaseWhen *) lfirst(le);
+			Assert(IsA(when, CaseWhen));
+			when->expr = SS_replace_correlation_vars(when->expr);
+			when->result = SS_replace_correlation_vars(when->result);
+		}
+		/* caseexpr->arg should be null, but we'll check it anyway */
+		caseexpr->arg = SS_replace_correlation_vars(caseexpr->arg);
+		caseexpr->defresult = SS_replace_correlation_vars(caseexpr->defresult);
+	}
 	else if (IsA(expr, TargetEntry))
-		((TargetEntry *) expr)->expr = SS_replace_correlation_vars((Node *) ((TargetEntry *) expr)->expr);
+		((TargetEntry *) expr)->expr = SS_replace_correlation_vars(((TargetEntry *) expr)->expr);
 	else if (IsA(expr, SubLink))
 	{
 		List	   *le;
@@ -409,30 +430,76 @@ SS_replace_correlation_vars(Node *expr)
 			SS_replace_correlation_vars((Node *) ((SubLink *) expr)->lefthand);
 	}
 	else
-		elog(NOTICE, "SS_replace_correlation_vars: can't handle node %d",
+		elog(ERROR, "SS_replace_correlation_vars: can't handle node %d",
 			 nodeTag(expr));
 
 	return expr;
 }
 
+/* Replace sublinks by subplans in the given expression */
+
+/* XXX should replace this with use of a generalized tree rebuilder,
+ * designed along the same lines as expression_tree_walker.
+ * Not done yet.
+ */
 Node *
 SS_process_sublinks(Node *expr)
 {
 	if (expr == NULL)
 		return NULL;
-	if (IsA(expr, List))
+	if (IsA(expr, SubLink))
+	{
+		expr = _make_subplan((SubLink *) expr);
+	}
+	else if (single_node(expr))
+		return expr;
+	else if (IsA(expr, List))
 	{
 		List	   *le;
 
 		foreach(le, (List *) expr)
 			lfirst(le) = SS_process_sublinks((Node *) lfirst(le));
 	}
-	else if (or_clause(expr) || and_clause(expr) || is_opclause(expr) ||
-			 not_clause(expr) || is_funcclause(expr))
+	else if (IsA(expr, Expr))
+	{
+		/* We should never see a subplan node here, since this is the
+		 * routine that makes 'em in the first place.  No need to check.
+		 */
 		((Expr *) expr)->args = (List *)
 			SS_process_sublinks((Node *) ((Expr *) expr)->args);
-	else if (IsA(expr, SubLink))/* got it! */
-		expr = _make_subplan((SubLink *) expr);
+	}
+	else if (IsA(expr, Aggref))
+		((Aggref *) expr)->target = SS_process_sublinks(((Aggref *) expr)->target);
+	else if (IsA(expr, Iter))
+		((Iter *) expr)->iterexpr = SS_process_sublinks(((Iter *) expr)->iterexpr);
+	else if (IsA(expr, ArrayRef))
+	{
+		((ArrayRef *) expr)->refupperindexpr = (List *)
+			SS_process_sublinks((Node *) ((ArrayRef *) expr)->refupperindexpr);
+		((ArrayRef *) expr)->reflowerindexpr = (List *)
+			SS_process_sublinks((Node *) ((ArrayRef *) expr)->reflowerindexpr);
+		((ArrayRef *) expr)->refexpr = SS_process_sublinks(((ArrayRef *) expr)->refexpr);
+		((ArrayRef *) expr)->refassgnexpr = SS_process_sublinks(((ArrayRef *) expr)->refassgnexpr);
+	}
+	else if (IsA(expr, CaseExpr))
+	{
+		CaseExpr   *caseexpr = (CaseExpr *) expr;
+		List	   *le;
+
+		foreach(le, caseexpr->args)
+		{
+			CaseWhen   *when = (CaseWhen *) lfirst(le);
+			Assert(IsA(when, CaseWhen));
+			when->expr = SS_process_sublinks(when->expr);
+			when->result = SS_process_sublinks(when->result);
+		}
+		/* caseexpr->arg should be null, but we'll check it anyway */
+		caseexpr->arg = SS_process_sublinks(caseexpr->arg);
+		caseexpr->defresult = SS_process_sublinks(caseexpr->defresult);
+	}
+	else
+		elog(ERROR, "SS_process_sublinks: can't handle node %d",
+			 nodeTag(expr));
 
 	return expr;
 }
@@ -440,60 +507,65 @@ SS_process_sublinks(Node *expr)
 List *
 SS_finalize_plan(Plan *plan)
 {
-	List	   *extParam = NULL;
-	List	   *locParam = NULL;
-	List	   *subPlan = NULL;
-	List	   *param_list;
+	List	   *extParam = NIL;
+	List	   *locParam = NIL;
+	finalize_primnode_results results;
 	List	   *lst;
 
 	if (plan == NULL)
 		return NULL;
 
-	param_list = _finalize_primnode(plan->targetlist, &subPlan);
-	Assert(subPlan == NULL);
+	/* Find params in targetlist, make sure there are no subplans there */
+	finalize_primnode((Node *) plan->targetlist, &results);
+	Assert(results.subplans == NIL);
 
+	/* From here on, we invoke finalize_primnode_walker not finalize_primnode,
+	 * so that results.paramids lists are automatically merged together and
+	 * we don't have to do it the hard way.  But when recursing to self,
+	 * we do have to merge the lists.  Oh well.
+	 */
 	switch (nodeTag(plan))
 	{
 		case T_Result:
-			param_list = set_unioni(param_list,
-									_finalize_primnode(((Result *) plan)->resconstantqual, &subPlan));
-			/* subPlan is NOT necessarily NULL here ... */
+			finalize_primnode_walker(((Result *) plan)->resconstantqual,
+									 &results);
+			/* results.subplans is NOT necessarily empty here ... */
 			break;
 
 		case T_Append:
 			foreach(lst, ((Append *) plan)->appendplans)
-				param_list = set_unioni(param_list,
-								 SS_finalize_plan((Plan *) lfirst(lst)));
+				results.paramids = set_unioni(results.paramids,
+								SS_finalize_plan((Plan *) lfirst(lst)));
 			break;
 
 		case T_IndexScan:
-			param_list = set_unioni(param_list,
-			_finalize_primnode(((IndexScan *) plan)->indxqual, &subPlan));
-			Assert(subPlan == NULL);
+			finalize_primnode_walker((Node *) ((IndexScan *) plan)->indxqual,
+									 &results);
+			Assert(results.subplans == NIL);
 			break;
 
 		case T_MergeJoin:
-			param_list = set_unioni(param_list,
-									_finalize_primnode(((MergeJoin *) plan)->mergeclauses, &subPlan));
-			Assert(subPlan == NULL);
+			finalize_primnode_walker((Node *) ((MergeJoin *) plan)->mergeclauses,
+									 &results);
+			Assert(results.subplans == NIL);
 			break;
 
 		case T_HashJoin:
-			param_list = set_unioni(param_list,
-									_finalize_primnode(((HashJoin *) plan)->hashclauses, &subPlan));
-			Assert(subPlan == NULL);
+			finalize_primnode_walker((Node *) ((HashJoin *) plan)->hashclauses,
+									 &results);
+			Assert(results.subplans == NIL);
 			break;
 
 		case T_Hash:
-			param_list = set_unioni(param_list,
-				 _finalize_primnode(((Hash *) plan)->hashkey, &subPlan));
-			Assert(subPlan == NULL);
+			finalize_primnode_walker((Node *) ((Hash *) plan)->hashkey,
+									 &results);
+			Assert(results.subplans == NIL);
 			break;
 
 		case T_Agg:
-			param_list = set_unioni(param_list,
-					 _finalize_primnode(((Agg *) plan)->aggs, &subPlan));
-			Assert(subPlan == NULL);
+			finalize_primnode_walker((Node *) ((Agg *) plan)->aggs,
+									 &results);
+			Assert(results.subplans == NIL);
 			break;
 
 		case T_SeqScan:
@@ -503,16 +575,24 @@ SS_finalize_plan(Plan *plan)
 		case T_Unique:
 		case T_Group:
 			break;
+
 		default:
-			elog(ERROR, "SS_finalize_plan: node %d unsupported", nodeTag(plan));
+			elog(ERROR, "SS_finalize_plan: node %d unsupported",
+				 nodeTag(plan));
 			return NULL;
 	}
 
-	param_list = set_unioni(param_list, _finalize_primnode(plan->qual, &subPlan));
-	param_list = set_unioni(param_list, SS_finalize_plan(plan->lefttree));
-	param_list = set_unioni(param_list, SS_finalize_plan(plan->righttree));
+	finalize_primnode_walker((Node *) plan->qual, &results);
+	/* subplans are OK in the qual... */
 
-	foreach(lst, param_list)
+	results.paramids = set_unioni(results.paramids,
+								  SS_finalize_plan(plan->lefttree));
+	results.paramids = set_unioni(results.paramids,
+								  SS_finalize_plan(plan->righttree));
+
+	/* Now we have all the paramids and subplans */
+
+	foreach(lst, results.paramids)
 	{
 		Var		   *var = nth(lfirsti(lst), PlannerParamVar);
 
@@ -520,7 +600,7 @@ SS_finalize_plan(Plan *plan)
 		if (var->varlevelsup < PlannerQueryLevel)
 			extParam = lappendi(extParam, lfirsti(lst));
 		else if (var->varlevelsup > PlannerQueryLevel)
-			elog(ERROR, "SS_finalize_plan: plan shouldn't reference subplan' variable");
+			elog(ERROR, "SS_finalize_plan: plan shouldn't reference subplan's variable");
 		else
 		{
 			Assert(var->varno == 0 && var->varattno == 0);
@@ -530,52 +610,35 @@ SS_finalize_plan(Plan *plan)
 
 	plan->extParam = extParam;
 	plan->locParam = locParam;
-	plan->subPlan = subPlan;
+	plan->subPlan = results.subplans;
 
-	return param_list;
-
+	return results.paramids;
 }
 
 /* Construct a list of all subplans found within the given node tree */
 
+static bool SS_pull_subplan_walker(Node *node, List **listptr);
+
 List *
 SS_pull_subplan(Node *expr)
 {
-	List	   *result = NULL;
+	List	   *result = NIL;
 
-	if (expr == NULL || single_node(expr))
-		return NULL;
-
-	if (IsA(expr, List))
-	{
-		List	   *le;
-
-		foreach(le, (List *) expr)
-			result = nconc(result, SS_pull_subplan(lfirst(le)));
-	}
-	else if (IsA(expr, Iter))
-		return SS_pull_subplan(((Iter *) expr)->iterexpr);
-	else if (or_clause(expr) || and_clause(expr) || is_opclause(expr) ||
-			 not_clause(expr) || is_funcclause(expr))
-		return SS_pull_subplan((Node *) ((Expr *) expr)->args);
-	else if (IsA(expr, Aggref))
-		return SS_pull_subplan(((Aggref *) expr)->target);
-	else if (IsA(expr, ArrayRef))
-	{
-		result = SS_pull_subplan((Node *) ((ArrayRef *) expr)->refupperindexpr);
-		result = nconc(result,
-		 SS_pull_subplan((Node *) ((ArrayRef *) expr)->reflowerindexpr));
-		result = nconc(result,
-					   SS_pull_subplan(((ArrayRef *) expr)->refexpr));
-		result = nconc(result,
-					 SS_pull_subplan(((ArrayRef *) expr)->refassgnexpr));
-	}
-	else if (IsA(expr, TargetEntry))
-		return SS_pull_subplan(((TargetEntry *) expr)->expr);
-	else if (is_subplan(expr))
-		return lcons(((Expr *) expr)->oper, NULL);
-	else
-		elog(ERROR, "SS_pull_subplan: can't handle node %d", nodeTag(expr));
-
+	SS_pull_subplan_walker(expr, &result);
 	return result;
+}
+
+static bool
+SS_pull_subplan_walker(Node *node, List **listptr)
+{
+	if (node == NULL)
+		return false;
+	if (is_subplan(node))
+	{
+		*listptr = lappend(*listptr, ((Expr *) node)->oper);
+		/* XXX original code did not examine args to subplan, is this right? */
+		return false;
+	}
+	return expression_tree_walker(node, SS_pull_subplan_walker,
+								  (void *) listptr);
 }
