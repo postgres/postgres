@@ -1,421 +1,229 @@
-<!--
-$Header: /cvsroot/pgsql/doc/src/sgml/bki.sgml,v 1.5 2000/12/22 18:57:49 petere Exp $
-
-Transcribed from the original bki.man.5 documentation
-- Thomas Lockhart 1998-08-03
--->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/bki.sgml,v 1.6 2000/12/23 16:24:29 petere Exp $ -->
 
 <chapter id="bki">
-<title>Backend Interface</title>
+ <title><acronym>BKI</acronym> Backend Interface</title>
 
-<para>
-Backend Interface (<acronym>BKI</acronym>) files are scripts that are input 
-to the <productname>Postgres</productname>
-backend running in the special "bootstrap" mode that allows it to perform
-database functions without a database system already existing.  <acronym>BKI</acronym> files
-can therefore be used to create the database system in the first place.
-<application>initdb</application>
-uses <acronym>BKI</acronym> files to do just that: to create a database system.  However,
-<application>initdb</application>'s
-<acronym>BKI</acronym> files are generated internally.  It generates them using the files
-<filename>global1.bki.source</filename> and <filename>local1.template1.bki.source</filename>, which it finds in the
-<productname>Postgres</productname> "library" directory.  They get installed there as part of installing
-<productname>Postgres</productname>.  These .source files get build as part of the <productname>Postgres</productname> build
-process, by a build program called 
-  <application>genbki</application>.
-  <application>genbki</application>
-takes as input <productname>Postgres</productname> source files that double as
-  <application>genbki</application>
-input that builds tables and C header files that describe those
-tables.
-</para>
+ <para>
+  Backend Interface (<acronym>BKI</acronym>) files are scripts in a
+  special language that are input to the
+  <productname>Postgres</productname> backend running in the special
+  <quote>bootstrap</quote> mode that allows it to perform database
+  functions without a database system already existing.
+  <acronym>BKI</acronym> files can therefore be used to create the
+  database system in the first place.  (And they are probably not
+  useful for anything else.)
+ </para>
 
-<para>
-Related information may be found in documentation for 
-<application>initdb</application>,
-<application>createdb</application>,
-and the <acronym>SQL</acronym> command <command>CREATE DATABASE</command>.
-</para>
+ <para>
+  <application>initdb</application> uses <acronym>BKI</acronym> files
+  to do part of its job when creating a new database cluster.  The
+  input files used by <application>initbd</application> are created as
+  part of building and installing <productname>Postgres</productname>
+  by a program named <filename>genbki.sh</filename> from some
+  specially formatted C header files in the source tree.  The created
+  BKI files are called <filename>global.bki</filename> (for global
+  catalogs) and <filename>template1.bki</filename> (for the catalogs
+  initially stored in the template1 database and then duplicated in
+  every created database) and are normally installed in the
+  <filename>share</filename> subdirectory of the installation tree.
+ </para>
 
-  <sect1 id="bki-format">
-   <title><acronym>BKI</acronym> File Format</title>
+ <para>
+  Related information may be found in the documentation for
+  <application>initdb</application>.
+ </para>
 
-   <para>
-    The <productname>Postgres</productname> backend interprets
-    <acronym>BKI</acronym> files as described below.  This
-    description will be easier to understand if the
-    <filename>global1.bki.source</filename> file is
-    at hand as an example.  (As explained above, this .source file isn't quite
-    a <acronym>BKI</acronym> file, but you'll be able to guess what
-    the resulting <acronym>BKI</acronym> file would be
-    anyway).
-   </para>
+ <sect1 id="bki-format">
+  <title><acronym>BKI</acronym> File Format</title>
 
-<para>
-Commands are composed of a command name followed by space separated
-arguments.  Arguments to a command that begin with a "$" are
-treated specially.  If "$$" are the first two characters, then
-the first "$" is ignored and the argument is then processed
-normally.  If the "$" is followed by space, then it is treated
-as a NULL
-value.  Otherwise, the characters following the "$" are
-interpreted as the name of a macro causing the argument to be replaced
-with the macro's value.  It is an error for this macro to be
-undefined.
-</para>
+  <para>
+   This section describes how the <productname>Postgres</productname>
+   backend interprets <acronym>BKI</acronym> files.  This description
+   will be easier to understand if the <filename>global.bki</filename>
+   file is at hand as an example.  You should also study the source
+   code of <application>initdb</application> to get an idea of how the
+   backend is invoked.
+  </para>
 
-<para>
-Macros are defined using
+  <para>
+   BKI input consists of a sequence of commands.  Commands are made up
+   of a number of tokens, depending on the syntax of the command.
+   Tokens are usually separated by whitespace, but need not be if
+   there is no ambiguity.  There is not special command separator; the
+   next token that syntactically cannot belong to the preceeding
+   command starts a new one.  (Usually you would put a new command on
+   a new line, for clarity.)  Tokens can be certain key words, special
+   characters (parentheses, commas, etc.), numbers, or double-quoted
+   strings.  Everything is case sensitive.
+  </para>
+
+  <para>
+   Lines starting with a <literal>#</literal> are ignored.
+  </para>
+
+ </sect1>
+
+ <sect1 id="bki-commands">
+  <title>BKI Commands</title>
+
+  <variablelist>
+   <varlistentry>
+    <term>
+     open <replaceable class="parameter">tablename</replaceable>
+    </term>
+
+    <listitem>
+     <para>
+      Open the table called
+      <replaceable class="parameter">tablename</replaceable>
+      for further manipulation.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>
+     close <optional><replaceable class="parameter">tablename</replaceable></optional>
+    </term>
+
+    <listitem>
+     <para>
+      Close the open table called <replaceable
+      class="parameter">tablename</replaceable>.  It is an error if
+      <replaceable class="parameter">tablename</replaceable> is not
+      already opened.  If no <replaceable
+      class="parameter">tablename</replaceable> is given, then the
+      currently open table is closed.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>
+     create <replaceable class="parameter">tablename</replaceable>
+     (<replaceable class="parameter">name1</replaceable> =
+     <replaceable class="parameter">type1</replaceable> <optional>,
+     <replaceable class="parameter">name2</replaceable> = <replaceable
+     class="parameter">type2</replaceable>, ...</optional>)
+    </term>
+
+    <listitem>
+     <para>
+      Create a table named <replaceable
+      class="parameter">tablename</replaceable> with the columns given
+      in parentheses.
+     </para>
+
+     <para>
+      The <replaceable>type</replaceable> is not necessarily the data
+      type that the column will have in the SQL environment; that is
+      determined by the <structname>pg_attribute</structname> system
+      catalog.  The type here is essentially only used to allocate
+      storage.  The following types are allowed: <type>bool</type>,
+      <type>bytea</type>, <type>char</type> (1 byte),
+      <type>name</type>, <type>int2</type>, <type>int2vector</type>,
+      <type>int4</type>, <type>regproc</type>, <type>text</type>,
+      <type>oid</type>, <type>tid</type>, <type>xid</type>,
+      <type>cid</type>, <type>oidvector</type>, <type>smgr</type>,
+      <type>_int4</type> (array), <type>_aclitem</type> (array).
+      Array types can also be indicated by writing
+      <literal>[]</literal> after the name of the element type.
+     </para>
+
+     <note>
+      <para>
+       The table will only be created on disk, it will not
+       automatically be registered in the system catalogs and will
+       therefore not be accessible unless appropriate rows are
+       inserted in <structname>pg_class</structname>,
+       <structname>pg_attribute</structname>, etc.
+      </para>
+     </note>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>
+     insert <optional>OID = <replaceable class="parameter">oid_value</replaceable></optional> (<replaceable class="parameter">value1</replaceable> <replaceable class="parameter">value2</replaceable> ...)
+    </term>
+
+    <listitem>
+     <para>
+      Insert a new row into the open table using <replaceable
+      class="parameter">value1</replaceable>, <replaceable
+      class="parameter">value2</replaceable>, etc., for its column
+      values and <replaceable
+      class="parameter">oid_value</replaceable> for its OID.  If
+      <replaceable class="parameter">oid_value</replaceable> is zero
+      (0) or the clause is ommitted, then the next available OID is
+      used.
+     </para>
+
+     <para>
+      NULL values can be specified using the special key word
+      <literal>_null_</literal>.  Values containing spaces should be
+      double quoted.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>
+     declare <optional>unique</optional> index <replaceable
+     class="parameter">indexname</replaceable> on <replaceable
+     class="parameter">tablename</replaceable> using <replaceable
+     class="parameter">amname</replaceable> (<replaceable
+     class="parameter">opclass1</replaceable> <replaceable
+     class="parameter">name1</replaceable> <optional>, ...</optional>)
+    </term>
+
+    <listitem>
+     <para>
+      Create an index named <replaceable
+      class="parameter">indexname</replaceable> on the table named
+      <replaceable class="parameter">tablename</replaceable> using the
+      <replaceable class="parameter">amname</replaceable> access
+      method.  The fields to index are called <replaceable
+      class="parameter">name1</replaceable>, <replaceable
+      class="parameter">name2</replaceable> etc., and the operator
+      classes to use are <replaceable
+      class="parameter">opclass1</replaceable>, <replaceable
+      class="parameter">opclass2</replaceable> etc., respectively.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>build indices</term>
+
+    <listitem>
+     <para>
+      Build the indices that have previously been declared.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+
+ </sect1>
+
+ <sect1 id="bki-example">
+  <title>Example</title>
+
+  <para>
+   The following sequence of commands will create the
+   <literal>test_table</literal> table with the two columns
+   <literal>cola</literal> and <literal>colb</literal> of type
+   <type>int4</type> and <type>text</type>, respectively, and insert
+   two rows into the table.
 <programlisting>
-define macro macro_name = macro_value
+create test_table (cola = int4, colb = text)
+open test_table
+insert OID=421 ( 1 "value1" )
+insert OID=422 ( 2 _null_ )
+close test_table
 </programlisting>
-and are undefined using 
-<programlisting>
-undefine macro macro_name
-</programlisting>
-and redefined using the same syntax as define.
-</para>
-
-<para>
-Lists of general commands and macro commands
-follow.
-</para>
-</sect1>
-
-<sect1 id="bki-commands">
-<title>General Commands</title>
-
-<variablelist>
-<varlistentry>
-<term>
-OPEN <replaceable class="parameter">classname</replaceable>
-</term>
-<listitem>
-<para>
-Open the class called
-<replaceable class="parameter">classname</replaceable>
-for further manipulation.
-</para>
-</listitem>
-</varlistentry>
-
-<varlistentry>
-<term>
-CLOSE [<replaceable class="parameter">classname</replaceable>]
-</term>
-<listitem>
-<para>
-Close the open class called
-<replaceable class="parameter">classname</replaceable>.
-It is an error if 
-<replaceable class="parameter">classname</replaceable>
-is not already opened.   If no
-<replaceable class="parameter">classname</replaceable>
-is given, then the currently open class is closed.
-</para>
-</listitem>
-</varlistentry>
-
-<varlistentry>
-<term>
-PRINT
-</term>
-<listitem>
-<para>
-Print the currently open class.
-</para>
-</listitem>
-</varlistentry>
-
-<varlistentry>
-<term>
-INSERT [OID=<replaceable class="parameter">oid_value</replaceable>] (<replaceable class="parameter">value1</replaceable> <replaceable class="parameter">value2</replaceable> ...)
-</term>
-<listitem>
-<para>
-Insert a new instance to the open class using
-<replaceable class="parameter">value1</replaceable>,
-<replaceable class="parameter">value2</replaceable>,
-etc., for its attribute values and 
-<replaceable class="parameter">oid_value</replaceable>
-for its OID.  If
-<replaceable class="parameter">oid_value</replaceable>
-is not zero (0), then this value will be used as the instance's
-object identifier.  Otherwise, it is an error.
-</para>
-</listitem>
-</varlistentry>
-
-<varlistentry>
-<term>
-INSERT (<replaceable class="parameter">value1</replaceable> <replaceable class="parameter">value2</replaceable> ...)
-</term>
-<listitem>
-<para>
-As above, but the system generates a unique object identifier.
-</para>
-</listitem>
-</varlistentry>
-
-<varlistentry>
-<term>
-CREATE <replaceable class="parameter">classname</replaceable> (<replaceable class="parameter">name1</replaceable> = <replaceable class="parameter">type1</replaceable> [,<replaceable class="parameter">name2</replaceable> = <replaceable class="parameter">type2</replaceable>[,...]])
-</term>
-<listitem>
-<para>
-Create a class named
-<replaceable class="parameter">classname</replaceable>
-with the attributes given in parentheses.
-</para>
-</listitem>
-</varlistentry>
-
-<varlistentry>
-<term>
-OPEN (<replaceable class="parameter">name1</replaceable> = <replaceable class="parameter">type1</replaceable> [,<replaceable class="parameter">name2</replaceable> = <replaceable class="parameter">type2</replaceable>[,...]]) AS <replaceable class="parameter">classname</replaceable>
-</term>
-<listitem>
-<para>
-Open a class named
-<replaceable class="parameter">classname</replaceable>
-for writing but do not record its existence in the system catalogs.
-(This is primarily to aid in bootstrapping.)
-</para>
-</listitem>
-</varlistentry>
-
-<varlistentry>
-<term>
-DESTROY <replaceable class="parameter">classname</replaceable>
-</term>
-<listitem>
-<para>
-Destroy the class named
-<replaceable class="parameter">classname</replaceable>.
-</para>
-</listitem>
-</varlistentry>
-
-<varlistentry>
-<term>
-DEFINE INDEX <replaceable class="parameter">indexname</replaceable> ON <replaceable class="parameter">class_name</replaceable> USING <replaceable class="parameter">amname</replaceable>
-  (<replaceable class="parameter">opclass</replaceable> <replaceable class="parameter">attr</replaceable> | (<replaceable class="parameter">function</replaceable>(<replaceable class="parameter">attr</replaceable>))
-</term>
-<listitem>
-<para>
-Create an index named
-<replaceable class="parameter">indexname</replaceable>
-on the class named
-<replaceable class="parameter">classname</replaceable>
-using the
-<replaceable class="parameter">amname</replaceable>
-access method.  The fields to index are called
-<replaceable class="parameter">name1</replaceable>,
-<replaceable class="parameter">name2</replaceable>
-etc., and the operator collections to use are
-<replaceable class="parameter">collection_1</replaceable>,
-<replaceable class="parameter">collection_2</replaceable>
-etc., respectively.
-</para>
-</listitem>
-</varlistentry>
-
-</variablelist>
-
-<note>
-<para>
-This last sentence doesn't reference anything in the example. Should be changed to make sense. - Thomas 1998-08-04
-</para>
-</note>
-</sect1>
-
-<sect1 id="bki-macros">
-<title>Macro Commands</title>
-
-<para>
-<variablelist>
-<varlistentry>
-<term>
-DEFINE FUNCTION <replaceable class="parameter">macro_name</replaceable> AS <replaceable class="parameter">rettype</replaceable> <replaceable class="parameter">function_name</replaceable>(<replaceable class="parameter">args</replaceable>)
-</term>
-<listitem>
-<para>
-Define a function prototype for a function named
-<replaceable class="parameter">macro_name</replaceable>
-which has its value of type
-<replaceable class="parameter">rettype</replaceable>
-computed from the execution
-<replaceable class="parameter">function_name</replaceable>
-with the arguments
-<replaceable class="parameter">args</replaceable>
-declared in a C-like manner.
-</para>
-</listitem>
-</varlistentry>
-
-<varlistentry>
-<term>
-DEFINE MACRO <replaceable class="parameter">macro_name</replaceable> FROM FILE <replaceable class="parameter">filename</replaceable>
-</term>
-<listitem>
-<para>
-Define a macro named
-<replaceable class="parameter">macro_name</replaceable>
-which has its value 
-read from the file called
-<replaceable class="parameter">filename</replaceable>.
-</para>
-</listitem>
-</varlistentry>
-
-</variablelist>
-</para>
-</sect1>
-
-<sect1 id="bki-debug">
-<title>Debugging Commands</title>
-
-<para>
-<note>
-<para>
-This section on debugging commands was commented-out in the original documentation. Thomas 1998-08-05
-</para>
-</note>
-
-<variablelist>
-<varlistentry>
-<term>
-r
-</term>
-<listitem>
-<para>
-Randomly print the open class.
-</para>
-</listitem>
-</varlistentry>
-
-<varlistentry>
-<term>
-m -1
-</term>
-<listitem>
-<para>
-Toggle display of time information.
-</para>
-</listitem>
-</varlistentry>
-
-<varlistentry>
-<term>
-m 0
-</term>
-<listitem>
-<para>
-Set retrievals to now.
-</para>
-</listitem>
-</varlistentry>
-
-<varlistentry>
-<term>
-m 1 Jan 1 01:00:00 1988
-</term>
-<listitem>
-<para>
-Set retrievals to snapshots of the specfied time.
-</para>
-</listitem>
-</varlistentry>
-
-<varlistentry>
-<term>
-m 2 Jan 1 01:00:00 1988, Feb 1 01:00:00 1988
-</term>
-<listitem>
-<para>
-Set retrievals to ranges of the specified times.
-Either time may be replaced with space
-if an unbounded time range is desired.
-</para>
-</listitem>
-</varlistentry>
-
-<varlistentry>
-<term>
-&amp;A <replaceable class="parameter">classname</replaceable> <replaceable class="parameter">natts</replaceable> <replaceable class="parameter">name1</replaceable> <replaceable class="parameter">type1</replaceable> <replaceable class="parameter">name2</replaceable> <replaceable class="parameter">type2</replaceable> <replaceable class="parameter">...</replaceable>
-</term>
-<listitem>
-<para>
-Add 
-<replaceable class="parameter">natts</replaceable>
-attributes named
-<replaceable class="parameter">name1</replaceable>,
-<replaceable class="parameter">name2</replaceable>,
-etc. of
-types
-<replaceable class="parameter">type1</replaceable>,
-<replaceable class="parameter">type2</replaceable>,
-etc. to the class
-<replaceable class="parameter">classname</replaceable>.
-</para>
-</listitem>
-</varlistentry>
-
-<varlistentry>
-<term>
-&amp;RR <replaceable class="parameter">oldclassname</replaceable> <replaceable class="parameter">newclassname</replaceable>
-</term>
-<listitem>
-<para>
-Rename the
-<replaceable class="parameter">oldclassname</replaceable>
-class to
-<replaceable class="parameter">newclassname</replaceable>.
-</para>
-</listitem>
-</varlistentry>
-
-<varlistentry>
-<term>
-&amp;RA	classname oldattname newattname
-<replaceable class="parameter">classname</replaceable>
-<replaceable class="parameter">oldattname</replaceable>
-<replaceable class="parameter">newattname</replaceable>
-</term>
-<listitem>
-<para>
-Rename the
-<replaceable class="parameter">oldattname</replaceable>
-attribute in the class named
-<replaceable class="parameter">classname</replaceable>
-to
-<replaceable class="parameter">newattname</replaceable>.
-</para>
-</listitem>
-</varlistentry>
-</variablelist>
-</para>
-</sect1>
-
-<sect1 id="bki-example">
-<title>Example</title>
-
-<para>
-The following set of commands will create the <literal>pg_opclass</literal>
-class containing the
-<parameter>int_ops</parameter>
-collection as an object with an OID of
-<parameter>421</parameter>,
-print out the class, and then close it.
-<programlisting>
-create pg_opclass (opcname=name)
-open pg_opclass
-insert oid=421 (int_ops)
-print
-close pg_opclass
-</programlisting>
-</para>
-</sect1>
+  </para>
+ </sect1>
 </chapter>
 
 <!-- Keep this comment at the end of the file
