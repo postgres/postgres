@@ -8,7 +8,7 @@
  * or in pg_config.h afterwards.  Of course, if you edit pg_config.h, then your
  * changes will be overwritten the next time you run configure.
  *
- * $Id: pg_config.h.in,v 1.28 2002/08/20 17:54:45 petere Exp $
+ * $Id: pg_config.h.in,v 1.29 2002/08/29 08:03:22 ishii Exp $
  */
 
 #ifndef PG_CONFIG_H
@@ -23,7 +23,7 @@
  *
  * Beware of "fixing" configure-time mistakes by editing these values,
  * since configure may have inserted the settings in other files as well
- * as here.  Best to rerun configure if you forgot --enable-multibyte
+ * as here.  Best to rerun configure if you forgot --enable-integer-datetimes
  * or whatever.
  *------------------------------------------------------------------------
  */
@@ -38,14 +38,6 @@
 
 /* Set to 1 if you want cyrillic recode (--enable-recode) */
 #undef CYR_RECODE
-
-/* Set to 1 if you want to use multibyte characters (--enable-multibyte) */
-#undef MULTIBYTE
-
-#ifdef MULTIBYTE
-/* --enable-multibyte implies UNICODE_CONVERSION */
-#define UNICODE_CONVERSION
-#endif
 
 /* Set to 1 if you want ASSERT checking (--enable-cassert) */
 #undef USE_ASSERT_CHECKING
