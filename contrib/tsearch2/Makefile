@@ -1,9 +1,9 @@
+# $Header: /cvsroot/pgsql/contrib/tsearch2/Makefile,v 1.4 2003/08/23 04:25:28 petere Exp $
+
 subdir = contrib/tsearch2
 top_builddir = ../..
 include $(top_builddir)/src/Makefile.global
 
-
-override CPPFLAGS := -I$(srcdir) -I$(srcdir)/snowball -I$(srcdir)/ispell -I$(srcdir)/wordparser $(CPPFLAGS)
 
 MODULE_big = tsearch2
 OBJS = dict_ex.o dict.o snmap.o stopword.o common.o prs_dcfg.o \
@@ -22,6 +22,9 @@ $(SUBDIROBJS): $(SUBDIRS:%=%-recursive) ;
 $(SUBDIRS:%=%-recursive):
 	$(MAKE) -C $(subst -recursive,,$@) SUBSYS.o
 
+PG_CPPFLAGS = -I$(srcdir)/snowball -I$(srcdir)/ispell -I$(srcdir)/wordparser
+
+DATA = stopword/english.stop stopword/russian.stop
 DATA_built = tsearch2.sql untsearch2.sql
 DOCS = README.tsearch2
 REGRESS = tsearch2
@@ -29,23 +32,18 @@ REGRESS = tsearch2
 EXTRA_CLEAN = tsearch2.sql.in
 
 SHLIB_LINK := -lm
-include $(top_srcdir)/contrib/contrib-global.mk
-# DO NOT DELETE
 
-install: installstop
-
-installstop:
-	cp $(srcdir)/stopword/*.stop $(datadir)
-
-
-tsearch2.sql.in: tsearch.sql._in
-	sed 's,DATA_PATH,$(datadir),g' < $< > $@
+tsearch2.sql: tsearch.sql.in
+	sed -e 's,MODULE_PATHNAME,$$libdir/$*,g' \
+	    -e 's,DATA_PATH,$(datadir)/contrib,g' $< >$@
 
 untsearch2.sql: untsearch.sql.in
 	cp $< $@
 
+.PHONY: subclean
 clean: subclean
 
 subclean:
 	for dir in $(SUBDIRS); do $(MAKE) -C $$dir clean || exit; done
  
+include $(top_srcdir)/contrib/contrib-global.mk
