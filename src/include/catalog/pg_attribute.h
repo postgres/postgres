@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_attribute.h,v 1.51 1999/12/20 10:40:43 wieck Exp $
+ * $Id: pg_attribute.h,v 1.52 2000/01/11 05:18:42 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -271,7 +271,7 @@ DATA(insert OID = 0 ( 1262 cmax				29 0  4  -6 0 -1 -1 t p f i f f));
 { 1255, {"pronargs"},			21, 0,	2,	7, 0, -1, -1, '\001', 'p', '\0', 's', '\0', '\0' }, \
 { 1255, {"proretset"},			16, 0,	1,	8, 0, -1, -1, '\001', 'p', '\0', 'c', '\0', '\0' }, \
 { 1255, {"prorettype"},			26, 0,	4,	9, 0, -1, -1, '\001', 'p', '\0', 'i', '\0', '\0' }, \
-{ 1255, {"proargtypes"},		30, 0, 32, 10, 0, -1, -1,	'\0', 'p', '\0', 'i', '\0', '\0' }, \
+{ 1255, {"proargtypes"},		30, 0, INDEX_MAX_KEYS*4, 10, 0, -1, -1,	'\0', 'p', '\0', 'i', '\0', '\0' }, \
 { 1255, {"probyte_pct"},		23, 0,	4, 11, 0, -1, -1, '\001', 'p', '\0', 'i', '\0', '\0' }, \
 { 1255, {"properbyte_cpu"},		23, 0,	4, 12, 0, -1, -1, '\001', 'p', '\0', 'i', '\0', '\0' }, \
 { 1255, {"propercall_cpu"},		23, 0,	4, 13, 0, -1, -1, '\001', 'p', '\0', 'i', '\0', '\0' }, \
@@ -288,7 +288,7 @@ DATA(insert OID = 0 ( 1255 proiscachable	16 0  1   6 0 -1 -1 t p f c f f));
 DATA(insert OID = 0 ( 1255 pronargs			21 0  2   7 0 -1 -1 t p f s f f));
 DATA(insert OID = 0 ( 1255 proretset		16 0  1   8 0 -1 -1 t p f c f f));
 DATA(insert OID = 0 ( 1255 prorettype		26 0  4   9 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1255 proargtypes		30 0 32  10 0 -1 -1 f p f i f f));
+DATA(insert OID = 0 ( 1255 proargtypes		30 0 INDEX_MAX_KEYS*4 10 0 -1 -1 f p f i f f));
 DATA(insert OID = 0 ( 1255 probyte_pct		23 0  4  11 0 -1 -1 t p f i f f));
 DATA(insert OID = 0 ( 1255 properbyte_cpu	23 0  4  12 0 -1 -1 t p f i f f));
 DATA(insert OID = 0 ( 1255 propercall_cpu	23 0  4  13 0 -1 -1 t p f i f f));
@@ -475,7 +475,7 @@ DATA(insert OID = 0 ( 1219 tgconstrrelid	26 0  4   8 0 -1 -1 t p f i f f));
 DATA(insert OID = 0 ( 1219 tgdeferrable		16 0  1   9 0 -1 -1 t p f c f f));
 DATA(insert OID = 0 ( 1219 tginitdeferred	16 0  1   10 0 -1 -1 t p f c f f));
 DATA(insert OID = 0 ( 1219 tgnargs			21 0  2   11 0 -1 -1 t p f s f f));
-DATA(insert OID = 0 ( 1219 tgattr			22 0 16   12 0 -1 -1 f p f i f f));
+DATA(insert OID = 0 ( 1219 tgattr			22 0  INDEX_MAX_KEYS*2  12 0 -1 -1 f p f i f f));
 DATA(insert OID = 0 ( 1219 tgargs			17 0 -1   13 0 -1 -1 f p f i f f));
 DATA(insert OID = 0 ( 1219 ctid				27 0  6  -1 0 -1 -1 f p f i f f));
 DATA(insert OID = 0 ( 1219 oid				26 0  4  -2 0 -1 -1 t p f i f f));
