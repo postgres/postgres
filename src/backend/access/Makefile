@@ -1,54 +1,30 @@
-#-------------------------------------------------------------------------
 #
-# Makefile--
-#    Makefile for the access methods module
+# Makefile for the access methods module
 #
-# IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/access/Makefile,v 1.5 1999/12/13 22:32:17 momjian Exp $
+# $Header: /cvsroot/pgsql/src/backend/access/Makefile,v 1.6 2000/07/13 16:06:42 petere Exp $
 #
-#-------------------------------------------------------------------------
 
-SRCDIR = ../..
+subdir = src/backend/access
+top_builddir = ../../..
 include ../../Makefile.global
 
-OBJS = common/SUBSYS.o gist/SUBSYS.o hash/SUBSYS.o heap/SUBSYS.o \
-       index/SUBSYS.o rtree/SUBSYS.o nbtree/SUBSYS.o transam/SUBSYS.o
+SUBDIRS	    := common gist hash heap index nbtree rtree transam
+SUBDIROBJS  := $(SUBDIRS:%=%/SUBSYS.o)
 
+all: SUBSYS.o
 
-all: submake SUBSYS.o
+SUBSYS.o: $(SUBDIROBJS)
+	$(LD) $(LDREL) $(LDOUT) $@ $^
 
-SUBSYS.o: $(OBJS)
-	$(LD) $(LDREL) $(LDOUT) SUBSYS.o $(OBJS)
+$(SUBDIROBJS): $(SUBDIRS:%=%-recursive)
 
-.PHONY: submake
-submake:
-	$(MAKE) -C common  SUBSYS.o
-	$(MAKE) -C gist    SUBSYS.o
-	$(MAKE) -C hash    SUBSYS.o
-	$(MAKE) -C heap    SUBSYS.o
-	$(MAKE) -C index   SUBSYS.o
-	$(MAKE) -C rtree   SUBSYS.o
-	$(MAKE) -C nbtree  SUBSYS.o
-	$(MAKE) -C transam SUBSYS.o
+.PHONY: $(SUBDIRS:%=%-recursive)
+$(SUBDIRS:%=%-recursive):
+	$(MAKE) -C $(subst -recursive,,$@) SUBSYS.o
 
 clean:
+	for dir in $(SUBDIRS); do $(MAKE) -C $$dir $@ || exit; done
 	rm -f SUBSYS.o
-	$(MAKE) -C common   clean
-	$(MAKE) -C gist     clean
-	$(MAKE) -C hash     clean
-	$(MAKE) -C heap     clean
-	$(MAKE) -C index    clean
-	$(MAKE) -C rtree    clean
-	$(MAKE) -C nbtree   clean
-	$(MAKE) -C transam  clean
 
-.DEFAULT: 
-	$(MAKE) -C common   $@
-	$(MAKE) -C gist     $@
-	$(MAKE) -C hash     $@
-	$(MAKE) -C heap     $@
-	$(MAKE) -C index    $@
-	$(MAKE) -C rtree    $@
-	$(MAKE) -C nbtree   $@
-	$(MAKE) -C transam  $@
-
+dep depend:
+	for dir in $(SUBDIRS); do $(MAKE) -C $$dir $@ || exit; done

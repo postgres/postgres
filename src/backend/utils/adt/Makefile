@@ -1,22 +1,16 @@
-#-------------------------------------------------------------------------
 #
-# Makefile--
-#    Makefile for utils/adt
+# Makefile for utils/adt
 #
-# IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/adt/Makefile,v 1.38 2000/07/07 19:24:37 petere Exp $
+# $Header: /cvsroot/pgsql/src/backend/utils/adt/Makefile,v 1.39 2000/07/13 16:07:14 petere Exp $
 #
-#-------------------------------------------------------------------------
 
-SRCDIR = ../../..
+subdir = src/backend/utils/adt
+top_builddir = ../../../..
 include ../../../Makefile.global
 
 # seems to be required for some date/time stuff 1999/07/22 bjm
 ifeq ($(CPU),alpha)
-ifeq ($(CC), gcc)
-CFLAGS+= -mieee
-endif
-ifeq ($(CC), egcs)
+ifeq ($(GCC), yes)
 CFLAGS+= -mieee
 endif
 endif

@@ -1,22 +1,16 @@
-#-------------------------------------------------------------------------
 #
-# Makefile--
-#    Makefile for storage/ipc
+# Makefile for storage/ipc
 #
-# IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/storage/ipc/Makefile,v 1.11 2000/05/29 05:45:06 tgl Exp $
+# $Header: /cvsroot/pgsql/src/backend/storage/ipc/Makefile,v 1.12 2000/07/13 16:06:54 petere Exp $
 #
-#-------------------------------------------------------------------------
 
-SRCDIR = ../../..
+subdir = src/backend/storage/ipc
+top_builddir = ../../../..
 include ../../../Makefile.global
 
 # seems to be required 1999/07/22 bjm
-ifeq ($(CPU),alpha)
-ifeq ($(CC), gcc)
-CFLAGS+= -fno-inline
-endif
-ifeq ($(CC), egcs)
+ifeq ($(CPU), alpha)
+ifeq ($(GCC), yes)
 CFLAGS+= -fno-inline
 endif
 endif
@@ -38,4 +32,3 @@ clean:
 ifeq (depend,$(wildcard depend))
 include depend
 endif
-

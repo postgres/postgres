@@ -1,32 +1,30 @@
-#-------------------------------------------------------------------------
 #
-# Makefile--
-#    Makefile for optimizer
+# Makefile for optimizer
 #
-# IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/optimizer/Makefile,v 1.7 1999/12/13 22:32:48 momjian Exp $
+# $Header: /cvsroot/pgsql/src/backend/optimizer/Makefile,v 1.8 2000/07/13 16:06:44 petere Exp $
 #
-#-------------------------------------------------------------------------
 
-SRCDIR= ../..
+subdir = src/backend/optimizer
+top_builddir = ../../..
 include ../../Makefile.global
 
-all: submake SUBSYS.o
+SUBDIRS     := geqo path plan prep util
+SUBDIROBJS  := $(SUBDIRS:%=%/SUBSYS.o)
 
-OBJS = path/SUBSYS.o plan/SUBSYS.o prep/SUBSYS.o util/SUBSYS.o geqo/SUBSYS.o
+all: SUBSYS.o
 
-DIRS = path plan prep util geqo
+SUBSYS.o: $(SUBDIROBJS)
+	$(LD) $(LDREL) $(LDOUT) $@ $^
 
-SUBSYS.o: $(OBJS)
-	$(LD) $(LDREL) $(LDOUT) SUBSYS.o $(OBJS)
+$(SUBDIROBJS): $(SUBDIRS:%=%-recursive)
 
-.PHONY: submake clean dep depend
-submake:
-	for i in $(DIRS); do $(MAKE) -C $$i SUBSYS.o; done
+.PHONY: $(SUBDIRS:%=%-recursive)
+$(SUBDIRS:%=%-recursive):
+	$(MAKE) -C $(subst -recursive,,$@) SUBSYS.o
 
 clean:
+	for dir in $(SUBDIRS); do $(MAKE) -C $$dir $@ || exit; done
 	rm -f SUBSYS.o
-	for i in $(DIRS); do $(MAKE) -C $$i clean; done
 
-.DEFAULT: 
-	for i in $(DIRS); do $(MAKE) -C $$i $@; done
+dep depend: 
+	for dir in $(SUBDIRS); do $(MAKE) -C $$dir $@ || exit; done

@@ -9,7 +9,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh,v 1.16 2000/07/06 21:33:30 petere Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh,v 1.17 2000/07/13 16:07:06 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -19,7 +19,7 @@ CMDNAME=`basename $0`
 : ${CPP='cc -E'}
 
 cleanup(){
-    [ x"$noclean" != x"t" ] && rm -f "$CPPTMPFILE" "$RAWFILE"
+    [ x"$noclean" != x"t" ] && rm -f "$CPPTMPFILE" "$RAWFILE" "$$-$OIDSFILE" "$$-$TABLEFILE"
 }
 
 BKIOPTS=
@@ -71,13 +71,13 @@ if [ x"$INFILE" = x ] ; then
     exit 1
 fi
 
-CPPTMPFILE=fmgrtmp.c
-RAWFILE=fmgr.raw
+CPPTMPFILE="$$-fmgrtmp.c"
+RAWFILE="$$-fmgr.raw"
 OIDSFILE=fmgroids.h
 TABLEFILE=fmgrtab.c
 
 
-trap 'echo "Caught signal." ; cleanup ; exit 1' 1 2 3 15
+trap 'echo "Caught signal." ; cleanup ; exit 1' 1 2 15
 
 
 #
@@ -124,7 +124,7 @@ cpp_define=`echo $OIDSFILE | tr abcdefghijklmnopqrstuvwxyz ABCDEFGHIJKLMNOPQRSTU
 #
 # Generate fmgroids.h
 #
-cat > "$OIDSFILE" <<FuNkYfMgRsTuFf
+cat > "$$-$OIDSFILE" <<FuNkYfMgRsTuFf
 /*-------------------------------------------------------------------------
  *
  * $OIDSFILE
@@ -165,7 +165,7 @@ FuNkYfMgRsTuFf
 tr 'abcdefghijklmnopqrstuvwxyz' 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' < $RAWFILE | \
 $AWK '
 BEGIN	{ OFS = ""; }
-	{ if (seenit[$(NF-1)]++ == 0) print "#define F_", $(NF-1), " ", $1; }' >> "$OIDSFILE"
+	{ if (seenit[$(NF-1)]++ == 0) print "#define F_", $(NF-1), " ", $1; }' >> "$$-$OIDSFILE"
 
 if [ $? -ne 0 ]; then
     cleanup
@@ -173,7 +173,7 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-cat >> "$OIDSFILE" <<FuNkYfMgRsTuFf
+cat >> "$$-$OIDSFILE" <<FuNkYfMgRsTuFf
 
 #endif	/* $cpp_define */
 FuNkYfMgRsTuFf
@@ -187,7 +187,7 @@ FuNkYfMgRsTuFf
 # this table definition as a separate C file that won't need to include any
 # "real" declarations for those functions!
 #
-cat > "$TABLEFILE" <<FuNkYfMgRtAbStUfF
+cat > "$$-$TABLEFILE" <<FuNkYfMgRtAbStUfF
 /*-------------------------------------------------------------------------
  *
  * $TABLEFILE
@@ -218,7 +218,7 @@ cat > "$TABLEFILE" <<FuNkYfMgRtAbStUfF
 
 FuNkYfMgRtAbStUfF
 
-$AWK '{ print "extern Datum", $(NF-1), "(PG_FUNCTION_ARGS);"; }' $RAWFILE >> "$TABLEFILE"
+$AWK '{ print "extern Datum", $(NF-1), "(PG_FUNCTION_ARGS);"; }' $RAWFILE >> "$$-$TABLEFILE"
 
 if [ $? -ne 0 ]; then
     cleanup
@@ -227,7 +227,7 @@ if [ $? -ne 0 ]; then
 fi
 
 
-cat >> "$TABLEFILE" <<FuNkYfMgRtAbStUfF
+cat >> "$$-$TABLEFILE" <<FuNkYfMgRtAbStUfF
 
 const FmgrBuiltin fmgr_builtins[] = {
 FuNkYfMgRtAbStUfF
@@ -244,7 +244,7 @@ $AWK 'BEGIN {
 }
 { printf ("  { %d, \"%s\", %d, %s, %s, %s },\n"), \
 	$1, $(NF-1), $9, Strict[$8], OldStyle[$4], $(NF-1)
-}' $RAWFILE >> "$TABLEFILE"
+}' $RAWFILE >> "$$-$TABLEFILE"
 
 if [ $? -ne 0 ]; then
     cleanup
@@ -252,7 +252,7 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-cat >> "$TABLEFILE" <<FuNkYfMgRtAbStUfF
+cat >> "$$-$TABLEFILE" <<FuNkYfMgRtAbStUfF
   /* dummy entry is easier than getting rid of comma after last real one */
   /* (not that there has ever been anything wrong with *having* a
      comma after the last field in an array initializer) */
@@ -263,6 +263,11 @@ cat >> "$TABLEFILE" <<FuNkYfMgRtAbStUfF
 const int fmgr_nbuiltins = (sizeof(fmgr_builtins) / sizeof(FmgrBuiltin)) - 1;
 
 FuNkYfMgRtAbStUfF
+
+# We use the temporary files to avoid problems with concurrent runs
+# (which can happen during parallel make).
+mv "$$-$OIDSFILE" $OIDSFILE
+mv "$$-$TABLEFILE" $TABLEFILE
 
 cleanup
 exit 0

@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.59 2000/07/08 02:40:27 tgl Exp $
+# $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.60 2000/07/13 16:06:42 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -34,22 +34,16 @@ endif
 
 all: postgres $(POSTGRES_IMP)
 
-# Note that this is bogus. The desired effect is to build these
-# commonly used headers before doing much else. However, nothing says
-# that make is required to update these dependencies in any particular
-# order, it just happens to do that. Parallel make is broken though.
-
 ifneq ($(PORTNAME), win)
 
-postgres: $(top_srcdir)/src/include/parser/parse.h $(top_builddir)/src/include/utils/fmgroids.h $(OBJS)
-	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LDFLAGS)
+postgres: $(OBJS)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
 else # win
 
 # No points for style here. How about encapsulating some of these
 # commands into variables?
-postgres: $(top_srcdir)/src/include/parser/parse.h $(top_builddir)/src/include/utils/fmgroids.h \
-	  $(DLLOBJS) $(top_builddir)/src/utils/dllinit.o postgres.def libpostgres.a
+postgres: $(DLLOBJS) $(top_builddir)/src/utils/dllinit.o postgres.def libpostgres.a
 	dlltool --dllname $@$(X) --output-exp $@.exp --def postgres.def
 	gcc -g -o $@$(X) -Wl,--base-file,$@.base $@.exp $(DLLOBJS) $(DLLLIBS)
 	dlltool --dllname $@$(X) --base-file $@.base --output-exp $@.exp --def postgres.def
@@ -60,11 +54,12 @@ endif # win
 
 
 # Parallel make trickery
-$(OBJS): $(DIRS:%=%.dir)
+$(OBJS): $(DIRS:%=%-recursive)
 
-.PHONY: $(DIRS:%=%.dir)
-$(DIRS:%=%.dir):
-	$(MAKE) -C $(subst .dir,,$@) all
+.PHONY: $(DIRS:%=%-recursive)
+# Update the commonly used headers before building the subdirectories
+$(DIRS:%=%-recursive): $(top_srcdir)/src/include/parser/parse.h $(top_builddir)/src/include/utils/fmgroids.h
+	$(MAKE) -C $(subst -recursive,,$@) all
 
 
 ifeq ($(MAKE_DLL), true)
@@ -166,7 +161,7 @@ ifeq ($(MAKE_DLL), true)
 	rm -f postgres.dll postgres.def libpostgres.a
 endif
 endif
-	for i in $(DIRS); do $(MAKE) -C $$i clean; done
+	for i in $(DIRS); do $(MAKE) -C $$i clean || exit; done
 
 distclean: clean
 	rm -f port/Makefile port/tas.s port/dynloader.c

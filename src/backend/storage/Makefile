@@ -1,34 +1,30 @@
-#-------------------------------------------------------------------------
 #
-# Makefile--
-#    Makefile for the storage manager subsystem
+# Makefile for the storage manager subsystem
 #
-# IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/storage/Makefile,v 1.6 1999/12/13 22:33:33 momjian Exp $
+# $Header: /cvsroot/pgsql/src/backend/storage/Makefile,v 1.7 2000/07/13 16:06:48 petere Exp $
 #
-#-------------------------------------------------------------------------
 
-SRCDIR= ../..
+subdir = src/backend/storage
+top_builddir = ../../..
 include ../../Makefile.global
 
-all: submake SUBSYS.o
+SUBDIRS     := buffer file ipc large_object lmgr page smgr
+SUBDIROBJS  := $(SUBDIRS:%=%/SUBSYS.o)
 
-OBJS = buffer/SUBSYS.o file/SUBSYS.o ipc/SUBSYS.o large_object/SUBSYS.o \
-       lmgr/SUBSYS.o page/SUBSYS.o smgr/SUBSYS.o
+all: SUBSYS.o
 
-DIRS = buffer file ipc large_object lmgr page smgr
+SUBSYS.o: $(SUBDIROBJS)
+	$(LD) $(LDREL) $(LDOUT) $@ $^
 
-SUBSYS.o: $(OBJS)
-	$(LD) $(LDREL) $(LDOUT) SUBSYS.o $(OBJS)
+$(SUBDIROBJS): $(SUBDIRS:%=%-recursive)
 
-.PHONY: submake clean dep
-
-submake:
-	for i in $(DIRS); do $(MAKE) -C $$i SUBSYS.o; done
+.PHONY: $(SUBDIRS:%=%-recursive)
+$(SUBDIRS:%=%-recursive):
+	$(MAKE) -C $(subst -recursive,,$@) SUBSYS.o
 
 clean:
+	for dir in $(SUBDIRS); do $(MAKE) -C $$dir $@ || exit; done
 	rm -f SUBSYS.o
-	for i in $(DIRS); do $(MAKE) -C $$i clean; done
 
-.DEFAULT: 
-	for i in $(DIRS); do $(MAKE) -C $$i $@; done
+dep depend: 
+	for dir in $(SUBDIRS); do $(MAKE) -C $$dir $@ || exit; done
