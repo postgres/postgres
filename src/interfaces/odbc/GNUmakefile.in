@@ -7,10 +7,9 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/odbc/Attic/GNUmakefile.in,v 1.14 2000/06/12 17:58:20 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/odbc/Attic/GNUmakefile.in,v 1.15 2000/06/14 02:43:46 momjian Exp $
 #
 #-------------------------------------------------------------------------
-@SET_MAKE@
 
 NAME = psqlodbc
 SRCDIR= ../..
