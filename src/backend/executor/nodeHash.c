@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  *
- *  $Id: nodeHash.c,v 1.31 1999/02/13 23:15:22 momjian Exp $
+ *  $Id: nodeHash.c,v 1.32 1999/04/07 23:33:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,7 +41,7 @@ extern int	NBuffers;
 static int	HashTBSize;
 
 static void mk_hj_temp(char *tempname);
-static int	hashFunc(char *key, int len);
+static int	hashFunc(Datum key, int len, bool byVal);
 static int	ExecHashPartition(Hash *node);
 static RelativeAddr hashTableAlloc(int size, HashJoinTable hashtable);
 static void ExecHashOverflowInsert(HashJoinTable hashtable,
@@ -580,10 +580,8 @@ ExecHashGetBucket(HashJoinTable hashtable,
 	 *	compute the hash function
 	 * ------------------
 	 */
-	if (execConstByVal)
-		bucketno = hashFunc((char *) &keyval, execConstLen) % hashtable->totalbuckets;
-	else
-		bucketno = hashFunc((char *) keyval, execConstLen) % hashtable->totalbuckets;
+	bucketno = hashFunc(keyval, execConstLen, execConstByVal) % hashtable->totalbuckets;
+
 #ifdef HJDEBUG
 	if (bucketno >= hashtable->nbuckets)
 		printf("hash(%d) = %d SAVED\n", keyval, bucketno);
@@ -771,41 +769,45 @@ ExecScanHashBucket(HashJoinState *hjstate,
  * ----------------------------------------------------------------
  */
 static int
-hashFunc(char *key, int len)
+hashFunc(Datum key, int len, bool byVal)
 {
-	unsigned int h;
-	int			l;
-	unsigned char *k;
+	unsigned int	h = 0;
+	unsigned char  *k;
 
-	/*
-	 * If this is a variable length type, then 'k' points to a "struct
-	 * varlena" and len == -1. NOTE: VARSIZE returns the "real" data
-	 * length plus the sizeof the "vl_len" attribute of varlena (the
-	 * length information). 'k' points to the beginning of the varlena
-	 * struct, so we have to use "VARDATA" to find the beginning of the
-	 * "real" data.
-	 */
-	if (len == -1)
-	{
-		l = VARSIZE(key) - VARHDRSZ;
-		k = (unsigned char *) VARDATA(key);
+	if (byVal) {
+		/*
+		 * If it's a by-value data type, use the 'len' least significant bytes
+		 * of the Datum value.  This should do the right thing on either
+		 * bigendian or littleendian hardware --- see the Datum access
+		 * macros in c.h.
+		 */
+		while (len-- > 0) {
+			h = (h * PRIME1) ^ (key & 0xFF);
+			key >>= 8;
+		}
+	} else {
+		/*
+		 * If this is a variable length type, then 'k' points to a "struct
+		 * varlena" and len == -1. NOTE: VARSIZE returns the "real" data
+		 * length plus the sizeof the "vl_len" attribute of varlena (the
+		 * length information). 'k' points to the beginning of the varlena
+		 * struct, so we have to use "VARDATA" to find the beginning of the
+		 * "real" data.
+		 */
+		if (len == -1)
+		{
+			len = VARSIZE(key) - VARHDRSZ;
+			k = (unsigned char *) VARDATA(key);
+		}
+		else
+		{
+			k = (unsigned char *) key;
+		}
+		while (len-- > 0)
+			h = (h * PRIME1) ^ (*k++);
 	}
-	else
-	{
-		l = len;
-		k = (unsigned char *) key;
-	}
 
-	h = 0;
-
-	/*
-	 * Convert string to integer
-	 */
-	while (l--)
-		h = h * PRIME1 ^ (*k++);
-	h %= PRIME2;
-
-	return h;
+	return h % PRIME2;
 }
 
 /* ----------------------------------------------------------------

@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_operator.h,v 1.54 1999/04/07 04:21:10 tgl Exp $
+ * $Id: pg_operator.h,v 1.55 1999/04/07 23:33:29 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -98,7 +98,7 @@ DATA(insert OID =  82 ( ">="	   PGUID 0 b t f  23  20  16 420  37   0   0 int48g
 DATA(insert OID =  58 ( "<"		   PGUID 0 b t f  16  16  16  59   0   0   0 boollt intltsel intltjoinsel ));
 DATA(insert OID =  59 ( ">"		   PGUID 0 b t f  16  16  16  58   0   0   0 boolgt intltsel intltjoinsel ));
 DATA(insert OID =  85 ( "<>"	   PGUID 0 b t f  16  16  16  85  91   0   0 boolne neqsel neqjoinsel ));
-DATA(insert OID =  91 ( "="		   PGUID 0 b t t  16  16  16  91  85   0   0 booleq eqsel eqjoinsel ));
+DATA(insert OID =  91 ( "="		   PGUID 0 b t t  16  16  16  91  85  58  58 booleq eqsel eqjoinsel ));
 #define BooleanEqualOperator   91
 
 DATA(insert OID =  92 ( "="		   PGUID 0 b t t  18  18  16  92 630 631 631 chareq eqsel eqjoinsel ));
@@ -124,14 +124,14 @@ DATA(insert OID = 384 (  "="	   PGUID 0 b t t  1011	1011  16  384 0  0	0 array_e
 DATA(insert OID = 385 (  "="	   PGUID 0 b t t  1012	1012  16  385 0  0	0 array_eq eqsel eqjoinsel ));
 DATA(insert OID = 386 (  "="	   PGUID 0 b t t  1013	1013  16  386 0  0	0 array_eq eqsel eqjoinsel ));
 DATA(insert OID = 390 (  "="	   PGUID 0 b t t  1017	1017  16  390 0  0	0 array_eq eqsel eqjoinsel ));
-DATA(insert OID = 391 (  "="	   PGUID 0 b t t  1018	1018  16  391 0  0	0 array_eq eqsel eqjoinsel ));
-DATA(insert OID = 392 (  "="	   PGUID 0 b t t  1019	1019  16  392 0  0	0 array_eq eqsel eqjoinsel ));
-DATA(insert OID = 393 (  "="	   PGUID 0 b t t  1020	1020  16  393 0  0	0 array_eq eqsel eqjoinsel ));
-DATA(insert OID = 394 (  "="	   PGUID 0 b t t  1021	1021  16  394 0  0	0 array_eq eqsel eqjoinsel ));
-DATA(insert OID = 395 (  "="	   PGUID 0 b t t  1022	1022  16  395 0  0	0 array_eq eqsel eqjoinsel ));
+DATA(insert OID = 391 (  "="	   PGUID 0 b t f  1018	1018  16  391 0  0	0 array_eq eqsel eqjoinsel ));
+DATA(insert OID = 392 (  "="	   PGUID 0 b t f  1019	1019  16  392 0  0	0 array_eq eqsel eqjoinsel ));
+DATA(insert OID = 393 (  "="	   PGUID 0 b t f  1020	1020  16  393 0  0	0 array_eq eqsel eqjoinsel ));
+DATA(insert OID = 394 (  "="	   PGUID 0 b t f  1021	1021  16  394 0  0	0 array_eq eqsel eqjoinsel ));
+DATA(insert OID = 395 (  "="	   PGUID 0 b t f  1022	1022  16  395 0  0	0 array_eq eqsel eqjoinsel ));
 DATA(insert OID = 396 (  "="	   PGUID 0 b t t  1023	1023  16  396 0  0	0 array_eq eqsel eqjoinsel ));
 DATA(insert OID = 397 (  "="	   PGUID 0 b t t  1024	1024  16  397 0  0	0 array_eq eqsel eqjoinsel ));
-DATA(insert OID = 398 (  "="	   PGUID 0 b t t  1025	1025  16  398 0  0	0 array_eq eqsel eqjoinsel ));
+DATA(insert OID = 398 (  "="	   PGUID 0 b t f  1025	1025  16  398 0  0	0 array_eq eqsel eqjoinsel ));
 DATA(insert OID = 399 (  "="	   PGUID 0 b t t  1026	1026  16  399 0  0	0 array_eq eqsel eqjoinsel ));
 DATA(insert OID = 400 (  "="	   PGUID 0 b t t  1027	1027  16  400 0  0	0 array_eq eqsel eqjoinsel ));
 DATA(insert OID = 401 (  "="	   PGUID 0 b t t  1034	1034  16  401 0  0	0 array_eq eqsel eqjoinsel ));
@@ -157,7 +157,7 @@ DATA(insert OID = 487 (  "&>"	   PGUID 0 b t f 604 604  16   0   0   0   0 poly_
 DATA(insert OID = 488 (  ">>"	   PGUID 0 b t f 604 604  16   0   0   0   0 poly_right intltsel intltjoinsel ));
 DATA(insert OID = 489 (  "@"	   PGUID 0 b t f 604 604  16 490   0   0   0 poly_contained intltsel intltjoinsel ));
 DATA(insert OID = 490 (  "~"	   PGUID 0 b t f 604 604  16 489   0   0   0 poly_contain intltsel intltjoinsel ));
-DATA(insert OID = 491 (  "~="	   PGUID 0 b t f 604 604  16 491   0   0   0 poly_same intltsel intltjoinsel ));
+DATA(insert OID = 491 (  "~="	   PGUID 0 b t f 604 604  16 491   0   0   0 poly_same eqsel eqjoinsel ));
 DATA(insert OID = 492 (  "&&"	   PGUID 0 b t f 604 604  16   0   0   0   0 poly_overlap intltsel intltjoinsel ));
 DATA(insert OID = 493 (  "<<"	   PGUID 0 b t f 603 603  16   0   0   0   0 box_left intltsel intltjoinsel ));
 DATA(insert OID = 494 (  "&<"	   PGUID 0 b t f 603 603  16   0   0   0   0 box_overleft intltsel intltjoinsel ));
@@ -165,18 +165,18 @@ DATA(insert OID = 495 (  "&>"	   PGUID 0 b t f 603 603  16   0   0   0   0 box_o
 DATA(insert OID = 496 (  ">>"	   PGUID 0 b t f 603 603  16   0   0   0   0 box_right intltsel intltjoinsel ));
 DATA(insert OID = 497 (  "@"	   PGUID 0 b t f 603 603  16 498   0   0   0 box_contained intltsel intltjoinsel ));
 DATA(insert OID = 498 (  "~"	   PGUID 0 b t f 603 603  16 497   0   0   0 box_contain intltsel intltjoinsel ));
-DATA(insert OID = 499 (  "~="	   PGUID 0 b t f 603 603  16 499   0   0   0 box_same intltsel intltjoinsel ));
+DATA(insert OID = 499 (  "~="	   PGUID 0 b t f 603 603  16 499   0   0   0 box_same eqsel eqjoinsel ));
 DATA(insert OID = 500 (  "&&"	   PGUID 0 b t f 603 603  16   0   0   0   0 box_overlap intltsel intltjoinsel ));
 DATA(insert OID = 501 (  ">="	   PGUID 0 b t f 603 603  16 505 504   0   0 box_ge areasel areajoinsel ));
 DATA(insert OID = 502 (  ">"	   PGUID 0 b t f 603 603  16 504 505   0   0 box_gt areasel areajoinsel ));
-DATA(insert OID = 503 (  "="	   PGUID 0 b t t 603 603  16 503   0   0   0 box_eq areasel areajoinsel ));
+DATA(insert OID = 503 (  "="	   PGUID 0 b t f 603 603  16 503   0 504 504 box_eq eqsel eqjoinsel ));
 DATA(insert OID = 504 (  "<"	   PGUID 0 b t f 603 603  16 502 501   0   0 box_lt areasel areajoinsel ));
 DATA(insert OID = 505 (  "<="	   PGUID 0 b t f 603 603  16 501 502   0   0 box_le areasel areajoinsel ));
 DATA(insert OID = 506 (  ">^"	   PGUID 0 b t f 600 600  16   0   0   0   0 point_above intltsel intltjoinsel ));
 DATA(insert OID = 507 (  "<<"	   PGUID 0 b t f 600 600  16   0   0   0   0 point_left intltsel intltjoinsel ));
 DATA(insert OID = 508 (  ">>"	   PGUID 0 b t f 600 600  16   0   0   0   0 point_right intltsel intltjoinsel ));
 DATA(insert OID = 509 (  "<^"	   PGUID 0 b t f 600 600  16   0   0   0   0 point_below intltsel intltjoinsel ));
-DATA(insert OID = 510 (  "~="	   PGUID 0 b t f 600 600  16 510   0   0   0 point_eq intltsel intltjoinsel ));
+DATA(insert OID = 510 (  "~="	   PGUID 0 b t f 600 600  16 510   0   0   0 point_eq eqsel eqjoinsel ));
 DATA(insert OID = 511 (  "@"	   PGUID 0 b t f 600 603  16   0   0   0   0 on_pb intltsel intltjoinsel ));
 DATA(insert OID = 512 (  "@"	   PGUID 0 b t f 600 602  16 755   0   0   0 on_ppath intltsel intltjoinsel ));
 DATA(insert OID = 513 (  "@@"	   PGUID 0 l t f   0 603 600   0   0   0   0 box_center - - ));
@@ -232,13 +232,13 @@ DATA(insert OID = 562 (  "<"	   PGUID 0 b t f 702 702  16 563 565 0 0 abstimelt 
 DATA(insert OID = 563 (  ">"	   PGUID 0 b t f 702 702  16 562 564 0 0 abstimegt intltsel intltjoinsel ));
 DATA(insert OID = 564 (  "<="	   PGUID 0 b t f 702 702  16 565 563 0 0 abstimele intltsel intltjoinsel ));
 DATA(insert OID = 565 (  ">="	   PGUID 0 b t f 702 702  16 564 562 0 0 abstimege intltsel intltjoinsel ));
-DATA(insert OID = 566 (  "="	   PGUID 0 b t t 703 703  16 566 567 568 568 reltimeeq - - ));
-DATA(insert OID = 567 (  "<>"	   PGUID 0 b t f 703 703  16 567 566 0 0 reltimene - - ));
-DATA(insert OID = 568 (  "<"	   PGUID 0 b t f 703 703  16 569 571 0 0 reltimelt - - ));
-DATA(insert OID = 569 (  ">"	   PGUID 0 b t f 703 703  16 568 570 0 0 reltimegt - - ));
-DATA(insert OID = 570 (  "<="	   PGUID 0 b t f 703 703  16 571 569 0 0 reltimele - - ));
-DATA(insert OID = 571 (  ">="	   PGUID 0 b t f 703 703  16 570 568 0 0 reltimege - - ));
-DATA(insert OID = 572 (  "~="	   PGUID 0 b t f 704 704  16 572   0   0   0 intervalsame - - ));
+DATA(insert OID = 566 (  "="	   PGUID 0 b t t 703 703  16 566 567 568 568 reltimeeq eqsel eqjoinsel ));
+DATA(insert OID = 567 (  "<>"	   PGUID 0 b t f 703 703  16 567 566 0 0 reltimene neqsel neqjoinsel ));
+DATA(insert OID = 568 (  "<"	   PGUID 0 b t f 703 703  16 569 571 0 0 reltimelt intltsel intltjoinsel ));
+DATA(insert OID = 569 (  ">"	   PGUID 0 b t f 703 703  16 568 570 0 0 reltimegt intltsel intltjoinsel ));
+DATA(insert OID = 570 (  "<="	   PGUID 0 b t f 703 703  16 571 569 0 0 reltimele intltsel intltjoinsel ));
+DATA(insert OID = 571 (  ">="	   PGUID 0 b t f 703 703  16 570 568 0 0 reltimege intltsel intltjoinsel ));
+DATA(insert OID = 572 (  "~="	   PGUID 0 b t f 704 704  16 572   0   0   0 intervalsame eqsel eqjoinsel ));
 DATA(insert OID = 573 (  "<<"	   PGUID 0 b t f 704 704  16   0   0   0   0 intervalct - - ));
 DATA(insert OID = 574 (  "&&"	   PGUID 0 b t f 704 704  16   0   0   0   0 intervalov - - ));
 DATA(insert OID = 575 (  "#="	   PGUID 0 b t f 704 703  16   0 576   0   0 intervalleneq - - ));
@@ -274,12 +274,12 @@ DATA(insert OID = 607 (  "="	   PGUID 0 b t t  26  26  16 607 608 609 609 oideq 
 #define OIDEqualOperator 607	/* XXX planner/prep/semanopt.c crock */
 DATA(insert OID = 608 (  "<>"	   PGUID 0 b t f  26  26  16 608 607  0  0 oidne neqsel neqjoinsel ));
 
-DATA(insert OID = 644 (  "<>"	   PGUID 0 b t f  30  30  16 644 649  0  0 oid8ne neqsel neqjoinsel ));
-DATA(insert OID = 645 (  "<"	   PGUID 0 b t f  30  30  16 646 648  0  0 oid8lt intltsel intltjoinsel ));
-DATA(insert OID = 646 (  ">"	   PGUID 0 b t f  30  30  16 645 647  0  0 oid8gt intgtsel intgtjoinsel ));
-DATA(insert OID = 647 (  "<="	   PGUID 0 b t f  30  30  16 648 646  0  0 oid8le intltsel intltjoinsel ));
-DATA(insert OID = 648 (  ">="	   PGUID 0 b t f  30  30  16 647 645  0  0 oid8ge intgtsel intgtjoinsel ));
-DATA(insert OID = 649 (  "="	   PGUID 0 b t f  30  30  16 649 644  0  0 oid8eq eqsel eqjoinsel ));
+DATA(insert OID = 644 (  "<>"	   PGUID 0 b t f  30  30  16 644 649   0   0 oid8ne neqsel neqjoinsel ));
+DATA(insert OID = 645 (  "<"	   PGUID 0 b t f  30  30  16 646 648   0   0 oid8lt intltsel intltjoinsel ));
+DATA(insert OID = 646 (  ">"	   PGUID 0 b t f  30  30  16 645 647   0   0 oid8gt intgtsel intgtjoinsel ));
+DATA(insert OID = 647 (  "<="	   PGUID 0 b t f  30  30  16 648 646   0   0 oid8le intltsel intltjoinsel ));
+DATA(insert OID = 648 (  ">="	   PGUID 0 b t f  30  30  16 647 645   0   0 oid8ge intgtsel intgtjoinsel ));
+DATA(insert OID = 649 (  "="	   PGUID 0 b t t  30  30  16 649 644 645 645 oid8eq eqsel eqjoinsel ));
 
 DATA(insert OID = 609 (  "<"	   PGUID 0 b t f  26  26  16 610 612  0  0 int4lt intltsel intltjoinsel ));
 DATA(insert OID = 610 (  ">"	   PGUID 0 b t f  26  26  16 609 611  0  0 int4gt intgtsel intgtjoinsel ));
@@ -293,7 +293,7 @@ DATA(insert OID = 616 (  "<->"	   PGUID 0 b t f 601 628 701   0   0  0  0 dist_s
 DATA(insert OID = 617 (  "<->"	   PGUID 0 b t f 601 603 701   0   0  0  0 dist_sb - - ));
 DATA(insert OID = 618 (  "<->"	   PGUID 0 b t f 600 602 701   0   0  0  0 dist_ppath - - ));
 
-DATA(insert OID = 620 (  "="	   PGUID 0 b t t  700  700	16 620 621	622 622 float4eq eqsel eqjoinsel ));
+DATA(insert OID = 620 (  "="	   PGUID 0 b t f  700  700	16 620 621	622 622 float4eq eqsel eqjoinsel ));
 DATA(insert OID = 621 (  "<>"	   PGUID 0 b t f  700  700	16 621 620	0 0 float4ne neqsel neqjoinsel ));
 DATA(insert OID = 622 (  "<"	   PGUID 0 b t f  700  700	16 623 625	0 0 float4lt intltsel intltjoinsel ));
 DATA(insert OID = 623 (  ">"	   PGUID 0 b t f  700  700	16 622 624	0 0 float4gt intgtsel intgtjoinsel ));
@@ -330,7 +330,7 @@ DATA(insert OID = 665 (  "<="	   PGUID 0 b t f  25  25  16 667 666  0 0 text_le 
 DATA(insert OID = 666 (  ">"	   PGUID 0 b t f  25  25  16 664 665  0 0 text_gt intltsel intltjoinsel ));
 DATA(insert OID = 667 (  ">="	   PGUID 0 b t f  25  25  16 665 664  0 0 text_ge intltsel intltjoinsel ));
 
-DATA(insert OID = 670 (  "="	   PGUID 0 b t t  701  701	16 670 671	0 0 float8eq eqsel eqjoinsel ));
+DATA(insert OID = 670 (  "="	   PGUID 0 b t f  701  701	16 670 671 672 672 float8eq eqsel eqjoinsel ));
 DATA(insert OID = 671 (  "<>"	   PGUID 0 b t f  701  701	16 671 670	0 0 float8ne neqsel neqjoinsel ));
 DATA(insert OID = 672 (  "<"	   PGUID 0 b t f  701  701	16 674 675	0 0 float8lt intltsel intltjoinsel ));
 DATA(insert OID = 673 (  "<="	   PGUID 0 b t f  701  701	16 675 674	0 0 float8le intltsel intltjoinsel ));
@@ -373,7 +373,7 @@ DATA(insert OID = 758 (  "@"	   PGUID 0 b t f  600  718	 16  759  0 0 0 pt_conta
 DATA(insert OID = 759 (  "~"	   PGUID 0 b t f  718  600	 16  758  0 0 0 circle_contain_pt - - ));
 
 /* additional operators for geometric types - thomas 1997-07-09 */
-DATA(insert OID =  792 (  "="	   PGUID 0 b t f  602  602	 16  792  0 0 0 path_n_eq intltsel intltjoinsel ));
+DATA(insert OID =  792 (  "="	   PGUID 0 b t f  602  602	 16  792  0 0 0 path_n_eq eqsel eqjoinsel ));
 DATA(insert OID =  793 (  "<"	   PGUID 0 b t f  602  602	 16  794  0 0 0 path_n_lt intltsel intltjoinsel ));
 DATA(insert OID =  794 (  ">"	   PGUID 0 b t f  602  602	 16  793  0 0 0 path_n_gt intltsel intltjoinsel ));
 DATA(insert OID =  795 (  "<="	   PGUID 0 b t f  602  602	 16  796  0 0 0 path_n_le intltsel intltjoinsel ));
@@ -392,8 +392,8 @@ DATA(insert OID =  807 (  "/"	   PGUID 0 b t f  603  600	603    0  0 0 0 box_div
 DATA(insert OID =  808 (  "?-"	   PGUID 0 b t f  600  600	 16  808  0 0 0 point_horiz - - ));
 DATA(insert OID =  809 (  "?|"	   PGUID 0 b t f  600  600	 16  809  0 0 0 point_vert - - ));
 
-DATA(insert OID = 811 (  "="	   PGUID 0 b t t 704 704  16 811 812   0   0 intervaleq - - ));
-DATA(insert OID = 812 (  "<>"	   PGUID 0 b t f 704 704  16 812 811   0   0 intervalne - - ));
+DATA(insert OID = 811 (  "="	   PGUID 0 b t f 704 704  16 811 812   0   0 intervaleq eqsel eqjoinsel ));
+DATA(insert OID = 812 (  "<>"	   PGUID 0 b t f 704 704  16 812 811   0   0 intervalne neqsel neqjoinsel ));
 DATA(insert OID = 813 (  "<"	   PGUID 0 b t f 704 704  16 814 816   0   0 intervallt - - ));
 DATA(insert OID = 814 (  ">"	   PGUID 0 b t f 704 704  16 813 815   0   0 intervalgt - - ));
 DATA(insert OID = 815 (  "<="	   PGUID 0 b t f 704 704  16 816 814   0   0 intervalle - - ));
@@ -464,7 +464,7 @@ DATA(insert OID = 1100 ( "+"	   PGUID 0 b t f  1082	  23 1082 0 0 0 0 date_pli -
 DATA(insert OID = 1101 ( "-"	   PGUID 0 b t f  1082	  23 1082 0 0 0 0 date_mii - - ));
 
 /* time operators */
-DATA(insert OID = 1108 ( "="	   PGUID 0 b t t  1083	1083  16 1108 1109 1110 1110 time_eq eqsel eqjoinsel ));
+DATA(insert OID = 1108 ( "="	   PGUID 0 b t f  1083	1083  16 1108 1109 1110 1110 time_eq eqsel eqjoinsel ));
 DATA(insert OID = 1109 ( "<>"	   PGUID 0 b t f  1083	1083  16 1109 1108	0 0 time_ne neqsel neqjoinsel ));
 DATA(insert OID = 1110 ( "<"	   PGUID 0 b t f  1083	1083  16 1112 1113	0 0 time_lt intltsel intltjoinsel ));
 DATA(insert OID = 1111 ( "<="	   PGUID 0 b t f  1083	1083  16 1113 1112	0 0 time_le intltsel intltjoinsel ));
@@ -528,7 +528,7 @@ DATA(insert OID = 1305 (  ">="		PGUID 0 b t f  1296 1296 16 1304 1302 0 0 timest
 
 /* datetime operators */
 /* name, owner, prec, kind, isleft, canhash, left, right, result, com, negate, lsortop, rsortop, oprcode, operrest, oprjoin */
-DATA(insert OID = 1320 (  "="	   PGUID 0 b t t 1184 1184	 16 1320 1321 1322 1322 datetime_eq eqsel eqjoinsel ));
+DATA(insert OID = 1320 (  "="	   PGUID 0 b t f 1184 1184	 16 1320 1321 1322 1322 datetime_eq eqsel eqjoinsel ));
 DATA(insert OID = 1321 (  "<>"	   PGUID 0 b t f 1184 1184	 16 1321 1320 0 0 datetime_ne neqsel neqjoinsel ));
 DATA(insert OID = 1322 (  "<"	   PGUID 0 b t f 1184 1184	 16 1324 1325 0 0 datetime_lt intltsel intltjoinsel ));
 DATA(insert OID = 1323 (  "<="	   PGUID 0 b t f 1184 1184	 16 1325 1324 0 0 datetime_le intltsel intltjoinsel ));
@@ -540,7 +540,7 @@ DATA(insert OID = 1328 (  "-"	   PGUID 0 b t f 1184 1184 1186    0	0 0 0 datetim
 DATA(insert OID = 1329 (  "-"	   PGUID 0 b t f 1184 1186 1184    0	0 0 0 datetime_mi_span - - ));
 
 /* timespan operators */
-DATA(insert OID = 1330 (  "="	   PGUID 0 b t t 1186 1186	 16 1330 1331 1332 1332 timespan_eq eqsel eqjoinsel ));
+DATA(insert OID = 1330 (  "="	   PGUID 0 b t f 1186 1186	 16 1330 1331 1332 1332 timespan_eq eqsel eqjoinsel ));
 DATA(insert OID = 1331 (  "<>"	   PGUID 0 b t f 1186 1186	 16 1331 1330 0 0 timespan_ne neqsel neqjoinsel ));
 DATA(insert OID = 1332 (  "<"	   PGUID 0 b t f 1186 1186	 16 1334 1335 0 0 timespan_lt intltsel intltjoinsel ));
 DATA(insert OID = 1333 (  "<="	   PGUID 0 b t f 1186 1186	 16 1335 1334 0 0 timespan_le intltsel intltjoinsel ));
@@ -553,7 +553,7 @@ DATA(insert OID = 1338 (  "-"	   PGUID 0 b t f 1186 1186 1186    0	0 0 0 timespa
 
 /* additional geometric operators - thomas 97/04/18 */
 DATA(insert OID = 1420 (  "@@"	  PGUID 0 l t f    0  718  600	  0    0	0	 0 circle_center - - ));
-DATA(insert OID = 1500 (  "="	  PGUID 0 b t t  718  718	16 1500 1501 1502 1502 circle_eq eqsel eqjoinsel ));
+DATA(insert OID = 1500 (  "="	  PGUID 0 b t f  718  718	16 1500 1501 1502 1502 circle_eq eqsel eqjoinsel ));
 DATA(insert OID = 1501 (  "<>"	  PGUID 0 b t f  718  718	16 1501 1500	0	 0 circle_ne neqsel neqjoinsel ));
 DATA(insert OID = 1502 (  "<"	  PGUID 0 b t f  718  718	16 1503 1505	0	 0 circle_lt areasel areajoinsel ));
 DATA(insert OID = 1503 (  ">"	  PGUID 0 b t f  718  718	16 1502 1504	0	 0 circle_gt areasel areajoinsel ));
@@ -566,7 +566,7 @@ DATA(insert OID = 1508 (  "&>"	  PGUID 0 b t f  718  718	16	  0    0	0	 0 circle
 DATA(insert OID = 1509 (  ">>"	  PGUID 0 b t f  718  718	16	  0    0	0	 0 circle_right intltsel intltjoinsel ));
 DATA(insert OID = 1510 (  "@"	  PGUID 0 b t f  718  718	16 1511    0	0	 0 circle_contained intltsel intltjoinsel ));
 DATA(insert OID = 1511 (  "~"	  PGUID 0 b t f  718  718	16 1510    0	0	 0 circle_contain intltsel intltjoinsel ));
-DATA(insert OID = 1512 (  "~="	  PGUID 0 b t f  718  718	16 1512    0	0	 0 circle_same intltsel intltjoinsel ));
+DATA(insert OID = 1512 (  "~="	  PGUID 0 b t f  718  718	16 1512    0	0	 0 circle_same eqsel eqjoinsel ));
 DATA(insert OID = 1513 (  "&&"	  PGUID 0 b t f  718  718	16	  0    0	0	 0 circle_overlap intltsel intltjoinsel ));
 DATA(insert OID = 1514 (  ">^"	  PGUID 0 b t f  718  718	16	  0    0	0	 0 circle_above intltsel intltjoinsel ));
 DATA(insert OID = 1515 (  "<^"	  PGUID 0 b t f  718  718	16	  0    0	0	 0 circle_below intltsel intltjoinsel ));
@@ -589,7 +589,7 @@ DATA(insert OID = 1526 (  "?||"   PGUID 0 b t f  601  601	16 1526  0 0 0 lseg_pa
 DATA(insert OID = 1527 (  "?-|"   PGUID 0 b t f  601  601	16 1527  0 0 0 lseg_perp - - ));
 DATA(insert OID = 1528 (  "?-"	  PGUID 0 l t f    0  601	16    0  0 0 0 lseg_horizontal - - ));
 DATA(insert OID = 1529 (  "?|"	  PGUID 0 l t f    0  601	16    0  0 0 0 lseg_vertical - - ));
-DATA(insert OID = 1535 (  "="	  PGUID 0 b t f  601  601	16 1535 1586 0 0 lseg_eq intltsel - ));
+DATA(insert OID = 1535 (  "="	  PGUID 0 b t f  601  601	16 1535 1586 0 0 lseg_eq eqsel eqjoinsel ));
 DATA(insert OID = 1536 (  "#"	  PGUID 0 b t f  601  601  600 1536  0 0 0 lseg_interpt - - ));
 DATA(insert OID = 1537 (  "?#"	  PGUID 0 b t f  601  628	16    0  0 0 0 inter_sl - - ));
 DATA(insert OID = 1538 (  "?#"	  PGUID 0 b t f  601  603	16    0  0 0 0 inter_sb - - ));
@@ -611,7 +611,7 @@ DATA(insert OID = 1577 (  "##"	  PGUID 0 b t f  628  601  600	  0  0 0 0 close_l
 DATA(insert OID = 1578 (  "##"	  PGUID 0 b t f  601  601  600	  0  0 0 0 close_lseg - - ));
 DATA(insert OID = 1585 (  "/"	  PGUID 0 b t f 1186  701 1186	  0  0 0 0 timespan_div - - ));
 
-DATA(insert OID = 1586 (  "<>"	  PGUID 0 b t f  601  601	16 1586 1535 0 0 lseg_ne intltsel - ));
+DATA(insert OID = 1586 (  "<>"	  PGUID 0 b t f  601  601	16 1586 1535 0 0 lseg_ne neqsel neqjoinsel ));
 DATA(insert OID = 1587 (  "<"	  PGUID 0 b t f  601  601	16 1589 1590 0 0 lseg_lt intltsel - ));
 DATA(insert OID = 1588 (  "<="	  PGUID 0 b t f  601  601	16 1590 1589 0 0 lseg_le intltsel - ));
 DATA(insert OID = 1589 (  ">"	  PGUID 0 b t f  601  601	16 1587 1588 0 0 lseg_gt intltsel - ));
@@ -624,11 +624,11 @@ DATA(insert OID = 1612 (  "?||"   PGUID 0 b t f  628  628	16 1612  0 0 0 line_pa
 DATA(insert OID = 1613 (  "?-|"   PGUID 0 b t f  628  628	16 1613  0 0 0 line_perp - - ));
 DATA(insert OID = 1614 (  "?-"	  PGUID 0 l t f    0  628	16    0  0 0 0 line_horizontal - - ));
 DATA(insert OID = 1615 (  "?|"	  PGUID 0 l t f    0  628	16    0  0 0 0 line_vertical - - ));
-DATA(insert OID = 1616 (  "="	  PGUID 0 b t f  628  628	16 1616  0 0 0 line_eq intltsel - ));
+DATA(insert OID = 1616 (  "="	  PGUID 0 b t f  628  628	16 1616  0 0 0 line_eq eqsel eqjoinsel ));
 DATA(insert OID = 1617 (  "#"	  PGUID 0 b t f  628  628  600 1617  0 0 0 line_interpt - - ));
 
 /* MAC type */
-DATA(insert OID = 1220 (  "="	   PGUID 0 b t t 829 829	 16 1220 1221 0 0 macaddr_eq eqsel eqjoinsel ));
+DATA(insert OID = 1220 (  "="	   PGUID 0 b t f 829 829	 16 1220 1221 0 0 macaddr_eq eqsel eqjoinsel ));
 DATA(insert OID = 1221 (  "<>"	   PGUID 0 b t f 829 829	 16 1221 1220 0 0 macaddr_ne neqsel neqjoinsel ));
 DATA(insert OID = 1222 (  "<"	   PGUID 0 b t f 829 829	 16 1224 1225 0 0 macaddr_lt intltsel intltjoinsel ));
 DATA(insert OID = 1223 (  "<="	   PGUID 0 b t f 829 829	 16 1225 1224 0 0 macaddr_le intltsel intltjoinsel ));
@@ -636,7 +636,7 @@ DATA(insert OID = 1224 (  ">"	   PGUID 0 b t f 829 829	 16 1222 1223 0 0 macaddr
 DATA(insert OID = 1225 (  ">="	   PGUID 0 b t f 829 829	 16 1223 1222 0 0 macaddr_ge intltsel intltjoinsel ));
 
 /* INET type */
-DATA(insert OID = 1201 (  "="	   PGUID 0 b t t 869 869	 16 1201 1202 0 0 network_eq eqsel eqjoinsel ));
+DATA(insert OID = 1201 (  "="	   PGUID 0 b t f 869 869	 16 1201 1202 0 0 network_eq eqsel eqjoinsel ));
 DATA(insert OID = 1202 (  "<>"	   PGUID 0 b t f 869 869	 16 1202 1201 0 0 network_ne neqsel neqjoinsel ));
 DATA(insert OID = 1203 (  "<"	   PGUID 0 b t f 869 869	 16 1205 1206 0 0 network_lt intltsel intltjoinsel ));
 DATA(insert OID = 1204 (  "<="	   PGUID 0 b t f 869 869	 16 1206 1205 0 0 network_le intltsel intltjoinsel ));
@@ -648,7 +648,7 @@ DATA(insert OID = 933  (  ">>"	   PGUID 0 b t f 869 869     16 931  932  0 0 net
 DATA(insert OID = 934  (  ">>="	   PGUID 0 b t f 869 869     16 932  931  0 0 network_supeq intltsel intltjoinsel ));
 
 /* CIDR type */
-DATA(insert OID = 820 (  "="	   PGUID 0 b t t 650 650	 16 820 821 0 0 network_eq eqsel eqjoinsel ));
+DATA(insert OID = 820 (  "="	   PGUID 0 b t f 650 650	 16 820 821 0 0 network_eq eqsel eqjoinsel ));
 DATA(insert OID = 821 (  "<>"	   PGUID 0 b t f 650 650	 16 821 820 0 0 network_ne neqsel neqjoinsel ));
 DATA(insert OID = 822 (  "<"	   PGUID 0 b t f 650 650	 16 824 825 0 0 network_lt intltsel intltjoinsel ));
 DATA(insert OID = 823 (  "<="	   PGUID 0 b t f 650 650	 16 825 824 0 0 network_le intltsel intltjoinsel ));
@@ -660,7 +660,7 @@ DATA(insert OID = 828  (  ">>"	   PGUID 0 b t f 650 650     16 826  827  0 0 net
 DATA(insert OID = 1004  (  ">>="   PGUID 0 b t f 650 650     16 827  826  0 0 network_supeq intltsel intltjoinsel ));
 
 /* NUMERIC type - OID's 1700-1799 */
-DATA(insert OID = 1752 (  "="	   PGUID 0 b t t 1700 1700	 16 1752 1753 0 0 numeric_eq eqsel eqjoinsel ));
+DATA(insert OID = 1752 (  "="	   PGUID 0 b t f 1700 1700	 16 1752 1753 1754 1754 numeric_eq eqsel eqjoinsel ));
 DATA(insert OID = 1753 (  "<>"	   PGUID 0 b t f 1700 1700   16 1753 1752 0 0 numeric_ne neqsel neqjoinsel ));
 DATA(insert OID = 1754 (  "<"	   PGUID 0 b t f 1700 1700   16 1756 1757 0 0 numeric_lt intltsel intltjoinsel ));
 DATA(insert OID = 1755 (  "<="	   PGUID 0 b t f 1700 1700   16 1757 1756 0 0 numeric_le intltsel intltjoinsel ));

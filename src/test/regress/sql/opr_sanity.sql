@@ -132,16 +132,6 @@ WHERE (p1.oprleft = 0 and p1.oprkind != 'l') OR
     (p1.oprright = 0 and p1.oprkind != 'r') OR
     (p1.oprright != 0 and p1.oprkind = 'r');
 
--- Hashing only works on simple equality operators "type = sametype",
--- since the hash itself depends on the bitwise representation of the type.
--- Check that allegedly hashable operators look like they might be "=".
-
-SELECT p1.oid, p1.oprname
-FROM pg_operator as p1
-WHERE p1.oprcanhash AND NOT
-    (p1.oprkind = 'b' AND p1.oprresult = 16 AND p1.oprleft = p1.oprright AND
-     p1.oprname = '=' AND p1.oprcom = p1.oid);
-
 -- Look for conflicting operator definitions (same names and input datatypes).
 
 SELECT p1.oid, p1.oprcode, p2.oid, p2.oprcode
@@ -235,6 +225,29 @@ WHERE p1.oprlsortop != 0 AND NOT
         p2.oprleft = p1.oprleft AND
         p2.oprright = p1.oprright AND
         p2.oprkind = 'b');
+
+-- Hashing only works on simple equality operators "type = sametype",
+-- since the hash itself depends on the bitwise representation of the type.
+-- Check that allegedly hashable operators look like they might be "=".
+-- NOTE: in 6.5, this search finds int4eqoid and oideqint4.  Until we have
+-- some cleaner way of dealing with binary-equivalent types, just leave
+-- those two tuples in the expected output.
+
+SELECT p1.oid, p1.oprname
+FROM pg_operator AS p1
+WHERE p1.oprcanhash AND NOT
+    (p1.oprkind = 'b' AND p1.oprresult = 16 AND p1.oprleft = p1.oprright AND
+     p1.oprname = '=' AND p1.oprcom = p1.oid);
+
+-- Look for array equality operators that are hashable when the underlying
+-- type is not, or vice versa.  This is presumably bogus.
+
+SELECT p1.oid, p1.oprcanhash, p2.oid, p2.oprcanhash, t1.typname, t2.typname
+FROM pg_operator AS p1, pg_operator AS p2, pg_type AS t1, pg_type AS t2
+WHERE p1.oprname = '=' AND p1.oprleft = p1.oprright AND 
+    p2.oprname = '=' AND p2.oprleft = p2.oprright AND
+    p1.oprleft = t1.oid AND p2.oprleft = t2.oid AND t1.typelem = t2.oid AND
+    p1.oprcanhash != p2.oprcanhash;
 
 -- Check that each operator defined in pg_operator matches its oprcode entry
 -- in pg_proc.  Easiest to do this separately for each oprkind.
