@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.117 2003/02/13 21:39:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.118 2003/02/25 23:47:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,6 +33,12 @@
 #include "utils/lsyscache.h"
 
 
+/* We use a list of these to detect recursion in RewriteQuery */
+typedef struct rewrite_event {
+	Oid			relation;		/* OID of relation having rules */
+	CmdType		event;			/* type of rule being fired */
+} rewrite_event;
+
 static Query *rewriteRuleAction(Query *parsetree,
 				  Query *rule_action,
 				  Node *rule_qual,
@@ -45,7 +51,7 @@ static TargetEntry *process_matched_tle(TargetEntry *src_tle,
 static void markQueryForUpdate(Query *qry, bool skipOldNew);
 static List *matchLocks(CmdType event, RuleLock *rulelocks,
 		   int varno, Query *parsetree);
-static Query *fireRIRrules(Query *parsetree);
+static Query *fireRIRrules(Query *parsetree, List *activeRIRs);
 
 
 /*
@@ -526,8 +532,8 @@ matchLocks(CmdType event,
 	int			nlocks;
 	int			i;
 
-	Assert(rulelocks != NULL);	/* we get called iff there is some lock */
-	Assert(parsetree != NULL);
+	if (rulelocks == NULL)
+		return NIL;
 
 	if (parsetree->commandType != CMD_SELECT)
 	{
@@ -562,7 +568,8 @@ ApplyRetrieveRule(Query *parsetree,
 				  int rt_index,
 				  bool relation_level,
 				  Relation relation,
-				  bool relIsUsed)
+				  bool relIsUsed,
+				  List *activeRIRs)
 {
 	Query	   *rule_action;
 	RangeTblEntry *rte,
@@ -581,7 +588,7 @@ ApplyRetrieveRule(Query *parsetree,
 	 */
 	rule_action = copyObject(lfirst(rule->actions));
 
-	rule_action = fireRIRrules(rule_action);
+	rule_action = fireRIRrules(rule_action, activeRIRs);
 
 	/*
 	 * VIEWs are really easy --- just plug the view query in as a
@@ -683,7 +690,7 @@ markQueryForUpdate(Query *qry, bool skipOldNew)
  * the SubLink's subselect link with the possibly-rewritten subquery.
  */
 static bool
-fireRIRonSubLink(Node *node, void *context)
+fireRIRonSubLink(Node *node, List *activeRIRs)
 {
 	if (node == NULL)
 		return false;
@@ -692,7 +699,8 @@ fireRIRonSubLink(Node *node, void *context)
 		SubLink    *sub = (SubLink *) node;
 
 		/* Do what we came for */
-		sub->subselect = (Node *) fireRIRrules((Query *) (sub->subselect));
+		sub->subselect = (Node *) fireRIRrules((Query *) sub->subselect,
+											   activeRIRs);
 		/* Fall through to process lefthand args of SubLink */
 	}
 
@@ -701,7 +709,7 @@ fireRIRonSubLink(Node *node, void *context)
 	 * processed subselects of subselects for us.
 	 */
 	return expression_tree_walker(node, fireRIRonSubLink,
-								  (void *) context);
+								  (void *) activeRIRs);
 }
 
 
@@ -710,7 +718,7 @@ fireRIRonSubLink(Node *node, void *context)
  *	Apply all RIR rules on each rangetable entry in a query
  */
 static Query *
-fireRIRrules(Query *parsetree)
+fireRIRrules(Query *parsetree, List *activeRIRs)
 {
 	int			rt_index;
 
@@ -729,7 +737,6 @@ fireRIRrules(Query *parsetree)
 		LOCKMODE	lockmode;
 		bool		relIsUsed;
 		int			i;
-		List	   *l;
 
 		++rt_index;
 
@@ -742,7 +749,7 @@ fireRIRrules(Query *parsetree)
 		 */
 		if (rte->rtekind == RTE_SUBQUERY)
 		{
-			rte->subquery = fireRIRrules(rte->subquery);
+			rte->subquery = fireRIRrules(rte->subquery, activeRIRs);
 			continue;
 		}
 
@@ -814,18 +821,30 @@ fireRIRrules(Query *parsetree)
 		}
 
 		/*
-		 * Now apply them
+		 * If we found any, apply them --- but first check for recursion!
 		 */
-		foreach(l, locks)
+		if (locks != NIL)
 		{
-			rule = lfirst(l);
+			List	   *newActiveRIRs;
+			List	   *l;
 
-			parsetree = ApplyRetrieveRule(parsetree,
-										  rule,
-										  rt_index,
-										  rule->attrno == -1,
-										  rel,
-										  relIsUsed);
+			if (oidMember(RelationGetRelid(rel), activeRIRs))
+				elog(ERROR, "Infinite recursion detected in rules for relation %s",
+					 RelationGetRelationName(rel));
+			newActiveRIRs = lconso(RelationGetRelid(rel), activeRIRs);
+
+			foreach(l, locks)
+			{
+				rule = lfirst(l);
+
+				parsetree = ApplyRetrieveRule(parsetree,
+											  rule,
+											  rt_index,
+											  rule->attrno == -1,
+											  rel,
+											  relIsUsed,
+											  newActiveRIRs);
+			}
 		}
 
 		heap_close(rel, NoLock);
@@ -836,7 +855,7 @@ fireRIRrules(Query *parsetree)
 	 * in the rtable.
 	 */
 	if (parsetree->hasSubLinks)
-		query_tree_walker(parsetree, fireRIRonSubLink, NULL,
+		query_tree_walker(parsetree, fireRIRonSubLink, (void *) activeRIRs,
 						  QTW_IGNORE_RT_SUBQUERIES);
 
 	/*
@@ -967,7 +986,7 @@ fireRules(Query *parsetree,
 			 * its actions only in cases where the rule quals of all
 			 * INSTEAD rules are false. Think of it as the default action
 			 * in a case. We save this in *qual_product so
-			 * deepRewriteQuery() can add it to the query list after we
+			 * RewriteQuery() can add it to the query list after we
 			 * mangled it up enough.
 			 *
 			 * If we have already found an unqualified INSTEAD rule,
@@ -1006,124 +1025,109 @@ fireRules(Query *parsetree,
 
 
 /*
- * One pass of rewriting a single query.
- *
- * parsetree is the input query.  Return value and output parameters
- * are defined the same as for fireRules, above.
- */
-static List *
-RewriteQuery(Query *parsetree, bool *instead_flag, Query **qual_product)
-{
-	CmdType		event;
-	List	   *product_queries = NIL;
-	int			result_relation;
-	RangeTblEntry *rt_entry;
-	Relation	rt_entry_relation;
-	RuleLock   *rt_entry_locks;
-
-	Assert(parsetree != NULL);
-
-	event = parsetree->commandType;
-
-	/*
-	 * SELECT rules are handled later when we have all the queries that
-	 * should get executed
-	 */
-	if (event == CMD_SELECT)
-		return NIL;
-
-	/*
-	 * Utilities aren't rewritten at all - why is this here?
-	 */
-	if (event == CMD_UTILITY)
-		return NIL;
-
-	/*
-	 * the statement is an update, insert or delete - fire rules on it.
-	 */
-	result_relation = parsetree->resultRelation;
-	Assert(result_relation != 0);
-	rt_entry = rt_fetch(result_relation, parsetree->rtable);
-	Assert(rt_entry->rtekind == RTE_RELATION);
-
-	/*
-	 * This may well be the first access to the result relation during the
-	 * current statement (it will be, if this Query was extracted from a
-	 * rule or somehow got here other than via the parser). Therefore,
-	 * grab the appropriate lock type for a result relation, and do not
-	 * release it until end of transaction.  This protects the rewriter
-	 * and planner against schema changes mid-query.
-	 */
-	rt_entry_relation = heap_open(rt_entry->relid, RowExclusiveLock);
-
-	/*
-	 * If it's an INSERT or UPDATE, rewrite the targetlist into standard
-	 * form.  This will be needed by the planner anyway, and doing it now
-	 * ensures that any references to NEW.field will behave sanely.
-	 */
-	if (event == CMD_INSERT || event == CMD_UPDATE)
-		rewriteTargetList(parsetree, rt_entry_relation);
-
-	/*
-	 * Collect and apply the appropriate rules.
-	 */
-	rt_entry_locks = rt_entry_relation->rd_rules;
-
-	if (rt_entry_locks != NULL)
-	{
-		List	   *locks = matchLocks(event, rt_entry_locks,
-									   result_relation, parsetree);
-
-		product_queries = fireRules(parsetree,
-									result_relation,
-									event,
-									locks,
-									instead_flag,
-									qual_product);
-	}
-
-	heap_close(rt_entry_relation, NoLock);		/* keep lock! */
-
-	return product_queries;
-}
-
-
-/*
- * to avoid infinite recursion, we restrict the number of times a query
- * can be rewritten. Detecting cycles is left for the reader as an exercise.
- */
-#ifndef REWRITE_INVOKE_MAX
-#define REWRITE_INVOKE_MAX		100
-#endif
-
-static int	numQueryRewriteInvoked = 0;
-
-/*
- * deepRewriteQuery -
+ * RewriteQuery -
  *	  rewrites the query and apply the rules again on the queries rewritten
+ *
+ * rewrite_events is a list of open query-rewrite actions, so we can detect
+ * infinite recursion.
  */
 static List *
-deepRewriteQuery(Query *parsetree)
+RewriteQuery(Query *parsetree, List *rewrite_events)
 {
-	List	   *rewritten = NIL;
-	List	   *result;
+	CmdType		event = parsetree->commandType;
 	bool		instead = false;
 	Query	   *qual_product = NULL;
-	List	   *n;
+	List	   *rewritten = NIL;
 
-	if (++numQueryRewriteInvoked > REWRITE_INVOKE_MAX)
-		elog(ERROR, "query rewritten %d times, may contain cycles",
-			 numQueryRewriteInvoked - 1);
-
-	result = RewriteQuery(parsetree, &instead, &qual_product);
-
-	foreach(n, result)
+	/*
+	 * If the statement is an update, insert or delete - fire rules on it.
+	 *
+	 * SELECT rules are handled later when we have all the queries that
+	 * should get executed.  Also, utilities aren't rewritten at all
+	 * (do we still need that check?)
+	 */
+	if (event != CMD_SELECT && event != CMD_UTILITY)
 	{
-		Query	   *pt = lfirst(n);
-		List	   *newstuff;
+		int			result_relation;
+		RangeTblEntry *rt_entry;
+		Relation	rt_entry_relation;
+		List	   *locks;
 
-		newstuff = deepRewriteQuery(pt);
-		rewritten = nconc(rewritten, newstuff);
+		result_relation = parsetree->resultRelation;
+		Assert(result_relation != 0);
+		rt_entry = rt_fetch(result_relation, parsetree->rtable);
+		Assert(rt_entry->rtekind == RTE_RELATION);
+
+		/*
+		 * This may well be the first access to the result relation during the
+		 * current statement (it will be, if this Query was extracted from a
+		 * rule or somehow got here other than via the parser). Therefore,
+		 * grab the appropriate lock type for a result relation, and do not
+		 * release it until end of transaction.  This protects the rewriter
+		 * and planner against schema changes mid-query.
+		 */
+		rt_entry_relation = heap_open(rt_entry->relid, RowExclusiveLock);
+
+		/*
+		 * If it's an INSERT or UPDATE, rewrite the targetlist into standard
+		 * form.  This will be needed by the planner anyway, and doing it now
+		 * ensures that any references to NEW.field will behave sanely.
+		 */
+		if (event == CMD_INSERT || event == CMD_UPDATE)
+			rewriteTargetList(parsetree, rt_entry_relation);
+
+		/*
+		 * Collect and apply the appropriate rules.
+		 */
+		locks = matchLocks(event, rt_entry_relation->rd_rules,
+						   result_relation, parsetree);
+
+		if (locks != NIL)
+		{
+			List	   *product_queries;
+
+			product_queries = fireRules(parsetree,
+										result_relation,
+										event,
+										locks,
+										&instead,
+										&qual_product);
+
+			/*
+			 * If we got any product queries, recursively rewrite them
+			 * --- but first check for recursion!
+			 */
+			if (product_queries != NIL)
+			{
+				List	   *n;
+				rewrite_event *rev;
+
+				foreach(n, rewrite_events)
+				{
+					rev = (rewrite_event *) lfirst(n);
+					if (rev->relation == RelationGetRelid(rt_entry_relation) &&
+						rev->event == event)
+						elog(ERROR, "Infinite recursion detected in rules for relation %s",
+							 RelationGetRelationName(rt_entry_relation));
+				}
+
+				rev = (rewrite_event *) palloc(sizeof(rewrite_event));
+				rev->relation = RelationGetRelid(rt_entry_relation);
+				rev->event = event;
+				rewrite_events = lcons(rev, rewrite_events);
+
+				foreach(n, product_queries)
+				{
+					Query	   *pt = (Query *) lfirst(n);
+					List	   *newstuff;
+
+					newstuff = RewriteQuery(pt, rewrite_events);
+					rewritten = nconc(rewritten, newstuff);
+				}
+			}
+		}
+
+		heap_close(rt_entry_relation, NoLock);		/* keep lock! */
 	}
 
 	/*
@@ -1162,22 +1166,6 @@ deepRewriteQuery(Query *parsetree)
 
 
 /*
- * QueryRewriteOne -
- *	  rewrite one query
- */
-static List *
-QueryRewriteOne(Query *parsetree)
-{
-	numQueryRewriteInvoked = 0;
-
-	/*
-	 * take a deep breath and apply all the rewrite rules - ay
-	 */
-	return deepRewriteQuery(parsetree);
-}
-
-
-/*
  * QueryRewrite -
  *	  Primary entry point to the query rewriter.
  *	  Rewrite one query via query rewrite system, possibly returning 0
@@ -1198,7 +1186,7 @@ QueryRewrite(Query *parsetree)
 	 *
 	 * Apply all non-SELECT rules possibly getting 0 or many queries
 	 */
-	querylist = QueryRewriteOne(parsetree);
+	querylist = RewriteQuery(parsetree, NIL);
 
 	/*
 	 * Step 2
@@ -1209,7 +1197,7 @@ QueryRewrite(Query *parsetree)
 	{
 		Query	   *query = (Query *) lfirst(l);
 
-		query = fireRIRrules(query);
+		query = fireRIRrules(query, NIL);
 
 		/*
 		 * If the query target was rewritten as a view, complain.
