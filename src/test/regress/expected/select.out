@@ -1,15 +1,15 @@
 QUERY: SELECT onek.* WHERE onek.unique1 < 10;
 unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
 -------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
-      6|    978|  0|   2|  6|     6|      6|       6|          6|        6|       6| 12|  13|GAAAAA  |QLBAAA  |OOOOxx 
       0|    998|  0|   0|  0|     0|      0|       0|          0|        0|       0|  0|   1|AAAAAA  |KMBAAA  |OOOOxx 
+      1|    214|  1|   1|  1|     1|      1|       1|          1|        1|       1|  2|   3|BAAAAA  |GIAAAA  |OOOOxx 
+      2|    326|  0|   2|  2|     2|      2|       2|          2|        2|       2|  4|   5|CAAAAA  |OMAAAA  |OOOOxx 
+      3|    431|  1|   3|  3|     3|      3|       3|          3|        3|       3|  6|   7|DAAAAA  |PQAAAA  |VVVVxx 
       4|    833|  0|   0|  4|     4|      4|       4|          4|        4|       4|  8|   9|EAAAAA  |BGBAAA  |HHHHxx 
+      5|    541|  1|   1|  5|     5|      5|       5|          5|        5|       5| 10|  11|FAAAAA  |VUAAAA  |HHHHxx 
+      6|    978|  0|   2|  6|     6|      6|       6|          6|        6|       6| 12|  13|GAAAAA  |QLBAAA  |OOOOxx 
       7|    647|  1|   3|  7|     7|      7|       7|          7|        7|       7| 14|  15|HAAAAA  |XYAAAA  |VVVVxx 
       8|    653|  0|   0|  8|     8|      8|       8|          8|        8|       8| 16|  17|IAAAAA  |DZAAAA  |HHHHxx 
-      5|    541|  1|   1|  5|     5|      5|       5|          5|        5|       5| 10|  11|FAAAAA  |VUAAAA  |HHHHxx 
-      3|    431|  1|   3|  3|     3|      3|       3|          3|        3|       3|  6|   7|DAAAAA  |PQAAAA  |VVVVxx 
-      2|    326|  0|   2|  2|     2|      2|       2|          2|        2|       2|  4|   5|CAAAAA  |OMAAAA  |OOOOxx 
-      1|    214|  1|   1|  1|     1|      1|       1|          1|        1|       1|  2|   3|BAAAAA  |GIAAAA  |OOOOxx 
       9|     49|  1|   1|  9|     9|      9|       9|          9|        9|       9| 18|  19|JAAAAA  |XBAAAA  |HHHHxx 
 (10 rows)
 
