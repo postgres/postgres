@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.69 1998/10/29 18:07:09 momjian Exp $
+ * $Id: builtins.h,v 1.70 1998/11/17 14:36:37 thomas Exp $
  *
  * NOTES
  *	  This should normally only be included by fmgr.h.
@@ -280,6 +280,10 @@ extern float32 i4tof(int32 num);
 extern float32 i2tof(int16 num);
 extern int32 ftoi4(float32 num);
 extern int16 ftoi2(float32 num);
+extern float64 text_float8(text *str);
+extern float32 text_float4(text *str);
+extern text *float8_text(float64 num);
+extern text *float4_text(float32 num);
 extern float64 dround(float64 arg1);
 extern float64 dtrunc(float64 arg1);
 extern float64 dsqrt(float64 arg1);

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.83 1998/10/29 19:03:50 tgl Exp $
+ * $Id: pg_proc.h,v 1.84 1998/11/17 14:36:51 thomas Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -1067,16 +1067,14 @@ DESCR("convert");
 DATA(insert OID = 819 (  text_int4		   PGUID 11 f t f 1 f 23 "25" 100 0 0 100  foo bar));
 DESCR("convert");
 
-DATA(insert OID =  849 (  textpos		   PGUID 11 f t f 2 f 23 "25 25" 100 0 1 0 foo bar ));
-DESCR("return position of substring");
-DATA(insert OID =  850 (  textlike		   PGUID 11 f t f 2 f 16 "25 25" 100 0 1 0 foo bar ));
-DESCR("matches LIKE expression");
-DATA(insert OID =  851 (  textnlike		   PGUID 11 f t f 2 f 16 "25 25" 100 0 1 0 foo bar ));
-DESCR("does not match LIKE expression");
-DATA(insert OID =  858 (  namelike		   PGUID 11 f t f 2 f 16 "19 25" 100 0 0 100  foo bar ));
-DESCR("matches LIKE expression");
-DATA(insert OID =  859 (  namenlike		   PGUID 11 f t f 2 f 16 "19 25" 100 0 0 100  foo bar ));
-DESCR("does not match LIKE expression");
+DATA(insert OID = 838 (  text_float8	   PGUID 11 f t f 1 f 701 "25" 100 0 0 100  foo bar));
+DESCR("convert");
+DATA(insert OID = 839 (  text_float4	   PGUID 11 f t f 1 f 700 "25" 100 0 0 100  foo bar));
+DESCR("convert");
+DATA(insert OID = 840 (  float8_text	   PGUID 11 f t f 1 f  25 "701" 100 0 0 100  foo bar));
+DESCR("convert");
+DATA(insert OID = 841 (  float4_text	   PGUID 11 f t f 1 f  25 "700" 100 0 0 100  foo bar));
+DESCR("convert");
 
 DATA(insert OID =  846 (  cash_mul_flt4    PGUID 11 f t f 2 f 790 "790 700" 100 0 0 100  foo bar ));
 DESCR("multiply");
@@ -1084,6 +1082,13 @@ DATA(insert OID =  847 (  cash_div_flt4    PGUID 11 f t f 2 f 790 "790 700" 100 
 DESCR("divide");
 DATA(insert OID =  848 (  flt4_mul_cash    PGUID 11 f t f 2 f 790 "700 790" 100 0 0 100  foo bar ));
 DESCR("multiply");
+
+DATA(insert OID =  849 (  textpos		   PGUID 11 f t f 2 f 23 "25 25" 100 0 1 0 foo bar ));
+DESCR("return position of substring");
+DATA(insert OID =  850 (  textlike		   PGUID 11 f t f 2 f 16 "25 25" 100 0 1 0 foo bar ));
+DESCR("matches LIKE expression");
+DATA(insert OID =  851 (  textnlike		   PGUID 11 f t f 2 f 16 "25 25" 100 0 1 0 foo bar ));
+DESCR("does not match LIKE expression");
 
 DATA(insert OID =  852 (  int48eq		   PGUID 11 f t f 2 f 16 "21 20" 100 0 0 100  foo bar ));
 DESCR("equal");
@@ -1097,6 +1102,11 @@ DATA(insert OID =  856 (  int48le		   PGUID 11 f t f 2 f 16 "21 20" 100 0 0 100 
 DESCR("less-than-or-equal");
 DATA(insert OID =  857 (  int48ge		   PGUID 11 f t f 2 f 16 "21 20" 100 0 0 100  foo bar ));
 DESCR("greater-than-or-equal");
+
+DATA(insert OID =  858 (  namelike		   PGUID 11 f t f 2 f 16 "19 25" 100 0 0 100  foo bar ));
+DESCR("matches LIKE expression");
+DATA(insert OID =  859 (  namenlike		   PGUID 11 f t f 2 f 16 "19 25" 100 0 0 100  foo bar ));
+DESCR("does not match LIKE expression");
 
 DATA(insert OID =  860 (  char_bpchar	   PGUID 11 f t f 1 f 1042 "18" 100 0 0 100  foo bar ));
 DESCR("convert to bpchar");
@@ -1981,13 +1991,22 @@ DESCR("convert int8 to float8");
 /* OIDS 1600 - 1699 */
 
 DATA(insert OID = 1600 (  line				PGUID 14 f t f 2 f 628 "600 600" 100 0 0 100  "select line_construct_pp($1, $2)" - ));
-DESCR("");
+DESCR("points to line");
 DATA(insert OID = 1601 (  ishorizontal		PGUID 14 f t f 1 f	16 "628" 100 0 0 100  "select line_horizontal($1)" - ));
-DESCR("");
+DESCR("is line horizontal?");
 DATA(insert OID = 1602 (  isvertical		PGUID 14 f t f 1 f	16 "628" 100 0 0 100  "select line_vertical($1)" - ));
-DESCR("");
+DESCR("is line vertical?");
 DATA(insert OID = 1603 (  isparallel		PGUID 14 f t f 2 f	16 "628 628" 100 0 0 100  "select line_parallel($1, $2)" - ));
-DESCR("");
+DESCR("are lines parallel?");
+
+DATA(insert OID = 1604 (  float8	   PGUID 14 f t f 1 f 701 "25" 100 0 0 100  "select text_float8($1)" - ));
+DESCR("convert");
+DATA(insert OID = 1605 (  float4	   PGUID 14 f t f 1 f 700 "25" 100 0 0 100  "select text_float4($1)" - ));
+DESCR("convert");
+DATA(insert OID = 1606 (  text		   PGUID 14 f t f 1 f  25 "701" 100 0 0 100  "select float8_text($1)" - ));
+DESCR("convert");
+DATA(insert OID = 1607 (  text		   PGUID 14 f t f 1 f  25 "700" 100 0 0 100  "select float4_text($1)" - ));
+DESCR("convert");
 
 /* Oracle Compatibility Related Functions - By Edmund Mergl <E.Mergl@bawue.de> */
 DATA(insert OID =  868 (  strpos	   PGUID 14 f t f 2 f 23 "25 25" 100 0 0 100  "select textpos($1, $2)" - ));
