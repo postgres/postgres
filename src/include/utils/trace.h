@@ -64,6 +64,9 @@ enum pg_option_enum {
 	OPT_SYSLOG,					/* use syslog for error messages */
 	OPT_HOSTLOOKUP,				/* enable hostname lookup in ps_status */
 	OPT_SHOWPORTNUMBER,			/* show port number in ps_status */
+#ifdef FREE_TUPLE_MEMORY
+	OPT_FREE_TUPLE_MEMORY,		/* try to pfree memory for each tuple */
+#endif
 
 	NUM_PG_OPTIONS				/* must be the last item of enum */
 };
@@ -83,9 +86,9 @@ extern int	pg_options[NUM_PG_OPTIONS];
 #endif	 /* TRACE_H */
 
 /*
- * Local variables:
- *	tab-width: 4
- *	c-indent-level: 4
- *	c-basic-offset: 4
+ * Local Variables:
+ *  tab-width: 4
+ *  c-indent-level: 4
+ *  c-basic-offset: 4
  * End:
  */

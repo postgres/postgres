@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.51 1999/05/25 16:06:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.52 1999/06/12 14:05:36 momjian Exp $
  *
  * NOTES
  *	  The old interface functions have been converted to macros
@@ -26,6 +26,11 @@
 #include <catalog/pg_type.h>
 #include <storage/bufpage.h>
 #include <utils/memutils.h>
+
+#ifdef FREE_TUPLE_MEMORY
+#include <utils/portal.h>
+#include <utils/trace.h>
+#endif
 
 #ifndef HAVE_MEMMOVE
 #include <regex/utils.h>
@@ -93,6 +98,9 @@ DataFill(char *data,
 	int			i;
 	int			numberOfAttributes = tupleDesc->natts;
 	Form_pg_attribute *att = tupleDesc->attrs;
+#ifdef FREE_TUPLE_MEMORY
+	bool		free_tuple_memory = pg_options[OPT_FREE_TUPLE_MEMORY];
+#endif
 
 	if (bit != NULL)
 	{
@@ -131,6 +139,14 @@ DataFill(char *data,
 				*infomask |= HEAP_HASVARLENA;
 				data_length = VARSIZE(DatumGetPointer(value[i]));
 				memmove(data, DatumGetPointer(value[i]), data_length);
+#ifdef FREE_TUPLE_MEMORY
+				/* try to pfree value[i] - dz */
+				if (free_tuple_memory &&
+					PortalHeapMemoryIsValid(CurrentMemoryContext,
+											(Pointer) value[i])) {
+					pfree(value[i]);
+				}
+#endif
 				break;
 			case sizeof(char):
 				*data = att[i]->attbyval ?
@@ -147,8 +163,15 @@ DataFill(char *data,
 								   *((int32 *) value[i]));
 				break;
 			default:
-				memmove(data, DatumGetPointer(value[i]),
-						att[i]->attlen);
+				memmove(data, DatumGetPointer(value[i]), att[i]->attlen);
+#ifdef FREE_TUPLE_MEMORY
+				/* try to pfree value[i] - dz */
+				if (free_tuple_memory &&
+					PortalHeapMemoryIsValid(CurrentMemoryContext,
+											(Pointer) value[i])) {
+					pfree(value[i]);
+				}
+#endif
 				break;
 		}
 		data = (char *) att_addlength((long) data, att[i]->attlen, value[i]);

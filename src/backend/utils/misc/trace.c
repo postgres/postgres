@@ -73,6 +73,9 @@ static char *opt_names[] = {
 	"syslog",					/* use syslog for error messages */
 	"hostlookup",				/* enable hostname lookup in ps_status */
 	"showportnumber",			/* show port number in ps_status */
+#ifdef FREE_TUPLE_MEMORY
+	"free_tuple_memory",		/* try to pfree memory for each tuple */
+#endif
 
 	/* NUM_PG_OPTIONS */		/* must be the last item of enum */
 };
@@ -404,9 +407,9 @@ read_pg_options(SIGNAL_ARGS)
 }
 
 /*
- * Local variables:
- *	tab-width: 4
- *	c-indent-level: 4
- *	c-basic-offset: 4
+ * Local Variables:
+ *  tab-width: 4
+ *  c-indent-level: 4
+ *  c-basic-offset: 4
  * End:
  */
