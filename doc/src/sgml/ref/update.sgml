@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/update.sgml,v 1.21 2003/04/26 23:56:51 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/update.sgml,v 1.22 2003/06/25 04:19:24 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -16,7 +16,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-UPDATE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> SET <replaceable class="PARAMETER">column</replaceable> = <replaceable class="PARAMETER">expression</replaceable> [, ...]
+UPDATE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> SET <replaceable class="PARAMETER">column</replaceable> = { <replaceable class="PARAMETER">expression</replaceable> | DEFAULT } [, ...]
     [ FROM <replaceable class="PARAMETER">fromlist</replaceable> ]
     [ WHERE <replaceable class="PARAMETER">condition</replaceable> ]
 </synopsis>
@@ -73,6 +73,15 @@ UPDATE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> SET <replacea
     <listitem>
      <para>
       An expression or value to assign to the column.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>DEFAULT</literal></term>
+    <listitem>
+     <para>
+      This column will be filled with its default value.
      </para>
     </listitem>
    </varlistentry>

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.419 2003/06/25 03:40:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.420 2003/06/25 04:19:24 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -6945,6 +6945,15 @@ update_target_el:
 					$$->indirection = $2;
 					$$->val = (Node *)$4;
 				}
+			| ColId opt_indirection '=' DEFAULT
+				{
+					SetToDefault *def = makeNode(SetToDefault);
+					$$ = makeNode(ResTarget);
+					$$->name = $1;
+					$$->indirection = NULL;
+					$$->val = (Node *)def;
+				}
+
 		;
 
 insert_target_list:
@@ -6956,7 +6965,7 @@ insert_target_el:
 			target_el								{ $$ = $1; }
 			| DEFAULT
 				{
-					InsertDefault *def = makeNode(InsertDefault);
+					SetToDefault *def = makeNode(SetToDefault);
 					$$ = makeNode(ResTarget);
 					$$->name = NULL;
 					$$->indirection = NULL;

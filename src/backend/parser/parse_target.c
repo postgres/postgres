@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.102 2003/05/31 19:03:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.103 2003/06/25 04:19:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -177,19 +177,24 @@ transformTargetList(ParseState *pstate, List *targetlist)
 														false));
 			}
 		}
-		else if (IsA(res->val, InsertDefault))
+		else if (IsA(res->val, SetToDefault))
 		{
-			InsertDefault *newnode = makeNode(InsertDefault);
-
 			/*
-			 * If this is a DEFAULT element, we make a junk entry which
-			 * will get dropped on return to transformInsertStmt().
+			 * If this is a DEFAULT element, we make a standard entry using
+			 * the default for the target expression.  rewriteTargetList will
+			 * substitute the columns default for this expression.
 			 */
-			p_target = lappend(p_target, newnode);
+			p_target = lappend(p_target,
+							   makeTargetEntry(makeResdom((AttrNumber) pstate->p_next_resno++,
+														  UNKNOWNOID,
+														  -1,
+														  res->name,
+														  false),
+											   (Expr *) res->val));
 		}
 		else
 		{
-			/* Everything else but ColumnRef and InsertDefault */
+			/* Everything else but ColumnRef and SetToDefault */
 			p_target = lappend(p_target,
 							   transformTargetEntry(pstate,
 													res->val,
@@ -321,9 +326,10 @@ updateTargetListEntry(ParseState *pstate,
 					  int attrno,
 					  List *indirection)
 {
-	Oid			type_id = exprType((Node *) tle->expr);	/* type of value provided */
+	Oid			type_id; 		/* type of value provided */
 	Oid			attrtype;		/* type of target column */
 	int32		attrtypmod;
+	bool		isDefault = false;
 	Resdom	   *resnode = tle->resdom;
 	Relation	rd = pstate->p_target_relation;
 
@@ -332,6 +338,17 @@ updateTargetListEntry(ParseState *pstate,
 		elog(ERROR, "Cannot assign to system attribute '%s'", colname);
 	attrtype = attnumTypeId(rd, attrno);
 	attrtypmod = rd->rd_att->attrs[attrno - 1]->atttypmod;
+
+	/* The type of the default column is equivalent to that of the column */
+	if (tle->expr != NULL && IsA(tle->expr, SetToDefault))
+	{
+		type_id = attrtype;
+		isDefault = true;
+	}
+
+	/* Otherwise the expression holds the type */
+	else
+		type_id = exprType((Node *) tle->expr);
 
 	/*
 	 * If there are subscripts on the target column, prepare an array
@@ -383,7 +400,7 @@ updateTargetListEntry(ParseState *pstate,
 		 * coercion.  But accept InvalidOid, which indicates the source is
 		 * a NULL constant.  (XXX is that still true?)
 		 */
-		if (type_id != InvalidOid)
+		if (!isDefault && type_id != InvalidOid)
 		{
 			tle->expr = (Expr *)
 				coerce_to_target_type(pstate,

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.120 2003/05/02 20:54:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.121 2003/06/25 04:19:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -307,7 +307,25 @@ rewriteTargetList(Query *parsetree, Relation target_relation)
 			{
 				Assert(strcmp(resdom->resname,
 							  NameStr(att_tup->attname)) == 0);
-				new_tle = process_matched_tle(old_tle, new_tle);
+
+				if (old_tle->expr != NULL && IsA(old_tle->expr, SetToDefault))
+				{
+					/* Set to the default value of the column, as requested */
+					Node	   *new_expr;
+
+					new_expr = build_column_default(target_relation, attrno);
+
+					new_tle = makeTargetEntry(makeResdom(attrno,
+														 att_tup->atttypid,
+														 att_tup->atttypmod,
+											  pstrdup(NameStr(att_tup->attname)),
+														 false),
+											  (Expr *) new_expr);
+				}
+				else
+					/* Normal Case */
+					new_tle = process_matched_tle(old_tle, new_tle);
+
 				/* keep scanning to detect multiple assignments to attr */
 			}
 		}

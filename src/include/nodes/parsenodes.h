@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.239 2003/06/25 03:40:19 momjian Exp $
+ * $Id: parsenodes.h,v 1.240 2003/06/25 04:19:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -279,10 +279,10 @@ typedef struct ResTarget
 /*
  * Empty node used as a marker for Default Columns
  */
-typedef struct InsertDefault
+typedef struct SetToDefault
 {
 	NodeTag		type;
-} InsertDefault;
+} SetToDefault;
 
 /*
  * SortGroupBy - for ORDER BY clause

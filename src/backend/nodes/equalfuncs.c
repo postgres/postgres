@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.197 2003/06/25 03:40:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.198 2003/06/25 04:19:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -728,7 +728,7 @@ _equalFuncWithArgs(FuncWithArgs *a, FuncWithArgs *b)
 }
 
 static bool
-_equalInsertDefault(InsertDefault *a, InsertDefault *b)
+_equalSetToDefault(SetToDefault *a, SetToDefault *b)
 {
 	return true;
 }
@@ -2055,8 +2055,8 @@ equal(void *a, void *b)
 		case T_FuncWithArgs:
 			retval = _equalFuncWithArgs(a, b);
 			break;
-		case T_InsertDefault:
-			retval = _equalInsertDefault(a, b);
+		case T_SetToDefault:
+			retval = _equalSetToDefault(a, b);
 			break;
 
 		default:
