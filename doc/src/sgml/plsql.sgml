@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.55 2002/04/09 02:31:58 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.56 2002/04/09 02:43:25 momjian Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -1691,10 +1691,10 @@ SELECT reffunc2();
   
         reffunc2      
   --------------------
-   <unnamed cursor 1>
+   &gt;unnamed cursor 1&lt;
   (1 row)
 
-FETCH ALL IN "<unnamed cursor 1>";
+FETCH ALL IN "&gt;unnamed cursor 1&lt;";
 COMMIT;
 </programlisting>
        </para>
