@@ -19,7 +19,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/pgarch.c,v 1.10 2004/11/09 13:01:26 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/pgarch.c,v 1.11 2004/11/17 17:50:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -338,15 +338,14 @@ pgarch_MainLoop(void)
 
 		/*
 		 * There shouldn't be anything for the archiver to do except to
-		 * wait for a signal, so we could use pause(3) here... ...however,
-		 * the archiver exists to protect our data, so she wakes up
-		 * occasionally to allow herself to be proactive. In particular
-		 * this avoids getting stuck if a signal arrives just before we
-		 * enter sleep().
+		 * wait for a signal, ... however, the archiver exists to 
+		 * protect our data, so she wakes up occasionally to allow 
+		 * herself to be proactive. In particular this avoids getting 
+		 * stuck if a signal arrives just before we sleep.
 		 */
 		if (!wakened)
 		{
-			sleep(PGARCH_AUTOWAKE_INTERVAL);
+			pg_usleep(PGARCH_AUTOWAKE_INTERVAL * 1000000L);
 
 			curtime = time(NULL);
 			if ((unsigned int) (curtime - last_copy_time) >=
