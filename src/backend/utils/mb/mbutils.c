@@ -4,7 +4,7 @@
  * (currently mule internal code (mic) is used)
  * Tatsuo Ishii
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/mb/mbutils.c,v 1.36 2002/11/02 18:41:22 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/mb/mbutils.c,v 1.37 2002/11/26 02:22:29 ishii Exp $
  */
 #include "postgres.h"
 
@@ -165,6 +165,9 @@ pg_do_encoding_conversion(unsigned char *src, int len,
 	if (src_encoding == PG_SQL_ASCII || dest_encoding == PG_SQL_ASCII)
 		return src;
 
+	if (len <= 0)
+		return src;
+
 	proc = FindDefaultConversionProc(src_encoding, dest_encoding);
 	if (!OidIsValid(proc))
 	{
@@ -319,6 +322,9 @@ perform_default_encoding_conversion(unsigned char *src, int len, bool is_client_
 	int			src_encoding,
 				dest_encoding;
 	FmgrInfo   *flinfo;
+
+	if (len <= 0)
+		return src;
 
 	if (is_client_to_server)
 	{
