@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.42 1997/09/08 21:46:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.43 1997/09/18 14:32:15 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2467,13 +2467,18 @@ ParseFunc(ParseState *pstate, char *funcname, List *fargs, int *curr_resno)
 	{
 		Const	   *seq;
 		char	   *seqrel;
+		text	   *seqname;
 		int32		aclcheck_result = -1;
+		extern text *lower (text *string);
 
 		Assert(length(fargs) == 1);
 		seq = (Const *) lfirst(fargs);
 		if (!IsA((Node *) seq, Const))
 			elog(WARN, "%s: only constant sequence names are acceptable", funcname);
-		seqrel = textout((struct varlena *) (seq->constvalue));
+		seqname = lower ((text*)DatumGetPointer(seq->constvalue));
+		pfree (DatumGetPointer(seq->constvalue));
+		seq->constvalue = PointerGetDatum (seqname);
+		seqrel = textout(seqname);
 
 		if ((aclcheck_result = pg_aclcheck(seqrel, GetPgUserName(),
 			   ((funcid == SeqNextValueRegProcedure) ? ACL_WR : ACL_RD)))
