@@ -2785,7 +2785,11 @@ if test "${enable_thread_safety+set}" = set; then
 
   case $enableval in
     yes)
-      :
+
+cat >>confdefs.h <<\_ACEOF
+#define USE_THREADS 1
+_ACEOF
+
       ;;
     no)
       :
