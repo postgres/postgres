@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile,v 1.10 1997/03/17 22:05:08 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile,v 1.11 1997/03/25 09:19:41 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -30,24 +30,26 @@ ifeq ($(CC), gcc)
 endif
 
 
+shlib             := 
+install-shlib-dep :=
+
 ifeq ($(PORTNAME), linux)
   ifdef LINUX_ELF
     ifeq ($(CC), gcc)
       CFLAGS += -fpic -fPIC
     endif
+    shlib             := libpgtcl.so.1
+    install-shlib-dep := install-shlib
+    LDFLAGS           += -L ../libpq -lpq
   endif
+endif
+
+ifeq ($(PORTNAME), i386_solaris)
+  CFLAGS+= -fPIC
 endif
 
 OBJS= pgtcl.o pgtclCmds.o pgtclId.o
 
-ifdef LINUX_ELF
-  shlib             := libpgtcl.so.1
-  install-shlib-dep := install-shlib
-  LDFLAGS           += -L ../libpq -lpq
-else
-  shlib             := 
-  install-shlib-dep :=
-endif
 
 all: libpgtcl.a $(shlib)
 

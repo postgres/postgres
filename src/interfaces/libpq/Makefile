@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.32 1997/03/25 09:08:05 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.33 1997/03/25 09:20:12 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -42,6 +42,12 @@ ifeq ($(PORTNAME), BSD44_derived)
   LDFLAGS_SL = -x -Bshareable -Bforcearchive
   CFLAGS += -fpic -DPIC
 endif
+ifeq ($(PORTNAME), i386_solaris)
+  install-shlib-dep := install-shlib
+  shlib := libpq.so.1
+  LDFLAGS_SL = -G -z text
+  CFLAGS += -fPIC
+endif
 
 all: libpq.a $(shlib) c.h
 
@@ -71,6 +77,8 @@ pqcomprim.c:	    ../backend/libpq/pqcomprim.c
 
 $(shlib): $(OBJS)
 	$(LD) $(LDFLAGS) $(LDFLAGS_SL) -o $@ $(OBJS)
+	ln -sf $@ libpq.so
+
 
 c.h: ../include/c.h
 	rm -f c.h

@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/Makefile,v 1.6 1997/02/13 10:00:23 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/Makefile,v 1.7 1997/03/25 09:20:32 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -39,7 +39,17 @@ endif
 
 OBJS = pgenv.o pgconnection.o pgtransdb.o pgcursordb.o pglobject.o
 
-all: $(LIBNAME).a install examples
+# Shared library stuff
+SHLIB := 
+INSTALL-SHLIB-DEP :=
+ifeq ($(PORTNAME), i386_solaris)
+  INSTALL-SHLIB-DEP := install-shlib
+  SHLIB := libpq++.so.1
+  LDFLAGS_SL = -G -z text
+  CFLAGS += -fPIC
+endif
+
+all: $(LIBNAME).a $(SHLIB) install examples
 
 $(LIBNAME).a: $(OBJS)
 ifdef MK_NO_LORDER
@@ -49,14 +59,17 @@ else
 endif
 	$(RANLIB) $(LIBNAME).a
 
+$(SHLIB): $(OBJS)
+	$(LD) $(LDFLAGS) $(LDFLAGS_SL) -o $@ $(OBJS)
+
 .PHONY: examples
 examples:
 	$(MAKE) -C examples all
 
 .PHONY: beforeinstall-headers install-headers 
-.PHONY: install install-$(LIBNAME) doc
+.PHONY: install beforeinstall-lib install-$(LIBNAME) doc
 
-install: install-headers install-$(LIBNAME) doc
+install: install-headers install-$(LIBNAME) $(INSTALL-SHLIB-DEP) doc
 
 LIBPGXXDIR = $(LIBNAME)
 LIBPGXXHEADERDIR = $(HEADERDIR)/$(LIBPGXXDIR)
@@ -79,8 +92,17 @@ beforeinstall-headers:
 	@if [ ! -d $(HEADERDIR) ]; then mkdir $(HEADERDIR); fi
 	@if [ ! -d $(LIBPGXXHEADERDIR) ]; then mkdir $(LIBPGXXHEADERDIR); fi
 
-install-$(LIBNAME): $(LIBNAME).a
+beforeinstall-lib:
+	@if [ ! -d $(DESTDIR)/$(LIBDIR) ] ; then mkdir $(DESTDIR)/$(LIBDIR); fi
+
+install-$(LIBNAME): $(LIBNAME).a beforeinstall-lib
 	$(INSTALL) $(INSTL_LIB_OPTS) $(LIBNAME).a $(DESTDIR)$(LIBDIR)/$(LIBNAME).a
+
+install-shlib: $(SHLIBNAME) beforeinstall-lib
+	$(INSTALL) $(INSTL_SHLIB_OPTS) $(SHLIB) $(DESTDIR)/$(LIBDIR)/$(SHLIB)
+	rm -f $(DESTDIR)/$(LIBDIR)/libpq++.so
+	ln -sf $(SHLIB) $(DESTDIR)/$(LIBDIR)/libpq++.so
+
 
 doc:
 	$(MAKE) -C man install
