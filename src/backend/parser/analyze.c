@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: analyze.c,v 1.103 1999/05/13 07:28:34 tgl Exp $
+ *  $Id: analyze.c,v 1.104 1999/05/13 15:01:32 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -546,39 +546,22 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 					constraint->contype = CONSTR_DEFAULT;
 					constraint->name = sname;
 					cstring = palloc(9 + strlen(constraint->name) + 2 + 1);
-					strcpy(cstring, "nextval('");
+					strcpy(cstring, "nextval('\"");
 					strcat(cstring, constraint->name);
-					strcat(cstring, "')");
+					strcat(cstring, "\"')");
 					constraint->def = cstring;
 					constraint->keys = NULL;
 
-#if 0
-					/* The parser only allows PRIMARY KEY as a constraint for the SERIAL type.
-					 * So, if there is a constraint of any kind, assume it is that.
-					 * If PRIMARY KEY is specified, then don't need to gin up a UNIQUE constraint
-					 * since that will be covered already.
-					 * - thomas 1998-09-15
-					 */
-					if (column->constraints != NIL)
-					{
-						column->constraints = lappend(column->constraints, constraint);
-					}
-					else
-					{
-#endif
-						column->constraints = lappend(column->constraints, constraint);
+					column->constraints = lappend(column->constraints, constraint);
 
-						constraint = makeNode(Constraint);
-						constraint->contype = CONSTR_UNIQUE;
-						constraint->name = makeTableName(stmt->relname, column->colname, "key", NULL);
-						if (constraint->name == NULL)
-							elog(ERROR, "CREATE TABLE/SERIAL implicit index name must be less than %d characters"
-								 "\n\tSum of lengths of '%s' and '%s' must be less than %d",
-								 NAMEDATALEN, stmt->relname, column->colname, (NAMEDATALEN-5));
-						column->constraints = lappend(column->constraints, constraint);
-#if 0
-					}
-#endif
+					constraint = makeNode(Constraint);
+					constraint->contype = CONSTR_UNIQUE;
+					constraint->name = makeTableName(stmt->relname, column->colname, "key", NULL);
+					if (constraint->name == NULL)
+						elog(ERROR, "CREATE TABLE/SERIAL implicit index name must be less than %d characters"
+							 "\n\tSum of lengths of '%s' and '%s' must be less than %d",
+							 NAMEDATALEN, stmt->relname, column->colname, (NAMEDATALEN-5));
+					column->constraints = lappend(column->constraints, constraint);
 
 					sequence = makeNode(CreateSeqStmt);
 					sequence->seqname = pstrdup(sname);
@@ -604,21 +587,21 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 								 */
 								if (column->is_not_null)
 									elog(ERROR, "CREATE TABLE/(NOT) NULL conflicting declaration"
-										 " for %s.%s", stmt->relname, column->colname);
+										 " for '%s.%s'", stmt->relname, column->colname);
 								column->is_not_null = FALSE;
 								break;
 
 							case CONSTR_NOTNULL:
 								if (column->is_not_null)
 									elog(ERROR, "CREATE TABLE/NOT NULL already specified"
-										 " for %s.%s", stmt->relname, column->colname);
+										 " for '%s.%s'", stmt->relname, column->colname);
 								column->is_not_null = TRUE;
 								break;
 
 							case CONSTR_DEFAULT:
 								if (column->defval != NULL)
 									elog(ERROR, "CREATE TABLE/DEFAULT multiple values specified"
-										 " for %s.%s", stmt->relname, column->colname);
+										 " for '%s.%s'", stmt->relname, column->colname);
 								column->defval = constraint->def;
 								break;
 
@@ -680,10 +663,6 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 						break;
 
 					case CONSTR_UNIQUE:
-#ifdef NOT_USED
-						if (constraint->name == NULL)
-							constraint->name = makeTableName(stmt->relname, "key", NULL);
-#endif
 						dlist = lappend(dlist, constraint);
 						break;
 
@@ -735,7 +714,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 		{
 			if (pkey != NULL)
 				elog(ERROR, "CREATE TABLE/PRIMARY KEY multiple primary keys"
-					 " for table %s are not legal", stmt->relname);
+					 " for table '%s' are not allowed", stmt->relname);
 			pkey = (IndexStmt *) index;
 		}
 
@@ -796,14 +775,8 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 		}
 
 		if (index->idxname == NULL)
-			elog(ERROR, "CREATE TABLE unable to construct implicit index for table %s"
+			elog(ERROR, "CREATE TABLE unable to construct implicit index for table '%s'"
 				 "; name too long", stmt->relname);
-#if 0
-		else
-			elog(NOTICE, "CREATE TABLE/%s will create implicit index '%s' for table '%s'",
-				 ((constraint->contype == CONSTR_PRIMARY) ? "PRIMARY KEY" : "UNIQUE"),
-				 index->idxname, stmt->relname);
-#endif
 
 		ilist = lappend(ilist, index);
 		dlist = lnext(dlist);
@@ -855,7 +828,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 	extras_after = ilist;
 
 	return q;
-}
+} /* transformCreateStmt() */
 
 /*
  * transformIndexStmt -
