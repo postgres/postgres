@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.80 2001/01/24 19:43:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.81 2001/02/21 06:05:23 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -683,6 +683,8 @@ write_syslog(int level, const char *line)
 #ifdef MULTIBYTE
 			/* trim to multibyte letter boundary */ 
 			buflen = pg_mbcliplen(buf, l, l);
+			if (buflen <= 0)
+			    return;
 			buf[buflen] = '\0';
 			l = strlen(buf);
 #endif
