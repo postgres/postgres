@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.33 2004/11/27 22:44:15 petere Exp $
+ *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.34 2004/12/20 17:40:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -486,30 +486,45 @@ pipe_read_line(char *cmd, char *line, int maxsize)
 					  &si,
 					  &pi))
 	{
-		DWORD		bytesread = 0;
-
 		/* Successfully started the process */
+		char   *lineptr;
 
 		ZeroMemory(line, maxsize);
 
-		/* Let's see if we can read */
-		if (WaitForSingleObject(childstdoutrddup, 10000) != WAIT_OBJECT_0)
+		/* Try to read at least one line from the pipe */
+		/* This may require more than one wait/read attempt */
+		for (lineptr = line; lineptr < line+maxsize-1; )
 		{
-			/* Got timeout */
-			CloseHandle(pi.hProcess);
-			CloseHandle(pi.hThread);
-			CloseHandle(childstdoutwr);
-			CloseHandle(childstdoutrddup);
-			return NULL;
+			DWORD		bytesread = 0;
+
+			/* Let's see if we can read */
+			if (WaitForSingleObject(childstdoutrddup, 10000) != WAIT_OBJECT_0)
+				break;		/* Timeout, but perhaps we got a line already */
+
+			if (!ReadFile(childstdoutrddup, lineptr, maxsize-(lineptr-line),
+						  &bytesread, NULL))
+				break;		/* Error, but perhaps we got a line already */
+
+			lineptr += strlen(lineptr);
+
+			if (!bytesread)
+				break; /* EOF */
+
+			if (strchr(line, '\n'))
+				break; /* One or more lines read */
 		}
 
-		/* We try just once */
-		if (ReadFile(childstdoutrddup, line, maxsize, &bytesread, NULL) &&
-			bytesread > 0)
+		if (lineptr != line)
 		{
-			/* So we read some data */
-			int			len = strlen(line);
-			retval = line;
+			/* OK, we read some data */
+			int			len;
+
+			/* If we got more than one line, cut off after the first \n */
+			lineptr = strchr(line,'\n');
+			if (lineptr)
+				*(lineptr+1) = '\0';
+
+			len = strlen(line);
 
 			/*
 			 * If EOL is \r\n, convert to just \n. Because stdout is a
@@ -531,6 +546,8 @@ pipe_read_line(char *cmd, char *line, int maxsize)
 			 */
 			if (len == 0 || line[len - 1] != '\n')
 				strcat(line, "\n");
+
+			retval = line;
 		}
 
 		CloseHandle(pi.hProcess);
