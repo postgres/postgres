@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.133 2001/05/14 21:53:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.134 2001/05/14 22:06:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,7 +49,6 @@
 #include "catalog/pg_relcheck.h"
 #include "catalog/pg_rewrite.h"
 #include "catalog/pg_type.h"
-#include "catalog/pg_variable.h"
 #include "commands/trigger.h"
 #include "lib/hasht.h"
 #include "miscadmin.h"
@@ -2166,8 +2165,7 @@ RelationCacheInitializePhase2(void)
 		fixrdesc(TypeRelationName);
 
 		/*
-		 * We don't bother to update the entries for pg_variable or
-		 * pg_log.
+		 * We don't bother to update the entries for pg_log.
 		 */
 	}
 }

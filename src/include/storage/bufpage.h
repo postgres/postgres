@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufpage.h,v 1.41 2001/03/22 04:01:05 momjian Exp $
+ * $Id: bufpage.h,v 1.42 2001/05/14 22:06:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,9 +54,9 @@
  * obviously, a page is not formatted before it is initialized with by
  * a call to PageInit.
  *
- * the contents of the special pg_variable/pg_time/pg_log tables are
- * raw disk blocks with special formats.  these are the only "access
- * methods" that need not write disk pages.
+ * The contents of the special pg_log tables are raw disk blocks with
+ * special formats.  these are the only "access methods" that need not
+ * write disk pages.
  *
  * NOTES:
  *
