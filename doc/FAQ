@@ -1,8 +1,8 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Sat Sep 13 22:00:02 EDT 1997
-   Version: 6.2beta
+   Last updated: Mon Sep 29 22:45:58 EDT 1997
+   Version: 6.2
    
    Current maintainer: Bruce Momjian (maillist@candle.pha.pa.us)
    
@@ -413,6 +413,10 @@ Section 2: Installation Questions
    this parameter too high, the process will not start or crash
    unexpectedly. Each buffer is 8K and the defualt is 64 buffers.
    
+   You can also use the postmaster -S option to increase the maximum
+   amount of memory used by each backend process for temporary sorts.
+   Each buffer is 1K and the defualt is 512 buffers.
+   
   2.12) What debugging features are available in PostgreSQL?
   
    PostgreSQL has several features that report status information that
@@ -434,28 +438,29 @@ Section 2: Installation Questions
    This file can contain useful information about problems or errors
    encountered by the server. Postmaster has a -d option that allows even
    more detailed information to be reported. The -d option takes a number
-   1-3 that specifies the debug level. The query plans in a verbose debug
-   file can be formatted using the 'indent' program. Be warned that a
-   debug level of three generates large log files.
+   1-3 that specifies the debug level. Be warned that a debug level of 3
+   generates large log files.
    
    You can actuall run the postgres backend from the command line, and
    type your SQL statement directly. This is recommended ONLY for
    debugging purposes. Note that a newline terminates the query, not a
-   semicolon. If you have compiled with debugging symbols, you can
-   perhaps use a debugger to see what is happening. Because the backend
-   was not started from the postmaster, it is not running in an identical
-   environment and locking/backend interaction problems may not be
-   duplicated. Some operating system can attach to a running backend
-   directly to diagnose problems.
+   semicolon. If you have compiled with debugging symbols, you can use a
+   debugger to see what is happening. Because the backend was not started
+   from the postmaster, it is not running in an identical environment and
+   locking/backend interaction problems may not be duplicated. Some
+   operating system can attach to a running backend directly to diagnose
+   problems.
    
    The postgres program has a -s, -A, -t options that can be very usefull
    for debugging and performance measurements.
    
-   The EXPLAIN command (see this FAQ) allows you to see how PostgreSQL is
-   iterpreting your query.
-   
    You can also compile with profiling to see what functions are taking
-   execution time.
+   execution time. The backend profile files will be deposited in the
+   pgsql/data/base/dbname directory. The client profile file will be put
+   in the current directory.
+   
+   The EXPLAIN command (see this FAQ) allows you to see how PostgreSQL is
+   interpreting your query.
    
   2.13) How do I enable more than 32 concurrent backends?
   
