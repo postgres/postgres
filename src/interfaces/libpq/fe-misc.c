@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-misc.c,v 1.107 2004/06/03 00:07:38 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-misc.c,v 1.108 2004/06/08 13:49:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1132,7 +1132,7 @@ libpq_gettext(const char *msgid)
 	{
 		already_bound = 1;
 		/* No relocatable lookup here because the binary could be anywhere */
-		bindtextdomain("libpq", getenv("PGLOCALE") ? getenv("PGLOCALE") : LOCALEDIR);
+		bindtextdomain("libpq", getenv("PGLOCALEDIR") ? getenv("PGLOCALEDIR") : LOCALEDIR);
 	}
 
 	return dgettext("libpq", msgid);

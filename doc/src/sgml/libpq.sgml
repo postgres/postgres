@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.156 2004/06/03 00:07:35 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.157 2004/06/08 13:49:22 momjian Exp $
 -->
 
  <chapter id="libpq">
@@ -3585,18 +3585,18 @@ sets the default mode for the genetic query optimizer.
 <listitem>
 <para>
 <indexterm>
- <primary><envar>PGETC</envar></primary>
+ <primary><envar>PGSYSCONFDIR</envar></primary>
 </indexterm>
-<envar>PGETC</envar>
+<envar>PGSYSCONFDIR</envar>
 sets the directory containing the <filename>pg_service.conf</> file.
 </para>
 </listitem>
 <listitem>
 <para>
 <indexterm>
- <primary><envar>PGLOCALE</envar></primary>
+ <primary><envar>PGLOCALEDIR</envar></primary>
 </indexterm>
-<envar>PGLOCALE</envar>
+<envar>PGLOCALEDIR</envar>
 sets the directory containing the <literal>locale</> files.
 </para>
 </listitem>

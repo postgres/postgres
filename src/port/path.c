@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/path.c,v 1.17 2004/06/03 00:07:38 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/path.c,v 1.18 2004/06/08 13:49:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -233,7 +233,7 @@ set_pglocale_pgservice(const char *argv0, const char *app)
 {
 	char path[MAXPGPATH];
 	char my_exec_path[MAXPGPATH];
-	char env_path[MAXPGPATH + strlen("PGLOCALE=")]; /* longer than PGETC */
+	char env_path[MAXPGPATH + strlen("PGLOCALEDIR=")]; /* longer than PGSYSCONFDIR */
 
 	/* don't set LC_ALL in the backend */
 	if (strcmp(app, "postgres") != 0)
@@ -247,20 +247,20 @@ set_pglocale_pgservice(const char *argv0, const char *app)
 	bindtextdomain(app, path);
 	textdomain(app);
 
-	if (!getenv("PGLOCALE"))
+	if (!getenv("PGLOCALEDIR"))
 	{
 		/* set for libpq to use */
-		sprintf(env_path, "PGLOCALE=%s", path);
+		sprintf(env_path, "PGLOCALEDIR=%s", path);
 		putenv(env_path);
 	}
 #endif
 
-	if (!getenv("PGETC"))
+	if (!getenv("PGSYSCONFDIR"))
 	{
 		get_etc_path(my_exec_path, path);
 	
 		/* set for libpq to use */
-		sprintf(env_path, "PGETC=%s", path);
+		sprintf(env_path, "PGSYSCONFDIR=%s", path);
 		putenv(env_path);
 	}
 }
