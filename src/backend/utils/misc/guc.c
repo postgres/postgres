@@ -4,7 +4,7 @@
  * Support for grand unified configuration scheme, including SET
  * command, configuration file, and command line options.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.19 2000/11/14 01:15:02 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.20 2000/11/14 19:13:27 petere Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -41,8 +41,8 @@ extern int XLOGbuffers;
 extern int XLOG_DEBUG;
 #ifdef ENABLE_SYSLOG
 extern char *Syslog_facility;
-extern char *Syslog_progid;
-       bool check_facility(const char *facility);
+extern char *Syslog_ident;
+bool check_facility(const char *facility);
 #endif
 
 /*
@@ -308,10 +308,11 @@ ConfigureNamesString[] =
 
 	{"unix_socket_group",         PGC_POSTMASTER,       &Unix_socket_group,
 	 "", NULL},
+
 #ifdef ENABLE_SYSLOG
-	{"syslog_facility",           PGC_SIGHUP,	    &Syslog_facility, 
+	{"syslog_facility",           PGC_POSTMASTER,	    &Syslog_facility, 
 	"LOCAL0", check_facility},	 
-	{"syslog_progid",             PGC_SIGHUP,	    &Syslog_progid, 
+	{"syslog_ident",              PGC_POSTMASTER,	    &Syslog_ident, 
 	"postgres", NULL},	 
 #endif
 
@@ -608,7 +609,7 @@ set_config_option(const char * name, const char * value, GucContext
 				bool boolval;
                 if (!parse_bool(value, &boolval))
 				{
-					elog(elevel, "Option '%s' requires a boolean value", name);
+					elog(elevel, "option '%s' requires a boolean value", name);
 					return false;
 				}
 				if (DoIt)
@@ -629,12 +630,12 @@ set_config_option(const char * name, const char * value, GucContext
 
                 if (!parse_int(value, &intval))
 				{
-                    elog(elevel, "Option '%s' expects an integer value", name);
+                    elog(elevel, "option '%s' expects an integer value", name);
 					return false;
 				}
                 if (intval < conf->min || intval > conf->max)
 				{
-                    elog(elevel, "Option '%s' value %d is outside"
+                    elog(elevel, "option '%s' value %d is outside"
 						 " of permissible range [%d .. %d]",
 						 name, intval, conf->min, conf->max);
 					return false;
@@ -657,12 +658,12 @@ set_config_option(const char * name, const char * value, GucContext
 
                 if (!parse_real(value, &dval))
 				{
-                    elog(elevel, "Option '%s' expects a real number", name);
+                    elog(elevel, "option '%s' expects a real number", name);
 					return false;
 				}
                 if (dval < conf->min || dval > conf->max)
 				{
-                    elog(elevel, "Option '%s' value %g is outside"
+                    elog(elevel, "option '%s' value %g is outside"
 						 " of permissible range [%g .. %g]",
 						 name, dval, conf->min, conf->max);
 					return false;
@@ -683,7 +684,7 @@ set_config_option(const char * name, const char * value, GucContext
 			{
 				if (conf->parse_hook && !(conf->parse_hook)(value))
 				{
-					elog(elevel, "Option '%s' rejects value '%s'", name, value);
+					elog(elevel, "invalid value for option '%s': '%s'", name, value);
 					return false;
 				}
 				if (DoIt)
@@ -824,6 +825,9 @@ ParseLongOption(const char * string, char ** name, char ** value)
 		if (*cp == '-')
 			*cp = '_';
 }
+
+
+
 #ifdef ENABLE_SYSLOG
 bool 
 check_facility(const char *facility)

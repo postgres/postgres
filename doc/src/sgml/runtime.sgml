@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.35 2000/11/14 18:11:30 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.36 2000/11/14 19:13:26 petere Exp $
 -->
 
 <Chapter Id="runtime">
@@ -825,22 +825,25 @@ env PGOPTIONS='-c geqo=off' psql
       <term>SYSLOG_FACILITY (<type>string</type>)</term>
        <listitem>
         <para>
-          If the SYSLOG option is set to 1 or greater, this option determines
-          the <application>syslog</application> facility used.  You may choose
-          from LOCAL0, LOCAL1, LOCAL2, LOCAL3, LOCAL4, LOCAL5, LOCAL6, LOCAL7.
-          the default is LOCAL0
+          This option determines the <application>syslog</application>
+          <quote>facility</quote> to be used when syslog is enabled.
+          You may choose from LOCAL0, LOCAL1, LOCAL2, LOCAL3, LOCAL4,
+          LOCAL5, LOCAL6, LOCAL7; the default is LOCAL0.  See also the
+          documentation of your system's
+          <application>syslog</application>.
         </para>
        </listitem>
      </varlistentry>
      
      <varlistentry>
-      <term>SYSLOG_PROGID (<type>string</type>)</term>
+      <term>SYSLOG_IDENT (<type>string</type>)</term>
        <listitem>
         <para>
-         If the SYSLOG option is set to 1 or greater, this option determines
-         the program id used to identify <product>PostgreSQL</product> messages
-         in <application>syslog</application> log messages.  The default is
-         postgres.
+         If logging to syslog is enabled, this option determines the
+         program name used to identify
+         <productname>PostgreSQL</productname> messages in
+         <application>syslog</application> log messages.  The default
+         is <quote>postgres</quote>.
         </para>
        </listitem>
       </varlistentry>

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.66 2000/11/13 21:35:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.67 2000/11/14 19:13:27 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,8 +58,8 @@ extern CommandDest whereToSendOutput;
  * ... in theory anyway
  */
 int Use_syslog = 0;
-char *Syslog_facility = "LOCAL0";
-char *Syslog_progid = "postgres";
+char *Syslog_facility;
+char *Syslog_ident;
 
 static void write_syslog(int level, const char *line);
 
@@ -646,7 +646,7 @@ write_syslog(int level, const char *line)
 			syslog_fac = LOG_LOCAL6;
 		if (strcasecmp(Syslog_facility,"LOCAL7") == 0)
 			syslog_fac = LOG_LOCAL7;
-		openlog(Syslog_progid, LOG_PID | LOG_NDELAY, syslog_fac);
+		openlog(Syslog_ident, LOG_PID | LOG_NDELAY, syslog_fac);
 		openlog_done = true;
 	}
 
