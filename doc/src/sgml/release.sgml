@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.263 2004/06/12 03:54:51 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.264 2004/06/12 04:02:53 momjian Exp $
 -->
 
 <appendix id="release">
@@ -47,7 +47,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.263 2004/06/12 03:54:51 momjian
 <listitem><para>Add missing check for invalid protocol packet length in binary COPY (Tom)</para></listitem>
 <para>
   This fixes a difficult-to-exploit security hole.
-</para>
+</para></listitem>
 </itemizedlist>
 
   </sect2>
