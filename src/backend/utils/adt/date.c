@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * date.c--
- *    Functions for the built-in type "AbsoluteTime".
+ *    Utilities for the built-in type "AbsoluteTime" (defined in nabstime).
  *    Functions for the built-in type "RelativeTime".
  *    Functions for the built-in type "TimeInterval".
  *
@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.5 1997/02/14 04:17:35 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.6 1997/03/14 23:19:57 scrappy Exp $
  *
  * NOTES
  *   This code is actually (almost) unused.
@@ -35,25 +35,11 @@
 #include "access/xact.h"
 #include "utils/builtins.h"	/* where function declarations go */
 #include "utils/palloc.h"
+#include "utils/dt.h"
 
-#define	TM_YEAR_BASE	1900		/* compatible to UNIX time */
-#define	EPOCH_YEAR	1970		/* compatible to UNIX time */
-#define	YEAR_MAX	2038		/* otherwise overflow */
-#define	YEAR_MIN	1902		/* otherwise overflow */
-#define	DAYS_PER_LYEAR	366
-#define	DAYS_PER_NYEAR	365
-#define	HOURS_PER_DAY	24
-#define	MINS_PER_HOUR	60
-#define	SECS_PER_MIN	60
-#define	MAX_LONG	2147483647	/* 2^31 */
-
-/* absolute time definitions */
-#define	TIME_NOW_STR		"now"	   /* represents time now */
-#define	TIME_EPOCH_STR		"epoch"	   /* Jan 1 00:00:00 1970 GMT */
-#define TIME_EPOCH_STR_LEN	(sizeof(TIME_EPOCH_STR)-1)
-
-#define	INVALID_ABSTIME_STR 	"Undefined AbsTime"
-#define	INVALID_ABSTIME_STR_LEN	(sizeof(INVALID_ABSTIME_STR)-1)
+#ifndef USE_NEW_TIME_CODE
+#define USE_NEW_TIME_CODE 1
+#endif
 
 #define	INVALID_RELTIME_STR	"Undefined RelTime"
 #define	INVALID_RELTIME_STR_LEN (sizeof(INVALID_RELTIME_STR)-1)
@@ -66,10 +52,7 @@
  *  sixty-eight years on either side of that.
  */ 
 
-#define	IsCharDigit(C)		isdigit(C)
-#define	IsCharA_Z(C)		isalpha(C)		
 #define	IsSpace(C)		((C) == ' ')
-#define	IsNull(C)		((C) == NULL)
 
 #define	T_INTERVAL_INVAL   0	/* data represents no valid interval */
 #define	T_INTERVAL_VALID   1	/* data represents a valid interval */
@@ -101,20 +84,13 @@ static	int	sec_tab[] = {
 	3600, 3600, 86400, 86400, 604800,  604800,
 	2592000,  2592000,  31536000,  31536000 };
 
-/* maximal values (in seconds) per unit which can be represented */
-static	int	unit_max_quantity[] = {
-	2144448000, 2144448000, 35740800, 35740800,
-	595680, 595680, 24820, 24820, 3545, 3545,
-	827, 827, 68, 68 };
-
-
-struct timeb *TimeDifferenceFromGMT = NULL;
-
 /*
  * Function prototypes -- internal to this file only
  */
+
 static int correct_unit(char unit[], int *unptr);
 static int correct_dir(char direction[], int *signptr);
+
 static int istinterval(char *i_string, 
 		       AbsoluteTime *i_start, 
 		       AbsoluteTime *i_end);
@@ -126,41 +102,45 @@ static int istinterval(char *i_string,
 /*
  *	reltimein	- converts a reltime string in an internal format
  */
-int32	/* RelativeTime */
-reltimein(char *timestring)
+RelativeTime
+reltimein(char *str)
 {
-    int		error;
-    int32 /* RelativeTime */	timeinsec;
-    int		sign, unitnr;
-    long		quantity;
-    
-    error = isreltime(timestring, &sign, &quantity, &unitnr);
-    
-#ifdef	DATEDEBUG
-    elog(DEBUG, "reltimein: isreltime(%s) returns error=%d, %d, %d, %d",
-	 timestring, error, sign, quantity, unitnr);
-#endif	/* !DATEDEBUG */
-    
-    if (error != 1) {
-	timeinsec = INVALID_RELTIME;  /*invalid time representation */
-    } else {
-	/* this check is necessary, while no control on overflow */
-	if (quantity > unit_max_quantity[unitnr] || quantity < 0) {
-#ifdef	DATEDEBUG
-	    elog(DEBUG, "reltimein: illegal quantity %d (< %d)",
-		 quantity, unit_max_quantity[unitnr]);
-#endif	/* DATEDEBUG */
-	    timeinsec = INVALID_RELTIME; /* illegal quantity */
-	} else {
-	    timeinsec = sign * quantity * sec_tab[unitnr];
-#ifdef	DATEDEBUG
-	    elog(DEBUG, "reltimein: computed timeinsec %d",
-		 timeinsec);
-#endif	/* DATEDEBUG */
-	}
-    }
-    return(timeinsec);
-}
+    RelativeTime result;
+
+    struct tm tt, *tm = &tt;
+    double fsec;
+    int dtype;
+    char *field[MAXDATEFIELDS];
+    int nf, ftype[MAXDATEFIELDS];
+    char lowstr[MAXDATELEN+1];
+
+    if (!PointerIsValid(str))
+	elog(WARN,"Bad (null) date external representation",NULL);
+
+    if (strlen(str) > MAXDATELEN)
+	elog( WARN, "Bad (length) reltime external representation '%s'",str);
+
+    if ((ParseDateTime( str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
+      || (DecodeDateDelta( field, ftype, nf, &dtype, tm, &fsec) != 0))
+	elog(WARN,"Bad reltime external representation '%s'",str);
+
+#ifdef DATEDEBUG
+printf( "reltimein- %d fields are type %d (DTK_DATE=%d)\n", nf, dtype, DTK_DATE);
+#endif
+
+    switch (dtype) {
+    case DTK_DELTA:
+	result = ((((tm->tm_hour*60)+tm->tm_min)*60)+tm->tm_sec);
+	result += (((tm->tm_year*365)+(tm->tm_mon*30)+tm->tm_mday)*(24*60*60));
+	return(result);
+
+    default:
+	return(INVALID_RELTIME);
+    };
+
+    elog(WARN,"Bad reltime (internal coding error) '%s'",str);
+    return(INVALID_RELTIME);
+} /* reltimein() */
 
 
 /*
@@ -379,42 +359,42 @@ AbsoluteTime timenow()
  *	reltimele	- returns 1, iff t1 less than or equal to t2
  *	reltimege	- returns 1, iff t1 greater than or equal to t2
  */
-int32 reltimeeq(RelativeTime t1, RelativeTime t2)
+bool reltimeeq(RelativeTime t1, RelativeTime t2)
 {
     if (t1 == INVALID_RELTIME || t2 == INVALID_RELTIME)
 	return 0;
     return(t1 == t2);
 }
 
-int32 reltimene(RelativeTime t1, RelativeTime t2)
+bool reltimene(RelativeTime t1, RelativeTime t2)
 {
     if (t1 == INVALID_RELTIME || t2 == INVALID_RELTIME)
 	return 0;
     return(t1 != t2);
 }
 
-int32 reltimelt(RelativeTime t1, RelativeTime t2)
+bool reltimelt(RelativeTime t1, RelativeTime t2)
 {
     if (t1 == INVALID_RELTIME || t2 == INVALID_RELTIME)
 	return 0;
     return(t1 < t2);
 }
 
-int32 reltimegt(RelativeTime t1, RelativeTime t2)
+bool reltimegt(RelativeTime t1, RelativeTime t2)
 {
     if (t1 == INVALID_RELTIME || t2 == INVALID_RELTIME)
 	return 0;
     return(t1 > t2);
 }
 
-int32 reltimele(RelativeTime t1, RelativeTime t2)
+bool reltimele(RelativeTime t1, RelativeTime t2)
 {
     if (t1 == INVALID_RELTIME || t2 == INVALID_RELTIME)
 	return 0;
     return(t1 <= t2);
 }
 
-int32 reltimege(RelativeTime t1, RelativeTime t2)
+bool reltimege(RelativeTime t1, RelativeTime t2)
 {
     if (t1 == INVALID_RELTIME || t2 == INVALID_RELTIME)
 	return 0;
@@ -425,7 +405,7 @@ int32 reltimege(RelativeTime t1, RelativeTime t2)
 /*
  *	intervaleq	- returns 1, iff interval i1 is equal to interval i2
  */
-int32 intervaleq(TimeInterval i1, TimeInterval i2)
+bool intervaleq(TimeInterval i1, TimeInterval i2)
 {
     if (i1->status == T_INTERVAL_INVAL || i2->status == T_INTERVAL_INVAL)
 	return(0);	/* invalid interval */
@@ -437,7 +417,7 @@ int32 intervaleq(TimeInterval i1, TimeInterval i2)
  *	intervalleneq	- returns 1, iff length of interval i is equal to
  *				reltime t
  */
-int32 intervalleneq(TimeInterval i, RelativeTime t)
+bool intervalleneq(TimeInterval i, RelativeTime t)
 {
     RelativeTime rt;
     
@@ -451,7 +431,7 @@ int32 intervalleneq(TimeInterval i, RelativeTime t)
  *	intervallenne	- returns 1, iff length of interval i is not equal
  *				to reltime t
  */
-int32 intervallenne(TimeInterval i, RelativeTime t)
+bool intervallenne(TimeInterval i, RelativeTime t)
 {
     RelativeTime rt;
     
@@ -465,7 +445,7 @@ int32 intervallenne(TimeInterval i, RelativeTime t)
  *	intervallenlt	- returns 1, iff length of interval i is less than
  *				reltime t
  */
-int32 intervallenlt(TimeInterval i, RelativeTime t)
+bool intervallenlt(TimeInterval i, RelativeTime t)
 {
     RelativeTime rt;
     
@@ -479,7 +459,7 @@ int32 intervallenlt(TimeInterval i, RelativeTime t)
  *	intervallengt	- returns 1, iff length of interval i is greater than
  *				reltime t
  */
-int32 intervallengt(TimeInterval i, RelativeTime t)
+bool intervallengt(TimeInterval i, RelativeTime t)
 {
     RelativeTime rt;
     
@@ -493,7 +473,7 @@ int32 intervallengt(TimeInterval i, RelativeTime t)
  *	intervallenle	- returns 1, iff length of interval i is less or equal
  *				    than reltime t
  */
-int32 intervallenle(TimeInterval i, RelativeTime t)
+bool intervallenle(TimeInterval i, RelativeTime t)
 {	
     RelativeTime rt;
     
@@ -507,7 +487,7 @@ int32 intervallenle(TimeInterval i, RelativeTime t)
  *	intervallenge	- returns 1, iff length of interval i is greater or
  * 				equal than reltime t
  */
-int32 intervallenge(TimeInterval i, RelativeTime t)
+bool intervallenge(TimeInterval i, RelativeTime t)
 {
     RelativeTime rt;
     
@@ -520,7 +500,7 @@ int32 intervallenge(TimeInterval i, RelativeTime t)
 /*
  *	intervalct	- returns 1, iff interval i1 contains interval i2
  */
-int32 intervalct(TimeInterval i1, TimeInterval i2)
+bool intervalct(TimeInterval i1, TimeInterval i2)
 {
     if (i1->status == T_INTERVAL_INVAL || i2->status == T_INTERVAL_INVAL)
 	return(0);
@@ -531,7 +511,7 @@ int32 intervalct(TimeInterval i1, TimeInterval i2)
 /*
  *	intervalov	- returns 1, iff interval i1 (partially) overlaps i2
  */
-int32 intervalov(TimeInterval i1, TimeInterval i2)
+bool intervalov(TimeInterval i1, TimeInterval i2)
 {
     if (i1->status == T_INTERVAL_INVAL || i2->status == T_INTERVAL_INVAL)
 	return(0);
@@ -735,7 +715,6 @@ static int correct_dir(char direction[], int *signptr)
 	} else
 	    return (0);  /* invalid direction descriptor */
 }
-
 
 /*
  *	istinterval	- returns 1, iff i_string is a valid interval descr.

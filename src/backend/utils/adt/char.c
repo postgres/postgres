@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/char.c,v 1.2 1996/09/10 06:41:34 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/char.c,v 1.3 1997/03/14 23:19:54 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -127,25 +127,25 @@ char *char16out(char *s)
  *   PUBLIC ROUTINES                                                         *
  *****************************************************************************/
 
-int32 chareq(int8 arg1, int8 arg2)	{ return(arg1 == arg2); }
-int32 charne(int8 arg1, int8 arg2)	{ return(arg1 != arg2); }
+bool chareq(int8 arg1, int8 arg2)	{ return(arg1 == arg2); }
+bool charne(int8 arg1, int8 arg2)	{ return(arg1 != arg2); }
 #ifdef UNSIGNED_CHAR_TEXT
-int32 charlt(int8 arg1, int8 arg2)    { return((uint8)arg1 <  (uint8)arg2); }
-int32 charle(int8 arg1, int8 arg2)    { return((uint8)arg1 <= (uint8)arg2); }
-int32 chargt(int8 arg1, int8 arg2)    { return((uint8)arg1 >  (uint8)arg2); }
-int32 charge(int8 arg1, int8 arg2)    { return((uint8)arg1 >= (uint8)arg2); }
+bool charlt(int8 arg1, int8 arg2)    { return((uint8)arg1 <  (uint8)arg2); }
+bool charle(int8 arg1, int8 arg2)    { return((uint8)arg1 <= (uint8)arg2); }
+bool chargt(int8 arg1, int8 arg2)    { return((uint8)arg1 >  (uint8)arg2); }
+bool charge(int8 arg1, int8 arg2)    { return((uint8)arg1 >= (uint8)arg2); }
 #else
-int32 charlt(int8 arg1, int8 arg2)	{ return(arg1 < arg2); }
-int32 charle(int8 arg1, int8 arg2)	{ return(arg1 <= arg2); }
-int32 chargt(int8 arg1, int8 arg2)	{ return(arg1 > arg2); }
-int32 charge(int8 arg1, int8 arg2)	{ return(arg1 >= arg2); }
+bool charlt(int8 arg1, int8 arg2)	{ return(arg1 < arg2); }
+bool charle(int8 arg1, int8 arg2)	{ return(arg1 <= arg2); }
+bool chargt(int8 arg1, int8 arg2)	{ return(arg1 > arg2); }
+bool charge(int8 arg1, int8 arg2)	{ return(arg1 >= arg2); }
 #endif
 int8 charpl(int8 arg1, int8 arg2)       { return(arg1 + arg2); }
 int8 charmi(int8 arg1, int8 arg2)	{ return(arg1 - arg2); }
 int8 charmul(int8 arg1, int8 arg2)	{ return(arg1 * arg2); }
 int8 chardiv(int8 arg1, int8 arg2)	{ return(arg1 / arg2); }
 
-int32 cideq(int8 arg1, int8 arg2)	{ return(arg1 == arg2); }
+bool cideq(int8 arg1, int8 arg2)	{ return(arg1 == arg2); }
 
 /*
  *	char16eq	- returns 1 iff arguments are equal
@@ -161,48 +161,48 @@ int32 cideq(int8 arg1, int8 arg2)	{ return(arg1 == arg2); }
  *	char16ge	- returns 1 iff a <= b
  *
  */
-int32 char16eq(char *arg1, char *arg2)
+bool char16eq(char *arg1, char *arg2)
 {
     if (arg1 == NULL || arg2 == NULL)
-	return((int32) 0);
+	return((bool) 0);
     return(strncmp(arg1, arg2, 16) == 0);
 }
 
-int32 char16ne(char *arg1, char *arg2)
+bool char16ne(char *arg1, char *arg2)
 {
     if (arg1 == NULL || arg2 == NULL)
-	return((int32) 0);
+	return((bool) 0);
     return(strncmp(arg1, arg2, 16) != 0);
 }
 
-int32 char16lt(char *arg1, char *arg2)
+bool char16lt(char *arg1, char *arg2)
 {
     if (arg1 == NULL || arg2 == NULL)
-	return((int32) 0);
-    return((int32) (strncmp(arg1, arg2, 16) < 0));
+	return((bool) 0);
+    return((bool) (strncmp(arg1, arg2, 16) < 0));
 }
 
-int32 char16le(char *arg1, char *arg2)
+bool char16le(char *arg1, char *arg2)
 {
     if (arg1 == NULL || arg2 == NULL)
-	return((int32) 0);
-    return((int32) (strncmp(arg1, arg2, 16) <= 0));
+	return((bool) 0);
+    return((bool) (strncmp(arg1, arg2, 16) <= 0));
 }
 
-int32 char16gt(char *arg1, char *arg2)
+bool char16gt(char *arg1, char *arg2)
 {
     if (arg1 == NULL || arg2 == NULL)
-	return((int32) 0);
+	return((bool) 0);
     
-    return((int32) (strncmp(arg1, arg2, 16) > 0));
+    return((bool) (strncmp(arg1, arg2, 16) > 0));
 }
 
-int32 char16ge(char *arg1, char *arg2)
+bool char16ge(char *arg1, char *arg2)
 {
     if (arg1 == NULL || arg2 == NULL)
-	return((int32) 0);
+	return((bool) 0);
     
-    return((int32) (strncmp(arg1, arg2, 16) >= 0));
+    return((bool) (strncmp(arg1, arg2, 16) >= 0));
 }
 
 
@@ -229,32 +229,32 @@ char *char2out(uint16 s)
     return(result);
 }
 
-int32 char2eq(uint16 a, uint16 b)
+bool char2eq(uint16 a, uint16 b)
 {
     return(strncmp((char *) &a, (char *) &b, 2) == 0);
 }
 
-int32 char2ne(uint16 a, uint16 b)
+bool char2ne(uint16 a, uint16 b)
 {
     return(strncmp((char *) &a, (char *) &b, 2) != 0);
 }
 
-int32 char2lt(uint16 a, uint16 b)
+bool char2lt(uint16 a, uint16 b)
 {
     return(strncmp((char *) &a, (char *) &b, 2) < 0);
 }
 
-int32 char2le(uint16 a, uint16 b)
+bool char2le(uint16 a, uint16 b)
 {
     return(strncmp((char *) &a, (char *) &b, 2) <= 0);
 }
 
-int32 char2gt(uint16 a, uint16 b)
+bool char2gt(uint16 a, uint16 b)
 {
     return(strncmp((char *) &a, (char *) &b, 2) > 0);
 }
 
-int32 char2ge(uint16 a, uint16 b)
+bool char2ge(uint16 a, uint16 b)
 {
     return(strncmp((char *) &a, (char *) &b, 2) >= 0);
 }
@@ -289,32 +289,32 @@ char *char4out(s)
     return(result);
 }
 
-int32 char4eq(uint32 a, uint32 b)
+bool char4eq(uint32 a, uint32 b)
 {
     return(strncmp((char *) &a, (char *) &b, 4) == 0);
 }
 
-int32 char4ne(uint32 a, uint32 b)
+bool char4ne(uint32 a, uint32 b)
 {
     return(strncmp((char *) &a, (char *) &b, 4) != 0);
 }
 
-int32 char4lt(uint32 a, uint32 b)
+bool char4lt(uint32 a, uint32 b)
 {
     return(strncmp((char *) &a, (char *) &b, 4) < 0);
 }
 
-int32 char4le(uint32 a, uint32 b)
+bool char4le(uint32 a, uint32 b)
 {
     return(strncmp((char *) &a, (char *) &b, 4) <= 0);
 }
 
-int32 char4gt(uint32 a, uint32 b)
+bool char4gt(uint32 a, uint32 b)
 {
     return(strncmp((char *) &a, (char *) &b, 4) > 0);
 }
 
-int32 char4ge(uint32 a, uint32 b)
+bool char4ge(uint32 a, uint32 b)
 {
     return(strncmp((char *) &a, (char *) &b, 4) >= 0);
 }
@@ -351,46 +351,46 @@ char *char8out(char *s)
     return(result);
 }
 
-int32 char8eq(char *arg1, char *arg2)
+bool char8eq(char *arg1, char *arg2)
 {
     if (arg1 == NULL || arg2 == NULL)
-	return((int32) 0);
-    return(strncmp(arg1, arg2, 8) == 0);
+	return((bool) 0);
+    return((bool) strncmp(arg1, arg2, 8) == 0);
 }
 
-int32 char8ne(char *arg1, char *arg2)
+bool char8ne(char *arg1, char *arg2)
 {
     if (arg1 == NULL || arg2 == NULL)
-	return((int32) 0);
-    return(strncmp(arg1, arg2, 8) != 0);
+	return((bool) 0);
+    return((bool) strncmp(arg1, arg2, 8) != 0);
 }
 
-int32 char8lt(char *arg1, char *arg2)
+bool char8lt(char *arg1, char *arg2)
 {
     if (arg1 == NULL || arg2 == NULL)
-	return((int32) 0);
-    return(strncmp(arg1, arg2, 8) < 0);
+	return((bool) 0);
+    return((bool) strncmp(arg1, arg2, 8) < 0);
 }
 
-int32 char8le(char *arg1, char *arg2)
+bool char8le(char *arg1, char *arg2)
 {
     if (arg1 == NULL || arg2 == NULL)
-	return((int32) 0);
-    return(strncmp(arg1, arg2, 8) <= 0);
+	return((bool) 0);
+    return((bool) strncmp(arg1, arg2, 8) <= 0);
 }
 
-int32 char8gt(char *arg1, char *arg2)
+bool char8gt(char *arg1, char *arg2)
 {
     if (arg1 == NULL || arg2 == NULL)
-	return((int32) 0);
-    return(strncmp(arg1, arg2, 8) > 0);
+	return((bool) 0);
+    return((bool) strncmp(arg1, arg2, 8) > 0);
 }
 
-int32 char8ge(char *arg1, char *arg2)
+bool char8ge(char *arg1, char *arg2)
 {
     if (arg1 == NULL || arg2 == NULL)
-	return((int32) 0);
-    return(strncmp(arg1, arg2, 8) >= 0);
+	return((bool) 0);
+    return((bool) strncmp(arg1, arg2, 8) >= 0);
 }
 
 int32 char8cmp(char *arg1, char *arg2)

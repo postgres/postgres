@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.10 1997/01/16 03:53:51 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.11 1997/03/14 23:21:12 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -255,16 +255,16 @@ textcat(text* t1, text* t2)
  *	texteq		- returns 1 iff arguments are equal
  *	textne		- returns 1 iff arguments are not equal
  */
-int32
+bool
 texteq(struct varlena *arg1, struct varlena *arg2)
 {
     register int	len;
     register char	*a1p, *a2p;
     
     if (arg1 == NULL || arg2 == NULL)
-	return((int32) NULL);
+	return((bool) NULL);
     if ((len = arg1->vl_len) != arg2->vl_len)
-	return((int32) 0);
+	return((bool) 0);
     a1p = arg1->vl_dat;
     a2p = arg2->vl_dat;
     /*
@@ -275,17 +275,17 @@ texteq(struct varlena *arg1, struct varlena *arg2)
     len -= sizeof(int32);
     while (len-- != 0)
 	if (*a1p++ != *a2p++)
-	    return((int32) 0);
-    return((int32) 1);
+	    return((bool) 0);
+    return((bool) 1);
 }
 
-int32
+bool
 textne(struct varlena *arg1, struct varlena *arg2) 
 {
-    return((int32) !texteq(arg1, arg2));
+    return((bool) !texteq(arg1, arg2));
 }
 
-int32
+bool
 text_lt(struct varlena *arg1, struct varlena *arg2) 
 {
     int len;
@@ -295,7 +295,7 @@ text_lt(struct varlena *arg1, struct varlena *arg2)
     char *a1p, *a2p;
     
     if (arg1 == NULL || arg2 == NULL)
-	return((int32) 0);
+	return((bool) 0);
     
     a1p = (unsigned char *)VARDATA(arg1);
     a2p = (unsigned char *)VARDATA(arg2);
@@ -311,12 +311,12 @@ text_lt(struct varlena *arg1, struct varlena *arg2)
 	    len--;
 	}
     if (len)
-	return (int32) (*a1p < *a2p);
+	return (bool) (*a1p < *a2p);
     else
-	return (int32) (arg1->vl_len < arg2->vl_len);
+	return (bool) (arg1->vl_len < arg2->vl_len);
 }
 
-int32
+bool
 text_le(struct varlena *arg1, struct varlena *arg2) 
 {
     int len;
@@ -326,7 +326,7 @@ text_le(struct varlena *arg1, struct varlena *arg2)
     char *a1p, *a2p;
     
     if (arg1 == NULL || arg2 == NULL)
-	return((int32) 0);
+	return((bool) 0);
     
     a1p = (unsigned char *)VARDATA(arg1);
     a2p = (unsigned char *)VARDATA(arg2);
@@ -342,21 +342,21 @@ text_le(struct varlena *arg1, struct varlena *arg2)
 	    len--;
 	}
     if (len)
-	return (int32) (*a1p < *a2p);
+	return (bool) (*a1p < *a2p);
     else
-	return ((int32) VARSIZE(arg1) <= VARSIZE(arg2));
+	return ((bool) VARSIZE(arg1) <= VARSIZE(arg2));
 }
 
-int32
+bool
 text_gt(struct varlena *arg1, struct varlena *arg2) 
 {
-    return ((int32) !text_le(arg1, arg2));
+    return ((bool) !text_le(arg1, arg2));
 }
 
-int32
+bool
 text_ge(struct varlena *arg1, struct varlena *arg2) 
 {
-    return ((int32) !text_lt(arg1, arg2));
+    return ((bool) !text_lt(arg1, arg2));
 }
 
 /*-------------------------------------------------------------

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.7 1997/03/12 20:41:14 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.8 1997/03/14 23:18:16 scrappy Exp $
  *	
  * NOTES
  *	Transaction aborts can now occur two ways:
@@ -171,7 +171,14 @@ TransactionState CurrentTransactionState =
     &CurrentTransactionStateData;
 
 /* ----------------
- *	info returned when the system is desabled
+ *	info returned when the system is disabled
+ *
+ * Apparently a lot of this code is inherited from other prototype systems.
+ * For DisabledStartTime, use a symbolic value to make the relationships clearer.
+ * The old value of 1073741823 corresponds to a date in y2004, which is coming closer
+ *  every day. It appears that if we return a value guaranteed larger than
+ *  any real time associated with a transaction then comparisons in other
+ *  modules will still be correct. Let's use BIG_ABSTIME for this. tgl 2/14/97
  *
  *	Note:  I have no idea what the significance of the
  *	       1073741823 in DisabledStartTime.. I just carried
@@ -183,7 +190,7 @@ TransactionId DisabledTransactionId = (TransactionId)-1;
      
 CommandId DisabledCommandId = (CommandId) -1;
      
-AbsoluteTime DisabledStartTime = (AbsoluteTime) 1073741823;
+AbsoluteTime DisabledStartTime = (AbsoluteTime) BIG_ABSTIME; /* 1073741823; */
      
 /* ----------------
  *	overflow flag

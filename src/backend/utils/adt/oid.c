@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/oid.c,v 1.5 1997/03/12 21:09:15 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/oid.c,v 1.6 1997/03/14 23:20:52 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -100,19 +100,19 @@ char *oidout(Oid o)
  *   PUBLIC ROUTINES                                                         *
  *****************************************************************************/
 
-int32 oideq(Oid arg1, Oid arg2)
+bool oideq(Oid arg1, Oid arg2)
 {
     return(arg1 == arg2);
 }
 
-int32 oidne(Oid arg1, Oid arg2)
+bool oidne(Oid arg1, Oid arg2)
 {
     return(arg1 != arg2);
 }
 
-int32 oid8eq(Oid arg1[], Oid arg2[])
+bool oid8eq(Oid arg1[], Oid arg2[])
 {
-    return (int32)(memcmp(arg1, arg2, 8 * sizeof(Oid)) == 0);
+    return (bool)(memcmp(arg1, arg2, 8 * sizeof(Oid)) == 0);
 }
 
 bool oideqint4(Oid arg1, int32 arg2)

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.11 1997/01/10 09:47:28 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.12 1997/03/14 23:17:46 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,7 @@
 #include <storage/lmgr.h>
 #include <access/rtree.h>
 #include <storage/bufmgr.h>
-#include <utils/geo-decls.h>
+#include <utils/geo_decls.h>
 #include <executor/executor.h>
 #include <access/heapam.h>
 #include <fmgr.h>

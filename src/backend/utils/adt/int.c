@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.3 1996/11/06 10:30:55 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.4 1997/03/14 23:20:26 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -225,36 +225,36 @@ int16 i4toi2(int32 arg1)
  *	intgt		- returns 1 iff arg1 > arg2
  *	intge		- returns 1 iff arg1 >= arg2
  */
-int32 int4eq(int32 arg1, int32 arg2) { return(arg1 == arg2); }
-int32 int4ne(int32 arg1, int32 arg2) { return(arg1 != arg2); }
-int32 int4lt(int32 arg1, int32 arg2) { return(arg1 < arg2); }
-int32 int4le(int32 arg1, int32 arg2) { return(arg1 <= arg2); }
-int32 int4gt(int32 arg1, int32 arg2) { return(arg1 > arg2); } 
-int32 int4ge(int32 arg1, int32 arg2) { return(arg1 >= arg2); }
+bool int4eq(int32 arg1, int32 arg2) { return(arg1 == arg2); }
+bool int4ne(int32 arg1, int32 arg2) { return(arg1 != arg2); }
+bool int4lt(int32 arg1, int32 arg2) { return(arg1 < arg2); }
+bool int4le(int32 arg1, int32 arg2) { return(arg1 <= arg2); }
+bool int4gt(int32 arg1, int32 arg2) { return(arg1 > arg2); } 
+bool int4ge(int32 arg1, int32 arg2) { return(arg1 >= arg2); }
 
-int32 int2eq(int16 arg1, int16 arg2) { return(arg1 == arg2); }
-int32 int2ne(int16 arg1, int16 arg2) { return(arg1 != arg2); }
-int32 int2lt(int16 arg1, int16 arg2) { return(arg1 < arg2); }
-int32 int2le(int16 arg1, int16 arg2) { return(arg1 <= arg2); }
-int32 int2gt(int16 arg1, int16 arg2) { return(arg1 > arg2); }
-int32 int2ge(int16 arg1, int16 arg2) { return(arg1 >= arg2); }
+bool int2eq(int16 arg1, int16 arg2) { return(arg1 == arg2); }
+bool int2ne(int16 arg1, int16 arg2) { return(arg1 != arg2); }
+bool int2lt(int16 arg1, int16 arg2) { return(arg1 < arg2); }
+bool int2le(int16 arg1, int16 arg2) { return(arg1 <= arg2); }
+bool int2gt(int16 arg1, int16 arg2) { return(arg1 > arg2); }
+bool int2ge(int16 arg1, int16 arg2) { return(arg1 >= arg2); }
 
-int32 int24eq(int32 arg1, int32 arg2) { return(arg1 == arg2); }
-int32 int24ne(int32 arg1, int32 arg2) { return(arg1 != arg2); }
-int32 int24lt(int32 arg1, int32 arg2) { return(arg1 < arg2); }
-int32 int24le(int32 arg1, int32 arg2) { return(arg1 <= arg2); }
-int32 int24gt(int32 arg1, int32 arg2) { return(arg1 > arg2); }
-int32 int24ge(int32 arg1, int32 arg2) { return(arg1 >= arg2); }
+bool int24eq(int32 arg1, int32 arg2) { return(arg1 == arg2); }
+bool int24ne(int32 arg1, int32 arg2) { return(arg1 != arg2); }
+bool int24lt(int32 arg1, int32 arg2) { return(arg1 < arg2); }
+bool int24le(int32 arg1, int32 arg2) { return(arg1 <= arg2); }
+bool int24gt(int32 arg1, int32 arg2) { return(arg1 > arg2); }
+bool int24ge(int32 arg1, int32 arg2) { return(arg1 >= arg2); }
 
-int32 int42eq(int32 arg1, int32 arg2) { return(arg1 == arg2); }
-int32 int42ne(int32 arg1, int32 arg2) { return(arg1 != arg2); }
-int32 int42lt(int32 arg1, int32 arg2) { return(arg1 < arg2); }
-int32 int42le(int32 arg1, int32 arg2) { return(arg1 <= arg2); }
-int32 int42gt(int32 arg1, int32 arg2) { return(arg1 > arg2); } 
-int32 int42ge(int32 arg1, int32 arg2) { return(arg1 >= arg2); }
+bool int42eq(int32 arg1, int32 arg2) { return(arg1 == arg2); }
+bool int42ne(int32 arg1, int32 arg2) { return(arg1 != arg2); }
+bool int42lt(int32 arg1, int32 arg2) { return(arg1 < arg2); }
+bool int42le(int32 arg1, int32 arg2) { return(arg1 <= arg2); }
+bool int42gt(int32 arg1, int32 arg2) { return(arg1 > arg2); } 
+bool int42ge(int32 arg1, int32 arg2) { return(arg1 >= arg2); }
 
 
-int32 keyfirsteq(int16 *arg1, int16 arg2) { return(*arg1 == arg2); }
+bool keyfirsteq(int16 *arg1, int16 arg2) { return(*arg1 == arg2); }
 
 /*
  *	int[24]pl	- returns arg1 + arg2

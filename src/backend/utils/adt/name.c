@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/name.c,v 1.1.1.1 1996/07/09 06:22:04 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/name.c,v 1.2 1997/03/14 23:20:43 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,49 +74,49 @@ char *nameout(NameData *s)
  *	namege	- returns 1 iff a <= b
  *
  */
-int32 nameeq(NameData *arg1, NameData *arg2)
+bool nameeq(NameData *arg1, NameData *arg2)
 {
     if (!arg1  || !arg2)
 	return 0;
     else
-	return (strncmp(arg1->data, arg2->data, NAMEDATALEN) == 0);
+	return ((bool) strncmp(arg1->data, arg2->data, NAMEDATALEN) == 0);
 }
 
-int32 namene(NameData *arg1, NameData *arg2)
+bool namene(NameData *arg1, NameData *arg2)
 {
     if (arg1 == NULL || arg2 == NULL)
-	return((int32) 0);
-    return(strncmp(arg1->data, arg2->data, NAMEDATALEN) != 0);
+	return((bool) 0);
+    return((bool) (strncmp(arg1->data, arg2->data, NAMEDATALEN) != 0));
 }
 
-int32 namelt(NameData *arg1, NameData *arg2)
+bool namelt(NameData *arg1, NameData *arg2)
 {
     if (arg1 == NULL || arg2 == NULL)
-	return((int32) 0);
-    return((int32) (strncmp(arg1->data, arg2->data, NAMEDATALEN) < 0));
+	return((bool) 0);
+    return((bool) (strncmp(arg1->data, arg2->data, NAMEDATALEN) < 0));
 }
 
-int32 namele(NameData *arg1, NameData *arg2)
+bool namele(NameData *arg1, NameData *arg2)
 {
     if (arg1 == NULL || arg2 == NULL)
-	return((int32) 0);
-    return((int32) (strncmp(arg1->data, arg2->data, NAMEDATALEN) <= 0));
+	return((bool) 0);
+    return((bool) (strncmp(arg1->data, arg2->data, NAMEDATALEN) <= 0));
 }
 
-int32 namegt(NameData *arg1, NameData *arg2)
+bool namegt(NameData *arg1, NameData *arg2)
 {
     if (arg1 == NULL || arg2 == NULL)
-	return((int32) 0);
+	return((bool) 0);
     
-    return((int32) (strncmp(arg1->data, arg2->data, NAMEDATALEN) > 0));
+    return((bool) (strncmp(arg1->data, arg2->data, NAMEDATALEN) > 0));
 }
 
-int32 namege(NameData *arg1, NameData *arg2)
+bool namege(NameData *arg1, NameData *arg2)
 {
     if (arg1 == NULL || arg2 == NULL)
-	return((int32) 0);
+	return((bool) 0);
     
-    return((int32) (strncmp(arg1->data, arg2->data, NAMEDATALEN) >= 0));
+    return((bool) (strncmp(arg1->data, arg2->data, NAMEDATALEN) >= 0));
 }
 
 

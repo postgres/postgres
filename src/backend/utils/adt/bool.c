@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/bool.c,v 1.2 1996/11/03 06:53:03 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/bool.c,v 1.3 1997/03/14 23:19:52 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,12 +24,12 @@
 /*
  *	boolin		- converts "t" or "f" to 1 or 0
  */
-int32
+bool
 boolin(char *b)
 {
     if (b == NULL)
 	elog(WARN, "Bad input string for type bool");
-    return((int32) (*b == 't') || (*b == 'T'));
+    return((bool) (*b == 't') || (*b == 'T'));
 }
 
 /*
@@ -49,13 +49,13 @@ boolout(long b)
  *   PUBLIC ROUTINES                                                         *
  *****************************************************************************/
 
-int32
+bool
 booleq(int8 arg1, int8 arg2)	
 { 
     return(arg1 == arg2); 
 }
 
-int32
+bool
 boolne(int8 arg1, int8 arg2)	
 {
     return(arg1 != arg2); 

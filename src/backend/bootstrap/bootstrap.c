@@ -7,7 +7,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.16 1997/03/12 20:57:33 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.17 1997/03/14 23:18:32 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -89,7 +89,7 @@
 
 #include "catalog/catname.h"
 
-#include "utils/geo-decls.h"
+#include "utils/geo_decls.h"
 #include "utils/builtins.h"
 
 #include "catalog/index.h"
