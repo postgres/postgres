@@ -31,9 +31,18 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
+#if 0
 # include "sendmail.h"
 # include "pathnames.h"
+#endif
+
+# include "postgres.h"
+
+# include <stdarg.h>
+# define VA_LOCAL_DECL  va_list args;
+# define VA_START(f)    va_start(args, f)
+# define VA_END     va_end(args)
+
 # include <sys/ioctl.h>
 # include <sys/param.h>
 
@@ -59,50 +68,43 @@
  * causing nast effects.
  **************************************************************/
 
-/*static char _id[] = "$Id: snprintf.c,v 1.4 1998/09/04 14:34:23 scrappy Exp $";*/
-static void dopr();
+/*static char _id[] = "$Id: snprintf.c,v 1.5 1998/09/10 04:11:52 vadim Exp $";*/
 static char *end;
 static int	SnprfOverflow;
 
-/* VARARGS3 */
+int snprintf(char *str, size_t count, const char *fmt, ...);
+int vsnprintf(char *str, size_t count, const char *fmt, ...);
+static void dopr (char *buffer, const char *format, ... );
+
 int
-# ifdef __STDC__
 snprintf(char *str, size_t count, const char *fmt, ...)
-# else
-snprintf(str, count, fmt, va_alist)
-	char *str;
-	size_t count;
-	const char *fmt;
-	va_dcl
-#endif
 {
 	int len;
 	VA_LOCAL_DECL
 
 	VA_START(fmt);
-	len = vsnprintf(str, count, fmt, ap);
+	len = vsnprintf(str, count, fmt, args);
 	VA_END;
 	return len;
 }
 
 
-# ifndef luna2
 int
-vsnprintf(str, count, fmt, args)
-	char *str;
-	size_t count;
-	const char *fmt;
-	va_list args;
+vsnprintf(char *str, size_t count, const char *fmt, ...)
 {
+	VA_LOCAL_DECL
+
+	VA_START(fmt);
 	str[0] = 0;
 	end = str + count - 1;
 	SnprfOverflow = 0;
-	dopr( str, fmt, args );
+	dopr( str, fmt, args);
 	if (count > 0)
 		end[0] = 0;
-	if (SnprfOverflow && tTd(57, 2))
-		printf("\nvsnprintf overflow, len = %d, str = %s",
-			count, shortenstring(str, 203));
+	if (SnprfOverflow)
+		elog(NOTICE, "vsnprintf overflow, len = %d, str = %s",
+			count, str);
+	VA_END;
 	return strlen(str);
 }
 
@@ -117,20 +119,20 @@ static char *output;
 static void dopr_outch __P(( int c ));
 
 static void
-dopr( buffer, format, args )
-       char *buffer;
-       const char *format;
-       va_list args;
+dopr (char *buffer, const char *format, ... )
 {
-       int ch;
-       long value;
-       int longflag  = 0;
-       int pointflag = 0;
-       int maxwidth  = 0;
-       char *strvalue;
-       int ljust;
-       int len;
-       int zpad;
+	int ch;
+	long value;
+	int longflag  = 0;
+	int pointflag = 0;
+	int maxwidth  = 0;
+	char *strvalue;
+	int ljust;
+	int len;
+	int zpad;
+	VA_LOCAL_DECL
+
+	VA_START(format);
 
        output = buffer;
        while( (ch = *format++) ){
@@ -143,6 +145,7 @@ dopr( buffer, format, args )
                        switch( ch ){
                        case 0:
                                dostr( "**end of format**" , 0);
+							   VA_END;
                                return;
                        case '-': ljust = 1; goto nextch;
                        case '0': /* set zero padding if len not set */
@@ -222,6 +225,7 @@ dopr( buffer, format, args )
                }
        }
        *output = 0;
+	   VA_END;
 }
 
 static void
@@ -340,4 +344,4 @@ dopr_outch( c )
 		SnprfOverflow++;
 }
 
-# endif /* !luna2 */
+
