@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/large_obj.c,v 1.16 2001/08/10 18:57:39 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/large_obj.c,v 1.17 2001/10/04 22:39:34 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "large_obj.h"
@@ -14,6 +14,9 @@
 #include "variables.h"
 #include "common.h"
 #include "print.h"
+
+
+#define atooid(x)  ((Oid) strtoul((x), NULL, 10))
 
 
 /*
@@ -107,7 +110,7 @@ do_lo_export(const char *loid_arg, const char *filename_arg)
 		PQclear(res);
 	}
 
-	status = lo_export(pset.db, atol(loid_arg), filename_arg);
+	status = lo_export(pset.db, atooid(loid_arg), filename_arg);
 	if (status != 1)
 	{							/* of course this status is documented
 								 * nowhere :( */
@@ -187,7 +190,9 @@ do_lo_import(const char *filename_arg, const char *comment_arg)
 	}
 
 	/* insert description if given */
-	if (comment_arg)
+	/* XXX don't try to hack pg_description if not superuser */
+	/* XXX ought to replace this with some kind of COMMENT command */
+	if (comment_arg && pset.issuper)
 	{
 		char	*cmdbuf;
 		char	*bufptr;
@@ -204,7 +209,7 @@ do_lo_import(const char *filename_arg, const char *comment_arg)
 			return false;
 		}
 		sprintf(cmdbuf,
-				"INSERT INTO pg_description VALUES (%u, "
+				"INSERT INTO pg_description VALUES ('%u', "
 				"(SELECT oid FROM pg_class WHERE relname = 'pg_largeobject'),"
 				" 0, '", loid);
 		bufptr = cmdbuf + strlen(cmdbuf);
@@ -263,7 +268,7 @@ do_lo_unlink(const char *loid_arg)
 {
 	PGresult   *res;
 	int			status;
-	Oid			loid = (Oid) atol(loid_arg);
+	Oid			loid = atooid(loid_arg);
 	char		buf[256];
 	bool		own_transaction = true;
 	const char *var = GetVariable(pset.vars, "LO_TRANSACTION");
@@ -301,19 +306,23 @@ do_lo_unlink(const char *loid_arg)
 	}
 
 	/* remove the comment as well */
-	sprintf(buf, "DELETE FROM pg_description WHERE objoid = %u "
-			"AND classoid = (SELECT oid FROM pg_class WHERE relname = 'pg_largeobject')",
-			loid);
-	if (!(res = PSQLexec(buf)))
+	/* XXX don't try to hack pg_description if not superuser */
+	/* XXX ought to replace this with some kind of COMMENT command */
+	if (pset.issuper)
 	{
-		if (own_transaction)
+		sprintf(buf, "DELETE FROM pg_description WHERE objoid = '%u' "
+				"AND classoid = (SELECT oid FROM pg_class WHERE relname = 'pg_largeobject')",
+				loid);
+		if (!(res = PSQLexec(buf)))
 		{
-			res = PQexec(pset.db, "ROLLBACK");
-			PQclear(res);
+			if (own_transaction)
+			{
+				res = PQexec(pset.db, "ROLLBACK");
+				PQclear(res);
+			}
+			return false;
 		}
-		return false;
 	}
-
 
 	if (own_transaction)
 	{
@@ -327,7 +336,7 @@ do_lo_unlink(const char *loid_arg)
 	}
 
 
-	fprintf(pset.queryFout, "lo_unlink %d\n", loid);
+	fprintf(pset.queryFout, "lo_unlink %u\n", loid);
 
 	return true;
 }
