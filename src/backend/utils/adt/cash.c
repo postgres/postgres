@@ -9,7 +9,7 @@
  * workings can be found in the book "Software Solutions in C" by
  * Dale Schumacher, Academic Press, ISBN: 0-12-632360-7.
  * 
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.4 1997/04/15 17:39:44 scrappy Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.5 1997/04/18 02:55:54 vadim Exp $
  */
 
 #include <stdio.h>
@@ -22,6 +22,8 @@
 #include "miscadmin.h"
 #include "utils/builtins.h"
 #include "utils/cash.h"
+
+static const char *num_word(Cash value);
 
 /* when we go to 64 bit values we will have to modify this */
 #define CASH_BUFSZ	24
