@@ -252,7 +252,7 @@
    Additional mailing lists and information about PostgreSQL can be found
    via the PostgreSQL WWW home page at:
    
-     http://postgreSQL.org
+     http://www.postgreSQL.org
      
    There is also an IRC channel on EFNet, channel #PostgreSQL. I use the
    unix command irc -c '#PostgreSQL' "$USER" irc.phoenix.net.
@@ -453,6 +453,7 @@
                                       
     3.1) Why does initdb fail?
     
+   Try these:
      * check that you don't have any of the previous version's binaries
        in your path
      * check to see that you have the proper paths set
@@ -469,7 +470,7 @@
     message. Why?
     
    It could be a variety of problems, but first check to see that you
-   have system V extensions installed in your kernel. PostgreSQL requires
+   have System V extensions installed in your kernel. PostgreSQL requires
    kernel support for shared memory and semaphores.
    
     3.4) When I try to start the postmaster, I get IpcMemoryCreate errors. Why?
@@ -606,7 +607,7 @@
    You need to increase the postmaster's limit on how many concurrent
    backend processes it can start.
    
-   In Postgres 6.5 and up, the default limit is 32 processes. You can
+   In PostgreSQL 6.5 and up, the default limit is 32 processes. You can
    increase it by restarting the postmaster with a suitable -N value.
    With the default configuration you can set -N as large as 1024; if you
    need more, increase MAXBACKENDS in include/config.h and rebuild. You
@@ -622,12 +623,12 @@
    number of semaphores, SEMMNS and SEMMNI, the maximum number of
    processes, NPROC, the maximum number of processes per user, MAXUPRC,
    and the maximum number of open files, NFILE and NINODE. The reason
-   that Postgres has a limit on the number of allowed backend processes
+   that PostgreSQL has a limit on the number of allowed backend processes
    is so that you can ensure that your system won't run out of resources.
    
-   In Postgres versions prior to 6.5, the maximum number of backends was
-   64, and changing it required a rebuild after altering the MaxBackendId
-   constant in include/storage/sinvaladt.h.
+   In PostgreSQL versions prior to 6.5, the maximum number of backends
+   was 64, and changing it required a rebuild after altering the
+   MaxBackendId constant in include/storage/sinvaladt.h.
    
     3.13) What are the pg_tempNNN.NN files in my database directory?
     
@@ -704,7 +705,7 @@ Maximum number of indexes on a table?    unlimited
     4.7)How much database disk space is required to store data from a typical
     flat file?
     
-   A Postgres database can require about six and a half times the disk
+   A PostgreSQL database can require about six and a half times the disk
    space required to store the data in a flat file.
    
    Consider a file of 300,000 lines with two integers on each line. The
@@ -772,7 +773,7 @@ Maximum number of indexes on a table?    unlimited
    
     4.11) What is an R-tree index?
     
-   An r-tree index is used for indexing spatial data. A hash index can't
+   An R-tree index is used for indexing spatial data. A hash index can't
    handle range searches. A B-tree index only handles range searches in a
    single dimension. R-tree's can handle multi-dimensional data. For
    example, if an R-tree index can be built on an attribute of type
@@ -839,13 +840,13 @@ BYTEA           bytea           variable-length array of bytes
     4.16.1) How do I create a serial/auto-incrementing field?
     
    PostgreSQL supports SERIAL data type. It auto-creates a sequence and
-   index on the column. For example, this...
+   index on the column. For example, this:
         CREATE TABLE person (
                 id   SERIAL,
                 name TEXT
         );
 
-   ...is automatically translated into this...
+   is automatically translated into this:
         CREATE SEQUENCE person_id_seq;
         CREATE TABLE person (
                 id   INT4 NOT NULL DEFAULT nextval('person_id_seq'),
@@ -858,7 +859,7 @@ BYTEA           bytea           variable-length array of bytes
    However, if you need to dump and reload the database, you need to use
    pg_dump's -o option or COPY WITH OIDS option to preserve the oids.
    
-   For more details, see Bruce Momjian's chapter on Numbering Rows.
+   Numbering Rows.
    
     4.16.2) How do I get the back the generated SERIAL value after an insert?
     
