@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Jan 22 20:21:13 EST 2001
+Last updated:		Mon Jan 22 21:26:54 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -303,6 +303,7 @@ MISC
   connection pooling
 * Add SET PERFORMANCE_TIPS option to suggest INDEX, VACUUM, VACUUM
   ANALYZE, and CLUSTER
+* Delay fsync() when other backends are about to commit too
 
 SOURCE CODE
 -----------
