@@ -1,7 +1,9 @@
 /*
  *  Copied from NetBSD CVS, 2002-07-19, bjm
  *  Add do ... while() macro fix
- *  Remove __inline, _DIAGASSERTs
+ *  Remove __inline, _DIAGASSERTs, __P
+ *
+ *  $Header: /cvsroot/pgsql/src/port/qsort.c,v 1.2 2002/08/12 15:24:07 tgl Exp $
  */
 
 /*	$NetBSD: qsort.c,v 1.12 1999/09/20 04:39:40 lukem Exp $ */
@@ -39,18 +41,16 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
+#include <stdlib.h>
+#include <errno.h>
 #include <sys/types.h>
 
-#include <assert.h>
-#include <errno.h>
-#include <stdlib.h>
 
-static char *med3 __P((char *, char *, char *,
-	 int (*) (const void *, const void *)));
-static void swapfunc __P((char *, char *, size_t, int));
+static char *med3 (char *, char *, char *,
+				   int (*) (const void *, const void *));
+static void swapfunc (char *, char *, size_t, int);
 
-#define min(a, b)	(a) < (b) ? a : b
+#define min(a, b)	((a) < (b) ? (a) : (b))
 
 /*
  * Qsort routine from Bentley & McIlroy's "Engineering a Sort Function".
@@ -98,7 +98,7 @@ med3(a, b, c, cmp)
 char	   *a,
 		   *b,
 		   *c;
-int			(*cmp) __P((const void *, const void *));
+int			(*cmp) (const void *, const void *);
 {
 	return cmp(a, b) < 0 ?
 		(cmp(b, c) < 0 ? b : (cmp(a, c) < 0 ? c : a))
@@ -110,7 +110,7 @@ qsort(a, n, es, cmp)
 void	   *a;
 size_t		n,
 			es;
-int			(*cmp) __P((const void *, const void *));
+int			(*cmp) (const void *, const void *);
 {
 	char	   *pa,
 			   *pb,
