@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.12 1999/11/07 23:08:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.13 1999/11/22 17:56:39 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -132,7 +132,7 @@ plpgsql_compile(Oid fn_oid, int functype)
 	 * Lookup the pg_proc tuple by Oid
 	 * ----------
 	 */
-	procTup = SearchSysCacheTuple(PROOID,
+	procTup = SearchSysCacheTuple(PROCOID,
 								  ObjectIdGetDatum(fn_oid),
 								  0, 0, 0);
 	if (!HeapTupleIsValid(procTup))
@@ -174,7 +174,7 @@ plpgsql_compile(Oid fn_oid, int functype)
 			 * Lookup the functions return type
 			 * ----------
 			 */
-			typeTup = SearchSysCacheTuple(TYPOID,
+			typeTup = SearchSysCacheTuple(TYPEOID,
 					  ObjectIdGetDatum(procStruct->prorettype), 0, 0, 0);
 
 			if (!HeapTupleIsValid(typeTup))
@@ -205,7 +205,7 @@ plpgsql_compile(Oid fn_oid, int functype)
 				 * Get the parameters type
 				 * ----------
 				 */
-				typeTup = SearchSysCacheTuple(TYPOID,
+				typeTup = SearchSysCacheTuple(TYPEOID,
 				  ObjectIdGetDatum(procStruct->proargtypes[i]), 0, 0, 0);
 
 				if (!HeapTupleIsValid(typeTup))
@@ -601,7 +601,7 @@ plpgsql_parse_word(char *word)
 	 * ----------
 	 */
 	typeXlated = xlateSqlType(cp);
-	typeTup = SearchSysCacheTuple(TYPNAME,
+	typeTup = SearchSysCacheTuple(TYPENAME,
 								  PointerGetDatum(typeXlated), 0, 0, 0);
 	if (HeapTupleIsValid(typeTup))
 	{
@@ -924,7 +924,7 @@ plpgsql_parse_wordtype(char *word)
 	 * ----------
 	 */
 	typeXlated = xlateSqlType(cp);
-	typeTup = SearchSysCacheTuple(TYPNAME,
+	typeTup = SearchSysCacheTuple(TYPENAME,
 								  PointerGetDatum(typeXlated), 0, 0, 0);
 	if (HeapTupleIsValid(typeTup))
 	{
@@ -1067,7 +1067,7 @@ plpgsql_parse_dblwordtype(char *string)
 	}
 	attrStruct = (Form_pg_attribute) GETSTRUCT(attrtup);
 
-	typetup = SearchSysCacheTuple(TYPOID,
+	typetup = SearchSysCacheTuple(TYPEOID,
 						ObjectIdGetDatum(attrStruct->atttypid), 0, 0, 0);
 	if (!HeapTupleIsValid(typetup))
 	{
@@ -1143,7 +1143,7 @@ plpgsql_parse_wordrowtype(char *string)
 	 * Fetch the tables pg_type tuple too
 	 * ----------
 	 */
-	typetup = SearchSysCacheTuple(TYPNAME,
+	typetup = SearchSysCacheTuple(TYPENAME,
 								  PointerGetDatum(word1), 0, 0, 0);
 	if (!HeapTupleIsValid(typetup))
 	{
@@ -1182,7 +1182,7 @@ plpgsql_parse_wordrowtype(char *string)
 		}
 		attrStruct = (Form_pg_attribute) GETSTRUCT(attrtup);
 
-		typetup = SearchSysCacheTuple(TYPOID,
+		typetup = SearchSysCacheTuple(TYPEOID,
 						ObjectIdGetDatum(attrStruct->atttypid), 0, 0, 0);
 		if (!HeapTupleIsValid(typetup))
 		{

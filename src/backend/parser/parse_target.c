@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.48 1999/11/07 23:08:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.49 1999/11/22 17:56:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -329,7 +329,7 @@ SizeTargetExpr(ParseState *pstate,
 		oid_array[i] = InvalidOid;
 
 	/* attempt to find with arguments exactly as specified... */
-	ftup = SearchSysCacheTuple(PRONAME,
+	ftup = SearchSysCacheTuple(PROCNAME,
 							   PointerGetDatum(funcname),
 							   Int32GetDatum(2),
 							   PointerGetDatum(oid_array),

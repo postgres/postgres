@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.108 1999/11/16 04:13:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.109 1999/11/22 17:55:57 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -964,7 +964,7 @@ RelationRemoveInheritance(Relation relation)
 	tuple = heap_getnext(scan, 0);
 	if (HeapTupleIsValid(tuple))
 	{
-		Oid		subclass = ((Form_pg_inherits) GETSTRUCT(tuple))->inhrel;
+		Oid		subclass = ((Form_pg_inherits) GETSTRUCT(tuple))->inhrelid;
 
 		heap_endscan(scan);
 		heap_close(catalogRelation, RowExclusiveLock);
@@ -979,7 +979,7 @@ RelationRemoveInheritance(Relation relation)
 	 *	so we can trash it.  First we remove dead INHERITS tuples.
 	 * ----------------
 	 */
-	entry.sk_attno = Anum_pg_inherits_inhrel;
+	entry.sk_attno = Anum_pg_inherits_inhrelid;
 
 	scan = heap_beginscan(catalogRelation,
 						  false,
@@ -1003,7 +1003,7 @@ RelationRemoveInheritance(Relation relation)
 	catalogRelation = heap_openr(InheritancePrecidenceListRelationName,
 								 RowExclusiveLock);
 
-	entry.sk_attno = Anum_pg_ipl_iplrel;
+	entry.sk_attno = Anum_pg_ipl_iplrelid;
 
 	scan = heap_beginscan(catalogRelation,
 						  false,
@@ -1157,7 +1157,7 @@ RelationTruncateIndexes(Relation heapRelation)
 		{
 			funcInfo = &fInfo;
 			FIsetnArgs(funcInfo, numberOfAttributes);
-			procTuple = SearchSysCacheTuple(PROOID, ObjectIdGetDatum(procId),
+			procTuple = SearchSysCacheTuple(PROCOID, ObjectIdGetDatum(procId),
 											0, 0, 0);
 			if (!HeapTupleIsValid(procTuple))
 				elog(ERROR, "RelationTruncateIndexes: index procedure not found");

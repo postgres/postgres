@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.14 1999/11/07 23:08:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.15 1999/11/22 17:56:40 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1553,7 +1553,7 @@ exec_stmt_raise(PLpgSQL_execstate * estate, PLpgSQL_stmt_raise * stmt)
 						extval = "<NULL>";
 					else
 					{
-						typetup = SearchSysCacheTuple(TYPOID,
+						typetup = SearchSysCacheTuple(TYPEOID,
 						ObjectIdGetDatum(var->datatype->typoid), 0, 0, 0);
 						if (!HeapTupleIsValid(typetup))
 							elog(ERROR, "cache lookup for type %u failed (1)", var->datatype->typoid);
@@ -1958,7 +1958,7 @@ exec_assign_value(PLpgSQL_execstate * estate,
 				 */
 				atttype = SPI_gettypeid(rec->tupdesc, i + 1);
 				atttypmod = rec->tupdesc->attrs[i]->atttypmod;
-				typetup = SearchSysCacheTuple(TYPOID,
+				typetup = SearchSysCacheTuple(TYPEOID,
 									 ObjectIdGetDatum(atttype), 0, 0, 0);
 				if (!HeapTupleIsValid(typetup))
 					elog(ERROR, "cache lookup for type %u failed", atttype);
@@ -2389,7 +2389,7 @@ exec_cast_value(Datum value, Oid valtype,
 			FmgrInfo	finfo_output;
 			char	   *extval;
 
-			typetup = SearchSysCacheTuple(TYPOID,
+			typetup = SearchSysCacheTuple(TYPEOID,
 									 ObjectIdGetDatum(valtype), 0, 0, 0);
 			if (!HeapTupleIsValid(typetup))
 				elog(ERROR, "cache lookup for type %u failed", valtype);

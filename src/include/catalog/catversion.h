@@ -36,7 +36,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: catversion.h,v 1.2 1999/11/04 08:01:06 inoue Exp $
+ * $Id: catversion.h,v 1.3 1999/11/22 17:56:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,6 +51,6 @@
  * catalog changes on the same day...)
  */
 
-#define CATALOG_VERSION_NO	199911041
+#define CATALOG_VERSION_NO	199911221
 
 #endif

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.32 1999/11/01 05:06:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.33 1999/11/22 17:56:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -251,7 +251,7 @@ transformArraySubscripts(ParseState *pstate,
 	/* Get the type tuple for the array */
 	typearray = exprType(arrayBase);
 
-	type_tuple = SearchSysCacheTuple(TYPOID,
+	type_tuple = SearchSysCacheTuple(TYPEOID,
 									 ObjectIdGetDatum(typearray),
 									 0, 0, 0);
 	if (!HeapTupleIsValid(type_tuple))
@@ -265,7 +265,7 @@ transformArraySubscripts(ParseState *pstate,
 			 type_struct_array->typname);
 
 	/* Get the type tuple for the array element type */
-	type_tuple = SearchSysCacheTuple(TYPOID,
+	type_tuple = SearchSysCacheTuple(TYPEOID,
 									 ObjectIdGetDatum(typeelement),
 									 0, 0, 0);
 	if (!HeapTupleIsValid(type_tuple))

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.13 1999/11/07 23:08:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.14 1999/11/22 17:56:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -310,7 +310,7 @@ ExtendIndex(char *indexRelationName, Expr *predicate, List *rangetable)
 /*		FIgetnArgs(funcInfo) = numberOfAttributes; */
 		FIsetnArgs(funcInfo, numberOfAttributes);
 
-		tuple = SearchSysCacheTuple(PROOID,
+		tuple = SearchSysCacheTuple(PROCOID,
 									ObjectIdGetDatum(indproc),
 									0, 0, 0);
 		if (!HeapTupleIsValid(tuple))
@@ -482,7 +482,7 @@ NormIndexAttrs(List *attList,	/* list of IndexElem's */
 		/* we want the type so we can set the proper alignment, etc. */
 		if (attribute->typename == NULL)
 		{
-			tuple = SearchSysCacheTuple(TYPOID,
+			tuple = SearchSysCacheTuple(TYPEOID,
 									 ObjectIdGetDatum(attform->atttypid),
 										0, 0, 0);
 			if (!HeapTupleIsValid(tuple))

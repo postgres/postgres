@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.30 1999/07/22 02:40:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.31 1999/11/22 17:56:26 momjian Exp $
  *
  * NOTES
  *	  This cruft is the server side of PQfn.
@@ -202,7 +202,7 @@ update_fp_info(Oid func_id, struct fp_info * fip)
 	MemSet((char *) fip, 0, (int) sizeof(struct fp_info));
 	fip->funcid = InvalidOid;
 
-	func_htp = SearchSysCacheTuple(PROOID,
+	func_htp = SearchSysCacheTuple(PROCOID,
 								   ObjectIdGetDatum(func_id),
 								   0, 0, 0);
 	if (!HeapTupleIsValid(func_htp))
@@ -219,7 +219,7 @@ update_fp_info(Oid func_id, struct fp_info * fip)
 	{
 		if (OidIsValid(argtypes[i]))
 		{
-			type_htp = SearchSysCacheTuple(TYPOID,
+			type_htp = SearchSysCacheTuple(TYPEOID,
 										   ObjectIdGetDatum(argtypes[i]),
 										   0, 0, 0);
 			if (!HeapTupleIsValid(type_htp))
@@ -235,7 +235,7 @@ update_fp_info(Oid func_id, struct fp_info * fip)
 
 	if (OidIsValid(rettype))
 	{
-		type_htp = SearchSysCacheTuple(TYPOID,
+		type_htp = SearchSysCacheTuple(TYPEOID,
 									   ObjectIdGetDatum(rettype),
 									   0, 0, 0);
 		if (!HeapTupleIsValid(type_htp))

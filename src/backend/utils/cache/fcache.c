@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.26 1999/07/17 20:18:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.27 1999/11/22 17:56:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,7 +53,7 @@ GetDynamicFuncArgType(Var *arg, ExprContext *econtext)
 	relname = (char *) getrelname(rtid, econtext->ecxt_range_table);
 
 
-	tup = SearchSysCacheTuple(TYPNAME,
+	tup = SearchSysCacheTuple(TYPENAME,
 							  PointerGetDatum(relname),
 							  0, 0, 0);
 	if (!tup)
@@ -89,7 +89,7 @@ init_fcache(Oid foid,
 	if (!use_syscache)
 		elog(ERROR, "what the ????, init the fcache without the catalogs?");
 
-	procedureTuple = SearchSysCacheTuple(PROOID,
+	procedureTuple = SearchSysCacheTuple(PROCOID,
 										 ObjectIdGetDatum(foid),
 										 0, 0, 0);
 
@@ -110,7 +110,7 @@ init_fcache(Oid foid,
 	 *	 to "null" so we just return it.
 	 * ----------------
 	 */
-	typeTuple = SearchSysCacheTuple(TYPOID,
+	typeTuple = SearchSysCacheTuple(TYPEOID,
 						   ObjectIdGetDatum(procedureStruct->prorettype),
 									0, 0, 0);
 
@@ -255,7 +255,7 @@ init_fcache(Oid foid,
 		else
 		{
 			tmp = (text *)
-				SearchSysCacheGetAttribute(PROOID,
+				SearchSysCacheGetAttribute(PROCOID,
 										   Anum_pg_proc_probin,
 										   ObjectIdGetDatum(foid),
 										   0, 0, 0);

@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.35 1999/11/07 23:08:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.36 1999/11/22 17:56:32 momjian Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -263,7 +263,7 @@ get_opcode(Oid opno)
 {
 	HeapTuple	tp;
 
-	tp = SearchSysCacheTuple(OPROID,
+	tp = SearchSysCacheTuple(OPEROID,
 							 ObjectIdGetDatum(opno),
 							 0, 0, 0);
 	if (HeapTupleIsValid(tp))
@@ -286,7 +286,7 @@ get_opname(Oid opno)
 {
 	HeapTuple	tp;
 
-	tp = SearchSysCacheTuple(OPROID,
+	tp = SearchSysCacheTuple(OPEROID,
 							 ObjectIdGetDatum(opno),
 							 0, 0, 0);
 	if (HeapTupleIsValid(tp))
@@ -310,7 +310,7 @@ op_mergejoinable(Oid opno, Oid ltype, Oid rtype, Oid *leftOp, Oid *rightOp)
 {
 	HeapTuple	tp;
 
-	tp = SearchSysCacheTuple(OPROID,
+	tp = SearchSysCacheTuple(OPEROID,
 							 ObjectIdGetDatum(opno),
 							 0, 0, 0);
 	if (HeapTupleIsValid(tp))
@@ -342,7 +342,7 @@ op_hashjoinable(Oid opno, Oid ltype, Oid rtype)
 {
 	HeapTuple	tp;
 
-	tp = SearchSysCacheTuple(OPROID,
+	tp = SearchSysCacheTuple(OPEROID,
 							 ObjectIdGetDatum(opno),
 							 0, 0, 0);
 	if (HeapTupleIsValid(tp))
@@ -362,7 +362,7 @@ get_operator_tuple(Oid opno)
 {
 	HeapTuple	optup;
 
-	if ((optup = SearchSysCacheTuple(OPROID,
+	if ((optup = SearchSysCacheTuple(OPEROID,
 									 ObjectIdGetDatum(opno),
 									 0, 0, 0)))
 		return optup;
@@ -381,7 +381,7 @@ get_commutator(Oid opno)
 {
 	HeapTuple	tp;
 
-	tp = SearchSysCacheTuple(OPROID,
+	tp = SearchSysCacheTuple(OPEROID,
 							 ObjectIdGetDatum(opno),
 							 0, 0, 0);
 	if (HeapTupleIsValid(tp))
@@ -404,7 +404,7 @@ get_negator(Oid opno)
 {
 	HeapTuple	tp;
 
-	tp = SearchSysCacheTuple(OPROID,
+	tp = SearchSysCacheTuple(OPEROID,
 							 ObjectIdGetDatum(opno),
 							 0, 0, 0);
 	if (HeapTupleIsValid(tp))
@@ -427,7 +427,7 @@ get_oprrest(Oid opno)
 {
 	HeapTuple	tp;
 
-	tp = SearchSysCacheTuple(OPROID,
+	tp = SearchSysCacheTuple(OPEROID,
 							 ObjectIdGetDatum(opno),
 							 0, 0, 0);
 	if (HeapTupleIsValid(tp))
@@ -450,7 +450,7 @@ get_oprjoin(Oid opno)
 {
 	HeapTuple	tp;
 
-	tp = SearchSysCacheTuple(OPROID,
+	tp = SearchSysCacheTuple(OPEROID,
 							 ObjectIdGetDatum(opno),
 							 0, 0, 0);
 	if (HeapTupleIsValid(tp))
@@ -474,7 +474,7 @@ get_func_rettype(Oid funcid)
 	HeapTuple	func_tuple;
 	Oid			funcrettype;
 
-	func_tuple = SearchSysCacheTuple(PROOID,
+	func_tuple = SearchSysCacheTuple(PROCOID,
 									 ObjectIdGetDatum(funcid),
 									 0, 0, 0);
 
@@ -548,7 +548,7 @@ get_typlen(Oid typid)
 {
 	HeapTuple	tp;
 
-	tp = SearchSysCacheTuple(TYPOID,
+	tp = SearchSysCacheTuple(TYPEOID,
 							 ObjectIdGetDatum(typid),
 							 0, 0, 0);
 	if (HeapTupleIsValid(tp))
@@ -572,7 +572,7 @@ get_typbyval(Oid typid)
 {
 	HeapTuple	tp;
 
-	tp = SearchSysCacheTuple(TYPOID,
+	tp = SearchSysCacheTuple(TYPEOID,
 							 ObjectIdGetDatum(typid),
 							 0, 0, 0);
 	if (HeapTupleIsValid(tp))
@@ -590,7 +590,7 @@ get_typalign(Oid typid)
 {
 	HeapTuple	tp;
 
-	tp = SearchSysCacheTuple(TYPOID,
+	tp = SearchSysCacheTuple(TYPEOID,
 							 ObjectIdGetDatum(typid),
 							 0, 0, 0);
 	if (HeapTupleIsValid(tp))
@@ -628,7 +628,7 @@ get_typdefault(Oid typid)
 	 * First, see if there is a non-null typdefault field (usually there isn't)
 	 */
 	typDefault = (struct varlena *)
-		SearchSysCacheGetAttribute(TYPOID,
+		SearchSysCacheGetAttribute(TYPEOID,
 								   Anum_pg_type_typdefault,
 								   ObjectIdGetDatum(typid),
 								   0, 0, 0);
@@ -645,7 +645,7 @@ get_typdefault(Oid typid)
 	 * just did --- but at present this path isn't taken often enough to
 	 * make it worth fixing.
 	 */
-	typeTuple = SearchSysCacheTuple(TYPOID,
+	typeTuple = SearchSysCacheTuple(TYPEOID,
 									ObjectIdGetDatum(typid),
 									0, 0, 0);
 
@@ -727,7 +727,7 @@ get_typtype(Oid typid)
 {
 	HeapTuple	tp;
 
-	tp = SearchSysCacheTuple(TYPOID,
+	tp = SearchSysCacheTuple(TYPEOID,
 							 ObjectIdGetDatum(typid),
 							 0, 0, 0);
 	if (HeapTupleIsValid(tp))

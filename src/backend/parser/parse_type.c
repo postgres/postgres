@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.26 1999/11/07 23:08:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.27 1999/11/22 17:56:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,7 @@
 bool
 typeidIsValid(Oid id)
 {
-	return (SearchSysCacheTuple(TYPOID,
+	return (SearchSysCacheTuple(TYPEOID,
 								ObjectIdGetDatum(id),
 								0, 0, 0) != NULL);
 }
@@ -39,7 +39,7 @@ typeidTypeName(Oid id)
 	HeapTuple	tup;
 	Form_pg_type typetuple;
 
-	if (!(tup = SearchSysCacheTuple(TYPOID,
+	if (!(tup = SearchSysCacheTuple(TYPEOID,
 									ObjectIdGetDatum(id),
 									0, 0, 0)))
 	{
@@ -56,7 +56,7 @@ typeidType(Oid id)
 {
 	HeapTuple	tup;
 
-	if (!(tup = SearchSysCacheTuple(TYPOID,
+	if (!(tup = SearchSysCacheTuple(TYPEOID,
 									ObjectIdGetDatum(id),
 									0, 0, 0)))
 	{
@@ -75,7 +75,7 @@ typenameType(char *s)
 	if (s == NULL)
 		elog(ERROR, "type(): Null type");
 
-	if (!(tup = SearchSysCacheTuple(TYPNAME,
+	if (!(tup = SearchSysCacheTuple(TYPENAME,
 									PointerGetDatum(s),
 									0, 0, 0)))
 		elog(ERROR, "Unable to locate type name '%s' in catalog", s);
@@ -154,7 +154,7 @@ typeidOutfunc(Oid type_id)
 	Form_pg_type type;
 	Oid			outfunc;
 
-	typeTuple = SearchSysCacheTuple(TYPOID,
+	typeTuple = SearchSysCacheTuple(TYPEOID,
 									ObjectIdGetDatum(type_id),
 									0, 0, 0);
 	if (!HeapTupleIsValid(typeTuple))
@@ -173,7 +173,7 @@ typeidTypeRelid(Oid type_id)
 	HeapTuple	typeTuple;
 	Form_pg_type type;
 
-	typeTuple = SearchSysCacheTuple(TYPOID,
+	typeTuple = SearchSysCacheTuple(TYPEOID,
 									ObjectIdGetDatum(type_id),
 									0, 0, 0);
 	if (!HeapTupleIsValid(typeTuple))
@@ -212,7 +212,7 @@ GetArrayElementType(Oid typearray)
 	HeapTuple	type_tuple;
 	Form_pg_type type_struct_array;
 
-	type_tuple = SearchSysCacheTuple(TYPOID,
+	type_tuple = SearchSysCacheTuple(TYPEOID,
 									 ObjectIdGetDatum(typearray),
 									 0, 0, 0);
 

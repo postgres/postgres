@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_operator.h,v 1.60 1999/10/11 06:28:29 inoue Exp $
+ * $Id: pg_operator.h,v 1.61 1999/11/22 17:56:37 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -274,7 +274,13 @@ DATA(insert OID = 1283 (  ";"		PGUID 0 l t f	0 701 701	0	0	0	0 dlog1 - - ));
 DATA(insert OID = 1284 (  "|"		PGUID 0 l t f	0 704 702	0	0	0	0 intervalstart - - ));
 DATA(insert OID = 606 (  "<#>"		PGUID 0 b t f 702 702 704	0	0	0	0 mktinterval - - ));
 DATA(insert OID = 607 (  "="	   PGUID 0 b t t  26  26  16 607 608 609 609 oideq eqsel eqjoinsel ));
+#define MIN_OIDCMP 607 /* used by cache code */
 DATA(insert OID = 608 (  "<>"	   PGUID 0 b t f  26  26  16 608 607  0  0 oidne neqsel neqjoinsel ));
+DATA(insert OID = 609 (  "<"	   PGUID 0 b t f  26  26  16 610 612  0  0 int4lt intltsel intltjoinsel ));
+DATA(insert OID = 610 (  ">"	   PGUID 0 b t f  26  26  16 609 611  0  0 int4gt intgtsel intgtjoinsel ));
+DATA(insert OID = 611 (  "<="	   PGUID 0 b t f  26  26  16 612 610  0  0 int4le intltsel intltjoinsel ));
+DATA(insert OID = 612 (  ">="	   PGUID 0 b t f  26  26  16 611 609  0  0 int4ge intgtsel intgtjoinsel ));
+#define MAX_OIDCMP 612 /* used by cache code */
 
 DATA(insert OID = 644 (  "<>"	   PGUID 0 b t f  30  30  16 644 649   0   0 oid8ne neqsel neqjoinsel ));
 DATA(insert OID = 645 (  "<"	   PGUID 0 b t f  30  30  16 646 648   0   0 oid8lt intltsel intltjoinsel ));
@@ -282,11 +288,6 @@ DATA(insert OID = 646 (  ">"	   PGUID 0 b t f  30  30  16 645 647   0   0 oid8gt
 DATA(insert OID = 647 (  "<="	   PGUID 0 b t f  30  30  16 648 646   0   0 oid8le intltsel intltjoinsel ));
 DATA(insert OID = 648 (  ">="	   PGUID 0 b t f  30  30  16 647 645   0   0 oid8ge intgtsel intgtjoinsel ));
 DATA(insert OID = 649 (  "="	   PGUID 0 b t t  30  30  16 649 644 645 645 oid8eq eqsel eqjoinsel ));
-
-DATA(insert OID = 609 (  "<"	   PGUID 0 b t f  26  26  16 610 612  0  0 int4lt intltsel intltjoinsel ));
-DATA(insert OID = 610 (  ">"	   PGUID 0 b t f  26  26  16 609 611  0  0 int4gt intgtsel intgtjoinsel ));
-DATA(insert OID = 611 (  "<="	   PGUID 0 b t f  26  26  16 612 610  0  0 int4le intltsel intltjoinsel ));
-DATA(insert OID = 612 (  ">="	   PGUID 0 b t f  26  26  16 611 609  0  0 int4ge intgtsel intgtjoinsel ));
 
 DATA(insert OID = 613 (  "<->"	   PGUID 0 b t f 600 628 701   0   0  0  0 dist_pl - - ));
 DATA(insert OID = 614 (  "<->"	   PGUID 0 b t f 600 601 701   0   0  0  0 dist_ps - - ));

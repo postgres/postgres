@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.56 1999/11/07 23:07:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.57 1999/11/22 17:55:52 momjian Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -309,7 +309,7 @@ TupleDescInitEntry(TupleDesc desc,
 	 *	-cim 6/14/90
 	 * ----------------
 	 */
-	tuple = SearchSysCacheTuple(TYPOID,
+	tuple = SearchSysCacheTuple(TYPEOID,
 								ObjectIdGetDatum(typeid),
 								0, 0, 0);
 	if (!HeapTupleIsValid(tuple))

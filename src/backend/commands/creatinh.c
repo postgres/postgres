@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.51 1999/11/07 23:08:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.52 1999/11/22 17:56:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -342,7 +342,7 @@ MergeAttributes(List *schema, List *supers, List **supconstr)
 			 * form name, type and constraints
 			 */
 			attributeName = NameStr(attribute->attname);
-			tuple = SearchSysCacheTuple(TYPOID,
+			tuple = SearchSysCacheTuple(TYPEOID,
 								   ObjectIdGetDatum(attribute->atttypid),
 										0, 0, 0);
 			Assert(HeapTupleIsValid(tuple));
@@ -495,6 +495,16 @@ StoreCatalogInheritance(Oid relationId, List *supers)
 		tuple = heap_formtuple(desc, datum, nullarr);
 
 		heap_insert(relation, tuple);
+
+		if (RelationGetForm(relation)->relhasindex)
+		{
+			Relation	idescs[Num_pg_inherits_indices];
+	
+			CatalogOpenIndices(Num_pg_inherits_indices, Name_pg_inherits_indices, idescs);
+			CatalogIndexInsert(idescs, Num_pg_inherits_indices, relation, tuple);
+			CatalogCloseIndices(Num_pg_inherits_indices, idescs);
+		}
+
 		pfree(tuple);
 
 		seqNumber += 1;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.42 1999/09/18 19:06:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.43 1999/11/22 17:55:58 momjian Exp $
  *
  * NOTES
  *	  these routines moved here from commands/define.c and somewhat cleaned up.
@@ -18,6 +18,7 @@
 
 #include "access/heapam.h"
 #include "catalog/catname.h"
+#include "catalog/indexing.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
@@ -292,6 +293,15 @@ OperatorShellMakeWithOpenRelation(Relation pg_operator_desc,
 	heap_insert(pg_operator_desc, tup);
 	operatorObjectId = tup->t_data->t_oid;
 
+	if (RelationGetForm(pg_operator_desc)->relhasindex)
+	{
+		Relation	idescs[Num_pg_operator_indices];
+
+		CatalogOpenIndices(Num_pg_operator_indices, Name_pg_operator_indices, idescs);
+		CatalogIndexInsert(idescs, Num_pg_operator_indices, pg_operator_desc, tup);
+		CatalogCloseIndices(Num_pg_operator_indices, idescs);
+	}
+
 	/* ----------------
 	 *	free the tuple and return the operator oid
 	 * ----------------
@@ -563,7 +573,7 @@ OperatorDef(char *operatorName,
 		typeId[1] = rightTypeId;
 		nargs = 2;
 	}
-	tup = SearchSysCacheTuple(PRONAME,
+	tup = SearchSysCacheTuple(PROCNAME,
 							  PointerGetDatum(procedureName),
 							  Int32GetDatum(nargs),
 							  PointerGetDatum(typeId),
@@ -588,7 +598,7 @@ OperatorDef(char *operatorName,
 		typeId[2] = INT2OID;	/* attribute number */
 		typeId[3] = 0;			/* value - can be any type	*/
 		typeId[4] = INT4OID;	/* flags - left or right selectivity */
-		tup = SearchSysCacheTuple(PRONAME,
+		tup = SearchSysCacheTuple(PROCNAME,
 								  PointerGetDatum(restrictionName),
 								  Int32GetDatum(5),
 								  PointerGetDatum(typeId),
@@ -614,7 +624,7 @@ OperatorDef(char *operatorName,
 		typeId[3] = OIDOID;		/* relation OID 2 */
 		typeId[4] = INT2OID;	/* attribute number 2 */
 
-		tup = SearchSysCacheTuple(PRONAME,
+		tup = SearchSysCacheTuple(PROCNAME,
 								  PointerGetDatum(joinName),
 								  Int32GetDatum(5),
 								  PointerGetDatum(typeId),
@@ -759,7 +769,6 @@ OperatorDef(char *operatorName,
 	/*
 	 * If we are adding to an operator shell, get its t_self
 	 */
-
 	if (operatorObjectId)
 	{
 		opKey[0].sk_argument = PointerGetDatum(operatorName);
@@ -797,6 +806,16 @@ OperatorDef(char *operatorName,
 
 		heap_insert(pg_operator_desc, tup);
 		operatorObjectId = tup->t_data->t_oid;
+
+	}
+
+	if (RelationGetForm(pg_operator_desc)->relhasindex)
+	{
+		Relation	idescs[Num_pg_operator_indices];
+
+		CatalogOpenIndices(Num_pg_operator_indices, Name_pg_operator_indices, idescs);
+		CatalogIndexInsert(idescs, Num_pg_operator_indices, pg_operator_desc, tup);
+		CatalogCloseIndices(Num_pg_operator_indices, idescs);
 	}
 
 	heap_close(pg_operator_desc, RowExclusiveLock);
@@ -904,7 +923,15 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 				setheapoverride(true);
 				heap_replace(pg_operator_desc, &tup->t_self, tup, NULL);
 				setheapoverride(false);
-
+		
+				if (RelationGetForm(pg_operator_desc)->relhasindex)
+				{
+					Relation	idescs[Num_pg_operator_indices];
+			
+					CatalogOpenIndices(Num_pg_operator_indices, Name_pg_operator_indices, idescs);
+					CatalogIndexInsert(idescs, Num_pg_operator_indices, pg_operator_desc, tup);
+					CatalogCloseIndices(Num_pg_operator_indices, idescs);
+				}
 			}
 		}
 		heap_endscan(pg_operator_scan);
@@ -930,6 +957,15 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 		setheapoverride(true);
 		heap_replace(pg_operator_desc, &tup->t_self, tup, NULL);
 		setheapoverride(false);
+
+		if (RelationGetForm(pg_operator_desc)->relhasindex)
+		{
+			Relation	idescs[Num_pg_operator_indices];
+	
+			CatalogOpenIndices(Num_pg_operator_indices, Name_pg_operator_indices, idescs);
+			CatalogIndexInsert(idescs, Num_pg_operator_indices, pg_operator_desc, tup);
+			CatalogCloseIndices(Num_pg_operator_indices, idescs);
+		}
 
 		values[Anum_pg_operator_oprcom - 1] = (Datum) NULL;
 		replaces[Anum_pg_operator_oprcom - 1] = ' ';
@@ -961,9 +997,19 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 		setheapoverride(true);
 		heap_replace(pg_operator_desc, &tup->t_self, tup, NULL);
 		setheapoverride(false);
+
+		if (RelationGetForm(pg_operator_desc)->relhasindex)
+		{
+			Relation	idescs[Num_pg_operator_indices];
+	
+			CatalogOpenIndices(Num_pg_operator_indices, Name_pg_operator_indices, idescs);
+			CatalogIndexInsert(idescs, Num_pg_operator_indices, pg_operator_desc, tup);
+			CatalogCloseIndices(Num_pg_operator_indices, idescs);
+		}
 	}
 
 	heap_endscan(pg_operator_scan);
+
 
 	heap_close(pg_operator_desc, RowExclusiveLock);
 }

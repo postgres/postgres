@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_ipl.h,v 1.6 1999/02/13 23:21:10 momjian Exp $
+ * $Id: pg_ipl.h,v 1.7 1999/11/22 17:56:37 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -32,7 +32,7 @@
  */
 CATALOG(pg_ipl)
 {
-	Oid			iplrel;
+	Oid			iplrelid;
 	Oid			iplipl;
 	int4		iplseqno;
 } FormData_pg_ipl;
@@ -49,7 +49,7 @@ typedef FormData_pg_ipl *Form_pg_ipl;
  * ----------------
  */
 #define Natts_pg_ipl			3
-#define Anum_pg_ipl_iplrel		1
+#define Anum_pg_ipl_iplrelid	1
 #define Anum_pg_ipl_iplipl		2
 #define Anum_pg_ipl_iplseqno	3
 

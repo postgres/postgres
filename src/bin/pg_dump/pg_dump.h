@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_dump.h,v 1.40 1999/10/23 03:13:26 tgl Exp $
+ * $Id: pg_dump.h,v 1.41 1999/11/22 17:56:36 momjian Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -105,7 +105,7 @@ typedef struct _tableInfo
 
 typedef struct _inhInfo
 {
-	char	   *inhrel;
+	char	   *inhrelid;
 	char	   *inhparent;
 } InhInfo;
 

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.41 1999/09/18 19:07:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.42 1999/11/22 17:56:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -510,7 +510,7 @@ convert_to_scale(Datum value, Oid typid,
 
 			MemSet(oid_array, 0, MAXFARGS * sizeof(Oid));
 			oid_array[0] = typid;
-			ftup = SearchSysCacheTuple(PRONAME,
+			ftup = SearchSysCacheTuple(PROCNAME,
 									   PointerGetDatum("float8"),
 									   Int32GetDatum(1),
 									   PointerGetDatum(oid_array),
@@ -622,7 +622,7 @@ getattstatistics(Oid relid, AttrNumber attnum, Oid typid, int32 typmod,
 		*commonfrac = ((Form_pg_statistic) GETSTRUCT(tuple))->stacommonfrac;
 
 	/* Get the type input proc for the column datatype */
-	typeTuple = SearchSysCacheTuple(TYPOID,
+	typeTuple = SearchSysCacheTuple(TYPEOID,
 									ObjectIdGetDatum(typid),
 									0, 0, 0);
 	if (! HeapTupleIsValid(typeTuple))

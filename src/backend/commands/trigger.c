@@ -144,7 +144,7 @@ CreateTrigger(CreateTrigStmt *stmt)
 	heap_endscan(tgscan);
 
 	MemSet(fargtypes, 0, 8 * sizeof(Oid));
-	tuple = SearchSysCacheTuple(PRONAME,
+	tuple = SearchSysCacheTuple(PROCNAME,
 								PointerGetDatum(stmt->funcname),
 								Int32GetDatum(0),
 								PointerGetDatum(fargtypes),
@@ -161,7 +161,7 @@ CreateTrigger(CreateTrigStmt *stmt)
 	{
 		HeapTuple	langTup;
 
-		langTup = SearchSysCacheTuple(LANOID,
+		langTup = SearchSysCacheTuple(LANGOID,
 			ObjectIdGetDatum(((Form_pg_proc) GETSTRUCT(tuple))->prolang),
 									  0, 0, 0);
 		if (!HeapTupleIsValid(langTup))

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.54 1999/10/07 04:23:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.55 1999/11/22 17:56:17 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -902,7 +902,7 @@ eval_const_expressions_mutator (Node *node, void *context)
 					result_typeid = func->functype;
 				}
 				/* Someday lsyscache.c might provide a function for this */
-				func_tuple = SearchSysCacheTuple(PROOID,
+				func_tuple = SearchSysCacheTuple(PROCOID,
 												 ObjectIdGetDatum(funcid),
 												 0, 0, 0);
 				if (!HeapTupleIsValid(func_tuple))

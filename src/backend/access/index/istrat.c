@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.37 1999/10/23 03:13:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.38 1999/11/22 17:55:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -479,7 +479,7 @@ OperatorRelationFillScanKeyEntry(Relation operatorRelation,
 
 	if (!IsBootstrapProcessingMode())
 	{
-		tuple = SearchSysCacheTuple(OPROID,
+		tuple = SearchSysCacheTuple(OPEROID,
 									ObjectIdGetDatum(operatorObjectId),
 									0, 0, 0);
 	}

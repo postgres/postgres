@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.90 1999/11/21 04:16:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.91 1999/11/22 17:56:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -938,7 +938,7 @@ GetOutputFunction(Oid type)
 {
 	HeapTuple	typeTuple;
 
-	typeTuple = SearchSysCacheTuple(TYPOID,
+	typeTuple = SearchSysCacheTuple(TYPEOID,
 									ObjectIdGetDatum(type),
 									0, 0, 0);
 
@@ -954,7 +954,7 @@ GetTypeElement(Oid type)
 {
 	HeapTuple	typeTuple;
 
-	typeTuple = SearchSysCacheTuple(TYPOID,
+	typeTuple = SearchSysCacheTuple(TYPEOID,
 									ObjectIdGetDatum(type),
 									0, 0, 0);
 
@@ -970,7 +970,7 @@ GetInputFunction(Oid type)
 {
 	HeapTuple	typeTuple;
 
-	typeTuple = SearchSysCacheTuple(TYPOID,
+	typeTuple = SearchSysCacheTuple(TYPEOID,
 									ObjectIdGetDatum(type),
 									0, 0, 0);
 
@@ -986,7 +986,7 @@ IsTypeByVal(Oid type)
 {
 	HeapTuple	typeTuple;
 
-	typeTuple = SearchSysCacheTuple(TYPOID,
+	typeTuple = SearchSysCacheTuple(TYPEOID,
 									ObjectIdGetDatum(type),
 									0, 0, 0);
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.96 1999/11/21 20:01:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.97 1999/11/22 17:55:57 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -157,7 +157,7 @@ BuildFuncTupleDesc(FuncIndexInfo *funcInfo)
 	funcname = FIgetname(funcInfo);
 	nargs = FIgetnArgs(funcInfo);
 	argtypes = FIgetArglist(funcInfo);
-	tuple = SearchSysCacheTuple(PRONAME,
+	tuple = SearchSysCacheTuple(PROCNAME,
 								PointerGetDatum(funcname),
 								Int32GetDatum(nargs),
 								PointerGetDatum(argtypes),
@@ -171,7 +171,7 @@ BuildFuncTupleDesc(FuncIndexInfo *funcInfo)
 	/*
 	 * Look up the return type in pg_type for the type length.
 	 */
-	tuple = SearchSysCacheTuple(TYPOID,
+	tuple = SearchSysCacheTuple(TYPEOID,
 								ObjectIdGetDatum(retType),
 								0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
@@ -317,7 +317,7 @@ ConstructTupleDescriptor(Oid heapoid,
 		{
 			HeapTuple	tup;
 
-			tup = SearchSysCacheTuple(TYPNAME,
+			tup = SearchSysCacheTuple(TYPENAME,
 									  PointerGetDatum(IndexKeyType->name),
 									  0, 0, 0);
 			if (!HeapTupleIsValid(tup))
@@ -1028,7 +1028,7 @@ index_create(char *heapRelationName,
 	{
 		HeapTuple	proc_tup;
 
-		proc_tup = SearchSysCacheTuple(PRONAME,
+		proc_tup = SearchSysCacheTuple(PROCNAME,
 									PointerGetDatum(FIgetname(funcInfo)),
 									 Int32GetDatum(FIgetnArgs(funcInfo)),
 								 PointerGetDatum(FIgetArglist(funcInfo)),

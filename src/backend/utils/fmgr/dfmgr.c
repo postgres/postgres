@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.36 1999/11/07 23:08:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.37 1999/11/22 17:56:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,7 +67,7 @@ fmgr_dynamic(Oid procedureId, int *pronargs)
 	 */
 	rel = heap_openr(ProcedureRelationName, AccessShareLock);
 
-	procedureTuple = SearchSysCacheTuple(PROOID,
+	procedureTuple = SearchSysCacheTuple(PROCOID,
 										 ObjectIdGetDatum(procedureId),
 										 0, 0, 0);
 	if (!HeapTupleIsValid(procedureTuple))

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.36 1999/10/02 21:33:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.37 1999/11/22 17:56:01 momjian Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -269,7 +269,7 @@ CreateFunction(ProcedureStmt *stmt, CommandDest dest)
 		Form_pg_language languageStruct;
 
 		/* Lookup the language in the system cache */
-		languageTuple = SearchSysCacheTuple(LANNAME,
+		languageTuple = SearchSysCacheTuple(LANGNAME,
 											PointerGetDatum(languageName),
 											0, 0, 0);
 

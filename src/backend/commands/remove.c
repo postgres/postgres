@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.39 1999/11/07 23:08:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.40 1999/11/22 17:56:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,7 +78,7 @@ RemoveOperator(char *operatorName,		/* operator name */
 
 	relation = heap_openr(OperatorRelationName, RowExclusiveLock);
 
-	tup = SearchSysCacheTupleCopy(OPRNAME,
+	tup = SearchSysCacheTupleCopy(OPERNAME,
 								  PointerGetDatum(operatorName),
 								  ObjectIdGetDatum(typeId1),
 								  ObjectIdGetDatum(typeId2),
@@ -90,7 +90,7 @@ RemoveOperator(char *operatorName,		/* operator name */
 		userName = GetPgUserName();
 		if (!pg_ownercheck(userName,
 						   (char *) ObjectIdGetDatum(tup->t_data->t_oid),
-						   OPROID))
+						   OPEROID))
 			elog(ERROR, "RemoveOperator: operator '%s': permission denied",
 				 operatorName);
 #endif
@@ -259,14 +259,14 @@ RemoveType(char *typeName)		/* type name to be removed */
 
 #ifndef NO_SECURITY
 	userName = GetPgUserName();
-	if (!pg_ownercheck(userName, typeName, TYPNAME))
+	if (!pg_ownercheck(userName, typeName, TYPENAME))
 		elog(ERROR, "RemoveType: type '%s': permission denied",
 			 typeName);
 #endif
 
 	relation = heap_openr(TypeRelationName, RowExclusiveLock);
 
-	tup = SearchSysCacheTuple(TYPNAME,
+	tup = SearchSysCacheTuple(TYPENAME,
 							  PointerGetDatum(typeName),
 							  0, 0, 0);
 	if (!HeapTupleIsValid(tup))
@@ -285,7 +285,7 @@ RemoveType(char *typeName)		/* type name to be removed */
 
 	/* Now, Delete the "array of" that type */
 	shadow_type = makeArrayTypeName(typeName);
-	tup = SearchSysCacheTuple(TYPNAME,
+	tup = SearchSysCacheTuple(TYPENAME,
 							  PointerGetDatum(shadow_type),
 							  0, 0, 0);
 	if (!HeapTupleIsValid(tup))
@@ -331,7 +331,7 @@ RemoveFunction(char *functionName,		/* function name to be removed */
 			argList[i] = 0;
 		else
 		{
-			tup = SearchSysCacheTuple(TYPNAME,
+			tup = SearchSysCacheTuple(TYPENAME,
 									  PointerGetDatum(typename),
 									  0, 0, 0);
 
@@ -351,7 +351,7 @@ RemoveFunction(char *functionName,		/* function name to be removed */
 #endif
 
 	relation = heap_openr(ProcedureRelationName, RowExclusiveLock);
-	tup = SearchSysCacheTuple(PRONAME,
+	tup = SearchSysCacheTuple(PROCNAME,
 							  PointerGetDatum(functionName),
 							  Int32GetDatum(nargs),
 							  PointerGetDatum(argList),

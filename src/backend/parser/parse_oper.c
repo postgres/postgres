@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.32 1999/09/18 19:07:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.33 1999/11/22 17:56:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -395,7 +395,7 @@ oper_exact(char *op, Oid arg1, Oid arg2)
 	else if ((arg2 == UNKNOWNOID) && (arg1 != InvalidOid))
 		arg2 = arg1;
 
-	tup = SearchSysCacheTuple(OPRNAME,
+	tup = SearchSysCacheTuple(OPERNAME,
 							  PointerGetDatum(op),
 							  ObjectIdGetDatum(arg1),
 							  ObjectIdGetDatum(arg2),
@@ -434,7 +434,7 @@ oper_inexact(char *op, Oid arg1, Oid arg2)
 	/* Or found exactly one? Then proceed... */
 	else if (ncandidates == 1)
 	{
-		tup = SearchSysCacheTuple(OPRNAME,
+		tup = SearchSysCacheTuple(OPERNAME,
 								  PointerGetDatum(op),
 								  ObjectIdGetDatum(candidates->args[0]),
 								  ObjectIdGetDatum(candidates->args[1]),
@@ -450,7 +450,7 @@ oper_inexact(char *op, Oid arg1, Oid arg2)
 		targetOids = oper_select_candidate(2, inputOids, candidates);
 		if (targetOids != NULL)
 		{
-			tup = SearchSysCacheTuple(OPRNAME,
+			tup = SearchSysCacheTuple(OPERNAME,
 									  PointerGetDatum(op),
 									  ObjectIdGetDatum(targetOids[0]),
 									  ObjectIdGetDatum(targetOids[1]),
@@ -558,7 +558,7 @@ right_oper(char *op, Oid arg)
 	int			ncandidates;
 	Oid		   *targetOid;
 
-	tup = SearchSysCacheTuple(OPRNAME,
+	tup = SearchSysCacheTuple(OPERNAME,
 							  PointerGetDatum(op),
 							  ObjectIdGetDatum(arg),
 							  ObjectIdGetDatum(InvalidOid),
@@ -574,7 +574,7 @@ right_oper(char *op, Oid arg)
 		}
 		else if (ncandidates == 1)
 		{
-			tup = SearchSysCacheTuple(OPRNAME,
+			tup = SearchSysCacheTuple(OPERNAME,
 									  PointerGetDatum(op),
 								   ObjectIdGetDatum(candidates->args[0]),
 									  ObjectIdGetDatum(InvalidOid),
@@ -587,7 +587,7 @@ right_oper(char *op, Oid arg)
 
 			if (targetOid != NULL)
 			{
-				tup = SearchSysCacheTuple(OPRNAME,
+				tup = SearchSysCacheTuple(OPERNAME,
 										  PointerGetDatum(op),
 										  ObjectIdGetDatum(InvalidOid),
 										  ObjectIdGetDatum(*targetOid),
@@ -618,7 +618,7 @@ left_oper(char *op, Oid arg)
 	int			ncandidates;
 	Oid		   *targetOid;
 
-	tup = SearchSysCacheTuple(OPRNAME,
+	tup = SearchSysCacheTuple(OPERNAME,
 							  PointerGetDatum(op),
 							  ObjectIdGetDatum(InvalidOid),
 							  ObjectIdGetDatum(arg),
@@ -634,7 +634,7 @@ left_oper(char *op, Oid arg)
 		}
 		else if (ncandidates == 1)
 		{
-			tup = SearchSysCacheTuple(OPRNAME,
+			tup = SearchSysCacheTuple(OPERNAME,
 									  PointerGetDatum(op),
 									  ObjectIdGetDatum(InvalidOid),
 								   ObjectIdGetDatum(candidates->args[0]),
@@ -646,7 +646,7 @@ left_oper(char *op, Oid arg)
 			targetOid = oper_select_candidate(1, &arg, candidates);
 			if (targetOid != NULL)
 			{
-				tup = SearchSysCacheTuple(OPRNAME,
+				tup = SearchSysCacheTuple(OPERNAME,
 										  PointerGetDatum(op),
 										  ObjectIdGetDatum(InvalidOid),
 										  ObjectIdGetDatum(*targetOid),

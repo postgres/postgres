@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.50 1999/08/09 01:39:19 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.51 1999/11/22 17:55:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -149,7 +149,7 @@ l1:
 						buf = _bt_getbuf(rel, blkno, BT_WRITE);
 						goto l1;/* continue from the begin */
 					}
-					elog(ERROR, "Cannot insert a duplicate key into a unique index");
+					elog(ERROR, "Cannot insert a duplicate key into unique index %s", RelationGetRelationName(rel));
 				}
 				/* htup null so no buffer to release */
 				/* get next offnum */

@@ -11,6 +11,7 @@
 
 #include "access/heapam.h"
 #include "catalog/catname.h"
+#include "catalog/indexing.h"
 #include "catalog/pg_language.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_shadow.h"
@@ -75,7 +76,7 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 	 */
 	case_translate_language_name(stmt->plname, languageName);
 
-	langTup = SearchSysCacheTuple(LANNAME,
+	langTup = SearchSysCacheTuple(LANGNAME,
 								  PointerGetDatum(languageName),
 								  0, 0, 0);
 	if (HeapTupleIsValid(langTup))
@@ -87,7 +88,7 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 	 * ----------------
 	 */
 	memset(typev, 0, sizeof(typev));
-	procTup = SearchSysCacheTuple(PRONAME,
+	procTup = SearchSysCacheTuple(PROCNAME,
 								  PointerGetDatum(stmt->plhandler),
 								  Int32GetDatum(0),
 								  PointerGetDatum(typev),
@@ -127,6 +128,15 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 
 	heap_insert(rel, tup);
 
+	if (RelationGetForm(rel)->relhasindex)
+	{
+		Relation	idescs[Num_pg_language_indices];
+
+		CatalogOpenIndices(Num_pg_language_indices, Name_pg_language_indices, idescs);
+		CatalogIndexInsert(idescs, Num_pg_language_indices, rel, tup);
+		CatalogCloseIndices(Num_pg_language_indices, idescs);
+	}
+	
 	heap_close(rel, RowExclusiveLock);
 }
 
@@ -161,7 +171,7 @@ DropProceduralLanguage(DropPLangStmt *stmt)
 
 	rel = heap_openr(LanguageRelationName, RowExclusiveLock);
 
-	langTup = SearchSysCacheTupleCopy(LANNAME,
+	langTup = SearchSysCacheTupleCopy(LANGNAME,
 									  PointerGetDatum(languageName),
 									  0, 0, 0);
 	if (!HeapTupleIsValid(langTup))

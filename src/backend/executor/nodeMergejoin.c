@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.31 1999/10/17 18:00:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.32 1999/11/22 17:56:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -159,7 +159,7 @@ MJFormSkipQual(List *qualList, char *replaceopname)
 		 *	 whoever marked the "=" operator mergejoinable was a loser.
 		 * ----------------
 		 */
-		optup = SearchSysCacheTuple(OPRNAME,
+		optup = SearchSysCacheTuple(OPERNAME,
 									PointerGetDatum(replaceopname),
 									ObjectIdGetDatum(oprleft),
 									ObjectIdGetDatum(oprright),

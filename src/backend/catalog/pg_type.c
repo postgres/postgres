@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.41 1999/09/18 19:06:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.42 1999/11/22 17:55:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -395,7 +395,7 @@ TypeCreate(char *typeName,
 		 */
 		MemSet(argList, 0, 8 * sizeof(Oid));
 
-		tup = SearchSysCacheTuple(PRONAME,
+		tup = SearchSysCacheTuple(PROCNAME,
 								  PointerGetDatum(procname),
 								  Int32GetDatum(1),
 								  PointerGetDatum(argList),
@@ -425,7 +425,7 @@ TypeCreate(char *typeName,
 					nargs = 3;
 					argList[2] = INT4OID;
 				}
-				tup = SearchSysCacheTuple(PRONAME,
+				tup = SearchSysCacheTuple(PROCNAME,
 										  PointerGetDatum(procname),
 										  Int32GetDatum(nargs),
 										  PointerGetDatum(argList),
@@ -536,7 +536,7 @@ TypeRename(char *oldTypeName, char *newTypeName)
 
 	pg_type_desc = heap_openr(TypeRelationName, RowExclusiveLock);
 
-	oldtup = SearchSysCacheTupleCopy(TYPNAME,
+	oldtup = SearchSysCacheTupleCopy(TYPENAME,
 									 PointerGetDatum(oldTypeName),
 									 0, 0, 0);
 
@@ -546,7 +546,7 @@ TypeRename(char *oldTypeName, char *newTypeName)
 		elog(ERROR, "TypeRename: type %s not defined", oldTypeName);
 	}
 
-	newtup = SearchSysCacheTuple(TYPNAME,
+	newtup = SearchSysCacheTuple(TYPENAME,
 								 PointerGetDatum(newTypeName),
 								 0, 0, 0);
 	if (HeapTupleIsValid(newtup))

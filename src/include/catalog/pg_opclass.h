@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_opclass.h,v 1.20 1999/09/29 21:13:30 wieck Exp $
+ * $Id: pg_opclass.h,v 1.21 1999/11/22 17:56:37 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -68,9 +68,11 @@ DATA(insert OID =  422 (	box_ops			603   ));
 DESCR("");
 DATA(insert OID =  423 (	float8_ops		701   ));
 DESCR("");
-DATA(insert OID =  424 (	int24_ops		  0   ));
+/* Technically, deftype is wrong, but it must be unique for index, bjm */
+DATA(insert OID =  424 (	int24_ops		424   ));
 DESCR("");
-DATA(insert OID =  425 (	int42_ops		  0   ));
+/* Technically, deftype is wrong, but it must be unique for index, bjm */
+DATA(insert OID =  425 (	int42_ops		425   ));
 DESCR("");
 DATA(insert OID =  426 (	int4_ops		 23   ));
 DESCR("");
@@ -85,7 +87,8 @@ DATA(insert OID =  431 (	text_ops		 25   ));
 DESCR("");
 DATA(insert OID =  432 (	abstime_ops		702   ));
 DESCR("");
-DATA(insert OID =  433 (	bigbox_ops		603   ));
+/* Technically, deftype is wrong, but it must be unique for index, bjm */
+DATA(insert OID =  433 (	bigbox_ops		433   ));
 DESCR("");
 DATA(insert OID =  434 (	poly_ops		604   ));
 DESCR("");
@@ -109,13 +112,13 @@ DATA(insert OID = 1312 (	datetime_ops   1184   ));
 DESCR("");
 DATA(insert OID = 1313 (	timespan_ops   1186   ));
 DESCR("");
-DATA(insert OID = 810  (	macaddr_ops   829	));
+DATA(insert OID = 810  (	macaddr_ops     829	  ));
 DESCR("");
-DATA(insert OID = 935  (	network_ops   869	));
+DATA(insert OID = 935  (	inet_ops	    869	  ));
 DESCR("");
-DATA(insert OID = 652  (	network_ops   650	));
+DATA(insert OID = 652  (	cidr_ops        650	  ));
 DESCR("");
-DATA(insert OID = 1768 (	numeric_ops   1700	));
+DATA(insert OID = 1768 (	numeric_ops    1700	  ));
 DESCR("");
 
 #endif	 /* PG_OPCLASS_H */

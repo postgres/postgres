@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteSupport.c,v 1.37 1999/09/18 19:07:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteSupport.c,v 1.38 1999/11/22 17:56:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,7 +42,7 @@ RuleIdGetActionInfo(Oid ruleoid, bool *instead_flag, Query **parseTrees)
 
 	ruleRelation = heap_openr(RewriteRelationName, AccessShareLock);
 	ruleTupdesc = RelationGetDescr(ruleRelation);
-	ruletuple = SearchSysCacheTuple(RULOID,
+	ruletuple = SearchSysCacheTuple(RULEOID,
 									ObjectIdGetDatum(ruleoid),
 									0, 0, 0);
 	if (ruletuple == NULL)
@@ -81,7 +81,7 @@ IsDefinedRewriteRule(char *ruleName)
 {
 	HeapTuple	tuple;
 
-	tuple = SearchSysCacheTuple(REWRITENAME,
+	tuple = SearchSysCacheTuple(RULENAME,
 								PointerGetDatum(ruleName),
 								0, 0, 0);
 	return HeapTupleIsValid(tuple);

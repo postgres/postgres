@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.34 1999/10/23 03:13:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.35 1999/11/22 17:56:36 momjian Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -118,7 +118,7 @@ findParentsByOid(TableInfo *tblinfo, int numTables,
 	numParents = 0;
 	for (i = 0; i < numInherits; i++)
 	{
-		if (strcmp(inhinfo[i].inhrel, oid) == 0)
+		if (strcmp(inhinfo[i].inhrelid, oid) == 0)
 			numParents++;
 	}
 
@@ -130,7 +130,7 @@ findParentsByOid(TableInfo *tblinfo, int numTables,
 		j = 0;
 		for (i = 0; i < numInherits; i++)
 		{
-			if (strcmp(inhinfo[i].inhrel, oid) == 0)
+			if (strcmp(inhinfo[i].inhrelid, oid) == 0)
 			{
 				parentInd = findTableByOid(tblinfo, numTables,
 										   inhinfo[i].inhparent);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.29 1999/11/07 23:08:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.30 1999/11/22 17:55:56 momjian Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -350,7 +350,7 @@ pg_aclcheck(char *relname, char *usename, AclMode mode)
 	int32		result;
 	Relation	relation;
 
-	tuple = SearchSysCacheTuple(USENAME,
+	tuple = SearchSysCacheTuple(USERNAME,
 								PointerGetDatum(usename),
 								0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
@@ -469,7 +469,7 @@ pg_ownercheck(char *usename,
 	AclId		user_id,
 				owner_id = 0;
 
-	tuple = SearchSysCacheTuple(USENAME,
+	tuple = SearchSysCacheTuple(USERNAME,
 								PointerGetDatum(usename),
 								0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
@@ -493,13 +493,13 @@ pg_ownercheck(char *usename,
 								0, 0, 0);
 	switch (cacheid)
 	{
-		case OPROID:
+		case OPEROID:
 			if (!HeapTupleIsValid(tuple))
 				elog(ERROR, "pg_ownercheck: operator %ld not found",
 					 PointerGetDatum(value));
 			owner_id = ((Form_pg_operator) GETSTRUCT(tuple))->oprowner;
 			break;
-		case PRONAME:
+		case PROCNAME:
 			if (!HeapTupleIsValid(tuple))
 				elog(ERROR, "pg_ownercheck: function \"%s\" not found",
 					 value);
@@ -511,7 +511,7 @@ pg_ownercheck(char *usename,
 					 value);
 			owner_id = ((Form_pg_class) GETSTRUCT(tuple))->relowner;
 			break;
-		case TYPNAME:
+		case TYPENAME:
 			if (!HeapTupleIsValid(tuple))
 				elog(ERROR, "pg_ownercheck: type \"%s\" not found",
 					 value);
@@ -535,7 +535,7 @@ pg_func_ownercheck(char *usename,
 	AclId		user_id,
 				owner_id;
 
-	tuple = SearchSysCacheTuple(USENAME,
+	tuple = SearchSysCacheTuple(USERNAME,
 								PointerGetDatum(usename),
 								0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
@@ -555,7 +555,7 @@ pg_func_ownercheck(char *usename,
 		return 1;
 	}
 
-	tuple = SearchSysCacheTuple(PRONAME,
+	tuple = SearchSysCacheTuple(PROCNAME,
 								PointerGetDatum(funcname),
 								Int32GetDatum(nargs),
 								PointerGetDatum(arglist),
@@ -577,7 +577,7 @@ pg_aggr_ownercheck(char *usename,
 	AclId		user_id,
 				owner_id;
 
-	tuple = SearchSysCacheTuple(USENAME,
+	tuple = SearchSysCacheTuple(USERNAME,
 								PointerGetDatum(usename),
 								0, 0, 0);
 	if (!HeapTupleIsValid(tuple))

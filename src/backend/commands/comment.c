@@ -395,7 +395,7 @@ void CommentDatabase(char *database, char *comment) {
   /*** Now, fetch user information ***/
   
   username = GetPgUserName();
-  usertuple = SearchSysCacheTuple(USENAME, PointerGetDatum(username),
+  usertuple = SearchSysCacheTuple(USERNAME, PointerGetDatum(username),
 				  0, 0, 0);
   if (!HeapTupleIsValid(usertuple)) {
     elog(ERROR, "current user '%s' does not exist", username);
@@ -454,7 +454,7 @@ void CommentRewrite(char *rule, char *comment) {
 
   /*** Next, find the rule's oid ***/
   
-  rewritetuple = SearchSysCacheTuple(REWRITENAME, PointerGetDatum(rule),
+  rewritetuple = SearchSysCacheTuple(RULENAME, PointerGetDatum(rule),
 				     0, 0, 0);
   if (!HeapTupleIsValid(rewritetuple)) {
     elog(ERROR, "rule '%s' does not exist", rule);
@@ -489,7 +489,7 @@ void CommentType(char *type, char *comment) {
   
   #ifndef NO_SECURITY  
   user = GetPgUserName();
-  if (!pg_ownercheck(user, type, TYPNAME)) {    
+  if (!pg_ownercheck(user, type, TYPENAME)) {    
     elog(ERROR, "you are not permitted to comment on type '%s'",
 	 type);
   }
@@ -497,7 +497,7 @@ void CommentType(char *type, char *comment) {
 
   /*** Next, find the type's oid ***/
   
-  typetuple = SearchSysCacheTuple(TYPNAME, PointerGetDatum(type),
+  typetuple = SearchSysCacheTuple(TYPENAME, PointerGetDatum(type),
 				  0, 0, 0);
   if (!HeapTupleIsValid(typetuple)) {
     elog(ERROR, "type '%s' does not exist", type);
@@ -604,7 +604,7 @@ void CommentProc(char *function, List *arguments, char *comment) {
       if (strcmp(argument, "opaque") == 0) {
 	argoids[i] = 0;
       } else {
-	argtuple = SearchSysCacheTuple(TYPNAME, PointerGetDatum(argument),
+	argtuple = SearchSysCacheTuple(TYPENAME, PointerGetDatum(argument),
 				       0, 0, 0);
 	if (!HeapTupleIsValid(argtuple)) {
 	  elog(ERROR, "function argument type '%s' does not exist",
@@ -627,7 +627,7 @@ void CommentProc(char *function, List *arguments, char *comment) {
 
   /*** Now, find the corresponding oid for this procedure ***/
 
-  functuple = SearchSysCacheTuple(PRONAME, PointerGetDatum(function),
+  functuple = SearchSysCacheTuple(PROCNAME, PointerGetDatum(function),
 				  Int32GetDatum(argcount),
 				  PointerGetDatum(argoids), 0);
 
@@ -702,7 +702,7 @@ void CommentOperator(char *opername, List *arguments, char *comment) {
   
   /*** Attempt to fetch the operator oid ***/
 
-  optuple = SearchSysCacheTupleCopy(OPRNAME, PointerGetDatum(opername),
+  optuple = SearchSysCacheTupleCopy(OPERNAME, PointerGetDatum(opername),
 				    ObjectIdGetDatum(leftoid),
 				    ObjectIdGetDatum(rightoid),
 				    CharGetDatum(oprtype));
@@ -716,7 +716,7 @@ void CommentOperator(char *opername, List *arguments, char *comment) {
 
   #ifndef NO_SECURITY
   user = GetPgUserName();
-  if (!pg_ownercheck(user, (char *) ObjectIdGetDatum(oid), OPROID)) {
+  if (!pg_ownercheck(user, (char *) ObjectIdGetDatum(oid), OPEROID)) {
     elog(ERROR, "you are not permitted to comment on operator '%s'",
 	 opername);
   }

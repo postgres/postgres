@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.41 1999/10/18 03:32:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.42 1999/11/22 17:56:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -170,7 +170,7 @@ aclparse(char *s, AclItem *aip, unsigned *modechg)
 	switch (aip->ai_idtype)
 	{
 		case ACL_IDTYPE_UID:
-			htup = SearchSysCacheTuple(USENAME,
+			htup = SearchSysCacheTuple(USERNAME,
 									   PointerGetDatum(name),
 									   0, 0, 0);
 			if (!HeapTupleIsValid(htup))
@@ -281,7 +281,7 @@ aclitemout(AclItem *aip)
 	switch (aip->ai_idtype)
 	{
 		case ACL_IDTYPE_UID:
-			htup = SearchSysCacheTuple(USESYSID,
+			htup = SearchSysCacheTuple(USERSYSID,
 									   ObjectIdGetDatum(aip->ai_id),
 									   0, 0, 0);
 			if (!HeapTupleIsValid(htup))

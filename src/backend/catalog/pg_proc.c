@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.35 1999/09/30 10:31:42 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.36 1999/11/22 17:55:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,7 +109,7 @@ ProcedureCreate(char *procedureName,
 		typev[parameterCount++] = toid;
 	}
 
-	tup = SearchSysCacheTuple(PRONAME,
+	tup = SearchSysCacheTuple(PROCNAME,
 							  PointerGetDatum(procedureName),
 							  UInt16GetDatum(parameterCount),
 							  PointerGetDatum(typev),
@@ -157,7 +157,7 @@ ProcedureCreate(char *procedureName,
 		}
 	}
 
-	tup = SearchSysCacheTuple(LANNAME,
+	tup = SearchSysCacheTuple(LANGNAME,
 							  PointerGetDatum(languageName),
 							  0, 0, 0);
 

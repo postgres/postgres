@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.61 1999/11/07 23:08:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.62 1999/11/22 17:56:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -403,7 +403,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 			 * just pass through the argument itself. (make this clearer
 			 * with some extra brackets - thomas 1998-12-05)
 			 */
-			if ((HeapTupleIsValid(tp = SearchSysCacheTuple(TYPNAME,
+			if ((HeapTupleIsValid(tp = SearchSysCacheTuple(TYPENAME,
 											   PointerGetDatum(funcname),
 														   0, 0, 0)))
 				&& IS_BINARY_COMPATIBLE(typeTypeId(tp), basetype))
@@ -923,7 +923,7 @@ func_get_detail(char *funcname,
 	Form_pg_proc pform;
 
 	/* attempt to find with arguments exactly as specified... */
-	ftup = SearchSysCacheTuple(PRONAME,
+	ftup = SearchSysCacheTuple(PROCNAME,
 							   PointerGetDatum(funcname),
 							   Int32GetDatum(nargs),
 							   PointerGetDatum(oid_array),
@@ -953,7 +953,7 @@ func_get_detail(char *funcname,
 				if (ncandidates == 1)
 				{
 					*true_typeids = current_function_typeids->args;
-					ftup = SearchSysCacheTuple(PRONAME,
+					ftup = SearchSysCacheTuple(PROCNAME,
 											   PointerGetDatum(funcname),
 											   Int32GetDatum(nargs),
 										  PointerGetDatum(*true_typeids),
@@ -982,7 +982,7 @@ func_get_detail(char *funcname,
 					/* found something, so use the first one... */
 					else
 					{
-						ftup = SearchSysCacheTuple(PRONAME,
+						ftup = SearchSysCacheTuple(PROCNAME,
 											   PointerGetDatum(funcname),
 												   Int32GetDatum(nargs),
 										  PointerGetDatum(*true_typeids),
@@ -1111,7 +1111,7 @@ find_inheritors(Oid relid, Oid **supervec)
 	 */
 	do
 	{
-		ScanKeyEntryInitialize(&skey, 0x0, Anum_pg_inherits_inhrel,
+		ScanKeyEntryInitialize(&skey, 0x0, Anum_pg_inherits_inhrelid,
 							   F_OIDEQ,
 							   ObjectIdGetDatum(relid));
 

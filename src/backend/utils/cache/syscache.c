@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.40 1999/11/18 13:56:29 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.41 1999/11/22 17:56:32 momjian Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -45,12 +45,63 @@ extern bool AMI_OVERRIDE;		/* XXX style */
 
 typedef HeapTuple (*ScanFunc) ();
 
-/* ----------------
- *		Warning:  cacheinfo[] below is changed, then be sure and
- *		update the magic constants in syscache.h!
- * ----------------
- */
+
+/*---------------------------------------------------------------------------
+
+	Adding system caches:
+
+	Add your new cache to the list in include/utils/syscache.h.  Keep
+	the list sorted alphabetically and adjust the cache numbers
+	accordingly.
+	
+	Add your entry to the cacheinfo[] array below.  All cache lists are
+	alphabetical, so add it in the proper place.  Specify the relation
+    name, number of arguments, argument names, size of tuple, index lookup
+	function, and index name.
+
+    In include/catalog/indexing.h, add a define for the number of indexes
+    in the relation, add a define for the index name, add an extern
+    array to hold the index names, define the index lookup function
+    prototype, and use DECLARE_UNIQUE_INDEX to define the index.  Cache
+    lookups return only one row, so the index should be unique.
+
+    In backend/catalog/indexing.c, initialize the relation array with
+    the index names for the relation, and create the index lookup function.
+    Pick one that takes similar arguments and use that one, but keep the
+    function names in the same order as the cache list for clarity.
+
+    Finally, any place your relation gets heap_insert() or
+	heap_replace calls, include code to do a CatalogIndexInsert() to update
+	the system indexes.  The heap_* calls do not update indexes.
+	
+    bjm 1999/11/22
+
+  ---------------------------------------------------------------------------
+*/
+
 static struct cachedesc cacheinfo[] = {
+	{AggregateRelationName,		/* AGGNAME */
+		2,
+		{
+			Anum_pg_aggregate_aggname,
+			Anum_pg_aggregate_aggbasetype,
+			0,
+			0
+		},
+		offsetof(FormData_pg_aggregate, agginitval1),
+		AggregateNameTypeIndex,
+	AggregateNameTypeIndexScan},
+	{AccessMethodRelationName,	/* AMNAME */
+		1,
+		{
+			Anum_pg_am_amname,
+			0,
+			0,
+			0
+		},
+		sizeof(FormData_pg_am),
+		AmNameIndex,
+	AmNameIndexScan},
 	{AccessMethodOperatorRelationName,	/* AMOPOPID */
 		3,
 		{
@@ -61,7 +112,7 @@ static struct cachedesc cacheinfo[] = {
 		},
 		sizeof(FormData_pg_amop),
 		AccessMethodOpidIndex,
-	(ScanFunc) AccessMethodOpidIndexScan},
+	AccessMethodOpidIndexScan},
 	{AccessMethodOperatorRelationName,	/* AMOPSTRATEGY */
 		3,
 		{
@@ -82,8 +133,8 @@ static struct cachedesc cacheinfo[] = {
 			0
 		},
 		ATTRIBUTE_TUPLE_SIZE,
-		AttributeNameIndex,
-	(ScanFunc) AttributeNameIndexScan},
+		AttributeRelidNameIndex,
+	AttributeRelidNameIndexScan},
 	{AttributeRelationName,		/* ATTNUM */
 		2,
 		{
@@ -93,8 +144,52 @@ static struct cachedesc cacheinfo[] = {
 			0
 		},
 		ATTRIBUTE_TUPLE_SIZE,
-		AttributeNumIndex,
-	(ScanFunc) AttributeNumIndexScan},
+		AttributeRelidNumIndex,
+	(ScanFunc) AttributeRelidNumIndexScan},
+	{OperatorClassRelationName, /* CLADEFTYPE */
+		1,
+		{
+			Anum_pg_opclass_opcdeftype,
+			0,
+			0,
+			0
+		},
+		sizeof(FormData_pg_opclass),
+		OpclassDeftypeIndex,
+	OpclassDeftypeIndexScan},
+	{OperatorClassRelationName, /* CLANAME */
+		1,
+		{
+			Anum_pg_opclass_opcname,
+			0,
+			0,
+			0
+		},
+		sizeof(FormData_pg_opclass),
+		OpclassNameIndex,
+	OpclassNameIndexScan},
+	{GroupRelationName,			/* GRONAME */
+		1,
+		{
+			Anum_pg_group_groname,
+			0,
+			0,
+			0
+		},
+		offsetof(FormData_pg_group, grolist[0]),
+		GroupNameIndex,
+	GroupNameIndexScan},
+	{GroupRelationName,			/* GROSYSID */
+		1,
+		{
+			Anum_pg_group_grosysid,
+			0,
+			0,
+			0
+		},
+		offsetof(FormData_pg_group, grolist[0]),
+		GroupSysidIndex,
+	GroupSysidIndexScan},
 	{IndexRelationName,			/* INDEXRELID */
 		1,
 		{
@@ -105,8 +200,19 @@ static struct cachedesc cacheinfo[] = {
 		},
 		offsetof(FormData_pg_index, indpred),
 		IndexRelidIndex,
-	(ScanFunc) IndexRelidIndexScan},
-	{LanguageRelationName,		/* LANNAME */
+	IndexRelidIndexScan},
+	{InheritsRelationName,		/* INHRELID */
+		2,
+		{
+			Anum_pg_inherits_inhrelid,
+			Anum_pg_inherits_inhseqno,
+			0,
+			0
+		},
+		sizeof(FormData_pg_inherits),
+		InheritsRelidSeqnoIndex,
+	InheritsRelidSeqnoIndexScan},
+	{LanguageRelationName,		/* LANGNAME */
 		1,
 		{
 			Anum_pg_language_lanname,
@@ -115,9 +221,31 @@ static struct cachedesc cacheinfo[] = {
 			0
 		},
 		offsetof(FormData_pg_language, lancompiler),
-		NULL,
-	NULL},
-	{OperatorRelationName,		/* OPRNAME */
+		LanguageNameIndex,
+	LanguageNameIndexScan},
+	{LanguageRelationName,		/* LANGOID */
+		1,
+		{
+			ObjectIdAttributeNumber,
+			0,
+			0,
+			0
+		},
+		offsetof(FormData_pg_language, lancompiler),
+		LanguageOidIndex,
+	LanguageOidIndexScan},
+	{ListenerRelationName,		/* LISTENREL */
+		2,
+		{
+			Anum_pg_listener_relname,
+			Anum_pg_listener_pid,
+			0,
+			0
+		},
+		sizeof(FormData_pg_listener),
+		ListenerRelnamePidIndex,
+	ListenerRelnamePidIndexScan},
+	{OperatorRelationName,		/* OPERNAME */
 		4,
 		{
 			Anum_pg_operator_oprname,
@@ -126,9 +254,9 @@ static struct cachedesc cacheinfo[] = {
 			Anum_pg_operator_oprkind
 		},
 		sizeof(FormData_pg_operator),
-		NULL,
-	NULL},
-	{OperatorRelationName,		/* OPROID */
+		OperatorNameIndex,
+	(ScanFunc) OperatorNameIndexScan},
+	{OperatorRelationName,		/* OPEROID */
 		1,
 		{
 			ObjectIdAttributeNumber,
@@ -137,9 +265,9 @@ static struct cachedesc cacheinfo[] = {
 			0
 		},
 		sizeof(FormData_pg_operator),
-		NULL,
-	(ScanFunc) NULL},
-	{ProcedureRelationName,		/* PRONAME */
+		OperatorOidIndex,
+	OperatorOidIndexScan},
+	{ProcedureRelationName,		/* PROCNAME */
 		3,
 		{
 			Anum_pg_proc_proname,
@@ -150,7 +278,7 @@ static struct cachedesc cacheinfo[] = {
 		offsetof(FormData_pg_proc, prosrc),
 		ProcedureNameIndex,
 	(ScanFunc) ProcedureNameIndexScan},
-	{ProcedureRelationName,		/* PROOID */
+	{ProcedureRelationName,		/* PROCOID */
 		1,
 		{
 			ObjectIdAttributeNumber,
@@ -160,7 +288,7 @@ static struct cachedesc cacheinfo[] = {
 		},
 		offsetof(FormData_pg_proc, prosrc),
 		ProcedureOidIndex,
-	(ScanFunc) ProcedureOidIndexScan},
+	ProcedureOidIndexScan},
 	{RelationRelationName,		/* RELNAME */
 		1,
 		{
@@ -171,7 +299,7 @@ static struct cachedesc cacheinfo[] = {
 		},
 		CLASS_TUPLE_SIZE,
 		ClassNameIndex,
-	(ScanFunc) ClassNameIndexScan},
+	ClassNameIndexScan},
 	{RelationRelationName,		/* RELOID */
 		1,
 		{
@@ -182,8 +310,30 @@ static struct cachedesc cacheinfo[] = {
 		},
 		CLASS_TUPLE_SIZE,
 		ClassOidIndex,
-	(ScanFunc) ClassOidIndexScan},
-	{TypeRelationName,			/* TYPNAME */
+	ClassOidIndexScan},
+	{RewriteRelationName,		/* REWRITENAME */
+		1,
+		{
+			Anum_pg_rewrite_rulename,
+			0,
+			0,
+			0
+		},
+		offsetof(FormData_pg_rewrite, ev_qual),
+		RewriteRulenameIndex,
+	RewriteRulenameIndexScan},
+	{RewriteRelationName,		/* RULEOID */
+		1,
+		{
+			ObjectIdAttributeNumber,
+			0,
+			0,
+			0
+		},
+		offsetof(FormData_pg_rewrite, ev_qual),
+		RewriteOidIndex,
+	RewriteOidIndexScan},
+	{TypeRelationName,			/* TYPENAME */
 		1,
 		{
 			Anum_pg_type_typname,
@@ -194,7 +344,7 @@ static struct cachedesc cacheinfo[] = {
 		offsetof(FormData_pg_type, typalign) +sizeof(char),
 		TypeNameIndex,
 	TypeNameIndexScan},
-	{TypeRelationName,			/* TYPOID */
+	{TypeRelationName,			/* TYPEOID */
 		1,
 		{
 			ObjectIdAttributeNumber,
@@ -205,73 +355,7 @@ static struct cachedesc cacheinfo[] = {
 		offsetof(FormData_pg_type, typalign) +sizeof(char),
 		TypeOidIndex,
 	TypeOidIndexScan},
-	{AccessMethodRelationName,	/* AMNAME */
-		1,
-		{
-			Anum_pg_am_amname,
-			0,
-			0,
-			0
-		},
-		sizeof(FormData_pg_am),
-		NULL,
-	NULL},
-	{OperatorClassRelationName, /* CLANAME */
-		1,
-		{
-			Anum_pg_opclass_opcname,
-			0,
-			0,
-			0
-		},
-		sizeof(FormData_pg_opclass),
-		NULL,
-	NULL},
-	{InheritsRelationName,		/* INHRELID */
-		2,
-		{
-			Anum_pg_inherits_inhrel,
-			Anum_pg_inherits_inhseqno,
-			0,
-			0
-		},
-		sizeof(FormData_pg_inherits),
-		NULL,
-	(ScanFunc) NULL},
-	{RewriteRelationName,		/* RULOID */
-		1,
-		{
-			ObjectIdAttributeNumber,
-			0,
-			0,
-			0
-		},
-		offsetof(FormData_pg_rewrite, ev_qual),
-		NULL,
-	(ScanFunc) NULL},
-	{AggregateRelationName,		/* AGGNAME */
-		2,
-		{
-			Anum_pg_aggregate_aggname,
-			Anum_pg_aggregate_aggbasetype,
-			0,
-			0
-		},
-		offsetof(FormData_pg_aggregate, agginitval1),
-		NULL,
-	(ScanFunc) NULL},
-	{ListenerRelationName,		/* LISTENREL */
-		2,
-		{
-			Anum_pg_listener_relname,
-			Anum_pg_listener_pid,
-			0,
-			0
-		},
-		sizeof(FormData_pg_listener),
-		NULL,
-	(ScanFunc) NULL},
-	{ShadowRelationName,		/* USENAME */
+	{ShadowRelationName,		/* USERNAME */
 		1,
 		{
 			Anum_pg_shadow_usename,
@@ -280,9 +364,10 @@ static struct cachedesc cacheinfo[] = {
 			0
 		},
 		sizeof(FormData_pg_shadow),
-		NULL,
-	(ScanFunc) NULL},
-	{ShadowRelationName,		/* USESYSID */
+NULL,NULL
+/*		ShadowNameIndex,
+	ShadowNameIndexScan*/},
+	{ShadowRelationName,		/* USERSYSID */
 		1,
 		{
 			Anum_pg_shadow_usesysid,
@@ -291,63 +376,9 @@ static struct cachedesc cacheinfo[] = {
 			0
 		},
 		sizeof(FormData_pg_shadow),
-		NULL,
-	(ScanFunc) NULL},
-	{GroupRelationName,			/* GRONAME */
-		1,
-		{
-			Anum_pg_group_groname,
-			0,
-			0,
-			0
-		},
-		offsetof(FormData_pg_group, grolist[0]),
-		NULL,
-	(ScanFunc) NULL},
-	{GroupRelationName,			/* GROSYSID */
-		1,
-		{
-			Anum_pg_group_grosysid,
-			0,
-			0,
-			0
-		},
-		offsetof(FormData_pg_group, grolist[0]),
-		NULL,
-	(ScanFunc) NULL},
-	{RewriteRelationName,		/* REWRITENAME */
-		1,
-		{
-			Anum_pg_rewrite_rulename,
-			0,
-			0,
-			0
-		},
-		offsetof(FormData_pg_rewrite, ev_qual),
-		NULL,
-	(ScanFunc) NULL},
-	{OperatorClassRelationName, /* CLADEFTYPE */
-		1,
-		{
-			Anum_pg_opclass_opcdeftype,
-			0,
-			0,
-			0
-		},
-		sizeof(FormData_pg_opclass),
-		NULL,
-	(ScanFunc) NULL},
-	{LanguageRelationName,		/* LANOID */
-		1,
-		{
-			ObjectIdAttributeNumber,
-			0,
-			0,
-			0
-		},
-		offsetof(FormData_pg_language, lancompiler),
-		NULL,
-	NULL}
+NULL,NULL
+/*		ShadowSysidIndex,
+	ShadowSysidIndexScan*/}
 };
 
 static struct catcache *SysCache[lengthof(cacheinfo)];

@@ -351,7 +351,7 @@
        <synopsis>
 	int PgConnection::ExecTuplesOk(const char *query)
        </synopsis>
-       Returns TRUE if the command query succeeds and there are tuples to be retrieved.
+       Returns TRUE if the command query succeeds.
       </para>
      </listitem>
      <listitem>

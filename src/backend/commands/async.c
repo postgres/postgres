@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.54 1999/09/18 19:06:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.55 1999/11/22 17:55:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,6 +79,7 @@
 
 #include "access/heapam.h"
 #include "catalog/catname.h"
+#include "catalog/indexing.h"
 #include "catalog/pg_listener.h"
 #include "commands/async.h"
 #include "lib/dllist.h"
@@ -464,7 +465,6 @@ AtCommit_Notify()
 
 			if (listenerPID == MyProcPid)
 			{
-
 				/*
 				 * Self-notify: no need to bother with table update.
 				 * Indeed, we *must not* clear the notification field in
@@ -490,7 +490,6 @@ AtCommit_Notify()
 				 */
 				if (kill(listenerPID, SIGUSR2) < 0)
 				{
-
 					/*
 					 * Get rid of pg_listener entry if it refers to a PID
 					 * that no longer exists.  Presumably, that backend
@@ -511,6 +510,14 @@ AtCommit_Notify()
 						rTuple = heap_modifytuple(lTuple, lRel,
 												  value, nulls, repl);
 						heap_replace(lRel, &lTuple->t_self, rTuple, NULL);
+						if (RelationGetForm(lRel)->relhasindex)
+						{
+							Relation	idescs[Num_pg_listener_indices];
+					
+							CatalogOpenIndices(Num_pg_listener_indices, Name_pg_listener_indices, idescs);
+							CatalogIndexInsert(idescs, Num_pg_listener_indices, lRel, rTuple);
+							CatalogCloseIndices(Num_pg_listener_indices, idescs);
+						}
 					}
 				}
 			}
@@ -769,6 +776,14 @@ ProcessIncomingNotify(void)
 			/* Rewrite the tuple with 0 in notification column */
 			rTuple = heap_modifytuple(lTuple, lRel, value, nulls, repl);
 			heap_replace(lRel, &lTuple->t_self, rTuple, NULL);
+			if (RelationGetForm(lRel)->relhasindex)
+			{
+				Relation	idescs[Num_pg_listener_indices];
+		
+				CatalogOpenIndices(Num_pg_listener_indices, Name_pg_listener_indices, idescs);
+				CatalogIndexInsert(idescs, Num_pg_listener_indices, lRel, rTuple);
+				CatalogCloseIndices(Num_pg_listener_indices, idescs);
+			}
 		}
 	}
 	heap_endscan(sRel);

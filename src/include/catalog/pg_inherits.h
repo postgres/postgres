@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_inherits.h,v 1.7 1999/02/13 23:21:10 momjian Exp $
+ * $Id: pg_inherits.h,v 1.8 1999/11/22 17:56:37 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -32,7 +32,7 @@
  */
 CATALOG(pg_inherits)
 {
-	Oid			inhrel;
+	Oid			inhrelid;
 	Oid			inhparent;
 	int4		inhseqno;
 } FormData_pg_inherits;
@@ -49,7 +49,7 @@ typedef FormData_pg_inherits *Form_pg_inherits;
  * ----------------
  */
 #define Natts_pg_inherits				3
-#define Anum_pg_inherits_inhrel			1
+#define Anum_pg_inherits_inhrelid		1
 #define Anum_pg_inherits_inhparent		2
 #define Anum_pg_inherits_inhseqno		3
 

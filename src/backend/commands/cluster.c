@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.46 1999/11/07 23:08:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.47 1999/11/22 17:56:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -270,7 +270,7 @@ copy_index(Oid OIDOldIndex, Oid OIDNewHeap)
 		FIgetnArgs(finfo) = natts;
 		FIgetProcOid(finfo) = Old_pg_index_Form->indproc;
 
-		pg_proc_Tuple = SearchSysCacheTuple(PROOID,
+		pg_proc_Tuple = SearchSysCacheTuple(PROCOID,
 							ObjectIdGetDatum(Old_pg_index_Form->indproc),
 											0, 0, 0);
 

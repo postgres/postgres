@@ -4,7 +4,7 @@
 #    Makefile for catalog
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/catalog/Makefile,v 1.17 1999/03/27 17:25:09 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/catalog/Makefile,v 1.18 1999/11/22 17:55:56 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -38,7 +38,8 @@ LOCALBKI_SRCS= $(addprefix ../../include/catalog/, \
                  pg_rewrite.h pg_listener.h pg_description.h indexing.h \
                 )
 
-global1.bki.source: $(GENBKI) $(GLOBALBKI_SRCS)
+global1.bki.source: $(GENBKI) $(GLOBALBKI_SRCS) \
+		$(addprefix ../../include/catalog/, indexing.h)
 ifneq ($(PORTNAME), win)
 	sh $(SHOPTS) $(GENBKI) $(BKIOPTS) $(GLOBALBKI_SRCS) > $@ 2>global1.description
 else

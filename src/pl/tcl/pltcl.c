@@ -3,7 +3,7 @@
  *			  procedural language (PL)
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.14 1999/11/07 23:08:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.15 1999/11/22 17:56:41 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -467,7 +467,7 @@ pltcl_func_handler(FmgrInfo *proinfo,
 		/************************************************************
 		 * Lookup the pg_proc tuple by Oid
 		 ************************************************************/
-		procTup = SearchSysCacheTuple(PROOID,
+		procTup = SearchSysCacheTuple(PROCOID,
 									  ObjectIdGetDatum(proinfo->fn_oid),
 									  0, 0, 0);
 		if (!HeapTupleIsValid(procTup))
@@ -482,7 +482,7 @@ pltcl_func_handler(FmgrInfo *proinfo,
 		 * Get the required information for input conversion of the
 		 * return value.
 		 ************************************************************/
-		typeTup = SearchSysCacheTuple(TYPOID,
+		typeTup = SearchSysCacheTuple(TYPEOID,
 								ObjectIdGetDatum(procStruct->prorettype),
 									  0, 0, 0);
 		if (!HeapTupleIsValid(typeTup))
@@ -512,7 +512,7 @@ pltcl_func_handler(FmgrInfo *proinfo,
 		proc_internal_args[0] = '\0';
 		for (i = 0; i < proinfo->fn_nargs; i++)
 		{
-			typeTup = SearchSysCacheTuple(TYPOID,
+			typeTup = SearchSysCacheTuple(TYPEOID,
 							ObjectIdGetDatum(procStruct->proargtypes[i]),
 										  0, 0, 0);
 			if (!HeapTupleIsValid(typeTup))
@@ -798,7 +798,7 @@ pltcl_trigger_handler(FmgrInfo *proinfo)
 		/************************************************************
 		 * Lookup the pg_proc tuple by Oid
 		 ************************************************************/
-		procTup = SearchSysCacheTuple(PROOID,
+		procTup = SearchSysCacheTuple(PROCOID,
 									  ObjectIdGetDatum(proinfo->fn_oid),
 									  0, 0, 0);
 		if (!HeapTupleIsValid(procTup))
@@ -1120,7 +1120,7 @@ pltcl_trigger_handler(FmgrInfo *proinfo)
 		 * Lookup the attribute type in the syscache
 		 * for the input function
 		 ************************************************************/
-		typeTup = SearchSysCacheTuple(TYPOID,
+		typeTup = SearchSysCacheTuple(TYPEOID,
 				  ObjectIdGetDatum(tupdesc->attrs[attnum - 1]->atttypid),
 									  0, 0, 0);
 		if (!HeapTupleIsValid(typeTup))
@@ -1592,7 +1592,7 @@ pltcl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
 	 ************************************************************/
 	for (i = 0; i < nargs; i++)
 	{
-		typeTup = SearchSysCacheTuple(TYPNAME,
+		typeTup = SearchSysCacheTuple(TYPENAME,
 									  PointerGetDatum(args[i]),
 									  0, 0, 0);
 		if (!HeapTupleIsValid(typeTup))
@@ -2137,7 +2137,7 @@ pltcl_set_tuple_values(Tcl_Interp *interp, char *arrayname,
 		 * Lookup the attribute type in the syscache
 		 * for the output function
 		 ************************************************************/
-		typeTup = SearchSysCacheTuple(TYPOID,
+		typeTup = SearchSysCacheTuple(TYPEOID,
 						   ObjectIdGetDatum(tupdesc->attrs[i]->atttypid),
 									  0, 0, 0);
 		if (!HeapTupleIsValid(typeTup))
@@ -2210,7 +2210,7 @@ pltcl_build_tuple_argument(HeapTuple tuple, TupleDesc tupdesc,
 		 * Lookup the attribute type in the syscache
 		 * for the output function
 		 ************************************************************/
-		typeTup = SearchSysCacheTuple(TYPOID,
+		typeTup = SearchSysCacheTuple(TYPEOID,
 						   ObjectIdGetDatum(tupdesc->attrs[i]->atttypid),
 									  0, 0, 0);
 		if (!HeapTupleIsValid(typeTup))

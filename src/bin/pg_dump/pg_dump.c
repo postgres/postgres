@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.123 1999/10/23 03:13:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.124 1999/11/22 17:56:36 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -1096,8 +1096,8 @@ clearInhInfo(InhInfo *inh, int numInherits)
 		return;
 	for (i = 0; i < numInherits; ++i)
 	{
-		if (inh[i].inhrel)
-			free(inh[i].inhrel);
+		if (inh[i].inhrelid)
+			free(inh[i].inhrelid);
 		if (inh[i].inhparent)
 			free(inh[i].inhparent);
 	}
@@ -1478,7 +1478,7 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 
 			sprintf(query, "SELECT rcname from pg_relcheck, pg_inherits as i "
 					"where rcrelid = '%s'::oid "
-					" and rcrelid = i.inhrel"
+					" and rcrelid = i.inhrelid"
 					" and exists "
 					"  (select * from pg_relcheck as c "
 					"    where c.rcname = pg_relcheck.rcname "
@@ -1523,7 +1523,7 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 					"where rcrelid = '%s'::oid "
 					"   and not exists "
 					"  (select * from pg_relcheck as c, pg_inherits as i "
-					"   where i.inhrel = pg_relcheck.rcrelid "
+					"   where i.inhrelid = pg_relcheck.rcrelid "
 					"     and c.rcname = pg_relcheck.rcname "
 					"     and c.rcsrc = pg_relcheck.rcsrc "
 					"     and c.rcrelid = i.inhparent) ",
@@ -1738,12 +1738,12 @@ getInherits(int *numInherits)
 	char		query[MAX_QUERY_SIZE];
 	InhInfo    *inhinfo;
 
-	int			i_inhrel;
+	int			i_inhrelid;
 	int			i_inhparent;
 
 	/* find all the inheritance information */
 
-	sprintf(query, "SELECT inhrel, inhparent from pg_inherits");
+	sprintf(query, "SELECT inhrelid, inhparent from pg_inherits");
 
 	res = PQexec(g_conn, query);
 	if (!res ||
@@ -1759,12 +1759,12 @@ getInherits(int *numInherits)
 
 	inhinfo = (InhInfo *) malloc(ntups * sizeof(InhInfo));
 
-	i_inhrel = PQfnumber(res, "inhrel");
+	i_inhrelid = PQfnumber(res, "inhrelid");
 	i_inhparent = PQfnumber(res, "inhparent");
 
 	for (i = 0; i < ntups; i++)
 	{
-		inhinfo[i].inhrel = strdup(PQgetvalue(res, i, i_inhrel));
+		inhinfo[i].inhrelid = strdup(PQgetvalue(res, i, i_inhrelid));
 		inhinfo[i].inhparent = strdup(PQgetvalue(res, i, i_inhparent));
 	}
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.80 1999/11/21 01:58:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.81 1999/11/22 17:56:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -524,7 +524,7 @@ build_tupdesc_ind(RelationBuildDescInfo buildinfo,
 
 	for (i = 1; i <= relation->rd_rel->relnatts; i++)
 	{
-		atttup = (HeapTuple) AttributeNumIndexScan(attrel,
+		atttup = (HeapTuple) AttributeRelidNumIndexScan(attrel,
 										  RelationGetRelid(relation), i);
 
 		if (!HeapTupleIsValid(atttup))
@@ -2085,7 +2085,7 @@ write_irels(void)
 	SetProcessingMode(BootstrapProcessing);
 
 	bi.infotype = INFO_RELNAME;
-	bi.i.info_name = AttributeNumIndex;
+	bi.i.info_name = AttributeRelidNumIndex;
 	irel[0] = RelationBuildDesc(bi, NULL);
 	irel[0]->rd_isnailed = true;
 

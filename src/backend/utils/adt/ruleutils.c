@@ -3,7 +3,7 @@
  *			  out of it's tuple
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.31 1999/11/15 02:00:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.32 1999/11/22 17:56:30 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -484,7 +484,7 @@ pg_get_indexdef(Oid indexrelid)
 		HeapTuple	proctup;
 		Form_pg_proc procStruct;
 
-		proctup = SearchSysCacheTuple(PROOID,
+		proctup = SearchSysCacheTuple(PROCOID,
 							 ObjectIdGetDatum(idxrec->indproc), 0, 0, 0);
 		if (!HeapTupleIsValid(proctup))
 			elog(ERROR, "cache lookup for proc %u failed", idxrec->indproc);
@@ -567,7 +567,7 @@ pg_get_userbyid(int32 uid)
 	 * Get the pg_shadow entry and print the result
 	 * ----------
 	 */
-	usertup = SearchSysCacheTuple(USESYSID,
+	usertup = SearchSysCacheTuple(USERSYSID,
 								  ObjectIdGetDatum(uid), 0, 0, 0);
 	if (HeapTupleIsValid(usertup))
 	{
@@ -1282,7 +1282,7 @@ get_rule_expr(Node *node, deparse_context *context)
 							HeapTuple	tp;
 							Form_pg_operator optup;
 
-							tp = SearchSysCacheTuple(OPROID,
+							tp = SearchSysCacheTuple(OPEROID,
 													 ObjectIdGetDatum(opno),
 													 0, 0, 0);
 							Assert(HeapTupleIsValid(tp));
@@ -1439,7 +1439,7 @@ get_func_expr(Expr *expr, deparse_context *context)
 	 * Get the functions pg_proc tuple
 	 * ----------
 	 */
-	proctup = SearchSysCacheTuple(PROOID,
+	proctup = SearchSysCacheTuple(PROCOID,
 								  ObjectIdGetDatum(func->funcid),
 								  0, 0, 0);
 	if (!HeapTupleIsValid(proctup))
@@ -1524,7 +1524,7 @@ get_tle_expr(TargetEntry *tle, deparse_context *context)
 	 * Get the functions pg_proc tuple
 	 * ----------
 	 */
-	tup = SearchSysCacheTuple(PROOID,
+	tup = SearchSysCacheTuple(PROCOID,
 							  ObjectIdGetDatum(func->funcid), 0, 0, 0);
 	if (!HeapTupleIsValid(tup))
 		elog(ERROR, "cache lookup for proc %u failed", func->funcid);
@@ -1548,7 +1548,7 @@ get_tle_expr(TargetEntry *tle, deparse_context *context)
 	 * Furthermore, the name of the function must be the same
 	 * as the argument/result type name.
 	 */
-	tup = SearchSysCacheTuple(TYPOID,
+	tup = SearchSysCacheTuple(TYPEOID,
 							  ObjectIdGetDatum(procStruct->prorettype),
 							  0, 0, 0);
 	if (!HeapTupleIsValid(tup))
@@ -1607,7 +1607,7 @@ get_const_expr(Const *constval, deparse_context *context)
 		return;
 	}
 
-	typetup = SearchSysCacheTuple(TYPOID,
+	typetup = SearchSysCacheTuple(TYPEOID,
 								  ObjectIdGetDatum(constval->consttype),
 								  0, 0, 0);
 	if (!HeapTupleIsValid(typetup))

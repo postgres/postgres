@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.53 1999/11/21 01:58:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.54 1999/11/22 17:56:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,6 +15,7 @@
 #include "access/genam.h"
 #include "access/heapam.h"
 #include "access/valid.h"
+#include "catalog/pg_operator.h"
 #include "catalog/pg_type.h"
 #include "catalog/catname.h"
 #include "catalog/indexing.h"
@@ -711,7 +712,6 @@ InitSysCache(char *relname,
 	 * ----------------
 	 */
 	{
-
 		/*
 		 * We can only do this optimization because the number of hash
 		 * buckets never changes.  Without it, we call malloc() too much.
@@ -811,9 +811,10 @@ InitSysCache(char *relname,
 /* --------------------------------
  *		SearchSelfReferences
  *
- *		This call searches a self referencing information,
- *
- *		which causes a cycle in system catalog cache
+ *		This call searches for self-referencing information,
+ *		which causes infinite recursion in the system catalog cache.
+ *      This code short-circuits the normal index lookup for cache loads
+ *      in those cases and replaces it with a heap scan.
  *
  *		cache should already be initailized
  * --------------------------------
@@ -823,45 +824,81 @@ SearchSelfReferences(struct catcache * cache)
 {
 	HeapTuple		ntp;
 	Relation		rel;
-	static Oid		indexSelfOid = 0;
-	static HeapTuple	indexSelfTuple = 0;
 
-	if (cache->id != INDEXRELID)
+	if (cache->id == INDEXRELID)
+	{
+		static Oid			indexSelfOid = InvalidOid;
+		static HeapTuple	indexSelfTuple = NULL;
+
+		if (!OidIsValid(indexSelfOid))
+		{
+			/* Find oid of pg_index_indexrelid_index */
+			rel = heap_openr(RelationRelationName, AccessShareLock);
+			ntp = ClassNameIndexScan(rel, IndexRelidIndex);
+			if (!HeapTupleIsValid(ntp))
+				elog(ERROR, "SearchSelfReferences: %s not found in %s",
+					IndexRelidIndex, RelationRelationName);
+			indexSelfOid = ntp->t_data->t_oid;
+			pfree(ntp);
+			heap_close(rel, AccessShareLock);
+		}
+		/* Looking for something other than pg_index_indexrelid_index? */
+		if ((Oid)cache->cc_skey[0].sk_argument != indexSelfOid)
+			return (HeapTuple)0;
+
+		/* Do we need to load our private copy of the tuple? */
+		if (!HeapTupleIsValid(indexSelfTuple))
+		{
+			HeapScanDesc	sd;
+			MemoryContext	oldcxt;
+	
+			if (!CacheCxt)
+				CacheCxt = CreateGlobalMemory("Cache");
+			rel = heap_open(cache->relationId, AccessShareLock);
+			sd = heap_beginscan(rel, false, SnapshotNow, 1, cache->cc_skey);
+			ntp = heap_getnext(sd, 0);
+			if (!HeapTupleIsValid(ntp))
+				elog(ERROR, "SearchSelfReferences: tuple not found");
+			oldcxt = MemoryContextSwitchTo((MemoryContext) CacheCxt);
+			indexSelfTuple = heap_copytuple(ntp);
+			MemoryContextSwitchTo(oldcxt);
+			heap_endscan(sd);
+			heap_close(rel, AccessShareLock);
+		}
+		return indexSelfTuple;
+	}
+	else if (cache->id == OPEROID)
+	{
+		/* bootstrapping this requires preloading a range of rows. bjm */
+		static HeapTuple	operatorSelfTuple[MAX_OIDCMP-MIN_OIDCMP+1];
+		Oid					lookup_oid = (Oid)cache->cc_skey[0].sk_argument;
+		
+		if (lookup_oid < MIN_OIDCMP || lookup_oid > MAX_OIDCMP)
+			return (HeapTuple)0;
+
+		if (!HeapTupleIsValid(operatorSelfTuple[lookup_oid-MIN_OIDCMP]))
+		{
+			HeapScanDesc	sd;
+			MemoryContext	oldcxt;
+	
+			if (!CacheCxt)
+				CacheCxt = CreateGlobalMemory("Cache");
+			rel = heap_open(cache->relationId, AccessShareLock);
+			sd = heap_beginscan(rel, false, SnapshotNow, 1, cache->cc_skey);
+			ntp = heap_getnext(sd, 0);
+			if (!HeapTupleIsValid(ntp))
+				elog(ERROR, "SearchSelfReferences: tuple not found");
+			oldcxt = MemoryContextSwitchTo((MemoryContext) CacheCxt);
+			operatorSelfTuple[lookup_oid-MIN_OIDCMP] = heap_copytuple(ntp);
+			MemoryContextSwitchTo(oldcxt);
+			heap_endscan(sd);
+			heap_close(rel, AccessShareLock);
+		}
+		return operatorSelfTuple[lookup_oid-MIN_OIDCMP];
+	}
+	else
 		return (HeapTuple)0;
 
-	if (!indexSelfOid)
-	{
-		rel = heap_openr(RelationRelationName, AccessShareLock);
-		ntp = ClassNameIndexScan(rel, IndexRelidIndex);
-		if (!HeapTupleIsValid(ntp))
-			elog(ERROR, "SearchSelfRefernces: %s not found in %s",
-				IndexRelidIndex, RelationRelationName);
-		indexSelfOid = ntp->t_data->t_oid;
-		pfree(ntp);
-		heap_close(rel, AccessShareLock);
-	}
-	if ((Oid)cache->cc_skey[0].sk_argument != indexSelfOid)
-		return (HeapTuple)0;
-	if (!indexSelfTuple)
-	{
-		HeapScanDesc	sd;
-		MemoryContext	oldcxt;
-
-		if (!CacheCxt)
-			CacheCxt = CreateGlobalMemory("Cache");
-		rel = heap_open(cache->relationId, AccessShareLock);
-		sd = heap_beginscan(rel, false, SnapshotNow, 1, cache->cc_skey);
-		ntp = heap_getnext(sd, 0);
-		if (!HeapTupleIsValid(ntp))
-			elog(ERROR, "SearchSelfRefernces: tuple not found");
-		oldcxt = MemoryContextSwitchTo((MemoryContext) CacheCxt);
-		indexSelfTuple = heap_copytuple(ntp);
-		MemoryContextSwitchTo(oldcxt);
-		heap_endscan(sd);
-		heap_close(rel, AccessShareLock);
-	}
-
-	return indexSelfTuple;
 }
 
 /* --------------------------------
@@ -907,10 +944,8 @@ SearchSysCache(struct catcache * cache,
 	/*
 	 *	resolve self referencing informtion
 	 */
-	if (ntp = SearchSelfReferences(cache), ntp)
-	{
-			return heap_copytuple(ntp);
-	}
+	if ((ntp = SearchSelfReferences(cache)))
+		return	heap_copytuple(ntp);
 
 	/* ----------------
 	 *	find the hash bucket in which to look for the tuple

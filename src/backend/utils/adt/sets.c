@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.26 1999/09/18 19:07:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.27 1999/11/22 17:56:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,7 +72,7 @@ SetDefine(char *querystr, char *typename)
 	 * until you start the next command.)
 	 */
 	CommandCounterIncrement();
-	tup = SearchSysCacheTuple(PROOID,
+	tup = SearchSysCacheTuple(PROCOID,
 							  ObjectIdGetDatum(setoid),
 							  0, 0, 0);
 	if (!HeapTupleIsValid(tup))
@@ -102,7 +102,7 @@ SetDefine(char *querystr, char *typename)
 		/* change the pg_proc tuple */
 		procrel = heap_openr(ProcedureRelationName, RowExclusiveLock);
 
-		tup = SearchSysCacheTuple(PROOID,
+		tup = SearchSysCacheTuple(PROCOID,
 								  ObjectIdGetDatum(setoid),
 								  0, 0, 0);
 		if (HeapTupleIsValid(tup))

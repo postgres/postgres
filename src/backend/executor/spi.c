@@ -3,7 +3,7 @@
  * spi.c
  *				Server Programming Interface
  *
- * $Id: spi.c,v 1.41 1999/11/07 23:08:06 momjian Exp $
+ * $Id: spi.c,v 1.42 1999/11/22 17:56:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -449,7 +449,7 @@ SPI_gettype(TupleDesc tupdesc, int fnumber)
 		return NULL;
 	}
 
-	typeTuple = SearchSysCacheTuple(TYPOID,
+	typeTuple = SearchSysCacheTuple(TYPEOID,
 				 ObjectIdGetDatum(tupdesc->attrs[fnumber - 1]->atttypid),
 									0, 0, 0);
 

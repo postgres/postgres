@@ -8,7 +8,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: syscache.h,v 1.20 1999/11/01 02:29:27 momjian Exp $
+ * $Id: syscache.h,v 1.21 1999/11/22 17:56:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,39 +27,36 @@
  *
  *		The order of these must match the order
  *		they are entered into the structure cacheinfo[] in syscache.c
- *		The best thing to do is to add yours at the END, because some
- *		code assumes that certain caches are at certain places in this
- *		array.
+ *		Keep them in alphabeticall order.
  */
 
-#define AMOPOPID		0
-#define AMOPSTRATEGY	1
-#define ATTNAME			2
-#define ATTNUM			3
-#define INDEXRELID		4
-#define LANNAME			5
-#define OPRNAME			6
-#define OPROID			7
-#define PRONAME			8
-#define PROOID			9
-#define RELNAME			10
-#define RELOID			11
-#define TYPNAME			12
-#define TYPOID			13
-#define AMNAME			14
-#define CLANAME			15
-/* #define INDRELIDKEY		16 */
-#define INHRELID		16
-#define RULOID			17
-#define AGGNAME			18
-#define LISTENREL		19
-#define USENAME			20
-#define USESYSID		21
-#define GRONAME			22
-#define GROSYSID		23
-#define REWRITENAME		24
-#define CLADEFTYPE		25
-#define LANOID			26
+#define AGGNAME			0
+#define AMNAME			1
+#define AMOPOPID		2
+#define AMOPSTRATEGY	3
+#define ATTNAME			4
+#define ATTNUM			5
+#define CLADEFTYPE		6
+#define CLANAME			7
+#define GRONAME			8
+#define GROSYSID		9
+#define INDEXRELID		10
+#define INHRELID		11
+#define LANGNAME		12
+#define LANGOID			13
+#define LISTENREL		14
+#define OPERNAME		15
+#define OPEROID			16
+#define PROCNAME		17
+#define PROCOID			18
+#define RELNAME			19
+#define RELOID			20
+#define RULENAME		21
+#define RULEOID			22
+#define TYPENAME		23
+#define TYPEOID			24
+#define USERNAME		25
+#define USERSYSID		26
 
 /* ----------------
  *		struct cachedesc:		information needed for a call to InitSysCache()

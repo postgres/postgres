@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.56 1999/11/07 23:08:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.57 1999/11/22 17:56:00 momjian Exp $
  *
  * NOTES
  *	  The PortalExecutorHeapMemory crap needs to be eliminated
@@ -438,7 +438,7 @@ PerformAddAttribute(char *relationName,
 		else
 			attnelems = 0;
 
-		typeTuple = SearchSysCacheTuple(TYPNAME,
+		typeTuple = SearchSysCacheTuple(TYPENAME,
 										PointerGetDatum(typename),
 										0, 0, 0);
 		tform = (Form_pg_type) GETSTRUCT(typeTuple);

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/_deadcode/Attic/xfunc.c,v 1.10 1999/09/21 20:58:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/_deadcode/Attic/xfunc.c,v 1.11 1999/11/22 17:56:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -494,7 +494,7 @@ xfunc_func_expense(LispValue node, LispValue args)
 		funcid = get_funcid((Func) node);
 
 	/* look up tuple in cache */
-	tupl = SearchSysCacheTuple(PROOID,
+	tupl = SearchSysCacheTuple(PROCOID,
 							   ObjectIdGetDatum(funcid),
 							   0, 0, 0);
 	if (!HeapTupleIsValid(tupl))
@@ -609,7 +609,7 @@ xfunc_width(LispValue clause)
 	else if (IsA(clause, Var))
 	{
 		/* base case: width is width of this attribute */
-		tupl = SearchSysCacheTuple(TYPOID,
+		tupl = SearchSysCacheTuple(TYPEOID,
 							 ObjectIdGetDatum(get_vartype((Var) clause)),
 								   0, 0, 0);
 		if (!HeapTupleIsValid(tupl))
@@ -672,7 +672,7 @@ xfunc_width(LispValue clause)
 		 * * get function associated with this Oper, and treat this as * a
 		 * Func
 		 */
-		tupl = SearchSysCacheTuple(OPROID,
+		tupl = SearchSysCacheTuple(OPEROID,
 					   ObjectIdGetDatum(get_opno((Oper) get_op(clause))),
 								   0, 0, 0);
 		if (!HeapTupleIsValid(tupl))
@@ -1303,7 +1303,7 @@ xfunc_func_width(RegProcedure funcid, LispValue args)
 
 	/* lookup function and find its return type */
 	Assert(RegProcedureIsValid(funcid));
-	tupl = SearchSysCacheTuple(PROOID,
+	tupl = SearchSysCacheTuple(PROCOID,
 							   ObjectIdGetDatum(funcid),
 							   0, 0, 0);
 	if (!HeapTupleIsValid(tupl))
@@ -1321,7 +1321,7 @@ xfunc_func_width(RegProcedure funcid, LispValue args)
 	else
 /* function returns a base type */
 	{
-		tupl = SearchSysCacheTuple(TYPOID,
+		tupl = SearchSysCacheTuple(TYPEOID,
 								   ObjectIdGetDatum(proc->prorettype),
 								   0, 0, 0);
 		if (!HeapTupleIsValid(tupl))

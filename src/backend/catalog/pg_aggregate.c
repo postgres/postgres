@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.25 1999/09/18 19:06:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.26 1999/11/22 17:55:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,6 +15,7 @@
 
 #include "access/heapam.h"
 #include "catalog/catname.h"
+#include "catalog/indexing.h"
 #include "catalog/pg_aggregate.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
@@ -83,7 +84,7 @@ AggregateCreate(char *aggName,
 	if (!aggtransfn1Name && !aggtransfn2Name)
 		elog(ERROR, "AggregateCreate: aggregate must have at least one transition function");
 
-	tup = SearchSysCacheTuple(TYPNAME,
+	tup = SearchSysCacheTuple(TYPENAME,
 							  PointerGetDatum(aggbasetypeName),
 							  0, 0, 0);
 	if (!HeapTupleIsValid(tup))
@@ -92,7 +93,7 @@ AggregateCreate(char *aggName,
 
 	if (aggtransfn1Name)
 	{
-		tup = SearchSysCacheTuple(TYPNAME,
+		tup = SearchSysCacheTuple(TYPENAME,
 								  PointerGetDatum(aggtransfn1typeName),
 								  0, 0, 0);
 		if (!HeapTupleIsValid(tup))
@@ -102,7 +103,7 @@ AggregateCreate(char *aggName,
 
 		fnArgs[0] = xret1;
 		fnArgs[1] = xbase;
-		tup = SearchSysCacheTuple(PRONAME,
+		tup = SearchSysCacheTuple(PROCNAME,
 								  PointerGetDatum(aggtransfn1Name),
 								  Int32GetDatum(2),
 								  PointerGetDatum(fnArgs),
@@ -122,7 +123,7 @@ AggregateCreate(char *aggName,
 
 	if (aggtransfn2Name)
 	{
-		tup = SearchSysCacheTuple(TYPNAME,
+		tup = SearchSysCacheTuple(TYPENAME,
 								  PointerGetDatum(aggtransfn2typeName),
 								  0, 0, 0);
 		if (!HeapTupleIsValid(tup))
@@ -132,7 +133,7 @@ AggregateCreate(char *aggName,
 
 		fnArgs[0] = xret2;
 		fnArgs[1] = 0;
-		tup = SearchSysCacheTuple(PRONAME,
+		tup = SearchSysCacheTuple(PROCNAME,
 								  PointerGetDatum(aggtransfn2Name),
 								  Int32GetDatum(1),
 								  PointerGetDatum(fnArgs),
@@ -168,7 +169,7 @@ AggregateCreate(char *aggName,
 	{
 		fnArgs[0] = xret1;
 		fnArgs[1] = xret2;
-		tup = SearchSysCacheTuple(PRONAME,
+		tup = SearchSysCacheTuple(PROCNAME,
 								  PointerGetDatum(aggfinalfnName),
 								  Int32GetDatum(2),
 								  PointerGetDatum(fnArgs),
@@ -242,6 +243,16 @@ AggregateCreate(char *aggName,
 		elog(ERROR, "AggregateCreate: heap_formtuple failed");
 	if (!OidIsValid(heap_insert(aggdesc, tup)))
 		elog(ERROR, "AggregateCreate: heap_insert failed");
+
+	if (RelationGetForm(aggdesc)->relhasindex)
+	{
+		Relation	idescs[Num_pg_aggregate_indices];
+
+		CatalogOpenIndices(Num_pg_aggregate_indices, Name_pg_aggregate_indices, idescs);
+		CatalogIndexInsert(idescs, Num_pg_aggregate_indices, aggdesc, tup);
+		CatalogCloseIndices(Num_pg_aggregate_indices, idescs);
+	}
+
 	heap_close(aggdesc, RowExclusiveLock);
 }
 
@@ -301,7 +312,7 @@ AggNameGetInitVal(char *aggName, Oid basetype, int xfuncno, bool *isNull)
 
 	heap_close(aggRel, AccessShareLock);
 
-	tup = SearchSysCacheTuple(TYPOID,
+	tup = SearchSysCacheTuple(TYPEOID,
 							  ObjectIdGetDatum(transtype),
 							  0, 0, 0);
 	if (!HeapTupleIsValid(tup))
