@@ -1,0 +1,11 @@
+MK_NO_LORDER= true
+CXXFLAGS+= -I/usr/local/lib/gcc-lib/i386-pc-qnx4/egcs-2.91.60/include/g++
+AR= ar
+LD= $(AR)
+LDREL= $(AROPT)
+LDOUT=
+LIBS= -lunix
+LDFLAGS=   $(LIBS)
+
+%$(DLSUFFIX): %.o
+	@echo Cannot make shared library $@ from $*.o

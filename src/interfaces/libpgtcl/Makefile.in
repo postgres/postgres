@@ -6,7 +6,7 @@
 # Copyright (c) 1994, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile.in,v 1.36 1999/10/11 17:46:59 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile.in,v 1.37 1999/12/16 01:25:17 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -46,7 +46,7 @@ install-headers: beforeinstall-headers libpgtcl.h
 	$(INSTALL) $(INSTLOPTS) libpgtcl.h $(HEADERDIR)/libpgtcl.h
 
 beforeinstall-headers:
-	@if [ ! -d $(HEADERDIR) ]; then mkdir $(HEADERDIR); fi
+	-@if [ ! -d $(HEADERDIR) ]; then mkdir $(HEADERDIR); fi
 
 
 .PHONY: clean

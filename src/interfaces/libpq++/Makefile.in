@@ -6,7 +6,7 @@
 # Copyright (c) 1994, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/Makefile.in,v 1.18 1999/12/03 17:35:05 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/Makefile.in,v 1.19 1999/12/16 01:25:20 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -90,8 +90,8 @@ install-headers: beforeinstall-headers $(MAINHEADER)
 	done
 
 beforeinstall-headers:
-	@if [ ! -d $(HEADERDIR) ]; then mkdir $(HEADERDIR); fi
-	@if [ ! -d $(LIBPGXXHEADERDIR) ]; then mkdir $(LIBPGXXHEADERDIR); fi
+	-@if [ ! -d $(HEADERDIR) ]; then mkdir $(HEADERDIR); fi
+	-@if [ ! -d $(LIBPGXXHEADERDIR) ]; then mkdir $(LIBPGXXHEADERDIR); fi
 
 .PHONY: clean
 

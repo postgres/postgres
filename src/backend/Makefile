@@ -34,7 +34,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.41 1999/12/13 22:32:16 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.42 1999/12/16 01:25:00 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -50,6 +50,10 @@ DIRS += tioga
 endif
 
 OBJS = $(DIRS:%=%/SUBSYS.o)
+ifeq ($(PORTNAME), qnx4)
+# This file chrashes wlink and is therefore not in bootstrap/SUBSYS.o.
+OBJS1 = bootstrap/bootstrap.o
+endif
 
 # kerberos flags
 
@@ -75,7 +79,7 @@ all: postgres $(POSTGRES_IMP) global1.bki.source local1_template1.bki.source \
 
 ifneq ($(PORTNAME), win)
 postgres: fmgr.h $(OBJS) ../utils/version.o
-	$(CC) -o postgres $(OBJS) ../utils/version.o $(LDFLAGS)
+	$(CC) -o postgres $(OBJS) $(OBJS1) ../utils/version.o $(LDFLAGS)
 else
 postgres: $(DLLOBJS) ../utils/dllinit.o postgres.def libpostgres.a
 	dlltool --dllname $@$(X) --output-exp $@.exp --def postgres.def
@@ -109,7 +113,7 @@ catalog/global1.description catalog/local1_template1.description:
 # The postgres.o target is needed by the rule in Makefile.global that
 # creates the exports file when MAKE_EXPORTS = true.
 postgres.o: $(OBJS)
-	$(CC) $(LDREL) $(LDOUT) postgres.o $(OBJS) $(LDFLAGS)
+	$(CC) $(LDREL) $(LDOUT) postgres.o $(OBJS) $(OBJS1) $(LDFLAGS)
 
 ############################################################################
 # The following targets are specified in make commands that appear in the
@@ -197,21 +201,21 @@ install-lib: $(LIBDIR) \
 	  $(LIBDIR)/pg_geqo.sample
 
 install-headers: fmgr.h $(SRCDIR)/include/config.h
-	@if [ ! -d $(HEADERDIR) ]; then mkdir $(HEADERDIR); fi
-	@if [ ! -d $(HEADERDIR)/port ]; then mkdir $(HEADERDIR)/port; fi
-	@if [ ! -d $(HEADERDIR)/port/$(PORTNAME) ]; \
+	-@if [ ! -d $(HEADERDIR) ]; then mkdir $(HEADERDIR); fi
+	-@if [ ! -d $(HEADERDIR)/port ]; then mkdir $(HEADERDIR)/port; fi
+	-@if [ ! -d $(HEADERDIR)/port/$(PORTNAME) ]; \
 		then mkdir $(HEADERDIR)/port/$(PORTNAME); fi
-	@if [ ! -d $(HEADERDIR)/lib ]; \
+	-@if [ ! -d $(HEADERDIR)/lib ]; \
 		then mkdir $(HEADERDIR)/lib; fi
-	@if [ ! -d $(HEADERDIR)/libpq ]; \
+	-@if [ ! -d $(HEADERDIR)/libpq ]; \
 		then mkdir $(HEADERDIR)/libpq; fi
-	@if [ ! -d $(HEADERDIR)/utils ]; \
+	-@if [ ! -d $(HEADERDIR)/utils ]; \
 		then mkdir $(HEADERDIR)/utils; fi
-	@if [ ! -d $(HEADERDIR)/access ]; \
+	-@if [ ! -d $(HEADERDIR)/access ]; \
 		then mkdir $(HEADERDIR)/access; fi
-	@if [ ! -d $(HEADERDIR)/executor ]; \
+	-@if [ ! -d $(HEADERDIR)/executor ]; \
 		then mkdir $(HEADERDIR)/executor; fi
-	@if [ ! -d $(HEADERDIR)/commands ]; \
+	-@if [ ! -d $(HEADERDIR)/commands ]; \
 		then mkdir $(HEADERDIR)/commands; fi
 	$(INSTALL) $(INSTLOPTS) fmgr.h \
           $(HEADERDIR)/fmgr.h
@@ -267,7 +271,7 @@ $(HEADERDIR):
 # are up to date.  It saves the time of doing all the submakes.
 .PHONY: quick
 quick: $(OBJS)
-	$(CC) -o postgres $(OBJS) $(LDFLAGS)
+	$(CC) -o postgres $(OBJS) $(OBJS1) $(LDFLAGS)
 
 #
 # Build the file, "./ID", used by the "gid" (grep-for-identifier) tool

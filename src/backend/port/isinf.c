@@ -1,4 +1,4 @@
-/* $Id: isinf.c,v 1.13 1999/07/30 03:45:44 momjian Exp $ */
+/* $Id: isinf.c,v 1.14 1999/12/16 01:25:02 momjian Exp $ */
 
 #include <math.h>
 
@@ -51,7 +51,7 @@ double		x;
 	return 0;
 }
 
-#else defined(HAVE_CLASS)
+#elif defined(HAVE_CLASS)
 int
 isinf(double x)
 {
@@ -65,4 +65,19 @@ isinf(double x)
 }
 
 #endif
+#endif
+
+#ifdef __QNX__
+#include <float.h>
+
+int
+isinf(double x)
+{
+        if (x == HUGE_VAL)
+                return 1;
+        if (x == -HUGE_VAL)
+                return -1;
+        return 0;
+}
+
 #endif

@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/regress.sh,v 1.33 1999/12/10 00:48:32 momjian Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/regress.sh,v 1.34 1999/12/16 01:25:23 momjian Exp $
 #
 if [ $# -eq 0 ]
 then
@@ -11,7 +11,7 @@ portname=$1
 shift
 extratests="$*"
 
-if [ x$portname = "xwin" ]
+if [ x$portname = "xwin" -o x$portname = "xqnx4" ]
 then
 	HOST="-h localhost"
 else
@@ -67,15 +67,25 @@ if [ $? -ne 0 ]; then
      exit 1
 fi
 
+if [ x$portname != "xqnx4" ]
+then
 echo "=============== installing PL/pgSQL...                ================="
 createlang $HOST plpgsql regression
 if [ $? -ne 0 -a $? -ne 2 ]; then
      echo createlang failed
      exit 1
 fi
+fi
 
 echo "=============== running regression queries...         ================="
 echo "" > regression.diffs
+
+if [ x$portname = "xqnx4" ]
+then
+	DIFFOPT="-b"
+else
+	DIFFOPT="-w"
+fi
 
 stdtests=`awk '
 $1=="test"	{ print $2; }
@@ -93,13 +103,14 @@ do
 		EXPECTED="expected/${i}.out"
 	fi
   
-	if [ `diff -w ${EXPECTED} results/${i}.out | wc -l` -ne 0 ]
+	if [ `diff ${DIFFOPT} ${EXPECTED} results/${i}.out | wc -l` -ne 0 ]
 	then
-		( diff -wC3 ${EXPECTED} results/${i}.out; \
+		( diff ${DIFFOPT} -C3 ${EXPECTED} results/${i}.out; \
 		echo "";  \
 		echo "----------------------"; \
 		echo "" ) >> regression.diffs
 		echo failed
+		echo "diff ${DIFFOPT} -C3 ${EXPECTED} results/${i}.out"
 	else
 		echo ok
 	fi

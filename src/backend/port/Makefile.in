@@ -13,7 +13,7 @@
 # be converted to Method 2.  
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/port/Attic/Makefile.in,v 1.19 1999/12/13 22:33:05 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/port/Attic/Makefile.in,v 1.20 1999/12/16 01:25:02 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -25,10 +25,18 @@ CFLAGS+= -I..
 OBJS = dynloader.o @INET_ATON@ @STRERROR@ @MISSING_RANDOM@ @SRANDOM@
 OBJS+= @GETHOSTNAME@ @GETRUSAGE@ @STRCASECMP@ @STRDUP@ @TAS@ @ISINF@
 OBJS+= @STRTOL@ @STRTOUL@ @SNPRINTF@
+ifeq ($(PORTNAME), qnx4)
+OBJS += getrusage.o qnx4/SUBSYS.o
+endif
 all: SUBSYS.o
 
 SUBSYS.o: $(OBJS)
 	$(LD) $(LDREL) $(LDOUT) SUBSYS.o $(OBJS)
+
+qnx4/SUBSYS.o: qnx4.dir
+
+qnx4.dir:
+	$(MAKE) -C qnx4 all
 
 .PHONY: clean dep
 

@@ -810,6 +810,9 @@ EOF
     BePC:BeOS:*:*)	# BeOS running on Intel PC compatible.
 	echo i586-pc-beos
 	exit 0 ;;
+    *:QNX:*:*)
+	echo i386-pc-qnx${UNAME_VERSION}
+	exit 0 ;;
 esac
 
 #echo '(No uname command or uname output not recognized.)' 1>&2

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.91 1999/11/25 01:28:07 wieck Exp $
+ * $Id: builtins.h,v 1.92 1999/12/16 01:25:14 momjian Exp $
  *
  * NOTES
  *	  This should normally only be included by fmgr.h.
@@ -155,6 +155,11 @@ extern int	namestrcmp(Name name, char *str);
 #define ltoa pg_ltoa
 #endif	 /* hpux */
 extern int32 pg_atoi(char *s, int size, int c);
+/* XXX hack.  QNX has itoa and ltoa (with different arguments) already. */
+#ifdef __QNX__
+#define itoa pg_itoa
+#define ltoa pg_ltoa
+#endif   /* QNX */
 extern void itoa(int i, char *a);
 extern void ltoa(int32 l, char *a);
 

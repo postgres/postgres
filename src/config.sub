@@ -777,6 +777,9 @@ case $os in
 	-xenix)
 		os=-xenix
 		;;
+	-qnx4*)
+		os=-qnx4
+		;;
 	-none)
 		;;
 	*)

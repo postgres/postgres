@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.130 1999/12/06 07:21:12 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.131 1999/12/16 01:25:07 momjian Exp $
  *
  * NOTES
  *
@@ -200,7 +200,7 @@ static char Execfile[MAXPGPATH];
 
 static int	ServerSock_INET = INVALID_SOCK;		/* stream socket server */
 
-#ifndef __CYGWIN32__
+#if !defined(__CYGWIN32__) && !defined(__QNX__)
 static int	ServerSock_UNIX = INVALID_SOCK;		/* stream socket server */
 
 #endif
@@ -631,7 +631,7 @@ PostmasterMain(int argc, char *argv[])
 	    }
 	}
 
-#ifndef __CYGWIN32__
+#if !defined(__CYGWIN32__) && !defined(__QNX__)
 	status = StreamServerPort(NULL, PostPortName, &ServerSock_UNIX);
 	if (status != STATUS_OK)
 	{
@@ -887,7 +887,7 @@ ServerLoop(void)
 
 		/* new connection pending on our well-known port's socket */
 
-#ifndef __CYGWIN32__
+#if !defined(__CYGWIN32__) && !defined(__QNX__)
 		if (ServerSock_UNIX != INVALID_SOCK &&
 			FD_ISSET(ServerSock_UNIX, &rmask) &&
    		        (port = ConnCreate(ServerSock_UNIX)) != NULL) {
@@ -1035,7 +1035,7 @@ initMasks(fd_set *rmask, fd_set *wmask)
 	FD_ZERO(rmask);
 	FD_ZERO(wmask);
 
-#ifndef __CYGWIN32__
+#if !defined(__CYGWIN32__) && !defined(__QNX__)
 	if (ServerSock_UNIX != INVALID_SOCK)
 	{
 		FD_SET(ServerSock_UNIX, rmask);
@@ -1831,7 +1831,7 @@ DoBackend(Port *port)
 	/* Close the postmaster sockets */
 	if (NetServer) 
 		StreamClose(ServerSock_INET);
-#ifndef __CYGWIN32__
+#if !defined(__CYGWIN32__) && !defined(__QNX__)
 	StreamClose(ServerSock_UNIX);
 #endif
 
@@ -1964,7 +1964,7 @@ ExitPostmaster(int status)
 	 */
 	if (ServerSock_INET != INVALID_SOCK)
 		StreamClose(ServerSock_INET);
-#ifndef __CYGWIN32__
+#if !defined(__CYGWIN32__) && !defined(__QNX__)
 	if (ServerSock_UNIX != INVALID_SOCK)
 		StreamClose(ServerSock_UNIX);
 #endif
@@ -2129,7 +2129,7 @@ SSDataBase(bool startup)
 		on_exit_reset();	
 		if (NetServer) 
 			StreamClose(ServerSock_INET);
-#ifndef __CYGWIN32__
+#if !defined(__CYGWIN32__) && !defined(__QNX__)
 		StreamClose(ServerSock_UNIX);
 #endif
 
