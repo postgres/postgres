@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.272 2004/07/28 14:28:57 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.273 2004/07/31 04:22:46 momjian Exp $
 -->
 
 <appendix id="release">
@@ -72,8 +72,6 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.272 2004/07/28 14:28:57 momjian
         release had no such capability; there was no way to recover from
         a statement failure in a transation. This feature is valuable
         for application writers that required complex transaction control.
-        Future releases will add similar exception handling to server-side
-        languages.
        </para>
       </listitem>
      </varlistentry>
