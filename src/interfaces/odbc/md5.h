@@ -1,6 +1,6 @@
-/* File:			connection.h
+/* File:			md5.h
  *
- * Description:		See "md.h"
+ * Description:		See "md5.c"
  *
  * Comments:		See "notice.txt" for copyright and license information.
  *
