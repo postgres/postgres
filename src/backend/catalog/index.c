@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.13 1997/03/24 07:39:47 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.14 1997/03/27 04:13:44 vadim Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1714,7 +1714,7 @@ IndexIsUnique(Oid indexId)
 				ObjectIdGetDatum(indexId),
 				0,0,0);
     if(!HeapTupleIsValid(tuple)) {
-	elog(WARN, "Can't find index id %d in IndexIsUnique",
+	elog(WARN, "IndexIsUnique: can't find index id %d",
 	     indexId);
     }
     index = (IndexTupleForm)GETSTRUCT(tuple);
@@ -1742,7 +1742,6 @@ IndexIsUniqueNoCache(Oid indexId)
     ScanKeyData skey[1];
     HeapScanDesc scandesc;
     HeapTuple tuple;
-    Buffer b;
     IndexTupleForm index;
     bool isunique;
 
@@ -1755,15 +1754,16 @@ IndexIsUniqueNoCache(Oid indexId)
 
     scandesc = heap_beginscan(pg_index, 0, SelfTimeQual, 1, skey);
     
-    tuple = heap_getnext(scandesc, 0, &b);
+    tuple = heap_getnext(scandesc, 0, NULL);
     if(!HeapTupleIsValid(tuple)) {
-	elog(WARN, "Can't find index id %d in IndexIsUniqueNoCache",
+	elog(WARN, "IndexIsUniqueNoCache: can't find index id %d",
 	     indexId);
     }
     index = (IndexTupleForm)GETSTRUCT(tuple);
     Assert(index->indexrelid == indexId);
     isunique = index->indisunique;
 
-    ReleaseBuffer(b);
+    heap_endscan (scandesc);
+    heap_close (pg_index);
     return isunique;
 }
