@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.440 2004/11/17 08:30:09 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.441 2004/12/29 21:36:03 tgl Exp $
  *
  * NOTES
  *
@@ -1584,10 +1584,8 @@ processCancelRequest(Port *port, void *pkt)
 	int			backendPID;
 	long		cancelAuthCode;
 	Backend    *bp;
-
 #ifndef EXEC_BACKEND
 	Dlelem	   *curr;
-
 #else
 	int			i;
 #endif
@@ -3152,9 +3150,30 @@ SubPostmasterMain(int argc, char *argv[])
 
 	MyProcPid = getpid();		/* reset MyProcPid */
 
-	/* Read in file-based context */
+	/* In EXEC_BACKEND case we will not have inherited these settings */
+	IsPostmasterEnvironment = true;
+	whereToSendOutput = None;
+
+	/* Setup essential subsystems (to ensure elog() behaves sanely) */
+	MemoryContextInit();
+	InitializeGUCOptions();
+
+	/* Read in the variables file */
 	memset(&port, 0, sizeof(Port));
 	read_backend_variables(argv[2], &port);
+
+	/* Check we got appropriate args */
+	if (argc < 3)
+		elog(FATAL, "invalid subpostmaster invocation");
+
+	/*
+	 * If appropriate, physically re-attach to shared memory segment.
+	 * We want to do this before going any further to ensure that we
+	 * can attach at the same address the postmaster used.
+	 */
+	if (strcmp(argv[1], "-forkbackend") == 0 ||
+		strcmp(argv[1], "-forkboot") == 0)
+		PGSharedMemoryReAttach();
 
 	/*
 	 * Start our win32 signal implementation. This has to be done
@@ -3166,18 +3185,8 @@ SubPostmasterMain(int argc, char *argv[])
 #endif
 
 	/* In EXEC_BACKEND case we will not have inherited these settings */
-	IsPostmasterEnvironment = true;
-	whereToSendOutput = None;
 	pqinitmask();
 	PG_SETMASK(&BlockSig);
-
-	/* Setup essential subsystems */
-	MemoryContextInit();
-	InitializeGUCOptions();
-
-	/* Check we got appropriate args */
-	if (argc < 3)
-		elog(FATAL, "invalid subpostmaster invocation");
 
 	/* Read in remaining GUC variables */
 	read_nondefault_variables();
@@ -3187,7 +3196,7 @@ SubPostmasterMain(int argc, char *argv[])
 	{
 		/* BackendRun will close sockets */
 
-		/* Attach process to shared segments */
+		/* Attach process to shared data structures */
 		CreateSharedMemoryAndSemaphores(false, MaxBackends, 0);
 
 #ifdef USE_SSL
@@ -3208,7 +3217,7 @@ SubPostmasterMain(int argc, char *argv[])
 		/* Close the postmaster's sockets */
 		ClosePostmasterPorts(false);
 
-		/* Attach process to shared segments */
+		/* Attach process to shared data structures */
 		CreateSharedMemoryAndSemaphores(false, MaxBackends, 0);
 
 		BootstrapMain(argc - 2, argv + 2);
@@ -3259,6 +3268,7 @@ SubPostmasterMain(int argc, char *argv[])
 
 	return 1;					/* shouldn't get here */
 }
+
 #endif   /* EXEC_BACKEND */
 
 
@@ -3767,10 +3777,11 @@ read_inheritable_socket(SOCKET *dest, InheritableSocket *src)
 static void
 read_backend_variables(char *id, Port *port)
 {
+	BackendParameters param;
+
 #ifndef WIN32
 	/* Non-win32 implementation reads from file */
 	FILE *fp;
-	BackendParameters param;
 
 	/* Open file */
 	fp = AllocateFile(id, PG_BINARY_R);
@@ -3796,25 +3807,23 @@ read_backend_variables(char *id, Port *port)
 					 id, strerror(errno));
 		exit(1);
 	}
-
-	restore_backend_variables(&param, port);
 #else
 	/* Win32 version uses mapped file */
 	HANDLE paramHandle;
-	BackendParameters *param;
+	BackendParameters *paramp;
 
 	paramHandle = (HANDLE)atol(id);
-	param = MapViewOfFile(paramHandle, FILE_MAP_READ, 0, 0, 0);
-	if (!param)
+	paramp = MapViewOfFile(paramHandle, FILE_MAP_READ, 0, 0, 0);
+	if (!paramp)
 	{
 		write_stderr("could not map view of backend variables: error code %d\n",
 					 (int) GetLastError());
 		exit(1);
 	}
 
-	restore_backend_variables(param, port);
+	memcpy(&param, paramp, sizeof(BackendParameters));
 
-	if (!UnmapViewOfFile(param))
+	if (!UnmapViewOfFile(paramp))
 	{
 		write_stderr("could not unmap view of backend variables: error code %d\n",
 					 (int) GetLastError());
@@ -3828,6 +3837,8 @@ read_backend_variables(char *id, Port *port)
 		exit(1);
 	}
 #endif
+
+	restore_backend_variables(&param, port);
 }
 
 /* Restore critical backend variables from the BackendParameters struct */
@@ -3930,6 +3941,7 @@ ShmemBackendArrayRemove(pid_t pid)
 			(errmsg_internal("could not find backend entry with pid %d",
 							 (int) pid)));
 }
+
 #endif   /* EXEC_BACKEND */
 
 

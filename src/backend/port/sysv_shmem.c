@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/sysv_shmem.c,v 1.40 2004/11/09 21:30:13 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/sysv_shmem.c,v 1.41 2004/12/29 21:35:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -142,11 +142,7 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, uint32 size)
 	on_shmem_exit(IpcMemoryDelete, Int32GetDatum(shmid));
 
 	/* OK, should be able to attach to the segment */
-#ifdef EXEC_BACKEND
-	memAddress = shmat(shmid, UsedShmemSegAddr, PG_SHMAT_FLAGS);
-#else
 	memAddress = shmat(shmid, NULL, PG_SHMAT_FLAGS);
-#endif
 
 	if (memAddress == (void *) -1)
 		elog(FATAL, "shmat(id=%d) failed: %m", shmid);
@@ -279,7 +275,7 @@ PGSharedMemoryIsInUse(unsigned long id1, unsigned long id2)
  *
  * Create a shared memory segment of the given size and initialize its
  * standard header.  Also, register an on_shmem_exit callback to release
- * the storage.  For an exec'ed backend, it just attaches.
+ * the storage.
  *
  * Dead Postgres segments are recycled if found, but we do not fail upon
  * collision with non-Postgres shmem segments.	The idea here is to detect and
@@ -301,30 +297,6 @@ PGSharedMemoryCreate(uint32 size, bool makePrivate, int port)
 	IpcMemoryId shmid;
 #ifndef WIN32
 	struct stat statbuf;
-#endif
-
-#ifdef EXEC_BACKEND
-	/* If Exec case, just attach and return the pointer */
-	if (UsedShmemSegAddr != NULL && !makePrivate && IsUnderPostmaster)
-	{
-		void	   *origUsedShmemSegAddr = UsedShmemSegAddr;
-
-#ifdef __CYGWIN__
-		/* cygipc (currently) appears to not detach on exec. */
-		PGSharedMemoryDetach();
-		UsedShmemSegAddr = origUsedShmemSegAddr;
-#endif
-		elog(DEBUG3, "Attaching to %p", UsedShmemSegAddr);
-		hdr = PGSharedMemoryAttach((IpcMemoryKey) UsedShmemSegID, &shmid);
-		if (hdr == NULL)
-			elog(FATAL, "could not attach to proper memory at fixed address: shmget(key=%d, addr=%p) failed: %m",
-				 (int) UsedShmemSegID, UsedShmemSegAddr);
-		if (hdr != origUsedShmemSegAddr)
-			elog(FATAL, "attaching to shared mem returned unexpected address (got %p, expected %p)",
-				 hdr, UsedShmemSegAddr);
-		UsedShmemSegAddr = hdr;
-		return hdr;
-	}
 #endif
 
 	/* Room for a header? */
@@ -423,6 +395,49 @@ PGSharedMemoryCreate(uint32 size, bool makePrivate, int port)
 
 	return hdr;
 }
+
+#ifdef EXEC_BACKEND
+
+/*
+ * PGSharedMemoryReAttach
+ *
+ * Re-attach to an already existing shared memory segment.  In the non
+ * EXEC_BACKEND case this is not used, because postmaster children inherit
+ * the shared memory segment attachment via fork().
+ *
+ * UsedShmemSegID and UsedShmemSegAddr are implicit parameters to this
+ * routine.  The caller must have already restored them to the postmaster's
+ * values.
+ */
+void
+PGSharedMemoryReAttach(void)
+{
+	IpcMemoryId shmid;
+	void	   *hdr;
+	void	   *origUsedShmemSegAddr = UsedShmemSegAddr;
+
+	Assert(UsedShmemSegAddr != NULL);
+	Assert(IsUnderPostmaster);
+
+#ifdef __CYGWIN__
+	/* cygipc (currently) appears to not detach on exec. */
+	PGSharedMemoryDetach();
+	UsedShmemSegAddr = origUsedShmemSegAddr;
+#endif
+
+	elog(DEBUG3, "Attaching to %p", UsedShmemSegAddr);
+	hdr = (void *) PGSharedMemoryAttach((IpcMemoryKey) UsedShmemSegID, &shmid);
+	if (hdr == NULL)
+		elog(FATAL, "could not reattach to shared memory (key=%d, addr=%p): %m",
+			 (int) UsedShmemSegID, UsedShmemSegAddr);
+	if (hdr != origUsedShmemSegAddr)
+		elog(FATAL, "reattaching to shared memory returned unexpected address (got %p, expected %p)",
+			 hdr, origUsedShmemSegAddr);
+
+	UsedShmemSegAddr = hdr;		/* probably redundant */
+}
+
+#endif /* EXEC_BACKEND */
 
 /*
  * PGSharedMemoryDetach

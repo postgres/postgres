@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipci.c,v 1.72 2004/09/29 15:15:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipci.c,v 1.73 2004/12/29 21:36:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,7 @@
 #include "access/xlog.h"
 #include "miscadmin.h"
 #include "postmaster/bgwriter.h"
+#include "postmaster/postmaster.h"
 #include "storage/bufmgr.h"
 #include "storage/freespace.h"
 #include "storage/ipc.h"
@@ -37,14 +38,15 @@
  *		Creates and initializes shared memory and semaphores.
  *
  * This is called by the postmaster or by a standalone backend.
- * It is also called by a backend forked from the postmaster under
- * the EXEC_BACKEND case.  (In the non EXEC_BACKEND case, backends
- * start life already attached to shared memory.)  The initialization
- * functions are set up to simply "attach" to pre-existing shared memory
- * structures in the latter case.  We have to do that in order to
- * initialize pointers in local memory that reference the shared structures.
- * (In the non EXEC_BACKEND case, these pointer values are inherited via
- * fork() from the postmaster.)
+ * It is also called by a backend forked from the postmaster in the
+ * EXEC_BACKEND case.  In the latter case, the shared memory segment
+ * already exists and has been physically attached to, but we have to
+ * initialize pointers in local memory that reference the shared structures,
+ * because we didn't inherit the correct pointer values from the postmaster
+ * as we do in the fork() scenario.  The easiest way to do that is to run
+ * through the same code as before.  (Note that the called routines mostly
+ * check IsUnderPostmaster, rather than EXEC_BACKEND, to detect this case.
+ * This is a bit code-wasteful and could be cleaned up.)
  *
  * If "makePrivate" is true then we only need private memory, not shared
  * memory.	This is true for a standalone backend, false for a postmaster.
@@ -101,14 +103,16 @@ CreateSharedMemoryAndSemaphores(bool makePrivate,
 	else
 	{
 		/*
-		 * Attach to the shmem segment. (this should only ever be reached
-		 * by EXEC_BACKEND code, and only then with makePrivate == false)
+		 * We are reattaching to an existing shared memory segment.
+		 * This should only be reached in the EXEC_BACKEND case, and
+		 * even then only with makePrivate == false.
 		 */
 #ifdef EXEC_BACKEND
 		Assert(!makePrivate);
-		seghdr = PGSharedMemoryCreate(-1, makePrivate, 0);
+		Assert(UsedShmemSegAddr != NULL);
+		seghdr = UsedShmemSegAddr;
 #else
-		Assert(false);
+		elog(PANIC, "should be attached to shared memory already");
 #endif
 	}
 

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/postmaster/postmaster.h,v 1.7 2004/08/29 05:06:58 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/postmaster/postmaster.h,v 1.8 2004/12/29 21:36:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,6 +41,9 @@ extern void ClosePostmasterPorts(bool am_syslogger);
 #ifdef EXEC_BACKEND
 extern pid_t postmaster_forkexec(int argc, char *argv[]);
 extern int	SubPostmasterMain(int argc, char *argv[]);
+
+extern size_t ShmemBackendArraySize(void);
+extern void ShmemBackendArrayAllocation(void);
 #endif
 
 #endif   /* _POSTMASTER_H */

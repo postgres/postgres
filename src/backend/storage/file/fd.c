@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.113 2004/09/16 16:58:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.114 2004/12/29 21:36:05 tgl Exp $
  *
  * NOTES:
  *
@@ -228,6 +228,7 @@ static File fileNameOpenFile(FileName fileName, int fileFlags, int fileMode);
 static char *filepath(const char *filename);
 static void AtProcExit_Files(int code, Datum arg);
 static void CleanupTempFiles(bool isProcExit);
+static void RemovePgTempFilesInDir(const char *tmpdirname);
 
 
 /*
@@ -1482,59 +1483,83 @@ RemovePgTempFiles(void)
 {
 	char		db_path[MAXPGPATH];
 	char		temp_path[MAXPGPATH];
-	char		rm_path[MAXPGPATH];
 	DIR		   *db_dir;
-	DIR		   *temp_dir;
 	struct dirent *db_de;
-	struct dirent *temp_de;
 
 	/*
-	 * Cycle through pg_tempfiles for all databases and remove old temp
-	 * files.
+	 * Cycle through pgsql_tmp directories for all databases and remove old
+	 * temp files.
 	 */
 	snprintf(db_path, sizeof(db_path), "%s/base", DataDir);
-	if ((db_dir = AllocateDir(db_path)) != NULL)
+	db_dir = AllocateDir(db_path);
+	if (db_dir == NULL)
 	{
-		while ((db_de = readdir(db_dir)) != NULL)
-		{
-			if (strcmp(db_de->d_name, ".") == 0
-#ifndef EXEC_BACKEND
-			/* no PG_TEMP_FILES_DIR in DataDir in non EXEC_BACKEND case */
-				|| strcmp(db_de->d_name, "..") == 0
-#endif
-				)
-				continue;
-
-			snprintf(temp_path, sizeof(temp_path),
-					 "%s/%s/%s",
-					 db_path, db_de->d_name,
-					 PG_TEMP_FILES_DIR);
-			if ((temp_dir = AllocateDir(temp_path)) != NULL)
-			{
-				while ((temp_de = readdir(temp_dir)) != NULL)
-				{
-					if (strcmp(temp_de->d_name, ".") == 0 ||
-						strcmp(temp_de->d_name, "..") == 0)
-						continue;
-
-					snprintf(rm_path, sizeof(temp_path),
-							 "%s/%s/%s/%s",
-							 db_path, db_de->d_name,
-							 PG_TEMP_FILES_DIR,
-							 temp_de->d_name);
-
-					if (strncmp(temp_de->d_name,
-								PG_TEMP_FILE_PREFIX,
-								strlen(PG_TEMP_FILE_PREFIX)) == 0)
-						unlink(rm_path);
-					else
-						elog(LOG,
-							 "unexpected file found in temporary-files directory: \"%s\"",
-							 rm_path);
-				}
-				FreeDir(temp_dir);
-			}
-		}
-		FreeDir(db_dir);
+		/* this really should not happen */
+		elog(LOG, "could not open directory \"%s\": %m", db_path);
+		return;
 	}
+
+	while ((db_de = readdir(db_dir)) != NULL)
+	{
+		if (strcmp(db_de->d_name, ".") == 0 ||
+			strcmp(db_de->d_name, "..") == 0)
+			continue;
+
+		snprintf(temp_path, sizeof(temp_path), "%s/%s/%s",
+				 db_path, db_de->d_name, PG_TEMP_FILES_DIR);
+		RemovePgTempFilesInDir(temp_path);
+	}
+
+	FreeDir(db_dir);
+
+	/*
+	 * In EXEC_BACKEND case there is a pgsql_tmp directory at the top
+	 * level of DataDir as well.
+	 */
+#ifdef EXEC_BACKEND
+	snprintf(temp_path, sizeof(temp_path), "%s/%s",
+			 DataDir, PG_TEMP_FILES_DIR);
+	RemovePgTempFilesInDir(temp_path);
+#endif
+}
+
+/* Process one pgsql_tmp directory for RemovePgTempFiles */
+static void
+RemovePgTempFilesInDir(const char *tmpdirname)
+{
+	DIR		   *temp_dir;
+	struct dirent *temp_de;
+	char		rm_path[MAXPGPATH];
+
+	temp_dir = AllocateDir(tmpdirname);
+	if (temp_dir == NULL)
+	{
+		/* anything except ENOENT is fishy */
+		if (errno != ENOENT)
+			elog(LOG,
+				 "could not open temporary-files directory \"%s\": %m",
+				 tmpdirname);
+		return;
+	}
+
+	while ((temp_de = readdir(temp_dir)) != NULL)
+	{
+		if (strcmp(temp_de->d_name, ".") == 0 ||
+			strcmp(temp_de->d_name, "..") == 0)
+			continue;
+
+		snprintf(rm_path, sizeof(rm_path), "%s/%s",
+				 tmpdirname, temp_de->d_name);
+
+		if (strncmp(temp_de->d_name,
+					PG_TEMP_FILE_PREFIX,
+					strlen(PG_TEMP_FILE_PREFIX)) == 0)
+			unlink(rm_path);	/* note we ignore any error */
+		else
+			elog(LOG,
+				 "unexpected file found in temporary-files directory: \"%s\"",
+				 rm_path);
+	}
+
+	FreeDir(temp_dir);
 }
