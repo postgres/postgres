@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.101 2001/03/22 06:16:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.102 2001/05/04 18:39:16 tgl Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -1026,15 +1026,15 @@ CommitTransaction(void)
 	if (s->state != TRANS_INPROGRESS)
 		elog(NOTICE, "CommitTransaction and not in in-progress state ");
 
-	/* Prevent cancel/die interrupt while cleaning up */
-	HOLD_INTERRUPTS();
-
 	/*
 	 * Tell the trigger manager that this transaction is about to be
 	 * committed. He'll invoke all trigger deferred until XACT before we
 	 * really start on committing the transaction.
 	 */
 	DeferredTriggerEndXact();
+
+	/* Prevent cancel/die interrupt while cleaning up */
+	HOLD_INTERRUPTS();
 
 	/*
 	 * set the current transaction state information appropriately during
