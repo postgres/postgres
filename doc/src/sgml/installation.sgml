@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.121 2002/11/18 17:15:27 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.122 2002/11/18 18:10:59 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -9,8 +9,8 @@
  </indexterm>
 
  <para>
-  This <![%standalone-include;[document.]]>
-  <![%standalone-ignore;[chapter.]]> describes the installation of
+  This <![%standalone-include;[document]]>
+  <![%standalone-ignore;[chapter]]> describes the installation of
   <productname>PostgreSQL</productname> from the source code
   distribution.
  </para>
@@ -1512,7 +1512,7 @@ gunzip -c user.ps.gz \
 	<entry><systemitem>RS6000</></entry>
 	<entry>7.3</entry>
 	<entry>2002-11-12,
-	 Andreas Zeugswetter (<email>ZeugswetterA@spardat.at</email>)
+	 Andreas Zeugswetter (<email>ZeugswetterA@spardat.at</email>)</entry>
         <entry>see also <filename>doc/FAQ_AIX</filename></entry>
        </row>
        <row>
