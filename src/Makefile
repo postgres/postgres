@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile,v 1.3.2.3 1996/10/25 09:23:42 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile,v 1.3.2.4 1996/10/25 09:42:47 scrappy Exp $
 #
 # NOTES
 #	objdir	- location of the objects and generated files (eg. obj)
@@ -40,7 +40,9 @@ endif
 ifeq (../doc, $(wildcard ../doc))
 	$(MAKE) -C ../doc $@
 endif
-	@echo All of Postgres95 is successfully made.  Ready to install.
+	@if test $@. = all. -o $@. = .; then \
+	  echo All of Postgres95 is successfully made.  Ready to install. ;\
+	fi
 
 TAGS:
 	rm -f TAGS; \
