@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.132 2003/03/25 16:15:36 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.133 2003/06/11 06:56:06 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -270,8 +270,7 @@ JAVACMD=$JAVA_HOME/bin/java
     <listitem>
      <para>
       <application>Kerberos</>, <application>OpenSSL</>, or <application>PAM</>,
-      if you want to support
-      authentication using these services.
+      if you want to support authentication using these services.
      </para>
     </listitem>
    </itemizedlist>
@@ -902,6 +901,15 @@ JAVACMD=$JAVA_HOME/bin/java
          Prevents the use of the <application>Readline</> library.  This disables
          command-line editing and history in
          <application>psql</application>, so it is not recommended.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><option>--with-rendezvous</option></term>
+       <listitem>
+        <para>
+	 Build with Rendezvous support.
         </para>
        </listitem>
       </varlistentry>

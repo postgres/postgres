@@ -866,6 +866,7 @@ Optional Packages:
   --with-krb5[=DIR]       build with Kerberos 5 support [/usr/athena]
   --with-krb-srvnam=NAME  name of the service principal in Kerberos postgres
   --with-pam              build with PAM support
+  --with-rendezvous       build with Rendezvous support
   --with-openssl[=DIR]    build with OpenSSL support [/usr/local/ssl]
   --without-readline      do not use Readline
   --without-zlib          do not use Zlib
@@ -3357,6 +3358,46 @@ fi;
 
 echo "$as_me:$LINENO: result: $with_pam" >&5
 echo "${ECHO_T}$with_pam" >&6
+
+
+
+#
+# Rendezvous
+#
+echo "$as_me:$LINENO: checking whether to build with Rendezvous support" >&5
+echo $ECHO_N "checking whether to build with Rendezvous support... $ECHO_C" >&6
+
+
+
+# Check whether --with-rendezvous or --without-rendezvous was given.
+if test "${with_rendezvous+set}" = set; then
+  withval="$with_rendezvous"
+
+  case $withval in
+    yes)
+
+cat >>confdefs.h <<\_ACEOF
+#define USE_RENDEZVOUS 1
+_ACEOF
+
+      ;;
+    no)
+      :
+      ;;
+    *)
+      { { echo "$as_me:$LINENO: error: no argument expected for --with-rendezvous option" >&5
+echo "$as_me: error: no argument expected for --with-rendezvous option" >&2;}
+   { (exit 1); exit 1; }; }
+      ;;
+  esac
+
+else
+  with_rendezvous=no
+
+fi;
+
+echo "$as_me:$LINENO: result: $with_rendezvous" >&5
+echo "${ECHO_T}$with_rendezvous" >&6
 
 
 
@@ -9037,6 +9078,119 @@ done
 fi
 
 done
+
+fi
+
+if test "$with_rendezvous" = yes ; then
+  if test "${ac_cv_header_DNSServiceDiscovery_DNSServiceDiscovery_h+set}" = set; then
+  echo "$as_me:$LINENO: checking for DNSServiceDiscovery/DNSServiceDiscovery.h" >&5
+echo $ECHO_N "checking for DNSServiceDiscovery/DNSServiceDiscovery.h... $ECHO_C" >&6
+if test "${ac_cv_header_DNSServiceDiscovery_DNSServiceDiscovery_h+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+fi
+echo "$as_me:$LINENO: result: $ac_cv_header_DNSServiceDiscovery_DNSServiceDiscovery_h" >&5
+echo "${ECHO_T}$ac_cv_header_DNSServiceDiscovery_DNSServiceDiscovery_h" >&6
+else
+  # Is the header compilable?
+echo "$as_me:$LINENO: checking DNSServiceDiscovery/DNSServiceDiscovery.h usability" >&5
+echo $ECHO_N "checking DNSServiceDiscovery/DNSServiceDiscovery.h usability... $ECHO_C" >&6
+cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
+$ac_includes_default
+#include <DNSServiceDiscovery/DNSServiceDiscovery.h>
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_header_compiler=yes
+else
+  echo "$as_me: failed program was:" >&5
+cat conftest.$ac_ext >&5
+ac_header_compiler=no
+fi
+rm -f conftest.$ac_objext conftest.$ac_ext
+echo "$as_me:$LINENO: result: $ac_header_compiler" >&5
+echo "${ECHO_T}$ac_header_compiler" >&6
+
+# Is the header present?
+echo "$as_me:$LINENO: checking DNSServiceDiscovery/DNSServiceDiscovery.h presence" >&5
+echo $ECHO_N "checking DNSServiceDiscovery/DNSServiceDiscovery.h presence... $ECHO_C" >&6
+cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
+#include <DNSServiceDiscovery/DNSServiceDiscovery.h>
+_ACEOF
+if { (eval echo "$as_me:$LINENO: \"$ac_cpp conftest.$ac_ext\"") >&5
+  (eval $ac_cpp conftest.$ac_ext) 2>conftest.er1
+  ac_status=$?
+  egrep -v '^ *\+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } >/dev/null; then
+  if test -s conftest.err; then
+    ac_cpp_err=$ac_c_preproc_warn_flag
+  else
+    ac_cpp_err=
+  fi
+else
+  ac_cpp_err=yes
+fi
+if test -z "$ac_cpp_err"; then
+  ac_header_preproc=yes
+else
+  echo "$as_me: failed program was:" >&5
+  cat conftest.$ac_ext >&5
+  ac_header_preproc=no
+fi
+rm -f conftest.err conftest.$ac_ext
+echo "$as_me:$LINENO: result: $ac_header_preproc" >&5
+echo "${ECHO_T}$ac_header_preproc" >&6
+
+# So?  What about this header?
+case $ac_header_compiler:$ac_header_preproc in
+  yes:no )
+    { echo "$as_me:$LINENO: WARNING: DNSServiceDiscovery/DNSServiceDiscovery.h: accepted by the compiler, rejected by the preprocessor!" >&5
+echo "$as_me: WARNING: DNSServiceDiscovery/DNSServiceDiscovery.h: accepted by the compiler, rejected by the preprocessor!" >&2;}
+    { echo "$as_me:$LINENO: WARNING: DNSServiceDiscovery/DNSServiceDiscovery.h: proceeding with the preprocessor's result" >&5
+echo "$as_me: WARNING: DNSServiceDiscovery/DNSServiceDiscovery.h: proceeding with the preprocessor's result" >&2;};;
+  no:yes )
+    { echo "$as_me:$LINENO: WARNING: DNSServiceDiscovery/DNSServiceDiscovery.h: present but cannot be compiled" >&5
+echo "$as_me: WARNING: DNSServiceDiscovery/DNSServiceDiscovery.h: present but cannot be compiled" >&2;}
+    { echo "$as_me:$LINENO: WARNING: DNSServiceDiscovery/DNSServiceDiscovery.h: check for missing prerequisite headers?" >&5
+echo "$as_me: WARNING: DNSServiceDiscovery/DNSServiceDiscovery.h: check for missing prerequisite headers?" >&2;}
+    { echo "$as_me:$LINENO: WARNING: DNSServiceDiscovery/DNSServiceDiscovery.h: proceeding with the preprocessor's result" >&5
+echo "$as_me: WARNING: DNSServiceDiscovery/DNSServiceDiscovery.h: proceeding with the preprocessor's result" >&2;};;
+esac
+echo "$as_me:$LINENO: checking for DNSServiceDiscovery/DNSServiceDiscovery.h" >&5
+echo $ECHO_N "checking for DNSServiceDiscovery/DNSServiceDiscovery.h... $ECHO_C" >&6
+if test "${ac_cv_header_DNSServiceDiscovery_DNSServiceDiscovery_h+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_cv_header_DNSServiceDiscovery_DNSServiceDiscovery_h=$ac_header_preproc
+fi
+echo "$as_me:$LINENO: result: $ac_cv_header_DNSServiceDiscovery_DNSServiceDiscovery_h" >&5
+echo "${ECHO_T}$ac_cv_header_DNSServiceDiscovery_DNSServiceDiscovery_h" >&6
+
+fi
+if test $ac_cv_header_DNSServiceDiscovery_DNSServiceDiscovery_h = yes; then
+  :
+else
+  { { echo "$as_me:$LINENO: error: header file <DNSServiceDiscovery/DNSServiceDiscovery.h> is required for Rendezvous" >&5
+echo "$as_me: error: header file <DNSServiceDiscovery/DNSServiceDiscovery.h> is required for Rendezvous" >&2;}
+   { (exit 1); exit 1; }; }
+fi
+
 
 fi
 
@@ -17327,6 +17481,7 @@ s,@with_krb4@,$with_krb4,;t t
 s,@with_krb5@,$with_krb5,;t t
 s,@krb_srvtab@,$krb_srvtab,;t t
 s,@with_pam@,$with_pam,;t t
+s,@with_rendezvous@,$with_rendezvous,;t t
 s,@with_openssl@,$with_openssl,;t t
 s,@ELF_SYS@,$ELF_SYS,;t t
 s,@THREAD_LIBS@,$THREAD_LIBS,;t t

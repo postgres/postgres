@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $Header: /cvsroot/pgsql/configure.in,v 1.257 2003/06/09 03:41:46 tgl Exp $
+dnl $Header: /cvsroot/pgsql/configure.in,v 1.258 2003/06/11 06:56:06 momjian Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -472,6 +472,17 @@ AC_SUBST(with_pam)
 
 
 #
+# Rendezvous
+#
+AC_MSG_CHECKING([whether to build with Rendezvous support])
+PGAC_ARG_BOOL(with, rendezvous, no,
+              [  --with-rendezvous       build with Rendezvous support],
+              [AC_DEFINE([USE_RENDEZVOUS], 1, [Define to 1 to build with Rendezvous support. (--with-rendezvous)])])
+AC_MSG_RESULT([$with_rendezvous])
+AC_SUBST(with_rendezvous)
+
+
+#
 # OpenSSL
 #
 PGAC_ARG_OPTARG(with, openssl,
@@ -757,6 +768,10 @@ if test "$with_pam" = yes ; then
   AC_CHECK_HEADERS(security/pam_appl.h, [],
                    [AC_CHECK_HEADERS(pam/pam_appl.h, [],
                                      [AC_MSG_ERROR([header file <security/pam_appl.h> or <pam/pam_appl.h> is required for PAM.])])])
+fi
+
+if test "$with_rendezvous" = yes ; then
+  AC_CHECK_HEADER(DNSServiceDiscovery/DNSServiceDiscovery.h, [], [AC_MSG_ERROR([header file <DNSServiceDiscovery/DNSServiceDiscovery.h> is required for Rendezvous])])
 fi
 
 

@@ -564,6 +564,9 @@
 /* Define to 1 to build with PAM support. (--with-pam) */
 #undef USE_PAM
 
+/* Define to 1 to build with Rendezvous support. (--with-rendezvous) */
+#undef USE_RENDEZVOUS
+
 /* Define to build with (Open)SSL support. (--with-openssl) */
 #undef USE_SSL
 

@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.331 2003/05/28 19:36:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.332 2003/06/11 06:56:06 momjian Exp $
  *
  * NOTES
  *
@@ -83,6 +83,10 @@
 
 #ifdef HAVE_GETOPT_H
 #include <getopt.h>
+#endif
+
+#ifdef USE_RENDEZVOUS
+#include <DNSServiceDiscovery/DNSServiceDiscovery.h>
 #endif
 
 #include "catalog/pg_database.h"
@@ -365,6 +369,17 @@ checkDataDir(const char *checkdir)
 	FreeFile(fp);
 }
 
+
+#ifdef USE_RENDEZVOUS
+
+/* reg_reply -- empty callback function for DNSServiceRegistrationCreate() */
+static void
+reg_reply(DNSServiceRegistrationReplyErrorType errorCode, void *context)
+{
+
+}
+
+#endif
 
 int
 PostmasterMain(int argc, char *argv[])
@@ -723,6 +738,18 @@ PostmasterMain(int argc, char *argv[])
 			else
 				elog(LOG, "IPv4 socket created");
 		}
+#endif
+#ifdef USE_RENDEZVOUS                    
+                if (service_name != NULL)
+                {
+                        DNSServiceRegistrationCreate(NULL,	/* default to hostname */
+                                                     "_postgresql._tcp.",
+                                                     "",
+                                                     htonl(PostPortNumber),
+                                                     "",
+                                                     (DNSServiceRegistrationReply)reg_reply,
+                                                     NULL);
+                }
 #endif
 	}
 
