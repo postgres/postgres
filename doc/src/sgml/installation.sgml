@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.109 2002/11/05 17:31:36 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.110 2002/11/05 19:01:07 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1735,7 +1735,7 @@ gunzip -c user.ps.gz \
 	<entry>7.3</entry>
 	<entry>2002-11-01,
 	 7.1.3 Larry Rosenman (<email>ler@lerctr.org</email>),
-	 7.2 Olivier Prenant (<email>ohp@pyrenet.fr</email>)
+	 7.1.1 and 7.1.2(8.0.0) Olivier Prenant (<email>ohp@pyrenet.fr</email>)
 	<entry>see also <filename>doc/FAQ_SCO</filename></entry>
        </row>
        <row>
