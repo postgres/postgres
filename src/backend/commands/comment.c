@@ -7,7 +7,7 @@
  * Copyright (c) 1996-2001, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.60 2002/09/04 20:31:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.61 2002/10/09 16:26:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -559,7 +559,6 @@ CommentRule(List *qualname, char *comment)
 	}
 
 	/* Check object security */
-
 	aclcheck = pg_class_aclcheck(reloid, GetUserId(), ACL_RULE);
 	if (aclcheck != ACLCHECK_OK)
 		aclcheck_error(aclcheck, rulename);
@@ -568,8 +567,9 @@ CommentRule(List *qualname, char *comment)
 	classoid = get_system_catalog_relid(RewriteRelationName);
 
 	/* Call CreateComments() to create/drop the comments */
-
 	CreateComments(ruleoid, classoid, 0, comment);
+
+	heap_close(relation, NoLock);
 }
 
 /*
