@@ -102,7 +102,7 @@ _rserv_log_()
 
 	if (keynum == ObjectIdAttributeNumber)
 	{
-		snprintf(oidbuf, "%u", sizeof(oidbuf), HeapTupleGetOid(tuple));
+		snprintf(oidbuf, sizeof(oidbuf), "%u", HeapTupleGetOid(tuple));
 		key = oidbuf;
 	}
 	else
