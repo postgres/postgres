@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.185 2005/03/27 23:52:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.186 2005/03/28 01:50:32 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -53,9 +53,6 @@
 #include "pgstat.h"
 
 
-/* comments are in heap_update */
-static xl_heaptid _locked_tuple_;
-static void _heap_unlock_tuple(void *data);
 static XLogRecPtr log_heap_update(Relation reln, Buffer oldbuf,
 	   ItemPointerData from, Buffer newbuf, HeapTuple newtup, bool move);
 
@@ -1620,15 +1617,7 @@ l2:
 	 * context lock (but not the pin!) on the old tuple's buffer while we
 	 * are off doing TOAST and/or table-file-extension work.  We must mark
 	 * the old tuple to show that it's already being updated, else other
-	 * processes may try to update it themselves. To avoid second XLOG log
-	 * record, we use xact mgr hook to unlock old tuple without reading
-	 * log if xact will abort before update is logged. In the event of
-	 * crash prio logging, TQUAL routines will see HEAP_XMAX_UNLOGGED
-	 * flag...
-	 *
-	 * NOTE: this trick is useless currently but saved for future when we'll
-	 * implement UNDO and will re-use transaction IDs after postmaster
-	 * startup.
+	 * processes may try to update it themselves.
 	 *
 	 * We need to invoke the toaster if there are already any out-of-line
 	 * toasted values present, or if the new tuple is over-threshold.
@@ -1642,15 +1631,10 @@ l2:
 
 	if (need_toast || newtupsize > pagefree)
 	{
-		_locked_tuple_.node = relation->rd_node;
-		_locked_tuple_.tid = oldtup.t_self;
-		XactPushRollback(_heap_unlock_tuple, (void *) &_locked_tuple_);
-
 		oldtup.t_data->t_infomask &= ~(HEAP_XMAX_COMMITTED |
 									   HEAP_XMAX_INVALID |
 									   HEAP_MARKED_FOR_UPDATE |
 									   HEAP_MOVED);
-		oldtup.t_data->t_infomask |= HEAP_XMAX_UNLOGGED;
 		HeapTupleHeaderSetXmax(oldtup.t_data, xid);
 		HeapTupleHeaderSetCmax(oldtup.t_data, cid);
 		already_marked = true;
@@ -1731,12 +1715,7 @@ l2:
 
 	RelationPutHeapTuple(relation, newbuf, newtup);		/* insert new tuple */
 
-	if (already_marked)
-	{
-		oldtup.t_data->t_infomask &= ~HEAP_XMAX_UNLOGGED;
-		XactPopRollback();
-	}
-	else
+	if (!already_marked)
 	{
 		oldtup.t_data->t_infomask &= ~(HEAP_XMAX_COMMITTED |
 									   HEAP_XMAX_INVALID |
@@ -2583,48 +2562,6 @@ newsame:;
 
 	elog(PANIC, "heap_update_undo: unimplemented");
 
-}
-
-static void
-_heap_unlock_tuple(void *data)
-{
-	TransactionId xid = GetCurrentTransactionId();
-	xl_heaptid *xltid = (xl_heaptid *) data;
-	Relation	reln = XLogOpenRelation(false, RM_HEAP_ID, xltid->node);
-	Buffer		buffer;
-	Page		page;
-	OffsetNumber offnum;
-	ItemId		lp;
-	HeapTupleHeader htup;
-
-	if (!RelationIsValid(reln))
-		elog(PANIC, "_heap_unlock_tuple: can't open relation");
-
-	buffer = XLogReadBuffer(false, reln,
-							ItemPointerGetBlockNumber(&(xltid->tid)));
-	if (!BufferIsValid(buffer))
-		elog(PANIC, "_heap_unlock_tuple: can't read buffer");
-
-	page = (Page) BufferGetPage(buffer);
-	if (PageIsNew((PageHeader) page))
-		elog(PANIC, "_heap_unlock_tuple: uninitialized page");
-
-	offnum = ItemPointerGetOffsetNumber(&(xltid->tid));
-	if (offnum > PageGetMaxOffsetNumber(page))
-		elog(PANIC, "_heap_unlock_tuple: invalid itemid");
-	lp = PageGetItemId(page, offnum);
-
-	if (!ItemIdIsUsed(lp) || ItemIdDeleted(lp))
-		elog(PANIC, "_heap_unlock_tuple: unused/deleted tuple in rollback");
-
-	htup = (HeapTupleHeader) PageGetItem(page, lp);
-
-	if (!TransactionIdEquals(HeapTupleHeaderGetXmax(htup), xid))
-		elog(PANIC, "_heap_unlock_tuple: invalid xmax in rollback");
-	htup->t_infomask &= ~HEAP_XMAX_UNLOGGED;
-	htup->t_infomask |= HEAP_XMAX_INVALID;
-	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-	WriteBuffer(buffer);
 }
 
 void

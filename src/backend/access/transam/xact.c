@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.197 2005/02/20 21:46:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.198 2005/03/28 01:50:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -195,9 +195,6 @@ typedef struct SubXactCallbackItem
 } SubXactCallbackItem;
 
 static SubXactCallbackItem *SubXact_callbacks = NULL;
-
-static void (*_RollbackFunc) (void *) = NULL;
-static void *_RollbackData = NULL;
 
 
 /* local function prototypes */
@@ -3901,22 +3898,4 @@ xact_desc(char *buf, uint8 xl_info, char *rec)
 	}
 	else
 		strcat(buf, "UNKNOWN");
-}
-
-void
-			XactPushRollback(void (*func) (void *), void *data)
-{
-#ifdef XLOG_II
-	if (_RollbackFunc != NULL)
-		elog(PANIC, "XactPushRollback: already installed");
-#endif
-
-	_RollbackFunc = func;
-	_RollbackData = data;
-}
-
-void
-XactPopRollback(void)
-{
-	_RollbackFunc = NULL;
 }

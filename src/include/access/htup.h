@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/htup.h,v 1.72 2004/12/31 22:03:21 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/access/htup.h,v 1.73 2005/03/28 01:50:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -152,9 +152,7 @@ typedef HeapTupleHeaderData *HeapTupleHeader;
 										 * attribute(s) */
 #define HEAP_HASEXTENDED		0x000C	/* the two above combined */
 #define HEAP_HASOID				0x0010	/* has an object-id field */
-/* 0x0020 and 0x0040 are unused */
-#define HEAP_XMAX_UNLOGGED		0x0080	/* to lock tuple for update
-										 * without logging */
+/* 0x0020, 0x0040 and 0x0080 are unused */
 #define HEAP_XMIN_COMMITTED		0x0100	/* t_xmin committed */
 #define HEAP_XMIN_INVALID		0x0200	/* t_xmin invalid/aborted */
 #define HEAP_XMAX_COMMITTED		0x0400	/* t_xmax committed */
