@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.118 2003/09/25 06:58:03 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.119 2003/11/16 20:29:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,7 +25,7 @@
 #include "utils/guc.h"
 
 
-static int DecodeNumber(int flen, char *field,
+static int DecodeNumber(int flen, char *field, bool haveTextMonth,
 			 int fmask, int *tmask,
 			 struct tm * tm, fsec_t *fsec, int *is2digits);
 static int DecodeNumberField(int len, char *str,
@@ -924,7 +924,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 	int			val;
 	int			dterr;
 	int			mer = HR24;
-	int			haveTextMonth = FALSE;
+	bool		haveTextMonth = FALSE;
 	int			is2digits = FALSE;
 	int			bc = FALSE;
 
@@ -1281,7 +1281,8 @@ DecodeDateTime(char **field, int *ftype, int nf,
 					/* otherwise it is a single date/time field... */
 					else
 					{
-						dterr = DecodeNumber(flen, field[i], fmask,
+						dterr = DecodeNumber(flen, field[i],
+											 haveTextMonth, fmask,
 											 &tmask, tm,
 											 fsec, &is2digits);
 						if (dterr)
@@ -2032,6 +2033,7 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 					else
 					{
 						dterr = DecodeNumber(flen, field[i],
+											 FALSE,
 											 (fmask | DTK_DATE_M),
 											 &tmask, tm,
 											 fsec, &is2digits);
@@ -2229,6 +2231,7 @@ DecodeDate(char *str, int fmask, int *tmask, struct tm * tm)
 	int			i,
 				len;
 	int			dterr;
+	bool		haveTextMonth = FALSE;
 	int			bc = FALSE;
 	int			is2digits = FALSE;
 	int			type,
@@ -2283,6 +2286,7 @@ DecodeDate(char *str, int fmask, int *tmask, struct tm * tm)
 			{
 				case MONTH:
 					tm->tm_mon = val;
+					haveTextMonth = TRUE;
 					break;
 
 				case ADBC:
@@ -2312,7 +2316,7 @@ DecodeDate(char *str, int fmask, int *tmask, struct tm * tm)
 		if ((len = strlen(field[i])) <= 0)
 			return DTERR_BAD_FORMAT;
 
-		dterr = DecodeNumber(len, field[i], fmask,
+		dterr = DecodeNumber(len, field[i], haveTextMonth, fmask,
 							 &dmask, tm,
 							 &fsec, &is2digits);
 		if (dterr)
@@ -2444,7 +2448,7 @@ DecodeTime(char *str, int fmask, int *tmask, struct tm * tm, fsec_t *fsec)
  * Return 0 if okay, a DTERR code if not.
  */
 static int
-DecodeNumber(int flen, char *str, int fmask,
+DecodeNumber(int flen, char *str, bool haveTextMonth, int fmask,
 			 int *tmask, struct tm * tm, fsec_t *fsec, int *is2digits)
 {
 	int			val;
@@ -2534,10 +2538,59 @@ DecodeNumber(int flen, char *str, int fmask,
 			tm->tm_mon = val;
 			break;
 
+		case (DTK_M(MONTH)):
+			if (haveTextMonth)
+			{
+				/*
+				 * We are at the first numeric field of a date that included
+				 * a textual month name.  We want to support the variants
+				 * MON-DD-YYYY, DD-MON-YYYY, and YYYY-MON-DD as unambiguous
+				 * inputs.  We will also accept MON-DD-YY or DD-MON-YY in
+				 * either DMY or MDY modes, as well as YY-MON-DD in YMD mode.
+				 */
+				if (flen >= 3 || DateOrder == DATEORDER_YMD)
+				{
+					*tmask = DTK_M(YEAR);
+					tm->tm_year = val;
+				}
+				else
+				{
+					*tmask = DTK_M(DAY);
+					tm->tm_mday = val;
+				}
+			}
+			else
+			{
+				/* Must be at second field of MM-DD-YY */
+				*tmask = DTK_M(DAY);
+				tm->tm_mday = val;
+			}
+			break;
+
 		case (DTK_M(YEAR) | DTK_M(MONTH)):
-			/* Must be at third field of YY-MM-DD */
-			*tmask = DTK_M(DAY);
-			tm->tm_mday = val;
+			if (haveTextMonth)
+			{
+				/* Need to accept DD-MON-YYYY even in YMD mode */
+				if (flen >= 3 && *is2digits)
+				{
+					/* Guess that first numeric field is day was wrong */
+					*tmask = DTK_M(DAY); /* YEAR is already set */
+					tm->tm_mday = tm->tm_year;
+					tm->tm_year = val;
+					*is2digits = FALSE;
+				}
+				else
+				{
+					*tmask = DTK_M(DAY);
+					tm->tm_mday = val;
+				}
+			}
+			else
+			{
+				/* Must be at third field of YY-MM-DD */
+				*tmask = DTK_M(DAY);
+				tm->tm_mday = val;
+			}
 			break;
 
 		case (DTK_M(DAY)):
@@ -2550,12 +2603,6 @@ DecodeNumber(int flen, char *str, int fmask,
 			/* Must be at third field of DD-MM-YY or MM-DD-YY */
 			*tmask = DTK_M(YEAR);
 			tm->tm_year = val;
-			break;
-
-		case (DTK_M(MONTH)):
-			/* Must be at second field of MM-DD-YY */
-			*tmask = DTK_M(DAY);
-			tm->tm_mday = val;
 			break;
 
 		case (DTK_M(YEAR) | DTK_M(MONTH) | DTK_M(DAY)):
@@ -2574,10 +2621,10 @@ DecodeNumber(int flen, char *str, int fmask,
 
 	/*
 	 * When processing a year field, mark it for adjustment if it's
-	 * exactly two digits.
+	 * only one or two digits.
 	 */
 	if (*tmask == DTK_M(YEAR))
-		*is2digits = (flen == 2);
+		*is2digits = (flen <= 2);
 
 	return 0;
 }

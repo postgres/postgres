@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.130 2003/11/06 22:21:47 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.131 2003/11/16 20:29:16 tgl Exp $
 -->
 
  <chapter id="datatype">
@@ -1464,7 +1464,7 @@ SELECT b, char_length(b) FROM test2;
         </row>
         <row>
          <entry>1999-01-08</entry>
-         <entry>ISO 8601, January 8 in any mode
+         <entry>ISO 8601; January 8 in any mode
          (recommended format)</entry>
         </row>
         <row>
@@ -1483,6 +1483,30 @@ SELECT b, char_length(b) FROM test2;
           February 1, 2003 in <literal>DMY</> mode;
           February 3, 2001 in <literal>YMD</> mode
          </entry>
+        </row>
+        <row>
+         <entry>1999-Jan-08</entry>
+         <entry>January 8 in any mode</entry>
+        </row>
+        <row>
+         <entry>Jan-08-1999</entry>
+         <entry>January 8 in any mode</entry>
+        </row>
+        <row>
+         <entry>08-Jan-1999</entry>
+         <entry>January 8 in any mode</entry>
+        </row>
+        <row>
+         <entry>99-Jan-08</entry>
+         <entry>January 8 in <literal>YMD</> mode, else error</entry>
+        </row>
+        <row>
+         <entry>08-Jan-99</entry>
+         <entry>January 8, except error in <literal>YMD</> mode</entry>
+        </row>
+        <row>
+         <entry>Jan-08-99</entry>
+         <entry>January 8, except error in <literal>YMD</> mode</entry>
         </row>
         <row>
          <entry>19990108</entry>
@@ -1625,7 +1649,7 @@ SELECT b, char_length(b) FROM test2;
          </row>
          <row>
           <entry><literal>zulu</literal></entry>
-          <entry>Military abbreviation for GMT</entry>
+          <entry>Military abbreviation for UTC</entry>
          </row>
          <row>
           <entry><literal>z</literal></entry>

@@ -29,6 +29,166 @@ SELECT f1 AS "Three" FROM DATE_TBL
   WHERE f1 BETWEEN '2000-01-01' AND '2001-01-01';
 
 --
+-- Check all the documented input formats
+--
+SET datestyle TO iso;  -- display results in ISO
+
+SET datestyle TO ymd;
+
+SELECT date 'January 8, 1999';
+SELECT date '1999-01-08';
+SELECT date '1999-01-18';
+SELECT date '1/8/1999';
+SELECT date '1/18/1999';
+SELECT date '18/1/1999';
+SELECT date '01/02/03';
+SELECT date '19990108';
+SELECT date '990108';
+SELECT date '1999.008';
+SELECT date 'J2451187';
+SELECT date 'January 8, 99 BC';
+
+SELECT date '99-Jan-08';
+SELECT date '1999-Jan-08';
+SELECT date '08-Jan-99';
+SELECT date '08-Jan-1999';
+SELECT date 'Jan-08-99';
+SELECT date 'Jan-08-1999';
+SELECT date '99-08-Jan';
+SELECT date '1999-08-Jan';
+
+SELECT date '99 Jan 08';
+SELECT date '1999 Jan 08';
+SELECT date '08 Jan 99';
+SELECT date '08 Jan 1999';
+SELECT date 'Jan 08 99';
+SELECT date 'Jan 08 1999';
+SELECT date '99 08 Jan';
+SELECT date '1999 08 Jan';
+
+SELECT date '99-01-08';
+SELECT date '1999-01-08';
+SELECT date '08-01-99';
+SELECT date '08-01-1999';
+SELECT date '01-08-99';
+SELECT date '01-08-1999';
+SELECT date '99-08-01';
+SELECT date '1999-08-01';
+
+SELECT date '99 01 08';
+SELECT date '1999 01 08';
+SELECT date '08 01 99';
+SELECT date '08 01 1999';
+SELECT date '01 08 99';
+SELECT date '01 08 1999';
+SELECT date '99 08 01';
+SELECT date '1999 08 01';
+
+SET datestyle TO dmy;
+
+SELECT date 'January 8, 1999';
+SELECT date '1999-01-08';
+SELECT date '1999-01-18';
+SELECT date '1/8/1999';
+SELECT date '1/18/1999';
+SELECT date '18/1/1999';
+SELECT date '01/02/03';
+SELECT date '19990108';
+SELECT date '990108';
+SELECT date '1999.008';
+SELECT date 'J2451187';
+SELECT date 'January 8, 99 BC';
+
+SELECT date '99-Jan-08';
+SELECT date '1999-Jan-08';
+SELECT date '08-Jan-99';
+SELECT date '08-Jan-1999';
+SELECT date 'Jan-08-99';
+SELECT date 'Jan-08-1999';
+SELECT date '99-08-Jan';
+SELECT date '1999-08-Jan';
+
+SELECT date '99 Jan 08';
+SELECT date '1999 Jan 08';
+SELECT date '08 Jan 99';
+SELECT date '08 Jan 1999';
+SELECT date 'Jan 08 99';
+SELECT date 'Jan 08 1999';
+SELECT date '99 08 Jan';
+SELECT date '1999 08 Jan';
+
+SELECT date '99-01-08';
+SELECT date '1999-01-08';
+SELECT date '08-01-99';
+SELECT date '08-01-1999';
+SELECT date '01-08-99';
+SELECT date '01-08-1999';
+SELECT date '99-08-01';
+SELECT date '1999-08-01';
+
+SELECT date '99 01 08';
+SELECT date '1999 01 08';
+SELECT date '08 01 99';
+SELECT date '08 01 1999';
+SELECT date '01 08 99';
+SELECT date '01 08 1999';
+SELECT date '99 08 01';
+SELECT date '1999 08 01';
+
+SET datestyle TO mdy;
+
+SELECT date 'January 8, 1999';
+SELECT date '1999-01-08';
+SELECT date '1999-01-18';
+SELECT date '1/8/1999';
+SELECT date '1/18/1999';
+SELECT date '18/1/1999';
+SELECT date '01/02/03';
+SELECT date '19990108';
+SELECT date '990108';
+SELECT date '1999.008';
+SELECT date 'J2451187';
+SELECT date 'January 8, 99 BC';
+
+SELECT date '99-Jan-08';
+SELECT date '1999-Jan-08';
+SELECT date '08-Jan-99';
+SELECT date '08-Jan-1999';
+SELECT date 'Jan-08-99';
+SELECT date 'Jan-08-1999';
+SELECT date '99-08-Jan';
+SELECT date '1999-08-Jan';
+
+SELECT date '99 Jan 08';
+SELECT date '1999 Jan 08';
+SELECT date '08 Jan 99';
+SELECT date '08 Jan 1999';
+SELECT date 'Jan 08 99';
+SELECT date 'Jan 08 1999';
+SELECT date '99 08 Jan';
+SELECT date '1999 08 Jan';
+
+SELECT date '99-01-08';
+SELECT date '1999-01-08';
+SELECT date '08-01-99';
+SELECT date '08-01-1999';
+SELECT date '01-08-99';
+SELECT date '01-08-1999';
+SELECT date '99-08-01';
+SELECT date '1999-08-01';
+
+SELECT date '99 01 08';
+SELECT date '1999 01 08';
+SELECT date '08 01 99';
+SELECT date '08 01 1999';
+SELECT date '01 08 99';
+SELECT date '01 08 1999';
+SELECT date '99 08 01';
+SELECT date '1999 08 01';
+
+RESET datestyle;
+
+--
 -- Simple math
 -- Leave most of it for the horology tests
 --
