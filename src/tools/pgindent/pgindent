@@ -14,18 +14,18 @@ then	echo "Go to the src/tools/entab directory and do a 'make' and 'make install
 	echo "Then run $0 again."
 	exit 1
 fi
-indent --version </dev/null >/dev/null 2>&1
+indent -version </dev/null >/dev/null 2>&1
 if [ "$?" -eq 0 ]
 then	echo "You do not appear to have 'indent' installed on your system." >&2
 	exit 1
 fi
-indent -version -npro </dev/null >/dev/null 2>&1
+indent -gnu </dev/null >/dev/null 2>&1
 if [ "$?" -eq 0 ]
 then	echo "You appear to have GNU indent rather than BSD indent." >&2
 	echo "See the pgindent/README file for a description of its problems." >&2
-	EXTRA_OPTS="-ncdb -bli0 -npcs -cli4"
+	EXTRA_OPTS="-cdb -bli0 -npcs -cli4 -sc"
 else	echo "Hope you installed /src/tools/pgindent/indent.bsd.patch." >&2
-	EXTRA_OPTS="-bbb -cli1"
+	EXTRA_OPTS="-cli1"
 fi
 
 for FILE
@@ -67,7 +67,7 @@ do
 
 # We get the list of typedef's from /src/tools/find_typedef
 	indent -bad -bap -bc -bl -d0 -cdb -nce -nfc1 -di12 -i4 -l75 \
-		-lp -nip -npro $EXTRA_OPTS \
+		-lp -nip -npro -bbb $EXTRA_OPTS \
 -TA_Const \
 -TA_Expr \
 -TA_Indices \
