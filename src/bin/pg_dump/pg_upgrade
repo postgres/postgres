@@ -29,8 +29,9 @@ OLDDIR="$1"
 
 # check things
 
-if [ ! -f "./lib/global1.bki.source" ]
-then	echo "$0 must be run from the top of the postgres directory tree." 1>&2
+if [ ! -f "./data/PG_VERSION" ]
+then	echo "`basename $0` must be run from the directory containing
+the database directory \`data' (`dirname $PGDATA`.)" 1>&2
 	exit 1
 fi
 
@@ -72,7 +73,8 @@ cat $INPUT | awk '	{
 psql "template1" <"/tmp/$$"
 
 if [ $? -ne 0 ]
-then	echo "psql failed to execute $INPUT script." 1>&2
+then	echo "There were errors in the input script $INPUT.
+$0 aborted." 1>&2
 	exit 1
 fi
 
