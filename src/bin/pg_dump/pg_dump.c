@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.31 1997/06/07 05:19:06 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.32 1997/06/07 05:29:22 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -1081,7 +1081,7 @@ getTables(int *numTables)
     sprintf(query, 
             "SELECT oid, relname, relarch, relkind, relacl from pg_class "
             "where (relkind = 'r' or relkind = 'S') and relname !~ '^pg_' "
-            "and relname !~ '^xinv[0-9]' order by oid;");
+            "and relname !~ '^xin[xv][0-9]+' order by oid;");
 
     res = PQexec(g_conn, query);
     if (!res || 
