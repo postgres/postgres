@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.135 2003/02/08 20:20:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.136 2003/03/23 01:49:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2039,7 +2039,7 @@ expand_indexqual_conditions(List *indexquals)
  * Given a fixed prefix that all the "leftop" values must have,
  * generate suitable indexqual condition(s).  expr_op is the original
  * LIKE or regex operator; we use it to deduce the appropriate comparison
- * operators.
+ * operators and operand datatypes.
  */
 static List *
 prefix_quals(Node *leftop, Oid expr_op,
@@ -2094,10 +2094,13 @@ prefix_quals(Node *leftop, Oid expr_op,
 			return NIL;
 	}
 
-	if (prefix_const->consttype != BYTEAOID)
-		prefix = DatumGetCString(DirectFunctionCall1(textout, prefix_const->constvalue));
+	/* Prefix constant is text for all except BYTEA_LIKE */
+	if (datatype != BYTEAOID)
+		prefix = DatumGetCString(DirectFunctionCall1(textout,
+													 prefix_const->constvalue));
 	else
-		prefix = DatumGetCString(DirectFunctionCall1(byteaout, prefix_const->constvalue));
+		prefix = DatumGetCString(DirectFunctionCall1(byteaout,
+													 prefix_const->constvalue));
 
 	/*
 	 * If we found an exact-match pattern, generate an "=" indexqual.

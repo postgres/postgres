@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.132 2003/02/08 20:20:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.133 2003/03/23 01:49:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -94,6 +94,7 @@
 #include "optimizer/prep.h"
 #include "optimizer/tlist.h"
 #include "optimizer/var.h"
+#include "parser/parse_expr.h"
 #include "parser/parse_func.h"
 #include "parser/parse_oper.h"
 #include "parser/parsetree.h"
@@ -176,7 +177,8 @@ static bool get_restriction_var(List *args, int varRelid,
 					Var **var, Node **other,
 					bool *varonleft);
 static void get_join_vars(List *args, Var **var1, Var **var2);
-static Selectivity prefix_selectivity(Query *root, Var *var, Const *prefix);
+static Selectivity prefix_selectivity(Query *root, Var *var, Oid vartype,
+									  Const *prefix);
 static Selectivity pattern_selectivity(Const *patt, Pattern_Type ptype);
 static bool string_lessthan(const char *str1, const char *str2,
 				Oid datatype);
@@ -227,7 +229,8 @@ eqsel(PG_FUNCTION_ARGS)
 	 * If the something is a NULL constant, assume operator is strict and
 	 * return zero, ie, operator will never return TRUE.
 	 */
-	if (IsA(other, Const) &&((Const *) other)->constisnull)
+	if (IsA(other, Const) &&
+		((Const *) other)->constisnull)
 		PG_RETURN_FLOAT8(0.0);
 
 	/* get stats for the attribute, if available */
@@ -834,6 +837,8 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype)
 	bool		varonleft;
 	Oid			relid;
 	Datum		constval;
+	Oid			consttype;
+	Oid			vartype;
 	Pattern_Prefix_Status pstatus;
 	Const	   *patt = NULL;
 	Const	   *prefix = NULL;
@@ -861,13 +866,25 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype)
 	if (((Const *) other)->constisnull)
 		return 0.0;
 	constval = ((Const *) other)->constvalue;
+	consttype = ((Const *) other)->consttype;
 
 	/*
-	 * the right-hand const is type text or bytea for all supported
-	 * operators
+	 * The right-hand const is type text or bytea for all supported
+	 * operators.  We do not expect to see binary-compatible types here,
+	 * since const-folding should have relabeled the const to exactly match
+	 * the operator's declared type.
 	 */
-	Assert(((Const *) other)->consttype == TEXTOID ||
-		   ((Const *) other)->consttype == BYTEAOID);
+	if (consttype != TEXTOID && consttype != BYTEAOID)
+		return DEFAULT_MATCH_SEL;
+
+	/*
+	 * The var, on the other hand, might be a binary-compatible type;
+	 * particularly a domain.  Try to fold it if it's not recognized
+	 * immediately.
+	 */
+	vartype = var->vartype;
+	if (vartype != consttype)
+		vartype = getBaseType(vartype);
 
 	/* divide pattern into fixed prefix and remainder */
 	patt = (Const *) other;
@@ -878,12 +895,12 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype)
 		/*
 		 * Pattern specifies an exact match, so pretend operator is '='
 		 */
-		Oid			eqopr = find_operator("=", var->vartype);
+		Oid			eqopr = find_operator("=", vartype);
 		List	   *eqargs;
 
 		if (eqopr == InvalidOid)
 			elog(ERROR, "patternsel: no = operator for type %u",
-				 var->vartype);
+				 vartype);
 		eqargs = makeList2(var, prefix);
 		result = DatumGetFloat8(DirectFunctionCall4(eqsel,
 													PointerGetDatum(root),
@@ -903,7 +920,7 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype)
 		Selectivity selec;
 
 		if (pstatus == Pattern_Prefix_Partial)
-			prefixsel = prefix_selectivity(root, var, prefix);
+			prefixsel = prefix_selectivity(root, var, vartype, prefix);
 		else
 			prefixsel = 1.0;
 		restsel = pattern_selectivity(rest, ptype);
@@ -1033,7 +1050,8 @@ booltestsel(Query *root, BoolTestType booltesttype, Node *arg,
 	if (IsA(arg, RelabelType))
 		arg = (Node *) ((RelabelType *) arg)->arg;
 
-	if (IsA(arg, Var) &&(varRelid == 0 || varRelid == ((Var *) arg)->varno))
+	if (IsA(arg, Var) &&
+		(varRelid == 0 || varRelid == ((Var *) arg)->varno))
 		var = (Var *) arg;
 	else
 	{
@@ -1775,6 +1793,8 @@ mergejoinscansel(Query *root, Node *clause,
 {
 	Var		   *left,
 			   *right;
+	Oid			lefttype,
+				righttype;
 	Oid			opno,
 				lsortop,
 				rsortop,
@@ -1798,6 +1818,24 @@ mergejoinscansel(Query *root, Node *clause,
 	right = (Var *) get_rightop((Expr *) clause);
 	if (!right)
 		return;					/* shouldn't happen */
+
+	/* Save the direct input types of the operator */
+	lefttype = exprType((Node *) left);
+	righttype = exprType((Node *) right);
+
+	/*
+	 * Now skip any binary-compatible relabeling; there can only be one level
+	 * since constant-expression folder eliminates adjacent RelabelTypes.
+	 *
+	 * XXX can't enable this quite yet, it exposes regproc uncertainty problems
+	 * in regression tests.  FIXME soon.
+	 */
+#if 0
+	if (IsA(left, RelabelType))
+		left = (Var *) ((RelabelType *) left)->arg;
+	if (IsA(right, RelabelType))
+		right = (Var *) ((RelabelType *) right)->arg;
+#endif
 
 	/* Can't do anything if inputs are not Vars */
 	if (!IsA(left, Var) ||
@@ -1841,13 +1879,13 @@ mergejoinscansel(Query *root, Node *clause,
 	 * non-default estimates, else stick with our 1.0.
 	 */
 	selec = scalarineqsel(root, leop, false, left,
-						  rightmax, right->vartype);
+						  rightmax, righttype);
 	if (selec != DEFAULT_INEQ_SEL)
 		*leftscan = selec;
 
 	/* And similarly for the right variable. */
 	selec = scalarineqsel(root, revleop, false, right,
-						  leftmax, left->vartype);
+						  leftmax, lefttype);
 	if (selec != DEFAULT_INEQ_SEL)
 		*rightscan = selec;
 
@@ -2263,6 +2301,19 @@ convert_to_scalar(Datum value, Oid valuetypid, double *scaledvalue,
 				  Datum lobound, Datum hibound, Oid boundstypid,
 				  double *scaledlobound, double *scaledhibound)
 {
+	/*
+	 * In present usage, we can assume that the valuetypid exactly matches
+	 * the declared input type of the operator we are invoked for (because
+	 * constant-folding will ensure that any Const passed to the operator
+	 * has been reduced to the correct type).  However, the boundstypid is
+	 * the type of some variable that might be only binary-compatible with
+	 * the declared type; in particular it might be a domain type.  Must
+	 * fold the variable type down to base type so we can recognize it.
+	 * (But we can skip that lookup if the variable type matches the const.)
+	 */
+	if (boundstypid != valuetypid)
+		boundstypid = getBaseType(boundstypid);
+
 	switch (valuetypid)
 	{
 			/*
@@ -3234,13 +3285,18 @@ pattern_fixed_prefix(Const *patt, Pattern_Type ptype,
  * A fixed prefix "foo" is estimated as the selectivity of the expression
  * "var >= 'foo' AND var < 'fop'" (see also indxqual.c).
  *
+ * Because of constant-folding, we can assume that the prefixcon constant's
+ * type exactly matches the operator's declared input type; but it's not
+ * safe to make the same assumption for the Var, so the type to use for the
+ * Var must be passed in separately.
+ *
  * XXX Note: we make use of the upper bound to estimate operator selectivity
  * even if the locale is such that we cannot rely on the upper-bound string.
  * The selectivity only needs to be approximately right anyway, so it seems
  * more useful to use the upper-bound code than not.
  */
 static Selectivity
-prefix_selectivity(Query *root, Var *var, Const *prefixcon)
+prefix_selectivity(Query *root, Var *var, Oid vartype, Const *prefixcon)
 {
 	Selectivity prefixsel;
 	Oid			cmpopr;
@@ -3248,17 +3304,17 @@ prefix_selectivity(Query *root, Var *var, Const *prefixcon)
 	List	   *cmpargs;
 	Const	   *greaterstrcon;
 
-	cmpopr = find_operator(">=", var->vartype);
+	cmpopr = find_operator(">=", vartype);
 	if (cmpopr == InvalidOid)
 		elog(ERROR, "prefix_selectivity: no >= operator for type %u",
-			 var->vartype);
+			 vartype);
 	if (prefixcon->consttype != BYTEAOID)
 		prefix = DatumGetCString(DirectFunctionCall1(textout, prefixcon->constvalue));
 	else
 		prefix = DatumGetCString(DirectFunctionCall1(byteaout, prefixcon->constvalue));
 
 	/* If var is type NAME, must adjust type of comparison constant */
-	if (var->vartype == NAMEOID)
+	if (vartype == NAMEOID)
 		prefixcon = string_to_const(prefix, NAMEOID);
 
 	cmpargs = makeList2(var, prefixcon);
@@ -3279,10 +3335,10 @@ prefix_selectivity(Query *root, Var *var, Const *prefixcon)
 	{
 		Selectivity topsel;
 
-		cmpopr = find_operator("<", var->vartype);
+		cmpopr = find_operator("<", vartype);
 		if (cmpopr == InvalidOid)
 			elog(ERROR, "prefix_selectivity: no < operator for type %u",
-				 var->vartype);
+				 vartype);
 		cmpargs = makeList2(var, greaterstrcon);
 		/* Assume scalarltsel is appropriate for all supported types */
 		topsel = DatumGetFloat8(DirectFunctionCall4(scalarltsel,
