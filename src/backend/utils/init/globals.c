@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.6 1997/03/18 16:35:46 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.7 1997/03/18 20:14:46 scrappy Exp $
  *
  * NOTES
  *    Globals used all over the place should be declared here and not
@@ -70,6 +70,9 @@ bool		HasCTZSet = false;
 bool		CDayLight = false;
 int		CTimeZone = 0;
 char		CTZName[8] = "";
+
+char DateFormat[20] 	= "%d-%m-%Y";	/* mjl: sizes! or better malloc? XXX */
+char FloatFormat[20] = "%f";
 
 char *IndexedCatalogNames[] = {
     AttributeRelationName,

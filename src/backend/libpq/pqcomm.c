@@ -1,4 +1,4 @@
-/*-------------------------------------------------------------------------
+ /*-------------------------------------------------------------------------
  *
  * pqcomm.c--
  *    Communication functions between the Frontend and the Backend
@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.12 1997/03/12 21:17:58 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.13 1997/03/18 20:14:33 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -206,26 +206,29 @@ pq_getstr(char *s, int maxlen)
  *		 the line ended within maxlen bytes.)
  *	1 in other cases
  */
-int
-PQgetline(char *s, int maxlen)
-{
-    int c = '\0';
-    
+int PQgetline(char *s, int maxlen)
+	{
     if (!Pfin || !s || maxlen <= 1)
 	return(EOF);
     
-    for (; maxlen > 1 && (c = pq_getc(Pfin)) != '\n' && c != EOF; --maxlen) {
-	*s++ = c;
-    }
+   if(fgets(s, maxlen - 1, Pfin) == NULL)
+   	{
+   	return feof(Pfin) ? EOF : 1;
+   	}
+   else
+   	{
+   	for( ; *s; *s++)
+   		{
+   		if(*s == '\n')
+   			{
     *s = '\0';
+   			break;
+   			}
+   		}
+   	}
     
-    if (c == EOF) {
-	return(EOF);		/* error -- reached EOF before \n */
-    } else if (c == '\n') {
-	return(0);		/* done with this line */
+   return 0;
     }
-    return(1);			/* returning a full buffer */
-}
 
 /*
  * USER FUNCTION - sends a string to the backend.
@@ -252,6 +255,9 @@ PQputline(char *s)
 int
 pq_getnchar(char *s, int off, int maxlen)
 {
+	return pqGetNBytes(s + off, maxlen, Pfin);
+
+#if 0
     int	c = '\0';
     
     if (Pfin == (FILE *) NULL) {
@@ -270,6 +276,7 @@ pq_getnchar(char *s, int off, int maxlen)
     if (c == EOF)
 	return(EOF);
     return(!EOF);
+#endif
 }
 
 /* --------------------------------
@@ -282,20 +289,38 @@ pq_getnchar(char *s, int off, int maxlen)
 int
 pq_getint(int b)
 {
-    int	n, c, p;
+    int n, status = 1;
     
-    if (Pfin == (FILE *) NULL) {
-/*	elog(DEBUG, "pq_getint: Input descriptor is null"); */
-	return(EOF);
+    if(!Pfin)
+    	return EOF;    
+    /* mjl: Seems inconsisten w/ return value of pq_putint (void). Also,
+    	EOF is a valid return value for an int! XXX */
+    	    
+    switch(b)
+    	{
+    	case 1:
+    	    status = ((n = fgetc(Pfin)) == EOF);
+    	    break;
+    	case 2:
+    	    pqGetShort(&n, Pfin);
+    	    break;
+    	case 4:
+    	    pqGetLong(&n, Pfin);
+    	    break;
+    	default:
+    	    fprintf(stderr, "** Unsupported size %d\n", b);
     }
     
-    n = p = 0;
-    while (b-- && (c = pq_getc(Pfin)) != EOF && p < 32) {
-	n |= (c & 0xff) << p;
-	p += 8;
+    if(status)
+    	{
+	(void) sprintf(PQerrormsg,
+    	    "FATAL: pq_getint failed: errno=%d\n", errno);
+    	fputs(PQerrormsg, stderr);
+    	pqdebug("%s", PQerrormsg);
+    	n = 0;
     }
     
-    return(n);
+    return n;
 }
 
 /* --------------------------------
@@ -305,26 +330,13 @@ pq_getint(int b)
 void
 pq_putstr(char *s)
 {
-    int status;
-    
-    if (Pfout) {
-	status = fputs(s, Pfout);
-	if (status == EOF) {
+	if(pqPutString(s, Pfout))
+		{
 	    (void) sprintf(PQerrormsg,
-			   "FATAL: pq_putstr: fputs() failed: errno=%d\n",
-			   errno);
+			"FATAL: pq_putstr: fputs() failed: errno=%d\n", errno);
 	    fputs(PQerrormsg, stderr);
 	    pqdebug("%s", PQerrormsg);
 	}
-	status = fputc('\0', Pfout);
-	if (status == EOF) {
-	    (void) sprintf(PQerrormsg,
-			   "FATAL: pq_putstr: fputc() failed: errno=%d\n",
-			   errno);
-	    fputs(PQerrormsg, stderr);
-	    pqdebug("%s", PQerrormsg);
-	}
-    }
 }
 
 /* --------------------------------
@@ -333,13 +345,9 @@ pq_putstr(char *s)
  */
 void
 pq_putnchar(char *s, int n)
-{
-    int status;
-    
-    if (Pfout) {
-	while (n--) {
-	    status = fputc(*s++, Pfout);
-	    if (status == EOF) {
+	{
+	if(pqPutNBytes(s, n, Pfout))
+		{	
 		(void) sprintf(PQerrormsg,
 			       "FATAL: pq_putnchar: fputc() failed: errno=%d\n",
 			       errno);
@@ -347,8 +355,6 @@ pq_putnchar(char *s, int n)
 		pqdebug("%s", PQerrormsg);
 	    }
 	}
-    }
-}
 
 /* --------------------------------
  *	pq_putint - send an integer to connection
@@ -362,22 +368,31 @@ pq_putint(int i, int b)
 {
     int status;
     
-    if (b > 4)
-	b = 4;
+    if(!Pfout)	return;
     
-    if (Pfout) {
-	while (b--) {
-	    status = fputc(i & 0xff, Pfout);
-	    i >>= 8;
-	    if (status == EOF) {
+    status = 1;
+    switch(b)
+    	{
+    	case 1:
+    	    status = (fputc(i, Pfout) == EOF);
+    	    break;
+       	case 2:
+    	    status = pqPutShort(i, Pfout);
+    	    break;
+    	case 4:
+    	    status = pqPutLong(i, Pfout);
+    	    break;
+    	default:
+    	    fprintf(stderr, "** Unsupported size %d\n", b);
+    	}
+
+    if(status)
+    	{
 		(void) sprintf(PQerrormsg,
-			       "FATAL: pq_putint: fputc() failed: errno=%d\n",
-			       errno);
+    	    "FATAL: pq_putint failed: errno=%d\n", errno);
 		fputs(PQerrormsg, stderr);
 		pqdebug("%s", PQerrormsg);
 	    }
-	}
-    }
 }
 
 /* ---

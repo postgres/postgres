@@ -11,7 +11,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.6 1997/03/18 16:36:23 scrappy Exp $
+ * $Id: miscadmin.h,v 1.7 1997/03/18 20:15:19 scrappy Exp $
  *
  * NOTES
  *    some of the information in this file will be moved to
@@ -69,6 +69,9 @@ extern bool	    HasCTZSet;
 extern bool	    CDayLight;
 extern int	    CTimeZone;
 extern char	    CTZName[];
+
+extern char FloatFormat[];
+extern char DateFormat[];
 
 extern Oid	    LastOidProcessed;	/* for query rewrite */
 
