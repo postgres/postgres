@@ -3,7 +3,7 @@
  * 1996-06-05 by Arthur David Olson (arthur_david_olson@nih.gov).
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/zic.c,v 1.10 2004/08/08 05:19:44 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/zic.c,v 1.11 2004/08/11 16:53:28 tgl Exp $
  */
 
 #include "postgres.h"
@@ -151,10 +151,6 @@ static pg_time_t tadd(pg_time_t t1, long t2);
 static void usage(void);
 static void writezone(const char *name);
 static int	yearistype(int year, const char *type);
-
-#ifndef HAVE_STRERROR
-static char *strerror(int);
-#endif
 
 static int	charcnt;
 static int	errors;
@@ -375,8 +371,7 @@ static char roll[TZ_MAX_LEAPS];
  */
 
 static char *
-memcheck(ptr)
-char	   *const ptr;
+memcheck(char *ptr)
 {
 	if (ptr == NULL)
 	{
@@ -397,18 +392,6 @@ char	   *const ptr;
 /*
  * Error handling.
  */
-
-#ifndef HAVE_STRERROR
-static char *
-strerror(int errnum)
-{
-	extern char *sys_errlist[];
-	extern int	sys_nerr;
-
-	return (errnum > 0 && errnum <= sys_nerr) ?
-		sys_errlist[errnum] : _("Unknown system error");
-}
-#endif
 
 static void
 eats(const char *name, const int num, const char *rname, const int rnum)
