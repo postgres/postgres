@@ -83,6 +83,16 @@ public class ResultSetTest extends TestCase
 		TestUtil.closeDB(con);
 	}
 
+	public void testBackward() throws Exception
+	{
+		Statement stmt = con.createStatement();
+		ResultSet rs = stmt.executeQuery("SELECT * FROM testrs");
+		rs.afterLast();
+		assertTrue(rs.previous());
+		rs.close();
+		stmt.close();
+	}
+
 	public void testAbsolute() throws Exception
 	{
 		Statement stmt = con.createStatement();
