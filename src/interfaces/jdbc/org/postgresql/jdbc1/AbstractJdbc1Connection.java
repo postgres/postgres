@@ -14,7 +14,7 @@ import org.postgresql.largeobject.LargeObjectManager;
 import org.postgresql.util.*;
 
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Connection.java,v 1.12.2.1 2002/11/14 05:54:39 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Connection.java,v 1.12.2.2 2003/03/19 04:09:09 barry Exp $
  * This class defines methods of the jdbc1 specification.  This class is
  * extended by org.postgresql.jdbc2.AbstractJdbc2Connection which adds the jdbc2
  * methods.  The real Connection class (for jdbc1) is org.postgresql.jdbc1.Jdbc1Connection
@@ -939,7 +939,11 @@ public abstract class AbstractJdbc1Connection implements org.postgresql.PGConnec
                 //We do the select to ensure a transaction is in process
 				//before we do the commit to avoid warning messages
 				//from issuing a commit without a transaction in process
-				ExecSQL("select 1; commit; set autocommit = on;");
+				//NOTE this is done in two network roundtrips to work around
+				//a server bug in 7.3 where the select wouldn't actually start
+				//a new transaction if in the same command as the commit
+				ExecSQL("select 1;");
+				ExecSQL("commit; set autocommit = on;");
 			}
 			else
 			{
