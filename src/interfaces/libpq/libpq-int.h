@@ -11,7 +11,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-int.h,v 1.15 2000/01/14 05:33:15 tgl Exp $
+ * $Id: libpq-int.h,v 1.16 2000/01/15 05:37:21 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -236,6 +236,8 @@ struct pg_conn
 
 	/* Buffer for receiving various parts of messages */
 	PQExpBufferData	workBuffer;	/* expansible string */
+
+	int client_encoding;		/* encoding id */
 };
 
 /* ----------------

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.109 2000/01/14 05:33:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.110 2000/01/15 05:37:21 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1299,7 +1299,7 @@ PQconnectPoll(PGconn *conn)
 			   these queries. */
 			conn->status = CONNECTION_OK;
 
-			switch (PQsetenvPoll(conn->setenv_handle))
+			switch (PQsetenvPoll(conn))
 			{
 				case PGRES_POLLING_OK: /* Success */
 					conn->status = CONNECTION_OK;
@@ -1384,8 +1384,9 @@ PQsetenvStart(PGconn *conn)
  * ----------------
  */
 PostgresPollingStatusType
-PQsetenvPoll(PGsetenvHandle handle)
+PQsetenvPoll(PGconn *conn)
 {
+	PGsetenvHandle handle = conn->setenv_handle;
 #ifdef MULTIBYTE
 	static const char envname[] = "PGCLIENTENCODING";
 #endif
@@ -1470,16 +1471,12 @@ PQsetenvPoll(PGsetenvHandle handle)
 
 				encoding = PQgetvalue(handle->res, 0, 0);
 				if (!encoding)			/* this should not happen */
-					encoding = pg_encoding_to_char(MULTIBYTE);
+					encoding = SQL_ASCII;
 
 				if (encoding)
 				{
-					/* set client encoding via environment variable */
-					char	   *envbuf;
-
-					envbuf = (char *) malloc(strlen(envname) + strlen(encoding) + 2);
-					sprintf(envbuf, "%s=%s", envname, encoding);
-					putenv(envbuf);
+					/* set client encoding to pg_conn struct */
+					conn->client_encoding = atoi(encoding);
 				}
 				PQclear(handle->res);
 				/* We have to keep going in order to clear up the query */
@@ -1630,7 +1627,7 @@ PQsetenv(PGconn *conn)
 		return 0;
 
 	for (;;) {
-		flag = PQsetenvPoll(handle);
+		flag = PQsetenvPoll(conn);
 		switch (flag)
 		{
 			case PGRES_POLLING_ACTIVE:
@@ -2353,6 +2350,14 @@ PQbackendPID(const PGconn *conn)
 	if (!conn || conn->status != CONNECTION_OK)
 		return 0;
 	return conn->be_pid;
+}
+
+int
+PQclientencoding(const PGconn *conn)
+{
+	if (!conn || conn->status != CONNECTION_OK)
+		return -1;
+	return conn->client_encoding;
 }
 
 void
