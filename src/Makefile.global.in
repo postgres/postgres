@@ -1,4 +1,5 @@
-# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.97 2000/09/29 17:17:32 petere Exp $
+# -*-makefile-*-
+# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.98 2000/10/08 21:13:27 petere Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -12,10 +13,20 @@
 # parent directory of the directory this file is in.)
 #------------------------------------------------------------------------------
 
+
+##########################################################################
+#
+# Meta configuration
+
+.PHONY: all install installdirs uninstall dep depend clean distclean maintainer-clean distprep check installcheck
+.SILENT: installdirs
+
+# make `all' the default target
+all:
+
 # Delete target files if the command fails after it has
 # started to update the file.
 .DELETE_ON_ERROR:
-
 
 # PostgreSQL version number
 VERSION = @VERSION@
@@ -30,14 +41,162 @@ srcdir = $(top_srcdir)/$(subdir)
 endif
 VPATH = $(srcdir)
 
-##############################################################################
+
+##########################################################################
 #
-# CONFIGURATION SECTION
+# Installation directories
 #
-# Following are settings pertaining to the postgres build and
-# installation.
-# of the port.
+# These are set by the equivalent --xxxdir configure options.  We
+# append "postgresql" to some of them, if the string does not already
+# contain "pgsql" or "postgres", in order to avoid directory clutter.
+
+prefix := @prefix@
+exec_prefix := @exec_prefix@
+
+bindir := @bindir@
+sbindir := @sbindir@
+
+libexecdir := @libexecdir@
+ifeq "$(findstring pgsql, $(libexecdir))" ""
+ifeq "$(findstring postgres, $(libexecdir))" ""
+override libexecdir := $(libexecdir)/postgresql
+endif
+endif
+
+datadir := @datadir@
+ifeq "$(findstring pgsql, $(datadir))" ""
+ifeq "$(findstring postgres, $(datadir))" ""
+override datadir := $(datadir)/postgresql
+endif
+endif
+
+sysconfdir := @sysconfdir@
+ifeq "$(findstring pgsql, $(sysconfdir))" ""
+ifeq "$(findstring postgres, $(sysconfdir))" ""
+override sysconfdir := $(sysconfdir)/postgresql
+endif
+endif
+
+libdir := @libdir@
+
+includedir := @includedir@
+ifeq "$(findstring pgsql, $(includedir))" ""
+ifeq "$(findstring postgres, $(includedir))" ""
+override includedir := $(includedir)/postgresql
+endif
+endif
+
+mandir := @mandir@
+
+docdir := @docdir@
+ifeq "$(findstring pgsql, $(docdir))" ""
+ifeq "$(findstring postgres, $(docdir))" ""
+override docdir := $(docdir)/postgresql
+endif
+endif
+
+odbcinst_ini_dir = @odbcinst_ini_dir@
+
+
+##########################################################################
 #
+# Features
+#
+# Records the choice of the various --enable-xxx and --with-xxx options.
+
+with_CXX	= @with_CXX@
+with_perl	= @with_perl@
+with_python	= @with_python@
+with_tcl	= @with_tcl@
+with_tk		= @with_tk@
+enable_odbc	= @enable_odbc@
+MULTIBYTE	= @MULTIBYTE@
+
+python_extmakefile = @python_extmakefile@
+python_moduledir = @python_moduledir@
+
+krb_srvtab = @krb_srvtab@
+
+TCL_CONFIG_SH = @TCL_CONFIG_SH@
+TK_CONFIG_SH = @TK_CONFIG_SH@
+
+
+##########################################################################
+#
+# Programs and flags
+
+# Compilers
+
+CC = @CC@
+CPP = @CPP@
+GCC = @GCC@
+CPPFLAGS = @CPPFLAGS@
+CFLAGS = -I$(top_srcdir)/src/include $(CPPFLAGS) @CFLAGS@
+CFLAGS_SL = @SHARED_LIB@
+CXX = @CXX@
+CXXFLAGS = @CXXFLAGS@ @INCLUDES@
+
+ifeq ($(GCC), yes)
+  override CFLAGS += -Wall -Wmissing-prototypes -Wmissing-declarations
+endif
+
+# Kind-of compilers
+
+YACC = @YACC@
+YFLAGS = @YFLAGS@
+FLEX = @FLEX@
+FLEXFLAGS = @FLEXFLAGS@ $(LFLAGS)
+
+# Linking
+
+AROPT = @AROPT@
+LIBS = @LIBS@
+LDFLAGS = @LDFLAGS@ $(LIBS)
+KRB_LIBS = @KRB_LIBS@
+LDREL = -r
+LDOUT = -o
+DLSUFFIX = @DLSUFFIX@
+RANLIB = @RANLIB@
+X = @EXEEXT@
+
+# Miscellaneous
+
+AWK	= @AWK@
+LN_S	= @LN_S@
+PERL	= @PERL@
+PYTHON	= @PYTHON@
+TAR	= @TAR@
+WISH	= @WISH@
+
+# Installation.
+
+INSTALL	= @INSTALL@
+
+INSTALL_PROGRAM	= @INSTALL_PROGRAM@
+INSTALL_SCRIPT	= @INSTALL_SCRIPT@
+INSTALL_DATA	= @INSTALL_DATA@
+INSTALL_SHLIB	= @INSTALL_SHLIB@
+
+mkinstalldirs	= $(SHELL) $(top_srcdir)/config/mkinstalldirs
+missing		= $(SHELL) $(top_srcdir)/config/missing
+
+
+##########################################################################
+#
+# Additional platform-specific settings
+#
+
+# Name of the "template"
+PORTNAME= @PORTNAME@
+
+host_tuple = @host@
+host_os = @host_os@
+host_cpu = @host_cpu@
+
+# Grungy things needed for HP-UX
+HAVE_POSIX_SIGNALS= @HAVE_POSIX_SIGNALS@
+HPUXMATHLIB= @HPUXMATHLIB@
+
 # Ignore BSD_SHLIB if you're not using one of the BSD ports.  But if you
 # are, and it's one that doesn't have shared libraries (NetBSD/vax is an
 # example of this), set BSD_SHLIB to null in Makefile.custom.
@@ -46,6 +205,14 @@ BSD_SHLIB= true
 # This is mainly for use on FreeBSD, where we have both a.out and elf
 # systems now.  May be applicable to other systems to?
 ELF_SYSTEM= @ELF_SYS@
+
+# Pull in platform-specific magic
+include $(top_builddir)/src/Makefile.port
+
+
+##########################################################################
+#
+# Some variables needed to find some client interfaces
 
 libpq_srcdir = $(top_srcdir)/src/interfaces/libpq
 libpq_builddir = $(top_builddir)/src/interfaces/libpq
@@ -56,165 +223,25 @@ libpgeasy_builddir = $(top_builddir/src/interfaces/libpgeasy
 libpgeasy = -L$(libpgeasy_builddir) -lpgeasy
 
 
-# installation directories
-
-prefix = @prefix@
-exec_prefix = @exec_prefix@
-bindir = @bindir@
-sbindir = @sbindir@
-libexecdir = @libexecdir@
-datadir = @datadir@
-sysconfdir = @sysconfdir@
-sharedstatedir = @sharedstatedir@
-localstatedir = @localstatedir@
-libdir = @libdir@
-includedir = @includedir@
-mandir = @mandir@
-docdir = @docdir@
-
-odbcinst_ini_dir = @odbcinst_ini_dir@
-
-
-##############################################################################
+##########################################################################
 #
-# FEATURES
-#
-# To disable a feature, comment out the entire definition
-# (that is, prepend '#', don't set it to "0" or "no").
-
-# Comment out PROFILE to generate a profile version of the binaries
-#PROFILE= -p -non_shared
-
-
-with_CXX = @with_CXX@
-with_perl = @with_perl@
-enable_odbc = @enable_odbc@
-
-with_python = @with_python@
-PYTHON = @PYTHON@
-python_extmakefile = @python_extmakefile@
-python_moduledir = @python_moduledir@
-
-krb_srvtab = @krb_srvtab@
-
-with_tcl = @with_tcl@
-with_tk = @with_tk@
-
-WISH= @WISH@
-TCL_CONFIG_SH = @TCL_CONFIG_SH@
-TK_CONFIG_SH = @TK_CONFIG_SH@
-
-# flag whether multibyte is on/off
-MULTIBYTE=@MULTIBYTE@
-
-##############################################################################
-#
-# Installation.
-#
-INSTALL= @INSTALL@
-
-INSTALL_PROGRAM = @INSTALL_PROGRAM@
-INSTALL_SCRIPT = @INSTALL_SCRIPT@
-INSTALL_DATA = @INSTALL_DATA@
-INSTALL_SHLIB = @INSTALL_SHLIB@
-
-mkinstalldirs = @mkinstalldirs@
-missing = $(top_srcdir)/config/missing
-
-RANLIB= @RANLIB@
-
-#-------------------------------------------------------------
-# See the subdirectory template for default settings for these
-#-------------------------------------------------------------
-CC= @CC@
-CPP= @CPP@
-YACC= @YACC@
-YFLAGS = @YFLAGS@
-FLEX = @FLEX@
-FLEXFLAGS = @FLEXFLAGS@ $(LFLAGS)
-AROPT= @AROPT@
-CPPFLAGS = @CPPFLAGS@
-CFLAGS = -I$(top_srcdir)/src/include $(CPPFLAGS) @CFLAGS@
-CFLAGS_SL= @SHARED_LIB@
-LIBS= @LIBS@
-LDFLAGS= @LDFLAGS@ $(LIBS)
-KRB_LIBS = @KRB_LIBS@
-LDREL= -r
-LDOUT= -o
-DLSUFFIX= @DLSUFFIX@
-LN_S= @LN_S@
-TAR= @tar@
-PERL = @PERL@
-AWK = @AWK@
-CXX=@CXX@
-CXXFLAGS=@CXXFLAGS@ @INCLUDES@
-GCC = @GCC@
-X = @EXEEXT@
-
-ifeq ($(GCC), yes)
-  CFLAGS += -Wall -Wmissing-prototypes -Wmissing-declarations
-endif
-
-##############################################################################
-#
-# Additional platform-specific settings
-#
-
-# Name of the target platform.
-PORTNAME= @PORTNAME@
-
-host_tuple = @host@
-host_os = @host_os@
-host_cpu = @host_cpu@
-
-# Various grungy items needed to configure some platforms.
-HAVE_POSIX_SIGNALS= @HAVE_POSIX_SIGNALS@
-HPUXMATHLIB= @HPUXMATHLIB@
-
-include $(top_builddir)/src/Makefile.port
-
-##############################################################################
-#
-# Customization.
+# Customization
 #
 # This includes your local customizations if Makefile.custom exists
 # in the source directory.  This file doesn't exist in the original
 # distribution so that it doesn't get overwritten when you upgrade.
--include $(top_srcdir)/src/Makefile.custom
+#
+# NOTE:  Makefile.custom is from the pre-Autoconf days of PostgreSQL.
+# You are liable to shoot yourself in the foot if you use it without
+# knowing exactly what you're doing.  The preferred (and more
+# reliable) method is to communicate what you want to do to the
+# configure script, and leave the makefiles alone.
 
-# This goes here so that customization in Makefile.custom is effective
-##############################################################################
+-include $(top_srcdir)/src/Makefile.custom
 
 ifneq ($(CUSTOM_INSTALL),)
 INSTALL= $(CUSTOM_INSTALL)
 endif
-
-#
-# Flags for CC and LD.
-
-##############################################################################
-# COPT
-#
-# COPT is for options that the sophisticated builder might want to vary
-# from one build to the next, like options to build Postgres with debugging
-# information included.  COPT is meant to be set on the make command line,
-# for example with the command "make COPT=-g".  The value you see set here
-# is the default that gets used if the builder does not give a value for
-# COPT on his make command.
-#
-# There is a nonobvious relationship between -O (optimization) and
-# -Werror (consider all warnings fatal).  On some systems, if you don't
-# optimize, you will always get some warnings because the system header
-# files will include some unreferenced functions in the code.  These are
-# functions that are supposed to be inline, so there wouldn't ordinarily
-# be an "unreferenced" problem, but if you don't enable optimization, no
-# inlining can happen, and hence the problem.  Therefore, we include
-# if you override -O, you override -Werror as well.
-#
-# CUSTOM_COPT is something the user may set in Makefile.custom
-
-# Common values for COPT are: -g for debuggable binaries, -m486 if you are
-# using a i486 or better.
 
 ifneq ($(CUSTOM_CC),)
   CC= $(CUSTOM_CC)
@@ -235,19 +262,20 @@ ifdef PROFILE
 endif
 
 
+##########################################################################
+#
 # substitute implementations of the C library
+
 INET_ATON = @INET_ATON@
 STRERROR = @STRERROR@
 STRERROR2 = @STRERROR2@
 SNPRINTF = @SNPRINTF@
 STRDUP = @STRDUP@
 
-.PHONY: all install installdirs uninstall dep depend clean distclean maintainer-clean distprep check installcheck
-.SILENT: installdirs
 
-# make `all' the default target
-all:
-
+##########################################################################
+#
+# Global targets
 
 # Remake Makefile.global from Makefile.global.in if the latter
 # changed. In order to trigger this rule, the including file must
@@ -274,10 +302,8 @@ $(top_builddir)/config.status: $(top_srcdir)/configure
 	cd $(top_builddir) && ./config.status --recheck
 
 
-
-
-COMPILE.c = $(CC) -c $(CPPFLAGS) $(CFLAGS)
-
+##########################################################################
+#
 # Automatic dependency generation
 # -------------------------------
 # When we configure with --enable-depend then we override the default
@@ -297,6 +323,8 @@ COMPILE.c = $(CC) -c $(CPPFLAGS) $(CFLAGS)
 # consider it updated. (That in turn also has the nice side effect
 # that make will update all files that depended on the now removed
 # file.)
+
+COMPILE.c = $(CC) -c $(CPPFLAGS) $(CFLAGS)
 
 autodepend = @autodepend@
 

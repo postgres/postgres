@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.22 2000/09/30 16:58:20 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.23 2000/10/08 21:13:27 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%flattext-install-include[<productname>PostgreSQL</> ]]>Installation Instructions</title>
@@ -398,7 +398,29 @@ su - postgres
         </para>
        </listitem>
       </varlistentry>
+     </variablelist>
 
+     <note>
+      <para>
+       To reduce the pollution of shared installation locations (such
+       as <filename>/usr/local/include</filename>), the string
+       <quote><literal>/postgresql</literal></quote> is automatically
+       appended to <varname>datadir</varname>,
+       <varname>sysconfdir</varname>, <varname>includedir</varname>,
+       and <varname>docdir</varname>, unless the fully expanded
+       directory name already contains the string
+       <quote>postgres</quote> or <quote>pgsql</quote>.  For example,
+       if you choose <filename>/usr/local</filename> as prefix, the C
+       header files will be installed in
+       <filename>/usr/local/include/postgresql</filename>, but if the
+       prefix is <filename>/opt/postgres</filename>, then they will be
+       in <filename>/opt/postgres/include</filename>.
+      </para>
+     </note>
+    </para>
+
+    <para>
+     <variablelist>
       <varlistentry>
        <term>--with-includes=<replaceable>DIRECTORIES</></term>
        <listitem>

@@ -589,15 +589,11 @@ INSTALL_SHLIB="\${INSTALL} $INSTL_SHLIB_OPTS"
 AC_SUBST(INSTALL_SHLIB)
 
 
-mkinstalldirs="\$(SHELL) \$(top_srcdir)/config/mkinstalldirs"
-AC_SUBST(mkinstalldirs)
-
-
 AC_PROG_AWK
 PGAC_PATH_FLEX
 AC_PROG_LN_S
 AC_PROG_RANLIB
-AC_PATH_PROG(tar, tar)
+AC_PATH_PROG(TAR, tar)
 AC_CHECK_PROGS(PERL, perl,)
 AC_PROG_YACC
 AC_SUBST(YFLAGS)
