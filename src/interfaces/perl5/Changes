@@ -1,7 +1,10 @@
 Revision history for Perl extension Pg.
 
+1.6.3   Sep 25 1997
+	- README update
+
 1.6.2   Sep 20 1997
-	- adapted to PostgresqL-6.2:
+	- adapted to PostgreSQL-6.2:
           o added support for new method cmdTuples
           o cmdStatus returns now for DELETE the status 
             followed by the number of affected rows,

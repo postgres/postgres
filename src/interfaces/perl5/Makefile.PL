@@ -1,20 +1,22 @@
 #-------------------------------------------------------
 #
-# $Id: Makefile.PL,v 1.3 1997/09/17 20:46:20 mergl Exp $
+# $Id: Makefile.PL,v 1.4 1997/09/25 21:14:41 mergl Exp $
 #
 # Copyright (c) 1997  Edmund Mergl
 #
 #-------------------------------------------------------
 
 use ExtUtils::MakeMaker;
+use Config;
+use strict;
 
 print "\nConfiguring Pg\n";
 print "Remember to actually read the README file !\n";
-die "\nYou didn't read the README file !\n" unless ($] >= 5.003);
+die "\nYou didn't read the README file !\n" unless ($] >= 5.002);
 
 if (! $ENV{POSTGRES_HOME}) {
     warn "\$POSTGRES_HOME not defined. Searching for PostgreSQL...\n";
-    foreach(qw(/usr/pgsql /usr/local/pgsql /usr/pgsql-6.1 /usr/local/pgsql-6.1)) {
+    foreach(qw(/usr/local/pgsql /usr/pgsql /home/pgsql /opt/pgsql /usr/local/postgres /usr/postgres /home/postgres /opt/postgres)) {
         if (-d "$_/lib") {
             $ENV{POSTGRES_HOME} = $_;
             last;
@@ -22,17 +24,22 @@ if (! $ENV{POSTGRES_HOME}) {
     }
 }
 
-if ($ENV{POSTGRES_HOME}) {
-    print "\nFound PostgreSQL in $ENV{POSTGRES_HOME}\n";
+if (-d "$ENV{POSTGRES_HOME}/lib") {
+    print "Found PostgreSQL in $ENV{POSTGRES_HOME}\n";
 } else {
-    die "Unable to determine \$POSTGRES_HOME !\n";
+    die "Unable to determine PostgreSQL\n";
 }
 
-WriteMakefile(
-    'NAME'	   => 'Pg',
-    'VERSION_FROM' => 'Pg.pm',
-    'LIBS'	   => ["-L$ENV{POSTGRES_HOME}/lib -lpq"],
-    'INC'	   =>  "-I$ENV{POSTGRES_HOME}/include",
+my %opts = (
+    NAME         => 'Pg',
+    VERSION_FROM => 'Pg.pm',
+    INC	         =>  "-I$ENV{POSTGRES_HOME}/include",
+    LIBS         => ["-L$ENV{POSTGRES_HOME}/lib -lpq"],
 );
 
-# EOF
+
+WriteMakefile(%opts);
+
+exit(0);
+
+# end of Makefile.PL

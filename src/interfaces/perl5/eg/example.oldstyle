@@ -1,8 +1,8 @@
-#!/usr/local/bin/perl
+#!/usr/local/bin/perl -w
 
 #-------------------------------------------------------
 #
-# $Id: example.oldstyle,v 1.1 1997/09/17 20:48:15 mergl Exp $
+# $Id: example.oldstyle,v 1.2 1997/09/25 21:15:04 mergl Exp $
 #
 # Copyright (c) 1997  Edmund Mergl
 #
@@ -148,7 +148,8 @@ $result = PQexec($conn, "COPY person TO STDOUT");
 cmp_eq(PGRES_COPY_OUT, PQresultStatus($result));
 PQclear($result);
 
-$i = 1;
+$i   = 1;
+$ret = 0;
 while (-1 != $ret) {
     $ret = PQgetline($conn, $string, 256);
     last if $string eq "\\.";

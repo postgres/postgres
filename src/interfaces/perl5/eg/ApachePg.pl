@@ -4,7 +4,7 @@
 #  - PostgreSQL-6.2
 #  - apache_1.2.4
 #  - mod_perl-1.00
-#  - perl5.004_01
+#  - perl5.004_03
 
 use CGI;
 use Pg;
@@ -30,7 +30,15 @@ if ($query->param) {
     $conn = Pg::connectdb("dbname = $dbname");
     $cmd = $query->param('cmd');
     $result = $conn->exec($cmd);
-    $result->print(STDOUT, 0, 0, 0, 1, 0, 0, '', '', '');
+    print "<TABLE>";
+    for ($i = 0; $i < $result->ntuples; $i++) {
+        print "<TR>";
+        for ($j = 0; $j < $result->nfields; $j++) {
+            print "<TD>", $result->getvalue($i, $j), "</TD>";
+        }
+        print "</TR>";
+    }
+    print "</TABLE>";
 }
 
 print $query->end_html;

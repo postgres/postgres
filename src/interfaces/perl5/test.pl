@@ -1,8 +1,8 @@
-#!/usr/local/bin/perl
+#!/usr/local/bin/perl -w
 
 #-------------------------------------------------------
 #
-# $Id: test.pl,v 1.4 1997/09/17 20:53:35 mergl Exp $
+# $Id: test.pl,v 1.5 1997/09/25 21:14:47 mergl Exp $
 #
 # Copyright (c) 1997  Edmund Mergl
 #
@@ -88,7 +88,7 @@ $SIG{PIPE} = sub { print "broken pipe\n" };
 ######################### create and connect to test database
 # 2-4
 
-$conn = Pg::connectdb("dbname = $dbmain");
+$conn = Pg::connectdb("dbname=$dbmain");
 cmp_eq(PGRES_CONNECTION_OK, $conn->status);
 
 # might fail if $dbname doesn't exist => don't check resultStatus
@@ -97,7 +97,7 @@ $result = $conn->exec("DROP DATABASE $dbname");
 $result = $conn->exec("CREATE DATABASE $dbname");
 cmp_eq(PGRES_COMMAND_OK, $result->resultStatus);
 
-$conn = Pg::connectdb("dbname = $dbname");
+$conn = Pg::connectdb("dbname=$dbname");
 cmp_eq(PGRES_CONNECTION_OK, $conn->status);
 
 ######################### debug, PQtrace
@@ -141,7 +141,8 @@ for ($i = 1; $i <= 5; $i++) {
 $result = $conn->exec("COPY person TO STDOUT");
 cmp_eq(PGRES_COPY_OUT, $result->resultStatus);
 
-$i = 1;
+$i   = 1;
+$ret = 0;
 while (-1 != $ret) {
     $ret = $conn->getline($string, 256);
     last if $string eq "\\.";
@@ -218,7 +219,7 @@ if ($DEBUG) {
 ######################### disconnect and drop test database
 # 49-50
 
-$conn = Pg::connectdb("dbname = $dbmain");
+$conn = Pg::connectdb("dbname=$dbmain");
 cmp_eq(PGRES_CONNECTION_OK, $conn->status);
 
 $result = $conn->exec("DROP DATABASE $dbname");
