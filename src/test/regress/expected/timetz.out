@@ -27,7 +27,7 @@ SELECT f1 AS "Time TZ" FROM TIMETZ_TBL;
  23:59:59.99-07
 (10 rows)
 
-SELECT f1 AS "Three" FROM TIMETZ_TBL WHERE f1 < '05:06:07';
+SELECT f1 AS "Three" FROM TIMETZ_TBL WHERE f1 < '05:06:07-07';
     Three    
 -------------
  00:01:00-07
@@ -35,7 +35,7 @@ SELECT f1 AS "Three" FROM TIMETZ_TBL WHERE f1 < '05:06:07';
  02:03:00-07
 (3 rows)
 
-SELECT f1 AS "Seven" FROM TIMETZ_TBL WHERE f1 > '05:06:07';
+SELECT f1 AS "Seven" FROM TIMETZ_TBL WHERE f1 > '05:06:07-07';
      Seven      
 ----------------
  07:07:00-08
@@ -47,12 +47,12 @@ SELECT f1 AS "Seven" FROM TIMETZ_TBL WHERE f1 > '05:06:07';
  23:59:59.99-07
 (7 rows)
 
-SELECT f1 AS "None" FROM TIMETZ_TBL WHERE f1 < '00:00';
+SELECT f1 AS "None" FROM TIMETZ_TBL WHERE f1 < '00:00-07';
  None 
 ------
 (0 rows)
 
-SELECT f1 AS "Ten" FROM TIMETZ_TBL WHERE f1 >= '00:00';
+SELECT f1 AS "Ten" FROM TIMETZ_TBL WHERE f1 >= '00:00-07';
       Ten       
 ----------------
  00:01:00-07
