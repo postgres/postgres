@@ -3,7 +3,7 @@
  *			  out of it's tuple
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.18.2.1 1999/08/02 05:24:57 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.18.2.2 1999/08/29 19:22:24 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -57,6 +57,11 @@ typedef struct QryHier
 	Query	   *query;
 } QryHier;
 
+typedef struct {
+	Index		rt_index;
+	int			levelsup;
+} check_if_rte_used_context;
+
 
 /* ----------
  * Global data
@@ -94,6 +99,7 @@ static char *get_select_query_def(Query *query, QryHier *qh);
 static char *get_insert_query_def(Query *query, QryHier *qh);
 static char *get_update_query_def(Query *query, QryHier *qh);
 static char *get_delete_query_def(Query *query, QryHier *qh);
+static RangeTblEntry *get_rte_for_var(Var *var, QryHier *qh);
 static char *get_rule_expr(QryHier *qh, int rt_index, Node *node, bool varprefix);
 static char *get_func_expr(QryHier *qh, int rt_index, Expr *expr, bool varprefix);
 static char *get_tle_expr(QryHier *qh, int rt_index, TargetEntry *tle, bool varprefix);
@@ -101,7 +107,9 @@ static char *get_const_expr(Const *constval);
 static char *get_sublink_expr(QryHier *qh, int rt_index, Node *node, bool varprefix);
 static char *get_relation_name(Oid relid);
 static char *get_attribute_name(Oid relid, int2 attnum);
-static bool check_if_rte_used(int rt_index, Node *node, int sup);
+static bool check_if_rte_used(Node *node, Index rt_index, int levelsup);
+static bool check_if_rte_used_walker(Node *node,
+									 check_if_rte_used_context *context);
 
 
 /* ----------
@@ -852,7 +860,7 @@ get_select_query_def(Query *query, QryHier *qh)
 	List	   *l;
 
 	/* ----------
-	 * First we need need to know which and how many of the
+	 * First we need to know which and how many of the
 	 * range table entries in the query are used in the target list
 	 * or queries qualification
 	 * ----------
@@ -861,21 +869,15 @@ get_select_query_def(Query *query, QryHier *qh)
 	rt_used = palloc(sizeof(bool) * rt_length);
 	for (i = 0; i < rt_length; i++)
 	{
-		if (check_if_rte_used(i + 1, (Node *) (query->targetList), 0))
+		if (check_if_rte_used((Node *) (query->targetList), i + 1, 0) ||
+			check_if_rte_used(query->qual, i + 1, 0) ||
+			check_if_rte_used(query->havingQual, i + 1, 0))
 		{
 			rt_used[i] = TRUE;
 			rt_numused++;
 		}
 		else
-		{
-			if (check_if_rte_used(i + 1, (Node *) (query->qual), 0))
-			{
-				rt_used[i] = TRUE;
-				rt_numused++;
-			}
-			else
-				rt_used[i] = FALSE;
-		}
+			rt_used[i] = FALSE;
 	}
 
 	/* ----------
@@ -919,14 +921,14 @@ get_select_query_def(Query *query, QryHier *qh)
 		strcat(buf, get_tle_expr(qh, 0, tle, (rt_numused > 1)));
 
 		/* Check if we must say AS ... */
-		if (nodeTag(tle->expr) != T_Var)
+		if (! IsA(tle->expr, Var))
 			tell_as = strcmp(tle->resdom->resname, "?column?");
 		else
 		{
 			Var		   *var = (Var *) (tle->expr);
 			char	   *attname;
 
-			rte = (RangeTblEntry *) nth(var->varno - 1, query->rtable);
+			rte = get_rte_for_var(var, qh);
 			attname = get_attribute_name(rte->relid, var->varattno);
 			if (strcmp(attname, tle->resdom->resname))
 				tell_as = TRUE;
@@ -989,9 +991,14 @@ get_select_query_def(Query *query, QryHier *qh)
 		sep = "";
 		foreach(l, query->groupClause)
 		{
+			GroupClause *grp = (GroupClause *) lfirst(l);
+			Node *groupexpr;
+
+			groupexpr = (Node *) get_groupclause_expr(grp,
+													  query->targetList);
 			strcat(buf, sep);
+			strcat(buf, get_rule_expr(qh, 0, groupexpr, (rt_numused > 1)));
 			sep = ", ";
-			strcat(buf, get_rule_expr(qh, 0, lfirst(l), (rt_numused > 1)));
 		}
 	}
 
@@ -1031,21 +1038,15 @@ get_insert_query_def(Query *query, QryHier *qh)
 	rt_used = palloc(sizeof(bool) * rt_length);
 	for (i = 0; i < rt_length; i++)
 	{
-		if (check_if_rte_used(i + 1, (Node *) (query->targetList), 0))
+		if (check_if_rte_used((Node *) (query->targetList), i + 1, 0) ||
+			check_if_rte_used(query->qual, i + 1, 0) ||
+			check_if_rte_used(query->havingQual, i + 1, 0))
 		{
 			rt_used[i] = TRUE;
 			rt_numused++;
 		}
 		else
-		{
-			if (check_if_rte_used(i + 1, (Node *) (query->qual), 0))
-			{
-				rt_used[i] = TRUE;
-				rt_numused++;
-			}
-			else
-				rt_used[i] = FALSE;
-		}
+			rt_used[i] = FALSE;
 	}
 
 	i = 0;
@@ -1199,6 +1200,20 @@ get_delete_query_def(Query *query, QryHier *qh)
 	return pstrdup(buf);
 }
 
+/*
+ * Find the RTE referenced by a (possibly nonlocal) Var.
+ */
+static RangeTblEntry *
+get_rte_for_var(Var *var, QryHier *qh)
+{
+	int		sup = var->varlevelsup;
+
+	while (sup-- > 0)
+		qh = qh->parent;
+
+	return (RangeTblEntry *) nth(var->varno - 1, qh->query->rtable);
+}
+
 
 /* ----------
  * get_rule_expr			- Parse back an expression
@@ -1215,19 +1230,112 @@ get_rule_expr(QryHier *qh, int rt_index, Node *node, bool varprefix)
 	buf[0] = '\0';
 
 	/* ----------
-	 * Up to now I don't know if all the node types below
-	 * can really occur in rules actions and qualifications.
-	 * There might be some work left.
+	 * Each level of get_rule_expr must return an indivisible term
+	 * (parenthesized if necessary) to ensure result is reparsed into
+	 * the same expression tree.
+	 *
+	 * There might be some work left here to support additional node types...
 	 * ----------
 	 */
 	switch (nodeTag(node))
 	{
-		case T_TargetEntry:
-			{
-				TargetEntry *tle = (TargetEntry *) node;
+		case T_Const:
+			return get_const_expr((Const *) node);
+			break;
 
-				return get_rule_expr(qh, rt_index,
-									 (Node *) (tle->expr), varprefix);
+		case T_Var:
+			{
+				Var		   *var = (Var *) node;
+				RangeTblEntry *rte = get_rte_for_var(var, qh);
+
+				if (!strcmp(rte->refname, "*NEW*"))
+					strcat(buf, "new.");
+				else if (!strcmp(rte->refname, "*CURRENT*"))
+					strcat(buf, "old.");
+				else
+				{
+					strcat(buf, "\"");
+					strcat(buf, rte->refname);
+					strcat(buf, "\".");
+				}
+				strcat(buf, "\"");
+				strcat(buf, get_attribute_name(rte->relid, var->varattno));
+				strcat(buf, "\"");
+
+				return pstrdup(buf);
+			}
+			break;
+
+		case T_Expr:
+			{
+				Expr	   *expr = (Expr *) node;
+
+				/* ----------
+				 * Expr nodes have to be handled a bit detailed
+				 * ----------
+				 */
+				switch (expr->opType)
+				{
+					case OP_EXPR:
+						strcat(buf, "(");
+						strcat(buf, get_rule_expr(qh, rt_index,
+											   (Node *) get_leftop(expr),
+												  varprefix));
+						strcat(buf, " ");
+						strcat(buf, get_opname(((Oper *) expr->oper)->opno));
+						strcat(buf, " ");
+						strcat(buf, get_rule_expr(qh, rt_index,
+											  (Node *) get_rightop(expr),
+												  varprefix));
+						strcat(buf, ")");
+						return pstrdup(buf);
+						break;
+
+					case OR_EXPR:
+						strcat(buf, "(");
+						strcat(buf, get_rule_expr(qh, rt_index,
+											   (Node *) get_leftop(expr),
+												  varprefix));
+						strcat(buf, " OR ");
+						strcat(buf, get_rule_expr(qh, rt_index,
+											  (Node *) get_rightop(expr),
+												  varprefix));
+						strcat(buf, ")");
+						return pstrdup(buf);
+						break;
+
+					case AND_EXPR:
+						strcat(buf, "(");
+						strcat(buf, get_rule_expr(qh, rt_index,
+											   (Node *) get_leftop(expr),
+												  varprefix));
+						strcat(buf, " AND ");
+						strcat(buf, get_rule_expr(qh, rt_index,
+											  (Node *) get_rightop(expr),
+												  varprefix));
+						strcat(buf, ")");
+						return pstrdup(buf);
+						break;
+
+					case NOT_EXPR:
+						strcat(buf, "(NOT ");
+						strcat(buf, get_rule_expr(qh, rt_index,
+											   (Node *) get_leftop(expr),
+												  varprefix));
+						strcat(buf, ")");
+						return pstrdup(buf);
+						break;
+
+					case FUNC_EXPR:
+						return get_func_expr(qh, rt_index,
+											 (Expr *) node,
+											 varprefix);
+						break;
+
+					default:
+						printf("\n%s\n", nodeToString(node));
+						elog(ERROR, "Expr type not supported");
+				}
 			}
 			break;
 
@@ -1245,139 +1353,58 @@ get_rule_expr(QryHier *qh, int rt_index, Node *node, bool varprefix)
 			}
 			break;
 
-		case T_GroupClause:
+		case T_ArrayRef:
 			{
-				GroupClause *grp = (GroupClause *) node;
-				List	   *l;
-				TargetEntry *tle = NULL;
+				ArrayRef   *aref = (ArrayRef *) node;
+				List	   *lowlist;
+				List	   *uplist;
 
-				foreach(l, qh->query->targetList)
+				strcat(buf, get_rule_expr(qh, rt_index,
+										  aref->refexpr, varprefix));
+				lowlist = aref->reflowerindexpr;
+				foreach(uplist, aref->refupperindexpr)
 				{
-					if (((TargetEntry *) lfirst(l))->resdom->resgroupref ==
-						grp->tleGroupref)
+					strcat(buf, "[");
+					if (lowlist)
 					{
-						tle = (TargetEntry *) lfirst(l);
-						break;
+						strcat(buf, get_rule_expr(qh, rt_index,
+												  (Node *) lfirst(lowlist),
+												  varprefix));
+						strcat(buf, ":");
+						lowlist = lnext(lowlist);
 					}
+					strcat(buf, get_rule_expr(qh, rt_index,
+											  (Node *) lfirst(uplist),
+											  varprefix));
+					strcat(buf, "]");
 				}
-
-				if (tle == NULL)
-					elog(ERROR, "GROUP BY expression not found in targetlist");
-
-				return get_rule_expr(qh, rt_index, (Node *) tle, varprefix);
-			}
-			break;
-
-		case T_Expr:
-			{
-				Expr	   *expr = (Expr *) node;
-
-				/* ----------
-				 * Expr nodes have to be handled a bit detailed
-				 * ----------
-				 */
-				switch (expr->opType)
-				{
-					case OP_EXPR:
-						strcat(buf, get_rule_expr(qh, rt_index,
-											   (Node *) get_leftop(expr),
-												  varprefix));
-						strcat(buf, " ");
-						strcat(buf, get_opname(((Oper *) expr->oper)->opno));
-						strcat(buf, " ");
-						strcat(buf, get_rule_expr(qh, rt_index,
-											  (Node *) get_rightop(expr),
-												  varprefix));
-						return pstrdup(buf);
-						break;
-
-					case OR_EXPR:
-						strcat(buf, "(");
-						strcat(buf, get_rule_expr(qh, rt_index,
-											   (Node *) get_leftop(expr),
-												  varprefix));
-						strcat(buf, ") OR (");
-						strcat(buf, get_rule_expr(qh, rt_index,
-											  (Node *) get_rightop(expr),
-												  varprefix));
-						strcat(buf, ")");
-						return pstrdup(buf);
-						break;
-
-					case AND_EXPR:
-						strcat(buf, "(");
-						strcat(buf, get_rule_expr(qh, rt_index,
-											   (Node *) get_leftop(expr),
-												  varprefix));
-						strcat(buf, ") AND (");
-						strcat(buf, get_rule_expr(qh, rt_index,
-											  (Node *) get_rightop(expr),
-												  varprefix));
-						strcat(buf, ")");
-						return pstrdup(buf);
-						break;
-
-					case NOT_EXPR:
-						strcat(buf, "NOT (");
-						strcat(buf, get_rule_expr(qh, rt_index,
-											   (Node *) get_leftop(expr),
-												  varprefix));
-						strcat(buf, ")");
-						return pstrdup(buf);
-						break;
-
-					case FUNC_EXPR:
-						return get_func_expr(qh, rt_index,
-											 (Expr *) node,
-											 varprefix);
-						break;
-
-					default:
-						printf("\n%s\n", nodeToString(node));
-						elog(ERROR, "Expr not yet supported");
-				}
-			}
-			break;
-
-		case T_Var:
-			{
-				Var		   *var = (Var *) node;
-				RangeTblEntry *rte;
-				int			sup = var->varlevelsup;
-
-				while (sup-- > 0)
-					qh = qh->parent;
-
-				rte = (RangeTblEntry *) nth(var->varno - 1, qh->query->rtable);
-
-				if (!strcmp(rte->refname, "*NEW*"))
-					strcat(buf, "new.");
-				else
-				{
-					if (!strcmp(rte->refname, "*CURRENT*"))
-						strcat(buf, "old.");
-					else
-					{
-						if (strcmp(rte->relname, rte->refname) != 0)
-						{
-							strcat(buf, "\"");
-							strcat(buf, rte->refname);
-							strcat(buf, "\".");
-						}
-					}
-				}
-				strcat(buf, "\"");
-				strcat(buf, get_attribute_name(rte->relid, var->varattno));
-				strcat(buf, "\"");
-
+				/* XXX need to do anything with refassgnexpr? */
 				return pstrdup(buf);
 			}
 			break;
 
-		case T_List:
+		case T_CaseExpr:
 			{
-				printf("\n%s\n", nodeToString(node));
-				elog(ERROR, "List not yet supported");
+				CaseExpr   *caseexpr = (CaseExpr *) node;
+				List	   *temp;
+
+				strcat(buf, "CASE");
+				foreach(temp, caseexpr->args)
+				{
+					CaseWhen   *when = (CaseWhen *) lfirst(temp);
+
+					strcat(buf, " WHEN ");
+					strcat(buf, get_rule_expr(qh, rt_index,
+											  when->expr, varprefix));
+					strcat(buf, " THEN ");
+					strcat(buf, get_rule_expr(qh, rt_index,
+											  when->result, varprefix));
+				}
+				strcat(buf, " ELSE ");
+				strcat(buf, get_rule_expr(qh, rt_index,
+										  caseexpr->defresult, varprefix));
+				strcat(buf, " END");
+				return pstrdup(buf);
 			}
 			break;
 
@@ -1385,13 +1412,9 @@ get_rule_expr(QryHier *qh, int rt_index, Node *node, bool varprefix)
 			return get_sublink_expr(qh, rt_index, node, varprefix);
 			break;
 
-		case T_Const:
-			return get_const_expr((Const *) node);
-			break;
-
 		default:
 			printf("\n%s\n", nodeToString(node));
-			elog(ERROR, "get_ruledef of %s: unknown node type %d get_rule_expr()",
+			elog(ERROR, "get_ruledef of %s: unknown node type %d in get_rule_expr()",
 				 rulename, nodeTag(node));
 			break;
 	}
@@ -1434,7 +1457,7 @@ get_func_expr(QryHier *qh, int rt_index, Expr *expr, bool varprefix)
 			strcpy(buf, "(");
 			strcat(buf, get_rule_expr(qh, rt_index, lfirst(expr->args),
 									  varprefix));
-			strcat(buf, ") ISNULL");
+			strcat(buf, " ISNULL)");
 			return pstrdup(buf);
 		}
 		if (!strcmp(proname, "nonnullvalue"))
@@ -1442,7 +1465,7 @@ get_func_expr(QryHier *qh, int rt_index, Expr *expr, bool varprefix)
 			strcpy(buf, "(");
 			strcat(buf, get_rule_expr(qh, rt_index, lfirst(expr->args),
 									  varprefix));
-			strcat(buf, ") NOTNULL");
+			strcat(buf, " NOTNULL)");
 			return pstrdup(buf);
 		}
 	}
@@ -1486,10 +1509,11 @@ get_func_expr(QryHier *qh, int rt_index, Expr *expr, bool varprefix)
 static char *
 get_tle_expr(QryHier *qh, int rt_index, TargetEntry *tle, bool varprefix)
 {
-	HeapTuple	proctup;
-	Form_pg_proc procStruct;
-	Expr	   *expr;
+	Expr	   *expr = (Expr *) (tle->expr);
 	Func	   *func;
+	HeapTuple	tup;
+	Form_pg_proc procStruct;
+	Form_pg_type typeStruct;
 	Const	   *second_arg;
 
 	/* ----------
@@ -1497,12 +1521,9 @@ get_tle_expr(QryHier *qh, int rt_index, TargetEntry *tle, bool varprefix)
 	 * expression in the targetlist entry is a function call
 	 * ----------
 	 */
-	if (tle->resdom->restypmod < 0)
-		return get_rule_expr(qh, rt_index, tle->expr, varprefix);
-	if (nodeTag(tle->expr) != T_Expr)
-		return get_rule_expr(qh, rt_index, tle->expr, varprefix);
-	expr = (Expr *) (tle->expr);
-	if (expr->opType != FUNC_EXPR)
+	if (tle->resdom->restypmod < 0 ||
+		! IsA(expr, Expr) ||
+		expr->opType != FUNC_EXPR)
 		return get_rule_expr(qh, rt_index, tle->expr, varprefix);
 
 	func = (Func *) (expr->oper);
@@ -1511,12 +1532,11 @@ get_tle_expr(QryHier *qh, int rt_index, TargetEntry *tle, bool varprefix)
 	 * Get the functions pg_proc tuple
 	 * ----------
 	 */
-	proctup = SearchSysCacheTuple(PROOID,
-								ObjectIdGetDatum(func->funcid), 0, 0, 0);
-	if (!HeapTupleIsValid(proctup))
+	tup = SearchSysCacheTuple(PROOID,
+							  ObjectIdGetDatum(func->funcid), 0, 0, 0);
+	if (!HeapTupleIsValid(tup))
 		elog(ERROR, "cache lookup for proc %u failed", func->funcid);
-
-	procStruct = (Form_pg_proc) GETSTRUCT(proctup);
+	procStruct = (Form_pg_proc) GETSTRUCT(tup);
 
 	/* ----------
 	 * It must be a function with two arguments where the first
@@ -1524,12 +1544,25 @@ get_tle_expr(QryHier *qh, int rt_index, TargetEntry *tle, bool varprefix)
 	 * an int4.
 	 * ----------
 	 */
-	if (procStruct->pronargs != 2)
+	if (procStruct->pronargs != 2 ||
+		procStruct->prorettype != procStruct->proargtypes[0] ||
+		procStruct->proargtypes[1] != INT4OID)
 		return get_rule_expr(qh, rt_index, tle->expr, varprefix);
-	if (procStruct->prorettype != procStruct->proargtypes[0])
-		return get_rule_expr(qh, rt_index, tle->expr, varprefix);
-	if (procStruct->proargtypes[1] != INT4OID)
-		return get_rule_expr(qh, rt_index, tle->expr, varprefix);
+
+	/*
+	 * Furthermore, the name of the function must be the same
+	 * as the argument/result type name.
+	 */
+	tup = SearchSysCacheTuple(TYPOID,
+							  ObjectIdGetDatum(procStruct->prorettype),
+							  0, 0, 0);
+	if (!HeapTupleIsValid(tup))
+		elog(ERROR, "cache lookup for type %u failed",
+			 procStruct->prorettype);
+	typeStruct = (Form_pg_type) GETSTRUCT(tup);
+	if (strncmp(procStruct->proname.data, typeStruct->typname.data,
+				NAMEDATALEN) != 0)
+        return get_rule_expr(qh, rt_index, tle->expr, varprefix);
 
 	/* ----------
 	 * Finally (to be totally safe) the second argument must be a
@@ -1537,9 +1570,8 @@ get_tle_expr(QryHier *qh, int rt_index, TargetEntry *tle, bool varprefix)
 	 * ----------
 	 */
 	second_arg = (Const *) nth(1, expr->args);
-	if (nodeTag((Node *) second_arg) != T_Const)
-		return get_rule_expr(qh, rt_index, tle->expr, varprefix);
-	if ((int4) (second_arg->constvalue) != tle->resdom->restypmod)
+	if (! IsA(second_arg, Const) ||
+		((int4) second_arg->constvalue) != tle->resdom->restypmod)
 		return get_rule_expr(qh, rt_index, tle->expr, varprefix);
 
 	/* ----------
@@ -1567,12 +1599,12 @@ get_const_expr(Const *constval)
 	char		namebuf[64];
 
 	if (constval->constisnull)
-		return "NULL";
+		return pstrdup("NULL");
 
 	typetup = SearchSysCacheTuple(TYPOID,
 						 ObjectIdGetDatum(constval->consttype), 0, 0, 0);
 	if (!HeapTupleIsValid(typetup))
-		elog(ERROR, "cache lookup of type %d failed", constval->consttype);
+		elog(ERROR, "cache lookup of type %u failed", constval->consttype);
 
 	typeStruct = (Form_pg_type) GETSTRUCT(typetup);
 
@@ -1603,6 +1635,8 @@ get_sublink_expr(QryHier *qh, int rt_index, Node *node, bool varprefix)
 	char		buf[BUFSIZE];
 
 	buf[0] = '\0';
+
+	strcat(buf, "(");
 
 	if (sublink->lefthand != NULL)
 	{
@@ -1656,7 +1690,7 @@ get_sublink_expr(QryHier *qh, int rt_index, Node *node, bool varprefix)
 
 	strcat(buf, "(");
 	strcat(buf, get_query_def(query, qh));
-	strcat(buf, ")");
+	strcat(buf, "))");
 
 	return pstrdup(buf);
 }
@@ -1705,95 +1739,49 @@ get_attribute_name(Oid relid, int2 attnum)
 
 
 /* ----------
- * check_if_rte_used			- Check a targetlist or qual
- *					  if a given rangetable entry
- *					  is used in it
+ * check_if_rte_used
+ *		Check a targetlist or qual to see if a given rangetable entry
+ *		is used in it
  * ----------
  */
 static bool
-check_if_rte_used(int rt_index, Node *node, int sup)
+check_if_rte_used(Node *node, Index rt_index, int levelsup)
+{
+	check_if_rte_used_context context;
+
+	context.rt_index = rt_index;
+	context.levelsup = levelsup;
+	return check_if_rte_used_walker(node, &context);
+}
+
+static bool
+check_if_rte_used_walker(Node *node,
+						 check_if_rte_used_context *context)
 {
 	if (node == NULL)
-		return FALSE;
-
-	switch (nodeTag(node))
+		return false;
+	if (IsA(node, Var))
 	{
-		case T_TargetEntry:
-			{
-				TargetEntry *tle = (TargetEntry *) node;
+		Var		   *var = (Var *) node;
 
-				return check_if_rte_used(rt_index,
-										 (Node *) (tle->expr), sup);
-			}
-			break;
-
-		case T_Aggref:
-			{
-				Aggref	   *aggref = (Aggref *) node;
-
-				return check_if_rte_used(rt_index,
-										 (Node *) (aggref->target), sup);
-			}
-			break;
-
-		case T_GroupClause:
-			return FALSE;
-			break;
-
-		case T_Expr:
-			{
-				Expr	   *expr = (Expr *) node;
-
-				return check_if_rte_used(rt_index,
-										 (Node *) (expr->args), sup);
-			}
-			break;
-
-		case T_Var:
-			{
-				Var		   *var = (Var *) node;
-
-				return var->varno == rt_index && var->varlevelsup == sup;
-			}
-			break;
-
-		case T_List:
-			{
-				List	   *l;
-
-				foreach(l, (List *) node)
-				{
-					if (check_if_rte_used(rt_index, lfirst(l), sup))
-						return TRUE;
-				}
-				return FALSE;
-			}
-			break;
-
-		case T_SubLink:
-			{
-				SubLink    *sublink = (SubLink *) node;
-				Query	   *query = (Query *) sublink->subselect;
-
-				if (check_if_rte_used(rt_index, (Node *) (query->qual), sup + 1))
-					return TRUE;
-
-				if (check_if_rte_used(rt_index, (Node *) (sublink->lefthand), sup))
-					return TRUE;
-
-				return FALSE;
-			}
-			break;
-
-		case T_Const:
-			return FALSE;
-			break;
-
-		default:
-			elog(ERROR, "get_ruledef of %s: unknown node type %d in check_if_rte_used()",
-				 rulename, nodeTag(node));
-			break;
+		return var->varno == context->rt_index &&
+			var->varlevelsup == context->levelsup;
 	}
+	if (IsA(node, SubLink))
+	{
+		SubLink    *sublink = (SubLink *) node;
+		Query	   *query = (Query *) sublink->subselect;
 
-	return FALSE;
+		/* Recurse into subquery; expression_tree_walker will not */
+		if (check_if_rte_used((Node *) (query->targetList),
+							  context->rt_index, context->levelsup + 1) ||
+			check_if_rte_used(query->qual,
+							  context->rt_index, context->levelsup + 1) ||
+			check_if_rte_used(query->havingQual,
+							  context->rt_index, context->levelsup + 1))
+			return true;
+		/* fall through to let expression_tree_walker examine lefthand args */
+	}
+	return expression_tree_walker(node, check_if_rte_used_walker,
+								  (void *) context);
 }
