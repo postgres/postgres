@@ -573,7 +573,7 @@ main() {
 	AC_MSG_RESULT(no),
 	AC_MSG_RESULT(assuming not on target machine))
 
-AC_MSG_CHECKING(whether 'long long int' is 64 bits)
+AC_MSG_CHECKING(whether 'long long int' is 64 bits using %Ld)
 AC_TRY_RUN([#include <stdio.h>
 typedef long long int int64;
 #define INT64_FORMAT "%Ld"
@@ -610,6 +610,7 @@ main() {
 	AC_MSG_RESULT(no),
 	AC_MSG_RESULT(assuming not on target machine))
 
+AC_MSG_CHECKING(whether 'long long int' is 64 bits using %qd)
 AC_TRY_RUN([#include <stdio.h>
 typedef long long int int64;
 #define INT64_FORMAT "%qd"
