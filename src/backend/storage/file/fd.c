@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *    $Id: fd.c,v 1.10 1996/12/04 03:05:58 bryanh Exp $
+ *    $Id: fd.c,v 1.11 1996/12/27 22:57:51 bryanh Exp $
  *
  * NOTES:
  *
@@ -48,7 +48,7 @@
 #include <fcntl.h>
 
 #include "postgres.h"
-#include "miscadmin.h"	/* for DataDir */
+#include "miscadmin.h"  /* for DataDir */
 #include "utils/palloc.h"
 #include "storage/fd.h"
 
@@ -81,7 +81,7 @@
  * equivalent, the OS must still open several files to perform the
  * dynamic loading.  Keep this here.)
  */
-#define RESERVE_FOR_LD	10
+#define RESERVE_FOR_LD  10
 
 /*
  * If we are using weird storage managers, we may need to keep real
@@ -93,10 +93,10 @@
  * these descriptors at whim, we must make allowances for them.
  */
 #ifdef HP_JUKEBOX
-#define RESERVE_FOR_JB	25
-#define	MAXFILES	((NOFILE - RESERVE_FOR_LD) - RESERVE_FOR_JB)
+#define RESERVE_FOR_JB  25
+#define MAXFILES        ((NOFILE - RESERVE_FOR_LD) - RESERVE_FOR_JB)
 #else /* HP_JUKEBOX */
-#define	MAXFILES	(NOFILE - RESERVE_FOR_LD)
+#define MAXFILES        (NOFILE - RESERVE_FOR_LD)
 #endif /* HP_JUKEBOX */
 
 /* Debugging.... */
@@ -115,36 +115,36 @@
 #define FileIsNotOpen(file) (VfdCache[file].fd == VFD_CLOSED)
 
 typedef struct vfd {
-    signed short	fd;
-    unsigned short	fdstate;
+    signed short        fd;
+    unsigned short      fdstate;
 
-#define FD_DIRTY	(1 << 0)
+#define FD_DIRTY        (1 << 0)
 
-    File	nextFree;
-    File	lruMoreRecently;
-    File	lruLessRecently;
-    long	seekPos;
-    char	*fileName;
-    int		fileFlags;
-    int		fileMode;
+    File        nextFree;
+    File        lruMoreRecently;
+    File        lruLessRecently;
+    long        seekPos;
+    char        *fileName;
+    int         fileFlags;
+    int         fileMode;
 } Vfd;
 
 /*
  * Virtual File Descriptor array pointer and size.  This grows as
  * needed.
  */
-static	Vfd	*VfdCache;
-static	Size	SizeVfdCache = 0;
+static  Vfd     *VfdCache;
+static  Size    SizeVfdCache = 0;
 
 /*
  * Minimum number of file descriptors known to be free.
  */
-static	int	FreeFd = 0;
+static  int     FreeFd = 0;
 
 /*
  * Number of file descriptors known to be open.
  */
-static	int	nfile = 0;
+static  int     nfile = 0;
 
 /*
  * we use the name of the null device in various places, mostly so
@@ -162,14 +162,16 @@ static char Sep_char = '\\';
 /*
  * Private Routines
  *
- * Delete	   - delete a file from the Lru ring
- * LruDelete	   - remove a file from the Lru ring and close
- * Insert	   - put a file at the front of the Lru ring
- * LruInsert	   - put a file at the front of the Lru ring and open
+ * Delete          - delete a file from the Lru ring
+ * LruDelete       - remove a file from the Lru ring and close
+ * Insert          - put a file at the front of the Lru ring
+ * LruInsert       - put a file at the front of the Lru ring and open
  * AssertLruRoom   - make sure that there is a free fd.
  *
  * the Last Recently Used ring is a doubly linked list that begins and
- * ends on element zero.
+ * ends on element zero.  Element zero is special -- it doesn't represent
+ * a file and its "fd" field always == VFD_CLOSED.  Element zero is just an
+ * anchor that shows us the beginning/end of the ring.
  *
  * example:
  *
@@ -180,8 +182,8 @@ static char Sep_char = '\\';
  *     \\less--> MostRecentlyUsedFile   <---/ |
  *      \more---/                    \--less--/
  *
- * AllocateVfd	   - grab a free (or new) file record (from VfdArray)
- * FreeVfd	   - free a file record
+ * AllocateVfd     - grab a free (or new) file record (from VfdArray)
+ * FreeVfd         - free a file record
  *
  */
 static void Delete(File file);
@@ -213,11 +215,11 @@ _dump_lru()
     
     printf("MOST %d ", mru);
     while (mru != 0)
-	{
-	    mru = vfdP->lruLessRecently;
-	    vfdP = &VfdCache[mru];
-	    printf("%d ", mru);
-	}
+        {
+            mru = vfdP->lruLessRecently;
+            vfdP = &VfdCache[mru];
+            printf("%d ", mru);
+        }
     printf("LEAST\n");
 }
 #endif /* FDDEBUG */
@@ -225,10 +227,10 @@ _dump_lru()
 static void
 Delete(File file)
 {
-    Vfd	*fileP;
+    Vfd *fileP;
     
-    DO_DB(printf("DEBUG:	Delete %d (%s)\n",
-		 file, VfdCache[file].fileName));
+    DO_DB(printf("DEBUG:        Delete %d (%s)\n",
+                 file, VfdCache[file].fileName));
     DO_DB(_dump_lru());
     
     Assert(file != 0);
@@ -236,9 +238,9 @@ Delete(File file)
     fileP = &VfdCache[file];
 
     VfdCache[fileP->lruLessRecently].lruMoreRecently =
-	VfdCache[file].lruMoreRecently;
+        VfdCache[file].lruMoreRecently;
     VfdCache[fileP->lruMoreRecently].lruLessRecently =
-	VfdCache[file].lruLessRecently;
+        VfdCache[file].lruLessRecently;
     
     DO_DB(_dump_lru());
 }
@@ -247,10 +249,10 @@ static void
 LruDelete(File file)
 {
     Vfd     *fileP;
-    int	returnValue;
+    int returnValue;
     
-    DO_DB(printf("DEBUG:	LruDelete %d (%s)\n",
-		 file, VfdCache[file].fileName));
+    DO_DB(printf("DEBUG:        LruDelete %d (%s)\n",
+                 file, VfdCache[file].fileName));
     
     Assert(file != 0);
     
@@ -265,9 +267,9 @@ LruDelete(File file)
     
     /* if we have written to the file, sync it */
     if (fileP->fdstate & FD_DIRTY) {
-	returnValue = fsync(fileP->fd);
-	Assert(returnValue != -1);
-	fileP->fdstate &= ~FD_DIRTY;
+        returnValue = fsync(fileP->fd);
+        Assert(returnValue != -1);
+        fileP->fdstate &= ~FD_DIRTY;
     }
     
     /* close the file */
@@ -284,10 +286,10 @@ LruDelete(File file)
 static void
 Insert(File file)
 {
-    Vfd	*vfdP;
+    Vfd *vfdP;
     
-    DO_DB(printf("DEBUG:	Insert %d (%s)\n",
-		 file, VfdCache[file].fileName));
+    DO_DB(printf("DEBUG:        Insert %d (%s)\n",
+                 file, VfdCache[file].fileName));
     DO_DB(_dump_lru());
     
     vfdP = &VfdCache[file];
@@ -303,58 +305,58 @@ Insert(File file)
 static int
 LruInsert (File file)
 {
-    Vfd	*vfdP;
-    int	returnValue;
+    Vfd *vfdP;
+    int returnValue;
     
-    DO_DB(printf("DEBUG:	LruInsert %d (%s)\n",
-		 file, VfdCache[file].fileName));
+    DO_DB(printf("DEBUG:        LruInsert %d (%s)\n",
+                 file, VfdCache[file].fileName));
     
     vfdP = &VfdCache[file];
     
     if (FileIsNotOpen(file)) {
-	int tmpfd;
-	
+        int tmpfd;
+        
         /*
-	 * Note, we check to see if there's a free file descriptor
-	 * before attempting to open a file. One general way to do
-	 * this is to try to open the null device which everybody
-	 * should be able to open all the time. If this fails, we
-	 * assume this is because there's no free file descriptors.
-	 */
+         * Note, we check to see if there's a free file descriptor
+         * before attempting to open a file. One general way to do
+         * this is to try to open the null device which everybody
+         * should be able to open all the time. If this fails, we
+         * assume this is because there's no free file descriptors.
+         */
     tryAgain:
-	tmpfd = open(Nulldev, O_CREAT|O_RDWR, 0666);
-	if (tmpfd < 0) {
-	    FreeFd = 0;
-	    errno = 0;
-	    AssertLruRoom();
-	    goto tryAgain;
-	} else {
-	    close(tmpfd);
-	}
-	vfdP->fd = open(vfdP->fileName,vfdP->fileFlags,vfdP->fileMode);
-	
-	if (vfdP->fd < 0) {
-	    DO_DB(printf("RE_OPEN FAILED: %d\n",
-			 errno));
-	    return (vfdP->fd);
-	} else {
-	    DO_DB(printf("RE_OPEN SUCCESS\n"));
-	    ++nfile;
-	}
-	
-	/* seek to the right position */
-	if (vfdP->seekPos != 0L) {
-	    returnValue =
-		lseek(vfdP->fd, vfdP->seekPos, SEEK_SET);
-	    Assert(returnValue != -1);
-	}
-	
-	/* init state on open */
-	vfdP->fdstate = 0x0;
-	
-	/* note that a file descriptor has been used up */
-	if (FreeFd > 0)
-	    FreeFd--;
+        tmpfd = open(Nulldev, O_CREAT|O_RDWR, 0666);
+        if (tmpfd < 0) {
+            FreeFd = 0;
+            errno = 0;
+            AssertLruRoom();
+            goto tryAgain;
+        } else {
+            close(tmpfd);
+        }
+        vfdP->fd = open(vfdP->fileName,vfdP->fileFlags,vfdP->fileMode);
+        
+        if (vfdP->fd < 0) {
+            DO_DB(printf("RE_OPEN FAILED: %d\n",
+                         errno));
+            return (vfdP->fd);
+        } else {
+            DO_DB(printf("RE_OPEN SUCCESS\n"));
+            ++nfile;
+        }
+        
+        /* seek to the right position */
+        if (vfdP->seekPos != 0L) {
+            returnValue =
+                lseek(vfdP->fd, vfdP->seekPos, SEEK_SET);
+            Assert(returnValue != -1);
+        }
+        
+        /* init state on open */
+        vfdP->fdstate = 0x0;
+        
+        /* note that a file descriptor has been used up */
+        if (FreeFd > 0)
+            FreeFd--;
     }
     
     /*
@@ -369,69 +371,73 @@ LruInsert (File file)
 static void
 AssertLruRoom()
 {
-    DO_DB(printf("DEBUG:	AssertLruRoom (FreeFd = %d)\n",
-		 FreeFd));
+    DO_DB(printf("DEBUG:        AssertLruRoom (FreeFd = %d)\n",
+                 FreeFd));
     
     if (FreeFd <= 0 || nfile >= MAXFILES) {
-	LruDelete(VfdCache[0].lruMoreRecently);
+        /* We supposedly are using more vfds than we want to be.  First
+           assert that there is at least one used vfd in the ring. 
+           */
+        Assert(VfdCache[0].lruMoreRecently ! 0);
+        LruDelete(VfdCache[0].lruMoreRecently);
     }
 }
 
 static File
 AllocateVfd()
 {
-    Index	i;
-    File	file;
+    Index       i;
+    File        file;
     
-    DO_DB(printf("DEBUG:	AllocateVfd\n"));
+    DO_DB(printf("DEBUG:        AllocateVfd\n"));
     
     if (SizeVfdCache == 0) {
-	
-	/* initialize */
-	VfdCache = (Vfd *)malloc(sizeof(Vfd));
-	
-	VfdCache->nextFree = 0;
-	VfdCache->lruMoreRecently = 0;
-	VfdCache->lruLessRecently = 0;
-	VfdCache->fd = VFD_CLOSED;
-	VfdCache->fdstate = 0x0;
-	
-	SizeVfdCache = 1;
+        
+        /* initialize */
+        VfdCache = (Vfd *)malloc(sizeof(Vfd));
+        
+        VfdCache->nextFree = 0;
+        VfdCache->lruMoreRecently = 0;
+        VfdCache->lruLessRecently = 0;
+        VfdCache->fd = VFD_CLOSED;
+        VfdCache->fdstate = 0x0;
+        
+        SizeVfdCache = 1;
     }
     
     if (VfdCache[0].nextFree == 0) {
-	
-	/*
-	 * The free list is empty so it is time to increase the
-	 * size of the array
-	 */
-	
-	VfdCache =(Vfd *)realloc(VfdCache, sizeof(Vfd)*SizeVfdCache*2);
-	Assert(VfdCache != NULL);
-	
-	/*
-	 * Set up the free list for the new entries
-	 */
-	
-	for (i = SizeVfdCache; i < 2*SizeVfdCache; i++)  {
-	    memset((char *) &(VfdCache[i]), 0, sizeof(VfdCache[0]));
-	    VfdCache[i].nextFree = i+1;
-	    VfdCache[i].fd = VFD_CLOSED;
-	}
-	
-	/*
-	 * Element 0 is the first and last element of the free
-	 * list
-	 */
-	
-	VfdCache[0].nextFree = SizeVfdCache;
-	VfdCache[2*SizeVfdCache-1].nextFree = 0;
-	
-	/*
-	 * Record the new size
-	 */
-	
-	SizeVfdCache *= 2;
+        
+        /*
+         * The free list is empty so it is time to increase the
+         * size of the array
+         */
+        
+        VfdCache =(Vfd *)realloc(VfdCache, sizeof(Vfd)*SizeVfdCache*2);
+        Assert(VfdCache != NULL);
+        
+        /*
+         * Set up the free list for the new entries
+         */
+        
+        for (i = SizeVfdCache; i < 2*SizeVfdCache; i++)  {
+            memset((char *) &(VfdCache[i]), 0, sizeof(VfdCache[0]));
+            VfdCache[i].nextFree = i+1;
+            VfdCache[i].fd = VFD_CLOSED;
+        }
+        
+        /*
+         * Element 0 is the first and last element of the free
+         * list
+         */
+        
+        VfdCache[0].nextFree = SizeVfdCache;
+        VfdCache[2*SizeVfdCache-1].nextFree = 0;
+        
+        /*
+         * Record the new size
+         */
+        
+        SizeVfdCache *= 2;
     }
     file = VfdCache[0].nextFree;
     
@@ -444,7 +450,7 @@ static void
 FreeVfd(File file)
 {
     DO_DB(printf("DB: FreeVfd: %d (%s)\n",
-		 file, VfdCache[file].fileName));
+                 file, VfdCache[file].fileName));
     
     VfdCache[file].nextFree = VfdCache[0].nextFree;
     VfdCache[0].nextFree = file;
@@ -461,19 +467,19 @@ filepath(char *filename)
     if (*filename != Sep_char) {
 #else
     if (!(filename[1] == ':' && filename[2] == Sep_char)) {
-#endif /* WIN32 */	
+#endif /* WIN32 */      
 
-	/* Either /base/ or \base\ */
-	sprintf(basename, "%cbase%c", Sep_char, Sep_char);
+        /* Either /base/ or \base\ */
+        sprintf(basename, "%cbase%c", Sep_char, Sep_char);
 
-	len = strlen(DataDir) + strlen(basename) + strlen(GetDatabaseName())
-	    + strlen(filename) + 2;
-	buf = (char*) palloc(len);
-	sprintf(buf, "%s%s%s%c%s",
-		DataDir, basename, GetDatabaseName(), Sep_char, filename);
+        len = strlen(DataDir) + strlen(basename) + strlen(GetDatabaseName())
+            + strlen(filename) + 2;
+        buf = (char*) palloc(len);
+        sprintf(buf, "%s%s%s%c%s",
+                DataDir, basename, GetDatabaseName(), Sep_char, filename);
     } else {
-	buf = (char *) palloc(strlen(filename) + 1);
-	strcpy(buf, filename);
+        buf = (char *) palloc(strlen(filename) + 1);
+        strcpy(buf, filename);
     }
     
     return(buf);
@@ -482,10 +488,10 @@ filepath(char *filename)
 static int
 FileAccess(File file)
 {
-    int	returnValue;
+    int returnValue;
     
     DO_DB(printf("DB: FileAccess %d (%s)\n",
-		 file, VfdCache[file].fileName));
+                 file, VfdCache[file].fileName));
     
     /*
      * Is the file open?  If not, close the least recently used,
@@ -493,23 +499,23 @@ FileAccess(File file)
      */
     
     if (FileIsNotOpen(file)) {
-	
-	AssertLruRoom();
-	
-	returnValue = LruInsert(file);
-	if (returnValue != 0)
-	    return returnValue;
-	
+        
+        AssertLruRoom();
+        
+        returnValue = LruInsert(file);
+        if (returnValue != 0)
+            return returnValue;
+        
     } else {
-	
-	/*
-	 * We now know that the file is open and that it is not the
-	 * last one accessed, so we need to more it to the head of
-	 * the Lru ring.
-	 */
-	
-	Delete(file);
-	Insert(file);
+        
+        /*
+         * We now know that the file is open and that it is not the
+         * last one accessed, so we need to more it to the head of
+         * the Lru ring.
+         */
+        
+        Delete(file);
+        Insert(file);
     }
     
     return (0);
@@ -521,44 +527,45 @@ FileAccess(File file)
 void
 FileInvalidate(File file)
 {
+    Assert(file > 0);
     if (!FileIsNotOpen(file)) {
-	LruDelete(file);
+        LruDelete(file);
     }
 }
 
 /* VARARGS2 */
 static File
 fileNameOpenFile(FileName fileName,
-		 int fileFlags,
-		 int fileMode)
+                 int fileFlags,
+                 int fileMode)
 {
     static int osRanOut = 0;
-    File	file;
-    Vfd	*vfdP;
+    File        file;
+    Vfd *vfdP;
     int     tmpfd;
     
     DO_DB(printf("DEBUG: FileNameOpenFile: %s %x %o\n",
-		 fileName, fileFlags, fileMode));
+                 fileName, fileFlags, fileMode));
     
     file = AllocateVfd();
     vfdP = &VfdCache[file];
     
     if (nfile >= MAXFILES || (FreeFd == 0 && osRanOut)) {
-	AssertLruRoom();
+        AssertLruRoom();
     }
     
  tryAgain:
     tmpfd = open(Nulldev, O_CREAT|O_RDWR, 0666);
     if (tmpfd < 0) {
-	DO_DB(printf("DB: not enough descs, retry, er= %d\n",
-		     errno));
-	errno = 0;
-	FreeFd = 0;
-	osRanOut = 1;
-	AssertLruRoom();
-	goto tryAgain;
+        DO_DB(printf("DB: not enough descs, retry, er= %d\n",
+                     errno));
+        errno = 0;
+        FreeFd = 0;
+        osRanOut = 1;
+        AssertLruRoom();
+        goto tryAgain;
     } else {
-	close(tmpfd);
+        close(tmpfd);
     }
     
 #ifdef WIN32
@@ -568,17 +575,17 @@ fileNameOpenFile(FileName fileName,
     vfdP->fdstate = 0x0;
     
     if (vfdP->fd < 0) {
-	FreeVfd(file);
-	return -1;
+        FreeVfd(file);
+        return -1;
     }
     ++nfile;
     DO_DB(printf("DB: FNOF success %d\n",
-		 vfdP->fd));
+                 vfdP->fd));
     
     (void)LruInsert(file);
     
     if (fileName==NULL) {
-	elog(WARN, "fileNameOpenFile: NULL fname");
+        elog(WARN, "fileNameOpenFile: NULL fname");
     }
     vfdP->fileName = malloc(strlen(fileName)+1);
     strcpy(vfdP->fileName,fileName);
@@ -617,32 +624,32 @@ PathNameOpenFile(FileName fileName, int fileFlags, int fileMode)
 void
 FileClose(File file)
 {
-    int	returnValue;
+    int returnValue;
     
     DO_DB(printf("DEBUG: FileClose: %d (%s)\n",
-		 file, VfdCache[file].fileName));
+                 file, VfdCache[file].fileName));
     
     if (!FileIsNotOpen(file)) {
-	
-	/* remove the file from the lru ring */
-	Delete(file);
-	
-	/* record the new free operating system file descriptor */
-	FreeFd++;
-	
-	/* if we did any writes, sync the file before closing */
-	if (VfdCache[file].fdstate & FD_DIRTY) {
-	    returnValue = fsync(VfdCache[file].fd);
-	    Assert(returnValue != -1);
-	    VfdCache[file].fdstate &= ~FD_DIRTY;
-	}
-	
-	/* close the file */
-	returnValue = close(VfdCache[file].fd);
-	Assert(returnValue != -1);
-	
-	--nfile;
-	VfdCache[file].fd = VFD_CLOSED;
+        
+        /* remove the file from the lru ring */
+        Delete(file);
+        
+        /* record the new free operating system file descriptor */
+        FreeFd++;
+        
+        /* if we did any writes, sync the file before closing */
+        if (VfdCache[file].fdstate & FD_DIRTY) {
+            returnValue = fsync(VfdCache[file].fd);
+            Assert(returnValue != -1);
+            VfdCache[file].fdstate &= ~FD_DIRTY;
+        }
+        
+        /* close the file */
+        returnValue = close(VfdCache[file].fd);
+        Assert(returnValue != -1);
+        
+        --nfile;
+        VfdCache[file].fd = VFD_CLOSED;
     }
     /*
      * Add the Vfd slot to the free list
@@ -660,29 +667,29 @@ FileUnlink(File file)
     int returnValue;
     
     DO_DB(printf("DB: FileClose: %d (%s)\n",
-		 file, VfdCache[file].fileName));
+                 file, VfdCache[file].fileName));
     
     if (!FileIsNotOpen(file)) {
-	
-	/* remove the file from the lru ring */
-	Delete(file);
-	
-	/* record the new free operating system file descriptor */
-	FreeFd++;
-	
-	/* if we did any writes, sync the file before closing */
-	if (VfdCache[file].fdstate & FD_DIRTY) {
-	    returnValue = fsync(VfdCache[file].fd);
-	    Assert(returnValue != -1);
-	    VfdCache[file].fdstate &= ~FD_DIRTY;
-	}
-	
-	/* close the file */
-	returnValue = close(VfdCache[file].fd);
-	Assert(returnValue != -1);
-	
-	--nfile;
-	VfdCache[file].fd = VFD_CLOSED;
+        
+        /* remove the file from the lru ring */
+        Delete(file);
+        
+        /* record the new free operating system file descriptor */
+        FreeFd++;
+        
+        /* if we did any writes, sync the file before closing */
+        if (VfdCache[file].fdstate & FD_DIRTY) {
+            returnValue = fsync(VfdCache[file].fd);
+            Assert(returnValue != -1);
+            VfdCache[file].fdstate &= ~FD_DIRTY;
+        }
+        
+        /* close the file */
+        returnValue = close(VfdCache[file].fd);
+        Assert(returnValue != -1);
+        
+        --nfile;
+        VfdCache[file].fd = VFD_CLOSED;
     }
     /* add the Vfd slot to the free list */
     FreeVfd(file);
@@ -695,15 +702,15 @@ FileUnlink(File file)
 int
 FileRead(File file, char *buffer, int amount)
 {
-    int	returnCode;
+    int returnCode;
 
     DO_DB(printf("DEBUG: FileRead: %d (%s) %d 0x%x\n",
-		 file, VfdCache[file].fileName, amount, buffer));
+                 file, VfdCache[file].fileName, amount, buffer));
     
     FileAccess(file);
     returnCode = read(VfdCache[file].fd, buffer, amount);
     if (returnCode > 0) {
-	VfdCache[file].seekPos += returnCode;
+        VfdCache[file].seekPos += returnCode;
     }
     
     return returnCode;
@@ -712,15 +719,15 @@ FileRead(File file, char *buffer, int amount)
 int
 FileWrite(File file, char *buffer, int amount)
 {
-    int	returnCode;
+    int returnCode;
 
     DO_DB(printf("DB: FileWrite: %d (%s) %d 0x%lx\n",
-		 file, VfdCache[file].fileName, amount, buffer));
+                 file, VfdCache[file].fileName, amount, buffer));
     
     FileAccess(file);
     returnCode = write(VfdCache[file].fd, buffer, amount);
     if (returnCode > 0) {  /* changed by Boris with Mao's advice */
-	VfdCache[file].seekPos += returnCode;
+        VfdCache[file].seekPos += returnCode;
     }
     
     /* record the write */
@@ -732,32 +739,32 @@ FileWrite(File file, char *buffer, int amount)
 long
 FileSeek(File file, long offset, int whence)
 {
-    int	returnCode;
+    int returnCode;
     
     DO_DB(printf("DEBUG: FileSeek: %d (%s) %d %d\n",
-		 file, VfdCache[file].fileName, offset, whence));
+                 file, VfdCache[file].fileName, offset, whence));
     
     if (FileIsNotOpen(file)) {
-	switch(whence) {
-	case SEEK_SET:
-	    VfdCache[file].seekPos = offset;
-	    return offset;
-	case SEEK_CUR:
-	    VfdCache[file].seekPos = VfdCache[file].seekPos +offset;
-	    return VfdCache[file].seekPos;
-	case SEEK_END:
-	    FileAccess(file);
-	    returnCode = VfdCache[file].seekPos = 
-		lseek(VfdCache[file].fd, offset, whence);
-	    return returnCode;
-	default:
-	    elog(WARN, "FileSeek: invalid whence: %d", whence);
-	    break;
-	}
+        switch(whence) {
+        case SEEK_SET:
+            VfdCache[file].seekPos = offset;
+            return offset;
+        case SEEK_CUR:
+            VfdCache[file].seekPos = VfdCache[file].seekPos +offset;
+            return VfdCache[file].seekPos;
+        case SEEK_END:
+            FileAccess(file);
+            returnCode = VfdCache[file].seekPos = 
+                lseek(VfdCache[file].fd, offset, whence);
+            return returnCode;
+        default:
+            elog(WARN, "FileSeek: invalid whence: %d", whence);
+            break;
+        }
     } else {
-	returnCode = VfdCache[file].seekPos = 
-	    lseek(VfdCache[file].fd, offset, whence);
-	return returnCode;
+        returnCode = VfdCache[file].seekPos = 
+            lseek(VfdCache[file].fd, offset, whence);
+        return returnCode;
     }
     /*NOTREACHED*/
     return(-1L);
@@ -770,7 +777,7 @@ long
 FileTell(File file)
 {
     DO_DB(printf("DEBUG: FileTell %d (%s)\n",
-		 file, VfdCache[file].fileName));
+                 file, VfdCache[file].fileName));
     return VfdCache[file].seekPos;
 }
 
@@ -780,7 +787,7 @@ FileTruncate(File file, int offset)
     int returnCode;
 
     DO_DB(printf("DEBUG: FileTruncate %d (%s)\n",
-		 file, VfdCache[file].fileName));
+                 file, VfdCache[file].fileName));
     
     (void) FileSync(file);
     (void) FileAccess(file);
@@ -791,7 +798,7 @@ FileTruncate(File file, int offset)
 int
 FileSync(File file)
 {
-    int	returnCode;
+    int returnCode;
     
     /*
      *  If the file isn't open, then we don't need to sync it; we
@@ -801,10 +808,10 @@ FileSync(File file)
      */
     
     if (VfdCache[file].fd < 0 || !(VfdCache[file].fdstate & FD_DIRTY)) {
-	returnCode = 0;
+        returnCode = 0;
     } else {
-	returnCode = fsync(VfdCache[file].fd);
-	VfdCache[file].fdstate &= ~FD_DIRTY;
+        returnCode = fsync(VfdCache[file].fd);
+        VfdCache[file].fdstate &= ~FD_DIRTY;
     }
     
     return returnCode;
@@ -840,24 +847,24 @@ AllocateFile()
     int fdleft;
 
     while ((fd = open(Nulldev,O_WRONLY,0)) < 0) {
-	if (errno == EMFILE) {
-	    errno = 0;
-	    FreeFd = 0;
-	    AssertLruRoom();
-	} else {
-	    elog(WARN,"Open: %s in %s line %d\n", Nulldev,
-		 __FILE__, __LINE__);
-	}
+        if (errno == EMFILE) {
+            errno = 0;
+            FreeFd = 0;
+            AssertLruRoom();
+        } else {
+            elog(WARN,"Open: %s in %s line %d\n", Nulldev,
+                 __FILE__, __LINE__);
+        }
     }
     close(fd);
     ++allocatedFiles;
     fdleft = MAXFILES - allocatedFiles;
     if (fdleft < 6) {
-	elog(DEBUG,"warning: few usable file descriptors left (%d)", fdleft);
+        elog(DEBUG,"warning: few usable file descriptors left (%d)", fdleft);
     }
     
     DO_DB(printf("DEBUG: AllocatedFile.  FreeFd = %d\n",
-		 FreeFd));
+                 FreeFd));
 }
 
 /*
@@ -868,9 +875,9 @@ void
 FreeFile()
 {
     DO_DB(printf("DEBUG: FreeFile.  FreeFd now %d\n",
-		 FreeFd));
+                 FreeFd));
     FreeFd++;
-    nfile++;			/* dangerous */
+    nfile++;                    /* dangerous */
     Assert(allocatedFiles > 0);
     --allocatedFiles;
 }
@@ -879,9 +886,10 @@ void
 closeAllVfds()
 {
     int i;
-    for (i=0; i<SizeVfdCache; i++) {
-	if (!FileIsNotOpen(i))
-	    LruDelete(i);
+    Assert (FileIsNotOpen(0));  /* Make sure ring not corrupted */
+    for (i=1; i<SizeVfdCache; i++) {
+        if (!FileIsNotOpen(i))
+            LruDelete(i);
     }
 }
 
@@ -892,10 +900,10 @@ closeOneVfd()
     
     tmpfd = open(Nulldev, O_CREAT | O_RDWR, 0666);
     if (tmpfd < 0) {
-	FreeFd = 0;
-	AssertLruRoom();
-	FreeFd = 0;
+        FreeFd = 0;
+        AssertLruRoom();
+        FreeFd = 0;
     }
     else
-	close(tmpfd);
+        close(tmpfd);
 }
