@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.39 2003/06/11 16:29:42 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.40 2003/08/28 20:44:02 tgl Exp $ -->
 
 <refentry id="APP-PGRESTORE">
  <refmeta>
@@ -42,8 +42,8 @@
   <para>
    <application>pg_restore</application> can operate in two modes: If
    a database name is specified, the archive is restored directly into
-   the database.  Large objects can only be restored by using a direct
-   database connection.  Otherwise, a script containing the SQL
+   the database.  (Large objects can only be restored by using such a direct
+   database connection.)  Otherwise, a script containing the SQL
    commands necessary to rebuild the database is created (and written
    to a file or standard output), similar to the ones created by the
    <application>pg_dump</application> plain text format.  Some of the
@@ -228,11 +228,13 @@
       <term><option>--orig-order</option></term>
       <listitem>
        <para>
-        Restore items in the original dump order. By default
-        <application>pg_dump</application> will dump items in an order
-        convenient to <application>pg_dump</application>, then save the
-        archive in a modified OID order. This option overrides the OID
-        ordering.
+        Restore items in the order they were originally generated within
+        <application>pg_dump</application>.  This option has no known
+	practical use, since <application>pg_dump</application> generates
+	the items in an order convenient to it, which is unlikely to be a
+	safe order for restoring them.  (This is <emphasis>not</> the order
+	in which the items are ultimately listed in the archive's table of
+	contents.)  See also <option>-r</>.
        </para>
       </listitem>
      </varlistentry>
@@ -242,11 +244,10 @@
       <term><option>--oid-order</option></term>
       <listitem>
        <para>
-        Restore items in the OID order. By default
-        <application>pg_dump</application> will dump items in an order
-        convenient to <application>pg_dump</application>, then save the
-        archive in a modified OID order. This option enforces strict
-        OID ordering.
+        Restore items in order by OID.  This option is of limited usefulness,
+	since OID is only an approximate indication of original creation
+	order.  This option overrides <option>-N</> if both are specified.
+	See also <option>-r</>.
        </para>
       </listitem>
      </varlistentry>
@@ -281,13 +282,22 @@
       <term><option>--rearrange</option></term>
       <listitem>
        <para>
-        Restore items in modified OID order. By default
-        <application>pg_dump</application> will dump items in an order
-        convenient to <application>pg_dump</application>, then save the
-        archive in a modified OID order. Most objects will be restored
-        in OID order, but some things (e.g., rules and indexes) will
-        be restored at the end of the process irrespective of their
-        OIDs. This option is the default.
+        Rearrange items by object type (this occurs after the sorting
+	specified by <option>-N</option> or <option>-o</option>, if
+	given).  The rearrangement is intended to give the best possible
+	restore performance.
+       </para>
+
+       <para>
+        When none of <option>-N</option>, <option>-o</option>, and
+	<option>-r</> appear, <application>pg_restore</application> restores
+	items in the order they appear in the dump's table of contents,
+	or in the order they appear in the  <REPLACEABLE
+        CLASS="PARAMETER">list-file</REPLACEABLE> if <option>-L</> is
+	given.  The combination of <option>-o</> and <option>-r</>
+	duplicates the sorting done by <application>pg_dump</application>
+	before creating the dump's table of contents,
+	and so it is normally unnecessary to specify it.
        </para>
       </listitem>
      </varlistentry>
