@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/indices.sgml,v 1.25 2001/11/08 23:34:33 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/indices.sgml,v 1.26 2001/11/18 00:59:00 tgl Exp $ -->
 
 <chapter id="indexes">
  <title id="indexes-title">Indexes</title>
@@ -105,7 +105,7 @@ CREATE INDEX test1_id_index ON test1 (id);
 
   <para>
    <productname>Postgres</productname> provides several index types:
-   B-tree, R-tree, and Hash.  Each index type is more appropriate for
+   B-tree, R-tree, GiST, and Hash.  Each index type is more appropriate for
    a particular query type because of the algorithm it uses.
    <indexterm>
     <primary>indexes</primary>
@@ -235,7 +235,7 @@ CREATE INDEX test2_mm_idx ON test2 (major, minor);
   </para>
 
   <para>
-   Currently, only the B-tree implementation supports multicolumn
+   Currently, only the B-tree and GiST implementations support multicolumn
    indexes.  Up to 16 columns may be specified.  (This limit can be
    altered when building <productname>Postgres</productname>; see the
    file <filename>pg_config.h</filename>.)
@@ -291,7 +291,7 @@ SELECT name FROM test2 WHERE major = <replaceable>constant</replaceable> OR mino
 <synopsis>
 CREATE UNIQUE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable> (<replaceable>column</replaceable> <optional>, ...</optional>);
 </synopsis>
-   Only B-tree indexes can be declared unique.
+   Currently, only B-tree indexes can be declared unique.
   </para>
 
   <para>
