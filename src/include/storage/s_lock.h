@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.41 1998/07/19 04:16:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.42 1998/07/19 09:44:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -128,9 +128,9 @@ tas(volatile slock_t *lock)
 {
 	register slock_t	_res = 1;
 
-    __asm__("ldstub [%1], %0" \
-            : "=r"(_res), "=m"(*lock) \
-            : "0"(lock));
+    __asm__("ldstub [%2], %0" \
+            : "=r" (_res), "=m" (*lock) \
+            : "r" (lock));
 	return (int) _res;
 }
 #endif /* sparc */
