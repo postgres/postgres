@@ -163,7 +163,7 @@ In the first method, your code implicitly loads the driver using the
 Class.forName() method. For <application>Postgres</application>, you would use:
 
 <programlisting>
-Class.forName(<literal>postgresql.Driver</literal>);
+Class.forName("postgresql.Driver");
 </programlisting>
 
 This will load the driver, and while loading, the driver will automatically
@@ -380,9 +380,9 @@ An example is as follows:
 
 <programlisting>
 Statement st = db.createStatement();
-ResultSet rs = st.executeQuery(<literal>select * from mytable</literal>);
+ResultSet rs = st.executeQuery("select * from mytable");
 while(rs.next()) {
-    System.out.print(<literal>Column 1 returned </literal>);
+    System.out.print("Column 1 returned ");
     System.out.println(rs.getString(1));
 }
 rs.close();
@@ -400,7 +400,7 @@ To perform an update (or any other SQL statement that does not return a
 result), you simply use the executeUpdate() method:
 
 <programlisting>
-st.executeUpdate(<literal>create table basic (a int2, b int2)</literal>);
+st.executeUpdate("create table basic (a int2, b int2)");
 </programlisting>
 </para>
 </sect1>
@@ -455,9 +455,9 @@ create table images (imgname name,imgoid oid);
 To insert an image, you would use:
 
 <programlisting>
-File file = new File(<literal>myimage.gif</literal>);
+File file = new File("myimage.gif");
 FileInputStream fis = new FileInputStream(file);
-PreparedStatement ps = conn.prepareStatement(<literal>insert into images values (?,?)</literal>);
+PreparedStatement ps = conn.prepareStatement("insert into images values (?,?)");
 ps.setString(1,file.getName());
 ps.setBinaryStream(2,fis,file.length());
 ps.executeUpdate();
@@ -477,8 +477,8 @@ Retrieving an image is even easier (I'm using PreparedStatement here, but
 Statement can equally be used):
 
 <programlisting>
-PreparedStatement ps = con.prepareStatement(<literal>select oid from images where name=?</literal>);
-ps.setString(1,<literal>myimage.gif</literal>);
+PreparedStatement ps = con.prepareStatement("select oid from images where name=?");
+ps.setString(1,"myimage.gif");
 ResultSet rs = ps.executeQuery();
 if(rs!=null) {
     while(rs.next()) {
