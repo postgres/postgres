@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/Makefile,v 1.19 1998/10/18 02:33:56 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/Makefile,v 1.20 1998/10/27 21:27:36 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -18,7 +18,9 @@ include $(SRCDIR)/Makefile.global
 # Note: the klugery for perl5 is to ensure that the perl5 shared lib
 # gets built with the correct path to the installed location of libpq
 # during "make install", but is built against the local tree during
-# ordinary building and testing.
+# ordinary building and testing.  During install, we must also guard
+# against the likelihood that we don't have permissions to install into
+# the Perl module library.
 
 .DEFAULT all install clean dep depend distclean:
 	$(MAKE) -C libpq $@
@@ -49,7 +51,14 @@ perl5/Makefile: perl5/Makefile.PL
 install-perl5:
 	$(MAKE) -C perl5 clean
 	cd perl5 && POSTGRES_HOME="$(POSTGRESDIR)" perl Makefile.PL
-	$(MAKE) -C perl5 install
-	rm -f perl5/Makefile
+	$(MAKE) -C perl5 all
+	if [ -w `sed -n -e 's/^ *SITELIBEXP *= *//p' perl5/Makefile` ]; then \
+		$(MAKE) $(MFLAGS) -C perl5 install; \
+		rm -f perl5/Makefile; \
+	else \
+		echo "Skipping install of Perl module for lack of permissions."; \
+		echo "To install it, cd into interfaces/perl5, su to become the"; \
+		echo "appropriate user, and do '$(MAKE) install'."; \
+	fi
 
 .PHONY: install-perl5
