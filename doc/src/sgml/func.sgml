@@ -45,10 +45,10 @@
 	  class="parameter">c2</replaceable> + 5, 0) </entry>
        </row>
        <row>
-	<entry> IFNULL(<replaceable class="parameter">input</replaceable>,<replaceable class="parameter">non-NULL substitute</replaceable>) </entry>
-	<entry> non-NULL </entry>
-	<entry> return second argument if first is NULL </entry>
-	<entry> IFNULL(<replaceable class="parameter">c1</replaceable>, 'N/A')</entry>
+	<entry> NULLIF(<replaceable class="parameter">input</replaceable>,<replaceable class="parameter">value</replaceable>) </entry>
+	<entry> <replaceable class="parameter">input</replaceable> or NULL </entry>
+	<entry> return NULL if <replaceable class="parameter">input</replaceable> = <replaceable class="parameter">value</replaceable> </entry>
+	<entry> NULLIF(<replaceable class="parameter">c1</replaceable>, 'N/A')</entry>
        </row>
        <row>
 	<entry> CASE WHEN <replaceable class="parameter">expr</replaceable> THEN <replaceable class="parameter">expr</replaceable> [...] ELSE <replaceable class="parameter">expr</replaceable> END </entry>
