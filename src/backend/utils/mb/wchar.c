@@ -1,7 +1,7 @@
 /*
  * conversion functions between pg_wchar and multi-byte streams.
  * Tatsuo Ishii
- * $Id: wchar.c,v 1.6 1999/03/24 07:02:17 ishii Exp $
+ * $Id: wchar.c,v 1.7 1999/04/25 20:35:51 tgl Exp $
  */
 
 #include "mb/pg_wchar.h"
@@ -267,6 +267,11 @@ pg_utf2wchar_with_len(const unsigned char *from, pg_wchar * to, int len)
 			*to = c1 << 12;
 			*to |= c2 << 6;
 			*to |= c3;
+		}
+		else
+		{
+			*to = *from++;
+			len--;
 		}
 		to++;
 	}
