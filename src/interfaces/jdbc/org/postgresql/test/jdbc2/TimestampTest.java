@@ -5,7 +5,7 @@ import junit.framework.TestCase;
 import java.sql.*;
 
 /**
- * $Id: TimestampTest.java,v 1.3 2001/09/23 04:11:14 momjian Exp $
+ * $Id: TimestampTest.java,v 1.4 2001/09/29 03:11:11 momjian Exp $
  *
  * This has been the most controversial pair of methods since 6.5 was released!
  *
@@ -129,4 +129,6 @@ public class TimestampTest extends TestCase {
 										  JDBC2Tests.fix(h,  2) + ":" +
 										  JDBC2Tests.fix(mn, 2) + ":" +
 										  JDBC2Tests.fix(se, 2) + "." +
+										  JDBC2Tests.fix(f,  9));
+	}
 }
