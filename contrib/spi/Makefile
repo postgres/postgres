@@ -9,12 +9,11 @@ ifdef REFINT_VERBOSE
 CFLAGS+= -DREFINT_VERBOSE
 endif
 
-TARGETS= refint$(DLSUFFIX) refint.sql
+TARGETS= refint$(DLSUFFIX) refint.sql timetravel$(DLSUFFIX) timetravel.sql
 
 CLEANFILES+= $(TARGETS)
 
 all:: $(TARGETS)
-	rm -f *.obj *.pic
 
 %.sql: %.source
 	rm -f $@; \
@@ -23,4 +22,4 @@ all:: $(TARGETS)
 	    -e "s:_DLSUFFIX_:$(DLSUFFIX):g" < $< > $@
 
 clean: 
-	rm -f $(TARGETS) *.[op]*
+	rm -f $(TARGETS)

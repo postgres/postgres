@@ -1,0 +1,63 @@
+drop table tttest;
+create table tttest (
+	price_id	int4, 
+	price_val	int4, 
+	price_on	abstime default currabstime(),
+	price_off	abstime default 'infinity'
+);
+
+insert into tttest values (1, 1, null, null);
+insert into tttest values (2, 2, null, null);
+insert into tttest values (3, 3, null, null);
+
+create trigger timetravel 
+	before delete or update on tttest
+	for each row 
+	execute procedure 
+	timetravel (price_on, price_off);
+
+select * from tttest;
+delete from tttest where price_id = 2;
+select * from tttest;
+-- what do we see ?
+
+-- get current prices
+select * from tttest where price_off = 'infinity';
+
+-- change price for price_id == 3
+update tttest set price_val = 30 where price_id = 3;
+select * from tttest;
+
+-- now we want to change price_id from 3 to 5 in ALL tuples
+-- but this gets us not what we need
+update tttest set price_id = 5 where price_id = 3;
+select * from tttest;
+
+-- restore data as before last update:
+select set_timetravel('tttest', 0);	-- turn TT OFF!
+delete from tttest where price_id = 5;
+update tttest set price_off = 'infinity' where price_val = 30;
+select * from tttest;
+
+-- and try change price_id now!
+update tttest set price_id = 5 where price_id = 3;
+select * from tttest;
+-- isn't it what we need ?
+
+select set_timetravel('tttest', 1);	-- turn TT ON!
+
+-- we want to correct some date
+update tttest set price_on = 'Jan-01-1990 00:00:01' where price_id = 5 and 
+	price_off <> 'infinity';
+-- but this doesn't work
+
+-- try in this way
+select set_timetravel('tttest', 0);	-- turn TT OFF!
+update tttest set price_on = '01-Jan-1990 00:00:01' where price_id = 5 and 
+	price_off <> 'infinity';
+select * from tttest;
+-- isn't it what we need ?
+
+-- get price for price_id == 5 as it was '10-Jan-1990'
+select * from tttest where price_id = 5 and 
+	price_on <= '10-Jan-1990' and price_off > '10-Jan-1990';
