@@ -199,7 +199,7 @@ make_name(void)
                 READ, REFERENCES, RELATIVE, REVOKE, RIGHT, ROLLBACK,
                 SCHEMA, SCROLL, SECOND_P, SELECT, SESSION, SESSION_USER, SET, SOME, SUBSTRING,
                 TABLE, TEMPORARY, THEN, TIME, TIMESTAMP, TIMEZONE_HOUR,
-		TIMEZONE_MINUTE, TO, TOAST, TRAILING, TRANSACTION, TRIM, TRUE_P,
+		TIMEZONE_MINUTE, TO, TRAILING, TRANSACTION, TRIM, TRUE_P,
                 UNION, UNIQUE, UPDATE, USER, USING,
                 VALUES, VARCHAR, VARYING, VIEW,
                 WHEN, WHERE, WITH, WITHOUT, WORK, YEAR_P, ZONE
@@ -232,7 +232,7 @@ make_name(void)
 		OPERATOR, OWNER, PASSWORD, PROCEDURAL, REINDEX, RENAME, RESET,
 		RETURNS, ROW, RULE, SEQUENCE, SERIAL, SETOF, SHARE,
 		SHOW, START, STATEMENT, STDIN, STDOUT, SYSID TEMP,
-		TRUNCATE, TRUSTED, UNDER, UNLISTEN, UNTIL, VACUUM,
+		TEMPLATE, TOAST, TRUNCATE, TRUSTED, UNDER, UNLISTEN, UNTIL, VACUUM,
 		VALID, VERBOSE, VERSION
 
 /* The grammar thinks these are keywords, but they are not in the keywords.c
@@ -2251,11 +2251,8 @@ LoadStmt:  LOAD file_name
  *
  *****************************************************************************/
 
-CreatedbStmt:  CREATE DATABASE database_name WITH createdb_opt_location createdb_opt_encoding
+CreatedbStmt:  CREATE DATABASE database_name WITH createdb_opt_list
 			{
-				if (strlen($5) == 0 || strlen($6) == 0) 
-					mmerror(ET_ERROR, "CREATE DATABASE WITH requires at least an option.");
-
 				$$ = cat_str(5, make_str("create database"), $3, make_str("with"), $5, $6);
 			}
 		| CREATE DATABASE database_name
@@ -2264,12 +2261,17 @@ CreatedbStmt:  CREATE DATABASE database_name WITH createdb_opt_location createdb
 			}
 		;
 
-createdb_opt_location:  LOCATION '=' StringConst	{ $$ = cat2_str(make_str("location ="), $3); }
-		| LOCATION '=' DEFAULT		{ $$ = make_str("location = default"); }
-		| /*EMPTY*/			{ $$ = EMPTY; }
-		;
+createdb_opt_list:  createdb_opt_item
+                               { $$ = $1; }
+                | createdb_opt_list createdb_opt_item
+                               { $$ = cat2_str($1, $2); }
+                ;                
 
-createdb_opt_encoding:  ENCODING '=' PosIntStringConst  
+createdb_opt_item:  LOCATION '=' StringConst	{ $$ = cat2_str(make_str("location ="), $3); }
+		| LOCATION '=' DEFAULT		{ $$ = make_str("location = default"); }
+		| TEMPLATE '=' name  		{ $$ = cat2_str(make_str("template ="), $3); }
+		| TEMPLATE '=' DEFAULT		{ $$ = make_str("template = default"); }
+		| ENCODING '=' PosIntStringConst  
 			{
 				$$ = cat2_str(make_str("encoding ="), $3);
 			}
@@ -2277,7 +2279,6 @@ createdb_opt_encoding:  ENCODING '=' PosIntStringConst
 			{
 				$$ = make_str("encoding = default");
 			}
-                | /*EMPTY*/	        { $$ = NULL; }
                 ;
 
 /*****************************************************************************
@@ -5076,6 +5077,7 @@ TokenId:  ABSOLUTE			{ $$ = make_str("absolute"); }
 	| STDOUT                        { $$ = make_str("stdout"); }
 	| SYSID                         { $$ = make_str("sysid"); }
 	| TEMP				{ $$ = make_str("temp"); }
+	| TEMPLATE			{ $$ = make_str("template"); }
 	| TEMPORARY			{ $$ = make_str("temporary"); }
 	| TIMEZONE_HOUR                 { $$ = make_str("timezone_hour"); }
         | TIMEZONE_MINUTE               { $$ = make_str("timezone_minute"); } 
