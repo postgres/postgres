@@ -1,4 +1,4 @@
-$Header: /cvsroot/pgsql/src/backend/storage/lmgr/README,v 1.9 2001/09/29 04:02:24 tgl Exp $
+$Header: /cvsroot/pgsql/src/backend/storage/lmgr/README,v 1.10 2002/04/15 23:46:13 momjian Exp $
 
 
 LOCKING OVERVIEW
@@ -93,7 +93,7 @@ grantMask -
     This bitmask indicates what types of locks are currently held on the
     given lockable object.  It is used (against the lock table's conflict
     table) to determine if a new lock request will conflict with existing
-    lock types held.  Conficts are determined by bitwise AND operations
+    lock types held.  Conflicts are determined by bitwise AND operations
     between the grantMask and the conflict table entry for the requested
     lock type.  Bit i of grantMask is 1 if and only if granted[i] > 0.
 
@@ -268,7 +268,7 @@ Postgres' situation is a little more complex than the standard discussion
 of deadlock detection, for two reasons:
 
 1. A process can be waiting for more than one other process, since there
-might be multiple holders of (nonconflicting) lock types that all conflict
+might be multiple holders of (non-conflicting) lock types that all conflict
 with the waiter's request.  This creates no real difficulty however; we
 simply need to be prepared to trace more than one outgoing edge.
 
@@ -292,7 +292,7 @@ algorithm.
 
 The workhorse of the deadlock detector is a routine FindLockCycle() which
 is given a starting point process (which must be a waiting process).
-It recursively scans outwards across waits-for edges as discussed above.
+It recursively scans outward across waits-for edges as discussed above.
 If it finds no cycle involving the start point, it returns "false".
 (As discussed above, we can ignore cycles not involving the start point.)
 When such a cycle is found, FindLockCycle() returns "true", and as it
@@ -315,7 +315,7 @@ We build a proposed new queue order by doing a "topological sort" of the
 existing entries.  Each soft edge that we are currently considering
 reversing creates a property of the partial order that the topological sort
 has to enforce.  We must use a sort method that preserves the input
-ordering as much as possible, so as not to gratuituously break arrival
+ordering as much as possible, so as not to gratuitously break arrival
 order for processes not involved in a deadlock.  (This is not true of the
 tsort method shown in Knuth, for example, but it's easily done by a simple
 doubly-nested-loop method that emits the first legal candidate at each
@@ -406,7 +406,7 @@ implementation, BTW).  Therefore, if ProcLockWakeup is always invoked
 after a lock is released or a wait queue is rearranged, there can be no
 failure to wake a wakable process.  One should also note that
 LockWaitCancel (abort a waiter due to outside factors) must run
-ProcLockWakeup, in case the cancelled waiter was soft-blocking other
+ProcLockWakeup, in case the canceled waiter was soft-blocking other
 waiters.
 
 4. We can minimize excess rearrangement-trial work by being careful to scan

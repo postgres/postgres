@@ -1,7 +1,8 @@
-$Header: /cvsroot/pgsql/src/backend/catalog/README,v 1.5 2002/04/08 22:09:05 tgl Exp $
+$Header: /cvsroot/pgsql/src/backend/catalog/README,v 1.6 2002/04/15 23:46:13 momjian Exp $
 
-This directory contains .c files that manipulate the system catalogs
-as well as .h files that define the structure of the system catalogs.
+This directory contains .c files that manipulate the system catalogs;
+src/include/catalog contains the .h files that define the structure
+of the system catalogs.
 
 When the compile-time scripts (such as Gen_fmgrtab.sh and genbki.sh)
 execute, they grep the DATA statements out of the .h files and munge
