@@ -150,6 +150,16 @@
 
 
 #
+#	Access statistics collection
+#
+#collect_startcollector = true
+#collect_resetonpmstart = true
+#collect_querystring = false
+#collect_tuplelevel = false
+#collect_blocklevel = false
+
+
+#
 #	Lock Tracing
 #
 #trace_notify = false

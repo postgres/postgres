@@ -4,7 +4,7 @@
  * Support for grand unified configuration scheme, including SET
  * command, configuration file, and command line options.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.44 2001/06/30 22:03:26 petere Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.45 2001/07/05 15:19:40 wieck Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -36,6 +36,7 @@
 #include "storage/proc.h"
 #include "tcop/tcopprot.h"
 #include "utils/datetime.h"
+#include "pgstat.h"
 
 
 /* XXX these should be in other modules' header files */
@@ -224,6 +225,12 @@ static struct config_bool
 #ifdef BTREE_BUILD_STATS
 	{"show_btree_build_stats", PGC_SUSET, &Show_btree_build_stats, false, NULL},
 #endif
+
+	{"collect_startcollector", PGC_POSTMASTER, &pgstat_collect_startcollector, true, NULL},
+	{"collect_resetonpmstart", PGC_POSTMASTER, &pgstat_collect_resetonpmstart, true, NULL},
+	{"collect_querystring", PGC_SUSET, &pgstat_collect_querystring, false, NULL},
+	{"collect_tuplelevel", PGC_SUSET, &pgstat_collect_tuplelevel, false, NULL},
+	{"collect_blocklevel", PGC_SUSET, &pgstat_collect_blocklevel, false, NULL},
 
 	{"trace_notify", PGC_USERSET, &Trace_notify, false, NULL},
 

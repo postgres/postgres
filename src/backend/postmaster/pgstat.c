@@ -14,12 +14,9 @@
  *			  thus an initdb and we might want to provide this as a
  *			  patch for 7.1.
  *
- *			- Make the functions from contrib/pgstat_tmp builtin
- *			  and create the views on initdb.
- *
  *	Copyright (c) 2001, PostgreSQL Global Development Group
  *
- *	$Id: pgstat.c,v 1.3 2001/06/30 19:01:27 petere Exp $
+ *	$Id: pgstat.c,v 1.4 2001/07/05 15:19:40 wieck Exp $
  * ----------
  */
 #include "postgres.h"
@@ -56,7 +53,11 @@
  * Global data
  * ----------
  */
-
+bool	pgstat_collect_startcollector	= true;
+bool	pgstat_collect_resetonpmstart	= true;
+bool	pgstat_collect_querystring		= false;
+bool	pgstat_collect_tuplelevel		= false;
+bool	pgstat_collect_blocklevel		= false;
 
 /* ----------
  * Local data
@@ -136,12 +137,33 @@ pgstat_init(void)
 	int			alen;
 
 	/*
+	 * Force start of collector daemon if something to collect
+	 */
+	if (pgstat_collect_querystring || pgstat_collect_tuplelevel ||
+				pgstat_collect_blocklevel)
+		pgstat_collect_startcollector = true;
+
+	/*
 	 * Initialize the filenames for the status reports.
 	 */
 	snprintf(pgStat_tmpfname, MAXPGPATH, 
 				PGSTAT_STAT_TMPFILE,  DataDir, getpid());
 	snprintf(pgStat_fname, MAXPGPATH, 
 				PGSTAT_STAT_FILENAME, DataDir);
+
+	/*
+	 * If we don't have to start a collector or should reset the
+	 * collected statistics on postmaster start, simply remove the
+	 * file.
+	 */
+	if (!pgstat_collect_startcollector || pgstat_collect_resetonpmstart)
+		unlink(pgStat_fname);
+
+	/*
+	 * Nothing else required if collector will not get started
+	 */
+	if (!pgstat_collect_startcollector)
+		return 0;
 
 	/*
 	 * Create the UDP socket for receiving statistic messages
@@ -212,6 +234,12 @@ int
 pgstat_start(void)
 {
 	/*
+	 * Do nothing if no collector needed
+	 */
+	if (!pgstat_collect_startcollector)
+		return 0;
+
+	/*
 	 * Check that the socket at least is there
 	 */
 	if (pgStatSock < 0)
@@ -275,6 +303,9 @@ pgstat_beterm(int pid)
 {
 	PgStat_MsgBeterm		msg;
 
+	if (!pgstat_collect_startcollector)
+		return;
+
 	msg.m_hdr.m_type		= PGSTAT_MTYPE_BETERM;
 	msg.m_hdr.m_backendid	= 0;
 	msg.m_hdr.m_procpid		= pid;
@@ -302,7 +333,7 @@ pgstat_bestart(void)
 {
 	PgStat_MsgBestart		msg;
 
-	if (pgStatSock < 0)
+	if (!pgstat_collect_startcollector || pgStatSock < 0)
 		return;
 
 	pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_BESTART);
@@ -324,7 +355,7 @@ pgstat_report_activity(char *what)
 	PgStat_MsgActivity	msg;
 	int						len;
 
-	if (pgStatSock < 0)
+	if (!pgstat_collect_querystring || pgStatSock < 0)
 		return;
 
 	len = strlen(what);
@@ -353,6 +384,10 @@ pgstat_report_tabstat(void)
 	int				i;
 	int				n;
 	int				len;
+
+	if (!pgstat_collect_querystring && !pgstat_collect_tuplelevel &&
+			!pgstat_collect_blocklevel)
+		return;
 
 	if (pgStatSock < 0)
 		return;
@@ -654,7 +689,7 @@ pgstat_initstats(PgStat_Info *stats, Relation rel)
 	stats->heap_scan_counted	= FALSE;
 	stats->index_scan_counted	= FALSE;
 
-	if (pgStatSock < 0)
+	if (!pgstat_collect_startcollector || pgStatSock < 0)
 	{
 		stats->no_stats = TRUE;
 		return;
@@ -764,6 +799,10 @@ pgstat_initstats(PgStat_Info *stats, Relation rel)
 void
 pgstat_count_xact_commit(void)
 {
+	if (!pgstat_collect_querystring && !pgstat_collect_tuplelevel &&
+			!pgstat_collect_blocklevel)
+		return;
+
 	pgStatXactCommit++;
 
 	/*
@@ -791,6 +830,10 @@ pgstat_count_xact_commit(void)
 void
 pgstat_count_xact_rollback(void)
 {
+	if (!pgstat_collect_querystring && !pgstat_collect_tuplelevel &&
+			!pgstat_collect_blocklevel)
+		return;
+
 	pgStatXactRollback++;
 
 	/*
