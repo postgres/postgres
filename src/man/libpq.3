@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/libpq.3,v 1.1 1996/11/14 10:17:26 scrappy Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/libpq.3,v 1.2 1996/11/15 17:55:30 momjian Exp $
 .TH LIBPQ INTRO 03/12/94 Postgres95 Postgres95
 .SH DESCRIPTION
 Libpq is the programmer's interface to Postgres.  Libpq is a set of
@@ -469,7 +469,7 @@ returns EOF at EOF, 0 if the entire line has been read, and 1 if the
 buffer is full but the terminating newline has not yet been read.
 .IP
 Notice that the application must check to see if a new line consists
-of the single character \*(lq.\*(rq, which indicates that the backend
+of the characters \*(lq\\.\*(rq, which indicates that the backend
 server has finished sending the results of the 
 .I copy
 command.  Therefore, if the application ever expects to receive lines
@@ -645,7 +645,7 @@ main()
 
   /* check to see that the backend connection was successfully made */
   if (PQstatus(conn) == CONNECTION_BAD) {
-    fprintf(stderr,"Connection to database '%s' failed.\n", dbName);
+    fprintf(stderr,"Connection to database '%s' failed.\\n", dbName);
     fprintf(stderr,"%s",PQerrorMessage(conn));
     exit_nicely(conn);
   }
@@ -656,7 +656,7 @@ main()
   /* start a transaction block */
   res = PQexec(conn,"BEGIN"); 
   if (PQresultStatus(res) != PGRES_COMMAND_OK) {
-    fprintf(stderr,"BEGIN command failed\n");
+    fprintf(stderr,"BEGIN command failed\\n");
     PQclear(res);
     exit_nicely(conn);
   }
@@ -667,7 +667,7 @@ main()
   /* fetch instances from the pg_database, the system catalog of databases*/
   res = PQexec(conn,"DECLARE mycursor CURSOR FOR select * from pg_database");
   if (PQresultStatus(res) != PGRES_COMMAND_OK) {
-    fprintf(stderr,"DECLARE CURSOR command failed\n");
+    fprintf(stderr,"DECLARE CURSOR command failed\\n");
     PQclear(res);
     exit_nicely(conn);
   }
@@ -675,7 +675,7 @@ main()
 
   res = PQexec(conn,"FETCH ALL in mycursor");
   if (PQresultStatus(res) != PGRES_TUPLES_OK) {
-    fprintf(stderr,"FETCH ALL command didn't return tuples properly\n");
+    fprintf(stderr,"FETCH ALL command didn't return tuples properly\\n");
     PQclear(res);
     exit_nicely(conn);
   }
@@ -685,14 +685,14 @@ main()
   for (i=0; i < nFields; i++) {
     printf("%-15s",PQfname(res,i));
   }
-  printf("\n\n");
+  printf("\\n\\n");
 
   /* next, print out the instances */
   for (i=0; i < PQntuples(res); i++) {
     for (j=0  ; j < nFields; j++) {
       printf("%-15s", PQgetvalue(res,i,j));
     }
-    printf("\n");
+    printf("\\n");
   }
 
   PQclear(res);
@@ -770,14 +770,14 @@ main()
 
   /* check to see that the backend connection was successfully made */
   if (PQstatus(conn) == CONNECTION_BAD) {
-    fprintf(stderr,"Connection to database '%s' failed.\n", dbName);
+    fprintf(stderr,"Connection to database '%s' failed.\\n", dbName);
     fprintf(stderr,"%s",PQerrorMessage(conn));
     exit_nicely(conn);
   }
 
   res = PQexec(conn, "LISTEN TBL2");
   if (PQresultStatus(res) != PGRES_COMMAND_OK) {
-    fprintf(stderr,"LISTEN command failed\n");
+    fprintf(stderr,"LISTEN command failed\\n");
     PQclear(res);
     exit_nicely(conn);
   }
@@ -789,12 +789,12 @@ main()
       /* async notification only come back as a result of a query*/
       /* we can send empty queries */
       res = PQexec(conn, " ");
-/*      printf("res->status = %s\n", pgresStatus[PQresultStatus(res)]); */
+/*      printf("res->status = %s\\n", pgresStatus[PQresultStatus(res)]); */
       /* check for asynchronous returns */
       notify = PQnotifies(conn);
       if (notify) {
 	  fprintf(stderr,
-		  "ASYNC NOTIFY of '%s' from backend pid '%d' received\n",
+		  "ASYNC NOTIFY of '%s' from backend pid '%d' received\\n",
 		  notify->relname, notify->be_pid);
 	  free(notify);
 	  break;
@@ -876,7 +876,7 @@ main()
 
   /* check to see that the backend connection was successfully made */
   if (PQstatus(conn) == CONNECTION_BAD) {
-    fprintf(stderr,"Connection to database '%s' failed.\n", dbName);
+    fprintf(stderr,"Connection to database '%s' failed.\\n", dbName);
     fprintf(stderr,"%s",PQerrorMessage(conn));
     exit_nicely(conn);
   }
@@ -884,7 +884,7 @@ main()
   /* start a transaction block */
   res = PQexec(conn,"BEGIN"); 
   if (PQresultStatus(res) != PGRES_COMMAND_OK) {
-    fprintf(stderr,"BEGIN command failed\n");
+    fprintf(stderr,"BEGIN command failed\\n");
     PQclear(res);
     exit_nicely(conn);
   }
@@ -895,7 +895,7 @@ main()
   /* fetch instances from the pg_database, the system catalog of databases*/
   res = PQexec(conn,"DECLARE mycursor BINARY CURSOR FOR select * from test1");
   if (PQresultStatus(res) != PGRES_COMMAND_OK) {
-    fprintf(stderr,"DECLARE CURSOR command failed\n");
+    fprintf(stderr,"DECLARE CURSOR command failed\\n");
     PQclear(res);
     exit_nicely(conn);
   }
@@ -903,7 +903,7 @@ main()
 
   res = PQexec(conn,"FETCH ALL in mycursor");
   if (PQresultStatus(res) != PGRES_TUPLES_OK) {
-    fprintf(stderr,"FETCH ALL command didn't return tuples properly\n");
+    fprintf(stderr,"FETCH ALL command didn't return tuples properly\\n");
     PQclear(res);
     exit_nicely(conn);
   }
@@ -913,7 +913,7 @@ main()
   p_fnum = PQfnumber(res,"p");
   
   for (i=0;i<3;i++) {
-      printf("type[%d] = %d, size[%d] = %d\n",
+      printf("type[%d] = %d, size[%d] = %d\\n",
 	     i, PQftype(res,i), 
 	     i, PQfsize(res,i));
   }
@@ -931,12 +931,12 @@ main()
     pval = (POLYGON*) malloc(plen + VARHDRSZ); 
     pval->size = plen;
     memmove((char*)&pval->npts, PQgetvalue(res,i,p_fnum), plen);
-    printf("tuple %d: got\n", i);
-    printf(" i = (%d bytes) %d,\n",
+    printf("tuple %d: got\\n", i);
+    printf(" i = (%d bytes) %d,\\n",
 	   PQgetlength(res,i,i_fnum), *ival);
-    printf(" d = (%d bytes) %f,\n",
+    printf(" d = (%d bytes) %f,\\n",
 	   PQgetlength(res,i,d_fnum), *dval);
-    printf(" p = (%d bytes) %d points \tboundbox = (hi=%f/%f, lo = %f,%f)\n",
+    printf(" p = (%d bytes) %d points \\tboundbox = (hi=%f/%f, lo = %f,%f)\\n",
 	   PQgetlength(res,i,d_fnum),
 	   pval->npts,
 	   pval->boundbox.xh,
@@ -960,3 +960,4 @@ main()
 
 }
 .fi
+

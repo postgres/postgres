@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/psql.1,v 1.1 1996/11/14 10:17:50 scrappy Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/psql.1,v 1.2 1996/11/15 17:55:31 momjian Exp $
 .TH PSQL UNIX 1/20/96 Postgres95 Postgres95
 .SH NAME
 psql \(em run the interactive query front-end
@@ -343,7 +343,8 @@ When executed with the
 .BR "-c"
 option,
 .IR psql
-returns 0 to the shell on successful query completion, 1 otherwise.
+returns 0 to the shell on successful query completion, 1 for errors,
+2 for abrupt disconnection from the backend.
 .IR psql
 will also return 1 if the connection to a database could not be made for
 any reason.
@@ -352,8 +353,3 @@ introduction(libpq),
 monitor(1)
 postgres(1),
 postmaster(1).
-.SH BUGS
-If multiple queries are sent to the backend at once without semicolon
-termination after each query, psql gets confused about the query
-results.  The queries will still be processed correctly by the backend.
-
