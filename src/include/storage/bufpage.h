@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufpage.h,v 1.9 1997/08/24 23:08:01 momjian Exp $
+ * $Id: bufpage.h,v 1.10 1997/08/26 23:31:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -221,7 +221,7 @@ typedef enum {
  *	Assumes page is locked.
  */
 #define PageGetSpecialSize(page) \
-    ((uint16) (PageGetPageSize(page) - ((PageHeader)page)->pd_special))
+    ((uint16) (PageGetPageSize(page) - ((PageHeader)(page))->pd_special))
 
 /*
  * PageGetSpecialPointer --
@@ -245,8 +245,8 @@ typedef enum {
  */
 #define PageGetItem(page, itemId) \
     (AssertMacro(PageIsValid(page)) ? \
-     AssertMacro(itemId->lp_flags & LP_USED) ? \
-    (Item)(((char *)page) + itemId->lp_off) : false : false)
+     AssertMacro((itemId)->lp_flags & LP_USED) ? \
+    (Item)(((char *)(page)) + (itemId)->lp_off) : false : false)
 
 /*
  * BufferGetPageSize --

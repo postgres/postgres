@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/execJunk.c,v 1.4 1997/01/10 20:17:25 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/execJunk.c,v 1.5 1997/08/26 23:31:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,6 @@
 #include "postgres.h"
 
 #include "utils/palloc.h"
-#include "access/heaptuple.h"
 #include "access/heapam.h"
 #include "executor/executor.h"
 #include "nodes/relation.h"

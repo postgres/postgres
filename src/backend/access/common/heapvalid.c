@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/common/Attic/heapvalid.c,v 1.14 1997/08/24 23:07:26 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/common/Attic/heapvalid.c,v 1.15 1997/08/26 23:31:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,7 +15,7 @@
 #include <postgres.h>
 
 #include <fmgr.h>
-#include <access/heaptuple.h>
+#include <access/heapam.h>
 #include <access/valid.h>
 #include <access/xact.h>
 #include <storage/bufpage.h>

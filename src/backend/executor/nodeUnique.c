@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/nodeUnique.c,v 1.6 1997/01/10 20:17:38 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/nodeUnique.c,v 1.7 1997/08/26 23:31:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,6 @@
 #include "executor/nodeUnique.h"
 #include "optimizer/clauses.h"
 #include "access/heapam.h"
-#include "access/heaptuple.h"
 #include "access/printtup.h" /* for typtoout() */
 #include "utils/builtins.h"  /* for namecpy()*/
 

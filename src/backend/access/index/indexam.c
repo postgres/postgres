@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.12 1997/08/19 21:29:30 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.13 1997/08/26 23:31:28 momjian Exp $
  *
  * INTERFACE ROUTINES
  *	index_open 	- open an index relation by relationId
@@ -69,7 +69,7 @@
 #include <utils/relcache.h>
 #include <fmgr.h>
 #include <storage/lmgr.h>
-#include <access/heaptuple.h>
+#include <access/heapam.h>
 
 /* ----------------
  *   undefine macros we aren't going to use that would otherwise

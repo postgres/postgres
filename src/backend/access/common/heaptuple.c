@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.20 1997/08/24 23:07:26 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.21 1997/08/26 23:31:20 momjian Exp $
  *
  * NOTES
  *    The old interface functions have been converted to macros
@@ -38,8 +38,6 @@
 #if !defined(NO_ASSERT_CHECKING) && defined(sparc) && defined(sunos4)
 #define register
 #endif /* !NO_ASSERT_CHECKING && sparc && sunos4 */
-
-static char *heap_getsysattr(HeapTuple tup, Buffer b, int attnum);
 
 /* ----------------------------------------------------------------
  *			misc support routines
@@ -337,7 +335,7 @@ heap_sysattrbyval(AttrNumber attno)
  *	heap_getsysattr
  * ----------------
  */
-static char *
+char *
 heap_getsysattr(HeapTuple tup, Buffer b, int attnum)
 {
     switch (attnum) {
@@ -423,7 +421,6 @@ fastgetattr(HeapTuple tup,
      * ----------------
      */
     
-    Assert(PointerIsValid(isnull));
     Assert(attnum > 0);
     
     /* ----------------
@@ -435,7 +432,8 @@ fastgetattr(HeapTuple tup,
      * ----------------
      */
     
-    *isnull =  false;
+    if (isnull)
+	*isnull =  false;
     
     if (HeapTupleNoNulls(tup)) {
 	attnum--;
@@ -469,7 +467,8 @@ fastgetattr(HeapTuple tup,
 	 */
 	
 	if (att_isnull(attnum, bp)) {
-	    *isnull = true;
+	    if (isnull)
+		*isnull = true;
 	    return NULL;
 	}
 
@@ -656,58 +655,6 @@ fastgetattr(HeapTuple tup,
 	    break;
 	}
 	return((char *) fetchatt(&(att[attnum]), tp + off));
-    }
-}
-
-/* ----------------
- *      heap_getattr
- *
- *      Find a particular field in a row represented as a heap tuple.
- *      We return a pointer into that heap tuple, which points to the
- *      first byte of the value of the field in question.
- *
- *      If the field in question has a NULL value, we return a null
- *      pointer and return <*isnull> == true.  Otherwise, we return
- *      <*isnull> == false.
- *
- *      <tup> is the pointer to the heap tuple.  <attnum> is the attribute
- *      number of the column (field) caller wants.  <tupleDesc> is a 
- *      pointer to the structure describing the row and all its fields.
- * ---------------- */
-char *
-heap_getattr(HeapTuple tup,
-             Buffer b,
-             int attnum,
-             TupleDesc tupleDesc,
-             bool *isnull)
-{
-    bool        localIsNull;
-
-    /* ----------------
-     *  sanity checks
-     * ----------------
-     */
-    Assert(tup != NULL);
-    
-    if (! PointerIsValid(isnull))
-        isnull = &localIsNull;
-    
-    if (attnum > (int) tup->t_natts) {
-        *isnull = true;
-        return ((char *) NULL);
-    } else if (attnum > 0) {
-	/* ----------------
-	 *  take care of user defined attributes
-	 * ----------------
-	 */
-        return fastgetattr(tup, attnum, tupleDesc, isnull);
-    } else {
-	/* ----------------
-	 *  take care of system attributes
-	 * ----------------
-	 */
-	*isnull = false;
-	return heap_getsysattr(tup, b, attnum);
     }
 }
 

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heapam.h,v 1.7 1997/08/19 21:37:30 momjian Exp $
+ * $Id: heapam.h,v 1.8 1997/08/26 23:31:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,6 +78,30 @@ typedef HeapAccessStatisticsData *HeapAccessStatistics;
 #define IncrHeapAccessStat(x) \
     (heap_access_stats == NULL ? 0 : (heap_access_stats->x)++)
 
+/* ----------------
+ *      heap_getattr
+ *
+ *      Find a particular field in a row represented as a heap tuple.
+ *      We return a pointer into that heap tuple, which points to the
+ *      first byte of the value of the field in question.
+ *
+ *      If the field in question has a NULL value, we return a null
+ *      pointer and return <*isnull> == true.  Otherwise, we return
+ *      <*isnull> == false.
+ *
+ *      <tup> is the pointer to the heap tuple.  <attnum> is the attribute
+ *      number of the column (field) caller wants.  <tupleDesc> is a 
+ *      pointer to the structure describing the row and all its fields.
+ * ---------------- */
+#define heap_getattr(tup, b, attnum, tupleDesc, isnull) \
+    (AssertMacro((tup) != NULL) ? \
+	((attnum) > (int) (tup)->t_natts) ? \
+	    (((isnull) ? (*(isnull) = true) : NULL), (char *) NULL) : \
+	((attnum) > 0) ? \
+	    fastgetattr((tup), (attnum), (tupleDesc), (isnull)) : \
+	(((isnull) ? (*(isnull) = false) : NULL), heap_getsysattr((tup), (b), (attnum))) : \
+    (char *) NULL)
+
 extern HeapAccessStatistics heap_access_stats;	/* in stats.c */
 
 /* ----------------
@@ -114,10 +138,9 @@ extern void DataFill(char *data, TupleDesc tupleDesc,
 extern int heap_attisnull(HeapTuple tup, int attnum);
 extern int heap_sysattrlen(AttrNumber attno);
 extern bool heap_sysattrbyval(AttrNumber attno);
+extern char *heap_getsysattr(HeapTuple tup, Buffer b, int attnum);
 extern char *fastgetattr(HeapTuple tup, int attnum,
 			 TupleDesc att, bool *isnull);
-extern char *heap_getattr(HeapTuple tup, Buffer b, int attnum,
-			  TupleDesc att, bool *isnull);
 extern HeapTuple heap_copytuple(HeapTuple tuple);
 extern HeapTuple heap_formtuple(TupleDesc tupleDescriptor, 
 				Datum value[], char nulls[]);
