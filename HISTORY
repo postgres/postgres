@@ -1,8 +1,9 @@
 PostgreSQL 6.2.1                 Fri Oct 17 00:01:27 EDT 1997
 -------------------------------------------------------------
 
-This release does NOT require a dump/restore for those running 6.2.
-Please see the appropriate /migration file for more information.
+This release does NOT require a dump/restore for those running 6.2, but
+there is an SQL query in /migration/6.2_to_6.2.1 that should be run. See
+that file for more information.
 
 Changes in this release
 -----------------------
