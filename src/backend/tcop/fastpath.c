@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.43 2000/07/03 23:09:46 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.44 2000/10/24 20:59:35 tgl Exp $
  *
  * NOTES
  *	  This cruft is the server side of PQfn.
@@ -271,9 +271,14 @@ update_fp_info(Oid func_id, struct fp_info * fip)
  * Note: All ordinary errors result in elog(ERROR,...).  However,
  * if we lose the frontend connection there is no one to elog to,
  * and no use in proceeding...
+ *
+ * Note: palloc()s done here and in the called function do not need to be
+ * cleaned up explicitly.  We are called from PostgresMain() in the
+ * QueryContext memory context, which will be automatically reset when
+ * control returns to PostgresMain.
  */
 int
-HandleFunctionRequest()
+HandleFunctionRequest(void)
 {
 	Oid			fid;
 	int			argsize;
@@ -285,6 +290,32 @@ HandleFunctionRequest()
 	char	   *p;
 	struct fp_info *fip;
 
+	/*
+	 * XXX FIXME: This protocol is misdesigned.
+	 *
+	 * We really do not want to elog() before having swallowed all of the
+	 * frontend's fastpath message; otherwise we will lose sync with the input
+	 * datastream.  What should happen is we absorb all of the input message
+	 * per protocol syntax, and *then* do error checking (including lookup of
+	 * the given function ID) and elog if appropriate.  Unfortunately, because
+	 * we cannot even read the message properly without knowing whether the
+	 * data types are pass-by-ref or pass-by-value, it's not all that easy to
+	 * do :-(.  The protocol should require the client to supply what it
+	 * thinks is the typbyval and typlen value for each arg, so that we can
+	 * read the data without having to do any lookups.  Then after we've read
+	 * the message, we should do the lookups, verify agreement of the actual
+	 * function arg types with what we received, and finally call the function.
+	 *
+	 * As things stand, not only will we lose sync for an invalid message
+	 * (such as requested function OID doesn't exist), but we may lose sync
+	 * for a perfectly valid message if we are in transaction-aborted state!
+	 * This can happen because our database lookup attempts may fail entirely
+	 * in abort state.
+	 *
+	 * Unfortunately I see no way to fix this without breaking a lot of
+	 * existing clients.  Maybe do it as part of next protocol version change.
+	 */
+
 	if (pq_getint(&tmp, 4))		/* function oid */
 		return EOF;
 	fid = (Oid) tmp;
@@ -293,22 +324,12 @@ HandleFunctionRequest()
 
 	/*
 	 * This is where the one-back caching is done. If you want to save
-	 * more state, make this a loop around an array.
+	 * more state, make this a loop around an array.  Given the relatively
+	 * short lifespan of the cache, not clear that there's any win possible.
 	 */
 	fip = &last_fp;
 	if (!valid_fp_info(fid, fip))
 		update_fp_info(fid, fip);
-
-	/*
-	 * XXX FIXME: elog() here means we lose sync with the frontend, since
-	 * we have not swallowed all of its input message.	What should happen
-	 * is we absorb all of the input message per protocol syntax, and
-	 * *then* do error checking (including lookup of the given function ID)
-	 * and elog if appropriate.  Unfortunately, because we cannot even read
-	 * the message properly without knowing whether the data types are
-	 * pass-by-ref or pass-by-value, it's not all that easy to fix :-(.
-	 * This protocol is misdesigned.
-	 */
 
 	if (fip->flinfo.fn_nargs != nargs || nargs > FUNC_MAX_ARGS)
 	{
@@ -365,6 +386,17 @@ HandleFunctionRequest()
 			fcinfo.arg[i] = PointerGetDatum(p);
 		}
 	}
+
+	/*
+	 * Now that we've eaten the input message, check to see if we actually
+	 * want to do the function call or not.
+	 *
+	 * Currently, we report an error if in ABORT state, or return a dummy
+	 * NULL response if fastpath support has been compiled out.
+	 */
+	if (IsAbortedTransactionBlockState())
+		elog(ERROR, "current transaction is aborted, "
+			 "queries ignored until end of transaction block");
 
 #ifdef NO_FASTPATH
 	/* force a NULL return */
