@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.53 2002/08/10 16:57:32 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.54 2002/08/10 19:35:01 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "print.h"
@@ -80,7 +80,8 @@ usage(void)
 	}
 
 /* If this " is the start of the string then it ought to end there to fit in 80 columns >> " */
-	puts(_("This is psql, the PostgreSQL interactive terminal.\n"));
+	printf(_("This is psql %s, the PostgreSQL interactive terminal.\n"),
+		   PG_VERSION);
 	puts(_("Usage:"));
 	puts(_("  psql [options] [dbname [username]]\n"));
 	puts(_("Options:"));

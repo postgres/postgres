@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.41 2002/07/06 20:12:30 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.42 2002/08/10 19:35:00 tgl Exp $
  */
 #include "postgres_fe.h"
 
@@ -466,7 +466,8 @@ SendQuery(const char *query)
 
 	/* Possible microtiming output */
 	if (pset.timing && success)
-		printf(gettext("Total time: %.3fs\n"), ((after.tv_sec-before.tv_sec)*1000000 + after.tv_usec - before.tv_usec) / 1000000.0);
+		printf(gettext("Total time: %.2f msec\n"),
+			   ((after.tv_sec-before.tv_sec)*1000000 + after.tv_usec - before.tv_usec) / 1000.0);
 
 	return success;
 }

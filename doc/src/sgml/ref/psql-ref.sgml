@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.70 2002/08/10 03:56:23 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.71 2002/08/10 19:35:00 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -488,7 +488,7 @@ PostgreSQL documentation
     the string <literal>=&gt;</literal>. For example,
 <programlisting>
 $ <userinput>psql testdb</userinput>
-Welcome to psql, the PostgreSQL interactive terminal.
+Welcome to psql &version;, the PostgreSQL interactive terminal.
 
 Type:  \copyright for distribution terms
        \h for help with SQL commands
@@ -1582,7 +1582,7 @@ lo_import 152801
        <term><literal>\timing</literal></term>
         <listitem>
         <para>
-         Toggles a display of how long each query takes in seconds.
+         Toggles a display of how long each query takes, in milliseconds.
         </para>
        </listitem>
       </varlistentry>

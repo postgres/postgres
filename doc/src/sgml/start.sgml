@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/start.sgml,v 1.22 2002/01/20 22:19:56 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/start.sgml,v 1.23 2002/08/10 19:35:00 tgl Exp $
 -->
 
  <chapter id="tutorial-start">
@@ -313,7 +313,7 @@ createdb: database creation failed
     In <command>psql</command>, you will be greeted with the following
     message:
 <screen>
-Welcome to psql, the PostgreSQL interactive terminal.
+Welcome to psql &version;, the PostgreSQL interactive terminal.
  
 Type:  \copyright for distribution terms
        \h for help with SQL commands

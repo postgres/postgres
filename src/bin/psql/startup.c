@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.61 2002/07/15 22:48:54 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.62 2002/08/10 19:35:01 tgl Exp $
  */
 #include "postgres_fe.h"
 
@@ -281,13 +281,13 @@ main(int argc, char *argv[])
 		pset.issuper = test_superuser(PQuser(pset.db));
 		if (!QUIET() && !pset.notty)
 		{
-			printf(gettext("Welcome to %s, the PostgreSQL interactive terminal.\n\n"
+			printf(gettext("Welcome to %s %s, the PostgreSQL interactive terminal.\n\n"
 						   "Type:  \\copyright for distribution terms\n"
 						   "       \\h for help with SQL commands\n"
 					   "       \\? for help on internal slash commands\n"
 			  "       \\g or terminate with semicolon to execute query\n"
 						   "       \\q to quit\n\n"),
-				   pset.progname);
+				   pset.progname, PG_VERSION);
 #ifdef USE_SSL
 			printSSLInfo();
 #endif
