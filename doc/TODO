@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Oct 18 22:31:00 EDT 2002
+Last updated:		Sat Oct 19 22:29:58 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -254,6 +254,7 @@ Commands
 	o Add SET SCHEMA
 	o Allow EXPLAIN EXECUTE to see prepared plans
 	o Allow SHOW of non-modifiable variables, like pg_controldata
+	o Add GUC parameter to control the maximum number of rewrite cycles
 
 * SERVER-SIDE LANGUAGES
 	o Allow PL/PgSQL's RAISE function to take expressions
