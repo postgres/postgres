@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tupmacs.h,v 1.6 1998/09/07 05:35:45 momjian Exp $
+ * $Id: tupmacs.h,v 1.7 1998/09/08 15:24:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,7 +75,7 @@
 		( \
 			((attlen) == sizeof(char)) ? \
 			( \
-				(cur_offset) \
+				(long)(cur_offset) \
 			) \
 			: \
 			( \
