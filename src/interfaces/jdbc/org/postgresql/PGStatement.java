@@ -3,7 +3,7 @@ package org.postgresql;
 
 import java.sql.*;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/Attic/PGStatement.java,v 1.5 2002/09/06 21:23:05 momjian Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/Attic/PGStatement.java,v 1.6 2002/09/08 00:15:28 barry Exp $
  * This interface defines PostgreSQL extentions to the java.sql.Statement interface.
  * Any java.sql.Statement object returned by the driver will also implement this
  * interface
@@ -18,7 +18,7 @@ public interface PGStatement
 	 */
 	public long getLastOID() throws SQLException;
 
-	public void setUseServerPrepare(boolean flag);
+	public void setUseServerPrepare(boolean flag) throws SQLException;
 
 	public boolean isUseServerPrepare();
 

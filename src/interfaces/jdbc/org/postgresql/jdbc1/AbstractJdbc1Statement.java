@@ -8,7 +8,7 @@ import java.util.Vector;
 import org.postgresql.largeobject.*;
 import org.postgresql.util.*;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.7 2002/09/06 21:23:06 momjian Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.8 2002/09/08 00:15:29 barry Exp $
  * This class defines methods of the jdbc1 specification.  This class is
  * extended by org.postgresql.jdbc2.AbstractJdbc2Statement which adds the jdbc2
  * methods.  The real Statement class (for jdbc1) is org.postgresql.jdbc1.Jdbc1Statement
@@ -111,8 +111,6 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 		m_sqlFragments = new String[v.size()];
 		m_binds = new String[v.size() - 1];
 		m_bindTypes = new String[v.size() - 1];
-		//BJL why if binds is new???
-		clearParameters();
 
 		for (i = 0 ; i < m_sqlFragments.length; ++i)
 			m_sqlFragments[i] = (String)v.elementAt(i);
@@ -131,6 +129,14 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 	{
 		String l_sql = replaceProcessing(p_sql);
 		m_sqlFragments = new String[] {l_sql};
+		//If we have already created a server prepared statement, we need
+		//to deallocate the existing one
+		if (m_statementName != null) {
+			((AbstractJdbc1Connection)connection).ExecSQL("DEALLOCATE " + m_statementName);
+			m_statementName = null;
+			m_origSqlFragments = null;
+			m_executeSqlFragments = null;
+		}
 		return executeQuery();
 	}
 
@@ -164,6 +170,14 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 	{
 		String l_sql = replaceProcessing(p_sql);
 		m_sqlFragments = new String[] {l_sql};
+		//If we have already created a server prepared statement, we need
+		//to deallocate the existing one
+		if (m_statementName != null) {
+			((AbstractJdbc1Connection)connection).ExecSQL("DEALLOCATE " + m_statementName);
+			m_statementName = null;
+			m_origSqlFragments = null;
+			m_executeSqlFragments = null;
+		}
 		return executeUpdate();
 	}
 
@@ -199,6 +213,14 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 	{
 		String l_sql = replaceProcessing(p_sql);
 		m_sqlFragments = new String[] {l_sql};
+		//If we have already created a server prepared statement, we need
+		//to deallocate the existing one
+		if (m_statementName != null) {
+			((AbstractJdbc1Connection)connection).ExecSQL("DEALLOCATE " + m_statementName);
+			m_statementName = null;
+			m_origSqlFragments = null;
+			m_executeSqlFragments = null;
+		}
 		return execute();
 	}
 
@@ -565,6 +587,11 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 		java.sql.ResultSet rs = getResultSet();
 		if (rs != null)
 			rs.close();
+
+		// If using server prepared statements deallocate them
+		if (m_useServerPrepare && m_statementName != null) {
+			((AbstractJdbc1Connection)connection).ExecSQL("DEALLOCATE " + m_statementName);
+		}
 
 		// Disasociate it from us (For Garbage Collection)
 		result = null;
@@ -1812,9 +1839,20 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 
 
 
-	public void setUseServerPrepare(boolean flag)
-	{
-		m_useServerPrepare = flag;
+    public void setUseServerPrepare(boolean flag) throws SQLException {
+        //Server side prepared statements were introduced in 7.3
+        if (connection.haveMinimumServerVersion("7.3")) {
+			//If turning server prepared statements off deallocate statement
+			//and reset statement name
+			if (m_useServerPrepare != flag && !flag)
+				((AbstractJdbc1Connection)connection).ExecSQL("DEALLOCATE " + m_statementName);
+			m_statementName = null;
+			m_useServerPrepare = flag;
+		} else {
+			//This is a pre 7.3 server so no op this method
+			//which means we will never turn on the flag to use server
+			//prepared statements and thus regular processing will continue
+		}
 	}
 
 	public boolean isUseServerPrepare()

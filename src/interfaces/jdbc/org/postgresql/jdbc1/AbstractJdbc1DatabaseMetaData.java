@@ -27,10 +27,20 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	protected static final int iInt2Oid = 21; // OID for int2
 	protected static final int iInt4Oid = 23; // OID for int4
 	protected static final int VARHDRSZ = 4;	// length for int4
+	protected static int NAME_SIZE = 64;	// length for name datatype
 
 	public AbstractJdbc1DatabaseMetaData(AbstractJdbc1Connection conn)
 	{
 		this.connection = conn;
+		try {
+			if (connection.haveMinimumServerVersion("7.3")) {
+				NAME_SIZE = 64;
+			} else {
+				NAME_SIZE = 32;
+			}
+		} catch (SQLException l_se) {
+			//leave value at default
+		}
 	}
 
 	/*
@@ -1290,16 +1300,14 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	}
 
 	/*
-	 * Whats the limit on column name length.  The description of
-	 * pg_class would say '32' (length of pg_class.relname) - we
-	 * should probably do a query for this....but....
+	 * Whats the limit on column name length.
 	 *
 	 * @return the maximum column name length
 	 * @exception SQLException if a database access error occurs
 	 */
 	public int getMaxColumnNameLength() throws SQLException
 	{
-		return 32;
+		return NAME_SIZE;
 	}
 
 	/*
@@ -1383,15 +1391,14 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	}
 
 	/*
-	 * What is the maximum cursor name length (the same as all
-	 * the other F***** identifiers!)
+	 * What is the maximum cursor name length
 	 *
 	 * @return max cursor name length in bytes
 	 * @exception SQLException if a database access error occurs
 	 */
 	public int getMaxCursorNameLength() throws SQLException
 	{
-		return 32;
+		return NAME_SIZE;
 	}
 
 	/*
@@ -1415,16 +1422,14 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	}
 
 	/*
-	 * What is the maximum length of a procedure name?
-	 * (length of pg_proc.proname used) - again, I really
-	 * should do a query here to get it.
+	 * What is the maximum length of a procedure name
 	 *
 	 * @return the max name length in bytes
 	 * @exception SQLException if a database access error occurs
 	 */
 	public int getMaxProcedureNameLength() throws SQLException
 	{
-		return 32;
+		return NAME_SIZE;
 	}
 
 	public int getMaxCatalogNameLength() throws SQLException
@@ -1490,15 +1495,14 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	}
 
 	/*
-	 * What is the maximum length of a table name?	This was found
-	 * from pg_class.relname length
+	 * What is the maximum length of a table name
 	 *
 	 * @return max name length in bytes
 	 * @exception SQLException if a database access error occurs
 	 */
 	public int getMaxTableNameLength() throws SQLException
 	{
-		return 32;
+		return NAME_SIZE;
 	}
 
 	/*
@@ -1514,17 +1518,14 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	}
 
 	/*
-	 * What is the maximum length of a user name?  Well, we generally
-	 * use UNIX like user names in PostgreSQL, so I think this would
-	 * be 8.  However, showing the schema for pg_user shows a length
-	 * for username of 32.
+	 * What is the maximum length of a user name
 	 *
 	 * @return the max name length in bytes
 	 * @exception SQLException if a database access error occurs
 	 */
 	public int getMaxUserNameLength() throws SQLException
 	{
-		return 32;
+		return NAME_SIZE;
 	}
 
 
@@ -1671,10 +1672,10 @@ public abstract class AbstractJdbc1DatabaseMetaData
 		java.sql.ResultSet r;	// ResultSet for the SQL query that we need to do
 		Vector v = new Vector();		// The new ResultSet tuple stuff
 
-		f[0] = new Field(connection, "PROCEDURE_CAT", iVarcharOid, 32);
-		f[1] = new Field(connection, "PROCEDURE_SCHEM", iVarcharOid, 32);
-		f[2] = new Field(connection, "PROCEDURE_NAME", iVarcharOid, 32);
-		f[3] = f[4] = f[5] = new Field(connection, "reserved", iVarcharOid, 32);	// null;	// reserved, must be null for now
+		f[0] = new Field(connection, "PROCEDURE_CAT", iVarcharOid, NAME_SIZE);
+		f[1] = new Field(connection, "PROCEDURE_SCHEM", iVarcharOid, NAME_SIZE);
+		f[2] = new Field(connection, "PROCEDURE_NAME", iVarcharOid, NAME_SIZE);
+		f[3] = f[4] = f[5] = new Field(connection, "reserved", iVarcharOid, NAME_SIZE);	// null;	// reserved, must be null for now
 		f[6] = new Field(connection, "REMARKS", iVarcharOid, 8192);
 		f[7] = new Field(connection, "PROCEDURE_TYPE", iInt2Oid, 2);
 
@@ -1763,19 +1764,19 @@ public abstract class AbstractJdbc1DatabaseMetaData
 		ResultSet r;	// ResultSet for the SQL query that we need to do
 		Vector v = new Vector();		// The new ResultSet tuple stuff
 
-		f[0] = new Field(connection, "PROCEDURE_CAT", iVarcharOid, 32);
-		f[1] = new Field(connection, "PROCEDURE_SCHEM", iVarcharOid, 32);
-		f[2] = new Field(connection, "PROCEDURE_NAME", iVarcharOid, 32);
-		f[3] = new Field(connection, "COLUMN_NAME", iVarcharOid, 32);
+		f[0] = new Field(connection, "PROCEDURE_CAT", iVarcharOid, NAME_SIZE);
+		f[1] = new Field(connection, "PROCEDURE_SCHEM", iVarcharOid, NAME_SIZE);
+		f[2] = new Field(connection, "PROCEDURE_NAME", iVarcharOid, NAME_SIZE);
+		f[3] = new Field(connection, "COLUMN_NAME", iVarcharOid, NAME_SIZE);
 		f[4] = new Field(connection, "COLUMN_TYPE", iInt2Oid, 2);
 		f[5] = new Field(connection, "DATA_TYPE", iInt2Oid, 2);
-		f[6] = new Field(connection, "TYPE_NAME", iVarcharOid, 32);
+		f[6] = new Field(connection, "TYPE_NAME", iVarcharOid, NAME_SIZE);
 		f[7] = new Field(connection, "PRECISION", iInt4Oid, 4);
 		f[8] = new Field(connection, "LENGTH", iInt4Oid, 4);
 		f[9] = new Field(connection, "SCALE", iInt2Oid, 2);
 		f[10] = new Field(connection, "RADIX", iInt2Oid, 2);
 		f[11] = new Field(connection, "NULLABLE", iInt2Oid, 2);
-		f[12] = new Field(connection, "REMARKS", iVarcharOid, 32);
+		f[12] = new Field(connection, "REMARKS", iVarcharOid, NAME_SIZE);
 
 		// add query loop here
 
@@ -1828,11 +1829,11 @@ public abstract class AbstractJdbc1DatabaseMetaData
 		java.sql.ResultSet r;	// ResultSet for the SQL query that we need to do
 		Vector v = new Vector();		// The new ResultSet tuple stuff
 
-		f[0] = new Field(connection, "TABLE_CAT", iVarcharOid, 32);
-		f[1] = new Field(connection, "TABLE_SCHEM", iVarcharOid, 32);
-		f[2] = new Field(connection, "TABLE_NAME", iVarcharOid, 32);
-		f[3] = new Field(connection, "TABLE_TYPE", iVarcharOid, 32);
-		f[4] = new Field(connection, "REMARKS", iVarcharOid, 32);
+		f[0] = new Field(connection, "TABLE_CAT", iVarcharOid, NAME_SIZE);
+		f[1] = new Field(connection, "TABLE_SCHEM", iVarcharOid, NAME_SIZE);
+		f[2] = new Field(connection, "TABLE_NAME", iVarcharOid, NAME_SIZE);
+		f[3] = new Field(connection, "TABLE_TYPE", iVarcharOid, NAME_SIZE);
+		f[4] = new Field(connection, "REMARKS", iVarcharOid, NAME_SIZE);
 
 		// Now form the query
 		StringBuffer sql = new StringBuffer("select relname,oid,relkind from pg_class where (");
@@ -1958,7 +1959,7 @@ public abstract class AbstractJdbc1DatabaseMetaData
 		Field f[] = new Field[1];
 		Vector v = new Vector();
 		byte[][] tuple = new byte[1][0];
-		f[0] = new Field(connection, "TABLE_SCHEM", iVarcharOid, 32);
+		f[0] = new Field(connection, "TABLE_SCHEM", iVarcharOid, NAME_SIZE);
 		tuple[0] = "".getBytes();
 		v.addElement(tuple);
 		return connection.getResultSet(null, f, v, "OK", 1);
@@ -1999,7 +2000,7 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	{
 		Field f[] = new Field[1];
 		Vector v = new Vector();
-		f[0] = new Field(connection, new String("TABLE_TYPE"), iVarcharOid, 32);
+		f[0] = new Field(connection, new String("TABLE_TYPE"), iVarcharOid, NAME_SIZE);
 		for (int i = 0;i < getTableTypes.length;i++)
 		{
 			byte[][] tuple = new byte[1][0];
@@ -2062,24 +2063,24 @@ public abstract class AbstractJdbc1DatabaseMetaData
 		Vector v = new Vector();		// The new ResultSet tuple stuff
 		Field f[] = new Field[18];		// The field descriptors for the new ResultSet
 
-		f[0] = new Field(connection, "TABLE_CAT", iVarcharOid, 32);
-		f[1] = new Field(connection, "TABLE_SCHEM", iVarcharOid, 32);
-		f[2] = new Field(connection, "TABLE_NAME", iVarcharOid, 32);
-		f[3] = new Field(connection, "COLUMN_NAME", iVarcharOid, 32);
+		f[0] = new Field(connection, "TABLE_CAT", iVarcharOid, NAME_SIZE);
+		f[1] = new Field(connection, "TABLE_SCHEM", iVarcharOid, NAME_SIZE);
+		f[2] = new Field(connection, "TABLE_NAME", iVarcharOid, NAME_SIZE);
+		f[3] = new Field(connection, "COLUMN_NAME", iVarcharOid, NAME_SIZE);
 		f[4] = new Field(connection, "DATA_TYPE", iInt2Oid, 2);
-		f[5] = new Field(connection, "TYPE_NAME", iVarcharOid, 32);
+		f[5] = new Field(connection, "TYPE_NAME", iVarcharOid, NAME_SIZE);
 		f[6] = new Field(connection, "COLUMN_SIZE", iInt4Oid, 4);
-		f[7] = new Field(connection, "BUFFER_LENGTH", iVarcharOid, 32);
+		f[7] = new Field(connection, "BUFFER_LENGTH", iVarcharOid, NAME_SIZE);
 		f[8] = new Field(connection, "DECIMAL_DIGITS", iInt4Oid, 4);
 		f[9] = new Field(connection, "NUM_PREC_RADIX", iInt4Oid, 4);
 		f[10] = new Field(connection, "NULLABLE", iInt4Oid, 4);
-		f[11] = new Field(connection, "REMARKS", iVarcharOid, 32);
-		f[12] = new Field(connection, "COLUMN_DEF", iVarcharOid, 32);
+		f[11] = new Field(connection, "REMARKS", iVarcharOid, NAME_SIZE);
+		f[12] = new Field(connection, "COLUMN_DEF", iVarcharOid, NAME_SIZE);
 		f[13] = new Field(connection, "SQL_DATA_TYPE", iInt4Oid, 4);
 		f[14] = new Field(connection, "SQL_DATETIME_SUB", iInt4Oid, 4);
-		f[15] = new Field(connection, "CHAR_OCTET_LENGTH", iVarcharOid, 32);
+		f[15] = new Field(connection, "CHAR_OCTET_LENGTH", iVarcharOid, NAME_SIZE);
 		f[16] = new Field(connection, "ORDINAL_POSITION", iInt4Oid, 4);
-		f[17] = new Field(connection, "IS_NULLABLE", iVarcharOid, 32);
+		f[17] = new Field(connection, "IS_NULLABLE", iVarcharOid, NAME_SIZE);
 
 		StringBuffer sql = new StringBuffer(512);
 
@@ -2245,14 +2246,14 @@ public abstract class AbstractJdbc1DatabaseMetaData
 		else
 			columnNamePattern = columnNamePattern.toLowerCase();
 
-		f[0] = new Field(connection, "TABLE_CAT", iVarcharOid, 32);
-		f[1] = new Field(connection, "TABLE_SCHEM", iVarcharOid, 32);
-		f[2] = new Field(connection, "TABLE_NAME", iVarcharOid, 32);
-		f[3] = new Field(connection, "COLUMN_NAME", iVarcharOid, 32);
-		f[4] = new Field(connection, "GRANTOR", iVarcharOid, 32);
-		f[5] = new Field(connection, "GRANTEE", iVarcharOid, 32);
-		f[6] = new Field(connection, "PRIVILEGE", iVarcharOid, 32);
-		f[7] = new Field(connection, "IS_GRANTABLE", iVarcharOid, 32);
+		f[0] = new Field(connection, "TABLE_CAT", iVarcharOid, NAME_SIZE);
+		f[1] = new Field(connection, "TABLE_SCHEM", iVarcharOid, NAME_SIZE);
+		f[2] = new Field(connection, "TABLE_NAME", iVarcharOid, NAME_SIZE);
+		f[3] = new Field(connection, "COLUMN_NAME", iVarcharOid, NAME_SIZE);
+		f[4] = new Field(connection, "GRANTOR", iVarcharOid, NAME_SIZE);
+		f[5] = new Field(connection, "GRANTEE", iVarcharOid, NAME_SIZE);
+		f[6] = new Field(connection, "PRIVILEGE", iVarcharOid, NAME_SIZE);
+		f[7] = new Field(connection, "IS_GRANTABLE", iVarcharOid, NAME_SIZE);
 
 		// This is taken direct from the psql source
 		java.sql.ResultSet r = connection.ExecSQL("SELECT relname, relacl FROM pg_class, pg_user WHERE ( relkind = 'r' OR relkind = 'i') and relname !~ '^pg_' and relname !~ '^xin[vx][0-9]+' and usesysid = relowner and relname like '" + table.toLowerCase() + "' ORDER BY relname");
@@ -2309,14 +2310,14 @@ public abstract class AbstractJdbc1DatabaseMetaData
 		if (tableNamePattern == null)
 			tableNamePattern = "%";
 
-		f[0] = new Field(connection, "TABLE_CAT", iVarcharOid, 32);
-		f[1] = new Field(connection, "TABLE_SCHEM", iVarcharOid, 32);
-		f[2] = new Field(connection, "TABLE_NAME", iVarcharOid, 32);
-		f[3] = new Field(connection, "COLUMN_NAME", iVarcharOid, 32);
-		f[4] = new Field(connection, "GRANTOR", iVarcharOid, 32);
-		f[5] = new Field(connection, "GRANTEE", iVarcharOid, 32);
-		f[6] = new Field(connection, "PRIVILEGE", iVarcharOid, 32);
-		f[7] = new Field(connection, "IS_GRANTABLE", iVarcharOid, 32);
+		f[0] = new Field(connection, "TABLE_CAT", iVarcharOid, NAME_SIZE);
+		f[1] = new Field(connection, "TABLE_SCHEM", iVarcharOid, NAME_SIZE);
+		f[2] = new Field(connection, "TABLE_NAME", iVarcharOid, NAME_SIZE);
+		f[3] = new Field(connection, "COLUMN_NAME", iVarcharOid, NAME_SIZE);
+		f[4] = new Field(connection, "GRANTOR", iVarcharOid, NAME_SIZE);
+		f[5] = new Field(connection, "GRANTEE", iVarcharOid, NAME_SIZE);
+		f[6] = new Field(connection, "PRIVILEGE", iVarcharOid, NAME_SIZE);
+		f[7] = new Field(connection, "IS_GRANTABLE", iVarcharOid, NAME_SIZE);
 
 		// This is taken direct from the psql source
 		java.sql.ResultSet r = connection.ExecSQL("SELECT relname, relacl FROM pg_class, pg_user WHERE ( relkind = 'r' OR relkind = 'i') and relname !~ '^pg_' and relname !~ '^xin[vx][0-9]+' and usesysid = relowner and relname like '" + tableNamePattern.toLowerCase() + "' ORDER BY relname");
@@ -2377,9 +2378,9 @@ public abstract class AbstractJdbc1DatabaseMetaData
 		Vector v = new Vector();		// The new ResultSet tuple stuff
 
 		f[0] = new Field(connection, "SCOPE", iInt2Oid, 2);
-		f[1] = new Field(connection, "COLUMN_NAME", iVarcharOid, 32);
+		f[1] = new Field(connection, "COLUMN_NAME", iVarcharOid, NAME_SIZE);
 		f[2] = new Field(connection, "DATA_TYPE", iInt2Oid, 2);
-		f[3] = new Field(connection, "TYPE_NAME", iVarcharOid, 32);
+		f[3] = new Field(connection, "TYPE_NAME", iVarcharOid, NAME_SIZE);
 		f[4] = new Field(connection, "COLUMN_SIZE", iInt4Oid, 4);
 		f[5] = new Field(connection, "BUFFER_LENGTH", iInt4Oid, 4);
 		f[6] = new Field(connection, "DECIMAL_DIGITS", iInt2Oid, 2);
@@ -2533,19 +2534,19 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	{
 		Field f[] = new Field[14];
 
-		f[0] = new Field(connection, "PKTABLE_CAT", iVarcharOid, 32);
-		f[1] = new Field(connection, "PKTABLE_SCHEM", iVarcharOid, 32);
-		f[2] = new Field(connection, "PKTABLE_NAME", iVarcharOid, 32);
-		f[3] = new Field(connection, "PKCOLUMN_NAME", iVarcharOid, 32);
-		f[4] = new Field(connection, "FKTABLE_CAT", iVarcharOid, 32);
-		f[5] = new Field(connection, "FKTABLE_SCHEM", iVarcharOid, 32);
-		f[6] = new Field(connection, "FKTABLE_NAME", iVarcharOid, 32);
-		f[7] = new Field(connection, "FKCOLUMN_NAME", iVarcharOid, 32);
+		f[0] = new Field(connection, "PKTABLE_CAT", iVarcharOid, NAME_SIZE);
+		f[1] = new Field(connection, "PKTABLE_SCHEM", iVarcharOid, NAME_SIZE);
+		f[2] = new Field(connection, "PKTABLE_NAME", iVarcharOid, NAME_SIZE);
+		f[3] = new Field(connection, "PKCOLUMN_NAME", iVarcharOid, NAME_SIZE);
+		f[4] = new Field(connection, "FKTABLE_CAT", iVarcharOid, NAME_SIZE);
+		f[5] = new Field(connection, "FKTABLE_SCHEM", iVarcharOid, NAME_SIZE);
+		f[6] = new Field(connection, "FKTABLE_NAME", iVarcharOid, NAME_SIZE);
+		f[7] = new Field(connection, "FKCOLUMN_NAME", iVarcharOid, NAME_SIZE);
 		f[8] = new Field(connection, "KEY_SEQ", iInt2Oid, 2);
 		f[9] = new Field(connection, "UPDATE_RULE", iInt2Oid, 2);
 		f[10] = new Field(connection, "DELETE_RULE", iInt2Oid, 2);
-		f[11] = new Field(connection, "FK_NAME", iVarcharOid, 32);
-		f[12] = new Field(connection, "PK_NAME", iVarcharOid, 32);
+		f[11] = new Field(connection, "FK_NAME", iVarcharOid, NAME_SIZE);
+		f[12] = new Field(connection, "PK_NAME", iVarcharOid, NAME_SIZE);
 		f[13] = new Field(connection, "DEFERRABILITY", iInt2Oid, 2);
 
 		java.sql.ResultSet rs = connection.ExecSQL(
@@ -2962,19 +2963,19 @@ public abstract class AbstractJdbc1DatabaseMetaData
 			ResultSet r;	// ResultSet for the SQL query that we need to do
 			Vector v = new Vector();		// The new ResultSet tuple stuff
 
-			f[0] = new Field(connection, "TYPE_NAME", iVarcharOid, 32);
+			f[0] = new Field(connection, "TYPE_NAME", iVarcharOid, NAME_SIZE);
 			f[1] = new Field(connection, "DATA_TYPE", iInt2Oid, 2);
 			f[2] = new Field(connection, "PRECISION", iInt4Oid, 4);
-			f[3] = new Field(connection, "LITERAL_PREFIX", iVarcharOid, 32);
-			f[4] = new Field(connection, "LITERAL_SUFFIX", iVarcharOid, 32);
-			f[5] = new Field(connection, "CREATE_PARAMS", iVarcharOid, 32);
+			f[3] = new Field(connection, "LITERAL_PREFIX", iVarcharOid, NAME_SIZE);
+			f[4] = new Field(connection, "LITERAL_SUFFIX", iVarcharOid, NAME_SIZE);
+			f[5] = new Field(connection, "CREATE_PARAMS", iVarcharOid, NAME_SIZE);
 			f[6] = new Field(connection, "NULLABLE", iInt2Oid, 2);
 			f[7] = new Field(connection, "CASE_SENSITIVE", iBoolOid, 1);
 			f[8] = new Field(connection, "SEARCHABLE", iInt2Oid, 2);
 			f[9] = new Field(connection, "UNSIGNED_ATTRIBUTE", iBoolOid, 1);
 			f[10] = new Field(connection, "FIXED_PREC_SCALE", iBoolOid, 1);
 			f[11] = new Field(connection, "AUTO_INCREMENT", iBoolOid, 1);
-			f[12] = new Field(connection, "LOCAL_TYPE_NAME", iVarcharOid, 32);
+			f[12] = new Field(connection, "LOCAL_TYPE_NAME", iVarcharOid, NAME_SIZE);
 			f[13] = new Field(connection, "MINIMUM_SCALE", iInt2Oid, 2);
 			f[14] = new Field(connection, "MAXIMUM_SCALE", iInt2Oid, 2);
 			f[15] = new Field(connection, "SQL_DATA_TYPE", iInt4Oid, 4);
@@ -3072,19 +3073,19 @@ public abstract class AbstractJdbc1DatabaseMetaData
 		java.sql.ResultSet r;	// ResultSet for the SQL query that we need to do
 		Vector v = new Vector();		// The new ResultSet tuple stuff
 
-		f[0] = new Field(connection, "TABLE_CAT", iVarcharOid, 32);
-		f[1] = new Field(connection, "TABLE_SCHEM", iVarcharOid, 32);
-		f[2] = new Field(connection, "TABLE_NAME", iVarcharOid, 32);
+		f[0] = new Field(connection, "TABLE_CAT", iVarcharOid, NAME_SIZE);
+		f[1] = new Field(connection, "TABLE_SCHEM", iVarcharOid, NAME_SIZE);
+		f[2] = new Field(connection, "TABLE_NAME", iVarcharOid, NAME_SIZE);
 		f[3] = new Field(connection, "NON_UNIQUE", iBoolOid, 1);
-		f[4] = new Field(connection, "INDEX_QUALIFIER", iVarcharOid, 32);
-		f[5] = new Field(connection, "INDEX_NAME", iVarcharOid, 32);
+		f[4] = new Field(connection, "INDEX_QUALIFIER", iVarcharOid, NAME_SIZE);
+		f[5] = new Field(connection, "INDEX_NAME", iVarcharOid, NAME_SIZE);
 		f[6] = new Field(connection, "TYPE", iInt2Oid, 2);
 		f[7] = new Field(connection, "ORDINAL_POSITION", iInt2Oid, 2);
-		f[8] = new Field(connection, "COLUMN_NAME", iVarcharOid, 32);
-		f[9] = new Field(connection, "ASC_OR_DESC", iVarcharOid, 32);
+		f[8] = new Field(connection, "COLUMN_NAME", iVarcharOid, NAME_SIZE);
+		f[9] = new Field(connection, "ASC_OR_DESC", iVarcharOid, NAME_SIZE);
 		f[10] = new Field(connection, "CARDINALITY", iInt4Oid, 4);
 		f[11] = new Field(connection, "PAGES", iInt4Oid, 4);
-		f[12] = new Field(connection, "FILTER_CONDITION", iVarcharOid, 32);
+		f[12] = new Field(connection, "FILTER_CONDITION", iVarcharOid, NAME_SIZE);
 
 		r = connection.ExecSQL("select " +
 							   "c.relname, " +
