@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.79 2002/08/30 17:14:30 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.80 2002/09/08 02:33:08 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -656,7 +656,7 @@ su - postgres
         <para>
          Builds components that require Tcl/Tk, which are
          <application>libpgtcl</>, <application>pgtclsh</>,
-         <application>pgtksh</application>, <application>PgAccess</>,
+         <application>pgtksh</application>,
          and <application>PL/Tcl</>.  But see below about
          <option>--without-tk</>.
         </para>
@@ -668,8 +668,8 @@ su - postgres
        <listitem>
         <para>
          If you specify <option>--with-tcl</> and this option, then
-         programs that require <productname>Tk</>
-         (<application>pgtksh</> and <application>PgAccess</>) will be
+         the program that requires <productname>Tk</>
+         (<application>pgtksh</>) will be
          excluded.
         </para>
        </listitem>

@@ -1,5 +1,5 @@
 <!-- reference.sgml
-$Header: /cvsroot/pgsql/doc/src/sgml/reference.sgml,v 1.37 2002/08/27 04:55:07 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/reference.sgml,v 1.38 2002/09/08 02:33:08 momjian Exp $
 
 PostgreSQL Reference Manual
 -->
@@ -176,7 +176,6 @@ Disable this chapter until we have more functions documented.
    &droplang;
    &dropuser;
    &ecpgRef;
-   &pgAccess;
    &pgConfig;
    &pgDump;
    &pgDumpall;
