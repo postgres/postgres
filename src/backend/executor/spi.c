@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.85 2003/01/29 15:24:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.86 2003/02/14 21:12:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1088,6 +1088,15 @@ _SPI_execute(const char *src, int tcount, _SPI_plan *plan)
 			else
 				canSetResult = false;
 
+			/* Reset state if can set result */
+			if (canSetResult)
+			{
+				SPI_processed = 0;
+				SPI_lastoid = InvalidOid;
+				SPI_tuptable = NULL;
+				_SPI_current->tuptable = NULL;
+			}
+
 			if (queryTree->commandType == CMD_UTILITY)
 			{
 				if (IsA(queryTree->utilityStmt, CopyStmt))
@@ -1198,6 +1207,15 @@ _SPI_execute_plan(_SPI_plan *plan, Datum *Values, const char *Nulls,
 				canSetResult = true;
 			else
 				canSetResult = false;
+
+			/* Reset state if can set result */
+			if (canSetResult)
+			{
+				SPI_processed = 0;
+				SPI_lastoid = InvalidOid;
+				SPI_tuptable = NULL;
+				_SPI_current->tuptable = NULL;
+			}
 
 			if (queryTree->commandType == CMD_UTILITY)
 			{
