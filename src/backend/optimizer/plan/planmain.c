@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.55 2000/04/12 17:15:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.55.2.1 2000/09/23 23:50:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -184,7 +184,7 @@ subplanner(Query *root,
 	 * base_rel_list as relation references are found (e.g., in the
 	 * qualification, the targetlist, etc.).  Restrict and join clauses
 	 * are added to appropriate lists belonging to the mentioned
-	 * relations, and we also build lists of equijoined keys for pathkey
+	 * relations.  We also build lists of equijoined keys for pathkey
 	 * construction.
 	 */
 	root->base_rel_list = NIL;
@@ -193,7 +193,17 @@ subplanner(Query *root,
 
 	make_var_only_tlist(root, flat_tlist);
 	add_restrict_and_join_to_rels(root, qual);
+
+	/*
+	 * Make sure we have RelOptInfo nodes for all relations used.
+	 */
 	add_missing_rels_to_query(root);
+
+	/*
+	 * Use the completed lists of equijoined keys to deduce any implied
+	 * but unstated equalities (for example, A=B and B=C imply A=C).
+	 */
+	generate_implied_equalities(root);
 
 	/*
 	 * We should now have all the pathkey equivalence sets built, so it's

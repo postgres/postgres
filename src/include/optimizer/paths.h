@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: paths.h,v 1.44 2000/04/12 17:16:42 momjian Exp $
+ * $Id: paths.h,v 1.44.2.1 2000/09/23 23:50:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -90,6 +90,7 @@ typedef enum
 } PathKeysComparison;
 
 extern void add_equijoined_keys(Query *root, RestrictInfo *restrictinfo);
+extern void generate_implied_equalities(Query *root);
 extern List *canonicalize_pathkeys(Query *root, List *pathkeys);
 extern PathKeysComparison compare_pathkeys(List *keys1, List *keys2);
 extern bool pathkeys_contained_in(List *keys1, List *keys2);

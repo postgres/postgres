@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.21 2000/04/12 17:15:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.21.2.1 2000/09/23 23:50:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,7 @@
 #include "optimizer/joininfo.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
+#include "optimizer/planmain.h"
 #include "optimizer/tlist.h"
 #include "optimizer/var.h"
 #include "parser/parsetree.h"
@@ -227,33 +228,105 @@ add_equijoined_keys(Query *root, RestrictInfo *restrictinfo)
 	 * into our new set. When done, we add the new set to the front of
 	 * equi_key_list.
 	 *
+	 * It may well be that the two items we're given are already known to
+	 * be equijoin-equivalent, in which case we don't need to change our
+	 * data structure.  If we find both of them in the same equivalence
+	 * set to start with, we can quit immediately.
+	 *
 	 * This is a standard UNION-FIND problem, for which there exist better
 	 * data structures than simple lists.  If this code ever proves to be
 	 * a bottleneck then it could be sped up --- but for now, simple is
 	 * beautiful.
 	 */
-	newset = lcons(item1, lcons(item2, NIL));
+	newset = NIL;
 
 	foreach(cursetlink, root->equi_key_list)
 	{
 		List	   *curset = lfirst(cursetlink);
+		bool		item1here = member(item1, curset);
+		bool		item2here = member(item2, curset);
 
-		if (member(item1, curset) || member(item2, curset))
+		if (item1here || item2here)
 		{
+			/* If find both in same equivalence set, no need to do any more */
+			if (item1here && item2here)
+			{
+				/* Better not have seen only one in an earlier set... */
+				Assert(newset == NIL);
+				return;
+			}
+
+			/* Build the new set only when we know we must */
+			if (newset == NIL)
+				newset = lcons(item1, lcons(item2, NIL));
+
 			/* Found a set to merge into our new set */
 			newset = LispUnion(newset, curset);
 
 			/*
 			 * Remove old set from equi_key_list.  NOTE this does not
-			 * change lnext(cursetlink), so the outer foreach doesn't
-			 * break.
+			 * change lnext(cursetlink), so the foreach loop doesn't break.
 			 */
 			root->equi_key_list = lremove(curset, root->equi_key_list);
 			freeList(curset);	/* might as well recycle old cons cells */
 		}
 	}
 
+	/* Build the new set only when we know we must */
+	if (newset == NIL)
+		newset = lcons(item1, lcons(item2, NIL));
+
 	root->equi_key_list = lcons(newset, root->equi_key_list);
+}
+
+/*
+ * generate_implied_equalities
+ *	  Scan the completed equi_key_list for the query, and generate explicit
+ *	  qualifications (WHERE clauses) for all the pairwise equalities not
+ *	  already mentioned in the quals.  This is useful because the additional
+ *	  clauses help the selectivity-estimation code, and in fact it's
+ *	  *necessary* to ensure that sort keys we think are equivalent really
+ *	  are (see src/backend/optimizer/README for more info).
+ *
+ * This routine just walks the equi_key_list to find all pairwise equalities.
+ * We call process_implied_equality (in plan/initsplan.c) to determine whether
+ * each is already known and add it to the proper restrictinfo list if not.
+ */
+void
+generate_implied_equalities(Query *root)
+{
+	List	   *cursetlink;
+
+	foreach(cursetlink, root->equi_key_list)
+	{
+		List	   *curset = lfirst(cursetlink);
+		List	   *ptr1;
+
+		/*
+		 * A set containing only two items cannot imply any equalities
+		 * beyond the one that created the set, so we can skip it.
+		 */
+		if (length(curset) < 3)
+			continue;
+
+		/*
+		 * Match each item in the set with all that appear after it
+		 * (it's sufficient to generate A=B, need not process B=A too).
+		 */
+		foreach(ptr1, curset)
+		{
+			PathKeyItem *item1 = (PathKeyItem *) lfirst(ptr1);
+			List	   *ptr2;
+
+			foreach(ptr2, lnext(ptr1))
+			{
+				PathKeyItem *item2 = (PathKeyItem *) lfirst(ptr2);
+
+				process_implied_equality(root, item1->key, item2->key,
+										 item1->sortop, item2->sortop);
+			}
+		}
+	}
 }
 
 /*

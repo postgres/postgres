@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: planmain.h,v 1.39 2000/04/12 17:16:42 momjian Exp $
+ * $Id: planmain.h,v 1.39.2.1 2000/09/23 23:50:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,6 +43,8 @@ extern Result *make_result(List *tlist, Node *resconstantqual, Plan *subplan);
 extern void make_var_only_tlist(Query *root, List *tlist);
 extern void add_restrict_and_join_to_rels(Query *root, List *clauses);
 extern void add_missing_rels_to_query(Query *root);
+extern void process_implied_equality(Query *root, Node *item1, Node *item2,
+									 Oid sortop1, Oid sortop2);
 
 /*
  * prototypes for plan/setrefs.c
