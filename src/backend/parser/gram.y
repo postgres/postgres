@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.292 2002/03/19 02:18:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.293 2002/03/19 12:52:20 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -3184,6 +3184,14 @@ createdb_opt_item:  LOCATION opt_equal Sconst
 				{
 					$$ = lconsi(3, makeListi1(-1));
 				}
+		| OWNER opt_equal name 
+				{
+					$$ = lconsi(4, makeList1($3));
+				}
+		| OWNER opt_equal DEFAULT
+				{
+					$$ = lconsi(4, makeList1(NULL));
+				}
 		;
 
 
@@ -3199,14 +3207,6 @@ DropdbStmt:	DROP DATABASE database_name
 					DropdbStmt *n = makeNode(DropdbStmt);
 					n->dbname = $3;
 					$$ = (Node *)n;
-				}
-		| OWNER opt_equal name 
-				{
-					$$ = lconsi(4, makeList1($3));
-				}
-		| OWNER opt_equal DEFAULT
-				{
-					$$ = lconsi(4, makeList1(NULL));
 				}
 		;
 
