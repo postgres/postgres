@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.60 1999/02/04 01:46:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.61 1999/02/04 03:19:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1397,13 +1397,13 @@ _copyHashInfo(HashInfo *from)
 }
 
 /* ----------------
- *		_copyMInfo
+ *		_copyMergeInfo
  * ----------------
  */
-static MInfo *
-_copyMInfo(MInfo *from)
+static MergeInfo *
+_copyMergeInfo(MergeInfo *from)
 {
-	MInfo	   *newnode = makeNode(MInfo);
+	MergeInfo	   *newnode = makeNode(MergeInfo);
 
 	/* ----------------
 	 *	copy remainder of node
@@ -1800,8 +1800,8 @@ copyObject(void *from)
 		case T_HashInfo:
 			retval = _copyHashInfo(from);
 			break;
-		case T_MInfo:
-			retval = _copyMInfo(from);
+		case T_MergeInfo:
+			retval = _copyMergeInfo(from);
 			break;
 		case T_JoinInfo:
 			retval = _copyJoinInfo(from);

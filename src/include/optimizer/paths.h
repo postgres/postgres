@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: paths.h,v 1.11 1999/02/03 20:15:53 momjian Exp $
+ * $Id: paths.h,v 1.12 1999/02/04 03:19:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,7 +70,7 @@ extern List *new_join_pathkeys(List *outer_pathkeys,
  */
 extern List *group_clauses_by_order(List *restrictinfo_list,
 					   int inner_relid);
-extern MInfo *match_order_mergeinfo(PathOrder *ordering,
+extern MergeInfo *match_order_mergeinfo(PathOrder *ordering,
 					  List *mergeinfo_list);
 
 /*

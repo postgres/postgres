@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.13 1999/02/04 01:46:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.14 1999/02/04 03:19:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -162,7 +162,6 @@ find_all_join_paths(Query *root, List *joinrels)
 		temp_list = innerrel->pathlist;
 		foreach(path, temp_list)
 		{
-
 			/*
 			 * XXX
 			 *
@@ -235,7 +234,7 @@ sort_inner_and_outer(RelOptInfo * joinrel,
 					 List *mergeinfo_list)
 {
 	List	   *ms_list = NIL;
-	MInfo	   *xmergeinfo = (MInfo *) NULL;
+	MergeInfo	   *xmergeinfo = (MergeInfo *) NULL;
 	MergePath  *temp_node = (MergePath *) NULL;
 	List	   *i;
 	List	   *outerkeys = NIL;
@@ -244,7 +243,7 @@ sort_inner_and_outer(RelOptInfo * joinrel,
 
 	foreach(i, mergeinfo_list)
 	{
-		xmergeinfo = (MInfo *) lfirst(i);
+		xmergeinfo = (MergeInfo *) lfirst(i);
 
 		outerkeys = extract_path_keys(xmergeinfo->jmethod.jmkeys,
 							  outerrel->targetlist,
@@ -325,7 +324,7 @@ match_unsorted_outer(RelOptInfo * joinrel,
 		List	   *clauses = NIL;
 		List	   *matchedJoinKeys = NIL;
 		List	   *matchedJoinClauses = NIL;
-		MInfo	   *xmergeinfo = (MInfo *) NULL;
+		MergeInfo	   *xmergeinfo = (MergeInfo *) NULL;
 
 		outerpath = (Path *) lfirst(i);
 
@@ -465,7 +464,7 @@ match_unsorted_inner(RelOptInfo * joinrel,
 
 	foreach(i, innerpath_list)
 	{
-		MInfo	   *xmergeinfo = (MInfo *) NULL;
+		MergeInfo	   *xmergeinfo = (MergeInfo *) NULL;
 		List	   *clauses = NIL;
 		List	   *matchedJoinKeys = NIL;
 		List	   *matchedJoinClauses = NIL;
@@ -579,7 +578,7 @@ hash_inner_and_outer(RelOptInfo * joinrel,
 					 RelOptInfo * innerrel,
 					 List *hashinfo_list)
 {
-	HashInfo	   *xhashinfo = (HashInfo *) NULL;
+	HashInfo   *xhashinfo = (HashInfo *) NULL;
 	List	   *hjoin_list = NIL;
 	HashPath   *temp_node = (HashPath *) NULL;
 	List	   *i = NIL;

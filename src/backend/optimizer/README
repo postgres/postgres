@@ -1,3 +1,6 @@
+Optimizer Functions
+-------------------
+
 These directories take the Query structure returned by the parser, and
 generate a plan used by the executor.  The /plan directory generates the
 plan, the /path generates all possible ways to join the tables, and
@@ -93,9 +96,18 @@ planner()
 
 Optimizer Structures
 --------------------
-RelOptInfo		- info about every relation
-  RestrictInfo	- info about restrictions
-  JoinInfo		- info about join combinations
-  Path			- info about every way to access a relation(sequential, index)
-    PathOrder 	- info about every ordering (sort, merge of relations)
+
+RelOptInfo		- Every relation
+
+ RestrictInfo	- restriction clauses
+ JoinInfo		- join combinations
+
+ Path			- every way to access a relation(sequential, index)
+  IndexPath		- index scans
+
+  JoinPath		- joins
+   MergePath	- merge joins
+   HashPath		- hash joins
+
+ PathOrder		- every ordering type (sort, merge of relations)
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.47 1999/02/04 01:46:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.48 1999/02/04 03:19:06 momjian Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -1914,7 +1914,7 @@ _readJoinMethod()
 static HashInfo *
 _readHashInfo()
 {
-	HashInfo	   *local_node;
+	HashInfo	*local_node;
 	char	   *token;
 	int			length;
 

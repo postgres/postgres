@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/hashutils.c,v 1.10 1999/02/04 01:46:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/hashutils.c,v 1.11 1999/02/04 03:19:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,7 +54,7 @@ group_clauses_by_hashop(List *restrictinfo_list,
 		 */
 		if (hashjoinop)
 		{
-			HashInfo	   *xhashinfo = (HashInfo *) NULL;
+			HashInfo   *xhashinfo = (HashInfo *) NULL;
 			Expr	   *clause = restrictinfo->clause;
 			Var		   *leftop = get_leftop(clause);
 			Var		   *rightop = get_rightop(clause);

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relation.h,v 1.13 1999/02/04 01:47:02 momjian Exp $
+ * $Id: relation.h,v 1.14 1999/02/04 03:19:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,7 @@ typedef List *Relid;
  *						leaves the tuples unordered)
  *		cheapestpath -	least expensive Path (regardless of final order)
  *		pruneable - flag to let the planner know whether it can prune the plan
- *					space of this RelOptInfo or not.  -- JMH, 11/11/92
+ *					space of this RelOptInfo or not.
  *
  *	 * If the relation is a (secondary) index it will have the following
  *		three fields:
@@ -157,8 +157,7 @@ typedef struct IndexPath
 	Path		path;
 	List	   *indexid;
 	List	   *indexqual;
-	int		   *indexkeys;		/* to transform heap attnos into index
-								 * ones */
+	int		   *indexkeys;	/* to transform heap attnos into index ones */
 } IndexPath;
 
 typedef struct JoinPath
@@ -236,11 +235,11 @@ typedef struct HashInfo
 	Oid			hashop;
 } HashInfo;
 
-typedef struct MInfo
+typedef struct MergeInfo
 {
 	JoinMethod	jmethod;
 	MergeOrder *m_ordering;
-} MInfo;
+} MergeInfo;
 
 typedef struct JoinInfo
 {

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/mergeutils.c,v 1.11 1999/02/03 21:16:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/mergeutils.c,v 1.12 1999/02/04 03:19:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,7 +53,7 @@ group_clauses_by_order(List *restrictinfo_list,
 			 * if one does not yet exist for this merge ordering.
 			 */
 			PathOrder	p_ordering;
-			MInfo	   *xmergeinfo;
+			MergeInfo	   *xmergeinfo;
 			Expr	   *clause = restrictinfo->clause;
 			Var		   *leftop = get_leftop(clause);
 			Var		   *rightop = get_rightop(clause);
@@ -77,7 +77,7 @@ group_clauses_by_order(List *restrictinfo_list,
 
 			if (xmergeinfo == NULL)
 			{
-				xmergeinfo = makeNode(MInfo);
+				xmergeinfo = makeNode(MergeInfo);
 
 				xmergeinfo->m_ordering = merge_ordering;
 				mergeinfo_list = lcons(xmergeinfo,
@@ -102,7 +102,7 @@ group_clauses_by_order(List *restrictinfo_list,
  * Returns the node if it exists.
  *
  */
-MInfo *
+MergeInfo *
 match_order_mergeinfo(PathOrder *ordering, List *mergeinfo_list)
 {
 	MergeOrder *xmergeorder;
@@ -110,7 +110,7 @@ match_order_mergeinfo(PathOrder *ordering, List *mergeinfo_list)
 
 	foreach(xmergeinfo, mergeinfo_list)
 	{
-		MInfo	   *mergeinfo = (MInfo *) lfirst(xmergeinfo);
+		MergeInfo	   *mergeinfo = (MergeInfo *) lfirst(xmergeinfo);
 
 		xmergeorder = mergeinfo->m_ordering;
 
@@ -123,5 +123,5 @@ match_order_mergeinfo(PathOrder *ordering, List *mergeinfo_list)
 			return mergeinfo;
 		}
 	}
-	return (MInfo *) NIL;
+	return (MergeInfo *) NIL;
 }
