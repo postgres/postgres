@@ -5,7 +5,7 @@ TODO list for PostgreSQL
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Sun Jul 11 19:52:02 EDT 2004
+Last updated:		Sun Jul 11 20:23:57 EDT 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web site, http://www.PostgreSQL.org.
 
@@ -376,7 +376,7 @@ Vacuum
 * Reduce lock time by moving tuples with read lock, then write
   lock and truncate table
 * Provide automatic running of vacuum in the background in backend
-  rather than in /contrib
+  rather than in /contrib (Matthew)
 * Allow free space map to be auto-sized or warn when it is too small
 * Maintain a map of recently-expired of pages so vacuum can reclaim
   free space without a sequential scan
@@ -513,6 +513,7 @@ Developers who have claimed items are:
 * Liam is Liam Stewart <liams@redhat.com> of Red Hat
 * Marc is Marc Fournier <scrappy@hub.org> of PostgreSQL, Inc.
 * Mark is Mark Hollomon <mhh@mindspring.com>
+* Matthew T. O'Connor <matthew@zeut.net>
 * Michael is Michael Meskes <meskes@postgresql.org> of Credativ
 * Neil is Neil Conway <neilc@samurai.com>
 * Oleg is Oleg Bartunov <oleg@sai.msu.su>
