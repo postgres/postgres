@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/functioncmds.c,v 1.22 2002/09/21 18:39:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/functioncmds.c,v 1.23 2002/10/04 22:08:44 tgl Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -756,8 +756,35 @@ CreateCast(CreateCastStmt *stmt)
 	}
 	else
 	{
+		int16	typ1len;
+		int16	typ2len;
+		bool	typ1byval;
+		bool	typ2byval;
+		char	typ1align;
+		char	typ2align;
+
 		/* indicates binary coercibility */
 		funcid = InvalidOid;
+
+		/*
+		 * Must be superuser to create binary-compatible casts, since
+		 * erroneous casts can easily crash the backend.
+		 */
+		if (!superuser())
+			elog(ERROR, "Must be superuser to create a cast WITHOUT FUNCTION");
+
+		/*
+		 * Also, insist that the types match as to size, alignment, and
+		 * pass-by-value attributes; this provides at least a crude check
+		 * that they have similar representations.  A pair of types that
+		 * fail this test should certainly not be equated.
+		 */
+		get_typlenbyvalalign(sourcetypeid, &typ1len, &typ1byval, &typ1align);
+		get_typlenbyvalalign(targettypeid, &typ2len, &typ2byval, &typ2align);
+		if (typ1len != typ2len ||
+			typ1byval != typ2byval ||
+			typ1align != typ2align)
+			elog(ERROR, "source and target datatypes are not physically compatible");
 	}
 
 	/* convert CoercionContext enum to char value for castcontext */

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/create_cast.sgml,v 1.5 2002/09/18 21:35:20 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/create_cast.sgml,v 1.6 2002/10/04 22:08:44 tgl Exp $ -->
 
 <refentry id="SQL-CREATECAST">
  <refmeta>
@@ -81,10 +81,9 @@ SELECT 'The time is ' || now();
 </programlisting>
    will be allowed only if the cast from type <type>timestamp</> to
    <type>text</type> is marked <literal>AS IMPLICIT</>.  Otherwise it
-   will be necessary to write one of
+   will be necessary to write the cast explicitly, for example
 <programlisting>
 SELECT 'The time is ' || CAST(now() AS text);
-SELECT 'The time is ' || now()::text;
 </programlisting>
    (We generally use the term <firstterm>implicit
    cast</firstterm> to describe this kind of cast.)
@@ -107,7 +106,9 @@ SELECT 'The time is ' || now()::text;
 
   <para>
    To be able to create a cast, you must own the source or the target
-   data type.
+   data type.  To create a binary-compatible cast, you must be superuser
+   (this restriction is made because an erroneous binary-compatible cast
+   conversion can easily crash the server).
   </para>
 
    <variablelist>
