@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.102 1999/09/28 14:38:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.103 1999/09/28 14:49:36 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -3682,6 +3682,10 @@ a_expr:  attr
 				{	$$ = makeA_Expr(OP, "^", NULL, $2); }
 		| '|' a_expr
 				{	$$ = makeA_Expr(OP, "|", NULL, $2); }
+		| ':' a_expr
+				{	$$ = makeA_Expr(OP, ":", NULL, $2); }
+		| ';' a_expr
+				{	$$ = makeA_Expr(OP, ";", NULL, $2); }
 		| a_expr '%'
 				{	$$ = makeA_Expr(OP, "%", $1, NULL); }
 		| a_expr '^'
@@ -3715,12 +3719,6 @@ a_expr:  attr
 
 		| a_expr '=' a_expr
 				{	$$ = makeA_Expr(OP, "=", $1, $3); }
-		| ':' a_expr
-				{	$$ = makeA_Expr(OP, ":", NULL, $2); }
-		| ';' a_expr
-				{	$$ = makeA_Expr(OP, ";", NULL, $2); }
-		| '|' a_expr
-				{	$$ = makeA_Expr(OP, "|", NULL, $2); }
 		| a_expr TYPECAST Typename
 				{
 					$$ = (Node *)$1;
@@ -4439,6 +4437,10 @@ b_expr:  attr
 				{	$$ = makeA_Expr(OP, "^", NULL, $2); }
 		| '|' b_expr
 				{	$$ = makeA_Expr(OP, "|", NULL, $2); }
+		| ':' b_expr
+				{	$$ = makeA_Expr(OP, ":", NULL, $2); }
+		| ';' b_expr
+				{	$$ = makeA_Expr(OP, ";", NULL, $2); }
 		| b_expr '%'
 				{	$$ = makeA_Expr(OP, "%", $1, NULL); }
 		| b_expr '^'
@@ -4459,12 +4461,6 @@ b_expr:  attr
 				{	$$ = makeA_Expr(OP, "^", $1, $3); }
 		| b_expr '|' b_expr
 				{	$$ = makeA_Expr(OP, "|", $1, $3); }
-		| ':' b_expr
-				{	$$ = makeA_Expr(OP, ":", NULL, $2); }
-		| ';' b_expr
-				{	$$ = makeA_Expr(OP, ";", NULL, $2); }
-		| '|' b_expr
-				{	$$ = makeA_Expr(OP, "|", NULL, $2); }
 		| b_expr TYPECAST Typename
 				{
 					$$ = (Node *)$1;
