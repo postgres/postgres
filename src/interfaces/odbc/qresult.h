@@ -37,31 +37,31 @@ typedef enum QueryResultCode_ QueryResultCode;
 
 
 struct QResultClass_ {
-    ColumnInfoClass *fields;			// the Column information
-    TupleListClass *manual_tuples;		// manual result tuple list
-	ConnectionClass *conn;				// the connection this result is using (backend)
+    ColumnInfoClass *fields;			/* the Column information */
+    TupleListClass *manual_tuples;		/* manual result tuple list */
+	ConnectionClass *conn;				/* the connection this result is using (backend) */
 
-	//	Stuff for declare/fetch tuples
-	int fetch_count;					// logical rows read so far
-	int fcount;							// actual rows read in the fetch
+	/*	Stuff for declare/fetch tuples */
+	int fetch_count;					/* logical rows read so far */
+	int fcount;							/* actual rows read in the fetch */
 	int currTuple;
 	int base;
 
-	int num_fields;						// number of fields in the result
+	int num_fields;						/* number of fields in the result */
 	int cache_size;
 	int rowset_size;
 
     QueryResultCode status;
 
     char *message;
-	char *cursor;						// The name of the cursor for select statements
+	char *cursor;						/* The name of the cursor for select statements */
 	char *command;
 	char *notice;
 
-	TupleField *backend_tuples;			// data from the backend (the tuple cache)
-	TupleField *tupleField;				// current backend tuple being retrieved
+	TupleField *backend_tuples;			/* data from the backend (the tuple cache) */
+	TupleField *tupleField;				/* current backend tuple being retrieved */
 
-	char inTuples;						// is a fetch of rows from the backend in progress?
+	char inTuples;						/* is a fetch of rows from the backend in progress? */
 };
 
 #define QR_get_fields(self)				(self->fields)
@@ -97,7 +97,7 @@ struct QResultClass_ {
 #define QR_get_notice(self)				(self->notice)
 #define QR_get_status(self)				(self->status)
 
-//	Core Functions
+/*	Core Functions */
 QResultClass *QR_Constructor(void);
 void QR_Destructor(QResultClass *self);
 char QR_read_tuple(QResultClass *self, char binary);

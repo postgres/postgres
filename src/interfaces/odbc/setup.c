@@ -29,33 +29,33 @@
 extern HINSTANCE NEAR s_hModule;               /* Saved module handle. */
 extern GLOBAL_VALUES globals;
 
-// Constants ---------------------------------------------------------------
+/* Constants --------------------------------------------------------------- */
 #define MIN(x,y)      ((x) < (y) ? (x) : (y))
 
 #ifdef WIN32
 #define MAXPGPATH       (255+1)
 #endif
 
-#define MAXKEYLEN       (15+1)            // Max keyword length
-#define MAXDESC         (255+1)           // Max description length
-#define MAXDSNAME       (32+1)            // Max data source name length
+#define MAXKEYLEN       (15+1)            /* Max keyword length */
+#define MAXDESC         (255+1)           /* Max description length */
+#define MAXDSNAME       (32+1)            /* Max data source name length */
 
 
-// Globals -----------------------------------------------------------------
-// NOTE:  All these are used by the dialog procedures
+/* Globals ----------------------------------------------------------------- */
+/* NOTE:  All these are used by the dialog procedures */
 typedef struct tagSETUPDLG {
-        HWND       hwndParent;                   // Parent window handle
-        LPCSTR     lpszDrvr;                     // Driver description
+        HWND       hwndParent;                   /* Parent window handle */
+        LPCSTR     lpszDrvr;                     /* Driver description */
 		ConnInfo   ci;
-        char       szDSN[MAXDSNAME];             // Original data source name
-        BOOL       fNewDSN;                      // New data source flag
-        BOOL       fDefault;                     // Default data source flag
+        char       szDSN[MAXDSNAME];             /* Original data source name */
+        BOOL       fNewDSN;                      /* New data source flag */
+        BOOL       fDefault;                     /* Default data source flag */
 
 } SETUPDLG, FAR *LPSETUPDLG;
 
 
 
-// Prototypes --------------------------------------------------------------
+/* Prototypes -------------------------------------------------------------- */
 void INTFUNC CenterDialog(HWND hdlg);
 int  CALLBACK ConfigDlgProc(HWND hdlg, WORD wMsg, WPARAM wParam, LPARAM lParam);
 void INTFUNC ParseAttributes (LPCSTR lpszAttributes, LPSETUPDLG lpsetupdlg);
@@ -78,49 +78,49 @@ BOOL CALLBACK ConfigDSN (HWND    hwnd,
                          LPCSTR  lpszDriver,
                          LPCSTR  lpszAttributes)
 {
-BOOL  fSuccess;                                            // Success/fail flag
+BOOL  fSuccess;                                            /* Success/fail flag */
 GLOBALHANDLE hglbAttr;
 LPSETUPDLG lpsetupdlg;
         
 
-        // Allocate attribute array
+	/* Allocate attribute array */
         hglbAttr = GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT, sizeof(SETUPDLG));
         if (!hglbAttr)
                 return FALSE;
         lpsetupdlg = (LPSETUPDLG)GlobalLock(hglbAttr);
 
-        // Parse attribute string
+        /* Parse attribute string */
         if (lpszAttributes)
                 ParseAttributes(lpszAttributes, lpsetupdlg);
 
-        // Save original data source name
+        /* Save original data source name */
         if (lpsetupdlg->ci.dsn[0])
                 lstrcpy(lpsetupdlg->szDSN, lpsetupdlg->ci.dsn);
         else
                 lpsetupdlg->szDSN[0] = '\0';
 
-        // Remove data source
+        /* Remove data source */
         if (ODBC_REMOVE_DSN == fRequest) {
-                // Fail if no data source name was supplied
+		/* Fail if no data source name was supplied */
                 if (!lpsetupdlg->ci.dsn[0])
                         fSuccess = FALSE;
 
-                // Otherwise remove data source from ODBC.INI
+                /* Otherwise remove data source from ODBC.INI */
                 else
                         fSuccess = SQLRemoveDSNFromIni(lpsetupdlg->ci.dsn);
         }
 
-        // Add or Configure data source
+        /* Add or Configure data source */
         else {
-                // Save passed variables for global access (e.g., dialog access)
+		/* Save passed variables for global access (e.g., dialog access) */
                 lpsetupdlg->hwndParent = hwnd;
                 lpsetupdlg->lpszDrvr     = lpszDriver;
                 lpsetupdlg->fNewDSN      = (ODBC_ADD_DSN == fRequest);
                 lpsetupdlg->fDefault     = !lstrcmpi(lpsetupdlg->ci.dsn, INI_DSN);
 
-                // Display the appropriate dialog (if parent window handle supplied)
+                /* Display the appropriate dialog (if parent window handle supplied) */
                 if (hwnd) {
-                        // Display dialog(s)
+			  /* Display dialog(s) */
                           fSuccess = (IDOK == DialogBoxParam(s_hModule,
                                                                 MAKEINTRESOURCE(DLG_CONFIG),
                                                                 hwnd,
@@ -202,7 +202,7 @@ int CALLBACK ConfigDlgProc(HWND   hdlg,
 {
 
 	switch (wMsg) {
-	// Initialize the dialog
+	/* Initialize the dialog */
 	case WM_INITDIALOG:
 	{
 		LPSETUPDLG lpsetupdlg = (LPSETUPDLG) lParam;
@@ -212,19 +212,19 @@ int CALLBACK ConfigDlgProc(HWND   hdlg,
 		ShowWindow(GetDlgItem(hdlg, DRV_MSG_LABEL), SW_HIDE);
 
 		SetWindowLong(hdlg, DWL_USER, lParam);
-		CenterDialog(hdlg);                             // Center dialog
+		CenterDialog(hdlg);                             /* Center dialog */
 
-		// NOTE: Values supplied in the attribute string will always
-		//       override settings in ODBC.INI
+		/* NOTE: Values supplied in the attribute string will always */
+		/*       override settings in ODBC.INI */
 
-		//	Get the rest of the common attributes
+		/*	Get the rest of the common attributes */
 		getDSNinfo(ci, CONN_DONT_OVERWRITE);
 
-		//	Fill in any defaults
+		/*	Fill in any defaults */
 		getDSNdefaults(ci);
 
 
-		// Initialize dialog fields
+		/* Initialize dialog fields */
 		SetDlgStuff(hdlg, ci);
 
 
@@ -238,22 +238,22 @@ int CALLBACK ConfigDlgProc(HWND   hdlg,
 
 		SendDlgItemMessage(hdlg, IDC_DESC,
 			EM_LIMITTEXT, (WPARAM)(MAXDESC-1), 0L);
-		return TRUE;                                            // Focus was not set
+		return TRUE;                                            /* Focus was not set */
     }
 
 
-	// Process buttons
+	/* Process buttons */
 	case WM_COMMAND:
 
 		switch (GET_WM_COMMAND_ID(wParam, lParam)) {
-		// Ensure the OK button is enabled only when a data source name
-		// is entered
+		/* Ensure the OK button is enabled only when a data source name */
+		/* is entered */
 		case IDC_DSNAME:
 			if (GET_WM_COMMAND_CMD(wParam, lParam) == EN_CHANGE)
 			{
-				char    szItem[MAXDSNAME];              // Edit control text
+				char    szItem[MAXDSNAME];              /* Edit control text */
 
-				// Enable/disable the OK button
+				/* Enable/disable the OK button */
 				EnableWindow(GetDlgItem(hdlg, IDOK),
 					GetDlgItemText(hdlg, IDC_DSNAME,
 					szItem, sizeof(szItem)));
@@ -262,27 +262,27 @@ int CALLBACK ConfigDlgProc(HWND   hdlg,
 			}
 			break;
 
-		// Accept results
+		/* Accept results */
 		case IDOK:
 		{
 			LPSETUPDLG lpsetupdlg;
 
 			lpsetupdlg = (LPSETUPDLG)GetWindowLong(hdlg, DWL_USER);
-			// Retrieve dialog values
+			/* Retrieve dialog values */
 			if (!lpsetupdlg->fDefault)
 					GetDlgItemText(hdlg, IDC_DSNAME,
 							lpsetupdlg->ci.dsn,
 							sizeof(lpsetupdlg->ci.dsn));
 
 
-			//	Get Dialog Values
+			/*	Get Dialog Values */
 			GetDlgStuff(hdlg, &lpsetupdlg->ci);
 
-			// Update ODBC.INI
+			/* Update ODBC.INI */
 			SetDSNAttributes(hdlg, lpsetupdlg);
         }
 
-		// Return to caller
+		/* Return to caller */
 		case IDCANCEL:
 			EndDialog(hdlg, wParam);
 			return TRUE;
@@ -310,7 +310,7 @@ int CALLBACK ConfigDlgProc(HWND   hdlg,
 		break;
 	}
 
-	// Message not processed
+	/* Message not processed */
 	return FALSE;
 }
 
@@ -331,16 +331,16 @@ char    value[MAXPGPATH];
 		memset(&lpsetupdlg->ci, 0, sizeof(ConnInfo));
 
         for (lpsz=lpszAttributes; *lpsz; lpsz++)
-        {  //  Extract key name (e.g., DSN), it must be terminated by an equals
+        {  /*  Extract key name (e.g., DSN), it must be terminated by an equals */
                 lpszStart = lpsz;
                 for (;; lpsz++)
                 {
                         if (!*lpsz)
-                                return;         // No key was found
+                                return;         /* No key was found */
                         else if (*lpsz == '=')
-                                break;          // Valid key found
+                                break;          /* Valid key found */
                 }
-                // Determine the key's index in the key table (-1 if not found)
+                /* Determine the key's index in the key table (-1 if not found) */
                 cbKey    = lpsz - lpszStart;
                 if (cbKey < sizeof(aszKey))
                 {
@@ -349,17 +349,17 @@ char    value[MAXPGPATH];
                         aszKey[cbKey] = '\0';
                 }
 
-                // Locate end of key value
+                /* Locate end of key value */
                 lpszStart = ++lpsz;
                 for (; *lpsz; lpsz++);
 
 
-                // lpsetupdlg->aAttr[iElement].fSupplied = TRUE;
+                /* lpsetupdlg->aAttr[iElement].fSupplied = TRUE; */
                 _fmemcpy(value, lpszStart, MIN(lpsz-lpszStart+1, MAXPGPATH));
 
 				mylog("aszKey='%s', value='%s'\n", aszKey, value);
 
-				//	Copy the appropriate value to the conninfo 
+				/*	Copy the appropriate value to the conninfo  */
 				copyAttributes(&lpsetupdlg->ci, aszKey, value);
         }
         return;
@@ -374,15 +374,15 @@ char    value[MAXPGPATH];
 
 BOOL INTFUNC SetDSNAttributes(HWND hwndParent, LPSETUPDLG lpsetupdlg)
 {
-LPCSTR  lpszDSN;                                                // Pointer to data source name
+LPCSTR  lpszDSN;                                                /* Pointer to data source name */
     
         lpszDSN = lpsetupdlg->ci.dsn;
 
-        // Validate arguments
+        /* Validate arguments */
         if (lpsetupdlg->fNewDSN && !*lpsetupdlg->ci.dsn)
                 return FALSE;
 
-        // Write the data source name
+        /* Write the data source name */
         if (!SQLWriteDSNToIni(lpszDSN, lpsetupdlg->lpszDrvr))
         {
                 if (hwndParent)
@@ -399,11 +399,11 @@ LPCSTR  lpszDSN;                                                // Pointer to da
         }
 
 
-        // Update ODBC.INI
+        /* Update ODBC.INI */
 		writeDSNinfo(&lpsetupdlg->ci);
 
 
-        // If the data source name has changed, remove the old name
+	/* If the data source name has changed, remove the old name */
         if (lstrcmpi(lpsetupdlg->szDSN, lpsetupdlg->ci.dsn))
         {
                 SQLRemoveDSNFromIni(lpsetupdlg->szDSN);

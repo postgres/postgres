@@ -1,7 +1,7 @@
-//{{NO_DEPENDENCIES}}
-// Microsoft Developer Studio generated include file.
-// Used by psqlodbc.rc
-//
+/*{{NO_DEPENDENCIES}} */
+/* Microsoft Developer Studio generated include file. */
+/* Used by psqlodbc.rc */
+/* */
 #define IDS_BADDSN                      1
 #define IDS_MSGTITLE                    2
 #define DLG_OPTIONS_DRV                 102
@@ -50,8 +50,8 @@
 #define DS_PG64                         1057
 #define DS_PG63                         1058
 
-// Next default values for new objects
-// 
+/* Next default values for new objects */
+/*  */
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        104

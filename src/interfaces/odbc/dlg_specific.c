@@ -156,7 +156,7 @@ int CALLBACK driver_optionsProc(HWND   hdlg,
 
 			globals.fetch_max = GetDlgItemInt(hdlg, DRV_CACHE_SIZE, NULL, FALSE);
 			globals.max_varchar_size = GetDlgItemInt(hdlg, DRV_VARCHAR_SIZE, NULL, FALSE);
-			globals.max_longvarchar_size= GetDlgItemInt(hdlg, DRV_LONGVARCHAR_SIZE, NULL, TRUE);	// allows for SQL_NO_TOTAL
+			globals.max_longvarchar_size= GetDlgItemInt(hdlg, DRV_LONGVARCHAR_SIZE, NULL, TRUE);	/* allows for SQL_NO_TOTAL */
 
 			GetDlgItemText(hdlg, DRV_EXTRASYSTABLEPREFIXES, globals.extra_systable_prefixes, sizeof(globals.extra_systable_prefixes));
 
@@ -165,7 +165,7 @@ int CALLBACK driver_optionsProc(HWND   hdlg,
 
 			updateGlobals();
 
-			//	fall through
+			/*	fall through */
 
 		case IDCANCEL:
 			EndDialog(hdlg, GET_WM_COMMAND_ID(wParam, lParam) == IDOK);
@@ -230,7 +230,7 @@ char buf[128];
 	switch (wMsg) {
 	case WM_INITDIALOG:
 		ci = (ConnInfo *) lParam;		
-		SetWindowLong(hdlg, DWL_USER, lParam);	// save for OK
+		SetWindowLong(hdlg, DWL_USER, lParam);	/* save for OK */
 
 		/*	Change window caption */
 		if (ci->driver[0])
@@ -301,7 +301,7 @@ char buf[128];
 			GetDlgItemText(hdlg, DS_CONNSETTINGS, ci->conn_settings, sizeof(ci->conn_settings));
 
 
-			//	fall through
+			/*	fall through */
 
 		case IDCANCEL:
 			EndDialog(hdlg, GET_WM_COMMAND_ID(wParam, lParam) == IDOK);
@@ -389,7 +389,7 @@ copyAttributes(ConnInfo *ci, char *attribute, char *value)
 
 	else if (stricmp(attribute, INI_CONNSETTINGS) == 0) {
 		decode(value, ci->conn_settings);
-		// strcpy(ci->conn_settings, value);
+		/* strcpy(ci->conn_settings, value); */
 	}
 
 	mylog("copyAttributes: DSN='%s',server='%s',dbase='%s',user='%s',passwd='%s',port='%s',onlyread='%s',protocol='%s', conn_settings='%s')\n", ci->dsn, ci->server,ci->database,ci->username,ci->password,ci->port,ci->onlyread,ci->protocol,ci->conn_settings);
@@ -428,8 +428,8 @@ getDSNinfo(ConnInfo *ci, char overwrite)
 char *DSN = ci->dsn;
 char encoded_conn_settings[LARGE_REGISTRY_LEN];
 
-	//	If a driver keyword was present, then dont use a DSN and return.
-	//	If DSN is null and no driver, then use the default datasource.
+/*	If a driver keyword was present, then dont use a DSN and return. */
+/*	If DSN is null and no driver, then use the default datasource. */
 	if ( DSN[0] == '\0') {
 		if ( ci->driver[0] != '\0')
 			return;
@@ -437,10 +437,10 @@ char encoded_conn_settings[LARGE_REGISTRY_LEN];
 			strcpy(DSN, INI_DSN);
 	}
 
-	// brute-force chop off trailing blanks...
+	/* brute-force chop off trailing blanks... */
 	while (*(DSN+strlen(DSN)-1) == ' ') *(DSN+strlen(DSN)-1) = '\0';
 
-	//	Proceed with getting info for the given DSN.
+	/*	Proceed with getting info for the given DSN. */
 
 	if ( ci->desc[0] == '\0' || overwrite)
 		SQLGetPrivateProfileString(DSN, INI_KDESC, "", ci->desc, sizeof(ci->desc), ODBC_INI);
@@ -600,7 +600,7 @@ void getGlobalDefaults(char *section, char *filename, char override)
 char temp[256];
 
 
-	//	Fetch Count is stored in driver section
+    /*	Fetch Count is stored in driver section */
     SQLGetPrivateProfileString(section, INI_FETCH, "",
                             temp, sizeof(temp), filename);
 	if ( temp[0] ) {
@@ -613,7 +613,7 @@ char temp[256];
 		globals.fetch_max = FETCH_MAX;
 
 
-	//	Socket Buffersize is stored in driver section
+	/*	Socket Buffersize is stored in driver section */
     SQLGetPrivateProfileString(section, INI_SOCKET, "",
                             temp, sizeof(temp), filename);
 	if ( temp[0] ) 
@@ -622,7 +622,7 @@ char temp[256];
 		globals.socket_buffersize = SOCK_BUFFER_SIZE;
 
 
-	//	Debug is stored in the driver section
+	/*	Debug is stored in the driver section */
 	SQLGetPrivateProfileString(section, INI_DEBUG, "", 
 							temp, sizeof(temp), filename);
 	if ( temp[0] )
@@ -631,7 +631,7 @@ char temp[256];
 		globals.debug = DEFAULT_DEBUG;
 
 
-	//	CommLog is stored in the driver section
+	/*	CommLog is stored in the driver section */
 	SQLGetPrivateProfileString(section, INI_COMMLOG, "", 
 							temp, sizeof(temp), filename);
 	if ( temp[0] ) 
@@ -640,7 +640,7 @@ char temp[256];
 		globals.commlog = DEFAULT_COMMLOG;
 
 
-	//	Optimizer is stored in the driver section only
+	/*	Optimizer is stored in the driver section only */
 	SQLGetPrivateProfileString(section, INI_OPTIMIZER, "", 
 				temp, sizeof(temp), filename);
 	if ( temp[0] ) 
@@ -648,7 +648,7 @@ char temp[256];
 	else if ( ! override)
 		globals.disable_optimizer = DEFAULT_OPTIMIZER;
 
-	//	KSQO is stored in the driver section only
+	/*	KSQO is stored in the driver section only */
 	SQLGetPrivateProfileString(section, INI_KSQO, "", 
 				temp, sizeof(temp), filename);
 	if ( temp[0] ) 
@@ -656,7 +656,7 @@ char temp[256];
 	else if ( ! override)
 		globals.ksqo = DEFAULT_KSQO;
 
-	//	Recognize Unique Index is stored in the driver section only
+	/*	Recognize Unique Index is stored in the driver section only */
 	SQLGetPrivateProfileString(section, INI_UNIQUEINDEX, "", 
 				temp, sizeof(temp), filename);
 	if ( temp[0] ) 
@@ -665,7 +665,7 @@ char temp[256];
 		globals.unique_index = DEFAULT_UNIQUEINDEX;
 
 
-	//	Unknown Sizes is stored in the driver section only
+	/*	Unknown Sizes is stored in the driver section only */
 	SQLGetPrivateProfileString(section, INI_UNKNOWNSIZES, "", 
 				temp, sizeof(temp), filename);
 	if ( temp[0] )
@@ -674,7 +674,7 @@ char temp[256];
 		globals.unknown_sizes = DEFAULT_UNKNOWNSIZES;
 
 
-	//	Lie about supported functions?
+	/*	Lie about supported functions? */
 	SQLGetPrivateProfileString(section, INI_LIE, "", 
 				temp, sizeof(temp), filename);
 	if ( temp[0] ) 
@@ -682,7 +682,7 @@ char temp[256];
 	else if ( ! override)
 		globals.lie = DEFAULT_LIE;
 
-	//	Parse statements
+	/*	Parse statements */
 	SQLGetPrivateProfileString(section, INI_PARSE, "", 
 				temp, sizeof(temp), filename);
 	if ( temp[0] ) 
@@ -690,7 +690,7 @@ char temp[256];
 	else if ( ! override)
 		globals.parse = DEFAULT_PARSE;
 
-	//	SQLCancel calls SQLFreeStmt in Driver Manager
+	/*	SQLCancel calls SQLFreeStmt in Driver Manager */
 	SQLGetPrivateProfileString(section, INI_CANCELASFREESTMT, "", 
 				temp, sizeof(temp), filename);
 	if ( temp[0] ) 
@@ -700,7 +700,7 @@ char temp[256];
 
 
 
-	//	UseDeclareFetch is stored in the driver section only
+	/*	UseDeclareFetch is stored in the driver section only */
 	SQLGetPrivateProfileString(section, INI_USEDECLAREFETCH, "", 
 				temp, sizeof(temp), filename);
 	if ( temp[0] ) 
@@ -709,7 +709,7 @@ char temp[256];
 		globals.use_declarefetch = DEFAULT_USEDECLAREFETCH;
 
 
-	//	Max Varchar Size
+	/*	Max Varchar Size */
 	SQLGetPrivateProfileString(section, INI_MAXVARCHARSIZE, "", 
 				temp, sizeof(temp), filename);
 	if ( temp[0] ) 
@@ -717,7 +717,7 @@ char temp[256];
 	else if ( ! override)
 		globals.max_varchar_size = MAX_VARCHAR_SIZE;
 
-	//	Max TextField Size
+	/*	Max TextField Size */
 	SQLGetPrivateProfileString(section, INI_MAXLONGVARCHARSIZE, "", 
 				temp, sizeof(temp), filename);
 	if ( temp[0] ) 
@@ -725,7 +725,7 @@ char temp[256];
 	else if ( ! override)
 		globals.max_longvarchar_size = TEXT_FIELD_SIZE;
 
-	//	Text As LongVarchar 
+	/*	Text As LongVarchar  */
 	SQLGetPrivateProfileString(section, INI_TEXTASLONGVARCHAR, "", 
 				temp, sizeof(temp), filename);
 	if ( temp[0] ) 
@@ -733,7 +733,7 @@ char temp[256];
 	else if ( ! override)
 		globals.text_as_longvarchar = DEFAULT_TEXTASLONGVARCHAR;
 
-	//	Unknowns As LongVarchar 
+	/*	Unknowns As LongVarchar  */
 	SQLGetPrivateProfileString(section, INI_UNKNOWNSASLONGVARCHAR, "", 
 				temp, sizeof(temp), filename);
 	if ( temp[0] ) 
@@ -741,7 +741,7 @@ char temp[256];
 	else if ( ! override)
 		globals.unknowns_as_longvarchar = DEFAULT_UNKNOWNSASLONGVARCHAR;
 
-	//	Bools As Char
+	/*	Bools As Char */
 	SQLGetPrivateProfileString(section, INI_BOOLSASCHAR, "", 
 				temp, sizeof(temp), filename);
 	if ( temp[0] ) 
@@ -749,8 +749,8 @@ char temp[256];
 	else if ( ! override)
 		globals.bools_as_char = DEFAULT_BOOLSASCHAR;
 
-	//	Extra Systable prefixes
-	//	Use @@@ to distinguish between blank extra prefixes and no key entry
+	/*	Extra Systable prefixes */
+	/*	Use @@@ to distinguish between blank extra prefixes and no key entry */
 	SQLGetPrivateProfileString(section, INI_EXTRASYSTABLEPREFIXES, "@@@", 
 			temp, sizeof(temp), filename);
 	if ( strcmp(temp, "@@@" ))	
@@ -761,14 +761,14 @@ char temp[256];
 	mylog("globals.extra_systable_prefixes = '%s'\n", globals.extra_systable_prefixes);
 
 
-	//	Dont allow override of an override!
+	/*	Dont allow override of an override! */
 	if ( ! override) {
 
-		//	ConnSettings is stored in the driver section and per datasource for override
+		/*	ConnSettings is stored in the driver section and per datasource for override */
 		SQLGetPrivateProfileString(section, INI_CONNSETTINGS, "", 
 					globals.conn_settings, sizeof(globals.conn_settings), filename);
 
-		//	Default state for future DSN's Readonly attribute
+		/*	Default state for future DSN's Readonly attribute */
 		SQLGetPrivateProfileString(section, INI_READONLY, "", 
 					temp, sizeof(temp), filename);
 		if ( temp[0] ) 

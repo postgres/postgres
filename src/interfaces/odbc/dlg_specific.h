@@ -91,15 +91,15 @@
 /*	Connection Defaults */
 #define DEFAULT_PORT					"5432"
 #define DEFAULT_READONLY				1
-#define DEFAULT_PROTOCOL				"6.4"		// the latest protocol is the default
+#define DEFAULT_PROTOCOL				"6.4"		/* the latest protocol is the default */
 #define DEFAULT_USEDECLAREFETCH			0
 #define DEFAULT_TEXTASLONGVARCHAR		1
 #define DEFAULT_UNKNOWNSASLONGVARCHAR	0
 #define DEFAULT_BOOLSASCHAR				1
-#define DEFAULT_OPTIMIZER				1		// disable
-#define DEFAULT_KSQO					1		// on
-#define DEFAULT_UNIQUEINDEX				0		// dont recognize
-#define DEFAULT_COMMLOG					0		// dont log
+#define DEFAULT_OPTIMIZER				1		/* disable */
+#define DEFAULT_KSQO					1		/* on */
+#define DEFAULT_UNIQUEINDEX				0		/* dont recognize */
+#define DEFAULT_COMMLOG					0		/* dont log */
 #define DEFAULT_DEBUG					0
 #define DEFAULT_UNKNOWNSIZES			UNKNOWNS_AS_MAX
 
@@ -107,7 +107,7 @@
 #define DEFAULT_FAKEOIDINDEX			0
 #define DEFAULT_SHOWOIDCOLUMN			0
 #define DEFAULT_ROWVERSIONING			0
-#define DEFAULT_SHOWSYSTEMTABLES		0		// dont show system tables
+#define DEFAULT_SHOWSYSTEMTABLES		0		/* dont show system tables */
 #define DEFAULT_LIE						0
 #define DEFAULT_PARSE					0
 

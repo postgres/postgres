@@ -152,7 +152,7 @@ StatementClass *stmt = (StatementClass *) hstmt;
 		/* this should discard all the results, but leave the statement */
 		/* itself in place (it can be executed again) */
 	if (!SC_recycle_statement(stmt)) {
-			//	errormsg passed in above
+		/*	errormsg passed in above */
 			SC_log_error(func, "", stmt);
 	    return SQL_ERROR;
 		}
@@ -178,10 +178,10 @@ StatementClass *stmt = (StatementClass *) hstmt;
 void
 InitializeStatementOptions(StatementOptions *opt)
 {
-	opt->maxRows = 0;			// driver returns all rows
-	opt->maxLength = 0;			// driver returns all data for char/binary
+	opt->maxRows = 0;			/* driver returns all rows */
+	opt->maxLength = 0;			/* driver returns all data for char/binary */
 	opt->rowset_size = 1;
-	opt->keyset_size = 0;		// fully keyset driven is the default
+	opt->keyset_size = 0;		/* fully keyset driven is the default */
 	opt->scroll_concurrency = SQL_CONCUR_READ_ONLY;
 	opt->cursor_type = SQL_CURSOR_FORWARD_ONLY;
 	opt->bind_size = 0;			/* default is to bind by column */
@@ -447,7 +447,7 @@ mylog("recycle statement: self= %u\n", self);
 	/****************************************************************/
 
 	self->status = STMT_READY;
-	self->manual_result = FALSE;	// very important
+	self->manual_result = FALSE;	/* very important */
 
 	self->currTuple = -1;
 	self->rowset_start = -1;
@@ -461,9 +461,9 @@ mylog("recycle statement: self= %u\n", self);
 
 	self->lobj_fd = -1;
 
-	//	Free any data at exec params before the statement is executed
-	//	again.  If not, then there will be a memory leak when
-	//	the next SQLParamData/SQLPutData is called.
+	/*	Free any data at exec params before the statement is executed */
+	/*	again.  If not, then there will be a memory leak when */
+	/*	the next SQLParamData/SQLPutData is called. */
 	SC_free_params(self, STMT_FREE_PARAMS_DATA_AT_EXEC_ONLY);
 
 	return TRUE;
@@ -517,8 +517,8 @@ SC_clear_error(StatementClass *self)
 }
 
 
-//	This function creates an error msg which is the concatenation
-//	of the result, statement, connection, and socket messages.
+/*	This function creates an error msg which is the concatenation */
+/*	of the result, statement, connection, and socket messages. */
 char *
 SC_create_errormsg(StatementClass *self)
 {
@@ -557,7 +557,7 @@ SC_get_error(StatementClass *self, int *number, char **message)
 {
 char rv;
 
-	//	Create a very informative errormsg if it hasn't been done yet.
+/*	Create a very informative errormsg if it hasn't been done yet. */
 	if ( ! self->errormsg_created) {
 		self->errormsg = SC_create_errormsg(self);
 		self->errormsg_created = TRUE;
@@ -595,7 +595,7 @@ Int2 num_cols, lf;
 Oid type;
 char *value;
 ColumnInfoClass *ci;
-// TupleField *tupleField;
+/* TupleField *tupleField; */
 
 	self->last_fetch_count = 0;
 	ci = QR_get_fields(res);		/* the column info */
@@ -619,14 +619,14 @@ ColumnInfoClass *ci;
 	}
 	else {
 
-		// read from the cache or the physical next tuple
+		/* read from the cache or the physical next tuple */
 		retval = QR_next_tuple(res);
 		if (retval < 0) {
 			mylog("**** SQLFetch: end_tuples\n");
 			return SQL_NO_DATA_FOUND;
 		}
 		else if (retval > 0)
-			(self->currTuple)++;		// all is well
+			(self->currTuple)++;		/* all is well */
 
 		else {
 			mylog("SQLFetch: error\n");
@@ -663,9 +663,9 @@ ColumnInfoClass *ci;
 		self->bindings[lf].data_left = -1;
 
 		if (self->bindings[lf].buffer != NULL) {
-	    // this column has a binding
+			/* this column has a binding */
 
-	    // type = QR_get_field_type(res, lf);
+			/* type = QR_get_field_type(res, lf); */
 			type = CI_get_oid(ci, lf);		/* speed things up */
 
 			mylog("type = %d\n", type);
@@ -783,9 +783,9 @@ QueryInfo qi;
 	self->status = STMT_EXECUTING;
 
 
-	//	If it's a SELECT statement, use a cursor.
-	//	Note that the declare cursor has already been prepended to the statement
-	//	in copy_statement...
+	/*	If it's a SELECT statement, use a cursor. */
+	/*	Note that the declare cursor has already been prepended to the statement */
+	/*	in copy_statement... */
 	if (self->statement_type == STMT_TYPE_SELECT) {
 
 		char fetch[128];
@@ -821,11 +821,11 @@ QueryInfo qi;
 
 
 	}
-	else  { // not a SELECT statement so don't use a cursor
+	else  { /* not a SELECT statement so don't use a cursor */
 		mylog("      it's NOT a select statement: stmt=%u\n", self);
 		self->result = CC_send_query(conn, self->stmt_with_params, NULL);
 
-		//	If we are in autocommit, we must send the commit.
+		/*	If we are in autocommit, we must send the commit. */
 		if ( ! self->internal && CC_is_in_autocommit(conn) && STMT_UPDATE(self)) {
 	    res = CC_send_query(conn, "COMMIT", NULL);
 	    QR_Destructor(res);
@@ -929,7 +929,7 @@ SC_log_error(char *func, char *desc, StatementClass *self)
 		qlog("                 status=%d, inTuples=%d\n", res->status, res->inTuples);
 		}
 
-		//	Log the connection error if there is one
+		/*	Log the connection error if there is one */
 		CC_log_error(func, desc, self->hdbc);
 	}
 	else
