@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $Header: /cvsroot/pgsql/configure.in,v 1.171 2002/03/29 17:32:52 petere Exp $
+dnl $Header: /cvsroot/pgsql/configure.in,v 1.172 2002/03/30 00:20:15 petere Exp $
 
 dnl Developers, please strive to achieve this order:
 dnl
@@ -748,21 +748,12 @@ if test "$with_pam" = yes ; then
   AC_CHECK_LIB(pam,    [pam_start], [], [AC_MSG_ERROR([library 'pam' is required for PAM])])
 fi
 
-if test "$enable_nls" = yes ; then
-  PGAC_CHECK_GETTEXT
-fi
-
-if test "$with_CXX" = yes; then
-  PGAC_CLASS_STRING
-  PGAC_CXX_NAMESPACE_STD
-fi
-
 
 ##
 ## Header files
 ##
 dnl sys/socket.h is required by AC_FUNC_ACCEPT_ARGTYPES
-AC_CHECK_HEADERS([crypt.h dld.h endian.h fp_class.h getopt.h ieeefp.h pwd.h strings.h sys/ipc.h sys/pstat.h sys/select.h sys/sem.h sys/socket.h sys/shm.h sys/un.h termios.h kernel/OS.h kernel/image.h SupportDefs.h])
+AC_CHECK_HEADERS([crypt.h dld.h endian.h fp_class.h getopt.h ieeefp.h pwd.h sys/ipc.h sys/pstat.h sys/select.h sys/sem.h sys/socket.h sys/shm.h sys/un.h termios.h kernel/OS.h kernel/image.h SupportDefs.h])
 
 # At least on IRIX, cpp test for netinet/tcp.h will fail unless
 # netinet/in.h is included first.
@@ -1177,6 +1168,16 @@ AC_CHECK_TYPES([sig_atomic_t], [], [], [#include <signal.h>])
 
 
 PGAC_FUNC_POSIX_SIGNALS
+
+
+if test "$enable_nls" = yes ; then
+  PGAC_CHECK_GETTEXT
+fi
+
+if test "$with_CXX" = yes; then
+  PGAC_CLASS_STRING
+  PGAC_CXX_NAMESPACE_STD
+fi
 
 
 # Check for Tcl configuration script tclConfig.sh
