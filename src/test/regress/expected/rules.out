@@ -1428,3 +1428,55 @@ DETAIL:  Key (id3a,id3c)=(1,13) is not present in table "rule_and_refint_t2".
 insert into rule_and_refint_t3 values (1, 13, 11, 'row8');
 ERROR:  insert or update on table "rule_and_refint_t3" violates foreign key constraint "rule_and_refint_t3_id3a_fkey"
 DETAIL:  Key (id3a,id3b)=(1,13) is not present in table "rule_and_refint_t1".
+--
+-- check for planner problems with complex inherited UPDATES
+--
+create table id (id serial primary key, name text);
+NOTICE:  CREATE TABLE will create implicit sequence "id_id_seq" for serial column "id.id"
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "id_pkey" for table "id"
+-- currently, must respecify PKEY for each inherited subtable
+create table test_1 (id integer primary key) inherits (id);
+NOTICE:  merging column "id" with inherited definition
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "test_1_pkey" for table "test_1"
+create table test_2 (id integer primary key) inherits (id);
+NOTICE:  merging column "id" with inherited definition
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "test_2_pkey" for table "test_2"
+create table test_3 (id integer primary key) inherits (id);
+NOTICE:  merging column "id" with inherited definition
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "test_3_pkey" for table "test_3"
+insert into test_1 (name) values ('Test 1');
+insert into test_1 (name) values ('Test 2');
+insert into test_2 (name) values ('Test 3');
+insert into test_2 (name) values ('Test 4');
+insert into test_3 (name) values ('Test 5');
+insert into test_3 (name) values ('Test 6');
+create view id_ordered as select * from id order by id;
+create rule update_id_ordered as on update to id_ordered
+	do instead update id set name = new.name where id = old.id;
+select * from id_ordered;
+ id |  name  
+----+--------
+  1 | Test 1
+  2 | Test 2
+  3 | Test 3
+  4 | Test 4
+  5 | Test 5
+  6 | Test 6
+(6 rows)
+
+update id_ordered set name = 'update 2' where id = 2;
+update id_ordered set name = 'update 4' where id = 4;
+update id_ordered set name = 'update 5' where id = 5;
+select * from id_ordered;
+ id |   name   
+----+----------
+  1 | Test 1
+  2 | update 2
+  3 | Test 3
+  4 | update 4
+  5 | update 5
+  6 | Test 6
+(6 rows)
+
+set client_min_messages to warning; -- suppress cascade notices
+drop table id cascade;

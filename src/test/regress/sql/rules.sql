@@ -848,3 +848,34 @@ create rule rule_and_refint_t3_ins as on insert to rule_and_refint_t3
 
 insert into rule_and_refint_t3 values (1, 11, 13, 'row7');
 insert into rule_and_refint_t3 values (1, 13, 11, 'row8');
+
+--
+-- check for planner problems with complex inherited UPDATES
+--
+
+create table id (id serial primary key, name text);
+-- currently, must respecify PKEY for each inherited subtable
+create table test_1 (id integer primary key) inherits (id);
+create table test_2 (id integer primary key) inherits (id);
+create table test_3 (id integer primary key) inherits (id);
+
+insert into test_1 (name) values ('Test 1');
+insert into test_1 (name) values ('Test 2');
+insert into test_2 (name) values ('Test 3');
+insert into test_2 (name) values ('Test 4');
+insert into test_3 (name) values ('Test 5');
+insert into test_3 (name) values ('Test 6');
+
+create view id_ordered as select * from id order by id;
+
+create rule update_id_ordered as on update to id_ordered
+	do instead update id set name = new.name where id = old.id;
+
+select * from id_ordered;
+update id_ordered set name = 'update 2' where id = 2;
+update id_ordered set name = 'update 4' where id = 4;
+update id_ordered set name = 'update 5' where id = 5;
+select * from id_ordered;
+
+set client_min_messages to warning; -- suppress cascade notices
+drop table id cascade;
