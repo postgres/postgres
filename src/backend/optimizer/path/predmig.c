@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/predmig.c,v 1.1.1.1 1996/07/09 06:21:36 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/predmig.c,v 1.2 1996/10/23 07:14:41 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,12 +41,12 @@
 #include "nodes/relation.h"
 #include "utils/palloc.h"
 #include "utils/elog.h"
-#include "planner/xfunc.h"
-#include "planner/pathnode.h"
-#include "planner/internal.h"
-#include "planner/cost.h"
-#include "planner/keys.h"
-#include "planner/tlist.h"
+#include "optimizer/xfunc.h"
+#include "optimizer/pathnode.h"
+#include "optimizer/internal.h"
+#include "optimizer/cost.h"
+#include "optimizer/keys.h"
+#include "optimizer/tlist.h"
 #include "lib/qsort.h"
 
 #define is_clause(node) (get_cinfo(node))  /* a stream node represents a

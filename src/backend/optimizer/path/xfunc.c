@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/xfunc.c,v 1.1.1.1 1996/07/09 06:21:36 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/xfunc.c,v 1.2 1996/10/23 07:14:43 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,13 +35,13 @@
 #include "catalog/pg_type.h"
 #include "utils/syscache.h"
 #include "catalog/pg_language.h"
-#include "planner/xfunc.h"
-#include "planner/clauses.h"
-#include "planner/pathnode.h"
-#include "planner/internal.h"
-#include "planner/cost.h"
-#include "planner/keys.h"
-#include "planner/tlist.h"
+#include "optimizer/xfunc.h"
+#include "optimizer/clauses.h"
+#include "optimizer/pathnode.h"
+#include "optimizer/internal.h"
+#include "optimizer/cost.h"
+#include "optimizer/keys.h"
+#include "optimizer/tlist.h"
 #include "lib/lispsort.h"
 #include "access/heapam.h"
 #include "tcop/dest.h"
