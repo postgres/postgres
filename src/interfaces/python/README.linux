@@ -1,5 +1,10 @@
 Thanks to thilo@eevolute.com for this README and the RPM
 
+Note: The precompiled RPM package is not available at www.eevolute.com.
+  You may use the spec file provided with PyGreSQL to build your
+  own package.
+    Hartmut Goebel <hartmut@goebel.noris.de>
+
 
 INSTALLING PyGreSQL on Redhat Linux 5.1 or 5.2
 ==============================================

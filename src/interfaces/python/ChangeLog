@@ -5,16 +5,39 @@ This software is copyright (c) 1995, Pascal Andre (andre@via.ecp.fr)
 Further copyright 1997, 1998 and 1999 by D'Arcy J.M. Cain (darcy@druid.net)
 See file README for copyright information.
 
+Version 3.0
+  - Remove strlen() call from pglarge_write() and get size from object.
+    (Richard@Bouska.cz)
+  - Add a little more error checking to the quote function in the wrapper
+  - Add extra checking in _quote function
+  - Wrap query in pg.py for debugging
+  - Add DB-API 2.0 support to pgmodule.c (andre@via.ecp.fr)
+  - Add DB-API 2.0 wrapper pgdb.py (andre@via.ecp.fr) 
+  - Correct keyword clash (temp) in tutorial
+  - Clean up layout of tutorial
+  - Return NULL values as None (rlawrence@lastfoot.com)
+  - Change None to NULL in insert and update
+  - Change hash-bang lines to use /usr/bin/env
+  - Clearing date should be blank (NULL) not TODAY
+  - Quote backslashes in strings in _quote (brian@CSUA.Berkeley.EDU)
+  - Expanded and clarified build instructions (tbryan@starship.python.net)
+  - Make code thread safe (Jerome.Alet@unice.fr)
+  - Add README.distutils (mwa@gate.net & jeremy@cnri.reston.va.us)
+  - Many fixes and increased DB-API compliance by chifungfan@yahoo.com,
+    tony@printra.net, jeremy@alum.mit.edu and others to get the final
+    version ready to release.
+
 Version 2.4
   - Insert returns None if the user doesn't have select permissions
     on the table.  It can (and does) happen that one has insert but
     not select permissions on a table.
   - Added ntuples() method to query object (brit@druid.net)
   - Corrected a bug related to getresult() and the money type
-  - Corrected a but related to negative money amounts
+  - Corrected a bug related to negative money amounts
   - Allow update based on primary key if munged oid not available and
     table has a primary key
   - Add many __doc__ strings. (andre@via.ecp.fr)
+  - Get method works with views if key specified
 
 Version 2.3
   - connect.host returns "localhost" when connected to Unix socket 

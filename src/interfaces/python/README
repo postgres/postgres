@@ -1,11 +1,11 @@
 
-PyGreSQL - v2.4: PostgreSQL module for Python
+PyGreSQL - v2.5: PostgreSQL module for Python
 ==============================================
 
 0. Copyright notice
 ===================
 
-  PyGreSQL, version 2.4
+  PyGreSQL, version 2.5
   A Python interface for PostgreSQL database.
   Written by D'Arcy J.M. Cain, darcy@druid.net<BR>
   Based heavily on code written by Pascal Andre, andre@chimay.via.ecp.fr.
@@ -57,7 +57,8 @@ PyGreSQL 2.0 was developed and tested on a NetBSD 1.3_BETA system.  It is
 based on the PyGres95 code written by Pascal Andre, andre@chimay.via.ecp.fr.
 I changed the version to 2.0 and updated the code for Python 1.5 and
 PostgreSQL 6.2.1.  While I was at it I upgraded the code to use full ANSI 
-style prototypes and changed the order of arguments to connect.
+style prototypes and changed the order of arguments to connect.  The latest
+version of PyGreSQL works with PostgreSQL 6.5 and Python 1.5.2.
 
 
 1.2. Distribution files
@@ -78,25 +79,90 @@ style prototypes and changed the order of arguments to connect.
 1.3. Installation
 -----------------
 
-* You first have to get and build Python and PostgreSQL.
+* If you are on NetBSD, look in the packages directory under databases. If
+  it isn't there yet, it should be there shortly.  You can also pick up the
+  package files from ftp://ftp.druid.net/pub/distrib/pygresql.pkg.tgz.
+  There is also a package in the FreeBSD ports collection but as I write
+  this it is at version 2.1.  I will try to get that updated as well.
+
+* For Linux installation look at README.linux.  If you're on an x86 system 
+  that uses RPMs, then you can pick up an RPM at 
+  ftp://ftp.druid.net/pub/distrib/pygresql.i386.rpm
+
+* Also, check out setup.py for an alternate method of installing the package.
+
+You have two options.  You can compile PyGreSQL as a stand-alone module 
+or you can build it into the Python interpreter.
+
+GENERAL 
+
+* You must first have installed Python and PostgreSQL on your system.
+  The header files and developer's libraries for both Python and PostgreSQL
+  must be installed on your system before you can build PyGreSQL.  If you 
+  built both Python and PostgreSQL from source, you should be fine.  If your 
+  system uses some package mechanism (such as RPMs or NetBSD packages), then 
+  you probably need to install packages such as Python-devel in addition to 
+  the Python package.
 
 * PyGreSQL is implemented as two parts, a C module labeled _pg and a
   Python wrapper called pg.py.  This changed between 2.1 and 2.2.  This
   should not affect any existing programs but the installation is slightly
   different.
 
-* Find the directory where your 'Setup' file lives (usually ??/Modules) and
-  copy or symlink the 'pgmodule.c' file there.
+* Download and unpack the PyGreSQL tarball if you haven't already done so.
 
-* Add the following line to your Setup file
-    _pg  pgmodule.c -I[pgInc] -L[pgLib] -lpq # -lcrypt # needed on some systems
+STAND-ALONE
+
+* In the directory containing pgmodule.c, run the following command
+  cc -fpic -shared -o _pg.so -I[pyInc] -I[pgInc] -L[pgLib] -lpq # -lcrypt # needed on some systems
   where:
-    [pgInc] = path of the PostgreSQL include 
-    [pgLib] = path of the PostgreSQL libraries 
+    [pyInc] = path of the Python include (usually Python.h)
+    [pgInc] = path of the PostgreSQL include (usually postgres.h)
+    [pgLib] = path of the PostgreSQL libraries (usually libpq.so or libpq.a)
   Some options may be added to this line:
     -DNO_DEF_VAR  - no default variables support
     -DNO_DIRECT   - no direct access methods
     -DNO_LARGE    - no large object support
+    -DNO_SNPRINTF - if running a system with no snprintf call
+    -DNO_PQSOCKET - if running an older PostgreSQL
+
+  Define NO_PQSOCKET if you are using a version of PostgreSQL before 6.4
+  that does not have the PQsocket function.  The other options will be
+  described in the next sections.
+
+* Test the new module.  Something like the following should work.
+  
+  $ python
+
+  >>> import _pg
+  >>> db = _pg.connect('thilo','localhost')
+  >>> db.query("INSERT INTO test VALUES ('ping','pong')")
+  18304
+  >>> db.query("SELECT * FROM test")
+  eins|zwei
+  ----+----
+  ping|pong
+  (1 row)
+
+* Finally, move the _pg.so, pg.py, and pgdb.py to a directory in your 
+  PYTHONPATH.  A good place would be /usr/lib/python1.5/site-python if
+  your Python modules are in /usr/lib/python1.5.
+
+BUILT-IN TO PYTHON INTERPRETER
+
+* Find the directory where your 'Setup' file lives (usually ??/Modules) in 
+  the Python source hierarchy and copy or symlink the 'pgmodule.c' file there.
+
+* Add the following line to your Setup file
+    _pg  pgmodule.c -I[pgInc] -L[pgLib] -lpq # -lcrypt # needed on some systems
+  where:
+    [pgInc] = path of PostgreSQL include (often /usr/local/include/python1.5)
+    [pgLib] = path of the PostgreSQL libraries (often /usr/local/lib/python1.5)
+  Some options may be added to this line:
+    -DNO_DEF_VAR  - no default variables support
+    -DNO_DIRECT   - no direct access methods
+    -DNO_LARGE    - no large object support
+    -DNO_SNPRINTF - if running a system with no snprintf call
     -DNO_PQSOCKET - if running an older PostgreSQL
 
   Define NO_PQSOCKET if you are using a version of PostgreSQL before 6.4
@@ -108,20 +174,13 @@ style prototypes and changed the order of arguments to connect.
   your shared modules with "make sharedinstall but this no longer seems
   to be true."
 
-* Copy pg.py to the lib directory where the rest of your modules are.  For
+* Copy pg.py to the lib directory where the rest of your modules are. For
   example, that's /usr/local/lib/Python on my system.
 
-* Do 'make -f Makefile.pre.in boot' and do 'make && make install'
+* Rebuild Python from the root directory of the Python source hierarchy by 
+  running 'make -f Makefile.pre.in boot' and 'make && make install'
 
 * For more details read the documentation at the top of Makefile.pre.in
-
-* If you are on NetBSD, look in the packages directory under databases.  If
-  it isn't there yet, it should be there shortly.  You can also pick up the
-  package files from ftp://ftp.druid.net/pub/distrib/pygresql.pkg.tgz.
-  There is also a package in the FreeBSD ports collection but as I write
-  this it is at version 2.1.  I will try to get that updated as well.
-
-* For Linux installation look at README.linux
 
 
 1.4. Where to get ... ?
@@ -133,9 +192,10 @@ The home sites of the different packages are:
   - PosgreSQL:  http://www.PostgreSQL.org/
   - PyGreSQL:   http://www.druid.net/pygresql/
 
-A Linux RPM can be picked up from ftp://www.eevolute.com/pub/python/.
-A NetBSD package thould be in the distribution soon and is available
-at ftp://ftp.druid.net/pub/distrib/pygresql.pkg.tgz.
+A Linux RPM can be picked up from
+ftp://ftp.druid.net/pub/distrib/pygresql.i386.rpm.  A NetBSD package thould
+be in the distribution soon and is available at
+ftp://ftp.druid.net/pub/distrib/pygresql.pkg.tgz.
 
 1.5. Information and support
 ----------------------------
@@ -394,7 +454,7 @@ methods are specified by the tag [LO].
     inserted row.  If it is otherwise a query that does not return a result
     (ie. is not a some kind of SELECT statement), it returns None.
     Otherwise, it returns a pgqueryobject that can be accessed via the
-    getresult method or printed.
+    getresult or dictresult method or simply printed.
 
   pgqueryobject methods
   ---------------------
@@ -411,8 +471,8 @@ methods are specified by the tag [LO].
       pg.error      - invalid previous result
     Description:
       This method returns the list of the values returned by the query.
-      More information about this result may be get using listfields,
-      fieldname and fiednum methods.
+      More information about this result may be accessed using listfields,
+      fieldname and fieldnum methods.
 
     2.2.1.2. dictresult - like getresult but returns list of dictionaries
     ---------------------------------------------------------------------
@@ -839,8 +899,8 @@ has a class called DB.  The above functions are also included in the
 name space so it isn't necessary to import both modules.  The preferred
 way to use this module is as follows.
 
-from pg import DB
-db = DB(...) # See description of the initialization method below.
+import pg
+db = pg.DB(...) # See description of the initialization method below.
 
 The following describes the methods and variables of this class.
 
@@ -973,11 +1033,30 @@ The following describes the methods and variables of this class.
    as munged as described above.
 
 
-4. Future directions
-====================
+4. DB-API reference
+===================
+
+  This section needs to be written.
+
+
+5. Todo
+=======
 
 The large object and direct access functions need much more attention.
 
-I want to add a DB-SIG API wrapper around the underlying module.  This
-will be in 3.0.
+An update query should return the number of rows affected.
+
+The C module needs to be cleaned up and redundant code merged.
+
+The DB-API module needs to be documented.
+
+
+6. Future directions
+====================
+
+Users should be able to register their own types with _pg.
+
+I would like a new method that returns a dictionary of dictionaries from
+a SELECT.
+
 

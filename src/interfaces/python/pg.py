@@ -10,13 +10,16 @@ import string, re, sys
 # utility function
 # We expect int, seq, decimal, text or date (more later)
 def _quote(d, t):
+	if d == None:
+		return "NULL"
+
 	if t in ['int', 'decimal', 'seq']:
 		if d == "": return 0
-		return "%s" % d
+		return "%d" % int(d)
 
 	if t == 'money':
 		if d == "": return '0.00'
-		return "'%.2f'" % d
+		return "'%.2f'" % float(d)
 
 	if t == 'bool':
 		if string.upper(d) in ['T', 'TRUE', 'Y', 'YES', 1, '1', 'ON']:
@@ -25,7 +28,8 @@ def _quote(d, t):
 			return "'f'"
 
 	if d == "": return "null"
-	return "'%s'" % string.strip(re.sub("'", "''", "%s" % d))
+	return "'%s'" % string.strip(re.sub("'", "''", \
+							 re.sub("\\\\", "\\\\\\\\", "%s" %d)))
 
 class DB:
 	"""This class wraps the pg connection type"""
@@ -42,8 +46,8 @@ class DB:
 			if not hasattr(self,e) and hasattr(self.db,e):
 				exec 'self.%s = self.db.%s' % ( e, e )
 
-		self.attnames = {}
-		self.pkeys = {}
+		self.__attnames__ = {}
+		self.__pkeys__ = {}
 		self.debug = None	# For debugging scripts, set to output format
 							# that takes a single string arg.  For example
 							# in a CGI set to "%s<BR>"
@@ -56,11 +60,17 @@ class DB:
 							pg_class.oid = pg_index.indrelid AND
 							pg_index.indkey[0] = pg_attribute.attnum AND 
 							pg_index.indisprimary = 't'""").getresult():
-			self.pkeys[rel] = att
+			self.__pkeys__[rel] = att
+
+	# wrap query for debugging
+	def query(self, qstr):
+		if self.debug != None:
+			print self.debug % qstr
+		return self.db.query(qstr)
 
 	def pkey(self, cl):
 		# will raise an exception if primary key doesn't exist
-		return self.pkeys[cl]
+		return self.__pkeys__[cl]
 
 	def get_databases(self):
 		l = []
@@ -79,8 +89,8 @@ class DB:
 
 	def get_attnames(self, cl):
 		# May as well cache them
-		if self.attnames.has_key(cl):
-			return self.attnames[cl]
+		if self.__attnames__.has_key(cl):
+			return self.__attnames__[cl]
 
 		query = """SELECT pg_attribute.attname, pg_type.typname
 					FROM pg_class, pg_attribute, pg_type
@@ -114,13 +124,13 @@ class DB:
 			else:
 				l[attname] = 'text'
 
-		self.attnames[cl] = l
-		return self.attnames[cl]
+		self.__attnames__[cl] = l
+		return self.__attnames__[cl]
 
 	# return a tuple from a database
-	def get(self, cl, arg, keyname = None):
+	def get(self, cl, arg, keyname = None, view = 0):
 		if keyname == None:			# use the primary key by default
-			keyname = self.pkeys[cl]
+			keyname = self.__pkeys__[cl]
 
 		fnames = self.get_attnames(cl)
 
@@ -136,6 +146,9 @@ class DB:
 		# We want the oid for later updates if that isn't the key
 		if keyname == 'oid':
 			q = "SELECT * FROM %s WHERE oid = %s" % (cl, k)
+		elif view:
+			q = "SELECT * FROM %s WHERE %s = %s" % \
+				(cl, keyname, _quote(k, fnames[keyname]))
 		else:
 			q = "SELECT oid AS oid_%s, %s FROM %s WHERE %s = %s" % \
 				(cl, string.join(fnames.keys(), ','),\
@@ -155,6 +168,7 @@ class DB:
 		return arg
 
 	# Inserts a new tuple into a table
+	# We currently don't support insert into views although PostgreSQL does
 	def insert(self, cl, a):
 		fnames = self.get_attnames(cl)
 		l = []
@@ -183,7 +197,7 @@ class DB:
 	# otherwise use the primary key.  Fail if neither.
 	def update(self, cl, a):
 		foid = 'oid_%s' % cl
-		pk = self.pkeys[cl]
+		pk = self.__pkeys__[cl]
 		if a.has_key(foid):
 			where = "oid = %s" % a[foid]
 		elif a.has_key(pk):
@@ -228,8 +242,6 @@ class DB:
 		for ff in fnames.keys():
 			if fnames[ff] in ['int', 'decimal', 'seq', 'money']:
 				a[ff] = 0
-			elif fnames[ff] == 'date':
-				a[ff] = 'TODAY'
 			else:
 				a[ff] = ""
 

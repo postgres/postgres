@@ -1,14 +1,11 @@
 
-Announce: Release of PyGreSQL version 2.4
+Announce: Release of PyGreSQL version 3.0
 ===============================================
 
-PyGreSQL v2.4 has been released.
+PyGreSQL v3.0 has been released.
 It is available at: ftp://ftp.druid.net/pub/distrib/PyGreSQL.tgz.  If
-you are on NetBSD, look in the packages directory under databases.  If
-it isn't there yet, it should be there shortly.  You can also pick up the
-package files from ftp://ftp.druid.net/pub/distrib/pygresql.pkg.tgz.
-There is also a package in the FreeBSD ports collection but as I write
-this it is at version 2.1.  I will try to get that updated as well.
+you are running NetBSD, look in the packages directory under databases.
+There is also a package in the FreeBSD ports collection.              
 
 PostgreSQL is a database system derived from Postgres4.2. It conforms
 to (most of) ANSI SQL and offers many interesting capabilities (C
@@ -28,19 +25,49 @@ PyGreSQL is a python module that interfaces to a PostgreSQL database. It
 embeds the PostgreSQL query library to allow easy use of the powerful
 PostgreSQL features from a Python script.
 
-I wanted to have DB-SIG API support in the next release but there are
-enough fixes and improvements to make one more release before starting
-on that.  The next version will be 3.0 and have the DB-SIG API support.
-Note that I said this for 2.4 but some required changes from others have
-been slow in coming (I'm not complaining, people do have lives) and
-there were enough fixes that I didn't want to keep them from a release.
+This release of PyGreSQL is the first DB-SIG API.  That's why we have
+a bump in the major number.  There is also a potential problem in
+backwards compatibility.  Previously when there was a NULL in a returned
+field it was returned as a blank.  Now it is more properly returned as
+a Python None.  Any scripts that expect NULLs to be blanks will have
+problems with this.
 
-PyGreSQL 2.3 was developed and tested on a NetBSD 1.3_BETA system.  It
+Due to the fact that the DB-API is brand new, it is expected that there
+will be a 3.1 release shortly with corrections once many people have
+had a chance to test it.
+
+See the other changes below or in the Changelog file.
+
+PyGreSQL 2.0 was developed and tested on a NetBSD 1.3_BETA system.  It
 is based on the PyGres95 code written by Pascal Andre,
 andre@chimay.via.ecp.fr.  I changed the version to 2.0 and updated the
 code for Python 1.5 and PostgreSQL 6.2.1.  While I was at it I upgraded
 the code to use full ANSI style prototypes and changed the order of
 arguments to connect.  Later versions are fixes and enhancements to that.
+The latest version of PyGreSQL works with Python 1.5.2 and PostgreSQL 6.5.
+
+Important changes from PyGreSQL 2.4 to PyGreSQL 3.0:
+  - Remove strlen() call from pglarge_write() and get size from object.
+    (Richard@Bouska.cz)
+  - Add a little more error checking to the quote function in the wrapper
+  - Add extra checking in _quote function
+  - Wrap query in pg.py for debugging
+  - Add DB-API 2.0 support to pgmodule.c (andre@via.ecp.fr)
+  - Add DB-API 2.0 wrapper pgdb.py (andre@via.ecp.fr)
+  - Correct keyword clash (temp) in tutorial
+  - Clean up layout of tutorial
+  - Return NULL values as None (rlawrence@lastfoot.com) (WARNING: This
+    will cause backwards compatibility issues.)
+  - Change None to NULL in insert and update
+  - Change hash-bang lines to use /usr/bin/env
+  - Clearing date should be blank (NULL) not TODAY
+  - Quote backslashes in strings in _quote (brian@CSUA.Berkeley.EDU)
+  - Expanded and clarified build instructions (tbryan@starship.python.net)
+  - Make code thread safe (Jerome.Alet@unice.fr)
+  - Add README.distutils (mwa@gate.net & jeremy@cnri.reston.va.us)
+  - Many fixes and increased DB-API compliance by chifungfan@yahoo.com,
+    tony@printra.net, jeremy@alum.mit.edu and others to get the final
+    version ready to release.
 
 Important changes from PyGreSQL 2.3 to PyGreSQL 2.4:
   - Insert returns None if the user doesn't have select permissions
@@ -48,10 +75,11 @@ Important changes from PyGreSQL 2.3 to PyGreSQL 2.4:
     not select permissions on a table.
   - Added ntuples() method to query object (brit@druid.net)
   - Corrected a bug related to getresult() and the money type
-  - Corrected a but related to negative money amounts
+  - Corrected a bug related to negative money amounts
   - Allow update based on primary key if munged oid not available and
     table has a primary key
   - Add many __doc__ strings. (andre@via.ecp.fr)
+  - Get method works with views if key specified
 
 Important changes from PyGreSQL 2.2 to PyGreSQL 2.3:
   - connect.host returns "localhost" when connected to Unix socket
