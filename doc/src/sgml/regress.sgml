@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/regress.sgml,v 1.42 2004/11/15 06:32:14 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/regress.sgml,v 1.43 2004/12/02 20:35:45 momjian Exp $ -->
 
  <chapter id="regress">
   <title id="regress-title">Regression Tests</title>
@@ -46,8 +46,11 @@ gmake check
    in the top-level directory.  (Or you can change to
    <filename>src/test/regress</filename> and run the command there.)
    This will first build several auxiliary files, such as
-   some sample
-   user-defined trigger functions, and then run the test driver
+   some sample user-defined trigger functions, and then run the test driver
+   script. On some platforms if you want perform a <literal>make check<literal>
+   without installing it first, you have to build with:
+   <literal>configure --disable-rpath</>.
+   At the end you should see something like
    script.  At the end you should see something like
 <screen>
 <computeroutput>
