@@ -1763,3 +1763,254 @@ message can get through to the mailing list cleanly
 
 
 
+From pgsql-committers-owner+M9273=maillist=candle.pha.pa.us@postgresql.org Thu Mar  6 19:37:25 2003
+Return-path: <pgsql-committers-owner+M9273=maillist=candle.pha.pa.us@postgresql.org>
+Received: from relay2.pgsql.com (relay2.pgsql.com [64.49.215.143])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id h270bM624923
+	for <maillist@candle.pha.pa.us>; Thu, 6 Mar 2003 19:37:24 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by relay2.pgsql.com (Postfix) with ESMTP id 4D5CDEE0411
+	for <maillist@candle.pha.pa.us>; Thu,  6 Mar 2003 19:37:23 -0500 (EST)
+X-Original-To: pgsql-committers@postgresql.org
+Received: from perrin.int.nxad.com (internal.ext.nxad.com [69.1.70.251])
+	by postgresql.org (Postfix) with ESMTP
+	id 3120E47646F; Thu,  6 Mar 2003 19:36:58 -0500 (EST)
+Received: by perrin.int.nxad.com (Postfix, from userid 1001)
+	id 9CBE42105B; Thu,  6 Mar 2003 16:36:40 -0800 (PST)
+Date: Thu, 6 Mar 2003 16:36:40 -0800
+From: Sean Chittenden <sean@chittenden.org>
+To: Tom Lane <tgl@sss.pgh.pa.us>
+cc: Christopher Kings-Lynne <chriskl@familyhealth.com.au>,
+   pgsql-committers@postgresql.org, pgsql-performance@postgresql.org
+Subject: Re: [COMMITTERS] pgsql-server/ /configure /configure.in rc/incl ...
+Message-ID: <20030307003640.GF79234@perrin.int.nxad.com>
+References: <20030306031656.1876F4762E0@postgresql.org> <032f01c2e390$b1842b20$6500a8c0@fhp.internal> <11077.1046921667@sss.pgh.pa.us> <033f01c2e392$71476570$6500a8c0@fhp.internal> <12228.1046922471@sss.pgh.pa.us> <20030306094117.GA79234@perrin.int.nxad.com> <15071.1046964336@sss.pgh.pa.us>
+MIME-Version: 1.0
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature"; boundary="HjNkcEWJ4DMx36DP"
+Content-Disposition: inline
+In-Reply-To: <15071.1046964336@sss.pgh.pa.us>
+User-Agent: Mutt/1.4i
+X-PGP-Key: finger seanc@FreeBSD.org
+X-PGP-Fingerprint: 3849 3760 1AFE 7B17 11A0  83A6 DD99 E31F BC84 B341
+X-Web-Homepage: http://sean.chittenden.org/
+Precedence: bulk
+Sender: pgsql-committers-owner@postgresql.org
+Status: OR
+
+--HjNkcEWJ4DMx36DP
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
+
+[moving to -performance, please drop -committers from replies]
+
+> > I've toyed with the idea of adding this because it is monstrously more
+> > efficient than select()/poll() in basically every way, shape, and
+> > form.
+>=20
+> From what I've looked at, kqueue only wins when you are watching a
+> large number of file descriptors at the same time; which is an
+> operation done nowhere in Postgres.  I think the above would be a
+> complete waste of effort.
+
+It scales very well to many thousands of descriptors, but it also
+works well on small numbers as well.  kqueue is about 5x faster than
+select() or poll() on the low end of number of fd's.  As I said
+earlier, I don't think there is _much_ to gain in this regard, but I
+do think that it would be a speed improvement but only to one OS
+supported by PostgreSQL.  I think that there are bigger speed
+improvements to be had elsewhere in the code.
+
+> > Is this one of the areas of PostgreSQL that just needs to get
+> > slowly migrated to use mmap() or are there any gaping reasons why
+> > to not use the family of system calls?
+>=20
+> There has been much speculation on this, and no proof that it
+> actually buys us anything to justify the portability hit.
+
+Actually, I think that it wouldn't be that big of a portability hit
+because you still would read() and write() as always, but in
+performance sensitive areas, an #ifdef HAVE_MMAP section would have
+the appropriate mmap() calls.  If the system doesn't have mmap(),
+there isn't much to loose and we're in the same position we're in now.
+
+> There would be some nontrivial problems to solve, such as the
+> mechanics of accessing a large number of files from a large number
+> of backends without running out of virtual memory.  Also, is it
+> guaranteed that multiple backends mmap'ing the same block will
+> access the very same physical buffer, and not multiple copies?
+> Multiple copies would be fatal.  See the acrhives for more
+> discussion.
+
+Have read through the archives.  Making a call to madvise() will speed
+up access to the pages as it gives hints to the VM about what order
+the pages are accessed/used.  Here are a few bits from the BSD mmap()
+and madvise() man pages:
+
+mmap(2):
+     MAP_NOSYNC        Causes data dirtied via this VM map to be flushed to
+                       physical media only when necessary (usually by the
+                       pager) rather then gratuitously.  Typically this pre-
+                       vents the update daemons from flushing pages dirtied
+                       through such maps and thus allows efficient sharing =
+of
+                       memory across unassociated processes using a file-
+                       backed shared memory map.  Without this option any VM
+                       pages you dirty may be flushed to disk every so often
+                       (every 30-60 seconds usually) which can create perfo=
+r-
+                       mance problems if you do not need that to occur (such
+                       as when you are using shared file-backed mmap regions
+                       for IPC purposes).  Note that VM/filesystem coherency
+                       is maintained whether you use MAP_NOSYNC or not.  Th=
+is
+                       option is not portable across UNIX platforms (yet),
+                       though some may implement the same behavior by defau=
+lt.
+
+                       WARNING!  Extending a file with ftruncate(2), thus c=
+re-
+                       ating a big hole, and then filling the hole by modif=
+y-
+                       ing a shared mmap() can lead to severe file fragment=
+a-
+                       tion.  In order to avoid such fragmentation you shou=
+ld
+                       always pre-allocate the file's backing store by
+                       write()ing zero's into the newly extended area prior=
+ to
+                       modifying the area via your mmap().  The fragmentati=
+on
+                       problem is especially sensitive to MAP_NOSYNC pages,
+                       because pages may be flushed to disk in a totally ra=
+n-
+                       dom order.
+
+                       The same applies when using MAP_NOSYNC to implement a
+                       file-based shared memory store.  It is recommended t=
+hat
+                       you create the backing store by write()ing zero's to
+                       the backing file rather then ftruncate()ing it.  You
+                       can test file fragmentation by observing the KB/t
+                       (kilobytes per transfer) results from an ``iostat 1''
+                       while reading a large file sequentially, e.g. using
+                       ``dd if=3Dfilename of=3D/dev/null bs=3D32k''.
+
+                       The fsync(2) function will flush all dirty data and
+                       metadata associated with a file, including dirty NOS=
+YNC
+                       VM data, to physical media.  The sync(8) command and
+                       sync(2) system call generally do not flush dirty NOS=
+YNC
+                       VM data.  The msync(2) system call is obsolete since
+                       BSD implements a coherent filesystem buffer cache.
+                       However, it may be used to associate dirty VM pages
+                       with filesystem buffers and thus cause them to be
+                       flushed to physical media sooner rather then later.
+
+madvise(2):
+     MADV_NORMAL      Tells the system to revert to the default paging beha=
+v-
+                      ior.
+
+     MADV_RANDOM      Is a hint that pages will be accessed randomly, and
+                      prefetching is likely not advantageous.
+
+     MADV_SEQUENTIAL  Causes the VM system to depress the priority of pages
+                      immediately preceding a given page when it is faulted
+                      in.
+
+mprotect(2):
+     The mprotect() system call changes the specified pages to have protect=
+ion
+     prot.  Not all implementations will guarantee protection on a page bas=
+is;
+     the granularity of protection changes may be as large as an entire
+     region.  A region is the virtual address space defined by the start and
+     end addresses of a struct vm_map_entry.
+
+     Currently these protection bits are known, which can be combined, OR'd
+     together:
+
+     PROT_NONE     No permissions at all.
+
+     PROT_READ     The pages can be read.
+
+     PROT_WRITE    The pages can be written.
+
+     PROT_EXEC     The pages can be executed.
+
+msync(2):
+     The msync() system call writes any modified pages back to the filesyst=
+em
+     and updates the file modification time.  If len is 0, all modified pag=
+es
+     within the region containing addr will be flushed; if len is non-zero,
+     only those pages containing addr and len-1 succeeding locations will be
+     examined.  The flags argument may be specified as follows:
+
+     MS_ASYNC        Return immediately
+     MS_SYNC         Perform synchronous writes
+     MS_INVALIDATE   Invalidate all cached data
+
+
+A few thoughts come to mind:
+
+1) backends could share buffers by mmap()'ing shared regions of data.
+   While I haven't seen any numbers to reflect this, I'd wager that
+   mmap() is a faster interface than ipc.
+
+2) It looks like while there are various file IO schemes scattered all
+   over the place, the bulk of the critical routines that would need
+   to be updated are in backend/storage/file/fd.c, more specifically:
+
+   *) fileNameOpenFile() would need the appropriate mmap() call made
+      to it.
+
+   *) FileTruncate() would need some attention to avoid fragmentation.
+
+   *) a new "sync" GUC would have to be introduced to handle msync
+      (affects only pg_fsync() and pg_fdatasync()).
+
+3) There's a bit of code in pgsql/src/backend/storage/smgr that could
+   be gutted/removed.  Which of those storage types are even used any
+   more?  There's a reference in the code to PostgreSQL 3.0.  :)
+
+And I think that'd be it.  The LRU code could be used if necessary to
+help manage the amount of mmap()'ed in the VM at any one time, at the
+very least that could be a handled by a shm var that various backends
+would increment/decrement as files are open()'ed/close()'ed.
+
+I didn't spend too long looking at this, but I _think_ that'd cover
+80% of PostgreSQL's disk access needs.  The next bit to possibly add
+would be passing a flag on FileOpen operations that'd act as a hint to
+madvise() that way the VM could proactively react to PostgreSQL's
+needs.
+
+I don't have my copy of Steven's handy (it's some 700mi away atm
+otherwise I'd cite it), but if Tom or someone else has it handy, look
+up the example re: the performance gain from read()'ing an mmap()'ed
+file versus a non-mmap()'ed file.  The difference is non-trivial and
+_WELL_ worth the time given the speed increase.  The same speed
+benefit held true for writes as well, iirc.  It's been a while, but I
+think it was around page 330.  The index has it listed and it's not
+that hard of an example to find.  -sc
+
+--=20
+Sean Chittenden
+
+--HjNkcEWJ4DMx36DP
+Content-Type: application/pgp-signature
+Content-Disposition: inline
+
+-----BEGIN PGP SIGNATURE-----
+Comment: Sean Chittenden <sean@chittenden.org>
+
+iD8DBQE+Z+mY3ZnjH7yEs0ERAjVkAJwMI1V7+HvMAA5ODadD5znsekI8TQCgvH0C
+KwvG7YLsJ+xpsTUS67KD+4M=
+=w8/7
+-----END PGP SIGNATURE-----
+
+--HjNkcEWJ4DMx36DP--
+
