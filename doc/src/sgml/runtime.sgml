@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.147.2.3 2002/11/21 06:36:27 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.147.2.4 2002/12/09 21:03:42 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -2631,13 +2631,13 @@ kernel.shmmax = 134217728
 
 
      <varlistentry>
-      <term><systemitem class="osname">OS/X</></term>
-      <indexterm><primary>OS/X</></>
+      <term><systemitem class="osname">MacOS X</></term>
+      <indexterm><primary>MacOS X</></>
       <listitem>
        <para>
         Edit the file
         <filename>/System/Library/StartupItems/SystemTuning/SystemTuning
-        </> and edit the following values:
+        </> and change the following values:
 <programlisting>
 sysctl -w kern.sysv.shmmax
 sysctl -w kern.sysv.shmmin
@@ -2645,8 +2645,8 @@ sysctl -w kern.sysv.shmmni
 sysctl -w kern.sysv.shmseg
 sysctl -w kern.sysv.shmall
 </programlisting>
-        These values have the same meanings on OS/X as those listed for
-        previous operating systems.
+        These values have the same meanings on <productname>MacOS</> X
+        as those listed for previous operating systems.
        </para>
       </listitem>
      </varlistentry>
