@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.128 2003/10/16 20:59:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.128.2.1 2005/03/01 21:15:26 tgl Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -900,8 +900,7 @@ WaitOnLock(LOCKMETHOD lockmethod, LOCKMODE lockmode,
 	{
 		/*
 		 * We failed as a result of a deadlock, see CheckDeadLock(). Quit
-		 * now.  Removal of the proclock and lock objects, if no longer
-		 * needed, will happen in xact cleanup (see above for motivation).
+		 * now.
 		 */
 		LOCK_PRINT("WaitOnLock: aborting on lock", lock, lockmode);
 		LWLockRelease(lockMethodTable->masterLock);
@@ -927,23 +926,20 @@ WaitOnLock(LOCKMETHOD lockmethod, LOCKMODE lockmode,
  * (caller must know it is on one).
  *
  * Locktable lock must be held by caller.
- *
- * NB: this does not remove the process' proclock object, nor the lock object,
- * even though their counts might now have gone to zero.  That will happen
- * during a subsequent LockReleaseAll call, which we expect will happen
- * during transaction cleanup.	(Removal of a proc from its wait queue by
- * this routine can only happen if we are aborting the transaction.)
  */
 void
 RemoveFromWaitQueue(PGPROC *proc)
 {
 	LOCK	   *waitLock = proc->waitLock;
+	PROCLOCK   *proclock = proc->waitHolder;
 	LOCKMODE	lockmode = proc->waitLockMode;
+	LOCKMETHOD	lockmethod = LOCK_LOCKMETHOD(*waitLock);
 
 	/* Make sure proc is waiting */
 	Assert(proc->links.next != INVALID_OFFSET);
 	Assert(waitLock);
 	Assert(waitLock->waitProcs.size > 0);
+	Assert(lockmethod > 0 && lockmethod < NumLockMethods);
 
 	/* Remove proc from lock's wait queue */
 	SHMQueueDelete(&(proc->links));
@@ -963,8 +959,25 @@ RemoveFromWaitQueue(PGPROC *proc)
 	proc->waitLock = NULL;
 	proc->waitHolder = NULL;
 
+	/*
+	 * Delete the proclock immediately if it represents no already-held locks.
+	 * This must happen now because if the owner of the lock decides to release
+	 * it, and the requested/granted counts then go to zero, LockRelease
+	 * expects there to be no remaining proclocks.
+	 */
+	if (proclock->nHolding == 0)
+	{
+		SHMQueueDelete(&proclock->lockLink);
+		SHMQueueDelete(&proclock->procLink);
+		proclock = (PROCLOCK *) hash_search(LockMethodTable[lockmethod]->proclockHash,
+											(void *) proclock,
+											HASH_REMOVE, NULL);
+		if (!proclock)
+			elog(WARNING, "proclock table corrupted");
+	}
+
 	/* See if any other waiters for the lock can be woken up now */
-	ProcLockWakeup(GetLocksMethodTable(waitLock), waitLock);
+	ProcLockWakeup(LockMethodTable[lockmethod], waitLock);
 }
 
 /*
