@@ -2,7 +2,7 @@
 TODO list for PostgreSQL
 ========================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Tue Jan  4 00:13:28 EST 2005
+Last updated:		Tue Jan  4 00:35:42 EST 2005
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -895,16 +895,17 @@ Source Code
 * Allow cross-compiling by generating the zic database on the target system
 * Improve NLS maintenace of libpgport messages linked onto applications
 * Allow ecpg to work with MSVC and BCC
-* Allow building with directories containing spaces
+* Allow building in directories containing spaces
 
-  There are two capabilities here, first the ability to build from a
-  source directory that contains spaces, and second the ability to install
-  into a directory that contains spaces.  The first is probably not
-  possible because 'gmake' and other compiler tools do not fully support
-  spaces in path names.  The second is possible with proper quoting in
-  the makefiles.  Because PostgreSQL supports relocatable installs, it
-  is possible to install into a directory that doesn't contain spaces and
-  then copy the install to a directory with spaces.
+  This is probably not possible because 'gmake' and other compiler tools
+  do not fully support quoting of paths with spaces.
+
+* Allow installing to directories containing spaces
+
+  This is possible if proper quoting is added to the makefiles for the
+  install targets.  Because PostgreSQL supports relocatable installs, it
+  is already possible to install into a directory that doesn't contain 
+  spaces and then copy the install to a directory with spaces.
 
 * Win32
 	o Remove configure.in check for link failure when cause is found
