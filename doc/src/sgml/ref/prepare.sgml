@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/prepare.sgml,v 1.14 2004/09/30 04:23:27 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/prepare.sgml,v 1.15 2004/10/29 19:40:33 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -152,9 +152,9 @@ PREPARE <replaceable class="PARAMETER">plan_name</replaceable> [ (<replaceable c
    Create a prepared query for an <command>INSERT</command> statement,
    and then execute it:
 <programlisting>
-PREPARE fooplan (int, text, bool, numeric(8,2)) AS
-    INSERT INTO foo VALUES($1, '$2', '$3', '$4');
-EXECUTE fooplan(1, 'Hunter Valley', 't', '200.00');
+PREPARE fooplan (int, text, bool, numeric) AS
+    INSERT INTO foo VALUES($1, $2, $3, $4);
+EXECUTE fooplan(1, 'Hunter Valley', 't', 200.00);
 </programlisting>
   </para>
 
