@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.232 2002/07/20 05:16:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.233 2002/08/06 02:36:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1899,6 +1899,8 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 					newtup.t_data = (HeapTupleHeader) PageGetItem(ToPage, newitemid);
 					ItemPointerSet(&(newtup.t_self), destvacpage->blkno, newoff);
 
+					/* XLOG stuff */
+					if (!onerel->rd_istemp)
 					{
 						XLogRecPtr	recptr =
 						log_heap_move(onerel, Cbuf, tuple.t_self,
@@ -1912,6 +1914,12 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 						PageSetLSN(ToPage, recptr);
 						PageSetSUI(ToPage, ThisStartUpID);
 					}
+					else
+					{
+						/* No XLOG record, but still need to flag that XID exists on disk */
+						MyXactMadeTempRelUpdate = true;
+					}
+
 					END_CRIT_SECTION();
 
 					if (destvacpage->blkno > last_move_dest_block)
@@ -2042,6 +2050,8 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 			tuple.t_data->t_infomask |= HEAP_MOVED_OFF;
 			HeapTupleHeaderSetXvac(tuple.t_data, myXID);
 
+			/* XLOG stuff */
+			if (!onerel->rd_istemp)
 			{
 				XLogRecPtr	recptr =
 				log_heap_move(onerel, buf, tuple.t_self,
@@ -2052,6 +2062,12 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 				PageSetLSN(ToPage, recptr);
 				PageSetSUI(ToPage, ThisStartUpID);
 			}
+			else
+			{
+				/* No XLOG record, but still need to flag that XID exists on disk */
+				MyXactMadeTempRelUpdate = true;
+			}
+
 			END_CRIT_SECTION();
 
 			cur_page->offsets_used++;
@@ -2321,8 +2337,13 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 
 			}
 			Assert(vacpage->offsets_free == num_tuples);
+
 			START_CRIT_SECTION();
+
 			uncnt = PageRepairFragmentation(page, unused);
+
+			/* XLOG stuff */
+			if (!onerel->rd_istemp)
 			{
 				XLogRecPtr	recptr;
 
@@ -2331,7 +2352,14 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 				PageSetLSN(page, recptr);
 				PageSetSUI(page, ThisStartUpID);
 			}
+			else
+			{
+				/* No XLOG record, but still need to flag that XID exists on disk */
+				MyXactMadeTempRelUpdate = true;
+			}
+
 			END_CRIT_SECTION();
+
 			LockBuffer(buf, BUFFER_LOCK_UNLOCK);
 			WriteBuffer(buf);
 		}
@@ -2450,12 +2478,17 @@ vacuum_page(Relation onerel, Buffer buffer, VacPage vacpage)
 	Assert(vacpage->offsets_used == 0);
 
 	START_CRIT_SECTION();
+
 	for (i = 0; i < vacpage->offsets_free; i++)
 	{
 		itemid = PageGetItemId(page, vacpage->offsets[i]);
 		itemid->lp_flags &= ~LP_USED;
 	}
+
 	uncnt = PageRepairFragmentation(page, unused);
+
+	/* XLOG stuff */
+	if (!onerel->rd_istemp)
 	{
 		XLogRecPtr	recptr;
 
@@ -2464,6 +2497,12 @@ vacuum_page(Relation onerel, Buffer buffer, VacPage vacpage)
 		PageSetLSN(page, recptr);
 		PageSetSUI(page, ThisStartUpID);
 	}
+	else
+	{
+		/* No XLOG record, but still need to flag that XID exists on disk */
+		MyXactMadeTempRelUpdate = true;
+	}
+
 	END_CRIT_SECTION();
 }
 

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.100 2002/08/05 03:29:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.101 2002/08/06 02:36:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -121,7 +121,7 @@ CatalogIndexInsert(CatalogIndexState indstate, HeapTuple heapTuple)
 							  nullv,	/* info on nulls */
 							  &(heapTuple->t_self),		/* tid of heap tuple */
 							  heapRelation,
-							  relationDescs[i]->rd_uniqueindex);
+							  relationDescs[i]->rd_index->indisunique);
 
 		if (result)
 			pfree(result);

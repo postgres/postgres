@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.91 2002/06/20 20:29:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.92 2002/08/06 02:36:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -381,16 +381,7 @@ mdclose_fd(int fd)
 
 		/* if not closed already */
 		if (v->mdfd_vfd >= 0)
-		{
-			/*
-			 * We sync the file descriptor so that we don't need to reopen
-			 * it at transaction commit to force changes to disk.  (This
-			 * is not really optional, because we are about to forget that
-			 * the file even exists...)
-			 */
-			FileSync(v->mdfd_vfd);
 			FileClose(v->mdfd_vfd);
-		}
 		/* Now free vector */
 		v = v->mdfd_chain;
 		if (ov != &Md_fdvec[fd])
@@ -403,16 +394,7 @@ mdclose_fd(int fd)
 	if (v != (MdfdVec *) NULL)
 	{
 		if (v->mdfd_vfd >= 0)
-		{
-			/*
-			 * We sync the file descriptor so that we don't need to reopen
-			 * it at transaction commit to force changes to disk.  (This
-			 * is not really optional, because we are about to forget that
-			 * the file even exists...)
-			 */
-			FileSync(v->mdfd_vfd);
 			FileClose(v->mdfd_vfd);
-		}
 	}
 #endif
 
@@ -498,55 +480,15 @@ mdwrite(Relation reln, BlockNumber blocknum, char *buffer)
 }
 
 /*
- *	mdflush() -- Synchronously write a block to disk.
- *
- *		This is exactly like mdwrite(), but doesn't return until the file
- *		system buffer cache has been flushed.
- */
-int
-mdflush(Relation reln, BlockNumber blocknum, char *buffer)
-{
-	int			status;
-	long		seekpos;
-	MdfdVec    *v;
-
-	v = _mdfd_getseg(reln, blocknum);
-
-#ifndef LET_OS_MANAGE_FILESIZE
-	seekpos = (long) (BLCKSZ * (blocknum % ((BlockNumber) RELSEG_SIZE)));
-#ifdef DIAGNOSTIC
-	if (seekpos >= BLCKSZ * RELSEG_SIZE)
-		elog(FATAL, "seekpos too big!");
-#endif
-#else
-	seekpos = (long) (BLCKSZ * (blocknum));
-#endif
-
-	if (FileSeek(v->mdfd_vfd, seekpos, SEEK_SET) != seekpos)
-		return SM_FAIL;
-
-	/* write and sync the block */
-	status = SM_SUCCESS;
-	if (FileWrite(v->mdfd_vfd, buffer, BLCKSZ) != BLCKSZ
-		|| FileSync(v->mdfd_vfd) < 0)
-		status = SM_FAIL;
-
-	return status;
-}
-
-/*
  *	mdblindwrt() -- Write a block to disk blind.
  *
- *		We have to be able to do this using only the name and OID of
- *		the database and relation in which the block belongs.  Otherwise
- *		this is much like mdwrite().  If dofsync is TRUE, then we fsync
- *		the file, making it more like mdflush().
+ *		We have to be able to do this using only the rnode of the relation
+ *		in which the block belongs.  Otherwise this is much like mdwrite().
  */
 int
 mdblindwrt(RelFileNode rnode,
 		   BlockNumber blkno,
-		   char *buffer,
-		   bool dofsync)
+		   char *buffer)
 {
 	int			status;
 	long		seekpos;
@@ -568,7 +510,6 @@ mdblindwrt(RelFileNode rnode,
 #endif
 
 	errno = 0;
-
 	if (lseek(fd, seekpos, SEEK_SET) != seekpos)
 	{
 		elog(LOG, "mdblindwrt: lseek(%ld) failed: %m", seekpos);
@@ -578,7 +519,7 @@ mdblindwrt(RelFileNode rnode,
 
 	status = SM_SUCCESS;
 
-	/* write and optionally sync the block */
+	/* write the block */
 	errno = 0;
 	if (write(fd, buffer, BLCKSZ) != BLCKSZ)
 	{
@@ -594,54 +535,6 @@ mdblindwrt(RelFileNode rnode,
 		elog(LOG, "mdblindwrt: close() failed: %m");
 		status = SM_FAIL;
 	}
-
-	return status;
-}
-
-/*
- *	mdmarkdirty() -- Mark the specified block "dirty" (ie, needs fsync).
- *
- *		Returns SM_SUCCESS or SM_FAIL.
- */
-int
-mdmarkdirty(Relation reln, BlockNumber blkno)
-{
-	MdfdVec    *v;
-
-	v = _mdfd_getseg(reln, blkno);
-
-	FileMarkDirty(v->mdfd_vfd);
-
-	return SM_SUCCESS;
-}
-
-/*
- *	mdblindmarkdirty() -- Mark the specified block "dirty" (ie, needs fsync).
- *
- *		We have to be able to do this using only the name and OID of
- *		the database and relation in which the block belongs.  Otherwise
- *		this is much like mdmarkdirty().  However, we do the fsync immediately
- *		rather than building md/fd datastructures to postpone it till later.
- */
-int
-mdblindmarkdirty(RelFileNode rnode,
-				 BlockNumber blkno)
-{
-	int			status;
-	int			fd;
-
-	fd = _mdfd_blind_getseg(rnode, blkno);
-
-	if (fd < 0)
-		return SM_FAIL;
-
-	status = SM_SUCCESS;
-
-	if (pg_fsync(fd) < 0)
-		status = SM_FAIL;
-
-	if (close(fd) < 0)
-		status = SM_FAIL;
 
 	return status;
 }
@@ -796,61 +689,36 @@ mdtruncate(Relation reln, BlockNumber nblocks)
 /*
  *	mdcommit() -- Commit a transaction.
  *
- *		All changes to magnetic disk relations must be forced to stable
- *		storage.  This routine makes a pass over the private table of
- *		file descriptors.  Any descriptors to which we have done writes,
- *		but not synced, are synced here.
- *
  *		Returns SM_SUCCESS or SM_FAIL with errno set as appropriate.
  */
 int
-mdcommit()
+mdcommit(void)
 {
-	int			i;
-	MdfdVec    *v;
-
-	for (i = 0; i < CurFd; i++)
-	{
-		v = &Md_fdvec[i];
-		if (v->mdfd_flags & MDFD_FREE)
-			continue;
-		/* Sync the file entry */
-#ifndef LET_OS_MANAGE_FILESIZE
-		for (; v != (MdfdVec *) NULL; v = v->mdfd_chain)
-#else
-		if (v != (MdfdVec *) NULL)
-#endif
-		{
-			if (FileSync(v->mdfd_vfd) < 0)
-				return SM_FAIL;
-		}
-	}
-
+	/*
+	 * We don't actually have to do anything here...
+	 */
 	return SM_SUCCESS;
 }
 
 /*
  *	mdabort() -- Abort a transaction.
  *
- *		Changes need not be forced to disk at transaction abort.  We mark
- *		all file descriptors as clean here.  Always returns SM_SUCCESS.
+ *		Changes need not be forced to disk at transaction abort.
  */
 int
-mdabort()
+mdabort(void)
 {
 	/*
-	 * We don't actually have to do anything here.  fd.c will discard
-	 * fsync-needed bits in its AtEOXact_Files() routine.
+	 * We don't actually have to do anything here...
 	 */
 	return SM_SUCCESS;
 }
 
 /*
- *	mdsync() -- Sync storage.
- *
+ *	mdsync() -- Sync previous writes to stable storage.
  */
 int
-mdsync()
+mdsync(void)
 {
 	sync();
 	if (IsUnderPostmaster)
@@ -861,11 +729,9 @@ mdsync()
 
 /*
  *	_fdvec_alloc () -- grab a free (or new) md file descriptor vector.
- *
  */
-static
-int
-_fdvec_alloc()
+static int
+_fdvec_alloc(void)
 {
 	MdfdVec    *nvec;
 	int			fdvec,

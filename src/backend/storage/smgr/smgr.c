@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.57 2002/06/20 20:29:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.58 2002/08/06 02:36:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,12 +40,8 @@ typedef struct f_smgr
 										  char *buffer);
 	int			(*smgr_write) (Relation reln, BlockNumber blocknum,
 										   char *buffer);
-	int			(*smgr_flush) (Relation reln, BlockNumber blocknum,
-										   char *buffer);
 	int			(*smgr_blindwrt) (RelFileNode rnode, BlockNumber blkno,
-											  char *buffer, bool dofsync);
-	int			(*smgr_markdirty) (Relation reln, BlockNumber blkno);
-	int			(*smgr_blindmarkdirty) (RelFileNode, BlockNumber blkno);
+											  char *buffer);
 	BlockNumber (*smgr_nblocks) (Relation reln);
 	BlockNumber (*smgr_truncate) (Relation reln, BlockNumber nblocks);
 	int			(*smgr_commit) (void);	/* may be NULL */
@@ -62,15 +58,15 @@ static f_smgr smgrsw[] = {
 
 	/* magnetic disk */
 	{mdinit, NULL, mdcreate, mdunlink, mdextend, mdopen, mdclose,
-		mdread, mdwrite, mdflush, mdblindwrt, mdmarkdirty, mdblindmarkdirty,
+		mdread, mdwrite, mdblindwrt,
 		mdnblocks, mdtruncate, mdcommit, mdabort, mdsync
 	},
 
 #ifdef STABLE_MEMORY_STORAGE
 	/* main memory */
 	{mminit, mmshutdown, mmcreate, mmunlink, mmextend, mmopen, mmclose,
-		mmread, mmwrite, mmflush, mmblindwrt, mmmarkdirty, mmblindmarkdirty,
-	mmnblocks, NULL, mmcommit, mmabort},
+		mmread, mmwrite, mmblindwrt,
+		mmnblocks, NULL, mmcommit, mmabort, NULL},
 #endif
 };
 
@@ -110,6 +106,7 @@ typedef struct PendingRelDelete
 {
 	RelFileNode relnode;		/* relation that may need to be deleted */
 	int16		which;			/* which storage manager? */
+	bool		isTemp;			/* is it a temporary relation? */
 	bool		atCommit;		/* T=delete at commit; F=delete at abort */
 	struct PendingRelDelete *next;		/* linked-list link */
 } PendingRelDelete;
@@ -123,7 +120,7 @@ static PendingRelDelete *pendingDeletes = NULL; /* head of linked list */
  *
  */
 int
-smgrinit()
+smgrinit(void)
 {
 	int			i;
 
@@ -181,6 +178,7 @@ smgrcreate(int16 which, Relation reln)
 		MemoryContextAlloc(TopMemoryContext, sizeof(PendingRelDelete));
 	pending->relnode = reln->rd_node;
 	pending->which = which;
+	pending->isTemp = reln->rd_istemp;
 	pending->atCommit = false;	/* delete if abort */
 	pending->next = pendingDeletes;
 	pendingDeletes = pending;
@@ -208,6 +206,7 @@ smgrunlink(int16 which, Relation reln)
 		MemoryContextAlloc(TopMemoryContext, sizeof(PendingRelDelete));
 	pending->relnode = reln->rd_node;
 	pending->which = which;
+	pending->isTemp = reln->rd_istemp;
 	pending->atCommit = true;	/* delete if commit */
 	pending->next = pendingDeletes;
 	pendingDeletes = pending;
@@ -312,8 +311,10 @@ smgrread(int16 which, Relation reln, BlockNumber blocknum, char *buffer)
 /*
  *	smgrwrite() -- Write the supplied buffer out.
  *
- *		This is not a synchronous write -- the interface for that is
- *		smgrflush().  The buffer is written out via the appropriate
+ *		This is not a synchronous write -- the block is not necessarily
+ *		on disk at return, only dumped out to the kernel.
+ *
+ *		The buffer is written out via the appropriate
  *		storage manager.  This routine returns SM_SUCCESS or aborts
  *		the current transaction.
  */
@@ -332,23 +333,6 @@ smgrwrite(int16 which, Relation reln, BlockNumber blocknum, char *buffer)
 }
 
 /*
- *	smgrflush() -- A synchronous smgrwrite().
- */
-int
-smgrflush(int16 which, Relation reln, BlockNumber blocknum, char *buffer)
-{
-	int			status;
-
-	status = (*(smgrsw[which].smgr_flush)) (reln, blocknum, buffer);
-
-	if (status == SM_FAIL)
-		elog(ERROR, "cannot flush block %d of %s to stable store: %m",
-			 blocknum, RelationGetRelationName(reln));
-
-	return status;
-}
-
-/*
  *	smgrblindwrt() -- Write a page out blind.
  *
  *		In some cases, we may find a page in the buffer cache that we
@@ -357,70 +341,21 @@ smgrflush(int16 which, Relation reln, BlockNumber blocknum, char *buffer)
  *		that has not yet committed, which created a new relation.  In
  *		this case, the buffer manager will call smgrblindwrt() with
  *		the name and OID of the database and the relation to which the
- *		buffer belongs.  Every storage manager must be able to force
- *		this page down to stable storage in this circumstance.	The
- *		write should be synchronous if dofsync is true.
+ *		buffer belongs.  Every storage manager must be able to write
+ *		this page out to stable storage in this circumstance.
  */
 int
 smgrblindwrt(int16 which,
 			 RelFileNode rnode,
 			 BlockNumber blkno,
-			 char *buffer,
-			 bool dofsync)
+			 char *buffer)
 {
 	int			status;
 
-	status = (*(smgrsw[which].smgr_blindwrt)) (rnode, blkno, buffer, dofsync);
+	status = (*(smgrsw[which].smgr_blindwrt)) (rnode, blkno, buffer);
 
 	if (status == SM_FAIL)
 		elog(ERROR, "cannot write block %d of %u/%u blind: %m",
-			 blkno, rnode.tblNode, rnode.relNode);
-
-	return status;
-}
-
-/*
- *	smgrmarkdirty() -- Mark a page dirty (needs fsync).
- *
- *		Mark the specified page as needing to be fsync'd before commit.
- *		Ordinarily, the storage manager will do this implicitly during
- *		smgrwrite().  However, the buffer manager may discover that some
- *		other backend has written a buffer that we dirtied in the current
- *		transaction.  In that case, we still need to fsync the file to be
- *		sure the page is down to disk before we commit.
- */
-int
-smgrmarkdirty(int16 which,
-			  Relation reln,
-			  BlockNumber blkno)
-{
-	int			status;
-
-	status = (*(smgrsw[which].smgr_markdirty)) (reln, blkno);
-
-	if (status == SM_FAIL)
-		elog(ERROR, "cannot mark block %d of %s: %m",
-			 blkno, RelationGetRelationName(reln));
-
-	return status;
-}
-
-/*
- *	smgrblindmarkdirty() -- Mark a page dirty, "blind".
- *
- *		Just like smgrmarkdirty, except we don't have a reldesc.
- */
-int
-smgrblindmarkdirty(int16 which,
-				   RelFileNode rnode,
-				   BlockNumber blkno)
-{
-	int			status;
-
-	status = (*(smgrsw[which].smgr_blindmarkdirty)) (rnode, blkno);
-
-	if (status == SM_FAIL)
-		elog(ERROR, "cannot mark block %d of %u/%u blind: %m",
 			 blkno, rnode.tblNode, rnode.relNode);
 
 	return status;
@@ -504,7 +439,7 @@ smgrDoPendingDeletes(bool isCommit)
 			 * any in the commit case, but there can be in the abort
 			 * case).
 			 */
-			DropRelFileNodeBuffers(pending->relnode);
+			DropRelFileNodeBuffers(pending->relnode, pending->isTemp);
 
 			/*
 			 * Tell the free space map to forget this relation.  It won't
@@ -531,11 +466,13 @@ smgrDoPendingDeletes(bool isCommit)
 }
 
 /*
- *	smgrcommit(), smgrabort() -- Commit or abort changes made during the
- *								 current transaction.
+ *	smgrcommit() -- Prepare to commit changes made during the current
+ *					transaction.
+ *
+ * This is called before we actually commit.
  */
 int
-smgrcommit()
+smgrcommit(void)
 {
 	int			i;
 
@@ -553,8 +490,11 @@ smgrcommit()
 	return SM_SUCCESS;
 }
 
+/*
+ *	smgrabort() -- Abort changes made during the current transaction.
+ */
 int
-smgrabort()
+smgrabort(void)
 {
 	int			i;
 
@@ -572,8 +512,11 @@ smgrabort()
 	return SM_SUCCESS;
 }
 
+/*
+ * Sync files to disk at checkpoint time.
+ */
 int
-smgrsync()
+smgrsync(void)
 {
 	int			i;
 

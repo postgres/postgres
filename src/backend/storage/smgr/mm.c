@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/Attic/mm.c,v 1.31 2002/06/20 20:29:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/Attic/mm.c,v 1.32 2002/08/06 02:36:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,7 +81,7 @@ static HTAB *MMCacheHT;
 static HTAB *MMRelCacheHT;
 
 int
-mminit()
+mminit(void)
 {
 	char	   *mmcacheblk;
 	int			mmsize = 0;
@@ -151,7 +151,7 @@ mminit()
 }
 
 int
-mmshutdown()
+mmshutdown(void)
 {
 	return SM_SUCCESS;
 }
@@ -443,30 +443,15 @@ mmwrite(Relation reln, BlockNumber blocknum, char *buffer)
 }
 
 /*
- *	mmflush() -- Synchronously write a block to stable storage.
- *
- *		For main-memory relations, this is exactly equivalent to mmwrite().
- */
-int
-mmflush(Relation reln, BlockNumber blocknum, char *buffer)
-{
-	return mmwrite(reln, blocknum, buffer);
-}
-
-/*
  *	mmblindwrt() -- Write a block to stable storage blind.
  *
- *		We have to be able to do this using only the name and OID of
- *		the database and relation in which the block belongs.
+ *		We have to be able to do this using only the rnode of the relation
+ *		in which the block belongs.  Otherwise this is much like mmwrite().
  */
 int
-mmblindwrt(char *dbstr,
-		   char *relstr,
-		   Oid dbid,
-		   Oid relid,
+mmblindwrt(RelFileNode rnode,
 		   BlockNumber blkno,
-		   char *buffer,
-		   bool dofsync)
+		   char *buffer)
 {
 	return SM_FAIL;
 }
@@ -512,7 +497,7 @@ mmnblocks(Relation reln)
  *		Returns SM_SUCCESS or SM_FAIL with errno set as appropriate.
  */
 int
-mmcommit()
+mmcommit(void)
 {
 	return SM_SUCCESS;
 }
@@ -522,7 +507,7 @@ mmcommit()
  */
 
 int
-mmabort()
+mmabort(void)
 {
 	return SM_SUCCESS;
 }
@@ -536,7 +521,7 @@ mmabort()
  *		manager will use.
  */
 int
-MMShmemSize()
+MMShmemSize(void)
 {
 	int			size = 0;
 

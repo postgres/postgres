@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.100 2002/08/05 01:24:13 thomas Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.101 2002/08/06 02:36:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -136,10 +136,19 @@ bool		InRecovery = false;
  * to be set true.  The latter can be used to test whether the current xact
  * made any loggable changes (including out-of-xact changes, such as
  * sequence updates).
+ *
+ * When we insert/update/delete a tuple in a temporary relation, we do not
+ * make any XLOG record, since we don't care about recovering the state of
+ * the temp rel after a crash.  However, we will still need to remember
+ * whether our transaction committed or aborted in that case.  So, we must
+ * set MyXactMadeTempRelUpdate true to indicate that the XID will be of
+ * interest later.
  */
 XLogRecPtr	MyLastRecPtr = {0, 0};
 
 bool		MyXactMadeXLogEntry = false;
+
+bool		MyXactMadeTempRelUpdate = false;
 
 /*
  * ProcLastRecPtr points to the start of the last XLOG record inserted by the
@@ -2923,6 +2932,7 @@ ShutdownXLOG(void)
 	/* suppress in-transaction check in CreateCheckPoint */
 	MyLastRecPtr.xrecoff = 0;
 	MyXactMadeXLogEntry = false;
+	MyXactMadeTempRelUpdate = false;
 
 	CritSectionCount++;
 	CreateDummyCaches();
@@ -3084,12 +3094,10 @@ CreateCheckPoint(bool shutdown)
 
 	/*
 	 * Having constructed the checkpoint record, ensure all shmem disk
-	 * buffers are flushed to disk.
+	 * buffers and commit-log buffers are flushed to disk.
 	 */
-	FlushBufferPool();
-
-	/* And commit-log buffers, too */
 	CheckPointCLOG();
+	FlushBufferPool();
 
 	/*
 	 * Now insert the checkpoint record into XLOG.

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Id: hio.c,v 1.45 2002/06/20 20:29:25 momjian Exp $
+ *	  $Id: hio.c,v 1.46 2002/08/06 02:36:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -102,6 +102,7 @@ RelationGetBufferForTuple(Relation relation, Size len,
 	Size		pageFreeSpace;
 	BlockNumber targetBlock,
 				otherBlock;
+	bool		needLock;
 
 	len = MAXALIGN(len);		/* be conservative */
 
@@ -231,9 +232,12 @@ RelationGetBufferForTuple(Relation relation, Size len,
 	 *
 	 * We have to use a lock to ensure no one else is extending the rel at
 	 * the same time, else we will both try to initialize the same new
-	 * page.
+	 * page.  We can skip locking for new or temp relations, however,
+	 * since no one else could be accessing them.
 	 */
-	if (!relation->rd_myxactonly)
+	needLock = !(relation->rd_isnew || relation->rd_istemp);
+
+	if (needLock)
 		LockPage(relation, 0, ExclusiveLock);
 
 	/*
@@ -249,7 +253,7 @@ RelationGetBufferForTuple(Relation relation, Size len,
 	 * Release the file-extension lock; it's now OK for someone else to
 	 * extend the relation some more.
 	 */
-	if (!relation->rd_myxactonly)
+	if (needLock)
 		UnlockPage(relation, 0, ExclusiveLock);
 
 	/*

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rel.h,v 1.60 2002/06/20 20:29:53 momjian Exp $
+ * $Id: rel.h,v 1.61 2002/08/06 02:36:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -112,10 +112,10 @@ typedef struct RelationData
 	BlockNumber rd_targblock;	/* current insertion target block, or
 								 * InvalidBlockNumber */
 	int			rd_refcnt;		/* reference count */
-	bool		rd_myxactonly;	/* rel uses the local buffer mgr */
+	bool		rd_isnew;		/* rel was created in current xact */
+	bool		rd_istemp;		/* rel uses the local buffer mgr */
 	bool		rd_isnailed;	/* rel is nailed in cache */
 	bool		rd_indexfound;	/* true if rd_indexlist is valid */
-	bool		rd_uniqueindex; /* true if rel is a UNIQUE index */
 	Form_pg_class rd_rel;		/* RELATION tuple */
 	TupleDesc	rd_att;			/* tuple descriptor */
 	Oid			rd_id;			/* relation's object id */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.218 2002/08/05 03:29:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.219 2002/08/06 02:36:33 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1919,7 +1919,7 @@ heap_truncate(Oid rid)
 	 * a rel created in the current xact (which would be deleted on abort,
 	 * anyway).
 	 */
-	if (IsTransactionBlock() && !rel->rd_myxactonly)
+	if (IsTransactionBlock() && !rel->rd_isnew)
 		elog(ERROR, "TRUNCATE TABLE cannot run inside a transaction block");
 
 	/*

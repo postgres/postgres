@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.143 2002/07/30 16:08:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.144 2002/08/06 02:36:33 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1155,6 +1155,7 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid)
 	pgstat_count_heap_insert(&relation->pgstat_info);
 
 	/* XLOG stuff */
+	if (!relation->rd_istemp)
 	{
 		xl_heap_insert xlrec;
 		xl_heap_header xlhdr;
@@ -1204,6 +1205,12 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid)
 		PageSetLSN(page, recptr);
 		PageSetSUI(page, ThisStartUpID);
 	}
+	else
+	{
+		/* No XLOG record, but still need to flag that XID exists on disk */
+		MyXactMadeTempRelUpdate = true;
+	}
+
 	END_CRIT_SECTION();
 
 	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
@@ -1323,12 +1330,15 @@ l1:
 	}
 
 	START_CRIT_SECTION();
+
 	/* store transaction information of xact deleting the tuple */
 	tp.t_data->t_infomask &= ~(HEAP_XMAX_COMMITTED |
 							 HEAP_XMAX_INVALID | HEAP_MARKED_FOR_UPDATE);
 	HeapTupleHeaderSetXmax(tp.t_data, GetCurrentTransactionId());
 	HeapTupleHeaderSetCmax(tp.t_data, cid);
+
 	/* XLOG stuff */
+	if (!relation->rd_istemp)
 	{
 		xl_heap_delete xlrec;
 		XLogRecPtr	recptr;
@@ -1351,12 +1361,17 @@ l1:
 		PageSetLSN(dp, recptr);
 		PageSetSUI(dp, ThisStartUpID);
 	}
+	else
+	{
+		/* No XLOG record, but still need to flag that XID exists on disk */
+		MyXactMadeTempRelUpdate = true;
+	}
+
 	END_CRIT_SECTION();
 
 	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 
 #ifdef TUPLE_TOASTER_ACTIVE
-
 	/*
 	 * If the relation has toastable attributes, we need to delete no
 	 * longer needed items there too.  We have to do this before
@@ -1659,6 +1674,7 @@ l2:
 	oldtup.t_data->t_ctid = newtup->t_self;
 
 	/* XLOG stuff */
+	if (!relation->rd_istemp)
 	{
 		XLogRecPtr	recptr = log_heap_update(relation, buffer, oldtup.t_self,
 											 newbuf, newtup, false);
@@ -1670,6 +1686,11 @@ l2:
 		}
 		PageSetLSN(BufferGetPage(buffer), recptr);
 		PageSetSUI(BufferGetPage(buffer), ThisStartUpID);
+	}
+	else
+	{
+		/* No XLOG record, but still need to flag that XID exists on disk */
+		MyXactMadeTempRelUpdate = true;
 	}
 
 	END_CRIT_SECTION();
@@ -1927,6 +1948,9 @@ log_heap_clean(Relation reln, Buffer buffer, char *unused, int unlen)
 	XLogRecPtr	recptr;
 	XLogRecData rdata[3];
 
+	/* Caller should not call me on a temp relation */
+	Assert(!reln->rd_istemp);
+
 	xlrec.node = reln->rd_node;
 	xlrec.block = BufferGetBlockNumber(buffer);
 	rdata[0].buffer = InvalidBuffer;
@@ -1978,6 +2002,9 @@ log_heap_update(Relation reln, Buffer oldbuf, ItemPointerData from,
 	Page		page = BufferGetPage(newbuf);
 	uint8		info = (move) ? XLOG_HEAP_MOVE : XLOG_HEAP_UPDATE;
 
+	/* Caller should not call me on a temp relation */
+	Assert(!reln->rd_istemp);
+
 	xlrec.target.node = reln->rd_node;
 	xlrec.target.tid = from;
 	xlrec.newtid = newtup->t_self;
@@ -2012,7 +2039,8 @@ log_heap_update(Relation reln, Buffer oldbuf, ItemPointerData from,
 			xid[0] = HeapTupleHeaderGetXmax(newtup->t_data);
 		xid[1] = HeapTupleHeaderGetXmin(newtup->t_data);
 		memcpy((char *) &xlhdr + hsize,
-		       (char *) xid,            2 * sizeof(TransactionId));
+		       (char *) xid,
+			   2 * sizeof(TransactionId));
 		hsize += 2 * sizeof(TransactionId);
 	}
 	rdata[2].buffer = newbuf;

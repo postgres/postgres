@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.94 2002/07/02 05:48:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.95 2002/08/06 02:36:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -623,8 +623,11 @@ _bt_insertuple(Relation rel, Buffer buf,
 	BTPageOpaque pageop = (BTPageOpaque) PageGetSpecialPointer(page);
 
 	START_CRIT_SECTION();
+
 	_bt_pgaddtup(rel, page, itemsz, btitem, newitemoff, "page");
+
 	/* XLOG stuff */
+	if (!rel->rd_istemp)
 	{
 		xl_btree_insert xlrec;
 		uint8		flag = XLOG_BTREE_INSERT;
@@ -866,6 +869,9 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 	 * NO ELOG(ERROR) till right sibling is updated.
 	 */
 	START_CRIT_SECTION();
+
+	/* XLOG stuff */
+	if (!rel->rd_istemp)
 	{
 		xl_btree_split xlrec;
 		int			flag = (newitemonleft) ?
@@ -891,7 +897,7 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 		BlockIdSet(&(xlrec.rightblk), ropaque->btpo_next);
 
 		/*
-		 * Dirrect access to page is not good but faster - we should
+		 * Direct access to page is not good but faster - we should
 		 * implement some new func in page API.
 		 */
 		xlrec.leftlen = ((PageHeader) leftpage)->pd_special -
@@ -1352,6 +1358,7 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 	(metad->btm_level)++;
 
 	/* XLOG stuff */
+	if (!rel->rd_istemp)
 	{
 		xl_btree_newroot xlrec;
 		XLogRecPtr	recptr;
@@ -1366,7 +1373,7 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 		rdata[0].next = &(rdata[1]);
 
 		/*
-		 * Dirrect access to page is not good but faster - we should
+		 * Direct access to page is not good but faster - we should
 		 * implement some new func in page API.
 		 */
 		rdata[1].buffer = InvalidBuffer;
@@ -1388,6 +1395,7 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 		PageSetLSN(rpage, recptr);
 		PageSetSUI(rpage, ThisStartUpID);
 	}
+
 	END_CRIT_SECTION();
 
 	/* write and let go of metapage buffer */

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: xlog.h,v 1.33 2002/08/05 01:24:16 thomas Exp $
+ * $Id: xlog.h,v 1.34 2002/08/06 02:36:35 tgl Exp $
  */
 #ifndef XLOG_H
 #define XLOG_H
@@ -182,6 +182,7 @@ extern StartUpID ThisStartUpID; /* current SUI */
 extern bool InRecovery;
 extern XLogRecPtr MyLastRecPtr;
 extern bool MyXactMadeXLogEntry;
+extern bool MyXactMadeTempRelUpdate;
 extern XLogRecPtr ProcLastRecEnd;
 
 /* these variables are GUC parameters related to XLOG */

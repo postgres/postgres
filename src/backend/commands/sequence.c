@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.83 2002/07/16 22:12:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.84 2002/08/06 02:36:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -237,6 +237,7 @@ DefineSequence(CreateSeqStmt *seq)
 	 * means two log records instead of one :-(
 	 */
 	LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
+
 	START_CRIT_SECTION();
 
 	{
@@ -260,6 +261,8 @@ DefineSequence(CreateSeqStmt *seq)
 		tuple->t_data->t_infomask |= HEAP_XMIN_COMMITTED;
 	}
 
+	/* XLOG stuff */
+	if (!rel->rd_istemp)
 	{
 		xl_seq_rec	xlrec;
 		XLogRecPtr	recptr;
@@ -287,6 +290,7 @@ DefineSequence(CreateSeqStmt *seq)
 		PageSetLSN(page, recptr);
 		PageSetSUI(page, ThisStartUpID);
 	}
+
 	END_CRIT_SECTION();
 
 	LockBuffer(buf, BUFFER_LOCK_UNLOCK);
@@ -437,7 +441,9 @@ nextval(PG_FUNCTION_ARGS)
 	elm->cached = last;			/* last fetched number */
 
 	START_CRIT_SECTION();
-	if (logit)
+
+	/* XLOG stuff */
+	if (logit && !seqrel->rd_istemp)
 	{
 		xl_seq_rec	xlrec;
 		XLogRecPtr	recptr;
@@ -449,9 +455,11 @@ nextval(PG_FUNCTION_ARGS)
 		rdata[0].len = sizeof(xl_seq_rec);
 		rdata[0].next = &(rdata[1]);
 
+		/* set values that will be saved in xlog */
 		seq->last_value = next;
 		seq->is_called = true;
 		seq->log_cnt = 0;
+
 		rdata[1].buffer = InvalidBuffer;
 		rdata[1].data = (char *) page + ((PageHeader) page)->pd_upper;
 		rdata[1].len = ((PageHeader) page)->pd_special -
@@ -468,6 +476,7 @@ nextval(PG_FUNCTION_ARGS)
 	seq->last_value = last;		/* last fetched number */
 	seq->is_called = true;
 	seq->log_cnt = log;			/* how much is logged */
+
 	END_CRIT_SECTION();
 
 	LockBuffer(buf, BUFFER_LOCK_UNLOCK);
@@ -550,6 +559,9 @@ do_setval(RangeVar *sequence, int64 next, bool iscalled)
 								 * values) */
 
 	START_CRIT_SECTION();
+
+	/* XLOG stuff */
+	if (!seqrel->rd_istemp)
 	{
 		xl_seq_rec	xlrec;
 		XLogRecPtr	recptr;
@@ -562,9 +574,11 @@ do_setval(RangeVar *sequence, int64 next, bool iscalled)
 		rdata[0].len = sizeof(xl_seq_rec);
 		rdata[0].next = &(rdata[1]);
 
+		/* set values that will be saved in xlog */
 		seq->last_value = next;
 		seq->is_called = true;
 		seq->log_cnt = 0;
+
 		rdata[1].buffer = InvalidBuffer;
 		rdata[1].data = (char *) page + ((PageHeader) page)->pd_upper;
 		rdata[1].len = ((PageHeader) page)->pd_special -
@@ -576,10 +590,12 @@ do_setval(RangeVar *sequence, int64 next, bool iscalled)
 		PageSetLSN(page, recptr);
 		PageSetSUI(page, ThisStartUpID);
 	}
+
 	/* save info in sequence relation */
 	seq->last_value = next;		/* last fetched number */
 	seq->is_called = iscalled;
 	seq->log_cnt = (iscalled) ? 0 : 1;
+
 	END_CRIT_SECTION();
 
 	LockBuffer(buf, BUFFER_LOCK_UNLOCK);

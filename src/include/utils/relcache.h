@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relcache.h,v 1.33 2002/08/02 22:36:05 tgl Exp $
+ * $Id: relcache.h,v 1.34 2002/08/06 02:36:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,9 +61,7 @@ extern void RelationIdInvalidateRelationCacheByRelationId(Oid relationId);
 
 extern void RelationCacheInvalidate(void);
 
-extern void RelationPurgeLocalRelation(bool xactComitted);
-
-extern void AtEOXactRelationCache(bool commit);
+extern void AtEOXact_RelationCache(bool commit);
 
 /*
  * Routines to help manage rebuilding of relcache init file

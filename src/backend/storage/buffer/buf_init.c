@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.49 2002/06/20 20:29:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.50 2002/08/06 02:36:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -258,7 +258,7 @@ ShutdownBufferPoolAccess(void)
 	/* Release any buffer context locks we are holding */
 	UnlockBuffers();
 	/* Release any buffer reference counts we are holding */
-	ResetBufferPool(false);
+	AtEOXact_Buffers(false);
 }
 
 /* -----------------------------------------------------

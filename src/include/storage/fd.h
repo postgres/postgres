@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fd.h,v 1.35 2002/06/20 20:29:52 momjian Exp $
+ * $Id: fd.h,v 1.36 2002/08/06 02:36:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,8 +62,6 @@ extern int	FileRead(File file, char *buffer, int amount);
 extern int	FileWrite(File file, char *buffer, int amount);
 extern long FileSeek(File file, long offset, int whence);
 extern int	FileTruncate(File file, long offset);
-extern int	FileSync(File file);
-extern void FileMarkDirty(File file);
 
 /* Operations that allow use of regular stdio --- USE WITH CAUTION */
 extern FILE *AllocateFile(char *name, char *mode);

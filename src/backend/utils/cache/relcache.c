@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.170 2002/08/04 18:12:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.171 2002/08/06 02:36:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,6 +39,7 @@
 #include "catalog/catalog.h"
 #include "catalog/catname.h"
 #include "catalog/indexing.h"
+#include "catalog/namespace.h"
 #include "catalog/pg_amop.h"
 #include "catalog/pg_amproc.h"
 #include "catalog/pg_attrdef.h"
@@ -93,13 +94,6 @@ static HTAB *RelationSysNameCache;
  * in smgr, but no time to do it right way now.		-- vadim 10/22/2000
  */
 static HTAB *RelationNodeCache;
-
-/*
- * newlyCreatedRelns -
- *	  relations created during this transaction. We need to keep track of
- *	  these.
- */
-static List *newlyCreatedRelns = NIL;
 
 /*
  * This flag is false until we have prepared the critical relcache entries
@@ -865,9 +859,12 @@ RelationBuildDesc(RelationBuildDescInfo buildinfo,
 	RelationSetReferenceCount(relation, 1);
 
 	/*
-	 * normal relations are not nailed into the cache
+	 * normal relations are not nailed into the cache; nor can a pre-existing
+	 * relation be new or temp.
 	 */
 	relation->rd_isnailed = false;
+	relation->rd_isnew = false;
+	relation->rd_istemp = false;
 
 	/*
 	 * initialize the tuple descriptor (relation->rd_att).
@@ -956,9 +953,6 @@ RelationInitIndexAccessInfo(Relation relation)
 	memcpy(iform, GETSTRUCT(tuple), iformsize);
 	ReleaseSysCache(tuple);
 	relation->rd_index = iform;
-
-	/* this field is now kinda redundant... */
-	relation->rd_uniqueindex = iform->indisunique;
 
 	/*
 	 * Make a copy of the pg_am entry for the index's access method
@@ -1359,9 +1353,12 @@ formrdesc(const char *relationName,
 	RelationSetReferenceCount(relation, 1);
 
 	/*
-	 * all entries built with this routine are nailed-in-cache
+	 * all entries built with this routine are nailed-in-cache; none are
+	 * for new or temp relations.
 	 */
 	relation->rd_isnailed = true;
+	relation->rd_isnew = false;
+	relation->rd_istemp = false;
 
 	/*
 	 * initialize relation tuple form
@@ -1603,7 +1600,9 @@ RelationClose(Relation relation)
 	RelationDecrementReferenceCount(relation);
 
 #ifdef RELCACHE_FORCE_RELEASE
-	if (RelationHasReferenceCountZero(relation) && !relation->rd_myxactonly)
+	if (RelationHasReferenceCountZero(relation) &&
+		!relation->rd_isnew &&
+		!relation->rd_istemp)
 		RelationClearRelation(relation, false);
 #endif
 }
@@ -1734,13 +1733,14 @@ RelationClearRelation(Relation relation, bool rebuild)
 	{
 		/*
 		 * When rebuilding an open relcache entry, must preserve ref count
-		 * and myxactonly flag.  Also attempt to preserve the tupledesc,
+		 * and new/temp flags.  Also attempt to preserve the tupledesc,
 		 * rewrite rules, and trigger substructures in place. Furthermore
-		 * we save/restore rd_nblocks (in case it is a local relation)
+		 * we save/restore rd_nblocks (in case it is a new/temp relation)
 		 * *and* call RelationGetNumberOfBlocks (in case it isn't).
 		 */
 		int			old_refcnt = relation->rd_refcnt;
-		bool		old_myxactonly = relation->rd_myxactonly;
+		bool		old_isnew = relation->rd_isnew;
+		bool		old_istemp = relation->rd_istemp;
 		TupleDesc	old_att = relation->rd_att;
 		RuleLock   *old_rules = relation->rd_rules;
 		MemoryContext old_rulescxt = relation->rd_rulescxt;
@@ -1763,7 +1763,8 @@ RelationClearRelation(Relation relation, bool rebuild)
 				 buildinfo.i.info_id);
 		}
 		RelationSetReferenceCount(relation, old_refcnt);
-		relation->rd_myxactonly = old_myxactonly;
+		relation->rd_isnew = old_isnew;
+		relation->rd_istemp = old_istemp;
 		if (equalTupleDescs(old_att, relation->rd_att))
 		{
 			FreeTupleDesc(relation->rd_att);
@@ -1810,11 +1811,11 @@ RelationFlushRelation(Relation relation)
 {
 	bool		rebuild;
 
-	if (relation->rd_myxactonly)
+	if (relation->rd_isnew || relation->rd_istemp)
 	{
 		/*
-		 * Local rels should always be rebuilt, not flushed; the relcache
-		 * entry must live until RelationPurgeLocalRelation().
+		 * New and temp relcache entries must always be rebuilt, not
+		 * flushed; else we'd forget those two important status bits.
 		 */
 		rebuild = true;
 	}
@@ -1830,11 +1831,10 @@ RelationFlushRelation(Relation relation)
 }
 
 /*
- * RelationForgetRelation -
+ * RelationForgetRelation - unconditionally remove a relcache entry
  *
- *		   RelationClearRelation + if the relation is myxactonly then
- *		   remove the relation descriptor from the newly created
- *		   relation list.
+ *		   External interface for destroying a relcache entry when we
+ *		   drop the relation.
  */
 void
 RelationForgetRelation(Oid rid)
@@ -1848,31 +1848,6 @@ RelationForgetRelation(Oid rid)
 
 	if (!RelationHasReferenceCountZero(relation))
 		elog(ERROR, "RelationForgetRelation: relation %u is still open", rid);
-
-	/* If local, remove from list */
-	if (relation->rd_myxactonly)
-	{
-		List	   *curr;
-		List	   *prev = NIL;
-
-		foreach(curr, newlyCreatedRelns)
-		{
-			Relation	reln = lfirst(curr);
-
-			Assert(reln != NULL && reln->rd_myxactonly);
-			if (RelationGetRelid(reln) == rid)
-				break;
-			prev = curr;
-		}
-		if (curr == NIL)
-			elog(ERROR, "Local relation %s not found in list",
-				 RelationGetRelationName(relation));
-		if (prev == NIL)
-			newlyCreatedRelns = lnext(newlyCreatedRelns);
-		else
-			lnext(prev) = lnext(curr);
-		pfree(curr);
-	}
 
 	/* Unconditionally destroy the relcache entry */
 	RelationClearRelation(relation, false);
@@ -1909,7 +1884,7 @@ RelationIdInvalidateRelationCacheByRelationId(Oid relationId)
  *	 and rebuild those with positive reference counts.
  *
  *	 This is currently used only to recover from SI message buffer overflow,
- *	 so we do not touch transaction-local relations; they cannot be targets
+ *	 so we do not touch new-in-transaction relations; they cannot be targets
  *	 of cross-backend SI updates (and our own updates now go through a
  *	 separate linked list that isn't limited by the SI message buffer size).
  *
@@ -1940,13 +1915,13 @@ RelationCacheInvalidate(void)
 	{
 		relation = idhentry->reldesc;
 
-		/* Ignore xact-local relations, since they are never SI targets */
-		if (relation->rd_myxactonly)
+		/* Ignore new relations, since they are never SI targets */
+		if (relation->rd_isnew)
 			continue;
 
 		relcacheInvalsReceived++;
 
-		if (RelationHasReferenceCountZero(relation))
+		if (RelationHasReferenceCountZero(relation) && !relation->rd_istemp)
 		{
 			/* Delete this entry immediately */
 			RelationClearRelation(relation, false);
@@ -1968,36 +1943,15 @@ RelationCacheInvalidate(void)
 }
 
 /*
- * AtEOXactRelationCache
+ * AtEOXact_RelationCache
  *
  *	Clean up the relcache at transaction commit or abort.
- *
- *	During transaction abort, we must reset relcache entry ref counts
- *	to their normal not-in-a-transaction state.  A ref count may be
- *	too high because some routine was exited by elog() between
- *	incrementing and decrementing the count.
- *
- *	During commit, we should not have to do this, but it's useful to
- *	check that the counts are correct to catch missed relcache closes.
- *	Since that's basically a debugging thing, only pay the cost when
- *	assert checking is enabled.
- *
- *	In bootstrap mode, forget the debugging checks --- the bootstrap code
- *	expects relations to stay open across start/commit transaction calls.
  */
 void
-AtEOXactRelationCache(bool commit)
+AtEOXact_RelationCache(bool commit)
 {
 	HASH_SEQ_STATUS status;
 	RelIdCacheEnt *idhentry;
-
-#ifdef USE_ASSERT_CHECKING
-	if (commit && IsBootstrapProcessingMode())
-		return;
-#else
-	if (commit)
-		return;
-#endif
 
 	hash_seq_init(&status, RelationIdCache);
 
@@ -2006,11 +1960,45 @@ AtEOXactRelationCache(bool commit)
 		Relation	relation = idhentry->reldesc;
 		int			expected_refcnt;
 
+		/*
+		 * Is it a relation created in the current transaction?
+		 *
+		 * During commit, reset the flag to false, since we are now out of the
+		 * creating transaction.  During abort, simply delete the relcache
+		 * entry --- it isn't interesting any longer.
+		 */
+		if (relation->rd_isnew)
+		{
+			if (commit)
+				relation->rd_isnew = false;
+			else
+			{
+				RelationClearRelation(relation, false);
+				continue;
+			}
+		}
+
+		/*
+		 * During transaction abort, we must also reset relcache entry ref
+		 * counts to their normal not-in-a-transaction state.  A ref count may
+		 * be too high because some routine was exited by elog() between
+		 * incrementing and decrementing the count.
+		 *
+		 * During commit, we should not have to do this, but it's still useful
+		 * to check that the counts are correct to catch missed relcache
+		 * closes.
+		 *
+		 * In bootstrap mode, do NOT reset the refcnt nor complain that it's
+		 * nonzero --- the bootstrap code expects relations to stay open
+		 * across start/commit transaction calls.  (That seems bogus, but it's
+		 * not worth fixing.)
+		 */
 		expected_refcnt = relation->rd_isnailed ? 1 : 0;
 
 		if (commit)
 		{
-			if (relation->rd_refcnt != expected_refcnt)
+			if (relation->rd_refcnt != expected_refcnt &&
+				!IsBootstrapProcessingMode())
 			{
 				elog(WARNING, "Relcache reference leak: relation \"%s\" has refcnt %d instead of %d",
 					 RelationGetRelationName(relation),
@@ -2055,16 +2043,23 @@ RelationBuildLocalRelation(const char *relname,
 	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 
 	/*
-	 * allocate a new relation descriptor.
+	 * allocate a new relation descriptor and fill in basic state fields.
 	 */
 	rel = (Relation) palloc(sizeof(RelationData));
 	MemSet((char *) rel, 0, sizeof(RelationData));
+
 	rel->rd_targblock = InvalidBlockNumber;
 
 	/* make sure relation is marked as having no open file yet */
 	rel->rd_fd = -1;
 
 	RelationSetReferenceCount(rel, 1);
+
+	/* it's being created in this transaction */
+	rel->rd_isnew = true;
+
+	/* is it a temporary relation? */
+	rel->rd_istemp = isTempNamespace(relnamespace);
 
 	/*
 	 * nail the reldesc if this is a bootstrap create reln and we may need
@@ -2122,54 +2117,11 @@ RelationBuildLocalRelation(const char *relname,
 	RelationCacheInsert(rel);
 
 	/*
-	 * we've just created the relation. It is invisible to anyone else
-	 * before the transaction is committed. Setting rd_myxactonly allows
-	 * us to use the local buffer manager for select/insert/etc before the
-	 * end of transaction. (We also need to keep track of relations
-	 * created during a transaction and do the necessary clean up at the
-	 * end of the transaction.)				- ay 3/95
-	 */
-	rel->rd_myxactonly = true;
-	newlyCreatedRelns = lcons(rel, newlyCreatedRelns);
-
-	/*
 	 * done building relcache entry.
 	 */
 	MemoryContextSwitchTo(oldcxt);
 
 	return rel;
-}
-
-/*
- * RelationPurgeLocalRelation -
- *	  find all the Relation descriptors marked rd_myxactonly and reset them.
- *	  This should be called at the end of a transaction (commit/abort) when
- *	  the "local" relations will become visible to others and the multi-user
- *	  buffer pool should be used.
- */
-void
-RelationPurgeLocalRelation(bool xactCommitted)
-{
-	while (newlyCreatedRelns)
-	{
-		List	   *l = newlyCreatedRelns;
-		Relation	reln = lfirst(l);
-
-		newlyCreatedRelns = lnext(newlyCreatedRelns);
-		pfree(l);
-
-		Assert(reln != NULL && reln->rd_myxactonly);
-
-		reln->rd_myxactonly = false;	/* mark it not on list anymore */
-
-		/*
-		 * XXX while we clearly must throw out new Relation entries at
-		 * xact abort, it's not clear why we need to do it at commit.
-		 * Could this be improved?
-		 */
-		if (!IsBootstrapProcessingMode())
-			RelationClearRelation(reln, false);
-	}
 }
 
 /*

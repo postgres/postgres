@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.87 2002/07/20 05:16:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.88 2002/08/06 02:36:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -691,7 +691,7 @@ ExecInsertIndexTuples(TupleTableSlot *slot,
 							  nullv,	/* info on nulls */
 							  &(heapTuple->t_self),		/* tid of heap tuple */
 							  heapRelation,
-							  relationDescs[i]->rd_uniqueindex && !is_vacuum);
+							  relationDescs[i]->rd_index->indisunique && !is_vacuum);
 
 		/*
 		 * keep track of index inserts for debugging

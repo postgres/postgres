@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/tuptoaster.c,v 1.33 2002/07/20 05:16:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/tuptoaster.c,v 1.34 2002/08/06 02:36:33 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -915,7 +915,7 @@ toast_save_datum(Relation rel, Datum value)
 		 */
 		idxres = index_insert(toastidx, t_values, t_nulls,
 							  &(toasttup->t_self),
-							  toastrel, toastidx->rd_uniqueindex);
+							  toastrel, toastidx->rd_index->indisunique);
 		if (idxres == NULL)
 			elog(ERROR, "Failed to insert index entry for TOAST tuple");
 

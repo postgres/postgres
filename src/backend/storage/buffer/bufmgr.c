@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.127 2002/07/02 05:47:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.128 2002/08/06 02:36:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,15 +57,8 @@
 #include "pgstat.h"
 
 #define BufferGetLSN(bufHdr)	\
-	(*((XLogRecPtr*)MAKE_PTR((bufHdr)->data)))
+	(*((XLogRecPtr*) MAKE_PTR((bufHdr)->data)))
 
-
-extern long int ReadBufferCount;
-extern long int ReadLocalBufferCount;
-extern long int BufferHitCount;
-extern long int LocalBufferHitCount;
-extern long int BufferFlushCount;
-extern long int LocalBufferFlushCount;
 
 static void WaitIO(BufferDesc *buf);
 static void StartBufferIO(BufferDesc *buf, bool forInput);
@@ -82,16 +75,12 @@ static Buffer ReadBufferInternal(Relation reln, BlockNumber blockNum,
 				   bool bufferLockHeld);
 static BufferDesc *BufferAlloc(Relation reln, BlockNumber blockNum,
 			bool *foundPtr);
-static int	ReleaseBufferWithBufferLock(Buffer buffer);
 static int	BufferReplace(BufferDesc *bufHdr);
 #ifdef NOT_USED
 void		PrintBufferDescs(void);
 #endif
 
 static void write_buffer(Buffer buffer, bool unpin);
-static void drop_relfilenode_buffers(RelFileNode rnode,
-                                     bool do_local, bool do_both);
-static int release_buffer(Buffer buffer, bool havelock);
 
 /*
  * ReadBuffer -- returns a buffer containing the requested
@@ -140,7 +129,7 @@ ReadBufferInternal(Relation reln, BlockNumber blockNum,
 	bool		isLocalBuf;
 
 	isExtend = (blockNum == P_NEW);
-	isLocalBuf = reln->rd_myxactonly;
+	isLocalBuf = reln->rd_istemp;
 
 	if (isLocalBuf)
 	{
@@ -684,10 +673,10 @@ ReleaseAndReadBuffer(Buffer buffer,
 /*
  * BufferSync -- Write all dirty buffers in the pool.
  *
- * This is called at checkpoint time and write out all dirty buffers.
+ * This is called at checkpoint time and writes out all dirty shared buffers.
  */
 void
-BufferSync()
+BufferSync(void)
 {
 	int			i;
 	BufferDesc *bufHdr;
@@ -780,8 +769,7 @@ BufferSync()
 			status = smgrblindwrt(DEFAULT_SMGR,
 								  bufHdr->tag.rnode,
 								  bufHdr->tag.blockNum,
-								  (char *) MAKE_PTR(bufHdr->data),
-								  true);		/* must fsync */
+								  (char *) MAKE_PTR(bufHdr->data));
 		}
 		else
 		{
@@ -908,19 +896,16 @@ ResetBufferUsage(void)
 	NDirectFileWrite = 0;
 }
 
-/* ----------------------------------------------
- *		ResetBufferPool
+/*
+ *		AtEOXact_Buffers - clean up at end of transaction.
  *
- *		This routine is supposed to be called when a transaction aborts.
- *		It will release all the buffer pins held by the transaction.
- *		Currently, we also call it during commit if BufferPoolCheckLeak
- *		detected a problem --- in that case, isCommit is TRUE, and we
- *		only clean up buffer pin counts.
- *
- * ----------------------------------------------
+ *		During abort, we need to release any buffer pins we're holding
+ *		(this cleans up in case elog interrupted a routine that pins a
+ *		buffer).  During commit, we shouldn't need to do that, but check
+ *		anyway to see if anyone leaked a buffer reference count.
  */
 void
-ResetBufferPool(bool isCommit)
+AtEOXact_Buffers(bool isCommit)
 {
 	int			i;
 
@@ -928,7 +913,16 @@ ResetBufferPool(bool isCommit)
 	{
 		if (PrivateRefCount[i] != 0)
 		{
-			BufferDesc *buf = &BufferDescriptors[i];
+			BufferDesc *buf = &(BufferDescriptors[i]);
+
+			if (isCommit)
+				elog(WARNING,
+					 "Buffer Leak: [%03d] (freeNext=%d, freePrev=%d, "
+					 "rel=%u/%u, blockNum=%u, flags=0x%x, refcount=%d %ld)",
+					 i, buf->freeNext, buf->freePrev,
+					 buf->tag.rnode.tblNode, buf->tag.rnode.relNode,
+					 buf->tag.blockNum, buf->flags,
+					 buf->refcount, PrivateRefCount[i]);
 
 			PrivateRefCount[i] = 1;		/* make sure we release shared pin */
 			LWLockAcquire(BufMgrLock, LW_EXCLUSIVE);
@@ -938,48 +932,15 @@ ResetBufferPool(bool isCommit)
 		}
 	}
 
-	ResetLocalBufferPool();
-
-	if (!isCommit)
-		smgrabort();
+	AtEOXact_LocalBuffers(isCommit);
 }
 
 /*
- * BufferPoolCheckLeak
- *
- *		check if there is buffer leak
- */
-bool
-BufferPoolCheckLeak(void)
-{
-	int			i;
-	bool		result = false;
-
-	for (i = 0; i < NBuffers; i++)
-	{
-		if (PrivateRefCount[i] != 0)
-		{
-			BufferDesc *buf = &(BufferDescriptors[i]);
-
-			elog(WARNING,
-				 "Buffer Leak: [%03d] (freeNext=%d, freePrev=%d, \
-rel=%u/%u, blockNum=%u, flags=0x%x, refcount=%d %ld)",
-				 i, buf->freeNext, buf->freePrev,
-				 buf->tag.rnode.tblNode, buf->tag.rnode.relNode,
-				 buf->tag.blockNum, buf->flags,
-				 buf->refcount, PrivateRefCount[i]);
-			result = true;
-		}
-	}
-	return result;
-}
-
-/* ------------------------------------------------
  * FlushBufferPool
  *
- * Flush all dirty blocks in buffer pool to disk
- * at the checkpoint time
- * ------------------------------------------------
+ * Flush all dirty blocks in buffer pool to disk at the checkpoint time.
+ * Local relations do not participate in checkpoints, so they don't need to be
+ * flushed.
  */
 void
 FlushBufferPool(void)
@@ -989,16 +950,13 @@ FlushBufferPool(void)
 }
 
 /*
- * At the commit time we have to flush local buffer pool only
+ * Do whatever is needed to prepare for commit at the bufmgr and smgr levels
  */
 void
 BufmgrCommit(void)
 {
-	LocalBufferSync();
+	/* Nothing to do in bufmgr anymore... */
 
-	/*
-	 * All files created in current transaction will be fsync-ed
-	 */
 	smgrcommit();
 }
 
@@ -1051,15 +1009,15 @@ BufferReplace(BufferDesc *bufHdr)
 
 	if (reln != (Relation) NULL)
 	{
-		status = smgrwrite(DEFAULT_SMGR, reln, bufHdr->tag.blockNum,
+		status = smgrwrite(DEFAULT_SMGR, reln,
+						   bufHdr->tag.blockNum,
 						   (char *) MAKE_PTR(bufHdr->data));
 	}
 	else
 	{
 		status = smgrblindwrt(DEFAULT_SMGR, bufHdr->tag.rnode,
 							  bufHdr->tag.blockNum,
-							  (char *) MAKE_PTR(bufHdr->data),
-							  false);	/* no fsync */
+							  (char *) MAKE_PTR(bufHdr->data));
 	}
 
 	/* drop relcache refcnt incremented by RelationNodeCacheGetRelation */
@@ -1091,31 +1049,55 @@ RelationGetNumberOfBlocks(Relation relation)
 {
 	/*
 	 * relation->rd_nblocks should be accurate already if the relation is
-	 * myxactonly.	(XXX how safe is that really?)	Don't call smgr on a
-	 * view, either.
+	 * new or temp, because no one else should be modifying it.  Otherwise
+	 * we need to ask the smgr for the current physical file length.
+	 *
+	 * Don't call smgr on a view, either.
 	 */
 	if (relation->rd_rel->relkind == RELKIND_VIEW)
 		relation->rd_nblocks = 0;
-	else if (!relation->rd_myxactonly)
+	else if (!relation->rd_isnew && !relation->rd_istemp)
 		relation->rd_nblocks = smgrnblocks(DEFAULT_SMGR, relation);
 	return relation->rd_nblocks;
 }
 
-/*
- * drop_relfilenode_buffers -- common functionality for
- *                             DropRelationBuffers and
- *                             DropRelFileNodeBuffers
+/* ---------------------------------------------------------------------
+ *		DropRelationBuffers
  *
- *		XXX currently it sequentially searches the buffer pool, should be
- *		changed to more clever ways of searching.
+ *		This function removes all the buffered pages for a relation
+ *		from the buffer pool.  Dirty pages are simply dropped, without
+ *		bothering to write them out first.	This is NOT rollback-able,
+ *		and so should be used only with extreme caution!
+ *
+ *		We assume that the caller holds an exclusive lock on the relation,
+ *		which should assure that no new buffers will be acquired for the rel
+ *		meanwhile.
+ * --------------------------------------------------------------------
  */
-static void
-drop_relfilenode_buffers(RelFileNode rnode, bool do_local, bool do_both)
+void
+DropRelationBuffers(Relation rel)
+{
+	DropRelFileNodeBuffers(rel->rd_node, rel->rd_istemp);
+}
+
+/* ---------------------------------------------------------------------
+ *		DropRelFileNodeBuffers
+ *
+ *		This is the same as DropRelationBuffers, except that the target
+ *		relation is specified by RelFileNode and temp status.
+ *
+ *		This is NOT rollback-able.	One legitimate use is to clear the
+ *		buffer cache of buffers for a relation that is being deleted
+ *		during transaction abort.
+ * --------------------------------------------------------------------
+ */
+void
+DropRelFileNodeBuffers(RelFileNode rnode, bool istemp)
 {
 	int			i;
 	BufferDesc *bufHdr;
 
-	if (do_local)
+	if (istemp)
 	{
 		for (i = 0; i < NLocBuffer; i++)
 		{
@@ -1128,8 +1110,7 @@ drop_relfilenode_buffers(RelFileNode rnode, bool do_local, bool do_both)
 				bufHdr->tag.rnode.relNode = InvalidOid;
 			}
 		}
-		if (!do_both)
-			return;
+		return;
 	}
 
 	LWLockAcquire(BufMgrLock, LW_EXCLUSIVE);
@@ -1160,18 +1141,19 @@ recheck:
 			bufHdr->cntxDirty = false;
 
 			/*
-			 * Release any refcount we may have.
-			 *
-			 * This is very probably dead code, and if it isn't then it's
-			 * probably wrong.	I added the Assert to find out --- tgl
-			 * 11/99.
+			 * Release any refcount we may have.  If someone else has a
+			 * pin on the buffer, we got trouble.
 			 */
 			if (!(bufHdr->flags & BM_FREE))
 			{
-				/* Assert checks that buffer will actually get freed! */
-				Assert(PrivateRefCount[i - 1] == 1 &&
-					   bufHdr->refcount == 1);
-				ReleaseBufferWithBufferLock(i);
+				/* the sole pin should be ours */
+				if (bufHdr->refcount != 1 || PrivateRefCount[i - 1] == 0)
+					elog(FATAL, "DropRelFileNodeBuffers: block %u is referenced (private %ld, global %d)",
+						 bufHdr->tag.blockNum,
+						 PrivateRefCount[i - 1], bufHdr->refcount);
+				/* Make sure it will be released */
+				PrivateRefCount[i - 1] = 1;
+				UnpinBuffer(bufHdr);
 			}
 
 			/*
@@ -1182,43 +1164,6 @@ recheck:
 	}
 
 	LWLockRelease(BufMgrLock);
-}
-
-/* ---------------------------------------------------------------------
- *		DropRelationBuffers
- *
- *		This function removes all the buffered pages for a relation
- *		from the buffer pool.  Dirty pages are simply dropped, without
- *		bothering to write them out first.	This is NOT rollback-able,
- *		and so should be used only with extreme caution!
- *
- *		We assume that the caller holds an exclusive lock on the relation,
- *		which should assure that no new buffers will be acquired for the rel
- *		meanwhile.
- * --------------------------------------------------------------------
- */
-void
-DropRelationBuffers(Relation rel)
-{
-	drop_relfilenode_buffers(rel->rd_node, rel->rd_myxactonly, false);
-}
-
-/* ---------------------------------------------------------------------
- *		DropRelFileNodeBuffers
- *
- *		This is the same as DropRelationBuffers, except that the target
- *		relation is specified by RelFileNode.
- *
- *		This is NOT rollback-able.	One legitimate use is to clear the
- *		buffer cache of buffers for a relation that is being deleted
- *		during transaction abort.
- * --------------------------------------------------------------------
- */
-void
-DropRelFileNodeBuffers(RelFileNode rnode)
-{
-	/* We have to search both local and shared buffers... */
-	drop_relfilenode_buffers(rnode, true, true);
 }
 
 /* ---------------------------------------------------------------------
@@ -1296,7 +1241,7 @@ recheck:
  */
 #ifdef NOT_USED
 void
-PrintBufferDescs()
+PrintBufferDescs(void)
 {
 	int			i;
 	BufferDesc *buf = BufferDescriptors;
@@ -1331,7 +1276,7 @@ blockNum=%u, flags=0x%x, refcount=%d %ld)",
 
 #ifdef NOT_USED
 void
-PrintPinnedBufs()
+PrintPinnedBufs(void)
 {
 	int			i;
 	BufferDesc *buf = BufferDescriptors;
@@ -1348,33 +1293,6 @@ blockNum=%u, flags=0x%x, refcount=%d %ld)",
 				 buf->refcount, PrivateRefCount[i]);
 	}
 	LWLockRelease(BufMgrLock);
-}
-#endif
-
-/*
- * BufferPoolBlowaway
- *
- * this routine is solely for the purpose of experiments -- sometimes
- * you may want to blowaway whatever is left from the past in buffer
- * pool and start measuring some performance with a clean empty buffer
- * pool.
- */
-#ifdef NOT_USED
-void
-BufferPoolBlowaway()
-{
-	int			i;
-
-	BufferSync();
-	for (i = 1; i <= NBuffers; i++)
-	{
-		if (BufferIsValid(i))
-		{
-			while (BufferIsValid(i))
-				ReleaseBuffer(i);
-		}
-		BufTableDelete(&BufferDescriptors[i - 1]);
-	}
 }
 #endif
 
@@ -1428,7 +1346,7 @@ FlushRelationBuffers(Relation rel, BlockNumber firstDelBlock)
 	XLogRecPtr	recptr;
 	int			status;
 
-	if (rel->rd_myxactonly)
+	if (rel->rd_istemp)
 	{
 		for (i = 0; i < NLocBuffer; i++)
 		{
@@ -1544,12 +1462,14 @@ FlushRelationBuffers(Relation rel, BlockNumber firstDelBlock)
 	return 0;
 }
 
+#undef ReleaseBuffer
+
 /*
- * release_buffer -- common functionality for
- *                   ReleaseBuffer and ReleaseBufferWithBufferLock
+ * ReleaseBuffer -- remove the pin on a buffer without
+ *		marking it dirty.
  */
-static int
-release_buffer(Buffer buffer, bool havelock)
+int
+ReleaseBuffer(Buffer buffer)
 {
 	BufferDesc *bufHdr;
 
@@ -1570,40 +1490,13 @@ release_buffer(Buffer buffer, bool havelock)
 		PrivateRefCount[buffer - 1]--;
 	else
 	{
-		if (!havelock)
-			LWLockAcquire(BufMgrLock, LW_EXCLUSIVE);
-
+		LWLockAcquire(BufMgrLock, LW_EXCLUSIVE);
 		UnpinBuffer(bufHdr);
-
-		if (!havelock)
-			LWLockRelease(BufMgrLock);
+		LWLockRelease(BufMgrLock);
 	}
 
 	return STATUS_OK;
 }
-
-#undef ReleaseBuffer
-
-/*
- * ReleaseBuffer -- remove the pin on a buffer without
- *		marking it dirty.
- */
-int
-ReleaseBuffer(Buffer buffer)
-{
-	return release_buffer(buffer, false);
-}
-
-/*
- * ReleaseBufferWithBufferLock
- *		Same as ReleaseBuffer except we hold the bufmgr lock
- */
-static int
-ReleaseBufferWithBufferLock(Buffer buffer)
-{
-	return release_buffer(buffer, true);
-}
-
 
 #ifdef NOT_USED
 void
@@ -1847,10 +1740,13 @@ SetBufferCommitInfoNeedsSave(Buffer buffer)
 	BufferDesc *bufHdr;
 
 	if (BufferIsLocal(buffer))
+	{
+		WriteLocalBuffer(buffer, false);
 		return;
+	}
 
 	if (BAD_BUFFER_ID(buffer))
-		return;
+		elog(ERROR, "SetBufferCommitInfoNeedsSave: bad buffer %d", buffer);
 
 	bufHdr = &BufferDescriptors[buffer - 1];
 
