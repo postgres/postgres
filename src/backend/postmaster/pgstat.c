@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2004, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.85 2004/11/17 00:14:12 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.86 2004/12/20 19:17:56 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -379,7 +379,7 @@ pgstat_init(void)
 			 * errno will not be set meaningfully here, so don't use it.
 			 */
 			ereport(LOG,
-					(ERRCODE_CONNECTION_FAILURE,
+					(errcode(ERRCODE_CONNECTION_FAILURE),
 					 errmsg("test message did not get through on socket for statistics collector")));
 			closesocket(pgStatSock);
 			pgStatSock = -1;
@@ -401,7 +401,7 @@ pgstat_init(void)
 		if (test_byte != TESTBYTEVAL)	/* strictly paranoia ... */
 		{
 			ereport(LOG,
-					(ERRCODE_INTERNAL_ERROR,
+					(errcode(ERRCODE_INTERNAL_ERROR),
 					 errmsg("incorrect test message transmission on socket for statistics collector")));
 			closesocket(pgStatSock);
 			pgStatSock = -1;
@@ -414,12 +414,7 @@ pgstat_init(void)
 
 	/* Did we find a working address? */
 	if (!addr || pgStatSock < 0)
-	{
-		ereport(LOG,
-				(errcode_for_socket_access(),
-				 errmsg("disabling statistics collector for lack of working socket")));
 		goto startup_failed;
-	}
 
 	/*
 	 * Set the socket to non-blocking IO.  This ensures that if the
@@ -440,6 +435,9 @@ pgstat_init(void)
 	return;
 
 startup_failed:
+	ereport(LOG,
+			(errmsg("disabling statistics collector for lack of working socket")));
+
 	if (addrs)
 		freeaddrinfo_all(hints.ai_family, addrs);
 
