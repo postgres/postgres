@@ -1,5 +1,5 @@
 #! /bin/sh
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/pg_regress.sh,v 1.4 2000/10/02 11:47:30 petere Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/pg_regress.sh,v 1.5 2000/10/03 19:37:39 petere Exp $
 
 me=`basename $0`
 : ${TMPDIR=/tmp}
@@ -461,7 +461,7 @@ do
     if [ $# -eq 1 ]; then
         # Run a single test
         formatted=`echo $1 | awk '{printf "%-20.20s", $1;}'`
-        $ECHO_N "test $formatted ... " $ECHO_C
+        $ECHO_N "test $formatted ... $ECHO_C"
 
         $PSQL -d "$dbname" <"$inputdir/sql/$1.sql" >"$outputdir/results/$1.out" 2>&1
     else
@@ -469,7 +469,7 @@ do
         $ECHO_N "parallel group ($# tests): " $ECHO_C
         for name; do
             ( $PSQL -d $dbname <"$inputdir/sql/$name.sql" >"$outputdir/results/$name.out" 2>&1
-              $ECHO_N " $name" $ECHO_C
+              $ECHO_N " $name $ECHO_C"
             ) &
         done
         wait
@@ -486,7 +486,7 @@ do
     for name; do
         if [ $# -ne 1 ]; then
             formatted=`echo "$name" | awk '{printf "%-20.20s", $1;}'`
-            $ECHO_N "     $formatted ... " $ECHO_C
+            $ECHO_N "     $formatted ... $ECHO_C"
         fi
 
         # Check list extracted from resultmap to see if we should compare
