@@ -1,0 +1,152 @@
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/plpython.sgml,v 1.1 2001/05/12 17:49:32 petere Exp $ -->
+
+<chapter id="plpython">
+ <title>PL/Python - Python Procedural Language</title>
+
+ <note>
+  <para>
+   This chapter is not fully developed yet.
+  </para>
+ </note>
+
+ <sect1 id="plpython-install">
+  <title>Installation</title>
+
+  <para>
+   ... needs to be worked out.
+  </para>
+ </sect1>
+
+ <sect1 id="plpython-using">
+  <title>Using</title>
+
+  <para>
+   There are sample functions in
+   <filename>plpython_function.sql</filename>.  The Python code you
+   write gets transformed into a function.  E.g.,
+<programlisting>
+CREATE FUNCTION myfunc(text) RETURNS text AS
+'return args[0]'
+LANGUAGE 'plpython';
+</programlisting>
+
+   gets transformed into
+
+<programlisting>
+def __plpython_procedure_myfunc_23456():
+	return args[0]
+</programlisting>
+
+   where 23456 is the Oid of the function.
+  </para>
+
+  <para>
+   If you do not provide a return value, Python returns the default
+   <symbol>None</symbol> which may or may not be what you want.  The
+   language module translates Python's None into SQL NULL.
+  </para>
+
+  <para>
+   PostgreSQL function variables are available in the global
+   <varname>args</varname> list.  In the <function>myfunc</function>
+   example, args[0] contains whatever was passed in as the text
+   argument.  For <literal>myfunc2(text, int4)</literal>, args[0]
+   would contain the text variable and args[1] the int4 variable.
+  </para>
+
+  <para>
+   The global dictionary SD is available to store data between
+   function calls.  This variable is private static data.  The global
+   dictionary GD is public data, available to all python functions
+   within a backend.  Use with care.  When the function is used in a
+   trigger, the triggers tuples are in TD["new"] and/or TD["old"]
+   depending on the trigger event.  Return 'None' or "OK" from the
+   python function to indicate the tuple is unmodified, "SKIP" to
+   abort the event, or "MODIFIED" to indicate you've modified the
+   tuple.  If the trigger was called with arguments they are available
+   in TD["args"][0] to TD["args"][(n -1)]
+  </para>
+
+  <para>
+   Each function gets its own restricted execution object in the
+   Python interpreter, so that global data and function arguments from
+   <function>myfunc</function> are not available to
+   <function>myfunc2</function>.  The exception is the data in the GD
+   dictionary, as mentioned above.
+  </para>
+
+  <para>
+   The PL/Python language module automatically imports a Python module
+   called <literal>plpy</literal>.  The functions and constants in
+   this module are available to you in the Python code as
+   <literal>plpy.<replaceable>foo</replaceable></literal>.  At present
+   <literal>plpy</literal> implements the functions
+   <literal>plpy.error("msg")</literal>,
+   <literal>plpy.fatal("msg")</literal>,
+   <literal>plpy.debug("msg")</literal>, and
+   <literal>plpy.notice("msg")</literal>.  They are mostly equivalent
+   to calling <literal>elog(<replaceable>LEVEL</>, "msg")</literal>,
+   where <replaceable>LEVEL</> is DEBUG, ERROR, FATAL or NOTICE.
+   <function>plpy.error</function> and <function>plpy.fatal</function>
+   actually raise a Python exception which, if uncaught, causes the
+   PL/Python module to call <literal>elog(ERROR, msg)</literal> when
+   the function handler returns from the Python interpreter.  Long
+   jumping out of the Python interpreter is probably not good.
+   <literal>raise plpy.ERROR("msg")</literal> and <literal>raise
+   plpy.FATAL("msg")</literal> are equivalent to calling
+   <function>plpy.error</function> or <function>plpy.fatal</function>.
+  </para>
+
+  <para>
+   Additionally, the plpy module provides two functions called
+   <function>execute</function> and <function>prepare</function>.
+   Calling <function>plpy.execute</function> with a query string, and
+   an optional limit argument, causes that query to be run, and the
+   result returned in a result object.  The result object emulates a
+   list or dictionary object.  The result object can be accessed by
+   row number, and field name.  It has these additional methods:
+   <function>nrows()</function> which returns the number of rows
+   returned by the query, and <function>status</function> which is the
+   <function>SPI_exec</function> return variable.  The result object
+   can be modified.
+
+<programlisting>
+rv = plpy.execute("SELECT * FROM my_table", 5)
+</programlisting>
+   returns up to 5 rows from my_table.  Ff my_table has a column
+   my_field it would be accessed as
+<programlisting>
+foo = rv[i]["my_field"]
+</programlisting>
+   The second function <function>plpy.prepare</function> is called
+   with a query string, and a list of argument types if you have bind
+   variables in the query.
+<programlisting>
+plan = plpy.prepare("SELECT last_name FROM my_users WHERE first_name = $1", [ "text" ])
+</programlisting>
+   text is the type of the variable you will be passing as $1.  After
+   preparing you use the function <function>plpy.execute</function> to
+   run it.
+<programlisting>
+rv = plpy.execute(plan, [ "name" ], 5)
+</programlisting>
+   The limit argument is optional in the call to
+   <function>plpy.execute</function>.
+  </para>
+
+  <para>
+   When you prepare a plan using the PL/Python module it is
+   automatically saved.  Read the SPI documentation (<xref
+   linkend="spi">) for a description of what this means.  The take
+   home message is if you do
+<programlisting>
+plan = plpy.prepare("SOME QUERY")
+plan = plpy.prepare("SOME OTHER QUERY")
+</programlisting>
+   you are leaking memory, as I know of no way to free a saved plan.
+   The alternative of using unsaved plans it even more painful (for
+   me).
+  </para>
+ </sect1>
+
+</chapter>

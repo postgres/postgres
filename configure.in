@@ -409,11 +409,8 @@ AC_SUBST(with_perl)
 # Optionally build Python interface module
 #
 AC_MSG_CHECKING([whether to build Python modules])
-PGAC_ARG_BOOL(with, python, no, [  --with-python           build Python interface module],
-[AC_MSG_RESULT(yes)
-PGAC_PROG_PYTHON
-PGAC_PATH_PYTHONDIR],
-[AC_MSG_RESULT(no)])
+PGAC_ARG_BOOL(with, python, no, [  --with-python           build Python interface module])
+AC_MSG_RESULT([$with_python])
 AC_SUBST(with_python)
 
 #
@@ -657,6 +654,12 @@ AC_SUBST(YFLAGS)
 if test "$with_tk" = yes; then
     AC_PATH_PROG(WISH, wish)
     test -z "$WISH" && AC_MSG_ERROR(['wish' is required for Tk support])
+fi
+
+if test "$with_python" = yes; then
+  PGAC_PATH_PYTHON
+  PGAC_CHECK_PYTHON_MODULE_SETUP
+  PGAC_CHECK_PYTHON_EMBED_SETUP
 fi
 
 

@@ -53,12 +53,12 @@ select import_test_two(users) from users where fname = 'willem';
  sha hash of willemdoe is 3cde6b574953b0ca937b4d76ebc40d534d910759
 (1 row)
 
-select argument_test_one(users, fname, lname) from users where lname = 'doe';
+select argument_test_one(users, fname, lname) from users where lname = 'doe' order by 1;
                                   argument_test_one                                  
 -------------------------------------------------------------------------------------
- willem doe => {'fname': 'willem', 'userid': 3, 'lname': 'doe', 'username': 'w_doe'}
- john doe => {'fname': 'john', 'userid': 2, 'lname': 'doe', 'username': 'johnd'}
  jane doe => {'fname': 'jane', 'userid': 1, 'lname': 'doe', 'username': 'j_doe'}
+ john doe => {'fname': 'john', 'userid': 2, 'lname': 'doe', 'username': 'johnd'}
+ willem doe => {'fname': 'willem', 'userid': 3, 'lname': 'doe', 'username': 'w_doe'}
 (3 rows)
 
 select nested_call_one('pass this along');

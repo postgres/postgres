@@ -1,9 +1,25 @@
-<html>
-<head><title>TODO</title></head>
-<body bgcolor="white">
-In no special order<br>
-<li>allow arrays as function arguments and return values (almost done).
-<li>more and better documentation.
-<li>improve/automate configuration.
-<li>???
-</body>
+In no particular order...
+
+* Allow arrays as function arguments and return values.  (almost done)
+
+* Create a new restricted execution class that will allow me to pass
+  function arguments in as locals.  Passing them as globals means
+  functions cannot be called recursively.
+
+* Functions cache the input and output functions for their arguments,
+  so the following will make PostgreSQL unhappy:
+
+    create table users (first_name text, last_name text);
+    create function user_name(user) returns text as 'mycode' language 'plpython';
+    select user_name(user) from users;
+    alter table add column user_id integer;
+    select user_name(user) from users;
+
+  You have to drop and create the function(s) each time its arguments
+  are modified (not nice), or don't cache the input and output functions
+  (slower?), or check if the structure of the argument has been
+  altered (is this possible, easy, quick?) and recreate cache.
+
+* Better documentation
+
+* Add a DB-API compliant interface on top of the SPI interface.

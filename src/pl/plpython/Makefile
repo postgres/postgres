@@ -1,42 +1,36 @@
-# $Header: /cvsroot/pgsql/src/pl/plpython/Makefile,v 1.4 2001/05/12 01:30:30 petere Exp $
+# $Header: /cvsroot/pgsql/src/pl/plpython/Makefile,v 1.5 2001/05/12 17:49:32 petere Exp $
 
 subdir = src/pl/plpython
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
-# These things ought to go into $(top_srcdir)/config/python.m4 sometime.
 
-PYTHON_VERSION := $(shell $(PYTHON) -c  'import sys; print sys.version[:3]')
-PYTHON_INCLUDE := $(shell $(PYTHON) -c 'import sys; print sys.prefix')/include/python$(PYTHON_VERSION)
-
-override CPPFLAGS := -I$(srcdir) -I$(PYTHON_INCLUDE) $(CPPFLAGS)
-
-PYTHON_LIB := $(shell $(PYTHON) -c 'import sys; print sys.exec_prefix')/lib/python$(PYTHON_VERSION)
+override CPPFLAGS := -I$(srcdir) -I$(python_includedir) $(CPPFLAGS)
 
 NAME = plpython
 SO_MAJOR_VERSION = 0
 SO_MINOR_VERSION = 0
 OBJS = plpython.o
 
-# This static version might work on most ELF systems...
-SHLIB_LINK += $(PYTHON_LIB)/config/libpython$(PYTHON_VERSION).a
-# ...otherwise you need a shared version, but you need to build that yourself.
-#SHLIB_LINK += -lpython$(PYTHON_VERSION)
 
-# Python uses this.  Should become a configure check.
-SHLIB_LINK += -lpthread
+SHLIB_LINK += $(python_libspec)
 
-# Python 2 seems to want libdb.
-#SHLIB_LINK += -ldb2
+# If you have not patched the dynamic loader files as described in the
+# README you will have to link these in manually.  You may have to add
+# more modules.  If you have patched the loader, override
+# EXTRA_MODULES to be empty.
 
+# version 2.x
+ifneq (,$(findstring 2.,$(python_version)))
+EXTRA_MODULES = array cmath errno math md5 operator pcre sha time
+endif
 
-# Hopefully you won't need this utter crap.  But if you can't patch
-# the appropriate dynloader file, try this.  You may have to add other
-# modules.
-#
-#DLDIR=$(PYTHON_LIB)/lib-dynload
-#DLHACK=$(DLDIR)/arraymodule.so $(DLDIR)/timemodule.so $(DLDIR)/cmathmodule.so $(DLDIR)/errnomodule.so $(DLDIR)/mathmodule.so $(DLDIR)/md5module.so $(DLDIR)/operator.so $(DLDIR)/shamodule.so
-#SHLIB_LINK += $(DLDIR)
+# version 1.x
+ifneq (,$(findstring 1.,$(python_version)))
+EXTRA_MODULES = arraymodule cmathmodule errnomodule mathmodule md5module operator shamodule timemodule
+endif
+
+SHLIB_LINK += $(addprefix $(python_dynlibdir)/, $(addsuffix $(DLSUFFIX), $(EXTRA_MODULES)))
 
 include $(top_srcdir)/src/Makefile.shlib
 

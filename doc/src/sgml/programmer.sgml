@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/programmer.sgml,v 1.36 2001/05/08 19:14:52 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/programmer.sgml,v 1.37 2001/05/12 17:49:32 petere Exp $
 
 PostgreSQL Programmer's Guide.
 -->
@@ -84,6 +84,7 @@ Disable it until we put in some info.
   &plsql;
   &pltcl;
   &plperl;
+  &plpython;
  </part>
 
 <![%single-book;[

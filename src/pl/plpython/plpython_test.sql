@@ -26,7 +26,7 @@ select import_test_two(users) from users where fname = 'willem';
 
 -- test multiple arguments
 --
-select argument_test_one(users, fname, lname) from users where lname = 'doe';
+select argument_test_one(users, fname, lname) from users where lname = 'doe' order by 1;
 
 
 -- spi and nested calls

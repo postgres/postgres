@@ -4,7 +4,7 @@
 #
 # Written by Peter Eisentraut  <peter_e@gmx.net>
 #
-# $Header: /cvsroot/pgsql/src/interfaces/python/Attic/GNUmakefile,v 1.6 2001/03/25 19:44:03 petere Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/python/Attic/GNUmakefile,v 1.7 2001/05/12 17:49:32 petere Exp $
 #
 #-------------------------------------------------------------------
 
@@ -22,7 +22,7 @@ libpq-all:
 Makefile: Setup.in Makefile.pre.in
 	$(MAKE) -f Makefile.pre.in boot srcdir=$(srcdir) VPATH=$(srcdir)
 
-Makefile.pre.in: $(python_extmakefile)
+Makefile.pre.in: $(python_makefile_pre_in)
 	cp $< $@
 
 Setup.in: Setup.in.raw
