@@ -18,10 +18,10 @@ Valid as of 2003-09-28.  Update release.sgml later.
          Full support for IPv6 connections and IPv6 address data types
 
    SSL
-         Major improvements in SSL performance and security
+         Major improvements in SSL performance and reliability
 
    Index Growth Prevention
-         Allow free space map to efficiently reused empty index pages,
+         Allow free space map to efficiently reuse empty index pages,
          and other free space management improvements.
 
    Standards Compliance
@@ -38,8 +38,8 @@ Valid as of 2003-09-28.  Update release.sgml later.
          IN/NOT IN subqueries now perform as efficiently as joins
          Improved GROUP BY processing by using hash buckets
          New multi-key hash join capability
-         ANSI joins are now fully optimized
-         Faster regular expression code
+         ANSI joins are now better optimized
+         Faster and more powerful regular expression code
          Function-inlining for simple SQL functions
           
    Holdable Cursors
@@ -61,11 +61,11 @@ Valid as of 2003-09-28.  Update release.sgml later.
    data from any previous release.
    
    Observe the following incompatibilities:
-     * The server-side autocommit setting was removed an reimplemented
+     * The server-side autocommit setting was removed and reimplemented
        in client applications and languages.
-     * Error message wording has changed dramatically in this release,
+     * Error message wording has changed substantially in this release,
        and error codes have been added.
-     * ANSI joins may behave differently because they are now fully optimized
+     * ANSI joins may behave differently because they are now better optimized
      * A number of server variables have been renamed for clarity
      * MOVE/FETCH 0 now does nothing; return value of MOVE/FETCH 1/0
        varies based on the current offset in the cursor
@@ -75,7 +75,7 @@ Valid as of 2003-09-28.  Update release.sgml later.
      * Trailing spaces are now trimmed when converting from CHAR(n) to
        VARCHAR(n)/TEXT
      * FLOAT(p) now measures 'p' in bits, not digits
-     * Date values now must match the ordering specified by DateStyle
+     * Ambiguous date values now must match the ordering specified by DateStyle
      * The oidrand(), oidsrand(), and userfntest() functions have been
        removed.
 
