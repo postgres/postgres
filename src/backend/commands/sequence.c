@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.67 2001/11/05 17:46:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.68 2002/01/11 18:16:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,7 +43,7 @@
 #define SEQ_MINVALUE	(-SEQ_MAXVALUE)
 
 /*
- * We don't want to log each fetching values from sequences,
+ * We don't want to log each fetching of a value from a sequence,
  * so we pre-log a few fetches in advance. In the event of
  * crash we can lose as much as we pre-logged.
  */
@@ -199,17 +199,51 @@ DefineSequence(CreateSeqStmt *seq)
 	/* hack: ensure heap_insert will insert on the just-created page */
 	rel->rd_targblock = 0;
 
-	/* Now - form & insert sequence tuple */
+	/* Now form & insert sequence tuple */
 	tuple = heap_formtuple(tupDesc, value, null);
 	heap_insert(rel, tuple);
 
+	Assert(ItemPointerGetOffsetNumber(&(tuple->t_self)) == FirstOffsetNumber);
+
 	/*
-	 * After crash REDO of heap_insert above would re-init page and our
-	 * magic number would be lost. We have to log sequence creation. This
-	 * means two log records instead of one -:(
+	 * Two special hacks here:
+	 *
+	 * 1. Since VACUUM does not process sequences, we have to force the tuple
+	 * to have xmin = FrozenTransactionId now.  Otherwise it would become
+	 * invisible to SELECTs after 2G transactions.  It is okay to do this
+	 * because if the current transaction aborts, no other xact will ever
+	 * examine the sequence tuple anyway.
+	 *
+	 * 2. Even though heap_insert emitted a WAL log record, we have to emit
+	 * an XLOG_SEQ_LOG record too, since (a) the heap_insert record will
+	 * not have the right xmin, and (b) REDO of the heap_insert record
+	 * would re-init page and sequence magic number would be lost.  This
+	 * means two log records instead of one :-(
 	 */
 	LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
 	START_CRIT_SECTION();
+
+	{
+		/*
+		 * Note that the "tuple" structure is still just a local tuple record
+		 * created by heap_formtuple; its t_data pointer doesn't point at the
+		 * disk buffer.  To scribble on the disk buffer we need to fetch the
+		 * item pointer.  But do the same to the local tuple, since that will
+		 * be the source for the WAL log record, below.
+		 */
+		ItemId		itemId;
+		Item		item;
+
+		itemId = PageGetItemId((Page) page, FirstOffsetNumber);
+		item = PageGetItem((Page) page, itemId);
+
+		((HeapTupleHeader) item)->t_xmin = FrozenTransactionId;
+		((HeapTupleHeader) item)->t_infomask |= HEAP_XMIN_COMMITTED;
+
+		tuple->t_data->t_xmin = FrozenTransactionId;
+		tuple->t_data->t_infomask |= HEAP_XMIN_COMMITTED;
+	}
+
 	{
 		xl_seq_rec	xlrec;
 		XLogRecPtr	recptr;
@@ -217,6 +251,7 @@ DefineSequence(CreateSeqStmt *seq)
 		Form_pg_sequence newseq = (Form_pg_sequence) GETSTRUCT(tuple);
 
 		/* We do not log first nextval call, so "advance" sequence here */
+		/* Note we are scribbling on local tuple, not the disk buffer */
 		newseq->is_called = true;
 		newseq->log_cnt = 0;
 
@@ -239,8 +274,8 @@ DefineSequence(CreateSeqStmt *seq)
 	END_CRIT_SECTION();
 
 	LockBuffer(buf, BUFFER_LOCK_UNLOCK);
-	ReleaseBuffer(buf);
-	heap_close(rel, AccessExclusiveLock);
+	WriteBuffer(buf);
+	heap_close(rel, NoLock);
 }
 
 
@@ -628,7 +663,6 @@ read_info(char *caller, SeqTable elm, Buffer *buf)
 	elm->increment = seq->increment_by;
 
 	return seq;
-
 }
 
 
@@ -858,6 +892,8 @@ seq_redo(XLogRecPtr lsn, XLogRecord *record)
 
 	page = (Page) BufferGetPage(buffer);
 
+	/* Always reinit the page and reinstall the magic number */
+	/* See comments in DefineSequence */
 	PageInit((Page) page, BufferGetPageSize(buffer), sizeof(sequence_magic));
 	sm = (sequence_magic *) PageGetSpecialPointer(page);
 	sm->magic = SEQ_MAGIC;
