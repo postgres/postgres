@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.84 2001/09/21 20:31:43 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.85 2001/09/23 21:52:36 petere Exp $
 -->
 
 <Chapter Id="runtime">
@@ -781,45 +781,6 @@ env PGOPTIONS='-c geqo=off' psql
    <para>
     <variablelist>
      <varlistentry>
-      <term><varname>COLLECT_STARTCOLLECTOR</varname> (<type>boolean</type>)</term>
-      <listitem>
-       <para>
-        Controls whether the postmaster should start the statistics-collection
-	subprocess.  This is on by default, but may be turned off if you
-	know you have no interest in collecting statistics.  This option
-	can only be set at postmaster start.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><varname>COLLECT_RESETONPMSTART</varname> (<type>boolean</type>)</term>
-      <listitem>
-       <para>
-        If on, collected statistics are zeroed out whenever the postmaster
-	is restarted.  If off, statistics are accumulated across postmaster
-	restarts.  The default is on.  This option
-	can only be set at postmaster start.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><varname>COLLECT_QUERYSTRING</varname> (<type>boolean</type>)</term>
-      <term><varname>COLLECT_BLOCKLEVEL</varname> (<type>boolean</type>)</term>
-      <term><varname>COLLECT_TUPLELEVEL</varname> (<type>boolean</type>)</term>
-      <listitem>
-       <para>
-        These flags determine what information backends send to the statistics
-	collector process: current queries, block-level activity statistics,
-	or tuple-level activity statistics.  All default to off.  Enabling
-	statistics collection costs a small amount of time per query, but
-	is invaluable for debugging and performance tuning.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
       <term><varname>DEBUG_ASSERTIONS</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
@@ -936,6 +897,45 @@ env PGOPTIONS='-c geqo=off' psql
         to find out what user initiated the connection. Other than
         that it's pretty useless and therefore off by default. This
         option can only be set at server start.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>STATS_COMMAND_STRING</varname> (<type>boolean</type>)</term>
+      <term><varname>STATS_BLOCK_LEVEL</varname> (<type>boolean</type>)</term>
+      <term><varname>STATS_ROW_LEVEL</varname> (<type>boolean</type>)</term>
+      <listitem>
+       <para>
+        These flags determine what information backends send to the statistics
+	collector process: current commands, block-level activity statistics,
+	or row-level activity statistics.  All default to off.  Enabling
+	statistics collection costs a small amount of time per query, but
+	is invaluable for debugging and performance tuning.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>STATS_RESET_ON_SERVER_START</varname> (<type>boolean</type>)</term>
+      <listitem>
+       <para>
+        If on, collected statistics are zeroed out whenever the server
+	is restarted.  If off, statistics are accumulated across server
+	restarts.  The default is on.  This option
+	can only be set at server start.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>STATS_START_COLLECTOR</varname> (<type>boolean</type>)</term>
+      <listitem>
+       <para>
+        Controls whether the server should start the statistics-collection
+	subprocess.  This is on by default, but may be turned off if you
+	know you have no interest in collecting statistics.  This option
+	can only be set at server start.
        </para>
       </listitem>
      </varlistentry>
@@ -1269,49 +1269,6 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
      </varlistentry>
 
      <varlistentry>
-      <term><varname>TRANSFORM_NULL_EQUALS</varname> (<type>boolean</type>)</term>
-      <listitem>
-       <para>
-        When turned on, expressions of the form
-        <literal><replaceable>expr</> = NULL</literal> (or
-        <literal>NULL = <replaceable>expr</></literal>) are treated as
-        <literal><replaceable>expr</> IS NULL</literal>, that is, they
-        return true if <replaceable>expr</> evaluates to the NULL
-        value, and false otherwise.  The correct behavior of
-        <literal><replaceable>expr</> = NULL</literal> is to always
-        return NULL (unknown).  Therefore this option defaults to off.
-       </para>
-
-       <para>
-        However, filtered forms in <productname>Microsoft
-        Access</productname> generate queries that appear to use
-        <literal><replaceable>expr</> = NULL</literal> to test for
-        NULLs, so if you use that interface to access the database you
-        might want to turn this option on.  Since expressions of the
-        form <literal><replaceable>expr</> = NULL</literal> always
-        return NULL (using the correct interpretation) they are not
-        very useful and do not appear often in normal applications, so
-        this option does little harm in practice.  But new users are
-        frequently confused about the semantics of expressions
-        involving NULL, so we do not turn this option on by default.
-       </para>
-
-       <para>
-        Note that this option only affects the literal <literal>=</>
-        operator, not other comparison operators or other expressions
-        that are computationally equivalent to some expression
-        involving the equals operator (such as <literal>IN</literal>).
-        Thus, this option is not a general fix for bad programming.
-       </para>
-
-       <para>
-        Refer to the <citetitle>User's Guide</citetitle> for related
-        information.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
       <term><varname>PORT</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
@@ -1404,6 +1361,49 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
         connections. Otherwise only local Unix domain socket
         connections are accepted. It is off by default. This option
         can only be set at server start.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>TRANSFORM_NULL_EQUALS</varname> (<type>boolean</type>)</term>
+      <listitem>
+       <para>
+        When turned on, expressions of the form
+        <literal><replaceable>expr</> = NULL</literal> (or
+        <literal>NULL = <replaceable>expr</></literal>) are treated as
+        <literal><replaceable>expr</> IS NULL</literal>, that is, they
+        return true if <replaceable>expr</> evaluates to the NULL
+        value, and false otherwise.  The correct behavior of
+        <literal><replaceable>expr</> = NULL</literal> is to always
+        return NULL (unknown).  Therefore this option defaults to off.
+       </para>
+
+       <para>
+        However, filtered forms in <productname>Microsoft
+        Access</productname> generate queries that appear to use
+        <literal><replaceable>expr</> = NULL</literal> to test for
+        NULLs, so if you use that interface to access the database you
+        might want to turn this option on.  Since expressions of the
+        form <literal><replaceable>expr</> = NULL</literal> always
+        return NULL (using the correct interpretation) they are not
+        very useful and do not appear often in normal applications, so
+        this option does little harm in practice.  But new users are
+        frequently confused about the semantics of expressions
+        involving NULL, so we do not turn this option on by default.
+       </para>
+
+       <para>
+        Note that this option only affects the literal <literal>=</>
+        operator, not other comparison operators or other expressions
+        that are computationally equivalent to some expression
+        involving the equals operator (such as <literal>IN</literal>).
+        Thus, this option is not a general fix for bad programming.
+       </para>
+
+       <para>
+        Refer to the <citetitle>User's Guide</citetitle> for related
+        information.
        </para>
       </listitem>
      </varlistentry>

@@ -150,11 +150,11 @@
 #
 #	Access statistics collection
 #
-#collect_startcollector = true
-#collect_resetonpmstart = true
-#collect_querystring = false
-#collect_tuplelevel = false
-#collect_blocklevel = false
+#stats_start_collector = true
+#stats_reset_on_server_start = true
+#stats_command_string = false
+#stats_row_level = false
+#stats_block_level = false
 
 
 #

@@ -4,7 +4,7 @@
  * Support for grand unified configuration scheme, including SET
  * command, configuration file, and command line options.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.51 2001/09/21 17:06:12 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.52 2001/09/23 21:52:36 petere Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -229,11 +229,11 @@ static struct config_bool
 	{"show_btree_build_stats", PGC_SUSET, &Show_btree_build_stats, false, NULL},
 #endif
 
-	{"collect_startcollector", PGC_POSTMASTER, &pgstat_collect_startcollector, true, NULL},
-	{"collect_resetonpmstart", PGC_POSTMASTER, &pgstat_collect_resetonpmstart, true, NULL},
-	{"collect_querystring", PGC_SUSET, &pgstat_collect_querystring, false, NULL},
-	{"collect_tuplelevel", PGC_SUSET, &pgstat_collect_tuplelevel, false, NULL},
-	{"collect_blocklevel", PGC_SUSET, &pgstat_collect_blocklevel, false, NULL},
+	{"stats_start_collector", PGC_POSTMASTER, &pgstat_collect_startcollector, true, NULL},
+	{"stats_reset_on_server_start", PGC_POSTMASTER, &pgstat_collect_resetonpmstart, true, NULL},
+	{"stats_command_string", PGC_SUSET, &pgstat_collect_querystring, false, NULL},
+	{"stats_row_level", PGC_SUSET, &pgstat_collect_tuplelevel, false, NULL},
+	{"stats_block_level", PGC_SUSET, &pgstat_collect_blocklevel, false, NULL},
 
 	{"trace_notify", PGC_USERSET, &Trace_notify, false, NULL},
 
