@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.119 2004/10/12 21:54:38 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.120 2004/12/20 17:13:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -150,7 +150,6 @@ pg_krb4_recvauth(Port *port)
  */
 
 #include <krb5.h>
-#include <com_err.h>
 
 /*
  * pg_an_to_ln -- return the local name corresponding to an authentication

@@ -10,7 +10,7 @@
  * exceed INITIAL_EXPBUFFER_SIZE (currently 256 bytes).
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.95 2004/11/09 15:57:57 petere Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.96 2004/12/20 17:13:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -243,7 +243,6 @@ pg_krb4_sendauth(char *PQerrormsg, int sock,
  */
 
 #include <krb5.h>
-#include <com_err.h>
 
 /*
  * pg_an_to_ln -- return the local name corresponding to an authentication
