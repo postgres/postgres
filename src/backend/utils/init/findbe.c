@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/Attic/findbe.c,v 1.21 2001/04/21 18:29:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/Attic/findbe.c,v 1.22 2001/05/09 19:28:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,7 +74,9 @@ ValidateBinary(char *path)
 					path);
 		return -1;
 	}
-	if (!(buf.st_mode & S_IFREG))
+
+	
+	if ((buf.st_mode & S_IFMT) != S_IFREG)
 	{
 		if (DebugLvl > 1)
 			fprintf(stderr, "ValidateBinary: \"%s\" is not a regular file\n",
