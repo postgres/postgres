@@ -59,56 +59,44 @@
  * The following is set using configure.  
  */
 
-/* Set to 1 if you have <string.h> */
-#undef HAVE_STRING_H
-
-/* Set to 1 if you have <strings.h> */
-#undef HAVE_STRINGS_H
-
-/* Set to 1 if you have <getopt.h> */
-#undef HAVE_GETOPT_H
-
-/* Set to 1 if you have <fp_class.h> */
-#undef HAVE_FP_CLASS_H
-
-/* Set to 1 if you have <netinet/in.h> */
-#undef HAVE_NETINET_IN_H
-
-/* Set to 1 if you have <ieeefp.h> */
-#undef HAVE_IEEEFP_H
-
 /* Set to 1 if you have <arpa/inet.h> */
 #undef HAVE_ARPA_INET_H
-
-/* Set to 1 if you have <netdb.h> */
-#undef HAVE_NETDB_H
-
-/* Set to 1 if you have <endian.h> */
-#undef HAVE_ENDIAN_H
 
 /* Set to 1 if you have <crypt.h> */
 #undef HAVE_CRYPT_H
 
-/* Set to 1 if you have <termios.h> */
-#undef HAVE_TERMIOS_H
+/* Set to 1 if you have <dld.h> */
+#undef HAVE_DLD_H
+
+/* Set to 1 if you have <endian.h> */
+#undef HAVE_ENDIAN_H
 
 /* Set to 1 if you have <float.h> */
 #undef HAVE_FLOAT_H
 
-/* Set to 1 if you have <limits.h> */
-#undef HAVE_LIMITS_H
+/* Set to 1 if you have <fp_class.h> */
+#undef HAVE_FP_CLASS_H
 
-/* Set to 1 if  you have <values.h> */
-#undef HAVE_VALUES_H
-
-/* Set to 1 if  you have <sys/select.h> */
-#undef HAVE_SYS_SELECT_H
-
-/* Set to 1 if you have <readline.h> */
-#undef HAVE_READLINE_H
+/* Set to 1 if you have <getopt.h> */
+#undef HAVE_GETOPT_H
 
 /* Set to 1 if you have <history.h> */
 #undef HAVE_HISTORY_H
+
+/* Set to 1 if you have <ieeefp.h> */
+#undef HAVE_IEEEFP_H
+
+/* Set to 1 if you have <limits.h> */
+#undef HAVE_LIMITS_H
+
+/* Set to 1 if you have <netdb.h> */
+#undef HAVE_NETDB_H
+
+/* Set to 1 if you have <netinet/in.h> */
+#undef HAVE_NETINET_IN_H
+
+/* Set to 1 if you have <readline.h> */
+#undef HAVE_READLINE_H
 
 /* Set to 1 if you have <readline/history.h> */
 #undef HAVE_READLINE_HISTORY_H
@@ -116,11 +104,14 @@
 /* Set to 1 if you have <readline/readline.h> */
 #undef HAVE_READLINE_READLINE_H
 
-/* Set to 1 if you have libreadline and it includes history functions */
-#undef HAVE_HISTORY
+/* Set to 1 if  you have <sys/select.h> */
+#undef HAVE_SYS_SELECT_H
 
-/* Set to 1 if you have <dld.h> */
-#undef HAVE_DLD_H
+/* Set to 1 if you have <termios.h> */
+#undef HAVE_TERMIOS_H
+
+/* Set to 1 if  you have <values.h> */
+#undef HAVE_VALUES_H
 
 /* Define if you have the ANSI C header files.  */
 #undef STDC_HEADERS
@@ -130,6 +121,9 @@
 
 /* Define if you have the stricmp function.  */
 #undef HAVE_STRICMP
+
+/* Set to 1 if you have libreadline and it includes history functions */
+#undef HAVE_HISTORY
 
 /*
  * Block of parameters for the ODBC code.
