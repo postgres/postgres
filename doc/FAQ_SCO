@@ -3,7 +3,7 @@ Frequently Asked Questions (FAQ) for PostgreSQL  V7.0
 SCO UnixWare and OpenServer Specific
 TO BE READ IN CONJUNCTION WITH THE NORMAL FAQ
 =======================================================
-last updated:           Mon Apr 24 04:31:44 EDT 2000
+last updated:           Mon May  1 23:35:43 EDT 2000
 
 current maintainer:     Billy G. Allie (Bill.Allie@mug.org)
 original author:        Andrew Merrill (andrew@compclass.com)
@@ -275,7 +275,7 @@ section names in the man page:
 #!/bin/ksh
 cd /usr/local/pgsql/man
 mv man1 man.1
-mkdir ../man.1sql
+mkdir man.1sql
 
 cd /usr/local/pgsql/man/manl
 for i in *.l
@@ -284,6 +284,8 @@ do
 done
 cd /usr/local/pgsql/man
 rm -rf manl
+/usr/ucb/catman -M /usr/local/pgsql/man 1
+/usr/ucb/catman -M /usr/local/pgsql/man 1sql
 ------------------------------8< CUT HERE >8------------------------------
 
 After running this script, you can view the man pages using the 'man'

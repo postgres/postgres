@@ -18,4 +18,4 @@ dyntest2: dyntest2.c
 	$(ECPG) $? 
 
 clean:
-	rm -f test1 test2 test3 test4 perftest *.c log dyntest dyntest2
+	rm -f test1 test2 test3 test4 perftest *.c *.o log dyntest dyntest2
