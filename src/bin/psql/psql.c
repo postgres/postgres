@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.74 1997/06/20 02:20:26 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.75 1997/06/29 05:06:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1558,6 +1558,7 @@ MainLoop(PsqlSettings * settings, FILE * source)
 		    free(line);
 		    break;
 		}
+		free(line);
 	    } else if (strlen(query) + strlen(query_start) > MAX_QUERY_BUFFER) {
 		fprintf(stderr, "query buffer max length of %d exceeded\n",
 			MAX_QUERY_BUFFER);
@@ -1573,7 +1574,7 @@ MainLoop(PsqlSettings * settings, FILE * source)
 		    } else
 			strcpy(query, query_start);
 		}
-	free(line); /* PURIFY */
+		free(line); /* PURIFY */
 	    }
 
 	    if (slashCmdStatus == 0) {
