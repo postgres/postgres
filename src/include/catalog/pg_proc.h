@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.97 1999/05/03 19:10:18 momjian Exp $
+ * $Id: pg_proc.h,v 1.98 1999/05/09 02:22:16 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2194,7 +2194,7 @@ DATA(insert OID = 683 (  network				PGUID 11 f t f 1 f 25 "869" 100 0 0 100  net
 DESCR("network address");
 
 /* OID's 1700 - 1799 NUMERIC data type */
-DATA(insert OID = 1701 ( numeric_in				PGUID 11 f t f 1 f 1700 "0" 100 0 0 100  numeric_in - ));
+DATA(insert OID = 1701 ( numeric_in				PGUID 11 f t f 3 f 1700 "0 0 23" 100 0 0 100  numeric_in - ));
 DESCR("(internal)");
 DATA(insert OID = 1702 ( numeric_out			PGUID 11 f t f 1 f 23 "0" 100 0 0 100  numeric_out - ));
 DESCR("(internal)");
