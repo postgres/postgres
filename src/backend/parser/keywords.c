@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.16 1997/09/08 02:25:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.17 1997/09/13 03:13:37 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,6 +55,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"by", BY},
 	{"cast", CAST},
 	{"change", CHANGE},
+	{"character", CHARACTER},
 	{"check", CHECK},
 	{"close", CLOSE},
 	{"cluster", CLUSTER},
@@ -75,6 +76,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"desc", DESC},
 	{"distinct", DISTINCT},
 	{"do", DO},
+	{"double", DOUBLE},
 	{"drop", DROP},
 	{"end", END_TRANS},
 	{"execute", EXECUTE},
@@ -132,6 +134,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"order", ORDER},
 	{"outer", OUTERJOIN},
 	{"position", POSITION},
+	{"precision", PRECISION},
 	{"privileges", PRIVILEGES},
 	{"procedure", PROCEDURE},
 	{"public", PUBLIC},
@@ -159,8 +162,8 @@ static ScanKeyword ScanKeywords[] = {
 	{"table", TABLE},
 	{"time", TIME},
 	{"to", TO},
-	{"transaction", TRANSACTION},
 	{"trailing", TRAILING},
+	{"transaction", TRANSACTION},
 	{"trigger", TRIGGER},
 	{"trim", TRIM},
 	{"type", P_TYPE},
@@ -170,6 +173,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"using", USING},
 	{"vacuum", VACUUM},
 	{"values", VALUES},
+	{"varying", VARYING},
 	{"verbose", VERBOSE},
 	{"version", VERSION},
 	{"view", VIEW},
