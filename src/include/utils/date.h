@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: date.h,v 1.8 2001/01/23 01:48:17 momjian Exp $
+ * $Id: date.h,v 1.9 2001/01/23 03:10:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,7 +25,7 @@ typedef struct
 {
 	double		time;			/* all time units other than months and
 								 * years */
-	int			zone;			/* numeric time zone, in seconds */
+	int32		zone;			/* numeric time zone, in seconds */
 } TimeTzADT;
 
 /*

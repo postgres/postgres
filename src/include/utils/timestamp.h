@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: timestamp.h,v 1.12 2001/01/23 01:48:17 momjian Exp $
+ * $Id: timestamp.h,v 1.13 2001/01/23 03:10:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,7 +36,7 @@ typedef double Timestamp;
 typedef struct
 {
 	double		time;	/* all time units other than months and years */
-	int		month;	/* months and years, after time for alignment */
+	int32		month;	/* months and years, after time for alignment */
 } Interval;
 
 
