@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.74 1998/06/16 07:29:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.75 1998/06/19 02:55:14 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -57,7 +57,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <sys/param.h>			/* for MAXHOSTNAMELEN on most */
-#ifdef sparc_solaris
+#ifdef solaris_sparc
 #include <netdb.h>				/* for MAXHOSTNAMELEN on some */
 #endif
 

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: sparc_solaris.h,v 1.1 1997/12/20 03:35:55 scrappy Exp $
+ * $Id: solaris_sparc.h,v 1.1 1998/06/19 02:55:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
