@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.63 2001/03/22 03:59:18 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.64 2001/04/05 09:34:32 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2440,23 +2440,53 @@ StartupXLOG(void)
 	openLogOff = 0;
 	ControlFile->logId = openLogId;
 	ControlFile->logSeg = openLogSeg + 1;
-	XLogCtl->xlblocks[0].xlogid = openLogId;
-	XLogCtl->xlblocks[0].xrecoff =
-		((EndOfLog.xrecoff - 1) / BLCKSZ + 1) * BLCKSZ;
 	Insert = &XLogCtl->Insert;
+	Insert->PrevRecord = LastRec;
 
 	/*
-	 * Tricky point here: readBuf contains the *last* block that the
-	 * LastRec record spans, not the one it starts in, which is what we
-	 * want.
+	 * If the next record will go to the new page
+	 * then initialize for that one.
 	 */
-	Assert(readOff == (XLogCtl->xlblocks[0].xrecoff - BLCKSZ) % XLogSegSize);
-	memcpy((char *) Insert->currpage, readBuf, BLCKSZ);
-	Insert->currpos = (char *) Insert->currpage +
-		(EndOfLog.xrecoff + BLCKSZ - XLogCtl->xlblocks[0].xrecoff);
-	/* Make sure rest of page is zero */
-	memset(Insert->currpos, 0, INSERT_FREESPACE(Insert));
-	Insert->PrevRecord = LastRec;
+	if ((BLCKSZ - EndOfLog.xrecoff % BLCKSZ) < SizeOfXLogRecord)
+		EndOfLog.xrecoff += (BLCKSZ - EndOfLog.xrecoff % BLCKSZ);
+	if (EndOfLog.xrecoff % BLCKSZ == 0)
+	{
+		if (EndOfLog.xrecoff >= XLogFileSize)
+		{
+			XLogCtl->xlblocks[0].xlogid = EndOfLog.xlogid + 1;
+			XLogCtl->xlblocks[0].xrecoff = BLCKSZ;
+		}
+		else
+		{
+			XLogCtl->xlblocks[0].xlogid = EndOfLog.xlogid;
+			XLogCtl->xlblocks[0].xrecoff = EndOfLog.xrecoff + BLCKSZ;
+		}
+		Insert->currpos = (char *) Insert->currpage + SizeOfXLogPHD;
+		Insert->currpage->xlp_magic = XLOG_PAGE_MAGIC;
+		if (InRecovery)
+			Insert->currpage->xlp_sui = ThisStartUpID;
+		else
+			Insert->currpage->xlp_sui = ThisStartUpID + 1;
+	}
+	else
+	{
+		XLogCtl->xlblocks[0].xlogid = openLogId;
+		XLogCtl->xlblocks[0].xrecoff =
+			((EndOfLog.xrecoff - 1) / BLCKSZ + 1) * BLCKSZ;
+		/*
+		 * Tricky point here: readBuf contains the *last* block that the
+		 * LastRec record spans, not the one it starts in, which is what we
+		 * want.
+		 *
+		 * XXX - why would we want block LastRec starts in?
+		 */
+		Assert(readOff == (XLogCtl->xlblocks[0].xrecoff - BLCKSZ) % XLogSegSize);
+		memcpy((char *) Insert->currpage, readBuf, BLCKSZ);
+		Insert->currpos = (char *) Insert->currpage +
+			(EndOfLog.xrecoff + BLCKSZ - XLogCtl->xlblocks[0].xrecoff);
+		/* Make sure rest of page is zero */
+		memset(Insert->currpos, 0, INSERT_FREESPACE(Insert));
+	}
 
 	LogwrtResult.Write = LogwrtResult.Flush = EndOfLog;
 
