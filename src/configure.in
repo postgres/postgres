@@ -411,6 +411,27 @@ echo "- setting CPPFLAGS=$CPPFLAGS"
 LDFLAGS="$LDFLAGS $PGSQL_LDFLAGS"
 echo "- setting LDFLAGS=$LDFLAGS"
 
+dnl --enable-debug adds -g to compiler flags
+dnl --disable-debug will forcefully remove it
+AC_MSG_CHECKING(setting debug compiler flag)
+AC_ARG_ENABLE(
+    debug,
+    [  --enable-debug          build with debugging symbols (-g) ],
+    [
+        case "$enableval" in
+	y | ye | yes)
+            CFLAGS="$CFLAGS -g"
+            AC_MSG_RESULT(enabled)
+            ;;
+        *)
+            CFLAGS=`echo "$CFLAGS" | sed -e 's/ -g/ /g' | sed -e 's/^-g//'`
+            AC_MSG_RESULT(disabled)
+            ;;
+        esac            
+   ],
+   AC_MSG_RESULT(using default)
+)
+
 # Assume system is ELF if it predefines __ELF__ as 1,
 # otherwise believe "elf" setting from check of host_os above.
 AC_EGREP_CPP(yes,
