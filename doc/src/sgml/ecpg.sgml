@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.45 2003/07/23 17:27:28 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.46 2003/08/01 03:10:04 momjian Exp $
 -->
 
 <chapter id="ecpg">
@@ -751,7 +751,7 @@ EXEC SQL INCLUDE <replaceable>filename</replaceable>;
 
   <para>
    <application>ecpg</application> is thread-safe if it is compiled using
-   the <literal>--enable-thread-safeness</> <filename>configure</filename>
+   the <literal>--enable-thread-safety</> <filename>configure</filename>
    command-line option.  (You might need to use other threading
    command-line options to compile your client code.)
   </para>

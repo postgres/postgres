@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.136 2003/07/23 17:27:28 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.137 2003/08/01 03:10:04 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -915,7 +915,7 @@ JAVACMD=$JAVA_HOME/bin/java
       </varlistentry>
 
       <varlistentry>
-       <term><option>--enable-thread-safeness</option></term>
+       <term><option>--enable-thread-safety</option></term>
        <listitem>
         <para>
 	 Allow separate libpq and ecpg threads to safely control their

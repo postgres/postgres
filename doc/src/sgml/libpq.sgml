@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.129 2003/07/26 13:50:01 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.130 2003/08/01 03:10:04 momjian Exp $
 -->
 
  <chapter id="libpq">
@@ -3322,7 +3322,7 @@ If the permissions are less strict than this, the file will be ignored.
 <para>
 <application>libpq</application> is thread-safe if the library is
 compiled using <filename>configure</filename>'s 
-<literal>--enable-thread-safeness</> command-line option.  
+<literal>--enable-thread-safety</> command-line option.  
 (In addition, you might need to use other threading command-line 
 options to compile your client code.)
 </para>
