@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pgtclCmds.h,v 1.1.1.1 1996/07/09 06:22:16 scrappy Exp $
+ * $Id: pgtclCmds.h,v 1.2 1996/10/07 21:19:09 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,8 @@ extern int Pg_connect(
 extern int Pg_disconnect(
     ClientData cData, Tcl_Interp *interp, int argc, char* argv[]);
 extern int Pg_exec(
+    ClientData cData, Tcl_Interp *interp, int argc, char* argv[]);
+extern int Pg_select(
     ClientData cData, Tcl_Interp *interp, int argc, char* argv[]);
 extern int Pg_result(
     ClientData cData, Tcl_Interp *interp, int argc, char* argv[]);

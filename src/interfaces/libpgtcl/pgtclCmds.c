@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.3 1996/09/16 05:54:53 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.4 1996/10/07 21:19:07 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1031,4 +1031,116 @@ Pg_lo_export(ClientData cData, Tcl_Interp *interp, int argc, char* argv[])
     return TCL_OK;
 }
 
+/**********************************
+ * pg_select
+ send a select query string to the backend connection
+ 
+ syntax:
+ pg_select connection query var proc
+
+ The query must be a select statement
+ The var is used in the proc as an array
+ The proc is run once for each row found
+
+ Originally I was also going to update changes but that has turned out
+ to be not so simple.  Instead, the caller should get the OID of any
+ table they want to update and update it themself in the loop.  I may
+ try to write a simplified table lookup and update function to make
+ that task a little easier.
+
+ The return is either TCL_OK, TCL_ERROR or TCL_RETURN and interp->result
+ may contain more information.
+ **********************************/
+
+int
+Pg_select(ClientData cData, Tcl_Interp *interp, int argc, char **argv)
+{
+	PGconn *conn;
+   	PGresult *result;
+    int ch_flag, r;
+    size_t tupno, column, ncols;
+	Tcl_DString headers;
+	struct {
+		char    *cname;
+		char    *data;
+		int     change;
+	} *info;
+
+	if (argc != 5)
+	{
+		Tcl_AppendResult(interp, "Wrong # of arguments\n",
+			 "pg_select connection queryString var proc", 0);
+		return TCL_ERROR;
+	}
+
+    if (! PgValidId(argv[1]))
+	{
+		Tcl_AppendResult(interp,
+				"Argument passed in is not a valid connection\n", 0);
+		return TCL_ERROR;
+    }
+  
+    conn = (PGconn*)PgGetId(argv[1]);
+
+	if ((result = PQexec(conn, argv[2])) == 0)
+    {
+		/* error occurred during the query */
+		Tcl_SetResult(interp, conn->errorMessage, TCL_STATIC);
+		return TCL_ERROR;
+    }
+
+	if ((info = malloc(sizeof(*info) * (ncols =  PQnfields(result)))) == NULL)
+	{
+		Tcl_AppendResult(interp, "Not enough memory", 0);
+		return TCL_ERROR;
+	}
+
+	Tcl_DStringInit(&headers);
+
+	for (column = 0; column < ncols; column++)
+	{
+		info[column].cname = PQfname(result, column);
+		info[column].data = malloc(2000);
+		info[column].change = 0;
+		Tcl_DStringAppendElement(&headers, info[column].cname);
+	}
+
+	Tcl_SetVar2(interp, argv[3], ".headers", Tcl_DStringValue(&headers), 0);
+	sprintf(info[0].data, "%d", ncols);
+	Tcl_SetVar2(interp, argv[3], ".numcols", info[0].data, 0);
+
+	for (tupno = 0; tupno < PQntuples(result); tupno++)
+	{
+		sprintf(info[0].data, "%d", tupno);
+		Tcl_SetVar2(interp, argv[3], ".tupno", info[0].data, 0);
+
+		for (column = 0; column < ncols; column++)
+		{
+			strcpy(info[column].data, PQgetvalue(result, tupno, column));
+			Tcl_SetVar2(interp, argv[3], info[column].cname, info[column].data, 0);
+		}
+
+		Tcl_SetVar2(interp, argv[3], ".command", "update", 0);
+
+		if ((r = Tcl_Eval(interp, argv[4])) != TCL_OK && r != TCL_CONTINUE)
+		{
+			if (r == TCL_BREAK)
+				return TCL_OK;
+
+			if (r == TCL_ERROR)
+			{
+				char	msg[60];
+
+				sprintf(msg, "\n    (\"pg_select\" body line %d)",
+								interp->errorLine);
+				Tcl_AddErrorInfo(interp, msg);
+			}
+
+			return r;
+		}
+	}
+
+	Tcl_AppendResult(interp, "", 0);
+	return TCL_OK;
+}
 

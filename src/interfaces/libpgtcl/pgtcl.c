@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtcl.c,v 1.1.1.1 1996/07/09 06:22:16 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtcl.c,v 1.2 1996/10/07 21:19:06 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,6 +42,11 @@ Pg_Init (Tcl_Interp *interp)
   Tcl_CreateCommand(interp,
 		    "pg_exec",
 		    Pg_exec,
+		    (ClientData)NULL, (Tcl_CmdDeleteProc*)NULL);
+  
+  Tcl_CreateCommand(interp,
+		    "pg_select",
+		    Pg_select,
 		    (ClientData)NULL, (Tcl_CmdDeleteProc*)NULL);
   
   Tcl_CreateCommand(interp,
