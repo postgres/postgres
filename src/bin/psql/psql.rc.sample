@@ -1,0 +1,7 @@
+--
+--	psql configuration file
+--
+--  This file is read before the .psqlrc file in the user's home directory.
+--
+--  Copy this to your sysconf directory (typically /usr/local/pgsql/etc) and
+--  rename it psql.rc.

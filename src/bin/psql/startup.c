@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.88 2004/04/19 17:42:58 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.89 2004/04/22 01:53:37 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -44,7 +44,8 @@ int			optreset;
  */
 PsqlSettings pset;
 
-#define PSQLRC ".psqlrc"
+#define PSQLRC 		".psqlrc"
+#define SYSPSQLRC	"psql.rc"
 
 /*
  * Structures to pass information between the option parsing routine
@@ -74,6 +75,7 @@ struct adhoc_opts
 static void parse_psql_options(int argc, char *argv[],
 				   struct adhoc_opts * options);
 static void process_psqlrc(void);
+static void process_psqlrc_file(char *filename);
 static void showVersion(void);
 
 #ifdef USE_SSL
@@ -562,6 +564,9 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 
 }
 
+#ifndef SYSCONFDIR
+#error "You must compile this file with SYSCONFDIR defined."
+#endif
 
 
 /*
@@ -570,32 +575,39 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 static void
 process_psqlrc(void)
 {
-	char	   *psqlrc;
+	char	   *globalFile = SYSCONFDIR "/" SYSPSQLRC;
 	char	   *home;
+	char	   *psqlrc;
+
+	process_psqlrc_file(globalFile);
+
+	if ((home = getenv("HOME")) != NULL)
+	{
+		psqlrc = pg_malloc(strlen(home) + 1 + strlen(PSQLRC) + 1);
+		sprintf(psqlrc, "%s/%s", home, PSQLRC);
+		process_psqlrc_file(psqlrc);
+	}
+}
+
+
+
+static void
+process_psqlrc_file(char *filename)
+{
+	char	   *psqlrc;
 
 #if defined(WIN32) && (!defined(__MINGW32__))
 #define R_OK 4
 #endif
 
-	/* Look for one in the home dir */
-	home = getenv("HOME");
+	psqlrc = pg_malloc(strlen(filename) + 1 + strlen(PG_VERSION) + 1);
+	sprintf(psqlrc, "%s-%s", filename, PG_VERSION);
 
-	if (home)
-	{
-		psqlrc = pg_malloc(strlen(home) + 1 + strlen(PSQLRC) + 1 +
-						   strlen(PG_VERSION) + 1);
-		sprintf(psqlrc, "%s/%s-%s", home, PSQLRC, PG_VERSION);
-
-		if (access(psqlrc, R_OK) == 0)
-			process_file(psqlrc);
-		else
-		{
-			sprintf(psqlrc, "%s/%s", home, PSQLRC);
-			if (access(psqlrc, R_OK) == 0)
-				process_file(psqlrc);
-		}
-		free(psqlrc);
-	}
+	if (access(psqlrc, R_OK) == 0)
+		process_file(psqlrc);
+	else if (access(filename, R_OK) == 0)
+			process_file(filename);
+	free(psqlrc);
 }
 
 
