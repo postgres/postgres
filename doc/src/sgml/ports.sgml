@@ -5,10 +5,10 @@
 <Title>Currently Supported Platforms</Title>
 
 <Para>
-     <ProductName>Postgres</ProductName>  is  available  free  of charge. This manual
-     describes version 6.4 of <ProductName>Postgres</ProductName>.  The authors  have
-     compiled  and  tested <ProductName>Postgres</ProductName> on the following 
-     platforms:
+This manual  describes version 6.4 of <ProductName>Postgres</ProductName>.
+The <ProductName>Postgres</ProductName> developer community has
+compiled  and  tested <ProductName>Postgres</ProductName> on the following 
+platforms:
 
 <TABLE TOCENTRY="1">
 <TITLE>Supported Platforms</TITLE>
@@ -29,14 +29,14 @@
     <ENTRY>v6.3</ENTRY>
     <ENTRY>1998-03-01</ENTRY>
     <ENTRY>4.1.4.0,4.2 (<ULink url="mailto:darrenk@insightdist.com">Darren King</ULink>),
-4.1.5 (<ULink url="mailto:Andreas.Zeugswetter@telecom.at">Andreas Zeugswetter</ULink>);
-3.2.5 confirmed on v6.2.1 (<ULink url="mailto:danaf@ans.net">Frank Dana</ULink>)</ENTRY>
+           4.1.5 (<ULink url="mailto:Andreas.Zeugswetter@telecom.at">Andreas Zeugswetter</ULink>);
+           3.2.5 confirmed on v6.2.1 (<ULink url="mailto:danaf@ans.net">Frank Dana</ULink>)</ENTRY>
   </ROW>
   <ROW>
-    <ENTRY>BSDi</ENTRY>
+    <ENTRY>BSDI</ENTRY>
     <ENTRY>x86</ENTRY>
-    <ENTRY>v6.3</ENTRY>
-    <ENTRY>1998-03-01</ENTRY>
+    <ENTRY>v6.4</ENTRY>
+    <ENTRY>1998-10-25</ENTRY>
     <ENTRY>(<ULink url="mailto:maillist@candle.pha.pa.us">Bruce Momjian</ULink></ENTRY>
   </ROW>
   <ROW>
@@ -45,13 +45,13 @@
     <ENTRY>v6.3</ENTRY>
     <ENTRY>1998-03-01</ENTRY>
     <ENTRY>(<ULink url="mailto:t-ishii@sra.co.jp">Tatsuo Ishii</ULink>,
-<ULink url="mailto:scrappy@hub.org">Marc Fournier</ULink>)</ENTRY>
+            <ULink url="mailto:scrappy@hub.org">Marc Fournier</ULink>)</ENTRY>
   </ROW>
   <ROW>
-    <ENTRY>NetBSD 1.3</ENTRY>
+    <ENTRY>NetBSD 1.3.2</ENTRY>
     <ENTRY>x86</ENTRY>
-    <ENTRY>v6.3</ENTRY>
-    <ENTRY>1998-03-01</ENTRY>
+    <ENTRY>v6.4</ENTRY>
+    <ENTRY>1998-10-25</ENTRY>
     <ENTRY>(<ULink url="mailto:brook@trillium.NMSU.Edu">Brook Milligan</ULink>)</ENTRY>
   </ROW>
   <ROW>
@@ -83,33 +83,38 @@
     <ENTRY>(<ULink url="mailto:geek+@cmu.edu">Brian E Gallew</ULink>)</ENTRY>
   </ROW>
   <ROW>
-    <ENTRY>HPUX 10.20</ENTRY>
+    <ENTRY>HPUX</ENTRY>
     <ENTRY>PA-RISC</ENTRY>
-    <ENTRY>v6.3</ENTRY>
-    <ENTRY>1998-03-01</ENTRY>
-    <ENTRY>9.0.x confirmed on v6.2.1 (<ULink url="mailto:stanb@awod.com">Stan Brown</ULink>)</ENTRY>
+    <ENTRY>v6.4</ENTRY>
+    <ENTRY>1998-10-25</ENTRY>
+    <ENTRY>Both 9.0.x and 10.20
+           (<ULink url="mailto:tgl@sss.pgh.pa.us">Tom Lane</ULink>,
+            <ULink url="mailto:stanb@awod.com">Stan Brown</ULink>)</ENTRY>
   </ROW>
   <ROW>
     <ENTRY>IRIX 6.x</ENTRY>
     <ENTRY>MIPS</ENTRY>
     <ENTRY>v6.3</ENTRY>
     <ENTRY>1998-03-01</ENTRY>
-    <ENTRY>5.x is different (<ULink url="mailto:martin@biochemistry.ucl.ac.uk">Andrew Martin</ULink>)</ENTRY>
+    <ENTRY>5.x is different
+           (<ULink url="mailto:martin@biochemistry.ucl.ac.uk">Andrew Martin</ULink>)</ENTRY>
   </ROW>
   <ROW>
     <ENTRY>Digital 4.0</ENTRY>
     <ENTRY>Alpha</ENTRY>
     <ENTRY>v6.3.2</ENTRY>
     <ENTRY>1998-04-16</ENTRY>
-    <ENTRY>reported working for DUnix/v3.2g (<ULink url="mailto:pjlobo@euitt.upm.es">Pedro J. Lobo</ULink>)</ENTRY>
+    <ENTRY>reported working for DUnix/v3.2g
+           (<ULink url="mailto:pjlobo@euitt.upm.es">Pedro J. Lobo</ULink>)</ENTRY>
   </ROW>
   <ROW>
     <ENTRY>linux 2.0.x</ENTRY>
     <ENTRY>Alpha</ENTRY>
     <ENTRY>v6.3.2</ENTRY>
     <ENTRY>1998-04-16</ENTRY>
-    <ENTRY>mostly successful (<ULink url="mailto:rkirkpat@nag.cs.colorado.edu">Ryan Kirkpatrick</ULink>,
-<ULink url="mailto:jsturm@zenacomp.com"> Jeff Sturm </ULink>)</ENTRY>
+    <ENTRY>mostly successful
+           (<ULink url="mailto:rkirkpat@nag.cs.colorado.edu">Ryan Kirkpatrick</ULink>,
+            <ULink url="mailto:jsturm@zenacomp.com"> Jeff Sturm </ULink>)</ENTRY>
   </ROW>
   <ROW>
     <ENTRY>linux 2.0.x</ENTRY>
@@ -117,13 +122,21 @@
     <ENTRY>v6.4</ENTRY>
     <ENTRY>1998-10-09</ENTRY>
     <ENTRY>(<ULink url="mailto:lockhart@alumni.caltech.edu">Thomas Lockhart</ULink>,
-<ULink url="mailto:t-ishii@sra.co.jp">Tatsuo Ishii</ULink>)</ENTRY>
+            <ULink url="mailto:t-ishii@sra.co.jp">Tatsuo Ishii</ULink>)</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>linux 2.0.x/glibc2</ENTRY>
+    <ENTRY>x86</ENTRY>
+    <ENTRY>v6.4</ENTRY>
+    <ENTRY>1998-10-25</ENTRY>
+    <ENTRY>(<ulink url="mailto:olly@lfix.co.uk">Oliver Elphick</ulink>,
+            <ulink url="mailto:taral@mail.utexas.edu">Taral</ulink>)</ENTRY>
   </ROW>
   <ROW>
     <ENTRY>linux 2.0.x</ENTRY>
     <ENTRY>Sparc</ENTRY>
-    <ENTRY>v6.3</ENTRY>
-    <ENTRY>1998-03-01</ENTRY>
+    <ENTRY>v6.4</ENTRY>
+    <ENTRY>1998-10-25</ENTRY>
     <ENTRY>(<ULink url="mailto:szybist@boxhill.com">Tom Szybist</ULink>)</ENTRY>
   </ROW>
   <ROW>
@@ -138,7 +151,8 @@
     <ENTRY>x86</ENTRY>
     <ENTRY>v6.3</ENTRY>
     <ENTRY>1998-03-01</ENTRY>
-    <ENTRY>partial success (<ULink url="mailto:Bill.Allie@mug.org">Billy G. Allie</ULink>)</ENTRY>
+    <ENTRY>partial success
+           (<ULink url="mailto:Bill.Allie@mug.org">Billy G. Allie</ULink>)</ENTRY>
   </ROW>
   <ROW>
     <ENTRY>Solaris</ENTRY>
@@ -149,54 +163,67 @@
   </ROW>
   <ROW>
     <ENTRY>Solaris 2.5.1-2.6</ENTRY>
-    <ENTRY>x86</ENTRY>
-    <ENTRY>v6.3</ENTRY>
-    <ENTRY>1998-03-01</ENTRY>
-    <ENTRY>(<ULink url="mailto:scrappy@hub.org">Marc Fournier</ULink>,
-<ULink url="mailto:t-ishii@sra.co.jp">Tatsuo Ishii</ULink>)</ENTRY>
+    <ENTRY>Sparc</ENTRY>
+    <ENTRY>v6.4</ENTRY>
+    <ENTRY>1998-10-25</ENTRY>
+    <ENTRY>(<ULink url="mailto:szybist@boxhill.com">Tom Szybist</ULink>)</ENTRY>
   </ROW>
   <ROW>
     <ENTRY>SunOS 4.1.4</ENTRY>
     <ENTRY>Sparc</ENTRY>
     <ENTRY>v6.3</ENTRY>
     <ENTRY>1998-03-01</ENTRY>
-    <ENTRY>patches submitted (<ULink url="mailto:t-ishii@sra.co.jp">Tatsuo Ishii</ULink>)</ENTRY>
+    <ENTRY>patches submitted
+           (<ULink url="mailto:t-ishii@sra.co.jp">Tatsuo Ishii</ULink>)</ENTRY>
   </ROW>
   <ROW>
     <ENTRY>SVR4</ENTRY>
     <ENTRY>MIPS</ENTRY>
     <ENTRY>v6.4</ENTRY>
     <ENTRY>1998-10-08</ENTRY>
-    <ENTRY>no 64-bit int support (<ULink url="mailto:ridderbusch.pad@sni.de">Frank Ridderbusch</ULink>)</ENTRY>
+    <ENTRY>no 64-bit int support
+           (<ULink url="mailto:ridderbusch.pad@sni.de">Frank Ridderbusch</ULink>)</ENTRY>
   </ROW>
   <ROW>
     <ENTRY>SVR4 4.4</ENTRY>
     <ENTRY>m88k</ENTRY>
     <ENTRY>v6.2.1</ENTRY>
     <ENTRY>1998-03-01</ENTRY>
-    <ENTRY>confirmed with patching (<ULink url="mailto:dlw@seavme.xroads.com">Doug Winterburn</ULink>)</ENTRY>
+    <ENTRY>confirmed with patching
+           (<ULink url="mailto:dlw@seavme.xroads.com">Doug Winterburn</ULink>)</ENTRY>
   </ROW>
   <ROW>
     <ENTRY>Unixware</ENTRY>
     <ENTRY>x86</ENTRY>
     <ENTRY>v6.4</ENTRY>
     <ENTRY>1998-10-04</ENTRY>
-    <ENTRY>aka UNIVEL (<ULink url="mailto:Bill.Allie@mug.org">Billy G. Allie</ULink>)</ENTRY>
+    <ENTRY>aka UNIVEL
+           (<ULink url="mailto:Bill.Allie@mug.org">Billy G. Allie</ULink>)</ENTRY>
   </ROW>
   <ROW>
     <ENTRY>Windows NT</ENTRY>
     <ENTRY>x86</ENTRY>
     <ENTRY>v6.4</ENTRY>
     <ENTRY>1998-10-08</ENTRY>
-    <ENTRY>Mostly working with the Cygwin library. No DLLs yet. <ulink url="mailto:horak@mmp.plzen-city.cz">Horak Daniel</ulink> </ENTRY>
+    <ENTRY>Mostly working with the Cygwin library. No DLLs yet.
+           (<ulink url="mailto:horak@mmp.plzen-city.cz">Horak Daniel</ulink>) </ENTRY>
   </ROW>
 </TBODY>
 </TGROUP>
 </TABLE>
 
+<para>
+Platforms listed for v6.3.x should also work with v6.4, but we did not receive
+confirmation of such at the time this list was compiled.
+
 <note>
 <para>
-For <productname>Windows NT</productname>, look for patches on the
+For <productname>Windows NT</productname>, 
+the server-side port of <productname>Postgres</productname> has recently been
+accomplished. Check
+<ulink url="http://www.askesis.nl/AskesisPostgresIndex.html">the Askesis Postgres Home Page</ulink>
+for up to date information. You may also want to
+look for possible patches on the
 <ulink url="http://postgresql.org">Postgres web site</ulink>.
 </note>
 
