@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.5 1996/11/30 17:48:52 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.6 1997/01/22 06:30:57 vadim Exp $
  *
  * HISTORY
  *    AUTHOR		DATE		MAJOR EVENT
@@ -649,6 +649,14 @@ get_relattval(Node *clause,
 	    *constval = 0;
 	    *flag = (_SELEC_NOT_CONSTANT_);
 	} 
+#ifdef INDEXSCAN_PATCH
+    } else if (is_opclause(clause) && IsA(right,Var) && IsA(left,Param)) {
+	/* ...And here... - vadim 01/22/97 */ 
+	*relid = right->varno;
+	*attno = right->varattno;
+	*constval = 0;
+	*flag = (_SELEC_NOT_CONSTANT_);
+#endif
     } else {
 	/* One or more of the operands are expressions 
 	 * (e.g., oper clauses)
