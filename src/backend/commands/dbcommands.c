@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.63 2000/10/28 16:20:54 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.64 2000/11/08 16:59:49 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,8 +17,6 @@
 
 #include <errno.h>
 #include <fcntl.h>
-#include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -37,12 +35,10 @@
 
 
 /* non-export function prototypes */
-static bool
-			get_user_info(Oid use_sysid, bool *use_super, bool *use_createdb);
-
-static bool
-			get_db_info(const char *name, char *dbpath, Oid *dbIdP, int4 *ownerIdP);
-
+static bool get_user_info(Oid use_sysid, bool *use_super, bool *use_createdb);
+static bool get_db_info(const char *name, char *dbpath, Oid *dbIdP, int4 *ownerIdP);
+static char * resolve_alt_dbpath(const char * dbpath, Oid dboid);
+static bool remove_dbdirs(const char * real_loc, const char * altloc);
 
 /*
  * CREATE DATABASE
@@ -52,8 +48,8 @@ void
 createdb(const char *dbname, const char *dbpath, int encoding)
 {
 	char		buf[2 * MAXPGPATH + 100];
-	char	   *loc;
-	char		locbuf[512];
+	char	   *altloc;
+	char	   *real_loc;
 	int			ret;
 	bool		use_super,
 				use_createdb;
@@ -77,24 +73,6 @@ createdb(const char *dbname, const char *dbpath, int encoding)
 	if (IsTransactionBlock())
 		elog(ERROR, "CREATE DATABASE: may not be called in a transaction block");
 
-#ifdef OLD_FILE_NAMING
-	/* Generate directory name for the new database */
-	if (dbpath == NULL || strcmp(dbpath, dbname) == 0)
-		strcpy(locbuf, dbname);
-	else
-		snprintf(locbuf, sizeof(locbuf), "%s/%s", dbpath, dbname);
-
-	loc = ExpandDatabasePath(locbuf);
-
-	if (loc == NULL)
-		elog(ERROR,
-			 "The database path '%s' is invalid. "
-			 "This may be due to a character that is not allowed or because the chosen "
-			 "path isn't permitted for databases", dbpath);
-#else
-	locbuf[0] = 0; /* Avoid junk in strings */
-#endif
-
 	/*
 	 * Insert a new tuple into pg_database
 	 */
@@ -108,13 +86,15 @@ createdb(const char *dbname, const char *dbpath, int encoding)
 	dboid = newoid();
 
 	/* Form tuple */
-	new_record[Anum_pg_database_datname - 1] = DirectFunctionCall1(namein,
-													CStringGetDatum(dbname));
+	new_record[Anum_pg_database_datname - 1] =
+		DirectFunctionCall1(namein, CStringGetDatum(dbname));
 	new_record[Anum_pg_database_datdba - 1] = Int32GetDatum(GetUserId());
 	new_record[Anum_pg_database_encoding - 1] = Int32GetDatum(encoding);
-	new_record[Anum_pg_database_datlastsysoid - 1] = ObjectIdGetDatum(dboid); /* Save current OID val */
-	new_record[Anum_pg_database_datpath - 1] = DirectFunctionCall1(textin,
-													CStringGetDatum(locbuf));
+	/* Save current OID val */
+	new_record[Anum_pg_database_datlastsysoid - 1] = ObjectIdGetDatum(dboid);
+	/* no nulls here, GetRawDatabaseInfo doesn't like them */
+	new_record[Anum_pg_database_datpath - 1] =
+		DirectFunctionCall1(textin, CStringGetDatum(dbpath ? dbpath : ""));
 
 	tuple = heap_formtuple(pg_database_dsc, new_record, new_record_nulls);
 
@@ -126,9 +106,12 @@ createdb(const char *dbname, const char *dbpath, int encoding)
 	 */
 	heap_insert(pg_database_rel, tuple);
 
-#ifndef OLD_FILE_NAMING
-	loc = GetDatabasePath(tuple->t_data->t_oid);
-#endif
+	real_loc = GetDatabasePath(tuple->t_data->t_oid);
+	altloc = resolve_alt_dbpath(dbpath, tuple->t_data->t_oid);
+
+	if (strchr(real_loc, '\'') && strchr(altloc, '\''))
+		elog(ERROR, "database path may not contain single quotes");
+	/* ... otherwise we'd be open to shell exploits below */
 
 	/*
 	 * Update indexes (there aren't any currently)
@@ -156,41 +139,28 @@ createdb(const char *dbname, const char *dbpath, int encoding)
 
 	/* Copy the template database to the new location */
 
-	if (mkdir(loc, S_IRWXU) != 0)
-		elog(ERROR, "CREATE DATABASE: unable to create database directory '%s': %s", loc, strerror(errno));
+	if (mkdir((altloc ? altloc : real_loc), S_IRWXU) != 0)
+		elog(ERROR, "CREATE DATABASE: unable to create database directory '%s': %s",
+			 (altloc ? altloc : real_loc), strerror(errno));
 
-#ifdef OLD_FILE_NAMING
-	snprintf(buf, sizeof(buf), "cp %s%cbase%ctemplate1%c* '%s'",
-			 DataDir, SEP_CHAR, SEP_CHAR, SEP_CHAR, loc);
-#else
+	if (altloc)
 	{
-		char   *tmpl = GetDatabasePath(TemplateDbOid);
-
-		snprintf(buf, sizeof(buf), "cp %s%c* '%s'",
-			tmpl, SEP_CHAR, loc);
-		pfree(tmpl);
+		if (symlink(altloc, real_loc) != 0)
+			elog(ERROR, "CREATE DATABASE: could not link %s to %s: %s",
+				 real_loc, altloc, strerror(errno));
 	}
-#endif
+
+	snprintf(buf, sizeof(buf), "cp '%s'/* '%s'",
+			 GetDatabasePath(TemplateDbOid), real_loc);
 
 	ret = system(buf);
 	/* Some versions of SunOS seem to return ECHILD after a system() call */
-#if defined(sun)
 	if (ret != 0 && errno != ECHILD)
-#else
-	if (ret != 0)
-#endif
 	{
-		/* Failed, so try to clean up the created directory ... */
-		snprintf(buf, sizeof(buf), "rm -rf '%s'", loc);
-		ret = system(buf);
-#if defined(sun)
-		if (ret == 0 || errno == ECHILD)
-#else
-		if (ret == 0)
-#endif
+		if (remove_dbdirs(real_loc, altloc))
 			elog(ERROR, "CREATE DATABASE: could not initialize database directory");
 		else
-			elog(ERROR, "CREATE DATABASE: Could not initialize database directory. Delete failed as well");
+			elog(ERROR, "CREATE DATABASE: could not initialize database directory; delete failed as well");
 	}
 
 #ifdef XLOG
@@ -210,9 +180,9 @@ dropdb(const char *dbname)
 	int4		db_owner;
 	bool		use_super;
 	Oid			db_id;
-	char	   *path,
-				dbpath[MAXPGPATH],
-				buf[MAXPGPATH + 100];
+	char       *altloc;
+	char       *real_loc;
+	char        dbpath[MAXPGPATH];
 	Relation	pgdbrel;
 	HeapScanDesc pgdbscan;
 	ScanKeyData key;
@@ -221,33 +191,25 @@ dropdb(const char *dbname)
 	AssertArg(dbname);
 
 	if (strcmp(dbname, "template1") == 0)
-		elog(ERROR, "DROP DATABASE: May not be executed on the template1 database");
+		elog(ERROR, "DROP DATABASE: may not be executed on the template1 database");
 
 	if (strcmp(dbname, DatabaseName) == 0)
-		elog(ERROR, "DROP DATABASE: Cannot be executed on the currently open database");
+		elog(ERROR, "DROP DATABASE: cannot be executed on the currently open database");
 
 	if (IsTransactionBlock())
-		elog(ERROR, "DROP DATABASE: May not be called in a transaction block");
+		elog(ERROR, "DROP DATABASE: may not be called in a transaction block");
 
 	if (!get_user_info(GetUserId(), &use_super, NULL))
-		elog(ERROR, "Current user name is invalid");
+		elog(ERROR, "current user name is invalid");
 
 	if (!get_db_info(dbname, dbpath, &db_id, &db_owner))
-		elog(ERROR, "DROP DATABASE: Database \"%s\" does not exist", dbname);
+		elog(ERROR, "DROP DATABASE: database \"%s\" does not exist", dbname);
 
 	if (GetUserId() != db_owner && !use_super)
-		elog(ERROR, "DROP DATABASE: Permission denied");
+		elog(ERROR, "DROP DATABASE: permission denied");
 
-#ifdef OLD_FILE_NAMING
-	path = ExpandDatabasePath(dbpath);
-	if (path == NULL)
-		elog(ERROR,
-			 "The database path '%s' is invalid. "
-			 "This may be due to a character that is not allowed or because the chosen "
-			 "path isn't permitted for databases", path);
-#else
-	path = GetDatabasePath(db_id);
-#endif
+	real_loc = GetDatabasePath(db_id);
+	altloc = resolve_alt_dbpath(dbpath, db_id);
 
 	/*
 	 * Obtain exclusive lock on pg_database.  We need this to ensure that
@@ -266,7 +228,7 @@ dropdb(const char *dbname)
 	if (DatabaseHasActiveBackends(db_id))
 	{
 		heap_close(pgdbrel, AccessExclusiveLock);
-		elog(ERROR, "DROP DATABASE: Database \"%s\" is being accessed by other users", dbname);
+		elog(ERROR, "DROP DATABASE: database \"%s\" is being accessed by other users", dbname);
 	}
 
 	/*
@@ -320,13 +282,7 @@ dropdb(const char *dbname)
 	/*
 	 * Remove the database's subdirectory and everything in it.
 	 */
-	snprintf(buf, sizeof(buf), "rm -rf '%s'", path);
-#if defined(sun)
-	if (system(buf) != 0 && errno != ECHILD)
-#else
-	if (system(buf) != 0)
-#endif
-		elog(NOTICE, "DROP DATABASE: The database directory '%s' could not be removed", path);
+	remove_dbdirs(real_loc, altloc);
 }
 
 
@@ -425,4 +381,67 @@ get_user_info(Oid use_sysid, bool *use_super, bool *use_createdb)
 		*use_createdb = ((Form_pg_shadow) GETSTRUCT(utup))->usecreatedb;
 
 	return true;
+}
+
+
+static char *
+resolve_alt_dbpath(const char * dbpath, Oid dboid)
+{
+	char * prefix;
+	char * ret;
+	size_t len;
+
+	if (dbpath == NULL || dbpath[0] == '\0')
+		return NULL;
+
+	if (strchr(dbpath, '/'))
+	{
+#ifdef ALLOW_ABSOLUTE_DBPATHS
+		prefix = dbpath;
+#else
+		elog(ERROR, "Absolute paths are not allowed as database locations");
+#endif
+	}
+	else
+	{
+		/* must be environment variable */
+		char * var = getenv(dbpath);
+		if (!var)
+			elog(ERROR, "environment variable %s not set", dbpath);
+		if (var[0] != '/')
+			elog(ERROR, "environment variable %s must be absolute path", dbpath);
+		prefix = var;
+	}
+
+	len = strlen(prefix) + 6 + sizeof(Oid) * 8 + 1;
+	ret = palloc(len);
+	snprintf(ret, len, "%s/base/%u", prefix, dboid);
+
+	return ret;
+}
+
+
+static bool
+remove_dbdirs(const char * real_loc, const char * altloc)
+{
+	char buf[MAXPGPATH + 100];
+	bool success = true;
+
+	if (altloc)
+		/* remove symlink */
+		if (unlink(real_loc) != 0)
+		{
+			elog(NOTICE, "could not remove '%s': %s", real_loc, strerror(errno));
+			success = false;
+		}
+
+	snprintf(buf, sizeof(buf), "rm -rf '%s'", altloc ? altloc : real_loc);
+	if (system(buf) != 0 && errno != ECHILD)
+	{
+		elog(NOTICE, "database directory '%s' could not be removed",
+			 altloc ? altloc : real_loc);
+		success = false;
+	}
+
+	return success;
 }
