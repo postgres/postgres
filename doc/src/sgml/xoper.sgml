@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xoper.sgml,v 1.18 2002/03/22 19:20:34 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xoper.sgml,v 1.19 2002/05/11 02:09:41 tgl Exp $
 -->
 
  <Chapter Id="xoper">
@@ -322,10 +322,11 @@ table1.column1 OP table2.column2
     <title>HASHES</title>
 
     <para>
-     The <literal>HASHES</literal> clause, if present, tells the system that it is OK to
-     use the hash join method for a join based on this operator.  <literal>HASHES</>
-     only makes sense for binary operators that return <literal>boolean</>, and
-     in practice the operator had better be equality for some data type.
+     The <literal>HASHES</literal> clause, if present, tells the system that
+     it is permissible to use the hash join method for a join based on this
+     operator.  <literal>HASHES</> only makes sense for binary operators that
+     return <literal>boolean</>, and in practice the operator had better be
+     equality for some data type.
     </para>
 
     <para>
@@ -377,80 +378,112 @@ table1.column1 OP table2.column2
    </sect2>
 
    <sect2>
-    <title>SORT1 and SORT2</title>
+    <title>MERGES (SORT1, SORT2, LTCMP, GTCMP)</title>
 
     <para>
-     The <literal>SORT</literal> clauses, if present, tell the system that it is permissible to use
-     the merge join method for a join based on the current operator.
-     Both must be specified if either is.  The current operator must be
-     equality for some pair of data types, and the <literal>SORT1</> and <literal>SORT2</> clauses
-     name the ordering operator (<quote>&lt;</quote> operator) for the left and right-side
-     data types respectively.
+     The <literal>MERGES</literal> clause, if present, tells the system that
+     it is permissible to use the merge join method for a join based on this
+     operator.  <literal>MERGES</> only makes sense for binary operators that
+     return <literal>boolean</>, and in practice the operator must represent
+     equality for some datatype or pair of datatypes.
     </para>
 
     <para>
      Merge join is based on the idea of sorting the left- and right-hand tables
      into order and then scanning them in parallel.  So, both data types must
      be capable of being fully ordered, and the join operator must be one
-     that can only succeed for pairs of values that fall at the <quote>same place</>
+     that can only succeed for pairs of values that fall at the
+     <quote>same place</>
      in the sort order.  In practice this means that the join operator must
      behave like equality.  But unlike hash join, where the left and right
      data types had better be the same (or at least bitwise equivalent),
      it is possible to merge-join two
      distinct data types so long as they are logically compatible.  For
-     example, the <type>int2</type>-versus-<type>int4</type> equality operator is merge-joinable.
+     example, the <type>int2</type>-versus-<type>int4</type> equality operator
+     is mergejoinable.
      We only need sorting operators that will bring both data types into a
      logically compatible sequence.
     </para>
 
     <para>
-     When specifying merge-sort operators, the current operator and both
-     referenced operators must return <type>boolean</type>; the <literal>SORT1</> operator must have
-     both input data types equal to the current operator's left operand type,
-     and the <literal>SORT2</> operator must have
-     both input data types equal to the current operator's right operand type.
-     (As with <literal>COMMUTATOR</> and <literal>NEGATOR</>, this means that the operator name is
-     sufficient to specify the operator, and the system is able to make dummy
+     Execution of a merge join requires that the system be able to identify
+     four operators related to the mergejoin equality operator: less-than
+     comparison for the left input datatype, less-than comparison for the
+     right input datatype, less-than comparison between the two datatypes, and
+     greater-than comparison between the two datatypes.  (These are actually
+     four distinct operators if the mergejoinable operator has two different
+     input datatypes; but when the input types are the same the three
+     less-than operators are all the same operator.)
+     It is possible to
+     specify these operators individually by name, as the <literal>SORT1</>,
+     <literal>SORT2</>, <literal>LTCMP</>, and <literal>GTCMP</> options
+     respectively.  The system will fill in the default names
+     <literal>&lt;</>, <literal>&lt;</>, <literal>&lt;</>, <literal>&gt;</>
+     respectively if any of these are omitted when <literal>MERGES</> is
+     specified.  Also, <literal>MERGES</> will be assumed to be implied if any
+     of these four operator options appear, so it is possible to specify
+     just some of them and let the system fill in the rest.
+    </para>
+
+    <para>
+     The input datatypes of the four comparison operators can be deduced
+     from the input types of the mergejoinable operator, so just as with
+     <literal>COMMUTATOR</>, only the operator names need be given in these
+     clauses.  Unless you are using peculiar choices of operator names,
+     it's sufficient to write <literal>MERGES</> and let the system fill in
+     the details.
+     (As with <literal>COMMUTATOR</> and <literal>NEGATOR</>, the system is
+     able to make dummy
      operator entries if you happen to define the equality operator before
      the other ones.)
     </para>
 
     <para>
-     In practice you should only write <literal>SORT</> clauses for an <literal>=</> operator,
-     and the two referenced operators should always be named <literal>&lt;</>.  Trying
-     to use merge join with operators named anything else will result in
-     hopeless confusion, for reasons we'll see in a moment.
-    </para>
-
-    <para>
      There are additional restrictions on operators that you mark
-     merge-joinable.  These restrictions are not currently checked by
-     <command>CREATE OPERATOR</command>, but a merge join may fail at run time if any are
-     not true:
+     mergejoinable.  These restrictions are not currently checked by
+     <command>CREATE OPERATOR</command>, but errors may occur when
+     the operator is used if any are not true:
 
      <itemizedlist>
       <listitem>
        <para>
-	The merge-joinable equality operator must have a commutator
-	(itself if the two data types are the same, or a related equality operator
-	if they are different).
+	A mergejoinable equality operator must have a mergejoinable
+        commutator (itself if the two data types are the same, or a related
+        equality operator if they are different).
        </para>
       </listitem>
 
       <listitem>
        <para>
-	There must be <literal>&lt;</> and <literal>&gt;</> ordering operators having the same left and
-	right operand data types as the merge-joinable operator itself.  These
-	operators <emphasis>must</emphasis> be named <literal>&lt;</> and <literal>&gt;</>; you do
-	not have any choice in the matter, since there is no provision for
-	specifying them explicitly.  Note that if the left and right data types
-	are different, neither of these operators is the same as either
-	<literal>SORT</literal> operator.  But they had better order the data values compatibly
-	with the <literal>SORT</literal> operators, or the merge join will fail to work.
+        If there is a mergejoinable operator relating any two data types
+	A and B, and another mergejoinable operator relating B to any
+	third data type C, then A and C must also have a mergejoinable
+	operator; in other words, having a mergejoinable operator must
+	be transitive.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Bizarre results will ensue at runtime if the four comparison
+	operators you name do not sort the data values compatibly.
        </para>
       </listitem>
      </itemizedlist>
     </para>
+
+    <note>
+    <para>
+     In <ProductName>PostgreSQL</ProductName> versions before 7.3,
+     the <literal>MERGES</> shorthand was not available: to make a
+     mergejoinable operator one had to write both <literal>SORT1</> and
+     <literal>SORT2</> explicitly.  Also, the <literal>LTCMP</> and
+     <literal>GTCMP</>
+     options did not exist; the names of those operators were hardwired as
+     <literal>&lt;</> and <literal>&gt;</> respectively.
+    </para>
+    </note>
+
    </sect2>
 
   </sect1>
