@@ -2,7 +2,7 @@
 TODO list for PostgreSQL
 ========================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Tue Mar 15 00:31:22 EST 2005
+Last updated:		Wed Mar 16 23:42:00 EST 2005
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -320,7 +320,8 @@ Commands
 * Allow backslash handling in quoted strings to be disabled for portability
 
   The use of C-style backslashes (.e.g. \n, \r) in quoted strings is not
-  SQL-spec compliant, so allow such handling to be disabled.
+  SQL-spec compliant, so allow such handling to be disabled.  However,
+  disabling backslashes could break many third-party applications and tools.
 
 * Allow an alias to be provided for the target table in UPDATE/DELETE
 
