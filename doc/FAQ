@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Mon Jul 26 23:27:08 EDT 2004
+   Last updated: Fri Jul 30 12:51:38 EDT 2004
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -54,7 +54,7 @@
    3.9) What is in the pgsql_tmp directory?
    3.10) Why do I need to do a dump and restore to upgrade PostgreSQL
    releases?
-   3.10) What computer hardware should I use?
+   3.11) What computer hardware should I use?
    
                            Operational Questions
                                       
