@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.104 2004/06/08 20:28:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.105 2004/06/16 01:26:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,6 +109,11 @@ static void array_insert_slice(int ndim, int *dim, int *lb,
 				   int *st, int *endp, char *srcPtr,
 				   int typlen, bool typbyval, char typalign);
 static int	array_cmp(FunctionCallInfo fcinfo);
+static Datum array_type_length_coerce_internal(ArrayType *src,
+											   int32 desttypmod,
+											   bool isExplicit,
+											   FmgrInfo *fmgr_info);
+
 
 /*---------------------------------------------------------------------
  * array_in :
@@ -1172,82 +1177,6 @@ array_send(PG_FUNCTION_ARGS)
 	}
 
 	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
-}
-
-/*-------------------------------------------------------------------------
- * array_length_coerce :
- *		  Apply the element type's length-coercion routine to each element
- *		  of the given array.
- *-------------------------------------------------------------------------
- */
-Datum
-array_length_coerce(PG_FUNCTION_ARGS)
-{
-	ArrayType  *v = PG_GETARG_ARRAYTYPE_P(0);
-	int32		len = PG_GETARG_INT32(1);
-	bool		isExplicit = PG_GETARG_BOOL(2);
-	FmgrInfo   *fmgr_info = fcinfo->flinfo;
-	typedef struct
-	{
-		Oid			elemtype;
-		FmgrInfo	coerce_finfo;
-	} alc_extra;
-	alc_extra  *my_extra;
-	FunctionCallInfoData locfcinfo;
-
-	/* If no typmod is provided, shortcircuit the whole thing */
-	if (len < 0)
-		PG_RETURN_ARRAYTYPE_P(v);
-
-	/*
-	 * We arrange to look up the element type's coercion function only
-	 * once per series of calls, assuming the element type doesn't change
-	 * underneath us.
-	 */
-	my_extra = (alc_extra *) fmgr_info->fn_extra;
-	if (my_extra == NULL)
-	{
-		fmgr_info->fn_extra = MemoryContextAlloc(fmgr_info->fn_mcxt,
-												 sizeof(alc_extra));
-		my_extra = (alc_extra *) fmgr_info->fn_extra;
-		my_extra->elemtype = InvalidOid;
-	}
-
-	if (my_extra->elemtype != ARR_ELEMTYPE(v))
-	{
-		Oid			funcId;
-		int			nargs;
-
-		funcId = find_typmod_coercion_function(ARR_ELEMTYPE(v), &nargs);
-
-		if (OidIsValid(funcId))
-			fmgr_info_cxt(funcId, &my_extra->coerce_finfo, fmgr_info->fn_mcxt);
-		else
-			my_extra->coerce_finfo.fn_oid = InvalidOid;
-		my_extra->elemtype = ARR_ELEMTYPE(v);
-	}
-
-	/*
-	 * If we didn't find a coercion function, return the array unmodified
-	 * (this should not happen in the normal course of things, but might
-	 * happen if this function is called manually).
-	 */
-	if (my_extra->coerce_finfo.fn_oid == InvalidOid)
-		PG_RETURN_ARRAYTYPE_P(v);
-
-	/*
-	 * Use array_map to apply the function to each array element.
-	 *
-	 * Note: we pass isExplicit whether or not the function wants it ...
-	 */
-	MemSet(&locfcinfo, 0, sizeof(locfcinfo));
-	locfcinfo.flinfo = &my_extra->coerce_finfo;
-	locfcinfo.nargs = 3;
-	locfcinfo.arg[0] = PointerGetDatum(v);
-	locfcinfo.arg[1] = Int32GetDatum(len);
-	locfcinfo.arg[2] = BoolGetDatum(isExplicit);
-
-	return array_map(&locfcinfo, ARR_ELEMTYPE(v), ARR_ELEMTYPE(v));
 }
 
 /*-----------------------------------------------------------------------------
@@ -2879,6 +2808,9 @@ array_insert_slice(int ndim,
  * array_type_coerce -- allow explicit or assignment coercion from
  * one array type to another.
  *
+ * array_type_length_coerce -- the same, for cases where both type and length
+ * coercion are done by a single function on the element type.
+ *
  * Caller should have already verified that the source element type can be
  * coerced into the target element type.
  */
@@ -2886,8 +2818,30 @@ Datum
 array_type_coerce(PG_FUNCTION_ARGS)
 {
 	ArrayType  *src = PG_GETARG_ARRAYTYPE_P(0);
-	Oid			src_elem_type = ARR_ELEMTYPE(src);
 	FmgrInfo   *fmgr_info = fcinfo->flinfo;
+
+	return array_type_length_coerce_internal(src, -1, false, fmgr_info);
+}
+
+Datum
+array_type_length_coerce(PG_FUNCTION_ARGS)
+{
+	ArrayType  *src = PG_GETARG_ARRAYTYPE_P(0);
+	int32		desttypmod = PG_GETARG_INT32(1);
+	bool		isExplicit = PG_GETARG_BOOL(2);
+	FmgrInfo   *fmgr_info = fcinfo->flinfo;
+
+	return array_type_length_coerce_internal(src, desttypmod,
+											 isExplicit, fmgr_info);
+}
+
+static Datum
+array_type_length_coerce_internal(ArrayType *src,
+								  int32 desttypmod,
+								  bool isExplicit,
+								  FmgrInfo *fmgr_info)
+{
+	Oid			src_elem_type = ARR_ELEMTYPE(src);
 	typedef struct
 	{
 		Oid			srctype;
@@ -2946,7 +2900,8 @@ array_type_coerce(PG_FUNCTION_ARGS)
 		{
 			/* should never happen, but check anyway */
 			elog(ERROR, "no conversion function from %s to %s",
-			format_type_be(src_elem_type), format_type_be(tgt_elem_type));
+				 format_type_be(src_elem_type),
+				 format_type_be(tgt_elem_type));
 		}
 		if (OidIsValid(funcId))
 			fmgr_info_cxt(funcId, &my_extra->coerce_finfo, fmgr_info->fn_mcxt);
@@ -2962,21 +2917,101 @@ array_type_coerce(PG_FUNCTION_ARGS)
 	 */
 	if (my_extra->coerce_finfo.fn_oid == InvalidOid)
 	{
-		ArrayType  *result = DatumGetArrayTypePCopy(PG_GETARG_DATUM(0));
+		ArrayType  *result;
 
+		result = (ArrayType *) DatumGetPointer(datumCopy(PointerGetDatum(src),
+														 false, -1));
 		ARR_ELEMTYPE(result) = my_extra->desttype;
 		PG_RETURN_ARRAYTYPE_P(result);
 	}
 
 	/*
 	 * Use array_map to apply the function to each array element.
+	 *
+	 * We pass on the desttypmod and isExplicit flags whether or not the
+	 * function wants them.
 	 */
 	MemSet(&locfcinfo, 0, sizeof(locfcinfo));
 	locfcinfo.flinfo = &my_extra->coerce_finfo;
-	locfcinfo.nargs = 1;
+	locfcinfo.nargs = 3;
 	locfcinfo.arg[0] = PointerGetDatum(src);
+	locfcinfo.arg[1] = Int32GetDatum(desttypmod);
+	locfcinfo.arg[2] = BoolGetDatum(isExplicit);
 
 	return array_map(&locfcinfo, my_extra->srctype, my_extra->desttype);
+}
+
+/*
+ * array_length_coerce -- apply the element type's length-coercion routine
+ *		to each element of the given array.
+ */
+Datum
+array_length_coerce(PG_FUNCTION_ARGS)
+{
+	ArrayType  *v = PG_GETARG_ARRAYTYPE_P(0);
+	int32		desttypmod = PG_GETARG_INT32(1);
+	bool		isExplicit = PG_GETARG_BOOL(2);
+	FmgrInfo   *fmgr_info = fcinfo->flinfo;
+	typedef struct
+	{
+		Oid			elemtype;
+		FmgrInfo	coerce_finfo;
+	} alc_extra;
+	alc_extra  *my_extra;
+	FunctionCallInfoData locfcinfo;
+
+	/* If no typmod is provided, shortcircuit the whole thing */
+	if (desttypmod < 0)
+		PG_RETURN_ARRAYTYPE_P(v);
+
+	/*
+	 * We arrange to look up the element type's coercion function only
+	 * once per series of calls, assuming the element type doesn't change
+	 * underneath us.
+	 */
+	my_extra = (alc_extra *) fmgr_info->fn_extra;
+	if (my_extra == NULL)
+	{
+		fmgr_info->fn_extra = MemoryContextAlloc(fmgr_info->fn_mcxt,
+												 sizeof(alc_extra));
+		my_extra = (alc_extra *) fmgr_info->fn_extra;
+		my_extra->elemtype = InvalidOid;
+	}
+
+	if (my_extra->elemtype != ARR_ELEMTYPE(v))
+	{
+		Oid			funcId;
+
+		funcId = find_typmod_coercion_function(ARR_ELEMTYPE(v));
+
+		if (OidIsValid(funcId))
+			fmgr_info_cxt(funcId, &my_extra->coerce_finfo, fmgr_info->fn_mcxt);
+		else
+			my_extra->coerce_finfo.fn_oid = InvalidOid;
+		my_extra->elemtype = ARR_ELEMTYPE(v);
+	}
+
+	/*
+	 * If we didn't find a coercion function, return the array unmodified
+	 * (this should not happen in the normal course of things, but might
+	 * happen if this function is called manually).
+	 */
+	if (my_extra->coerce_finfo.fn_oid == InvalidOid)
+		PG_RETURN_ARRAYTYPE_P(v);
+
+	/*
+	 * Use array_map to apply the function to each array element.
+	 *
+	 * Note: we pass isExplicit whether or not the function wants it ...
+	 */
+	MemSet(&locfcinfo, 0, sizeof(locfcinfo));
+	locfcinfo.flinfo = &my_extra->coerce_finfo;
+	locfcinfo.nargs = 3;
+	locfcinfo.arg[0] = PointerGetDatum(v);
+	locfcinfo.arg[1] = Int32GetDatum(desttypmod);
+	locfcinfo.arg[2] = BoolGetDatum(isExplicit);
+
+	return array_map(&locfcinfo, ARR_ELEMTYPE(v), ARR_ELEMTYPE(v));
 }
 
 /*

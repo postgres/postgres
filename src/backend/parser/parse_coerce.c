@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.118 2004/06/06 00:41:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.119 2004/06/16 01:26:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,8 +33,13 @@
 
 
 static Node *coerce_type_typmod(Node *node,
-				   Oid targetTypeId, int32 targetTypMod,
-				   CoercionForm cformat, bool isExplicit);
+								Oid targetTypeId, int32 targetTypMod,
+								CoercionForm cformat, bool isExplicit,
+								bool hideInputCoercion);
+static void hide_coercion_node(Node *node);
+static Node *build_coercion_expression(Node *node, Oid funcId,
+									   Oid targetTypeId, int32 targetTypMod,
+									   CoercionForm cformat, bool isExplicit);
 static Node *coerce_record_to_complex(ParseState *pstate, Node *node,
 									  Oid targetTypeId,
 									  CoercionContext ccontext,
@@ -67,22 +72,27 @@ coerce_to_target_type(ParseState *pstate, Node *expr, Oid exprtype,
 					  CoercionContext ccontext,
 					  CoercionForm cformat)
 {
-	if (can_coerce_type(1, &exprtype, &targettype, ccontext))
-		expr = coerce_type(pstate, expr, exprtype, targettype,
-						   ccontext, cformat);
-	else
-		expr = NULL;
+	Node	*result;
+
+	if (!can_coerce_type(1, &exprtype, &targettype, ccontext))
+		return NULL;
+
+	result = coerce_type(pstate, expr, exprtype,
+						 targettype, targettypmod,
+						 ccontext, cformat);
 
 	/*
 	 * If the target is a fixed-length type, it may need a length coercion
-	 * as well as a type coercion.
+	 * as well as a type coercion.  If we find ourselves adding both,
+	 * force the inner coercion node to implicit display form.
 	 */
-	if (expr != NULL)
-		expr = coerce_type_typmod(expr, targettype, targettypmod,
-								  cformat,
-								  (cformat != COERCE_IMPLICIT_CAST));
+	result = coerce_type_typmod(result,
+								targettype, targettypmod,
+								cformat,
+								(cformat != COERCE_IMPLICIT_CAST),
+								(result != expr && !IsA(result, Const)));
 
-	return expr;
+	return result;
 }
 
 
@@ -93,10 +103,13 @@ coerce_to_target_type(ParseState *pstate, Node *expr, Oid exprtype,
  * The caller should already have determined that the coercion is possible;
  * see can_coerce_type.
  *
- * No coercion to a typmod (length) is performed here.	The caller must
- * call coerce_type_typmod as well, if a typmod constraint is wanted.
+ * Normally, no coercion to a typmod (length) is performed here.  The caller
+ * must call coerce_type_typmod as well, if a typmod constraint is wanted.
  * (But if the target type is a domain, it may internally contain a
  * typmod constraint, which will be applied inside coerce_to_domain.)
+ * In some cases pg_cast specifies a type coercion function that also
+ * applies length conversion, and in those cases only, the result will
+ * already be properly coerced to the specified typmod.
  *
  * pstate is only used in the case that we are able to resolve the type of
  * a previously UNKNOWN Param.	It is okay to pass pstate = NULL if the
@@ -104,7 +117,7 @@ coerce_to_target_type(ParseState *pstate, Node *expr, Oid exprtype,
  */
 Node *
 coerce_type(ParseState *pstate, Node *node,
-			Oid inputTypeId, Oid targetTypeId,
+			Oid inputTypeId, Oid targetTypeId, int32 targetTypeMod,
 			CoercionContext ccontext, CoercionForm cformat)
 {
 	Node	   *result;
@@ -178,7 +191,7 @@ coerce_type(ParseState *pstate, Node *node,
 		/* If target is a domain, apply constraints. */
 		if (targetTyptype == 'd')
 			result = coerce_to_domain(result, InvalidOid, targetTypeId,
-									  cformat);
+									  cformat, false);
 
 		ReleaseSysCache(targetType);
 
@@ -240,13 +253,14 @@ coerce_type(ParseState *pstate, Node *node,
 			 * Generate an expression tree representing run-time
 			 * application of the conversion function.	If we are dealing
 			 * with a domain target type, the conversion function will
-			 * yield the base type.
+			 * yield the base type (and we assume targetTypeMod must be -1).
 			 */
 			Oid			baseTypeId = getBaseType(targetTypeId);
 
-			result = (Node *) makeFuncExpr(funcId, baseTypeId,
-										   list_make1(node),
-										   cformat);
+			result = build_coercion_expression(node, funcId,
+											   baseTypeId, targetTypeMod,
+											   cformat,
+											   (cformat != COERCE_IMPLICIT_CAST));
 
 			/*
 			 * If domain, coerce to the domain type and relabel with
@@ -254,7 +268,7 @@ coerce_type(ParseState *pstate, Node *node,
 			 */
 			if (targetTypeId != baseTypeId)
 				result = coerce_to_domain(result, baseTypeId, targetTypeId,
-										  cformat);
+										  cformat, true);
 		}
 		else
 		{
@@ -269,7 +283,7 @@ coerce_type(ParseState *pstate, Node *node,
 			 * then we won't need a RelabelType node.
 			 */
 			result = coerce_to_domain(node, InvalidOid, targetTypeId,
-									  cformat);
+									  cformat, false);
 			if (result == node)
 			{
 				/*
@@ -409,11 +423,13 @@ can_coerce_type(int nargs, Oid *input_typeids, Oid *target_typeids,
  *		has not bothered to look this up)
  * 'typeId': target type to coerce to
  * 'cformat': coercion format
+ * 'hideInputCoercion': if true, hide the input coercion under this one.
  *
  * If the target type isn't a domain, the given 'arg' is returned as-is.
  */
 Node *
-coerce_to_domain(Node *arg, Oid baseTypeId, Oid typeId, CoercionForm cformat)
+coerce_to_domain(Node *arg, Oid baseTypeId, Oid typeId,
+				 CoercionForm cformat, bool hideInputCoercion)
 {
 	CoerceToDomain *result;
 	int32		typmod;
@@ -425,6 +441,10 @@ coerce_to_domain(Node *arg, Oid baseTypeId, Oid typeId, CoercionForm cformat)
 	/* If it isn't a domain, return the node as it was passed in */
 	if (baseTypeId == typeId)
 		return arg;
+
+	/* Suppress display of nested coercion steps */
+	if (hideInputCoercion)
+		hide_coercion_node(arg);
 
 	/*
 	 * If the domain applies a typmod to its base type, build the
@@ -444,7 +464,8 @@ coerce_to_domain(Node *arg, Oid baseTypeId, Oid typeId, CoercionForm cformat)
 	if (typmod >= 0)
 		arg = coerce_type_typmod(arg, baseTypeId, typmod,
 								 COERCE_IMPLICIT_CAST,
-								 (cformat != COERCE_IMPLICIT_CAST));
+								 (cformat != COERCE_IMPLICIT_CAST),
+								 false);
 
 	/*
 	 * Now build the domain coercion node.	This represents run-time
@@ -473,56 +494,141 @@ coerce_to_domain(Node *arg, Oid baseTypeId, Oid typeId, CoercionForm cformat)
  * The caller must have already ensured that the value is of the correct
  * type, typically by applying coerce_type.
  *
+ * cformat determines the display properties of the generated node (if any),
+ * while isExplicit may affect semantics.  If hideInputCoercion is true
+ * *and* we generate a node, the input node is forced to IMPLICIT display
+ * form, so that only the typmod coercion node will be visible when
+ * displaying the expression.
+ *
  * NOTE: this does not need to work on domain types, because any typmod
  * coercion for a domain is considered to be part of the type coercion
  * needed to produce the domain value in the first place.  So, no getBaseType.
  */
 static Node *
 coerce_type_typmod(Node *node, Oid targetTypeId, int32 targetTypMod,
-				   CoercionForm cformat, bool isExplicit)
+				   CoercionForm cformat, bool isExplicit,
+				   bool hideInputCoercion)
 {
 	Oid			funcId;
-	int			nargs;
 
 	/*
 	 * A negative typmod is assumed to mean that no coercion is wanted.
+	 * Also, skip coercion if already done.
 	 */
 	if (targetTypMod < 0 || targetTypMod == exprTypmod(node))
 		return node;
 
-	funcId = find_typmod_coercion_function(targetTypeId, &nargs);
+	funcId = find_typmod_coercion_function(targetTypeId);
 
 	if (OidIsValid(funcId))
 	{
-		List	   *args;
-		Const	   *cons;
+		/* Suppress display of nested coercion steps */
+		if (hideInputCoercion)
+			hide_coercion_node(node);
 
-		/* Pass given value, plus target typmod as an int4 constant */
+		node = build_coercion_expression(node, funcId,
+										 targetTypeId, targetTypMod,
+										 cformat, isExplicit);
+	}
+
+	return node;
+}
+
+/*
+ * Mark a coercion node as IMPLICIT so it will never be displayed by
+ * ruleutils.c.  We use this when we generate a nest of coercion nodes
+ * to implement what is logically one conversion; the inner nodes are
+ * forced to IMPLICIT_CAST format.  This does not change their semantics,
+ * only display behavior.
+ *
+ * It is caller error to call this on something that doesn't have a
+ * CoercionForm field.
+ */
+static void
+hide_coercion_node(Node *node)
+{
+	if (IsA(node, FuncExpr))
+		((FuncExpr *) node)->funcformat = COERCE_IMPLICIT_CAST;
+	else if (IsA(node, RelabelType))
+		((RelabelType *) node)->relabelformat = COERCE_IMPLICIT_CAST;
+	else if (IsA(node, RowExpr))
+		((RowExpr *) node)->row_format = COERCE_IMPLICIT_CAST;
+	else if (IsA(node, CoerceToDomain))
+		((CoerceToDomain *) node)->coercionformat = COERCE_IMPLICIT_CAST;
+	else
+		elog(ERROR, "unsupported node type: %d", (int) nodeTag(node));
+}
+
+/*
+ * build_coercion_expression()
+ *		Construct a function-call expression for applying a pg_cast entry.
+ *
+ * This is used for both type-coercion and length-coercion functions,
+ * since there is no difference in terms of the calling convention.
+ */
+static Node *
+build_coercion_expression(Node *node, Oid funcId,
+						  Oid targetTypeId, int32 targetTypMod,
+						  CoercionForm cformat, bool isExplicit)
+{
+	HeapTuple	tp;
+	Form_pg_proc procstruct;
+	int			nargs;
+	List	   *args;
+	Const	   *cons;
+
+	tp = SearchSysCache(PROCOID,
+						ObjectIdGetDatum(funcId),
+						0, 0, 0);
+	if (!HeapTupleIsValid(tp))
+		elog(ERROR, "cache lookup failed for function %u", funcId);
+	procstruct = (Form_pg_proc) GETSTRUCT(tp);
+
+	/*
+	 * Asserts essentially check that function is a legal coercion function.
+	 * We can't make the seemingly obvious tests on prorettype and
+	 * proargtypes[0], because of various binary-compatibility cases.
+	 */
+	/* Assert(targetTypeId == procstruct->prorettype); */
+	Assert(!procstruct->proretset);
+	Assert(!procstruct->proisagg);
+	nargs = procstruct->pronargs;
+	Assert(nargs >= 1 && nargs <= 3);
+	/* Assert(procstruct->proargtypes[0] == exprType(node)); */
+	Assert(nargs < 2 || procstruct->proargtypes[1] == INT4OID);
+	Assert(nargs < 3 || procstruct->proargtypes[2] == BOOLOID);
+
+	ReleaseSysCache(tp);
+
+	args = list_make1(node);
+
+	if (nargs >= 2)
+	{
+		/* Pass target typmod as an int4 constant */
 		cons = makeConst(INT4OID,
 						 sizeof(int32),
 						 Int32GetDatum(targetTypMod),
 						 false,
 						 true);
 
-		args = list_make2(node, cons);
-
-		if (nargs == 3)
-		{
-			/* Pass it a boolean isExplicit parameter, too */
-			cons = makeConst(BOOLOID,
-							 sizeof(bool),
-							 BoolGetDatum(isExplicit),
-							 false,
-							 true);
-
-			args = lappend(args, cons);
-		}
-
-		node = (Node *) makeFuncExpr(funcId, targetTypeId, args, cformat);
+		args = lappend(args, cons);
 	}
 
-	return node;
+	if (nargs == 3)
+	{
+		/* Pass it a boolean isExplicit parameter, too */
+		cons = makeConst(BOOLOID,
+						 sizeof(bool),
+						 BoolGetDatum(isExplicit),
+						 false,
+						 true);
+
+		args = lappend(args, cons);
+	}
+
+	return (Node *) makeFuncExpr(funcId, targetTypeId, args, cformat);
 }
+
 
 /*
  * coerce_record_to_complex
@@ -803,7 +909,7 @@ coerce_to_common_type(ParseState *pstate, Node *node,
 	if (inputTypeId == targetTypeId)
 		return node;			/* no work */
 	if (can_coerce_type(1, &inputTypeId, &targetTypeId, COERCION_IMPLICIT))
-		node = coerce_type(pstate, node, inputTypeId, targetTypeId,
+		node = coerce_type(pstate, node, inputTypeId, targetTypeId, -1,
 						   COERCION_IMPLICIT, COERCE_IMPLICIT_CAST);
 	else
 		ereport(ERROR,
@@ -1528,8 +1634,8 @@ find_coercion_pathway(Oid targetTypeId, Oid sourceTypeId,
 	{
 		/*
 		 * If there's no pg_cast entry, perhaps we are dealing with a pair
-		 * of array types.	If so, and if the element types have a
-		 * suitable cast, use array_type_coerce().
+		 * of array types.	If so, and if the element types have a suitable
+		 * cast, use array_type_coerce() or array_type_length_coerce().
 		 */
 		Oid			targetElemType;
 		Oid			sourceElemType;
@@ -1541,7 +1647,23 @@ find_coercion_pathway(Oid targetTypeId, Oid sourceTypeId,
 			if (find_coercion_pathway(targetElemType, sourceElemType,
 									  ccontext, &elemfuncid))
 			{
-				*funcid = F_ARRAY_TYPE_COERCE;
+				if (!OidIsValid(elemfuncid))
+				{
+					/* binary-compatible element type conversion */
+					*funcid = F_ARRAY_TYPE_COERCE;
+				}
+				else
+				{
+					/* does the function take a typmod arg? */
+					Oid		argtypes[FUNC_MAX_ARGS];
+					int		nargs;
+
+					(void) get_func_signature(elemfuncid, argtypes, &nargs);
+					if (nargs > 1)
+						*funcid = F_ARRAY_TYPE_LENGTH_COERCE;
+					else
+						*funcid = F_ARRAY_TYPE_COERCE;
+				}
 				result = true;
 			}
 		}
@@ -1554,14 +1676,8 @@ find_coercion_pathway(Oid targetTypeId, Oid sourceTypeId,
 /*
  * find_typmod_coercion_function -- does the given type need length coercion?
  *
- * If the target type possesses a function named for the type
- * and having parameter signature (targettype, int4), we assume that
- * the type requires coercion to its own length and that the said
- * function should be invoked to do that.
- *
- * Alternatively, the length-coercing function may have the signature
- * (targettype, int4, bool).  On success, *nargs is set to report which
- * signature we found.
+ * If the target type possesses a pg_cast function from itself to itself,
+ * it must need length coercion.
  *
  * "bpchar" (ie, char(N)) and "numeric" are examples of such types.
  *
@@ -1569,23 +1685,15 @@ find_coercion_pathway(Oid targetTypeId, Oid sourceTypeId,
  * function associated directly with the array type, but instead look for
  * one associated with the element type.  If one exists, we report
  * array_length_coerce() as the coercion function to use.
- *
- * This mechanism may seem pretty grotty and in need of replacement by
- * something in pg_cast, but since typmod is only interesting for datatypes
- * that have special handling in the grammar, there's not really much
- * percentage in making it any easier to apply such coercions ...
  */
 Oid
-find_typmod_coercion_function(Oid typeId, int *nargs)
+find_typmod_coercion_function(Oid typeId)
 {
 	Oid			funcid = InvalidOid;
 	bool		isArray = false;
 	Type		targetType;
 	Form_pg_type typeForm;
-	char	   *typname;
-	Oid			typnamespace;
-	Oid			oid_array[FUNC_MAX_ARGS];
-	HeapTuple	ftup;
+	HeapTuple	tuple;
 
 	targetType = typeidType(typeId);
 	typeForm = (Form_pg_type) GETSTRUCT(targetType);
@@ -1597,79 +1705,30 @@ find_typmod_coercion_function(Oid typeId, int *nargs)
 	{
 		/* Yes, switch our attention to the element type */
 		typeId = typeForm->typelem;
-		ReleaseSysCache(targetType);
-		targetType = typeidType(typeId);
-		typeForm = (Form_pg_type) GETSTRUCT(targetType);
 		isArray = true;
 	}
-
-	/* Function name is same as type internal name, and in same namespace */
-	typname = NameStr(typeForm->typname);
-	typnamespace = typeForm->typnamespace;
-
-	/* First look for parameters (type, int4) */
-	MemSet(oid_array, 0, FUNC_MAX_ARGS * sizeof(Oid));
-	oid_array[0] = typeId;
-	oid_array[1] = INT4OID;
-	*nargs = 2;
-
-	ftup = SearchSysCache(PROCNAMENSP,
-						  CStringGetDatum(typname),
-						  Int16GetDatum(2),
-						  PointerGetDatum(oid_array),
-						  ObjectIdGetDatum(typnamespace));
-	if (HeapTupleIsValid(ftup))
-	{
-		Form_pg_proc pform = (Form_pg_proc) GETSTRUCT(ftup);
-
-		/* Make sure the function's result type is as expected */
-		if (pform->prorettype == typeId && !pform->proretset &&
-			!pform->proisagg)
-		{
-			/* Okay to use it */
-			funcid = HeapTupleGetOid(ftup);
-		}
-		ReleaseSysCache(ftup);
-	}
-
-	if (!OidIsValid(funcid))
-	{
-		/* Didn't find a function, so now try (type, int4, bool) */
-		oid_array[2] = BOOLOID;
-		*nargs = 3;
-
-		ftup = SearchSysCache(PROCNAMENSP,
-							  CStringGetDatum(typname),
-							  Int16GetDatum(3),
-							  PointerGetDatum(oid_array),
-							  ObjectIdGetDatum(typnamespace));
-		if (HeapTupleIsValid(ftup))
-		{
-			Form_pg_proc pform = (Form_pg_proc) GETSTRUCT(ftup);
-
-			/* Make sure the function's result type is as expected */
-			if (pform->prorettype == typeId && !pform->proretset &&
-				!pform->proisagg)
-			{
-				/* Okay to use it */
-				funcid = HeapTupleGetOid(ftup);
-			}
-			ReleaseSysCache(ftup);
-		}
-	}
-
 	ReleaseSysCache(targetType);
+
+	/* Look in pg_cast */
+	tuple = SearchSysCache(CASTSOURCETARGET,
+						   ObjectIdGetDatum(typeId),
+						   ObjectIdGetDatum(typeId),
+						   0, 0);
+
+	if (HeapTupleIsValid(tuple))
+	{
+		Form_pg_cast castForm = (Form_pg_cast) GETSTRUCT(tuple);
+
+		funcid = castForm->castfunc;
+		ReleaseSysCache(tuple);
+	}
 
 	/*
 	 * Now, if we did find a coercion function for an array element type,
-	 * report array_length_coerce() as the function to use.  We know it
-	 * takes three arguments always.
+	 * report array_length_coerce() as the function to use.
 	 */
 	if (isArray && OidIsValid(funcid))
-	{
 		funcid = F_ARRAY_LENGTH_COERCE;
-		*nargs = 3;
-	}
 
 	return funcid;
 }

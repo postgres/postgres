@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.132 2004/06/09 19:08:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.133 2004/06/16 01:26:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -915,11 +915,11 @@ buildMergedJoinVar(ParseState *pstate, JoinType jointype,
 	 * Insert coercion functions if needed.  Note that a difference in
 	 * typmod can only happen if input has typmod but outcoltypmod is -1.
 	 * In that case we insert a RelabelType to clearly mark that result's
-	 * typmod is not same as input.
+	 * typmod is not same as input.  We never need coerce_type_typmod.
 	 */
 	if (l_colvar->vartype != outcoltype)
 		l_node = coerce_type(pstate, (Node *) l_colvar, l_colvar->vartype,
-							 outcoltype,
+							 outcoltype, outcoltypmod,
 							 COERCION_IMPLICIT, COERCE_IMPLICIT_CAST);
 	else if (l_colvar->vartypmod != outcoltypmod)
 		l_node = (Node *) makeRelabelType((Expr *) l_colvar,
@@ -930,7 +930,7 @@ buildMergedJoinVar(ParseState *pstate, JoinType jointype,
 
 	if (r_colvar->vartype != outcoltype)
 		r_node = coerce_type(pstate, (Node *) r_colvar, r_colvar->vartype,
-							 outcoltype,
+							 outcoltype, outcoltypmod,
 							 COERCION_IMPLICIT, COERCE_IMPLICIT_CAST);
 	else if (r_colvar->vartypmod != outcoltypmod)
 		r_node = (Node *) makeRelabelType((Expr *) r_colvar,
@@ -1276,7 +1276,7 @@ transformGroupClause(ParseState *pstate, List *grouplist,
 		if (restype == UNKNOWNOID)
 		{
 			tle->expr = (Expr *) coerce_type(pstate, (Node *) tle->expr,
-											 restype, TEXTOID,
+											 restype, TEXTOID, -1,
 											 COERCION_IMPLICIT,
 											 COERCE_IMPLICIT_CAST);
 			restype = tle->resdom->restype = TEXTOID;
@@ -1528,7 +1528,7 @@ addTargetToSortList(ParseState *pstate, TargetEntry *tle,
 		if (restype == UNKNOWNOID && resolveUnknown)
 		{
 			tle->expr = (Expr *) coerce_type(pstate, (Node *) tle->expr,
-											 restype, TEXTOID,
+											 restype, TEXTOID, -1,
 											 COERCION_IMPLICIT,
 											 COERCE_IMPLICIT_CAST);
 			restype = tle->resdom->restype = TEXTOID;

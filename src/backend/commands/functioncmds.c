@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.47 2004/05/26 04:41:11 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.48 2004/06/16 01:26:42 tgl Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -809,6 +809,7 @@ CreateCast(CreateCastStmt *stmt)
 	Oid			sourcetypeid;
 	Oid			targettypeid;
 	Oid			funcid;
+	int			nargs;
 	char		castcontext;
 	Relation	relation;
 	HeapTuple	tuple;
@@ -830,11 +831,6 @@ CreateCast(CreateCastStmt *stmt)
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("target data type %s does not exist",
 						TypeNameToString(stmt->targettype))));
-
-	if (sourcetypeid == targettypeid)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-		  errmsg("source data type and target data type are the same")));
 
 	/* No shells, no pseudo-types allowed */
 	if (!get_typisdefined(sourcetypeid))
@@ -885,14 +881,23 @@ CreateCast(CreateCastStmt *stmt)
 			elog(ERROR, "cache lookup failed for function %u", funcid);
 
 		procstruct = (Form_pg_proc) GETSTRUCT(tuple);
-		if (procstruct->pronargs != 1)
+		nargs = procstruct->pronargs;
+		if (nargs < 1 || nargs > 3)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("cast function must take one argument")));
+					 errmsg("cast function must take one to three arguments")));
 		if (procstruct->proargtypes[0] != sourcetypeid)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 					 errmsg("argument of cast function must match source data type")));
+		if (nargs > 1 && procstruct->proargtypes[1] != INT4OID)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+					 errmsg("second argument of cast function must be type integer")));
+		if (nargs > 2 && procstruct->proargtypes[2] != BOOLOID)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+					 errmsg("third argument of cast function must be type boolean")));
 		if (procstruct->prorettype != targettypeid)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
@@ -931,6 +936,7 @@ CreateCast(CreateCastStmt *stmt)
 
 		/* indicates binary coercibility */
 		funcid = InvalidOid;
+		nargs = 0;
 
 		/*
 		 * Must be superuser to create binary-compatible casts, since
@@ -956,6 +962,15 @@ CreateCast(CreateCastStmt *stmt)
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 					 errmsg("source and target data types are not physically compatible")));
 	}
+
+	/*
+	 * Allow source and target types to be same only for length coercion
+	 * functions.  We assume a multi-arg function does length coercion.
+	 */
+	if (sourcetypeid == targettypeid && nargs < 2)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+		  errmsg("source data type and target data type are the same")));
 
 	/* convert CoercionContext enum to char value for castcontext */
 	switch (stmt->context)

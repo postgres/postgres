@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.145 2004/06/07 04:04:47 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.146 2004/06/16 01:26:35 tgl Exp $
 -->
 
  <chapter id="datatype">
@@ -2851,7 +2851,7 @@ SELECT * FROM test1 WHERE a;
     linkend="sql-syntax-bit-strings"> for information about the syntax
     of bit string constants.  Bit-logical operators and string
     manipulation functions are available; see <xref
-    linkend="functions">.
+    linkend="functions-bitstring">.
    </para>
 
    <example>

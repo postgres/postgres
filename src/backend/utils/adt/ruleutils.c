@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.171 2004/06/09 19:08:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.172 2004/06/16 01:26:47 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -194,7 +194,6 @@ static void get_oper_expr(OpExpr *expr, deparse_context *context);
 static void get_func_expr(FuncExpr *expr, deparse_context *context,
 			  bool showimplicit);
 static void get_agg_expr(Aggref *aggref, deparse_context *context);
-static Node *strip_type_coercion(Node *expr, Oid resultType);
 static void get_const_expr(Const *constval, deparse_context *context);
 static void get_sublink_expr(SubLink *sublink, deparse_context *context);
 static void get_from_clause(Query *query, deparse_context *context);
@@ -2983,22 +2982,13 @@ get_rule_expr(Node *node, deparse_context *context,
 					!showimplicit)
 				{
 					/* don't show the implicit cast */
-					get_rule_expr_paren(arg, context, showimplicit, node);
+					get_rule_expr_paren(arg, context, false, node);
 				}
 				else
 				{
-					/*
-					 * Strip off any type coercions on the input, so we
-					 * don't print redundancies like
-					 * x::bpchar::character(8).
-					 *
-					 * XXX Are there any cases where this is a bad idea?
-					 */
-					arg = strip_type_coercion(arg, relabel->resulttype);
-
 					if (!PRETTY_PAREN(context))
 						appendStringInfoChar(buf, '(');
-					get_rule_expr_paren(arg, context, showimplicit, node);
+					get_rule_expr_paren(arg, context, false, node);
 					if (!PRETTY_PAREN(context))
 						appendStringInfoChar(buf, ')');
 					appendStringInfo(buf, "::%s",
@@ -3206,11 +3196,6 @@ get_rule_expr(Node *node, deparse_context *context,
 				CoerceToDomain *ctest = (CoerceToDomain *) node;
 				Node	   *arg = (Node *) ctest->arg;
 
-				/*
-				 * Any implicit coercion at the top level of the argument
-				 * is presumably due to the domain's own internal typmod
-				 * coercion, so do not force it to be shown.
-				 */
 				if (ctest->coercionformat == COERCE_IMPLICIT_CAST &&
 					!showimplicit)
 				{
@@ -3331,7 +3316,7 @@ get_func_expr(FuncExpr *expr, deparse_context *context,
 	if (expr->funcformat == COERCE_IMPLICIT_CAST && !showimplicit)
 	{
 		get_rule_expr_paren((Node *) linitial(expr->args), context,
-							showimplicit, (Node *) expr);
+							false, (Node *) expr);
 		return;
 	}
 
@@ -3349,17 +3334,9 @@ get_func_expr(FuncExpr *expr, deparse_context *context,
 		/* Get the typmod if this is a length-coercion function */
 		(void) exprIsLengthCoercion((Node *) expr, &coercedTypmod);
 
-		/*
-		 * Strip off any type coercions on the input, so we don't print
-		 * redundancies like x::bpchar::character(8).
-		 *
-		 * XXX Are there any cases where this is a bad idea?
-		 */
-		arg = strip_type_coercion(arg, rettype);
-
 		if (!PRETTY_PAREN(context))
 			appendStringInfoChar(buf, '(');
-		get_rule_expr_paren(arg, context, showimplicit, (Node *) expr);
+		get_rule_expr_paren(arg, context, false, (Node *) expr);
 		if (!PRETTY_PAREN(context))
 			appendStringInfoChar(buf, ')');
 		appendStringInfo(buf, "::%s",
@@ -3410,46 +3387,6 @@ get_agg_expr(Aggref *aggref, deparse_context *context)
 	else
 		get_rule_expr((Node *) aggref->target, context, true);
 	appendStringInfoChar(buf, ')');
-}
-
-
-/*
- * strip_type_coercion
- *		Strip any type coercion at the top of the given expression tree,
- *		if it is a coercion to the given datatype.
- *
- * We use this to avoid printing two levels of coercion in situations where
- * the expression tree has a length-coercion node atop a type-coercion node.
- *
- * Note: avoid stripping a length-coercion node, since two successive
- * coercions to different lengths aren't a no-op.  Also, never strip a
- * CoerceToDomain node, even though it might be effectively just RelabelType.
- */
-static Node *
-strip_type_coercion(Node *expr, Oid resultType)
-{
-	if (expr == NULL || exprType(expr) != resultType)
-		return expr;
-
-	if (IsA(expr, RelabelType) &&
-		((RelabelType *) expr)->resulttypmod == -1)
-		return (Node *) ((RelabelType *) expr)->arg;
-
-	if (IsA(expr, FuncExpr))
-	{
-		FuncExpr   *func = (FuncExpr *) expr;
-
-		if (func->funcformat != COERCE_EXPLICIT_CAST &&
-			func->funcformat != COERCE_IMPLICIT_CAST)
-			return expr;		/* don't absorb into upper coercion */
-
-		if (exprIsLengthCoercion(expr, NULL))
-			return expr;
-
-		return (Node *) linitial(func->args);
-	}
-
-	return expr;
 }
 
 

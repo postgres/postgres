@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.93 2004/06/07 04:04:47 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.94 2004/06/16 01:26:38 tgl Exp $
 -->
 
 <chapter id="sql-syntax">
@@ -1319,7 +1319,7 @@ CAST ( <replaceable>expression</replaceable> AS <replaceable>type</replaceable> 
    <para>
     When a cast is applied to a value expression of a known type, it
     represents a run-time type conversion.  The cast will succeed only
-    if a suitable type conversion function is available.  Notice that this
+    if a suitable type conversion operation has been defined.  Notice that this
     is subtly different from the use of casts with constants, as shown in
     <xref linkend="sql-syntax-constants-generic">.  A cast applied to an
     unadorned string literal represents the initial assignment of a type

@@ -225,13 +225,28 @@ WHERE p1.prorettype = 'internal'::regtype AND NOT
 (1 row)
 
 -- **************** pg_cast ****************
--- Look for casts from and to the same type.  This is not harmful, but
--- useless.  Also catch bogus values in pg_cast columns (other than
--- cases detected by oidjoins test).
+-- Catch bogus values in pg_cast columns (other than cases detected by
+-- oidjoins test).
 SELECT *
 FROM pg_cast c
-WHERE castsource = casttarget OR castsource = 0 OR casttarget = 0
-    OR castcontext NOT IN ('e', 'a', 'i');
+WHERE castsource = 0 OR casttarget = 0 OR castcontext NOT IN ('e', 'a', 'i');
+ castsource | casttarget | castfunc | castcontext 
+------------+------------+----------+-------------
+(0 rows)
+
+-- Look for casts to/from the same type that aren't length coercion functions.
+-- (We assume they are length coercions if they take multiple arguments.)
+-- Such entries are not necessarily harmful, but they are useless.
+SELECT *
+FROM pg_cast c
+WHERE castsource = casttarget AND castfunc = 0;
+ castsource | casttarget | castfunc | castcontext 
+------------+------------+----------+-------------
+(0 rows)
+
+SELECT c.*
+FROM pg_cast c, pg_proc p
+WHERE c.castfunc = p.oid AND p.pronargs < 2 AND castsource = casttarget;
  castsource | casttarget | castfunc | castcontext 
 ------------+------------+----------+-------------
 (0 rows)
@@ -246,11 +261,20 @@ WHERE castsource = casttarget OR castsource = 0 OR casttarget = 0
 SELECT c.*
 FROM pg_cast c, pg_proc p
 WHERE c.castfunc = p.oid AND
-    (p.pronargs <> 1
+    (p.pronargs < 1 OR p.pronargs > 3
      OR NOT (binary_coercible(c.castsource, p.proargtypes[0])
              OR (c.castsource = 'character'::regtype AND
                  p.proargtypes[0] = 'text'::regtype))
      OR NOT binary_coercible(p.prorettype, c.casttarget));
+ castsource | casttarget | castfunc | castcontext 
+------------+------------+----------+-------------
+(0 rows)
+
+SELECT c.*
+FROM pg_cast c, pg_proc p
+WHERE c.castfunc = p.oid AND
+    ((p.pronargs > 1 AND p.proargtypes[1] != 'int4'::regtype) OR
+     (p.pronargs > 2 AND p.proargtypes[2] != 'bool'::regtype));
  castsource | casttarget | castfunc | castcontext 
 ------------+------------+----------+-------------
 (0 rows)

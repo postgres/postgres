@@ -184,14 +184,24 @@ WHERE p1.prorettype = 'internal'::regtype AND NOT
 
 -- **************** pg_cast ****************
 
--- Look for casts from and to the same type.  This is not harmful, but
--- useless.  Also catch bogus values in pg_cast columns (other than
--- cases detected by oidjoins test).
+-- Catch bogus values in pg_cast columns (other than cases detected by
+-- oidjoins test).
 
 SELECT *
 FROM pg_cast c
-WHERE castsource = casttarget OR castsource = 0 OR casttarget = 0
-    OR castcontext NOT IN ('e', 'a', 'i');
+WHERE castsource = 0 OR casttarget = 0 OR castcontext NOT IN ('e', 'a', 'i');
+
+-- Look for casts to/from the same type that aren't length coercion functions.
+-- (We assume they are length coercions if they take multiple arguments.)
+-- Such entries are not necessarily harmful, but they are useless.
+
+SELECT *
+FROM pg_cast c
+WHERE castsource = casttarget AND castfunc = 0;
+
+SELECT c.*
+FROM pg_cast c, pg_proc p
+WHERE c.castfunc = p.oid AND p.pronargs < 2 AND castsource = casttarget;
 
 -- Look for cast functions that don't have the right signature.  The
 -- argument and result types in pg_proc must be the same as, or binary
@@ -204,11 +214,17 @@ WHERE castsource = casttarget OR castsource = 0 OR casttarget = 0
 SELECT c.*
 FROM pg_cast c, pg_proc p
 WHERE c.castfunc = p.oid AND
-    (p.pronargs <> 1
+    (p.pronargs < 1 OR p.pronargs > 3
      OR NOT (binary_coercible(c.castsource, p.proargtypes[0])
              OR (c.castsource = 'character'::regtype AND
                  p.proargtypes[0] = 'text'::regtype))
      OR NOT binary_coercible(p.prorettype, c.casttarget));
+
+SELECT c.*
+FROM pg_cast c, pg_proc p
+WHERE c.castfunc = p.oid AND
+    ((p.pronargs > 1 AND p.proargtypes[1] != 'int4'::regtype) OR
+     (p.pronargs > 2 AND p.proargtypes[2] != 'bool'::regtype));
 
 -- Look for binary compatible casts that do not have the reverse
 -- direction registered as well, or where the reverse direction is not

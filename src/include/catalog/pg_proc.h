@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.337 2004/06/13 21:57:26 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.338 2004/06/16 01:26:49 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -1028,8 +1028,8 @@ DATA(insert OID = 379 (  array_prepend	   PGNSP PGUID 12 f f t f i 2 2277 "2283 
 DESCR("prepend element onto front of array");
 DATA(insert OID = 383 (  array_cat		   PGNSP PGUID 12 f f t f i 2 2277 "2277 2277" _null_ array_cat - _null_ ));
 DESCR("concatenate two arrays");
-DATA(insert OID = 384  (  array_coerce	   PGNSP PGUID 12 f f t f i 1 2277 "2277" _null_ array_type_coerce - _null_ ));
-DESCR("coerce array type to another array type");
+DATA(insert OID = 384  (  array_coerce	   PGNSP PGUID 12 f f t f s 1 2277 "2277" _null_ array_type_coerce - _null_ ));
+DESCR("coerce array to another array type");
 DATA(insert OID = 394 (  string_to_array   PGNSP PGUID 12 f f t f i 2 1009 "25 25" _null_ text_to_array - _null_ ));
 DESCR("split delimited text into text[]");
 DATA(insert OID = 395 (  array_to_string   PGNSP PGUID 12 f f t f i 2 25 "2277 25" _null_ array_to_text - _null_ ));
@@ -1587,8 +1587,8 @@ DESCR("convert int8 to text");
 DATA(insert OID = 1290 (  int8			   PGNSP PGUID 12 f f t f i 1 20 "25" _null_  text_int8 - _null_ ));
 DESCR("convert text to int8");
 
-DATA(insert OID = 1291 (  array_length_coerce	PGNSP PGUID 12 f f t f i 3 2277 "2277 23 16" _null_	array_length_coerce - _null_ ));
-DESCR("adjust any array to element typmod length");
+DATA(insert OID = 1291 (  array_length_coerce	PGNSP PGUID 12 f f t f s 3 2277 "2277 23 16" _null_	array_length_coerce - _null_ ));
+DESCR("adjust any array to new element typmod");
 
 DATA(insert OID = 1292 ( tideq			   PGNSP PGUID 12 f f t f i 2 16 "27 27" _null_	tideq - _null_ ));
 DESCR("equal");
@@ -1721,6 +1721,9 @@ DATA(insert OID = 1370 (  interval			 PGNSP PGUID 12 f f t f i 1 1186 "1083" _nu
 DESCR("convert time to interval");
 DATA(insert OID = 1372 (  char_length		 PGNSP PGUID 12 f f t f i 1 23	 "1042" _null_  bpcharlen - _null_ ));
 DESCR("character length");
+
+DATA(insert OID = 1373 (  array_type_length_coerce	PGNSP PGUID 12 f f t f s 3 2277 "2277 23 16" _null_	array_type_length_coerce - _null_ ));
+DESCR("coerce array to another type and adjust element typmod");
 
 DATA(insert OID = 1374 (  octet_length			 PGNSP PGUID 12 f f t f i 1 23	 "25" _null_  textoctetlen - _null_ ));
 DESCR("octet length");
@@ -2298,7 +2301,7 @@ DATA(insert OID = 1681 (  length			PGNSP PGUID 12 f f t f i 1 23 "1560" _null_	b
 DESCR("bitstring length");
 DATA(insert OID = 1682 (  octet_length		PGNSP PGUID 12 f f t f i 1 23 "1560" _null_	bitoctetlength - _null_ ));
 DESCR("octet length");
-DATA(insert OID = 1683 (  bit				PGNSP PGUID 12 f f t f i 1 1560 "23" _null_	bitfromint4 - _null_ ));
+DATA(insert OID = 1683 (  bit				PGNSP PGUID 12 f f t f i 2 1560 "23 23" _null_	bitfromint4 - _null_ ));
 DESCR("int4 to bitstring");
 DATA(insert OID = 1684 (  int4				PGNSP PGUID 12 f f t f i 1 23 "1560" _null_	bittoint4 - _null_ ));
 DESCR("bitstring to int4");
@@ -2968,7 +2971,7 @@ DESCR("extracts text matching regular expression");
 DATA(insert OID = 2074 (  substring			PGNSP PGUID 14 f f t f i 3 25 "25 25 25" _null_	"select pg_catalog.substring($1, pg_catalog.similar_escape($2, $3))" - _null_ ));
 DESCR("extracts text matching SQL99 regular expression");
 
-DATA(insert OID = 2075 (  bit				PGNSP PGUID 12 f f t f i 1 1560 "20" _null_	bitfromint8 - _null_ ));
+DATA(insert OID = 2075 (  bit				PGNSP PGUID 12 f f t f i 2 1560 "20 23" _null_	bitfromint8 - _null_ ));
 DESCR("int8 to bitstring");
 DATA(insert OID = 2076 (  int8				PGNSP PGUID 12 f f t f i 1 20 "1560" _null_	bittoint8 - _null_ ));
 DESCR("bitstring to int8");

@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varbit.c,v 1.38 2003/11/29 19:51:59 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varbit.c,v 1.39 2004/06/16 01:26:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1166,32 +1166,58 @@ bitshiftright(PG_FUNCTION_ARGS)
 	PG_RETURN_VARBIT_P(result);
 }
 
-/* This is not defined in any standard. We retain the natural ordering of
+/*
+ * This is not defined in any standard. We retain the natural ordering of
  * bits here, as it just seems more intuitive.
  */
 Datum
 bitfromint4(PG_FUNCTION_ARGS)
 {
 	int32		a = PG_GETARG_INT32(0);
+	int32		typmod = PG_GETARG_INT32(1);
 	VarBit	   *result;
 	bits8	   *r;
-	int			len;
+	int			rlen;
+	int			destbitsleft,
+				srcbitsleft;
 
-	/* allocate enough space for the bits in an int4 */
-	len = VARBITTOTALLEN(sizeof(int4) * BITS_PER_BYTE);
-	result = (VarBit *) palloc(len);
-	VARATT_SIZEP(result) = len;
-	VARBITLEN(result) = sizeof(int4) * BITS_PER_BYTE;
+	if (typmod <= 0)
+		typmod = 1;				/* default bit length */
 
-	/*
-	 * masks and shifts here are just too painful and we know that an int4
-	 * has got 4 bytes
-	 */
+	rlen = VARBITTOTALLEN(typmod);
+	result = (VarBit *) palloc(rlen);
+	VARATT_SIZEP(result) = rlen;
+	VARBITLEN(result) = typmod;
+
 	r = VARBITS(result);
-	r[0] = (bits8) ((a >> (3 * BITS_PER_BYTE)) & BITMASK);
-	r[1] = (bits8) ((a >> (2 * BITS_PER_BYTE)) & BITMASK);
-	r[2] = (bits8) ((a >> (1 * BITS_PER_BYTE)) & BITMASK);
-	r[3] = (bits8) (a & BITMASK);
+	destbitsleft = typmod;
+	srcbitsleft = 32;
+	/* drop any input bits that don't fit */
+	srcbitsleft = Min(srcbitsleft, destbitsleft);
+	/* sign-fill any excess bytes in output */
+	while (destbitsleft >= srcbitsleft + 8)
+	{
+		*r++ = (bits8) ((a < 0) ? BITMASK : 0);
+		destbitsleft -= 8;
+	}
+	/* store first fractional byte */
+	if (destbitsleft > srcbitsleft)
+	{
+		*r++ = (bits8) ((a >> (srcbitsleft - 8)) & BITMASK);
+		destbitsleft -= 8;
+	}
+	/* Now srcbitsleft and destbitsleft are the same, need not track both */
+	/* store whole bytes */
+	while (destbitsleft >= 8)
+	{
+		*r++ = (bits8) ((a >> (destbitsleft - 8)) & BITMASK);
+		destbitsleft -= 8;
+	}
+	/* store last fractional byte */
+	if (destbitsleft > 0)
+	{
+		*r = (bits8) ((a << (8 - destbitsleft)) & BITMASK);
+	}
 
 	PG_RETURN_VARBIT_P(result);
 }
@@ -1204,7 +1230,7 @@ bittoint4(PG_FUNCTION_ARGS)
 	bits8	   *r;
 
 	/* Check that the bit string is not too long */
-	if (VARBITLEN(arg) > sizeof(int4) * BITS_PER_BYTE)
+	if (VARBITLEN(arg) > sizeof(result) * BITS_PER_BYTE)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("integer out of range")));
@@ -1224,46 +1250,62 @@ bittoint4(PG_FUNCTION_ARGS)
 Datum
 bitfromint8(PG_FUNCTION_ARGS)
 {
-#ifndef INT64_IS_BUSTED
 	int64		a = PG_GETARG_INT64(0);
+	int32		typmod = PG_GETARG_INT32(1);
 	VarBit	   *result;
 	bits8	   *r;
-	int			len;
+	int			rlen;
+	int			destbitsleft,
+				srcbitsleft;
 
-	/* allocate enough space for the bits in an int64 */
-	len = VARBITTOTALLEN(sizeof(a) * BITS_PER_BYTE);
-	result = (VarBit *) palloc(len);
-	VARATT_SIZEP(result) = len;
-	VARBITLEN(result) = sizeof(a) * BITS_PER_BYTE;
+	if (typmod <= 0)
+		typmod = 1;				/* default bit length */
 
-	/*
-	 * masks and shifts here are just too painful and we know that an
-	 * int64 has got 8 bytes
-	 */
+	rlen = VARBITTOTALLEN(typmod);
+	result = (VarBit *) palloc(rlen);
+	VARATT_SIZEP(result) = rlen;
+	VARBITLEN(result) = typmod;
+
 	r = VARBITS(result);
-	r[0] = (bits8) ((a >> (7 * BITS_PER_BYTE)) & BITMASK);
-	r[1] = (bits8) ((a >> (6 * BITS_PER_BYTE)) & BITMASK);
-	r[2] = (bits8) ((a >> (5 * BITS_PER_BYTE)) & BITMASK);
-	r[3] = (bits8) ((a >> (4 * BITS_PER_BYTE)) & BITMASK);
-	r[4] = (bits8) ((a >> (3 * BITS_PER_BYTE)) & BITMASK);
-	r[5] = (bits8) ((a >> (2 * BITS_PER_BYTE)) & BITMASK);
-	r[6] = (bits8) ((a >> (1 * BITS_PER_BYTE)) & BITMASK);
-	r[7] = (bits8) (a & BITMASK);
+	destbitsleft = typmod;
+#ifndef INT64_IS_BUSTED
+	srcbitsleft = 64;
+#else
+	srcbitsleft = 32;			/* don't try to shift more than 32 */
+#endif
+	/* drop any input bits that don't fit */
+	srcbitsleft = Min(srcbitsleft, destbitsleft);
+	/* sign-fill any excess bytes in output */
+	while (destbitsleft >= srcbitsleft + 8)
+	{
+		*r++ = (bits8) ((a < 0) ? BITMASK : 0);
+		destbitsleft -= 8;
+	}
+	/* store first fractional byte */
+	if (destbitsleft > srcbitsleft)
+	{
+		*r++ = (bits8) ((a >> (srcbitsleft - 8)) & BITMASK);
+		destbitsleft -= 8;
+	}
+	/* Now srcbitsleft and destbitsleft are the same, need not track both */
+	/* store whole bytes */
+	while (destbitsleft >= 8)
+	{
+		*r++ = (bits8) ((a >> (destbitsleft - 8)) & BITMASK);
+		destbitsleft -= 8;
+	}
+	/* store last fractional byte */
+	if (destbitsleft > 0)
+	{
+		*r = (bits8) ((a << (8 - destbitsleft)) & BITMASK);
+	}
 
 	PG_RETURN_VARBIT_P(result);
-#else
-	ereport(ERROR,
-			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("64-bit integers not supported on this platform")));
-
-	PG_RETURN_NULL();
-#endif
 }
 
 Datum
 bittoint8(PG_FUNCTION_ARGS)
 {
-#ifndef INT64_IS_BUSTED
 	VarBit	   *arg = PG_GETARG_VARBIT_P(0);
 	uint64		result;
 	bits8	   *r;
@@ -1284,13 +1326,6 @@ bittoint8(PG_FUNCTION_ARGS)
 	result >>= VARBITPAD(arg);
 
 	PG_RETURN_INT64(result);
-#else
-	ereport(ERROR,
-			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("64-bit integers not supported on this platform")));
-
-	PG_RETURN_NULL();
-#endif
 }
 
 

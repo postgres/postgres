@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.208 2004/06/14 19:01:09 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.209 2004/06/16 01:26:36 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -488,54 +488,12 @@ PostgreSQL documentation
    </table>
 
    <para>
-    The bitwise operators are also available for the bit
+    The bitwise operators work only on integral data types, whereas
+    the others are available for all numeric data types.  The bitwise
+    operators are also available for the bit
     string types <type>bit</type> and <type>bit varying</type>, as
-    shown in <xref linkend="functions-math-bit-table">.
-    Bit string operands of <literal>&amp;</literal>, <literal>|</literal>,
-    and <literal>#</literal> must be of equal length.  When bit
-    shifting, the original length of the string is preserved, as shown
-    in the table.
+    shown in <xref linkend="functions-bit-string-op-table">.
    </para>
-
-    <table id="functions-math-bit-table">
-     <title>Bit String Bitwise Operators</title>
-
-     <tgroup cols="2">
-      <thead>
-       <row>
-        <entry>Example</entry>
-        <entry>Result</entry>
-       </row>
-      </thead>
-
-      <tbody>
-       <row>
-        <entry><literal>B'10001' &amp; B'01101'</literal></entry>
-        <entry><literal>00001</literal></entry>
-       </row>
-       <row>
-        <entry><literal>B'10001' | B'01101'</literal></entry>
-        <entry><literal>11101</literal></entry>
-       </row>
-       <row>
-        <entry><literal>B'10001' # B'01101'</literal></entry>
-        <entry><literal>11110</literal></entry>
-       </row>
-       <row>
-        <entry><literal>~ B'10001'</literal></entry>
-        <entry><literal>01110</literal></entry>
-       </row>
-       <row>
-        <entry><literal>B'10001' &lt;&lt; 3</literal></entry>
-        <entry><literal>01000</literal></entry>
-       </row>
-       <row>
-        <entry><literal>B'10001' &gt;&gt; 2</literal></entry>
-        <entry><literal>00100</literal></entry>
-       </row>
-      </tbody>
-     </tgroup>
-    </table>
 
   <para>
    <xref linkend="functions-math-func-table"> shows the available
@@ -2335,6 +2293,130 @@ PostgreSQL documentation
   </table>
 
  </sect1>
+
+
+  <sect1 id="functions-bitstring">
+   <title>Bit String Functions and Operators</title>
+
+   <indexterm zone="functions-bitstring">
+    <primary>bit strings</primary>
+    <secondary>functions</secondary>
+   </indexterm>
+
+   <para>
+    This section describes functions and operators for examining and
+    manipulating bit strings, that is values of the types
+    <type>bit</type> and <type>bit varying</type>.  Aside from the
+    usual comparison operators, the operators
+    shown in <xref linkend="functions-bit-string-op-table"> can be used.
+    Bit string operands of <literal>&amp;</literal>, <literal>|</literal>,
+    and <literal>#</literal> must be of equal length.  When bit
+    shifting, the original length of the string is preserved, as shown
+    in the examples.
+   </para>
+
+   <table id="functions-bit-string-op-table">
+    <title>Bit String Operators</title>
+
+    <tgroup cols="4">
+     <thead>
+      <row>
+       <entry>Operator</entry>
+       <entry>Description</entry>
+       <entry>Example</entry>
+       <entry>Result</entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry> <literal>||</literal> </entry>
+       <entry>concatenation</entry>
+       <entry><literal>B'10001' || B'011'</literal></entry>
+       <entry><literal>10001011</literal></entry>
+      </row>
+
+      <row>
+       <entry> <literal>&amp;</literal> </entry>
+       <entry>bitwise AND</entry>
+       <entry><literal>B'10001' &amp; B'01101'</literal></entry>
+       <entry><literal>00001</literal></entry>
+      </row>
+
+      <row>
+       <entry> <literal>|</literal> </entry>
+       <entry>bitwise OR</entry>
+       <entry><literal>B'10001' | B'01101'</literal></entry>
+       <entry><literal>11101</literal></entry>
+      </row>
+
+      <row>
+       <entry> <literal>#</literal> </entry>
+       <entry>bitwise XOR</entry>
+       <entry><literal>B'10001' # B'01101'</literal></entry>
+       <entry><literal>11100</literal></entry>
+      </row>
+
+      <row>
+       <entry> <literal>~</literal> </entry>
+       <entry>bitwise NOT</entry>
+       <entry><literal>~ B'10001'</literal></entry>
+       <entry><literal>01110</literal></entry>
+      </row>
+
+      <row>
+       <entry> <literal>&lt;&lt;</literal> </entry>
+       <entry>bitwise shift left</entry>
+       <entry><literal>B'10001' &lt;&lt; 3</literal></entry>
+       <entry><literal>01000</literal></entry>
+      </row>
+
+      <row>
+       <entry> <literal>&gt;&gt;</literal> </entry>
+       <entry>bitwise shift right</entry>
+       <entry><literal>B'10001' &gt;&gt; 2</literal></entry>
+       <entry><literal>00100</literal></entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+   <para>
+    The following <acronym>SQL</acronym>-standard functions work on bit
+    strings as well as character strings:
+    <literal><function>length</function></literal>,
+    <literal><function>bit_length</function></literal>,
+    <literal><function>octet_length</function></literal>,
+    <literal><function>position</function></literal>,
+    <literal><function>substring</function></literal>.
+   </para>
+
+   <para>
+    In addition, it is possible to cast integral values to and from type
+    <type>bit</>.
+    Some examples:
+<programlisting>
+44::bit(10)                    <lineannotation>0000101100</lineannotation>
+44::bit(3)                     <lineannotation>100</lineannotation>
+cast(-44 as bit(12))           <lineannotation>111111010100</lineannotation>
+'1110'::bit(4)::integer        <lineannotation>14</lineannotation>
+</programlisting>
+    Note that casting to just <quote>bit</> means casting to
+    <literal>bit(1)</>, and so it will deliver only the least significant
+    bit of the integer.
+   </para>
+
+    <note>
+     <para>
+      Prior to <productname>PostgreSQL</productname> 7.5, casting an
+      integer to <type>bit(n)</> would copy the leftmost <literal>n</>
+      bits of the integer, whereas now it copies the rightmost <literal>n</>
+      bits.  Also, casting an integer to a bit string width wider than
+      the integer itself will sign-extend on the left.
+     </para>
+    </note>
+
+  </sect1>
 
 
  <sect1 id="functions-matching">
@@ -7628,14 +7710,13 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
        <function>bit_and(<replaceable class="parameter">expression</replaceable>)</function>
       </entry>
       <entry>
-       <type>smallint</type>, <type>integer</type>, <type>bigint</type> or
-       <type>bit</type>,
+       <type>smallint</type>, <type>integer</type>, <type>bigint</type>, or
+       <type>bit</type>
       </entry>
       <entry>
-        same as argument data type.
+        same as argument data type
       </entry>
-      <entry>the bitwise-and of all non-null input values, or null if empty
-      </entry>
+      <entry>the bitwise AND of all non-null input values, or null if none</entry>
      </row>
 
      <row>
@@ -7646,14 +7727,13 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
        <function>bit_or(<replaceable class="parameter">expression</replaceable>)</function>
       </entry>
       <entry>
-       <type>smallint</type>, <type>integer</type>, <type>bigint</type> or
-       <type>bit</type>,
+       <type>smallint</type>, <type>integer</type>, <type>bigint</type>, or
+       <type>bit</type>
       </entry>
       <entry>
-        same as argument data type.
+        same as argument data type
       </entry>
-      <entry>the bitwise-or of all non-null input values, or null if empty.
-      </entry>
+      <entry>the bitwise OR of all non-null input values, or null if none</entry>
      </row>
 
      <row>
@@ -7669,9 +7749,7 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
       <entry>
        <type>bool</type>
       </entry>
-      <entry>true if all input values are true, otherwise false.
-      Also known as <function>bool_and</function>.
-      </entry>
+      <entry>true if all input values are true, otherwise false</entry>
      </row>
 
      <row>
@@ -7720,9 +7798,7 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
       <entry>
        <type>bool</type>
       </entry>
-      <entry>true if all input values are true, otherwise false.
-      Also known as <function>bool_and</function>.
-      </entry>
+      <entry>equivalent to <function>bool_and</function></entry>
      </row>
 
      <row>

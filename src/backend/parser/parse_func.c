@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.170 2004/05/30 23:40:35 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.171 2004/06/16 01:26:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -150,7 +150,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		 * these cases, so why duplicate code...
 		 */
 		return coerce_type(pstate, linitial(fargs),
-						   actual_arg_types[0], rettype,
+						   actual_arg_types[0], rettype, -1,
 						   COERCION_EXPLICIT, COERCE_EXPLICIT_CALL);
 	}
 	else if (fdresult == FUNCDETAIL_NORMAL)
@@ -726,11 +726,12 @@ func_get_detail(List *funcname,
 			{
 				Oid			sourceType = argtypes[0];
 				Node	   *arg1 = linitial(fargs);
+				Oid			cfuncid;
 
 				if ((sourceType == UNKNOWNOID && IsA(arg1, Const)) ||
 					(find_coercion_pathway(targetType, sourceType,
-										   COERCION_EXPLICIT, funcid) &&
-					 *funcid == InvalidOid))
+										   COERCION_EXPLICIT, &cfuncid) &&
+					 cfuncid == InvalidOid))
 				{
 					/* Yup, it's a type coercion */
 					*funcid = InvalidOid;
@@ -1122,7 +1123,7 @@ make_fn_arguments(ParseState *pstate,
 			lfirst(current_fargs) = coerce_type(pstate,
 												lfirst(current_fargs),
 												actual_arg_types[i],
-												declared_arg_types[i],
+												declared_arg_types[i], -1,
 												COERCION_IMPLICIT,
 												COERCE_IMPLICIT_CAST);
 		}

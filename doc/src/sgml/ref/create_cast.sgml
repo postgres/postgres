@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/create_cast.sgml,v 1.16 2004/02/15 06:27:37 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/create_cast.sgml,v 1.17 2004/06/16 01:26:40 tgl Exp $ -->
 
 <refentry id="SQL-CREATECAST">
  <refmeta>
@@ -18,7 +18,7 @@
  <refsynopsisdiv>
 <synopsis>
 CREATE CAST (<replaceable>sourcetype</replaceable> AS <replaceable>targettype</replaceable>)
-    WITH FUNCTION <replaceable>funcname</replaceable> (<replaceable>argtype</replaceable>)
+    WITH FUNCTION <replaceable>funcname</replaceable> (<replaceable>argtypes</replaceable>)
     [ AS ASSIGNMENT | AS IMPLICIT ]
 
 CREATE CAST (<replaceable>sourcetype</replaceable> AS <replaceable>targettype</replaceable>)
@@ -55,9 +55,9 @@ SELECT CAST(42 AS text);
   <para>
    By default, a cast can be invoked only by an explicit cast request,
    that is an explicit <literal>CAST(<replaceable>x</> AS
-   <replaceable>typename</>)</literal>,
-   <replaceable>x</><literal>::</><replaceable>typename</>, or
-   <replaceable>typename</>(<replaceable>x</>) construct.
+   <replaceable>typename</>)</literal> or
+   <replaceable>x</><literal>::</><replaceable>typename</>
+   construct.
   </para>
 
   <para>
@@ -141,15 +141,14 @@ SELECT 'The time is ' || CAST(now() AS text);
     </varlistentry>
 
     <varlistentry>
-     <term><replaceable>funcname</replaceable>(<replaceable>argtype</replaceable>)</term>
+     <term><replaceable>funcname</replaceable>(<replaceable>argtypes</replaceable>)</term>
 
      <listitem>
       <para>
        The function used to perform the cast.  The function name may
        be schema-qualified.  If it is not, the function will be looked
-       up in the schema search path.  The argument type must be
-       identical to the source type and the result data type must
-       match the target type of the cast.
+       up in the schema search path.  The function's result data type must
+       match the target type of the cast.   Its arguments are discussed below.
       </para>
      </listitem>
     </varlistentry>
@@ -187,6 +186,42 @@ SELECT 'The time is ' || CAST(now() AS text);
     </varlistentry>
    </variablelist>
 
+  <para>
+   Cast implementation functions may have one to three arguments.
+   The first argument type must be identical to the cast's source type.
+   The second argument,
+   if present, must be type <type>integer</>; it receives the type
+   modifier associated with the destination type, or <literal>-1</>
+   if there is none.  The third argument,
+   if present, must be type <type>boolean</>; it receives <literal>true</>
+   if the cast is an explicit cast, <literal>false</> otherwise.
+   (Bizarrely, the SQL spec demands different behaviors for explicit and
+   implicit casts in some cases.  This argument is supplied for functions
+   that must implement such casts.  It is not recommended that you design
+   your own datatypes so that this matters.)
+  </para>
+
+  <para>
+   Ordinarily a cast must have different source and target data types.
+   However, it is allowed to declare a cast with identical source and
+   target types if it has a cast implementation function with more than one
+   argument.  This is used to represent type-specific length coercion
+   functions in the system catalogs.  The named function is used to
+   coerce a value of the type to the type modifier value given by its
+   second argument.  (Since the grammar presently permits only certain
+   built-in data types to have type modifiers, this feature is of no
+   use for user-defined target types, but we mention it for completeness.)
+  </para>
+
+  <para>
+   When a cast has different source and
+   target types and a function that takes more than one argument, it
+   represents converting from one type to another and applying a length
+   coercion in a single step.  When no such entry is available, coercion
+   to a type that uses a type modifier involves two steps, one to
+   convert between datatypes and a second to apply the modifier.
+  </para>
+
  </refsect1>
 
  <refsect1 id="sql-createcast-notes">
@@ -207,10 +242,40 @@ SELECT 'The time is ' || CAST(now() AS text);
    argument of a different type was automatically a cast function.
    This convention has been abandoned in face of the introduction of
    schemas and to be able to represent binary compatible casts in the
-   system catalogs.  (The built-in cast functions still follow this naming
-   scheme, but they have to be shown as casts in the system catalog <literal>pg_cast</>
-   now.)
+   system catalogs.  The built-in cast functions still follow this naming
+   scheme, but they have to be shown as casts in the system catalog
+   <structname>pg_cast</> as well.
   </para>
+
+  <para>
+   While not required, it is recommended that you continue to follow this old
+   convention of naming cast implementation functions after the target data
+   type.  Many users are used to being able to cast datatypes using a
+   function-style notation, that is
+   <replaceable>typename</>(<replaceable>x</>).  This notation is in fact
+   nothing more nor less than a call of the cast implementation function; it
+   is not specially treated as a cast.  If your conversion functions are not
+   named to support this convention then you will have surprised users.
+   Since <productname>PostgreSQL</> allows overloading of the same function
+   name with different argument types, there is no difficulty in having
+   multiple conversion functions from different types that all use the
+   target type's name.
+  </para>
+
+  <note>
+   <para>
+   There is one small lie in the preceding paragraph: there is still one
+   case in which <structname>pg_cast</> will be used to resolve the
+   meaning of an apparent function call.  If a
+   function call <replaceable>name</>(<replaceable>x</>) matches no
+   actual function, but <replaceable>name</> is the name of a data type
+   and <structname>pg_cast</> shows a binary-compatible cast to this
+   type from the type of <replaceable>x</>, then the call will be construed
+   as an explicit cast.  This exception is made so that binary-compatible
+   casts can be invoked using functional syntax, even though they lack
+   any function.
+   </para>
+  </note>
  </refsect1>
 
 
@@ -234,7 +299,8 @@ CREATE CAST (text AS int4) WITH FUNCTION int4(text);
   <para>
    The <command>CREATE CAST</command> command conforms to SQL99,
    except that SQL99 does not make provisions for binary-compatible
-   types.  <literal>AS IMPLICIT</> is a <productname>PostgreSQL</productname>
+   types or extra arguments to implementation functions.
+   <literal>AS IMPLICIT</> is a <productname>PostgreSQL</productname> 
    extension, too.
   </para>
  </refsect1>

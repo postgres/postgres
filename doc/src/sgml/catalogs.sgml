@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.86 2004/06/07 04:04:47 tgl Exp $
+ $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.87 2004/06/16 01:26:33 tgl Exp $
  -->
 
 <chapter id="catalogs">
@@ -934,7 +934,7 @@
       <entry>
        Indicates what contexts the cast may be invoked in.
        <literal>e</> means only as an explicit cast (using
-       <literal>CAST</>, <literal>::</>, or function-call syntax).
+       <literal>CAST</> or <literal>::</> syntax).
        <literal>a</> means implicitly in assignment
        to a target column, as well as explicitly.
        <literal>i</> means implicitly in expressions, as well as the
@@ -944,6 +944,39 @@
     </tbody>
    </tgroup>
   </table>
+
+  <para>
+   The cast functions listed in <structname>pg_cast</structname> must
+   always take the cast source type as their first argument type, and
+   return the cast destination type as their result type.  A cast
+   function can have up to three arguments.  The second argument,
+   if present, must be type <type>integer</>; it receives the type
+   modifier associated with the destination type, or <literal>-1</>
+   if there is none.  The third argument,
+   if present, must be type <type>boolean</>; it receives <literal>true</>
+   if the cast is an explicit cast, <literal>false</> otherwise.
+  </para>
+
+  <para>
+   It is legitimate to create a <structname>pg_cast</structname> entry
+   in which the source and target types are the same, if the associated
+   function takes more than one argument.  Such entries represent
+   <quote>length coercion functions</> that coerce values of the type
+   to be legal for a particular type modifier value.  Note however that
+   at present there is no support for associating non-default type
+   modifiers with user-created data types, and so this facility is only
+   of use for the small number of built-in types that have type modifier
+   syntax built into the grammar.
+  </para>
+
+  <para>
+   When a <structname>pg_cast</structname> entry has different source and
+   target types and a function that takes more than one argument, it
+   represents converting from one type to another and applying a length
+   coercion in a single step.  When no such entry is available, coercion
+   to a type that uses a type modifier involves two steps, one to
+   convert between datatypes and a second to apply the modifier.
+  </para>
  </sect1>
 
  <sect1 id="catalog-pg-class">
