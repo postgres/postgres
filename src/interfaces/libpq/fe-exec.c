@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.124 2003/01/07 22:23:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.125 2003/02/19 03:59:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2272,7 +2272,7 @@ PQoidStatus(const PGresult *res)
 
 /*
   PQoidValue -
-		a perhaps preferable form of the above which just returns
+	a perhaps preferable form of the above which just returns
 	an Oid type
 */
 Oid
@@ -2300,53 +2300,54 @@ PQoidValue(const PGresult *res)
 
 /*
    PQcmdTuples -
-	if the last command was an INSERT/UPDATE/DELETE, return number
-	of inserted/affected tuples, if not, return ""
+	If the last command was an INSERT/UPDATE/DELETE/MOVE/FETCH, return a
+	string containing the number of inserted/affected tuples. If not,
+	return "".
+
+	XXX: this should probably return an int
 */
 char *
 PQcmdTuples(PGresult *res)
 {
 	char		noticeBuf[128];
+	char		*p;
 
 	if (!res)
 		return "";
 
-	if (strncmp(res->cmdStatus, "INSERT", 6) == 0 ||
-		strncmp(res->cmdStatus, "DELETE", 6) == 0 ||
-		strncmp(res->cmdStatus, "UPDATE", 6) == 0)
+	if (strncmp(res->cmdStatus, "INSERT ", 7) == 0)
 	{
-		char	   *p = res->cmdStatus + 6;
-
-		if (*p == 0)
-		{
-			if (res->noticeHook)
-			{
-				snprintf(noticeBuf, sizeof(noticeBuf),
-						 libpq_gettext("could not interpret result from server: %s\n"),
-						 res->cmdStatus);
-				DONOTICE(res, noticeBuf);
-			}
-			return "";
-		}
+		p = res->cmdStatus + 6;
 		p++;
-		if (*(res->cmdStatus) != 'I')	/* UPDATE/DELETE */
-			return p;
+		/* INSERT: skip oid */
 		while (*p != ' ' && *p)
-			p++;				/* INSERT: skip oid */
-		if (*p == 0)
-		{
-			if (res->noticeHook)
-			{
-				snprintf(noticeBuf, sizeof(noticeBuf),
-						 libpq_gettext("no row count available\n"));
-				DONOTICE(res, noticeBuf);
-			}
-			return "";
-		}
-		p++;
-		return p;
+			p++;
 	}
-	return "";
+	else if (strncmp(res->cmdStatus, "DELETE ", 7) == 0 ||
+			 strncmp(res->cmdStatus, "UPDATE ", 7) == 0)
+		p = res->cmdStatus + 6;
+	else if (strncmp(res->cmdStatus, "FETCH ", 6) == 0)
+		p = res->cmdStatus + 5;
+	else if (strncmp(res->cmdStatus, "MOVE ", 5) == 0)
+		p = res->cmdStatus + 4;
+	else
+		return "";
+
+	p++;
+
+	if (*p == 0)
+	{
+		if (res->noticeHook)
+		{
+			snprintf(noticeBuf, sizeof(noticeBuf),
+					 libpq_gettext("could not interpret result from server: %s\n"),
+					 res->cmdStatus);
+			DONOTICE(res, noticeBuf);
+		}
+		return "";
+	}
+
+	return p;
 }
 
 /*

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/protocol.sgml,v 1.24 2002/03/22 19:20:21 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/protocol.sgml,v 1.25 2003/02/19 03:59:02 momjian Exp $ -->
 
 <chapter id="protocol">
  <title>Frontend/Backend Protocol</title>
@@ -1335,6 +1335,20 @@ CompletedResponse (B)
 	<literal>UPDATE <Replaceable>rows</Replaceable></literal> where
         <Replaceable>rows</Replaceable> is the number of rows updated.
 </Para>
+
+       <para>
+        For a <command>MOVE</command> command, the tag is
+        <literal>MOVE <replaceable>rows</replaceable></literal> where
+        <replaceable>rows</replaceable> is the number of rows the
+        cursor's position has been changed by.
+       </para>
+
+       <para>
+        For a <command>FETCH</command> command, the tag is
+        <literal>FETCH <replaceable>rows</replaceable></literal> where
+        <replaceable>rows</replaceable> is the number of rows that
+        have been retrieved from the cursor.
+       </para>
 </ListItem>
 </VarListEntry>
 </VariableList>

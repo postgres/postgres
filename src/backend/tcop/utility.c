@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.192 2003/02/13 05:20:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.193 2003/02/19 03:59:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -254,7 +254,7 @@ ProcessUtility(Node *parsetree,
 	switch (nodeTag(parsetree))
 	{
 			/*
-			 * ******************************** transactions ********************************
+			 * ******************** transactions ********************
 			 */
 		case T_TransactionStmt:
 			{

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.110 2003/02/14 02:21:25 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.111 2003/02/19 03:59:02 momjian Exp $
 -->
 
  <chapter id="libpq">
@@ -702,12 +702,11 @@ char *PQerrorMessage(const PGconn* conn);
 int PQbackendPID(const PGconn *conn);
        </synopsis>
        The backend <acronym>PID</acronym> is useful for debugging
-       purposes and for comparison
-       to NOTIFY messages (which include the <acronym>PID</acronym> of
-       the notifying backend).
-       Note that the <acronym>PID</acronym> belongs to a process
-       executing on the database
-       server host, not the local host!
+       purposes and for comparison to <command>NOTIFY</command>
+       messages (which include the <acronym>PID</acronym> of the
+       notifying backend).  Note that the <acronym>PID</acronym>
+       belongs to a process executing on the database server host, not
+       the local host!
       </para>
      </listitem>
 
@@ -818,13 +817,14 @@ ExecStatusType PQresultStatus(const PGresult *res)
  </listitem>
 </itemizedlist>
 
-If  the result status is <literal>PGRES_TUPLES_OK</literal>, then the
-routines described below can be  used  to  retrieve  the
-rows returned by the query.  Note that a SELECT command that
-happens to retrieve zero rows still shows <literal>PGRES_TUPLES_OK</literal>.
-<literal>PGRES_COMMAND_OK</literal> is for commands that can never return rows
-(INSERT, UPDATE, etc.). A response of <literal>PGRES_EMPTY_QUERY</literal> often
-exposes a bug in the client software.
+If the result status is <literal>PGRES_TUPLES_OK</literal>, then the
+routines described below can be used to retrieve the rows returned by
+the query.  Note that a <command>SELECT</command> command that happens
+to retrieve zero rows still shows <literal>PGRES_TUPLES_OK</literal>.
+<literal>PGRES_COMMAND_OK</literal> is for commands that can never
+return rows (<command>INSERT</command>, <command>UPDATE</command>,
+etc.). A response of <literal>PGRES_EMPTY_QUERY</literal> often
+indicates a bug in the client software.
 </para>
 </listitem>
 
@@ -1243,36 +1243,41 @@ char * PQcmdStatus(PGresult *res);
 char * PQcmdTuples(PGresult *res);
 </synopsis>
           If the <acronym>SQL</acronym> command that generated the
-	  <structname>PGresult</structname> was INSERT, UPDATE or DELETE, this returns a
-	  string containing the number of rows affected.  If the
-          command was anything else, it returns the empty string.
+	  <structname>PGresult</structname> was <command>INSERT</command>,
+	  <command>UPDATE</command>, <command>DELETE</command>,
+	  <command>MOVE</command>, or <command>FETCH</command> this
+	  returns a string containing the number of rows affected.  If the
+	  command was anything else, it returns the empty string.
 </para>
 </listitem>
 
 <listitem>
 <para>
 <function>PQoidValue</function>
-          Returns the object ID of the inserted row, if the
-	  <acronym>SQL</acronym> command was an INSERT
-	  that inserted exactly one row into a table that has OIDs.
-          Otherwise, returns <literal>InvalidOid</literal>.
+      Returns the object ID of the inserted row, if the
+      <acronym>SQL</acronym> command was an <command>INSERT</command>
+      that inserted exactly one row into a table that has OIDs.
+      Otherwise, returns <literal>InvalidOid</literal>.
 <synopsis>
 Oid PQoidValue(const PGresult *res);
 </synopsis>
-          The type <type>Oid</type> and the constant <literal>InvalidOid</literal>
-          will be defined if you include the <application>libpq</application>
-          header file. They will both be some integer type.
+          The type <type>Oid</type> and the constant
+      <literal>InvalidOid</literal> will be defined if you include the
+      <application>libpq</application> header file. They will both be
+      some integer type.
 </para>
 </listitem>
 
 <listitem>
 <para>
 <function>PQoidStatus</function>
-          Returns a string with the object ID of the inserted row, if the
-	  <acronym>SQL</acronym> command was an INSERT.
-	  (The string will be <literal>0</> if the INSERT did not insert exactly one
-	  row, or if the target table does not have OIDs.)  If the command
-	  was not an INSERT, returns an empty string.
+      Returns a string with the object ID
+      of the inserted row, if the <acronym>SQL</acronym> command
+      was an <command>INSERT</command>.  (The string will be
+      <literal>0</> if the <command>INSERT</command> did not
+      insert exactly one row, or if the target table does not have
+      OIDs.)  If the command was not an <command>INSERT</command>,
+      returns an empty string.
 <synopsis>
 char * PQoidStatus(const PGresult *res);
 </synopsis>
@@ -1530,7 +1535,8 @@ When the main loop detects input ready, it should call
 <function>PQconsumeInput</function> to read the input.  It can then call
 <function>PQisBusy</function>, followed by <function>PQgetResult</function>
 if <function>PQisBusy</function> returns false (0).  It can also call
-<function>PQnotifies</function> to detect NOTIFY messages (see <xref linkend="libpq-notify">).
+<function>PQnotifies</function> to detect <command>NOTIFY</command>
+messages (see <xref linkend="libpq-notify">).
 </para>
 
 <para>
@@ -1700,13 +1706,13 @@ of asynchronous notification.
 <function>PQnotifies()</function> does not actually read backend data; it just
 returns messages previously absorbed by another <application>libpq</application>
 function.  In prior releases of <application>libpq</application>, the only way
-to ensure timely receipt of NOTIFY messages was to constantly submit queries,
+to ensure timely receipt of <command>NOTIFY</command> messages was to constantly submit queries,
 even empty ones, and then check <function>PQnotifies()</function> after each
 <function>PQexec()</function>.  While this still works, it is
 deprecated as a waste of processing power.
 </para>
 <para>
-A better way to check for NOTIFY
+A better way to check for <command>NOTIFY</command>
 messages when you have no useful queries to make is to call
 <function>PQconsumeInput()</function>, then check
 <function>PQnotifies()</function>.
