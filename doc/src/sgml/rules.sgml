@@ -7,7 +7,7 @@
      them.  Consequently, we will not attempt to explain the
      actual syntax and operation of the <ProductName>Postgres</ProductName> rule system
      here.  Instead, you should read 
-<XRef LinkEnd="STON90b" EndTerm="[STON90b]"> to understand
+[<XRef LinkEnd="STON90b" EndTerm="STON90b">] to understand
      some of these points and the theoretical foundations of
      the  <ProductName>Postgres</ProductName>  rule  system before trying to use rules.
      The discussion in this section is intended  to  provide
@@ -20,9 +20,300 @@
      is  very powerful, and can be used for many things such
      as query language procedures, views, and versions.  The
      power  of  this  rule system is discussed in 
-<XRef LinkEnd="ONG90" EndTerm="[ONG90]">
+[<XRef LinkEnd="ONG90" EndTerm="ONG90">]
  as well as
-<XRef LinkEnd="STON90b" EndTerm="[STON90b]">.
+[<XRef LinkEnd="STON90b" EndTerm="STON90b">].
 </Para>
+
+<Sect1>
+<Title>The Goodness of Rules</Title>
+
+<Note>
+<title>Editor's Note</title>
+<Para>
+This information resulted from an exchange of e-mail on 1998-02-20/22 between
+<ULink url="mailto:jwieck@debis.com">Jan Wieck</ULink>,
+<ULink url="mailto:Andreas.Zeugswetter@telecom.at">Andreas Zeugswetter</ULink>,
+and
+<ULink url="mailto:vadim@sable.krasnoyarsk.su">Vadim B. Mikheev</ULink>
+on the subject.
+</Para>
+</Note>
+
+<Para>
+<ProgramListing>
+From: Zeugswetter Andreas SARZ
+To: Jan Wieck
+</ProgramListing>
+
+<Para>
+Since we have so little documentation on the rules, I think we should save
+every 
+little word describing them, so could you simply put the following into a
+rules.readme 
+(undigested is still better than not adding it)
+
+<Sect1>
+<Title>Rewrite Rules versus Triggers</Title>
+
+<Para>
+> > Why I like the rewrite system is:
+The benefits of the rewrite rules system include:
+
+<VariableList>
+<VarListEntry>
+<Term>
+Select Rewrite Possible
+</Term>
+<ListItem>
+<Para>
+A select trigger would be no good, due to optimizer concerns.
+ 
+<Para>
+Exactly that's what is done if you create  a  view.  Postgres
+creates  a  regular  table  (look  at  pg_class  and into the
+database directory) and then sets up a relation level instead
+rewrite rule on select.
+</ListItem>
+</VarListEntry>
+
+<VarListEntry>
+<Term>
+Dumb Client Possible
+</Term>
+<ListItem>
+<Para>
+The client can be really dumb, like MS Access or some other
+standard ODBC tool
+which does not know anything about funcs procs and the like
+(even without using passthrough).
+
+<Para>
+The  client  must not know why and how and where the
+data is left and coming from. But that's true in any case - a
+trigger  for each row on insert can do anything different and
+push the data wherever it wants.
+</ListItem>
+</VarListEntry>
+
+<VarListEntry>
+<Term>
+Rewrite rules are more powerful than views
+</Term>
+<ListItem>
+<Para>
+Views are only one special rule case in Postgres.
+</ListItem>
+</VarListEntry>
+
+<VarListEntry>
+<Term>
+Optimizer Used
+</Term>
+<ListItem>
+<Para>
+It allows the optimizer to get involved (this is where triggers
+fail per definition).
+</ListItem>
+</VarListEntry>
+
+<VarListEntry>
+<Term>
+Simple to use
+</Term>
+<ListItem>
+<Para>
+Once understood it is very easy to use;
+easier than triggers with <Acronym>C</Acronym> stored procedures at least.
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+
+<Para>
+Optimizing again and again. If the rules aren't instead,  the
+querytree  get's  additional queries for every rule appended.
+Have a table field that references an entry in another  table
+and  this entry should have a refcount. So on update you must
+decrease the refcount from the old ref and increase it on the
+new.   You  create  two  rules so the UPDATE will result in 1
+scan and 2 nestloops with scans inside - really optimized  if
+the  referenced value doesn't change.  And don't think that a
+rule qual of NEW != CURRENT might help - that will result  in
+2 mergejoins where the scanned tuples are compared.
+
+<Note>
+<Para>
+I fought that like a windmill, I guess it would be better to kill the
+CURRENT keyword
+with this meaning alltogether, since it only has the same meaning as the
+tablename itself.
+I have already crossed it out of my mind and don't miss anything.
+</Para>
+</Note>
+
+I think there should instead be an OLD and NEW keyword
+like in triggers:
+<ProgramListing>
+referencing old as <replaceable class="parameter">oldname</replaceable> new as <replaceable class="parameter">newname</replaceable>
+</ProgramListing>
+that only reference the tuples in memory.
+
+<Para>
+BTW,  this  sample  doesn't  work currently because the rules
+queries are appended at the end of the  querytree,  thus  the
+decrement  scan  having  the  same qual will not find the old
+tuple    at    all    because    it's    already     outdated
+(command_counter_increment  between  processing the queries).
+Referencing CURRENT in a rule is not what most  people  think
+it is.
+
+<Para>
+The old 4.2 postgres had a second, instance level rule system
+(prs2 stubs) that fired the rules actions when  actually  the
+old  tuple and the new projected tuple where handy. There you
+could have made also things like 'UPDATE NEW SET a = 4'  that
+really   modified  the  in  memory  tuple  in  the  executors
+expression context. Who the hell removed all that? It was  so
+nice :-(
+
+<Note>
+<Title>Editor's Note</Title>
+<Para>
+This feature was removed by Jolly et. al. prior to v1.0.x.
+</Para>
+</Note>
+
+<Para>
+Absolutely !    I did cry up when that was done, but nobody responded :-(
+Well to be honest Vadim did respond with the trigger code, which made me
+feel comfortable again.
+
+<Para>
+A  really  simple to write trigger can compare old != new and
+only if send down the other two queries. This time they  wont
+be  nestloops,  they  are  simple  scans. And the trigger can
+arrange that the queries it uses  are  only  parsed  on  it's
+first  of  all  calls and store the generated execution plans
+permanently for quick execution (look at SPI_prepare).
+
+<Para>
+For the stored C procedures you're  totally  right.  I  don't
+like  the  C functions because it requires postgres superuser
+rights to develop them and thus I created  PL/Tcl  where  joe
+user  can  hack  around without having complete access to the
+whole database (look at src/pl/tcl). And  someday  after  6.3
+release  I'll really start on a plain PL/pgSQL implementation
+that would give a  normal  user  the  opportunity  to  create
+functions and triggers on a high level. There is light at the
+end of the tunnel - hope that it isn't the coming train :-)
+
+<Para>
+I guess if triggers could also trigger simple select statements, I could
+do
+most of what I want using triggers except of course the select stuff.
+But as I said I like the rules system very much, especially after your
+recent
+fixes Jan :-) So please stick to supporting all 3: triggers, views and
+rules. Wow :-)
+
+<Para>
+Well - a trigger cannot build a view. The relation underlying
+the view doesn't contain any tuples and a select trigger will
+never be fired.  As long as there is no possibility to return
+tuple  sets  from  non-SQL  functions.  But  a trigger can do
+things like the pg_hide_passwd stuff much more powerful.  You
+could  define  the trigger so that it checks if the user is a
+superuser and overwrite the passwd value  only  in  the  case
+where  he/she isn't. If fired at the right place it would too
+work for things like the copy command etc.
+
+<Para>
+We must stay with all 3 features. And I will take a  look  at
+the  INSERT  ...  SELECT  view problem really soon as it is a
+rule system problem that breaks views. But this is  only  the
+SELECT  rewriting part of the rule system which I really like
+(optimizable). The other areas (insert,  update,  delete)  of
+the  rule  system are dangerous and I really think a powerful
+PL/pgSQL language could make them obsolete.
+
+<Sect1>
+<Title>Summary from Andreas</Title>
+
+<Para>
+Ok, to sum it up:
+
+<ItemizedList Mark="bullet">
+<ListItem>
+<Para>
+We need and want the select part of the rewrite rules.
+</Para>
+</ListItem>
+
+<ListItem>
+<Para>
+For the insert/update/delete rules the old instance rules system
+	    was much more appropriate. TODO: dig up the old code
+	    and merge it with the current trigger Implementation;
+		    it must be pretty much the wanted functionality (it
+supported SQL).
+
+<Note>
+<Title>Vadim's Note</Title>
+<Para>
+Old instance rules system was removed by Jolly & Andrew and so
+it never supported SQL. I hope that Jan will give us PL/pgSQL soon
+and it will be used for triggers, without changing current trigger 
+implementation...
+</Para>
+</Note>
+
+</Para>
+</ListItem>
+
+<ListItem>
+<Para>
+The CURRENT keyword in the i/u/d rewrite rules is stupid
+and should be disabled
+		   destroyed and burned in hell.
+
+<Note>
+<Title>Vadim's Note</Title>
+<Para>
+Agreed, if standard hasn't it. I know that OLD & NEW are in standard,
+for triggers atleast.
+</Para>
+</Note>
+
+</Para>
+</ListItem>
+
+<ListItem>
+<Para>
+To stick to the mainstream we should enhance the trigger
+syntax,
+		    and forget the rule stuff for i/u/d
+		
+<ProgramListing>
+		create trigger passwd_utr
+		..........
+		referencing old as o new as n
+		  for each row (statement, statement, statement, procedure,
+		...... all PL/pgSQL syntax allowed );
+</ProgramListing>
+with a syntax to modify the new tuple in memory.
+
+<Note>
+<Title>Vadim's Note</Title>
+<Para>
+Yes. Statement level triggers give the same functionality as rewrite 
+i/u/d rules. We could let them to return something special to skip 
+user' i/u/d itself, isn't it the same as INSTEAD ?
+</Para>
+</Note>
+
+</Para>
+</ListItem>
+</ItemizedList>
 
 </Chapter>
