@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.25 1997/03/18 20:15:39 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.26 1997/03/25 02:37:21 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -105,8 +105,12 @@ struct EnvironmentOptions
 	const char *envName, *pgName;
 	} EnvironmentOptions[] =
 	{
-		{ "PG_DATEFORMAT",	"pg_dateformat" },
-		{ "PG_FLOATFORMAT",	"pg_floatformat" },
+		{ "PG_DATE",	"date" },
+		{ "PG_TIME",	"time" },
+		{ "PG_FLOAT",	"float" },
+		{ "PG_LANG",	"language" },
+		{ "PG_TZONE",	"timezone" },
+		{ "PG_MONEY",	"money" },
 		{ NULL }
 	};
 	

@@ -4,7 +4,7 @@
 #    Makefile for tcop
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/tcop/Makefile,v 1.8 1996/11/18 02:26:55 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/backend/tcop/Makefile,v 1.9 1997/03/25 02:35:22 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -24,7 +24,7 @@ ifeq ($(CC), gcc)
 CFLAGS+= -Wno-error
 endif
 
-OBJS= aclchk.o dest.o fastpath.o postgres.o pquery.o utility.o
+OBJS= aclchk.o dest.o fastpath.o postgres.o pquery.o utility.o variable.o
 
 all: SUBSYS.o
 
