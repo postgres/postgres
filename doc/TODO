@@ -5,7 +5,7 @@ TODO list for PostgreSQL
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Fri Aug 27 00:34:33 EDT 2004
+Last updated:		Mon Aug 30 12:08:12 EDT 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web site, http://www.PostgreSQL.org.
 
@@ -499,7 +499,6 @@ Clients
   This would allow non-psql clients to pull the same information out of
   the database as psql.
 
-* Fix oid2name and dbsize for tablespaces
 * Consistently display privilege information for all objects in psql
 
 * pg_dump
