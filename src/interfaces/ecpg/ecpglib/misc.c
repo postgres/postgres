@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.19 2004/03/14 12:16:30 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.20 2004/03/14 14:47:33 momjian Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -118,7 +118,7 @@ ECPGinit(const struct connection * con, const char *connection_name, const int l
 }
 
 #ifdef ENABLE_THREAD_SAFETY
-static void *ecpg_sqlca_key_destructor(void *arg)
+static void ecpg_sqlca_key_destructor(void *arg)
 {
   if( arg != NULL )
     free(arg); /* sqlca structure allocated in ECPGget_sqlca */
