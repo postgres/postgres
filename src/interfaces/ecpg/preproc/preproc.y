@@ -284,7 +284,7 @@ make_name(void)
 %type  <str>	CreateAsElement OptCreateAs CreateAsList CreateAsStmt
 %type  <str>	OptUnder key_reference comment_text ConstraintDeferrabilitySpec
 %type  <str>    key_match ColLabel SpecialRuleRelation ColId columnDef
-%type  <str>    ColConstraint ColConstraintElem NumericOnly FloatOnly
+%type  <str>    ColConstraint ColConstraintElem
 %type  <str>    OptTableElementList OptTableElement TableConstraint
 %type  <str>    ConstraintElem key_actions ColQualList TokenId DropSchemaStmt
 %type  <str>    target_list target_el update_target_list alias_clause
@@ -329,41 +329,41 @@ make_name(void)
 %type  <str>    OptSeqElem TriggerForSpec TriggerForOpt TriggerForType
 %type  <str>	DropTrigStmt TriggerOneEvent TriggerEvents RuleActionStmt
 %type  <str>    TriggerActionTime CreateTrigStmt DropPLangStmt PLangTrusted
-%type  <str>    CreatePLangStmt IntegerOnly TriggerFuncArgs TriggerFuncArg
+%type  <str>    CreatePLangStmt TriggerFuncArgs TriggerFuncArg
 %type  <str>    ViewStmt LoadStmt CreatedbStmt createdb_opt_encoding
 %type  <str>	createdb_opt_location opt_encoding OptInherit Geometric
 %type  <str>    DropdbStmt ClusterStmt grantee RevokeStmt Bit bit
-%type  <str>	GrantStmt privileges operation_commalist operation
-%type  <str>	opt_cursor opt_lmode ConstraintsSetStmt comment_tg
+%type  <str>	GrantStmt privileges operation_commalist operation PosAllConst
+%type  <str>	opt_cursor opt_lmode ConstraintsSetStmt comment_tg AllConst
 %type  <str>	case_expr when_clause_list case_default case_arg when_clause
 %type  <str>    select_clause opt_select_limit select_limit_value ConstraintTimeSpec
 %type  <str>    select_offset_value ReindexStmt join_type opt_only opt_boolean
 %type  <str>	join_qual update_list AlterSchemaStmt joined_table
 %type  <str>	opt_level opt_lock lock_type users_in_new_group_clause
-%type  <str>    OptConstrFromTable comment_op OptTempTableName
+%type  <str>    OptConstrFromTable comment_op OptTempTableName StringConst
 %type  <str>    constraints_set_list constraints_set_namelist comment_fn
 %type  <str>	constraints_set_mode comment_type comment_cl comment_ag
 %type  <str>	CreateGroupStmt AlterGroupStmt DropGroupStmt key_delete
-%type  <str>	opt_force key_update CreateSchemaStmt
-%type  <str>    SessionList SessionClause SetSessionStmt
+%type  <str>	opt_force key_update CreateSchemaStmt PosIntStringConst
+%type  <str>    SessionList SessionClause SetSessionStmt IntConst PosIntConst
 
 %type  <str>	ECPGWhenever ECPGConnect connection_target ECPGOpen
 %type  <str>	indicator ECPGExecute ECPGPrepare ecpg_using
 %type  <str>    storage_clause opt_initializer c_anything blockstart
 %type  <str>    blockend variable_list variable c_thing c_term
-%type  <str>	opt_pointer cvariable ECPGDisconnect dis_name storage_modifier
+%type  <str>	opt_pointer ECPGDisconnect dis_name storage_modifier
 %type  <str>	stmt ECPGRelease execstring server_name
 %type  <str>	connection_object opt_server opt_port c_stuff opt_reference
 %type  <str>    user_name opt_user char_variable ora_user ident
 %type  <str>    db_prefix server opt_options opt_connection_name c_list
 %type  <str>	ECPGSetConnection cpp_line ECPGTypedef c_args ECPGKeywords
-%type  <str>	enum_type civariableonly ECPGCursorStmt ECPGDeallocate
+%type  <str>	enum_type civar civarind ECPGCursorStmt ECPGDeallocate
 %type  <str>	ECPGFree ECPGDeclare ECPGVar opt_at enum_definition
 %type  <str>    struct_type s_struct declaration declarations variable_declarations
 %type  <str>    s_union union_type ECPGSetAutocommit on_off
 %type  <str>	ECPGAllocateDescr ECPGDeallocateDescr symbol opt_symbol
 %type  <str>	ECPGGetDescriptorHeader ECPGColLabel ECPGTypeName
-%type  <str>	ECPGLabelTypeName ECPGColId
+%type  <str>	ECPGLabelTypeName ECPGColId variablelist cvariable
 
 %type  <descriptor> ECPGFetchDescStmt ECPGGetDescriptor
 
@@ -620,7 +620,7 @@ AlterUserStmt:  ALTER USER UserId user_createdb_clause
 				{
 					$$ = cat_str(5, make_str("alter user"), $3, $4, $5, $6);
 				}
-			| ALTER USER UserId WITH PASSWORD Sconst
+			| ALTER USER UserId WITH PASSWORD StringConst
 				user_createdb_clause
 				user_createuser_clause user_valid_clause
 				{
@@ -641,11 +641,11 @@ DropUserStmt:  DROP USER user_list
 				}
 		;
 
-user_passwd_clause:  PASSWORD Sconst	{ $$ = cat2_str(make_str("password") , $2); }
+user_passwd_clause:  PASSWORD StringConst	{ $$ = cat2_str(make_str("password") , $2); }
 			| /*EMPTY*/	{ $$ = EMPTY; }
 		;
 
-sysid_clause:	SYSID Iconst		{ if (atoi($2) <= 0)
+sysid_clause:	SYSID PosIntConst	{ if (atoi($2) <= 0)
 						mmerror(ET_ERROR, "sysid must be positive");
 
 					  $$ = cat2_str(make_str("sysid"), $2); }
@@ -691,7 +691,7 @@ user_group_clause:  IN GROUP user_list
 			| /*EMPTY*/		{ $$ = EMPTY; }
 		;
 
-user_valid_clause:  VALID UNTIL Sconst			{ $$ = cat2_str(make_str("valid until"), $3); }
+user_valid_clause:  VALID UNTIL StringConst			{ $$ = cat2_str(make_str("valid until"), $3); }
 			| /*EMPTY*/			{ $$ = EMPTY; }
 		;
 
@@ -848,11 +848,7 @@ opt_level:  READ COMMITTED      { $$ = make_str("read committed"); }
 
 
 var_value:  opt_boolean		{ $$ = $1; }
-		| Sconst		{ $$ = $1; }
-		| Iconst		{ $$ = $1; }
-		| '-' Iconst		{ $$ = cat2_str(make_str("-"), $2); }
-		| Fconst		{ $$ = $1; }
-		| '-' Fconst		{ $$ = cat2_str(make_str("-"), $2); }
+		| AllConst		{ $$ = $1; }
 		| name_list		{ 
 					  if (strlen($1) == 0)
 						mmerror(ET_ERROR, "SET must have at least one argument.");
@@ -868,12 +864,12 @@ opt_boolean:  TRUE_P 		{ $$ = make_str("true"); }
 		| OFF		{ $$ = make_str("off"); }
 		;
 
-zone_value:  Sconst			{ $$ = $1; }
+zone_value:  StringConst			{ $$ = $1; }
 		| DEFAULT		{ $$ = make_str("default"); }
 		| LOCAL			{ $$ = make_str("local"); }
 		;
 
-opt_encoding:	Sconst	 	{ $$ = $1; }
+opt_encoding:	StringConst	 	{ $$ = $1; }
 		| DEFAULT       { $$ = make_str("default"); }
 		| /*EMPTY*/     { $$ = EMPTY; }
 		;
@@ -1037,7 +1033,7 @@ copy_dirn:	TO
  * used depends on the direction. (It really doesn't make sense to copy from
  * stdout. We silently correct the "typo".		 - AY 9/94
  */
-copy_file_name:  Sconst					{ $$ = $1; }
+copy_file_name:  StringConst					{ $$ = $1; }
 		| STDIN					{ $$ = make_str("stdin"); }
 		| STDOUT				{ $$ = make_str("stdout"); }
 		;
@@ -1053,7 +1049,7 @@ opt_with_copy:	WITH OIDS				{ $$ = make_str("with oids"); }
 /*
  * the default copy delimiter is tab but the user can configure it
  */
-copy_delimiter:  opt_using DELIMITERS Sconst		{ $$ = cat_str(3, $1, make_str("delimiters"), $3); }
+copy_delimiter:  opt_using DELIMITERS StringConst		{ $$ = cat_str(3, $1, make_str("delimiters"), $3); }
 		| /*EMPTY*/				{ $$ = EMPTY; }
 		;
 
@@ -1061,7 +1057,7 @@ opt_using:	USING		{ $$ = make_str("using"); }
 		| /* EMPTY */	{ $$ = EMPTY; }
 		;
 
-copy_null:	WITH NULL_P AS Sconst	{ $$ = cat2_str(make_str("with null as"), $4); }
+copy_null:	WITH NULL_P AS StringConst	{ $$ = cat2_str(make_str("with null as"), $4); }
 		| /* EMPTY */   { $$ = EMPTY; }
 		;
 
@@ -1329,7 +1325,7 @@ OptSeqList:  OptSeqList OptSeqElem
 			|	{ $$ = EMPTY; }
 		;
 
-OptSeqElem:  CACHE IntegerOnly
+OptSeqElem:  CACHE IntConst
 				{
 					$$ = cat2_str(make_str("cache"), $2);
 				}
@@ -1337,45 +1333,21 @@ OptSeqElem:  CACHE IntegerOnly
 				{
 					$$ = make_str("cycle");
 				}
-			| INCREMENT IntegerOnly
+			| INCREMENT IntConst
 				{
 					$$ = cat2_str(make_str("increment"), $2);
 				}
-			| MAXVALUE IntegerOnly
+			| MAXVALUE IntConst
 				{
 					$$ = cat2_str(make_str("maxvalue"), $2);
 				}
-			| MINVALUE IntegerOnly
+			| MINVALUE IntConst
 				{
 					$$ = cat2_str(make_str("minvalue"), $2);
 				}
-			| START IntegerOnly
+			| START IntConst
 				{
 					$$ = cat2_str(make_str("start"), $2);
-				}
-		;
-
-NumericOnly:  FloatOnly         { $$ = $1; }
-		| IntegerOnly   { $$ = $1; }
-
-FloatOnly:  Fconst
-                               {
-                                       $$ = $1;
-                               }
-                       | '-' Fconst
-                               {
-                                       $$ = cat2_str(make_str("-"), $2);
-                               }
-               ;
-
-
-IntegerOnly:  Iconst
-				{
-					$$ = $1;
-				}
-			| '-' Iconst
-				{
-					$$ = cat2_str(make_str("-"), $2);
 				}
 		;
 
@@ -1387,8 +1359,8 @@ IntegerOnly:  Iconst
  *
  *****************************************************************************/
 
-CreatePLangStmt:  CREATE PLangTrusted PROCEDURAL LANGUAGE Sconst 
-			HANDLER def_name LANCOMPILER Sconst
+CreatePLangStmt:  CREATE PLangTrusted PROCEDURAL LANGUAGE StringConst 
+			HANDLER def_name LANCOMPILER StringConst
 			{
 				$$ = cat_str(8, make_str("create"), $2, make_str("precedural language"), $5, make_str("handler"), $7, make_str("langcompiler"), $9);
 			}
@@ -1397,7 +1369,7 @@ CreatePLangStmt:  CREATE PLangTrusted PROCEDURAL LANGUAGE Sconst
 PLangTrusted:		TRUSTED { $$ = make_str("trusted"); }
 			|	{ $$ = EMPTY; }
 
-DropPLangStmt:  DROP PROCEDURAL LANGUAGE Sconst
+DropPLangStmt:  DROP PROCEDURAL LANGUAGE StringConst
 			{
 				$$ = cat2_str(make_str("drop procedural language"), $4);
 			}
@@ -1472,15 +1444,10 @@ TriggerFuncArgs:  TriggerFuncArg
 				{ $$ = EMPTY; }
 		;
 
-TriggerFuncArg:  Iconst
+TriggerFuncArg:  PosAllConst
 				{
 					$$ = $1;
 				}
-			| Fconst
-				{
-					$$ = $1;
-				}
-			| Sconst	{  $$ = $1; }
 			| ColId		{  $$ = $1; }
 		;
 
@@ -1575,8 +1542,7 @@ def_elem:  def_name '=' def_arg	{
 def_arg:  func_return		{  $$ = $1; }
 		| TokenId	{  $$ = $1; }
 		| all_Op	{  $$ = $1; }
-		| NumericOnly	{  $$ = $1; }
-		| Sconst	{  $$ = $1; }
+		| AllConst	{  $$ = $1; }
 		;
 
 /*****************************************************************************
@@ -1671,8 +1637,7 @@ direction:	FORWARD		{ $$ = make_str("forward"); }
 				}
 		;
 
-fetch_how_many:   Iconst        { $$ = $1; }
-		| '-' Iconst    { $$ = cat2_str(make_str("-"), $2); }
+fetch_how_many:   IntConst        { $$ = $1; }
 		| ALL		{ $$ = make_str("all"); }
 		| NEXT		{ $$ = make_str("next"); }
 		| PRIOR		{ $$ = make_str("prior"); }
@@ -1739,7 +1704,7 @@ comment_op:    OPERATOR		{ $$ = make_str("operator"); }
 
 comment_tg:    TRIGGER		{ $$ = make_str("trigger"); }
 
-comment_text:    Sconst		{ $$ = $1; }
+comment_text:    StringConst		{ $$ = $1; }
                | NULL_P		{ $$ = make_str("null"); }
                ;
 
@@ -1953,7 +1918,7 @@ RecipeStmt:  EXECUTE RECIPE recipe_name
  *****************************************************************************/
 
 ProcedureStmt:	CREATE FUNCTION func_name func_args
-			 RETURNS func_return AS func_as LANGUAGE Sconst opt_with
+			 RETURNS func_return AS func_as LANGUAGE StringConst opt_with
 				{
 					$$ = cat_str(10, make_str("create function"), $3, $4, make_str("returns"), $6, make_str("as"), $8, make_str("language"), $10, $11);
 				}
@@ -1998,8 +1963,8 @@ opt_arg:  IN    { $$ = make_str("in"); }
 		}
 	;
 
-func_as: Sconst				{ $$ = $1; }
-		| Sconst ',' Sconst	{ $$ = cat_str(3, $1, make_str(","), $3); }
+func_as: StringConst				{ $$ = $1; }
+		| StringConst ',' StringConst	{ $$ = cat_str(3, $1, make_str(","), $3); }
 
 func_return:  Typename
 				{
@@ -2292,19 +2257,12 @@ CreatedbStmt:  CREATE DATABASE database_name WITH createdb_opt_location createdb
 			}
 		;
 
-createdb_opt_location:  LOCATION '=' Sconst	{ $$ = cat2_str(make_str("location ="), $3); }
+createdb_opt_location:  LOCATION '=' StringConst	{ $$ = cat2_str(make_str("location ="), $3); }
 		| LOCATION '=' DEFAULT		{ $$ = make_str("location = default"); }
 		| /*EMPTY*/			{ $$ = EMPTY; }
 		;
 
-createdb_opt_encoding:  ENCODING '=' Sconst  
-			{
-#ifndef MULTIBYTE
-				mmerror(ET_ERROR, "Multi-byte support is not enabled.");
-#endif
-				$$ = cat2_str(make_str("encoding ="), $3);
-			}
-		| ENCODING '=' Iconst  
+createdb_opt_encoding:  ENCODING '=' PosIntStringConst  
 			{
 #ifndef MULTIBYTE
 				mmerror(ET_ERROR, "Multi-byte support is not enabled.");
@@ -2732,12 +2690,12 @@ opt_select_limit:      LIMIT select_limit_value ',' select_offset_value
                        { $$ = EMPTY; }
                ;
 
-select_limit_value:	Iconst	{ $$ = $1; }
+select_limit_value:	PosIntConst	{ $$ = $1; }
 	          	| ALL	{ $$ = make_str("all"); }
 			| PARAM { $$ = make_name(); }
                ;
 
-select_offset_value:  	Iconst	{ $$ = $1; }
+select_offset_value:  	PosIntConst	{ $$ = $1; }
 			| PARAM { $$ = make_name(); }
                ;
 
@@ -2986,7 +2944,7 @@ opt_array_bounds:  '[' ']' opt_array_bounds
                         }
 		;
 
-Iresult:	Iconst			{ $$ = atol($1); }
+Iresult:	PosIntConst		{ $$ = atol($1); }
 	|	'(' Iresult ')'		{ $$ = $2; }
 	|	Iresult '+' Iresult	{ $$ = $1 + $3; }
 	|	Iresult '-' Iresult	{ $$ = $1 - $3; }
@@ -3048,7 +3006,7 @@ Numeric:  FLOAT opt_float
 
 Geometric:  PATH_P 	{ $$ = make_str("path"); };
 
-opt_float:  '(' Iconst ')'
+opt_float:  '(' PosIntConst ')'
 				{
 					if (atol($2) < 1)
 						mmerror(ET_ERROR, "precision for FLOAT must be at least 1");
@@ -3062,7 +3020,7 @@ opt_float:  '(' Iconst ')'
 				}
 		;
 
-opt_numeric:  '(' Iconst ',' Iconst ')'
+opt_numeric:  '(' PosIntConst ',' PosIntConst ')'
 				{
 					if (atol($2) < 1 || atol($2) > NUMERIC_MAX_PRECISION) {
 						sprintf(errortext, "NUMERIC precision %s must be between 1 and %d", $2, NUMERIC_MAX_PRECISION);
@@ -3074,7 +3032,7 @@ opt_numeric:  '(' Iconst ',' Iconst ')'
 					}
 					$$ = cat_str(5, make_str("("), $2, make_str(","), $4, make_str(")"));
 				}
-		| '(' Iconst ')'
+		| '(' PosIntConst ')'
 				{
 					if (atol($2) < 1 || atol($2) > NUMERIC_MAX_PRECISION) {
 						sprintf(errortext, "NUMERIC precision %s must be between 1 and %d", $2, NUMERIC_MAX_PRECISION);
@@ -3088,7 +3046,7 @@ opt_numeric:  '(' Iconst ',' Iconst ')'
 				}
 		;
 
-opt_decimal:  '(' Iconst ',' Iconst ')'
+opt_decimal:  '(' PosIntConst ',' PosIntConst ')'
 				{
 					if (atol($2) < 1 || atol($2) > NUMERIC_MAX_PRECISION) {
 						sprintf(errortext, "NUMERIC precision %s must be between 1 and %d", $2, NUMERIC_MAX_PRECISION);
@@ -3100,7 +3058,7 @@ opt_decimal:  '(' Iconst ',' Iconst ')'
 					}
 					$$ = cat_str(5, make_str("("), $2, make_str(","), $4, make_str(")"));
 				}
-		| '(' Iconst ')'
+		| '(' PosIntConst ')'
 				{
 					if (atol($2) < 1 || atol($2) > NUMERIC_MAX_PRECISION) {
 						sprintf(errortext, "NUMERIC precision %s must be between 1 and %d", $2, NUMERIC_MAX_PRECISION);
@@ -3118,7 +3076,7 @@ opt_decimal:  '(' Iconst ',' Iconst ')'
  * SQL92 bit-field data types
  * The following implements BIT() and BIT VARYING().
  */
-Bit:  bit '(' Iconst ')'
+Bit:  bit '(' PosIntConst ')'
                                 {
                                         $$ = cat_str(4, $1, make_str("("), $3, make_str(")"));
                                         if (atol($3) < 1)
@@ -3149,7 +3107,7 @@ bit:  BIT opt_varying
  * The following implements CHAR() and VARCHAR().
  *								- ay 6/95
  */
-Character:  character '(' Iconst ')'
+Character:  character '(' PosIntConst ')'
 				{
 					if (atol($3) < 1)
 					{
@@ -3446,8 +3404,6 @@ a_expr:  c_expr
 				}
 		| row_expr
 				{       $$ = $1; }
-		| cinputvariable
-			        { $$ = make_str("?"); }
 		;
 
 /* Restricted expressions
@@ -3506,8 +3462,6 @@ b_expr:  c_expr
 				{	$$ = cat2_str($1, $2); }
 		| b_expr Op
 				{	$$ = cat2_str($1, $2); }
-		| civariableonly
-			        { 	$$ = $1; }
 		;
 
 /*
@@ -3544,7 +3498,7 @@ c_expr:  attr
 				{	$$ = make_str("current_date"); }
 		| CURRENT_TIME
 				{	$$ = make_str("current_time"); }
-		| CURRENT_TIME '(' Iconst ')'
+		| CURRENT_TIME '(' PosIntConst ')'
 				{
 					if (atol($3) != 0)
 					{
@@ -3556,7 +3510,7 @@ c_expr:  attr
 				}
 		| CURRENT_TIMESTAMP
 				{	$$ = make_str("current_timestamp"); }
-		| CURRENT_TIMESTAMP '(' Iconst ')'
+		| CURRENT_TIMESTAMP '(' PosIntConst ')'
 				{
 					if (atol($3) != 0)
 					{
@@ -3622,8 +3576,6 @@ extract_list:  extract_arg FROM a_expr
 				}
 		| /* EMPTY */
 				{	$$ = EMPTY; }
-		| cinputvariable
-			        { $$ = make_str("?"); }
 		;
 
 extract_arg:  datetime		{ $$ = $1; }
@@ -3835,28 +3787,20 @@ index_name:				ColId			{ $$ = $1; };
 name:					ColId			{ $$ = $1; };
 func_name:				ColId			{ $$ = $1; };
 
-file_name:				Sconst			{ $$ = $1; };
+file_name:				StringConst			{ $$ = $1; };
 
 /* Constants
  * Include TRUE/FALSE for SQL3 support. - thomas 1997-10-24
  */
-AexprConst:  Iconst
+AexprConst:  PosAllConst
 				{
 					$$ = $1;
 				}
-		| Fconst
-				{
-					$$ = $1;
-				}
-		| Sconst
-				{
-					$$ = $1;
-				}
-		| ConstTypename Sconst
+		| ConstTypename StringConst
 				{
 					$$ = cat2_str($1, $2);
 				}
-		| ConstInterval Sconst opt_interval 
+		| ConstInterval StringConst opt_interval 
 				{
 					$$ = cat_str(3, $1, $2, $3);
 				}
@@ -3874,6 +3818,8 @@ AexprConst:  Iconst
 				{
 					$$ = make_str("null");
 				}
+		| civarind
+			        { $$ = make_str("?"); }
 		;
 
 ParamNo:  PARAM opt_indirection
@@ -3892,6 +3838,36 @@ Sconst:  SCONST                                 {
 							$$[strlen($1)+1]='\'';
 							free($1);
 						}
+PosIntConst:	Iconst		{ $$ = $1; }
+		| civar		{ $$ = make_str("?"); }
+		;
+
+IntConst:	PosIntConst		{ $$ = $1; }
+		| '-' PosIntConst	{ $$ = cat2_str(make_str("-"), $2); }
+		;
+
+StringConst:	Sconst		{ $$ = $1; }
+		| civar		{ $$ = make_str("?"); }
+		;
+
+PosIntStringConst:	Iconst		{ $$ = $1; }
+			| Sconst          { $$ = $1; }  
+			| civar		{ $$ = make_str("?"); }
+			;
+AllConst:	Sconst		{ $$ = $1; }
+		| Fconst	{ $$ = $1; }
+		| Iconst        { $$ = $1; }
+		| '-' Fconst	{ $$ = cat2_str(make_str("-"), $2); }
+		| '-' Iconst    { $$ = cat2_str(make_str("-"), $2); }
+		| civar		{ $$ = make_str("?"); }
+		;
+
+PosAllConst:	Sconst  	{ $$ = $1; }
+		| Fconst	{ $$ = $1; }
+		| Iconst        { $$ = $1; }
+		| civar 	{ $$ = make_str("?"); }
+		;
+
 UserId:  ColId                                  { $$ = $1;};
 
 /* Column identifier
@@ -3987,11 +3963,7 @@ connection_target: database_name opt_server opt_port
 	
 		  $$ = make3_str(make3_str(make_str("\""), $1, make_str(":")), $3, make3_str(make3_str($4, make_str("/"), $6),  $7, make_str("\"")));
 		}
-	| char_variable
-                {
-		  $$ = $1;
-		}
-	| Sconst
+	| StringConst
 		{
 		  $$ = mm_strdup($1);
 		  $$[0] = '\"';
@@ -4034,7 +4006,7 @@ server_name: ColId   { $$ = $1; }
         | ColId '.' server_name { $$ = make3_str($1, make_str("."), $3); }
 	| IP			{ $$ = make_name(); }
 
-opt_port: ':' Iconst { $$ = make2_str(make_str(":"), $2); }
+opt_port: ':' PosIntConst { $$ = make2_str(make_str(":"), $2); }
         | /* empty */ { $$ = EMPTY; }
 
 opt_connection_name: AS connection_target { $$ = $2; }
@@ -4065,8 +4037,7 @@ user_name: UserId       { if ($1[0] == '\"')
 			  else
 				$$ = make3_str(make_str("\""), $1, make_str("\""));
 			}
-        | char_variable { $$ = $1; }
-        | SCONST        { $$ = make3_str(make_str("\""), $1, make_str("\"")); }
+        | StringConst        { $$ = make3_str(make_str("\""), $1, make_str("\"")); }
 
 char_variable: cvariable
 		{ /* check if we have a char variable */
@@ -4528,7 +4499,8 @@ ecpg_using: /* empty */		{ $$ = EMPTY; }
 				}
 	;
 
-variablelist: cinputvariable | cinputvariable ',' variablelist;
+variable: civarind | civar 
+variablelist: variable | variable ',' variablelist;
 
 /*
  * As long as the prepare statement is not supported by the backend, we will
@@ -5237,12 +5209,18 @@ c_args: /* empty */		{ $$ = EMPTY; }
 	| c_list		{ $$ = $1; }
 	;
 
-coutputvariable : cvariable indicator
+coutputvariable: cvariable indicator
 	{
-		add_variable(&argsresult, find_variable($1), ($2 == NULL) ? &no_indicator : find_variable($2)); 
-	};
+		add_variable(&argsresult, find_variable($1), find_variable($2)); 
+	}
+	| cvariable
+	{
+		add_variable(&argsresult, find_variable($1), &no_indicator); 
+	}
+	;
 
-cinputvariable : cvariable indicator
+
+civarind: cvariable indicator
 	{
 		if ($2 != NULL && (find_variable($2))->type->typ == ECPGt_array)
 			mmerror(ET_ERROR, "arrays of indicators are not allowed on input");
@@ -5250,16 +5228,15 @@ cinputvariable : cvariable indicator
 		add_variable(&argsinsert, find_variable($1), ($2 == NULL) ? &no_indicator : find_variable($2)); 
 	};
 
-civariableonly : cvariable
+civar: cvariable
 	{
 		add_variable(&argsinsert, find_variable($1), &no_indicator); 
-		$$ = make_str("?");
+		$$ = $1;
 	};
 
-cvariable: CVARIABLE			{ $$ = $1; };
+cvariable: CVARIABLE	{ $$ = $1; }
 
-indicator: /* empty */			{ $$ = NULL; }
-	| cvariable		 	{ check_indicator((find_variable($1))->type); $$ = $1; }
+indicator: CVARIABLE		 	{ check_indicator((find_variable($1))->type); $$ = $1; }
 	| SQL_INDICATOR cvariable 	{ check_indicator((find_variable($2))->type); $$ = $2; }
 	| SQL_INDICATOR name		{ check_indicator((find_variable($2))->type); $$ = $2; }
 	;
@@ -5302,7 +5279,7 @@ c_thing:	c_anything	{ $$ = $1; }
 
 c_anything:  IDENT 	{ $$ = $1; }
 	| CSTRING	{ $$ = make3_str(make_str("\""), $1, make_str("\"")); }
-	| Iconst	{ $$ = $1; }
+	| PosIntConst	{ $$ = $1; }
 	| Fconst	{ $$ = $1; }
 	| Sconst	{ $$ = $1; }
 	| '*'		{ $$ = make_str("*"); }

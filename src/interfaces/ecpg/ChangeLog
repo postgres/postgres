@@ -960,5 +960,10 @@ Wed Oct  4 14:36:51 CEST 2000
 Wed Oct 11 16:49:36 CEST 2000
 
 	- Synced preproc.y with gram.y.
+
+Thu Oct 12 20:13:00 CEST 2000
+
+	- Changed parser to accept a variable instead of a constant wherever
+	  possible.
 	- Set ecpg version to 2.8.0. 
 	- Set library version to 3.2.0.

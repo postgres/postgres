@@ -18,7 +18,7 @@ exec sql begin declare section;
 					birthinfo ind_birth;
 				  } ind_personal;
 	int *ind_married = NULL;
-	int children;
+	int children, movevalue = 2;
 	int ind_children;
 	str *married = NULL;
 	char *wifesname="Petra";
@@ -53,8 +53,11 @@ exec sql end declare section;
 	strcpy(msg, "open");
 	exec sql open cur;
 
-	exec sql whenever not found do break;
+	strcpy(msg, "move");
+	exec sql move :movevalue in cur;
 
+	exec sql whenever not found do break;
+	
 	while (1) {
 		strcpy(msg, "fetch");
 		exec sql fetch from cur into :personal:ind_personal, :married:ind_married, :children:ind_children;
