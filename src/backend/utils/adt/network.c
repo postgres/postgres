@@ -3,7 +3,7 @@
  *	is for IP V4 CIDR notation, but prepared for V6: just
  *	add the necessary bits where the comments indicate.
  *
- *	$Id: network.c,v 1.5 1999/01/01 04:17:13 momjian Exp $
+ *	$Id: network.c,v 1.6 1999/02/24 03:17:05 momjian Exp $
  *	Jon Postel RIP 16 Oct 1998
  */
 
@@ -356,7 +356,12 @@ network_broadcast(inet *ip)
 	if (ip_family(ip) == AF_INET)
 	{
 		/* It's an IP V4 address: */
-		int	addr = htonl(ntohl(ip_v4addr(ip)) | (0xffffffff >> ip_bits(ip)));
+		int addr;
+		unsigned long mask = 0xffffffff;
+
+		if (ip_bits(ip) < 32)
+			mask >>= ip_bits(ip);
+		addr = htonl(ntohl(ip_v4addr(ip)) | mask);
 
 		if (inet_net_ntop(AF_INET, &addr, 32, tmp, sizeof(tmp)) == NULL)
 		{
