@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.76 2001/06/05 17:13:51 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.77 2001/07/16 17:57:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,6 +37,8 @@ static void set_plain_rel_pathlist(Query *root, RelOptInfo *rel,
 static void set_inherited_rel_pathlist(Query *root, RelOptInfo *rel,
 									   Index rti, RangeTblEntry *rte,
 									   List *inheritlist);
+static void set_subquery_pathlist(Query *root, RelOptInfo *rel,
+								  Index rti, RangeTblEntry *rte);
 static RelOptInfo *make_one_rel_by_joins(Query *root, int levels_needed,
 					  List *initial_rels);
 
@@ -101,94 +103,7 @@ set_base_rel_pathlists(Query *root)
 		if (rel->issubquery)
 		{
 			/* Subquery --- generate a separate plan for it */
-
-			/*
-			 * If there are any restriction clauses that have been
-			 * attached to the subquery relation, consider pushing them
-			 * down to become HAVING quals of the subquery itself.	(Not
-			 * WHERE clauses, since they may refer to subquery outputs
-			 * that are aggregate results. But planner.c will transfer
-			 * them into the subquery's WHERE if they do not.)  This
-			 * transformation is useful because it may allow us to
-			 * generate a better plan for the subquery than evaluating all
-			 * the subquery output rows and then filtering them.
-			 *
-			 * Currently, we do not push down clauses that contain
-			 * subselects, mainly because I'm not sure it will work
-			 * correctly (the subplan hasn't yet transformed sublinks to
-			 * subselects). Also, if the subquery contains set ops
-			 * (UNION/INTERSECT/EXCEPT) we do not push down any qual
-			 * clauses, since the planner doesn't support quals at the top
-			 * level of a setop.  (With suitable analysis we could try to
-			 * push the quals down into the component queries of the
-			 * setop, but getting it right is not trivial.)
-			 * Non-pushed-down clauses will get evaluated as qpquals of
-			 * the SubqueryScan node.
-			 *
-			 * XXX Are there any cases where we want to make a policy
-			 * decision not to push down, because it'd result in a worse
-			 * plan?
-			 */
-			if (rte->subquery->setOperations == NULL)
-			{
-				/* OK to consider pushing down individual quals */
-				List	   *upperrestrictlist = NIL;
-				List	   *lst;
-
-				foreach(lst, rel->baserestrictinfo)
-				{
-					RestrictInfo *rinfo = (RestrictInfo *) lfirst(lst);
-					Node	   *clause = (Node *) rinfo->clause;
-
-					if (contain_subplans(clause))
-					{
-						/* Keep it in the upper query */
-						upperrestrictlist = lappend(upperrestrictlist, rinfo);
-					}
-					else
-					{
-
-						/*
-						 * We need to replace Vars in the clause (which
-						 * must refer to outputs of the subquery) with
-						 * copies of the subquery's targetlist
-						 * expressions.  Note that at this point, any
-						 * uplevel Vars in the clause should have been
-						 * replaced with Params, so they need no work.
-						 */
-						clause = ResolveNew(clause, rti, 0,
-											rte->subquery->targetList,
-											CMD_SELECT, 0);
-						rte->subquery->havingQual =
-							make_and_qual(rte->subquery->havingQual,
-										  clause);
-
-						/*
-						 * We need not change the subquery's hasAggs or
-						 * hasSublinks flags, since we can't be pushing
-						 * down any aggregates that weren't there before,
-						 * and we don't push down subselects at all.
-						 */
-					}
-				}
-				rel->baserestrictinfo = upperrestrictlist;
-			}
-
-			/* Generate the plan for the subquery */
-			rel->subplan = subquery_planner(rte->subquery,
-											-1.0 /* default case */ );
-
-			/* Copy number of output rows from subplan */
-			rel->tuples = rel->subplan->plan_rows;
-
-			/* Mark rel with estimated output rows, width, etc */
-			set_baserel_size_estimates(root, rel);
-
-			/* Generate appropriate path */
-			add_path(rel, create_subqueryscan_path(rel));
-
-			/* Select cheapest path (pretty easy in this case...) */
-			set_cheapest(rel);
+			set_subquery_pathlist(root, rel, rti, rte);
 		}
 		else if ((inheritlist = expand_inherted_rtentry(root, rti, true))
 				 != NIL)
@@ -353,6 +268,106 @@ set_inherited_rel_pathlist(Query *root, RelOptInfo *rel,
 	set_cheapest(rel);
 }
 
+/*
+ * set_subquery_pathlist
+ *		Build the (single) access path for a subquery RTE
+ */
+static void
+set_subquery_pathlist(Query *root, RelOptInfo *rel,
+					  Index rti, RangeTblEntry *rte)
+{
+	Query	   *subquery = rte->subquery;
+
+	/*
+	 * If there are any restriction clauses that have been attached to the
+	 * subquery relation, consider pushing them down to become HAVING quals
+	 * of the subquery itself.  (Not WHERE clauses, since they may refer to
+	 * subquery outputs that are aggregate results.  But planner.c will
+	 * transfer them into the subquery's WHERE if they do not.)  This
+	 * transformation is useful because it may allow us to generate a better
+	 * plan for the subquery than evaluating all the subquery output rows
+	 * and then filtering them.
+	 *
+	 * There are several cases where we cannot push down clauses:
+	 *
+	 * 1. If the subquery contains set ops (UNION/INTERSECT/EXCEPT) we do not
+	 * push down any qual clauses, since the planner doesn't support quals at
+	 * the top level of a setop.  (With suitable analysis we could try to push
+	 * the quals down into the component queries of the setop, but getting it
+	 * right seems nontrivial.  Work on this later.)
+	 *
+	 * 2. If the subquery has a LIMIT clause we must not push down any quals,
+	 * since that could change the set of rows returned.
+	 *
+	 * 3. We do not push down clauses that contain subselects, mainly because
+	 * I'm not sure it will work correctly (the subplan hasn't yet transformed
+	 * sublinks to subselects).
+	 *
+	 * Non-pushed-down clauses will get evaluated as qpquals of the
+	 * SubqueryScan node.
+	 *
+	 * XXX Are there any cases where we want to make a policy decision not to
+	 * push down, because it'd result in a worse plan?
+	 */
+	if (subquery->setOperations == NULL &&
+		subquery->limitOffset == NULL &&
+		subquery->limitCount == NULL)
+	{
+		/* OK to consider pushing down individual quals */
+		List	   *upperrestrictlist = NIL;
+		List	   *lst;
+
+		foreach(lst, rel->baserestrictinfo)
+		{
+			RestrictInfo *rinfo = (RestrictInfo *) lfirst(lst);
+			Node	   *clause = (Node *) rinfo->clause;
+
+			if (contain_subplans(clause))
+			{
+				/* Keep it in the upper query */
+				upperrestrictlist = lappend(upperrestrictlist, rinfo);
+			}
+			else
+			{
+				/*
+				 * We need to replace Vars in the clause (which must refer to
+				 * outputs of the subquery) with copies of the subquery's
+				 * targetlist expressions.  Note that at this point, any
+				 * uplevel Vars in the clause should have been replaced with
+				 * Params, so they need no work.
+				 */
+				clause = ResolveNew(clause, rti, 0,
+									subquery->targetList,
+									CMD_SELECT, 0);
+				subquery->havingQual = make_and_qual(subquery->havingQual,
+													 clause);
+				/*
+				 * We need not change the subquery's hasAggs or
+				 * hasSublinks flags, since we can't be pushing
+				 * down any aggregates that weren't there before,
+				 * and we don't push down subselects at all.
+				 */
+			}
+		}
+		rel->baserestrictinfo = upperrestrictlist;
+	}
+
+	/* Generate the plan for the subquery */
+	rel->subplan = subquery_planner(subquery,
+									-1.0 /* default case */ );
+
+	/* Copy number of output rows from subplan */
+	rel->tuples = rel->subplan->plan_rows;
+
+	/* Mark rel with estimated output rows, width, etc */
+	set_baserel_size_estimates(root, rel);
+
+	/* Generate appropriate path */
+	add_path(rel, create_subqueryscan_path(rel));
+
+	/* Select cheapest path (pretty easy in this case...) */
+	set_cheapest(rel);
+}
 
 /*
  * make_fromexpr_rel
