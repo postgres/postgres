@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.91 2000/07/05 12:45:26 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.92 2000/09/06 14:15:21 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,9 +74,6 @@ ProcessUtility(Node *parsetree,
 	char	   *commandTag = NULL;
 	char	   *relname;
 	char	   *relationName;
-	char	   *userName;
-
-	userName = GetPgUserName();
 
 	switch (nodeTag(parsetree))
 	{
@@ -200,7 +197,7 @@ ProcessUtility(Node *parsetree,
 					/* close rel, but keep lock until end of xact */
 					heap_close(rel, NoLock);
 #ifndef NO_SECURITY
-					if (!pg_ownercheck(userName, relname, RELNAME))
+					if (!pg_ownercheck(GetUserId(), relname, RELNAME))
 						elog(ERROR, "you do not own class \"%s\"",
 							 relname);
 #endif
@@ -234,7 +231,7 @@ ProcessUtility(Node *parsetree,
 				heap_close(rel, NoLock);
 
 #ifndef NO_SECURITY
-				if (!pg_ownercheck(userName, relname, RELNAME))
+				if (!pg_ownercheck(GetUserId(), relname, RELNAME))
 					elog(ERROR, "you do not own class \"%s\"", relname);
 #endif
 				TruncateRelation(relname);
@@ -299,7 +296,7 @@ ProcessUtility(Node *parsetree,
 					elog(ERROR, "ALTER TABLE: relation \"%s\" is a system catalog",
 						 relname);
 #ifndef NO_SECURITY
-				if (!pg_ownercheck(userName, relname, RELNAME))
+				if (!pg_ownercheck(GetUserId(), relname, RELNAME))
 					elog(ERROR, "permission denied");
 #endif
 
@@ -333,7 +330,6 @@ ProcessUtility(Node *parsetree,
 					renameatt(relname,	/* relname */
 							  stmt->column,		/* old att name */
 							  stmt->newname,	/* new att name */
-							  userName,
 							  stmt->inh);		/* recursive? */
 				}
 			}
@@ -405,7 +401,7 @@ ProcessUtility(Node *parsetree,
 					/* close rel, but keep lock until end of xact */
 					heap_close(rel, NoLock);
 #ifndef NO_SECURITY
-					if (!pg_ownercheck(userName, relname, RELNAME))
+					if (!pg_ownercheck(GetUserId(), relname, RELNAME))
 						elog(ERROR, "you do not own class \"%s\"",
 							 relname);
 #endif
@@ -484,7 +480,7 @@ ProcessUtility(Node *parsetree,
 
 #ifndef NO_SECURITY
 				relname = stmt->object->relname;
-				aclcheck_result = pg_aclcheck(relname, userName, ACL_RU);
+				aclcheck_result = pg_aclcheck(relname, GetUserId(), ACL_RU);
 				if (aclcheck_result != ACLCHECK_OK)
 					elog(ERROR, "%s: %s", relname, aclcheck_error_strings[aclcheck_result]);
 #endif
@@ -529,7 +525,7 @@ ProcessUtility(Node *parsetree,
 							elog(ERROR, "class \"%s\" is a system catalog index",
 								 relname);
 #ifndef NO_SECURITY
-						if (!pg_ownercheck(userName, relname, RELNAME))
+						if (!pg_ownercheck(GetUserId(), relname, RELNAME))
 							elog(ERROR, "%s: %s", relname, aclcheck_error_strings[ACLCHECK_NOT_OWNER]);
 #endif
 						RemoveIndex(relname);
@@ -542,7 +538,7 @@ ProcessUtility(Node *parsetree,
 #ifndef NO_SECURITY
 
 							relationName = RewriteGetRuleEventRel(rulename);
-							aclcheck_result = pg_aclcheck(relationName, userName, ACL_RU);
+							aclcheck_result = pg_aclcheck(relationName, GetUserId(), ACL_RU);
 							if (aclcheck_result != ACLCHECK_OK)
 								elog(ERROR, "%s: %s", relationName, aclcheck_error_strings[aclcheck_result]);
 #endif
@@ -564,7 +560,7 @@ ProcessUtility(Node *parsetree,
 
 							ruleName = MakeRetrieveViewRuleName(viewName);
 							relationName = RewriteGetRuleEventRel(ruleName);
-							if (!pg_ownercheck(userName, relationName, RELNAME))
+							if (!pg_ownercheck(GetUserId(), relationName, RELNAME))
 								elog(ERROR, "%s: %s", relationName, aclcheck_error_strings[ACLCHECK_NOT_OWNER]);
 							pfree(ruleName);
 #endif
@@ -881,7 +877,7 @@ ProcessUtility(Node *parsetree,
 								 relname);
 						}
 #ifndef NO_SECURITY
-						if (!pg_ownercheck(userName, relname, RELNAME))
+						if (!pg_ownercheck(GetUserId(), relname, RELNAME))
 							elog(ERROR, "%s: %s", relname, aclcheck_error_strings[ACLCHECK_NOT_OWNER]);
 #endif
 						ReindexIndex(relname, stmt->force);
@@ -899,7 +895,7 @@ ProcessUtility(Node *parsetree,
 								 relname);
 						}
 #ifndef NO_SECURITY
-						if (!pg_ownercheck(userName, relname, RELNAME))
+						if (!pg_ownercheck(GetUserId(), relname, RELNAME))
 							elog(ERROR, "%s: %s", relname, aclcheck_error_strings[ACLCHECK_NOT_OWNER]);
 #endif
 						ReindexTable(relname, stmt->force);

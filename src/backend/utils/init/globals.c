@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.45 2000/05/31 00:28:32 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.46 2000/09/06 14:15:22 petere Exp $
  *
  * NOTES
  *	  Globals used all over the place should be declared here and not
@@ -54,7 +54,6 @@ char		OutputFileName[MAXPGPATH] = "";
 BackendId	MyBackendId;
 BackendTag	MyBackendTag;
 
-char	   *UserName = NULL;
 char	   *DatabaseName = NULL;
 char	   *DatabasePath = NULL;
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tcopprot.h,v 1.33 2000/08/29 09:36:51 petere Exp $
+ * $Id: tcopprot.h,v 1.34 2000/09/06 14:15:28 petere Exp $
  *
  * OLD COMMENTS
  *	  This file was created so that other c files could get the two
@@ -45,7 +45,7 @@ extern void handle_warn(SIGNAL_ARGS);
 extern void die(SIGNAL_ARGS);
 extern void CancelQuery(void);
 extern int PostgresMain(int argc, char *argv[],
-			 int real_argc, char *real_argv[]);
+			 int real_argc, char *real_argv[], const char *username);
 extern void ResetUsage(void);
 extern void ShowUsage(void);
 extern FILE * StatFp;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.174 2000/08/30 20:30:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.175 2000/09/06 14:15:21 petere Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -817,28 +817,27 @@ usage(char *progname)
 }
 
 /* ----------------------------------------------------------------
- *	PostgresMain
- *		postgres main loop
- *		all backends, interactive or otherwise start here
+ * PostgresMain
+ *     postgres main loop -- all backends, interactive or otherwise start here
  *
- *	argc/argv are the command line arguments to be used.  When being forked
- *	by the postmaster, these are not the original argv array of the process.
- *	real_argc/real_argv point to the original argv array, which is needed by
- *	PS_INIT_STATUS on some platforms.
+ * argc/argv are the command line arguments to be used.  When being forked
+ * by the postmaster, these are not the original argv array of the process.
+ * real_argc/real_argv point to the original argv array, which is needed by
+ * `ps' display on some platforms. username is the (possibly authenticated)
+ * PostgreSQL user name to be used for the session.
  * ----------------------------------------------------------------
  */
 int
-PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
+PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const char * username)
 {
 	int			flag;
 
-	char	   *DBName = NULL;
+	const char	   *DBName = NULL;
 	bool		secure = true;
 	int			errs = 0;
 
 	int			firstchar;
 	StringInfo	parser_input;
-	char	   *userName;
 
 	char	   *remote_host;
 	unsigned short remote_port;
@@ -1244,12 +1243,6 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	pqsignal(SIGTTOU, SIG_DFL);
 	pqsignal(SIGCONT, SIG_DFL);
 
-	/*
-	 * Get user name (needed now in case it is the default database name)
-	 * and check command line validity
-	 */
-	SetPgUserName();
-	userName = GetPgUserName();
 
 	if (IsUnderPostmaster)
 	{
@@ -1274,9 +1267,9 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 		}
 		else if (argc - optind == 1)
 			DBName = argv[optind];
-		else if ((DBName = userName) == NULL)
+		else if ((DBName = username) == NULL)
 		{
-			fprintf(stderr, "%s: USER undefined and no database specified\n",
+			fprintf(stderr, "%s: user name undefined and no database specified\n",
 					argv[0]);
 			proc_exit(0);
 		}
@@ -1361,20 +1354,20 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 		 * references to optarg or getenv() from above will be invalid
 		 * after this call. Better use strdup or something similar.
 		 */
-		init_ps_display(real_argc, real_argv, userName, DBName, remote_host);
+		init_ps_display(real_argc, real_argv, username, DBName, remote_host);
 		set_ps_display("startup");
 	}
 
 	if (Log_connections)
 		elog(DEBUG, "connection: host=%s user=%s database=%s",
-			 remote_host, userName, DBName);
+			 remote_host, username, DBName);
 
 	/*
 	 * general initialization
 	 */
 	if (DebugLvl > 1)
 		elog(DEBUG, "InitPostgres");
-	InitPostgres(DBName);
+	InitPostgres(DBName, username);
 
 #ifdef MULTIBYTE
 	/* set default client encoding */
@@ -1404,7 +1397,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.174 $ $Date: 2000/08/30 20:30:06 $\n");
+		puts("$Revision: 1.175 $ $Date: 2000/09/06 14:15:21 $\n");
 	}
 
 	/*

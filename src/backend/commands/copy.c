@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.121 2000/08/22 04:06:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.122 2000/09/06 14:15:16 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -272,7 +272,6 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
 
 	FILE	   *fp;
 	Relation	rel;
-	extern char *UserName;		/* defined in global.c */
 	const AclMode required_access = from ? ACL_WR : ACL_RD;
 	int			result;
 
@@ -281,7 +280,7 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
 	 */
 	rel = heap_openr(relname, (from ? RowExclusiveLock : AccessShareLock));
 
-	result = pg_aclcheck(relname, UserName, required_access);
+	result = pg_aclcheck(relname, GetUserId(), required_access);
 	if (result != ACLCHECK_OK)
 		elog(ERROR, "%s: %s", relname, aclcheck_error_strings[result]);
 	if (!pipe && !superuser())

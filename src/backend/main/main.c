@@ -8,10 +8,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.29 2000/01/26 05:56:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.30 2000/09/06 14:15:19 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
+#include "postgres.h"
+
+#include <pwd.h>
 #include <unistd.h>
 
 #if defined(__alpha__) && !defined(linux)
@@ -22,7 +25,6 @@
 #undef ASSEMBLER
 #endif
 
-#include "postgres.h"
 #ifdef USE_LOCALE
 #include <locale.h>
 #endif
@@ -100,5 +102,15 @@ main(int argc, char *argv[])
 		exit(BootstrapMain(argc - 1, argv + 1));		/* remove the -boot arg
 														 * from the command line */
 	else
-		exit(PostgresMain(argc, argv, argc, argv));
+	{
+		struct passwd *pw;
+
+		pw = getpwuid(geteuid());
+		if (!pw)
+		{
+			fprintf(stderr, "%s: invalid current euid", argv[0]);
+			exit(1);
+		}
+		exit(PostgresMain(argc, argv, argc, argv, pw->pw_name));
+	}
 }

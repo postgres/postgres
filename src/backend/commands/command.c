@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.97 2000/08/29 04:20:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.98 2000/09/06 14:15:16 petere Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -308,7 +308,7 @@ AlterTableAddColumn(const char *relationName,
 		elog(ERROR, "ALTER TABLE: relation \"%s\" is a system catalog",
 			 relationName);
 #ifndef NO_SECURITY
-	if (!pg_ownercheck(UserName, relationName, RELNAME))
+	if (!pg_ownercheck(GetUserId(), relationName, RELNAME))
 		elog(ERROR, "ALTER TABLE: permission denied");
 #endif
 
@@ -523,7 +523,7 @@ AlterTableAlterColumn(const char *relationName,
 		elog(ERROR, "ALTER TABLE: relation \"%s\" is a system catalog",
 			 relationName);
 #ifndef NO_SECURITY
-	if (!pg_ownercheck(UserName, relationName, RELNAME))
+	if (!pg_ownercheck(GetUserId(), relationName, RELNAME))
 		elog(ERROR, "ALTER TABLE: permission denied");
 #endif
 
@@ -935,7 +935,7 @@ AlterTableDropColumn(const char *relationName,
 		elog(ERROR, "ALTER TABLE: relation \"%s\" is a system catalog",
 			 relationName);
 #ifndef NO_SECURITY
-	if (!pg_ownercheck(UserName, relationName, RELNAME))
+	if (!pg_ownercheck(GetUserId(), relationName, RELNAME))
 		elog(ERROR, "ALTER TABLE: permission denied");
 #endif
 
@@ -1095,7 +1095,7 @@ AlterTableAddConstraint(char *relationName,
 		elog(ERROR, "ALTER TABLE / ADD CONSTRAINT passed invalid constraint.");
 
 #ifndef NO_SECURITY
-	if (!pg_ownercheck(UserName, relationName, RELNAME))
+	if (!pg_ownercheck(GetUserId(), relationName, RELNAME))
 		elog(ERROR, "ALTER TABLE: permission denied");
 #endif
 
@@ -1484,7 +1484,7 @@ AlterTableCreateToastTable(const char *relationName, bool silent)
 	 * permissions checking.  XXX exactly what is appropriate here?
 	 */
 #ifndef NO_SECURITY
-	if (!pg_ownercheck(UserName, relationName, RELNAME))
+	if (!pg_ownercheck(GetUserId(), relationName, RELNAME))
 		elog(ERROR, "ALTER TABLE: permission denied");
 #endif
 
@@ -1723,9 +1723,9 @@ LockTableCommand(LockStmt *lockstmt)
 	rel = heap_openr(lockstmt->relname, NoLock);
 
 	if (lockstmt->mode == AccessShareLock)
-		aclresult = pg_aclcheck(lockstmt->relname, GetPgUserName(), ACL_RD);
+		aclresult = pg_aclcheck(lockstmt->relname, GetUserId(), ACL_RD);
 	else
-		aclresult = pg_aclcheck(lockstmt->relname, GetPgUserName(), ACL_WR);
+		aclresult = pg_aclcheck(lockstmt->relname, GetUserId(), ACL_WR);
 
 	if (aclresult != ACLCHECK_OK)
 		elog(ERROR, "LOCK TABLE: permission denied");

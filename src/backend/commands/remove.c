@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.50 2000/07/04 06:11:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.51 2000/09/06 14:15:16 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,6 @@ RemoveOperator(char *operatorName,		/* operator name */
 	Oid			typeId1 = InvalidOid;
 	Oid			typeId2 = InvalidOid;
 	bool		defined;
-	char	   *userName;
 	char		oprtype;
 
 	if (typeName1)
@@ -88,8 +87,7 @@ RemoveOperator(char *operatorName,		/* operator name */
 	if (HeapTupleIsValid(tup))
 	{
 #ifndef NO_SECURITY
-		userName = GetPgUserName();
-		if (!pg_ownercheck(userName,
+		if (!pg_ownercheck(GetUserId(),
 						   (char *) ObjectIdGetDatum(tup->t_data->t_oid),
 						   OPEROID))
 			elog(ERROR, "RemoveOperator: operator '%s': permission denied",
@@ -257,11 +255,9 @@ RemoveType(char *typeName)		/* type name to be removed */
 	HeapTuple	tup;
 	Oid			typeOid;
 	char	   *shadow_type;
-	char	   *userName;
 
 #ifndef NO_SECURITY
-	userName = GetPgUserName();
-	if (!pg_ownercheck(userName, typeName, TYPENAME))
+	if (!pg_ownercheck(GetUserId(), typeName, TYPENAME))
 		elog(ERROR, "RemoveType: type '%s': permission denied",
 			 typeName);
 #endif
@@ -318,7 +314,6 @@ RemoveFunction(char *functionName,		/* function name to be removed */
 	Relation	relation;
 	HeapTuple	tup;
 	Oid			argList[FUNC_MAX_ARGS];
-	char	   *userName;
 	char	   *typename;
 	int			i;
 
@@ -346,8 +341,7 @@ RemoveFunction(char *functionName,		/* function name to be removed */
 	}
 
 #ifndef NO_SECURITY
-	userName = GetPgUserName();
-	if (!pg_func_ownercheck(userName, functionName, nargs, argList))
+	if (!pg_func_ownercheck(GetUserId(), functionName, nargs, argList))
 	{
 		elog(ERROR, "RemoveFunction: function '%s': permission denied",
 			 functionName);
@@ -388,7 +382,6 @@ RemoveAggregate(char *aggName, char *aggType)
 {
 	Relation	relation;
 	HeapTuple	tup;
-	char	   *userName;
 	Oid			basetypeID = InvalidOid;
 	bool		defined;
 
@@ -413,8 +406,7 @@ RemoveAggregate(char *aggName, char *aggType)
 		basetypeID = 0;
 
 #ifndef NO_SECURITY
-	userName = GetPgUserName();
-	if (!pg_aggr_ownercheck(userName, aggName, basetypeID))
+	if (!pg_aggr_ownercheck(GetUserId(), aggName, basetypeID))
 	{
 		if (aggType)
 		{

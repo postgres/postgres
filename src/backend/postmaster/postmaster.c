@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.164 2000/08/30 14:54:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.165 2000/09/06 14:15:19 petere Exp $
  *
  * NOTES
  *
@@ -1635,11 +1635,11 @@ BackendStartup(Port *port)
 				i;
 
 #ifdef CYR_RECODE
-#define NR_ENVIRONMENT_VBL 6
+#define NR_ENVIRONMENT_VBL 5
 	char		ChTable[80];
 
 #else
-#define NR_ENVIRONMENT_VBL 5
+#define NR_ENVIRONMENT_VBL 4
 #endif
 
 	static char envEntry[NR_ENVIRONMENT_VBL][2 * ARGV_SIZE];
@@ -1655,19 +1655,17 @@ BackendStartup(Port *port)
 	putenv(envEntry[0]);
 	sprintf(envEntry[1], "POSTID=%d", NextBackendTag);
 	putenv(envEntry[1]);
-	sprintf(envEntry[2], "PG_USER=%s", port->user);
+	sprintf(envEntry[2], "PGDATA=%s", DataDir);
 	putenv(envEntry[2]);
-	sprintf(envEntry[3], "PGDATA=%s", DataDir);
+	sprintf(envEntry[3], "IPC_KEY=%d", ipc_key);
 	putenv(envEntry[3]);
-	sprintf(envEntry[4], "IPC_KEY=%d", ipc_key);
-	putenv(envEntry[4]);
 
 #ifdef CYR_RECODE
 	GetCharSetByHost(ChTable, port->raddr.in.sin_addr.s_addr, DataDir);
 	if (*ChTable != '\0')
 	{
-		sprintf(envEntry[5], "PG_RECODETABLE=%s", ChTable);
-		putenv(envEntry[5]);
+		sprintf(envEntry[4], "PG_RECODETABLE=%s", ChTable);
+		putenv(envEntry[4]);
 	}
 #endif
 
@@ -1931,7 +1929,7 @@ DoBackend(Port *port)
 		fprintf(stderr, ")\n");
 	}
 
-	return (PostgresMain(ac, av, real_argc, real_argv));
+	return (PostgresMain(ac, av, real_argc, real_argv, port->user));
 }
 
 /*

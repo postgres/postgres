@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: acl.h,v 1.26 2000/07/31 22:39:02 tgl Exp $
+ * $Id: acl.h,v 1.27 2000/09/06 14:15:31 petere Exp $
  *
  * NOTES
  *	  For backward-compatibility purposes we have to allow there
@@ -197,11 +197,11 @@ extern void ChangeAcl(char *relname, AclItem *mod_aip, unsigned modechg);
 extern AclId get_grosysid(char *groname);
 extern char *get_groname(AclId grosysid);
 
-extern int32 pg_aclcheck(char *relname, char *usename, AclMode mode);
-extern int32 pg_ownercheck(const char *usename, const char *value, int cacheid);
-extern int32 pg_func_ownercheck(char *usename, char *funcname,
+extern int32 pg_aclcheck(char *relname, Oid userid, AclMode mode);
+extern int32 pg_ownercheck(Oid userid, const char *value, int cacheid);
+extern int32 pg_func_ownercheck(Oid userid, char *funcname,
 				   int nargs, Oid *arglist);
-extern int32 pg_aggr_ownercheck(char *usename, char *aggname,
+extern int32 pg_aggr_ownercheck(Oid userid, char *aggname,
 				   Oid basetypeID);
 
 #endif	 /* ACL_H */

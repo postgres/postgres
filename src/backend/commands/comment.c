@@ -281,7 +281,7 @@ CommentRelation(int reltype, char *relname, char *comment)
 	/*** First, check object security ***/
 
 #ifndef NO_SECURITY
-	if (!pg_ownercheck(GetPgUserName(), relname, RELNAME))
+	if (!pg_ownercheck(GetUserId(), relname, RELNAME))
 		elog(ERROR, "you are not permitted to comment on class '%s'", relname);
 #endif
 
@@ -347,7 +347,7 @@ CommentAttribute(char *relname, char *attrname, char *comment)
 	/*** First, check object security ***/
 
 #ifndef NO_SECURITY
-	if (!pg_ownercheck(GetPgUserName(), relname, RELNAME))
+	if (!pg_ownercheck(GetUserId(), relname, RELNAME))
 		elog(ERROR, "you are not permitted to comment on class '%s\'", relname);
 #endif
 
@@ -395,9 +395,8 @@ CommentDatabase(char *database, char *comment)
 	HeapScanDesc scan;
 	Oid			oid;
 	bool		superuser;
-	int4		dba,
-				userid;
-	char	   *username;
+	int4		dba;
+	Oid		userid;
 
 	/*** First find the tuple in pg_database for the database ***/
 
@@ -416,12 +415,11 @@ CommentDatabase(char *database, char *comment)
 
 	/*** Now, fetch user information ***/
 
-	username = GetPgUserName();
-	usertuple = SearchSysCacheTuple(SHADOWNAME, PointerGetDatum(username),
+	userid = GetUserId();
+	usertuple = SearchSysCacheTuple(SHADOWSYSID, ObjectIdGetDatum(userid),
 									0, 0, 0);
 	if (!HeapTupleIsValid(usertuple))
-		elog(ERROR, "current user '%s' does not exist", username);
-	userid = ((Form_pg_shadow) GETSTRUCT(usertuple))->usesysid;
+		elog(ERROR, "invalid user id %u", (unsigned) userid);
 	superuser = ((Form_pg_shadow) GETSTRUCT(usertuple))->usesuper;
 
 	/*** Allow if the userid matches the database dba or is a superuser ***/
@@ -461,16 +459,14 @@ CommentRewrite(char *rule, char *comment)
 
 	HeapTuple	rewritetuple;
 	Oid			oid;
-	char	   *user,
-			   *relation;
+	char	   *relation;
 	int			aclcheck;
 
 	/*** First, validate user ***/
 
 #ifndef NO_SECURITY
-	user = GetPgUserName();
 	relation = RewriteGetRuleEventRel(rule);
-	aclcheck = pg_aclcheck(relation, user, ACL_RU);
+	aclcheck = pg_aclcheck(relation, GetUserId(), ACL_RU);
 	if (aclcheck != ACLCHECK_OK)
 	{
 		elog(ERROR, "you are not permitted to comment on rule '%s'",
@@ -510,13 +506,11 @@ CommentType(char *type, char *comment)
 
 	HeapTuple	typetuple;
 	Oid			oid;
-	char	   *user;
 
 	/*** First, validate user ***/
 
 #ifndef NO_SECURITY
-	user = GetPgUserName();
-	if (!pg_ownercheck(user, type, TYPENAME))
+	if (!pg_ownercheck(GetUserId(), type, TYPENAME))
 	{
 		elog(ERROR, "you are not permitted to comment on type '%s'",
 			 type);
@@ -556,7 +550,6 @@ CommentAggregate(char *aggregate, char *argument, char *comment)
 	Oid			baseoid,
 				oid;
 	bool		defined;
-	char	   *user;
 
 	/*** First, attempt to determine the base aggregate oid ***/
 
@@ -572,8 +565,7 @@ CommentAggregate(char *aggregate, char *argument, char *comment)
 	/*** Next, validate the user's attempt to comment ***/
 
 #ifndef NO_SECURITY
-	user = GetPgUserName();
-	if (!pg_aggr_ownercheck(user, aggregate, baseoid))
+	if (!pg_aggr_ownercheck(GetUserId(), aggregate, baseoid))
 	{
 		if (argument)
 		{
@@ -629,8 +621,7 @@ CommentProc(char *function, List *arguments, char *comment)
 				functuple;
 	Oid			oid,
 				argoids[FUNC_MAX_ARGS];
-	char	   *user,
-			   *argument;
+	char	   *argument;
 	int			i,
 				argcount;
 
@@ -662,8 +653,7 @@ CommentProc(char *function, List *arguments, char *comment)
 	/*** Now, validate the user's ability to comment on this function ***/
 
 #ifndef NO_SECURITY
-	user = GetPgUserName();
-	if (!pg_func_ownercheck(user, function, argcount, argoids))
+	if (!pg_func_ownercheck(GetUserId(), function, argcount, argoids))
 		elog(ERROR, "you are not permitted to comment on function '%s'",
 			 function);
 #endif
@@ -708,7 +698,6 @@ CommentOperator(char *opername, List *arguments, char *comment)
 				rightoid = InvalidOid;
 	bool		defined;
 	char		oprtype = 0,
-			   *user,
 			   *lefttype = NULL,
 			   *righttype = NULL;
 
@@ -762,8 +751,7 @@ CommentOperator(char *opername, List *arguments, char *comment)
 	/*** Valid user's ability to comment on this operator ***/
 
 #ifndef NO_SECURITY
-	user = GetPgUserName();
-	if (!pg_ownercheck(user, (char *) ObjectIdGetDatum(oid), OPEROID))
+	if (!pg_ownercheck(GetUserId(), (char *) ObjectIdGetDatum(oid), OPEROID))
 	{
 		elog(ERROR, "you are not permitted to comment on operator '%s'",
 			 opername);
@@ -805,13 +793,11 @@ CommentTrigger(char *trigger, char *relname, char *comment)
 	HeapScanDesc scan;
 	ScanKeyData entry;
 	Oid			oid = InvalidOid;
-	char	   *user;
 
 	/*** First, validate the user's action ***/
 
 #ifndef NO_SECURITY
-	user = GetPgUserName();
-	if (!pg_ownercheck(user, relname, RELNAME))
+	if (!pg_ownercheck(GetUserId(), relname, RELNAME))
 	{
 		elog(ERROR, "you are not permitted to comment on trigger '%s' %s '%s'",
 			 trigger, "defined for relation", relname);

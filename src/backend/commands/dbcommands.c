@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.59 2000/08/03 16:34:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.60 2000/09/06 14:15:16 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,7 @@
 
 /* non-export function prototypes */
 static bool
-			get_user_info(const char *name, int4 *use_sysid, bool *use_super, bool *use_createdb);
+			get_user_info(Oid use_sysid, bool *use_super, bool *use_createdb);
 
 static bool
 			get_db_info(const char *name, char *dbpath, Oid *dbIdP, int4 *ownerIdP);
@@ -54,7 +54,6 @@ createdb(const char *dbname, const char *dbpath, int encoding)
 	char		buf[2 * MAXPGPATH + 100];
 	char	   *loc;
 	char		locbuf[512];
-	int4		user_id;
 	int			ret;
 	bool		use_super,
 				use_createdb;
@@ -64,7 +63,7 @@ createdb(const char *dbname, const char *dbpath, int encoding)
 	Datum		new_record[Natts_pg_database];
 	char		new_record_nulls[Natts_pg_database] = {' ', ' ', ' ', ' '};
 
-	if (!get_user_info(GetPgUserName(), &user_id, &use_super, &use_createdb))
+	if (!get_user_info(GetUserId(), &use_super, &use_createdb))
 		elog(ERROR, "current user name is invalid");
 
 	if (!use_createdb && !use_super)
@@ -100,7 +99,7 @@ createdb(const char *dbname, const char *dbpath, int encoding)
 	/* Form tuple */
 	new_record[Anum_pg_database_datname - 1] = DirectFunctionCall1(namein,
 													CStringGetDatum(dbname));
-	new_record[Anum_pg_database_datdba - 1] = Int32GetDatum(user_id);
+	new_record[Anum_pg_database_datdba - 1] = Int32GetDatum(GetUserId());
 	new_record[Anum_pg_database_encoding - 1] = Int32GetDatum(encoding);
 	new_record[Anum_pg_database_datpath - 1] = DirectFunctionCall1(textin,
 													CStringGetDatum(locbuf));
@@ -174,8 +173,7 @@ createdb(const char *dbname, const char *dbpath, int encoding)
 void
 dropdb(const char *dbname)
 {
-	int4		user_id,
-				db_owner;
+	int4		db_owner;
 	bool		use_super;
 	Oid			db_id;
 	char	   *path,
@@ -197,13 +195,13 @@ dropdb(const char *dbname)
 	if (IsTransactionBlock())
 		elog(ERROR, "DROP DATABASE: May not be called in a transaction block");
 
-	if (!get_user_info(GetPgUserName(), &user_id, &use_super, NULL))
+	if (!get_user_info(GetUserId(), &use_super, NULL))
 		elog(ERROR, "Current user name is invalid");
 
 	if (!get_db_info(dbname, dbpath, &db_id, &db_owner))
 		elog(ERROR, "DROP DATABASE: Database \"%s\" does not exist", dbname);
 
-	if (user_id != db_owner && !use_super)
+	if (GetUserId() != db_owner && !use_super)
 		elog(ERROR, "DROP DATABASE: Permission denied");
 
 	path = ExpandDatabasePath(dbpath);
@@ -374,20 +372,17 @@ get_db_info(const char *name, char *dbpath, Oid *dbIdP, int4 *ownerIdP)
 
 
 static bool
-get_user_info(const char *name, int4 *use_sysid, bool *use_super, bool *use_createdb)
+get_user_info(Oid use_sysid, bool *use_super, bool *use_createdb)
 {
 	HeapTuple	utup;
 
-	AssertArg(name);
-	utup = SearchSysCacheTuple(SHADOWNAME,
-							   PointerGetDatum(name),
+	utup = SearchSysCacheTuple(SHADOWSYSID,
+							   ObjectIdGetDatum(use_sysid),
 							   0, 0, 0);
 
 	if (!HeapTupleIsValid(utup))
 		return false;
 
-	if (use_sysid)
-		*use_sysid = ((Form_pg_shadow) GETSTRUCT(utup))->usesysid;
 	if (use_super)
 		*use_super = ((Form_pg_shadow) GETSTRUCT(utup))->usesuper;
 	if (use_createdb)

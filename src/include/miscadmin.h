@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.64 2000/08/03 16:34:43 tgl Exp $
+ * $Id: miscadmin.h,v 1.65 2000/09/06 14:15:24 petere Exp $
  *
  * NOTES
  *	  some of the information in this file will be moved to
@@ -50,8 +50,6 @@ extern struct Port *MyProcPort;
 extern long MyCancelKey;
 
 extern char OutputFileName[];
-
-extern char *UserName;
 
 /*
  * done in storage/backendid.h for now.
@@ -130,9 +128,9 @@ extern void SetDatabaseName(const char *name);
 extern void SetDatabasePath(const char *path);
 
 extern char *GetPgUserName(void);
-extern void SetPgUserName(void);
-extern int	GetUserId(void);
-extern void SetUserId(void);
+extern Oid	GetUserId(void);
+extern void SetUserId(Oid userid);
+extern void SetUserIdFromUserName(const char *username);
 extern int	FindExec(char *full_path, const char *argv0, const char *binary_name);
 extern int	CheckPathAccess(char *path, char *name, int open_mode);
 
@@ -186,7 +184,7 @@ typedef int16 ExitStatus;
 
 extern int	lockingOff;
 
-extern void InitPostgres(const char *dbname);
+extern void InitPostgres(const char *dbname, const char *username);
 extern void BaseInit(void);
 
 /* one of the ways to get out of here */

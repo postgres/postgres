@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.76 2000/08/11 23:45:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.77 2000/09/06 14:15:16 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,7 +69,7 @@ CreateTrigger(CreateTrigStmt *stmt)
 		elog(ERROR, "CreateTrigger: can't create trigger for system relation %s", stmt->relname);
 
 #ifndef NO_SECURITY
-	if (!pg_ownercheck(GetPgUserName(), stmt->relname, RELNAME))
+	if (!pg_ownercheck(GetUserId(), stmt->relname, RELNAME))
 		elog(ERROR, "%s: %s", stmt->relname, aclcheck_error_strings[ACLCHECK_NOT_OWNER]);
 #endif
 
@@ -309,7 +309,7 @@ DropTrigger(DropTrigStmt *stmt)
 	int			tgfound = 0;
 
 #ifndef NO_SECURITY
-	if (!pg_ownercheck(GetPgUserName(), stmt->relname, RELNAME))
+	if (!pg_ownercheck(GetUserId(), stmt->relname, RELNAME))
 		elog(ERROR, "%s: %s", stmt->relname, aclcheck_error_strings[ACLCHECK_NOT_OWNER]);
 #endif
 

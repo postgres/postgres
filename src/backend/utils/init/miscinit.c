@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.53 2000/08/03 16:34:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.54 2000/09/06 14:15:22 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -273,44 +273,24 @@ convertstr(unsigned char *buff, int len, int dest)
 #endif
 
 /* ----------------
- *		GetPgUserName and SetPgUserName
- *
- *		SetPgUserName must be called before InitPostgres, since the setuid()
- *		is done there.
+ *		GetPgUserName
  * ----------------
  */
 char *
 GetPgUserName(void)
 {
-	return UserName;
+	HeapTuple tuple;
+	Oid userid;
+
+	userid = GetUserId();
+
+	tuple = SearchSysCacheTuple(SHADOWSYSID, ObjectIdGetDatum(userid), 0, 0, 0);
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "invalid user id %u", (unsigned) userid);
+
+	return pstrdup( NameStr(((Form_pg_shadow) GETSTRUCT(tuple))->usename) );
 }
 
-void
-SetPgUserName(void)
-{
-#ifndef NO_SECURITY
-	char	   *p;
-	struct passwd *pw;
-
-	if (IsUnderPostmaster)
-	{
-		/* use the (possibly) authenticated name that's provided */
-		if (!(p = getenv("PG_USER")))
-			elog(FATAL, "SetPgUserName: PG_USER environment variable is unset");
-	}
-	else
-	{
-		/* setuid() has not yet been done, see above comment */
-		if (!(pw = getpwuid(geteuid())))
-			elog(FATAL, "SetPgUserName: no entry in host passwd file");
-		p = pw->pw_name;
-	}
-	if (UserName)
-		free(UserName);
-	UserName = malloc(strlen(p) + 1);
-	strcpy(UserName, p);
-#endif	 /* NO_SECURITY */
-}
 
 /* ----------------------------------------------------------------
  *		GetUserId and SetUserId
@@ -318,41 +298,41 @@ SetPgUserName(void)
  */
 static Oid	UserId = InvalidOid;
 
-int
+
+Oid
 GetUserId()
 {
 	AssertState(OidIsValid(UserId));
 	return UserId;
 }
 
+
 void
-SetUserId()
+SetUserId(Oid newid)
+{
+	UserId = newid;
+}
+
+
+void
+SetUserIdFromUserName(const char *username)
 {
 	HeapTuple	userTup;
-	char	   *userName;
-
-	AssertState(!OidIsValid(UserId));	/* only once */
 
 	/*
 	 * Don't do scans if we're bootstrapping, none of the system catalogs
 	 * exist yet, and they should be owned by postgres anyway.
 	 */
-	if (IsBootstrapProcessingMode())
-	{
-		UserId = geteuid();
-		return;
-	}
+	AssertState(!IsBootstrapProcessingMode());
 
-	userName = GetPgUserName();
 	userTup = SearchSysCacheTuple(SHADOWNAME,
-								  PointerGetDatum(userName),
+								  PointerGetDatum(username),
 								  0, 0, 0);
 	if (!HeapTupleIsValid(userTup))
-		elog(FATAL, "SetUserId: user '%s' is not in '%s'",
-			 userName,
-			 ShadowRelationName);
-	UserId = (Oid) ((Form_pg_shadow) GETSTRUCT(userTup))->usesysid;
+		elog(FATAL, "user \"%s\" does not exist", username);
+	SetUserId( ((Form_pg_shadow) GETSTRUCT(userTup))->usesysid );
 }
+
 
 /*-------------------------------------------------------------------------
  *

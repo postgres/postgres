@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.39 2000/07/31 22:39:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.40 2000/09/06 14:15:15 petere Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -355,21 +355,22 @@ aclcheck(char *relname, Acl *acl, AclId id, AclIdType idtype, AclMode mode)
 }
 
 int32
-pg_aclcheck(char *relname, char *usename, AclMode mode)
+pg_aclcheck(char *relname, Oid userid, AclMode mode)
 {
 	HeapTuple	tuple;
-	AclId		id;
 	Acl		   *acl = (Acl *) NULL;
 	int32		result;
+	char       *usename;
 	Relation	relation;
 
-	tuple = SearchSysCacheTuple(SHADOWNAME,
-								PointerGetDatum(usename),
+	tuple = SearchSysCacheTuple(SHADOWSYSID,
+								ObjectIdGetDatum(userid),
 								0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "pg_aclcheck: user \"%s\" not found",
-			 usename);
-	id = (AclId) ((Form_pg_shadow) GETSTRUCT(tuple))->usesysid;
+		elog(ERROR, "pg_aclcheck: invalid user id %u",
+			 (unsigned) userid);
+
+	usename = NameStr(((Form_pg_shadow) GETSTRUCT(tuple))->usename);
 
 	/*
 	 * Deny anyone permission to update a system catalog unless
@@ -445,28 +446,28 @@ pg_aclcheck(char *relname, char *usename, AclMode mode)
 	}
 	heap_close(relation, RowExclusiveLock);
 #endif
-	result = aclcheck(relname, acl, id, (AclIdType) ACL_IDTYPE_UID, mode);
+	result = aclcheck(relname, acl, userid, (AclIdType) ACL_IDTYPE_UID, mode);
 	if (acl)
 		pfree(acl);
 	return result;
 }
 
 int32
-pg_ownercheck(const char *usename,
+pg_ownercheck(Oid userid,
 			  const char *value,
 			  int cacheid)
 {
 	HeapTuple	tuple;
-	AclId		user_id,
-				owner_id = 0;
+	AclId		owner_id = 0;
+	char       *usename;
 
-	tuple = SearchSysCacheTuple(SHADOWNAME,
-								PointerGetDatum(usename),
+	tuple = SearchSysCacheTuple(SHADOWSYSID,
+								ObjectIdGetDatum(userid),
 								0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "pg_ownercheck: user \"%s\" not found",
-			 usename);
-	user_id = (AclId) ((Form_pg_shadow) GETSTRUCT(tuple))->usesysid;
+		elog(ERROR, "pg_ownercheck: invalid user id %u",
+			 (unsigned) userid);
+	usename = NameStr(((Form_pg_shadow) GETSTRUCT(tuple))->usename);
 
 	/*
 	 * Superusers bypass all permission-checking.
@@ -513,26 +514,26 @@ pg_ownercheck(const char *usename,
 			break;
 	}
 
-	return user_id == owner_id;
+	return userid == owner_id;
 }
 
 int32
-pg_func_ownercheck(char *usename,
+pg_func_ownercheck(Oid userid,
 				   char *funcname,
 				   int nargs,
 				   Oid *arglist)
 {
 	HeapTuple	tuple;
-	AclId		user_id,
-				owner_id;
+	AclId		owner_id;
+	char *username;
 
-	tuple = SearchSysCacheTuple(SHADOWNAME,
-								PointerGetDatum(usename),
+	tuple = SearchSysCacheTuple(SHADOWSYSID,
+								ObjectIdGetDatum(userid),
 								0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "pg_func_ownercheck: user \"%s\" not found",
-			 usename);
-	user_id = (AclId) ((Form_pg_shadow) GETSTRUCT(tuple))->usesysid;
+		elog(ERROR, "pg_func_ownercheck: invalid user id %u",
+			 (unsigned) userid);
+	username = NameStr(((Form_pg_shadow) GETSTRUCT(tuple))->usename);
 
 	/*
 	 * Superusers bypass all permission-checking.
@@ -541,7 +542,7 @@ pg_func_ownercheck(char *usename,
 	{
 #ifdef ACLDEBUG_TRACE
 		elog(DEBUG, "pg_ownercheck: user \"%s\" is superuser",
-			 usename);
+			 username);
 #endif
 		return 1;
 	}
@@ -556,25 +557,25 @@ pg_func_ownercheck(char *usename,
 
 	owner_id = ((Form_pg_proc) GETSTRUCT(tuple))->proowner;
 
-	return user_id == owner_id;
+	return userid == owner_id;
 }
 
 int32
-pg_aggr_ownercheck(char *usename,
+pg_aggr_ownercheck(Oid userid,
 				   char *aggname,
 				   Oid basetypeID)
 {
 	HeapTuple	tuple;
-	AclId		user_id,
-				owner_id;
+	AclId		owner_id;
+	char *username;
 
-	tuple = SearchSysCacheTuple(SHADOWNAME,
-								PointerGetDatum(usename),
+	tuple = SearchSysCacheTuple(SHADOWSYSID,
+								PointerGetDatum(userid),
 								0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "pg_aggr_ownercheck: user \"%s\" not found",
-			 usename);
-	user_id = (AclId) ((Form_pg_shadow) GETSTRUCT(tuple))->usesysid;
+		elog(ERROR, "pg_aggr_ownercheck: invalid user id %u",
+			 (unsigned) userid);
+	username = NameStr(((Form_pg_shadow) GETSTRUCT(tuple))->usename);
 
 	/*
 	 * Superusers bypass all permission-checking.
@@ -583,7 +584,7 @@ pg_aggr_ownercheck(char *usename,
 	{
 #ifdef ACLDEBUG_TRACE
 		elog(DEBUG, "pg_aggr_ownercheck: user \"%s\" is superuser",
-			 usename);
+			 username);
 #endif
 		return 1;
 	}
@@ -598,5 +599,5 @@ pg_aggr_ownercheck(char *usename,
 
 	owner_id = ((Form_pg_aggregate) GETSTRUCT(tuple))->aggowner;
 
-	return user_id == owner_id;
+	return userid == owner_id;
 }

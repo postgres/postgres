@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.163 2000/07/14 22:17:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.164 2000/09/06 14:15:16 petere Exp $
  *
 
  *-------------------------------------------------------------------------
@@ -404,7 +404,7 @@ vacuum_rel(Oid relid, bool analyze, bool is_toastrel)
 	toast_relid = onerel->rd_rel->reltoastrelid;
 
 #ifndef NO_SECURITY
-	if (!pg_ownercheck(GetPgUserName(), RelationGetRelationName(onerel),
+	if (!pg_ownercheck(GetUserId(), RelationGetRelationName(onerel),
 					   RELNAME))
 	{
 		elog(NOTICE, "Skipping \"%s\" --- only table owner can VACUUM it",

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.37 2000/08/20 00:44:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.38 2000/09/06 14:15:16 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -697,15 +697,11 @@ ReindexDatabase(const char *dbname, bool force, bool all)
 {
 	Relation	relation,
 				relationRelation;
-	HeapTuple	usertuple,
-				dbtuple,
+	HeapTuple	dbtuple,
 				tuple;
 	HeapScanDesc scan;
-	int4		user_id,
-				db_owner;
-	bool		superuser;
+	int4		db_owner;
 	Oid			db_id;
-	char	   *username;
 	ScanKeyData scankey;
 	MemoryContext private_context;
 	MemoryContext old;
@@ -716,14 +712,6 @@ ReindexDatabase(const char *dbname, bool force, bool all)
 	Oid		   *relids = (Oid *) NULL;
 
 	AssertArg(dbname);
-
-	username = GetPgUserName();
-	usertuple = SearchSysCacheTuple(SHADOWNAME, PointerGetDatum(username),
-									0, 0, 0);
-	if (!HeapTupleIsValid(usertuple))
-		elog(ERROR, "Current user \"%s\" is invalid.", username);
-	user_id = ((Form_pg_shadow) GETSTRUCT(usertuple))->usesysid;
-	superuser = ((Form_pg_shadow) GETSTRUCT(usertuple))->usesuper;
 
 	relation = heap_openr(DatabaseRelationName, AccessShareLock);
 	ScanKeyEntryInitialize(&scankey, 0, Anum_pg_database_datname,
@@ -737,7 +725,7 @@ ReindexDatabase(const char *dbname, bool force, bool all)
 	heap_endscan(scan);
 	heap_close(relation, NoLock);
 
-	if (user_id != db_owner && !superuser)
+	if (GetUserId() != db_owner && !superuser())
 		elog(ERROR, "REINDEX DATABASE: Permission denied.");
 
 	if (db_id != MyDatabaseId)

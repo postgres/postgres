@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.5 2000/08/21 17:22:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.6 2000/09/06 14:15:16 petere Exp $
  *
 
  *-------------------------------------------------------------------------
@@ -99,7 +99,7 @@ analyze_rel(Oid relid, List *anal_cols2, int MESSAGE_LEVEL)
 	onerel = heap_open(relid, AccessShareLock);
 
 #ifndef NO_SECURITY
-	if (!pg_ownercheck(GetPgUserName(), RelationGetRelationName(onerel),
+	if (!pg_ownercheck(GetUserId(), RelationGetRelationName(onerel),
 					   RELNAME))
 	{
 		/* we already did an elog during vacuum

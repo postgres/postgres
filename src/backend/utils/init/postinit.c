@@ -8,18 +8,18 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.64 2000/08/06 04:39:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.65 2000/09/06 14:15:22 petere Exp $
  *
  *
  *-------------------------------------------------------------------------
  */
+#include "postgres.h"
+
 #include <fcntl.h>
 #include <sys/file.h>
 #include <sys/types.h>
 #include <math.h>
 #include <unistd.h>
-
-#include "postgres.h"
 
 #include "access/heapam.h"
 #include "catalog/catname.h"
@@ -223,7 +223,7 @@ int			lockingOff = 0;		/* backend -L switch */
 /*
  */
 void
-InitPostgres(const char *dbname)
+InitPostgres(const char *dbname, const char *username)
 {
 	bool		bootstrap = IsBootstrapProcessingMode();
 
@@ -366,16 +366,19 @@ InitPostgres(const char *dbname)
 	/* replace faked-up relcache entries with the real info */
 	RelationCacheInitializePhase2();
 
-	/*
-	 * Set ourselves to the proper user id and figure out our postgres
-	 * user id.  If we ever add security so that we check for valid
-	 * postgres users, we might do it here.
-	 */
-	setuid(geteuid());
-	SetUserId();
-
 	if (lockingOff)
 		LockDisable(true);
+
+	/*
+	 * Set ourselves to the proper user id and figure out our postgres
+	 * user id.
+	 */
+	if (bootstrap)
+		SetUserId(geteuid());
+	else
+		SetUserIdFromUserName(username);
+
+	setuid(geteuid());
 
 	/*
 	 * Unless we are bootstrapping, double-check that InitMyDatabaseInfo()

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.78 2000/08/08 15:42:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.79 2000/09/06 14:15:20 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1137,7 +1137,7 @@ fireRules(Query *parsetree,
 			if (!rte->skipAcl)
 			{
 				acl_rc = pg_aclcheck(rte->relname,
-									 GetPgUserName(), reqperm);
+									 GetUserId(), reqperm);
 				if (acl_rc != ACLCHECK_OK)
 				{
 					elog(ERROR, "%s: %s",
