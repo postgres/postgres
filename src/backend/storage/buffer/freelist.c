@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/freelist.c,v 1.34 2003/11/13 14:57:15 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/freelist.c,v 1.35 2003/11/16 16:41:00 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,7 +87,7 @@ static int		strategy_cdb_found;
 static int		strategy_cdb_replace;
 static int		strategy_get_from;
 
-int				BufferStrategyStatInterval = 0;
+int				DebugSharedBuffers = 0;
 
 static bool				strategy_hint_vacuum;
 static TransactionId	strategy_vacuum_xid;
@@ -184,10 +184,10 @@ StrategyBufferLookup(BufferTag *tagPtr, bool recheck)
 	BufferStrategyCDB  *cdb;
 	time_t				now;
 
-	if (BufferStrategyStatInterval > 0)
+	if (DebugSharedBuffers > 0)
 	{
 		time(&now);
-		if (StrategyControl->stat_report + BufferStrategyStatInterval < now)
+		if (StrategyControl->stat_report + DebugSharedBuffers < now)
 		{
 			long	all_hit, b1_hit, t1_hit, t2_hit, b2_hit;
 			ErrorContextCallback	*errcxtold;
