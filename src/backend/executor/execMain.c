@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.68 1999/01/29 11:56:00 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.69 1999/01/29 13:24:36 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1593,7 +1593,7 @@ EvalPlanQual(EState *estate, Index rti, ItemPointer tid)
 		/* try to reuse plan used previously */
 		evalPlanQual   *newepq = (epq != NULL) ? epq->free : NULL;
 
-		if (newepq == NULL)
+		if (newepq == NULL)		/* first call or freePQ stack is empty */
 		{
 			newepq = (evalPlanQual*) palloc(sizeof(evalPlanQual));
 			/* Init EState */
@@ -1614,21 +1614,18 @@ EvalPlanQual(EState *estate, Index rti, ItemPointer tid)
 			/* ... rest */
 			newepq->plan = copyObject(estate->es_origPlan);
 			newepq->free = NULL;
-			if (epq == NULL)
+			epqstate->es_evTupleNull = (bool*) 
+				palloc(length(estate->es_range_table) * sizeof(bool));
+			if (epq == NULL)	/* first call */
 			{
 				epqstate->es_evTuple = (HeapTuple*) 
 					palloc(length(estate->es_range_table) * sizeof(HeapTuple));
 				memset(epqstate->es_evTuple, 0, 
 					length(estate->es_range_table) * sizeof(HeapTuple));
-				epqstate->es_evTupleNull = (bool*) 
-					palloc(length(estate->es_range_table) * sizeof(bool));
-				memset(epqstate->es_evTupleNull, false, 
-					length(estate->es_range_table) * sizeof(bool));
 			}
 			else
 			{
 				epqstate->es_evTuple = epq->estate.es_evTuple;
-				epqstate->es_evTupleNull = epq->estate.es_evTupleNull;
 			}
 		}
 		else
@@ -1697,8 +1694,9 @@ EvalPlanQual(EState *estate, Index rti, ItemPointer tid)
 			/*
 			 * Nice! We got tuple - now copy it.
 			 */
+			if (epqstate->es_evTuple[epq->rti - 1] != NULL)
+				pfree(epqstate->es_evTuple[epq->rti - 1]);
 			epqstate->es_evTuple[epq->rti - 1] = heap_copytuple(&tuple);
-			epqstate->es_evTupleNull[epq->rti - 1] = false;
 			ReleaseBuffer(buffer);
 			break;
 		}
@@ -1738,6 +1736,8 @@ EvalPlanQual(EState *estate, Index rti, ItemPointer tid)
 	if (estate->es_origPlan->nParamExec > 0)
 		memset(epqstate->es_param_exec_vals, 0, 
 				estate->es_origPlan->nParamExec * sizeof(ParamExecData));
+	memset(epqstate->es_evTupleNull, false, 
+			length(estate->es_range_table) * sizeof(bool));
 	ExecInitNode(epq->plan, epqstate, NULL);
 
 	/*
