@@ -1,0 +1,232 @@
+# SOME DESCRIPTIVE TITLE.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Postgresql 7.4\n"
+"POT-Creation-Date: 2004-08-18 01:13-0300\n"
+"PO-Revision-Date: 2004-09-09 10:57+0330\n"
+"Last-Translator: ameen <ameen78101@yahoo.com>\n"
+"Language-Team: Sahand <postgresql@imenafzar.net>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: pg_controldata.c:28
+#, c-format
+msgid ""
+"%s displays control information of a PostgreSQL database cluster.\n"
+"\n"
+msgstr ""
+"%s نمایش اطلاعات کنترلی مربوط به کلاستر پایگاه داده PostgreSQL.\n"
+"\n"
+
+#: pg_controldata.c:32
+#, c-format
+msgid ""
+"Usage:\n"
+"  %s [OPTION]\n"
+"\n"
+"Options:\n"
+"  DATADIR        show cluster control information for DATADIR\n"
+"  --help         show this help, then exit\n"
+"  --version      output version information, then exit\n"
+msgstr ""
+"روش استفاده:\n"
+" %s [امکانات]\n"
+"\n"
+"امکانات:\n"
+" DATADIR      نمایش اطلاعات کنترلی کلاستر برای DATADIR \n"
+" --help     نمایش این راهنما و خروج\n"
+" --version    نمایش اطلاعات مربوط به نسخه و خروج\n"
+
+#: pg_controldata.c:41
+msgid ""
+"\n"
+"If no data directory is specified, the environment variable PGDATA\n"
+"is used.\n"
+"\n"
+msgstr ""
+"\n"
+"در صورتی که پوشه اطلاعات مشخص نشود، متغییر محیطی PGDATA\n"
+"استفاده خواهد شد.\n"
+"\n"
+
+#: pg_controldata.c:42
+msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
+msgstr "مشکلات فنی را به <pgsql-bugs@postgresql.org>گزارش دهید.\n"
+
+#: pg_controldata.c:52
+msgid "starting up"
+msgstr "شروع شدن"
+
+#: pg_controldata.c:54
+msgid "shut down"
+msgstr "پایان"
+
+#: pg_controldata.c:56
+msgid "shutting down"
+msgstr "خاموش شدن"
+
+#: pg_controldata.c:58
+msgid "in recovery"
+msgstr "در حال بازیابی"
+
+#: pg_controldata.c:60
+msgid "in production"
+msgstr "در حال تولید"
+
+#: pg_controldata.c:62
+msgid "unrecognized status code"
+msgstr "کد حالت شناخته نشده"
+
+#: pg_controldata.c:107
+#, c-format
+msgid "%s: no data directory specified\n"
+msgstr "%s: هیج پوشه اطلاعاتی مشخص نشده است\n"
+
+#: pg_controldata.c:108
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "برای اطلاعات بیشتر \"%s --help\" را آزمایش کنید.\n"
+
+#: pg_controldata.c:116
+#, c-format
+msgid "%s: could not open file \"%s\" for reading: %s\n"
+msgstr "%s: فایل \"%s\" را نمی توان برای خواندن باز کرد. %s\n"
+
+#: pg_controldata.c:123
+#, c-format
+msgid "%s: could not read file \"%s\": %s\n"
+msgstr "%s: فایل \"%s\" قابل خواندن نیست: %s\n"
+
+#: pg_controldata.c:137
+msgid ""
+"WARNING: Calculated CRC checksum does not match value stored in file.\n"
+"Either the file is corrupt, or it has a different layout than this program\n"
+"is expecting.  The results below are untrustworthy.\n"
+"\n"
+msgstr ""
+"اخطار: CRC checksum با مقداری که در فایل ذخیره شده مطابقت نمی کند.\n"
+"یا فایل خراب است، و یا طرح بندی آن \n"
+"با آنچه که این برنامه انتظار دارد متفاوت است. خروجیهای زیر غیر قابل اعتماد هستند.\n"
+"\n"
+
+#: pg_controldata.c:150
+#, c-format
+msgid "pg_control version number:            %u\n"
+msgstr "شماره نسخه pg_control:            %u\n"
+
+#: pg_controldata.c:151
+#, c-format
+msgid "Catalog version number:               %u\n"
+msgstr "شماره نسخه کاتالوگ        %u\n"
+
+#: pg_controldata.c:152
+#, c-format
+msgid "Database cluster state:               %s\n"
+msgstr "وضعیت کلاستر:         %s\n"
+
+#: pg_controldata.c:153
+#, c-format
+msgid "pg_control last modified:             %s\n"
+msgstr "آخرین تغییر pg_control:         %s\n"
+
+#: pg_controldata.c:154
+#, c-format
+msgid "Current log file ID:                  %u\n"
+msgstr "مشخصه فایل گزارش جاری       %u\n"
+
+#: pg_controldata.c:155
+#, c-format
+msgid "Next log file segment:                %u\n"
+msgstr "قسمت بعدی فایل گزارش:            %u\n"
+
+#: pg_controldata.c:156
+#, c-format
+msgid "Latest checkpoint location:           %X/%X\n"
+msgstr "محل آخرین نقطه وارسی:       %X/%X\n"
+
+#: pg_controldata.c:158
+#, c-format
+msgid "Prior checkpoint location:            %X/%X\n"
+msgstr "اولین نقطه وارسی:           %X/%X\n"
+
+#: pg_controldata.c:160
+#, c-format
+msgid "Latest checkpoint's REDO location:    %X/%X\n"
+msgstr "آخرین نقطه وارسی برای دوباره کاری: %X/%X\n"
+
+#: pg_controldata.c:162
+#, c-format
+msgid "Latest checkpoint's UNDO location:    %X/%X\n"
+msgstr "آخرین نقطه وارسی برای برگشت به حالت قبل:      %X/%X\n"
+
+#: pg_controldata.c:164
+#, c-format
+msgid "Latest checkpoint's StartUpID:        %u\n"
+msgstr "آخرین نقطه وارسی برای StartUpID:      %u\n"
+
+#: pg_controldata.c:165
+#, c-format
+msgid "Latest checkpoint's NextXID:          %u\n"
+msgstr "آخرین نقطه وارسی برای NetxtXID:       %u\n"
+
+#: pg_controldata.c:166
+#, c-format
+msgid "Latest checkpoint's NextOID:          %u\n"
+msgstr "آخرین نقطه وارسی برای NetxOID:      %u\n"
+
+#: pg_controldata.c:167
+#, c-format
+msgid "Time of latest checkpoint:            %s\n"
+msgstr "زمان آخرین وارسی:       %s\n"
+
+#: pg_controldata.c:168
+#, c-format
+msgid "Database block size:                  %u\n"
+msgstr "اندازه بلوک در پایگاه داده:      %u\n"
+
+#: pg_controldata.c:169
+#, c-format
+msgid "Blocks per segment of large relation: %u\n"
+msgstr "تعداد بلوکها در هر بخش از یک Relation بزرگ: %u\n"
+
+#: pg_controldata.c:170
+#, c-format
+msgid "Maximum length of identifiers:        %u\n"
+msgstr "بیشترین طول مشخصه ها:    %u\n"
+
+#: pg_controldata.c:171
+#, c-format
+msgid "Maximum number of function arguments: %u\n"
+msgstr "بیشترین تعداد آرگومانها در توابع:  %u\n"
+
+#: pg_controldata.c:172
+#, c-format
+msgid "Date/time type storage:               %s\n"
+msgstr "نوع ذخیره سازی زمان/تاریخ:      %s\n"
+
+#: pg_controldata.c:173
+msgid "64-bit integers"
+msgstr "64-bit عدد صحیح"
+
+#: pg_controldata.c:173
+msgid "floating-point numbers"
+msgstr "اعداد حقیقی"
+
+#: pg_controldata.c:174
+#, c-format
+msgid "Maximum length of locale name:        %u\n"
+msgstr "بیشترین طول نامهای محلی:     %u\n"
+
+#: pg_controldata.c:175
+#, c-format
+msgid "LC_COLLATE:                           %s\n"
+msgstr "زبان محلی برای مرتب سازی:    %s\n"
+
+#: pg_controldata.c:176
+#, c-format
+msgid "LC_CTYPE:                             %s\n"
+msgstr "زبان محلی برای تشخیص انواع کاراکتر ها:              %s\n"
+
