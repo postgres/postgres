@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.103 2003/09/29 16:39:18 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.104 2003/10/11 16:30:55 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -1280,7 +1280,7 @@ unescape(const unsigned char *source, size_t len)
 				case '7':
 				case '8':
 				case '9':
-					c = parse_char((char **) &p);
+					c = parse_char((void *) &p);
 					break;
 
 				default:

@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/sysv_shmem.c,v 1.17 2003/09/29 00:05:25 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/sysv_shmem.c,v 1.18 2003/10/11 16:30:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -365,7 +365,7 @@ PGSharedMemoryAttach(IpcMemoryKey key, IpcMemoryId *shmid)
 
 	if (hdr->magic != PGShmemMagic)
 	{
-		shmdt(hdr);
+		shmdt((void *) hdr);
 		return NULL;			/* segment belongs to a non-Postgres app */
 	}
 
