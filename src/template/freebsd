@@ -1,6 +1,6 @@
 CFLAGS='-pipe'
 
-if [ `expr "$host_cpu" : "alpha"` -ge 5 ]
-then	CFLAGS="$CFLAGS -O"
-	CXXFLAGS="$CFLAGS -O"
-fi
+case $host_cpu in
+  alpha*)   CFLAGS="$CFLAGS -O";;
+            CXXFLAGS="$CXXFLAGS -O"
+esac
