@@ -7,7 +7,7 @@
  *
  * Copyright (c) 2002, PostgreSQL Global Development Group
  *
- * $Id: pg_cast.h,v 1.4 2002/09/18 21:35:23 tgl Exp $
+ * $Id: pg_cast.h,v 1.5 2002/10/14 22:12:49 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -234,6 +234,11 @@ DATA(insert (  869	650    0 i ));
  */
 DATA(insert ( 1560 1562    0 i ));
 DATA(insert ( 1562 1560    0 i ));
+/* Cross-category casts between bit and int4, int8 */
+DATA(insert (   20 1560 2075 e ));
+DATA(insert (   23 1560 1683 e ));
+DATA(insert ( 1560   20 2076 e ));
+DATA(insert ( 1560   23 1684 e ));
 
 /*
  * Cross-category casts to and from TEXT
