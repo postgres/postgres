@@ -4,7 +4,7 @@
  *
  *	Portions Copyright (c) 1999-2000, PostgreSQL, Inc
  *
- * $Header: /cvsroot/pgsql/contrib/pg_dumplo/Attic/main.c,v 1.1 2000/06/15 19:05:08 momjian Exp $
+ * $Header: /cvsroot/pgsql/contrib/pg_dumplo/Attic/main.c,v 1.2 2000/06/19 13:54:01 momjian Exp $
  *
  *					Karel Zak 1999-2000
  * -------------------------------------------------------------------------
@@ -152,11 +152,16 @@ main(int argc, char **argv)
 	 * Check space
 	 * ----------
 	 */
-	if (! pgLO->space) {
+	if (! pgLO->space && ! pgLO->action == ACTION_SHOW) {
 		if (!(pgLO->space = getenv("PWD"))) {
 			fprintf(stderr, "%s: not set space for dump-tree (option '-s' or $PWD).\n", progname);
 			exit(RE_ERROR);
 		}	
+	}
+	
+	if (!pgLO->action) {
+		fprintf(stderr, "%s: What do you want - export or import?\n", progname);
+		exit(RE_ERROR);
 	}
 	
 	/* ----------
@@ -179,12 +184,8 @@ main(int argc, char **argv)
 	 * Init index file
 	 * ----------
 	 */
-	if (pgLO->action) {
+	if (pgLO->action != ACTION_SHOW) 
 		index_file(pgLO);
-	} else {
-		fprintf(stderr, "%s: What do you want - export or import?\n", progname);
-		exit(RE_ERROR);
-	}
 	
 	PQexec(pgLO->conn, "BEGIN");
 
@@ -198,7 +199,7 @@ main(int argc, char **argv)
 			pglo_export(pgLO);
 			if (!pgLO->quiet) {
 				if (pgLO->action == ACTION_SHOW)
-					printf("\nDatabase '%s' content %d large objects.\n\n", pgLO->db, pgLO->counter);
+					printf("\nDatabase '%s' contains %d large objects.\n\n", pgLO->db, pgLO->counter);
 				else	
 					printf("\nExported %d large objects.\n\n", pgLO->counter);
 			}

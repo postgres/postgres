@@ -1,4 +1,10 @@
+
 HOW TO get Apache to log to PostgreSQL
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+ Note: contain of files 'httpconf.txt' and 'apachelog.sql' are below this
+       text. 
+
 
 First, this is intended mostly as a starting point, an example of how to do it.
 
@@ -59,3 +65,27 @@ http://www.terrym.com
 
 Have fun ... and remember, this is mostly just intended as a stating point, 
 not as a finished idea.
+
+--- apachelog.sql : ---
+
+drop table access;
+CREATE TABLE access (host char(200), ident char(200), authuser char(200), accdate datetime, request char(500), ttime int2, status int2, bytes int4) archive = none;
+grant all on access to nobody;
+
+--- httpconf.txt: ---
+
+# This is mostly the same as the default, except for no square brakets around
+# the time or the extra timezone info, also added the download time, 3rd from
+# the end, number of seconds.
+
+LogFormat "insert into access values ( '%h', '%l', '%u', '%{%d/%b/%Y:%H:%M:%S}t', '%r', %T, %s, %b );"
+
+# The above format ALMOST eleminates the need to use sed, except that I noticed
+# that when a frameset page is called, then the bytes transfered is '-', which
+# will choke the insert, so replaced it with '-1'.
+
+TransferLog '| su -c "sed \"s/, - );$/, -1 );/\" | /usr/local/pgsql/bin/psql www_log" nobody'
+
+
+
+

@@ -1,7 +1,7 @@
 /*
  *	PostgreSQL type definitions for ISBNs.
  *
- *	$Id: isbn_issn.c,v 1.1 2000/06/15 19:04:50 momjian Exp $
+ *	$Id: isbn_issn.c,v 1.2 2000/06/19 13:53:39 momjian Exp $
  */
 
 #include <stdio.h>

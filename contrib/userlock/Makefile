@@ -1,5 +1,5 @@
 #
-# $Header: /cvsroot/pgsql/contrib/userlock/Attic/Makefile,v 1.9 2000/06/16 18:59:28 momjian Exp $
+# $Header: /cvsroot/pgsql/contrib/userlock/Attic/Makefile,v 1.10 2000/06/19 13:54:44 momjian Exp $
 #
 
 TOPDIR=../..
@@ -10,7 +10,7 @@ NAME	= user_locks
 
 PROGRAM	= 
 OBJS	= $(NAME).o
-DOCS	= README
+DOCS	= README.$(NAME)
 SQLS	= $(NAME).sql
 BINS	=
 EXAMPLES=
@@ -29,7 +29,7 @@ install: install_doc install_sql install_mod
 
 install_doc:
 	for inst_file in $(DOCS); do \
-		$(INSTALL) $(INSTL_LIB_OPTS) $$inst_file $(CONTRIB_DOCDIR)/$(DOCS).$(NAME); \
+		$(INSTALL) $(INSTL_LIB_OPTS) $$inst_file $(CONTRIB_DOCDIR); \
 	done
 
 install_sql:

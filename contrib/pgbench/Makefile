@@ -1,5 +1,5 @@
 #
-# $Header: /cvsroot/pgsql/contrib/pgbench/Makefile,v 1.3 2000/06/16 18:59:07 momjian Exp $
+# $Header: /cvsroot/pgsql/contrib/pgbench/Makefile,v 1.4 2000/06/19 13:54:09 momjian Exp $
 #
 
 TOPDIR=../..
@@ -10,7 +10,7 @@ NAME	= pgbench
 
 PROGRAM	= $(NAME)
 OBJS	= $(NAME).o
-DOCS	= README README.jis
+DOCS	= README.$(NAME) README.$(NAME)_jis
 SQLS	= 
 BINS    = $(PROGRAM) 
 EXAMPLES=
@@ -29,7 +29,7 @@ install: install_doc install_bin
 
 install_doc:
 	for inst_file in $(DOCS); do \
-		$(INSTALL) $(INSTL_LIB_OPTS) $$inst_file $(CONTRIB_DOCDIR)/$(DOCS).$(NAME); \
+		$(INSTALL) $(INSTL_LIB_OPTS) $$inst_file $(CONTRIB_DOCDIR); \
 	done
 
 install_bin:

@@ -1,5 +1,5 @@
 #
-# $Header: /cvsroot/pgsql/contrib/tools/Attic/Makefile,v 1.2 2000/06/15 18:55:22 momjian Exp $
+# $Header: /cvsroot/pgsql/contrib/tools/Attic/Makefile,v 1.3 2000/06/19 13:54:37 momjian Exp $
 #
 
 TOPDIR=../..

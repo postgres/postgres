@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/contrib/vacuumlo/vacuumlo.c,v 1.4 2000/06/15 18:55:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/contrib/vacuumlo/vacuumlo.c,v 1.5 2000/06/19 13:54:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

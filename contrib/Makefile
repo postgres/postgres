@@ -3,7 +3,7 @@
 #
 #	Portions Copyright (c) 1999-2000, PostgreSQL, Inc
 #
-# $Header: /cvsroot/pgsql/contrib/Makefile,v 1.4 2000/06/15 18:54:29 momjian Exp $
+# $Header: /cvsroot/pgsql/contrib/Makefile,v 1.5 2000/06/19 13:52:59 momjian Exp $
 #
 
 TOPDIR = ..
@@ -14,7 +14,6 @@ WANTED_DIRS =	array		\
 		findoidjoins	\
 		fulltextindex	\
 		isbn_issn	\
-		likeplanning	\
 		linux		\
 		lo		\
 		mSQL-interface	\
@@ -31,7 +30,6 @@ WANTED_DIRS =	array		\
 		userlock	\
 		vacuumlo	
 	#	odbc
-	#	os2client	
 
 
 all:

@@ -1,5 +1,5 @@
 #
-# $Header: /cvsroot/pgsql/contrib/mSQL-interface/Attic/Makefile,v 1.2 2000/06/16 18:58:54 momjian Exp $
+# $Header: /cvsroot/pgsql/contrib/mSQL-interface/Attic/Makefile,v 1.3 2000/06/19 13:53:47 momjian Exp $
 #
 
 TOPDIR=../..
@@ -10,7 +10,7 @@ NAME	= mpgsql
 
 PROGRAM	= 
 OBJS	= 
-DOCS	= README $(NAME).c
+DOCS	= README.$(NAME) $(NAME).c
 SQLS	= 
 BINS    = 
 EXAMPLES=
@@ -24,7 +24,7 @@ install: install_doc
 
 install_doc:
 	for inst_file in $(DOCS); do \
-		$(INSTALL) $(INSTL_LIB_OPTS) $$inst_file $(CONTRIB_DOCDIR)/$(DOCS).$(NAME); \
+		$(INSTALL) $(INSTL_LIB_OPTS) $$inst_file $(CONTRIB_DOCDIR); \
 	done
 
 clean:

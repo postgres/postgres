@@ -3,18 +3,18 @@
  ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 	FIXME:
-		os2client	
 		odbc
 		spi/preprocessor
 		tools		
-	
+
+ - the contrib contain is in the "Contrib.index" 	
 
  - in each directory must be Makefile, possible Makefile template
    is below this text,
 
 --------
 #
-# $Header: /cvsroot/pgsql/contrib/README,v 1.18 2000/06/15 18:54:29 momjian Exp $
+# $Header: /cvsroot/pgsql/contrib/README,v 1.19 2000/06/19 13:52:59 momjian Exp $
 #
 
 TOPDIR=../..

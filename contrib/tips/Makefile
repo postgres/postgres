@@ -1,16 +1,16 @@
 #
-# $Header: /cvsroot/pgsql/contrib/tips/Attic/Makefile,v 1.2 2000/06/16 18:59:25 momjian Exp $
+# $Header: /cvsroot/pgsql/contrib/tips/Attic/Makefile,v 1.3 2000/06/19 13:54:31 momjian Exp $
 #
 
 TOPDIR=../..
 
 include ../Makefile.global
 
-NAME	= apachelog
+NAME	= 
 
 PROGRAM	= 
 OBJS	= 
-DOCS	= README
+DOCS	= README.apachelog
 SQLS	= 
 BINS	=
 EXAMPLES=
@@ -21,8 +21,9 @@ all::
 install: install_doc 
 
 install_doc:
+	$(TOPDIR)/config/mkinstalldirs $(CONTRIB_DOCDIR)/tips
 	for inst_file in $(DOCS); do \
-		$(INSTALL) $(INSTL_LIB_OPTS) $$inst_file $(CONTRIB_DOCDIR)/$(DOCS).$(NAME); \
+		$(INSTALL) $(INSTL_LIB_OPTS) $$inst_file $(CONTRIB_DOCDIR)/tips; \
 	done
 
 clean:

@@ -14,11 +14,6 @@ Compilation:
 		* run 'make'
 		* run 'make install'
 
-	- Out of PG contrib:
-		* edit Makefile.out
-		* run 'make -f Makefile.out' 
-
-	
 THANKS:
 ~~~~~~ 
 	<??? I lost his e-mail ???>

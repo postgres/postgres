@@ -1,5 +1,5 @@
 #
-# $Header: /cvsroot/pgsql/contrib/vacuumlo/Makefile,v 1.4 2000/06/16 18:59:30 momjian Exp $
+# $Header: /cvsroot/pgsql/contrib/vacuumlo/Makefile,v 1.5 2000/06/19 13:54:50 momjian Exp $
 #
 
 TOPDIR=../..
@@ -10,7 +10,7 @@ NAME	= vacuumlo
 
 PROGRAM	= $(NAME)
 OBJS	= $(NAME).o
-DOCS	= README
+DOCS	= README.$(NAME)
 SQLS	= 
 BINS    = $(PROGRAM)
 EXAMPLES=
@@ -29,7 +29,7 @@ install: install_doc install_bin
 
 install_doc:
 	for inst_file in $(DOCS); do \
-		$(INSTALL) $(INSTL_LIB_OPTS) $$inst_file $(CONTRIB_DOCDIR)/$(DOCS).$(NAME); \
+		$(INSTALL) $(INSTL_LIB_OPTS) $$inst_file $(CONTRIB_DOCDIR); \
 	done
 
 install_bin:
