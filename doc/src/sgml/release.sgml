@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.212 2003/10/16 04:11:53 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.213 2003/10/17 18:29:55 tgl Exp $
 -->
 
 <appendix id="release">
@@ -324,7 +324,7 @@ required for those wishing to migrate data from any previous release.</para>
 <listitem><para>Allow proper comparisons for arrays (Joe)</para></listitem>
 <listitem><para>Allow array concatenation with '||' (Joe)</para></listitem>
 <listitem><para>Allow indexes on array columns, and used in ORDER BY and DISTINCT (Joe)</para></listitem>
-<listitem><para>Allow WHERE qualification 'expr &gt;oper&lt; ANY/SOME/ALL (array-expr)' (Joe)
+<listitem><para>Allow WHERE qualification 'expr &gt;oper&lt; ANY/SOME/ALL (array-expr)' (Joe)</para></listitem>
 <listitem><para>Allow polymorphic SQL functions (Joe)</para></listitem>
 <listitem><para>New array functions array_append(), array_cat(), array_lower(),
   array_prepend(), array_to_string(), array_upper(), string_to_array() (Joe)</para></listitem>
