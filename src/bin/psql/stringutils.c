@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/stringutils.c,v 1.4 1996/09/16 06:06:17 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/stringutils.c,v 1.5 1996/11/14 16:08:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,8 +19,11 @@
 
 /* all routines assume null-terminated strings! */
 
-/* removes whitespaces from the left, right and both sides of a string */
+/* The following routines remove whitespaces from the left, right
+   and both sides of a string */
 /* MODIFIES the string passed in and returns the head of it */
+
+
 char *leftTrim(char *s)  
 {
   char *s2 = s;
