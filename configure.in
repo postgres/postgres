@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.322 2004/03/24 03:54:16 momjian Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.323 2004/04/20 00:33:45 pgsql Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -372,26 +372,10 @@ PGAC_ARG_BOOL(with, tcl, no, [  --with-tcl              build Tcl and Tk interfa
 AC_MSG_RESULT([$with_tcl])
 AC_SUBST([with_tcl])
 
-# If Tcl is enabled (above) then Tk is also, unless the user disables it using --without-tk
-AC_MSG_CHECKING([whether to build with Tk])
-if test "$with_tcl" = yes; then
-  PGAC_ARG_BOOL(with, tk, yes, [  --without-tk            do not build Tk interfaces if Tcl is enabled])
-else
-  with_tk=no
-fi
-AC_MSG_RESULT([$with_tk])
-AC_SUBST([with_tk])
-
-
 # We see if the path to the Tcl/Tk configuration scripts is specified.
 # This will override the use of tclsh to find the paths to search.
 
-PGAC_ARG_REQ(with, tclconfig, [  --with-tclconfig=DIR    tclConfig.sh and tkConfig.sh are in DIR])
-
-# We see if the path to the Tk configuration scripts is specified.
-# This will override the use of tclsh to find the paths to search.
-
-PGAC_ARG_REQ(with, tkconfig,  [  --with-tkconfig=DIR     tkConfig.sh is in DIR])
+PGAC_ARG_REQ(with, tclconfig, [  --with-tclconfig=DIR    tclConfig.sh is in DIR])
 
 #
 # Optionally build Perl modules (PL/Perl)
@@ -1188,13 +1172,6 @@ if test "$with_tcl" = yes; then
                           [TCL_INCLUDE_SPEC,TCL_LIB_FILE,TCL_LIBS,TCL_LIB_SPEC,TCL_SHARED_BUILD])
     AC_SUBST(TCL_SHLIB_LD_LIBS)dnl don't want to double-evaluate that one
 fi
-
-# Check for Tk configuration script tkConfig.sh
-if test "$with_tk" = yes; then
-    PGAC_PATH_TKCONFIGSH([$with_tkconfig $with_tclconfig])
-    PGAC_EVAL_TCLCONFIGSH([$TK_CONFIG_SH], [TK_LIBS,TK_LIB_SPEC,TK_XINCLUDES])
-fi
-
 
 #
 # Check for DocBook and tools

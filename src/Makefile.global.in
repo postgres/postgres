@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.176 2004/03/10 21:12:46 momjian Exp $
+# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.177 2004/04/20 00:33:46 pgsql Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -123,7 +123,6 @@ localedir := @localedir@
 with_perl	= @with_perl@
 with_python	= @with_python@
 with_tcl	= @with_tcl@
-with_tk		= @with_tk@
 enable_shared	= @enable_shared@
 enable_rpath	= @enable_rpath@
 enable_nls	= @enable_nls@

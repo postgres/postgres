@@ -1,7 +1,7 @@
 #
 # PostgreSQL top level makefile
 #
-# $PostgreSQL: pgsql/GNUmakefile.in,v 1.37 2004/01/19 21:20:04 tgl Exp $
+# $PostgreSQL: pgsql/GNUmakefile.in,v 1.38 2004/04/20 00:33:44 pgsql Exp $
 #
 
 subdir =
@@ -71,8 +71,6 @@ $(distdir).tar: distdir
 
 opt_files := \
 	src/tools src/corba src/tutorial \
-	src/bin/pgtclsh \
-	$(addprefix src/interfaces/, libpgtcl) \
 	$(addprefix src/pl/, plperl plpython tcl)
 
 docs_files := doc/postgres.tar.gz doc/src doc/TODO.detail

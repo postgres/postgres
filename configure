@@ -859,9 +859,7 @@ Optional Packages:
   --with-libs=DIRS        alternative spelling of --with-libraries
   --with-pgport=PORTNUM   change default port number 5432
   --with-tcl              build Tcl and Tk interfaces
-  --without-tk            do not build Tk interfaces if Tcl is enabled
-  --with-tclconfig=DIR    tclConfig.sh and tkConfig.sh are in DIR
-  --with-tkconfig=DIR     tkConfig.sh is in DIR
+  --with-tclconfig=DIR    tclConfig.sh is in DIR
   --with-perl             build Perl modules (PL/Perl)
   --with-python           build Python modules (PL/Python)
   --with-krb4             build with Kerberos 4 support
@@ -2999,44 +2997,6 @@ echo "$as_me:$LINENO: result: $with_tcl" >&5
 echo "${ECHO_T}$with_tcl" >&6
 
 
-# If Tcl is enabled (above) then Tk is also, unless the user disables it using --without-tk
-echo "$as_me:$LINENO: checking whether to build with Tk" >&5
-echo $ECHO_N "checking whether to build with Tk... $ECHO_C" >&6
-if test "$with_tcl" = yes; then
-
-
-
-# Check whether --with-tk or --without-tk was given.
-if test "${with_tk+set}" = set; then
-  withval="$with_tk"
-
-  case $withval in
-    yes)
-      :
-      ;;
-    no)
-      :
-      ;;
-    *)
-      { { echo "$as_me:$LINENO: error: no argument expected for --with-tk option" >&5
-echo "$as_me: error: no argument expected for --with-tk option" >&2;}
-   { (exit 1); exit 1; }; }
-      ;;
-  esac
-
-else
-  with_tk=yes
-
-fi;
-
-else
-  with_tk=no
-fi
-echo "$as_me:$LINENO: result: $with_tk" >&5
-echo "${ECHO_T}$with_tk" >&6
-
-
-
 # We see if the path to the Tcl/Tk configuration scripts is specified.
 # This will override the use of tclsh to find the paths to search.
 
@@ -3056,35 +3016,6 @@ echo "$as_me: error: argument required for --with-tclconfig option" >&2;}
     no)
       { { echo "$as_me:$LINENO: error: argument required for --with-tclconfig option" >&5
 echo "$as_me: error: argument required for --with-tclconfig option" >&2;}
-   { (exit 1); exit 1; }; }
-      ;;
-    *)
-
-      ;;
-  esac
-
-fi;
-
-
-# We see if the path to the Tk configuration scripts is specified.
-# This will override the use of tclsh to find the paths to search.
-
-
-
-
-# Check whether --with-tkconfig or --without-tkconfig was given.
-if test "${with_tkconfig+set}" = set; then
-  withval="$with_tkconfig"
-
-  case $withval in
-    yes)
-      { { echo "$as_me:$LINENO: error: argument required for --with-tkconfig option" >&5
-echo "$as_me: error: argument required for --with-tkconfig option" >&2;}
-   { (exit 1); exit 1; }; }
-      ;;
-    no)
-      { { echo "$as_me:$LINENO: error: argument required for --with-tkconfig option" >&5
-echo "$as_me: error: argument required for --with-tkconfig option" >&2;}
    { (exit 1); exit 1; }; }
       ;;
     *)
@@ -17233,51 +17164,6 @@ eval TCL_SHARED_BUILD=\"$TCL_SHARED_BUILD\"
 
     fi
 
-# Check for Tk configuration script tkConfig.sh
-if test "$with_tk" = yes; then
-    echo "$as_me:$LINENO: checking for tkConfig.sh" >&5
-echo $ECHO_N "checking for tkConfig.sh... $ECHO_C" >&6
-# Let user override test
-if test -z "$TK_CONFIG_SH"; then
-    pgac_test_dirs="$with_tkconfig $with_tclconfig"
-
-    set X $pgac_test_dirs; shift
-    if test $# -eq 0; then
-        test -z "$TCLSH" && { { echo "$as_me:$LINENO: error: unable to locate tkConfig.sh because no Tcl shell was found" >&5
-echo "$as_me: error: unable to locate tkConfig.sh because no Tcl shell was found" >&2;}
-   { (exit 1); exit 1; }; }
-        set X `echo 'puts $auto_path' | $TCLSH`; shift
-    fi
-
-    for pgac_dir do
-        if test -r "$pgac_dir/tkConfig.sh"; then
-            TK_CONFIG_SH=$pgac_dir/tkConfig.sh
-            break
-        fi
-    done
-fi
-
-if test -z "$TK_CONFIG_SH"; then
-    echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-    { { echo "$as_me:$LINENO: error: file 'tkConfig.sh' is required for Tk" >&5
-echo "$as_me: error: file 'tkConfig.sh' is required for Tk" >&2;}
-   { (exit 1); exit 1; }; }
-else
-    echo "$as_me:$LINENO: result: $TK_CONFIG_SH" >&5
-echo "${ECHO_T}$TK_CONFIG_SH" >&6
-fi
-
-
-
-    . "$TK_CONFIG_SH"
-eval TK_LIBS=\"$TK_LIBS\"
-eval TK_LIB_SPEC=\"$TK_LIB_SPEC\"
-eval TK_XINCLUDES=\"$TK_XINCLUDES\"
-
-fi
-
-
 #
 # Check for DocBook and tools
 #
@@ -18197,7 +18083,6 @@ s,@autodepend@,$autodepend,;t t
 s,@INCLUDES@,$INCLUDES,;t t
 s,@enable_thread_safety@,$enable_thread_safety,;t t
 s,@with_tcl@,$with_tcl,;t t
-s,@with_tk@,$with_tk,;t t
 s,@with_perl@,$with_perl,;t t
 s,@with_python@,$with_python,;t t
 s,@with_krb4@,$with_krb4,;t t
@@ -18253,10 +18138,6 @@ s,@TCL_LIBS@,$TCL_LIBS,;t t
 s,@TCL_LIB_SPEC@,$TCL_LIB_SPEC,;t t
 s,@TCL_SHARED_BUILD@,$TCL_SHARED_BUILD,;t t
 s,@TCL_SHLIB_LD_LIBS@,$TCL_SHLIB_LD_LIBS,;t t
-s,@TK_CONFIG_SH@,$TK_CONFIG_SH,;t t
-s,@TK_LIBS@,$TK_LIBS,;t t
-s,@TK_LIB_SPEC@,$TK_LIB_SPEC,;t t
-s,@TK_XINCLUDES@,$TK_XINCLUDES,;t t
 s,@NSGMLS@,$NSGMLS,;t t
 s,@JADE@,$JADE,;t t
 s,@have_docbook@,$have_docbook,;t t
