@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.44 1999/08/09 00:51:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.45 1999/08/10 03:00:15 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -78,7 +78,8 @@ bool
 is_opclause(Node *clause)
 {
 	return (clause != NULL &&
-	  nodeTag(clause) == T_Expr && ((Expr *) clause)->opType == OP_EXPR);
+			IsA(clause, Expr) &&
+			((Expr *) clause)->opType == OP_EXPR);
 }
 
 /*
@@ -147,7 +148,7 @@ bool
 is_funcclause(Node *clause)
 {
 	return (clause != NULL &&
-			nodeTag(clause) == T_Expr &&
+			IsA(clause, Expr) &&
 			((Expr *) clause)->opType == FUNC_EXPR);
 }
 
@@ -183,9 +184,9 @@ make_funcclause(Func *func, List *funcargs)
 bool
 or_clause(Node *clause)
 {
-	return clause != NULL &&
-	nodeTag(clause) == T_Expr &&
-	((Expr *) clause)->opType == OR_EXPR;
+	return (clause != NULL &&
+			IsA(clause, Expr) &&
+			((Expr *) clause)->opType == OR_EXPR);
 }
 
 /*
@@ -220,7 +221,7 @@ bool
 not_clause(Node *clause)
 {
 	return (clause != NULL &&
-			nodeTag(clause) == T_Expr &&
+			IsA(clause, Expr) &&
 			((Expr *) clause)->opType == NOT_EXPR);
 }
 
@@ -269,7 +270,7 @@ bool
 and_clause(Node *clause)
 {
 	return (clause != NULL &&
-			nodeTag(clause) == T_Expr &&
+			IsA(clause, Expr) &&
 			((Expr *) clause)->opType == AND_EXPR);
 }
 
@@ -319,27 +320,10 @@ make_ands_implicit(Expr *clause)
 		return lcons(clause, NIL);
 }
 
-/*****************************************************************************
- *		CASE clause functions
- *****************************************************************************/
-
-
-/*
- * case_clause
- *
- * Returns t iff its argument is a 'case' clause: (CASE { expr }).
- *
- */
-bool
-case_clause(Node *clause)
-{
-	return (clause != NULL &&
-			nodeTag(clause) == T_CaseExpr);
-}
 
 /*****************************************************************************
  *																			 *
- *																			 *
+ *		General clause-manipulating routines								 *
  *																			 *
  *****************************************************************************/
 
@@ -374,20 +358,21 @@ pull_constant_clauses(List *quals, List **constantQual)
 
 /*
  * clause_relids_vars
- *	  Retrieves relids and vars appearing within a clause.
- *	  Returns ((relid1 relid2 ... relidn) (var1 var2 ... varm)) where
- *	  vars appear in the clause  this is done by recursively searching
- *	  through the left and right operands of a clause.
+ *	  Retrieves distinct relids and vars appearing within a clause.
  *
- * Returns the list of relids and vars.
- *
+ * '*relids' is set to an integer list of all distinct "varno"s appearing
+ *		in Vars within the clause.
+ * '*vars' is set to a list of all distinct Vars appearing within the clause.
+ *		Var nodes are considered distinct if they have different varno
+ *		or varattno values.  If there are several occurrences of the same
+ *		varno/varattno, you get a randomly chosen one...
  */
 void
 clause_get_relids_vars(Node *clause, Relids *relids, List **vars)
 {
 	List	   *clvars = pull_var_clause(clause);
-	List	   *var_list = NIL;
 	List	   *varno_list = NIL;
+	List	   *var_list = NIL;
 	List	   *i;
 
 	foreach(i, clvars)
@@ -397,7 +382,7 @@ clause_get_relids_vars(Node *clause, Relids *relids, List **vars)
 
 		Assert(var->varlevelsup == 0);
 		if (!intMember(var->varno, varno_list))
-			varno_list = lappendi(varno_list, var->varno);
+			varno_list = lconsi(var->varno, varno_list);
 		foreach(vi, var_list)
 		{
 			Var		   *in_list = (Var *) lfirst(vi);
@@ -407,7 +392,7 @@ clause_get_relids_vars(Node *clause, Relids *relids, List **vars)
 				break;
 		}
 		if (vi == NIL)
-			var_list = lappend(var_list, var);
+			var_list = lcons(var, var_list);
 	}
 	freeList(clvars);
 
@@ -424,22 +409,10 @@ clause_get_relids_vars(Node *clause, Relids *relids, List **vars)
 int
 NumRelids(Node *clause)
 {
-	List	   *vars = pull_var_clause(clause);
-	List	   *var_list = NIL;
-	List	   *i;
-	int			result;
+	List	   *varno_list = pull_varnos(clause);
+	int			result = length(varno_list);
 
-	foreach(i, vars)
-	{
-		Var		   *var = (Var *) lfirst(i);
-
-		if (!intMember(var->varno, var_list))
-			var_list = lconsi(var->varno, var_list);
-	}
-
-	result = length(var_list);
-	freeList(vars);
-	freeList(var_list);
+	freeList(varno_list);
 	return result;
 }
 
@@ -468,7 +441,7 @@ is_joinable(Node *clause)
 	 * One side of the clause (i.e. left or right operands) must either be
 	 * a var node ...
 	 */
-	if (IsA(leftop, Var) ||IsA(rightop, Var))
+	if (IsA(leftop, Var) || IsA(rightop, Var))
 		return true;
 
 	/*
@@ -477,36 +450,6 @@ is_joinable(Node *clause)
 	if (is_funcclause(leftop) || is_funcclause(rightop))
 		return true;
 
-	return false;
-}
-
-/*
- * qual_clause_p
- *
- * Returns t iff 'clause' is a valid qualification clause.
- *
- * For now we accept only "var op const" or "const op var".
- */
-bool
-qual_clause_p(Node *clause)
-{
-	Node	   *leftop,
-			   *rightop;
-
-	if (!is_opclause(clause))
-		return false;
-
-	leftop = (Node *) get_leftop((Expr *) clause);
-	rightop = (Node *) get_rightop((Expr *) clause);
-
-	if (!rightop)
-		return false;			/* unary opclauses need not apply */
-
-	/* How about Param-s ?	- vadim 02/03/98 */
-	if (IsA(leftop, Var) &&IsA(rightop, Const))
-		return true;
-	if (IsA(rightop, Var) &&IsA(leftop, Const))
-		return true;
 	return false;
 }
 
@@ -644,24 +587,16 @@ static int is_single_func(Node *node)
 {
 	if (is_funcclause(node))
 	{
-		List	   *vars = pull_var_clause(node);
+		List	   *varnos = pull_varnos(node);
 
-		if (vars != NIL)
+		if (length(varnos) == 1)
 		{
-			int		funcvarno = ((Var *) lfirst(vars))->varno;
-			List   *v;
-			/* need to check that all args of func are same relation */
-			foreach(v, lnext(vars))
-			{
-				if (((Var *) lfirst(v))->varno != funcvarno)
-				{
-					funcvarno = 0;
-					break;
-				}
-			}
-			freeList(vars);
+			int		funcvarno = lfirsti(varnos);
+
+			freeList(varnos);
 			return funcvarno;
 		}
+		freeList(varnos);
 	}
 	return 0;
 }

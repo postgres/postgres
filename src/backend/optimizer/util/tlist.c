@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.37 1999/08/09 05:34:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.38 1999/08/10 03:00:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -285,37 +285,31 @@ copy_vars(List *target, List *source)
 List *
 flatten_tlist(List *tlist)
 {
+	List	   *vlist = pull_var_clause((Node *) tlist);
 	int			last_resdomno = 1;
 	List	   *new_tlist = NIL;
-	List	   *tl;
+	List	   *v;
 
-	foreach(tl, tlist)
+	foreach(v, vlist)
 	{
-		TargetEntry *tl_entry = (TargetEntry *) lfirst(tl);
-		List	   *vlist = pull_var_clause((Node *) get_expr(tl_entry));
-		List	   *v;
+		Var		   *var = lfirst(v);
 
-		foreach(v, vlist)
+		if (! tlistentry_member(var, new_tlist))
 		{
-			Var		   *var = lfirst(v);
+			Resdom	   *r;
 
-			if (! tlistentry_member(var, new_tlist))
-			{
-				Resdom	   *r;
-
-				r = makeResdom(last_resdomno++,
-							   var->vartype,
-							   var->vartypmod,
-							   NULL,
-							   (Index) 0,
-							   (Oid) 0,
-							   false);
-				new_tlist = lappend(new_tlist,
-									makeTargetEntry(r, (Node *) var));
-			}
+			r = makeResdom(last_resdomno++,
+						   var->vartype,
+						   var->vartypmod,
+						   NULL,
+						   (Index) 0,
+						   (Oid) 0,
+						   false);
+			new_tlist = lappend(new_tlist,
+								makeTargetEntry(r, (Node *) var));
 		}
-		freeList(vlist);
 	}
+	freeList(vlist);
 
 	return new_tlist;
 }
@@ -334,20 +328,8 @@ flatten_tlist(List *tlist)
 List *
 flatten_tlist_vars(List *full_tlist, List *flat_tlist)
 {
-	List	   *result = NIL;
-	List	   *x;
-
-	foreach(x, full_tlist)
-	{
-		TargetEntry *tle = lfirst(x);
-
-		result = lappend(result,
-						 makeTargetEntry(tle->resdom,
-							flatten_tlist_vars_mutator((Node *) get_expr(tle),
-													   flat_tlist)));
-	}
-
-	return result;
+	return (List *) flatten_tlist_vars_mutator((Node *) full_tlist,
+											   flat_tlist);
 }
 
 static Node *

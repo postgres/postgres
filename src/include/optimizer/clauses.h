@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: clauses.h,v 1.25 1999/08/09 00:51:23 tgl Exp $
+ * $Id: clauses.h,v 1.26 1999/08/10 03:00:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,13 +37,10 @@ extern Expr *make_andclause(List *andclauses);
 extern Expr *make_ands_explicit(List *andclauses);
 extern List *make_ands_implicit(Expr *clause);
 
-extern bool case_clause(Node *clause);
-
 extern List *pull_constant_clauses(List *quals, List **constantQual);
 extern void clause_get_relids_vars(Node *clause, Relids *relids, List **vars);
 extern int	NumRelids(Node *clause);
 extern bool is_joinable(Node *clause);
-extern bool qual_clause_p(Node *clause);
 extern List *fix_opids(List *clauses);
 extern void get_relattval(Node *clause, int targetrelid,
 						  int *relid, AttrNumber *attno,

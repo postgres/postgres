@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.21 1999/07/15 22:39:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.22 1999/08/10 03:00:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,10 +15,8 @@
 
 #include "postgres.h"
 
-
 #include "optimizer/clauses.h"
 #include "optimizer/var.h"
-
 
 
 static bool pull_varnos_walker(Node *node, List **listptr);
@@ -111,22 +109,23 @@ pull_var_clause_walker(Node *node, List **listptr)
 /*
  *		var_equal
  *
- *		The only difference between this an equal() is that this does not
- *		test varnoold and varoattno.
+ *		This is like equal() except that it does NOT test varnoold and
+ *		varoattno.  Also, it will not compare non-Var nodes.
  *
  *		Returns t iff two var nodes correspond to the same attribute.
  */
 bool
 var_equal(Var *var1, Var *var2)
 {
-	if (IsA(var1, Var) &&IsA(var2, Var) &&
-		(((Var *) var1)->varno == ((Var *) var2)->varno) &&
-		(((Var *) var1)->vartype == ((Var *) var2)->vartype) &&
-		(((Var *) var1)->vartypmod == ((Var *) var2)->vartypmod) &&
-		(((Var *) var1)->varlevelsup == ((Var *) var2)->varlevelsup) &&
-		(((Var *) var1)->varattno == ((Var *) var2)->varattno))
+	if (var1 != NULL && IsA(var1, Var) &&
+		var2 != NULL && IsA(var2, Var) &&
+		var1->varno == var2->varno &&
+		var1->varattno == var2->varattno &&
+		var1->vartype == var2->vartype &&
+		var1->vartypmod == var2->vartypmod &&
+		var1->varlevelsup == var2->varlevelsup)
 	{
-		Assert(((Var *) var1)->varlevelsup == 0);
+		Assert(var1->varlevelsup == 0);	/* XXX why do this here??? */
 		return true;
 	}
 	else

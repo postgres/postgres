@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.35 1999/07/24 23:21:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.36 1999/08/10 03:00:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,28 +51,29 @@ static Oid	hashjoinop(Expr *clause);
 void
 make_var_only_tlist(Query *root, List *tlist)
 {
-	List	   *tlist_vars = NIL;
-	List	   *l = NIL;
-	List	   *tvar = NIL;
+	List	   *tlist_vars = pull_var_clause((Node *) tlist);
 
-	foreach(l, tlist)
+	add_vars_to_targetlist(root, tlist_vars);
+	freeList(tlist_vars);
+}
+
+/*
+ * add_vars_to_targetlist
+ *	  For each variable appearing in the list, add it to the relation's
+ *	  targetlist if not already present.  Rel nodes will also be created
+ *	  if not already present.
+ */
+static void
+add_vars_to_targetlist(Query *root, List *vars)
+{
+	List	   *temp;
+
+	foreach(temp, vars)
 	{
-		TargetEntry *entry = (TargetEntry *) lfirst(l);
+		Var		   *var = (Var *) lfirst(temp);
+		RelOptInfo *rel = get_base_rel(root, var->varno);
 
-		tlist_vars = nconc(tlist_vars, pull_var_clause(entry->expr));
-	}
-
-	/* now, the target list only contains Var nodes */
-	foreach(tvar, tlist_vars)
-	{
-		Var		   *var = (Var *) lfirst(tvar);
-		Index		varno;
-		RelOptInfo *result;
-
-		varno = var->varno;
-		result = get_base_rel(root, varno);
-
-		add_var_to_tlist(result, var);
+		add_var_to_tlist(rel, var);
 	}
 }
 
@@ -87,31 +88,30 @@ make_var_only_tlist(Query *root, List *tlist)
 void
 add_missing_vars_to_tlist(Query *root, List *tlist)
 {
+	int			varno = 1;
 	List	   *l;
-	int			varno;
 
-	varno = 1;
 	foreach(l, root->rtable)
 	{
 		RangeTblEntry *rte = (RangeTblEntry *) lfirst(l);
 		Relids		relids;
-		RelOptInfo *result;
-		Var		   *var;
 
 		relids = lconsi(varno, NIL);
 		if (rte->inFromCl && !rel_member(relids, root->base_rel_list))
 		{
+			RelOptInfo *rel;
+			Var		   *var;
+
+			/* add it to base_rel_list */
+			rel = get_base_rel(root, varno);
+			/* give it a dummy tlist entry for its OID */
 			var = makeVar(varno, ObjectIdAttributeNumber,
 						  OIDOID, -1, 0, varno, ObjectIdAttributeNumber);
-			/* add it to base_rel_list */
-			result = get_base_rel(root, varno);
-			add_var_to_tlist(result, var);
+			add_var_to_tlist(rel, var);
 		}
 		pfree(relids);
 		varno++;
 	}
-
-	return;
 }
 
 /*****************************************************************************
@@ -239,26 +239,6 @@ add_join_info_to_rels(Query *root, RestrictInfo *restrictinfo,
 	}
 }
 
-/*
- * add_vars_to_targetlist
- *	  For each variable appearing in a clause, add it to the relation's
- *	  targetlist if not already present.
- */
-static void
-add_vars_to_targetlist(Query *root, List *vars)
-{
-	List	   *temp;
-
-	foreach(temp, vars)
-	{
-		Var		   *var = (Var *) lfirst(temp);
-		RelOptInfo *rel = get_base_rel(root, var->varno);
-
-		if (tlistentry_member(var, rel->targetlist) == NULL)
-			add_var_to_tlist(rel, var);
-	}
-}
-
 /*****************************************************************************
  *
  *	 JOININFO
@@ -269,7 +249,7 @@ add_vars_to_targetlist(Query *root, List *vars)
  * set_joininfo_mergeable_hashable
  *	  Set the MergeJoinable or HashJoinable field for every joininfo node
  *	  (within a rel node) and the mergejoinorder or hashjoinop field for
- *	  each restrictinfo node(within a joininfo node) for all relations in a
+ *	  each restrictinfo node (within a joininfo node) for all relations in a
  *	  query.
  *
  *	  Returns nothing.
@@ -277,43 +257,43 @@ add_vars_to_targetlist(Query *root, List *vars)
 void
 set_joininfo_mergeable_hashable(List *rel_list)
 {
-	List	   *x,
-			   *y,
-			   *z;
-	RelOptInfo *rel;
-	JoinInfo   *joininfo;
-	RestrictInfo *restrictinfo;
-	Expr	   *clause;
+	List	   *x;
 
 	foreach(x, rel_list)
 	{
-		rel = (RelOptInfo *) lfirst(x);
+		RelOptInfo *rel = (RelOptInfo *) lfirst(x);
+		List	   *y;
+
 		foreach(y, rel->joininfo)
 		{
-			joininfo = (JoinInfo *) lfirst(y);
+			JoinInfo   *joininfo = (JoinInfo *) lfirst(y);
+			List	   *z;
+
 			foreach(z, joininfo->jinfo_restrictinfo)
 			{
-				restrictinfo = (RestrictInfo *) lfirst(z);
-				clause = restrictinfo->clause;
+				RestrictInfo *restrictinfo = (RestrictInfo *) lfirst(z);
+				Expr	   *clause = restrictinfo->clause;
+
 				if (is_joinable((Node *) clause))
 				{
-					MergeOrder *sortop = (MergeOrder *) NULL;
-					Oid			hashop = (Oid) NULL;
-
 					if (_enable_mergejoin_)
-						sortop = mergejoinop(clause);
-					if (sortop)
 					{
-						restrictinfo->mergejoinorder = sortop;
-						joininfo->mergejoinable = true;
+						MergeOrder *sortop = mergejoinop(clause);
+						if (sortop)
+						{
+							restrictinfo->mergejoinorder = sortop;
+							joininfo->mergejoinable = true;
+						}
 					}
 
 					if (_enable_hashjoin_)
-						hashop = hashjoinop(clause);
-					if (hashop)
 					{
-						restrictinfo->hashjoinoperator = hashop;
-						joininfo->hashjoinable = true;
+						Oid			hashop = hashjoinop(clause);
+						if (hashop)
+						{
+							restrictinfo->hashjoinoperator = hashop;
+							joininfo->hashjoinable = true;
+						}
 					}
 				}
 			}
@@ -323,8 +303,8 @@ set_joininfo_mergeable_hashable(List *rel_list)
 
 /*
  * mergejoinop
- *	  Returns the mergejoin operator of an operator iff 'clause' is
- *	  mergejoinable, i.e., both operands are single vars and the operator is
+ *	  Returns a MergeOrder node for 'clause' iff 'clause' is mergejoinable,
+ *	  i.e., both operands are single vars and the operator is
  *	  a mergejoinable operator.
  */
 static MergeOrder *
@@ -346,7 +326,7 @@ mergejoinop(Expr *clause)
 	/* caution: is_opclause accepts more than I do, so check it */
 	if (!right)
 		return NULL;			/* unary opclauses need not apply */
-	if (!IsA(left, Var) ||!IsA(right, Var))
+	if (!IsA(left, Var) || !IsA(right, Var))
 		return NULL;
 
 	opno = ((Oper *) clause->oper)->opno;
@@ -374,8 +354,8 @@ mergejoinop(Expr *clause)
 
 /*
  * hashjoinop
- *	  Returns the hashjoin operator of an operator iff 'clause' is
- *	  hashjoinable, i.e., both operands are single vars and the operator is
+ *	  Returns the hashjoin operator iff 'clause' is hashjoinable,
+ *	  i.e., both operands are single vars and the operator is
  *	  a hashjoinable operator.
  */
 static Oid
@@ -393,7 +373,7 @@ hashjoinop(Expr *clause)
 	/* caution: is_opclause accepts more than I do, so check it */
 	if (!right)
 		return InvalidOid;		/* unary opclauses need not apply */
-	if (!IsA(left, Var) ||!IsA(right, Var))
+	if (!IsA(left, Var) || !IsA(right, Var))
 		return InvalidOid;
 
 	return op_hashjoinable(((Oper *) clause->oper)->opno,
