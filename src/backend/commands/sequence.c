@@ -85,6 +85,7 @@ DefineSequence(CreateSeqStmt *seq)
 	Datum		value[SEQ_COL_LASTCOL];
 	char		null[SEQ_COL_LASTCOL];
 	int			i;
+	NameData	name;
 
 	/* Check and set values */
 	init_params(seq, &new);
@@ -110,7 +111,8 @@ DefineSequence(CreateSeqStmt *seq)
 			case SEQ_COL_NAME:
 				typnam->name = "name";
 				coldef->colname = "sequence_name";
-				value[i - 1] = PointerGetDatum(seq->seqname);
+				namestrcpy(&name, seq->seqname);
+				value[i - 1] = NameGetDatum(&name);
 				break;
 			case SEQ_COL_LASTVAL:
 				typnam->name = "int4";
