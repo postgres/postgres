@@ -22,7 +22,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/init/flatfiles.c,v 1.2 2005/02/20 04:45:59 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/init/flatfiles.c,v 1.3 2005/02/20 22:02:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -235,11 +235,9 @@ write_database_file(Relation drel)
 						tempname)));
 
 	/*
-	 * Read pg_database and write the file.  Note we use SnapshotSelf to
-	 * ensure we see all effects of current transaction.  (Perhaps could
-	 * do a CommandCounterIncrement beforehand, instead?)
+	 * Read pg_database and write the file.
 	 */
-	scan = heap_beginscan(drel, SnapshotSelf, 0, NULL);
+	scan = heap_beginscan(drel, SnapshotNow, 0, NULL);
 	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
 		Form_pg_database dbform = (Form_pg_database) GETSTRUCT(tuple);
@@ -349,11 +347,9 @@ write_group_file(Relation grel)
 						tempname)));
 
 	/*
-	 * Read pg_group and write the file.  Note we use SnapshotSelf to
-	 * ensure we see all effects of current transaction.  (Perhaps could
-	 * do a CommandCounterIncrement beforehand, instead?)
+	 * Read pg_group and write the file.
 	 */
-	scan = heap_beginscan(grel, SnapshotSelf, 0, NULL);
+	scan = heap_beginscan(grel, SnapshotNow, 0, NULL);
 	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
 		Form_pg_group grpform = (Form_pg_group) GETSTRUCT(tuple);
@@ -491,11 +487,9 @@ write_user_file(Relation urel)
 						tempname)));
 
 	/*
-	 * Read pg_shadow and write the file.  Note we use SnapshotSelf to
-	 * ensure we see all effects of current transaction.  (Perhaps could
-	 * do a CommandCounterIncrement beforehand, instead?)
+	 * Read pg_shadow and write the file.
 	 */
-	scan = heap_beginscan(urel, SnapshotSelf, 0, NULL);
+	scan = heap_beginscan(urel, SnapshotNow, 0, NULL);
 	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
 		Form_pg_shadow pwform = (Form_pg_shadow) GETSTRUCT(tuple);
@@ -712,6 +706,12 @@ AtEOXact_UpdateFlatFiles(bool isCommit)
 		user_file_update_subid = InvalidSubTransactionId;
 		return;
 	}
+
+	/*
+	 * Advance command counter to be certain we see all effects of the
+	 * current transaction.
+	 */
+	CommandCounterIncrement();
 
 	/*
 	 * We use ExclusiveLock to ensure that only one backend writes the
