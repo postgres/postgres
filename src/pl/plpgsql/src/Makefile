@@ -2,7 +2,7 @@
 #
 # Makefile for the plpgsql shared object
 #
-# $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Makefile,v 1.18 2001/09/16 16:11:11 petere Exp $
+# $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Makefile,v 1.19 2001/10/09 04:15:38 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -23,7 +23,7 @@ override CPPFLAGS := -I$(srcdir) $(CPPFLAGS)
 override DLLLIBS := $(BE_DLLLIBS) $(DLLLIBS)
 rpath :=
 
-OBJS = pl_parse.o pl_handler.o pl_comp.o pl_exec.o pl_funcs.o
+OBJS = pl_gram.o pl_scan.o pl_handler.o pl_comp.o pl_exec.o pl_funcs.o
 
 ifneq ($(PORTNAME), qnx4)
 all: all-lib
@@ -59,10 +59,7 @@ installdirs:
 uninstall:
 	rm -f $(DESTDIR)$(pkglibdir)/plpgsql$(DLSUFFIX)
 
-pl_handler.o pl_comp.o pl_exec.o pl_funcs.o: plpgsql.h $(srcdir)/pl.tab.h
-
-pl_parse.o: $(srcdir)/pl_gram.c $(srcdir)/pl_scan.c plpgsql.h
-	$(CC) -c $(CPPFLAGS) $(CFLAGS) -o $@ $<
+pl_gram.o pl_scan.o pl_handler.o pl_comp.o pl_exec.o pl_funcs.o: plpgsql.h $(srcdir)/pl.tab.h
 
 # Note: Since the yacc and lex files are shipped in the distribution,
 # they must be generated in the srcdir (as opposed to builddir).
@@ -79,17 +76,18 @@ endif
 
 $(srcdir)/pl_scan.c: scan.l
 ifdef FLEX
-	$(FLEX) -i -l $(FLEXFLAGS) $<
-	sed -e 's/yy/plpgsql_yy/g' -e 's/YY/PLPGSQL_YY/g' < lex.yy.c > $@
-	rm -f lex.yy.c
+	$(FLEX) -i $(FLEXFLAGS) -Pplpgsql_base_yy -o'$@' $<
 else
 	@$(missing) flex $< $@
 endif
 
 distprep: $(srcdir)/pl_scan.c $(srcdir)/pl.tab.h $(srcdir)/pl_gram.c
 
+# pl_gram.c, pl.tab.h, and pl_scan.c are in the distribution tarball,
+# so they are not cleaned here.
 clean distclean: clean-lib
 	rm -f $(OBJS)
+# And the garbage that might have been left behind by partial build:
 	@rm -f y.tab.c y.tab.h lex.yy.c
 
 maintainer-clean: clean

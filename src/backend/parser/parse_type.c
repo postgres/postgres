@@ -8,13 +8,16 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.35 2001/03/22 03:59:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.36 2001/10/09 04:15:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include "catalog/pg_type.h"
+#include "nodes/parsenodes.h"
+#include "parser/parser.h"
+#include "parser/parse_expr.h"
 #include "parser/parse_type.h"
 #include "utils/syscache.h"
 
@@ -262,4 +265,74 @@ typenameTypeId(char *s)
 	result = typ->t_data->t_oid;
 	ReleaseSysCache(typ);
 	return result;
+}
+
+/*
+ * Given a string that is supposed to be a SQL-compatible type declaration,
+ * such as "int4" or "integer" or "character varying(32)", parse
+ * the string and convert it to a type OID and type modifier.
+ *
+ * This routine is not currently used by the main backend, but it is
+ * exported for use by add-on modules such as plpgsql, in hopes of
+ * centralizing parsing knowledge about SQL type declarations.
+ */
+void
+parseTypeString(const char *str, Oid *type_id, int32 *typmod)
+{
+	char   *buf;
+	List   *raw_parsetree_list;
+	SelectStmt *stmt;
+	ResTarget *restarget;
+	A_Const *aconst;
+	TypeName *typename;
+
+	buf = (char *) palloc(strlen(str) + 16);
+	sprintf(buf, "SELECT (NULL::%s)", str);
+
+	raw_parsetree_list = parser(buf, NULL, 0);
+
+	/*
+	 * Make sure we got back exactly what we expected and no more;
+	 * paranoia is justified since the string might contain anything.
+	 */
+	if (length(raw_parsetree_list) != 1)
+		elog(ERROR, "Invalid type name '%s'", str);
+	stmt = (SelectStmt *) lfirst(raw_parsetree_list);
+	if (stmt == NULL ||
+		!IsA(stmt, SelectStmt) ||
+		stmt->distinctClause != NIL ||
+		stmt->into != NULL ||
+		stmt->fromClause != NIL ||
+		stmt->whereClause != NULL ||
+		stmt->groupClause != NIL ||
+		stmt->havingClause != NULL ||
+		stmt->sortClause != NIL ||
+		stmt->portalname != NULL ||
+		stmt->limitOffset != NULL ||
+		stmt->limitCount != NULL ||
+		stmt->forUpdate != NIL ||
+		stmt->op != SETOP_NONE)
+		elog(ERROR, "Invalid type name '%s'", str);
+	if (length(stmt->targetList) != 1)
+		elog(ERROR, "Invalid type name '%s'", str);
+	restarget = (ResTarget *) lfirst(stmt->targetList);
+	if (restarget == NULL ||
+		!IsA(restarget, ResTarget) ||
+		restarget->name != NULL ||
+		restarget->indirection != NIL)
+		elog(ERROR, "Invalid type name '%s'", str);
+	aconst = (A_Const *) restarget->val;
+	if (aconst == NULL ||
+		!IsA(aconst, A_Const) ||
+		aconst->val.type != T_Null)
+		elog(ERROR, "Invalid type name '%s'", str);
+	typename = aconst->typename;
+	if (typename == NULL ||
+		!IsA(typename, TypeName))
+		elog(ERROR, "Invalid type name '%s'", str);
+
+	*type_id = typenameTypeId(TypeNameToInternalName(typename));
+	*typmod = typename->typmod;
+
+	pfree(buf);
 }

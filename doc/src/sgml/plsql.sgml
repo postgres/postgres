@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.40 2001/09/18 12:08:26 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.41 2001/10/09 04:15:38 tgl Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -229,7 +229,7 @@ END;
     re-create them. For example:
 <programlisting>
 drop function testfunc(integer);
-create function testfunc(integer) return integer as '
+create function testfunc(integer) returns integer as '
     ....
 end;
 ' language 'plpgsql';
@@ -360,7 +360,7 @@ END;
      Here are some examples of variable declarations:
 <programlisting>
 user_id INTEGER;
-quantity NUMBER(5);
+quantity NUMERIC(5);
 url VARCHAR;
 </programlisting>
     </para>
@@ -437,7 +437,7 @@ END;
      <para>
       Using the <type>%TYPE</type> and <type>%ROWTYPE</type>
       attributes, you can declare variables with the same
-      data type or structure of another database item (e.g: a
+      data type or structure as another database item (e.g: a
       table field).
      </para>
 
@@ -512,7 +512,7 @@ create function cs_refresh_one_mv(integer) returns integer as '
                WHERE sort_key=key;
 
         IF NOT FOUND THEN
-           RAISE EXCEPTION ''View '' || key || '' not found'';
+           RAISE EXCEPTION ''View % not found'', key;
            RETURN 0;
         END IF;
 
@@ -575,8 +575,7 @@ SELECT <replaceable>expression</replaceable>
      identifiers are substituted by parameters and the actual values from
      the variables are passed to the executor in the parameter array. All
      expressions used in a <application>PL/pgSQL</application> function are only prepared and
-     saved once.  The only exception to this rule is an EXECUTE statement
-     if parsing of a query is needed each time it is encountered.
+     saved once.  The only exception to this rule is an EXECUTE statement.
     </para>
 
     <para>

@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.34 2001/10/06 23:21:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.35 2001/10/09 04:15:38 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -35,15 +35,12 @@
  *
  **********************************************************************/
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
+#include "plpgsql.h"
+
 #include <unistd.h>
 #include <fcntl.h>
-#include <string.h>
 #include <ctype.h>
 
-#include "plpgsql.h"
 #include "pl.tab.h"
 
 #include "access/heapam.h"
@@ -57,6 +54,7 @@
 #include "executor/spi.h"
 #include "fmgr.h"
 #include "parser/gramparse.h"
+#include "parser/parse_type.h"
 #include "utils/builtins.h"
 #include "utils/syscache.h"
 
@@ -66,8 +64,6 @@
  * ----------
  */
 extern PLPGSQL_YYSTYPE plpgsql_yylval;
-extern char plpgsql_yytext[];
-extern int	plpgsql_yylineno;
 
 /* ----------
  * Our own local and global variables
@@ -152,8 +148,7 @@ plpgsql_compile(Oid fn_oid, int functype)
 	proc_source = DatumGetCString(DirectFunctionCall1(textout,
 								  PointerGetDatum(&procStruct->prosrc)));
 	plpgsql_setinput(proc_source, functype);
-	plpgsql_error_funcname = DatumGetCString(DirectFunctionCall1(nameout,
-								  NameGetDatum(&(procStruct->proname))));
+	plpgsql_error_funcname = pstrdup(NameStr(procStruct->proname));
 	plpgsql_error_lineno = 0;
 
 	/*
@@ -165,8 +160,7 @@ plpgsql_compile(Oid fn_oid, int functype)
 
 	function->fn_functype = functype;
 	function->fn_oid = fn_oid;
-	function->fn_name = strdup(DatumGetCString(DirectFunctionCall1(nameout,
-								 NameGetDatum(&(procStruct->proname)))));
+	function->fn_name = strdup(NameStr(procStruct->proname));
 
 	switch (functype)
 	{
@@ -237,9 +231,7 @@ plpgsql_compile(Oid fn_oid, int functype)
 					 * For tuple type parameters, we set up a record of
 					 * that type
 					 */
-					sprintf(buf, "%s%%rowtype",
-							DatumGetCString(DirectFunctionCall1(nameout,
-								 NameGetDatum(&(typeStruct->typname)))));
+					sprintf(buf, "%s%%rowtype", NameStr(typeStruct->typname));
 					if (plpgsql_parse_wordrowtype(buf) != T_ROW)
 					{
 						plpgsql_comperrinfo();
@@ -272,8 +264,7 @@ plpgsql_compile(Oid fn_oid, int functype)
 					var->dtype = PLPGSQL_DTYPE_VAR;
 					var->refname = strdup(buf);
 					var->lineno = 0;
-					var->datatype->typname = DatumGetCString(DirectFunctionCall1(nameout,
-								  NameGetDatum(&(typeStruct->typname))));
+					var->datatype->typname = strdup(NameStr(typeStruct->typname));
 					var->datatype->typoid = procStruct->proargtypes[i];
 					perm_fmgr_info(typeStruct->typinput, &(var->datatype->typinput));
 					var->datatype->typelem = typeStruct->typelem;
@@ -340,8 +331,7 @@ plpgsql_compile(Oid fn_oid, int functype)
 			var->dtype = PLPGSQL_DTYPE_VAR;
 			var->refname = strdup("tg_name");
 			var->lineno = 0;
-			plpgsql_parse_word("name");
-			var->datatype = plpgsql_yylval.dtype;
+			var->datatype = plpgsql_parse_datatype("name");
 			var->isconst = false;
 			var->notnull = false;
 			var->default_val = NULL;
@@ -359,8 +349,7 @@ plpgsql_compile(Oid fn_oid, int functype)
 			var->dtype = PLPGSQL_DTYPE_VAR;
 			var->refname = strdup("tg_when");
 			var->lineno = 0;
-			plpgsql_parse_word("text");
-			var->datatype = plpgsql_yylval.dtype;
+			var->datatype = plpgsql_parse_datatype("text");
 			var->isconst = false;
 			var->notnull = false;
 			var->default_val = NULL;
@@ -378,8 +367,7 @@ plpgsql_compile(Oid fn_oid, int functype)
 			var->dtype = PLPGSQL_DTYPE_VAR;
 			var->refname = strdup("tg_level");
 			var->lineno = 0;
-			plpgsql_parse_word("text");
-			var->datatype = plpgsql_yylval.dtype;
+			var->datatype = plpgsql_parse_datatype("text");
 			var->isconst = false;
 			var->notnull = false;
 			var->default_val = NULL;
@@ -397,8 +385,7 @@ plpgsql_compile(Oid fn_oid, int functype)
 			var->dtype = PLPGSQL_DTYPE_VAR;
 			var->refname = strdup("tg_op");
 			var->lineno = 0;
-			plpgsql_parse_word("text");
-			var->datatype = plpgsql_yylval.dtype;
+			var->datatype = plpgsql_parse_datatype("text");
 			var->isconst = false;
 			var->notnull = false;
 			var->default_val = NULL;
@@ -416,8 +403,7 @@ plpgsql_compile(Oid fn_oid, int functype)
 			var->dtype = PLPGSQL_DTYPE_VAR;
 			var->refname = strdup("tg_relid");
 			var->lineno = 0;
-			plpgsql_parse_word("oid");
-			var->datatype = plpgsql_yylval.dtype;
+			var->datatype = plpgsql_parse_datatype("oid");
 			var->isconst = false;
 			var->notnull = false;
 			var->default_val = NULL;
@@ -435,8 +421,7 @@ plpgsql_compile(Oid fn_oid, int functype)
 			var->dtype = PLPGSQL_DTYPE_VAR;
 			var->refname = strdup("tg_relname");
 			var->lineno = 0;
-			plpgsql_parse_word("name");
-			var->datatype = plpgsql_yylval.dtype;
+			var->datatype = plpgsql_parse_datatype("name");
 			var->isconst = false;
 			var->notnull = false;
 			var->default_val = NULL;
@@ -454,8 +439,7 @@ plpgsql_compile(Oid fn_oid, int functype)
 			var->dtype = PLPGSQL_DTYPE_VAR;
 			var->refname = strdup("tg_nargs");
 			var->lineno = 0;
-			plpgsql_parse_word("int4");
-			var->datatype = plpgsql_yylval.dtype;
+			var->datatype = plpgsql_parse_datatype("int4");
 			var->isconst = false;
 			var->notnull = false;
 			var->default_val = NULL;
@@ -482,8 +466,7 @@ plpgsql_compile(Oid fn_oid, int functype)
 	var->dtype = PLPGSQL_DTYPE_VAR;
 	var->refname = strdup("found");
 	var->lineno = 0;
-	plpgsql_parse_word("bool");
-	var->datatype = plpgsql_yylval.dtype;
+	var->datatype = plpgsql_parse_datatype("bool");
 	var->isconst = false;
 	var->notnull = false;
 	var->default_val = NULL;
@@ -541,9 +524,6 @@ plpgsql_parse_word(char *word)
 {
 	PLpgSQL_nsitem *nse;
 	char	   *cp;
-	HeapTuple	typeTup;
-	Form_pg_type typeStruct;
-	char	   *typeXlated;
 
 	/*
 	 * We do our lookups case insensitive
@@ -604,45 +584,6 @@ plpgsql_parse_word(char *word)
 			default:
 				return T_ERROR;
 		}
-	}
-
-	/*
-	 * Try to find a data type with that name, but ignore pg_type entries
-	 * that are in fact class types.
-	 */
-	typeXlated = xlateSqlType(cp);
-	typeTup = SearchSysCache(TYPENAME,
-							 PointerGetDatum(typeXlated),
-							 0, 0, 0);
-	if (HeapTupleIsValid(typeTup))
-	{
-		PLpgSQL_type *typ;
-
-		typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
-
-		if (typeStruct->typrelid != InvalidOid)
-		{
-			ReleaseSysCache(typeTup);
-			pfree(cp);
-			return T_WORD;
-		}
-
-		typ = (PLpgSQL_type *) malloc(sizeof(PLpgSQL_type));
-
-		typ->typname = DatumGetCString(DirectFunctionCall1(nameout,
-								  NameGetDatum(&(typeStruct->typname))));
-		typ->typoid = typeTup->t_data->t_oid;
-		perm_fmgr_info(typeStruct->typinput, &(typ->typinput));
-		typ->typelem = typeStruct->typelem;
-		typ->typbyval = typeStruct->typbyval;
-		typ->typlen = typeStruct->typlen;
-		typ->atttypmod = -1;
-
-		plpgsql_yylval.dtype = typ;
-
-		ReleaseSysCache(typeTup);
-		pfree(cp);
-		return T_DTYPE;
 	}
 
 	/*
@@ -946,8 +887,7 @@ plpgsql_parse_wordtype(char *word)
 
 		typ = (PLpgSQL_type *) malloc(sizeof(PLpgSQL_type));
 
-		typ->typname = DatumGetCString(DirectFunctionCall1(nameout,
-								  NameGetDatum(&(typeStruct->typname))));
+		typ->typname = strdup(NameStr(typeStruct->typname));
 		typ->typoid = typeTup->t_data->t_oid;
 		perm_fmgr_info(typeStruct->typinput, &(typ->typinput));
 		typ->typelem = typeStruct->typelem;
@@ -1090,8 +1030,7 @@ plpgsql_parse_dblwordtype(char *string)
 	 */
 	typ = (PLpgSQL_type *) malloc(sizeof(PLpgSQL_type));
 
-	typ->typname = DatumGetCString(DirectFunctionCall1(nameout,
-								  NameGetDatum(&(typeStruct->typname))));
+	typ->typname = strdup(NameStr(typeStruct->typname));
 	typ->typoid = typetup->t_data->t_oid;
 	perm_fmgr_info(typeStruct->typinput, &(typ->typinput));
 	typ->typelem = typeStruct->typelem;
@@ -1199,8 +1138,7 @@ plpgsql_parse_wordrowtype(char *string)
 		}
 		attrStruct = (Form_pg_attribute) GETSTRUCT(attrtup);
 
-		cp = DatumGetCString(DirectFunctionCall1(nameout,
-								  NameGetDatum(&(attrStruct->attname))));
+		cp = pstrdup(NameStr(attrStruct->attname));
 
 		typetup = SearchSysCache(TYPEOID,
 								 ObjectIdGetDatum(attrStruct->atttypid),
@@ -1265,6 +1203,47 @@ plpgsql_parse_wordrowtype(char *string)
 	plpgsql_yylval.row = row;
 
 	return T_ROW;
+}
+
+
+/* ----------
+ * plpgsql_parse_datatype			Scanner found something that should
+ *					be a datatype name.
+ * ----------
+ */
+PLpgSQL_type *
+plpgsql_parse_datatype(char *string)
+{
+	Oid		type_id;
+	int32	typmod;
+	HeapTuple	typeTup;
+	Form_pg_type typeStruct;
+	PLpgSQL_type *typ;
+
+	/* Let the main parser try to parse it under standard SQL rules */
+	parseTypeString(string, &type_id, &typmod);
+
+	/* Okay, build a PLpgSQL_type data structure for it */
+	typeTup = SearchSysCache(TYPEOID,
+							 ObjectIdGetDatum(type_id),
+							 0, 0, 0);
+	if (!HeapTupleIsValid(typeTup))
+		elog(ERROR, "cache lookup failed for type %u", type_id);
+	typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
+
+	typ = (PLpgSQL_type *) malloc(sizeof(PLpgSQL_type));
+
+	typ->typname = strdup(NameStr(typeStruct->typname));
+	typ->typoid = type_id;
+	perm_fmgr_info(typeStruct->typinput, &(typ->typinput));
+	typ->typelem = typeStruct->typelem;
+	typ->typbyval = typeStruct->typbyval;
+	typ->typlen = typeStruct->typlen;
+	typ->atttypmod = typmod;
+
+	ReleaseSysCache(typeTup);
+
+	return typ;
 }
 
 

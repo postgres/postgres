@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.17 2001/08/02 21:31:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.18 2001/10/09 04:15:38 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -523,8 +523,13 @@ extern PLpgSQL_datum **plpgsql_Datums;
 extern int	plpgsql_error_lineno;
 extern char *plpgsql_error_funcname;
 
-extern PLpgSQL_function *plpgsql_curr_compile;
+/* linkage to the real yytext and yylineno variables */
+extern char *plpgsql_base_yytext;
+#define plpgsql_yytext plpgsql_base_yytext
+extern int	plpgsql_base_yylineno;
+#define plpgsql_yylineno plpgsql_base_yylineno
 
+extern PLpgSQL_function *plpgsql_curr_compile;
 
 /**********************************************************************
  * Function declarations
@@ -541,9 +546,11 @@ extern int	plpgsql_parse_tripword(char *string);
 extern int	plpgsql_parse_wordtype(char *string);
 extern int	plpgsql_parse_dblwordtype(char *string);
 extern int	plpgsql_parse_wordrowtype(char *string);
+extern PLpgSQL_type *plpgsql_parse_datatype(char *string);
 extern void plpgsql_adddatum(PLpgSQL_datum * new);
 extern int	plpgsql_add_initdatums(int **varnos);
 extern void plpgsql_comperrinfo(void);
+extern void plpgsql_yyerror(const char *s);
 
 /* ----------
  * Functions in pl_handler.c
@@ -594,10 +601,10 @@ extern char *plpgsql_tolower(char *s);
  * ----------
  */
 extern PLpgSQL_expr *plpgsql_read_expression(int until, char *s);
-extern void plpgsql_yyrestart(FILE *fp);
-extern int	plpgsql_yylex(void);
-extern void plpgsql_setinput(char *s, int functype);
 extern int	plpgsql_yyparse(void);
-extern void plpgsql_yyerror(const char *s);
+extern int	plpgsql_base_yylex(void);
+extern int	plpgsql_yylex(void);
+extern void plpgsql_push_back_token(int token);
+extern void plpgsql_setinput(char *s, int functype);
 
 #endif	 /* PLPGSQL_H */

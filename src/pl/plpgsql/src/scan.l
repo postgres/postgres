@@ -4,7 +4,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Attic/scan.l,v 1.14 2001/07/12 17:42:08 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Attic/scan.l,v 1.15 2001/10/09 04:15:38 tgl Exp $
  *
  *    This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -36,20 +36,27 @@
  *
  **********************************************************************/
 
+#include "plpgsql.h"
+#include "pl.tab.h"
+
+
 static char	*plpgsql_source;
 static int	plpgsql_bytes_left;
 static int	scanner_functype;
 static int	scanner_typereported;
+static int	pushback_token;
+static bool have_pushback_token;
 
 int	plpgsql_SpaceScanned = 0;
-
-extern int yylineno;
 
 static void plpgsql_input(char *buf, int *result, int max);
 
 #define YY_INPUT(buf,res,max)	plpgsql_input(buf, &res, max)
 #define YY_NO_UNPUT
 %}
+
+%option yylineno
+
 
 WS    [\200-\377_A-Za-z"]
 WC    [\200-\377_A-Za-z0-9"]
@@ -91,8 +98,6 @@ WC    [\200-\377_A-Za-z0-9"]
 \.\.			{ return K_DOTDOT;			}
 alias			{ return K_ALIAS;			}
 begin			{ return K_BEGIN;			}
-bpchar			{ return T_BPCHAR;			}
-char			{ return T_CHAR;			}
 close			{ return K_CLOSE;			}
 constant		{ return K_CONSTANT;		}
 cursor			{ return K_CURSOR;			}
@@ -131,7 +136,6 @@ select			{ return K_SELECT;			}
 then			{ return K_THEN;			}
 to				{ return K_TO;				}
 type			{ return K_TYPE;			}
-varchar			{ return T_VARCHAR;			}
 when			{ return K_WHEN;			}
 while			{ return K_WHILE;			}
 
@@ -235,7 +239,37 @@ plpgsql_input(char *buf, int *result, int max)
     plpgsql_bytes_left -= n;
 }
 
+/*
+ * This is the yylex routine called from outside.  It exists to provide
+ * a token pushback facility.
+ */
+int
+plpgsql_yylex(void)
+{
+	if (have_pushback_token)
+	{
+		have_pushback_token = false;
+		return pushback_token;
+	}
+	return yylex();
+}
 
+/*
+ * Push back a single token to be re-read by next plpgsql_yylex() call.
+ */
+void
+plpgsql_push_back_token(int token)
+{
+	if (have_pushback_token)
+		elog(ERROR, "plpgsql_push_back_token: can't push back multiple tokens");
+	pushback_token = token;
+	have_pushback_token = true;
+}
+
+
+/*
+ * Initialize the scanner for new input.
+ */
 void
 plpgsql_setinput(char *source, int functype)
 {
@@ -261,4 +295,6 @@ plpgsql_setinput(char *source, int functype)
 
     scanner_functype     = functype;
     scanner_typereported = 0;
+
+	have_pushback_token = false;
 }

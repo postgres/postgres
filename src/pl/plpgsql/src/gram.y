@@ -4,7 +4,7 @@
  *						  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.25 2001/09/26 21:35:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.26 2001/10/09 04:15:38 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -36,16 +36,11 @@
  *
  **********************************************************************/
 
-#include <stdio.h>
-#include <string.h>
 #include "plpgsql.h"
-#ifdef YYBISON
-#include "pl_scan.c" /* GNU bison wants it here */
-#endif
-
 
 
 static	PLpgSQL_expr	*read_sqlstmt(int until, char *s, char *sqlstart);
+static	PLpgSQL_type	*read_datatype(int tok);
 static	PLpgSQL_stmt	*make_select_stmt(void);
 static	PLpgSQL_stmt	*make_fetch_stmt(void);
 static	PLpgSQL_expr	*make_tupret_expr(PLpgSQL_row *row);
@@ -99,9 +94,9 @@ static	PLpgSQL_expr	*make_tupret_expr(PLpgSQL_row *row);
 %type <declhdr> decl_sect
 %type <varname> decl_varname
 %type <str>		decl_renname
-%type <ival>	decl_const, decl_notnull, decl_atttypmod, decl_atttypmodval
+%type <ival>	decl_const, decl_notnull
 %type <expr>	decl_defval, decl_cursor_query
-%type <dtype>	decl_datatype, decl_dtypename
+%type <dtype>	decl_datatype
 %type <row>		decl_rowtype, decl_cursor_args, decl_cursor_arglist
 %type <nsitem>	decl_aliasitem
 %type <str>		decl_stmts, decl_stmt
@@ -189,9 +184,6 @@ static	PLpgSQL_expr	*make_tupret_expr(PLpgSQL_row *row);
 		 */
 %token	T_FUNCTION
 %token	T_TRIGGER
-%token	T_CHAR
-%token	T_BPCHAR
-%token	T_VARCHAR
 %token	T_LABEL
 %token	T_STRING
 %token	T_VARIABLE
@@ -394,8 +386,7 @@ decl_statement	: decl_varname decl_const decl_datatype decl_notnull decl_defval
 						curname_def->query = strdup(buf);
 						new->default_val = curname_def;
 
-						plpgsql_parse_word("refcursor");
-						new->datatype	= yylval.dtype;
+						new->datatype = plpgsql_parse_datatype("refcursor");
 
 						new->cursor_explicit_expr = $6;
 						if ($3 == NULL)
@@ -554,48 +545,14 @@ decl_const		:
 					{ $$ = 1; }
 				;
 
-decl_datatype	: decl_dtypename
-					{ $$ = $1; }
-				;
-
-decl_dtypename	: T_DTYPE
-					{ $$ = yylval.dtype; }
-				| T_CHAR decl_atttypmod
+decl_datatype	:
 					{
-						if ($2 < 0)
-						{
-							plpgsql_parse_word("char");
-							$$ = yylval.dtype;
-						} else
-						{
-							plpgsql_parse_word("bpchar");
-							$$ = yylval.dtype;
-							$$->atttypmod = $2;
-						}
-					}
-				| T_VARCHAR decl_atttypmod
-					{
-						plpgsql_parse_word("varchar");
-						$$ = yylval.dtype;
-						$$->atttypmod = $2;
-					}
-				| T_BPCHAR '(' decl_atttypmodval ')'
-					{
-						plpgsql_parse_word("bpchar");
-						$$ = yylval.dtype;
-						$$->atttypmod = $3;
-					}
-				;
-
-decl_atttypmod	:
-					{ $$ = -1; }
-				| '(' decl_atttypmodval ')'
-					{ $$ = $2; }
-				;
-
-decl_atttypmodval		: T_NUMBER
-					{
-						$$ = pg_atoi(yytext, sizeof(int16), '\0') + VARHDRSZ;
+						/*
+						 * If there's a lookahead token, read_datatype
+						 * should consume it.
+						 */
+						$$ = read_datatype(yychar);
+						yyclearin;
 					}
 				;
 
@@ -1007,9 +964,7 @@ fori_var		: fori_varname
 						new->refname	= $1.name;
 						new->lineno		= $1.lineno;
 
-						plpgsql_parse_word("integer");
-
-						new->datatype	= yylval.dtype;
+						new->datatype	= plpgsql_parse_datatype("integer");
 						new->isconst	= false;
 						new->notnull	= false;
 						new->default_val = NULL;
@@ -1558,10 +1513,6 @@ lno				:
 
 %%
 
-#ifndef YYBISON
-#include "pl_scan.c" /* BSD yacc wants it here */
-#endif
-
 
 PLpgSQL_expr *
 plpgsql_read_expression (int until, char *s)
@@ -1592,6 +1543,12 @@ read_sqlstmt (int until, char *s, char *sqlstart)
 			plpgsql_dstring_append(&ds, " ");
 		switch (tok)
 		{
+			case 0:
+				plpgsql_error_lineno = lno;
+				plpgsql_comperrinfo();
+				elog(ERROR, "missing %s at end of SQL statement", s);
+				break;
+
 			case T_VARIABLE:
 				params[nparams] = yylval.var->varno;
 				sprintf(buf, " $%d ", ++nparams);
@@ -1611,12 +1568,6 @@ read_sqlstmt (int until, char *s, char *sqlstart)
 				break;
 
 			default:
-				if (tok == 0)
-				{
-					plpgsql_error_lineno = lno;
-					plpgsql_comperrinfo();
-					elog(ERROR, "missing %s at end of SQL statement", s);
-				}
 				plpgsql_dstring_append(&ds, yytext);
 				break;
 		}
@@ -1632,6 +1583,64 @@ read_sqlstmt (int until, char *s, char *sqlstart)
 	plpgsql_dstring_free(&ds);
 
 	return expr;
+}
+
+static PLpgSQL_type *
+read_datatype(int tok)
+{
+	int					lno;
+	PLpgSQL_dstring		ds;
+	PLpgSQL_type		*result;
+	bool				needspace = false;
+	int					parenlevel = 0;
+
+	lno = yylineno;
+
+	/* Often there will be a lookahead token, but if not, get one */
+	if (tok == YYEMPTY)
+		tok = yylex();
+
+	if (tok == T_DTYPE)
+	{
+		/* lexer found word%TYPE and did its thing already */
+		return yylval.dtype;
+	}
+
+	plpgsql_dstring_init(&ds);
+
+	while (tok != ';')
+	{
+		if (tok == 0)
+		{
+			plpgsql_error_lineno = lno;
+			plpgsql_comperrinfo();
+			elog(ERROR, "incomplete datatype declaration");
+		}
+		/* Possible followers for datatype in a declaration */
+		if (tok == K_NOT || tok == K_ASSIGN || tok == K_DEFAULT)
+			break;
+		/* Possible followers for datatype in a cursor_arg list */
+		if ((tok == ',' || tok == ')') && parenlevel == 0)
+			break;
+		if (tok == '(')
+			parenlevel++;
+		else if (tok == ')')
+			parenlevel--;
+		if (needspace)
+			plpgsql_dstring_append(&ds, " ");
+		needspace = true;
+		plpgsql_dstring_append(&ds, yytext);
+
+		tok = yylex();
+	}
+
+	plpgsql_push_back_token(tok);
+
+	result = plpgsql_parse_datatype(plpgsql_dstring_get(&ds));
+
+	plpgsql_dstring_free(&ds);
+
+	return result;
 }
 
 
