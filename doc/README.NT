@@ -67,3 +67,167 @@ Also, the cygnus-bindir has to be placed in the path before the
 NT-directories, because the sort.exe has to be take for cygnus, not
 NT.
 
+---------------------------------------------------------------------------
+
+FIX FOR POSTGRESQL FREEZING ON NT MACHINES
+
+
+From: "Hiroshi Inoue" <Inoue@tpf.co.jp>
+To: "Horak Daniel" <horak@mmp.plzen-city.cz>, "'Tom Lane'" <tgl@sss.pgh.pa.us>
+Cc: <pgsql-hackers@postgreSQL.org>
+Subject: RE: [HACKERS] backend freezeing on win32 fixed (I hope ;-) ) 
+Date: Wed, 18 Aug 1999 08:45:28 +0900
+Message-ID: <000301bee90a$95d40f00$2801007e@cadzone.tpf.co.jp>
+MIME-Version: 1.0
+Content-Type: text/plain;
+	charset="iso-8859-1"
+Content-Transfer-Encoding: 7bit
+X-Priority: 3 (Normal)
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook 8.5, Build 4.71.2173.0
+X-MimeOLE: Produced By Microsoft MimeOLE V4.72.2106.4
+In-reply-to: <2E7F82FAC1FCD2118E1500A024B3BF907DED3F@exchange.mmp.plzen-city.cz>
+Importance: Normal
+Sender: owner-pgsql-hackers@postgreSQL.org
+Precedence: bulk
+Status: RO
+
+> -----Original Message-----
+> From: owner-pgsql-hackers@postgreSQL.org
+> [mailto:owner-pgsql-hackers@postgreSQL.org]On Behalf Of Horak Daniel
+> Sent: Tuesday, August 17, 1999 9:06 PM
+> To: 'Tom Lane'
+> Cc: 'pgsql-hackers@postgreSQL.org'
+> Subject: RE: [HACKERS] backend freezeing on win32 fixed (I hope ;-) )
+
+Yutaka Tanida [yutaka@marin.or.jp] and I have examined IPC
+library.
+
+We found that postmaster doesn't call exec() after fork() since v6.4.
+
+The value of static/extern variables which cygipc library holds may
+be different from their initial values when postmaster fork()s child
+backend processes.
+
+I made the following patch for cygipc library on trial.
+This patch was effective for Yutaka's test case.
+
+Regards.
+
+Hiroshi Inoue
+Inoue@tpf.co.jp
+
+*** sem.c.orig	Tue Dec 01 00:16:25 1998
+--- sem.c	Tue Aug 17 13:22:06 1999
+***************
+*** 58,63 ****
+--- 58,78 ----
+  static int		  GFirstSem	 = 0;		/*PCPC*/
+  static int		  GFdSem	    ;		/*PCPC*/
+
++ static pid_t	GProcessId = 0;
++
++ static void	init_globals(void)
++ {
++ 	pid_t pid;
++
++ 	if (pid=getpid(), pid != GProcessId)
++ 	{
++ 		GFirstSem = 0;
++ 		used_sems = used_semids = max_semid = 0;
++ 		sem_seq = 0;
++ 		GProcessId = pid;
++ 	}
++ }
++
+  /************************************************************************/
+  /* Demande d'acces a la zone partagee de gestion des semaphores		*/
+  /************************************************************************/
+***************
+*** 77,82 ****
+--- 92,98 ----
+  {
+      int LRet ;
+
++ 	init_globals();
+      if( GFirstSem == 0 )
+      {
+  	if( IsGSemSemExist() )
+*** shm.c.orig	Tue Dec 01 01:04:57 1998
+--- shm.c	Tue Aug 17 13:22:27 1999
+***************
+*** 59,64 ****
+--- 59,81 ----
+  static int		  GFirstShm	 = 0;		/*PCPC*/
+  static int		  GFdShm	    ;		/*PCPC*/
+
++ /*****************************************/
++ /*	Initialization of static variables   */
++ /*****************************************/
++ static pid_t GProcessId = 0;
++ static void init_globals(void)
++ {
++ 	pid_t pid;
++
++ 	if (pid=getpid(), pid != GProcessId)
++ 	{
++ 		GFirstShm = 0;
++ 		shm_rss = shm_swp = max_shmid = 0;
++ 		shm_seq = 0;
++ 		GProcessId = pid;
++ 	}
++ }
++
+  /************************************************************************/
+  /* Demande d'acces a la zone partagee de gestion des shm		*/
+  /************************************************************************/
+***************
+*** 82,87 ****
+--- 99,105 ----
+  {
+   int LRet ;
+
++  init_globals();
+   if( GFirstShm == 0 )
+   {
+    if( IsGSemShmExist() )
+*** msg.c.orig	Tue Dec 01 00:16:09 1998
+--- msg.c	Tue Aug 17 13:20:04 1999
+***************
+*** 57,62 ****
+--- 57,77 ----
+  static int		  GFirstMsg	 = 0;		/*PCPC*/
+  static int		  GFdMsg	    ;		/*PCPC*/
+
++ /*****************************************/
++ /*	Initialization of static variables   */
++ /*****************************************/
++ static pid_t GProcessId = 0;
++ static void init_globals(void)
++ {
++ 	pid_t pid;
++
++ 	if (pid=getpid(), pid != GProcessId)
++ 	{
++ 		GFirstMsg = 0;
++ 		msgbytes = msghdrs = msg_seq = used_queues = max_msqid = 0;
++ 		GProcessId = pid;
++ 	}
++ }
+  /************************************************************************/
+  /* Demande d'acces a la zone partagee de gestion des semaphores		*/
+  /************************************************************************/
+***************
+*** 79,84 ****
+--- 94,100 ----
+  {
+   int LRet ;
+
++  init_globals();
+   if( GFirstMsg == 0 )
+   {
+    if( IsGSemMsgExist() )
+
+
+
+
