@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.247 2003/07/14 10:16:44 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.248 2003/07/14 12:18:25 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -2904,7 +2904,6 @@ opt_select_limit:	select_limit	{ $$ = $1; }
 
 select_limit_value: a_expr 	{ $$ = $1; }
 		| ALL		{ $$ = make_str("all"); }
-		| PARAM 	{ $$ = make_name(); }
 		;
 
 select_offset_value: a_expr { $$ = $1; }	
