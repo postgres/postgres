@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.41 1999/02/18 00:49:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.42 1999/02/18 05:26:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -147,7 +147,6 @@ set_base_rel_pathlist(Query *root, List *rels)
  *	  Find all possible joinpaths for a query by successively finding ways
  *	  to join single relations into join relations.
  *
- *	  if BushyPlanFlag is set, bushy tree plans will be generated:
  *	  Find all possible joinpaths(bushy trees) for a query by systematically
  *	  finding ways to join relations(both original and derived) together.
  *
@@ -221,12 +220,7 @@ make_one_rel_by_joins(Query *root, List *rels, int levels_needed)
 
 	}
 
-	Assert(BushyPlanFlag || length(rels) == 1);
-
-	if (!BushyPlanFlag)
-		return lfirst(rels);
-	else
-		return get_cheapest_complete_rel(rels);
+	return get_cheapest_complete_rel(rels);
 }
 
 /*****************************************************************************

@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/postgres.1,v 1.12 1998/08/24 01:51:20 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/postgres.1,v 1.13 1999/02/18 05:26:34 momjian Exp $
 .TH POSTGRESQL UNIX 12/08/96 PostgreSQL PostgreSQL
 .SH NAME
 postgres - the Postgres backend server
@@ -172,12 +172,6 @@ Turns off the locking system.
 .TP
 .BR "-N"
 Disables use of newline as a query delimiter.
-.TP
-.BR "-b"
-Enables generation of bushy query plan trees (as opposed to left-deep
-query plans trees).  These query plans are not intended for actual
-execution; in addition, this flag often causes Postgres to run out of
-memory.
 .TP
 .BR "-f"
 Forbids the use of particular scan and join methods:

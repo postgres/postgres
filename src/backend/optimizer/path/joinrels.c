@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.28 1999/02/18 04:45:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.29 1999/02/18 05:26:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,9 +69,9 @@ make_rels_by_joins(Query *root, List *old_rels)
 			 */
 			joined_rels = make_rels_by_clauseless_joins(old_rel,
 														root->base_rel_list);
-			if (BushyPlanFlag)
-				joined_rels = make_rels_by_clauseless_joins(old_rel,
-															old_rels);
+			joined_rels = append(joined_rels,
+								 make_rels_by_clauseless_joins(old_rel,
+															   old_rels));
 		}
 
 		join_list = nconc(join_list, joined_rels);

@@ -1,8 +1,11 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/geqo.sgml,v 1.5 1998/12/29 02:24:15 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/geqo.sgml,v 1.6 1999/02/18 05:26:17 momjian Exp $
 Genetic Optimizer
 
 $Log: geqo.sgml,v $
+Revision 1.6  1999/02/18 05:26:17  momjian
+Enable bushy plans by default.
+
 Revision 1.5  1998/12/29 02:24:15  thomas
 Clean up to ensure tag completion as required by the newest versions
  of Norm's Modular Style Sheets and jade/docbook.
@@ -307,11 +310,6 @@ Suggestions are welcome :-(
 
 <Sect2>
 <Title>Further Improvements</Title>
-
-<Para>
-Enable bushy query tree processing within <ProductName>Postgres</ProductName>;
-that may improve the quality of query plans.
-</para>
 
 <BIBLIOGRAPHY Id="geqo-biblio">
 <TITLE>
