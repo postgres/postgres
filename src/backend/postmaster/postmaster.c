@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.274 2002/05/17 01:19:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.275 2002/05/28 23:56:51 tgl Exp $
  *
  * NOTES
  *
@@ -1065,10 +1065,13 @@ ProcessStartupPacket(Port *port, bool SSLdone)
 	len = ntohl(len);
 	len -= 4;
 
-	if (len < sizeof(len) || len > sizeof(len) + sizeof(StartupPacket))
+	if (len < sizeof(ProtocolVersion) || len > sizeof(StartupPacket))
 		elog(FATAL, "invalid length of startup packet");
 
-	buf = palloc(len);
+	buf = palloc(sizeof(StartupPacket));
+
+	/* Ensure we see zeroes for any bytes not sent */
+	MemSet(buf, 0, sizeof(StartupPacket));
 
 	if (pq_getbytes(buf, len) == EOF)
 	{
@@ -1141,7 +1144,7 @@ ProcessStartupPacket(Port *port, bool SSLdone)
 	/*
 	 * Get the parameters from the startup packet as C strings.  The
 	 * packet destination was cleared first so a short packet has zeros
-	 * silently added and a long packet is silently truncated.
+	 * silently added.
 	 */
 	StrNCpy(port->database, packet->database, sizeof(port->database));
 	StrNCpy(port->user, packet->user, sizeof(port->user));
@@ -1188,7 +1191,7 @@ ProcessStartupPacket(Port *port, bool SSLdone)
 			break;
 		case CAC_OK:
 		default:
-			;
+			break;
 	}
 
 	return STATUS_OK;
@@ -2036,42 +2039,15 @@ DoBackend(Port *port)
 	 * We arrange for a simple exit(0) if we receive SIGTERM or SIGQUIT
 	 * during any client authentication related communication. Otherwise
 	 * the postmaster cannot shutdown the database FAST or IMMED cleanly
-	 * if a buggy client blocks a backend during authentication.  We also
-	 * will exit(0) after a time delay, so that a broken client can't hog
-	 * a connection indefinitely.
-	 *
-	 * PreAuthDelay is a debugging aid for investigating problems in the
-	 * authentication cycle: it can be set in postgresql.conf to allow
-	 * time to attach to the newly-forked backend with a debugger. (See
-	 * also the -W backend switch, which we allow clients to pass through
-	 * PGOPTIONS, but it is not honored until after authentication.)
+	 * if a buggy client blocks a backend during authentication.
 	 */
 	pqsignal(SIGTERM, authdie);
 	pqsignal(SIGQUIT, authdie);
 	pqsignal(SIGALRM, authdie);
 	PG_SETMASK(&AuthBlockSig);
 
-	if (PreAuthDelay > 0)
-		sleep(PreAuthDelay);
-
-	if (!enable_sigalrm_interrupt(AuthenticationTimeout * 1000))
-		elog(FATAL, "DoBackend: Unable to set timer for auth timeout");
-
 	/*
-	 * Receive the startup packet (which might turn out to be a cancel
-	 * request packet).
-	 */
-	status = ProcessStartupPacket(port, false);
-
-	if (status != STATUS_OK)
-		return 0;				/* cancel request processed, or error */
-
-	/*
-	 * Now that we have the user and database name, we can set the process
-	 * title for ps.  It's good to do this as early as possible in
-	 * startup.
-	 *
-	 * But first, we need the remote host name.
+	 * Get the remote host name and port for logging and status display.
 	 */
 	if (port->raddr.sa.sa_family == AF_INET)
 	{
@@ -2101,11 +2077,17 @@ DoBackend(Port *port)
 		if (remote_host == NULL)
 			remote_host = pstrdup(host_addr);
 
+		if (Log_connections)
+			elog(LOG, "connection received: host=%s port=%hu",
+				 remote_host, remote_port);
+
 		if (ShowPortNumber)
 		{
-			char	   *str = palloc(strlen(remote_host) + 7);
+			/* modify remote_host for use in ps status */
+			int			slen = strlen(remote_host) + 10;
+			char	   *str = palloc(slen);
 
-			sprintf(str, "%s:%hu", remote_host, remote_port);
+			snprintf(str, slen, "%s:%hu", remote_host, remote_port);
 			pfree(remote_host);
 			remote_host = str;
 		}
@@ -2114,10 +2096,43 @@ DoBackend(Port *port)
 	{
 		/* not AF_INET */
 		remote_host = "[local]";
+
+		if (Log_connections)
+			elog(LOG, "connection received: host=%s",
+				 remote_host);
 	}
 
 	/*
-	 * Set process parameters for ps display.
+	 * PreAuthDelay is a debugging aid for investigating problems in the
+	 * authentication cycle: it can be set in postgresql.conf to allow
+	 * time to attach to the newly-forked backend with a debugger. (See
+	 * also the -W backend switch, which we allow clients to pass through
+	 * PGOPTIONS, but it is not honored until after authentication.)
+	 */
+	if (PreAuthDelay > 0)
+		sleep(PreAuthDelay);
+
+	/*
+	 * Ready to begin client interaction.  We will give up and exit(0)
+	 * after a time delay, so that a broken client can't hog a connection
+	 * indefinitely.  PreAuthDelay doesn't count against the time limit.
+	 */
+	if (!enable_sigalrm_interrupt(AuthenticationTimeout * 1000))
+		elog(FATAL, "DoBackend: Unable to set timer for auth timeout");
+
+	/*
+	 * Receive the startup packet (which might turn out to be a cancel
+	 * request packet).
+	 */
+	status = ProcessStartupPacket(port, false);
+
+	if (status != STATUS_OK)
+		return 0;				/* cancel request processed, or error */
+
+	/*
+	 * Now that we have the user and database name, we can set the process
+	 * title for ps.  It's good to do this as early as possible in
+	 * startup.
 	 */
 	init_ps_display(port->user, port->database, remote_host);
 	set_ps_display("authentication");
@@ -2136,8 +2151,8 @@ DoBackend(Port *port)
 	PG_SETMASK(&BlockSig);
 
 	if (Log_connections)
-		elog(LOG, "connection: host=%s user=%s database=%s",
-			 remote_host, port->user, port->database);
+		elog(LOG, "connection authorized: user=%s database=%s",
+			 port->user, port->database);
 
 	/*
 	 * Don't want backend to be able to see the postmaster random number
