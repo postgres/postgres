@@ -11,13 +11,14 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/posix_sema.c,v 1.3 2002/05/05 16:01:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/posix_sema.c,v 1.4 2002/05/05 16:14:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include <errno.h>
+#include <fcntl.h>
 #include <signal.h>
 #include <unistd.h>
 

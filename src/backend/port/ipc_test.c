@@ -21,12 +21,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/ipc_test.c,v 1.1 2002/05/05 16:02:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/ipc_test.c,v 1.2 2002/05/05 16:14:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
+#include <errno.h>
 #include <unistd.h>
 
 #include "miscadmin.h"
