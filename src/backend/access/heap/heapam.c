@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.120 2001/06/27 23:31:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.121 2001/06/29 21:08:23 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -202,8 +202,7 @@ heapgettup(Relation relation,
 
 		*buffer = ReleaseAndReadBuffer(*buffer,
 									   relation,
-									   ItemPointerGetBlockNumber(tid),
-									   false);
+									   ItemPointerGetBlockNumber(tid));
 		if (!BufferIsValid(*buffer))
 			elog(ERROR, "heapgettup: failed ReadBuffer");
 
@@ -238,8 +237,7 @@ heapgettup(Relation relation,
 
 		*buffer = ReleaseAndReadBuffer(*buffer,
 									   relation,
-									   page,
-									   false);
+									   page);
 		if (!BufferIsValid(*buffer))
 			elog(ERROR, "heapgettup: failed ReadBuffer");
 
@@ -280,8 +278,7 @@ heapgettup(Relation relation,
 
 		*buffer = ReleaseAndReadBuffer(*buffer,
 									   relation,
-									   page,
-									   false);
+									   page);
 		if (!BufferIsValid(*buffer))
 			elog(ERROR, "heapgettup: failed ReadBuffer");
 
@@ -374,8 +371,7 @@ heapgettup(Relation relation,
 
 		*buffer = ReleaseAndReadBuffer(*buffer,
 									   relation,
-									   page,
-									   false);
+									   page);
 		if (!BufferIsValid(*buffer))
 			elog(ERROR, "heapgettup: failed ReadBuffer");
 
@@ -1088,8 +1084,8 @@ heap_insert(Relation relation, HeapTuple tup)
 		heap_tuple_toast_attrs(relation, tup, NULL);
 #endif
 
-	/* Find buffer for this tuple */
-	buffer = RelationGetBufferForTuple(relation, tup->t_len, 0);
+	/* Find buffer to insert this tuple into */
+	buffer = RelationGetBufferForTuple(relation, tup->t_len, InvalidBuffer);
 
 	/* NO ELOG(ERROR) from here till changes are logged */
 	START_CRIT_SECTION();
@@ -1501,18 +1497,16 @@ l2:
 		 * buffer locks on both old and new pages.  To avoid deadlock against
 		 * some other backend trying to get the same two locks in the other
 		 * order, we must be consistent about the order we get the locks in.
-		 * We use the rule "lock the higher-numbered page of the relation
+		 * We use the rule "lock the lower-numbered page of the relation
 		 * first".  To implement this, we must do RelationGetBufferForTuple
-		 * while not holding the lock on the old page, and we must tell it
-		 * to give us a page beyond the old page.
+		 * while not holding the lock on the old page, and we must rely on it
+		 * to get the locks on both pages in the correct order.
 		 */
 		if (newtupsize > pagefree)
 		{
 			/* Assume there's no chance to put newtup on same page. */
 			newbuf = RelationGetBufferForTuple(relation, newtup->t_len,
-											BufferGetBlockNumber(buffer) + 1);
-			/* Now reacquire lock on old tuple's page. */
-			LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
+											   buffer);
 		}
 		else
 		{
@@ -1529,8 +1523,7 @@ l2:
 				 */
 				LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 				newbuf = RelationGetBufferForTuple(relation, newtup->t_len,
-											BufferGetBlockNumber(buffer) + 1);
-				LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
+												   buffer);
 			}
 			else
 			{
@@ -1550,7 +1543,8 @@ l2:
 
 	/*
 	 * At this point newbuf and buffer are both pinned and locked,
-	 * and newbuf has enough space for the new tuple.
+	 * and newbuf has enough space for the new tuple.  If they are
+	 * the same buffer, only one pin is held.
 	 */
 
 	/* NO ELOG(ERROR) from here till changes are logged */

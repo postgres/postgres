@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.140 2001/06/27 23:31:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.141 2001/06/29 21:08:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1928,33 +1928,111 @@ RelationCacheAbortWalker(Relation *relationPtr, Datum dummy)
 }
 
 /*
- *		RelationRegisterRelation -
- *		   register the Relation descriptor of a newly created relation
- *		   with the relation descriptor Cache.
+ *		RelationBuildLocalRelation
+ *			Build a relcache entry for an about-to-be-created relation,
+ *			and enter it into the relcache.
  */
-void
-RelationRegisterRelation(Relation relation)
+Relation
+RelationBuildLocalRelation(const char *relname,
+						   TupleDesc tupDesc,
+						   Oid relid, Oid dbid,
+						   bool nailit)
 {
+	Relation	rel;
 	MemoryContext oldcxt;
+	int			natts = tupDesc->natts;
+	int			i;
 
-	RelationInitLockInfo(relation);
+	AssertArg(natts > 0);
+
+	/*
+	 * switch to the cache context to create the relcache entry.
+	 */
+	if (!CacheMemoryContext)
+		CreateCacheMemoryContext();
 
 	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 
-	RelationCacheInsert(relation);
+	/*
+	 * allocate a new relation descriptor.
+	 */
+	rel = (Relation) palloc(sizeof(RelationData));
+	MemSet((char *) rel, 0, sizeof(RelationData));
+	rel->rd_targblock = InvalidBlockNumber;
+
+	/* make sure relation is marked as having no open file yet */
+	rel->rd_fd = -1;
+
+	RelationSetReferenceCount(rel, 1);
+
+	/*
+	 * nail the reldesc if this is a bootstrap create reln and we may need
+	 * it in the cache later on in the bootstrap process so we don't ever
+	 * want it kicked out.	e.g. pg_attribute!!!
+	 */
+	if (nailit)
+		rel->rd_isnailed = true;
+
+	/*
+	 * create a new tuple descriptor from the one passed in
+	 * (we do this to copy it into the cache context)
+	 */
+	rel->rd_att = CreateTupleDescCopyConstr(tupDesc);
+
+	/*
+	 * initialize relation tuple form (caller may add/override data later)
+	 */
+	rel->rd_rel = (Form_pg_class) palloc(CLASS_TUPLE_SIZE);
+	MemSet((char *) rel->rd_rel, 0, CLASS_TUPLE_SIZE);
+
+	strcpy(RelationGetPhysicalRelationName(rel), relname);
+
+	rel->rd_rel->relkind = RELKIND_UNCATALOGED;
+	rel->rd_rel->relnatts = natts;
+	rel->rd_rel->reltype = InvalidOid;
+	if (tupDesc->constr)
+		rel->rd_rel->relchecks = tupDesc->constr->num_check;
+
+	/*
+	 * Insert relation OID and database/tablespace ID into the right places.
+	 * XXX currently we assume physical tblspace/relnode are same as logical
+	 * dbid/reloid.  Probably should pass an extra pair of parameters.
+	 */
+	rel->rd_rel->relisshared = (dbid == InvalidOid);
+
+	RelationGetRelid(rel) = relid;
+
+	for (i = 0; i < natts; i++)
+		rel->rd_att->attrs[i]->attrelid = relid;
+
+	RelationInitLockInfo(rel);	/* see lmgr.c */
+
+	rel->rd_node.tblNode = dbid;
+	rel->rd_node.relNode = relid;
+	rel->rd_rel->relfilenode = relid;
+
+	/*
+	 * Okay to insert into the relcache hash tables.
+	 */
+	RelationCacheInsert(rel);
 
 	/*
 	 * we've just created the relation. It is invisible to anyone else
 	 * before the transaction is committed. Setting rd_myxactonly allows
 	 * us to use the local buffer manager for select/insert/etc before the
 	 * end of transaction. (We also need to keep track of relations
-	 * created during a transaction and does the necessary clean up at the
+	 * created during a transaction and do the necessary clean up at the
 	 * end of the transaction.)				- ay 3/95
 	 */
-	relation->rd_myxactonly = TRUE;
-	newlyCreatedRelns = lcons(relation, newlyCreatedRelns);
+	rel->rd_myxactonly = true;
+	newlyCreatedRelns = lcons(rel, newlyCreatedRelns);
 
+	/*
+	 * done building relcache entry.
+	 */
 	MemoryContextSwitchTo(oldcxt);
+
+	return rel;
 }
 
 /*
@@ -1972,14 +2050,18 @@ RelationPurgeLocalRelation(bool xactCommitted)
 		List	   *l = newlyCreatedRelns;
 		Relation	reln = lfirst(l);
 
+		newlyCreatedRelns = lnext(newlyCreatedRelns);
+		pfree(l);
+
 		Assert(reln != NULL && reln->rd_myxactonly);
 
 		reln->rd_myxactonly = false;	/* mark it not on list anymore */
 
-		newlyCreatedRelns = lnext(newlyCreatedRelns);
-		pfree(l);
-
-		/* XXX is this step still needed?  If so, why? */
+		/*
+		 * XXX while we clearly must throw out new Relation entries at
+		 * xact abort, it's not clear why we need to do it at commit.
+		 * Could this be improved?
+		 */
 		if (!IsBootstrapProcessingMode())
 			RelationClearRelation(reln, false);
 	}

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.169 2001/06/27 23:31:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.170 2001/06/29 21:08:24 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -39,7 +39,6 @@
 #include "catalog/pg_attrdef.h"
 #include "catalog/pg_inherits.h"
 #include "catalog/pg_index.h"
-#include "catalog/pg_proc.h"
 #include "catalog/pg_relcheck.h"
 #include "catalog/pg_statistic.h"
 #include "catalog/pg_type.h"
@@ -50,8 +49,6 @@
 #include "optimizer/planmain.h"
 #include "optimizer/prep.h"
 #include "optimizer/var.h"
-#include "nodes/makefuncs.h"
-#include "parser/parse_clause.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_relation.h"
 #include "parser/parse_target.h"
@@ -59,7 +56,6 @@
 #include "rewrite/rewriteRemove.h"
 #include "storage/smgr.h"
 #include "utils/builtins.h"
-#include "utils/catcache.h"
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 #include "utils/relcache.h"
@@ -197,25 +193,18 @@ heap_create(char *relname,
 	static unsigned int uniqueId = 0;
 
 	Oid			relid;
-	Relation	rel;
-	bool		nailme = false;
-	int			natts = tupDesc->natts;
-	int			i;
-	MemoryContext oldcxt;
 	Oid			tblNode = MyDatabaseId;
+	bool		nailme = false;
+	Relation	rel;
 
 	/*
 	 * sanity checks
 	 */
-	AssertArg(natts > 0);
-
 	if (relname && !allow_system_table_mods &&
 		IsSystemRelationName(relname) && IsNormalProcessingMode())
-	{
 		elog(ERROR, "Illegal class name '%s'"
 			 "\n\tThe 'pg_' name prefix is reserved for system catalogs",
 			 relname);
-	}
 
 	/*
 	 * Real ugly stuff to assign the proper relid in the relation
@@ -276,78 +265,26 @@ heap_create(char *relname,
 
 	if (istemp)
 	{
-
 		/*
 		 * replace relname of caller with a unique name for a temp
 		 * relation
 		 */
 		snprintf(relname, NAMEDATALEN, "%s_%d_%u",
-				PG_TEMP_REL_PREFIX, (int) MyProcPid, uniqueId++);
+				 PG_TEMP_REL_PREFIX, (int) MyProcPid, uniqueId++);
 	}
 
 	/*
-	 * switch to the cache context to create the relcache entry.
+	 * build the relcache entry.
 	 */
-	if (!CacheMemoryContext)
-		CreateCacheMemoryContext();
-
-	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
-
-	/*
-	 * allocate a new relation descriptor.
-	 */
-	rel = (Relation) palloc(sizeof(RelationData));
-	MemSet((char *) rel, 0, sizeof(RelationData));
-	rel->rd_fd = -1;			/* physical file is not open */
-
-	RelationSetReferenceCount(rel, 1);
-
-	/*
-	 * create a new tuple descriptor from the one passed in
-	 */
-	rel->rd_att = CreateTupleDescCopyConstr(tupDesc);
-
-	/*
-	 * nail the reldesc if this is a bootstrap create reln and we may need
-	 * it in the cache later on in the bootstrap process so we don't ever
-	 * want it kicked out.	e.g. pg_attribute!!!
-	 */
-	if (nailme)
-		rel->rd_isnailed = true;
-
-	/*
-	 * initialize the fields of our new relation descriptor
-	 */
-	rel->rd_rel = (Form_pg_class) palloc(sizeof *rel->rd_rel);
-	MemSet((char *) rel->rd_rel, 0, sizeof *rel->rd_rel);
-	strcpy(RelationGetPhysicalRelationName(rel), relname);
-	rel->rd_rel->relkind = RELKIND_UNCATALOGED;
-	rel->rd_rel->relnatts = natts;
-	rel->rd_rel->reltype = InvalidOid;
-	if (tupDesc->constr)
-		rel->rd_rel->relchecks = tupDesc->constr->num_check;
-
-	for (i = 0; i < natts; i++)
-		rel->rd_att->attrs[i]->attrelid = relid;
-
-	RelationGetRelid(rel) = relid;
-
-	rel->rd_node.tblNode = tblNode;
-	rel->rd_node.relNode = relid;
-	rel->rd_rel->relfilenode = relid;
-
-	/*
-	 * done building relcache entry.
-	 */
-	MemoryContextSwitchTo(oldcxt);
+	rel = RelationBuildLocalRelation(relname, tupDesc,
+									 relid, tblNode,
+									 nailme);
 
 	/*
 	 * have the storage manager create the relation.
 	 */
 	if (storage_create)
 		heap_storage_create(rel);
-
-	RelationRegisterRelation(rel);
 
 	return rel;
 }

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.50 2001/06/27 23:31:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.51 2001/06/29 21:08:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -437,7 +437,20 @@ smgrblindmarkdirty(int16 which,
 BlockNumber
 smgrnblocks(int16 which, Relation reln)
 {
-	return (*(smgrsw[which].smgr_nblocks)) (reln);
+	BlockNumber		nblocks;
+
+	nblocks = (*(smgrsw[which].smgr_nblocks)) (reln);
+	/*
+	 * NOTE: if a relation ever did grow to 2^32-1 blocks, this code would
+	 * fail --- but that's a good thing, because it would stop us from
+	 * extending the rel another block and having a block whose number
+	 * actually is InvalidBlockNumber.
+	 */
+	if (nblocks == InvalidBlockNumber)
+		elog(ERROR, "cannot count blocks for %s: %m",
+			 RelationGetRelationName(reln));
+
+	return nblocks;
 }
 
 /*

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/freespace/freespace.c,v 1.1 2001/06/27 23:31:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/freespace/freespace.c,v 1.2 2001/06/29 21:08:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -161,10 +161,42 @@ FreeSpaceShmemSize(void)
 	return size;
 }
 
+BlockNumber
+GetPageWithFreeSpace(RelFileNode *rel, Size spaceNeeded)
+{
+	return InvalidBlockNumber;	/* stub */
+}
+
+void
+RecordFreeSpace(RelFileNode *rel, BlockNumber page, Size spaceAvail)
+{
+	/* stub */
+}
+
+BlockNumber
+RecordAndGetPageWithFreeSpace(RelFileNode *rel,
+							  BlockNumber oldPage,
+							  Size oldSpaceAvail,
+							  Size spaceNeeded)
+{
+	return InvalidBlockNumber;	/* stub */
+}
+
+void
+MultiRecordFreeSpace(RelFileNode *rel,
+					 BlockNumber minPage,
+					 BlockNumber maxPage,
+					 int nPages,
+					 BlockNumber *pages,
+					 Size *spaceAvail)
+{
+	/* stub */
+}
 
 void
 FreeSpaceMapForgetRel(RelFileNode *rel)
 {
+	/* stub */
 }
 
 
@@ -178,6 +210,7 @@ FreeSpaceMapForgetRel(RelFileNode *rel)
 void
 DumpFreeSpace(void)
 {
+	/* stub */
 }
 
 #endif	 /* FREESPACE_DEBUG */

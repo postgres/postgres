@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.60 2001/06/23 00:07:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.61 2001/06/29 21:08:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -168,20 +168,25 @@ DefineSequence(CreateSeqStmt *seq)
 	DefineRelation(stmt, RELKIND_SEQUENCE);
 
 	rel = heap_openr(seq->seqname, AccessExclusiveLock);
-
 	tupDesc = RelationGetDescr(rel);
 
-	Assert(RelationGetNumberOfBlocks(rel) == 0);
+	/* Initialize first page of relation with special magic number */
+
 	buf = ReadBuffer(rel, P_NEW);
 
 	if (!BufferIsValid(buf))
 		elog(ERROR, "DefineSequence: ReadBuffer failed");
+
+	Assert(BufferGetBlockNumber(buf) == 0);
 
 	page = (PageHeader) BufferGetPage(buf);
 
 	PageInit((Page) page, BufferGetPageSize(buf), sizeof(sequence_magic));
 	sm = (sequence_magic *) PageGetSpecialPointer(page);
 	sm->magic = SEQ_MAGIC;
+
+	/* hack: ensure heap_insert will insert on the just-created page */
+	rel->rd_targblock = 0;
 
 	/* Now - form & insert sequence tuple */
 	tuple = heap_formtuple(tupDesc, value, null);
