@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.28 1997/11/19 17:52:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.29 1997/11/19 18:28:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -658,7 +658,11 @@ StreamServerPort(char *hostName, short portName, int *fdP)
 	 */
 
 	*fdP = fd;
-	if (family == AF_UNIX) atexit(do_unlink);
+	if (family == AF_UNIX)
+	  {
+	    chmod(sock_path, 0777);
+	    atexit(do_unlink);
+	  }
 	return (STATUS_OK);
 }
 
