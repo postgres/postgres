@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sat Feb 17 09:35:40 EST 2001
+Last updated:		Mon Feb 19 10:22:59 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -203,6 +203,7 @@ CLIENTS
 * -Allow dumping of users/groups separately
 * Add a global RESET command for use with connection pooling
 * Remove <=6.3 version compatibility in ODBC?
+* Add SET FLOAT4_PRECISION and SET FLOAT8_PRECISION using printf args
 
 REFERENTIAL INTEGRITY
 
