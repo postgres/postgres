@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.43 2001/05/21 14:22:19 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.44 2001/05/28 19:33:24 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -185,7 +185,7 @@ plpgsql_exec_function(PLpgSQL_function * func, FunctionCallInfo fcinfo)
 		 */
 		if (error_info_func != NULL)
 		{
-			elog(DEBUG, "Last error occured while executing PL/pgSQL function %s",
+			elog(NOTICE, "Error occurred while executing PL/pgSQL function %s",
 				 error_info_func->fn_name);
 			if (error_info_stmt != NULL)
 			{
@@ -248,15 +248,15 @@ plpgsql_exec_function(PLpgSQL_function * func, FunctionCallInfo fcinfo)
 						stmttype = "unknown";
 						break;
 				}
-				elog(DEBUG, "line %d at %s", error_info_stmt->lineno,
+				elog(NOTICE, "line %d at %s", error_info_stmt->lineno,
 					 stmttype);
 			}
 			else
 			{
 				if (error_info_text != NULL)
-					elog(DEBUG, "%s", error_info_text);
+					elog(NOTICE, "%s", error_info_text);
 				else
-					elog(DEBUG, "no more error information available");
+					elog(NOTICE, "no more error information available");
 			}
 
 			error_info_func = NULL;
@@ -491,7 +491,7 @@ plpgsql_exec_trigger(PLpgSQL_function * func,
 		 */
 		if (error_info_func != NULL)
 		{
-			elog(DEBUG, "Last error occured while executing PL/pgSQL function %s",
+			elog(NOTICE, "Error occurred while executing PL/pgSQL function %s",
 				 error_info_func->fn_name);
 			if (error_info_stmt != NULL)
 			{
@@ -548,15 +548,15 @@ plpgsql_exec_trigger(PLpgSQL_function * func,
 						stmttype = "unknown";
 						break;
 				}
-				elog(DEBUG, "line %d at %s", error_info_stmt->lineno,
+				elog(NOTICE, "line %d at %s", error_info_stmt->lineno,
 					 stmttype);
 			}
 			else
 			{
 				if (error_info_text != NULL)
-					elog(DEBUG, "%s", error_info_text);
+					elog(NOTICE, "%s", error_info_text);
 				else
-					elog(DEBUG, "no more error information available");
+					elog(NOTICE, "no more error information available");
 			}
 
 			error_info_func = NULL;
@@ -1065,15 +1065,41 @@ exec_stmt(PLpgSQL_execstate * estate, PLpgSQL_stmt * stmt)
 /* ----------
  * exec_stmt_assign			Evaluate an expression and
  *					put the result into a variable.
+ *
+ * For no very good reason, this is also used for PERFORM statements.
  * ----------
  */
 static int
 exec_stmt_assign(PLpgSQL_execstate * estate, PLpgSQL_stmt_assign * stmt)
 {
-	if (stmt->varno < 0)
-		exec_assign_expr(estate, NULL, stmt->expr);
+	PLpgSQL_expr   *expr = stmt->expr;
+
+	if (stmt->varno >= 0)
+		exec_assign_expr(estate, estate->datums[stmt->varno], expr);
 	else
-		exec_assign_expr(estate, estate->datums[stmt->varno], stmt->expr);
+	{
+		/*
+		 * PERFORM: evaluate query and discard result.  This cannot share
+		 * code with the assignment case since we do not wish to constraint
+		 * the discarded result to be only one row/column.
+		 */
+		int			rc;
+
+		SPI_tuptable = NULL;
+		SPI_processed = 0;
+
+		/*
+		 * If not already done create a plan for this expression
+		 */
+		if (expr->plan == NULL)
+			exec_prepare_plan(estate, expr);
+
+		rc = exec_run_select(estate, expr, 0, NULL);
+		if (rc != SPI_OK_SELECT)
+			elog(ERROR, "query \"%s\" didn't return data", expr->query);
+
+		SPI_freetuptable(SPI_tuptable);
+	}
 
 	return PLPGSQL_RC_OK;
 }
@@ -2608,8 +2634,7 @@ exec_assign_expr(PLpgSQL_execstate * estate, PLpgSQL_datum * target,
 	bool		isnull = false;
 
 	value = exec_eval_expr(estate, expr, &isnull, &valtype);
-	if (target != NULL)
-		exec_assign_value(estate, target, value, valtype, &isnull);
+	exec_assign_value(estate, target, value, valtype, &isnull);
 
 	SPI_freetuptable(SPI_tuptable);
 }

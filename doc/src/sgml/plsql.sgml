@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.34 2001/05/28 14:58:58 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.35 2001/05/28 19:33:24 tgl Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -1402,15 +1402,12 @@ RAISE EXCEPTION ''Inexistent ID --> %'',user_id;
      error, parse error). And it is possible that the database backend
      is in an inconsistent state at this point so returning to the upper
      executor or issuing more commands might corrupt the whole database.
-     And even if, at this point the information, that the transaction
-     is aborted, is already sent to the client application, so resuming
-     operation does not make any sense.
     </para>
 
     <para>
      Thus, the only thing PL/pgSQL currently does when it encounters
      an abort during execution of a function or trigger
-     procedure is to write some additional DEBUG level log messages
+     procedure is to write some additional NOTICE level log messages
      telling in which function and where (line number and type of
      statement) this happened.
     </para>
