@@ -27,7 +27,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.168 2002/06/26 21:58:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.169 2002/06/26 22:16:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1223,7 +1223,7 @@ ExecInsert(TupleTableSlot *slot,
 	 * Check the constraints of the tuple
 	 */
 	if (resultRelationDesc->rd_att->constr)
-		ExecConstraints("ExecInsert", resultRelInfo, slot, estate);
+		ExecConstraints("ExecAppend", resultRelInfo, slot, estate);
 
 	/*
 	 * insert the tuple
