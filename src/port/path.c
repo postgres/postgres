@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/path.c,v 1.46 2004/12/31 22:03:53 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/port/path.c,v 1.47 2005/01/06 01:00:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,10 @@
 #include "c.h"
 
 #include <ctype.h>
+#include <sys/stat.h>
+#ifndef WIN32
+#include <unistd.h>
+#endif
 
 #include "pg_config_paths.h"
 
@@ -445,19 +449,29 @@ get_locale_path(const char *my_exec_path, char *ret_path)
 bool
 get_home_path(char *ret_path)
 {
-	const char *homedir = getenv(HOMEDIR);
+#ifndef WIN32
+	char		pwdbuf[BUFSIZ];
+	struct passwd pwdstr;
+	struct passwd *pwd = NULL;
 
-	if (homedir == NULL)
-	{
-		*ret_path = '\0';
+	if (pqGetpwuid(geteuid(), &pwdstr, pwdbuf, sizeof(pwdbuf), &pwd) != 0)
 		return false;
-	}
-	else
-	{
-		StrNCpy(ret_path, homedir, MAXPGPATH);
-		canonicalize_path(ret_path);
-		return true;
-	}
+	StrNCpy(ret_path, pwd->pw_dir, MAXPGPATH);
+	return true;
+
+#else
+
+	/* TEMPORARY PLACEHOLDER IMPLEMENTATION */
+	const char *homedir;
+
+	homedir = getenv("USERPROFILE");
+	if (homedir == NULL)
+		homedir = getenv("HOME");
+	if (homedir == NULL)
+		return false;
+	StrNCpy(ret_path, homedir, MAXPGPATH);
+	return true;
+#endif
 }
 
 

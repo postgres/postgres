@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/port.h,v 1.68 2004/12/31 22:03:19 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/port.h,v 1.69 2005/01/06 00:59:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -96,12 +96,6 @@ extern int find_other_exec(const char *argv0, const char *target,
 #define SYSTEMQUOTE "\""
 #else
 #define SYSTEMQUOTE ""
-#endif
-
-#if defined(WIN32) && !defined(__CYGWIN__)
-#define HOMEDIR "USERPROFILE"
-#else
-#define HOMEDIR "HOME"
 #endif
 
 /* Portable delay handling */

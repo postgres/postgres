@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.295 2005/01/04 23:18:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.296 2005/01/06 00:59:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3175,8 +3175,7 @@ static char *
 PasswordFromFile(char *hostname, char *port, char *dbname, char *username)
 {
 	FILE	   *fp;
-	char	   *pgpassfile;
-	char	   *home;
+	char		pgpassfile[MAXPGPATH];
 	struct stat stat_buf;
 
 #define LINELEN NAMEDATALEN*5
@@ -3194,32 +3193,16 @@ PasswordFromFile(char *hostname, char *port, char *dbname, char *username)
 	if (port == NULL)
 		port = DEF_PGPORT_STR;
 
-	/*
-	 * Look for it in the home dir. We don't use get_home_path() so we
-	 * don't pull path.c into our library.
-	 */
-	if (!(home = getenv(HOMEDIR)))
+	if (!pqGetHomeDirectory(pgpassfile, sizeof(pgpassfile)))
 		return NULL;
 
-	pgpassfile = malloc(strlen(home) + 1 + strlen(PGPASSFILE) + 1);
-	if (!pgpassfile)
-	{
-		fprintf(stderr, libpq_gettext("out of memory\n"));
-		return NULL;
-	}
-
-#ifndef WIN32
-	sprintf(pgpassfile, "%s/%s", home, PGPASSFILE);
-#else
-	sprintf(pgpassfile, "%s\\%s", home, PGPASSFILE);
-#endif
+	snprintf(pgpassfile + strlen(pgpassfile),
+			 sizeof(pgpassfile) - strlen(pgpassfile),
+			 "/%s", PGPASSFILE);
 
 	/* If password file cannot be opened, ignore it. */
 	if (stat(pgpassfile, &stat_buf) == -1)
-	{
-		free(pgpassfile);
 		return NULL;
-	}
 
 #ifndef WIN32
 	/* If password file is insecure, alert the user and ignore it. */
@@ -3228,13 +3211,11 @@ PasswordFromFile(char *hostname, char *port, char *dbname, char *username)
 		fprintf(stderr,
 				libpq_gettext("WARNING: Password file %s has world or group read access; permission should be u=rw (0600)\n"),
 				pgpassfile);
-		free(pgpassfile);
 		return NULL;
 	}
 #endif
 
 	fp = fopen(pgpassfile, "r");
-	free(pgpassfile);
 	if (fp == NULL)
 		return NULL;
 
@@ -3268,6 +3249,41 @@ PasswordFromFile(char *hostname, char *port, char *dbname, char *username)
 	return NULL;
 
 #undef LINELEN
+}
+
+/*
+ * Obtain user's home directory, return in given buffer
+ *
+ * This is essentially the same as get_home_path(), but we don't use that
+ * because we don't want to pull path.c into libpq (it pollutes application
+ * namespace)
+ */
+bool
+pqGetHomeDirectory(char *buf, int bufsize)
+{
+#ifndef WIN32
+	char		pwdbuf[BUFSIZ];
+	struct passwd pwdstr;
+	struct passwd *pwd = NULL;
+
+	if (pqGetpwuid(geteuid(), &pwdstr, pwdbuf, sizeof(pwdbuf), &pwd) != 0)
+		return false;
+	StrNCpy(buf, pwd->pw_dir, bufsize);
+	return true;
+
+#else
+
+	/* TEMPORARY PLACEHOLDER IMPLEMENTATION */
+	const char *homedir;
+
+	homedir = getenv("USERPROFILE");
+	if (homedir == NULL)
+		homedir = getenv("HOME");
+	if (homedir == NULL)
+		return false;
+	StrNCpy(buf, homedir, bufsize);
+	return true;
+#endif
 }
 
 /*
