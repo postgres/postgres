@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.29 1999/11/17 23:51:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.30 1999/11/21 01:58:22 tgl Exp $
  *
  * Note - this code is real crufty...
  *
@@ -18,23 +18,36 @@
 #include "catalog/catalog.h"
 #include "catalog/catname.h"
 #include "catalog/heap.h"
+#include "catalog/pg_class.h"
 #include "miscadmin.h"
 #include "storage/sinval.h"
 #include "utils/catcache.h"
 #include "utils/inval.h"
 #include "utils/relcache.h"
 
-static InvalidationEntry InvalidationEntryAllocate(uint16 size);
-static void LocalInvalidInvalidate(LocalInvalid invalid, void (*function) ());
-static LocalInvalid LocalInvalidRegister(LocalInvalid invalid,
-					 InvalidationEntry entry);
-static void getmyrelids(void);
-
 
 /* ----------------
  *		private invalidation structures
  * ----------------
  */
+
+typedef struct InvalidationUserData
+{
+	struct InvalidationUserData *dataP[1];		/* VARIABLE LENGTH */
+} InvalidationUserData;			/* VARIABLE LENGTH STRUCTURE */
+
+typedef struct InvalidationEntryData
+{
+	InvalidationUserData *nextP;
+	InvalidationUserData userData;		/* VARIABLE LENGTH ARRAY */
+} InvalidationEntryData;		/* VARIABLE LENGTH STRUCTURE */
+
+typedef Pointer InvalidationEntry;
+
+typedef InvalidationEntry LocalInvalid;
+
+#define EmptyLocalInvalid		NULL
+
 typedef struct CatalogInvalidationData
 {
 	Index		cacheId;
@@ -66,15 +79,14 @@ typedef InvalidationMessageData *InvalidationMessage;
  *		variables and macros
  * ----------------
  */
-static LocalInvalid Invalid = EmptyLocalInvalid;		/* XXX global */
+static LocalInvalid Invalid = EmptyLocalInvalid;	/* head of linked list */
 
-Oid			MyRelationRelationId = InvalidOid;
-Oid			MyAttributeRelationId = InvalidOid;
-Oid			MyAMRelationId = InvalidOid;
-Oid			MyAMOPRelationId = InvalidOid;
 
-#define ValidateHacks() \
-	if (!OidIsValid(MyRelationRelationId)) getmyrelids()
+static InvalidationEntry InvalidationEntryAllocate(uint16 size);
+static void LocalInvalidInvalidate(LocalInvalid invalid, void (*function) ());
+static LocalInvalid LocalInvalidRegister(LocalInvalid invalid,
+										 InvalidationEntry entry);
+
 
 /* ----------------------------------------------------------------
  *				"local" invalidation support functions
@@ -99,7 +111,8 @@ InvalidationEntryAllocate(uint16 size)
 
 /* --------------------------------
  *		LocalInvalidRegister
- *		   Returns a new local cache invalidation state containing a new entry.
+ *		   Link an invalidation entry into a chain of them.  Really ugly
+ *		   coding here.
  * --------------------------------
  */
 static LocalInvalid
@@ -117,7 +130,7 @@ LocalInvalidRegister(LocalInvalid invalid,
 /* --------------------------------
  *		LocalInvalidInvalidate
  *				Processes, then frees all entries in a local cache
- *				invalidation state.
+ *				invalidation list.
  * --------------------------------
  */
 static void
@@ -187,7 +200,7 @@ CacheIdRegisterLocalInvalid(Index cacheId,
 	ItemPointerCopy(pointer, &message->any.catalog.pointerData);
 
 	/* ----------------
-	 *	Note: Invalid is a global variable
+	 *	Add message to linked list of unprocessed messages.
 	 * ----------------
 	 */
 	Invalid = LocalInvalidRegister(Invalid, (InvalidationEntry) message);
@@ -224,30 +237,10 @@ RelationIdRegisterLocalInvalid(Oid relationId, Oid objectId)
 	message->any.relation.objectId = objectId;
 
 	/* ----------------
-	 *	Note: Invalid is a global variable
+	 *	Add message to linked list of unprocessed messages.
 	 * ----------------
 	 */
 	Invalid = LocalInvalidRegister(Invalid, (InvalidationEntry) message);
-}
-
-/* --------------------------------
- *		getmyrelids
- * --------------------------------
- */
-static void
-getmyrelids()
-{
-	MyRelationRelationId = RelnameFindRelid(RelationRelationName);
-	Assert(RelationRelationName != InvalidOid);
-
-	MyAttributeRelationId = RelnameFindRelid(AttributeRelationName);
-	Assert(AttributeRelationName != InvalidOid);
-
-	MyAMRelationId = RelnameFindRelid(AccessMethodRelationName);
-	Assert(MyAMRelationId != InvalidOid);
-
-	MyAMOPRelationId = RelnameFindRelid(AccessMethodOperatorRelationName);
-	Assert(MyAMOPRelationId != InvalidOid);
 }
 
 /* --------------------------------
@@ -284,35 +277,20 @@ CacheIdInvalidate(Index cacheId,
 
 	CacheIdInvalidate_DEBUG1;
 
-	ValidateHacks();			/* XXX */
-
 	/* ----------------
-	 *	if the cacheId is the oid of any of the tuples in the
-	 *	following system relations, then assume we are invalidating
-	 *	a relation descriptor
+	 *	if the cacheId is the oid of any of the following system relations,
+	 *	then assume we are invalidating a relation descriptor
 	 * ----------------
 	 */
-	if (cacheId == MyRelationRelationId)
+	if (cacheId == RelOid_pg_class)
 	{
 		RelationIdInvalidateRelationCacheByRelationId(hashIndex);
 		return;
 	}
 
-	if (cacheId == MyAttributeRelationId)
+	if (cacheId == RelOid_pg_attribute)
 	{
 		RelationIdInvalidateRelationCacheByRelationId(hashIndex);
-		return;
-	}
-
-	if (cacheId == MyAMRelationId)
-	{
-		RelationIdInvalidateRelationCacheByAccessMethodId(hashIndex);
-		return;
-	}
-
-	if (cacheId == MyAMOPRelationId)
-	{
-		RelationIdInvalidateRelationCacheByAccessMethodId(InvalidOid);
 		return;
 	}
 
@@ -446,29 +424,22 @@ RelationInvalidateRelationCache(Relation relation,
 								void (*function) ())
 {
 	Oid			relationId;
-	Oid			objectId = (Oid) 0;
+	Oid			objectId;
 
 	/* ----------------
 	 *	get the relation object id
 	 * ----------------
 	 */
-	ValidateHacks();			/* XXX */
 	relationId = RelationGetRelid(relation);
 
 	/* ----------------
-	 *
+	 *	is it one of the ones we need to send an SI message for?
 	 * ----------------
 	 */
-	if (relationId == MyRelationRelationId)
+	if (relationId == RelOid_pg_class)
 		objectId = tuple->t_data->t_oid;
-	else if (relationId == MyAttributeRelationId)
+	else if (relationId == RelOid_pg_attribute)
 		objectId = ((Form_pg_attribute) GETSTRUCT(tuple))->attrelid;
-	else if (relationId == MyAMRelationId)
-		objectId = tuple->t_data->t_oid;
-	else if (relationId == MyAMOPRelationId)
-	{
-		;						/* objectId is unused */
-	}
 	else
 		return;
 
@@ -479,19 +450,6 @@ RelationInvalidateRelationCache(Relation relation,
 	Assert(PointerIsValid(function));
 
 	(*function) (relationId, objectId);
-}
-
-
-/*
- *	InitLocalInvalidateData
- *
- *	Setup this before anything could ever get invalid!
- *	Called by InitPostgres();
- */
-void
-InitLocalInvalidateData()
-{
-	ValidateHacks();
 }
 
 
@@ -528,6 +486,8 @@ DiscardInvalid()
 void
 RegisterInvalid(bool send)
 {
+	LocalInvalid invalid;
+
 	/* ----------------
 	 *	debugging stuff
 	 * ----------------
@@ -537,17 +497,19 @@ RegisterInvalid(bool send)
 #endif	 /* defined(INVALIDDEBUG) */
 
 	/* ----------------
-	 *	Note: Invalid is a global variable
+	 *	Process and free the current list of inval messages.
 	 * ----------------
 	 */
+	invalid = Invalid;
+	Invalid = EmptyLocalInvalid; /* anything added now is part of a new list */
+
 	if (send)
-		LocalInvalidInvalidate(Invalid,
+		LocalInvalidInvalidate(invalid,
 							   InvalidationMessageRegisterSharedInvalid);
 	else
-		LocalInvalidInvalidate(Invalid,
+		LocalInvalidInvalidate(invalid,
 							   InvalidationMessageCacheInvalidate);
 
-	Invalid = EmptyLocalInvalid;
 }
 
 /*

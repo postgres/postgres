@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relcache.h,v 1.15 1999/10/03 23:55:38 tgl Exp $
+ * $Id: relcache.h,v 1.16 1999/11/21 01:58:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,8 +31,6 @@ extern void RelationForgetRelation(Oid rid);
 extern void RelationRebuildRelation(Relation relation);
 
 extern void RelationIdInvalidateRelationCacheByRelationId(Oid relationId);
-
-extern void RelationIdInvalidateRelationCacheByAccessMethodId(Oid accessMethodId);
 
 extern void RelationCacheInvalidate(bool onlyFlushReferenceCountZero);
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.52 1999/10/25 03:07:51 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.53 1999/11/21 01:58:21 tgl Exp $
  *
  * NOTES
  *		InitPostgres() is the function called from PostgresMain
@@ -552,12 +552,6 @@ InitPostgres(char *name)		/* database name */
 	 * postgres users, we might do it here.
 	 */
 	InitUserid();
-
-	/*
-	 * Initialize local data in cache invalidation stuff
-	 */
-	if (!bootstrap)
-		InitLocalInvalidateData();
 
 	if (lockingOff)
 		LockDisable(true);
