@@ -1,7 +1,7 @@
 /* -------------------------------------------------------------------------
  * pg_dumplo
  *
- * $Header: /cvsroot/pgsql/contrib/pg_dumplo/Attic/main.c,v 1.13 2002/10/18 18:41:20 momjian Exp $
+ * $Header: /cvsroot/pgsql/contrib/pg_dumplo/Attic/main.c,v 1.14 2003/01/07 21:42:38 tgl Exp $
  *
  *					Karel Zak 1999-2000
  * -------------------------------------------------------------------------
@@ -17,13 +17,14 @@
 
 #include "pg_dumplo.h"
 
-#ifdef HAVE_GETOPT_LONG
-#include <getopt.h>
-#define no_argument 0
-#define required_argument 1
+#ifndef HAVE_STRDUP
+#include "strdup.h"
 #endif
 
-extern int	errno;
+#ifndef HAVE_GETOPT_LONG
+#include "getopt_long.h"
+int optreset;
+#endif
 
 char	   *progname = NULL;
 
@@ -67,8 +68,6 @@ main(int argc, char **argv)
 	{
 		int			arg;
 		extern int	optind;
-
-#ifdef HAVE_GETOPT_LONG
 		int			l_index = 0;
 		static struct option l_opt[] = {
 			{"help", no_argument, 0, 'h'},
@@ -89,10 +88,6 @@ main(int argc, char **argv)
 
 		while ((arg = getopt_long(argc, argv, "?aeho:u:p:qd:l:t:irs:w", l_opt, &l_index)) != -1)
 		{
-#else
-		while ((arg = getopt(argc, argv, "?aeho:u:p:qd:l:t:irs:w")) != -1)
-		{
-#endif
 			switch (arg)
 			{
 				case '?':
@@ -272,11 +267,8 @@ parse_lolist(LODumpMaster * pgLO)
 static void
 usage()
 {
-	printf("\npg_dumplo %s - PostgreSQL large objects dump\n", VERSION);
+	printf("\npg_dumplo %s - PostgreSQL large objects dump\n", PG_VERSION);
 	puts("pg_dumplo [option]\n\n"
-
-#ifdef HAVE_GETOPT_LONG
-
 		 "-h --help                    this help\n"
 	   "-u --user=<username>         username for connection to server\n"
 	   "-p --password=<password>     password for connection to server\n"
@@ -291,27 +283,7 @@ usage()
 		 "-r --remove                  if is set '-i' try remove old LO\n"
 		 "-q --quiet                   run quietly\n"
 		 "-w --show                    not dump, but show all LO in DB\n"
-		);						/* puts() */
-
-#else
-		 "-h                           this help\n"
-	   "-u <username>                username for connection to server\n"
-	   "-p <password>                password for connection to server\n"
-		 "-d <database>                database name\n"
-		 "-t <hostname>                server hostname\n"
-	"-o <port>                    database server port (default: 5432)\n"
-		 "-s <dir>                     directory with dump tree (for export/import)\n"
-		 "-i                           import large obj dump tree to DB\n"
-	"-e                           export (dump) large obj to dump tree\n"
-		 "-l <table.attr ...>          dump attribute (columns) with LO to dump tree\n"
-		 "-a                           dump all LO in DB (default)\n"
-		 "-r                           if is set '-i' try remove old LO\n"
-		 "-q                           run quietly\n"
-		 "-w                           not dump, but show all LO in DB\n"
-		);						/* puts() */
-#endif
-
-	puts(
+		 "\n"
 		 "Example (dump):   pg_dumplo -d my_db -s /my_dump/dir -l t1.a t1.b t2.a\n"
 		 "                  pg_dumplo -a -d my_db -s /my_dump/dir\n"
 		 "Example (import): pg_dumplo -i -d my_db -s /my_dump/dir\n"
@@ -319,6 +291,6 @@ usage()
 		 "Note:  * option '-l' must be last option!\n"
 	"       * option '-i' without option '-r' make new large obj in DB\n"
 		 "         not rewrite old, the '-i' UPDATE oid numbers in table.attr only!\n"
-		 "       * if is not set option -s, the pg_dumplo use $PWD\n"
+		 "       * if option -s is not set, pg_dumplo uses $PWD\n"
 		);						/* puts() */
 }

@@ -1,7 +1,7 @@
 /* -------------------------------------------------------------------------
- * pg_dumplo
+ * pg_dumplo.h
  *
- * $Header: /cvsroot/pgsql/contrib/pg_dumplo/Attic/pg_dumplo.h,v 1.8 2001/11/12 17:44:14 momjian Exp $
+ * $Header: /cvsroot/pgsql/contrib/pg_dumplo/Attic/pg_dumplo.h,v 1.9 2003/01/07 21:42:38 tgl Exp $
  *
  *					Karel Zak 1999-2000
  * -------------------------------------------------------------------------
@@ -11,8 +11,6 @@
 #define PG_DUMPLO_H
 
 #include "postgres_ext.h"
-
-#define VERSION "7.1.0"
 
 /* ----------
  * Define
