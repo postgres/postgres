@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: command.h,v 1.23 2000/09/12 05:09:47 momjian Exp $
+ * $Id: command.h,v 1.24 2000/12/15 04:08:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,7 @@
  *
  * Exceptions:
  *		BadArg if forward invalid.
- *		"WARN" if portal not found.
+ *		"ERROR" if portal not found.
  */
 extern void PerformPortalFetch(char *name, bool forward, int count,
 				   char *tag, CommandDest dest);

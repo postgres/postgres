@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.42 2000/12/08 06:17:58 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.43 2000/12/15 04:08:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -598,7 +598,7 @@ GetDefaultOpClass(Oid atttypid)
  *
  * Exceptions:
  *		BadArg if name is invalid.
- *		"WARN" if index nonexistent.
+ *		"ERROR" if index nonexistent.
  *		...
  */
 void

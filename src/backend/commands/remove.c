@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.56 2000/11/20 20:36:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.57 2000/12/15 04:08:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,7 +35,7 @@
  * Exceptions:
  *		BadArg if name is invalid.
  *		BadArg if type1 is invalid.
- *		"WARN" if operator nonexistent.
+ *		"ERROR" if operator nonexistent.
  *		...
  */
 void
@@ -291,7 +291,7 @@ RemoveType(char *typeName)		/* type name to be removed */
  *
  * Exceptions:
  *		BadArg if name is invalid.
- *		"WARN" if function nonexistent.
+ *		"ERROR" if function nonexistent.
  *		...
  */
 void
