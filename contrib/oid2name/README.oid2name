@@ -54,6 +54,9 @@ oid2name -d test -t testdate
   ---------------------------------
   18722  = testdate
 
+Keep in mind tables over one gigabyte will be split into separate files
+with numeric file extensions.
+
 ---------------------------------------------------------------------------
 
 Sample session:
