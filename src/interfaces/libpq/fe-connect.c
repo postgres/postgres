@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.208 2002/10/11 04:41:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.209 2002/10/14 17:15:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1071,15 +1071,14 @@ connectDBComplete(PGconn *conn)
 			conn->status = CONNECTION_BAD;
 			return 0;
 		}
-		remains.tv_usec = 0;
+		remains.tv_usec = 0;	/* We don't use subsecond timing */
 		rp = &remains;
 
 		/* calculate the finish time based on start + timeout */
 		finish_time = time((time_t *) NULL) + remains.tv_sec;
 	}
 
-	while (rp == NULL || remains.tv_sec > 0 ||
-		   (remains.tv_sec == 0 && remains.tv_usec > 0))
+	while (rp == NULL || remains.tv_sec > 0)
 	{
 		/*
 		 * Wait, if necessary.	Note that the initial state (just after
@@ -1133,7 +1132,6 @@ connectDBComplete(PGconn *conn)
 			}
 
 			remains.tv_sec = finish_time - current_time;
-			remains.tv_usec = 0;
 		}
 	}
 	conn->status = CONNECTION_BAD;

@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-int.h,v 1.58 2002/10/03 17:09:42 momjian Exp $
+ * $Id: libpq-int.h,v 1.59 2002/10/14 17:15:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -340,7 +340,7 @@ extern int	pqReadData(PGconn *conn);
 extern int	pqFlush(PGconn *conn);
 extern int	pqSendSome(PGconn *conn);
 extern int	pqWait(int forRead, int forWrite, PGconn *conn);
-extern int	pqWaitTimed(int forRead, int forWrite, PGconn *conn, const struct timeval * timeout);
+extern int	pqWaitTimed(int forRead, int forWrite, PGconn *conn, const struct timeval *timeout);
 extern int	pqReadReady(PGconn *conn);
 extern int	pqWriteReady(PGconn *conn);
 

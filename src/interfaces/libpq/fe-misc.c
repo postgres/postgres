@@ -25,7 +25,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.80 2002/10/03 17:09:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.81 2002/10/14 17:15:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -783,14 +783,13 @@ pqWait(int forRead, int forWrite, PGconn *conn)
 }
 
 int
-pqWaitTimed(int forRead, int forWrite, PGconn *conn, const struct timeval * timeout)
+pqWaitTimed(int forRead, int forWrite, PGconn *conn, const struct timeval *timeout)
 {
 	fd_set		input_mask;
 	fd_set		output_mask;
 	fd_set		except_mask;
 
 	struct timeval tmp_timeout;
-	struct timeval *ptmp_timeout = NULL;
 
 	if (conn->sock < 0)
 	{
@@ -823,14 +822,13 @@ retry5:
 		if (NULL != timeout)
 		{
 			/*
-			 * select may modify timeout argument on some platforms use
-			 * copy
+			 * 	select() may modify timeout argument on some platforms so
+			 *	use copy
 			 */
 			tmp_timeout = *timeout;
-			ptmp_timeout = &tmp_timeout;
 		}
 		if (select(conn->sock + 1, &input_mask, &output_mask,
-				   &except_mask, ptmp_timeout) < 0)
+				   &except_mask, &tmp_timeout) < 0)
 		{
 			if (SOCK_ERRNO == EINTR)
 				goto retry5;
