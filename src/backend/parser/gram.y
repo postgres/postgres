@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.103 1998/02/03 19:26:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.104 1998/02/04 06:11:46 thomas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -188,7 +188,7 @@ Oid	param_type(int t); /* used in parse_expr.c */
 %type <node>	columnDef, alter_clause
 %type <defelt>	def_elem
 %type <node>	def_arg, columnElem, where_clause,
-				a_expr, a_expr_or_null, AexprConst,
+				a_expr, a_expr_or_null, b_expr, AexprConst,
 				in_expr, in_expr_nodes, not_in_expr, not_in_expr_nodes,
 				having_clause
 %type <list>	row_descriptor, row_list
@@ -269,14 +269,14 @@ Oid	param_type(int t); /* used in parse_expr.c */
 %token	TYPE_P
 
 /* Keywords for Postgres support (not in SQL92 reserved words) */
-%token	ABORT_TRANS, ACL, AFTER, AGGREGATE, ANALYZE,
-		APPEND, BACKWARD, BEFORE, BINARY, CLUSTER, COPY,
+%token	ABORT_TRANS, AFTER, AGGREGATE, ANALYZE,
+		BACKWARD, BEFORE, BINARY, CLUSTER, COPY,
 		DATABASE, DELIMITERS, DO, EXPLAIN, EXTEND,
 		FORWARD, FUNCTION, HANDLER,
 		INDEX, INHERITS, INSTEAD, ISNULL,
-		LANCOMPILER, LISTEN, LOAD, LOCK_P, LOCATION, MERGE, MOVE,
+		LANCOMPILER, LISTEN, LOAD, LOCK_P, LOCATION, MOVE,
 		NEW, NONE, NOTHING, NOTNULL, OIDS, OPERATOR, PROCEDURAL,
-		RECIPE, RENAME, REPLACE, RESET, RETURNS, RULE,
+		RECIPE, RENAME, RESET, RETURNS, RULE,
 		SEQUENCE, SETOF, SHOW, STDIN, STDOUT, TRUSTED, 
 		VACUUM, VERBOSE, VERSION
 
@@ -3199,6 +3199,14 @@ row_list:  row_list ',' a_expr
 				}
 		;
 
+/*
+ * This is the heart of the expression syntax.
+ * Note that the BETWEEN clause looks similar to a boolean expression
+ *  and so we must define b_expr which is almost the same as a_expr
+ *  but without the boolean expressions.
+ * All operations are allowed in a BETWEEN clause if surrounded by parens.
+ */
+
 a_expr:  attr opt_indirection
 				{
 					$1->indirection = $2;
@@ -3208,6 +3216,14 @@ a_expr:  attr opt_indirection
 				{	$$ = $1;  }
 		| AexprConst
 				{	$$ = $1;  }
+		| ColId
+				{
+					/* could be a column name or a relation_name */
+					Ident *n = makeNode(Ident);
+					n->name = $1;
+					n->indirection = NULL;
+					$$ = (Node *)n;
+				}
 		| '-' a_expr %prec UMINUS
 				{	$$ = makeA_Expr(OP, "-", NULL, $2); }
 		| a_expr '+' a_expr
@@ -3274,14 +3290,6 @@ a_expr:  attr opt_indirection
 				{	$$ = makeA_Expr(OP, $1, NULL, $2); }
 		| a_expr Op
 				{	$$ = makeA_Expr(OP, $2, $1, NULL); }
-		| ColId
-				{
-					/* could be a column name or a relation_name */
-					Ident *n = makeNode(Ident);
-					n->name = $1;
-					n->indirection = NULL;
-					$$ = (Node *)n;
-				}
 		| name '(' '*' ')'
 				{
 					/* cheap hack for aggregate (eg. count) */
@@ -3508,13 +3516,13 @@ a_expr:  attr opt_indirection
 					n->typename->name = xlateSqlType("bool");
 					$$ = makeA_Expr(OP, "=", $1,(Node *)n);
 				}
-		| a_expr BETWEEN AexprConst AND AexprConst
+		| a_expr BETWEEN b_expr AND b_expr
 				{
 					$$ = makeA_Expr(AND, NULL,
 						makeA_Expr(OP, ">=", $1, $3),
 						makeA_Expr(OP, "<=", $1, $5));
 				}
-		| a_expr NOT BETWEEN AexprConst AND AexprConst
+		| a_expr NOT BETWEEN b_expr AND b_expr
 				{
 					$$ = makeA_Expr(OR, NULL,
 						makeA_Expr(OP, "<", $1, $4),
@@ -3794,6 +3802,233 @@ a_expr:  attr opt_indirection
 				{	$$ = makeA_Expr(OR, NULL, $1, $3); }
 		| NOT a_expr
 				{	$$ = makeA_Expr(NOT, NULL, NULL, $2); }
+		;
+
+/*
+ * b_expr is a subset of the complete expression syntax
+ *  defined by a_expr. b_expr is used in BETWEEN clauses
+ *  to eliminate parser ambiguities stemming from the AND keyword.
+ */
+
+b_expr:  attr opt_indirection
+				{
+					$1->indirection = $2;
+					$$ = (Node *)$1;
+				}
+		| AexprConst
+				{	$$ = $1;  }
+		| ColId
+				{
+					/* could be a column name or a relation_name */
+					Ident *n = makeNode(Ident);
+					n->name = $1;
+					n->indirection = NULL;
+					$$ = (Node *)n;
+				}
+		| '-' b_expr %prec UMINUS
+				{	$$ = makeA_Expr(OP, "-", NULL, $2); }
+		| b_expr '+' b_expr
+				{	$$ = makeA_Expr(OP, "+", $1, $3); }
+		| b_expr '-' b_expr
+				{	$$ = makeA_Expr(OP, "-", $1, $3); }
+		| b_expr '/' b_expr
+				{	$$ = makeA_Expr(OP, "/", $1, $3); }
+		| b_expr '*' b_expr
+				{	$$ = makeA_Expr(OP, "*", $1, $3); }
+		| ':' b_expr
+				{	$$ = makeA_Expr(OP, ":", NULL, $2); }
+		| ';' b_expr
+				{	$$ = makeA_Expr(OP, ";", NULL, $2); }
+		| '|' b_expr
+				{	$$ = makeA_Expr(OP, "|", NULL, $2); }
+		| b_expr TYPECAST Typename
+				{
+					$$ = (Node *)$1;
+					/* AexprConst can be either A_Const or ParamNo */
+					if (nodeTag($1) == T_A_Const) {
+						((A_Const *)$1)->typename = $3;
+					} else if (nodeTag($1) == T_Param) {
+						((ParamNo *)$1)->typename = $3;
+					/* otherwise, try to transform to a function call */
+					} else {
+						FuncCall *n = makeNode(FuncCall);
+						n->funcname = $3->name;
+						n->args = lcons($1,NIL);
+						$$ = (Node *)n;
+					}
+				}
+		| CAST b_expr AS Typename
+				{
+					$$ = (Node *)$2;
+					/* AexprConst can be either A_Const or ParamNo */
+					if (nodeTag($2) == T_A_Const) {
+						((A_Const *)$2)->typename = $4;
+					} else if (nodeTag($2) == T_Param) {
+						((ParamNo *)$2)->typename = $4;
+					/* otherwise, try to transform to a function call */
+					} else {
+						FuncCall *n = makeNode(FuncCall);
+						n->funcname = $4->name;
+						n->args = lcons($2,NIL);
+						$$ = (Node *)n;
+					}
+				}
+		| '(' a_expr ')'
+				{	$$ = $2; }
+		| b_expr Op b_expr
+				{	$$ = makeIndexable($2,$1,$3);	}
+		| Op b_expr
+				{	$$ = makeA_Expr(OP, $1, NULL, $2); }
+		| b_expr Op
+				{	$$ = makeA_Expr(OP, $2, $1, NULL); }
+		| name '(' ')'
+				{
+					FuncCall *n = makeNode(FuncCall);
+					n->funcname = $1;
+					n->args = NIL;
+					$$ = (Node *)n;
+				}
+		| name '(' expr_list ')'
+				{
+					FuncCall *n = makeNode(FuncCall);
+					n->funcname = $1;
+					n->args = $3;
+					$$ = (Node *)n;
+				}
+		| CURRENT_DATE
+				{
+					A_Const *n = makeNode(A_Const);
+					TypeName *t = makeNode(TypeName);
+
+					n->val.type = T_String;
+					n->val.val.str = "now";
+					n->typename = t;
+
+					t->name = xlateSqlType("date");
+					t->setof = FALSE;
+
+					$$ = (Node *)n;
+				}
+		| CURRENT_TIME
+				{
+					A_Const *n = makeNode(A_Const);
+					TypeName *t = makeNode(TypeName);
+
+					n->val.type = T_String;
+					n->val.val.str = "now";
+					n->typename = t;
+
+					t->name = xlateSqlType("time");
+					t->setof = FALSE;
+
+					$$ = (Node *)n;
+				}
+		| CURRENT_TIME '(' Iconst ')'
+				{
+					FuncCall *n = makeNode(FuncCall);
+					A_Const *s = makeNode(A_Const);
+					TypeName *t = makeNode(TypeName);
+
+					n->funcname = xlateSqlType("time");
+					n->args = lcons(s, NIL);
+
+					s->val.type = T_String;
+					s->val.val.str = "now";
+					s->typename = t;
+
+					t->name = xlateSqlType("time");
+					t->setof = FALSE;
+
+					if ($3 != 0)
+						elog(NOTICE,"CURRENT_TIME(%d) precision not implemented; zero used instead",$3);
+
+					$$ = (Node *)n;
+				}
+		| CURRENT_TIMESTAMP
+				{
+					A_Const *n = makeNode(A_Const);
+					TypeName *t = makeNode(TypeName);
+
+					n->val.type = T_String;
+					n->val.val.str = "now";
+					n->typename = t;
+
+					t->name = xlateSqlType("timestamp");
+					t->setof = FALSE;
+
+					$$ = (Node *)n;
+				}
+		| CURRENT_TIMESTAMP '(' Iconst ')'
+				{
+					FuncCall *n = makeNode(FuncCall);
+					A_Const *s = makeNode(A_Const);
+					TypeName *t = makeNode(TypeName);
+
+					n->funcname = xlateSqlType("timestamp");
+					n->args = lcons(s, NIL);
+
+					s->val.type = T_String;
+					s->val.val.str = "now";
+					s->typename = t;
+
+					t->name = xlateSqlType("timestamp");
+					t->setof = FALSE;
+
+					if ($3 != 0)
+						elog(NOTICE,"CURRENT_TIMESTAMP(%d) precision not implemented; zero used instead",$3);
+
+					$$ = (Node *)n;
+				}
+		| CURRENT_USER
+				{
+					FuncCall *n = makeNode(FuncCall);
+					n->funcname = "getpgusername";
+					n->args = NIL;
+					$$ = (Node *)n;
+				}
+		| POSITION '(' position_list ')'
+				{
+					FuncCall *n = makeNode(FuncCall);
+					n->funcname = "strpos";
+					n->args = $3;
+					$$ = (Node *)n;
+				}
+		| SUBSTRING '(' substr_list ')'
+				{
+					FuncCall *n = makeNode(FuncCall);
+					n->funcname = "substr";
+					n->args = $3;
+					$$ = (Node *)n;
+				}
+		/* various trim expressions are defined in SQL92 - thomas 1997-07-19 */
+		| TRIM '(' BOTH trim_list ')'
+				{
+					FuncCall *n = makeNode(FuncCall);
+					n->funcname = "btrim";
+					n->args = $4;
+					$$ = (Node *)n;
+				}
+		| TRIM '(' LEADING trim_list ')'
+				{
+					FuncCall *n = makeNode(FuncCall);
+					n->funcname = "ltrim";
+					n->args = $4;
+					$$ = (Node *)n;
+				}
+		| TRIM '(' TRAILING trim_list ')'
+				{
+					FuncCall *n = makeNode(FuncCall);
+					n->funcname = "rtrim";
+					n->args = $4;
+					$$ = (Node *)n;
+				}
+		| TRIM '(' trim_list ')'
+				{
+					FuncCall *n = makeNode(FuncCall);
+					n->funcname = "btrim";
+					n->args = $3;
+					$$ = (Node *)n;
+				}
 		;
 
 opt_indirection:  '[' a_expr ']' opt_indirection

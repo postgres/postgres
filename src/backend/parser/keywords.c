@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.33 1998/02/03 16:04:05 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.34 1998/02/04 06:11:48 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,6 @@
 static ScanKeyword ScanKeywords[] = {
 	/* name					value			*/
 	{"abort", ABORT_TRANS},
-	{"acl", ACL},
 	{"action", ACTION},
 	{"add", ADD},
 	{"after", AFTER},
@@ -40,7 +39,6 @@ static ScanKeyword ScanKeywords[] = {
 	{"analyze", ANALYZE},
 	{"and", AND},
 	{"any", ANY},
-	{"append", APPEND},
 	{"archive", ARCHIVE},
 	{"as", AS},
 	{"asc", ASC},
@@ -128,7 +126,6 @@ static ScanKeyword ScanKeywords[] = {
 	{"location", LOCATION},
 	{"lock", LOCK_P},
 	{"match", MATCH},
-	{"merge", MERGE},
 	{"minute", MINUTE_P},
 	{"month", MONTH_P},
 	{"move", MOVE},
@@ -165,7 +162,6 @@ static ScanKeyword ScanKeywords[] = {
 	{"recipe", RECIPE},
 	{"references", REFERENCES},
 	{"rename", RENAME},
-	{"replace", REPLACE},
 	{"reset", RESET},
 	{"returns", RETURNS},
 	{"revoke", REVOKE},
