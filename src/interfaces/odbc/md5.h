@@ -36,11 +36,11 @@ typedef char bool;
 #endif   /* __BEOS__ */
 
 /* Also defined in include/c.h */
-#if SIZEOF_UINT8 == 0
+#ifndef HAVE_UINT8
 typedef unsigned char uint8;	/* == 8 bits */
 typedef unsigned short uint16;	/* == 16 bits */
 typedef unsigned int uint32;	/* == 32 bits */
-#endif   /* SIZEOF_UINT8 == 0 */
+#endif /* not HAVE_UINT8 */
 
 extern bool md5_hash(const void *buff, size_t len, char *hexsum);
 extern bool EncryptMD5(const char *passwd, const char *salt,

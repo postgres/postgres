@@ -1,5 +1,5 @@
 # Macros to detect C compiler features
-# $Header: /cvsroot/pgsql/config/c-compiler.m4,v 1.3 2000/08/29 09:36:37 petere Exp $
+# $Header: /cvsroot/pgsql/config/c-compiler.m4,v 1.4 2001/12/02 11:38:40 petere Exp $
 
 
 # PGAC_C_SIGNED
@@ -117,3 +117,34 @@ AC_DEFINE_UNQUOTED(AC_TYPE_NAME, $AC_CV_NAME, [The alignment requirement of a `]
 undefine([AC_TYPE_NAME])dnl
 undefine([AC_CV_NAME])dnl
 ])# PGAC_CHECK_ALIGNOF
+
+
+# PGAC_CHECK_TYPE(TYPE, [ACTION-IF-FOUND], [ACTION-IF-NOT-FOUND], [INCLUDES])
+# ---------------------------------------------------------------------------
+
+AC_DEFUN([PGAC_CHECK_TYPE],
+[changequote(<<,>>)dnl
+dnl The name to #define
+define(<<AC_TYPE_NAME>>, translit(have_$1, [a-z *], [A-Z_P]))dnl
+dnl The cache variable name.
+define(<<AC_CV_NAME>>, translit(pgac_cv_have_$1, [ *], [_p]))dnl
+changequote([, ])dnl
+AC_CACHE_CHECK([for $1], AC_CV_NAME,
+[AC_TRY_COMPILE([$4],
+[if (($1 *) 0)
+  return 0;
+if (sizeof ($1))
+  return 0;],
+AC_CV_NAME[=yes],
+AC_CV_NAME[=no])])
+if test "$AC_CV_NAME" = yes; then
+  AC_DEFINE(AC_TYPE_NAME, 1, [Define to 1 if you have `]$1['])
+  ifelse($2,,,[$2
+])[]dnl
+ifelse($3,,,[else
+  $3
+])[]dnl
+fi
+undefine([AC_TYPE_NAME])dnl
+undefine([AC_CV_NAME])dnl
+])# PGAC_CHECK_TYPE

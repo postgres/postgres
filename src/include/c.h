@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.111 2001/11/15 16:35:19 momjian Exp $
+ * $Id: c.h,v 1.112 2001/12/02 11:38:40 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -205,11 +205,11 @@ typedef char *Pointer;
  *		used for numerical computations and the
  *		frontend/backend protocol.
  */
-#if SIZEOF_INT8 == 0
+#ifndef HAVE_INT8
 typedef signed char int8;		/* == 8 bits */
 typedef signed short int16;		/* == 16 bits */
 typedef signed int int32;		/* == 32 bits */
-#endif   /* SIZEOF_INT8 == 0 */
+#endif /* not HAVE_INT8 */
 
 /*
  * uintN
@@ -218,11 +218,11 @@ typedef signed int int32;		/* == 32 bits */
  *		frontend/backend protocol.
  */
 /* Also defined in interfaces/odbc/md5.h */
-#if SIZEOF_UINT8 == 0
+#ifndef HAVE_UINT8
 typedef unsigned char uint8;	/* == 8 bits */
 typedef unsigned short uint16;	/* == 16 bits */
 typedef unsigned int uint32;	/* == 32 bits */
-#endif   /* SIZEOF_UINT8 == 0 */
+#endif /* not HAVE_UINT8 */
 
 /*
  * boolN
@@ -270,35 +270,37 @@ typedef double *float64;
  */
 #ifdef HAVE_LONG_INT_64
 /* Plain "long int" fits, use it */
-#if SIZEOF_INT64 == 0
+
+#ifndef HAVE_INT64
 typedef long int int64;
 #endif
-#if SIZEOF_UINT64 == 0
+#ifndef HAVE_UINT64
 typedef unsigned long int uint64;
 #endif
 
-#else
-#ifdef HAVE_LONG_LONG_INT_64
+#elif defined(HAVE_LONG_LONG_INT_64)
 /* We have working support for "long long int", use that */
-#if SIZEOF_INT64 == 0
+
+#ifndef HAVE_INT64
 typedef long long int int64;
 #endif
-#if SIZEOF_UINT64 == 0
+#ifndef HAVE_UINT64
 typedef unsigned long long int uint64;
 #endif
 
-#else
+#else /* not HAVE_LONG_INT_64 and not HAVE_LONG_LONG_INT_64 */
+
 /* Won't actually work, but fall back to long int so that code compiles */
-#if SIZEOF_INT64 == 0
+#ifndef HAVE_INT64
 typedef long int int64;
 #endif
-#if SIZEOF_UINT64 == 0
+#ifndef HAVE_UINT64
 typedef unsigned long int uint64;
 #endif
 
 #define INT64_IS_BUSTED
-#endif
-#endif
+
+#endif /* not HAVE_LONG_INT_64 and not HAVE_LONG_LONG_INT_64 */
 
 /*
  * Size
