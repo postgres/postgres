@@ -6,16 +6,16 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bootstrap.h,v 1.3 1996/11/08 06:01:45 momjian Exp $
+ * $Id: bootstrap.h,v 1.4 1996/11/08 06:43:28 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef BOOTSTRAP_H
 #define BOOTSTRAP_H
 
-#include "access/funcindex.h"
-#include "access/itup.h"
-#include "utils/rel.h"
+#include <access/funcindex.h>
+#include <access/itup.h>
+#include <utils/rel.h>
 
 #define	MAXATTR 40		/* max. number of attributes in a relation */
 
