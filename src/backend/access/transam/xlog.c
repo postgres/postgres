@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.45 2000/12/28 13:00:08 vadim Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.46 2000/12/29 21:31:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -411,7 +411,7 @@ begin:;
 					}
 				}
 			}
-			s_lock_sleep(i++);
+			S_LOCK_SLEEP(&(XLogCtl->insert_lck), i++);
 			if (!TAS(&(XLogCtl->insert_lck)))
 				break;
 		}
@@ -599,17 +599,10 @@ begin:;
 
 	if (updrqst)
 	{
-		for (;;)
-		{
-			if (!TAS(&(XLogCtl->info_lck)))
-			{
-				if (XLByteLT(XLogCtl->LgwrRqst.Write, LgwrRqst.Write))
-					XLogCtl->LgwrRqst.Write = LgwrRqst.Write;
-				S_UNLOCK(&(XLogCtl->info_lck));
-				break;
-			}
-			s_lock_sleep(i++);
-		}
+		S_LOCK(&(XLogCtl->info_lck));
+		if (XLByteLT(XLogCtl->LgwrRqst.Write, LgwrRqst.Write))
+			XLogCtl->LgwrRqst.Write = LgwrRqst.Write;
+		S_UNLOCK(&(XLogCtl->info_lck));
 	}
 
 	END_CRIT_CODE;
@@ -622,7 +615,7 @@ XLogFlush(XLogRecPtr record)
 	XLogRecPtr	WriteRqst;
 	char		buffer[BLCKSZ];
 	char	   *usebuf = NULL;
-	unsigned	i = 0;
+	unsigned	spins = 0;
 	bool		force_lgwr = false;
 
 	if (XLOG_DEBUG)
@@ -715,7 +708,7 @@ XLogFlush(XLogRecPtr record)
 				break;
 			}
 		}
-		s_lock_sleep(i++);
+		S_LOCK_SLEEP(&(XLogCtl->lgwr_lck), spins++);
 	}
 
 	if (logFile >= 0 && (LgwrResult.Write.xlogid != logId ||
@@ -740,18 +733,12 @@ XLogFlush(XLogRecPtr record)
 			 logId, logSeg);
 	LgwrResult.Flush = LgwrResult.Write;
 
-	for (i = 0;;)
-	{
-		if (!TAS(&(XLogCtl->info_lck)))
-		{
-			XLogCtl->LgwrResult = LgwrResult;
-			if (XLByteLT(XLogCtl->LgwrRqst.Write, LgwrResult.Write))
-				XLogCtl->LgwrRqst.Write = LgwrResult.Write;
-			S_UNLOCK(&(XLogCtl->info_lck));
-			break;
-		}
-		s_lock_sleep(i++);
-	}
+	S_LOCK(&(XLogCtl->info_lck));
+	XLogCtl->LgwrResult = LgwrResult;
+	if (XLByteLT(XLogCtl->LgwrRqst.Write, LgwrResult.Write))
+		XLogCtl->LgwrRqst.Write = LgwrResult.Write;
+	S_UNLOCK(&(XLogCtl->info_lck));
+
 	XLogCtl->Write.LgwrResult = LgwrResult;
 
 	S_UNLOCK(&(XLogCtl->lgwr_lck));
@@ -767,6 +754,7 @@ GetFreeXLBuffer()
 	XLogCtlInsert *Insert = &XLogCtl->Insert;
 	XLogCtlWrite *Write = &XLogCtl->Write;
 	uint16		curridx = NextBufIdx(Insert->curridx);
+	unsigned	spins = 0;
 
 	LgwrRqst.Write = XLogCtl->xlblocks[Insert->curridx];
 	for (;;)
@@ -809,9 +797,8 @@ GetFreeXLBuffer()
 			InitXLBuffer(curridx);
 			return;
 		}
+		S_LOCK_SLEEP(&(XLogCtl->lgwr_lck), spins++);
 	}
-
-	return;
 }
 
 static void
@@ -820,7 +807,6 @@ XLogWrite(char *buffer)
 	XLogCtlWrite *Write = &XLogCtl->Write;
 	char	   *from;
 	uint32		wcnt = 0;
-	int			i = 0;
 	bool		usexistent;
 
 	for (; XLByteLT(LgwrResult.Write, LgwrRqst.Write);)
@@ -919,18 +905,12 @@ XLogWrite(char *buffer)
 		LgwrResult.Flush = LgwrResult.Write;
 	}
 
-	for (;;)
-	{
-		if (!TAS(&(XLogCtl->info_lck)))
-		{
-			XLogCtl->LgwrResult = LgwrResult;
-			if (XLByteLT(XLogCtl->LgwrRqst.Write, LgwrResult.Write))
-				XLogCtl->LgwrRqst.Write = LgwrResult.Write;
-			S_UNLOCK(&(XLogCtl->info_lck));
-			break;
-		}
-		s_lock_sleep(i++);
-	}
+	S_LOCK(&(XLogCtl->info_lck));
+	XLogCtl->LgwrResult = LgwrResult;
+	if (XLByteLT(XLogCtl->LgwrRqst.Write, LgwrResult.Write))
+		XLogCtl->LgwrRqst.Write = LgwrResult.Write;
+	S_UNLOCK(&(XLogCtl->info_lck));
+
 	Write->LgwrResult = LgwrResult;
 }
 
@@ -2062,18 +2042,17 @@ CreateCheckPoint(bool shutdown)
 	uint32		_logId;
 	uint32		_logSeg;
 	char		archdir[MAXPGPATH];
+	unsigned	spins = 0;
 
 	if (MyLastRecPtr.xrecoff != 0)
 		elog(ERROR, "CreateCheckPoint: cannot be called inside transaction block");
  
 	START_CRIT_CODE;
+
+	/* Grab lock, using larger than normal sleep between tries (1 sec) */
 	while (TAS(&(XLogCtl->chkp_lck)))
 	{
-		struct timeval delay = {2, 0};
-
-		if (shutdown)
-			elog(STOP, "Checkpoint lock is busy while data base is shutting down");
-		(void) select(0, NULL, NULL, NULL, &delay);
+		S_LOCK_SLEEP_INTERVAL(&(XLogCtl->chkp_lck), spins++, 1000000);
 	}
 
 	memset(&checkPoint, 0, sizeof(checkPoint));
@@ -2087,14 +2066,7 @@ CreateCheckPoint(bool shutdown)
 	checkPoint.Shutdown = shutdown;
 
 	/* Get REDO record ptr */
-	while (TAS(&(XLogCtl->insert_lck)))
-	{
-		struct timeval delay = {1, 0};
-
-		if (shutdown)
-			elog(STOP, "XLog insert lock is busy while data base is shutting down");
-		(void) select(0, NULL, NULL, NULL, &delay);
-	}
+	S_LOCK(&(XLogCtl->insert_lck));
 	freespace = ((char *) Insert->currpage) + BLCKSZ - Insert->currpos;
 	if (freespace < SizeOfXLogRecord)
 	{

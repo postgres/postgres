@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/Attic/s_lock.c,v 1.27 2000/12/11 00:49:51 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/Attic/s_lock.c,v 1.28 2000/12/29 21:31:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,19 +25,21 @@
  * number of microseconds to wait. This accomplishes pseudo random back-off.
  * Values are not critical but 10 milliseconds is a common platform
  * granularity.
- * note: total time to cycle through all 16 entries might be about .07 sec.
+ *
+ * Total time to cycle through all 20 entries might be about .07 sec,
+ * so the given value of S_MAX_BUSY results in timeout after ~70 sec.
  */
 #define S_NSPINCYCLE	20
 #define S_MAX_BUSY		1000 * S_NSPINCYCLE
 
 int			s_spincycle[S_NSPINCYCLE] =
-{0, 0, 0, 0, 10000, 0, 0, 0, 10000, 0,
+{	0, 0, 0, 0, 10000, 0, 0, 0, 10000, 0,
 	0, 10000, 0, 0, 10000, 0, 10000, 0, 10000, 10000
 };
 
 
 /*
- * s_lock_stuck(lock) - complain about a stuck spinlock
+ * s_lock_stuck() - complain about a stuck spinlock
  */
 static void
 s_lock_stuck(volatile slock_t *lock, const char *file, const int line)
@@ -52,13 +54,38 @@ s_lock_stuck(volatile slock_t *lock, const char *file, const int line)
 }
 
 
+/*
+ * s_lock_sleep() - sleep a pseudo-random amount of time, check for timeout
+ *
+ * Normally 'microsec' is 0, specifying to use the next s_spincycle[] value.
+ * Some callers may pass a nonzero interval, specifying to use exactly that
+ * delay value rather than a pseudo-random delay.
+ */
 void
-s_lock_sleep(unsigned spin)
+s_lock_sleep(unsigned spins, int microsec,
+			 volatile slock_t *lock,
+			 const char *file, const int line)
 {
 	struct timeval delay;
+	unsigned	max_spins;
 
-	delay.tv_sec = 0;
-	delay.tv_usec = s_spincycle[spin % S_NSPINCYCLE];
+	if (microsec > 0)
+	{
+		delay.tv_sec = 0;
+		delay.tv_usec = microsec;
+		/* two-minute timeout in this case */
+		max_spins = 120000000 / microsec;
+	}
+	else
+	{
+		delay.tv_sec = 0;
+		delay.tv_usec = s_spincycle[spins % S_NSPINCYCLE];
+		max_spins = S_MAX_BUSY;
+	}
+
+	if (spins > max_spins)
+		s_lock_stuck(lock, file, line);
+
 	(void) select(0, NULL, NULL, NULL, &delay);
 }
 
@@ -71,14 +98,13 @@ s_lock(volatile slock_t *lock, const char *file, const int line)
 {
 	unsigned	spins = 0;
 
+	/*
+	 * If you are thinking of changing this code, be careful.  This same
+	 * loop logic is used in other places that call TAS() directly.
+	 */
 	while (TAS(lock))
 	{
-		s_lock_sleep(spins);
-		if (++spins > S_MAX_BUSY)
-		{
-			/* It's been over a minute...  */
-			s_lock_stuck(lock, file, line);
-		}
+		s_lock_sleep(spins++, 0, lock, file, line);
 	}
 }
 

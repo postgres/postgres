@@ -1,75 +1,97 @@
 /*-------------------------------------------------------------------------
  *
  * s_lock.h
- *	   This file contains the implementation (if any) for spinlocks.
+ *	   This file contains the in-line portion of the implementation
+ *	   of spinlocks.
  *
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.75 2000/12/03 14:41:42 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.76 2000/12/29 21:31:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-/*
- *	 DESCRIPTION
- *		The public macros that must be provided are:
+/*----------
+ * DESCRIPTION
+ *	The public macros that must be provided are:
  *
- *		void S_INIT_LOCK(slock_t *lock)
+ *	void S_INIT_LOCK(slock_t *lock)
+ *		Initialize a spinlock (to the unlocked state).
  *
- *		void S_LOCK(slock_t *lock)
+ *	void S_LOCK(slock_t *lock)
+ *		Acquire a spinlock, waiting if necessary.
+ *		Time out and abort() if unable to acquire the lock in a
+ *		"reasonable" amount of time --- typically ~ 1 minute.
  *
- *		void S_UNLOCK(slock_t *lock)
+ *	void S_UNLOCK(slock_t *lock)
+ *		Unlock a previously acquired lock.
  *
- *		void S_LOCK_FREE(slock_t *lock)
- *			Tests if the lock is free. Returns non-zero if free, 0 if locked.
+ *	bool S_LOCK_FREE(slock_t *lock)
+ *		Tests if the lock is free. Returns TRUE if free, FALSE if locked.
+ *		This does *not* change the state of the lock.
  *
- *		The S_LOCK() macro implements a primitive but still useful random
- *		backoff to avoid hordes of busywaiting lockers chewing CPU.
+ *	int TAS(slock_t *lock)
+ *		Atomic test-and-set instruction.  Attempt to acquire the lock,
+ *		but do *not* wait.  Returns 0 if successful, nonzero if unable
+ *		to acquire the lock.
  *
- *		Effectively:
- *		void
- *		S_LOCK(slock_t *lock)
+ *	TAS() is a lower-level part of the API, but is used directly in a
+ *	few places that want to do other things while waiting for a lock.
+ *	The S_LOCK() macro is equivalent to
+ *
+ *	void
+ *	S_LOCK(slock_t *lock)
+ *	{
+ *		unsigned	spins = 0;
+ *
+ *		while (TAS(lock))
  *		{
- *			while (TAS(lock))
- *			{
- *			// back off the cpu for a semi-random short time
- *			}
+ *			S_LOCK_SLEEP(lock, spins++);
  *		}
+ *	}
  *
- *		This implementation takes advantage of a tas function written
- *		(in assembly language) on machines that have a native test-and-set
- *		instruction. Alternative mutex implementations may also be used.
- *		This function is hidden under the TAS macro to allow substitutions.
+ *	where S_LOCK_SLEEP() checks for timeout and sleeps for a short
+ *	interval.  Callers that want to perform useful work while waiting
+ *	can write out this entire loop and insert the "useful work" inside
+ *	the loop.
  *
- *		#define TAS(lock) tas(lock)
- *		int tas(slock_t *lock)		// True if lock already set
+ *	CAUTION to TAS() callers: on some platforms TAS() may sometimes
+ *	report failure to acquire a lock even when the lock is not locked.
+ *	For example, on Alpha TAS() will "fail" if interrupted.  Therefore
+ *	TAS() must *always* be invoked in a retry loop as depicted, even when
+ *	you are certain the lock is free.
  *
- *		There are default implementations for all these macros at the bottom
- *		of this file. Check if your platform can use these or needs to
- *		override them.
+ *	On most supported platforms, TAS() uses a tas() function written
+ *	in assembly language to execute a hardware atomic-test-and-set
+ *	instruction.  Equivalent OS-supplied mutex routines could be used too.
  *
- *	NOTES
- *		If none of this can be done, POSTGRES will default to using
- *		System V semaphores (and take a large performance hit -- around 40%
- *		of its time on a DS5000/240 is spent in semop(3)...).
+ *	If no system-specific TAS() is available (ie, HAS_TEST_AND_SET is not
+ *	defined), then we fall back on an emulation that uses SysV semaphores.
+ *	This emulation will be MUCH MUCH MUCH slower than a proper TAS()
+ *	implementation, because of the cost of a kernel call per lock or unlock.
+ *	An old report is that Postgres spends around 40% of its time in semop(2)
+ *	when using the SysV semaphore code.
  *
- *		AIX has a test-and-set but the recommended interface is the cs(3)
- *		system call.  This provides an 8-instruction (plus system call
- *		overhead) uninterruptible compare-and-set operation.  True
- *		spinlocks might be faster but using cs(3) still speeds up the
- *		regression test suite by about 25%.  I don't have an assembler
- *		manual for POWER in any case.
- *
+ *	Note to implementors: there are default implementations for all these
+ *	macros at the bottom of the file.  Check if your platform can use
+ *	these or needs to override them.
+ *----------
  */
 #ifndef S_LOCK_H
 #define S_LOCK_H
 
 #include "storage/ipc.h"
 
-extern void s_lock_sleep(unsigned spin);
+/* Platform-independent out-of-line support routines */
+extern void s_lock(volatile slock_t *lock,
+				   const char *file, const int line);
+extern void s_lock_sleep(unsigned spins, int microsec,
+						 volatile slock_t *lock,
+						 const char *file, const int line);
+
 
 #if defined(HAS_TEST_AND_SET)
 
@@ -216,7 +238,6 @@ tas(volatile slock_t *lock)
 #endif	 /* NEED_VAX_TAS_ASM */
 
 
-
 #if defined(NEED_NS32K_TAS_ASM)
 #define TAS(lock) tas(lock)
 
@@ -234,28 +255,13 @@ tas(volatile slock_t *lock)
 
 
 
-#else							/* __GNUC__ */
+#else							/* !__GNUC__ */
+
 /***************************************************************************
- * All non gcc
+ * All non-gcc inlines
  */
 
-#if defined(__QNX__)
-/*
- * QNX 4
- *
- * Note that slock_t under QNX is sem_t instead of char
- */
-#define TAS(lock)       (sem_trywait((lock)) < 0)
-#define S_UNLOCK(lock)  sem_post((lock))
-#define S_INIT_LOCK(lock)       sem_init((lock), 1, 1)
-#define S_LOCK_FREE(lock)       (lock)->value
-#endif   /* __QNX__ */
-
-
-#if defined(NEED_I386_TAS_ASM)
-/* non gcc i386 based things */
-
-#if defined(USE_UNIVEL_CC)
+#if defined(NEED_I386_TAS_ASM) && defined(USE_UNIVEL_CC)
 #define TAS(lock)	tas(lock)
 
 asm int
@@ -271,16 +277,15 @@ tas(volatile slock_t *s_lock)
 	popl %ebx
 }
 
-#endif	 /* USE_UNIVEL_CC */
-
-#endif	 /* NEED_I386_TAS_ASM */
+#endif /* defined(NEED_I386_TAS_ASM) && defined(USE_UNIVEL_CC) */
 
 #endif	 /* defined(__GNUC__) */
 
 
 
 /*************************************************************************
- * These are the platforms that have common code for gcc and non-gcc
+ * These are the platforms that do not use inline assembler (and hence
+ * have common code for gcc and non-gcc compilers, if both are available).
  */
 
 
@@ -342,7 +347,7 @@ __asm__("	 ldq   $0, %0			   \n\
  * (see include/port/hpux.h).
  *
  * a "set" slock_t has a single word cleared.  a "clear" slock_t has
- * all words set to non-zero. tas() in tas.s
+ * all words set to non-zero. tas() is in tas.s
  */
 
 #define S_UNLOCK(lock) \
@@ -354,6 +359,19 @@ do { \
 #define S_LOCK_FREE(lock)	( *(int *) (((long) (lock) + 15) & ~15) != 0)
 
 #endif	 /* __hpux */
+
+
+#if defined(__QNX__)
+/*
+ * QNX 4
+ *
+ * Note that slock_t under QNX is sem_t instead of char
+ */
+#define TAS(lock)       (sem_trywait((lock)) < 0)
+#define S_UNLOCK(lock)  sem_post((lock))
+#define S_INIT_LOCK(lock)       sem_init((lock), 1, 1)
+#define S_LOCK_FREE(lock)       ((lock)->value)
+#endif   /* __QNX__ */
 
 
 #if defined(__sgi)
@@ -416,41 +434,6 @@ do { \
 
 
 
-
-/****************************************************************************
- * Default Definitions - override these above as needed.
- */
-
-#if !defined(S_LOCK)
-extern void s_lock(volatile slock_t *lock, const char *file, const int line);
-
-#define S_LOCK(lock) \
-	do { \
-		if (TAS((volatile slock_t *) (lock))) \
-			s_lock((volatile slock_t *) (lock), __FILE__, __LINE__); \
-	} while (0)
-#endif	 /* S_LOCK */
-
-#if !defined(S_LOCK_FREE)
-#define S_LOCK_FREE(lock)	(*(lock) == 0)
-#endif	 /* S_LOCK_FREE */
-
-#if !defined(S_UNLOCK)
-#define S_UNLOCK(lock)		(*(lock) = 0)
-#endif	 /* S_UNLOCK */
-
-#if !defined(S_INIT_LOCK)
-#define S_INIT_LOCK(lock)	S_UNLOCK(lock)
-#endif	 /* S_INIT_LOCK */
-
-#if !defined(TAS)
-extern int	tas(volatile slock_t *lock);		/* port/.../tas.s, or
-												 * s_lock.c */
-
-#define TAS(lock)		tas((volatile slock_t *) (lock))
-#endif	 /* TAS */
-
-
 #else	 /* !HAS_TEST_AND_SET */
 
 /*
@@ -471,19 +454,55 @@ extern void s_unlock_sema(volatile slock_t *lock);
 extern void s_init_lock_sema(volatile slock_t *lock);
 extern int tas_sema(volatile slock_t *lock);
 
-extern void s_lock(volatile slock_t *lock, const char *file, const int line);
-
-#define S_LOCK(lock) \
-	do { \
-		if (TAS((volatile slock_t *) (lock))) \
-			s_lock((volatile slock_t *) (lock), __FILE__, __LINE__); \
-	} while (0)
-
 #define S_LOCK_FREE(lock)   s_lock_free_sema(lock)
 #define S_UNLOCK(lock)   s_unlock_sema(lock)
 #define S_INIT_LOCK(lock)   s_init_lock_sema(lock)
 #define TAS(lock)   tas_sema(lock)
 
 #endif	 /* HAS_TEST_AND_SET */
+
+
+
+/****************************************************************************
+ * Default Definitions - override these above as needed.
+ */
+
+#if !defined(S_LOCK)
+#define S_LOCK(lock) \
+	do { \
+		if (TAS(lock)) \
+			s_lock((lock), __FILE__, __LINE__); \
+	} while (0)
+#endif	 /* S_LOCK */
+
+#if !defined(S_LOCK_SLEEP)
+#define S_LOCK_SLEEP(lock,spins) \
+	s_lock_sleep((spins), 0, (lock), __FILE__, __LINE__)
+#endif	 /* S_LOCK_SLEEP */
+
+#if !defined(S_LOCK_SLEEP_INTERVAL)
+#define S_LOCK_SLEEP_INTERVAL(lock,spins,microsec) \
+	s_lock_sleep((spins), (microsec), (lock), __FILE__, __LINE__)
+#endif	 /* S_LOCK_SLEEP_INTERVAL */
+
+#if !defined(S_LOCK_FREE)
+#define S_LOCK_FREE(lock)	(*(lock) == 0)
+#endif	 /* S_LOCK_FREE */
+
+#if !defined(S_UNLOCK)
+#define S_UNLOCK(lock)		(*(lock) = 0)
+#endif	 /* S_UNLOCK */
+
+#if !defined(S_INIT_LOCK)
+#define S_INIT_LOCK(lock)	S_UNLOCK(lock)
+#endif	 /* S_INIT_LOCK */
+
+#if !defined(TAS)
+extern int	tas(volatile slock_t *lock);		/* in port/.../tas.s, or
+												 * s_lock.c */
+
+#define TAS(lock)		tas(lock)
+#endif	 /* TAS */
+
 
 #endif	 /* S_LOCK_H */
