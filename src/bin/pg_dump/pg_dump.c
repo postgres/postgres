@@ -20,7 +20,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.13 1996/11/08 06:01:03 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.14 1996/11/10 01:35:39 bryanh Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -43,6 +43,7 @@
  */
 
 #include <stdlib.h>
+#include <unistd.h>     /* for getopt() */
 #include <stdio.h>
 #include <string.h>
 #include <sys/param.h>	/* for MAXHOSTNAMELEN on most */
