@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/grant.sgml,v 1.27 2002/08/10 03:56:23 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/grant.sgml,v 1.28 2002/08/12 20:02:09 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -83,7 +83,8 @@ GRANT { { CREATE | USAGE } [,...] | ALL [ PRIVILEGES ] }
       <para>
        Allows <xref linkend="sql-select" endterm="sql-select-title"> from any column of the
        specified table, view, or sequence.  Also allows the use of
-       <xref linkend="sql-copy" endterm="sql-copy-title"> TO.
+       <xref linkend="sql-copy" endterm="sql-copy-title"> TO.  For sequences, this
+       privilege also allows the use of the <function>currval</function> function.
       </para>
      </listitem>
     </varlistentry>
@@ -106,8 +107,8 @@ GRANT { { CREATE | USAGE } [,...] | ALL [ PRIVILEGES ] }
        specified table.  <literal>SELECT ... FOR UPDATE</literal>
        also requires this privilege (besides the
        <literal>SELECT</literal> privilege).  For sequences, this
-       privilege allows the use of <function>nextval</function>,
-       <function>currval</function> and <function>setval</function>.
+       privilege allows the use of the <function>nextval</function> and
+       <function>setval</function> functions.
       </para>
      </listitem>
     </varlistentry>
