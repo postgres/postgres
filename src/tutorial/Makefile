@@ -4,7 +4,7 @@
 #    Makefile for tutorial
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/tutorial/Makefile,v 1.7 1998/02/28 23:37:07 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/tutorial/Makefile,v 1.8 1998/03/01 04:52:55 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -29,16 +29,7 @@ DLOBJS= complex$(DLSUFFIX) funcs$(DLSUFFIX)
 
 QUERIES= advanced.sql basics.sql complex.sql funcs.sql syscat.sql
 
-INFILES= $(DLOBJS)
-
-#
-# plus exports files
-#
-ifdef EXPSUFF
-INFILES+= $(DLOBJS:.o=$(EXPSUFF))
-endif
-
-all: $(QUERIES)
+all: $(DLOBJS) $(QUERIES)
 
 %.sql: %.source
 	if [ -z "$$USER" ]; then USER=$$LOGNAME; fi; \
@@ -51,12 +42,7 @@ all: $(QUERIES)
 	    -e "s:_DLSUFFIX_:$(DLSUFFIX):g" \
 	    -e "s/_USER_/$$USER/g" < $< > $@
 
-funcs.sql: $(INFILES)
-
-$(INFILES): 
-	$(MAKE) -C C-code $@
-	cp C-code/$@ .
+funcs.sql: $(DLOBJS)
 
 clean:
-	$(MAKE) -C C-code clean
-	rm -f $(QUERIES) $(INFILES)
+	rm -f $(DLOBJS) $(QUERIES)

@@ -4,13 +4,11 @@ to compile all the scripts and C files for the user-defined functions
 and types.  (make needs to be GNU make and may be named something
 different on your system)
 
-Then, change to the object directory
-	% cd obj
-
-and run psql with the -s flag:
+Then, run psql with the -s flag:
 	% psql -s
 
-Welcome to the POSTGRES95 interactive sql monitor:
+Welcome to the POSTGRESQL interactive sql monitor:
+  Please read the file COPYRIGHT for copyright terms of POSTGRESQL
 
    type \? for help on slash commands
    type \q to quit
