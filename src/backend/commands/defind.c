@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/defind.c,v 1.4 1996/08/26 06:30:23 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/defind.c,v 1.5 1996/10/23 07:39:57 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -129,8 +129,6 @@ DefineIndex(char *heapRelationName,
      *  -- JMH, 7/22/96
      */
     foreach(pl, parameterList) {
-        int count;
-	char *ptr;
 	ParamString *param = (ParamString*)lfirst(pl);
 	
 	if (!strcasecmp(param->name, "islossy"))
@@ -138,7 +136,6 @@ DefineIndex(char *heapRelationName,
     }
   
 
-    
     /*
      * Convert the partial-index predicate from parsetree form to plan
      * form, so it can be readily evaluated during index creation.

@@ -7,10 +7,13 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtget.c,v 1.2 1996/10/20 09:27:04 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtget.c,v 1.3 1996/10/23 07:39:20 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
+
+#include <string.h>
+#include <time.h>
 
 #include "postgres.h"
  
@@ -32,16 +35,18 @@
 #include "storage/block.h" 
 #include "storage/off.h"
 #include "storage/itemptr.h"
-#include <time.h>
 #include "utils/nabstime.h"
 #include "access/htup.h"
 #include "utils/tqual.h"
+#include "utils/palloc.h"
 #include "storage/buf.h"
 #include "access/relscan.h"
+#include "access/iqual.h"
  
 #include "storage/itemid.h"
 #include "storage/item.h"
 #include "storage/bufpage.h"
+#include "storage/bufmgr.h"
  
 #include "access/itup.h"
 

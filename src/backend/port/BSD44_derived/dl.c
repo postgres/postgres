@@ -43,6 +43,8 @@ static char sccsid[] = "@(#)dl.c	5.4 (Berkeley) 2/23/91";
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "port-protos.h"
+
 static char	error_message[BUFSIZ];
 
 char *
@@ -56,7 +58,7 @@ BSD44_derived_dlerror(void)
 }
 
 void *
-BSD44_derived_dlopen(char *file, int num)
+BSD44_derived_dlopen(const char *file, int num)
 {
 #ifdef __mips__
         (void) sprintf(error_message, "dlopen (%s) not supported", file);
@@ -72,7 +74,7 @@ BSD44_derived_dlopen(char *file, int num)
 }
 
 void *
-BSD44_derived_dlsym(void *handle, char *name)
+BSD44_derived_dlsym(void *handle, const char *name)
 {
 #ifdef __mips__
 	(void) sprintf(error_message, "dlsym (%s) failed", name);

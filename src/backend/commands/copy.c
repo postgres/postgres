@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.9 1996/10/21 09:37:26 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.10 1996/10/23 07:39:53 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -177,7 +177,7 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
     Oid *elements;
     Datum value;
     bool isnull = (bool) true;
-    char *nulls;
+    char *nulls = NULL;
     char *string;
     int32 ntuples;
     TupleDesc tupDesc;
@@ -189,8 +189,7 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
     tupDesc = rel->rd_att;
 
     if (!binary) {
-	out_functions = (func_ptr *)
-	    palloc(attr_count * sizeof(func_ptr));
+	out_functions = (func_ptr *) palloc(attr_count * sizeof(func_ptr));
 	elements = (Oid *) palloc(attr_count * sizeof(Oid));
 	for (i = 0; i < attr_count; i++) {
 	    out_func_oid = (Oid) GetOutputFunction(attr[i]->atttypid);
@@ -198,6 +197,8 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 	    elements[i] = GetTypeElement(attr[i]->atttypid);
 	}
     }else {
+	elements = NULL;
+	out_functions = NULL;
 	nulls = (char *) palloc(attr_count);
 	for (i = 0; i < attr_count; i++) nulls[i] = ' ';
 	
@@ -295,23 +296,25 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
     bool isnull;
     bool has_index;
     int done = 0;
-    char *string, *ptr;
+    char *string = NULL, *ptr;
     Relation *index_rels;
     int32 len, null_ct, null_id;
     int32 ntuples, tuples_read = 0;
     bool reading_to_eof = true;
     Oid *elements;
-    FuncIndexInfo *finfo, **finfoP;
+    FuncIndexInfo *finfo, **finfoP = NULL;
     TupleDesc *itupdescArr;
     HeapTuple pgIndexTup;
-    IndexTupleForm *pgIndexP;
-    int *indexNatts;
+    IndexTupleForm *pgIndexP = NULL;
+    int *indexNatts = NULL;
     char *predString;
-    Node **indexPred;
+    Node **indexPred = NULL;
     TupleDesc rtupdesc;
-    ExprContext *econtext;
+    ExprContext *econtext = NULL;
+#ifndef OMIT_PARTIAL_INDEX
     TupleTable tupleTable;
-    TupleTableSlot *slot;
+    TupleTableSlot *slot = NULL;
+#endif
     int natts;
     AttrNumber *attnumP;
     Datum idatum;
@@ -416,6 +419,8 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 	}
     else
 	{
+		in_functions = NULL;
+		elements = NULL;
 	    fread(&ntuples, sizeof(int32), 1, fp);
 	    if (ntuples != 0) reading_to_eof = false;
 	}
@@ -874,7 +879,7 @@ CopyAttributeOut(FILE *fp, char *string, char *delim)
     if (len && (string[0] == '{') && (string[len-1] == '}'))
       is_array = true;
 
-    for ( ; c = *string; string++) {
+    for ( ; (c = *string) != 0; string++) {
       if (c == delim[0] || c == '\n' ||
           (c == '\\' && !is_array))
           fputc('\\', fp);

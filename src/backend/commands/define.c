@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.1.1.1 1996/07/09 06:21:20 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.2 1996/10/23 07:40:01 scrappy Exp $
  *
  * DESCRIPTION
  *    The "DefineFoo" routines take the parse tree and pick out the
@@ -42,6 +42,7 @@
 #include "catalog/pg_aggregate.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
+#include "catalog/pg_operator.h"
 #include "utils/syscache.h"
 #include "nodes/pg_list.h"
 #include "nodes/parsenodes.h"
@@ -74,10 +75,9 @@ DefineFunction(ProcedureStmt *stmt, CommandDest dest)
     char*	prosrc_str;
     char *prorettype;
     char *languageName;
-    bool	canCache;
-    bool        trusted = TRUE;
+    bool	canCache = FALSE;
     List	*argList;
-    int32       byte_pct, perbyte_cpu, percall_cpu, outin_ratio;
+    int32       byte_pct = 100, perbyte_cpu, percall_cpu, outin_ratio = 100;
     bool	returnsSet;
     int		i;
     
@@ -112,7 +112,6 @@ DefineFunction(ProcedureStmt *stmt, CommandDest dest)
 	List *pl;
 
 	/* the defaults */
-	canCache = FALSE;
 	byte_pct = BYTE_PCT;
 	perbyte_cpu = PERBYTE_CPU;
 	percall_cpu = PERCALL_CPU;
@@ -165,12 +164,8 @@ DefineFunction(ProcedureStmt *stmt, CommandDest dest)
 	    }
 	}
     } else if (!strcmp(languageName, "sql")) {
-	canCache = false;
-	trusted = true;
-	
 	/* query optimizer groks sql, these are meaningless */
 	perbyte_cpu = percall_cpu = 0;
-	byte_pct = outin_ratio = 100;
     } else {
 	elog(WARN, "DefineFunction: language '%s' is not supported",
 	     languageName);
@@ -208,7 +203,7 @@ DefineFunction(ProcedureStmt *stmt, CommandDest dest)
 		    prosrc_str,		/* converted to text later */
 		    probin_str,		/* converted to text later */
 		    canCache,
-		    trusted,
+		    TRUE,
 		    byte_pct,
 		    perbyte_cpu,
 		    percall_cpu, 

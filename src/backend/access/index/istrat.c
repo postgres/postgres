@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.3 1996/10/21 07:38:20 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.4 1996/10/23 07:38:43 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -233,8 +233,8 @@ StrategyTermEvaluate(StrategyTerm term,
 		     Datum right)
 {
     Index		index;
-    long		tmpres;
-    bool		result;
+    long		tmpres = 0;
+    bool		result = 0;
     StrategyOperator	operator;
     ScanKey		entry;
     

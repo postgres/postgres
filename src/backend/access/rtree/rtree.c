@@ -7,10 +7,13 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.4 1996/10/20 09:27:07 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.5 1996/10/23 07:39:24 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
+
+#include <stdio.h>
+#include <time.h>
 
 #include "postgres.h"
  
@@ -21,6 +24,7 @@
 #include "storage/fd.h"
 #include "catalog/pg_am.h"
 #include "catalog/pg_class.h"
+#include "catalog/index.h"
 #include "nodes/nodes.h"
 #include "rewrite/prs2lock.h"
 #include "access/skey.h"
@@ -30,22 +34,23 @@
 #include "storage/block.h"
 #include "storage/off.h"
 #include "storage/itemptr.h"
-#include <time.h>
 #include "utils/nabstime.h"
 #include "access/htup.h"
  
 #include "access/itup.h"
  
 #include "utils/tqual.h"
+#include "utils/palloc.h"
 #include "storage/buf.h"
 #include "access/relscan.h"  
+#include "access/rtscan.h"
  
 #include "storage/itemid.h"
 #include "storage/item.h" 
 #include "storage/bufpage.h"
+#include "storage/lmgr.h"
 
 #include "access/rtree.h"
-
 #include "access/funcindex.h"
  
 #include "nodes/params.h"
@@ -56,7 +61,6 @@
 #include "executor/tuptable.h"
 #include "nodes/execnodes.h"
  
-#include <stdio.h>
 #include "storage/ipc.h"
 #include "storage/bufmgr.h"
 
@@ -126,9 +130,11 @@ rtbuild(Relation heap,
     Datum *d;
     bool *nulls;
     int nb, nh, ni;
+#ifndef OMIT_PARTIAL_INDEX
     ExprContext *econtext;
     TupleTable tupleTable;
     TupleTableSlot *slot;
+#endif
     Oid hrelid, irelid;
     Node *pred, *oldPred;
     RTSTATE rtState;
@@ -176,6 +182,12 @@ rtbuild(Relation heap,
 	econtext = makeNode(ExprContext);
 	FillDummyExprContext(econtext, slot, hd, buffer);
     }
+	else
+	{
+		econtext = NULL;
+		tupleTable = NULL;
+		slot = NULL;
+	}
 #endif /* OMIT_PARTIAL_INDEX */    
     scan = heap_beginscan(heap, 0, NowTimeQual, 0, (ScanKey) NULL);
     htup = heap_getnext(scan, 0, &buffer);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.5 1996/10/21 05:45:11 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.6 1996/10/23 07:38:29 scrappy Exp $
  *
  * NOTES
  *    This file contains only the public interface routines.
@@ -113,9 +113,11 @@ hashbuild(Relation heap,
     int nhtups, nitups;
     int i;
     HashItem hitem;
+#ifndef OMIT_PARTIAL_INDEX
     ExprContext *econtext;
     TupleTable tupleTable;
     TupleTableSlot *slot;
+#endif
     Oid hrelid, irelid;
     Node *pred, *oldPred;
     
@@ -151,6 +153,12 @@ hashbuild(Relation heap,
 	econtext = makeNode(ExprContext);
 	FillDummyExprContext(econtext, slot, htupdesc, buffer);
     }
+	else	/* quiet the compiler */
+	{
+		econtext = NULL;
+		tupleTable = 0;
+		slot = 0;
+	}
 #endif /* OMIT_PARTIAL_INDEX */
     
     /* start a heap scan */

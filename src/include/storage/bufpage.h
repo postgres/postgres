@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufpage.h,v 1.4 1996/10/20 06:35:16 scrappy Exp $
+ * $Id: bufpage.h,v 1.5 1996/10/23 07:42:07 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,7 @@
 #include "storage/itemid.h"
 #include "storage/item.h"
 #include "storage/buf.h"
+#include "storage/page.h"
 #include "storage/off.h"
 
 /*
@@ -72,7 +73,6 @@
  * initialize its pages with PageInit and then set its own opaque
  * fields.
  */
-typedef Pointer	Page;
 
 /*
  * PageIsValid --

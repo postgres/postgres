@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.3 1996/10/20 06:35:07 scrappy Exp $
+ * $Id: execnodes.h,v 1.4 1996/10/23 07:41:56 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,6 +15,7 @@
 
 #include "nodes/params.h"
 #include "access/sdir.h"
+#include "access/funcindex.h"
 #include "executor/hashjoin.h"
 #include "nodes/primnodes.h"
 #include "nodes/memnodes.h"

@@ -7,10 +7,12 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.3 1996/10/20 10:53:11 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.4 1996/10/23 07:39:10 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
+
+#include <time.h>
 
 #include "postgres.h"
 
@@ -36,13 +38,17 @@
 #include "storage/item.h"
 #include "storage/buf.h"
 #include "storage/bufpage.h"
-#include <time.h>
+#include "storage/bufmgr.h"
 #include "utils/nabstime.h"
 #include "access/htup.h"
 #include "utils/tqual.h"
+#include "utils/palloc.h"
 #include "access/relscan.h"
 #include "access/sdir.h"
 #include "access/nbtree.h"
+#include "access/genam.h"
+
+#include "fmgr.h"
 
 static BTStack _bt_searchr(Relation rel, int keysz, ScanKey scankey, Buffer *bufP, BTStack stack_in);
 static OffsetNumber _bt_firsteq(Relation rel, TupleDesc itupdesc, Page page, Size keysz, ScanKey scankey, OffsetNumber offnum);
@@ -296,14 +302,13 @@ _bt_binsrch(Relation rel,
     Page page;
     BTPageOpaque opaque;
     OffsetNumber low, mid, high;
-    bool match;
     int result;
     
     page = BufferGetPage(buf);
     opaque = (BTPageOpaque) PageGetSpecialPointer(page);
     
     /* by convention, item 0 on any non-rightmost page is the high key */
-    low = P_RIGHTMOST(opaque) ? P_HIKEY : P_FIRSTKEY;
+    low = mid = P_RIGHTMOST(opaque) ? P_HIKEY : P_FIRSTKEY;
     
     high = PageGetMaxOffsetNumber(page);
     
@@ -320,7 +325,6 @@ _bt_binsrch(Relation rel,
 	return (low);
     
     itupdesc = RelationGetTupleDescriptor(rel);
-    match = false;
     
     while ((high - low) > 1) {
 	mid = low + ((high - low) / 2);
@@ -330,16 +334,9 @@ _bt_binsrch(Relation rel,
 	    low = mid;
 	else if (result < 0)
 	    high = mid - 1;
-	else {
-	    match = true;
-	    break;
-	}
-    }
-    
-    /* if we found a match, we want to find the first one on the page */
-    if (match) {
+	else
 	return (_bt_firsteq(rel, itupdesc, page, keysz, scankey, mid));
-    } else {
+    }
 	
 	/*
 	 *  We terminated because the endpoints got too close together.  There
@@ -387,7 +384,6 @@ _bt_binsrch(Relation rel,
 		    return (OffsetNumberNext(high));
 	    }
 	}
-    }
 }
 
 static OffsetNumber
@@ -1039,7 +1035,7 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
     ItemPointer current;
     ItemPointer iptr;
     OffsetNumber offnum, maxoff;
-    OffsetNumber start;
+    OffsetNumber start = 0;
     BlockNumber blkno;
     BTItem btitem;
     IndexTuple itup;

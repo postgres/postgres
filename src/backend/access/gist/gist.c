@@ -145,9 +145,11 @@ gistbuild(Relation heap,
     Datum *d;
     bool *nulls;
     int nb, nh, ni;
+#ifndef OMIT_PARTIAL_INDEX
     ExprContext *econtext;
     TupleTable tupleTable;
     TupleTableSlot *slot;
+#endif
     Oid hrelid, irelid;
     Node *pred, *oldPred;
     GISTSTATE giststate;
@@ -199,6 +201,12 @@ gistbuild(Relation heap,
 	econtext = makeNode(ExprContext);
 	FillDummyExprContext(econtext, slot, hd, buffer);
     }
+	else	/* shut the compiler up */
+	{
+		tupleTable = NULL;
+		slot = NULL;
+		econtext = NULL;
+	}
 #endif /* OMIT_PARTIAL_INDEX */    
     scan = heap_beginscan(heap, 0, NowTimeQual, 0, (ScanKey) NULL);
     htup = heap_getnext(scan, 0, &buffer);

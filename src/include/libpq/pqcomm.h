@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqcomm.h,v 1.2 1996/10/11 09:12:18 bryanh Exp $
+ * $Id: pqcomm.h,v 1.3 1996/10/23 07:41:47 scrappy Exp $
  *
  * NOTES
  *    Some of this should move to libpq.h
@@ -16,7 +16,9 @@
 #ifndef PQCOMM_H
 #define	PQCOMM_H
 
+#include <stdio.h>
 #include <sys/types.h>
+
 #ifdef WIN32
 #include <winsock.h>
 #else

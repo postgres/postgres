@@ -7,10 +7,13 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtscan.c,v 1.4 1996/10/20 09:27:10 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtscan.c,v 1.5 1996/10/23 07:39:26 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
+
+#include <string.h>
+#include <time.h>
 
 #include "postgres.h"
  
@@ -30,14 +33,17 @@
 #include "storage/block.h" 
 #include "storage/off.h"
 #include "storage/itemptr.h"
-#include <time.h>
 #include "utils/nabstime.h"
+#include "utils/palloc.h"
 #include "access/htup.h"
 #include "utils/tqual.h"
 #include "storage/buf.h"
+#include "storage/lmgr.h"
+#include "storage/bufmgr.h"
 #include "access/relscan.h"
 
 #include "access/rtree.h"
+#include "access/rtstrat.h"
  
 #include "access/itup.h"
 #include "access/funcindex.h"

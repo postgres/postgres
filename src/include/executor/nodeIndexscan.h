@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeIndexscan.h,v 1.1 1996/08/28 07:22:20 scrappy Exp $
+ * $Id: nodeIndexscan.h,v 1.2 1996/10/23 07:41:34 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,4 +29,5 @@ extern bool ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent);
 
 extern int ExecCountSlotsIndexScan(IndexScan *node);
 
+extern void ExecIndexReScan(IndexScan *node, ExprContext *exprCtxt, Plan* parent);
 #endif	/* NODEINDEXSCAN_H */

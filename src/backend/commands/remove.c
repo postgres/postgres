@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.2 1996/08/19 01:53:39 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.3 1996/10/23 07:40:09 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -321,7 +321,7 @@ RemoveFunction(char *functionName, /* function name to be removed */
     Buffer           buffer = InvalidBuffer;
     bool		 bufferUsed = FALSE;
     Oid	 argList[8];
-    Form_pg_proc	 the_proc;
+    Form_pg_proc	 the_proc = NULL;
     ItemPointerData  itemPointerData;
     static ScanKeyData key[3] = {
 	{ 0, Anum_pg_proc_proname, NameEqualRegProcedure }

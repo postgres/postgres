@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: iqual.h,v 1.1 1996/08/27 21:50:16 scrappy Exp $
+ * $Id: iqual.h,v 1.2 1996/10/23 07:41:27 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 #include "storage/itemid.h"
 #include "utils/rel.h"
 #include "access/skey.h"
+#include "access/itup.h"
 
 /* ----------------
  *	index tuple qualification support

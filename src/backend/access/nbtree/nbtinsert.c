@@ -7,10 +7,13 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.2 1996/10/20 10:53:03 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.3 1996/10/23 07:39:00 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
+
+#include <stdio.h>
+#include <time.h>
 
 #include "postgres.h"
 
@@ -37,15 +40,14 @@
 #include "storage/itemid.h"
 #include "storage/item.h"
 #include "storage/bufpage.h"
-#include <time.h>
 #include "utils/nabstime.h"
+#include "utils/palloc.h"
 #include "access/htup.h"
 #include "utils/tqual.h"
 #include "access/relscan.h"
 #include "access/sdir.h"
 #include "access/nbtree.h"
 
-#include <stdio.h>
 #include "storage/ipc.h"
 #include "storage/bufmgr.h"
 

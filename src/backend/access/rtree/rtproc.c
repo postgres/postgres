@@ -7,15 +7,17 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtproc.c,v 1.2 1996/10/20 09:27:06 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtproc.c,v 1.3 1996/10/23 07:39:23 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 
+#include <string.h>
+
 #include "postgres.h"
 
 #include "utils/geo-decls.h"
-
+#include "utils/palloc.h"
 
 BOX
 *rt_box_union(BOX *a, BOX *b)

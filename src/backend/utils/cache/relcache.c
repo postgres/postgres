@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.1.1.1 1996/07/09 06:22:06 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.2 1996/10/23 07:41:00 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -237,9 +237,10 @@ typedef struct relnamecacheent {
 static void formrdesc(char *relationName, u_int natts,
 		      FormData_pg_attribute att[]);
 
+#if 0		/* See comments at line 1304 */
 static void RelationFlushIndexes(Relation *r, Oid accessMethodId);
+#endif
 
-static char *BuildDescInfoError(RelationBuildDescInfo buildinfo);
 static HeapTuple ScanPgRelation(RelationBuildDescInfo buildinfo);
 static HeapTuple scan_pg_rel_seq(RelationBuildDescInfo buildinfo);
 static HeapTuple scan_pg_rel_ind(RelationBuildDescInfo buildinfo);
@@ -260,6 +261,7 @@ static void IndexedAccessMethodInitialize(Relation relation);
  */
  
 
+#if 0		/* XXX This doesn't seem to be used anywhere */
 /* --------------------------------
  *	BuildDescInfoError returns a string appropriate to
  *	the buildinfo passed to it
@@ -282,6 +284,7 @@ BuildDescInfoError(RelationBuildDescInfo buildinfo)
     
     return errBuf;
 }
+#endif
 
 /* --------------------------------
  *	ScanPgRelation
@@ -403,6 +406,9 @@ scan_pg_rel_ind(RelationBuildDescInfo buildinfo)
 	
     default:
 	elog(WARN, "ScanPgRelation: bad buildinfo");
+	/* XXX I hope this is right.  It seems better than returning
+	 * an uninitialized value */
+	return_tuple = NULL;
     }
     
     /* all done */
@@ -641,19 +647,16 @@ RelationBuildRuleLock(Relation relation)
 
 	rule->ruleId = pg_rewrite_tuple->t_oid;
 
-	/* XXX too lazy to fix the type cast problem
-	 * 	(see rewriteDefine.c:121)
-	 */
 	rule->event =
-	    (CmdType)((char)heap_getattr(pg_rewrite_tuple, InvalidBuffer,
+	    (int)heap_getattr(pg_rewrite_tuple, InvalidBuffer,
 				  Anum_pg_rewrite_ev_type, pg_rewrite_tupdesc,
-				  &isnull) - 48);
+				  &isnull) - 48;
 	rule->attrno = 
-	    (AttrNumber)heap_getattr(pg_rewrite_tuple, InvalidBuffer,
+	    (int)heap_getattr(pg_rewrite_tuple, InvalidBuffer,
 				  Anum_pg_rewrite_ev_attr, pg_rewrite_tupdesc,
 				  &isnull);
 	rule->isInstead = 
-	    (bool)heap_getattr(pg_rewrite_tuple, InvalidBuffer,
+	    !!heap_getattr(pg_rewrite_tuple, InvalidBuffer,
 			       Anum_pg_rewrite_is_instead, pg_rewrite_tupdesc,
 			       &isnull);
 
@@ -1273,6 +1276,7 @@ RelationIdInvalidateRelationCacheByRelationId(Oid relationId)
     }
 }
 
+#if 0		/* See comments at line 1304 */
 /* --------------------------------
  *	RelationIdInvalidateRelationCacheByAccessMethodId
  *
@@ -1297,6 +1301,8 @@ RelationFlushIndexes(Relation *r,
 	    RelationFlushRelation(&relation, false);
 	}
 }
+#endif
+
 
 void
 RelationIdInvalidateRelationCacheByAccessMethodId(Oid accessMethodId)

@@ -12,7 +12,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.4 1996/10/07 03:28:12 scrappy Exp $
+ * $Id: miscadmin.h,v 1.5 1996/10/23 07:40:32 scrappy Exp $
  *
  * NOTES
  *    some of the information in this file will be moved to
@@ -22,16 +22,6 @@
  */
 #ifndef MISCADMIN_H
 #define MISCADMIN_H
-
-/* ----------------
- *	note: <sys/types.h> was in unix.h  This should be moved
- *	to the .c files.
- * ----------------
- */
-#include <sys/types.h>
-
-#include "postgres.h"
-#include "storage/backendid.h"
 
 /*****************************************************************************
  *    globals.h --                                                           *

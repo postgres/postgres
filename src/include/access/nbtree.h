@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nbtree.h,v 1.1 1996/08/27 21:50:19 scrappy Exp $
+ * $Id: nbtree.h,v 1.2 1996/10/23 07:41:29 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,10 @@
 #include "access/relscan.h"
 #include "access/sdir.h"
 #include "nodes/pg_list.h"
+#include "storage/page.h"
+#include "storage/bufpage.h"
+#include "storage/item.h"
+#include "utils/memutils.h"
 
 /*
  *  BTPageOpaqueData -- At the end of every page, we store a pointer

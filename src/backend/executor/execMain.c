@@ -26,11 +26,12 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.4 1996/09/19 19:57:18 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.5 1996/10/23 07:40:26 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "executor/executor.h"
+#include "executor/nodeIndexscan.h"
 #include "utils/builtins.h"
 #include "utils/palloc.h"
 #include "utils/acl.h"
@@ -221,6 +222,7 @@ ExecutorRun(QueryDesc *queryDesc, EState *estate, int feature, int count)
 			     destination);
 	break;
     default:
+	result = NULL;
 	elog(DEBUG, "ExecutorRun: Unknown feature %d", feature);
 	break;
     }

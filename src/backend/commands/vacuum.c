@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.4 1996/10/18 08:13:36 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.5 1996/10/23 07:40:10 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,6 +34,7 @@
 #include "storage/bufmgr.h"
 #include "storage/bufpage.h"
 #include "storage/smgr.h"
+#include "storage/lmgr.h"
 
 #include "utils/elog.h"
 #include "utils/mcxt.h"
@@ -206,7 +207,7 @@ _vc_getrels(Portal p, NameData *VacRelP)
     Buffer buf;
     PortalVariableMemory portalmem;
     MemoryContext old;
-    VRelList vrl, cur;
+    VRelList vrl, cur = NULL;
     Datum d;
     char *rname;
     char rkind;
@@ -404,7 +405,7 @@ _vc_vacheap(Portal p, VRelList curvrl, Relation onerel)
     Buffer buf;
     Page page;
     OffsetNumber offnum, maxoff;
-    Relation archrel;
+    Relation archrel = NULL;
     bool isarchived;
     int nvac;
     int ntups;
@@ -883,7 +884,7 @@ _vc_free(Portal p, VRelList vrl)
 {
     VRelList p_vrl;
     VAttList p_val, val;
-    VPageDescr p_vpd, *vpd;
+    VPageDescr *vpd;
     int i;
     MemoryContext old;
     PortalVariableMemory pmem;

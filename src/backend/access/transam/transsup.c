@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/transam/Attic/transsup.c,v 1.3 1996/10/21 07:15:06 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/transam/Attic/transsup.c,v 1.4 1996/10/23 07:39:32 scrappy Exp $
  *
  * NOTES
  *    This file contains support functions for the high
@@ -78,7 +78,7 @@ TransComputeBlockNumber(Relation relation, /* relation to test */
 			TransactionId transactionId, /* transaction id to test */
 			BlockNumber *blockNumberOutP)
 {
-    long	itemsPerBlock;
+    long	itemsPerBlock = 0;
     
     /* ----------------
      *  we calculate the block number of our transaction

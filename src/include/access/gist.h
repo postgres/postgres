@@ -12,8 +12,11 @@
 #ifndef GIST_H
 #define GIST_H
 
+#include "utils/rel.h"
+#include "storage/off.h"
+#include "storage/block.h"
 #include "storage/bufpage.h"
-
+#include "access/skey.h"
 
 /* 
 ** You can have as many strategies as you please in GiSTs, as
@@ -146,4 +149,5 @@ extern void gistdentryinit(GISTSTATE *giststate, GISTENTRY *e, char *pr,
 			   Relation r, Page pg, OffsetNumber o, int b, bool l) ;
 extern void gistcentryinit(GISTSTATE *giststate, GISTENTRY *e, char *pr, 
 			   Relation r, Page pg, OffsetNumber o, int b, bool l) ;
+extern StrategyNumber RelationGetGISTStrategy(Relation, AttrNumber, RegProcedure);
 #endif /* GIST_H */

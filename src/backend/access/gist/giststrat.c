@@ -113,7 +113,7 @@ static StrategyEvaluationData GISTEvaluationData = {
     (StrategyTransformMap) GISTNegate,	/* how to do (not qual) */
     (StrategyTransformMap) GISTCommute,	/* how to swap operands */
     (StrategyTransformMap) GISTNegateCommute,	/* how to do both */
-    NULL
+    { NULL }
 };
 
 StrategyNumber

@@ -8,13 +8,15 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.4 1996/10/20 10:53:08 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.5 1996/10/23 07:39:06 scrappy Exp $
  *
  * NOTES
  *    This file contains only the public interface routines.
  *
  *-------------------------------------------------------------------------
  */
+#include <stdio.h>
+#include <time.h>
 
 #include "postgres.h"
 
@@ -25,6 +27,7 @@
 #include "storage/fd.h"
 #include "catalog/pg_am.h"
 #include "catalog/pg_class.h"
+#include "catalog/index.h"
 #include "nodes/nodes.h"
 #include "rewrite/prs2lock.h"
 #include "access/skey.h"
@@ -40,10 +43,11 @@
 #include "storage/item.h"
 #include "storage/buf.h"
 #include "storage/bufpage.h"
-#include <time.h>
+#include "storage/bufmgr.h"
 #include "utils/nabstime.h"
 #include "access/htup.h"
 #include "utils/tqual.h"
+#include "utils/palloc.h"
 #include "access/relscan.h"
 #include "access/sdir.h"
 #include "access/nbtree.h"
@@ -59,7 +63,6 @@
 #include "nodes/parsenodes.h"
 #include "tcop/dest.h"
 #include "executor/execdesc.h"
-#include <stdio.h>
 #include "catalog/pg_index.h"
 #include "executor/executor.h"
 
@@ -96,13 +99,15 @@ btbuild(Relation heap,
     TupleDesc htupdesc, itupdesc;
     Datum *attdata;
     bool *nulls;
-    InsertIndexResult res;
+    InsertIndexResult res = 0;
     int nhtups, nitups;
     int i;
     BTItem btitem;
+#ifndef OMIT_PARTIAL_INDEX
     ExprContext *econtext;
     TupleTable tupleTable;
     TupleTableSlot *slot;
+#endif
     Oid hrelid, irelid;
     Node *pred, *oldPred;
     void *spool;
@@ -139,6 +144,12 @@ btbuild(Relation heap,
 	econtext = makeNode(ExprContext);
 	FillDummyExprContext(econtext, slot, htupdesc, InvalidBuffer);
     }
+	else
+	{
+		econtext = NULL;
+		tupleTable = NULL;
+		slot = NULL;
+	}
 #endif /* OMIT_PARTIAL_INDEX */
     
     /* start a heap scan */
@@ -152,6 +163,8 @@ btbuild(Relation heap,
 	spool = _bt_spoolinit(index, 7);
 	res = (InsertIndexResult) NULL;
     }
+	else
+		spool = NULL;
 
     for (; HeapTupleIsValid(htup); htup = heap_getnext(hscan, 0, &buffer)) {
 	

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/Attic/nbtscan.c,v 1.2 1996/10/20 10:53:10 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/Attic/nbtscan.c,v 1.3 1996/10/23 07:39:08 scrappy Exp $
  *
  *
  * NOTES
@@ -55,6 +55,7 @@
 #include "utils/nabstime.h"
 #include "access/htup.h"
 #include "utils/tqual.h"
+#include "utils/palloc.h"
 #include "access/relscan.h"
 #include "access/sdir.h"
 #include "access/nbtree.h"

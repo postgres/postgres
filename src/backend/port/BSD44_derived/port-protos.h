@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: port-protos.h,v 1.1.1.1 1996/07/09 06:21:42 scrappy Exp $
+ * $Id: port-protos.h,v 1.2 1996/10/23 07:40:45 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,5 +37,11 @@
 #define	pg_dlsym	BSD44_derived_dlsym
 #define	pg_dlclose	BSD44_derived_dlclose
 #define	pg_dlerror	BSD44_derived_dlerror
+
+char *		BSD44_derived_dlerror(void);
+void *		BSD44_derived_dlopen(const char *filename, int num);
+void *		BSD44_derived_dlsym(void *handle, const char *name);
+void *		BSD44_derived_dlsym(void *handle, const char *name);
+void		BSD44_derived_dlclose(void *handle);
 
 #endif /* PORT_PROTOS_H */
