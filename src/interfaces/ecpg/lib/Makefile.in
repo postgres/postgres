@@ -6,7 +6,7 @@
 # Copyright (c) 1994, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/Makefile.in,v 1.43 1999/02/23 12:56:55 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/Makefile.in,v 1.44 1999/06/30 23:57:23 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -41,8 +41,9 @@ typename.o : typename.c ../include/ecpgtype.h
 
 
 .PHONY: clean
-clean:
-	rm -f lib$(NAME).a $(shlib) $(OBJS)
+
+clean: clean-shlib
+	rm -f lib$(NAME).a $(OBJS)
 ifeq ($(PORTNAME), win)
 	rm -f $(NAME).def
 endif

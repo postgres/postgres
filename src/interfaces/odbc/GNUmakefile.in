@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/odbc/Attic/GNUmakefile.in,v 1.10 1999/01/17 06:19:43 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/odbc/Attic/GNUmakefile.in,v 1.11 1999/06/30 23:57:29 tgl Exp $
 #
 #-------------------------------------------------------------------------
 @SET_MAKE@
@@ -65,8 +65,8 @@ install-ini: odbcinst.ini
 
 .PHONY: clean
 
-clean:
-	-rm -f lib$(NAME).a $(shlib) $(OBJS)
+clean: clean-shlib
+	-rm -f lib$(NAME).a $(OBJS)
 
 .PHONY: distclean
 
@@ -76,7 +76,7 @@ distclean: clean
 ifeq ($(PORTNAME), win)
 	@if [ $SRCDIR != $ODBCSRCDIR ]; then rm -f template makefiles port; fi
 else
-	@if [ $SRCDIR ne $ODBCSRCDIR ]; then rm -f template makefiles port
+	@if [ $SRCDIR ne $ODBCSRCDIR ]; then rm -f template makefiles port; fi
 endif
 
 .PHONY: standalone

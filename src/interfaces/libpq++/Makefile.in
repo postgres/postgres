@@ -6,7 +6,7 @@
 # Copyright (c) 1994, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/Makefile.in,v 1.14 1999/05/27 14:28:40 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/Makefile.in,v 1.15 1999/06/30 23:57:27 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -87,8 +87,9 @@ beforeinstall-headers:
 	@if [ ! -d $(LIBPGXXHEADERDIR) ]; then mkdir $(LIBPGXXHEADERDIR); fi
 
 .PHONY: clean
-clean:
-	rm -f libpq++.a $(shlib) $(OBJS)
+
+clean: clean-shlib
+	rm -f libpq++.a $(OBJS)
 	$(MAKE) -C examples clean
 
 dep depend:
