@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/problems.sgml,v 2.16 2003/11/29 19:51:37 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/problems.sgml,v 2.17 2003/12/14 00:05:29 neilc Exp $
 -->
 
 <sect1 id="bug-reporting">
@@ -18,7 +18,7 @@ $PostgreSQL: pgsql/doc/src/sgml/problems.sgml,v 2.16 2003/11/29 19:51:37 pgsql E
  <para>
   The following suggestions are intended to assist you in forming bug reports
   that can be handled in an effective fashion. No one is required to follow
-  them but it tends to be to everyone's advantage.
+  them but doing so tends to be to everyone's advantage.
  </para>
 
  <para>
@@ -204,17 +204,19 @@ $PostgreSQL: pgsql/doc/src/sgml/problems.sgml,v 2.16 2003/11/29 19:51:37 pgsql E
 
     <listitem>
      <para>
-      Any command line options and other start-up options, including concerned
-      environment variables or configuration files that you changed from the
-      default. Again, be exact. If you are using a prepackaged
-      distribution that starts the database server at boot time, you should try
-      to find out how that is done.
+      Any command line options and other start-up options, including
+      any relevant environment variables or configuration files that
+      you changed from the default. Again, please provide exact
+      information. If you are using a prepackaged distribution that
+      starts the database server at boot time, you should try to find
+      out how that is done.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Anything you did at all differently from the installation instructions.
+      Anything you did at all differently from the installation
+      instructions.
      </para>
     </listitem>
 
@@ -234,9 +236,14 @@ $PostgreSQL: pgsql/doc/src/sgml/problems.sgml,v 2.16 2003/11/29 19:51:37 pgsql E
      </para>
 
      <para>
-      If your version is older than &version; we will almost certainly tell
-      you to upgrade. There are tons
-      of bug fixes in each new release, that is why we make new releases.
+      If your version is older than &version; we will almost certainly
+      tell you to upgrade. There are many bug fixes and improvements
+      in each new release, so it is quite possible that a bug you have
+      encountered in an older release of <productname>PostgreSQL</>
+      has already been fixed. We can only provide limited support for
+      sites using older releases of PostgreSQL; if you require more
+      than we can provide, consider acquiring a commercial support
+      contract.
      </para>
      <para>
      </para>
@@ -244,12 +251,14 @@ $PostgreSQL: pgsql/doc/src/sgml/problems.sgml,v 2.16 2003/11/29 19:51:37 pgsql E
 
     <listitem>
      <para>
-      Platform information. This includes the kernel name and version, C library,
-      processor, memory information. In most cases it is sufficient to report
-      the vendor and version, but do not assume everyone knows what exactly
-      <quote>Debian</quote> contains or that everyone runs on Pentiums. If
-      you have installation problems then information about compilers, make,
-      etc. is also necessary.
+      Platform information. This includes the kernel name and version,
+      C library, processor, memory information, and so on. In most
+      cases it is sufficient to report the vendor and version, but do
+      not assume everyone knows what exactly <quote>Debian</quote>
+      contains or that everyone runs on Pentiums. If you have
+      installation problems then information about the toolchain on
+      your machine (compiler, <application>make</application>, and so
+      on) is also necessary.
      </para>
     </listitem>
    </itemizedlist>
@@ -269,7 +278,7 @@ $PostgreSQL: pgsql/doc/src/sgml/problems.sgml,v 2.16 2003/11/29 19:51:37 pgsql E
   </para>
 
   <para>
-   When writing a bug report, please choose non-confusing terminology.
+   When writing a bug report, please avoid confusing terminology.
    The software package in total is called <quote>PostgreSQL</quote>,
    sometimes <quote>Postgres</quote> for short. If you
    are specifically talking about the backend server, mention that, do not

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/lock.sgml,v 1.39 2003/11/29 19:51:39 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/lock.sgml,v 1.40 2003/12/14 00:05:29 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -108,9 +108,10 @@ where <replaceable class="PARAMETER">lockmode</replaceable> is one of:
      </para>
 
      <para>
-      The command <literal>LOCK a, b;</> is equivalent to
-      <literal>LOCK a; LOCK b;</>. The tables are locked one-by-one in
-      the order specified in the <command>LOCK</command> command.
+      The command <literal>LOCK TABLE a, b;</> is equivalent to
+      <literal>LOCK TABLE a; LOCK TABLE b;</>. The tables are locked
+      one-by-one in the order specified in the <command>LOCK
+      TABLE</command> command.
      </para>
     </listitem>
    </varlistentry>
@@ -136,17 +137,18 @@ where <replaceable class="PARAMETER">lockmode</replaceable> is one of:
   <title>Notes</title>
 
    <para>
-    <literal>LOCK ... IN ACCESS SHARE MODE</> requires <literal>SELECT</>
+    <literal>LOCK TABLE ... IN ACCESS SHARE MODE</> requires <literal>SELECT</>
     privileges on the target table.  All other forms of <command>LOCK</>
     require <literal>UPDATE</> and/or <literal>DELETE</> privileges.
    </para>
 
    <para>
-    <command>LOCK</command> is useful only inside a transaction block
-    (<command>BEGIN</>/<command>COMMIT</> pair), since the lock is dropped
-    as soon as the transaction ends.  A <command>LOCK</> command appearing
-    outside any transaction block forms a self-contained transaction, so the
-    lock will be dropped as soon as it is obtained.
+    <command>LOCK TABLE</command> is useful only inside a transaction
+    block (<command>BEGIN</>/<command>COMMIT</> pair), since the lock
+    is dropped as soon as the transaction ends.  A <command>LOCK
+    TABLE</> command appearing outside any transaction block forms a
+    self-contained transaction, so the lock will be dropped as soon as
+    it is obtained.
    </para>
 
   <para>
@@ -157,7 +159,11 @@ where <replaceable class="PARAMETER">lockmode</replaceable> is one of:
    <literal>ROW EXCLUSIVE</> mode is a sharable table lock.  Keep in
    mind that all the lock modes have identical semantics so far as
    <command>LOCK TABLE</> is concerned, differing only in the rules
-   about which modes conflict with which.
+   about which modes conflict with which. For information on how to
+   acquire an actual row-level lock, see <xref linkend="locking-rows">
+   and the <xref linkend="sql-for-update"
+   endterm="sql-for-update-title"> in the <command>SELECT</command>
+   reference documentation.
   </para>
  </refsect1>
   
