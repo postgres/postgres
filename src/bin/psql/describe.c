@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.51 2002/04/24 05:24:00 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.52 2002/04/24 06:17:04 petere Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -662,21 +662,31 @@ describeTableDetails(const char *name, bool desc)
 		}
 		else
 		{
+			PQExpBufferData tmpbuf;
 			char	   *indisunique = PQgetvalue(result, 0, 0);
 			char	   *indisprimary = PQgetvalue(result, 0, 1);
 			char	   *indamname = PQgetvalue(result, 0, 2);
 			char	   *indtable = PQgetvalue(result, 0, 3);
 			char	   *indpred = PQgetvalue(result, 0, 4);
 
+			initPQExpBuffer(&tmpbuf);
+
+			if (strcmp(indisprimary, "t") == 0)
+				printfPQExpBuffer(&tmpbuf, _("primary key, "));
+			else if (strcmp(indisunique, "t") == 0)
+				printfPQExpBuffer(&tmpbuf, _("unique, "));
+			else
+				resetPQExpBuffer(&tmpbuf);
+			appendPQExpBuffer(&tmpbuf, "%s, ", indamname);
+
+			appendPQExpBuffer(&tmpbuf, _("for table \"%s\""), indtable);
+			if (strlen(indpred))
+				appendPQExpBuffer(&tmpbuf, ", predicate %s", indpred);
+
 			footers = xmalloc(2 * sizeof(*footers));
-			/* XXX This construction is poorly internationalized. */
-			footers[0] = xmalloc(NAMEDATALEN*4 + 128);
-			snprintf(footers[0], NAMEDATALEN*4 + 128, "%s%s for %s \"%s\"%s%s",
-					 strcmp(indisprimary, "t") == 0 ? _("primary key ") : 
-					 strcmp(indisunique, "t") == 0 ? _("unique ") : "",
-					 indamname, _("table"), indtable, 
-					 strlen(indpred) ? " WHERE " : "",indpred);
+			footers[0] = xstrdup(tmpbuf.data);
 			footers[1] = NULL;
+			termPQExpBuffer(&tmpbuf);
 		}
 
 		PQclear(result);
