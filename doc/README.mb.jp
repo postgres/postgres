@@ -1,8 +1,7 @@
-PostgreSQL 7.2 multi-byte (MB) support README	       2001/9/18 $B:n@.(B
+PostgreSQL 7.3 multi-byte (MB) support README	       2002/10/21 $B:n@.(B
 
 							$B@P0fC#IW(B
 						ishii@postgresql.org
-		  http://www.sra.co.jp/people/t-ishii/PostgreSQL/
 
 $B"#$O$8$a$K(B
 
@@ -10,7 +9,7 @@ PostgreSQL 7.2 multi-byte (MB) support README	       2001/9/18 $B:n@.(B
 
     1. $B%^%k%A%P%$%HJ8;z$H$7$F!$F|K\8l!$Cf9q8l$J$I$N3F9q$N(B EUC$B!$(BUnicode$B!$(B
        mule internal code, ISO-8859-* $B$,%G!<%?%Y!<%9:n@.;~$KA*Br2DG=!%(B
-       $B%G!<%?%Y!<%9$K$O$3$N%3!<%I$N$^$^3JG<$5$l$^$9!%(B
+       $B%G!<%?%Y!<%9$K$O$3$N%(%s%3!<%G%#%s%0$N$^$^3JG<$5$l$^$9!%(B
     2. $B%F!<%V%kL>$K%^%k%A%P%$%HJ8;z$,;HMQ2DG=(B
     3. $B%+%i%`L>$K%^%k%A%P%$%HJ8;z$,;HMQ2DG=(B
     4. $B%G!<%?$=$N$b$N$K$b%^%k%A%P%$%HJ8;z$,;HMQ2DG=(B
@@ -19,26 +18,11 @@ PostgreSQL 7.2 multi-byte (MB) support README	       2001/9/18 $B:n@.(B
     7. character_length(), position(), substring() $B$J$I$NJ8;zNs4X?t$G(B
        $B$N%^%k%A%P%$%H%5%]!<%H(B
     8. $B%U%m%s%H%(%s%IB&$N%(%s%3!<%G%#%s%0$,%P%C%/%(%s%IB&$H0[$k>l9g$K!$(B
-       $B<+F0E*$K%3!<%IJQ49$r9T$J$$$^$9!%(B
+       $B<+F0E*$K%(%s%3!<%G%#%s%0JQ49$r9T$J$$$^$9!%(B
+    9. $B%f!<%6Dj5A$N%(%s%3!<%G%#%s%0JQ49$r:n@.2DG=!%(B
 
-$B"#%$%s%9%H!<%k(B
-
-  $B%G%U%)%k%H$N%3%s%U%#%.%e%l!<%7%g%s$G$O(B PostgreSQL $B$O%^%k%A%P%$%H$r(B
-  $B%5%]!<%H$7$F$$$^$;$s!%%^%k%A%P%$%H%5%]!<%H$rM-8z$K$9$kJ}K!$r@bL@$7$^$9!%(B
-
-  $B$?$H$($PF|K\8l(B EUC $B$r<g$KMxMQ$9$k>l9g$O!$(Bconfigure $B5/F0;~$K0J2<$N$h(B
-  $B$&$K;XDj$7$^$9!%(B
-
-  $ ./configure --enable-multibyte=EUC_JP
-
-  7.1 $B$G$O!$(B--enable-unicode-conversion $B$r;XDj$7$J$$$H(B Unicode $B$H$=$l(B
-  $B0J30$N%(%s%3!<%G%#%s%0$N4V$NJQ49$,$G$-$^$;$s$G$7$?$,!$(B7.2 $B0J9_$G$OC1(B
-  $B$K(B --enable-multibyte $B$r;XDj$7$?$@$1$G<+F0E*$K(B
-  --enable-unicode-conversion $B$,M-8z$K$J$j$^$9!%$?$@$7!$(B
-  --enable-multibyte $B$r;XDj$7$J$,$i!$(B--enable-unicode-conversion $B$@$1(B
-  $B$rL58z$K$9$k$3$H$O$G$-$^$;$s!%(B
-
-  $B%(%s%3!<%G%#%s%0$H$7$F$O(B EUC_JP $B$NB>!$0J2<$,;XDj$G$-$^$9!%(B
+  $B%^%k%A%P%$%H%5%]!<%H$,07$&$3$H$N$G$-$k%(%s%3!<%G%#%s%0$O0J2<$K$J$j$^(B
+  $B$9!%(B
 
 	SQL_ASCII	ASCII
 	EUC_JP		$BF|K\8l(B EUC
@@ -52,8 +36,8 @@ PostgreSQL 7.2 multi-byte (MB) support README	       2001/9/18 $B:n@.(B
 			$B$9$J$o$A(B 0xffff $B$^$G$G$9!%(B
 	MULE_INTERNAL	mule $B$NFbIt%3!<%I!%$?$@$7!$(BType N $B$NITDjD9J8;z$O(B
 			$B%5%]!<%H$7$F$$$^$;$s!%(B
-	LATIN*		ISO8859 Latin $B%7%j!<%:!%(B* $B$O(B 1 $B$+$i(B 5 $B$^$G;XDj(B
-			$B$G$-$^$9!%(B
+	LATIN1 $B$+$i(B LATIN10$B$^$G(B
+	ISO_8859_1 $B$+$i(B 16$B$^$G(B
 	$B%-%j%kJ8;z(B	KOI8(KOI8-R), WIN(CP1251), ALT(CP866)$B$r%5%]!<%H(B
 			$B$7$F$$$^$9!%$b$A$m$s(B ISO 8859-5 $B$b;HMQ2DG=$G$9!%(B
 			$B$3$N>l9g!$(B"LATIN5" $B$H$7$F;XDj$7$F2<$5$$!%(B
@@ -61,25 +45,21 @@ PostgreSQL 7.2 multi-byte (MB) support README	       2001/9/18 $B:n@.(B
 	TCVN		$B%Y%H%J%`8l(B."ABC"$B$d(B"VSCII"$B$b;HMQ2DG=(B.
 	WIN874		$B%?%$8l(B.
 
+  $B%U%m%s%H%(%s%IB&$G$O$5$i$K0J2<$N%(%s%3!<%G%#%s%0$,;HMQ$G$-$^$9!%(B
+
+	SJIS		$B%7%U%H(BJIS(MS932$B$H$[$\8_49(B)
+	BIG5		$BBfOQ$d9a9A$G;HMQ$5$l$F$$$kCf9q8l!%(BEUC_TW$B$H8_49(B
+			$B@-$,$"$j$^$9!%(B
+	GBK		Windows-936
+	UHC		Windows-949
+	WIN1250		Windows-1250
+	GB18030		GB18030
+
+$B"#F|K\8l$r;HMQ$9$k$3$H$N$G$-$k%(%s%3!<%G%#%s%0(B
+
   $BA*Br$NL\0B$H$7$F$O!$1Q8l$HF|K\8l$7$+;H$o$J$$>l9g$O(B EUC_JP($BF1MM$K!$Cf(B
   $B9q8l$7$+;H$o$J$$>l9g$O(B EUC_CN... $B$J$I$H$J$j$^$9(B)$B!$$=$NB>$N8@8l$b;H$$$?(B
   $B$$>l9g$O(B UNICODE $B$b$7$/$O(B MULE_INTERNAL $B$H$J$k$G$7$g$&!%(B
-
-  $B%(%s%3!<%G%#%s%0$r>JN,$7$?>l9g!$%G%U%)%k%HCM$H$7$F(B SQL_ASCII $B$,:NMQ(B
-  $B$5$l$^$9!%(B
-
-  $B$J$*!$(Bconfigure $B$GA*Br$7$?%(%s%3!<%G%#%s%0$O!$$"$/$^$G(B initdb $B$N$?$a$N(B
-  $B%G%U%)%k%HCMDxEY$N0UL#$7$+$"$j$^$;$s(B(initdb $B$G$O0z?t$G%(%s%3!<%G%#%s%0$,(B
-  $B;XDj$G$-$^$9(B)$B!%$7$?$,$C$F!$0[$J$k%(%s%3!<%G%#%s%0$r;HMQ$9$k$?$a$K(B
-  $B$o$6$o$6(B PostgreSQL $B$r%j%3%s%Q%$%k$9$kI,MW$"$j$^$;$s!%(B
-
-  initdb $B$O(B shell script $B$J$N$G!$%G%U%)%k%H$N%(%s%3!<%G%#%s%0$O(B script $B$r(B
-  $BE,Ev$J%(%G%#%?$GJT=8$9$k$3$H$K$h$j4JC1$KJQ99$G$-$^$9!%(Binitdb $B$N(B 61$B9TL\(B
-  $BIU6a$K!$(B
-
-  MULTIBYTE=EUC_JP
-
-  $B$N$h$&$J9T$,$"$k$N$G!$(B= $B0J9_$r4uK>$9$k%(%s%3!<%G%#%s%0$KJQ$($k$@$1$G$9!%(B
 
   $BCm0U!'(BMULE_INTERNAL $B$rA*$V$H!$$?$/$5$s$NJ8;z=89g$KBP1~$G$-$FJXMx$G$9(B
   $B$,!$@55,I=8=$GJ#?t$NJ8;z=89g$K$^$?$,$k$h$&$JHO0O;XDj(B($B$?$H$($P!$(B[a-$BHO(B]
@@ -89,10 +69,11 @@ PostgreSQL 7.2 multi-byte (MB) support README	       2001/9/18 $B:n@.(B
   $B$3$H$rI=$7$^$9!%7h$7$F4A;z$dJ?2>L>$J$I(B "a" $B0J30$r$9$Y$FI=$9$o$1$G$O(B
   $B$J$$$3$H$KCm0U$7$F2<$5$$!%(B
 
-  $B%$%s%9%H!<%k$O(B --enable-multibye $B$J$7$N>l9g$HF1MM$K9T$J$$$^$9!%%$%s(B
-  $B%9%H!<%k$N>\:Y$O(B INSTALL $B$H$$$&%F%-%9%H%U%!%$%k$r8fMw2<$5$$!%$^$?!$(B
-  http://www.sra.co.jp/people/t-ishii/PostgreSQL/ $B$G$b4JC1$J%$%s%9%H!<(B
-  $B%kJ}K!$r>R2p$7$F$$$^$9!%(B
+$B"#%$%s%9%H!<%k(B
+
+  PostgreSQL 7.3$B$+$i$O(Bconfigure$B$N%*%W%7%g%s;XDj$NM-L5$K4X$o$i$:!$%^%k(B
+  $B%A%P%$%H%5%]!<%H$,M-8z$K$J$C$F$$$^$9$N$G!$FC$K(Bconifgure$B;~$K%^%k%A%P(B
+  $B%$%HMQ$NFCJL$J%*%W%7%g%s$r;XDj$9$kI,MW$O$"$j$^$;$s!%(B
 
 $B"#(Binitdb/createdb/create database $B$K$*$1$k%(%s%3!<%G%#%s%0$N;XDj$K$D$$$F(B
 
@@ -103,8 +84,27 @@ PostgreSQL 7.2 multi-byte (MB) support README	       2001/9/18 $B:n@.(B
 
   $B$3$3$G;XDj$7$?%(%s%3!<%G%#%s%0$O!$0J8e(B createdb/create database $B$G%((B
   $B%s%3!<%G%#%s%0$r>JN,$7$?>l9g$K@_Dj$5$l$k%(%s%3!<%G%#%s%0$K$J$j$^$9!%(B
-  -E $B$^$?$O(B --encoding $B%*%W%7%g%s$r>JN,$7$?>l9g$O!$(Bconfigure $B$G;XDj$7(B
-  $B$?%(%s%3!<%G%#%s%0$,:NMQ$5$l$^$9!%(B
+  -E $B$^$?$O(B --encoding $B%*%W%7%g%s$r>JN,$7$?>l9g$O!$%(%s%3!<%G%#%s%0$H(B
+  $B$7$F(BSQL_ASCII$B$,:NMQ$5$l$F$7$^$&$N$G!$F|K\8l$r%G%U%)%k%H$G;HMQ$9$k>l(B
+  $B9g$O!$(B
+
+	-E EUC_JP
+
+   $B$"$k$$$O(B
+
+	--encoding=EUC_JP
+
+  $B$H$7$FI,$:L@<(E*$K%(%s%3!<%G%#%s%0$r;XDj$7$F$/$@$5$$!%(B
+
+  $B$J$*!$(BPostgreSQL 7.3$B0J9_%m%1!<%k%5%]!<%H$,I,$:M-8z$K$J$C$F$$$^$9$,!$(B
+  $B$3$l$OF|K\8l$J$I$r;HMQ$9$k:]$K$O2?$N%a%C%j%H$b$J$$$P$+$j$G$J$/!$>c32(B
+  $B$N860x$K$J$C$?$j!$(BLIKE$B8!:w$d@55,I=8=8!:w$G%$%s%G%C%/%9$,M-8z$K$J$i$J(B
+  $B$$$J$I$NLdBj$r0z$-5/$3$9$N$G!$L58z$K$7$F$*$/$3$H$r$*$9$9$a$7$^$9!%%m(B
+  $B%1!<%k%5%]!<%H$rL58z$K$9$k$?$a$K$O!$(B
+
+	--no-locale
+
+  $B%*%W%7%g%s$r;XDj$7$^$9!%(B
 
   createdb $B$G$O0J2<$N%*%W%7%g%s$G%(%s%3!<%G%#%s%0$,;XDj$G$-$^$9!%(B
 
@@ -229,31 +229,35 @@ o libpq $B$N4X?t(B PQsetClientEncoding $B$r;H$&J}K!(B
 
   $B$G$9!%(B
 
-o $B4D6-JQ?t(B PGCLIENTENCODING $B$r;H$&J}K!(B
+o postgresql.conf $B$G@_Dj$9$kJ}K!(B
 
-  $B>e5-J}K!$GBP1~$G$-$J$$>l9g!$$"$k$$$O%U%m%s%H%(%s%I$G;H$o$l$k%(%s%3!<(B
-  $B%G%#%s%0$,$"$i$+$8$aJ,$+$C$F$$$k>l9g$O4D6-JQ?t(B PGCLIENTENCODING $B$r;H(B
-  $B$&$N$,JXMx$G$9!%$3$NJ}K!$O99$KBg$-$/(B2$B$D$KJ,$+$l$^$9!%(B
+  $B%U%m%s%H%(%s%I$N%G%U%)%k%H%(%s%3!<%G%#%s%0$r;XDj$9$k$K$O!$(B
+  postgresql.conf $B$N(B client_encoding $B$r;XDj$7$^$9!%;XDjNc(B:
+
+  client_encoding = SJIS
+
+o $B4D6-JQ?t(B PGCLIENTENCODING $B$r;H$&J}K!(B
 
   (1) postmaster $B5/F0;~$K4D6-JQ?t$r@_Dj$9$kJ}K!(B
 
-  $B$9$Y$F$N%/%i%$%"%s%H(B($B%U%m%s%H%(%s%I(B)$B$,F1$8%(%s%3!<%G%#%s%0$r;H$&$N$,(B
-  $BJ,$+$C$F$$$k>l9g!$(Bpostmaster $B5/F0;~$K4D6-JQ?t(B PGCLIENTENCODING $B$r@_(B
-  $BDj$7$^$9!%$3$N>l9g$G$b!$(B(2)$B$NJ}K!$G8D!9$N%/%i%$%"%s%HKh$KJL$N%(%s%3!<(B
-  $B%G%#%s%0$r@_Dj$9$k$3$H$,$G$-$^$9!%(B
+  $B4D6-JQ?t(B PGCLIENTENCODING $B$r@_Dj$9$k$3$H$K$h$j!$(B postgresql.conf $B$G(B
+  $B%(%s%3!<%G%#%s%0$r;XDj$9$k$N$HF1$88z2L$,F@$i$l$^$9!%$?$@$7!$$3$l$ONr(B
+  $B;KE*7P0^$+$i;D$5$l$F$$$k5!G=$G!$:#8e$O$3$N5!G=$rMxMQ$7$J$$$3$H$r$*$9(B
+  $B$9$a$7$^$9!%@_DjNc(B:
+
+  export PGCLIENTENCODING=SJIS postmaster -S
 
   (2) $B%/%i%$%"%s%H!$%U%m%s%H%(%s%IKh$K%(%s%3!<%G%#%s%0$r@_Dj$7$?$$>l9g(B
 
-  $B$3$N>l9g$O$=$N%U%m%s%H%(%s%I(B($B$?$H$($P(B psql)$B$r5/F0$9$kA0$K4D6-JQ?t(B 
+  $B$=$N%U%m%s%H%(%s%I(B($B$?$H$($P(B psql)$B$r5/F0$9$kA0$K4D6-JQ?t(B 
   PGCLIENTENCODING $B$r@_Dj$7$^$9!%(B
 
 o set client_encoding $B%3%^%s%I$r;H$&J}K!(B
 
-  $B>e5-(B(2)$B$NJ}K!$O!$(Blibpq $B$r;H$C$F$$$J$$(B JDBC $B$d(B ODBC $B$G$O;HMQ$G$-$^$;(B
-  $B$s!%$3$N>l9g!$(BSQL$B%3%^%s%I$G$"$k(B set client_encoding $B%3%^%s%I$rMxMQ$7(B
-  $B$^$9!%Nc!'(B
+  SET CLIENT_ENCODING SQL$B%3%^%s%I$r;H$C$FF0E*$K%U%m%s%H%(%s%I$N%(%s%3!<(B
+  $B%G%#%s%0$rJQ99$G$-$^$9!%Nc(B:
 
-	set client_encoding to 'sjis';
+	SET CLIENT_ENCODING TO SJIS;
 
 $B"#8=:_@_Dj$5$l$F$$$k%U%m%s%H%(%s%IB&$N%(%s%3!<%G%#%s%0$rD4$Y$k(B
 
@@ -261,18 +265,18 @@ o set client_encoding $B%3%^%s%I$r;H$&J}K!(B
 
 	show client_encoding;
 
-  $B$G;2>H$G$-$^$9!%(B
+ $B$G;2>H$G$-$^$9(B($B>.J8;z$GI=<($5$l$^$9(B)$B!%(B
 
 $B"#%G%U%)%k%H$N%(%s%3!<%G%#%s%0$X$NI|5"(B
 
   SQL$B%3%^%s%I(B:
 
-	reset client_encoding;
+	RESET CLIENT_ENCODING;
 
   $B$O!$%G%U%)%k%H$N%U%m%s%H%(%s%I%(%s%3!<%G%#%s%0@_Dj$KI|5"$5$;$^$9!%(B
-  postmaster$B$rN)$A>e$2$k$H$-$K4D6-JQ?t(B PGCLIENTENCODING $B$,@_Dj$5$l$F$$(B
-  $B$k$H$=$N%(%s%3!<%G%#%s%0$K!$$=$&$G$J$1$l$P%G!<%?%Y!<%9$N%(%s%3!<%G%#(B
-  $B%s%0$HF1$8$K$J$j$^$9!%(B
+  postmaster$B$rN)$A>e$2$k$H$-$K(B postgresql.conf $B$N(B client_encoding $B$d4D(B
+  $B6-JQ?t(B PGCLIENTENCODING $B$,@_Dj$5$l$F$$$k$H$=$N%(%s%3!<%G%#%s%0$K!$$=(B
+  $B$&$G$J$1$l$P%G!<%?%Y!<%9$N%(%s%3!<%G%#%s%0$HF1$8$K$J$j$^$9!%(B
   
 $B"#L@<(E*$J%(%s%3!<%G%#%s%0JQ49(B
 
@@ -291,6 +295,17 @@ o set client_encoding $B%3%^%s%I$r;H$&J}K!(B
 
   $B$O!$(BUnicode$B$N%F!<%V%k(Bunicode_tbl$B$N(Btext$BNs$r(BEUC_JP$B$KJQ49$7$FJV$7$^$9!%(B
 
+  7.3$B$G$O$5$i$K(BSQL$BI8=`$N(BCONVERT$B4X?t$,;H$($^$9!%(BSQL$BI8=`$N(BCONVERT$B$O(B
+  PostgreSQL$B$N(BCONVERT$B$H5!G=$O$[$H$s$IF1$8$G$9$,!$8F$S=P$77A<0$,0[$j$^(B
+  $B$9!%(B
+
+  SELECT convert(text using euc_jp_to_utf_8) FROM unicode_tbl;
+
+  "using" $B$N8e$N0z?t$O!V%3%s%P!<%8%g%sL>!W$G$9!%$3$NNc$G$O!$(BEUC_JP $B$+(B
+  $B$i(B UTF-8 $B$KJQ49$9$k%3%s%P!<%8%g%s$r;XDj$7$F$$$^$9!%Dj5A:Q$N%3%s%P!<(B
+  $B%8%g%s$K$D$$$F$O!$%f!<%6!<%:%,%$%I$N(B "String Functions and
+  Operators" $B$NI=(B"Built-in Conversions" $B$r8+$F$/$@$5$$!%(B
+
 $B"#%(%s%3!<%G%#%s%0JQ49ITG=$N>l9g$N=hM}(B
 
   $B%P%C%/%(%s%IB&$N%(%s%3!<%G%#%s%0$H%U%m%s%H%(%s%IB&$N%(%s%3!<%G%#%s%0(B
@@ -304,6 +319,34 @@ o set client_encoding $B%3%^%s%I$r;H$&J}K!(B
 
   $B$J$*!$(BUnicode$B$H$=$l0J30$N%(%s%3!<%G%#%s%0$NJQ49$@$1$ONc30$G!$(BNOTICE
   $B%a%C%;!<%8$,I=<($5$l!$JQ49ITG=$NJ8;z$OL5;k$5$l$^$9!%(B
+
+$B"#%G%U%)%k%H%3%s%P!<%8%g%s(B
+
+  $B%G%U%)%k%H%3%s%P!<%8%g%s$O!$%P%C%/%(%s%I$H%U%m%s%H%(%s%I$H$N4V$N%(%s(B
+  $B%3!<%G%#%s%0$N<+F0JQ49$K;H$o$l$kFCJL$J%3%s%P!<%8%g%s$G$9!%%G%U%)%k%H(B
+  $B%3%s%P!<%8%g%s$O3F!9$N(B{$B%9%-!<%^!$%=!<%9%(%s%3!<%G%#%s%0!$%G%9%F%#%M!<(B
+  $B%7%g%s%(%s%3!<%G%#%s%0(B}$B$NAH$_9g$o$;$K$*$$$F!$$?$@0l8D$@$1B8:_$7$^$9!%(B
+  $B>e5-$G@bL@$7$?AH$_9~$_:Q$N%3%s%P!<%8%g%s$O!$(Bpg_catalog$B%9%-!<%^$K$*$$(B
+  $B$FDj5A$5$l$F$*$j!$%9%-!<%^%5!<%A%Q%9$N@_Dj$K4X$o$i$:I,$:MxMQ$G$-$k%3(B
+  $B%s%P!<%8%g%s$K$J$C$F$$$^$9!%(B
+
+  $B5U$K8@$&$H!$(B pg_catalog $B0J30$N%9%-!<%^$K%G%U%)%k%H%3%s%P!<%8%g%s$r:n(B
+  $B@.$9$k$3$H$K$h$j!$%G%U%)%k%H%3%s%P!<%8%g%s$r<+M3$KA*Br$9$k$3$H$b$G$-(B
+  $B$k$o$1$G$9!%$?$H$($P(B SJIS $B$H$NJQ49$K$*$$$F!$(BPostgreSQL $B$,MQ0U$7$F$$(B
+  $B$k(B MS932$B8_49(B $B$NJQ49$G$O$J$/!$(BJIS $B5,3J$N%7%U%H%8%9$KAjEv$9$kJQ49$r9T(B
+  $B$&$h$&$J%3%s%P!<%8%g%s$r:n@.$9$k$3$H$b2DG=$G$9!%(B
+
+$B"#%f!<%6Dj5A%3%s%P!<%8%g%s$N:n@.(B
+
+  PostgreSQL 7.3$B0J9_!$%f!<%6Dj5A$N%3%s%P!<%8%g%s$r:n@.$G$-$k$h$&$K$J$C(B
+  $B$F$$$^$9!%%3%s%P!<%8%g%s$NDj5A$O(B CREATE CONVERSION $B$H$$$&(B SQL $B%3%^%s(B
+  $B%I$r;H$C$F9T$$$^$9!%(B
+
+    CREATE [DEFAULT] CONVERSION conversion_name
+        FOR source_encoding
+        TO dest_encoding FROM funcname
+
+  $B>\:Y$O%j%U%!%l%s%9%^%K%e%"%k$r$4Mw2<$5$$!%(B
 
 $B"#(BSJIS$B%f!<%6Dj5AJ8;z$X$NBP1~(B
 
@@ -630,6 +673,17 @@ SJIS $B$N%f!<%6Dj5A(B/$B%Y%s%@Dj5AJ8;zNN0h$r(B EUC $B$KJQ49$9$k:]!$H=JLIT(
 -------------------------- $B0zMQ$3$3$^$G(B ---------------------------------
 
 $B2~DjMzNr!'(B
+
+  2002/10/21
+	* $B%^%k%A%P%$%HBP1~$,%*%W%7%g%s$G$O$J$/!$8GDj$GI,$:AH$_9~$^$l$k(B
+	  $B$h$&$K$J$j$^$7$?!%(B
+
+	* CREATE CONVERSION/DROP CONVERSION$B$NDI2C!%$3$l$K$H$b$J$$!$%((B
+	  $B%s%3!<%G%#%s%0JQ494X?t$,%m!<%@%V%k4X?t$K$J$j!$%P%C%/%(%s%I$N(B
+	  $B%m!<%I%b%8%e!<%k%5%$%:$,(B7.2$B$h$j$b>.$5$/$J$C$F$$$^$9!%$^$?!$(B
+	  SQL$BI8=`$N(BCONVERT$B4X?t$rDI2C$7$^$7$?!%(B
+	* $B$$$/$D$+%(%s%3!<%G%#%s%0$,DI2C$5$l$F$$$^$9!%(B
+	* $B0J>e!$(B7.3$B$KH?1G$5$l$^$9!%(B
 
   2001/10/01
 	* CONVERT$B$NDI2C!%(Blpad/rpad/trim/btrim/ltrim/rtrim/translate$B$N(B
