@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.58 2001/10/04 22:06:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.59 2001/10/24 09:28:31 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -130,7 +130,7 @@ DefineIndex(char *heapRelationName,
 		CheckPredicate(cnfPred, rangetable, relationId);
 	}
 
-	if (!IsBootstrapProcessingMode() && !IndexesAreActive(relationId, false))
+	if (!IsBootstrapProcessingMode() && IsSystemRelationName(heapRelationName) && !IndexesAreActive(relationId, false))
 		elog(ERROR, "Existing indexes are inactive. REINDEX first");
 
 	/*
