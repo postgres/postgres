@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.60.2.1 2002/05/14 18:16:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.60.2.2 2003/01/21 19:41:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -269,10 +269,16 @@ path_decode(int opentype, int npts, char *str, int *isopen, char **ss, Point *p)
 static char *
 path_encode(bool closed, int npts, Point *pt)
 {
-	char	   *result = palloc(npts * (P_MAXLEN + 3) + 2);
-
+	int			size = npts * (P_MAXLEN + 3) + 2;
+	char	   *result;
 	char	   *cp;
 	int			i;
+
+	/* Check for integer overflow */
+	if ((size - 2) / npts != (P_MAXLEN + 3))
+		elog(ERROR, "Too many points requested");
+
+	result = palloc(size);
 
 	cp = result;
 	switch (closed)
@@ -1913,8 +1919,8 @@ lseg_eq(PG_FUNCTION_ARGS)
 	LSEG	   *l2 = PG_GETARG_LSEG_P(1);
 
 	PG_RETURN_BOOL(FPeq(l1->p[0].x, l2->p[0].x) &&
-				   FPeq(l1->p[1].y, l2->p[1].y) &&
-				   FPeq(l1->p[0].x, l2->p[0].x) &&
+				   FPeq(l1->p[0].y, l2->p[0].y) &&
+				   FPeq(l1->p[1].x, l2->p[1].x) &&
 				   FPeq(l1->p[1].y, l2->p[1].y));
 }
 
@@ -1925,8 +1931,8 @@ lseg_ne(PG_FUNCTION_ARGS)
 	LSEG	   *l2 = PG_GETARG_LSEG_P(1);
 
 	PG_RETURN_BOOL(!FPeq(l1->p[0].x, l2->p[0].x) ||
-				   !FPeq(l1->p[1].y, l2->p[1].y) ||
-				   !FPeq(l1->p[0].x, l2->p[0].x) ||
+				   !FPeq(l1->p[0].y, l2->p[0].y) ||
+				   !FPeq(l1->p[1].x, l2->p[1].x) ||
 				   !FPeq(l1->p[1].y, l2->p[1].y));
 }
 
@@ -2024,8 +2030,8 @@ lseg_center(PG_FUNCTION_ARGS)
 
 	result = (Point *) palloc(sizeof(Point));
 
-	result->x = (lseg->p[0].x - lseg->p[1].x) / 2.0;
-	result->y = (lseg->p[0].y - lseg->p[1].y) / 2.0;
+	result->x = (lseg->p[0].x + lseg->p[1].x) / 2.0;
+	result->y = (lseg->p[0].y + lseg->p[1].y) / 2.0;
 
 	PG_RETURN_POINT_P(result);
 }
@@ -3595,12 +3601,20 @@ path_add(PG_FUNCTION_ARGS)
 	PATH	   *p2 = PG_GETARG_PATH_P(1);
 	PATH	   *result;
 	int			size;
+	int			base_size;
 	int			i;
 
 	if (p1->closed || p2->closed)
 		PG_RETURN_NULL();
 
-	size = offsetof(PATH, p[0]) +sizeof(p1->p[0]) * (p1->npts + p2->npts);
+	base_size = sizeof(p1->p[0]) * (p1->npts + p2->npts);
+	size = offsetof(PATH, p[0]) + base_size;
+
+	/* Check for integer overflow */
+	if (base_size / sizeof(p1->p[0]) != (p1->npts + p2->npts) ||
+		size <= base_size)
+		elog(ERROR, "Too many points requested");
+
 	result = (PATH *) palloc(size);
 
 	result->size = size;
@@ -4412,13 +4426,20 @@ circle_poly(PG_FUNCTION_ARGS)
 	CIRCLE	   *circle = PG_GETARG_CIRCLE_P(1);
 	POLYGON    *poly;
 	int			size;
+	int			base_size;
 	int			i;
 	double		angle;
 
 	if (FPzero(circle->radius) || (npts < 2))
 		elog(ERROR, "Unable to convert circle to polygon");
 
-	size = offsetof(POLYGON, p[0]) +(sizeof(poly->p[0]) * npts);
+	base_size = sizeof(poly->p[0]) * npts;
+	size = offsetof(POLYGON, p[0]) + base_size;
+
+	/* Check for integer overflow */
+	if (base_size / npts != sizeof(poly->p[0]) || size <= base_size)
+		elog(ERROR, "Too many points requested");
+
 	poly = (POLYGON *) palloc(size);
 
 	MemSet((char *) poly, 0, size);		/* zero any holes */
