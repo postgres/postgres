@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.12 1997/03/16 20:40:52 scrappy Exp $
+ * $Id: pg_proc.h,v 1.13 1997/03/24 07:32:38 vadim Exp $
  *
  * NOTES
  *    The script catalog/genbki.sh reads this file and generates .bki
@@ -688,7 +688,9 @@ DATA(insert OID = 999 (  lseg_eq           PGUID 11 f t f 2 f 16 "601 601" 100 0
 /* OIDS 1000 - 1999 */
 
 DATA(insert OID = 1029 (  NullValue        PGUID 11 f t f 1 f 16 "0" 100 0 0 100  foo bar ));
+#define NullValueRegProcedure 1029
 DATA(insert OID = 1030 (  NonNullValue     PGUID 11 f t f 1 f 16 "0" 100 0 0 100  foo bar ));
+#define NonNullValueRegProcedure 1030
 DATA(insert OID = 1031 (  aclitemin        PGUID 11 f t f 1 f 1033 "0" 100 0 0 100  foo bar ));
 DATA(insert OID = 1032 (  aclitemout       PGUID 11 f t f 1 f 23 "0" 100 0 0 100  foo bar ));
 DATA(insert OID = 1035 (  aclinsert        PGUID 11 f t f 2 f 1034 "1034 1033" 100 0 0 100  foo bar ));
