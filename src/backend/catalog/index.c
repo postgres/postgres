@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.150 2001/05/16 22:36:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.151 2001/05/18 22:35:50 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -2175,12 +2175,12 @@ reindex_relation(Oid relid, bool force)
 	heap_endscan(scan);
 	heap_close(indexRelation, AccessShareLock);
 	if (reindexed)
+	{
 
 		/*
 		 * Ok,we could use the reindexed indexes of the target system
 		 * relation now.
 		 */
-	{
 		if (deactivate_needed)
 		{
 			if (!overwrite && relid == RelOid_pg_class)
