@@ -2,7 +2,7 @@ From pgsql-hackers-owner+M174@hub.org Sun Mar 12 22:31:11 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id XAA25886
 	for <pgman@candle.pha.pa.us>; Sun, 12 Mar 2000 23:31:10 -0500 (EST)
-Received: from news.tht.net (news.hub.org [216.126.91.242]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id XAA04589 for <pgman@candle.pha.pa.us>; Sun, 12 Mar 2000 23:19:33 -0500 (EST)
+Received: from news.tht.net (news.hub.org [216.126.91.242]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id XAA04589 for <pgman@candle.pha.pa.us>; Sun, 12 Mar 2000 23:19:33 -0500 (EST)
 Received: from hub.org (hub.org [216.126.84.1])
 	by news.tht.net (8.9.3/8.9.3) with SMTP id XAA42854;
 	Sun, 12 Mar 2000 23:05:05 -0500 (EST)
@@ -480,7 +480,7 @@ From Inoue@tpf.co.jp Wed Mar 15 02:00:58 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id DAA17887
 	for <pgman@candle.pha.pa.us>; Wed, 15 Mar 2000 03:00:57 -0500 (EST)
-Received: from sd.tpf.co.jp (sd.tpf.co.jp [210.161.239.34]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id CAA02974 for <pgman@candle.pha.pa.us>; Wed, 15 Mar 2000 02:54:44 -0500 (EST)
+Received: from sd.tpf.co.jp (sd.tpf.co.jp [210.161.239.34]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id CAA02974 for <pgman@candle.pha.pa.us>; Wed, 15 Mar 2000 02:54:44 -0500 (EST)
 Received: from cadzone ([126.0.1.40] (may be forged))
           by sd.tpf.co.jp (2.5 Build 2640 (Berkeley 8.8.6)/8.8.4) with SMTP
    id QAA00734; Wed, 15 Mar 2000 16:53:56 +0900
@@ -743,7 +743,7 @@ From JanWieck@t-online.de Wed Jun 14 19:01:01 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id TAA21372
 	for <pgman@candle.pha.pa.us>; Wed, 14 Jun 2000 19:00:59 -0400 (EDT)
-Received: from mailout02.sul.t-online.com (mailout02.sul.t-online.com [194.25.134.17]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id SAA01930 for <pgman@candle.pha.pa.us>; Wed, 14 Jun 2000 18:51:11 -0400 (EDT)
+Received: from mailout02.sul.t-online.com (mailout02.sul.t-online.com [194.25.134.17]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id SAA01930 for <pgman@candle.pha.pa.us>; Wed, 14 Jun 2000 18:51:11 -0400 (EDT)
 Received: from fwd01.sul.t-online.de 
 	by mailout02.sul.t-online.com with smtp 
 	id 132Lz6-0004ec-01; Thu, 15 Jun 2000 00:50:08 +0200
@@ -1336,7 +1336,7 @@ From pgsql-hackers-owner+M3400@hub.org Thu Jun 15 03:31:16 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id DAA24604
 	for <pgman@candle.pha.pa.us>; Thu, 15 Jun 2000 03:31:15 -0400 (EDT)
-Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id DAA01191 for <pgman@candle.pha.pa.us>; Thu, 15 Jun 2000 03:15:28 -0400 (EDT)
+Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id DAA01191 for <pgman@candle.pha.pa.us>; Thu, 15 Jun 2000 03:15:28 -0400 (EDT)
 Received: from hub.org (majordom@localhost [127.0.0.1])
 	by hub.org (8.10.1/8.10.1) with SMTP id e5F7CP835301;
 	Thu, 15 Jun 2000 03:12:25 -0400 (EDT)
@@ -1396,7 +1396,7 @@ From tgl@sss.pgh.pa.us Thu Jun 15 03:31:11 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id DAA24592
 	for <pgman@candle.pha.pa.us>; Thu, 15 Jun 2000 03:31:10 -0400 (EDT)
-Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id DAA01213 for <pgman@candle.pha.pa.us>; Thu, 15 Jun 2000 03:15:46 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id DAA01213 for <pgman@candle.pha.pa.us>; Thu, 15 Jun 2000 03:15:46 -0400 (EDT)
 Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
 	by sss2.sss.pgh.pa.us (8.9.3/8.9.3) with ESMTP id DAA18833;
 	Thu, 15 Jun 2000 03:14:30 -0400 (EDT)
@@ -1434,7 +1434,7 @@ From pgsql-hackers-owner+M3401@hub.org Thu Jun 15 03:31:15 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id DAA24601
 	for <pgman@candle.pha.pa.us>; Thu, 15 Jun 2000 03:31:14 -0400 (EDT)
-Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id DAA01428 for <pgman@candle.pha.pa.us>; Thu, 15 Jun 2000 03:19:39 -0400 (EDT)
+Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id DAA01428 for <pgman@candle.pha.pa.us>; Thu, 15 Jun 2000 03:19:39 -0400 (EDT)
 Received: from hub.org (majordom@localhost [127.0.0.1])
 	by hub.org (8.10.1/8.10.1) with SMTP id e5F7GP843802;
 	Thu, 15 Jun 2000 03:16:25 -0400 (EDT)
@@ -1539,7 +1539,7 @@ From ZeugswetterA@wien.spardat.at Thu Jun 15 04:31:04 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id EAA25144
 	for <pgman@candle.pha.pa.us>; Thu, 15 Jun 2000 04:31:03 -0400 (EDT)
-Received: from gandalf.it-austria.net (gandalf.it-austria.net [213.150.1.65]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id EAA03225 for <pgman@candle.pha.pa.us>; Thu, 15 Jun 2000 04:05:41 -0400 (EDT)
+Received: from gandalf.it-austria.net (gandalf.it-austria.net [213.150.1.65]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id EAA03225 for <pgman@candle.pha.pa.us>; Thu, 15 Jun 2000 04:05:41 -0400 (EDT)
 Received: from sdexcgtw01.f000.d0188.sd.spardat.at (sdgtw.sd.spardat.at [172.18.1.16])
 	by gandalf.it-austria.net (xxx/xxx) with ESMTP id KAA100894;
 	Thu, 15 Jun 2000 10:04:52 +0200
@@ -1604,7 +1604,7 @@ From pgsql-hackers-owner+M3405@hub.org Thu Jun 15 04:31:09 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id EAA25151
 	for <pgman@candle.pha.pa.us>; Thu, 15 Jun 2000 04:31:07 -0400 (EDT)
-Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id EAA04151 for <pgman@candle.pha.pa.us>; Thu, 15 Jun 2000 04:30:23 -0400 (EDT)
+Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id EAA04151 for <pgman@candle.pha.pa.us>; Thu, 15 Jun 2000 04:30:23 -0400 (EDT)
 Received: from hub.org (majordom@localhost [127.0.0.1])
 	by hub.org (8.10.1/8.10.1) with SMTP id e5F8RI883087;
 	Thu, 15 Jun 2000 04:27:18 -0400 (EDT)
@@ -1676,7 +1676,7 @@ From pgsql-hackers-owner+M3407@hub.org Thu Jun 15 05:01:03 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id FAA25462
 	for <pgman@candle.pha.pa.us>; Thu, 15 Jun 2000 05:01:02 -0400 (EDT)
-Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id EAA04667 for <pgman@candle.pha.pa.us>; Thu, 15 Jun 2000 04:45:51 -0400 (EDT)
+Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id EAA04667 for <pgman@candle.pha.pa.us>; Thu, 15 Jun 2000 04:45:51 -0400 (EDT)
 Received: from hub.org (majordom@localhost [127.0.0.1])
 	by hub.org (8.10.1/8.10.1) with SMTP id e5F8gr817124;
 	Thu, 15 Jun 2000 04:42:53 -0400 (EDT)
@@ -1714,7 +1714,7 @@ From scrappy@hub.org Thu Jun 15 08:30:59 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id IAA03846
 	for <pgman@candle.pha.pa.us>; Thu, 15 Jun 2000 08:30:58 -0400 (EDT)
-Received: from thelab.hub.org (nat193.152.mpoweredpc.net [142.177.193.152]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id IAA14167 for <pgman@candle.pha.pa.us>; Thu, 15 Jun 2000 08:16:58 -0400 (EDT)
+Received: from thelab.hub.org (nat193.152.mpoweredpc.net [142.177.193.152]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id IAA14167 for <pgman@candle.pha.pa.us>; Thu, 15 Jun 2000 08:16:58 -0400 (EDT)
 Received: from localhost (scrappy@localhost)
 	by thelab.hub.org (8.9.3/8.9.3) with ESMTP id JAA74856;
 	Thu, 15 Jun 2000 09:14:29 -0300 (ADT)
@@ -1769,7 +1769,7 @@ From pgsql-hackers-owner+M3412@hub.org Thu Jun 15 08:30:55 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id IAA03842
 	for <pgman@candle.pha.pa.us>; Thu, 15 Jun 2000 08:30:54 -0400 (EDT)
-Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id IAA15241 for <pgman@candle.pha.pa.us>; Thu, 15 Jun 2000 08:31:29 -0400 (EDT)
+Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id IAA15241 for <pgman@candle.pha.pa.us>; Thu, 15 Jun 2000 08:31:29 -0400 (EDT)
 Received: from hub.org (majordom@localhost [127.0.0.1])
 	by hub.org (8.10.1/8.10.1) with SMTP id e5FCSM877572;
 	Thu, 15 Jun 2000 08:28:22 -0400 (EDT)
@@ -1932,7 +1932,7 @@ From dhogaza@pacifier.com Thu Jun 15 09:31:05 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id JAA04418
 	for <pgman@candle.pha.pa.us>; Thu, 15 Jun 2000 09:31:04 -0400 (EDT)
-Received: from smtp.pacifier.com (comet.pacifier.com [199.2.117.155]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id JAA20080 for <pgman@candle.pha.pa.us>; Thu, 15 Jun 2000 09:22:36 -0400 (EDT)
+Received: from smtp.pacifier.com (comet.pacifier.com [199.2.117.155]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id JAA20080 for <pgman@candle.pha.pa.us>; Thu, 15 Jun 2000 09:22:36 -0400 (EDT)
 Received: from desktop (dsl-dhogaza.pacifier.net [207.202.226.68])
 	by smtp.pacifier.com (8.9.3/8.9.3pop) with SMTP id GAA05755;
 	Thu, 15 Jun 2000 06:21:54 -0700 (PDT)
@@ -1983,7 +1983,7 @@ From pgsql-hackers-owner+M3440@hub.org Thu Jun 15 14:46:22 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id OAA04607
 	for <pgman@candle.pha.pa.us>; Thu, 15 Jun 2000 14:46:21 -0400 (EDT)
-Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id MAA12695 for <pgman@candle.pha.pa.us>; Thu, 15 Jun 2000 12:48:58 -0400 (EDT)
+Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id MAA12695 for <pgman@candle.pha.pa.us>; Thu, 15 Jun 2000 12:48:58 -0400 (EDT)
 Received: from hub.org (majordom@localhost [127.0.0.1])
 	by hub.org (8.10.1/8.10.1) with SMTP id e5FGjXI40370;
 	Thu, 15 Jun 2000 12:45:33 -0400 (EDT)
@@ -2167,7 +2167,7 @@ From pgsql-hackers-owner+M3448@hub.org Thu Jun 15 19:01:03 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id TAA00764
 	for <pgman@candle.pha.pa.us>; Thu, 15 Jun 2000 19:01:02 -0400 (EDT)
-Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id SAA17328 for <pgman@candle.pha.pa.us>; Thu, 15 Jun 2000 18:57:32 -0400 (EDT)
+Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id SAA17328 for <pgman@candle.pha.pa.us>; Thu, 15 Jun 2000 18:57:32 -0400 (EDT)
 Received: from hub.org (majordom@localhost [127.0.0.1])
 	by hub.org (8.10.1/8.10.1) with SMTP id e5FMsMI97744;
 	Thu, 15 Jun 2000 18:54:22 -0400 (EDT)
@@ -2233,7 +2233,7 @@ From pgsql-patches-owner+M233@hub.org Thu Jun 15 19:31:07 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id TAA01228
 	for <pgman@candle.pha.pa.us>; Thu, 15 Jun 2000 19:31:04 -0400 (EDT)
-Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id TAA17880 for <pgman@candle.pha.pa.us>; Thu, 15 Jun 2000 19:05:42 -0400 (EDT)
+Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id TAA17880 for <pgman@candle.pha.pa.us>; Thu, 15 Jun 2000 19:05:42 -0400 (EDT)
 Received: from hub.org (majordom@localhost [127.0.0.1])
 	by hub.org (8.10.1/8.10.1) with SMTP id e5FN11I12640;
 	Thu, 15 Jun 2000 19:01:01 -0400 (EDT)
@@ -3443,7 +3443,7 @@ From pgsql-hackers-owner+M3451@hub.org Thu Jun 15 20:01:00 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id UAA01651
 	for <pgman@candle.pha.pa.us>; Thu, 15 Jun 2000 20:00:59 -0400 (EDT)
-Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id TAA20985 for <pgman@candle.pha.pa.us>; Thu, 15 Jun 2000 19:57:49 -0400 (EDT)
+Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id TAA20985 for <pgman@candle.pha.pa.us>; Thu, 15 Jun 2000 19:57:49 -0400 (EDT)
 Received: from hub.org (majordom@localhost [127.0.0.1])
 	by hub.org (8.10.1/8.10.1) with SMTP id e5FNsgI25402;
 	Thu, 15 Jun 2000 19:54:42 -0400 (EDT)
@@ -3519,7 +3519,7 @@ From tgl@sss.pgh.pa.us Thu Jun 15 20:00:59 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id UAA01647
 	for <pgman@candle.pha.pa.us>; Thu, 15 Jun 2000 20:00:58 -0400 (EDT)
-Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id TAA21034 for <pgman@candle.pha.pa.us>; Thu, 15 Jun 2000 19:58:30 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id TAA21034 for <pgman@candle.pha.pa.us>; Thu, 15 Jun 2000 19:58:30 -0400 (EDT)
 Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
 	by sss2.sss.pgh.pa.us (8.9.3/8.9.3) with ESMTP id TAA02283;
 	Thu, 15 Jun 2000 19:57:05 -0400 (EDT)
@@ -3560,7 +3560,7 @@ From pgsql-hackers-owner+M3453@hub.org Thu Jun 15 21:01:01 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id VAA02731
 	for <pgman@candle.pha.pa.us>; Thu, 15 Jun 2000 21:01:01 -0400 (EDT)
-Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id UAA23469 for <pgman@candle.pha.pa.us>; Thu, 15 Jun 2000 20:36:36 -0400 (EDT)
+Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id UAA23469 for <pgman@candle.pha.pa.us>; Thu, 15 Jun 2000 20:36:36 -0400 (EDT)
 Received: from hub.org (majordom@localhost [127.0.0.1])
 	by hub.org (8.10.1/8.10.1) with SMTP id e5G0WDI97134;
 	Thu, 15 Jun 2000 20:32:13 -0400 (EDT)
@@ -3636,7 +3636,7 @@ From tgl@sss.pgh.pa.us Thu Jun 15 22:01:02 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id WAA03637
 	for <maillist@candle.pha.pa.us>; Thu, 15 Jun 2000 22:01:01 -0400 (EDT)
-Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id VAA28521 for <maillist@candle.pha.pa.us>; Thu, 15 Jun 2000 21:58:46 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id VAA28521 for <maillist@candle.pha.pa.us>; Thu, 15 Jun 2000 21:58:46 -0400 (EDT)
 Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
 	by sss2.sss.pgh.pa.us (8.9.3/8.9.3) with ESMTP id VAA02730;
 	Thu, 15 Jun 2000 21:57:27 -0400 (EDT)
@@ -3839,7 +3839,7 @@ From Inoue@tpf.co.jp Thu Jun 15 23:31:00 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id XAA06634;
 	Thu, 15 Jun 2000 23:30:59 -0400 (EDT)
-Received: from sd.tpf.co.jp (sd.tpf.co.jp [210.161.239.34]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id XAA03227; Thu, 15 Jun 2000 23:18:54 -0400 (EDT)
+Received: from sd.tpf.co.jp (sd.tpf.co.jp [210.161.239.34]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id XAA03227; Thu, 15 Jun 2000 23:18:54 -0400 (EDT)
 Received: from cadzone ([126.0.1.40] (may be forged))
           by sd.tpf.co.jp (2.5 Build 2640 (Berkeley 8.8.6)/8.8.4) with SMTP
    id MAA07544; Fri, 16 Jun 2000 12:18:06 +0900
@@ -3910,7 +3910,7 @@ From pgsql-hackers-owner+M3465@hub.org Fri Jun 16 00:01:01 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id AAA06924
 	for <pgman@candle.pha.pa.us>; Fri, 16 Jun 2000 00:01:00 -0400 (EDT)
-Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id XAA05470 for <pgman@candle.pha.pa.us>; Thu, 15 Jun 2000 23:59:46 -0400 (EDT)
+Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id XAA05470 for <pgman@candle.pha.pa.us>; Thu, 15 Jun 2000 23:59:46 -0400 (EDT)
 Received: from hub.org (majordom@localhost [127.0.0.1])
 	by hub.org (8.10.1/8.10.1) with SMTP id e5G3uaI10809;
 	Thu, 15 Jun 2000 23:56:36 -0400 (EDT)
@@ -3971,7 +3971,7 @@ From Inoue@tpf.co.jp Fri Jun 16 02:01:00 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id CAA08093
 	for <maillist@candle.pha.pa.us>; Fri, 16 Jun 2000 02:00:59 -0400 (EDT)
-Received: from sd.tpf.co.jp (sd.tpf.co.jp [210.161.239.34]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id BAA10174 for <maillist@candle.pha.pa.us>; Fri, 16 Jun 2000 01:34:44 -0400 (EDT)
+Received: from sd.tpf.co.jp (sd.tpf.co.jp [210.161.239.34]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id BAA10174 for <maillist@candle.pha.pa.us>; Fri, 16 Jun 2000 01:34:44 -0400 (EDT)
 Received: from cadzone ([126.0.1.40] (may be forged))
           by sd.tpf.co.jp (2.5 Build 2640 (Berkeley 8.8.6)/8.8.4) with SMTP
    id OAA07656; Fri, 16 Jun 2000 14:33:12 +0900
@@ -4057,7 +4057,7 @@ From pgsql-hackers-owner+M3469@hub.org Fri Jun 16 02:01:03 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id CAA08109
 	for <pgman@candle.pha.pa.us>; Fri, 16 Jun 2000 02:01:02 -0400 (EDT)
-Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id BAA11218 for <pgman@candle.pha.pa.us>; Fri, 16 Jun 2000 01:57:33 -0400 (EDT)
+Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id BAA11218 for <pgman@candle.pha.pa.us>; Fri, 16 Jun 2000 01:57:33 -0400 (EDT)
 Received: from hub.org (majordom@localhost [127.0.0.1])
 	by hub.org (8.10.1/8.10.1) with SMTP id e5G5tLI49492;
 	Fri, 16 Jun 2000 01:55:21 -0400 (EDT)
@@ -4129,7 +4129,7 @@ From pgsql-hackers-owner+M3471@hub.org Fri Jun 16 03:31:05 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id DAA12816
 	for <pgman@candle.pha.pa.us>; Fri, 16 Jun 2000 03:31:04 -0400 (EDT)
-Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id DAA14405 for <pgman@candle.pha.pa.us>; Fri, 16 Jun 2000 03:03:38 -0400 (EDT)
+Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id DAA14405 for <pgman@candle.pha.pa.us>; Fri, 16 Jun 2000 03:03:38 -0400 (EDT)
 Received: from hub.org (majordom@localhost [127.0.0.1])
 	by hub.org (8.10.1/8.10.1) with SMTP id e5G71YI83633;
 	Fri, 16 Jun 2000 03:01:34 -0400 (EDT)
@@ -4233,7 +4233,7 @@ From pgsql-hackers-owner+M3473@hub.org Fri Jun 16 04:01:12 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id EAA13087
 	for <pgman@candle.pha.pa.us>; Fri, 16 Jun 2000 04:01:11 -0400 (EDT)
-Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id DAA16002 for <pgman@candle.pha.pa.us>; Fri, 16 Jun 2000 03:37:24 -0400 (EDT)
+Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id DAA16002 for <pgman@candle.pha.pa.us>; Fri, 16 Jun 2000 03:37:24 -0400 (EDT)
 Received: from hub.org (majordom@localhost [127.0.0.1])
 	by hub.org (8.10.1/8.10.1) with SMTP id e5G7ZZI51521;
 	Fri, 16 Jun 2000 03:35:35 -0400 (EDT)
@@ -4288,7 +4288,7 @@ From JanWieck@t-online.de Fri Jun 16 11:01:06 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id LAA28913
 	for <maillist@candle.pha.pa.us>; Fri, 16 Jun 2000 11:01:05 -0400 (EDT)
-Received: from mailout05.sul.t-online.com (mailout05.sul.t-online.com [194.25.134.82]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id KAA01818 for <maillist@candle.pha.pa.us>; Fri, 16 Jun 2000 10:46:42 -0400 (EDT)
+Received: from mailout05.sul.t-online.com (mailout05.sul.t-online.com [194.25.134.82]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id KAA01818 for <maillist@candle.pha.pa.us>; Fri, 16 Jun 2000 10:46:42 -0400 (EDT)
 Received: from fwd06.sul.t-online.de 
 	by mailout05.sul.t-online.com with smtp 
 	id 132xN9-0006ze-03; Fri, 16 Jun 2000 16:45:27 +0200
@@ -4426,7 +4426,7 @@ From tgl@sss.pgh.pa.us Fri Jun 16 12:01:03 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id MAA29853
 	for <maillist@candle.pha.pa.us>; Fri, 16 Jun 2000 12:01:02 -0400 (EDT)
-Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id LAA08255 for <maillist@candle.pha.pa.us>; Fri, 16 Jun 2000 11:48:10 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id LAA08255 for <maillist@candle.pha.pa.us>; Fri, 16 Jun 2000 11:48:10 -0400 (EDT)
 Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
 	by sss2.sss.pgh.pa.us (8.9.3/8.9.3) with ESMTP id LAA07461;
 	Fri, 16 Jun 2000 11:46:41 -0400 (EDT)
@@ -4509,7 +4509,7 @@ From lockhart@alumni.caltech.edu Fri Jun 16 12:31:50 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id MAA00649
 	for <maillist@candle.pha.pa.us>; Fri, 16 Jun 2000 12:31:49 -0400 (EDT)
-Received: from huey.jpl.nasa.gov (huey.jpl.nasa.gov [128.149.68.100]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id MAA13118 for <maillist@candle.pha.pa.us>; Fri, 16 Jun 2000 12:31:52 -0400 (EDT)
+Received: from huey.jpl.nasa.gov (huey.jpl.nasa.gov [128.149.68.100]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id MAA13118 for <maillist@candle.pha.pa.us>; Fri, 16 Jun 2000 12:31:52 -0400 (EDT)
 Received: from golem.jpl.nasa.gov (hectic-1 [128.149.68.203])
 	by huey.jpl.nasa.gov (8.8.8+Sun/8.8.8) with ESMTP id JAA15007;
 	Fri, 16 Jun 2000 09:27:18 -0700 (PDT)
@@ -4568,7 +4568,7 @@ From scrappy@hub.org Fri Jun 16 13:01:02 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id NAA01191;
 	Fri, 16 Jun 2000 13:01:01 -0400 (EDT)
-Received: from thelab.hub.org (nat193.152.mpoweredpc.net [142.177.193.152]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id MAA15282; Fri, 16 Jun 2000 12:53:23 -0400 (EDT)
+Received: from thelab.hub.org (nat193.152.mpoweredpc.net [142.177.193.152]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id MAA15282; Fri, 16 Jun 2000 12:53:23 -0400 (EDT)
 Received: from localhost (scrappy@localhost)
 	by thelab.hub.org (8.9.3/8.9.3) with ESMTP id NAA28326;
 	Fri, 16 Jun 2000 13:50:37 -0300 (ADT)
@@ -4628,7 +4628,7 @@ From tgl@sss.pgh.pa.us Fri Jun 16 13:01:01 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id NAA01188
 	for <maillist@candle.pha.pa.us>; Fri, 16 Jun 2000 13:01:01 -0400 (EDT)
-Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id MAA15530 for <maillist@candle.pha.pa.us>; Fri, 16 Jun 2000 12:55:38 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id MAA15530 for <maillist@candle.pha.pa.us>; Fri, 16 Jun 2000 12:55:38 -0400 (EDT)
 Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
 	by sss2.sss.pgh.pa.us (8.9.3/8.9.3) with ESMTP id MAA07750;
 	Fri, 16 Jun 2000 12:54:00 -0400 (EDT)
@@ -4669,7 +4669,7 @@ From dhogaza@pacifier.com Fri Jun 16 14:55:00 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id OAA02086
 	for <maillist@candle.pha.pa.us>; Fri, 16 Jun 2000 14:54:59 -0400 (EDT)
-Received: from smtp.pacifier.com (comet.pacifier.com [199.2.117.155]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id OAA26430 for <maillist@candle.pha.pa.us>; Fri, 16 Jun 2000 14:40:00 -0400 (EDT)
+Received: from smtp.pacifier.com (comet.pacifier.com [199.2.117.155]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id OAA26430 for <maillist@candle.pha.pa.us>; Fri, 16 Jun 2000 14:40:00 -0400 (EDT)
 Received: from desktop (dsl-dhogaza.pacifier.net [207.202.226.68])
 	by smtp.pacifier.com (8.9.3/8.9.3pop) with SMTP id LAA08661;
 	Fri, 16 Jun 2000 11:38:36 -0700 (PDT)
@@ -4775,7 +4775,7 @@ From pgsql-hackers-owner+M3500@hub.org Fri Jun 16 14:55:10 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id OAA02107
 	for <pgman@candle.pha.pa.us>; Fri, 16 Jun 2000 14:55:09 -0400 (EDT)
-Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id OAA26943 for <pgman@candle.pha.pa.us>; Fri, 16 Jun 2000 14:44:12 -0400 (EDT)
+Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id OAA26943 for <pgman@candle.pha.pa.us>; Fri, 16 Jun 2000 14:44:12 -0400 (EDT)
 Received: from hub.org (majordom@localhost [127.0.0.1])
 	by hub.org (8.10.1/8.10.1) with SMTP id e5GIelM05972;
 	Fri, 16 Jun 2000 14:40:47 -0400 (EDT)
@@ -4905,7 +4905,7 @@ From reedstrm@rice.edu Fri Jun 16 16:51:50 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id QAA03689
 	for <maillist@candle.pha.pa.us>; Fri, 16 Jun 2000 16:51:49 -0400 (EDT)
-Received: from wallace.ece.rice.edu (wallace.ece.rice.edu [128.42.12.154]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id PAA03409 for <maillist@candle.pha.pa.us>; Fri, 16 Jun 2000 15:48:40 -0400 (EDT)
+Received: from wallace.ece.rice.edu (wallace.ece.rice.edu [128.42.12.154]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id PAA03409 for <maillist@candle.pha.pa.us>; Fri, 16 Jun 2000 15:48:40 -0400 (EDT)
 Received: by rice.edu
 	via sendmail from stdin
 	id <m1331to-000LEJC@wallace.ece.rice.edu> (Debian Smail3.2.0.102)
@@ -5018,7 +5018,7 @@ From dhogaza@pacifier.com Fri Jun 16 16:51:51 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id QAA03692
 	for <maillist@candle.pha.pa.us>; Fri, 16 Jun 2000 16:51:50 -0400 (EDT)
-Received: from smtp.pacifier.com (comet.pacifier.com [199.2.117.155]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id PAA02911 for <maillist@candle.pha.pa.us>; Fri, 16 Jun 2000 15:43:13 -0400 (EDT)
+Received: from smtp.pacifier.com (comet.pacifier.com [199.2.117.155]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id PAA02911 for <maillist@candle.pha.pa.us>; Fri, 16 Jun 2000 15:43:13 -0400 (EDT)
 Received: from desktop (dsl-dhogaza.pacifier.net [207.202.226.68])
 	by smtp.pacifier.com (8.9.3/8.9.3pop) with SMTP id MAA11003;
 	Fri, 16 Jun 2000 12:41:50 -0700 (PDT)
@@ -5084,7 +5084,7 @@ From pgsql-hackers-owner+M3512@hub.org Fri Jun 16 17:31:04 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id RAA04168
 	for <pgman@candle.pha.pa.us>; Fri, 16 Jun 2000 17:31:03 -0400 (EDT)
-Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id RAA12122 for <pgman@candle.pha.pa.us>; Fri, 16 Jun 2000 17:09:28 -0400 (EDT)
+Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id RAA12122 for <pgman@candle.pha.pa.us>; Fri, 16 Jun 2000 17:09:28 -0400 (EDT)
 Received: from hub.org (majordom@localhost [127.0.0.1])
 	by hub.org (8.10.1/8.10.1) with SMTP id e5GL7WM02231;
 	Fri, 16 Jun 2000 17:07:32 -0400 (EDT)
@@ -5213,7 +5213,7 @@ From Inoue@tpf.co.jp Fri Jun 16 19:31:00 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id TAA05334
 	for <maillist@candle.pha.pa.us>; Fri, 16 Jun 2000 19:30:59 -0400 (EDT)
-Received: from sd.tpf.co.jp (sd.tpf.co.jp [210.161.239.34]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id TAA19834 for <maillist@candle.pha.pa.us>; Fri, 16 Jun 2000 19:09:59 -0400 (EDT)
+Received: from sd.tpf.co.jp (sd.tpf.co.jp [210.161.239.34]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id TAA19834 for <maillist@candle.pha.pa.us>; Fri, 16 Jun 2000 19:09:59 -0400 (EDT)
 Received: from mcadnote1 (ppm122.noc.fukui.nsk.ne.jp [210.161.188.41])
           by sd.tpf.co.jp (2.5 Build 2640 (Berkeley 8.8.6)/8.8.4) with SMTP
    id IAA08210; Sat, 17 Jun 2000 08:08:15 +0900
@@ -5271,7 +5271,7 @@ From tgl@sss.pgh.pa.us Fri Jun 16 19:31:01 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id TAA05337
 	for <maillist@candle.pha.pa.us>; Fri, 16 Jun 2000 19:31:00 -0400 (EDT)
-Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id TAA20335 for <maillist@candle.pha.pa.us>; Fri, 16 Jun 2000 19:18:26 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id TAA20335 for <maillist@candle.pha.pa.us>; Fri, 16 Jun 2000 19:18:26 -0400 (EDT)
 Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
 	by sss2.sss.pgh.pa.us (8.9.3/8.9.3) with ESMTP id TAA09274;
 	Fri, 16 Jun 2000 19:16:37 -0400 (EDT)
@@ -5384,7 +5384,7 @@ From chris@bitmead.com Fri Jun 16 21:01:02 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id VAA07578;
 	Fri, 16 Jun 2000 21:01:00 -0400 (EDT)
-Received: from tech.com.au (IDENT:root@techpt.lnk.telstra.net [139.130.75.122]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id UAA24724; Fri, 16 Jun 2000 20:39:30 -0400 (EDT)
+Received: from tech.com.au (IDENT:root@techpt.lnk.telstra.net [139.130.75.122]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id UAA24724; Fri, 16 Jun 2000 20:39:30 -0400 (EDT)
 Received: from bitmead.com (IDENT:chris@tardis [203.41.180.243])
 	by tech.com.au (8.9.3/8.9.3) with ESMTP id KAA21388;
 	Sat, 17 Jun 2000 10:39:21 +1000
@@ -5418,7 +5418,7 @@ From Inoue@tpf.co.jp Sat Jun 17 06:00:59 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id GAA22177;
 	Sat, 17 Jun 2000 06:00:59 -0400 (EDT)
-Received: from sd.tpf.co.jp (sd.tpf.co.jp [210.161.239.34]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id FAA21759; Sat, 17 Jun 2000 05:36:27 -0400 (EDT)
+Received: from sd.tpf.co.jp (sd.tpf.co.jp [210.161.239.34]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id FAA21759; Sat, 17 Jun 2000 05:36:27 -0400 (EDT)
 Received: from mcadnote1 (ppm130.noc.fukui.nsk.ne.jp [210.161.188.49])
           by sd.tpf.co.jp (2.5 Build 2640 (Berkeley 8.8.6)/8.8.4) with SMTP
    id SAA08383; Sat, 17 Jun 2000 18:35:36 +0900
@@ -5470,7 +5470,7 @@ From tgl@sss.pgh.pa.us Sat Jun 17 12:31:08 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id MAA02794;
 	Sat, 17 Jun 2000 12:31:07 -0400 (EDT)
-Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id MAA07194; Sat, 17 Jun 2000 12:12:53 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id MAA07194; Sat, 17 Jun 2000 12:12:53 -0400 (EDT)
 Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
 	by sss2.sss.pgh.pa.us (8.9.3/8.9.3) with ESMTP id MAA18824;
 	Sat, 17 Jun 2000 12:11:18 -0400 (EDT)
@@ -5506,7 +5506,7 @@ From tgl@sss.pgh.pa.us Sun Jun 18 12:30:59 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id MAA06514
 	for <pgman@candle.pha.pa.us>; Sun, 18 Jun 2000 12:30:58 -0400 (EDT)
-Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id MAA04979 for <pgman@candle.pha.pa.us>; Sun, 18 Jun 2000 12:07:44 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id MAA04979 for <pgman@candle.pha.pa.us>; Sun, 18 Jun 2000 12:07:44 -0400 (EDT)
 Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
 	by sss2.sss.pgh.pa.us (8.9.3/8.9.3) with ESMTP id MAA12163;
 	Sun, 18 Jun 2000 12:06:29 -0400 (EDT)
@@ -5575,7 +5575,7 @@ From dhogaza@pacifier.com Sun Jun 18 20:01:00 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id UAA19951
 	for <pgman@candle.pha.pa.us>; Sun, 18 Jun 2000 20:00:59 -0400 (EDT)
-Received: from smtp.pacifier.com (asteroid.pacifier.com [199.2.117.154]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id TAA24345 for <pgman@candle.pha.pa.us>; Sun, 18 Jun 2000 19:50:06 -0400 (EDT)
+Received: from smtp.pacifier.com (asteroid.pacifier.com [199.2.117.154]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id TAA24345 for <pgman@candle.pha.pa.us>; Sun, 18 Jun 2000 19:50:06 -0400 (EDT)
 Received: from desktop (dsl-dhogaza.pacifier.net [207.202.226.68])
 	by smtp.pacifier.com (8.9.3/8.9.3pop) with SMTP id QAA05302;
 	Sun, 18 Jun 2000 16:49:27 -0700 (PDT)
@@ -5624,7 +5624,7 @@ From pgsql-hackers-owner+M3571@hub.org Sun Jun 18 23:28:13 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id XAA23880
 	for <pgman@candle.pha.pa.us>; Sun, 18 Jun 2000 23:28:12 -0400 (EDT)
-Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id XAA04627 for <pgman@candle.pha.pa.us>; Sun, 18 Jun 2000 23:24:37 -0400 (EDT)
+Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id XAA04627 for <pgman@candle.pha.pa.us>; Sun, 18 Jun 2000 23:24:37 -0400 (EDT)
 Received: from hub.org (majordom@localhost [127.0.0.1])
 	by hub.org (8.10.1/8.10.1) with SMTP id e5J3GQM78526;
 	Sun, 18 Jun 2000 23:16:26 -0400 (EDT)
@@ -5672,7 +5672,7 @@ From dhogaza@pacifier.com Mon Jun 19 00:31:00 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id AAA01941
 	for <pgman@candle.pha.pa.us>; Mon, 19 Jun 2000 00:31:00 -0400 (EDT)
-Received: from smtp.pacifier.com (comet.pacifier.com [199.2.117.155]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id AAA06881 for <pgman@candle.pha.pa.us>; Mon, 19 Jun 2000 00:11:39 -0400 (EDT)
+Received: from smtp.pacifier.com (comet.pacifier.com [199.2.117.155]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id AAA06881 for <pgman@candle.pha.pa.us>; Mon, 19 Jun 2000 00:11:39 -0400 (EDT)
 Received: from desktop (dsl-dhogaza.pacifier.net [207.202.226.68])
 	by smtp.pacifier.com (8.9.3/8.9.3pop) with SMTP id VAA29138;
 	Sun, 18 Jun 2000 21:11:01 -0700 (PDT)
@@ -5715,7 +5715,7 @@ From pgsql-hackers-owner+M3573@hub.org Mon Jun 19 01:31:02 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id BAA01981
 	for <pgman@candle.pha.pa.us>; Mon, 19 Jun 2000 01:31:01 -0400 (EDT)
-Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id BAA09569 for <pgman@candle.pha.pa.us>; Mon, 19 Jun 2000 01:13:53 -0400 (EDT)
+Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id BAA09569 for <pgman@candle.pha.pa.us>; Mon, 19 Jun 2000 01:13:53 -0400 (EDT)
 Received: from hub.org (majordom@localhost [127.0.0.1])
 	by hub.org (8.10.1/8.10.1) with SMTP id e5J4T3M86960;
 	Mon, 19 Jun 2000 00:29:04 -0400 (EDT)
@@ -5762,7 +5762,7 @@ From tgl@sss.pgh.pa.us Mon Jun 19 00:30:58 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id AAA01934
 	for <pgman@candle.pha.pa.us>; Mon, 19 Jun 2000 00:30:58 -0400 (EDT)
-Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id AAA07814 for <pgman@candle.pha.pa.us>; Mon, 19 Jun 2000 00:29:36 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id AAA07814 for <pgman@candle.pha.pa.us>; Mon, 19 Jun 2000 00:29:36 -0400 (EDT)
 Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
 	by sss2.sss.pgh.pa.us (8.9.3/8.9.3) with ESMTP id AAA09535;
 	Mon, 19 Jun 2000 00:28:14 -0400 (EDT)
@@ -5798,7 +5798,7 @@ From pgsql-hackers-owner+M3574@hub.org Mon Jun 19 01:31:01 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id BAA01977
 	for <pgman@candle.pha.pa.us>; Mon, 19 Jun 2000 01:31:00 -0400 (EDT)
-Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id BAA09374 for <pgman@candle.pha.pa.us>; Mon, 19 Jun 2000 01:07:50 -0400 (EDT)
+Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id BAA09374 for <pgman@candle.pha.pa.us>; Mon, 19 Jun 2000 01:07:50 -0400 (EDT)
 Received: from hub.org (majordom@localhost [127.0.0.1])
 	by hub.org (8.10.1/8.10.1) with SMTP id e5J4VkM95901;
 	Mon, 19 Jun 2000 00:31:46 -0400 (EDT)
@@ -5843,7 +5843,7 @@ From dhogaza@pacifier.com Mon Jun 19 00:58:39 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id AAA00799
 	for <pgman@candle.pha.pa.us>; Mon, 19 Jun 2000 00:58:38 -0400 (EDT)
-Received: from smtp.pacifier.com (comet.pacifier.com [199.2.117.155]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id AAA08143 for <pgman@candle.pha.pa.us>; Mon, 19 Jun 2000 00:37:39 -0400 (EDT)
+Received: from smtp.pacifier.com (comet.pacifier.com [199.2.117.155]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id AAA08143 for <pgman@candle.pha.pa.us>; Mon, 19 Jun 2000 00:37:39 -0400 (EDT)
 Received: from desktop (dsl-dhogaza.pacifier.net [207.202.226.68])
 	by smtp.pacifier.com (8.9.3/8.9.3pop) with SMTP id VAA00259;
 	Sun, 18 Jun 2000 21:36:25 -0700 (PDT)
@@ -5902,7 +5902,7 @@ From Inoue@tpf.co.jp Mon Jun 19 12:31:17 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id MAA29988
 	for <pgman@candle.pha.pa.us>; Mon, 19 Jun 2000 12:31:16 -0400 (EDT)
-Received: from sd.tpf.co.jp (mail.tpf.co.jp [210.161.239.34]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id MAA21005 for <pgman@candle.pha.pa.us>; Mon, 19 Jun 2000 12:15:22 -0400 (EDT)
+Received: from sd.tpf.co.jp (mail.tpf.co.jp [210.161.239.34]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id MAA21005 for <pgman@candle.pha.pa.us>; Mon, 19 Jun 2000 12:15:22 -0400 (EDT)
 Received: from mcadnote1 (ppm127.noc.fukui.nsk.ne.jp [210.161.188.46])
           by sd.tpf.co.jp (2.5 Build 2640 (Berkeley 8.8.6)/8.8.4) with SMTP
    id BAA09828; Tue, 20 Jun 2000 01:14:19 +0900
@@ -5957,7 +5957,7 @@ From Inoue@tpf.co.jp Tue Jun 20 02:01:04 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id CAA24419
 	for <pgman@candle.pha.pa.us>; Tue, 20 Jun 2000 02:00:59 -0400 (EDT)
-Received: from sd.tpf.co.jp (sd.tpf.co.jp [210.161.239.34]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id BAA26090 for <pgman@candle.pha.pa.us>; Tue, 20 Jun 2000 01:51:00 -0400 (EDT)
+Received: from sd.tpf.co.jp (sd.tpf.co.jp [210.161.239.34]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id BAA26090 for <pgman@candle.pha.pa.us>; Tue, 20 Jun 2000 01:51:00 -0400 (EDT)
 Received: from cadzone ([126.0.1.40] (may be forged))
           by sd.tpf.co.jp (2.5 Build 2640 (Berkeley 8.8.6)/8.8.4) with SMTP
    id OAA10171; Tue, 20 Jun 2000 14:50:03 +0900
@@ -6031,7 +6031,7 @@ From tgl@sss.pgh.pa.us Tue Jun 20 10:51:32 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id KAA15181
 	for <pgman@candle.pha.pa.us>; Tue, 20 Jun 2000 10:51:31 -0400 (EDT)
-Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id KAA26466 for <pgman@candle.pha.pa.us>; Tue, 20 Jun 2000 10:37:20 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id KAA26466 for <pgman@candle.pha.pa.us>; Tue, 20 Jun 2000 10:37:20 -0400 (EDT)
 Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
 	by sss2.sss.pgh.pa.us (8.9.3/8.9.3) with ESMTP id KAA29689;
 	Tue, 20 Jun 2000 10:36:04 -0400 (EDT)
@@ -6113,7 +6113,7 @@ From pgsql-hackers-owner+M3615@hub.org Tue Jun 20 12:55:05 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id MAA25768
 	for <pgman@candle.pha.pa.us>; Tue, 20 Jun 2000 12:55:04 -0400 (EDT)
-Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id MAA09949 for <pgman@candle.pha.pa.us>; Tue, 20 Jun 2000 12:41:15 -0400 (EDT)
+Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id MAA09949 for <pgman@candle.pha.pa.us>; Tue, 20 Jun 2000 12:41:15 -0400 (EDT)
 Received: from hub.org (majordom@localhost [127.0.0.1])
 	by hub.org (8.10.1/8.10.1) with SMTP id e5KGcCM19112;
 	Tue, 20 Jun 2000 12:38:12 -0400 (EDT)
@@ -6222,7 +6222,7 @@ From Inoue@tpf.co.jp Tue Jun 20 17:10:56 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id RAA10307
 	for <pgman@candle.pha.pa.us>; Tue, 20 Jun 2000 17:10:55 -0400 (EDT)
-Received: from sd.tpf.co.jp (mail.tpf.co.jp [210.161.239.34]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id QAA08017 for <pgman@candle.pha.pa.us>; Tue, 20 Jun 2000 16:57:44 -0400 (EDT)
+Received: from sd.tpf.co.jp (mail.tpf.co.jp [210.161.239.34]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id QAA08017 for <pgman@candle.pha.pa.us>; Tue, 20 Jun 2000 16:57:44 -0400 (EDT)
 Received: from mcadnote1 (ppm127.noc.fukui.nsk.ne.jp [210.161.188.46])
           by sd.tpf.co.jp (2.5 Build 2640 (Berkeley 8.8.6)/8.8.4) with SMTP
    id FAA00867; Wed, 21 Jun 2000 05:56:44 +0900
@@ -6288,7 +6288,7 @@ From Inoue@tpf.co.jp Tue Jun 20 20:00:59 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id UAA12668;
 	Tue, 20 Jun 2000 20:00:58 -0400 (EDT)
-Received: from sd.tpf.co.jp (sd.tpf.co.jp [210.161.239.34]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id TAA21016; Tue, 20 Jun 2000 19:54:18 -0400 (EDT)
+Received: from sd.tpf.co.jp (sd.tpf.co.jp [210.161.239.34]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id TAA21016; Tue, 20 Jun 2000 19:54:18 -0400 (EDT)
 Received: from cadzone ([126.0.1.40] (may be forged))
           by sd.tpf.co.jp (2.5 Build 2640 (Berkeley 8.8.6)/8.8.4) with SMTP
    id IAA00974; Wed, 21 Jun 2000 08:52:38 +0900
@@ -6353,7 +6353,7 @@ From tgl@sss.pgh.pa.us Wed Jun 21 00:23:48 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id AAA18016;
 	Wed, 21 Jun 2000 00:23:47 -0400 (EDT)
-Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id AAA05207; Wed, 21 Jun 2000 00:07:58 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id AAA05207; Wed, 21 Jun 2000 00:07:58 -0400 (EDT)
 Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
 	by sss2.sss.pgh.pa.us (8.9.3/8.9.3) with ESMTP id AAA03002;
 	Wed, 21 Jun 2000 00:06:42 -0400 (EDT)
@@ -6480,7 +6480,7 @@ From pgsql-hackers-owner+M3636@hub.org Wed Jun 21 01:31:12 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id BAA20523
 	for <pgman@candle.pha.pa.us>; Wed, 21 Jun 2000 01:31:12 -0400 (EDT)
-Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id BAA08982 for <pgman@candle.pha.pa.us>; Wed, 21 Jun 2000 01:15:17 -0400 (EDT)
+Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id BAA08982 for <pgman@candle.pha.pa.us>; Wed, 21 Jun 2000 01:15:17 -0400 (EDT)
 Received: from hub.org (majordom@localhost [127.0.0.1])
 	by hub.org (8.10.1/8.10.1) with SMTP id e5L5Bp151546;
 	Wed, 21 Jun 2000 01:11:51 -0400 (EDT)
@@ -6538,7 +6538,7 @@ From dhogaza@pacifier.com Wed Jun 21 01:31:03 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id BAA20492
 	for <pgman@candle.pha.pa.us>; Wed, 21 Jun 2000 01:30:58 -0400 (EDT)
-Received: from smtp.pacifier.com (comet.pacifier.com [199.2.117.155]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id BAA09401 for <pgman@candle.pha.pa.us>; Wed, 21 Jun 2000 01:22:50 -0400 (EDT)
+Received: from smtp.pacifier.com (comet.pacifier.com [199.2.117.155]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id BAA09401 for <pgman@candle.pha.pa.us>; Wed, 21 Jun 2000 01:22:50 -0400 (EDT)
 Received: from desktop (dsl-dhogaza.pacifier.net [207.202.226.68])
 	by smtp.pacifier.com (8.9.3/8.9.3pop) with SMTP id WAA22395;
 	Tue, 20 Jun 2000 22:21:47 -0700 (PDT)
@@ -6587,7 +6587,7 @@ From lockhart@alumni.caltech.edu Wed Jun 21 01:31:07 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id BAA20508;
 	Wed, 21 Jun 2000 01:31:06 -0400 (EDT)
-Received: from huey.jpl.nasa.gov (huey.jpl.nasa.gov [128.149.68.100]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id BAA09355; Wed, 21 Jun 2000 01:22:03 -0400 (EDT)
+Received: from huey.jpl.nasa.gov (huey.jpl.nasa.gov [128.149.68.100]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id BAA09355; Wed, 21 Jun 2000 01:22:03 -0400 (EDT)
 Received: from golem.jpl.nasa.gov (hectic-1 [128.149.68.203])
 	by huey.jpl.nasa.gov (8.8.8+Sun/8.8.8) with ESMTP id WAA00821;
 	Tue, 20 Jun 2000 22:18:38 -0700 (PDT)
@@ -6641,7 +6641,7 @@ From tgl@sss.pgh.pa.us Wed Jun 21 01:31:05 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id BAA20503
 	for <pgman@candle.pha.pa.us>; Wed, 21 Jun 2000 01:31:05 -0400 (EDT)
-Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id BAA09513 for <pgman@candle.pha.pa.us>; Wed, 21 Jun 2000 01:25:18 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id BAA09513 for <pgman@candle.pha.pa.us>; Wed, 21 Jun 2000 01:25:18 -0400 (EDT)
 Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
 	by sss2.sss.pgh.pa.us (8.9.3/8.9.3) with ESMTP id BAA03557;
 	Wed, 21 Jun 2000 01:23:58 -0400 (EDT)
@@ -6697,7 +6697,7 @@ From pgsql-hackers-owner+M3641@hub.org Wed Jun 21 02:31:02 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id CAA25698
 	for <pgman@candle.pha.pa.us>; Wed, 21 Jun 2000 02:31:00 -0400 (EDT)
-Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id CAA11423 for <pgman@candle.pha.pa.us>; Wed, 21 Jun 2000 02:09:13 -0400 (EDT)
+Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id CAA11423 for <pgman@candle.pha.pa.us>; Wed, 21 Jun 2000 02:09:13 -0400 (EDT)
 Received: from hub.org (majordom@localhost [127.0.0.1])
 	by hub.org (8.10.1/8.10.1) with SMTP id e5L5we151226;
 	Wed, 21 Jun 2000 01:58:40 -0400 (EDT)
@@ -6765,7 +6765,7 @@ From pgsql-hackers-owner+M3644@hub.org Wed Jun 21 02:31:03 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id CAA25704
 	for <pgman@candle.pha.pa.us>; Wed, 21 Jun 2000 02:31:02 -0400 (EDT)
-Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id CAA11923 for <pgman@candle.pha.pa.us>; Wed, 21 Jun 2000 02:22:41 -0400 (EDT)
+Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id CAA11923 for <pgman@candle.pha.pa.us>; Wed, 21 Jun 2000 02:22:41 -0400 (EDT)
 Received: from hub.org (majordom@localhost [127.0.0.1])
 	by hub.org (8.10.1/8.10.1) with SMTP id e5L6JO196109;
 	Wed, 21 Jun 2000 02:19:24 -0400 (EDT)
@@ -6822,7 +6822,7 @@ From pgsql-hackers-owner+M3648@hub.org Wed Jun 21 09:01:01 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id JAA06055
 	for <pgman@candle.pha.pa.us>; Wed, 21 Jun 2000 09:01:00 -0400 (EDT)
-Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id IAA29647 for <pgman@candle.pha.pa.us>; Wed, 21 Jun 2000 08:52:25 -0400 (EDT)
+Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id IAA29647 for <pgman@candle.pha.pa.us>; Wed, 21 Jun 2000 08:52:25 -0400 (EDT)
 Received: from hub.org (majordom@localhost [127.0.0.1])
 	by hub.org (8.10.1/8.10.1) with SMTP id e5LCo0112103;
 	Wed, 21 Jun 2000 08:50:00 -0400 (EDT)
@@ -6878,7 +6878,7 @@ From e99re41@DoCS.UU.SE Wed Jun 21 10:01:10 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id KAA06585;
 	Wed, 21 Jun 2000 10:01:09 -0400 (EDT)
-Received: from meryl.it.uu.se (root@meryl.it.uu.se [130.238.12.42]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id JAA03592; Wed, 21 Jun 2000 09:38:34 -0400 (EDT)
+Received: from meryl.it.uu.se (root@meryl.it.uu.se [130.238.12.42]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id JAA03592; Wed, 21 Jun 2000 09:38:34 -0400 (EDT)
 Received: from Ulv.DoCS.UU.SE (e99re41@Ulv.DoCS.UU.SE [130.238.9.167])
 	by meryl.it.uu.se (8.8.5/8.8.5) with ESMTP id PAA20520;
 	Wed, 21 Jun 2000 15:34:34 +0200 (MET DST)
@@ -6951,7 +6951,7 @@ From e99re41@DoCS.UU.SE Wed Jun 21 10:01:09 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id KAA06582;
 	Wed, 21 Jun 2000 10:01:08 -0400 (EDT)
-Received: from meryl.it.uu.se (root@meryl.it.uu.se [130.238.12.42]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id JAA04510; Wed, 21 Jun 2000 09:43:48 -0400 (EDT)
+Received: from meryl.it.uu.se (root@meryl.it.uu.se [130.238.12.42]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id JAA04510; Wed, 21 Jun 2000 09:43:48 -0400 (EDT)
 Received: from Ulv.DoCS.UU.SE (e99re41@Ulv.DoCS.UU.SE [130.238.9.167])
 	by meryl.it.uu.se (8.8.5/8.8.5) with ESMTP id PAA20730;
 	Wed, 21 Jun 2000 15:39:23 +0200 (MET DST)
@@ -6995,7 +6995,7 @@ From tgl@sss.pgh.pa.us Wed Jun 21 11:31:09 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id LAA08120;
 	Wed, 21 Jun 2000 11:31:08 -0400 (EDT)
-Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id LAA13232; Wed, 21 Jun 2000 11:08:38 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id LAA13232; Wed, 21 Jun 2000 11:08:38 -0400 (EDT)
 Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
 	by sss2.sss.pgh.pa.us (8.9.3/8.9.3) with ESMTP id LAA04286;
 	Wed, 21 Jun 2000 11:07:20 -0400 (EDT)
@@ -7050,7 +7050,7 @@ From lockhart@alumni.caltech.edu Wed Jun 21 11:31:10 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id LAA08135;
 	Wed, 21 Jun 2000 11:31:09 -0400 (EDT)
-Received: from huey.jpl.nasa.gov (huey.jpl.nasa.gov [128.149.68.100]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id LAA15864; Wed, 21 Jun 2000 11:30:06 -0400 (EDT)
+Received: from huey.jpl.nasa.gov (huey.jpl.nasa.gov [128.149.68.100]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id LAA15864; Wed, 21 Jun 2000 11:30:06 -0400 (EDT)
 Received: from golem.jpl.nasa.gov (hectic-1 [128.149.68.203])
 	by huey.jpl.nasa.gov (8.8.8+Sun/8.8.8) with ESMTP id IAA02881;
 	Wed, 21 Jun 2000 08:26:40 -0700 (PDT)
@@ -7108,7 +7108,7 @@ From tgl@sss.pgh.pa.us Wed Jun 21 11:31:18 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id LAA08164;
 	Wed, 21 Jun 2000 11:31:12 -0400 (EDT)
-Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id LAA15786; Wed, 21 Jun 2000 11:29:30 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id LAA15786; Wed, 21 Jun 2000 11:29:30 -0400 (EDT)
 Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
 	by sss2.sss.pgh.pa.us (8.9.3/8.9.3) with ESMTP id LAA04451;
 	Wed, 21 Jun 2000 11:28:09 -0400 (EDT)
@@ -7187,7 +7187,7 @@ From lamar.owen@wgcr.org Wed Jun 21 11:51:39 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id LAA09021;
 	Wed, 21 Jun 2000 11:51:38 -0400 (EDT)
-Received: from www.wgcr.org (IDENT:root@www.wgcr.org [206.74.232.194]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id LAA18613; Wed, 21 Jun 2000 11:51:48 -0400 (EDT)
+Received: from www.wgcr.org (IDENT:root@www.wgcr.org [206.74.232.194]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id LAA18613; Wed, 21 Jun 2000 11:51:48 -0400 (EDT)
 Received: from wgcr.org ([206.74.232.197])
 	by www.wgcr.org (8.9.3/8.9.3/WGCR) with ESMTP id LAA19124;
 	Wed, 21 Jun 2000 11:48:25 -0400
@@ -7299,7 +7299,7 @@ From pgsql-hackers-owner+M3670@hub.org Wed Jun 21 12:30:42 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id MAA10371
 	for <pgman@candle.pha.pa.us>; Wed, 21 Jun 2000 12:30:41 -0400 (EDT)
-Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id MAA22315 for <pgman@candle.pha.pa.us>; Wed, 21 Jun 2000 12:23:18 -0400 (EDT)
+Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id MAA22315 for <pgman@candle.pha.pa.us>; Wed, 21 Jun 2000 12:23:18 -0400 (EDT)
 Received: from hub.org (majordom@localhost [127.0.0.1])
 	by hub.org (8.10.1/8.10.1) with SMTP id e5LGJU175424;
 	Wed, 21 Jun 2000 12:19:30 -0400 (EDT)
@@ -7356,7 +7356,7 @@ From tgl@sss.pgh.pa.us Wed Jun 21 12:30:40 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id MAA10364
 	for <pgman@candle.pha.pa.us>; Wed, 21 Jun 2000 12:30:38 -0400 (EDT)
-Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id MAA22593 for <pgman@candle.pha.pa.us>; Wed, 21 Jun 2000 12:25:58 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id MAA22593 for <pgman@candle.pha.pa.us>; Wed, 21 Jun 2000 12:25:58 -0400 (EDT)
 Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
 	by sss2.sss.pgh.pa.us (8.9.3/8.9.3) with ESMTP id MAA04944;
 	Wed, 21 Jun 2000 12:24:44 -0400 (EDT)
@@ -7408,7 +7408,7 @@ From tgl@sss.pgh.pa.us Wed Jun 21 13:01:06 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id NAA11366
 	for <pgman@candle.pha.pa.us>; Wed, 21 Jun 2000 13:01:05 -0400 (EDT)
-Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id MAA24726 for <pgman@candle.pha.pa.us>; Wed, 21 Jun 2000 12:47:50 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id MAA24726 for <pgman@candle.pha.pa.us>; Wed, 21 Jun 2000 12:47:50 -0400 (EDT)
 Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
 	by sss2.sss.pgh.pa.us (8.9.3/8.9.3) with ESMTP id MAA05112;
 	Wed, 21 Jun 2000 12:46:34 -0400 (EDT)
@@ -7459,7 +7459,7 @@ From peter@localhost.its.uu.se Wed Jun 21 14:31:13 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id OAA13233
 	for <pgman@candle.pha.pa.us>; Wed, 21 Jun 2000 14:31:13 -0400 (EDT)
-Received: from merganser.its.uu.se (merganser.its.uu.se [130.238.6.236]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id OAA04201 for <pgman@candle.pha.pa.us>; Wed, 21 Jun 2000 14:11:42 -0400 (EDT)
+Received: from merganser.its.uu.se (merganser.its.uu.se [130.238.6.236]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id OAA04201 for <pgman@candle.pha.pa.us>; Wed, 21 Jun 2000 14:11:42 -0400 (EDT)
 Received: from regulus.student.UU.SE ([130.238.5.2]:34923 "EHLO
         regulus.its.uu.se") by merganser.its.uu.se with ESMTP
 	id <S385153AbQFUSJq>; Wed, 21 Jun 2000 20:09:46 +0200
@@ -7513,7 +7513,7 @@ From tgl@sss.pgh.pa.us Wed Jun 21 18:14:19 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id SAA24147
 	for <pgman@candle.pha.pa.us>; Wed, 21 Jun 2000 18:14:18 -0400 (EDT)
-Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id RAA24649 for <pgman@candle.pha.pa.us>; Wed, 21 Jun 2000 17:40:59 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id RAA24649 for <pgman@candle.pha.pa.us>; Wed, 21 Jun 2000 17:40:59 -0400 (EDT)
 Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
 	by sss2.sss.pgh.pa.us (8.9.3/8.9.3) with ESMTP id RAA06031;
 	Wed, 21 Jun 2000 17:39:38 -0400 (EDT)
@@ -7561,7 +7561,7 @@ From vmikheev@SECTORBASE.COM Wed Jun 21 22:18:38 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id WAA07570;
 	Wed, 21 Jun 2000 22:18:36 -0400 (EDT)
-Received: from sectorbase2.sectorbase.com ([208.48.122.131]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id TAA29965; Wed, 21 Jun 2000 19:07:37 -0400 (EDT)
+Received: from sectorbase2.sectorbase.com ([208.48.122.131]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id TAA29965; Wed, 21 Jun 2000 19:07:37 -0400 (EDT)
 Received: by SECTORBASE2 with Internet Mail Service (5.5.2650.21)
 	id <MCTD2WLM>; Wed, 21 Jun 2000 15:58:30 -0700
 Message-ID: <8F4C99C66D04D4118F580090272A7A23018C2B@SECTORBASE1>
@@ -7616,7 +7616,7 @@ From Inoue@tpf.co.jp Wed Jun 21 22:18:39 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id WAA07573;
 	Wed, 21 Jun 2000 22:18:38 -0400 (EDT)
-Received: from sd.tpf.co.jp (sd.tpf.co.jp [210.161.239.34]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id TAA01857; Wed, 21 Jun 2000 19:37:04 -0400 (EDT)
+Received: from sd.tpf.co.jp (sd.tpf.co.jp [210.161.239.34]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id TAA01857; Wed, 21 Jun 2000 19:37:04 -0400 (EDT)
 Received: from cadzone ([126.0.1.40] (may be forged))
           by sd.tpf.co.jp (2.5 Build 2640 (Berkeley 8.8.6)/8.8.4) with SMTP
    id IAA02627; Thu, 22 Jun 2000 08:35:27 +0900
@@ -7684,7 +7684,7 @@ From Inoue@tpf.co.jp Wed Jun 21 22:18:15 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id WAA07540;
 	Wed, 21 Jun 2000 22:18:11 -0400 (EDT)
-Received: from sd.tpf.co.jp (sd.tpf.co.jp [210.161.239.34]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id UAA04100; Wed, 21 Jun 2000 20:15:09 -0400 (EDT)
+Received: from sd.tpf.co.jp (sd.tpf.co.jp [210.161.239.34]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id UAA04100; Wed, 21 Jun 2000 20:15:09 -0400 (EDT)
 Received: from cadzone ([126.0.1.40] (may be forged))
           by sd.tpf.co.jp (2.5 Build 2640 (Berkeley 8.8.6)/8.8.4) with SMTP
    id JAA02691; Thu, 22 Jun 2000 09:14:15 +0900
@@ -7743,7 +7743,7 @@ From Inoue@tpf.co.jp Wed Jun 21 22:18:16 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id WAA07553;
 	Wed, 21 Jun 2000 22:18:15 -0400 (EDT)
-Received: from sd.tpf.co.jp (sd.tpf.co.jp [210.161.239.34]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id UAA05872; Wed, 21 Jun 2000 20:44:21 -0400 (EDT)
+Received: from sd.tpf.co.jp (sd.tpf.co.jp [210.161.239.34]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id UAA05872; Wed, 21 Jun 2000 20:44:21 -0400 (EDT)
 Received: from cadzone ([126.0.1.40] (may be forged))
           by sd.tpf.co.jp (2.5 Build 2640 (Berkeley 8.8.6)/8.8.4) with SMTP
    id JAA02750; Thu, 22 Jun 2000 09:43:31 +0900
@@ -7804,7 +7804,7 @@ From pgsql-hackers-owner+M3700@hub.org Wed Jun 21 22:17:59 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id WAA07504
 	for <pgman@candle.pha.pa.us>; Wed, 21 Jun 2000 22:17:58 -0400 (EDT)
-Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id VAA07914 for <pgman@candle.pha.pa.us>; Wed, 21 Jun 2000 21:23:22 -0400 (EDT)
+Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id VAA07914 for <pgman@candle.pha.pa.us>; Wed, 21 Jun 2000 21:23:22 -0400 (EDT)
 Received: from hub.org (majordom@localhost [127.0.0.1])
 	by hub.org (8.10.1/8.10.1) with SMTP id e5M1It194420;
 	Wed, 21 Jun 2000 21:18:55 -0400 (EDT)
@@ -7864,7 +7864,7 @@ From pgsql-hackers-owner+M3701@hub.org Wed Jun 21 22:18:02 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id WAA07513
 	for <pgman@candle.pha.pa.us>; Wed, 21 Jun 2000 22:18:01 -0400 (EDT)
-Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id VAA08502 for <pgman@candle.pha.pa.us>; Wed, 21 Jun 2000 21:33:13 -0400 (EDT)
+Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id VAA08502 for <pgman@candle.pha.pa.us>; Wed, 21 Jun 2000 21:33:13 -0400 (EDT)
 Received: from hub.org (majordom@localhost [127.0.0.1])
 	by hub.org (8.10.1/8.10.1) with SMTP id e5M1QS107400;
 	Wed, 21 Jun 2000 21:26:28 -0400 (EDT)
@@ -7926,7 +7926,7 @@ From vmikheev@SECTORBASE.COM Wed Jun 21 22:17:52 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id WAA07492;
 	Wed, 21 Jun 2000 22:17:51 -0400 (EDT)
-Received: from sectorbase2.sectorbase.com ([208.48.122.131]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id VAA08730; Wed, 21 Jun 2000 21:37:44 -0400 (EDT)
+Received: from sectorbase2.sectorbase.com ([208.48.122.131]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id VAA08730; Wed, 21 Jun 2000 21:37:44 -0400 (EDT)
 Received: by SECTORBASE2 with Internet Mail Service (5.5.2650.21)
 	id <MCTD2WWC>; Wed, 21 Jun 2000 18:28:36 -0700
 Message-ID: <8F4C99C66D04D4118F580090272A7A23018C2F@SECTORBASE1>
@@ -7978,7 +7978,7 @@ From Inoue@tpf.co.jp Wed Jun 21 23:22:36 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id XAA10350
 	for <pgman@candle.pha.pa.us>; Wed, 21 Jun 2000 23:22:35 -0400 (EDT)
-Received: from sd.tpf.co.jp (sd.tpf.co.jp [210.161.239.34]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id XAA13743 for <pgman@candle.pha.pa.us>; Wed, 21 Jun 2000 23:07:50 -0400 (EDT)
+Received: from sd.tpf.co.jp (sd.tpf.co.jp [210.161.239.34]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id XAA13743 for <pgman@candle.pha.pa.us>; Wed, 21 Jun 2000 23:07:50 -0400 (EDT)
 Received: from cadzone ([126.0.1.40] (may be forged))
           by sd.tpf.co.jp (2.5 Build 2640 (Berkeley 8.8.6)/8.8.4) with SMTP
    id MAA03008; Thu, 22 Jun 2000 12:07:00 +0900
@@ -8041,7 +8041,7 @@ From tgl@sss.pgh.pa.us Wed Jun 21 23:22:38 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id XAA10353
 	for <pgman@candle.pha.pa.us>; Wed, 21 Jun 2000 23:22:36 -0400 (EDT)
-Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id XAA14206 for <pgman@candle.pha.pa.us>; Wed, 21 Jun 2000 23:16:26 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id XAA14206 for <pgman@candle.pha.pa.us>; Wed, 21 Jun 2000 23:16:26 -0400 (EDT)
 Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
 	by sss2.sss.pgh.pa.us (8.9.3/8.9.3) with ESMTP id XAA07099;
 	Wed, 21 Jun 2000 23:14:50 -0400 (EDT)
@@ -8105,7 +8105,7 @@ From pgsql-hackers-owner+M3711@hub.org Thu Jun 22 01:01:06 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id BAA22245
 	for <pgman@candle.pha.pa.us>; Thu, 22 Jun 2000 01:01:02 -0400 (EDT)
-Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id AAA18310 for <pgman@candle.pha.pa.us>; Thu, 22 Jun 2000 00:43:00 -0400 (EDT)
+Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id AAA18310 for <pgman@candle.pha.pa.us>; Thu, 22 Jun 2000 00:43:00 -0400 (EDT)
 Received: from hub.org (majordom@localhost [127.0.0.1])
 	by hub.org (8.10.1/8.10.1) with SMTP id e5M3US167109;
 	Wed, 21 Jun 2000 23:30:28 -0400 (EDT)
@@ -8164,7 +8164,7 @@ From tgl@sss.pgh.pa.us Thu Jun 22 01:01:00 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id BAA22232;
 	Thu, 22 Jun 2000 01:00:59 -0400 (EDT)
-Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id AAA17842; Thu, 22 Jun 2000 00:31:06 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id AAA17842; Thu, 22 Jun 2000 00:31:06 -0400 (EDT)
 Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
 	by sss2.sss.pgh.pa.us (8.9.3/8.9.3) with ESMTP id AAA07254;
 	Thu, 22 Jun 2000 00:29:42 -0400 (EDT)
@@ -8214,7 +8214,7 @@ From pgsql-hackers-owner+M3720@hub.org Thu Jun 22 02:01:02 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id CAA24025
 	for <pgman@candle.pha.pa.us>; Thu, 22 Jun 2000 02:01:02 -0400 (EDT)
-Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id BAA21392 for <pgman@candle.pha.pa.us>; Thu, 22 Jun 2000 01:56:49 -0400 (EDT)
+Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id BAA21392 for <pgman@candle.pha.pa.us>; Thu, 22 Jun 2000 01:56:49 -0400 (EDT)
 Received: from hub.org (majordom@localhost [127.0.0.1])
 	by hub.org (8.10.1/8.10.1) with SMTP id e5M5jp143149;
 	Thu, 22 Jun 2000 01:45:51 -0400 (EDT)
@@ -8269,7 +8269,7 @@ From dhogaza@pacifier.com Thu Jun 22 02:00:58 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id CAA24005
 	for <pgman@candle.pha.pa.us>; Thu, 22 Jun 2000 02:00:58 -0400 (EDT)
-Received: from smtp.pacifier.com (comet.pacifier.com [199.2.117.155]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id BAA21369 for <pgman@candle.pha.pa.us>; Thu, 22 Jun 2000 01:56:18 -0400 (EDT)
+Received: from smtp.pacifier.com (comet.pacifier.com [199.2.117.155]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id BAA21369 for <pgman@candle.pha.pa.us>; Thu, 22 Jun 2000 01:56:18 -0400 (EDT)
 Received: from desktop (dsl-dhogaza.pacifier.net [207.202.226.68])
 	by smtp.pacifier.com (8.9.3/8.9.3pop) with SMTP id WAA12121;
 	Wed, 21 Jun 2000 22:55:39 -0700 (PDT)
@@ -8306,7 +8306,7 @@ From Inoue@tpf.co.jp Thu Jun 22 02:01:00 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id CAA24009
 	for <pgman@candle.pha.pa.us>; Thu, 22 Jun 2000 02:00:59 -0400 (EDT)
-Received: from sd.tpf.co.jp (sd.tpf.co.jp [210.161.239.34]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id BAA21277 for <pgman@candle.pha.pa.us>; Thu, 22 Jun 2000 01:54:44 -0400 (EDT)
+Received: from sd.tpf.co.jp (sd.tpf.co.jp [210.161.239.34]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id BAA21277 for <pgman@candle.pha.pa.us>; Thu, 22 Jun 2000 01:54:44 -0400 (EDT)
 Received: from cadzone ([126.0.1.40] (may be forged))
           by sd.tpf.co.jp (2.5 Build 2640 (Berkeley 8.8.6)/8.8.4) with SMTP
    id OAA03303; Thu, 22 Jun 2000 14:53:52 +0900
@@ -8378,7 +8378,7 @@ From tgl@sss.pgh.pa.us Thu Jun 22 03:31:04 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id DAA28813
 	for <pgman@candle.pha.pa.us>; Thu, 22 Jun 2000 03:31:03 -0400 (EDT)
-Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id DAA23901 for <pgman@candle.pha.pa.us>; Thu, 22 Jun 2000 03:06:47 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id DAA23901 for <pgman@candle.pha.pa.us>; Thu, 22 Jun 2000 03:06:47 -0400 (EDT)
 Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
 	by sss2.sss.pgh.pa.us (8.9.3/8.9.3) with ESMTP id DAA07725;
 	Thu, 22 Jun 2000 03:05:00 -0400 (EDT)
@@ -8417,7 +8417,7 @@ From pgsql-hackers-owner+M3727@hub.org Thu Jun 22 03:31:06 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id DAA28819
 	for <pgman@candle.pha.pa.us>; Thu, 22 Jun 2000 03:31:05 -0400 (EDT)
-Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id DAA24751 for <pgman@candle.pha.pa.us>; Thu, 22 Jun 2000 03:29:00 -0400 (EDT)
+Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id DAA24751 for <pgman@candle.pha.pa.us>; Thu, 22 Jun 2000 03:29:00 -0400 (EDT)
 Received: from hub.org (majordom@localhost [127.0.0.1])
 	by hub.org (8.10.1/8.10.1) with SMTP id e5M7KP140211;
 	Thu, 22 Jun 2000 03:20:25 -0400 (EDT)
@@ -8479,7 +8479,7 @@ From zeugswettera@wien.spardat.at Thu Jun 22 05:01:11 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id FAA29525
 	for <pgman@candle.pha.pa.us>; Thu, 22 Jun 2000 05:01:09 -0400 (EDT)
-Received: from gandalf.it-austria.net (gandalf.it-austria.net [213.150.1.65]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id EAA27070 for <pgman@candle.pha.pa.us>; Thu, 22 Jun 2000 04:38:32 -0400 (EDT)
+Received: from gandalf.it-austria.net (gandalf.it-austria.net [213.150.1.65]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id EAA27070 for <pgman@candle.pha.pa.us>; Thu, 22 Jun 2000 04:38:32 -0400 (EDT)
 Received: from peligor.server.lan.at (peligor.server.lan.at [10.8.32.84])
 	by gandalf.it-austria.net (xxx/xxx) with ESMTP id KAA23252;
 	Thu, 22 Jun 2000 10:37:45 +0200
@@ -8540,7 +8540,7 @@ From pjw@rhyme.com.au Thu Jun 22 04:01:05 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id EAA29060
 	for <pgman@candle.pha.pa.us>; Thu, 22 Jun 2000 04:01:03 -0400 (EDT)
-Received: from acheron.rime.com.au (root@albatr.lnk.telstra.net [139.130.54.222]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id DAA25604 for <pgman@candle.pha.pa.us>; Thu, 22 Jun 2000 03:50:30 -0400 (EDT)
+Received: from acheron.rime.com.au (root@albatr.lnk.telstra.net [139.130.54.222]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id DAA25604 for <pgman@candle.pha.pa.us>; Thu, 22 Jun 2000 03:50:30 -0400 (EDT)
 Received: from oberon (Oberon.rime.com.au [203.8.195.100])
 	by acheron.rime.com.au (8.9.3/8.9.3) with SMTP id RAA08811;
 	Thu, 22 Jun 2000 17:43:22 +1000
@@ -8617,7 +8617,7 @@ From pgsql-hackers-owner+M3730@hub.org Thu Jun 22 05:31:00 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id FAA29741
 	for <pgman@candle.pha.pa.us>; Thu, 22 Jun 2000 05:31:00 -0400 (EDT)
-Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id FAA28478 for <pgman@candle.pha.pa.us>; Thu, 22 Jun 2000 05:18:37 -0400 (EDT)
+Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id FAA28478 for <pgman@candle.pha.pa.us>; Thu, 22 Jun 2000 05:18:37 -0400 (EDT)
 Received: from hub.org (majordom@localhost [127.0.0.1])
 	by hub.org (8.10.1/8.10.1) with SMTP id e5M96W171286;
 	Thu, 22 Jun 2000 05:06:32 -0400 (EDT)
@@ -8677,7 +8677,7 @@ From Inoue@tpf.co.jp Thu Jun 22 07:31:01 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id HAA07559
 	for <pgman@candle.pha.pa.us>; Thu, 22 Jun 2000 07:31:00 -0400 (EDT)
-Received: from sd.tpf.co.jp (sd.tpf.co.jp [210.161.239.34]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id HAA02741 for <pgman@candle.pha.pa.us>; Thu, 22 Jun 2000 07:08:29 -0400 (EDT)
+Received: from sd.tpf.co.jp (sd.tpf.co.jp [210.161.239.34]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id HAA02741 for <pgman@candle.pha.pa.us>; Thu, 22 Jun 2000 07:08:29 -0400 (EDT)
 Received: from cadzone ([126.0.1.40] (may be forged))
           by sd.tpf.co.jp (2.5 Build 2640 (Berkeley 8.8.6)/8.8.4) with SMTP
    id UAA03834; Thu, 22 Jun 2000 20:06:51 +0900
@@ -8729,7 +8729,7 @@ From tgl@sss.pgh.pa.us Thu Jun 22 11:31:06 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id LAA10544
 	for <pgman@candle.pha.pa.us>; Thu, 22 Jun 2000 11:31:05 -0400 (EDT)
-Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id LAA23513 for <pgman@candle.pha.pa.us>; Thu, 22 Jun 2000 11:28:53 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id LAA23513 for <pgman@candle.pha.pa.us>; Thu, 22 Jun 2000 11:28:53 -0400 (EDT)
 Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
 	by sss2.sss.pgh.pa.us (8.9.3/8.9.3) with ESMTP id LAA08851;
 	Thu, 22 Jun 2000 11:27:30 -0400 (EDT)
@@ -8770,7 +8770,7 @@ From vmikheev@SECTORBASE.COM Thu Jun 22 14:31:00 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id OAA11892
 	for <pgman@candle.pha.pa.us>; Thu, 22 Jun 2000 14:30:59 -0400 (EDT)
-Received: from sectorbase2.sectorbase.com ([208.48.122.131]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id OAA10107 for <pgman@candle.pha.pa.us>; Thu, 22 Jun 2000 14:17:04 -0400 (EDT)
+Received: from sectorbase2.sectorbase.com ([208.48.122.131]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id OAA10107 for <pgman@candle.pha.pa.us>; Thu, 22 Jun 2000 14:17:04 -0400 (EDT)
 Received: by SECTORBASE2 with Internet Mail Service (5.5.2650.21)
 	id <MCTD2X5X>; Thu, 22 Jun 2000 11:07:59 -0700
 Message-ID: <8F4C99C66D04D4118F580090272A7A23018C31@SECTORBASE1>
@@ -8835,7 +8835,7 @@ From peter@localhost.its.uu.se Thu Jun 22 18:37:35 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id SAA19684
 	for <pgman@candle.pha.pa.us>; Thu, 22 Jun 2000 18:37:34 -0400 (EDT)
-Received: from merganser.its.uu.se (merganser.its.uu.se [130.238.6.236]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id SAA02841 for <pgman@candle.pha.pa.us>; Thu, 22 Jun 2000 18:31:53 -0400 (EDT)
+Received: from merganser.its.uu.se (merganser.its.uu.se [130.238.6.236]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id SAA02841 for <pgman@candle.pha.pa.us>; Thu, 22 Jun 2000 18:31:53 -0400 (EDT)
 Received: from regulus.student.UU.SE ([130.238.5.2]:37596 "EHLO
         regulus.its.uu.se") by merganser.its.uu.se with ESMTP
 	id <S125060AbQFVW3s>; Fri, 23 Jun 2000 00:29:48 +0200
@@ -10408,7 +10408,7 @@ From ZeugswetterA@wien.spardat.at Thu Jun 29 06:34:49 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id GAA25201
 	for <pgman@candle.pha.pa.us>; Thu, 29 Jun 2000 06:34:44 -0400 (EDT)
-Received: from gandalf.it-austria.net (gandalf.it-austria.net [213.150.1.65]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id GAA00379 for <pgman@candle.pha.pa.us>; Thu, 29 Jun 2000 06:35:30 -0400 (EDT)
+Received: from gandalf.it-austria.net (gandalf.it-austria.net [213.150.1.65]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id GAA00379 for <pgman@candle.pha.pa.us>; Thu, 29 Jun 2000 06:35:30 -0400 (EDT)
 Received: from sdexcgtw01.f000.d0188.sd.spardat.at (sdgtw.sd.spardat.at [172.18.1.16])
 	by gandalf.it-austria.net (xxx/xxx) with ESMTP id MAA33950;
 	Thu, 29 Jun 2000 12:33:42 +0200
@@ -10961,7 +10961,7 @@ From ZeugswetterA@wien.spardat.at Mon Jul  3 04:30:07 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id EAA16088
 	for <pgman@candle.pha.pa.us>; Mon, 3 Jul 2000 04:30:05 -0400 (EDT)
-Received: from gandalf.it-austria.net (gandalf.it-austria.net [213.150.1.65]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id EAA19031 for <pgman@candle.pha.pa.us>; Mon, 3 Jul 2000 04:30:07 -0400 (EDT)
+Received: from gandalf.it-austria.net (gandalf.it-austria.net [213.150.1.65]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id EAA19031 for <pgman@candle.pha.pa.us>; Mon, 3 Jul 2000 04:30:07 -0400 (EDT)
 Received: from sdexcgtw01.f000.d0188.sd.spardat.at (sdgtw.sd.spardat.at [172.18.1.16])
 	by gandalf.it-austria.net (xxx/xxx) with ESMTP id KAA28416;
 	Mon, 3 Jul 2000 10:28:06 +0200
@@ -11013,4 +11013,741 @@ different
 (SQL99) cluster. This would be a very nifty feature.
 
 Andreas 
+
+From pgsql-hackers-owner+M3496@hub.org Fri Jun 16 15:55:14 2000
+Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id OAA02116
+	for <pgman@candle.pha.pa.us>; Fri, 16 Jun 2000 14:55:13 -0400 (EDT)
+Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id NAA21581 for <pgman@candle.pha.pa.us>; Fri, 16 Jun 2000 13:53:58 -0400 (EDT)
+Received: from hub.org (majordom@localhost [127.0.0.1])
+	by hub.org (8.10.1/8.10.1) with SMTP id e5GHpqN06086;
+	Fri, 16 Jun 2000 13:51:52 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2])
+	by hub.org (8.10.1/8.10.1) with ESMTP id e5GHpcN05946
+	for <pgsql-hackers@postgreSQL.org>; Fri, 16 Jun 2000 13:51:39 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss2.sss.pgh.pa.us (8.9.3/8.9.3) with ESMTP id NAA07945
+	for <pgsql-hackers@postgreSQL.org>; Fri, 16 Jun 2000 13:51:38 -0400 (EDT)
+To: pgsql-hackers@postgresql.org
+Subject: [HACKERS] OK, OK, Hiroshi's right: use a seperately-generated filename
+Date: Fri, 16 Jun 2000 13:51:37 -0400
+Message-ID: <7942.961177897@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+X-Mailing-List: pgsql-hackers@postgresql.org
+Precedence: bulk
+Sender: pgsql-hackers-owner@hub.org
+Status: OR
+
+After further thought I think there's a lot of merit in Hiroshi's
+opinion that physical file names should not be tied to relation OID.
+If we use a separately generated value for the file name, we can
+solve a lot of problems pretty nicely by means of "table versioning".
+
+For example: VACUUM can't compact indexes at the moment, and what it
+does do (scan the index and delete unused entries) is really slow.
+The right thing to do is for it to generate an all-new index file,
+but how do we do that without creating a risk of leaving the index
+corrupted if we crash partway through?  The answer is to build the
+new index in a new physical file.  But how do we install the new
+file as the real index atomically, when it might span multiple
+segments?  If the physical file name is decoupled from the relation's
+name *and* OID then there is no problem: the atomic event that makes
+the new file(s) the real table contents is the commit of the new
+pg_class row with the new value for the physical filename.
+
+Aside from possible improvements in VACUUM, this would let us do a
+robust implementation of CLUSTER, and we could do the "really change
+the table" variant of ALTER TABLE DROP COLUMN the same way if anyone
+wants to do it.
+
+The only cost is that we need an additional column in pg_class to
+hold the physical file name.  That's not so bad, especially when
+you remember that we'd surely need to add something to pg_class for
+tablespace support anyway.
+
+If we bite that bullet, then we could also do something to satisfy
+Bruce about having legible file names ;-).  The column in pg_class
+could perfectly well be a string, not a pure number, and that means
+that we can throw in the relname (truncated to fit of course).  So
+the thing would act a lot like the original-relname-plus-OID variant
+that's been discussed so far.  (Original relname because ALTER TABLE
+RENAME would *not* change the physical file name.  But we could
+think about a form of VACUUM that creates a whole new table by
+versioning, and that would presumably bring the physical name back
+in sync with the logical relname.)
+
+Here is a sketch of a concrete proposal.  I see no need to have
+separate pg_class columns for tablespace and physical relname;
+instead, I suggest there be a column of type NAME that is the
+file pathname (relative to the database directory).  Further,
+instead of the existing convention of appending .N to the base
+file name to make extension segment names, I propose that we
+always have a segment number in the physical file name, and that
+the pg_class entry be required to contain a "%d" somewhere that
+indicates where.  The actual filename is manufactured by
+	sprintf(tempbuf, value_from_pg_class_column, segment_number);
+
+As an example, the arrangement I was suggesting earlier today
+about segments in different subdirectories of a tablespace
+could be implemented by assigning physical filenames like
+
+	tablespace/%d/12345_relname
+
+where the 12345 is a value generated separately from the table's OID.
+(We would still use the OID counter to produce these numbers, and
+in fact there's no reason not to use the table's OID as the initial
+unique ID for the physical filename.  The point is just that the
+physical filename doesn't have to remain forever equal to the
+relation's OID.)
+
+If we use type NAME for this string then the tablespace part of the path
+would have to be kept to no more than ~ 15 characters, but that seems
+workable enough.  (Anybody who really didn't like that could recompile
+with larger NAMEDATALEN.  Doesn't seem worth inventing a separate type.)
+
+As Hiroshi pointed out, one of the best aspects of this approach
+is that the physical table layout policy doesn't have to be hard-wired
+into low-level file access routines.  The low-level routines don't
+need to know much of anything about the format of the pathname,
+they just stuff in the right segment number and use the name.  The
+layout policy need only be known to one single routine that generates
+the strings that go into pg_class.  So it'd be really easy to change.
+
+One thing we'd have to work out is that the critical system tables
+(eg, pg_class itself, as well as its indexes) would have to have
+predictable physical names.  Otherwise there's no way for a new
+backend to bootstrap itself up ... it can't very well read pg_class
+to find out where pg_class is.  A brute-force solution is to forbid
+reversioning of the critical tables, but I suspect we can find a
+less restrictive answer.
+
+This seems like it'd satisfy all the concerns that have been raised.
+Comments?
+
+			regards, tom lane
+
+From pgsql-hackers-owner+M3524@hub.org Fri Jun 16 22:30:59 2000
+Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id VAA07796
+	for <pgman@candle.pha.pa.us>; Fri, 16 Jun 2000 21:30:58 -0400 (EDT)
+Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id VAA26393 for <pgman@candle.pha.pa.us>; Fri, 16 Jun 2000 21:16:37 -0400 (EDT)
+Received: from hub.org (majordom@localhost [127.0.0.1])
+	by hub.org (8.10.1/8.10.1) with SMTP id e5H1EeM94683;
+	Fri, 16 Jun 2000 21:14:40 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2])
+	by hub.org (8.10.1/8.10.1) with ESMTP id e5H1D0M94365
+	for <pgsql-hackers@postgreSQL.org>; Fri, 16 Jun 2000 21:13:00 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss2.sss.pgh.pa.us (8.9.3/8.9.3) with ESMTP id VAA10209;
+	Fri, 16 Jun 2000 21:12:30 -0400 (EDT)
+To: Chris Bitmead <chris@bitmead.com>
+cc: pgsql-hackers@postgreSQL.org
+Subject: Re: [HACKERS] OK, OK, Hiroshi's right: use a seperately-generated filename 
+In-reply-to: <394ACB42.C87C59B8@bitmead.com> 
+References: <7942.961177897@sss.pgh.pa.us> <394ACB42.C87C59B8@bitmead.com>
+Comments: In-reply-to Chris Bitmead <chris@bitmead.com>
+	message dated "Sat, 17 Jun 2000 10:50:10 +1000"
+Date: Fri, 16 Jun 2000 21:12:29 -0400
+Message-ID: <10206.961204349@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+X-Mailing-List: pgsql-hackers@postgresql.org
+Precedence: bulk
+Sender: pgsql-hackers-owner@hub.org
+Status: OR
+
+Chris Bitmead <chris@bitmead.com> writes:
+> At least on UNIX, couldn't you use a hard-link and change the name in
+> pg_class immediately? Let the brain-dead operating systems use the
+> vacuum method.
+
+Hmm ... maybe, but it doesn't seem worth the portability headache to
+me.  We do have an NT port that we don't want to break, and I don't
+think RENAME TABLE is worth the trouble of testing/supporting two
+implementations.
+
+Even on Unix, aren't there filesystems that don't do hard links?
+Not that I'd recommend running Postgres on such a volume, but...
+
+			regards, tom lane
+
+From pgsql-hackers-owner+M3525@hub.org Sat Jun 17 07:01:03 2000
+Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id GAA22194
+	for <pgman@candle.pha.pa.us>; Sat, 17 Jun 2000 06:01:02 -0400 (EDT)
+Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id FAA21836 for <pgman@candle.pha.pa.us>; Sat, 17 Jun 2000 05:39:21 -0400 (EDT)
+Received: from hub.org (majordom@localhost [127.0.0.1])
+	by hub.org (8.10.1/8.10.1) with SMTP id e5H9bSM88777;
+	Sat, 17 Jun 2000 05:37:28 -0400 (EDT)
+Received: from sd.tpf.co.jp (sd.tpf.co.jp [210.161.239.34])
+	by hub.org (8.10.1/8.10.1) with ESMTP id e5H9anM88603
+	for <pgsql-hackers@postgreSQL.org>; Sat, 17 Jun 2000 05:36:49 -0400 (EDT)
+Received: from mcadnote1 (ppm130.noc.fukui.nsk.ne.jp [210.161.188.49])
+          by sd.tpf.co.jp (2.5 Build 2640 (Berkeley 8.8.6)/8.8.4) with SMTP
+   id SAA08384; Sat, 17 Jun 2000 18:36:00 +0900
+From: "Hiroshi Inoue" <Inoue@tpf.co.jp>
+To: "Tom Lane" <tgl@sss.pgh.pa.us>
+Cc: <pgsql-hackers@postgresql.org>
+Subject: RE: [HACKERS] OK, OK, Hiroshi's right: use a seperately-generated filename
+Date: Sat, 17 Jun 2000 18:38:53 +0900
+Message-ID: <EKEJJICOHDIEMGPNIFIJIEAKCCAA.Inoue@tpf.co.jp>
+MIME-Version: 1.0
+Content-Type: text/plain;
+	charset="iso-2022-jp"
+Content-Transfer-Encoding: 7bit
+X-Priority: 3 (Normal)
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook IMO, Build 9.0.2416 (9.0.2910.0)
+In-Reply-To: <7942.961177897@sss.pgh.pa.us>
+X-MimeOLE: Produced By Microsoft MimeOLE V5.00.2919.6700
+Importance: Normal
+X-Mailing-List: pgsql-hackers@postgresql.org
+Precedence: bulk
+Sender: pgsql-hackers-owner@hub.org
+Status: OR
+
+> -----Original Message-----
+> From: pgsql-hackers-owner@hub.org [mailto:pgsql-hackers-owner@hub.org]On
+> Behalf Of Tom Lane
+> 
+> After further thought I think there's a lot of merit in Hiroshi's
+> opinion that physical file names should not be tied to relation OID.
+> If we use a separately generated value for the file name, we can
+> solve a lot of problems pretty nicely by means of "table versioning".
+> 
+> For example: VACUUM can't compact indexes at the moment, and what it
+> does do (scan the index and delete unused entries) is really slow.
+> The right thing to do is for it to generate an all-new index file,
+> but how do we do that without creating a risk of leaving the index
+> corrupted if we crash partway through?  The answer is to build the
+> new index in a new physical file.  But how do we install the new
+> file as the real index atomically, when it might span multiple
+> segments?  If the physical file name is decoupled from the relation's
+> name *and* OID then there is no problem: the atomic event that makes
+> the new file(s) the real table contents is the commit of the new
+> pg_class row with the new value for the physical filename.
+> 
+> Aside from possible improvements in VACUUM, this would let us do a
+> robust implementation of CLUSTER, and we could do the "really change
+> the table" variant of ALTER TABLE DROP COLUMN the same way if anyone
+> wants to do it.
+>
+
+Yes,I've wondered how do we implement column_is_really_dropped 
+ALTER TABLE DROP COLUMN feature without this kind of mechanism.
+
+> The only cost is that we need an additional column in pg_class to
+> hold the physical file name.  That's not so bad, especially when
+> you remember that we'd surely need to add something to pg_class for
+> tablespace support anyway.
+> 
+> If we bite that bullet, then we could also do something to satisfy
+> Bruce about having legible file names ;-).  The column in pg_class
+> could perfectly well be a string, not a pure number, and that means
+> that we can throw in the relname (truncated to fit of course).  So
+> the thing would act a lot like the original-relname-plus-OID variant
+> that's been discussed so far.  (Original relname because ALTER TABLE
+> RENAME would *not* change the physical file name.  But we could
+> think about a form of VACUUM that creates a whole new table by
+> versioning, and that would presumably bring the physical name back
+> in sync with the logical relname.)
+> 
+> As Hiroshi pointed out, one of the best aspects of this approach
+> is that the physical table layout policy doesn't have to be hard-wired
+> into low-level file access routines.  The low-level routines don't
+> need to know much of anything about the format of the pathname,
+> they just stuff in the right segment number and use the name.  The
+> layout policy need only be known to one single routine that generates
+> the strings that go into pg_class.  So it'd be really easy to change.
+>
+
+Ross's approach is fundamentally same though he is using relname+OID
+naming rule.  I've said his trial is most practical one.
+ 
+> One thing we'd have to work out is that the critical system tables
+> (eg, pg_class itself, as well as its indexes) would have to have
+> predictable physical names.
+
+The only limitation of the relation filename is the uniqueness.
+So it doesn't introduce any inconsistency that system tables
+have fixed name.
+As for system relations it wouldn't be so bad because CLUSTER/
+ALTER TABLE DROP COLUMN ... would be unnecessary(maybe).
+But as for system indexes,it is preferable that VACUUM/REINDEX
+could rebuild them safely. System indexes never shrink currently.
+
+Regards.
+
+Hiroshi Inoue
+Inoue@tpf.co.jp
+
+From pgsql-hackers-owner+M3529@hub.org Sat Jun 17 10:01:24 2000
+Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id JAA24004
+	for <pgman@candle.pha.pa.us>; Sat, 17 Jun 2000 09:01:23 -0400 (EDT)
+Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id IAA28633 for <pgman@candle.pha.pa.us>; Sat, 17 Jun 2000 08:57:47 -0400 (EDT)
+Received: from hub.org (majordom@localhost [127.0.0.1])
+	by hub.org (8.10.1/8.10.1) with SMTP id e5HCtxM77095;
+	Sat, 17 Jun 2000 08:55:59 -0400 (EDT)
+Received: from merganser.its.uu.se (merganser.its.uu.se [130.238.6.236])
+	by hub.org (8.10.1/8.10.1) with ESMTP id e5HCtoM77026
+	for <pgsql-hackers@postgresql.org>; Sat, 17 Jun 2000 08:55:50 -0400 (EDT)
+Received: from regulus.student.UU.SE ([130.238.5.2]:57716 "EHLO
+        regulus.its.uu.se") by merganser.its.uu.se with ESMTP
+	id <S276602AbQFQMzZ>; Sat, 17 Jun 2000 14:55:25 +0200
+Received: from peter (helo=localhost)
+	by regulus.its.uu.se with local-esmtp (Exim 3.02 #2)
+	id 133IET-0002Y3-00; Sat, 17 Jun 2000 15:01:53 +0200
+Date:   Sat, 17 Jun 2000 15:01:53 +0200 (CEST)
+From: Peter Eisentraut <peter_e@gmx.net>
+To: Tom Lane <tgl@sss.pgh.pa.us>
+cc: pgsql-hackers@postgreSQL.org
+Subject: Re: [HACKERS] OK, OK, Hiroshi's right: use a seperately-generated
+	filename
+In-Reply-To: <7942.961177897@sss.pgh.pa.us>
+Message-ID: <Pine.LNX.4.21.0006170403000.17284-100000@localhost.localdomain>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=ISO-8859-1
+Content-Transfer-Encoding: 8BIT
+X-Mailing-List: pgsql-hackers@postgresql.org
+Precedence: bulk
+Sender: pgsql-hackers-owner@hub.org
+Status: OR
+
+Tom Lane writes:
+
+> 	tablespace/%d/12345_relname
+
+Throwing table spaces and relation names into one pot doesn't excite me
+very much. For example, before long people will want to
+
+* Query what tables are in what space (without using string operations)
+Consider for example creating a new table and choosing where to put it.
+
+* Rename table spaces
+
+* Assign attributes of some sort to table spaces (permissions, etc.)
+
+* Use table space names with more than 15 characters. :)
+
+Somehow table spaces need to be catalogued. You could still make the
+physical file name 'tablespaceoid/rest' without actually having to look up
+anything, although that depends on your symlink idea which is still under
+discussion.
+
+Then, why are all nth segments of tables in one directory in that
+proposal?
+
+Also, you said before that an old relname (after rename) is worse than
+none at all. I couldn't agree more.
+
+Why not use OID.[SEGMENT.]VERSION for the physical relname (different
+order possible)? That way you at least have some guaranteed correspondence
+between files and tables. Version could probably be an INT2, so you save
+some space.
+
+
+-- 
+Peter Eisentraut                  Sernanders väg 10:115
+peter_e@gmx.net                   75262 Uppsala
+http://yi.org/peter-e/            Sweden
+
+
+From pgsql-hackers-owner+M3534@hub.org Sat Jun 17 13:31:11 2000
+Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id MAA02801
+	for <pgman@candle.pha.pa.us>; Sat, 17 Jun 2000 12:31:10 -0400 (EDT)
+Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id MAA07848 for <pgman@candle.pha.pa.us>; Sat, 17 Jun 2000 12:27:14 -0400 (EDT)
+Received: from hub.org (majordom@localhost [127.0.0.1])
+	by hub.org (8.10.1/8.10.1) with SMTP id e5HGPJM95074;
+	Sat, 17 Jun 2000 12:25:19 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2])
+	by hub.org (8.10.1/8.10.1) with ESMTP id e5HGP1M94990
+	for <pgsql-hackers@postgreSQL.org>; Sat, 17 Jun 2000 12:25:01 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss2.sss.pgh.pa.us (8.9.3/8.9.3) with ESMTP id MAA18939;
+	Sat, 17 Jun 2000 12:24:56 -0400 (EDT)
+To: "Hiroshi Inoue" <Inoue@tpf.co.jp>
+cc: pgsql-hackers@postgreSQL.org
+Subject: Re: [HACKERS] OK, OK, Hiroshi's right: use a seperately-generated filename 
+In-reply-to: <EKEJJICOHDIEMGPNIFIJIEAKCCAA.Inoue@tpf.co.jp> 
+References: <EKEJJICOHDIEMGPNIFIJIEAKCCAA.Inoue@tpf.co.jp>
+Comments: In-reply-to "Hiroshi Inoue" <Inoue@tpf.co.jp>
+	message dated "Sat, 17 Jun 2000 18:38:53 +0900"
+Date: Sat, 17 Jun 2000 12:24:56 -0400
+Message-ID: <18936.961259096@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+X-Mailing-List: pgsql-hackers@postgresql.org
+Precedence: bulk
+Sender: pgsql-hackers-owner@hub.org
+Status: OR
+
+"Hiroshi Inoue" <Inoue@tpf.co.jp> writes:
+>> One thing we'd have to work out is that the critical system tables
+>> (eg, pg_class itself, as well as its indexes) would have to have
+>> predictable physical names.
+
+> The only limitation of the relation filename is the uniqueness.
+> So it doesn't introduce any inconsistency that system tables
+> have fixed name.
+> As for system relations it wouldn't be so bad because CLUSTER/
+> ALTER TABLE DROP COLUMN ... would be unnecessary(maybe).
+> But as for system indexes,it is preferable that VACUUM/REINDEX
+> could rebuild them safely. System indexes never shrink currently.
+
+Right, it's the index-shrinking business that has me worried.
+Most of the other reasons for swapping in a new file don't apply
+to system tables, but that one does.
+
+One possibility is to say that system *tables* can't be reversioned
+(at least not the critical ones) but system *indexes* can be.
+Then we'd have to use your ignore-system-indexes stuff during backend
+startup, until we'd found out where the indexes are.  Might be too big
+a time penalty however... not sure.  Shared cache inval of a system
+index could be a little tricky too; I don't think the catcache routines
+are prepared to fall back to non-index scan are they?
+
+On the whole it might be better to cheat by using a side data structure
+like the pg_internal.init file, that a backend could consult to find out
+where the indexes are now.
+
+			regards, tom lane
+
+From pgsql-hackers-owner+M3553@hub.org Sun Jun 18 18:31:03 2000
+Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id RAA08740
+	for <pgman@candle.pha.pa.us>; Sun, 18 Jun 2000 17:31:02 -0400 (EDT)
+Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id RAA18332 for <pgman@candle.pha.pa.us>; Sun, 18 Jun 2000 17:21:51 -0400 (EDT)
+Received: from hub.org (majordom@localhost [127.0.0.1])
+	by hub.org (8.10.1/8.10.1) with SMTP id e5ILJcM11720;
+	Sun, 18 Jun 2000 17:19:38 -0400 (EDT)
+Received: from merganser.its.uu.se (merganser.its.uu.se [130.238.6.236])
+	by hub.org (8.10.1/8.10.1) with ESMTP id e5ILILM09628
+	for <pgsql-hackers@postgresql.org>; Sun, 18 Jun 2000 17:18:21 -0400 (EDT)
+Received: from regulus.student.UU.SE ([130.238.5.2]:40239 "EHLO
+        regulus.its.uu.se") by merganser.its.uu.se with ESMTP
+	id <S436346AbQFRVRt>; Sun, 18 Jun 2000 23:17:49 +0200
+Received: from peter (helo=localhost)
+	by regulus.its.uu.se with local-esmtp (Exim 3.02 #2)
+	id 133mYM-0000Ns-00; Sun, 18 Jun 2000 23:24:26 +0200
+Date:   Sun, 18 Jun 2000 23:24:26 +0200 (CEST)
+From: Peter Eisentraut <peter_e@gmx.net>
+To: Tom Lane <tgl@sss.pgh.pa.us>
+cc: PostgreSQL Development <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] OK, OK, Hiroshi's right: use a seperately-generated
+	filename 
+In-Reply-To: <19045.961260445@sss.pgh.pa.us>
+Message-ID: <Pine.LNX.4.21.0006181657280.562-100000@localhost.localdomain>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=ISO-8859-1
+Content-Transfer-Encoding: 8BIT
+X-Mailing-List: pgsql-hackers@postgresql.org
+Precedence: bulk
+Sender: pgsql-hackers-owner@hub.org
+Status: OR
+
+Tom Lane writes:
+
+> I don't think it's a good idea to have to consult pg_tablespace to find
+> out where a table actually is --- I think the pathname (or smgr access
+> token as Ross would call it ;-)) ought to be determinable from just the
+> pg_class entry.
+
+That's why I suggested the table space oid. That would be readily
+available from pg_class.
+
+
+> Tablespaces can have logical names stored in pg_tablespace; they just
+> can't contribute more than a dozen or so characters to file pathnames
+> under the implementation I'm proposing.  That doesn't seem too
+> unreasonable; the pathname part can be some sort of abbreviated name.
+
+Since the abbreviated name is really only used internally it might as well
+be the oid. Otherwise you create a weird functional dependency like the
+pg_shadow.usesysid field that's just an extra layer of maintenance.
+
+
+> this implementation mechanism will support either policy choice ---
+> original relname in the filename, or just a numeric ID for the
+> filename
+
+But when you look at a file name `12345_accounts_recei' you know neither
+
+* whether the table name was really `accounts_recei' or whether the name
+was truncated
+
+* whether the table still has that name, whatever it was
+
+* what table this is at all
+
+So in the aggregate you really know less than nothing. :-)
+
+
+> > Why not use OID.[SEGMENT.]VERSION for the physical relname (different
+> > order possible)?
+> 
+> Doesn't give you a manageable way to split segments across different
+> disks.
+
+Okay, so maybe ${base}/TABLESPACEOID/SEGMENT/RELOID.VERSION.
+
+This doesn't need any catalog lookup outside of pg_class, yet it's still
+easy to resolve to human-readable names by simple admin tools (SELECT *
+FROM pg_foo WHERE oid = xxx). VERSION would be unique within a conceptual
+relation, so you could even see how many times the relation was altered in
+major ways (kind of).
+
+
+-- 
+Peter Eisentraut                  Sernanders väg 10:115
+peter_e@gmx.net                   75262 Uppsala
+http://yi.org/peter-e/            Sweden
+
+
+From pgsql-hackers-owner+M3561@hub.org Sun Jun 18 21:31:03 2000
+Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id UAA20523
+	for <pgman@candle.pha.pa.us>; Sun, 18 Jun 2000 20:31:02 -0400 (EDT)
+Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id UAA25719 for <pgman@candle.pha.pa.us>; Sun, 18 Jun 2000 20:26:49 -0400 (EDT)
+Received: from hub.org (majordom@localhost [127.0.0.1])
+	by hub.org (8.10.1/8.10.1) with SMTP id e5J0OLM53050;
+	Sun, 18 Jun 2000 20:24:21 -0400 (EDT)
+Received: from sd.tpf.co.jp (sd.tpf.co.jp [210.161.239.34])
+	by hub.org (8.10.1/8.10.1) with ESMTP id e5J0NmM50883
+	for <pgsql-hackers@postgreSQL.org>; Sun, 18 Jun 2000 20:23:49 -0400 (EDT)
+Received: from cadzone ([126.0.1.40] (may be forged))
+          by sd.tpf.co.jp (2.5 Build 2640 (Berkeley 8.8.6)/8.8.4) with SMTP
+   id JAA09003; Mon, 19 Jun 2000 09:22:45 +0900
+From: "Hiroshi Inoue" <Inoue@tpf.co.jp>
+To: "Chris Bitmead" <chris@bitmead.com>, "Tom Lane" <tgl@sss.pgh.pa.us>
+Cc: "Peter Eisentraut" <peter_e@gmx.net>, <pgsql-hackers@postgresql.org>
+Subject: RE: [HACKERS] OK, OK, Hiroshi's right: use a seperately-generated filename
+Date: Mon, 19 Jun 2000 09:24:56 +0900
+Message-ID: <000901bfd984$cbf1dfc0$2801007e@tpf.co.jp>
+MIME-Version: 1.0
+Content-Type: text/plain;
+	charset="ISO-8859-1"
+Content-Transfer-Encoding: 7bit
+X-Priority: 3 (Normal)
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook 8.5, Build 4.71.2173.0
+In-Reply-To: <394C20C6.9580A8A9@bitmead.com>
+X-MimeOLE: Produced By Microsoft MimeOLE V5.00.2314.1300
+Importance: Normal
+X-Mailing-List: pgsql-hackers@postgresql.org
+Precedence: bulk
+Sender: pgsql-hackers-owner@hub.org
+Status: OR
+
+> -----Original Message-----
+> From: pgsql-hackers-owner@hub.org [mailto:pgsql-hackers-owner@hub.org]On
+> Behalf Of Chris Bitmead
+>
+> Tom Lane wrote:
+>
+> > > Also, you said before that an old relname (after rename) is worse than
+> > > none at all. I couldn't agree more.
+> >
+> > I'm not the one who wants relnames in the physical names ;-).  However,
+> > this implementation mechanism will support either policy choice ---
+> > original relname in the filename, or just a numeric ID for the filename
+> > --- and that seems like a good sign to me.
+> >
+> > > Why not use OID.[SEGMENT.]VERSION for the physical relname (different
+> > > order possible)?
+>
+> Unless VERSION is globally unique like an oid is, having RELNAME.VERSION
+> would be a problem if you created a table with the same name as a
+> recently renamed table.
+>
+
+In my proposal(relname+unique-id),the unique-id is globally unique
+and relname is only for dba's convenience. I've said many times that
+we should be free from the rule of file naming as far as possible.
+I myself don't mind the name of relation files except that they should
+be globally unique. I had to propose my opinion for file naming
+because people have been so enthusiastic about globally_not_unique
+file naming.
+
+Regards.
+
+Hiroshi Inoue
+Inoue@tpf.co.jp
+
+
+From pgsql-hackers-owner+M3523@hub.org Fri Jun 16 22:01:00 2000
+Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id VAA07568
+	for <pgman@candle.pha.pa.us>; Fri, 16 Jun 2000 21:00:59 -0400 (EDT)
+Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id UAA25354 for <pgman@candle.pha.pa.us>; Fri, 16 Jun 2000 20:54:02 -0400 (EDT)
+Received: from hub.org (majordom@localhost [127.0.0.1])
+	by hub.org (8.10.1/8.10.1) with SMTP id e5H0q3M53458;
+	Fri, 16 Jun 2000 20:52:03 -0400 (EDT)
+Received: from tech.com.au (IDENT:root@techpt.lnk.telstra.net [139.130.75.122])
+	by hub.org (8.10.1/8.10.1) with ESMTP id e5H0oRM47761
+	for <pgsql-hackers@postgreSQL.org>; Fri, 16 Jun 2000 20:50:28 -0400 (EDT)
+Received: from bitmead.com (IDENT:chris@tardis [203.41.180.243])
+	by tech.com.au (8.9.3/8.9.3) with ESMTP id KAA21482;
+	Sat, 17 Jun 2000 10:50:14 +1000
+Message-ID: <394ACB42.C87C59B8@bitmead.com>
+Date: Sat, 17 Jun 2000 10:50:10 +1000
+From: Chris Bitmead <chris@bitmead.com>
+X-Mailer: Mozilla 4.72 [en] (X11; U; Linux 2.2.14-5.0 i686)
+X-Accept-Language: en
+MIME-Version: 1.0
+To: Tom Lane <tgl@sss.pgh.pa.us>
+CC: pgsql-hackers@postgreSQL.org
+Subject: Re: [HACKERS] OK, OK, Hiroshi's right: use a seperately-generated 
+	filename
+References: <7942.961177897@sss.pgh.pa.us>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+X-Mailing-List: pgsql-hackers@postgresql.org
+Precedence: bulk
+Sender: pgsql-hackers-owner@hub.org
+Status: ORr
+
+Tom Lane wrote:
+  So
+> the thing would act a lot like the original-relname-plus-OID variant
+> that's been discussed so far.  (Original relname because ALTER TABLE
+> RENAME would *not* change the physical file name.  But we could
+> think about a form of VACUUM that creates a whole new table by
+> versioning, and that would presumably bring the physical name back
+> in sync with the logical relname.)
+
+At least on UNIX, couldn't you use a hard-link and change the name in
+pg_class immediately? Let the brain-dead operating systems use the
+vacuum method.
+
+From pgsql-hackers-owner+M3576@hub.org Mon Jun 19 01:58:35 2000
+Received: from hub.org (root@hub.org [216.126.84.1])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id AAA00789
+	for <pgman@candle.pha.pa.us>; Mon, 19 Jun 2000 00:58:34 -0400 (EDT)
+Received: from hub.org (majordom@localhost [127.0.0.1])
+	by hub.org (8.10.1/8.10.1) with SMTP id e5J4qfM87650;
+	Mon, 19 Jun 2000 00:52:41 -0400 (EDT)
+Received: from sd.tpf.co.jp (sd.tpf.co.jp [210.161.239.34])
+	by hub.org (8.10.1/8.10.1) with ESMTP id e5J4oUM77400
+	for <pgsql-hackers@postgresql.org>; Mon, 19 Jun 2000 00:50:30 -0400 (EDT)
+Received: from cadzone ([126.0.1.40] (may be forged))
+          by sd.tpf.co.jp (2.5 Build 2640 (Berkeley 8.8.6)/8.8.4) with SMTP
+   id NAA09265; Mon, 19 Jun 2000 13:50:22 +0900
+From: "Hiroshi Inoue" <Inoue@tpf.co.jp>
+To: "Peter Eisentraut" <peter_e@gmx.net>
+Cc: "PostgreSQL Development" <pgsql-hackers@postgresql.org>,
+        "Tom Lane" <tgl@sss.pgh.pa.us>
+Subject: RE: [HACKERS] OK, OK, Hiroshi's right: use a seperately-generatedfilename 
+Date: Mon, 19 Jun 2000 13:52:34 +0900
+Message-ID: <001201bfd9aa$2f1c1320$2801007e@tpf.co.jp>
+MIME-Version: 1.0
+Content-Type: text/plain;
+	charset="ISO-8859-1"
+Content-Transfer-Encoding: 7bit
+X-Priority: 3 (Normal)
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook 8.5, Build 4.71.2173.0
+In-Reply-To: <Pine.LNX.4.21.0006181657280.562-100000@localhost.localdomain>
+X-MimeOLE: Produced By Microsoft MimeOLE V5.00.2314.1300
+Importance: Normal
+X-Mailing-List: pgsql-hackers@postgresql.org
+Precedence: bulk
+Sender: pgsql-hackers-owner@hub.org
+Status: OR
+
+> -----Original Message-----
+> From: pgsql-hackers-owner@hub.org [mailto:pgsql-hackers-owner@hub.org]On
+> Behalf Of Peter Eisentraut
+> 
+> Tom Lane writes:
+> 
+> > I don't think it's a good idea to have to consult pg_tablespace to find
+> > out where a table actually is --- I think the pathname (or smgr access
+> > token as Ross would call it ;-)) ought to be determinable from just the
+> > pg_class entry.
+> 
+> That's why I suggested the table space oid. That would be readily
+> available from pg_class.
+>
+
+It seems to me that the following 1)2) has always been mixed up.
+IMHO,they should be distinguished clearly.
+
+1) Where the table is stored
+    Currently PostgreSQL relies on relname -> filename mapping
+    rule to access *existent* relations and doesn't have this
+    information in its database. Our(Tom,Ross,me) proposal is to
+    keep the information(token) in pg_class and provide a standard
+    transactional control mechanism for the change of table file
+    allocation. By doing it we would be able to be free from table
+    allocation(naming) rule.
+    Isn't it a kind of thing why we haven't had it from the first ?
+   
+2) Where to store the table
+    Yes,TABLE(DATA)SPACE should encapsulate this concept.
+ 
+I want the decision about 1) first. Ross has already tried it without
+2).
+
+Comments ?
+
+As for 2) every one seems to have each opinion and the discussion
+has always been divergent.   Please don't discard 1) together.
+
+Regards.
+
+Hiroshi Inoue
+Inoue@tpf.co.jp 
+
+
+From pgsql-hackers-owner+M3591@hub.org Mon Jun 19 11:01:19 2000
+Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id KAA21409
+	for <pgman@candle.pha.pa.us>; Mon, 19 Jun 2000 10:01:18 -0400 (EDT)
+Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id JAA05383 for <pgman@candle.pha.pa.us>; Mon, 19 Jun 2000 09:56:59 -0400 (EDT)
+Received: from hub.org (majordom@localhost [127.0.0.1])
+	by hub.org (8.10.1/8.10.1) with SMTP id e5JDsVM91574;
+	Mon, 19 Jun 2000 09:54:31 -0400 (EDT)
+Received: from gandalf.it-austria.net (gandalf.it-austria.net [213.150.1.65])
+	by hub.org (8.10.1/8.10.1) with ESMTP id e5JDldM77267
+	for <pgsql-hackers@postgreSQL.org>; Mon, 19 Jun 2000 09:48:05 -0400 (EDT)
+Received: from sdexcgtw01.f000.d0188.sd.spardat.at (sdgtw.sd.spardat.at [172.18.1.16])
+	by gandalf.it-austria.net (xxx/xxx) with ESMTP id PAA80686;
+	Mon, 19 Jun 2000 15:46:24 +0200
+Received: by sdexcgtw01.f000.d0188.sd.spardat.at with Internet Mail Service (5.5.2448.0)
+	id <M6F90H0A>; Mon, 19 Jun 2000 15:46:24 +0200
+Message-ID: <219F68D65015D011A8E000006F8590C605BA5978@sdexcsrv1.f000.d0188.sd.spardat.at>
+From: Zeugswetter Andreas SB <ZeugswetterA@wien.spardat.at>
+To: "'Tom Lane'" <tgl@sss.pgh.pa.us>, Peter Eisentraut <peter_e@gmx.net>
+Cc: pgsql-hackers@postgresql.org
+Subject: AW: [HACKERS] OK, OK, Hiroshi's right: use a seperately-generated
+  filename 
+Date: Mon, 19 Jun 2000 15:46:22 +0200
+MIME-Version: 1.0
+X-Mailer: Internet Mail Service (5.5.2448.0)
+Content-Type: text/plain;
+	charset="iso-8859-1"
+X-Mailing-List: pgsql-hackers@postgresql.org
+Precedence: bulk
+Sender: pgsql-hackers-owner@hub.org
+Status: OR
+
+
+> It's better than *all* segments of tables in one directory, which is
+> what you get if the segment number is just a component of a flat file
+> name.  We have to have a better answer than that for people who need
+> to cope with tables bigger than a disk.  Perhaps someone can 
+> think of a
+> better answer than subdirectory-per-segment-number, but I think that
+> will work well enough; and it doesn't add any complexity for file
+> access.
+
+I do not see this connection between a filesystem and a disk ?
+Modern systems have the ability to join more than one disk into 
+one filesystem.
+
+Also if we think about separating large tables into smaller parts
+we imho want something where the optimizer has knowledge 
+what data it finds in what part of the table.
+
+Andreas
 
