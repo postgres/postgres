@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/lselect.c,v 1.15 1999/02/13 23:20:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/lselect.c,v 1.16 1999/07/10 18:21:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -186,41 +186,49 @@ puttuple(struct leftist ** treep,
 int
 tuplecmp(HeapTuple ltup, HeapTuple rtup, LeftistContext context)
 {
-	Datum		lattr,
-				rattr;
-	int			nkey = 0;
+	int			nkey;
 	int			result = 0;
-	bool		isnull;
 
 	if (ltup == (HeapTuple) NULL)
 		return 0;
 	if (rtup == (HeapTuple) NULL)
 		return 1;
-	while (nkey < context->nKeys && !result)
+	for (nkey = 0; nkey < context->nKeys; nkey++)
 	{
-		lattr = heap_getattr(ltup,
-							 context->scanKeys[nkey].sk_attno,
-							 context->tupDesc, &isnull);
-		if (isnull)
-			return 0;
-		rattr = heap_getattr(rtup,
-							 context->scanKeys[nkey].sk_attno,
-							 context->tupDesc,
-							 &isnull);
-		if (isnull)
+		ScanKey		thisKey = & context->scanKeys[nkey];
+		Datum		lattr,
+					rattr;
+		bool		lisnull,
+					risnull;
+
+		lattr = heap_getattr(ltup, thisKey->sk_attno,
+							 context->tupDesc, &lisnull);
+		rattr = heap_getattr(rtup, thisKey->sk_attno,
+							 context->tupDesc, &risnull);
+		if (lisnull)
+		{
+			if (risnull)
+				continue;		/* treat two nulls as equal */
+			return 0;			/* else, a null sorts after all else */
+		}
+		if (risnull)
 			return 1;
-		if (context->scanKeys[nkey].sk_flags & SK_COMMUTE)
+		if (thisKey->sk_flags & SK_COMMUTE)
 		{
 			if (!(result =
-				  (long) (*fmgr_faddr(&context->scanKeys[nkey].sk_func)) (rattr, lattr)))
+				  (long) (*fmgr_faddr(&thisKey->sk_func)) (rattr, lattr)))
 				result =
-					-(long) (*fmgr_faddr(&context->scanKeys[nkey].sk_func)) (lattr, rattr);
+					-(long) (*fmgr_faddr(&thisKey->sk_func)) (lattr, rattr);
 		}
-		else if (!(result =
-				   (long) (*fmgr_faddr(&context->scanKeys[nkey].sk_func)) (lattr, rattr)))
-			result =
-				-(long) (*fmgr_faddr(&context->scanKeys[nkey].sk_func)) (rattr, lattr);
-		nkey++;
+		else
+		{
+			if (!(result =
+				  (long) (*fmgr_faddr(&thisKey->sk_func)) (lattr, rattr)))
+				result =
+					-(long) (*fmgr_faddr(&thisKey->sk_func)) (rattr, lattr);
+		}
+		if (result)
+			break;
 	}
 	return result == 1;
 }
