@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  *
- *  $Id: nodeHash.c,v 1.33 1999/05/06 00:30:46 tgl Exp $
+ *  $Id: nodeHash.c,v 1.34 1999/05/09 00:53:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,9 +39,6 @@
 
 extern int	NBuffers;
 
-#define HJ_TEMP_NAMELEN  16		/* max length for mk_hj_temp file names */
-
-static void mk_hj_temp(char *tempname);
 static int	hashFunc(Datum key, int len, bool byVal);
 static RelativeAddr hashTableAlloc(int size, HashJoinTable hashtable);
 static void * absHashTableAlloc(int size, HashJoinTable hashtable);
@@ -72,7 +69,6 @@ ExecHash(Hash *node)
 	RelativeAddr *batchPos;
 	int		   *batchSizes;
 	int			i;
-	RelativeAddr *innerbatchNames;
 
 	/* ----------------
 	 *	get state info from node
@@ -91,8 +87,6 @@ ExecHash(Hash *node)
 
 	if (nbatch > 0)
 	{							/* if needs hash partition */
-		innerbatchNames = (RelativeAddr *) ABSADDR(hashtable->innerbatchNames);
-
 		/* --------------
 		 *	allocate space for the file descriptors of batch files
 		 *	then open the batch files in the current processes.
@@ -101,13 +95,7 @@ ExecHash(Hash *node)
 		batches = (File *) palloc(nbatch * sizeof(File));
 		for (i = 0; i < nbatch; i++)
 		{
-#ifndef __CYGWIN32__
-			batches[i] = FileNameOpenFile(ABSADDR(innerbatchNames[i]),
-										  O_CREAT | O_RDWR, 0600);
-#else
-			batches[i] = FileNameOpenFile(ABSADDR(innerbatchNames[i]),
-										  O_CREAT | O_RDWR | O_BINARY, 0600);
-#endif
+			batches[i] = OpenTemporaryFile();
 		}
 		hashstate->hashBatches = batches;
 		batchPos = (RelativeAddr *) ABSADDR(hashtable->innerbatchPos);
@@ -291,7 +279,7 @@ absHashTableAlloc(int size, HashJoinTable hashtable)
  * ----------------------------------------------------------------
  */
 #define NTUP_PER_BUCKET			10
-#define FUDGE_FAC				1.5
+#define FUDGE_FAC				2.0
 
 HashJoinTable
 ExecHashTableCreate(Hash *node)
@@ -310,12 +298,9 @@ ExecHashTableCreate(Hash *node)
 	int			totalbuckets;
 	int			bucketsize;
 	int			i;
-	RelativeAddr *outerbatchNames;
 	RelativeAddr *outerbatchPos;
-	RelativeAddr *innerbatchNames;
 	RelativeAddr *innerbatchPos;
 	int		   *innerbatchSizes;
-	RelativeAddr tempname;
 
 	/* ----------------
 	 *	Get information about the size of the relation to be hashed
@@ -425,46 +410,32 @@ ExecHashTableCreate(Hash *node)
 		 *	allocate and initialize the outer batches
 		 * ---------------
 		 */
-		outerbatchNames = (RelativeAddr *)
-			absHashTableAlloc(nbatch * sizeof(RelativeAddr), hashtable);
 		outerbatchPos = (RelativeAddr *)
 			absHashTableAlloc(nbatch * sizeof(RelativeAddr), hashtable);
 		for (i = 0; i < nbatch; i++)
 		{
-			tempname = hashTableAlloc(HJ_TEMP_NAMELEN, hashtable);
-			mk_hj_temp(ABSADDR(tempname));
-			outerbatchNames[i] = tempname;
 			outerbatchPos[i] = -1;
 		}
-		hashtable->outerbatchNames = RELADDR(outerbatchNames);
 		hashtable->outerbatchPos = RELADDR(outerbatchPos);
 		/* ---------------
 		 *	allocate and initialize the inner batches
 		 * ---------------
 		 */
-		innerbatchNames = (RelativeAddr *)
-			absHashTableAlloc(nbatch * sizeof(RelativeAddr), hashtable);
 		innerbatchPos = (RelativeAddr *)
 			absHashTableAlloc(nbatch * sizeof(RelativeAddr), hashtable);
 		innerbatchSizes = (int *)
 			absHashTableAlloc(nbatch * sizeof(int), hashtable);
 		for (i = 0; i < nbatch; i++)
 		{
-			tempname = hashTableAlloc(HJ_TEMP_NAMELEN, hashtable);
-			mk_hj_temp(ABSADDR(tempname));
-			innerbatchNames[i] = tempname;
 			innerbatchPos[i] = -1;
 			innerbatchSizes[i] = 0;
 		}
-		hashtable->innerbatchNames = RELADDR(innerbatchNames);
 		hashtable->innerbatchPos = RELADDR(innerbatchPos);
 		hashtable->innerbatchSizes = RELADDR(innerbatchSizes);
 	}
 	else
 	{
-		hashtable->outerbatchNames = (RelativeAddr) NULL;
 		hashtable->outerbatchPos = (RelativeAddr) NULL;
-		hashtable->innerbatchNames = (RelativeAddr) NULL;
 		hashtable->innerbatchPos = (RelativeAddr) NULL;
 		hashtable->innerbatchSizes = (RelativeAddr) NULL;
 	}
@@ -884,15 +855,6 @@ ExecHashTableReset(HashJoinTable hashtable, int ntuples)
 	}
 
 	hashtable->pcount = hashtable->nprocess;
-}
-
-static void
-mk_hj_temp(char *tempname)
-{
-	static int	hjtmpcnt = 0;
-
-	snprintf(tempname, HJ_TEMP_NAMELEN, "HJ%d.%d", (int) MyProcPid, hjtmpcnt);
-	hjtmpcnt = (hjtmpcnt + 1) % 1000;
 }
 
 void

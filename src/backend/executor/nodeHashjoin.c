@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.18 1999/05/06 00:30:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.19 1999/05/09 00:53:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,7 +74,6 @@ ExecHashJoin(HashJoin *node)
 	int			nbatch;
 	int			curbatch;
 	File	   *outerbatches;
-	RelativeAddr *outerbatchNames;
 	RelativeAddr *outerbatchPos;
 	Var		   *innerhashkey;
 	int			batch;
@@ -166,21 +165,10 @@ ExecHashJoin(HashJoin *node)
 		 */
 		innerhashkey = hashNode->hashkey;
 		hjstate->hj_InnerHashKey = innerhashkey;
-		outerbatchNames = (RelativeAddr *)
-			ABSADDR(hashtable->outerbatchNames);
-		outerbatches = (File *)
-			palloc(nbatch * sizeof(File));
+		outerbatches = (File *) palloc(nbatch * sizeof(File));
 		for (i = 0; i < nbatch; i++)
 		{
-#ifndef __CYGWIN32__
-			outerbatches[i] = FileNameOpenFile(
-							ABSADDR(outerbatchNames[i]),
-							O_CREAT | O_RDWR, 0600);
-#else
-			outerbatches[i] = FileNameOpenFile(
-							ABSADDR(outerbatchNames[i]),
-							O_CREAT | O_RDWR | O_BINARY, 0600);
-#endif
+			outerbatches[i] = OpenTemporaryFile();
 		}
 		hjstate->hj_OuterBatches = outerbatches;
 
@@ -193,7 +181,6 @@ ExecHashJoin(HashJoin *node)
 	}
 	outerbatchPos = (RelativeAddr *) ABSADDR(hashtable->outerbatchPos);
 	curbatch = hashtable->curbatch;
-	outerbatchNames = (RelativeAddr *) ABSADDR(hashtable->outerbatchNames);
 
 	/* ----------------
 	 *	Now get an outer tuple and probe into the hash table for matches

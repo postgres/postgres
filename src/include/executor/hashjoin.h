@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hashjoin.h,v 1.9 1999/05/06 00:30:45 tgl Exp $
+ * $Id: hashjoin.h,v 1.10 1999/05/09 00:53:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,9 +54,7 @@ typedef struct HashTableData
 	RelativeAddr batch;			/* char* */
 	RelativeAddr readbuf;		/* char* */
 	int			nbatch;
-	RelativeAddr outerbatchNames;		/* RelativeAddr* */
 	RelativeAddr outerbatchPos; /* RelativeAddr* */
-	RelativeAddr innerbatchNames;		/* RelativeAddr* */
 	RelativeAddr innerbatchPos; /* RelativeAddr* */
 	RelativeAddr innerbatchSizes;		/* int* */
 	int			curbatch;

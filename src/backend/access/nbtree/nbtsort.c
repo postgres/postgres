@@ -5,7 +5,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Id: nbtsort.c,v 1.37 1999/02/21 03:48:27 scrappy Exp $
+ *	  $Id: nbtsort.c,v 1.38 1999/05/09 00:53:19 tgl Exp $
  *
  * NOTES
  *
@@ -85,11 +85,9 @@ static void _bt_uppershutdown(Relation index, BTPageState *state);
 
 #define MAXTAPES		(7)
 #define TAPEBLCKSZ		(BLCKSZ << 2)
-#define TAPETEMP		"pg_btsortXXXXXXX"
 
 extern int	NDirectFileRead;
 extern int	NDirectFileWrite;
-extern char *mktemp(char *template);
 
 /*
  * this is what we use to shovel BTItems in and out of memory.	it's
@@ -107,7 +105,7 @@ extern char *mktemp(char *template);
 typedef struct
 {
 	int			bttb_magic;		/* magic number */
-	int			bttb_fd;		/* file descriptor */
+	File		bttb_fd;		/* file descriptor */
 	int			bttb_top;		/* top of free space within bttb_data */
 	short		bttb_ntup;		/* number of tuples in this block */
 	short		bttb_eor;		/* End-Of-Run marker */
@@ -380,7 +378,7 @@ _bt_tapereset(BTTapeBlock *tape)
 static void
 _bt_taperewind(BTTapeBlock *tape)
 {
-	FileSeek(tape->bttb_fd, 0, SEEK_SET);
+	FileSeek(tape->bttb_fd, 0L, SEEK_SET);
 }
 
 /*
@@ -411,7 +409,7 @@ _bt_tapeclear(BTTapeBlock *tape)
  * as well as opening a physical tape file.
  */
 static BTTapeBlock *
-_bt_tapecreate(char *fname)
+_bt_tapecreate(void)
 {
 	BTTapeBlock *tape = (BTTapeBlock *) palloc(sizeof(BTTapeBlock));
 
@@ -420,11 +418,7 @@ _bt_tapecreate(char *fname)
 
 	tape->bttb_magic = BTTAPEMAGIC;
 
-#ifndef __CYGWIN32__
-	tape->bttb_fd = FileNameOpenFile(fname, O_RDWR | O_CREAT | O_TRUNC, 0600);
-#else
-	tape->bttb_fd = FileNameOpenFile(fname, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, 0600);
-#endif
+	tape->bttb_fd = OpenTemporaryFile();
 	Assert(tape->bttb_fd >= 0);
 
 	/* initialize the buffer */
@@ -467,7 +461,7 @@ _bt_tapewrite(BTTapeBlock *tape, int eor)
 static int
 _bt_taperead(BTTapeBlock *tape)
 {
-	int			fd;
+	File		fd;
 	int			nread;
 
 	if (tape->bttb_eor)
@@ -550,9 +544,8 @@ _bt_spoolinit(Relation index, int ntapes, bool isunique)
 {
 	BTSpool    *btspool = (BTSpool *) palloc(sizeof(BTSpool));
 	int			i;
-	char	   *fname = (char *) palloc(sizeof(TAPETEMP) + 1);
 
-	if (btspool == (BTSpool *) NULL || fname == (char *) NULL)
+	if (btspool == (BTSpool *) NULL)
 		elog(ERROR, "_bt_spoolinit: out of memory");
 	MemSet((char *) btspool, 0, sizeof(BTSpool));
 	btspool->bts_ntapes = ntapes;
@@ -567,10 +560,9 @@ _bt_spoolinit(Relation index, int ntapes, bool isunique)
 
 	for (i = 0; i < ntapes; ++i)
 	{
-		btspool->bts_itape[i] =	_bt_tapecreate(mktemp(strcpy(fname, TAPETEMP)));
-		btspool->bts_otape[i] =	_bt_tapecreate(mktemp(strcpy(fname, TAPETEMP)));
+		btspool->bts_itape[i] =	_bt_tapecreate();
+		btspool->bts_otape[i] =	_bt_tapecreate();
 	}
-	pfree((void *) fname);
 
 	_bt_isortcmpinit(index, btspool);
 

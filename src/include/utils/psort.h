@@ -6,27 +6,25 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: psort.h,v 1.17 1999/02/13 23:22:29 momjian Exp $
+ * $Id: psort.h,v 1.18 1999/05/09 00:53:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef PSORT_H
 #define PSORT_H
 
-#include <stdio.h>
+#include "storage/fd.h"
 #include "access/relscan.h"
 #include "utils/lselect.h"
 #include "nodes/plannodes.h"
 
-#define MAXTAPES		7		/* 7--See Fig. 70, p273 */
-#define TAPEEXTLEN		strlen("pg_psort.xxxxx.xxx")	/* TEMPDIR/TAPEEXT */
-#define FREE(x)			pfree((char *) x)
+#define MAXTAPES		7		/* See Knuth Fig. 70, p273 */
 
 struct tape
 {
 	int			tp_dummy;		/* (D) */
 	int			tp_fib;			/* (A) */
-	FILE	   *tp_file;		/* (TAPE) */
+	BufFile	   *tp_file;		/* (TAPE) */
 	struct tape *tp_prev;
 };
 
@@ -58,7 +56,7 @@ typedef struct Psortstate
 
 	struct leftist *Tuples;
 
-	FILE	   *psort_grab_file;
+	BufFile	   *psort_grab_file;
 	long		psort_current;	/* could be file offset, or array index */
 	long		psort_saved;	/* could be file offset, or array index */
 	bool		using_tape_files;
@@ -68,7 +66,6 @@ typedef struct Psortstate
 } Psortstate;
 
 #ifdef	EBUG
-#include <stdio.h>
 #include "utils/elog.h"
 #include "storage/buf.h"
 #include "storage/bufmgr.h"
