@@ -11,9 +11,9 @@ Each subdirectory contains a README file with information about the
 module.  Most items can be built with `gmake all' and installed with
 `gmake install' in the usual fashion, after you have run the `configure'
 script in the top-level directory.  Some directories supply new
-user-defined functions, operators, or types.  After you have installed
-the files you need to register the new entities in the database system
-by running the commands in the supplied .sql file.  For example,
+user-defined functions, operators, or types.  In these cases, after you have
+installed the files you need to register the new entities in the database
+system by running the commands in the supplied .sql file.  For example,
 
 	$ psql -d dbname -f module.sql
 
@@ -34,7 +34,7 @@ array -
 
 btree_gist -
 	Support for emulating BTREE indexing in GiST
-	by Oleg Bartunov <oleg@sai.msu.su> and Teodor Sigaev <teodor@stack.net>
+	by Oleg Bartunov <oleg@sai.msu.su> and Teodor Sigaev <teodor@sigaev.ru>
 
 chkpass -
 	An auto-encrypted password datatype
@@ -85,7 +85,7 @@ intagg -
 
 intarray -
 	Index support for arrays of int4, using GiST
-	by Teodor Sigaev <teodor@stack.net> and Oleg Bartunov <oleg@sai.msu.su>
+	by Teodor Sigaev <teodor@sigaev.ru> and Oleg Bartunov <oleg@sai.msu.su>
 
 ipc_check -
 	Simple test script to help in configuring IPC.
@@ -101,7 +101,7 @@ lo -
 
 ltree -
 	Tree-like data structures
-	by Teodor Sigaev <teodor@stack.net> and Oleg Bartunov <oleg@sai.msu.su>
+	by Teodor Sigaev <teodor@sigaev.ru> and Oleg Bartunov <oleg@sai.msu.su>
 
 mSQL-interface -
 	mSQL API translation library
@@ -144,6 +144,11 @@ pg_logger -
 	Stdin-to-syslog gateway for PostgreSQL
 	by Nathan Myers <ncm@nospam.cantrip.org>
 
+pg_trgm -
+	Functions for determining the similarity of text based on trigram
+	matching.
+	by Oleg Bartunov <oleg@sai.msu.su> and Teodor Sigaev <teodor@sigaev.ru>
+
 pg_upgrade -
 	Upgrade from previous PostgreSQL version without pg_dump/reload
 	by Bruce Momjian <pgman@candle.pha.pa.us>
@@ -156,13 +161,14 @@ pgcrypto -
 	Cryptographic functions
 	by Marko Kreen <marko@l-t.ee>
 
+pgstattuple -
+	A function to return statistics about "dead" tuples and free
+	space within a table
+	by Tatsuo Ishii <t-ishii@sra.co.jp>
+
 reindexdb - 
 	Reindexes a database
 	by Shaun Thomas <sthomas@townnews.com>
-
-pgstattuple -
-	A function returns the percentage of "dead" tuples in a table
-	by Tatsuo Ishii <t-ishii@sra.co.jp>
 
 rserv -
 	Replication server
@@ -170,7 +176,7 @@ rserv -
 
 rtree_gist -
 	Support for emulating RTREE indexing in GiST
-	by Oleg Bartunov <oleg@sai.msu.su> and Teodor Sigaev <teodor@stack.net>
+	by Oleg Bartunov <oleg@sai.msu.su> and Teodor Sigaev <teodor@sigaev.ru>
 
 seg -
 	Confidence-interval datatype (GiST indexing example)
@@ -200,12 +206,12 @@ tools -
 
 tsearch -
 	Full-text-index support using GiST (obsolete version)
-	by Teodor Sigaev <teodor@stack.net> and Oleg Bartunov
+	by Teodor Sigaev <teodor@sigaev.ru> and Oleg Bartunov
 	<oleg@sai.msu.su>.
 
 tsearch2 -
 	Full-text-index support using GiST
-	by Teodor Sigaev <teodor@stack.net> and Oleg Bartunov
+	by Teodor Sigaev <teodor@sigaev.ru> and Oleg Bartunov
 	<oleg@sai.msu.su>.
 
 userlock -
