@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Sat Jan 29 21:05:17 EST 2005
+   Last updated: Sat Jan 29 21:21:25 EST 2005
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -16,19 +16,17 @@
                                       
    1.1) What is PostgreSQL? How is it pronounced?
    1.2) What is the copyright on PostgreSQL?
-   1.3) What Unix platforms does PostgreSQL run on?
-   1.4) What non-Unix ports are available?
-   1.5) Where can I get PostgreSQL?
-   1.6) Where can I get support?
-   1.7) What is the latest release?
-   1.8) What documentation is available?
-   1.9) How do I find out about known bugs or missing features?
-   1.10) How can I learn SQL?
-   1.11) Is PostgreSQL Y2K compliant?
-   1.12) How do I join the development team?
-   1.13) How do I submit a bug report?
-   1.14) How does PostgreSQL compare to other DBMSs?
-   1.15) How can I financially assist PostgreSQL?
+   1.3) What platforms does PostgreSQL support?
+   1.4) Where can I get PostgreSQL?
+   1.5) Where can I get support?
+   1.6) What is the latest release?
+   1.7) What documentation is available?
+   1.8) How do I find out about known bugs or missing features?
+   1.9) How can I learn SQL?
+   1.10) How do I join the development team?
+   1.11) How do I submit a bug report?
+   1.12) How does PostgreSQL compare to other DBMSs?
+   1.13) How can I financially assist PostgreSQL?
    
                            User Client Questions
                                       
@@ -172,14 +170,12 @@
    no restrictions on how the source code may be used. We like it and
    have no intention of changing it.
    
-    1.3) What Unix platforms does PostgreSQL run on?
+    1.3) What platforms does PostgreSQL support?
     
    In general, any modern Unix-compatible platform should be able to run
    PostgreSQL. The platforms that had received explicit testing at the
    time of release are listed in the installation instructions.
    
-    1.4) What non-Unix ports are available?
-    
    Starting with version 8.0, PostgreSQL now runs natively on Microsoft
    Windows NT-based operating systems like Win2000, WinXP, and Win2003. A
    prepackaged installer is available at
@@ -191,12 +187,12 @@
    http://hobbes.nmsu.edu/cgi-bin/h-search?sh=1&button=Search&key=postgre
    SQL&stype=all&sort=type&dir=%2F.
    
-    1.5) Where can I get PostgreSQL?
+    1.4) Where can I get PostgreSQL?
     
    The primary anonymous ftp site for PostgreSQL is
    ftp://ftp.PostgreSQL.org/pub. For mirror sites, see our main web site.
    
-    1.6) Where can I get support?
+    1.5) Where can I get support?
     
    The main mailing list is: pgsql-general@PostgreSQL.org. It is
    available for discussion of matters pertaining to PostgreSQL. To
@@ -241,13 +237,13 @@
    A list of commercial support companies is available at
    http://techdocs.postgresql.org/companies.php.
    
-    1.7) What is the latest release?
+    1.6) What is the latest release?
     
    The latest release of PostgreSQL is version 8.0.0.
    
    We plan to have major releases every six to eight months.
    
-    1.8) What documentation is available?
+    1.7) What documentation is available?
     
    Several manuals, manual pages, and some small test examples are
    included in the distribution. See the /doc directory. You can also
@@ -267,12 +263,12 @@
    
    Our web site contains even more documentation.
    
-    1.9) How do I find out about known bugs or missing features?
+    1.8) How do I find out about known bugs or missing features?
     
    PostgreSQL supports an extended subset of SQL-92. See our TODO list
    for known bugs, missing features, and future plans.
    
-    1.10) How can I learn SQL?
+    1.9) How can I learn SQL?
     
    The PostgreSQL book at http://www.PostgreSQL.org/docs/awbook.html
    teaches SQL. There is another PostgreSQL book at
@@ -288,11 +284,7 @@
    et al., Addison-Wesley. Others like The Complete Reference SQL, Groff
    et al., McGraw-Hill.
    
-    1.11) Is PostgreSQL Y2K compliant?
-    
-   Yes, we easily handle dates past the year 2000 AD, and before 2000 BC.
-   
-    1.12) How do I join the development team?
+    1.10) How do I join the development team?
     
    First, download the latest source and read the PostgreSQL Developers
    documentation on our web site, or in the distribution. Second,
@@ -305,7 +297,7 @@
    and we had confidence that patches they committed were of high
    quality.
    
-    1.13) How do I submit a bug report?
+    1.11) How do I submit a bug report?
     
    Visit the PostgreSQL bug form at
    http://www.postgresql.org/support/submitbug.
@@ -313,7 +305,7 @@
    Also check out our ftp site ftp://ftp.PostgreSQL.org/pub to see if
    there is a more recent PostgreSQL version or patches.
    
-    1.14) How does PostgreSQL compare to other DBMSs?
+    1.12) How does PostgreSQL compare to other DBMSs?
     
    There are several ways of measuring software: features, performance,
    reliability, support, and price.
@@ -353,14 +345,14 @@
           community, manuals, and the source code often make PostgreSQL
           support superior to other DBMSs. There is commercial
           per-incident support available for those who need it. (See FAQ
-          section 1.6.)
+          section 1.5.)
           
    Price
           We are free for all use, both commercial and non-commercial.
           You can add our code to your product with no limitations,
           except those outlined in our BSD-style license stated above.
           
-    1.15) How can I financially assist PostgreSQL?
+    1.13) How can I financially assist PostgreSQL?
     
    PostgreSQL has had a first-class infrastructure since we started in
    1996. This is all thanks to Marc Fournier, who has created and managed
