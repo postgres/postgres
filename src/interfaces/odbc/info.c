@@ -2240,7 +2240,7 @@ PGAPI_Statistics(
 	char		index_query[INFO_INQUIRY_LEN];
 	HSTMT		hindx_stmt;
 	RETCODE		result;
-	char	   *table_name, *schema_name = NULL;
+	char	   *table_name;
 	char		index_name[MAX_INFO_STRING];
 	short		fields_vector[16];
 	char		isunique[10],
@@ -4091,7 +4091,7 @@ PGAPI_TablePrivileges(
 	int		tablecount, usercount, i, j, k;
 	BOOL		grpauth, sys, su;
 	char		(*useracl)[ACLMAX], *acl, *user, *delim, *auth;
-	char		*reln, *owner, *priv, *schnm;
+	char		*reln, *owner, *priv, *schnm = NULL;
 
 	mylog("%s: entering... scnm=%x len-%d\n", func, szTableOwner, cbTableOwner);
 	if (!SC_recycle_statement(stmt))
