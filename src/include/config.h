@@ -44,6 +44,8 @@
 #  ifndef __USE_POSIX
 #    define __USE_POSIX
 #  endif
+#  define USE_POSIX_TIME
+#  define HAVE_TZSET
 #  define NEED_CBRT
 #endif
 
