@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.117 2002/10/31 21:34:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.118 2002/11/01 00:40:23 tgl Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -255,7 +255,7 @@ LockMethodTableInit(char *tabName,
 	/* This is just temp space in this routine, so palloc is OK. */
 	shmemName = (char *) palloc(strlen(tabName) + 32);
 
-	/* each lock table has a non-shared, permanent header */
+	/* each lock table has a header in shared memory */
 	sprintf(shmemName, "%s (lock method table)", tabName);
 	lockMethodTable = (LOCKMETHODTABLE *)
 		ShmemInitStruct(shmemName, sizeof(LOCKMETHODTABLE), &found);
