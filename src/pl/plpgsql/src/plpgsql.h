@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.13 2001/03/22 04:01:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.14 2001/05/21 14:22:19 wieck Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -94,7 +94,10 @@ enum
 	PLPGSQL_STMT_EXECSQL,
 	PLPGSQL_STMT_DYNEXECUTE,
 	PLPGSQL_STMT_DYNFORS,
-	PLPGSQL_STMT_GETDIAG
+	PLPGSQL_STMT_GETDIAG,
+	PLPGSQL_STMT_OPEN,
+	PLPGSQL_STMT_FETCH,
+	PLPGSQL_STMT_CLOSE
 };
 
 
@@ -139,6 +142,7 @@ typedef struct
 	Oid			typoid;
 	FmgrInfo	typinput;
 	Oid			typelem;
+	int16		typlen;
 	bool		typbyval;
 	int32		atttypmod;
 }			PLpgSQL_type;
@@ -176,10 +180,12 @@ typedef struct
 	int			isconst;
 	int			notnull;
 	PLpgSQL_expr *default_val;
+	PLpgSQL_expr *cursor_explicit_expr;
+	int			cursor_explicit_argrow;
 
 	Datum		value;
 	bool		isnull;
-	int			shouldfree;
+	bool		freeval;
 }			PLpgSQL_var;
 
 
@@ -206,6 +212,8 @@ typedef struct
 
 	HeapTuple	tup;
 	TupleDesc	tupdesc;
+	bool		freetup;
+	bool		freetupdesc;
 }			PLpgSQL_rec;
 
 
@@ -367,6 +375,36 @@ typedef struct
 	PLpgSQL_row *row;
 	PLpgSQL_expr *query;
 }			PLpgSQL_stmt_select;
+
+
+typedef struct
+{								/* OPEN a curvar					*/
+	int			cmd_type;
+	int			lineno;
+	int			curvar;
+	PLpgSQL_row	*returntype;
+	PLpgSQL_expr *argquery;
+	PLpgSQL_expr *query;
+	PLpgSQL_expr *dynquery;
+}			PLpgSQL_stmt_open;
+
+
+typedef struct
+{								/* FETCH curvar INTO statement		*/
+	int			cmd_type;
+	int			lineno;
+	PLpgSQL_rec *rec;
+	PLpgSQL_row *row;
+	int			curvar;
+}			PLpgSQL_stmt_fetch;
+
+
+typedef struct
+{								/* CLOSE curvar						*/
+	int			cmd_type;
+	int			lineno;
+	int			curvar;
+}			PLpgSQL_stmt_close;
 
 
 typedef struct

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: portal.h,v 1.27 2001/03/22 04:01:14 momjian Exp $
+ * $Id: portal.h,v 1.28 2001/05/21 14:22:18 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,7 +55,7 @@ typedef struct PortalData
  * estimate of the maximum number of open portals a user would have,
  * used in initially sizing the PortalHashTable in EnablePortalManager()
  */
-#define PORTALS_PER_USER	   10
+#define PORTALS_PER_USER	   64
 
 
 extern void EnablePortalManager(void);

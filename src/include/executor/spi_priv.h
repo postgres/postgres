@@ -3,7 +3,7 @@
  * spi.c
  *				Server Programming Interface private declarations
  *
- * $Header: /cvsroot/pgsql/src/include/executor/spi_priv.h,v 1.7 2000/06/28 03:33:05 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/include/executor/spi_priv.h,v 1.8 2001/05/21 14:22:18 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,6 +25,7 @@ typedef struct
 
 typedef struct
 {
+	MemoryContext plancxt;
 	List	   *qtlist;
 	List	   *ptlist;
 	int			nargs;

@@ -4,7 +4,7 @@
  *						  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.18 2001/05/18 21:16:59 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.19 2001/05/21 14:22:18 wieck Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -47,6 +47,7 @@
 
 static	PLpgSQL_expr	*read_sqlstmt(int until, char *s, char *sqlstart);
 static	PLpgSQL_stmt	*make_select_stmt(void);
+static	PLpgSQL_stmt	*make_fetch_stmt(void);
 static	PLpgSQL_expr	*make_tupret_expr(PLpgSQL_row *row);
 
 %}
@@ -99,17 +100,17 @@ static	PLpgSQL_expr	*make_tupret_expr(PLpgSQL_row *row);
 %type <varname> decl_varname
 %type <str>		decl_renname
 %type <ival>	decl_const, decl_notnull, decl_atttypmod, decl_atttypmodval
-%type <expr>	decl_defval
+%type <expr>	decl_defval, decl_cursor_query
 %type <dtype>	decl_datatype, decl_dtypename
-%type <row>		decl_rowtype
+%type <row>		decl_rowtype, decl_cursor_args, decl_cursor_arglist
 %type <nsitem>	decl_aliasitem
 %type <str>		decl_stmts, decl_stmt
 
 %type <expr>	expr_until_semi, expr_until_then, expr_until_loop
 %type <expr>	opt_exitcond
 
-%type <ival>	assign_var
-%type <var>		fori_var
+%type <ival>	assign_var, cursor_variable
+%type <var>		fori_var, cursor_varptr, decl_cursor_arg
 %type <varname> fori_varname
 %type <forilow> fori_lower
 %type <rec>		fors_target
@@ -124,6 +125,7 @@ static	PLpgSQL_expr	*make_tupret_expr(PLpgSQL_row *row);
 %type <stmt>	stmt_return, stmt_raise, stmt_execsql, stmt_fori
 %type <stmt>	stmt_fors, stmt_select, stmt_perform
 %type <stmt>	stmt_dynexecute, stmt_dynfors, stmt_getdiag
+%type <stmt>	stmt_open, stmt_fetch, stmt_close
 
 %type <intlist>	raise_params
 %type <ival>	raise_level, raise_param
@@ -140,7 +142,9 @@ static	PLpgSQL_expr	*make_tupret_expr(PLpgSQL_row *row);
 %token	K_ALIAS
 %token	K_ASSIGN
 %token	K_BEGIN
+%token	K_CLOSE
 %token	K_CONSTANT
+%token	K_CURSOR
 %token	K_DEBUG
 %token	K_DECLARE
 %token	K_DEFAULT
@@ -153,15 +157,18 @@ static	PLpgSQL_expr	*make_tupret_expr(PLpgSQL_row *row);
 %token	K_EXECUTE
 %token	K_EXIT
 %token	K_FOR
+%token	K_FETCH
 %token	K_FROM
 %token	K_GET
 %token	K_IF
 %token	K_IN
 %token	K_INTO
+%token	K_IS
 %token	K_LOOP
 %token	K_NOT
 %token	K_NOTICE
 %token	K_NULL
+%token	K_OPEN
 %token	K_PERFORM
 %token	K_ROW_COUNT
 %token	K_RAISE
@@ -300,6 +307,7 @@ decl_statement	: decl_varname decl_const decl_datatype decl_notnull decl_defval
 						PLpgSQL_var		*new;
 
 						new = malloc(sizeof(PLpgSQL_var));
+						memset(new, 0, sizeof(PLpgSQL_var));
 
 						new->dtype		= PLPGSQL_DTYPE_VAR;
 						new->refname	= $1.name;
@@ -347,7 +355,151 @@ decl_statement	: decl_varname decl_const decl_datatype decl_notnull decl_defval
 					{
 						plpgsql_ns_rename($2, $4);
 					}
+				| decl_varname K_CURSOR decl_cursor_args K_IS K_SELECT decl_cursor_query
+					{
+						PLpgSQL_var *new;
+						PLpgSQL_expr *curname_def;
+						char		buf[1024];
+						char		*cp1;
+						char		*cp2;
+
+						plpgsql_ns_pop();
+
+						new = malloc(sizeof(PLpgSQL_var));
+						memset(new, 0, sizeof(PLpgSQL_var));
+
+						curname_def = malloc(sizeof(PLpgSQL_var));
+						memset(curname_def, 0, sizeof(PLpgSQL_var));
+
+						new->dtype		= PLPGSQL_DTYPE_VAR;
+						new->refname	= $1.name;
+						new->lineno		= $1.lineno;
+
+						curname_def->dtype = PLPGSQL_DTYPE_EXPR;
+						strcpy(buf, "SELECT '");
+						cp1 = new->refname;
+						cp2 = buf + strlen(buf);
+						while (*cp1 != '\0')
+						{
+							if (*cp1 == '\\' || *cp1 == '\'')
+								*cp2++ = '\\';
+							*cp2++ = *cp1++;
+						}
+						strcat(buf, "'");
+						curname_def->query = strdup(buf);
+						new->default_val = curname_def;
+
+						plpgsql_parse_word("refcursor");
+						new->datatype	= yylval.dtype;
+
+						new->cursor_explicit_expr = $6;
+						if ($3 == NULL)
+							new->cursor_explicit_argrow = -1;
+						else
+							new->cursor_explicit_argrow = $3->rowno;
+
+						plpgsql_adddatum((PLpgSQL_datum *)new);
+						plpgsql_ns_additem(PLPGSQL_NSTYPE_VAR, new->varno,
+												$1.name);
+					}
 				;
+
+decl_cursor_query :
+					{
+						PLpgSQL_expr *query;
+
+						plpgsql_ns_setlocal(false);
+						query = plpgsql_read_expression(';', ";");
+						plpgsql_ns_setlocal(true);
+						
+						$$ = query;
+					}
+				;
+
+decl_cursor_args :
+					{
+						$$ = NULL;
+					}
+				| decl_cursor_openparen decl_cursor_arglist ')'
+					{
+						char **ftmp;
+						int *vtmp;
+
+						ftmp = malloc($2->nfields * sizeof(char *));
+						vtmp = malloc($2->nfields * sizeof(int));
+						memcpy(ftmp, $2->fieldnames, $2->nfields * sizeof(char *));
+						memcpy(vtmp, $2->varnos, $2->nfields * sizeof(int));
+
+						pfree((char *)($2->fieldnames));
+						pfree((char *)($2->varnos));
+
+						$2->fieldnames = ftmp;
+						$2->varnos = vtmp;
+
+						plpgsql_adddatum((PLpgSQL_datum *)$2);
+
+						$$ = $2;
+					}
+				;
+
+decl_cursor_arglist : decl_cursor_arg
+					{
+						PLpgSQL_row *new;
+
+						new = malloc(sizeof(PLpgSQL_row));
+						memset(new, 0, sizeof(PLpgSQL_row));
+
+						new->dtype = PLPGSQL_DTYPE_ROW;
+						new->refname = strdup("*internal*");
+						new->lineno = yylineno;
+						new->rowtypeclass = InvalidOid;
+						new->fieldnames = palloc(1024 * sizeof(char *));
+						new->varnos = palloc(1024 * sizeof(int));
+						new->nfields = 1;
+
+						new->fieldnames[0] = $1->refname;
+						new->varnos[0] = $1->varno;
+
+						$$ = new;
+					}
+				| decl_cursor_arglist ',' decl_cursor_arg
+					{
+						int i = $1->nfields++;
+
+						$1->fieldnames[i] = $3->refname;
+						$1->varnos[i] = $3->varno;
+					}
+				;
+
+decl_cursor_arg : decl_varname decl_datatype
+					{
+						PLpgSQL_var *new;
+
+						new = malloc(sizeof(PLpgSQL_var));
+						memset(new, 0, sizeof(PLpgSQL_var));
+
+						new->dtype		= PLPGSQL_DTYPE_VAR;
+						new->refname	= $1.name;
+						new->lineno		= $1.lineno;
+
+						new->datatype	= $2;
+						new->isconst	= false;
+						new->notnull	= false;
+
+						plpgsql_adddatum((PLpgSQL_datum *)new);
+						plpgsql_ns_additem(PLPGSQL_NSTYPE_VAR, new->varno,
+												$1.name);
+						
+						$$ = new;
+					}
+				;
+
+decl_cursor_openparen : '('
+					{
+						plpgsql_ns_push(NULL);
+					}
+				;
+				
 
 decl_aliasitem	: T_WORD
 					{
@@ -580,6 +732,12 @@ proc_stmt		: pl_block
 				| stmt_perform
 						{ $$ = $1; }
 				| stmt_getdiag
+						{ $$ = $1; }
+				| stmt_open
+						{ $$ = $1; }
+				| stmt_fetch
+						{ $$ = $1; }
+				| stmt_close
 						{ $$ = $1; }
 				;
 
@@ -836,6 +994,7 @@ fori_var		: fori_varname
 						PLpgSQL_var		*new;
 
 						new = malloc(sizeof(PLpgSQL_var));
+						memset(new, 0, sizeof(PLpgSQL_var));
 
 						new->dtype		= PLPGSQL_DTYPE_VAR;
 						new->refname	= $1.name;
@@ -1189,15 +1348,137 @@ stmt_execsql	: execsql_start lno
 
 stmt_dynexecute : K_EXECUTE lno expr_until_semi
 						{
-								PLpgSQL_stmt_dynexecute *new;
+							PLpgSQL_stmt_dynexecute *new;
 
-						new = malloc(sizeof(PLpgSQL_stmt_dynexecute));
-						new->cmd_type = PLPGSQL_STMT_DYNEXECUTE;
-						new->lineno   = $2;
-						new->query	  = $3;
+							new = malloc(sizeof(PLpgSQL_stmt_dynexecute));
+							new->cmd_type = PLPGSQL_STMT_DYNEXECUTE;
+							new->lineno   = $2;
+							new->query	  = $3;
+
+							$$ = (PLpgSQL_stmt *)new;
+						}
+				;
+
+stmt_open		: K_OPEN lno cursor_varptr
+					{
+						PLpgSQL_stmt_open *new;
+						int				  tok;
+
+						new = malloc(sizeof(PLpgSQL_stmt_open));
+						memset(new, 0, sizeof(PLpgSQL_stmt_open));
+
+						new->cmd_type = PLPGSQL_STMT_OPEN;
+						new->lineno = $2;
+						new->curvar = $3->varno;
+
+						if ($3->cursor_explicit_expr == NULL)
+						{
+						    tok = yylex();
+
+							if (tok != K_FOR)
+							{
+								plpgsql_comperrinfo();
+								elog(ERROR, "syntax error at \"%s\" - expected FOR to open a reference cursor", yytext);
+							}
+
+							tok = yylex();
+							switch (tok)
+							{
+								case K_SELECT:
+									new->query = plpgsql_read_expression(';', ";");
+									break;
+
+								case K_EXECUTE:
+									new->dynquery = plpgsql_read_expression(';', ";");
+									break;
+
+								default:
+									plpgsql_comperrinfo();
+									elog(ERROR, "syntax error at \"%s\"", yytext);
+							}
+
+						}
+						else
+						{
+							if ($3->cursor_explicit_argrow >= 0)
+							{
+								tok = yylex();
+
+								if (tok != '(')
+								{
+									plpgsql_comperrinfo();
+									elog(ERROR, "cursor %s has arguments", $3->refname);
+								}
+
+								new->argquery = read_sqlstmt(';', ";", "SELECT (");
+							}
+							else
+							{
+								tok = yylex();
+
+								if (tok == '(')
+								{
+									plpgsql_comperrinfo();
+									elog(ERROR, "cursor %s has no arguments", $3->refname);
+								}
+								
+								if (tok != ';')
+								{
+									plpgsql_comperrinfo();
+									elog(ERROR, "syntax error at \"%s\"", yytext);
+								}
+							}
+						}
 
 						$$ = (PLpgSQL_stmt *)new;
+					}
+				;
+
+stmt_fetch		: K_FETCH lno cursor_variable K_INTO
+					{
+						PLpgSQL_stmt_fetch *new;
+
+						new = (PLpgSQL_stmt_fetch *)make_fetch_stmt();
+						new->curvar = $3;
+
+						$$ = (PLpgSQL_stmt *)new;
+						$$->lineno = $2;
+					}
+				;
+
+stmt_close		: K_CLOSE lno cursor_variable ';'
+					{
+						PLpgSQL_stmt_close *new;
+
+						new = malloc(sizeof(PLpgSQL_stmt_close));
+						new->cmd_type = PLPGSQL_STMT_CLOSE;
+						new->lineno = $2;
+						new->curvar = $3;
+
+						$$ = (PLpgSQL_stmt *)new;
+					}
+				;
+
+cursor_varptr	: T_VARIABLE
+					{
+						if (yylval.var->datatype->typoid != REFCURSOROID)
+						{
+							plpgsql_comperrinfo();
+							elog(ERROR, "%s must be of type cursor or refcursor", yylval.var->refname);
 						}
+						$$ = yylval.var;
+					}
+				;
+
+cursor_variable	: T_VARIABLE
+					{
+						if (yylval.var->datatype->typoid != REFCURSOROID)
+						{
+							plpgsql_comperrinfo();
+							elog(ERROR, "%s must be of type refcursor", yylval.var->refname);
+						}
+						$$ = yylval.var->varno;
+					}
 				;
 
 execsql_start	: T_WORD
@@ -1612,6 +1893,113 @@ make_select_stmt()
 	select->query	 = expr;
 
 	return (PLpgSQL_stmt *)select;
+}
+
+
+static PLpgSQL_stmt *
+make_fetch_stmt()
+{
+	int					tok;
+	PLpgSQL_row		   *row = NULL;
+	PLpgSQL_rec		   *rec = NULL;
+	PLpgSQL_stmt_fetch *fetch;
+	int					have_nexttok = 0;
+
+	tok = yylex();
+	switch (tok)
+	{
+		case T_ROW:
+			row = yylval.row;
+			break;
+
+		case T_RECORD:
+			rec = yylval.rec;
+			break;
+
+		case T_VARIABLE:
+		case T_RECFIELD:
+			{
+				PLpgSQL_var		*var;
+				PLpgSQL_recfield *recfield;
+				int				nfields = 1;
+				char			*fieldnames[1024];
+				int				varnos[1024];
+
+				switch (tok)
+				{	
+					case T_VARIABLE:
+						var = yylval.var;
+						fieldnames[0] = strdup(yytext);
+						varnos[0]	  = var->varno;
+						break;
+
+					case T_RECFIELD:
+						recfield = yylval.recfield;
+						fieldnames[0] = strdup(yytext);
+						varnos[0]	  = recfield->rfno;
+						break;
+				}
+
+				while ((tok = yylex()) == ',')
+				{
+					tok = yylex();
+					switch(tok)
+					{
+						case T_VARIABLE:
+							var = yylval.var;
+							fieldnames[nfields] = strdup(yytext);
+							varnos[nfields++]	= var->varno;
+							break;
+
+						case T_RECFIELD:
+							recfield = yylval.recfield;
+							fieldnames[0] = strdup(yytext);
+							varnos[0]	  = recfield->rfno;
+							break;
+
+						default:
+							elog(ERROR, "plpgsql: %s is not a variable or record field", yytext);
+					}
+				}
+				row = malloc(sizeof(PLpgSQL_row));
+				row->dtype = PLPGSQL_DTYPE_ROW;
+				row->refname = strdup("*internal*");
+				row->lineno = yylineno;
+				row->rowtypeclass = InvalidOid;
+				row->nfields = nfields;
+				row->fieldnames = malloc(sizeof(char *) * nfields);
+				row->varnos = malloc(sizeof(int) * nfields);
+				while (--nfields >= 0)
+				{
+					row->fieldnames[nfields] = fieldnames[nfields];
+					row->varnos[nfields] = varnos[nfields];
+				}
+
+				plpgsql_adddatum((PLpgSQL_datum *)row);
+
+				have_nexttok = 1;
+			}
+			break;
+
+		default:
+			{
+				elog(ERROR, "syntax error at '%s'", yytext);
+			}
+	}
+
+	if (!have_nexttok)
+		tok = yylex();
+
+	if (tok != ';')
+		elog(ERROR, "syntax error at '%s'", yytext);
+
+	fetch = malloc(sizeof(PLpgSQL_stmt_select));
+	memset(fetch, 0, sizeof(PLpgSQL_stmt_fetch));
+	fetch->cmd_type = PLPGSQL_STMT_FETCH;
+	fetch->rec		 = rec;
+	fetch->row		 = row;
+
+	return (PLpgSQL_stmt *)fetch;
 }
 
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.127 2001/05/09 21:10:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.128 2001/05/21 14:22:11 wieck Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -108,6 +108,7 @@ PerformPortalFetch(char *name,
 	QueryDesc  *queryDesc;
 	EState	   *estate;
 	MemoryContext oldcontext;
+	bool		faked_desc = false;
 
 	/*
 	 * sanity checks
@@ -143,13 +144,14 @@ PerformPortalFetch(char *name,
 	queryDesc = PortalGetQueryDesc(portal);
 	estate = PortalGetState(portal);
 
-	if (dest == None)			/* MOVE */
+	if (dest != queryDesc->dest)			/* MOVE */
 	{
 		QueryDesc  *qdesc = (QueryDesc *) palloc(sizeof(QueryDesc));
 
 		memcpy(qdesc, queryDesc, sizeof(QueryDesc));
 		qdesc->dest = dest;
 		queryDesc = qdesc;
+		faked_desc = true;
 	}
 
 	BeginCommand(name,
@@ -197,7 +199,7 @@ PerformPortalFetch(char *name,
 	/*
 	 * Clean up and switch back to old context.
 	 */
-	if (dest == None)			/* MOVE */
+	if (faked_desc)			/* MOVE */
 		pfree(queryDesc);
 
 	MemoryContextSwitchTo(oldcontext);

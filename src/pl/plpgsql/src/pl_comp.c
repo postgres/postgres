@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.30 2001/04/18 20:42:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.31 2001/05/21 14:22:18 wieck Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -282,6 +282,7 @@ plpgsql_compile(Oid fn_oid, int functype)
 					perm_fmgr_info(typeStruct->typinput, &(var->datatype->typinput));
 					var->datatype->typelem = typeStruct->typelem;
 					var->datatype->typbyval = typeStruct->typbyval;
+					var->datatype->typlen = typeStruct->typlen;
 					var->datatype->atttypmod = -1;
 					var->isconst = true;
 					var->notnull = false;
@@ -313,6 +314,9 @@ plpgsql_compile(Oid fn_oid, int functype)
 			memset(rec, 0, sizeof(PLpgSQL_rec));
 			rec->dtype = PLPGSQL_DTYPE_REC;
 			rec->refname = strdup("new");
+			rec->tup = NULL;
+			rec->tupdesc = NULL;
+			rec->freetup = false;
 			plpgsql_adddatum((PLpgSQL_datum *) rec);
 			plpgsql_ns_additem(PLPGSQL_NSTYPE_REC, rec->recno, rec->refname);
 			function->new_varno = rec->recno;
@@ -324,6 +328,9 @@ plpgsql_compile(Oid fn_oid, int functype)
 			memset(rec, 0, sizeof(PLpgSQL_rec));
 			rec->dtype = PLPGSQL_DTYPE_REC;
 			rec->refname = strdup("old");
+			rec->tup = NULL;
+			rec->tupdesc = NULL;
+			rec->freetup = false;
 			plpgsql_adddatum((PLpgSQL_datum *) rec);
 			plpgsql_ns_additem(PLPGSQL_NSTYPE_REC, rec->recno, rec->refname);
 			function->old_varno = rec->recno;
@@ -632,6 +639,7 @@ plpgsql_parse_word(char *word)
 		perm_fmgr_info(typeStruct->typinput, &(typ->typinput));
 		typ->typelem = typeStruct->typelem;
 		typ->typbyval = typeStruct->typbyval;
+		typ->typlen = typeStruct->typlen;
 		typ->atttypmod = -1;
 
 		plpgsql_yylval.dtype = typ;
@@ -948,6 +956,7 @@ plpgsql_parse_wordtype(char *word)
 		perm_fmgr_info(typeStruct->typinput, &(typ->typinput));
 		typ->typelem = typeStruct->typelem;
 		typ->typbyval = typeStruct->typbyval;
+		typ->typlen = typeStruct->typlen;
 		typ->atttypmod = -1;
 
 		plpgsql_yylval.dtype = typ;
@@ -1091,6 +1100,7 @@ plpgsql_parse_dblwordtype(char *string)
 	perm_fmgr_info(typeStruct->typinput, &(typ->typinput));
 	typ->typelem = typeStruct->typelem;
 	typ->typbyval = typeStruct->typbyval;
+	typ->typlen = typeStruct->typlen;
 	typ->atttypmod = attrStruct->atttypmod;
 
 	plpgsql_yylval.dtype = typ;
@@ -1230,13 +1240,14 @@ plpgsql_parse_wordrowtype(char *string)
 		perm_fmgr_info(typeStruct->typinput, &(var->datatype->typinput));
 		var->datatype->typelem = typeStruct->typelem;
 		var->datatype->typbyval = typeStruct->typbyval;
+		var->datatype->typlen = typeStruct->typlen;
 		var->datatype->atttypmod = attrStruct->atttypmod;
 		var->isconst = false;
 		var->notnull = false;
 		var->default_val = NULL;
 		var->value = (Datum) 0;
 		var->isnull = true;
-		var->shouldfree = false;
+		var->freeval = false;
 
 		ReleaseSysCache(typetup);
 		ReleaseSysCache(attrtup);

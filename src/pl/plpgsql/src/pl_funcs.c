@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.12 2001/03/22 06:16:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.13 2001/05/21 14:22:19 wieck Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -387,6 +387,9 @@ static void dump_execsql(PLpgSQL_stmt_execsql * stmt);
 static void dump_dynexecute(PLpgSQL_stmt_dynexecute * stmt);
 static void dump_dynfors(PLpgSQL_stmt_dynfors * stmt);
 static void dump_getdiag(PLpgSQL_stmt_getdiag * stmt);
+static void dump_open(PLpgSQL_stmt_open * stmt);
+static void dump_fetch(PLpgSQL_stmt_fetch * stmt);
+static void dump_close(PLpgSQL_stmt_close * stmt);
 static void dump_expr(PLpgSQL_expr * expr);
 
 
@@ -449,6 +452,15 @@ dump_stmt(PLpgSQL_stmt * stmt)
 			break;
 		case PLPGSQL_STMT_GETDIAG:
 			dump_getdiag((PLpgSQL_stmt_getdiag *) stmt);
+			break;
+		case PLPGSQL_STMT_OPEN:
+			dump_open((PLpgSQL_stmt_open *) stmt);
+			break;
+		case PLPGSQL_STMT_FETCH:
+			dump_fetch((PLpgSQL_stmt_fetch *) stmt);
+			break;
+		case PLPGSQL_STMT_CLOSE:
+			dump_close((PLpgSQL_stmt_close *) stmt);
 			break;
 		default:
 			elog(ERROR, "plpgsql_dump: unknown cmd_type %d\n", stmt->cmd_type);
@@ -620,6 +632,66 @@ dump_select(PLpgSQL_stmt_select * stmt)
 }
 
 static void
+dump_open(PLpgSQL_stmt_open * stmt)
+{
+	dump_ind();
+	printf("OPEN curvar=%d\n", stmt->curvar);
+
+	dump_indent += 2;
+	if (stmt->argquery != NULL)
+	{
+		dump_ind();
+		printf("  arguments = '");
+		dump_expr(stmt->argquery);
+		printf("'\n");
+	}
+	if (stmt->query != NULL)
+	{
+		dump_ind();
+		printf("  query = '");
+		dump_expr(stmt->query);
+		printf("'\n");
+	}
+	if (stmt->dynquery != NULL)
+	{
+		dump_ind();
+		printf("  execute = '");
+		dump_expr(stmt->dynquery);
+		printf("'\n");
+	}
+	dump_indent -= 2;
+
+}
+
+static void
+dump_fetch(PLpgSQL_stmt_fetch * stmt)
+{
+	dump_ind();
+	printf("FETCH curvar=%d\n", stmt->curvar);
+
+	dump_indent += 2;
+	if (stmt->rec != NULL)
+	{
+		dump_ind();
+		printf("    target = %d %s\n", stmt->rec->recno, stmt->rec->refname);
+	}
+	if (stmt->row != NULL)
+	{
+		dump_ind();
+		printf("    target = %d %s\n", stmt->row->rowno, stmt->row->refname);
+	}
+	dump_indent -= 2;
+
+}
+
+static void
+dump_close(PLpgSQL_stmt_close * stmt)
+{
+	dump_ind();
+	printf("CLOSE curvar=%d\n", stmt->curvar);
+}
+
+static void
 dump_exit(PLpgSQL_stmt_exit * stmt)
 {
 	dump_ind();
@@ -777,6 +849,25 @@ plpgsql_dumptree(PLpgSQL_function * func)
 						   var->refname, var->datatype->typname,
 						   var->datatype->typoid,
 						   var->datatype->atttypmod);
+					if (var->isconst)
+						printf("                                  CONSTANT\n");
+					if (var->notnull)
+						printf("                                  NOT NULL\n");
+					if (var->default_val != NULL)
+					{
+						printf("                                  DEFAULT ");
+						dump_expr(var->default_val);
+						printf("\n");
+					}
+					if (var->cursor_explicit_expr != NULL)
+					{
+						if (var->cursor_explicit_argrow >= 0)
+							printf("                                  CURSOR argument row %d\n", var->cursor_explicit_argrow);
+
+						printf("                                  CURSOR IS ");
+						dump_expr(var->cursor_explicit_expr);
+						printf("\n");
+					}
 				}
 				break;
 			case PLPGSQL_DTYPE_ROW:

@@ -41,6 +41,7 @@
 
 typedef struct
 {
+	MemoryContext tuptabcxt;	/* memory context of result table */
 	uint32		alloced;		/* # of alloced vals */
 	uint32		free;			/* # of free vals */
 	TupleDesc	tupdesc;		/* tuple descriptor */
@@ -83,6 +84,7 @@ extern int	SPI_exec(char *src, int tcount);
 extern int	SPI_execp(void *plan, Datum *values, char *Nulls, int tcount);
 extern void *SPI_prepare(char *src, int nargs, Oid *argtypes);
 extern void *SPI_saveplan(void *plan);
+extern int  SPI_freeplan(void *plan);
 
 extern HeapTuple SPI_copytuple(HeapTuple tuple);
 extern HeapTuple SPI_modifytuple(Relation rel, HeapTuple tuple, int natts,
@@ -98,6 +100,14 @@ extern void *SPI_palloc(Size size);
 extern void *SPI_repalloc(void *pointer, Size size);
 extern void SPI_pfree(void *pointer);
 extern void SPI_freetuple(HeapTuple pointer);
+extern void SPI_freetuptable(SPITupleTable *tuptable);
+
+extern Portal SPI_cursor_open(char *name, void *plan, 
+				Datum *Values, char *Nulls);
+extern Portal SPI_cursor_find(char *name);
+extern void   SPI_cursor_fetch(Portal portal, bool forward, int count);
+extern void   SPI_cursor_move(Portal portal, bool forward, int count);
+extern void   SPI_cursor_close(Portal portal);
 
 extern void AtEOXact_SPI(void);
 
