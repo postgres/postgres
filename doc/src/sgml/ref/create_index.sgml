@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_index.sgml,v 1.23 2001/09/03 12:57:49 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_index.sgml,v 1.24 2001/09/14 08:05:55 ishii Exp $
 Postgres documentation
 -->
 
@@ -378,7 +378,7 @@ SELECT am.amname AS acc_method,
     WHERE opc.opcamid = am.oid AND
           amop.amopclaid = opc.oid AND
           amop.amopopr = opr.oid
-    ORDER BY acc_method, ops_name, ops_comp
+    ORDER BY acc_method, ops_name, ops_comp;
     </programlisting>
    </para>
   </refsect2>
