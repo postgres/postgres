@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.15 1997/04/15 17:41:35 scrappy Exp $
+ * $Id: builtins.h,v 1.16 1997/04/27 19:24:13 thomas Exp $
  *
  * NOTES
  *    This should normally only be included by fmgr.h.
@@ -33,6 +33,8 @@ extern bool boolin(char *b);
 extern char *boolout(long b);
 extern bool booleq(int8 arg1, int8 arg2);
 extern bool boolne(int8 arg1, int8 arg2);
+extern bool boollt(int8 arg1, int8 arg2);
+extern bool boolgt(int8 arg1, int8 arg2);
 
 /* char.c */
 extern int32 charin(char *ch);
@@ -333,11 +335,15 @@ extern long float84ge(float64 arg1, float32 arg2);
 /* geo_ops.c, geo_selfuncs.c */
 
 /* misc.c */
-extern bool NullValue(Datum value, bool *isNull);
-extern bool NonNullValue(Datum value, bool *isNull);
+extern bool nullvalue(Datum value, bool *isNull);
+extern bool nonnullvalue(Datum value, bool *isNull);
 extern bool oidrand(Oid o, int32 X);
 extern bool oidsrand(int32 X);
 extern int32 userfntest(int i);
+
+/* define macros to replace mixed-case function calls - tgl 97/04/27 */
+#define NullValue(v,b) nullvalue(v,b)
+#define NonNullValue(v,b) nonnullvalue(v,b)
 
 /* not_in.c */
 extern bool int4notin(int16 not_in_arg, char *relation_and_attr);
@@ -385,7 +391,10 @@ extern bool texticregexne(struct varlena *s, struct varlena *p);
 /* regproc.c */
 extern int32 regprocin(char *proname);
 extern char *regprocout(RegProcedure proid);
-extern Oid RegprocToOid(RegProcedure rp);
+extern Oid regproctooid(RegProcedure rp);
+
+/* define macro to replace mixed-case function call - tgl 97/04/27 */
+#define RegprocToOid(rp) regproctooid(rp)
 
 /* selfuncs.c */
 extern float64 eqsel(Oid opid, Oid relid, AttrNumber attno, char *value, int32 flag);

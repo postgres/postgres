@@ -8,7 +8,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dt.h,v 1.6 1997/04/25 18:40:45 scrappy Exp $
+ * $Id: dt.h,v 1.7 1997/04/27 19:24:16 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -255,6 +255,8 @@ extern bool datetime_le(DateTime *dt1, DateTime *dt2);
 extern bool datetime_ge(DateTime *dt1, DateTime *dt2);
 extern bool datetime_gt(DateTime *dt1, DateTime *dt2);
 extern bool datetime_finite(DateTime *datetime);
+extern DateTime *datetime_smaller(DateTime *dt1, DateTime *dt2);
+extern DateTime *datetime_larger(DateTime *dt1, DateTime *dt2);
 
 extern TimeSpan *timespan_in(char *str);
 extern char *timespan_out(TimeSpan *span);
@@ -265,6 +267,8 @@ extern bool timespan_le(TimeSpan *span1, TimeSpan *span2);
 extern bool timespan_ge(TimeSpan *span1, TimeSpan *span2);
 extern bool timespan_gt(TimeSpan *span1, TimeSpan *span2);
 extern bool timespan_finite(TimeSpan *span);
+extern TimeSpan *timespan_smaller(TimeSpan *span1, TimeSpan *span2);
+extern TimeSpan *timespan_larger(TimeSpan *span1, TimeSpan *span2);
 
 extern text *datetime_text(DateTime *datetime);
 extern DateTime *text_datetime(text *str);
