@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.87 2002/03/10 12:09:54 meskes Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.88 2002/03/15 21:46:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,29 +43,32 @@ static int		xcdepth = 0;	/* depth of nesting in slash-star comments */
  * to empty, addlit to add text.  Note that the buffer is permanently
  * malloc'd to the largest size needed so far in the current run.
  */
-static char	   *literalbuf = NULL;		/* expandable buffer */
-static int		literallen;		/* actual current length */
-static int		literalalloc;	/* current allocated buffer size */
+static char    *literalbuf = NULL;		/* expandable buffer */
+static int		literallen;				/* actual current length */
+static int		literalalloc;			/* current allocated buffer size */
 
-#define startlit()  (literalbuf[0] = '\0', literallen = 0)
+#define startlit()	(literalbuf[0] = '\0', literallen = 0)
 static void addlit(char *ytext, int yleng);
 
 int state_before;
 
-struct _yy_buffer { YY_BUFFER_STATE 	buffer;
-		    long		lineno;
-		    char	      * filename;
-		    struct _yy_buffer * next;
-		  } *yy_buffer = NULL;
+struct _yy_buffer 
+{ 
+	YY_BUFFER_STATE		buffer;
+	long				lineno;
+	char		  		*filename;
+	struct _yy_buffer 	*next;
+} *yy_buffer = NULL;
 
 static char *old;
 
 #define MAX_NESTED_IF 128
 static short preproc_tos;
 static short ifcond;
-static struct _if_value {
-    short condition;
-    short else_branch;
+static struct _if_value 
+{
+	short condition;
+	short else_branch;
 } stacked_if_value[MAX_NESTED_IF];
 
 %}
@@ -84,11 +87,11 @@ static struct _if_value {
  * We use exclusive states for quoted strings, extended comments,
  * and to eliminate parsing troubles for numeric strings.
  * Exclusive states:
- *  <xbit> bit string literal
- *  <xc> extended C-style comments - thomas 1997-07-12
- *  <xd> delimited identifiers (double-quoted identifiers) - thomas 1997-10-27
- *  <xh> hexadecimal numeric string - thomas 1997-11-16
- *  <xq> quoted strings - thomas 1997-07-30
+ *	<xbit> bit string literal
+ *	<xc> extended C-style comments - thomas 1997-07-12
+ *	<xd> delimited identifiers (double-quoted identifiers) - thomas 1997-10-27
+ *	<xh> hexadecimal numeric string - thomas 1997-11-16
+ *	<xq> quoted strings - thomas 1997-07-30
  */
 
 %x xbit
@@ -115,7 +118,7 @@ xhstop			{quote}
 xhinside		[^']+
 xhcat			{quote}{whitespace_with_newline}{quote}
 
-/* C version of hex number 
+/* C version of hex number
  */
 xch			0[xX][0-9A-Fa-f]*
 
@@ -137,7 +140,7 @@ xqcat			{quote}{whitespace_with_newline}{quote}
 dquote			\"
 xdstart			{dquote}
 xdstop			{dquote}
-xddouble               	{dquote}{dquote}
+xddouble				{dquote}{dquote}
 xdinside		[^"]+
 
 /* special stuff for C strings */
@@ -151,27 +154,27 @@ xdcinside		({xdcqq}|{xdcqdq}|{xdcother})
  * The "extended comment" syntax closely resembles allowable operator syntax.
  * The tricky part here is to get lex to recognize a string starting with
  * slash-star as a comment, when interpreting it as an operator would produce
- * a longer match --- remember lex will prefer a longer match!  Also, if we
+ * a longer match --- remember lex will prefer a longer match!	Also, if we
  * have something like plus-slash-star, lex will think this is a 3-character
  * operator whereas we want to see it as a + operator and a comment start.
  * The solution is two-fold:
  * 1. append {op_chars}* to xcstart so that it matches as much text as
- *    {operator} would. Then the tie-breaker (first matching rule of same
- *    length) ensures xcstart wins.  We put back the extra stuff with yyless()
- *    in case it contains a star-slash that should terminate the comment.
+ *	  {operator} would. Then the tie-breaker (first matching rule of same
+ *	  length) ensures xcstart wins.  We put back the extra stuff with yyless()
+ *	  in case it contains a star-slash that should terminate the comment.
  * 2. In the operator rule, check for slash-star within the operator, and
- *    if found throw it back with yyless().  This handles the plus-slash-star
- *    problem.
+ *	  if found throw it back with yyless().  This handles the plus-slash-star
+ *	  problem.
  * SQL92-style comments, which start with dash-dash, have similar interactions
  * with the operator rule.
  */
 xcstart			\/\*{op_chars}*
 xcstop			\*+\/
-xcinside 		[^*/]+
+xcinside		[^*/]+
 
 digit			[0-9]
 letter			[\200-\377_A-Za-z]
-letter_or_digit	[\200-\377_A-Za-z0-9]
+letter_or_digit [\200-\377_A-Za-z0-9]
 
 identifier		{letter}{letter_or_digit}*
 
@@ -179,7 +182,7 @@ typecast		"::"
 
 /*
  * "self" is the set of chars that should be returned as single-character
- * tokens.  "op_chars" is the set of chars that can make up "Op" tokens,
+ * tokens.	"op_chars" is the set of chars that can make up "Op" tokens,
  * which can be one or more characters long (but if a single-char token
  * appears in the "self" set, it is not to be returned as an Op).  Note
  * that the sets overlap, but each has some chars that are not in the other.
@@ -191,9 +194,9 @@ self			[,()\[\].;$\:\+\-\*\/\%\^\<\>\=]
 op_chars		[\~\!\@\#\^\&\|\`\?\$\+\-\*\/\%\<\>\=]
 operator		{op_chars}+
 
-/* we no longer allow unary minus in numbers. 
+/* we no longer allow unary minus in numbers.
  * instead we pass it separately to parser. there it gets
- * coerced via doNegate() -- Leon aug 20 1999 
+ * coerced via doNegate() -- Leon aug 20 1999
  */
 
 integer			{digit}+
@@ -221,12 +224,12 @@ ccomment		"//".*\n
 
 space			[ \t\n\r\f]
 horiz_space		[ \t\f]
-newline                 [\n\r]
+newline					[\n\r]
 non_newline		[^\n\r]
 
-comment         ("--"{non_newline}*)
+comment			("--"{non_newline}*)
 
-whitespace 		({space}|{comment})
+whitespace		({space}|{comment})
 
 /*
  * SQL92 requires at least one newline in the whitespace separating
@@ -236,13 +239,13 @@ whitespace 		({space}|{comment})
  */
 
 horiz_whitespace	({horiz_space}|{comment})
-whitespace_with_newline	({horiz_whitespace}*{newline}{whitespace}*)
+whitespace_with_newline ({horiz_whitespace}*{newline}{whitespace}*)
 
 other			.
 
 /* some stuff needed for ecpg */
-exec    [eE][xX][eE][cC]
-sql     [sS][qQ][lL]
+exec	[eE][xX][eE][cC]
+sql		[sS][qQ][lL]
 define	[dD][eE][fF][iI][nN][eE]
 include [iI][nN][cC][lL][uU][dD][eE]
 
@@ -264,360 +267,280 @@ cppline			{space}*#(.*\\{space})*.*
  * So, put comments here. thomas - 1997-09-08
  *
  * Quoted strings must allow some special characters such as single-quote
- *  and newline.
+ *	and newline.
  * Embedded single-quotes are implemented both in the SQL92-standard
- *  style of two adjacent single quotes "''" and in the Postgres/Java style
- *  of escaped-quote "\'".
+ *	style of two adjacent single quotes "''" and in the Postgres/Java style
+ *	of escaped-quote "\'".
  * Other embedded escaped characters are matched explicitly and the leading
- *  backslash is dropped from the string. - thomas 1997-09-24
+ *	backslash is dropped from the string. - thomas 1997-09-24
  * Note that xcstart must appear before operator, as explained above!
- *  Also whitespace (comment) must appear before operator.
+ *	Also whitespace (comment) must appear before operator.
  */
 
 %%
 <SQL>{whitespace}	{ /* ignore */ }
 
-{xcstart}		{
-				state_before = YYSTATE;
-				xcdepth = 0;
-	 			BEGIN(xc);
-				/* Put back any characters past slash-star; see above */
-				yyless(2);
-				fputs("/*", yyout);
-			}
+{xcstart}			{
+						state_before = YYSTATE;
+						xcdepth = 0;
+						BEGIN(xc);
+						/* Put back any characters past slash-star; see above */
+						yyless(2);
+						fputs("/*", yyout);
+					}
+<xc>{xcstart}		{
+						xcdepth++;
+				 		/* Put back any characters past slash-star; see above */
+				 		yyless(2);
+						fputs("/*", yyout);
+					}
 
-<xc>{xcstart}   {
-                        xcdepth++;
-                        /* Put back any characters past slash-star; see above */
-                        yyless(2);
-			fputs("/*", yyout);
-                }
+<xc>{xcstop}		{
+						ECHO;
+						if (xcdepth <= 0)
+							BEGIN(state_before);
+						else
+							xcdepth--;
+					}
 
-<xc>{xcstop}    {
-			ECHO;
-                        if (xcdepth <= 0)
-                        	BEGIN(state_before);
-                        else
-                                xcdepth--;
-		}
+<xc>{xcinside}		{ ECHO; }
+<xc>{op_chars}		{ ECHO; }
 
-<xc>{xcinside}	{ ECHO; }
-<xc>{op_chars}  { ECHO; }
+<xc><<EOF>>			{ mmerror(PARSE_ERROR, ET_ERROR, "Unterminated /* comment"); }
 
-<xc><<EOF>>            { mmerror(PARSE_ERROR, ET_ERROR, "Unterminated /* comment"); }
+<SQL>{xbitstart}	{
+						BEGIN(xbit);
+						startlit();
+					}
+<xbit>{xbitstop}	{
+						BEGIN(SQL);
+						if (literalbuf[strspn(literalbuf, "01") + 1] != '\0')
+							mmerror(PARSE_ERROR, ET_ERROR, "invalid bit string input.");
+						yylval.str = literalbuf;
+						return BITCONST;
+					}
 
-<SQL>{xbitstart}		{
-					BEGIN(xbit);
-					startlit();
-				}
-<xbit>{xbitstop}		{
-					BEGIN(SQL);
-					if (literalbuf[strspn(literalbuf, "01") + 1] != '\0')
-						mmerror(PARSE_ERROR, ET_ERROR, "invalid bit string input.");
-					yylval.str = literalbuf;
-			                return BITCONST;
-				}
- 
 <xh>{xhinside}	|
-<xbit>{xbitinside}	{
-					addlit(yytext, yyleng);
-				}
+<xbit>{xbitinside}	{ addlit(yytext, yyleng); }
 <xh>{xhcat}		|
-<xbit>{xbitcat}		{
-					/* ignore */
-				}
+<xbit>{xbitcat}		{ /* ignore */ }
 <xbit><<EOF>>		{ mmerror(PARSE_ERROR, ET_ERROR, "Unterminated bit string"); }
 
 <SQL>{xhstart}		{
-					BEGIN(xh);
-					startlit();
-				}
-<xh>{xhstop}			{
-					long val;
-					char* endptr;
+						BEGIN(xh);
+						startlit();
+					}
+<xh>{xhstop}		{
+						long val;
+						char* endptr;
 
-					BEGIN(SQL);
-					errno = 0;
-					val = strtol(literalbuf, &endptr, 16);
-					if (*endptr != '\0' || errno == ERANGE
-#ifdef HAVE_LONG_INT_64  
-						/* if long > 32 bits, check for overflow of int4 */
-	                                        || val != (long) ((int32) val)
-#endif
-						)
-						mmerror(PARSE_ERROR, ET_ERROR, "Bad hexadecimal integer input");
-					yylval.ival = val;
-					return ICONST;
-				}
+						BEGIN(SQL);
+						errno = 0;
+						val = strtol(literalbuf, &endptr, 16);
+						if (*endptr != '\0' || errno == ERANGE
+	#ifdef HAVE_LONG_INT_64
+							/* if long > 32 bits, check for overflow of int4 */
+							|| val != (long) ((int32) val)
+	#endif
+							)
+							mmerror(PARSE_ERROR, ET_ERROR, "Bad hexadecimal integer input");
+						yylval.ival = val;
+						return ICONST;
+					}
 
-<xh><<EOF>>		{ mmerror(PARSE_ERROR, ET_ERROR, "Unterminated hexadecimal integer"); }
+<xh><<EOF>>			{ mmerror(PARSE_ERROR, ET_ERROR, "Unterminated hexadecimal integer"); }
 
-<C,SQL>{xqstart}		{
-					state_before = YYSTATE;
-					BEGIN(xq);
-					startlit();
-				}
-<xq>{xqstop}			{
-					BEGIN(state_before);
-					yylval.str = mm_strdup(literalbuf);
-					return SCONST;
-				}
+<C,SQL>{xqstart}	{
+						state_before = YYSTATE;
+						BEGIN(xq);
+						startlit();
+					}
+<xq>{xqstop}		{
+						BEGIN(state_before);
+						yylval.str = mm_strdup(literalbuf);
+						return SCONST;
+					}
 <xq>{xqdouble}	|
 <xq>{xqinside}	|
-<xq>{xqliteral} 		{
-					addlit(yytext, yyleng);
-				}
-<xq>{xqcat}			{
-					/* ignore */
-				}
+<xq>{xqliteral}		{ addlit(yytext, yyleng); }
+<xq>{xqcat}			{ /* ignore */ }
 
-<xq><<EOF>> 	 	        { mmerror(PARSE_ERROR, ET_ERROR, "Unterminated quoted string"); }
+<xq><<EOF>>			{ mmerror(PARSE_ERROR, ET_ERROR, "Unterminated quoted string"); }
 
-<SQL>{xdstart}			{
-					state_before = YYSTATE;
-					BEGIN(xd);
-					startlit();
-				}
+<SQL>{xdstart}		{
+						state_before = YYSTATE;
+						BEGIN(xd);
+						startlit();
+					}
 <xd>{xdstop}		{
-					BEGIN(state_before);
-					if (strlen(literalbuf) >= NAMEDATALEN)
-       			                {
-#ifdef MULTIBYTE_NOTUSED
-                                                int len;
-
-	                                        len = pg_mbcliplen(literalbuf,strlen(literalbuf),NAMEDATALEN-1);
-						sprintf(errortext, "identifier \"%s\" will be truncated to \"%.*s\"",
-                                                        literalbuf, len, literalbuf);
-	                                        literalbuf[len] = '\0';
-#else
-						sprintf(errortext, "identifier \"%s\" will be truncated to \"%.*s\"",
-                                                        literalbuf, NAMEDATALEN-1, literalbuf);
-                                                literalbuf[NAMEDATALEN-1] = '\0';
-#endif
- 						mmerror(PARSE_ERROR, ET_WARNING, errortext);
-                                        }
-
-					yylval.str = mm_strdup(literalbuf);
-					return CSTRING;
-				}
-<xdc>{xdstop}			{
-					BEGIN(state_before);   
-					yylval.str = mm_strdup(literalbuf);
-					return CSTRING;
-				}
-<xd>{xddouble} 			{
-					addlit(yytext, yyleng-1);
-				}
-<xd>{xdinside}			{
-					addlit(yytext, yyleng);
-				}
-<xd,xdc><<EOF>> 	 	        { mmerror(PARSE_ERROR, ET_ERROR, "Unterminated quoted identifier"); }
-<C,SQL>{xdstart}		{
-					state_before = YYSTATE;
-					BEGIN(xdc);
-					startlit();
-				}
-<xdc>{xdcinside}		{
- 					addlit(yytext, yyleng);
-				}
-<SQL>{typecast}			{ 	return TYPECAST; }
-<SQL>{self}			{ /* 
-				   * We may find a ';' inside a structure
-				   * definition in a TYPE or VAR statement.
-				   * This is not an EOL marker.
-				   */
-				  if (yytext[0] == ';' && struct_level == 0)
-					 BEGIN C;
-				  return yytext[0];
-				}
-<SQL>{operator}			{
-					/*
-					 * Check for embedded slash-star or dash-dash; those
-					 * are comment starts, so operator must stop there.
-					 * Note that slash-star or dash-dash at the first
-					 * character will match a prior rule, not this one.
-					 */
-					int		nchars = yyleng;
-					char   *slashstar = strstr((char*)yytext, "/*");
-					char   *dashdash = strstr((char*)yytext, "--");
-
-					if (slashstar && dashdash)
-					{
-						/* if both appear, take the first one */
-						if (slashstar > dashdash)
-							slashstar = dashdash;
-					}
-					else if (!slashstar)
-						slashstar = dashdash;
-					if (slashstar)
-						nchars = slashstar - ((char*)yytext);
-
-					/*
-					 * For SQL92 compatibility, '+' and '-' cannot be the
-					 * last char of a multi-char operator unless the operator
-					 * contains chars that are not in SQL92 operators.
-					 * The idea is to lex '=-' as two operators, but not
-					 * to forbid operator names like '?-' that could not be
-					 * sequences of SQL92 operators.
-					 */
-					while (nchars > 1 &&
-						   (yytext[nchars-1] == '+' ||
-							yytext[nchars-1] == '-'))
-					{
-						int		ic;
-
-						for (ic = nchars-2; ic >= 0; ic--)
+						BEGIN(state_before);
+						if (strlen(literalbuf) >= NAMEDATALEN)
 						{
-							if (strchr("~!@#^&|`?$%", yytext[ic]))
-								break;
-						}
-						if (ic >= 0)
-							break; /* found a char that makes it OK */
-						nchars--; /* else remove the +/-, and check again */
-					}
+#ifdef MULTIBYTE_NOTUSED
+							int len;
 
-					if (nchars < yyleng)
-					{
-						/* Strip the unwanted chars from the token */
-						yyless(nchars);
-						/*
-						 * If what we have left is only one char, and it's
-						 * one of the characters matching "self", then
-						 * return it as a character token the same way
-						 * that the "self" rule would have.
-						 */
-						if (nchars == 1 &&
-							strchr(",()[].;$:+-*/%^<>=", yytext[0]))
-							return yytext[0];
-					}
-
-					/* Convert "!=" operator to "<>" for compatibility */
-					if (strcmp((char*)yytext, "!=") == 0)
-						yylval.str = mm_strdup("<>");
-					else
-						yylval.str = mm_strdup((char*)yytext);
-					return Op;
-				}
-<SQL>{param}			{
-					yylval.ival = atol((char*)&yytext[1]);
-					return PARAM;
-				}
-<C,SQL>{integer}		{
-					long val;
-					char* endptr;
-
-					errno = 0;
-					val = strtol((char *)yytext, &endptr,10);
-					if (*endptr != '\0' || errno == ERANGE
-#ifdef HAVE_LONG_INT_64  
-						/* if long > 32 bits, check for overflow of int4 */
-	                                        || val != (long) ((int32) val)
+							len = pg_mbcliplen(literalbuf,strlen(literalbuf),NAMEDATALEN-1);
+							sprintf(errortext, "identifier \"%s\" will be truncated to \"%.*s\"",
+									literalbuf, len, literalbuf);
+							literalbuf[len] = '\0';
+#else
+							sprintf(errortext, "identifier \"%s\" will be truncated to \"%.*s\"",
+									literalbuf, NAMEDATALEN-1, literalbuf);
+							literalbuf[NAMEDATALEN-1] = '\0';
 #endif
-						)
-					{
+							mmerror(PARSE_ERROR, ET_WARNING, errortext);
+						}
+					
+						yylval.str = mm_strdup(literalbuf);
+						return CSTRING;
+					}
+<xdc>{xdstop}		{
+						BEGIN(state_before);
+						yylval.str = mm_strdup(literalbuf);
+						return CSTRING;
+					}
+<xd>{xddouble}		{ addlit(yytext, yyleng-1); }
+<xd>{xdinside}		{ addlit(yytext, yyleng); }
+<xd,xdc><<EOF>>		{ mmerror(PARSE_ERROR, ET_ERROR, "Unterminated quoted identifier"); }
+<C,SQL>{xdstart}	{
+						state_before = YYSTATE;
+						BEGIN(xdc);
+						startlit();
+					}
+<xdc>{xdcinside}	{ addlit(yytext, yyleng); }
+<SQL>{typecast}		{ return TYPECAST; }
+<SQL>{self}			{ /*
+					   * We may find a ';' inside a structure
+					   * definition in a TYPE or VAR statement.
+					   * This is not an EOL marker.
+					   */
+					  if (yytext[0] == ';' && struct_level == 0)
+						 BEGIN C;
+					  return yytext[0];
+					}
+<SQL>{operator}		{
+						/*
+						 * Check for embedded slash-star or dash-dash; those
+						 * are comment starts, so operator must stop there.
+						 * Note that slash-star or dash-dash at the first
+						 * character will match a prior rule, not this one.
+						 */
+						int		nchars = yyleng;
+						char   *slashstar = strstr((char*)yytext, "/*");
+						char   *dashdash = strstr((char*)yytext, "--");
+
+						if (slashstar && dashdash)
+						{
+							/* if both appear, take the first one */
+							if (slashstar > dashdash)
+								slashstar = dashdash;
+						}
+						else if (!slashstar)
+							slashstar = dashdash;
+						if (slashstar)
+							nchars = slashstar - ((char*)yytext);
+
+						/*
+						 * For SQL92 compatibility, '+' and '-' cannot be the
+						 * last char of a multi-char operator unless the operator
+						 * contains chars that are not in SQL92 operators.
+						 * The idea is to lex '=-' as two operators, but not
+						 * to forbid operator names like '?-' that could not be
+						 * sequences of SQL92 operators.
+						 */
+						while (nchars > 1 &&
+							   (yytext[nchars-1] == '+' ||
+								yytext[nchars-1] == '-'))
+						{
+							int		ic;
+
+							for (ic = nchars-2; ic >= 0; ic--)
+							{
+								if (strchr("~!@#^&|`?$%", yytext[ic]))
+									break;
+							}
+							if (ic >= 0)
+								break; /* found a char that makes it OK */
+							nchars--; /* else remove the +/-, and check again */
+						}
+
+						if (nchars < yyleng)
+						{
+							/* Strip the unwanted chars from the token */
+							yyless(nchars);
+							/*
+							 * If what we have left is only one char, and it's
+							 * one of the characters matching "self", then
+							 * return it as a character token the same way
+							 * that the "self" rule would have.
+							 */
+							if (nchars == 1 &&
+								strchr(",()[].;$:+-*/%^<>=", yytext[0]))
+								return yytext[0];
+						}
+
+						/* Convert "!=" operator to "<>" for compatibility */
+						if (strcmp((char*)yytext, "!=") == 0)
+							yylval.str = mm_strdup("<>");
+						else
+							yylval.str = mm_strdup((char*)yytext);
+						return Op;
+					}
+<SQL>{param}		{
+						yylval.ival = atol((char*)&yytext[1]);
+						return PARAM;
+					}
+<C,SQL>{integer}	{
+						long val;
+						char* endptr;
+
 						errno = 0;
+						val = strtol((char *)yytext, &endptr,10);
+						if (*endptr != '\0' || errno == ERANGE
+#ifdef HAVE_LONG_INT_64
+							/* if long > 32 bits, check for overflow of int4 */
+							|| val != (long) ((int32) val)
+#endif
+							)
+						{
+							errno = 0;
+							yylval.str = mm_strdup((char*)yytext);
+							return FCONST;
+						}
+						yylval.ival = val;
+						return ICONST;
+					}
+<SQL>{ip}			{
+						yylval.str = mm_strdup((char*)yytext);
+						return IP;
+					}
+{decimal}			{
 						yylval.str = mm_strdup((char*)yytext);
 						return FCONST;
 					}
-					yylval.ival = val;
-					return ICONST;
-				}
-<SQL>{ip}			{
-					yylval.str = mm_strdup((char*)yytext);
-					return IP;
-				}
-{decimal}		{
-					yylval.str = mm_strdup((char*)yytext);
-					return FCONST;
-				}
-<C,SQL>{real}			{
-					yylval.str = mm_strdup((char*)yytext);
-					return FCONST;
-				}
-<SQL>:{identifier}(("->"|\.){identifier})*	{
-					yylval.str = mm_strdup((char*)yytext+1);
-					return(CVARIABLE);
-			}
-<SQL>{identifier}	{
-					ScanKeyword	   *keyword;
-					struct _defines *ptr;
-
-					/* Is it an SQL keyword? */
-					keyword = ScanKeywordLookup((char*) yytext);
-					if (keyword != NULL)
-						return keyword->value;
-
-					/* Is it an ECPG keyword? */
-					keyword = ScanECPGKeywordLookup((char*) yytext);
-					if (keyword != NULL)
-						return keyword->value;
-
-					/* How about a DEFINE? */
-					for (ptr = defines; ptr; ptr = ptr->next)
-					{
-						if (strcmp(yytext, ptr->old) == 0)
-						{
-							struct _yy_buffer *yb;
-
-							yb = mm_alloc(sizeof(struct _yy_buffer));
-
-							yb->buffer =  YY_CURRENT_BUFFER;
-							yb->lineno = yylineno;
-							yb->filename = mm_strdup(input_filename);
-							yb->next = yy_buffer;
-
-							yy_buffer = yb;
-
-							yy_scan_string(ptr->new);
-							break;
-						}
-					}
-
-					/*
-					 * None of the above.  Return it as an identifier.
-					 *
-					 * The backend would attempt to truncate and case-fold
-					 * the identifier, but I see no good reason for ecpg
-					 * to do so; that's just another way that ecpg could get
-					 * out of step with the backend.
-					 */
-					if (ptr == NULL) 
-					{
-						yylval.str = mm_strdup((char*) yytext);
-						return IDENT;
-					}
-				}
-<SQL>{other}			{ return yytext[0]; }
-<C>{exec_sql}			{ BEGIN SQL; return SQL_START; }
-<C>{ccomment}			{ /* ignore */ } 
-<C>{xch}			{
-					char* endptr;
-
-					errno = 0;
-					yylval.ival = strtol((char *)yytext,&endptr,16);
-					if (*endptr != '\0' || errno == ERANGE)
-					{
-						errno = 0;
+<C,SQL>{real}		{
 						yylval.str = mm_strdup((char*)yytext);
-						return SCONST;
+						return FCONST;
 					}
-					return ICONST;
-				}
-<C>{cppline}			{
-					yylval.str = mm_strdup((char*)yytext);
-					return(CPP_LINE);
-				}
-<C>{identifier}	{
-					ScanKeyword		*keyword;
-
-					keyword = ScanCKeywordLookup((char*)yytext);
-					if (keyword != NULL) {
-						return keyword->value;
+<SQL>:{identifier}(("->"|\.){identifier})*	{
+						yylval.str = mm_strdup((char*)yytext+1);
+						return(CVARIABLE);
 					}
-					else
-					{
+<SQL>{identifier}	{
+						ScanKeyword    *keyword;
 						struct _defines *ptr;
 
+						/* Is it an SQL keyword? */
+						keyword = ScanKeywordLookup((char*) yytext);
+						if (keyword != NULL)
+							return keyword->value;
+
+						/* Is it an ECPG keyword? */
+						keyword = ScanECPGKeywordLookup((char*) yytext);
+						if (keyword != NULL)
+							return keyword->value;
+
+						/* How about a DEFINE? */
 						for (ptr = defines; ptr; ptr = ptr->next)
 						{
 							if (strcmp(yytext, ptr->old) == 0)
@@ -626,272 +549,328 @@ cppline			{space}*#(.*\\{space})*.*
 
 								yb = mm_alloc(sizeof(struct _yy_buffer));
 
-					                        yb->buffer =  YY_CURRENT_BUFFER;
-					                        yb->lineno = yylineno;
-					                        yb->filename = mm_strdup(input_filename);
-					                        yb->next = yy_buffer;
+								yb->buffer =  YY_CURRENT_BUFFER;
+								yb->lineno = yylineno;
+								yb->filename = mm_strdup(input_filename);
+								yb->next = yy_buffer;
 
-					                        yy_buffer = yb;
+								yy_buffer = yb;
 
 								yy_scan_string(ptr->new);
 								break;
 							}
 						}
-						if (ptr == NULL) 
+
+						/*
+						 * None of the above.  Return it as an identifier.
+						 *
+						 * The backend would attempt to truncate and case-fold
+						 * the identifier, but I see no good reason for ecpg
+						 * to do so; that's just another way that ecpg could get
+						 * out of step with the backend.
+						 */
+						if (ptr == NULL)
 						{
-							yylval.str = mm_strdup((char*)yytext);
+							yylval.str = mm_strdup((char*) yytext);
 							return IDENT;
 						}
 					}
-				}
-<C>";"	      	        { return(';'); }
-<C>","	      	        { return(','); }
-<C>"*"	      	        { return('*'); }
-<C>"%"	      	        { return('%'); }
-<C>"/"	      	        { return('/'); }
-<C>"+"	      	        { return('+'); }
-<C>"-"	      	        { return('-'); }
-<C>"("	      	        { return('('); }
-<C>")"	      	        { return(')'); }
-<C>{space}	{ ECHO; }
-<C>\{			{ return('{'); }
-<C>\}			{ return('}'); }
-<C>\[			{ return('['); }
-<C>\]			{ return(']'); }
-<C>\=			{ return('='); }
-<C>"->"			{ return(S_MEMBER); } 
-<C>">>"			{ return(S_RSHIFT); } 
-<C>"<<"			{ return(S_LSHIFT); } 
-<C>"||"			{ return(S_OR); } 
-<C>"&&"			{ return(S_AND); } 
-<C>"++"			{ return(S_INC); } 
-<C>"--"			{ return(S_DEC); } 
-<C>"=="			{ return(S_EQUAL); } 
-<C>"!="			{ return(S_NEQUAL); } 
-<C>"+="			{ return(S_ADD); } 
-<C>"-="			{ return(S_SUB); } 
-<C>"*="			{ return(S_MUL); } 
-<C>"/="			{ return(S_DIV); } 
-<C>"%="			{ return(S_MOD); } 
-<C>"->*"		{ return(S_MEMPOINT); } 
-<C>".*"			{ return(S_DOTPOINT); } 
-<C>{other}		{ return S_ANYTHING; }
+<SQL>{other}		{ return yytext[0]; }
+<C>{exec_sql}		{ BEGIN SQL; return SQL_START; }
+<C>{ccomment}		{ /* ignore */ }
+<C>{xch}			{
+						char* endptr;
+
+						errno = 0;
+						yylval.ival = strtol((char *)yytext,&endptr,16);
+						if (*endptr != '\0' || errno == ERANGE)
+						{
+							errno = 0;
+							yylval.str = mm_strdup((char*)yytext);
+							return SCONST;
+						}
+						return ICONST;
+					}
+<C>{cppline}		{
+						yylval.str = mm_strdup((char*)yytext);
+						return(CPP_LINE);
+					}
+<C>{identifier} 	{
+						ScanKeyword		*keyword;
+
+						keyword = ScanCKeywordLookup((char*)yytext);
+						if (keyword != NULL) {
+							return keyword->value;
+						}
+						else
+						{
+							struct _defines *ptr;
+
+							for (ptr = defines; ptr; ptr = ptr->next)
+							{
+								if (strcmp(yytext, ptr->old) == 0)
+								{
+									struct _yy_buffer *yb;
+
+									yb = mm_alloc(sizeof(struct _yy_buffer));
+
+												yb->buffer =  YY_CURRENT_BUFFER;
+												yb->lineno = yylineno;
+												yb->filename = mm_strdup(input_filename);
+												yb->next = yy_buffer;
+
+												yy_buffer = yb;
+
+									yy_scan_string(ptr->new);
+									break;
+								}
+							}
+							if (ptr == NULL)
+							{
+								yylval.str = mm_strdup((char*)yytext);
+								return IDENT;
+							}
+						}
+					}
+<C>";"				{ return(';'); }
+<C>","				{ return(','); }
+<C>"*"				{ return('*'); }
+<C>"%"				{ return('%'); }
+<C>"/"				{ return('/'); }
+<C>"+"				{ return('+'); }
+<C>"-"				{ return('-'); }
+<C>"("				{ return('('); }
+<C>")"				{ return(')'); }
+<C>{space}			{ ECHO; }
+<C>\{				{ return('{'); }
+<C>\}				{ return('}'); }
+<C>\[				{ return('['); }
+<C>\]				{ return(']'); }
+<C>\=				{ return('='); }
+<C>"->"				{ return(S_MEMBER); }
+<C>">>"				{ return(S_RSHIFT); }
+<C>"<<"				{ return(S_LSHIFT); }
+<C>"||"				{ return(S_OR); }
+<C>"&&"				{ return(S_AND); }
+<C>"++"				{ return(S_INC); }
+<C>"--"				{ return(S_DEC); }
+<C>"=="				{ return(S_EQUAL); }
+<C>"!="				{ return(S_NEQUAL); }
+<C>"+="				{ return(S_ADD); }
+<C>"-="				{ return(S_SUB); }
+<C>"*="				{ return(S_MUL); }
+<C>"/="				{ return(S_DIV); }
+<C>"%="				{ return(S_MOD); }
+<C>"->*"			{ return(S_MEMPOINT); }
+<C>".*"				{ return(S_DOTPOINT); }
+<C>{other}			{ return S_ANYTHING; }
 
 <C>{exec_sql}{define}{space}*	{ BEGIN(def_ident); }
 <C>{exec_sql}{include}{space}*	{ BEGIN(incl); }
 
-<C,xskip>{exec_sql}{ifdef}{space}* 	{ ifcond = TRUE; BEGIN(xcond); }
-<C,xskip>{exec_sql}{ifndef}{space}*	{ ifcond = FALSE; BEGIN(xcond); }
+<C,xskip>{exec_sql}{ifdef}{space}*	{ ifcond = TRUE; BEGIN(xcond); }
+<C,xskip>{exec_sql}{ifndef}{space}* { ifcond = FALSE; BEGIN(xcond); }
 
 <C,xskip>{exec_sql}{elif}{space}*	{	/* pop stack */
 						if ( preproc_tos == 0 ) {
-						    mmerror(PARSE_ERROR, ET_FATAL, "Missing matching 'EXEC SQL IFDEF / EXEC SQL IFNDEF'");
+							mmerror(PARSE_ERROR, ET_FATAL, "Missing matching 'EXEC SQL IFDEF / EXEC SQL IFNDEF'");
 						}
-						else if ( stacked_if_value[preproc_tos].else_branch ) {
-						    mmerror(PARSE_ERROR, ET_FATAL, "Missing 'EXEC SQL ENDIF;'");
-						}
-						else {
-						    preproc_tos--;
-						}
+						else if ( stacked_if_value[preproc_tos].else_branch )
+							mmerror(PARSE_ERROR, ET_FATAL, "Missing 'EXEC SQL ENDIF;'");
+						else
+							preproc_tos--;
 
 						ifcond = TRUE; BEGIN(xcond);
 					}
 
 <C,xskip>{exec_sql}{else}{space}*";" {	/* only exec sql endif pops the stack, so take care of duplicated 'else' */
 						if ( stacked_if_value[preproc_tos].else_branch ) {
-						    mmerror(PARSE_ERROR, ET_FATAL, "Duplicated 'EXEC SQL ELSE;'");
+							mmerror(PARSE_ERROR, ET_FATAL, "Duplicated 'EXEC SQL ELSE;'");
 						}
 						else {
-						    stacked_if_value[preproc_tos].else_branch = TRUE;
-						    stacked_if_value[preproc_tos].condition = 
+							stacked_if_value[preproc_tos].else_branch = TRUE;
+							stacked_if_value[preproc_tos].condition =
 							(stacked_if_value[preproc_tos-1].condition &&
 							 ! stacked_if_value[preproc_tos].condition);
 
-						    if ( stacked_if_value[preproc_tos].condition ) {
-							BEGIN(C);
-						    }
-						    else {
-							BEGIN(xskip);
-						    }
+							if ( stacked_if_value[preproc_tos].condition )
+								BEGIN(C);
+							else
+								BEGIN(xskip);
 						}
 					}
-<C,xskip>{exec_sql}{endif}{space}*";" { 
-						if ( preproc_tos == 0 ) {
-						    mmerror(PARSE_ERROR, ET_FATAL, "Unmatched 'EXEC SQL ENDIF;'");
-						}
-						else {
-						    preproc_tos--;
-						}
+<C,xskip>{exec_sql}{endif}{space}*";" {
+						if ( preproc_tos == 0 )
+							mmerror(PARSE_ERROR, ET_FATAL, "Unmatched 'EXEC SQL ENDIF;'");
+						else
+							preproc_tos--;
 
-						if ( stacked_if_value[preproc_tos].condition ) {
+						if ( stacked_if_value[preproc_tos].condition )
 						   BEGIN(C);
-						}
-						else {
+						else
 						   BEGIN(xskip);
-						}
 					}
 
-<xskip>{other}			{ /* ignore */ }
+<xskip>{other}		{ /* ignore */ }
 
 <xcond>{identifier}{space}*";" {
-					if ( preproc_tos >= MAX_NESTED_IF-1 ) {
-					    mmerror(PARSE_ERROR, ET_FATAL, "Too many nested 'EXEC SQL IFDEF' conditions");
+						if ( preproc_tos >= MAX_NESTED_IF-1 ) {
+							mmerror(PARSE_ERROR, ET_FATAL, "Too many nested 'EXEC SQL IFDEF' conditions");
+						}
+						else 
+						{
+							struct _defines *defptr;
+							unsigned int i;
+
+							/* skip the ";" and trailing whitespace. Note that yytext contains
+							   at least one non-space character plus the ";" */
+							for ( i = strlen(yytext)-2;
+								  i > 0 && isspace((unsigned char) yytext[i]);
+								  i-- )
+							{}
+							yytext[i+1] = '\0';
+
+							for ( defptr = defines; defptr != NULL &&
+								  ( strcmp((char*)yytext, defptr->old) != 0 ); defptr = defptr->next );
+
+							preproc_tos++;
+							stacked_if_value[preproc_tos].else_branch = FALSE;
+							stacked_if_value[preproc_tos].condition =
+							( (defptr ? ifcond : !ifcond) && stacked_if_value[preproc_tos-1].condition );
+						}
+
+						if ( stacked_if_value[preproc_tos].condition )
+						   BEGIN C;
+						else
+						   BEGIN(xskip);
 					}
-					else {
-					    struct _defines *defptr;
-					    unsigned int i;
 
-					    /* skip the ";" and trailing whitespace. Note that yytext contains
-					       at least one non-space character plus the ";" */
-					    for ( i = strlen(yytext)-2;
-							  i > 0 && isspace((unsigned char) yytext[i]);
-							  i-- )
-						{}
-					    yytext[i+1] = '\0';
-
-					    for ( defptr = defines; defptr != NULL &&
-						      ( strcmp((char*)yytext, defptr->old) != 0 ); defptr = defptr->next );
-
-					    preproc_tos++;
-					    stacked_if_value[preproc_tos].else_branch = FALSE;
-					    stacked_if_value[preproc_tos].condition = 
-						( (defptr ? ifcond : !ifcond) && stacked_if_value[preproc_tos-1].condition );
-					}
-
-					if ( stacked_if_value[preproc_tos].condition ) {
-					   BEGIN C;
-					}
-					else {
-					   BEGIN(xskip);
-					}
-				}
-
-<def_ident>{identifier}	{
+<def_ident>{identifier} {
 				old = mm_strdup(yytext);
 				BEGIN(def);
 				startlit();
 			}
 <def>{space}*";"	{
-				struct _defines *ptr, *this;
-        
-                                for (ptr = defines; ptr != NULL; ptr = ptr->next)
-                                {
-                                     if (strcmp(old, ptr->old) == 0)
-                                     {
-					free(ptr->new);
-					/* ptr->new = mm_strdup(scanstr(literalbuf));*/
-					ptr->new = mm_strdup(literalbuf);
-                                     }
-                                }
-				if (ptr == NULL)
-				{                        
-                                        this = (struct _defines *) mm_alloc(sizeof(struct _defines));
+						struct _defines *ptr, *this;
 
-                                        /* initial definition */
-                                        this->old = old;
-                                        this->new = mm_strdup(literalbuf);
-					this->next = defines;
-					defines = this;
-				}
+						for (ptr = defines; ptr != NULL; ptr = ptr->next)
+						{
+							 if (strcmp(old, ptr->old) == 0)
+							 {
+								free(ptr->new);
+								/* ptr->new = mm_strdup(scanstr(literalbuf));*/
+								ptr->new = mm_strdup(literalbuf);
+							 }
+						}
+						if (ptr == NULL)
+						{
+												this = (struct _defines *) mm_alloc(sizeof(struct _defines));
 
-				BEGIN(C);
-			}
-<def>[^;]		{
-				addlit(yytext, yyleng);
-			}
+												/* initial definition */
+												this->old = old;
+												this->new = mm_strdup(literalbuf);
+							this->next = defines;
+							defines = this;
+						}
 
-<incl>[^;]+";" 	{ /* got the include file name */
-			  struct _yy_buffer *yb;
-			  struct _include_path *ip;
-			  char inc_file[MAXPGPATH];
-			  unsigned int i;
+						BEGIN(C);
+					}
+<def>[^;]			{ addlit(yytext, yyleng); }
 
-			  yb = mm_alloc(sizeof(struct _yy_buffer));
+<incl>[^;]+";"		{ 
+						/* got the include file name */
+						struct _yy_buffer *yb;
+					  	struct _include_path *ip;
+					  	char inc_file[MAXPGPATH];
+					  	unsigned int i;
 
-			  yb->buffer =  YY_CURRENT_BUFFER;
-			  yb->lineno = yylineno;
-			  yb->filename = input_filename;
-			  yb->next = yy_buffer;
+					  	yb = mm_alloc(sizeof(struct _yy_buffer));
 
-			  yy_buffer = yb;
+					  	yb->buffer =	YY_CURRENT_BUFFER;
+					  	yb->lineno = yylineno;
+					  	yb->filename = input_filename;
+					  	yb->next = yy_buffer;
 
-			  /* skip the ";" and trailing whitespace. Note that yytext contains
-			     at least one non-space character plus the ";" */
-			  for ( i = strlen(yytext)-2;
-					i > 0 && isspace((unsigned char) yytext[i]);
-					i-- )
-			  {}
-			  yytext[i+1] = '\0';
+					  	yy_buffer = yb;
 
-			  yyin = NULL;
-			  for (ip = include_paths; yyin == NULL && ip != NULL; ip = ip->next)
-			  {
-				if (strlen(ip->path) + strlen(yytext) + 3 > MAXPGPATH)
-				{
-					fprintf(stderr, "Error: Path %s/%s is too long in line %d, skipping.\n", ip->path, yytext, yylineno);
-					continue;
-				}
-			  	sprintf (inc_file, "%s/%s", ip->path, yytext);
-		          	yyin = fopen( inc_file, "r" );
-			  	if (!yyin)
-				{
-					if (strcmp(inc_file + strlen(inc_file) - 2, ".h"))
-					{
-						strcat(inc_file, ".h");
-						yyin = fopen( inc_file, "r" );
+					  	/*
+						 * skip the ";" and trailing whitespace. Note that yytext contains
+						 * at least one non-space character plus the ";" 
+						 */
+					  	for ( i = strlen(yytext)-2;
+							i > 0 && isspace((unsigned char) yytext[i]);
+							i-- )
+					  		{}
+					  	yytext[i+1] = '\0';
+
+					  	yyin = NULL;
+					  	for (ip = include_paths; yyin == NULL && ip != NULL; ip = ip->next)
+					  	{
+							if (strlen(ip->path) + strlen(yytext) + 3 > MAXPGPATH)
+							{
+								fprintf(stderr, "Error: Path %s/%s is too long in line %d, skipping.\n", ip->path, yytext, yylineno);
+								continue;
+							}
+							sprintf (inc_file, "%s/%s", ip->path, yytext);
+							yyin = fopen( inc_file, "r" );
+							if (!yyin)
+							{
+								if (strcmp(inc_file + strlen(inc_file) - 2, ".h"))
+								{
+									strcat(inc_file, ".h");
+									yyin = fopen( inc_file, "r" );
+								}
+							}
+						}
+						if (!yyin)
+						{
+							sprintf(errortext, "Cannot open include file %s in line %d\n", yytext, yylineno);
+							mmerror(NO_INCLUDE_FILE, ET_FATAL, errortext);
+					  	}
+
+						input_filename = mm_strdup(inc_file);
+						yy_switch_to_buffer(yy_create_buffer(yyin,YY_BUF_SIZE ));
+						yylineno = 1;
+						output_line_number();
+
+					  	BEGIN C;
 					}
 
-				}
-			  }
-			  if (!yyin)
-			  {
-				sprintf(errortext, "Cannot open include file %s in line %d\n", yytext, yylineno);
-				mmerror(NO_INCLUDE_FILE, ET_FATAL, errortext);
-			  }
+<<EOF>>				{
+				  		if ( preproc_tos > 0 ) 
+						{
+					  		preproc_tos = 0;
+							mmerror(PARSE_ERROR, ET_FATAL, "Missing 'EXEC SQL ENDIF;'");
+				  		}
 
-			  input_filename = mm_strdup(inc_file);
-			  yy_switch_to_buffer(yy_create_buffer(yyin,YY_BUF_SIZE ));
-			  yylineno = 1;
-			  output_line_number();
+				  		if (yy_buffer == NULL)
+							yyterminate();
+				  		else
+				  		{
+							struct _yy_buffer *yb = yy_buffer;
+							int i;
 
-			  BEGIN C;
-			}
+							if (yyin != NULL)
+								fclose(yyin);
 
-<<EOF>>			{
-			  if ( preproc_tos > 0 ) {
-			      preproc_tos = 0;
+							yy_delete_buffer( YY_CURRENT_BUFFER );
+							yy_switch_to_buffer(yy_buffer->buffer);
 
-			      mmerror(PARSE_ERROR, ET_FATAL, "Missing 'EXEC SQL ENDIF;'");
-			  }
+							yylineno = yy_buffer->lineno;
 
-			  if (yy_buffer == NULL)
-				yyterminate();
-			  else
-			  {
-				struct _yy_buffer *yb = yy_buffer;
-				int i;
+							/* We have to output the filename only if we change files here */
+							i = strcmp(input_filename, yy_buffer->filename);
 
-				if (yyin != NULL)
-					fclose(yyin);
+							free(input_filename);
+							input_filename = yy_buffer->filename;
 
-				yy_delete_buffer( YY_CURRENT_BUFFER );
-				yy_switch_to_buffer(yy_buffer->buffer);
+							yy_buffer = yy_buffer->next;
+							free(yb);
 
-				yylineno = yy_buffer->lineno;
-				
-				/* We have to output the filename only if we change files here */
-				i = strcmp(input_filename, yy_buffer->filename);
-
-				free(input_filename);
-				input_filename = yy_buffer->filename;
-
-				yy_buffer = yy_buffer->next;
-				free(yb);
-
-				if (i != 0)
-					output_line_number();
-			  }
-			}
+							if (i != 0)
+								output_line_number();
+				  		}
+					}
 %%
 void
 lex_init(void)
@@ -912,7 +891,7 @@ lex_init(void)
 	}
 	startlit();
 
-    BEGIN C;
+	BEGIN C;
 }
 
 static void
@@ -921,9 +900,9 @@ addlit(char *ytext, int yleng)
 	/* enlarge buffer if needed */
 	if ((literallen+yleng) >= literalalloc)
 	{
-		do {
+		do 
 			literalalloc *= 2;
-		} while ((literallen+yleng) >= literalalloc);
+		while ((literallen+yleng) >= literalalloc);
 		literalbuf = (char *) realloc(literalbuf, literalalloc);
 	}
 	/* append new data, add trailing null */
@@ -932,7 +911,7 @@ addlit(char *ytext, int yleng)
 	literalbuf[literallen] = '\0';
 }
 
-int yywrap(void) 
+int yywrap(void)
 {
-    return 1;
+	return 1;
 }
