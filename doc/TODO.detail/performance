@@ -345,7 +345,7 @@ From owner-pgsql-hackers@hub.org Tue Oct 19 10:31:10 1999
 Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id KAA29087
 	for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 10:31:08 -0400 (EDT)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.11 $) with ESMTP id KAA27535 for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 10:19:47 -0400 (EDT)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.12 $) with ESMTP id KAA27535 for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 10:19:47 -0400 (EDT)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.3/8.9.3) with SMTP id KAA30328;
 	Tue, 19 Oct 1999 10:12:10 -0400 (EDT)
@@ -454,7 +454,7 @@ From owner-pgsql-hackers@hub.org Tue Oct 19 21:25:30 1999
 Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id VAA28130
 	for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 21:25:26 -0400 (EDT)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.11 $) with ESMTP id VAA10512 for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 21:15:28 -0400 (EDT)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.12 $) with ESMTP id VAA10512 for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 21:15:28 -0400 (EDT)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.3/8.9.3) with SMTP id VAA50745;
 	Tue, 19 Oct 1999 21:07:23 -0400 (EDT)
@@ -1006,7 +1006,7 @@ From pgsql-general-owner+M2497@hub.org Fri Jun 16 18:31:03 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id RAA04165
 	for <pgman@candle.pha.pa.us>; Fri, 16 Jun 2000 17:31:01 -0400 (EDT)
-Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.11 $) with ESMTP id RAA13110 for <pgman@candle.pha.pa.us>; Fri, 16 Jun 2000 17:20:12 -0400 (EDT)
+Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.12 $) with ESMTP id RAA13110 for <pgman@candle.pha.pa.us>; Fri, 16 Jun 2000 17:20:12 -0400 (EDT)
 Received: from hub.org (majordom@localhost [127.0.0.1])
 	by hub.org (8.10.1/8.10.1) with SMTP id e5GLDaM14477;
 	Fri, 16 Jun 2000 17:13:36 -0400 (EDT)
@@ -1511,5 +1511,141 @@ Checkpoints and rollbacks would be harder of course.
 
 Cheerio,
 Link.
+
+
+From pgsql-hackers-owner+M20329@postgresql.org Tue Mar 19 18:00:15 2002
+Return-path: <pgsql-hackers-owner+M20329@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g2K00EA02465
+	for <pgman@candle.pha.pa.us>; Tue, 19 Mar 2002 19:00:14 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP
+	id 8C7164763EF; Tue, 19 Mar 2002 18:22:08 -0500 (EST)
+Received: from CopelandConsulting.Net (dsl-24293-ld.customer.centurytel.net [209.142.135.135])
+	by postgresql.org (Postfix) with ESMTP id E4DAD475F1F
+	for <pgsql-hackers@postgresql.org>; Tue, 19 Mar 2002 18:02:17 -0500 (EST)
+Received: from mouse.copelandconsulting.net (mouse.copelandconsulting.net [192.168.1.2])
+	by CopelandConsulting.Net (8.10.1/8.10.1) with ESMTP id g2JN0jh13185;
+	Tue, 19 Mar 2002 17:00:45 -0600 (CST)
+X-Trade-Id: <CCC.Tue, 19 Mar 2002 17:00:45 -0600 (CST).Tue, 19 Mar 2002 17:00:45 -0600 (CST).200203192300.g2JN0jh13185.g2JN0jh13185@CopelandConsulting.Net.
+Subject: Re: [HACKERS] Bitmap indexes?
+From: Greg Copeland <greg@CopelandConsulting.Net>
+To: Matthew Kirkwood <matthew@hairy.beasts.org>
+cc: Oleg Bartunov <oleg@sai.msu.su>,
+   PostgresSQL Hackers Mailing List <pgsql-hackers@postgresql.org>
+	<Pine.LNX.4.33.0203192118140.29494-100000@sphinx.mythic-beasts.com>
+	<Pine.LNX.4.33.0203192118140.29494-100000@sphinx.mythic-beasts.com>
+Content-Type: multipart/signed; micalg=pgp-sha1; protocol="application/pgp-signature";
+	boundary="=-Ivchb84S75fOMzJ9DxwK"
+X-Mailer: Evolution/1.0.2 
+Date: 19 Mar 2002 17:00:53 -0600
+Message-ID: <1016578854.14670.450.camel@mouse.copelandconsulting.net>
+MIME-Version: 1.0
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+--=-Ivchb84S75fOMzJ9DxwK
+Content-Type: text/plain
+Content-Transfer-Encoding: quoted-printable
+
+On Tue, 2002-03-19 at 15:30, Matthew Kirkwood wrote:
+> On Tue, 19 Mar 2002, Oleg Bartunov wrote:
+>=20
+> Sorry to reply over you, Oleg.
+>=20
+> > On 13 Mar 2002, Greg Copeland wrote:
+> >
+> > > One of the reasons why I originally stated following the hackers list=
+ is
+> > > because I wanted to implement bitmap indexes.  I found in the archive=
+s,
+> > > the follow link, http://www.it.iitb.ernet.in/~rvijay/dbms/proj/, which
+> > > was extracted from this,
+> > > http://groups.google.com/groups?hl=3Den&threadm=3D01C0EF67.5105D2E0.m=
+ascarm%40mascari.com&rnum=3D1&prev=3D/groups%3Fq%3Dbitmap%2Bindex%2Bgroup:c=
+omp.databases.postgresql.hackers%26hl%3Den%26selm%3D01C0EF67.5105D2E0.masca=
+rm%2540mascari.com%26rnum%3D1, archive thread.
+>=20
+> For every case I have used a bitmap index on Oracle, a
+> partial index[0] made more sense (especialy since it
+> could usefully be compound).
+
+That's very true, however, often bitmap indexes are used where partial
+indexes may not work well.  It maybe you were trying to apply the cure
+for the wrong disease.  ;)
+
+>=20
+> Our troublesome case (on Oracle) is a table of "events"
+> where maybe fifty to a couple of hundred are "published"
+> (ie. web-visible) at any time.  The events are categorised
+> by sport (about a dozen) and by "event type" (about five).
+> We never really query events except by PK or by sport/type/
+> published.
+
+The reason why bitmap indexes are primarily used for DSS and data
+wherehousing applications is because they are best used on extremely
+large to very large tables which have low cardinality (e.g, 10,000,000
+rows having 200 distinct values).  On top of that, bitmap indexes also
+tend to be much smaller than their "standard" cousins.  On large and
+very tables tables, this can sometimes save gigs in index space alone
+(serious space benefit).  Plus, their small index size tends to result
+in much less I/O (serious speed benefit).  This, of course, can result
+in several orders of magnitude speed improvements when index scans are
+required.  As an added bonus, using AND, OR, XOR and NOT predicates are
+exceptionally fast and if implemented properly, can even take advantage
+of some 64-bit hardware for further speed improvements.  This, of
+course, further speeds look ups.  The primary down side is that inserts
+and updates to bitmap indexes are very costly (comparatively) which is,
+yet again, why they excel in read-only environments (DSS & data
+wherehousing).
+
+It should also be noted that RDMS's, such as Oracle, often use multiple
+types of bitmap indexes.  This further impedes insert/update
+performance, however, the additional bitmap index types usually allow
+for range predicates while still making use of the bitmap index.  If I'm
+not mistaken, several other types of bitmaps are available as well as
+many ways to encode and compress (rle, quad compression, etc) bitmap
+indexes which further save on an already compact indexing scheme.
+
+Given the proper problem domain, index bitmaps can be a big win.
+
+>=20
+> We make a bitmap index on "published", and trust Oracle to
+> use it correctly, and hope that our other indexes are also
+> useful.
+>=20
+> On Postgres[1] we would make a partial compound index:
+>=20
+> create index ... on events(sport_id,event_type_id)
+> where published=3D'Y';
+
+
+Generally speaking, bitmap indexes will not serve you very will on
+tables having a low row counts, high cardinality or where they are
+attached to tables which are primarily used in an OLTP capacity.=20
+Situations where you have a low row count and low cardinality or high
+row count and high cardinality tend to be better addressed by partial
+indexes; which seem to make much more sense.  In your example, it sounds
+like you did "the right thing"(tm).  ;)
+
+
+Greg
+
+
+--=-Ivchb84S75fOMzJ9DxwK
+Content-Type: application/pgp-signature; name=signature.asc
+Content-Description: This is a digitally signed message part
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.0.6 (GNU/Linux)
+Comment: For info see http://www.gnupg.org
+
+iD8DBQA8l8Ml4lr1bpbcL6kRAhldAJ9Aoi9dwm1OteZjySfsd1o42trWLACfegQj
+OEV6eO8MnBSlbJMHiQ08gNE=
+=PQvW
+-----END PGP SIGNATURE-----
+
+--=-Ivchb84S75fOMzJ9DxwK--
 
 
