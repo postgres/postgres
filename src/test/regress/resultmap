@@ -11,7 +11,6 @@ float8/i.86-.*-freebsd[234]=float8-small-is-zero
 float8/i.86-.*-openbsd=float8-small-is-zero
 float8/i.86-.*-netbsd=float8-small-is-zero
 float8/.*-qnx=float8-exp-three-digits
-float8/alpha.*-dec-osf.*:cc=float8-fp-exception
 float8/i.86-pc-cygwin=float8-small-is-zero
 horology/.*-aix4=horology-solaris-1947
 horology/.*-aix5=horology-solaris-1947
