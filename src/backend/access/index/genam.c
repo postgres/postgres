@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/index/genam.c,v 1.44 2004/12/31 21:59:19 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/index/genam.c,v 1.45 2005/03/27 23:52:59 tgl Exp $
  *
  * NOTES
  *	  many of the old access method routines have been turned into
@@ -103,6 +103,7 @@ RelationGetIndexScan(Relation indexRelation,
 
 	/* mark cached function lookup data invalid; it will be set later */
 	scan->fn_getnext.fn_oid = InvalidOid;
+	scan->fn_getmulti.fn_oid = InvalidOid;
 
 	scan->unique_tuple_pos = 0;
 	scan->unique_tuple_mark = 0;

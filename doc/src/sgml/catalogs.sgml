@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.96 2005/02/13 03:04:15 tgl Exp $
+ $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.97 2005/03/27 23:52:51 tgl Exp $
  -->
 
 <chapter id="catalogs">
@@ -317,13 +317,6 @@
      </row>
 
      <row>
-      <entry><structfield>amowner</structfield></entry>
-      <entry><type>int4</type></entry>
-      <entry><literal><link linkend="catalog-pg-shadow"><structname>pg_shadow</structname></link>.usesysid</literal></entry>
-      <entry>User ID of the owner (currently not used)</entry>
-     </row>
-
-     <row>
       <entry><structfield>amstrategies</structfield></entry>
       <entry><type>int2</type></entry>
       <entry></entry>
@@ -374,13 +367,6 @@
      </row>
 
      <row>
-      <entry><structfield>amgettuple</structfield></entry>
-      <entry><type>regproc</type></entry>
-      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
-      <entry><quote>Next valid tuple</quote> function</entry>
-     </row>
-
-     <row>
       <entry><structfield>aminsert</structfield></entry>
       <entry><type>regproc</type></entry>
       <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
@@ -392,6 +378,20 @@
       <entry><type>regproc</type></entry>
       <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
       <entry><quote>Start new scan</quote> function</entry>
+     </row>
+
+     <row>
+      <entry><structfield>amgettuple</structfield></entry>
+      <entry><type>regproc</type></entry>
+      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
+      <entry><quote>Next valid tuple</quote> function</entry>
+     </row>
+
+     <row>
+      <entry><structfield>amgetmulti</structfield></entry>
+      <entry><type>regproc</type></entry>
+      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
+      <entry><quote>Fetch multiple tuples</quote> function</entry>
      </row>
 
      <row>

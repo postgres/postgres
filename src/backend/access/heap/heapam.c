@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.184 2005/03/20 23:40:23 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.185 2005/03/27 23:52:58 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -933,18 +933,35 @@ heap_release_fetch(Relation relation,
 	 * Need share lock on buffer to examine tuple commit status.
 	 */
 	LockBuffer(buffer, BUFFER_LOCK_SHARE);
+	dp = (PageHeader) BufferGetPage(buffer);
+
+	/*
+	 * We'd better check for out-of-range offnum in case of VACUUM since
+	 * the TID was obtained.
+	 */
+	offnum = ItemPointerGetOffsetNumber(tid);
+	if (offnum < FirstOffsetNumber || offnum > PageGetMaxOffsetNumber(dp))
+	{
+		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+		if (keep_buf)
+			*userbuf = buffer;
+		else
+		{
+			ReleaseBuffer(buffer);
+			*userbuf = InvalidBuffer;
+		}
+		tuple->t_datamcxt = NULL;
+		tuple->t_data = NULL;
+		return false;
+	}
 
 	/*
 	 * get the item line pointer corresponding to the requested tid
 	 */
-	dp = (PageHeader) BufferGetPage(buffer);
-	offnum = ItemPointerGetOffsetNumber(tid);
 	lp = PageGetItemId(dp, offnum);
 
 	/*
-	 * must check for deleted tuple (see for example analyze.c, which is
-	 * careful to pass an offnum in range, but doesn't know if the offnum
-	 * actually corresponds to an undeleted tuple).
+	 * Must check for deleted tuple.
 	 */
 	if (!ItemIdIsUsed(lp))
 	{

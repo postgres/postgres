@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/genam.h,v 1.48 2005/03/21 01:24:04 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/genam.h,v 1.49 2005/03/27 23:53:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -82,6 +82,9 @@ extern IndexScanDesc index_beginscan(Relation heapRelation,
 				Relation indexRelation,
 				Snapshot snapshot,
 				int nkeys, ScanKey key);
+extern IndexScanDesc index_beginscan_multi(Relation indexRelation,
+				Snapshot snapshot,
+				int nkeys, ScanKey key);
 extern void index_rescan(IndexScanDesc scan, ScanKey key);
 extern void index_endscan(IndexScanDesc scan);
 extern void index_markpos(IndexScanDesc scan);
@@ -89,6 +92,9 @@ extern void index_restrpos(IndexScanDesc scan);
 extern HeapTuple index_getnext(IndexScanDesc scan, ScanDirection direction);
 extern bool index_getnext_indexitem(IndexScanDesc scan,
 						ScanDirection direction);
+extern bool index_getmulti(IndexScanDesc scan,
+						   ItemPointer tids, int32 max_tids,
+						   int32 *returned_tids);
 
 extern IndexBulkDeleteResult *index_bulk_delete(Relation indexRelation,
 				  IndexBulkDeleteCallback callback,

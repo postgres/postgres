@@ -8,20 +8,22 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/index/indexam.c,v 1.78 2005/03/21 01:23:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/index/indexam.c,v 1.79 2005/03/27 23:52:59 tgl Exp $
  *
  * INTERFACE ROUTINES
  *		index_open		- open an index relation by relation OID
  *		index_openrv	- open an index relation specified by a RangeVar
  *		index_openr		- open a system index relation by name
  *		index_close		- close an index relation
- *		index_beginscan - start a scan of an index
+ *		index_beginscan - start a scan of an index with amgettuple
+ *		index_beginscan_multi - start a scan of an index with amgetmulti
  *		index_rescan	- restart a scan of an index
  *		index_endscan	- end a scan
  *		index_insert	- insert an index tuple into a relation
  *		index_markpos	- mark a scan position
  *		index_restrpos	- restore a scan position
  *		index_getnext	- get the next tuple from a scan
+ *		index_getmulti	- get multiple tuples from a scan
  *		index_bulk_delete	- bulk deletion of index tuples
  *		index_vacuum_cleanup	- post-deletion cleanup of an index
  *		index_cost_estimator	- fetch amcostestimate procedure OID
@@ -85,23 +87,24 @@
 	AssertMacro(PointerIsValid(scan->indexRelation->rd_am)) \
 )
 
-#define GET_REL_PROCEDURE(x,y) \
+#define GET_REL_PROCEDURE(pname) \
 ( \
-	procedure = indexRelation->rd_am->y, \
+	procedure = indexRelation->rd_am->pname, \
 	(!RegProcedureIsValid(procedure)) ? \
-		elog(ERROR, "index_%s: invalid %s regproc", \
-			 CppAsString(x), CppAsString(y)) \
+		elog(ERROR, "invalid %s regproc", CppAsString(pname)) \
 	: (void)NULL \
 )
 
-#define GET_SCAN_PROCEDURE(x,y) \
+#define GET_SCAN_PROCEDURE(pname) \
 ( \
-	procedure = scan->indexRelation->rd_am->y, \
+	procedure = scan->indexRelation->rd_am->pname, \
 	(!RegProcedureIsValid(procedure)) ? \
-		elog(ERROR, "index_%s: invalid %s regproc", \
-			 CppAsString(x), CppAsString(y)) \
+		elog(ERROR, "invalid %s regproc", CppAsString(pname)) \
 	: (void)NULL \
 )
+
+static IndexScanDesc index_beginscan_internal(Relation indexRelation,
+											  int nkeys, ScanKey key);
 
 
 /* ----------------------------------------------------------------
@@ -222,7 +225,7 @@ index_insert(Relation indexRelation,
 	RegProcedure procedure;
 
 	RELATION_CHECKS;
-	GET_REL_PROCEDURE(insert, aminsert);
+	GET_REL_PROCEDURE(aminsert);
 
 	/*
 	 * have the am's insert proc do all the work.
@@ -236,15 +239,14 @@ index_insert(Relation indexRelation,
 										 BoolGetDatum(check_uniqueness)));
 }
 
-/* ----------------
- *		index_beginscan - start a scan of an index
+/*
+ * index_beginscan - start a scan of an index with amgettuple
  *
  * Note: heapRelation may be NULL if there is no intention of calling
  * index_getnext on this scan; index_getnext_indexitem will not use the
  * heapRelation link (nor the snapshot).  However, the caller had better
  * be holding some kind of lock on the heap relation in any case, to ensure
  * no one deletes it (or the index) out from under us.
- * ----------------
  */
 IndexScanDesc
 index_beginscan(Relation heapRelation,
@@ -255,8 +257,71 @@ index_beginscan(Relation heapRelation,
 	IndexScanDesc scan;
 	RegProcedure procedure;
 
+	scan = index_beginscan_internal(indexRelation, nkeys, key);
+
+	/*
+	 * Save additional parameters into the scandesc.  Everything else was
+	 * set up by RelationGetIndexScan.
+	 */
+	scan->heapRelation = heapRelation;
+	scan->xs_snapshot = snapshot;
+
+	/*
+	 * We want to look up the amgettuple procedure just once per scan, not
+	 * once per index_getnext call.  So do it here and save the fmgr info
+	 * result in the scan descriptor.
+	 */
+	GET_SCAN_PROCEDURE(amgettuple);
+	fmgr_info(procedure, &scan->fn_getnext);
+
+	return scan;
+}
+
+/*
+ * index_beginscan_multi - start a scan of an index with amgetmulti
+ *
+ * As above, caller had better be holding some lock on the parent heap
+ * relation, even though it's not explicitly mentioned here.
+ */
+IndexScanDesc
+index_beginscan_multi(Relation indexRelation,
+					  Snapshot snapshot,
+					  int nkeys, ScanKey key)
+{
+	IndexScanDesc scan;
+	RegProcedure procedure;
+
+	scan = index_beginscan_internal(indexRelation, nkeys, key);
+
+	/*
+	 * Save additional parameters into the scandesc.  Everything else was
+	 * set up by RelationGetIndexScan.
+	 */
+	scan->xs_snapshot = snapshot;
+
+	/*
+	 * We want to look up the amgetmulti procedure just once per scan, not
+	 * once per index_getmulti call.  So do it here and save the fmgr info
+	 * result in the scan descriptor.
+	 */
+	GET_SCAN_PROCEDURE(amgetmulti);
+	fmgr_info(procedure, &scan->fn_getmulti);
+
+	return scan;
+}
+
+/*
+ * index_beginscan_internal --- common code for index_beginscan variants
+ */
+static IndexScanDesc
+index_beginscan_internal(Relation indexRelation,
+						 int nkeys, ScanKey key)
+{
+	IndexScanDesc scan;
+	RegProcedure procedure;
+
 	RELATION_CHECKS;
-	GET_REL_PROCEDURE(beginscan, ambeginscan);
+	GET_REL_PROCEDURE(ambeginscan);
 
 	RelationIncrementReferenceCount(indexRelation);
 
@@ -277,21 +342,6 @@ index_beginscan(Relation heapRelation,
 										 PointerGetDatum(indexRelation),
 										 Int32GetDatum(nkeys),
 										 PointerGetDatum(key)));
-
-	/*
-	 * Save additional parameters into the scandesc.  Everything else was
-	 * set up by RelationGetIndexScan.
-	 */
-	scan->heapRelation = heapRelation;
-	scan->xs_snapshot = snapshot;
-
-	/*
-	 * We want to look up the amgettuple procedure just once per scan, not
-	 * once per index_getnext call.  So do it here and save the fmgr info
-	 * result in the scan descriptor.
-	 */
-	GET_SCAN_PROCEDURE(beginscan, amgettuple);
-	fmgr_info(procedure, &scan->fn_getnext);
 
 	return scan;
 }
@@ -314,7 +364,7 @@ index_rescan(IndexScanDesc scan, ScanKey key)
 	RegProcedure procedure;
 
 	SCAN_CHECKS;
-	GET_SCAN_PROCEDURE(rescan, amrescan);
+	GET_SCAN_PROCEDURE(amrescan);
 
 	/* Release any held pin on a heap page */
 	if (BufferIsValid(scan->xs_cbuf))
@@ -346,7 +396,7 @@ index_endscan(IndexScanDesc scan)
 	RegProcedure procedure;
 
 	SCAN_CHECKS;
-	GET_SCAN_PROCEDURE(endscan, amendscan);
+	GET_SCAN_PROCEDURE(amendscan);
 
 	/* Release any held pin on a heap page */
 	if (BufferIsValid(scan->xs_cbuf))
@@ -378,7 +428,7 @@ index_markpos(IndexScanDesc scan)
 	RegProcedure procedure;
 
 	SCAN_CHECKS;
-	GET_SCAN_PROCEDURE(markpos, ammarkpos);
+	GET_SCAN_PROCEDURE(ammarkpos);
 
 	scan->unique_tuple_mark = scan->unique_tuple_pos;
 
@@ -395,7 +445,7 @@ index_restrpos(IndexScanDesc scan)
 	RegProcedure procedure;
 
 	SCAN_CHECKS;
-	GET_SCAN_PROCEDURE(restrpos, amrestrpos);
+	GET_SCAN_PROCEDURE(amrestrpos);
 
 	scan->kill_prior_tuple = false;		/* for safety */
 
@@ -525,9 +575,9 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
 							   &scan->xs_pgstat_info))
 			break;
 
-		/* Skip if no tuple at this location */
+		/* Skip if no undeleted tuple at this location */
 		if (heapTuple->t_data == NULL)
-			continue;			/* should we raise an error instead? */
+			continue;
 
 		/*
 		 * If we can't see it, maybe no one else can either.  Check to see
@@ -596,6 +646,44 @@ index_getnext_indexitem(IndexScanDesc scan,
 }
 
 /* ----------------
+ *		index_getmulti - get multiple tuples from an index scan
+ *
+ * Collects the TIDs of multiple heap tuples satisfying the scan keys.
+ * Since there's no interlock between the index scan and the eventual heap
+ * access, this is only safe to use with MVCC-based snapshots: the heap
+ * item slot could have been replaced by a newer tuple by the time we get
+ * to it.
+ *
+ * A TRUE result indicates more calls should occur; a FALSE result says the
+ * scan is done.  *returned_tids could be zero or nonzero in either case.
+ * ----------------
+ */
+bool
+index_getmulti(IndexScanDesc scan,
+			   ItemPointer tids, int32 max_tids,
+			   int32 *returned_tids)
+{
+	bool		found;
+
+	SCAN_CHECKS;
+
+	/* just make sure this is false... */
+	scan->kill_prior_tuple = false;
+
+	/*
+	 * have the am's getmulti proc do all the work. index_beginscan_multi
+	 * already set up fn_getmulti.
+	 */
+	found = DatumGetBool(FunctionCall4(&scan->fn_getmulti,
+									   PointerGetDatum(scan),
+									   PointerGetDatum(tids),
+									   Int32GetDatum(max_tids),
+									   PointerGetDatum(returned_tids)));
+
+	return found;
+}
+
+/* ----------------
  *		index_bulk_delete - do mass deletion of index entries
  *
  *		callback routine tells whether a given main-heap tuple is
@@ -613,7 +701,7 @@ index_bulk_delete(Relation indexRelation,
 	IndexBulkDeleteResult *result;
 
 	RELATION_CHECKS;
-	GET_REL_PROCEDURE(bulk_delete, ambulkdelete);
+	GET_REL_PROCEDURE(ambulkdelete);
 
 	result = (IndexBulkDeleteResult *)
 		DatumGetPointer(OidFunctionCall3(procedure,
@@ -644,7 +732,7 @@ index_vacuum_cleanup(Relation indexRelation,
 	if (!RegProcedureIsValid(indexRelation->rd_am->amvacuumcleanup))
 		return stats;
 
-	GET_REL_PROCEDURE(vacuum_cleanup, amvacuumcleanup);
+	GET_REL_PROCEDURE(amvacuumcleanup);
 
 	result = (IndexBulkDeleteResult *)
 		DatumGetPointer(OidFunctionCall3(procedure,
@@ -671,7 +759,7 @@ index_cost_estimator(Relation indexRelation)
 	RegProcedure procedure;
 
 	RELATION_CHECKS;
-	GET_REL_PROCEDURE(cost_estimator, amcostestimate);
+	GET_REL_PROCEDURE(amcostestimate);
 
 	return procedure;
 }

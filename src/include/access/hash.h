@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/hash.h,v 1.60 2005/03/21 01:24:04 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/hash.h,v 1.61 2005/03/27 23:53:04 tgl Exp $
  *
  * NOTES
  *		modeled after Margo Seltzer's hash implementation for unix.
@@ -232,8 +232,9 @@ typedef HashItemData *HashItem;
 
 extern Datum hashbuild(PG_FUNCTION_ARGS);
 extern Datum hashinsert(PG_FUNCTION_ARGS);
-extern Datum hashgettuple(PG_FUNCTION_ARGS);
 extern Datum hashbeginscan(PG_FUNCTION_ARGS);
+extern Datum hashgettuple(PG_FUNCTION_ARGS);
+extern Datum hashgetmulti(PG_FUNCTION_ARGS);
 extern Datum hashrescan(PG_FUNCTION_ARGS);
 extern Datum hashendscan(PG_FUNCTION_ARGS);
 extern Datum hashmarkpos(PG_FUNCTION_ARGS);

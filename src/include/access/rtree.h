@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/rtree.h,v 1.37 2005/01/18 23:25:55 neilc Exp $
+ * $PostgreSQL: pgsql/src/include/access/rtree.h,v 1.38 2005/03/27 23:53:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -116,10 +116,9 @@ extern void freestack(RTSTACK *s);
  */
 extern Datum rtinsert(PG_FUNCTION_ARGS);
 extern Datum rtbulkdelete(PG_FUNCTION_ARGS);
-
-extern Datum rtgettuple(PG_FUNCTION_ARGS);
 extern Datum rtbeginscan(PG_FUNCTION_ARGS);
-
+extern Datum rtgettuple(PG_FUNCTION_ARGS);
+extern Datum rtgetmulti(PG_FUNCTION_ARGS);
 extern Datum rtendscan(PG_FUNCTION_ARGS);
 extern Datum rtmarkpos(PG_FUNCTION_ARGS);
 extern Datum rtrestrpos(PG_FUNCTION_ARGS);

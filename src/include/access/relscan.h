@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/relscan.h,v 1.37 2004/12/31 22:03:21 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/access/relscan.h,v 1.38 2005/03/27 23:53:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,7 +38,12 @@ typedef struct HeapScanDescData
 
 typedef HeapScanDescData *HeapScanDesc;
 
-
+/*
+ * We use the same IndexScanDescData structure for both amgettuple-based
+ * and amgetmulti-based index scans.  Which one is being used can be told
+ * by looking at fn_getnext and fn_getmulti, only one of which will be
+ * initialized.  Some fields are only relevant in amgettuple-based scans.
+ */
 typedef struct IndexScanDescData
 {
 	/* scan parameters */
@@ -71,6 +76,7 @@ typedef struct IndexScanDescData
 	/* NB: if xs_cbuf is not InvalidBuffer, we hold a pin on that buffer */
 
 	FmgrInfo	fn_getnext;		/* cached lookup info for AM's getnext fn */
+	FmgrInfo	fn_getmulti;	/* cached lookup info for AM's getmulti fn */
 
 	/*
 	 * If keys_are_unique and got_tuple are both true, we stop calling the

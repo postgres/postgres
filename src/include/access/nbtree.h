@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.84 2005/03/21 01:24:04 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.85 2005/03/27 23:53:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -404,8 +404,9 @@ typedef BTScanOpaqueData *BTScanOpaque;
  */
 extern Datum btbuild(PG_FUNCTION_ARGS);
 extern Datum btinsert(PG_FUNCTION_ARGS);
-extern Datum btgettuple(PG_FUNCTION_ARGS);
 extern Datum btbeginscan(PG_FUNCTION_ARGS);
+extern Datum btgettuple(PG_FUNCTION_ARGS);
+extern Datum btgetmulti(PG_FUNCTION_ARGS);
 extern Datum btrescan(PG_FUNCTION_ARGS);
 extern Datum btendscan(PG_FUNCTION_ARGS);
 extern Datum btmarkpos(PG_FUNCTION_ARGS);

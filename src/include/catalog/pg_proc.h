@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.353 2005/03/21 01:24:04 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.354 2005/03/27 23:53:05 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -664,6 +664,8 @@ DATA(insert OID = 320 (  rtinsert		   PGNSP PGUID 12 f f t f v 6 16 "2281 2281 2
 DESCR("r-tree(internal)");
 DATA(insert OID = 322 (  rtgettuple		   PGNSP PGUID 12 f f t f v 2 16 "2281 2281" _null_  rtgettuple - _null_ ));
 DESCR("r-tree(internal)");
+DATA(insert OID = 635 (  rtgetmulti		   PGNSP PGUID 12 f f t f v 4 16 "2281 2281 2281 2281" _null_  rtgetmulti - _null_ ));
+DESCR("r-tree(internal)");
 DATA(insert OID = 323 (  rtbuild		   PGNSP PGUID 12 f f t f v 3 2278 "2281 2281 2281" _null_ rtbuild - _null_ ));
 DESCR("r-tree(internal)");
 DATA(insert OID = 324 (  rtbeginscan	   PGNSP PGUID 12 f f t f v 3 2281 "2281 2281 2281" _null_	rtbeginscan - _null_ ));
@@ -678,10 +680,12 @@ DATA(insert OID = 328 (  rtrescan		   PGNSP PGUID 12 f f t f v 2 2278 "2281 2281
 DESCR("r-tree(internal)");
 DATA(insert OID = 321 (  rtbulkdelete	   PGNSP PGUID 12 f f t f v 3 2281 "2281 2281 2281" _null_ rtbulkdelete - _null_ ));
 DESCR("r-tree(internal)");
-DATA(insert OID = 1265 (  rtcostestimate   PGNSP PGUID 12 f f t f v 8 2278 "2281 2281 2281 2281 2281 2281 2281 2281" _null_  rtcostestimate - _null_ ));
+DATA(insert OID = 1265 (  rtcostestimate   PGNSP PGUID 12 f f t f v 7 2278 "2281 2281 2281 2281 2281 2281 2281" _null_  rtcostestimate - _null_ ));
 DESCR("r-tree(internal)");
 
 DATA(insert OID = 330 (  btgettuple		   PGNSP PGUID 12 f f t f v 2 16 "2281 2281" _null_  btgettuple - _null_ ));
+DESCR("btree(internal)");
+DATA(insert OID = 636 (  btgetmulti		   PGNSP PGUID 12 f f t f v 4 16 "2281 2281 2281 2281" _null_  btgetmulti - _null_ ));
 DESCR("btree(internal)");
 DATA(insert OID = 331 (  btinsert		   PGNSP PGUID 12 f f t f v 6 16 "2281 2281 2281 2281 2281 2281" _null_	btinsert - _null_ ));
 DESCR("btree(internal)");
@@ -701,7 +705,7 @@ DATA(insert OID = 332 (  btbulkdelete	   PGNSP PGUID 12 f f t f v 3 2281 "2281 2
 DESCR("btree(internal)");
 DATA(insert OID = 972 (  btvacuumcleanup   PGNSP PGUID 12 f f t f v 3 2281 "2281 2281 2281" _null_ btvacuumcleanup - _null_ ));
 DESCR("btree(internal)");
-DATA(insert OID = 1268 (  btcostestimate   PGNSP PGUID 12 f f t f v 8 2278 "2281 2281 2281 2281 2281 2281 2281 2281" _null_  btcostestimate - _null_ ));
+DATA(insert OID = 1268 (  btcostestimate   PGNSP PGUID 12 f f t f v 7 2278 "2281 2281 2281 2281 2281 2281 2281" _null_  btcostestimate - _null_ ));
 DESCR("btree(internal)");
 
 DATA(insert OID = 339 (  poly_same		   PGNSP PGUID 12 f f t f i 2 16 "604 604" _null_	poly_same - _null_ ));
@@ -798,6 +802,8 @@ DESCR("convert char(n) to name");
 
 DATA(insert OID = 440 (  hashgettuple	   PGNSP PGUID 12 f f t f v 2 16 "2281 2281" _null_  hashgettuple - _null_ ));
 DESCR("hash(internal)");
+DATA(insert OID = 637 (  hashgetmulti	   PGNSP PGUID 12 f f t f v 4 16 "2281 2281 2281 2281" _null_  hashgetmulti - _null_ ));
+DESCR("hash(internal)");
 DATA(insert OID = 441 (  hashinsert		   PGNSP PGUID 12 f f t f v 6 16 "2281 2281 2281 2281 2281 2281" _null_	hashinsert - _null_ ));
 DESCR("hash(internal)");
 DATA(insert OID = 443 (  hashbeginscan	   PGNSP PGUID 12 f f t f v 3 2281 "2281 2281 2281" _null_	hashbeginscan - _null_ ));
@@ -814,7 +820,7 @@ DATA(insert OID = 448 (  hashbuild		   PGNSP PGUID 12 f f t f v 3 2278 "2281 228
 DESCR("hash(internal)");
 DATA(insert OID = 442 (  hashbulkdelete    PGNSP PGUID 12 f f t f v 3 2281 "2281 2281 2281" _null_ hashbulkdelete - _null_ ));
 DESCR("hash(internal)");
-DATA(insert OID = 438 (  hashcostestimate  PGNSP PGUID 12 f f t f v 8 2278 "2281 2281 2281 2281 2281 2281 2281 2281" _null_  hashcostestimate - _null_ ));
+DATA(insert OID = 438 (  hashcostestimate  PGNSP PGUID 12 f f t f v 7 2278 "2281 2281 2281 2281 2281 2281 2281" _null_  hashcostestimate - _null_ ));
 DESCR("hash(internal)");
 
 DATA(insert OID = 449 (  hashint2		   PGNSP PGUID 12 f f t f i 1 23 "21" _null_  hashint2 - _null_ ));
@@ -1060,6 +1066,8 @@ DESCR("smaller of two");
 
 DATA(insert OID = 774 (  gistgettuple	   PGNSP PGUID 12 f f t f v 2 16 "2281 2281" _null_  gistgettuple - _null_ ));
 DESCR("gist(internal)");
+DATA(insert OID = 638 (  gistgetmulti	   PGNSP PGUID 12 f f t f v 4 16 "2281 2281 2281 2281" _null_  gistgetmulti - _null_ ));
+DESCR("gist(internal)");
 DATA(insert OID = 775 (  gistinsert		   PGNSP PGUID 12 f f t f v 6 16 "2281 2281 2281 2281 2281 2281" _null_	gistinsert - _null_ ));
 DESCR("gist(internal)");
 DATA(insert OID = 777 (  gistbeginscan	   PGNSP PGUID 12 f f t f v 3 2281 "2281 2281 2281" _null_	gistbeginscan - _null_ ));
@@ -1076,7 +1084,7 @@ DATA(insert OID = 782 (  gistbuild		   PGNSP PGUID 12 f f t f v 3 2278 "2281 228
 DESCR("gist(internal)");
 DATA(insert OID = 776 (  gistbulkdelete    PGNSP PGUID 12 f f t f v 3 2281 "2281 2281 2281" _null_ gistbulkdelete - _null_ ));
 DESCR("gist(internal)");
-DATA(insert OID = 772 (  gistcostestimate  PGNSP PGUID 12 f f t f v 8 2278 "2281 2281 2281 2281 2281 2281 2281 2281" _null_  gistcostestimate - _null_ ));
+DATA(insert OID = 772 (  gistcostestimate  PGNSP PGUID 12 f f t f v 7 2278 "2281 2281 2281 2281 2281 2281 2281" _null_  gistcostestimate - _null_ ));
 DESCR("gist(internal)");
 
 DATA(insert OID = 784 (  tintervaleq	   PGNSP PGUID 12 f f t f i 2 16 "704 704" _null_	tintervaleq - _null_ ));

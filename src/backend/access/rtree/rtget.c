@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/rtree/rtget.c,v 1.34 2005/01/18 23:25:43 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/rtree/rtget.c,v 1.35 2005/03/27 23:53:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,15 +29,13 @@ rtgettuple(PG_FUNCTION_ARGS)
 {
 	IndexScanDesc s = (IndexScanDesc) PG_GETARG_POINTER(0);
 	ScanDirection dir = (ScanDirection) PG_GETARG_INT32(1);
+	RTreeScanOpaque so = (RTreeScanOpaque) s->opaque;
 	Page page;
 	OffsetNumber offnum;
-	RTreeScanOpaque so;
-
-	so = (RTreeScanOpaque) s->opaque;
 
 	/*
 	 * If we've already produced a tuple and the executor has informed
-	 * us that it should be marked "killed", do so know.
+	 * us that it should be marked "killed", do so now.
 	 */
 	if (s->kill_prior_tuple && ItemPointerIsValid(&(s->currentItemData)))
 	{
@@ -57,7 +55,7 @@ rtgettuple(PG_FUNCTION_ARGS)
 	{
 		bool res = rtnext(s, dir);
 
-		if (res == true && s->ignore_killed_tuples)
+		if (res && s->ignore_killed_tuples)
 		{
 			offnum = ItemPointerGetOffsetNumber(&(s->currentItemData));
 			page = BufferGetPage(so->curbuf);
@@ -67,6 +65,42 @@ rtgettuple(PG_FUNCTION_ARGS)
 
 		PG_RETURN_BOOL(res);
 	}
+}
+
+Datum
+rtgetmulti(PG_FUNCTION_ARGS)
+{
+	IndexScanDesc s = (IndexScanDesc) PG_GETARG_POINTER(0);
+	ItemPointer	tids = (ItemPointer) PG_GETARG_POINTER(1);
+	int32		max_tids = PG_GETARG_INT32(2);
+	int32	   *returned_tids = (int32 *) PG_GETARG_POINTER(3);
+	RTreeScanOpaque so = (RTreeScanOpaque) s->opaque;
+	bool		res = true;
+	int32		ntids = 0;
+
+	/* XXX generic implementation: loop around guts of rtgettuple */
+	while (ntids < max_tids)
+	{
+		res = rtnext(s, ForwardScanDirection);
+		if (res && s->ignore_killed_tuples)
+		{
+			Page page;
+			OffsetNumber offnum;
+
+			offnum = ItemPointerGetOffsetNumber(&(s->currentItemData));
+			page = BufferGetPage(so->curbuf);
+			if (ItemIdDeleted(PageGetItemId(page, offnum)))
+				continue;
+		}
+
+		if (!res)
+			break;
+		tids[ntids] = s->xs_ctup.t_self;
+		ntids++;
+	}
+
+	*returned_tids = ntids;
+	PG_RETURN_BOOL(res);
 }
 
 static bool

@@ -49,7 +49,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.139 2005/03/27 06:29:35 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.140 2005/03/27 23:53:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -277,9 +277,8 @@ cost_index(Path *path, Query *root,
 	 * index (ie, the fraction of main-table tuples we will have to
 	 * retrieve) and its correlation to the main-table tuple order.
 	 */
-	OidFunctionCall8(index->amcostestimate,
+	OidFunctionCall7(index->amcostestimate,
 					 PointerGetDatum(root),
-					 PointerGetDatum(baserel),
 					 PointerGetDatum(index),
 					 PointerGetDatum(indexQuals),
 					 PointerGetDatum(&indexStartupCost),

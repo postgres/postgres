@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistget.c,v 1.44 2005/02/05 19:38:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gistget.c,v 1.45 2005/03/27 23:52:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,6 +44,33 @@ gistgettuple(PG_FUNCTION_ARGS)
 		res = gistnext(s, dir);
 	else
 		res = gistfirst(s, dir);
+	PG_RETURN_BOOL(res);
+}
+
+Datum
+gistgetmulti(PG_FUNCTION_ARGS)
+{
+	IndexScanDesc s = (IndexScanDesc) PG_GETARG_POINTER(0);
+	ItemPointer	tids = (ItemPointer) PG_GETARG_POINTER(1);
+	int32		max_tids = PG_GETARG_INT32(2);
+	int32	   *returned_tids = (int32 *) PG_GETARG_POINTER(3);
+	bool		res = true;
+	int32		ntids = 0;
+
+	/* XXX generic implementation: loop around guts of gistgettuple */
+	while (ntids < max_tids)
+	{
+		if (ItemPointerIsValid(&(s->currentItemData)))
+			res = gistnext(s, ForwardScanDirection);
+		else
+			res = gistfirst(s, ForwardScanDirection);
+		if (!res)
+			break;
+		tids[ntids] = s->xs_ctup.t_self;
+		ntids++;
+	}
+
+	*returned_tids = ntids;
 	PG_RETURN_BOOL(res);
 }
 

@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.174 2005/03/26 20:55:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.175 2005/03/27 23:53:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4198,7 +4198,7 @@ string_to_bytea_const(const char *str, size_t str_len)
  */
 
 static void
-genericcostestimate(Query *root, RelOptInfo *rel,
+genericcostestimate(Query *root,
 					IndexOptInfo *index, List *indexQuals,
 					Cost *indexStartupCost,
 					Cost *indexTotalCost,
@@ -4250,7 +4250,7 @@ genericcostestimate(Query *root, RelOptInfo *rel,
 
 	/* Estimate the fraction of main-table tuples that will be visited */
 	*indexSelectivity = clauselist_selectivity(root, selectivityQuals,
-											   rel->relid,
+											   index->rel->relid,
 											   JOIN_INNER);
 
 	/*
@@ -4259,7 +4259,7 @@ genericcostestimate(Query *root, RelOptInfo *rel,
 	 * for partial indexes.  We can bound the number of tuples by the
 	 * index size, in any case.
 	 */
-	numIndexTuples = *indexSelectivity * rel->tuples;
+	numIndexTuples = *indexSelectivity * index->rel->tuples;
 
 	if (numIndexTuples > index->tuples)
 		numIndexTuples = index->tuples;
@@ -4328,25 +4328,24 @@ Datum
 btcostestimate(PG_FUNCTION_ARGS)
 {
 	Query	   *root = (Query *) PG_GETARG_POINTER(0);
-	RelOptInfo *rel = (RelOptInfo *) PG_GETARG_POINTER(1);
-	IndexOptInfo *index = (IndexOptInfo *) PG_GETARG_POINTER(2);
-	List	   *indexQuals = (List *) PG_GETARG_POINTER(3);
-	Cost	   *indexStartupCost = (Cost *) PG_GETARG_POINTER(4);
-	Cost	   *indexTotalCost = (Cost *) PG_GETARG_POINTER(5);
-	Selectivity *indexSelectivity = (Selectivity *) PG_GETARG_POINTER(6);
-	double	   *indexCorrelation = (double *) PG_GETARG_POINTER(7);
+	IndexOptInfo *index = (IndexOptInfo *) PG_GETARG_POINTER(1);
+	List	   *indexQuals = (List *) PG_GETARG_POINTER(2);
+	Cost	   *indexStartupCost = (Cost *) PG_GETARG_POINTER(3);
+	Cost	   *indexTotalCost = (Cost *) PG_GETARG_POINTER(4);
+	Selectivity *indexSelectivity = (Selectivity *) PG_GETARG_POINTER(5);
+	double	   *indexCorrelation = (double *) PG_GETARG_POINTER(6);
 	Oid			relid;
 	AttrNumber	colnum;
 	HeapTuple	tuple;
 
-	genericcostestimate(root, rel, index, indexQuals,
+	genericcostestimate(root, index, indexQuals,
 						indexStartupCost, indexTotalCost,
 						indexSelectivity, indexCorrelation);
 
 	/*
 	 * If we can get an estimate of the first column's ordering
 	 * correlation C from pg_statistic, estimate the index correlation as
-	 * C for a single- column index, or C * 0.75 for multiple columns.
+	 * C for a single-column index, or C * 0.75 for multiple columns.
 	 * (The idea here is that multiple columns dilute the importance of
 	 * the first column's ordering, but don't negate it entirely.  Before
 	 * 8.0 we divided the correlation by the number of columns, but that
@@ -4355,7 +4354,7 @@ btcostestimate(PG_FUNCTION_ARGS)
 	if (index->indexkeys[0] != 0)
 	{
 		/* Simple variable --- look to stats for the underlying table */
-		relid = getrelid(rel->relid, root->rtable);
+		relid = getrelid(index->rel->relid, root->rtable);
 		Assert(relid != InvalidOid);
 		colnum = index->indexkeys[0];
 	}
@@ -4408,15 +4407,14 @@ Datum
 rtcostestimate(PG_FUNCTION_ARGS)
 {
 	Query	   *root = (Query *) PG_GETARG_POINTER(0);
-	RelOptInfo *rel = (RelOptInfo *) PG_GETARG_POINTER(1);
-	IndexOptInfo *index = (IndexOptInfo *) PG_GETARG_POINTER(2);
-	List	   *indexQuals = (List *) PG_GETARG_POINTER(3);
-	Cost	   *indexStartupCost = (Cost *) PG_GETARG_POINTER(4);
-	Cost	   *indexTotalCost = (Cost *) PG_GETARG_POINTER(5);
-	Selectivity *indexSelectivity = (Selectivity *) PG_GETARG_POINTER(6);
-	double	   *indexCorrelation = (double *) PG_GETARG_POINTER(7);
+	IndexOptInfo *index = (IndexOptInfo *) PG_GETARG_POINTER(1);
+	List	   *indexQuals = (List *) PG_GETARG_POINTER(2);
+	Cost	   *indexStartupCost = (Cost *) PG_GETARG_POINTER(3);
+	Cost	   *indexTotalCost = (Cost *) PG_GETARG_POINTER(4);
+	Selectivity *indexSelectivity = (Selectivity *) PG_GETARG_POINTER(5);
+	double	   *indexCorrelation = (double *) PG_GETARG_POINTER(6);
 
-	genericcostestimate(root, rel, index, indexQuals,
+	genericcostestimate(root, index, indexQuals,
 						indexStartupCost, indexTotalCost,
 						indexSelectivity, indexCorrelation);
 
@@ -4427,15 +4425,14 @@ Datum
 hashcostestimate(PG_FUNCTION_ARGS)
 {
 	Query	   *root = (Query *) PG_GETARG_POINTER(0);
-	RelOptInfo *rel = (RelOptInfo *) PG_GETARG_POINTER(1);
-	IndexOptInfo *index = (IndexOptInfo *) PG_GETARG_POINTER(2);
-	List	   *indexQuals = (List *) PG_GETARG_POINTER(3);
-	Cost	   *indexStartupCost = (Cost *) PG_GETARG_POINTER(4);
-	Cost	   *indexTotalCost = (Cost *) PG_GETARG_POINTER(5);
-	Selectivity *indexSelectivity = (Selectivity *) PG_GETARG_POINTER(6);
-	double	   *indexCorrelation = (double *) PG_GETARG_POINTER(7);
+	IndexOptInfo *index = (IndexOptInfo *) PG_GETARG_POINTER(1);
+	List	   *indexQuals = (List *) PG_GETARG_POINTER(2);
+	Cost	   *indexStartupCost = (Cost *) PG_GETARG_POINTER(3);
+	Cost	   *indexTotalCost = (Cost *) PG_GETARG_POINTER(4);
+	Selectivity *indexSelectivity = (Selectivity *) PG_GETARG_POINTER(5);
+	double	   *indexCorrelation = (double *) PG_GETARG_POINTER(6);
 
-	genericcostestimate(root, rel, index, indexQuals,
+	genericcostestimate(root, index, indexQuals,
 						indexStartupCost, indexTotalCost,
 						indexSelectivity, indexCorrelation);
 
@@ -4446,15 +4443,14 @@ Datum
 gistcostestimate(PG_FUNCTION_ARGS)
 {
 	Query	   *root = (Query *) PG_GETARG_POINTER(0);
-	RelOptInfo *rel = (RelOptInfo *) PG_GETARG_POINTER(1);
-	IndexOptInfo *index = (IndexOptInfo *) PG_GETARG_POINTER(2);
-	List	   *indexQuals = (List *) PG_GETARG_POINTER(3);
-	Cost	   *indexStartupCost = (Cost *) PG_GETARG_POINTER(4);
-	Cost	   *indexTotalCost = (Cost *) PG_GETARG_POINTER(5);
-	Selectivity *indexSelectivity = (Selectivity *) PG_GETARG_POINTER(6);
-	double	   *indexCorrelation = (double *) PG_GETARG_POINTER(7);
+	IndexOptInfo *index = (IndexOptInfo *) PG_GETARG_POINTER(1);
+	List	   *indexQuals = (List *) PG_GETARG_POINTER(2);
+	Cost	   *indexStartupCost = (Cost *) PG_GETARG_POINTER(3);
+	Cost	   *indexTotalCost = (Cost *) PG_GETARG_POINTER(4);
+	Selectivity *indexSelectivity = (Selectivity *) PG_GETARG_POINTER(5);
+	double	   *indexCorrelation = (double *) PG_GETARG_POINTER(6);
 
-	genericcostestimate(root, rel, index, indexQuals,
+	genericcostestimate(root, index, indexQuals,
 						indexStartupCost, indexTotalCost,
 						indexSelectivity, indexCorrelation);
 
