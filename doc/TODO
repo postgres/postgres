@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Jan 22 15:49:54 EST 2002
+Last updated:		Tue Jan 22 16:54:39 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -35,55 +35,75 @@ URGENT
 * Point-in-time data recovery using backup and write-ahead log
 * Allow row re-use without vacuum (Tom)
 
-ADMIN
+REPORTING
+
+* Allow elog() to return error codes, module name, file name, line
+  number, not just messages (Peter E)
+* Add error codes (Peter E)
+* -Allow international error message support (Peter E)
+* Change DEBUG startup tag to NOTICE;  change NOTICE to output to client
+  only if client exists (Bruce)
+* Show location of syntax error in query [yacc]
+* -Populate backend status area and write program to dump status data (Jan)
+
+PERMISSIONS
 
 * Improve control over user privileges, including table creation and
   lock use [privileges] (Karel, others)
+* Allow usernames to be specified directly in pg_hba.conf (Bruce)
+* Add PGPASSWORDFILE environment variable or ~/.pgpass to store
+  user/host/password combinations
+* Remove PGPASSWORD because is insecure on some OS's
+* Make single-user local access permissions the default (Peter E)
+* -Allow single-user access without passwords using Unix socket permissions
+* -Better document pg_hba.conf host-based authentication (Bruce)
+* -Add MD5 to ODBC (Bruce)
+* Use thread-safe crypt() in libpq, if available
+
+ADMIN
+
+* Incremental backups
 * Make it easier to create a database owned by someone who can't createdb,
   perhaps CREATE DATABASE dbname WITH OWNER = "user" (Gavin)
 * Make equals sign optional in CREATE DATABASE WITH param = 'val'
 * -Permission to DELETE table also allows UPDATE (Peter E)
-* Allow elog() to return error codes, module name, file name, line
-  number, not just messages (Peter E)
-* -Allow international error message support (Peter E)
-* Add error codes (Peter E)
 * -Remove unused sort files on postmaster startup (Bruce)
 * Remove unreferenced table files and temp tables during database vacuum
   or postmaster startup (Bruce)
 * -Remove unreferenced sort files during postmaster startup (Bruce)
 * Add table name mapping for numeric file names (Bruce)
-* -Better document pg_hba.conf host-based authentication (Bruce)
-* -Encrpyt passwords in pg_shadow table using MD5 (Bruce, Vince)
-* Incremental backups
+* -Encrypt passwords in pg_shadow table using MD5 (Bruce, Vince)
 * Remove behavior of postmaster -o after making postmaster/postgres
   flags unique
-* Allow usernames to be specified directly in pg_hba.conf (Bruce)
-* Add function to return compressed length of TOAST data values (Tom)
-* Change DEBUG startup tag to NOTICE;  change NOTICE to output to client
-  only if client exists (Bruce)
-
+* Allow logging of query durations
+* -Put sort files in their own directory (Bruce)
 
 DATA TYPES
 
 * Add domain capability [domain]
 * Add IPv6 capability to INET/CIDR types
-* -Add conversion function from text to inet
-* Store binary-compatible type information in the system
-* Allow better handling of numeric constants, type conversion [typeconv]
-* Support construction of array result values in expressions
 * Remove Money type, add money formatting for decimal type
 * SELECT cash_out(2) crashes because of opaque
 * Declare typein/out functions in pg_proc with a special "C string" data type
 * Functions returning sets do not totally work
-* SELECT col FROM tab WHERE numeric_col = 10.1 fails, requires quotes
-* Missing optimizer selectivities for date, r-tree, etc. [optimizer]
 * -Add SQL standard function bit_length() (Peter E)
 * -Make oid use unsigned int more reliably (Tom)
 * Change factorial to return a numeric
+* Add function to return compressed length of TOAST data values (Tom)
+
+* CONVERSION
+	o -Add conversion function from text to inet
+	o Store binary-compatible type information in the system
+	o Allow better handling of numeric constants, type conversion 
+	  [typeconv]
+	o SELECT col FROM tab WHERE numeric_col = 10.1 fails, requires quotes
+
 * ARRAYS
 	o Allow nulls in arrays
 	o Allow arrays to be ORDER'ed
 	o Ensure we have array-eq operators for every built-in array type
+	o Support construction of array result values in expressions
+
 * BINARY DATA
 	o -Add non-large-object binary field (already exists -- bytea)
 	o -Make binary interface for TOAST columns (base64)
@@ -131,8 +151,8 @@ INDEXES
 * UNIQUE INDEX on base column not honored on inserts from inherited table
   INSERT INTO inherit_table (unique_index_col) VALUES (dup) should fail
   [inheritance]
-* Have UPDATE/DELETE clean out indexes
 * Allow UPDATE/DELETE on inherited table
+* Have UPDATE/DELETE clean out indexes
 * Add UNIQUE capability to non-btree indexes
 * Add btree index support for reltime, tinterval, regproc
 * Add rtree index support for line, lseg, path, point
@@ -177,7 +197,8 @@ COMMANDS
 * CREATE TABLE AS can not determine column lengths from expressions [atttypmod]
 * Allow UPDATE to handle complex aggregates [update]
 * Prevent create/drop scripts from allowing extra args (Bruce)
-* Allow command blocks that can ignore certain types of errors
+* Allow command blocks to ignore certain types of errors
+
 * ALTER
 	o ALTER TABLE ADD COLUMN does not honor DEFAULT and non-CHECK CONSTRAINT
 	o ALTER TABLE ADD COLUMN to inherited table put column in wrong place
@@ -192,23 +213,27 @@ COMMANDS
 	o ALTER TABLE ADD COLUMN column SET DEFAULT should fill existing
 	  rows with DEFAULT value
 	o Have ALTER TABLE OWNER change all dependant objects like indexes
+
 * CLUSTER
 	o cluster all tables at once
 	o prevent lose of indexes, permissions, inheritance (Bruce)
-	o Automatically keep clustering on a table
+	o Automatically maintain clustering on a table
 	o -Keep statistics about clustering (Tom) [optimizer]
+
 * COPY
 	o Allow specification of column names
 	o Allow dump/load of CSV format
 	o Change syntax to WITH DELIMITER, (keep old syntax around?)
 	o Allow COPY to report error lines and continue;  optionally
 	  allow error codes to be specified; requires savepoints
+
 * CURSOR
-	o Allow BINARY option to SELECT, like we do with DECLARE
+	o Allow BINARY option to SELECT, just like DECLARE
 	o MOVE 0 should not move to end of cursor
 	o Allow cursors to be DECLAREd/OPENed/CLOSEed outside transactions
 	o Allow DELETE WHERE CURRENT OF cursor
 	o Prevent DROP of table being referenced by our own open cursor
+
 * INSERT
 	o Allow INSERT/UPDATE of system-generated oid value for a row
 	o Allow INSERT INTO tab (col1, ..) VALUES (val1, ..), (val2, ..)
@@ -216,6 +241,7 @@ COMMANDS
 	o Disallow missing columns in INSERT ... VALUES, per ANSI
 	o Allow INSERT/UPDATE ... RETURNING new.col or old.col; handle
 	  RULE cases (Philip)
+
 * SHOW/SET
 	o Add SHOW command to display locks
 	o -Add SHOW command to show all settings
@@ -226,6 +252,7 @@ COMMANDS
 	o Add SET PERFORMANCE_TIPS option to suggest INDEX, VACUUM, VACUUM
 	  ANALYZE, and CLUSTER
 	o Add SHOW command to see locale
+
 * SERVER-SIDE LANGUAGES
 	o Allow PL/PgSQL's RAISE function to take expressions
 	o Fix PL/PgSQL to handle quoted mixed-case identifiers
@@ -245,15 +272,8 @@ CLIENTS
 * Allow psql \d to show temporary table structure
 * Add XML interface:  psql, pg_dump, COPY, separate server (?)
 * -Fix libpq to properly handle socket failures under native MS Win32
-* -Add MD5 to ODBC (Bruce)
-* Use thread-safe crypt() in libpq, if available
 * Add config file check for $ODBCINI, $HOME/.odbc.ini, installpath/etc/odbc.ini
-* Add documentation for perl, including mention of DBI/DBD perl location
-* Add PGPASSWORDFILE environment variable or ~/.pgpass to store
-  user/host/password combinations
-* Remove PGPASSWORD because is insecure on some OS's
-* -Allow single-user access without passwords using Unix socket permissions
-* Make single-user local access permissions the default (Peter E)
+
 * JDBC
 	o Comprehensive test suite. This may be available already.
 	o Updateable resultSet (must be done in backend code)
@@ -267,6 +287,7 @@ CLIENTS
 	o Implement cancel() method on Statement
 	o Use cursors implicitly to avoid large results (see setCursorName())
         o Add support for CallableStatements
+
 * ECPG
 	o Implement set descriptor, using descriptor
 	o Make casts work in variable initializations
@@ -283,7 +304,7 @@ CLIENTS
 	o -Remove space_or_nl and line_end from pgc.l
 	o Fix nested C comments
 	o Add SQLSTATE
-	o fix handling of DB attributes taht are arrays
+	o fix handling of DB attributes that are arrays
 
 REFERENTIAL INTEGRITY
 
@@ -333,16 +354,6 @@ EXOTIC FEATURES
 * SQL*Net listener that makes PostgreSQL appear as an Oracle database
   to clients
 
-MISCELLANEOUS
-
-* Increase identifier length (NAMEDATALEN) if small performance hit
-* Increase maximum number of function parameters if little wasted space
-* -Populate backend status area and write program to dump status data (Jan)
-* -Put sort files in their own directory (Bruce)
-* Show location of syntax error in query [yacc]
-* Change representation of whole-tuple parameters to functions
-* Add optional CRC checksum to heap and index pages
-* Add WAL index reliability improvement to non-btree indexes
 
 PERFORMANCE
 -----------
@@ -369,7 +380,7 @@ VACUUM
 * Reduce lock time by moving tuples with read lock, then write
   lock and truncate table [vacuum]
 * -Make ANALYZE a separate command (Tom)
-* -Allow ANALYZE to ESTIMATE based on certain random precentage of rows (Tom)
+* -Allow ANALYZE to ESTIMATE based on certain random percentage of rows (Tom)
 * Add LAZY VACUUM (Vadim) [performance]
 
 LOCKING
@@ -396,6 +407,7 @@ WRITE-AHEAD LOG
 * Reduce number of after-change WAL writes; they exist only to gaurd against
   partial page writes
 * Turn off after-change writes if fsync is disabled (?)
+* Add WAL index reliability improvement to non-btree indexes
 
 OPTIMIZER/EXECUTOR
 
@@ -410,6 +422,7 @@ OPTIMIZER/EXECUTOR
   evaluated only once or once per query
 * Change FIXED_CHAR_SEL to 0.20 from 0.04 to give better selectivity (Bruce)
 * Make IN/NOT IN have similar performance to EXISTS/NOT EXISTS [exists]
+* Missing optimizer selectivities for date, r-tree, etc. [optimizer]
 
 MISCELLANEOUS
 
@@ -420,7 +433,6 @@ MISCELLANEOUS
 * Use mmap() rather than SYSV shared memory or to write WAL files (?) [mmap]
 * -Allow GUC configuration of maximum number of open files (Tom)
 * -Improve statistics storage in pg_class [performance] (Tom)
-* Allow logging of query durations
 * -Read pg_hba.conf only on postmaster startup or SIGHUP (Bruce)
 
 
@@ -438,7 +450,6 @@ SOURCE CODE
 * HOLDER/HOLDERTAB rename to PROCLOCK/PROCLOCKTAG (Bruce)
 * Remove LockMethodTable.prio field, not used (Bruce)
 * Add version file format stamp to heap and other table types
-* Make elog(LOG) in WAL its own output type, distinct from DEBUG
 * Rename some /contrib modules from pg* to pg_*
 * Move some things from /contrib into main tree
 * Remove warnings created by -Wcast-align
@@ -455,6 +466,11 @@ SOURCE CODE
 * Improve access-permissions check on data directory in Cygwin (Tom)
 * Report failure to find readline or zlib at end of configure run
 * Add --port flag to regression tests
+* Increase identifier length (NAMEDATALEN) if small performance hit
+* Increase maximum number of function parameters if little wasted space
+* Add documentation for perl, including mention of DBI/DBD perl location
+* Add optional CRC checksum to heap and index pages
+* Change representation of whole-tuple parameters to functions
 
 ---------------------------------------------------------------------------
 
