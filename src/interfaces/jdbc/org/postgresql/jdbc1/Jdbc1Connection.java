@@ -6,7 +6,7 @@ import java.sql.*;
 import org.postgresql.Field;
 import org.postgresql.util.PSQLException;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/Jdbc1Connection.java,v 1.1 2002/07/23 03:59:55 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/Jdbc1Connection.java,v 1.2 2002/07/24 22:08:40 barry Exp $
  * This class implements the java.sql.Connection interface for JDBC1.
  * However most of the implementation is really done in 
  * org.postgresql.jdbc1.AbstractJdbc1Connection
@@ -21,7 +21,7 @@ public class Jdbc1Connection extends org.postgresql.jdbc1.AbstractJdbc1Connectio
 
 	public java.sql.PreparedStatement prepareStatement(String sql) throws SQLException
 	{
-		return new org.postgresql.jdbc1.PreparedStatement(this, sql);
+		return new org.postgresql.jdbc1.Jdbc1PreparedStatement(this, sql);
 	}
 
 //BJL TODO - merge callable statement logic from jdbc2 to jdbc1

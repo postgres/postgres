@@ -13,14 +13,14 @@ import org.postgresql.largeobject.*;
 import org.postgresql.util.PGbytea;
 import org.postgresql.util.PSQLException;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2ResultSet.java,v 1.1 2002/07/23 03:59:55 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2ResultSet.java,v 1.2 2002/07/24 22:08:42 barry Exp $
  * This class defines methods of the jdbc2 specification.  This class extends
  * org.postgresql.jdbc1.AbstractJdbc1ResultSet which provides the jdbc1
  * methods.  The real Statement class (for jdbc2) is org.postgresql.jdbc2.Jdbc2ResultSet
  */
 public class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.AbstractJdbc1ResultSet
 {
-	protected Jdbc2Statement statement;
+	protected Statement statement;
 
 	protected String sqlQuery=null;
 
@@ -373,7 +373,7 @@ public class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.AbstractJdbc1Re
 	}
 
 	// This one needs some thought, as not all ResultSets come from a statement
-	public java.sql.Statement getStatement() throws SQLException
+	public Statement getStatement() throws SQLException
 	{
 		return statement;
 	}
@@ -740,7 +740,7 @@ public class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.AbstractJdbc1Re
 	 * It's used currently by getStatement() but may also with the new core
 	 * package.
 	 */
-	public void setStatement(Jdbc2Statement statement)
+	public void setStatement(Statement statement)
 	{
 		this.statement = statement;
 	}

@@ -40,7 +40,7 @@ import org.postgresql.util.*;
  * @author Paul Bethe (implementer)
  */
 
-public class CallableStatement extends org.postgresql.jdbc2.PreparedStatement implements java.sql.CallableStatement
+public class CallableStatement extends org.postgresql.jdbc2.Jdbc2PreparedStatement implements java.sql.CallableStatement
 {
 	/*
 	 * @exception SQLException on failure

@@ -39,7 +39,7 @@ import java.math.*;
  * @see ResultSet
  */
 
-public class CallableStatement extends PreparedStatement implements java.sql.CallableStatement
+public class CallableStatement extends Jdbc1PreparedStatement implements java.sql.CallableStatement
 {
 	/*
 	 * @exception SQLException on failure

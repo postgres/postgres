@@ -1,11 +1,13 @@
 package org.postgresql.jdbc2;
 
 
+import java.io.*;
 import java.sql.*;
 import java.util.Vector;
+import org.postgresql.largeobject.*;
 import org.postgresql.util.PSQLException;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2Statement.java,v 1.1 2002/07/23 03:59:55 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2Statement.java,v 1.2 2002/07/24 22:08:42 barry Exp $
  * This class defines methods of the jdbc2 specification.  This class extends
  * org.postgresql.jdbc1.AbstractJdbc1Statement which provides the jdbc1
  * methods.  The real Statement class (for jdbc2) is org.postgresql.jdbc2.Jdbc2Statement
@@ -16,6 +18,18 @@ public abstract class AbstractJdbc2Statement extends org.postgresql.jdbc1.Abstra
 	protected Vector batch = null;
 	protected int resultsettype;		 // the resultset type to return
 	protected int concurrency;		 // is it updateable or not?
+
+	public AbstractJdbc2Statement (AbstractJdbc2Connection c)
+	{
+		super(c);
+		resultsettype = java.sql.ResultSet.TYPE_SCROLL_INSENSITIVE;
+		concurrency = java.sql.ResultSet.CONCUR_READ_ONLY;
+	}
+
+	public AbstractJdbc2Statement(AbstractJdbc2Connection connection, String sql) throws SQLException
+	{
+		super(connection, sql);
+	}
 
 	/*
 	 * Execute a SQL statement that may return multiple results. We
@@ -31,10 +45,9 @@ public abstract class AbstractJdbc2Statement extends org.postgresql.jdbc1.Abstra
 	public boolean execute(String sql) throws SQLException
 	{
 	        boolean l_return = super.execute(sql);
-
                 //Now do the jdbc2 specific stuff
 		//required for ResultSet.getStatement() to work
-		((AbstractJdbc2ResultSet)result).setStatement((Jdbc2Statement)this);
+		((AbstractJdbc2ResultSet)result).setStatement((Statement)this);
 
 		// Added this so that the Updateable resultset knows the query that gave this
 		((AbstractJdbc2ResultSet)result).setSQLQuery(sql);
@@ -139,4 +152,183 @@ public abstract class AbstractJdbc2Statement extends org.postgresql.jdbc1.Abstra
 		resultsettype = value;
 	}
 
+	public void addBatch() throws SQLException
+	{
+		addBatch(compileQuery());
+	}
+
+	public java.sql.ResultSetMetaData getMetaData() throws SQLException
+	{
+		java.sql.ResultSet rs = getResultSet();
+		if (rs != null)
+			return rs.getMetaData();
+
+		// Does anyone really know what this method does?
+		return null;
+	}
+
+	public void setArray(int i, java.sql.Array x) throws SQLException
+	{
+		setString(i, x.toString());
+	}
+
+	public void setBlob(int i, Blob x) throws SQLException
+	{
+		InputStream l_inStream = x.getBinaryStream();
+		int l_length = (int) x.length();
+		LargeObjectManager lom = connection.getLargeObjectAPI();
+		int oid = lom.create();
+		LargeObject lob = lom.open(oid);
+		OutputStream los = lob.getOutputStream();
+		try
+		{
+			// could be buffered, but then the OutputStream returned by LargeObject
+			// is buffered internally anyhow, so there would be no performance
+			// boost gained, if anything it would be worse!
+			int c = l_inStream.read();
+			int p = 0;
+			while (c > -1 && p < l_length)
+			{
+				los.write(c);
+				c = l_inStream.read();
+				p++;
+			}
+			los.close();
+		}
+		catch (IOException se)
+		{
+			throw new PSQLException("postgresql.unusual", se);
+		}
+		// lob is closed by the stream so don't call lob.close()
+		setInt(i, oid);
+	}
+
+	public void setCharacterStream(int i, java.io.Reader x, int length) throws SQLException
+	{
+		if (connection.haveMinimumCompatibleVersion("7.2"))
+		{
+			//Version 7.2 supports CharacterStream for for the PG text types
+			//As the spec/javadoc for this method indicate this is to be used for
+			//large text values (i.e. LONGVARCHAR)	PG doesn't have a separate
+			//long varchar datatype, but with toast all the text datatypes are capable of
+			//handling very large values.  Thus the implementation ends up calling
+			//setString() since there is no current way to stream the value to the server
+			char[] l_chars = new char[length];
+			int l_charsRead;
+			try
+			{
+				l_charsRead = x.read(l_chars, 0, length);
+			}
+			catch (IOException l_ioe)
+			{
+				throw new PSQLException("postgresql.unusual", l_ioe);
+			}
+			setString(i, new String(l_chars, 0, l_charsRead));
+		}
+		else
+		{
+			//Version 7.1 only supported streams for LargeObjects
+			//but the jdbc spec indicates that streams should be
+			//available for LONGVARCHAR instead
+			LargeObjectManager lom = connection.getLargeObjectAPI();
+			int oid = lom.create();
+			LargeObject lob = lom.open(oid);
+			OutputStream los = lob.getOutputStream();
+			try
+			{
+				// could be buffered, but then the OutputStream returned by LargeObject
+				// is buffered internally anyhow, so there would be no performance
+				// boost gained, if anything it would be worse!
+				int c = x.read();
+				int p = 0;
+				while (c > -1 && p < length)
+				{
+					los.write(c);
+					c = x.read();
+					p++;
+				}
+				los.close();
+			}
+			catch (IOException se)
+			{
+				throw new PSQLException("postgresql.unusual", se);
+			}
+			// lob is closed by the stream so don't call lob.close()
+			setInt(i, oid);
+		}
+	}
+
+	public void setClob(int i, Clob x) throws SQLException
+	{
+		InputStream l_inStream = x.getAsciiStream();
+		int l_length = (int) x.length();
+		LargeObjectManager lom = connection.getLargeObjectAPI();
+		int oid = lom.create();
+		LargeObject lob = lom.open(oid);
+		OutputStream los = lob.getOutputStream();
+		try
+		{
+			// could be buffered, but then the OutputStream returned by LargeObject
+			// is buffered internally anyhow, so there would be no performance
+			// boost gained, if anything it would be worse!
+			int c = l_inStream.read();
+			int p = 0;
+			while (c > -1 && p < l_length)
+			{
+				los.write(c);
+				c = l_inStream.read();
+				p++;
+			}
+			los.close();
+		}
+		catch (IOException se)
+		{
+			throw new PSQLException("postgresql.unusual", se);
+		}
+		// lob is closed by the stream so don't call lob.close()
+		setInt(i, oid);
+	}
+
+	public void setNull(int i, int t, String s) throws SQLException
+	{
+		setNull(i, t);
+	}
+
+	public void setRef(int i, Ref x) throws SQLException
+	{
+		throw org.postgresql.Driver.notImplemented();
+	}
+
+	public void setDate(int i, java.sql.Date d, java.util.Calendar cal) throws SQLException
+	{
+		if (cal == null)
+			setDate(i, d);
+		else
+		{
+			cal.setTime(d);
+			setDate(i, new java.sql.Date(cal.getTime().getTime()));
+		}
+	}
+
+	public void setTime(int i, Time t, java.util.Calendar cal) throws SQLException
+	{
+		if (cal == null)
+			setTime(i, t);
+		else
+		{
+			cal.setTime(t);
+			setTime(i, new java.sql.Time(cal.getTime().getTime()));
+		}
+	}
+
+	public void setTimestamp(int i, Timestamp t, java.util.Calendar cal) throws SQLException
+	{
+		if (cal == null)
+			setTimestamp(i, t);
+		else
+		{
+			cal.setTime(t);
+			setTimestamp(i, new java.sql.Timestamp(cal.getTime().getTime()));
+		}
+	}
 }

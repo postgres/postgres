@@ -5,7 +5,7 @@ import java.sql.*;
 import java.util.Vector;
 import org.postgresql.Field;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/Jdbc2Connection.java,v 1.1 2002/07/23 03:59:55 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/Jdbc2Connection.java,v 1.2 2002/07/24 22:08:42 barry Exp $
  * This class implements the java.sql.Connection interface for JDBC2.
  * However most of the implementation is really done in 
  * org.postgresql.jdbc2.AbstractJdbc2Connection or one of it's parents
@@ -24,7 +24,7 @@ public class Jdbc2Connection extends org.postgresql.jdbc2.AbstractJdbc2Connectio
 
         public java.sql.PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency) throws SQLException
         {
-                org.postgresql.jdbc2.PreparedStatement s = new org.postgresql.jdbc2.PreparedStatement(this, sql);
+                Jdbc2PreparedStatement s = new Jdbc2PreparedStatement(this, sql);
                 s.setResultSetType(resultSetType);
                 s.setResultSetConcurrency(resultSetConcurrency);
                 return s;
