@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: int8.h,v 1.34 2002/06/20 20:29:53 momjian Exp $
+ * $Id: int8.h,v 1.35 2002/09/18 21:35:25 tgl Exp $
  *
  * NOTES
  * These data types are supported on all 64-bit architectures, and may
@@ -28,6 +28,8 @@
 #warning "Broken pg_config.h should have defined INT64_FORMAT"
 #define INT64_FORMAT "%ld"
 #endif
+
+extern bool scanint8(const char *str, bool errorOK, int64 *result);
 
 extern Datum int8in(PG_FUNCTION_ARGS);
 extern Datum int8out(PG_FUNCTION_ARGS);
@@ -105,6 +107,12 @@ extern Datum int82(PG_FUNCTION_ARGS);
 
 extern Datum i8tod(PG_FUNCTION_ARGS);
 extern Datum dtoi8(PG_FUNCTION_ARGS);
+
+extern Datum i8tof(PG_FUNCTION_ARGS);
+extern Datum ftoi8(PG_FUNCTION_ARGS);
+
+extern Datum i8tooid(PG_FUNCTION_ARGS);
+extern Datum oidtoi8(PG_FUNCTION_ARGS);
 
 extern Datum int8_text(PG_FUNCTION_ARGS);
 extern Datum text_int8(PG_FUNCTION_ARGS);

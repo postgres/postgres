@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.40 2002/09/04 20:31:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.41 2002/09/18 21:35:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -520,6 +520,7 @@ build_index_pathkeys(Query *root,
 		funcnode->funcid = index->indproc;
 		funcnode->funcresulttype = get_func_rettype(index->indproc);
 		funcnode->funcretset = false;	/* can never be a set */
+		funcnode->funcformat = COERCE_DONTCARE;	/* to match any user expr */
 		funcnode->func_fcache = NULL;
 
 		while (*indexkeys != 0)

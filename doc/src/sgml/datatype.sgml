@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.102 2002/08/23 02:54:18 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.103 2002/09/18 21:35:20 tgl Exp $
 -->
 
  <chapter id="datatype">
@@ -823,8 +823,19 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (
 
    <note>
     <para>
-     Prior to <productname>PostgreSQL</> 7.2, strings that were too long were silently
-     truncated, no error was raised.
+     If one explicitly casts a value to
+     <type>character(<replaceable>n</>)</type> or <type>character
+     varying(<replaceable>n</>)</type>, then an overlength value will
+     be truncated to <replaceable>n</> characters without raising an
+     error.  (This too is required by the SQL standard.)
+    </para>
+   </note>
+
+   <note>
+    <para>
+     Prior to <productname>PostgreSQL</> 7.2, strings that were too long were
+     always truncated without raising an error, in either explicit or
+     implicit casting contexts.
     </para>
    </note>
 
@@ -897,12 +908,14 @@ INSERT INTO test2 VALUES ('ok');
 INSERT INTO test2 VALUES ('good      ');
 INSERT INTO test2 VALUES ('too long');
 <computeroutput>ERROR:  value too long for type character varying(5)</computeroutput>
+INSERT INTO test2 VALUES ('too long'::varchar(5)); -- explicit truncation
 SELECT b, char_length(b) FROM test2;
 <computeroutput>
    b   | char_length
 -------+-------------
  ok    |           2
  good  |           5
+ too l |           5
 </computeroutput>
 </programlisting>
     <calloutlist>
@@ -932,7 +945,7 @@ SELECT b, char_length(b) FROM test2;
    </para>
 
     <table tocentry="1">
-     <title>Specialty Character Type</title>
+     <title>Specialty Character Types</title>
      <tgroup cols="3">
       <thead>
        <row>
@@ -2832,29 +2845,39 @@ SELECT * FROM test1 WHERE a;
    <para>
     Bit strings are strings of 1's and 0's.  They can be used to store
     or visualize bit masks.  There are two SQL bit types:
-    <type>BIT(<replaceable>x</replaceable>)</type> and <type>BIT
-    VARYING(<replaceable>x</replaceable>)</type>; where
-    <replaceable>x</replaceable> is a positive integer.
+    <type>BIT(<replaceable>n</replaceable>)</type> and <type>BIT
+    VARYING(<replaceable>n</replaceable>)</type>, where
+    <replaceable>n</replaceable> is a positive integer.
    </para>
 
    <para>
     <type>BIT</type> type data must match the length
-    <replaceable>x</replaceable> exactly; it is an error to attempt to
-    store shorter or longer bit strings.  <type>BIT VARYING</type> is
+    <replaceable>n</replaceable> exactly; it is an error to attempt to
+    store shorter or longer bit strings.  <type>BIT VARYING</type> data is
     of variable length up to the maximum length
-    <replaceable>x</replaceable>; longer strings will be rejected.
-    <type>BIT</type> without length is equivalent to
-    <literal>BIT(1)</literal>, <type>BIT VARYING</type> without length
+    <replaceable>n</replaceable>; longer strings will be rejected.
+    Writing <type>BIT</type> without a length is equivalent to
+    <literal>BIT(1)</literal>, while <type>BIT VARYING</type> without a length
     specification means unlimited length.
    </para>
 
    <note>
     <para>
-     Prior to <productname>PostgreSQL</> 7.2, <type>BIT</type> type data was
-     zero-padded on the right.  This was changed to comply with the
-     SQL standard.  To implement zero-padded bit strings, a
-     combination of the concatenation operator and the
-     <function>substring</function> function can be used.
+     If one explicitly casts a bit-string value to
+     <type>BIT(<replaceable>n</>)</type>, it will be truncated or
+     zero-padded on the right to be exactly <replaceable>n</> bits,
+     without raising an error.  Similarly,
+     if one explicitly casts a bit-string value to
+     <type>BIT VARYING(<replaceable>n</>)</type>, it will be truncated
+     on the right if it is more than <replaceable>n</> bits.
+    </para>
+   </note>
+
+   <note>
+    <para>
+     Prior to <productname>PostgreSQL</> 7.2, <type>BIT</type> data was
+     always silently truncated or zero-padded on the right, with or without an
+     explicit cast. This was changed to comply with the SQL standard.
     </para>
    </note>
 
@@ -2874,9 +2897,16 @@ CREATE TABLE test (a BIT(3), b BIT VARYING(5));
 INSERT INTO test VALUES (B'101', B'00');
 INSERT INTO test VALUES (B'10', B'101');
 <computeroutput>
-ERROR:  bit string length does not match type bit(3)
+ERROR:  Bit string length 2 does not match type BIT(3)
 </computeroutput>
-SELECT SUBSTRING(b FROM 1 FOR 2) FROM test;
+INSERT INTO test VALUES (B'10'::bit(3), B'101');
+SELECT * FROM test;
+<computeroutput>
+  a  |  b
+-----+-----
+ 101 | 00
+ 100 | 101
+</computeroutput>
 </programlisting>
    </example>
 

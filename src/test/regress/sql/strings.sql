@@ -27,7 +27,9 @@ SELECT CAST(f1 AS text) AS "text(varchar)" FROM VARCHAR_TBL;
 
 SELECT CAST(name 'namefield' AS text) AS "text(name)";
 
-SELECT CAST(f1 AS char(10)) AS "char(text)" FROM TEXT_TBL; -- fail
+-- since this is an explicit cast, it should truncate w/o error:
+SELECT CAST(f1 AS char(10)) AS "char(text)" FROM TEXT_TBL;
+-- note: implicit-cast case is tested in char.sql
 
 SELECT CAST(f1 AS char(20)) AS "char(text)" FROM TEXT_TBL;
 

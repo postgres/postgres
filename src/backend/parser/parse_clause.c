@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.97 2002/09/04 20:31:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.98 2002/09/18 21:35:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -872,20 +872,24 @@ buildMergedJoinVar(JoinType jointype, Var *l_colvar, Var *r_colvar)
 	 * typmod is not same as input.
 	 */
 	if (l_colvar->vartype != outcoltype)
-		l_node = coerce_type(NULL, (Node *) l_colvar, l_colvar->vartype,
-							 outcoltype, outcoltypmod, false);
+		l_node = coerce_type((Node *) l_colvar, l_colvar->vartype,
+							 outcoltype,
+							 COERCION_IMPLICIT, COERCE_IMPLICIT_CAST);
 	else if (l_colvar->vartypmod != outcoltypmod)
 		l_node = (Node *) makeRelabelType((Node *) l_colvar,
-										  outcoltype, outcoltypmod);
+										  outcoltype, outcoltypmod,
+										  COERCE_IMPLICIT_CAST);
 	else
 		l_node = (Node *) l_colvar;
 
 	if (r_colvar->vartype != outcoltype)
-		r_node = coerce_type(NULL, (Node *) r_colvar, r_colvar->vartype,
-							 outcoltype, outcoltypmod, false);
+		r_node = coerce_type((Node *) r_colvar, r_colvar->vartype,
+							 outcoltype,
+							 COERCION_IMPLICIT, COERCE_IMPLICIT_CAST);
 	else if (r_colvar->vartypmod != outcoltypmod)
 		r_node = (Node *) makeRelabelType((Node *) r_colvar,
-										  outcoltype, outcoltypmod);
+										  outcoltype, outcoltypmod,
+										  COERCE_IMPLICIT_CAST);
 	else
 		r_node = (Node *) r_colvar;
 

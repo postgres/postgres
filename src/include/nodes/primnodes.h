@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: primnodes.h,v 1.67 2002/09/04 20:31:44 momjian Exp $
+ * $Id: primnodes.h,v 1.68 2002/09/18 21:35:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -140,6 +140,30 @@ typedef struct RangeVar
  */
 
 /*
+ * CoercionContext - distinguishes the allowed set of type casts
+ *
+ * NB: ordering of the alternatives is significant; later (larger) values
+ * allow more casts than earlier ones.
+ */
+typedef enum CoercionContext
+{
+	COERCION_IMPLICIT,			/* coercion in context of expression */
+	COERCION_ASSIGNMENT,		/* coercion in context of assignment */
+	COERCION_EXPLICIT			/* explicit cast operation */
+} CoercionContext;
+
+/*
+ * CoercionForm - information showing how to display a function-call node
+ */
+typedef enum CoercionForm
+{
+	COERCE_EXPLICIT_CALL,		/* display as a function call */
+	COERCE_EXPLICIT_CAST,		/* display as an explicit cast */
+	COERCE_IMPLICIT_CAST,		/* implicit cast, so hide it */
+	COERCE_DONTCARE				/* special case for pathkeys */
+} CoercionForm;
+
+/*
  * Expr
  */
 typedef enum OpType
@@ -194,6 +218,7 @@ typedef struct Func
 	Oid			funcid;			/* PG_PROC OID of the function */
 	Oid			funcresulttype; /* PG_TYPE OID of result value */
 	bool		funcretset;		/* true if function returns set */
+	CoercionForm funcformat;	/* how to display this function call */
 	FunctionCachePtr func_fcache;		/* runtime state, or NULL */
 } Func;
 
@@ -460,6 +485,7 @@ typedef struct RelabelType
 	Node	   *arg;			/* input expression */
 	Oid			resulttype;		/* output type of coercion expression */
 	int32		resulttypmod;	/* output typmod (usually -1) */
+	CoercionForm relabelformat;	/* how to display this node */
 } RelabelType;
 
 

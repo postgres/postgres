@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.132 2002/09/04 20:31:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.133 2002/09/18 21:35:21 tgl Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -1129,6 +1129,10 @@ _readFunc(void)
 	token = pg_strtok(&length); /* now read it */
 	local_node->funcretset = strtobool(token);
 
+	token = pg_strtok(&length); /* get :funcformat */
+	token = pg_strtok(&length); /* now read it */
+	local_node->funcformat = (CoercionForm) atoi(token);
+
 	local_node->func_fcache = NULL;
 
 	return local_node;
@@ -1334,6 +1338,10 @@ _readRelabelType(void)
 	token = pg_strtok(&length); /* eat :resulttypmod */
 	token = pg_strtok(&length); /* get resulttypmod */
 	local_node->resulttypmod = atoi(token);
+
+	token = pg_strtok(&length); /* eat :relabelformat */
+	token = pg_strtok(&length); /* get relabelformat */
+	local_node->relabelformat = (CoercionForm) atoi(token);
 
 	return local_node;
 }

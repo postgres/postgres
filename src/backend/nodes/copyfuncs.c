@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.211 2002/09/04 20:31:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.212 2002/09/18 21:35:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -850,6 +850,7 @@ _copyFunc(Func *from)
 	newnode->funcid = from->funcid;
 	newnode->funcresulttype = from->funcresulttype;
 	newnode->funcretset = from->funcretset;
+	newnode->funcformat = from->funcformat;
 	/* Do not copy the run-time state, if any */
 	newnode->func_fcache = NULL;
 
@@ -931,6 +932,7 @@ _copyRelabelType(RelabelType *from)
 	Node_Copy(from, newnode, arg);
 	newnode->resulttype = from->resulttype;
 	newnode->resulttypmod = from->resulttypmod;
+	newnode->relabelformat = from->relabelformat;
 
 	return newnode;
 }
@@ -2634,7 +2636,7 @@ _copyCreateCastStmt(CreateCastStmt *from)
 	Node_Copy(from, newnode, sourcetype);
 	Node_Copy(from, newnode, targettype);
 	Node_Copy(from, newnode, func);
-	newnode->implicit = from->implicit;
+	newnode->context = from->context;
 
 	return newnode;
 }

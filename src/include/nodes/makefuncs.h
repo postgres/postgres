@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: makefuncs.h,v 1.40 2002/09/04 20:31:43 momjian Exp $
+ * $Id: makefuncs.h,v 1.41 2002/09/18 21:35:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,6 +15,7 @@
 #define MAKEFUNC_H
 
 #include "nodes/parsenodes.h"
+
 
 extern A_Expr *makeA_Expr(int oper, List *name, Node *lexpr, Node *rexpr);
 
@@ -52,7 +53,8 @@ extern Const *makeNullConst(Oid consttype);
 
 extern Alias *makeAlias(const char *aliasname, List *colnames);
 
-extern RelabelType *makeRelabelType(Node *arg, Oid rtype, int32 rtypmod);
+extern RelabelType *makeRelabelType(Node *arg, Oid rtype, int32 rtypmod,
+									CoercionForm rformat);
 
 extern RangeVar *makeRangeVar(char *schemaname, char *relname);
 

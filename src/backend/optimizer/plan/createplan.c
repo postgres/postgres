@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.118 2002/09/04 20:31:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.119 2002/09/18 21:35:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1027,8 +1027,7 @@ fix_indxqual_sublist(List *indexqual, int baserelid, IndexOptInfo *index,
 		Expr	   *clause = (Expr *) lfirst(i);
 		Expr	   *newclause;
 		List	   *leftvarnos;
-		Oid			opclass,
-					newopno;
+		Oid			opclass;
 
 		if (!is_opclause((Node *) clause) || length(clause->args) != 2)
 			elog(ERROR, "fix_indxqual_sublist: indexqual clause is not binary opclause");
@@ -1061,23 +1060,13 @@ fix_indxqual_sublist(List *indexqual, int baserelid, IndexOptInfo *index,
 													   index,
 													   &opclass);
 
-		/*
-		 * Substitute the appropriate operator if the expression operator
-		 * is merely binary-compatible with the index.	This shouldn't
-		 * fail, since indxpath.c found it before...
-		 */
-		newopno = indexable_operator(newclause, opclass, true);
-		if (newopno == InvalidOid)
-			elog(ERROR, "fix_indxqual_sublist: failed to find substitute op");
-		((Oper *) newclause->oper)->opno = newopno;
-
 		fixed_qual = lappend(fixed_qual, newclause);
 
 		/*
 		 * Finally, check to see if index is lossy for this operator. If
 		 * so, add (a copy of) original form of clause to recheck list.
 		 */
-		if (op_requires_recheck(newopno, opclass))
+		if (op_requires_recheck(((Oper *) newclause->oper)->opno, opclass))
 			recheck_qual = lappend(recheck_qual,
 								   copyObject((Node *) clause));
 	}

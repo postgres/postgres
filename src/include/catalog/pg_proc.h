@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.271 2002/09/12 00:21:24 momjian Exp $
+ * $Id: pg_proc.h,v 1.272 2002/09/18 21:35:23 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -886,14 +886,19 @@ DESCR("convert int8 to float8");
 DATA(insert OID = 483 (  int8			   PGNSP PGUID 12 f f t f i 1  20 "701"  dtoi8 - _null_ ));
 DESCR("convert float8 to int8");
 
+/* OIDS 500 - 599 */
+
+/* OIDS 600 - 699 */
+
+DATA(insert OID = 652 (  float4			   PGNSP PGUID 12 f f t f i 1 700 "20"	i8tof - _null_ ));
+DESCR("convert int8 to float4");
+DATA(insert OID = 653 (  int8			   PGNSP PGUID 12 f f t f i 1  20 "700"  ftoi8 - _null_ ));
+DESCR("convert float4 to int8");
+
 DATA(insert OID = 714 (  int2			   PGNSP PGUID 12 f f t f i 1  21 "20"	int82 - _null_ ));
 DESCR("convert int8 to int2");
 DATA(insert OID = 754 (  int8			   PGNSP PGUID 12 f f t f i 1  20 "21"	int28 - _null_ ));
 DESCR("convert int2 to int8");
-
-/* OIDS 500 - 599 */
-
-/* OIDS 600 - 699 */
 
 DATA(insert OID = 1285 (  int4notin		   PGNSP PGUID 12 f f t f s 2 16 "23 25"	int4notin - _null_ ));
 DESCR("not in");
@@ -910,9 +915,9 @@ DESCR("greater-than-or-equal");
 DATA(insert OID = 659 (  namene			   PGNSP PGUID 12 f f t f i 2 16 "19 19"	namene - _null_ ));
 DESCR("not equal");
 
-DATA(insert OID = 668 (  bpchar			   PGNSP PGUID 12 f f t f i 2 1042 "1042 23"	bpchar - _null_ ));
+DATA(insert OID = 668 (  bpchar			   PGNSP PGUID 12 f f t f i 3 1042 "1042 23 16"	bpchar - _null_ ));
 DESCR("adjust char() to typmod length");
-DATA(insert OID = 669 (  varchar		   PGNSP PGUID 12 f f t f i 2 1043 "1043 23"	varchar - _null_ ));
+DATA(insert OID = 669 (  varchar		   PGNSP PGUID 12 f f t f i 3 1043 "1043 23 16"	varchar - _null_ ));
 DESCR("adjust varchar() to typmod length");
 
 DATA(insert OID = 676 (  mktinterval	   PGNSP PGUID 12 f f t f i 2 704 "702 702" mktinterval - _null_ ));
@@ -1374,7 +1379,7 @@ DATA(insert OID = 1141 (  date_pli		   PGNSP PGUID 12 f f t f i 2 1082 "1082 23"
 DESCR("add");
 DATA(insert OID = 1142 (  date_mii		   PGNSP PGUID 12 f f t f i 2 1082 "1082 23"	date_mii - _null_ ));
 DESCR("subtract");
-DATA(insert OID = 1143 (  time_in		   PGNSP PGUID 12 f f t f s 1 1083 "2275"	time_in - _null_ ));
+DATA(insert OID = 1143 (  time_in		   PGNSP PGUID 12 f f t f s 3 1083 "2275 26 23"	time_in - _null_ ));
 DESCR("(internal)");
 DATA(insert OID = 1144 (  time_out		   PGNSP PGUID 12 f f t f i 1 2275 "1083"	time_out - _null_ ));
 DESCR("(internal)");
@@ -1390,7 +1395,7 @@ DESCR("multiply");
 DATA(insert OID = 1149 (  circle_div_pt    PGNSP PGUID 12 f f t f i 2 718 "718 600"  circle_div_pt - _null_ ));
 DESCR("divide");
 
-DATA(insert OID = 1150 (  timestamptz_in   PGNSP PGUID 12 f f t f s 1 1184 "2275"	timestamptz_in - _null_ ));
+DATA(insert OID = 1150 (  timestamptz_in   PGNSP PGUID 12 f f t f s 3 1184 "2275 26 23"	timestamptz_in - _null_ ));
 DESCR("(internal)");
 DATA(insert OID = 1151 (  timestamptz_out  PGNSP PGUID 12 f f t f s 1 2275 "1184"	timestamptz_out - _null_ ));
 DESCR("(internal)");
@@ -1409,7 +1414,7 @@ DESCR("greater-than");
 DATA(insert OID = 1159 (  timezone		   PGNSP PGUID 12 f f t f s 2 1114 "25 1184"  timestamptz_zone - _null_ ));
 DESCR("timestamp at a specified time zone");
 
-DATA(insert OID = 1160 (  interval_in	   PGNSP PGUID 12 f f t f s 1 1186 "2275"	interval_in - _null_ ));
+DATA(insert OID = 1160 (  interval_in	   PGNSP PGUID 12 f f t f s 3 1186 "2275 26 23"	interval_in - _null_ ));
 DESCR("(internal)");
 DATA(insert OID = 1161 (  interval_out	   PGNSP PGUID 12 f f t f i 1 2275 "1186"	interval_out - _null_ ));
 DESCR("(internal)");
@@ -1539,15 +1544,18 @@ DESCR("multiply");
 DATA(insert OID = 1281 (  int48div		   PGNSP PGUID 12 f f t f i 2 20 "23 20"	int48div - _null_ ));
 DESCR("divide");
 
-DATA(insert OID = 1288 (  text			   PGNSP PGUID 12 f f t f i 1 25 "20"  int8_text - _null_ ));
+DATA(insert OID = 1287 (  oid			   PGNSP PGUID 12 f f t f i 1 26 "20"  i8tooid - _null_ ));
+DESCR("convert int8 to oid");
+DATA(insert OID = 1288 (  int8			   PGNSP PGUID 12 f f t f i 1 20 "26"  oidtoi8 - _null_ ));
+DESCR("convert oid to int8");
+
+DATA(insert OID = 1289 (  text			   PGNSP PGUID 12 f f t f i 1 25 "20"  int8_text - _null_ ));
 DESCR("convert int8 to text");
-DATA(insert OID = 1289 (  int8			   PGNSP PGUID 12 f f t f i 1 20 "25"  text_int8 - _null_ ));
+DATA(insert OID = 1290 (  int8			   PGNSP PGUID 12 f f t f i 1 20 "25"  text_int8 - _null_ ));
 DESCR("convert text to int8");
 
-DATA(insert OID = 1290 (  _bpchar		   PGNSP PGUID 12 f f t f i 2 1014 "1014 23"	_bpchar - _null_ ));
-DESCR("adjust char()[] to typmod length");
-DATA(insert OID = 1291 (  _varchar		   PGNSP PGUID 12 f f t f i 2 1015 "1015 23"	_varchar - _null_ ));
-DESCR("adjust varchar()[] to typmod length");
+DATA(insert OID = 1291 (  array_length_coerce	PGNSP PGUID 12 f f t f i 3 2277 "2277 23 16"	array_length_coerce - _null_ ));
+DESCR("adjust any array to element typmod length");
 
 DATA(insert OID = 1292 ( tideq			   PGNSP PGUID 12 f f t f i 2 16 "27 27"	tideq - _null_ ));
 DESCR("equal");
@@ -1594,7 +1602,7 @@ DESCR("SQL92 interval comparison");
 DATA(insert OID = 1311 ( overlaps			 PGNSP PGUID 14 f f f f i 4 16 "1083 1186 1083 1083"	"select ($1, ($1 + $2)) overlaps ($3, $4)" - _null_ ));
 DESCR("SQL92 interval comparison");
 
-DATA(insert OID = 1312 (  timestamp_in		 PGNSP PGUID 12 f f t f s 1 1114 "2275" timestamp_in - _null_ ));
+DATA(insert OID = 1312 (  timestamp_in		 PGNSP PGUID 12 f f t f s 3 1114 "2275 26 23" timestamp_in - _null_ ));
 DESCR("(internal)");
 DATA(insert OID = 1313 (  timestamp_out		 PGNSP PGUID 12 f f t f s 1 2275 "1114" timestamp_out - _null_ ));
 DESCR("(internal)");
@@ -1644,7 +1652,7 @@ DATA(insert OID = 1349 (  oidvectortypes	 PGNSP PGUID 12 f f t f s 1 25 "30"  oi
 DESCR("print type names of oidvector field");
 
 
-DATA(insert OID = 1350 (  timetz_in		   PGNSP PGUID 12 f f t f s 1 1266 "2275"	timetz_in - _null_ ));
+DATA(insert OID = 1350 (  timetz_in		   PGNSP PGUID 12 f f t f s 3 1266 "2275 26 23"	timetz_in - _null_ ));
 DESCR("(internal)");
 DATA(insert OID = 1351 (  timetz_out	   PGNSP PGUID 12 f f t f i 1 2275 "1266"	timetz_out - _null_ ));
 DESCR("(internal)");
@@ -1983,7 +1991,7 @@ DESCR("# points in path");
 DATA(insert OID = 1556 (  npoints			PGNSP PGUID 12 f f t f i 1	23 "604"  poly_npoints - _null_ ));
 DESCR("number of points in polygon");
 
-DATA(insert OID = 1564 (  bit_in			PGNSP PGUID 12 f f t f i 1 1560 "2275"	bit_in - _null_ ));
+DATA(insert OID = 1564 (  bit_in			PGNSP PGUID 12 f f t f i 3 1560 "2275 26 23"	bit_in - _null_ ));
 DESCR("(internal)");
 DATA(insert OID = 1565 (  bit_out			PGNSP PGUID 12 f f t f i 1 2275 "1560"	bit_out - _null_ ));
 DESCR("(internal)");
@@ -2008,7 +2016,7 @@ DESCR("set sequence value");
 DATA(insert OID = 1765 (  setval			PGNSP PGUID 12 f f t f v 3 20 "25 20 16"	setval_and_iscalled - _null_ ));
 DESCR("set sequence value and iscalled status");
 
-DATA(insert OID = 1579 (  varbit_in			PGNSP PGUID 12 f f t f i 1 1562 "2275"	varbit_in - _null_ ));
+DATA(insert OID = 1579 (  varbit_in			PGNSP PGUID 12 f f t f i 3 1562 "2275 26 23"	varbit_in - _null_ ));
 DESCR("(internal)");
 DATA(insert OID = 1580 (  varbit_out		PGNSP PGUID 12 f f t f i 1 2275 "1562"	varbit_out - _null_ ));
 DESCR("(internal)");
@@ -2060,8 +2068,6 @@ DESCR("PI");
 
 DATA(insert OID = 1618 (  interval_mul		PGNSP PGUID 12 f f t f i 2 1186 "1186 701"	interval_mul - _null_ ));
 DESCR("multiply interval");
-DATA(insert OID = 1619 (  varchar			PGNSP PGUID 12 f f t f i 1 1043 "23"	int4_text - _null_ ));
-DESCR("convert int4 to varchar");
 
 DATA(insert OID = 1620 (  ascii				PGNSP PGUID 12 f f t f i 1 23 "25"	ascii - _null_ ));
 DESCR("convert first char to int4");
@@ -2070,8 +2076,6 @@ DESCR("convert int4 to char");
 DATA(insert OID = 1622 (  repeat			PGNSP PGUID 12 f f t f i 2 25 "25 23"  repeat - _null_ ));
 DESCR("replicate string int4 times");
 
-DATA(insert OID = 1623 (  varchar			PGNSP PGUID 12 f f t f i 1 1043 "20"	int8_text - _null_ ));
-DESCR("convert int8 to varchar");
 DATA(insert OID = 1624 (  mul_d_interval	PGNSP PGUID 12 f f t f i 2 1186 "701 1186"	mul_d_interval - _null_ ));
 
 DATA(insert OID = 1633 (  texticlike		PGNSP PGUID 12 f f t f i 2 16 "25 25" texticlike - _null_ ));
@@ -2133,9 +2137,9 @@ DESCR("replace all occurrences of old_substr with new_substr in string");
 DATA(insert OID =  2088 ( split_part   PGNSP PGUID 12 f f t f i 3 25 "25 25 23"  split_text - _null_ ));
 DESCR("split string by field_sep and return field_num");
 DATA(insert OID =  2089 ( to_hex	   PGNSP PGUID 12 f f t f i 1 25 "23"  to_hex32 - _null_ ));
-DESCR("convert int32 number to hex");
+DESCR("convert int4 number to hex");
 DATA(insert OID =  2090 ( to_hex	   PGNSP PGUID 12 f f t f i 1 25 "20"  to_hex64 - _null_ ));
-DESCR("convert int64 number to hex");
+DESCR("convert int8 number to hex");
 
 /* for character set encoding support */
 
@@ -2250,14 +2254,10 @@ DESCR("int4 to bitstring");
 DATA(insert OID = 1684 (  int4				PGNSP PGUID 12 f f t f i 1 23 "1560"	bittoint4 - _null_ ));
 DESCR("bitstring to int4");
 
-DATA(insert OID = 1685 (  bit			   PGNSP PGUID 12 f f t f i 2 1560 "1560 23"	bit - _null_ ));
+DATA(insert OID = 1685 (  bit			   PGNSP PGUID 12 f f t f i 3 1560 "1560 23 16"	bit - _null_ ));
 DESCR("adjust bit() to typmod length");
-DATA(insert OID = 1686 (  _bit			   PGNSP PGUID 12 f f t f i 2 1561 "1561 23"	_bit - _null_ ));
-DESCR("adjust bit()[] to typmod length");
-DATA(insert OID = 1687 (  varbit		   PGNSP PGUID 12 f f t f i 2 1562 "1562 23"	varbit - _null_ ));
+DATA(insert OID = 1687 (  varbit		   PGNSP PGUID 12 f f t f i 3 1562 "1562 23 16"	varbit - _null_ ));
 DESCR("adjust varbit() to typmod length");
-DATA(insert OID = 1688 (  _varbit		   PGNSP PGUID 12 f f t f i 2 1563 "1563 23"	_varbit - _null_ ));
-DESCR("adjust varbit()[] to typmod length");
 
 DATA(insert OID = 1698 (  position		   PGNSP PGUID 12 f f t f i 2 23 "1560 1560" bitposition - _null_ ));
 DESCR("return position of sub-bitstring");
@@ -2350,6 +2350,11 @@ DATA(insert OID = 1714 (  cidr				PGNSP PGUID 12 f f t f i 1 650 "25"  text_cidr
 DESCR("text to cidr");
 DATA(insert OID = 1715 (  set_masklen		PGNSP PGUID 12 f f t f i 2 869 "869 23"  inet_set_masklen - _null_ ));
 DESCR("change the netmask of an inet");
+
+DATA(insert OID = 1686 ( numeric			PGNSP PGUID 12 f f t f i 1 1700 "25"	text_numeric - _null_ ));
+DESCR("(internal)");
+DATA(insert OID = 1688 ( text				PGNSP PGUID 12 f f t f i 1 25 "1700"	numeric_text - _null_ ));
+DESCR("(internal)");
 
 DATA(insert OID = 1690 ( time_mi_time		PGNSP PGUID 12 f f t f i 2 1186 "1083 1083"  time_mi_time - _null_ ));
 DESCR("minus");

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.158 2002/09/04 07:16:32 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.159 2002/09/18 21:35:20 tgl Exp $
 -->
 
 <appendix id="release">
@@ -24,6 +24,8 @@ CDATA means the content is "SGML-free", so you can write without
 worries about funny characters.
 -->
 <literallayout><![CDATA[
+Mixed numeric-and-float expressions are evaluated as float, per SQL spec
+Explicit casts to char, varchar, bit, varbit will truncate or pad without error
 CREATE OR REPLACE VIEW, CREATE OR REPLACE RULE are available
 No-autocommit mode is available (set autocommit to off)
 Substantial improvements in functionality for functions returning sets

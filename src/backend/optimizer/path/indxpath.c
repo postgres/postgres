@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.122 2002/09/04 20:31:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.123 2002/09/18 21:35:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -825,32 +825,15 @@ match_clause_to_indexkey(RelOptInfo *rel,
  * is whether the operator has a commutator operator that matches
  * the index's opclass.
  *
- * We try both the straightforward match and matches that rely on
- * recognizing binary-compatible datatypes.  For example, if we have
- * an expression like "oid = 123", the operator will be oideqint4,
- * which we need to replace with oideq in order to recognize it as
- * matching an oid_ops index on the oid field.	A variant case is where
- * the expression is like "oid::int4 = 123", where the given operator
- * will be int4eq and again we need to intuit that we want to use oideq.
- *
  * Returns the OID of the matching operator, or InvalidOid if no match.
- * Note that the returned OID will be different from the one in the given
- * expression if we used a binary-compatible substitution.	Also note that
- * if indexkey_on_left is FALSE (meaning we need to commute), the returned
- * OID is *not* commuted; it can be plugged directly into the given clause.
+ * (Formerly, this routine might return a binary-compatible operator
+ * rather than the original one, but that kluge is history.)
  */
 Oid
 indexable_operator(Expr *clause, Oid opclass, bool indexkey_on_left)
 {
 	Oid			expr_op = ((Oper *) clause->oper)->opno;
-	Oid			commuted_op,
-				new_op;
-	Operator	oldoptup;
-	Form_pg_operator oldopform;
-	char	   *opname;
-	Oid			ltype,
-				rtype,
-				indexkeytype;
+	Oid			commuted_op;
 
 	/* Get the commuted operator if necessary */
 	if (indexkey_on_left)
@@ -860,82 +843,9 @@ indexable_operator(Expr *clause, Oid opclass, bool indexkey_on_left)
 	if (commuted_op == InvalidOid)
 		return InvalidOid;
 
-	/* Done if the (commuted) operator is a member of the index's opclass */
+	/* OK if the (commuted) operator is a member of the index's opclass */
 	if (op_in_opclass(commuted_op, opclass))
 		return expr_op;
-
-	/*
-	 * Maybe the index uses a binary-compatible operator set.
-	 *
-	 * Get the nominal input types of the given operator and the actual type
-	 * (before binary-compatible relabeling) of the index key.
-	 */
-	oldoptup = SearchSysCache(OPEROID,
-							  ObjectIdGetDatum(expr_op),
-							  0, 0, 0);
-	if (!HeapTupleIsValid(oldoptup))
-		return InvalidOid;		/* probably can't happen */
-	oldopform = (Form_pg_operator) GETSTRUCT(oldoptup);
-	opname = pstrdup(NameStr(oldopform->oprname));
-	ltype = oldopform->oprleft;
-	rtype = oldopform->oprright;
-	ReleaseSysCache(oldoptup);
-
-	if (indexkey_on_left)
-	{
-		Node	   *leftop = (Node *) get_leftop(clause);
-
-		if (leftop && IsA(leftop, RelabelType))
-			leftop = ((RelabelType *) leftop)->arg;
-		indexkeytype = exprType(leftop);
-	}
-	else
-	{
-		Node	   *rightop = (Node *) get_rightop(clause);
-
-		if (rightop && IsA(rightop, RelabelType))
-			rightop = ((RelabelType *) rightop)->arg;
-		indexkeytype = exprType(rightop);
-	}
-
-	/*
-	 * Make sure we have different but binary-compatible types.
-	 */
-	if (ltype == indexkeytype && rtype == indexkeytype)
-		return InvalidOid;		/* no chance for a different operator */
-	if (!IsBinaryCompatible(ltype, indexkeytype))
-		return InvalidOid;
-	if (!IsBinaryCompatible(rtype, indexkeytype))
-		return InvalidOid;
-
-	/*
-	 * OK, look for operator of the same name with the indexkey's data
-	 * type. (In theory this might find a non-semantically-comparable
-	 * operator, but in practice that seems pretty unlikely for
-	 * binary-compatible types.)
-	 */
-	new_op = compatible_oper_opid(makeList1(makeString(opname)),
-								  indexkeytype, indexkeytype, true);
-
-	if (OidIsValid(new_op))
-	{
-		if (new_op != expr_op)
-		{
-			/*
-			 * OK, we found a binary-compatible operator of the same name;
-			 * now does it match the index?
-			 */
-			if (indexkey_on_left)
-				commuted_op = new_op;
-			else
-				commuted_op = get_commutator(new_op);
-			if (commuted_op == InvalidOid)
-				return InvalidOid;
-
-			if (op_in_opclass(commuted_op, opclass))
-				return new_op;
-		}
-	}
 
 	return InvalidOid;
 }

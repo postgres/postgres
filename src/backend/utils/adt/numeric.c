@@ -5,7 +5,7 @@
  *
  *	1998 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.53 2002/09/04 20:31:28 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.54 2002/09/18 21:35:22 tgl Exp $
  *
  * ----------
  */
@@ -1706,6 +1706,50 @@ numeric_float4(PG_FUNCTION_ARGS)
 	pfree(tmp);
 
 	PG_RETURN_DATUM(result);
+}
+
+
+Datum
+text_numeric(PG_FUNCTION_ARGS)
+{
+	text	   *str = PG_GETARG_TEXT_P(0);
+	int			len;
+	char	   *s;
+	Datum		result;
+
+	len = (VARSIZE(str) - VARHDRSZ);
+	s = palloc(len + 1);
+	memcpy(s, VARDATA(str), len);
+	*(s + len) = '\0';
+
+	result = DirectFunctionCall3(numeric_in, CStringGetDatum(s),
+								 ObjectIdGetDatum(0), Int32GetDatum(-1));
+
+	pfree(s);
+
+	return result;
+}
+
+Datum
+numeric_text(PG_FUNCTION_ARGS)
+{
+	/* val is numeric, but easier to leave it as Datum */
+	Datum		val = PG_GETARG_DATUM(0);
+	char	   *s;
+	int			len;
+	text	   *result;
+
+	s = DatumGetCString(DirectFunctionCall1(numeric_out, val));
+	len = strlen(s);
+
+	result = (text *) palloc(VARHDRSZ + len);
+
+	VARATT_SIZEP(result) = len + VARHDRSZ;
+	memcpy(VARDATA(result), s, len);
+
+	pfree(s);
+
+	PG_RETURN_TEXT_P(result);
 }
 
 

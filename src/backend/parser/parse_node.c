@@ -1,27 +1,22 @@
 /*-------------------------------------------------------------------------
  *
  * parse_node.c
- *	  various routines that make nodes for query plans
+ *	  various routines that make nodes for querytrees
  *
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.68 2002/09/04 20:31:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.69 2002/09/18 21:35:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-#include <ctype.h>
-#include <errno.h>
-#include <float.h>
-
 #include "access/heapam.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_type.h"
-#include "fmgr.h"
 #include "nodes/makefuncs.h"
 #include "parser/parsetree.h"
 #include "parser/parse_coerce.h"
@@ -29,14 +24,11 @@
 #include "parser/parse_node.h"
 #include "parser/parse_oper.h"
 #include "parser/parse_relation.h"
-#include "parser/parse_target.h"
-#include "parser/parse_type.h"
 #include "utils/builtins.h"
-#include "utils/varbit.h"
+#include "utils/int8.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
-
-static bool fitsInFloat(Value *value);
+#include "utils/varbit.h"
 
 
 /* make_parsestate()
@@ -70,8 +62,8 @@ make_operand(Node *tree, Oid orig_typeId, Oid target_typeId)
 	{
 		/* must coerce? */
 		if (target_typeId != orig_typeId)
-			result = coerce_type(NULL, tree, orig_typeId, target_typeId, -1,
-								 false);
+			result = coerce_type(tree, orig_typeId, target_typeId,
+								 COERCION_IMPLICIT, COERCE_IMPLICIT_CAST);
 		else
 			result = tree;
 	}
@@ -191,6 +183,7 @@ make_var(ParseState *pstate, RangeTblEntry *rte, int attrno)
  * arrayBase	Already-transformed expression for the array as a whole
  *				(may be NULL if we are handling an INSERT)
  * arrayType	OID of array's datatype
+ * arrayTypMod	typmod to be applied to array elements
  * indirection	Untransformed list of subscripts (must not be NIL)
  * forceSlice	If true, treat subscript as array slice in all cases
  * assignFrom	NULL for array fetch, else transformed expression for source.
@@ -199,6 +192,7 @@ ArrayRef *
 transformArraySubscripts(ParseState *pstate,
 						 Node *arrayBase,
 						 Oid arrayType,
+						 int32 arrayTypMod,
 						 List *indirection,
 						 bool forceSlice,
 						 Node *assignFrom)
@@ -286,8 +280,10 @@ transformArraySubscripts(ParseState *pstate,
 			{
 				subexpr = transformExpr(pstate, ai->lidx);
 				/* If it's not int4 already, try to coerce */
-				subexpr = CoerceTargetExpr(pstate, subexpr, exprType(subexpr),
-										   INT4OID, -1, false);
+				subexpr = coerce_to_target_type(subexpr, exprType(subexpr),
+												INT4OID, -1,
+												COERCION_ASSIGNMENT,
+												COERCE_IMPLICIT_CAST);
 				if (subexpr == NULL)
 					elog(ERROR, "array index expressions must be integers");
 			}
@@ -306,8 +302,10 @@ transformArraySubscripts(ParseState *pstate,
 		}
 		subexpr = transformExpr(pstate, ai->uidx);
 		/* If it's not int4 already, try to coerce */
-		subexpr = CoerceTargetExpr(pstate, subexpr, exprType(subexpr),
-								   INT4OID, -1, false);
+		subexpr = coerce_to_target_type(subexpr, exprType(subexpr),
+										INT4OID, -1,
+										COERCION_ASSIGNMENT,
+										COERCE_IMPLICIT_CAST);
 		if (subexpr == NULL)
 			elog(ERROR, "array index expressions must be integers");
 		upperIndexpr = lappend(upperIndexpr, subexpr);
@@ -323,19 +321,16 @@ transformArraySubscripts(ParseState *pstate,
 
 		if (typesource != InvalidOid)
 		{
-			if (typesource != typeneeded)
-			{
-				/* XXX fixme: need to get the array's atttypmod? */
-				assignFrom = CoerceTargetExpr(pstate, assignFrom,
-											  typesource, typeneeded,
-											  -1, false);
-				if (assignFrom == NULL)
-					elog(ERROR, "Array assignment requires type '%s'"
-						 " but expression is of type '%s'"
-					"\n\tYou will need to rewrite or cast the expression",
-						 format_type_be(typeneeded),
-						 format_type_be(typesource));
-			}
+			assignFrom = coerce_to_target_type(assignFrom, typesource,
+											   typeneeded, arrayTypMod,
+											   COERCION_ASSIGNMENT,
+											   COERCE_IMPLICIT_CAST);
+			if (assignFrom == NULL)
+				elog(ERROR, "Array assignment requires type %s"
+					 " but expression is of type %s"
+					 "\n\tYou will need to rewrite or cast the expression",
+					 format_type_be(typeneeded),
+					 format_type_be(typesource));
 		}
 	}
 
@@ -344,7 +339,7 @@ transformArraySubscripts(ParseState *pstate,
 	 */
 	aref = makeNode(ArrayRef);
 	aref->refrestype = resultType;		/* XXX should save element type
-										 * too */
+										 * OID too */
 	aref->refattrlength = type_struct_array->typlen;
 	aref->refelemlength = type_struct_element->typlen;
 	aref->refelembyval = type_struct_element->typbyval;
@@ -373,21 +368,16 @@ transformArraySubscripts(ParseState *pstate,
  *	resolution that we're not sure that it should be considered text.
  *	Explicit "NULL" constants are also typed as UNKNOWN.
  *
- *	For integers and floats we produce int4, float8, or numeric depending
- *	on the value of the number.  XXX In some cases it would be nice to take
- *	context into account when determining the type to convert to, but in
- *	other cases we can't delay the type choice.  One possibility is to invent
- *	a dummy type "UNKNOWNNUMERIC" that's treated similarly to UNKNOWN;
- *	that would allow us to do the right thing in examples like a simple
- *	INSERT INTO table (numericcolumn) VALUES (1.234), since we wouldn't
- *	have to resolve the unknown type until we knew the destination column
- *	type.  On the other hand UNKNOWN has considerable problems of its own.
- *	We would not like "SELECT 1.2 + 3.4" to claim it can't choose a type.
+ *	For integers and floats we produce int4, int8, or numeric depending
+ *	on the value of the number.  XXX This should include int2 as well,
+ *	but additional cleanup is needed before we can do that; else cases
+ *	like "WHERE int4var = 42" will fail to be indexable.
  */
 Const *
 make_const(Value *value)
 {
 	Datum		val;
+	int64		val64;
 	Oid			typeid;
 	int			typelen;
 	bool		typebyval;
@@ -404,12 +394,13 @@ make_const(Value *value)
 			break;
 
 		case T_Float:
-			if (fitsInFloat(value))
+			/* could be an oversize integer as well as a float ... */
+			if (scanint8(strVal(value), true, &val64))
 			{
-				val = Float8GetDatum(floatVal(value));
+				val = Int64GetDatum(val64);
 
-				typeid = FLOAT8OID;
-				typelen = sizeof(float8);
+				typeid = INT8OID;
+				typelen = sizeof(int64);
 				typebyval = false;		/* XXX might change someday */
 			}
 			else
@@ -469,47 +460,4 @@ make_const(Value *value)
 					false);		/* not coerced */
 
 	return con;
-}
-
-/*
- * Decide whether a T_Float value fits in float8, or must be treated as
- * type "numeric".	We check the number of digits and check for overflow/
- * underflow.  (With standard compilation options, Postgres' NUMERIC type
- * can handle decimal exponents up to 1000, considerably more than most
- * implementations of float8, so this is a sensible test.)
- */
-static bool
-fitsInFloat(Value *value)
-{
-	const char *ptr;
-	int			ndigits;
-	char	   *endptr;
-
-	/*
-	 * Count digits, ignoring leading zeroes (but not trailing zeroes).
-	 * DBL_DIG is the maximum safe number of digits for "double".
-	 */
-	ptr = strVal(value);
-	while (*ptr == '+' || *ptr == '-' || *ptr == '0' || *ptr == '.')
-		ptr++;
-	ndigits = 0;
-	for (; *ptr; ptr++)
-	{
-		if (isdigit((unsigned char) *ptr))
-			ndigits++;
-		else if (*ptr == 'e' || *ptr == 'E')
-			break;				/* don't count digits in exponent */
-	}
-	if (ndigits > DBL_DIG)
-		return false;
-
-	/*
-	 * Use strtod() to check for overflow/underflow.
-	 */
-	errno = 0;
-	(void) strtod(strVal(value), &endptr);
-	if (*endptr != '\0' || errno != 0)
-		return false;
-
-	return true;
 }

@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: array.h,v 1.34 2002/09/04 20:31:45 momjian Exp $
+ * $Id: array.h,v 1.35 2002/09/18 21:35:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -82,6 +82,7 @@ typedef struct
  */
 extern Datum array_in(PG_FUNCTION_ARGS);
 extern Datum array_out(PG_FUNCTION_ARGS);
+extern Datum array_length_coerce(PG_FUNCTION_ARGS);
 extern Datum array_eq(PG_FUNCTION_ARGS);
 extern Datum array_dims(PG_FUNCTION_ARGS);
 

@@ -20,9 +20,9 @@ create domain domainnumeric numeric(8,2);
 create domain domainint4 int4;
 create domain domaintext text;
 
--- Test coercions
-SELECT cast('123456' as domainvarchar); -- fail
-SELECT cast('12345' as domainvarchar); -- pass
+-- Test explicit coercions --- these should succeed (and truncate)
+SELECT cast('123456' as domainvarchar);
+SELECT cast('12345' as domainvarchar);
 
 -- Test tables using domains
 create table basictest

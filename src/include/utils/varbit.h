@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: varbit.h,v 1.15 2002/08/04 06:33:56 thomas Exp $
+ * $Id: varbit.h,v 1.16 2002/09/18 21:35:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,9 +66,7 @@ extern Datum bit_out(PG_FUNCTION_ARGS);
 extern Datum varbit_in(PG_FUNCTION_ARGS);
 extern Datum varbit_out(PG_FUNCTION_ARGS);
 extern Datum bit(PG_FUNCTION_ARGS);
-extern Datum _bit(PG_FUNCTION_ARGS);
 extern Datum varbit(PG_FUNCTION_ARGS);
-extern Datum _varbit(PG_FUNCTION_ARGS);
 extern Datum biteq(PG_FUNCTION_ARGS);
 extern Datum bitne(PG_FUNCTION_ARGS);
 extern Datum bitlt(PG_FUNCTION_ARGS);

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_node.h,v 1.31 2002/06/20 20:29:51 momjian Exp $
+ * $Id: parse_node.h,v 1.32 2002/09/18 21:35:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,6 +57,7 @@ extern Var *make_var(ParseState *pstate, RangeTblEntry *rte, int attrno);
 extern ArrayRef *transformArraySubscripts(ParseState *pstate,
 						 Node *arrayBase,
 						 Oid arrayType,
+						 int32 arrayTypMod,
 						 List *indirection,
 						 bool forceSlice,
 						 Node *assignFrom);

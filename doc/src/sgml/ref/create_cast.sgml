@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/create_cast.sgml,v 1.4 2002/09/15 13:04:16 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/create_cast.sgml,v 1.5 2002/09/18 21:35:20 tgl Exp $ -->
 
 <refentry id="SQL-CREATECAST">
  <refmeta>
@@ -15,11 +15,11 @@
 <synopsis>
 CREATE CAST (<replaceable>sourcetype</replaceable> AS <replaceable>targettype</replaceable>)
     WITH FUNCTION <replaceable>funcname</replaceable> (<replaceable>argtype</replaceable>)
-    [AS ASSIGNMENT]
+    [ AS ASSIGNMENT | AS IMPLICIT ]
 
 CREATE CAST (<replaceable>sourcetype</replaceable> AS <replaceable>targettype</replaceable>)
     WITHOUT FUNCTION
-    [AS ASSIGNMENT]
+    [ AS ASSIGNMENT | AS IMPLICIT ]
 </synopsis>
  </refsynopsisdiv>
   
@@ -49,20 +49,44 @@ SELECT CAST(42 AS text);
   </para>
 
   <para>
-   A cast can be marked <literal>AS ASSIGNMENT</>, which means that it
-   can be invoked implicitly in any context where the conversion it
-   defines is required.  Cast functions not so marked can be invoked
-   only by explicit <literal>CAST</>,
+   By default, a cast can be invoked only by an explicit cast request,
+   that is an explicit <literal>CAST(<replaceable>x</> AS
+   <replaceable>typename</>)</literal>,
    <replaceable>x</><literal>::</><replaceable>typename</>, or
-   <replaceable>typename</>(<replaceable>x</>) constructs.  For
-   example, supposing that <literal>foo.f1</literal> is a column of
+   <replaceable>typename</>(<replaceable>x</>) construct.
+  </para>
+
+  <para>
+   If the cast is marked <literal>AS ASSIGNMENT</> then it can be invoked
+   implicitly when assigning to a column of the target data type.
+   For example, supposing that <literal>foo.f1</literal> is a column of
    type <type>text</type>, then
 <programlisting>
 INSERT INTO foo(f1) VALUES(42);
 </programlisting>
    will be allowed if the cast from type <type>integer</type> to type
    <type>text</type> is marked <literal>AS ASSIGNMENT</>, otherwise
-   not. (We generally use the term <firstterm>implicit
+   not.
+   (We generally use the term <firstterm>assignment
+   cast</firstterm> to describe this kind of cast.)
+  </para>
+
+  <para>
+   If the cast is marked <literal>AS IMPLICIT</> then it can be invoked
+   implicitly in any context, whether assignment or internally in an
+   expression.  For example, since <literal>||</> takes <type>text</>
+   arguments,
+<programlisting>
+SELECT 'The time is ' || now();
+</programlisting>
+   will be allowed only if the cast from type <type>timestamp</> to
+   <type>text</type> is marked <literal>AS IMPLICIT</>.  Otherwise it
+   will be necessary to write one of
+<programlisting>
+SELECT 'The time is ' || CAST(now() AS text);
+SELECT 'The time is ' || now()::text;
+</programlisting>
+   (We generally use the term <firstterm>implicit
    cast</firstterm> to describe this kind of cast.)
   </para>
 
@@ -74,10 +98,11 @@ INSERT INTO foo(f1) VALUES(42);
    all because there are multiple possible interpretations.  A good
    rule of thumb is to make a cast implicitly invokable only for
    information-preserving transformations between types in the same
-   general type category.  For example, <type>int2</type> to
-   <type>int4</type> casts can reasonably be implicit, but be wary of
-   marking <type>int4</type> to <type>text</type> or
-   <type>float8</type> to <type>int4</type> as implicit casts.
+   general type category.  For example, the cast from <type>int2</type> to
+   <type>int4</type> can reasonably be implicit, but the cast from
+   <type>float8</type> to <type>int4</type> should probably be
+   assignment-only.  Cross-type-category casts, such as <type>text</>
+   to <type>int4</>, are best made explicit-only.
   </para>
 
   <para>
@@ -138,7 +163,18 @@ INSERT INTO foo(f1) VALUES(42);
 
      <listitem>
       <para>
-       Indicates that the cast may be invoked implicitly.
+       Indicates that the cast may be invoked implicitly in assignment
+       contexts.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>AS IMPLICIT</literal></term>
+
+     <listitem>
+      <para>
+       Indicates that the cast may be invoked implicitly in any context.
       </para>
      </listitem>
     </varlistentry>
@@ -163,10 +199,10 @@ INSERT INTO foo(f1) VALUES(42);
    data type, returned that data type, and took one argument of a
    different type was automatically a cast function.  This convention has
    been abandoned in face of the introduction of schemas and to be
-   able to represent binary compatible casts in the catalogs.  The built-in
+   able to represent binary compatible casts in the catalogs.  (The built-in
    cast functions
-   still follow this naming scheme, but they have to be declared as
-   casts explicitly now.
+   still follow this naming scheme, but they have to be shown as
+   casts in <literal>pg_cast</> now.)
   </para>
  </refsect1>
 
@@ -191,7 +227,8 @@ CREATE CAST (text AS int4) WITH FUNCTION int4(text);
   <para>
    The <command>CREATE CAST</command> command conforms to SQL99,
    except that SQL99 does not make provisions for binary compatible
-   types.
+   types.  <literal>AS IMPLICIT</> is a <productname>PostgreSQL</productname>
+   extension, too.
   </para>
  </refsect1>
 

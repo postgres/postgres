@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/functioncmds.c,v 1.20 2002/09/15 13:04:16 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/functioncmds.c,v 1.21 2002/09/18 21:35:20 tgl Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -601,14 +601,11 @@ CreateCast(CreateCastStmt *stmt)
 	Oid			sourcetypeid;
 	Oid			targettypeid;
 	Oid			funcid;
-	HeapTuple	tuple;
+	char		castcontext;
 	Relation	relation;
-	Form_pg_proc procstruct;
-
-	Datum		values[Natts_pg_proc];
-	char		nulls[Natts_pg_proc];
-	int			i;
-
+	HeapTuple	tuple;
+	Datum		values[Natts_pg_cast];
+	char		nulls[Natts_pg_cast];
 	ObjectAddress myself,
 				referenced;
 
@@ -648,24 +645,17 @@ CreateCast(CreateCastStmt *stmt)
 			 TypeNameToString(stmt->sourcetype),
 			 TypeNameToString(stmt->targettype));
 
-	relation = heap_openr(CastRelationName, RowExclusiveLock);
-
-	tuple = SearchSysCache(CASTSOURCETARGET,
-						   ObjectIdGetDatum(sourcetypeid),
-						   ObjectIdGetDatum(targettypeid),
-						   0, 0);
-	if (HeapTupleIsValid(tuple))
-		elog(ERROR, "cast from data type %s to data type %s already exists",
-			 TypeNameToString(stmt->sourcetype),
-			 TypeNameToString(stmt->targettype));
-
 	if (stmt->func != NULL)
 	{
+		Form_pg_proc procstruct;
+
 		funcid = LookupFuncNameTypeNames(stmt->func->funcname,
 										 stmt->func->funcargs,
 										 "CreateCast");
 
-		tuple = SearchSysCache(PROCOID, ObjectIdGetDatum(funcid), 0, 0, 0);
+		tuple = SearchSysCache(PROCOID,
+							   ObjectIdGetDatum(funcid),
+							   0, 0, 0);
 		if (!HeapTupleIsValid(tuple))
 			elog(ERROR, "cache lookup of function %u failed", funcid);
 
@@ -687,18 +677,51 @@ CreateCast(CreateCastStmt *stmt)
 	}
 	else
 	{
-		/* indicates binary compatibility */
+		/* indicates binary coercibility */
 		funcid = InvalidOid;
 	}
+
+	/* convert CoercionContext enum to char value for castcontext */
+	switch (stmt->context)
+	{
+		case COERCION_IMPLICIT:
+			castcontext = COERCION_CODE_IMPLICIT;
+			break;
+		case COERCION_ASSIGNMENT:
+			castcontext = COERCION_CODE_ASSIGNMENT;
+			break;
+		case COERCION_EXPLICIT:
+			castcontext = COERCION_CODE_EXPLICIT;
+			break;
+		default:
+			elog(ERROR, "CreateCast: bogus CoercionContext %c", stmt->context);
+			castcontext = 0;	/* keep compiler quiet */
+			break;
+	}
+
+	relation = heap_openr(CastRelationName, RowExclusiveLock);
+
+	/*
+	 * Check for duplicate.  This is just to give a friendly error message,
+	 * the unique index would catch it anyway (so no need to sweat about
+	 * race conditions).
+	 */
+	tuple = SearchSysCache(CASTSOURCETARGET,
+						   ObjectIdGetDatum(sourcetypeid),
+						   ObjectIdGetDatum(targettypeid),
+						   0, 0);
+	if (HeapTupleIsValid(tuple))
+		elog(ERROR, "cast from data type %s to data type %s already exists",
+			 TypeNameToString(stmt->sourcetype),
+			 TypeNameToString(stmt->targettype));
 
 	/* ready to go */
 	values[Anum_pg_cast_castsource - 1] = ObjectIdGetDatum(sourcetypeid);
 	values[Anum_pg_cast_casttarget - 1] = ObjectIdGetDatum(targettypeid);
 	values[Anum_pg_cast_castfunc - 1] = ObjectIdGetDatum(funcid);
-	values[Anum_pg_cast_castimplicit - 1] = BoolGetDatum(stmt->implicit);
+	values[Anum_pg_cast_castcontext - 1] = CharGetDatum(castcontext);
 
-	for (i = 0; i < Natts_pg_cast; ++i)
-		nulls[i] = ' ';
+	MemSet(nulls, ' ', Natts_pg_cast);
 
 	tuple = heap_formtuple(RelationGetDescr(relation), values, nulls);
 
@@ -706,6 +729,7 @@ CreateCast(CreateCastStmt *stmt)
 
 	CatalogUpdateIndexes(relation, tuple);
 
+	/* make dependency entries */
 	myself.classId = RelationGetRelid(relation);
 	myself.objectId = HeapTupleGetOid(tuple);
 	myself.objectSubId = 0;
@@ -732,6 +756,7 @@ CreateCast(CreateCastStmt *stmt)
 	}
 
 	heap_freetuple(tuple);
+
 	heap_close(relation, RowExclusiveLock);
 }
 

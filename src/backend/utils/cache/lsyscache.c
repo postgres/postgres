@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.83 2002/09/04 20:31:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.84 2002/09/18 21:35:23 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -1071,51 +1071,6 @@ getBaseType(Oid typid)
 	}
 
 	return typid;
-}
-
-/*
- * getBaseTypeMod
- *		If the given type is a domain, return the typmod it applies to
- *		its base type; otherwise return the specified original typmod.
- */
-int32
-getBaseTypeMod(Oid typid, int32 typmod)
-{
-	/*
-	 * We loop to find the bottom base type in a stack of domains.
-	 */
-	for (;;)
-	{
-		HeapTuple	tup;
-		Form_pg_type typTup;
-
-		tup = SearchSysCache(TYPEOID,
-							 ObjectIdGetDatum(typid),
-							 0, 0, 0);
-		if (!HeapTupleIsValid(tup))
-			elog(ERROR, "getBaseTypeMod: failed to lookup type %u", typid);
-		typTup = (Form_pg_type) GETSTRUCT(tup);
-		if (typTup->typtype != 'd')
-		{
-			/* Not a domain, so done */
-			ReleaseSysCache(tup);
-			break;
-		}
-
-		/*
-		 * The typmod applied to a domain should always be -1.
-		 *
-		 * We substitute the domain's typmod as we switch attention to the
-		 * base type.
-		 */
-		Assert(typmod < 0);
-
-		typid = typTup->typbasetype;
-		typmod = typTup->typtypmod;
-		ReleaseSysCache(tup);
-	}
-
-	return typmod;
 }
 
 /*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.94 2002/09/04 20:31:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.95 2002/09/18 21:35:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -165,21 +165,28 @@ bpcharout(PG_FUNCTION_ARGS)
 
 
 /*
- * Converts a CHARACTER type to the specified size.  maxlen is the new
- * declared length plus VARHDRSZ bytes.  Truncation
- * rules see bpcharin() above.
+ * Converts a CHARACTER type to the specified size.
+ *
+ * maxlen is the typmod, ie, declared length plus VARHDRSZ bytes.
+ * isExplicit is true if this is for an explicit cast to char(N).
+ *
+ * Truncation rules: for an explicit cast, silently truncate to the given
+ * length; for an implicit cast, raise error unless extra characters are
+ * all spaces.  (This is sort-of per SQL: the spec would actually have us
+ * raise a "completion condition" for the explicit cast case, but Postgres
+ * hasn't got such a concept.)
  */
 Datum
 bpchar(PG_FUNCTION_ARGS)
 {
 	BpChar	   *source = PG_GETARG_BPCHAR_P(0);
 	int32		maxlen = PG_GETARG_INT32(1);
+	bool		isExplicit = PG_GETARG_BOOL(2);
 	BpChar	   *result;
 	int32		len;
 	char	   *r;
 	char	   *s;
 	int			i;
-
 	int			charlen;		/* number of charcters in the input string
 								 * + VARHDRSZ */
 
@@ -188,7 +195,7 @@ bpchar(PG_FUNCTION_ARGS)
 	charlen = pg_mbstrlen_with_len(VARDATA(source), len - VARHDRSZ) + VARHDRSZ;
 
 	/* No work if typmod is invalid or supplied data matches it already */
-	if (maxlen < (int32) VARHDRSZ || len == maxlen)
+	if (maxlen < (int32) VARHDRSZ || charlen == maxlen)
 		PG_RETURN_BPCHAR_P(source);
 
 	if (charlen > maxlen)
@@ -199,10 +206,13 @@ bpchar(PG_FUNCTION_ARGS)
 		maxmblen = pg_mbcharcliplen(VARDATA(source), len - VARHDRSZ,
 									maxlen - VARHDRSZ) + VARHDRSZ;
 
-		for (i = maxmblen - VARHDRSZ; i < len - VARHDRSZ; i++)
-			if (*(VARDATA(source) + i) != ' ')
-				elog(ERROR, "value too long for type character(%d)",
-					 maxlen - VARHDRSZ);
+		if (!isExplicit)
+		{
+			for (i = maxmblen - VARHDRSZ; i < len - VARHDRSZ; i++)
+				if (*(VARDATA(source) + i) != ' ')
+					elog(ERROR, "value too long for type character(%d)",
+						 maxlen - VARHDRSZ);
+		}
 
 		len = maxmblen;
 
@@ -235,37 +245,6 @@ bpchar(PG_FUNCTION_ARGS)
 		*r++ = ' ';
 
 	PG_RETURN_BPCHAR_P(result);
-}
-
-
-/* _bpchar()
- * Converts an array of char() elements to a specific internal length.
- * len is the length specified in () plus VARHDRSZ bytes.
- */
-Datum
-_bpchar(PG_FUNCTION_ARGS)
-{
-	ArrayType  *v = PG_GETARG_ARRAYTYPE_P(0);
-	int32		len = PG_GETARG_INT32(1);
-	FunctionCallInfoData locfcinfo;
-
-	/*
-	 * Since bpchar() is a built-in function, we should only need to look
-	 * it up once per run.
-	 */
-	static FmgrInfo bpchar_finfo;
-
-	if (bpchar_finfo.fn_oid == InvalidOid)
-		fmgr_info_cxt(F_BPCHAR, &bpchar_finfo, TopMemoryContext);
-
-	MemSet(&locfcinfo, 0, sizeof(locfcinfo));
-	locfcinfo.flinfo = &bpchar_finfo;
-	locfcinfo.nargs = 2;
-	/* We assume we are "strict" and need not worry about null inputs */
-	locfcinfo.arg[0] = PointerGetDatum(v);
-	locfcinfo.arg[1] = Int32GetDatum(len);
-
-	return array_map(&locfcinfo, BPCHAROID, BPCHAROID);
 }
 
 
@@ -354,9 +333,9 @@ name_bpchar(PG_FUNCTION_ARGS)
  * Note that atttypmod is regarded as the number of characters, which
  * is not necessarily the same as the number of bytes.
  *
- * If the C string is too long,
- * raise an error, unless the extra characters are spaces, in which
- * case they're truncated.  (per SQL) */
+ * If the C string is too long, raise an error, unless the extra characters
+ * are spaces, in which case they're truncated.  (per SQL)
+ */
 Datum
 varcharin(PG_FUNCTION_ARGS)
 {
@@ -428,17 +407,26 @@ varcharout(PG_FUNCTION_ARGS)
 
 
 /*
- * Converts a VARCHAR type to the specified size.  maxlen is the new
- * declared length plus VARHDRSZ bytes.  Truncation
- * rules see varcharin() above.
+ * Converts a VARCHAR type to the specified size.
+ *
+ * maxlen is the typmod, ie, declared length plus VARHDRSZ bytes.
+ * isExplicit is true if this is for an explicit cast to varchar(N).
+ *
+ * Truncation rules: for an explicit cast, silently truncate to the given
+ * length; for an implicit cast, raise error unless extra characters are
+ * all spaces.  (This is sort-of per SQL: the spec would actually have us
+ * raise a "completion condition" for the explicit cast case, but Postgres
+ * hasn't got such a concept.)
  */
 Datum
 varchar(PG_FUNCTION_ARGS)
 {
 	VarChar    *source = PG_GETARG_VARCHAR_P(0);
 	int32		maxlen = PG_GETARG_INT32(1);
+	bool		isExplicit = PG_GETARG_BOOL(2);
 	VarChar    *result;
 	int32		len;
+	size_t		maxmblen;
 	int			i;
 
 	len = VARSIZE(source);
@@ -448,59 +436,25 @@ varchar(PG_FUNCTION_ARGS)
 
 	/* only reach here if string is too long... */
 
+	/* truncate multibyte string preserving multibyte boundary */
+	maxmblen = pg_mbcharcliplen(VARDATA(source), len - VARHDRSZ,
+								maxlen - VARHDRSZ);
+
+	if (!isExplicit)
 	{
-		size_t		maxmblen;
-
-		/* truncate multibyte string preserving multibyte boundary */
-		maxmblen = pg_mbcharcliplen(VARDATA(source), len - VARHDRSZ,
-									maxlen - VARHDRSZ) + VARHDRSZ;
-
-		for (i = maxmblen - VARHDRSZ; i < len - VARHDRSZ; i++)
+		for (i = maxmblen; i < len - VARHDRSZ; i++)
 			if (*(VARDATA(source) + i) != ' ')
 				elog(ERROR, "value too long for type character varying(%d)",
 					 maxlen - VARHDRSZ);
-
-		len = maxmblen;
 	}
 
+	len = maxmblen + VARHDRSZ;
 	result = palloc(len);
 	VARATT_SIZEP(result) = len;
 	memcpy(VARDATA(result), VARDATA(source), len - VARHDRSZ);
 
 	PG_RETURN_VARCHAR_P(result);
 }
-
-
-/* _varchar()
- * Converts an array of varchar() elements to the specified size.
- * len is the length specified in () plus VARHDRSZ bytes.
- */
-Datum
-_varchar(PG_FUNCTION_ARGS)
-{
-	ArrayType  *v = PG_GETARG_ARRAYTYPE_P(0);
-	int32		len = PG_GETARG_INT32(1);
-	FunctionCallInfoData locfcinfo;
-
-	/*
-	 * Since varchar() is a built-in function, we should only need to look
-	 * it up once per run.
-	 */
-	static FmgrInfo varchar_finfo;
-
-	if (varchar_finfo.fn_oid == InvalidOid)
-		fmgr_info_cxt(F_VARCHAR, &varchar_finfo, TopMemoryContext);
-
-	MemSet(&locfcinfo, 0, sizeof(locfcinfo));
-	locfcinfo.flinfo = &varchar_finfo;
-	locfcinfo.nargs = 2;
-	/* We assume we are "strict" and need not worry about null inputs */
-	locfcinfo.arg[0] = PointerGetDatum(v);
-	locfcinfo.arg[1] = Int32GetDatum(len);
-
-	return array_map(&locfcinfo, VARCHAROID, VARCHAROID);
-}
-
 
 
 /*****************************************************************************

@@ -162,28 +162,32 @@ WHERE p1.prorettype = 'internal'::regtype AND NOT
 -- **************** pg_cast ****************
 
 -- Look for casts from and to the same type.  This is not harmful, but
--- useless.
+-- useless.  Also catch bogus values in pg_cast columns (other than
+-- cases detected by oidjoins test).
 
 SELECT *
 FROM pg_cast c
-WHERE c.castsource = c.casttarget;
+WHERE castsource = casttarget OR castsource = 0 OR casttarget = 0
+    OR castcontext NOT IN ('e', 'a', 'i');
 
--- Look for cast functions with incorrect number or type of argument
--- or return value.
+-- Look for cast functions that don't have the right signature.  The
+-- argument and result types in pg_proc must be the same as, or binary
+-- compatible with, what it says in pg_cast.
 
 SELECT c.*
 FROM pg_cast c, pg_proc p
 WHERE c.castfunc = p.oid AND
-    (p.pronargs <> 1 OR
-     p.proargtypes[0] <> c.castsource OR
-     p.prorettype <> c.casttarget);
-
--- Look for binary compatible casts that are not implicit.  This is
--- legal, but probably not intended.
-
-SELECT *
-FROM pg_cast c
-WHERE c.castfunc = 0 AND NOT c.castimplicit;
+    (p.pronargs <> 1
+     OR NOT (c.castsource = p.proargtypes[0] OR
+             EXISTS (SELECT 1 FROM pg_cast k
+                     WHERE k.castfunc = 0 AND
+                       k.castsource = c.castsource AND
+                       k.casttarget = p.proargtypes[0]))
+     OR NOT (p.prorettype = c.casttarget OR
+             EXISTS (SELECT 1 FROM pg_cast k
+                     WHERE k.castfunc = 0 AND
+                       k.castsource = p.prorettype AND
+                       k.casttarget = c.casttarget)));
 
 -- Look for binary compatible casts that do not have the reverse
 -- direction registered as well, or where the reverse direction is not
@@ -341,9 +345,9 @@ WHERE p1.oprlsortop != p1.oprrsortop AND
 -- Hashing only works on simple equality operators "type = sametype",
 -- since the hash itself depends on the bitwise representation of the type.
 -- Check that allegedly hashable operators look like they might be "=".
--- NOTE: in 7.2, this search finds int4eqoid, oideqint4, and xideqint4.
+-- NOTE: in 7.3, this search finds xideqint4.
 -- Until we have some cleaner way of dealing with binary-equivalent types,
--- just leave those three tuples in the expected output.
+-- just leave that tuple in the expected output.
 
 SELECT p1.oid, p1.oprname
 FROM pg_operator AS p1

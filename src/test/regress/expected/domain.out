@@ -13,10 +13,14 @@ create domain domainvarchar varchar(5);
 create domain domainnumeric numeric(8,2);
 create domain domainint4 int4;
 create domain domaintext text;
--- Test coercions
-SELECT cast('123456' as domainvarchar); -- fail
-ERROR:  value too long for type character varying(5)
-SELECT cast('12345' as domainvarchar); -- pass
+-- Test explicit coercions --- these should succeed (and truncate)
+SELECT cast('123456' as domainvarchar);
+ domainvarchar 
+---------------
+ 12345
+(1 row)
+
+SELECT cast('12345' as domainvarchar);
  domainvarchar 
 ---------------
  12345

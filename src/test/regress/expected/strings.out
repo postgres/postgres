@@ -47,8 +47,15 @@ SELECT CAST(name 'namefield' AS text) AS "text(name)";
  namefield
 (1 row)
 
-SELECT CAST(f1 AS char(10)) AS "char(text)" FROM TEXT_TBL; -- fail
-ERROR:  value too long for type character(10)
+-- since this is an explicit cast, it should truncate w/o error:
+SELECT CAST(f1 AS char(10)) AS "char(text)" FROM TEXT_TBL;
+ char(text) 
+------------
+ doh!      
+ hi de ho n
+(2 rows)
+
+-- note: implicit-cast case is tested in char.sql
 SELECT CAST(f1 AS char(20)) AS "char(text)" FROM TEXT_TBL;
       char(text)      
 ----------------------

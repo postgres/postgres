@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_operator.h,v 1.109 2002/09/04 20:31:37 momjian Exp $
+ * $Id: pg_operator.h,v 1.110 2002/09/18 21:35:23 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -526,10 +526,6 @@ DATA(insert OID = 1133 (  ">"		PGNSP PGUID b f  701	700  16 1122 1134  0 0 0 0 f
 DATA(insert OID = 1134 (  "<="		PGNSP PGUID b f  701	700  16 1125 1133  0 0 0 0 float84le scalarltsel scalarltjoinsel ));
 DATA(insert OID = 1135 (  ">="		PGNSP PGUID b f  701	700  16 1124 1132  0 0 0 0 float84ge scalargtsel scalargtjoinsel ));
 
-/* int4 vs oid equality --- use oid (unsigned) comparison */
-DATA(insert OID = 1136 (  "="		PGNSP PGUID b t 23	 26   16 1137 1656 0 0 0 0 oideq eqsel eqjoinsel ));
-DATA(insert OID = 1137 (  "="		PGNSP PGUID b t 26	 23   16 1136 1661 0 0 0 0 oideq eqsel eqjoinsel ));
-
 DATA(insert OID = 1158 (  "!"		PGNSP PGUID r f 21	  0   23 0 0 0 0 0 0 int2fac - - ));
 DATA(insert OID = 1175 (  "!!"		PGNSP PGUID l f  0	 21   23 0 0 0 0 0 0 int2fac - - ));
 
@@ -723,17 +719,13 @@ DATA(insert OID = 1631 (  "~~*"   PGNSP PGUID b f  1043 25	16 0 1632 0 0 0 0 tex
 #define OID_VARCHAR_ICLIKE_OP	1631
 DATA(insert OID = 1632 (  "!~~*"  PGNSP PGUID b f  1043 25	16 0 1631 0 0 0 0 texticnlike icnlikesel icnlikejoinsel ));
 
-/* int4 vs oid comparisons --- use oid (unsigned) comparison */
-DATA(insert OID = 1656 (  "<>"	   PGNSP PGUID b f	23	26	16 1661 1136	0  0   0   0 oidne neqsel neqjoinsel ));
-DATA(insert OID = 1657 (  "<"	   PGNSP PGUID b f	23	26	16 1663 1660	0  0   0   0 oidlt scalarltsel scalarltjoinsel ));
-DATA(insert OID = 1658 (  ">"	   PGNSP PGUID b f	23	26	16 1662 1659	0  0   0   0 oidgt scalargtsel scalargtjoinsel ));
-DATA(insert OID = 1659 (  "<="	   PGNSP PGUID b f	23	26	16 1665 1658	0  0   0   0 oidle scalarltsel scalarltjoinsel ));
-DATA(insert OID = 1660 (  ">="	   PGNSP PGUID b f	23	26	16 1664 1657	0  0   0   0 oidge scalargtsel scalargtjoinsel ));
-DATA(insert OID = 1661 (  "<>"	   PGNSP PGUID b f	26	23	16 1656 1137	0  0   0   0 oidne neqsel neqjoinsel ));
-DATA(insert OID = 1662 (  "<"	   PGNSP PGUID b f	26	23	16 1658 1665	0  0   0   0 oidlt scalarltsel scalarltjoinsel ));
-DATA(insert OID = 1663 (  ">"	   PGNSP PGUID b f	26	23	16 1657 1664	0  0   0   0 oidgt scalargtsel scalargtjoinsel ));
-DATA(insert OID = 1664 (  "<="	   PGNSP PGUID b f	26	23	16 1660 1663	0  0   0   0 oidle scalarltsel scalarltjoinsel ));
-DATA(insert OID = 1665 (  ">="	   PGNSP PGUID b f	26	23	16 1659 1662	0  0   0   0 oidge scalargtsel scalargtjoinsel ));
+/* regproc comparisons --- use oid (unsigned) comparison */
+DATA(insert OID = 1656 (  "="	   PGNSP PGUID b t	24	24	16 1656 1657 1658 1658 1658 1659 oideq eqsel eqjoinsel ));
+DATA(insert OID = 1657 (  "<>"	   PGNSP PGUID b f	24	24	16 1657 1656 0 0 0 0 oidne neqsel neqjoinsel ));
+DATA(insert OID = 1658 (  "<"	   PGNSP PGUID b f	24	24	16 1659 1661 0 0 0 0 oidlt scalarltsel scalarltjoinsel ));
+DATA(insert OID = 1659 (  ">"	   PGNSP PGUID b f	24	24	16 1658 1660 0 0 0 0 oidgt scalargtsel scalargtjoinsel ));
+DATA(insert OID = 1660 (  "<="	   PGNSP PGUID b f	24	24	16 1661 1659 0 0 0 0 oidle scalarltsel scalarltjoinsel ));
+DATA(insert OID = 1661 (  ">="	   PGNSP PGUID b f	24	24	16 1660 1658 0 0 0 0 oidge scalargtsel scalargtjoinsel ));
 
 /* NUMERIC type - OID's 1700-1799 */
 DATA(insert OID = 1751 (  "-"	   PGNSP PGUID l f	0 1700 1700    0	0 0 0 0 0 numeric_uminus - - ));

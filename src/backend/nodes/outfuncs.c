@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.173 2002/09/04 20:31:19 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.174 2002/09/18 21:35:21 tgl Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -860,10 +860,11 @@ static void
 _outFunc(StringInfo str, Func *node)
 {
 	appendStringInfo(str,
-				   " FUNC :funcid %u :funcresulttype %u :funcretset %s ",
+		" FUNC :funcid %u :funcresulttype %u :funcretset %s :funcformat %d ",
 					 node->funcid,
 					 node->funcresulttype,
-					 booltostr(node->funcretset));
+					 booltostr(node->funcretset),
+					 (int) node->funcformat);
 }
 
 /*
@@ -914,9 +915,11 @@ _outRelabelType(StringInfo str, RelabelType *node)
 {
 	appendStringInfo(str, " RELABELTYPE :arg ");
 	_outNode(str, node->arg);
-
-	appendStringInfo(str, " :resulttype %u :resulttypmod %d ",
-					 node->resulttype, node->resulttypmod);
+	appendStringInfo(str,
+					 " :resulttype %u :resulttypmod %d :relabelformat %d ",
+					 node->resulttype,
+					 node->resulttypmod,
+					 (int) node->relabelformat);
 }
 
 /*

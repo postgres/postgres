@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.366 2002/09/05 22:52:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.367 2002/09/18 21:35:21 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -161,8 +161,8 @@ static void doNegateFloat(Value *v);
 %type <list>	createdb_opt_list, copy_opt_list
 %type <defelt>	createdb_opt_item, copy_opt_item
 
-%type <ival>	opt_lock, lock_type
-%type <boolean>	opt_force, opt_or_replace, opt_assignment
+%type <ival>	opt_lock, lock_type, cast_context
+%type <boolean>	opt_force, opt_or_replace
 
 %type <list>	user_list
 
@@ -349,7 +349,7 @@ static void doNegateFloat(Value *v);
 
 	HANDLER, HAVING, HOUR_P,
 
-	ILIKE, IMMEDIATE, IMMUTABLE, IN_P, INCREMENT,
+	ILIKE, IMMEDIATE, IMMUTABLE, IMPLICIT_P, IN_P, INCREMENT,
 	INDEX, INHERITS, INITIALLY, INNER_P, INOUT, INPUT,
 	INSENSITIVE, INSERT, INSTEAD, INT, INTEGER, INTERSECT,
 	INTERVAL, INTO, INVOKER, IS, ISNULL, ISOLATION,
@@ -3230,29 +3230,30 @@ any_operator:
  *****************************************************************************/
 
 CreateCastStmt: CREATE CAST '(' ConstTypename AS ConstTypename ')'
-					WITH FUNCTION function_with_argtypes opt_assignment
+					WITH FUNCTION function_with_argtypes cast_context
 				{
 					CreateCastStmt *n = makeNode(CreateCastStmt);
 					n->sourcetype = $4;
 					n->targettype = $6;
 					n->func = (FuncWithArgs *) $10;
-					n->implicit = $11;
+					n->context = (CoercionContext) $11;
 					$$ = (Node *)n;
 				}
 			| CREATE CAST '(' ConstTypename AS ConstTypename ')'
-					WITHOUT FUNCTION opt_assignment
+					WITHOUT FUNCTION cast_context
 				{
 					CreateCastStmt *n = makeNode(CreateCastStmt);
 					n->sourcetype = $4;
 					n->targettype = $6;
 					n->func = NULL;
-					n->implicit = $10;
+					n->context = (CoercionContext) $10;
 					$$ = (Node *)n;
 				}
 		;
 
-opt_assignment:  AS ASSIGNMENT					{ $$ = TRUE; }
-		| /*EMPTY*/								{ $$ = FALSE; }
+cast_context:  AS IMPLICIT_P					{ $$ = COERCION_IMPLICIT; }
+		| AS ASSIGNMENT							{ $$ = COERCION_ASSIGNMENT; }
+		| /*EMPTY*/								{ $$ = COERCION_EXPLICIT; }
 		;
 
 
@@ -7061,6 +7062,7 @@ unreserved_keyword:
 			| HOUR_P
 			| IMMEDIATE
 			| IMMUTABLE
+			| IMPLICIT_P
 			| INCREMENT
 			| INDEX
 			| INHERITS

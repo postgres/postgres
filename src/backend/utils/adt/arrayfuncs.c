@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.80 2002/09/04 20:31:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.81 2002/09/18 21:35:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,7 @@
 #include "access/tupmacs.h"
 #include "catalog/catalog.h"
 #include "catalog/pg_type.h"
+#include "parser/parse_coerce.h"
 #include "utils/array.h"
 #include "utils/memutils.h"
 #include "utils/syscache.h"
@@ -753,6 +754,72 @@ array_out(PG_FUNCTION_ARGS)
 	pfree(needquotes);
 
 	PG_RETURN_CSTRING(retval);
+}
+
+/*-------------------------------------------------------------------------
+ * array_length_coerce :
+ *		  Apply the element type's length-coercion routine to each element
+ *		  of the given array.
+ *-------------------------------------------------------------------------
+ */
+Datum
+array_length_coerce(PG_FUNCTION_ARGS)
+{
+	ArrayType  *v = PG_GETARG_ARRAYTYPE_P(0);
+	int32		len = PG_GETARG_INT32(1);
+	bool		isExplicit = PG_GETARG_BOOL(2);
+	FmgrInfo   *fmgr_info = fcinfo->flinfo;
+	FmgrInfo   *element_finfo;
+	FunctionCallInfoData locfcinfo;
+
+	/* If no typmod is provided, shortcircuit the whole thing */
+	if (len < 0)
+		PG_RETURN_ARRAYTYPE_P(v);
+
+	/*
+	 * We arrange to look up the element type's coercion function only
+	 * once per series of calls.
+	 */
+	if (fmgr_info->fn_extra == NULL)
+	{
+		Oid			funcId;
+		int			nargs;
+
+		fmgr_info->fn_extra = MemoryContextAlloc(fmgr_info->fn_mcxt,
+												 sizeof(FmgrInfo));
+		element_finfo = (FmgrInfo *) fmgr_info->fn_extra;
+
+		funcId = find_typmod_coercion_function(ARR_ELEMTYPE(v), &nargs);
+
+		if (OidIsValid(funcId))
+			fmgr_info_cxt(funcId, element_finfo, fmgr_info->fn_mcxt);
+		else
+			element_finfo->fn_oid = InvalidOid;
+	}
+	else
+		element_finfo = (FmgrInfo *) fmgr_info->fn_extra;
+
+	/*
+	 * If we didn't find a coercion function, return the array unmodified
+	 * (this should not happen in the normal course of things, but might
+	 * happen if this function is called manually).
+	 */
+	if (element_finfo->fn_oid == InvalidOid)
+		PG_RETURN_ARRAYTYPE_P(v);
+
+	/*
+	 * Use array_map to apply the function to each array element.
+	 *
+	 * Note: we pass isExplicit whether or not the function wants it ...
+	 */
+	MemSet(&locfcinfo, 0, sizeof(locfcinfo));
+	locfcinfo.flinfo = element_finfo;
+	locfcinfo.nargs = 3;
+	locfcinfo.arg[0] = PointerGetDatum(v);
+	locfcinfo.arg[1] = Int32GetDatum(len);
+	locfcinfo.arg[2] = BoolGetDatum(isExplicit);
+
+	return array_map(&locfcinfo, ARR_ELEMTYPE(v), ARR_ELEMTYPE(v));
 }
 
 /*-----------------------------------------------------------------------------

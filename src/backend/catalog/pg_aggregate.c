@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.55 2002/09/04 20:31:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.56 2002/09/18 21:35:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -95,7 +95,7 @@ AggregateCreate(const char *aggName,
 	 */
 	if (proc->proisstrict && agginitval == NULL)
 	{
-		if (!IsBinaryCompatible(aggBaseType, aggTransType))
+		if (!IsBinaryCoercible(aggBaseType, aggTransType))
 			elog(ERROR, "must not omit initval when transfn is strict and transtype is not compatible with input type");
 	}
 	ReleaseSysCache(tup);

@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.75 2002/09/04 20:31:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.76 2002/09/18 21:35:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,7 +49,7 @@ static void parseNameAndArgTypes(const char *string, const char *caller,
 /*
  * regprocin		- converts "proname" to proc OID
  *
- * We also accept a numeric OID, mostly for historical reasons.
+ * We also accept a numeric OID, for symmetry with the output routine.
  *
  * '-' signifies unknown (OID 0).  In all other cases, the input must
  * match an existing pg_proc entry.
@@ -71,15 +71,8 @@ regprocin(PG_FUNCTION_ARGS)
 		pro_name_or_oid[0] <= '9' &&
 		strspn(pro_name_or_oid, "0123456789") == strlen(pro_name_or_oid))
 	{
-		Oid			searchOid;
-
-		searchOid = DatumGetObjectId(DirectFunctionCall1(oidin,
+		result = DatumGetObjectId(DirectFunctionCall1(oidin,
 									  CStringGetDatum(pro_name_or_oid)));
-		result = (RegProcedure) GetSysCacheOid(PROCOID,
-											 ObjectIdGetDatum(searchOid),
-											   0, 0, 0);
-		if (!RegProcedureIsValid(result))
-			elog(ERROR, "No procedure with oid %s", pro_name_or_oid);
 		PG_RETURN_OID(result);
 	}
 
@@ -211,7 +204,7 @@ regprocout(PG_FUNCTION_ARGS)
 /*
  * regprocedurein		- converts "proname(args)" to proc OID
  *
- * We also accept a numeric OID, mostly for historical reasons.
+ * We also accept a numeric OID, for symmetry with the output routine.
  *
  * '-' signifies unknown (OID 0).  In all other cases, the input must
  * match an existing pg_proc entry.
@@ -235,15 +228,8 @@ regprocedurein(PG_FUNCTION_ARGS)
 		pro_name_or_oid[0] <= '9' &&
 		strspn(pro_name_or_oid, "0123456789") == strlen(pro_name_or_oid))
 	{
-		Oid			searchOid;
-
-		searchOid = DatumGetObjectId(DirectFunctionCall1(oidin,
+		result = DatumGetObjectId(DirectFunctionCall1(oidin,
 									  CStringGetDatum(pro_name_or_oid)));
-		result = (RegProcedure) GetSysCacheOid(PROCOID,
-											 ObjectIdGetDatum(searchOid),
-											   0, 0, 0);
-		if (!RegProcedureIsValid(result))
-			elog(ERROR, "No procedure with oid %s", pro_name_or_oid);
 		PG_RETURN_OID(result);
 	}
 
@@ -361,7 +347,7 @@ regprocedureout(PG_FUNCTION_ARGS)
 /*
  * regoperin		- converts "oprname" to operator OID
  *
- * We also accept a numeric OID, mostly for historical reasons.
+ * We also accept a numeric OID, for symmetry with the output routine.
  *
  * '0' signifies unknown (OID 0).  In all other cases, the input must
  * match an existing pg_operator entry.
@@ -383,15 +369,8 @@ regoperin(PG_FUNCTION_ARGS)
 		opr_name_or_oid[0] <= '9' &&
 		strspn(opr_name_or_oid, "0123456789") == strlen(opr_name_or_oid))
 	{
-		Oid			searchOid;
-
-		searchOid = DatumGetObjectId(DirectFunctionCall1(oidin,
+		result = DatumGetObjectId(DirectFunctionCall1(oidin,
 									  CStringGetDatum(opr_name_or_oid)));
-		result = GetSysCacheOid(OPEROID,
-								ObjectIdGetDatum(searchOid),
-								0, 0, 0);
-		if (!OidIsValid(result))
-			elog(ERROR, "No operator with oid %s", opr_name_or_oid);
 		PG_RETURN_OID(result);
 	}
 
@@ -531,7 +510,7 @@ regoperout(PG_FUNCTION_ARGS)
 /*
  * regoperatorin		- converts "oprname(args)" to operator OID
  *
- * We also accept a numeric OID, mostly for historical reasons.
+ * We also accept a numeric OID, for symmetry with the output routine.
  *
  * '0' signifies unknown (OID 0).  In all other cases, the input must
  * match an existing pg_operator entry.
@@ -556,15 +535,8 @@ regoperatorin(PG_FUNCTION_ARGS)
 		opr_name_or_oid[0] <= '9' &&
 		strspn(opr_name_or_oid, "0123456789") == strlen(opr_name_or_oid))
 	{
-		Oid			searchOid;
-
-		searchOid = DatumGetObjectId(DirectFunctionCall1(oidin,
+		result = DatumGetObjectId(DirectFunctionCall1(oidin,
 									  CStringGetDatum(opr_name_or_oid)));
-		result = GetSysCacheOid(OPEROID,
-								ObjectIdGetDatum(searchOid),
-								0, 0, 0);
-		if (!OidIsValid(result))
-			elog(ERROR, "No operator with oid %s", opr_name_or_oid);
 		PG_RETURN_OID(result);
 	}
 
@@ -698,7 +670,7 @@ regoperatorout(PG_FUNCTION_ARGS)
 /*
  * regclassin		- converts "classname" to class OID
  *
- * We also accept a numeric OID, mostly for historical reasons.
+ * We also accept a numeric OID, for symmetry with the output routine.
  *
  * '-' signifies unknown (OID 0).  In all other cases, the input must
  * match an existing pg_class entry.
@@ -719,15 +691,8 @@ regclassin(PG_FUNCTION_ARGS)
 		class_name_or_oid[0] <= '9' &&
 	strspn(class_name_or_oid, "0123456789") == strlen(class_name_or_oid))
 	{
-		Oid			searchOid;
-
-		searchOid = DatumGetObjectId(DirectFunctionCall1(oidin,
+		result = DatumGetObjectId(DirectFunctionCall1(oidin,
 									CStringGetDatum(class_name_or_oid)));
-		result = GetSysCacheOid(RELOID,
-								ObjectIdGetDatum(searchOid),
-								0, 0, 0);
-		if (!OidIsValid(result))
-			elog(ERROR, "No class with oid %s", class_name_or_oid);
 		PG_RETURN_OID(result);
 	}
 
@@ -843,7 +808,7 @@ regclassout(PG_FUNCTION_ARGS)
 /*
  * regtypein		- converts "typename" to type OID
  *
- * We also accept a numeric OID, mostly for historical reasons.
+ * We also accept a numeric OID, for symmetry with the output routine.
  *
  * '-' signifies unknown (OID 0).  In all other cases, the input must
  * match an existing pg_type entry.
@@ -870,15 +835,8 @@ regtypein(PG_FUNCTION_ARGS)
 		typ_name_or_oid[0] <= '9' &&
 		strspn(typ_name_or_oid, "0123456789") == strlen(typ_name_or_oid))
 	{
-		Oid			searchOid;
-
-		searchOid = DatumGetObjectId(DirectFunctionCall1(oidin,
+		result = DatumGetObjectId(DirectFunctionCall1(oidin,
 									  CStringGetDatum(typ_name_or_oid)));
-		result = GetSysCacheOid(TYPEOID,
-								ObjectIdGetDatum(searchOid),
-								0, 0, 0);
-		if (!OidIsValid(result))
-			elog(ERROR, "No type with oid %s", typ_name_or_oid);
 		PG_RETURN_OID(result);
 	}
 

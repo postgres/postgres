@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
  * parse_target.h
- *
+ *	  handle target lists
  *
  *
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_target.h,v 1.26 2002/09/04 20:31:45 momjian Exp $
+ * $Id: parse_target.h,v 1.27 2002/09/18 21:35:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,7 @@
 
 #include "parser/parse_node.h"
 
+
 extern List *transformTargetList(ParseState *pstate, List *targetlist);
 extern TargetEntry *transformTargetEntry(ParseState *pstate,
 					 Node *node, Node *expr,
@@ -23,9 +24,6 @@ extern TargetEntry *transformTargetEntry(ParseState *pstate,
 extern void updateTargetListEntry(ParseState *pstate, TargetEntry *tle,
 					  char *colname, int attrno,
 					  List *indirection);
-extern Node *CoerceTargetExpr(ParseState *pstate, Node *expr,
-				 Oid type_id, Oid attrtype, int32 attrtypmod,
-				 bool isExplicit);
 extern List *checkInsertTargets(ParseState *pstate, List *cols,
 				   List **attrnos);
 

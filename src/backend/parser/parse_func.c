@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.136 2002/09/04 20:31:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.137 2002/09/18 21:35:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,15 +32,12 @@
 #include "utils/syscache.h"
 
 
-static Node *ParseComplexProjection(ParseState *pstate,
-					   char *funcname,
-					   Node *first_arg);
+static Node *ParseComplexProjection(char *funcname, Node *first_arg);
 static Oid **argtype_inherit(int nargs, Oid *argtypes);
 
 static int	find_inheritors(Oid relid, Oid **supervec);
 static Oid **gen_cross_product(InhPaths *arginh, int nargs);
-static void make_arguments(ParseState *pstate,
-			   int nargs,
+static void make_arguments(int nargs,
 			   List *fargs,
 			   Oid *input_typeids,
 			   Oid *function_typeids);
@@ -137,7 +134,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 			 * ParseComplexProjection can't handle the projection, we have
 			 * to keep going.
 			 */
-			retval = ParseComplexProjection(pstate, cname, first_arg);
+			retval = ParseComplexProjection(cname, first_arg);
 			if (retval)
 				return retval;
 		}
@@ -243,8 +240,8 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		 * We can do it as a trivial coercion. coerce_type can handle
 		 * these cases, so why duplicate code...
 		 */
-		return coerce_type(pstate, lfirst(fargs),
-						   oid_array[0], rettype, -1, true);
+		return coerce_type(lfirst(fargs), oid_array[0], rettype,
+						   COERCION_EXPLICIT, COERCE_EXPLICIT_CALL);
 	}
 	else if (fdresult == FUNCDETAIL_NORMAL)
 	{
@@ -296,7 +293,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	}
 
 	/* perform the necessary typecasting of arguments */
-	make_arguments(pstate, nargs, fargs, oid_array, true_oid_array);
+	make_arguments(nargs, fargs, oid_array, true_oid_array);
 
 	/* build the appropriate output structure */
 	if (fdresult == FUNCDETAIL_NORMAL)
@@ -307,6 +304,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		funcnode->funcid = funcid;
 		funcnode->funcresulttype = rettype;
 		funcnode->funcretset = retset;
+		funcnode->funcformat = COERCE_EXPLICIT_CALL;
 		funcnode->func_fcache = NULL;
 
 		expr->typeOid = rettype;
@@ -367,7 +365,7 @@ match_argtypes(int nargs,
 	{
 		next_candidate = current_candidate->next;
 		if (can_coerce_type(nargs, input_typeids, current_candidate->args,
-							false))
+							COERCION_IMPLICIT))
 		{
 			current_candidate->next = *candidates;
 			*candidates = current_candidate;
@@ -470,7 +468,7 @@ func_select_candidate(int nargs,
 		{
 			if (input_typeids[i] != UNKNOWNOID)
 			{
-				if (IsBinaryCompatible(current_typeids[i], input_typeids[i]))
+				if (IsBinaryCoercible(input_typeids[i], current_typeids[i]))
 					nmatch++;
 			}
 		}
@@ -776,7 +774,7 @@ func_get_detail(List *funcname,
 				Node	   *arg1 = lfirst(fargs);
 
 				if ((sourceType == UNKNOWNOID && IsA(arg1, Const)) ||
-					IsBinaryCompatible(sourceType, targetType))
+					IsBinaryCoercible(sourceType, targetType))
 				{
 					/* Yup, it's a type coercion */
 					*funcid = InvalidOid;
@@ -1120,8 +1118,7 @@ typeInheritsFrom(Oid subclassTypeId, Oid superclassTypeId)
  *	actual arguments and argument types, do the necessary typecasting.
  */
 static void
-make_arguments(ParseState *pstate,
-			   int nargs,
+make_arguments(int nargs,
 			   List *fargs,
 			   Oid *input_typeids,
 			   Oid *function_typeids)
@@ -1136,11 +1133,11 @@ make_arguments(ParseState *pstate,
 		/* types don't match? then force coercion using a function call... */
 		if (input_typeids[i] != function_typeids[i])
 		{
-			lfirst(current_fargs) = coerce_type(pstate,
-												lfirst(current_fargs),
+			lfirst(current_fargs) = coerce_type(lfirst(current_fargs),
 												input_typeids[i],
-												function_typeids[i], -1,
-												false);
+												function_typeids[i],
+												COERCION_IMPLICIT,
+												COERCE_IMPLICIT_CAST);
 		}
 	}
 }
@@ -1179,9 +1176,7 @@ setup_field_select(Node *input, char *attname, Oid relid)
  * NB: argument is expected to be transformed already, ie, not a RangeVar.
  */
 static Node *
-ParseComplexProjection(ParseState *pstate,
-					   char *funcname,
-					   Node *first_arg)
+ParseComplexProjection(char *funcname, Node *first_arg)
 {
 	Oid			argtype = exprType(first_arg);
 	Oid			argrelid;

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.206 2002/09/04 20:31:43 momjian Exp $
+ * $Id: parsenodes.h,v 1.207 2002/09/18 21:35:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1632,7 +1632,7 @@ typedef struct CreateCastStmt
 	TypeName   *sourcetype;
 	TypeName   *targettype;
 	FuncWithArgs *func;
-	bool		implicit;
+	CoercionContext context;
 } CreateCastStmt;
 
 /* ----------------------

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.199 2002/09/04 20:31:45 momjian Exp $
+ * $Id: builtins.h,v 1.200 2002/09/18 21:35:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -422,7 +422,6 @@ extern Datum currtid_byrelname(PG_FUNCTION_ARGS);
 extern Datum bpcharin(PG_FUNCTION_ARGS);
 extern Datum bpcharout(PG_FUNCTION_ARGS);
 extern Datum bpchar(PG_FUNCTION_ARGS);
-extern Datum _bpchar(PG_FUNCTION_ARGS);
 extern Datum char_bpchar(PG_FUNCTION_ARGS);
 extern Datum name_bpchar(PG_FUNCTION_ARGS);
 extern Datum bpchar_name(PG_FUNCTION_ARGS);
@@ -440,7 +439,6 @@ extern Datum hashbpchar(PG_FUNCTION_ARGS);
 extern Datum varcharin(PG_FUNCTION_ARGS);
 extern Datum varcharout(PG_FUNCTION_ARGS);
 extern Datum varchar(PG_FUNCTION_ARGS);
-extern Datum _varchar(PG_FUNCTION_ARGS);
 extern Datum varchareq(PG_FUNCTION_ARGS);
 extern Datum varcharne(PG_FUNCTION_ARGS);
 extern Datum varcharlt(PG_FUNCTION_ARGS);
@@ -633,6 +631,8 @@ extern Datum numeric_float8(PG_FUNCTION_ARGS);
 extern Datum numeric_float8_no_overflow(PG_FUNCTION_ARGS);
 extern Datum float4_numeric(PG_FUNCTION_ARGS);
 extern Datum numeric_float4(PG_FUNCTION_ARGS);
+extern Datum text_numeric(PG_FUNCTION_ARGS);
+extern Datum numeric_text(PG_FUNCTION_ARGS);
 extern Datum numeric_accum(PG_FUNCTION_ARGS);
 extern Datum int2_accum(PG_FUNCTION_ARGS);
 extern Datum int4_accum(PG_FUNCTION_ARGS);

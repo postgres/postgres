@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.83 2002/09/04 20:31:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.84 2002/09/18 21:35:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,28 +23,104 @@
 #include "parser/parse_func.h"
 #include "parser/parse_type.h"
 #include "utils/builtins.h"
+#include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
 
+static Node *coerce_type_typmod(Node *node,
+								Oid targetTypeId, int32 targetTypMod,
+								CoercionForm cformat);
 static Oid	PreferredType(CATEGORY category, Oid type);
 static bool find_coercion_pathway(Oid targetTypeId, Oid sourceTypeId,
-					  bool isExplicit,
-					  Oid *funcid);
-static Oid	find_typmod_coercion_function(Oid typeId);
-static Node *build_func_call(Oid funcid, Oid rettype, List *args);
+								  CoercionContext ccontext,
+								  Oid *funcid);
+static Node *build_func_call(Oid funcid, Oid rettype, List *args,
+							 CoercionForm fformat);
+
+
+/*
+ * coerce_to_target_type()
+ *		Convert an expression to a target type and typmod.
+ *
+ * This is the general-purpose entry point for arbitrary type coercion
+ * operations.  Direct use of the component operations can_coerce_type,
+ * coerce_type, and coerce_type_typmod should be restricted to special
+ * cases (eg, when the conversion is expected to succeed).
+ *
+ * Returns the possibly-transformed expression tree, or NULL if the type
+ * conversion is not possible.  (We do this, rather than elog'ing directly,
+ * so that callers can generate custom error messages indicating context.)
+ *
+ * expr - input expression tree (already transformed by transformExpr)
+ * exprtype - result type of expr
+ * targettype - desired result type
+ * targettypmod - desired result typmod
+ * ccontext, cformat - context indicators to control coercions
+ */
+Node *
+coerce_to_target_type(Node *expr, Oid exprtype,
+					  Oid targettype, int32 targettypmod,
+					  CoercionContext ccontext,
+					  CoercionForm cformat)
+{
+	if (can_coerce_type(1, &exprtype, &targettype, ccontext))
+		expr = coerce_type(expr, exprtype, targettype,
+						   ccontext, cformat);
+	/*
+	 * String hacks to get transparent conversions for char and varchar:
+	 * if a coercion to text is available, use it for forced coercions to
+	 * char(n) or varchar(n).
+	 *
+	 * This is pretty grotty, but seems easier to maintain than providing
+	 * entries in pg_cast that parallel all the ones for text.
+	 */
+	else if (ccontext >= COERCION_ASSIGNMENT &&
+			 (targettype == BPCHAROID || targettype == VARCHAROID))
+	{
+		Oid			text_id = TEXTOID;
+
+		if (can_coerce_type(1, &exprtype, &text_id, ccontext))
+		{
+			expr = coerce_type(expr, exprtype, text_id,
+							   ccontext, cformat);
+			/* Need a RelabelType if no typmod coercion is performed */
+			if (targettypmod < 0)
+				expr = (Node *) makeRelabelType(expr, targettype, -1,
+												cformat);
+		}
+		else
+			expr = NULL;
+	}
+	else
+		expr = NULL;
+
+	/*
+	 * If the target is a fixed-length type, it may need a length coercion
+	 * as well as a type coercion.
+	 */
+	if (expr != NULL)
+		expr = coerce_type_typmod(expr, targettype, targettypmod, cformat);
+
+	return expr;
+}
 
 
 /*
  * coerce_type()
- *		Convert a function argument to a different type.
+ *		Convert an expression to a different type.
  *
  * The caller should already have determined that the coercion is possible;
  * see can_coerce_type.
+ *
+ * No coercion to a typmod (length) is performed here.  The caller must
+ * call coerce_type_typmod as well, if a typmod constraint is wanted.
+ * (But if the target type is a domain, it may internally contain a
+ * typmod constraint, which will be applied inside coerce_type_constraints.)
  */
 Node *
-coerce_type(ParseState *pstate, Node *node, Oid inputTypeId,
-			Oid targetTypeId, int32 atttypmod, bool isExplicit)
+coerce_type(Node *node, Oid inputTypeId, Oid targetTypeId,
+			CoercionContext ccontext, CoercionForm cformat)
 {
 	Node	   *result;
 	Oid			funcId;
@@ -68,7 +144,7 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId,
 		 * example, int4's typinput function will reject "1.2", whereas
 		 * float-to-int type conversion will round to integer.
 		 *
-		 * XXX if the typinput function is not cachable, we really ought to
+		 * XXX if the typinput function is not immutable, we really ought to
 		 * postpone evaluation of the function call until runtime. But
 		 * there is no way to represent a typinput function call as an
 		 * expression tree, because C-string values are not Datums. (XXX
@@ -91,28 +167,31 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId,
 													   con->constvalue));
 
 			/*
-			 * If target is a domain, use the typmod it applies to the
-			 * base type.  Note that we call stringTypeDatum using the
-			 * domain's pg_type row, though.  This works because the
-			 * domain row has the same typinput and typelem as the base
-			 * type --- ugly...
+			 * We pass typmod -1 to the input routine, primarily because
+			 * existing input routines follow implicit-coercion semantics
+			 * for length checks, which is not always what we want here.
+			 * Any length constraint will be applied later by our caller.
+			 *
+			 * Note that we call stringTypeDatum using the domain's pg_type
+			 * row, if it's a domain.  This works because the domain row has
+			 * the same typinput and typelem as the base type --- ugly...
 			 */
-			if (targetTyptype == 'd')
-				atttypmod = getBaseTypeMod(targetTypeId, atttypmod);
-
-			newcon->constvalue = stringTypeDatum(targetType, val, atttypmod);
+			newcon->constvalue = stringTypeDatum(targetType, val, -1);
 			pfree(val);
 		}
 
 		result = (Node *) newcon;
 
-		/*
-		 * If target is a domain, apply constraints (except for typmod,
-		 * which we assume the input routine took care of).
-		 */
+		/* If target is a domain, apply constraints. */
 		if (targetTyptype == 'd')
-			result = coerce_type_constraints(pstate, result, targetTypeId,
-											 false);
+		{
+			result = coerce_type_constraints(result, targetTypeId,
+											 cformat);
+			/* We might now need a RelabelType. */
+			if (exprType(result) != targetTypeId)
+				result = (Node *) makeRelabelType(result, targetTypeId, -1,
+												  cformat);
+		}
 
 		ReleaseSysCache(targetType);
 	}
@@ -120,9 +199,10 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId,
 			 targetTypeId == ANYARRAYOID)
 	{
 		/* assume can_coerce_type verified that implicit coercion is okay */
+		/* NB: we do NOT want a RelabelType here */
 		result = node;
 	}
-	else if (find_coercion_pathway(targetTypeId, inputTypeId, isExplicit,
+	else if (find_coercion_pathway(targetTypeId, inputTypeId, ccontext,
 								   &funcId))
 	{
 		if (OidIsValid(funcId))
@@ -135,7 +215,8 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId,
 			 */
 			Oid			baseTypeId = getBaseType(targetTypeId);
 
-			result = build_func_call(funcId, baseTypeId, makeList1(node));
+			result = build_func_call(funcId, baseTypeId, makeList1(node),
+									 cformat);
 
 			/*
 			 * If domain, test against domain constraints and relabel with
@@ -143,9 +224,10 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId,
 			 */
 			if (targetTypeId != baseTypeId)
 			{
-				result = coerce_type_constraints(pstate, result,
-												 targetTypeId, true);
-				result = (Node *) makeRelabelType(result, targetTypeId, -1);
+				result = coerce_type_constraints(result, targetTypeId,
+												 cformat);
+				result = (Node *) makeRelabelType(result, targetTypeId, -1,
+												  cformat);
 			}
 
 			/*
@@ -179,8 +261,8 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId,
 			 * Also, domains may have value restrictions beyond the base type
 			 * that must be accounted for.
 			 */
-			result = coerce_type_constraints(pstate, node,
-											 targetTypeId, true);
+			result = coerce_type_constraints(node, targetTypeId,
+											 cformat);
 
 			/*
 			 * XXX could we label result with exprTypmod(node) instead of
@@ -189,7 +271,8 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId,
 			 * typmod, which is likely but not certain (wrong if target is
 			 * a domain, in any case).
 			 */
-			result = (Node *) makeRelabelType(result, targetTypeId, -1);
+			result = (Node *) makeRelabelType(result, targetTypeId, -1,
+											  cformat);
 		}
 	}
 	else if (typeInheritsFrom(inputTypeId, targetTypeId))
@@ -199,7 +282,8 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId,
 		 * except relabel the type.  This is binary compatibility for
 		 * complex types.
 		 */
-		result = (Node *) makeRelabelType(node, targetTypeId, -1);
+		result = (Node *) makeRelabelType(node, targetTypeId, -1,
+										  cformat);
 	}
 	else
 	{
@@ -215,15 +299,14 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId,
 
 /*
  * can_coerce_type()
- *		Can input_typeids be coerced to func_typeids?
+ *		Can input_typeids be coerced to target_typeids?
  *
- * We must be told whether this is an implicit or explicit coercion
- * (explicit being a CAST construct, explicit function call, etc).
- * We will accept a wider set of coercion cases for an explicit coercion.
+ * We must be told the context (CAST construct, assignment, implicit coercion)
+ * as this determines the set of available casts.
  */
 bool
-can_coerce_type(int nargs, Oid *input_typeids, Oid *func_typeids,
-				bool isExplicit)
+can_coerce_type(int nargs, Oid *input_typeids, Oid *target_typeids,
+				CoercionContext ccontext)
 {
 	int			i;
 
@@ -231,7 +314,7 @@ can_coerce_type(int nargs, Oid *input_typeids, Oid *func_typeids,
 	for (i = 0; i < nargs; i++)
 	{
 		Oid			inputTypeId = input_typeids[i];
-		Oid			targetTypeId = func_typeids[i];
+		Oid			targetTypeId = target_typeids[i];
 		Oid			funcId;
 
 		/* no problem if same type */
@@ -278,7 +361,7 @@ can_coerce_type(int nargs, Oid *input_typeids, Oid *func_typeids,
 
 			/*
 			 * Otherwise reject; this assumes there are no explicit
-			 * coercions to ANYARRAY.  If we don't reject then
+			 * coercion paths to ANYARRAY.  If we don't reject then
 			 * parse_coerce would have to repeat the above test.
 			 */
 			return false;
@@ -288,7 +371,7 @@ can_coerce_type(int nargs, Oid *input_typeids, Oid *func_typeids,
 		 * If pg_cast shows that we can coerce, accept.  This test now
 		 * covers both binary-compatible and coercion-function cases.
 		 */
-		if (find_coercion_pathway(targetTypeId, inputTypeId, isExplicit,
+		if (find_coercion_pathway(targetTypeId, inputTypeId, ccontext,
 								  &funcId))
 			continue;
 
@@ -312,10 +395,12 @@ can_coerce_type(int nargs, Oid *input_typeids, Oid *func_typeids,
  * Create an expression tree to enforce the constraints (if any)
  * that should be applied by the type.	Currently this is only
  * interesting for domain types.
+ *
+ * NOTE: result tree is not guaranteed to show the correct exprType() for
+ * the domain; it may show the base type.  Caller must relabel if needed.
  */
 Node *
-coerce_type_constraints(ParseState *pstate, Node *arg,
-						Oid typeId, bool applyTypmod)
+coerce_type_constraints(Node *arg, Oid typeId, CoercionForm cformat)
 {
 	char	   *notNull = NULL;
 	int32		typmod = -1;
@@ -356,8 +441,8 @@ coerce_type_constraints(ParseState *pstate, Node *arg,
 	/*
 	 * If domain applies a typmod to its base type, do length coercion.
 	 */
-	if (applyTypmod && typmod >= 0)
-		arg = coerce_type_typmod(pstate, arg, typeId, typmod);
+	if (typmod >= 0)
+		arg = coerce_type_typmod(arg, typeId, typmod, cformat);
 
 	/*
 	 * Only need to add one NOT NULL check regardless of how many domains
@@ -380,8 +465,9 @@ coerce_type_constraints(ParseState *pstate, Node *arg,
 }
 
 
-/* coerce_type_typmod()
- * Force a value to a particular typmod, if meaningful and possible.
+/*
+ * coerce_type_typmod()
+ *		Force a value to a particular typmod, if meaningful and possible.
  *
  * This is applied to values that are going to be stored in a relation
  * (where we have an atttypmod for the column) as well as values being
@@ -394,33 +480,65 @@ coerce_type_constraints(ParseState *pstate, Node *arg,
  * coercion for a domain is considered to be part of the type coercion
  * needed to produce the domain value in the first place.  So, no getBaseType.
  */
-Node *
-coerce_type_typmod(ParseState *pstate, Node *node,
-				   Oid targetTypeId, int32 atttypmod)
+static Node *
+coerce_type_typmod(Node *node, Oid targetTypeId, int32 targetTypMod,
+				   CoercionForm cformat)
 {
 	Oid			funcId;
+	int			nargs;
 
 	/*
 	 * A negative typmod is assumed to mean that no coercion is wanted.
 	 */
-	if (atttypmod < 0 || atttypmod == exprTypmod(node))
+	if (targetTypMod < 0 || targetTypMod == exprTypmod(node))
 		return node;
 
-	funcId = find_typmod_coercion_function(targetTypeId);
+	funcId = find_typmod_coercion_function(targetTypeId, &nargs);
 
 	if (OidIsValid(funcId))
 	{
+		List	   *args;
 		Const	   *cons;
+		Node	   *fcall;
 
+		/* Pass given value, plus target typmod as an int4 constant */
 		cons = makeConst(INT4OID,
 						 sizeof(int32),
-						 Int32GetDatum(atttypmod),
+						 Int32GetDatum(targetTypMod),
 						 false,
 						 true,
 						 false,
 						 false);
 
-		node = build_func_call(funcId, targetTypeId, makeList2(node, cons));
+		args = makeList2(node, cons);
+
+		if (nargs == 3)
+		{
+			/* Pass it a boolean isExplicit parameter, too */
+			cons = makeConst(BOOLOID,
+							 sizeof(bool),
+							 BoolGetDatum(cformat != COERCE_IMPLICIT_CAST),
+							 false,
+							 true,
+							 false,
+							 false);
+
+			args = lappend(args, cons);
+		}
+
+		fcall = build_func_call(funcId, targetTypeId, args, cformat);
+
+		/*
+		 * If the input is a constant, apply the length coercion
+		 * function now instead of delaying to runtime.
+		 *
+		 * See the comments for the similar case in coerce_type.
+		 */
+		if (node && IsA(node, Const) &&
+			!((Const *) node)->constisnull)
+			node = eval_const_expressions(fcall);
+		else
+			node = fcall;
 	}
 
 	return node;
@@ -437,19 +555,19 @@ Node *
 coerce_to_boolean(Node *node, const char *constructName)
 {
 	Oid			inputTypeId = exprType(node);
-	Oid			targetTypeId;
 
 	if (inputTypeId != BOOLOID)
 	{
-		targetTypeId = BOOLOID;
-		if (!can_coerce_type(1, &inputTypeId, &targetTypeId, false))
+		node = coerce_to_target_type(node, inputTypeId,
+									 BOOLOID, -1,
+									 COERCION_ASSIGNMENT,
+									 COERCE_IMPLICIT_CAST);
+		if (node == NULL)
 		{
 			/* translator: first %s is name of a SQL construct, eg WHERE */
 			elog(ERROR, "Argument of %s must be type boolean, not type %s",
 				 constructName, format_type_be(inputTypeId));
 		}
-		node = coerce_type(NULL, node, inputTypeId, targetTypeId, -1,
-						   false);
 	}
 
 	if (expression_returns_set(node))
@@ -472,12 +590,6 @@ coerce_to_boolean(Node *node, const char *constructName)
  * in the list will be preferred if there is doubt.
  * 'context' is a phrase to use in the error message if we fail to select
  * a usable type.
- *
- * XXX this code is WRONG, since (for example) given the input (int4,int8)
- * it will select int4, whereas according to SQL92 clause 9.3 the correct
- * answer is clearly int8.	To fix this we need a notion of a promotion
- * hierarchy within type categories --- something more complete than
- * just a single preferred type.
  */
 Oid
 select_common_type(List *typeids, const char *context)
@@ -511,12 +623,13 @@ select_common_type(List *typeids, const char *context)
 				elog(ERROR, "%s types '%s' and '%s' not matched",
 				  context, format_type_be(ptype), format_type_be(ntype));
 			}
-			else if (IsPreferredType(pcategory, ntype)
-					 && !IsPreferredType(pcategory, ptype)
-					 && can_coerce_type(1, &ptype, &ntype, false))
+			else if (!IsPreferredType(pcategory, ptype) &&
+					 can_coerce_type(1, &ptype, &ntype, COERCION_IMPLICIT) &&
+					 !can_coerce_type(1, &ntype, &ptype, COERCION_IMPLICIT))
 			{
 				/*
-				 * new one is preferred and can convert? then take it...
+				 * take new type if can coerce to it implicitly but not the
+				 * other way; but if we have a preferred type, stay on it.
 				 */
 				ptype = ntype;
 				pcategory = TypeCategory(ptype);
@@ -547,26 +660,20 @@ select_common_type(List *typeids, const char *context)
  * This is used following select_common_type() to coerce the individual
  * expressions to the desired type.  'context' is a phrase to use in the
  * error message if we fail to coerce.
- *
- * NOTE: pstate may be NULL.
  */
 Node *
-coerce_to_common_type(ParseState *pstate, Node *node,
-					  Oid targetTypeId,
-					  const char *context)
+coerce_to_common_type(Node *node, Oid targetTypeId, const char *context)
 {
 	Oid			inputTypeId = exprType(node);
 
 	if (inputTypeId == targetTypeId)
 		return node;			/* no work */
-	if (can_coerce_type(1, &inputTypeId, &targetTypeId, false))
-		node = coerce_type(pstate, node, inputTypeId, targetTypeId, -1,
-						   false);
+	if (can_coerce_type(1, &inputTypeId, &targetTypeId, COERCION_IMPLICIT))
+		node = coerce_type(node, inputTypeId, targetTypeId,
+						   COERCION_IMPLICIT, COERCE_IMPLICIT_CAST);
 	else
-	{
 		elog(ERROR, "%s unable to convert to type %s",
 			 context, format_type_be(targetTypeId));
-	}
 	return node;
 }
 
@@ -708,8 +815,6 @@ PreferredType(CATEGORY category, Oid type)
 				type == REGCLASSOID ||
 				type == REGTYPEOID)
 				result = OIDOID;
-			else if (type == NUMERICOID)
-				result = NUMERICOID;
 			else
 				result = FLOAT8OID;
 			break;
@@ -742,49 +847,52 @@ PreferredType(CATEGORY category, Oid type)
 }	/* PreferredType() */
 
 
-/* IsBinaryCompatible()
- *		Check if two types are binary-compatible.
+/* IsBinaryCoercible()
+ *		Check if srctype is binary-coercible to targettype.
  *
  * This notion allows us to cheat and directly exchange values without
  * going through the trouble of calling a conversion function.
  *
- * As of 7.3, binary compatibility isn't hardwired into the code anymore.
- * We consider two types binary-compatible if there is an implicit,
- * no-function-needed pg_cast entry.  NOTE that we assume that such
- * entries are symmetric, ie, it doesn't matter which type we consider
- * source and which target.  (cf. checks in opr_sanity regression test)
+ * As of 7.3, binary coercibility isn't hardwired into the code anymore.
+ * We consider two types binary-coercible if there is an implicitly
+ * invokable, no-function-needed pg_cast entry.
+ *
+ * This function replaces IsBinaryCompatible(), which was an inherently
+ * symmetric test.  Since the pg_cast entries aren't necessarily symmetric,
+ * the order of the operands is now significant.
  */
 bool
-IsBinaryCompatible(Oid type1, Oid type2)
+IsBinaryCoercible(Oid srctype, Oid targettype)
 {
 	HeapTuple	tuple;
 	Form_pg_cast castForm;
 	bool		result;
 
 	/* Fast path if same type */
-	if (type1 == type2)
+	if (srctype == targettype)
 		return true;
 
 	/* Perhaps the types are domains; if so, look at their base types */
-	if (OidIsValid(type1))
-		type1 = getBaseType(type1);
-	if (OidIsValid(type2))
-		type2 = getBaseType(type2);
+	if (OidIsValid(srctype))
+		srctype = getBaseType(srctype);
+	if (OidIsValid(targettype))
+		targettype = getBaseType(targettype);
 
 	/* Somewhat-fast path if same base type */
-	if (type1 == type2)
+	if (srctype == targettype)
 		return true;
 
 	/* Else look in pg_cast */
 	tuple = SearchSysCache(CASTSOURCETARGET,
-						   ObjectIdGetDatum(type1),
-						   ObjectIdGetDatum(type2),
+						   ObjectIdGetDatum(srctype),
+						   ObjectIdGetDatum(targettype),
 						   0, 0);
 	if (!HeapTupleIsValid(tuple))
 		return false;			/* no cast */
 	castForm = (Form_pg_cast) GETSTRUCT(tuple);
 
-	result = (castForm->castfunc == InvalidOid) && castForm->castimplicit;
+	result = (castForm->castfunc == InvalidOid &&
+			  castForm->castcontext == COERCION_CODE_IMPLICIT);
 
 	ReleaseSysCache(tuple);
 
@@ -796,12 +904,15 @@ IsBinaryCompatible(Oid type1, Oid type2)
  * find_coercion_pathway
  *		Look for a coercion pathway between two types.
  *
- * If we find a matching entry in pg_cast, return TRUE, and set *funcid
+ * ccontext determines the set of available casts.
+ *
+ * If we find a suitable entry in pg_cast, return TRUE, and set *funcid
  * to the castfunc value (which may be InvalidOid for a binary-compatible
  * coercion).
  */
 static bool
-find_coercion_pathway(Oid targetTypeId, Oid sourceTypeId, bool isExplicit,
+find_coercion_pathway(Oid targetTypeId, Oid sourceTypeId,
+					  CoercionContext ccontext,
 					  Oid *funcid)
 {
 	bool		result = false;
@@ -828,8 +939,29 @@ find_coercion_pathway(Oid targetTypeId, Oid sourceTypeId, bool isExplicit,
 	if (HeapTupleIsValid(tuple))
 	{
 		Form_pg_cast castForm = (Form_pg_cast) GETSTRUCT(tuple);
+		CoercionContext castcontext;
 
-		if (isExplicit || castForm->castimplicit)
+		/* convert char value for castcontext to CoercionContext enum */
+		switch (castForm->castcontext)
+		{
+			case COERCION_CODE_IMPLICIT:
+				castcontext = COERCION_IMPLICIT;
+				break;
+			case COERCION_CODE_ASSIGNMENT:
+				castcontext = COERCION_ASSIGNMENT;
+				break;
+			case COERCION_CODE_EXPLICIT:
+				castcontext = COERCION_EXPLICIT;
+				break;
+			default:
+				elog(ERROR, "find_coercion_pathway: bogus castcontext %c",
+					 castForm->castcontext);
+				castcontext = 0;	/* keep compiler quiet */
+				break;
+		}
+
+		/* Rely on ordering of enum for correct behavior here */
+		if (ccontext >= castcontext)
 		{
 			*funcid = castForm->castfunc;
 			result = true;
@@ -850,30 +982,59 @@ find_coercion_pathway(Oid targetTypeId, Oid sourceTypeId, bool isExplicit,
  * the type requires coercion to its own length and that the said
  * function should be invoked to do that.
  *
+ * Alternatively, the length-coercing function may have the signature
+ * (targettype, int4, bool).  On success, *nargs is set to report which
+ * signature we found.
+ *
  * "bpchar" (ie, char(N)) and "numeric" are examples of such types.
+ *
+ * If the given type is a varlena array type, we do not look for a coercion
+ * function associated directly with the array type, but instead look for
+ * one associated with the element type.  If one exists, we report
+ * array_length_coerce() as the coercion function to use.
  *
  * This mechanism may seem pretty grotty and in need of replacement by
  * something in pg_cast, but since typmod is only interesting for datatypes
  * that have special handling in the grammar, there's not really much
  * percentage in making it any easier to apply such coercions ...
  */
-static Oid
-find_typmod_coercion_function(Oid typeId)
+Oid
+find_typmod_coercion_function(Oid typeId, int *nargs)
 {
 	Oid			funcid = InvalidOid;
+	bool		isArray = false;
 	Type		targetType;
+	Form_pg_type typeForm;
 	char	   *typname;
 	Oid			typnamespace;
 	Oid			oid_array[FUNC_MAX_ARGS];
 	HeapTuple	ftup;
 
 	targetType = typeidType(typeId);
-	typname = NameStr(((Form_pg_type) GETSTRUCT(targetType))->typname);
-	typnamespace = ((Form_pg_type) GETSTRUCT(targetType))->typnamespace;
+	typeForm = (Form_pg_type) GETSTRUCT(targetType);
 
+	/* Check for a varlena array type (and not a domain) */
+	if (typeForm->typelem != InvalidOid &&
+		typeForm->typlen == -1 &&
+		typeForm->typtype != 'd')
+	{
+		/* Yes, switch our attention to the element type */
+		typeId = typeForm->typelem;
+		ReleaseSysCache(targetType);
+		targetType = typeidType(typeId);
+		typeForm = (Form_pg_type) GETSTRUCT(targetType);
+		isArray = true;
+	}
+
+	/* Function name is same as type internal name, and in same namespace */
+	typname = NameStr(typeForm->typname);
+	typnamespace = typeForm->typnamespace;
+
+	/* First look for parameters (type, int4) */
 	MemSet(oid_array, 0, FUNC_MAX_ARGS * sizeof(Oid));
 	oid_array[0] = typeId;
 	oid_array[1] = INT4OID;
+	*nargs = 2;
 
 	ftup = SearchSysCache(PROCNAMENSP,
 						  CStringGetDatum(typname),
@@ -894,7 +1055,44 @@ find_typmod_coercion_function(Oid typeId)
 		ReleaseSysCache(ftup);
 	}
 
+	if (!OidIsValid(funcid))
+	{
+		/* Didn't find a function, so now try (type, int4, bool) */
+		oid_array[2] = BOOLOID;
+		*nargs = 3;
+
+		ftup = SearchSysCache(PROCNAMENSP,
+							  CStringGetDatum(typname),
+							  Int16GetDatum(3),
+							  PointerGetDatum(oid_array),
+							  ObjectIdGetDatum(typnamespace));
+		if (HeapTupleIsValid(ftup))
+		{
+			Form_pg_proc pform = (Form_pg_proc) GETSTRUCT(ftup);
+
+			/* Make sure the function's result type is as expected */
+			if (pform->prorettype == typeId && !pform->proretset &&
+				!pform->proisagg)
+			{
+				/* Okay to use it */
+				funcid = HeapTupleGetOid(ftup);
+			}
+			ReleaseSysCache(ftup);
+		}
+	}
+
 	ReleaseSysCache(targetType);
+
+	/*
+	 * Now, if we did find a coercion function for an array element type,
+	 * report array_length_coerce() as the function to use.  We know it
+	 * takes three arguments always.
+	 */
+	if (isArray && OidIsValid(funcid))
+	{
+		funcid = F_ARRAY_LENGTH_COERCE;
+		*nargs = 3;
+	}
 
 	return funcid;
 }
@@ -905,7 +1103,7 @@ find_typmod_coercion_function(Oid typeId)
  * The argument expressions must have been transformed already.
  */
 static Node *
-build_func_call(Oid funcid, Oid rettype, List *args)
+build_func_call(Oid funcid, Oid rettype, List *args, CoercionForm fformat)
 {
 	Func	   *funcnode;
 	Expr	   *expr;
@@ -914,6 +1112,7 @@ build_func_call(Oid funcid, Oid rettype, List *args)
 	funcnode->funcid = funcid;
 	funcnode->funcresulttype = rettype;
 	funcnode->funcretset = false;		/* only possible case here */
+	funcnode->funcformat = fformat;
 	funcnode->func_fcache = NULL;
 
 	expr = makeNode(Expr);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.59 2002/09/04 20:31:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.60 2002/09/18 21:35:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -273,7 +273,7 @@ oper_select_candidate(int nargs,
 		 current_candidate = current_candidate->next)
 	{
 		if (can_coerce_type(nargs, input_typeids, current_candidate->args,
-							false))
+							COERCION_IMPLICIT))
 		{
 			if (last_candidate == NULL)
 			{
@@ -362,7 +362,7 @@ oper_select_candidate(int nargs,
 		{
 			if (input_typeids[i] != UNKNOWNOID)
 			{
-				if (IsBinaryCompatible(current_typeids[i], input_typeids[i]))
+				if (IsBinaryCoercible(input_typeids[i], current_typeids[i]))
 					nmatch++;
 			}
 		}
@@ -696,8 +696,8 @@ compatible_oper(List *op, Oid arg1, Oid arg2, bool noError)
 
 	/* but is it good enough? */
 	opform = (Form_pg_operator) GETSTRUCT(optup);
-	if (IsBinaryCompatible(opform->oprleft, arg1) &&
-		IsBinaryCompatible(opform->oprright, arg2))
+	if (IsBinaryCoercible(arg1, opform->oprleft) &&
+		IsBinaryCoercible(arg2, opform->oprright))
 		return optup;
 
 	/* nope... */

@@ -804,13 +804,9 @@ If the non-unknown inputs are not all of the same type category, fail.
 
 <step performance="required">
 <para>
-If one or more non-unknown inputs are of a preferred type in that category,
-resolve as that type.
-</para></step>
-
-<step performance="required">
-<para>
-Otherwise, resolve as the type of the first non-unknown input.
+Choose the first non-unknown input type which is a preferred type in
+that category or allows all the non-unknown inputs to be implicitly
+coerced to it.
 </para></step>
 
 <step performance="required">
@@ -842,15 +838,16 @@ Here, the unknown-type literal <literal>'b'</literal> will be resolved as type t
 
 <para>
 <screen>
-tgl=> SELECT 1.2 AS "Double" UNION SELECT 1;
- Double
---------
-      1
-    1.2
+tgl=> SELECT 1.2 AS "Numeric" UNION SELECT 1;
+ Numeric
+---------
+       1
+     1.2
 (2 rows)
 </screen>
-The literal <literal>1.2</> is of type <type>double precision</>,
-the preferred type in the numeric category, so that type is used.
+The literal <literal>1.2</> is of type <type>numeric</>,
+and the integer value <literal>1</> can be cast implicitly to
+<type>numeric</>, so that type is used.
 </para>
 </example>
 
@@ -858,27 +855,18 @@ the preferred type in the numeric category, so that type is used.
 <title>Type Conversion in a Transposed Union</title>
 
 <para>
-Here the output type of the union is forced to match the type of
-the first clause in the union:
-
 <screen>
-tgl=> SELECT 1 AS "All integers"
+tgl=> SELECT 1 AS "Real"
 tgl-> UNION SELECT CAST('2.2' AS REAL);
- All integers
---------------
-            1
-            2
+ Real
+------
+    1
+  2.2
 (2 rows)
 </screen>
-</para>
-<para>
-Since <type>REAL</type> is not a preferred type, the parser sees no reason
-to select it over <type>INTEGER</type> (which is what the 1 is), and instead
-falls back on the use-the-first-alternative rule.
-This example demonstrates that the preferred-type mechanism doesn't encode
-as much information as we'd like.  Future versions of
-<productname>PostgreSQL</productname> may support a more general notion of
-type preferences.
+Here, since type <type>real</> cannot be implicitly cast to <type>integer</>,
+but <type>integer</> can be implicitly cast to <type>real</>, the union
+result type is resolved as <type>real</>.
 </para>
 </example>
 

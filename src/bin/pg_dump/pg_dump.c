@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.298 2002/09/07 16:14:33 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.299 2002/09/18 21:35:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3797,7 +3797,7 @@ dumpCasts(Archive *fout,
 	selectSourceSchema("pg_catalog");
 
 	if (fout->remoteVersion >= 70300)
-		appendPQExpBuffer(query, "SELECT oid, castsource, casttarget, castfunc, castimplicit FROM pg_cast ORDER BY 1,2,3;");
+		appendPQExpBuffer(query, "SELECT oid, castsource, casttarget, castfunc, castcontext FROM pg_cast ORDER BY 1,2,3;");
 	else
 		appendPQExpBuffer(query, "SELECT p.oid, t1.oid, t2.oid, p.oid, true FROM pg_type t1, pg_type t2, pg_proc p WHERE p.pronargs = 1 AND p.proargtypes[0] = t1.oid AND p.prorettype = t2.oid AND p.proname = t2.typname ORDER BY 1,2,3;");
 
@@ -3816,7 +3816,7 @@ dumpCasts(Archive *fout,
 		char	   *castsource = PQgetvalue(res, i, 1);
 		char	   *casttarget = PQgetvalue(res, i, 2);
 		char	   *castfunc = PQgetvalue(res, i, 3);
-		char	   *castimplicit = PQgetvalue(res, i, 4);
+		char	   *castcontext = PQgetvalue(res, i, 4);
 		int			fidx = -1;
 		const char *((*deps)[]);
 
@@ -3859,8 +3859,10 @@ dumpCasts(Archive *fout,
 			appendPQExpBuffer(defqry, "WITH FUNCTION %s",
 						  format_function_signature(&finfo[fidx], true));
 
-		if (strcmp(castimplicit, "t") == 0)
+		if (strcmp(castcontext, "a") == 0)
 			appendPQExpBuffer(defqry, " AS ASSIGNMENT");
+		else if (strcmp(castcontext, "i") == 0)
+			appendPQExpBuffer(defqry, " AS IMPLICIT");
 		appendPQExpBuffer(defqry, ";\n");
 
 		ArchiveEntry(fout, castoid,

@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.59 2002/09/03 01:04:40 tgl Exp $
+ $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.60 2002/09/18 21:35:20 tgl Exp $
  -->
 
 <chapter id="catalogs">
@@ -841,9 +841,8 @@
   <title>pg_cast</title>
 
   <para>
-   <structname>pg_cast</structname> stores data type conversion paths
-   defined with <command>CREATE CAST</command> plus the built-in
-   conversions.
+   <structname>pg_cast</structname> stores data type conversion paths,
+   both built-in paths and those defined with <command>CREATE CAST</command>.
   </para>
 
   <table>
@@ -879,17 +878,25 @@
       <entry><type>oid</type></entry>
       <entry>pg_proc.oid</entry>
       <entry>
-       The OID of the function to use to perform this cast.  A 0 is
-       stored if the data types are binary compatible (that is, no
-       function is needed to perform the cast).
+       The OID of the function to use to perform this cast.  Zero is
+       stored if the data types are binary coercible (that is, no
+       run-time operation is needed to perform the cast).
       </entry>
      </row>
 
      <row>
-      <entry>castimplicit</entry>
-      <entry><type>bool</type></entry>
+      <entry>castcontext</entry>
+      <entry><type>char</type></entry>
       <entry></entry>
-      <entry>Indication whether this cast can be invoked implicitly</entry>
+      <entry>
+       Indicates what contexts the cast may be invoked in.
+       <literal>e</> means only as an explicit cast (using
+       <literal>CAST</>, <literal>::</>, or function-call syntax).
+       <literal>a</> means implicitly in assignment
+       to a target column, as well as explicitly.
+       <literal>i</> means implicitly in expressions, as well as the
+       other cases.
+      </entry>
      </row>
     </tbody>
    </tgroup>

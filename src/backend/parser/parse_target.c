@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.89 2002/09/04 20:31:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.90 2002/09/18 21:35:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -274,6 +274,7 @@ updateTargetListEntry(ParseState *pstate,
 		aref = transformArraySubscripts(pstate,
 										arrayBase,
 										attrtype,
+										attrtypmod,
 										indirection,
 										pstate->p_is_insert,
 										tle->expr);
@@ -284,30 +285,21 @@ updateTargetListEntry(ParseState *pstate,
 		/*
 		 * For normal non-subscripted target column, do type checking and
 		 * coercion.  But accept InvalidOid, which indicates the source is
-		 * a NULL constant.
+		 * a NULL constant.  (XXX is that still true?)
 		 */
 		if (type_id != InvalidOid)
 		{
-			if (type_id != attrtype)
-			{
-				tle->expr = CoerceTargetExpr(pstate, tle->expr, type_id,
-											 attrtype, attrtypmod,
-											 false);
-				if (tle->expr == NULL)
-					elog(ERROR, "column \"%s\" is of type '%s'"
-						 " but expression is of type '%s'"
-					"\n\tYou will need to rewrite or cast the expression",
-						 colname,
-						 format_type_be(attrtype),
-						 format_type_be(type_id));
-			}
-
-			/*
-			 * If the target is a fixed-length type, it may need a length
-			 * coercion as well as a type coercion.
-			 */
-			tle->expr = coerce_type_typmod(pstate, tle->expr,
-										   attrtype, attrtypmod);
+			tle->expr = coerce_to_target_type(tle->expr, type_id,
+											  attrtype, attrtypmod,
+											  COERCION_ASSIGNMENT,
+											  COERCE_IMPLICIT_CAST);
+			if (tle->expr == NULL)
+				elog(ERROR, "column \"%s\" is of type %s"
+					 " but expression is of type %s"
+					 "\n\tYou will need to rewrite or cast the expression",
+					 colname,
+					 format_type_be(attrtype),
+					 format_type_be(type_id));
 		}
 	}
 
@@ -321,46 +313,6 @@ updateTargetListEntry(ParseState *pstate,
 	resnode->restypmod = attrtypmod;
 	resnode->resname = colname;
 	resnode->resno = (AttrNumber) attrno;
-}
-
-
-Node *
-CoerceTargetExpr(ParseState *pstate,
-				 Node *expr,
-				 Oid type_id,
-				 Oid attrtype,
-				 int32 attrtypmod,
-				 bool isExplicit)
-{
-	if (can_coerce_type(1, &type_id, &attrtype, isExplicit))
-		expr = coerce_type(pstate, expr, type_id, attrtype, attrtypmod,
-						   isExplicit);
-
-#ifndef DISABLE_STRING_HACKS
-
-	/*
-	 * string hacks to get transparent conversions w/o explicit
-	 * conversions
-	 */
-	else if ((attrtype == BPCHAROID) || (attrtype == VARCHAROID))
-	{
-		Oid			text_id = TEXTOID;
-
-		if (type_id == TEXTOID)
-		{
-		}
-		else if (can_coerce_type(1, &type_id, &text_id, isExplicit))
-			expr = coerce_type(pstate, expr, type_id, text_id, attrtypmod,
-							   isExplicit);
-		else
-			expr = NULL;
-	}
-#endif
-
-	else
-		expr = NULL;
-
-	return expr;
 }
 
 

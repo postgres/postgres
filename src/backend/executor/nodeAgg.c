@@ -46,7 +46,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.86 2002/09/04 20:31:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.87 2002/09/18 21:35:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -913,7 +913,7 @@ ExecInitAgg(Agg *node, EState *estate, Plan *parent)
 			 */
 			Oid			inputType = exprType(aggref->target);
 
-			if (!IsBinaryCompatible(inputType, aggform->aggtranstype))
+			if (!IsBinaryCoercible(inputType, aggform->aggtranstype))
 				elog(ERROR, "Aggregate %u needs to have compatible input type and transition type",
 					 aggref->aggfnoid);
 		}

@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.121 2002/09/04 20:31:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.122 2002/09/18 21:35:23 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -152,7 +152,6 @@ static void get_oper_expr(Expr *expr, deparse_context *context);
 static void get_func_expr(Expr *expr, deparse_context *context);
 static void get_agg_expr(Aggref *aggref, deparse_context *context);
 static Node *strip_type_coercion(Node *expr, Oid resultType);
-static void get_tle_expr(TargetEntry *tle, deparse_context *context);
 static void get_const_expr(Const *constval, deparse_context *context);
 static void get_sublink_expr(Node *node, deparse_context *context);
 static void get_from_clause(Query *query, deparse_context *context);
@@ -1430,7 +1429,6 @@ get_basic_select_query(Query *query, deparse_context *context,
 		sep = ", ";
 		colno++;
 
-		/* Do NOT use get_tle_expr here; see its comments! */
 		get_rule_expr(tle->expr, context);
 
 		/*
@@ -1644,7 +1642,7 @@ get_insert_query_def(Query *query, deparse_context *context)
 
 			appendStringInfo(buf, sep);
 			sep = ", ";
-			get_tle_expr(tle, context);
+			get_rule_expr(tle->expr, context);
 		}
 		appendStringInfoChar(buf, ')');
 	}
@@ -1694,7 +1692,7 @@ get_update_query_def(Query *query, deparse_context *context)
 		if (!tleIsArrayAssign(tle))
 			appendStringInfo(buf, "%s = ",
 							 quote_identifier(tle->resdom->resname));
-		get_tle_expr(tle, context);
+		get_rule_expr(tle->expr, context);
 	}
 
 	/* Add the FROM clause if needed */
@@ -2106,12 +2104,29 @@ get_rule_expr(Node *node, deparse_context *context)
 		case T_RelabelType:
 			{
 				RelabelType *relabel = (RelabelType *) node;
+				Node   *arg = relabel->arg;
 
-				appendStringInfoChar(buf, '(');
-				get_rule_expr(relabel->arg, context);
-				appendStringInfo(buf, ")::%s",
+				if (relabel->relabelformat == COERCE_IMPLICIT_CAST)
+				{
+					/* don't show an implicit cast */
+					get_rule_expr(arg, context);
+				}
+				else
+				{
+					/*
+					 * Strip off any type coercions on the input, so we don't
+					 * print redundancies like x::bpchar::character(8).
+					 *
+					 * XXX Are there any cases where this is a bad idea?
+					 */
+					arg = strip_type_coercion(arg, relabel->resulttype);
+
+					appendStringInfoChar(buf, '(');
+					get_rule_expr(arg, context);
+					appendStringInfo(buf, ")::%s",
 							format_type_with_typemod(relabel->resulttype,
-												 relabel->resulttypmod));
+													 relabel->resulttypmod));
+				}
 			}
 			break;
 
@@ -2305,21 +2320,33 @@ get_func_expr(Expr *expr, deparse_context *context)
 	StringInfo	buf = context->buf;
 	Func	   *func = (Func *) (expr->oper);
 	Oid			funcoid = func->funcid;
-	int32		coercedTypmod;
 	Oid			argtypes[FUNC_MAX_ARGS];
 	int			nargs;
 	List	   *l;
 	char	   *sep;
 
 	/*
-	 * Check to see if function is a length-coercion function for some
-	 * datatype.  If so, display the operation as a type cast.
+	 * If the function call came from an implicit coercion, then just show
+	 * the first argument.
 	 */
-	if (exprIsLengthCoercion((Node *) expr, &coercedTypmod))
+	if (func->funcformat == COERCE_IMPLICIT_CAST)
+	{
+		get_rule_expr((Node *) lfirst(expr->args), context);
+		return;
+	}
+
+	/*
+	 * If the function call came from an explicit cast, then show
+	 * the first argument plus an explicit cast operation.
+	 */
+	if (func->funcformat == COERCE_EXPLICIT_CAST)
 	{
 		Node	   *arg = lfirst(expr->args);
-		Oid			rettype = get_func_rettype(funcoid);
-		char	   *typdesc;
+		Oid			rettype = expr->typeOid;
+		int32		coercedTypmod;
+
+		/* Get the typmod if this is a length-coercion function */
+		(void) exprIsLengthCoercion((Node *) expr, &coercedTypmod);
 
 		/*
 		 * Strip off any type coercions on the input, so we don't print
@@ -2331,17 +2358,8 @@ get_func_expr(Expr *expr, deparse_context *context)
 
 		appendStringInfoChar(buf, '(');
 		get_rule_expr(arg, context);
-
-		/*
-		 * Show typename with appropriate length decoration. Note that
-		 * since exprIsLengthCoercion succeeded, the function's output
-		 * type is the right thing to report.  Also note we don't need to
-		 * quote the result of format_type_with_typemod: it takes care of
-		 * double-quoting any identifier that needs it.
-		 */
-		typdesc = format_type_with_typemod(rettype, coercedTypmod);
-		appendStringInfo(buf, ")::%s", typdesc);
-		pfree(typdesc);
+		appendStringInfo(buf, ")::%s",
+						 format_type_with_typemod(rettype, coercedTypmod));
 
 		return;
 	}
@@ -2393,15 +2411,14 @@ get_agg_expr(Aggref *aggref, deparse_context *context)
 
 /*
  * strip_type_coercion
- *		Strip any type coercions at the top of the given expression tree,
- *		as long as they are coercions to the given datatype.
+ *		Strip any type coercion at the top of the given expression tree,
+ *		if it is a coercion to the given datatype.
  *
- * A RelabelType node is always a type coercion.  A function call is
- * also considered a type coercion if it has one argument and there is
- * a cast declared that uses it.
+ * We use this to avoid printing two levels of coercion in situations where
+ * the expression tree has a length-coercion node atop a type-coercion node.
  *
- * XXX It'd be better if the parsetree retained some explicit indication
- * of the coercion, so we didn't need these heuristics.
+ * Note: avoid stripping a length-coercion node, since two successive
+ * coercions to different lengths aren't a no-op.
  */
 static Node *
 strip_type_coercion(Node *expr, Oid resultType)
@@ -2409,98 +2426,27 @@ strip_type_coercion(Node *expr, Oid resultType)
 	if (expr == NULL || exprType(expr) != resultType)
 		return expr;
 
-	if (IsA(expr, RelabelType))
-		return strip_type_coercion(((RelabelType *) expr)->arg, resultType);
+	if (IsA(expr, RelabelType) &&
+		((RelabelType *) expr)->resulttypmod == -1)
+		return ((RelabelType *) expr)->arg;
 
 	if (IsA(expr, Expr) &&
 		((Expr *) expr)->opType == FUNC_EXPR)
 	{
-		Func	   *func;
-		HeapTuple	procTuple;
-		HeapTuple	castTuple;
-		Form_pg_proc procStruct;
-		Form_pg_cast castStruct;
+		Func	   *func = (Func *) (((Expr *) expr)->oper);
 
-		func = (Func *) (((Expr *) expr)->oper);
 		Assert(IsA(func, Func));
-		if (length(((Expr *) expr)->args) != 1)
+		if (func->funcformat != COERCE_EXPLICIT_CAST &&
+			func->funcformat != COERCE_IMPLICIT_CAST)
+			return expr;		/* don't absorb into upper coercion */
+
+		if (exprIsLengthCoercion(expr, NULL))
 			return expr;
-		/* Lookup the function in pg_proc */
-		procTuple = SearchSysCache(PROCOID,
-								   ObjectIdGetDatum(func->funcid),
-								   0, 0, 0);
-		if (!HeapTupleIsValid(procTuple))
-			elog(ERROR, "cache lookup for proc %u failed", func->funcid);
-		procStruct = (Form_pg_proc) GETSTRUCT(procTuple);
-		/* Double-check func has one arg and correct result type */
-		if (procStruct->pronargs != 1 ||
-			procStruct->prorettype != resultType)
-		{
-			ReleaseSysCache(procTuple);
-			return expr;
-		}
-		/* See if function has is actually declared as a cast */
-		castTuple = SearchSysCache(CASTSOURCETARGET,
-							ObjectIdGetDatum(procStruct->proargtypes[0]),
-								ObjectIdGetDatum(procStruct->prorettype),
-								   0, 0);
-		if (!HeapTupleIsValid(castTuple))
-		{
-			ReleaseSysCache(procTuple);
-			return expr;
-		}
-		/* It must also be an implicit cast. */
-		castStruct = (Form_pg_cast) GETSTRUCT(castTuple);
-		if (!castStruct->castimplicit)
-		{
-			ReleaseSysCache(procTuple);
-			ReleaseSysCache(castTuple);
-			return expr;
-		}
-		/* Okay, it is indeed a type-coercion function */
-		ReleaseSysCache(procTuple);
-		ReleaseSysCache(castTuple);
-		return strip_type_coercion(lfirst(((Expr *) expr)->args), resultType);
+
+		return (Node *) lfirst(((Expr *) expr)->args);
 	}
 
 	return expr;
-}
-
-
-/* ----------
- * get_tle_expr
- *
- *		In an INSERT or UPDATE targetlist item, the parser may have inserted
- *		a length-coercion function call to coerce the value to the right
- *		length for the target column.  We want to suppress the output of
- *		that function call, otherwise dump/reload/dump... would blow up the
- *		expression by adding more and more layers of length-coercion calls.
- *
- * As of 7.0, this hack is no longer absolutely essential, because the parser
- * is now smart enough not to add a redundant length coercion function call.
- * But we still suppress the function call just for neatness of displayed
- * rules.
- *
- * Note that this hack must NOT be applied to SELECT targetlist items;
- * any length coercion appearing there is something the user actually wrote.
- * ----------
- */
-static void
-get_tle_expr(TargetEntry *tle, deparse_context *context)
-{
-	Expr	   *expr = (Expr *) (tle->expr);
-	int32		coercedTypmod;
-
-	/*
-	 * If top level is a length coercion to the correct length, suppress
-	 * it; else dump the expression normally.
-	 */
-	if (tle->resdom->restypmod >= 0 &&
-		exprIsLengthCoercion((Node *) expr, &coercedTypmod) &&
-		coercedTypmod == tle->resdom->restypmod)
-		get_rule_expr((Node *) lfirst(expr->args), context);
-	else
-		get_rule_expr(tle->expr, context);
 }
 
 
@@ -2518,6 +2464,8 @@ get_const_expr(Const *constval, deparse_context *context)
 	Form_pg_type typeStruct;
 	char	   *extval;
 	char	   *valptr;
+	bool		isfloat = false;
+	bool		needlabel;
 
 	if (constval->constisnull)
 	{
@@ -2563,8 +2511,12 @@ get_const_expr(Const *constval, deparse_context *context)
 				 * NaN, so we need not get too crazy about pattern
 				 * matching here.
 				 */
-				if (strspn(extval, "0123456789 +-eE.") == strlen(extval))
+				if (strspn(extval, "0123456789+-eE.") == strlen(extval))
+				{
 					appendStringInfo(buf, extval);
+					if (strcspn(extval, "eE.") != strlen(extval))
+						isfloat = true;	/* it looks like a float */
+				}
 				else
 					appendStringInfo(buf, "'%s'", extval);
 			}
@@ -2609,20 +2561,30 @@ get_const_expr(Const *constval, deparse_context *context)
 
 	pfree(extval);
 
+	/*
+	 * Append ::typename unless the constant will be implicitly typed as
+	 * the right type when it is read in.  XXX this code has to be kept
+	 * in sync with the behavior of the parser, especially make_const.
+	 */
 	switch (constval->consttype)
 	{
 		case BOOLOID:
 		case INT4OID:
-		case FLOAT8OID:
 		case UNKNOWNOID:
 			/* These types can be left unlabeled */
+			needlabel = false;
+			break;
+		case NUMERICOID:
+			/* Float-looking constants will be typed as numeric */
+			needlabel = !isfloat;
 			break;
 		default:
-			appendStringInfo(buf, "::%s",
-							 format_type_with_typemod(constval->consttype,
-													  -1));
+			needlabel = true;
 			break;
 	}
+	if (needlabel)
+		appendStringInfo(buf, "::%s",
+						 format_type_with_typemod(constval->consttype, -1));
 
 	ReleaseSysCache(typetup);
 }

@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.158 2002/09/02 02:13:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.159 2002/09/18 21:35:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -217,6 +217,15 @@ _equalFunc(Func *a, Func *b)
 		return false;
 	if (a->funcretset != b->funcretset)
 		return false;
+	/*
+	 * Special-case COERCE_DONTCARE, so that pathkeys can build coercion
+	 * nodes that are equal() to both explicit and implicit coercions.
+	 */
+	if (a->funcformat != b->funcformat &&
+		a->funcformat != COERCE_DONTCARE &&
+		b->funcformat != COERCE_DONTCARE)
+		return false;
+
 	/* Note we do not look at func_fcache; see notes for _equalOper */
 
 	return true;
@@ -301,6 +310,14 @@ _equalRelabelType(RelabelType *a, RelabelType *b)
 	if (a->resulttype != b->resulttype)
 		return false;
 	if (a->resulttypmod != b->resulttypmod)
+		return false;
+	/*
+	 * Special-case COERCE_DONTCARE, so that pathkeys can build coercion
+	 * nodes that are equal() to both explicit and implicit coercions.
+	 */
+	if (a->relabelformat != b->relabelformat &&
+		a->relabelformat != COERCE_DONTCARE &&
+		b->relabelformat != COERCE_DONTCARE)
 		return false;
 	return true;
 }
@@ -1475,7 +1492,7 @@ _equalCreateCastStmt(CreateCastStmt *a, CreateCastStmt *b)
 		return false;
 	if (!equal(a->func, b->func))
 		return false;
-	if (a->implicit != b->implicit)
+	if (a->context != b->context)
 		return false;
 
 	return true;

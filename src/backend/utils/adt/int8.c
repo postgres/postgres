@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int8.c,v 1.41 2002/09/04 20:31:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int8.c,v 1.42 2002/09/18 21:35:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,14 +48,16 @@
  * Formatting and conversion routines.
  *---------------------------------------------------------*/
 
-/* int8in()
+/*
+ * scanint8 --- try to parse a string into an int8.
+ *
+ * If errorOK is false, elog a useful error message if the string is bad.
+ * If errorOK is true, just return "false" for bad input.
  */
-Datum
-int8in(PG_FUNCTION_ARGS)
+bool
+scanint8(const char *str, bool errorOK, int64 *result)
 {
-	char	   *str = PG_GETARG_CSTRING(0);
-	int64		result;
-	char	   *ptr = str;
+	const char *ptr = str;
 	int64		tmp = 0;
 	int			sign = 1;
 
@@ -63,8 +65,11 @@ int8in(PG_FUNCTION_ARGS)
 	 * Do our own scan, rather than relying on sscanf which might be
 	 * broken for long long.
 	 */
-	while (*ptr && isspace((unsigned char) *ptr))		/* skip leading spaces */
+
+	/* skip leading spaces */
+	while (*ptr && isspace((unsigned char) *ptr))
 		ptr++;
+
 	/* handle sign */
 	if (*ptr == '-')
 	{
@@ -79,28 +84,61 @@ int8in(PG_FUNCTION_ARGS)
 #ifndef INT64_IS_BUSTED
 		if (strcmp(ptr, "9223372036854775808") == 0)
 		{
-			result = -INT64CONST(0x7fffffffffffffff) - 1;
-			PG_RETURN_INT64(result);
+			*result = -INT64CONST(0x7fffffffffffffff) - 1;
+			return true;
 		}
 #endif
 	}
 	else if (*ptr == '+')
 		ptr++;
-	if (!isdigit((unsigned char) *ptr)) /* require at least one digit */
-		elog(ERROR, "Bad int8 external representation \"%s\"", str);
-	while (*ptr && isdigit((unsigned char) *ptr))		/* process digits */
+
+	/* require at least one digit */
+	if (!isdigit((unsigned char) *ptr))
+	{
+		if (errorOK)
+			return false;
+		else
+			elog(ERROR, "Bad int8 external representation \"%s\"", str);
+	}
+
+	/* process digits */
+	while (*ptr && isdigit((unsigned char) *ptr))
 	{
 		int64		newtmp = tmp * 10 + (*ptr++ - '0');
 
 		if ((newtmp / 10) != tmp)		/* overflow? */
-			elog(ERROR, "int8 value out of range: \"%s\"", str);
+		{
+			if (errorOK)
+				return false;
+			else
+				elog(ERROR, "int8 value out of range: \"%s\"", str);
+		}
 		tmp = newtmp;
 	}
-	if (*ptr)					/* trailing junk? */
-		elog(ERROR, "Bad int8 external representation \"%s\"", str);
 
-	result = (sign < 0) ? -tmp : tmp;
+	/* trailing junk? */
+	if (*ptr)
+	{
+		if (errorOK)
+			return false;
+		else
+			elog(ERROR, "Bad int8 external representation \"%s\"", str);
+	}
 
+	*result = (sign < 0) ? -tmp : tmp;
+
+	return true;
+}
+
+/* int8in()
+ */
+Datum
+int8in(PG_FUNCTION_ARGS)
+{
+	char	   *str = PG_GETARG_CSTRING(0);
+	int64		result;
+
+	(void) scanint8(str, false, &result);
 	PG_RETURN_INT64(result);
 }
 
@@ -747,7 +785,7 @@ i8tod(PG_FUNCTION_ARGS)
 }
 
 /* dtoi8()
- * Convert double float to 8-byte integer.
+ * Convert float8 to 8-byte integer.
  */
 Datum
 dtoi8(PG_FUNCTION_ARGS)
@@ -771,8 +809,66 @@ dtoi8(PG_FUNCTION_ARGS)
 	PG_RETURN_INT64(result);
 }
 
-/* text_int8()
+Datum
+i8tof(PG_FUNCTION_ARGS)
+{
+	int64		val = PG_GETARG_INT64(0);
+	float4		result;
+
+	result = val;
+
+	PG_RETURN_FLOAT4(result);
+}
+
+/* ftoi8()
+ * Convert float4 to 8-byte integer.
  */
+Datum
+ftoi8(PG_FUNCTION_ARGS)
+{
+	float4		val = PG_GETARG_FLOAT4(0);
+	int64		result;
+	float8		dval;
+
+	/* Round val to nearest integer (but it's still in float form) */
+	dval = rint(val);
+
+	/*
+	 * Does it fit in an int64?  Avoid assuming that we have handy
+	 * constants defined for the range boundaries, instead test for
+	 * overflow by reverse-conversion.
+	 */
+	result = (int64) dval;
+
+	if ((float8) result != dval)
+		elog(ERROR, "Floating point conversion to int8 is out of range");
+
+	PG_RETURN_INT64(result);
+}
+
+Datum
+i8tooid(PG_FUNCTION_ARGS)
+{
+	int64		val = PG_GETARG_INT64(0);
+	Oid			result;
+
+	result = (Oid) val;
+
+	/* Test for overflow by reverse-conversion. */
+	if ((int64) result != val)
+		elog(ERROR, "int8 conversion to OID is out of range");
+
+	PG_RETURN_OID(result);
+}
+
+Datum
+oidtoi8(PG_FUNCTION_ARGS)
+{
+	Oid			val = PG_GETARG_OID(0);
+
+	PG_RETURN_INT64((int64) val);
+}
+
 Datum
 text_int8(PG_FUNCTION_ARGS)
 {
@@ -793,9 +889,6 @@ text_int8(PG_FUNCTION_ARGS)
 	return result;
 }
 
-
-/* int8_text()
- */
 Datum
 int8_text(PG_FUNCTION_ARGS)
 {

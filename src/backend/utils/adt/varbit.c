@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varbit.c,v 1.25 2002/09/04 20:31:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varbit.c,v 1.26 2002/09/18 21:35:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,6 +35,11 @@
  *	  data section -- private data section for the bits data structures
  *		bitlength -- length of the bit string in bits
  *		bitdata   -- bit string, most significant byte first
+ *
+ *	The length of the bitdata vector should always be exactly as many
+ *	bytes as are needed for the given bitlength.  If the bitlength is
+ *	not a multiple of 8, the extra low-order padding bits of the last
+ *	byte must be zeroes.
  *----------
  */
 
@@ -104,7 +109,7 @@ bit_in(PG_FUNCTION_ARGS)
 	len = VARBITTOTALLEN(atttypmod);
 	result = (VarBit *) palloc(len);
 	/* set to 0 so that *r is always initialised and string is zero-padded */
-	memset(result, 0, len);
+	MemSet(result, 0, len);
 	VARATT_SIZEP(result) = len;
 	VARBITLEN(result) = atttypmod;
 
@@ -203,50 +208,52 @@ bit_out(PG_FUNCTION_ARGS)
 /* bit()
  * Converts a bit() type to a specific internal length.
  * len is the bitlength specified in the column definition.
+ *
+ * If doing implicit cast, raise error when source data is wrong length.
+ * If doing explicit cast, silently truncate or zero-pad to specified length.
  */
 Datum
 bit(PG_FUNCTION_ARGS)
 {
 	VarBit	   *arg = PG_GETARG_VARBIT_P(0);
 	int32		len = PG_GETARG_INT32(1);
+	bool		isExplicit = PG_GETARG_BOOL(2);
+	VarBit	   *result;
+	int			rlen;
+	int			ipad;
+	bits8		mask;
 
 	/* No work if typmod is invalid or supplied data matches it already */
 	if (len <= 0 || len == VARBITLEN(arg))
 		PG_RETURN_VARBIT_P(arg);
-	else
+
+	if (!isExplicit)
 		elog(ERROR, "Bit string length %d does not match type BIT(%d)",
 			 VARBITLEN(arg), len);
-	return 0;					/* quiet compiler */
-}
 
-/* _bit()
- * Converts an array of bit() elements to a specific internal length.
- * len is the bitlength specified in the column definition.
- */
-Datum
-_bit(PG_FUNCTION_ARGS)
-{
-	ArrayType  *v = PG_GETARG_ARRAYTYPE_P(0);
-	int32		len = PG_GETARG_INT32(1);
-	FunctionCallInfoData locfcinfo;
+	rlen = VARBITTOTALLEN(len);
+	result = (VarBit *) palloc(rlen);
+	/* set to 0 so that string is zero-padded */
+	MemSet(result, 0, rlen);
+	VARATT_SIZEP(result) = rlen;
+	VARBITLEN(result) = len;
+
+	memcpy(VARBITS(result), VARBITS(arg),
+		   Min(VARBITBYTES(result), VARBITBYTES(arg)));
 
 	/*
-	 * Since bit() is a built-in function, we should only need to look it
-	 * up once per run.
+	 * Make sure last byte is zero-padded if needed.  This is useless but
+	 * safe if source data was shorter than target length (we assume the
+	 * last byte of the source data was itself correctly zero-padded).
 	 */
-	static FmgrInfo bit_finfo;
+	ipad = VARBITPAD(result);
+	if (ipad > 0)
+	{
+		mask = BITMASK << ipad;
+		*(VARBITS(result) + VARBITBYTES(result) - 1) &= mask;
+	}
 
-	if (bit_finfo.fn_oid == InvalidOid)
-		fmgr_info_cxt(F_BIT, &bit_finfo, TopMemoryContext);
-
-	MemSet(&locfcinfo, 0, sizeof(locfcinfo));
-	locfcinfo.flinfo = &bit_finfo;
-	locfcinfo.nargs = 2;
-	/* We assume we are "strict" and need not worry about null inputs */
-	locfcinfo.arg[0] = PointerGetDatum(v);
-	locfcinfo.arg[1] = Int32GetDatum(len);
-
-	return array_map(&locfcinfo, BITOID, BITOID);
+	PG_RETURN_VARBIT_P(result);
 }
 
 /*
@@ -311,7 +318,7 @@ varbit_in(PG_FUNCTION_ARGS)
 	len = VARBITTOTALLEN(bitlen);
 	result = (VarBit *) palloc(len);
 	/* set to 0 so that *r is always initialised and string is zero-padded */
-	memset(result, 0, len);
+	MemSet(result, 0, len);
 	VARATT_SIZEP(result) = len;
 	VARBITLEN(result) = Min(bitlen, atttypmod);
 
@@ -406,20 +413,26 @@ varbit_out(PG_FUNCTION_ARGS)
 /* varbit()
  * Converts a varbit() type to a specific internal length.
  * len is the maximum bitlength specified in the column definition.
+ *
+ * If doing implicit cast, raise error when source data is too long.
+ * If doing explicit cast, silently truncate to max length.
  */
 Datum
 varbit(PG_FUNCTION_ARGS)
 {
 	VarBit	   *arg = PG_GETARG_VARBIT_P(0);
 	int32		len = PG_GETARG_INT32(1);
+	bool		isExplicit = PG_GETARG_BOOL(2);
 	VarBit	   *result;
 	int			rlen;
+	int			ipad;
+	bits8		mask;
 
 	/* No work if typmod is invalid or supplied data matches it already */
 	if (len <= 0 || len >= VARBITLEN(arg))
 		PG_RETURN_VARBIT_P(arg);
 
-	if (len < VARBITLEN(arg))
+	if (!isExplicit)
 		elog(ERROR, "Bit string too long for type BIT VARYING(%d)", len);
 
 	rlen = VARBITTOTALLEN(len);
@@ -429,37 +442,15 @@ varbit(PG_FUNCTION_ARGS)
 
 	memcpy(VARBITS(result), VARBITS(arg), VARBITBYTES(result));
 
+	/* Make sure last byte is zero-padded if needed */
+	ipad = VARBITPAD(result);
+	if (ipad > 0)
+	{
+		mask = BITMASK << ipad;
+		*(VARBITS(result) + VARBITBYTES(result) - 1) &= mask;
+	}
+
 	PG_RETURN_VARBIT_P(result);
-}
-
-/* _varbit()
- * Converts an array of bit() elements to a specific internal length.
- * len is the maximum bitlength specified in the column definition.
- */
-Datum
-_varbit(PG_FUNCTION_ARGS)
-{
-	ArrayType  *v = PG_GETARG_ARRAYTYPE_P(0);
-	int32		len = PG_GETARG_INT32(1);
-	FunctionCallInfoData locfcinfo;
-
-	/*
-	 * Since varbit() is a built-in function, we should only need to look
-	 * it up once per run.
-	 */
-	static FmgrInfo varbit_finfo;
-
-	if (varbit_finfo.fn_oid == InvalidOid)
-		fmgr_info_cxt(F_VARBIT, &varbit_finfo, TopMemoryContext);
-
-	MemSet(&locfcinfo, 0, sizeof(locfcinfo));
-	locfcinfo.flinfo = &varbit_finfo;
-	locfcinfo.nargs = 2;
-	/* We assume we are "strict" and need not worry about null inputs */
-	locfcinfo.arg[0] = PointerGetDatum(v);
-	locfcinfo.arg[1] = Int32GetDatum(len);
-
-	return array_map(&locfcinfo, VARBITOID, VARBITOID);
 }
 
 
@@ -978,7 +969,7 @@ bitshiftleft(PG_FUNCTION_ARGS)
 	/* If we shifted all the bits out, return an all-zero string */
 	if (shft >= VARBITLEN(arg))
 	{
-		memset(r, 0, VARBITBYTES(arg));
+		MemSet(r, 0, VARBITBYTES(arg));
 		PG_RETURN_VARBIT_P(result);
 	}
 
@@ -991,7 +982,7 @@ bitshiftleft(PG_FUNCTION_ARGS)
 		/* Special case: we can do a memcpy */
 		len = VARBITBYTES(arg) - byte_shift;
 		memcpy(r, p, len);
-		memset(r + len, 0, byte_shift);
+		MemSet(r + len, 0, byte_shift);
 	}
 	else
 	{
@@ -1037,7 +1028,7 @@ bitshiftright(PG_FUNCTION_ARGS)
 	/* If we shifted all the bits out, return an all-zero string */
 	if (shft >= VARBITLEN(arg))
 	{
-		memset(r, 0, VARBITBYTES(arg));
+		MemSet(r, 0, VARBITBYTES(arg));
 		PG_RETURN_VARBIT_P(result);
 	}
 
@@ -1046,7 +1037,7 @@ bitshiftright(PG_FUNCTION_ARGS)
 	p = VARBITS(arg);
 
 	/* Set the first part of the result to 0 */
-	memset(r, 0, byte_shift);
+	MemSet(r, 0, byte_shift);
 	r += byte_shift;
 
 	if (ishift == 0)

@@ -354,12 +354,16 @@ SELECT date '1994-01-01' + time '10:00' AS "Jan_01_1994_10am";
  Sat Jan 01 10:00:00 1994
 (1 row)
 
-SELECT date '1994-01-01' + time '11:00-5' AS "Jan_01_1994_8am";
-ERROR:  Bad time external representation '11:00-5'
-SELECT "timestamp"(date '1994-01-01', time with time zone '11:00-5') AS "Jan_01_1994_11am";
-     Jan_01_1994_11am     
---------------------------
- Sat Jan 01 11:00:00 1994
+SELECT date '1994-01-01' + timetz '11:00-5' AS "Jan_01_1994_8am";
+       Jan_01_1994_8am        
+------------------------------
+ Sat Jan 01 08:00:00 1994 PST
+(1 row)
+
+SELECT timestamptz(date '1994-01-01', time with time zone '11:00-5') AS "Jan_01_1994_8am";
+       Jan_01_1994_8am        
+------------------------------
+ Sat Jan 01 08:00:00 1994 PST
 (1 row)
 
 SELECT '' AS "64", d1 + interval '1 year' AS one_year FROM TIMESTAMP_TBL;
@@ -762,9 +766,9 @@ SELECT interval '04:30' - time '01:02' AS "20:32:00";
 (1 row)
 
 SELECT CAST(time with time zone '01:02-08' AS interval) AS "+00:01";
-ERROR:  Cannot cast type 'time with time zone' to 'interval'
+ERROR:  Cannot cast type time with time zone to interval
 SELECT CAST(interval '02:03' AS time with time zone) AS "02:03:00-08";
-ERROR:  Cannot cast type 'interval' to 'time with time zone'
+ERROR:  Cannot cast type interval to time with time zone
 SELECT time with time zone '01:30-08' - interval '02:01' AS "23:29:00-08";
  23:29:00-08 
 -------------

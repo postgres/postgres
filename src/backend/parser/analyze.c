@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.248 2002/09/04 20:31:22 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.249 2002/09/18 21:35:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2565,24 +2565,20 @@ transformExecuteStmt(ParseState *pstate, ExecuteStmt *stmt)
 			given_type_id = exprType(expr);
 			expected_type_id = (Oid) lfirsti(paramtypes);
 
-			if (given_type_id != expected_type_id)
-			{
-				expr = CoerceTargetExpr(pstate,
-										expr,
-										given_type_id,
-										expected_type_id,
-										-1,
-										false);
+			expr = coerce_to_target_type(expr, given_type_id,
+										 expected_type_id, -1,
+										 COERCION_ASSIGNMENT,
+										 COERCE_IMPLICIT_CAST);
 
-				if (!expr)
-					elog(ERROR, "Parameter $%d of type %s cannot be coerced into the expected type %s"
-					"\n\tYou will need to rewrite or cast the expression",
-						 i,
-						 format_type_be(given_type_id),
-						 format_type_be(expected_type_id));
-			}
+			if (expr == NULL)
+				elog(ERROR, "Parameter $%d of type %s cannot be coerced into the expected type %s"
+					 "\n\tYou will need to rewrite or cast the expression",
+					 i,
+					 format_type_be(given_type_id),
+					 format_type_be(expected_type_id));
 
 			fix_opids(expr);
+
 			lfirst(l) = expr;
 
 			paramtypes = lnext(paramtypes);

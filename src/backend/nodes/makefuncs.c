@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/makefuncs.c,v 1.34 2002/09/04 20:31:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/makefuncs.c,v 1.35 2002/09/18 21:35:21 tgl Exp $
  */
 #include "postgres.h"
 
@@ -215,13 +215,14 @@ makeAlias(const char *aliasname, List *colnames)
  *	  creates a RelabelType node
  */
 RelabelType *
-makeRelabelType(Node *arg, Oid rtype, int32 rtypmod)
+makeRelabelType(Node *arg, Oid rtype, int32 rtypmod, CoercionForm rformat)
 {
 	RelabelType *r = makeNode(RelabelType);
 
 	r->arg = arg;
 	r->resulttype = rtype;
 	r->resulttypmod = rtypmod;
+	r->relabelformat = rformat;
 
 	return r;
 }

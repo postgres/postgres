@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.226 2002/09/14 22:14:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.227 2002/09/18 21:35:20 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -51,7 +51,6 @@
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_relation.h"
-#include "parser/parse_target.h"
 #include "rewrite/rewriteRemove.h"
 #include "storage/smgr.h"
 #include "utils/builtins.h"
@@ -1705,17 +1704,16 @@ cookDefault(ParseState *pstate,
 	{
 		Oid			type_id = exprType(expr);
 
-		if (type_id != atttypid)
-		{
-			if (CoerceTargetExpr(pstate, expr, type_id,
-								 atttypid, atttypmod, false) == NULL)
-				elog(ERROR, "Column \"%s\" is of type %s"
-					 " but default expression is of type %s"
-				   "\n\tYou will need to rewrite or cast the expression",
-					 attname,
-					 format_type_be(atttypid),
-					 format_type_be(type_id));
-		}
+		if (coerce_to_target_type(expr, type_id,
+								  atttypid, atttypmod,
+								  COERCION_ASSIGNMENT,
+								  COERCE_IMPLICIT_CAST) == NULL)
+			elog(ERROR, "Column \"%s\" is of type %s"
+				 " but default expression is of type %s"
+				 "\n\tYou will need to rewrite or cast the expression",
+				 attname,
+				 format_type_be(atttypid),
+				 format_type_be(type_id));
 	}
 
 	/*

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.109 2002/09/11 14:48:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.110 2002/09/18 21:35:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,7 +25,6 @@
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_oper.h"
-#include "parser/parse_target.h"
 #include "parser/parse_type.h"
 #include "parser/parsetree.h"
 #include "rewrite/rewriteHandler.h"
@@ -474,29 +473,21 @@ build_column_default(Relation rel, int attrno)
 	 */
 	exprtype = exprType(expr);
 
-	if (exprtype != atttype)
-	{
-		expr = CoerceTargetExpr(NULL, expr, exprtype,
-								atttype, atttypmod, false);
-
-		/*
-		 * This really shouldn't fail; should have checked the default's
-		 * type when it was created ...
-		 */
-		if (expr == NULL)
-			elog(ERROR, "Column \"%s\" is of type %s"
-				 " but default expression is of type %s"
-				 "\n\tYou will need to rewrite or cast the expression",
-				 NameStr(att_tup->attname),
-				 format_type_be(atttype),
-				 format_type_be(exprtype));
-	}
-
+	expr = coerce_to_target_type(expr, exprtype,
+								 atttype, atttypmod,
+								 COERCION_ASSIGNMENT,
+								 COERCE_IMPLICIT_CAST);
 	/*
-	 * If the column is a fixed-length type, it may need a length coercion
-	 * as well as a type coercion.
+	 * This really shouldn't fail; should have checked the default's
+	 * type when it was created ...
 	 */
-	expr = coerce_type_typmod(NULL, expr, atttype, atttypmod);
+	if (expr == NULL)
+		elog(ERROR, "Column \"%s\" is of type %s"
+			 " but default expression is of type %s"
+			 "\n\tYou will need to rewrite or cast the expression",
+			 NameStr(att_tup->attname),
+			 format_type_be(atttype),
+			 format_type_be(exprtype));
 
 	return expr;
 }

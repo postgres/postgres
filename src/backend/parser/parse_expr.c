@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.128 2002/09/04 20:31:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.129 2002/09/18 21:35:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,6 @@
 #include "parser/parse_func.h"
 #include "parser/parse_oper.h"
 #include "parser/parse_relation.h"
-#include "parser/parse_target.h"
 #include "parser/parse_type.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
@@ -40,9 +39,7 @@ static int	expr_depth_counter = 0;
 
 bool		Transform_null_equals = false;
 
-static Node *parser_typecast_constant(Value *expr, TypeName *typename);
-static Node *parser_typecast_expression(ParseState *pstate,
-						   Node *expr, TypeName *typename);
+static Node *typecast_expression(Node *expr, TypeName *typename);
 static Node *transformColumnRef(ParseState *pstate, ColumnRef *cref);
 static Node *transformIndirection(ParseState *pstate, Node *basenode,
 					 List *indirection);
@@ -145,10 +142,9 @@ transformExpr(ParseState *pstate, Node *expr)
 				A_Const    *con = (A_Const *) expr;
 				Value	   *val = &con->val;
 
+				result = (Node *) make_const(val);
 				if (con->typename != NULL)
-					result = parser_typecast_constant(val, con->typename);
-				else
-					result = (Node *) make_const(val);
+					result = typecast_expression(result, con->typename);
 				break;
 			}
 		case T_ExprFieldSelect:
@@ -175,7 +171,7 @@ transformExpr(ParseState *pstate, Node *expr)
 				TypeCast   *tc = (TypeCast *) expr;
 				Node	   *arg = transformExpr(pstate, tc->arg);
 
-				result = parser_typecast_expression(pstate, arg, tc->typename);
+				result = typecast_expression(arg, tc->typename);
 				break;
 			}
 		case T_A_Expr:
@@ -562,8 +558,7 @@ transformExpr(ParseState *pstate, Node *expr)
 				newc->casetype = ptype;
 
 				/* Convert default result clause, if necessary */
-				newc->defresult = coerce_to_common_type(pstate,
-														newc->defresult,
+				newc->defresult = coerce_to_common_type(newc->defresult,
 														ptype,
 														"CASE/ELSE");
 
@@ -572,8 +567,7 @@ transformExpr(ParseState *pstate, Node *expr)
 				{
 					CaseWhen   *w = (CaseWhen *) lfirst(args);
 
-					w->result = coerce_to_common_type(pstate,
-													  w->result,
+					w->result = coerce_to_common_type(w->result,
 													  ptype,
 													  "CASE/WHEN");
 				}
@@ -671,8 +665,12 @@ transformIndirection(ParseState *pstate, Node *basenode, List *indirection)
 	if (indirection == NIL)
 		return basenode;
 	return (Node *) transformArraySubscripts(pstate,
-											 basenode, exprType(basenode),
-											 indirection, false, NULL);
+											 basenode,
+											 exprType(basenode),
+											 exprTypmod(basenode),
+											 indirection,
+											 false,
+											 NULL);
 }
 
 static Node *
@@ -1037,23 +1035,13 @@ exprTypmod(Node *expr)
  *
  * If coercedTypmod is not NULL, the typmod is stored there if the expression
  * is a length-coercion function, else -1 is stored there.
- *
- * We assume that a two-argument function named for a datatype, whose
- * output and first argument types are that datatype, and whose second
- * input is an int32 constant, represents a forced length coercion.
- *
- * XXX It'd be better if the parsetree retained some explicit indication
- * of the coercion, so we didn't need these heuristics.
  */
 bool
 exprIsLengthCoercion(Node *expr, int32 *coercedTypmod)
 {
 	Func	   *func;
+	int			nargs;
 	Const	   *second_arg;
-	HeapTuple	procTuple;
-	HeapTuple	typeTuple;
-	Form_pg_proc procStruct;
-	Form_pg_type typeStruct;
 
 	if (coercedTypmod != NULL)
 		*coercedTypmod = -1;	/* default result on failure */
@@ -1067,12 +1055,21 @@ exprIsLengthCoercion(Node *expr, int32 *coercedTypmod)
 	Assert(IsA(func, Func));
 
 	/*
-	 * If it's not a two-argument function with the second argument being
-	 * an int4 constant, it can't have been created from a length
-	 * coercion.
+	 * If it didn't come from a coercion context, reject.
 	 */
-	if (length(((Expr *) expr)->args) != 2)
+	if (func->funcformat != COERCE_EXPLICIT_CAST &&
+		func->funcformat != COERCE_IMPLICIT_CAST)
 		return false;
+
+	/*
+	 * If it's not a two-argument or three-argument function with the second
+	 * argument being an int4 constant, it can't have been created from a
+	 * length coercion (it must be a type coercion, instead).
+	 */
+	nargs = length(((Expr *) expr)->args);
+	if (nargs < 2 || nargs > 3)
+		return false;
+
 	second_arg = (Const *) lsecond(((Expr *) expr)->args);
 	if (!IsA(second_arg, Const) ||
 		second_arg->consttype != INT4OID ||
@@ -1080,129 +1077,22 @@ exprIsLengthCoercion(Node *expr, int32 *coercedTypmod)
 		return false;
 
 	/*
-	 * Lookup the function in pg_proc
-	 */
-	procTuple = SearchSysCache(PROCOID,
-							   ObjectIdGetDatum(func->funcid),
-							   0, 0, 0);
-	if (!HeapTupleIsValid(procTuple))
-		elog(ERROR, "cache lookup for proc %u failed", func->funcid);
-	procStruct = (Form_pg_proc) GETSTRUCT(procTuple);
-
-	/*
-	 * It must be a function with two arguments where the first is of the
-	 * same type as the return value and the second is an int4. Also, just
-	 * to be sure, check return type agrees with expr node.
-	 */
-	if (procStruct->pronargs != 2 ||
-		procStruct->prorettype != procStruct->proargtypes[0] ||
-		procStruct->proargtypes[1] != INT4OID ||
-		procStruct->prorettype != ((Expr *) expr)->typeOid)
-	{
-		ReleaseSysCache(procTuple);
-		return false;
-	}
-
-	/*
-	 * Furthermore, the name and namespace of the function must be the
-	 * same as its result type's name/namespace (cf.
-	 * find_coercion_function).
-	 */
-	typeTuple = SearchSysCache(TYPEOID,
-							   ObjectIdGetDatum(procStruct->prorettype),
-							   0, 0, 0);
-	if (!HeapTupleIsValid(typeTuple))
-		elog(ERROR, "cache lookup for type %u failed",
-			 procStruct->prorettype);
-	typeStruct = (Form_pg_type) GETSTRUCT(typeTuple);
-	if (strcmp(NameStr(procStruct->proname),
-			   NameStr(typeStruct->typname)) != 0 ||
-		procStruct->pronamespace != typeStruct->typnamespace)
-	{
-		ReleaseSysCache(procTuple);
-		ReleaseSysCache(typeTuple);
-		return false;
-	}
-
-	/*
 	 * OK, it is indeed a length-coercion function.
 	 */
 	if (coercedTypmod != NULL)
 		*coercedTypmod = DatumGetInt32(second_arg->constvalue);
 
-	ReleaseSysCache(procTuple);
-	ReleaseSysCache(typeTuple);
 	return true;
 }
 
 /*
- * Produce an appropriate Const node from a constant value produced
- * by the parser and an explicit type name to cast to.
- */
-static Node *
-parser_typecast_constant(Value *expr, TypeName *typename)
-{
-	Type		tp;
-	Datum		datum;
-	Const	   *con;
-	char	   *const_string = NULL;
-	bool		string_palloced = false;
-	bool		isNull = false;
-
-	tp = typenameType(typename);
-
-	switch (nodeTag(expr))
-	{
-		case T_Integer:
-			const_string = DatumGetCString(DirectFunctionCall1(int4out,
-										 Int32GetDatum(expr->val.ival)));
-			string_palloced = true;
-			break;
-		case T_Float:
-		case T_String:
-		case T_BitString:
-			const_string = expr->val.str;
-			break;
-		case T_Null:
-			isNull = true;
-			break;
-		default:
-			elog(ERROR, "Cannot cast this expression to type '%s'",
-				 typeTypeName(tp));
-	}
-
-	if (isNull)
-		datum = (Datum) NULL;
-	else
-		datum = stringTypeDatum(tp, const_string, typename->typmod);
-
-	con = makeConst(typeTypeId(tp),
-					typeLen(tp),
-					datum,
-					isNull,
-					typeByVal(tp),
-					false,		/* not a set */
-					true /* is cast */ );
-
-	if (string_palloced)
-		pfree(const_string);
-
-	ReleaseSysCache(tp);
-
-	return (Node *) con;
-}
-
-/*
- * Handle an explicit CAST applied to a non-constant expression.
- * (Actually, this works for constants too, but gram.y won't generate
- * a TypeCast node if the argument is just a constant.)
+ * Handle an explicit CAST construct.
  *
  * The given expr has already been transformed, but we need to lookup
  * the type name and then apply any necessary coercion function(s).
  */
 static Node *
-parser_typecast_expression(ParseState *pstate,
-						   Node *expr, TypeName *typename)
+typecast_expression(Node *expr, TypeName *typename)
 {
 	Oid			inputType = exprType(expr);
 	Oid			targetType;
@@ -1212,23 +1102,14 @@ parser_typecast_expression(ParseState *pstate,
 	if (inputType == InvalidOid)
 		return expr;			/* do nothing if NULL input */
 
-	if (inputType != targetType)
-	{
-		expr = CoerceTargetExpr(pstate, expr, inputType,
-								targetType, typename->typmod,
-								true);	/* explicit coercion */
-		if (expr == NULL)
-			elog(ERROR, "Cannot cast type '%s' to '%s'",
-				 format_type_be(inputType),
-				 format_type_be(targetType));
-	}
-
-	/*
-	 * If the target is a fixed-length type, it may need a length coercion
-	 * as well as a type coercion.
-	 */
-	expr = coerce_type_typmod(pstate, expr,
-							  targetType, typename->typmod);
+	expr = coerce_to_target_type(expr, inputType,
+								 targetType, typename->typmod,
+								 COERCION_EXPLICIT,
+								 COERCE_EXPLICIT_CAST);
+	if (expr == NULL)
+		elog(ERROR, "Cannot cast type %s to %s",
+			 format_type_be(inputType),
+			 format_type_be(targetType));
 
 	return expr;
 }

@@ -90,8 +90,8 @@ SELECT (timestamp without time zone 'tomorrow' > 'now') as "True";
 -- to enable support for SQL99 timestamp type syntax.
 SELECT date '1994-01-01' + time '11:00' AS "Jan_01_1994_11am";
 SELECT date '1994-01-01' + time '10:00' AS "Jan_01_1994_10am";
-SELECT date '1994-01-01' + time '11:00-5' AS "Jan_01_1994_8am";
-SELECT "timestamp"(date '1994-01-01', time with time zone '11:00-5') AS "Jan_01_1994_11am";
+SELECT date '1994-01-01' + timetz '11:00-5' AS "Jan_01_1994_8am";
+SELECT timestamptz(date '1994-01-01', time with time zone '11:00-5') AS "Jan_01_1994_8am";
 
 SELECT '' AS "64", d1 + interval '1 year' AS one_year FROM TIMESTAMP_TBL;
 SELECT '' AS "64", d1 - interval '1 year' AS one_year FROM TIMESTAMP_TBL;
