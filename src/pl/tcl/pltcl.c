@@ -31,7 +31,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.45 2001/10/19 02:43:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.46 2001/10/19 19:43:19 tgl Exp $
  *
  **********************************************************************/
 
@@ -107,7 +107,6 @@ typedef struct pltcl_proc_desc
 	int			nargs;
 	FmgrInfo	arg_out_func[FUNC_MAX_ARGS];
 	Oid			arg_out_elem[FUNC_MAX_ARGS];
-	int			arg_out_len[FUNC_MAX_ARGS];
 	int			arg_is_rel[FUNC_MAX_ARGS];
 }			pltcl_proc_desc;
 
@@ -123,8 +122,8 @@ typedef struct pltcl_query_desc
 	Oid		   *argtypes;
 	FmgrInfo   *arginfuncs;
 	Oid		   *argtypelems;
+	bool	   *argbyvals;
 	Datum	   *argvalues;
-	int		   *arglen;
 }			pltcl_query_desc;
 
 
@@ -353,7 +352,7 @@ pltcl_init_load_unknown(Tcl_Interp *interp)
 	/************************************************************
 	 * There is a module named unknown. Resemble the
 	 * source from the modsrc attributes and evaluate
-	 * it in the safe interpreter
+	 * it in the Tcl interpreter
 	 ************************************************************/
 	fno = SPI_fnumber(SPI_tuptable->tupdesc, "modsrc");
 
@@ -468,7 +467,7 @@ pltcl_func_handler(PG_FUNCTION_ARGS)
 
 	/************************************************************
 	 * Create the tcl command to call the internal
-	 * proc in the safe interpreter
+	 * proc in the Tcl interpreter
 	 ************************************************************/
 	Tcl_DStringInit(&tcl_cmd);
 	Tcl_DStringInit(&list_tmp);
@@ -525,7 +524,7 @@ pltcl_func_handler(PG_FUNCTION_ARGS)
 				tmp = DatumGetCString(FunctionCall3(&prodesc->arg_out_func[i],
 													fcinfo->arg[i],
 							  ObjectIdGetDatum(prodesc->arg_out_elem[i]),
-								Int32GetDatum(prodesc->arg_out_len[i])));
+													Int32GetDatum(-1)));
 				UTF_BEGIN;
 				Tcl_DStringAppendElement(&tcl_cmd, UTF_E2U(tmp));
 				UTF_END;
@@ -567,7 +566,7 @@ pltcl_func_handler(PG_FUNCTION_ARGS)
 	}
 
 	/************************************************************
-	 * Convert the result value from the safe interpreter
+	 * Convert the result value from the Tcl interpreter
 	 * into its PostgreSQL data format and return it.
 	 * Again, the function call could fire an elog and we
 	 * have to count for the current interpreter level we are
@@ -823,7 +822,7 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 	}
 
 	/************************************************************
-	 * Convert the result value from the safe interpreter
+	 * Convert the result value from the Tcl interpreter
 	 * and setup structures for SPI_modifytuple();
 	 ************************************************************/
 	if (Tcl_SplitList(interp, interp->result,
@@ -902,8 +901,8 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 				 ret_values[--i],
 				 tupdesc->attrs[attnum - 1]->atttypid);
 		}
-		typinput = (Oid) (((Form_pg_type) GETSTRUCT(typeTup))->typinput);
-		typelem = (Oid) (((Form_pg_type) GETSTRUCT(typeTup))->typelem);
+		typinput = ((Form_pg_type) GETSTRUCT(typeTup))->typinput;
+		typelem = ((Form_pg_type) GETSTRUCT(typeTup))->typelem;
 		ReleaseSysCache(typeTup);
 
 		/************************************************************
@@ -1001,7 +1000,7 @@ compile_pltcl_function(Oid fn_oid, bool is_trigger)
 	 * the in-/out-functions in the prodesc block and create
 	 * a new hashtable entry for it.
 	 *
-	 * Then we load the procedure into the safe interpreter.
+	 * Then we load the procedure into the Tcl interpreter.
 	 ************************************************************/
 	if (hashent == NULL)
 	{
@@ -1122,8 +1121,7 @@ compile_pltcl_function(Oid fn_oid, bool is_trigger)
 					prodesc->arg_is_rel[i] = 0;
 
 				perm_fmgr_info(typeStruct->typoutput, &(prodesc->arg_out_func[i]));
-				prodesc->arg_out_elem[i] = (Oid) (typeStruct->typelem);
-				prodesc->arg_out_len[i] = typeStruct->typlen;
+				prodesc->arg_out_elem[i] = typeStruct->typelem;
 
 				if (i > 0)
 					strcat(proc_internal_args, " ");
@@ -1442,7 +1440,7 @@ pltcl_returnnull(ClientData cdata, Tcl_Interp *interp,
 
 /**********************************************************************
  * pltcl_SPI_exec()		- The builtin SPI_exec command
- *				  for the safe interpreter
+ *				  for the Tcl interpreter
  **********************************************************************/
 static int
 pltcl_SPI_exec(ClientData cdata, Tcl_Interp *interp,
@@ -1724,8 +1722,8 @@ pltcl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
 	qdesc->argtypes = (Oid *) malloc(nargs * sizeof(Oid));
 	qdesc->arginfuncs = (FmgrInfo *) malloc(nargs * sizeof(FmgrInfo));
 	qdesc->argtypelems = (Oid *) malloc(nargs * sizeof(Oid));
+	qdesc->argbyvals = (bool *) malloc(nargs * sizeof(bool));
 	qdesc->argvalues = (Datum *) malloc(nargs * sizeof(Datum));
-	qdesc->arglen = (int *) malloc(nargs * sizeof(int));
 
 	/************************************************************
 	 * Prepare to start a controlled return through all
@@ -1739,8 +1737,8 @@ pltcl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
 		free(qdesc->argtypes);
 		free(qdesc->arginfuncs);
 		free(qdesc->argtypelems);
+		free(qdesc->argbyvals);
 		free(qdesc->argvalues);
-		free(qdesc->arglen);
 		free(qdesc);
 		ckfree((char *) args);
 		return TCL_ERROR;
@@ -1761,8 +1759,8 @@ pltcl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
 		perm_fmgr_info(((Form_pg_type) GETSTRUCT(typeTup))->typinput,
 					   &(qdesc->arginfuncs[i]));
 		qdesc->argtypelems[i] = ((Form_pg_type) GETSTRUCT(typeTup))->typelem;
+		qdesc->argbyvals[i] = ((Form_pg_type) GETSTRUCT(typeTup))->typbyval;
 		qdesc->argvalues[i] = (Datum) NULL;
-		qdesc->arglen[i] = (int) (((Form_pg_type) GETSTRUCT(typeTup))->typlen);
 		ReleaseSysCache(typeTup);
 	}
 
@@ -2035,10 +2033,10 @@ pltcl_SPI_execp(ClientData cdata, Tcl_Interp *interp,
 			memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
 			for (j = 0; j < callnargs; j++)
 			{
-				if (qdesc->arglen[j] < 0 &&
+				if (!qdesc->argbyvals[j] &&
 					qdesc->argvalues[j] != (Datum) NULL)
 				{
-					pfree((char *) (qdesc->argvalues[j]));
+					pfree(DatumGetPointer(qdesc->argvalues[j]));
 					qdesc->argvalues[j] = (Datum) NULL;
 				}
 			}
@@ -2060,7 +2058,7 @@ pltcl_SPI_execp(ClientData cdata, Tcl_Interp *interp,
 				FunctionCall3(&qdesc->arginfuncs[j],
 							  CStringGetDatum(UTF_U2E(callargs[j])),
 							  ObjectIdGetDatum(qdesc->argtypelems[j]),
-							  Int32GetDatum(qdesc->arglen[j]));
+							  Int32GetDatum(-1));
 			UTF_END;
 		}
 
@@ -2090,9 +2088,9 @@ pltcl_SPI_execp(ClientData cdata, Tcl_Interp *interp,
 		memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
 		for (j = 0; j < callnargs; j++)
 		{
-			if (qdesc->arglen[j] < 0 && qdesc->argvalues[j] != (Datum) NULL)
+			if (!qdesc->argbyvals[j] && qdesc->argvalues[j] != (Datum) NULL)
 			{
-				pfree((char *) (qdesc->argvalues[j]));
+				pfree(DatumGetPointer(qdesc->argvalues[j]));
 				qdesc->argvalues[j] = (Datum) NULL;
 			}
 		}
@@ -2112,9 +2110,9 @@ pltcl_SPI_execp(ClientData cdata, Tcl_Interp *interp,
 	 ************************************************************/
 	for (j = 0; j < callnargs; j++)
 	{
-		if (qdesc->arglen[j] < 0 && qdesc->argvalues[j] != (Datum) NULL)
+		if (!qdesc->argbyvals[j] && qdesc->argvalues[j] != (Datum) NULL)
 		{
-			pfree((char *) (qdesc->argvalues[j]));
+			pfree(DatumGetPointer(qdesc->argvalues[j]));
 			qdesc->argvalues[j] = (Datum) NULL;
 		}
 	}
@@ -2338,8 +2336,8 @@ pltcl_set_tuple_values(Tcl_Interp *interp, char *arrayname,
 				 attname, tupdesc->attrs[i]->atttypid);
 		}
 
-		typoutput = (Oid) (((Form_pg_type) GETSTRUCT(typeTup))->typoutput);
-		typelem = (Oid) (((Form_pg_type) GETSTRUCT(typeTup))->typelem);
+		typoutput = ((Form_pg_type) GETSTRUCT(typeTup))->typoutput;
+		typelem = ((Form_pg_type) GETSTRUCT(typeTup))->typelem;
 		ReleaseSysCache(typeTup);
 
 		/************************************************************
@@ -2355,7 +2353,7 @@ pltcl_set_tuple_values(Tcl_Interp *interp, char *arrayname,
 			outputstr = DatumGetCString(OidFunctionCall3(typoutput,
 														 attr,
 											   ObjectIdGetDatum(typelem),
-							  Int32GetDatum(tupdesc->attrs[i]->attlen)));
+							  Int32GetDatum(tupdesc->attrs[i]->atttypmod)));
 			UTF_BEGIN;
 			Tcl_SetVar2(interp, *arrptr, *nameptr, UTF_E2U(outputstr), 0);
 			UTF_END;
@@ -2410,8 +2408,8 @@ pltcl_build_tuple_argument(HeapTuple tuple, TupleDesc tupdesc,
 				 attname, tupdesc->attrs[i]->atttypid);
 		}
 
-		typoutput = (Oid) (((Form_pg_type) GETSTRUCT(typeTup))->typoutput);
-		typelem = (Oid) (((Form_pg_type) GETSTRUCT(typeTup))->typelem);
+		typoutput = ((Form_pg_type) GETSTRUCT(typeTup))->typoutput;
+		typelem = ((Form_pg_type) GETSTRUCT(typeTup))->typelem;
 		ReleaseSysCache(typeTup);
 
 		/************************************************************
@@ -2427,7 +2425,7 @@ pltcl_build_tuple_argument(HeapTuple tuple, TupleDesc tupdesc,
 			outputstr = DatumGetCString(OidFunctionCall3(typoutput,
 														 attr,
 											   ObjectIdGetDatum(typelem),
-							  Int32GetDatum(tupdesc->attrs[i]->attlen)));
+							  Int32GetDatum(tupdesc->attrs[i]->atttypmod)));
 			Tcl_DStringAppendElement(retval, attname);
 			UTF_BEGIN;
 			Tcl_DStringAppendElement(retval, UTF_E2U(outputstr));
