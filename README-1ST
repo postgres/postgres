@@ -6,5 +6,8 @@ The following list is a list of those operating systems upon which
 PostgreSQL is known to work, including the date that it was last
 tested:
 
-   FreeBSD 3.0-CURRENT (aout) ........ September 14th, 1998
+|      Operating System      |    Tested by    |      Date Tested     |
++----------------------------+-----------------+----------------------+
+| FreeBSD 3.0-CURRENT (aout) | scrappy@hub.org | September 14th, 1998 |
++----------------------------+-----------------+----------------------+
 
