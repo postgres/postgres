@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.38 2000/11/13 23:37:53 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.39 2000/11/25 06:21:54 momjian Exp $
  */
 #include "postgres.h"
 #include "command.h"
@@ -13,7 +13,8 @@
 #include <ctype.h>
 #ifndef WIN32
 #include <sys/types.h>			/* for umask() */
-#include <sys/stat.h>			/* for umask(), stat() */
+#include <sys/stat.h>			/* for stat() */
+#include <fcntl.h>				/* open() flags */
 #include <unistd.h>				/* for geteuid(), getpid(), stat() */
 #else
 #include <win32.h>
@@ -1397,7 +1398,8 @@ do_edit(const char *filename_arg, PQExpBuffer query_buf)
 	FILE	   *stream;
 	const char *fname;
 	bool		error = false;
-
+	int			fd;
+	
 #ifndef WIN32
 	struct stat before,
 				after;
@@ -1411,7 +1413,6 @@ do_edit(const char *filename_arg, PQExpBuffer query_buf)
 	{
 		/* make a temp file to edit */
 #ifndef WIN32
-		mode_t		oldumask;
 		const char *tmpdirenv = getenv("TMPDIR");
 
 		sprintf(fnametmp, "%s/psql.edit.%ld.%ld",
@@ -1422,15 +1423,11 @@ do_edit(const char *filename_arg, PQExpBuffer query_buf)
 #endif
 		fname = (const char *) fnametmp;
 
-#ifndef WIN32
-		oldumask = umask(0177);
-#endif
-		stream = fopen(fname, "w");
-#ifndef WIN32
-		umask(oldumask);
-#endif
+		fd = open(fname, O_WRONLY|O_CREAT|O_EXCL, 0600);
+		if (fd != -1)
+			stream = fdopen(fd, "w");
 
-		if (!stream)
+		if (fd == -1 || !stream)
 		{
 			psql_error("couldn't open temp file %s: %s\n", fname, strerror(errno));
 			error = true;
