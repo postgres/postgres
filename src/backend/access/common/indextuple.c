@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.24 1998/02/04 21:32:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.25 1998/02/05 17:22:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -293,7 +293,7 @@ nocache_index_getattr(IndexTuple tup,
 		while (att[j]->attcacheoff > 0)
 			j++;
 
-		if (!VARLENA_FIXED_SIZE(att[j]))
+		if (!VARLENA_FIXED_SIZE(att[j-1]))
 			off = att[j - 1]->attcacheoff + att[j - 1]->attlen;
 		else
 			off = att[j - 1]->attcacheoff + att[j - 1]->atttypmod;

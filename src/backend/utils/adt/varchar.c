@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.24 1998/01/16 23:20:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.25 1998/02/05 17:22:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,7 +60,7 @@ bpcharin(char *s, int dummy, int atttypmod)
 	if (s == NULL)
 		return ((char *) NULL);
 
-	if (atttypmod == -1)
+	if (atttypmod < 1)
 	{
 
 		/*
@@ -133,7 +133,7 @@ varcharin(char *s, int dummy, int atttypmod)
 		return ((char *) NULL);
 
 	len = strlen(s) + VARHDRSZ;
-	if (atttypmod != -1 && len > atttypmod)
+	if (atttypmod > 0 && len > atttypmod)
 		len = atttypmod;	/* clip the string at max length */
 
 	if (len > 4096)
