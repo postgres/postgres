@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.367 2004/03/03 21:28:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.368 2004/03/20 20:09:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,6 +67,15 @@ extern int	optind,
 			opterr;
 
 
+typedef struct
+{
+	const char *descr;			/* comment for an object */
+	Oid			classoid;		/* object class (catalog OID) */
+	Oid			objoid;			/* object OID */
+	int			objsubid;		/* subobject (table column #) */
+} CommentItem;
+
+
 /* global decls */
 bool		g_verbose;			/* User wants verbose narration of our
 								 * activities. */
@@ -105,6 +114,9 @@ static void dumpTableData(Archive *fout, TableDataInfo *tdinfo);
 static void dumpComment(Archive *fout, const char *target,
 			const char *namespace, const char *owner,
 			CatalogId catalogId, int subid, DumpId dumpId);
+static int	findComments(Archive *fout, Oid classoid, Oid objoid,
+						 CommentItem **items);
+static int	collectComments(Archive *fout, CommentItem **items);
 static void dumpDumpableObject(Archive *fout, DumpableObject *dobj);
 static void dumpNamespace(Archive *fout, NamespaceInfo *nspinfo);
 static void dumpType(Archive *fout, TypeInfo *tinfo);
@@ -3880,58 +3892,33 @@ dumpComment(Archive *fout, const char *target,
 			const char *namespace, const char *owner,
 			CatalogId catalogId, int subid, DumpId dumpId)
 {
-	PGresult   *res;
-	PQExpBuffer query;
-	int			i_description;
+	CommentItem *comments;
+	int			ncomments;
 
 	/* Comments are SCHEMA not data */
 	if (dataOnly)
 		return;
 
-	/*
-	 * Note we do NOT change source schema here; preserve the caller's
-	 * setting, instead.
-	 */
+	/* Search for comments associated with catalogId, using table */
+	ncomments = findComments(fout, catalogId.tableoid, catalogId.oid,
+							 &comments);
 
-	/* Build query to find comment */
-
-	query = createPQExpBuffer();
-
-	if (fout->remoteVersion >= 70300)
+	/* Is there one matching the subid? */
+	while (ncomments > 0)
 	{
-		appendPQExpBuffer(query,
-						  "SELECT description FROM pg_catalog.pg_description "
-						  "WHERE classoid = '%u'::pg_catalog.oid and "
-						  "objoid = '%u'::pg_catalog.oid and objsubid = %d",
-						  catalogId.tableoid, catalogId.oid, subid);
+		if (comments->objsubid == subid)
+			break;
+		comments++;
+		ncomments--;
 	}
-	else if (fout->remoteVersion >= 70200)
-	{
-		appendPQExpBuffer(query,
-						  "SELECT description FROM pg_description "
-						  "WHERE classoid = '%u'::oid and "
-						  "objoid = '%u'::oid and objsubid = %d",
-						  catalogId.tableoid, catalogId.oid, subid);
-	}
-	else
-	{
-		/* Note: this will fail to find attribute comments in pre-7.2... */
-		appendPQExpBuffer(query, "SELECT description FROM pg_description WHERE objoid = '%u'::oid", catalogId.oid);
-	}
-
-	/* Execute query */
-
-	res = PQexec(g_conn, query->data);
-	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
 
 	/* If a comment exists, build COMMENT ON statement */
-
-	if (PQntuples(res) == 1)
+	if (ncomments > 0)
 	{
-		i_description = PQfnumber(res, "description");
-		resetPQExpBuffer(query);
+		PQExpBuffer query = createPQExpBuffer();
+
 		appendPQExpBuffer(query, "COMMENT ON %s IS ", target);
-		appendStringLiteral(query, PQgetvalue(res, 0, i_description), false);
+		appendStringLiteral(query, comments->descr, false);
 		appendPQExpBuffer(query, ";\n");
 
 		ArchiveEntry(fout, nilCatalogId, createDumpId(),
@@ -3939,82 +3926,47 @@ dumpComment(Archive *fout, const char *target,
 					 "COMMENT", query->data, "", NULL,
 					 &(dumpId), 1,
 					 NULL, NULL);
-	}
 
-	PQclear(res);
-	destroyPQExpBuffer(query);
+		destroyPQExpBuffer(query);
+	}
 }
 
 /*
  * dumpTableComment --
  *
  * As above, but dump comments for both the specified table (or view)
- * and its columns.  For speed, we want to do this with only one query.
+ * and its columns.
  */
 static void
 dumpTableComment(Archive *fout, TableInfo *tbinfo,
 				 const char *reltypename)
 {
-	PGresult   *res;
+	CommentItem *comments;
+	int			ncomments;
 	PQExpBuffer query;
 	PQExpBuffer target;
-	int			i_description;
-	int			i_objsubid;
-	int			ntups;
-	int			i;
 
 	/* Comments are SCHEMA not data */
 	if (dataOnly)
 		return;
 
-	/*
-	 * Note we do NOT change source schema here; preserve the caller's
-	 * setting, instead.
-	 */
+	/* Search for comments associated with relation, using table */
+	ncomments = findComments(fout,
+							 tbinfo->dobj.catId.tableoid,
+							 tbinfo->dobj.catId.oid,
+							 &comments);
 
-	/* Build query to find comments */
+	/* If comments exist, build COMMENT ON statements */
+	if (ncomments <= 0)
+		return;
 
 	query = createPQExpBuffer();
 	target = createPQExpBuffer();
 
-	if (fout->remoteVersion >= 70300)
+	while (ncomments > 0)
 	{
-		appendPQExpBuffer(query, "SELECT description, objsubid FROM pg_catalog.pg_description "
-						  "WHERE classoid = '%u'::pg_catalog.oid and "
-						  "objoid = '%u'::pg_catalog.oid "
-						  "ORDER BY objoid, classoid, objsubid",
-						  tbinfo->dobj.catId.tableoid, tbinfo->dobj.catId.oid);
-	}
-	else if (fout->remoteVersion >= 70200)
-	{
-		appendPQExpBuffer(query, "SELECT description, objsubid FROM pg_description "
-						  "WHERE classoid = '%u'::oid and "
-						  "objoid = '%u'::oid "
-						  "ORDER BY objoid, classoid, objsubid",
-						  tbinfo->dobj.catId.tableoid, tbinfo->dobj.catId.oid);
-	}
-	else
-	{
-		/* Note: this will fail to find attribute comments in pre-7.2... */
-		appendPQExpBuffer(query, "SELECT description, 0 as objsubid FROM pg_description WHERE objoid = '%u'::oid",
-						  tbinfo->dobj.catId.oid);
-	}
-
-	/* Execute query */
-
-	res = PQexec(g_conn, query->data);
-	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
-
-	i_description = PQfnumber(res, "description");
-	i_objsubid = PQfnumber(res, "objsubid");
-
-	/* If comments exist, build COMMENT ON statements */
-
-	ntups = PQntuples(res);
-	for (i = 0; i < ntups; i++)
-	{
-		const char *descr = PQgetvalue(res, i, i_description);
-		int			objsubid = atoi(PQgetvalue(res, i, i_objsubid));
+		const char *descr = comments->descr;
+		int			objsubid = comments->objsubid;
 
 		if (objsubid == 0)
 		{
@@ -4054,11 +4006,181 @@ dumpTableComment(Archive *fout, TableInfo *tbinfo,
 						 &(tbinfo->dobj.dumpId), 1,
 						 NULL, NULL);
 		}
+
+		comments++;
+		ncomments--;
 	}
 
-	PQclear(res);
 	destroyPQExpBuffer(query);
 	destroyPQExpBuffer(target);
+}
+
+/*
+ * findComments --
+ *
+ * Find the comment(s), if any, associated with the given object.  All the
+ * objsubid values associated with the given classoid/objoid are found with
+ * one search.
+ */
+static int
+findComments(Archive *fout, Oid classoid, Oid objoid,
+			 CommentItem **items)
+{
+	/* static storage for table of comments */
+	static CommentItem *comments = NULL;
+	static int	ncomments = -1;
+
+	CommentItem *middle = NULL;
+	CommentItem *low;
+	CommentItem *high;
+	int			nmatch;
+
+	/* Get comments if we didn't already */
+	if (ncomments < 0)
+		ncomments = collectComments(fout, &comments);
+
+	/*
+	 * Pre-7.2, pg_description does not contain classoid, so collectComments
+	 * just stores a zero.  If there's a collision on object OID, well, you
+	 * get duplicate comments.
+	 */
+	if (fout->remoteVersion < 70200)
+		classoid = 0;
+
+	/*
+	 * Do binary search to find some item matching the object.
+	 */
+	low = &comments[0];
+	high = &comments[ncomments-1];
+	while (low <= high)
+	{
+		middle = low + (high - low) / 2;
+
+		if (classoid < middle->classoid)
+			high = middle - 1;
+		else if (classoid > middle->classoid)
+			low = middle + 1;
+		else if (objoid < middle->objoid)
+			high = middle - 1;
+		else if (objoid > middle->objoid)
+			low = middle + 1;
+		else
+			break;				/* found a match */
+	}
+
+	if (low > high)				/* no matches */
+	{
+		*items = NULL;
+		return 0;
+	}
+
+	/*
+	 * Now determine how many items match the object.  The search loop
+	 * invariant still holds: only items between low and high inclusive
+	 * could match.
+	 */
+	nmatch = 1;
+	while (middle > low)
+	{
+		if (classoid != middle[-1].classoid ||
+			objoid != middle[-1].objoid)
+			break;
+		middle--;
+		nmatch++;
+	}
+
+	*items = middle;
+
+	middle += nmatch;
+	while (middle <= high)
+	{
+		if (classoid != middle->classoid ||
+			objoid != middle->objoid)
+			break;
+		middle++;
+		nmatch++;
+	}
+
+	return nmatch;
+}
+
+/*
+ * collectComments --
+ *
+ * Construct a table of all comments available for database objects.
+ * We used to do per-object queries for the comments, but it's much faster
+ * to pull them all over at once, and on most databases the memory cost
+ * isn't high.
+ *
+ * The table is sorted by classoid/objid/objsubid for speed in lookup.
+ */
+static int
+collectComments(Archive *fout, CommentItem **items)
+{
+	PGresult   *res;
+	PQExpBuffer query;
+	int			i_description;
+	int			i_classoid;
+	int			i_objoid;
+	int			i_objsubid;
+	int			ntups;
+	int			i;
+	CommentItem *comments;
+
+	/*
+	 * Note we do NOT change source schema here; preserve the caller's
+	 * setting, instead.
+	 */
+
+	query = createPQExpBuffer();
+
+	if (fout->remoteVersion >= 70300)
+	{
+		appendPQExpBuffer(query, "SELECT description, classoid, objoid, objsubid "
+						  "FROM pg_catalog.pg_description "
+						  "ORDER BY classoid, objoid, objsubid");
+	}
+	else if (fout->remoteVersion >= 70200)
+	{
+		appendPQExpBuffer(query, "SELECT description, classoid, objoid, objsubid "
+						  "FROM pg_description "
+						  "ORDER BY classoid, objoid, objsubid");
+	}
+	else
+	{
+		/* Note: this will fail to find attribute comments in pre-7.2... */
+		appendPQExpBuffer(query, "SELECT description, 0 as classoid, objoid, 0 as objsubid "
+						  "FROM pg_description "
+						  "ORDER BY objoid");
+	}
+
+	res = PQexec(g_conn, query->data);
+	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+
+	/* Construct lookup table containing OIDs in numeric form */
+
+	i_description = PQfnumber(res, "description");
+	i_classoid = PQfnumber(res, "classoid");
+	i_objoid = PQfnumber(res, "objoid");
+	i_objsubid = PQfnumber(res, "objsubid");
+
+	ntups = PQntuples(res);
+
+	comments = (CommentItem *) malloc(ntups * sizeof(CommentItem));
+
+	for (i = 0; i < ntups; i++)
+	{
+		comments[i].descr = PQgetvalue(res, i, i_description);
+		comments[i].classoid = atooid(PQgetvalue(res, i, i_classoid));
+		comments[i].objoid = atooid(PQgetvalue(res, i, i_objoid));
+		comments[i].objsubid = atoi(PQgetvalue(res, i, i_objsubid));
+	}
+
+	/* Do NOT free the PGresult since we are keeping pointers into it */
+	destroyPQExpBuffer(query);
+
+	*items = comments;
+	return ntups;
 }
 
 /*
