@@ -8,6 +8,7 @@ extern char *strtokx(const char *s,
 		const char *quote,
 		char escape,
 		char *was_quoted,
-		unsigned int *token_pos);
+		unsigned int *token_pos,
+		int encoding);
 
 #endif	 /* STRINGUTILS_H */

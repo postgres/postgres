@@ -27,10 +27,10 @@ typedef enum _backslashResult
 backslashResult
 HandleSlashCmds(const char *line,
 				PQExpBuffer query_buf,
-				const char **end_of_cmd);
+				const char **end_of_cmd, int encoding);
 
 bool
-process_file(const char *filename);
+process_file(const char *filename, int encoding);
 
 bool
 do_pset(const char *param,

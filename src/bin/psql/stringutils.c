@@ -41,7 +41,8 @@ strtokx(const char *s,
 		const char *quote,
 		char escape,
 		char *was_quoted,
-		unsigned int *token_pos)
+		unsigned int *token_pos,
+		int encoding)
 {
 	static char *storage = NULL;/* store the local copy of the users
 								 * string here */
@@ -93,7 +94,7 @@ strtokx(const char *s,
 		for (p = start;
 			 *p && (*p != *cp || *(p - 1) == escape);
 #ifdef MULTIBYTE
-			 p += PQmblen(p)
+			 p += PQmblen(p, encoding)
 #else
 			 p++
 #endif

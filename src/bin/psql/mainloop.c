@@ -25,7 +25,7 @@
  * FIXME: rewrite this whole thing with flex
  */
 int
-MainLoop(FILE *source)
+MainLoop(FILE *source, int encoding)
 {
 	PQExpBuffer query_buf;		/* buffer for query being accumulated */
     PQExpBuffer previous_buf;   /* if there isn't anything in the new buffer
@@ -212,10 +212,10 @@ MainLoop(FILE *source)
 		 * The current character is at line[i], the prior character at line[i
 		 * - prevlen], the next character at line[i + thislen].
 		 */
-#define ADVANCE_1 (prevlen = thislen, i += thislen, thislen = PQmblen(line+i))
+#define ADVANCE_1 (prevlen = thislen, i += thislen, thislen = PQmblen(line+i, encoding))
 
 		success = true;
-		for (i = 0, prevlen = 0, thislen = (len > 0) ? PQmblen(line) : 0;
+		for (i = 0, prevlen = 0, thislen = (len > 0) ? PQmblen(line, encoding) : 0;
              i < len;
              ADVANCE_1)
 		{
@@ -373,7 +373,7 @@ MainLoop(FILE *source)
                 /* handle backslash command */
                 slashCmdStatus = HandleSlashCmds(&line[i], 
                                                  query_buf->len>0 ? query_buf : previous_buf,
-                                                 &end_of_cmd);
+                                                 &end_of_cmd, encoding);
 
 				success = slashCmdStatus != CMD_ERROR;
 

@@ -8,7 +8,7 @@
 
 /* handler for \copy */
 bool
-			do_copy(const char *args);
+			do_copy(const char *args, int encoding);
 
 
 /* lower level processors for copy in/out streams */

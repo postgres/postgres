@@ -190,10 +190,10 @@ main(int argc, char **argv)
 
 	/* process file given by -f */
 	if (options.action == ACT_FILE)
-		successResult = process_file(options.action_string) ? 0 : 1;
+		successResult = process_file(options.action_string, PQclientencoding(pset.db)) ? 0 : 1;
 	/* process slash command if one was given to -c */
 	else if (options.action == ACT_SINGLE_SLASH)
-		successResult = HandleSlashCmds(options.action_string, NULL, NULL) != CMD_ERROR ? 0 : 1;
+		successResult = HandleSlashCmds(options.action_string, NULL, NULL, PQclientencoding(pset.db)) != CMD_ERROR ? 0 : 1;
 	/* If the query given to -c was a normal one, send it */
 	else if (options.action == ACT_SINGLE_QUERY)
 		successResult = SendQuery( options.action_string) ? 0 : 1;
@@ -202,7 +202,7 @@ main(int argc, char **argv)
     {
         process_psqlrc();
         initializeInput(options.no_readline ? 0 : 1);
-		successResult = MainLoop(stdin);
+		successResult = MainLoop(stdin, PQclientencoding(pset.db));
         finishInput();
     }
 
@@ -465,16 +465,20 @@ process_psqlrc(void)
 {
 	char	   *psqlrc;
 	char	   *home;
+	int	   encoding;
 
 #ifdef WIN32
 #define R_OK 0
 #endif
 
+	/* get client side encoding from envrionment variable if any */
+	encoding = PQenv2encoding();
+
 	/* System-wide startup file */
 	if (access("/etc/psqlrc-" PG_RELEASE "." PG_VERSION "." PG_SUBVERSION, R_OK) == 0)
-		process_file("/etc/psqlrc-" PG_RELEASE "." PG_VERSION "." PG_SUBVERSION);
+		process_file("/etc/psqlrc-" PG_RELEASE "." PG_VERSION "." PG_SUBVERSION, encoding);
 	else if (access("/etc/psqlrc", R_OK) == 0)
-		process_file("/etc/psqlrc");
+		process_file("/etc/psqlrc", encoding);
 
 	/* Look for one in the home dir */
 	home = getenv("HOME");
@@ -490,12 +494,12 @@ process_psqlrc(void)
 
 		sprintf(psqlrc, "%s/.psqlrc-" PG_RELEASE "." PG_VERSION "." PG_SUBVERSION, home);
 		if (access(psqlrc, R_OK) == 0)
-			process_file(psqlrc);
+			process_file(psqlrc, encoding);
 		else
 		{
 			sprintf(psqlrc, "%s/.psqlrc", home);
 			if (access(psqlrc, R_OK) == 0)
-				process_file(psqlrc);
+				process_file(psqlrc, encoding);
 		}
 		free(psqlrc);
 	}

@@ -38,11 +38,12 @@
 static backslashResult exec_command(const char *cmd,
 			 char *const * options,
 			 const char *options_string,
-			 PQExpBuffer query_buf);
+			 PQExpBuffer query_buf,
+			 int encoding);
 
 static bool do_edit(const char *filename_arg, PQExpBuffer query_buf);
 
-static char * unescape(const char *source);
+static char * unescape(const char *source, int encoding);
 
 static bool do_connect(const char *new_dbname,
                        const char *new_user);
@@ -79,7 +80,8 @@ static bool do_shell(const char *command);
 backslashResult
 HandleSlashCmds(const char *line,
 				PQExpBuffer query_buf,
-				const char **end_of_cmd)
+				const char **end_of_cmd,
+				int encoding)
 {
 	backslashResult status = CMD_SKIP_LINE;
 	char	   *my_line;
@@ -131,14 +133,14 @@ HandleSlashCmds(const char *line,
 																				 * whitespace */
 
 		i = 0;
-		token = strtokx(options_string, " \t", "\"'`", '\\', &quote, &pos);
+		token = strtokx(options_string, " \t", "\"'`", '\\', &quote, &pos, encoding);
 
 		for (i = 0; token && i < NR_OPTIONS; i++)
 		{
 			switch (quote)
 			{
 				case '"':
-					options[i] = unescape(token);
+					options[i] = unescape(token, encoding);
 					break;
 				case '\'':
 					options[i] = xstrdup(token);
@@ -147,7 +149,7 @@ HandleSlashCmds(const char *line,
 					{
 						bool		error = false;
 						FILE	   *fd = NULL;
-						char	   *file = unescape(token);
+						char	   *file = unescape(token, encoding);
 						PQExpBufferData output;
 						char		buf[512];
 						size_t		result;
@@ -217,14 +219,14 @@ HandleSlashCmds(const char *line,
 			if (continue_parse)
 				break;
 
-			token = strtokx(NULL, " \t", "\"'`", '\\', &quote, &pos);
+			token = strtokx(NULL, " \t", "\"'`", '\\', &quote, &pos, encoding);
 		} /* for */
 
         options[i] = NULL;
 	}
 
 	cmd = my_line;
-	status = exec_command(cmd, options, options_string, query_buf);
+	status = exec_command(cmd, options, options_string, query_buf, encoding);
 
 	if (status == CMD_UNKNOWN)
 	{
@@ -246,7 +248,7 @@ HandleSlashCmds(const char *line,
 		new_cmd[0] = cmd[0];
 		new_cmd[1] = '\0';
 
-		status = exec_command(new_cmd, (char *const *) new_options, my_line + 2, query_buf);
+		status = exec_command(new_cmd, (char *const *) new_options, my_line + 2, query_buf, encoding);
 	}
 
 	if (status == CMD_UNKNOWN)
@@ -283,7 +285,8 @@ static backslashResult
 exec_command(const char *cmd,
 			 char *const * options,
 			 const char *options_string,
-			 PQExpBuffer query_buf)
+			 PQExpBuffer query_buf,
+			 int encoding)
 {
 	bool		success = true; /* indicate here if the command ran ok or
 								 * failed */
@@ -338,7 +341,7 @@ exec_command(const char *cmd,
 
 	/* \copy */
 	else if (strcasecmp(cmd, "copy") == 0)
-		success = do_copy(options_string);
+		success = do_copy(options_string, encoding);
 
 	/* \copyright */
 	else if (strcmp(cmd, "copyright") == 0)
@@ -465,7 +468,7 @@ exec_command(const char *cmd,
 			success = false;
 		}
 		else
-			success = process_file(options[0]);
+			success = process_file(options[0], encoding);
 	}
 
 
@@ -768,7 +771,7 @@ exec_command(const char *cmd,
  * The return value is malloc()'ed.
  */
 static char *
-unescape(const char *source)
+unescape(const char *source, int encoding)
 {
 	unsigned char *p;
 	bool		esc = false;	/* Last character we saw was the escape
@@ -790,7 +793,7 @@ unescape(const char *source)
 		exit(EXIT_FAILURE);
 	}
 
-	for (p = (char *) source; *p; p += PQmblen(p))
+	for (p = (char *) source; *p; p += PQmblen(p, encoding))
 	{
 		if (esc)
 		{
@@ -1219,7 +1222,7 @@ do_edit(const char *filename_arg, PQExpBuffer query_buf)
  * Handler for \i, but can be used for other things as well.
  */
 bool
-process_file(const char *filename)
+process_file(const char *filename, int encoding)
 {
 	FILE	   *fd;
 	int			result;
@@ -1241,7 +1244,7 @@ process_file(const char *filename)
 		return false;
 	}
 
-	result = MainLoop(fd);
+	result = MainLoop(fd, encoding);
 	fclose(fd);
 	return (result == EXIT_SUCCESS);
 }

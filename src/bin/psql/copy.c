@@ -58,7 +58,7 @@ free_copy_options(struct copy_options * ptr)
 
 
 static struct copy_options *
-parse_slash_copy(const char *args)
+parse_slash_copy(const char *args, int encoding)
 {
 	struct copy_options *result;
 	char	   *line;
@@ -74,7 +74,7 @@ parse_slash_copy(const char *args)
 		exit(EXIT_FAILURE);
 	}
 
-	token = strtokx(line, " \t", "\"", '\\', &quote, NULL);
+	token = strtokx(line, " \t", "\"", '\\', &quote, NULL, encoding);
 	if (!token)
 		error = true;
 	else
@@ -84,7 +84,7 @@ parse_slash_copy(const char *args)
         if (!quote && strcasecmp(token, "binary") == 0)
 		{
 			result->binary = true;
-			token = strtokx(NULL, " \t", "\"", '\\', &quote, NULL);
+			token = strtokx(NULL, " \t", "\"", '\\', &quote, NULL, encoding);
 			if (!token)
 				error = true;
 		}
@@ -99,14 +99,14 @@ parse_slash_copy(const char *args)
 
 	if (!error)
 	{
-		token = strtokx(NULL, " \t", NULL, '\\', NULL, NULL);
+		token = strtokx(NULL, " \t", NULL, '\\', NULL, NULL, encoding);
 		if (!token)
 			error = true;
 		else
 		{
 			if (strcasecmp(token, "with") == 0)
 			{
-				token = strtokx(NULL, " \t", NULL, '\\', NULL, NULL);
+				token = strtokx(NULL, " \t", NULL, '\\', NULL, NULL, encoding);
 				if (!token || strcasecmp(token, "oids") != 0)
 					error = true;
 				else
@@ -114,7 +114,7 @@ parse_slash_copy(const char *args)
 
 				if (!error)
 				{
-					token = strtokx(NULL, " \t", NULL, '\\', NULL, NULL);
+					token = strtokx(NULL, " \t", NULL, '\\', NULL, NULL, encoding);
 					if (!token)
 						error = true;
 				}
@@ -131,7 +131,7 @@ parse_slash_copy(const char *args)
 
 	if (!error)
 	{
-		token = strtokx(NULL, " \t", "'", '\\', &quote, NULL);
+		token = strtokx(NULL, " \t", "'", '\\', &quote, NULL, encoding);
 		if (!token)
 			error = true;
 		else if (!quote && (strcasecmp(token, "stdin")==0 || strcasecmp(token, "stdout")==0))
@@ -142,21 +142,21 @@ parse_slash_copy(const char *args)
 
 	if (!error)
 	{
-		token = strtokx(NULL, " \t", NULL, '\\', NULL, NULL);
+		token = strtokx(NULL, " \t", NULL, '\\', NULL, NULL, encoding);
 		if (token)
 		{
 			if (strcasecmp(token, "using") == 0)
 			{
-				token = strtokx(NULL, " \t", NULL, '\\', NULL, NULL);
+				token = strtokx(NULL, " \t", NULL, '\\', NULL, NULL, encoding);
 				if (!token || strcasecmp(token, "delimiters") != 0)
 					error = true;
 				else
 				{
-					token = strtokx(NULL, " \t", "'", '\\', NULL, NULL);
+					token = strtokx(NULL, " \t", "'", '\\', NULL, NULL, encoding);
 					if (token)
                     {
 						result->delim = xstrdup(token);
-                        token = strtokx(NULL, " \t", NULL, '\\', NULL, NULL);
+                        token = strtokx(NULL, " \t", NULL, '\\', NULL, NULL, encoding);
                     }
 					else
 						error = true;
@@ -167,17 +167,17 @@ parse_slash_copy(const char *args)
             {
                 if (strcasecmp(token, "with") == 0)
                 {
-                    token = strtokx(NULL, " \t", NULL, '\\', NULL, NULL);
+                    token = strtokx(NULL, " \t", NULL, '\\', NULL, NULL, encoding);
                     if (!token || strcasecmp(token, "null") != 0)
                         error = true;
                     else
                     {
-                        token = strtokx(NULL, " \t", NULL, '\\', NULL, NULL);
+                        token = strtokx(NULL, " \t", NULL, '\\', NULL, NULL, encoding);
                         if (!token || strcasecmp(token, "as") != 0)
                             error = true;
                         else
                         {
-                            token = strtokx(NULL, " \t", "'", '\\', NULL, NULL);
+                            token = strtokx(NULL, " \t", "'", '\\', NULL, NULL, encoding);
                             if (token)
                                 result->null = xstrdup(token);
                         }
@@ -214,7 +214,7 @@ parse_slash_copy(const char *args)
  * file or route its response into the file.
  */
 bool
-do_copy(const char *args)
+do_copy(const char *args, int encoding)
 {
 	char		query[128 + NAMEDATALEN];
 	FILE	   *copystream;
@@ -223,7 +223,7 @@ do_copy(const char *args)
 	bool		success;
 
 	/* parse options */
-	options = parse_slash_copy(args);
+	options = parse_slash_copy(args, encoding);
 
 	if (!options)
 		return false;

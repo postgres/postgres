@@ -3,6 +3,6 @@
 
 #include <stdio.h>
 
-int MainLoop(FILE *source);
+int MainLoop(FILE *source, int encoding);
 
 #endif	 /* MAINLOOP_H */
