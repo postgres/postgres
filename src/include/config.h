@@ -184,50 +184,69 @@
 #define DEADLOCK_TIMEOUT 60
 
 
-/* Fixes use of indexes infunctions */
 #define INDEXSCAN_PATCH 
 
-/* found in src/backend/utils/adt/date.c */
 /* #define DATEDEBUG */
 
-/* found in src/backend/utils/adt/datetimes.c */
 /* #define USE_SHORT_YEAR */
 /* #define AMERICAN_STYLE */
 
-/*----------------------------------------*/
-/* found in src/backend/utils/adt/float.c */
-/*------------------------------------------------------*/
-/* defining unsafe floats's will make float4 and float8 */
-/* ops faster at the cost of safety, of course!         */
-/*------------------------------------------------------*/
+/*
+ * defining unsafe floats's will make float4 and float8
+ * ops faster at the cost of safety, of course!        
+ */
 /* #define UNSAFE_FLOATS */
 
 /*
-
-There is a bug in the function executor. The backend crashes while trying to
-execute an sql function containing an utility command (create, notify, ...).
-The bug is part in the planner, which returns a number of plans different
-than the number of commands if there are utility commands in the query, and
-in part in the function executor which assumes that all commands are normal
-query commands and causes a SIGSEGV trying to execute commands without plan.
-
-*/
+ * There is a bug in the function executor. The backend crashes while trying to
+ * execute an sql function containing an utility command (create, notify, ...).
+ * The bug is part in the planner, which returns a number of plans different
+ * than the number of commands if there are utility commands in the query, and
+ * in part in the function executor which assumes that all commands are normal
+ * query commands and causes a SIGSEGV trying to execute commands without plan.
+ */
 #define FUNC_UTIL_PATCH
 
 /*
-
-Async notifies received while a backend is in the middle of a begin/end
-transaction block are lost by libpq when the final end command is issued.
-
-The bug is in the routine PQexec of libpq. The routine throws away any
-message from the backend when a message of type 'C' is received. This
-type of message is sent when the result of a portal query command with
-no tuples is returned. Unfortunately this is the case of the end command.
-As all async notification are sent only when the transaction is finished,
-if they are received in the middle of a transaction they are lost in the
-libpq library. I added some tracing code to PQexec and this is the output:
-
-*/
+ * Async notifies received while a backend is in the middle of a begin/end
+ * transaction block are lost by libpq when the final end command is issued.
+ * 
+ * The bug is in the routine PQexec of libpq. The routine throws away any
+ * message from the backend when a message of type 'C' is received. This
+ * type of message is sent when the result of a portal query command with
+ * no tuples is returned. Unfortunately this is the case of the end command.
+ * As all async notification are sent only when the transaction is finished,
+ * if they are received in the middle of a transaction they are lost in the
+ * libpq library. I added some tracing code to PQexec and this is the output:
+ */
 #define PQ_NOTIFY_PATCH
+
+/* Debug #defines */
+/* #define IPORTAL_DEBUG /* access/common/printtup.c */
+/* #define HEAPDEBUGALL /* access/heap/heapam.c */
+/* #define ISTRATDEBUG /* access/index/istrat.c */
+/* #define FASTBUILD_DEBUG /* access/nbtree/nbtsort.c */
+#define RTDEBUG /* access/rtree/rtree.c */
+#define GISTDEBUG /* access/gist/gist.c */
+
+
+/* The following don't have any apparent purpose, but are in the
+ * code.  someday, will take them out altogether, but for now, 
+ * document them here
+ */
+/* #define OMIT_PARTIAL_INDEX /* access/hash/hash.c */
+/* #define PERFECT_MMGR /* access/hash/hash.c */
+/* #define PERFECT_MEM /* access/hash/hashscan.c */
+/* #define NO_BUFFERISVALID /* access/heap/heapam.c */
+
+
+/* Undocumented "features"? */
+#define FASTBUILD /* access/nbtree/nbtsort.c */
+
+
+
+
+
+
 #endif /* CONFIG_H */
 
