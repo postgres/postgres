@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.96 2000/12/27 23:59:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.97 2001/01/23 02:32:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1478,11 +1478,6 @@ setup_field_select(Node *input, char *attname, Oid relid)
 	AttrNumber	attno;
 
 	attno = get_attnum(relid, attname);
-
-	/* XXX Is there still a reason for this restriction? */
-	if (attno < 0)
-		elog(ERROR, "Cannot reference attribute '%s'"
-			 " of tuple params/return values for functions", attname);
 
 	fselect->arg = input;
 	fselect->fieldnum = attno;
