@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/Attic/catalog_utils.c,v 1.5 1996/10/31 05:54:27 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/Attic/catalog_utils.c,v 1.6 1996/11/04 04:35:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -472,10 +472,8 @@ oper(char *op, int arg1, int arg2)
     CandidateList candidates;
     int ncandidates;
 
-#ifdef NULL_PATCH
     if (!arg2) arg2=arg1;
     if (!arg1) arg1=arg2;
-#endif
 
     if (!(tup = SearchSysCacheTuple(OPRNAME,
 				    PointerGetDatum(op),

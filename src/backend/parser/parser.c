@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.3 1996/10/31 11:09:44 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.4 1996/11/04 04:35:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -302,10 +302,8 @@ parser_typecast2(Node *expr, int exprType, Type tp, int typlen)
     Assert(IsA(expr,Const));
     
     switch (exprType) {
-#ifdef NULL_PATCH
       case 0: /* NULL */
 	break;
-#endif
     case 23: /* int4 */
 	const_string = (char *) palloc(256);
 	string_palloced = true;
@@ -356,7 +354,6 @@ parser_typecast2(Node *expr, int exprType, Type tp, int typlen)
 	elog(WARN,"unknown type%d ",exprType);
     }
     
-#ifdef NULL_PATCH
     if (!exprType) {
 	adt = makeConst((Oid)typeid(tp),
 			(Size) 0,
@@ -366,7 +363,6 @@ parser_typecast2(Node *expr, int exprType, Type tp, int typlen)
 			0 	/* not a set */);
 	return ((Node*) adt);
     }
-#endif
 
     cp = instr2 (tp, const_string, typlen);
     

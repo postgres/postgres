@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.10 1996/11/04 04:19:41 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.11 1996/11/04 04:35:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1234,11 +1234,9 @@ make_targetlist_expr(ParseState *pstate,
 	 elog(WARN, "make_targetlist_expr: invalid use of NULL expression");
 
      type_id = exprType(expr);
-#ifdef NULL_PATCH
      if (!type_id) {
 	 type_len = 0;
      } else
-#endif
      type_len = tlen(get_id_type(type_id));
 
      /* I have no idea what the following does! */

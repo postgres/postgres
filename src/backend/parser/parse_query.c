@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/Attic/parse_query.c,v 1.5 1996/10/30 02:01:59 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/Attic/parse_query.c,v 1.6 1996/11/04 04:35:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -651,11 +651,7 @@ make_const(Value *value)
 
 	    /* null const */
 	    con = makeConst(0, 0, (Datum)NULL, TRUE, 0, FALSE);
-#ifdef NULL_PATCH
 	    return con;
-#else
-	    return NULL /*con*/;
-#endif
 	}
     }
 
