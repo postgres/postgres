@@ -25,7 +25,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.48 2001/03/31 23:13:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.49 2001/05/28 15:29:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -400,14 +400,20 @@ pqReadData(PGconn *conn)
 	/* Left-justify any data in the buffer to make room */
 	if (conn->inStart < conn->inEnd)
 	{
-		memmove(conn->inBuffer, conn->inBuffer + conn->inStart,
-				conn->inEnd - conn->inStart);
-		conn->inEnd -= conn->inStart;
-		conn->inCursor -= conn->inStart;
-		conn->inStart = 0;
+		if (conn->inStart > 0)
+		{
+			memmove(conn->inBuffer, conn->inBuffer + conn->inStart,
+					conn->inEnd - conn->inStart);
+			conn->inEnd -= conn->inStart;
+			conn->inCursor -= conn->inStart;
+			conn->inStart = 0;
+		}
 	}
 	else
+	{
+		/* buffer is logically empty, reset it */
 		conn->inStart = conn->inCursor = conn->inEnd = 0;
+	}
 
 	/*
 	 * If the buffer is fairly full, enlarge it. We need to be able to
