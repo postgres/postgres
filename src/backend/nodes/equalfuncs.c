@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.111 2002/02/26 22:47:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.112 2002/03/01 22:45:12 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1113,6 +1113,19 @@ _equalCreatedbStmt(CreatedbStmt *a, CreatedbStmt *b)
 }
 
 static bool
+_equalAlterDatabaseSetStmt(AlterDatabaseSetStmt *a, AlterDatabaseSetStmt *b)
+{
+	if (!equalstr(a->dbname, b->dbname))
+		return false;
+	if (!equalstr(a->variable, b->variable))
+		return false;
+	if (!equal(a->value, b->value))
+		return false;
+
+	return true;
+}
+
+static bool
 _equalDropdbStmt(DropdbStmt *a, DropdbStmt *b)
 {
 	if (!equalstr(a->dbname, b->dbname))
@@ -1284,6 +1297,19 @@ _equalAlterUserStmt(AlterUserStmt *a, AlterUserStmt *b)
 	if (!equalstr(a->user, b->user))
 		return false;
 	if (!equal(a->options, b->options))
+		return false;
+
+	return true;
+}
+
+static bool
+_equalAlterUserSetStmt(AlterUserSetStmt *a, AlterUserSetStmt *b)
+{
+	if (!equalstr(a->user, b->user))
+		return false;
+	if (!equalstr(a->variable, b->variable))
+		return false;
+	if (!equal(a->value, b->value))
 		return false;
 
 	return true;
@@ -1988,6 +2014,9 @@ equal(void *a, void *b)
 		case T_CreatedbStmt:
 			retval = _equalCreatedbStmt(a, b);
 			break;
+		case T_AlterDatabaseSetStmt:
+			retval = _equalAlterDatabaseSetStmt(a, b);
+			break;
 		case T_DropdbStmt:
 			retval = _equalDropdbStmt(a, b);
 			break;
@@ -2026,6 +2055,9 @@ equal(void *a, void *b)
 			break;
 		case T_AlterUserStmt:
 			retval = _equalAlterUserStmt(a, b);
+			break;
+		case T_AlterUserSetStmt:
+			retval = _equalAlterUserSetStmt(a, b);
 			break;
 		case T_DropUserStmt:
 			retval = _equalDropUserStmt(a, b);

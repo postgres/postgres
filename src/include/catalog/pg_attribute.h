@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_attribute.h,v 1.80 2002/02/18 23:11:33 petere Exp $
+ * $Id: pg_attribute.h,v 1.81 2002/03/01 22:45:16 petere Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -281,6 +281,7 @@ DATA(insert ( 1262 datvacuumxid		28 0  4   7 0 -1 -1 t p f i f f));
 DATA(insert ( 1262 datfrozenxid		28 0  4   8 0 -1 -1 t p f i f f));
 /* do not mark datpath as toastable; GetRawDatabaseInfo won't cope */
 DATA(insert ( 1262 datpath			25 0 -1   9 0 -1 -1 f p f i f f));
+DATA(insert ( 1262 datconfig	  1009 0 -1  10 0 -1 -1 f x f i f f));
 DATA(insert ( 1262 ctid				27 0  6  -1 0 -1 -1 f p f i f f));
 DATA(insert ( 1262 oid				26 0  4  -2 0 -1 -1 t p f i f f));
 DATA(insert ( 1262 xmin				28 0  4  -3 0 -1 -1 t p f i f f));
@@ -351,6 +352,7 @@ DATA(insert ( 1260 usesuper			16	0	1	5 0 -1 -1 t p f c f f));
 DATA(insert ( 1260 usecatupd		16	0	1	6 0 -1 -1 t p f c f f));
 DATA(insert ( 1260 passwd			25	0  -1	7 0 -1 -1 f x f i f f));
 DATA(insert ( 1260 valuntil			702 0	4	8 0 -1 -1 t p f i f f));
+DATA(insert ( 1260 useconfig	  1009  0  -1   9 0 -1 -1 f x f i f f));
 DATA(insert ( 1260 ctid				27 0  6  -1 0 -1 -1 f p f i f f));
 /* no OIDs in pg_shadow */
 DATA(insert ( 1260 xmin				28 0  4  -3 0 -1 -1 t p f i f f));

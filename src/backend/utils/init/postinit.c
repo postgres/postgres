@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.98 2002/02/19 20:11:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.99 2002/03/01 22:45:15 petere Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -35,6 +35,7 @@
 #include "storage/sinval.h"
 #include "storage/smgr.h"
 #include "utils/fmgroids.h"
+#include "utils/guc.h"
 #include "utils/portal.h"
 #include "utils/relcache.h"
 #include "utils/syscache.h"
@@ -70,6 +71,10 @@ static bool ThereIsAtLeastOneUser(void);
  *
  * This is also a handy place to fetch the database encoding info out
  * of pg_database, if we are in MULTIBYTE mode.
+ *
+ * To avoid having to read pg_database more times than necessary
+ * during session startup, this place is also fitting to set up any
+ * database-specific configuration variables.
  * --------------------------------
  */
 static void
@@ -131,6 +136,25 @@ ReverifyMyDatabase(const char *name)
 		elog(FATAL, "database was initialized with MULTIBYTE encoding %d,\n\tbut the backend was compiled without multibyte support.\n\tlooks like you need to initdb or recompile.",
 			 dbform->encoding);
 #endif
+
+	/*
+	 * Set up datbase-specific configuration variables.
+	 */
+	if (IsUnderPostmaster)
+	{
+		Datum		datum;
+		bool		isnull;
+
+		datum = heap_getattr(tup, Anum_pg_database_datconfig,
+							 RelationGetDescr(pgdbrel), &isnull);
+		if (!isnull)
+		{
+			ArrayType *a;
+
+			a = (ArrayType *) pg_detoast_datum((struct varlena *)datum);
+			ProcessGUCArray(a, PGC_S_DATABASE);
+		}
+	}
 
 	heap_endscan(pgdbscan);
 	heap_close(pgdbrel, AccessShareLock);

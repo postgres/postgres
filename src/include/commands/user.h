@@ -3,7 +3,7 @@
  * user.h
  *
  *
- * $Id: user.h,v 1.16 2001/11/05 17:46:33 momjian Exp $
+ * $Id: user.h,v 1.17 2002/03/01 22:45:17 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -14,6 +14,7 @@
 
 extern void CreateUser(CreateUserStmt *stmt);
 extern void AlterUser(AlterUserStmt *stmt);
+extern void AlterUserSet(AlterUserSetStmt *stmt);
 extern void DropUser(DropUserStmt *stmt);
 
 extern void CreateGroup(CreateGroupStmt *stmt);

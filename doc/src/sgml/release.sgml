@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.118 2002/02/24 20:20:19 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.119 2002/03/01 22:45:04 petere Exp $
 -->
 
 <appendix id="release">
@@ -28,6 +28,8 @@ Access privileges on functions
 Access privileges on procedural languages
 CREATE DATABASE has OWNER option so superuser can create DB for someone else
 Kerberos 5 support now works with Heimdal
+Database and user-specific session defaults of run-time configurations variables
+    (ALTER DATABASE ... SET and ALTER USER ... SET)
 ]]></literallayout>
 
  </sect1>

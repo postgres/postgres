@@ -4,10 +4,12 @@
  * External declarations pertaining to backend/utils/misc/guc.c and
  * backend/utils/misc/guc-file.l
  *
- * $Id: guc.h,v 1.14 2002/02/23 01:31:37 petere Exp $
+ * $Id: guc.h,v 1.15 2002/03/01 22:45:18 petere Exp $
  */
 #ifndef GUC_H
 #define GUC_H
+
+#include "utils/array.h"
 
 /*
  * Certain options can only be set at certain times. The rules are
@@ -74,6 +76,9 @@ extern bool set_config_option(const char *name, const char *value,
 				  GucContext context, bool DoIt, GucSource source);
 extern void ShowAllGUCConfig(void);
 
+extern void ProcessGUCArray(ArrayType *array, GucSource source);
+extern ArrayType *GUCArrayAdd(ArrayType *array, const char *name, const char *value);
+extern ArrayType *GUCArrayDelete(ArrayType *array, const char *name);
 
 extern bool Debug_print_query;
 extern bool Debug_print_plan;

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.103 2002/01/20 22:19:56 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.104 2002/03/01 22:45:05 petere Exp $
 -->
 
 <Chapter Id="runtime">
@@ -537,12 +537,17 @@ env PGOPTIONS='-c geqo=off' psql
    </para>
 
    <para>
-    Finally, some options can be changed in individual SQL sessions
-    with the <command>SET</command> command, for example
+    Some options can be changed in individual SQL sessions with the
+    <command>SET</command> command, for example
 <screen>
 =&gt; <userinput>SET ENABLE_SEQSCAN TO OFF;</userinput>
 </screen>
     See the SQL command language reference for details on the syntax.
+    Furthermore, it is possible to assign a set of option settings to
+    a user or a database.  Whenever a session is started, the default
+    settings for the user and database involved are loaded.  The
+    commands <literal>ALTER DATABASE</literal> and <literal>ALTER
+    USER</literal>, respectively, are used to set this up.
    </para>
 
    <sect2 id="runtime-config-optimizer">

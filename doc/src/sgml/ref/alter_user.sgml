@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_user.sgml,v 1.19 2002/02/27 21:14:53 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_user.sgml,v 1.20 2002/03/01 22:45:07 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -24,6 +24,9 @@ where <replaceable class="PARAMETER">option</replaceable> can be:
     | CREATEDB | NOCREATEDB
     | CREATEUSER | NOCREATEUSER 
     | VALID UNTIL '<replaceable class="PARAMETER">abstime</replaceable>'
+
+ALTER USER <replaceable class="PARAMETER">username</replaceable> SET <replaceable>variable</replaceable> { TO | = } { <replaceable>value</replaceable> | DEFAULT }
+ALTER USER <replaceable class="PARAMETER">username</replaceable> RESET <replaceable>variable</replaceable>
 </synopsis>
  </refsynopsisdiv>
 
@@ -37,9 +40,22 @@ where <replaceable class="PARAMETER">option</replaceable> can be:
   </para>
 
   <para>
-   Only a database superuser can change privileges and password
-   expiration with this command. Ordinary users can only change their
-   own password.
+   The first variant of this command in the synopsis changes certain
+   global user privileges and authentication settings.  (See below for
+   details.)  Only a database superuser can change privileges and
+   password expiration with this command.  Ordinary users can only
+   change their own password.
+  </para>
+
+  <para>
+   The second and the third variant change a user's session default of
+   a specified configuration variable.  Whenever the user subsequently
+   starts a new session, <literal>SET
+   <replaceable>variable</replaceable> TO
+   <replaceable>value</replaceable></literal> is effectively executed
+   before the start of the session.  Ordinary users can change their
+   own session defaults.  Superusers can change anyone's session
+   defaults.
   </para>
 
   <refsect2>
@@ -113,6 +129,28 @@ where <replaceable class="PARAMETER">option</replaceable> can be:
        </para>
       </listitem>
      </varlistentry>
+
+     <varlistentry>
+      <term><replaceable>variable</replaceable></term>
+      <term><replaceable>value</replaceable></term>
+      <listitem>
+       <para>
+        Set this user's session default of the specified configuration
+        variable to the given value.  If
+        <replaceable>value</replaceable> is <literal>DEFAULT</literal>
+        or, equivalently, <literal>RESET</literal> is used, the
+        user-specific variable setting is removed and the user will
+        inherit the default setting in new sessions.  Use
+        <literal>RESET ALL</literal> to clear all settings.
+       </para>
+
+       <para>
+        See <xref linkend="sql-set" endterm="sql-set-title"> and the
+        <citetitle>Administrator's Guide</citetitle> for more
+        information about allowed variable names and values.
+       </para>
+      </listitem>
+     </varlistentry>
     </variablelist>
    </para>
   </refsect2>
@@ -158,6 +196,12 @@ where <replaceable class="PARAMETER">option</replaceable> can be:
    <command>ALTER USER</command> cannot change a user's group memberships.
    Use <xref linkend="SQL-ALTERGROUP" endterm="SQL-ALTERGROUP-title">
    to do that.
+  </para>
+
+  <para>
+   Using <xref linkend="sql-alterdatabase"
+   endterm="sql-alterdatabase-title">, it is also possible to tie a
+   session default to a specific database rather than a user.
   </para>
  </refsect1>
 
@@ -214,6 +258,7 @@ ALTER USER miriam CREATEUSER CREATEDB;
   <simplelist type="inline">
    <member><xref linkend="sql-createuser" endterm="sql-createuser-title"></member>
    <member><xref linkend="sql-dropuser" endterm="sql-dropuser-title"></member>
+   <member><xref linkend="sql-set" endterm="sql-set-title"></member>
   </simplelist>
  </refsect1>
 </refentry>

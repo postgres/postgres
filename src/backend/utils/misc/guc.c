@@ -4,7 +4,7 @@
  * Support for grand unified configuration scheme, including SET
  * command, configuration file, and command line options.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.59 2002/02/23 01:31:36 petere Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.60 2002/03/01 22:45:16 petere Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -36,6 +36,8 @@
 #include "storage/lock.h"
 #include "storage/proc.h"
 #include "tcop/tcopprot.h"
+#include "utils/array.h"
+#include "utils/builtins.h"
 #include "utils/datetime.h"
 #include "pgstat.h"
 
@@ -89,6 +91,7 @@ bool		Password_encryption = false;
 #define PG_KRB_SRVTAB ""
 #endif
 
+static bool guc_session_init = false; /* XXX mildly bogus */
 
 /*
  * Declarations for GUC tables
@@ -882,7 +885,12 @@ set_config_option(const char *name, const char *value,
 	int			elevel;
 	bool		makeDefault;
 
-	elevel = (context == PGC_SIGHUP) ? DEBUG : ERROR;
+	if (context == PGC_SIGHUP)
+		elevel = DEBUG;
+	else if (guc_session_init)
+		elevel = NOTICE;
+	else
+		elevel = ERROR;
 
 	type = find_option(name, &record);
 	if (type == PGC_NONE)
@@ -1361,4 +1369,148 @@ assign_defaultxactisolevel(const char *value)
 		DefaultXactIsoLevel = XACT_READ_COMMITTED;
 	else
 		elog(ERROR, "bogus transaction isolation level");
+}
+
+
+
+void
+ProcessGUCArray(ArrayType *array, GucSource source)
+{
+	int		i;
+
+	Assert(array);
+
+	for (i = 1; i <= ARR_DIMS(array)[0]; i++)
+	{
+		Datum		d;
+		bool		isnull;
+		char	   *s;
+		char	   *name;
+		char	   *value;
+
+		d = array_ref(array, 1, &i,
+					  false /*notbyvalue*/,
+					  -1 /*varlenelem*/,
+					  -1 /*varlenarray*/,
+					  &isnull);
+
+		if (isnull)
+			continue;
+
+		s = DatumGetCString(DirectFunctionCall1(textout, d));
+		ParseLongOption(s, &name, &value);
+		if (!value)
+		{
+		    elog(NOTICE, "cannot to parse setting \"%s\"", name);
+		    continue;
+		}
+
+		/* prevent errors from incorrect options */
+		guc_session_init = true;
+		
+		SetConfigOption(name, value, PGC_SUSET, source);
+
+		guc_session_init = false;
+	}
+}
+
+
+
+ArrayType *
+GUCArrayAdd(ArrayType *array, const char *name, const char *value)
+{
+	Datum		datum;
+	char	   *newval;
+	ArrayType  *a;
+
+	Assert(name);
+	Assert(value);
+
+	/* test if the option is valid */
+	set_config_option(name, value,
+					  superuser() ? PGC_SUSET : PGC_USERSET,
+					  false, PGC_S_INFINITY);
+
+	newval = palloc(strlen(name) + 1 + strlen(value) + 1);
+	sprintf(newval, "%s=%s", name, value);
+	datum = DirectFunctionCall1(textin, CStringGetDatum(newval));
+	
+	if (array)
+	{
+		int		index;
+		bool	isnull;
+		int		i;
+
+		index = ARR_DIMS(array)[0] + 1;	/* add after end */
+
+		for (i = 1; i <= ARR_DIMS(array)[0]; i++)
+		{
+			Datum		d;
+			char	   *current;
+
+			d = array_ref(array, 1, &i,
+						  false /*notbyvalue*/,
+						  -1 /*varlenelem*/,
+						  -1 /*varlenarray*/,
+						  &isnull);
+			current = DatumGetCString(DirectFunctionCall1(textout, d));
+			if (strncmp(current, newval, strlen(name) + 1)==0)
+			{
+				index = i;
+				break;
+			}
+		}
+
+		isnull = false;
+		a = array_set(array, 1, &index, datum, false/*notbyval*/, -1, -1, &isnull);
+	}
+	else
+		a = construct_array(&datum, 1, false, -1, 'i');
+
+	return a;
+}
+
+
+
+ArrayType *
+GUCArrayDelete(ArrayType *array, const char *name)
+{
+	ArrayType *newarray;
+	int i;
+	int index;
+
+	Assert(name);
+	Assert(array);
+
+	/* test if the option is valid */
+	set_config_option(name, NULL,
+					  superuser() ? PGC_SUSET : PGC_USERSET,
+					  false, PGC_S_INFINITY);
+
+	newarray = construct_array(NULL, 0, false, -1, 'i');
+	index = 1;
+
+	for (i = 1; i <= ARR_DIMS(array)[0]; i++)
+	{
+		Datum		d;
+		char	   *val;
+		bool		isnull;
+
+		d = array_ref(array, 1, &i,
+					  false /*notbyvalue*/,
+					  -1 /*varlenelem*/,
+					  -1 /*varlenarray*/,
+					  &isnull);
+		val = DatumGetCString(DirectFunctionCall1(textout, d));
+
+		if (strncmp(val, name, strlen(name))==0
+			&& val[strlen(name)] == '=')
+			continue;
+
+		isnull = false;
+		newarray = array_set(newarray, 1, &index, d, false/*notbyval*/, -1, -1, &isnull);
+		index++;
+	}
+
+	return newarray;
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.82 2002/01/09 19:13:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.83 2002/03/01 22:45:15 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,6 +31,7 @@
 #include "libpq/libpq-be.h"
 #include "miscadmin.h"
 #include "utils/builtins.h"
+#include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
@@ -437,6 +438,8 @@ void
 InitializeSessionUserId(const char *username)
 {
 	HeapTuple	userTup;
+	Datum		datum;
+	bool		isnull;
 
 	/*
 	 * Don't do scans if we're bootstrapping, none of the system catalogs
@@ -456,6 +459,21 @@ InitializeSessionUserId(const char *username)
 	SetSessionUserId(((Form_pg_shadow) GETSTRUCT(userTup))->usesysid);
 
 	AuthenticatedUserIsSuperuser = ((Form_pg_shadow) GETSTRUCT(userTup))->usesuper;
+
+	/*
+	 * Set up user-specific configuration variables.  This is a good
+	 * place to do it so we don't have to read pg_shadow twice during
+	 * session startup.
+	 */
+	datum = SysCacheGetAttr(SHADOWNAME, userTup,
+							Anum_pg_shadow_useconfig, &isnull);
+	if (!isnull)
+	{
+		ArrayType *a;
+
+		a = (ArrayType *) pg_detoast_datum((struct varlena *)datum);
+		ProcessGUCArray(a, PGC_S_USER);
+	}
 
 	ReleaseSysCache(userTup);
 }

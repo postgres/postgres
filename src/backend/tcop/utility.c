@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.127 2002/02/26 22:47:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.128 2002/03/01 22:45:14 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -600,6 +600,10 @@ ProcessUtility(Node *parsetree,
 			}
 			break;
 
+		case T_AlterDatabaseSetStmt:
+			AlterDatabaseSet((AlterDatabaseSetStmt *)parsetree);
+			break;
+
 		case T_DropdbStmt:
 			{
 				DropdbStmt *stmt = (DropdbStmt *) parsetree;
@@ -746,6 +750,10 @@ ProcessUtility(Node *parsetree,
 
 		case T_AlterUserStmt:
 			AlterUser((AlterUserStmt *) parsetree);
+			break;
+
+		case T_AlterUserSetStmt:
+			AlterUserSet((AlterUserSetStmt *) parsetree);
 			break;
 
 		case T_DropUserStmt:

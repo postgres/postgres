@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.83 2002/02/24 20:20:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.84 2002/03/01 22:45:08 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,8 +32,10 @@
 #include "miscadmin.h"
 #include "storage/freespace.h"
 #include "storage/sinval.h"
+#include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
+#include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
@@ -287,6 +289,7 @@ createdb(const char *dbname, const char *dbowner,
 		DirectFunctionCall1(textin, CStringGetDatum(dbpath ? dbpath : ""));
 
 	memset(new_record_nulls, ' ', sizeof(new_record_nulls));
+	new_record_nulls[Anum_pg_database_datconfig - 1] = 'n';
 
 	tuple = heap_formtuple(pg_database_dsc, new_record, new_record_nulls);
 
@@ -442,6 +445,80 @@ dropdb(const char *dbname)
 	 * GetRawDatabaseInfo.)
 	 */
 	BufferSync();
+}
+
+
+
+/*
+ * ALTER DATABASE name SET ...
+ */
+void
+AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
+{
+	char	   *valuestr;
+	HeapTuple	tuple,
+				newtuple;
+	Relation	rel;
+	ScanKeyData	scankey;
+	HeapScanDesc scan;
+	Datum		repl_val[Natts_pg_database];
+	char		repl_null[Natts_pg_database];
+	char		repl_repl[Natts_pg_database];
+	int			i;
+
+	valuestr = (stmt->value
+				? ((A_Const *) lfirst(stmt->value))->val.val.str
+				: NULL);
+
+	rel = heap_openr(DatabaseRelationName, RowExclusiveLock);
+	ScanKeyEntryInitialize(&scankey, 0, Anum_pg_database_datname,
+						   F_NAMEEQ, NameGetDatum(stmt->dbname));
+	scan = heap_beginscan(rel, 0, SnapshotNow, 1, &scankey);
+	tuple = heap_getnext(scan, 0);
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "database \"%s\" does not exist", stmt->dbname);
+
+	if (!(superuser()
+		  || ((Form_pg_database) GETSTRUCT(tuple))->datdba == GetUserId()))
+		elog(ERROR, "permission denied");
+
+	for (i = 0; i < Natts_pg_database; i++)
+		repl_repl[i] = ' ';
+
+	repl_repl[Anum_pg_database_datconfig-1] = 'r';
+	if (strcmp(stmt->variable, "all")==0 && stmt->value == NULL)
+		/* RESET ALL */
+		repl_null[Anum_pg_database_datconfig-1] = 'n';
+	else
+	{
+		Datum datum;
+		bool isnull;
+		ArrayType *a;
+
+		repl_null[Anum_pg_database_datconfig-1] = ' ';
+
+		datum = heap_getattr(tuple, Anum_pg_database_datconfig,
+							 RelationGetDescr(rel), &isnull);
+
+		if (valuestr)
+			a = GUCArrayAdd(isnull
+							? NULL
+							: (ArrayType *) pg_detoast_datum((struct varlena *)datum),
+							stmt->variable, valuestr);
+		else
+			a = GUCArrayDelete(isnull
+							   ? NULL
+							   : (ArrayType *) pg_detoast_datum((struct varlena *)datum),
+							   stmt->variable);
+
+		repl_val[Anum_pg_database_datconfig-1] = PointerGetDatum(a);
+	}
+
+	newtuple = heap_modifytuple(tuple, rel, repl_val, repl_null, repl_repl);
+	simple_heap_update(rel, &tuple->t_self, newtuple);
+
+	heap_endscan(scan);
+	heap_close(rel, RowExclusiveLock);
 }
 
 

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.90 2001/11/05 17:46:25 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.91 2002/03/01 22:45:08 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,6 +30,7 @@
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
+#include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
@@ -406,6 +407,8 @@ CreateUser(CreateUserStmt *stmt)
 	new_record_nulls[Anum_pg_shadow_passwd - 1] = password ? ' ' : 'n';
 	new_record_nulls[Anum_pg_shadow_valuntil - 1] = validUntil ? ' ' : 'n';
 
+	new_record_nulls[Anum_pg_shadow_useconfig - 1] = 'n';
+
 	tuple = heap_formtuple(pg_shadow_dsc, new_record, new_record_nulls);
 
 	/*
@@ -653,6 +656,11 @@ AlterUser(AlterUserStmt *stmt)
 		new_record_nulls[Anum_pg_shadow_valuntil - 1] = null ? 'n' : ' ';
 	}
 
+	/* leave useconfig as is */
+	new_record[Anum_pg_shadow_useconfig - 1] =
+		heap_getattr(tuple, Anum_pg_shadow_useconfig, pg_shadow_dsc, &null);
+	new_record_nulls[Anum_pg_shadow_useconfig - 1] = null ? 'n' : ' ';
+
 	new_tuple = heap_formtuple(pg_shadow_dsc, new_record, new_record_nulls);
 	simple_heap_update(pg_shadow_rel, &tuple->t_self, new_tuple);
 
@@ -680,6 +688,85 @@ AlterUser(AlterUserStmt *stmt)
 	 * Now we can clean up.
 	 */
 	heap_close(pg_shadow_rel, NoLock);
+}
+
+
+
+/*
+ * ALTER USER ... SET
+ */
+void
+AlterUserSet(AlterUserSetStmt *stmt)
+{
+	char	   *valuestr;
+	HeapTuple	oldtuple,
+				newtuple;
+	Relation	rel;
+	Datum		repl_val[Natts_pg_shadow];
+	char		repl_null[Natts_pg_shadow];
+	char		repl_repl[Natts_pg_shadow];
+	int			i;
+
+	valuestr = (stmt->value
+				? ((A_Const *) lfirst(stmt->value))->val.val.str
+				: NULL);
+
+	rel = heap_openr(ShadowRelationName, RowExclusiveLock);
+	oldtuple = SearchSysCache(SHADOWNAME,
+							  PointerGetDatum(stmt->user),
+							  0, 0, 0);
+	if (!HeapTupleIsValid(oldtuple))
+		elog(ERROR, "user \"%s\" does not exist", stmt->user);
+
+	if (!(superuser()
+		  || ((Form_pg_shadow) GETSTRUCT(oldtuple))->usesysid == GetUserId()))
+		elog(ERROR, "permission denied");
+
+	for (i = 0; i < Natts_pg_shadow; i++)
+		repl_repl[i] = ' ';
+
+	repl_repl[Anum_pg_shadow_useconfig-1] = 'r';
+	if (strcmp(stmt->variable, "all")==0 && stmt->value == NULL)
+		/* RESET ALL */
+		repl_null[Anum_pg_shadow_useconfig-1] = 'n';
+	else
+	{
+		Datum datum;
+		bool isnull;
+		ArrayType *a;
+
+		repl_null[Anum_pg_shadow_useconfig-1] = ' ';
+
+		datum = SysCacheGetAttr(SHADOWNAME, oldtuple,
+								Anum_pg_shadow_useconfig, &isnull);
+
+		if (valuestr)
+			a = GUCArrayAdd(isnull
+							? NULL
+							: (ArrayType *) pg_detoast_datum((struct varlena *)datum),
+							stmt->variable, valuestr);
+		else
+			a = GUCArrayDelete(isnull
+							   ? NULL
+							   : (ArrayType *) pg_detoast_datum((struct varlena *)datum),
+							   stmt->variable);
+
+		repl_val[Anum_pg_shadow_useconfig-1] = PointerGetDatum(a);
+	}
+
+	newtuple = heap_modifytuple(oldtuple, rel, repl_val, repl_null, repl_repl);
+	simple_heap_update(rel, &oldtuple->t_self, newtuple);
+
+	{
+		Relation	idescs[Num_pg_shadow_indices];
+
+		CatalogOpenIndices(Num_pg_shadow_indices, Name_pg_shadow_indices, idescs);
+		CatalogIndexInsert(idescs, Num_pg_shadow_indices, rel, newtuple);
+		CatalogCloseIndices(Num_pg_shadow_indices, idescs);
+	}
+
+	ReleaseSysCache(oldtuple);
+	heap_close(rel, RowExclusiveLock);
 }
 
 

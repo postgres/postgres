@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.154 2002/02/26 22:47:10 tgl Exp $
+ * $Id: parsenodes.h,v 1.155 2002/03/01 22:45:18 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -359,7 +359,7 @@ typedef struct DropPLangStmt
 
 
 /* ----------------------
- *				Create/Alter/Drop User Statements
+ *	Create/Alter/Drop User Statements
  * ----------------------
  */
 typedef struct CreateUserStmt
@@ -375,6 +375,14 @@ typedef struct AlterUserStmt
 	char	   *user;			/* PostgreSQL user login name */
 	List	   *options;		/* List of DefElem nodes */
 } AlterUserStmt;
+
+typedef struct AlterUserSetStmt
+{
+	NodeTag		type;
+	char	   *user;
+	char	   *variable;
+	List	   *value;
+} AlterUserSetStmt;
 
 typedef struct DropUserStmt
 {
@@ -686,6 +694,18 @@ typedef struct CreatedbStmt
 	char	   *dbtemplate;		/* template to use (NULL = default) */
 	int			encoding;		/* MULTIBYTE encoding (-1 = use default) */
 } CreatedbStmt;
+
+/* ----------------------
+ *	Alter Database
+ * ----------------------
+ */
+typedef struct AlterDatabaseSetStmt
+{
+	NodeTag		type;
+	char	   *dbname;
+	char	   *variable;
+	List	   *value;
+} AlterDatabaseSetStmt;
 
 /* ----------------------
  *		Dropdb Statement

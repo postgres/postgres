@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.30 2002/02/18 23:10:59 petere Exp $
+ $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.31 2002/03/01 22:45:03 petere Exp $
  -->
 
 <chapter id="catalogs">
@@ -888,6 +888,13 @@
        records the location.  It's either an environment variable name
        or an absolute path, depending how it was entered.
       </entry>
+     </row>
+
+     <row>
+      <entry>datconfig</entry>
+      <entry><type>text[]</type></entry>
+      <entry></entry>
+      <entry>Session defaults for run-time configuration variables</entry>
      </row>
     </tbody>
    </tgroup>
@@ -1979,6 +1986,13 @@
       <entry><type>abstime</type></entry>
       <entry></entry>
       <entry>Account expiry time (only used for password authentication)</entry>
+     </row>
+
+     <row>
+      <entry>useconfig</entry>
+      <entry><type>text[]</type></entry>
+      <entry></entry>
+      <entry>Session defaults for run-time configuration variables</entry>
      </row>
     </tbody>
    </tgroup>

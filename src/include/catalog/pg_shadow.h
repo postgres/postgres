@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_shadow.h,v 1.17 2001/11/05 17:46:32 momjian Exp $
+ * $Id: pg_shadow.h,v 1.18 2002/03/01 22:45:17 petere Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -39,6 +39,7 @@ CATALOG(pg_shadow) BOOTSTRAP BKI_WITHOUT_OIDS
 	bool		usecatupd;
 	text		passwd;
 	int4		valuntil;
+	text		useconfig[1];
 } FormData_pg_shadow;
 
 /* ----------------
@@ -52,7 +53,7 @@ typedef FormData_pg_shadow *Form_pg_shadow;
  *		compiler constants for pg_shadow
  * ----------------
  */
-#define Natts_pg_shadow				8
+#define Natts_pg_shadow				9
 #define Anum_pg_shadow_usename			1
 #define Anum_pg_shadow_usesysid			2
 #define Anum_pg_shadow_usecreatedb		3
@@ -61,6 +62,7 @@ typedef FormData_pg_shadow *Form_pg_shadow;
 #define Anum_pg_shadow_usecatupd		6
 #define Anum_pg_shadow_passwd			7
 #define Anum_pg_shadow_valuntil			8
+#define Anum_pg_shadow_useconfig		9
 
 /* ----------------
  *		initial contents of pg_shadow
@@ -69,7 +71,7 @@ typedef FormData_pg_shadow *Form_pg_shadow;
  * user choices.
  * ----------------
  */
-DATA(insert ( "POSTGRES" PGUID t t t t _null_ _null_ ));
+DATA(insert ( "POSTGRES" PGUID t t t t _null_ _null_ _null_ ));
 
 #define BOOTSTRAP_USESYSID 1
 
