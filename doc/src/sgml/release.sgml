@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.306 2004/11/10 06:13:12 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.307 2004/11/10 21:43:50 momjian Exp $
 -->
 
 <appendix id="release">
@@ -27,28 +27,32 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.306 2004/11/10 06:13:12 momjian
 
       <listitem>
        <para>
-        This is the first <productname>PostgreSQL</productname>
-        release to natively run on Microsoft Windows as a server. It
-        can run as a Windows service. This release supports NT-based
-        Windows releases like Win2000, XP, Win2003.  Older releases
-        like Windows 95, 98, and ME are not supported because these
-        operating systems do not have the infrastructure to support
-        <productname>PostgreSQL</productname>.  A separate installer
-        project has been created to ease installation on Windows:
-        <ulink url="http://pgfoundry.org/projects/pginstaller">
+        This is the first <productname>PostgreSQL</productname> release
+        to natively run on <productname>Microsoft Windows</> as a
+        server. It can run as a <productname>Windows</> service. This
+        release supports NT-based Windows releases like
+        <productname>Win2000</>, <productname>XP</>,
+        <productname>Win2003</>. Older releases like
+        <productname>Windows 95</>, <productname>98</>, and
+        <productname>ME</> are not supported because these operating
+        systems do not have the infrastructure to support
+        <productname>PostgreSQL</productname>. A separate installer
+        project has been created to ease installation on
+        <productname>Windows</>: <ulink
+        url="http://pgfoundry.org/projects/pginstaller">
         http://pgfoundry.org/projects/pginstaller</ulink>.
        </para>
        <para>
         Although tested throughout our release cycle, the Windows port
-        does not have the benefit of years of use in production 
-        environments that PostgreSQL has on Unix platforms and 
-        therefore should be treated with the same level of caution as 
-        you would a new product.
+        does not have the benefit of years of use in production
+        environments that <productname>PostgreSQL</productname> has on
+        Unix platforms and therefore should be treated with the same
+        level of caution as you would a new product.
        </para>
-       <para>
-        Previous releases required the Unix emulation toolkit Cygwin for
-        Win32 server support. <productname>PostgreSQL</productname>
-        has always supported clients on Win32.
+       <para> Previous releases required the Unix emulation toolkit
+       <productname>Cygwin</> for Win32 server support.
+       <productname>PostgreSQL</productname> has always supported
+       clients on Win32.
        </para>
       </listitem>
      </varlistentry>
@@ -149,13 +153,13 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.306 2004/11/10 06:13:12 momjian
 
      <varlistentry>
       <term>
-        CSV support in <command>COPY</command>
+        Comma-separated-value (CSV) support in <command>COPY</command>
       </term>
 
       <listitem>
        <para>
         <command>COPY</command> can now read and write
-        comma-separated-value (CSV) files. It has the flexibility to
+        comma-separated-value files. It has the flexibility to
         interpret non-standard quoting and separation characters too.
        </para>
       </listitem>
@@ -238,21 +242,21 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.306 2004/11/10 06:13:12 momjian
 
      <listitem>
       <para>
-       The length() function no longer counts trailing spaces in
-       CHAR(n) values.
+       The <function>length()</> function no longer counts trailing spaces in
+       <type>CHAR(n)</> values.
       </para>
      </listitem>
 
     <listitem>
      <para>
-      Casting an integer to BIT(N) selects the rightmost N bits of the
+      Casting an integer to <type>BIT(N)</> selects the rightmost N bits of the
       integer, not the leftmost N bits as before.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      UPDATE-ing an element or slice of a NULL array value now produces
+      Updating an element or slice of a NULL array value now produces
       a non-NULL array result, namely an array containing
       just the assigned-to positions.
      </para>
@@ -267,8 +271,8 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.306 2004/11/10 06:13:12 momjian
 
      <listitem>
       <para>
-       The arithmetic operators associated with the <quote>char</> data type
-       have been removed.
+       The arithmetic operators associated with the single-byte
+       <type>"char"</> data type has been removed.
       </para>
      </listitem>
 
@@ -283,18 +287,21 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.306 2004/11/10 06:13:12 momjian
 
      <listitem>
       <para>
-       The extract() function (also called date_part) now returns the proper
-       year for BC dates. It previously returned one less than the current
-       year. The function now also returns the proper values for millennium
-       and century.
+       The <function>extract()</> function (also called
+       <function>date_part</>) now returns the proper year for BC dates.
+       It previously returned one less than the current year. The
+       function now also returns the proper values for millennium and
+       century.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       psql's \copy command now reads or writes the query stdin/stdout, rather
-       than psql's stdin/stdout. The previous behavior can be accessed via new
-       pstdin/pstdout parameters.
+       <application>psql</>'s <command>\copy</> command now reads or
+       writes to the query's <literal>stdin/stdout</>, rather than
+       <application>psql</>'s <literal>stdin/stdout</>. The previous
+       behavior can be accessed via new
+       ><option>pstdin</>/<option>pstdout</> parameters.
       </para>
      </listitem>
 
@@ -328,9 +335,9 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.306 2004/11/10 06:13:12 momjian
 
      <listitem>
       <para>
-       configure's threading option no longer requires users to run
-       tests or edit configuration files; threading options are now detected
-       automatically.
+       <application>Configure</>'s threading option no longer requires
+       users to run tests or edit configuration files; threading options
+       are now detected automatically.
       </para>
      </listitem>
 
@@ -345,17 +352,17 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.306 2004/11/10 06:13:12 momjian
       <para>
        Syntax checking of array input values has been tightened up
        considerably. Junk that was previously allowed in odd places with
-       odd results now causes an ERROR. Empty-string element values must
-       now be written as <literal>""</>, rather than writing nothing.
-       Also changed behavior with respect to whitespace surrounding array
-       elements: trailing whitespace is now ignored, for symmetry with leading
-       whitespace (which has always been ignored).
+       odd results now causes an <literal>ERROR. Empty-string element
+       values must now be written as ""</>, rather than writing nothing.
+       Also changed behavior with respect to whitespace surrounding
+       array elements: trailing whitespace is now ignored, for symmetry
+       with leading whitespace (which has always been ignored).
       </para>
      </listitem>
 
      <listitem>
       <para>
-       In <literal>READ COMMITTED</> serialization mode, volatile functions
+       In <option>READ COMMITTED</> serialization mode, volatile functions
        now see the results of concurrent transactions committed up to the
        beginning of each statement within the function, rather than up to the
        beginning of the interactive command that called the function.
@@ -364,7 +371,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.306 2004/11/10 06:13:12 momjian
 
      <listitem>
       <para>
-       Functions declared <literal>STABLE</> or <literal>IMMUTABLE</> always
+       Functions declared <option>STABLE</> or <option>IMMUTABLE</> always
        use the snapshot of the calling query, and therefore do not see the
        effects of actions taken after the calling query starts, whether in
        their own transaction or other transactions.  Such a function must be
@@ -375,20 +382,22 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.306 2004/11/10 06:13:12 momjian
 
      <listitem>
       <para>
-       Non-deferred AFTER triggers are now fired immediately after completion
-       of the triggering query, rather than upon finishing the current
-       interactive command.  This makes a difference when the triggering query
-       occurred within a function: the trigger is invoked before the function
-       proceeds to its next operation.
+       Non-deferred <option>AFTER</> triggers are now fired immediately
+       after completion of the triggering query, rather than upon
+       finishing the current interactive command. This makes a
+       difference when the triggering query occurred within a function:
+       the trigger is invoked before the function proceeds to its next
+       operation.
       </para>
      </listitem>
 
     <listitem>
      <para>
-      CIDR values now must have their non-masked bits be zero.  For example,
-      no longer allow <literal>204.248.199.1/31</literal> as a CIDR value.
-      Such values should have never been accepted by PostgreSQL and will now be
-      rejected.
+      <type>CIDR</> values now must have their non-masked bits be zero.
+      For example, we no longer allow
+      <literal>204.248.199.1/31</literal> as a <type>CIDR>/> value. Such
+      values should never have been accepted by
+      <productname>PostgreSQL</productname> and will now be rejected.
      </para>
     </listitem>
 
@@ -412,19 +421,19 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.306 2004/11/10 06:13:12 momjian
     <listitem>
      <para>
       The 8.1 release will remove the function
-       <literal>to_char(interval)</literal>.
+       <function>to_char(interval)</>.
      </para>
     </listitem>
 
     <listitem>
      <para>
       By default, tables in <productname>PostgreSQL</productname> 8.0
-      and earlier are created with OIDs. In the next release, this
-      will <emphasis>not</emphasis> be the case: to create a table
-      that contains OIDs, the <literal>WITH OIDS</literal> clause must
+      and earlier are created with <type>OID</>s. In the next release,
+      this will <emphasis>not</emphasis> be the case: to create a table
+      that contains <type>OID</>s, the <option>WITH OIDS</> clause must
       be specified or the <varname>default_with_oids</varname>
       configuration parameter must be enabled. Users are encouraged to
-      explicitly specify <literal>WITH OIDS</literal> if their tables
+      explicitly specify <option>WITH OIDS</> if their tables
       require OIDs for compatibility with future releases of
       <productname>PostgreSQL</productname>.
      </para>
@@ -475,7 +484,8 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.306 2004/11/10 06:13:12 momjian
 
     <listitem>
      <para>
-      Add subprocess to write dirty buffers periodically to reduce checkpoint writes (Jan)
+      Add subprocess to write dirty buffers periodically to reduce
+      checkpoint writes (Jan)
      </para>
      <para>
       In previous releases, the checkpoint process, which runs every few
@@ -484,10 +494,10 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.306 2004/11/10 06:13:12 momjian
       disk. This often resulted in a periodic spike in disk usage that
       hurt performance. The new code uses a background writer to trickle
       disk writes at a steady pace so checkpoints have far fewer dirty
-      pages to write to disk.  Also, the new code does not issue a global
-      sync() call, but instead fsync()s just the files written since the
-      last checkpoint.  This should improve performance and
-      minimize degradation during checkpoints.
+      pages to write to disk. Also, the new code does not issue a global
+      <function>sync()</> call, but instead <function>fsync()</>s just
+      the files written since the last checkpoint. This should improve
+      performance and minimize degradation during checkpoints.
      </para>
     </listitem>
 
@@ -516,13 +526,13 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.306 2004/11/10 06:13:12 momjian
 
     <listitem>
      <para>
-      Improved index usage with OR clauses (Tom)
+      Improved index usage with <literal>OR</> clauses (Tom)
      </para>
      <para>
       This allows the optimizer to use indexes in statements with many OR
       clauses that would not have been indexed in the past.  It can also use
       multi-column indexes where the first column is specified and the second
-      column is part of an OR clause.
+      column is part of an <literal>OR</> clause.
      </para>
     </listitem>
 
@@ -532,7 +542,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.306 2004/11/10 06:13:12 momjian
      </para>
      <para>
       The server is now smarter about using partial indexes in queries
-      involving complex WHERE clauses.
+      involving complex <option>WHERE</> clauses.
      </para>
     </listitem>
 
@@ -640,7 +650,8 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.306 2004/11/10 06:13:12 momjian
      </para>
      <para>
       It is now possible to log server messages conveniently without
-      relying on either syslog or an external log rotation program.
+      relying on either <application>syslog</> or an external log
+      rotation program.
      </para>
     </listitem>
 
@@ -655,21 +666,22 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.306 2004/11/10 06:13:12 momjian
 
     <listitem>
      <para>
-      Make quoting of "sameuser", "samegroup", and "all" remove
-      special meaning of these terms in pg_hba.conf (Andrew)
+      Make quoting of <literal>sameuser</>, <literal>samegroup</>, and
+      <literal>all</> remove special meaning of these terms in
+      <filename>pg_hba.conf</> (Andrew)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Use clearer IPv6 name <literal>::1/128</> for localhost in default
-      pg_hba.conf (Andrew)
+      Use clearer IPv6 name <literal>::1/128</> for
+      <literal>localhost</> in default <filename>pg_hba.conf</> (Andrew)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Use CIDR format in pg_hba.conf examples (Andrew)
+      Use CIDR format in <filename>pg_hba.conf</> examples (Andrew)
      </para>
     </listitem>
 
@@ -723,12 +735,13 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.306 2004/11/10 06:13:12 momjian
     <listitem>
      <para>
       Listen on localhost by default, which eliminates the need for the
-      <literal>-i</> postmaster switch in many scenarios (Andrew)
+      <option>-i</> postmaster switch in many scenarios (Andrew)
      </para>
      <para>
-      Listening on localhost (127.0.0.1) opens no new security holes but
-      allows configurations like Win32 and JDBC, which do not support
-      local sockets, to work without special adjustments.
+      Listening on localhost (<literal>127.0.0.1</>) opens no new
+      security holes but allows configurations like Win32 and JDBC,
+      which do not support local sockets, to work without special
+      adjustments.
      </para>
     </listitem>
 
@@ -786,9 +799,9 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.306 2004/11/10 06:13:12 momjian
      </para>
      <para>
       It is now useful to issue <command>DECLARE CURSOR</command> in a
-      Parse message with parameters.  The parameter values sent at
-      Bind time will be substituted into the execution of the cursor's
-      query.
+      <function>Parse</> message with parameters. The parameter values
+      sent at <function>Bind</> time will be substituted into the
+      execution of the cursor's query.
      </para>
     </listitem>
 
@@ -801,7 +814,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.306 2004/11/10 06:13:12 momjian
       Release 7.4 handled hashing of mixed <type>inet</type> and
       <type>cidr</type> values incorrectly.  (This bug did not exist
       in prior releases because they wouldn't try to hash either
-      datatype.)
+      data type.)
      </para>
     </listitem>
 
@@ -875,7 +888,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.306 2004/11/10 06:13:12 momjian
       Make <literal>CASE val WHEN compval1 THEN ...</> evaluate <literal>val</> only once (Tom)
      </para>
      <para>
-      CASE no longer evaluates the test expression multiple
+      <option>CASE</> no longer evaluates the test expression multiple
       times. This has benefits when the expression is complex or is
       volatile.
      </para>
@@ -883,11 +896,12 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.306 2004/11/10 06:13:12 momjian
 
     <listitem>
      <para>
-      Test HAVING before computing target list of an aggregate query (Tom)
+      Test <option>HAVING</> before computing target list of an
+      aggregate query (Tom)
      </para>
      <para>
-      Fixes improper failure of cases such as SELECT SUM(win)/SUM(lose)
-      ... GROUP BY ... HAVING SUM(lose) > 0.  This should work but formerly
+      Fixes improper failure of cases such as <literal>SELECT SUM(win)/SUM(lose)
+      ... GROUP BY ... HAVING SUM(lose) > 0</>.  This should work but formerly
       could fail with divide-by-zero.
      </para>
     </listitem>
@@ -918,8 +932,8 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.306 2004/11/10 06:13:12 momjian
       
     <listitem>
      <para>
-      Allow LIKE/ILIKE to be used as the operator in row and subselect
-      comparisons (Fabien Coelho)
+      Allow <option>LIKE</>/<option>ILIKE</> to be used as the operator
+      in row and subselect comparisons (Fabien Coelho)
      </para>
     </listitem>
       
@@ -958,7 +972,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.306 2004/11/10 06:13:12 momjian
 
     <listitem>
      <para>
-      Avoid emitting NATURAL CROSS JOIN in rule listings (Tom)
+      Avoid emitting <option>NATURAL CROSS JOIN</> in rule listings (Tom)
      </para>
      <para>
       Such a clause makes no logical sense, but in some cases the rule
@@ -976,33 +990,35 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.306 2004/11/10 06:13:12 momjian
 
     <listitem>
      <para>
-      Add COMMENT ON casts, conversions, languages, operator classes, and
-      large objects (Christopher)
+      Add <command>COMMENT ON</> for casts, conversions, languages,
+      operator classes, and large objects (Christopher)
      </para>
     </listitem>
 
     <listitem>
      <para>
       Add new server configuration parameter <varname>default_with_oids</> to
-      control whether tables are created with OIDs by default (Neil)
+      control whether tables are created with <type>OID</>s by default (Neil)
      </para>
      <para>
       This allows administrators to default all <command>CREATE
-      TABLE</command> commands to create tables without OID columns.
+      TABLE</command> commands to create tables without <type>OID</>
+      columns.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Add WITH / WITHOUT OIDS clause to <command>CREATE TABLE
-      AS</command> (Neil)
+      Add <option>WITH</> / <option>WITHOUT OIDS</> clause to
+      <command>CREATE TABLE AS</command> (Neil)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Allow ALTER TABLE DROP COLUMN to drop an OID column
-      (ALTER TABLE SET WITHOUT OIDS still works) (Tom)
+      Allow <command>ALTER TABLE DROP COLUMN</> to drop an <type>OID</>
+      column (<command>ALTER TABLE SET WITHOUT OIDS</> still works)
+      (Tom)
      </para>
     </listitem>
 
@@ -1014,41 +1030,43 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.306 2004/11/10 06:13:12 momjian
 
     <listitem>
      <para>
-      Allow ALTER ... ADD COLUMN with defaults and NOT NULL constraints;
-      works per SQL spec (Rod)
+      Allow <command>ALTER ... ADD COLUMN</> with defaults and
+      <option>NOT NULL</> constraints; works per SQL spec (Rod)
      </para>
      <para>
-      It is now possible for ADD COLUMN to create a column that is not
-      initially filled with NULLs, but with a specified default value.
+      It is now possible for <option>ADD COLUMN</> to create a column
+      that is not initially filled with NULLs, but with a specified
+      default value.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Add ALTER COLUMN TYPE to change column's type (Rod)
+      Add <command>ALTER COLUMN TYPE</> to change column's type (Rod)
      </para>
      <para>
-      It is now possible to alter a column's datatype without dropping
+      It is now possible to alter a column's data type without dropping
       and re-adding the column.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Allow multiple ALTER actions in a single <command>ALTER
+      Allow multiple <command>ALTER</> actions in a single <command>ALTER
       TABLE</command> command (Rod)
      </para>
      <para>
-      This is particularly useful for ALTER commands that rewrite the
-      table (which include ALTER COLUMN TYPE and ADD COLUMN with a default).
-      By grouping ALTER commands together, the table need be
-      rewritten only once.
+      This is particularly useful for <command>ALTER</> commands that
+      rewrite the table (which include <option>ALTER COLUMN TYPE</> and
+      <option>ADD COLUMN</> with a default). By grouping
+      <command>ALTER</> commands together, the table need be rewritten
+      only once.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Allow <command>ALTER TABLE</command> to add <type>serial</type>
+      Allow <command>ALTER TABLE</command> to add <type>SERIAL</type>
       columns (Tom)
      </para>
      <para>
@@ -1070,14 +1088,14 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.306 2004/11/10 06:13:12 momjian
 
     <listitem>
      <para>
-      Allow temporary object creation to be limited to SECURITY DEFINER
-      functions (Sean Chittenden)
+      Allow temporary object creation to be limited to <option>SECURITY
+      DEFINER</> functions (Sean Chittenden)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Add ALTER TABLE ... SET WITHOUT CLUSTER (Christopher)
+      Add <option>ALTER TABLE ... SET WITHOUT CLUSTER</> (Christopher)
      </para>
      <para>
       Prior to this release, there was no way to clear an auto-cluster
@@ -1087,8 +1105,9 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.306 2004/11/10 06:13:12 momjian
 
     <listitem>
      <para>
-      Constraint/Index/SERIAL names are now table_column_type with numbers
-      appended to guarantee uniqueness within the schema (Tom)
+      Constraint/Index/<type>SERIAL</> names are now table_column_type
+      with numbers appended to guarantee uniqueness within the schema
+      (Tom)
      </para>
      <para>
       The SQL specification states that such names should be unique
@@ -1098,32 +1117,32 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.306 2004/11/10 06:13:12 momjian
 
     <listitem>
      <para>
-      Add pg_get_serial_sequence() to return a serial column's
-      sequence name (Christopher)
+      Add <function>pg_get_serial_sequence()</> to return a
+      <type>SERIAL</> column's sequence name (Christopher)
      </para>
      <para>
-      This allows automated scripts to reliabily find the serial
+      This allows automated scripts to reliably find the <type>SERIAL</>
       sequence name.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Warn when primary/foreign key datatype mismatch requires costly lookup
+      Warn when primary/foreign key data type mismatch requires costly lookup
      </para>
     </listitem>
 
     <listitem>
      <para>
-      New ALTER INDEX command to allow moving of indexes between tablespaces 
-      (Gavin)
+      New <command>ALTER INDEX</> command to allow moving of indexes
+      between tablespaces (Gavin)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Have ALTER TABLE OWNER change dependent sequence ownership too (Alvaro)
-      (Gavin)
+      Have <command>ALTER TABLE OWNER</> change dependent sequence
+      ownership too (Alvaro)
      </para>
     </listitem>
 
@@ -1145,18 +1164,18 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.306 2004/11/10 06:13:12 momjian
 
     <listitem>
      <para>
-      Add ALSO keyword to <command>CREATE RULE</command> (Fabien
+      Add <option>ALSO</> keyword to <command>CREATE RULE</command> (Fabien
       Coelho)
      </para>
      <para>
-      This allows ALSO to be added to rule creation to contrast it with
-      INSTEAD rules.
+      This allows <option>ALSO</> to be added to rule creation to contrast it with
+      <option>INSTEAD</> rules.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Add NOWAIT option to <command>LOCK</command> (Tatsuo)
+      Add <option>NOWAIT</> option to <command>LOCK</command> (Tatsuo)
      </para>
      <para>
       This allows the <command>LOCK</command> command to fail if it
@@ -1192,7 +1211,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.306 2004/11/10 06:13:12 momjian
      </para>
      <para>
       In 7.3 and 7.4, a long-running btree index build could block concurrent
-      CHECKPOINTs from completing, thereby causing WAL bloat because the
+      <command>CHECKPOINT</>s from completing, thereby causing WAL bloat because the
       WAL log could not be recycled.
      </para>
     </listitem>
@@ -1240,11 +1259,11 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.306 2004/11/10 06:13:12 momjian
 
     <listitem>
      <para>
-      New pg_ctl <literal>kill</> option for Win32 (Andrew)
+      New <application>pg_ctl</> <option>kill</> option for Win32 (Andrew)
      </para>
      <para>
       Win32 does not have a <literal>kill</> command to send signals to
-      backends so this capability was added to pg_ctl.
+      backends so this capability was added to <application>pg_ctl</>.
      </para>
     </listitem>
 
@@ -1256,8 +1275,9 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.306 2004/11/10 06:13:12 momjian
 
     <listitem>
      <para>
-      Add --pwfile option to <application>initdb</application> so the
-      initial password can be set by GUI tools (Magnus)
+      Add <option>--pwfile</> option to
+      <application>initdb</application> so the initial password can be
+      set by GUI tools (Magnus)
      </para>
     </listitem>
 
@@ -1270,7 +1290,8 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.306 2004/11/10 06:13:12 momjian
 
     <listitem>
      <para>
-      Add Win32 service "register" command to pg_ctl (Dave Page)
+      Add Win32 service <option>register</> command to
+      <application>pg_ctl</> (Dave Page)
      </para>
     </listitem>
 
@@ -1297,7 +1318,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.306 2004/11/10 06:13:12 momjian
       Reject non-rectangular array values as erroneous (Joe)
      </para>
      <para>
-      Formerly, <literal>array_in</literal> would silently build a
+      Formerly, <function>array_in</> would silently build a
       surprising result.
      </para>
     </listitem>
@@ -1310,14 +1331,14 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.306 2004/11/10 06:13:12 momjian
 
      <listitem>
       <para>
-       The arithmetic operators associated with the <quote>char</> data type
-       have been removed.
+       The arithmetic operators associated with the single-byte
+       <type>"char"</> data type have been removed.
       </para>
       <para>
        Formerly, the parser would select these operators in many situations
        where an <quote>unable to select an operator</> error would be more
        appropriate, such as <literal>null * null</>.  If you actually want
-       to do arithmetic on a <quote>char</> column, you can cast it to integer.
+       to do arithmetic on a <type>"char"</> column, you can cast it to integer.
       </para>
      </listitem>
 
@@ -1326,9 +1347,9 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.306 2004/11/10 06:13:12 momjian
        Syntax checking of array input values considerably tightened up (Joe)
       </para>
      <para>
-       Junk that was previously allowed in odd places with odd results now
-       causes an ERROR: for example, non-whitespace after the closing
-       right brace.
+       Junk that was previously allowed in odd places with odd results
+       now causes an <literal>ERROR</>, for example, non-whitespace
+       after the closing right brace.
       </para>
     </listitem>
 
@@ -1340,7 +1361,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.306 2004/11/10 06:13:12 momjian
      <para>
        Formerly, both ways of writing an empty-string element value were
        allowed, but now a quoted empty string is required.  The case where
-       nothing at all appears will probably be taken over to mean a NULL
+       nothing at all appears will probably be considered to be a NULL
        element value in some future release.
       </para>
     </listitem>
@@ -1365,14 +1386,14 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.306 2004/11/10 06:13:12 momjian
 
     <listitem>
      <para>
-      Accept YYYY-monthname-DD as a date string (Tom)
+      Accept <literal>YYYY-monthname-DD</> as a date string (Tom)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Make netmask() and hostmask() functions return maximum-length
-      masklen (Tom)
+      Make <function>netmask()</> and <function>hostmask()</> functions
+      return maximum-length masklen (Tom)
      </para>
     </listitem>
 
@@ -1388,24 +1409,27 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.306 2004/11/10 06:13:12 momjian
 
     <listitem>
      <para>
-      to_char/to_date date conversion improvements (Kurt Roeckx, Fabien Coelho)
+      <function>>to_char>/>/<function>to_date()</> date conversion
+      improvements (Kurt Roeckx, Fabien Coelho)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Make length() disregard trailing spaces in CHAR(n) (Gavin)
+      Make <function>length()</> disregard trailing spaces in
+      <type>CHAR(n)</> (Gavin)
      </para>
      <para>
       This change was made to improve consistency: trailing spaces are
-      semantically insignificant in CHAR(n) data, so they should not be
-      counted by length().
+      semantically insignificant in <type>CHAR(n)</> data, so they
+      should not be counted by <function>length()</>.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Warn of empty string being passed to oid/float4/float8 data types (Neil)
+      Warn of empty string being passed to
+      <type>OID</>/<type>float4</>/<type>float8</> data types (Neil)
      </para>
      <para>
       8.1 will throw an error instead.
@@ -1414,15 +1438,17 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.306 2004/11/10 06:13:12 momjian
 
     <listitem>
      <para>
-      Allow int2/int4/int8/float4/float8 input routines to have leading
-      or trailing whitespace (Neil)
+      Allow
+      <type>int2</>/<type>int4</>/<type>int8</>/<type>float4</>/<type>float8>/> 
+      input routines to have leading or trailing whitespace
+      (Neil)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Better support for IEEE Infinity and NaN values in
-      <type>float4</type>, <type>float8</type> (Neil)
+      Better support for IEEE <literal>Infinity</> and <literal>NaN</>
+      values in <type>float4</type>/<type>float8</type> (Neil)
      </para>
      <para>
       These should now work on all platforms that support IEEE-compliant
@@ -1432,27 +1458,28 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.306 2004/11/10 06:13:12 momjian
 
     <listitem>
      <para>
-      Add "week" to date_trunc options (Robert Creager)
+      Add <option>week</> option to <function>date_trunc()</> (Robert Creager)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Fix to_char for 1 BC (previously it returned 1 AD) (Bruce)
+      Fix to_char for <literal>1 BC</> (previously it returned
+      <literal>1 AD</>) (Bruce)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Fix to_char(year) for BC dates (previously it returned one less than
-      the correct year) (Bruce)
+      Fix <function>to_char(year)</> for BC dates (previously it
+      returned one less than the correct year) (Bruce)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Fix date_part() to return the proper millennium and century (Fabien
-      Coelho)
+      Fix <function>date_part()</> to return the proper millennium and
+      century (Fabien Coelho)
      </para>
      <para>
       In previous versions, the century and millennium results had a wrong
@@ -1463,40 +1490,45 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.306 2004/11/10 06:13:12 momjian
 
     <listitem>
      <para>
-      Add ceiling() as an alias for ceil(), and power() as an alias for pow()
-      for standards compliance (Neil)
+      Add <function>ceiling()</> as an alias for <function>ceil()</>,
+      and <function>power()</> as an alias for <function>pow()</> for
+      standards compliance (Neil)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Change ln(), log(), power(), and sqrt() to emit the correct SQLSTATE
-      error codes for certain error conditions, as specified by SQL2003
-      (Neil)
+      Change <function>ln()</>, <function>log()</>,
+      <function>power()</>, and <function>sqrt()</> to emit the correct
+      <literal>SQLSTATE</> error codes for certain error conditions, as
+      specified by SQL2003 (Neil)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Add width_bucket() function as defined by SQL2003 (Neil)
+      Add <function>width_bucket()</> function as defined by SQL2003 (Neil)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Add generate_series() functions to simplify working with numeric sets (Joe)
+      Add <function>generate_series()</> functions to simplify working
+      with numeric sets (Joe)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Fix upper/lower/initcap functions to work with multibyte encodings (Tom)
+      Fix <function>upper/lower/initcap()</> functions to work with
+      multibyte encodings (Tom)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Add boolean and bitwise integer AND/OR aggregates (Fabien Coelho)
+      Add boolean and bitwise integer <option>AND</>/<option>OR</>
+      aggregates (Fabien Coelho)
      </para>
     </listitem>
 
@@ -1521,17 +1553,18 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.306 2004/11/10 06:13:12 momjian
 
     <listitem>
      <para>
-      Add interval plus datetime operators (Tom)
+      Add <type>interval</> plus <type>datetime</> operators (Tom)
      </para>
      <para>
-      The reverse ordering, datetime plus interval, was already supported,
-      but both are required by the SQL standard.
+      The reverse ordering, <type>datetime</> plus <type>interval</>,
+      was already supported, but both are required by the SQL standard.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Casting an integer to BIT(N) selects the rightmost N bits of the integer
+      Casting an integer to <type>BIT(N)</> selects the rightmost N bits
+      of the integer
       (Tom)
      </para>
      <para>
@@ -1543,22 +1576,8 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.306 2004/11/10 06:13:12 momjian
 
     <listitem>
      <para>
-      Detect overflow of integer arithmetic (Tom)
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      Remove arithmetic operators for one-byte character type/"char" (Tom)
-     </para>
-     <para>
-      The data type can be cast to 'int' to perform such operations.
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      Require CIDR values to have all non-masked bits be zero (Kevin Brintnall)
+      Require <type>CIDR</> values to have all non-masked bits be zero
+      (Kevin Brintnall)
      </para>
     </listitem>
 
@@ -1592,13 +1611,14 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.306 2004/11/10 06:13:12 momjian
 
     <listitem>
      <para>
-      Non-deferred AFTER triggers are now fired immediately after completion
-      of the triggering query, rather than upon finishing the current
-      interactive command.  This makes a difference when the triggering query
-      occurred within a function: the trigger is invoked before the function
-      proceeds to its next operation.  For example, if a function inserts
-      a new row into a table, any non-deferred foreign key checks occur
-      before proceeding with the function.
+      Non-deferred <option>AFTER</> triggers are now fired immediately
+      after completion of the triggering query, rather than upon
+      finishing the current interactive command. This makes a difference
+      when the triggering query occurred within a function: the trigger
+      is invoked before the function proceeds to its next operation. For
+      example, if a function inserts a new row into a table, any
+      non-deferred foreign key checks occur before proceeding with the
+      function.
      </para>
     </listitem>
 
@@ -1653,9 +1673,10 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.306 2004/11/10 06:13:12 momjian
       Improve parsing of PL/pgSQL FOR loops (Tom)
      </para>
      <para>
-      Parsing is now driven by presence of ".." rather than datatype of FOR
-      variable.  This makes no difference for correct functions, but should
-      result in more understandable error messages when a mistake is made.
+      Parsing is now driven by presence of <literal>".."</> rather than
+      data type of <option>FOR</> variable. This makes no difference for
+      correct functions, but should result in more understandable error
+      messages when a mistake is made.
      </para>
     </listitem>
 
@@ -1670,43 +1691,47 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.306 2004/11/10 06:13:12 momjian
 
 
   <sect3>
-   <title>psql Changes</title>
+   <title><application>psql</> Changes</title>
    <itemizedlist>
 
     <listitem>
      <para>
-      Improve psql information display about database objects (Christopher)
+      Improve <application>psql</> information display about database
+      objects (Christopher)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Allow psql to display group membership in \du and \dg (Markus Bertheau)
+      Allow <application>psql</> to display group membership in
+      <command>\du</> and <command>\dg</> (Markus Bertheau)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Prevent psql \dn from showing temporary schemas (Bruce)
+      Prevent <application>psql</> <command>\dn</command> from showing
+      temporary schemas (Bruce)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Allow psql to handle tilde user expansion for file names (Zach Irmen)
+      Allow <application>psql</> to handle tilde user expansion for file
+      names (Zach Irmen)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Allow psql to display fancy prompts, including color, via readline
-      (Reece Hart, Chet Ramey)
+      Allow <application>psql</> to display fancy prompts, including
+      color, via <application>readline</> (Reece Hart, Chet Ramey)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Make psql \copy match <command>COPY</command> command syntax
+      Make <application>psql</> <command>\copy</> match <command>COPY</command> command syntax
       fully (Tom)
      </para>
     </listitem>
@@ -1719,50 +1744,55 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.306 2004/11/10 06:13:12 momjian
 
     <listitem>
      <para>
-      Add <command>CLUSTER</command> information to psql \d display
+      Add <command>CLUSTER</command> information to <application>psql</>
+      <command>\d</> display
       (Bruce)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Change psql \copy stdin/stdout to read from command input/output (Bruce)
+      Change <application>psql</> <command>\copy stdin/stdout</> to read
+      from command input/output (Bruce)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Add pstdin/pstdout to read from psql's stdin/stdout (Mark Feit)
+      Add <option>pstdin</>/<option>pstdout</> to read from
+      <application>psql</>'s <literal>stdin</>/<literal>stdout</> (Mark
+      Feit)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Add global psql config file, <filename>psqlrc.sample</filename>
+      Add global <application>psql</> config file, <filename>psqlrc.sample</filename>
       (Bruce)
      </para>
      <para>
-      This allows a central file where global psql startup commands can
+      This allows a central file where global <application>psql</> startup commands can
       be stored.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Have psql \d+ indicate if the table has an OID column (Neil)
+      Have <application>psql</> <command>\d+</> indicate if the table
+      has an <type>OID</> column (Neil)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      On Windows, use binary mode in psql when reading files so control-Z
+      On Windows, use binary mode in <application>psql</> when reading files so control-Z
       is not seen as end-of-file
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Have \dn+ show permissions and description for schemas (Dennis
+      Have <command>\dn+</> show permissions and description for schemas (Dennis
       Bjorklund)
      </para>
     </listitem>
@@ -1784,18 +1814,19 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.306 2004/11/10 06:13:12 momjian
 
 
   <sect3>
-   <title>pg_dump Changes</title>
+   <title><application>pg_dump</> Changes</title>
    <itemizedlist>
 
     <listitem>
      <para>
-      Use dependency information to improve the reliability of pg_dump (Tom)
+      Use dependency information to improve the reliability of
+      <application>pg_dump</> (Tom)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Have pg_dump output objects in alphabetical order if possible (Tom)
+      Have <application>pg_dump</> output objects in alphabetical order if possible (Tom)
      </para>
      <para>
       This should make it easier to identify changes between
@@ -1805,44 +1836,50 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.306 2004/11/10 06:13:12 momjian
 
     <listitem>
      <para>
-      Allow pg_restore to ignore some SQL errors (Fabien Coelho)
+      Allow <application>g_restore</> to ignore some SQL errors (Fabien Coelho)
      </para>
      <para>
-      This makes pg_restore's behavior similar to the results of feeding
-      a pg_dump output script to psql.  In most cases, ignoring errors and
-      plowing ahead is the most useful thing to do.  Also added was a
-      pg_restore option to give the old behavior of exiting on an error.
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      pg_restore -l display now includes objects' schema names
+      This makes <application>pg_restore</>'s behavior similar to the
+      results of feeding a <application>pg_dump</> output script to
+      <application>psql</>. In most cases, ignoring errors and plowing
+      ahead is the most useful thing to do. Also added was a pg_restore
+      option to give the old behavior of exiting on an error.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      New begin/end markers in pg_dump text output (Bruce)
+      <application>pg_restore</> <option>-l</> display now includes
+      objects' schema names
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Add start/stop times for pg_dump/pg_dumpall in verbose mode (Bruce)
+      New begin/end markers in <application>pg_dump</> text output (Bruce)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Allow most pg_dump options in pg_dumpall (Christopher)
+      Add start/stop times for
+      <application>pg_dump</>/<application>pg_dumpall</> in verbose mode
+      (Bruce)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Have pg_dump use ALTER OWNER rather than SET SESSION
-      AUTHORIZATION by default (Christopher)
+      Allow most <application>pg_dump</> options in
+      <application>pg_dumpall</> (Christopher)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Have <application>pg_dump</> use <command>ALTER OWNER</> rather
+      than <command>SET SESSION AUTHORIZATION</> by default
+      (Christopher)
      </para>
     </listitem>
 
@@ -1856,47 +1893,50 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.306 2004/11/10 06:13:12 momjian
 
     <listitem>
      <para>
-      Make libpq SIGPIPE thread-safe (Bruce)
+      Make libpq <option>SIGPIPE</> thread-safe (Bruce)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Add PQmbdsplen() which returns the "display length" of a character (Tatsuo)
+      Add <function>PQmbdsplen()</> which returns the display length
+      of a character (Tatsuo)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Add thread locking to SSL and Kerberos connections (Manfred Spraul)
+      Add thread locking to <application>SSL</> and
+      <application>Kerberos</> connections (Manfred Spraul)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Allow PQoidValue(), PQcmdTuples(), and PQoidStatus() to work on
-      <command>EXECUTE</command> commands (Neil)
+      Allow <function>PQoidValue()</>, <function>PQcmdTuples()</>, and
+      <function>PQoidStatus()</> to work on <command>EXECUTE</command>
+      commands (Neil)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Add PQserverVersion() to provide more convenient access to
-      the server version number (Greg Sabino Mullane)
+      Add <function>PQserverVersion()</> to provide more convenient
+      access to the server version number (Greg Sabino Mullane)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Many ecpg fixes, including SET DESCRIPTOR (Michael)
+      Many ecpg improvements, including <command>SET DESCRIPTOR</> (Michael)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Add PQprepare()/PQsendPrepared() functions to support preparing
-      statements without necessarily specifying the datatypes of their parameters
-      (Abhijit Menon-Sen)
+      Add <function>PQprepare/PQsendPrepared()</> functions to support
+      preparing statements without necessarily specifying the data types
+      of their parameters (Abhijit Menon-Sen)
      </para>
     </listitem>
 
@@ -1935,41 +1975,42 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.306 2004/11/10 06:13:12 momjian
       Support relocatable installations (Bruce)
      </para>
      <para>
-      Directory paths for installed files (such as the /share directory)
-      are now computed relative to the actual location of the executables,
-      so that an installation tree can be moved to another place without
-      reconfiguring and rebuilding.
+      Directory paths for installed files (such as the
+      <filename>/share</> directory) are now computed relative to the
+      actual location of the executables, so that an installation tree
+      can be moved to another place without reconfiguring and
+      rebuilding.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Use --with-docdir to choose installation location of documentation; also
-      allow --infodir (Peter)
+      Use <option>--with-docdir</> to choose installation location of documentation; also
+      allow <option>--infodir</> (Peter)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Add --without-docdir to prevent installation of documentation (Peter)
+      Add <option>--without-docdir</> to prevent installation of documentation (Peter)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Upgrade to DocBook V4.2 SGML (Peter)
+      Upgrade to <application>DocBook</> V4.2 SGML (Peter)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      New "PostgreSQL" CVS tag (Marc)
+      New <literal>PostgreSQL</> <application>CVS</> tag (Marc)
      </para>
      <para>
-      This was done to make it easier for organizations to manage
-      their own copies of the <productname>PostgreSQL</productname>
-      CVS repository.  File version stamps from the master repository
-      will not get munged by checking into or out of a copied
+      This was done to make it easier for organizations to manage their
+      own copies of the <productname>PostgreSQL</productname>
+      <application>CVS</> repository. File version stamps from the master
+      repository will not get munged by checking into or out of a copied
       repository.
      </para>
     </listitem>
@@ -1994,7 +2035,8 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.306 2004/11/10 06:13:12 momjian
 
     <listitem>
      <para>
-      Add inlined test-and-set code on PA-RISC for gcc (ViSolve, Tom)
+      Add inlined test-and-set code on PA-RISC for <application>gcc</>
+      (ViSolve, Tom)
      </para>
     </listitem>
 
@@ -2006,8 +2048,8 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.306 2004/11/10 06:13:12 momjian
 
     <listitem>
      <para>
-      Clean up spinlock assembly code to avoid warnings from newer gcc
-      releases (Tom)
+      Clean up spinlock assembly code to avoid warnings from newer
+      <application>gcc</> releases (Tom)
      </para>
     </listitem>
 
@@ -2023,7 +2065,6 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.306 2004/11/10 06:13:12 momjian
      </para>
     </listitem>
 
-
     <listitem>
      <para>
       More accurately estimate memory and file descriptor usage (Tom)
@@ -2038,19 +2079,13 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.306 2004/11/10 06:13:12 momjian
 
     <listitem>
      <para>
-      New fsync test program (Bruce)
+      New <function>fsync()</> test program (Bruce)
      </para>
     </listitem>
 
     <listitem>
      <para>
       Major documentation improvements (Neil, Peter)
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      Remove contrib/rserv: obsoleted by various separate projects
      </para>
     </listitem>
 
@@ -2076,13 +2111,13 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.306 2004/11/10 06:13:12 momjian
 
     <listitem>
      <para>
-      Auto detect thread flags (no more manual testing) (Bruce)
+      Auto-detect thread flags (no more manual testing) (Bruce)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Use Olson's public domain timezone library (Magnus)
+      Use Olson's public domain <application>timezone</> library (Magnus)
      </para>
     </listitem>
 
@@ -2099,7 +2134,8 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.306 2004/11/10 06:13:12 momjian
 
     <listitem>
      <para>
-      psql now uses a flex-generated lexical analyzer to process command strings
+      <application>psql</> now uses a <application>flex</>-generated
+      lexical analyzer to process command strings
      </para>
     </listitem>
 
@@ -2135,7 +2171,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.306 2004/11/10 06:13:12 momjian
 
     <listitem>
      <para>
-      New pgevent for Win32 logging
+      New <application>pgevent</> for Win32 logging
      </para>
     </listitem>
 
@@ -2204,12 +2240,6 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.306 2004/11/10 06:13:12 momjian
 
     <listitem>
      <para>
-      Remove /contrib/rserv
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
       Allow /contrib/pg_autovacuum to run as a Win32 service (Dave Page)
      </para>
     </listitem>
@@ -2223,6 +2253,12 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.306 2004/11/10 06:13:12 momjian
     <listitem>
      <para>
       Remove contrib/pg_logger
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Remove contrib/rserv: obsoleted by various separate projects
      </para>
     </listitem>
 
@@ -2268,7 +2304,7 @@ it as a potential-data-loss bug.
 Very large left joins using a hash join plan could fail to output unmatched
 left-side rows given just the right data distribution.
 </para></listitem>
-<listitem><para>Disallow running pg_ctl as root</para>
+<listitem><para>Disallow running <application>pg_ctl</> as root</para>
 <para>
 This is to guard against any possible security issues.
 </para></listitem>
@@ -2378,7 +2414,7 @@ aggregate plan</para></listitem>
 <listitem><para>Force cache update after renaming a column in a foreign key</para></listitem>
 <listitem><para>Pretty-print UNION queries correctly</para></listitem>
 <listitem><para>Make psql handle <literal>\r\n</> newlines properly in COPY IN</para></listitem>
-<listitem><para>pg_dump handled ACLs with grant options incorrectly</para></listitem>
+<listitem><para><application>pg_dump</> handled ACLs with grant options incorrectly</para></listitem>
 <listitem><para>Fix thread support for OS X and Solaris</para></listitem>
 <listitem><para>Updated JDBC driver (build 215) with various fixes</para></listitem>
 <listitem><para>ECPG fixes</para></listitem>
