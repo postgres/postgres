@@ -7,11 +7,10 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtscan.c,v 1.2 1996/08/15 07:30:22 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtscan.c,v 1.3 1996/08/27 22:15:08 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include "c.h"
 #include "postgres.h"
 
 #include "storage/bufmgr.h"

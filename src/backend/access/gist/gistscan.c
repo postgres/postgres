@@ -9,7 +9,6 @@
  *
  *-------------------------------------------------------------------------
  */
-#include "c.h"
 #include "postgres.h"
 
 #include "storage/bufmgr.h"

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.1.1.1 1996/07/09 06:21:13 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.2 1996/08/27 22:15:15 scrappy Exp $
  *
  * NOTES
  *    This file contains the high level access-method interface to the
@@ -16,8 +16,6 @@
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
-
-#include "machine.h"		/* in port/ directory (needed for BLCKSZ) */
 
 #include "access/heapam.h"
 #include "storage/buf.h"

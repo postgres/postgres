@@ -7,14 +7,13 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.2 1996/08/24 20:48:04 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.3 1996/08/27 22:15:17 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <math.h>
 #include "postgres.h"
 
-#include "machine.h"		/* in port/ directory (needed for BLCKSZ) */
 #include "storage/buf.h"
 #include "storage/bufmgr.h"
 #include "storage/ipc.h"	/* for OIDGENLOCKID */
