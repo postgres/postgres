@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.149 2003/03/27 16:35:30 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.150 2003/03/27 16:45:51 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -6757,6 +6757,12 @@ SELECT relname FROM pg_class WHERE pg_table_is_visible(oid);
        <entry><type>boolean</type></entry>
        <entry>is operator class visible in search path</entry>
       </row>
+      <row>
+       <entry><literal><function>pg_conversion_is_visible</function>(<parameter>conversion_oid</parameter>)</literal>
+       </entry>
+       <entry><type>boolean</type></entry>
+       <entry>is conversion visible in search path</entry>
+      </row>
      </tbody>
     </tgroup>
    </table>
@@ -6776,16 +6782,20 @@ SELECT relname FROM pg_class WHERE pg_table_is_visible(oid);
    <indexterm zone="functions-misc">
     <primary>pg_opclass_is_visible</primary>
    </indexterm>
+   <indexterm zone="functions-misc">
+    <primary>pg_conversion_is_visible</primary>
+   </indexterm>
 
    <para>
    <function>pg_table_is_visible</function> performs the check for
    tables (or views, or any other kind of <literal>pg_class</> entry).
    <function>pg_type_is_visible</function>,
    <function>pg_function_is_visible</function>,
-   <function>pg_operator_is_visible</function>, and
-   <function>pg_opclass_is_visible</function> perform the same sort of
-   visibility check for types, functions, operators, and operator
-   classes, respectively.  For functions and operators, an object in
+   <function>pg_operator_is_visible</function>,
+   <function>pg_opclass_is_visible</function>, and
+   <function>pg_conversion_is_visible</function> perform the same sort of
+   visibility check for types, functions, operators, operator classes
+   and conversions, respectively.  For functions and operators, an object in
    the search path is visible if there is no object of the same name
    <emphasis>and argument data type(s)</> earlier in the path.  For
    operator classes, both name and associated index access method are
@@ -6833,8 +6843,8 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
    extract information from the system catalogs.
    <function>pg_get_viewdef</function>,
    <function>pg_get_ruledef</function>,
-   <function>pg_get_indexdef()</function>,
-   <function>pg_get_triggerdef()</function>, and
+   <function>pg_get_indexdef</function>,
+   <function>pg_get_triggerdef</function>, and
    <function>pg_get_constraintdef</function> respectively
    reconstruct the creating command for a view, rule, index, or
    constraint.  (Note that this is a decompiled reconstruction, not
@@ -6872,9 +6882,9 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
        <entry>get <command>CREATE INDEX</> command for index</entry>
       </row>
       <row>
-       <entry><function>pg_get_triggerdef</function>(<parameter>triggerOID</parameter>)</entry>
+       <entry><function>pg_get_triggerdef</function>(<parameter>trigger_oid</parameter>)</entry>
        <entry><type>text</type></entry>
-       <entry>Get <command>CREATE [ CONSTRAINT ] TRIGGER</> command for trigger</entry>
+       <entry>get <command>CREATE [ CONSTRAINT ] TRIGGER</> command for trigger</entry>
       </row>
       <row>
        <entry><literal><function>pg_get_constraintdef</function>(<parameter>constraint_oid</parameter>)</literal></entry>
