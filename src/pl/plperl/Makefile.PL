@@ -56,17 +56,13 @@ TYPEMAP= -typemap \$(EXTDIR)/typemap
 # use the same compiler as perl did
 CC= $Config{cc}
 
-# get the compiler options that perl wants.
-CFLAGS+= @{[ccopts()]}
+# use the same compiler options as perl did, too
+CFLAGS= @{[ccopts()]}
 # including the ones for dynamic loading
 CFLAGS+= $Config{cccdlflags}
 
-# add the includes for postgreSQL
-CFLAGS+= -I\$(LIBPQDIR) -I\$(SRCDIR)/include
-
-# For fmgr.h
-CFLAGS+= -I\$(SRCDIR)/backend
-
+# now add the includes for postgreSQL
+CFLAGS+= -I\$(LIBPQDIR) -I\$(SRCDIR)/include -I\$(SRCDIR)/backend
 
 # add the postgreSQL libraries
 LDADD+= -L\$(LIBPQDIR) -lpq
