@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.59 2003/08/17 19:58:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.60 2003/08/26 15:38:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -686,6 +686,12 @@ pageloop:;
 	 * Estimate total number of valid rows in relation.
 	 */
 	*totalrows = floor((double) onerel->rd_nblocks * tuplesperpage + 0.5);
+
+	/*
+	 * Emit some interesting relation info 
+	 */
+	elog(elevel, "  pages = %d rows/page = %d rows = %.0f", 
+		onerel->rd_nblocks, (int)tuplesperpage, *totalrows);
 
 	return numrows;
 }
