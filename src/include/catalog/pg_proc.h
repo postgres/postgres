@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.335 2004/06/06 19:07:00 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.336 2004/06/13 19:56:51 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2346,15 +2346,6 @@ DESCR("I/O");
 DATA(insert OID = 911 (  inet_out			PGNSP PGUID 12 f f t f i 1 2275 "869" _null_  inet_out - _null_ ));
 DESCR("I/O");
 
-DATA(insert OID = 2196 (  inet_client_addr		PGNSP PGUID 12 f f f f s 0 869 "" _null_  inet_client_addr - _null_ ));
-DESCR("Returns the INET address of the client connected to the backend");
-DATA(insert OID = 2197 (  inet_client_port		PGNSP PGUID 12 f f f f s 0 23 "" _null_  inet_client_port - _null_ ));
-DESCR("Returns the client's port number for this connection");
-DATA(insert OID = 2198 (  inet_server_addr		PGNSP PGUID 12 f f f f s 0 869 "" _null_  inet_server_addr - _null_ ));
-DESCR("Returns the INET address that the backend is using to service the connection");
-DATA(insert OID = 2199 (  inet_server_port		PGNSP PGUID 12 f f f f s 0 23 "" _null_  inet_server_port - _null_ ));
-DESCR("Returns the servers's port number for this connection");
-
 /* for cidr type support */
 DATA(insert OID = 1267 (  cidr_in			PGNSP PGUID 12 f f t f i 1 650 "2275" _null_  cidr_in - _null_ ));
 DESCR("I/O");
@@ -2410,6 +2401,15 @@ DATA(insert OID = 1714 (  cidr				PGNSP PGUID 12 f f t f i 1 650 "25" _null_  te
 DESCR("text to cidr");
 DATA(insert OID = 1715 (  set_masklen		PGNSP PGUID 12 f f t f i 2 869 "869 23" _null_  inet_set_masklen - _null_ ));
 DESCR("change the netmask of an inet");
+
+DATA(insert OID = 2196 (  inet_client_addr		PGNSP PGUID 12 f f f f s 0 869 "" _null_  inet_client_addr - _null_ ));
+DESCR("INET address of the client");
+DATA(insert OID = 2197 (  inet_client_port		PGNSP PGUID 12 f f f f s 0 23 "" _null_  inet_client_port - _null_ ));
+DESCR("client's port number for this connection");
+DATA(insert OID = 2198 (  inet_server_addr		PGNSP PGUID 12 f f f f s 0 869 "" _null_  inet_server_addr - _null_ ));
+DESCR("INET address of the server");
+DATA(insert OID = 2199 (  inet_server_port		PGNSP PGUID 12 f f f f s 0 23 "" _null_  inet_server_port - _null_ ));
+DESCR("server's port number for this connection");
 
 DATA(insert OID = 1686 ( numeric			PGNSP PGUID 12 f f t f i 1 1700 "25" _null_	text_numeric - _null_ ));
 DESCR("(internal)");

@@ -1,7 +1,7 @@
 /*
  *	PostgreSQL type definitions for the INET and CIDR types.
  *
- *	$PostgreSQL: pgsql/src/backend/utils/adt/network.c,v 1.50 2004/05/26 18:35:38 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/utils/adt/network.c,v 1.51 2004/06/13 19:56:50 tgl Exp $
  *
  *	Jon Postel RIP 16 Oct 1998
  */
@@ -131,109 +131,6 @@ cidr_in(PG_FUNCTION_ARGS)
 	char	   *src = PG_GETARG_CSTRING(0);
 
 	PG_RETURN_INET_P(network_in(src, 1));
-}
-
-/* INET that the client is connecting from */
-Datum
-inet_client_addr(PG_FUNCTION_ARGS)
-{
-	Port *port = MyProcPort;
-
-	if (port == NULL)
-		PG_RETURN_NULL();
-
-	switch (port->raddr.addr.ss_family) {
-	case AF_INET:
-#ifdef HAVE_IPV6
-	case AF_INET6:
-#endif
-		break;
-	default:
-		PG_RETURN_NULL();
-	}
-
-	PG_RETURN_INET_P(network_in(port->remote_host, 0));
-}
-
-
-/* port that the client is connecting from */
-Datum
-inet_client_port(PG_FUNCTION_ARGS)
-{
-	Port *port = MyProcPort;
-
-	if (port == NULL)
-		PG_RETURN_NULL();
-
-	PG_RETURN_INT32(DirectFunctionCall1(int4in, CStringGetDatum(port->remote_port)));
-}
-
-
-/* server INET that the client connected to */
-Datum
-inet_server_addr(PG_FUNCTION_ARGS)
-{
-	Port *port = MyProcPort;
-	char	local_host[NI_MAXHOST];
-	int	ret;
-
-	if (port == NULL)
-		PG_RETURN_NULL();
-
-	switch (port->laddr.addr.ss_family) {
-	case AF_INET:
-#ifdef HAVE_IPV6
-	case AF_INET6:
-#endif
-	  break;
-	default:
-		PG_RETURN_NULL();
-	}
-
-	local_host[0] = '\0';
-
-	ret = getnameinfo_all(&port->laddr.addr, port->laddr.salen,
-			      local_host, sizeof(local_host),
-			      NULL, 0,
-			      NI_NUMERICHOST | NI_NUMERICSERV);
-	if (ret)
-		PG_RETURN_NULL();
-
-	PG_RETURN_INET_P(network_in(local_host, 0));
-}
-
-
-/* port that the server accepted the connection on */
-Datum
-inet_server_port(PG_FUNCTION_ARGS)
-{
-	Port *port = MyProcPort;
-	char	local_port[NI_MAXSERV];
-	int	ret;
-
-	if (port == NULL)
-		PG_RETURN_NULL();
-
-	switch (port->laddr.addr.ss_family) {
-	case AF_INET:
-#ifdef HAVE_IPV6
-	case AF_INET6:
-#endif
-	  break;
-	default:
-		PG_RETURN_NULL();
-	}
-
-	local_port[0] = '\0';
-
-	ret = getnameinfo_all(&port->laddr.addr, port->laddr.salen,
-			      NULL, 0,
-			      local_port, sizeof(local_port),
-			      NI_NUMERICHOST | NI_NUMERICSERV);
-	if (ret)
-		PG_RETURN_NULL();
-
-	PG_RETURN_INT32(DirectFunctionCall1(int4in, CStringGetDatum(local_port)));
 }
 
 
@@ -1068,4 +965,148 @@ network_scan_last(Datum in)
 	return DirectFunctionCall2(inet_set_masklen,
 							   DirectFunctionCall1(network_broadcast, in),
 							   Int32GetDatum(-1));
+}
+
+
+/*
+ * IP address that the client is connecting from (NULL if Unix socket)
+ */
+Datum
+inet_client_addr(PG_FUNCTION_ARGS)
+{
+	Port *port = MyProcPort;
+	char	remote_host[NI_MAXHOST];
+	int	ret;
+
+	if (port == NULL)
+		PG_RETURN_NULL();
+
+	switch (port->raddr.addr.ss_family) {
+	case AF_INET:
+#ifdef HAVE_IPV6
+	case AF_INET6:
+#endif
+	  break;
+	default:
+		PG_RETURN_NULL();
+	}
+
+	remote_host[0] = '\0';
+
+	ret = getnameinfo_all(&port->raddr.addr, port->raddr.salen,
+			      remote_host, sizeof(remote_host),
+			      NULL, 0,
+			      NI_NUMERICHOST | NI_NUMERICSERV);
+	if (ret)
+		PG_RETURN_NULL();
+
+	PG_RETURN_INET_P(network_in(remote_host, 0));
+}
+
+
+/*
+ * port that the client is connecting from (NULL if Unix socket)
+ */
+Datum
+inet_client_port(PG_FUNCTION_ARGS)
+{
+	Port *port = MyProcPort;
+	char	remote_port[NI_MAXSERV];
+	int	ret;
+
+	if (port == NULL)
+		PG_RETURN_NULL();
+
+	switch (port->raddr.addr.ss_family) {
+	case AF_INET:
+#ifdef HAVE_IPV6
+	case AF_INET6:
+#endif
+	  break;
+	default:
+		PG_RETURN_NULL();
+	}
+
+	remote_port[0] = '\0';
+
+	ret = getnameinfo_all(&port->raddr.addr, port->raddr.salen,
+			      NULL, 0,
+			      remote_port, sizeof(remote_port),
+			      NI_NUMERICHOST | NI_NUMERICSERV);
+	if (ret)
+		PG_RETURN_NULL();
+
+	PG_RETURN_DATUM(DirectFunctionCall1(int4in, CStringGetDatum(remote_port)));
+}
+
+
+/*
+ * IP address that the server accepted the connection on (NULL if Unix socket)
+ */
+Datum
+inet_server_addr(PG_FUNCTION_ARGS)
+{
+	Port *port = MyProcPort;
+	char	local_host[NI_MAXHOST];
+	int	ret;
+
+	if (port == NULL)
+		PG_RETURN_NULL();
+
+	switch (port->laddr.addr.ss_family) {
+	case AF_INET:
+#ifdef HAVE_IPV6
+	case AF_INET6:
+#endif
+	  break;
+	default:
+		PG_RETURN_NULL();
+	}
+
+	local_host[0] = '\0';
+
+	ret = getnameinfo_all(&port->laddr.addr, port->laddr.salen,
+			      local_host, sizeof(local_host),
+			      NULL, 0,
+			      NI_NUMERICHOST | NI_NUMERICSERV);
+	if (ret)
+		PG_RETURN_NULL();
+
+	PG_RETURN_INET_P(network_in(local_host, 0));
+}
+
+
+/*
+ * port that the server accepted the connection on (NULL if Unix socket)
+ */
+Datum
+inet_server_port(PG_FUNCTION_ARGS)
+{
+	Port *port = MyProcPort;
+	char	local_port[NI_MAXSERV];
+	int	ret;
+
+	if (port == NULL)
+		PG_RETURN_NULL();
+
+	switch (port->laddr.addr.ss_family) {
+	case AF_INET:
+#ifdef HAVE_IPV6
+	case AF_INET6:
+#endif
+	  break;
+	default:
+		PG_RETURN_NULL();
+	}
+
+	local_port[0] = '\0';
+
+	ret = getnameinfo_all(&port->laddr.addr, port->laddr.salen,
+			      NULL, 0,
+			      local_port, sizeof(local_port),
+			      NI_NUMERICHOST | NI_NUMERICSERV);
+	if (ret)
+		PG_RETURN_NULL();
+
+	PG_RETURN_DATUM(DirectFunctionCall1(int4in, CStringGetDatum(local_port)));
 }

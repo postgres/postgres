@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.206 2004/06/02 21:34:49 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.207 2004/06/13 19:56:49 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -6609,25 +6609,25 @@ SELECT NULLIF(value, '(none)') ...
       </row>
 
       <row>
-       <entry><function>inet_client_addr</function></entry>
+       <entry><function>inet_client_addr()</function></entry>
        <entry><type>inet</type></entry>
        <entry>address of the remote connection</entry>
       </row>
 
       <row>
-       <entry><function>inet_client_port</function></entry>
+       <entry><function>inet_client_port()</function></entry>
        <entry><type>int4</type></entry>
        <entry>port of the remote connection</entry>
       </row>
 
       <row>
-       <entry><function>inet_server_addr</function></entry>
+       <entry><function>inet_server_addr()</function></entry>
        <entry><type>inet</type></entry>
        <entry>address of the local connection</entry>
       </row>
 
       <row>
-       <entry><function>inet_server_port</function></entry>
+       <entry><function>inet_server_port()</function></entry>
        <entry><type>int4</type></entry>
        <entry>port of the local connection</entry>
       </row>
@@ -6688,17 +6688,6 @@ SELECT NULLIF(value, '(none)') ...
    </note>
 
    <para>
-     <function>inet_client_addr</function> and
-     <function>inet_server_addr</function> return the IPv4 or IPv6 (if
-     configured) address of the remote or local host connecting to the
-     database, respectively.  <function>inet_client_port</function>
-     and <function>inet_server_port</function> return the port number
-     of the remote or local host connecting to the database,
-     respectively.  If the connection is not a network connection,
-     these functions will return <literal>NULL</literal>.
-   </para>
-
-   <para>
     <function>current_schema</function> returns the name of the schema that is
     at the front of the search path (or a null value if the search path is
     empty).  This is the schema that will be used for any tables or
@@ -6717,6 +6706,33 @@ SET search_path TO <replaceable>schema</> <optional>, <replaceable>schema</>, ..
 </programlisting>
     </para>
    </note>
+
+   <indexterm zone="functions-misc">
+    <primary>inet_client_addr</primary>
+   </indexterm>
+
+   <indexterm zone="functions-misc">
+    <primary>inet_client_port</primary>
+   </indexterm>
+
+   <indexterm zone="functions-misc">
+    <primary>inet_server_addr</primary>
+   </indexterm>
+
+   <indexterm zone="functions-misc">
+    <primary>inet_server_port</primary>
+   </indexterm>
+
+   <para>
+     <function>inet_client_addr</function> returns the IP address of the
+     current client, and <function>inet_client_port</function> returns the
+     port number.
+     <function>inet_server_addr</function> returns the IP address on which
+     the server accepted the current connection, and
+     <function>inet_server_port</function> returns the port number.
+     All these functions return NULL if the connection is via a Unix-domain
+     socket.
+   </para>
 
    <indexterm zone="functions-misc">
     <primary>version</primary>
