@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.276 2002/07/25 20:52:59 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.277 2002/07/30 21:56:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -118,6 +118,7 @@ static void dumpOneOpr(Archive *fout, OprInfo *oprinfo,
 static const char *convertRegProcReference(const char *proc);
 static const char *convertOperatorReference(const char *opr,
 						OprInfo *g_oprinfo, int numOperators);
+static void dumpOneOpclass(Archive *fout, OpclassInfo *opcinfo);
 static void dumpOneAgg(Archive *fout, AggInfo *agginfo);
 static Oid	findLastBuiltinOid_V71(const char *);
 static Oid	findLastBuiltinOid_V70(void);
@@ -1752,6 +1753,90 @@ getOperators(int *numOprs)
 	destroyPQExpBuffer(query);
 
 	return oprinfo;
+}
+
+/*
+ * getOpclasses:
+ *	  read all opclasses in the system catalogs and return them in the
+ * OpclassInfo* structure
+ *
+ *	numOpclasses is set to the number of opclasses read in
+ */
+OpclassInfo *
+getOpclasses(int *numOpclasses)
+{
+	PGresult   *res;
+	int			ntups;
+	int			i;
+	PQExpBuffer query = createPQExpBuffer();
+	OpclassInfo    *opcinfo;
+	int			i_oid;
+	int			i_opcname;
+	int			i_opcnamespace;
+	int			i_usename;
+
+	/*
+	 * find all opclasses, including builtin opclasses;
+	 * we filter out system-defined opclasses at dump-out time.
+	 */
+
+	/* Make sure we are in proper schema */
+	selectSourceSchema("pg_catalog");
+
+	if (g_fout->remoteVersion >= 70300)
+	{
+		appendPQExpBuffer(query, "SELECT pg_opclass.oid, opcname, "
+						  "opcnamespace, "
+						  "(select usename from pg_user where opcowner = usesysid) as usename "
+						  "from pg_opclass");
+	}
+	else
+	{
+		appendPQExpBuffer(query, "SELECT pg_opclass.oid, opcname, "
+						  "0::oid as opcnamespace, "
+						  "''::name as usename "
+						  "from pg_opclass");
+	}
+
+	res = PQexec(g_conn, query->data);
+	if (!res ||
+		PQresultStatus(res) != PGRES_TUPLES_OK)
+	{
+		write_msg(NULL, "query to obtain list of opclasses failed: %s", PQerrorMessage(g_conn));
+		exit_nicely();
+	}
+
+	ntups = PQntuples(res);
+	*numOpclasses = ntups;
+
+	opcinfo = (OpclassInfo *) malloc(ntups * sizeof(OpclassInfo));
+
+	i_oid = PQfnumber(res, "oid");
+	i_opcname = PQfnumber(res, "opcname");
+	i_opcnamespace = PQfnumber(res, "opcnamespace");
+	i_usename = PQfnumber(res, "usename");
+
+	for (i = 0; i < ntups; i++)
+	{
+		opcinfo[i].oid = strdup(PQgetvalue(res, i, i_oid));
+		opcinfo[i].opcname = strdup(PQgetvalue(res, i, i_opcname));
+		opcinfo[i].opcnamespace = findNamespace(PQgetvalue(res, i, i_opcnamespace),
+												opcinfo[i].oid);
+		opcinfo[i].usename = strdup(PQgetvalue(res, i, i_usename));
+
+		if (g_fout->remoteVersion >= 70300)
+		{
+			if (strlen(opcinfo[i].usename) == 0)
+				write_msg(NULL, "WARNING: owner of opclass \"%s\" appears to be invalid\n",
+						  opcinfo[i].opcname);
+		}
+	}
+
+	PQclear(res);
+
+	destroyPQExpBuffer(query);
+
+	return opcinfo;
 }
 
 /*
@@ -3980,6 +4065,236 @@ convertOperatorReference(const char *opr,
 				  opr);
 	return name;
 }
+
+
+/*
+ * dumpOpclasses
+ *	  writes out to fout the queries to recreate all the user-defined
+ *	  operator classes
+ */
+void
+dumpOpclasses(Archive *fout, OpclassInfo *opcinfo, int numOpclasses)
+{
+	int			i;
+
+	for (i = 0; i < numOpclasses; i++)
+	{
+		/* Dump only opclasses in dumpable namespaces */
+		if (!opcinfo[i].opcnamespace->dump)
+			continue;
+
+		/* OK, dump it */
+		dumpOneOpclass(fout, &opcinfo[i]);
+	}
+}
+
+/*
+ * dumpOneOpclass
+ *	  write out a single operator class definition
+ */
+static void
+dumpOneOpclass(Archive *fout, OpclassInfo *opcinfo)
+{
+	PQExpBuffer query = createPQExpBuffer();
+	PQExpBuffer q = createPQExpBuffer();
+	PQExpBuffer delq = createPQExpBuffer();
+	PGresult   *res;
+	int			ntups;
+	int			i_opcintype;
+	int			i_opckeytype;
+	int			i_opcdefault;
+	int			i_amname;
+	int			i_amopstrategy;
+	int			i_amopreqcheck;
+	int			i_amopopr;
+	int			i_amprocnum;
+	int			i_amproc;
+	char	   *opcintype;
+	char	   *opckeytype;
+	char	   *opcdefault;
+	char	   *amname;
+	char	   *amopstrategy;
+	char	   *amopreqcheck;
+	char	   *amopopr;
+	char	   *amprocnum;
+	char	   *amproc;
+	bool		needComma;
+	int			i;
+
+	/*
+	 * XXX currently we do not implement dumping of operator classes from
+	 * pre-7.3 databases.  This could be done but it seems not worth the
+	 * trouble.
+	 */
+	if (g_fout->remoteVersion < 70300)
+		return;
+
+	/* Make sure we are in proper schema so regoperator works correctly */
+	selectSourceSchema(opcinfo->opcnamespace->nspname);
+
+	/* Get additional fields from the pg_opclass row */
+	appendPQExpBuffer(query, "SELECT opcintype::pg_catalog.regtype, "
+					  "opckeytype::pg_catalog.regtype, "
+					  "opcdefault, "
+					  "(SELECT amname FROM pg_catalog.pg_am WHERE oid = opcamid) AS amname "
+					  "FROM pg_catalog.pg_opclass "
+					  "WHERE oid = '%s'::pg_catalog.oid",
+					  opcinfo->oid);
+
+	res = PQexec(g_conn, query->data);
+	if (!res ||
+		PQresultStatus(res) != PGRES_TUPLES_OK)
+	{
+		write_msg(NULL, "query to obtain opclass details failed: %s", PQerrorMessage(g_conn));
+		exit_nicely();
+	}
+
+	/* Expecting a single result only */
+	ntups = PQntuples(res);
+	if (ntups != 1)
+	{
+		write_msg(NULL, "Got %d rows instead of one from: %s",
+				  ntups, query->data);
+		exit_nicely();
+	}
+
+	i_opcintype = PQfnumber(res, "opcintype");
+	i_opckeytype = PQfnumber(res, "opckeytype");
+	i_opcdefault = PQfnumber(res, "opcdefault");
+	i_amname = PQfnumber(res, "amname");
+
+	opcintype = PQgetvalue(res, 0, i_opcintype);
+	opckeytype = PQgetvalue(res, 0, i_opckeytype);
+	opcdefault = PQgetvalue(res, 0, i_opcdefault);
+	amname = PQgetvalue(res, 0, i_amname);
+
+	/* DROP must be fully qualified in case same name appears in pg_catalog */
+	appendPQExpBuffer(delq, "DROP OPERATOR CLASS %s",
+					  fmtId(opcinfo->opcnamespace->nspname, force_quotes));
+	appendPQExpBuffer(delq, ".%s",
+					  fmtId(opcinfo->opcname, force_quotes));
+	appendPQExpBuffer(delq, " USING %s;\n",
+					  fmtId(amname, force_quotes));
+
+	/* Build the fixed portion of the CREATE command */
+	appendPQExpBuffer(q, "CREATE OPERATOR CLASS %s\n\t",
+					  fmtId(opcinfo->opcname, force_quotes));
+	if (strcmp(opcdefault, "t") == 0)
+		appendPQExpBuffer(q, "DEFAULT ");
+	appendPQExpBuffer(q, "FOR TYPE %s USING %s AS\n\t",
+					  opcintype,
+					  fmtId(amname, force_quotes));
+
+	needComma = false;
+
+	if (strcmp(opckeytype, "-") != 0)
+	{
+		appendPQExpBuffer(q, "STORAGE\t%s",
+						  opckeytype);
+		needComma = true;
+	}
+
+	PQclear(res);
+
+	/*
+	 * Now fetch and print the OPERATOR entries (pg_amop rows).
+	 */
+	resetPQExpBuffer(query);
+
+	appendPQExpBuffer(query, "SELECT amopstrategy, amopreqcheck, "
+					  "amopopr::pg_catalog.regoperator "
+					  "FROM pg_catalog.pg_amop "
+					  "WHERE amopclaid = '%s'::pg_catalog.oid "
+					  "ORDER BY amopstrategy",
+					  opcinfo->oid);
+
+	res = PQexec(g_conn, query->data);
+	if (!res ||
+		PQresultStatus(res) != PGRES_TUPLES_OK)
+	{
+		write_msg(NULL, "query to obtain opclass operators failed: %s", PQerrorMessage(g_conn));
+		exit_nicely();
+	}
+
+	ntups = PQntuples(res);
+
+	i_amopstrategy = PQfnumber(res, "amopstrategy");
+	i_amopreqcheck = PQfnumber(res, "amopreqcheck");
+	i_amopopr = PQfnumber(res, "amopopr");
+
+	for (i = 0; i < ntups; i++)
+	{
+		amopstrategy = PQgetvalue(res, i, i_amopstrategy);
+		amopreqcheck = PQgetvalue(res, i, i_amopreqcheck);
+		amopopr = PQgetvalue(res, i, i_amopopr);
+
+		if (needComma)
+			appendPQExpBuffer(q, " ,\n\t");
+
+		appendPQExpBuffer(q, "OPERATOR\t%s\t%s",
+						  amopstrategy, amopopr);
+		if (strcmp(amopreqcheck, "t") == 0)
+			appendPQExpBuffer(q, "\tRECHECK");
+
+		needComma = true;
+	}
+
+	PQclear(res);
+
+	/*
+	 * Now fetch and print the FUNCTION entries (pg_amproc rows).
+	 */
+	resetPQExpBuffer(query);
+
+	appendPQExpBuffer(query, "SELECT amprocnum, "
+					  "amproc::pg_catalog.regprocedure "
+					  "FROM pg_catalog.pg_amproc "
+					  "WHERE amopclaid = '%s'::pg_catalog.oid "
+					  "ORDER BY amprocnum",
+					  opcinfo->oid);
+
+	res = PQexec(g_conn, query->data);
+	if (!res ||
+		PQresultStatus(res) != PGRES_TUPLES_OK)
+	{
+		write_msg(NULL, "query to obtain opclass functions failed: %s", PQerrorMessage(g_conn));
+		exit_nicely();
+	}
+
+	ntups = PQntuples(res);
+
+	i_amprocnum = PQfnumber(res, "amprocnum");
+	i_amproc = PQfnumber(res, "amproc");
+
+	for (i = 0; i < ntups; i++)
+	{
+		amprocnum = PQgetvalue(res, i, i_amprocnum);
+		amproc = PQgetvalue(res, i, i_amproc);
+
+		if (needComma)
+			appendPQExpBuffer(q, " ,\n\t");
+
+		appendPQExpBuffer(q, "FUNCTION\t%s\t%s",
+						  amprocnum, amproc);
+
+		needComma = true;
+	}
+
+	PQclear(res);
+
+	appendPQExpBuffer(q, " ;\n");
+
+	ArchiveEntry(fout, opcinfo->oid, opcinfo->opcname,
+				 opcinfo->opcnamespace->nspname, opcinfo->usename,
+				 "OPERATOR CLASS", NULL,
+				 q->data, delq->data,
+				 NULL, NULL, NULL);
+
+	destroyPQExpBuffer(query);
+	destroyPQExpBuffer(q);
+	destroyPQExpBuffer(delq);
+}
+
 
 /*
  * dumpAggs
