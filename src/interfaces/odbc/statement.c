@@ -892,7 +892,7 @@ QueryInfo qi;
 		return SQL_SUCCESS;
 
 	else {
-		// Modified, 04/29/2000, Zoltan
+		/* Modified, 2000-04-29, Zoltan */
 		if (self->errornumber == STMT_INFO_ONLY)
 		    self->errormsg = "Error while executing the query (non-fatal)";
 		else
