@@ -12,12 +12,11 @@ Migration to version 7.4
 
    A dump/restore is *not* required for those running 7.4.
    
-   If you want to install the fixes in the information schema concerning
-   the bit types, you need to reload the information schema. This is
-   either accomplished by initializing a new cluster by running "initdb",
-   or by running the following sequence of SQL commands in each database
-   (ideally including template1) as a superuser in psql, after installing
-   the new release:
+   If you want to install the fixes in the information schema you need to
+   reload it into the database. This is either accomplished by
+   initializing a new cluster by running "initdb", or by running the
+   following sequence of SQL commands in each database (ideally including
+   template1) as a superuser in psql, after installing the new release:
 DROP SCHEMA information_schema CASCADE;
 \i /usr/local/pgsql/share/information_schema.sql
 
@@ -28,9 +27,9 @@ Changes
 
    Changes as of 2003-12-14
    
-     * Fixed bug in CREATE SCHEMA parsing (Michael)
-     * Fix --enable-thread-safety compile error when used with
-       --with-perl (Peter)
+     * Fixed bug in "CREATE SCHEMA" parsing in ECPG (Michael)
+     * Fix compile error when "--enable-thread-safety" and "--with-perl"
+       are used together (Peter)
      * Fix for subqueries that used hash joins (Tom)
        Certain subqueries that used hash joins would crash because of
        improperly shared structures.
@@ -42,19 +41,18 @@ Changes
        (Tom)
        Fix these functions to return values consistent with pre-7.4
        releases.
-     * Several /contrib/pg_autovacuum fixes
+     * Several "contrib/pg_autovacuum" fixes
        Fixes include improper variable initialization, missing vacuum
-       after TRUNCATE, and duration computation overflow for long
+       after "TRUNCATE", and duration computation overflow for long
        vacuums.
-     * Allow compile of /contrib/cube under Cygwin (Jason Tishler)
+     * Allow compile of "contrib/cube" under Cygwin (Jason Tishler)
      * Fix Solaris use of password file when no passwords are defined
        (Tom)
        Fix crash on Solaris caused by use of any type of password
        authentication when no passwords were defined.
      * JDBC fix for thread problems, other fixes
-     * Fix for index bytea lookups (Joe)
+     * Fix for bytea index lookups (Joe)
      * Fix information schema for bit data types (Peter)
-       To enable this fix, an initdb is required.
      * Force zero_damaged_pages to be on during recovery from WAL
      * Prevent some obscure cases of "variable not in subplan target
        lists"
