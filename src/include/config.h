@@ -8,6 +8,11 @@
 
 #define BLCKSZ	8192
 
+/* Found in catalog/catalog.c, but doesn't seem to do anything in there */
+#ifndef MAXPATHLEN
+#define MAXPATHLEN      80
+#endif
+
 #if defined(sequent) 
 #  define NEED_UNION_SEMUN 
 #endif
@@ -32,6 +37,9 @@
 #endif
 
 #if defined(linux)
+#  ifndef __USE_POSIX
+#    define __USE_POSIX
+#  endif
 #  define NEED_CBRT
 #endif
 
@@ -75,8 +83,12 @@
 #  define NEED_UNION_SEMUN 
 #endif
 
+#if defined(next)
+#  define NEED_SIG_JMP
+#endif
+
 #if defined(win32)
-#  define WIN32
+#  define NEED_SIG_JMP
 #  define NO_UNISTD_H
 #  define USES_WINSOCK 
 #  define NOFILE	100
@@ -228,6 +240,8 @@
 /* #define FASTBUILD_DEBUG /* access/nbtree/nbtsort.c */
 #define RTDEBUG /* access/rtree/rtree.c */
 #define GISTDEBUG /* access/gist/gist.c */
+/* #define PURGEDEBUG /* commands/purge.c */
+/* #define DEBUG_RECIPE /* commands/recipe.c */
 
 
 /* The following don't have any apparent purpose, but are in the
@@ -235,9 +249,13 @@
  * document them here
  */
 /* #define OMIT_PARTIAL_INDEX /* access/hash/hash.c */
-/* #define PERFECT_MMGR /* access/hash/hash.c */
-/* #define PERFECT_MEM /* access/hash/hashscan.c */
-/* #define NO_BUFFERISVALID /* access/heap/heapam.c */
+/* #define PERFECT_MMGR       /* access/hash/hash.c */
+/* #define PERFECT_MEM        /* access/hash/hashscan.c */
+/* #define NO_BUFFERISVALID   /* access/heap/heapam.c */
+/* #define NO_SECURITY        /* commands/cluster.c */
+/* #define TIOGA              /* commands/recipe.c */
+/* #define OLD_REWRITE        /* commands/version.c */
+/* #define NOTYET             /* commands/view.c */
 
 
 /* Undocumented "features"? */
