@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.169 2004/12/31 22:01:22 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.170 2005/01/28 20:34:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1937,10 +1937,13 @@ add_unique_group_var(Query *root, List *varinfos,
  *		if we considered ones of the same rel, we'd be double-counting the
  *		restriction selectivity of the equality in the next step.
  *	3.	For Vars within a single source rel, we multiply together the numbers
- *		of values, clamp to the number of rows in the rel, and then multiply
- *		by the selectivity of the restriction clauses for that rel.  The
- *		initial product is probably too high (it's the worst case) but since
- *		we can clamp to the rel's rows it won't be hugely bad.	Multiplying
+ *		of values, clamp to the number of rows in the rel (divided by 10 if
+ *		more than one Var), and then multiply by the selectivity of the
+ *		restriction clauses for that rel.  When there's more than one Var,
+ *		the initial product is probably too high (it's the worst case) but
+ *		clamping to a fraction of the rel's rows seems to be a helpful
+ *		heuristic for not letting the estimate get out of hand.  (The factor
+ *		of 10 is derived from pre-Postgres-7.4 practice.)  Multiplying
  *		by the restriction selectivity is effectively assuming that the
  *		restriction clauses are independent of the grouping, which is a crummy
  *		assumption, but it's hard to do better.
@@ -2040,6 +2043,7 @@ estimate_num_groups(Query *root, List *groupExprs, double input_rows)
 		GroupVarInfo *varinfo1 = (GroupVarInfo *) linitial(varinfos);
 		RelOptInfo *rel = varinfo1->rel;
 		double		reldistinct = varinfo1->ndistinct;
+		int			relvarcount = 1;
 		List	   *newvarinfos = NIL;
 
 		/*
@@ -2051,7 +2055,10 @@ estimate_num_groups(Query *root, List *groupExprs, double input_rows)
 			GroupVarInfo *varinfo2 = (GroupVarInfo *) lfirst(l);
 
 			if (varinfo2->rel == varinfo1->rel)
+			{
 				reldistinct *= varinfo2->ndistinct;
+				relvarcount++;
+			}
 			else
 			{
 				/* not time to process varinfo2 yet */
@@ -2066,10 +2073,20 @@ estimate_num_groups(Query *root, List *groupExprs, double input_rows)
 		if (rel->tuples > 0)
 		{
 			/*
-			 * Clamp to size of rel, multiply by restriction selectivity.
+			 * Clamp to size of rel, or size of rel / 10 if multiple Vars.
+			 * The fudge factor is because the Vars are probably correlated
+			 * but we don't know by how much.
 			 */
-			if (reldistinct > rel->tuples)
-				reldistinct = rel->tuples;
+			double		clamp = rel->tuples;
+
+			if (relvarcount > 1)
+				clamp *= 0.1;
+			if (reldistinct > clamp)
+				reldistinct = clamp;
+
+			/*
+			 * Multiply by restriction selectivity.
+			 */
 			reldistinct *= rel->rows / rel->tuples;
 
 			/*
