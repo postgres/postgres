@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Wed Sep 1 19:26:40 EDT 1999
+   Last updated: Tue Sep 28 01:06:15 EDT 1999
    
    Current maintainer: Bruce Momjian (maillist@candle.pha.pa.us)
    
@@ -95,6 +95,7 @@
    4.20) How do I tell what PostgreSQL version I am running?
    4.21) My large-object operations get invalid large obj descriptor.
    Why?
+   4.22) How do I create a column that will default to the current time?
    
                             Extending PostgreSQL
                                       
@@ -196,8 +197,9 @@
    The database server is now working on Windows NT using the Cygnus
    Unix/NT porting library. See pgsql/doc/README.NT in the distribution.
    
-   There is another port using U/Win at
-   http://surya.wipro.com/uwin/ported.html.
+   There is also a web page at
+   http://members.tripod.com/~kevlo/postgres/portNT.html. There is
+   another port using U/Win at http://surya.wipro.com/uwin/ported.html.
    
     1.5) Where can I get PostgreSQL?
     
@@ -254,7 +256,7 @@
    
     1.7) What is the latest release of PostgreSQL?
     
-   The latest release of PostgreSQL is version 6.5.
+   The latest release of PostgreSQL is version 6.5.2.
    
    We plan to have major releases every four months.
    
@@ -580,7 +582,7 @@
    You need to increase the postmaster's limit on how many concurrent
    backend processes it can start.
    
-   In Postgres 6.5, the default limit is 32 processes. You can increase
+   In Postgres 6.5.*, the default limit is 32 processes. You can increase
    it by restarting the postmaster with a suitable -N value. With the
    default configuration you can set -N as large as 1024; if you need
    more, increase MAXBACKENDS in include/config.h and rebuild. You can
@@ -903,6 +905,18 @@ BYTEA           bytea           variable-length array of bytes
    
    If you are using a client interface like ODBC you may need to set
    auto-commit off.
+   
+    4.22) How do I create a column that will default to the current time?
+    
+   The tempation is to do:
+        create table test (x int, modtime timestamp default 'now');
+
+   but this makes the column default to the time of table creation, not
+   the time of row insertion. Instead do:
+        create table test (x int, modtime timestamp default text 'now');
+
+   The casting of the value to text prevents the default value from being
+   computed at table creation time, and delays it until insertion time.
      _________________________________________________________________
    
                             Extending PostgreSQL
