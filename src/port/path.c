@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/path.c,v 1.4 2003/11/29 19:52:13 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/port/path.c,v 1.5 2004/03/09 04:49:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,6 +81,32 @@ last_path_separator(const char *filename)
 	else
 		return (slash > bslash) ? slash : bslash;
 #endif
+}
+
+
+/*
+ * make all paths look like unix, with forward slashes
+ * also strip any trailing slash.
+ *
+ * The Windows command processor will accept suitably quoted paths
+ * with forward slashes, but barfs badly with mixed forward and back
+ * slashes. Removing the trailing slash on a path means we never get
+ * ugly double slashes.  Don't remove a leading slash, though.
+ */
+void
+canonicalize_path(char *path)
+{
+	char	   *p;
+
+	for (p = path; *p; p++)
+	{
+#ifdef WIN32
+		if (*p == '\\')
+			*p = '/';
+#endif
+	}
+	if (p > path+1 && *--p == '/')
+		*p = '\0';
 }
 
 

@@ -43,7 +43,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.22 2004/02/02 00:11:31 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.23 2004/03/09 04:49:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -151,7 +151,6 @@ char	   *pgpath;
 /* forward declare all our functions */
 static bool rmtree(char *, bool);
 static void exit_nicely(void);
-static void canonicalize_path(char *);
 #ifdef WIN32
 static char *expanded_path(char *);
 #else
@@ -287,31 +286,6 @@ rmtree(char *path, bool rmtopdir)
 	return !system(buf);
 }
 
-
-/*
- * make all paths look like unix, with forward slashes
- * also strip any trailing slash.
- *
- * The Windows command processor will accept suitably quoted paths
- * with forward slashes, but barfs badly with mixed forward and back
- * slashes. Removing the trailing slash on a path means we never get
- * ugly double slashes.  Don't remove a leading slash, though.
- */
-static void
-canonicalize_path(char *path)
-{
-	char	   *p;
-
-	for (p = path; *p; p++)
-	{
-#ifdef WIN32
-		if (*p == '\\')
-			*p = '/';
-#endif
-	}
-	if (p > path+1 && *--p == '/')
-		*p = '\0';
-}
 
 /*
  * make a copy of the array of lines, with token replaced by replacement
