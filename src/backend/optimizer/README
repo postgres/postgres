@@ -80,7 +80,7 @@ example, the WHERE clause "tab1.col1 = tab2.col1" generates a JoinInfo
 for tab1 listing tab2 as an unjoined relation, and also one for tab2
 showing tab1 as an unjoined relation.
 
-If we have only a single base relation in the query, we are done now.
+If we have only a single base relation in the query, we are done.
 Otherwise we have to figure out how to join the base relations into a
 single join relation.
 

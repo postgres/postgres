@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: primnodes.h,v 1.49 2000/09/29 18:21:39 tgl Exp $
+ * $Id: primnodes.h,v 1.50 2001/01/17 06:41:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,17 +29,8 @@ typedef struct FunctionCache *FunctionCachePtr;
  * ----------------------------------------------------------------
  */
 
-/* ----------------
+/*
  * Resdom (Result Domain)
- *		resno			- attribute number
- *		restype			- type of the value
- *		restypmod		- type-specific modifier of the value
- *		resname			- name of the resdom (could be NULL)
- *		ressortgroupref - nonzero if referenced by a sort/group clause
- *		reskey			- order of key in a sort (for those > 0)
- *		reskeyop		- sort operator's regproc Oid
- *		resjunk			- set to true to eliminate the attribute
- *						  from final target list
  *
  * Notes:
  * ressortgroupref is the parse/plan-time representation of ORDER BY and
@@ -59,46 +50,48 @@ typedef struct FunctionCache *FunctionCachePtr;
  *
  * Both reskey and reskeyop are typically zero during parse/plan stages.
  * The executor does not pay any attention to ressortgroupref.
- * ----------------
+ *
  */
 typedef struct Resdom
 {
-	NodeTag		type;
-	AttrNumber	resno;
-	Oid			restype;
-	int32		restypmod;
-	char	   *resname;
+	NodeTag		type;		
+	AttrNumber	resno;		/* attribute number */
+	Oid			restype;	/* type of the value */
+	int32		restypmod;	/* type-specific modifier of the value */
+	char	   *resname;	/* name of the resdom (could be NULL) */
 	Index		ressortgroupref;
-	Index		reskey;
-	Oid			reskeyop;
-	bool		resjunk;
+							/* nonzero if referenced by a sort/group clause */
+	Index		reskey;		/* order of key in a sort (for those > 0) */
+	Oid			reskeyop;	/* sort operator's regproc Oid */
+	bool		resjunk;	/* set to true to eliminate the attribute
+ *						       from final target list */
 } Resdom;
 
-/* -------------
+/*
  * Fjoin
- *		initialized		- true if the Fjoin has already been initialized for
- *						  the current target list evaluation
- *		nNodes			- The number of Iter nodes returning sets that the
- *						  node will flatten
- *		outerList		- 1 or more Iter nodes
- *		inner			- exactly one Iter node.  We eval every node in the
- *						  outerList once then eval the inner node to completion
- *						  pair the outerList result vector with each inner
- *						  result to form the full result.  When the inner has
- *						  been exhausted, we get the next outer result vector
- *						  and reset the inner.
- *		results			- The complete (flattened) result vector
- *		alwaysNull		- a null vector to indicate sets with a cardinality of
- *						  0, we treat them as the set {NULL}.
  */
 typedef struct Fjoin
 {
 	NodeTag		type;
-	bool		fj_initialized;
-	int			fj_nNodes;
-	List	   *fj_innerNode;
-	DatumPtr	fj_results;
-	BoolPtr		fj_alwaysDone;
+	bool		fj_initialized;	/* true if the Fjoin has already been
+								 * initialized for the current target
+								 * list evaluation */
+	int			fj_nNodes;		/* The number of Iter nodes returning
+								 * sets that the node will flatten */
+	List	   *fj_innerNode;	/* exactly one Iter node.  We eval every
+								 * node in the outerList once then eval
+								 * the inner node to completion pair the
+								 * outerList result vector with each inner
+								 * result to form the full result.  When
+								 * the inner has been exhausted, we get
+								 * the next outer result vector and reset
+								 * the inner.
+								 */
+	DatumPtr	fj_results;		/* The complete (flattened) result vector */
+	BoolPtr		fj_alwaysDone;	/* a null vector to indicate sets with a
+								 * cardinality of 0, we treat them as the
+								 * set {NULL}.
+								 */
 } Fjoin;
 
 
@@ -107,13 +100,8 @@ typedef struct Fjoin
  * ----------------------------------------------------------------
  */
 
-/* ----------------
+/*
  * Expr
- *		typeOid			- oid of the type of this expression
- *		opType			- type of this expression
- *		oper			- operator node if needed (Oper, Func, or SubPlan)
- *		args			- arguments to this expression
- * ----------------
  */
 typedef enum OpType
 {
@@ -123,23 +111,15 @@ typedef enum OpType
 typedef struct Expr
 {
 	NodeTag		type;
-	Oid			typeOid;		/* oid of the type of this expr */
-	OpType		opType;			/* type of the op */
-	Node	   *oper;			/* could be Oper or Func or SubPlan */
-	List	   *args;			/* list of argument nodes */
+	Oid			typeOid;	/* oid of the type of this expression */
+	OpType		opType;		/* type of this expression */
+	Node	   *oper;		/* operator node if needed (Oper, Func, or
+							 * SubPlan) */
+	List	   *args;		/* arguments to this expression */
 } Expr;
 
-/* ----------------
+/*
  * Var
- *		varno			- index of this var's relation in the range table
- *						  (could also be INNER or OUTER)
- *		varattno		- attribute number of this var, or zero for all
- *		vartype			- pg_type tuple OID for the type of this var
- *		vartypmod		- pg_attribute typmod value
- *		varlevelsup		- for subquery variables referencing outer relations;
- *						  0 in a normal var, >0 means N levels up
- *		varnoold		- original value of varno
- *		varoattno		- original value of varattno
  *
  * Note: during parsing/planning, varnoold/varoattno are always just copies
  * of varno/varattno.  At the tail end of planning, Var nodes appearing in
@@ -160,23 +140,22 @@ typedef struct Expr
 typedef struct Var
 {
 	NodeTag		type;
-	Index		varno;
-	AttrNumber	varattno;
-	Oid			vartype;
-	int32		vartypmod;
+	Index		varno;		/* index of this var's relation in the range
+							 * table (could also be INNER or OUTER) */
+	AttrNumber	varattno;	/* attribute number of this var, or zero for all */
+	Oid			vartype;	/* pg_type tuple OID for the type of this var */
+	int32		vartypmod;	/* pg_attribute typmod value */
 	Index		varlevelsup;
-	Index		varnoold;		/* mainly for debugging --- see above */
-	AttrNumber	varoattno;
+							/* for subquery variables referencing outer
+							 * relations; 0 in a normal var, >0 means N
+							 * levels up */
+	Index		varnoold;	/* original value of varno, for debugging */
+	AttrNumber	varoattno;	/* original value of varattno */
 } Var;
 
-/* ----------------
+/*
  * Oper
- *		opno			- PG_OPERATOR OID of the operator
- *		opid			- PG_PROC OID for the operator's underlying function
- *		opresulttype	- PG_TYPE OID of the operator's return value
- *		op_fcache		- runtime state while running the function
  *
- * ----
  * NOTE: in the good old days 'opno' used to be both (or either, or
  * neither) the pg_operator oid, and/or the pg_proc oid depending
  * on the postgres module in question (parser->pg_operator,
@@ -190,43 +169,40 @@ typedef struct Var
  * Note also that opid is not necessarily filled in immediately on creation
  * of the node.  The planner makes sure it is valid before passing the node
  * tree to the executor, but during parsing/planning opid is typically 0.
- * ----------------
+ *
  */
 typedef struct Oper
 {
 	NodeTag		type;
-	Oid			opno;
-	Oid			opid;
+	Oid			opno;		/* PG_OPERATOR OID of the operator */
+	Oid			opid;		/* PG_PROC OID for the operator's underlying
+							 * function */
 	Oid			opresulttype;
+							/* PG_TYPE OID of the operator's return value */
 	FunctionCachePtr op_fcache;
+							/* runtime state while running the function */
 } Oper;
 
 
-/* ----------------
+/*
  * Const
- *		consttype - PG_TYPE OID of the constant's value
- *		constlen - length in bytes of the constant's value
- *		constvalue - the constant's value
- *		constisnull - whether the constant is null
- *				(if true, the other fields are undefined)
- *		constbyval - whether the information in constvalue
- *				if passed by value.  If true, then all the information
- *				is stored in the datum. If false, then the datum
- *				contains a pointer to the information.
- *		constisset - whether the const represents a set.  The const
- *				value corresponding will be the query that defines
- *				the set.
- * ----------------
  */
 typedef struct Const
 {
 	NodeTag		type;
-	Oid			consttype;
-	int			constlen;
-	Datum		constvalue;
-	bool		constisnull;
-	bool		constbyval;
-	bool		constisset;
+	Oid			consttype;		/* PG_TYPE OID of the constant's value */
+	int			constlen;		/* length in bytes of the constant's value */
+	Datum		constvalue;		/* the constant's value */
+	bool		constisnull;	/* whether the constant is null (if true,
+								 * the other fields are undefined) */
+	bool		constbyval;		/* whether the information in constvalue
+								 * if passed by value.  If true, then all
+								 * the information is stored in the datum.
+								 * If false, then the datum contains a pointer
+								 * to the information. */
+	bool		constisset;		/* whether the const represents a set.
+								 * The const value corresponding will be the
+								 * query that defines the set. */
 	bool		constiscast;
 } Const;
 
@@ -250,38 +226,33 @@ typedef struct Const
  *
  *		PARAM_OLD:	 Same as PARAM_NEW, but in this case we refer to
  *				the "OLD" tuple.
- *
- *		paramid - numeric identifier for literal-constant parameters ("$1")
- *		paramname - attribute name for tuple-substitution parameters ("$.foo")
- *		paramtype - PG_TYPE OID of the parameter's value
  * ----------------
  */
 typedef struct Param
 {
 	NodeTag		type;
-	int			paramkind;
-	AttrNumber	paramid;
-	char	   *paramname;
-	Oid			paramtype;
+	int			paramkind;	/* specifies the kind of parameter.  See above */
+	AttrNumber	paramid;	/* numeric identifier for literal-constant
+							 * parameters ("$1") */
+	char	   *paramname;	/* attribute name for tuple-substitution
+							 * parameters ("$.foo") */
+	Oid			paramtype;	/* PG_TYPE OID of the parameter's value */
 } Param;
 
 
-/* ----------------
+/*
  * Func
- *		funcid			- PG_PROC OID of the function
- *		functype		- PG_TYPE OID of the function's return value
- *		func_fcache		- runtime state while running this function.  Where
- *						  we are in the execution of the function if it
- *						  returns more than one value, etc.
- *						  See utils/fcache.h
- * ----------------
  */
 typedef struct Func
 {
 	NodeTag		type;
-	Oid			funcid;
-	Oid			functype;
+	Oid			funcid;		/* PG_PROC OID of the function */
+	Oid			functype;	/* PG_TYPE OID of the function's return value */
 	FunctionCachePtr func_fcache;
+							/* runtime state while running this function.
+							 * Where we are in the execution of the function
+							 * if it returns more than one value, etc.
+							 * See utils/fcache.h */
 } Func;
 
 /* ----------------
@@ -298,36 +269,24 @@ typedef struct Iter
 								 * checking) */
 } Iter;
 
-/* ----------------
+/*
  * Aggref
- *		aggname			- name of the aggregate
- *		basetype		- base type Oid of the aggregate (ie, input type)
- *		aggtype			- type Oid of final result of the aggregate
- *		target			- attribute or expression we are aggregating on
- *		aggstar			- TRUE if argument was really '*'
- *		aggdistinct		- TRUE if it's agg(DISTINCT ...)
- *		aggno			- workspace for executor (see nodeAgg.c)
- * ----------------
  */
 typedef struct Aggref
 {
 	NodeTag		type;
-	char	   *aggname;
-	Oid			basetype;
-	Oid			aggtype;
-	Node	   *target;
-	bool		aggstar;
-	bool		aggdistinct;
-	int			aggno;
+	char	   *aggname;	/* name of the aggregate */
+	Oid			basetype;	/* base type Oid of the aggregate
+							 * (ie, input type) */
+	Oid			aggtype;	/* type Oid of final result of the aggregate */
+	Node	   *target;		/* attribute or expression we are aggregating on */
+	bool		aggstar;	/* TRUE if argument was really '*' */
+	bool		aggdistinct;/* TRUE if it's agg(DISTINCT ...) */
+	int			aggno;		/* workspace for executor (see nodeAgg.c) */
 } Aggref;
 
 /* ----------------
  * SubLink
- *		subLinkType		- EXISTS, ALL, ANY, MULTIEXPR, EXPR
- *		useor			- TRUE to combine column results with "OR" not "AND"
- *		lefthand		- list of outer-query expressions on the left
- *		oper			- list of Oper nodes for combining operators
- *		subselect		- subselect as Query* or parsetree
  *
  * A SubLink represents a subselect appearing in an expression, and in some
  * cases also the combining operator(s) just above it.	The subLinkType
@@ -385,11 +344,12 @@ typedef enum SubLinkType
 typedef struct SubLink
 {
 	NodeTag		type;
-	SubLinkType subLinkType;
-	bool		useor;
-	List	   *lefthand;
-	List	   *oper;
-	Node	   *subselect;
+	SubLinkType subLinkType;/* EXISTS, ALL, ANY, MULTIEXPR, EXPR */
+	bool		useor;		/* TRUE to combine column results with "OR"
+							 * not "AND" */
+	List	   *lefthand;	/* list of outer-query expressions on the left */
+	List	   *oper;		/* list of Oper nodes for combining operators */
+	Node	   *subselect;	/* subselect as Query* or parsetree */
 } SubLink;
 
 /* ----------------
@@ -401,15 +361,6 @@ typedef struct SubLink
  * initial array value and a source value that is inserted into the
  * appropriate part of the array; the result of the operation is an
  * entire new modified array value.
- *
- *		refattrlength	- typlen of array type
- *		refelemtype		- type of the result of the ArrayRef operation
- *		refelemlength	- typlen of the array element type
- *		refelembyval	- is the element type pass-by-value?
- *		refupperindexpr - expressions that evaluate to upper array indexes
- *		reflowerindexpr - expressions that evaluate to lower array indexes
- *		refexpr			- the expression that evaluates to an array value
- *		refassgnexpr	- expression for the source value, or NULL if fetch
  *
  * If reflowerindexpr = NIL, then we are fetching or storing a single array
  * element at the subscripts given by refupperindexpr.	Otherwise we are
@@ -432,22 +383,23 @@ typedef struct SubLink
 typedef struct ArrayRef
 {
 	NodeTag		type;
-	int			refattrlength;
-	int			refelemlength;
-	Oid			refelemtype;
-	bool		refelembyval;
-	List	   *refupperindexpr;
-	List	   *reflowerindexpr;
-	Node	   *refexpr;
-	Node	   *refassgnexpr;
+	int			refattrlength;		/* typlen of array type */
+	int			refelemlength;		/* typlen of the array element type */
+	Oid			refelemtype;		/* type of the result of the ArrayRef
+								 	 * operation */
+	bool		refelembyval;		/* is the element type pass-by-value? */
+	List	   *refupperindexpr;	/* expressions that evaluate to upper
+								 	 * array indexes */
+	List	   *reflowerindexpr;	/* expressions that evaluate to lower
+								 	 * array indexes */
+	Node	   *refexpr;			/* the expression that evaluates to an
+									 * array value */
+	Node	   *refassgnexpr;		/* expression for the source value, or NULL
+								 	 * if fetch */
 } ArrayRef;
 
 /* ----------------
  * FieldSelect
- *		arg				- input expression
- *		fieldnum		- attribute number of field to extract
- *		resulttype		- type of the field (result type of this node)
- *		resulttypmod	- output typmod (usually -1)
  *
  * FieldSelect represents the operation of extracting one field from a tuple
  * value.  At runtime, the input expression is expected to yield a Datum
@@ -459,17 +411,15 @@ typedef struct ArrayRef
 typedef struct FieldSelect
 {
 	NodeTag		type;
-	Node	   *arg;
-	AttrNumber	fieldnum;
-	Oid			resulttype;
-	int32		resulttypmod;
+	Node	   *arg;			/* input expression */
+	AttrNumber	fieldnum;		/* attribute number of field to extract */
+	Oid			resulttype;		/* type of the field (result type of this
+								 * node) */
+	int32		resulttypmod;	/* output typmod (usually -1) */
 } FieldSelect;
 
 /* ----------------
  * RelabelType
- *		arg				- input expression
- *		resulttype		- output type of coercion expression
- *		resulttypmod	- output typmod (usually -1)
  *
  * RelabelType represents a "dummy" type coercion between two binary-
  * compatible datatypes, such as reinterpreting the result of an OID
@@ -484,9 +434,9 @@ typedef struct FieldSelect
 typedef struct RelabelType
 {
 	NodeTag		type;
-	Node	   *arg;
-	Oid			resulttype;
-	int32		resulttypmod;
+	Node	   *arg;			/* input expression */
+	Oid			resulttype;		/* output type of coercion expression */
+	int32		resulttypmod;	/* output typmod (usually -1) */
 } RelabelType;
 
 
