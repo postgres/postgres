@@ -120,7 +120,7 @@ sixtythree|d1
           |-infinity                      
           |infinity                       
           |epoch                          
-          |Mon Feb 10 17:32:01.00 1997 PST
+          |Mon Feb 10 17:32:01 1997 PST   
           |invalid                        
           |invalid                        
           |Mon Feb 10 17:32:01.00 1997 PST
@@ -128,56 +128,56 @@ sixtythree|d1
           |Mon Feb 10 17:32:01.40 1997 PST
           |Mon Feb 10 17:32:01.50 1997 PST
           |Mon Feb 10 17:32:01.60 1997 PST
-          |Thu Jan 02 00:00:00.00 1997 PST
-          |Thu Jan 02 03:04:05.00 1997 PST
-          |Mon Feb 10 17:32:01.00 1997 PST
-          |Mon Feb 10 17:32:01.00 1997 PST
-          |Mon Feb 10 17:32:01.00 1997 PST
-          |Mon Feb 10 17:32:01.00 1997 PST
-          |Tue Jun 10 17:32:01.00 1997 PDT
-          |Mon Feb 10 17:32:01.00 1997 PST
-          |Mon Feb 10 17:32:01.00 1997 PST
-          |Mon Feb 10 17:32:00.00 1997 PST
-          |Mon Feb 10 17:32:01.00 1997 PST
-          |Mon Feb 10 17:32:01.00 1997 PST
-          |Mon Feb 10 17:32:01.00 1997 PST
-          |Mon Feb 10 17:32:01.00 1997 PST
-          |Mon Feb 10 17:32:01.00 1997 PST
-          |Mon Feb 10 09:32:01.00 1997 PST
-          |Mon Feb 10 09:32:01.00 1997 PST
-          |Mon Feb 10 09:32:01.00 1997 PST
-          |Tue Jun 10 18:32:01.00 1997 PDT
-          |Mon Feb 10 17:32:01.00 1997 PST
-          |Tue Feb 11 17:32:01.00 1997 PST
-          |Wed Feb 12 17:32:01.00 1997 PST
-          |Thu Feb 13 17:32:01.00 1997 PST
-          |Fri Feb 14 17:32:01.00 1997 PST
-          |Sat Feb 15 17:32:01.00 1997 PST
-          |Sun Feb 16 17:32:01.00 1997 PST
+          |Thu Jan 02 00:00:00 1997 PST   
+          |Thu Jan 02 03:04:05 1997 PST   
+          |Mon Feb 10 17:32:01 1997 PST   
+          |Mon Feb 10 17:32:01 1997 PST   
+          |Mon Feb 10 17:32:01 1997 PST   
+          |Mon Feb 10 17:32:01 1997 PST   
+          |Tue Jun 10 17:32:01 1997 PDT   
+          |Mon Feb 10 17:32:01 1997 PST   
+          |Mon Feb 10 17:32:01 1997 PST   
+          |Mon Feb 10 17:32:00 1997 PST   
+          |Mon Feb 10 17:32:01 1997 PST   
+          |Mon Feb 10 17:32:01 1997 PST   
+          |Mon Feb 10 17:32:01 1997 PST   
+          |Mon Feb 10 17:32:01 1997 PST   
+          |Mon Feb 10 17:32:01 1997 PST   
+          |Mon Feb 10 09:32:01 1997 PST   
+          |Mon Feb 10 09:32:01 1997 PST   
+          |Mon Feb 10 09:32:01 1997 PST   
+          |Tue Jun 10 18:32:01 1997 PDT   
+          |Mon Feb 10 17:32:01 1997 PST   
+          |Tue Feb 11 17:32:01 1997 PST   
+          |Wed Feb 12 17:32:01 1997 PST   
+          |Thu Feb 13 17:32:01 1997 PST   
+          |Fri Feb 14 17:32:01 1997 PST   
+          |Sat Feb 15 17:32:01 1997 PST   
+          |Sun Feb 16 17:32:01 1997 PST   
           |Tue Feb 16 17:32 0097 BC       
-          |Sat Feb 16 17:32:01.00 0097    
-          |Thu Feb 16 17:32:01.00 0597    
-          |Tue Feb 16 17:32:01.00 1097    
-          |Sat Feb 16 17:32:01.00 1697    
-          |Thu Feb 16 17:32:01.00 1797    
-          |Tue Feb 16 17:32:01.00 1897    
-          |Sun Feb 16 17:32:01.00 1997 PST
-          |Sat Feb 16 17:32:01.00 2097    
-          |Wed Feb 28 17:32:01.00 1996 PST
-          |Thu Feb 29 17:32:01.00 1996 PST
-          |Fri Mar 01 17:32:01.00 1996 PST
-          |Mon Dec 30 17:32:01.00 1996 PST
-          |Tue Dec 31 17:32:01.00 1996 PST
-          |Wed Jan 01 17:32:01.00 1997 PST
-          |Fri Feb 28 17:32:01.00 1997 PST
-          |Sat Mar 01 17:32:01.00 1997 PST
-          |Sat Mar 01 17:32:01.00 1997 PST
-          |Tue Dec 30 17:32:01.00 1997 PST
-          |Wed Dec 31 17:32:01.00 1997 PST
-          |Fri Dec 31 17:32:01.00 1999 PST
-          |Sat Jan 01 17:32:01.00 2000 PST
-          |Sun Dec 31 17:32:01.00 2000 PST
-          |Mon Jan 01 17:32:01.00 2001 PST
+          |Sat Feb 16 17:32:01 0097       
+          |Thu Feb 16 17:32:01 0597       
+          |Tue Feb 16 17:32:01 1097       
+          |Sat Feb 16 17:32:01 1697       
+          |Thu Feb 16 17:32:01 1797       
+          |Tue Feb 16 17:32:01 1897       
+          |Sun Feb 16 17:32:01 1997 PST   
+          |Sat Feb 16 17:32:01 2097       
+          |Wed Feb 28 17:32:01 1996 PST   
+          |Thu Feb 29 17:32:01 1996 PST   
+          |Fri Mar 01 17:32:01 1996 PST   
+          |Mon Dec 30 17:32:01 1996 PST   
+          |Tue Dec 31 17:32:01 1996 PST   
+          |Wed Jan 01 17:32:01 1997 PST   
+          |Fri Feb 28 17:32:01 1997 PST   
+          |Sat Mar 01 17:32:01 1997 PST   
+          |Sat Mar 01 17:32:01 1997 PST   
+          |Tue Dec 30 17:32:01 1997 PST   
+          |Wed Dec 31 17:32:01 1997 PST   
+          |Fri Dec 31 17:32:01 1999 PST   
+          |Sat Jan 01 17:32:01 2000 PST   
+          |Sun Dec 31 17:32:01 2000 PST   
+          |Mon Jan 01 17:32:01 2001 PST   
 (62 rows)
 
 QUERY: SELECT '' AS fortythree, d1 FROM DATETIME_TBL
@@ -185,76 +185,76 @@ QUERY: SELECT '' AS fortythree, d1 FROM DATETIME_TBL
 fortythree|d1                             
 ----------+-------------------------------
           |infinity                       
-          |Mon Feb 10 17:32:01.00 1997 PST
+          |Mon Feb 10 17:32:01 1997 PST   
           |Mon Feb 10 17:32:01.00 1997 PST
           |Mon Feb 10 17:32:02.00 1997 PST
           |Mon Feb 10 17:32:01.40 1997 PST
           |Mon Feb 10 17:32:01.50 1997 PST
           |Mon Feb 10 17:32:01.60 1997 PST
-          |Thu Jan 02 03:04:05.00 1997 PST
-          |Mon Feb 10 17:32:01.00 1997 PST
-          |Mon Feb 10 17:32:01.00 1997 PST
-          |Mon Feb 10 17:32:01.00 1997 PST
-          |Mon Feb 10 17:32:01.00 1997 PST
-          |Tue Jun 10 17:32:01.00 1997 PDT
-          |Mon Feb 10 17:32:01.00 1997 PST
-          |Mon Feb 10 17:32:01.00 1997 PST
-          |Mon Feb 10 17:32:00.00 1997 PST
-          |Mon Feb 10 17:32:01.00 1997 PST
-          |Mon Feb 10 17:32:01.00 1997 PST
-          |Mon Feb 10 17:32:01.00 1997 PST
-          |Mon Feb 10 17:32:01.00 1997 PST
-          |Mon Feb 10 17:32:01.00 1997 PST
-          |Mon Feb 10 09:32:01.00 1997 PST
-          |Mon Feb 10 09:32:01.00 1997 PST
-          |Mon Feb 10 09:32:01.00 1997 PST
-          |Tue Jun 10 18:32:01.00 1997 PDT
-          |Mon Feb 10 17:32:01.00 1997 PST
-          |Tue Feb 11 17:32:01.00 1997 PST
-          |Wed Feb 12 17:32:01.00 1997 PST
-          |Thu Feb 13 17:32:01.00 1997 PST
-          |Fri Feb 14 17:32:01.00 1997 PST
-          |Sat Feb 15 17:32:01.00 1997 PST
-          |Sun Feb 16 17:32:01.00 1997 PST
-          |Sun Feb 16 17:32:01.00 1997 PST
-          |Sat Feb 16 17:32:01.00 2097    
-          |Fri Feb 28 17:32:01.00 1997 PST
-          |Sat Mar 01 17:32:01.00 1997 PST
-          |Sat Mar 01 17:32:01.00 1997 PST
-          |Tue Dec 30 17:32:01.00 1997 PST
-          |Wed Dec 31 17:32:01.00 1997 PST
-          |Fri Dec 31 17:32:01.00 1999 PST
-          |Sat Jan 01 17:32:01.00 2000 PST
-          |Sun Dec 31 17:32:01.00 2000 PST
-          |Mon Jan 01 17:32:01.00 2001 PST
+          |Thu Jan 02 03:04:05 1997 PST   
+          |Mon Feb 10 17:32:01 1997 PST   
+          |Mon Feb 10 17:32:01 1997 PST   
+          |Mon Feb 10 17:32:01 1997 PST   
+          |Mon Feb 10 17:32:01 1997 PST   
+          |Tue Jun 10 17:32:01 1997 PDT   
+          |Mon Feb 10 17:32:01 1997 PST   
+          |Mon Feb 10 17:32:01 1997 PST   
+          |Mon Feb 10 17:32:00 1997 PST   
+          |Mon Feb 10 17:32:01 1997 PST   
+          |Mon Feb 10 17:32:01 1997 PST   
+          |Mon Feb 10 17:32:01 1997 PST   
+          |Mon Feb 10 17:32:01 1997 PST   
+          |Mon Feb 10 17:32:01 1997 PST   
+          |Mon Feb 10 09:32:01 1997 PST   
+          |Mon Feb 10 09:32:01 1997 PST   
+          |Mon Feb 10 09:32:01 1997 PST   
+          |Tue Jun 10 18:32:01 1997 PDT   
+          |Mon Feb 10 17:32:01 1997 PST   
+          |Tue Feb 11 17:32:01 1997 PST   
+          |Wed Feb 12 17:32:01 1997 PST   
+          |Thu Feb 13 17:32:01 1997 PST   
+          |Fri Feb 14 17:32:01 1997 PST   
+          |Sat Feb 15 17:32:01 1997 PST   
+          |Sun Feb 16 17:32:01 1997 PST   
+          |Sun Feb 16 17:32:01 1997 PST   
+          |Sat Feb 16 17:32:01 2097       
+          |Fri Feb 28 17:32:01 1997 PST   
+          |Sat Mar 01 17:32:01 1997 PST   
+          |Sat Mar 01 17:32:01 1997 PST   
+          |Tue Dec 30 17:32:01 1997 PST   
+          |Wed Dec 31 17:32:01 1997 PST   
+          |Fri Dec 31 17:32:01 1999 PST   
+          |Sat Jan 01 17:32:01 2000 PST   
+          |Sun Dec 31 17:32:01 2000 PST   
+          |Mon Jan 01 17:32:01 2001 PST   
 (43 rows)
 
 QUERY: SELECT '' AS fifteen, d1 FROM DATETIME_TBL
    WHERE d1 < '1997-01-02'::datetime and d1 != 'current'::datetime;
-fifteen|d1                             
--------+-------------------------------
-       |-infinity                      
-       |epoch                          
-       |Tue Feb 16 17:32 0097 BC       
-       |Sat Feb 16 17:32:01.00 0097    
-       |Thu Feb 16 17:32:01.00 0597    
-       |Tue Feb 16 17:32:01.00 1097    
-       |Sat Feb 16 17:32:01.00 1697    
-       |Thu Feb 16 17:32:01.00 1797    
-       |Tue Feb 16 17:32:01.00 1897    
-       |Wed Feb 28 17:32:01.00 1996 PST
-       |Thu Feb 29 17:32:01.00 1996 PST
-       |Fri Mar 01 17:32:01.00 1996 PST
-       |Mon Dec 30 17:32:01.00 1996 PST
-       |Tue Dec 31 17:32:01.00 1996 PST
-       |Wed Jan 01 17:32:01.00 1997 PST
+fifteen|d1                          
+-------+----------------------------
+       |-infinity                   
+       |epoch                       
+       |Tue Feb 16 17:32 0097 BC    
+       |Sat Feb 16 17:32:01 0097    
+       |Thu Feb 16 17:32:01 0597    
+       |Tue Feb 16 17:32:01 1097    
+       |Sat Feb 16 17:32:01 1697    
+       |Thu Feb 16 17:32:01 1797    
+       |Tue Feb 16 17:32:01 1897    
+       |Wed Feb 28 17:32:01 1996 PST
+       |Thu Feb 29 17:32:01 1996 PST
+       |Fri Mar 01 17:32:01 1996 PST
+       |Mon Dec 30 17:32:01 1996 PST
+       |Tue Dec 31 17:32:01 1996 PST
+       |Wed Jan 01 17:32:01 1997 PST
 (15 rows)
 
 QUERY: SELECT '' AS one, d1 FROM DATETIME_TBL
    WHERE d1 = '1997-01-02'::datetime and d1 != 'current'::datetime;
-one|d1                             
----+-------------------------------
-   |Thu Jan 02 00:00:00.00 1997 PST
+one|d1                          
+---+----------------------------
+   |Thu Jan 02 00:00:00 1997 PST
 (1 row)
 
 QUERY: SELECT '' AS fiftyeight, d1 FROM DATETIME_TBL
@@ -264,83 +264,83 @@ fiftyeight|d1
           |-infinity                      
           |infinity                       
           |epoch                          
-          |Mon Feb 10 17:32:01.00 1997 PST
+          |Mon Feb 10 17:32:01 1997 PST   
           |Mon Feb 10 17:32:01.00 1997 PST
           |Mon Feb 10 17:32:02.00 1997 PST
           |Mon Feb 10 17:32:01.40 1997 PST
           |Mon Feb 10 17:32:01.50 1997 PST
           |Mon Feb 10 17:32:01.60 1997 PST
-          |Thu Jan 02 03:04:05.00 1997 PST
-          |Mon Feb 10 17:32:01.00 1997 PST
-          |Mon Feb 10 17:32:01.00 1997 PST
-          |Mon Feb 10 17:32:01.00 1997 PST
-          |Mon Feb 10 17:32:01.00 1997 PST
-          |Tue Jun 10 17:32:01.00 1997 PDT
-          |Mon Feb 10 17:32:01.00 1997 PST
-          |Mon Feb 10 17:32:01.00 1997 PST
-          |Mon Feb 10 17:32:00.00 1997 PST
-          |Mon Feb 10 17:32:01.00 1997 PST
-          |Mon Feb 10 17:32:01.00 1997 PST
-          |Mon Feb 10 17:32:01.00 1997 PST
-          |Mon Feb 10 17:32:01.00 1997 PST
-          |Mon Feb 10 17:32:01.00 1997 PST
-          |Mon Feb 10 09:32:01.00 1997 PST
-          |Mon Feb 10 09:32:01.00 1997 PST
-          |Mon Feb 10 09:32:01.00 1997 PST
-          |Tue Jun 10 18:32:01.00 1997 PDT
-          |Mon Feb 10 17:32:01.00 1997 PST
-          |Tue Feb 11 17:32:01.00 1997 PST
-          |Wed Feb 12 17:32:01.00 1997 PST
-          |Thu Feb 13 17:32:01.00 1997 PST
-          |Fri Feb 14 17:32:01.00 1997 PST
-          |Sat Feb 15 17:32:01.00 1997 PST
-          |Sun Feb 16 17:32:01.00 1997 PST
+          |Thu Jan 02 03:04:05 1997 PST   
+          |Mon Feb 10 17:32:01 1997 PST   
+          |Mon Feb 10 17:32:01 1997 PST   
+          |Mon Feb 10 17:32:01 1997 PST   
+          |Mon Feb 10 17:32:01 1997 PST   
+          |Tue Jun 10 17:32:01 1997 PDT   
+          |Mon Feb 10 17:32:01 1997 PST   
+          |Mon Feb 10 17:32:01 1997 PST   
+          |Mon Feb 10 17:32:00 1997 PST   
+          |Mon Feb 10 17:32:01 1997 PST   
+          |Mon Feb 10 17:32:01 1997 PST   
+          |Mon Feb 10 17:32:01 1997 PST   
+          |Mon Feb 10 17:32:01 1997 PST   
+          |Mon Feb 10 17:32:01 1997 PST   
+          |Mon Feb 10 09:32:01 1997 PST   
+          |Mon Feb 10 09:32:01 1997 PST   
+          |Mon Feb 10 09:32:01 1997 PST   
+          |Tue Jun 10 18:32:01 1997 PDT   
+          |Mon Feb 10 17:32:01 1997 PST   
+          |Tue Feb 11 17:32:01 1997 PST   
+          |Wed Feb 12 17:32:01 1997 PST   
+          |Thu Feb 13 17:32:01 1997 PST   
+          |Fri Feb 14 17:32:01 1997 PST   
+          |Sat Feb 15 17:32:01 1997 PST   
+          |Sun Feb 16 17:32:01 1997 PST   
           |Tue Feb 16 17:32 0097 BC       
-          |Sat Feb 16 17:32:01.00 0097    
-          |Thu Feb 16 17:32:01.00 0597    
-          |Tue Feb 16 17:32:01.00 1097    
-          |Sat Feb 16 17:32:01.00 1697    
-          |Thu Feb 16 17:32:01.00 1797    
-          |Tue Feb 16 17:32:01.00 1897    
-          |Sun Feb 16 17:32:01.00 1997 PST
-          |Sat Feb 16 17:32:01.00 2097    
-          |Wed Feb 28 17:32:01.00 1996 PST
-          |Thu Feb 29 17:32:01.00 1996 PST
-          |Fri Mar 01 17:32:01.00 1996 PST
-          |Mon Dec 30 17:32:01.00 1996 PST
-          |Tue Dec 31 17:32:01.00 1996 PST
-          |Wed Jan 01 17:32:01.00 1997 PST
-          |Fri Feb 28 17:32:01.00 1997 PST
-          |Sat Mar 01 17:32:01.00 1997 PST
-          |Sat Mar 01 17:32:01.00 1997 PST
-          |Tue Dec 30 17:32:01.00 1997 PST
-          |Wed Dec 31 17:32:01.00 1997 PST
-          |Fri Dec 31 17:32:01.00 1999 PST
-          |Sat Jan 01 17:32:01.00 2000 PST
-          |Sun Dec 31 17:32:01.00 2000 PST
-          |Mon Jan 01 17:32:01.00 2001 PST
+          |Sat Feb 16 17:32:01 0097       
+          |Thu Feb 16 17:32:01 0597       
+          |Tue Feb 16 17:32:01 1097       
+          |Sat Feb 16 17:32:01 1697       
+          |Thu Feb 16 17:32:01 1797       
+          |Tue Feb 16 17:32:01 1897       
+          |Sun Feb 16 17:32:01 1997 PST   
+          |Sat Feb 16 17:32:01 2097       
+          |Wed Feb 28 17:32:01 1996 PST   
+          |Thu Feb 29 17:32:01 1996 PST   
+          |Fri Mar 01 17:32:01 1996 PST   
+          |Mon Dec 30 17:32:01 1996 PST   
+          |Tue Dec 31 17:32:01 1996 PST   
+          |Wed Jan 01 17:32:01 1997 PST   
+          |Fri Feb 28 17:32:01 1997 PST   
+          |Sat Mar 01 17:32:01 1997 PST   
+          |Sat Mar 01 17:32:01 1997 PST   
+          |Tue Dec 30 17:32:01 1997 PST   
+          |Wed Dec 31 17:32:01 1997 PST   
+          |Fri Dec 31 17:32:01 1999 PST   
+          |Sat Jan 01 17:32:01 2000 PST   
+          |Sun Dec 31 17:32:01 2000 PST   
+          |Mon Jan 01 17:32:01 2001 PST   
 (58 rows)
 
 QUERY: SELECT '' AS sixteen, d1 FROM DATETIME_TBL
    WHERE d1 <= '1997-01-02'::datetime and d1 != 'current'::datetime;
-sixteen|d1                             
--------+-------------------------------
-       |-infinity                      
-       |epoch                          
-       |Thu Jan 02 00:00:00.00 1997 PST
-       |Tue Feb 16 17:32 0097 BC       
-       |Sat Feb 16 17:32:01.00 0097    
-       |Thu Feb 16 17:32:01.00 0597    
-       |Tue Feb 16 17:32:01.00 1097    
-       |Sat Feb 16 17:32:01.00 1697    
-       |Thu Feb 16 17:32:01.00 1797    
-       |Tue Feb 16 17:32:01.00 1897    
-       |Wed Feb 28 17:32:01.00 1996 PST
-       |Thu Feb 29 17:32:01.00 1996 PST
-       |Fri Mar 01 17:32:01.00 1996 PST
-       |Mon Dec 30 17:32:01.00 1996 PST
-       |Tue Dec 31 17:32:01.00 1996 PST
-       |Wed Jan 01 17:32:01.00 1997 PST
+sixteen|d1                          
+-------+----------------------------
+       |-infinity                   
+       |epoch                       
+       |Thu Jan 02 00:00:00 1997 PST
+       |Tue Feb 16 17:32 0097 BC    
+       |Sat Feb 16 17:32:01 0097    
+       |Thu Feb 16 17:32:01 0597    
+       |Tue Feb 16 17:32:01 1097    
+       |Sat Feb 16 17:32:01 1697    
+       |Thu Feb 16 17:32:01 1797    
+       |Tue Feb 16 17:32:01 1897    
+       |Wed Feb 28 17:32:01 1996 PST
+       |Thu Feb 29 17:32:01 1996 PST
+       |Fri Mar 01 17:32:01 1996 PST
+       |Mon Dec 30 17:32:01 1996 PST
+       |Tue Dec 31 17:32:01 1996 PST
+       |Wed Jan 01 17:32:01 1997 PST
 (16 rows)
 
 QUERY: SELECT '' AS fortyfour, d1 FROM DATETIME_TBL
@@ -348,49 +348,49 @@ QUERY: SELECT '' AS fortyfour, d1 FROM DATETIME_TBL
 fortyfour|d1                             
 ---------+-------------------------------
          |infinity                       
-         |Mon Feb 10 17:32:01.00 1997 PST
+         |Mon Feb 10 17:32:01 1997 PST   
          |Mon Feb 10 17:32:01.00 1997 PST
          |Mon Feb 10 17:32:02.00 1997 PST
          |Mon Feb 10 17:32:01.40 1997 PST
          |Mon Feb 10 17:32:01.50 1997 PST
          |Mon Feb 10 17:32:01.60 1997 PST
-         |Thu Jan 02 00:00:00.00 1997 PST
-         |Thu Jan 02 03:04:05.00 1997 PST
-         |Mon Feb 10 17:32:01.00 1997 PST
-         |Mon Feb 10 17:32:01.00 1997 PST
-         |Mon Feb 10 17:32:01.00 1997 PST
-         |Mon Feb 10 17:32:01.00 1997 PST
-         |Tue Jun 10 17:32:01.00 1997 PDT
-         |Mon Feb 10 17:32:01.00 1997 PST
-         |Mon Feb 10 17:32:01.00 1997 PST
-         |Mon Feb 10 17:32:00.00 1997 PST
-         |Mon Feb 10 17:32:01.00 1997 PST
-         |Mon Feb 10 17:32:01.00 1997 PST
-         |Mon Feb 10 17:32:01.00 1997 PST
-         |Mon Feb 10 17:32:01.00 1997 PST
-         |Mon Feb 10 17:32:01.00 1997 PST
-         |Mon Feb 10 09:32:01.00 1997 PST
-         |Mon Feb 10 09:32:01.00 1997 PST
-         |Mon Feb 10 09:32:01.00 1997 PST
-         |Tue Jun 10 18:32:01.00 1997 PDT
-         |Mon Feb 10 17:32:01.00 1997 PST
-         |Tue Feb 11 17:32:01.00 1997 PST
-         |Wed Feb 12 17:32:01.00 1997 PST
-         |Thu Feb 13 17:32:01.00 1997 PST
-         |Fri Feb 14 17:32:01.00 1997 PST
-         |Sat Feb 15 17:32:01.00 1997 PST
-         |Sun Feb 16 17:32:01.00 1997 PST
-         |Sun Feb 16 17:32:01.00 1997 PST
-         |Sat Feb 16 17:32:01.00 2097    
-         |Fri Feb 28 17:32:01.00 1997 PST
-         |Sat Mar 01 17:32:01.00 1997 PST
-         |Sat Mar 01 17:32:01.00 1997 PST
-         |Tue Dec 30 17:32:01.00 1997 PST
-         |Wed Dec 31 17:32:01.00 1997 PST
-         |Fri Dec 31 17:32:01.00 1999 PST
-         |Sat Jan 01 17:32:01.00 2000 PST
-         |Sun Dec 31 17:32:01.00 2000 PST
-         |Mon Jan 01 17:32:01.00 2001 PST
+         |Thu Jan 02 00:00:00 1997 PST   
+         |Thu Jan 02 03:04:05 1997 PST   
+         |Mon Feb 10 17:32:01 1997 PST   
+         |Mon Feb 10 17:32:01 1997 PST   
+         |Mon Feb 10 17:32:01 1997 PST   
+         |Mon Feb 10 17:32:01 1997 PST   
+         |Tue Jun 10 17:32:01 1997 PDT   
+         |Mon Feb 10 17:32:01 1997 PST   
+         |Mon Feb 10 17:32:01 1997 PST   
+         |Mon Feb 10 17:32:00 1997 PST   
+         |Mon Feb 10 17:32:01 1997 PST   
+         |Mon Feb 10 17:32:01 1997 PST   
+         |Mon Feb 10 17:32:01 1997 PST   
+         |Mon Feb 10 17:32:01 1997 PST   
+         |Mon Feb 10 17:32:01 1997 PST   
+         |Mon Feb 10 09:32:01 1997 PST   
+         |Mon Feb 10 09:32:01 1997 PST   
+         |Mon Feb 10 09:32:01 1997 PST   
+         |Tue Jun 10 18:32:01 1997 PDT   
+         |Mon Feb 10 17:32:01 1997 PST   
+         |Tue Feb 11 17:32:01 1997 PST   
+         |Wed Feb 12 17:32:01 1997 PST   
+         |Thu Feb 13 17:32:01 1997 PST   
+         |Fri Feb 14 17:32:01 1997 PST   
+         |Sat Feb 15 17:32:01 1997 PST   
+         |Sun Feb 16 17:32:01 1997 PST   
+         |Sun Feb 16 17:32:01 1997 PST   
+         |Sat Feb 16 17:32:01 2097       
+         |Fri Feb 28 17:32:01 1997 PST   
+         |Sat Mar 01 17:32:01 1997 PST   
+         |Sat Mar 01 17:32:01 1997 PST   
+         |Tue Dec 30 17:32:01 1997 PST   
+         |Wed Dec 31 17:32:01 1997 PST   
+         |Fri Dec 31 17:32:01 1999 PST   
+         |Sat Jan 01 17:32:01 2000 PST   
+         |Sun Dec 31 17:32:01 2000 PST   
+         |Mon Jan 01 17:32:01 2001 PST   
 (44 rows)
 
 QUERY: SELECT '' AS sixtythree, d1 + '1 year'::timespan AS one_year FROM DATETIME_TBL;
@@ -399,8 +399,8 @@ sixtythree|one_year
           |invalid                        
           |-infinity                      
           |infinity                       
-          |Thu Dec 31 16:00:00.00 1970 PST
-          |Tue Feb 10 17:32:01.00 1998 PST
+          |Thu Dec 31 16:00:00 1970 PST   
+          |Tue Feb 10 17:32:01 1998 PST   
           |invalid                        
           |invalid                        
           |Tue Feb 10 17:32:01.00 1998 PST
@@ -408,56 +408,56 @@ sixtythree|one_year
           |Tue Feb 10 17:32:01.40 1998 PST
           |Tue Feb 10 17:32:01.50 1998 PST
           |Tue Feb 10 17:32:01.60 1998 PST
-          |Fri Jan 02 00:00:00.00 1998 PST
-          |Fri Jan 02 03:04:05.00 1998 PST
-          |Tue Feb 10 17:32:01.00 1998 PST
-          |Tue Feb 10 17:32:01.00 1998 PST
-          |Tue Feb 10 17:32:01.00 1998 PST
-          |Tue Feb 10 17:32:01.00 1998 PST
-          |Wed Jun 10 17:32:01.00 1998 PDT
-          |Tue Feb 10 17:32:01.00 1998 PST
-          |Tue Feb 10 17:32:01.00 1998 PST
-          |Tue Feb 10 17:32:00.00 1998 PST
-          |Tue Feb 10 17:32:01.00 1998 PST
-          |Tue Feb 10 17:32:01.00 1998 PST
-          |Tue Feb 10 17:32:01.00 1998 PST
-          |Tue Feb 10 17:32:01.00 1998 PST
-          |Tue Feb 10 17:32:01.00 1998 PST
-          |Tue Feb 10 09:32:01.00 1998 PST
-          |Tue Feb 10 09:32:01.00 1998 PST
-          |Tue Feb 10 09:32:01.00 1998 PST
-          |Wed Jun 10 18:32:01.00 1998 PDT
-          |Tue Feb 10 17:32:01.00 1998 PST
-          |Wed Feb 11 17:32:01.00 1998 PST
-          |Thu Feb 12 17:32:01.00 1998 PST
-          |Fri Feb 13 17:32:01.00 1998 PST
-          |Sat Feb 14 17:32:01.00 1998 PST
-          |Sun Feb 15 17:32:01.00 1998 PST
-          |Mon Feb 16 17:32:01.00 1998 PST
+          |Fri Jan 02 00:00:00 1998 PST   
+          |Fri Jan 02 03:04:05 1998 PST   
+          |Tue Feb 10 17:32:01 1998 PST   
+          |Tue Feb 10 17:32:01 1998 PST   
+          |Tue Feb 10 17:32:01 1998 PST   
+          |Tue Feb 10 17:32:01 1998 PST   
+          |Wed Jun 10 17:32:01 1998 PDT   
+          |Tue Feb 10 17:32:01 1998 PST   
+          |Tue Feb 10 17:32:01 1998 PST   
+          |Tue Feb 10 17:32:00 1998 PST   
+          |Tue Feb 10 17:32:01 1998 PST   
+          |Tue Feb 10 17:32:01 1998 PST   
+          |Tue Feb 10 17:32:01 1998 PST   
+          |Tue Feb 10 17:32:01 1998 PST   
+          |Tue Feb 10 17:32:01 1998 PST   
+          |Tue Feb 10 09:32:01 1998 PST   
+          |Tue Feb 10 09:32:01 1998 PST   
+          |Tue Feb 10 09:32:01 1998 PST   
+          |Wed Jun 10 18:32:01 1998 PDT   
+          |Tue Feb 10 17:32:01 1998 PST   
+          |Wed Feb 11 17:32:01 1998 PST   
+          |Thu Feb 12 17:32:01 1998 PST   
+          |Fri Feb 13 17:32:01 1998 PST   
+          |Sat Feb 14 17:32:01 1998 PST   
+          |Sun Feb 15 17:32:01 1998 PST   
+          |Mon Feb 16 17:32:01 1998 PST   
           |Thu Feb 16 17:32 0096 BC       
-          |Sun Feb 16 17:32:01.00 0098    
-          |Fri Feb 16 17:32:01.00 0598    
-          |Wed Feb 16 17:32:01.00 1098    
-          |Sun Feb 16 17:32:01.00 1698    
-          |Fri Feb 16 17:32:01.00 1798    
-          |Wed Feb 16 17:32:01.00 1898    
-          |Mon Feb 16 17:32:01.00 1998 PST
-          |Sun Feb 16 17:32:01.00 2098    
-          |Fri Feb 28 17:32:01.00 1997 PST
-          |Fri Feb 28 17:32:01.00 1997 PST
-          |Sat Mar 01 17:32:01.00 1997 PST
-          |Tue Dec 30 17:32:01.00 1997 PST
-          |Wed Dec 31 17:32:01.00 1997 PST
-          |Thu Jan 01 17:32:01.00 1998 PST
-          |Sat Feb 28 17:32:01.00 1998 PST
-          |Sun Mar 01 17:32:01.00 1998 PST
-          |Sun Mar 01 17:32:01.00 1998 PST
-          |Wed Dec 30 17:32:01.00 1998 PST
-          |Thu Dec 31 17:32:01.00 1998 PST
-          |Sun Dec 31 17:32:01.00 2000 PST
-          |Mon Jan 01 17:32:01.00 2001 PST
-          |Mon Dec 31 17:32:01.00 2001 PST
-          |Tue Jan 01 17:32:01.00 2002 PST
+          |Sun Feb 16 17:32:01 0098       
+          |Fri Feb 16 17:32:01 0598       
+          |Wed Feb 16 17:32:01 1098       
+          |Sun Feb 16 17:32:01 1698       
+          |Fri Feb 16 17:32:01 1798       
+          |Wed Feb 16 17:32:01 1898       
+          |Mon Feb 16 17:32:01 1998 PST   
+          |Sun Feb 16 17:32:01 2098       
+          |Fri Feb 28 17:32:01 1997 PST   
+          |Fri Feb 28 17:32:01 1997 PST   
+          |Sat Mar 01 17:32:01 1997 PST   
+          |Tue Dec 30 17:32:01 1997 PST   
+          |Wed Dec 31 17:32:01 1997 PST   
+          |Thu Jan 01 17:32:01 1998 PST   
+          |Sat Feb 28 17:32:01 1998 PST   
+          |Sun Mar 01 17:32:01 1998 PST   
+          |Sun Mar 01 17:32:01 1998 PST   
+          |Wed Dec 30 17:32:01 1998 PST   
+          |Thu Dec 31 17:32:01 1998 PST   
+          |Sun Dec 31 17:32:01 2000 PST   
+          |Mon Jan 01 17:32:01 2001 PST   
+          |Mon Dec 31 17:32:01 2001 PST   
+          |Tue Jan 01 17:32:01 2002 PST   
 (62 rows)
 
 QUERY: SELECT '' AS sixtythree, d1 - '1 year'::timespan AS one_year FROM DATETIME_TBL;
@@ -466,8 +466,8 @@ sixtythree|one_year
           |invalid                        
           |-infinity                      
           |infinity                       
-          |Tue Dec 31 16:00:00.00 1968 PST
-          |Sat Feb 10 17:32:01.00 1996 PST
+          |Tue Dec 31 16:00:00 1968 PST   
+          |Sat Feb 10 17:32:01 1996 PST   
           |invalid                        
           |invalid                        
           |Sat Feb 10 17:32:01.00 1996 PST
@@ -475,56 +475,56 @@ sixtythree|one_year
           |Sat Feb 10 17:32:01.40 1996 PST
           |Sat Feb 10 17:32:01.50 1996 PST
           |Sat Feb 10 17:32:01.60 1996 PST
-          |Tue Jan 02 00:00:00.00 1996 PST
-          |Tue Jan 02 03:04:05.00 1996 PST
-          |Sat Feb 10 17:32:01.00 1996 PST
-          |Sat Feb 10 17:32:01.00 1996 PST
-          |Sat Feb 10 17:32:01.00 1996 PST
-          |Sat Feb 10 17:32:01.00 1996 PST
-          |Mon Jun 10 17:32:01.00 1996 PDT
-          |Sat Feb 10 17:32:01.00 1996 PST
-          |Sat Feb 10 17:32:01.00 1996 PST
-          |Sat Feb 10 17:32:00.00 1996 PST
-          |Sat Feb 10 17:32:01.00 1996 PST
-          |Sat Feb 10 17:32:01.00 1996 PST
-          |Sat Feb 10 17:32:01.00 1996 PST
-          |Sat Feb 10 17:32:01.00 1996 PST
-          |Sat Feb 10 17:32:01.00 1996 PST
-          |Sat Feb 10 09:32:01.00 1996 PST
-          |Sat Feb 10 09:32:01.00 1996 PST
-          |Sat Feb 10 09:32:01.00 1996 PST
-          |Mon Jun 10 18:32:01.00 1996 PDT
-          |Sat Feb 10 17:32:01.00 1996 PST
-          |Sun Feb 11 17:32:01.00 1996 PST
-          |Mon Feb 12 17:32:01.00 1996 PST
-          |Tue Feb 13 17:32:01.00 1996 PST
-          |Wed Feb 14 17:32:01.00 1996 PST
-          |Thu Feb 15 17:32:01.00 1996 PST
-          |Fri Feb 16 17:32:01.00 1996 PST
+          |Tue Jan 02 00:00:00 1996 PST   
+          |Tue Jan 02 03:04:05 1996 PST   
+          |Sat Feb 10 17:32:01 1996 PST   
+          |Sat Feb 10 17:32:01 1996 PST   
+          |Sat Feb 10 17:32:01 1996 PST   
+          |Sat Feb 10 17:32:01 1996 PST   
+          |Mon Jun 10 17:32:01 1996 PDT   
+          |Sat Feb 10 17:32:01 1996 PST   
+          |Sat Feb 10 17:32:01 1996 PST   
+          |Sat Feb 10 17:32:00 1996 PST   
+          |Sat Feb 10 17:32:01 1996 PST   
+          |Sat Feb 10 17:32:01 1996 PST   
+          |Sat Feb 10 17:32:01 1996 PST   
+          |Sat Feb 10 17:32:01 1996 PST   
+          |Sat Feb 10 17:32:01 1996 PST   
+          |Sat Feb 10 09:32:01 1996 PST   
+          |Sat Feb 10 09:32:01 1996 PST   
+          |Sat Feb 10 09:32:01 1996 PST   
+          |Mon Jun 10 18:32:01 1996 PDT   
+          |Sat Feb 10 17:32:01 1996 PST   
+          |Sun Feb 11 17:32:01 1996 PST   
+          |Mon Feb 12 17:32:01 1996 PST   
+          |Tue Feb 13 17:32:01 1996 PST   
+          |Wed Feb 14 17:32:01 1996 PST   
+          |Thu Feb 15 17:32:01 1996 PST   
+          |Fri Feb 16 17:32:01 1996 PST   
           |Mon Feb 16 17:32 0098 BC       
-          |Thu Feb 16 17:32:01.00 0096    
-          |Tue Feb 16 17:32:01.00 0596    
-          |Sun Feb 16 17:32:01.00 1096    
-          |Thu Feb 16 17:32:01.00 1696    
-          |Tue Feb 16 17:32:01.00 1796    
-          |Sun Feb 16 17:32:01.00 1896    
-          |Fri Feb 16 17:32:01.00 1996 PST
-          |Thu Feb 16 17:32:01.00 2096    
-          |Tue Feb 28 17:32:01.00 1995 PST
-          |Tue Feb 28 17:32:01.00 1995 PST
-          |Wed Mar 01 17:32:01.00 1995 PST
-          |Sat Dec 30 17:32:01.00 1995 PST
-          |Sun Dec 31 17:32:01.00 1995 PST
-          |Mon Jan 01 17:32:01.00 1996 PST
-          |Wed Feb 28 17:32:01.00 1996 PST
-          |Fri Mar 01 17:32:01.00 1996 PST
-          |Fri Mar 01 17:32:01.00 1996 PST
-          |Mon Dec 30 17:32:01.00 1996 PST
-          |Tue Dec 31 17:32:01.00 1996 PST
-          |Thu Dec 31 17:32:01.00 1998 PST
-          |Fri Jan 01 17:32:01.00 1999 PST
-          |Fri Dec 31 17:32:01.00 1999 PST
-          |Sat Jan 01 17:32:01.00 2000 PST
+          |Thu Feb 16 17:32:01 0096       
+          |Tue Feb 16 17:32:01 0596       
+          |Sun Feb 16 17:32:01 1096       
+          |Thu Feb 16 17:32:01 1696       
+          |Tue Feb 16 17:32:01 1796       
+          |Sun Feb 16 17:32:01 1896       
+          |Fri Feb 16 17:32:01 1996 PST   
+          |Thu Feb 16 17:32:01 2096       
+          |Tue Feb 28 17:32:01 1995 PST   
+          |Tue Feb 28 17:32:01 1995 PST   
+          |Wed Mar 01 17:32:01 1995 PST   
+          |Sat Dec 30 17:32:01 1995 PST   
+          |Sun Dec 31 17:32:01 1995 PST   
+          |Mon Jan 01 17:32:01 1996 PST   
+          |Wed Feb 28 17:32:01 1996 PST   
+          |Fri Mar 01 17:32:01 1996 PST   
+          |Fri Mar 01 17:32:01 1996 PST   
+          |Mon Dec 30 17:32:01 1996 PST   
+          |Tue Dec 31 17:32:01 1996 PST   
+          |Thu Dec 31 17:32:01 1998 PST   
+          |Fri Jan 01 17:32:01 1999 PST   
+          |Fri Dec 31 17:32:01 1999 PST   
+          |Sat Jan 01 17:32:01 2000 PST   
 (62 rows)
 
 QUERY: SELECT '' AS fifty, d1 - '1997-01-02'::datetime AS diff
@@ -533,11 +533,11 @@ fifty|diff
 -----+--------------------------------------
      |@ 9863 days 8 hours ago               
      |@ 39 days 17 hours 32 mins 1 sec      
-     |@ 39 days 17 hours 32 mins 1 sec      
-     |@ 39 days 17 hours 32 mins 1 sec      
-     |@ 39 days 17 hours 32 mins 1 sec      
-     |@ 39 days 17 hours 32 mins 1 sec      
-     |@ 39 days 17 hours 32 mins 1 sec      
+     |@ 39 days 17 hours 32 mins 1.00 secs  
+     |@ 39 days 17 hours 32 mins 2.00 secs  
+     |@ 39 days 17 hours 32 mins 1.40 secs  
+     |@ 39 days 17 hours 32 mins 1.50 secs  
+     |@ 39 days 17 hours 32 mins 1.60 secs  
      |@ 0                                   
      |@ 3 hours 4 mins 5 secs               
      |@ 39 days 17 hours 32 mins 1 sec      
