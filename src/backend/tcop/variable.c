@@ -2,7 +2,7 @@
  * Routines for handling of 'SET var TO', 'SHOW var' and 'RESET var'
  * statements.
  *
- * $Id: variable.c,v 1.10 1997/06/02 11:00:57 vadim Exp $
+ * $Id: variable.c,v 1.11 1997/06/03 06:29:31 vadim Exp $
  *
  */
 
@@ -151,7 +151,7 @@ static bool parse_geqo (const char *value)
 
     if ( strcasecmp (tok, "on") == 0 )
     {
-    	int32 geqo_rels = _use_geqo_rels_;
+    	int32 geqo_rels = GEQO_RELS;
     	
     	if ( val != NULL )
     	{
