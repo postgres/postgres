@@ -6,6 +6,11 @@
 #               based on news startup by David Myers
 #
 # Written for RedHat Linux but should apply to other Linux distributions.
+#
+# To be installed as /etc/rc.d/init.d/postgres.init
+# Softlink into rc5.d to bring up with multiuser and networking:
+#   cd /etc/rc.d/rc5.d; ln -s ../init.d/postgres.init S98postgres
+#
 # Assumptions:
 # - the postgres user is named "postgres"
 # - the postgres user is running csh/tcsh
@@ -32,6 +37,7 @@ case "$1" in
 	echo -n "Starting postgres service: "
 # force full login to get path names and environment variables
 # postgres runs tcsh so use proper syntax in redirection
+# change this line if the postgres superuser account is not "postgres"
 # change this line if another shell syntax is necessary
 #	su - postgres -c 'postmaster -S' > /dev/null&
 	su - postgres -c 'postmaster >>&! /tmp/postmaster.log&' > /dev/null&
