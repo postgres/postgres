@@ -227,7 +227,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
    */
   public short getShort(int columnIndex) throws SQLException
   {
-    String s = getString(columnIndex);
+    String s = getFixedString(columnIndex);
     
     if (s != null)
       {
@@ -250,7 +250,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
    */
   public int getInt(int columnIndex) throws SQLException
   {
-    String s = getString(columnIndex);
+    String s = getFixedString(columnIndex);
     
     if (s != null)
       {
@@ -273,7 +273,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
    */
   public long getLong(int columnIndex) throws SQLException
   {
-    String s = getString(columnIndex);
+    String s = getFixedString(columnIndex);
     
     if (s != null)
       {
@@ -296,7 +296,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
    */
   public float getFloat(int columnIndex) throws SQLException
   {
-    String s = getString(columnIndex);
+    String s = getFixedString(columnIndex);
     
     if (s != null)
       {
@@ -319,7 +319,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
    */
   public double getDouble(int columnIndex) throws SQLException
   {
-    String s = getString(columnIndex);
+    String s = getFixedString(columnIndex);
     
     if (s != null)
       {
@@ -344,7 +344,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
    */
   public BigDecimal getBigDecimal(int columnIndex, int scale) throws SQLException
   {
-    String s = getString(columnIndex);
+    String s = getFixedString(columnIndex);
     BigDecimal val;
     
     if (s != null)
@@ -412,12 +412,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
     String s = getString(columnIndex);
     if(s==null)
       return null;
-    SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
-    try {
-      return new java.sql.Date(df.parse(s).getTime());
-    } catch (ParseException e) {
-      throw new PSQLException("postgresql.res.baddate",new Integer(e.getErrorOffset()),s);
-    }
+    return java.sql.Date.valueOf(s);
   }
   
   /**

@@ -2,7 +2,7 @@
 
   build file to build the donated retep tools packages
 
-  $Id: build.xml,v 1.4 2001/03/11 11:06:59 petere Exp $
+  $Id: build.xml,v 1.5 2001/05/16 16:20:51 momjian Exp $
 
 -->
 
@@ -22,6 +22,11 @@
     <available property="xml" classname="org.xml.sax.Parser" />
   </target>
 
+  <target name="warning" depends="checks" unless="jdk1.2+">
+    <echo message="WARNING -- contributed retep tools need jdk1.2 or later -- compilation NOT done." />
+  </target>
+
+
   <!-- Prepares the build by creating a directory to place the class files -->
   <target name="prepare">
     <mkdir dir="${dest}" />
@@ -35,7 +40,7 @@
   </target>
 
   <!-- Builds the XML Tools -->
-  <target name="compile" depends="checks,prepare">
+  <target name="compile" depends="checks,prepare,warning" if="jdk1.2+">
     <javac srcdir="${src}" destdir="${dest}">
       <include name="${package}/**" />
     </javac>

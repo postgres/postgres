@@ -22,7 +22,7 @@ import org.postgresql.util.PSQLException;
  * @see java.sql.Statement
  * @see ResultSet
  */
-public class Statement implements java.sql.Statement
+public class Statement extends org.postgresql.Statement implements java.sql.Statement
 {
     Connection connection;		// The connection who created us
     java.sql.ResultSet result = null;	// The current results
