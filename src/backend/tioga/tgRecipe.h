@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tgRecipe.h,v 1.19 2001/10/28 06:25:51 momjian Exp $
+ * $Id: tgRecipe.h,v 1.20 2001/10/30 05:38:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,7 @@ typedef struct
 				y;
 } Point;						/* this should match whatever is in
 
+								 *
 								 * geo-decls.h */
 #endif	 /* TIOGA_FRONTEND */
 

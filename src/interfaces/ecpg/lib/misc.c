@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/misc.c,v 1.8 2001/10/28 06:26:11 momjian Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/misc.c,v 1.9 2001/10/30 05:38:56 momjian Exp $ */
 
 #include "postgres_fe.h"
 
@@ -14,8 +14,8 @@ static struct sqlca sqlca_init =
 	{
 		'S', 'Q', 'L', 'C', 'A', ' ', ' ', ' '
 	},
-		sizeof(struct sqlca),
-		0,
+	sizeof(struct sqlca),
+	0,
 	{
 		0,
 		{

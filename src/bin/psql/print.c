@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/print.c,v 1.24 2001/10/29 06:45:32 ishii Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/print.c,v 1.25 2001/10/30 05:38:56 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "print.h"
@@ -261,9 +261,7 @@ print_aligned_text(const char *title, const char *const * headers,
 		}
 	}
 	else
-	{
 		cell_w = 0;
-	}
 #endif
 
 
@@ -479,9 +477,7 @@ print_aligned_vertical(const char *title, const char *const * headers,
 		}
 	}
 	else
-	{
 		cell_w = 0;
-	}
 
 	/* find longest data cell */
 	for (i = 0, ptr = cells; *ptr; ptr++, i++)

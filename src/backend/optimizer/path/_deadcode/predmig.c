@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/_deadcode/Attic/predmig.c,v 1.12 2001/10/28 06:25:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/_deadcode/Attic/predmig.c,v 1.13 2001/10/30 05:38:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -484,7 +484,7 @@ xfunc_form_groups(Query *queryInfo, Stream root, Stream bottom)
 }
 
 
-/* -------------------									 UTILITY FUNCTIONS	   ------------------------- */
+/* -------------------									   UTILITY FUNCTIONS	 ------------------------- */
 
 /*
  ** xfunc_free_stream
