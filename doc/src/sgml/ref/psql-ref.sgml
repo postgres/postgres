@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.108 2004/03/24 03:27:46 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.109 2004/03/30 15:54:33 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -904,12 +904,17 @@ testdb=>
         return types. If <replaceable
         class="parameter">pattern</replaceable>
         is specified, only functions whose names match the pattern are shown.
-	If the form
-        <literal>\df+</literal> is used, additional information about
+	If the form <literal>\df+</literal> is used, additional information about
         each function, including language and description, is shown.
         </para>
 
         <note>
+        <para>
+        To look up functions taking argument or returning values of a specific
+        type, use your pager's search capability to scroll through the <literal>\df</>
+        output.
+        </para>
+
         <para>
         To reduce clutter, <literal>\df</> does not show data type I/O
 	functions.  This is implemented by ignoring functions that accept
