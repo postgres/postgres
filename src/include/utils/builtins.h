@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.31 1997/12/16 15:55:14 thomas Exp $
+ * $Id: builtins.h,v 1.32 1997/12/23 19:55:51 thomas Exp $
  *
  * NOTES
  *	  This should normally only be included by fmgr.h.
@@ -441,8 +441,8 @@ bool		timestamplt(time_t t1, time_t t2);
 bool		timestampgt(time_t t1, time_t t2);
 bool		timestample(time_t t1, time_t t2);
 bool		timestampge(time_t t1, time_t t2);
-DateTime   *stamp_datetime(time_t timestamp);
-time_t		datetime_stamp(DateTime *datetime);
+DateTime   *timestamp_datetime(time_t timestamp);
+time_t		datetime_timestamp(DateTime *datetime);
 
 /* varchar.c */
 extern char *bpcharin(char *s, int dummy, int typlen);
@@ -507,7 +507,7 @@ extern DateADT date_pli(DateADT dateVal, int32 days);
 extern DateADT date_mii(DateADT dateVal, int32 days);
 extern DateTime *date_datetime(DateADT date);
 extern DateADT datetime_date(DateTime *datetime);
-extern DateTime *datet_datetime(DateADT date, TimeADT *time);
+extern DateTime *datetime_datetime(DateADT date, TimeADT *time);
 extern DateADT abstime_date(AbsoluteTime abstime);
 
 extern TimeADT *time_in(char *timestr);
