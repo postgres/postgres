@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh.in,v 1.17 2000/01/10 20:23:29 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh.in,v 1.18 2000/01/10 20:46:23 momjian Exp $
 #
 # NOTES
 #    Passes any -D options on to cpp prior to generating the list
@@ -83,7 +83,7 @@ cat > $HFILE <<FuNkYfMgRsTuFf
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: Gen_fmgrtab.sh.in,v 1.17 2000/01/10 20:23:29 momjian Exp $
+ * $Id: Gen_fmgrtab.sh.in,v 1.18 2000/01/10 20:46:23 momjian Exp $
  *
  * NOTES
  *	******************************
@@ -108,7 +108,7 @@ cat > $HFILE <<FuNkYfMgRsTuFf
  *	    store 8 argument type values for type-checking ...
  */
 typedef struct {
-    char *data[FUNC_MAX_ARGS+1];  /* function name is arg0 */
+    char *data[FUNC_MAX_ARGS];  /* function name is arg0 */
 } FmgrValues;
 
 typedef struct {
@@ -204,7 +204,7 @@ cat > $TABCFILE <<FuNkYfMgRtAbStUfF
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh.in,v 1.17 2000/01/10 20:23:29 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh.in,v 1.18 2000/01/10 20:46:23 momjian Exp $
  *
  * NOTES
  *
