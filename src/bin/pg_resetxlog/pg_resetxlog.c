@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.15 2004/02/11 22:55:25 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.16 2004/02/17 03:45:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -611,6 +611,12 @@ KillExistingXLOG(void)
 		}
 		errno = 0;
 	}
+#ifdef WIN32
+	/* This fix is in mingw cvs (runtime/mingwex/dirent.c rev 1.4), but
+	   not in released version */
+	if (GetLastError() == ERROR_NO_MORE_FILES)
+		errno = 0;
+#endif
 
 	if (errno)
 	{

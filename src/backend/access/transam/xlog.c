@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.135 2004/02/11 22:55:24 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.136 2004/02/17 03:45:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1805,6 +1805,12 @@ MoveOfflineLogs(uint32 log, uint32 seg, XLogRecPtr endptr)
 		}
 		errno = 0;
 	}
+#ifdef WIN32
+	/* This fix is in mingw cvs (runtime/mingwex/dirent.c rev 1.4), but
+	   not in released version */
+	if (GetLastError() == ERROR_NO_MORE_FILES)
+		errno = 0;
+#endif
 	if (errno)
 		ereport(PANIC,
 				(errcode_for_file_access(),
