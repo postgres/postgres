@@ -55,11 +55,11 @@ test: sanity_check
 # ----------
 test: errors
 test: select
+ignore: random
 
 # ----------
 # The fourth group of parallel test
 # ----------
-ignore: random
 test: select_into select_distinct select_distinct_on select_implicit select_having subselect union case join aggregates transactions random portals arrays btree_index hash_index
 
 test: privileges
@@ -68,11 +68,10 @@ test: misc
 # ----------
 # The fifth group of parallel test
 # ----------
-test: select_views alter_table portals_p2 rules foreign_key
+test: select_views alter_table portals_p2 rules foreign_key cluster
 
 # ----------
 # The sixth group of parallel test
 # ----------
 # "plpgsql" cannot run concurrently with "rules"
-test: limit plpgsql temp domain rangefuncs copy2 conversion
-test: without_oid
+test: limit plpgsql temp domain rangefuncs copy2 conversion without_oid

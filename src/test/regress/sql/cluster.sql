@@ -64,9 +64,15 @@ SELECT * from clstr_tst ORDER BY a;
 SELECT * from clstr_tst ORDER BY b;
 SELECT * from clstr_tst ORDER BY c;
 
+-- Verify that inheritance link still works
+INSERT INTO clstr_tst_inh VALUES (0, 100, 'in child table');
+SELECT * from clstr_tst;
+
+-- Verify that foreign key link still works
+INSERT INTO clstr_tst (b, c) VALUES (1111, 'this should fail');
+
 SELECT conname FROM pg_constraint WHERE conrelid=(SELECT oid FROM pg_class
 	WHERE relname='clstr_tst');
-SELECT relname FROM pg_class WHERE relname LIKE 'clstr_tst%' ORDER BY relname;
 
-DROP TABLE clstr_tst_inh;
-DROP TABLE clstr_tst;
+
+SELECT relname FROM pg_class WHERE relname LIKE 'clstr_tst%' ORDER BY relname;

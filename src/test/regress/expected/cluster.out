@@ -204,6 +204,49 @@ SELECT * from clstr_tst ORDER BY c;
   8 | 21 | veintiuno
 (32 rows)
 
+-- Verify that inheritance link still works
+INSERT INTO clstr_tst_inh VALUES (0, 100, 'in child table');
+SELECT * from clstr_tst;
+ a  |  b  |       c        
+----+-----+----------------
+ 10 |  14 | catorce
+ 18 |   5 | cinco
+  9 |   4 | cuatro
+ 26 |  19 | diecinueve
+ 12 |  18 | dieciocho
+ 30 |  16 | dieciseis
+ 24 |  17 | diecisiete
+  2 |  10 | diez
+ 23 |  12 | doce
+ 11 |   2 | dos
+ 25 |   9 | nueve
+ 31 |   8 | ocho
+  1 |  11 | once
+ 28 |  15 | quince
+ 32 |   6 | seis
+ 29 |   7 | siete
+ 15 |  13 | trece
+ 22 |  30 | treinta
+ 17 |  32 | treinta y dos
+  3 |  31 | treinta y uno
+  5 |   3 | tres
+ 20 |   1 | uno
+  6 |  20 | veinte
+ 14 |  25 | veinticinco
+ 21 |  24 | veinticuatro
+  4 |  22 | veintidos
+ 19 |  29 | veintinueve
+ 16 |  28 | veintiocho
+ 27 |  26 | veintiseis
+ 13 |  27 | veintisiete
+  7 |  23 | veintitres
+  8 |  21 | veintiuno
+  0 | 100 | in child table
+(33 rows)
+
+-- Verify that foreign key link still works
+INSERT INTO clstr_tst (b, c) VALUES (1111, 'this should fail');
+ERROR:  clstr_tst_con referential integrity violation - key referenced from clstr_tst not found in clstr_tst_s
 SELECT conname FROM pg_constraint WHERE conrelid=(SELECT oid FROM pg_class
 	WHERE relname='clstr_tst');
     conname     
@@ -228,5 +271,3 @@ SELECT relname FROM pg_class WHERE relname LIKE 'clstr_tst%' ORDER BY relname;
  clstr_tst_s_rf_a_seq
 (11 rows)
 
-DROP TABLE clstr_tst_inh;
-DROP TABLE clstr_tst;
