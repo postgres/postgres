@@ -14,7 +14,7 @@
  * Copyright (c) 1998-2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.75 2004/05/16 23:18:55 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.76 2004/05/19 04:32:26 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4210,9 +4210,13 @@ sqrt_var(NumericVar *arg, NumericVar *result, int rscale)
 		return;
 	}
 
+	/*
+	 * SQL2003 defines sqrt() in terms of power, so we need to emit
+	 * the right SQLSTATE error code if the operand is negative.
+	 */
 	if (stat < 0)
 		ereport(ERROR,
-				(errcode(ERRCODE_FLOATING_POINT_EXCEPTION),
+				(errcode(ERRCODE_INVALID_ARGUMENT_FOR_POWER_FUNCTION),
 				 errmsg("cannot take square root of a negative number")));
 
 	init_var(&tmp_arg);
