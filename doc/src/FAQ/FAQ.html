@@ -10,7 +10,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Wed Jan 19 14:45:22 EST 2005</P>
+    <P>Last updated: Sat Jan 29 23:20:03 EST 2005</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -28,117 +28,100 @@
     <H2 align="center">General Questions</H2>
     <A href="#1.1">1.1</A>) What is PostgreSQL? How is it pronounced?<BR>
      <A href="#1.2">1.2</A>) What is the copyright on PostgreSQL?<BR>
-     <A href="#1.3">1.3</A>) What Unix platforms does PostgreSQL run
-    on?<BR>
-     <A href="#1.4">1.4</A>) What non-Unix ports are available?<BR>
-     <A href="#1.5">1.5</A>) Where can I get PostgreSQL?<BR>
-     <A href="#1.6">1.6</A>) Where can I get support?<BR>
-     <A href="#1.7">1.7</A>) What is the latest release?<BR>
-     <A href="#1.8">1.8</A>) What documentation is available?<BR>
-     <A href="#1.9">1.9</A>) How do I find out about known bugs or
+     <A href="#1.3">1.3</A>) What platforms does PostgreSQL support?<BR>
+     <A href="#1.4">1.4</A>) Where can I get PostgreSQL?<BR>
+     <A href="#1.5">1.5</A>) Where can I get support?<BR>
+     <A href="#1.6">1.6</A>) What is the latest release?<BR>
+     <A href="#1.7">1.7</A>) What documentation is available?<BR>
+     <A href="#1.8">1.8</A>) How do I find out about known bugs or
     missing features?<BR>
-     <A href="#1.10">1.10</A>) How can I learn <SMALL>SQL</SMALL>?<BR>
-     <A href="#1.11">1.11</A>) Is PostgreSQL Y2K compliant?<BR>
-     <A href="#1.12">1.12</A>) How do I join the development team?<BR>
-     <A href="#1.13">1.13</A>) How do I submit a bug report?<BR>
-     <A href="#1.14">1.14</A>) How does PostgreSQL compare to other
+     <A href="#1.9">1.9</A>) How can I learn <SMALL>SQL</SMALL>?<BR>
+     <A href="#1.10">1.10</A>) How do I join the development team?<BR>
+     <A href="#1.11">1.11</A>) How do I submit a bug report?<BR>
+     <A href="#1.12">1.12</A>) How does PostgreSQL compare to other
     <SMALL>DBMS</SMALL>s?<BR>
-     <A href="#1.15">1.15</A>) How can I financially assist
+     <A href="#1.13">1.13</A>) How can I financially assist
     PostgreSQL?<BR>
      
 
     <H2 align="center">User Client Questions</H2>
-    <A href="#2.1">2.1</A>) Are there <SMALL>ODBC</SMALL> drivers for
+    <A href="#2.1">2.1</A>) What interfaces are available for
     PostgreSQL?<BR>
      <A href="#2.2">2.2</A>) What tools are available for using
     PostgreSQL with Web pages?<BR>
      <A href="#2.3">2.3</A>) Does PostgreSQL have a graphical user
     interface?<BR>
-     <A href="#2.4">2.4</A>) What languages are available to
-    communicate with PostgreSQL?<BR>
      
 
     <H2 align="center">Administrative Questions</H2>
     <A href="#3.1">3.1</A>) How do I install PostgreSQL somewhere other
     than <I>/usr/local/pgsql</I>?<BR>
-     <A href="#3.2">3.2</A>) When I start <I>postmaster</I>, I get a
-    <I>Bad System Call</I> or core dumped message. Why?<BR>
-     <A href="#3.3">3.3</A>) When I try to start <I>postmaster</I>, I
-    get <I>IpcMemoryCreate</I> errors. Why?<BR>
-     <A href="#3.4">3.4</A>) When I try to start <I>postmaster</I>, I
-    get <I>IpcSemaphoreCreate</I> errors. Why?<BR>
-     <A href="#3.5">3.5</A>) How do I control connections from other
+     <A href="#3.2">3.2</A>) How do I control connections from other
     hosts?<BR>
-     <A href="#3.6">3.6</A>) How do I tune the database engine for
+     <A href="#3.3">3.3</A>) How do I tune the database engine for
     better performance?<BR>
-     <A href="#3.7">3.7</A>) What debugging features are available?<BR>
-     <A href="#3.8">3.8</A>) Why do I get <I>"Sorry, too many
+     <A href="#3.4">3.4</A>) What debugging features are available?<BR>
+     <A href="#3.5">3.5</A>) Why do I get <I>"Sorry, too many
     clients"</I> when trying to connect?<BR>
-     <A href="#3.9">3.9</A>) What is in the  <I>pgsql_tmp</I>
+     <A href="#3.6">3.6</A>) What is in the  <I>pgsql_tmp</I>
     directory?<BR>
-     <A href="#3.10">3.10</A>) Why do I need to do a dump and restore
+     <A href="#3.7">3.7</A>) Why do I need to do a dump and restore
     to upgrade PostgreSQL releases?<BR>
-     <A href="#3.11">3.11</A>) What computer hardware should I use?<BR>
+     <A href="#3.8">3.8</A>) What computer hardware should I use?<BR>
 
 
     <H2 align="center">Operational Questions</H2>
-    <A href="#4.1">4.1</A>) What is the difference between binary
-    cursors and normal cursors?<BR>
-     <A href="#4.2">4.2</A>) How do I <SMALL>SELECT</SMALL> only the
+     <A href="#4.1">4.1</A>) How do I <SMALL>SELECT</SMALL> only the
     first few rows of a query?  A random row?<BR>
-     <A href="#4.3">4.3</A>) How do I find out what tables, indexes,
+     <A href="#4.2">4.2</A>) How do I find out what tables, indexes,
     databases, and users are defined?  How do I see the queries used
     by <I>psql</I> to display them?<BR>
-     <A href="#4.4">4.4</A>) How do you remove a column from a
+     <A href="#4.3">4.3</A>) How do you remove a column from a
     table, or change its data type?<BR>
-     <A href="#4.5">4.5</A>) What is the maximum size for a row, a
+     <A href="#4.4">4.4</A>) What is the maximum size for a row, a
     table, and a database?<BR>
-     <A href="#4.6">4.6</A>) How much database disk space is required
+     <A href="#4.5">4.5</A>) How much database disk space is required
     to store data from a typical text file?<BR>
-     <A href="#4.7">4.7</A>) My queries are slow or don't make use of
-    the indexes. Why?<BR>
-     <A href="#4.8">4.8</A>) How do I see how the query optimizer is
+     <A href="#4.6">4.6</A>) Why are my queries slow?  Why don't they
+    use my indexes?<BR>
+     <A href="#4.7">4.7</A>) How do I see how the query optimizer is
     evaluating my query?<BR>
-     <A href="#4.9">4.9</A>) What is an R-tree index?<BR>
-     <A href="#4.10">4.10</A>) What is the Genetic Query Optimizer?<BR>
-     <A href="#4.11">4.11</A>) How do I perform regular expression
+     <A href="#4.8">4.8</A>) How do I perform regular expression
     searches and case-insensitive regular expression searches? How do I
     use an index for case-insensitive searches?<BR>
-     <A href="#4.12">4.12</A>) In a query, how do I detect if a field
+     <A href="#4.9">4.9</A>) In a query, how do I detect if a field
     is <SMALL>NULL</SMALL>?<BR>
-     <A href="#4.13">4.13</A>) What is the difference between the
+     <A href="#4.10">4.10</A>) What is the difference between the
     various character types?<BR>
-     <A href="#4.14.0">4.14.0</A>) How do I create a
+     <A href="#4.11.0">4.11.0</A>) How do I create a
     serial/auto-incrementing field?<BR>
-     <A href="#4.14.1">4.14.1</A>) How do I get the value of a
+     <A href="#4.11.1">4.11.1</A>) How do I get the value of a
     <SMALL>SERIAL</SMALL> insert?<BR>
-     <A href="#4.14.2">4.14.2</A>) Doesn't <I>currval()</I>
+     <A href="#4.11.2">4.11.2</A>) Doesn't <I>currval()</I>
     lead to a race condition with other users?<BR>
-     <A href="#4.14.3">4.14.3</A>) Why aren't my sequence numbers
+     <A href="#4.11.3">4.11.3</A>) Why aren't my sequence numbers
     reused on transaction abort? Why are there gaps in the numbering of
     my sequence/SERIAL column?<BR>
-     <A href="#4.15">4.15</A>) What is an <SMALL>OID</SMALL>? What is a
+     <A href="#4.12">4.12</A>) What is an <SMALL>OID</SMALL>? What is a
     <SMALL>TID</SMALL>?<BR>
-     <A href="#4.16">4.16</A>) What is the meaning of some of the terms
+     <A href="#4.13">4.13</A>) What is the meaning of some of the terms
     used in PostgreSQL?<BR>
-     <A href="#4.17">4.17</A>) Why do I get the error <I>"ERROR: Memory
+     <A href="#4.14">4.14</A>) Why do I get the error <I>"ERROR: Memory
     exhausted in AllocSetAlloc()"</I>?<BR>
-     <A href="#4.18">4.18</A>) How do I tell what PostgreSQL version I
+     <A href="#4.15">4.15</A>) How do I tell what PostgreSQL version I
     am running?<BR>
-     <A href="#4.19">4.19</A>) Why does my large-object operations get
+     <A href="#4.16">4.16</A>) Why does my large-object operations get
     <I>"invalid large obj descriptor"</I>?<BR>
-     <A href="#4.20">4.20</A>) How do I create a column that will
+     <A href="#4.17">4.17</A>) How do I create a column that will
     default to the current time?<BR>
-     <A href="#4.21">4.21</A>) Why are my subqueries using
-    <CODE><SMALL>IN</SMALL></CODE> so slow?<BR>
-     <A href="#4.22">4.22</A>) How do I perform an outer join?<BR>
-     <A href="#4.23">4.23</A>) How do I perform queries using multiple
+     <A href="#4.18">4.18</A>) How do I perform an outer join?<BR>
+     <A href="#4.19">4.19</A>) How do I perform queries using multiple
     databases?<BR>
-     <A href="#4.24">4.24</A>) How do I return multiple rows or columns
+     <A href="#4.20">4.20</A>) How do I return multiple rows or columns
     from a function?<BR>
-     <A href="#4.25">4.25</A>) Why can't I reliably create/drop
+     <A href="#4.21">4.21</A>) Why can't I reliably create/drop
     temporary tables in PL/PgSQL functions?<BR>
-     <A href="#4.26">4.26</A>) What encryption options are available?<BR>
+     <A href="#4.22">4.22</A>) What encryption options are available?<BR>
      
 
     <H2 align="center">Extending PostgreSQL</H2>
@@ -225,15 +208,12 @@
     It has no restrictions on how the source code may be used. We like
     it and have no intention of changing it.</P>
 
-    <H4><A name="1.3">1.3</A>) What Unix platforms does PostgreSQL run
-    on?</H4>
+    <H4><A name="1.3">1.3</A>) What platforms does PostgreSQL support?</H4>
 
     <P>In general, any modern Unix-compatible platform should be able to
     run PostgreSQL. The platforms that had received explicit testing at
     the time of release are listed in the installation
     instructions.</P>
-
-    <H4><A name="1.4">1.4</A>) What non-Unix ports are available?</H4>
 
     <P>Starting with version 8.0, PostgreSQL now runs natively on
     Microsoft Windows NT-based operating systems like Win2000, WinXP,
@@ -248,13 +228,13 @@
     "http://hobbes.nmsu.edu/cgi-bin/h-search?sh=1&button=Search&key=postgreSQL&stype=all&sort=type&dir=%2F">
     http://hobbes.nmsu.edu/cgi-bin/h-search?sh=1&button=Search&key=postgreSQL&stype=all&sort=type&dir=%2F</a>.</p>
 
-    <H4><A name="1.5">1.5</A>) Where can I get PostgreSQL?</H4>
+    <H4><A name="1.4">1.4</A>) Where can I get PostgreSQL?</H4>
 
     <P>The primary anonymous ftp site for PostgreSQL is <A href=
     "ftp://ftp.PostgreSQL.org/pub">ftp://ftp.PostgreSQL.org/pub</A>.
     For mirror sites, see our main web site.</P>
 
-    <H4><A name="1.6">1.6</A>) Where can I get support?</H4>
+    <H4><A name="1.5">1.5</A>) Where can I get support?</H4>
 
     <P>The main mailing list is: <A href=
     "mailto:pgsql-general@PostgreSQL.org">pgsql-general@PostgreSQL.org</A>.
@@ -316,13 +296,13 @@
     <P>A list of commercial support companies is available at <A href=
     "http://techdocs.postgresql.org/companies.php">http://techdocs.postgresql.org/companies.php</A>.</P>
 
-    <H4><A name="1.7">1.7</A>) What is the latest release?</H4>
+    <H4><A name="1.6">1.6</A>) What is the latest release?</H4>
 
     <P>The latest release of PostgreSQL is version 8.0.0.</P>
 
     <P>We plan to have major releases every six to eight months.</P>
 
-    <H4><A name="1.8">1.8</A>) What documentation is available?</H4>
+    <H4><A name="1.7">1.7</A>) What documentation is available?</H4>
 
     <P>Several manuals, manual pages, and some small test examples are
     included in the distribution. See the <I>/doc</I> directory. You
@@ -346,14 +326,14 @@
 
     <P>Our web site contains even more documentation.</P>
 
-    <H4><A name="1.9">1.9</A>) How do I find out about known bugs or
+    <H4><A name="1.8">1.8</A>) How do I find out about known bugs or
     missing features?</H4>
 
     <P>PostgreSQL supports an extended subset of <SMALL>SQL</SMALL>-92.
     See our <A href="http://developer.PostgreSQL.org/todo.php">TODO</A>
     list for known bugs, missing features, and future plans.</P>
 
-    <H4><A name="1.10">1.10</A>) How can I learn
+    <H4><A name="1.9">1.9</A>) How can I learn
     <SMALL>SQL</SMALL>?</H4>
 
     <P>The PostgreSQL book at <A href=
@@ -377,12 +357,7 @@
     Bowman, Judith S., et al., Addison-Wesley. Others like <I>The
     Complete Reference SQL</I>, Groff et al., McGraw-Hill.</P>
 
-    <H4><A name="1.11">1.11</A>) Is PostgreSQL Y2K compliant?</H4>
-
-    <P>Yes, we easily handle dates past the year 2000 AD, and before
-    2000 BC.</P>
-
-    <H4><A name="1.12">1.12</A>) How do I join the development
+    <H4><A name="1.10">1.10</A>) How do I join the development
     team?</H4>
 
     <P>First, download the latest source and read the PostgreSQL
@@ -397,7 +372,7 @@
     committers to keep up, and we had confidence that patches they
     committed were of high quality.</P>
 
-    <H4><A name="1.13">1.13</A>) How do I submit a bug report?</H4>
+    <H4><A name="1.11">1.11</A>) How do I submit a bug report?</H4>
 
     <P>Visit the PostgreSQL bug form at <A href=
     "http://www.postgresql.org/support/submitbug">
@@ -407,7 +382,7 @@
     "ftp://ftp.PostgreSQL.org/pub">ftp://ftp.PostgreSQL.org/pub</A> to
     see if there is a more recent PostgreSQL version or patches.</P>
 
-    <H4><A name="1.14">1.14</A>) How does PostgreSQL compare to other
+    <H4><A name="1.12">1.12</A>) How does PostgreSQL compare to other
     <SMALL>DBMS</SMALL>s?</H4>
 
     <P>There are several ways of measuring software: features,
@@ -460,7 +435,7 @@
       community, manuals, and the source code often make PostgreSQL
       support superior to other <SMALL>DBMS</SMALL>s. There is
       commercial per-incident support available for those who need it.
-      (See <A href="#1.6">FAQ section 1.6</A>.)<BR>
+      (See <A href="#1.5">FAQ section 1.5</A>.)<BR>
       <BR>
       </DD>
 
@@ -473,7 +448,7 @@
       </DD>
     </DL>
 
-    <H4><A name="1.15">1.15</A>) How can I financially assist
+    <H4><A name="1.13">1.13</A>) How can I financially assist
     PostgreSQL?</H4>
 
     <P>PostgreSQL has had a first-class infrastructure since we started
@@ -503,26 +478,20 @@
 
     <H2 align="center">User Client Questions</H2>
 
-    <H4><A name="2.1">2.1</A>) Are there <SMALL>ODBC</SMALL> drivers
-    for PostgreSQL?</H4>
+    <H4><A name="2.1">2.1</A>) What interfaces are available for
+    PostgreSQL?</H4>
 
-    <P>There are two <SMALL>ODBC</SMALL> drivers available, PsqlODBC
-    and OpenLink <SMALL>ODBC</SMALL>.</P>
+    <P>The PostgreSQL install includes only the <SMALL>C</SMALL> and embedded
+    <SMALL>C</SMALL> interfaces.  All other interfaces are independent projects
+    that are downloaded separately;  being separate allows them to have their
+    own release schedule and development teams.</P>
 
-    <P>You can download PsqlODBC from <A href=
-    "http://gborg.postgresql.org/project/psqlodbc/projdisplay.php">
-    http://gborg.postgresql.org/project/psqlodbc/projdisplay.php</A>.</P>
-
-    <P>OpenLink <SMALL>ODBC</SMALL> can be gotten from <A href=
-    "http://www.openlinksw.com/">http://www.openlinksw.com</A>. It
-    works with their standard <SMALL>ODBC</SMALL> client software so
-    you'll have PostgreSQL <SMALL>ODBC</SMALL> available on every
-    client platform they support (Win, Mac, Unix, VMS).</P>
-
-    <P>They will probably be selling this product to people who need
-    commercial-quality support, but a freeware version will always be
-    available. Please send questions to <A href=
-    "mailto:postgres95@openlink.co.uk">postgres95@openlink.co.uk</A>.</P>
+    <P>Some programming languages like <SMALL>PHP</SMALL> include an
+    interface to PostgreSQL. Interfaces for languages like Perl,
+    <SMALL>TCL</SMALL>, Python, and many others are available at
+    <a href="http://gborg.postgresql.org">http://gborg.postgresql.org</A>
+    in the <I>Drivers/Interfaces</I> section and via Internet search.
+    </P>
 
     <H4><A name="2.2">2.2</A>) What tools are available for using
     PostgreSQL with Web pages?</H4>
@@ -552,33 +521,8 @@
 
     <P>See <a href="http://techdocs.postgresql.org/guides/GUITools">http://techdocs.postgresql.org/guides/GUITools</a> for a more detailed list.</P>
 
-    <H4><A name="2.4">2.4</A>) What languages are able to communicate with 
-    PostgreSQL?</H4>
-
-    <P>Most popular programming languages contain an interface to
-    PostgreSQL. Check your programming language's list of extension
-    modules.</P>
-
-    <P>The following interfaces are included in the PostgreSQL
-    distribution:</P>
-
-    <UL>
-      <LI>C (libpq)</LI>
-
-      <LI>Embedded C (ecpg)</LI>
-
-      <LI>Java (jdbc)</LI>
-
-      <LI>Python (PyGreSQL)</LI>
-
-      <LI>TCL (libpgtcl)</LI>
-
-    </UL>
-    <P>Additional interfaces are available at 
-    <a href="http://gborg.postgresql.org">http://gborg.postgresql.org</A>
-    in the <I>Drivers/Interfaces</I> section.
-    </P>
     <HR>
+
 
     <H2 align="center">Administrative Questions</H2>
 
@@ -588,47 +532,7 @@
     <P>Specify the <I>--prefix</I> option when running
     <I>configure</I>.</P>
 
-    <H4><A name="3.2">3.2</A>) When I start <I>postmaster</I>, I get a
-    <I>Bad System Call</I> or core dumped message. Why?</H4>
-
-    <P>It could be a variety of problems, but first check to see that
-    you have System V extensions installed in your kernel. PostgreSQL
-    requires kernel support for shared memory and semaphores.</P>
-
-    <H4><A name="3.3">3.3</A>) When I try to start <I>postmaster</I>, I
-    get <I>IpcMemoryCreate</I> errors. Why?</H4>
-
-    <P>You either do not have shared memory configured properly in your
-    kernel or you need to enlarge the shared memory available in the
-    kernel. The exact amount you need depends on your architecture and
-    how many buffers and backend processes you configure for
-    <I>postmaster</I>. For most systems, with default numbers of
-    buffers and processes, you need a minimum of ~1 MB. See the <A
-    href="http://www.postgresql.org/docs/current/static/kernel-resources.html">PostgreSQL
-    Administrator's Guide/Server Run-time Environment/Managing Kernel Resources</A>
-    section for more detailed information about shared memory and semaphores.</P>
-
-    <H4><A name="3.4">3.4</A>) When I try to start <I>postmaster</I>, I
-    get <I>IpcSemaphoreCreate</I> errors. Why?</H4>
-
-    <P>If the error message is <I>IpcSemaphoreCreate: semget failed (No
-    space left on device)</I> then your kernel is not configured with
-    enough semaphores. Postgres needs one semaphore per potential
-    backend process. A temporary solution is to start <I>postmaster</I>
-    with a smaller limit on the number of backend processes. Use
-    <I>-N</I> with a parameter less than the default of 32. A more
-    permanent solution is to increase your kernel's
-    <SMALL>SEMMNS</SMALL> and <SMALL>SEMMNI</SMALL> parameters.</P>
-
-    <P>Inoperative semaphores can also cause crashes during heavy
-    database access.</P>
-
-    <P>If the error message is something else, you might not have
-    semaphore support configured in your kernel at all. See the
-    PostgreSQL Administrator's Guide for more detailed information
-    about shared memory and semaphores.</P>
-
-    <H4><A name="3.5">3.5</A>) How do I control connections from other
+    <H4><A name="3.2">3.2</A>) How do I control connections from other
     hosts?</H4>
 
     <P>By default, PostgreSQL only allows connections from the local
@@ -638,7 +542,7 @@
     host-based authentication by modifying the file
     <I>$PGDATA/pg_hba.conf</I> accordingly.</P>
 
-    <H4><A name="3.6">3.6</A>) How do I tune the database engine for
+    <H4><A name="3.3">3.3</A>) How do I tune the database engine for
     better performance?</H4>
 
     <P>Certainly, indexes can speed up queries. The
@@ -677,7 +581,7 @@
     data in tables to match an index. See the <SMALL>CLUSTER</SMALL>
     manual page for more details.</P>
 
-    <H4><A name="3.7">3.7</A>) What debugging features are
+    <H4><A name="3.4">3.4</A>) What debugging features are
     available?</H4>
 
     <P>PostgreSQL has several features that report status information
@@ -735,7 +639,7 @@
     file will be put in the client's current directory. Linux requires
     a compile with <I>-DLINUX_PROFILE</I> for proper profiling.</P>
 
-    <H4><A name="3.8">3.8</A>) Why do I get <I>"Sorry, too many
+    <H4><A name="3.5">3.5</A>) Why do I get <I>"Sorry, too many
     clients"</I> when trying to connect?</H4>
 
     <P>You need to increase <I>postmaster</I>'s limit on how many
@@ -760,7 +664,7 @@
     the number of allowed backend processes is so your system won't run
     out of resources.</P>
 
-    <H4><A name="3.9">3.9</A>) What is in the <I>pgsql_tmp</I> directory?</H4>
+    <H4><A name="3.6">3.6</A>) What is in the <I>pgsql_tmp</I> directory?</H4>
 
     <P>This directory contains temporary files generated by the query 
     executor. For example, if a sort needs to be done to satisfy an 
@@ -772,7 +676,7 @@
     remain if a backend crashes during a sort. A stop and restart of the
     <I>postmaster</I> will remove files from those directories.</P>
 
-    <H4><A name="3.10">3.10</A>) Why do I need to do a dump and restore
+    <H4><A name="3.7">3.7</A>) Why do I need to do a dump and restore
     to upgrade between major PostgreSQL releases?</H4>
 
     <P>The PostgreSQL team makes only small changes between minor releases,
@@ -788,7 +692,7 @@
     The release notes mention whether <I>pg_upgrade</I> is available for the
     release.</P>
 
-    <H4><A name="3.11">3.11</A>) What computer hardware should I use?</H4>
+    <H4><A name="3.8">3.8</A>) What computer hardware should I use?</H4>
 
     <P>Because PC hardware is mostly compatible, people tend to believe that
     all PC hardware is of equal quality.  It is not.  ECC RAM, SCSI, and
@@ -802,13 +706,7 @@
 
     <H2 align="center">Operational Questions</H2>
 
-    <H4><A name="4.1">4.1</A>) What is the difference between binary
-    cursors and normal cursors?</H4>
-
-    <P>See the <SMALL>DECLARE</SMALL> manual page for a
-    description.</P>
-
-    <H4><A name="4.2">4.2</A>) How do I <SMALL>SELECT</SMALL> only the
+    <H4><A name="4.1">4.1</A>) How do I <SMALL>SELECT</SMALL> only the
     first few rows of a query?  A random row?</H4>
 
     <P>See the <SMALL>FETCH</SMALL> manual page, or use
@@ -829,7 +727,7 @@
     LIMIT 1;
 </PRE>
 
-    <H4><A name="4.3">4.3</A>) How do I find out what tables, indexes,
+    <H4><A name="4.2">4.2</A>) How do I find out what tables, indexes,
     databases, and users are defined?  How do I see the queries used
     by <I>psql</I> to display them?</H4>
 
@@ -850,7 +748,7 @@
     illustrates many of the <SMALL>SELECT</SMALL>s needed to get
     information from the database system tables.</P>
 
-    <H4><A name="4.4">4.4</A>) How do you remove a column from a
+    <H4><A name="4.3">4.3</A>) How do you remove a column from a
     table, or change its data type?</H4>
 
     <P><SMALL>DROP COLUMN</SMALL> functionality was added in release 7.3
@@ -881,7 +779,7 @@
     <P>You might then want to do <I>VACUUM FULL tab</I> to reclaim the
     disk space used by the expired rows.</P>
     
-    <H4><A name="4.5">4.5</A>) What is the maximum size for a row, a
+    <H4><A name="4.4">4.4</A>) What is the maximum size for a row, a
     table, and a database?</H4>
 
     <P>These are the limits:</P>
@@ -907,7 +805,7 @@
     <P>The maximum table size and maximum number of columns can be
     quadrupled by increasing the default block size to 32k.</P>
 
-    <H4><A name="4.6">4.6</A>) How much database disk space is required
+    <H4><A name="4.5">4.5</A>) How much database disk space is required
     to store data from a typical text file?</H4>
 
     <P>A PostgreSQL database may require up to five times the disk
@@ -944,8 +842,8 @@
     <P><SMALL>NULL</SMALL>s are stored as bitmaps, so they
     use very little space.</P>
     
-    <H4><A name="4.7">4.7</A>) My queries are slow or don't make use of
-    the indexes. Why?</H4>
+    <H4><A name="4.6">4.6</A>) Why are my queries slow?  Why don't they
+    use my indexes?</H4>
 
     <P>Indexes are not automatically used by every query. Indexes are only
     used if the table is larger than a minimum size, and the query
@@ -995,7 +893,7 @@
     e.g. [a-e].</LI>
     <LI>Case-insensitive searches such as <SMALL>ILIKE</SMALL> and
     <I>~*</I> do not utilize indexes. Instead, use functional
-    indexes, which are described in section <a href="#4.11">4.11</a>.</LI>
+    indexes, which are described in section <a href="#4.10">4.10</a>.</LI>
     <LI>The default <I>C</I> locale must be used during
     <i>initdb</i> because it is not possible to know the next-greater
     character in a non-C locale.  You can create a special
@@ -1008,45 +906,12 @@
     types exactly match the index's column types.  This is particularly
     true of int2, int8, and numeric column indexes.</P>
 
-    <H4><A name="4.8">4.8</A>) How do I see how the query optimizer is
+    <H4><A name="4.7">4.7</A>) How do I see how the query optimizer is
     evaluating my query?</H4>
 
     <P>See the <SMALL>EXPLAIN</SMALL> manual page.</P>
 
-    <H4><A name="4.9">4.9</A>) What is an R-tree index?</H4>
-
-    <P>An R-tree index is used for indexing spatial data. A hash index
-    can't handle range searches. A B-tree index only handles range
-    searches in a single dimension. R-trees can handle
-    multi-dimensional data. For example, if an R-tree index can be
-    built on an attribute of type <I>point</I>, the system can more
-    efficiently answer queries such as "select all points within a
-    bounding rectangle."</P>
-
-    <P>The canonical paper that describes the original R-tree design
-    is:</P>
-
-    <P>Guttman, A. "R-trees: A Dynamic Index Structure for Spatial
-    Searching." Proceedings of the 1984 ACM SIGMOD Int'l Conf on Mgmt
-    of Data, 45-57.</P>
-
-    <P>You can also find this paper in Stonebraker's "Readings in
-    Database Systems".</P>
-
-    <P>Built-in R-trees can handle polygons and boxes. In theory,
-    R-trees can be extended to handle higher number of dimensions. In
-    practice, extending R-trees requires a bit of work and we don't
-    currently have any documentation on how to do it.</P>
-
-    <H4><A name="4.10">4.10</A>) What is the Genetic Query
-    Optimizer?</H4>
-
-    <P>The <SMALL>GEQO</SMALL> module speeds query optimization when
-    joining many tables by means of a Genetic Algorithm (GA). It allows
-    the handling of large join queries through nonexhaustive
-    search.</P>
-
-    <H4><A name="4.11">4.11</A>) How do I perform regular expression
+    <H4><A name="4.8">4.8</A>) How do I perform regular expression
     searches and case-insensitive regular expression searches? How do I
     use an index for case-insensitive searches?</H4>
 
@@ -1069,13 +934,13 @@
     CREATE INDEX tabindex ON tab (lower(col));
 </PRE>
 
-    <H4><A name="4.12">4.12</A>) In a query, how do I detect if a field
+    <H4><A name="4.9">4.9</A>) In a query, how do I detect if a field
     is <SMALL>NULL</SMALL>?</H4>
 
     <P>You test the column with <SMALL>IS NULL</SMALL> and <SMALL>IS
     NOT NULL</SMALL>.</P>
 
-    <H4><A name="4.13">4.13</A>) What is the difference between the
+    <H4><A name="4.10">4.10</A>) What is the difference between the
     various character types?</H4>
 <PRE>
 Type            Internal Name   Notes
@@ -1107,7 +972,7 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     particularly values that include <SMALL>NULL</SMALL> bytes. All the
     types described here have similar performance characteristics.</P>
 
-    <H4><A name="4.14.1">4.14.1</A>) How do I create a
+    <H4><A name="4.11.1">4.11.1</A>) How do I create a
     serial/auto-incrementing field?</H4>
 
     <P>PostgreSQL supports a <SMALL>SERIAL</SMALL> data type. It
@@ -1135,13 +1000,13 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     you need to use <I>pg_dump</I>'s <I>-o</I> option or <SMALL>COPY
     WITH OIDS</SMALL> option to preserve the <SMALL>OID</SMALL>s. 
 
-    <H4><A name="4.14.2">4.14.2</A>) How do I get the value of a
+    <H4><A name="4.11.2">4.11.2</A>) How do I get the value of a
     <SMALL>SERIAL</SMALL> insert?</H4>
 
     <P>One approach is to retrieve the next <SMALL>SERIAL</SMALL> value
     from the sequence object with the <I>nextval()</I> function
     <I>before</I> inserting and then insert it explicitly. Using the
-    example table in <A href="#4.14.1">4.14.1</A>, an example in a
+    example table in <A href="#4.11.1">4.11.1</A>, an example in a
     pseudo-language would look like this:</P>
 <PRE>
     new_id = execute("SELECT nextval('person_id_seq')");
@@ -1164,7 +1029,7 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     new_id = execute("SELECT currval('person_id_seq')");
 </PRE>
     
-    <P>Finally, you could use the <A href="#4.15"><SMALL>OID</SMALL></A>
+    <P>Finally, you could use the <A href="#4.12"><SMALL>OID</SMALL></A>
     returned from the <SMALL>INSERT</SMALL> statement to look up the
     default value, though this is probably the least portable approach,
     and the oid value will wrap around when it reaches 4 billion.
@@ -1172,13 +1037,13 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     available via <I>$sth-&gt;{pg_oid_status}</I> after
     <I>$sth-&gt;execute()</I>.</P>
 
-    <H4><A name="4.14.3">4.14.3</A>) Doesn't <I>currval()</I>
+    <H4><A name="4.11.3">4.11.3</A>) Doesn't <I>currval()</I>
     lead to a race condition with other users?</H4>
 
     <P>No. <I>currval()</I> returns the current value assigned by your
     backend, not by all users.</P>
 
-    <H4><A name="4.14.4">4.14.4</A>) Why aren't my sequence numbers
+    <H4><A name="4.11.4">4.11.4</A>) Why aren't my sequence numbers
     reused on transaction abort? Why are there gaps in the numbering of
     my sequence/SERIAL column?</H4>
 
@@ -1187,47 +1052,30 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     completes. This causes gaps in numbering from aborted
     transactions.</P>
 
-    <H4><A name="4.15">4.15</A>) What is an <SMALL>OID</SMALL>? What is
+    <H4><A name="4.12">4.12</A>) What is an <SMALL>OID</SMALL>? What is
     a <SMALL>TID</SMALL>?</H4>
 
-    <P><SMALL>OID</SMALL>s are PostgreSQL's answer to unique row ids.
-    Every row that is created in PostgreSQL gets a unique
-    <SMALL>OID</SMALL>. All <SMALL>OID</SMALL>s generated during
-    <I>initdb</I> are less than 16384 (from
-    <I>include/access/transam.h</I>). All user-created
-    <SMALL>OID</SMALL>s are equal to or greater than this. By default,
-    all these <SMALL>OID</SMALL>s are unique not only within a table or
-    database, but unique within the entire PostgreSQL installation.</P>
+    <P>Every row that is created in PostgreSQL gets a unique
+    <SMALL>OID</SMALL> unless created <SMALL>WITHOUT OIDS</SMALL>.
+    O<SMALL>ID</SMALL>s are autotomatically assigned unique 4-byte
+    integers that are unique across the entire installation.  However,
+    they overflow at 4 billion, and then the O<SMALL>ID</SMALL>s start
+    being duplicated. PostgreSQL uses <SMALL>OID</SMALL>s to link its
+    internal system tables together.</P>
 
-    <P>PostgreSQL uses <SMALL>OID</SMALL>s in its internal system
-    tables to link rows between tables. These <SMALL>OID</SMALL>s can
-    be used to identify specific user rows and used in joins. It is
-    recommended you use column type <SMALL>OID</SMALL> to store
-    <SMALL>OID</SMALL> values. You can create an index on the
-    <SMALL>OID</SMALL> field for faster access.</P>
-
-    <P>O<SMALL>ID</SMALL>s are assigned to all new rows from a central
-    area that is used by all databases. If you want to change the
-    <SMALL>OID</SMALL> to something else, or if you want to make a copy
-    of the table, with the original <SMALL>OID</SMALL>s, there is no
-    reason you can't do it:</P>
-<PRE>
-        CREATE TABLE new_table(mycol int);
-        SELECT oid AS old_oid, mycol INTO tmp_table FROM old_table;
-        COPY tmp_table TO '/tmp/pgtable';
-        COPY new_table WITH OIDS FROM '/tmp/pgtable';
-        DROP TABLE tmp_table;
-</PRE>
-    <P>O<SMALL>ID</SMALL>s are stored as 4-byte integers, and will
-    overflow at 4 billion. No one has reported this ever happening, and
-    we plan to have the limit removed before anyone does.</P>
+    <P>To uniquely number columns in user tables, it is best to use
+    <SMALL>SERIAL</> rather than O<SMALL>ID</SMALL>s because
+    <SMALL>SERIAL<SMALL> sequences are unique only within a single
+    table. and are therefore less likely to overflow.
+    <SMALL>SERIAL8</SMALL> is available for storing eight-byte sequence
+    values.</P>
 
     <P>T<SMALL>ID</SMALL>s are used to identify specific physical rows
     with block and offset values. T<SMALL>ID</SMALL>s change after rows
     are modified or reloaded. They are used by index entries to point
     to physical rows.</P>
 
-    <H4><A name="4.16">4.16</A>) What is the meaning of some of the
+    <H4><A name="4.13">4.13</A>) What is the meaning of some of the
     terms used in PostgreSQL?</H4>
 
     <P>Some of the source code and older documentation use terms that
@@ -1256,7 +1104,7 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     <P>A list of general database terms can be found at: <A href=
     "http://hea-www.harvard.edu/MST/simul/software/docs/pkgs/pgsql/glossary/glossary.html">http://hea-www.harvard.edu/MST/simul/software/docs/pkgs/pgsql/glossary/glossary.html</A></P>
 
-    <H4><A name="4.17">4.17</A>) Why do I get the error <I>"ERROR:
+    <H4><A name="4.14">4.14</A>) Why do I get the error <I>"ERROR:
     Memory exhausted in AllocSetAlloc()"</I>?</H4>
 
     <P>You probably have run out of virtual memory on your system,
@@ -1275,12 +1123,12 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     backend is returning too much data, try it before starting the
     client.
 
-    <H4><A name="4.18">4.18</A>) How do I tell what PostgreSQL version
+    <H4><A name="4.15">4.15</A>) How do I tell what PostgreSQL version
     I am running?</H4>
 
     <P>From <I>psql</I>, type <CODE>SELECT version();</CODE></P>
 
-    <H4><A name="4.19">4.19</A>) Why does my large-object operations
+    <H4><A name="4.16">4.16</A>) Why does my large-object operations
     get <I>"invalid large obj descriptor"</I>?</H4>
 
     <P>You need to put <CODE>BEGIN WORK</CODE> and <CODE>COMMIT</CODE>
@@ -1296,7 +1144,7 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     <P>If you are using a client interface like <SMALL>ODBC</SMALL> you
     may need to set <CODE>auto-commit off.</CODE></P>
 
-    <H4><A name="4.20">4.20</A>) How do I create a column that will
+    <H4><A name="4.17">4.17</A>) How do I create a column that will
     default to the current time?</H4>
 
     <P>Use <I>CURRENT_TIMESTAMP</I>:</P>
@@ -1305,31 +1153,7 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
 </CODE>
 </PRE>
 
-    <H4><A name="4.21">4.21</A>) Why are my subqueries using
-    <CODE><SMALL>IN</SMALL></CODE> so slow?</H4>
-
-    <P>In versions prior to 7.4, subqueries were joined to outer queries
-    by sequentially scanning the result of the subquery for each row of
-    the outer query. If the subquery returns only a few rows and the outer
-    query returns many rows, <CODE><SMALL>IN</SMALL></CODE> is fastest.  To
-    speed up other queries, replace <CODE>IN</CODE> with
-    <CODE>EXISTS</CODE>:</P>
-<PRE>    SELECT *
-    FROM tab
-    WHERE col IN (SELECT subcol FROM subtab);
-</PRE>
-    to:
-<PRE>    SELECT *
-    FROM tab
-    WHERE EXISTS (SELECT subcol FROM subtab WHERE subcol = col);
-</PRE>
-
-    For this to be fast, <CODE>subcol</CODE> should be an indexed column.
-    <P>In version 7.4 and later,  <CODE>IN</CODE> actually uses the same
-    sophisticated join techniques as normal queries, and is prefered
-    to using <CODE>EXISTS</CODE>.
-
-    <H4><A name="4.22">4.22</A>) How do I perform an outer join?</H4>
+    <H4><A name="4.18">4.18</A>) How do I perform an outer join?</H4>
 
     <P>PostgreSQL supports outer joins using the SQL standard syntax.
     Here are two examples:</P>
@@ -1369,7 +1193,7 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     ORDER BY col1
 </PRE>
 
-    <H4><A name="4.23">4.23</A>) How do I perform queries using
+    <H4><A name="4.19">4.19</A>) How do I perform queries using
     multiple databases?</H4>
 
     <P>There is no way to query a database other than the current one.
@@ -1381,7 +1205,7 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     connections to different databases and merge the results on the
     client side.</P>
 
-    <H4><A name="4.24">4.24</A>) How do I return multiple rows or
+    <H4><A name="4.20">4.20</A>) How do I return multiple rows or
     columns from a function?</H4>
 
     <P>In 7.3, you can easily return multiple rows or columns from a
@@ -1389,7 +1213,7 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     <a href="http://techdocs.postgresql.org/guides/SetReturningFunctions">
     http://techdocs.postgresql.org/guides/SetReturningFunctions</a>.
 
-    <H4><A name="4.25">4.25</A>) Why can't I reliably create/drop
+    <H4><A name="4.21">4.21</A>) Why can't I reliably create/drop
     temporary tables in PL/PgSQL functions?</H4>
     <P>PL/PgSQL caches function contents, and an unfortunate side effect
     is that if a PL/PgSQL function accesses a temporary table, and that
@@ -1399,7 +1223,7 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     <SMALL>EXECUTE</SMALL> for temporary table access in PL/PgSQL. This
     will cause the query to be reparsed every time.</P>
 
-    <H4><A name="4.26">4.26</A>) What encryption options are available?
+    <H4><A name="4.22">4.22</A>) What encryption options are available?
     </H4>
     <UL>
     <LI><I>contrib/pgcrypto</I> contains many encryption functions for
