@@ -15,7 +15,7 @@ import org.postgresql.util.PGbytea;
 import org.postgresql.util.PSQLException;
 
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2ResultSet.java,v 1.13 2003/02/04 09:20:10 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2ResultSet.java,v 1.14 2003/02/27 05:56:27 barry Exp $
  * This class defines methods of the jdbc2 specification.  This class extends
  * org.postgresql.jdbc1.AbstractJdbc1ResultSet which provides the jdbc1
  * methods.  The real Statement class (for jdbc2) is org.postgresql.jdbc2.Jdbc2ResultSet
@@ -1261,22 +1261,6 @@ public abstract class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.Abstra
 	}
 
 
-	private int _findColumn( String columnName )
-	{
-		int i;
-
-		final int flen = fields.length;
-		for (i = 0; i < flen; ++i)
-		{
-			if (fields[i].getName().equalsIgnoreCase(columnName))
-			{
-				return (i + 1);
-			}
-		}
-		return -1;
-	}
-
-
 	/**
 	 * Is this ResultSet updateable?
 	 */
@@ -1313,12 +1297,18 @@ public abstract class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.Abstra
 
 
 		usingOID = false;
-		int oidIndex = _findColumn( "oid" );
+		int oidIndex = 0;
+		try {
+		  oidIndex = findColumn( "oid" );
+		} catch (SQLException l_se) {
+			//Ignore if column oid isn't selected
+		}
 		int i = 0;
 
 
 		// if we find the oid then just use it
 
+		//oidIndex will be >0 if the oid was in the select list
 		if ( oidIndex > 0 )
 		{
 			i++;
@@ -1343,7 +1333,6 @@ public abstract class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.Abstra
 			for (; rs.next(); i++ )
 			{
 				String columnName = rs.getString(4);	// get the columnName
-
 				int index = findColumn( columnName );
 
 				if ( index > 0 )
@@ -1413,7 +1402,7 @@ public abstract class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.Abstra
 		while ( columns.hasMoreElements() )
 		{
 			String columnName = (String) columns.nextElement();
-			int columnIndex = _findColumn( columnName ) - 1;
+			int columnIndex = findColumn( columnName ) - 1;
 
 			Object valueObject = updateValues.get(columnName);
 			if (valueObject instanceof NullObject) {
