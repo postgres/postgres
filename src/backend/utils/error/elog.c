@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.121 2003/08/27 00:33:34 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.122 2003/09/03 15:49:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -543,7 +543,9 @@ errcode_for_file_access(void)
 			/* Wrong object type or state */
 		case ENOTDIR:			/* Not a directory */
 		case EISDIR:			/* Is a directory */
+#if defined(ENOTEMPTY) && (ENOTEMPTY != EEXIST)	/* same code on AIX */
 		case ENOTEMPTY:			/* Directory not empty */
+#endif
 			edata->sqlerrcode = ERRCODE_WRONG_OBJECT_TYPE;
 			break;
 
