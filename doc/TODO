@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Jun 25 17:08:02 EDT 2003
+Last updated:		Wed Jun 25 17:40:40 EDT 2003
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -461,12 +461,13 @@ Source Code
 * Acquire lock on a relation before building a relcache entry for it
 * Research interaction of setitimer() and sleep() used by statement_timeout
 * Add checks for fclose() failure
-* Change CVS $Id: TODO,v 1.1077 2003/06/25 21:08:06 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1077 2003/06/25 21:08:06 momjian Exp $
+* Change CVS $Id: TODO,v 1.1078 2003/06/25 21:40:48 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1078 2003/06/25 21:40:48 momjian Exp $
 * Exit postmaster if postgresql.conf can not be opened
 * Rename /scripts directory because they are all C programs now
 * Allow the regression tests to start postmaster with -i so the tests
   can be run on systems that don't support unix-domain sockets
 * Allow creation of a libpq-only tarball
+* Promote debug_query_string into a server-side function current_query()
 
 
 * Wire Protocol Changes
