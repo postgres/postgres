@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.285 2002/08/18 09:36:25 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.286 2002/08/18 21:05:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -5811,7 +5811,7 @@ dumpConstraints(Archive *fout, TableInfo *tblinfo, int numTables)
 			continue;
 
 		if (g_verbose)
-			write_msg(NULL, "dumping triggers for table %s\n",
+			write_msg(NULL, "dumping foreign key constraints for table %s\n",
 					  tbinfo->relname);
 
 		/* select table schema to ensure regproc name is qualified if needed */
