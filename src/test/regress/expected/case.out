@@ -72,6 +72,13 @@ SELECT '6' AS "One",
  6   |                     6
 (1 row)
 
+-- Test for cases involving untyped literals in test expression
+SELECT CASE 'a' WHEN 'a' THEN 1 ELSE 2 END;
+ case 
+------
+    1
+(1 row)
+
 --
 -- Examples of targets involving tables
 --

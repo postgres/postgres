@@ -58,6 +58,9 @@ SELECT '6' AS "One",
     ELSE 7
   END AS "Two WHEN with default";
 
+-- Test for cases involving untyped literals in test expression
+SELECT CASE 'a' WHEN 'a' THEN 1 ELSE 2 END;
+
 --
 -- Examples of targets involving tables
 --
