@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Sep  6 12:50:35 EDT 2001
+Last updated:		Thu Sep  6 12:59:41 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -66,7 +66,9 @@ TYPES
 * SELECT cash_out(2) crashes because of opaque
 * Declare typein/out functions in pg_proc with a special "C string" data type
 * -Add non-large-object binary field (already exists -- bytea)
-* -Make binary/file in/out interface for TOAST columns (base64)
+* -Make binary interface for TOAST columns (base64)
+* Make file in/out interface for TOAST columns, similar to large object
+  interface (force out-of-line storage and no compression)
 * Functions returning sets do not totally work
 * SELECT col FROM tab WHERE numeric_col = 10.1 fails, requires quotes
 * Missing optimizer selectivities for date, r-tree, etc. [optimizer]
