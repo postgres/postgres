@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.6 1997/04/02 03:34:44 vadim Exp $
+ * $Id: nodes.h,v 1.7 1997/04/02 18:24:38 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -179,6 +179,7 @@ typedef enum NodeTag {
     T_VacuumStmt,
     T_ExplainStmt,
     T_CreateSeqStmt,
+    T_VariableSetStmt,
 
     T_A_Expr = 700,
     T_Attr,

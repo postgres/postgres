@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.11 1997/04/02 03:34:46 vadim Exp $
+ * $Id: parsenodes.h,v 1.12 1997/04/02 18:24:52 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -422,6 +422,17 @@ typedef struct ExplainStmt {
     Query		*query;		/* the query */
     bool		verbose;	/* print plan info */
 } ExplainStmt;
+
+/* ----------------------
+ * Set Statement
+ * ----------------------
+ */
+
+typedef struct VariableSetStmt {
+	NodeTag	type;
+	char	*name;
+	char	*value;
+	} VariableSetStmt;
 
 
 /*****************************************************************************

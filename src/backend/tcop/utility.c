@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.13 1997/04/02 04:06:32 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.14 1997/04/02 18:23:34 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,6 +44,7 @@
 #include "rewrite/rewriteDefine.h"
 #include "tcop/tcopdebug.h"
 #include "tcop/dest.h"
+#include "tcop/variable.h"
 #include "tcop/utility.h"
 #include "fmgr.h"       /* For load_file() */
 
@@ -634,7 +635,17 @@ ProcessUtility(Node *parsetree,
 	    beginRecipe(stmt);
 	}
 	break;
-      
+
+	/* ********************************
+	 * set variable statements
+	 *********************************/
+    case T_VariableSetStmt:
+	{
+	    VariableSetStmt *n = (VariableSetStmt *) parsetree;
+	    SetPGVariable(n->name, n->value);
+	    commandTag = "SET_VARIABLE";
+	}
+	break;
       
 	/* ********************************
 	 *	default

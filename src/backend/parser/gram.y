@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.28 1997/04/02 04:01:03 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.29 1997/04/02 18:23:07 scrappy Exp $
  *
  * HISTORY
  *    AUTHOR		DATE		MAJOR EVENT
@@ -108,11 +108,12 @@ static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr);
         RevokeStmt, RuleStmt, TransactionStmt, ViewStmt, LoadStmt,
 	CreatedbStmt, DestroydbStmt, VacuumStmt, RetrieveStmt, CursorStmt,
 	ReplaceStmt, AppendStmt, NotifyStmt, DeleteStmt, ClusterStmt,
-	ExplainStmt
+	ExplainStmt, VariableSetStmt
 
 %type <str>	relation_name, copy_file_name, copy_delimiter, def_name,
 	database_name, access_method_clause, access_method, attr_name,
-	class, index_name, var_name, name, file_name, recipe_name
+	class, index_name, var_name, name, file_name, recipe_name,
+	var_name
 
 %type <str>	opt_id, opt_portal_name,
 	before_clause, after_clause, all_Op, MathOp, opt_name, opt_unique,
@@ -168,7 +169,7 @@ static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr);
 
 %type <ival>	Iconst
 %type <str>	Sconst
-%type <str>	Id, date
+%type <str>	Id, date, var_value
 
 
 /*
@@ -273,6 +274,30 @@ stmt :	  AddAttrStmt
 	| CreatedbStmt
 	| DestroydbStmt
 	| VacuumStmt
+	| VariableSetStmt
+	;
+
+/*****************************************************************************
+ * 
+ * Set PG internal variable
+ *    SET var_name TO 'var_value'
+ * 
+ *****************************************************************************/
+
+VariableSetStmt: SET var_name TO var_value
+		{
+		VariableSetStmt *n = makeNode(VariableSetStmt);
+		n->name  = $2;
+		n->value = $4;
+		
+		$$ = (Node *) n;
+		}
+	;
+
+var_name:	Id				{ $$ = $1; }
+	;
+
+var_value:	Sconst		{ $$ = $1; }
 	;
 
 /*****************************************************************************
