@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: internal.h,v 1.17 1999/02/18 05:26:29 momjian Exp $
+ * $Id: internal.h,v 1.18 1999/03/07 12:00:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -84,6 +84,6 @@
 /*#define joininfo_inactive(joininfo)	joininfo->inactive */
 
 /* GEQO switch according to number of relations in a query */
-#define GEQO_RELS 6
+#define GEQO_RELS 11
 
 #endif	 /* INTERNAL_H */

@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/set.l,v 1.15 1999/02/18 06:01:11 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/set.l,v 1.16 1999/03/07 12:00:40 momjian Exp $
 .TH SET SQL 05/14/97 PostgreSQL PostgreSQL
 .SH NAME
 set - set run-time parameters for session
@@ -44,7 +44,7 @@ determines the output format for the date and time data types.
 .IR GEQO
 enables or disables the genetic optimizer algorithm. This algorithm is
 .IR on
-by default, which used GEQO for statements of six or more tables.
+by default, which used GEQO for statements of eleven or more tables.
 Set the
 .IR Programmer's Guide
 for more information.

@@ -406,7 +406,7 @@ SET TIME ZONE { '<REPLACEABLE CLASS="PARAMETER">timezone</REPLACEABLE>' | LOCAL 
 	  </para>
 	  <para>
 		This algorithm is on by default, which used GEQO for
-		statements of six or more tables.
+		statements of eleven or more tables.
 		(See the chapter on GEQO in the Programmer's Guide
 		for more information).
 	  </para>
