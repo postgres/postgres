@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.61 2000/07/21 06:42:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.62 2000/07/25 04:47:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -374,7 +374,7 @@ _bt_next(IndexScanDesc scan, ScanDirection dir)
 	BTItem		btitem;
 	IndexTuple	itup;
 	BTScanOpaque so;
-	Size		keysok;
+	bool		continuescan;
 
 	rel = scan->relation;
 	so = (BTScanOpaque) scan->opaque;
@@ -396,16 +396,14 @@ _bt_next(IndexScanDesc scan, ScanDirection dir)
 		btitem = (BTItem) PageGetItem(page, PageGetItemId(page, offnum));
 		itup = &btitem->bti_itup;
 
-		if (_bt_checkkeys(scan, itup, &keysok))
+		if (_bt_checkkeys(scan, itup, dir, &continuescan))
 		{
 			/* tuple passes all scan key conditions, so return it */
-			Assert(keysok == so->numberOfKeys);
 			return FormRetrieveIndexResult(current, &(itup->t_tid));
 		}
 
 		/* This tuple doesn't pass, but there might be more that do */
-	} while (keysok >= so->numberOfFirstKeys ||
-			 (keysok == ((Size) -1) && ScanDirectionIsBackward(dir)));
+	} while (continuescan);
 
 	/* No more items, so close down the current-item info */
 	ItemPointerSetInvalid(current);
@@ -442,11 +440,10 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	RegProcedure proc;
 	int32		result;
 	BTScanOpaque so;
-	Size		keysok;
-	bool		strategyCheck;
-	ScanKey		scankeys = 0;
+	bool		continuescan;
+	ScanKey		scankeys = NULL;
 	int			keysCount = 0;
-	int		   *nKeyIs = 0;
+	int		   *nKeyIs = NULL;
 	int			i,
 				j;
 	StrategyNumber strat_total;
@@ -455,70 +452,73 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	so = (BTScanOpaque) scan->opaque;
 
 	/*
-	 * Order the keys in the qualification and be sure that the scan
-	 * exploits the tree order.
+	 * Order the scan keys in our canonical fashion and eliminate any
+	 * redundant keys.
 	 */
-	so->numberOfFirstKeys = 0;	/* may be changed by _bt_orderkeys */
-	so->qual_ok = 1;			/* may be changed by _bt_orderkeys */
+	_bt_orderkeys(rel, so);
+
+	/*
+	 * Quit now if _bt_orderkeys() discovered that the scan keys can
+	 * never be satisfied (eg, x == 1 AND x > 2).
+	 */
+	if (! so->qual_ok)
+		return (RetrieveIndexResult) NULL;
+
+	/*
+	 * Examine the scan keys to discover where we need to start the scan.
+	 */
 	scan->scanFromEnd = false;
-	strategyCheck = false;
+	strat_total = BTEqualStrategyNumber;
 	if (so->numberOfKeys > 0)
 	{
-		_bt_orderkeys(rel, so);
-
-		if (so->qual_ok)
-			strategyCheck = true;
-	}
-	strat_total = BTEqualStrategyNumber;
-	if (strategyCheck)
-	{
-		AttrNumber	attno;
-
 		nKeyIs = (int *) palloc(so->numberOfKeys * sizeof(int));
 		for (i = 0; i < so->numberOfKeys; i++)
 		{
-			attno = so->keyData[i].sk_attno;
-			if (attno == keysCount)
+			AttrNumber	attno = so->keyData[i].sk_attno;
+
+			/* ignore keys for already-determined attrs */
+			if (attno <= keysCount)
 				continue;
+			/* if we didn't find a boundary for the preceding attr, quit */
 			if (attno > keysCount + 1)
 				break;
 			strat = _bt_getstrat(rel, attno,
 								 so->keyData[i].sk_procedure);
+			/*
+			 * Can we use this key as a starting boundary for this attr?
+			 *
+			 * We can use multiple keys if they look like, say, = >= =
+			 * but we have to stop after accepting a > or < boundary.
+			 */
 			if (strat == strat_total ||
 				strat == BTEqualStrategyNumber)
 			{
 				nKeyIs[keysCount++] = i;
-				continue;
 			}
-			if (ScanDirectionIsBackward(dir) &&
-				(strat == BTLessStrategyNumber ||
-				 strat == BTLessEqualStrategyNumber))
+			else if (ScanDirectionIsBackward(dir) &&
+					 (strat == BTLessStrategyNumber ||
+					  strat == BTLessEqualStrategyNumber))
 			{
 				nKeyIs[keysCount++] = i;
 				strat_total = strat;
 				if (strat == BTLessStrategyNumber)
 					break;
-				continue;
 			}
-			if (ScanDirectionIsForward(dir) &&
-				(strat == BTGreaterStrategyNumber ||
-				 strat == BTGreaterEqualStrategyNumber))
+			else if (ScanDirectionIsForward(dir) &&
+					 (strat == BTGreaterStrategyNumber ||
+					  strat == BTGreaterEqualStrategyNumber))
 			{
 				nKeyIs[keysCount++] = i;
 				strat_total = strat;
 				if (strat == BTGreaterStrategyNumber)
 					break;
-				continue;
 			}
 		}
-		if (!keysCount)
+		if (keysCount == 0)
 			scan->scanFromEnd = true;
 	}
 	else
 		scan->scanFromEnd = true;
-
-	if (so->qual_ok == 0)
-		return (RetrieveIndexResult) NULL;
 
 	/* if we just need to walk down one edge of the tree, do that */
 	if (scan->scanFromEnd)
@@ -529,16 +529,14 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	}
 
 	/*
-	 * Okay, we want something more complicated.  What we'll do is use the
-	 * first item in the scan key passed in (which has been correctly
-	 * ordered to take advantage of index ordering) to position ourselves
-	 * at the right place in the scan.
+	 * We want to start the scan somewhere within the index.  Set up a
+	 * scankey we can use to search for the correct starting point.
 	 */
 	scankeys = (ScanKey) palloc(keysCount * sizeof(ScanKeyData));
 	for (i = 0; i < keysCount; i++)
 	{
 		j = nKeyIs[i];
-		/* _bt_orderkeys disallows it, but it's place to add some code latter */
+		/* _bt_orderkeys disallows it, but it's place to add some code later */
 		if (so->keyData[j].sk_flags & SK_ISNULL)
 		{
 			pfree(nKeyIs);
@@ -578,6 +576,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	blkno = BufferGetBlockNumber(buf);
 	page = BufferGetPage(buf);
 
+	/* position to the precise item on the page */
 	offnum = _bt_binsrch(rel, buf, keysCount, scankeys);
 
 	ItemPointerSet(current, blkno, offnum);
@@ -595,7 +594,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	 * call _bt_endpoint() to set up a scan starting at that index endpoint,
 	 * as appropriate for the desired scan type.
 	 *
-	 * it's yet other place to add some code latter for is(not)null ...
+	 * it's yet other place to add some code later for is(not)null ...
 	 *----------
 	 */
 
@@ -737,13 +736,12 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	itup = &btitem->bti_itup;
 
 	/* is the first item actually acceptable? */
-	if (_bt_checkkeys(scan, itup, &keysok))
+	if (_bt_checkkeys(scan, itup, dir, &continuescan))
 	{
 		/* yes, return it */
 		res = FormRetrieveIndexResult(current, &(itup->t_tid));
 	}
-	else if (keysok >= so->numberOfFirstKeys ||
-			 (keysok == ((Size) -1) && ScanDirectionIsBackward(dir)))
+	else if (continuescan)
 	{
 		/* no, but there might be another one that is */
 		res = _bt_next(scan, dir);
@@ -906,7 +904,7 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 	IndexTuple	itup;
 	BTScanOpaque so;
 	RetrieveIndexResult res;
-	Size		keysok;
+	bool		continuescan;
 
 	rel = scan->relation;
 	current = &(scan->currentItemData);
@@ -1012,13 +1010,12 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 	itup = &(btitem->bti_itup);
 
 	/* see if we picked a winner */
-	if (_bt_checkkeys(scan, itup, &keysok))
+	if (_bt_checkkeys(scan, itup, dir, &continuescan))
 	{
 		/* yes, return it */
 		res = FormRetrieveIndexResult(current, &(itup->t_tid));
 	}
-	else if (keysok >= so->numberOfFirstKeys ||
-			 (keysok == ((Size) -1) && ScanDirectionIsBackward(dir)))
+	else if (continuescan)
 	{
 		/* no, but there might be another one that is */
 		res = _bt_next(scan, dir);

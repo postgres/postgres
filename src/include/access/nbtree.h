@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nbtree.h,v 1.39 2000/07/21 06:42:35 tgl Exp $
+ * $Id: nbtree.h,v 1.40 2000/07/25 04:47:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,13 +47,12 @@ typedef struct BTPageOpaqueData
 typedef BTPageOpaqueData *BTPageOpaque;
 
 /*
- *	ScanOpaqueData is used to remember which buffers we're currently
- *	examining in the scan.	We keep these buffers locked and pinned
- *	and recorded in the opaque entry of the scan in order to avoid
- *	doing a ReadBuffer() for every tuple in the index.	This avoids
- *	semop() calls, which are expensive.
+ *	BTScanOpaqueData is used to remember which buffers we're currently
+ *	examining in the scan.	We keep these buffers pinned (but not locked,
+ *	see nbtree.c) and recorded in the opaque entry of the scan to avoid
+ *	doing a ReadBuffer() for every tuple in the index.
  *
- *	And it's used to remember actual scankey info (we need in it
+ *	And it's used to remember actual scankey info (we need it
  *	if some scankeys evaled at runtime).
  *
  *	curHeapIptr & mrkHeapIptr are heap iptr-s from current/marked
@@ -69,11 +68,12 @@ typedef struct BTScanOpaqueData
 	Buffer		btso_mrkbuf;
 	ItemPointerData curHeapIptr;
 	ItemPointerData mrkHeapIptr;
-	uint16		qual_ok;		/* 0 for quals like key == 1 && key > 2 */
-	uint16		numberOfKeys;	/* number of keys */
-	uint16		numberOfFirstKeys;		/* number of keys for 1st
-										 * attribute */
-	ScanKey		keyData;		/* key descriptor */
+	/* these fields are set by _bt_orderkeys(), which see for more info: */
+	bool		qual_ok;		/* false if qual can never be satisfied */
+	uint16		numberOfKeys;	/* number of scan keys */
+	uint16		numberOfRequiredKeys; /* number of keys that must be matched
+									   * to continue the scan */
+	ScanKey		keyData;		/* array of scan keys */
 } BTScanOpaqueData;
 
 typedef BTScanOpaqueData *BTScanOpaque;
@@ -276,7 +276,8 @@ extern ScanKey _bt_mkscankey_nodata(Relation rel);
 extern void _bt_freeskey(ScanKey skey);
 extern void _bt_freestack(BTStack stack);
 extern void _bt_orderkeys(Relation relation, BTScanOpaque so);
-extern bool _bt_checkkeys(IndexScanDesc scan, IndexTuple tuple, Size *keysok);
+extern bool _bt_checkkeys(IndexScanDesc scan, IndexTuple tuple,
+						  ScanDirection dir, bool *continuescan);
 extern BTItem _bt_formitem(IndexTuple itup);
 
 /*
