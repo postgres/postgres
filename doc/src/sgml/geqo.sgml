@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/geqo.sgml,v 1.15 2000/12/22 21:51:57 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/geqo.sgml,v 1.16 2001/04/20 15:52:33 thomas Exp $
 Genetic Optimizer
 -->
 
@@ -28,7 +28,7 @@ Genetic Optimizer
    <date>1997-10-02</date>
   </docinfo>
 
-  <title>Genetic Query Optimization in Database Systems</title>
+  <title>Genetic Query Optimization</title>
 
   <para>
    <note>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.12 2001/03/28 20:46:34 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.13 2001/04/20 15:52:33 thomas Exp $
 -->
 
  <chapter id="mvcc">
@@ -101,6 +101,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.12 2001/03/28 20:46:34 tgl Ex
       <thead>
        <row>
 	<entry>
+         Isolation Level
 	</entry>
 	<entry>
 	 Dirty Read

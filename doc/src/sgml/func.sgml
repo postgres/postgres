@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.56 2001/03/25 18:14:31 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.57 2001/04/20 15:52:33 thomas Exp $ -->
 
 <chapter id="functions">
  <title>Functions and Operators</title>
@@ -440,15 +440,15 @@
     <tbody>
      <row>
       <entry>abs(<replaceable>x</replaceable>)</entry>
-      <entry>(same as argument type)</entry>
+      <entry>(same as x)</entry>
       <entry>absolute value</entry>
       <entry>abs(-17.4)</entry>
       <entry>17.4</entry>
      </row>
 
      <row>
-      <entry>cbrt(<type>double precision</type>)</entry>
-      <entry><type>double precision</type></entry>
+      <entry>cbrt(<type>dp</type>)</entry>
+      <entry><type>dp</type></entry>
       <entry>cube root</entry>
       <entry>cbrt(27.0)</entry>
       <entry>3.0</entry>
@@ -463,17 +463,17 @@
      </row>
 
      <row>
-      <entry>degrees(<type>double precision</type>)</entry>
-      <entry><type>double precision</type></entry>
-      <entry>convert radians to degrees</entry>
+      <entry>degrees(<type>dp</type>)</entry>
+      <entry><type>dp</type></entry>
+      <entry>radians to degrees</entry>
       <entry>degrees(0.5)</entry>
       <entry>28.6478897565412</entry>
      </row>
 
      <row>
-      <entry>exp(<type>double precision</type>)</entry>
-      <entry><type>double precision</type></entry>
-      <entry>exponential function</entry>
+      <entry>exp(<type>dp</type>)</entry>
+      <entry><type>dp</type></entry>
+      <entry>exponential</entry>
       <entry>exp(1.0)</entry>
       <entry>2.71828182845905</entry>
      </row>
@@ -487,25 +487,26 @@
      </row>
 
      <row>
-      <entry>ln(<type>double precision</type>)</entry>
-      <entry><type>double precision</type></entry>
+      <entry>ln(<type>dp</type>)</entry>
+      <entry><type>dp</type></entry>
       <entry>natural logarithm</entry>
       <entry>ln(2.0)</entry>
       <entry>0.693147180559945</entry>
      </row>
 
      <row>
-      <entry>log(<type>double precision</type>)</entry>
-      <entry><type>double precision</type></entry>
+      <entry>log(<type>dp</type>)</entry>
+      <entry><type>dp</type></entry>
       <entry>base 10 logarithm</entry>
       <entry>log(100.0)</entry>
       <entry>2.0</entry>
      </row>
 
      <row>
-      <entry>log(<parameter>base</parameter> <type>numeric</type>, <parameter>x</parameter> <type>numeric</type>)</entry>
+      <entry>log(<parameter>b</parameter> <type>numeric</type>,
+       <parameter>x</parameter> <type>numeric</type>)</entry>
       <entry><type>numeric</type></entry>
-      <entry>logarithm to specified base</entry>
+      <entry>logarithm to base <parameter>b</parameter></entry>
       <entry>log(2.0, 64.0)</entry>
       <entry>6.0</entry>
      </row>
@@ -513,55 +514,56 @@
      <row>
       <entry>mod(<parameter>y</parameter>, <parameter>x</parameter>)</entry>
       <entry>(same as argument types)</entry>
-      <entry>remainder (modulo) of the division <parameter>y</parameter>/<parameter>x</parameter></entry>
+      <entry>remainder of <parameter>y</parameter>/<parameter>x</parameter></entry>
       <entry>mod(9,4)</entry>
       <entry>1</entry>
      </row>
 
      <row>
       <entry>pi()</entry>
-      <entry><type>double precision</type></entry>
+      <entry><type>dp</type></entry>
       <entry><quote>Pi</quote> constant</entry>
       <entry>pi()</entry>
       <entry>3.14159265358979</entry>
      </row>
 
      <row>
-      <entry>pow(<type>double precision</type>, <type>double precision</type>)</entry>
-      <entry><type>double precision</type></entry>
-      <entry>raise a number to the specified exponent</entry>
+      <entry>pow(<parameter>e</parameter> <type>dp</type>,
+       <parameter>n</parameter> <type>dp</type>)</entry>
+      <entry><type>dp</type></entry>
+      <entry>raise a number to exponent <parameter>e</parameter></entry>
       <entry>pow(9.0, 3.0)</entry>
       <entry>729.0</entry>
      </row>
 
      <row>
-      <entry>radians(<type>double precision</type>)</entry>
-      <entry><type>double precision</type></entry>
-      <entry>convert degrees to radians</entry>
+      <entry>radians(<type>dp</type>)</entry>
+      <entry><type>dp</type></entry>
+      <entry>degrees to radians</entry>
       <entry>radians(45.0)</entry>
       <entry>0.785398163397448</entry>
      </row>
 
      <row>
       <entry>random()</entry>
-      <entry><type>double precision</type></entry>
-      <entry>a pseudo-random value between 0.0 to 1.0</entry>
+      <entry><type>dp</type></entry>
+      <entry>value between 0.0 to 1.0</entry>
       <entry>random()</entry>
       <entry></entry>
      </row>
 
      <row>
-      <entry>round(<type>double precision</type>)</entry>
-      <entry><type>double precision</type></entry>
+      <entry>round(<type>dp</type>)</entry>
+      <entry><type>dp</type></entry>
       <entry>round to nearest integer</entry>
       <entry>round(42.4)</entry>
       <entry>42</entry>
      </row>
 
      <row>
-      <entry>round(<parameter>value</parameter> <type>numeric</type>, <parameter>scale</parameter> <type>integer</type>)</entry>
+      <entry>round(<parameter>v</parameter> <type>numeric</type>, <parameter>s</parameter> <type>integer</type>)</entry>
       <entry><type>numeric</type></entry>
-      <entry>round to specified number of decimal places</entry>
+      <entry>round to <parameter>s</parameter> decimal places</entry>
       <entry>round(42.4382, 2)</entry>
       <entry>42.44</entry>
      </row>
@@ -574,25 +576,25 @@
      </row>
 -->
      <row>
-      <entry>sqrt(<type>double precision</type>)</entry>
-      <entry><type>double precision</type></entry>
+      <entry>sqrt(<type>dp</type>)</entry>
+      <entry><type>dp</type></entry>
       <entry>square root</entry>
       <entry>sqrt(2.0)</entry>
       <entry>1.4142135623731</entry>
      </row>
 
      <row>
-      <entry>trunc(<type>double precision</type>)</entry>
-      <entry><type>double precision</type></entry>
-      <entry>truncate (toward zero)</entry>
+      <entry>trunc(<type>dp</type>)</entry>
+      <entry><type>dp</type></entry>
+      <entry>truncate toward zero</entry>
       <entry>trunc(42.8)</entry>
       <entry>42</entry>
      </row>
 
      <row>
-      <entry>trunc(<parameter>value</parameter> <type>numeric</type>, <parameter>scale</parameter> <type>integer</type>)</entry>
+      <entry>trunc(<type>numeric</type>, <parameter>s</parameter> <type>integer</type>)</entry>
       <entry><type>numeric</type></entry>
-      <entry>truncate to specified number of decimal places</entry>
+      <entry>truncate to <parameter>s</parameter> decimal places</entry>
       <entry>round(42.4382, 2)</entry>
       <entry>42.43</entry>
      </row>
@@ -602,12 +604,16 @@
   </table>
 
   <para>
+   In the table above, "<literal>dp</literal>" indicates <type>double precision</type>.
    The functions <function>exp</function>, <function>ln</function>,
    <function>log</function>, <function>pow</function>,
    <function>round</function> (1 argument), <function>sqrt</function>,
    and <function>trunc</function> (1 argument) are also available for
    the type <type>numeric</type> in place of <type>double
-   precision</type>.  Many of these functions are implemented on top
+   precision</type>.
+   Functions returning a <type>numeric</type> result take
+   <type>numeric</type> input arguments, unless otherwise specified.
+   Many of these functions are implemented on top
    of the host system's C library and behavior in boundary cases could
    therefore vary depending on the operating system.
   </para>
@@ -800,7 +806,7 @@
     <thead>
      <row>
       <entry>Function</entry>
-      <entry>Return type</entry>
+      <entry>Return Type</entry>
       <entry>Description</entry>
       <entry>Example</entry>
       <entry>Result</entry>
@@ -840,8 +846,8 @@
       <entry>initcap(<type>text</type>)</entry>
       <entry><type>text</type></entry>
       <entry>Converts first letter of each word (whitespace separated) to upper case.</entry>
-      <entry>initcap('hello thomas')</entry>
-      <entry>Hello Thomas</entry>
+      <entry>initcap('hi thomas')</entry>
+      <entry>Hi Thomas</entry>
      </row>
 
      <row>
@@ -1362,9 +1368,14 @@
     or bounded repetitions are nested.  An RE like, say,
     <literal>((((a{1,100}){1,100}){1,100}){1,100}){1,100}</literal>
     will (eventually) run almost any existing machine out of swap
-    space.<footnote><para>This was written in 1994, mind you.  The
-    numbers have probably changed, but the problem
-    persists.</para></footnote>
+    space.
+    <footnote>
+     <para>
+      This was written in 1994, mind you.  The
+      numbers have probably changed, but the problem
+      persists.
+     </para>
+    </footnote>
    </para>
 <!-- end re_format.7 man page -->
   </sect2>
@@ -2026,8 +2037,8 @@
         <entry><literal>'Good number: 485'</literal></entry>
        </row>
        <row>
-        <entry>to_char(485.8,'"Pre-decimal:"999" Post-decimal:" .999')</entry>
-        <entry><literal>'Pre-decimal: 485 Post-decimal: .800'</literal></entry>
+        <entry>to_char(485.8,'"Pre:"999" Post:" .999')</entry>
+        <entry><literal>'Pre: 485 Post: .800'</literal></entry>
        </row>
        <row>
         <entry>to_char(12,'99V999')</entry>		
@@ -2075,15 +2086,10 @@
       </thead>
 
       <tbody>
-<![IGNORE[
-<!--
-These two functions don't seem to do what it says here, or anything
-reasonable at all for that matter.
--->
        <row>
 	<entry>age(timestamp)</entry>
 	<entry>interval</entry>
-	<entry>Subtract argument from current date, preserve years and months and days</entry>
+	<entry>Subtract from today</entry>
 	<entry>age(timestamp '1957-06-13')</entry>
 	<entry>43 years 8 mons 3 days</entry>
        </row>
@@ -2091,17 +2097,15 @@ reasonable at all for that matter.
        <row>
 	<entry>age(timestamp, timestamp)</entry>
 	<entry>interval</entry>
-	<entry>preserve months and years</entry>
-	<entry>age('now', timestamp '1957-06-13')</entry>
-	<entry></entry>
+	<entry>Subtract arguments</entry>
+	<entry>age('2001-04-10', timestamp '1957-06-13')</entry>
+	<entry>43 years 9 mons 27 days</entry>
        </row>
-]]>
 
        <row>
 	<entry>current_date</entry>
 	<entry>date</entry>
-	<entry>
-	 returns current date; see also <link
+	<entry>Today's date; see <link
 	 linkend="functions-datetime-current">below</link>
 	</entry>
 	<entry></entry>
@@ -2111,8 +2115,7 @@ reasonable at all for that matter.
        <row>
 	<entry>current_time</entry>
 	<entry>time</entry>
-	<entry>
-	 returns current time (of day); see also <link
+	<entry>Time of day; see <link
 	 linkend="functions-datetime-current">below</link>
 	</entry>
 	<entry></entry>
@@ -2122,8 +2125,7 @@ reasonable at all for that matter.
        <row>
 	<entry>current_timestamp</entry>
 	<entry>timestamp</entry>
-	<entry>
-	 returns current date and time; see also <link
+	<entry>date and time; see also <link
 	 linkend="functions-datetime-current">below</link>
 	</entry>
 	<entry></entry>
@@ -2133,8 +2135,7 @@ reasonable at all for that matter.
        <row>
 	<entry>date_part(text, timestamp)</entry>
 	<entry>double precision</entry>
-	<entry>
-	 extract subfield from date/time value (equivalent to
+	<entry>Get subfield (equivalent to
 	 <function>extract</function>); see also <link
 	 linkend="functions-datetime-datepart">below</link>
         </entry>
@@ -2145,8 +2146,7 @@ reasonable at all for that matter.
        <row>
 	<entry>date_part(text, interval)</entry>
 	<entry>double precision</entry>
-	<entry>
-         extract subfield from interval value (equivalent to
+	<entry>Get subfield (equivalent to
 	 <function>extract</function>); see also <link
 	 linkend="functions-datetime-datepart">below</link>
         </entry>
@@ -2157,8 +2157,7 @@ reasonable at all for that matter.
        <row>
 	<entry>date_trunc(text, timestamp)</entry>
 	<entry>timestamp</entry>
-	<entry>
-         truncate date to specified precision; see also <link
+	<entry>Truncate to specified precision; see also <link
          linkend="functions-datetime-trunc">below</link>
         </entry>
 	<entry>date_trunc('hour', timestamp '2001-02-16 20:38:40')</entry>
@@ -2166,10 +2165,9 @@ reasonable at all for that matter.
        </row>
 
        <row>
-	<entry>extract(identifier from timestamp)</entry>
+	<entry>extract(<parameter>field</parameter> from timestamp)</entry>
 	<entry>double precision</entry>
-	<entry>
-         extract subfield from date/time value; see also <link
+	<entry>Get subfield; see also <link
          linkend="functions-datetime-extract">below</link>
         </entry>
 	<entry>extract(hour from timestamp '2001-02-16 20:38:40')</entry>
@@ -2177,10 +2175,9 @@ reasonable at all for that matter.
        </row>
 
        <row>
-	<entry>extract(identifier from interval)</entry>
+	<entry>extract(<parameter>field</parameter> from interval)</entry>
 	<entry>double precision</entry>
-	<entry>
-	 extract subfield from interval value; see also <link
+	<entry>Get subfield; see also <link
          linkend="functions-datetime-extract">below</link>
         </entry>
 	<entry>extract(month from interval '2 years 3 months')</entry>
@@ -2190,7 +2187,7 @@ reasonable at all for that matter.
        <row>
 	<entry>isfinite(timestamp)</entry>
 	<entry>boolean</entry>
-	<entry>Returns true if the time stamp is finite (neither invalid nor infinity)</entry>
+	<entry>Test for finite time stamp (neither invalid nor infinity)</entry>
 	<entry>isfinite(timestamp '2001-02-16 21:28:30')</entry>
 	<entry>true</entry>
        </row>
@@ -2198,7 +2195,7 @@ reasonable at all for that matter.
        <row>
 	<entry>isfinite(interval)</entry>
 	<entry>boolean</entry>
-	<entry>Returns true if the interval is finite in length</entry>
+	<entry>Test for finite interval</entry>
 	<entry>isfinite(interval '4 hours')</entry>
 	<entry>true</entry>
        </row>
@@ -2206,8 +2203,7 @@ reasonable at all for that matter.
        <row>
 	<entry>now()</entry>
 	<entry>timestamp</entry>
-	<entry>
-	 returns current date and time (equivalent to
+	<entry>Current date and time (equivalent to
 	 <function>current_timestamp</function>); see also <link
 	 linkend="functions-datetime-current">below</link>
 	</entry>
@@ -2218,8 +2214,7 @@ reasonable at all for that matter.
        <row>
 	<entry>timeofday()</entry>
 	<entry>text</entry>
-	<entry>
-	 returns high-precision date and time; see also <link
+	<entry>High-precision date and time; see also <link
 	 linkend="functions-datetime-current">below</link>
 	</entry>
 	<entry>timeofday()</entry>
@@ -2229,7 +2224,7 @@ reasonable at all for that matter.
        <row>
 	<entry>timestamp(date)</entry>
 	<entry>timestamp</entry>
-	<entry>convert date to timestamp</entry>
+	<entry>Date to timestamp</entry>
 	<entry>timestamp(date '2000-12-25')</entry>
 	<entry>2000-12-25 00:00:00</entry>
        </row>
@@ -2237,7 +2232,7 @@ reasonable at all for that matter.
        <row>
 	<entry>timestamp(date, time)</entry>
 	<entry>timestamp</entry>
-	<entry>combine date and time into a timestamp</entry>
+	<entry>Date and time to a timestamp</entry>
 	<entry>timestamp(date '1998-02-24',time '23:07')</entry>
 	<entry>1998-02-24 23:07:00</entry>
        </row>
@@ -2260,8 +2255,8 @@ EXTRACT (<replaceable>field</replaceable> FROM <replaceable>source</replaceable>
     evaluates to type <type>timestamp</type> or <type>interval</type>.
     (Expressions of type <type>date</type> or <type>time</type> will
     be cast to <type>timestamp</type> and can therefore be used as
-    well.)  <replaceable>field</replaceable> is an identifier (not a
-    string!) that selects what field to extract from the source value.
+    well.)  <replaceable>field</replaceable> is an identifier or
+    string that selects what field to extract from the source value.
     The <function>extract</function> function returns values of type
     <type>double precision</type>.
     The following are valid values:
@@ -2283,7 +2278,9 @@ SELECT EXTRACT(CENTURY FROM TIMESTAMP '2001-02-16 20:38:40');
        </informalexample>
 
        <para>
-        Note that this is not really the century that the date is in.
+        Note that the result for the century field is simply the year field
+        divided by 100, and not the conventional definition which puts most
+        years in the 1900's in the twentieth century.
        </para>
       </listitem>
      </varlistentry>
@@ -2422,7 +2419,9 @@ SELECT EXTRACT(MILLENNIUM FROM TIMESTAMP '2001-02-16 20:38:40');
        </informalexample>
 
        <para>
-        Note that this is not really the millennium that the date is in.
+        Note that the result for the millennium field is simply the year field
+        divided by 1000, and not the conventional definition which puts
+        years in the 1900's in the second millennium.
        </para>
       </listitem>
      </varlistentry>
@@ -2577,8 +2576,8 @@ tz_minute
 
    <anchor id="functions-datetime-datepart">
    <para>
-    The <function>date_part</function> function is the traditional
-    <productname>Postgres</productname> equivalent to the
+    The <function>date_part</function> function is modeled on the traditional
+    <productname>Ingres</productname> equivalent to the
     <acronym>SQL</acronym>-function <function>extract</function>:
 <synopsis>
 date_part('<replaceable>field</replaceable>', <replaceable>source</replaceable>)
@@ -3459,7 +3458,7 @@ SELECT NULLIF(value, '(none)') ...
     <title>Miscellaneous Functions</>
     <tgroup cols="3">
      <thead>
-      <row><entry>Name</> <entry>Return type</> <entry>Description</></row>
+      <row><entry>Name</> <entry>Return Type</> <entry>Description</></row>
      </thead>
 
      <tbody>

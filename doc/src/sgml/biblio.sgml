@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/biblio.sgml,v 1.13 2000/05/02 20:01:51 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/biblio.sgml,v 1.14 2001/04/20 15:52:33 thomas Exp $
 -->
 
  <bibliography id="biblio">
@@ -236,7 +236,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/biblio.sgml,v 1.13 2000/05/02 20:01:51 thom
      <surname>Lockhart</surname>
     </editor>
 
-    <pubdate>2000-05-01</pubdate>
+    <pubdate>2001-04-13</pubdate>
     <publisher>
      <publishername>The PostgreSQL Global Development Group</publishername>
     </publisher>
@@ -262,7 +262,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/biblio.sgml,v 1.13 2000/05/02 20:01:51 thom
      <surname>Lockhart</surname>
     </editor>
 
-    <pubdate>2000-05-01</pubdate>
+    <pubdate>2001-04-13</pubdate>
     <publisher>
      <publishername>The PostgreSQL Global Development Group</publishername>
     </publisher>
@@ -288,7 +288,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/biblio.sgml,v 1.13 2000/05/02 20:01:51 thom
      <surname>Lockhart</surname>
     </editor>
     
-    <pubdate>2000-05-01</pubdate>
+    <pubdate>2001-04-13</pubdate>
     <publisher>
      <publishername>The PostgreSQL Global Development Group</publishername>
     </publisher>
@@ -314,7 +314,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/biblio.sgml,v 1.13 2000/05/02 20:01:51 thom
      <surname>Lockhart</surname>
     </editor>
 
-    <pubdate>2000-05-01</pubdate>
+    <pubdate>2001-04-13</pubdate>
     <publisher>
      <publishername>The PostgreSQL Global Development Group</publishername>
     </publisher>
@@ -340,7 +340,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/biblio.sgml,v 1.13 2000/05/02 20:01:51 thom
      <surname>Lockhart</surname>
     </editor>
 
-    <pubdate>2000-05-01</pubdate>
+    <pubdate>2001-04-13</pubdate>
     <publisher>
      <publishername>The PostgreSQL Global Development Group</publishername>
     </publisher>

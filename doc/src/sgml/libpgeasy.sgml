@@ -1,9 +1,9 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpgeasy.sgml,v 2.4 2000/12/22 21:51:58 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpgeasy.sgml,v 2.5 2001/04/20 15:52:33 thomas Exp $
 -->
 
  <chapter id="pgeasy-chapter">
-  <title id="pgeasy">libpgeasy - Simplified C Binding Library</title>
+  <title id="pgeasy">libpgeasy - Simplified C Library</title>
 
   <note>
    <title>Author</title>

@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.14 2001/03/24 23:03:26 petere Exp $
+ $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.15 2001/04/20 15:52:33 thomas Exp $
  -->
 
 <chapter id="catalogs">
@@ -1193,7 +1193,7 @@
       <entry>lancompiler</entry>
       <entry><type>text</type></entry>
       <entry></entry>
-      <entry>not useful</entry>
+      <entry>not currently used</entry>
      </row>
     </tbody>
    </tgroup>

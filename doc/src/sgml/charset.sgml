@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/charset.sgml,v 2.6 2001/01/19 04:47:50 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/charset.sgml,v 2.7 2001/04/20 15:52:33 thomas Exp $ -->
 
 <chapter id="charset">
  <title>Localization</>
@@ -108,7 +108,7 @@ export LANG=sv_SE
        </row>
        <row>
         <entry>LC_CTYPE</>
-        <entry>Character classification (What is a letter? What is the upper-case equivalent of this letter?)</>
+        <entry>Character classification (What is a letter? The upper-case equivalent?)</>
        </row>
        <row>
         <entry>LC_MESSAGES</>

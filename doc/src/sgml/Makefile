@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.35 2001/03/25 08:32:24 petere Exp $
+#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.36 2001/04/20 15:52:33 thomas Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -20,7 +20,7 @@ include $(top_builddir)/src/Makefile.global
 .NOTPARALLEL:
 
 ifndef DOCBOOKSTYLE
-DOCBOOKSTYLE = /home/projects/pgsql/developers/thomas/db143.d/docbook
+DOCBOOKSTYLE = /home/projects/pgsql/developers/thomas/db162.d/docbook
 endif
 
 ifndef JADE

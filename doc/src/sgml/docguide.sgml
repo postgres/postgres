@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/docguide.sgml,v 1.31 2001/02/17 16:52:53 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/docguide.sgml,v 1.32 2001/04/20 15:52:33 thomas Exp $ -->
 
 <appendix label="DG2" id="docguide">
  <title>Documentation</title>
@@ -36,8 +36,8 @@
  </para>
 
  <para>
-  The documentation is organized into several <quote>books</quote>
-  with varyingly confusing names:
+  The documentation is organized into several <quote>books</quote>:
+
   <itemizedlist>
    <listitem>
     <para>
@@ -47,6 +47,11 @@
    <listitem>
     <para>
      <citetitle>User's Guide</citetitle>: documents the query language environment
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     <citetitle>Reference Manual</citetitle>: documents the query language
     </para>
    </listitem>
    <listitem>
@@ -68,8 +73,8 @@
    </listitem>
   </itemizedlist>
 
-  All five books are available as HTML and Postscript.  The
-  <citetitle>User's Guide</citetitle> contains reference entries which
+  All books are available as HTML and Postscript.  The
+  <citetitle>Reference Manual</citetitle> contains reference entries which
   are also shipped as man pages.
  </para>
 
