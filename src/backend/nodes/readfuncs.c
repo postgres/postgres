@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.4 1996/11/10 03:00:51 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.5 1997/05/12 07:17:23 vadim Exp $
  *
  * NOTES
  *    Most of the read functions for plan nodes are tested. (In fact, they
@@ -1015,6 +1015,45 @@ _readParam()
     return(local_node);
 }
 
+/* ----------------
+ *	_readAggreg
+ *	
+ *  Aggreg is a subclass of Node
+ * ----------------
+ */
+static Aggreg *
+_readAggreg()
+{
+    Aggreg *local_node;
+    char		*token;
+    int length;
+    
+    local_node = makeNode(Aggreg);
+    
+    token = lsptok(NULL, &length);    		/* eat :aggname */
+    token = lsptok(NULL, &length);    		/* get aggname */
+    local_node->aggname = (char*) palloc (length + 1);
+    memset (local_node->aggname, 0, length + 1);
+    strncpy (local_node->aggname, token, length);
+    
+    token = lsptok(NULL, &length);    		/* eat :basetype */
+    token = lsptok(NULL, &length);    		/* get basetype */
+    local_node->basetype = (Oid)atol(token);
+    
+    token = lsptok(NULL, &length);    		/* eat :aggtype */
+    token = lsptok(NULL, &length);    		/* get aggtype */
+    local_node->aggtype = (Oid)atol(token);
+    
+    token = lsptok(NULL, &length);    		/* eat :aggno */
+    token = lsptok(NULL, &length);    		/* get aggno */
+    local_node->aggno = atoi(token);
+    
+    token = lsptok(NULL, &length);    		/* eat :target */
+    local_node->target = nodeRead(true);	/* now read it */
+    
+    return(local_node);
+}
+
 /*
  *  Stuff from execnodes.h
  */
@@ -1822,6 +1861,8 @@ parsePlanString(void)
 	return_value = _readTemp();
     }else if (!strncmp(token, "SORT", 4)) {
 	return_value = _readSort();
+    }else if (!strncmp(token, "AGGREG", 6)) {
+	return_value = _readAggreg();
     }else if (!strncmp(token, "AGG", 3)) {
 	return_value = _readAgg();
     }else if (!strncmp(token, "UNIQUE", 4)) {
