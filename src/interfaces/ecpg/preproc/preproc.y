@@ -3608,8 +3608,6 @@ case_expr:  CASE case_arg when_clause_list case_default END_TRANS
                 | NULLIF '(' a_expr ',' a_expr ')'
                                 {
 					$$ = cat_str(5, make_str("nullif("), $3, make_str(","), $5, make_str(")"));
-
-					mmerror(ET_NOTICE, "NULLIF() not yet fully implemented");
                                 }
                 | COALESCE '(' expr_list ')'
                                 {
