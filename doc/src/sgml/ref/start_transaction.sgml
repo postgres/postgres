@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/start_transaction.sgml,v 1.1 2002/08/04 05:14:06 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/start_transaction.sgml,v 1.2 2002/08/06 05:32:16 momjian Exp $ -->
 <refentry id="SQL-START-TRANSACTION">
  <docinfo>
   <date>2002-07-26</date>
@@ -76,7 +76,7 @@ WARNING:  BEGIN: already a transaction in progress
    This command begins a new transaction. If the isolation level is
    specified, the new transaction has that isolation level. In all other
    respects, the behavior of this command is identical to the
-   <command>BEGIN</command>.
+   <command>BEGIN</command> command.
   </para>
 
  </refsect1>
@@ -86,8 +86,8 @@ WARNING:  BEGIN: already a transaction in progress
 
   <para>
    The isolation level of a transaction can also be set with the <xref
-   linkend="sql-set-transaction" endterm="sql-set-transaction-title">.
-   If no isolation level is specified, the level defaults to
+   linkend="sql-set-transaction" endterm="sql-set-transaction-title">
+   command. If no isolation level is specified, the level defaults to
    <option>READ COMMITTED</option>.
   </para>
  </refsect1>
