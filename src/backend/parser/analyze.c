@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: analyze.c,v 1.180 2001/02/14 23:32:38 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.181 2001/02/15 01:10:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1871,7 +1871,11 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	List	   *forUpdate;
 	Node	   *node;
 	List	   *lefttl,
-			   *dtlist;
+			   *dtlist,
+			   *targetvars,
+			   *targetnames,
+			   *sv_namespace;
+	JoinExpr   *jnode;
 	int			tllen;
 
 	qry->commandType = CMD_SELECT;
@@ -1934,22 +1938,26 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	Assert(leftmostQuery != NULL);
 	/*
 	 * Generate dummy targetlist for outer query using column names of
-	 * leftmost select and common datatypes of topmost set operation
+	 * leftmost select and common datatypes of topmost set operation.
+	 * Also make lists of the dummy vars and their names for use in
+	 * parsing ORDER BY.
 	 */
 	qry->targetList = NIL;
+	targetvars = NIL;
+	targetnames = NIL;
 	lefttl = leftmostQuery->targetList;
 	foreach(dtlist, sostmt->colTypes)
 	{
 		Oid		colType = (Oid) lfirsti(dtlist);
 		Resdom *leftResdom = ((TargetEntry *) lfirst(lefttl))->resdom;
-		char   *colName = leftResdom->resname;
+		char   *colName = pstrdup(leftResdom->resname);
 		Resdom *resdom;
 		Node   *expr;
 
 		resdom = makeResdom((AttrNumber) pstate->p_last_resno++,
 							colType,
 							-1,
-							pstrdup(colName),
+							colName,
 							false);
 		expr = (Node *) makeVar(leftmostRTI,
 								leftResdom->resno,
@@ -1958,6 +1966,8 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 								0);
 		qry->targetList = lappend(qry->targetList,
 								  makeTargetEntry(resdom, expr));
+		targetvars = lappend(targetvars, expr);
+		targetnames = lappend(targetnames, makeString(colName));
 		lefttl = lnext(lefttl);
 	}
 	/*
@@ -1998,6 +2008,23 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	}
 
 	/*
+	 * As a first step towards supporting sort clauses that are expressions
+	 * using the output columns, generate a namespace entry that makes the
+	 * output columns visible.  A JoinExpr node is handy for this, since
+	 * we can easily control the Vars generated upon matches.
+	 *
+	 * Note: we don't yet do anything useful with such cases, but at least
+	 * "ORDER BY upper(foo)" will draw the right error message rather than
+	 * "foo not found".
+	 */
+	jnode = makeNode(JoinExpr);
+	jnode->colnames = targetnames;
+	jnode->colvars = targetvars;
+
+	sv_namespace = pstate->p_namespace;
+	pstate->p_namespace = makeList1(jnode);
+
+	/*
 	 * For now, we don't support resjunk sort clauses on the output of a
 	 * setOperation tree --- you can only use the SQL92-spec options of
 	 * selecting an output column by name or number.  Enforce by checking
@@ -2008,6 +2035,8 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	qry->sortClause = transformSortClause(pstate,
 										  sortClause,
 										  qry->targetList);
+
+	pstate->p_namespace = sv_namespace;
 
 	if (tllen != length(qry->targetList))
 		elog(ERROR, "ORDER BY on a UNION/INTERSECT/EXCEPT result must be on one of the result columns");
