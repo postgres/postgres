@@ -1,23 +1,27 @@
 
    			      findoidjoins
 
-This program scans a database, and prints oid fields and the tables
-they join to.  CAUTION: it is ver-r-r-y slow on a large database, or
-even a not-so-large one.  We don't really recommend running it on
-anything but an empty database.
+This program scans a database, and prints oid fields (also regproc fields)
+and the tables they join to.  CAUTION: it is ver-r-r-y slow on a large
+database, or even a not-so-large one.  We don't really recommend running
+it on anything but an empty database.
 
 It requires pgsql/contrib/pginterface to be compiled first.
 
-Run on an empty database, it returns the system join relationships
-(shown below for 6.5).  Note that unexpected matches may indicate
-bogus entries in system tables --- don't accept a peculiar match
-without question.  In particular, a field shown as joining to more
-than one target table is probably messed up.
+Run on an empty database, it returns the system join relationships (shown
+below for 6.5).  Note that unexpected matches may indicate bogus entries
+in system tables --- don't accept a peculiar match without question.
+In particular, a field shown as joining to more than one target table is
+probably messed up.  In 6.5, the *only* field that should join to more
+than one target is pg_description.objoid.  (Running make_oidjoins_check
+is an easy way to spot fields joining to more than one table, BTW.)
 
 The shell script make_oidjoins_check converts findoidjoins' output
 into an SQL script that checks for dangling links (entries in an
-OID column that don't match any row in the expected table).
-The result of this script should be installed as the "oidjoins"
+OID or REGPROC column that don't match any row in the expected table).
+Note that fields joining to more than one table are NOT processed.
+
+The result of make_oidjoins_check should be installed as the "oidjoins"
 regression test.  The oidjoins test should be updated after any
 revision in the patterns of cross-links between system tables.
 (Ideally we'd just regenerate the script as part of the regression
@@ -68,9 +72,6 @@ Join pg_operator.oprrsortop => pg_operator.oid
 Join pg_operator.oprcode => pg_proc.oid
 Join pg_operator.oprrest => pg_proc.oid
 Join pg_operator.oprjoin => pg_proc.oid
-Join pg_parg.parproid => pg_operator.oid
-Join pg_parg.parproid => pg_proc.oid
-Join pg_parg.partype => pg_type.oid
 Join pg_proc.prolang => pg_language.oid
 Join pg_proc.prorettype => pg_type.oid
 Join pg_rewrite.ev_class => pg_class.oid

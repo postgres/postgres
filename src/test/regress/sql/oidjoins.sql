@@ -165,10 +165,6 @@ SELECT	oid, pg_operator.oprjoin
 FROM	pg_operator 
 WHERE	pg_operator.oprjoin != 0 AND 
 	NOT EXISTS(SELECT * FROM pg_proc AS t1 WHERE t1.oid = pg_operator.oprjoin);
-SELECT	oid, pg_parg.partype 
-FROM	pg_parg 
-WHERE	pg_parg.partype != 0 AND 
-	NOT EXISTS(SELECT * FROM pg_type AS t1 WHERE t1.oid = pg_parg.partype);
 SELECT	oid, pg_proc.prolang 
 FROM	pg_proc 
 WHERE	pg_proc.prolang != 0 AND 
