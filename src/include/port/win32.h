@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.41 2004/12/01 23:42:26 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.42 2004/12/26 19:20:33 tgl Exp $ */
 
 /* undefine and redefine after #include */
 #undef mkdir
@@ -7,6 +7,9 @@
 #include <windows.h>
 #include <winsock.h>
 #include <process.h>
+#include <signal.h>
+#include <errno.h>
+
 #undef near
 
 /* Must be here to avoid conflicting with prototype in windows.h */
@@ -103,16 +106,15 @@ int			semget(int semKey, int semNum, int flags);
 int			semop(int semId, struct sembuf * sops, int flag);
 
 
-/* In backend/port/win32/signal.c */
-extern DLLIMPORT HANDLE pgwin32_signal_event;
-extern HANDLE pgwin32_initial_signal_pipe;
+/*
+ * Signal stuff
+ */
+#define WEXITSTATUS(w)	(((w) >> 8) & 0xff)
+#define WIFEXITED(w)	(((w) & 0xff) == 0)
+#define WIFSIGNALED(w)	(((w) & 0x7f) > 0 && (((w) & 0x7f) < 0x7f))
+#define WTERMSIG(w)		((w) & 0x7f)
 
-void		pgwin32_signal_initialize(void);
-HANDLE		pgwin32_create_signal_listener(pid_t pid);
-void		pgwin32_dispatch_queued_signals(void);
-void		pg_queue_signal(int signum);
-
-#define sigmask(sig) ( 1 << (sig-1) )
+#define sigmask(sig) ( 1 << ((sig)-1) )
 
 /* Signal function return values */
 #undef SIG_DFL
@@ -121,44 +123,6 @@ void		pg_queue_signal(int signum);
 #define SIG_DFL ((pqsigfunc)0)
 #define SIG_ERR ((pqsigfunc)-1)
 #define SIG_IGN ((pqsigfunc)1)
-
-#ifndef FRONTEND
-#define pg_usleep(t) pgwin32_backend_usleep(t)
-void		pgwin32_backend_usleep(long microsec);
-#endif
-
-/* In backend/port/win32/socket.c */
-#ifndef FRONTEND
-#define socket(af, type, protocol) pgwin32_socket(af, type, protocol)
-#define accept(s, addr, addrlen) pgwin32_accept(s, addr, addrlen)
-#define connect(s, name, namelen) pgwin32_connect(s, name, namelen)
-#define select(n, r, w, e, timeout) pgwin32_select(n, r, w, e, timeout)
-#define recv(s, buf, len, flags) pgwin32_recv(s, buf, len, flags)
-#define send(s, buf, len, flags) pgwin32_send(s, buf, len, flags)
-
-SOCKET		pgwin32_socket(int af, int type, int protocol);
-SOCKET		pgwin32_accept(SOCKET s, struct sockaddr * addr, int *addrlen);
-int			pgwin32_connect(SOCKET s, const struct sockaddr * name, int namelen);
-int			pgwin32_select(int nfds, fd_set *readfs, fd_set *writefds, fd_set *exceptfds, const struct timeval * timeout);
-int			pgwin32_recv(SOCKET s, char *buf, int len, int flags);
-int			pgwin32_send(SOCKET s, char *buf, int len, int flags);
-
-const char *pgwin32_socket_strerror(int err);
-int pgwin32_waitforsinglesocket(SOCKET s, int what);
-
-/* in backend/port/win32/security.c */
-extern int	pgwin32_is_admin(void);
-extern int	pgwin32_is_service(void);
-#endif
-
-/* in backend/port/win32/error.c */
-void		_dosmaperr(unsigned long);
-
-
-#define WEXITSTATUS(w)	(((w) >> 8) & 0xff)
-#define WIFEXITED(w)	(((w) & 0xff) == 0)
-#define WIFSIGNALED(w)	(((w) & 0x7f) > 0 && (((w) & 0x7f) < 0x7f))
-#define WTERMSIG(w)		((w) & 0x7f)
 
 /* Some extra signals */
 #define SIGHUP				1
@@ -222,7 +186,6 @@ typedef int pid_t;
 /*
  * Supplement to <errno.h>.
  */
-#include <errno.h>
 #undef EAGAIN
 #undef EINTR
 #define EINTR WSAEINTR
@@ -237,3 +200,45 @@ typedef int pid_t;
 #define ECONNREFUSED WSAECONNREFUSED
 #define EBADFD WSAENOTSOCK
 #define EOPNOTSUPP WSAEOPNOTSUPP
+
+
+/* In backend/port/win32/signal.c */
+extern DLLIMPORT HANDLE pgwin32_signal_event;
+extern HANDLE pgwin32_initial_signal_pipe;
+
+void		pgwin32_signal_initialize(void);
+HANDLE		pgwin32_create_signal_listener(pid_t pid);
+void		pgwin32_dispatch_queued_signals(void);
+void		pg_queue_signal(int signum);
+
+#ifndef FRONTEND
+#define pg_usleep(t) pgwin32_backend_usleep(t)
+void		pgwin32_backend_usleep(long microsec);
+#endif
+
+/* In backend/port/win32/socket.c */
+#ifndef FRONTEND
+#define socket(af, type, protocol) pgwin32_socket(af, type, protocol)
+#define accept(s, addr, addrlen) pgwin32_accept(s, addr, addrlen)
+#define connect(s, name, namelen) pgwin32_connect(s, name, namelen)
+#define select(n, r, w, e, timeout) pgwin32_select(n, r, w, e, timeout)
+#define recv(s, buf, len, flags) pgwin32_recv(s, buf, len, flags)
+#define send(s, buf, len, flags) pgwin32_send(s, buf, len, flags)
+
+SOCKET		pgwin32_socket(int af, int type, int protocol);
+SOCKET		pgwin32_accept(SOCKET s, struct sockaddr * addr, int *addrlen);
+int			pgwin32_connect(SOCKET s, const struct sockaddr * name, int namelen);
+int			pgwin32_select(int nfds, fd_set *readfs, fd_set *writefds, fd_set *exceptfds, const struct timeval * timeout);
+int			pgwin32_recv(SOCKET s, char *buf, int len, int flags);
+int			pgwin32_send(SOCKET s, char *buf, int len, int flags);
+
+const char *pgwin32_socket_strerror(int err);
+int pgwin32_waitforsinglesocket(SOCKET s, int what);
+
+/* in backend/port/win32/security.c */
+extern int	pgwin32_is_admin(void);
+extern int	pgwin32_is_service(void);
+#endif
+
+/* in backend/port/win32/error.c */
+extern void _dosmaperr(unsigned long);
