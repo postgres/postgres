@@ -16,7 +16,8 @@ public class JDBC2Tests extends TestSuite
 	 */
 	public static String getURL()
 	{
-		return System.getProperty("database");
+		//return System.getProperty("database");
+    return "test";
 	}
 
 	/*
@@ -24,7 +25,8 @@ public class JDBC2Tests extends TestSuite
 	 */
 	public static String getUser()
 	{
-		return System.getProperty("username");
+    return "davec";
+		//return System.getProperty("username");
 	}
 
 	/*
@@ -32,7 +34,8 @@ public class JDBC2Tests extends TestSuite
 	 */
 	public static String getPassword()
 	{
-		return System.getProperty("password");
+    return null;
+		//return System.getProperty("password");
 	}
 
 	/*
@@ -226,6 +229,7 @@ public class JDBC2Tests extends TestSuite
 
 		// Fastpath/LargeObject
 		suite.addTestSuite(BlobTest.class);
+    suite.addTestSuite( UpdateableResultTest.class );
 
 		// That's all folks
 		return suite;
