@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.69 1998/04/07 22:00:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.70 1998/04/07 22:36:38 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -79,6 +79,7 @@
 #include "pg_dump.h"
 
 static void dumpSequence(FILE *fout, TableInfo tbinfo);
+static void dumpACL(FILE *fout, TableInfo tbinfo);
 static void
 dumpTriggers(FILE *fout, const char *tablename,
 			 TableInfo *tblinfo, int numTables);
@@ -2291,21 +2292,22 @@ GetPrivledges(char *s)
 {
 	char	   *acls = NULL;
 
-	/* Grant All		   == arwR */
-	/* INSERT		 == ar	 */
-	/* UPDATE/DELETE ==  rw  */
-	/* SELECT		 ==  r	 */
-	/* RULE			 ==    R */
+	/* Grant All     == arwR */
+	/* INSERT        == a   */
+	/* UPDATE/DELETE == w   */
+	/* SELECT        == r   */
+	/* RULE          == R   */
 
 	if (strstr(s, "arwR"))
 		return (strdup("ALL"));
 
-	if (strstr(s, "ar"))
+	if (strchr(s, 'a'))
 		acls = AddAcl(acls, "INSERT");
 
-	if (strstr(s, "rw"))
+	if (strchr(s, 'w'))
 		acls = AddAcl(acls, "UPDATE,DELETE");
-	else if (strchr(s, 'r'))
+
+	if (strchr(s, 'r'))
 		acls = AddAcl(acls, "SELECT");
 
 	if (strchr(s, 'R'))
@@ -2378,6 +2380,44 @@ ParseACL(const char *acls, int *count)
 	*count = NumAcls;
 	return (ParsedAcl);
 }
+/*
+ * dumpACL:
+ *    Write out grant/revoke information
+ *    Called for sequences and tables
+ */
+
+void
+dumpACL(FILE *fout, TableInfo tbinfo)
+{
+	int k, l;
+	ACL		   *ACLlist;
+
+	ACLlist = ParseACL(tbinfo.relacl, &l);
+	if (ACLlist == (ACL *) NULL)
+		if (l == 0)
+			return;
+		else
+		{
+			fprintf(stderr, "Could not parse ACL list for %s...Exiting!\n",
+					tbinfo.relname);
+			exit_nicely(g_conn);
+		}
+
+	/* Revoke Default permissions for PUBLIC */
+	fprintf(fout,
+			"REVOKE ALL on %s from PUBLIC;\n",
+			tbinfo.relname);
+
+	for (k = 0; k < l; k++)
+	{
+		if (ACLlist[k].privledges != (char *) NULL)
+			fprintf(fout,
+					"GRANT %s on %s to %s;\n",
+					ACLlist[k].privledges, tbinfo.relname,
+					ACLlist[k].user);
+	}
+}
+
 
 /*
  * dumpTables:
@@ -2392,13 +2432,11 @@ dumpTables(FILE *fout, TableInfo *tblinfo, int numTables,
 {
 	int			i,
 				j,
-				k,
-				l;
+				k;
 	char		q[MAXQUERYLEN];
 	char	  **parentRels;		/* list of names of parent relations */
 	int			numParents;
 	int			actual_atts;	/* number of attrs in this CREATE statment */
-	ACL		   *ACLlist;
 
 	/* First - dump SEQUENCEs */
 	for (i = 0; i < numTables; i++)
@@ -2409,6 +2447,8 @@ dumpTables(FILE *fout, TableInfo *tblinfo, int numTables,
 		{
 			fprintf(fout, "\\connect - %s\n", tblinfo[i].usename);
 			dumpSequence(fout, tblinfo[i]);
+			if (acls)
+				dumpACL(fout, tblinfo[i]);
 		}
 	}
 
@@ -2505,36 +2545,9 @@ dumpTables(FILE *fout, TableInfo *tblinfo, int numTables,
 			}
 			strcat(q, ";\n");
 			fputs(q, fout);
-
 			if (acls)
-			{
-				ACLlist = ParseACL(tblinfo[i].relacl, &l);
-				if (ACLlist == (ACL *) NULL)
-				{
-					if (l == 0)
-						continue;
-					else
-					{
-						fprintf(stderr, "Could not parse ACL list for %s...Exiting!\n",
-								tblinfo[i].relname);
-						exit_nicely(g_conn);
-					}
-				}
+				dumpACL(fout, tblinfo[i]);
 
-				/* Revoke Default permissions for PUBLIC */
-				fprintf(fout,
-						"REVOKE ALL on %s from PUBLIC;\n",
-						tblinfo[i].relname);
-
-				for (k = 0; k < l; k++)
-				{
-					if (ACLlist[k].privledges != (char *) NULL)
-						fprintf(fout,
-								"GRANT %s on %s to %s;\n",
-								ACLlist[k].privledges, tblinfo[i].relname,
-								ACLlist[k].user);
-				}
-			}
 		}
 	}
 }
