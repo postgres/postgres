@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sun Jul 20 15:22:00 EDT 2003
+Last updated:		Mon Jul 21 15:04:47 EDT 2003
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -312,6 +312,8 @@ Referential Integrity
 * With disabled triggers, allow pg_dump to use ALTER TABLE ADD FOREIGN KEY
 * -Support statement-level triggers (Neil)
 * Support triggers on columns (Neil)
+* Have AFTER triggers execute after the appropriate SQL statement in a 
+  function, not at the end of the function
 
 
 Dependency Checking
@@ -464,7 +466,7 @@ Source Code
 * Acquire lock on a relation before building a relcache entry for it
 * Research interaction of setitimer() and sleep() used by statement_timeout
 * Add checks for fclose() failure
-* Change CVS $Id: TODO,v 1.1091 2003/07/20 19:21:41 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1091 2003/07/20 19:21:41 momjian Exp $
+* Change CVS $Id: TODO,v 1.1092 2003/07/21 19:04:54 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1092 2003/07/21 19:04:54 momjian Exp $
 * Exit postmaster if postgresql.conf can not be opened
 * Rename /scripts directory because they are all C programs now
 * Allow the regression tests to start postmaster with -i so the tests
