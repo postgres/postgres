@@ -1,5 +1,5 @@
 #! /bin/sh
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/pg_regress.sh,v 1.28 2002/10/19 01:35:43 momjian Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/pg_regress.sh,v 1.28.2.1 2002/11/13 16:40:29 tgl Exp $
 
 me=`basename $0`
 : ${TMPDIR=/tmp}
@@ -545,16 +545,22 @@ do
         formatted=`echo $1 | awk '{printf "%-20.20s", $1;}'`
         $ECHO_N "test $formatted ... $ECHO_C"
 
-	# use awk to properly output backslashes
-        (echo "SET autocommit TO 'on';"; awk 'BEGIN {printf "\\set ECHO all\n"}'; cat "$inputdir/sql/$1.sql") |
+        (cat <<EOF
+SET autocommit TO 'on';
+\\set ECHO all
+EOF
+	 cat "$inputdir/sql/$1.sql") | \
         $PSQL -d "$dbname" >"$outputdir/results/$1.out" 2>&1
     else
         # Start a parallel group
         $ECHO_N "parallel group ($# tests): $ECHO_C"
         for name do
             ( 
-	      # use awk to properly output backslashes
-              (echo "SET autocommit TO 'on';"; awk 'BEGIN {printf "\\set ECHO all\n"}'; cat "$inputdir/sql/$name.sql") |
+	      (cat <<EOF
+SET autocommit TO 'on';
+\\set ECHO all
+EOF
+	       cat "$inputdir/sql/$name.sql") | \
 	      $PSQL -d $dbname >"$outputdir/results/$name.out" 2>&1
               $ECHO_N " $name$ECHO_C"
             ) &
