@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.56 2001/10/18 17:30:15 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.57 2001/10/18 19:54:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -603,9 +603,11 @@ timestamp2tm(Timestamp dt, int *tzp, struct tm * tm, double *fsec, char **tzn)
 		if (HasCTZSet)
 		{
 			*tzp = CTimeZone;
-			tm->tm_gmtoff = CTimeZone;
 			tm->tm_isdst = 0;
+#if defined(HAVE_TM_ZONE)
+			tm->tm_gmtoff = CTimeZone;
 			tm->tm_zone = NULL;
+#endif
 			if (tzn != NULL)
 				*tzn = NULL;
 		}
