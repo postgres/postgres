@@ -39,7 +39,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.55 2004/10/06 09:01:18 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.56 2004/10/06 09:13:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -147,7 +147,7 @@ char		backend_exec[MAXPGPATH];
 static void *xmalloc(size_t size);
 static char *xstrdup(const char *s);
 static char **replace_token(char **lines, char *token, char *replacement);
-#ifdef WIN32
+#ifndef HAVE_UNIX_SOCKETS
 static char **filter_lines_with_token(char **lines, char *token);
 #endif
 static char **readfile(char *path);
@@ -318,7 +318,7 @@ replace_token(char **lines, char *token, char *replacement)
  * a sort of poor man's grep -v
  *
  */
-#ifdef WIN32
+#ifndef HAVE_UNIX_SOCKETS
 static char **
 filter_lines_with_token(char **lines, char *token)
 {
@@ -1124,10 +1124,10 @@ setup_config(void)
 
 	conflines = readfile(hba_file);
 
-#ifdef WIN32
-	conflines = filter_lines_with_token(conflines,"@remove-line-for-win32@");
+#ifndef HAVE_UNIX_SOCKETS
+	conflines = filter_lines_with_token(conflines,"@remove-line-for-nolocal@");
 #else
-	conflines = replace_token(conflines,"@remove-line-for-win32@","");
+	conflines = replace_token(conflines,"@remove-line-for-nolocal@","");
 #endif
 
 #ifndef HAVE_IPV6

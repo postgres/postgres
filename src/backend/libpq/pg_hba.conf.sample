@@ -60,8 +60,8 @@
 
 # TYPE  DATABASE    USER        CIDR-ADDRESS          METHOD
 
-@remove-line-for-win32@# "local" is for Unix domain socket connections only
-@remove-line-for-win32@local   all         all                               @authmethod@
+@remove-line-for-nolocal@# "local" is for Unix domain socket connections only
+@remove-line-for-nolocal@local   all         all                               @authmethod@
 # IPv4 local connections:
 host    all         all         127.0.0.1/32          @authmethod@
 # IPv6 local connections:
