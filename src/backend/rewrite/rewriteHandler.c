@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.72 2000/04/20 00:31:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.73 2000/04/27 20:32:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1542,41 +1542,52 @@ QueryRewrite(Query *parsetree)
 static void
 check_targetlists_are_compatible(List *prev_target, List *current_target)
 {
-	List	   *tl,
-			   *next_target;
+	List	   *tl;
 	int			prev_len = 0,
 				next_len = 0;
 
 	foreach(tl, prev_target)
 		if (!((TargetEntry *) lfirst(tl))->resdom->resjunk)
-		prev_len++;
+			prev_len++;
 
-	foreach(next_target, current_target)
-		if (!((TargetEntry *) lfirst(next_target))->resdom->resjunk)
-		next_len++;
+	foreach(tl, current_target)
+		if (!((TargetEntry *) lfirst(tl))->resdom->resjunk)
+			next_len++;
 
 	if (prev_len != next_len)
 		elog(ERROR, "Each UNION | EXCEPT | INTERSECT query must have the same number of columns.");
 
-	foreach(next_target, current_target)
+	foreach(tl, current_target)
 	{
-		Oid			itype;
-		Oid			otype;
+		TargetEntry	   *next_tle = (TargetEntry *) lfirst(tl);
+		TargetEntry	   *prev_tle;
+		Oid				itype;
+		Oid				otype;
 
-		otype = ((TargetEntry *) lfirst(prev_target))->resdom->restype;
-		itype = ((TargetEntry *) lfirst(next_target))->resdom->restype;
+		if (next_tle->resdom->resjunk)
+			continue;
+
+		/* This loop must find an entry, since we counted them above. */
+		do
+		{
+			prev_tle = (TargetEntry *) lfirst(prev_target);
+			prev_target = lnext(prev_target);
+		} while (prev_tle->resdom->resjunk);
+
+		itype = next_tle->resdom->restype;
+		otype = prev_tle->resdom->restype;
 
 		/* one or both is a NULL column? then don't convert... */
 		if (otype == InvalidOid)
 		{
 			/* propagate a known type forward, if available */
 			if (itype != InvalidOid)
-				((TargetEntry *) lfirst(prev_target))->resdom->restype = itype;
+				prev_tle->resdom->restype = itype;
 #ifdef NOT_USED
 			else
 			{
-				((TargetEntry *) lfirst(prev_target))->resdom->restype = UNKNOWNOID;
-				((TargetEntry *) lfirst(next_target))->resdom->restype = UNKNOWNOID;
+				prev_tle->resdom->restype = UNKNOWNOID;
+				next_tle->resdom->restype = UNKNOWNOID;
 			}
 #endif
 		}
@@ -1588,7 +1599,7 @@ check_targetlists_are_compatible(List *prev_target, List *current_target)
 		{
 			Node	   *expr;
 
-			expr = ((TargetEntry *) lfirst(next_target))->expr;
+			expr = next_tle->expr;
 			expr = CoerceTargetExpr(NULL, expr, itype, otype, -1);
 			if (expr == NULL)
 			{
@@ -1597,17 +1608,16 @@ check_targetlists_are_compatible(List *prev_target, List *current_target)
 					 typeidTypeName(itype),
 					 typeidTypeName(otype));
 			}
-			((TargetEntry *) lfirst(next_target))->expr = expr;
-			((TargetEntry *) lfirst(next_target))->resdom->restype = otype;
+			next_tle->expr = expr;
+			next_tle->resdom->restype = otype;
 		}
 
 		/* both are UNKNOWN? then evaluate as text... */
 		else if (itype == UNKNOWNOID)
 		{
-			((TargetEntry *) lfirst(next_target))->resdom->restype = TEXTOID;
-			((TargetEntry *) lfirst(prev_target))->resdom->restype = TEXTOID;
+			next_tle->resdom->restype = TEXTOID;
+			prev_tle->resdom->restype = TEXTOID;
 		}
-		prev_target = lnext(prev_target);
 	}
 }
 
@@ -1645,7 +1655,6 @@ Except_Intersect_Rewrite(Query *parsetree)
 			   *sortClause,
 			   *distinctClause;
 	List	   *left_expr,
-			   *right_expr,
 			   *resnames = NIL;
 	char	   *op,
 			   *into;
@@ -1664,14 +1673,15 @@ Except_Intersect_Rewrite(Query *parsetree)
 	 * formulated by the user and he wants the columns named by these
 	 * strings. The transformation to DNF can cause another Select
 	 * Statment to be the top one which uses other names for its columns.
-	 * Therefore we remeber the original names and attach them to the
+	 * Therefore we remember the original names and attach them to the
 	 * targetlist of the new topmost Node at the end of this function
 	 */
 	foreach(elist, parsetree->targetList)
 	{
 		TargetEntry *tent = (TargetEntry *) lfirst(elist);
 
-		resnames = lappend(resnames, tent->resdom->resname);
+		if (! tent->resdom->resjunk)
+			resnames = lappend(resnames, tent->resdom->resname);
 	}
 
 	/*
@@ -1778,7 +1788,6 @@ Except_Intersect_Rewrite(Query *parsetree)
 		if (prev_target)
 			check_targetlists_are_compatible(prev_target, intersect_node->targetList);
 		prev_target = intersect_node->targetList;
-		/* End of check for corresponding targetlists */
 
 		/*
 		 * Transform all nodes remaining into subselects and add them to
@@ -1800,7 +1809,6 @@ Except_Intersect_Rewrite(Query *parsetree)
 				 */
 				check_targetlists_are_compatible(prev_target,
 						 ((Query *) lfirst(intersect_list))->targetList);
-				/* End of check for corresponding targetlists */
 
 				n->subselect = lfirst(intersect_list);
 				op = "=";
@@ -1822,7 +1830,6 @@ Except_Intersect_Rewrite(Query *parsetree)
 				 */
 				check_targetlists_are_compatible(prev_target,
 												 ((Query *) lfirst(((Expr *) lfirst(intersect_list))->args))->targetList);
-				/* End of check for corresponding targetlists */
 
 				n->subselect = (Node *) lfirst(((Expr *) lfirst(intersect_list))->args);
 				op = "<>";
@@ -1840,7 +1847,8 @@ Except_Intersect_Rewrite(Query *parsetree)
 			{
 				TargetEntry *tent = (TargetEntry *) lfirst(elist);
 
-				n->lefthand = lappend(n->lefthand, tent->expr);
+				if (! tent->resdom->resjunk)
+					n->lefthand = lappend(n->lefthand, tent->expr);
 			}
 
 			/*
@@ -1849,16 +1857,20 @@ Except_Intersect_Rewrite(Query *parsetree)
 			 * involved!)
 			 */
 			left_expr = n->lefthand;
-			right_expr = ((Query *) (n->subselect))->targetList;
 			n->oper = NIL;
 
-			foreach(elist, left_expr)
+			foreach(elist, ((Query *) (n->subselect))->targetList)
 			{
-				Node	   *lexpr = lfirst(elist);
-				TargetEntry *tent = (TargetEntry *) lfirst(right_expr);
+				TargetEntry *tent = (TargetEntry *) lfirst(elist);
+				Node	   *lexpr;
 				Operator	optup;
 				Form_pg_operator opform;
 				Oper	   *newop;
+
+				if (tent->resdom->resjunk)
+					continue;
+
+				lexpr = lfirst(left_expr);
 
 				optup = oper(op,
 							 exprType(lexpr),
@@ -1877,8 +1889,10 @@ Except_Intersect_Rewrite(Query *parsetree)
 
 				n->oper = lappend(n->oper, newop);
 
-				right_expr = lnext(right_expr);
+				left_expr = lnext(left_expr);
 			}
+
+			Assert(left_expr == NIL); /* should have used 'em all */
 
 			/*
 			 * If the Select Query node has aggregates in use add all the
@@ -1929,6 +1943,9 @@ Except_Intersect_Rewrite(Query *parsetree)
 	foreach(elist, result->targetList)
 	{
 		TargetEntry *tent = (TargetEntry *) lfirst(elist);
+
+		if (tent->resdom->resjunk)
+			continue;
 
 		tent->resdom->resname = lfirst(resnames);
 		resnames = lnext(resnames);
