@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.78 2002/10/11 23:03:48 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.79 2002/10/19 00:22:14 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -692,6 +692,7 @@ testdb=>
 
       <varlistentry>
         <term><literal>\copy <replaceable class="parameter">table</replaceable>
+	[ ( <replaceable class="parameter">column_list</replaceable> ) ]
         { <literal>from</literal> | <literal>to</literal> }
 	<replaceable class="parameter">filename</replaceable> | stdin | stdout
         [ <literal>with</literal> ] 
@@ -705,11 +706,12 @@ testdb=>
         Performs a frontend (client) copy. This is an operation that
         runs an <acronym>SQL</acronym> <xref linkend="SQL-COPY"
         endterm="SQL-COPY-title"> command, but instead of the backend's
-        reading or writing the specified file, and consequently
-        requiring backend access and special user privilege, as well as
-        being bound to the file system accessible by the backend,
+        reading or writing the specified file,
         <application>psql</application> reads or writes the file and
         routes the data between the backend and the local file system.
+	This means that file accessibility and privileges are those
+	of the local user, not the server, and no SQL superuser
+	privileges are required.
 	</para>
 
 	<para>

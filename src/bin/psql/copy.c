@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/copy.c,v 1.27 2002/10/15 02:24:16 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/copy.c,v 1.28 2002/10/19 00:22:14 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "copy.h"
@@ -38,11 +38,15 @@ bool		copy_in_state;
  * parse_slash_copy
  * -- parses \copy command line
  *
- * Accepted syntax: \copy table|"table" [with oids] from|to filename|'filename' [with ] [ oids ] [ delimiter '<char>'] [ null as 'string' ]
+ * Accepted syntax: \copy table [(columnlist)] [with oids] from|to filename [with ] [ oids ] [ delimiter char] [ null as string ]
  * (binary is not here yet)
  *
  * Old syntax for backward compatibility: (2002-06-19):
- * \copy table|"table" [with oids] from|to filename|'filename' [ using delimiters '<char>'] [ with null as 'string' ]
+ * \copy table [(columnlist)] [with oids] from|to filename [ using delimiters char] [ with null as string ]
+ *
+ * table name can be double-quoted and can have a schema part.
+ * column names can be double-quoted.
+ * filename, char, and string can be single-quoted like SQL literals.
  *
  * returns a malloc'ed structure with the options, or NULL on parsing error
  */
@@ -50,6 +54,7 @@ bool		copy_in_state;
 struct copy_options
 {
 	char	   *table;
+	char	   *column_list;
 	char	   *file;			/* NULL = stdin/stdout */
 	bool		from;
 	bool		binary;
@@ -65,10 +70,30 @@ free_copy_options(struct copy_options * ptr)
 	if (!ptr)
 		return;
 	free(ptr->table);
+	free(ptr->column_list);
 	free(ptr->file);
 	free(ptr->delim);
 	free(ptr->null);
 	free(ptr);
+}
+
+
+/* catenate "more" onto "var", freeing the original value of *var */
+static void
+xstrcat(char **var, const char *more)
+{
+	char	   *newvar;
+
+	newvar = (char *) malloc(strlen(*var) + strlen(more) + 1);
+	if (!newvar)
+	{
+		psql_error("out of memory\n");
+		exit(EXIT_FAILURE);
+	}
+	strcpy(newvar, *var);
+	strcat(newvar, more);
+	free(*var);
+	*var = newvar;
 }
 
 
@@ -78,8 +103,7 @@ parse_slash_copy(const char *args)
 	struct copy_options *result;
 	char	   *line;
 	char	   *token;
-	bool		error = false;
-	char		quote;
+	const char *whitespace = " \t\n\r";
 
 	if (args)
 		line = xstrdup(args);
@@ -95,152 +119,183 @@ parse_slash_copy(const char *args)
 		exit(EXIT_FAILURE);
 	}
 
-	token = strtokx(line, " \t\n\r", "\"", '\\', &quote, NULL, pset.encoding);
+	token = strtokx(line, whitespace, ".,()", "\"",
+					0, false, pset.encoding);
 	if (!token)
-		error = true;
-	else
-	{
+		goto error;
+
 #ifdef NOT_USED
-		/* this is not implemented yet */
-		if (!quote && strcasecmp(token, "binary") == 0)
+	/* this is not implemented yet */
+	if (strcasecmp(token, "binary") == 0)
+	{
+		result->binary = true;
+		token = strtokx(NULL, whitespace, ".,()", "\"",
+						0, false, pset.encoding);
+		if (!token)
+			goto error;
+	}
+#endif
+
+	result->table = xstrdup(token);
+
+	token = strtokx(NULL, whitespace, ".,()", "\"",
+					0, false, pset.encoding);
+	if (!token)
+		goto error;
+
+	/*
+	 * strtokx() will not have returned a multi-character token starting with
+	 * '.', so we don't need strcmp() here.  Likewise for '(', etc, below.
+	 */
+	if (token[0] == '.')
+	{
+		/* handle schema . table */
+		xstrcat(&result->table, token);
+		token = strtokx(NULL, whitespace, ".,()", "\"",
+						0, false, pset.encoding);
+		if (!token)
+			goto error;
+		xstrcat(&result->table, token);
+		token = strtokx(NULL, whitespace, ".,()", "\"",
+						0, false, pset.encoding);
+		if (!token)
+			goto error;
+	}
+
+	if (token[0] == '(')
+	{
+		/* handle parenthesized column list */
+		result->column_list = xstrdup(token);
+		for (;;)
 		{
-			result->binary = true;
-			token = strtokx(NULL, " \t\n\r", "\"", '\\', &quote, NULL, pset.encoding);
+			token = strtokx(NULL, whitespace, ".,()", "\"",
+							0, false, pset.encoding);
+			if (!token || strchr(".,()", token[0]))
+				goto error;
+			xstrcat(&result->column_list, token);
+			token = strtokx(NULL, whitespace, ".,()", "\"",
+							0, false, pset.encoding);
 			if (!token)
-				error = true;
+				goto error;
+			xstrcat(&result->column_list, token);
+			if (token[0] == ')')
+				break;
+			if (token[0] != ',')
+				goto error;
 		}
-		if (token)
-#endif
-			result->table = xstrdup(token);
+		token = strtokx(NULL, whitespace, ".,()", "\"",
+						0, false, pset.encoding);
+		if (!token)
+			goto error;
 	}
 
-#ifdef USE_ASSERT_CHECKING
-	assert(error || result->table);
-#endif
-
-	if (!error)
+	/*
+	 * Allows old COPY syntax for backward compatibility
+	 * 2002-06-19
+	 */
+	if (strcasecmp(token, "with") == 0)
 	{
-		token = strtokx(NULL, " \t\n\r", NULL, '\\', NULL, NULL, pset.encoding);
+		token = strtokx(NULL, whitespace, NULL, NULL,
+						0, false, pset.encoding);
+		if (!token || strcasecmp(token, "oids") != 0)
+			goto error;
+		result->oids = true;
+
+		token = strtokx(NULL, whitespace, NULL, NULL,
+						0, false, pset.encoding);
 		if (!token)
-			error = true;
-		else
+			goto error;
+	}
+
+	if (strcasecmp(token, "from") == 0)
+		result->from = true;
+	else if (strcasecmp(token, "to") == 0)
+		result->from = false;
+	else
+		goto error;
+
+	token = strtokx(NULL, whitespace, NULL, "'",
+					'\\', true, pset.encoding);
+	if (!token)
+		goto error;
+
+	if (strcasecmp(token, "stdin") == 0 ||
+		strcasecmp(token, "stdout") == 0)
+		result->file = NULL;
+	else
+		result->file = xstrdup(token);
+
+	token = strtokx(NULL, whitespace, NULL, NULL,
+					0, false, pset.encoding);
+
+	/*
+	 * Allows old COPY syntax for backward compatibility
+	 * 2002-06-19
+	 */
+	if (token && strcasecmp(token, "using") == 0)
+	{
+		token = strtokx(NULL, whitespace, NULL, NULL,
+						0, false, pset.encoding);
+		if (!(token && strcasecmp(token, "delimiters") == 0))
+			goto error;
+		token = strtokx(NULL, whitespace, NULL, "'",
+						'\\', false, pset.encoding);
+		if (!token)
+			goto error;
+		result->delim = xstrdup(token);
+		token = strtokx(NULL, whitespace, NULL, NULL,
+						0, false, pset.encoding);
+	}
+
+	if (token)
+	{
+		if (strcasecmp(token, "with") != 0)
+			goto error;
+		while ((token = strtokx(NULL, whitespace, NULL, NULL,
+								0, false, pset.encoding)) != NULL)
 		{
-			/*
-			 * Allows old COPY syntax for backward compatibility
-			 * 2002-06-19
-			 */
-			if (strcasecmp(token, "with") == 0)
+			if (strcasecmp(token, "delimiter") == 0)
 			{
-				token = strtokx(NULL, " \t\n\r", NULL, '\\', NULL, NULL, pset.encoding);
-				if (!token || strcasecmp(token, "oids") != 0)
-					error = true;
+				token = strtokx(NULL, whitespace, NULL, "'",
+								'\\', false, pset.encoding);
+				if (token && strcasecmp(token, "as") == 0)
+					token = strtokx(NULL, whitespace, NULL, "'",
+									'\\', false, pset.encoding);
+				if (token)
+					result->delim = xstrdup(token);
 				else
-					result->oids = true;
-
-				if (!error)
-				{
-					token = strtokx(NULL, " \t\n\r", NULL, '\\', NULL, NULL, pset.encoding);
-					if (!token)
-						error = true;
-				}
+					goto error;
 			}
-
-			if (!error && strcasecmp(token, "from") == 0)
-				result->from = true;
-			else if (!error && strcasecmp(token, "to") == 0)
-				result->from = false;
+			else if (strcasecmp(token, "null") == 0)
+			{
+				token = strtokx(NULL, whitespace, NULL, "'",
+								'\\', false, pset.encoding);
+				if (token && strcasecmp(token, "as") == 0)
+					token = strtokx(NULL, whitespace, NULL, "'",
+									'\\', false, pset.encoding);
+				if (token)
+					result->null = xstrdup(token);
+				else
+					goto error;
+			}
 			else
-				error = true;
+				goto error;
 		}
-	}
-
-	if (!error)
-	{
-		token = strtokx(NULL, " \t\n\r", "'", '\\', &quote, NULL, pset.encoding);
-		if (!token)
-			error = true;
-		else if (!quote && (strcasecmp(token, "stdin") == 0 || strcasecmp(token, "stdout") == 0))
-			result->file = NULL;
-		else
-			result->file = xstrdup(token);
-	}
-
-	if (!error)
-	{
-		token = strtokx(NULL, " \t\n\r", NULL, '\\', NULL, NULL, pset.encoding);
-		if (token)
-		{
-			/*
-			 * Allows old COPY syntax for backward compatibility
-			 * 2002-06-19
-			 */
-			if (strcasecmp(token, "using") == 0)
-			{
-				token = strtokx(NULL, " \t\n\r", NULL, '\\', NULL, NULL, pset.encoding);
-				if (token && strcasecmp(token, "delimiters") == 0)
-				{
-					token = strtokx(NULL, " \t\n\r", "'", '\\', NULL, NULL, pset.encoding);
-					if (token)
-					{
-						result->delim = xstrdup(token);
-						token = strtokx(NULL, " \t\n\r", NULL, '\\', NULL, NULL, pset.encoding);
-					}
-					else
-						error = true;
-				}
-				else
-					error = true;
-			}
-		}
-	}
-
-	if (!error && token)
-	{
-		if (strcasecmp(token, "with") == 0)
-		{
-			while (!error && (token = strtokx(NULL, " \t\n\r", NULL, '\\', NULL, NULL, pset.encoding)))
-			{
-				if (strcasecmp(token, "delimiter") == 0)
-				{
-					token = strtokx(NULL, " \t\n\r", "'", '\\', NULL, NULL, pset.encoding);
-					if (token && strcasecmp(token, "as") == 0)
-						token = strtokx(NULL, " \t\n\r", "'", '\\', NULL, NULL, pset.encoding);
-					if (token)
-						result->delim = xstrdup(token);
-					else
-						error = true;
-				}
-				else if (strcasecmp(token, "null") == 0)
-				{
-					token = strtokx(NULL, " \t\n\r", "'", '\\', NULL, NULL, pset.encoding);
-					if (token && strcasecmp(token, "as") == 0)
-						token = strtokx(NULL, " \t\n\r", "'", '\\', NULL, NULL, pset.encoding);
-					if (token)
-						result->null = xstrdup(token);
-					else
-						error = true;
-				}
-				else
-					error = true;
-			}
-		}
-		else
-			error = true;
 	}
 
 	free(line);
 
-	if (error)
-	{
-		if (token)
-			psql_error("\\copy: parse error at '%s'\n", token);
-		else
-			psql_error("\\copy: parse error at end of line\n");
-		free_copy_options(result);
-		return NULL;
-	}
+	return result;
+
+error:
+	if (token)
+		psql_error("\\copy: parse error at '%s'\n", token);
 	else
-		return result;
+		psql_error("\\copy: parse error at end of line\n");
+	free_copy_options(result);
+	free(line);
+
+	return NULL;
 }
 
 
@@ -272,7 +327,11 @@ do_copy(const char *args)
 	if (options->binary)
 		appendPQExpBuffer(&query, "BINARY ");
 
-	appendPQExpBuffer(&query, "\"%s\" ", options->table);
+	appendPQExpBuffer(&query, "%s ", options->table);
+
+	if (options->column_list)
+		appendPQExpBuffer(&query, "%s ", options->column_list);
+
 	/* Uses old COPY syntax for backward compatibility 2002-06-19 */
 	if (options->oids)
 		appendPQExpBuffer(&query, "WITH OIDS ");
@@ -285,10 +344,22 @@ do_copy(const char *args)
 
 	/* Uses old COPY syntax for backward compatibility 2002-06-19 */
 	if (options->delim)
-		appendPQExpBuffer(&query, " USING DELIMITERS '%s'", options->delim);
+	{
+		if (options->delim[0] == '\'')
+			appendPQExpBuffer(&query, " USING DELIMITERS %s",
+							  options->delim);
+		else
+			appendPQExpBuffer(&query, " USING DELIMITERS '%s'",
+							  options->delim);
+	}
 
 	if (options->null)
-		appendPQExpBuffer(&query, " WITH NULL AS '%s'", options->null);
+	{
+		if (options->null[0] == '\'')
+			appendPQExpBuffer(&query, " WITH NULL AS %s", options->null);
+		else
+			appendPQExpBuffer(&query, " WITH NULL AS '%s'", options->null);
+	}
 
 	if (options->from)
 	{

@@ -1,45 +1,61 @@
 /*
  * psql - the PostgreSQL interactive terminal
  *
- * Copyright 2000 by PostgreSQL Global Development Group
+ * Copyright 2000-2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/stringutils.c,v 1.30 2002/08/27 20:16:49 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/stringutils.c,v 1.31 2002/10/19 00:22:14 tgl Exp $
  */
 #include "postgres_fe.h"
-#include "stringutils.h"
-#include "settings.h"
 
-#include <ctype.h>
 #include <assert.h>
+#include <ctype.h>
 
 #include "libpq-fe.h"
+#include "settings.h"
+#include "stringutils.h"
 
 
-
-static void unescape_quotes(char *source, int quote, int escape);
+static void strip_quotes(char *source, char quote, char escape, int encoding);
 
 
 /*
  * Replacement for strtok() (a.k.a. poor man's flex)
  *
- * The calling convention is similar to that of strtok.
+ * Splits a string into tokens, returning one token per call, then NULL
+ * when no more tokens exist in the given string.
+ *
+ * The calling convention is similar to that of strtok, but with more
+ * frammishes.
+ *
  * s -			string to parse, if NULL continue parsing the last string
- * delim -		set of characters that delimit tokens (usually whitespace)
- * quote -		set of characters that quote stuff, they're not part of the token
- * escape -		character than can quote quotes
- * was_quoted - if not NULL, stores the quoting character if any was encountered
- * token_pos -	if not NULL, receives a count to the start of the token in the
- *				parsed string
+ * whitespace -	set of whitespace characters that separate tokens
+ * delim -		set of non-whitespace separator characters (or NULL)
+ * quote -		set of characters that can quote a token (NULL if none)
+ * escape -		character that can quote quotes (0 if none)
+ * del_quotes -	if TRUE, strip quotes from the returned token, else return
+ *				it exactly as found in the string
+ * encoding -	the active character-set encoding
+ *
+ * Characters in 'delim', if any, will be returned as single-character
+ * tokens unless part of a quoted token.
+ *
+ * Double occurences of the quoting character are always taken to represent
+ * a single quote character in the data.  If escape isn't 0, then escape
+ * followed by anything (except \0) is a data character too.
  *
  * Note that the string s is _not_ overwritten in this implementation.
+ *
+ * NB: it's okay to vary delim, quote, and escape from one call to the
+ * next on a single source string, but changing whitespace is a bad idea
+ * since you might lose data.
  */
 char *
 strtokx(const char *s,
+		const char *whitespace,
 		const char *delim,
 		const char *quote,
-		int escape,
-		char *was_quoted,
-		unsigned int *token_pos,
+		char escape,
+		bool del_quotes,
 		int encoding)
 {
 	static char *storage = NULL;/* store the local copy of the users
@@ -50,23 +66,32 @@ strtokx(const char *s,
 	/* variously abused variables: */
 	unsigned int offset;
 	char	   *start;
-	char	   *cp = NULL;
+	char	   *p;
 
 	if (s)
 	{
 		free(storage);
-		storage = strdup(s);
+		/*
+		 * We may need extra space to insert delimiter nulls for adjacent
+		 * tokens.  2X the space is a gross overestimate, but it's
+		 * unlikely that this code will be used on huge strings anyway.
+		 */
+		storage = (char *) malloc(2 * strlen(s) + 1);
+		if (!storage)
+			return NULL;		/* really "out of memory" */
+		strcpy(storage, s);
 		string = storage;
 	}
 
 	if (!storage)
 		return NULL;
 
-	/* skip leading "whitespace" */
-	offset = strspn(string, delim);
+	/* skip leading whitespace */
+	offset = strspn(string, whitespace);
+	start = &string[offset];
 
-	/* end of string reached */
-	if (string[offset] == '\0')
+	/* end of string reached? */
+	if (*start == '\0')
 	{
 		/* technically we don't need to free here, but we're nice */
 		free(storage);
@@ -75,118 +100,165 @@ strtokx(const char *s,
 		return NULL;
 	}
 
-	/* test if quoting character */
-	if (quote)
-		cp = strchr(quote, string[offset]);
-
-	if (cp)
+	/* test if delimiter character */
+	if (delim && strchr(delim, *start))
 	{
-		/* okay, we have a quoting character, now scan for the closer */
-		char	   *p;
-
-		start = &string[offset + 1];
-
-		if (token_pos)
-			*token_pos = start - storage;
-
-		for (p = start;
-			 *p && (*p != *cp || *(p - 1) == escape);
-			 p += PQmblen(p, encoding)
-			);
-
-		/* not yet end of string? */
+		/*
+		 * If not at end of string, we need to insert a null to terminate
+		 * the returned token.  We can just overwrite the next character
+		 * if it happens to be in the whitespace set ... otherwise move over
+		 * the rest of the string to make room.  (This is why we allocated
+		 * extra space above).
+		 */
+		p = start + 1;
 		if (*p != '\0')
 		{
+			if (!strchr(whitespace, *p))
+				memmove(p + 1, p, strlen(p) + 1);
 			*p = '\0';
 			string = p + 1;
-			if (was_quoted)
-				*was_quoted = *cp;
-			unescape_quotes(start, *cp, escape);
-			return start;
 		}
 		else
 		{
-			if (was_quoted)
-				*was_quoted = *cp;
+			/* at end of string, so no extra work */
 			string = p;
-
-			unescape_quotes(start, *cp, escape);
-			return start;
 		}
-	}
-
-	/* otherwise no quoting character. scan till next delimiter */
-	start = &string[offset];
-
-	if (token_pos)
-		*token_pos = start - storage;
-
-	offset = strcspn(start, delim);
-	if (was_quoted)
-		*was_quoted = 0;
-
-	if (start[offset] != '\0')
-	{
-		start[offset] = '\0';
-		string = &start[offset] + 1;
 
 		return start;
+	}
+
+	/* test if quoting character */
+	if (quote && strchr(quote, *start))
+	{
+		/* okay, we have a quoted token, now scan for the closer */
+		char		thisquote = *start;
+
+		for (p = start + 1; *p; p += PQmblen(p, encoding))
+		{
+			if (*p == escape && p[1] != '\0')
+				p++;			/* process escaped anything */
+			else if (*p == thisquote && p[1] == thisquote)
+				p++;			/* process doubled quote */
+			else if (*p == thisquote)
+			{
+				p++;			/* skip trailing quote */
+				break;
+			}
+		}
+
+		/*
+		 * If not at end of string, we need to insert a null to terminate
+		 * the returned token.  See notes above.
+		 */
+		if (*p != '\0')
+		{
+			if (!strchr(whitespace, *p))
+				memmove(p + 1, p, strlen(p) + 1);
+			*p = '\0';
+			string = p + 1;
+		}
+		else
+		{
+			/* at end of string, so no extra work */
+			string = p;
+		}
+
+		/* Clean up the token if caller wants that */
+		if (del_quotes)
+			strip_quotes(start, thisquote, escape, encoding);
+
+		return start;
+	}
+
+	/*
+	 * Otherwise no quoting character.  Scan till next whitespace,
+	 * delimiter or quote.  NB: at this point, *start is known not to be
+	 * '\0', whitespace, delim, or quote, so we will consume at least
+	 * one character.
+	 */
+	offset = strcspn(start, whitespace);
+
+	if (delim)
+	{
+		unsigned int offset2 = strcspn(start, delim);
+
+		if (offset > offset2)
+			offset = offset2;
+	}
+
+	if (quote)
+	{
+		unsigned int offset2 = strcspn(start, quote);
+
+		if (offset > offset2)
+			offset = offset2;
+	}
+
+	p = start + offset;
+
+	/*
+	 * If not at end of string, we need to insert a null to terminate
+	 * the returned token.  See notes above.
+	 */
+	if (*p != '\0')
+	{
+		if (!strchr(whitespace, *p))
+			memmove(p + 1, p, strlen(p) + 1);
+		*p = '\0';
+		string = p + 1;
 	}
 	else
 	{
-		string = &start[offset];
-		return start;
+		/* at end of string, so no extra work */
+		string = p;
 	}
+
+	return start;
 }
 
 
-
-
 /*
- * unescape_quotes
+ * strip_quotes
  *
- * Resolves escaped quotes. Used by strtokx above.
+ * Remove quotes from the string at *source.  Leading and trailing occurrences
+ * of 'quote' are removed; embedded double occurrences of 'quote' are reduced
+ * to single occurrences; if 'escape' is not 0 then 'escape' removes special
+ * significance of next character.
+ *
+ * Note that the source string is overwritten in-place.
  */
 static void
-unescape_quotes(char *source, int quote, int escape)
+strip_quotes(char *source, char quote, char escape, int encoding)
 {
-	char	   *p;
-	char	   *destination,
-			   *tmp;
+	char	   *src;
+	char	   *dst;
 
 #ifdef USE_ASSERT_CHECKING
 	assert(source);
+	assert(quote);
 #endif
 
-	destination = calloc(1, strlen(source) + 1);
-	if (!destination)
+	src = dst = source;
+
+	if (*src && *src == quote)
+		src++;					/* skip leading quote */
+
+	while (*src)
 	{
-		perror("calloc");
-		exit(EXIT_FAILURE);
+		char		c = *src;
+		int			i;
+
+		if (c == quote && src[1] == '\0')
+			break;				/* skip trailing quote */
+		else if (c == quote && src[1] == quote)
+			src++;				/* process doubled quote */
+		else if (c == escape && src[1] != '\0')
+			src++;				/* process escaped character */
+
+		i = PQmblen(src, encoding);
+		while (i--)
+			*dst++ = *src++;
 	}
 
-	tmp = destination;
-
-	for (p = source; *p; p++)
-	{
-		char		c;
-
-		if (*p == escape && *(p + 1) && quote == *(p + 1))
-		{
-			c = *(p + 1);
-			p++;
-		}
-		else
-			c = *p;
-
-		*tmp = c;
-		tmp++;
-	}
-
-	/* Terminating null character */
-	*tmp = '\0';
-
-	strcpy(source, destination);
-
-	free(destination);
+	*dst = '\0';
 }
