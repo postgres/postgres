@@ -8,30 +8,26 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.3 1996/11/03 23:27:04 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.4 1996/11/06 07:31:22 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include "postgres.h"
-#include "utils/builtins.h"
-#include "utils/oidcompos.h"
-#include "utils/palloc.h"
-#include "access/heapam.h"
-#include "access/genam.h"
-#include "access/skey.h"
-#include "storage/bufmgr.h"
-#include "nodes/execnodes.h"
-#include "catalog/catalog.h"
-#include "catalog/catname.h"
-#include "catalog/pg_index.h"
-#include "catalog/pg_proc.h"
-#include "catalog/pg_class.h"
-#include "catalog/pg_attribute.h"
-#include "utils/syscache.h"
-#include "catalog/indexing.h"
-#include "catalog/index.h"
+#include <postgres.h>
 
-#include "miscadmin.h"
+#include <utils/builtins.h>
+#include <utils/oidcompos.h>
+#include <access/heapam.h>
+#include <access/genam.h>
+#include <storage/bufmgr.h>
+#include <nodes/execnodes.h>
+#include <catalog/catalog.h>
+#include <catalog/catname.h>
+#include <catalog/pg_index.h>
+#include <catalog/pg_proc.h>
+#include <utils/syscache.h>
+#include <catalog/indexing.h>
+#include <catalog/index.h>
+#include <miscadmin.h>
 
 /*
  * Names of indices on the following system catalogs:

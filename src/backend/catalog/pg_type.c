@@ -7,30 +7,28 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.3 1996/11/05 11:57:55 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.4 1996/11/06 07:31:26 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <string.h>
-#include "postgres.h"
+#include <postgres.h>
+
 #include <utils/syscache.h>
 #include <catalog/pg_proc.h>
-
-
-#include "access/heapam.h"
-#include "access/relscan.h"
-#include "access/skey.h"
-#include "access/tupdesc.h"
-#include "utils/builtins.h"
-#include "utils/palloc.h"
-#include "fmgr.h"
-#include "parser/catalog_utils.h"
-
-#include "catalog/catname.h"
-#include "catalog/indexing.h"
-#include "storage/lmgr.h"
-
-#include "miscadmin.h"
+#include <access/heapam.h>
+#include <access/relscan.h>
+#include <utils/builtins.h>
+#include <fmgr.h>
+#include <parser/catalog_utils.h>
+#include <catalog/catname.h>
+#include <catalog/indexing.h>
+#include <storage/lmgr.h>
+#include <miscadmin.h>
+#ifndef HAVE_MEMMOVE
+# include <regex/utils.h>
+#else
+# include <string.h>
+#endif
 
 /* ----------------------------------------------------------------
  * 	TypeGetWithOpenRelation

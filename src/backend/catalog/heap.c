@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.5 1996/11/06 06:47:03 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.6 1996/11/06 07:31:19 scrappy Exp $
  *
  * INTERFACE ROUTINES
  *	heap_creatr()		- Create an uncataloged heap relation
@@ -26,6 +26,14 @@
  */
 #include <postgres.h>
 
+#include <catalog/pg_ipl.h>
+#include <catalog/pg_inherits.h>
+#include <catalog/pg_proc.h>
+#include <miscadmin.h>
+#include <catalog/indexing.h>
+#include <catalog/catalog.h>
+#include <utils/builtins.h>
+#include <access/heapam.h>
 #include <utils/mcxt.h>
 #include <parser/catalog_utils.h>
 #include <catalog/index.h>
@@ -39,37 +47,11 @@
 #include <rewrite/rewriteRemove.h>
 #include <storage/lmgr.h>
 #include <storage/smgr.h>
-#include <access/relscan.h>
-#include <utils/tqual.h>
-
-/*
-#include <catalog/heap.h>
-#include <catalog/pg_proc.h>
-#include <parser/catalog_utils.h>
-#include <access/heapam.h>
-#include <access/genam.h>
-#include <access/istrat.h>
-#include <storage/bufmgr.h>
-#include <lib/hasht.h>
-#include <miscadmin.h>
-#include <fmgr.h>
-#include <utils/builtins.h>
-#include <utils/mcxt.h>
-#include <utils/relcache.h>
-#include <catalog/catname.h>
-#include <catalog/pg_index.h>
-#include <catalog/pg_inherits.h>
-#include <catalog/pg_ipl.h>
-#include <catalog/index.h>
-#include <catalog/indexing.h>
-#include <catalog/catalog.h>
-#include <storage/lmgr.h>
-#include <rewrite/rewriteRemove.h>
-#include <storage/smgr.h>
-*/
-
-static void AddNewAttributeTuples(Oid new_rel_oid, TupleDesc tupdesc);
-static void CheckAttributeNames(TupleDesc tupdesc);
+#ifndef HAVE_MEMMOVE
+# include <regex/utils.h>
+#else
+# include <string.h>
+#endif
 
 /* ----------------------------------------------------------------
  *		XXX UGLY HARD CODED BADNESS FOLLOWS XXX
@@ -1179,4 +1161,263 @@ DeletePgTypeTuple(Relation rdesc)
     
     /* ----------------
      *	now scan pg_attribute.  if any other relations have
-     *  attributes of the type of the relation we are de
+     *  attributes of the type of the relation we are deleteing
+     *  then we have to disallow the deletion.  should talk to
+     *  stonebraker about this.  -cim 6/19/90
+     * ----------------
+     */
+    typoid = tup->t_oid;
+    
+    pg_attribute_desc = heap_openr(AttributeRelationName);
+    
+    ScanKeyEntryInitialize(&attkey,
+			   0, Anum_pg_attribute_atttypid, F_INT4EQ,
+			   typoid);
+    
+    pg_attribute_scan = heap_beginscan(pg_attribute_desc,
+				       0,
+				       NowTimeQual,
+				       1,
+				       &attkey);
+    
+    /* ----------------
+     *	try and get a pg_attribute tuple.  if we succeed it means
+     *  we cant delete the relation because something depends on
+     *  the schema.
+     * ----------------
+     */
+    atttup = heap_getnext(pg_attribute_scan, 0, (Buffer *)NULL);
+    
+    if (PointerIsValid(atttup)) {
+	Oid relid = ((AttributeTupleForm) GETSTRUCT(atttup))->attrelid;
+	
+	heap_endscan(pg_type_scan);
+	heap_close(pg_type_desc);
+	heap_endscan(pg_attribute_scan);
+	heap_close(pg_attribute_desc);
+	
+	elog(WARN, "DeletePgTypeTuple: att of type %s exists in relation %d",
+	     &rdesc->rd_rel->relname, relid);	
+    }
+    heap_endscan(pg_attribute_scan);
+    heap_close(pg_attribute_desc);
+    
+    /* ----------------
+     *  Ok, it's safe so we delete the relation tuple
+     *  from pg_type and finish up.  But first end the scan so that
+     *  we release the read lock on pg_type.  -mer 13 Aug 1991
+     * ----------------
+     */
+    heap_endscan(pg_type_scan);
+    heap_delete(pg_type_desc, &tup->t_ctid);
+    
+    heap_close(pg_type_desc);
+}
+
+/* --------------------------------
+ *	heap_destroy
+ *
+ * --------------------------------
+ */
+void
+heap_destroy(char *relname)
+{
+    Relation	rdesc;
+    
+    /* ----------------
+     *	first open the relation.  if the relation does exist,
+     *  heap_openr() returns NULL.
+     * ----------------
+     */
+    rdesc = heap_openr(relname);
+    if (rdesc == NULL)
+	elog(WARN,"Relation %s Does Not Exist!", relname);
+    
+    /* ----------------
+     *	prevent deletion of system relations
+     * ----------------
+     */
+    if (IsSystemRelationName(RelationGetRelationName(rdesc)->data))
+	elog(WARN, "amdestroy: cannot destroy %s relation",
+	     &rdesc->rd_rel->relname);
+    
+    /* ----------------
+     *	remove inheritance information
+     * ----------------
+     */
+    RelationRemoveInheritance(rdesc);
+    
+    /* ----------------
+     *	remove indexes if necessary
+     * ----------------
+     */
+    if (rdesc->rd_rel->relhasindex) {
+	RelationRemoveIndexes(rdesc);
+    }
+
+    /* ----------------
+     *	remove rules if necessary
+     * ----------------
+     */
+    if (rdesc->rd_rules != NULL) {
+	RelationRemoveRules(rdesc->rd_id);
+    }
+    
+    /* ----------------
+     *	delete attribute tuples
+     * ----------------
+     */
+    DeletePgAttributeTuples(rdesc);
+    
+    /* ----------------
+     *	delete type tuple.  here we want to see the effects
+     *  of the deletions we just did, so we use setheapoverride().
+     * ----------------
+     */
+    setheapoverride(true);
+    DeletePgTypeTuple(rdesc);
+    setheapoverride(false);
+    
+    /* ----------------
+     *	delete relation tuple
+     * ----------------
+     */
+    DeletePgRelationTuple(rdesc);
+    
+    /* ----------------
+     *	flush the relation from the relcache
+     * ----------------
+     */
+    RelationIdInvalidateRelationCacheByRelationId(rdesc->rd_id);
+
+    /* ----------------
+     *	unlink the relation and finish up.
+     * ----------------
+     */
+    (void) smgrunlink(rdesc->rd_rel->relsmgr, rdesc);
+    if(rdesc->rd_istemp) {
+        rdesc->rd_tmpunlinked = TRUE;
+    }
+    heap_close(rdesc);
+}
+
+/*
+ * heap_destroyr
+ *    destroy and close temporary relations
+ *
+ */
+
+void 
+heap_destroyr(Relation rdesc)
+{
+    ReleaseTmpRelBuffers(rdesc);
+    (void) smgrunlink(rdesc->rd_rel->relsmgr, rdesc);
+    if(rdesc->rd_istemp) {
+        rdesc->rd_tmpunlinked = TRUE;
+    }
+    heap_close(rdesc);
+    RemoveFromTempRelList(rdesc);
+}
+
+
+/**************************************************************
+  functions to deal with the list of temporary relations 
+**************************************************************/
+
+/* --------------
+   InitTempRellist():
+
+   initialize temporary relations list
+   the tempRelList is a list of temporary relations that
+   are created in the course of the transactions
+   they need to be destroyed properly at the end of the transactions
+
+   MODIFIES the global variable tempRels
+
+ >> NOTE <<
+
+   malloc is used instead of palloc because we KNOW when we are
+   going to free these things.  Keeps us away from the memory context
+   hairyness
+
+*/
+void
+InitTempRelList()
+{
+    if (tempRels) {
+	free(tempRels->rels);
+	free(tempRels);
+    };
+
+    tempRels = (TempRelList*)malloc(sizeof(TempRelList));
+    tempRels->size = TEMP_REL_LIST_SIZE;
+    tempRels->rels = (Relation*)malloc(sizeof(Relation) * tempRels->size);
+    memset(tempRels->rels, 0, sizeof(Relation) * tempRels->size);
+    tempRels->num = 0;
+}
+
+/*
+   removes a relation from the TempRelList
+
+   MODIFIES the global variable tempRels
+      we don't really remove it, just mark it as NULL
+      and DestroyTempRels will look for NULLs
+*/
+void
+RemoveFromTempRelList(Relation r)
+{
+    int i;
+
+    if (!tempRels)
+	return;
+
+    for (i=0; i<tempRels->num; i++) {
+	if (tempRels->rels[i] == r) {
+	    tempRels->rels[i] = NULL;
+	    break;
+	}
+    }
+}
+
+/*
+   add a temporary relation to the TempRelList
+
+   MODIFIES the global variable tempRels
+*/
+void
+AddToTempRelList(Relation r)
+{
+    if (!tempRels)
+	return;
+
+    if (tempRels->num == tempRels->size) {
+	tempRels->size += TEMP_REL_LIST_SIZE;
+	tempRels->rels = realloc(tempRels->rels, tempRels->size);
+    }
+    tempRels->rels[tempRels->num] = r;
+    tempRels->num++;
+}
+
+/*
+   go through the tempRels list and destroy each of the relations
+*/
+void
+DestroyTempRels()
+{
+    int i;
+    Relation rdesc;
+
+    if (!tempRels)
+	return;
+
+    for (i=0;i<tempRels->num;i++) {
+	rdesc = tempRels->rels[i];
+	/* rdesc may be NULL if it has been removed from the list already */
+	if (rdesc)
+	    heap_destroyr(rdesc);
+    }
+    free(tempRels->rels);
+    free(tempRels);
+    tempRels = NULL;
+}
+
