@@ -8,19 +8,21 @@ typedef char* c;
 exec sql type ind is union { int integer; short smallint; };
 typedef union { int integer; short smallint; } ind;
 
+exec sql type str is varchar[8];
+
 int
 main ()
 {
 	typedef struct { long born; short age; } birthinfo;
 	exec sql type birthinfo is struct { long born; short age; };
 exec sql begin declare section;
-	struct personal_struct	{	varchar name[8];
+	struct personal_struct	{	str name;
 					birthinfo birth;
 				} personal;
 	struct personal_indicator {	int ind_name;
 					birthinfo ind_birth;
 				  } ind_personal;
-	int ind_married;
+	float ind_married;
 	ind children;
 	ind ind_children;
 	char *married = NULL;
@@ -68,8 +70,8 @@ exec sql end declare section;
 			printf(", born %d", personal.birth.born);
 		if (ind_personal.ind_birth.age >= 0)
 			printf(", age = %d", personal.birth.age);
-		if (ind_married >= 0)
-			printf(", married %10.10s", married);
+		if ((long)ind_married >= 0)
+			printf(", married %s", married);
 		if (ind_children.smallint >= 0)
 			printf(", children = %d", children.integer);
 		putchar('\n');
@@ -98,8 +100,8 @@ exec sql end declare section;
 			printf(", born %d", personal.birth.born);
 		if (ind_personal.ind_birth.age >= 0)
 			printf(", age = %d", personal.birth.age);
-		if (ind_married >= 0)
-			printf(", married %10.10s", married);
+		if ((long)ind_married >= 0)
+			printf(", married %s", married);
 		if (ind_children.smallint >= 0)
 			printf(", children = %d", children.integer);
 		putchar('\n');

@@ -573,6 +573,9 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 		*dimension = type_dimension;
 	}
 
+	if (*length >= 0 && *dimension >= 0 && pointer)
+		yyerror("No multi-dimensional array support");
+
 	switch (type_enum)
 	{
 	   case ECPGt_struct:
@@ -589,9 +592,9 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 
                 break;
            case ECPGt_varchar:
-	        /* pointer has to get length 0 */
+	        /* pointer has to get dimension 0 */
                 if (pointer)
-                    *length=0;
+                    *dimension = 0;
 
                 /* one index is the string length */
                 if (*length < 0)
@@ -3721,11 +3724,11 @@ a_expr:  attr opt_indirection
 				}
 		| a_expr IN '(' in_expr ')'
 				{
-					$$ = make4_str($1, make1_str("in ("), $4, make1_str(")")); 
+					$$ = make4_str($1, make1_str(" in ("), $4, make1_str(")")); 
 				}
 		| a_expr NOT IN '(' not_in_expr ')'
 				{
-					$$ = make4_str($1, make1_str("not in ("), $5, make1_str(")")); 
+					$$ = make4_str($1, make1_str(" not in ("), $5, make1_str(")")); 
 				}
 		| a_expr Op '(' SubSelect ')'
 				{
@@ -4838,7 +4841,8 @@ type: simple_type
 		{
 			$$.type_str = $1;
 			$$.type_enum = ECPGt_int;
-			$$.type_dimension = -1;
+		
+	$$.type_dimension = -1;
   			$$.type_index = -1;
 		}
 	| symbol
@@ -4846,7 +4850,7 @@ type: simple_type
 			/* this is for typedef'ed types */
 			struct typedefs *this = get_typedef($1);
 
-			$$.type_str = mm_strdup(this->name);
+			$$.type_str = (this->type->type_enum == ECPGt_varchar) ? make1_str("") : mm_strdup(this->name);
                         $$.type_enum = this->type->type_enum;
 			$$.type_dimension = this->type->type_dimension;
   			$$.type_index = this->type->type_index;
@@ -4945,8 +4949,6 @@ variable: opt_pointer symbol opt_array_bounds opt_initializer
                                switch(dimension)
                                {
                                   case 0:
-                                      strcpy(dim, "[]");
-                                      break;
 				  case -1:
                                   case 1:
                                       *dim = '\0';
@@ -4957,11 +4959,14 @@ variable: opt_pointer symbol opt_array_bounds opt_initializer
                                }
 			       sprintf(ascii_len, "%d", length);
 
-                               if (length > 0)
-                                   $$ = make4_str(make5_str(mm_strdup(actual_storage[struct_level]), make1_str(" struct varchar_"), mm_strdup($2), make1_str(" { int len; char arr["), mm_strdup(ascii_len)), make1_str("]; } "), mm_strdup($2), mm_strdup(dim));
-                               else
-				   yyerror ("pointer to varchar are not implemented yet");
-/*                                   $$ = make4_str(make3_str(mm_strdup(actual_storage[struct_level]), make1_str(" struct varchar_"), mm_strdup($2)), make1_str(" { int len; char *arr; }"), mm_strdup($2), mm_strdup(dim));*/
+                               if (length == 0)
+				   yyerror ("pointer to varchar are not implemented");
+
+			       if (dimension == 0)
+				   $$ = make4_str(make5_str(mm_strdup(actual_storage[struct_level]), make1_str(" struct varchar_"), mm_strdup($2), make1_str(" { int len; char arr["), mm_strdup(ascii_len)), make1_str("]; } *"), mm_strdup($2), $4);
+			       else
+                                   $$ = make5_str(make5_str(mm_strdup(actual_storage[struct_level]), make1_str(" struct varchar_"), mm_strdup($2), make1_str(" { int len; char arr["), mm_strdup(ascii_len)), make1_str("]; } "), mm_strdup($2), mm_strdup(dim), $4);
+
                                break;
                            case ECPGt_char:
                            case ECPGt_unsigned_char:

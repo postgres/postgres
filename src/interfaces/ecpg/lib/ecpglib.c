@@ -113,7 +113,7 @@ register_error(long code, char *fmt,...)
 	va_end(args);
 	sqlca.sqlerrm.sqlerrml = strlen(sqlca.sqlerrm.sqlerrmc);
 	
-	/* free all memory we allocate for the user */
+	/* free all memory we have allocated for the user */
 	for (am = auto_allocs; am;)
 	{
 		struct auto_mem *act = am;
@@ -178,7 +178,7 @@ ECPGfinish(struct connection * act)
 static char *
 ecpg_alloc(long size, int lineno)
 {
-	char	   *new = (char *) malloc(size);
+	char	   *new = (char *) calloc(1L, size);
 
 	if (!new)
 	{
@@ -344,7 +344,7 @@ create_statement(int lineno, struct connection *connection, struct statement ** 
 			var->varcharsize = va_arg(ap, long);
 			var->arrsize = va_arg(ap, long);
 			var->offset = va_arg(ap, long);
-			
+
 			if (var->arrsize == 0 || var->varcharsize == 0)
 				var->value = *((void **)(var->pointer));
 			else
@@ -710,6 +710,8 @@ ECPGexecute(struct statement * stmt)
 					 */					 
 					if (var->arrsize == 0 || var->varcharsize == 0)
 					{
+					    int len = 0;
+					    
 					    switch(var->type)
 					    {
 						case ECPGt_char:
@@ -720,38 +722,26 @@ ECPGexecute(struct statement * stmt)
 								/* check strlen for each tuple */
 								for (act_tuple = 0; act_tuple < ntuples; act_tuple++)
 								{
-									int len = strlen(PQgetvalue(results, act_tuple, act_field));
+									int len = strlen(PQgetvalue(results, act_tuple, act_field)) + 1;
 									
 									if (len > var->varcharsize)
 										var->varcharsize = len;
 								}
 								var->offset *= var->varcharsize;
-								add_mem((void *)(var->value) = *((void **)(var->pointer)) = (void *) ecpg_alloc(var->offset * ntuples, stmt->lineno), stmt->lineno);
+								len = var->offset * ntuples;
 							}
 							break;
-#if 0							
 						case ECPGt_varchar:
-							if (((struct ECPGgeneric_varchar *)var->value)->arr == NULL)
-							{
-								var->varcharsize = 0;
-								/* check strlen for each tuple */
-								for (act_tuple = 0; act_tuple < ntuples; act_tuple++)
-								{
-									int len = strlen(PQgetvalue(results, act_tuple, act_field));
-									
-									if (len > var->varcharsize)
-										var->varcharsize = len;
-										
-									((struct ECPGgeneric_varchar *) ((long) var->value + var->offset * act_tuple))->arr = (char *) ecpg_alloc(len, stmt->lineno);
-								}
-							}
+							if (var->value == NULL)
+								len = ntuples * (var->varcharsize + sizeof (int));
 							break;							                    
-#endif
 						default:
 							if (var->value == NULL)
-								add_mem((void *)(var->value) = *((void **)(var->pointer)) = (void *) ecpg_alloc(var->offset * ntuples, stmt->lineno), stmt->lineno);
+								len = var->offset * ntuples;
 							break;
 					    }
+					    
+					    add_mem((void *)(var->value) = *((void **)(var->pointer)) = (void *) ecpg_alloc(len, stmt->lineno), stmt->lineno);
 					}
 									
 					for (act_tuple = 0; act_tuple < ntuples && status; act_tuple++)

@@ -1,4 +1,4 @@
-all: test1 test2 perftest
+all: test1 test2 test3 perftest
 
 LDFLAGS=-g -I /usr/local/pgsql/include -L/usr/local/pgsql/lib -lecpg -lpq -lcrypt
 
@@ -10,9 +10,13 @@ test2: test2.c
 test2.c: test2.pgc
 	/usr/local/pgsql/bin/ecpg $?
 
+test3: test3.c
+test3.c: test3.pgc
+	/usr/local/pgsql/bin/ecpg $?
+
 perftest: perftest.c
 perftest.c:perftest.pgc
 	/usr/local/pgsql/bin/ecpg $?
 
 clean:
-	-/bin/rm test1 test2 perftest *.c log
+	-/bin/rm test1 test2 test3 perftest *.c log
