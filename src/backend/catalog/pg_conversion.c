@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_conversion.c,v 1.1 2002/07/11 07:39:27 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_conversion.c,v 1.2 2002/07/16 06:58:44 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -194,8 +194,9 @@ Oid FindDefaultConversion(Oid name_space, int4 for_encoding, int4 to_encoding)
 	{
 		body = (Form_pg_conversion)GETSTRUCT(tuple);
 		if (body->conforencoding == for_encoding &&
-			body->conforencoding == to_encoding &&
-			body->condefault == TRUE) {
+			body->contoencoding == to_encoding &&
+			body->condefault == TRUE)
+		{
 			proc = body->conproc;
 			break;
 		}
