@@ -94,9 +94,8 @@ PGAPI_StmtError(	HSTMT hstmt,
 	StatementClass *stmt = (StatementClass *) hstmt;
 	char		*msg;
 	int		status;
-	BOOL		once_again = FALSE,
-			partial_ok = (flag & PODBC_ALLOW_PARTIAL_EXTRACT != 0),
-			clear_str = (flag & PODBC_ERROR_CLEAR != 0);
+	BOOL	partial_ok = ((flag & PODBC_ALLOW_PARTIAL_EXTRACT) != 0),
+			clear_str = ((flag & PODBC_ERROR_CLEAR) != 0);
 	SWORD		msglen, stapos, wrtlen, pcblen;
 
 	mylog("**** PGAPI_StmtError: hstmt=%u <%d>\n", hstmt, cbErrorMsgMax);

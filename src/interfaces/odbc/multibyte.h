@@ -86,4 +86,7 @@ void encoded_str_constr(encoded_str *encstr, int ccsc, const char *str);
 #define make_encoded_str(encstr, conn, str) encoded_str_constr(encstr, conn->ccsc, str)
 extern int encoded_nextchar(encoded_str *encstr);
 extern int encoded_byte_check(encoded_str *encstr, int abspos);
+
+/* This doesn't seem to be called by anyone, bjm 2002-03-24 */
+extern int pg_ismb(int characterset_code);
 #define check_client_encoding(X) pg_CS_name(pg_CS_code(X))

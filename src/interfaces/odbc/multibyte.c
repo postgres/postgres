@@ -228,8 +228,8 @@ pg_CS_stat(int stat,unsigned int character,int characterset_code)
 					character > 0xa0)
 					stat = 3;
 				else if (stat == 3 ||
-					stat < 2 &&
-					character > 0xa0)
+					(stat < 2 &&
+					character > 0xa0))
 					stat = 2;
 				else if (stat == 2)
 					stat = 1;

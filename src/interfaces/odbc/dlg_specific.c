@@ -641,7 +641,7 @@ makeConnectString(char *connect_string, const ConnInfo *ci, UWORD len)
 			flag |= BIT_TRUEISMINUS1;
 
 		sprintf(&connect_string[hlen],
-				";A6=%s;A7=%d;A8=%d;B0=%d;B1=%d;C2=%s;CX=%02x%x",
+				";A6=%s;A7=%d;A8=%d;B0=%d;B1=%d;C2=%s;CX=%02x%lx",
 				encoded_conn_settings,
 				ci->drivers.fetch_max,
 				ci->drivers.socket_buffersize,
@@ -662,7 +662,7 @@ unfoldCXAttribute(ConnInfo *ci, const char *value)
 	if (strlen(value) < 2)
 	{
 		count = 3;
-		sscanf(value, "%x", &flag);
+		sscanf(value, "%lx", &flag);
 	}
 	else
 	{
@@ -670,7 +670,7 @@ unfoldCXAttribute(ConnInfo *ci, const char *value)
 		memcpy(cnt, value, 2);
 		cnt[2] = '\0';
 		sscanf(cnt, "%x", &count);
-		sscanf(value + 2, "%x", &flag);
+		sscanf(value + 2, "%lx", &flag);
 	}
 	ci->disallow_premature = (char)((flag & BIT_DISALLOWPREMATURE) != 0);
 	ci->updatable_cursors = (char)((flag & BIT_UPDATABLECURSORS) != 0);

@@ -3983,7 +3983,7 @@ PGAPI_TablePrivileges(
 				char	*grolist, *uid, *delm;
 
 				snprintf(proc_query, sizeof(proc_query) - 1, "select grolist from pg_group where groname = '%s'", user);
-				if (gres = CC_send_query(conn, proc_query, NULL, CLEAR_RESULT_ON_ABORT))
+				if ((gres = CC_send_query(conn, proc_query, NULL, CLEAR_RESULT_ON_ABORT)))
 				{
 					grolist = QR_get_value_backend_row(gres, 0, 0);
 					if (grolist && grolist[0] == '{')

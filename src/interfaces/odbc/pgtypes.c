@@ -234,7 +234,9 @@ pgtype_to_sqltype(StatementClass *stmt, Int4 type)
 {
 	ConnectionClass	*conn = SC_get_conn(stmt);
 	ConnInfo	*ci = &(conn->connInfo);
+#if (ODBCVER >= 0x0300)
 	EnvironmentClass *env = (EnvironmentClass *) (conn->henv);
+#endif
 
 	switch (type)
 	{
@@ -342,7 +344,9 @@ pgtype_to_ctype(StatementClass *stmt, Int4 type)
 {
 	ConnectionClass	*conn = SC_get_conn(stmt);
 	ConnInfo	*ci = &(conn->connInfo);
+#if (ODBCVER >= 0x0300)
 	EnvironmentClass *env = (EnvironmentClass *) (conn->henv);
+#endif
 
 	switch (type)
 	{

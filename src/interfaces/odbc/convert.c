@@ -107,7 +107,7 @@ char	   *mapFuncs[][2] = {
 	{"DAYNAME",	 "to_char($1, 'Day')" },
 	{"DAYOFMONTH",  "cast(extract(day from $1) as integer)" },
 	{"DAYOFWEEK",	 "(cast(extract(dow from $1) as integer) + 1)" },
-	{"DAYOFYEAR",	 "cast(extract(doy from $1) as integer)" }, 
+	{"DAYOFYEAR",	 "cast(extract(doy from $1) as integer)" },
 	{"HOUR",	 "cast(extract(hour from $1) as integer)" },
 	{"MINUTE",	"cast(extract(minute from $1) as integer)" },
 	{"MONTH",	"cast(extract(month from $1) as integer)" },
@@ -161,7 +161,9 @@ timestamp2stime(const char *str, SIMPLE_TIME *st, BOOL *bZone, int *zone)
 			   *ptr;
 	int			scnt,
 				i;
+#if defined(WIN32) || defined(HAVE_INT_TIMEZONE)
 	long		timediff;
+#endif
 	BOOL		withZone = *bZone;
 
 	*bZone = FALSE;
@@ -402,7 +404,7 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 		else
 		{
 			stmt->errornumber = STMT_RETURN_NULL_WITHOUT_INDICATOR;
-			stmt->errormsg = "StrLen_or_IndPtr was a null pointer and NULL data was retrieved";	
+			stmt->errormsg = "StrLen_or_IndPtr was a null pointer and NULL data was retrieved";
 			SC_log_error(func, "", stmt);
 			return	SQL_ERROR;
 		}
@@ -757,7 +759,7 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 				if (cbValueMax < 2 * (SDWORD) ucount)
 					result = COPY_RESULT_TRUNCATED;
 				len = ucount * 2;
-				free(str); 
+				free(str);
 			}
 			else
 			{
@@ -1431,7 +1433,8 @@ copy_statement_with_parameters(StatementClass *stmt)
 		 */
 		else if (oldchar == '{')
 		{
-			char	   *begin = &old_statement[opos], *end;
+			char	   *begin = &old_statement[opos];
+			const char *end;
 
 			/* procedure calls */
 			if (stmt->statement_type == STMT_TYPE_PROCCALL)
@@ -1463,8 +1466,8 @@ copy_statement_with_parameters(StatementClass *stmt)
 					proc_no_param = FALSE;
 				continue;
 			}
-			if (convert_escape(begin, stmt, &npos, &new_stsize, &end
-) != CONVERT_ESCAPE_OK)
+			if (convert_escape(begin, stmt, &npos, &new_stsize, &end) !=
+				CONVERT_ESCAPE_OK)
 			{
 				stmt->errormsg = "ODBC escape convert error";
 				stmt->errornumber = STMT_EXEC_ERROR;
@@ -1604,7 +1607,7 @@ copy_statement_with_parameters(StatementClass *stmt)
 					buffer += (bind_size * current_row);
 				else if (ctypelen = ctype_length(stmt->parameters[param_number].CType), ctypelen > 0)
 					buffer += current_row * ctypelen;
-				else 
+				else
 					buffer += current_row * stmt->parameters[param_number].buflen;
 			}
 			if (stmt->parameters[param_number].used)
@@ -2080,7 +2083,7 @@ mapFunction(const char *func, int param_count)
 		if (mapFuncs[i][0][0] == '%')
 		{
 			if (mapFuncs[i][0][1] - '0' == param_count &&
-			    !stricmp(mapFuncs[i][0] + 2, func))
+				!stricmp(mapFuncs[i][0] + 2, func))
 				return mapFuncs[i][1];
 		}
 		else if (!stricmp(mapFuncs[i][0], func))
@@ -2098,7 +2101,7 @@ static int processParameters(const ConnectionClass *conn, const char *value, cha
  * inner_convert_escape()
  * work with embedded escapes sequences
  */
-     
+
 static
 int inner_convert_escape(const ConnectionClass *conn, const char *value,
 		char *result, UInt4 maxLen, const char **input_resume,
@@ -2111,7 +2114,7 @@ int inner_convert_escape(const ConnectionClass *conn, const char *value,
 	const char *valptr;
 	UInt4	vlen, prtlen, input_consumed, param_consumed, extra_len;
 	Int4	param_pos[16][2];
- 
+
 	valptr = value;
 	if (*valptr == '{') /* skip the first { */
 		valptr++;
@@ -2123,7 +2126,7 @@ int inner_convert_escape(const ConnectionClass *conn, const char *value,
 		valptr++;
 	while ((*valptr != '\0') && isspace((unsigned char) *valptr))
 		valptr++;
-     
+
 	if (end = my_strchr(conn, valptr, '}'), NULL == end)
 	{
 		mylog("%s couldn't find the ending }\n",func);
@@ -2135,7 +2138,7 @@ int inner_convert_escape(const ConnectionClass *conn, const char *value,
 	valnts[vlen] = '\0';
 	*input_resume = valptr + vlen; /* resume from the last } */
 	mylog("%s: key='%s', val='%s'\n", func, key, valnts);
-     
+
 	extra_len = 0;
 	if (isalnum(result[-1])) /* Avoid the concatenation of the function name with the previous word. Aceto */
 	{
@@ -2172,7 +2175,7 @@ int inner_convert_escape(const ConnectionClass *conn, const char *value,
 	{
 		/* Literal; return the escape part as-is */
 		strncpy(result, valnts, maxLen);
-		prtlen = vlen; 
+		prtlen = vlen;
 	}
 	else if (strcmp(key, "fn") == 0)
 	{
@@ -2183,7 +2186,7 @@ int inner_convert_escape(const ConnectionClass *conn, const char *value,
 		char	*funcEnd = valnts;
 		char     svchar;
 		const char	*mapExpr;
-     
+
 		params[sizeof(params)-1] = '\0';
 
 		while ((*funcEnd != '\0') && (*funcEnd != '(') &&
@@ -2197,7 +2200,7 @@ int inner_convert_escape(const ConnectionClass *conn, const char *value,
 			funcEnd++;
 
 		/*
- 		 * We expect left parenthesis here, else return fn body as-is
+		 * We expect left parenthesis here, else return fn body as-is
 		 * since it is one of those "function constants".
 		 */
 		if (*funcEnd != '(')
@@ -2213,7 +2216,7 @@ int inner_convert_escape(const ConnectionClass *conn, const char *value,
 		 */
 
 		valptr += (UInt4)(funcEnd - valnts);
-		if (subret = processParameters(conn, valptr, params, sizeof(params) - 1, &input_consumed, &param_consumed, param_pos), CONVERT_ESCAPE_OK != subret) 
+		if (subret = processParameters(conn, valptr, params, sizeof(params) - 1, &input_consumed, &param_consumed, param_pos), CONVERT_ESCAPE_OK != subret)
 			return CONVERT_ESCAPE_ERROR;
 
 		for (param_count = 0;; param_count++)
@@ -2222,9 +2225,9 @@ int inner_convert_escape(const ConnectionClass *conn, const char *value,
 				break;
 		}
 		if (param_count == 1 &&
-		    param_pos[0][1] < param_pos[0][0])
+			param_pos[0][1] < param_pos[0][0])
 			param_count = 0;
-		
+
 		mapExpr = mapFunction(key, param_count);
 		if (mapExpr == NULL)
 			prtlen = snprintf(result, maxLen, "%s%s", key, params);
@@ -2256,7 +2259,7 @@ int inner_convert_escape(const ConnectionClass *conn, const char *value,
 				{
 					pidx = *mapptr - '0' - 1;
 					if (pidx < 0 ||
-					    param_pos[pidx][0] <0)
+						param_pos[pidx][0] <0)
 					{
 						qlog("%s %dth param not found for the expression %s\n", pidx + 1, mapExpr);
 						return CONVERT_ESCAPE_ERROR;
@@ -2291,7 +2294,7 @@ int inner_convert_escape(const ConnectionClass *conn, const char *value,
 		/* Bogus key, leave untranslated */
 		return CONVERT_ESCAPE_ERROR;
 	}
-     
+
 	if (count)
 		*count = prtlen + extra_len;
 	if (prtlen < 0 || prtlen >= maxLen) /* buffer overflow */
@@ -2301,12 +2304,12 @@ int inner_convert_escape(const ConnectionClass *conn, const char *value,
 	}
 	return CONVERT_ESCAPE_OK;
 }
-     
+
 /*
  * processParameters()
  * Process function parameters and work with embedded escapes sequences.
  */
-     
+
 static
 int processParameters(const ConnectionClass *conn, const char *value,
 		char *result, UInt4 maxLen, UInt4 *input_consumed,
@@ -2321,7 +2324,7 @@ int processParameters(const ConnectionClass *conn, const char *value,
 #ifdef MULTIBYTE
 	encoded_str	encstr;
 #endif   /* MULTIBYTE */
- 
+
 	buf[sizeof(buf)-1] = '\0';
 	innerParenthesis = 0;
 	in_quote = in_dquote = in_escape = leadingSpace = FALSE;
@@ -2400,7 +2403,7 @@ int processParameters(const ConnectionClass *conn, const char *value,
 				}
 				innerParenthesis++;
 				break;
-     
+
 			case ')':
 				innerParenthesis--;
 				if (0 == innerParenthesis)
@@ -2411,18 +2414,18 @@ int processParameters(const ConnectionClass *conn, const char *value,
 					param_pos[param_count][1] = -1;
 				}
 				break;
-     
+
 			case '}':
 				stop = TRUE;
 				break;
-     
+
 			case '{':
 				if (subret = inner_convert_escape(conn, valptr, buf, sizeof(buf) - 1, &valptr, &inner_count), CONVERT_ESCAPE_OK != subret)
 					return CONVERT_ESCAPE_ERROR;
-     
+
 				if (inner_count + count >= maxLen)
 					return CONVERT_ESCAPE_OVERFLOW;
-				memcpy(&result[count], buf, inner_count); 
+				memcpy(&result[count], buf, inner_count);
 				count += inner_count;
 				ipos = (UInt4) (valptr - value);
 				continue;
@@ -2442,14 +2445,15 @@ int processParameters(const ConnectionClass *conn, const char *value,
 		*output_count = count;
 	return CONVERT_ESCAPE_OK;
 }
-     
+
 /*
  * convert_escape()
  * This function returns a pointer to static memory!
  */
-     
+
 int
-convert_escape(const char *value, StatementClass *stmt, int *npos, int *stsize, const char **val_resume)
+convert_escape(const char *value, StatementClass *stmt, int *npos, int *stsize,
+			   const char **val_resume)
 {
 	int	ret, pos = *npos;
 	UInt4 	count;

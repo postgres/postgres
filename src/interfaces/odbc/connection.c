@@ -1130,8 +1130,7 @@ CC_get_error(ConnectionClass *self, int *number, char **message)
 QResultClass *
 CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi, UDWORD flag)
 {
-	QResultClass *result_in = NULL,
-			   *cmdres = NULL,
+	QResultClass *cmdres = NULL,
 			   *retres = NULL,
 			   *res = NULL;
 	BOOL	clear_result_on_abort = ((flag & CLEAR_RESULT_ON_ABORT) != 0),

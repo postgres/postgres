@@ -731,10 +731,10 @@ QR_read_tuple(QResultClass *self, char binary)
 	if (this_keyset)
 	{
 		if (this_tuplefield[num_fields - 2].value)
-			sscanf(this_tuplefield[num_fields - 2].value, "(%u,%hu)",
+			sscanf(this_tuplefield[num_fields - 2].value, "(%lu,%hu)",
 				&this_keyset->blocknum, &this_keyset->offset);
 		if (this_tuplefield[num_fields - 1].value)
-			sscanf(this_tuplefield[num_fields - 1].value, "%u",
+			sscanf(this_tuplefield[num_fields - 1].value, "%lu",
 				&this_keyset->oid);
 	}
 	self->currTuple++;

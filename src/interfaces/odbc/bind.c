@@ -340,7 +340,7 @@ PGAPI_ParamOptions(
 	mylog("%s: entering... %d %x\n", func, crow, pirow);
 
 	stmt->options.paramset_size = crow;
-	stmt->options.param_processed_ptr = pirow;
+	stmt->options.param_processed_ptr = (SQLUINTEGER *)pirow;
 	return SQL_SUCCESS;
 }
 
