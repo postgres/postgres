@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.37 2000/05/30 00:49:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.38 2000/06/18 22:44:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -363,9 +363,7 @@ make_subplan(SubLink *slink)
 			}
 			if (use_material)
 			{
-				plan = (Plan *) make_noname(plan->targetlist,
-											NIL,
-											plan);
+				plan = (Plan *) make_material(plan->targetlist, plan);
 				node->plan = plan;
 			}
 		}

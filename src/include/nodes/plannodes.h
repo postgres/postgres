@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: plannodes.h,v 1.39 2000/04/12 17:16:40 momjian Exp $
+ * $Id: plannodes.h,v 1.40 2000/06/18 22:44:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -277,27 +277,13 @@ typedef struct Group
 	GroupState *grpstate;
 } Group;
 
-/*
- * ==========
- * Noname nodes
- * ==========
- */
-typedef struct Noname
-{
-	Plan		plan;
-	Oid			nonameid;
-	int			keycount;
-} Noname;
-
 /* ----------------
  *		materialization node
  * ----------------
  */
 typedef struct Material
 {
-	Plan		plan;			/* noname node flattened out */
-	Oid			nonameid;
-	int			keycount;
+	Plan		plan;
 	MaterialState *matstate;
 } Material;
 
@@ -307,8 +293,7 @@ typedef struct Material
  */
 typedef struct Sort
 {
-	Plan		plan;			/* noname node flattened out */
-	Oid			nonameid;
+	Plan		plan;
 	int			keycount;
 	SortState  *sortstate;
 } Sort;
@@ -319,9 +304,7 @@ typedef struct Sort
  */
 typedef struct Unique
 {
-	Plan		plan;			/* noname node flattened out */
-	Oid			nonameid;
-	int			keycount;
+	Plan		plan;
 	int			numCols;		/* number of columns to check for
 								 * uniqueness */
 	AttrNumber *uniqColIdx;		/* indexes into the target list */

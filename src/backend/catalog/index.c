@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.118 2000/06/17 23:41:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.119 2000/06/18 22:43:55 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -976,7 +976,6 @@ index_create(char *heapRelationName,
 
 	/* ----------------
 	 *	  get heap relation oid and open the heap relation
-	 *	  XXX ADD INDEXING
 	 * ----------------
 	 */
 	heapoid = GetHeapRelationOid(heapRelationName, indexRelationName, istemp);
@@ -1012,8 +1011,8 @@ index_create(char *heapRelationName,
 	 *	create the index relation
 	 * ----------------
 	 */
-	indexRelation = heap_create(indexRelationName,
-								indexTupDesc, false, istemp, false);
+	indexRelation = heap_create(indexRelationName, indexTupDesc,
+								istemp, false);
 
 	/* ----------------
 	 *	  construct the index relation descriptor

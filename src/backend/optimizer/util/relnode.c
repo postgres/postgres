@@ -8,14 +8,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.26 2000/04/12 17:15:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.27 2000/06/18 22:44:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include "optimizer/cost.h"
-#include "optimizer/internal.h"
 #include "optimizer/joininfo.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/plancat.h"
@@ -76,26 +75,9 @@ get_base_rel(Query *root, int relid)
 	rel->joininfo = NIL;
 	rel->innerjoin = NIL;
 
-	if (relid < 0)
-	{
-
-		/*
-		 * If the relation is a materialized relation, assume constants
-		 * for sizes.
-		 */
-		rel->pages = _NONAME_RELATION_PAGES_;
-		rel->tuples = _NONAME_RELATION_TUPLES_;
-	}
-	else
-	{
-
-		/*
-		 * Otherwise, retrieve relation statistics from the system
-		 * catalogs.
-		 */
-		relation_info(root, relid,
-					  &rel->indexed, &rel->pages, &rel->tuples);
-	}
+	/* Retrieve relation statistics from the system catalogs. */
+	relation_info(root, relid,
+				  &rel->indexed, &rel->pages, &rel->tuples);
 
 	root->base_rel_list = lcons(rel, root->base_rel_list);
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: planmain.h,v 1.41 2000/06/08 22:37:51 momjian Exp $
+ * $Id: planmain.h,v 1.42 2000/06/18 22:44:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,12 +27,13 @@ extern Plan *query_planner(Query *root, List *tlist, List *qual,
  * prototypes for plan/createplan.c
  */
 extern Plan *create_plan(Query *root, Path *best_path);
-extern Sort *make_sort(List *tlist, Oid nonameid, Plan *lefttree,
-		  int keycount);
+extern Sort *make_sort(List *tlist, Plan *lefttree, int keycount);
+extern Sort *make_sort_from_pathkeys(List *tlist, Plan *lefttree,
+									 List *pathkeys);
 extern Agg *make_agg(List *tlist, List *qual, Plan *lefttree);
 extern Group *make_group(List *tlist, bool tuplePerGroup, int ngrp,
 		   AttrNumber *grpColIdx, Plan *lefttree);
-extern Noname *make_noname(List *tlist, List *pathkeys, Plan *subplan);
+extern Material *make_material(List *tlist, Plan *lefttree);
 extern Unique *make_unique(List *tlist, Plan *lefttree, List *distinctList);
 extern Result *make_result(List *tlist, Node *resconstantqual, Plan *subplan);
 

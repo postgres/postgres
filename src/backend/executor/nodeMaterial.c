@@ -8,42 +8,37 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMaterial.c,v 1.30 2000/03/02 04:06:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMaterial.c,v 1.31 2000/06/18 22:44:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 /*
  * INTERFACE ROUTINES
- *		ExecMaterial			- generate a temporary relation
- *		ExecInitMaterial		- initialize node and subnodes..
+ *		ExecMaterial			- materialize the result of a subplan
+ *		ExecInitMaterial		- initialize node and subnodes
  *		ExecEndMaterial			- shutdown node and subnodes
  *
  */
 #include "postgres.h"
 
-
-#include "access/heapam.h"
-#include "catalog/heap.h"
 #include "executor/executor.h"
 #include "executor/nodeMaterial.h"
-#include "optimizer/internal.h"
+#include "miscadmin.h"
+#include "utils/tuplestore.h"
 
 /* ----------------------------------------------------------------
  *		ExecMaterial
  *
  *		The first time this is called, ExecMaterial retrieves tuples
- *		from this node's outer subplan and inserts them into a temporary
- *		relation.  After this is done, a flag is set indicating that
- *		the subplan has been materialized.	Once the relation is
- *		materialized, the first tuple is then returned.  Successive
- *		calls to ExecMaterial return successive tuples from the temp
- *		relation.
+ *		from this node's outer subplan and inserts them into a tuplestore
+ *		(a temporary tuple storage structure).  The first tuple is then
+ *		returned.  Successive calls to ExecMaterial return successive
+ *		tuples from the tuplestore.
  *
  *		Initial State:
  *
- *		ExecMaterial assumes the temporary relation has been
- *		created and opened by ExecInitMaterial during the prior
- *		InitPlan() phase.
+ *		matstate->tuplestorestate is initially NULL, indicating we
+ *		haven't yet collected the results of the subplan.
  *
  * ----------------------------------------------------------------
  */
@@ -52,13 +47,11 @@ ExecMaterial(Material *node)
 {
 	EState	   *estate;
 	MaterialState *matstate;
-	Plan	   *outerNode;
 	ScanDirection dir;
-	Relation	tempRelation;
-	Relation	currentRelation;
-	HeapScanDesc currentScanDesc;
+	Tuplestorestate *tuplestorestate;
 	HeapTuple	heapTuple;
 	TupleTableSlot *slot;
+	bool		should_free;
 
 	/* ----------------
 	 *	get state info from node
@@ -67,42 +60,42 @@ ExecMaterial(Material *node)
 	matstate = node->matstate;
 	estate = node->plan.state;
 	dir = estate->es_direction;
+	tuplestorestate = (Tuplestorestate *) matstate->tuplestorestate;
 
 	/* ----------------
-	 *	the first time we call this, we retrieve all tuples
-	 *	from the subplan into a temporary relation and then
-	 *	we sort the relation.  Subsequent calls return tuples
-	 *	from the temporary relation.
+	 *	If first time through, read all tuples from outer plan and
+	 *	pass them to tuplestore.c.
+	 *	Subsequent calls just fetch tuples from tuplestore.
 	 * ----------------
 	 */
 
-	if (matstate->mat_Flag == false)
+	if (tuplestorestate == NULL)
 	{
+		Plan	   *outerNode;
+
 		/* ----------------
-		 *	set all relations to be scanned in the forward direction
-		 *	while creating the temporary relation.
+		 *	Want to scan subplan in the forward direction while creating
+		 *	the stored data.  (Does setting my direction actually affect
+		 *	the subplan?  I bet this is useless code...)
 		 * ----------------
 		 */
 		estate->es_direction = ForwardScanDirection;
 
 		/* ----------------
-		 *	 if we couldn't create the temp relation then
-		 *	 we print a warning and return NULL.
+		 *	 Initialize tuplestore module.
 		 * ----------------
 		 */
-		tempRelation = matstate->mat_TempRelation;
-		if (tempRelation == NULL)
-		{
-			elog(DEBUG, "ExecMaterial: temp relation is NULL! aborting...");
-			return NULL;
-		}
+		tuplestorestate = tuplestore_begin_heap(true, /* randomAccess */
+												SortMem);
+
+		matstate->tuplestorestate = (void *) tuplestorestate;
 
 		/* ----------------
-		 *	 retrieve tuples from the subplan and
-		 *	 insert them in the temporary relation
+		 *	 Scan the subplan and feed all the tuples to tuplestore.
 		 * ----------------
 		 */
 		outerNode = outerPlan((Plan *) node);
+
 		for (;;)
 		{
 			slot = ExecProcNode(outerNode, (Plan *) node);
@@ -110,63 +103,34 @@ ExecMaterial(Material *node)
 			if (TupIsNull(slot))
 				break;
 
-			heap_insert(tempRelation, slot->val);
-
+			tuplestore_puttuple(tuplestorestate, (void *) slot->val);
 			ExecClearTuple(slot);
 		}
+
+		/* ----------------
+		 *	 Complete the store.
+		 * ----------------
+		 */
+		tuplestore_donestoring(tuplestorestate);
 
 		/* ----------------
 		 *	 restore to user specified direction
 		 * ----------------
 		 */
 		estate->es_direction = dir;
-
-		/* ----------------
-		 *	 now initialize the scan descriptor to scan the
-		 *	 sorted relation and update the sortstate information
-		 * ----------------
-		 */
-		currentRelation = tempRelation;
-		currentScanDesc = heap_beginscan(currentRelation,		/* relation */
-										 ScanDirectionIsBackward(dir),
-										 SnapshotSelf,	/* seeself */
-										 0,		/* num scan keys */
-										 NULL); /* scan keys */
-		matstate->csstate.css_currentRelation = currentRelation;
-		matstate->csstate.css_currentScanDesc = currentScanDesc;
-
-		ExecAssignScanType(&matstate->csstate,
-						   RelationGetDescr(currentRelation));
-
-		/* ----------------
-		 *	finally set the sorted flag to true
-		 * ----------------
-		 */
-		matstate->mat_Flag = true;
 	}
 
 	/* ----------------
-	 *	at this point we know we have a sorted relation so
-	 *	we perform a simple scan on it with amgetnext()..
+	 *	Get the first or next tuple from tuplestore.
+	 *	Returns NULL if no more tuples.
 	 * ----------------
 	 */
-	currentScanDesc = matstate->csstate.css_currentScanDesc;
+	slot = (TupleTableSlot *) matstate->csstate.cstate.cs_ResultTupleSlot;
+	heapTuple = tuplestore_getheaptuple(tuplestorestate,
+										ScanDirectionIsForward(dir),
+										&should_free);
 
-	heapTuple = heap_getnext(currentScanDesc, ScanDirectionIsBackward(dir));
-
-	/* ----------------
-	 *	put the tuple into the scan tuple slot and return the slot.
-	 *	Note: since the tuple is really a pointer to a page, we don't want
-	 *	to call pfree() on it..
-	 * ----------------
-	 */
-	slot = (TupleTableSlot *) matstate->csstate.css_ScanTupleSlot;
-
-	return ExecStoreTuple(heapTuple,	/* tuple to store */
-						  slot, /* slot to store in */
-						  currentScanDesc->rs_cbuf,		/* buffer for this tuple */
-						  false);		/* don't pfree this pointer */
-
+	return ExecStoreTuple(heapTuple, slot, InvalidBuffer, should_free);
 }
 
 /* ----------------------------------------------------------------
@@ -178,10 +142,6 @@ ExecInitMaterial(Material *node, EState *estate, Plan *parent)
 {
 	MaterialState *matstate;
 	Plan	   *outerPlan;
-	TupleDesc	tupType;
-	Relation	tempDesc;
-
-	/* int						len; */
 
 	/* ----------------
 	 *	assign the node's execution state
@@ -194,8 +154,7 @@ ExecInitMaterial(Material *node, EState *estate, Plan *parent)
 	 * ----------------
 	 */
 	matstate = makeNode(MaterialState);
-	matstate->mat_Flag = false;
-	matstate->mat_TempRelation = NULL;
+	matstate->tuplestorestate = NULL;
 	node->matstate = matstate;
 
 	/* ----------------
@@ -214,8 +173,12 @@ ExecInitMaterial(Material *node, EState *estate, Plan *parent)
 #define MATERIAL_NSLOTS 1
 	/* ----------------
 	 * tuple table initialization
+	 *
+	 *	material nodes only return tuples from their materialized
+	 *	relation.
 	 * ----------------
 	 */
+	ExecInitResultTupleSlot(estate, &matstate->csstate.cstate);
 	ExecInitScanTupleSlot(estate, &matstate->csstate);
 
 	/* ----------------
@@ -226,52 +189,14 @@ ExecInitMaterial(Material *node, EState *estate, Plan *parent)
 	ExecInitNode(outerPlan, estate, (Plan *) node);
 
 	/* ----------------
-	 *	initialize matstate information
-	 * ----------------
-	 */
-	matstate->mat_Flag = false;
-
-	/* ----------------
 	 *	initialize tuple type.	no need to initialize projection
 	 *	info because this node doesn't do projections.
 	 * ----------------
 	 */
+	ExecAssignResultTypeFromOuterPlan((Plan *) node, &matstate->csstate.cstate);
 	ExecAssignScanTypeFromOuterPlan((Plan *) node, &matstate->csstate);
 	matstate->csstate.cstate.cs_ProjInfo = NULL;
 
-	/* ----------------
-	 *	get type information needed for ExecCreatR
-	 * ----------------
-	 */
-	tupType = ExecGetScanType(&matstate->csstate);
-
-	/* ----------------
-	 *	ExecCreatR wants its second argument to be an object id of
-	 *	a relation in the range table or a _NONAME_RELATION_ID
-	 *	indicating that the relation is not in the range table.
-	 *
-	 *	In the second case ExecCreatR creates a temp relation.
-	 *	(currently this is the only case we support -cim 10/16/89)
-	 * ----------------
-	 */
-	/* ----------------
-	 *	create the temporary relation
-	 * ----------------
-	 */
-	tempDesc = ExecCreatR(tupType, _NONAME_RELATION_ID_);
-
-	/* ----------------
-	 *	save the relation descriptor in the sortstate
-	 * ----------------
-	 */
-	matstate->mat_TempRelation = tempDesc;
-	matstate->csstate.css_currentRelation = NULL;
-
-	/* ----------------
-	 *	return relation oid of temporary relation in a list
-	 *	(someday -- for now we return LispTrue... cim 10/12/89)
-	 * ----------------
-	 */
 	return TRUE;
 }
 
@@ -285,16 +210,12 @@ ExecCountSlotsMaterial(Material *node)
 
 /* ----------------------------------------------------------------
  *		ExecEndMaterial
- *
- * old comments
- *		destroys the temporary relation.
  * ----------------------------------------------------------------
  */
 void
 ExecEndMaterial(Material *node)
 {
 	MaterialState *matstate;
-	Relation	tempRelation;
 	Plan	   *outerPlan;
 
 	/* ----------------
@@ -302,14 +223,6 @@ ExecEndMaterial(Material *node)
 	 * ----------------
 	 */
 	matstate = node->matstate;
-	tempRelation = matstate->mat_TempRelation;
-
-	/* ----------------
-	 *	shut down the scan, but don't close the temp relation
-	 * ----------------
-	 */
-	matstate->csstate.css_currentRelation = NULL;
-	ExecCloseR((Plan *) node);
 
 	/* ----------------
 	 *	shut down the subplan
@@ -325,17 +238,64 @@ ExecEndMaterial(Material *node)
 	ExecClearTuple(matstate->csstate.css_ScanTupleSlot);
 
 	/* ----------------
-	 *	delete the temp relation
+	 *	Release tuplestore resources
 	 * ----------------
 	 */
-	if (tempRelation != NULL)
-		heap_drop(tempRelation);
+	if (matstate->tuplestorestate != NULL)
+		tuplestore_end((Tuplestorestate *) matstate->tuplestorestate);
+	matstate->tuplestorestate = NULL;
+}
+
+/* ----------------------------------------------------------------
+ *		ExecMaterialMarkPos
+ *
+ *		Calls tuplestore to save the current position in the stored file.
+ * ----------------------------------------------------------------
+ */
+void
+ExecMaterialMarkPos(Material *node)
+{
+	MaterialState  *matstate = node->matstate;
+
+	/* ----------------
+	 *	if we haven't materialized yet, just return.
+	 * ----------------
+	 */
+	if (!matstate->tuplestorestate)
+		return;
+
+	tuplestore_markpos((Tuplestorestate *) matstate->tuplestorestate);
+}
+
+/* ----------------------------------------------------------------
+ *		ExecMaterialRestrPos
+ *
+ *		Calls tuplestore to restore the last saved file position.
+ * ----------------------------------------------------------------
+ */
+void
+ExecMaterialRestrPos(Material *node)
+{
+	MaterialState  *matstate = node->matstate;
+
+	/* ----------------
+	 *	if we haven't materialized yet, just return.
+	 * ----------------
+	 */
+	if (!matstate->tuplestorestate)
+		return;
+
+	/* ----------------
+	 *	restore the scan to the previously marked position
+	 * ----------------
+	 */
+	tuplestore_restorepos((Tuplestorestate *) matstate->tuplestorestate);
 }
 
 /* ----------------------------------------------------------------
  *		ExecMaterialReScan
  *
- *		Rescans the temporary relation.
+ *		Rescans the materialized relation.
  * ----------------------------------------------------------------
  */
 void
@@ -343,70 +303,27 @@ ExecMaterialReScan(Material *node, ExprContext *exprCtxt, Plan *parent)
 {
 	MaterialState *matstate = node->matstate;
 
-	if (matstate->mat_Flag == false)
+	/*
+	 * If we haven't materialized yet, just return. If outerplan' chgParam is
+	 * not NULL then it will be re-scanned by ExecProcNode, else - no
+	 * reason to re-scan it at all.
+	 */
+	if (!matstate->tuplestorestate)
 		return;
 
-	matstate->csstate.css_currentScanDesc = ExecReScanR(matstate->csstate.css_currentRelation,
-								   matstate->csstate.css_currentScanDesc,
-								node->plan.state->es_direction, 0, NULL);
+	ExecClearTuple(matstate->csstate.cstate.cs_ResultTupleSlot);
 
+	/*
+	 * If subnode is to be rescanned then we forget previous stored results;
+	 * we have to re-read the subplan and re-store.
+	 *
+	 * Otherwise we can just rewind and rescan the stored output.
+	 */
+	if (((Plan *) node)->lefttree->chgParam != NULL)
+	{
+		tuplestore_end((Tuplestorestate *) matstate->tuplestorestate);
+		matstate->tuplestorestate = NULL;
+	}
+	else
+		tuplestore_rescan((Tuplestorestate *) matstate->tuplestorestate);
 }
-
-#ifdef NOT_USED					/* not used */
-/* ----------------------------------------------------------------
- *		ExecMaterialMarkPos
- * ----------------------------------------------------------------
- */
-List							/* nothing of interest */
-ExecMaterialMarkPos(Material node)
-{
-	MaterialState matstate;
-	HeapScanDesc scan;
-
-	/* ----------------
-	 *	if we haven't materialized yet, just return NIL.
-	 * ----------------
-	 */
-	matstate = get_matstate(node);
-	if (get_mat_Flag(matstate) == false)
-		return NIL;
-
-	/* ----------------
-	 *	XXX access methods don't return positions yet so
-	 *		for now we return NIL.	It's possible that
-	 *		they will never return positions for all I know -cim 10/16/89
-	 * ----------------
-	 */
-	scan = get_css_currentScanDesc((CommonScanState) matstate);
-	heap_markpos(scan);
-
-	return NIL;
-}
-
-/* ----------------------------------------------------------------
- *		ExecMaterialRestrPos
- * ----------------------------------------------------------------
- */
-void
-ExecMaterialRestrPos(Material node)
-{
-	MaterialState matstate;
-	HeapScanDesc scan;
-
-	/* ----------------
-	 *	if we haven't materialized yet, just return.
-	 * ----------------
-	 */
-	matstate = get_matstate(node);
-	if (get_mat_Flag(matstate) == false)
-		return;
-
-	/* ----------------
-	 *	restore the scan to the previously marked position
-	 * ----------------
-	 */
-	scan = get_css_currentScanDesc((CommonScanState) matstate);
-	heap_restrpos(scan);
-}
-
-#endif

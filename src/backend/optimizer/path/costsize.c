@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.61 2000/05/31 00:28:22 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.62 2000/06/18 22:44:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,8 +55,13 @@
 #include "miscadmin.h"
 #include "optimizer/clauses.h"
 #include "optimizer/cost.h"
-#include "optimizer/internal.h"
 #include "utils/lsyscache.h"
+
+
+/*
+ * The length of a variable-length field in bytes (stupid estimate...)
+ */
+#define _DEFAULT_ATTRIBUTE_WIDTH_ 12
 
 
 #define LOG2(x)  (log(x) / 0.693147180559945)
@@ -114,29 +119,17 @@ cost_seqscan(Path *path, RelOptInfo *baserel)
 	if (!enable_seqscan)
 		startup_cost += disable_cost;
 
-	/* disk costs */
-	if (lfirsti(baserel->relids) < 0)
-	{
-
-		/*
-		 * cost of sequentially scanning a materialized temporary relation
-		 */
-		run_cost += _NONAME_SCAN_COST_;
-	}
-	else
-	{
-
-		/*
-		 * The cost of reading a page sequentially is 1.0, by definition.
-		 * Note that the Unix kernel will typically do some amount of
-		 * read-ahead optimization, so that this cost is less than the
-		 * true cost of reading a page from disk.  We ignore that issue
-		 * here, but must take it into account when estimating the cost of
-		 * non-sequential accesses!
-		 */
-		run_cost += baserel->pages;		/* sequential fetches with cost
-										 * 1.0 */
-	}
+	/*
+	 * disk costs
+	 *
+	 * The cost of reading a page sequentially is 1.0, by definition.
+	 * Note that the Unix kernel will typically do some amount of
+	 * read-ahead optimization, so that this cost is less than the
+	 * true cost of reading a page from disk.  We ignore that issue
+	 * here, but must take it into account when estimating the cost of
+	 * non-sequential accesses!
+	 */
+	run_cost += baserel->pages;	/* sequential fetches with cost 1.0 */
 
 	/* CPU costs */
 	cpu_per_tuple = cpu_tuple_cost + baserel->baserestrictcost;

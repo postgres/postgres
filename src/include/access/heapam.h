@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heapam.h,v 1.52 2000/04/12 17:16:25 momjian Exp $
+ * $Id: heapam.h,v 1.53 2000/06/18 22:44:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -242,9 +242,11 @@ extern HeapAccessStatistics heap_access_stats;	/* in stats.c */
 
 /* ----------------
  *		function prototypes for heap access method
+ *
+ * heap_create, heap_create_with_catalog, and heap_drop_with_catalog
+ * are declared in catalog/heap.h
  * ----------------
  */
-/* heap_create, heap_creatr, and heap_destroy are declared in catalog/heap.h */
 
 /* heapam.c */
 

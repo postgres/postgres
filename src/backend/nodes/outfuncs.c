@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.119 2000/06/16 05:27:02 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.120 2000/06/18 22:44:05 tgl Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -531,51 +531,29 @@ _outTidScan(StringInfo str, TidScan *node)
 }
 
 /*
- *	Noname is a subclass of Plan
- */
-static void
-_outNoname(StringInfo str, Noname *node)
-{
-	appendStringInfo(str, " NONAME ");
-	_outPlanInfo(str, (Plan *) node);
-
-	appendStringInfo(str, " :nonameid %u :keycount %d ",
-					 node->nonameid,
-					 node->keycount);
-}
-
-/*
- *	Material is a subclass of Noname
+ *	Material is a subclass of Plan
  */
 static void
 _outMaterial(StringInfo str, Material *node)
 {
 	appendStringInfo(str, " MATERIAL ");
 	_outPlanInfo(str, (Plan *) node);
-
-	appendStringInfo(str, " :nonameid %u :keycount %d ",
-					 node->nonameid,
-					 node->keycount);
 }
 
 /*
- *	Sort is a subclass of Noname
+ *	Sort is a subclass of Plan
  */
 static void
 _outSort(StringInfo str, Sort *node)
 {
 	appendStringInfo(str, " SORT ");
 	_outPlanInfo(str, (Plan *) node);
-
-	appendStringInfo(str, " :nonameid %u :keycount %d ",
-					 node->nonameid,
-					 node->keycount);
+	appendStringInfo(str, " :keycount %d ", node->keycount);
 }
 
 static void
 _outAgg(StringInfo str, Agg *node)
 {
-
 	appendStringInfo(str, " AGG ");
 	_outPlanInfo(str, (Plan *) node);
 }
@@ -592,9 +570,6 @@ _outGroup(StringInfo str, Group *node)
 					 node->tuplePerGroup ? "true" : "false");
 }
 
-/*
- *	For some reason, unique is a subclass of Noname.
- */
 static void
 _outUnique(StringInfo str, Unique *node)
 {
@@ -603,17 +578,14 @@ _outUnique(StringInfo str, Unique *node)
 	appendStringInfo(str, " UNIQUE ");
 	_outPlanInfo(str, (Plan *) node);
 
-	appendStringInfo(str, " :nonameid %u :keycount %d :numCols %d :uniqColIdx ",
-					 node->nonameid,
-					 node->keycount,
+	appendStringInfo(str, " :numCols %d :uniqColIdx ",
 					 node->numCols);
-
 	for (i = 0; i < node->numCols; i++)
 		appendStringInfo(str, "%d ", (int) node->uniqColIdx[i]);
 }
 
 /*
- *	Hash is a subclass of Noname
+ *	Hash is a subclass of Plan
  */
 static void
 _outHash(StringInfo str, Hash *node)
@@ -1501,9 +1473,6 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_TidScan:
 				_outTidScan(str, obj);
-				break;
-			case T_Noname:
-				_outNoname(str, obj);
 				break;
 			case T_Material:
 				_outMaterial(str, obj);

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: execAmi.c,v 1.47 2000/06/15 04:09:50 momjian Exp $
+ *	$Id: execAmi.c,v 1.48 2000/06/18 22:44:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,13 +17,9 @@
  *		ExecBeginScan	 \							 /	ambeginscan
  *		ExecCloseR		  \							/	amclose
  *		ExecInsert		   \  executor interface   /	aminsert
- *		ExecReScanNode	   /  to access methods    \	amrescan
- *		ExecReScanR		  /							\	amrescan
- *		ExecMarkPos		 /							 \	ammarkpos
- *		ExecRestrPos	/							  \ amrestpos
- *
- *		ExecCreatR		function to create temporary relations
- *
+ *		ExecReScanR		   /  to access methods    \	amrescan
+ *		ExecMarkPos		  /							\	ammarkpos
+ *		ExecRestrPos	 /							 \  amrestpos
  */
 
 #include "postgres.h"
@@ -49,7 +45,6 @@
 #include "executor/nodeSort.h"
 #include "executor/nodeSubplan.h"
 #include "executor/nodeUnique.h"
-#include "optimizer/internal.h"
 
 static Pointer ExecBeginScan(Relation relation, int nkeys, ScanKey skeys,
 			  bool isindex, ScanDirection dir, Snapshot snapshot);
@@ -170,7 +165,6 @@ ExecBeginScan(Relation relation,
 	if (scanDesc == NULL)
 		elog(DEBUG, "ExecBeginScan: scanDesc = NULL, heap_beginscan failed.");
 
-
 	return scanDesc;
 }
 
@@ -179,9 +173,6 @@ ExecBeginScan(Relation relation,
  *
  *		closes the relation and scan descriptor for a scan or sort
  *		node.  Also closes index relations and scans for index scans.
- *
- * old comments
- *		closes the relation indicated in 'relID'
  * ----------------------------------------------------------------
  */
 void
@@ -206,10 +197,6 @@ ExecCloseR(Plan *node)
 			state = ((IndexScan *) node)->scan.scanstate;
 			break;
 
-		case T_Material:
-			state = &(((Material *) node)->matstate->csstate);
-			break;
-
 		case T_Sort:
 			state = &(((Sort *) node)->sortstate->csstate);
 			break;
@@ -223,7 +210,7 @@ ExecCloseR(Plan *node)
 			break;
 
 		default:
-			elog(DEBUG, "ExecCloseR: not a scan, material, or sort node!");
+			elog(DEBUG, "ExecCloseR: not a scan or sort node!");
 			return;
 	}
 
@@ -423,12 +410,16 @@ ExecMarkPos(Plan *node)
 {
 	switch (nodeTag(node))
 	{
-			case T_SeqScan:
+		case T_SeqScan:
 			ExecSeqMarkPos((SeqScan *) node);
 			break;
 
 		case T_IndexScan:
 			ExecIndexMarkPos((IndexScan *) node);
+			break;
+
+		case T_Material:
+			ExecMaterialMarkPos((Material *) node);
 			break;
 
 		case T_Sort:
@@ -457,12 +448,16 @@ ExecRestrPos(Plan *node)
 {
 	switch (nodeTag(node))
 	{
-			case T_SeqScan:
+		case T_SeqScan:
 			ExecSeqRestrPos((SeqScan *) node);
 			return;
 
 		case T_IndexScan:
 			ExecIndexRestrPos((IndexScan *) node);
+			return;
+
+		case T_Material:
+			ExecMaterialRestrPos((Material *) node);
 			return;
 
 		case T_Sort:
@@ -473,66 +468,4 @@ ExecRestrPos(Plan *node)
 			elog(DEBUG, "ExecRestrPos: node type %u not supported", nodeTag(node));
 			return;
 	}
-}
-
-/* ----------------------------------------------------------------
- *		ExecCreatR
- *
- * old comments
- *		Creates a relation.
- *
- *		Parameters:
- *		  attrType	-- type information on the attributes.
- *		  accessMtd -- access methods used to access the created relation.
- *		  relation	-- optional. Either an index to the range table or
- *					   negative number indicating a temporary relation.
- *					   A temporary relation is assume if this field is absent.
- * ----------------------------------------------------------------
- */
-
-Relation
-ExecCreatR(TupleDesc tupType,
-		   Oid relationOid)
-{
-	Relation	relDesc;
-
-	EU3_printf("ExecCreatR: %s type=%d oid=%u\n",
-			   "entering: ", tupType, relationOid);
-	CXT1_printf("ExecCreatR: context is %d\n", CurrentMemoryContext);
-
-	relDesc = NULL;
-
-	if (relationOid == _NONAME_RELATION_ID_)
-	{
-		/* ----------------
-		 *	 create a temporary relation
-		 *	 (currently the planner always puts a _NONAME_RELATION_ID
-		 *	 in the relation argument so we expect this to be the case although
-		 *	 it's possible that someday we'll get the name from
-		 *	 from the range table.. -cim 10/12/89)
-		 * ----------------
-		 */
-
-		/*
-		 * heap_create creates a name if the argument to heap_create is
-		 * '\0 '
-		 */
-		relDesc = heap_create(NULL, tupType, true, false, true);
-	}
-	else
-	{
-		/* ----------------
-		 *		use a relation from the range table
-		 * ----------------
-		 */
-		elog(DEBUG, "ExecCreatR: %s",
-			 "stuff using range table id's is not functional");
-	}
-
-	if (relDesc == NULL)
-		elog(DEBUG, "ExecCreatR: failed to create relation.");
-
-	EU1_printf("ExecCreatR: returning relDesc=%d\n", relDesc);
-
-	return relDesc;
 }

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.29 2000/01/26 05:56:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.30 2000/06/18 22:43:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -166,7 +166,7 @@ Boot_CreateStmt:
 							puts("creating bootstrap relation");
 						tupdesc = CreateTupleDesc(numattr,attrtypes);
 						reldesc = heap_create(LexIDStr($3), tupdesc,
-											  false, false, true);
+											  false, true);
 						if (DebugMode)
 							puts("bootstrap relation created ok");
 					}

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.41 2000/04/12 17:16:39 momjian Exp $
+ * $Id: execnodes.h,v 1.42 2000/06/18 22:44:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -565,11 +565,9 @@ typedef struct HashJoinState
  *	 MaterialState information
  *
  *		materialize nodes are used to materialize the results
- *		of a subplan into a temporary relation.
+ *		of a subplan into a temporary file.
  *
- *		Flag			indicated whether subplan has been materialized
- *		TempRelation	temporary relation containing result of executing
- *						the subplan.
+ *		tuplestorestate		private state of tuplestore.c
  *
  *	 CommonScanState information
  *
@@ -590,8 +588,7 @@ typedef struct HashJoinState
 typedef struct MaterialState
 {
 	CommonScanState csstate;	/* its first field is NodeTag */
-	bool		mat_Flag;
-	Relation	mat_TempRelation;
+	void	   *tuplestorestate;
 } MaterialState;
 
 /* ---------------------

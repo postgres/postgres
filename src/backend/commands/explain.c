@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.56 2000/04/12 17:14:58 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.57 2000/06/18 22:43:58 tgl Exp $
  *
  */
 
@@ -175,9 +175,6 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 			break;
 		case T_IndexScan:
 			pname = "Index Scan";
-			break;
-		case T_Noname:
-			pname = "Noname Scan";
 			break;
 		case T_Material:
 			pname = "Materialize";

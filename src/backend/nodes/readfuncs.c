@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.90 2000/06/16 05:27:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.91 2000/06/18 22:44:05 tgl Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -556,37 +556,9 @@ _readTidScan()
 }
 
 /* ----------------
- *		_readNoname
- *
- *	Noname is a subclass of Plan
- * ----------------
- */
-static Noname *
-_readNoname()
-{
-	Noname	   *local_node;
-	char	   *token;
-	int			length;
-
-	local_node = makeNode(Noname);
-
-	_getPlan((Plan *) local_node);
-
-	token = lsptok(NULL, &length);		/* eat :nonameid */
-	token = lsptok(NULL, &length);		/* get nonameid */
-	local_node->nonameid = atol(token);
-
-	token = lsptok(NULL, &length);		/* eat :keycount */
-	token = lsptok(NULL, &length);		/* get keycount */
-	local_node->keycount = atoi(token);
-
-	return local_node;
-}
-
-/* ----------------
  *		_readSort
  *
- *	Sort is a subclass of Noname
+ *	Sort is a subclass of Plan
  * ----------------
  */
 static Sort *
@@ -599,10 +571,6 @@ _readSort()
 	local_node = makeNode(Sort);
 
 	_getPlan((Plan *) local_node);
-
-	token = lsptok(NULL, &length);		/* eat :nonameid */
-	token = lsptok(NULL, &length);		/* get nonameid */
-	local_node->nonameid = atol(token);
 
 	token = lsptok(NULL, &length);		/* eat :keycount */
 	token = lsptok(NULL, &length);		/* get keycount */
@@ -625,7 +593,7 @@ _readAgg()
 /* ----------------
  *		_readHash
  *
- *	Hash is a subclass of Noname
+ *	Hash is a subclass of Plan
  * ----------------
  */
 static Hash *
@@ -1853,8 +1821,6 @@ parsePlanString(void)
 		return_value = _readIndexScan();
 	else if (length == 7 && strncmp(token, "TIDSCAN", length) == 0)
 		return_value = _readTidScan();
-	else if (length == 6 && strncmp(token, "NONAME", length) == 0)
-		return_value = _readNoname();
 	else if (length == 4 && strncmp(token, "SORT", length) == 0)
 		return_value = _readSort();
 	else if (length == 6 && strncmp(token, "AGGREG", length) == 0)

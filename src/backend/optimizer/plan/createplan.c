@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.92 2000/06/15 03:32:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.93 2000/06/18 22:44:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,6 @@
 #include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/cost.h"
-#include "optimizer/internal.h"
 #include "optimizer/paths.h"
 #include "optimizer/planmain.h"
 #include "optimizer/restrictinfo.h"
@@ -34,7 +33,6 @@
 
 
 static List *switch_outer(List *clauses);
-static int	set_tlist_sort_info(List *tlist, List *pathkeys);
 static Scan *create_scan_node(Query *root, Path *best_path, List *tlist);
 static Join *create_join_node(Query *root, JoinPath *best_path, List *tlist);
 static SeqScan *create_seqscan_node(Path *best_path, List *tlist,
@@ -71,8 +69,6 @@ static HashJoin *make_hashjoin(List *tlist, List *qpqual,
 static Hash *make_hash(List *tlist, Var *hashkey, Plan *lefttree);
 static MergeJoin *make_mergejoin(List *tlist, List *qpqual,
 			   List *mergeclauses, Plan *righttree, Plan *lefttree);
-static Material *make_material(List *tlist, Oid nonameid, Plan *lefttree,
-			  int keycount);
 static void copy_path_costsize(Plan *dest, Path *src);
 static void copy_plan_costsize(Plan *dest, Plan *src);
 static SeqScan *make_seqscan(List *qptlist, List *qpqual, Index scanrelid);
@@ -560,10 +556,12 @@ create_nestloop_node(NestPath *best_path,
 	}
 	else if (IsA(inner_node, TidScan))
 	{
-		List	   *inner_tideval = ((TidScan *) inner_node)->tideval;
 		TidScan    *innerscan = (TidScan *) inner_node;
 
-		((TidScan *) inner_node)->tideval = join_references(inner_tideval, outer_tlist, inner_tlist, innerscan->scan.scanrelid);
+		innerscan->tideval = join_references(innerscan->tideval,
+											 outer_tlist,
+											 inner_tlist,
+											 innerscan->scan.scanrelid);
 	}
 	else if (IsA_Join(inner_node))
 	{
@@ -575,9 +573,8 @@ create_nestloop_node(NestPath *best_path,
 		 * join --- how can we estimate whether this is a good thing to
 		 * do?
 		 */
-		inner_node = (Plan *) make_noname(inner_tlist,
-										  NIL,
-										  inner_node);
+		inner_node = (Plan *) make_material(inner_tlist,
+											inner_node);
 	}
 
 	join_node = make_nestloop(tlist,
@@ -632,14 +629,16 @@ create_mergejoin_node(MergePath *best_path,
 	 * necessary.  The sort cost was already accounted for in the path.
 	 */
 	if (best_path->outersortkeys)
-		outer_node = (Plan *) make_noname(outer_tlist,
-										  best_path->outersortkeys,
-										  outer_node);
+		outer_node = (Plan *)
+			make_sort_from_pathkeys(outer_tlist,
+									outer_node,
+									best_path->outersortkeys);
 
 	if (best_path->innersortkeys)
-		inner_node = (Plan *) make_noname(inner_tlist,
-										  best_path->innersortkeys,
-										  inner_node);
+		inner_node = (Plan *)
+			make_sort_from_pathkeys(inner_tlist,
+									inner_node,
+									best_path->innersortkeys);
 
 	join_node = make_mergejoin(tlist,
 							   qpqual,
@@ -959,72 +958,6 @@ switch_outer(List *clauses)
 }
 
 /*
- * set_tlist_sort_info
- *	  Sets the reskey and reskeyop fields of resdom nodes in a target list
- *	  for a sort node.
- *
- * 'tlist' is the target list (which is modified in-place).
- *			tlist's reskey fields must be clear to start with.
- * 'pathkeys' is the desired pathkeys for the sort.  NIL means no sort.
- *
- * Returns the number of sort keys assigned (which might be less than
- * length(pathkeys)!)
- */
-static int
-set_tlist_sort_info(List *tlist, List *pathkeys)
-{
-	int			keysassigned = 0;
-	List	   *i;
-
-	foreach(i, pathkeys)
-	{
-		List	   *keysublist = (List *) lfirst(i);
-		PathKeyItem *pathkey = NULL;
-		Resdom	   *resdom = NULL;
-		List	   *j;
-
-		/*
-		 * We can sort by any one of the sort key items listed in this
-		 * sublist.  For now, we take the first one that corresponds to an
-		 * available Var in the tlist.
-		 *
-		 * XXX if we have a choice, is there any way of figuring out which
-		 * might be cheapest to execute?  (For example, int4lt is likely
-		 * much cheaper to execute than numericlt, but both might appear
-		 * in the same pathkey sublist...)	Not clear that we ever will
-		 * have a choice in practice, so it may not matter.
-		 */
-		foreach(j, keysublist)
-		{
-			pathkey = lfirst(j);
-			Assert(IsA(pathkey, PathKeyItem));
-			resdom = tlist_member(pathkey->key, tlist);
-			if (resdom)
-				break;
-		}
-		if (!resdom)
-			elog(ERROR, "set_tlist_sort_info: cannot find tlist item to sort");
-
-		/*
-		 * The resdom might be already marked as a sort key, if the
-		 * pathkeys contain duplicate entries.	(This can happen in
-		 * scenarios where multiple mergejoinable clauses mention the same
-		 * var, for example.) In that case the current pathkey is
-		 * essentially a no-op, because only one value can be seen within
-		 * any subgroup where it would be consulted.  We can ignore it.
-		 */
-		if (resdom->reskey == 0)
-		{
-			/* OK, mark it as a sort key and set the sort operator regproc */
-			resdom->reskey = ++keysassigned;
-			resdom->reskeyop = get_opcode(pathkey->sortop);
-		}
-	}
-
-	return keysassigned;
-}
-
-/*
  * Copy cost and size info from a Path node to the Plan node created from it.
  * The executor won't use this info, but it's needed by EXPLAIN.
  */
@@ -1078,50 +1011,7 @@ copy_plan_costsize(Plan *dest, Plan *src)
  *
  *****************************************************************************/
 
-/*
- * make_noname
- *	  Create plan node to sort or materialize relations into noname.
- *
- *	  'tlist' is the target list of the scan to be sorted or materialized
- *	  'pathkeys' is the list of pathkeys by which the result is to be sorted
- *			(NIL implies no sort needed, just materialize it)
- *	  'subplan' is the node which yields input tuples
- */
-Noname *
-make_noname(List *tlist,
-			List *pathkeys,
-			Plan *subplan)
-{
-	List	   *noname_tlist;
-	int			numsortkeys;
-	Plan	   *retval;
-
-	/* Create a new target list for the noname, with sort keys set. */
-	noname_tlist = new_unsorted_tlist(tlist);
-	numsortkeys = set_tlist_sort_info(noname_tlist, pathkeys);
-
-	if (numsortkeys > 0)
-	{
-		/* need to sort */
-		retval = (Plan *) make_sort(noname_tlist,
-									_NONAME_RELATION_ID_,
-									subplan,
-									numsortkeys);
-	}
-	else
-	{
-		/* no sort */
-		retval = (Plan *) make_material(noname_tlist,
-										_NONAME_RELATION_ID_,
-										subplan,
-										0);
-	}
-
-	return (Noname *) retval;
-}
-
-
-static SeqScan    *
+static SeqScan *
 make_seqscan(List *qptlist,
 			 List *qpqual,
 			 Index scanrelid)
@@ -1256,8 +1146,14 @@ make_mergejoin(List *tlist,
 	return node;
 }
 
+/*
+ * To use make_sort directly, you must already have marked the tlist
+ * with reskey and reskeyop information.  The keys had better be
+ * non-redundant, too (ie, there had better be tlist items marked with
+ * each key number from 1 to keycount), or the executor will get confused!
+ */
 Sort *
-make_sort(List *tlist, Oid nonameid, Plan *lefttree, int keycount)
+make_sort(List *tlist, Plan *lefttree, int keycount)
 {
 	Sort	   *node = makeNode(Sort);
 	Plan	   *plan = &node->plan;
@@ -1272,17 +1168,84 @@ make_sort(List *tlist, Oid nonameid, Plan *lefttree, int keycount)
 	plan->qual = NIL;
 	plan->lefttree = lefttree;
 	plan->righttree = NULL;
-	node->nonameid = nonameid;
 	node->keycount = keycount;
 
 	return node;
 }
 
-static Material *
-make_material(List *tlist,
-			  Oid nonameid,
-			  Plan *lefttree,
-			  int keycount)
+/*
+ * make_sort_from_pathkeys
+ *	  Create sort plan to sort according to given pathkeys
+ *
+ *	  'tlist' is the target list of the input plan
+ *	  'lefttree' is the node which yields input tuples
+ *	  'pathkeys' is the list of pathkeys by which the result is to be sorted
+ *
+ * We must convert the pathkey information into reskey and reskeyop fields
+ * of resdom nodes in the sort plan's target list.
+ */
+Sort *
+make_sort_from_pathkeys(List *tlist, Plan *lefttree, List *pathkeys)
+{
+	List	   *sort_tlist;
+	List	   *i;
+	int			numsortkeys = 0;
+
+	/* Create a new target list for the sort, with sort keys set. */
+	sort_tlist = new_unsorted_tlist(tlist);
+
+	foreach(i, pathkeys)
+	{
+		List	   *keysublist = (List *) lfirst(i);
+		PathKeyItem *pathkey = NULL;
+		Resdom	   *resdom = NULL;
+		List	   *j;
+
+		/*
+		 * We can sort by any one of the sort key items listed in this
+		 * sublist.  For now, we take the first one that corresponds to an
+		 * available Var in the sort_tlist.
+		 *
+		 * XXX if we have a choice, is there any way of figuring out which
+		 * might be cheapest to execute?  (For example, int4lt is likely
+		 * much cheaper to execute than numericlt, but both might appear
+		 * in the same pathkey sublist...)	Not clear that we ever will
+		 * have a choice in practice, so it may not matter.
+		 */
+		foreach(j, keysublist)
+		{
+			pathkey = lfirst(j);
+			Assert(IsA(pathkey, PathKeyItem));
+			resdom = tlist_member(pathkey->key, sort_tlist);
+			if (resdom)
+				break;
+		}
+		if (!resdom)
+			elog(ERROR, "make_sort_from_pathkeys: cannot find tlist item to sort");
+
+		/*
+		 * The resdom might be already marked as a sort key, if the
+		 * pathkeys contain duplicate entries.	(This can happen in
+		 * scenarios where multiple mergejoinable clauses mention the same
+		 * var, for example.) In that case the current pathkey is
+		 * essentially a no-op, because only one value can be seen within
+		 * any subgroup where it would be consulted.  We can ignore it.
+		 */
+		if (resdom->reskey == 0)
+		{
+			/* OK, mark it as a sort key and set the sort operator regproc */
+			resdom->reskey = ++numsortkeys;
+			resdom->reskeyop = get_opcode(pathkey->sortop);
+		}
+	}
+
+	Assert(numsortkeys > 0);
+
+	return make_sort(sort_tlist, lefttree, numsortkeys);
+}
+
+Material *
+make_material(List *tlist, Plan *lefttree)
 {
 	Material   *node = makeNode(Material);
 	Plan	   *plan = &node->plan;
@@ -1291,8 +1254,9 @@ make_material(List *tlist,
 
 	/*
 	 * For plausibility, make startup & total costs equal total cost of
-	 * input plan; this only affects EXPLAIN display not decisions. XXX
-	 * shouldn't we charge some additional cost for materialization?
+	 * input plan; this only affects EXPLAIN display not decisions.
+	 *
+	 * XXX shouldn't we charge some additional cost for materialization?
 	 */
 	plan->startup_cost = plan->total_cost;
 	plan->state = (EState *) NULL;
@@ -1300,8 +1264,6 @@ make_material(List *tlist,
 	plan->qual = NIL;
 	plan->lefttree = lefttree;
 	plan->righttree = NULL;
-	node->nonameid = nonameid;
-	node->keycount = keycount;
 
 	return node;
 }
@@ -1420,8 +1382,6 @@ make_unique(List *tlist, Plan *lefttree, List *distinctList)
 	plan->qual = NIL;
 	plan->lefttree = lefttree;
 	plan->righttree = NULL;
-	node->nonameid = _NONAME_RELATION_ID_;
-	node->keycount = 0;
 
 	/*
 	 * convert SortClause list into array of attr indexes, as wanted by

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.83 2000/06/15 03:32:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.84 2000/06/18 22:44:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,7 +21,6 @@
 #include "executor/executor.h"
 #include "nodes/makefuncs.h"
 #include "optimizer/clauses.h"
-#include "optimizer/internal.h"
 #include "optimizer/paths.h"
 #include "optimizer/plancat.h"
 #include "optimizer/planmain.h"
@@ -40,7 +39,7 @@ static List *make_subplanTargetList(Query *parse, List *tlist,
 static Plan *make_groupplan(List *group_tlist, bool tuplePerGroup,
 			   List *groupClause, AttrNumber *grpColIdx,
 			   bool is_presorted, Plan *subplan);
-static Plan *make_sortplan(List *tlist, List *sortcls, Plan *plannode);
+static Plan *make_sortplan(List *tlist, Plan *plannode, List *sortcls);
 
 /*****************************************************************************
  *
@@ -641,7 +640,8 @@ union_planner(Query *parse,
 	if (parse->sortClause)
 	{
 		if (!pathkeys_contained_in(sort_pathkeys, current_pathkeys))
-			result_plan = make_sortplan(tlist, parse->sortClause, result_plan);
+			result_plan = make_sortplan(tlist, result_plan,
+										parse->sortClause);
 	}
 
 	/*
@@ -818,10 +818,9 @@ make_groupplan(List *group_tlist,
 			}
 		}
 
-		subplan = (Plan *) make_sort(sort_tlist,
-									 _NONAME_RELATION_ID_,
-									 subplan,
-									 keyno);
+		Assert(keyno > 0);
+
+		subplan = (Plan *) make_sort(sort_tlist, subplan, keyno);
 	}
 
 	return (Plan *) make_group(group_tlist, tuplePerGroup, numCols,
@@ -833,9 +832,9 @@ make_groupplan(List *group_tlist,
  *	  Add a Sort node to implement an explicit ORDER BY clause.
  */
 static Plan *
-make_sortplan(List *tlist, List *sortcls, Plan *plannode)
+make_sortplan(List *tlist, Plan *plannode, List *sortcls)
 {
-	List	   *temp_tlist;
+	List	   *sort_tlist;
 	List	   *i;
 	int			keyno = 0;
 
@@ -843,13 +842,12 @@ make_sortplan(List *tlist, List *sortcls, Plan *plannode)
 	 * First make a copy of the tlist so that we don't corrupt the
 	 * original.
 	 */
-
-	temp_tlist = new_unsorted_tlist(tlist);
+	sort_tlist = new_unsorted_tlist(tlist);
 
 	foreach(i, sortcls)
 	{
 		SortClause *sortcl = (SortClause *) lfirst(i);
-		TargetEntry *tle = get_sortgroupclause_tle(sortcl, temp_tlist);
+		TargetEntry *tle = get_sortgroupclause_tle(sortcl, sort_tlist);
 		Resdom	   *resdom = tle->resdom;
 
 		/*
@@ -865,10 +863,9 @@ make_sortplan(List *tlist, List *sortcls, Plan *plannode)
 		}
 	}
 
-	return (Plan *) make_sort(temp_tlist,
-							  _NONAME_RELATION_ID_,
-							  plannode,
-							  keyno);
+	Assert(keyno > 0);
+
+	return (Plan *) make_sort(sort_tlist, plannode, keyno);
 }
 
 /*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.132 2000/06/17 23:41:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.133 2000/06/18 22:43:55 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -70,14 +70,11 @@ static void AddNewRelationTuple(Relation pg_class_desc,
 					Relation new_rel_desc, Oid new_rel_oid,
 					int natts,
 					char relkind, char *temp_relname);
-static void AddToNoNameRelList(Relation r);
-
 static void DeleteAttributeTuples(Relation rel);
 static void DeleteRelationTuple(Relation rel);
 static void DeleteTypeTuple(Relation rel);
 static void RelationRemoveIndexes(Relation relation);
 static void RelationRemoveInheritance(Relation relation);
-static void RemoveFromNoNameRelList(Relation r);
 static void AddNewRelationType(char *typeName, Oid new_rel_oid);
 static void StoreAttrDefault(Relation rel, AttrNumber attnum, char *adbin,
 				 bool updatePgAttribute);
@@ -141,22 +138,6 @@ static Form_pg_attribute HeapAtt[] = {&a1, &a2, &a3, &a4, &a5, &a6};
  * ----------------------------------------------------------------
  */
 
-/* the tempRelList holds
-   the list of temporary uncatalogued relations that are created.
-   these relations should be destroyed at the end of transactions
-*/
-typedef struct tempRelList
-{
-	Relation   *rels;			/* array of relation descriptors */
-	int			num;			/* number of temporary relations */
-	int			size;			/* size of space allocated for the rels
-								 * array */
-} TempRelList;
-
-#define NONAME_REL_LIST_SIZE	32
-
-static TempRelList *tempRels = NULL;
-
 
 /* ----------------------------------------------------------------
  *		heap_create		- Create an uncataloged heap relation
@@ -170,15 +151,16 @@ static TempRelList *tempRels = NULL;
  *		Eventually, must place information about this temporary relation
  *		into the transaction context block.
  *
+ * NOTE: if istemp is TRUE then heap_create will overwrite relname with
+ * the unique "real" name chosen for the temp relation.
  *
- * if heap_create is called with "" as the name, then heap_create will create
- * a temporary name "pg_noname.$PID.$SEQUENCE" for the relation
+ * If storage_create is TRUE then heap_storage_create is called here,
+ * else caller must call heap_storage_create later.
  * ----------------------------------------------------------------
  */
 Relation
 heap_create(char *relname,
 			TupleDesc tupDesc,
-			bool isnoname,
 			bool istemp,
 			bool storage_create)
 {
@@ -245,18 +227,11 @@ heap_create(char *relname,
 	else
 		relid = newoid();
 
-	if (isnoname)
-	{
-		Assert(!relname);
-		relname = palloc(NAMEDATALEN);
-		snprintf(relname, NAMEDATALEN, "pg_noname.%d.%u",
-				 (int) MyProcPid, uniqueId++);
-	}
-
 	if (istemp)
 	{
-		/* replace relname of caller */
-		snprintf(relname, NAMEDATALEN, "pg_temp.%d.%u", MyProcPid, uniqueId++);
+		/* replace relname of caller with a unique name for a temp relation */
+		snprintf(relname, NAMEDATALEN, "pg_temp.%d.%u",
+				 (int) MyProcPid, uniqueId++);
 	}
 
 	/* ----------------
@@ -268,7 +243,7 @@ heap_create(char *relname,
 	rel = (Relation) palloc(len);
 	MemSet((char *) rel, 0, len);
 	rel->rd_fd = -1;			/* table is not open */
-	rel->rd_unlinked = TRUE;	/* table is not created yet */
+	rel->rd_unlinked = true;	/* table is not created yet */
 
 	/*
 	 * create a new tuple descriptor from the one passed in
@@ -311,12 +286,6 @@ heap_create(char *relname,
 	}
 
 	/* ----------------
-	 *	remember if this is a noname relation
-	 * ----------------
-	 */
-	rel->rd_isnoname = isnoname;
-
-	/* ----------------
 	 *	have the storage manager create the relation.
 	 * ----------------
 	 */
@@ -329,13 +298,6 @@ heap_create(char *relname,
 
 	MemoryContextSwitchTo(oldcxt);
 
-	/*
-	 * add all noname relations to the tempRels list so they can be
-	 * properly disposed of at the end of transaction
-	 */
-	if (isnoname)
-		AddToNoNameRelList(rel);
-
 	return rel;
 }
 
@@ -347,7 +309,7 @@ heap_storage_create(Relation rel)
 	if (rel->rd_unlinked)
 	{
 		rel->rd_fd = (File) smgrcreate(DEFAULT_SMGR, rel);
-		rel->rd_unlinked = FALSE;
+		rel->rd_unlinked = false;
 		smgrcall = true;
 	}
 	return smgrcall;
@@ -810,7 +772,7 @@ heap_create_with_catalog(char *relname,
 	 *	get_temp_rel_by_username() couldn't check the simultaneous
 	 *	creation. Uniqueness will be really checked by unique
 	 *	indexes of system tables but we couldn't check it here.
-	 *	We have to pospone to create the disk file for this
+	 *	We have to postpone creating the disk file for this
 	 *	relation.
 	 *	Another boolean parameter "storage_create" was added
 	 *	to heap_create() function. If the parameter is false
@@ -821,12 +783,12 @@ heap_create_with_catalog(char *relname,
 	 *	relation descriptor.
 	 *
 	 *	Note: The call to heap_create() changes relname for
-	 *	noname and temp tables.
+	 *	temp tables; it becomes the true physical relname.
 	 *	The call to heap_storage_create() does all the "real"
 	 *	work of creating the disk file for the relation.
 	 * ----------------
 	 */
-	new_rel_desc = heap_create(relname, tupdesc, false, istemp, false);
+	new_rel_desc = heap_create(relname, tupdesc, istemp, false);
 
 	new_rel_oid = new_rel_desc->rd_att->attrs[0]->attrelid;
 
@@ -1546,10 +1508,9 @@ heap_drop_with_catalog(const char *relname)
 	 *	unlink the relation's physical file and finish up.
 	 * ----------------
 	 */
-	if (!(rel->rd_isnoname) || !(rel->rd_unlinked))
+	if (! rel->rd_unlinked)
 		smgrunlink(DEFAULT_SMGR, rel);
-
-	rel->rd_unlinked = TRUE;
+	rel->rd_unlinked = true;
 
 	/*
 	 * Close relcache entry, but *keep* AccessExclusiveLock on the
@@ -1568,133 +1529,6 @@ heap_drop_with_catalog(const char *relname)
 		remove_temp_relation(rid);
 }
 
-/*
- * heap_drop
- *	  destroy and close temporary relations
- *
- */
-
-void
-heap_drop(Relation rel)
-{
-	Oid			rid = RelationGetRelid(rel);
-
-	ReleaseRelationBuffers(rel);
-	if (!(rel->rd_isnoname) || !(rel->rd_unlinked))
-		smgrunlink(DEFAULT_SMGR, rel);
-	rel->rd_unlinked = TRUE;
-	heap_close(rel, NoLock);
-	RemoveFromNoNameRelList(rel);
-	RelationForgetRelation(rid);
-}
-
-
-/**************************************************************
-  functions to deal with the list of temporary relations
-**************************************************************/
-
-/* --------------
-   InitTempRellist():
-
-   initialize temporary relations list
-   the tempRelList is a list of temporary relations that
-   are created in the course of the transactions
-   they need to be destroyed properly at the end of the transactions
-
-   MODIFIES the global variable tempRels
-
- >> NOTE <<
-
-   malloc is used instead of palloc because we KNOW when we are
-   going to free these things.	Keeps us away from the memory context
-   hairyness
-
-*/
-void
-InitNoNameRelList(void)
-{
-	if (tempRels)
-	{
-		free(tempRels->rels);
-		free(tempRels);
-	}
-
-	tempRels = (TempRelList *) malloc(sizeof(TempRelList));
-	tempRels->size = NONAME_REL_LIST_SIZE;
-	tempRels->rels = (Relation *) malloc(sizeof(Relation) * tempRels->size);
-	MemSet(tempRels->rels, 0, sizeof(Relation) * tempRels->size);
-	tempRels->num = 0;
-}
-
-/*
-   removes a relation from the TempRelList
-
-   MODIFIES the global variable tempRels
-	  we don't really remove it, just mark it as NULL
-	  and DropNoNameRels will look for NULLs
-*/
-static void
-RemoveFromNoNameRelList(Relation r)
-{
-	int			i;
-
-	if (!tempRels)
-		return;
-
-	for (i = 0; i < tempRels->num; i++)
-	{
-		if (tempRels->rels[i] == r)
-		{
-			tempRels->rels[i] = NULL;
-			break;
-		}
-	}
-}
-
-/*
-   add a temporary relation to the TempRelList
-
-   MODIFIES the global variable tempRels
-*/
-static void
-AddToNoNameRelList(Relation r)
-{
-	if (!tempRels)
-		return;
-
-	if (tempRels->num == tempRels->size)
-	{
-		tempRels->size += NONAME_REL_LIST_SIZE;
-		tempRels->rels = realloc(tempRels->rels,
-								 sizeof(Relation) * tempRels->size);
-	}
-	tempRels->rels[tempRels->num] = r;
-	tempRels->num++;
-}
-
-/*
-   go through the tempRels list and destroy each of the relations
-*/
-void
-DropNoNameRels(void)
-{
-	int			i;
-	Relation	rel;
-
-	if (!tempRels)
-		return;
-
-	for (i = 0; i < tempRels->num; i++)
-	{
-		rel = tempRels->rels[i];
-		/* rel may be NULL if it has been removed from the list already */
-		if (rel)
-			heap_drop(rel);
-	}
-	free(tempRels->rels);
-	free(tempRels);
-	tempRels = NULL;
-}
 
 /*
  * Store a default expression for column attnum of relation rel.

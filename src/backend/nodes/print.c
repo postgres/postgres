@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.38 2000/04/12 17:15:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.39 2000/06/18 22:44:05 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -315,9 +315,6 @@ plannode_type(Plan *p)
 		case T_HashJoin:
 			return "HASHJOIN";
 			break;
-		case T_Noname:
-			return "NONAME";
-			break;
 		case T_Material:
 			return "MATERIAL";
 			break;
@@ -332,9 +329,6 @@ plannode_type(Plan *p)
 			break;
 		case T_Hash:
 			return "HASH";
-			break;
-		case T_Choose:
-			return "CHOOSE";
 			break;
 		case T_Group:
 			return "GROUP";

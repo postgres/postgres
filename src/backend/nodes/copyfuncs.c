@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.113 2000/04/12 17:15:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.114 2000/06/18 22:44:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -415,41 +415,6 @@ _copyHashJoin(HashJoin *from)
 
 
 /* ----------------
- *		CopyNonameFields
- *
- *		This function copies the fields of the Noname node.  It is used by
- *		all the copy functions for classes which inherit from Noname.
- * ----------------
- */
-static void
-CopyNonameFields(Noname *from, Noname *newnode)
-{
-	newnode->nonameid = from->nonameid;
-	newnode->keycount = from->keycount;
-	return;
-}
-
-
-/* ----------------
- *		_copyNoname
- * ----------------
- */
-static Noname *
-_copyNoname(Noname *from)
-{
-	Noname	   *newnode = makeNode(Noname);
-
-	/* ----------------
-	 *	copy node superclass fields
-	 * ----------------
-	 */
-	CopyPlanFields((Plan *) from, (Plan *) newnode);
-	CopyNonameFields(from, newnode);
-
-	return newnode;
-}
-
-/* ----------------
  *		_copyMaterial
  * ----------------
  */
@@ -463,7 +428,6 @@ _copyMaterial(Material *from)
 	 * ----------------
 	 */
 	CopyPlanFields((Plan *) from, (Plan *) newnode);
-	CopyNonameFields((Noname *) from, (Noname *) newnode);
 
 	return newnode;
 }
@@ -483,7 +447,8 @@ _copySort(Sort *from)
 	 * ----------------
 	 */
 	CopyPlanFields((Plan *) from, (Plan *) newnode);
-	CopyNonameFields((Noname *) from, (Noname *) newnode);
+
+	newnode->keycount = from->keycount;
 
 	return newnode;
 }
@@ -552,7 +517,6 @@ _copyUnique(Unique *from)
 	 * ----------------
 	 */
 	CopyPlanFields((Plan *) from, (Plan *) newnode);
-	CopyNonameFields((Noname *) from, (Noname *) newnode);
 
 	/* ----------------
 	 *	copy remainder of node
@@ -1694,9 +1658,6 @@ copyObject(void *from)
 			break;
 		case T_HashJoin:
 			retval = _copyHashJoin(from);
-			break;
-		case T_Noname:
-			retval = _copyNoname(from);
 			break;
 		case T_Material:
 			retval = _copyMaterial(from);
