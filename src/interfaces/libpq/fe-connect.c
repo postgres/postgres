@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.198 2002/08/29 07:22:29 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.199 2002/08/29 23:06:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,10 +16,12 @@
 #include "postgres_fe.h"
 
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <ctype.h>
 #include <time.h>
+#include <unistd.h>
 
 #include "libpq-fe.h"
 #include "libpq-int.h"
@@ -2904,6 +2906,7 @@ PasswordFromFile(char *hostname, char *port, char *dbname,
 	FILE   *fp;
 #define LINELEN NAMEDATALEN*5
 	char	buf[LINELEN];
+	struct stat stat_buf;
 
 	if (pwdfile == NULL || strcmp(pwdfile, "") == 0)
 		return NULL;
@@ -2919,6 +2922,19 @@ PasswordFromFile(char *hostname, char *port, char *dbname,
 
 	if (port == NULL)
 		port = DEF_PGPORT_STR;
+
+	/* If password file cannot be opened, ignore it. */
+	if (stat(pwdfile, &stat_buf) == -1)
+		return NULL;
+
+	/* If password file is insecure, alert the user and ignore it. */
+	if (stat_buf.st_mode & (S_IRWXG | S_IRWXO))
+	{
+		fprintf(stderr,
+				libpq_gettext("WARNING: Password file %s has world or group read access; permission should be u=rw (0600)"),
+				pwdfile);
+		return NULL;
+	}
 
 	fp = fopen(pwdfile, "r");
 	if (fp == NULL)
