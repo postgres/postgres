@@ -125,9 +125,30 @@ Selected references and readings for <Acronym>SQL</Acronym> and <ProductName>Pos
 <!--
 <BIBLIOMISC>&dash;</BIBLIOMISC>
 
-<BOOKBIBLIO ID="ADMIN-GUIDE">
+<BOOKBIBLIO ID="ADMINISTRATORS-GUIDE">
 -->
 <TITLE>The <ProductName>PostgreSQL</ProductName> Administrator's Guide</TITLE>
+<Editor>
+<FIRSTNAME>Thomas</FIRSTNAME>
+<SURNAME>Lockhart</SURNAME>
+</Editor>
+
+<PUBDATE>1998-03-01</PUBDATE>
+<PUBLISHER>
+<PUBLISHERNAME>The PostgreSQL Global Development Group</PUBLISHERNAME>
+</PUBLISHER>
+<!--
+</BOOKBIBLIO>
+-->
+</BIBLIOENTRY>
+
+<BIBLIOENTRY ID="DEVELOPERS-GUIDE">
+<!--
+<BIBLIOMISC>&dash;</BIBLIOMISC>
+
+<BOOKBIBLIO ID="POSTGRES-REFERENCE">
+-->
+<TITLE>The <ProductName>PostgreSQL</ProductName> Developer's Guide</TITLE>
 <Editor>
 <FIRSTNAME>Thomas</FIRSTNAME>
 <SURNAME>Lockhart</SURNAME>
@@ -163,28 +184,7 @@ Selected references and readings for <Acronym>SQL</Acronym> and <ProductName>Pos
 -->
 </BIBLIOENTRY>
 
-<BIBLIOENTRY ID="TUTORIAL">
-<!--
-<BIBLIOMISC>&dash;</BIBLIOMISC>
-
-<BOOKBIBLIO ID="POSTGRES-REFERENCE">
--->
-<TITLE>The <ProductName>PostgreSQL</ProductName> Reference Manual</TITLE>
-<Editor>
-<FIRSTNAME>Thomas</FIRSTNAME>
-<SURNAME>Lockhart</SURNAME>
-</Editor>
-
-<PUBDATE>1998-03-01</PUBDATE>
-<PUBLISHER>
-<PUBLISHERNAME>The PostgreSQL Global Development Group</PUBLISHERNAME>
-</PUBLISHER>
-<!--
-</BOOKBIBLIO>
--->
-</BIBLIOENTRY>
-
-<BIBLIOENTRY ID="USERS-GUIDE">
+<BIBLIOENTRY ID="TUTORIAL-GUIDE">
 <!--
 <BIBLIOMISC>&dash;</BIBLIOMISC>
 
