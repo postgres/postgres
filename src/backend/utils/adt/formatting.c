@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.26 2000/12/03 20:45:35 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.27 2000/12/15 19:15:09 momjian Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2000, PostgreSQL, Inc
@@ -44,6 +44,17 @@
  *
  *	Karel Zak
  *
+ * TODO (7.2):
+ *	- replace some global values by struct that handle it
+ *	- check last used entry in the cache_search
+ *	- better number building (formatting) 
+ *	- add support for abstime
+ *	- add support for roman number to standard number conversion
+ *	- add support for number spelling
+ *	- add support for string to string formatting (we must be better
+ *	  than Oracle :-), 
+ *		to_char('Hello', 'X X X X X') -> 'H e l l o' 
+ * 
  * -----------------------------------------------------------------------
  */
 
@@ -334,11 +345,12 @@ static int	DCHCounter = 0;
 
 /* global cache for --- number part */
 static NUMCacheEntry NUMCache[NUM_CACHE_FIELDS + 1];	
+static NUMCacheEntry *last_NUMCacheEntry;
 
 static int	n_NUMCache = 0;		/* number of entries */
 static int	NUMCounter = 0;
 
-#define MAX_INT32	(2147483640)
+#define MAX_INT32	(2147483600)
 
 /* ----------
  * For char->date/time conversion
@@ -850,8 +862,10 @@ static char *NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *nu
 			  int plen, int sign, int type);
 static DCHCacheEntry *DCH_cache_search(char *str);
 static DCHCacheEntry *DCH_cache_getnew(char *str);
+
 static NUMCacheEntry *NUM_cache_search(char *str);
 static NUMCacheEntry *NUM_cache_getnew(char *str);
+static void NUM_cache_remove(NUMCacheEntry *ent);
 
 
 /* ----------
@@ -917,8 +931,10 @@ NUMDesc_prepare(NUMDesc *num, FormatNode *n)
 
 		case NUM_9:
 			if (IS_BRACKET(num))
+			{
+				NUM_cache_remove(last_NUMCacheEntry);
 				elog(ERROR, "to_char/to_number(): '9' must be ahead of 'PR'.");
-
+			}
 			if (IS_MULTI(num))
 			{
 				++num->multi;
@@ -932,8 +948,10 @@ NUMDesc_prepare(NUMDesc *num, FormatNode *n)
 
 		case NUM_0:
 			if (IS_BRACKET(num))
+			{
+				NUM_cache_remove(last_NUMCacheEntry);
 				elog(ERROR, "to_char/to_number(): '0' must be ahead of 'PR'.");
-
+			}
 			if (!IS_ZERO(num) && !IS_DECIMAL(num))
 			{
 				num->flag |= NUM_F_ZERO;
@@ -957,9 +975,15 @@ NUMDesc_prepare(NUMDesc *num, FormatNode *n)
 			num->need_locale = TRUE;
 		case NUM_DEC:
 			if (IS_DECIMAL(num))
+			{
+				NUM_cache_remove(last_NUMCacheEntry);
 				elog(ERROR, "to_char/to_number(): not unique decimal poit.");
+			}
 			if (IS_MULTI(num))
+			{
+				NUM_cache_remove(last_NUMCacheEntry);
 				elog(ERROR, "to_char/to_number(): can't use 'V' and decimal poin together.");
+			}
 			num->flag |= NUM_F_DECIMAL;
 			break;
 
@@ -969,11 +993,15 @@ NUMDesc_prepare(NUMDesc *num, FormatNode *n)
 
 		case NUM_S:
 			if (IS_LSIGN(num))
+			{
+				NUM_cache_remove(last_NUMCacheEntry);
 				elog(ERROR, "to_char/to_number(): not unique 'S'.");
-
+			}
 			if (IS_PLUS(num) || IS_MINUS(num) || IS_BRACKET(num))
+			{
+				NUM_cache_remove(last_NUMCacheEntry);
 				elog(ERROR, "to_char/to_number(): can't use 'S' and 'PL'/'MI'/'SG'/'PR' together.");
-
+			}
 			if (!IS_DECIMAL(num))
 			{
 				num->lsign = NUM_LSIGN_PRE;
@@ -992,29 +1020,38 @@ NUMDesc_prepare(NUMDesc *num, FormatNode *n)
 
 		case NUM_MI:
 			if (IS_LSIGN(num))
+			{
+				NUM_cache_remove(last_NUMCacheEntry);
 				elog(ERROR, "to_char/to_number(): can't use 'S' and 'MI' together.");
-
+			}
 			num->flag |= NUM_F_MINUS;
 			break;
 
 		case NUM_PL:
 			if (IS_LSIGN(num))
+			{
+				NUM_cache_remove(last_NUMCacheEntry);
 				elog(ERROR, "to_char/to_number(): can't use 'S' and 'PL' together.");
-
+			}
 			num->flag |= NUM_F_PLUS;
 			break;
 
 		case NUM_SG:
 			if (IS_LSIGN(num))
+			{
+				NUM_cache_remove(last_NUMCacheEntry);
 				elog(ERROR, "to_char/to_number(): can't use 'S' and 'SG' together.");
-
+			}
 			num->flag |= NUM_F_MINUS;
 			num->flag |= NUM_F_PLUS;
 			break;
 
 		case NUM_PR:
 			if (IS_LSIGN(num) || IS_PLUS(num) || IS_MINUS(num))
+			{
+				NUM_cache_remove(last_NUMCacheEntry);
 				elog(ERROR, "to_char/to_number(): can't use 'PR' and 'S'/'PL'/'MI'/'SG' together.");
+			}
 			num->flag |= NUM_F_BRACKET;
 			break;
 
@@ -1030,11 +1067,15 @@ NUMDesc_prepare(NUMDesc *num, FormatNode *n)
 
 		case NUM_V:
 			if (IS_DECIMAL(num))
+			{
+				NUM_cache_remove(last_NUMCacheEntry);
 				elog(ERROR, "to_char/to_number(): can't use 'V' and decimal poin together.");
+			}
 			num->flag |= NUM_F_MULTI;
 			break;
 
 		case NUM_E:
+			NUM_cache_remove(last_NUMCacheEntry);
 			elog(ERROR, "to_char/to_number(): 'E' is not supported.");
 	}
 
@@ -2988,6 +3029,14 @@ NUM_cache_getnew(char *str)
 
 		for (ent = NUMCache; ent <= (NUMCache + NUM_CACHE_FIELDS); ent++)
 		{
+			/* entry removed via NUM_cache_remove()
+			 * can be used here
+			 */
+			if (*ent->str == '\0')  
+			{
+				old = ent;
+				break;
+			}
 			if (ent->age < old->age)
 				old = ent;
 		}
@@ -3015,6 +3064,7 @@ NUM_cache_getnew(char *str)
 
 	zeroize_NUM(&ent->Num);
 
+	last_NUMCacheEntry = ent;
 	return ent;					/* never */
 }
 
@@ -3040,12 +3090,23 @@ NUM_cache_search(char *str)
 		if (strcmp(ent->str, str) == 0)
 		{
 			ent->age = (++NUMCounter);
+			last_NUMCacheEntry = ent;
 			return ent;
 		}
 		i++;
 	}
 
 	return (NUMCacheEntry *) NULL;
+}
+
+static void
+NUM_cache_remove(NUMCacheEntry *ent)
+{
+#ifdef DEBUG_TO_FROM_CHAR
+	elog(DEBUG_elog_output, "REMOVING ENTRY (%s)", ent->str);
+#endif
+	*ent->str = '\0';
+	ent->age = 0;
 }
 
 /* ----------
@@ -3070,7 +3131,7 @@ NUM_cache(int len, NUMDesc *Num, char *pars_str, int *flag)
 	 * Allocate new memory if format picture is bigger than static cache
 	 * and not use cache (call parser always) - flag=1 show this variant
 	 * ----------
-		 */
+	 */
 	if (len > NUM_CACHE_SIZE)
 	{
 
