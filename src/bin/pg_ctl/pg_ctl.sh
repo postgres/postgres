@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pg_ctl/Attic/pg_ctl.sh,v 1.36 2003/08/14 18:56:41 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pg_ctl/Attic/pg_ctl.sh,v 1.36.4.1 2004/08/28 21:10:00 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -236,6 +236,11 @@ esac
 if [ "$op" = "reload" ];then
 	sig="-HUP"
 	wait=no
+fi
+
+# Prevent duplicate of -D flags on each restart
+if [ "$op" = "restart" ];then
+	PGDATAOPTS=""
 fi
 
 DEFPOSTOPTS=$PGDATA/postmaster.opts.default
