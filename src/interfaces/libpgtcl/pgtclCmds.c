@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.37 1998/10/02 01:37:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.38 1998/10/14 15:17:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1230,7 +1230,8 @@ Pg_select(ClientData cData, Tcl_Interp * interp, int argc, char **argv)
 	Pg_ConnectionId *connid;
 	PGconn	   *conn;
 	PGresult   *result;
-	int			r;
+	int			r,
+				retval;
 	size_t		tupno,
 				column,
 				ncols;
@@ -1293,6 +1294,8 @@ Pg_select(ClientData cData, Tcl_Interp * interp, int argc, char **argv)
 	sprintf(buffer, "%d", ncols);
 	Tcl_SetVar2(interp, argv[3], ".numcols", buffer, 0);
 
+	retval = TCL_OK;
+
 	for (tupno = 0; tupno < PQntuples(result); tupno++)
 	{
 		sprintf(buffer, "%d", tupno);
@@ -1306,10 +1309,7 @@ Pg_select(ClientData cData, Tcl_Interp * interp, int argc, char **argv)
 		if ((r = Tcl_Eval(interp, argv[4])) != TCL_OK && r != TCL_CONTINUE)
 		{
 			if (r == TCL_BREAK)
-			{
-				PQclear(result);
-				return TCL_OK;
-			}
+				break;			/* exit loop, but return TCL_OK */
 
 			if (r == TCL_ERROR)
 			{
@@ -1320,15 +1320,15 @@ Pg_select(ClientData cData, Tcl_Interp * interp, int argc, char **argv)
 				Tcl_AddErrorInfo(interp, msg);
 			}
 
-			PQclear(result);
-			return r;
+			retval = r;
+			break;
 		}
 	}
 
 	ckfree((void *) info);
 	Tcl_UnsetVar(interp, argv[3], 0);
 	PQclear(result);
-	return TCL_OK;
+	return retval;
 }
 
 /*
