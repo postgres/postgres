@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.40 2001/05/07 00:43:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.41 2001/06/01 06:23:19 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,6 +44,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"as", AS},
 	{"asc", ASC},
 	{"at", AT},
+	{"authorization", AUTHORIZATION},
 	{"backward", BACKWARD},
 	{"before", BEFORE},
 	{"begin", BEGIN_TRANS},

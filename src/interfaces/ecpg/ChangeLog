@@ -1073,3 +1073,11 @@ Thu Apr  5 10:11:35 CEST 2001
 	- Fixed long long problem.
 	- Set ecpg version to 2.8.0. 
 	- Set library version to 3.2.0.
+
+Fri Jun  1 08:13:25 CEST 2001
+
+	- Synced preproc.y with gram.y.
+	- Synced pgc.l with scan.l.
+	- Synced keyword.c.
+	- Set ecpg version to 2.9.0.
+	- Set library version to 3.3.0.

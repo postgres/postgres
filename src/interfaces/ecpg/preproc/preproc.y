@@ -172,7 +172,7 @@ make_name(void)
 %token		TYPECAST
 
 /* Keywords (in SQL92 reserved words) */
-%token  ABSOLUTE, ACTION, ADD, ALL, ALTER, AND, ANY, AS, ASC,
+%token  ABSOLUTE, ACTION, ADD, ALL, ALTER, AND, ANY, AS, ASC, AT, AUTHORIZATION, 
                 BEGIN_TRANS, BETWEEN, BOTH, BY,
                 CASCADE, CASE, CAST, CHAIN, CHAR, CHARACTER,
 		CHARACTERISTICS, CHECK, CLOSE,
@@ -293,7 +293,7 @@ make_name(void)
 %type  <str>	row_expr row_descriptor row_list ConstDatetime opt_chain
 %type  <str>	SelectStmt into_clause OptTemp ConstraintAttributeSpec
 %type  <str>	opt_table opt_all sort_clause sortby_list ConstraintAttr 
-%type  <str>	sortby OptUseOp relation_name_list name_list
+%type  <str>	sortby OptUseOp relation_name_list name_list ColId_or_Sconst
 %type  <str>	group_clause having_clause from_clause opt_distinct
 %type  <str>	join_outer where_clause relation_expr sub_type opt_arg
 %type  <str>	opt_column_list insert_rest InsertStmt OptimizableStmt
@@ -802,6 +802,10 @@ VariableSetStmt:  SET ColId TO var_value
                                 {
 					$$ = cat2_str(make_str("set names"), $3);
                                 }
+		| SET SESSION AUTHORIZATION ColId_or_Sconst 
+                                {
+					$$ = cat2_str(make_str("set session authorization"), $4);
+                                }
                 ;
 
 opt_level:  READ COMMITTED      { $$ = make_str("read committed"); }
@@ -834,6 +838,10 @@ zone_value:  StringConst			{ $$ = $1; }
 opt_encoding:	StringConst	 	{ $$ = $1; }
 		| DEFAULT       { $$ = make_str("default"); }
 		| /*EMPTY*/     { $$ = EMPTY; }
+		;
+
+ColId_or_Sconst: ColId		{ $$ = $1; }
+		| SCONST	{ $$ = $1; }
 		;
 
 VariableShowStmt:  SHOW ColId
@@ -1677,9 +1685,9 @@ comment_text:    StringConst		{ $$ = $1; }
  *
  *****************************************************************************/
 
-GrantStmt:  GRANT privileges ON relation_name_list TO grantee opt_with_grant
+GrantStmt:  GRANT privileges ON opt_table relation_name_list TO grantee opt_with_grant
 				{
-					$$ = cat_str(7, make_str("grant"), $2, make_str("on"), $4, make_str("to"), $6);
+					$$ = cat_str(8, make_str("grant"), $2, make_str("on"), $4, $5, make_str("to"), $7);
 				}
 		;
 
@@ -1727,6 +1735,14 @@ operation:  SELECT
 				{
 						$$ = make_str("rule");
 				}
+		| REFERENCES
+				{
+						$$ = make_str("references");
+				}
+		| TRIGGER
+				{
+						$$ = make_str("trigger");
+				}
 		;
 
 grantee:  PUBLIC
@@ -1758,9 +1774,9 @@ opt_with_grant:  WITH GRANT OPTION
  *
  *****************************************************************************/
 
-RevokeStmt:  REVOKE privileges ON relation_name_list FROM grantee
+RevokeStmt:  REVOKE privileges ON opt_table relation_name_list FROM grantee
 				{
-					$$ = cat_str(7, make_str("revoke"), $2, make_str("on"), $4, make_str("from"), $6);
+					$$ = cat_str(8, make_str("revoke"), $2, make_str("on"), $4, $5, make_str("from"), $7);
 				}
 		;
 
@@ -4939,6 +4955,7 @@ TokenId:  ABSOLUTE			{ $$ = make_str("absolute"); }
 	| AGGREGATE			{ $$ = make_str("aggregate"); }
 	| ALTER				{ $$ = make_str("alter"); }
 	| AT				{ $$ = make_str("at"); }
+	| AUTHORIZATION			{ $$ = make_str("authorization"); }
 	| BACKWARD			{ $$ = make_str("backward"); }
 	| BEFORE			{ $$ = make_str("before"); }
 	| BEGIN_TRANS			{ $$ = make_str("begin"); }
@@ -5027,7 +5044,7 @@ TokenId:  ABSOLUTE			{ $$ = make_str("absolute"); }
 	| SHARE				{ $$ = make_str("share"); }
 	| START				{ $$ = make_str("start"); }
 	| STATEMENT			{ $$ = make_str("statement"); }
-	| STATISTICS		{ $$ = make_str("statistics"); }
+	| STATISTICS			{ $$ = make_str("statistics"); }
 	| STDIN                         { $$ = make_str("stdin"); }
 	| STDOUT                        { $$ = make_str("stdout"); }
 	| SYSID                         { $$ = make_str("sysid"); }
