@@ -63,7 +63,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	  $Id: s_lock.h,v 1.106 2003/04/20 21:54:34 tgl Exp $
+ *	  $Id: s_lock.h,v 1.107 2003/06/05 16:07:25 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,7 +76,7 @@
 #if defined(HAS_TEST_AND_SET)
 
 
-#if defined(__GNUC__)
+#if defined(__GNUC__) || defined(__ICC)
 /*************************************************************************
  * All the gcc inlines
  */

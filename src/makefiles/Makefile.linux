@@ -1,5 +1,5 @@
 AROPT = crs
-export_dynamic = -export-dynamic
+export_dynamic = -Wl,-E
 rpath = -Wl,-rpath,$(libdir)
 shlib_symbolic = -Wl,-Bsymbolic
 allow_nonpic_in_shlib = yes
