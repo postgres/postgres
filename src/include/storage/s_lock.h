@@ -63,7 +63,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	  $Id: s_lock.h,v 1.115 2003/10/10 03:58:57 momjian Exp $
+ *	  $Id: s_lock.h,v 1.116 2003/11/04 09:53:36 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -540,7 +540,7 @@ extern slock_t wc_tas(volatile slock_t *lock);
 #else	 /* HAS_TEST_AND_SET */
 
 #ifdef HAVE_SPINLOCKS
-#error This platform does not support native spinlocks.  To continue the compile, rerun configure using --disable-spinlocks.  However, performance will be poor.  Please report this to pgsql-bugs@postgresql.org.
+#error PostgreSQL does not have native spinlock support on this platform.  To continue the compilation, rerun configure using --disable-spinlocks.  However, performance will be poor.  Please report this to pgsql-bugs@postgresql.org.
 #endif
 
 /*
