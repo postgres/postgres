@@ -1,0 +1,40 @@
+# $Header: /cvsroot/pgsql/src/backend/storage/smgr/README,v 1.1.1.1 1996/07/09 06:21:59 scrappy Exp $
+
+This directory contains the code that supports the Postgres storage manager
+switch and all of the installed storage managers.  In released systems,
+the only supported storage manager is the magnetic disk manager.  At UC
+Berkeley, the Sony WORM optical disk jukebox and persistent main memory are
+also supported.
+
+As of Postgres Release 3.0, every relation in the system is tagged with the
+storage manager on which it resides.  The storage manager switch code turns
+what used to by filesystem operations into operations on the correct store,
+for any given relation.
+
+The files in this directory, and their contents, are
+
+    smgrtype.c	Storage manager type -- maps string names to storage manager
+		IDs and provides simple comparison operators.  This is the
+		regproc support for type 'smgr' in the system catalogs.
+
+    smgr.c	The storage manager switch dispatch code.  The routines in
+		this file call the appropriate storage manager to do hardware
+		accesses requested by the backend.
+
+    md.c	The magnetic disk storage manager.
+
+    mm.c	The persistent main memory storage manager (#undef'ed in
+		tmp/c.h for all distributed systems).
+
+    sj.c	The sony jukebox storage manager and cache management code
+		(#undef'ed in tmp/c.h for all distributed systems).  The
+		routines in this file allocate extents, maintain block
+		maps, and guarantee the persistence and coherency of a cache
+		of jukebox blocks on magnetic disk.
+
+    pgjb.c	The postgres jukebox interface routines.  The routines here
+		handle exclusion on the physical device and translate requests
+		from the storage manager code (sj.c) into jbaccess calls.
+
+    jbaccess.c	Access code for the physical Sony jukebox device.  This code
+		was swiped from Andy McFadden's jblib.a code at UC Berkeley.

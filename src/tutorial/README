@@ -1,0 +1,24 @@
+This directory contains SQL tutorial scripts.  To look at them, first do a
+	% make
+to compile all the scripts and C files for the user-defined functions
+and types.  (make needs to be GNU make and may be named something
+different on your system)
+
+Then, change to the object directory
+	% cd obj
+
+and run psql with the -s flag:
+	% psql -s
+
+Welcome to the POSTGRES95 interactive sql monitor:
+
+   type \? for help on slash commands
+   type \q to quit
+   type \g or terminate with semicolon to execute query
+ You are currently connected to the database: jolly
+
+jolly==>
+
+From within psql, you can try each individual script file by using
+the \i <filename> psql command.
+

@@ -1,0 +1,251 @@
+---------------------------------------------------------------------------
+--
+-- complex.sql-
+--    This file shows how to create a new user-defined type and how to
+--    use them.
+-- 
+--
+-- Copyright (c) 1994, Regents of the University of California
+--
+-- $Id: complex.source,v 1.1.1.1 1996/07/09 06:22:34 scrappy Exp $
+--
+---------------------------------------------------------------------------
+
+-----------------------------
+-- Creating a new type:
+--	a user-defined type must have an input and an output function. They
+--	are user-defined C functions. We are going to create a new type 
+--	called 'complex' which represents complex numbers.
+-----------------------------
+
+-- Assume the user defined functions are in _OBJWD_/complex.so
+-- Look at $PWD/C-code/complex.c for the source.
+
+-- the input function 'complex_in' takes a null-terminated string (the 
+-- textual representation of the type) and turns it into the internal
+-- (in memory) representation. You will get a message telling you 'complex'
+-- does not exist yet but that's okay.
+
+CREATE FUNCTION complex_in(opaque)
+   RETURNS complex
+   AS '_OBJWD_/complex.so'
+   LANGUAGE 'c';
+
+-- the output function 'complex_out' takes the internal representation and
+-- converts it into the textual representation.
+
+CREATE FUNCTION complex_out(opaque)
+   RETURNS opaque
+   AS '_OBJWD_/complex.so'
+   LANGUAGE 'c';
+
+-- now, we can create the type. The internallength specifies the size of the
+-- memory block required to hold the type (we need two 8-byte doubles).
+
+CREATE TYPE complex (
+   internallength = 16, 
+   input = complex_in,
+   output = complex_out
+);
+
+
+-----------------------------
+-- Using the new type:
+--	user-defined types can be use like ordinary built-in types.
+-----------------------------
+
+-- eg. we can use it in a schema
+
+CREATE TABLE test_complex (
+	a	complex,
+	b	complex
+);
+
+-- data for user-defined type are just strings in the proper textual
+-- representation. 
+
+INSERT INTO test_complex VALUES ('(1.0, 2.5)', '(4.2, 3.55 )')
+INSERT INTO test_complex VALUES ('(33.0, 51.4)', '(100.42, 93.55)')
+
+SELECT * FROM test_complex;
+
+-----------------------------
+-- Creating an operator for the new type:
+--	Let's define an add operator for complex types. Since POSTGRES
+--	supports function overloading, we'll use + as the add operator.
+--	(Operators can be reused with different number and types of 
+--	arguments.)
+-----------------------------
+
+-- first, define a function complex_add (also in C-code/complex.c)
+CREATE FUNCTION complex_add(complex, complex)
+   RETURNS complex
+   AS '_OBJWD_/complex.so'
+   LANGUAGE 'c';
+
+-- we can now define the operator. We show a binary operator here but you
+-- can also define unary operators by omitting either of leftarg or rightarg.
+CREATE OPERATOR + ( 
+   leftarg = complex,
+   rightarg = complex,
+   procedure = complex_add,
+   commutator = +
+);
+
+
+SELECT (a + b) AS c FROM test_complex;
+
+-- Occasionally, you may find it useful to cast the string to the desired
+-- type explicitly. :: denotes a type cast.
+
+SELECT  a + '(1.0,1.0)'::complex AS aa,
+        b + '(1.0,1.0)'::complex AS bb
+   FROM test_complex;
+
+
+-----------------------------
+-- Creating aggregate functions
+--	you can also define aggregate functions. The syntax is some what
+--	cryptic but the idea is to express the aggregate in terms of state
+--	transition functions.
+-----------------------------
+
+CREATE AGGREGATE complex_sum (
+   sfunc1 = complex_add,
+   basetype = complex,
+   stype1 = complex,
+   initcond1 = '(0,0)'
+);
+
+SELECT complex_sum(a) FROM test_complex;
+
+
+-------------------------------------------------------------------------------
+--             ATTENTION!      ATTENTION!      ATTENTION!                    --
+--  YOU MAY SKIP THE SECTION BELOW ON INTERFACING WITH INDICIES. YOU DON'T   --
+--  NEED THE FOLLOWING IF YOU DON'T USE INDICIES WITH NEW DATA TYPES.        --
+-------------------------------------------------------------------------------
+
+SELECT 'READ ABOVE!' AS STOP;
+
+-----------------------------
+-- Interfacing New Types with Indices:
+--	We cannot define a secondary index (eg. a B-tree) over the new type
+--	yet. We need to modify a few system catalogs to show POSTGRES how
+--	to use the new type. Unfortunately, there is no simple command to
+--	do this. Please bear with me.
+-----------------------------
+
+-- first, define the required operators
+CREATE FUNCTION complex_abs_lt(complex, complex) RETURNS bool
+   AS '_OBJWD_/complex.so' LANGUAGE 'c'
+CREATE FUNCTION complex_abs_le(complex, complex) RETURNS bool
+   AS '_OBJWD_/complex.so' LANGUAGE 'c'
+CREATE FUNCTION complex_abs_eq(complex, complex) RETURNS bool
+   AS '_OBJWD_/complex.so' LANGUAGE 'c'
+CREATE FUNCTION complex_abs_ge(complex, complex) RETURNS bool
+   AS '_OBJWD_/complex.so' LANGUAGE 'c'
+CREATE FUNCTION complex_abs_gt(complex, complex) RETURNS bool
+   AS '_OBJWD_/complex.so' LANGUAGE 'c';
+
+-- the restrict and join selectivity functions are bogus (notice we only
+-- have intltsel, eqsel and intgtsel)
+CREATE OPERATOR < (
+   leftarg = complex, rightarg = complex, procedure = complex_abs_lt,
+   restrict = intltsel, join = intltjoinsel
+)
+CREATE OPERATOR <= (
+   leftarg = complex, rightarg = complex, procedure = complex_abs_le,
+   restrict = intltsel, join = intltjoinsel
+)
+CREATE OPERATOR = (
+   leftarg = complex, rightarg = complex, procedure = complex_abs_eq,
+   restrict = eqsel, join = eqjoinsel
+)
+CREATE OPERATOR >= (
+   leftarg = complex, rightarg = complex, procedure = complex_abs_ge,
+   restrict = intgtsel, join = intgtjoinsel
+)
+CREATE OPERATOR > (
+   leftarg = complex, rightarg = complex, procedure = complex_abs_gt,
+   restrict = intgtsel, join = intgtjoinsel
+);
+
+INSERT INTO pg_opclass VALUES ('complex_abs_ops')
+
+SELECT oid, opcname FROM pg_opclass WHERE opcname = 'complex_abs_ops';
+
+SELECT o.oid AS opoid, o.oprname
+INTO TABLE complex_ops_tmp
+FROM pg_operator o, pg_type t
+WHERE o.oprleft = t.oid and o.oprright = t.oid
+   and t.typname = 'complex';
+
+-- make sure we have the right operators
+SELECT * from complex_ops_tmp;
+
+INSERT INTO pg_amop (amopid, amopclaid, amopopr, amopstrategy, 
+                     amopselect, amopnpages)
+   SELECT am.oid, opcl.oid, c.opoid, 1,
+	'btreesel'::regproc, 'btreenpage'::regproc
+   FROM pg_am am, pg_opclass opcl, complex_ops_tmp c
+   WHERE amname = 'btree' and opcname = 'complex_abs_ops' 
+      and c.oprname = '<';
+
+INSERT INTO pg_amop (amopid, amopclaid, amopopr, amopstrategy, 
+                     amopselect, amopnpages)
+   SELECT am.oid, opcl.oid, c.opoid, 2,
+	'btreesel'::regproc, 'btreenpage'::regproc
+   FROM pg_am am, pg_opclass opcl, complex_ops_tmp c
+   WHERE amname = 'btree' and opcname = 'complex_abs_ops' 
+      and c.oprname = '<=';
+
+INSERT INTO pg_amop (amopid, amopclaid, amopopr, amopstrategy, 
+                     amopselect, amopnpages)
+   SELECT am.oid, opcl.oid, c.opoid, 3,
+	'btreesel'::regproc, 'btreenpage'::regproc
+   FROM pg_am am, pg_opclass opcl, complex_ops_tmp c
+   WHERE amname = 'btree' and opcname = 'complex_abs_ops' 
+      and c.oprname = '=';
+
+INSERT INTO pg_amop (amopid, amopclaid, amopopr, amopstrategy, 
+                     amopselect, amopnpages)
+   SELECT am.oid, opcl.oid, c.opoid, 4,
+	'btreesel'::regproc, 'btreenpage'::regproc
+   FROM pg_am am, pg_opclass opcl, complex_ops_tmp c
+   WHERE amname = 'btree' and opcname = 'complex_abs_ops' 
+      and c.oprname = '>=';
+
+INSERT INTO pg_amop (amopid, amopclaid, amopopr, amopstrategy, 
+                     amopselect, amopnpages)
+   SELECT am.oid, opcl.oid, c.opoid, 5,
+	'btreesel'::regproc, 'btreenpage'::regproc
+   FROM pg_am am, pg_opclass opcl, complex_ops_tmp c
+   WHERE amname = 'btree' and opcname = 'complex_abs_ops' 
+      and c.oprname = '>';
+
+DROP table complex_ops_tmp;
+
+--
+CREATE FUNCTION complex_abs_cmp(complex, complex) RETURNS int4
+   AS '_OBJWD_/complex.so' LANGUAGE 'c';
+
+SELECT oid, proname FROM pg_proc WHERE proname = 'complex_abs_cmp';
+
+INSERT INTO pg_amproc (amid, amopclaid, amproc, amprocnum)
+   SELECT am.oid, opcl.oid, pro.oid, 1
+   FROM pg_am am, pg_opclass opcl, pg_proc pro
+   WHERE  amname = 'btree' and opcname = 'complex_abs_ops'
+      and proname = 'complex_abs_cmp';
+
+-- now, we can define a btree index on complex types. First, let's populate
+-- the table (THIS DOESN'T ACTUALLY WORK. YOU NEED MANY MORE TUPLES.)
+INSERT INTO test_complex VALUES ('(56.0,-22.5)', '(-43.2,-0.07)')
+INSERT INTO test_complex VALUES ('(-91.9,33.6)', '(8.6,3.0)');
+
+CREATE INDEX test_cplx_ind ON test_complex
+   USING btree(a complex_abs_ops);
+
+SELECT * from test_complex where a = '(56.0,-22.5)';
+SELECT * from test_complex where a < '(56.0,-22.5)';
+SELECT * from test_complex where a > '(56.0,-22.5)';

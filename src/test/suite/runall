@@ -1,0 +1,8 @@
+#!/bin/csh
+
+foreach s (*.sql)
+	echo "===> $s";
+	psql -q -e -n $USER < $s >& $s.out;
+	diff $s.out results/$s.out;
+end
+

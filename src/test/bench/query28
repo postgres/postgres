@@ -1,0 +1,2 @@
+update tenk1 set unique2 = 10001 where tenk1.unique2 =1491;
+update tenk1 set unique2 = 10023 where tenk1.unique2 =1480;

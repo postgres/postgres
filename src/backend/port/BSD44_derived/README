@@ -1,0 +1,4 @@
+The NetBSD port was done by Alistair G. Crooks (agc@uts.amdahl.com).
+
+It was extended to cover Operating Systems derived from the 4.4-lite
+BSD release by Alistair G. Crooks.

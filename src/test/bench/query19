@@ -1,0 +1,4 @@
+select * into table temp from onek;
+drop table temp;
+select * into table temp from onek;
+drop table temp;

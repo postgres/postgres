@@ -1,0 +1,35 @@
+#-------------------------------------------------------------------------
+#
+# postgres.mk.svr4--
+#    Intel x86/Intel SVR4 specific rules and variables
+#
+# Copyright (c) 1994-5, Regents of the University of California
+#
+#    $Id: postgres.mk.svr4,v 1.1.1.1 1996/07/09 06:22:20 scrappy Exp $
+#
+# NOTE
+#    This file has not been tested.	-ay 3/95
+#
+#-------------------------------------------------------------------------
+ifndef MK_PORT
+MK_PORT=	svr4
+
+#
+# for postgres.mk
+#
+CFLAGS_BE+= -DUSE_POSIX_SIGNALS
+
+# MAKE_EXPORTS is required for svr4 loaders that want a file of
+# symbol names to tell them what to export/import.
+MAKE_EXPORTS= true
+
+#
+# for postgres.user.mk
+#
+CFLAGS_SL=	-K pic
+SLSUFF=		.so
+
+%.so:  %.o
+	$(LD) -G $(LDFLAGS) -o $(objdir)/$(@F) $(objdir)/$(<F)
+
+endif

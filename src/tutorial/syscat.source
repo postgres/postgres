@@ -1,0 +1,151 @@
+---------------------------------------------------------------------------
+--
+-- syscat.sql-
+--    sample queries to the system catalogs
+--
+--
+-- Copyright (c) 1994, Regents of the University of California
+--
+-- $Id: syscat.source,v 1.1.1.1 1996/07/09 06:22:34 scrappy Exp $
+--
+---------------------------------------------------------------------------
+
+--
+-- lists the name of all database adminstrators and the name of their
+-- database(s)
+--
+SELECT usename, datname
+  FROM pg_user, pg_database
+  WHERE usesysid = int2in(int4out(datdba))
+  ORDER BY usename, datname;
+
+--
+-- lists all user-defined classes
+--
+SELECT relname
+  FROM pg_class
+  WHERE relkind = 'r'           -- not indices
+    and relname !~ '^pg_'       -- not catalogs
+    and relname !~ '^Inv'       -- not large objects
+  ORDER BY relname;
+
+
+--
+-- lists all simple indicies (ie. those that are not defined over a function
+-- of several attributes)
+--
+SELECT bc.relname AS class_name, 
+       ic.relname AS index_name, 
+       a.attname
+  FROM pg_class bc,             -- base class
+       pg_class ic,             -- index class
+       pg_index i,
+       pg_attribute a           -- att in base
+  WHERE i.indrelid = bc.oid
+     and i.indexrelid = ic.oid
+     and i.indkey[0] = a.attnum
+     and a.attrelid = bc.oid
+     and i.indproc = '0'::oid   -- no functional indices
+  ORDER BY class_name, index_name, attname;
+
+
+--
+-- lists the user-defined attributes and their types for all user-defined
+-- classes
+--
+SELECT c.relname, a.attname, t.typname
+  FROM pg_class c, pg_attribute a, pg_type t
+  WHERE c.relkind = 'r'     -- no indices
+    and c.relname !~ '^pg_' -- no catalogs
+    and c.relname !~ '^Inv' -- no large objects
+    and a.attnum > 0        -- no system att's
+    and a.attrelid = c.oid
+    and a.atttypid = t.oid
+  ORDER BY relname, attname;
+
+
+--
+-- lists all user-defined base types (not includeing array types)
+--
+SELECT u.usename, t.typname
+  FROM pg_type t, pg_user u
+  WHERE u.usesysid = int2in(int4out(t.typowner))
+    and t.typrelid = '0'::oid   -- no complex types
+    and t.typelem = '0'::oid    -- no arrays
+    and u.usename <> 'postgres'
+  ORDER BY usename, typname;
+
+
+--
+-- lists all left unary operators
+--
+SELECT o.oprname AS left_unary, 
+       right.typname AS operand,
+       result.typname AS return_type
+  FROM pg_operator o, pg_type right, pg_type result
+  WHERE o.oprkind = 'l'           -- left unary
+    and o.oprright = right.oid
+    and o.oprresult = result.oid
+  ORDER BY operand;
+
+
+--
+-- lists all right unary operators
+--
+SELECT o.oprname AS right_unary,
+       left.typname AS operand,
+       result.typname AS return_type
+  FROM pg_operator o, pg_type left, pg_type result
+  WHERE o.oprkind = 'r'          -- right unary
+    and o.oprleft = left.oid
+    and o.oprresult = result.oid
+  ORDER BY operand;
+
+--
+-- lists all binary operators
+--
+SELECT o.oprname AS binary_op,
+       left.typname AS left_opr,
+       right.typname AS right_opr,
+       result.typname AS return_type
+  FROM pg_operator o, pg_type left, pg_type right, pg_type result
+  WHERE o.oprkind = 'b'         -- binary
+    and o.oprleft = left.oid
+    and o.oprright = right.oid
+    and o.oprresult = result.oid
+  ORDER BY left_opr, right_opr;
+
+
+--
+-- lists the name, number of arguments and the return type of all user-defined
+-- C functions
+--
+SELECT p.proname, p.pronargs, t.typname
+  FROM pg_proc p, pg_language l, pg_type t
+  WHERE p.prolang = l.oid 
+    and p.prorettype = t.oid
+    and l.lanname = 'c'
+  ORDER BY proname;
+
+--
+-- lists all aggregate functions and the types to which they can be applied
+--
+SELECT a.aggname, t.typname
+  FROM pg_aggregate a, pg_type t
+  WHERE a.aggbasetype = t.oid
+  ORDER BY aggname, typname;
+
+
+--
+-- lists all the operator classes that can be used with each access method
+-- as well as the operators that cn be used with the respective operator
+-- classes
+--
+SELECT am.amname, opc.opcname, opr.oprname
+  FROM pg_am am, pg_amop amop, pg_opclass opc, pg_operator opr
+  WHERE amop.amopid = am.oid
+    and amop.amopclaid = opc.oid
+    and amop.amopopr = opr.oid
+  ORDER BY amname, opcname, oprname;
+
+

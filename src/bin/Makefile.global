@@ -1,0 +1,33 @@
+#-------------------------------------------------------------------------
+#
+# Makefile.inc--
+#    global configurations for Makefiles in src/bin
+#
+# Copyright (c) 1994, Regents of the University of California
+#
+#
+# IDENTIFICATION
+#    $Header: /cvsroot/pgsql/src/bin/Attic/Makefile.global,v 1.1.1.1 1996/07/09 06:22:11 scrappy Exp $
+#
+#-------------------------------------------------------------------------
+
+CFLAGS+= -I$(HEADERDIR) -I$(srcdir)/backend -I$(srcdir)/backend/include -I$(srcdir)/libpq
+
+#
+# try locating libpq.a in the following places
+# Almost all (all?) the C programs in this directory
+# link with libpq, so we put it here.
+#
+LIBPQ:=   -L$(srcdir)/libpq/$(objdir) -L$(LIBDIR) -lpq
+
+LD_ADD+= $(LIBPQ)
+DPADD+= $(LIBPQ)
+
+
+#
+# And where libpq goes, so goes the authentication stuff...
+#
+ifdef KRBVERS
+LD_ADD+= $(KRBLIBS)
+CFLAGS+= $(KRBFLAGS)
+endif

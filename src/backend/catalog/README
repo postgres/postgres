@@ -1,0 +1,66 @@
+$Header: /cvsroot/pgsql/src/backend/catalog/README,v 1.1.1.1 1996/07/09 06:21:15 scrappy Exp $
+
+This directory contains .c files that manipulate the system catalogs
+as well as .h files that define the structure of the system catalogs.
+
+When the compile-time scripts (such as Gen_fmgrtab.sh and genbki.sh)
+execute, they grep the DATA statements out of the .h files and munge
+these in order to generate the .bki files.  The .bki files are then
+used as input to initdb (which is just a wrapper around postgres
+running single-user in bootstrapping mode) in order to generate the
+initial (template) system catalog relation files.
+
+-----------------------------------------------------------------
+
+People who are going to hose around with the .h files should be aware
+of the following facts:
+
+- It is very important that the DATA statements be properly formatted
+(e.g., no broken lines, proper use of white-space and _null_).  The
+scripts are line-oriented and break easily.  In addition, the only
+documentation on the proper format for them is the code in the
+bootstrap/ directory.  Just be careful when adding new DATA
+statements.
+
+- Some catalogs require that OIDs be preallocated to tuples because
+certain catalogs contain circular references.  For example, pg_type
+contains pointers into pg_proc (pg_type.typinput), and pg_proc
+contains back-pointers into pg_type (pg_proc.proargtypes).  In these
+cases, the references may be explicitly set by use of the "OID ="
+clause of the .bki insert statement.  If no such pointers are required
+to a given tuple, then the OID may be set to the wildcard value 0
+(i.e., the system generates a random OID in the usual way).
+
+If you need to find a valid OID for a set of tuples that refer to each
+other, use the unused_oids script.  It generates inclusive ranges of
+*unused* OIDs (i.e., the line "45-900" means OIDs 45 through 900 have
+not been allocated yet).  However, you should not rely 100% on this
+script, since it only looks at the .h files in the catalog/ directory.
+Do a pg_grepsrc (recursive grep) of the source tree to insure that
+there aren't any hidden crocks (i.e., explicit use of a numeric OID)
+anywhere in the code.
+
+-----------------------------------------------------------------
+
+When munging the .c files, you should be aware of certain conventions:
+
+- The system catalog cache code (and most catalog-munging code in
+general) assumes that the fixed-length portion of all system catalog
+tuples are in fact present.  That is, only the variable-length
+portions of a catalog tuple are assumed to be permitted to be
+non-NULL.  For example, if you set pg_type.typdelim to be NULL, a
+piece of code will likely perform "typetup->typdelim" (or, worse,
+"typetyp->typelem", which follows typdelim).  This will result in
+random errors or even segmentation violations.  Hence, do NOT insert
+catalog tuples that contain NULL attributes except in their
+variable-length portions!
+
+- Modification of the catalogs must be performed with the proper
+updating of catalog indexes!  That is, several catalogs have indexes
+on them; when you munge them using the executor, the executor will
+take care of doing the index updates, but if you make direct access
+method calls to insert new or modified tuples into a heap, you must
+also make the calls to insert the tuple into ALL of its indexes!  If
+not, the new tuple will generally be "invisible" to the system because
+most of the accesses to the catalogs in question will be through the
+associated indexes.

@@ -1,0 +1,434 @@
+.\"
+.\" POSTGRES95 Data Base Management System
+.\" 
+.\" Copyright (c) 1994-5 Regents of the University of California
+.\" 
+.\" POSTGRES Data Base Management System
+.\" Copyright (c) 1988,1994 Regents of the University of California
+.\" 
+.\" Permission to use, copy, modify, and distribute this software and its
+.\" documentation for any purpose, without fee, and without a written agreement
+.\" is hereby granted, provided that the above copyright notice and this
+.\" paragraph and the following two paragraphs appear in all copies.
+.\"
+.\" IN NO EVENT SHALL THE UNIVERSITY OF CALIFORNIA BE LIABLE TO ANY PARTY FOR
+.\" DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, INCLUDING
+.\" LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
+.\" DOCUMENTATION, EVEN IF THE UNIVERSITY OF CALIFORNIA HAS BEEN ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\" THE UNIVERSITY OF CALIFORNIA SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+.\" INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+.\" AND FITNESS FOR A PARTICULAR PURPOSE.  THE SOFTWARE PROVIDED HEREUNDER IS
+.\" ON AN "AS IS" BASIS, AND THE UNIVERSITY OF CALIFORNIA HAS NO OBLIGATIONS TO
+.\" PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+.\" 
+.\"
+.\"	$Id: libpq++.3,v 1.1.1.1 1996/07/09 06:22:19 scrappy Exp $
+.\"
+.\" ------------------------------------------------------------------
+.\" .(l, .)l
+.\"	fake "-me"-style lists
+.de (l 
+.nf
+.ie '\\$1'M' .in +0n
+.el .in +5n
+..
+.de )l
+.fi
+.in
+..
+.\" .(C, .)C
+.\"	constant-width font blocks
+.de (C
+.ft C
+.(b
+.(l \\$1
+.sp
+..
+.de )C
+.sp
+.)l
+.)b
+.ft R
+..
+.\" ------------------------------------------------------------------
+.de SE
+.nr si 0
+.nr so 0
+.nr $0 0
+.nr $i \\n(si*\\n($0
+.in \\n($i+\\n(po
+..
+.\" ------------------------------------------------------------------
+.de SP
+.he '\fB\\$1 (\\$2)'\\$3'\\$1 (\\$2)\fR'
+..
+.\" ------------------------------------------------------------------
+.de SS
+.PP
+.B \\$1 \\$2 \\$3 \\$4 \\$5 \\$6 \\$7 \\$8
+.PP
+..
+.\" ------------------------------------------------------------------
+.SB
+.ds II \s-1INGRES\s0
+.ds PG \s-1POSTGRES95\s0
+.ds UU \s-1UNIX\s0
+.ds PQ \s-1POSTQUEL\s0
+.ds LI \s-1LIBPQ++\s0
+.ds PV 4.2
+.SB
+.TH INTRODUCTION LIBPQ++ 07/24/95
+.XA 0 "Libpq++"
+.BH "LIBPQ++"
+.SH DESCRIPTION
+\*(LI is the C++ API to \*(PG.  \*(LI is a set of classes which allow
+client programs to connect to the \*(PG backend server. These connections
+come in two forms: a Database Class and a Large Object class.
+.PP
+The Database Class is intended for manipulating a database. You can
+send all sorts of SQL queries to the \*(PG backend server and retrieve
+the responses of the server.
+.PP
+The Large Object Class is intended for manipulating a large object
+in a database. Although a Large Object instance can send normal
+queries to the \*(PG backend server it is only intended for simple
+queries that do not return any data. A large object should be seen
+as a file stream. In future it should behave much like the C++ file
+streams
+.IR cin ,
+.IR cout
+and
+.IR cerr .
+This version of the documentation is based on the C library.  Three
+short programs are listed at the end of this section as examples of
+\*(LI programming (though not necessarily of good programming).
+.PP
+There are several examples of \*(LI applications in the following
+directory:
+.(C
+\&.../src/libpq++/examples
+.)C
+.XA 1 "Control and Initialization"
+.SH "CONTROL AND INITIALIZATION"
+.XA 2 "Environment Variables"
+.SS "Environment Variables"
+The following environment variables can be used to set up default
+values for an environment and to avoid hard-coding database names into
+an application program:
+.TP 15n
+.BR PGDATABASE
+sets the default \*(PG database name.
+.TP 15n
+.BR PGHOST
+sets the default server name.
+.TP 15n
+.BR PGOPTIONS
+sets additional runtime options for the \*(PG backend.
+.TP 15n
+.BR PGPORT
+sets the default communication port with the \*(PG backend.
+.TP 15n
+.BR PGTTY
+sets the file or tty on which debugging messages from the backend server
+are displayed.
+.TP 15n
+.BR PGREALM
+sets the
+.IR Kerberos
+realm to use with \*(PG, if it is different from the local realm.  If 
+.SM PGREALM
+is set, \*(PG applications will attempt authentication with servers
+for this realm and use separate ticket files to avoid conflicts with
+local ticket files.  This environment variable is only used if 
+.IR Kerberos
+authentication is enabled.
+.TP 15n
+.BR PGAUTH
+sets the type of authentication which should be used. Currently
+only
+.IR unauth ,
+.IR krb4 ,
+and
+.IR krb5 .
+are supported. Depending on whether you compiled in support for those.
+.XA 1 "Database Connection Functions"
+.SH "DATABASE ENVIRONMENT CLASS: PGenv"
+The database environment class provides C++ objects for manipulating the
+above environment variables.
+.TP 15n
+.BR PGenv
+Create an environment for the running program.
+.(C
+PGenv()
+PGenv(char* auth, char* host, char* port, char* option, char* tty)
+.)C
+The first form of this object's constructor sets up the defaults for
+the program from the environment variables listed above.
+The second allows the programmer to hardcode the values into the program.
+The values of the second form relate directly to the environment variables
+above.
+.SH "DATABASE CLASS: PGdatabase"
+The database class is a provides C++ objects that have a connection
+to a backend server. To create such an object one first need
+the apropriate environment for the backend to access.
+The following constructors deal with making a connection to a backend
+server from a C++ program.
+.TP 15n
+.BR PGdatabase
+Make a new connection to a backend database server.
+.(C
+PGdatabase(PGenv *env, char *dbName); 
+.)C
+After a PGdatabase has been created it should be checked to make sure
+the connection to the database succeded before sending
+queries to the object. This can easily be done by
+retrieving the current status of the PGdatabase object with the
+.IR status
+command.
+.BR PGdatabase::status
+Returns the status of the PGdatabase object.
+
+.(C
+ConnStatus PGdatabase::status()
+.)C
+
+the following values are allowed
+
+.(C
+CONNECTION_OK
+CONNECTION_BAD
+.)C
+
+.XA 1 "Query Execution Functions"
+.SH "QUERY EXECUTION FUNCTIONS"
+.TP 15n
+.BR PGdatabase::exec
+Submits a query to \*(PG and returns result status. In case of an error 
+.IR PGdatabase::errormessage
+can be used to get more information on the error.
+.(C
+void
+ExecStatusType PGdatabase::exec(char *query);
+.)C
+The following status results can be expected.
+.(C
+PGRES_EMPTY_QUERY,
+PGRES_COMMAND_OK,  /* the query was a command */
+PGRES_TUPLES_OK,  /* the query successfully returned tuples */
+PGRES_COPY_OUT, 
+PGRES_COPY_IN,
+PGRES_BAD_RESPONSE, /* an unexpected response was received */
+PGRES_NONFATAL_ERROR,
+PGRES_FATAL_ERROR
+.)C
+.IP
+If the result status is PGRES_TUPLES_OK, then the following routines can
+be used to retrieve the tuples returned by the query.
+.IP
+.BR PGdatabase::ntuples
+returns the number of tuples (instances) in the query result.
+.(C
+int PGdatabase::ntuples();
+.)C
+.BR PGdatabase::nfields
+returns the number of fields (attributes) in the query result.
+.(C
+int PGdatabase::nfields();
+.)C
+.BR PGdatabase::fieldname
+returns the field (attribute) name associated with the given field index.
+Field indices start at 0.
+.(C
+char* PGdatabase::fieldname(int field_index);
+.)C
+.BR PGdatabase::fieldnum
+returns the field (attribute) index associated with the given field name.
+.(C
+int PGdatabase::fieldnum(char* field_name);
+.)C
+.BR PGdatabase::fieldtype
+returns the field type of associated with the given field index or name.
+The integer returned is an internal coding of the type. Field indices start
+at 0.
+.(C
+Oid PGdatabase::fieldtype(int field_index);
+Oid PGdatabase::fieldtype(char* field_name);
+.)C
+.BR PGdatabase::fieldsize
+returns the size in bytes of the field associated with the given field
+index or name. If the size returned is -1, the field is a variable length
+field. Field indices start at 0. 
+.(C
+int2 PGdatabase::fieldsize(int field_index);
+int2 PGdatabase::fieldsize(char* field_name);
+.)C
+.BR PGdatabase::getvalue
+returns the field (attribute) value.  For most queries, the values
+returned by 
+.IR PGdatabase::getvalue
+is a null-terminated ASCII string representation
+of the attribute value.  If the query was a result of a 
+.BR BINARY
+cursor, then the values returned by
+.IR PGdatabase::getvalue
+is the binary representation of the type in the internal format of the
+backend server.  It is the programmer's responsibility to cast and
+convert the data to the correct C++ type.  The value return by 
+.IR PGdatabase::getvalue
+points to storage that is part of the PGdatabase structure.  One must
+explicitly copy the value into other storage if it is to be used past
+the next query.
+.(C
+char* PGdatabase::getvalue(int tup_num, int field_index);
+char* PGdatabase::getvalue(int tup_num, char* field_name);
+.)C
+.BR PGdatabase::getlength
+returns the length of a field (attribute) in bytes.  If the field
+is a
+.IR "struct varlena" ,
+the length returned here does 
+.BR not
+include the size field of the varlena, i.e., it is 4 bytes less.
+.(C
+int PGdatabase::getlength(int tup_num, int field_index);
+int PGdatabase::getlength(int tup_num, char* field_name);
+.)C
+.BR PGdatabase::printtuples
+prints out all the tuples and, optionally, the attribute names to the
+specified output stream.
+.(C
+void PGdatabase::printtuples(
+       FILE* fout,      /* output stream */
+       int printAttName,/* print attribute names or not*/
+       int terseOutput, /* delimiter bars or not?*/
+       int width        /* width of column, variable width if 0*/
+       );
+.)C
+.XA 1 "Asynchronous Notification"
+.SH "ASYNCHRONOUS NOTIFICATION"
+\*(PG supports asynchronous notification via the 
+.IR LISTEN
+and
+.IR NOTIFY
+commands.  A backend registers its interest in a particular relation
+with the LISTEN command.  All backends that are listening on a
+particular relation will be notified asynchronously when a NOTIFY of
+that relation name is executed by another backend.   No additional
+information is passed from the notifier to the listener.  Thus,
+typically, any actual data that needs to be communicated is transferred
+through the relation.
+.PP
+\*(LI applications are notified whenever a connected backend has
+received an asynchronous notification.  However, the communication from
+the backend to the frontend is not asynchronous.  The \*(LI application
+must poll the backend to see if there is any pending notification
+information.  After the execution of a query, a frontend may call 
+.IR PGdatabase::notifies
+to see if any notification data is currently available from the backend. 
+.TP 15n
+.BR PGdatabase::notifies
+returns the notification from a list of unhandled notifications from the
+backend. Returns NULL if there is no pending notifications from the
+backend.   
+.IR PGdatabase::notifies
+behaves like the popping of a stack.  Once a notification is returned
+from
+.IR PGdatabase::notifies,
+it is considered handled and will be removed from the list of
+notifications.
+.(C
+PGnotify* PGdatabase::notifies()
+.)C
+.PP
+The second sample program gives an example of the use of asynchronous
+notification.
+.XA 1 "Functions Associated with the COPY Command"
+.SH "FUNCTIONS ASSOCIATED WITH THE COPY COMMAND"
+The
+.IR copy
+command in \*(PG has options to read from or write to the network
+connection used by \*(LI.  Therefore, functions are necessary to
+access this network connection directly so applications may take full
+advantage of this capability.
+.TP 15n
+.BR PGdatabase::getline
+Reads a newline-terminated line of characters (transmitted by the
+backend server) into a buffer 
+.IR string 
+of size
+.IR length .
+Like
+.IR fgets (3),
+this routine copies up to 
+.IR length "-1"
+characters into 
+.IR string .
+It is like 
+.IR gets (3),
+however, in that it converts the terminating newline into a null
+character.
+.IP
+.IR PGdatabase::getline
+returns EOF at EOF, 0 if the entire line has been read, and 1 if the
+buffer is full but the terminating newline has not yet been read.
+.IP
+Notice that the application must check to see if a new line consists
+of the single character \*(lq.\*(rq, which indicates that the backend
+server has finished sending the results of the 
+.IR copy
+command.  Therefore, if the application ever expects to receive lines
+that are more than
+.IR length "-1"
+characters long, the application must be sure to check the return
+value of 
+.IR PGdatabase::getline
+very carefully.
+.IP
+.(C
+int PGdatabase::getline(char* string, int length)
+.)C
+.TP 15n
+.BR PGdatabase::putline
+Sends a null-terminated 
+.IR string
+to the backend server.
+.IP
+The application must explicitly send the single character \*(lq.\*(rq
+to indicate to the backend that it has finished sending its data.
+.(C
+void PGdatabase::putline(char* string)
+.)C
+.TP 15n
+.BR PGdatabase::endcopy
+Syncs with the backend.  This function waits until the backend has
+finished processing the copy.  It should either be issued when the
+last string has been sent to the backend using
+.IR PGdatabase::putline
+or when the last string has been received from the backend using
+.IR PGdatabase::getline .
+It must be issued or the backend may get \*(lqout of sync\*(rq with
+the frontend.  Upon return from this function, the backend is ready to
+receive the next query.
+.IP
+The return value is 0 on successful completion, nonzero otherwise.
+.(C
+int PGdatabase::endcopy()
+.)C
+As an example:
+.(C
+PGdatabase data;
+data.exec("create table foo (a int4, b char16, d float8)");
+data.exec("copy foo from stdin");
+data.putline("3\etHello World\et4.5\en");
+data.putline("4\etGoodbye World\et7.11\en");
+\&...
+data.putline(".\en");
+data.endcopy();
+.)C
+.SH BUGS
+The query buffer is 8192 bytes long, and queries over that length will
+be silently truncated.
+.bp
+The PGlobj class is largely untested.  Use with caution.

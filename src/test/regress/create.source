@@ -1,0 +1,765 @@
+--
+-- create.source
+--
+--
+
+--
+-- ABSTRACT DATA TYPE DEFINITIONS
+--
+
+CREATE FUNCTION circle_in(opaque)
+   RETURNS circle
+   AS '_OBJWD_/regress_SLSUFF_'
+   LANGUAGE 'c';
+
+CREATE FUNCTION circle_out(opaque)
+   RETURNS opaque
+   AS '_OBJWD_/regress_SLSUFF_'
+   LANGUAGE 'c';
+
+CREATE TYPE circle (
+   internallength = 24, 
+   input = circle_in,
+   output = circle_out,
+   alignment = double
+);
+
+CREATE TYPE city_budget ( 
+   internallength = 16, 
+   input = int44in, 
+   output = int44out, 
+   element = int4
+);
+
+--
+-- CLASS DEFINITIONS
+--
+CREATE TABLE hobbies_r (
+	name		text, 
+	person 		text
+);
+
+CREATE TABLE equipment_r (
+	name 		text,
+	hobby		text
+);
+
+CREATE TABLE onek (
+	unique1		int4,
+	unique2		int4,
+	two		int4,
+	four		int4,
+	ten		int4,
+	twenty		int4,
+	hundred		int4,
+	thousand	int4,
+	twothousand	int4,
+	fivethous	int4,
+	tenthous	int4,
+	odd		int4,
+	even		int4,
+	stringu1	char16,
+	stringu2	char16,
+	string4		char16
+);
+
+CREATE TABLE tenk1 (
+	unique1		int4,
+	unique2		int4,
+	two		int4,
+	four		int4,
+	ten		int4,
+	twenty		int4,
+	hundred		int4,
+	thousand	int4,
+	twothousand	int4,
+	fivethous	int4,
+	tenthous	int4,
+	odd		int4,
+	even		int4,
+	stringu1	char16,
+	stringu2	char16,
+	string4		char16
+);
+
+CREATE TABLE tenk2 (
+	unique1 	int4,
+	unique2 	int4,
+	two 	 	int4,
+	four 		int4,
+	ten		int4,
+	twenty 		int4,
+	hundred 	int4,
+	thousand 	int4,
+	twothousand 	int4,
+	fivethous 	int4,
+	tenthous	int4,
+	odd		int4,
+	even		int4,
+	stringu1	char16,
+	stringu2	char16,
+	string4		char16
+);
+
+
+CREATE TABLE person (
+	name 		text,
+	age		int4,
+	location 	point
+);
+
+
+CREATE TABLE emp (
+	salary 		int4,
+	manager 	char16
+) INHERITS (person);
+
+
+CREATE TABLE student (
+	gpa 		float8
+) INHERITS (person);
+
+
+CREATE TABLE stud_emp (
+	percent 	int4
+) INHERITS (emp, student);
+
+
+CREATE TABLE city (
+	name		char16,
+	location 	box,
+	budget 		city_budget
+);
+
+CREATE TABLE dept (
+	dname		char16,
+	mgrname 	text
+);
+
+CREATE TABLE slow_emp4000 (
+	home_base	 box
+);
+
+CREATE TABLE fast_emp4000 (
+	home_base	 box
+);
+
+CREATE TABLE road (
+	name		text,
+	thepath 	path
+);
+
+CREATE TABLE ihighway () INHERITS (road);
+
+CREATE TABLE shighway (
+	surface		text
+) INHERITS (road);
+
+CREATE TABLE real_city (
+	pop		int4,
+	cname		text,
+	outline 	path
+);
+
+--
+-- test the "star" operators a bit more thoroughly -- this time,
+-- throw in lots of NULL fields...
+--
+-- a is the type root
+-- b and c inherit from a (one-level single inheritance)
+-- d inherits from b and c (two-level multiple inheritance)
+-- e inherits from c (two-level single inheritance)
+-- f inherits from e (three-level single inheritance)
+--
+CREATE TABLE a_star (
+	class		char, 
+	a 		int4
+);
+
+CREATE TABLE b_star (
+	b 		text
+) INHERITS (a_star);
+
+CREATE TABLE c_star (
+	c 		char16
+) INHERITS (a_star);
+
+CREATE TABLE d_star (
+	d 		float8
+) INHERITS (b_star, c_star);
+
+CREATE TABLE e_star (
+	e 		int2
+) INHERITS (c_star);
+
+CREATE TABLE f_star (
+	f 		polygon
+) INHERITS (e_star);
+
+CREATE TABLE aggtest (
+	a 		int2,
+	b		float4
+);
+
+CREATE TABLE arrtest (
+	a 		int2[],
+	b 		int4[][][],
+	c 		char16[],
+	d		text[][], 
+	e 		float8[]
+);
+
+CREATE TABLE hash_i4_heap (
+	seqno 		int4,
+	random 		int4
+);
+
+CREATE TABLE hash_c16_heap (
+	seqno 		int4,
+	random 		char16
+);
+
+CREATE TABLE hash_txt_heap (
+	seqno 		int4,
+	random 		text
+);
+
+CREATE TABLE hash_f8_heap (
+	seqno		int4,
+	random 		float8
+);
+
+-- don't include the hash_ovfl_heap stuff in the distribution
+-- the data set is too large for what it's worth
+-- 
+-- CREATE TABLE hash_ovfl_heap (
+--	x		int4,
+--	y		int4
+-- );
+
+CREATE TABLE bt_i4_heap (
+	seqno 		int4,
+	random 		int4
+);
+
+CREATE TABLE bt_c16_heap (
+	seqno 		char16,
+	random 		int4
+);
+
+CREATE TABLE bt_txt_heap (
+	seqno 		text,
+	random 		int4
+);
+
+CREATE TABLE bt_f8_heap (
+	seqno 		float8, 
+	random 		int4
+);
+
+--
+-- FUNCTION DEFINITIONS
+--
+CREATE FUNCTION hobbies(person)
+   RETURNS setof hobbies_r 
+   AS 'select * from hobbies_r where person = $1.name'
+   LANGUAGE 'sql';
+
+
+CREATE FUNCTION hobby_construct(text, text)
+   RETURNS hobbies_r
+   AS 'select $1 as name, $2 as hobby'
+   LANGUAGE 'sql';
+
+
+CREATE FUNCTION equipment(hobbies_r)
+   RETURNS setof equipment_r
+   AS 'select * from equipment_r where hobby = $1.name'
+   LANGUAGE 'sql';
+
+
+CREATE FUNCTION user_relns()
+   RETURNS setof name
+   AS 'select relname 
+       from pg_class 
+       where relname !~ ''pg_.*'' and
+             relkind <> ''i'' '
+   LANGUAGE 'sql';
+
+CREATE FUNCTION pt_in_circle(point, circle)
+   RETURNS int4
+   AS '_OBJWD_/regress_SLSUFF_'
+   LANGUAGE 'c';
+
+CREATE FUNCTION overpaid(emp)
+   RETURNS bool
+   AS '_OBJWD_/regress_SLSUFF_'
+   LANGUAGE 'c';
+
+CREATE FUNCTION boxarea(box)
+   RETURNS int4
+   AS '_OBJWD_/regress_SLSUFF_'
+   LANGUAGE 'c';
+
+CREATE FUNCTION interpt_pp(path, path)
+   RETURNS point
+   AS '_OBJWD_/regress_SLSUFF_'
+   LANGUAGE 'c';
+
+CREATE FUNCTION reverse_c16(char16)
+   RETURNS char16
+   AS '_OBJWD_/regress_SLSUFF_'
+   LANGUAGE 'c';
+
+--
+-- FUNCTION DYNAMIC LOADING
+--
+LOAD '_OBJWD_/regress_SLSUFF_'
+
+--
+-- CLASS POPULATION
+--	(any resemblance to real life is purely coincidental)
+--
+COPY onek FROM '_CWD_/data/onek.data';
+
+COPY tenk1 FROM '_CWD_/data/tenk.data';
+
+INSERT INTO tenk2 VALUES (tenk1.*);
+
+SELECT * INTO TABLE onek2 FROM onek;
+
+COPY slow_emp4000 FROM '_CWD_/data/rect.data';
+
+INSERT INTO fast_emp4000 VALUES (slow_emp4000.*);
+
+COPY person FROM '_CWD_/data/person.data';
+
+COPY emp FROM '_CWD_/data/emp.data';
+
+COPY student FROM '_CWD_/data/student.data';
+
+COPY stud_emp FROM '_CWD_/data/stud_emp.data';
+
+SELECT *
+   INTO TABLE Bprime
+   FROM tenk1
+   WHERE unique2 < 1000;
+
+INSERT INTO hobbies_r (name, person)
+   SELECT 'posthacking', p.name
+   FROM person* p
+   WHERE p.name = 'mike' or p.name = 'jeff';
+
+INSERT INTO hobbies_r (name, person)
+   SELECT 'basketball', p.name
+   FROM person p
+   WHERE p.name = 'joe' or p.name = 'sally';
+
+INSERT INTO hobbies_r (name) VALUES ('skywalking');
+
+INSERT INTO equipment_r (name, hobby) VALUES ('advil', 'posthacking');
+
+INSERT INTO equipment_r (name, hobby) VALUES ('peet''s coffee', 'posthacking');
+
+INSERT INTO equipment_r (name, hobby) VALUES ('hightops', 'basketball');
+
+INSERT INTO equipment_r (name, hobby) VALUES ('guts', 'skywalking');
+
+COPY road FROM '_CWD_/data/streets.data';
+
+COPY real_city FROM '_CWD_/data/real_city.data';
+
+SELECT *
+   INTO TABLE ramp
+   FROM road
+   WHERE name ~ '.*Ramp';
+
+INSERT INTO ihighway 
+   SELECT * 
+   FROM road 
+   WHERE name ~ 'I- .*';
+
+INSERT INTO shighway 
+   SELECT * 
+   FROM road 
+   WHERE name ~ 'State Hwy.*';
+
+UPDATE shighway
+   SET surface = 'asphalt'
+
+INSERT INTO a_star (class, a) VALUES ('a', 1);
+
+INSERT INTO a_star (class, a) VALUES ('a', 2);
+
+INSERT INTO a_star (class) VALUES ('a');
+
+INSERT INTO b_star (class, a, b) VALUES ('b', 3, 'mumble'::text);
+
+INSERT INTO b_star (class, a) VALUES ('b', 4);
+
+INSERT INTO b_star (class, b) VALUES ('b', 'bumble'::text);
+
+INSERT INTO b_star (class) VALUES ('b');
+
+INSERT INTO c_star (class, a, c) VALUES ('c', 5, 'hi mom'::char16);
+
+INSERT INTO c_star (class, a) VALUES ('c', 6);
+
+INSERT INTO c_star (class, c) VALUES ('c', 'hi paul'::char16);
+
+INSERT INTO c_star (class) VALUES ('c');
+
+INSERT INTO d_star (class, a, b, c, d)
+   VALUES ('d', 7, 'grumble'::text, 'hi sunita'::char16, '0.0'::float8);
+
+INSERT INTO d_star (class, a, b, c)
+   VALUES ('d', 8, 'stumble'::text, 'hi koko'::char16);
+
+INSERT INTO d_star (class, a, b, d)
+   VALUES ('d', 9, 'rumble'::text, '1.1'::float8);
+
+INSERT INTO d_star (class, a, c, d)
+   VALUES ('d', 10, 'hi kristin'::char16, '10.01'::float8);
+
+INSERT INTO d_star (class, b, c, d)
+   VALUES ('d', 'crumble'::text, 'hi boris'::char16, '100.001'::float8);
+
+INSERT INTO d_star (class, a, b)
+   VALUES ('d', 11, 'fumble'::text)
+
+INSERT INTO d_star (class, a, c)
+   VALUES ('d', 12, 'hi avi'::char16);
+
+INSERT INTO d_star (class, a, d)
+   VALUES ('d', 13, '1000.0001'::float8);
+
+INSERT INTO d_star (class, b, c)
+   VALUES ('d', 'tumble'::text, 'hi andrew'::char16);
+
+INSERT INTO d_star (class, b, d)
+   VALUES ('d', 'humble'::text, '10000.00001'::float8);
+
+INSERT INTO d_star (class, c, d)
+   VALUES ('d', 'hi ginger'::char16, '100000.000001'::float8);
+
+INSERT INTO d_star (class, a) VALUES ('d', 14);
+
+INSERT INTO d_star (class, b) VALUES ('d', 'jumble'::text);
+
+INSERT INTO d_star (class, c) VALUES ('d', 'hi jolly'::char16);
+
+INSERT INTO d_star (class, d) VALUES ('d', '1000000.0000001'::float8);
+
+INSERT INTO d_star (class) VALUES ('d');
+
+INSERT INTO e_star (class, a, c, e)
+   VALUES ('e', 15, 'hi carol'::char16, '-1'::int2);
+
+INSERT INTO e_star (class, a, c)
+   VALUES ('e', 16, 'hi bob'::char16);
+
+INSERT INTO e_star (class, a, e)
+   VALUES ('e', 17, '-2'::int2);
+
+INSERT INTO e_star (class, c, e)
+   VALUES ('e', 'hi michelle'::char16, '-3'::int2);
+
+INSERT INTO e_star (class, a)
+   VALUES ('e', 18);
+
+INSERT INTO e_star (class, c)
+   VALUES ('e', 'hi elisa'::char16);
+
+INSERT INTO e_star (class, e)
+   VALUES ('e', '-4'::int2);
+
+INSERT INTO f_star (class, a, c, e, f)
+   VALUES ('f', 19, 'hi claire'::char16, '-5'::int2, '(1,2,3,4)'::polygon);
+
+INSERT INTO f_star (class, a, c, e)
+   VALUES ('f', 20, 'hi mike'::char16, '-6'::int2);
+
+INSERT INTO f_star (class, a, c, f)
+   VALUES ('f', 21, 'hi marcel'::char16, '(11,22,33,44,55,66)'::polygon);
+
+INSERT INTO f_star (class, a, e, f)
+   VALUES ('f', 22, '-7'::int2, '(111,222,333,444,555,666,777,888)'::polygon);
+
+INSERT INTO f_star (class, c, e, f)
+   VALUES ('f', 'hi keith'::char16, '-8'::int2, 
+	   '(1111,2222,3333,4444)'::polygon);
+
+INSERT INTO f_star (class, a, c)
+   VALUES ('f', 24, 'hi marc'::char16);
+
+INSERT INTO f_star (class, a, e)
+   VALUES ('f', 25, '-9'::int2);
+
+INSERT INTO f_star (class, a, f)
+   VALUES ('f', 26, '(11111,22222,33333,44444)'::polygon); 
+
+INSERT INTO f_star (class, c, e)
+   VALUES ('f', 'hi allison'::char16, '-10'::int2);
+
+INSERT INTO f_star (class, c, f)
+   VALUES ('f', 'hi jeff'::char16,
+           '(111111,222222,333333,444444)'::polygon);
+
+INSERT INTO f_star (class, e, f)
+   VALUES ('f', '-11'::int2, '(1111111,2222222,3333333,4444444)'::polygon);
+
+INSERT INTO f_star (class, a) VALUES ('f', 27);
+
+INSERT INTO f_star (class, c) VALUES ('f', 'hi carl'::char16);
+
+INSERT INTO f_star (class, e) VALUES ('f', '-12'::int2);
+
+INSERT INTO f_star (class, f) 
+   VALUES ('f', '(11111111,22222222,33333333,44444444)'::polygon);
+
+INSERT INTO f_star (class) VALUES ('f');
+
+COPY hash_i4_heap FROM '_CWD_/data/hash.data';
+
+COPY hash_c16_heap FROM '_CWD_/data/hash.data';
+
+COPY hash_txt_heap FROM '_CWD_/data/hash.data';
+
+COPY hash_f8_heap FROM '_CWD_/data/hash.data';
+
+--
+-- the data in this file has a lot of duplicates in the index key
+-- fields, leading to long bucket chains and lots of table expansion.
+-- this is therefore a stress test of the bucket overflow code (unlike
+-- the data in hash.data, which has unique index keys).
+--
+-- COPY hash_ovfl_heap FROM '_CWD_/data/hashovfl.data';
+
+COPY bt_i4_heap FROM '_CWD_/data/desc.data';
+
+COPY bt_c16_heap FROM '_CWD_/data/hash.data';
+
+COPY bt_txt_heap FROM '_CWD_/data/desc.data';
+
+COPY bt_f8_heap FROM '_CWD_/data/hash.data';
+
+--
+-- ARRAYS
+--
+
+--
+-- only this array as a 0-based 'e', the others are 1-based.
+-- 'e' is also a large object.
+--
+
+INSERT INTO arrtest (a[5], b[2][1][2], c, d)
+   VALUES ('{1,2,3,4,5}', '{{{},{1,2}}}', '{}', '{}');
+
+-- UPDATE arrtest SET e[0] = '1.1';
+
+-- UPDATE arrtest SET e[1] = '2.2';
+
+INSERT INTO arrtest (a, b[2][2][1], c, d, e)
+   VALUES ('{11,12,23}', '{{3,4},{4,5}}', '{"foobar"}', 
+           '{{"elt1", "elt2"}}', '{"3.4", "6.7"}');
+
+INSERT INTO arrtest (a, b[1][2][2], c, d[2][1])
+   VALUES ('{}', '{3,4}', '{foo,bar}', '{bar,foo}');
+
+
+--
+-- for internal portal (cursor) tests
+--
+CREATE TABLE iportaltest (
+	i		int4, 
+	d		float4, 
+	p		polygon
+);
+
+INSERT INTO iportaltest (i, d, p)
+   VALUES (1, 3.567, '(3.0,4.0,1.0,2.0)'::polygon);
+
+INSERT INTO iportaltest (i, d, p)
+   VALUES (2, 89.05, '(4.0,3.0,2.0,1.0)'::polygon);
+
+--
+-- CREATE ancillary data structures (i.e. indices)
+--
+
+--
+-- BTREE
+--
+CREATE INDEX onek_unique1 ON onek USING btree(unique1 int4_ops);
+
+CREATE INDEX onek_unique2 ON onek USING btree(unique2 int4_ops);
+
+CREATE INDEX onek_hundred ON onek USING btree(hundred int4_ops);
+
+CREATE INDEX onek_stringu1 ON onek USING btree(stringu1 char16_ops);
+
+CREATE INDEX tenk1_unique1 ON tenk1 USING btree(unique1 int4_ops);
+
+CREATE INDEX tenk1_unique2 ON tenk1 USING btree(unique2 int4_ops);
+
+CREATE INDEX tenk1_hundred ON tenk1 USING btree(hundred int4_ops);
+
+CREATE INDEX tenk2_unique1 ON tenk2 USING btree(unique1 int4_ops);
+
+CREATE INDEX tenk2_unique2 ON tenk2 USING btree(unique2 int4_ops);
+
+CREATE INDEX tenk2_hundred ON tenk2 USING btree(hundred int4_ops);
+
+CREATE INDEX rix ON road USING btree (name text_ops);
+
+CREATE INDEX iix ON ihighway USING btree (name text_ops);
+
+CREATE INDEX six ON shighway USING btree (name text_ops);
+
+--
+-- BTREE ascending/descending cases
+--
+-- we load int4/text from pure descending data (each key is a new
+-- low key) and c16/f8 from pure ascending data (each key is a new
+-- high key).  we had a bug where new low keys would sometimes be
+-- "lost".
+--
+CREATE INDEX bt_i4_index ON bt_i4_heap USING btree (seqno int4_ops);
+
+CREATE INDEX bt_c16_index ON bt_c16_heap USING btree (seqno char16_ops);
+
+CREATE INDEX bt_txt_index ON bt_txt_heap USING btree (seqno text_ops);
+
+CREATE INDEX bt_f8_index ON bt_f8_heap USING btree (seqno float8_ops);
+
+--
+-- BTREE partial indices
+-- partial indices are not supported in postgres95
+--
+--CREATE INDEX onek2_u1_prtl ON onek2 USING btree(unique1 int4_ops)
+--	where onek2.unique1 < 20 or onek2.unique1 > 980;
+
+--CREATE INDEX onek2_u2_prtl ON onek2 USING btree(unique2 int4_ops)
+--	where onek2.stringu1 < 'B';
+
+-- EXTEND INDEX onek2_u2_prtl where onek2.stringu1 < 'C';
+
+-- EXTEND INDEX onek2_u2_prtl;
+
+-- CREATE INDEX onek2_stu1_prtl ON onek2 USING btree(stringu1 char16_ops)
+--	where onek2.stringu1 >= 'J' and onek2.stringu1 < 'K';
+
+--
+-- RTREE
+-- 
+-- rtrees use a quadratic page-splitting algorithm that takes a
+-- really, really long time.  we don't test all rtree opclasses
+-- in the regression test (we check them USING the sequoia 2000
+-- benchmark).
+--
+CREATE INDEX rect2ind ON fast_emp4000 USING rtree (home_base bigbox_ops);
+
+
+--
+-- HASH
+--
+CREATE INDEX hash_i4_index ON hash_i4_heap USING hash (random int4_ops);
+
+CREATE INDEX hash_c16_index ON hash_c16_heap USING hash (random char16_ops);
+
+CREATE INDEX hash_txt_index ON hash_txt_heap USING hash (random text_ops);
+
+CREATE INDEX hash_f8_index ON hash_f8_heap USING hash (random float8_ops);
+
+-- CREATE INDEX hash_ovfl_index ON hash_ovfl_heap USING hash (x int4_ops);
+
+--
+-- OPERATOR DEFINITIONS
+--
+CREATE OPERATOR ## ( 
+   leftarg = path,
+   rightarg = path,
+   procedure = path_inter,
+   commutator = ## 
+);
+
+CREATE OPERATOR <% (
+   leftarg = point,
+   rightarg = circle,
+   procedure = pt_in_circle,
+   commutator = >=% 
+);
+
+CREATE OPERATOR @#@ (
+   rightarg = int4,		-- left unary 
+   procedure = int4fac 
+);
+
+CREATE OPERATOR #@# (
+   leftarg = int4,		-- right unary
+   procedure = int4fac 
+);
+
+CREATE OPERATOR #%# ( 
+   leftarg = int4,		-- right unary 
+   procedure = int4fac 
+);
+
+--
+-- VIRTUAL CLASS DEFINITIONS
+--	(this also tests the query rewrite system)
+--
+
+CREATE VIEW street AS
+   SELECT r.name, r.thepath, c.cname AS cname 
+   FROM road r, real_city c
+   WHERE c.outline ## r.thepath;
+
+CREATE VIEW iexit AS
+   SELECT ih.name, ih.thepath, 
+	interpt_pp(ih.thepath, r.thepath) AS exit
+   FROM ihighway ih, ramp r
+   WHERE ih.thepath ## r.thepath;
+
+CREATE VIEW toyemp AS
+   SELECT name, age, location, 12*salary AS annualsal
+   FROM emp;
+
+--
+-- RULES ???
+--
+
+--
+-- AGGREGATE DEFINITIONS
+--
+
+-- all functions CREATEd
+CREATE AGGREGATE newavg (
+   sfunc1 = int4pl, basetype = int4, stype1 = int4, 
+   sfunc2 = int4inc, stype2 = int4,
+   finalfunc = int4div,
+   initcond1 = '0', initcond2 = '0'
+);
+
+-- sfunc1 (value-dependent) only 
+CREATE AGGREGATE newsum (
+   sfunc1 = int4pl, basetype = int4, stype1 = int4, 
+   initcond1 = '0'
+);
+
+-- sfunc2 (value-independent) only 
+CREATE AGGREGATE newcnt (
+   sfunc2 = int4inc, basetype = int4, stype2 = int4, 
+   initcond2 = '0'
+);
+
+VACUUM;
+
+--
+-- sanity check, if we don't have indices the test will take years to
+-- complete.
+--
+SELECT relname, relhasindex
+   FROM pg_class
+   WHERE relhasindex
+   ORDER BY relname;
+

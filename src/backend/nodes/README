@@ -1,0 +1,65 @@
+*******************************************************************************
+*                                                                             *
+* EXPLANATION OF THE NODE STRUCTURES                                          *
+*    - Andrew Yu (11/94)                                                      *
+*                                                                             *
+* Copyright (c) 1994, Regents of the University of California                 *
+*                                                                             *
+* $Id: README,v 1.1.1.1 1996/07/09 06:21:32 scrappy Exp $
+*                                                                             *
+*******************************************************************************
+
+INTRODUCTION
+
+The current node structures are plain old C structures. "Inheritance" is
+achieved by convention. No additional functions will be generated. Functions
+that manipulate node structures reside in this directory.
+
+
+FILES IN THIS DIRECTORY
+
+    Node manipulation functions:
+	copyfuncs.c	- copying a node
+	equalfuncs.c	- comparing a node
+	outfuncs.c	- convert a node to ascii representation
+	readfuncs.c	- convert ascii representation back to a node
+	makefuncs.c	- creator functions for primitive nodes
+
+    Node definitions:
+	nodes.h		- define node tags (NodeTag)
+	pg_list.h	- generic list 
+	primnodes.h	- primitive nodes
+	parsenodes.h	- parse tree nodes
+	plannodes.h	- plan tree nodes
+	relation.h	- inner plan tree nodes
+	execnodes.h	- executor nodes
+	memnodes.h	- memory nodes
+
+
+STEPS TO ADD A NODE
+
+Suppose you wana define a node Foo:
+
+1. add a tag (T_Foo) to the enum NodeTag in nodes.h (You may have to
+   recompile the whole tree after doing this.)
+2. add the structure definition to the appropriate ???nodes.h file. If you
+   intend to inherit from, say a Plan node, put Plan as the first field of
+   you definition.
+3. if you intend to use copyObject, equal, nodeToString or stringToNode,
+   add an appropriate function to copyfuncs.c, equalfuncs.c, outfuncs.c
+   and readfuncs.c accordingly. (Except for frequently used nodes, don't
+   bother writing a creator function in makefuncs.c)
+
+
+HISTORICAL NOTE
+
+Prior to the current simple C structure definitions, the Node structures 
+uses a pseudo-inheritance system which automatically generates creator and
+accessor functions. Since every node inherits from LispValue, the whole thing
+is a mess. Here's a little anecdote:
+
+    LispValue definition -- class used to support lisp structures
+    in C.  This is here because we did not want to totally rewrite
+    planner and executor code which depended on lisp structures when
+    we ported postgres V1 from lisp to C. -cim 4/23/90
+ 

@@ -1,0 +1,13 @@
+#
+# Example config file for Postgres95 host based access
+#
+# Lines starting with "all" apply to all databases.  Otherwise the first
+# column has to match the name of the database being connected to.  Up to
+# ten config lines can apply to each database.  Mask specifies bits that 
+# aren't counted. After those bits are taken out, the connection address 
+# must match the address in the middle column.
+#
+# <name>	<address>	<mask>
+#
+all		127.0.0.1	0.0.0.0
+

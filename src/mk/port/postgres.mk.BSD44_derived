@@ -1,0 +1,40 @@
+#-------------------------------------------------------------------------
+#
+# postgres.mk.BSD44_derived--
+#    specific rules for OSs derived from 4.4-lite BSD
+#	e.g. NetBSD, FreeBSD and BSD/OS
+#
+# Copyright (c) 1994-5, Regents of the University of California
+#
+#    $Id: postgres.mk.BSD44_derived,v 1.1.1.1 1996/07/09 06:22:19 scrappy Exp $
+#
+#-------------------------------------------------------------------------
+ifndef MK_PORT
+MK_PORT=	BSD44_derived
+
+# cc is gcc, but never mind about that...
+CC=		gcc
+
+INSTALL=	/usr/bin/install
+RANLIB=		/usr/bin/ranlib
+
+AROPT = cq
+
+#
+# for postgres.user.mk
+#
+CFLAGS_SL = -fpic -DPIC
+
+SLSUFF=		.so
+
+%.so: %.o
+	$(LD) -x -r -o $(objdir)/$(<F).obj $(objdir)/$(<F)
+	@echo building shared object $(objdir)/$(@F)
+	@rm -f $(objdir)/$(@F).pic
+	@${AR} cq $(objdir)/$(@F).pic `lorder $(objdir)/$(<F).obj | tsort`
+	${RANLIB} $(objdir)/$(@F).pic
+	@rm -f $(objdir)/$(@F)
+	$(LD) -x -Bshareable -Bforcearchive \
+		    -o $(objdir)/$(@F) $(objdir)/$(@F).pic
+
+endif

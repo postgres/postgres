@@ -1,0 +1,34 @@
+#-------------------------------------------------------------------------
+#
+# postgres.mk.ultrix4--
+#    DEC MIPS/Ultrix 4.x specific rules and variables
+#
+# Copyright (c) 1994-5, Regents of the University of California
+#
+#    $Id: postgres.mk.ultrix4,v 1.1.1.1 1996/07/09 06:22:20 scrappy Exp $
+#
+#-------------------------------------------------------------------------
+ifndef MK_PORT
+MK_PORT=	ultrix4
+
+#
+# for postgres.mk
+#
+ifdef ENFORCE_ALIGNMENT
+CFLAGS_BE= -DNOFIXADE
+endif
+
+# install creates intermediate directories
+NO_BEFOREINSTL=	true
+
+INSTALL=	/usr/bin/install
+RANLIB=		/usr/bin/ranlib
+
+#
+# for postgres.user.mk
+#
+CFLAGS_SL=	-G 0
+SLSUFF=		.o
+
+
+endif

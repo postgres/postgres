@@ -1,0 +1,93 @@
+$Header: /cvsroot/pgsql/src/backend/storage/lmgr/README,v 1.1.1.1 1996/07/09 06:21:55 scrappy Exp $
+
+This file is an attempt to save me (and future code maintainers) some
+time and a lot of headaches.  The existing lock manager code at the time
+of this writing (June 16 1992) can best be described as confusing.  The
+complexity seems inherent in lock manager functionality, but variable
+names chosen in the current implementation really confuse me everytime
+I have to track down a bug.  Also, what gets done where and by whom isn't
+always clear....
+
+Starting with the data structures the lock manager relies upon...
+
+(NOTE - these will undoubtedly change over time and it is likely
+that this file won't always be updated along with the structs.)
+
+The lock manager's LOCK:
+
+tag -
+    The key fields that are used for hashing locks in the shared memory
+    lock hash table.  This is kept as a separate struct to ensure that we
+    always zero out the correct number of bytes.  This is a problem as
+    part of the tag is an itempointer which is 6 bytes and causes 2
+    additional bytes to be added as padding.
+
+    tag.relId -
+	Uniquely identifies the relation that the lock corresponds to.
+    
+    tag.dbId -
+	Uniquely identifies the database in which the relation lives.  If
+	this is a shared system relation (e.g. pg_user) the dbId should be
+	set to 0.
+
+    tag.tupleId -
+	Uniquely identifies the block/page within the relation and the
+	tuple within the block.  If we are setting a table level lock
+	both the blockId and tupleId (in an item pointer this is called
+	the position) are set to invalid, if it is a page level lock the
+	blockId is valid, while the tuleId is still invalid.  Finally if
+	this is a tuple level lock (we currently never do this) then both
+	the blockId and tupleId are set to valid specifications.  This is
+	how we get the appearance of a multi-level lock table while using
+	only a single table (see Gray's paper on 2 phase locking if
+	you are puzzled about how multi-level lock tables work).
+
+mask -
+    This field indicates what types of locks are currently held in the
+    given lock.  It is used (against the lock table's conflict table)
+    to determine if the new lock request will conflict with existing
+    lock types held.  Conficts are determined by bitwise AND operations
+    between the mask and the conflict table entry for the given lock type
+    to be set.  The current representation is that each bit (1 through 5)
+    is set when that lock type (WRITE, READ, WRITE INTENT, READ INTENT, EXTEND)
+    has been acquired for the lock.
+
+waitProcs -
+    This is a shared memory queue of all process structures corresponding to
+    a backend that is waiting (sleeping) until another backend releases this
+    lock.  The process structure holds the information needed to determine
+    if it should be woken up when this lock is released.  If, for example,
+    we are releasing a read lock and the process is sleeping trying to acquire
+    a read lock then there is no point in waking it since the lock being
+    released isn't what caused it to sleep in the first place.  There will
+    be more on this below (when I get to releasing locks and waking sleeping
+    process routines).
+
+nHolding -
+    Keeps a count of how many times this lock has been attempted to be
+    acquired.  The count includes attempts by processes which were put
+    to sleep due to conflicts.  It also counts the same backend twice
+    if, for example, a backend process first acquires a read and then
+    acquires a write.
+
+holders -
+    Keeps a count of how many locks of each type have been attempted.  Only
+    elements 1 through MAX_LOCK_TYPES are used as they correspond to the lock
+    type defined constants (WRITE through EXTEND).  Summing the values of
+    holders should come out equal to nHolding.
+
+nActive -
+    Keeps a count of how many times this lock has been succesfully acquired.
+    This count does not include attempts that were rejected due to conflicts,
+    but can count the same backend twice (e.g. a read then a write -- since
+    its the same transaction this won't cause a conflict)
+
+activeHolders -
+    Keeps a count of how locks of each type are currently held.  Once again
+    only elements 1 through MAX_LOCK_TYPES are used (0 is not).  Also, like
+    holders, summing the values of activeHolders should total to the value
+    of nActive.
+
+
+This is all I had the stomach for right now..... I will get back to this
+someday.	-mer 17 June 1992 12:00 am

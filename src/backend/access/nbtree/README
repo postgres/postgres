@@ -1,0 +1,68 @@
+$Header: /cvsroot/pgsql/src/backend/access/nbtree/README,v 1.1.1.1 1996/07/09 06:21:12 scrappy Exp $
+
+This directory contains a correct implementation of Lehman and Yao's
+btree management algorithm that supports concurrent access for Postgres.
+We have made the following changes in order to incorporate their algorithm
+into Postgres:
+
+	+  The requirement that all btree keys be unique is too onerous,
+	   but the algorithm won't work correctly without it.  As a result,
+	   this implementation adds an OID (guaranteed to be unique) to
+	   every key in the index.  This guarantees uniqueness within a set
+	   of duplicates.  Space overhead is four bytes.
+
+	   For this reason, when we're passed an index tuple to store by the
+	   common access method code, we allocate a larger one and copy the
+	   supplied tuple into it.  No Postgres code outside of the btree
+	   access method knows about this xid or sequence number.
+
+	+  Lehman and Yao don't require read locks, but assume that in-
+	   memory copies of tree nodes are unshared.  Postgres shares
+	   in-memory buffers among backends.  As a result, we do page-
+	   level read locking on btree nodes in order to guarantee that
+	   no record is modified while we are examining it.  This reduces
+	   concurrency but guaranteees correct behavior.
+
+	+  Read locks on a page are held for as long as a scan has a pointer
+	   to the page.  However, locks are always surrendered before the
+	   sibling page lock is acquired (for readers), so we remain deadlock-
+	   free.  I will do a formal proof if I get bored anytime soon.
+
+In addition, the following things are handy to know:
+
+	+  Page zero of every btree is a meta-data page.  This page stores
+	   the location of the root page, a pointer to a list of free
+	   pages, and other stuff that's handy to know.
+
+	+  This algorithm doesn't really work, since it requires ordered
+	   writes, and UNIX doesn't support ordered writes.
+
+	+  There's one other case where we may screw up in this
+	   implementation.  When we start a scan, we descend the tree
+	   to the key nearest the one in the qual, and once we get there,
+	   position ourselves correctly for the qual type (eg, <, >=, etc).
+	   If we happen to step off a page, decide we want to get back to
+	   it, and fetch the page again, and if some bad person has split
+	   the page and moved the last tuple we saw off of it, then the
+	   code complains about botched concurrency in an elog(WARN, ...)
+	   and gives up the ghost.  This is the ONLY violation of Lehman
+	   and Yao's guarantee of correct behavior that I am aware of in
+	   this code.
+
+Notes to operator class implementors:
+
+	With this implementation, we require the user to supply us with
+	a procedure for pg_amproc.  This procedure should take two keys
+	A and B and return < 0, 0, or > 0 if A < B, A = B, or A > B,
+	respectively.  See the contents of that relation for the btree
+	access method for some samples.
+
+Notes to mao for implementation document:
+
+	On deletions, we need to adjust the position of active scans on
+	the index.  The code in nbtscan.c handles this.  We don't need to
+	do this for splits because of the way splits are handled; if they
+	happen behind us, we'll automatically go to the next page, and if
+	they happen in front of us, we're not affected by them.  For
+	insertions, if we inserted a tuple behind the current scan location
+	on the current scan page, we move one space ahead.

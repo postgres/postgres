@@ -1,0 +1,158 @@
+---------------------------------------------------------------------------
+--
+-- funcs.sql-
+--    Tutorial on using functions in POSTGRES.
+--
+--
+-- Copyright (c) 1994-5, Regents of the University of California
+--
+-- $Id: funcs.source,v 1.1.1.1 1996/07/09 06:22:34 scrappy Exp $
+--
+---------------------------------------------------------------------------
+
+-----------------------------
+-- Creating SQL Functions on Base Types
+--	a CREATE FUNCTION statement lets you create a new function that
+--	can be used in expressions (in SELECT, INSERT, etc.). We will start
+--	with functions that return values of base types.
+-----------------------------
+
+--
+-- let's create a simple SQL function that takes no arguments and 
+-- returns 1
+
+CREATE FUNCTION one() RETURNS int4
+   AS 'SELECT 1 as ONE' LANGUAGE 'sql';
+
+--
+-- functions can be used in any expressions (eg. in the target list or 
+-- qualifications)
+
+SELECT one() AS answer;
+
+--
+-- here's how you create a function that takes arguments. The following
+-- function returns the sum of its two arguments:
+
+CREATE FUNCTION add_em(int4, int4) RETURNS int4
+   AS 'SELECT $1 + $2' LANGUAGE 'sql';
+
+SELECT add_em(1, 2) AS answer;
+
+-----------------------------
+-- Creating SQL Functions on Composite Types
+--	it is also possible to create functions that return values of
+--	composite types.
+-----------------------------
+
+-- before we create more sophisticated functions, let's populate an EMP
+-- table
+
+CREATE TABLE EMP (
+	name		text,
+	salary		int4,
+	age		int4,
+	dept		char16
+);
+
+INSERT INTO EMP VALUES ('Sam', 1200, 16, 'toy')
+INSERT INTO EMP VALUES ('Claire', 5000, 32, 'shoe')
+INSERT INTO EMP VALUES ('Andy', -1000, 2, 'candy')
+INSERT INTO EMP VALUES ('Bill', 4200, 36, 'shoe')
+INSERT INTO EMP VALUES ('Ginger', 4800, 30, 'candy');
+
+-- the argument of a function can also be a tuple. For instance, 
+-- double_salary takes a tuple of the EMP table
+
+CREATE FUNCTION double_salary(EMP) RETURNS int4
+   AS 'SELECT $1.salary * 2 AS salary' LANGUAGE 'sql';
+
+SELECT name, double_salary(EMP) AS dream
+FROM EMP
+WHERE EMP.dept = 'toy';
+
+-- the return value of a function can also be a tuple. However, make sure 
+-- that the expressions in the target list is in the same order as the 
+-- columns of EMP.
+
+CREATE FUNCTION new_emp() RETURNS EMP
+   AS 'SELECT \'None\'::text AS name,
+              1000 AS salary,
+              25 AS age,
+              \'none\'::char16 AS dept'
+   LANGUAGE 'sql';
+
+-- you can then project a column out of resulting the tuple by using the
+-- "function notation" for projection columns. (ie. bar(foo) is equivalent
+-- to foo.bar) Note that we don't support new_emp().name at this moment.
+
+SELECT name(new_emp()) AS nobody;
+
+-- let's try one more function that returns tuples
+CREATE FUNCTION high_pay() RETURNS setof EMP
+   AS 'SELECT * FROM EMP where salary > 1500'
+   LANGUAGE 'sql';
+
+SELECT name(high_pay()) AS overpaid;
+
+
+-----------------------------
+-- Creating SQL Functions with multiple SQL statements
+--	you can also create functions that do more than just a SELECT.
+-----------------------------
+
+-- you may have noticed that Andy has a negative salary. We'll create a
+-- function that removes employees with negative salaries.
+
+SELECT * FROM EMP;
+
+CREATE FUNCTION clean_EMP () RETURNS int4
+   AS 'DELETE FROM EMP WHERE EMP.salary <= 0
+       SELECT 1 AS ignore_this'
+   LANGUAGE 'sql';
+
+SELECT clean_EMP();
+
+SELECT * FROM EMP;
+
+
+-----------------------------
+-- Creating C Functions
+--	in addition to SQL functions, you can also create C functions. 
+--	See C-code/funcs.c for the definition of the C functions.
+-----------------------------
+
+CREATE FUNCTION add_one(int4) RETURNS int4
+   AS '_OBJWD_/funcs.so' LANGUAGE 'c';
+
+CREATE FUNCTION concat16(char16, char16) RETURNS char16
+   AS '_OBJWD_/funcs.so' LANGUAGE 'c';
+
+CREATE FUNCTION copytext(text) RETURNS text
+   AS '_OBJWD_/funcs.so' LANGUAGE 'c';
+
+CREATE FUNCTION c_overpaid(EMP, int4) RETURNS bool
+   AS '_OBJWD_/funcs.so' LANGUAGE 'c';
+
+SELECT add_one(3) AS four;
+
+SELECT concat16('abc', 'xyz') AS newchar16;
+
+SELECT copytext('hello world!');
+
+SELECT name, c_overpaid(EMP, 1500) AS overpaid
+FROM EMP 
+WHERE name = 'Bill' or name = 'Sam';
+
+-- remove functions that were created in this file
+
+DROP FUNCTION c_overpaid(EMP, int4)
+DROP FUNCTION copytext(text)
+DROP FUNCTION concat16(char16,char16)
+DROP FUNCTION add_one(int4)
+DROP FUNCTION clean_EMP()
+DROP FUNCTION new_emp()
+DROP FUNCTION add_em(int4, int4)
+DROP FUNCTION one();
+
+DROP TABLE EMP;
