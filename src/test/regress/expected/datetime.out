@@ -1,6 +1,35 @@
+QUERY: SELECT ('today'::datetime = ('yesterday'::datetime + '1 day'::timespan)) as "True";
+True
+----
+t   
+(1 row)
+
+QUERY: SELECT ('today'::datetime = ('tomorrow'::datetime - '1 day'::timespan)) as "True";
+True
+----
+t   
+(1 row)
+
+QUERY: SELECT ('tomorrow'::datetime = ('yesterday'::datetime + '2 days'::timespan)) as "True";
+True
+----
+t   
+(1 row)
+
+QUERY: SELECT ('current'::datetime = 'now'::datetime) as "True";
+True
+----
+t   
+(1 row)
+
+QUERY: SELECT ('now'::datetime - 'current'::datetime) AS "ZeroSecs";
+ZeroSecs
+--------
+@ 0     
+(1 row)
+
 QUERY: CREATE TABLE DATETIME_TBL( d1 datetime);
 QUERY: INSERT INTO DATETIME_TBL VALUES ('current');
-QUERY: INSERT INTO DATETIME_TBL VALUES ('now');
 QUERY: INSERT INTO DATETIME_TBL VALUES ('today');
 QUERY: INSERT INTO DATETIME_TBL VALUES ('yesterday');
 QUERY: INSERT INTO DATETIME_TBL VALUES ('tomorrow');
@@ -34,12 +63,6 @@ QUERY: SELECT count(*) AS one FROM DATETIME_TBL WHERE d1 = 'today'::datetime - '
 one
 ---
   1
-(1 row)
-
-QUERY: SELECT 'now'::datetime - 'current'::datetime AS ZeroSecs;
-zerosecs
---------
-@ 0     
 (1 row)
 
 QUERY: SELECT count(*) AS one FROM DATETIME_TBL WHERE d1 = 'now'::datetime;

@@ -1,12 +1,18 @@
 -- *** testing new built-in time types: datetime, timespan ***
 
+-- Shorthand values
+-- Not directly usable for regression testing since these are not constants.
+-- So, just try to test parser and hope for the best - tgl 97/04/26
+
+SELECT ('today'::datetime = ('yesterday'::datetime + '1 day'::timespan)) as "True";
+SELECT ('today'::datetime = ('tomorrow'::datetime - '1 day'::timespan)) as "True";
+SELECT ('tomorrow'::datetime = ('yesterday'::datetime + '2 days'::timespan)) as "True";
+SELECT ('current'::datetime = 'now'::datetime) as "True";
+SELECT ('now'::datetime - 'current'::datetime) AS "ZeroSecs";
+
 CREATE TABLE DATETIME_TBL( d1 datetime);
 
--- Shorthand values
--- Not directly testable since these are not constant for regression testing.
--- So, just try to test parser and hope for the best - tgl 97/04/26
 INSERT INTO DATETIME_TBL VALUES ('current');
-INSERT INTO DATETIME_TBL VALUES ('now');
 INSERT INTO DATETIME_TBL VALUES ('today');
 INSERT INTO DATETIME_TBL VALUES ('yesterday');
 INSERT INTO DATETIME_TBL VALUES ('tomorrow');
@@ -19,8 +25,8 @@ SELECT count(*) AS one FROM DATETIME_TBL WHERE d1 = 'yesterday'::datetime;
 SELECT count(*) AS one FROM DATETIME_TBL WHERE d1 = 'today'::datetime + '1 day'::timespan;
 SELECT count(*) AS one FROM DATETIME_TBL WHERE d1 = 'today'::datetime - '1 day'::timespan;
 
-SELECT 'now'::datetime - 'current'::datetime AS ZeroSecs;
 SELECT count(*) AS one FROM DATETIME_TBL WHERE d1 = 'now'::datetime;
+
 DELETE FROM DATETIME_TBL;
 
 -- verify uniform transaction time within transaction block
