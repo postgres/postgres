@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/port.h,v 1.50 2004/08/08 06:44:33 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/port.h,v 1.51 2004/08/09 02:12:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,8 +91,8 @@ extern int find_other_exec(const char *argv0, const char *target,
 /*
  *	Win32 needs double quotes at the beginning and end of system()
  *	strings.  If not, it gets confused with multiple quoted strings.
- *	It also must use double-quotes around the executable name
- *	and any files used for redirection.  Other args can use single-quotes.
+ *	It also requires double-quotes around the executable name and
+ *	any files used for redirection.  Other args can use single-quotes.
  *
  *	See the "Notes" section about quotes at:
  *		http://home.earthlink.net/~rlively/MANUALS/COMMANDS/C/CMD.HTM
