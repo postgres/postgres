@@ -11,7 +11,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/createdb/Attic/createdb.sh,v 1.10 1998/07/26 04:31:13 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/bin/createdb/Attic/createdb.sh,v 1.11 1998/09/03 02:12:14 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -67,9 +67,10 @@ done
 if [ "$usage" ]; then
 	if [ -z "$MBENABLED" ];then
 		echo "Usage: $CMDNAME -a <authtype> -h <server> -p <portnumber> -D <location> [dbname]"
+		exit 1
 	else
 		echo "Usage: $CMDNAME -a <authtype> -h <server> -p <portnumber> -D <location> -E <encoding> [dbname]"
-	exit 1
+		exit 1
 	fi
 fi
 
