@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.1.1.1 1996/07/09 06:21:26 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.1.1.1.2.1 1996/10/30 06:06:50 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -273,6 +273,11 @@ ExecIndexReScan(IndexScan *node, ExprContext *exprCtxt, Plan* parent)
 		scanvalue = (Datum)
 		    ExecEvalExpr(scanexpr, exprCtxt, &isNull, &isDone);
 		scan_keys[j].sk_argument = scanvalue;
+		if (isNull) {
+		    scan_keys[j].sk_flags |= SK_ISNULL;
+		} else {
+		    scan_keys[j].sk_flags &= ~SK_ISNULL;
+		}
 	    }
 	}
     } 

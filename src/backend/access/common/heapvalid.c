@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/common/Attic/heapvalid.c,v 1.1.1.1 1996/07/09 06:21:09 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/common/Attic/heapvalid.c,v 1.1.1.1.2.1 1996/10/30 06:06:36 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,6 +54,10 @@ heap_keytest(HeapTuple t,
 	    /* XXX eventually should check if SK_ISNULL */
 	    return false;
 	
+	if (keys->sk_flags & SK_ISNULL) {
+	    return (false);
+	}
+
 	if (keys->sk_flags & SK_COMMUTE)
 	    test = (long) FMGR_PTR2(keys->sk_func, keys->sk_procedure,
 				    keys->sk_argument, atp);
