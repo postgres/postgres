@@ -11,7 +11,7 @@
  *
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/utils/errcodes.h,v 1.7 2003/11/29 22:41:15 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/utils/errcodes.h,v 1.8 2004/03/04 21:47:18 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,6 +44,7 @@
 #define ERRCODE_WARNING_IMPLICIT_ZERO_BIT_PADDING	MAKE_SQLSTATE('0','1', '0','0','8')
 #define ERRCODE_WARNING_NULL_VALUE_ELIMINATED_IN_SET_FUNCTION	MAKE_SQLSTATE('0','1', '0','0','3')
 #define ERRCODE_WARNING_STRING_DATA_RIGHT_TRUNCATION	MAKE_SQLSTATE('0','1', '0','0','4')
+#define ERRCODE_WARNING_DEPRECATED_FEATURE	MAKE_SQLSTATE('0','1', 'P','0','1')
 
 /* Class 02 - No Data --- this is also a warning class per SQL99 */
 /* (do not use this class for failure conditions!) */

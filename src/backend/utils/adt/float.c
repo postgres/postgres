@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.96 2003/11/29 19:51:58 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.97 2004/03/04 21:47:18 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -209,6 +209,19 @@ float4in(PG_FUNCTION_ARGS)
 	}
 
 	/*
+	 * In releases prior to 7.5, we accepted an empty string as valid
+	 * input (yielding a float4 of 0). In 7.5, we accept empty
+	 * strings, but emit a warning noting that the feature is
+	 * deprecated. In 7.6+, the warning should be replaced by an error.
+	 */
+	if (num == endptr)
+		ereport(WARNING,
+				(errcode(ERRCODE_WARNING_DEPRECATED_FEATURE),
+				 errmsg("deprecated input syntax for type real: \"\""),
+				 errdetail("This input will be rejected in "
+						   "a future release of PostgreSQL.")));
+
+	/*
 	 * if we get here, we have a legal double, still need to check to see
 	 * if it's a legal float
 	 */
@@ -308,6 +321,19 @@ float8in(PG_FUNCTION_ARGS)
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 					 errmsg("\"%s\" is out of range for type double precision", num)));
 	}
+
+	/*
+	 * In releases prior to 7.5, we accepted an empty string as valid
+	 * input (yielding a float8 of 0). In 7.5, we accept empty
+	 * strings, but emit a warning noting that the feature is
+	 * deprecated. In 7.6+, the warning should be replaced by an error.
+	 */
+	if (num == endptr)
+		ereport(WARNING,
+				(errcode(ERRCODE_WARNING_DEPRECATED_FEATURE),
+				 errmsg("deprecated input syntax for type double precision: \"\""),
+				 errdetail("This input will be rejected in "
+						   "a future release of PostgreSQL.")));
 
 	CheckFloat8Val(val);
 

@@ -7,7 +7,6 @@ INSERT INTO OID_TBL(f1) VALUES ('1235');
 INSERT INTO OID_TBL(f1) VALUES ('987');
 INSERT INTO OID_TBL(f1) VALUES ('-1040');
 INSERT INTO OID_TBL(f1) VALUES ('99999999');
-INSERT INTO OID_TBL(f1) VALUES ('');
 -- bad inputs 
 INSERT INTO OID_TBL(f1) VALUES ('asdfasd');
 ERROR:  invalid input syntax for type oid: "asdfasd"
@@ -21,8 +20,7 @@ SELECT '' AS six, OID_TBL.*;
      |        987
      | 4294966256
      |   99999999
-     |          0
-(6 rows)
+(5 rows)
 
 SELECT '' AS one, o.* FROM OID_TBL o WHERE o.f1 = 1234;
  one |  f1  
@@ -37,23 +35,20 @@ SELECT '' AS five, o.* FROM OID_TBL o WHERE o.f1 <> '1234';
       |        987
       | 4294966256
       |   99999999
-      |          0
-(5 rows)
+(4 rows)
 
 SELECT '' AS three, o.* FROM OID_TBL o WHERE o.f1 <= '1234';
  three |  f1  
 -------+------
        | 1234
        |  987
-       |    0
-(3 rows)
+(2 rows)
 
 SELECT '' AS two, o.* FROM OID_TBL o WHERE o.f1 < '1234';
  two | f1  
 -----+-----
      | 987
-     |   0
-(2 rows)
+(1 row)
 
 SELECT '' AS four, o.* FROM OID_TBL o WHERE o.f1 >= '1234';
  four |     f1     

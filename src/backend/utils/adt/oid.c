@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/oid.c,v 1.54 2004/02/18 00:01:34 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/oid.c,v 1.55 2004/03/04 21:47:18 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,15 +40,27 @@ oidin_subr(const char *funcname, const char *s, char **endloc)
 	 * strtoul() normally only sets ERANGE.  On some systems it also may
 	 * set EINVAL, which simply means it couldn't parse the input string.
 	 * This is handled by the second "if" consistent across platforms.
-	 * Note that for historical reasons we accept an empty string as
-	 * meaning 0.
 	 */
 	if (errno && errno != ERANGE && errno != EINVAL)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("invalid input syntax for type oid: \"%s\"",
 						s)));
-	if (endptr == s && *endptr)
+
+	/*
+	 * In releases prior to 7.5, we accepted an empty string as valid
+	 * input (yielding an OID of 0). In 7.5, we accept empty strings,
+	 * but emit a warning noting that the feature is deprecated. In
+	 * 7.6+, the warning should be replaced by an error.
+	 */
+	if (*s == '\0')
+		ereport(WARNING,
+				(errcode(ERRCODE_WARNING_DEPRECATED_FEATURE),
+				 errmsg("deprecated input syntax for type oid: \"\""),
+				 errdetail("This input will be rejected in "
+						   "a future release of PostgreSQL.")));
+
+	if (endptr == s && *s)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("invalid input syntax for type oid: \"%s\"",
