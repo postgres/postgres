@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.32 2000/03/17 02:36:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.33 2000/03/21 05:12:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -163,7 +163,7 @@ make_subplan(SubLink *slink)
 	else
 		tuple_fraction = -1.0;	/* default behavior */
 
-	node->plan = plan = union_planner(subquery, tuple_fraction);
+	node->plan = plan = subquery_planner(subquery, tuple_fraction);
 
 	/*
 	 * Assign subPlan, extParam and locParam to plan nodes. At the moment,

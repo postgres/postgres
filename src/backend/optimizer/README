@@ -132,14 +132,14 @@ than applying a sort to the cheapest other path).
 Optimizer Functions
 -------------------
 
+The primary entry point is planner().
+
 planner()
- handle inheritance by processing separately
--init_query_planner()
-  preprocess target list
-  preprocess qualifications(WHERE)
---query_planner()
-   simplify constant subexpressions
-   canonicalize_qual()
+ set up for recursive handling of subqueries
+ do final cleanup after planning.
+-subquery_planner()
+ simplify constant expressions
+ canonicalize qual
      Attempt to reduce WHERE clause to either CNF or DNF canonical form.
      CNF (top-level-AND) is preferred, since the optimizer can then use
      any of the AND subclauses to filter tuples; but quals that are in
@@ -147,6 +147,13 @@ planner()
      force them to CNF.  In pathological cases either transform may expand
      the qual unreasonably; so we may have to leave it un-normalized,
      thereby reducing the accuracy of selectivity estimates.
+ process sublinks
+ convert Vars of outer query levels into Params
+--union_planner()
+  handle unions and inheritance by mutual recursion with prepunion.c routines
+  preprocess target list
+  handle GROUP BY, HAVING, aggregates, ORDER BY, DISTINCT
+--query_planner()
    pull out constants from target list
    get a target list that only contains column names, no expressions
    if none, then return

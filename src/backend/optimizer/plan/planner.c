@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.77 2000/03/14 02:23:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.78 2000/03/21 05:12:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,6 +36,7 @@
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
+
 static List *make_subplanTargetList(Query *parse, List *tlist,
 									AttrNumber **groupColIdx);
 static Plan *make_groupplan(List *group_tlist, bool tuplePerGroup,
@@ -59,22 +60,153 @@ planner(Query *parse)
 	PlannerParamVar = NULL;
 	PlannerPlanId = 0;
 
+	/* this should go away sometime soon */
 	transformKeySetQuery(parse);
 
-	result_plan = union_planner(parse, -1.0 /* default case */);
+	/* primary planning entry point (may recurse for subplans) */
+	result_plan = subquery_planner(parse, -1.0 /* default case */);
 
 	Assert(PlannerQueryLevel == 1);
+
+	/* if top-level query had subqueries, do housekeeping for them */
 	if (PlannerPlanId > 0)
 	{
-		result_plan->initPlan = PlannerInitPlan;
 		(void) SS_finalize_plan(result_plan);
+		result_plan->initPlan = PlannerInitPlan;
 	}
+
+	/* executor wants to know total number of Params used overall */
 	result_plan->nParamExec = length(PlannerParamVar);
 
+	/* final cleanup of the plan */
 	set_plan_references(result_plan);
 
 	return result_plan;
 }
+
+
+/*--------------------
+ * subquery_planner
+ *	  Invokes the planner on a subquery.  We recurse to here for each
+ *	  sub-SELECT found in the query tree.
+ *
+ * parse is the querytree produced by the parser & rewriter.
+ * tuple_fraction is the fraction of tuples we expect will be retrieved.
+ * tuple_fraction is interpreted as explained for union_planner, below.
+ *
+ * Basically, this routine does the stuff that should only be done once
+ * per Query object.  It then calls union_planner, which may be called
+ * recursively on the same Query node in order to handle UNIONs and/or
+ * inheritance.  subquery_planner is called recursively from subselect.c.
+ *
+ * prepunion.c uses an unholy combination of calling union_planner when
+ * recursing on the primary Query node, or subquery_planner when recursing
+ * on a UNION'd Query node that hasn't previously been seen by
+ * subquery_planner.  That whole chunk of code needs rewritten from scratch.
+ *
+ * Returns a query plan.
+ *--------------------
+ */
+Plan *
+subquery_planner(Query *parse, double tuple_fraction)
+{
+	/*
+	 * A HAVING clause without aggregates is equivalent to a WHERE clause
+	 * (except it can only refer to grouped fields).  If there are no
+	 * aggs anywhere in the query, then we don't want to create an Agg
+	 * plan node, so merge the HAVING condition into WHERE.  (We used to
+	 * consider this an error condition, but it seems to be legal SQL.)
+	 */
+	if (parse->havingQual != NULL && ! parse->hasAggs)
+	{
+		if (parse->qual == NULL)
+			parse->qual = parse->havingQual;
+		else
+			parse->qual = (Node *) make_andclause(lappend(lcons(parse->qual,
+																NIL),
+														  parse->havingQual));
+		parse->havingQual = NULL;
+	}
+
+	/*
+	 * Simplify constant expressions in targetlist and quals.
+	 *
+	 * Note that at this point the qual has not yet been converted to
+	 * implicit-AND form, so we can apply eval_const_expressions directly.
+	 * Also note that we need to do this before SS_process_sublinks,
+	 * because that routine inserts bogus "Const" nodes.
+	 */
+	parse->targetList = (List *)
+		eval_const_expressions((Node *) parse->targetList);
+	parse->qual = eval_const_expressions(parse->qual);
+	parse->havingQual = eval_const_expressions(parse->havingQual);
+
+	/*
+	 * Canonicalize the qual, and convert it to implicit-AND format.
+	 *
+	 * XXX Is there any value in re-applying eval_const_expressions
+	 * after canonicalize_qual?
+	 */
+	parse->qual = (Node *) canonicalize_qual((Expr *) parse->qual, true);
+#ifdef OPTIMIZER_DEBUG
+	printf("After canonicalize_qual()\n");
+	pprint(parse->qual);
+#endif
+
+	/*
+	 * Ditto for the havingQual
+	 */
+	parse->havingQual = (Node *) canonicalize_qual((Expr *) parse->havingQual,
+												   true);
+
+	/* Expand SubLinks to SubPlans */
+	if (parse->hasSubLinks)
+	{
+		parse->targetList = (List *)
+			SS_process_sublinks((Node *) parse->targetList);
+		parse->qual = SS_process_sublinks(parse->qual);
+		parse->havingQual = SS_process_sublinks(parse->havingQual);
+
+		if (parse->groupClause != NIL)
+		{
+			/*
+			 * Check for ungrouped variables passed to subplans.
+			 * Note we do NOT do this for subplans in WHERE; it's legal
+			 * there because WHERE is evaluated pre-GROUP.
+			 *
+			 * An interesting fine point: if we reassigned a HAVING qual
+			 * into WHERE above, then we will accept references to ungrouped
+			 * vars from subplans in the HAVING qual.  This is not entirely
+			 * consistent, but it doesn't seem particularly harmful...
+			 */
+			check_subplans_for_ungrouped_vars((Node *) parse->targetList,
+											  parse);
+			check_subplans_for_ungrouped_vars(parse->havingQual, parse);
+		}
+	}
+
+	/* Replace uplevel vars with Param nodes */
+	if (PlannerQueryLevel > 1)
+	{
+		parse->targetList = (List *)
+			SS_replace_correlation_vars((Node *) parse->targetList);
+		parse->qual = SS_replace_correlation_vars(parse->qual);
+		parse->havingQual = SS_replace_correlation_vars(parse->havingQual);
+	}
+
+	/* Do the main planning (potentially recursive) */
+
+	return union_planner(parse, tuple_fraction);
+
+	/*
+	 * XXX should any more of union_planner's activity be moved here?
+	 *
+	 * That would take careful study of the interactions with prepunion.c,
+	 * but I suspect it would pay off in simplicity and avoidance of
+	 * wasted cycles.
+	 */
+}
+
 
 /*--------------------
  * union_planner
@@ -110,37 +242,6 @@ union_planner(Query *parse,
 	List	   *group_pathkeys;
 	List	   *sort_pathkeys;
 	Index		rt_index;
-
-	/*
-	 * A HAVING clause without aggregates is equivalent to a WHERE clause
-	 * (except it can only refer to grouped fields).  If there are no
-	 * aggs anywhere in the query, then we don't want to create an Agg
-	 * plan node, so merge the HAVING condition into WHERE.  (We used to
-	 * consider this an error condition, but it seems to be legal SQL.)
-	 */
-	if (parse->havingQual != NULL && ! parse->hasAggs)
-	{
-		if (parse->qual == NULL)
-			parse->qual = parse->havingQual;
-		else
-			parse->qual = (Node *) make_andclause(lappend(lcons(parse->qual,
-																NIL),
-														  parse->havingQual));
-		parse->havingQual = NULL;
-	}
-
-	/*
-	 * Simplify constant expressions in targetlist and quals.
-	 *
-	 * Note that at this point the qual has not yet been converted to
-	 * implicit-AND form, so we can apply eval_const_expressions directly.
-	 * Also note that we need to do this before SS_process_sublinks,
-	 * because that routine inserts bogus "Const" nodes.
-	 */
-	tlist = (List *) eval_const_expressions((Node *) tlist);
-	parse->qual = eval_const_expressions(parse->qual);
-	parse->havingQual = eval_const_expressions(parse->havingQual);
-
 
 	if (parse->unionClause)
 	{
@@ -472,32 +573,6 @@ union_planner(Query *parse,
 									 groupColIdx,
 									 is_sorted,
 									 result_plan);
-	}
-
-	/*
-	 * If we have a HAVING clause, do the necessary things with it.
-	 * This code should parallel query_planner()'s initial processing
-	 * of the WHERE clause.
-	 */
-	if (parse->havingQual)
-	{
-		/* Convert the havingQual to implicit-AND normal form */
-		parse->havingQual = (Node *)
-			canonicalize_qual((Expr *) parse->havingQual, true);
-
-		/* Replace uplevel Vars with Params */
-		if (PlannerQueryLevel > 1)
-			parse->havingQual = SS_replace_correlation_vars(parse->havingQual);
-
-		if (parse->hasSubLinks)
-		{
-			/* Expand SubLinks to SubPlans */
-			parse->havingQual = SS_process_sublinks(parse->havingQual);
-			/* Check for ungrouped variables passed to subplans */
-			check_subplans_for_ungrouped_vars(parse->havingQual,
-											  parse,
-											  parse->targetList);
-		}
 	}
 
 	/*

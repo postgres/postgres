@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.46 2000/03/14 23:06:29 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.47 2000/03/21 05:12:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -149,8 +149,12 @@ plan_union_queries(Query *parse)
 		{
 			Query	   *union_query = lfirst(ulist);
 
+			/* use subquery_planner here because the union'd queries
+			 * have not been preprocessed yet.  My goodness this is messy...
+			 */
 			union_plans = lappend(union_plans,
-								  union_planner(union_query, tuple_fraction));
+								  subquery_planner(union_query,
+												   tuple_fraction));
 			union_rts = lappend(union_rts, union_query->rtable);
 		}
 	}
@@ -185,8 +189,11 @@ plan_union_queries(Query *parse)
 		{
 			Query	   *union_all_query = lfirst(ulist);
 
+			/* use subquery_planner here because the union'd queries
+			 * have not been preprocessed yet.  My goodness this is messy...
+			 */
 			union_plans = lappend(union_plans,
-								  union_planner(union_all_query, -1.0));
+								  subquery_planner(union_all_query, -1.0));
 			union_rts = lappend(union_rts, union_all_query->rtable);
 		}
 	}

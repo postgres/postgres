@@ -3,29 +3,31 @@
  * planmain.c
  *	  Routines to plan a single query
  *
+ * What's in a name, anyway?  The top-level entry point of the planner/
+ * optimizer is over in planner.c, not here as you might think from the
+ * file name.  But this is the main code for planning a basic join operation,
+ * shorn of features like subselects, inheritance, aggregates, grouping,
+ * and so on.  (Those are the things planner.c deals with.)
+ *
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.52 2000/02/15 20:49:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.53 2000/03/21 05:11:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <sys/types.h>
-
 #include "postgres.h"
 
+#include <sys/types.h>
 
 #include "optimizer/clauses.h"
 #include "optimizer/cost.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
 #include "optimizer/planmain.h"
-#include "optimizer/prep.h"
-#include "optimizer/subselect.h"
 #include "optimizer/tlist.h"
-#include "utils/lsyscache.h"
 
 
 static Plan *subplanner(Query *root, List *flat_tlist, List *qual,
@@ -34,18 +36,14 @@ static Plan *subplanner(Query *root, List *flat_tlist, List *qual,
 
 /*--------------------
  * query_planner
- *	  Routine to create a query plan.  It does so by first creating a
- *	  subplan for the topmost level of attributes in the query.  Then,
- *	  it modifies all target list and qualifications to consider the next
- *	  level of nesting and creates a plan for this modified query by
- *	  recursively calling itself.  The two pieces are then merged together
- *	  by creating a result node that indicates which attributes should
- *	  be placed where and any relation level qualifications to be
- *	  satisfied.
+ *	  Generate a plan for a basic query, which may involve joins but
+ *	  not any fancier features.
  *
- * tlist is the target list of the query (do NOT use root->targetList!)
+ * tlist is the target list the query should produce (NOT root->targetList!)
  * qual is the qualification of the query (likewise!)
  * tuple_fraction is the fraction of tuples we expect will be retrieved
+ *
+ * qual must already have been converted to implicit-AND form.
  *
  * Note: the Query node now also includes a query_pathkeys field, which
  * is both an input and an output of query_planner().  The input value
@@ -82,46 +80,6 @@ query_planner(Query *root,
 	List	   *constant_qual = NIL;
 	List	   *var_only_tlist;
 	Plan	   *subplan;
-
-	/*
-	 * Note: union_planner should already have done constant folding
-	 * in both the tlist and qual, so we don't do it again here
-	 * (indeed, we may be getting a flattened var-only tlist anyway).
-	 *
-	 * Is there any value in re-folding the qual after canonicalize_qual?
-	 */
-
-	/*
-	 * Canonicalize the qual, and convert it to implicit-AND format.
-	 */
-	qual = canonicalize_qual((Expr *) qual, true);
-#ifdef OPTIMIZER_DEBUG
-	printf("After canonicalize_qual()\n");
-	pprint(qual);
-#endif
-
-	/* Replace uplevel vars with Param nodes */
-	if (PlannerQueryLevel > 1)
-	{
-		tlist = (List *) SS_replace_correlation_vars((Node *) tlist);
-		qual = (List *) SS_replace_correlation_vars((Node *) qual);
-	}
-
-	/* Expand SubLinks to SubPlans */
-	if (root->hasSubLinks)
-	{
-		tlist = (List *) SS_process_sublinks((Node *) tlist);
-		qual = (List *) SS_process_sublinks((Node *) qual);
-		if (root->groupClause != NIL)
-		{
-			/*
-			 * Check for ungrouped variables passed to subplans.
-			 * Note we do NOT do this for subplans in WHERE; it's legal
-			 * there because WHERE is evaluated pre-GROUP.
-			 */
-			check_subplans_for_ungrouped_vars((Node *) tlist, root, tlist);
-		}
-	}
 
 	/*
 	 * If the query contains no relation references at all, it must be
@@ -192,16 +150,6 @@ query_planner(Query *root,
 	}
 
 	return subplan;
-
-#ifdef NOT_USED
-
-	/*
-	 * Destructively modify the query plan's targetlist to add fjoin lists
-	 * to flatten functions that return sets of base types
-	 */
-	subplan->targetlist = generate_fjoin(subplan->targetlist);
-#endif
-
 }
 
 /*

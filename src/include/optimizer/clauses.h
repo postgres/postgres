@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: clauses.h,v 1.33 2000/01/26 05:58:20 momjian Exp $
+ * $Id: clauses.h,v 1.34 2000/03/21 05:11:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,9 +41,7 @@ extern List *make_ands_implicit(Expr *clause);
 extern List *pull_constant_clauses(List *quals, List **constantQual);
 extern bool contain_agg_clause(Node *clause);
 extern List *pull_agg_clause(Node *clause);
-extern void check_subplans_for_ungrouped_vars(Node *clause,
-											  Query *query,
-											  List *targetList);
+extern void check_subplans_for_ungrouped_vars(Node *clause, Query *query);
 
 extern void clause_get_relids_vars(Node *clause, Relids *relids, List **vars);
 extern int	NumRelids(Node *clause);

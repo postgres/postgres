@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: planner.h,v 1.14 2000/02/15 20:49:26 tgl Exp $
+ * $Id: planner.h,v 1.15 2000/03/21 05:11:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,7 @@
 #include "nodes/plannodes.h"
 
 extern Plan *planner(Query *parse);
+extern Plan *subquery_planner(Query *parse, double tuple_fraction);
 extern Plan *union_planner(Query *parse, double tuple_fraction);
 extern void pg_checkretval(Oid rettype, List *querytree_list);
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.62 2000/03/19 18:20:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.63 2000/03/21 05:12:12 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -41,15 +41,10 @@
 	((Node *) makeConst(BOOLOID, 1, (Datum) (val), \
 						(isnull), true, false, false))
 
-typedef struct {
-	Query	   *query;
-	List	   *targetList;
-} check_subplans_for_ungrouped_vars_context;
-
 static bool contain_agg_clause_walker(Node *node, void *context);
 static bool pull_agg_clause_walker(Node *node, List **listptr);
 static bool check_subplans_for_ungrouped_vars_walker(Node *node,
-					check_subplans_for_ungrouped_vars_context *context);
+													 Query *context);
 static int is_single_func(Node *node);
 static Node *eval_const_expressions_mutator (Node *node, void *context);
 static Expr *simplify_op_or_func(Expr *expr, List *args);
@@ -467,30 +462,24 @@ pull_agg_clause_walker(Node *node, List **listptr)
  * In most contexts, ungrouped variables will be detected by the parser (see
  * parse_agg.c, check_ungrouped_columns()). But that routine currently does
  * not check subplans, because the necessary info is not computed until the
- * planner runs.  So we do it here, after we have processed the subplan.
- * This ought to be cleaned up someday.
+ * planner runs.  So we do it here, after we have processed sublinks into
+ * subplans.  This ought to be cleaned up someday.
  *
  * 'clause' is the expression tree to be searched for subplans.
- * 'query' provides the GROUP BY list and range table.
- * 'targetList' is the target list that the group clauses refer to.
- * (Is it really necessary to pass the tlist separately?  Couldn't we
- * just use the tlist found in the query node?)
+ * 'query' provides the GROUP BY list, the target list that the group clauses
+ * refer to, and the range table.
  */
 void
 check_subplans_for_ungrouped_vars(Node *clause,
-								  Query *query,
-								  List *targetList)
+								  Query *query)
 {
-	check_subplans_for_ungrouped_vars_context context;
-
-	context.query = query;
-	context.targetList = targetList;
-	check_subplans_for_ungrouped_vars_walker(clause, &context);
+	/* No special setup needed; context for walker is just the Query pointer */
+	check_subplans_for_ungrouped_vars_walker(clause, query);
 }
 
 static bool
 check_subplans_for_ungrouped_vars_walker(Node *node,
-					check_subplans_for_ungrouped_vars_context *context)
+										 Query *context)
 {
 	if (node == NULL)
 		return false;
@@ -529,7 +518,7 @@ check_subplans_for_ungrouped_vars_walker(Node *node,
 			 * Else, see if it is a grouping column.
 			 */
 			contained_in_group_clause = false;
-			foreach(gl, context->query->groupClause)
+			foreach(gl, context->groupClause)
 			{
 				GroupClause	   *gcl = lfirst(gl);
 				Node		   *groupexpr;
@@ -550,8 +539,8 @@ check_subplans_for_ungrouped_vars_walker(Node *node,
 				char		   *attname;
 
 				Assert(var->varno > 0 &&
-					   var->varno <= length(context->query->rtable));
-				rte = rt_fetch(var->varno, context->query->rtable);
+					   var->varno <= length(context->rtable));
+				rte = rt_fetch(var->varno, context->rtable);
 				attname = get_attname(rte->relid, var->varattno);
 				if (! attname)
 					elog(ERROR, "cache lookup of attribute %d in relation %u failed",
