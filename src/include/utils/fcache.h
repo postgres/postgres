@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fcache.h,v 1.16 2001/03/22 04:01:12 momjian Exp $
+ * $Id: fcache.h,v 1.17 2001/09/21 00:11:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,46 +25,42 @@
  * A FunctionCache record is built for all functions regardless of language.
  *
  * We store the fmgr lookup info to avoid recomputing it on each call.
- * We also store a prebuilt FunctionCallInfo struct.  When evaluating a
- * function-returning-set, fcinfo holds the argument values across calls
- * so that we need not re-evaluate the arguments for each call.  Even for
- * non-set functions, fcinfo saves a few cycles per call by allowing us to
- * avoid redundant setup of its fields.
+ *
+ * We also need to store argument values across calls when evaluating a
+ * function-returning-set.  This is pretty ugly (and not re-entrant);
+ * current-evaluation info should be somewhere in the econtext, not in
+ * the querytree.  As it stands, a function-returning-set can't safely be
+ * recursive, at least not if it's in plpgsql which will try to re-use
+ * the querytree at multiple execution nesting levels.  FIXME someday.
  */
 
 typedef struct FunctionCache
 {
-
 	/*
 	 * Function manager's lookup info for the target function.
 	 */
 	FmgrInfo	func;
 
 	/*
-	 * Per-call info for calling the target function.  Unvarying fields
-	 * are set up by init_fcache().  Argument values are filled in as
-	 * needed.
-	 */
-	FunctionCallInfoData fcinfo;
-
-	/*
-	 * "Resultinfo" node --- used only if target function returns a set.
-	 */
-	ReturnSetInfo rsinfo;
-
-	/*
-	 * argsValid is true when we are evaluating a set-valued function and
-	 * we are in the middle of a call series; we want to pass the same
+	 * setArgsValid is true when we are evaluating a set-valued function
+	 * and we are in the middle of a call series; we want to pass the same
 	 * argument values to the function again (and again, until it returns
 	 * ExprEndResult).
 	 */
-	bool		argsValid;		/* TRUE if fcinfo contains valid arguments */
+	bool		setArgsValid;
 
 	/*
-	 * hasSetArg is true if we found a set-valued argument to the
+	 * Flag to remember whether we found a set-valued argument to the
 	 * function. This causes the function result to be a set as well.
+	 * Valid only when setArgsValid is true.
 	 */
-	bool		hasSetArg;		/* some argument returns a set */
+	bool		setHasSetArg;	/* some argument returns a set */
+
+	/*
+	 * Current argument data for a set-valued function; contains valid
+	 * data only if setArgsValid is true.
+	 */
+	FunctionCallInfoData setArgs;
 } FunctionCache;
 
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.87 2001/06/19 22:39:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.88 2001/09/21 00:11:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,9 +54,8 @@ static Datum ExecEvalOper(Expr *opClause, ExprContext *econtext,
 			 bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalFunc(Expr *funcClause, ExprContext *econtext,
 			 bool *isNull, ExprDoneCond *isDone);
-static ExprDoneCond ExecEvalFuncArgs(FunctionCachePtr fcache,
-				 List *argList,
-				 ExprContext *econtext);
+static ExprDoneCond ExecEvalFuncArgs(FunctionCallInfo fcinfo,
+				 List *argList, ExprContext *econtext);
 static Datum ExecEvalNot(Expr *notclause, ExprContext *econtext, bool *isNull);
 static Datum ExecEvalAnd(Expr *andExpr, ExprContext *econtext, bool *isNull);
 static Datum ExecEvalOr(Expr *orExpr, ExprContext *econtext, bool *isNull);
@@ -600,7 +599,7 @@ GetAttributeByName(TupleTableSlot *slot, char *attname, bool *isNull)
  * Evaluate arguments for a function.
  */
 static ExprDoneCond
-ExecEvalFuncArgs(FunctionCachePtr fcache,
+ExecEvalFuncArgs(FunctionCallInfo fcinfo,
 				 List *argList,
 				 ExprContext *econtext)
 {
@@ -615,14 +614,13 @@ ExecEvalFuncArgs(FunctionCachePtr fcache,
 	{
 		ExprDoneCond thisArgIsDone;
 
-		fcache->fcinfo.arg[i] = ExecEvalExpr((Node *) lfirst(arg),
-											 econtext,
-											 &fcache->fcinfo.argnull[i],
-											 &thisArgIsDone);
+		fcinfo->arg[i] = ExecEvalExpr((Node *) lfirst(arg),
+									  econtext,
+									  &fcinfo->argnull[i],
+									  &thisArgIsDone);
 
 		if (thisArgIsDone != ExprSingleResult)
 		{
-
 			/*
 			 * We allow only one argument to have a set value; we'd need
 			 * much more complexity to keep track of multiple set
@@ -631,11 +629,12 @@ ExecEvalFuncArgs(FunctionCachePtr fcache,
 			 */
 			if (argIsDone != ExprSingleResult)
 				elog(ERROR, "Functions and operators can take only one set argument");
-			fcache->hasSetArg = true;
 			argIsDone = thisArgIsDone;
 		}
 		i++;
 	}
+
+	fcinfo->nargs = i;
 
 	return argIsDone;
 }
@@ -656,7 +655,10 @@ ExecMakeFunctionResult(FunctionCachePtr fcache,
 					   ExprDoneCond *isDone)
 {
 	Datum		result;
+	FunctionCallInfoData fcinfo;
+	ReturnSetInfo rsinfo;		/* for functions returning sets */
 	ExprDoneCond argDone;
+	bool		hasSetArg;
 	int			i;
 
 	/*
@@ -664,11 +666,14 @@ ExecMakeFunctionResult(FunctionCachePtr fcache,
 	 * the function manager.  We skip the evaluation if it was already
 	 * done in the previous call (ie, we are continuing the evaluation of
 	 * a set-valued function).	Otherwise, collect the current argument
-	 * values into fcache->fcinfo.
+	 * values into fcinfo.
 	 */
-	if (fcache->fcinfo.nargs > 0 && !fcache->argsValid)
+	if (!fcache->setArgsValid)
 	{
-		argDone = ExecEvalFuncArgs(fcache, arguments, econtext);
+		/* Need to prep callinfo structure */
+		MemSet(&fcinfo, 0, sizeof(fcinfo));
+		fcinfo.flinfo = &(fcache->func);
+		argDone = ExecEvalFuncArgs(&fcinfo, arguments, econtext);
 		if (argDone == ExprEndResult)
 		{
 			/* input is an empty set, so return an empty set. */
@@ -679,15 +684,33 @@ ExecMakeFunctionResult(FunctionCachePtr fcache,
 				elog(ERROR, "Set-valued function called in context that cannot accept a set");
 			return (Datum) 0;
 		}
+		hasSetArg = (argDone != ExprSingleResult);
+	}
+	else
+	{
+		/* Copy callinfo from previous evaluation */
+		memcpy(&fcinfo, &fcache->setArgs, sizeof(fcinfo));
+		hasSetArg = fcache->setHasSetArg;
+		/* Reset flag (we may set it again below) */
+		fcache->setArgsValid = false;
+	}
+
+	/*
+	 * If function returns set, prepare a resultinfo node for
+	 * communication
+	 */
+	if (fcache->func.fn_retset)
+	{
+		fcinfo.resultinfo = (Node *) &rsinfo;
+		rsinfo.type = T_ReturnSetInfo;
 	}
 
 	/*
 	 * now return the value gotten by calling the function manager,
 	 * passing the function the evaluated parameter values.
 	 */
-	if (fcache->func.fn_retset || fcache->hasSetArg)
+	if (fcache->func.fn_retset || hasSetArg)
 	{
-
 		/*
 		 * We need to return a set result.	Complain if caller not ready
 		 * to accept one.
@@ -705,7 +728,6 @@ ExecMakeFunctionResult(FunctionCachePtr fcache,
 		 */
 		for (;;)
 		{
-
 			/*
 			 * If function is strict, and there are any NULL arguments,
 			 * skip calling the function (at least for this set of args).
@@ -714,9 +736,9 @@ ExecMakeFunctionResult(FunctionCachePtr fcache,
 
 			if (fcache->func.fn_strict)
 			{
-				for (i = 0; i < fcache->fcinfo.nargs; i++)
+				for (i = 0; i < fcinfo.nargs; i++)
 				{
-					if (fcache->fcinfo.argnull[i])
+					if (fcinfo.argnull[i])
 					{
 						callit = false;
 						break;
@@ -726,11 +748,11 @@ ExecMakeFunctionResult(FunctionCachePtr fcache,
 
 			if (callit)
 			{
-				fcache->fcinfo.isnull = false;
-				fcache->rsinfo.isDone = ExprSingleResult;
-				result = FunctionCallInvoke(&fcache->fcinfo);
-				*isNull = fcache->fcinfo.isnull;
-				*isDone = fcache->rsinfo.isDone;
+				fcinfo.isnull = false;
+				rsinfo.isDone = ExprSingleResult;
+				result = FunctionCallInvoke(&fcinfo);
+				*isNull = fcinfo.isnull;
+				*isDone = rsinfo.isDone;
 			}
 			else
 			{
@@ -741,14 +763,17 @@ ExecMakeFunctionResult(FunctionCachePtr fcache,
 
 			if (*isDone != ExprEndResult)
 			{
-
 				/*
 				 * Got a result from current argument.	If function itself
-				 * returns set, flag that we want to reuse current
-				 * argument values on next call.
+				 * returns set, save the current argument values to re-use
+				 * on the next call.
 				 */
 				if (fcache->func.fn_retset)
-					fcache->argsValid = true;
+				{
+					memcpy(&fcache->setArgs, &fcinfo, sizeof(fcinfo));
+					fcache->setHasSetArg = hasSetArg;
+					fcache->setArgsValid = true;
+				}
 
 				/*
 				 * Make sure we say we are returning a set, even if the
@@ -759,22 +784,15 @@ ExecMakeFunctionResult(FunctionCachePtr fcache,
 			}
 
 			/* Else, done with this argument */
-			fcache->argsValid = false;
-
-			if (!fcache->hasSetArg)
+			if (!hasSetArg)
 				break;			/* input not a set, so done */
 
 			/* Re-eval args to get the next element of the input set */
-			argDone = ExecEvalFuncArgs(fcache, arguments, econtext);
+			argDone = ExecEvalFuncArgs(&fcinfo, arguments, econtext);
 
 			if (argDone != ExprMultipleResult)
 			{
-
-				/*
-				 * End of arguments, so reset the hasSetArg flag and say
-				 * "Done"
-				 */
-				fcache->hasSetArg = false;
+				/* End of argument set, so we're done. */
 				*isNull = true;
 				*isDone = ExprEndResult;
 				result = (Datum) 0;
@@ -789,7 +807,6 @@ ExecMakeFunctionResult(FunctionCachePtr fcache,
 	}
 	else
 	{
-
 		/*
 		 * Non-set case: much easier.
 		 *
@@ -798,18 +815,18 @@ ExecMakeFunctionResult(FunctionCachePtr fcache,
 		 */
 		if (fcache->func.fn_strict)
 		{
-			for (i = 0; i < fcache->fcinfo.nargs; i++)
+			for (i = 0; i < fcinfo.nargs; i++)
 			{
-				if (fcache->fcinfo.argnull[i])
+				if (fcinfo.argnull[i])
 				{
 					*isNull = true;
 					return (Datum) 0;
 				}
 			}
 		}
-		fcache->fcinfo.isnull = false;
-		result = FunctionCallInvoke(&fcache->fcinfo);
-		*isNull = fcache->fcinfo.isnull;
+		fcinfo.isnull = false;
+		result = FunctionCallInvoke(&fcinfo);
+		*isNull = fcinfo.isnull;
 	}
 
 	return result;

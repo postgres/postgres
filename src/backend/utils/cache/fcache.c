@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.39 2001/03/22 03:59:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.40 2001/09/21 00:11:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,17 +17,18 @@
 #include "utils/fcache.h"
 
 
-/*-----------------------------------------------------------------
- *
+/*
  * Build a 'FunctionCache' struct given the PG_PROC oid.
- *
- *-----------------------------------------------------------------
  */
 FunctionCachePtr
 init_fcache(Oid foid, int nargs, MemoryContext fcacheCxt)
 {
 	MemoryContext oldcontext;
 	FunctionCachePtr retval;
+
+	/* Safety check (should never fail, as parser should check sooner) */
+	if (nargs > FUNC_MAX_ARGS)
+		elog(ERROR, "init_fcache: too many arguments");
 
 	/* Switch to a context long-lived enough for the fcache entry */
 	oldcontext = MemoryContextSwitchTo(fcacheCxt);
@@ -38,25 +39,8 @@ init_fcache(Oid foid, int nargs, MemoryContext fcacheCxt)
 	/* Set up the primary fmgr lookup information */
 	fmgr_info(foid, &(retval->func));
 
-	/* Initialize unvarying fields of per-call info block */
-	retval->fcinfo.flinfo = &(retval->func);
-	retval->fcinfo.nargs = nargs;
-
-	if (nargs > FUNC_MAX_ARGS)
-		elog(ERROR, "init_fcache: too many arguments");
-
-	/*
-	 * If function returns set, prepare a resultinfo node for
-	 * communication
-	 */
-	if (retval->func.fn_retset)
-	{
-		retval->fcinfo.resultinfo = (Node *) &(retval->rsinfo);
-		retval->rsinfo.type = T_ReturnSetInfo;
-	}
-
-	retval->argsValid = false;
-	retval->hasSetArg = false;
+	/* Initialize additional info */
+	retval->setArgsValid = false;
 
 	MemoryContextSwitchTo(oldcontext);
 
