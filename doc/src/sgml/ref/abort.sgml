@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/abort.sgml,v 1.14 2003/08/31 17:32:21 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/abort.sgml,v 1.15 2003/09/09 18:28:52 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -31,7 +31,8 @@ ABORT [ WORK | TRANSACTION ]
    <command>ABORT</command> rolls back the current transaction and causes
    all the updates made by the transaction to be discarded. 
    This command is identical
-   in behavior to the standard <acronym>SQL</acronym> command <command>ROLLBACK</command>,
+   in behavior to the standard <acronym>SQL</acronym> command
+   <xref linkend="SQL-ROLLBACK" endterm="SQL-ROLLBACK-TITLE">,
    and is present only for historical reasons.
   </para>
  </refsect1>
@@ -53,35 +54,16 @@ ABORT [ WORK | TRANSACTION ]
  </refsect1>
 
  <refsect1>
-  <title>Diagnostics</title>
-
-  <variablelist>
-   <varlistentry>
-    <term><computeroutput>ROLLBACK</computeroutput></term>
-    <listitem>
-     <para>
-      Message returned if successful.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term><computeroutput>WARNING:  ROLLBACK: no transaction in progress</computeroutput></term>
-    <listitem>
-     <para>
-      If there is not any transaction currently in progress.
-     </para>
-    </listitem>
-   </varlistentry>
-  </variablelist>
- </refsect1>
-
- <refsect1>
   <title>Notes</title>
 
   <para>
-   Use <command>COMMIT</command> to successfully
-   terminate a transaction.
+   Use <xref linkend="SQL-COMMIT" endterm="SQL-COMMIT-TITLE"> to
+   successfully terminate a transaction.
+  </para>
+
+  <para>
+   Issuing <command>ABORT</> when not inside a transaction does
+   no harm, but it will provoke a warning message.
   </para>
  </refsect1>
 
@@ -106,6 +88,15 @@ ABORT;
   </para>
  </refsect1>
 
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-begin" endterm="sql-begin-title"></member>
+   <member><xref linkend="sql-commit" endterm="sql-commit-title"></member>
+   <member><xref linkend="sql-rollback" endterm="sql-rollback-title"></member>
+  </simplelist>
+ </refsect1>
 </refentry>
 
 <!-- Keep this comment at the end of the file

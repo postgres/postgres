@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/close.sgml,v 1.17 2003/08/31 17:32:21 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/close.sgml,v 1.18 2003/09/09 18:28:52 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -37,9 +37,10 @@ CLOSE <replaceable class="PARAMETER">cursor</replaceable>
   <para>
    Every non-holdable open cursor is implicitly closed when a
    transaction is terminated by <command>COMMIT</command> or
-   <command>ROLLBACK</command>. Holdable cursors are implicitely
-   closed if the transaction that created them aborts via
-   <command>ROLLBACK</command>; if this does not happen, the holdable
+   <command>ROLLBACK</command>.  A holdable cursor is implicitly
+   closed if the transaction that created it aborts via
+   <command>ROLLBACK</command>.  If the creating transaction successfully
+   commits, the holdable
    cursor remains open until an explicit <command>CLOSE</command> is
    executed, or the client disconnects.
   </para>
@@ -54,32 +55,6 @@ CLOSE <replaceable class="PARAMETER">cursor</replaceable>
     <listitem>
      <para>
       The name of an open cursor to close.
-     </para>
-    </listitem>
-   </varlistentry>
-  </variablelist>
- </refsect1>
-  
- <refsect1>
-  <title>Diagnostics</title>
-
-  <variablelist>
-   <varlistentry>
-    <term><computeroutput>CLOSE CURSOR</computeroutput></term>
-    <listitem>
-     <para>
-      Message returned if the cursor is successfully closed.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term><computeroutput>ERROR:  cursor "<replaceable class="PARAMETER">cursor</replaceable>" does not exist</computeroutput></term>
-    <listitem>
-     <para>
-      Message returned if <replaceable
-      class="PARAMETER">cursor</replaceable> is not declared or has
-      already been closed.
      </para>
     </listitem>
    </varlistentry>

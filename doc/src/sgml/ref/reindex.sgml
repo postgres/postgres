@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/reindex.sgml,v 1.18 2003/08/31 17:32:24 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/reindex.sgml,v 1.19 2003/09/09 18:28:53 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -145,21 +145,6 @@ REINDEX { DATABASE | TABLE | INDEX } <replaceable class="PARAMETER">name</replac
       <command>REINDEX</> skips system indexes that are not marked
       invalid.  <literal>FORCE</> is irrelevant for <command>REINDEX
       INDEX</> or when reindexing user indexes.
-     </para>
-    </listitem>
-   </varlistentry>
-  </variablelist>
- </refsect1>
-  
- <refsect1>
-  <title>Diagnostics</title>
-
-  <variablelist>
-   <varlistentry>
-    <term><computeroutput>REINDEX</computeroutput></term>
-    <listitem>
-     <para>
-      Message returned if the indexes were successfully recreated.
      </para>
     </listitem>
    </varlistentry>

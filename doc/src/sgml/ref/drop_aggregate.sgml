@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_aggregate.sgml,v 1.24 2003/08/31 17:32:22 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_aggregate.sgml,v 1.25 2003/09/09 18:28:53 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -72,31 +72,6 @@ DROP AGGREGATE <replaceable class="PARAMETER">name</replaceable> ( <replaceable 
      <para>
       Refuse to drop the aggregate function if any objects depend on
       it.  This is the default.
-     </para>
-    </listitem>
-   </varlistentry>
-  </variablelist>
- </refsect1>
-
- <refsect1>
-  <title>Diagnostics</title>
-
-  <variablelist>
-   <varlistentry>
-    <term><computeroutput>DROP AGGREGATE</computeroutput></term>
-    <listitem>
-     <para>
-      Message returned if the command was successful.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term><computeroutput>ERROR: RemoveAggregate: aggregate '<replaceable class="parameter">name</replaceable>' for type <replaceable class="parameter">type</replaceable> does not exist</computeroutput></term>
-    <listitem>
-     <para>
-      This message is returned if the specified aggregate function
-      does not exist.
      </para>
     </listitem>
    </varlistentry>

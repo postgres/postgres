@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/comment.sgml,v 1.22 2003/08/31 17:32:21 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/comment.sgml,v 1.23 2003/09/09 18:28:52 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -90,21 +90,6 @@ COMMENT ON
     <listitem>
      <para>
       The new comment.
-     </para>
-    </listitem>
-   </varlistentry>
-  </variablelist>
- </refsect1>
-
- <refsect1>
-  <title>Diagnostics</title>
-
-  <variablelist>
-   <varlistentry>
-    <term><computeroutput>COMMENT</computeroutput></term>
-    <listitem>
-     <para>
-      Message returned if the comment was successfully changed.
      </para>
     </listitem>
    </varlistentry>

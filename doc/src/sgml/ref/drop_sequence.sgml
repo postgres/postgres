@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_sequence.sgml,v 1.18 2003/08/31 17:32:22 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_sequence.sgml,v 1.19 2003/09/09 18:28:53 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -60,30 +60,6 @@ DROP SEQUENCE <replaceable class="PARAMETER">name</replaceable> [, ...] [ CASCAD
      <para>
       Refuse to drop the sequence if any objects depend on it.  This
       is the default.
-     </para>
-    </listitem>
-   </varlistentry>
-  </variablelist>
- </refsect1>
-
- <refsect1>
-  <title>Diagnostics</title>
-
-  <variablelist>
-   <varlistentry>
-    <term><computeroutput>DROP SEQUENCE</computeroutput></term>
-    <listitem>
-     <para>
-      Message returned if the sequence was successfully dropped.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term><computeroutput>ERROR: sequence "<replaceable class="parameter">name</replaceable>" does not exist</computeroutput></term>
-    <listitem>
-     <para>
-      Message returned if the specified sequence does not exist.
      </para>
     </listitem>
    </varlistentry>

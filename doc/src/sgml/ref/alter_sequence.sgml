@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_sequence.sgml,v 1.3 2003/08/31 17:32:21 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_sequence.sgml,v 1.4 2003/09/09 18:28:52 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -23,24 +23,27 @@ PostgreSQL documentation
  </indexterm>
 
  <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>1999-07-20</date>
-  </refsynopsisdivinfo>
   <synopsis>
 ALTER SEQUENCE <replaceable class="parameter">seqname</replaceable> [ INCREMENT [ BY ] <replaceable class="parameter">increment</replaceable> ]
     [ MINVALUE <replaceable class="parameter">minvalue</replaceable> | NO MINVALUE ] [ MAXVALUE <replaceable class="parameter">maxvalue</replaceable> | NO MAXVALUE ]
     [ RESTART [ WITH ] <replaceable class="parameter">start</replaceable> ] [ CACHE <replaceable class="parameter">cache</replaceable> ] [ [ NO ] CYCLE ]
   </synopsis>
-  
-  <refsect2 id="R2-SQL-ALTERSEQUENCE-1">
-   <refsect2info>
-    <date>1998-09-11</date>
-   </refsect2info>
-   <title>
-    Inputs
-   </title>
-   <para>
+ </refsynopsisdiv>
 
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <command>ALTER SEQUENCE</command> changes the parameters of an existing
+   sequence generator.  Any parameter not specifically set in the
+   <command>ALTER SEQUENCE</command> command retains its prior setting.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Parameters</title>
+
+   <para>
     <variablelist>
      <varlistentry>
       <term><replaceable class="parameter">seqname</replaceable></term>
@@ -100,8 +103,8 @@ ALTER SEQUENCE <replaceable class="parameter">seqname</replaceable> [ INCREMENT 
       <listitem>
        <para>
 	The optional <option>RESTART WITH
-	 <replaceable class="parameter">start</replaceable>
-	 clause</option> enables the sequence to re-begin anywhere.
+	 <replaceable class="parameter">start</replaceable></option>
+	 clause changes the current value of the sequence.
        </para>
       </listitem>
      </varlistentry>
@@ -151,78 +154,11 @@ ALTER SEQUENCE <replaceable class="parameter">seqname</replaceable> [ INCREMENT 
 	</varlistentry>
     </variablelist>
    </para>
-  </refsect2>
+  </refsect1>
 
-  <refsect2 id="R2-SQL-ALTERSEQUENCE-2">
-   <refsect2info>
-    <date>1998-09-11</date>
-   </refsect2info>
-   <title>
-    Outputs
-   </title>
-   <para>
+ <refsect1>
+  <title>Examples</title>
 
-    <variablelist>
-     <varlistentry>
-      <term><computeroutput>
-ALTER SEQUENCE
-       </computeroutput></term>
-      <listitem>
-       <para>
-	Message returned if the command is successful.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><computeroutput>
-ERROR:  AlterSequence: MINVALUE (<replaceable class="parameter">start</replaceable>) can't be >= MAXVALUE (<replaceable class="parameter">max</replaceable>)
-       </computeroutput></term>
-      <listitem>
-       <para>
-	If the specified starting value is out of range.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><computeroutput>
-ERROR:  AlterSequence: START value (<replaceable class="parameter">start</replaceable>) can't be < MINVALUE (<replaceable class="parameter">min</replaceable>)
-       </computeroutput></term>
-      <listitem>
-       <para>
-	If the specified starting value is out of range.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><computeroutput>
-ERROR:  AlterSequence: MINVALUE (<replaceable class="parameter">min</replaceable>) can't be >= MAXVALUE (<replaceable class="parameter">max</replaceable>)
-       </computeroutput></term>
-      <listitem>
-       <para>
-	If the minimum and maximum values are inconsistent.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
- </refsynopsisdiv>
-
- <refsect1 id="R1-SQL-ALTERSEQUENCE-1">
-  <title>
-   Description
-  </title>
-
-  <para>
-   See <xref linkend="SQL-CREATESEQUENCE"> for limitations, and uses
-   of sequences.
-  </para>
- </refsect1>
-
- <refsect1 id="R1-SQL-ALTERSEQUENCE-2">
-  <title>
-   Usage
-  </title>
   <para>
    Restart a sequence called <literal>serial</literal>, at 105:
   </para>
@@ -231,35 +167,31 @@ ALTER SEQUENCE serial RESTART WITH 105;
   </programlisting>
  </refsect1>
 
- <refsect1 id="R1-SQL-ALTERSEQUENCE-5">
-  <title>
-   Notes
-  </title>
+ <refsect1>
+  <title>Notes</title>
+
   <para>
-   To avoid blocking of concurrent transactions that obtain numbers from the same
-   sequence, a nextval operation is never rolled back; that is, once a value has 
-   been fetched it is considered used, even if the transaction that did the nextval
-   later aborts. This means that aborted transactions may leave unused "holes" in
-   the sequence of assigned values. setval operations are never rolled back, either.
+   To avoid blocking of concurrent transactions that obtain numbers from the
+   same sequence, <command>ALTER SEQUENCE</command> is never rolled back;
+   the changes take effect immediately and are not reversible.
   </para>
+
   <para>
-   <command>ALTER SEQUENCE</command> will not immediately affect backends, other than the
-   current one, which have cached sequence values. They must use up all cached values
-   prior to noticing the changed sequence parameters.  The current backend will be 
-   immediatly affected.
+   <command>ALTER SEQUENCE</command> will not immediately affect
+   <literal>nextval</> results in backends,
+   other than the current one, that have preallocated (cached) sequence
+   values. They will use up all cached values prior to noticing the changed
+   sequence parameters.  The current backend will be affected immediately.
   </para>
  </refsect1>
 
 
- <refsect1 id="R1-SQL-ALTERSEQUENCE-3">
+ <refsect1>
   <title>
    Compatibility
   </title>
 
-  <refsect2 id="R2-SQL-ALTERSEQUENCE-4">
-   <refsect2info>
-    <date>2003-03-02</date>
-   </refsect2info>
+  <refsect2>
    <title>
     SQL99
    </title>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table_as.sgml,v 1.15 2003/08/31 17:32:22 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table_as.sgml,v 1.16 2003/09/09 18:28:53 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -99,18 +99,6 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable>table_name
     </listitem>
    </varlistentry>
   </variablelist>
- </refsect1>
-
- <refsect1>
-  <title>Diagnostics</title>
-
-  <para>
-   Refer to <xref linkend="sql-createtable"
-   endterm="sql-createtable-title">, <xref linkend="sql-select"
-   endterm="sql-select-title">, and <xref linkend="sql-execute"
-   endterm="sql-execute-title"> for a summary of possible output
-   messages.
-  </para>
  </refsect1>
 
  <refsect1>

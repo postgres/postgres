@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_table.sgml,v 1.19 2003/08/31 17:32:23 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_table.sgml,v 1.20 2003/09/09 18:28:53 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -72,30 +72,6 @@ DROP TABLE <replaceable class="PARAMETER">name</replaceable> [, ...] [ CASCADE |
      <para>
       Refuse to drop the table if any objects depend on it.  This is
       the default.
-     </para>
-    </listitem>
-   </varlistentry>
-  </variablelist>
- </refsect1>
-
- <refsect1>
-  <title>Diagnostics</title>
-
-  <variablelist>
-   <varlistentry>
-    <term><computeroutput>DROP TABLE</computeroutput></term>
-    <listitem>
-     <para>
-      Message returned if the command completes successfully.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term><computeroutput>ERROR: table "<replaceable class="parameter">name</replaceable>" does not exist</computeroutput></term>
-    <listitem>
-     <para>
-      Message returned if the specified table does not exist.
      </para>
     </listitem>
    </varlistentry>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_schema.sgml,v 1.7 2003/08/31 17:32:22 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_schema.sgml,v 1.8 2003/09/09 18:28:52 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -93,30 +93,6 @@ CREATE SCHEMA AUTHORIZATION <replaceable class="parameter">username</replaceable
       </listitem>
      </varlistentry>
     </variablelist>
- </refsect1>
-
- <refsect1>
-  <title>Diagnostics</title>
-
-  <variablelist>
-   <varlistentry>
-    <term><computeroutput>CREATE SCHEMA</computeroutput></term>
-    <listitem>
-     <para>
-      Message returned if the schema was successfully created.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term><computeroutput>ERROR:  namespace "<replaceable class="parameter">schemaname</replaceable>" already exists</computeroutput></term>
-    <listitem>
-     <para>
-      Message returned if the schema specified already exists.
-     </para>
-    </listitem>
-   </varlistentry>
-  </variablelist>
  </refsect1>
 
  <refsect1>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/analyze.sgml,v 1.13 2003/08/31 17:32:21 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/analyze.sgml,v 1.14 2003/09/09 18:28:52 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -71,21 +71,6 @@ ANALYZE [ VERBOSE ] [ <replaceable class="PARAMETER">table</replaceable> [ (<rep
     <listitem>
      <para>
       The name of a specific column to analyze. Defaults to all columns.
-     </para>
-    </listitem>
-   </varlistentry>
-  </variablelist>
- </refsect1>
-
- <refsect1>
-  <title>Diagnostics</title>
-
-  <variablelist>
-   <varlistentry>
-    <term><computeroutput>ANALYZE</computeroutput></term>
-    <listitem>
-     <para>
-      The command is complete.
      </para>
     </listitem>
    </varlistentry>

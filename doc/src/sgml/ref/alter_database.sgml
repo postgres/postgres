@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_database.sgml,v 1.8 2003/08/31 17:32:21 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_database.sgml,v 1.9 2003/09/09 18:28:52 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -101,31 +101,6 @@ ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> RENAME TO <repl
     </listitem>
    </varlistentry>
   </variablelist>
- </refsect1>
-
- <refsect1>
-  <title>Diagnostics</title>
-
-   <variablelist>
-    <varlistentry>
-     <term><computeroutput>ALTER DATABASE</computeroutput></term>
-     <listitem>
-      <para>
-       Message returned if the alteration was successful.
-      </para>
-     </listitem>
-    </varlistentry>
-     
-    <varlistentry>
-     <term><computeroutput>ERROR:  database "dbname" does not exist</computeroutput></term>
-     <listitem>
-      <para>
-       Error message returned if the specified database is not known
-       to the system.
-      </para>
-     </listitem>
-    </varlistentry>
-   </variablelist>
  </refsect1>
 
  <refsect1>

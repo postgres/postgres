@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_group.sgml,v 1.6 2003/08/31 17:32:22 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_group.sgml,v 1.7 2003/09/09 18:28:53 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -42,21 +42,6 @@ DROP GROUP <replaceable class="PARAMETER">name</replaceable>
     <listitem>
      <para>
       The name of an existing group.
-     </para>
-    </listitem>
-   </varlistentry>
-  </variablelist>
- </refsect1>
-  
- <refsect1>
-  <title>Diagnostics</title>
-
-  <variablelist>
-   <varlistentry>
-    <term><computeroutput>DROP GROUP</computeroutput></term>
-    <listitem>
-     <para>
-      Message returned if the group was successfully removed.
      </para>
     </listitem>
    </varlistentry>

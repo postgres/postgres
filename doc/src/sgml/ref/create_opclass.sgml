@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_opclass.sgml,v 1.9 2003/08/31 17:32:22 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_opclass.sgml,v 1.10 2003/09/09 18:28:52 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -203,21 +203,6 @@ CREATE OPERATOR CLASS <replaceable class="parameter">name</replaceable> [ DEFAUL
    The <literal>OPERATOR</>, <literal>FUNCTION</>, and <literal>STORAGE</>
    clauses may appear in any order.
   </para>
- </refsect1>
-
- <refsect1>
-  <title>Diagnostics</title>
-
-  <variablelist>
-   <varlistentry>
-    <term><computeroutput>CREATE OPERATOR CLASS</computeroutput></term>
-    <listitem>
-     <para>
-      Message returned if the operator class was successfully created.
-     </para>
-    </listitem>
-   </varlistentry>
-  </variablelist>
  </refsect1>
   
  <refsect1>

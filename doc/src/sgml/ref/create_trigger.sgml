@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_trigger.sgml,v 1.35 2003/08/31 17:32:22 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_trigger.sgml,v 1.36 2003/09/09 18:28:53 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -165,21 +165,6 @@ CREATE TRIGGER <replaceable class="PARAMETER">name</replaceable> { BEFORE | AFTE
       language of the trigger function about how the trigger arguments
       are accessible within the function; it may be different from
       normal function arguments.
-     </para>
-    </listitem>
-   </varlistentry>
-  </variablelist>
- </refsect1>
-
- <refsect1>
-  <title>Diagnostics</title>
-
-  <variablelist>
-   <varlistentry>
-    <term><computeroutput>CREATE TRIGGER</computeroutput></term>
-    <listitem>
-     <para>
-      Message returned if the trigger was successfully created.
      </para>
     </listitem>
    </varlistentry>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/copy.sgml,v 1.48 2003/08/31 17:32:21 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/copy.sgml,v 1.49 2003/09/09 18:28:52 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -168,21 +168,6 @@ COPY <replaceable class="parameter">table</replaceable> [ ( <replaceable class="
        <command>COPY TO</command>.
       </para>
      </note>
-    </listitem>
-   </varlistentry>
-  </variablelist>
- </refsect1>
-  
- <refsect1>
-  <title>Diagnostics</title>
-
-  <variablelist>
-   <varlistentry>
-    <term><computeroutput>COPY</computeroutput></term>
-    <listitem>
-     <para>
-      The copy operation completed successfully.
-     </para>
     </listitem>
    </varlistentry>
   </variablelist>

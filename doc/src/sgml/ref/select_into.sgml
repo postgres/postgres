@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/select_into.sgml,v 1.23 2003/08/31 17:32:24 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/select_into.sgml,v 1.24 2003/09/09 18:28:53 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -75,18 +75,6 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="PARAMETER">expression</replac
   <para>
    All other parameters are described in detail under <xref
    linkend="sql-select" endterm="sql-select-title">.
-  </para>
- </refsect1>
-
- <refsect1>
-  <title>Diagnostics</title>
-
-  <para>
-   Refer to
-   <xref linkend="sql-createtable" endterm="sql-createtable-title">
-   and
-   <xref linkend="sql-select" endterm="sql-select-title">
-   for a summary of possible output messages.
   </para>
  </refsect1>
 

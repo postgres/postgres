@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.49 2003/08/31 17:32:22 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.50 2003/09/09 18:28:52 tgl Exp $
 -->
 
 <refentry id="SQL-CREATEFUNCTION">
@@ -312,21 +312,6 @@ CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable>
 
    </variablelist>
 
- </refsect1>
-
- <refsect1>
-  <title>Diagnostics</title>
-
-  <variablelist>
-   <varlistentry>
-    <term><computeroutput>CREATE FUNCTION</computeroutput></term>
-    <listitem>
-     <para>
-      Message returned if the function was successfully created.
-     </para>
-    </listitem>
-   </varlistentry>
-  </variablelist>
  </refsect1>
 
  <refsect1 id="sql-createfunction-notes">

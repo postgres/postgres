@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_language.sgml,v 1.18 2003/08/31 17:32:22 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_language.sgml,v 1.19 2003/09/09 18:28:53 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -64,32 +64,6 @@ DROP [ PROCEDURAL ] LANGUAGE <replaceable class="PARAMETER">name</replaceable> [
      <para>
       Refuse to drop the language if any objects depend on it.  This
       is the default.
-     </para>
-    </listitem>
-   </varlistentry>
-  </variablelist>
- </refsect1>
-
- <refsect1>
-  <title>Diagnostics</title>
-
-  <variablelist>
-   <varlistentry>
-    <term><computeroutput>DROP LANGUAGE</computeroutput></term>
-    <listitem>
-     <para>
-      This message is returned if the language was successfully dropped.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term><computeroutput>ERROR: Language "<replaceable class="parameter">name</replaceable>" doesn't exist</computeroutput></term>
-    <listitem>
-     <para>
-      This message is returned if a language called <replaceable
-      class="parameter">name</replaceable> is not found in the
-      database.
      </para>
     </listitem>
    </varlistentry>

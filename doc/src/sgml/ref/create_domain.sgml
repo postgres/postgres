@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_domain.sgml,v 1.14 2003/08/31 17:32:22 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_domain.sgml,v 1.15 2003/09/09 18:28:52 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -150,21 +150,6 @@ where <replaceable class="PARAMETER">constraint</replaceable> is:
      <para>
       Currently, <literal>CHECK</literal> expressions cannot contain
       subqueries nor refer to variables other than <literal>VALUE</>.
-     </para>
-    </listitem>
-   </varlistentry>
-  </variablelist>
- </refsect1>
-
- <refsect1>
-  <title>Diagnostics</title>
-
-  <variablelist>
-   <varlistentry>
-    <term><computeroutput>CREATE DOMAIN</computeroutput></term>
-    <listitem>
-     <para>
-      Message returned if the domain was successfully created.
      </para>
     </listitem>
    </varlistentry>

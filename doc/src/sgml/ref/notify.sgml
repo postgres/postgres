@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/notify.sgml,v 1.21 2003/08/31 17:32:23 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/notify.sgml,v 1.22 2003/09/09 18:28:53 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -127,21 +127,6 @@ NOTIFY <replaceable class="PARAMETER">name</replaceable>
     <listitem>
      <para>
       Name of the notification to be signaled (any identifier).
-     </para>
-    </listitem>
-   </varlistentry>
-  </variablelist>
- </refsect1>
-
- <refsect1>
-  <title>Diagnostics</title>
-
-  <variablelist>
-   <varlistentry>
-    <term><computeroutput>NOTIFY</computeroutput></term>
-    <listitem>
-     <para>
-      Message returned when the commmand has executed.
      </para>
     </listitem>
    </varlistentry>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_conversion.sgml,v 1.2 2003/08/31 17:32:21 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_conversion.sgml,v 1.3 2003/09/09 18:28:52 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -29,7 +29,8 @@ ALTER CONVERSION <replaceable>name</replaceable> RENAME TO <replaceable>newname<
 
   <para>
    <command>ALTER CONVERSION</command> changes the definition of a
-   conversion.  The only functionality is to rename the conversion.
+   conversion.  The only currently available functionality is to rename the
+   conversion.
   </para>
  </refsect1>
   
@@ -51,21 +52,6 @@ ALTER CONVERSION <replaceable>name</replaceable> RENAME TO <replaceable>newname<
     <listitem>
      <para>
       The new name of the conversion.
-     </para>
-    </listitem>
-   </varlistentry>
-  </variablelist>
- </refsect1>
-   
- <refsect1>
-  <title>Diagnostics</title>
-
-  <variablelist>
-   <varlistentry>
-    <term><computeroutput>ALTER CONVERSION</computeroutput></term>
-    <listitem>
-     <para>
-      Message returned if the command was successful.
      </para>
     </listitem>
    </varlistentry>

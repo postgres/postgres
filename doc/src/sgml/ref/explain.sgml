@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/explain.sgml,v 1.28 2003/09/08 22:33:13 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/explain.sgml,v 1.29 2003/09/09 18:28:53 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -117,16 +117,6 @@ ROLLBACK;
     </listitem>
    </varlistentry>
   </variablelist>
- </refsect1>
-
- <refsect1>
-  <title>Diagnostics</title>
-
-  <para>
-   <command>EXPLAIN</command> prints the execution plan of the
-   specified statement from the <productname>PostgreSQL</productname>
-   planner.
-  </para>
  </refsect1>
 
  <refsect1>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_user.sgml,v 1.29 2003/08/31 17:32:21 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_user.sgml,v 1.30 2003/09/09 18:28:52 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -173,31 +173,6 @@ ALTER USER <replaceable class="PARAMETER">username</replaceable> RESET <replacea
       </listitem>
      </varlistentry>
     </variablelist>
- </refsect1>
-
- <refsect1>
-  <title>Diagnostics</title>
-
-   <variablelist>
-    <varlistentry>
-     <term><computeroutput>ALTER USER</computeroutput></term>
-     <listitem>
-      <para>
-       Message returned if the alteration was successful.
-      </para>
-     </listitem>
-    </varlistentry>
-     
-    <varlistentry>
-     <term><computeroutput>ERROR:  ALTER USER: user "username" does not exist</computeroutput></term>
-     <listitem>
-      <para>
-       Error message returned if the specified user is not known to
-       the database system.
-      </para>
-     </listitem>
-    </varlistentry>
-   </variablelist>
  </refsect1>
 
  <refsect1>

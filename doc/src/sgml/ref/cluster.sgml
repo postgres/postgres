@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/cluster.sgml,v 1.27 2003/08/31 17:32:21 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/cluster.sgml,v 1.28 2003/09/09 18:28:52 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -91,21 +91,6 @@ CLUSTER
     <listitem>
      <para>
       The name (possibly schema-qualified) of a table.
-     </para>
-    </listitem>
-   </varlistentry>
-  </variablelist>
- </refsect1>
-
- <refsect1>
-  <title>Diagnostics</title>
-
-  <variablelist>
-   <varlistentry>
-    <term><computeroutput>CLUSTER</computeroutput></term>
-    <listitem>
-     <para>
-      The clustering was done successfully.
      </para>
     </listitem>
    </varlistentry>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_constraint.sgml,v 1.10 2003/08/31 17:32:21 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_constraint.sgml,v 1.11 2003/09/09 18:28:52 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -94,21 +94,6 @@ CREATE CONSTRAINT TRIGGER <replaceable class="parameter">name</replaceable>
       <listitem>
        <para>
 	The function to call as part of the trigger processing.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
- </refsect1>
-
- <refsect1>
-  <title>Diagnostics</title>
-    
-    <variablelist>
-     <varlistentry>
-      <term><computeroutput>CREATE TRIGGER</computeroutput></term>
-      <listitem>
-       <para>
-	Message returned if successful.
        </para>
       </listitem>
      </varlistentry>

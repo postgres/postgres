@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/clusterdb.sgml,v 1.12 2003/08/31 17:32:21 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/clusterdb.sgml,v 1.13 2003/09/09 18:28:52 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -52,6 +52,12 @@ PostgreSQL documentation
    targeted host.  Also, any default settings and environment
    variables used by the <application>libpq</application> front-end
    library will apply.
+  </para>
+
+  <para>
+   In case of difficulty, see <xref linkend="SQL-CLUSTER"
+   endterm="sql-cluster-title"> and <xref linkend="APP-PSQL"> for
+   discussions of potential problems and error messages.
   </para>
 
  </refsect1>
@@ -171,37 +177,6 @@ PostgreSQL documentation
        </para>
       </listitem>
      </varlistentry>
-    </variablelist>
-   </para>
- </refsect1>
-
-
- <refsect1>
-  <title>Diagnostics</title>
-
-   <para>
-    <variablelist>
-     <varlistentry>
-      <term><computeroutput>CLUSTER</computeroutput></term>
-      <listitem>
-       <para>
-        The database was successfully clustered.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><computeroutput>clusterdb: Cluster failed.</computeroutput></term>
-      <listitem>
-       <para>
-        Something went wrong. <application>clusterdb</application> is only a wrapper
-        script. See <xref linkend="SQL-CLUSTER" endterm="sql-cluster-title">
-        and <xref linkend="APP-PSQL"> for a detailed
-        discussion of error messages and potential problems.
-       </para>
-      </listitem>
-     </varlistentry>
-
     </variablelist>
    </para>
  </refsect1>

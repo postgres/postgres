@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_domain.sgml,v 1.11 2003/08/31 17:32:22 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_domain.sgml,v 1.12 2003/09/09 18:28:53 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -62,30 +62,6 @@ DROP DOMAIN <replaceable class="PARAMETER">domainname</replaceable> [, ...]  [ C
      <para>
       Refuse to drop the domain if any objects depend on it.  This is
       the default.
-     </para>
-    </listitem>
-   </varlistentry>
-  </variablelist>
- </refsect1>
-
- <refsect1>
-  <title>Diagnostics</title>
-
-  <variablelist>
-   <varlistentry>
-    <term><computeroutput>DROP DOMAIN</computeroutput></term>
-    <listitem>
-     <para>
-      Message returned if the command was successful.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term><computeroutput>ERROR:  RemoveDomain: type '<replaceable class="parameter">domainname</replaceable>' does not exist</computeroutput></term>
-    <listitem>
-     <para>
-      This message occurs if the specified domain does not exist.
      </para>
     </listitem>
    </varlistentry>

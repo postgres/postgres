@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/reset.sgml,v 1.21 2003/08/31 17:32:24 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/reset.sgml,v 1.22 2003/09/09 18:28:53 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -79,14 +79,6 @@ SET <replaceable class="parameter">parameter</replaceable> TO DEFAULT
     </listitem>
    </varlistentry>
   </variablelist>
- </refsect1>
-
- <refsect1>
-  <title>Diagnostics</title>
-
-  <para>
-   See under the <xref linkend="sql-set" endterm="sql-set-title">.
-  </para>
  </refsect1>
 
  <refsect1>

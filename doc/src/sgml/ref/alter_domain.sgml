@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_domain.sgml,v 1.8 2003/08/31 17:32:21 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_domain.sgml,v 1.9 2003/09/09 18:28:52 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -23,9 +23,6 @@ PostgreSQL documentation
  </indexterm>
 
  <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>2002-11-27</date>
-  </refsynopsisdivinfo>
   <synopsis>
 ALTER DOMAIN <replaceable class="PARAMETER">domain</replaceable>
     { SET DEFAULT <replaceable class="PARAMETER">value</replaceable> | DROP DEFAULT }
@@ -38,116 +35,11 @@ ALTER DOMAIN <replaceable class="PARAMETER">domain</replaceable>
 ALTER DOMAIN <replaceable class="PARAMETER">domain</replaceable>
     OWNER TO <replaceable class="PARAMETER">new_owner</replaceable> 
   </synopsis>
-
-  <refsect2 id="R2-SQL-ALTERDOMAIN-1">
-   <refsect2info>
-    <date>2002-11-27</date>
-   </refsect2info>
-   <title>
-    Inputs
-   </title>
-   <para>
-    <variablelist>
-
-     <varlistentry>
-      <term><replaceable class="PARAMETER"> domain </replaceable></term>
-      <listitem>
-       <para>
-	The name (possibly schema-qualified) of an existing domain to
-	alter.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><replaceable class="PARAMETER"> domain_constraint </replaceable></term>
-      <listitem>
-       <para>
-	New domain constraint for the domain.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><replaceable class="PARAMETER"> constraint_name </replaceable></term>
-      <listitem>
-       <para>
-	Name of an existing constraint to drop.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>CASCADE</term>
-      <listitem>
-       <para>
-        Automatically drop objects that depend on the constraint.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>RESTRICT</term>
-      <listitem>
-       <para>
-        Refuse to drop the constraint if there are any dependent
-	objects. This is the default behavior.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><replaceable class="PARAMETER">new_owner</replaceable></term>
-      <listitem>
-       <para>
-	The user name of the new owner of the domain.
-       </para>
-      </listitem>
-     </varlistentry>
-
-    </variablelist>
-   </para>
-  </refsect2>
-
-  <refsect2 id="R2-SQL-ALTERDOMAIN-2">
-   <refsect2info>
-    <date>1998-04-15</date>
-   </refsect2info>
-   <title>
-    Outputs
-   </title>
-   <para>
-
-    <variablelist>
-     <varlistentry>
-      <term><computeroutput>ALTER DOMAIN</computeroutput></term>
-      <listitem>
-       <para>
-	Message returned from domain alteration.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><computeroutput>ERROR</computeroutput></term>
-      <listitem>
-       <para>
-	Message returned if domain is not available.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
  </refsynopsisdiv>
 
- <refsect1 id="R1-SQL-ALTERDOMAIN-1">
-  <refsect1info>
-   <date>2002-11-27</date>
-  </refsect1info>
-  <title>
-   Description
-  </title>
+ <refsect1>
+  <title>Description</title>
+
   <para>
    <command>ALTER DOMAIN</command> changes the definition of an existing domain.
    There are several sub-forms:
@@ -213,10 +105,74 @@ ALTER DOMAIN <replaceable class="PARAMETER">domain</replaceable>
   </para>
  </refsect1>
 
- <refsect1 id="R1-SQL-ALTERDOMAIN-2">
-  <title>
-   Usage
-  </title>
+ <refsect1>
+  <title>Parameters</title>
+
+   <para>
+    <variablelist>
+     <varlistentry>
+      <term><replaceable class="PARAMETER"> domain </replaceable></term>
+      <listitem>
+       <para>
+	The name (possibly schema-qualified) of an existing domain to
+	alter.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="PARAMETER"> domain_constraint </replaceable></term>
+      <listitem>
+       <para>
+	New domain constraint for the domain.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="PARAMETER"> constraint_name </replaceable></term>
+      <listitem>
+       <para>
+	Name of an existing constraint to drop.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>CASCADE</term>
+      <listitem>
+       <para>
+        Automatically drop objects that depend on the constraint.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>RESTRICT</term>
+      <listitem>
+       <para>
+        Refuse to drop the constraint if there are any dependent
+	objects. This is the default behavior.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="PARAMETER">new_owner</replaceable></term>
+      <listitem>
+       <para>
+	The user name of the new owner of the domain.
+       </para>
+      </listitem>
+     </varlistentry>
+
+    </variablelist>
+   </para>
+  </refsect1>
+
+ <refsect1>
+  <title>Examples</title>
+
   <para>
    To add a NOT NULL constraint to a domain:
    <programlisting>
@@ -243,6 +199,15 @@ ALTER DOMAIN zipcode DROP CONSTRAINT zipchk;
   </para>
  </refsect1>
 
+ <refsect1>
+  <title>Compatibility</title>
+    
+  <para>
+   The <command>ALTER DOMAIN</command> statement is compatible with SQL99,
+   except for the <literal>OWNER</> variant, which is a
+   <productname>PostgreSQL</productname> extension.
+  </para>
+ </refsect1>
 </refentry>
 
 <!-- Keep this comment at the end of the file

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/start_transaction.sgml,v 1.6 2003/08/31 17:32:24 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/start_transaction.sgml,v 1.7 2003/09/09 18:28:53 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -48,31 +48,6 @@ START TRANSACTION [ ISOLATION LEVEL { READ COMMITTED | SERIALIZABLE } ] [ READ W
  </refsect1>
 
  <refsect1>
-  <title>Diagnostics</title>
-
-  <variablelist>
-   <varlistentry>
-    <term><computeroutput>START TRANSACTION</computeroutput></term>
-    <listitem>
-     <para>
-      Message returned if successful.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term><computeroutput>WARNING:  BEGIN: already a transaction in progress</computeroutput></term>
-    <listitem>
-     <para>
-      Message returned if there was already a transaction in progress
-      when the command was issued.
-     </para>
-    </listitem>
-   </varlistentry>
-  </variablelist>
- </refsect1>
-
- <refsect1>
   <title>Compatibility</title>
 
   <para>
@@ -80,6 +55,17 @@ START TRANSACTION [ ISOLATION LEVEL { READ COMMITTED | SERIALIZABLE } ] [ READ W
    compatibility section of <xref linkend="sql-set-transaction"
    endterm="sql-set-transaction-title">.
   </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-begin" endterm="sql-begin-title"></member>
+   <member><xref linkend="sql-commit" endterm="sql-commit-title"></member>
+   <member><xref linkend="sql-rollback" endterm="sql-rollback-title"></member>
+   <member><xref linkend="sql-set-transaction" endterm="sql-set-transaction-title"></member>
+  </simplelist>
  </refsect1>
 </refentry>
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_trigger.sgml,v 1.16 2003/08/31 17:32:23 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_trigger.sgml,v 1.17 2003/09/09 18:28:53 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -72,30 +72,6 @@ DROP TRIGGER <replaceable class="PARAMETER">name</replaceable> ON <replaceable c
      <para>
       Refuse to drop the trigger if any objects depend on it.  This is
       the default.
-     </para>
-    </listitem>
-   </varlistentry>
-  </variablelist>
- </refsect1>
-
- <refsect1>
-  <title>Diagnostics</title>
-
-  <variablelist>
-   <varlistentry>
-    <term><computeroutput>DROP TRIGGER</computeroutput></term>
-    <listitem>
-     <para>
-      Message returned if the trigger was successfully dropped.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term><computeroutput>ERROR: DropTrigger: there is no trigger <replaceable class="PARAMETER">name</replaceable> on relation "<replaceable class="parameter">table</replaceable>"</computeroutput></term>
-    <listitem>
-     <para>
-      Message returned if the specified trigger does not exist.
      </para>
     </listitem>
    </varlistentry>

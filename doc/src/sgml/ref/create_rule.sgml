@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.40 2003/08/31 17:32:22 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.41 2003/09/09 18:28:52 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -164,21 +164,6 @@ CREATE [ OR REPLACE ] RULE <replaceable class="parameter">name</replaceable> AS 
    <literal>ON UPDATE</literal> and <literal>ON DELETE</literal> rules
    to refer to the existing row being updated or deleted.
   </para>
- </refsect1>
-
- <refsect1>
-  <title>Diagnostics</title>
-
-  <variablelist>
-   <varlistentry>
-    <term><computeroutput>CREATE RULE</computeroutput></term>
-    <listitem>
-     <para>
-      Message returned if the rule was successfully created.
-     </para>
-    </listitem>
-   </varlistentry>
-  </variablelist>
  </refsect1>
 
  <refsect1>

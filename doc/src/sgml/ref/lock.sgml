@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/lock.sgml,v 1.36 2003/08/31 17:32:23 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/lock.sgml,v 1.37 2003/09/09 18:28:53 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -126,21 +126,6 @@ where <replaceable class="PARAMETER">lockmode</replaceable> is one of:
      <para>
       If no lock mode is specified, then <literal>ACCESS
       EXCLUSIVE</literal>, the most restrictive mode, is used.
-     </para>
-    </listitem>
-   </varlistentry>
-  </variablelist>
- </refsect1>
-
- <refsect1>
-  <title>Diagnostics</title>
-
-  <variablelist>
-   <varlistentry>
-    <term><computeroutput>LOCK TABLE</computeroutput></term>
-    <listitem>
-     <para>
-      Message returned if the lock was successfully acquired.
      </para>
     </listitem>
    </varlistentry>

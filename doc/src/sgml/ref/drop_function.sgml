@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_function.sgml,v 1.26 2003/08/31 17:32:22 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_function.sgml,v 1.27 2003/09/09 18:28:53 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -74,30 +74,6 @@ DROP FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceable
      <para>
       Refuse to drop the function if any objects depend on it.  This
       is the default.
-     </para>
-    </listitem>
-   </varlistentry>
-  </variablelist>
- </refsect1>
-
- <refsect1>
-  <title>Diagnostics</title>
-
-  <variablelist>
-   <varlistentry>
-    <term><computeroutput>DROP FUNCTION</computeroutput></term>
-    <listitem>
-     <para>
-      Message returned if the command completes successfully.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term><computeroutput>WARNING:  RemoveFunction: Function <replaceable class="parameter">name</replaceable> (<replaceable class="parameter">types</replaceable>) does not exist</computeroutput></term>
-    <listitem>
-     <para>
-      This message is output if the function specified does not exist.
      </para>
     </listitem>
    </varlistentry>

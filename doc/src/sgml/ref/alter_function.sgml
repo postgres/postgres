@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_function.sgml,v 1.2 2003/08/31 17:32:21 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_function.sgml,v 1.3 2003/09/09 18:28:52 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -60,21 +60,6 @@ ALTER FUNCTION <replaceable>name</replaceable> ( [ <replaceable class="parameter
     <listitem>
      <para>
       The new name of the function.
-     </para>
-    </listitem>
-   </varlistentry>
-  </variablelist>
- </refsect1>
-   
- <refsect1>
-  <title>Diagnostics</title>
-
-  <variablelist>
-   <varlistentry>
-    <term><computeroutput>ALTER FUNCTION</computeroutput></term>
-    <listitem>
-     <para>
-      Message returned if the command was successful.
      </para>
     </listitem>
    </varlistentry>

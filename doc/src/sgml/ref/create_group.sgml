@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_group.sgml,v 1.12 2003/08/31 17:32:22 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_group.sgml,v 1.13 2003/09/09 18:28:52 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -82,21 +82,6 @@ where <replaceable class="PARAMETER">option</replaceable> can be:
       </listitem>
      </varlistentry>
 
-    </variablelist>
- </refsect1>
-  
- <refsect1>
-  <title>Diagnostics</title>
-
-    <variablelist>
-     <varlistentry>
-      <term><computeroutput>CREATE GROUP</computeroutput></term>
-      <listitem>
-       <para>
-	Message returned if the group was successfully created.
-       </para>
-      </listitem>
-     </varlistentry>
     </variablelist>
  </refsect1>
 

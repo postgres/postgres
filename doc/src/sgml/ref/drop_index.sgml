@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_index.sgml,v 1.19 2003/08/31 17:32:22 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_index.sgml,v 1.20 2003/09/09 18:28:53 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -62,32 +62,6 @@ DROP INDEX <replaceable class="PARAMETER">name</replaceable> [, ...] [ CASCADE |
      <para>
       Refuse to drop the index if any objects depend on it.  This is
       the default.
-     </para>
-    </listitem>
-   </varlistentry>
-  </variablelist>
- </refsect1>
-
- <refsect1>
-  <title>Diagnostics</title>
-
-  <variablelist>
-   <varlistentry>
-    <term><computeroutput>DROP INDEX</computeroutput></term>
-    <listitem>
-     <para>
-      Message returned if the command completes successfully.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term><computeroutput>ERROR: index "<replaceable class="PARAMETER">name</replaceable>" does not exist</computeroutput></term>
-    <listitem>
-     <para>
-      This message is returned if <replaceable
-      class="PARAMETER">name</replaceable> is not an existing
-      index.
      </para>
     </listitem>
    </varlistentry>

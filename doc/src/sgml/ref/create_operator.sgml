@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_operator.sgml,v 1.37 2003/08/31 17:32:22 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_operator.sgml,v 1.38 2003/09/09 18:28:52 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -252,21 +252,6 @@ CREATE OPERATOR <replaceable>name</replaceable> (
 COMMUTATOR = OPERATOR(myschema.===) ,
 </programlisting>  
   </para>
- </refsect1>
-
- <refsect1>
-  <title>Diagnostics</title>
-
-  <variablelist>
-   <varlistentry>
-    <term><computeroutput>CREATE OPERATOR</computeroutput></term>
-    <listitem>
-     <para>
-      Message returned if the operator was successfully created.
-     </para>
-    </listitem>
-   </varlistentry>
-  </variablelist>
  </refsect1>
   
  <refsect1>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_aggregate.sgml,v 1.2 2003/08/31 17:32:21 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_aggregate.sgml,v 1.3 2003/09/09 18:28:52 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -29,8 +29,8 @@ ALTER AGGREGATE <replaceable>name</replaceable> ( <replaceable>type</replaceable
 
   <para>
    <command>ALTER AGGREGATE</command> changes the definition of an
-   aggregate function.  The only functionality is to rename the
-   aggregate function.
+   aggregate function.  The only currently available functionality is to
+   rename the aggregate function.
   </para>
  </refsect1>
   
@@ -62,21 +62,6 @@ ALTER AGGREGATE <replaceable>name</replaceable> ( <replaceable>type</replaceable
     <listitem>
      <para>
       The new name of the aggregate function.
-     </para>
-    </listitem>
-   </varlistentry>
-  </variablelist>
- </refsect1>
-   
- <refsect1>
-  <title>Diagnostics</title>
-
-  <variablelist>
-   <varlistentry>
-    <term><computeroutput>ALTER AGGREGATE</computeroutput></term>
-    <listitem>
-     <para>
-      Message returned if the command was successful.
      </para>
     </listitem>
    </varlistentry>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_aggregate.sgml,v 1.27 2003/08/31 17:32:21 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_aggregate.sgml,v 1.28 2003/09/09 18:28:52 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -217,21 +217,6 @@ CREATE AGGREGATE <replaceable class="PARAMETER">name</replaceable> (
    The parameters of <command>CREATE AGGREGATE</command> can be
    written in any order, not just the order illustrated above.
   </para>
- </refsect1>
-
- <refsect1>
-  <title>Diagnostics</title>
-
-  <variablelist>
-   <varlistentry>
-    <term><computeroutput>CREATE AGGREGATE</computeroutput></term>
-    <listitem>
-     <para>
-      Message returned if the command completes successfully.
-     </para>
-    </listitem>
-   </varlistentry>
-  </variablelist>
  </refsect1>
   
  <refsect1>

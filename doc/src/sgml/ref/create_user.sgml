@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_user.sgml,v 1.27 2003/08/31 17:32:22 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_user.sgml,v 1.28 2003/09/09 18:28:53 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -166,21 +166,6 @@ where <replaceable class="PARAMETER">option</replaceable> can be:
      </varlistentry>
     </variablelist>
  </refsect1> 
-
- <refsect1>
-  <title>Diagnostics</title>
-
-   <variablelist>
-    <varlistentry>
-     <term><computeroutput>CREATE USER</computeroutput></term>
-     <listitem>
-      <para>
-       Message returned if the user account was successfully created.
-      </para>
-     </listitem>
-    </varlistentry>
-   </variablelist>
- </refsect1>
 
  <refsect1>
   <title>Notes</title>

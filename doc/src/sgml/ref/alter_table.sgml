@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.60 2003/08/31 17:32:21 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.61 2003/09/09 18:28:52 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -328,30 +328,6 @@ ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
       </listitem>
      </varlistentry>
 
-    </variablelist>
- </refsect1>
-
- <refsect1>
-  <title>Diagnostics</title>
-
-    <variablelist>
-     <varlistentry>
-      <term><computeroutput>ALTER TABLE</computeroutput></term>
-      <listitem>
-       <para>
-	Message returned if successful.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><computeroutput>ERROR</computeroutput></term>
-      <listitem>
-       <para>
-	Message returned if table or column does not exist.
-       </para>
-      </listitem>
-     </varlistentry>
     </variablelist>
  </refsect1>
 

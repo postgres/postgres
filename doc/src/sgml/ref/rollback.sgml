@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/rollback.sgml,v 1.15 2003/08/31 17:32:24 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/rollback.sgml,v 1.16 2003/09/09 18:28:53 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -50,35 +50,16 @@ ROLLBACK [ WORK | TRANSACTION ]
  </refsect1>
 
  <refsect1>
-  <title>Diagnostics</title>
-	
-  <variablelist>
-   <varlistentry>
-    <term><computeroutput>ROLLBACK</computeroutput></term>
-    <listitem>
-     <para>
-      Message returned if successful.
-     </para>
-    </listitem>
-   </varlistentry>
-     
-   <varlistentry>
-    <term><computeroutput>WARNING:  ROLLBACK: no transaction in progress</computeroutput></term>
-    <listitem>
-     <para>
-      If there is not any transaction currently in progress.
-     </para>
-    </listitem>
-   </varlistentry>
-  </variablelist>
- </refsect1>
-
- <refsect1>
   <title>Notes</title>
 
   <para>
    Use <xref linkend="SQL-COMMIT" endterm="SQL-COMMIT-TITLE"> to
    successfully terminate a transaction.
+  </para>
+
+  <para>
+   Issuing <command>ROLLBACK</> when not inside a transaction does
+   no harm, but it will provoke a warning message.
   </para>
  </refsect1>
 
@@ -101,6 +82,15 @@ ROLLBACK;
    <literal>ROLLBACK</literal> and <literal>ROLLBACK
    WORK</literal>. Otherwise, this command is fully conforming.
   </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-begin" endterm="sql-begin-title"></member>
+   <member><xref linkend="sql-commit" endterm="sql-commit-title"></member>
+  </simplelist>
  </refsect1>
 </refentry>
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/show.sgml,v 1.31 2003/08/31 17:32:24 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/show.sgml,v 1.32 2003/09/09 18:28:53 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -121,22 +121,6 @@ SHOW ALL
     <listitem>
      <para>
       Show the values of all configurations parameters.
-     </para>
-    </listitem>
-   </varlistentry>
-  </variablelist>
- </refsect1>
-
- <refsect1>
-  <title>Diagnostics</title>
-
-  <variablelist>
-   <varlistentry>
-    <term><computeroutput>ERROR: Option '<replaceable>name</replaceable>' is not recognized</computeroutput></term>
-    <listitem>
-     <para>
-      Message returned if <replaceable>name</replaceable> does not
-      stand for a known parameter.
      </para>
     </listitem>
    </varlistentry>

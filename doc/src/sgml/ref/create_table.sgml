@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.71 2003/08/31 17:32:22 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.72 2003/09/09 18:28:52 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -563,23 +563,6 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
    </varlistentry>
   </variablelist>
  </refsect1>    
-
-
- <refsect1 id="SQL-CREATETABLE-diagnostics">
-  <title>Diagnostics</title>
-
-  <variablelist>
-   <varlistentry>
-    <term><computeroutput>CREATE TABLE</computeroutput></term>
-    <listitem>
-     <para>
-      Message returned if the table was successfully created.
-     </para>
-    </listitem>
-   </varlistentry>
-  </variablelist>
- </refsect1>
-
 
  <refsect1 id="SQL-CREATETABLE-notes">
   <title>Notes</title>

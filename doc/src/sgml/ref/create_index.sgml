@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_index.sgml,v 1.40 2003/08/31 17:32:22 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_index.sgml,v 1.41 2003/09/09 18:28:52 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -183,21 +183,6 @@ CREATE [ UNIQUE ] INDEX <replaceable class="parameter">index_name</replaceable> 
       </listitem>
      </varlistentry>
     </variablelist>
- </refsect1>
-
- <refsect1>
-  <title>Diagnostics</title>
-
-  <variablelist>
-   <varlistentry>
-    <term><computeroutput>CREATE INDEX</computeroutput></term>
-    <listitem>
-     <para>
-      Message returned if the index was successfully created.
-     </para>
-    </listitem>
-   </varlistentry>
-  </variablelist>
  </refsect1>
 
  <refsect1>

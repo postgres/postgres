@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_trigger.sgml,v 1.5 2003/08/31 17:32:21 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_trigger.sgml,v 1.6 2003/09/09 18:28:52 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -41,7 +41,7 @@ ALTER TRIGGER <replaceable class="PARAMETER">trigger</replaceable> ON <replaceab
  </refsect1>
 
  <refsect1>
-  <title>Parameter</title>
+  <title>Parameters</title>
 
   <variablelist>
    <varlistentry>
@@ -67,31 +67,6 @@ ALTER TRIGGER <replaceable class="PARAMETER">trigger</replaceable> ON <replaceab
     <listitem>
      <para>
       The new name for the trigger.
-     </para>
-    </listitem>
-   </varlistentry>
-  </variablelist>
- </refsect1>
-
- <refsect1>
-  <title>Diagnostics</title>
-
-  <variablelist>
-   <varlistentry>
-    <term><computeroutput>ALTER TRIGGER</computeroutput></term>
-    <listitem>
-     <para>
-      Message returned if successful.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term><computeroutput>ERROR</computeroutput></term>
-    <listitem>
-     <para>
-      If the trigger does not exist, or the new name is a duplicate of
-      another existing trigger on the table.
      </para>
     </listitem>
    </varlistentry>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_opclass.sgml,v 1.2 2003/08/31 17:32:21 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_opclass.sgml,v 1.3 2003/09/09 18:28:52 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -62,21 +62,6 @@ ALTER OPERATOR CLASS <replaceable>name</replaceable> USING <replaceable class="p
     <listitem>
      <para>
       The new name of the operator class.
-     </para>
-    </listitem>
-   </varlistentry>
-  </variablelist>
- </refsect1>
-   
- <refsect1>
-  <title>Diagnostics</title>
-
-  <variablelist>
-   <varlistentry>
-    <term><computeroutput>ALTER OPERATOR CLASS</computeroutput></term>
-    <listitem>
-     <para>
-      Message returned if the command was successful.
      </para>
     </listitem>
    </varlistentry>

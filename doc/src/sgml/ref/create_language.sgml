@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_language.sgml,v 1.34 2003/08/31 17:32:22 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_language.sgml,v 1.35 2003/09/09 18:28:52 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -145,21 +145,6 @@ CREATE [ TRUSTED ] [ PROCEDURAL ] LANGUAGE <replaceable class="parameter">langna
      </listitem>
     </varlistentry>
    </variablelist>
- </refsect1>
-
- <refsect1 id="sql-createlanguage-diagnostics">
-  <title>Diagnostics</title>
-
-  <variablelist>
-   <varlistentry>
-    <term><computeroutput>CREATE LANGUAGE</computeroutput></term>
-    <listitem>
-     <para>
-      Message returned if the language was successfully created.
-     </para>
-    </listitem>
-   </varlistentry>
-  </variablelist>
  </refsect1>
 
  <refsect1 id="sql-createlanguage-notes">

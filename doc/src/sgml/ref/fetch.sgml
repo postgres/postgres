@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/fetch.sgml,v 1.31 2003/08/31 17:32:23 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/fetch.sgml,v 1.32 2003/09/09 18:28:53 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -274,21 +274,6 @@ where <replaceable class="PARAMETER">direction</replaceable> can be empty or one
     <listitem>
      <para>
       An open cursor's name.
-     </para>
-    </listitem>
-   </varlistentry>
-  </variablelist>
- </refsect1>
-
- <refsect1>
-  <title>Diagnostics</title>
-
-  <variablelist>
-   <varlistentry>
-    <term><computeroutput>ERROR:  cursor "<replaceable class="PARAMETER">cursor</replaceable>" does not exist</computeroutput></term>
-    <listitem>
-     <para>
-      There is no cursor with the specified name.
      </para>
     </listitem>
    </varlistentry>

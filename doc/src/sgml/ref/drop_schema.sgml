@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_schema.sgml,v 1.4 2003/08/31 17:32:22 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_schema.sgml,v 1.5 2003/09/09 18:28:53 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -67,30 +67,6 @@ DROP SCHEMA <replaceable class="PARAMETER">name</replaceable> [, ...] [ CASCADE 
      <para>
       Refuse to drop the schema if it contains any objects.  This is
       the default.
-     </para>
-    </listitem>
-   </varlistentry>
-  </variablelist>
- </refsect1>
-
- <refsect1>
-  <title>Diagnostics</title>
-
-  <variablelist>
-   <varlistentry>
-    <term><computeroutput>DROP SCHEMA</computeroutput></term>
-    <listitem>
-     <para>
-      Message returned if the schema was successfully dropped.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term><computeroutput>ERROR: Schema "<replaceable class="parameter">name</replaceable>" does not exist</computeroutput></term>
-    <listitem>
-     <para>
-      This message is returned if the specified schema does not exist.
      </para>
     </listitem>
    </varlistentry>

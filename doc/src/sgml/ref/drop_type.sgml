@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_type.sgml,v 1.22 2003/08/31 17:32:23 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_type.sgml,v 1.23 2003/09/09 18:28:53 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -62,30 +62,6 @@ DROP TYPE <replaceable class="PARAMETER">typename</replaceable> [, ...] [ CASCAD
      <para>
       Refuse to drop the type if any objects depend on it.  This is
       the default.
-     </para>
-    </listitem>
-   </varlistentry>
-  </variablelist>
- </refsect1>
-
- <refsect1>
-  <title>Diagnostics</title>
-
-  <variablelist>
-   <varlistentry>
-    <term><computeroutput>DROP TYPE</computeroutput></term>
-    <listitem>
-     <para>
-      Message returned if the command was successful.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term><computeroutput>ERROR:  RemoveType: type '<replaceable class="parameter">typename</replaceable>' does not exist</computeroutput></term>
-    <listitem>
-     <para>
-      Message returned if the specified type does not exist.
      </para>
     </listitem>
    </varlistentry>

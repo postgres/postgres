@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/begin.sgml,v 1.25 2003/08/31 17:32:21 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/begin.sgml,v 1.26 2003/09/09 18:28:52 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -28,21 +28,25 @@ BEGIN [ WORK | TRANSACTION ]
   <title>Description</title>
 
   <para>
-   By default, <productname>PostgreSQL</productname> executes
-   transactions in <quote>autocommit</quote> mode, that is, each
-   statement is executed in its own transaction and a commit is
-   implicitly performed at the end of the statement (if execution was
-   successful, otherwise a rollback is done).
    <command>BEGIN</command> initiates a transaction block, that is,
    all statements after <command>BEGIN</command> command will be
    executed in a single transaction until an explicit <xref
    linkend="sql-commit" endterm="sql-commit-title"> or <xref
-   linkend="sql-rollback" endterm="sql-rollback-title">.  Statements
-   are executed more quickly in a transaction block, because
+   linkend="sql-rollback" endterm="sql-rollback-title"> is given.
+   By default (without <command>BEGIN</command>),
+   <productname>PostgreSQL</productname> executes
+   transactions in <quote>autocommit</quote> mode, that is, each
+   statement is executed in its own transaction and a commit is
+   implicitly performed at the end of the statement (if execution was
+   successful, otherwise a rollback is done).
+  </para>
+
+  <para>
+   Statements are executed more quickly in a transaction block, because
    transaction start/commit requires significant CPU and disk
    activity. Execution of multiple statements inside a transaction is
-   also useful to ensure consistency when changing several related
-   tables: other sessions will be unable to see the intermediate states
+   also useful to ensure consistency when making several related changes:
+   other sessions will be unable to see the intermediate states
    wherein not all the related updates have been done.
   </para>
  </refsect1>
@@ -64,31 +68,6 @@ BEGIN [ WORK | TRANSACTION ]
  </refsect1>
   
  <refsect1>
-  <title>Diagnostics</title>
-
-  <variablelist>
-   <varlistentry>
-    <term><computeroutput>BEGIN</computeroutput></term>
-    <listitem>
-     <para>
-      This signifies that a new transaction has been started.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term><computeroutput>WARNING:  BEGIN: already a transaction in progress</computeroutput></term>
-    <listitem>
-     <para>
-      This indicates that a transaction was already in progress.  The
-      current transaction is not affected.
-     </para>
-    </listitem>
-   </varlistentry>
-  </variablelist>
- </refsect1>
-  
- <refsect1>
   <title>Notes</title>
 
   <para>
@@ -100,7 +79,12 @@ BEGIN [ WORK | TRANSACTION ]
   <para>
    Use <xref linkend="SQL-COMMIT" endterm="SQL-COMMIT-TITLE"> or
    <xref linkend="SQL-ROLLBACK" endterm="SQL-ROLLBACK-TITLE">
-   to terminate a transaction.
+   to terminate a transaction block.
+  </para>
+
+  <para>
+   Issuing <command>BEGIN</> when already inside a transaction block will
+   provoke a warning message.  The state of the transaction is not affected.
   </para>
  </refsect1>
 
@@ -137,6 +121,15 @@ BEGIN;
    different purpose in embedded SQL. You are advised to be careful
    about the transaction semantics when porting database applications.
   </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-commit" endterm="sql-commit-title"></member>
+   <member><xref linkend="sql-rollback" endterm="sql-rollback-title"></member>
+  </simplelist>
  </refsect1>
 </refentry>
  
