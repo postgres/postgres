@@ -4,6 +4,8 @@
  *	statistical aggregates for average, variance and standard
  *	deviation.
  *
+ * $Header: /cvsroot/pgsql/contrib/statmath/Attic/statmath.c,v 1.2 2000/07/04 14:37:32 wieck Exp $
+ *
  *	Jan Wieck
  * ----------
  */
