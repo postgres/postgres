@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.304 2002/10/18 22:05:35 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.305 2002/10/19 20:15:09 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -756,16 +756,30 @@ pg_exec_query_string(StringInfo query_string,	/* string to execute */
 
 				elog(DEBUG2, "ProcessUtility");
 
-				/* set snapshot if utility stmt needs one */
-				/* XXX maybe cleaner to list those that shouldn't set one? */
-				if (IsA(utilityStmt, AlterTableStmt) ||
-					IsA(utilityStmt, ClusterStmt) ||
-					IsA(utilityStmt, CopyStmt) ||
-					IsA(utilityStmt, ExecuteStmt) ||
-					IsA(utilityStmt, ExplainStmt) ||
-					IsA(utilityStmt, IndexStmt) ||
-					IsA(utilityStmt, PrepareStmt) ||
-					IsA(utilityStmt, ReindexStmt))
+				/*
+				 * Set snapshot if utility stmt needs one.  Most reliable
+				 * way to do this seems to be to enumerate those that do not
+				 * need one; this is a short list.  Transaction control,
+				 * LOCK, and SET must *not* set a snapshot since they need
+				 * to be executable at the start of a serializable transaction
+				 * without freezing a snapshot.  By extension we allow SHOW
+				 * not to set a snapshot.  The other stmts listed are just
+				 * efficiency hacks.  Beware of listing anything that can
+				 * modify the database --- if, say, it has to update a
+				 * functional index, then it had better have a snapshot.
+				 */
+				if (! (IsA(utilityStmt, TransactionStmt) ||
+					   IsA(utilityStmt, LockStmt) ||
+					   IsA(utilityStmt, VariableSetStmt) ||
+					   IsA(utilityStmt, VariableShowStmt) ||
+					   IsA(utilityStmt, VariableResetStmt) ||
+					   IsA(utilityStmt, ConstraintsSetStmt) ||
+					   /* efficiency hacks from here down */
+					   IsA(utilityStmt, FetchStmt) ||
+					   IsA(utilityStmt, ListenStmt) ||
+					   IsA(utilityStmt, NotifyStmt) ||
+					   IsA(utilityStmt, UnlistenStmt) ||
+					   IsA(utilityStmt, CheckPointStmt)))
 					SetQuerySnapshot();
 
 				/* end transaction block if transaction or variable stmt */
@@ -1769,7 +1783,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.304 $ $Date: 2002/10/18 22:05:35 $\n");
+		puts("$Revision: 1.305 $ $Date: 2002/10/19 20:15:09 $\n");
 	}
 
 	/*

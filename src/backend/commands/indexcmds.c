@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.90 2002/09/23 00:42:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.91 2002/10/19 20:15:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -669,6 +669,10 @@ ReindexDatabase(const char *dbname, bool force, bool all)
 	if (IsTransactionBlock())
 		elog(ERROR, "REINDEX DATABASE cannot run inside a BEGIN/END block");
 
+	/* Running this from a function would free the function context */
+	if (!MemoryContextContains(QueryContext, (void *) dbname))
+		elog(ERROR, "REINDEX DATABASE cannot be executed from a function");
+
 	/*
 	 * Create a memory context that will survive forced transaction
 	 * commits we do below.  Since it is a child of QueryContext, it will
@@ -724,6 +728,7 @@ ReindexDatabase(const char *dbname, bool force, bool all)
 	for (i = 0; i < relcnt; i++)
 	{
 		StartTransactionCommand(true);
+		SetQuerySnapshot();		/* might be needed for functional index */
 		if (reindex_relation(relids[i], force))
 			elog(NOTICE, "relation %u was reindexed", relids[i]);
 		CommitTransactionCommand(true);
