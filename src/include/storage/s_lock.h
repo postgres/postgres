@@ -66,7 +66,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	  $PostgreSQL: pgsql/src/include/storage/s_lock.h,v 1.131 2004/09/24 01:48:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/include/storage/s_lock.h,v 1.132 2004/10/06 23:41:59 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -138,6 +138,29 @@ tas(volatile slock_t *lock)
 static __inline__ void
 spin_delay(void)
 {
+	/*
+	 * This sequence is equivalent to the PAUSE instruction ("rep" is
+	 * ignored by old IA32 processors if the following instruction is
+	 * not a string operation); the IA-32 Architecture Software
+	 * Developer's Manual, Vol. 3, Section 7.7.2 describes why using
+	 * PAUSE in the inner loop of a spin lock is necessary for good
+	 * performance:
+	 *
+	 *     The PAUSE instruction improves the performance of IA-32
+	 *     processors supporting Hyper-Threading Technology when
+	 *     executing spin-wait loops and other routines where one
+	 *     thread is accessing a shared lock or semaphore in a tight
+	 *     polling loop. When executing a spin-wait loop, the
+	 *     processor can suffer a severe performance penalty when
+	 *     exiting the loop because it detects a possible memory order
+	 *     violation and flushes the core processor's pipeline. The
+	 *     PAUSE instruction provides a hint to the processor that the
+	 *     code sequence is a spin-wait loop. The processor uses this
+	 *     hint to avoid the memory order violation and prevent the
+	 *     pipeline flush. In addition, the PAUSE instruction
+	 *     de-pipelines the spin-wait loop to prevent it from
+	 *     consuming execution resources excessively.
+	 */
 	__asm__ __volatile__(
 		" rep; nop			\n");
 }
