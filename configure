@@ -7169,80 +7169,6 @@ fi
 done
 
 
-# This exports HAVE_IPV6 to both C files and Makefiles
-echo "$as_me:$LINENO: checking for getaddrinfo" >&5
-echo $ECHO_N "checking for getaddrinfo... $ECHO_C" >&6
-if test "${ac_cv_func_getaddrinfo+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  cat >conftest.$ac_ext <<_ACEOF
-#line $LINENO "configure"
-#include "confdefs.h"
-/* System header to define __stub macros and hopefully few prototypes,
-    which can conflict with char getaddrinfo (); below.  */
-#include <assert.h>
-/* Override any gcc2 internal prototype to avoid an error.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char getaddrinfo ();
-char (*f) ();
-
-#ifdef F77_DUMMY_MAIN
-#  ifdef __cplusplus
-     extern "C"
-#  endif
-   int F77_DUMMY_MAIN() { return 1; }
-#endif
-int
-main ()
-{
-/* The GNU C library defines this for functions which it implements
-    to always fail with ENOSYS.  Some functions are actually named
-    something starting with __ and the normal name is an alias.  */
-#if defined (__stub_getaddrinfo) || defined (__stub___getaddrinfo)
-choke me
-#else
-f = getaddrinfo;
-#endif
-
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-         { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_func_getaddrinfo=yes
-else
-  echo "$as_me: failed program was:" >&5
-cat conftest.$ac_ext >&5
-ac_cv_func_getaddrinfo=no
-fi
-rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
-fi
-echo "$as_me:$LINENO: result: $ac_cv_func_getaddrinfo" >&5
-echo "${ECHO_T}$ac_cv_func_getaddrinfo" >&6
-if test $ac_cv_func_getaddrinfo = yes; then
-  HAVE_IPV6="yes"; cat >>confdefs.h <<\_ACEOF
-#define HAVE_IPV6 1
-_ACEOF
-
-fi
-
-
-
 if test "$with_readline" = yes; then
 
 for ac_header in readline/readline.h
@@ -10031,6 +9957,80 @@ else
 #define HAVE_DECL_FDATASYNC 0
 _ACEOF
 
+
+fi
+
+
+
+# This exports HAVE_IPV6 to both C files and Makefiles
+echo "$as_me:$LINENO: checking for getaddrinfo" >&5
+echo $ECHO_N "checking for getaddrinfo... $ECHO_C" >&6
+if test "${ac_cv_func_getaddrinfo+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
+/* System header to define __stub macros and hopefully few prototypes,
+    which can conflict with char getaddrinfo (); below.  */
+#include <assert.h>
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char getaddrinfo ();
+char (*f) ();
+
+#ifdef F77_DUMMY_MAIN
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+#endif
+int
+main ()
+{
+/* The GNU C library defines this for functions which it implements
+    to always fail with ENOSYS.  Some functions are actually named
+    something starting with __ and the normal name is an alias.  */
+#if defined (__stub_getaddrinfo) || defined (__stub___getaddrinfo)
+choke me
+#else
+f = getaddrinfo;
+#endif
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_func_getaddrinfo=yes
+else
+  echo "$as_me: failed program was:" >&5
+cat conftest.$ac_ext >&5
+ac_cv_func_getaddrinfo=no
+fi
+rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
+fi
+echo "$as_me:$LINENO: result: $ac_cv_func_getaddrinfo" >&5
+echo "${ECHO_T}$ac_cv_func_getaddrinfo" >&6
+if test $ac_cv_func_getaddrinfo = yes; then
+  HAVE_IPV6="yes"; cat >>confdefs.h <<\_ACEOF
+#define HAVE_IPV6 1
+_ACEOF
 
 fi
 
@@ -16501,8 +16501,8 @@ s,@python_moduledir@,$python_moduledir,;t t
 s,@python_moduleexecdir@,$python_moduleexecdir,;t t
 s,@python_includespec@,$python_includespec,;t t
 s,@python_libspec@,$python_libspec,;t t
-s,@HAVE_IPV6@,$HAVE_IPV6,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t
+s,@HAVE_IPV6@,$HAVE_IPV6,;t t
 s,@HPUXMATHLIB@,$HPUXMATHLIB,;t t
 s,@HAVE_POSIX_SIGNALS@,$HAVE_POSIX_SIGNALS,;t t
 s,@MSGFMT@,$MSGFMT,;t t
