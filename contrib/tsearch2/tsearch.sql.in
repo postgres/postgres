@@ -77,7 +77,7 @@ CREATE FUNCTION snb_lexize(internal,internal,int4)
 insert into pg_ts_dict select 
 	'en_stem', 
 	'snb_en_init(text)',
-	'DATA_PATH/english.stop',
+	'contrib/english.stop',
 	'snb_lexize(internal,internal,int4)',
 	'English Stemmer. Snowball.'
 ;
@@ -90,7 +90,7 @@ CREATE FUNCTION snb_ru_init(text)
 insert into pg_ts_dict select 
 	'ru_stem', 
 	'snb_ru_init(text)',
-	'DATA_PATH/russian.stop',
+	'contrib/russian.stop',
 	'snb_lexize(internal,internal,int4)',
 	'Russian Stemmer. Snowball.'
 ;

@@ -2,12 +2,12 @@
  * stopword library
  * Teodor Sigaev <teodor@sigaev.ru>
  */
-#include <errno.h>
-#include <stdlib.h>
-#include <string.h>
+#include "postgres.h"
+
 #include <ctype.h>
 
-#include "postgres.h"
+#include "miscadmin.h"
+
 #include "common.h"
 #include "dict.h"
 
@@ -51,9 +51,22 @@ readstoplist(text *in, StopList * s)
 	if (in && VARSIZE(in) - VARHDRSZ > 0)
 	{
 		char	   *filename = text2char(in);
-		FILE	   *hin = NULL;
+		FILE	   *hin;
 		char		buf[STOPBUFLEN];
 		int			reallen = 0;
+
+		/* if path is relative, take it as relative to share dir */
+		if (!is_absolute_path(filename))
+		{
+			char	sharepath[MAXPGPATH];
+			char   *absfn;
+
+			get_share_path(my_exec_path, sharepath);
+			absfn = palloc(strlen(sharepath) + strlen(filename) + 2);
+			sprintf(absfn, "%s/%s", sharepath, filename);
+			pfree(filename);
+			filename = absfn;
+		}
 
 		if ((hin = fopen(filename, "r")) == NULL)
 			ereport(ERROR,
