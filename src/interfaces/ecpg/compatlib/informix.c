@@ -1002,12 +1002,12 @@ ECPG_informix_get_var(int number)
 int
 rsetnull(int t, char *ptr)
 {
-	ECPGset_informix_null(t, ptr);
+	ECPGset_noind_null(t, ptr);
 	return 0;
 }
 
 int
 risnull(int t, char *ptr)
 {
-	return (ECPGis_informix_null(t, ptr));
+	return (ECPGis_noind_null(t, ptr));
 }

@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.288 2004/06/20 10:45:47 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.289 2004/06/27 12:28:42 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -542,7 +542,7 @@ add_additional_variables(char *name, bool insert)
 %type  <str>	inf_val_list inf_col_list using_descriptor into_descriptor 
 %type  <str>	ecpg_into_using prepared_name struct_union_type_with_symbol
 %type  <str>	ECPGunreserved ECPGunreserved_interval cvariable
-%type  <str>	AlterDbOwnerStmt OptTableSpaceOwner CreateTableSpaceStmt
+%type  <str>	AlterOwnerStmt OptTableSpaceOwner CreateTableSpaceStmt
 %type  <str>	DropTableSpaceStmt indirection indirection_el
 
 %type  <struct_union> s_struct_union_symbol
@@ -578,7 +578,7 @@ statement: ecpgstart opt_at stmt ';'	{ connection = NULL; }
 		| c_thing		{ fprintf(yyout, "%s", $1); free($1); }
 		| CPP_LINE		{ fprintf(yyout, "%s", $1); free($1); }
 		| '{'			{ braces_open++; fputs("{", yyout); }
-		| '}'			{ remove_variables(braces_open--); fputs("}", yyout); }
+		| '}'			{ remove_typedefs(braces_open); remove_variables(braces_open--); fputs("}", yyout); }
 		;
 
 opt_at: AT connection_target
@@ -594,9 +594,9 @@ opt_at: AT connection_target
 		};
 
 stmt:  AlterDatabaseSetStmt		{ output_statement($1, 0, connection); }
-		| AlterDbOwnerStmt	{ output_statement($1, 0, connection); }
 		| AlterDomainStmt	{ output_statement($1, 0, connection); }
 		| AlterGroupStmt	{ output_statement($1, 0, connection); }
+		| AlterOwnerStmt	{ output_statement($1, 0, connection); }
 		| AlterSeqStmt		{ output_statement($1, 0, connection); }
 		| AlterTableStmt	{ output_statement($1, 0, connection); }
 		| AlterUserSetStmt	{ output_statement($1, 0, connection); }
@@ -2385,10 +2385,40 @@ RenameStmt:  ALTER AGGREGATE func_name '(' aggr_argtype ')' RENAME TO name
 			{ $$ = cat_str(6, make_str("alter trigger"), $3, make_str("on"), $5, make_str("rename to"), $8); }
 	| ALTER USER UserId RENAME TO UserId
 			{ $$ = cat_str(4, make_str("alter user"), $3, make_str("rename to"), $6); }
+	| ALTER TABLESPACE name RENAME TO name
+			{ $$ = cat_str(4, make_str("alter tablespace"), $3, make_str("rename to"), $6); }
 		;
 
 opt_column:  COLUMN			{ $$ = make_str("column"); }
 		| /*EMPTY*/			{ $$ = EMPTY; }
+		;
+
+/*****************************************************************************
+ *
+ * ALTER THING name OWNER TO newname.
+ *
+ *****************************************************************************/
+
+AlterOwnerStmt: ALTER AGGREGATE func_name '(' aggr_argtype ')' OWNER TO UserId
+			{ $$ = cat_str(6, make_str("alter aggregate"), $3, make_str("("), $5, make_str(") owner to"), $9); }
+		| ALTER CONVERSION_P any_name OWNER TO UserId
+			{ $$ = cat_str(4, make_str("alter conversion"), $3, make_str("owner to"), $6); }
+		| ALTER DATABASE database_name OWNER TO UserId
+			{ $$ = cat_str(4, make_str("alter database"), $3, make_str("owner to"), $6); }
+		| ALTER DOMAIN_P database_name OWNER TO UserId
+			{ $$ = cat_str(4, make_str("alter domain"), $3, make_str("owner to"), $6); }
+		| ALTER FUNCTION func_name func_args OWNER TO UserId
+			{ $$ = cat_str(5, make_str("alter function"), $3, $4, make_str("owner to"), $7); }
+		| ALTER OPERATOR any_operator '(' oper_argtypes ')' OWNER TO UserId
+			{ $$ = cat_str(6, make_str("alter operator"), $3, make_str("("), $5, make_str(") owner to"), $9); }
+		| ALTER OPERATOR CLASS any_name USING access_method OWNER TO UserId
+			{ $$ = cat_str(6, make_str("alter operator class"), $4, make_str("using"), $6, make_str("owner to"), $9); }
+		| ALTER SCHEMA name OWNER TO UserId
+			{ $$ = cat_str(4, make_str("alter schema"), $3, make_str("owner to"), $6); }
+		| ALTER TYPE_P any_name OWNER TO UserId
+			{ $$ = cat_str(4, make_str("alter type"), $3, make_str("owner to"), $6); }
+		| ALTER TABLESPACE name OWNER TO UserId
+			{ $$ = cat_str(4, make_str("alter tablespace"), $3, make_str("owner to"), $6); }
 		;
 
 
@@ -2589,8 +2619,6 @@ opt_equal: '='					{ $$ = make_str("="); }
  *
  *****************************************************************************/
 
-AlterDbOwnerStmt: ALTER DATABASE database_name OWNER TO UserId
-		      	{ $$ = cat_str(4, make_str("alter database"), $3, make_str("owner to"), $6); }
 AlterDatabaseSetStmt: ALTER DATABASE database_name SET set_rest
 			{ $$ = cat_str(4, make_str("alter database"), $3, make_str("set"), $5); }
 		| ALTER DATABASE database_name VariableResetStmt
@@ -2632,8 +2660,6 @@ AlterDomainStmt:
 		{ $$ = cat_str(4, make_str("alter domain"), $3, make_str("add"), $5); }
 	| ALTER DOMAIN_P any_name DROP CONSTRAINT name opt_drop_behavior
 		{ $$ = cat_str(5, make_str("alter domain"), $3, make_str("drop constraint"), $6, $7); }
-	| ALTER DOMAIN_P any_name OWNER TO UserId
-		{ $$ = cat_str(4, make_str("alter domain"), $3, make_str("owner to"), $6); }
 	;
 	
 opt_as:	AS	{$$ = make_str("as"); }
@@ -4582,6 +4608,7 @@ type_declaration: S_TYPEDEF
 	        	/* initial definition */
 		        this->next = types;
 	        	this->name = $5;
+	        	this->brace_level = braces_open;
 			this->type = (struct this_type *) mm_alloc(sizeof(struct this_type));
 			this->type->type_enum = $3.type_enum;
 			this->type->type_str = mm_strdup($5);
@@ -4897,6 +4924,7 @@ struct_union_type_with_symbol: s_struct_union_symbol
                         /* initial definition */
                         this->next = types;
 			this->name = mm_strdup(su_type.type_str);
+			this->brace_level = braces_open;
                         this->type = (struct this_type *) mm_alloc(sizeof(struct this_type));
                         this->type->type_enum = su_type.type_enum;
                         this->type->type_str = mm_strdup(su_type.type_str);
@@ -5417,6 +5445,7 @@ ECPGTypedef: TYPE_P
 				/* initial definition */
 				this->next = types;
 				this->name = $3;
+				this->brace_level = braces_open;
 				this->type = (struct this_type *) mm_alloc(sizeof(struct this_type));
 				this->type->type_enum = $5.type_enum;
 				this->type->type_str = mm_strdup($3);

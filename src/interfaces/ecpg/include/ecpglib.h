@@ -77,8 +77,8 @@ void		ECPGraise_backend(int line, PGresult *result, PGconn *conn, int compat);
 bool		ECPGget_desc_header(int, char *, int *);
 bool		ECPGget_desc(int, char *, int,...);
 
-void		ECPGset_informix_null(enum ECPGttype, void *);
-bool		ECPGis_informix_null(enum ECPGttype, void *);
+void		ECPGset_noind_null(enum ECPGttype, void *);
+bool		ECPGis_noind_null(enum ECPGttype, void *);
 bool		ECPGdescribe(int, bool, const char *,...);
 
 /* dynamic result allocation */

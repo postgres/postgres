@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.20 2004/03/14 14:47:33 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.21 2004/06/27 12:28:40 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -266,7 +266,7 @@ ECPGlog(const char *format,...)
 }
 
 void
-ECPGset_informix_null(enum ECPGttype type, void *ptr)
+ECPGset_noind_null(enum ECPGttype type, void *ptr)
 {
 	switch (type)
 	{
@@ -301,6 +301,7 @@ ECPGset_informix_null(enum ECPGttype type, void *ptr)
 			break;
 		case ECPGt_varchar:
 			*(((struct ECPGgeneric_varchar *) ptr)->arr) = 0x00;
+			((struct ECPGgeneric_varchar *) ptr)->len = 0;
 			break;
 		case ECPGt_decimal:
 			memset((char *) ptr, 0, sizeof(decimal));
@@ -331,7 +332,7 @@ _check(unsigned char *ptr, int length)
 }
 
 bool
-ECPGis_informix_null(enum ECPGttype type, void *ptr)
+ECPGis_noind_null(enum ECPGttype type, void *ptr)
 {
 	switch (type)
 	{

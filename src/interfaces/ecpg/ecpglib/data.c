@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/data.c,v 1.23 2004/05/05 15:03:04 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/data.c,v 1.24 2004/06/27 12:28:39 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -76,7 +76,10 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 	 * and 0 if not
 	 */
 	if (PQgetisnull(results, act_tuple, act_field))
+	{
+		printf("MM NULL\n");
 		value_for_indicator = -1;
+	}
 
 	switch (ind_type)
 	{
@@ -107,7 +110,7 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 					 * Informix has an additional way to specify NULLs
 					 * note that this uses special values to denote NULL
 					 */
-					ECPGset_informix_null(type, var + offset * act_tuple);
+					ECPGset_noind_null(type, var + offset * act_tuple);
 				}
 				else
 				{
@@ -411,7 +414,7 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 						if (INFORMIX_MODE(compat))
 						{
 							/* Informix wants its own NULL value here instead of an error */
-							ECPGset_informix_null(ECPGt_numeric, nres);
+							ECPGset_noind_null(ECPGt_numeric, nres);
 						}
 						else
 						{
@@ -454,7 +457,7 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 						if (INFORMIX_MODE(compat))
 						{
 							/* Informix wants its own NULL value here instead of an error */
-							ECPGset_informix_null(ECPGt_interval, ires);
+							ECPGset_noind_null(ECPGt_interval, ires);
 						}
 						else
 						{
@@ -493,7 +496,7 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 						if (INFORMIX_MODE(compat))
 						{
 							/* Informix wants its own NULL value here instead of an error */
-							ECPGset_informix_null(ECPGt_date, &ddres);
+							ECPGset_noind_null(ECPGt_date, &ddres);
 						}
 						else
 						{
@@ -531,7 +534,7 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 						if (INFORMIX_MODE(compat))
 						{
 							/* Informix wants its own NULL value here instead of an error */
-							ECPGset_informix_null(ECPGt_timestamp, &tres);
+							ECPGset_noind_null(ECPGt_timestamp, &tres);
 						}
 						else
 						{

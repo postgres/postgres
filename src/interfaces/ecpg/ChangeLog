@@ -1814,6 +1814,13 @@ Thu Jun 17 13:50:06 CEST 2004
 Sun Jun 20 12:44:01 CEST 2004
 
 	- Synced parser and keyword list.
+	
+Sun Jun 27 13:50:58 CEST 2004
+	
+	- Only use typedefs inside their scope.
+	- Variables that are out of scope, were not removed all the time.
+	- Make a varchar NULL set everything to 0 when not using indicators.
+	- Synced parser.
 	- Set pgtypes library version to 1.2.
 	- Set ecpg version to 3.2.0.
 	- Set compat library version to 1.2.

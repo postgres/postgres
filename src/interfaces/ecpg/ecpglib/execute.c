@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.33 2004/05/05 15:03:04 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.34 2004/06/27 12:28:40 meskes Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -532,7 +532,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 		case ECPGt_NO_INDICATOR:
 			if (stmt->force_indicator == false)
 			{
-				if (ECPGis_informix_null(var->type, var->value))
+				if (ECPGis_noind_null(var->type, var->value))
 					*tobeinserted_p = "null";
 			}
 			break;

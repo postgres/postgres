@@ -276,12 +276,46 @@ find_variable(char *name)
 }
 
 void
+remove_typedefs(int brace_level)
+{
+	struct typedefs *p,
+			   *prev;
+
+	for (p = prev = types; p;)
+	{
+		if (p->brace_level >= brace_level)
+		{
+			/* remove it */
+			if (p == types)
+				prev = types = p->next;
+			else
+				prev->next = p->next;
+
+			if (p->type->type_enum == ECPGt_struct || p->type->type_enum == ECPGt_union) 
+				free(p->struct_member_list);
+			free(p->type);
+			free(p->name);
+			free(p);
+			if (prev == types)
+				p = types;
+			else
+				p = prev ? prev->next : NULL;
+		}
+		else
+		{
+			prev = p;
+			p = prev->next;
+		}
+	}
+}
+
+void
 remove_variables(int brace_level)
 {
 	struct variable *p,
 			   *prev;
 
-	for (p = prev = allvariables; p; p = p ? p->next : NULL)
+	for (p = prev = allvariables; p;)
 	{
 		if (p->brace_level >= brace_level)
 		{
@@ -326,10 +360,16 @@ remove_variables(int brace_level)
 			ECPGfree_type(p->type);
 			free(p->name);
 			free(p);
-			p = prev;
+			if (prev == allvariables)
+				p = allvariables;
+			else
+				p = prev ? prev->next : NULL;
 		}
 		else
+		{
 			prev = p;
+			p = prev->next;
+		}
 	}
 }
 
