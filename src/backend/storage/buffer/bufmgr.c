@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.139 2003/08/04 02:40:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.140 2003/08/10 19:48:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1934,6 +1934,37 @@ LockBuffer(Buffer buffer, int mode)
 	}
 	else
 		elog(ERROR, "unrecognized buffer lock mode: %d", mode);
+}
+
+/*
+ * Acquire the cntx_lock for the buffer, but only if we don't have to wait.
+ *
+ * This assumes the caller wants BUFFER_LOCK_EXCLUSIVE mode.
+ */
+bool
+ConditionalLockBuffer(Buffer buffer)
+{
+	BufferDesc *buf;
+
+	Assert(BufferIsValid(buffer));
+	if (BufferIsLocal(buffer))
+		return true;			/* act as though we got it */
+
+	buf = &(BufferDescriptors[buffer - 1]);
+
+	if (LWLockConditionalAcquire(buf->cntx_lock, LW_EXCLUSIVE))
+	{
+		/*
+		 * This is not the best place to set cntxDirty flag (eg indices do
+		 * not always change buffer they lock in excl mode). But please
+		 * remember that it's critical to set cntxDirty *before* logging
+		 * changes with XLogInsert() - see comments in BufferSync().
+		 */
+		buf->cntxDirty = true;
+
+		return true;
+	}
+	return false;
 }
 
 /*

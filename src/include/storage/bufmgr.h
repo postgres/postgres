@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufmgr.h,v 1.69 2003/08/04 02:40:14 momjian Exp $
+ * $Id: bufmgr.h,v 1.70 2003/08/10 19:48:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -180,6 +180,7 @@ extern void SetBufferCommitInfoNeedsSave(Buffer buffer);
 
 extern void UnlockBuffers(void);
 extern void LockBuffer(Buffer buffer, int mode);
+extern bool ConditionalLockBuffer(Buffer buffer);
 extern void LockBufferForCleanup(Buffer buffer);
 
 extern void AbortBufferIO(void);

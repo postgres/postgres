@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.69 2003/08/08 21:41:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.70 2003/08/10 19:48:08 tgl Exp $
  *
  *	NOTES
  *	   Postgres btree pages look like ordinary relation pages.	The opaque
@@ -409,6 +409,22 @@ _bt_getbuf(Relation rel, BlockNumber blkno, int access)
 		 * that the page is still free.  (For example, an already-free
 		 * page could have been re-used between the time the last VACUUM
 		 * scanned it and the time the VACUUM made its FSM updates.)
+		 *
+		 * In fact, it's worse than that: we can't even assume that it's
+		 * safe to take a lock on the reported page.  If somebody else
+		 * has a lock on it, or even worse our own caller does, we could
+		 * deadlock.  (The own-caller scenario is actually not improbable.
+		 * Consider an index on a serial or timestamp column.  Nearly all
+		 * splits will be at the rightmost page, so it's entirely likely
+		 * that _bt_split will call us while holding a lock on the page most
+		 * recently acquired from FSM.  A VACUUM running concurrently with
+		 * the previous split could well have placed that page back in FSM.)
+		 *
+		 * To get around that, we ask for only a conditional lock on the
+		 * reported page.  If we fail, then someone else is using the page,
+		 * and we may reasonably assume it's not free.  (If we happen to be
+		 * wrong, the worst consequence is the page will be lost to use till
+		 * the next VACUUM, which is no big problem.)
 		 */
 		for (;;)
 		{
@@ -416,16 +432,24 @@ _bt_getbuf(Relation rel, BlockNumber blkno, int access)
 			if (blkno == InvalidBlockNumber)
 				break;
 			buf = ReadBuffer(rel, blkno);
-			LockBuffer(buf, access);
-			page = BufferGetPage(buf);
-			if (_bt_page_recyclable(page))
+			if (ConditionalLockBuffer(buf))
 			{
-				/* Okay to use page.  Re-initialize and return it */
-				_bt_pageinit(page, BufferGetPageSize(buf));
-				return buf;
+				page = BufferGetPage(buf);
+				if (_bt_page_recyclable(page))
+				{
+					/* Okay to use page.  Re-initialize and return it */
+					_bt_pageinit(page, BufferGetPageSize(buf));
+					return buf;
+				}
+				elog(DEBUG2, "FSM returned nonrecyclable page");
+				_bt_relbuf(rel, buf);
 			}
-			elog(DEBUG2, "FSM returned nonrecyclable page");
-			_bt_relbuf(rel, buf);
+			else
+			{
+				elog(DEBUG2, "FSM returned nonlockable page");
+				/* couldn't get lock, so just drop pin */
+				ReleaseBuffer(buf);
+			}
 		}
 
 		/*
