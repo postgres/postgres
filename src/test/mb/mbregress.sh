@@ -1,5 +1,5 @@
 #! /bin/sh
-# $Header: /cvsroot/pgsql/src/test/mb/mbregress.sh,v 1.5 2000/05/16 02:14:14 tgl Exp $
+# $Header: /cvsroot/pgsql/src/test/mb/mbregress.sh,v 1.6 2001/02/21 06:02:04 ishii Exp $
 
 if echo '\c' | grep -s c >/dev/null 2>&1
 then
@@ -13,6 +13,9 @@ fi
 if [ ! -d results ];then
     mkdir results
 fi
+
+dropdb unitest
+createdb -E UNICODE unitest
 
 PSQL="psql -n -e -q"
 tests="euc_jp sjis euc_kr euc_cn euc_tw big5 unicode mule_internal"
@@ -32,7 +35,7 @@ do
 		$PSQL euc_tw < sql/big5.sql > results/big5.out 2>&1
 		unset PGCLIENTENCODING
 	else
-		destroydb $i >/dev/null 2>&1
+		dropdb $i >/dev/null 2>&1
 		createdb -E `echo $i | tr 'abcdefghijklmnopqrstuvwxyz' 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'` $i >/dev/null
 		$PSQL $i < sql/${i}.sql > results/${i}.out 2>&1
 	fi
