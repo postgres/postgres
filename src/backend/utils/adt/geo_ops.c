@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.66 2002/09/05 00:43:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.66.2.1 2002/11/29 19:25:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1921,8 +1921,8 @@ lseg_eq(PG_FUNCTION_ARGS)
 	LSEG	   *l2 = PG_GETARG_LSEG_P(1);
 
 	PG_RETURN_BOOL(FPeq(l1->p[0].x, l2->p[0].x) &&
-				   FPeq(l1->p[1].y, l2->p[1].y) &&
-				   FPeq(l1->p[0].x, l2->p[0].x) &&
+				   FPeq(l1->p[0].y, l2->p[0].y) &&
+				   FPeq(l1->p[1].x, l2->p[1].x) &&
 				   FPeq(l1->p[1].y, l2->p[1].y));
 }
 
@@ -1933,8 +1933,8 @@ lseg_ne(PG_FUNCTION_ARGS)
 	LSEG	   *l2 = PG_GETARG_LSEG_P(1);
 
 	PG_RETURN_BOOL(!FPeq(l1->p[0].x, l2->p[0].x) ||
-				   !FPeq(l1->p[1].y, l2->p[1].y) ||
-				   !FPeq(l1->p[0].x, l2->p[0].x) ||
+				   !FPeq(l1->p[0].y, l2->p[0].y) ||
+				   !FPeq(l1->p[1].x, l2->p[1].x) ||
 				   !FPeq(l1->p[1].y, l2->p[1].y));
 }
 
