@@ -1,31 +1,25 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.104 2001/11/21 06:09:44 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.105 2001/12/23 18:20:05 petere Exp $
 -->
 
- <appendix id="release">
-  <title>Release Notes</title>
+<appendix id="release">
+ <title>Release Notes</title>
 
-  <sect1 id="release-7-2">
-   <title>Release 7.2</title>
-
-   <note>
+ <sect1 id="release-7-2">
+  <title>Release 7.2</title>
+<!--
+  <note>
    <title>Release date</title>
    <simpara>2001-??-??</simpara>
-   </note>
+  </note>
+-->
 
-   <!--
-  <docinfo>
-  <authorgroup>
-  <author>
-  <firstname>Bruce</firstname>
-  <surname>Momjian</surname>
-  </author>
-  </authorgroup>
-  </docinfo>
-   -->
+  <sect2>
+   <title>Overview</title>
 
    <para>
-	TO BE FILLED IN.  SEE /HISTORY.
+    This release improves <productname>PostgreSQL</> for use in
+    high-volume applications.
    </para>
 
    <para>
@@ -33,37 +27,516 @@ $Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.104 2001/11/21 06:09:44 th
 
     <variablelist>
      <varlistentry>
-      <term>
-	TO BE FILLED IN.  SEE /HISTORY.
-      </term>
+      <term>VACUUM</term>
       <listitem>
        <para>
-TO BE FILLED IN.  SEE /HISTORY.
+        Vacuuming no longer locks tables, thus allowing normal user
+        access during the vacuum.  A new <command>VACUUM FULL</>
+        command does old-style vacuum by locking the table and
+        shrinking the on-disk copy of the table.
+       </para>
+      </listitem>
+     </varlistentry>
+ 
+     <varlistentry>
+      <term>Transactions</term>
+      <listitem>
+       <para>
+        There is no longer a problem with installations that exceed
+        four billion transactions.
+       </para>
+      </listitem>
+     </varlistentry>
+ 
+     <varlistentry>
+      <term>OID's</term>
+      <listitem>
+       <para>
+        OID's are now optional.  Users can now create tables without
+        OID's for cases where OID usage is excessive.
+       </para>
+      </listitem>
+     </varlistentry>
+ 
+     <varlistentry>
+      <term>Optimizer</term>
+      <listitem>
+       <para>
+        The system now computes histogram column statistics during
+        <command>ANALYZE</>, allowing much better optimizer choices.
+       </para>
+      </listitem>
+     </varlistentry>
+ 
+     <varlistentry>
+      <term>Security</term>
+      <listitem>
+       <para>
+        A new MD5 encryption option allows more secure storage and
+        transfer of passwords.  A new Unix-domain socket
+        authentication option is available on Linux and BSD systems.
+       </para>
+      </listitem>
+     </varlistentry>
+ 
+     <varlistentry>
+      <term>Statistics</term>
+      <listitem>
+       <para>
+        Administrators can use the new table access statistics module
+        to get fine-grained information about table and index usage.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>Internationalization</term>
+      <listitem>
+       <para>
+        Program and library messages can now be displayed in several
+        languages.
        </para>
       </listitem>
      </varlistentry>
     </variablelist>
    </para>
+  </sect2>
 
-   <sect2>
-    <title>Migration to version 7.2</title>
+  <sect2>
+   <title>Migration to version 7.2</title>
 
-    <para>
-	A dump/restore using pg_dump is required for those wishing to migrate
-	data from any previous release.
-    </para>
-   </sect2>
+   <para>
+    A dump/restore using <command>pg_dump</command> is required for
+    those wishing to migrate data from any previous release.
+   </para>
 
-   <sect2>
-    <title>Changes</title>
+   <para>
+    Observe the following incompatibilities:
 
-    <para>
-     <programlisting>
-TO BE FILLED IN.  SEE /HISTORY.
-     </programlisting>
-    </para>
-   </sect2>
-  </sect1>
+    <itemizedlist>
+     <listitem>
+      <para>
+       The semantics of the <command>VACUUM</command> command have
+       changed in this release.  You may wish to update your
+       maintenance procedures accordingly.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       In this release, comparisons using <literal>= NULL</literal>
+       will always return false (or NULL, more precisely).  Previous
+       releases automatically transformed this syntax to <literal>IS
+       NULL</literal>.  The old behavior can be re-enabled using a
+       <filename>postgresql.conf</filename> parameter.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       The <filename>pg_hba.conf</> and <filename>pg_ident.conf</>
+       configuration is now only reloaded after receiving a
+       <systemitem>SIGHUP</> signal, not with each connection.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       The function <filename>octet_length()</> now returns the uncompressed data length.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       The date/time value <literal>current</literal> is no longer
+       available.  You will need to rewrite your applications.
+      </para>
+     </listitem>
+    </itemizedlist>
+   </para>
+
+   <para>
+    The <literal>SELECT ... LIMIT #,#</literal> syntax will be removed
+    in the next release. You should change your queries to use
+    separate LIMIT and OFFSET clauses, e.g. <literal>LIMIT 10 OFFSET
+    20</literal>.
+   </para>
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+<!-- as of 2001-12-22 -->
+
+   <sect3>
+    <title>Server Operation</title>
+<literallayout>
+Create temporary files in a separate directory (Bruce)
+Delete orphanded temporary files on postmaster startup (Bruce)
+Added unique indexes to some system tables (Tom)
+System table operator reorganization (Oleg Bartunov, Teodor Sigaev, Tom)
+Renamed pg_log to pg_clog (Tom)
+Enable SIGTERM, SIGQUIT to kill backends (Jan)
+Removed compile-time limit on number of backends (Tom)
+Better cleanup for semaphore resource failure (Tatsuo, Tom)
+Allow safe transaction ID wraparound (Tom)
+Removed OID's from some system tables (Tom)
+Removed "triggered data change violation" error check (Tom)
+SPI portal creation of prepared/saved plans (Jan)
+Allow SPI column functions to work for system columns (Tom)
+Long value compression improvement (Tom)
+Statistics collector for table, index access (Jan)
+Truncate extra-long sequence names to a reasonable value (Tom)
+Measure transaction times in milliseconds (Thomas)
+Fix TID sequential scans (Hiroshi)
+Superuser ID now fixed at 1 (Peter E)
+New pg_ctl "reload" option (Tom)
+</literallayout>
+   </sect3>
+
+   <sect3>
+    <title>Performance</title>
+<literallayout>
+Optimizer improvements (Tom)
+New histogram column statistics for optimizer (Tom)
+Reuse write-ahead log files rather than discarding them (Tom)
+Cache improvements (Tom)
+IS NULL, IS NOT NULL optimizer improvement (Tom)
+Improve lock manager to reduce lock contention (Tom)
+Keep relcache entries for index access support functions (Tom)
+Allow better selectivity with NaN and infinities in NUMERIC (Tom)
+R-tree performance improvements (Kenneth Been)
+B-tree splits more efficient (Tom)
+</literallayout>
+   </sect3>
+
+   <sect3>
+    <title>Privileges</title>
+<literallayout>
+Change UPDATE, DELETE permissions to be distinct (Peter E)
+New REFERENCES, TRIGGER privileges (Peter E)
+Allow GRANT/REVOKE to/from more than one user at a time (Peter E)
+New has_table_privilege() function (Joe Conway)
+Allow non-superuser to vacuum database (Tom)
+New SET SESSION AUTHORIZATION command (Peter E)
+Fix bug in privilege modifications on newly created tables (Tom)
+Disallow access to pg_statistic for non-superuser, add user-accessible views (Tom)
+</literallayout>
+   </sect3>
+
+   <sect3>
+    <title>Client Authentication</title>
+<literallayout>
+Fork postmaster before doing authentication to prevent hangs (Peter E)
+Add ident authentication over Unix domain sockets on Linux, *BSD (Helge Bahmann, Oliver Elphick, Teodor Sigaev, Bruce)
+Add a password authentication method that uses MD5 encryption (Bruce)
+Allow encryption of stored passwords using MD5 (Bruce)
+PAM authentication (Dominic J. Eidson)
+Load pg_hba.conf and pg_ident.conf only on startup and SIGHUP (Bruce)
+</literallayout>
+   </sect3>
+
+   <sect3>
+    <title>Server Configuration</title>
+<literallayout>
+Interpretation of some time zone abbreviations as Australian rather than North American now settable at run time (Bruce)
+New parameter to set default transaction isolation level (Peter E)
+New parameter to enable conversion of "expr = NULL" into "expr IS NULL", off by default (Peter E)
+New parameter to control memory usage by VACUUM (Tom)
+New parameter to set client authentication timeout (Tom)
+New parameter to set maximum number of open files (Tom)
+</literallayout>
+   </sect3>
+
+   <sect3>
+    <title>Queries</title>
+<literallayout>
+Statements added by INSERT rules now execute after the INSERT (Jan)
+Prevent unadorned relation names in target list (Bruce)
+NULLs now sort after all normal values in ORDER BY (Tom)
+New IS UNKNOWN, IS NOT UNKNOWN Boolean tests (Tom)
+New SHARE UPDATE EXCLUSIVE lock mode (Tom)
+New EXPLAIN ANALYZE command that shows run times and row counts (Martijn van Oosterhout)
+Fix problem with LIMIT and subqueries (Tom)
+Fix for LIMIT, DISTINCT ON pushed into subqueryies (Tom)
+Fix nested EXCEPT/INTERSECT (Tom)
+</literallayout>
+   </sect3>
+
+   <sect3>
+    <title>Schema Manipulation</title>
+<literallayout>
+Fix SERIAL in temporary tables (Bruce)
+Allow temporary sequences (Bruce)
+Sequences now use int8 internally (Tom)
+New SERIAL8 creates int8 columns with sequences, default still SERIAL4 (Tom)
+Make OIDs optional using WITHOUT OIDS (Tom)
+Add %TYPE syntax to CREATE TYPE (Ian Lance Taylor)
+Add ALTER TABLE / DROP CONSTRAINT for CHECK constraints (Christopher Kings-Lynne)
+New CREATE OR REPLACE FUNCTION to alter existing function (preserving the function OID) (Gavin Sherry)
+Add ALTER TABLE / ADD UNIQUE (Christopher Kings-Lynne)
+Allow column renaming in views
+Make ALTER TABLE / RENAME COLUMN update column names of indexes (Brent Verner)
+Fix for ALTER TABLE / ADD CONSTRAINT ... CHECK with inherited tables (Stephan Szabo)
+ALTER TABLE RENAME update foreign-key trigger arguments correctly (Brent Verner)
+DROP AGGREGATE and COMMENT ON AGGREGATE now accept an aggtype (Tom)
+Add automatic return type data casting for SQL functions (Tom)
+Allow GiST indexes to handle NULLs and multikey indexes (Oleg Bartunov, Teodor Sigaev, Tom)
+Enable partial indexes (Martijn van Oosterhout)
+</literallayout>
+   </sect3>
+
+   <sect3>
+    <title>Utility Commands</title>
+<literallayout>
+Add RESET ALL, SHOW ALL (Marko Kreen)
+CREATE/ALTER USER/GROUP now allow options in any order (Vince)
+Add LOCK A, B, C functionality (Neil Padgett)
+New ENCRYPTED/UNENCRYPTED option to CREATE/ALTER USER (Bruce)
+New light-weight VACUUM does not lock table; old semantics are available as VACUUM FULL (Tom)
+Disable COPY TO/FROM on views (Bruce)
+COPY DELIMITERS string must be exactly one character (Tom)
+VACUUM warning about index tuples fewer than heap now only appears when appropriate (Martijn van Oosterhout)
+</literallayout>
+   </sect3>
+
+   <sect3>
+    <title>Data Types and Functions</title>
+<literallayout>
+SUM(), AVG(), COUNT() now uses int8 internally for speed (Tom)
+Add convert(), convert2() (Tatsuo)
+New function bit_length() (Peter E)
+Make the "n" in CHAR(n)/VARCHAR(n) represents letters, not bytes (Tatsuo)
+CHAR(), VARCHAR() now reject strings that are too long (Peter E)
+BIT VARYING now rejects bit strings that are too long (Peter E)
+BIT now rejects bit strings that do not match declared size (Peter E)
+INET, CIDR text conversion functions (Alex Pilosov)
+INET, CIDR operators << and <<= indexable (Alex Pilosov)
+Bytea \### now requires valid three digit octal number
+Bytea comparison improvements, now supports =, &lt;&gt;, >, >=, <, and <=
+Bytea now supports B-tree indexes
+Bytea now supports LIKE, LIKE...ESCAPE, NOT LIKE, NOT LIKE...ESCAPE
+Bytea now supports concatenation
+New bytea functions: position, substring, trim, btrim, and length
+New encode() function mode, "escaped", converts minimally escaped bytea to/from text
+Add pg_database_encoding_max_length() (Tatsuo)
+Add pg_client_encoding() function (Tatsuo)
+now() returns time with millisecond precision (Thomas)
+New TIMESTAMP WITHOUT TIMEZONE data type (Thomas)
+Add ISO date/time specification with "T", yyyy-mm-ddThh:mm:ss (Thomas)
+New xid/int comparison functions (Hiroshi)
+Add precision to TIME, TIMESTAMP, and INVERVAL data types (Thomas)
+Modify type coersion logic to attempt binary-compatible functions first (Tom)
+New encode() function installed by default (Marko Kreen)
+Improved to_*() conversion functions (Karel Zak)
+Optimize LIKE/ILIKE when using single-byte encodings (Tatsuo)
+New functions in contrib/pgcrypto: crypt(), hmac(), encrypt(), gen_salt() (Marko Kreen)
+Correct description of translate() function (Bruce)
+Add INTERVAL argument for SET TIME ZONE (Thomas)
+Add INTERVAL YEAR TO MONTH (etc.) syntax (Thomas)
+Optimize length functions when using single-byte encodings (Tatsuo)
+Fix path_inter, path_distance, path_length, dist_ppath to handle closed paths (Curtis Barrett, Tom)
+octet_length(text) now returns non-compressed length (Tatsuo, Bruce)
+Handle "July" full name in date/time literals (Greg Sabino Mullane)
+</literallayout>
+   </sect3>
+
+   <sect3>
+    <title>Internationalization</title>
+<literallayout>
+Native language support in psql, pg_dump, libpq, and server (Peter E)
+Message translations in Chinese (simplified, traditional), Czech, French, German, Hungarian, Russian, Swedish (Peter E, Serguei A. Mokhov, Karel Zak, Weiping He, Zhenbang Wei, Kovacs Zoltan)
+Make trim, ltrim, rtrim, btrim, lpad, rpad, translate multibyte aware (Tatsuo)
+Add LATIN5,6,7,8,9,10 support (Tatsuo)
+Add ISO 8859-5,6,7,8 support (Tatsuo)
+Correct LATIN5 to mean ISO-8859-9, not ISO-8859-5 (Tatsuo)
+Make mic2ascii() non-ASCII aware (Tatsuo)
+Reject invalid multibyte character sequences (Tatsuo)
+</literallayout>
+   </sect3>
+
+   <sect3>
+    <title>PL/pgSQL</title>
+<literallayout>
+Now uses portals for SELECT loops, allowing huge result sets (Jan)
+CURSOR and REFCURSOR support (Jan)
+Can now return open cursors (Jan)
+Add ELSEIF (Klaus Reger)
+Improve PL/pgSQL error reporting, including location of error (Tom)
+Allow IS or FOR key words in cursor declaration, for compatibility (Bruce)
+Fix for SELECT ... FOR UPDATE (Tom)
+Fix for PERFORM returning multiple rows (Tom)
+Make PL/PgSQL use the server's type coercion code (Tom)
+Memory leak fix (Jan, Tom)
+Make trailing semicolon optional (Tom)
+</literallayout>
+   </sect3>
+
+   <sect3>
+    <title>PL/Perl</title>
+<literallayout>
+New untrusted PL/Perl (Alex Pilosov)
+PL/Perl is now built on some platforms even if libperl is not shared (Peter E)
+</literallayout>
+    </sect3>
+
+   <sect3>
+    <title>PL/Tcl</title>
+<literallayout>
+Now reports errorInfo (Vsevolod Lobko)
+Add spi_lastoid function (bob@redivi.com)
+</literallayout>
+   </sect3>
+
+   <sect3>
+    <title>PL/Python</title>
+<literallayout>
+...is new (Andrew Bosma)
+</literallayout>
+   </sect3>
+
+   <sect3>
+    <title>Psql</title>
+<literallayout>
+\d displays indexes in unique, primary groupings (Christopher Kings-Lynne)
+Allow trailing semicolons in backslash commands (Greg Sabino Mullane)
+Read password from /dev/tty if possible
+Force new password prompt when changing user and database (Tatsuo, Tom)
+Format the correct number of columns for Unicode (Patrice)
+</literallayout>
+   </sect3>
+
+   <sect3>
+    <title>Libpq</title>
+<literallayout>
+New function PQescapeString() to escape quotes in command strings (Florian Weimer)
+New function PQescapeBytea() escapes binary strings for use as SQL string literals
+</literallayout>
+   </sect3>
+
+   <sect3>
+    <title>JDBC</title>
+<literallayout>
+Return OID of INSERT (Ken K)
+Handle more data types (Ken K)
+Handle single quotes and newlines in strings (Ken K)
+Handle NULL variables (Ken K)
+Fix for time zone handling (Barry Lind)
+Improved Druid support
+Allow eight-bit characters with non-multibyte server (Barry Lind)
+Support BIT, BINARY types (Ned Wolpert)
+Reduce memory usage (Michael Stephens, Dave Cramer)
+Update DatabaseMetaData (Peter E)
+Add DatabaseMetaData.getCatalogs() (Peter E)
+Encoding fixes (Anders Bengtsson)
+Get/setCatalog methods (Jason Davies)
+DatabaseMetaData.getColumns() now returns column defaults (Jason Davies)
+DatabaseMetaData.getColumns() performance improvement (Jeroen van Vianen)
+Some JDBC1 and JDBC2 merging (Anders Bengtsson)
+Transaction performance improvements (Barry Lind)
+Array fixes (Greg Zoller)
+Serialize addition 
+Fix batch processing (Rene Pijlman)
+ExecSQL method reorganization (Anders Bengtsson)
+GetColumn() fixes (Jeroen van Vianen)
+Fix isWriteable() function (Rene Pijlman)
+Improved passage of JDBC2 conformance tests (Rene Pijlman)
+Add bytea type capability (Barry Lind)
+Add isNullable() (Rene Pijlman)
+JDBC date/time test suite fixes (Liam Stewart)
+Fix for SELECT 'id' AS xxx FROM table (Dave Cramer)
+Fix DatabaseMetaData to show precision properly (Mark Lillywhite)
+New getImported/getExported keys (Jason Davies)
+MD5 password encryption support (Jeremy Wohl)
+Fix to actually use type cache (Ned Wolpert)
+</literallayout>
+   </sect3>
+
+   <sect3>
+    <title>ODBC</title>
+<literallayout>
+Remove query size limit (Hiroshi)
+Remove text field size limit (Hiroshi)
+Fix for SQLPrimaryKeys in multibyte mode (Hiroshi)
+Allow ODBC procedure calls (Hiroshi)
+Improve boolean handing (Aidan Mountford)
+Most configuration options on setable via DSN (Hiroshi)
+Multibyte, performance fixes (Hiroshi)
+Allow driver to be used with iODBC or unixODBC (Peter E)
+MD5 password encryption support (Bruce)
+Add more compatibility functions to odbc.sql (Peter E)
+</literallayout>
+   </sect3>
+
+   <sect3>
+    <title>ECPG</title>
+<literallayout>
+EXECUTE ... INTO implemented
+multiple row descriptor support (e.g. CARDINALITY)
+Fix for GRANT parameters (Lee Kindness)
+Fix INITIALLY DEFERRED bug
+Various bug fixes (Michael, Christof Petig)
+</literallayout>
+   </sect3>
+
+   <sect3>
+    <title>Misc. Interfaces</title>
+<literallayout>
+Python fix fetchone() (Gerhard Haring)
+Use UTF, Unicode in Tcl where appropriate (Vsevolod Lobko, Reinhard Max)
+Add Tcl COPY TO/FROM (ljb)
+Prevent output of default index op class in pg_dump (Tom)
+Fix libpgeasy memory leak (Bruce)
+</literallayout>
+   </sect3>
+
+   <sect3>
+    <title>Build and Install</title>
+<literallayout>
+Configure, dynamic loader, and shared library fixes (Peter E)
+Fixes in QNX 4 port (Bernd Tegge)
+Fixes in Cygwin and Win32 ports (Jason Tishler, Gerhard Haring, Dmitry Yurtaev, Darko Prenosil, Mikhail Terekhov)
+Fix for Win32 socket communication failures (Magnus, Mikhail Terekhov)
+Hurd compile fix (Oliver Elphick)
+BeOS fixes (Cyril Velter)
+Remove configure --enable-unicode-conversion, now enabled by multibyte (Tatsuo)
+AIX fixes (Tatsuo, Andreas)
+Fix parallel make (Peter E)
+Install SQL language manual pages into OS-specific directories (Peter E)
+Rename config.h to pg_config.h (Peter E)
+Reorganize installation layout of header files (Peter E)
+</literallayout>
+   </sect3>
+
+   <sect3>
+    <title>Source Code</title>
+<literallayout>
+Remove SEP_CHAR (Bruce)
+New GUC hooks (Tom)
+Merge GUC and command line handling (Marko Kreen)
+Remove EXTEND INDEX (Martijn van Oosterhout, Tom)
+New pgjindent utility to indent java code (Bruce)
+Remove define of true/false when compiling under C++ (Leandro Fanzone, Tom)
+pgindent fixes (Bruce, Tom)
+Replace strcasecmp() with strcmp() where appropriate (Peter E)
+Dynahash portability improvements (Tom)
+</literallayout>
+   </sect3>
+
+   <sect3>
+    <title>Contrib</title>
+<literallayout>
+New contrib/rtree_gist (Oleg Bartunov, Teodor Sigaev)
+New contrib/tsearch full-text indexing (Oleg, Teodor Sigaev)
+Add contrib/dblink for remote database access (Joe Conway)
+contrib/ora2pg Oracle conversion utility (Gilles Darold)
+contrib/xml XML conversion utility (John Gray)
+contrib/fulltextindex fixes (Christopher Kings-Lynne)
+New contrib/fuzzystrmatch with levenshtein and metaphone, soundex merged (Joe Conway)
+Add contrib/intarray boolean queries, binary search, fixes (Oleg Bartunov)
+</literallayout>
+   </sect3>
+  </sect2>
+ </sect1>
 
 
   <sect1 id="release-7-1-3">
@@ -73,17 +546,6 @@ TO BE FILLED IN.  SEE /HISTORY.
    <title>Release date</title>
    <simpara>2001-08-15</simpara>
    </note>
-
-   <!--
-  <docinfo>
-  <authorgroup>
-  <author>
-  <firstname>Bruce</firstname>
-  <surname>Momjian</surname>
-  </author>
-  </authorgroup>
-  </docinfo>
-   -->
 
    <sect2>
     <title>Migration to version 7.1.3</title>
@@ -123,17 +585,6 @@ Cygwin build (Jason Tishler)
    <simpara>2001-05-11</simpara>
    </note>
 
-   <!--
-  <docinfo>
-  <authorgroup>
-  <author>
-  <firstname>Bruce</firstname>
-  <surname>Momjian</surname>
-  </author>
-  </authorgroup>
-  </docinfo>
-   -->
-
    <para>
     This has one fix from 7.1.1.
    </para>
@@ -171,17 +622,6 @@ pg_dump cleanups
    <title>Release date</title>
    <simpara>2001-05-05</simpara>
    </note>
-
-   <!--
-  <docinfo>
-  <authorgroup>
-  <author>
-  <firstname>Bruce</firstname>
-  <surname>Momjian</surname>
-  </author>
-  </authorgroup>
-  </docinfo>
-   -->
 
    <para>
     This has a variety of fixes from 7.1.
@@ -229,17 +669,6 @@ Python fixes (Darcy)
    <title>Release date</title>
    <simpara>2001-04-13</simpara>
    </note>
-
-   <!--
-  <docinfo>
-  <authorgroup>
-  <author>
-  <firstname>Bruce</firstname>
-  <surname>Momjian</surname>
-  </author>
-  </authorgroup>
-  </docinfo>
-   -->
 
    <para>
 	This release focuses on removing limitations that have existed in the
@@ -539,17 +968,6 @@ New FreeBSD tools ipc_check, start-scripts/freebsd
    <simpara>2000-11-11</simpara>
    </note>
 
-   <!--
-  <docinfo>
-  <authorgroup>
-  <author>
-  <firstname>Bruce</firstname>
-  <surname>Momjian</surname>
-  </author>
-  </authorgroup>
-  </docinfo>
-   -->
-
    <para>
     This has a variety of fixes from 7.0.2.
    </para>
@@ -622,17 +1040,6 @@ Fix for crash of backend, on abort (Tom)
    <simpara>2000-06-05</simpara>
    </note>
 
-   <!--
-  <docinfo>
-  <authorgroup>
-  <author>
-  <firstname>Bruce</firstname>
-  <surname>Momjian</surname>
-  </author>
-  </authorgroup>
-  </docinfo>
-   -->
-
    <para>
     This is a repackaging of 7.0.1 with added documentation.
    </para>
@@ -666,17 +1073,6 @@ Added documentation to tarball.
    <title>Release date</title>
    <simpara>2000-06-01</simpara>
    </note>
-
-   <!--
-  <docinfo>
-  <authorgroup>
-  <author>
-  <firstname>Bruce</firstname>
-  <surname>Momjian</surname>
-  </author>
-  </authorgroup>
-  </docinfo>
-   -->
 
    <para>
     This is a cleanup release for 7.0.
@@ -733,16 +1129,6 @@ ecpg changes (Michael)
    <simpara>2000-05-08</simpara>
    </note>
 
-   <!--
-  <docinfo>
-  <authorgroup>
-  <author>
-  <firstname>Bruce</firstname>
-  <surname>Momjian</surname>
-  </author>
-  </authorgroup>
-  </docinfo>
-   -->
    <para> 
     This release contains improvements in many areas, demonstrating
     the continued growth of <productname>PostgreSQL</productname>.
@@ -1224,17 +1610,6 @@ New multibyte encodings
    <simpara>1999-10-13</simpara>
    </note>
 
-   <!--
-  <docinfo>
-  <authorgroup>
-  <author>
-  <firstname>Bruce</firstname>
-  <surname>Momjian</surname>
-  </author>
-  </authorgroup>
-  </docinfo>
-   -->
-
    <para>
     This is basically a cleanup release for 6.5.2.  We have added a new
     <application>PgAccess</> that was missing in 6.5.2, and installed an NT-specific fix.
@@ -1270,17 +1645,6 @@ Fix dumping rules on inherited tables
    <title>Release date</title>
    <simpara>1999-09-15</simpara>
    </note>
-
-   <!--
-  <docinfo>
-  <authorgroup>
-  <author>
-  <firstname>Bruce</firstname>
-  <surname>Momjian</surname>
-  </author>
-  </authorgroup>
-  </docinfo>
-   -->
 
    <para>
     This is basically a cleanup release for 6.5.1.  We have fixed a variety of
@@ -1339,17 +1703,6 @@ Updated version of pgaccess 0.98
    <simpara>1999-07-15</simpara>
    </note>
 
-   <!--
-  <docinfo>
-  <authorgroup>
-  <author>
-  <firstname>Bruce</firstname>
-  <surname>Momjian</surname>
-  </author>
-  </authorgroup>
-  </docinfo>
-   -->
-
    <para>
     This is basically a cleanup release for 6.5.  We have fixed a variety of
     problems reported by 6.5 users.
@@ -1404,17 +1757,6 @@ Add Win1250 (Czech) support (Pavel Behal)
    <title>Release date</title>
    <simpara>1999-06-09</simpara>
    </note>
-
-   <!--
-  <docinfo>
-  <authorgroup>
-  <author>
-  <firstname>Bruce</firstname>
-  <surname>Momjian</surname>
-  </author>
-  </authorgroup>
-  </docinfo>
-   -->
 
    <para>
     This release marks a major step in the development team's mastery of the source
@@ -1814,17 +2156,6 @@ New install commands for plpgsql(Jan)
    <simpara>1998-12-20</simpara>
    </note>
 
-<!--
-<docinfo>
-<authorgroup>
-<author>
-<firstname>Bruce</firstname>
-<surname>Momjian</surname>
-</author>
-</authorgroup>
-</docinfo>
--->
-
 <para>
 The 6.4.1 release was improperly packaged.  This also has one additional
 bug fix.
@@ -1859,17 +2190,6 @@ Fix for datetime constant problem on some platforms(Thomas)
    <title>Release date</title>
    <simpara>1998-12-18</simpara>
    </note>
-
-<!--
-<docinfo>
-<authorgroup>
-<author>
-<firstname>Bruce</firstname>
-<surname>Momjian</surname>
-</author>
-</authorgroup>
-</docinfo>
--->
 
 <para>
 This is basically a cleanup release for 6.4.  We have fixed a variety of
@@ -1934,17 +2254,6 @@ Upgrade to PyGreSQL 2.2(D'Arcy)
    <title>Release date</title>
    <simpara>1998-10-30</simpara>
    </note>
-
-<!--
-<docinfo>
-<authorgroup>
-<author>
-<firstname>Bruce</firstname>
-<surname>Momjian</surname>
-</author>
-</authorgroup>
-</docinfo>
--->
 
 <para>
 There are <emphasis>many</emphasis> new features and improvements in this release.
@@ -2243,17 +2552,6 @@ new Makefile.shlib for shared library configuration(Tom)
    <simpara>1998-04-07</simpara>
    </note>
 
-<!--
-<docinfo>
-<authorgroup>
-<author>
-<firstname>Bruce</firstname>
-<surname>Momjian</surname>
-</author>
-</authorgroup>
-</docinfo>
--->
-
 <para>
 This is a bug-fix release for 6.3.x.
 Refer to the release notes for version 6.3 for a more complete summary of new features.
@@ -2323,17 +2621,6 @@ ASSERT fixes(Bruce)
    <title>Release date</title>
    <simpara>1998-03-23</simpara>
    </note>
-
-   <!--
-  <docinfo>
-  <authorgroup>
-  <author>
-  <firstname>Bruce</firstname>
-  <surname>Momjian</surname>
-  </author>
-  </authorgroup>
-  </docinfo>
-   -->
 
    <para>
     Summary:
@@ -2420,17 +2707,6 @@ Better identify tcl and tk libs and includes(Bruce)
    <title>Release date</title>
    <simpara>1998-03-01</simpara>
    </note>
-
-   <!--
-  <docinfo>
-  <authorgroup>
-  <author>
-  <firstname>Bruce</firstname>
-  <surname>Momjian</surname>
-  </author>
-  </authorgroup>
-  </docinfo>
-   -->
 
    <para>
     There are <emphasis>many</emphasis> new features and improvements in this release.
@@ -2744,17 +3020,6 @@ Remove un-needed malloc() calls and replace with palloc()(Bruce)
    <simpara>1997-10-17</simpara>
    </note>
 
-<!--
-<docinfo>
-<authorgroup>
-<author>
-<firstname>Bruce</firstname>
-<surname>Momjian</surname>
-</author>
-</authorgroup>
-</docinfo>
--->
-
 <para>
 6.2.1 is a bug-fix and usability release on 6.2.
 </para>
@@ -2836,17 +3101,6 @@ Trigger function for inserting user names for INSERT/UPDATE(Brook Milligan)
    <title>Release date</title>
    <simpara>1997-10-02</simpara>
    </note>
-
-<!--
-<docinfo>
-<authorgroup>
-<author>
-<firstname>Bruce</firstname>
-<surname>Momjian</surname>
-</author>
-</authorgroup>
-</docinfo>
--->
 
 <para>
 A dump/restore is required for those wishing to migrate data from
@@ -3001,18 +3255,6 @@ SPI and Trigger programming guides (Vadim & D'Arcy)
    <simpara>1997-07-22</simpara>
    </note>
 
-<!--
-<docinfo>
-<authorgroup>
-<author>
-<firstname>Bruce</firstname>
-<surname>Momjian</surname>
-</author>
-</authorgroup>
-</docinfo>
--->
-
-
 <sect2>
 <title>Migration from version 6.1 to version 6.1.1</title>
 
@@ -3057,17 +3299,6 @@ pg_dumpall now returns proper status, portability fix(Bruce)
    <title>Release date</title>
    <simpara>1997-06-08</simpara>
    </note>
-
-<!--
-<docinfo>
-<authorgroup>
-<author>
-<firstname>Bruce</firstname>
-<surname>Momjian</surname>
-</author>
-</authorgroup>
-</docinfo>
--->
 
 <para>
   The regression tests have been adapted and extensively modified for the
@@ -3240,17 +3471,6 @@ DG-UX, Ultrix, Irix, AIX portability fixes
    <simpara>1997-01-29</simpara>
    </note>
 
-<!--
-<docinfo>
-<authorgroup>
-<author>
-<firstname>Bruce</firstname>
-<surname>Momjian</surname>
-</author>
-</authorgroup>
-</docinfo>
--->
-
 <para>
 A dump/restore is required for those wishing to migrate data from
 previous releases of <productname>PostgreSQL</productname>.
@@ -3389,27 +3609,13 @@ Unused/uninialized variables corrected
 
 <sect1 id="release-1-09">
 <title>Release 1.09</title>
-<!--
-<docinfo>
-<authorgroup>
-<author>
-<firstname>Bruce</firstname>
-<surname>Momjian</surname>
-</author>
-</authorgroup>
-<date>
-1996-11-04
-</date>
-</docinfo>
--->
-
-<para>
 
    <note>
    <title>Release date</title>
    <simpara>1996-11-04</simpara>
    </note>
 
+<para>
 Sorry, we didn't keep track of changes from 1.02 to 1.09.  Some of
 the changes listed in 6.0 were actually included in the 1.02.1 to 1.09
 releases.
@@ -3423,17 +3629,6 @@ releases.
    <title>Release date</title>
    <simpara>1996-08-01</simpara>
    </note>
-
-<!--
-<docinfo>
-<authorgroup>
-<author>
-<firstname>Bruce</firstname>
-<surname>Momjian</surname>
-</author>
-</authorgroup>
-</docinfo>
--->
 
 <sect2>
 <title>Migration from version 1.02 to version 1.02.1</title>
@@ -3584,16 +3779,6 @@ Contributors (appologies to any missed)
    <simpara>1996-02-23</simpara>
    </note>
 
-<!--
-<docinfo>
-<authorgroup>
-<author>
-<firstname>Bruce</firstname>
-<surname>Momjian</surname>
-</author>
-</authorgroup>
-</docinfo>
--->
 
 <sect2>
 <title>Migration from version 1.0 to version 1.01</title>
@@ -3786,17 +3971,6 @@ Bug fixes:
    <simpara>1995-09-05</simpara>
    </note>
 
-<!--
-<docinfo>
-<authorgroup>
-<author>
-<firstname>Bruce</firstname>
-<surname>Momjian</surname>
-</author>
-</authorgroup>
-</docinfo>
--->
-
 <sect2>
 <title>Changes</title>
 
@@ -3853,17 +4027,6 @@ Bug fixes:
    <title>Release date</title>
    <simpara>1995-07-21</simpara>
    </note>
-
-<!--
-<docinfo>
-<authorgroup>
-<author>
-<firstname>Bruce</firstname>
-<surname>Momjian</surname>
-</author>
-</authorgroup>
-</docinfo>
--->
 
 <sect2>
 <title>Changes</title>
@@ -3987,17 +4150,6 @@ New documentation:
    <simpara>1995-05-25</simpara>
    </note>
 
-<!--
-<docinfo>
-<authorgroup>
-<author>
-<firstname>Bruce</firstname>
-<surname>Momjian</surname>
-</author>
-</authorgroup>
-</docinfo>
--->
-
 <sect2>
 <title>Changes</title>
 
@@ -4049,22 +4201,12 @@ The following bugs have been fixed in postgres95-beta-0.02:
    <simpara>1995-05-01</simpara>
    </note>
 
-<!--
-<docinfo>
-<authorgroup>
-<author>
-<firstname>Bruce</firstname>
-<surname>Momjian</surname>
-</author>
-</authorgroup>
-</docinfo>
--->
-
 <para>
 Initial release.
 </para>
 </sect1>
 
+<![IGNORE[
   <sect1 id="timing-results">
    <title>Timing Results</title>
 
@@ -4162,6 +4304,7 @@ In general, however, 6.3 is substantially faster than previous releases (thanks,
 </para>
 </sect2>
 </sect1>
+]]>
 </appendix>
 
 <!-- Keep this comment at the end of the file
