@@ -463,7 +463,7 @@ Compile the program.  Type
 <Step Performance="required">
 <Para>
  If necessary, tell UNIX how to find your shared libraries.  If you
-     are using Linux/ELF or any ELF-based system, do ONE of the following,
+     are using an ELF-based system, such as Linux, do ONE of the following,
      preferably the first:
 <SubSteps>
 <Step Performance="optional">
