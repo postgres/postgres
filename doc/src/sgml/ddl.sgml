@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ddl.sgml,v 1.1 2002/08/05 19:44:57 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ddl.sgml,v 1.2 2002/08/28 20:17:44 momjian Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -985,6 +985,15 @@ DROP TABLE products CASCADE;
     <literal>RESTRICT</literal> or <literal>CASCADE</literal> is
     required.  No database system actually implements it that way, but
     the defaults might be different.
+   </para>
+  </note>
+
+  <note>
+   <para>
+    Foreign Key constraint dependencies and SERIAL dependencies from
+    <productname>PostgreSQL</productname> versions prior to 7.3 are
+    <emphasis>not</emphasis> maintained or created during the upgrade
+    process.  However, all other dependency types are created successfully.
    </para>
   </note>
  </sect1>
