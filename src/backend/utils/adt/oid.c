@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/oid.c,v 1.4 1997/01/10 20:19:45 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/oid.c,v 1.5 1997/03/12 21:09:15 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,14 +37,14 @@ Oid *oid8in(char *oidString)
 	return(NULL);
     result = (Oid (*)[]) palloc(sizeof(Oid [8]));
     if ((nums = sscanf(oidString, "%d%d%d%d%d%d%d%d",
-		       *result,
-		       *result + 1,
-		       *result + 2,
-		       *result + 3,
-		       *result + 4,
-		       *result + 5,
-		       *result + 6,
-		       *result + 7)) != 8) {
+		       &(*result)[0],
+		       &(*result)[1],
+		       &(*result)[2],
+		       &(*result)[3],
+		       &(*result)[4],
+		       &(*result)[5],
+		       &(*result)[6],
+		       &(*result)[7])) != 8) {
 	do
 	    (*result)[nums++] = 0;
 	while (nums < 8);

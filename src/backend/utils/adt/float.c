@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.12 1997/02/19 20:10:49 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.13 1997/03/12 21:09:11 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -99,6 +99,26 @@ extern double	atof(const char *p);
 #define FLOAT4_MIN       FLT_MIN
 #define FLOAT8_MAX       DBL_MAX
 #define FLOAT8_MIN       DBL_MIN
+
+/* 
+ * if FLOAT8_MIN and FLOAT8_MAX are the limits of the range a
+ * double can store, then how are we ever going to wind up
+ * with something stored in a double that is outside those
+ * limits?  (and similarly for FLOAT4_{MIN,MAX}/float.)
+ * doesn't make sense to me, and it causes a
+ * floating point exception on linuxalpha, so UNSAFE_FLOATS
+ * it is.
+ * (maybe someone wanted to allow for values other than DBL_MIN/
+ * DBL_MAX for FLOAT8_MIN/FLOAT8_MAX?)
+ *                              --djm 12/12/96
+ * according to Richard Henderson this is a known bug in gcc on 
+ * the Alpha.  might as well leave the workaround in 
+ * until the distributions are updated.
+ *                              --djm 12/16/96
+ */
+#if defined(linuxalpha) && !defined(UNSAFE_FLOATS)
+#define UNSAFE_FLOATS
+#endif
 
 /*
    check to see if a float4 val is outside of

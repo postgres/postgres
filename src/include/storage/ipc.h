@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: ipc.h,v 1.15 1997/03/03 23:34:27 scrappy Exp $
+ * $Id: ipc.h,v 1.16 1997/03/12 21:12:27 scrappy Exp $
  *
  * NOTES
  *    This file is very architecture-specific.  This stuff should actually
@@ -32,7 +32,7 @@ extern void S_LOCK(slock_t *lock);
 extern void S_UNLOCK(slock_t *lock);
 extern void S_INIT_LOCK(slock_t *lock);
 
-#if defined(alpha) || \
+#if (defined(alpha) && !defined(linuxalpha)) || \
     defined(hpux) || \
     defined(irix5) || \
     defined(nextstep)

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_list.h,v 1.3 1996/11/04 07:18:19 scrappy Exp $
+ * $Id: pg_list.h,v 1.4 1997/03/12 21:11:23 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,7 +44,10 @@ typedef struct Value {
  */
 typedef	struct List {
     NodeTag		type;
-    void		*elem;
+    union {
+      void *ptr_value;
+      int   int_value;
+    } elem;
     struct List		*next;
 } List;
 
@@ -54,9 +57,14 @@ typedef	struct List {
  *	accessor macros
  * ----------------
  */
-#define lfirst(l)				((l)->elem)
+
+/* anything that doesn't end in 'i' is assumed to be referring to the */
+/* pointer version of the list (where it makes a difference)          */
+#define lfirst(l)				((l)->elem.ptr_value)
 #define lnext(l)				((l)->next)
 #define lsecond(l)				(lfirst(lnext(l)))
+
+#define lfirsti(l)                              ((l)->elem.int_value)
 
 /*
  * foreach -
@@ -85,12 +93,12 @@ extern void freeList(List *list);
 extern void *nth(int n, List *l);
 extern void set_nth(List *l, int n, void *elem);
 		    
-/* hack for now */
-#define	lconsi(i,l)	lcons((void*)(int)i,l)
-#define lfirsti(l)	((int)lfirst(l))
-#define	lappendi(l,i)	lappend(l,(void*)i)
+List *lconsi(int datum, List *list);
+List *lappendi(List *list, int datum);
 extern bool intMember(int, List *);
 extern List *intAppend(List *list1, List *list2);
+
+extern int nthi(int n, List *l);
 
 extern List *nreverse(List *);
 extern List *set_difference(List *, List *);

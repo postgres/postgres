@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.7 1997/01/10 20:17:56 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.8 1997/03/12 21:05:56 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -292,7 +292,7 @@ create_seqscan_node(Path *best_path, List *tlist, List *scan_clauses)
     if(temp == NULL)
 	elog(WARN,"scanrelid is empty");
     else
-	scan_relid = (Index)lfirst(temp); /* ??? who takes care of lnext? - ay */
+	scan_relid = (Index)lfirsti(temp); /* ??? who takes care of lnext? - ay */
     scan_node = make_seqscan(tlist,
 			     scan_clauses,
 			     scan_relid,
@@ -640,10 +640,10 @@ fix_indxqual_references(Node *clause, Path *index_path)
 	      is_funcclause((Node*)get_leftop((Expr*)clause)) && 
 	      ((Func*)((Expr*)get_leftop((Expr*)clause))->oper)->funcisindex){
 	Var *newvar =
-	    makeVar((Index)lfirst(index_path->parent->relids),
+	    makeVar((Index)lfirsti(index_path->parent->relids),
 		    1, /* func indices have one key */
 		    ((Func*)((Expr*)clause)->oper)->functype,
-		    (Index)lfirst(index_path->parent->relids),
+		    (Index)lfirsti(index_path->parent->relids),
 		    0);
 
 	return

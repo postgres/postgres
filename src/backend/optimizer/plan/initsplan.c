@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.3 1997/02/20 02:53:26 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.4 1997/03/12 21:05:59 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -256,8 +256,8 @@ add_join_clause_info_to_rels(Query *root, CInfo *clauseinfo, List *join_relids)
     	
     	foreach (rel, join_relids)
     	{
-    	    if ( (int)lfirst(rel) != (int)lfirst(join_relid) )
-    	    	other_rels = lappendi (other_rels, lfirst(rel));
+    	    if ( lfirsti(rel) != lfirsti(join_relid) )
+    	    	other_rels = lappendi (other_rels, lfirsti(rel));
     	}
     	
 	joininfo = 

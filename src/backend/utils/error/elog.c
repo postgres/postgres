@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.12 1997/02/14 04:17:57 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.13 1997/03/12 21:10:53 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,7 +49,8 @@ elog(int lev, const char *fmt, ... )
     extern	int	errno, sys_nerr;
 #if !defined(BSD44_derived) && \
     !defined(bsdi) && \
-    !defined(bsdi_2_1)
+    !defined(bsdi_2_1) && \
+    !defined(linuxalpha)
     extern	char	*sys_errlist[];
 #endif /* bsd derived */
 #ifndef PG_STANDALONE

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/s_lock.c,v 1.11 1997/02/14 04:16:43 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/s_lock.c,v 1.12 1997/03/12 21:06:48 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -126,7 +126,7 @@ S_LOCK_FREE(slock_t *lock)
  * (see storage/ipc.h).
  */
 
-#if defined(alpha)
+#if defined(alpha) && !defined(linuxalpha)
 
 void
 S_LOCK(slock_t *lock)
@@ -408,5 +408,49 @@ S_INIT_LOCK(slock_t *lock)
 
 #endif /* NEED_I386_TAS_ASM */
 
+
+#if defined(linuxalpha)
+
+int
+tas(slock_t *m)
+{
+    slock_t res;
+    __asm__("         ldq   $0, %0            \n\
+                      bne   $0, already_set   \n\
+                      ldq_l $0, %0            \n\
+                      bne   $0, already_set   \n\
+                      or    $31, 1, $0        \n\
+                      stq_c $0, %0            \n\
+                      beq   $0, stqc_fail     \n\
+        success:      bis   $31, $31, %1      \n\
+                      mb                      \n\
+                      jmp   $31, end          \n\
+        stqc_fail:    or    $31, 1, $0        \n\
+        already_set:  bis   $0, $0, %1        \n\
+        end:          nop      " : "=m" (*m), "=r" (res) :: "0" );
+    return(res);
+}
+
+void
+S_LOCK(slock_t *lock)
+{
+    while (tas(lock))
+	;
+}
+
+void
+S_UNLOCK(slock_t *lock)
+{
+    __asm__("mb");
+    *lock = 0;
+}
+
+void
+S_INIT_LOCK(slock_t *lock)
+{
+    S_UNLOCK(lock);
+}
+
+#endif
 
 #endif /* HAS_TEST_AND_SET */

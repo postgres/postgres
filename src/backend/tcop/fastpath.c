@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.3 1996/11/08 05:59:26 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.4 1997/03/12 21:07:50 scrappy Exp $
  *
  * NOTES
  *    This cruft is the server side of PQfn.
@@ -93,7 +93,7 @@ SendFunctionResult(Oid fid,	/* function id */
 	pq_putnchar("G", 1);
 	if (retbyval) {		/* by-value */
 	    pq_putint(retlen, 4);
-	    pq_putint((int)retval, retlen); 
+	    pq_putint((int)(Datum)retval, retlen); 
 	} else {		/* by-reference ... */
 	    if (retlen < 0) {		/* ... varlena */
 		pq_putint(VARSIZE(retval) - VARHDRSZ, 4);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.3 1996/11/06 09:29:24 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.4 1997/03/12 21:06:14 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -267,12 +267,12 @@ index_selectivity(Oid indid,
     
     i = 0;
     foreach(xopno, opnos) {
-	opno_array[i++] = (int)lfirst(xopno);
+	opno_array[i++] = lfirsti(xopno);
     }
 
     i = 0;
     foreach(xattno,attnos) {
-	attno_array[i++] = (int)lfirst(xattno);
+	attno_array[i++] = lfirsti(xattno);
     }
 
     i = 0;
@@ -282,7 +282,7 @@ index_selectivity(Oid indid,
 
     i = 0;
     foreach(flag,flags) {
-	flag_array[i++] = (int)lfirst(flag);
+	flag_array[i++] = lfirsti(flag);
     }
     
     IndexSelectivity(indid,
