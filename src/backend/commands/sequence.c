@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.53 2001/04/03 21:58:00 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.54 2001/04/04 15:43:25 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -181,13 +181,13 @@ DefineSequence(CreateSeqStmt *seq)
 	/* Now - form & insert sequence tuple */
 	tuple = heap_formtuple(tupDesc, value, null);
 	heap_insert(rel, tuple);
-	ReleaseBuffer(buf);
 
 	/*
 	 * After crash REDO of heap_insert above would re-init page and
 	 * our magic number would be lost. We have to log sequence creation.
 	 * This means two log records instead of one -:(
 	 */
+	LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
 	START_CRIT_SECTION();
 	{
 		xl_seq_rec			xlrec;
@@ -217,6 +217,8 @@ DefineSequence(CreateSeqStmt *seq)
 	}
 	END_CRIT_SECTION();
 
+	LockBuffer(buf, BUFFER_LOCK_UNLOCK);
+	ReleaseBuffer(buf);
 	heap_close(rel, AccessExclusiveLock);
 }
 
