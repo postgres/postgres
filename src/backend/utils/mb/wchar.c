@@ -1,7 +1,7 @@
 /*
  * conversion functions between pg_wchar and multi-byte streams.
  * Tatsuo Ishii
- * $Id: wchar.c,v 1.26 2001/10/28 06:25:56 momjian Exp $
+ * $Id: wchar.c,v 1.27 2002/03/05 05:52:44 momjian Exp $
  *
  * WIN1250 client encoding updated by Pavel Behal
  *
@@ -251,6 +251,21 @@ pg_euctw_mblen(const unsigned char *s)
 }
 
 /*
+ * JOHAB
+ */
+static int
+pg_johab2wchar_with_len(const unsigned char *from, pg_wchar *to, int len)
+{
+	return (pg_euc2wchar_with_len(from, to, len));
+}
+
+static int
+pg_johab_mblen(const unsigned char *s)
+{
+	return (pg_euc_mblen(s));
+}
+
+/*
  * convert UTF-8 string to pg_wchar (UCS-2)
  * caller should allocate enough space for "to"
  * len: length of from.
@@ -457,34 +472,78 @@ pg_big5_mblen(const unsigned char *s)
 	return (len);
 }
 
+/*
+ * GBK
+ */
+static int
+pg_gbk_mblen(const unsigned char *s)
+{
+	int			len;
+
+	if (*s > 0x7f)
+	{							/* kanji? */
+		len = 2;
+	}
+	else
+	{							/* should be ASCII */
+		len = 1;
+	}
+	return (len);
+}
+
+/*
+ * UHC
+ */
+static int
+pg_uhc_mblen(const unsigned char *s)
+{
+	int			len;
+
+	if (*s > 0x7f)
+	{							/* 2byte? */
+		len = 2;
+	}
+	else
+	{							/* should be ASCII */
+		len = 1;
+	}
+	return (len);
+}
+
 pg_wchar_tbl pg_wchar_table[] = {
 	{pg_ascii2wchar_with_len, pg_ascii_mblen, 1},		/* 0; PG_SQL_ASCII	*/
 	{pg_eucjp2wchar_with_len, pg_eucjp_mblen, 3},		/* 1; PG_EUC_JP */
 	{pg_euccn2wchar_with_len, pg_euccn_mblen, 3},		/* 2; PG_EUC_CN */
 	{pg_euckr2wchar_with_len, pg_euckr_mblen, 3},		/* 3; PG_EUC_KR */
 	{pg_euctw2wchar_with_len, pg_euctw_mblen, 3},		/* 4; PG_EUC_TW */
-	{pg_utf2wchar_with_len, pg_utf_mblen, 3},	/* 5; PG_UNICODE */
-	{pg_mule2wchar_with_len, pg_mule_mblen, 3}, /* 6; PG_MULE_INTERNAL */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 7; PG_LATIN1 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 8; PG_LATIN2 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 9; PG_LATIN3 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 10; PG_LATIN4 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 11; PG_LATIN5 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 12; PG_KOI8 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 13; PG_WIN1251 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 14; PG_ALT */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 15; ISO-8859-5 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 16; ISO-8859-6 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 17; ISO-8859-7 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 18; ISO-8859-8 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 19; ISO-8859-10 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 20; ISO-8859-13 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 21; ISO-8859-14 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 22; ISO-8859-15 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 23; ISO-8859-16 */
-	{0, pg_sjis_mblen, 2},		/* 24; PG_SJIS */
-	{0, pg_big5_mblen, 2},		/* 25; PG_BIG5 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, 1}		/* 26; PG_WIN1250 */
+	{pg_johab2wchar_with_len, pg_johab_mblen, 3},		/* 5; PG_JOHAB */
+	{pg_utf2wchar_with_len, pg_utf_mblen, 3},	/* 6; PG_UNICODE */
+	{pg_mule2wchar_with_len, pg_mule_mblen, 3},	/* 7; PG_MULE_INTERNAL */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 8; PG_LATIN1 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 9; PG_LATIN2 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 10; PG_LATIN3 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 11; PG_LATIN4 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 12; PG_LATIN5 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 13; PG_LATIN6 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 14; PG_LATIN7 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 15; PG_LATIN8 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 16; PG_LATIN9 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 17; PG_LATIN10 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 18; PG_WIN1256 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 19; PG_TCVN */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 20; PG_WIN874 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 21; PG_KOI8 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 22; PG_WIN1251 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 23; PG_ALT */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 24; ISO-8859-5 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 25; ISO-8859-6 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 26; ISO-8859-7 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 27; ISO-8859-8 */
+	{0, pg_sjis_mblen, 2},		/* 28; PG_SJIS */
+	{0, pg_big5_mblen, 2},		/* 29; PG_BIG5 */
+	{0, pg_gbk_mblen, 2},		/* 30; PG_GBK */
+	{0, pg_uhc_mblen, 2},		/* 31; PG_UHC */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 32; PG_WIN1250 */
 };
 
 /* returns the byte length of a word for mule internal code */

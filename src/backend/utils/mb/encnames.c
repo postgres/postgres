@@ -2,7 +2,7 @@
  * Encoding names and routines for work with it. All
  * in this file is shared bedween FE and BE.
  *
- * $Id: encnames.c,v 1.6 2001/10/28 06:25:56 momjian Exp $
+ * $Id: encnames.c,v 1.7 2002/03/05 05:52:44 momjian Exp $
  */
 #ifdef FRONTEND
 #include "postgres_fe.h"
@@ -37,6 +37,9 @@
 pg_encname	pg_encname_tbl[] =
 {
 	{
+		"abc", PG_TCVN
+	},							/* alias for TCVN */
+	{
 		"alt", PG_ALT
 	},							/* IBM866 */
 	{
@@ -52,11 +55,16 @@ pg_encname	pg_encname_tbl[] =
 								 * for Japanese, stdandard OSF */
 	{
 		"euckr", PG_EUC_KR
-	},							/* EUC-KR; RFC1557,Choi */
+	},							/* EUC-KR; Extended Unix Code for
+                                                                 * Korean , KS X 1001 standard */
 	{
 		"euctw", PG_EUC_TW
 	},							/* EUC-TW; Extended Unix Code for
 								 * traditional Chinese */
+	{
+		"gbk", PG_GBK
+	},							/* GBK; Chinese Windows CodePage 936
+								 * simplified Chinese */
 	{
 		"iso88591", PG_LATIN1
 	},							/* ISO-8859-1; RFC1345,KXS2 */
@@ -99,6 +107,10 @@ pg_encname	pg_encname_tbl[] =
 	{
 		"iso88599", PG_LATIN5
 	},							/* ISO-8859-9; RFC1345,KXS2 */
+	{
+		"johab", PG_JOHAB
+	},							/* JOHAB; Extended Unix Code for
+								 * simplified Chinese */
 	{
 		"koi8", PG_KOI8R
 	},							/* _dirty_ alias for KOI8-R (backward
@@ -152,11 +164,23 @@ pg_encname	pg_encname_tbl[] =
 		"sqlascii", PG_SQL_ASCII
 	},
 	{
+		"tcvn", PG_TCVN
+	},							/* TCVN; Vietnamese TCVN-5712 */
+	{
+		"tcvn5712",PG_TCVN
+	},							/* alias for TCVN */
+	{
+		"uhc", PG_UHC
+	},							/* UHC; Korean Windows CodePage 949 */
+	{
 		"unicode", PG_UTF8
 	},							/* alias for UTF-8 */
 	{
 		"utf8", PG_UTF8
 	},							/* UTF-8; RFC2279 */
+	{
+		"vscii", PG_TCVN
+	},							/* alias for TCVN */
 	{
 		"win", PG_WIN1251
 	},							/* _dirty_ alias for windows-1251
@@ -168,11 +192,53 @@ pg_encname	pg_encname_tbl[] =
 		"win1251", PG_WIN1251
 	},							/* alias for Windows-1251 */
 	{
+		"win1256", PG_WIN1256
+	},							/* alias for Windows-1256 */
+	{
+		"win1258", PG_TCVN
+	},							/* alias for Windows-1258 */
+	{
+		"win874", PG_WIN874
+	},							/* alias for Windows-874 */
+	{
+		"win932", PG_SJIS
+	},							/* alias for Shift_JIS */
+	{
+		"win936", PG_GBK
+	},							/* alias for GBK */
+	{
+		"win949", PG_UHC
+	},							/* alias for UHC */
+	{
+		"win950", PG_BIG5
+	},							/* alias for BIG5 */
+	{
 		"windows1250", PG_WIN1250
 	},							/* Windows-1251; Microsoft */
 	{
 		"windows1251", PG_WIN1251
 	},							/* Windows-1251; Microsoft */
+	{
+		"windows1256", PG_WIN1256
+	},							/* Windows-1256; Microsoft */
+	{
+		"windows1258", PG_TCVN
+	},							/* Windows-1258; Microsoft */
+	{
+		"windows874", PG_WIN874
+	},							/* Windows-874; Microsoft */
+	{
+		"windows932", PG_SJIS
+	},							/* alias for Shift_JIS */
+	{
+		"windows936", PG_GBK
+	},							/* alias for GBK */
+	{
+		"windows949", PG_UHC
+	},							/* alias for UHC */
+	{
+		"windows950", PG_BIG5
+	},							/* alias for BIG5 */
 
 	{
 		NULL, 0
@@ -203,6 +269,9 @@ pg_enc2name pg_enc2name_tbl[] =
 	},
 	{
 		"EUC_TW", PG_EUC_TW
+	},
+	{
+		"JOHAB", PG_JOHAB
 	},
 	{
 		"UNICODE", PG_UTF8
@@ -241,6 +310,15 @@ pg_enc2name pg_enc2name_tbl[] =
 		"LATIN10", PG_LATIN10
 	},
 	{
+		"WIN1256", PG_WIN1256
+	},
+	{
+		"TCVN", PG_TCVN
+	},
+	{
+		"WIN874", PG_WIN874
+	},
+	{
 		"KOI8", PG_KOI8R
 	},
 	{
@@ -266,6 +344,12 @@ pg_enc2name pg_enc2name_tbl[] =
 	},
 	{
 		"BIG5", PG_BIG5
+	},
+	{
+		"GBK", PG_GBK
+	},
+	{
+		"UHC", PG_UHC
 	},
 	{
 		"WIN1250", PG_WIN1250

@@ -944,6 +944,9 @@ another_version_retry:
 	CC_send_settings(self);
 	CC_lookup_lo(self);			/* a hack to get the oid of our large
 								 * object oid type */
+#ifdef MULTIBYTE
+	CC_lookup_characterset(self);
+#endif
 	CC_lookup_pg_version(self); /* Get PostgreSQL version for SQLGetInfo
 								 * use */
 
@@ -1247,9 +1250,27 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi)
 				if (QR_command_successful(res))
 					QR_set_status(res, PGRES_NONFATAL_ERROR);
 				QR_set_notice(res, cmdbuffer);	/* will dup this string */
+#ifdef MULTIBYTE
+				if (strstr(cmdbuffer,"encoding is"))
+				{
+					if (strstr(cmdbuffer,"Current client encoding is"))
+						strcpy(PG_CCSS, cmdbuffer + 36);
+					if (strstr(cmdbuffer,"Current server encoding is"))
+						strcpy(PG_SCSS, cmdbuffer + 36);
+					mylog("~~~ NOTICE: '%s'\n", cmdbuffer);
+					qlog("NOTICE from backend during send_query: '%s'\n ClientEncoding = %s\n ServerEncoding = %s\n", cmdbuffer, PG_CCSS, PG_SCSS);
 
+				}
+				else
+				{
+
+					mylog("~~~ NOTICE: '%s'\n", cmdbuffer);
+					qlog("NOTICE from backend during send_query: '%s'\n", cmdbuffer);
+				}
+#else
 				mylog("~~~ NOTICE: '%s'\n", cmdbuffer);
 				qlog("NOTICE from backend during send_query: '%s'\n", cmdbuffer);
+#endif
 				while (msg_truncated)
 					msg_truncated = SOCK_get_string(sock, cmdbuffer, ERROR_MSG_LENGTH);
 

@@ -1,4 +1,4 @@
-/* $Id: pg_wchar.h,v 1.37 2001/11/05 17:46:33 momjian Exp $ */
+/* $Id: pg_wchar.h,v 1.38 2002/03/05 05:52:50 momjian Exp $ */
 
 #ifndef PG_WCHAR_H
 #define PG_WCHAR_H
@@ -159,6 +159,7 @@ typedef enum pg_enc
 	PG_EUC_CN,					/* EUC for Chinese */
 	PG_EUC_KR,					/* EUC for Korean */
 	PG_EUC_TW,					/* EUC for Taiwan */
+	PG_JOHAB,					/* EUC for Korean JOHAB */
 	PG_UTF8,					/* Unicode UTF-8 */
 	PG_MULE_INTERNAL,			/* Mule internal code */
 	PG_LATIN1,					/* ISO-8859-1 Latin 1 */
@@ -171,6 +172,9 @@ typedef enum pg_enc
 	PG_LATIN8,					/* ISO-8859-14 Latin8 */
 	PG_LATIN9,					/* ISO-8859-15 Latin9 */
 	PG_LATIN10,					/* ISO-8859-16 Latin10 */
+	PG_WIN1256,					/* windows-1256 */
+	PG_TCVN,					/* TCVN (Windows-1258) */
+	PG_WIN874,					/* windows-874 */
 	PG_KOI8R,					/* KOI8-R */
 	PG_WIN1251,					/* windows-1251 (was: WIN) */
 	PG_ALT,						/* (MS-DOS CP866) */
@@ -180,8 +184,10 @@ typedef enum pg_enc
 	PG_ISO_8859_8,				/* ISO-8859-8 */
 
 	/* followings are for client encoding only */
-	PG_SJIS,					/* Shift JIS */
-	PG_BIG5,					/* Big5 */
+	PG_SJIS,					/* Shift JIS (Winindows-932) */
+	PG_BIG5,					/* Big5 (Windows-950) */
+	PG_GBK,					/* GBK (Windows-936) */
+	PG_UHC,					/* UHC (Windows-949) */
 	PG_WIN1250,					/* windows-1250 */
 
 	_PG_LAST_ENCODING_			/* mark only */
@@ -189,7 +195,7 @@ typedef enum pg_enc
 } pg_enc;
 
 #define PG_ENCODING_BE_LAST PG_ISO_8859_8
-#define PG_ENCODING_FE_LAST PG_WIN1250
+#define PG_ENCODING_FE_LAST PG_WIN1256
 
 
 #ifdef MULTIBYTE

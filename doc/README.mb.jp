@@ -45,6 +45,7 @@ PostgreSQL 7.2 multi-byte (MB) support README	       2001/9/18 作成
 	EUC_CN		GB をベースにした中文EUC．code set 2 は
 			SS2+2バイトコード = 3バイト表現です．
 	EUC_KR		韓国語 EUC．
+	JOHAB		ハングルベースの韓国語EUC.
 	EUC_TW		台湾の EUC．code set 2 は
 			SS2+面番号+2バイトコード = 4バイト表現です．
 	UNICODE		UTF-8．ただしサポートするのは UCS-2 の範囲，
@@ -56,6 +57,9 @@ PostgreSQL 7.2 multi-byte (MB) support README	       2001/9/18 作成
 	キリル文字	KOI8(KOI8-R), WIN(CP1251), ALT(CP866)をサポート
 			しています．もちろん ISO 8859-5 も使用可能です．
 			この場合，"LATIN5" として指定して下さい．
+	WIN1256		アラブ諸国語Windows用エンコーディング.
+	TCVN		ベトナム語."ABC"や"VSCII"も使用可能.
+	WIN874		タイ語.
 
   選択の目安としては，英語と日本語しか使わない場合は EUC_JP(同様に，中
   国語しか使わない場合は EUC_CN... などとなります)，その他の言語も使いた
@@ -165,22 +169,40 @@ $ psql -l
 					エンコーディング
   ----------------------------------------------------------------
 	EUC_JP				EUC_JP, SJIS, UNICODE
-  
+
 	EUC_TW				EUC_TW, BIG5, UNICODE
-  
+
+	EUC_CN				EUC_CN, UNICODE
+
+	EUC_KR				EUC_KR, UNICODE
+
+	JOHAB				JOHAB, UNICODE
+
 	LATIN1,3,4			LATIN1,3,4, UNICODE
 
   	LATIN2				LATIN2, WIN1250, UNICODE
-  
+
 	LATIN5				LATIN5, WIN, ALT, UNICODE
-  
+
+	LATIN6,7,8,9,10			LATIN6,7,8,9,10, UNICODE
+
+	ISO_8859_5,6,7,8		ISO_8859_5,6,7,8, UNICODE
+
+	WIN1256				WIN1256, UNICODE
+
+	TCVN				TCVN, UNICODE
+
+	WIN874				WIN874, UNICODE
+
 	MULE_INTERNAL			EUC_JP, SJIS, EUC_KR, EUC_CN, 
 					EUC_TW, BIG5, LATIN1から5, 
 					WIN, ALT, WIN1250
 
-	UNICODE				EUC_JP, SJIS, EUC_KR, EUC_CN, 
-					EUC_TW, BIG5, LATIN1から5, 
-					WIN, ALT, WIN1250
+	UNICODE				EUC_JP, SJIS, EUC_KR, UHC,
+					EUC_CN, GBK, EUC_TW, BIG5,
+					LATIN1から10, ISO_8859_5から8,
+					WIN, ALT, WIN1250, WIN1256,
+					TCVN, WIN874, JOHAB
   ----------------------------------------------------------------
 
   バックエンドとフロントエンドのエンコーディングが異なる場合，そのこと
@@ -390,12 +412,28 @@ o set client_encoding コマンドを使う方法
   ISO 8859-3		8859-3.TXT
   ISO 8859-4		8859-4.TXT
   ISO 8859-5		8859-5.TXT
-  EUC_JP		JIS0201.TXT, JIS0208.TXT, JIS0212.TXT
+  ISO 8859-6		8859-6.TXT
+  ISO 8859-7		8859-7.TXT
+  ISO 8859-8		8859-8.TXT
+  ISO 8859-9		8859-9.TXT
+  ISO 8859-10		8859-10.TXT
+  ISO 8859-13		8859-13.TXT
+  ISO 8859-14		8859-14.TXT
+  ISO 8859-15		8859-15.TXT
+  ISO 8859-16		8859-16.TXT
+  EUC_JP		JIS0201.TXT, JIS0208.TXT, JIS0212.TXT,
+			CP932.TXT, sjis.map
   SJIS			CP932.TXT
   EUC_CN		GB2312.TXT
-  EUC_KR		OLD5601.TXT
+  GBK			CP936.TXT
+  EUC_KR		KSX1001.TXT
+  UHC			CP949.TXT
+  JOHAB			JOHAB.TXT
   EUC_TW		CNS11643.TXT
   Big5			BIG5.TXT
+  WIN1256		CP1256.TXT
+  TCVN			CP1258.TXT
+  WIN874		CP874.TXT
   ============================================================
 
 謝辞：

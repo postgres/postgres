@@ -6,7 +6,7 @@
  * WIN1250 client encoding support contributed by Pavel Behal
  * SJIS UDC (NEC selection IBM kanji) support contributed by Eiji Tokuya
  *
- * $Id: conv.c,v 1.35 2001/11/05 17:46:30 momjian Exp $
+ * $Id: conv.c,v 1.36 2002/03/05 05:52:43 momjian Exp $
  *
  *
  */
@@ -56,6 +56,20 @@
 #include "Unicode/sjis_to_utf8.map"
 #include "Unicode/utf8_to_big5.map"
 #include "Unicode/big5_to_utf8.map"
+#include "Unicode/utf8_to_gbk.map"
+#include "Unicode/gbk_to_utf8.map"
+#include "Unicode/utf8_to_uhc.map"
+#include "Unicode/uhc_to_utf8.map"
+#include "Unicode/utf8_to_johab.map"
+#include "Unicode/johab_to_utf8.map"
+#include "Unicode/utf8_to_tcvn.map"
+#include "Unicode/tcvn_to_utf8.map"
+#include "Unicode/utf8_to_win1250.map"
+#include "Unicode/win1250_to_utf8.map"
+#include "Unicode/utf8_to_win1256.map"
+#include "Unicode/win1256_to_utf8.map"
+#include "Unicode/utf8_to_win874.map"
+#include "Unicode/win874_to_utf8.map"
 /* Cyrillic charset conversion */
 #include "Unicode/alt_to_utf8.map"
 #include "Unicode/koi8r_to_utf8.map"
@@ -1666,6 +1680,153 @@ big5_to_utf(unsigned char *euc, unsigned char *utf, int len)
 			  sizeof(LUmapBIG5) / sizeof(pg_local_to_utf), PG_BIG5, len);
 }
 
+/*
+ * UTF-8 ---> GBK
+ */
+static void
+utf_to_gbk(unsigned char *utf, unsigned char *euc, int len)
+
+{
+	utf_to_local(utf, euc, ULmapGBK,
+				 sizeof(ULmapGBK) / sizeof(pg_utf_to_local), len);
+}
+
+/*
+ * GBK ---> UTF-8
+ */
+static void
+gbk_to_utf(unsigned char *euc, unsigned char *utf, int len)
+{
+	local_to_utf(euc, utf, LUmapGBK,
+			  sizeof(LUmapGBK) / sizeof(pg_local_to_utf), PG_GBK, len);
+}
+
+/*
+ * UTF-8 ---> UHC
+ */
+static void
+utf_to_uhc(unsigned char *utf, unsigned char *euc, int len)
+
+{
+	utf_to_local(utf, euc, ULmapUHC,
+				 sizeof(ULmapUHC) / sizeof(pg_utf_to_local), len);
+}
+
+/*
+ * UHC ---> UTF-8
+ */
+static void
+uhc_to_utf(unsigned char *euc, unsigned char *utf, int len)
+{
+	local_to_utf(euc, utf, LUmapUHC,
+			  sizeof(LUmapUHC) / sizeof(pg_local_to_utf), PG_UHC, len);
+}
+
+/*
+ * UTF-8 ---> JOHAB
+ */
+static void
+utf_to_johab(unsigned char *utf, unsigned char *euc, int len)
+
+{
+	utf_to_local(utf, euc, ULmapJOHAB,
+				 sizeof(ULmapJOHAB) / sizeof(pg_utf_to_local), len);
+}
+
+/*
+ * JOHAB ---> UTF-8
+ */
+static void
+johab_to_utf(unsigned char *euc, unsigned char *utf, int len)
+{
+	local_to_utf(euc, utf, LUmapJOHAB,
+			  sizeof(LUmapJOHAB) / sizeof(pg_local_to_utf), PG_JOHAB, len);
+}
+
+/*
+ * UTF-8 ---> WIN1250
+ */
+static void
+utf_to_win1250(unsigned char *utf, unsigned char *euc, int len)
+
+{
+        utf_to_local(utf, euc, ULmapWIN1250,
+                                 sizeof(ULmapWIN1250) / sizeof(pg_utf_to_local), len);
+}
+
+/*
+ * WIN1250 ---> UTF-8
+ */
+static void
+win1250_to_utf(unsigned char *euc, unsigned char *utf, int len)
+{
+        local_to_utf(euc, utf, LUmapWIN1250,
+                          sizeof(LUmapWIN1250) / sizeof(pg_local_to_utf), PG_WIN1250, len);
+}
+
+/*
+ * UTF-8 ---> WIN1256
+ */
+static void
+utf_to_win1256(unsigned char *utf, unsigned char *euc, int len)
+
+{
+        utf_to_local(utf, euc, ULmapWIN1256,
+                                 sizeof(ULmapWIN1256) / sizeof(pg_utf_to_local), len);
+}
+
+/*
+ * WIN1256 ---> UTF-8
+ */
+static void
+win1256_to_utf(unsigned char *euc, unsigned char *utf, int len)
+{
+	local_to_utf(euc, utf, LUmapWIN1256,
+			  sizeof(LUmapWIN1256) / sizeof(pg_local_to_utf), PG_WIN1256, len);
+}
+
+/*
+ * UTF-8 ---> TCVN
+ */
+static void
+utf_to_tcvn(unsigned char *utf, unsigned char *euc, int len)
+
+{
+	utf_to_local(utf, euc, ULmapTCVN,
+				 sizeof(ULmapTCVN) / sizeof(pg_utf_to_local), len);
+}
+
+/*
+ * TCVN ---> UTF-8
+ */
+static void
+tcvn_to_utf(unsigned char *euc, unsigned char *utf, int len)
+{
+	local_to_utf(euc, utf, LUmapTCVN,
+			  sizeof(LUmapTCVN) / sizeof(pg_local_to_utf), PG_TCVN, len);
+}
+
+/*
+ * UTF-8 ---> WIN874
+ */
+static void
+utf_to_win874(unsigned char *utf, unsigned char *euc, int len)
+
+{
+	utf_to_local(utf, euc, ULmapWIN874,
+				 sizeof(ULmapWIN874) / sizeof(pg_utf_to_local), len);
+}
+
+/*
+ * WIN874 ---> UTF-8
+ */
+static void
+win874_to_utf(unsigned char *euc, unsigned char *utf, int len)
+{
+	local_to_utf(euc, utf, LUmapWIN874,
+			  sizeof(LUmapWIN874) / sizeof(pg_local_to_utf), PG_WIN874, len);
+}
+
 /* ----------
  * Encoding conversion routines
  *
@@ -1688,6 +1849,9 @@ pg_enconv	pg_enconv_tbl[] =
 	},
 	{
 		PG_EUC_TW, euc_tw2mic, mic2euc_tw, euc_tw_to_utf, utf_to_euc_tw
+	},
+	{
+		PG_JOHAB, 0, 0, johab_to_utf, utf_to_johab
 	},
 	{
 		PG_UTF8, 0, 0, 0, 0
@@ -1726,6 +1890,15 @@ pg_enconv	pg_enconv_tbl[] =
 		PG_LATIN10, 0, 0, iso8859_16_to_utf, utf_to_iso8859_16
 	},
 	{
+		PG_WIN1256, 0, 0, win1256_to_utf, utf_to_win1256
+	},
+	{
+		PG_TCVN, 0, 0, tcvn_to_utf, utf_to_tcvn
+	},
+	{
+		PG_WIN874, 0, 0, win874_to_utf, utf_to_win874
+	},
+	{
 		PG_KOI8R, koi8r2mic, mic2koi8r, KOI8R_to_utf, utf_to_KOI8R
 	},
 	{
@@ -1754,7 +1927,13 @@ pg_enconv	pg_enconv_tbl[] =
 		PG_BIG5, big52mic, mic2big5, big5_to_utf, utf_to_big5
 	},
 	{
-		PG_WIN1250, win12502mic, mic2win1250, 0, 0
+		PG_GBK, 0, 0, gbk_to_utf, utf_to_gbk
+	},
+	{
+		PG_UHC, 0, 0, uhc_to_utf, utf_to_uhc
+	},
+	{
+		PG_WIN1250, win12502mic, mic2win1250, win1250_to_utf, utf_to_win1250
 	},
 };
 

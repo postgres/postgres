@@ -2,7 +2,7 @@
 #
 # Copyright 2001 by PostgreSQL Global Development Group
 #
-# $Id: UCS_to_EUC_KR.pl,v 1.2 2001/04/16 06:10:18 ishii Exp $
+# $Id: UCS_to_EUC_KR.pl,v 1.3 2002/03/05 05:52:45 momjian Exp $
 #
 # Generate UTF-8 <--> EUC_KR code conversion tables from
 # map files provided by Unicode organization.
@@ -20,7 +20,7 @@ require "ucs2utf.pl";
 
 # first generate UTF-8 --> EUC_KR table
 
-$in_file = "OLD5601.TXT";
+$in_file = "KSX1001.TXT";
 
 open( FILE, $in_file ) || die( "cannot open $in_file" );
 
