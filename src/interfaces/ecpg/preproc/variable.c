@@ -78,7 +78,7 @@ find_struct(char *name, char *next)
 
 	if (c == '-')
 	{
-		if (p->type->typ != ECPGt_struct && p->type->typ != ECPGt_union)
+		if (p->type->typ != ECPGt_array)
 		{
 			sprintf(errortext, "variable %s is not a pointer", name);
 			mmerror(ET_FATAL, errortext);
