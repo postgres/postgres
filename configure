@@ -7916,7 +7916,8 @@ cat >>confdefs.h <<\_ACEOF
 #define HAVE_CXX_STRING_HEADER 1
 _ACEOF
 
-                echo "$as_me:$LINENO: checking for class string in <string.h>" >&5
+else
+  echo "$as_me:$LINENO: checking for class string in <string.h>" >&5
 echo $ECHO_N "checking for class string in <string.h>... $ECHO_C" >&6
 if test "${pgac_cv_class_string_in_string_h+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
