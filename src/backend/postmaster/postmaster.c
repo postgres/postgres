@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.118 1999/09/27 15:47:43 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.119 1999/09/30 02:17:23 tgl Exp $
  *
  * NOTES
  *
@@ -404,7 +404,7 @@ PostmasterMain(int argc, char *argv[])
 	DataDir = getenv("PGDATA"); /* default value */
 
 	opterr = 0;
-	while ((opt = getopt(nonblank_argc, argv, "A:a:B:b:D:i::dm:MN:no:p:Ss")) != EOF)
+	while ((opt = getopt(nonblank_argc, argv, "A:a:B:b:D:di:m:MN:no:p:Ss")) != EOF)
 	{
 		switch (opt)
 		{
@@ -578,12 +578,12 @@ PostmasterMain(int argc, char *argv[])
 
 	if (NetServer)
 	{
-	  status = StreamServerPort(hostName, PostPortName, &ServerSock_INET);
-	  if (status != STATUS_OK)
+		status = StreamServerPort(hostName, PostPortName, &ServerSock_INET);
+		if (status != STATUS_OK)
 	    {
-	      fprintf(stderr, "%s: cannot create INET stream port\n",
-		      progname);
-	      exit(1);
+			fprintf(stderr, "%s: cannot create INET stream port\n",
+					progname);
+			exit(1);
 	    }
 	}
 
