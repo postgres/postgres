@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon May 21 21:35:07 EDT 2001
+Last updated:		Tue May 22 08:10:27 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -155,7 +155,6 @@ COMMANDS
 	* Keep statistics about clustering, perhaps during VACUUM ANALYZE
 	  [optimizer]
 * COPY
-	* Update reltuples in COPY
 	* Allow specification of column names
 	* Allow dump/load of CSV format
 * CURSOR
