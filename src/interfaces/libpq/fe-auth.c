@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.15 1998/02/26 04:44:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.16 1998/03/22 04:18:17 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,11 +27,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/param.h>			/* for MAXHOSTNAMELEN on most */
+#include <sys/types.h>
 #ifndef  MAXHOSTNAMELEN
 #include <netdb.h>				/* for MAXHOSTNAMELEN on some */
 #endif
 #include <unistd.h>
-#include <sys/types.h>
 #include <pwd.h>
 
 #include "postgres.h"
