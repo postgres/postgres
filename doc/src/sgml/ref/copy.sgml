@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/copy.sgml,v 1.13 2000/04/18 18:41:15 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/copy.sgml,v 1.14 2000/04/18 23:21:04 momjian Exp $
 Postgres documentation
 -->
 
@@ -112,8 +112,8 @@ COPY [ BINARY ] <replaceable class="parameter">table</replaceable> [ WITH OIDS ]
       <listitem>
        <para>
         A string to represent NULL values. The default is
-        <quote><literal>\N</literal></quote> (backslash-N), for historical
-        reasons. You might prefer an empty string, for example.
+        <quote><literal>\N</literal></quote> (backslash-N).
+	You might prefer an empty string, for example.
        </para>
        <note>
         <para>
