@@ -1,8 +1,7 @@
-
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.1 2000/01/25 23:53:51 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.2 2000/01/26 06:33:49 momjian Exp $
  *
  *   TO_CHAR(); TO_DATETIME(); TO_DATE(); TO_NUMBER();  
  *
@@ -61,6 +60,7 @@
 #include <unistd.h>
 #include <locale.h>
 #include <math.h>
+#include <float.h>
 
 #include "postgres.h"
 #include "utils/builtins.h"
