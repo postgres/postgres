@@ -1,7 +1,7 @@
 /*
  *	PostgreSQL type definitions for the INET and CIDR types.
  *
- *	$PostgreSQL: pgsql/src/backend/utils/adt/network.c,v 1.53 2004/08/29 05:06:49 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/utils/adt/network.c,v 1.54 2004/10/08 01:10:31 momjian Exp $
  *
  *	Jon Postel RIP 16 Oct 1998
  */
@@ -942,7 +942,7 @@ addressOK(unsigned char *a, int bits, int family)
 	if (bits == maxbits)
 		return true;
 
-	byte = (bits + 7) / 8;
+	byte = bits / 8;
 	nbits = bits % 8;
 	mask = 0xff;
 	if (bits != 0)
