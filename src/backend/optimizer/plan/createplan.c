@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.69 1999/08/10 02:58:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.70 1999/08/12 04:32:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,10 +49,10 @@ static HashJoin *create_hashjoin_node(HashPath *best_path, List *tlist,
 					 List *clauses, Plan *outer_node, List *outer_tlist,
 					 Plan *inner_node, List *inner_tlist);
 static List *fix_indxqual_references(List *indexquals, IndexPath *index_path);
-static List *fix_one_indxqual_sublist(List *indexqual, IndexPath *index_path,
-									  Form_pg_index index);
-static Node *fix_one_indxqual_operand(Node *node, IndexPath *index_path,
-									  Form_pg_index index);
+static List *fix_indxqual_sublist(List *indexqual, IndexPath *index_path,
+								  Form_pg_index index);
+static Node *fix_indxqual_operand(Node *node, IndexPath *index_path,
+								  Form_pg_index index);
 static Noname *make_noname(List *tlist, List *pathkeys, Oid *operators,
 			Plan *plan_node, int nonametype);
 static IndexScan *make_indexscan(List *qptlist, List *qpqual, Index scanrelid,
@@ -345,8 +345,8 @@ create_indexscan_node(IndexPath *best_path,
 	/*
 	 * The qpqual list must contain all restrictions not automatically
 	 * handled by the index.  Note that for non-lossy indices, the
-	 * predicates in the indxqual are handled by the index, while for
-	 * lossy indices the indxqual predicates need to be double-checked
+	 * predicates in the indxqual are checked fully by the index, while
+	 * for lossy indices the indxqual predicates need to be double-checked
 	 * after the index fetches the best-guess tuples.
 	 *
 	 * Since the indexquals were generated from the restriction clauses
@@ -390,14 +390,17 @@ create_indexscan_node(IndexPath *best_path,
 	else
 		qpqual = NIL;
 
+	/* The executor needs a copy with the indexkey on the left of each clause
+	 * and with index attrs substituted for table ones.
+	 */
+	fixed_indxqual = fix_indxqual_references(indxqual, best_path);
+
 	/*
-	 * Fix opids in the completed indxqual.
+	 * Fix opids in the completed indxquals.
 	 * XXX this ought to only happen at final exit from the planner...
 	 */
 	indxqual = fix_opids(indxqual);
-
-	/* The executor needs a copy with index attrs substituted for table ones */
-	fixed_indxqual = fix_indxqual_references(indxqual, best_path);
+	fixed_indxqual = fix_opids(fixed_indxqual);
 
 	scan_node = make_indexscan(tlist,
 							   qpqual,
@@ -445,11 +448,6 @@ create_nestloop_node(NestPath *best_path,
 		 * checked as qpquals in the indexscan.  We can still remove them
 		 * from the nestloop's qpquals, but we gotta update the outer-rel
 		 * vars in the indexscan's qpquals too...
-		 *
-		 * XXX as of 8/99, removal of redundant joinclauses doesn't work
-		 * all the time, since it will fail to recognize clauses that have
-		 * been commuted in the indexqual.  I hope to make this problem go
-		 * away soon by not commuting indexqual clauses --- tgl.
 		 */
 		IndexScan  *innerscan = (IndexScan *) inner_node;
 		List	   *indxqualorig = innerscan->indxqualorig;
@@ -459,7 +457,8 @@ create_nestloop_node(NestPath *best_path,
 		{
 			/* Remove redundant tests from my clauses, if possible.
 			 * Note we must compare against indxqualorig not the "fixed"
-			 * indxqual (which has index attnos instead of relation attnos).
+			 * indxqual (which has index attnos instead of relation attnos,
+			 * and may have been commuted as well).
 			 */
 			if (length(indxqualorig) == 1) /* single indexscan? */
 				clauses = set_difference(clauses, lfirst(indxqualorig));
@@ -471,6 +470,7 @@ create_nestloop_node(NestPath *best_path,
 			innerscan->indxqual = join_references(innerscan->indxqual,
 												  outer_tlist,
 												  NIL);
+			/* fix the inner qpqual too, if it has join clauses */
 			if (NumRelids((Node *) inner_node->qual) > 1)
 				inner_node->qual = join_references(inner_node->qual,
 												   outer_tlist,
@@ -638,8 +638,10 @@ create_hashjoin_node(HashPath *best_path,
 
 /*
  * fix_indxqual_references
- *	Adjust indexqual clauses to refer to index attributes instead of the
- *	attributes of the original relation.
+ *	  Adjust indexqual clauses to refer to index attributes instead of the
+ *	  attributes of the original relation.  Also, commute clauses if needed
+ *	  to put the indexkey on the left.  (Someday the executor might not need
+ *	  that, but for now it does.)
  *
  * This code used to be entirely bogus for multi-index scans.  Now it keeps
  * track of which index applies to each subgroup of index qual clauses...
@@ -671,9 +673,9 @@ fix_indxqual_references(List *indexquals, IndexPath *index_path)
 		index = (Form_pg_index) GETSTRUCT(indexTuple);
 
 		fixed_quals = lappend(fixed_quals,
-							  fix_one_indxqual_sublist(indexqual,
-													   index_path,
-													   index));
+							  fix_indxqual_sublist(indexqual,
+												   index_path,
+												   index));
 
 		indexids = lnext(indexids);
 	}
@@ -683,41 +685,52 @@ fix_indxqual_references(List *indexquals, IndexPath *index_path)
 /*
  * Fix the sublist of indexquals to be used in a particular scan.
  *
- * All that we need to do is change the left or right operand of the top-level
- * operator of each qual clause.  Those are the only places that the index
- * attribute can appear in a valid indexqual.  The other side of the indexqual
- * might be a complex function of joined rels; we do not need or want to
- * alter such an expression.
+ * For each qual clause, commute if needed to put the indexkey operand on the
+ * left, and then change its varno.  We do not need to change the other side
+ * of the clause.
  */
 static List *
-fix_one_indxqual_sublist(List *indexqual, IndexPath *index_path,
-						 Form_pg_index index)
+fix_indxqual_sublist(List *indexqual, IndexPath *index_path,
+					 Form_pg_index index)
 {
 	List	   *fixed_qual = NIL;
 	List	   *i;
 
 	foreach(i, indexqual)
 	{
-		Node	   *clause = lfirst(i);
-		List	   *args;
+		Expr	   *clause = (Expr *) lfirst(i);
+		int			relid;
+		AttrNumber	attno;
+		Datum		constval;
+		int			flag;
 		Expr	   *newclause;
 
-		if (!is_opclause(clause))
-			elog(ERROR, "fix_one_indxqual_sublist: indexqual clause is not opclause");
+		if (!is_opclause((Node *) clause) ||
+			length(clause->args) != 2)
+			elog(ERROR, "fix_indxqual_sublist: indexqual clause is not binary opclause");
 
-		/* Copy enough structure to allow replacing left or right operand */
-		args = listCopy(((Expr *) clause)->args);
-		newclause = make_clause(((Expr *) clause)->opType,
-								((Expr *) clause)->oper,
-								args);
+		/* Which side is the indexkey on?
+		 *
+		 * get_relattval sets flag&SEL_RIGHT if the indexkey is on the LEFT.
+		 */
+		get_relattval((Node *) clause,
+					  lfirsti(index_path->path.parent->relids),
+					  &relid, &attno, &constval, &flag);
 
-		lfirst(args) = fix_one_indxqual_operand(lfirst(args),
-												index_path,
-												index);
-		if (lnext(args))
-			lfirst(lnext(args)) = fix_one_indxqual_operand(lfirst(lnext(args)),
-														   index_path,
-														   index);
+		/* Copy enough structure to allow commuting and replacing an operand
+		 * without changing original clause.
+		 */
+		newclause = make_clause(clause->opType, clause->oper,
+								listCopy(clause->args));
+
+		/* If the indexkey is on the right, commute the clause. */
+		if ((flag & SEL_RIGHT) == 0)
+			CommuteClause(newclause);
+
+		/* Now, change the indexkey operand as needed. */
+		lfirst(newclause->args) = fix_indxqual_operand(lfirst(newclause->args),
+													   index_path,
+													   index);
 
 		fixed_qual = lappend(fixed_qual, newclause);
 	}
@@ -725,11 +738,9 @@ fix_one_indxqual_sublist(List *indexqual, IndexPath *index_path,
 }
 
 static Node *
-fix_one_indxqual_operand(Node *node, IndexPath *index_path,
-						 Form_pg_index index)
+fix_indxqual_operand(Node *node, IndexPath *index_path,
+					 Form_pg_index index)
 {
-	if (node == NULL)
-		return NULL;
 	if (IsA(node, Var))
 	{
 		if (((Var *) node)->varno == lfirsti(index_path->path.parent->relids))
@@ -746,22 +757,17 @@ fix_one_indxqual_operand(Node *node, IndexPath *index_path,
 					return newnode;
 				}
 			}
-			/*
-			 * We should never see a reference to an attribute of the indexed
-			 * relation that is not one of the indexed attributes.
-			 */
-			elog(ERROR, "fix_one_indxqual_operand: failed to find index pos of index attribute");
 		}
 		/*
-		 * The Var is not part of the indexed relation, leave it alone.
-		 * This would normally only occur when looking at the other side
-		 * of a join indexqual.
+		 * Oops, this Var isn't the indexkey!
 		 */
-		return node;
+		elog(ERROR, "fix_indxqual_operand: var is not index attribute");
 	}
 
 	/*
-	 * Note: currently, there is no need for us to do anything here for
+	 * Else, it must be a func expression representing a functional index.
+	 *
+	 * Currently, there is no need for us to do anything here for
 	 * functional indexes.  If nodeIndexscan.c sees a func clause as the left
 	 * or right-hand toplevel operand of an indexqual, it assumes that that is
 	 * a reference to the functional index's value and makes the appropriate
@@ -789,7 +795,7 @@ switch_outer(List *clauses)
 
 	foreach(i, clauses)
 	{
-		Expr	   *clause = lfirst(i);
+		Expr	   *clause = (Expr *) lfirst(i);
 		Node	   *op;
 
 		Assert(is_opclause((Node *) clause));
@@ -808,11 +814,9 @@ switch_outer(List *clauses)
 			Expr	   *temp;
 
 			temp = make_clause(clause->opType, clause->oper,
-							   lcons(get_leftop(clause),
-									 lcons(get_rightop(clause),
-										   NIL)));
+							   listCopy(clause->args));
 			/* Commute it --- note this modifies the temp node in-place. */
-			CommuteClause((Node *) temp);
+			CommuteClause(temp);
 			t_list = lappend(t_list, temp);
 		}
 		else

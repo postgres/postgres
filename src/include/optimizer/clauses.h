@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: clauses.h,v 1.26 1999/08/10 03:00:12 tgl Exp $
+ * $Id: clauses.h,v 1.27 1999/08/12 04:32:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,7 @@ extern void get_relattval(Node *clause, int targetrelid,
 						  Datum *constval, int *flag);
 extern void get_rels_atts(Node *clause, int *relid1,
 			  AttrNumber *attno1, int *relid2, AttrNumber *attno2);
-extern void CommuteClause(Node *clause);
+extern void CommuteClause(Expr *clause);
 
 extern bool expression_tree_walker(Node *node, bool (*walker) (),
 								   void *context);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.67 1999/07/30 04:07:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.68 1999/08/12 04:32:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,6 +33,7 @@
 #include "optimizer/paths.h"
 #include "optimizer/plancat.h"
 #include "optimizer/restrictinfo.h"
+#include "optimizer/var.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_oper.h"
@@ -56,6 +57,8 @@ static List *group_clauses_by_ikey_for_joins(RelOptInfo *rel, RelOptInfo *index,
 static bool match_clause_to_indexkey(RelOptInfo *rel, RelOptInfo *index,
 									 int indexkey, int xclass,
 									 Expr *clause, bool join);
+static bool indexable_operator(Expr *clause, int xclass, Oid relam,
+							   bool indexkey_on_left);
 static bool pred_test(List *predicate_list, List *restrictinfo_list,
 		  List *joininfo_list);
 static bool one_pred_test(Expr *predicate, List *restrictinfo_list);
@@ -68,7 +71,7 @@ static void indexable_joinclauses(RelOptInfo *rel, RelOptInfo *index,
 static List *index_innerjoin(Query *root, RelOptInfo *rel, RelOptInfo *index,
 							 List *clausegroup_list, List *outerrelids_list);
 static bool useful_for_mergejoin(RelOptInfo *index, List *clausegroup_list);
-static bool match_index_to_operand(int indexkey, Expr *operand,
+static bool match_index_to_operand(int indexkey, Var *operand,
 								   RelOptInfo *rel, RelOptInfo *index);
 static bool function_index_operand(Expr *funcOpnd, RelOptInfo *rel, RelOptInfo *index);
 static bool match_special_index_operator(Expr *clause, bool indexkey_on_left);
@@ -285,7 +288,7 @@ match_index_orclauses(RelOptInfo *rel,
  *	  A match means that:
  *	  (1) the operator within the subclause can be used with the
  *				index's specified operator class, and
- *	  (2) the variable on one side of the subclause matches the index key.
+ *	  (2) one operand of the subclause matches the index key.
  *
  * 'or_clauses' is the list of subclauses within the 'or' clause
  * 'other_matching_indices' is the list of information on other indices
@@ -528,26 +531,28 @@ group_clauses_by_ikey_for_joins(RelOptInfo *rel,
  *    Determines whether a restriction or join clause matches
  *    a key of an index.
  *
- *	  To match, the clause must:
- *	  (1) be in the form (var op const) for a restriction clause,
- *		  or (var op var) for a join clause, where the var or one
- *		  of the vars matches the index key; and
- *	  (2) contain an operator which is in the same class as the index
- *		  operator for this key, or is a "special" operator as recognized
- *		  by match_special_index_operator().
+ *	  To match, the clause:
+
+ *	  (1a) for a restriction clause: must be in the form (indexkey op const)
+ *		   or (const op indexkey), or
+ *	  (1b) for a join clause: must be in the form (indexkey op others)
+ *		   or (others op indexkey), where others is an expression involving
+ *		   only vars of the other relation(s); and
+ *	  (2)  must contain an operator which is in the same class as the index
+ *		   operator for this key, or is a "special" operator as recognized
+ *		   by match_special_index_operator().
  *
- *	  In the restriction case, we can cope with (const op var) by commuting
- *	  the clause to (var op const), if there is a commutator operator.
- *	  XXX why do we bother to commute?  The executor doesn't care!!
+ *	  Presently, the executor can only deal with indexquals that have the
+ *	  indexkey on the left, so we can only use clauses that have the indexkey
+ *	  on the right if we can commute the clause to put the key on the left.
+ *	  We do not actually do the commuting here, but we check whether a
+ *	  suitable commutator operator is available.
  *
- *	  In the join case, later code will try to commute the clause if needed
- *	  to put the inner relation's var on the right.  We have no idea here
- *	  which relation might wind up on the inside, so we just accept
- *	  a match for either var.
- *	  XXX is this right?  We are making a list for this relation to
- *	  be an inner join relation, so if there is any commuting then
- *	  this rel must be on the right.  But again, it's not really clear
- *	  that we have to commute at all!
+ *	  Note that in the join case, we already know that the clause as a
+ *	  whole uses vars from the interesting set of relations.  But we need
+ *	  to defend against expressions like (a.f1 OP (b.f2 OP a.f3)); that's
+ *	  not processable by an indexscan nestloop join, whereas
+ *	  (a.f1 OP (b.f2 OP c.f3)) is.
  *
  * 'rel' is the relation of interest.
  * 'index' is an index on 'rel'.
@@ -568,162 +573,181 @@ match_clause_to_indexkey(RelOptInfo *rel,
 						 Expr *clause,
 						 bool join)
 {
-	bool		isIndexable = false;
 	Var		   *leftop,
 			   *rightop;
-	Oid			expr_op;
 
+	/* Clause must be a binary opclause. */
 	if (! is_opclause((Node *) clause))
 		return false;
 	leftop = get_leftop(clause);
 	rightop = get_rightop(clause);
 	if (! leftop || ! rightop)
 		return false;
-	expr_op = ((Oper *) clause->oper)->opno;
 
 	if (!join)
 	{
 		/*
 		 * Not considering joins, so check for clauses of the form:
-		 * (var/func operator constant) and (constant operator var/func)
+		 * (indexkey operator constant) or (constant operator indexkey).
+		 * We will accept a Param as being constant.
 		 */
 
-		/*
-		 * Check for standard s-argable clause
-		 */
 		if ((IsA(rightop, Const) || IsA(rightop, Param)) &&
-			match_index_to_operand(indexkey, (Expr *) leftop,
-								   rel, index))
+			match_index_to_operand(indexkey, leftop, rel, index))
 		{
-			isIndexable = op_class(expr_op, xclass, index->relam);
-
-#ifndef IGNORE_BINARY_COMPATIBLE_INDICES
-			/*
-			 * Didn't find an index? Then maybe we can find another
-			 * binary-compatible index instead... thomas 1998-08-14
-			 */
-			if (!isIndexable)
-			{
-				Oid			ltype = exprType((Node *) leftop);
-				Oid			rtype = exprType((Node *) rightop);
-
-				/*
-				 * make sure we have two different binary-compatible
-				 * types...
-				 */
-				if (ltype != rtype && IS_BINARY_COMPATIBLE(ltype, rtype))
-				{
-					char	   *opname = get_opname(expr_op);
-					Operator	newop = NULL;
-
-					if (opname != NULL)
-						newop = oper(opname, ltype, ltype, TRUE);
-
-					/* actually have a different operator to try? */
-					if (HeapTupleIsValid(newop) && oprid(newop) != expr_op)
-					{
-						expr_op = oprid(newop);
-						isIndexable = op_class(expr_op, xclass, index->relam);
-						if (isIndexable)
-							((Oper *) clause->oper)->opno = expr_op;
-					}
-				}
-			}
-#endif
-
+			if (indexable_operator(clause, xclass, index->relam, true))
+				return true;
 			/*
 			 * If we didn't find a member of the index's opclass,
 			 * see whether it is a "special" indexable operator.
 			 */
-			if (!isIndexable)
-				isIndexable = match_special_index_operator(clause, true);
-
+			if (match_special_index_operator(clause, true))
+				return true;
+			return false;
 		}
-
-		/*
-		 * Must try to commute the clause to standard s-arg format.
-		 * XXX do we really have to commute it?  The executor doesn't care!
-		 */
-		else if ((IsA(leftop, Const) || IsA(leftop, Param)) &&
-				 match_index_to_operand(indexkey, (Expr *) rightop,
-										rel, index))
+		if ((IsA(leftop, Const) || IsA(leftop, Param)) &&
+			match_index_to_operand(indexkey, rightop, rel, index))
 		{
-			Oid		commuted_op = get_commutator(expr_op);
-
-			isIndexable = ((commuted_op != InvalidOid) &&
-						   op_class(commuted_op, xclass, index->relam));
-
-#ifndef IGNORE_BINARY_COMPATIBLE_INDICES
-			if (!isIndexable)
-			{
-				Oid			ltype = exprType((Node *) leftop);
-				Oid			rtype = exprType((Node *) rightop);
-
-				if (ltype != rtype && IS_BINARY_COMPATIBLE(ltype, rtype))
-				{
-					char	   *opname = get_opname(expr_op);
-					Operator	newop = NULL;
-
-					/* note we use rtype, ie, the indexkey's type */
-					if (opname != NULL)
-						newop = oper(opname, rtype, rtype, TRUE);
-
-					if (HeapTupleIsValid(newop) && oprid(newop) != expr_op)
-					{
-						expr_op = get_commutator(oprid(newop));
-						isIndexable = (expr_op != InvalidOid) &&
-							op_class(expr_op, xclass, index->relam);
-						if (isIndexable)
-							((Oper *) clause->oper)->opno = oprid(newop);
-					}
-				}
-			}
-#endif
-
-			if (isIndexable)
-			{
-				/*
-				 * In place list modification. (op const var/func) -> (op
-				 * var/func const)
-				 */
-				CommuteClause((Node *) clause);
-			}
-			else
-			{
-				/*
-				 * If we didn't find a member of the index's opclass,
-				 * see whether it is a "special" indexable operator.
-				 * (match_special_index_operator must commute the
-				 * clause itself, if it wants to.)
-				 */
-				isIndexable = match_special_index_operator(clause, false);
-			}
+			if (indexable_operator(clause, xclass, index->relam, false))
+				return true;
+			/*
+			 * If we didn't find a member of the index's opclass,
+			 * see whether it is a "special" indexable operator.
+			 */
+			if (match_special_index_operator(clause, false))
+				return true;
+			return false;
 		}
 	}
 	else
 	{
 		/*
-		 * Check for an indexable scan on one of the join relations.
-		 * clause is of the form (operator var/func var/func)
-		 *  XXX this does not seem right.  Should check other side
-		 * looks like var/func? do we really want to only consider
-		 * this rel on lefthand side??
+		 * Check for an indexqual that could be handled by a nestloop join.
+		 * We need the index key to be compared against an expression
+		 * that uses none of the indexed relation's vars.
 		 */
-		Oid			join_op = InvalidOid;
+		if (match_index_to_operand(indexkey, leftop, rel, index))
+		{
+			List	   *othervarnos = pull_varnos((Node *) rightop);
+			bool		isIndexable;
 
-		if (match_index_to_operand(indexkey, (Expr *) leftop,
-								   rel, index))
-			join_op = expr_op;
-		else if (match_index_to_operand(indexkey, (Expr *) rightop,
-										rel, index))
-			join_op = get_commutator(expr_op);
+			isIndexable = ! intMember(lfirsti(rel->relids), othervarnos);
+			freeList(othervarnos);
+			if (isIndexable &&
+				indexable_operator(clause, xclass, index->relam, true))
+				return true;
+		}
+		else if (match_index_to_operand(indexkey, rightop, rel, index))
+		{
+			List	   *othervarnos = pull_varnos((Node *) leftop);
+			bool		isIndexable;
 
-		if (join_op && op_class(join_op, xclass, index->relam) &&
-			is_joinable((Node *) clause))
-			isIndexable = true;
+			isIndexable = ! intMember(lfirsti(rel->relids), othervarnos);
+			freeList(othervarnos);
+			if (isIndexable &&
+				indexable_operator(clause, xclass, index->relam, false))
+				return true;
+		}
 	}
 
-	return isIndexable;
+	return false;
+}
+
+/*
+ * indexable_operator
+ *	  Does a binary opclause contain an operator matching the index's
+ *	  access method?
+ *
+ *	  If the indexkey is on the right, what we actually want to know
+ *	  is whether the operator has a commutator operator that matches
+ *	  the index's access method.
+ *
+ * We try both the straightforward match and matches that rely on
+ * recognizing binary-compatible datatypes.  For example, if we have
+ * an expression like "oid = 123", the operator will be oideqint4,
+ * which we need to replace with oideq in order to recognize it as
+ * matching an oid_ops index on the oid field.
+ *
+ * NOTE: if a binary-compatible match is made, we destructively modify
+ * the given clause to use the binary-compatible substitute operator!
+ * This should be safe even if we don't end up using the index, but it's
+ * a tad ugly...
+ */
+static bool
+indexable_operator(Expr *clause, int xclass, Oid relam,
+				   bool indexkey_on_left)
+{
+	Oid			expr_op = ((Oper *) clause->oper)->opno;
+	Oid			commuted_op;
+	Oid			ltype,
+				rtype;
+
+	/* Get the commuted operator if necessary */
+	if (indexkey_on_left)
+		commuted_op = expr_op;
+	else
+		commuted_op = get_commutator(expr_op);
+	if (commuted_op == InvalidOid)
+		return false;
+
+	/* Done if the (commuted) operator is a member of the index's AM */
+	if (op_class(commuted_op, xclass, relam))
+		return true;
+
+	/*
+	 * Maybe the index uses a binary-compatible operator set.
+	 */
+	ltype = exprType((Node *) get_leftop(clause));
+	rtype = exprType((Node *) get_rightop(clause));
+
+	/*
+	 * make sure we have two different binary-compatible types...
+	 */
+	if (ltype != rtype && IS_BINARY_COMPATIBLE(ltype, rtype))
+	{
+		char	   *opname = get_opname(expr_op);
+		Operator	newop;
+
+		if (opname == NULL)
+			return false;		/* probably shouldn't happen */
+
+		/* Use the datatype of the index key */
+		if (indexkey_on_left)
+			newop = oper(opname, ltype, ltype, TRUE);
+		else
+			newop = oper(opname, rtype, rtype, TRUE);
+
+		if (HeapTupleIsValid(newop))
+		{
+			Oid		new_expr_op = oprid(newop);
+
+			if (new_expr_op != expr_op)
+			{
+				/*
+				 * OK, we found a binary-compatible operator of the same name;
+				 * now does it match the index?
+				 */
+				if (indexkey_on_left)
+					commuted_op = new_expr_op;
+				else
+					commuted_op = get_commutator(new_expr_op);
+				if (commuted_op == InvalidOid)
+					return false;
+
+				if (op_class(commuted_op, xclass, relam))
+				{
+					/*
+					 * Success!  Change the opclause to use the
+					 * binary-compatible operator.
+					 */
+					((Oper *) clause->oper)->opno = new_expr_op;
+					return true;
+				}
+			}
+		}
+	}
+
+	return false;
 }
 
 /****************************************************************************
@@ -1315,7 +1339,7 @@ useful_for_mergejoin(RelOptInfo *index,
  */
 static bool
 match_index_to_operand(int indexkey,
-					   Expr *operand,
+					   Var *operand,
 					   RelOptInfo *rel,
 					   RelOptInfo *index)
 {
@@ -1324,19 +1348,19 @@ match_index_to_operand(int indexkey,
 		/*
 		 * Normal index.
 		 */
-		return match_indexkey_operand(indexkey, (Var *) operand, rel);
+		return match_indexkey_operand(indexkey, operand, rel);
 	}
 
 	/*
 	 * functional index check
 	 */
-	return function_index_operand(operand, rel, index);
+	return function_index_operand((Expr *) operand, rel, index);
 }
 
 static bool
 function_index_operand(Expr *funcOpnd, RelOptInfo *rel, RelOptInfo *index)
 {
-	Oid			heapRelid = (Oid) lfirsti(rel->relids);
+	int			relvarno = lfirsti(rel->relids);
 	Func	   *function;
 	List	   *funcargs;
 	int		   *indexKeys = index->indexkeys;
@@ -1346,8 +1370,8 @@ function_index_operand(Expr *funcOpnd, RelOptInfo *rel, RelOptInfo *index)
 	/*
 	 * sanity check, make sure we know what we're dealing with here.
 	 */
-	if (funcOpnd == NULL ||
-		nodeTag(funcOpnd) != T_Expr || funcOpnd->opType != FUNC_EXPR ||
+	if (funcOpnd == NULL ||	! IsA(funcOpnd, Expr) ||
+		funcOpnd->opType != FUNC_EXPR ||
 		funcOpnd->oper == NULL || indexKeys == NULL)
 		return false;
 
@@ -1362,27 +1386,17 @@ function_index_operand(Expr *funcOpnd, RelOptInfo *rel, RelOptInfo *index)
 	 * create the functional index.  To do this we must check that 1.
 	 * refer to the right relatiion. 2. the args have the right attr.
 	 * numbers in the right order.
-	 *
-	 * Check all args refer to the correct relation (i.e. the one with the
-	 * functional index defined on it (rel).  To do this we can simply
-	 * compare range table entry numbers, they must be the same.
-	 */
-	foreach(arg, funcargs)
-	{
-		if (heapRelid != ((Var *) lfirst(arg))->varno)
-			return false;
-	}
-
-	/*
-	 * check attr numbers and order.
 	 */
 	i = 0;
 	foreach(arg, funcargs)
 	{
+		Var	   *var = (Var *) lfirst(arg);
+
+		if (! IsA(var, Var))
+			return false;
 		if (indexKeys[i] == 0)
 			return false;
-
-		if (((Var *) lfirst(arg))->varattno != indexKeys[i])
+		if (var->varno != relvarno || var->varattno != indexKeys[i])
 			return false;
 
 		i++;
