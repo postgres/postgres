@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.85 2002/08/30 19:23:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.86 2002/09/03 18:50:54 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -400,8 +400,12 @@ nextval(PG_FUNCTION_ARGS)
 				if (rescnt > 0)
 					break;		/* stop fetching */
 				if (!seq->is_cycled)
-					elog(ERROR, "%s.nextval: reached MAXVALUE (" INT64_FORMAT ")",
-						 sequence->relname, maxv);
+				{
+					char buf[100];
+					snprintf(buf, 100, INT64_FORMAT, maxv);
+					elog(ERROR, "%s.nextval: reached MAXVALUE (%s)",
+						 sequence->relname, buf);
+				}
 				next = minv;
 			}
 			else
@@ -416,8 +420,12 @@ nextval(PG_FUNCTION_ARGS)
 				if (rescnt > 0)
 					break;		/* stop fetching */
 				if (!seq->is_cycled)
-					elog(ERROR, "%s.nextval: reached MINVALUE (" INT64_FORMAT ")",
-						 sequence->relname, minv);
+				{
+					char buf[100];
+					snprintf(buf, 100, INT64_FORMAT, minv);
+					elog(ERROR, "%s.nextval: reached MINVALUE (%s)",
+						 sequence->relname, buf);
+				}
 				next = maxv;
 			}
 			else
@@ -551,8 +559,14 @@ do_setval(RangeVar *sequence, int64 next, bool iscalled)
 	seq = read_info("setval", elm, seqrel, &buf);
 
 	if ((next < seq->min_value) || (next > seq->max_value))
-		elog(ERROR, "%s.setval: value " INT64_FORMAT " is out of bounds (" INT64_FORMAT "," INT64_FORMAT ")",
-			 sequence->relname, next, seq->min_value, seq->max_value);
+	{
+		char bufv[100], bufm[100], bufx[100];
+		snprintf(bufv, 100, INT64_FORMAT, next);
+		snprintf(bufm, 100, INT64_FORMAT, seq->min_value);
+		snprintf(bufx, 100, INT64_FORMAT, seq->max_value);
+		elog(ERROR, "%s.setval: value %s is out of bounds (%s,%s)",
+			 sequence->relname, bufv, bufm, bufx);
+	}
 
 	/* save info in local cache */
 	elm->last = next;			/* last returned number */
@@ -813,8 +827,13 @@ init_params(CreateSeqStmt *seq, Form_pg_sequence new)
 		new->min_value = defGetInt64(min_value);
 
 	if (new->min_value >= new->max_value)
-		elog(ERROR, "DefineSequence: MINVALUE (" INT64_FORMAT ") can't be >= MAXVALUE (" INT64_FORMAT ")",
-			 new->min_value, new->max_value);
+	{
+		char bufm[100], bufx[100];
+		snprintf(bufm, 100, INT64_FORMAT, new->min_value);
+		snprintf(bufx, 100, INT64_FORMAT, new->max_value);
+		elog(ERROR, "DefineSequence: MINVALUE (%s) must be less than MAXVALUE (%s)",
+			 bufm, bufx);
+	}
 
 	if (last_value == (DefElem *) NULL) /* START WITH */
 	{
@@ -827,17 +846,31 @@ init_params(CreateSeqStmt *seq, Form_pg_sequence new)
 		new->last_value = defGetInt64(last_value);
 
 	if (new->last_value < new->min_value)
-		elog(ERROR, "DefineSequence: START value (" INT64_FORMAT ") can't be < MINVALUE (" INT64_FORMAT ")",
-			 new->last_value, new->min_value);
+	{
+		char bufs[100], bufm[100];
+		snprintf(bufs, 100, INT64_FORMAT, new->last_value);
+		snprintf(bufm, 100, INT64_FORMAT, new->min_value);
+		elog(ERROR, "DefineSequence: START value (%s) can't be less than MINVALUE (%s)",
+			 bufs, bufm);
+	}
 	if (new->last_value > new->max_value)
-		elog(ERROR, "DefineSequence: START value (" INT64_FORMAT ") can't be > MAXVALUE (" INT64_FORMAT ")",
-			 new->last_value, new->max_value);
+	{
+		char bufs[100], bufm[100];
+		snprintf(bufs, 100, INT64_FORMAT, new->last_value);
+		snprintf(bufm, 100, INT64_FORMAT, new->max_value);
+		elog(ERROR, "DefineSequence: START value (%s) can't be greater than MAXVALUE (%s)",
+			 bufs, bufm);
+	}
 
 	if (cache_value == (DefElem *) NULL)		/* CACHE */
 		new->cache_value = 1;
 	else if ((new->cache_value = defGetInt64(cache_value)) <= 0)
-		elog(ERROR, "DefineSequence: CACHE (" INT64_FORMAT ") can't be <= 0",
-			 new->cache_value);
+	{
+		char buf[100];
+		snprintf(buf, 100, INT64_FORMAT, new->cache_value);
+		elog(ERROR, "DefineSequence: CACHE (%s) can't be <= 0",
+			 buf);
+	}
 
 }
 
