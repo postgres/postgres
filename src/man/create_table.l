@@ -1,13 +1,13 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/create_table.l,v 1.10 1997/10/02 02:50:22 vadim Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/create_table.l,v 1.11 1997/10/09 04:59:37 thomas Exp $
 .TH "CREATE TABLE" SQL 09/25/97 PostgreSQL
 .SH NAME
 create table \(em create a new class
 .SH SYNOPSIS
 .nf
-\fBcreate table\fR classname \fB(\fPattname type [not null] [\fBdefault\fP value]
-	[\fB,\fP attname type [\fBdefault\fP value] [\fBnot null\fP] ]\fB )\fP
+\fBcreate table\fR classname \fB(\fPattname type [\fBdefault\fP value] [\fBnot null\fP]
+	[\fB,\fP attname type [\fBdefault\fP value] [\fBnot null\fP] [, ...] ]\fB )\fP
 	[\fBinherits\fR \fB(\fR classname [\fB,\fR classname] \fB)\fR]
 	[\fBconstraint\fR cname \fBcheck\fR \fB(\fR test \fB)\fR [, \fBcheck\fR \fB(\fR test \fB)\fR ] ]
 	[\fBarchive\fR \fB=\fR archive_mode]
