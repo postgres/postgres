@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/psort.c,v 1.10 1997/08/06 07:39:20 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/psort.c,v 1.11 1997/08/06 17:11:20 momjian Exp $
  *
  * NOTES
  *      Sorts the first relation into the second relation.
@@ -281,8 +281,14 @@ initialrun(Sort *node, bool *empty)
 	    inittapes(node);
 	extrapasses = 0;
     }
-    else
-	return;	/* if rows fit in memory, we never access tape stuff */
+    else {
+	/* if empty or rows fit in memory, we never access tape stuff */
+	if (*empty || ! PS(node)->using_tape_files)
+	    return;
+	if (! PS(node)->using_tape_files)
+	    inittapes(node);
+        extrapasses = 1 + (PS(node)->Tuples != NULL);   /* (T != N) ? 2 : 1 */
+    }
     
     for ( ; ; ) {
 	tp->tp_dummy--;
@@ -362,7 +368,8 @@ createrun(Sort *node, FILE *file, bool *empty)
 				       &PS(node)->treeContext);
 	    if (! PS(node)->using_tape_files) {
 		inittapes(node);
-		file = PS(node)->Tape->tp_file; /* was NULL */
+		if (! file)
+		    file = PS(node)->Tape->tp_file; /* was NULL */
 	    }
 	    PUTTUP(node, tup, file);
 	    TRACEOUT(createrun, tup);
