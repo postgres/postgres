@@ -10,6 +10,7 @@
 
 #include "access/gist.h"
 #include "access/rtree.h"
+#include "lib/stringinfo.h"
 #include "utils/elog.h"
 #include "utils/palloc.h"
 #include "utils/builtins.h"
@@ -107,47 +108,43 @@ cube_in(char *str)
  *	   char *out_func(char *);
  */
 char *
-cube_out(NDBOX * cube)
+cube_out(NDBOX *cube)
 {
-	char	   *result;
-	char	   *p;
-	int			equal = 1;
+	StringInfoData buf;
+	bool		equal = true;
 	int			dim = cube->dim;
 	int			i;
 
-	if (cube == NULL)
-		return (NULL);
-
-	p = result = (char *) palloc(100);
+	initStringInfo(&buf);
 
 	/*
 	 * while printing the first (LL) corner, check if it is equal to the
-	 * scond one
+	 * second one
 	 */
-	p += sprintf(p, "(");
+	appendStringInfoChar(&buf, '(');
 	for (i = 0; i < dim; i++)
 	{
-		p += sprintf(p, "%g", cube->x[i]);
-		p += sprintf(p, ", ");
+		if (i > 0)
+			appendStringInfo(&buf, ", ");
+		appendStringInfo(&buf, "%g", cube->x[i]);
 		if (cube->x[i] != cube->x[i + dim])
-			equal = 0;
+			equal = false;
 	}
-	p -= 2;						/* get rid of the last ", " */
-	p += sprintf(p, ")");
+	appendStringInfoChar(&buf, ')');
 
 	if (!equal)
 	{
-		p += sprintf(p, ",(");
-		for (i = dim; i < dim * 2; i++)
+		appendStringInfo(&buf, ",(");
+		for (i = 0; i < dim; i++)
 		{
-			p += sprintf(p, "%g", cube->x[i]);
-			p += sprintf(p, ", ");
+			if (i > 0)
+				appendStringInfo(&buf, ", ");
+			appendStringInfo(&buf, "%g", cube->x[i + dim]);
 		}
-		p -= 2;
-		p += sprintf(p, ")");
+		appendStringInfoChar(&buf, ')');
 	}
 
-	return (result);
+	return buf.data;
 }
 
 

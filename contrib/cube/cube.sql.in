@@ -8,12 +8,12 @@ SET search_path = public;
 CREATE FUNCTION cube_in(opaque)
 RETURNS opaque
 AS 'MODULE_PATHNAME'
-LANGUAGE 'c';
+LANGUAGE 'c' WITH (isStrict);
 
 CREATE FUNCTION cube_out(opaque)
 RETURNS opaque
 AS 'MODULE_PATHNAME'
-LANGUAGE 'c';
+LANGUAGE 'c' WITH (isStrict);
 
 CREATE TYPE cube (
 internallength = variable,
