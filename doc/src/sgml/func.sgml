@@ -785,11 +785,11 @@
        </row>
        <row>
 	<entry>W</entry>
-	<entry>week of month (1-5) where first week start on the first day of the month</entry>
+	<entry>week of month</entry>
        </row> 
        <row>
 	<entry>WW</entry>
-	<entry>week number of year (1-53) where first week start on the first day of the year</entry>
+	<entry>week number of year</entry>
        </row>
        <row>
 	<entry>CC</entry>
@@ -871,12 +871,9 @@
      <listitem>
       <para>
        <function>to_timestamp</function> and <function>to_date</function>
-       skip multiple blank space in converted string if the <literal>FX</literal> option 
-       is not used. <literal>FX</literal> must be specified as the first item
-       in the template; for example 
-       <literal>to_timestamp('2000    JUN','YYYY MON')</literal> is right, but
-       <literal>to_timestamp('2000    JUN','FXYYYY MON')</literal> returns error,
-       because to_timestamp() expects one blank space only.
+       skip blank space if the <literal>FX</literal> option is
+       not used. <literal>FX</literal> must be specified as the first item
+       in the template.
       </para>
      </listitem>
 
