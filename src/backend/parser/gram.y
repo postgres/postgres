@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.48 1997/09/20 16:11:42 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.49 1997/09/24 08:31:04 vadim Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -484,6 +484,11 @@ default_expr:  AexprConst
 					$$ = nconc( $$, $3);
 					$$ = lappend( $$, makeString(")"));
 				}
+			| name '(' ')'
+				{
+					$$ = makeList( makeString($1), makeString("("), -1);
+					$$ = lappend( $$, makeString(")"));
+				}
 			| default_expr Op default_expr
 				{
 					if (!strcmp("<=", $2) || !strcmp(">=", $2))
@@ -841,12 +846,19 @@ TriggerFuncArgs: TriggerFuncArg
 		;
 
 TriggerFuncArg: ICONST
-				{
+					{
 						char *s = (char *) palloc (256);
 						sprintf (s, "%d", $1);
 						$$ = s;
-				}
+					}
+				| FCONST
+					{
+						char *s = (char *) palloc (256);
+						sprintf (s, "%g", $1);
+						$$ = s;
+					}
 				| Sconst		{  $$ = $1; }
+				| IDENT			{  $$ = $1; }
 		;
 
 DropTrigStmt:	DROP TRIGGER name ON relation_name
