@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.62 1999/03/17 21:02:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.63 1999/03/18 21:39:56 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -79,6 +79,7 @@ static char *FlattenStringList(List *list);
 static char *fmtId(char *rawid);
 static Node *makeIndexable(char *opname, Node *lexpr, Node *rexpr);
 static void param_type_init(Oid *typev, int nargs);
+static Node *doNegate(Node *n);
 
 Oid	param_type(int t); /* used in parse_expr.c */
 
@@ -3695,7 +3696,7 @@ a_expr:  attr opt_indirection
 					$$ = (Node *)n;
 				}
 		| '-' a_expr %prec UMINUS
-				{	$$ = makeA_Expr(OP, "-", NULL, $2); }
+				{	$$ = doNegate($2); }
 		| a_expr '+' a_expr
 				{	$$ = makeA_Expr(OP, "+", $1, $3); }
 		| a_expr '-' a_expr
@@ -3710,9 +3711,13 @@ a_expr:  attr opt_indirection
 				{	$$ = makeA_Expr(OP, "<", $1, $3); }
 		| a_expr '>' a_expr
 				{	$$ = makeA_Expr(OP, ">", $1, $3); }
+
 		/* We allow this for standards-broken SQL products, like MS stuff */
   		| a_expr '=' NULL_P
   				{	$$ = makeA_Expr(ISNULL, NULL, $1, NULL); }
+  		| NULL_P '=' %prec '-' a_expr
+  				{	$$ = makeA_Expr(ISNULL, NULL, $3, NULL); }
+
 		| a_expr '=' a_expr
 				{	$$ = makeA_Expr(OP, "=", $1, $3); }
 		| ':' a_expr
@@ -4348,7 +4353,7 @@ b_expr:  attr opt_indirection
 					$$ = (Node *)n;
 				}
 		| '-' b_expr %prec UMINUS
-				{	$$ = makeA_Expr(OP, "-", NULL, $2); }
+				{	$$ = doNegate($2); }
 		| b_expr '+' b_expr
 				{	$$ = makeA_Expr(OP, "+", $1, $3); }
 		| b_expr '-' b_expr
@@ -5677,4 +5682,29 @@ Oid param_type(int t)
 	if ((t > pfunc_num_args) || (t == 0))
 		return InvalidOid;
 	return param_type_info[t - 1];
+}
+
+/*
+ *	The optimizer doesn't like '-' 4, but wants an integer of -4, so we
+ *  try to merge the minus into the constant.
+ */
+static Node *doNegate(Node *n)
+{
+	if (IsA(n, A_Const))
+	{
+		A_Const *con = (A_Const *)n;
+
+		if (con->val.type == T_Integer)
+		{
+			con->val.val.ival = -con->val.val.ival;
+			return n;
+		}
+		if (con->val.type == T_Float)
+		{
+			con->val.val.dval = -con->val.val.dval;
+			return n;
+		}
+	}
+
+	return makeA_Expr(OP, "-", NULL, n);
 }
