@@ -542,7 +542,7 @@ Data Type and Function Changes
      * Make EXTRACT(TIMEZONE) and SET/SHOW TIME ZONE follow the SQL
        convention for the sign of time zone offsets, i.e., positive is
        east from UTC (Tom)
-     * Fix date_trunc('quarter', ...) (B?jthe Zolt?n)
+     * Fix date_trunc('quarter', ...) (Böjthe Zoltán)
        Prior releases returned an incorrect value for this function call.
      * Make initcap() more compatible with Oracle (Mike Nolan)
        initcap() now uppercases a letter appearing after any
@@ -757,9 +757,9 @@ Contrib Changes
      * Improve pgstattuple (Rod)
      * Fix bug in metaphone() in fuzzystrmatch
      * Improve adddepend (Rod)
-     * Update spi/timetravel (B?jthe Zolt?n)
+     * Update spi/timetravel (Böjthe Zoltán)
      * Fix dbase "-s" option and improve non-ASCII handling (Thomas
-       Behr,M?rcio Smiderle)
+       Behr, Márcio Smiderle)
      * Remove array module because features now included by default (Joe)
      _________________________________________________________________
    
