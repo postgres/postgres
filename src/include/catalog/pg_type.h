@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.1 1996/08/28 01:57:18 scrappy Exp $
+ * $Id: pg_type.h,v 1.2 1996/10/19 04:24:57 scrappy Exp $
  *
  * NOTES
  *    the genbki.sh script reads this file and generates .bki
@@ -18,14 +18,14 @@
 #ifndef PG_TYPE_H
 #define PG_TYPE_H
 
+#include "utils/rel.h"
+
 /* ----------------
  *	postgres.h contains the system type definintions and the
  *	CATALOG(), BOOTSTRAP and DATA() sugar words so this file
  *	can be read by both genbki.sh and the C compiler.
  * ----------------
  */
-#include "postgres.h"
-#include "utils/rel.h"		/* for Relation */
 
 /* ----------------
  *	pg_type definition.  cpp turns this into
