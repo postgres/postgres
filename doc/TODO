@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Mar 30 13:34:23 EST 2001
+Last updated:		Fri Mar 30 13:36:16 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -230,6 +230,8 @@ REFERENTIAL INTEGRITY
 * INSERT & UPDATE/DELETE in transaction of primary key fails with 
   deferredTriggerGetPreviousEvent or "change violation" [foreign]
 * Add unique indexes to pg_shadow.usename and pg_shadow.usesysid
+* Add unique indexes on pg_database
+* Check all system tables and add unique indexes as needed
 
 EXOTIC FEATURES
 
