@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/s_lock.c,v 1.9 2002/09/21 00:14:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/s_lock.c,v 1.10 2002/11/10 00:33:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -143,31 +143,6 @@ success:						\n\
 ");
 }
 #endif   /* __APPLE__ && __ppc__ */
-
-#if defined(__powerpc__)
-/* Note: need a nice gcc constrained asm version so it can be inlined */
-static void
-tas_dummy()
-{
-	__asm__		__volatile__(
-										 "\
-.global tas 					\n\
-tas:							\n\
-			lwarx	5,0,3		\n\
-			cmpwi 	5,0 		\n\
-			bne 	fail		\n\
-			addi 	5,5,1		\n\
-			stwcx.	5,0,3		\n\
-			beq 	success 	\n\
-fail:		li		3,1 		\n\
-			blr 				\n\
-success:						\n\
-			isync				\n\
-			li 		3,0			\n\
-			blr					\n\
-");
-}
-#endif   /* __powerpc__ */
 
 #if defined(__mips__) && !defined(__sgi)
 static void

@@ -14,6 +14,11 @@ typedef unsigned char slock_t;
 
 #define HAS_TEST_AND_SET
 
+#elif defined(__powerpc64__)
+typedef unsigned long slock_t;
+
+#define HAS_TEST_AND_SET
+
 #elif defined(__powerpc__)
 typedef unsigned int slock_t;
 
