@@ -10,12 +10,19 @@
 #ifndef __DLG_SPECIFIC_H__
 #define __DLG_SPECIFIC_H__
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include "psqlodbc.h"
 #include "connection.h"
+
+#ifndef UNIX
 #include  <windows.h>
 #include  <windowsx.h>
 #include  <odbcinst.h>
 #include "resource.h"
+#endif
 
 /*	Unknown data type sizes */
 #define UNKNOWNS_AS_MAX				0
@@ -23,8 +30,13 @@
 #define UNKNOWNS_AS_LONGEST			2
 
 /* INI File Stuff */
-#define ODBC_INI     "ODBC.INI"         /* ODBC initialization file */
-#define ODBCINST_INI "ODBCINST.INI"		/* ODBC Installation file */
+#ifdef UNIX
+#define ODBC_INI		".odbc.ini"
+#define ODBCINST_INI	"/etc/odbcinst.ini"
+#else
+#define ODBC_INI		"ODBC.INI"         /* ODBC initialization file */
+#define ODBCINST_INI	"ODBCINST.INI"		/* ODBC Installation file */
+#endif
 
 #define INI_DSN           DBMS_NAME         /* Name of default Datasource in ini file (not used?) */
 #define INI_KDESC         "Description"     /* Data source description */
@@ -58,7 +70,13 @@
 #define INI_ROWVERSIONING			"RowVersioning"
 #define INI_SHOWSYSTEMTABLES		"ShowSystemTables"
 #define INI_LIE						"Lie"
+#define INI_PARSE					"Parse"
 #define INI_EXTRASYSTABLEPREFIXES	"ExtraSysTablePrefixes"
+
+#define INI_TRANSLATIONNAME       "TranslationName"
+#define INI_TRANSLATIONDLL        "TranslationDLL"
+#define INI_TRANSLATIONOPTION     "TranslationOption"
+
 
 /*	Connection Defaults */
 #define DEFAULT_PORT					"5432"
@@ -78,13 +96,14 @@
 #define DEFAULT_ROWVERSIONING			0
 #define DEFAULT_SHOWSYSTEMTABLES		0		// dont show system tables
 #define DEFAULT_LIE						0
+#define DEFAULT_PARSE					0
 
 #define DEFAULT_EXTRASYSTABLEPREFIXES	"dd_;"
 
 /*  prototypes */
-void updateGlobals(void);
 void getGlobalDefaults(void);
 
+#ifndef UNIX
 void SetDlgStuff(HWND hdlg, ConnInfo *ci);
 void GetDlgStuff(HWND hdlg, ConnInfo *ci);
 
@@ -96,12 +115,14 @@ int CALLBACK ds_optionsProc(HWND   hdlg,
                            WORD   wMsg,
                            WPARAM wParam,
                            LPARAM lParam);
+#endif /* ! UNIX */
 
+void updateGlobals(void);
+void writeDSNinfo(ConnInfo *ci);
+void getDSNdefaults(ConnInfo *ci);
+void getDSNinfo(ConnInfo *ci, char overwrite);
 void makeConnectString(char *connect_string, ConnInfo *ci);
 void copyAttributes(ConnInfo *ci, char *attribute, char *value);
-void getDSNdefaults(ConnInfo *ci);
 
-void getDSNinfo(ConnInfo *ci, char overwrite);
-void writeDSNinfo(ConnInfo *ci);
 
 #endif

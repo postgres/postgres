@@ -74,7 +74,8 @@ BEGIN
     EDITTEXT        IDC_PASSWORD,175,55,72,12,ES_PASSWORD | ES_AUTOHSCROLL
     DEFPUSHBUTTON   "OK",IDOK,25,90,40,14,WS_GROUP
     PUSHBUTTON      "Cancel",IDCANCEL,80,90,40,14
-    GROUPBOX        "Options (Advanced):",IDC_STATIC,140,74,140,35,BS_CENTER
+    GROUPBOX        "Options (Advanced):",IDC_OPTIONS,140,74,140,35,
+                    BS_CENTER
     PUSHBUTTON      "Driver",IDC_DRIVER,160,90,50,14
     PUSHBUTTON      "DataSource",IDC_DATASOURCE,220,90,50,14
     CTEXT           "Please supply any missing information needed to connect.",
@@ -96,6 +97,8 @@ BEGIN
                     BS_AUTOCHECKBOX | WS_TABSTOP,140,25,80,10
     CONTROL         "&Use Declare/Fetch",DRV_USEDECLAREFETCH,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,15,40,80,10
+    CONTROL         "P&arse Statements",DRV_PARSE,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,140,40,80,10
     GROUPBOX        "Unknown Sizes",IDC_STATIC,10,55,175,25
     CONTROL         "Maximum",DRV_UNKNOWN_MAX,"Button",BS_AUTORADIOBUTTON | 
                     WS_GROUP | WS_TABSTOP,15,65,45,10
@@ -200,8 +203,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 6,30,2,46
- PRODUCTVERSION 6,30,2,46
+ FILEVERSION 6,30,2,48
+ PRODUCTVERSION 6,30,2,48
  FILEFLAGSMASK 0x3L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -219,12 +222,12 @@ BEGIN
             VALUE "Comments", "PostgreSQL ODBC driver for Windows 95\0"
             VALUE "CompanyName", "Insight Distribution Systems\0"
             VALUE "FileDescription", "PostgreSQL Driver\0"
-            VALUE "FileVersion", " 6.30.0246\0"
+            VALUE "FileVersion", " 6.30.0248\0"
             VALUE "InternalName", "psqlodbc\0"
             VALUE "LegalTrademarks", "ODBC(TM) is a trademark of Microsoft Corporation.  Microsoft® is a registered trademark of Microsoft Corporation. Windows(TM) is a trademark of Microsoft Corporation.\0"
             VALUE "OriginalFilename", "psqlodbc.dll\0"
             VALUE "ProductName", "Microsoft Open Database Connectivity\0"
-            VALUE "ProductVersion", " 6.30.0246\0"
+            VALUE "ProductVersion", " 6.30.0248\0"
         END
     END
     BLOCK "VarFileInfo"

@@ -16,10 +16,27 @@
  *
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
+#ifdef UNIX
+#include <string.h>
+#include "gpps.h"
+#define SQLGetPrivateProfileString(a,b,c,d,e,f) GetPrivateProfileString(a,b,c,d,e,f)
+#define SQLWritePrivateProfileString(a,b,c,d) WritePrivateProfileString(a,b,c,d)
+#if !HAVE_STRICMP
+#define stricmp(s1,s2)	strcasecmp(s1,s2)
+#define strnicmp(s1,s2,n)	strncasecmp(s1,s2,n)
+#endif
+#endif
+
 #include "dlg_specific.h"
+#include "convert.h"
 
 extern GLOBAL_VALUES globals;
 
+#ifndef UNIX	/* best to find a #ifdef for WINDOWS */
 void
 SetDlgStuff(HWND hdlg, ConnInfo *ci)
 {
@@ -81,7 +98,9 @@ int CALLBACK driver_optionsProc(HWND   hdlg,
 		CheckDlgButton(hdlg, DRV_TEXT_LONGVARCHAR, globals.text_as_longvarchar);
 		CheckDlgButton(hdlg, DRV_UNKNOWNS_LONGVARCHAR, globals.unknowns_as_longvarchar);
 		CheckDlgButton(hdlg, DRV_BOOLS_CHAR, globals.bools_as_char);
-		
+
+		CheckDlgButton(hdlg, DRV_PARSE, globals.parse);
+
 		SetDlgItemInt(hdlg, DRV_CACHE_SIZE, globals.fetch_max, FALSE);
 		SetDlgItemInt(hdlg, DRV_VARCHAR_SIZE, globals.max_varchar_size, FALSE);
 		SetDlgItemInt(hdlg, DRV_LONGVARCHAR_SIZE, globals.max_longvarchar_size, TRUE);
@@ -117,6 +136,8 @@ int CALLBACK driver_optionsProc(HWND   hdlg,
 			globals.unknowns_as_longvarchar = IsDlgButtonChecked(hdlg, DRV_UNKNOWNS_LONGVARCHAR);
 			globals.bools_as_char = IsDlgButtonChecked(hdlg, DRV_BOOLS_CHAR);
 
+			globals.parse = IsDlgButtonChecked(hdlg, DRV_PARSE);
+
 			globals.fetch_max = GetDlgItemInt(hdlg, DRV_CACHE_SIZE, NULL, FALSE);
 			globals.max_varchar_size = GetDlgItemInt(hdlg, DRV_VARCHAR_SIZE, NULL, FALSE);
 			globals.max_longvarchar_size= GetDlgItemInt(hdlg, DRV_LONGVARCHAR_SIZE, NULL, TRUE);	// allows for SQL_NO_TOTAL
@@ -141,6 +162,8 @@ int CALLBACK driver_optionsProc(HWND   hdlg,
 			CheckDlgButton(hdlg, DRV_READONLY, DEFAULT_READONLY);
 			CheckDlgButton(hdlg, DRV_USEDECLAREFETCH, DEFAULT_USEDECLAREFETCH);
 	
+			CheckDlgButton(hdlg, DRV_PARSE, DEFAULT_PARSE);
+
 			/*	Unknown Sizes */
 			CheckDlgButton(hdlg, DRV_UNKNOWN_DONTKNOW, 0);
 			CheckDlgButton(hdlg, DRV_UNKNOWN_LONGEST, 0);
@@ -185,7 +208,6 @@ int CALLBACK ds_optionsProc(HWND   hdlg,
 {
 ConnInfo *ci;
 char buf[128];
-// int unknown_sizes;
 
 	switch (wMsg) {
 	case WM_INITDIALOG:
@@ -209,20 +231,6 @@ char buf[128];
 		else
 			CheckDlgButton(hdlg, DS_PG62, 0);
 
-		/*	Unknown Data Type sizes -- currently only needed in Driver options.
-		switch (atoi(ci->unknown_sizes)) {
-		case UNKNOWNS_AS_DONTKNOW:
-			CheckDlgButton(hdlg, DS_UNKNOWN_DONTKNOW, 1);
-			break;
-		case UNKNOWNS_AS_LONGEST:
-			CheckDlgButton(hdlg, DS_UNKNOWN_LONGEST, 1);
-			break;
-		case UNKNOWNS_AS_MAX:
-		default:
-			CheckDlgButton(hdlg, DS_UNKNOWN_MAX, 1);
-			break;
-		}
-		*/
 
 		CheckDlgButton(hdlg, DS_SHOWOIDCOLUMN, atoi(ci->show_oid_column));
 		CheckDlgButton(hdlg, DS_FAKEOIDINDEX, atoi(ci->fake_oid_index));
@@ -259,18 +267,6 @@ char buf[128];
 				ci->protocol[0] = '\0';
 
 
-			/*	Unknown Data Type sizes -- currently only needed in Driver options.
-			if (IsDlgButtonChecked(hdlg, DS_UNKNOWN_MAX))
-				unknown_sizes = UNKNOWNS_AS_MAX;
-			else if (IsDlgButtonChecked(hdlg, DS_UNKNOWN_DONTKNOW))
-				unknown_sizes = UNKNOWNS_AS_DONTKNOW;
-			else if (IsDlgButtonChecked(hdlg, DS_UNKNOWN_LONGEST))
-				unknown_sizes = UNKNOWNS_AS_LONGEST;
-			else
-				unknown_sizes = UNKNOWNS_AS_MAX;
-
-			sprintf(ci->unknown_sizes, "%d", unknown_sizes);
-			*/
 
 			sprintf(ci->show_system_tables, "%d", IsDlgButtonChecked(hdlg, DS_SHOWSYSTEMTABLES));
 
@@ -295,27 +291,36 @@ char buf[128];
 	return FALSE;
 }
 
+#endif	/* !UNIX */
+
 void
 makeConnectString(char *connect_string, ConnInfo *ci)
 {
 char got_dsn = (ci->dsn[0] != '\0');
+char encoded_conn_settings[LARGE_REGISTRY_LEN];
 
-	sprintf(connect_string, "%s=%s;DATABASE=%s;SERVER=%s;PORT=%s;UID=%s;READONLY=%s;PWD=%s;PROTOCOL=%s;FAKEOIDINDEX=%s;SHOWOIDCOLUMN=%s;ROWVERSIONING=%s;SHOWSYSTEMTABLES=%s;CONNSETTINGS=%s", 
+	/*	fundamental info */
+	sprintf(connect_string, "%s=%s;DATABASE=%s;SERVER=%s;PORT=%s;UID=%s;PWD=%s",
 		got_dsn ? "DSN" : "DRIVER", 
 		got_dsn ? ci->dsn : ci->driver,
 		ci->database,
 		ci->server,
 		ci->port,
 		ci->username,
+		ci->password);
+
+	encode(ci->conn_settings, encoded_conn_settings);
+
+	/*	extra info */
+	sprintf(&connect_string[strlen(connect_string)], 
+		";READONLY=%s;PROTOCOL=%s;FAKEOIDINDEX=%s;SHOWOIDCOLUMN=%s;ROWVERSIONING=%s;SHOWSYSTEMTABLES=%s;CONNSETTINGS=%s", 
 		ci->readonly,
-		ci->password,
 		ci->protocol,
-//		ci->unknown_sizes,  -- currently only needed in Driver options.
 		ci->fake_oid_index,
 		ci->show_oid_column,
 		ci->row_versioning,
 		ci->show_system_tables,
-		ci->conn_settings);
+		encoded_conn_settings);
 }
 
 void
@@ -349,10 +354,6 @@ copyAttributes(ConnInfo *ci, char *attribute, char *value)
 	else if (stricmp(attribute, INI_PROTOCOL) == 0)
 		strcpy(ci->protocol, value);
 
-	/*
-	else if (stricmp(attribute, INI_UNKNOWNSIZES) == 0)
-		strcpy(ci->unknown_sizes, value);
-	*/
 	else if (stricmp(attribute, INI_SHOWOIDCOLUMN) == 0)
 		strcpy(ci->show_oid_column, value);
 
@@ -365,9 +366,10 @@ copyAttributes(ConnInfo *ci, char *attribute, char *value)
 	else if (stricmp(attribute, INI_SHOWSYSTEMTABLES) == 0)
 		strcpy(ci->show_system_tables, value);
 
-	else if (stricmp(attribute, INI_CONNSETTINGS) == 0)
-		strcpy(ci->conn_settings, value);
-
+	else if (stricmp(attribute, INI_CONNSETTINGS) == 0) {
+		decode(value, ci->conn_settings);
+		// strcpy(ci->conn_settings, value);
+	}
 
 	mylog("copyAttributes: DSN='%s',server='%s',dbase='%s',user='%s',passwd='%s',port='%s',readonly='%s',protocol='%s', conn_settings='%s')\n", 
 		ci->dsn, 
@@ -378,7 +380,6 @@ copyAttributes(ConnInfo *ci, char *attribute, char *value)
 		ci->port,
 		ci->readonly,
 		ci->protocol,
-		// ci->unknown_sizes,
 		ci->conn_settings);
 
 }
@@ -392,10 +393,6 @@ getDSNdefaults(ConnInfo *ci)
 	if (ci->readonly[0] == '\0')
 		sprintf(ci->readonly, "%d", globals.readonly);
 
-/*	-- currently only needed in Driver options.
-	if (ci->unknown_sizes[0] == '\0')
-		sprintf(ci->unknown_sizes, "%d", globals.unknown_sizes);
-*/
 	if (ci->fake_oid_index[0] == '\0')
 		sprintf(ci->fake_oid_index, "%d", DEFAULT_FAKEOIDINDEX);
 
@@ -414,6 +411,7 @@ void
 getDSNinfo(ConnInfo *ci, char overwrite)
 {
 char *DSN = ci->dsn;
+char encoded_conn_settings[LARGE_REGISTRY_LEN];
 
 	//	If a driver keyword was present, then dont use a DSN and return.
 	//	If DSN is null and no driver, then use the default datasource.
@@ -447,10 +445,6 @@ char *DSN = ci->dsn;
 	if ( ci->readonly[0] == '\0' || overwrite)
 		SQLGetPrivateProfileString(DSN, INI_READONLY, "", ci->readonly, sizeof(ci->readonly), ODBC_INI);
 
-	/* -- currently only needed in Driver options.
-	if ( ci->unknown_sizes[0] == '\0' || overwrite)
-		SQLGetPrivateProfileString(DSN, INI_UNKNOWNSIZES, "", ci->unknown_sizes, sizeof(ci->unknown_sizes), ODBC_INI);
-	*/
 	if ( ci->show_oid_column[0] == '\0' || overwrite)
 		SQLGetPrivateProfileString(DSN, INI_SHOWOIDCOLUMN, "", ci->show_oid_column, sizeof(ci->show_oid_column), ODBC_INI);
 
@@ -466,8 +460,16 @@ char *DSN = ci->dsn;
 	if ( ci->protocol[0] == '\0' || overwrite)
 		SQLGetPrivateProfileString(DSN, INI_PROTOCOL, "", ci->protocol, sizeof(ci->protocol), ODBC_INI);
 
-	if ( ci->conn_settings[0] == '\0' || overwrite)
-		SQLGetPrivateProfileString(DSN, INI_CONNSETTINGS, "", ci->conn_settings, sizeof(ci->conn_settings), ODBC_INI);
+	if ( ci->conn_settings[0] == '\0' || overwrite) {
+		SQLGetPrivateProfileString(DSN, INI_CONNSETTINGS, "", encoded_conn_settings, sizeof(encoded_conn_settings), ODBC_INI);
+		decode(encoded_conn_settings, ci->conn_settings);
+	}
+
+	if ( ci->translation_dll[0] == '\0' || overwrite)
+		SQLGetPrivateProfileString(DSN, INI_TRANSLATIONDLL, "", ci->translation_dll, sizeof(ci->translation_dll), ODBC_INI);
+
+	if ( ci->translation_option[0] == '\0' || overwrite)
+		SQLGetPrivateProfileString(DSN, INI_TRANSLATIONOPTION, "", ci->translation_option, sizeof(ci->translation_option), ODBC_INI);
 
 	qlog("DSN info: DSN='%s',server='%s',port='%s',dbase='%s',user='%s',passwd='%s'\n", 
 		DSN, 
@@ -481,10 +483,13 @@ char *DSN = ci->dsn;
 		ci->protocol,
 		ci->show_oid_column,
 		ci->fake_oid_index,
-	//	ci->unknown_sizes,
 		ci->show_system_tables);
 	qlog("          conn_settings='%s'\n",
 		ci->conn_settings);
+	qlog("          translation_dll='%s',translation_option='%s'\n",
+		ci->translation_dll,
+		ci->translation_option);
+
 }
 
 
@@ -493,6 +498,9 @@ void
 writeDSNinfo(ConnInfo *ci)
 {
 char *DSN = ci->dsn;
+char encoded_conn_settings[LARGE_REGISTRY_LEN];
+
+		encode(ci->conn_settings, encoded_conn_settings);
 
 		SQLWritePrivateProfileString(DSN,
 			INI_KDESC,
@@ -529,12 +537,6 @@ char *DSN = ci->dsn;
 			ci->readonly,
 			ODBC_INI);
 
-		/*  -- currently only needed in Driver options.
-		SQLWritePrivateProfileString(DSN,
-			INI_UNKNOWNSIZES,
-			ci->unknown_sizes,
-			ODBC_INI);
-		*/
 		SQLWritePrivateProfileString(DSN,
 			INI_SHOWOIDCOLUMN,
 			ci->show_oid_column,
@@ -562,7 +564,7 @@ char *DSN = ci->dsn;
 
 		SQLWritePrivateProfileString(DSN,
 			INI_CONNSETTINGS,
-			ci->conn_settings,
+			encoded_conn_settings,
 			ODBC_INI);
 }
 
@@ -631,7 +633,7 @@ char temp[128];
 		globals.unique_index = atoi(temp);
 
 
-	//	Unknown Sizes is stored in the driver section AND per datasource
+	//	Unknown Sizes is stored in the driver section only
 	SQLGetPrivateProfileString(DBMS_NAME, INI_UNKNOWNSIZES, "", 
 				temp, sizeof(temp), ODBCINST_INI);
 	if ( temp[0] == '\0')
@@ -648,6 +650,13 @@ char temp[128];
 	else
 		globals.lie = atoi(temp);
 
+	//	Parse statements
+	SQLGetPrivateProfileString(DBMS_NAME, INI_PARSE, "", 
+				temp, sizeof(temp), ODBCINST_INI);
+	if ( temp[0] == '\0') 
+		globals.parse = DEFAULT_PARSE;
+	else
+		globals.parse = atoi(temp);
 
 	//	Readonly is stored in the driver section AND per datasource
 	SQLGetPrivateProfileString(DBMS_NAME, INI_READONLY, "", 
@@ -771,6 +780,10 @@ char tmp[128];
 	sprintf(tmp, "%d", globals.bools_as_char);
 	SQLWritePrivateProfileString(DBMS_NAME,
 		INI_BOOLSASCHAR, tmp, ODBCINST_INI);
+
+	sprintf(tmp, "%d", globals.parse);
+	SQLWritePrivateProfileString(DBMS_NAME,
+		INI_PARSE, tmp, ODBCINST_INI);
 
 	sprintf(tmp, "%d", globals.max_varchar_size);
 	SQLWritePrivateProfileString(DBMS_NAME,

@@ -10,9 +10,20 @@
 #ifndef __CONNECTION_H__
 #define __CONNECTION_H__
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
+#ifdef HAVE_IODBC
+#include "iodbc.h"
+#include "isql.h"
+#include "isqlext.h"
+#else
 #include <windows.h>
 #include <sql.h>
 #include <sqlext.h>
+#endif
+
 #include "psqlodbc.h"
 
 typedef enum {
@@ -48,6 +59,7 @@ typedef enum {
 #define CONN_NOT_IMPLEMENTED_ERROR 9
 #define CONN_INVALID_AUTHENTICATION 10
 #define CONN_AUTH_TYPE_UNSUPPORTED 11
+#define CONN_UNABLE_TO_LOAD_DLL 12
 
 
 /* Conn_status defines */
@@ -83,7 +95,7 @@ typedef enum {
 #define NO_AUTHENTICATION	7
 #define PATH_SIZE			64
 #define ARGV_SIZE			64
-#define NAMEDATALEN			32
+#define NAMEDATALEN			16
 
 typedef unsigned int ProtocolVersion;
 
@@ -130,11 +142,12 @@ typedef struct {
 	char	protocol[SMALL_REGISTRY_LEN];
 	char	port[SMALL_REGISTRY_LEN];
 	char	readonly[SMALL_REGISTRY_LEN];	
-//	char	unknown_sizes[SMALL_REGISTRY_LEN];
 	char	fake_oid_index[SMALL_REGISTRY_LEN];
 	char	show_oid_column[SMALL_REGISTRY_LEN];
 	char	row_versioning[SMALL_REGISTRY_LEN];
 	char	show_system_tables[SMALL_REGISTRY_LEN];
+	char    translation_dll[MEDIUM_REGISTRY_LEN];
+	char    translation_option[SMALL_REGISTRY_LEN];
 	char	focus_password;
 } ConnInfo;
 
@@ -142,6 +155,35 @@ typedef struct {
 #define PROTOCOL_62(conninfo_)		(strncmp((conninfo_)->protocol, PG62, strlen(PG62)) == 0)
 
 
+
+/*	This is used to store cached table information in the connection */
+struct col_info {
+	QResultClass	*result;
+	char			name[MAX_TABLE_LEN+1];
+};
+
+ /* Translation DLL entry points */
+typedef BOOL (FAR WINAPI *DataSourceToDriverProc) (UDWORD,
+					SWORD,
+					PTR,
+					SDWORD,
+					PTR,
+					SDWORD,
+					SDWORD FAR *,
+					UCHAR FAR *,
+					SWORD,
+					SWORD FAR *);
+
+typedef BOOL (FAR WINAPI *DriverToDataSourceProc) (UDWORD,
+					SWORD,
+					PTR,
+					SDWORD,
+					PTR,
+					SDWORD,
+					SDWORD FAR *,
+					UCHAR FAR *,
+					SWORD,
+					SWORD FAR *);
 
 /*******	The Connection handle	************/
 struct ConnectionClass_ {
@@ -154,6 +196,12 @@ struct ConnectionClass_ {
 	int				num_stmts;
 	SocketClass		*sock;
 	int				lobj_type;
+	int				ntables;
+	COL_INFO		**col_info;
+	long            translation_option;
+	HINSTANCE       translation_handle;
+	DataSourceToDriverProc  DataSourceToDriver;
+	DriverToDataSourceProc  DriverToDataSource;
 	char			transact_status;		/* Is a transaction is currently in progress */
 	char			errormsg_created;		/* has an informative error msg been created?  */
 };
@@ -179,6 +227,7 @@ char CC_Destructor(ConnectionClass *self);
 int CC_cursor_count(ConnectionClass *self);
 char CC_cleanup(ConnectionClass *self);
 char CC_abort(ConnectionClass *self);
+int CC_set_translation (ConnectionClass *self);
 char CC_connect(ConnectionClass *self, char do_password);
 char CC_add_statement(ConnectionClass *self, StatementClass *stmt);
 char CC_remove_statement(ConnectionClass *self, StatementClass *stmt);
@@ -190,5 +239,6 @@ int CC_send_function(ConnectionClass *conn, int fnid, void *result_buf, int *act
 char CC_send_settings(ConnectionClass *self);
 void CC_lookup_lo(ConnectionClass *conn);
 void CC_log_error(char *func, char *desc, ConnectionClass *self);
+
 
 #endif

@@ -13,16 +13,28 @@
  *
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include "psqlodbc.h"
 #include "dlg_specific.h"
+
+#ifdef HAVE_IODBC
+#include "iodbc.h"
+#include "isql.h"
+#include "isqlext.h"
+#else
 #include <winsock.h>
 #include <windows.h>
 #include <sql.h>
 #include <odbcinst.h>
+#endif
 
-HINSTANCE NEAR s_hModule;               /* Saved module handle. */
 GLOBAL_VALUES globals;
 
+#ifndef UNIX	/* again find a WINDOWS #ifdef */
+HINSTANCE NEAR s_hModule;               /* Saved module handle. */
 
 /*	This is where the Driver Manager attaches to this Driver */
 BOOL WINAPI DllMain(HANDLE hInst, ULONG ul_reason_for_call, LPVOID lpReserved) 
@@ -71,6 +83,33 @@ WSADATA wsaData;
                                                                                 
 	UNREFERENCED_PARAMETER(lpReserved);                                         
 }
+
+#else	/* UNIX */
+
+#ifndef TRUE
+#define TRUE	(BOOL)1
+#endif
+#ifndef FALSE
+#define FALSE	(BOOL)0
+#endif
+
+/* These two functions do shared library initialziation on UNIX, well at least
+ * on Linux. I don't know about other systems.
+ */
+BOOL
+_init(void)
+{
+	getGlobalDefaults();
+	return TRUE;
+}
+
+BOOL
+_fini(void)
+{
+	return TRUE;
+}
+
+#endif
 
 /*	This function is used to cause the Driver Manager to
 	call functions by number rather than name, which is faster.

@@ -16,11 +16,23 @@
  *
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <stdio.h>
 #include <string.h>
+
+#ifdef HAVE_IODBC
+#include "iodbc.h"
+#include "isql.h"
+#include "isqlext.h"
+#else
 #include <windows.h>
 #include <sql.h>
 #include <sqlext.h>
+#endif
+
 #include <time.h>
 #include <math.h>
 #include "convert.h"
@@ -29,6 +41,16 @@
 #include "pgtypes.h"
 #include "lobj.h"
 #include "connection.h"
+
+#ifdef UNIX
+#if !HAVE_STRICMP
+#define stricmp(s1,s2) strcasecmp(s1,s2)
+#define strnicmp(s1,s2,n) strncasecmp(s1,s2,n)
+#endif
+#ifndef SCHAR
+typedef signed char SCHAR;
+#endif
+#endif
 
 extern GLOBAL_VALUES globals;
 
@@ -102,6 +124,15 @@ struct tm *tim;
             *pcbValue = SQL_NULL_DATA;
         }
 		return COPY_OK;
+	}
+
+	if (stmt->hdbc->DataSourceToDriver != NULL) {
+		int length = strlen (value);
+		stmt->hdbc->DataSourceToDriver (stmt->hdbc->translation_option,
+										SQL_CHAR,
+										value, length,
+										value, length, NULL,
+										NULL, 0, NULL);
 	}
 
 	/********************************************************************
@@ -738,6 +769,15 @@ char in_quote = FALSE;
 	// make sure new_statement is always null-terminated
 	new_statement[npos] = '\0';
 
+	if(stmt->hdbc->DriverToDataSource != NULL) {
+		int length = strlen (new_statement);
+		stmt->hdbc->DriverToDataSource (stmt->hdbc->translation_option,
+										SQL_CHAR,
+										new_statement, length,
+										new_statement, length, NULL,
+										NULL, 0, NULL);
+	}
+
 	return SQL_SUCCESS;
 }
 
@@ -881,6 +921,12 @@ char *p;
 
 	for (i = 0; i < strlen(si) && out < max; i++) {
 		if (si[i] == '\n') {
+			/*	Only add the carriage-return if needed */
+			if (i > 0 && si[i-1] == '\r') {
+				p[out++] = si[i];
+				continue;
+			}
+
 			p[out++] = '\r';
 			p[out++] = '\n';
 		}
@@ -945,6 +991,26 @@ int i, y=0;
 
 }
 
+unsigned int
+conv_from_hex(unsigned char *s)
+{
+int i, y=0, val;
+
+	for (i = 1; i <= 2; i++) {
+
+        if (s[i] >= 'a' && s[i] <= 'f')
+            val = s[i] - 'a' + 10;
+        else if (s[i] >= 'A' && s[i] <= 'F')
+            val = s[i] - 'A' + 10;
+        else
+            val = s[i] - '0';
+
+		y += val * (int) pow(16, 2-i);
+	}
+
+	return y;
+}
+
 //	convert octal escapes to bytes
 int
 convert_from_pgbinary(unsigned char *value, unsigned char *rgbValue, int cbValueMax)
@@ -1007,6 +1073,50 @@ int i, o=0;
 
 	return o;
 }
+
+
+void
+encode(char *in, char *out)
+{
+unsigned int i, o = 0;
+
+	for (i = 0; i < strlen(in); i++) {
+		if ( in[i] == '+') {
+			sprintf(&out[o], "%%2B");
+			o += 3;
+		}
+		else if ( isspace(in[i])) {
+			out[o++] = '+';
+		}
+		else if ( ! isalnum(in[i])) {
+			sprintf(&out[o], "%%%02x", in[i]);
+			o += 3;
+		}
+		else
+			out[o++] = in[i];
+	}
+	out[o++] = '\0';
+}
+
+
+void
+decode(char *in, char *out)
+{
+unsigned int i, o = 0;
+
+	for (i = 0; i < strlen(in); i++) { 
+		if (in[i] == '+')
+			out[o++] = ' ';
+		else if (in[i] == '%') {
+			sprintf(&out[o++], "%c", conv_from_hex(&in[i]));
+			i+=2;
+		}
+		else
+			out[o++] = in[i];
+	}
+	out[o++] = '\0';
+}
+
 
 
 /*	1. get oid (from 'value')

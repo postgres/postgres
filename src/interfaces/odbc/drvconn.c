@@ -12,28 +12,56 @@
  *
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 
 #include "psqlodbc.h"
 #include "connection.h"
 
+#ifdef UNIX
+#include <sys/types.h>
+#include <sys/socket.h>
+#define NEAR
+#else
 #include <winsock.h>
 #include <sqlext.h>
+#endif
+
 #include <string.h>
+
+#ifdef UNIX
+#define stricmp(s1,s2)	strcasecmp(s1,s2)
+#define strnicmp(s1,s2,n)	strncasecmp(s1,s2,n)
+#else
 #include <windows.h>
 #include <windowsx.h>
 #include <odbcinst.h>
 #include "resource.h"
+#endif
+
+#ifndef TRUE
+#define TRUE	(BOOL)1
+#endif
+#ifndef FALSE
+#define FALSE	(BOOL)0
+#endif
 
 #include "dlg_specific.h"
 
 /* prototypes */
-BOOL FAR PASCAL dconn_FDriverConnectProc(HWND hdlg, UINT wMsg, WPARAM wParam, LPARAM lParam);
-RETCODE dconn_DoDialog(HWND hwnd, ConnInfo *ci);
 void dconn_get_connect_attributes(UCHAR FAR *connect_string, ConnInfo *ci);
 
+#ifndef UNIX	/* should be something like ifdef WINDOWS */
+BOOL FAR PASCAL dconn_FDriverConnectProc(HWND hdlg, UINT wMsg, WPARAM wParam, LPARAM lParam);
+RETCODE dconn_DoDialog(HWND hwnd, ConnInfo *ci);
+
 extern HINSTANCE NEAR s_hModule;               /* Saved module handle. */
+#endif
+
 extern GLOBAL_VALUES globals;
 
 
@@ -51,23 +79,25 @@ char *func = "SQLDriverConnect";
 ConnectionClass *conn = (ConnectionClass *) hdbc;
 ConnInfo *ci;
 RETCODE dialog_result;
-char connect_string[MAX_CONNECT_STRING];
+char connStrIn[MAX_CONNECT_STRING];
+char connStrOut[MAX_CONNECT_STRING];
 int retval;
 char password_required = FALSE;
-
-	mylog("**** SQLDriverConnect: fDriverCompletion=%d, connStrIn='%s'\n", fDriverCompletion, szConnStrIn);
 
 	if ( ! conn) {
 		CC_log_error(func, "", NULL);
 		return SQL_INVALID_HANDLE;
 	}
 
-	qlog("conn=%u, SQLDriverConnect( in)='%s'\n", conn, szConnStrIn);
+	make_string(szConnStrIn, cbConnStrIn, connStrIn);
+
+	mylog("**** SQLDriverConnect: fDriverCompletion=%d, connStrIn='%s'\n", fDriverCompletion, connStrIn);
+	qlog("conn=%u, SQLDriverConnect( in)='%s', fDriverCompletion=%d\n", conn, connStrIn, fDriverCompletion);
 
 	ci = &(conn->connInfo);
 
 	//	Parse the connect string and fill in conninfo for this hdbc.
-	dconn_get_connect_attributes(szConnStrIn, ci);
+	dconn_get_connect_attributes(connStrIn, ci);
 
 	//	If the ConnInfo in the hdbc is missing anything,
 	//	this function will fill them in from the registry (assuming
@@ -81,6 +111,7 @@ dialog:
 	ci->focus_password = password_required;
 
 	switch(fDriverCompletion) {
+#ifndef UNIX	/* again should be ifdef WINDOWS like */
 	case SQL_DRIVER_PROMPT:
 		dialog_result = dconn_DoDialog(hwnd, ci);
 		if(dialog_result != SQL_SUCCESS) {
@@ -88,9 +119,13 @@ dialog:
 		}
 		break;
 
-	case SQL_DRIVER_COMPLETE:
 	case SQL_DRIVER_COMPLETE_REQUIRED:
-	/* Password is not a required parameter. */
+
+		/*	Fall through */
+
+	case SQL_DRIVER_COMPLETE:
+
+		/* Password is not a required parameter. */
 		if( ci->username[0] == '\0' ||
 			ci->server[0] == '\0' ||
 			ci->database[0] == '\0' ||
@@ -103,6 +138,11 @@ dialog:
 			}
 		}
 		break;
+#else
+	case SQL_DRIVER_PROMPT:
+	case SQL_DRIVER_COMPLETE:
+	case SQL_DRIVER_COMPLETE_REQUIRED:
+#endif
 	case SQL_DRIVER_NOPROMPT:
 		break;
 	}
@@ -122,14 +162,16 @@ dialog:
 
 	if(szConnStrOut) {
 
-		//	return the completed string to the caller.
-
-		makeConnectString(connect_string, ci);
+		/*	Return the completed string to the caller.
+			Only construct the connect string if a dialog was put up,
+			otherwise, just copy the connection input string to the output.
+		*/
+		makeConnectString(connStrOut, ci);
 
 		if(pcbConnStrOut) {
-			*pcbConnStrOut = strlen(connect_string);
+			*pcbConnStrOut = strlen(connStrOut);
 		}
-		strncpy_null(szConnStrOut, connect_string, cbConnStrOutMax);
+		strncpy_null(szConnStrOut, connStrOut, cbConnStrOutMax);
 	}
 
 	mylog("szConnStrOut = '%s'\n", szConnStrOut);
@@ -143,8 +185,12 @@ dialog:
 			return SQL_ERROR;	/* need a password but not allowed to prompt so error */
 		}
 		else {
+#ifndef UNIX
 			password_required = TRUE;
 			goto dialog;
+#else
+			return SQL_ERROR;	/* until a better solution is found. */
+#endif
 		}
 	}
 	else if (retval == 0) {
@@ -157,7 +203,7 @@ dialog:
 	return SQL_SUCCESS;
 }
 
-
+#ifndef UNIX	/* yet another candidate for ifdef WINDOWS */
 RETCODE dconn_DoDialog(HWND hwnd, ConnInfo *ci)
 {
 int dialog_result;
@@ -216,6 +262,7 @@ ConnInfo *ci;
 		else if (ci->focus_password)
 			SetFocus(GetDlgItem(hdlg, IDC_PASSWORD));
 
+
 		break; 
 
 	case WM_COMMAND:
@@ -252,7 +299,7 @@ ConnInfo *ci;
 	return FALSE;
 }
 
-
+#endif	/* ! UNIX */
 
 void dconn_get_connect_attributes(UCHAR FAR *connect_string, ConnInfo *ci)
 {

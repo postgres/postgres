@@ -10,10 +10,21 @@
 #ifndef __ENVIRON_H__
 #define __ENVIRON_H__
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include "psqlodbc.h"
+
+#ifdef HAVE_IODBC
+#include "iodbc.h"
+#include "isql.h"
+#include "isqlext.h"
+#else
 #include <windows.h>
 #include <sql.h>
 #include <sqlext.h>
+#endif
 
 #define ENV_ALLOC_ERROR 1
 

@@ -16,12 +16,24 @@
  *
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <string.h>
 #include <stdio.h>
 #include "psqlodbc.h"
+
+#ifdef HAVE_IODBC
+#include "iodbc.h"
+#include "isql.h"
+#include "isqlext.h"
+#else
 #include <windows.h>
 #include <sql.h> 
 #include <sqlext.h>
+#endif
+
 #include "tuple.h"
 #include "pgtypes.h"
 
@@ -282,7 +294,7 @@ char *p;
         // examples of identifiers.  it says return a blank for no
         // quote character, we'll try that...
         if (pcbInfoValue) *pcbInfoValue = 1;
-        strncpy_null((char *)rgbInfoValue, " ", (size_t)cbInfoValueMax);
+        strncpy_null((char *)rgbInfoValue, "\"", (size_t)cbInfoValueMax);
         break;
 
     case SQL_KEYWORDS: /* ODBC 2.0 */
@@ -325,7 +337,7 @@ char *p;
 
     case SQL_MAX_COLUMN_NAME_LEN: /* ODBC 1.0 */
         // maximum length of a column name
-        *((WORD *)rgbInfoValue) = 32;
+        *((WORD *)rgbInfoValue) = MAX_COLUMN_LEN;
         if(pcbInfoValue) { *pcbInfoValue = 2; }
         break;
 
@@ -358,7 +370,7 @@ char *p;
         break;
 
     case SQL_MAX_CURSOR_NAME_LEN: /* ODBC 1.0 */
-        *((WORD *)rgbInfoValue) = 32;
+        *((WORD *)rgbInfoValue) = MAX_CURSOR_LEN;
         if(pcbInfoValue) { *pcbInfoValue = 2; }
         break;
 
@@ -405,7 +417,7 @@ char *p;
         break;
 
     case SQL_MAX_TABLE_NAME_LEN: /* ODBC 1.0 */
-        *((WORD *)rgbInfoValue) = 32;
+        *((WORD *)rgbInfoValue) = MAX_TABLE_LEN;
         if(pcbInfoValue) { *pcbInfoValue = 2; }
         break;
 
@@ -1036,7 +1048,7 @@ mylog("**** SQLTables(): ENTER, stmt=%u\n", stmt);
 	show_regular_tables = FALSE;
 	show_views = FALSE;
 
-	//	make_string mallocs memory
+	/*	make_string mallocs memory */
 	tableType = make_string(szTableType, cbTableType, NULL);
 	if (tableType) {
 		strcpy(table_types, tableType);
@@ -1059,7 +1071,10 @@ mylog("**** SQLTables(): ENTER, stmt=%u\n", stmt);
 
 			i++;
 		}
-
+	}
+	else {
+		show_regular_tables = TRUE;
+		show_views = TRUE;
 	}
 
 	/*  If not interested in SYSTEM TABLES then filter them out
@@ -1228,6 +1243,9 @@ mylog("**** SQLTables(): ENTER, stmt=%u\n", stmt);
 	return SQL_SUCCESS;
 }
 
+
+
+
 RETCODE SQL_API SQLColumns(
                            HSTMT        hstmt,
                            UCHAR FAR *  szTableQualifier,
@@ -1247,9 +1265,8 @@ StatementClass *col_stmt;
 char columns_query[MAX_STATEMENT_LEN];
 RETCODE result;
 char table_owner[MAX_INFO_STRING], table_name[MAX_INFO_STRING], field_name[MAX_INFO_STRING], field_type_name[MAX_INFO_STRING];
-Int2 field_number, field_length, mod_length;
-Int4 field_type;
-Int2 the_type;
+Int2 field_number, field_length, mod_length, result_cols;
+Int4 field_type, the_type;
 char not_null[MAX_INFO_STRING];
 ConnInfo *ci;
 
@@ -1403,10 +1420,11 @@ mylog("**** SQLColumns(): ENTER, stmt=%u\n", stmt);
 
     // the binding structure for a statement is not set up until
     // a statement is actually executed, so we'll have to do this ourselves.
-    extend_bindings(stmt, 12);
+	result_cols = 14;
+    extend_bindings(stmt, result_cols);
 
     // set the field names
-    QR_set_num_fields(stmt->result, 12);
+    QR_set_num_fields(stmt->result, result_cols);
     QR_set_field_info(stmt->result, 0, "TABLE_QUALIFIER", PG_TYPE_TEXT, MAX_INFO_STRING);
     QR_set_field_info(stmt->result, 1, "TABLE_OWNER", PG_TYPE_TEXT, MAX_INFO_STRING);
     QR_set_field_info(stmt->result, 2, "TABLE_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
@@ -1419,6 +1437,10 @@ mylog("**** SQLColumns(): ENTER, stmt=%u\n", stmt);
     QR_set_field_info(stmt->result, 9, "RADIX", PG_TYPE_INT2, 2);
     QR_set_field_info(stmt->result, 10, "NULLABLE", PG_TYPE_INT2, 2);
     QR_set_field_info(stmt->result, 11, "REMARKS", PG_TYPE_TEXT, 254);
+
+	//	User defined fields
+    QR_set_field_info(stmt->result, 12, "DISPLAY_SIZE", PG_TYPE_INT4, 4);
+	QR_set_field_info(stmt->result, 13, "FIELD_TYPE", PG_TYPE_INT4, 4);
 
 	
 	result = SQLFetch(hcol_stmt);
@@ -1435,7 +1457,7 @@ mylog("**** SQLColumns(): ENTER, stmt=%u\n", stmt);
 			/*	For OID fields */
 			the_type = PG_TYPE_OID;
 			row = (TupleNode *)malloc(sizeof(TupleNode) +
-									  (12 - 1) * sizeof(TupleField));
+									  (result_cols - 1) * sizeof(TupleField));
 
 			set_tuplefield_string(&row->tuple[0], "");
 			// see note in SQLTables()
@@ -1446,15 +1468,16 @@ mylog("**** SQLColumns(): ENTER, stmt=%u\n", stmt);
 			set_tuplefield_int2(&row->tuple[4], pgtype_to_sqltype(stmt, the_type));
 			set_tuplefield_string(&row->tuple[5], "OID");
 
-			set_tuplefield_int4(&row->tuple[7], pgtype_length(stmt, the_type, PG_STATIC,
-			PG_STATIC));
-			set_tuplefield_int4(&row->tuple[6], pgtype_precision(stmt, the_type, PG_STATIC,
-			PG_STATIC));
+			set_tuplefield_int4(&row->tuple[7], pgtype_length(stmt, the_type, PG_STATIC, PG_STATIC));
+			set_tuplefield_int4(&row->tuple[6], pgtype_precision(stmt, the_type, PG_STATIC, PG_STATIC));
 
 			set_nullfield_int2(&row->tuple[8], pgtype_scale(stmt, the_type));
 			set_nullfield_int2(&row->tuple[9], pgtype_radix(stmt, the_type));
 			set_tuplefield_int2(&row->tuple[10], SQL_NO_NULLS);
 			set_tuplefield_string(&row->tuple[11], "");
+
+			set_tuplefield_int4(&row->tuple[12], pgtype_display_size(stmt, the_type, PG_STATIC, PG_STATIC));
+			set_tuplefield_int4(&row->tuple[13], the_type);
 
 			QR_add_tuple(stmt->result, row);
 		}
@@ -1463,7 +1486,7 @@ mylog("**** SQLColumns(): ENTER, stmt=%u\n", stmt);
 
     while((result == SQL_SUCCESS) || (result == SQL_SUCCESS_WITH_INFO)) {
         row = (TupleNode *)malloc(sizeof(TupleNode) +
-                                  (12 - 1) * sizeof(TupleField));
+                                  (result_cols - 1) * sizeof(TupleField));
 
         set_tuplefield_string(&row->tuple[0], "");
         // see note in SQLTables()
@@ -1494,11 +1517,13 @@ mylog("**** SQLColumns(): ENTER, stmt=%u\n", stmt);
 
             set_tuplefield_int4(&row->tuple[7], mod_length);
 			set_tuplefield_int4(&row->tuple[6], mod_length);
+			set_tuplefield_int4(&row->tuple[12], mod_length);
         } else {
 			mylog("SQLColumns: field type is OTHER: field_type = %d, pgtype_length = %d\n", field_type, pgtype_length(stmt, field_type, PG_STATIC, PG_STATIC));
 
             set_tuplefield_int4(&row->tuple[7], pgtype_length(stmt, field_type, PG_STATIC, PG_STATIC));
 			set_tuplefield_int4(&row->tuple[6], pgtype_precision(stmt, field_type, PG_STATIC, PG_STATIC));
+			set_tuplefield_int4(&row->tuple[12], pgtype_display_size(stmt, field_type, PG_STATIC, PG_STATIC));
 
         }
 
@@ -1506,6 +1531,7 @@ mylog("**** SQLColumns(): ENTER, stmt=%u\n", stmt);
 		set_nullfield_int2(&row->tuple[9], pgtype_radix(stmt, field_type));
 		set_tuplefield_int2(&row->tuple[10], (Int2) (not_null[0] == '1' ? SQL_NO_NULLS : pgtype_nullable(stmt, field_type)));
 		set_tuplefield_string(&row->tuple[11], "");
+		set_tuplefield_int4(&row->tuple[13], field_type);
 
         QR_add_tuple(stmt->result, row);
 
@@ -1526,7 +1552,7 @@ mylog("**** SQLColumns(): ENTER, stmt=%u\n", stmt);
 		the_type = PG_TYPE_INT4;
 
 		row = (TupleNode *)malloc(sizeof(TupleNode) +
-								  (12 - 1) * sizeof(TupleField));
+								  (result_cols - 1) * sizeof(TupleField));
 
 		set_tuplefield_string(&row->tuple[0], "");
 		set_tuplefield_string(&row->tuple[1], "");
@@ -1540,6 +1566,8 @@ mylog("**** SQLColumns(): ENTER, stmt=%u\n", stmt);
 		set_nullfield_int2(&row->tuple[9], pgtype_radix(stmt, the_type));
 		set_tuplefield_int2(&row->tuple[10], SQL_NO_NULLS);
 		set_tuplefield_string(&row->tuple[11], "");
+		set_tuplefield_int4(&row->tuple[12], pgtype_display_size(stmt, the_type, PG_STATIC, PG_STATIC));
+		set_tuplefield_int4(&row->tuple[13], the_type);
 
 		QR_add_tuple(stmt->result, row);
 	}

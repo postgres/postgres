@@ -1,0 +1,113 @@
+
+Unix port of psqlodbc, brought to you by:
+		Gerald Gryschuk(ggryschuk@home.com)
+
+This is the first release of a port of psqlodbc to Unix(specifically Linux),
+as such the installation may not be as straight forward as it could be(then
+again it might be). As well the only testing of the driver has been with
+the real project I'm working on, since it seems to be working there I assumed
+it was ready to go out. This port works with Ke Jin's iodbc driver manager
+although there is no theoretical reason why it couldn't work with other
+driver managers for UNIX(I know of none though). The FreeODBC site 
+(http://users.ids.net/~bjepson/freeODBC/) has a link to download the current 
+version of iodbc(iodbc-2.12).
+
+This driver has been successfully compiled and tested on a RedHat 4.1 system
+using both gcc 2.7.2 and egcs 1.0.2.
+
+INSTALLATION:
+
+If you have a system any where close to mine this will be easy, just
+copy Makefile.lnx to Makefile then type 'make' and see what happens. Note
+that if you have not enabled logging(read the file misc.h) then you
+may get alot of warning messages, just ignore these, they shouldn't be
+a problem. If this doesn't work, well... I don't know what to say, see if
+ you can figure out what's wrong,fix it and send me a message. If everything
+ makes o.k. you can 'make install' which will install the shared library
+(in /usr/local/lib) and a WINDOWS type INI file in /etc (called odbcinst.ini,
+ see CONFIGURATION below). If you want to program using this driver do a 
+'make install-headers' which will install programming header files in 
+/usr/local/include/iodbc. If you don't like these install locations edit
+ Config.mk and change the environment variable DESTDIR(and possible DESTINCDIR
+ to get rid of the /iodbc) to suit your system.
+
+CONFIGURATION:
+
+The psqlodbc driver reads two Windows type INI files for configuration,
+one called odbcinst.ini located in /etc which is used for system wide
+configuration of the driver and one in the users home directory called
+.odbc.ini, which can be used to override the system wide settings. Note that
+the location of odbcinst is currently hardcoded into the source so if you
+want to change this you have to change it in the source as well. This latter 
+file is also searched for by iodbc and is where
+the DataSource definitions are placed. The format of both files is exactly
+like that of a Windows INI file using key,value pairs. A DataSource definition
+is started with a section name enclosed in square brackets i.e. [PostODBC].
+Comments are started using a ';' character and are restricted to being
+only on seperate lines(i.e. no comments are allowed on definition lines).
+The important keywords for psqlodbc are:
+	Driver = (location where the psqlodbc library was installed)
+	       ex. Driver = /usr/local/lib/libpspqlodbc.so
+
+	ServerName = hostname or ip-address of postgreSQL server
+		ex. ServerName = simpsons.springfield.com
+		or  ServerName = 192.1.1.1
+
+	Database = name of database to connect to
+		ex. Database = template1
+
+	Port = tcp port that the postgreSQL server is listening on, note
+		that this need not be set as the driver defaults to the
+		default postgreSQL port of 5432. Of course if your server
+		is listening on a different port than you need to say
+		what it is here.
+
+	Username = name of authorized postgreSQL user
+		ex. Username = homer
+
+	Password = the password for the user named in Username. Note
+		that if you have password checking on in postgreSQL
+		you have to have this field. Unfortunately this means
+		storing clear text passwords in a file. If this bothers
+		you, well... write a dialog box routine and send it
+		to me.
+		ex. Password = Doh!
+
+	ReadOnly = 0 or 1. Default is 1 => database IS readonly. If
+		set to 0, database is read-write.
+		ex. ReadOnly = 0
+
+	Protocol = 6.2 to force the use of Postgres 6.2 protocol
+
+The odbcinst.ini file is where sytem wide settings are kept. There are
+quite a number of these, all of which have built-in defaults. Since I'm
+not even sure what they are all for I won't try to describe them, check
+the file dlg_specific.h for a list and some explanation. Two that I found
+useful are Debug and CommLog, which can be used to tailor logging of messages
+by the driver(note that you have to have defined MY_LOG and Q_LOG during
+compilation of the driver, see the file misc.h for an explanation). If
+you have logging On(ie. CommLog = 1 and/or Debug = 1) then logging will
+occur to the files /tmp/mylog.log(Debug, only developers will be 
+interested) and /tmp/psqlodbc.log(end user log file).
+
+USE:
+	run an ODBC enabled application :-) .
+
+	O.k. Well, the only ODBC compliant applications that I can
+	"guarantee" to work are those that are compiled using the following
+	headers that come with this driver, iodbc.h, isql.h and isqlext.h.
+
+BUGS,etc.
+
+	If you have problems with compiling/installing or making this
+	package send e-mail to me at:
+	gerald.gryschuk@home.com or to the pgsql-interfaces mailing list
+	pgsql-interfaces@postgresql.org . 
+
+	Ports to different Unices are greatly appreciated and can probably be
+	sent to me for now(although this may change shortly).
+
+	Bugs of a general nature should still be sent to the current
+	maintainer or to the interfaces list.
+
+

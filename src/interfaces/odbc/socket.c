@@ -12,9 +12,32 @@
  *
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include "socket.h"
 
+#ifdef UNIX
+#include <stdlib.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <string.h>	/* for memset */
+#endif
+
 extern GLOBAL_VALUES globals;
+
+#ifndef BOOL
+#define BOOL	int
+#endif
+#ifndef TRUE
+#define TRUE	(BOOL)1
+#endif
+#ifndef FALSE
+#define FALSE	(BOOL)0
+#endif
+
 
 void
 SOCK_clear_error(SocketClass *self)
@@ -31,7 +54,7 @@ SocketClass *rv;
     rv = (SocketClass *) malloc(sizeof(SocketClass));
 
     if (rv != NULL) {
-		rv->socket = (SOCKET) -1;
+		rv->socket = (SOCKETFD) -1;
 		rv->buffer_filled_in = 0;
 		rv->buffer_filled_out = 0;
 		rv->buffer_read_in = 0;
@@ -119,7 +142,7 @@ unsigned long iaddr;
 		self->errornumber = SOCKET_COULD_NOT_CONNECT;
 		self->errormsg = "Could not connect to remote socket.";
 		closesocket(self->socket);
-		self->socket = (SOCKET) -1;
+		self->socket = (SOCKETFD) -1;
 		return 0;
 	}
 	return 1;

@@ -15,6 +15,10 @@
  *
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <string.h>
 #include "psqlodbc.h"
 #include "dlg_specific.h"
@@ -27,10 +31,33 @@
 #include "pgtypes.h" 
 
 #include <stdio.h>
+
+#ifdef HAVE_IODBC
+#include "iodbc.h"
+#include "isqlext.h"
+#else
 #include <windows.h>
 #include <sqlext.h>
+#endif
 
 extern GLOBAL_VALUES globals;
+
+RETCODE SQL_API SQLFetch(HSTMT   hstmt)
+{
+	return _SQLFetch(hstmt);
+}
+
+RETCODE SQL_API SQLGetData(
+        HSTMT      hstmt,
+        UWORD      icol,
+        SWORD      fCType,
+        PTR        rgbValue,
+        SDWORD     cbValueMax,
+        SDWORD FAR *pcbValue)
+{
+
+	return _SQLGetData(hstmt, icol, fCType, rgbValue, cbValueMax, pcbValue);
+}
 
 RETCODE SQL_API SQLRowCount(
         HSTMT      hstmt,
@@ -93,6 +120,7 @@ RETCODE SQL_API SQLNumResultCols(
 char *func="SQLNumResultCols";
 StatementClass *stmt = (StatementClass *) hstmt;
 QResultClass *result;
+char parse_ok;
 
 	if ( ! stmt) {
 		SC_log_error(func, "", NULL);
@@ -101,32 +129,45 @@ QResultClass *result;
 
 	SC_clear_error(stmt);    
 
-	/* CC: Now check for the "prepared, but not executed" situation, that enables us to
-	deal with "SQLPrepare -- SQLDescribeCol -- ... -- SQLExecute" situations.
-	(AutoCAD 13 ASE/ASI just _loves_ that ;-) )
-	*/
-	mylog("**** SQLNumResultCols: calling SC_pre_execute\n");
+	parse_ok = FALSE;
+	if (globals.parse && stmt->statement_type == STMT_TYPE_SELECT) {
 
-	SC_pre_execute(stmt);       
+		if (stmt->parse_status == STMT_PARSE_NONE) {
+			mylog("SQLNumResultCols: calling parse_statement on stmt=%u\n", stmt);
+			parse_statement(stmt);
+		}
 
-	result = SC_get_Result(stmt);
-
-	mylog("SQLNumResultCols: result = %u, status = %d, numcols = %d\n", result, stmt->status, result != NULL ? QR_NumResultCols(result) : -1);
-	if (( ! result) || ((stmt->status != STMT_FINISHED) && (stmt->status != STMT_PREMATURE)) ) {
-		/* no query has been executed on this statement */
-		stmt->errornumber = STMT_SEQUENCE_ERROR;
-		stmt->errormsg = "No query has been executed with that handle";
-		SC_log_error(func, "", stmt);
-		return SQL_ERROR;
+		if (stmt->parse_status != STMT_PARSE_FATAL) {
+			parse_ok = TRUE;
+			*pccol = stmt->nfld;
+			mylog("PARSE: SQLNumResultCols: *pccol = %d\n", *pccol);
+		}
 	}
 
-	*pccol = QR_NumResultCols(result);
+	if ( ! parse_ok) {
+
+		SC_pre_execute(stmt);       
+		result = SC_get_Result(stmt);
+
+		mylog("SQLNumResultCols: result = %u, status = %d, numcols = %d\n", result, stmt->status, result != NULL ? QR_NumResultCols(result) : -1);
+		if (( ! result) || ((stmt->status != STMT_FINISHED) && (stmt->status != STMT_PREMATURE)) ) {
+			/* no query has been executed on this statement */
+			stmt->errornumber = STMT_SEQUENCE_ERROR;
+			stmt->errormsg = "No query has been executed with that handle";
+			SC_log_error(func, "", stmt);
+			return SQL_ERROR;
+		}
+
+		*pccol = QR_NumResultCols(result);
+	}
 
 	return SQL_SUCCESS;
 }
 
 
 //      -       -       -       -       -       -       -       -       -
+
+
 
 //      Return information about the database column the user wants
 //      information about.
@@ -145,10 +186,11 @@ char *func="SQLDescribeCol";
     /* gets all the information about a specific column */
 StatementClass *stmt = (StatementClass *) hstmt;
 QResultClass *result;
-char *name;
+char *col_name;
 Int4 fieldtype;
-int p;
+int precision;
 ConnInfo *ci;
+char parse_ok;
 
     if ( ! stmt) {
 		SC_log_error(func, "", NULL);
@@ -158,24 +200,6 @@ ConnInfo *ci;
 	ci = &(stmt->hdbc->connInfo);
 
     SC_clear_error(stmt);
-
-    /* CC: Now check for the "prepared, but not executed" situation, that enables us to
-           deal with "SQLPrepare -- SQLDescribeCol -- ... -- SQLExecute" situations.
-           (AutoCAD 13 ASE/ASI just _loves_ that ;-) )
-    */
-
-	SC_pre_execute(stmt);       
-
-	
-    result = SC_get_Result(stmt);
-	mylog("**** SQLDescribeCol: result = %u, stmt->status = %d, !finished=%d, !premature=%d\n", result, stmt->status, stmt->status != STMT_FINISHED, stmt->status != STMT_PREMATURE);
-    if ( (NULL == result) || ((stmt->status != STMT_FINISHED) && (stmt->status != STMT_PREMATURE))) {
-        /* no query has been executed on this statement */
-        stmt->errornumber = STMT_SEQUENCE_ERROR;
-        stmt->errormsg = "No query has been assigned to this statement.";
-		SC_log_error(func, "", stmt);
-        return SQL_ERROR;
-    }
 
     if(icol < 1) {
         // we do not support bookmarks
@@ -187,60 +211,106 @@ ConnInfo *ci;
 
 	icol--;		/* use zero based column numbers */
 
+
+	parse_ok = FALSE;
+	if (globals.parse && stmt->statement_type == STMT_TYPE_SELECT) {
+
+		if (stmt->parse_status == STMT_PARSE_NONE) {
+			mylog("SQLDescribeCol: calling parse_statement on stmt=%u\n", stmt);
+			parse_statement(stmt);
+		}
+
+
+		mylog("PARSE: DescribeCol: icol=%d, stmt=%u, stmt->nfld=%d, stmt->fi=%u\n", icol, stmt, stmt->nfld, stmt->fi);
+
+		if (stmt->parse_status != STMT_PARSE_FATAL && stmt->fi && stmt->fi[icol]) {
+
+			if (icol >= stmt->nfld) {
+				stmt->errornumber = STMT_INVALID_COLUMN_NUMBER_ERROR;
+				stmt->errormsg = "Invalid column number in DescribeCol.";
+				SC_log_error(func, "", stmt);
+				return SQL_ERROR;
+			}
+			mylog("DescribeCol: getting info for icol=%d\n", icol);
+
+			fieldtype = stmt->fi[icol]->type;
+			col_name = stmt->fi[icol]->name;
+			precision = stmt->fi[icol]->precision;
+
+			mylog("PARSE: fieldtype=%d, col_name='%s', precision=%d\n", fieldtype, col_name, precision);
+			if (fieldtype > 0)
+				parse_ok = TRUE;
+		}
+	}
+
+
+	/*	If couldn't parse it OR the field being described was not parsed (i.e., because
+		it was a function or expression, etc, then do it the old fashioned way.
+	*/
+	if ( ! parse_ok) {
+		SC_pre_execute(stmt);
+	
+		result = SC_get_Result(stmt);
+
+		mylog("**** SQLDescribeCol: result = %u, stmt->status = %d, !finished=%d, !premature=%d\n", result, stmt->status, stmt->status != STMT_FINISHED, stmt->status != STMT_PREMATURE);
+		if ( (NULL == result) || ((stmt->status != STMT_FINISHED) && (stmt->status != STMT_PREMATURE))) {
+			/* no query has been executed on this statement */
+			stmt->errornumber = STMT_SEQUENCE_ERROR;
+			stmt->errormsg = "No query has been assigned to this statement.";
+			SC_log_error(func, "", stmt);
+			return SQL_ERROR;
+		}
+
+		if (icol >= QR_NumResultCols(result)) {
+			stmt->errornumber = STMT_INVALID_COLUMN_NUMBER_ERROR;
+			stmt->errormsg = "Invalid column number in DescribeCol.";
+			SC_log_error(func, "", stmt);
+			return SQL_ERROR;
+		}
+
+		col_name = QR_get_fieldname(result, icol);
+        fieldtype = QR_get_field_type(result, icol);
+
+		precision = pgtype_precision(stmt, fieldtype, icol, globals.unknown_sizes);  // atoi(ci->unknown_sizes)
+	}
+
+	mylog("describeCol: col %d fieldname = '%s'\n", icol, col_name);
+	mylog("describeCol: col %d fieldtype = %d\n", icol, fieldtype);
+	mylog("describeCol: col %d precision = %d\n", icol, precision);
+
     if (cbColNameMax >= 1) {
-        name = QR_get_fieldname(result, icol);
-		mylog("describeCol: col %d fieldname = '%s'\n", icol, name);
-        /* our indices start from 0 whereas ODBC defines indices starting from 1 */
-        if (NULL != pcbColName)  {
-            // we want to get the total number of bytes in the column name
-            if (NULL == name) 
+        if (pcbColName)  {
+            if (col_name) 
+                *pcbColName = strlen(col_name);
+            else
                 *pcbColName = 0;
-            else
-                *pcbColName = strlen(name);
         }
-        if (NULL != szColName) {
-            // get the column name into the buffer if there is one
-            if (NULL == name) 
-                szColName[0] = '\0';
+        if (szColName) {
+            if (col_name) 
+                strncpy_null(szColName, col_name, cbColNameMax);
             else
-                strncpy_null(szColName, name, cbColNameMax);
+                szColName[0] = '\0';
         }
     }
 
-    fieldtype = QR_get_field_type(result, icol);
-	mylog("describeCol: col %d fieldtype = %d\n", icol, fieldtype);
 
-    if (NULL != pfSqlType) {
+    if (pfSqlType) {
         *pfSqlType = pgtype_to_sqltype(stmt, fieldtype);
 
 		mylog("describeCol: col %d *pfSqlType = %d\n", icol, *pfSqlType);
 	}
 
-    if (NULL != pcbColDef) {
+    if (pcbColDef) {
 
-		/*	If type is BPCHAR, then precision is length of column because all
-			columns in the result set will be blank padded to the column length.
+		if ( precision < 0)
+			precision = 0;		// "I dont know"
 
-			If type is VARCHAR or TEXT, then precision can not be accurately 
-			determined.  Possibilities are:
-				1. return 0 (I dont know -- seems to work ok with Borland)
-				2. return MAXIMUM PRECISION for that datatype (Borland bad!)
-				3. return longest column thus far (that would be the longest 
-					strlen of any row in the tuple cache, which may not be a
-					good representation if the result set is more than one 
-					tuple cache long.)
-		*/
-
-		p = pgtype_precision(stmt, fieldtype, icol, globals.unknown_sizes);  // atoi(ci->unknown_sizes)
-		if ( p < 0)
-			p = 0;		// "I dont know"
-
-		*pcbColDef = p;
+		*pcbColDef = precision;
 
 		mylog("describeCol: col %d  *pcbColDef = %d\n", icol, *pcbColDef);
 	}
 
-    if (NULL != pibScale) {
+    if (pibScale) {
         Int2 scale;
         scale = pgtype_scale(stmt, fieldtype);
         if(scale == -1) { scale = 0; }
@@ -249,8 +319,12 @@ ConnInfo *ci;
 		mylog("describeCol: col %d  *pibScale = %d\n", icol, *pibScale);
     }
 
-    if (NULL != pfNullable) {
-        *pfNullable = pgtype_nullable(stmt, fieldtype);
+    if (pfNullable) {
+		if (parse_ok)
+			*pfNullable = stmt->fi[icol]->nullable;
+		else
+			*pfNullable = pgtype_nullable(stmt, fieldtype);
+
 		mylog("describeCol: col %d  *pfNullable = %d\n", icol, *pfNullable);
     }
 
@@ -274,6 +348,9 @@ char *value;
 Int4 field_type;
 ConnInfo *ci;
 int unknown_sizes;
+int cols;
+char parse_ok;
+
 
 	if( ! stmt) {
 		SC_log_error(func, "", NULL);
@@ -281,21 +358,6 @@ int unknown_sizes;
 	}
 
 	ci = &(stmt->hdbc->connInfo);
-
-    /* CC: Now check for the "prepared, but not executed" situation, that enables us to
-           deal with "SQLPrepare -- SQLDescribeCol -- ... -- SQLExecute" situations.
-           (AutoCAD 13 ASE/ASI just _loves_ that ;-) )
-    */
-	SC_pre_execute(stmt);       
-
-	mylog("**** SQLColAtt: result = %u, status = %d, numcols = %d\n", stmt->result, stmt->status, stmt->result != NULL ? QR_NumResultCols(stmt->result) : -1);
-
-	if ( (NULL == stmt->result) || ((stmt->status != STMT_FINISHED) && (stmt->status != STMT_PREMATURE)) ) {
-		stmt->errormsg = "Can't get column attributes: no result found.";
-		stmt->errornumber = STMT_SEQUENCE_ERROR;
-		SC_log_error(func, "", stmt);
-		return SQL_ERROR;
-	}
 
 	if(icol < 1) {
 		// we do not support bookmarks
@@ -305,18 +367,65 @@ int unknown_sizes;
 		return SQL_ERROR;
 	}
 
-	icol -= 1;
-	field_type = QR_get_field_type(stmt->result, icol);
-
-	mylog("colAttr: col %d field_type = %d\n", icol, field_type);
+	icol--;
 
 	unknown_sizes = globals.unknown_sizes;          // atoi(ci->unknown_sizes);
 	if (unknown_sizes == UNKNOWNS_AS_DONTKNOW)		// not appropriate for SQLColAttributes()
 		unknown_sizes = UNKNOWNS_AS_MAX;
 
+	parse_ok = FALSE;
+	if (globals.parse && stmt->statement_type == STMT_TYPE_SELECT) {
+
+		if (stmt->parse_status == STMT_PARSE_NONE) {
+			mylog("SQLColAttributes: calling parse_statement\n");
+			parse_statement(stmt);
+		}
+
+		cols = stmt->nfld;
+
+		if (stmt->parse_status != STMT_PARSE_FATAL && stmt->fi && stmt->fi[icol]) {
+
+			if (icol >= cols) {
+				stmt->errornumber = STMT_INVALID_COLUMN_NUMBER_ERROR;
+				stmt->errormsg = "Invalid column number in DescribeCol.";
+				SC_log_error(func, "", stmt);
+				return SQL_ERROR;
+			}
+
+			field_type = stmt->fi[icol]->type;
+			if (field_type > 0)
+				parse_ok = TRUE;
+		}
+	}
+
+	if ( ! parse_ok) {
+		SC_pre_execute(stmt);       
+
+		mylog("**** SQLColAtt: result = %u, status = %d, numcols = %d\n", stmt->result, stmt->status, stmt->result != NULL ? QR_NumResultCols(stmt->result) : -1);
+
+		if ( (NULL == stmt->result) || ((stmt->status != STMT_FINISHED) && (stmt->status != STMT_PREMATURE)) ) {
+			stmt->errormsg = "Can't get column attributes: no result found.";
+			stmt->errornumber = STMT_SEQUENCE_ERROR;
+			SC_log_error(func, "", stmt);
+			return SQL_ERROR;
+		}
+
+		cols = QR_NumResultCols(stmt->result);
+		if (icol >= cols) {
+			stmt->errornumber = STMT_INVALID_COLUMN_NUMBER_ERROR;
+			stmt->errormsg = "Invalid column number in DescribeCol.";
+			SC_log_error(func, "", stmt);
+			return SQL_ERROR;
+		}
+
+		field_type = QR_get_field_type(stmt->result, icol);
+	}
+
+	mylog("colAttr: col %d field_type = %d\n", icol, field_type);
+
 	switch(fDescType) {
 	case SQL_COLUMN_AUTO_INCREMENT:
-		if (NULL != pfDesc) {
+		if (pfDesc) {
 			*pfDesc = pgtype_auto_increment(stmt, field_type);
 			if (*pfDesc == -1)  /*  non-numeric becomes FALSE (ODBC Doc) */
 				*pfDesc = FALSE;
@@ -325,18 +434,21 @@ int unknown_sizes;
 		break;
 
 	case SQL_COLUMN_CASE_SENSITIVE:
-		if (NULL != pfDesc)    
+		if (pfDesc)    
 			*pfDesc = pgtype_case_sensitive(stmt, field_type);
 		break;
 
 	case SQL_COLUMN_COUNT:
-		if (NULL != pfDesc)    
-			*pfDesc = QR_NumResultCols(stmt->result);
+		if (pfDesc)
+			*pfDesc = cols;
 		break;
 
     case SQL_COLUMN_DISPLAY_SIZE:
-		if (NULL != pfDesc) {
-			*pfDesc = pgtype_display_size(stmt, field_type, icol, unknown_sizes);
+		if (pfDesc) {
+			if (parse_ok)
+				*pfDesc = stmt->fi[icol]->display_size;
+			else
+				*pfDesc = pgtype_display_size(stmt, field_type, icol, unknown_sizes);
 		}
 
 		mylog("SQLColAttributes: col %d, display_size= %d\n", icol, *pfDesc);
@@ -344,68 +456,104 @@ int unknown_sizes;
         break;
 
 	case SQL_COLUMN_LABEL:
+		if (parse_ok && stmt->fi[icol]->alias[0] != '\0') {
+			strncpy_null((char *)rgbDesc, stmt->fi[icol]->alias, cbDescMax);
+			if (pcbDesc)
+				*pcbDesc = strlen(stmt->fi[icol]->alias);
+
+			break;
+
+			mylog("SQLColAttr: COLUMN_LABEL = '%s'\n", rgbDesc);
+		}	// otherwise same as column name
+
 	case SQL_COLUMN_NAME:
-		value = QR_get_fieldname(stmt->result, icol);
+
+		if (parse_ok)
+			value = stmt->fi[icol]->name;
+		else
+			value = QR_get_fieldname(stmt->result, icol);
+
 		strncpy_null((char *)rgbDesc, value, cbDescMax);
 
-		if (NULL != pcbDesc)
+		if (pcbDesc)
 			*pcbDesc = strlen(value);
+
+		mylog("SQLColAttr: COLUMN_NAME = '%s'\n", rgbDesc);
 		break;
 
 	case SQL_COLUMN_LENGTH:
-		if (NULL != pfDesc) {
-			*pfDesc = pgtype_length(stmt, field_type, icol, unknown_sizes); 
+		if (pfDesc) {
+			if (parse_ok)
+				*pfDesc = stmt->fi[icol]->length;
+			else
+				*pfDesc = pgtype_length(stmt, field_type, icol, unknown_sizes); 
 		}
 		mylog("SQLColAttributes: col %d, length = %d\n", icol, *pfDesc);
         break;
 
 	case SQL_COLUMN_MONEY:
-		if (NULL != pfDesc)    
+		if (pfDesc)    
 			*pfDesc = pgtype_money(stmt, field_type);
 		break;
 
 	case SQL_COLUMN_NULLABLE:
-		if (NULL != pfDesc)    
-			*pfDesc = pgtype_nullable(stmt, field_type);
+		if (pfDesc) {
+			if (parse_ok)
+				*pfDesc = stmt->fi[icol]->nullable;
+			else
+				*pfDesc = pgtype_nullable(stmt, field_type);
+		}
 		break;
 
 	case SQL_COLUMN_OWNER_NAME:
 		strncpy_null((char *)rgbDesc, "", cbDescMax);
-		if (NULL != pcbDesc)        
+		if (pcbDesc)        
 			*pcbDesc = 0;
 		break;
 
 	case SQL_COLUMN_PRECISION:
-		if (NULL != pfDesc) {
-			*pfDesc = pgtype_precision(stmt, field_type, icol, unknown_sizes);
+		if (pfDesc) {
+			if (parse_ok)
+				*pfDesc = stmt->fi[icol]->precision;
+			else
+				*pfDesc = pgtype_precision(stmt, field_type, icol, unknown_sizes);
 		}
 		mylog("SQLColAttributes: col %d, precision = %d\n", icol, *pfDesc);
         break;
 
 	case SQL_COLUMN_QUALIFIER_NAME:
 		strncpy_null((char *)rgbDesc, "", cbDescMax);
-		if (NULL != pcbDesc)        
+		if (pcbDesc)        
 			*pcbDesc = 0;
 		break;
 
 	case SQL_COLUMN_SCALE:
-		if (NULL != pfDesc)    
+		if (pfDesc)    
 			*pfDesc = pgtype_scale(stmt, field_type);
 		break;
 
 	case SQL_COLUMN_SEARCHABLE:
-		if (NULL != pfDesc)    
+		if (pfDesc)    
 			*pfDesc = pgtype_searchable(stmt, field_type);
 		break;
 
     case SQL_COLUMN_TABLE_NAME:
-		strncpy_null((char *)rgbDesc, "", cbDescMax);
-		if (NULL != pcbDesc)        
-			*pcbDesc = 0;
+		if (parse_ok && stmt->fi[icol]->ti) {
+			strncpy_null((char *)rgbDesc, stmt->fi[icol]->ti->name, cbDescMax);
+			if (pcbDesc)        
+				*pcbDesc = strlen(stmt->fi[icol]->ti->name);
+		}
+		else {
+			strncpy_null((char *)rgbDesc, "", cbDescMax);
+			if (pcbDesc)        
+				*pcbDesc = 0;
+		}
+
+		mylog("SQLColAttr: TABLE_NAME = '%s'\n", rgbDesc);
         break;
 
 	case SQL_COLUMN_TYPE:
-		if (NULL != pfDesc) {
+		if (pfDesc) {
 			*pfDesc = pgtype_to_sqltype(stmt, field_type);
 		}
 		break;
@@ -413,12 +561,12 @@ int unknown_sizes;
 	case SQL_COLUMN_TYPE_NAME:
 		value = pgtype_to_name(stmt, field_type);
 		strncpy_null((char *)rgbDesc, value, cbDescMax);
-		if (NULL != pcbDesc)        
+		if (pcbDesc)        
 			*pcbDesc = strlen(value);
 		break;
 
 	case SQL_COLUMN_UNSIGNED:
-		if (NULL != pfDesc) {
+		if (pfDesc) {
 			*pfDesc = pgtype_unsigned(stmt, field_type);
 			if(*pfDesc == -1)	/* non-numeric becomes TRUE (ODBC Doc) */
 				*pfDesc = TRUE;
@@ -426,17 +574,16 @@ int unknown_sizes;
 		break;
 
 	case SQL_COLUMN_UPDATABLE:
-		// everything should be updatable, I guess, unless access permissions
-		// prevent it--are we supposed to check for that here?  seems kind
-		// of complicated.  hmm...
-		if (NULL != pfDesc)    {
+		if (pfDesc)    {
 			/*	Neither Access or Borland care about this.
 
 			if (field_type == PG_TYPE_OID)
 				*pfDesc = SQL_ATTR_READONLY;
 			else
 			*/
+
 			*pfDesc = SQL_ATTR_WRITE;
+			mylog("SQLColAttr: UPDATEABLE = %d\n", *pfDesc);
 		}
 		break;
     }
@@ -446,7 +593,7 @@ int unknown_sizes;
 
 //      Returns result data for a single column in the current row.
 
-RETCODE SQL_API SQLGetData(
+RETCODE SQL_API _SQLGetData(
         HSTMT      hstmt,
         UWORD      icol,
         SWORD      fCType,
@@ -590,7 +737,7 @@ mylog("SQLGetData: enter, stmt=%u\n", stmt);
 //      Returns data for bound columns in the current row ("hstmt->iCursor"),
 //      advances the cursor.
 
-RETCODE SQL_API SQLFetch(
+RETCODE SQL_API _SQLFetch(
         HSTMT   hstmt)
 {
 char *func = "SQLFetch";
@@ -863,8 +1010,11 @@ RETCODE SQL_API SQLSetPos(
         UWORD   fLock)
 {
 char *func = "SQLSetPos";
+char buf[128];
 
-	SC_log_error(func, "Function not implemented", (StatementClass *) hstmt);
+	sprintf(buf, "SQLSetPos not implemented: irow=%d, fOption=%d, fLock=%d\n", irow, fOption, fLock);
+
+	SC_log_error(func, buf, (StatementClass *) hstmt);
 	return SQL_ERROR;
 }
 

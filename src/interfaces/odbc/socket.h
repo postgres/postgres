@@ -10,7 +10,23 @@
 #ifndef __SOCKET_H__
 #define __SOCKET_H__
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
+#ifdef UNIX
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <unistd.h>
+#include <netdb.h>
+#include <netinet/in.h>
+#define closesocket(xxx) close(xxx)
+#define SOCKETFD int
+#else
 #include <winsock.h>
+#define SOCKETFD SOCKET
+#endif
+
 #include "psqlodbc.h"
 
 #define SOCKET_ALREADY_CONNECTED 1
@@ -33,7 +49,7 @@ struct SocketClass_ {
 	unsigned char *buffer_in;
 	unsigned char *buffer_out;
 
-	SOCKET socket;
+	SOCKETFD socket;
 
 	char *errormsg;
 	int errornumber;

@@ -21,6 +21,14 @@
 #include "qresult.h"
 #include "misc.h"
 #include <stdio.h>
+#include <string.h>
+
+#ifndef TRUE
+#define TRUE	(BOOL)1
+#endif
+#ifndef FALSE
+#define FALSE	(BOOL)0
+#endif
 
 extern GLOBAL_VALUES globals;
 
@@ -232,6 +240,7 @@ QR_fetch_tuples(QResultClass *self, ConnectionClass *conn, char *cursor)
 			QR_set_message(self, "Error reading field information");
 			return FALSE;
 		}
+		return TRUE;
 	}
 }
 

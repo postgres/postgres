@@ -13,10 +13,22 @@
  *
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include "psqlodbc.h"
+
+#ifdef HAVE_IODBC
+#include "iodbc.h"
+#include "isql.h"
+#include "isqlext.h"
+#else
 #include <windows.h>
 #include <sql.h>
 #include <sqlext.h>
+#endif
+
 #include "environ.h"
 #include "connection.h"
 #include "statement.h"
@@ -81,12 +93,15 @@ ConnectionClass *conn = (ConnectionClass *) hdbc;
 	case SQL_ACCESS_MODE:
 		break;
 
+	case SQL_TXN_ISOLATION:
+		break;
+
 	default:
 		{ 
-		char option[32];
-		conn->errormsg = "This option is currently unsupported by the driver";
+		char option[64];
+		conn->errormsg = "Driver does not support setting this connect option";
 		conn->errornumber = CONN_UNSUPPORTED_OPTION;
-		sprintf(option, "fOption=%d", fOption);
+		sprintf(option, "fOption=%d, vParam=%d", fOption, vParam);
 		CC_log_error(func, option, conn);
 		return SQL_ERROR;
 		}
@@ -126,8 +141,8 @@ ConnectionClass *conn = (ConnectionClass *) hdbc;
 
 	default:
 		{
-		char option[32];
-		conn->errormsg = "This option is currently unsupported by the driver";
+		char option[64];
+		conn->errormsg = "Driver does not support getting this connect option";
 		conn->errornumber = CONN_UNSUPPORTED_OPTION;
 		sprintf(option, "fOption=%d", fOption);
 		CC_log_error(func, option, conn);
@@ -242,10 +257,10 @@ char changed = FALSE;
 
     default:
 		{
-		char option[32];
+		char option[64];
 		stmt->errornumber = STMT_NOT_IMPLEMENTED_ERROR;
-		stmt->errormsg = "Driver does not support this statement option";
-		sprintf(option, "fOption=%d", fOption);
+		stmt->errormsg = "Driver does not support setting this statement option";
+		sprintf(option, "fOption=%d, vParam=%d", fOption, vParam);
 		SC_log_error(func, option, stmt);
         return SQL_ERROR;
 		}
@@ -326,9 +341,9 @@ StatementClass *stmt = (StatementClass *) hstmt;
 
 	default:
 		{
-		char option[32];
+		char option[64];
 		stmt->errornumber = STMT_NOT_IMPLEMENTED_ERROR;
-		stmt->errormsg = "Driver does not support this statement option";
+		stmt->errormsg = "Driver does not support getting this statement option";
 		sprintf(option, "fOption=%d", fOption);
 		SC_log_error(func, option, stmt);
 		return SQL_ERROR;

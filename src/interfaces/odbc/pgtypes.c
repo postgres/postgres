@@ -15,15 +15,26 @@
  *
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include "psqlodbc.h"
 #include "dlg_specific.h"
 #include "pgtypes.h"
 #include "statement.h"
 #include "connection.h"
 #include "qresult.h"
+
+#ifdef HAVE_IODBC
+#include "iodbc.h"
+#include "isql.h"
+#include "isqlext.h"
+#else
 #include <windows.h>
 #include <sql.h>
 #include <sqlext.h>
+#endif
 
 
 extern GLOBAL_VALUES globals;
@@ -223,7 +234,7 @@ mylog("getCharPrecision: type=%d, col=%d, unknown = %d\n", type,col,handle_unkno
 	if (stmt->manual_result) {
 		flds = result->fields;
 		if (flds)
-			return flds->typlen[col];
+			return flds->adtsize[col];
 		else
 			return maxsize;
 	}

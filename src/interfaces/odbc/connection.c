@@ -21,7 +21,11 @@
 #include "lobj.h"
 #include "dlg_specific.h"
 #include <stdio.h>
+#include <string.h>
+
+#ifndef UNIX
 #include <odbcinst.h>
+#endif
 
 #define STMT_INCREMENT 16  /* how many statement holders to allocate at a time */
 
@@ -99,7 +103,7 @@ char *func = "SQLConnect";
 	/* fill in any defaults */
 	getDSNdefaults(ci);
 
-	qlog("conn = %u, SQLConnect(DSN='%s', UID='%s', PWD='%s')\n", ci->dsn, ci->username, ci->password);
+	qlog("conn = %u, SQLConnect(DSN='%s', UID='%s', PWD='%s')\n", conn, ci->dsn, ci->username, ci->password);
 
 	if ( CC_connect(conn, FALSE) <= 0) {
 		//	Error messages are filled in
@@ -229,6 +233,14 @@ ConnectionClass *rv;
 		rv->num_stmts = STMT_INCREMENT;
 
 		rv->lobj_type = PG_TYPE_LO;
+
+		rv->ntables = 0;
+		rv->col_info = NULL;
+
+		rv->translation_option = 0;
+		rv->translation_handle = NULL;
+		rv->DataSourceToDriver = NULL;
+		rv->DriverToDataSource = NULL;
     } 
     return rv;
 }
@@ -253,6 +265,19 @@ CC_Destructor(ConnectionClass *self)
 		self->stmts = NULL;
 	}
 	mylog("after free statement holders\n");
+
+	/*	Free cached table info */
+	if (self->col_info) {
+		int i;
+		for (i = 0; i < self->ntables; i++) {
+			if (self->col_info[i]->result)		/*	Free the SQLColumns result structure */
+				QR_Destructor(self->col_info[i]->result);
+
+			free(self->col_info[i]);
+		}
+		free(self->col_info);
+	}
+
 
 	free(self);
 
@@ -354,11 +379,54 @@ StatementClass *stmt;
 			self->stmts[i] = NULL;
 		}
 	}
+
+	/*	Check for translation dll */
+	if ( self->translation_handle) {
+		FreeLibrary (self->translation_handle);
+		self->translation_handle = NULL;
+	}
+
 	mylog("exit CC_Cleanup\n");
 	return TRUE;
 }
 
+int
+CC_set_translation (ConnectionClass *self)
+{
 
+	if (self->translation_handle != NULL) {
+		FreeLibrary (self->translation_handle);
+		self->translation_handle = NULL;
+	}
+
+	if (self->connInfo.translation_dll[0] == 0)
+		return TRUE;
+
+	self->translation_option = atoi (self->connInfo.translation_option);
+	self->translation_handle = LoadLibrary (self->connInfo.translation_dll);
+
+	if (self->translation_handle == NULL) {
+		self->errornumber = CONN_UNABLE_TO_LOAD_DLL;
+		self->errormsg = "Could not load the translation DLL.";
+		return FALSE;
+	}
+
+	self->DataSourceToDriver
+	 = (DataSourceToDriverProc) GetProcAddress (self->translation_handle,
+												"SQLDataSourceToDriver");
+
+	self->DriverToDataSource
+	 = (DriverToDataSourceProc) GetProcAddress (self->translation_handle,
+												"SQLDriverToDataSource");
+
+	if (self->DataSourceToDriver == NULL || self->DriverToDataSource == NULL) {
+		self->errornumber = CONN_UNABLE_TO_LOAD_DLL;
+		self->errormsg = "Could not find translation DLL functions.";
+		return FALSE;
+	}
+
+	return TRUE;
+}
 
 char 
 CC_connect(ConnectionClass *self, char do_password)
@@ -587,15 +655,17 @@ char salt[2];
 
 	mylog("empty query seems to be OK.\n");
 
+	CC_set_translation (self);
 
 	/**********************************************/
 	/*******   Send any initial settings  *********/
 	/**********************************************/
 
-	//	The Unix iodbc errors out on this call because it allocates a statement
-	//	before the connection is established.  Therefore, don't check for error here.
+	/*	Since these functions allocate statements, and since the connection is not
+		established yet, it would violate odbc state transition rules.  Therefore,
+		these functions call the corresponding local function instead.
+	*/
 	CC_send_settings(self);
-
 	CC_lookup_lo(self);		/* a hack to get the oid of our large object oid type */
 
 //	CC_test(self);
@@ -1074,6 +1144,7 @@ int i;
 	}
 }
 
+
 char
 CC_send_settings(ConnectionClass *self)
 {
@@ -1085,7 +1156,10 @@ StatementClass *stmt;
 RETCODE result;
 SWORD cols = 0;
 
-	result = SQLAllocStmt( self, &hstmt);
+/*	This function must use the local odbc API functions since the odbc state 
+	has not transitioned to "connected" yet.
+*/
+	result = _SQLAllocStmt( self, &hstmt);
 	if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
 		return FALSE;
 	}
@@ -1116,13 +1190,13 @@ SWORD cols = 0;
 	if (ini_query[0] != '\0') {
 		mylog("Sending Initial Connection query: '%s'\n", ini_query);
 
-		result = SQLExecDirect(hstmt, ini_query, SQL_NTS);
+		result = _SQLExecDirect(hstmt, ini_query, SQL_NTS);
 		if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
-			SQLFreeStmt(hstmt, SQL_DROP);
+			_SQLFreeStmt(hstmt, SQL_DROP);
 			return FALSE;
 		}
 
-		SQLFreeStmt(hstmt, SQL_DROP);
+		_SQLFreeStmt(hstmt, SQL_DROP);
 
 	}
 	return TRUE;
@@ -1139,36 +1213,39 @@ HSTMT hstmt;
 StatementClass *stmt;
 RETCODE result;
 
-	result = SQLAllocStmt( self, &hstmt);
+/*	This function must use the local odbc API functions since the odbc state 
+	has not transitioned to "connected" yet.
+*/
+	result = _SQLAllocStmt( self, &hstmt);
 	if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
 		return;
 	}
 	stmt = (StatementClass *) hstmt;
 
-	result = SQLExecDirect(hstmt, "select oid from pg_type where typname='" \
+	result = _SQLExecDirect(hstmt, "select oid from pg_type where typname='" \
 		PG_TYPE_LO_NAME \
 		"'", SQL_NTS);
 	if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
-		SQLFreeStmt(hstmt, SQL_DROP);
+		_SQLFreeStmt(hstmt, SQL_DROP);
 		return;
 	}
 
-	result = SQLFetch(hstmt);
+	result = _SQLFetch(hstmt);
 	if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
-		SQLFreeStmt(hstmt, SQL_DROP);
+		_SQLFreeStmt(hstmt, SQL_DROP);
 		return;
 	}
 
-	result = SQLGetData(hstmt, 1, SQL_C_SLONG, &self->lobj_type, sizeof(self->lobj_type), NULL);
+	result = _SQLGetData(hstmt, 1, SQL_C_SLONG, &self->lobj_type, sizeof(self->lobj_type), NULL);
 	if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
-		SQLFreeStmt(hstmt, SQL_DROP);
+		_SQLFreeStmt(hstmt, SQL_DROP);
 		return;
 	}
 
 	mylog("Got the large object oid: %d\n", self->lobj_type);
 	qlog("    [ Large Object oid = %d ]\n", self->lobj_type);
 
-	result = SQLFreeStmt(hstmt, SQL_DROP);
+	result = _SQLFreeStmt(hstmt, SQL_DROP);
 }
 
 void
@@ -1201,29 +1278,38 @@ RETCODE result;
 SDWORD pcbValue;
 UDWORD pcrow;
 UWORD rgfRowStatus;
-char buf[255];
-SDWORD buflen;
-DATE_STRUCT *ds;
+char name[255], type[255];
+SDWORD namelen, typelen;
+SWORD cols;
 
 	result = SQLAllocStmt( self, &hstmt1);
 	if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
 		return;
 	}
 
-	result = SQLExecDirect(hstmt1, "select * from cpar", SQL_NTS);
-	qlog("exec result = %d\n", result);
+	result = SQLTables(hstmt1, "", SQL_NTS, "", SQL_NTS, "", SQL_NTS, "", SQL_NTS);
+	qlog("SQLTables result = %d\n", result);
 
-	result = SQLBindCol(hstmt1, 2, SQL_C_DATE, buf, 0, &buflen);
+	result = SQLNumResultCols(hstmt1, &cols);
+	qlog("cols SQLTables result = %d\n", result);
+
+	result = SQLBindCol(hstmt1, 3, SQL_C_CHAR, name, sizeof(name), &namelen);
 	qlog("bind result = %d\n", result);
 
+	result = SQLBindCol(hstmt1, 4, SQL_C_CHAR, type, sizeof(type), &typelen);
+	qlog("bind result = %d\n", result);
+	
 	result = SQLFetch(hstmt1);
+	qlog("SQLFetch result = %d\n", result);
 	while (result != SQL_NO_DATA_FOUND) {
-		ds = (DATE_STRUCT *) buf;
-		qlog("fetch on stmt1: result=%d, buflen=%d: year=%d, month=%d, day=%d\n", result, buflen, ds->year, ds->month, ds->day);
+		qlog("fetch on stmt1: result=%d, namelen=%d: name='%s', typelen=%d, type='%s'\n", result, namelen, name, typelen, type);
 
 		result = SQLFetch(hstmt1);
 	}
+	qlog("SQLFetch result = %d\n", result);
 	SQLFreeStmt(hstmt1, SQL_DROP);
 
 }
 */
+
+

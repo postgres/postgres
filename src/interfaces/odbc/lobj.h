@@ -13,7 +13,7 @@
 
 #include "psqlodbc.h"
 
-typedef struct lo_arg {
+struct lo_arg {
 	int		isint;
 	int		len;
 	union

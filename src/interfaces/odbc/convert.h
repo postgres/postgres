@@ -43,6 +43,8 @@ char *convert_special_chars(char *si, char *dst, int used);
 int convert_pgbinary_to_char(char *value, char *rgbValue, int cbValueMax);
 int convert_from_pgbinary(unsigned char *value, unsigned char *rgbValue, int cbValueMax);
 int convert_to_pgbinary(unsigned char *in, char *out, int len);
+void encode(char *in, char *out);
+void decode(char *in, char *out);
 int convert_lo(StatementClass *stmt, void *value, Int2 fCType, PTR rgbValue, 
 		   SDWORD cbValueMax, SDWORD *pcbValue, char multiple);
 

@@ -13,11 +13,21 @@
  *
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include "psqlodbc.h"
 #include <stdio.h>
 #include <string.h>
+
+#ifdef HAVE_IODBC
+#include "iodbc.h"
+#include "isqlext.h"
+#else
 #include <windows.h>
 #include <sqlext.h>
+#endif
 
 #include "connection.h"
 #include "statement.h"
@@ -25,6 +35,15 @@
 #include "convert.h"
 #include "bind.h"
 #include "lobj.h"
+
+
+RETCODE SQL_API SQLExecDirect(
+        HSTMT     hstmt,
+        UCHAR FAR *szSqlStr,
+        SDWORD    cbSqlStr)
+{
+	return _SQLExecDirect(hstmt, szSqlStr, cbSqlStr);
+}
 
 
 //      Perform a Prepare on the SQL statement
@@ -111,7 +130,7 @@ StatementClass *self = (StatementClass *) hstmt;
 
 //      Performs the equivalent of SQLPrepare, followed by SQLExecute.
 
-RETCODE SQL_API SQLExecDirect(
+RETCODE SQL_API _SQLExecDirect(
         HSTMT     hstmt,
         UCHAR FAR *szSqlStr,
         SDWORD    cbSqlStr)
@@ -358,6 +377,8 @@ StatementClass *stmt = (StatementClass *) hstmt;
 	stmt->data_at_exec = -1;
 	stmt->current_exec_param = -1;
 	stmt->put_data = FALSE;
+
+	return SQL_SUCCESS;
 
 }
 

@@ -10,9 +10,26 @@
 #ifndef __STATEMENT_H__
 #define __STATEMENT_H__
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
+#ifdef HAVE_IODBC
+#include "iodbc.h"
+#include "isql.h"
+#else
 #include <windows.h>
 #include <sql.h>
+#endif
+
 #include "psqlodbc.h"
+
+#ifndef FALSE
+#define FALSE	(BOOL)0
+#endif
+#ifndef TRUE
+#define TRUE	(BOOL)1
+#endif
 
 typedef enum {
     STMT_ALLOCATED,     /* The statement handle is allocated, but not used so far */
@@ -66,6 +83,40 @@ enum {
 
 #define STMT_UPDATE(stmt)	(stmt->statement_type > STMT_TYPE_SELECT)
 
+
+/*	Parsing status */
+enum {
+	STMT_PARSE_NONE = 0,
+	STMT_PARSE_COMPLETE,
+	STMT_PARSE_INCOMPLETE,
+	STMT_PARSE_FATAL,
+};
+
+typedef struct {
+	COL_INFO		*col_info;		/* cached SQLColumns info for this table */
+	char 			name[MAX_TABLE_LEN+1];
+	char			alias[MAX_TABLE_LEN+1];
+} TABLE_INFO;
+
+typedef struct {
+	TABLE_INFO  	*ti;			/* resolve to explicit table names */
+	int				precision;
+	int				display_size;
+	int				length;
+	int				type;
+	char			nullable;
+	char			func;
+	char			expr;
+	char			quote;
+	char			dquote;
+	char			numeric;
+	char			dot[MAX_TABLE_LEN+1];
+	char			name[MAX_COLUMN_LEN+1];
+	char			alias[MAX_COLUMN_LEN+1];
+} FIELD_INFO;
+
+
+
 /********	Statement Handle	***********/
 struct StatementClass_ {
     ConnectionClass *hdbc;		/* pointer to ConnectionClass this statement belongs to */
@@ -95,6 +146,13 @@ struct StatementClass_ {
 
     char *statement;			/* if non--null pointer to the SQL statement that has been executed */
 
+	TABLE_INFO	**ti;
+	FIELD_INFO	**fi;
+	int			nfld;
+	int			ntab;
+
+	int parse_status;
+
     int statement_type;			/* According to the defines above */
 	int data_at_exec;			/* Number of params needing SQLPutData */
 	int current_exec_param;		/* The current parameter for SQLPutData */
@@ -107,7 +165,8 @@ struct StatementClass_ {
 
 	char internal;				/* Is this statement being called internally? */
 
-	char cursor_name[32];
+	char cursor_name[MAX_CURSOR_LEN+1];
+
 	char stmt_with_params[65536 /* MAX_STATEMENT_LEN */];		/* statement after parameter substitution */
 
 };
@@ -123,6 +182,7 @@ struct StatementClass_ {
 StatementClass *SC_Constructor();
 char SC_Destructor(StatementClass *self);
 int statement_type(char *statement);
+char parse_statement(StatementClass *stmt);
 void SC_pre_execute(StatementClass *self);
 char SC_unbind_cols(StatementClass *self);
 char SC_recycle_statement(StatementClass *self);
@@ -133,5 +193,17 @@ char *SC_create_errormsg(StatementClass *self);
 RETCODE SC_execute(StatementClass *stmt);
 void SC_free_params(StatementClass *self, char option);
 void SC_log_error(char *func, char *desc, StatementClass *self);
+
+RETCODE SQL_API _SQLAllocStmt(HDBC hdbc, HSTMT FAR *phstmt);
+RETCODE SQL_API _SQLFreeStmt(HSTMT hstmt, UWORD fOption);
+RETCODE SQL_API _SQLExecDirect(HSTMT hstmt, UCHAR FAR *szSqlStr, SDWORD cbSqlStr);
+RETCODE SQL_API _SQLFetch(HSTMT   hstmt);
+RETCODE SQL_API _SQLGetData(
+        HSTMT      hstmt,
+        UWORD      icol,
+        SWORD      fCType,
+        PTR        rgbValue,
+        SDWORD     cbValueMax,
+        SDWORD FAR *pcbValue);
 
 #endif

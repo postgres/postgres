@@ -12,6 +12,11 @@
  * Comments:        See "notice.txt" for copyright and license information.
  *
  */
+
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include "bind.h"
 #include "environ.h"
 #include "statement.h"
@@ -19,8 +24,15 @@
 #include "pgtypes.h"
 #include <stdlib.h>
 #include <malloc.h>
+
+#ifdef HAVE_IODBC
+#include "iodbc.h"
+#include "isql.h"
+#include "isqlext.h"
+#else
 #include <sql.h>
 #include <sqlext.h>
+#endif
 
 //      Bind parameters on a statement handle
 

@@ -37,7 +37,7 @@ static FILE *LOGFP = 0;
 		fmt = va_arg(args, char *);
 
 		if (! LOGFP) {
-			LOGFP = fopen("c:\\mylog.log", "w");
+			LOGFP = fopen(MYLOGFILE, "w");
 			setbuf(LOGFP, NULL);
 		}
 
@@ -64,7 +64,7 @@ static FILE *LOGFP = 0;
 		fmt = va_arg(args, char *);
 
 		if (! LOGFP) {
-			LOGFP = fopen("c:\\psqlodbc.log", "w");
+			LOGFP = fopen(QLOGFILE, "w");
 			setbuf(LOGFP, NULL);
 		}
 
@@ -77,12 +77,24 @@ static FILE *LOGFP = 0;
 #endif
 
 /*  Undefine these because windows.h will redefine and cause a warning */
+
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
+#ifndef UNIX
 #undef va_start
 #undef va_end
+#endif
 
-
+#ifdef HAVE_IODBC
+#include "iodbc.h"
+#include "isql.h"
+#else
 #include <windows.h>
 #include <sql.h>
+#endif
+
  
 /*	returns STRCPY_FAIL, STRCPY_TRUNCATED, or #bytes copied (not including null term) */
 int 
@@ -155,7 +167,7 @@ make_string(char *s, int len, char *buf)
 int length;
 char *str;
 
-    if(s && (len > 0 || len == SQL_NTS)) {
+    if(s && (len > 0 || (len == SQL_NTS && strlen(s) > 0))) {
 		length = (len > 0) ? len : strlen(s);
 
 		if (buf) {

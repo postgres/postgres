@@ -12,6 +12,10 @@
  *
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include "statement.h"
 #include "bind.h"
 #include "connection.h"
@@ -19,11 +23,24 @@
 #include "convert.h"
 #include "environ.h"
 #include <stdio.h>
+#include <string.h>
 
+#ifdef HAVE_IODBC
+#include "iodbc.h"
+#include "isql.h"
+#else
 #include <windows.h>
 #include <sql.h>
+#endif
 
 extern GLOBAL_VALUES globals;
+
+#ifdef UNIX
+#if !HAVE_STRICMP
+#define stricmp(s1,s2) 		strcasecmp(s1,s2)
+#define strnicmp(s1,s2,n)	strncasecmp(s1,s2,n)
+#endif
+#endif
 
 /*	Map sql commands to statement types */
 static struct {
@@ -44,6 +61,19 @@ static struct {
 
 
 RETCODE SQL_API SQLAllocStmt(HDBC      hdbc,
+                             HSTMT FAR *phstmt)
+{
+	return _SQLAllocStmt(hdbc, phstmt);
+}
+
+RETCODE SQL_API SQLFreeStmt(HSTMT     hstmt,
+                            UWORD     fOption)
+{
+	return _SQLFreeStmt(hstmt, fOption);
+}
+
+
+RETCODE SQL_API _SQLAllocStmt(HDBC      hdbc,
                              HSTMT FAR *phstmt)
 {
 char *func="SQLAllocStmt";
@@ -82,7 +112,7 @@ StatementClass *stmt;
 }
 
 
-RETCODE SQL_API SQLFreeStmt(HSTMT     hstmt,
+RETCODE SQL_API _SQLFreeStmt(HSTMT     hstmt,
                             UWORD     fOption)
 {
 char *func="SQLFreeStmt";
@@ -145,6 +175,7 @@ StatementClass *stmt = (StatementClass *) hstmt;
 }
 
 
+
 /**********************************************************************
  * StatementClass implementation
  */
@@ -185,6 +216,12 @@ StatementClass *rv;
 		rv->lobj_fd = -1;
 		rv->internal = FALSE;
 		rv->cursor_name[0] = '\0';
+
+		rv->ti = NULL;
+		rv->fi = NULL;
+		rv->ntab = 0;
+		rv->nfld = 0;
+		rv->parse_status = STMT_PARSE_NONE;
 	}
 	return rv;
 }
@@ -217,6 +254,27 @@ SC_Destructor(StatementClass *self)
 	/* about that here. */
 	if (self->bindings)
 		free(self->bindings);
+
+
+	/*	Free the parsed table information */
+	if (self->ti) {
+		int i;
+		for (i = 0; i < self->ntab; i++) {
+			free(self->ti[i]);
+		}
+
+		free(self->ti);
+	}
+
+	/*	Free the parsed field information */
+	if (self->fi) {
+		int i;
+		for (i = 0; i < self->nfld; i++) {
+			free(self->fi[i]);
+		}
+		free(self->fi);
+	}
+
 
 	free(self);
 
@@ -266,7 +324,6 @@ int i;
 }
 
 
-
 int 
 statement_type(char *statement)
 {
@@ -278,6 +335,7 @@ int i;
 
 	return STMT_TYPE_OTHER;
 }
+
 
 /*	Called from SQLPrepare if STMT_PREMATURE, or
 	from SQLExecute if STMT_FINISHED, or
@@ -328,6 +386,29 @@ ConnectionClass *conn;
 		return FALSE;
 	}
 
+	/*	Free the parsed table information */
+	if (self->ti) {
+		int i;
+		for (i = 0; i < self->ntab; i++) {
+			free(self->ti[i]);
+		}
+
+		free(self->ti);
+		self->ti = NULL;
+		self->ntab = 0;
+	}
+
+	/*	Free the parsed field information */
+	if (self->fi) {
+		int i;
+		for (i = 0; i < self->nfld; i++) {
+			free(self->fi[i]);
+		}
+		free(self->fi);
+		self->fi = NULL;
+		self->nfld = 0;
+	}
+	self->parse_status = STMT_PARSE_NONE;
 
 	/*	Free any cursors */
 	if (self->result) {
@@ -359,7 +440,7 @@ ConnectionClass *conn;
 void 
 SC_pre_execute(StatementClass *self)
 {
- 
+
 	mylog("SC_pre_execute: status = %d\n", self->status);
 
 	if (self->status == STMT_READY) {
@@ -514,6 +595,7 @@ Int2 oldstatus, numcols;
 		char fetch[128];
 
 		mylog("       Sending SELECT statement on stmt=%u, cursor_name='%s'\n", self, self->cursor_name);
+
 
 		/*	send the declare/select */
 		self->result = CC_send_query(conn, self->stmt_with_params, NULL, NULL);

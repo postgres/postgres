@@ -10,6 +10,15 @@
 #ifndef __MISC_H__
 #define __MISC_H__
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
+#ifdef UNIX
+#include "gpps.h"
+#define SQLGetPrivateProfileString(a,b,c,d,e,f) GetPrivateProfileString(a,b,c,d,e,f)
+#endif
+
 #include <stdio.h>
 
 /*	Uncomment MY_LOG define to compile in the mylog() statements.
@@ -30,12 +39,22 @@
 
 
 #ifdef MY_LOG
+#ifdef UNIX
+#define MYLOGFILE	"/tmp/mylog.log"
+#else
+#define MYLOGFILE	"c:\\mylog.log"
+#endif
 void mylog();	/* prototype */
 #else
 #define mylog    // mylog
 #endif
 
 #ifdef Q_LOG
+#ifdef UNIX
+#define QLOGFILE	"/tmp/psqlodbc.log"
+#else
+#define QLOGFILE	"c:\\psqlodbc.log"
+#endif
 void qlog();	/* prototype */
 #else
 #define qlog    // qlog

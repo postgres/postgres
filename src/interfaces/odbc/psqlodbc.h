@@ -11,10 +11,23 @@
 #ifndef __PSQLODBC_H__
 #define __PSQLODBC_H__
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
+#ifdef UNIX
+#define Int4 long int
+#define UInt4 unsigned int
+#define Int2 short
+#define UInt2 unsigned short
+typedef float SFLOAT;
+typedef double SDOUBLE;
+#else
 #define Int4 int
 #define UInt4 unsigned int
 #define Int2 short
 #define UInt2 unsigned short
+#endif
 
 typedef UInt4 Oid;
 
@@ -30,6 +43,10 @@ typedef UInt4 Oid;
 #define MAX_FIELDS					512
 #define BYTELEN						8
 #define VARHDRSZ					sizeof(Int4)
+
+#define MAX_TABLE_LEN				32
+#define MAX_COLUMN_LEN				32
+#define MAX_CURSOR_LEN				32
 
 /*	Registry length limits */
 #define LARGE_REGISTRY_LEN			4096	/* used for special cases */
@@ -50,10 +67,14 @@ typedef UInt4 Oid;
 /* Driver stuff */
 #define DRIVERNAME             "PostgreSQL ODBC"
 #define DBMS_NAME              "PostgreSQL"
-#define DBMS_VERSION           "06.30.0246 PostgreSQL 6.3"
-#define POSTGRESDRIVERVERSION  "06.30.0246"
-#define DRIVER_FILE_NAME		"PSQLODBC.DLL"
+#define DBMS_VERSION           "06.30.0248 PostgreSQL 6.3"
+#define POSTGRESDRIVERVERSION  "06.30.0248"
 
+#ifndef UNIX
+#define DRIVER_FILE_NAME		"PSQLODBC.DLL"
+#else
+#define DRIVER_FILE_NAME		"libpsqlodbc.so"
+#endif
 
 #define PG62	"6.2"		/* "Protocol" key setting to force Postgres 6.2 */
 
@@ -70,6 +91,7 @@ typedef struct EnvironmentClass_ EnvironmentClass;
 typedef struct TupleNode_ TupleNode;
 typedef struct TupleField_ TupleField;
 
+typedef struct col_info COL_INFO;
 typedef struct lo_arg LO_ARG;
 
 typedef struct GlobalValues_
@@ -89,6 +111,7 @@ typedef struct GlobalValues_
 	char				unknowns_as_longvarchar;
 	char				bools_as_char;
 	char				lie;
+	char				parse;
 	char				extra_systable_prefixes[MEDIUM_REGISTRY_LEN];
 	char				conn_settings[LARGE_REGISTRY_LEN];
 } GLOBAL_VALUES;

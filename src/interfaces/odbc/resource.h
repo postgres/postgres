@@ -46,6 +46,8 @@
 #define DS_SHOWSYSTEMTABLES             1051
 #define DRV_EXTRASYSTABLEPREFIXES       1051
 #define DS_ROWVERSIONING                1052
+#define DRV_PARSE                       1052
+#define IDC_OPTIONS                     1054
 
 // Next default values for new objects
 // 
@@ -53,7 +55,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        104
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1054
+#define _APS_NEXT_CONTROL_VALUE         1055
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif
