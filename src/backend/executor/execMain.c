@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.79 1999/02/22 19:40:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.80 1999/03/19 18:56:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1724,7 +1724,8 @@ EvalPlanQual(EState *estate, Index rti, ItemPointer tid)
 		}
 		/* push current PQ to the stack */
 		epqstate->es_evalPlanQual = (Pointer) epq;
-		estate->es_evalPlanQual = (Pointer) epq = newepq;
+		epq = newepq;
+		estate->es_evalPlanQual = (Pointer) epq;
 		epq->rti = rti;
 		endNode = false;
 	}

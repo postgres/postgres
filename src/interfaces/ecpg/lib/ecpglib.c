@@ -741,7 +741,9 @@ ECPGexecute(struct statement * stmt)
 							break;
 					    }
 					    
-					    add_mem((void *)(var->value) = *((void **)(var->pointer)) = (void *) ecpg_alloc(len, stmt->lineno), stmt->lineno);
+					    var->pointer = (void *) ecpg_alloc(len, stmt->lineno);
+					    var->value = (void **) var->pointer;
+					    add_mem((void *) var->value, stmt->lineno);
 					}
 									
 					for (act_tuple = 0; act_tuple < ntuples && status; act_tuple++)

@@ -20,7 +20,7 @@
 extern char *ps_status_buffer;
 
 #define PS_DEFINE_BUFFER \
-char *ps_status_buffer = NULL;
+char *ps_status_buffer = NULL
 
 #define PS_INIT_STATUS(argc, argv, execname, username, hostname, dbname) \
 	{ \
@@ -53,7 +53,7 @@ char *ps_status_buffer = NULL;
 extern const char **ps_status;
 
 #define PS_DEFINE_BUFFER \
-const char **ps_status = NULL;
+const char **ps_status = NULL
 
 #define PS_INIT_STATUS(argc, argv, execname, username, hostname, dbname) \
 	{ \
