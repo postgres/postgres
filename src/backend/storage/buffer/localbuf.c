@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/localbuf.c,v 1.12 1997/09/18 20:21:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/localbuf.c,v 1.13 1997/10/12 07:12:03 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -127,6 +127,7 @@ LocalBufferAlloc(Relation reln, BlockNumber blockNum, bool *foundPtr)
 		smgrwrite(bufrel->rd_rel->relsmgr, bufrel, bufHdr->tag.blockNum,
 				  (char *) MAKE_PTR(bufHdr->data));
 		LocalBufferFlushCount++;
+		RelationDecrementReferenceCount(bufrel);
 	}
 
 	/*
@@ -204,7 +205,8 @@ FlushLocalBuffer(Buffer buffer, bool release)
 	smgrflush(bufrel->rd_rel->relsmgr, bufrel, bufHdr->tag.blockNum,
 			  (char *) MAKE_PTR(bufHdr->data));
 	LocalBufferFlushCount++;
-
+	RelationDecrementReferenceCount(bufrel);
+	
 	Assert(LocalRefCount[bufid] > 0);
 	if (release)
 		LocalRefCount[bufid]--;
@@ -277,7 +279,8 @@ LocalBufferSync(void)
 			smgrwrite(bufrel->rd_rel->relsmgr, bufrel, buf->tag.blockNum,
 					  (char *) MAKE_PTR(buf->data));
 			LocalBufferFlushCount++;
-
+			RelationDecrementReferenceCount(bufrel);
+			
 			buf->tag.relId.relId = InvalidOid;
 			buf->flags &= ~BM_DIRTY;
 		}
