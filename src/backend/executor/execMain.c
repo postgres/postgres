@@ -27,7 +27,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.146 2001/09/08 16:15:28 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.147 2001/09/17 00:29:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1268,11 +1268,11 @@ ExecAppend(TupleTableSlot *slot,
 	 * insert the tuple
 	 */
 	newId = heap_insert(resultRelationDesc, tuple);
-	setLastTid(&(tuple->t_self));
 
 	IncrAppended();
 	(estate->es_processed)++;
 	estate->es_lastoid = newId;
+	setLastTid(&(tuple->t_self));
 
 	/*
 	 * process indices

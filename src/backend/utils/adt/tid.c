@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/tid.c,v 1.26 2001/09/08 16:15:28 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/tid.c,v 1.27 2001/09/17 00:29:10 tgl Exp $
  *
  * NOTES
  *	  input routine largely stolen from boxin().
@@ -124,11 +124,15 @@ tidne(PG_FUNCTION_ARGS)
  *
  *	Maybe these implementations should be moved to another place
  */
-static	ItemPointerData	Current_last_tid = { {0, 0}, 0}; 
-void	setLastTid(const ItemPointer tid) 
-{ 
-	Current_last_tid = *tid; 
-} 
+
+static	ItemPointerData	Current_last_tid = { {0, 0}, 0};
+
+void
+setLastTid(const ItemPointer tid)
+{
+	Current_last_tid = *tid;
+}
+
 Datum
 currtid_byreloid(PG_FUNCTION_ARGS)
 {
