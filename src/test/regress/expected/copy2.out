@@ -5,7 +5,7 @@ CREATE TABLE x (
 	d text,
 	e text
 );
-NOTICE:  CREATE TABLE will create implicit sequence "x_a_seq" for "serial" column "x.a"
+NOTICE:  CREATE TABLE will create implicit sequence "x_a_seq" for serial column "x.a"
 CREATE FUNCTION fn_x_before () RETURNS TRIGGER AS '
   BEGIN
 		NEW.e := ''before trigger fired''::text;
@@ -191,6 +191,6 @@ COPY y TO stdout WITH CSV FORCE QUOTE col2 ESCAPE '\\';
 "Jackson, Sam","\\h"
 "It is \"perfect\".","	"
 "",
-DROP TABLE x;
+DROP TABLE x, y;
 DROP FUNCTION fn_x_before();
 DROP FUNCTION fn_x_after();

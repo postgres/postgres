@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_constraint.c,v 1.19 2003/11/29 19:51:46 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_constraint.c,v 1.20 2004/06/10 17:55:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,7 @@
 #include "catalog/indexing.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_type.h"
+#include "commands/defrem.h"
 #include "miscadmin.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
@@ -263,13 +264,19 @@ CreateConstraintEntry(const char *constraintName,
 
 /*
  * Test whether given name is currently used as a constraint name
- * for the given relation.
+ * for the given object (relation or domain).
  *
- * NB: Caller should hold exclusive lock on the given relation, else
- * this test is not very meaningful.
+ * This is used to decide whether to accept a user-specified constraint name.
+ * It is deliberately not the same test as ChooseConstraintName uses to decide
+ * whether an auto-generated name is OK: here, we will allow it unless there
+ * is an identical constraint name in use *on the same object*.
+ *
+ * NB: Caller should hold exclusive lock on the given object, else
+ * this test can be fooled by concurrent additions.
  */
 bool
-ConstraintNameIsUsed(CONSTRAINTCATEGORY conCat, Oid objId, Oid objNamespace, const char *cname)
+ConstraintNameIsUsed(ConstraintCategory conCat, Oid objId,
+					 Oid objNamespace, const char *conname)
 {
 	bool		found;
 	Relation	conDesc;
@@ -277,14 +284,14 @@ ConstraintNameIsUsed(CONSTRAINTCATEGORY conCat, Oid objId, Oid objNamespace, con
 	ScanKeyData skey[2];
 	HeapTuple	tup;
 
-	conDesc = heap_openr(ConstraintRelationName, RowExclusiveLock);
+	conDesc = heap_openr(ConstraintRelationName, AccessShareLock);
 
 	found = false;
 
 	ScanKeyInit(&skey[0],
 				Anum_pg_constraint_conname,
 				BTEqualStrategyNumber, F_NAMEEQ,
-				CStringGetDatum(cname));
+				CStringGetDatum(conname));
 
 	ScanKeyInit(&skey[1],
 				Anum_pg_constraint_connamespace,
@@ -311,101 +318,99 @@ ConstraintNameIsUsed(CONSTRAINTCATEGORY conCat, Oid objId, Oid objNamespace, con
 	}
 
 	systable_endscan(conscan);
-	heap_close(conDesc, RowExclusiveLock);
+	heap_close(conDesc, AccessShareLock);
 
 	return found;
 }
 
 /*
- * Generate a currently-unused constraint name for the given relation.
+ * Select a nonconflicting name for a new constraint.
  *
- * The passed counter should be initialized to 0 the first time through.
- * If multiple constraint names are to be generated in a single command,
- * pass the new counter value to each successive call, else the same
- * name will be generated each time.
+ * The objective here is to choose a name that is unique within the
+ * specified namespace.  Postgres does not require this, but the SQL
+ * spec does, and some apps depend on it.  Therefore we avoid choosing
+ * default names that so conflict.
  *
- * NB: Caller should hold exclusive lock on the given relation, else
- * someone else might choose the same name concurrently!
+ * name1, name2, and label are used the same way as for makeObjectName(),
+ * except that the label can't be NULL; digits will be appended to the label
+ * if needed to create a name that is unique within the specified namespace.
+ *
+ * 'others' can be a list of string names already chosen within the current
+ * command (but not yet reflected into the catalogs); we will not choose
+ * a duplicate of one of these either.
+ *
+ * Note: it is theoretically possible to get a collision anyway, if someone
+ * else chooses the same name concurrently.  This is fairly unlikely to be
+ * a problem in practice, especially if one is holding an exclusive lock on
+ * the relation identified by name1.
+ *
+ * Returns a palloc'd string.
  */
 char *
-GenerateConstraintName(CONSTRAINTCATEGORY conCat, Oid objId, Oid objNamespace, int *counter)
+ChooseConstraintName(const char *name1, const char *name2,
+					 const char *label, Oid namespace,
+					 List *others)
 {
-	bool		found;
+	int			pass = 0;
+	char	   *conname = NULL;
+	char		modlabel[NAMEDATALEN];
 	Relation	conDesc;
-	char	   *cname;
+	SysScanDesc conscan;
+	ScanKeyData skey[2];
+	bool		found;
+	ListCell   *l;
 
-	cname = (char *) palloc(NAMEDATALEN * sizeof(char));
+	conDesc = heap_openr(ConstraintRelationName, AccessShareLock);
 
-	conDesc = heap_openr(ConstraintRelationName, RowExclusiveLock);
+	/* try the unmodified label first */
+	StrNCpy(modlabel, label, sizeof(modlabel));
 
-	/* Loop until we find a non-conflicting constraint name */
-	/* We assume there will be one eventually ... */
-	do
+	for (;;)
 	{
-		SysScanDesc conscan;
-		ScanKeyData skey[2];
-		HeapTuple	tup;
+		conname = makeObjectName(name1, name2, modlabel);
 
-		++(*counter);
-		snprintf(cname, NAMEDATALEN, "$%d", *counter);
-
-		/*
-		 * This duplicates ConstraintNameIsUsed() so that we can avoid
-		 * re-opening pg_constraint for each iteration.
-		 */
 		found = false;
 
-		ScanKeyInit(&skey[0],
-					Anum_pg_constraint_conname,
-					BTEqualStrategyNumber, F_NAMEEQ,
-					CStringGetDatum(cname));
-
-		ScanKeyInit(&skey[1],
-					Anum_pg_constraint_connamespace,
-					BTEqualStrategyNumber, F_OIDEQ,
-					ObjectIdGetDatum(objNamespace));
-
-		conscan = systable_beginscan(conDesc, ConstraintNameNspIndex, true,
-									 SnapshotNow, 2, skey);
-
-		while (HeapTupleIsValid(tup = systable_getnext(conscan)))
+		foreach(l, others)
 		{
-			Form_pg_constraint con = (Form_pg_constraint) GETSTRUCT(tup);
-
-			if (conCat == CONSTRAINT_RELATION && con->conrelid == objId)
-			{
-				found = true;
-				break;
-			}
-			else if (conCat == CONSTRAINT_DOMAIN && con->contypid == objId)
+			if (strcmp((char *) lfirst(l), conname) == 0)
 			{
 				found = true;
 				break;
 			}
 		}
 
-		systable_endscan(conscan);
-	} while (found);
+		if (!found)
+		{
+			ScanKeyInit(&skey[0],
+						Anum_pg_constraint_conname,
+						BTEqualStrategyNumber, F_NAMEEQ,
+						CStringGetDatum(conname));
 
-	heap_close(conDesc, RowExclusiveLock);
+			ScanKeyInit(&skey[1],
+						Anum_pg_constraint_connamespace,
+						BTEqualStrategyNumber, F_OIDEQ,
+						ObjectIdGetDatum(namespace));
 
-	return cname;
-}
+			conscan = systable_beginscan(conDesc, ConstraintNameNspIndex, true,
+										 SnapshotNow, 2, skey);
 
-/*
- * Does the given name look like a generated constraint name?
- *
- * This is a test on the form of the name, *not* on whether it has
- * actually been assigned.
- */
-bool
-ConstraintNameIsGenerated(const char *cname)
-{
-	if (cname[0] != '$')
-		return false;
-	if (strspn(cname + 1, "0123456789") != strlen(cname + 1))
-		return false;
-	return true;
+			found = (HeapTupleIsValid(systable_getnext(conscan)));
+
+			systable_endscan(conscan);
+		}
+
+		if (!found)
+			break;
+
+		/* found a conflict, so try a new name component */
+		pfree(conname);
+		snprintf(modlabel, sizeof(modlabel), "%s%d", label, ++pass);
+	}
+
+	heap_close(conDesc, AccessShareLock);
+
+	return conname;
 }
 
 /*

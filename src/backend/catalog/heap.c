@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.269 2004/06/06 20:30:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.270 2004/06/10 17:55:53 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1488,7 +1488,7 @@ AddRelationRawConstraints(Relation rel,
 	ParseState *pstate;
 	RangeTblEntry *rte;
 	int			numchecks;
-	int			constr_name_ctr = 0;
+	List	   *checknames;
 	ListCell   *cell;
 	Node	   *expr;
 	CookedConstraint *cooked;
@@ -1547,6 +1547,7 @@ AddRelationRawConstraints(Relation rel,
 	 * Process constraint expressions.
 	 */
 	numchecks = numoldchecks;
+	checknames = NIL;
 	foreach(cell, rawConstraints)
 	{
 		Constraint *cdef = (Constraint *) lfirst(cell);
@@ -1555,81 +1556,6 @@ AddRelationRawConstraints(Relation rel,
 		if (cdef->contype != CONSTR_CHECK || cdef->raw_expr == NULL)
 			continue;
 		Assert(cdef->cooked_expr == NULL);
-
-		/* Check name uniqueness, or generate a new name */
-		if (cdef->name != NULL)
-		{
-			ListCell   *cell2;
-
-			ccname = cdef->name;
-			/* Check against pre-existing constraints */
-			if (ConstraintNameIsUsed(CONSTRAINT_RELATION,
-									 RelationGetRelid(rel),
-									 RelationGetNamespace(rel),
-									 ccname))
-				ereport(ERROR,
-						(errcode(ERRCODE_DUPLICATE_OBJECT),
-						 errmsg("constraint \"%s\" for relation \"%s\" already exists",
-								ccname, RelationGetRelationName(rel))));
-			/* Check against other new constraints */
-			/* Needed because we don't do CommandCounterIncrement in loop */
-			foreach(cell2, rawConstraints)
-			{
-				Constraint *cdef2 = (Constraint *) lfirst(cell2);
-
-				if (cdef2 == cdef ||
-					cdef2->contype != CONSTR_CHECK ||
-					cdef2->raw_expr == NULL ||
-					cdef2->name == NULL)
-					continue;
-				if (strcmp(cdef2->name, ccname) == 0)
-					ereport(ERROR,
-							(errcode(ERRCODE_DUPLICATE_OBJECT),
-						 errmsg("check constraint \"%s\" already exists",
-								ccname)));
-			}
-		}
-		else
-		{
-			bool		success;
-
-			do
-			{
-				ListCell   *cell2;
-
-				/*
-				 * Generate a name that does not conflict with
-				 * pre-existing constraints, nor with any auto-generated
-				 * names so far.
-				 */
-				ccname = GenerateConstraintName(CONSTRAINT_RELATION,
-												RelationGetRelid(rel),
-												RelationGetNamespace(rel),
-												&constr_name_ctr);
-
-				/*
-				 * Check against other new constraints, in case the user
-				 * has specified a name that looks like an auto-generated
-				 * name.
-				 */
-				success = true;
-				foreach(cell2, rawConstraints)
-				{
-					Constraint *cdef2 = (Constraint *) lfirst(cell2);
-
-					if (cdef2 == cdef ||
-						cdef2->contype != CONSTR_CHECK ||
-						cdef2->raw_expr == NULL ||
-						cdef2->name == NULL)
-						continue;
-					if (strcmp(cdef2->name, ccname) == 0)
-					{
-						success = false;
-						break;
-					}
-				}
-			} while (!success);
-		}
 
 		/*
 		 * Transform raw parsetree to executable expression.
@@ -1661,6 +1587,73 @@ AddRelationRawConstraints(Relation rel,
 			ereport(ERROR,
 					(errcode(ERRCODE_GROUPING_ERROR),
 					 errmsg("cannot use aggregate function in check constraint")));
+
+		/*
+		 * Check name uniqueness, or generate a name if none was given.
+		 */
+		if (cdef->name != NULL)
+		{
+			ListCell   *cell2;
+
+			ccname = cdef->name;
+			/* Check against pre-existing constraints */
+			if (ConstraintNameIsUsed(CONSTRAINT_RELATION,
+									 RelationGetRelid(rel),
+									 RelationGetNamespace(rel),
+									 ccname))
+				ereport(ERROR,
+						(errcode(ERRCODE_DUPLICATE_OBJECT),
+						 errmsg("constraint \"%s\" for relation \"%s\" already exists",
+								ccname, RelationGetRelationName(rel))));
+			/* Check against other new constraints */
+			/* Needed because we don't do CommandCounterIncrement in loop */
+			foreach(cell2, checknames)
+			{
+				if (strcmp((char *) lfirst(cell2), ccname) == 0)
+					ereport(ERROR,
+							(errcode(ERRCODE_DUPLICATE_OBJECT),
+							 errmsg("check constraint \"%s\" already exists",
+									ccname)));
+			}
+		}
+		else
+		{
+			/*
+			 * When generating a name, we want to create "tab_col_check"
+			 * for a column constraint and "tab_check" for a table
+			 * constraint.  We no longer have any info about the
+			 * syntactic positioning of the constraint phrase, so we
+			 * approximate this by seeing whether the expression references
+			 * more than one column.  (If the user played by the rules,
+			 * the result is the same...)
+			 *
+			 * Note: pull_var_clause() doesn't descend into sublinks,
+			 * but we eliminated those above; and anyway this only needs
+			 * to be an approximate answer.
+			 */
+			List *vars;
+			char *colname;
+
+			vars = pull_var_clause(expr, false);
+
+			/* eliminate duplicates */
+			vars = list_union(NIL, vars);
+
+			if (list_length(vars) == 1)
+				colname = get_attname(RelationGetRelid(rel),
+									  ((Var *) linitial(vars))->varattno);
+			else
+				colname = NULL;
+
+			ccname = ChooseConstraintName(RelationGetRelationName(rel),
+										  colname,
+										  "check",
+										  RelationGetNamespace(rel),
+										  checknames);
+		}
+
+		/* save name for future checks */
+		checknames = lappend(checknames, ccname);
 
 		/*
 		 * OK, store it.

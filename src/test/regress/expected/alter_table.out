@@ -194,27 +194,27 @@ NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" fo
 CREATE TEMP TABLE FKTABLE (ftest1 inet);
 -- This next should fail, because inet=int does not exist
 ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1) references pktable;
-ERROR:  foreign key constraint "$1" cannot be implemented
+ERROR:  foreign key constraint "fktable_ftest1_fkey" cannot be implemented
 DETAIL:  Key columns "ftest1" and "ptest1" are of incompatible types: inet and integer.
 -- This should also fail for the same reason, but here we
 -- give the column name
 ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1) references pktable(ptest1);
-ERROR:  foreign key constraint "$1" cannot be implemented
+ERROR:  foreign key constraint "fktable_ftest1_fkey" cannot be implemented
 DETAIL:  Key columns "ftest1" and "ptest1" are of incompatible types: inet and integer.
 -- This should succeed, even though they are different types
 -- because varchar=int does exist
 DROP TABLE FKTABLE;
 CREATE TEMP TABLE FKTABLE (ftest1 varchar);
 ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1) references pktable;
-WARNING:  foreign key constraint "$1" will require costly sequential scans
+WARNING:  foreign key constraint "fktable_ftest1_fkey" will require costly sequential scans
 DETAIL:  Key columns "ftest1" and "ptest1" are of different types: character varying and integer.
 -- As should this
 ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1) references pktable(ptest1);
-WARNING:  foreign key constraint "$2" will require costly sequential scans
+WARNING:  foreign key constraint "fktable_ftest1_fkey1" will require costly sequential scans
 DETAIL:  Key columns "ftest1" and "ptest1" are of different types: character varying and integer.
 DROP TABLE pktable cascade;
-NOTICE:  drop cascades to constraint $2 on table fktable
-NOTICE:  drop cascades to constraint $1 on table fktable
+NOTICE:  drop cascades to constraint fktable_ftest1_fkey1 on table fktable
+NOTICE:  drop cascades to constraint fktable_ftest1_fkey on table fktable
 DROP TABLE fktable;
 CREATE TEMP TABLE PKTABLE (ptest1 int, ptest2 inet,
                            PRIMARY KEY(ptest1, ptest2));
@@ -222,26 +222,26 @@ NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" fo
 -- This should fail, because we just chose really odd types
 CREATE TEMP TABLE FKTABLE (ftest1 cidr, ftest2 timestamp);
 ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1, ftest2) references pktable;
-ERROR:  foreign key constraint "$1" cannot be implemented
+ERROR:  foreign key constraint "fktable_ftest1_fkey" cannot be implemented
 DETAIL:  Key columns "ftest1" and "ptest1" are of incompatible types: cidr and integer.
 DROP TABLE FKTABLE;
 -- Again, so should this...
 CREATE TEMP TABLE FKTABLE (ftest1 cidr, ftest2 timestamp);
 ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1, ftest2)
      references pktable(ptest1, ptest2);
-ERROR:  foreign key constraint "$1" cannot be implemented
+ERROR:  foreign key constraint "fktable_ftest1_fkey" cannot be implemented
 DETAIL:  Key columns "ftest1" and "ptest1" are of incompatible types: cidr and integer.
 DROP TABLE FKTABLE;
 -- This fails because we mixed up the column ordering
 CREATE TEMP TABLE FKTABLE (ftest1 int, ftest2 inet);
 ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1, ftest2)
      references pktable(ptest2, ptest1);
-ERROR:  foreign key constraint "$1" cannot be implemented
+ERROR:  foreign key constraint "fktable_ftest1_fkey" cannot be implemented
 DETAIL:  Key columns "ftest1" and "ptest2" are of incompatible types: integer and inet.
 -- As does this...
 ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest2, ftest1)
      references pktable(ptest1, ptest2);
-ERROR:  foreign key constraint "$1" cannot be implemented
+ERROR:  foreign key constraint "fktable_ftest2_fkey" cannot be implemented
 DETAIL:  Key columns "ftest2" and "ptest1" are of incompatible types: inet and integer.
 -- temp tables should go away by themselves, need not drop them.
 -- test check constraint adding
@@ -284,7 +284,7 @@ create table atacc1 (test int check (test>3), test2 int);
 alter table atacc1 add check (test2>test);
 -- should fail for $2
 insert into atacc1 (test2, test) values (3, 4);
-ERROR:  new row for relation "atacc1" violates check constraint "$1"
+ERROR:  new row for relation "atacc1" violates check constraint "atacc1_check"
 drop table atacc1;
 -- inheritance related tests
 create table atacc1 (test int);
@@ -1081,7 +1081,7 @@ alter table p1 add column f2 text;
 NOTICE:  merging definition of column "f2" for child "c1"
 insert into p1 values (1,2,'abc');
 insert into c1 values(11,'xyz',33,0); -- should fail
-ERROR:  new row for relation "c1" violates check constraint "p1_a1"
+ERROR:  new row for relation "c1" violates check constraint "c1_a1_check"
 insert into c1 values(11,'xyz',33,22);
 select * from p1;
  f1 | a1 | f2  
@@ -1100,7 +1100,7 @@ select * from p1;
 
 drop table p1 cascade;
 NOTICE:  drop cascades to table c1
-NOTICE:  drop cascades to constraint p1_a1 on table c1
+NOTICE:  drop cascades to constraint c1_a1_check on table c1
 -- test that operations with a dropped column do not try to reference
 -- its datatype
 create domain mytype as text;
@@ -1148,7 +1148,7 @@ ERROR:  column "f1" cannot be cast to type "pg_catalog.int4"
 alter table foo alter f1 TYPE varchar(10);
 create table anothertab (atcol1 serial8, atcol2 boolean,
 	constraint anothertab_chk check (atcol1 <= 3));
-NOTICE:  CREATE TABLE will create implicit sequence "anothertab_atcol1_seq" for "serial" column "anothertab.atcol1"
+NOTICE:  CREATE TABLE will create implicit sequence "anothertab_atcol1_seq" for serial column "anothertab.atcol1"
 insert into anothertab (atcol1, atcol2) values (default, true);
 insert into anothertab (atcol1, atcol2) values (default, false);
 select * from anothertab;

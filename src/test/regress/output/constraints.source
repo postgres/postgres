@@ -127,7 +127,7 @@ INSERT INTO INSERT_TBL(y) VALUES ('Y');
 ERROR:  new row for relation "insert_tbl" violates check constraint "insert_con"
 INSERT INTO INSERT_TBL(y) VALUES ('Y');
 INSERT INTO INSERT_TBL(x,z) VALUES (1, -2);
-ERROR:  new row for relation "insert_tbl" violates check constraint "$1"
+ERROR:  new row for relation "insert_tbl" violates check constraint "insert_tbl_check"
 INSERT INTO INSERT_TBL(z,x) VALUES (-7,  7);
 INSERT INTO INSERT_TBL VALUES (5, 'check failed', -5);
 ERROR:  new row for relation "insert_tbl" violates check constraint "insert_con"
@@ -143,7 +143,7 @@ SELECT '' AS four, * FROM INSERT_TBL;
 (4 rows)
 
 INSERT INTO INSERT_TBL(y,z) VALUES ('check failed', 4);
-ERROR:  new row for relation "insert_tbl" violates check constraint "$1"
+ERROR:  new row for relation "insert_tbl" violates check constraint "insert_tbl_check"
 INSERT INTO INSERT_TBL(x,y) VALUES (5, 'check failed');
 ERROR:  new row for relation "insert_tbl" violates check constraint "insert_con"
 INSERT INTO INSERT_TBL(x,y) VALUES (5, '!check failed');
@@ -197,9 +197,9 @@ CREATE TABLE INSERT_CHILD (cx INT default 42,
 	INHERITS (INSERT_TBL);
 INSERT INTO INSERT_CHILD(x,z,cy) VALUES (7,-7,11);
 INSERT INTO INSERT_CHILD(x,z,cy) VALUES (7,-7,6);
-ERROR:  new row for relation "insert_child" violates check constraint "insert_child_cy"
+ERROR:  new row for relation "insert_child" violates check constraint "insert_child_check"
 INSERT INTO INSERT_CHILD(x,z,cy) VALUES (6,-7,7);
-ERROR:  new row for relation "insert_child" violates check constraint "$1"
+ERROR:  new row for relation "insert_child" violates check constraint "insert_tbl_check"
 INSERT INTO INSERT_CHILD(x,y,z,cy) VALUES (6,'check failed',-6,7);
 ERROR:  new row for relation "insert_child" violates check constraint "insert_con"
 SELECT * FROM INSERT_CHILD;

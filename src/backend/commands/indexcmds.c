@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.120 2004/05/26 04:41:11 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.121 2004/06/10 17:55:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,10 +28,10 @@
 #include "commands/defrem.h"
 #include "commands/tablecmds.h"
 #include "executor/executor.h"
+#include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "optimizer/clauses.h"
 #include "optimizer/prep.h"
-#include "parser/analyze.h"
 #include "parser/parsetree.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
@@ -53,8 +53,6 @@ static void ComputeIndexAttrs(IndexInfo *indexInfo, Oid *classOidP,
 static Oid GetIndexOpClass(List *opclass, Oid attrType,
 				char *accessMethodName, Oid accessMethodId);
 static Oid	GetDefaultOpClass(Oid attrType, Oid accessMethodId);
-static char *CreateIndexName(const char *table_name, const char *column_name,
-							 const char *label, Oid inamespace);
 static bool relationHasPrimaryKey(Relation rel);
 
 
@@ -159,18 +157,18 @@ DefineIndex(RangeVar *heapRelation,
 	if (indexRelationName == NULL)
 	{
 		if (primary)
-			indexRelationName = CreateIndexName(RelationGetRelationName(rel),
-												NULL,
-												"pkey",
-												namespaceId);
+			indexRelationName = ChooseRelationName(RelationGetRelationName(rel),
+												   NULL,
+												   "pkey",
+												   namespaceId);
 		else
 		{
 			IndexElem  *iparam = (IndexElem *) linitial(attributeList);
 
-			indexRelationName = CreateIndexName(RelationGetRelationName(rel),
-												iparam->name,
-												"key",
-												namespaceId);
+			indexRelationName = ChooseRelationName(RelationGetRelationName(rel),
+												   iparam->name,
+												   "key",
+												   namespaceId);
 		}
 	}
 
@@ -657,35 +655,131 @@ GetDefaultOpClass(Oid attrType, Oid accessMethodId)
 }
 
 /*
- * Select a nonconflicting name for an index.
+ *	makeObjectName()
+ *
+ *	Create a name for an implicitly created index, sequence, constraint, etc.
+ *
+ *	The parameters are typically: the original table name, the original field
+ *	name, and a "type" string (such as "seq" or "pkey").	The field name
+ *	and/or type can be NULL if not relevant.
+ *
+ *	The result is a palloc'd string.
+ *
+ *	The basic result we want is "name1_name2_label", omitting "_name2" or
+ *	"_label" when those parameters are NULL.  However, we must generate
+ *	a name with less than NAMEDATALEN characters!  So, we truncate one or
+ *	both names if necessary to make a short-enough string.	The label part
+ *	is never truncated (so it had better be reasonably short).
+ *
+ *	The caller is responsible for checking uniqueness of the generated
+ *	name and retrying as needed; retrying will be done by altering the
+ *	"label" string (which is why we never truncate that part).
  */
-static char *
-CreateIndexName(const char *table_name, const char *column_name,
-				const char *label, Oid inamespace)
+char *
+makeObjectName(const char *name1, const char *name2, const char *label)
 {
-	int			pass = 0;
-	char	   *iname = NULL;
-	char		typename[NAMEDATALEN];
+	char	   *name;
+	int			overhead = 0;	/* chars needed for label and underscores */
+	int			availchars;		/* chars available for name(s) */
+	int			name1chars;		/* chars allocated to name1 */
+	int			name2chars;		/* chars allocated to name2 */
+	int			ndx;
+
+	name1chars = strlen(name1);
+	if (name2)
+	{
+		name2chars = strlen(name2);
+		overhead++;				/* allow for separating underscore */
+	}
+	else
+		name2chars = 0;
+	if (label)
+		overhead += strlen(label) + 1;
+
+	availchars = NAMEDATALEN - 1 - overhead;
+	Assert(availchars > 0);		/* else caller chose a bad label */
 
 	/*
-	 * The type name for makeObjectName is label, or labelN if that's
-	 * necessary to prevent collision with existing indexes.
+	 * If we must truncate,  preferentially truncate the longer name. This
+	 * logic could be expressed without a loop, but it's simple and
+	 * obvious as a loop.
 	 */
-	strncpy(typename, label, sizeof(typename));
+	while (name1chars + name2chars > availchars)
+	{
+		if (name1chars > name2chars)
+			name1chars--;
+		else
+			name2chars--;
+	}
+
+	if (name1)
+		name1chars = pg_mbcliplen(name1, name1chars, name1chars);
+	if (name2)
+		name2chars = pg_mbcliplen(name2, name2chars, name2chars);
+
+	/* Now construct the string using the chosen lengths */
+	name = palloc(name1chars + name2chars + overhead + 1);
+	memcpy(name, name1, name1chars);
+	ndx = name1chars;
+	if (name2)
+	{
+		name[ndx++] = '_';
+		memcpy(name + ndx, name2, name2chars);
+		ndx += name2chars;
+	}
+	if (label)
+	{
+		name[ndx++] = '_';
+		strcpy(name + ndx, label);
+	}
+	else
+		name[ndx] = '\0';
+
+	return name;
+}
+
+/*
+ * Select a nonconflicting name for a new relation.  This is ordinarily
+ * used to choose index names (which is why it's here) but it can also
+ * be used for sequences, or any autogenerated relation kind.
+ *
+ * name1, name2, and label are used the same way as for makeObjectName(),
+ * except that the label can't be NULL; digits will be appended to the label
+ * if needed to create a name that is unique within the specified namespace.
+ *
+ * Note: it is theoretically possible to get a collision anyway, if someone
+ * else chooses the same name concurrently.  This is fairly unlikely to be
+ * a problem in practice, especially if one is holding an exclusive lock on
+ * the relation identified by name1.  However, if choosing multiple names
+ * within a single command, you'd better create the new object and do
+ * CommandCounterIncrement before choosing the next one!
+ *
+ * Returns a palloc'd string.
+ */
+char *
+ChooseRelationName(const char *name1, const char *name2,
+				   const char *label, Oid namespace)
+{
+	int			pass = 0;
+	char	   *relname = NULL;
+	char		modlabel[NAMEDATALEN];
+
+	/* try the unmodified label first */
+	StrNCpy(modlabel, label, sizeof(modlabel));
 
 	for (;;)
 	{
-		iname = makeObjectName(table_name, column_name, typename);
+		relname = makeObjectName(name1, name2, modlabel);
 
-		if (!OidIsValid(get_relname_relid(iname, inamespace)))
+		if (!OidIsValid(get_relname_relid(relname, namespace)))
 			break;
 
 		/* found a conflict, so try a new name component */
-		pfree(iname);
-		snprintf(typename, sizeof(typename), "%s%d", label, ++pass);
+		pfree(relname);
+		snprintf(modlabel, sizeof(modlabel), "%s%d", label, ++pass);
 	}
 
-	return iname;
+	return relname;
 }
 
 /*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.58 2004/06/04 20:35:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.59 2004/06/10 17:55:56 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -83,7 +83,7 @@ static void domainOwnerCheck(HeapTuple tup, TypeName *typename);
 static char *domainAddConstraint(Oid domainOid, Oid domainNamespace,
 					Oid baseTypeOid,
 					int typMod, Constraint *constr,
-					int *counter, char *domainName);
+					char *domainName);
 
 
 /*
@@ -509,7 +509,6 @@ DefineDomain(CreateDomainStmt *stmt)
 	Oid			basetypeoid;
 	Oid			domainoid;
 	Form_pg_type baseType;
-	int			counter = 0;
 
 	/* Convert list of names to a name and namespace */
 	domainNamespace = QualifiedNameGetCreationNamespace(stmt->domainname,
@@ -760,7 +759,7 @@ DefineDomain(CreateDomainStmt *stmt)
 			case CONSTR_CHECK:
 				domainAddConstraint(domainoid, domainNamespace,
 									basetypeoid, stmt->typename->typmod,
-									constr, &counter, domainName);
+									constr, domainName);
 				break;
 
 				/* Other constraint types were fully processed above */
@@ -768,6 +767,9 @@ DefineDomain(CreateDomainStmt *stmt)
 			default:
 				break;
 		}
+
+		/* CCI so we can detect duplicate constraint names */
+		CommandCounterIncrement();
 	}
 
 	/*
@@ -1463,7 +1465,6 @@ AlterDomainAddConstraint(List *names, Node *newConstraint)
 	char	   *ccbin;
 	Expr	   *expr;
 	ExprState  *exprstate;
-	int			counter = 0;
 	Constraint *constr;
 
 	/* Make a TypeName so we can use standard type lookup machinery */
@@ -1547,7 +1548,7 @@ AlterDomainAddConstraint(List *names, Node *newConstraint)
 
 	ccbin = domainAddConstraint(HeapTupleGetOid(tup), typTup->typnamespace,
 								typTup->typbasetype, typTup->typtypmod,
-							 constr, &counter, NameStr(typTup->typname));
+								constr, NameStr(typTup->typname));
 
 	/*
 	 * Test all values stored in the attributes based on the domain the
@@ -1788,7 +1789,7 @@ domainOwnerCheck(HeapTuple tup, TypeName *typename)
 static char *
 domainAddConstraint(Oid domainOid, Oid domainNamespace, Oid baseTypeOid,
 					int typMod, Constraint *constr,
-					int *counter, char *domainName)
+					char *domainName)
 {
 	Node	   *expr;
 	char	   *ccsrc;
@@ -1811,10 +1812,11 @@ domainAddConstraint(Oid domainOid, Oid domainNamespace, Oid baseTypeOid,
 					constr->name, domainName)));
 	}
 	else
-		constr->name = GenerateConstraintName(CONSTRAINT_DOMAIN,
-											  domainOid,
-											  domainNamespace,
-											  counter);
+		constr->name = ChooseConstraintName(domainName,
+											NULL,
+											"check",
+											domainNamespace,
+											NIL);
 
 	/*
 	 * Convert the A_EXPR in raw_expr into an EXPR

@@ -116,7 +116,7 @@ INSERT INTO nulltest values ('a', 'b', 'c', 'd', 'c');  -- Good
 insert into nulltest values ('a', 'b', 'c', 'd', NULL);
 ERROR:  domain dcheck does not allow null values
 insert into nulltest values ('a', 'b', 'c', 'd', 'a');
-ERROR:  new row for relation "nulltest" violates check constraint "nulltest_col5"
+ERROR:  new row for relation "nulltest" violates check constraint "nulltest_col5_check"
 INSERT INTO nulltest values (NULL, 'b', 'c', 'd', 'd');
 ERROR:  domain dnotnull does not allow null values
 INSERT INTO nulltest values ('a', NULL, 'c', 'd', 'c');
@@ -130,7 +130,7 @@ ERROR:  domain dcheck does not allow null values
 CONTEXT:  COPY nulltest, line 1: "a	b	\N	d	\N"
 -- Last row is bad
 COPY nulltest FROM stdin;
-ERROR:  new row for relation "nulltest" violates check constraint "nulltest_col5"
+ERROR:  new row for relation "nulltest" violates check constraint "nulltest_col5_check"
 CONTEXT:  COPY nulltest, line 3: "a	b	c	\N	a"
 select * from nulltest;
  col1 | col2 | col3 | col4 | col5 
@@ -251,13 +251,13 @@ ERROR:  column "col1" of table "domcontest" contains values that violate the new
 alter domain con add constraint t check (VALUE < 34);
 alter domain con add check (VALUE > 0);
 insert into domcontest values (-5); -- fails
-ERROR:  value for domain con violates check constraint "$1"
+ERROR:  value for domain con violates check constraint "con_check"
 insert into domcontest values (42); -- fails
 ERROR:  value for domain con violates check constraint "t"
 insert into domcontest values (5);
 alter domain con drop constraint t;
 insert into domcontest values (-5); --fails
-ERROR:  value for domain con violates check constraint "$1"
+ERROR:  value for domain con violates check constraint "con_check"
 insert into domcontest values (42);
 -- Confirm ALTER DOMAIN with RULES.
 create table domtab (col1 integer);

@@ -129,6 +129,6 @@ COPY y TO stdout WITH CSV;
 COPY y TO stdout WITH CSV QUOTE '''' DELIMITER '|';
 COPY y TO stdout WITH CSV FORCE QUOTE col2 ESCAPE '\\';
 
-DROP TABLE x;
+DROP TABLE x, y;
 DROP FUNCTION fn_x_before();
 DROP FUNCTION fn_x_after();

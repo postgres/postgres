@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.112 2004/06/06 20:30:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.113 2004/06/10 17:55:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -124,8 +124,6 @@ typedef struct AlteredTableInfo
 	List	   *changedConstraintDefs;	/* string definitions of same */
 	List	   *changedIndexOids;	/* OIDs of indexes to rebuild */
 	List	   *changedIndexDefs;	/* string definitions of same */
-	/* Workspace for ATExecAddConstraint */
-	int			constr_name_ctr;
 } AlteredTableInfo;
 
 /* Struct describing one new constraint to check in Phase 3 scan */
@@ -323,46 +321,45 @@ DefineRelation(CreateStmt *stmt, char relkind)
 
 	if (old_constraints != NIL)
 	{
-		ConstrCheck *check = (ConstrCheck *) palloc(list_length(old_constraints) *
-													sizeof(ConstrCheck));
+		ConstrCheck *check = (ConstrCheck *)
+			palloc0(list_length(old_constraints) * sizeof(ConstrCheck));
 		int			ncheck = 0;
-		int			constr_name_ctr = 0;
 
 		foreach(listptr, old_constraints)
 		{
 			Constraint *cdef = (Constraint *) lfirst(listptr);
+			bool dup = false;
 
 			if (cdef->contype != CONSTR_CHECK)
 				continue;
-
-			if (cdef->name != NULL)
+			Assert(cdef->name != NULL);
+			Assert(cdef->raw_expr == NULL && cdef->cooked_expr != NULL);
+			/*
+			 * In multiple-inheritance situations, it's possible to inherit
+			 * the same grandparent constraint through multiple parents.
+			 * Hence, discard inherited constraints that match as to both
+			 * name and expression.  Otherwise, gripe if the names conflict.
+			 */
+			for (i = 0; i < ncheck; i++)
 			{
-				for (i = 0; i < ncheck; i++)
+				if (strcmp(check[i].ccname, cdef->name) != 0)
+					continue;
+				if (strcmp(check[i].ccbin, cdef->cooked_expr) == 0)
 				{
-					if (strcmp(check[i].ccname, cdef->name) == 0)
-						ereport(ERROR,
-								(errcode(ERRCODE_DUPLICATE_OBJECT),
+					dup = true;
+					break;
+				}
+				ereport(ERROR,
+						(errcode(ERRCODE_DUPLICATE_OBJECT),
 						 errmsg("duplicate check constraint name \"%s\"",
 								cdef->name)));
-				}
-				check[ncheck].ccname = cdef->name;
 			}
-			else
+			if (!dup)
 			{
-				/*
-				 * Generate a constraint name.	NB: this should match the
-				 * form of names that GenerateConstraintName() may produce
-				 * for names added later.  We are assured that there is no
-				 * name conflict, because MergeAttributes() did not pass
-				 * back any names of this form.
-				 */
-				check[ncheck].ccname = (char *) palloc(NAMEDATALEN);
-				snprintf(check[ncheck].ccname, NAMEDATALEN, "$%d",
-						 ++constr_name_ctr);
+				check[ncheck].ccname = cdef->name;
+				check[ncheck].ccbin = pstrdup(cdef->cooked_expr);
+				ncheck++;
 			}
-			Assert(cdef->raw_expr == NULL && cdef->cooked_expr != NULL);
-			check[ncheck].ccbin = pstrdup(cdef->cooked_expr);
-			ncheck++;
 		}
 		if (ncheck > 0)
 		{
@@ -867,17 +864,7 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 				Node	   *expr;
 
 				cdef->contype = CONSTR_CHECK;
-
-				/*
-				 * Do not inherit generated constraint names, since they
-				 * might conflict across multiple inheritance parents.
-				 * (But conflicts between user-assigned names will cause
-				 * an error.)
-				 */
-				if (ConstraintNameIsGenerated(check[i].ccname))
-					cdef->name = NULL;
-				else
-					cdef->name = pstrdup(check[i].ccname);
+				cdef->name = pstrdup(check[i].ccname);
 				cdef->raw_expr = NULL;
 				/* adjust varattnos of ccbin here */
 				expr = stringToNode(check[i].ccbin);
@@ -3610,10 +3597,11 @@ ATExecAddConstraint(AlteredTableInfo *tab, Relation rel, Node *newConstraint)
 			}
 			else
 				fkconstraint->constr_name =
-					GenerateConstraintName(CONSTRAINT_RELATION,
-										   RelationGetRelid(rel),
-										   RelationGetNamespace(rel),
-										   &tab->constr_name_ctr);
+					ChooseConstraintName(RelationGetRelationName(rel),
+										 strVal(linitial(fkconstraint->fk_attrs)),
+										 "fkey",
+										 RelationGetNamespace(rel),
+										 NIL);
 
 			ATAddForeignKeyConstraint(tab, rel, fkconstraint);
 

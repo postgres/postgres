@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.304 2004/06/09 19:08:16 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.305 2004/06/10 17:55:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,7 @@
 #include "catalog/namespace.h"
 #include "catalog/pg_index.h"
 #include "catalog/pg_type.h"
+#include "commands/defrem.h"
 #include "commands/prepare.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
@@ -45,7 +46,6 @@
 #include "utils/lsyscache.h"
 #include "utils/relcache.h"
 #include "utils/syscache.h"
-#include "mb/pg_wchar.h"
 
 
 /* State shared by transformCreateSchemaStmt and its subroutines */
@@ -704,90 +704,6 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt,
 }
 
 /*
- *	makeObjectName()
- *
- *	Create a name for an implicitly created index, sequence, constraint, etc.
- *
- *	The parameters are: the original table name, the original field name, and
- *	a "type" string (such as "seq" or "pkey").	The field name and/or type
- *	can be NULL if not relevant.
- *
- *	The result is a palloc'd string.
- *
- *	The basic result we want is "name1_name2_type", omitting "_name2" or
- *	"_type" when those parameters are NULL.  However, we must generate
- *	a name with less than NAMEDATALEN characters!  So, we truncate one or
- *	both names if necessary to make a short-enough string.	The type part
- *	is never truncated (so it had better be reasonably short).
- *
- *	To reduce the probability of collisions, we might someday add more
- *	smarts to this routine, like including some "hash" characters computed
- *	from the truncated characters.	Currently it seems best to keep it simple,
- *	so that the generated names are easily predictable by a person.
- */
-char *
-makeObjectName(const char *name1, const char *name2, const char *typename)
-{
-	char	   *name;
-	int			overhead = 0;	/* chars needed for type and underscores */
-	int			availchars;		/* chars available for name(s) */
-	int			name1chars;		/* chars allocated to name1 */
-	int			name2chars;		/* chars allocated to name2 */
-	int			ndx;
-
-	name1chars = strlen(name1);
-	if (name2)
-	{
-		name2chars = strlen(name2);
-		overhead++;				/* allow for separating underscore */
-	}
-	else
-		name2chars = 0;
-	if (typename)
-		overhead += strlen(typename) + 1;
-
-	availchars = NAMEDATALEN - 1 - overhead;
-
-	/*
-	 * If we must truncate,  preferentially truncate the longer name. This
-	 * logic could be expressed without a loop, but it's simple and
-	 * obvious as a loop.
-	 */
-	while (name1chars + name2chars > availchars)
-	{
-		if (name1chars > name2chars)
-			name1chars--;
-		else
-			name2chars--;
-	}
-
-	if (name1)
-		name1chars = pg_mbcliplen(name1, name1chars, name1chars);
-	if (name2)
-		name2chars = pg_mbcliplen(name2, name2chars, name2chars);
-
-	/* Now construct the string using the chosen lengths */
-	name = palloc(name1chars + name2chars + overhead + 1);
-	strncpy(name, name1, name1chars);
-	ndx = name1chars;
-	if (name2)
-	{
-		name[ndx++] = '_';
-		strncpy(name + ndx, name2, name2chars);
-		ndx += name2chars;
-	}
-	if (typename)
-	{
-		name[ndx++] = '_';
-		strcpy(name + ndx, typename);
-	}
-	else
-		name[ndx] = '\0';
-
-	return name;
-}
-
-/*
  * transformCreateStmt -
  *	  transforms the "create table" statement
  *	  SQL92 allows constraints to be scattered all over, so thumb through
@@ -919,21 +835,34 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 	/* Special actions for SERIAL pseudo-types */
 	if (is_serial)
 	{
-		char	   *sname;
+		Oid			snamespaceid;
 		char	   *snamespace;
+		char	   *sname;
 		char	   *qstring;
 		A_Const    *snamenode;
 		FuncCall   *funccallnode;
 		CreateSeqStmt *seqstmt;
 
 		/*
-		 * Determine name and namespace to use for the sequence.
+		 * Determine namespace and name to use for the sequence.
+		 *
+		 * Although we use ChooseRelationName, it's not guaranteed that
+		 * the selected sequence name won't conflict; given sufficiently
+		 * long field names, two different serial columns in the same table
+		 * could be assigned the same sequence name, and we'd not notice
+		 * since we aren't creating the sequence quite yet.  In practice
+		 * this seems quite unlikely to be a problem, especially since
+		 * few people would need two serial columns in one table.
 		 */
-		sname = makeObjectName(cxt->relation->relname, column->colname, "seq");
-		snamespace = get_namespace_name(RangeVarGetCreationNamespace(cxt->relation));
+		snamespaceid = RangeVarGetCreationNamespace(cxt->relation);
+		snamespace = get_namespace_name(snamespaceid);
+		sname = ChooseRelationName(cxt->relation->relname,
+								   column->colname,
+								   "seq",
+								   snamespaceid);
 
 		ereport(NOTICE,
-				(errmsg("%s will create implicit sequence \"%s\" for \"serial\" column \"%s.%s\"",
+				(errmsg("%s will create implicit sequence \"%s\" for serial column \"%s.%s\"",
 						cxt->stmtType, sname,
 						cxt->relation->relname, column->colname)));
 
@@ -975,7 +904,6 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 
 		constraint = makeNode(Constraint);
 		constraint->contype = CONSTR_DEFAULT;
-		constraint->name = sname;
 		constraint->raw_expr = (Node *) funccallnode;
 		constraint->cooked_expr = NULL;
 		constraint->keys = NIL;
@@ -1044,30 +972,13 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 				break;
 
 			case CONSTR_PRIMARY:
-				if (constraint->name == NULL)
-					constraint->name = makeObjectName(cxt->relation->relname,
-													  NULL,
-													  "pkey");
-				if (constraint->keys == NIL)
-					constraint->keys = list_make1(makeString(column->colname));
-				cxt->ixconstraints = lappend(cxt->ixconstraints, constraint);
-				break;
-
 			case CONSTR_UNIQUE:
-				if (constraint->name == NULL)
-					constraint->name = makeObjectName(cxt->relation->relname,
-													  column->colname,
-													  "key");
 				if (constraint->keys == NIL)
 					constraint->keys = list_make1(makeString(column->colname));
 				cxt->ixconstraints = lappend(cxt->ixconstraints, constraint);
 				break;
 
 			case CONSTR_CHECK:
-				if (constraint->name == NULL)
-					constraint->name = makeObjectName(cxt->relation->relname,
-													  column->colname,
-													  NULL);
 				cxt->ckconstraints = lappend(cxt->ckconstraints, constraint);
 				break;
 
@@ -1093,13 +1004,6 @@ transformTableConstraint(ParseState *pstate, CreateStmtContext *cxt,
 	switch (constraint->contype)
 	{
 		case CONSTR_PRIMARY:
-			if (constraint->name == NULL)
-				constraint->name = makeObjectName(cxt->relation->relname,
-												  NULL,
-												  "pkey");
-			cxt->ixconstraints = lappend(cxt->ixconstraints, constraint);
-			break;
-
 		case CONSTR_UNIQUE:
 			cxt->ixconstraints = lappend(cxt->ixconstraints, constraint);
 			break;
