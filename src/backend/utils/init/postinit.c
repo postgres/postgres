@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.143 2005/03/18 16:16:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.144 2005/03/19 23:27:06 tgl Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -257,7 +257,6 @@ BaseInit(void)
 	/* Do local initialization of storage and buffer managers */
 	smgrinit();
 	InitBufferPoolAccess();
-	InitLocalBuffer();
 }
 
 

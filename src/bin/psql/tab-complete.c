@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.121 2005/01/23 15:58:50 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.122 2005/03/19 23:27:08 tgl Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -594,6 +594,7 @@ psql_completion(char *text, int start, int end)
 		"superuser_reserved_connections",
 		"syslog_facility",
 		"syslog_ident",
+		"temp_buffers",
 		"TimeZone",
 		"trace_notify",
 		"transform_null_equals",

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.309 2005/03/14 06:49:48 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.310 2005/03/19 23:27:04 tgl Exp $
 -->
 
 <chapter Id="runtime">
@@ -1034,6 +1034,33 @@ SET ENABLE_SEQSCAN TO OFF;
         memory than your operating system's default configuration
         allows. See <xref linkend="sysvipc"> for information on how to
         adjust those parameters, if necessary.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-temp-buffers" xreflabel="temp_buffers">
+      <term><varname>temp_buffers</varname> (<type>integer</type>)</term>
+      <indexterm>
+       <primary><varname>temp_buffers</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Sets the maximum number of temporary buffers used by each database
+        session.  These are session-local buffers used only for access
+        to temporary tables.  The default is 1000.  The setting can
+        be changed within individual sessions, but only up until the
+        first use of temporary tables within a session; subsequent
+        attempts to change the value will have no effect on that session.
+       </para>
+
+       <para>
+        A session will allocate temporary buffers as needed up to the limit
+        given by <varname>temp_buffers</>.  The cost of setting a large
+        value in sessions that do not actually need a lot of temporary
+        buffers is only a buffer descriptor, or about 64 bytes, per
+        increment in <varname>temp_buffers</>.  However if a buffer is
+        actually used an additional 8192 bytes will be consumed for it
+        (or in general <symbol>BLCKSZ</symbol> bytes).
        </para>
       </listitem>
      </varlistentry>

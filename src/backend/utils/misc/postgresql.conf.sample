@@ -74,6 +74,7 @@
 # - Memory -
 
 #shared_buffers = 1000		# min 16, at least max_connections*2, 8KB each
+#temp_buffers = 1000		# min 100, 8KB each
 #work_mem = 1024		# min 64, size in KB
 #maintenance_work_mem = 16384	# min 1024, size in KB
 #max_stack_depth = 2048		# min 100, size in KB

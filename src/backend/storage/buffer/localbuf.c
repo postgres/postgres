@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/localbuf.c,v 1.65 2005/03/19 17:39:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/localbuf.c,v 1.66 2005/03/19 23:27:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 #include "storage/buf_internals.h"
 #include "storage/bufmgr.h"
 #include "storage/smgr.h"
+#include "utils/guc.h"
 #include "utils/memutils.h"
 #include "utils/resowner.h"
 
@@ -46,6 +47,9 @@ static int	nextFreeLocalBuf = 0;
 static HTAB *LocalBufHash = NULL;
 
 
+static void InitLocalBuffers(void);
+
+
 /*
  * LocalBufferAlloc -
  *	  Find or create a local buffer for the given page of the given relation.
@@ -65,6 +69,10 @@ LocalBufferAlloc(Relation reln, BlockNumber blockNum, bool *foundPtr)
 	bool		found;
 
 	INIT_BUFFERTAG(newTag, reln, blockNum);
+
+	/* Initialize local buffers if first request in this session */
+	if (LocalBufHash == NULL)
+		InitLocalBuffers();
 
 	/* See if the desired buffer already exists */
 	hresult = (LocalBufferLookupEnt *)
@@ -238,31 +246,17 @@ WriteLocalBuffer(Buffer buffer, bool release)
 }
 
 /*
- * InitLocalBuffer -
+ * InitLocalBuffers -
  *	  init the local buffer cache. Since most queries (esp. multi-user ones)
  *	  don't involve local buffers, we delay allocating actual memory for the
  *	  buffers until we need them; just make the buffer headers here.
  */
-void
-InitLocalBuffer(void)
+static void
+InitLocalBuffers(void)
 {
-	int			nbufs = 64;		/* should be from a GUC var */
+	int			nbufs = num_temp_buffers;
 	HASHCTL		info;
 	int			i;
-
-	/* Create the lookup hash table */
-	MemSet(&info, 0, sizeof(info));
-	info.keysize = sizeof(BufferTag);
-	info.entrysize = sizeof(LocalBufferLookupEnt);
-	info.hash = tag_hash;
-
-	LocalBufHash = hash_create("Local Buffer Lookup Table",
-							   nbufs,
-							   &info,
-							   HASH_ELEM | HASH_FUNCTION);
-
-	if (!LocalBufHash)
-		elog(ERROR, "could not initialize local buffer hash table");
 
 	/* Allocate and zero buffer headers and auxiliary arrays */
 	LocalBufferDescriptors = (BufferDesc *)
@@ -290,6 +284,20 @@ InitLocalBuffer(void)
 		 */
 		buf->buf_id = -i - 2;
 	}
+
+	/* Create the lookup hash table */
+	MemSet(&info, 0, sizeof(info));
+	info.keysize = sizeof(BufferTag);
+	info.entrysize = sizeof(LocalBufferLookupEnt);
+	info.hash = tag_hash;
+
+	LocalBufHash = hash_create("Local Buffer Lookup Table",
+							   nbufs,
+							   &info,
+							   HASH_ELEM | HASH_FUNCTION);
+
+	if (!LocalBufHash)
+		elog(ERROR, "could not initialize local buffer hash table");
 
 	/* Initialization done, mark buffers allocated */
 	NLocBuffer = nbufs;

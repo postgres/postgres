@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.255 2005/03/13 09:36:31 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.256 2005/03/19 23:27:07 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -104,6 +104,7 @@ static const char *assign_log_error_verbosity(const char *newval, bool doit,
 						   GucSource source);
 static const char *assign_log_statement(const char *newval, bool doit,
 					 GucSource source);
+static const char *show_num_temp_buffers(void);
 static bool assign_phony_autocommit(bool newval, bool doit, GucSource source);
 static const char *assign_custom_variable_classes(const char *newval, bool doit,
 							   GucSource source);
@@ -144,8 +145,9 @@ bool		default_with_oids = false;
 int			log_min_error_statement = PANIC;
 int			log_min_messages = NOTICE;
 int			client_min_messages = NOTICE;
-
 int			log_min_duration_statement = -1;
+
+int			num_temp_buffers = 1000;
 
 char	   *ConfigFileName;
 char	   *HbaFileName;
@@ -964,6 +966,15 @@ static struct config_int ConfigureNamesInt[] =
 		},
 		&NBuffers,
 		1000, 16, INT_MAX / BLCKSZ, NULL, NULL
+	},
+
+	{
+		{"temp_buffers", PGC_USERSET, RESOURCES_MEM,
+			gettext_noop("Sets the maximum number of temporary buffers used by each session."),
+			NULL
+		},
+		&num_temp_buffers,
+		1000, 100, INT_MAX / BLCKSZ, NULL, show_num_temp_buffers
 	},
 
 	{
@@ -5494,6 +5505,19 @@ assign_log_statement(const char *newval, bool doit, GucSource source)
 	else
 		return NULL;			/* fail */
 	return newval;				/* OK */
+}
+
+static const char *
+show_num_temp_buffers(void)
+{
+	/*
+	 * We show the GUC var until local buffers have been initialized,
+	 * and NLocBuffer afterwards.
+	 */
+	static char nbuf[32];
+
+	sprintf(nbuf, "%d", NLocBuffer ? NLocBuffer : num_temp_buffers);
+	return nbuf;
 }
 
 static bool
