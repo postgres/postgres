@@ -7,14 +7,23 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile,v 1.2 1996/07/20 07:52:36 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile,v 1.3 1996/08/01 19:46:46 scrappy Exp $
 #
 # NOTES
 #	objdir	- location of the objects and generated files (eg. obj)
 #
 #-------------------------------------------------------------------------
 
-SUBDIR= backend libpq bin ../doc
+MKDIR=./mk
+-include $(MKDIR)/../Makefile.global
+
+SUBDIR= backend libpq 
+
+ifeq ($(USE_TCL), true)
+SUBDIR += libpgtcl
+endif
+
+SUBDIR+= bin ../doc
 
 FIND = find
 # assuming gnu tar and split here
@@ -23,10 +32,6 @@ SPLIT = split
 
 ETAGS = etags
 XARGS = xargs
-
-ifeq ($(USE_TCL), true)
-SUBDIR += libpgtcl
-endif
 
 include mk/postgres.subdir.mk
 
