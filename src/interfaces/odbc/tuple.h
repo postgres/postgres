@@ -30,6 +30,19 @@ struct TupleNode_
 	TupleField	tuple[1];
 };
 
+/*	keyset(TID + OID) info */
+struct KeySet_
+{
+	UWORD	status;
+	UWORD	offset;
+	UDWORD	blocknum;
+	UDWORD	oid;
+};
+#define	KEYSET_INFO_PUBLIC	0x0f
+#define	DRV_SELF_ADDED		(1L << 4)
+#define	DRV_SELF_DELETED	(1L << 5)
+#define	DRV_SELF_UPDATED	(1L << 6)
+
 /*	These macros are wrappers for the corresponding set_tuplefield functions
 	but these handle automatic NULL determination and call set_tuplefield_null()
 	if appropriate for the datatype (used by SQLGetTypeInfo).

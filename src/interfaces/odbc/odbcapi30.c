@@ -419,177 +419,17 @@ SQLSetConnectAttr(HDBC ConnectionHandle,
 	return PGAPI_SetConnectOption(ConnectionHandle, (UWORD) Attribute, (UDWORD) Value);
 }
 
-static RETCODE SQL_API
-ARDSetField(StatementClass *stmt, SQLSMALLINT RecNumber,
-		SQLSMALLINT FieldIdentifier, PTR Value, SQLINTEGER BufferLength)
-{
-	RETCODE		ret = SQL_SUCCESS;
-	PTR		tptr;
-	switch (FieldIdentifier)
-	{
-		case SQL_DESC_ARRAY_SIZE:
-			stmt->options.rowset_size = (SQLUINTEGER) Value;
-			break; 
-		case SQL_DESC_ARRAY_STATUS_PTR:
-			stmt->options.row_operation_ptr = Value;
-			break;
-		case SQL_DESC_BIND_OFFSET_PTR:
-			stmt->options.row_offset_ptr = Value;
-			break;
-		case SQL_DESC_BIND_TYPE:
-			stmt->options.bind_size = (SQLUINTEGER) Value;
-			break;
-
-		case SQL_DESC_DATA_PTR:
-			if (!RecNumber)
-				stmt->bookmark.buffer = Value;
-			else
-				stmt->bindings[RecNumber - 1].buffer = Value;
-			break;
-		case SQL_DESC_INDICATOR_PTR:
-			if (!RecNumber)
-				tptr = stmt->bookmark.used;
-			else
-				tptr = stmt->bindings[RecNumber - 1].used;
-			if (Value != tptr)
-			{
-				ret = SQL_ERROR;
-				stmt->errornumber = STMT_INVALID_OPTION_IDENTIFIER; 
-				stmt->errormsg = "INDICATOR != OCTET_LENGTH_PTR"; 
-			}
-			break;
-		case SQL_DESC_OCTET_LENGTH_PTR:
-			if (!RecNumber)
-				stmt->bookmark.used = Value;
-			else
-				stmt->bindings[RecNumber - 1].used = Value;
-			break;
-		default:ret = SQL_ERROR;
-			stmt->errornumber = STMT_INVALID_OPTION_IDENTIFIER; 
-			stmt->errormsg = "not implemedted yet"; 
-	}
-	return ret;
-}
-
-static RETCODE SQL_API
-APDSetField(StatementClass *stmt, SQLSMALLINT RecNumber,
-		SQLSMALLINT FieldIdentifier, PTR Value, SQLINTEGER BufferLength)
-{
-	RETCODE		ret = SQL_SUCCESS;
-	switch (FieldIdentifier)
-	{
-		case SQL_DESC_ARRAY_SIZE:
-			stmt->options.paramset_size = (SQLUINTEGER) Value;
-			break; 
-		case SQL_DESC_ARRAY_STATUS_PTR:
-			stmt->options.param_operation_ptr = Value;
-			break;
-		case SQL_DESC_BIND_OFFSET_PTR:
-			stmt->options.param_offset_ptr = Value;
-			break;
-		case SQL_DESC_BIND_TYPE:
-			stmt->options.param_bind_type = (SQLUINTEGER) Value;
-			break;
-
-		case SQL_DESC_DATA_PTR:
-			if (stmt->parameters_allocated < RecNumber)
-				PGAPI_BindParameter(stmt, RecNumber, 0, 0, 0, 0, 0, 0, 0, 0);
-			stmt->parameters[RecNumber - 1].buffer = Value;
-			break;
-		case SQL_DESC_INDICATOR_PTR:
-			if (stmt->parameters_allocated < RecNumber ||
-			    Value != stmt->parameters[RecNumber - 1].used)
-			{
-				ret = SQL_ERROR;
-				stmt->errornumber = STMT_INVALID_OPTION_IDENTIFIER; 
-				stmt->errormsg = "INDICATOR != OCTET_LENGTH_PTR"; 
-			}
-			break;
-		case SQL_DESC_OCTET_LENGTH_PTR:
-			if (stmt->parameters_allocated < RecNumber)
-				PGAPI_BindParameter(stmt, RecNumber, 0, 0, 0, 0, 0, 0, 0, 0);
-			stmt->parameters[RecNumber - 1].used = Value;
-			break;
-		default:ret = SQL_ERROR;
-			stmt->errornumber = STMT_INVALID_OPTION_IDENTIFIER; 
-	}
-	return ret;
-}
-
-static RETCODE SQL_API
-IRDSetField(StatementClass *stmt, SQLSMALLINT RecNumber,
-		SQLSMALLINT FieldIdentifier, PTR Value, SQLINTEGER BufferLength)
-{
-	RETCODE		ret = SQL_SUCCESS;
-	switch (FieldIdentifier)
-	{
-		case SQL_DESC_ARRAY_STATUS_PTR:
-			stmt->options.rowStatusArray = (SQLUSMALLINT *) Value;
-			break;
-		case SQL_DESC_ROWS_PROCESSED_PTR:
-			stmt->options.rowsFetched = (SQLUINTEGER *) Value;
-			break;
-		default:ret = SQL_ERROR;
-			stmt->errornumber = STMT_INVALID_OPTION_IDENTIFIER; 
-	}
-	return ret;
-}
-
-static RETCODE SQL_API
-IPDSetField(StatementClass *stmt, SQLSMALLINT RecNumber,
-		SQLSMALLINT FieldIdentifier, PTR Value, SQLINTEGER BufferLength)
-{
-	RETCODE		ret = SQL_SUCCESS;
-	switch (FieldIdentifier)
-	{
-		case SQL_DESC_ARRAY_STATUS_PTR:
-			stmt->options.param_status_ptr = (SQLUSMALLINT *) Value;
-			break;
-		case SQL_DESC_ROWS_PROCESSED_PTR:
-			stmt->options.param_processed_ptr = (SQLUINTEGER *) Value;
-			break;
-		default:ret = SQL_ERROR;
-			stmt->errornumber = STMT_INVALID_OPTION_IDENTIFIER; 
-	}
-	return ret;
-}
-
 /*	new function */
 RETCODE		SQL_API
 SQLSetDescField(SQLHDESC DescriptorHandle,
 				SQLSMALLINT RecNumber, SQLSMALLINT FieldIdentifier,
 				PTR Value, SQLINTEGER BufferLength)
 {
-	RETCODE		ret = SQL_SUCCESS;
-	HSTMT		hstmt;
-	SQLUINTEGER	descType;
-	StatementClass *stmt;
-	static const char *func = "SQLSetDescField";
+	RETCODE		ret;
 
 	mylog("[[SQLSetDescField]] h=%u rec=%d field=%d val=%x\n", DescriptorHandle, RecNumber, FieldIdentifier, Value);
-	hstmt = statementHandleFromDescHandle(DescriptorHandle, &descType);
-	mylog("stmt=%x type=%d\n", hstmt, descType);
-	stmt = (StatementClass *) hstmt;
-	switch (descType)
-	{
-		case SQL_ATTR_APP_ROW_DESC:
-			ret = ARDSetField(stmt, RecNumber, FieldIdentifier, Value, BufferLength);
-			break;
-		case SQL_ATTR_APP_PARAM_DESC:
-			ret = APDSetField(stmt, RecNumber, FieldIdentifier, Value, BufferLength);
-			break;
-		case SQL_ATTR_IMP_ROW_DESC:
-			ret = IRDSetField(stmt, RecNumber, FieldIdentifier, Value, BufferLength);
-			break;
-		case SQL_ATTR_IMP_PARAM_DESC:
-			ret = IPDSetField(stmt, RecNumber, FieldIdentifier, Value, BufferLength);
-			break;
-		default:ret = SQL_ERROR;
-			stmt->errornumber = STMT_INTERNAL_ERROR; 
-			stmt->errormsg = "Error not implemented";
-	}
-	if (ret == SQL_ERROR)
-		SC_log_error(func, "", stmt);
+	ret = PGAPI_SetDescField(DescriptorHandle, RecNumber, FieldIdentifier,
+				Value, BufferLength);
 	return ret;
 }
 
@@ -602,7 +442,7 @@ SQLSetDescRec(SQLHDESC DescriptorHandle,
 			  PTR Data, SQLINTEGER *StringLength,
 			  SQLINTEGER *Indicator)
 {
-	const char *func = "SQLSetDescField";
+	const char *func = "SQLSetDescRec";
 
 	mylog("[[SQLSetDescRec]]\n");
 	mylog("Error not implemented\n");

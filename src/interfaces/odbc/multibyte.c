@@ -300,7 +300,7 @@ CC_lookup_cs_new(ConnectionClass *self)
 	char		*encstr = NULL;
 	QResultClass	*res;
 
-	res = CC_send_query(self, "select pg_client_encoding()", NULL, TRUE);
+	res = CC_send_query(self, "select pg_client_encoding()", NULL, CLEAR_RESULT_ON_ABORT);
 	if (res)
 	{
 		char 	*enc = QR_get_value_backend_row(res, 0, 0);

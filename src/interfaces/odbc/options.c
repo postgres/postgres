@@ -39,6 +39,7 @@ set_statement_option(ConnectionClass *conn,
 	static char *func = "set_statement_option";
 	char		changed = FALSE;
 	ConnInfo   *ci = NULL;
+	UDWORD		setval;
 
 	if (conn)
 		ci = &(conn->connInfo);
@@ -63,22 +64,21 @@ set_statement_option(ConnectionClass *conn,
 			 * positioned update isn't supported so cursor concurrency is
 			 * read-only
 			 */
-			mylog("SetStmtOption(): SQL_CONCURRENCY = %d\n", vParam);
-			if (ci->drivers.lie || vParam == SQL_CONCUR_READ_ONLY || vParam == SQL_CONCUR_ROWVER)
-			{
-				if (conn)
-					conn->stmtOptions.scroll_concurrency = vParam;
-				if (stmt)
-					stmt->options.scroll_concurrency = vParam;
-			}
-			else
-			{
-				if (conn)
-					conn->stmtOptions.scroll_concurrency = SQL_CONCUR_ROWVER;
-				if (stmt)
-					stmt->options.scroll_concurrency = SQL_CONCUR_ROWVER;
+			mylog("SetStmtOption(): SQL_CONCURRENCY = %d ", vParam);
+			setval = SQL_CONCUR_READ_ONLY;
+			if (SQL_CONCUR_READ_ONLY == vParam)
+				;
+			if (ci->drivers.lie)
+				setval = vParam;
+			else if (ci->updatable_cursors)
+				setval = SQL_CONCUR_ROWVER;
+			if (conn)
+				conn->stmtOptions.scroll_concurrency = setval;
+			else if (stmt)
+				stmt->options.scroll_concurrency = setval;
+			if (setval != vParam)
 				changed = TRUE;
-			}
+			mylog("-> %d\n", setval);
 			break;
 
 		case SQL_CURSOR_TYPE:
@@ -87,47 +87,24 @@ set_statement_option(ConnectionClass *conn,
 			 * if declare/fetch, then type can only be forward. otherwise,
 			 * it can only be forward or static.
 			 */
-			mylog("SetStmtOption(): SQL_CURSOR_TYPE = %d\n", vParam);
-
+			mylog("SetStmtOption(): SQL_CURSOR_TYPE = %d ", vParam);
+			setval = SQL_CURSOR_FORWARD_ONLY;
 			if (ci->drivers.lie)
-			{
-				if (conn)
-					conn->stmtOptions.cursor_type = vParam;
-				if (stmt)
-					stmt->options.cursor_type = vParam;
-			}
-			else
-			{
-				if (ci->drivers.use_declarefetch)
-				{
-					if (conn)
-						conn->stmtOptions.cursor_type = SQL_CURSOR_FORWARD_ONLY;
-					if (stmt)
-						stmt->options.cursor_type = SQL_CURSOR_FORWARD_ONLY;
+				setval = vParam;
+			else if (ci->drivers.use_declarefetch)
+				;
+			else if (SQL_CURSOR_STATIC == vParam)
+				setval = vParam;
+			/** else if (SQL_CURSOR_KEYSET_DRIVEN == vParam && ci->updatable)
+				setval = vParam; **/
 
-					if (vParam != SQL_CURSOR_FORWARD_ONLY)
-						changed = TRUE;
-				}
-				else
-				{
-					if (vParam == SQL_CURSOR_FORWARD_ONLY || vParam == SQL_CURSOR_STATIC)
-					{
-						if (conn)
-							conn->stmtOptions.cursor_type = vParam;		/* valid type */
-						if (stmt)
-							stmt->options.cursor_type = vParam; /* valid type */
-					}
-					else
-					{
-						if (conn)
-							conn->stmtOptions.cursor_type = SQL_CURSOR_STATIC;
-						if (stmt)
-							stmt->options.cursor_type = SQL_CURSOR_STATIC;
-
-						changed = TRUE;
-					}
-				}
-			}
+			if (conn)
+				conn->stmtOptions.cursor_type = setval;
+			else if (stmt)
+				stmt->options.cursor_type = setval;
+			if (setval != vParam)
+				changed = TRUE;
+			mylog("-> %d\n", setval);
 			break;
 
 		case SQL_KEYSET_SIZE:	/* ignored, but saved and returned	*/

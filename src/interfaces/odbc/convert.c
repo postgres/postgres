@@ -1291,6 +1291,7 @@ copy_statement_with_parameters(StatementClass *stmt)
 #ifdef	DRIVER_CURSOR_IMPLEMENT
 	BOOL		search_from_pos = FALSE;
 #endif   /* DRIVER_CURSOR_IMPLEMENT */
+	Int4	from_pos = -1, where_pos = -1;
 
 	if (ci->disallow_premature)
 		prepare_dummy_cursor = stmt->pre_executing;
@@ -1326,7 +1327,11 @@ copy_statement_with_parameters(StatementClass *stmt)
 		else if (!stmt->ti || stmt->ntab != 1)
 			stmt->options.scroll_concurrency = SQL_CONCUR_READ_ONLY;
 		else
-			search_from_pos = TRUE;
+		{
+			/** search_from_pos = TRUE; **/
+			from_pos = stmt->from_pos;
+			where_pos = stmt->where_pos;
+		}
 	}
 #endif   /* DRIVER_CURSOR_IMPLEMENT */
 
@@ -1366,9 +1371,18 @@ copy_statement_with_parameters(StatementClass *stmt)
 #ifdef MULTIBYTE
 	make_encoded_str(&encstr, conn, old_statement);
 #endif
-
 	for (opos = 0; opos < oldstmtlen; opos++)
 	{
+		if (from_pos == (Int4) opos)
+		{
+			CVT_APPEND_STR(", CTID, OID ");
+		}
+		else if (where_pos == (Int4) opos)
+		{
+			stmt->load_statement = malloc(npos + 1);
+			memcpy(stmt->load_statement, new_statement, npos);
+			stmt->load_statement[npos] = '\0';
+		}
 #ifdef MULTIBYTE
 		oldchar = encoded_byte_check(&encstr, opos);
 		if (ENCODE_STATUS(encstr) != 0)
@@ -2033,6 +2047,12 @@ copy_statement_with_parameters(StatementClass *stmt)
 #ifdef	DRIVER_CURSOR_IMPLEMENT
 	if (search_from_pos)
 		stmt->options.scroll_concurrency = SQL_CONCUR_READ_ONLY;
+	if (!stmt->load_statement && from_pos >=0)
+	{
+		stmt->load_statement = malloc(npos + 1);
+		memcpy(stmt->load_statement, new_statement, npos);
+		stmt->load_statement[npos] = '\0';
+	}
 #endif   /* DRIVER_CURSOR_IMPLEMENT */
 	if (prepare_dummy_cursor && SC_is_pre_executable(stmt))
 	{

@@ -305,7 +305,7 @@ char		CC_connect(ConnectionClass *self, char do_password);
 char		CC_add_statement(ConnectionClass *self, StatementClass *stmt);
 char		CC_remove_statement(ConnectionClass *self, StatementClass *stmt);
 char		CC_get_error(ConnectionClass *self, int *number, char **message);
-QResultClass *CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi, BOOL);
+QResultClass *CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi, UDWORD flag);
 void		CC_clear_error(ConnectionClass *self);
 char	   *CC_create_errormsg(ConnectionClass *self);
 int			CC_send_function(ConnectionClass *conn, int fnid, void *result_buf, int *actual_result_len, int result_is_int, LO_ARG *argv, int nargs);
@@ -316,4 +316,7 @@ void		CC_initialize_pg_version(ConnectionClass *conn);
 void		CC_log_error(const char *func, const char *desc, const ConnectionClass *self);
 int			CC_get_max_query_len(const ConnectionClass *self);
 
+/* CC_send_query_options */
+#define	CLEAR_RESULT_ON_ABORT	1L
+#define	CREATE_KEYSET		(1L << 1) /* create keyset for updatable curosrs */
 #endif

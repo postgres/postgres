@@ -5,7 +5,7 @@
  *
  * Comments:		See "notice.txt" for copyright and license information.
  *
- * $Id: psqlodbc.h,v 1.59 2002/03/11 10:25:57 inoue Exp $
+ * $Id: psqlodbc.h,v 1.60 2002/03/14 05:42:03 inoue Exp $
  *
  */
 
@@ -166,6 +166,7 @@ typedef struct TupleListClass_ TupleListClass;
 typedef struct EnvironmentClass_ EnvironmentClass;
 typedef struct TupleNode_ TupleNode;
 typedef struct TupleField_ TupleField;
+typedef struct KeySet_ KeySet;
 
 typedef struct col_info COL_INFO;
 typedef struct lo_arg LO_ARG;

@@ -374,7 +374,7 @@ CC_begin(ConnectionClass *self)
 	char	ret = TRUE;
 	if (!CC_is_in_trans(self))
 	{
-		QResultClass *res = CC_send_query(self, "BEGIN", NULL, TRUE);
+		QResultClass *res = CC_send_query(self, "BEGIN", NULL, CLEAR_RESULT_ON_ABORT);
 		mylog("CC_begin:  sending BEGIN!\n");
 
 		if (res != NULL)
@@ -401,7 +401,7 @@ CC_commit(ConnectionClass *self)
 	char	ret = FALSE;
 	if (CC_is_in_trans(self))
 	{
-		QResultClass *res = CC_send_query(self, "COMMIT", NULL, TRUE);
+		QResultClass *res = CC_send_query(self, "COMMIT", NULL, CLEAR_RESULT_ON_ABORT);
 		mylog("CC_commit:  sending COMMIT!\n");
 
 		CC_set_no_trans(self);
@@ -427,7 +427,7 @@ CC_abort(ConnectionClass *self)
 {
 	if (CC_is_in_trans(self))
 	{
-		QResultClass *res = CC_send_query(self, "ROLLBACK", NULL, TRUE);
+		QResultClass *res = CC_send_query(self, "ROLLBACK", NULL, CLEAR_RESULT_ON_ABORT);
 		mylog("CC_abort:  sending ABORT!\n");
 
 		CC_set_no_trans(self);
@@ -919,7 +919,7 @@ another_version_retry:
 	 */
 	mylog("sending an empty query...\n");
 
-	res = CC_send_query(self, " ", NULL, TRUE);
+	res = CC_send_query(self, " ", NULL, CLEAR_RESULT_ON_ABORT);
 	if (res == NULL || QR_get_status(res) != PGRES_EMPTY_QUERY)
 	{
 		mylog("got no result from the empty query.  (probably database does not exist)\n");
@@ -956,7 +956,7 @@ another_version_retry:
 	 *	Multibyte handling is available ?
 	 */
 #ifdef MULTIBYTE
-	if (PG_VERSION_GE(self, 7.0))
+	if (PG_VERSION_GE(self, 6.4))
 	{
 		CC_lookup_characterset(self);
 		if (self->errornumber != 0)
@@ -977,7 +977,7 @@ another_version_retry:
 				if (self->client_encoding)
 					free(self->client_encoding);
 				self->client_encoding = NULL;
-				if (res = CC_send_query(self, "set client_encoding to 'UTF8'", NULL, TRUE), res)
+				if (res = CC_send_query(self, "set client_encoding to 'UTF8'", NULL, CLEAR_RESULT_ON_ABORT), res)
 				{
 					self->client_encoding = strdup("UNICODE");
 					QR_Destructor(res);
@@ -991,7 +991,7 @@ another_version_retry:
 	else if (self->unicode)
 	{
 		self->errornumber = CONN_NOT_IMPLEMENTED_ERROR;
-		self->errormsg = "Unicode isn't supported before 7.0";
+		self->errormsg = "Unicode isn't supported before 6.4";
 		return 0;
 	}
 #endif /* UNICODE_SUPPORT */
@@ -1128,12 +1128,14 @@ CC_get_error(ConnectionClass *self, int *number, char **message)
  *	'declare cursor C3326857 for ...' and 'fetch 100 in C3326857' statements.
  */
 QResultClass *
-CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi, BOOL clear_result_on_abort)
+CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi, UDWORD flag)
 {
 	QResultClass *result_in = NULL,
 			   *cmdres = NULL,
 			   *retres = NULL,
 			   *res = NULL;
+	BOOL	clear_result_on_abort = ((flag & CLEAR_RESULT_ON_ABORT) != 0),
+		create_keyset = ((flag & CREATE_KEYSET) != 0);
 	char		swallow,
 			   *wq;
 	int			id;
@@ -1376,6 +1378,8 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi, BOOL clear_resu
 				if (query_completed)
 				{
 					res->next = QR_Constructor();
+					if (create_keyset)
+						QR_set_haskeyset(res->next);
 					mylog("send_query: 'T' no result_in: res = %u\n", res->next);
 					if (!res->next)
 					{
@@ -1392,6 +1396,8 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi, BOOL clear_resu
 				}
 				if (!used_passed_result_object)
 				{
+					if (create_keyset)
+						QR_set_haskeyset(res);
 					if (!QR_fetch_tuples(res, self, qi ? qi->cursor : NULL))
 					{
 						self->errornumber = CONNECTION_COULD_NOT_RECEIVE;

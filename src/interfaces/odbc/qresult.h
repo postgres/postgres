@@ -72,6 +72,9 @@ struct QResultClass_
 	char		inTuples;		/* is a fetch of rows from the backend in
 								 * progress? */
 	char		aborted;		/* was aborted? */
+	char		haskeyset;		/* this result contains keyset ? */
+	KeySet		*keyset;	
+	
 };
 
 #define QR_get_fields(self)					(self->fields)
@@ -102,6 +105,7 @@ struct QResultClass_
 #define QR_set_status(self, condition)		( self->status = condition )
 #define QR_set_message(self, message_)		( self->message = message_)
 #define QR_set_aborted(self, aborted_)		( self->aborted = aborted_)
+#define QR_set_haskeyset(self)		(self->haskeyset = TRUE)
 
 #define QR_get_message(self)				(self->message)
 #define QR_get_command(self)				(self->command)

@@ -297,7 +297,6 @@ parse_statement(StatementClass *stmt)
 				in_distinct = FALSE,
 				in_on = FALSE,
 				in_from = FALSE,
-				from_found = FALSE,
 				in_where = FALSE,
 				in_table = FALSE;
 	char		in_field = FALSE,
@@ -309,7 +308,6 @@ parse_statement(StatementClass *stmt)
 				i,
 				k = 0,
 				n,
-				first_where = 0,
 				blevel = 0;
 	FIELD_INFO **fi;
 	TABLE_INFO **ti;
@@ -318,6 +316,7 @@ parse_statement(StatementClass *stmt)
 	HSTMT		hcol_stmt;
 	StatementClass *col_stmt;
 	RETCODE		result;
+	BOOL		updatable = TRUE;
 
 	mylog("%s: entering...\n", func);
 
@@ -327,6 +326,8 @@ parse_statement(StatementClass *stmt)
 
 	stmt->nfld = 0;
 	stmt->ntab = 0;
+	stmt->from_pos = -1;
+	stmt->where_pos = -1;
 
 #ifdef MULTIBYTE
 	while (pptr = ptr, (ptr = getNextToken(conn->ccsc, pptr, token, sizeof(token), &delim, &quote, &dquote, &numeric)) != NULL)
@@ -343,6 +344,7 @@ parse_statement(StatementClass *stmt)
 			if (!stricmp(token, "distinct"))
 			{
 				in_distinct = TRUE;
+				updatable = FALSE;
 
 				mylog("DISTINCT\n");
 				continue;
@@ -359,11 +361,11 @@ parse_statement(StatementClass *stmt)
 			{
 				in_select = FALSE;
 				in_from = TRUE;
-				if (!from_found &&
+				if (stmt->from_pos < 0 &&
 					(!strnicmp(pptr, "from", 4)))
 				{
 					mylog("First ");
-					from_found = TRUE;
+					stmt->from_pos = pptr - stmt->statement;
 				}
 
 				mylog("FROM\n");
@@ -384,9 +386,13 @@ parse_statement(StatementClass *stmt)
 				in_from = FALSE;
 				in_where = TRUE;
 
-				if (!first_where &&
-					(!stricmp(token, "where")))
-					first_where = ptr - stmt->statement;
+				if (!stricmp(token, "where"))
+				{
+					if (stmt->where_pos < 0)
+						stmt->where_pos = pptr - stmt->statement;
+				}
+				else if (stricmp(token, "order"))
+					updatable = FALSE;
 
 				mylog("WHERE...\n");
 				break;
@@ -733,6 +739,10 @@ parse_statement(StatementClass *stmt)
 	 */
 
 	/* Call SQLColumns for each table and store the result */
+	if (stmt->ntab > 1)
+		updatable = FALSE;
+	else if (stmt->from_pos < 0)
+		updatable = FALSE;
 	for (i = 0; i < stmt->ntab; i++)
 	{
 		/* See if already got it */
@@ -828,9 +838,11 @@ parse_statement(StatementClass *stmt)
 	 */
 	for (i = 0; i < stmt->nfld;)
 	{
+		fi[i]->updatable = updatable;
 		/* Dont worry about functions or quotes */
 		if (fi[i]->func || fi[i]->quote || fi[i]->numeric)
 		{
+			fi[i]->updatable = FALSE;
 			i++;
 			continue;
 		}
@@ -928,6 +940,7 @@ parse_statement(StatementClass *stmt)
 					mylog("about to copy at %d\n", n + i);
 
 					getColInfo(the_ti->col_info, fi[n + i], n);
+					fi[n + i]->updatable = updatable;
 
 					mylog("done copying\n");
 				}
@@ -945,23 +958,28 @@ parse_statement(StatementClass *stmt)
 		else if (fi[i]->ti)
 		{
 			if (!searchColInfo(fi[i]->ti->col_info, fi[i]))
+			{
 				parse = FALSE;
-
+				fi[i]->updatable = FALSE;
+			}
 			i++;
 		}
 
 		/* Don't know the table -- search all tables in "from" list */
 		else
 		{
-			parse = FALSE;
 			for (k = 0; k < stmt->ntab; k++)
 			{
 				if (searchColInfo(ti[k]->col_info, fi[i]))
 				{
 					fi[i]->ti = ti[k];	/* now know the table */
-					parse = TRUE;
 					break;
 				}
+			}
+			if (k >= stmt->ntab)
+			{
+				parse = FALSE;
+				fi[i]->updatable = FALSE;
 			}
 			i++;
 		}

@@ -2858,7 +2858,7 @@ getClientTableName(ConnectionClass *conn, char *serverTableName, BOOL *nameAlloc
 		return ret;
 	if (!conn->server_encoding)
 	{
-		if (res = CC_send_query(conn, "select getdatabaseencoding()", NULL, TRUE), res)
+		if (res = CC_send_query(conn, "select getdatabaseencoding()", NULL, CLEAR_RESULT_ON_ABORT), res)
 		{
 			if (QR_get_num_tuples(res) > 0)
 				conn->server_encoding = strdup(QR_get_value_backend_row(res, 0, 0));
@@ -2868,11 +2868,11 @@ getClientTableName(ConnectionClass *conn, char *serverTableName, BOOL *nameAlloc
 	if (!conn->server_encoding)
 		return ret;
 	sprintf(query, "SET CLIENT_ENCODING TO '%s'", conn->server_encoding);
-	bError = (CC_send_query(conn, query, NULL, TRUE) == NULL);
+	bError = (CC_send_query(conn, query, NULL, CLEAR_RESULT_ON_ABORT) == NULL);
 	if (!bError && continueExec)
 	{
 		sprintf(query, "select OID from pg_class where relname = '%s'", serverTableName);
-		if (res = CC_send_query(conn, query, NULL, TRUE), res)
+		if (res = CC_send_query(conn, query, NULL, CLEAR_RESULT_ON_ABORT), res)
 		{
 			if (QR_get_num_tuples(res) > 0)
 				strcpy(saveoid, QR_get_value_backend_row(res, 0, 0));
@@ -2891,11 +2891,11 @@ getClientTableName(ConnectionClass *conn, char *serverTableName, BOOL *nameAlloc
 	}
 	/* restore the client encoding */
 	sprintf(query, "SET CLIENT_ENCODING TO '%s'", conn->client_encoding);
-	bError = (CC_send_query(conn, query, NULL, TRUE) == NULL);
+	bError = (CC_send_query(conn, query, NULL, CLEAR_RESULT_ON_ABORT) == NULL);
 	if (bError || !continueExec)
 		return ret;
 	sprintf(query, "select relname from pg_class where OID = %s", saveoid);
-	if (res = CC_send_query(conn, query, NULL, TRUE), res)
+	if (res = CC_send_query(conn, query, NULL, CLEAR_RESULT_ON_ABORT), res)
 	{
 		if (QR_get_num_tuples(res) > 0)
 		{
@@ -2922,7 +2922,7 @@ getClientColumnName(ConnectionClass *conn, const char *serverTableName, char *se
 		return ret;
 	if (!conn->server_encoding)
 	{
-		if (res = CC_send_query(conn, "select getdatabaseencoding()", NULL, TRUE), res)
+		if (res = CC_send_query(conn, "select getdatabaseencoding()", NULL, CLEAR_RESULT_ON_ABORT), res)
 		{
 			if (QR_get_num_tuples(res) > 0)
 				conn->server_encoding = strdup(QR_get_value_backend_row(res, 0, 0));
@@ -2932,13 +2932,13 @@ getClientColumnName(ConnectionClass *conn, const char *serverTableName, char *se
 	if (!conn->server_encoding)
 		return ret;
 	sprintf(query, "SET CLIENT_ENCODING TO '%s'", conn->server_encoding);
-	bError = (CC_send_query(conn, query, NULL, TRUE) == NULL);
+	bError = (CC_send_query(conn, query, NULL, CLEAR_RESULT_ON_ABORT) == NULL);
 	if (!bError && continueExec)
 	{
 		sprintf(query, "select attrelid, attnum from pg_class, pg_attribute "
 				"where relname = '%s' and attrelid = pg_class.oid "
 				"and attname = '%s'", serverTableName, serverColumnName);
-		if (res = CC_send_query(conn, query, NULL, TRUE), res)
+		if (res = CC_send_query(conn, query, NULL, CLEAR_RESULT_ON_ABORT), res)
 		{
 			if (QR_get_num_tuples(res) > 0)
 			{
@@ -2960,11 +2960,11 @@ getClientColumnName(ConnectionClass *conn, const char *serverTableName, char *se
 	}
 	/* restore the cleint encoding */
 	sprintf(query, "SET CLIENT_ENCODING TO '%s'", conn->client_encoding);
-	bError = (CC_send_query(conn, query, NULL, TRUE) == NULL);
+	bError = (CC_send_query(conn, query, NULL, CLEAR_RESULT_ON_ABORT) == NULL);
 	if (bError || !continueExec)
 		return ret;
 	sprintf(query, "select attname from pg_attribute where attrelid = %s and attnum = %s", saveattrelid, saveattnum);
-	if (res = CC_send_query(conn, query, NULL, TRUE), res)
+	if (res = CC_send_query(conn, query, NULL, CLEAR_RESULT_ON_ABORT), res)
 	{
 		if (QR_get_num_tuples(res) > 0)
 		{
@@ -3790,7 +3790,7 @@ PGAPI_Procedures(
 		   " case when prorettype = 0 then 1::int2 else 2::int2 end as " "PROCEDURE_TYPE" " from pg_proc");
 	my_strcat(proc_query, " where proname like '%.*s'", szProcName, cbProcName);
 
-	if (res = CC_send_query(conn, proc_query, NULL, TRUE), !res)
+	if (res = CC_send_query(conn, proc_query, NULL, CLEAR_RESULT_ON_ABORT), !res)
 	{
 		stmt->errornumber = STMT_EXEC_ERROR;
 		stmt->errormsg = "PGAPI_Procedures query error";
@@ -3927,7 +3927,7 @@ PGAPI_TablePrivileges(
 		my_strcat(proc_query, " relname like '%.*s' and", esc_table_name, escTbnamelen);
 	}
 	strcat(proc_query, " pg_user.usesysid = relowner"); 
-	if (res = CC_send_query(conn, proc_query, NULL, TRUE), !res)
+	if (res = CC_send_query(conn, proc_query, NULL, CLEAR_RESULT_ON_ABORT), !res)
 	{
 		stmt->errornumber = STMT_EXEC_ERROR;
 		stmt->errormsg = "PGAPI_TablePrivileges query error";
@@ -3935,7 +3935,7 @@ PGAPI_TablePrivileges(
 	}
 	strncpy_null(proc_query, "select usename, usesysid, usesuper from pg_user", sizeof(proc_query));
 	tablecount = QR_get_num_tuples(res);
-	if (allures = CC_send_query(conn, proc_query, NULL, TRUE), !allures)
+	if (allures = CC_send_query(conn, proc_query, NULL, CLEAR_RESULT_ON_ABORT), !allures)
 	{
 		QR_Destructor(res);
 		stmt->errornumber = STMT_EXEC_ERROR;
@@ -3983,7 +3983,7 @@ PGAPI_TablePrivileges(
 				char	*grolist, *uid, *delm;
 
 				snprintf(proc_query, sizeof(proc_query) - 1, "select grolist from pg_group where groname = '%s'", user);
-				if (gres = CC_send_query(conn, proc_query, NULL, TRUE))
+				if (gres = CC_send_query(conn, proc_query, NULL, CLEAR_RESULT_ON_ABORT))
 				{
 					grolist = QR_get_value_backend_row(gres, 0, 0);
 					if (grolist && grolist[0] == '{')

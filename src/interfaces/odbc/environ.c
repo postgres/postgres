@@ -245,6 +245,9 @@ PGAPI_StmtError(	HSTMT hstmt,
 			case STMT_INVALID_CURSOR_STATE_ERROR:
 				strcpy(szSqlState, "24000");
 				break;
+			case STMT_ERROR_IN_ROW:
+				strcpy(szSqlState, "01S01");
+				break;
 			case STMT_OPTION_VALUE_CHANGED:
 				strcpy(szSqlState, "01S02");
 				break;

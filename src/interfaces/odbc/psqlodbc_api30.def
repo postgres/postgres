@@ -5,7 +5,7 @@ SQLAllocEnv @2
 SQLAllocStmt @3
 SQLBindCol @4
 SQLCancel @5
-SQLColAttributes @6
+; SQLColAttributes @6 */
 SQLConnect @7
 SQLDescribeCol @8
 SQLDisconnect @9

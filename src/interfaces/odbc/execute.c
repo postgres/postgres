@@ -94,6 +94,12 @@ PGAPI_Prepare(HSTMT hstmt,
 
 	if (self->statement)
 		free(self->statement);
+	if (self->stmt_with_params)
+		free(self->stmt_with_params);
+	self->stmt_with_params = NULL;
+	if (self->load_statement)
+		free(self->load_statement);
+	self->load_statement = NULL;
 
 	self->statement = make_string(szSqlStr, cbSqlStr, NULL);
 	if (!self->statement)
@@ -141,6 +147,12 @@ PGAPI_ExecDirect(
 
 	if (stmt->statement)
 		free(stmt->statement);
+	if (stmt->stmt_with_params)
+		free(stmt->stmt_with_params);
+	stmt->stmt_with_params = NULL;
+	if (stmt->load_statement)
+		free(stmt->load_statement);
+	stmt->load_statement = NULL;
 
 	/*
 	 * keep a copy of the un-parametrized statement, in case they try to
@@ -421,7 +433,7 @@ next_param_row:
 		BOOL		in_trans = CC_is_in_trans(conn);
 		BOOL		issued_begin = FALSE,
 					begin_included = FALSE;
-		QResultClass *res;
+		QResultClass *res, *curres;
 
 		if (strnicmp(stmt->stmt_with_params, "BEGIN;", 6) == 0)
 			begin_included = TRUE;
@@ -436,7 +448,7 @@ next_param_row:
 		}
 		/* we are now in a transaction */
 		CC_set_in_trans(conn);
-		res = CC_send_query(conn, stmt->stmt_with_params, NULL, TRUE);
+		res = CC_send_query(conn, stmt->stmt_with_params, NULL, CLEAR_RESULT_ON_ABORT);
 		if (!res)
 		{
 			CC_abort(conn);
@@ -445,6 +457,9 @@ next_param_row:
 			return SQL_ERROR;
 		}
 		SC_set_Result(stmt, res);
+		for (curres = res; !curres->num_fields; curres = curres->next)
+			;
+		SC_set_Curres(stmt, curres);
 		if (CC_is_in_autocommit(conn))
 		{
 			if (issued_begin)
@@ -518,7 +533,7 @@ PGAPI_Transact(
 	{
 		mylog("PGAPI_Transact: sending on conn %d '%s'\n", conn, stmt_string);
 
-		res = CC_send_query(conn, stmt_string, NULL, TRUE);
+		res = CC_send_query(conn, stmt_string, NULL, CLEAR_RESULT_ON_ABORT);
 		CC_set_no_trans(conn);
 
 		if (!res)

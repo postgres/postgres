@@ -76,6 +76,7 @@ typedef enum
 #define STMT_BAD_ERROR							27
 #define STMT_INVALID_OPTION_IDENTIFIER					28
 #define STMT_RETURN_NULL_WITHOUT_INDICATOR				29
+#define STMT_ERROR_IN_ROW						30
 
 /* statement types */
 enum
@@ -135,6 +136,7 @@ typedef struct
 	char		quote;
 	char		dquote;
 	char		numeric;
+	char		updatable;
 	char		dot[MAX_TABLE_LEN + 1];
 	char		name[MAX_COLUMN_LEN + 1];
 	char		alias[MAX_COLUMN_LEN + 1];
@@ -219,11 +221,15 @@ struct StatementClass_
 	char		miscinfo;
 	SWORD		errorpos;
 	SWORD		error_recsize;
+	char		*load_statement; /* to (re)load updatable individual rows */
+	Int4		from_pos;	
+	Int4		where_pos;
 };
 
 #define SC_get_conn(a)	  (a->hdbc)
 #define SC_set_Result(a, b)  (a->result = a->curres = b)
 #define SC_get_Result(a)  (a->result)
+#define SC_set_Curres(a, b)  (a->curres = b)
 #define SC_get_Curres(a)  (a->curres)
 
 /*	options for SC_free_params() */

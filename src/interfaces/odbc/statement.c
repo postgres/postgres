@@ -242,6 +242,7 @@ SC_Constructor(void)
 
 		rv->statement = NULL;
 		rv->stmt_with_params = NULL;
+		rv->load_statement = NULL;
 		rv->stmt_size_limit = -1;
 		rv->statement_type = STMT_TYPE_UNKNOWN;
 
@@ -318,6 +319,8 @@ SC_Destructor(StatementClass *self)
 		free(self->stmt_with_params);
 		self->stmt_with_params = NULL;
 	}
+	if (self->load_statement)
+		free(self->load_statement);
 
 	SC_free_params(self, STMT_FREE_PARAMS_ALL);
 
@@ -548,6 +551,12 @@ SC_recycle_statement(StatementClass *self)
 	 * SQLParamData/SQLPutData is called.
 	 */
 	SC_free_params(self, STMT_FREE_PARAMS_DATA_AT_EXEC_ONLY);
+	if (self->stmt_with_params)
+		free(self->stmt_with_params);
+	self->stmt_with_params = NULL;
+	if (self->load_statement)
+		free(self->load_statement);
+	self->load_statement = NULL;
 
 	return TRUE;
 }
@@ -635,12 +644,16 @@ SC_create_errormsg(StatementClass *self)
 	QResultClass *res = SC_get_Curres(self);
 	ConnectionClass *conn = self->hdbc;
 	int			pos;
+	BOOL			detailmsg = FALSE;
 	static char msg[4096];
 
 	msg[0] = '\0';
 
 	if (res && res->message)
+	{
 		strcpy(msg, res->message);
+		detailmsg = TRUE;
+	}
 	else if (self->errormsg)
 		strcpy(msg, self->errormsg);
 
@@ -660,10 +673,10 @@ SC_create_errormsg(StatementClass *self)
 	{
 		SocketClass *sock = conn->sock;
 
-		if (conn->errormsg && conn->errormsg[0] != '\0')
+		if (!detailmsg && conn->errormsg && conn->errormsg[0] != '\0')
 		{
 			pos = strlen(msg);
-			/*sprintf(&msg[pos], ";\n%s", conn->errormsg);*/
+			sprintf(&msg[pos], ";\n%s", conn->errormsg);
 		}
 
 		if (sock && sock->errormsg && sock->errormsg[0] != '\0')
@@ -722,9 +735,6 @@ SC_fetch(StatementClass *self)
 	int			retval,
 				result;
 
-#ifdef	DRIVER_CURSOR_IMPLEMENT
-	int			updret;
-#endif   /* DRIVER_CURSOR_IMPLEMENT */
 	Int2		num_cols,
 				lf;
 	Oid			type;
@@ -799,20 +809,13 @@ SC_fetch(StatementClass *self)
 	}
 
 #ifdef	DRIVER_CURSOR_IMPLEMENT
-	updret = 0;
 	if (self->options.scroll_concurrency != SQL_CONCUR_READ_ONLY)
 	{
-		if (!QR_get_value_backend_row(res, self->currTuple, num_cols - 1))
-			updret = SQL_ROW_DELETED;
 		num_cols -= 2;
 	}
 #endif   /* DRIVER_CURSOR_IMPLEMENT */
 	if (self->options.retrieve_data == SQL_RD_OFF)		/* data isn't required */
-#ifdef	DRIVER_CURSOR_IMPLEMENT
-		return updret ? updret + 10 : SQL_SUCCESS;
-#else
 		return SQL_SUCCESS;
-#endif   /* DRIVER_CURSOR_IMPLEMENT */
 	for (lf = 0; lf < num_cols; lf++)
 	{
 		mylog("fetch: cols=%d, lf=%d, self = %u, self->bindings = %u, buffer[] = %u\n", num_cols, lf, self, self->bindings, self->bindings[lf].buffer);
@@ -893,10 +896,6 @@ SC_fetch(StatementClass *self)
 		}
 	}
 
-#ifdef	DRIVER_CURSOR_IMPLEMENT
-	if (updret)
-		result = updret + 10;
-#endif   /* DRIVER_CURSOR_IMPLEMENT */
 	return result;
 }
 
@@ -955,11 +954,12 @@ SC_execute(StatementClass *self)
 	if (self->statement_type == STMT_TYPE_SELECT)
 	{
 		char		fetch[128];
+		UDWORD	qflag = (SQL_CONCUR_ROWVER == self->options.scroll_concurrency ? CREATE_KEYSET : 0); 
 
 		mylog("       Sending SELECT statement on stmt=%u, cursor_name='%s'\n", self, self->cursor_name);
 
 		/* send the declare/select */
-		res = CC_send_query(conn, self->stmt_with_params, NULL, FALSE);
+		res = CC_send_query(conn, self->stmt_with_params, NULL, qflag);
 		if (SC_is_fetchcursor(self) && res != NULL &&
 			QR_command_successful(res))
 		{
@@ -982,7 +982,7 @@ SC_execute(StatementClass *self)
 			 */
 			sprintf(fetch, "fetch %d in %s", qi.row_size, self->cursor_name);
 
-			res = CC_send_query(conn, fetch, &qi, FALSE);
+			res = CC_send_query(conn, fetch, &qi, qflag);
 		}
 		mylog("     done sending the query:\n");
 	}
@@ -990,7 +990,7 @@ SC_execute(StatementClass *self)
 	{
 		/* not a SELECT statement so don't use a cursor */
 		mylog("      it's NOT a select statement: stmt=%u\n", self);
-		res = CC_send_query(conn, self->stmt_with_params, NULL, FALSE);
+		res = CC_send_query(conn, self->stmt_with_params, NULL, 0);
 
 		/*
 		 * We shouldn't send COMMIT. Postgres backend does the autocommit
