@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.31 2002/01/24 18:28:15 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.32 2002/03/10 06:00:13 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -32,8 +32,6 @@ NOTHING
 <replaceable class="parameter">query</replaceable>
 |
 ( <replaceable class="parameter">query</replaceable> ; <replaceable class="parameter">query</replaceable> ... )
-|
-[ <replaceable class="parameter">query</replaceable> ; <replaceable class="parameter">query</replaceable> ... ]
   </synopsis>
 
   <refsect2 id="R2-SQL-CREATERULE-1">
@@ -177,15 +175,15 @@ CREATE
   </para>
 
   <para>
-   The <replaceable class="parameter">action</replaceable> part of the rule
-   can consist of one or more queries.  To write multiple queries, surround
-   them with either parentheses or square brackets.  Such queries will be
-   performed in the specified order (whereas there are no guarantees about
-   the execution order of multiple rules for an object).  The
-   <replaceable class="parameter">action</replaceable> can also be NOTHING
-   indicating no action.  Thus, a DO INSTEAD NOTHING rule suppresses the
-   original query from executing (when its condition is true); a DO NOTHING
-   rule is useless.
+   The <replaceable class="parameter">action</replaceable> part of the
+   rule can consist of one or more queries. To write multiple queries,
+   surround them with parentheses. Such queries will be performed in the
+   specified order (whereas there are no guarantees about the execution
+   order of multiple rules for an object). The <replaceable
+   class="parameter">action</replaceable> can also be NOTHING indicating
+   no action. Thus, a DO INSTEAD NOTHING rule suppresses the original
+   query from executing (when its condition is true); a DO NOTHING rule
+   is useless.
   </para>
 
   <para>

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.289 2002/03/09 17:37:16 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.290 2002/03/10 06:00:13 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2841,7 +2841,6 @@ RuleStmt:  CREATE RULE name AS
 
 RuleActionList:  NOTHING				{ $$ = NIL; }
 		| RuleActionStmt				{ $$ = makeList1($1); }
-		| '[' RuleActionMulti ']'		{ $$ = $2; }
 		| '(' RuleActionMulti ')'		{ $$ = $2; } 
 		;
 

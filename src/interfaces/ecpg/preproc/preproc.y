@@ -2153,7 +2153,6 @@ RuleStmt:  CREATE RULE name AS
 
 RuleActionList:  NOTHING                               { $$ = make_str("nothing"); }
                | RuleActionStmt                        { $$ = $1; }
-               | '[' RuleActionMulti ']'               { $$ = cat_str(3, make_str("["), $2, make_str("]")); }
                | '(' RuleActionMulti ')'               { $$ = cat_str(3, make_str("("), $2, make_str(")")); }
                 ;
 
