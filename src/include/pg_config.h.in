@@ -575,9 +575,6 @@
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
 
-/* Define to 1 to use our own timezone library */
-#undef PGTZ
-
 /* Define to the name of the PostgreSQL service principal in Kerberos.
    (--with-krb-srvnam=NAME) */
 #undef PG_KRB_SRVNAM
@@ -617,6 +614,9 @@
 
 /* Define to 1 to build with PAM support. (--with-pam) */
 #undef USE_PAM
+
+/* Define to 1 to use our own timezone library */
+#undef USE_PGTZ
 
 /* Define to 1 to build with Rendezvous support. (--with-rendezvous) */
 #undef USE_RENDEZVOUS
