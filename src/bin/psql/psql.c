@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.84 1997/08/19 21:36:51 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.85 1997/08/22 00:17:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -157,7 +157,9 @@ slashUsage(PsqlSettings * ps)
     char *pagerenv;
     FILE *fout;
 
-    if ((pagerenv = getenv("PAGER")) && (pagerenv[0] != '\0') && \
+    if 	(settings.notty == 0 &&
+	(pagerenv = getenv("PAGER")) &&
+	(pagerenv[0] != '\0') &&
 	(fout = popen(pagerenv, "w")))
     {
 	usePipe = 1;
@@ -1047,6 +1049,7 @@ do_help(const char *topic)
 	FILE *fout;
 
 	if (strcmp(topic, "*") == 0 &&
+	    (settings.notty == 0) &&
 	    (pagerenv = getenv("PAGER")) &&
 	    (pagerenv[0] != '\0') &&
 	    (fout = popen(pagerenv, "w")))
