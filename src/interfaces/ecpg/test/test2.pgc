@@ -65,6 +65,7 @@ exec sql end declare section;
 
 	p=&personal;
 	i=&ind_personal;
+	memset(i, 0, sizeof(ind_personal));
 	while (1) {
 		strcpy(msg, "fetch");
 		exec sql fetch cur into :p:i, :married:ind_married, :children.integer:ind_children.smallint;

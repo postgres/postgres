@@ -318,9 +318,13 @@ ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype type,
 	{
 		char	   *variable = (char *) mm_alloc(strlen(name) + ((prefix == NULL) ? 0 : strlen(prefix)) + 4);
 		char	   *offset = (char *) mm_alloc(strlen(name) + strlen("sizeof(struct varchar_)") + 1);
-
+		
 		switch (type)
 		{
+			/*
+			 * we have to use the & operator except for arrays and pointers
+                         */
+			
 			case ECPGt_varchar:
 
 				/*
@@ -342,7 +346,7 @@ ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype type,
 
 				/*
 				 * we have to use the pointer except for arrays with given
-				 * bounds
+				 * bounds, ecpglib will distinguish between * and [] 
 				 */
 				if ((atoi(varcharsize) > 1 ||
 				    (atoi(arrsize) > 0) ||

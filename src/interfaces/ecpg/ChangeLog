@@ -1558,6 +1558,11 @@ Mon Jul  7 14:13:43 CEST 2003
 Tue Jul  8 09:04:31 CEST 2003
 
 	- Fixed segfault in ECPGconnect in Informix mode.
+	
+Tue Jul  8 12:34:00 CEST 2003
+
+	- Made Informix decimal-ascii conversion honor Informix NULLs.
+	- Informix variable handling didn't cope well with arrays.
 	- Set ecpg version to 3.0.0
 	- Set ecpg library to 4.0.0
 	- Set pgtypes library to 1.0.0

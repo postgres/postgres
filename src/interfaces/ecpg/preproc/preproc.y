@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.244 2003/07/01 12:40:51 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.245 2003/07/08 12:11:32 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -208,10 +208,18 @@ adjust_informix(struct arguments *list)
 	 	/* change variable name to "ECPG_informix_get_var(<counter>)" */
 		original_var = ptr->variable->name;
 		sprintf(temp, "%d))", ecpg_informix_var);
-		ptr->variable = new_variable(cat_str(4, make_str("*("), mm_strdup(ECPGtype_name(ptr->variable->type->type)), make_str(" *)(ECPG_informix_get_var("), mm_strdup(temp)), ECPGmake_simple_type(ptr->variable->type->type, ptr->variable->type->size), 0);
 		
 		/* create call to "ECPG_informix_set_var(<counter>, <pointer>. <linen number>)" */
-		sprintf(temp, "%d, &(", ecpg_informix_var++);
+		if (atoi(ptr->variable->type->size) > 1)
+		{
+			ptr->variable = new_variable(cat_str(4, make_str("("), mm_strdup(ECPGtype_name(ptr->variable->type->type)), make_str(" *)(ECPG_informix_get_var("), mm_strdup(temp)), ECPGmake_simple_type(ptr->variable->type->type, ptr->variable->type->size), 0);
+			sprintf(temp, "%d, (", ecpg_informix_var++);
+		}
+		else
+		{
+			ptr->variable = new_variable(cat_str(4, make_str("*("), mm_strdup(ECPGtype_name(ptr->variable->type->type)), make_str(" *)(ECPG_informix_get_var("), mm_strdup(temp)), ECPGmake_simple_type(ptr->variable->type->type, ptr->variable->type->size), 0);
+			sprintf(temp, "%d, &(", ecpg_informix_var++);
+		}
 		result = cat_str(5, result, make_str("ECPG_informix_set_var("), mm_strdup(temp), mm_strdup(original_var), make_str("), __LINE__);\n"));
 	 }
 

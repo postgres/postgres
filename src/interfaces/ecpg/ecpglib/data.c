@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/data.c,v 1.10 2003/07/01 12:40:51 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/data.c,v 1.11 2003/07/08 12:11:28 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -24,6 +24,7 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 {
 	struct sqlca_t *sqlca = ECPGget_sqlca();
 	char	   *pval = (char *) PQgetvalue(results, act_tuple, act_field);
+	int	    value_for_indicator = 0;
 
 	ECPGlog("ECPGget_data line %d: RESULT: %s offset: %ld\n", lineno, pval ? pval : "", offset);
 
@@ -53,31 +54,34 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 	/* We will have to decode the value */
 
 	/*
-	 * check for null value and set indicator accordingly
+	 * check for null value and set indicator accordingly, i.e. -1 if NULL and 0 if not
 	 */
 	if (PQgetisnull(results, act_tuple, act_field))
+		value_for_indicator = -1;
+	
+	switch (ind_type)
 	{
-		switch (ind_type)
-		{
-			case ECPGt_short:
-			case ECPGt_unsigned_short:
-				*((short *) (ind + ind_offset * act_tuple)) = -1;
-				break;
-			case ECPGt_int:
-			case ECPGt_unsigned_int:
-				*((int *) (ind + ind_offset * act_tuple)) = -1;
-				break;
-			case ECPGt_long:
-			case ECPGt_unsigned_long:
-				*((long *) (ind + ind_offset * act_tuple)) = -1;
-				break;
+		case ECPGt_short:
+		case ECPGt_unsigned_short:
+			*((short *) (ind + ind_offset * act_tuple)) = value_for_indicator;
+			break;
+		case ECPGt_int:
+		case ECPGt_unsigned_int:
+			*((int *) (ind + ind_offset * act_tuple)) = value_for_indicator;
+			break;
+		case ECPGt_long:
+		case ECPGt_unsigned_long:
+			*((long *) (ind + ind_offset * act_tuple)) = value_for_indicator;
+			break;
 #ifdef HAVE_LONG_LONG_INT_64
-			case ECPGt_long_long:
-			case ECPGt_unsigned_long_long:
-				*((long long int *) (ind + ind_offset * act_tuple)) = -1;
-				break;
+		case ECPGt_long_long:
+		case ECPGt_unsigned_long_long:
+			*((long long int *) (ind + ind_offset * act_tuple)) = value_for_indicator;
+			break;
 #endif   /* HAVE_LONG_LONG_INT_64 */
-			case ECPGt_NO_INDICATOR:
+		case ECPGt_NO_INDICATOR:
+			if (value_for_indicator == -1)
+			{				
 				if (force_indicator == false)
 				{
 					/* Informix has an additional way to specify NULLs
@@ -89,15 +93,16 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 					ECPGraise(lineno, ECPG_MISSING_INDICATOR, NULL);
 					return (false);
 				}
-				break;
-			default:
-				ECPGraise(lineno, ECPG_UNSUPPORTED, ECPGtype_name(ind_type));
-				return (false);
-				break;
-		}
-
-		return (true);
+			}
+			break;
+		default:
+			ECPGraise(lineno, ECPG_UNSUPPORTED, ECPGtype_name(ind_type));
+			return (false);
+			break;
 	}
+
+	if (value_for_indicator == -1)
+		return (true);
 
 	do
 	{

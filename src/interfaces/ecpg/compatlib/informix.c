@@ -8,6 +8,7 @@
 #include <ecpg_informix.h>
 #include <pgtypes_error.h>
 #include <pgtypes_date.h>
+#include <sqltypes.h>
 
 char * ECPGalloc(long, int);
 
@@ -147,8 +148,13 @@ deccvasc(char *cp, int len, Decimal *np)
 	char *str = strndup(cp, len); /* Decimal_in always converts the complete string */
 	int ret = 0;
 	Numeric *result;
-	
-	
+
+	if (risnull(CSTRINGTYPE, cp))
+	{
+		rsetnull(CDECIMALTYPE, (char *)np);
+		return 0;
+	}
+
 	if (!str)
 		ret = -1201;
 	else
@@ -291,6 +297,12 @@ dectoasc(Decimal *np, char *cp, int len, int right)
 
 	if (nres == NULL)
 		return -1211;
+
+	if (risnull(CDECIMALTYPE, (char *)np))
+	{
+		rsetnull(CSTRINGTYPE, (char *)cp);
+		return 0;
+	}
 
 	if (PGTYPESnumeric_from_decimal(np, nres) != 0)
 		return -1211;
