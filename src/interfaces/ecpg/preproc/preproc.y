@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.282 2004/05/10 13:46:06 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.283 2004/05/21 13:50:12 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -714,7 +714,7 @@ stmt:  AlterDatabaseSetStmt		{ output_statement($1, 0, connection); }
 		{
 			if (connection)
 				mmerror(PARSE_ERROR, ET_ERROR, "no at option for deallocate statement.\n");
-			fprintf(yyout, "{ ECPGdeallocate(__LINE__, \"%s\");", $1);
+			fprintf(yyout, "{ ECPGdeallocate(__LINE__, %d, %s);", compat, $1);
 			whenever_action(2);
 			free($1);
 		}
@@ -4249,26 +4249,16 @@ connection_target: database_name opt_server opt_port
 
 			$$ = make3_str(make3_str(make_str("\""), $1, make_str(":")), $3, make3_str(make3_str($4, make_str("/"), $6),	$7, make_str("\"")));
 		}
-		| StringConst
+		| Sconst
 		{
 			if ($1[0] == '\"')
 				$$ = $1;
-			else if (strcmp($1, " ?") == 0) /* variable */
-			{
-				enum ECPGttype type = argsinsert->variable->type->type;
-
-				/* if array see what's inside */
-				if (type == ECPGt_array)
-					type = argsinsert->variable->type->u.element->type;
-
-				/* handle varchars */
-				if (type == ECPGt_varchar)
-					$$ = make2_str(mm_strdup(argsinsert->variable->name), make_str(".arr"));
-				else
-					$$ = mm_strdup(argsinsert->variable->name);
-			}
 			else
 				$$ = make3_str(make_str("\""), $1, make_str("\""));
+		}
+		| char_variable
+		{
+			$$ = $1;
 		}
 		;
 
@@ -4365,26 +4355,32 @@ user_name: UserId
 
 char_variable: cvariable
 		{
-			/* check if we have a char variable */
+			/* check if we have a string variable */
 			struct variable *p = find_variable($1);
 			enum ECPGttype type = p->type->type;
 
-			/* if array see what's inside */
-			if (type == ECPGt_array)
-				type = p->type->u.element->type;
-
-			switch (type)
-			{
-				case ECPGt_char:
-				case ECPGt_unsigned_char:
-					$$ = $1;
-					break;
-				case ECPGt_varchar:
-					$$ = make2_str($1, make_str(".arr"));
-					break;
-				default:
+			/* If we have just one character this is not a string */
+			if (atol(p->type->size) == 1)
 					mmerror(PARSE_ERROR, ET_ERROR, "invalid datatype");
-					break;
+			else
+			{
+				/* if array see what's inside */
+				if (type == ECPGt_array)
+					type = p->type->u.element->type;
+
+				switch (type)
+				{
+					case ECPGt_char:
+					case ECPGt_unsigned_char:
+						$$ = $1;
+						break;
+					case ECPGt_varchar:
+						$$ = make2_str($1, make_str(".arr"));
+						break;
+					default:
+						mmerror(PARSE_ERROR, ET_ERROR, "invalid datatype");
+						break;
+				}
 			}
 		}
 		;

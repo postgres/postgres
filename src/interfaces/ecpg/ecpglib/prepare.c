@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/prepare.c,v 1.11 2004/01/28 09:52:14 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/prepare.c,v 1.12 2004/05/21 13:50:12 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -116,7 +116,7 @@ ECPGdeallocate(int lineno, int c, char *name)
 	{
 		/*
 		 * Just ignore all errors since we do not know the list of cursors
-		 * we are allowed to free. We have to trust that the software.
+		 * we are allowed to free. We have to trust the software.
 		 */
 		return true;
 	}
