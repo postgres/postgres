@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pg_passwd.sgml,v 1.6 2001/02/20 01:16:49 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pg_passwd.sgml,v 1.7 2001/06/18 16:11:30 momjian Exp $
 Postgres documentation
 -->
 
@@ -16,7 +16,7 @@ Postgres documentation
 
  <refnamediv>
   <refname>pg_passwd</refname>
-  <refpurpose>Manipulate a text password file</refpurpose>
+  <refpurpose>Manipulate a secondary password file</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>
@@ -29,30 +29,28 @@ Postgres documentation
  <refsect1 id="app-pg-passwd-description">
   <title>Description</title>
   <para>
-   <application>pg_passwd</application> is a tool to manipulate a flat
-   text password file for the purpose of using that file to control
-   client authentication of the
-   <productname>PostgreSQL</productname> server.  More information
+   <application>pg_passwd</application> is a tool for manipulating flat
+   text password files. These files can control client authentication of
+   the <productname>PostgreSQL</productname> server. More information
    about setting up this authentication mechanism can be found in the
    <citetitle>Administrator's Guide</citetitle>.
   </para>
 
   <para>
-   The form of a text password file is one entry per line; the fields
-   of each entry are separated by colons.  The first field is the user
-   name, the second field is the encrypted password.  Other fields are
+   The format of a text password file is one entry per line; the fields
+   of each entry are separated by colons. The first field is the user
+   name, the second field is the encrypted password. Other fields are
    ignored (to allow password files to be shared between applications
-   that use similar formats).  The functionality of the
-   <application>pg_passwd</application> utility is to enable a user to
-   interactively add entries to such a file, to alter passwords of
-   existing entries, and to take care of encrypting the passwords.
+   that use similar formats). <application>pg_passwd</application>
+   enables users to interactively add entries to such a file, to alter
+   passwords of existing entries, and to encrypt such passwords.
   </para>
 
   <para>
-   Supply the name of the password file as argument to the <application>pg_passwd</application>
-   command.  To be of use for client authentication the file needs to
-   be located in the server's data directory, and the base name of
-   the file needs to be specified in the
+   Supply the name of the password file as argument to the
+   <application>pg_passwd</application> command. To be used by
+   PostgreSQL, the file needs to be located in the server's data
+   directory, and the base name of the file needs to be specified in the
    <filename>pg_hba.conf</filename> access control file.
 
 <screen>
@@ -90,11 +88,11 @@ host  mydb     133.65.96.250   255.255.255.255 password passwords
 
   <note>
    <para>
-    It is also useful to have entries in a password file with an empty
-    password field.  (This is different from an empty password.)
-    These entries cannot be managed by
-    <application>pg_passwd</application>, but it is always possible to
-    edit password files manually.
+    It is also useful to have entries in a password file with empty
+    password fields. (This is different from an empty password.) Such
+    entries allow you to restrict users who can access the system. These
+    entries cannot be managed by <application>pg_passwd</application>,
+    but you can edit password files manually.
    </para>
   </note>
  </refsect1>

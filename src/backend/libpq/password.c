@@ -2,7 +2,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: password.c,v 1.36 2001/03/22 03:59:30 momjian Exp $
+ * $Id: password.c,v 1.37 2001/06/18 16:11:30 momjian Exp $
  *
  */
 
@@ -76,9 +76,11 @@ verify_password(const Port *port, const char *user, const char *password)
 			FreeFile(pw_file);
 
 			/*
-			 * If the password is empty of "+" then we use the regular
+			 * If the password is empty or "+" then we use the regular
 			 * pg_shadow passwords. If we use crypt then we have to use
-			 * pg_shadow passwords no matter what.
+			 * pg_shadow passwords no matter what.  This is because
+			 * the current code needs non-encrypted passwords to
+			 * encrypt with a random salt.
 			 */
 			if (port->auth_method == uaCrypt
 				|| test_pw == NULL || test_pw[0] == '\0'
