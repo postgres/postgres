@@ -347,6 +347,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 	  } catch (NumberFormatException e) {
 	    throw new PSQLException ("postgresql.res.badbigdec",s);
 	  }
+	if (scale==-1) return val;
 	  try
 	    {
 	      return val.setScale(scale);
@@ -739,7 +740,8 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
       case Types.BIGINT:
 	return new Long(getLong(columnIndex));
       case Types.NUMERIC:
-	return getBigDecimal(columnIndex, ((field.mod-4) & 0xffff));
+	return getBigDecimal
+	    (columnIndex, (field.mod==-1)?-1:((field.mod-4) & 0xffff));
       case Types.REAL:
 	return new Float(getFloat(columnIndex));
       case Types.DOUBLE:
@@ -804,9 +806,10 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 	if(index<0)
 	    index=rows.size()+index;
 	
-	if (index==0 || index > rows.size())
+	if (index > rows.size())
 	    return false;
 	
+	current_row=index;
 	this_row = (byte [][])rows.elementAt(index);
 	return true;
     }
