@@ -456,4 +456,18 @@ extern void srandom(int seed);
  */
 #define TBL_FREE_CMD_MEMORY
 
+/*
+ * ELOG_TIMESTAMPS: adds a timestamp with the following format to elog
+ * messages:  yymmdd.hh:mm:ss.mmm [pid] message
+ */
+/* #define ELOG_TIMESTAMPS */
+
+/*
+ * USE_SYSLOG: use syslog for elog and error messages printed by tprintf
+ * and eprintf. This must be activated with the syslog flag in pg_options
+ * (syslog=0 for stdio, syslog=1 for stdio+syslog, syslog=2 for syslog).
+ * For information see backend/utils/misc/trace.c (Massimo Dal Zotto).
+ */
+/* #define USE_SYSLOG */
+
 #endif /* CONFIG_H */
