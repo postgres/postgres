@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.52 2003/09/20 20:12:04 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.53 2003/10/17 18:57:00 tgl Exp $
 -->
 
 <chapter id="ecpg">
@@ -1151,13 +1151,13 @@ struct
     two characters indicate the general class of the condition, the
     last three characters indicate a subclass of the general
     condition.  A successful state is indicated by the code
-    <literal>00000</literal>.  Further information about the codes can
-    be found XXX.  The <literal>SQLSTATE</literal> codes are for the
-    most part defined in the SQL standard.  The
+    <literal>00000</literal>.  The <literal>SQLSTATE</literal> codes are for
+    the most part defined in the SQL standard.  The
     <productname>PostgreSQL</productname> server natively supports
     <literal>SQLSTATE</literal> error codes; therefore a high degree
     of consistency can be achieved by using this error code scheme
-    throughout all applications.
+    throughout all applications.  For further information see
+    <xref linkend="errcodes-appendix">.
    </para>
 
    <para>
@@ -1178,7 +1178,8 @@ struct
     <literal>SQLSTATE</literal> is also listed.  There is, however, no
     one-to-one or one-to-many mapping between the two schemes (indeed
     it is many-to-many), so you should consult the global
-    <literal>SQLSTATE</literal> listing in XXX in each case.
+    <literal>SQLSTATE</literal> listing in <xref linkend="errcodes-appendix">
+    in each case.
    </para>
 
    <para>

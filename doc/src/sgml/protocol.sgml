@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/protocol.sgml,v 1.45 2003/09/20 20:12:05 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/protocol.sgml,v 1.46 2003/10/17 18:57:01 tgl Exp $ -->
 
 <chapter id="protocol">
  <title>Frontend/Backend Protocol</title>
@@ -3833,9 +3833,8 @@ message.
 </Term>
 <ListItem>
 <Para>
-        Code: the SQLSTATE code for the error (a 5-character
-        string following SQL spec conventions).  Not localizable.
-        Always present.
+        Code: the SQLSTATE code for the error (see <xref
+	linkend="errcodes-appendix">).  Not localizable.  Always present.
 </Para>
 </ListItem>
 </VarListEntry>

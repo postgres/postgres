@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/filelist.sgml,v 1.30 2003/09/01 23:01:49 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/filelist.sgml,v 1.31 2003/10/17 18:57:01 tgl Exp $ -->
 
 <!entity history    SYSTEM "history.sgml">
 <!entity info       SYSTEM "info.sgml">
@@ -23,6 +23,7 @@
 <!entity datetime   SYSTEM "datetime.sgml">
 <!entity ddl        SYSTEM "ddl.sgml">
 <!entity dml        SYSTEM "dml.sgml">
+<!entity errcodes   SYSTEM "errcodes.sgml">
 <!entity features   SYSTEM "features.sgml">
 <!entity func       SYSTEM "func.sgml">
 <!entity indices    SYSTEM "indices.sgml">

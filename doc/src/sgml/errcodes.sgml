@@ -1,0 +1,1138 @@
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/errcodes.sgml,v 1.1 2003/10/17 18:57:01 tgl Exp $ -->
+
+<appendix id="errcodes-appendix">
+ <title><productname>PostgreSQL</productname> Error Codes</title>
+
+ <indexterm zone="errcodes-appendix">
+  <primary>error codes</primary>
+  <secondary>list of</secondary>
+ </indexterm>
+
+ <para>
+  All messages emitted by the <productname>PostgreSQL</productname> server
+  are assigned five-character error codes that follow the SQL standard's
+  conventions for <quote>SQLSTATE</> codes.  Applications that need to know
+  which error condition has occurred should usually test the error code,
+  rather than looking at the textual error message.  The error codes are
+  less likely to change across <productname>PostgreSQL</productname> releases,
+  and also are not subject to change due to localization of error messages.
+ </para>
+
+ <para>
+  According to the standard, the first two characters of an error code
+  denote a class of errors, while the last three characters indicate
+  a specific condition within that class.  Thus, an application that
+  does not recognize the specific error code may still be able to infer
+  what to do from the error class.
+ </para>
+
+ <para>
+  <xref linkend="errcodes-table"> lists all the error codes defined in
+  <productname>PostgreSQL</productname> &version;.  (Some are not actually
+  used at present, but are defined by the SQL standard.)
+  The error classes are also shown.  For each error class there is a
+  <quote>standard</> error code having the last three characters
+  <literal>000</>.  This code is used only for error conditions that fall
+  within the class but do not have any more-specific code assigned.
+ </para>
+
+
+<!--
+ The following table should correspond to the contents of
+ src/include/utils/errcodes.h.
+-->
+
+<table id="errcodes-table">
+ <title><productname>PostgreSQL</productname> Error Codes</title>
+
+ <tgroup cols="2">
+  <thead>
+   <row>
+    <entry>Error Code</entry>
+    <entry>Meaning</entry>
+   </row>
+  </thead>
+
+  <tbody>
+
+<row>
+<entry>Class 00</entry>
+<entry>Successful Completion</entry>
+</row>
+
+<row>
+<entry><literal>00000</literal></entry>
+<entry>SUCCESSFUL COMPLETION</entry>
+</row>
+
+<row>
+<entry>Class 01</entry>
+<entry>Warning</entry>
+</row>
+
+<row>
+<entry><literal>01000</literal></entry>
+<entry>WARNING</entry>
+</row>
+
+<row>
+<entry><literal>0100C</literal></entry>
+<entry>WARNING DYNAMIC RESULT SETS RETURNED</entry>
+</row>
+
+<row>
+<entry><literal>01008</literal></entry>
+<entry>WARNING IMPLICIT ZERO BIT PADDING</entry>
+</row>
+
+<row>
+<entry><literal>01003</literal></entry>
+<entry>WARNING NULL VALUE ELIMINATED IN SET FUNCTION</entry>
+</row>
+
+<row>
+<entry><literal>01004</literal></entry>
+<entry>WARNING STRING DATA RIGHT TRUNCATION</entry>
+</row>
+
+
+<row>
+<entry>Class 02</entry>
+<entry>No Data --- this is also a warning class per SQL99</entry>
+</row>
+
+<row>
+<entry><literal>02000</literal></entry>
+<entry>NO DATA</entry>
+</row>
+
+<row>
+<entry><literal>02001</literal></entry>
+<entry>NO ADDITIONAL DYNAMIC RESULT SETS RETURNED</entry>
+</row>
+
+
+<row>
+<entry>Class 03</entry>
+<entry>SQL Statement Not Yet Complete</entry>
+</row>
+
+<row>
+<entry><literal>03000</literal></entry>
+<entry>SQL STATEMENT NOT YET COMPLETE</entry>
+</row>
+
+
+<row>
+<entry>Class 08</entry>
+<entry>Connection Exception</entry>
+</row>
+
+<row>
+<entry><literal>08000</literal></entry>
+<entry>CONNECTION EXCEPTION</entry>
+</row>
+
+<row>
+<entry><literal>08003</literal></entry>
+<entry>CONNECTION DOES NOT EXIST</entry>
+</row>
+
+<row>
+<entry><literal>08006</literal></entry>
+<entry>CONNECTION FAILURE</entry>
+</row>
+
+<row>
+<entry><literal>08001</literal></entry>
+<entry>SQLCLIENT UNABLE TO ESTABLISH SQLCONNECTION</entry>
+</row>
+
+<row>
+<entry><literal>08004</literal></entry>
+<entry>SQLSERVER REJECTED ESTABLISHMENT OF SQLCONNECTION</entry>
+</row>
+
+<row>
+<entry><literal>08007</literal></entry>
+<entry>TRANSACTION RESOLUTION UNKNOWN</entry>
+</row>
+
+<row>
+<entry><literal>08P01</literal></entry>
+<entry>PROTOCOL VIOLATION</entry>
+</row>
+
+
+<row>
+<entry>Class 09</entry>
+<entry>Triggered Action Exception</entry>
+</row>
+
+<row>
+<entry><literal>09000</literal></entry>
+<entry>TRIGGERED ACTION EXCEPTION</entry>
+</row>
+
+
+<row>
+<entry>Class 0A</entry>
+<entry>Feature Not Supported</entry>
+</row>
+
+<row>
+<entry><literal>0A000</literal></entry>
+<entry>FEATURE NOT SUPPORTED</entry>
+</row>
+
+
+<row>
+<entry>Class 0B</entry>
+<entry>Invalid Transaction Initiation</entry>
+</row>
+
+<row>
+<entry><literal>0B000</literal></entry>
+<entry>INVALID TRANSACTION INITIATION</entry>
+</row>
+
+
+<row>
+<entry>Class 0F</entry>
+<entry>Locator Exception</entry>
+</row>
+
+<row>
+<entry><literal>0F000</literal></entry>
+<entry>LOCATOR EXCEPTION</entry>
+</row>
+
+<row>
+<entry><literal>0F001</literal></entry>
+<entry>INVALID SPECIFICATION</entry>
+</row>
+
+
+<row>
+<entry>Class 0L</entry>
+<entry>Invalid Grantor</entry>
+</row>
+
+<row>
+<entry><literal>0L000</literal></entry>
+<entry>INVALID GRANTOR</entry>
+</row>
+
+<row>
+<entry><literal>0LP01</literal></entry>
+<entry>INVALID GRANT OPERATION</entry>
+</row>
+
+
+<row>
+<entry>Class 0P</entry>
+<entry>Invalid Role Specification</entry>
+</row>
+
+<row>
+<entry><literal>0P000</literal></entry>
+<entry>INVALID ROLE SPECIFICATION</entry>
+</row>
+
+
+<row>
+<entry>Class 21</entry>
+<entry>Cardinality Violation</entry>
+</row>
+
+<row>
+<entry><literal>21000</literal></entry>
+<entry>CARDINALITY VIOLATION</entry>
+</row>
+
+
+<row>
+<entry>Class 22</entry>
+<entry>Data Exception</entry>
+</row>
+
+<row>
+<entry><literal>22000</literal></entry>
+<entry>DATA EXCEPTION</entry>
+</row>
+
+<row>
+<entry><literal>2202E</literal></entry>
+<entry>ARRAY ELEMENT ERROR</entry>
+</row>
+
+<row>
+<entry><literal>22021</literal></entry>
+<entry>CHARACTER NOT IN REPERTOIRE</entry>
+</row>
+
+<row>
+<entry><literal>22008</literal></entry>
+<entry>DATETIME FIELD OVERFLOW</entry>
+</row>
+
+<row>
+<entry><literal>22012</literal></entry>
+<entry>DIVISION BY ZERO</entry>
+</row>
+
+<row>
+<entry><literal>22005</literal></entry>
+<entry>ERROR IN ASSIGNMENT</entry>
+</row>
+
+<row>
+<entry><literal>2200B</literal></entry>
+<entry>ESCAPE CHARACTER CONFLICT</entry>
+</row>
+
+<row>
+<entry><literal>22022</literal></entry>
+<entry>INDICATOR OVERFLOW</entry>
+</row>
+
+<row>
+<entry><literal>22015</literal></entry>
+<entry>INTERVAL FIELD OVERFLOW</entry>
+</row>
+
+<row>
+<entry><literal>22018</literal></entry>
+<entry>INVALID CHARACTER VALUE FOR CAST</entry>
+</row>
+
+<row>
+<entry><literal>22007</literal></entry>
+<entry>INVALID DATETIME FORMAT</entry>
+</row>
+
+<row>
+<entry><literal>22019</literal></entry>
+<entry>INVALID ESCAPE CHARACTER</entry>
+</row>
+
+<row>
+<entry><literal>2200D</literal></entry>
+<entry>INVALID ESCAPE OCTET</entry>
+</row>
+
+<row>
+<entry><literal>22025</literal></entry>
+<entry>INVALID ESCAPE SEQUENCE</entry>
+</row>
+
+<row>
+<entry><literal>22010</literal></entry>
+<entry>INVALID INDICATOR PARAMETER VALUE</entry>
+</row>
+
+<row>
+<entry><literal>22020</literal></entry>
+<entry>INVALID LIMIT VALUE</entry>
+</row>
+
+<row>
+<entry><literal>22023</literal></entry>
+<entry>INVALID PARAMETER VALUE</entry>
+</row>
+
+<row>
+<entry><literal>2201B</literal></entry>
+<entry>INVALID REGULAR EXPRESSION</entry>
+</row>
+
+<row>
+<entry><literal>22009</literal></entry>
+<entry>INVALID TIME ZONE DISPLACEMENT VALUE</entry>
+</row>
+
+<row>
+<entry><literal>2200C</literal></entry>
+<entry>INVALID USE OF ESCAPE CHARACTER</entry>
+</row>
+
+<row>
+<entry><literal>2200G</literal></entry>
+<entry>MOST SPECIFIC TYPE MISMATCH</entry>
+</row>
+
+<row>
+<entry><literal>22004</literal></entry>
+<entry>NULL VALUE NOT ALLOWED</entry>
+</row>
+
+<row>
+<entry><literal>22002</literal></entry>
+<entry>NULL VALUE NO INDICATOR PARAMETER</entry>
+</row>
+
+<row>
+<entry><literal>22003</literal></entry>
+<entry>NUMERIC VALUE OUT OF RANGE</entry>
+</row>
+
+<row>
+<entry><literal>22026</literal></entry>
+<entry>STRING DATA LENGTH MISMATCH</entry>
+</row>
+
+<row>
+<entry><literal>22001</literal></entry>
+<entry>STRING DATA RIGHT TRUNCATION</entry>
+</row>
+
+<row>
+<entry><literal>22011</literal></entry>
+<entry>SUBSTRING ERROR</entry>
+</row>
+
+<row>
+<entry><literal>22027</literal></entry>
+<entry>TRIM ERROR</entry>
+</row>
+
+<row>
+<entry><literal>22024</literal></entry>
+<entry>UNTERMINATED C STRING</entry>
+</row>
+
+<row>
+<entry><literal>2200F</literal></entry>
+<entry>ZERO LENGTH CHARACTER STRING</entry>
+</row>
+
+<row>
+<entry><literal>22P01</literal></entry>
+<entry>FLOATING POINT EXCEPTION</entry>
+</row>
+
+<row>
+<entry><literal>22P02</literal></entry>
+<entry>INVALID TEXT REPRESENTATION</entry>
+</row>
+
+<row>
+<entry><literal>22P03</literal></entry>
+<entry>INVALID BINARY REPRESENTATION</entry>
+</row>
+
+<row>
+<entry><literal>22P04</literal></entry>
+<entry>BAD COPY FILE FORMAT</entry>
+</row>
+
+<row>
+<entry><literal>22P05</literal></entry>
+<entry>UNTRANSLATABLE CHARACTER</entry>
+</row>
+
+
+<row>
+<entry>Class 23</entry>
+<entry>Integrity Constraint Violation</entry>
+</row>
+
+<row>
+<entry><literal>23000</literal></entry>
+<entry>INTEGRITY CONSTRAINT VIOLATION</entry>
+</row>
+
+<row>
+<entry><literal>23001</literal></entry>
+<entry>RESTRICT VIOLATION</entry>
+</row>
+
+<row>
+<entry><literal>23502</literal></entry>
+<entry>NOT NULL VIOLATION</entry>
+</row>
+
+<row>
+<entry><literal>23503</literal></entry>
+<entry>FOREIGN KEY VIOLATION</entry>
+</row>
+
+<row>
+<entry><literal>23505</literal></entry>
+<entry>UNIQUE VIOLATION</entry>
+</row>
+
+<row>
+<entry><literal>23514</literal></entry>
+<entry>CHECK VIOLATION</entry>
+</row>
+
+
+<row>
+<entry>Class 24</entry>
+<entry>Invalid Cursor State</entry>
+</row>
+
+<row>
+<entry><literal>24000</literal></entry>
+<entry>INVALID CURSOR STATE</entry>
+</row>
+
+
+<row>
+<entry>Class 25</entry>
+<entry>Invalid Transaction State</entry>
+</row>
+
+<row>
+<entry><literal>25000</literal></entry>
+<entry>INVALID TRANSACTION STATE</entry>
+</row>
+
+<row>
+<entry><literal>25001</literal></entry>
+<entry>ACTIVE SQL TRANSACTION</entry>
+</row>
+
+<row>
+<entry><literal>25002</literal></entry>
+<entry>BRANCH TRANSACTION ALREADY ACTIVE</entry>
+</row>
+
+<row>
+<entry><literal>25008</literal></entry>
+<entry>HELD CURSOR REQUIRES SAME ISOLATION LEVEL</entry>
+</row>
+
+<row>
+<entry><literal>25003</literal></entry>
+<entry>INAPPROPRIATE ACCESS MODE FOR BRANCH TRANSACTION</entry>
+</row>
+
+<row>
+<entry><literal>25004</literal></entry>
+<entry>INAPPROPRIATE ISOLATION LEVEL FOR BRANCH TRANSACTION</entry>
+</row>
+
+<row>
+<entry><literal>25005</literal></entry>
+<entry>NO ACTIVE SQL TRANSACTION FOR BRANCH TRANSACTION</entry>
+</row>
+
+<row>
+<entry><literal>25006</literal></entry>
+<entry>READ ONLY SQL TRANSACTION</entry>
+</row>
+
+<row>
+<entry><literal>25007</literal></entry>
+<entry>SCHEMA AND DATA STATEMENT MIXING NOT SUPPORTED</entry>
+</row>
+
+<row>
+<entry><literal>25P01</literal></entry>
+<entry>NO ACTIVE SQL TRANSACTION</entry>
+</row>
+
+<row>
+<entry><literal>25P02</literal></entry>
+<entry>IN FAILED SQL TRANSACTION</entry>
+</row>
+
+
+<row>
+<entry>Class 26</entry>
+<entry>Invalid SQL Statement Name</entry>
+</row>
+
+<row>
+<entry><literal>26000</literal></entry>
+<entry>INVALID SQL STATEMENT NAME</entry>
+</row>
+
+
+<row>
+<entry>Class 27</entry>
+<entry>Triggered Data Change Violation</entry>
+</row>
+
+<row>
+<entry><literal>27000</literal></entry>
+<entry>TRIGGERED DATA CHANGE VIOLATION</entry>
+</row>
+
+
+<row>
+<entry>Class 28</entry>
+<entry>Invalid Authorization Specification</entry>
+</row>
+
+<row>
+<entry><literal>28000</literal></entry>
+<entry>INVALID AUTHORIZATION SPECIFICATION</entry>
+</row>
+
+
+<row>
+<entry>Class 2B</entry>
+<entry>Dependent Privilege Descriptors Still Exist</entry>
+</row>
+
+<row>
+<entry><literal>2B000</literal></entry>
+<entry>DEPENDENT PRIVILEGE DESCRIPTORS STILL EXIST</entry>
+</row>
+
+<row>
+<entry><literal>2BP01</literal></entry>
+<entry>DEPENDENT OBJECTS STILL EXIST</entry>
+</row>
+
+
+<row>
+<entry>Class 2D</entry>
+<entry>Invalid Transaction Termination</entry>
+</row>
+
+<row>
+<entry><literal>2D000</literal></entry>
+<entry>INVALID TRANSACTION TERMINATION</entry>
+</row>
+
+
+<row>
+<entry>Class 2F</entry>
+<entry>SQL Routine Exception</entry>
+</row>
+
+<row>
+<entry><literal>2F000</literal></entry>
+<entry>SQL ROUTINE EXCEPTION</entry>
+</row>
+
+<row>
+<entry><literal>2F005</literal></entry>
+<entry>FUNCTION EXECUTED NO RETURN STATEMENT</entry>
+</row>
+
+<row>
+<entry><literal>2F002</literal></entry>
+<entry>MODIFYING SQL DATA NOT PERMITTED</entry>
+</row>
+
+<row>
+<entry><literal>2F003</literal></entry>
+<entry>PROHIBITED SQL STATEMENT ATTEMPTED</entry>
+</row>
+
+<row>
+<entry><literal>2F004</literal></entry>
+<entry>READING SQL DATA NOT PERMITTED</entry>
+</row>
+
+
+<row>
+<entry>Class 34</entry>
+<entry>Invalid Cursor Name</entry>
+</row>
+
+<row>
+<entry><literal>34000</literal></entry>
+<entry>INVALID CURSOR NAME</entry>
+</row>
+
+
+<row>
+<entry>Class 38</entry>
+<entry>External Routine Exception</entry>
+</row>
+
+<row>
+<entry><literal>38000</literal></entry>
+<entry>EXTERNAL ROUTINE EXCEPTION</entry>
+</row>
+
+<row>
+<entry><literal>38001</literal></entry>
+<entry>CONTAINING SQL NOT PERMITTED</entry>
+</row>
+
+<row>
+<entry><literal>38002</literal></entry>
+<entry>MODIFYING SQL DATA NOT PERMITTED</entry>
+</row>
+
+<row>
+<entry><literal>38003</literal></entry>
+<entry>PROHIBITED SQL STATEMENT ATTEMPTED</entry>
+</row>
+
+<row>
+<entry><literal>38004</literal></entry>
+<entry>READING SQL DATA NOT PERMITTED</entry>
+</row>
+
+
+<row>
+<entry>Class 39</entry>
+<entry>External Routine Invocation Exception</entry>
+</row>
+
+<row>
+<entry><literal>39000</literal></entry>
+<entry>EXTERNAL ROUTINE INVOCATION EXCEPTION</entry>
+</row>
+
+<row>
+<entry><literal>39001</literal></entry>
+<entry>INVALID SQLSTATE RETURNED</entry>
+</row>
+
+<row>
+<entry><literal>39004</literal></entry>
+<entry>NULL VALUE NOT ALLOWED</entry>
+</row>
+
+<row>
+<entry><literal>39P01</literal></entry>
+<entry>TRIGGER PROTOCOL VIOLATED</entry>
+</row>
+
+<row>
+<entry><literal>39P02</literal></entry>
+<entry>SRF PROTOCOL VIOLATED</entry>
+</row>
+
+
+<row>
+<entry>Class 3D</entry>
+<entry>Invalid Catalog Name</entry>
+</row>
+
+<row>
+<entry><literal>3D000</literal></entry>
+<entry>INVALID CATALOG NAME</entry>
+</row>
+
+
+<row>
+<entry>Class 3F</entry>
+<entry>Invalid Schema Name</entry>
+</row>
+
+<row>
+<entry><literal>3F000</literal></entry>
+<entry>INVALID SCHEMA NAME</entry>
+</row>
+
+
+<row>
+<entry>Class 40</entry>
+<entry>Transaction Rollback</entry>
+</row>
+
+<row>
+<entry><literal>40000</literal></entry>
+<entry>TRANSACTION ROLLBACK</entry>
+</row>
+
+<row>
+<entry><literal>40002</literal></entry>
+<entry>INTEGRITY CONSTRAINT VIOLATION</entry>
+</row>
+
+<row>
+<entry><literal>40001</literal></entry>
+<entry>SERIALIZATION FAILURE</entry>
+</row>
+
+<row>
+<entry><literal>40003</literal></entry>
+<entry>STATEMENT COMPLETION UNKNOWN</entry>
+</row>
+
+<row>
+<entry><literal>40P01</literal></entry>
+<entry>DEADLOCK DETECTED</entry>
+</row>
+
+
+<row>
+<entry>Class 42</entry>
+<entry>Syntax Error or Access Rule Violation</entry>
+</row>
+
+<row>
+<entry><literal>42000</literal></entry>
+<entry>SYNTAX ERROR OR ACCESS RULE VIOLATION</entry>
+</row>
+
+<row>
+<entry><literal>42601</literal></entry>
+<entry>SYNTAX ERROR</entry>
+</row>
+
+<row>
+<entry><literal>42501</literal></entry>
+<entry>INSUFFICIENT PRIVILEGE</entry>
+</row>
+
+<row>
+<entry><literal>42846</literal></entry>
+<entry>CANNOT COERCE</entry>
+</row>
+
+<row>
+<entry><literal>42803</literal></entry>
+<entry>GROUPING ERROR</entry>
+</row>
+
+<row>
+<entry><literal>42830</literal></entry>
+<entry>INVALID FOREIGN KEY</entry>
+</row>
+
+<row>
+<entry><literal>42602</literal></entry>
+<entry>INVALID NAME</entry>
+</row>
+
+<row>
+<entry><literal>42622</literal></entry>
+<entry>NAME TOO LONG</entry>
+</row>
+
+<row>
+<entry><literal>42939</literal></entry>
+<entry>RESERVED NAME</entry>
+</row>
+
+<row>
+<entry><literal>42804</literal></entry>
+<entry>DATATYPE MISMATCH</entry>
+</row>
+
+<row>
+<entry><literal>42P18</literal></entry>
+<entry>INDETERMINATE DATATYPE</entry>
+</row>
+
+<row>
+<entry><literal>42809</literal></entry>
+<entry>WRONG OBJECT TYPE</entry>
+</row>
+
+<row>
+<entry><literal>42703</literal></entry>
+<entry>UNDEFINED COLUMN</entry>
+</row>
+
+<row>
+<entry><literal>42883</literal></entry>
+<entry>UNDEFINED FUNCTION</entry>
+</row>
+
+<row>
+<entry><literal>42P01</literal></entry>
+<entry>UNDEFINED TABLE</entry>
+</row>
+
+<row>
+<entry><literal>42P02</literal></entry>
+<entry>UNDEFINED PARAMETER</entry>
+</row>
+
+<row>
+<entry><literal>42704</literal></entry>
+<entry>UNDEFINED OBJECT</entry>
+</row>
+
+<row>
+<entry><literal>42701</literal></entry>
+<entry>DUPLICATE COLUMN</entry>
+</row>
+
+<row>
+<entry><literal>42P03</literal></entry>
+<entry>DUPLICATE CURSOR</entry>
+</row>
+
+<row>
+<entry><literal>42P04</literal></entry>
+<entry>DUPLICATE DATABASE</entry>
+</row>
+
+<row>
+<entry><literal>42723</literal></entry>
+<entry>DUPLICATE FUNCTION</entry>
+</row>
+
+<row>
+<entry><literal>42P05</literal></entry>
+<entry>DUPLICATE PSTATEMENT</entry>
+</row>
+
+<row>
+<entry><literal>42P06</literal></entry>
+<entry>DUPLICATE SCHEMA</entry>
+</row>
+
+<row>
+<entry><literal>42P07</literal></entry>
+<entry>DUPLICATE TABLE</entry>
+</row>
+
+<row>
+<entry><literal>42712</literal></entry>
+<entry>DUPLICATE ALIAS</entry>
+</row>
+
+<row>
+<entry><literal>42710</literal></entry>
+<entry>DUPLICATE OBJECT</entry>
+</row>
+
+<row>
+<entry><literal>42702</literal></entry>
+<entry>AMBIGUOUS COLUMN</entry>
+</row>
+
+<row>
+<entry><literal>42725</literal></entry>
+<entry>AMBIGUOUS FUNCTION</entry>
+</row>
+
+<row>
+<entry><literal>42P08</literal></entry>
+<entry>AMBIGUOUS PARAMETER</entry>
+</row>
+
+<row>
+<entry><literal>42P09</literal></entry>
+<entry>AMBIGUOUS ALIAS</entry>
+</row>
+
+<row>
+<entry><literal>42P10</literal></entry>
+<entry>INVALID COLUMN REFERENCE</entry>
+</row>
+
+<row>
+<entry><literal>42611</literal></entry>
+<entry>INVALID COLUMN DEFINITION</entry>
+</row>
+
+<row>
+<entry><literal>42P11</literal></entry>
+<entry>INVALID CURSOR DEFINITION</entry>
+</row>
+
+<row>
+<entry><literal>42P12</literal></entry>
+<entry>INVALID DATABASE DEFINITION</entry>
+</row>
+
+<row>
+<entry><literal>42P13</literal></entry>
+<entry>INVALID FUNCTION DEFINITION</entry>
+</row>
+
+<row>
+<entry><literal>42P14</literal></entry>
+<entry>INVALID PSTATEMENT DEFINITION</entry>
+</row>
+
+<row>
+<entry><literal>42P15</literal></entry>
+<entry>INVALID SCHEMA DEFINITION</entry>
+</row>
+
+<row>
+<entry><literal>42P16</literal></entry>
+<entry>INVALID TABLE DEFINITION</entry>
+</row>
+
+<row>
+<entry><literal>42P17</literal></entry>
+<entry>INVALID OBJECT DEFINITION</entry>
+</row>
+
+
+<row>
+<entry>Class 44</entry>
+<entry>WITH CHECK OPTION Violation</entry>
+</row>
+
+<row>
+<entry><literal>44000</literal></entry>
+<entry>WITH CHECK OPTION VIOLATION</entry>
+</row>
+
+
+<row>
+<entry>Class 53</entry>
+<entry>Insufficient Resources</entry>
+</row>
+
+<row>
+<entry><literal>53000</literal></entry>
+<entry>INSUFFICIENT RESOURCES</entry>
+</row>
+
+<row>
+<entry><literal>53100</literal></entry>
+<entry>DISK FULL</entry>
+</row>
+
+<row>
+<entry><literal>53200</literal></entry>
+<entry>OUT OF MEMORY</entry>
+</row>
+
+<row>
+<entry><literal>53300</literal></entry>
+<entry>TOO MANY CONNECTIONS</entry>
+</row>
+
+
+<row>
+<entry>Class 54</entry>
+<entry>Program Limit Exceeded</entry>
+</row>
+
+<row>
+<entry><literal>54000</literal></entry>
+<entry>PROGRAM LIMIT EXCEEDED</entry>
+</row>
+
+<row>
+<entry><literal>54001</literal></entry>
+<entry>STATEMENT TOO COMPLEX</entry>
+</row>
+
+<row>
+<entry><literal>54011</literal></entry>
+<entry>TOO MANY COLUMNS</entry>
+</row>
+
+<row>
+<entry><literal>54023</literal></entry>
+<entry>TOO MANY ARGUMENTS</entry>
+</row>
+
+
+<row>
+<entry>Class 55</entry>
+<entry>Object Not In Prerequisite State</entry>
+</row>
+
+<row>
+<entry><literal>55000</literal></entry>
+<entry>OBJECT NOT IN PREREQUISITE STATE</entry>
+</row>
+
+<row>
+<entry><literal>55006</literal></entry>
+<entry>OBJECT IN USE</entry>
+</row>
+
+<row>
+<entry><literal>55P02</literal></entry>
+<entry>CANT CHANGE RUNTIME PARAM</entry>
+</row>
+
+
+<row>
+<entry>Class 57</entry>
+<entry>Operator Intervention</entry>
+</row>
+
+<row>
+<entry><literal>57000</literal></entry>
+<entry>OPERATOR INTERVENTION</entry>
+</row>
+
+<row>
+<entry><literal>57014</literal></entry>
+<entry>QUERY CANCELED</entry>
+</row>
+
+<row>
+<entry><literal>57P01</literal></entry>
+<entry>ADMIN SHUTDOWN</entry>
+</row>
+
+<row>
+<entry><literal>57P02</literal></entry>
+<entry>CRASH SHUTDOWN</entry>
+</row>
+
+<row>
+<entry><literal>57P03</literal></entry>
+<entry>CANNOT CONNECT NOW</entry>
+</row>
+
+
+<row>
+<entry>Class 58</entry>
+<entry>System Error (errors external to PostgreSQL itself)</entry>
+</row>
+
+<row>
+<entry><literal>58030</literal></entry>
+<entry>IO ERROR</entry>
+</row>
+
+<row>
+<entry><literal>58P01</literal></entry>
+<entry>UNDEFINED FILE</entry>
+</row>
+
+<row>
+<entry><literal>58P02</literal></entry>
+<entry>DUPLICATE FILE</entry>
+</row>
+
+
+<row>
+<entry>Class F0</entry>
+<entry>Configuration File Error</entry>
+</row>
+
+<row>
+<entry><literal>F0000</literal></entry>
+<entry>CONFIG FILE ERROR</entry>
+</row>
+
+<row>
+<entry><literal>F0001</literal></entry>
+<entry>LOCK FILE EXISTS</entry>
+</row>
+
+
+<row>
+<entry>Class XX</entry>
+<entry>Internal Error</entry>
+</row>
+
+<row>
+<entry><literal>XX000</literal></entry>
+<entry>INTERNAL ERROR</entry>
+</row>
+
+<row>
+<entry><literal>XX001</literal></entry>
+<entry>DATA CORRUPTED</entry>
+</row>
+
+<row>
+<entry><literal>XX002</literal></entry>
+<entry>INDEX CORRUPTED</entry>
+</row>
+
+  </tbody>
+ </tgroup>
+</table>
+
+
+</appendix>

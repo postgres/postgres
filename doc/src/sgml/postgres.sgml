@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.56 2003/09/12 22:17:23 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.57 2003/10/17 18:57:01 tgl Exp $
 -->
 
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook V3.1//EN" [
@@ -244,6 +244,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.56 2003/09/12 22:17:23 tg
  <part id="appendixes">
   <title>Appendixes</title>
 
+  &errcodes;
   &datetime;
   &keywords;
   &features;

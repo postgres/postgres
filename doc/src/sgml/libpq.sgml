@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.139 2003/10/04 21:05:20 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.140 2003/10/17 18:57:01 tgl Exp $
 -->
 
  <chapter id="libpq">
@@ -1332,8 +1332,8 @@ localized translation of one of these.  Always present.
 </term>
 <listitem>
 <para>
-The SQLSTATE code for the error (a 5-character string following SQL
-spec conventions).  Not localizable.  Always present.
+The SQLSTATE code for the error (see <xref linkend="errcodes-appendix">).
+Not localizable.  Always present.
 </para>
 </listitem>
 </varlistentry>
