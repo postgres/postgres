@@ -60,7 +60,34 @@
 	- Fix a problem with local settings regarding decimal separator (all ,
 	  are changed to .) Thank to Jan Kester.
 
-Thanks for all congratulation message and bug report I received.
+2002 09 27 - Version 1.11
+	- Fix a problem when retrieving package+package body. Thanks to Mike WILHELM-HILTZ
+	- Set LongReadLen to 100000 when exporting table information. Many users reports
+	  this kind of error: A-01406 LongReadLen too small and/or LongTruncOk not set
+	  This should fix the problem else you must increase the value (around line 422 of Ora2Pg.pm.
+	- Filtering by owner for better performance when retreiving database schema. Thanks to Jefferson MEDEIROS
+
+2002 12 03 - Version 1.12
+
+I have fixed 2 bugs when using it against Oracle 817R3 on linux.
+
+	- Fix problem regarding RI constraints, the owner name was not
+	  getting into the sql statement. Thank to Ian Boston.
+
+	- Moved all the RI constraints out of the create table statement.
+	  Thank to Ian Boston for this contribution. This was a major request
+	  from Ora2pg users.
+
+2002 12 26 - Version 2.0
+
+	- Clean code.
+	- Fix COPY output on column value with end of line and add column naming.
+	- Add support to the PostgreSQL 7.3 schema. So Oracle schema can now be exported.
+	  (see export_schema init option)
+	- Remove data extraction limit (old default: 10) so each tuple will be dump by default.
+
+
+Thanks for all congratulation message and bug report+fix I received.
 
 Gilles DAROLD <gilles@darold.net>
 

@@ -1,7 +1,6 @@
 <HTML>
 <HEAD>
 <TITLE>Ora2Pg - Oracle to PostgreSQL database schema converter</TITLE>
-<LINK REV="made" HREF="mailto:darold@localhost.localdomain">
 </HEAD>
 
 <BODY>
@@ -40,14 +39,14 @@
 		<LI><A HREF="#_get_sql_data">_get_sql_data</A></LI>
 		<LI><A HREF="#_get_data table">_get_data TABLE</A></LI>
 		<LI><A HREF="#_sql_type internal_type length precision scale">_sql_type INTERNAL_TYPE LENGTH PRECISION SCALE</A></LI>
-		<LI><A HREF="#_column_info table">_column_info TABLE</A></LI>
-		<LI><A HREF="#_primary_key table">_primary_key TABLE</A></LI>
-		<LI><A HREF="#_unique_key table">_unique_key TABLE</A></LI>
-		<LI><A HREF="#_foreign_key table">_foreign_key TABLE</A></LI>
+		<LI><A HREF="#_column_info table owner">_column_info TABLE OWNER</A></LI>
+		<LI><A HREF="#_primary_key table owner">_primary_key TABLE OWNER</A></LI>
+		<LI><A HREF="#_unique_key table owner">_unique_key TABLE OWNER</A></LI>
+		<LI><A HREF="#_foreign_key table owner">_foreign_key TABLE OWNER</A></LI>
 		<LI><A HREF="#_get_users">_get_users</A></LI>
 		<LI><A HREF="#_get_roles">_get_roles</A></LI>
 		<LI><A HREF="#_get_all_grants">_get_all_grants</A></LI>
-		<LI><A HREF="#_get_indexes table">_get_indexes TABLE</A></LI>
+		<LI><A HREF="#_get_indexes table owner">_get_indexes TABLE OWNER</A></LI>
 		<LI><A HREF="#_get_sequences">_get_sequences</A></LI>
 		<LI><A HREF="#_get_views">_get_views</A></LI>
 		<LI><A HREF="#_alias_info">_alias_info</A></LI>
@@ -141,6 +140,8 @@ to your schema name:</P>
 <P>This schema definition can also be needed when you want to export data. If export
 failed and complain that the table doesn't exists use this to prefix the table name
 by the schema name.</P>
+<P>If you want to use PostgreSQL 7.3 schema support activate the init option
+'export_schema' set to 1. Default is no schema export</P>
 <P>To know at which indices tables can be found during extraction use the option:</P>
 <PRE>
         showtableid =&gt; 1</PRE>
@@ -224,6 +225,7 @@ the connection parameters to the Oracle database.</P>
           with unique, primary and foreign key.
         - Grants/privileges export by user and group.
         - Table selection (by name and max table) export.
+        - Export Oracle schema to PostgreSQL 7.3 schema.
         - Predefined functions/triggers/procedures/packages export.
         - Data export.
         - Sql query converter (todo)</PRE>
@@ -248,11 +250,12 @@ so contribution is welcome.</P>
         - type          : Type of data to extract, can be TABLE,VIEW,GRANT,SEQUENCE,
                           TRIGGER,FUNCTION,PROCEDURE,DATA,COPY,PACKAGE
         - debug         : Print the current state of the parsing
+        - export_schema : Export Oracle schema to PostgreSQL 7.3 schema
         - tables        : Extract only the given tables (arrayref)
         - showtableid   : Display only the table indice during extraction
         - min           : Indice to begin extraction. Default to 0
         - max           : Indice to end extraction. Default to 0 mean no limits
-        - data_limit    : Number max of tuples to return during data extraction (default 10)</PRE>
+        - data_limit    : Number max of tuples to return during data extraction (default 0 no limit)</PRE>
 <P>Attempt that this list should grow a little more because all initialization is
 done by this way.</P>
 <P>
@@ -328,10 +331,10 @@ main hash of the database structure :</P>
 <P>It also call these other private subroutine to affect the main hash
 of the database structure :</P>
 <PRE>
-    @{$self-&gt;{tables}{$class_name}{column_info}} = $self-&gt;_column_info($class_name);
-    @{$self-&gt;{tables}{$class_name}{primary_key}} = $self-&gt;_primary_key($class_name);
-    @{$self-&gt;{tables}{$class_name}{unique_key}}  = $self-&gt;_unique_key($class_name);
-    @{$self-&gt;{tables}{$class_name}{foreign_key}} = $self-&gt;_foreign_key($class_name);</PRE>
+    @{$self-&gt;{tables}{$class_name}{column_info}} = $self-&gt;_column_info($class_name, $owner);
+    @{$self-&gt;{tables}{$class_name}{primary_key}} = $self-&gt;_primary_key($class_name, $owner);
+    @{$self-&gt;{tables}{$class_name}{unique_key}}  = $self-&gt;_unique_key($class_name, $owner);
+    @{$self-&gt;{tables}{$class_name}{foreign_key}} = $self-&gt;_foreign_key($class_name, $owner);</PRE>
 <P>
 <H2><A NAME="_views">_views</A></H2>
 <P>This function is used to retrieve all views information.</P>
@@ -354,7 +357,7 @@ database values are the text definition of the views.</P>
 <P>This function return the PostgreSQL datatype corresponding to the
 Oracle internal type.</P>
 <P>
-<H2><A NAME="_column_info table">_column_info TABLE</A></H2>
+<H2><A NAME="_column_info table owner">_column_info TABLE OWNER</A></H2>
 <P>This function implements a Oracle-native column information.</P>
 <P>Return a list of array reference containing the following informations
 for each column the given a table</P>
@@ -366,19 +369,19 @@ for each column the given a table</P>
   default value
 )]</P>
 <P>
-<H2><A NAME="_primary_key table">_primary_key TABLE</A></H2>
+<H2><A NAME="_primary_key table owner">_primary_key TABLE OWNER</A></H2>
 <P>This function implements a Oracle-native primary key column
 information.</P>
 <P>Return a list of all column name defined as primary key
 for the given table.</P>
 <P>
-<H2><A NAME="_unique_key table">_unique_key TABLE</A></H2>
+<H2><A NAME="_unique_key table owner">_unique_key TABLE OWNER</A></H2>
 <P>This function implements a Oracle-native unique key column
 information.</P>
 <P>Return a list of all column name defined as unique key
 for the given table.</P>
 <P>
-<H2><A NAME="_foreign_key table">_foreign_key TABLE</A></H2>
+<H2><A NAME="_foreign_key table owner">_foreign_key TABLE OWNER</A></H2>
 <P>This function implements a Oracle-native foreign key reference
 information.</P>
 <P>Return a list of hash of hash of array reference. Ouuf! Nothing very difficult.
@@ -409,7 +412,7 @@ information.</P>
 information.</P>
 <P>Return a hash of all tables grants as an array of associated users.</P>
 <P>
-<H2><A NAME="_get_indexes table">_get_indexes TABLE</A></H2>
+<H2><A NAME="_get_indexes table owner">_get_indexes TABLE OWNER</A></H2>
 <P>This function implements a Oracle-native indexes information.</P>
 <P>Return hash of array containing all unique index and a hash of
 array of all indexes name which are not primary keys for the

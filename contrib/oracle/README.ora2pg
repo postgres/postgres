@@ -76,6 +76,9 @@ SYNOPSIS
     If export failed and complain that the table doesn't exists use this to
     prefix the table name by the schema name.
 
+    If you want to use PostgreSQL 7.3 schema support activate the init
+    option 'export_schema' set to 1. Default is no schema export
+
     To know at which indices tables can be found during extraction use the
     option:
 
@@ -184,6 +187,7 @@ ABSTRACT
               with unique, primary and foreign key.
             - Grants/privileges export by user and group.
             - Table selection (by name and max table) export.
+            - Export Oracle schema to PostgreSQL 7.3 schema.
             - Predefined functions/triggers/procedures/packages export.
             - Data export.
             - Sql query converter (todo)
@@ -209,11 +213,12 @@ PUBLIC METHODS
             - type          : Type of data to extract, can be TABLE,VIEW,GRANT,SEQUENCE,
                               TRIGGER,FUNCTION,PROCEDURE,DATA,COPY,PACKAGE
             - debug         : Print the current state of the parsing
+            - export_schema : Export Oracle schema to PostgreSQL 7.3 schema
             - tables        : Extract only the given tables (arrayref)
             - showtableid   : Display only the table indice during extraction
             - min           : Indice to begin extraction. Default to 0
             - max           : Indice to end extraction. Default to 0 mean no limits
-            - data_limit    : Number max of tuples to return during data extraction (default 10)
+            - data_limit    : Number max of tuples to return during data extraction (default 0 no limit)
 
     Attempt that this list should grow a little more because all
     initialization is done by this way.
@@ -306,10 +311,10 @@ PRIVATE METHODS
     It also call these other private subroutine to affect the main hash of
     the database structure :
 
-        @{$self->{tables}{$class_name}{column_info}} = $self->_column_info($class_name);
-        @{$self->{tables}{$class_name}{primary_key}} = $self->_primary_key($class_name);
-        @{$self->{tables}{$class_name}{unique_key}}  = $self->_unique_key($class_name);
-        @{$self->{tables}{$class_name}{foreign_key}} = $self->_foreign_key($class_name);
+        @{$self->{tables}{$class_name}{column_info}} = $self->_column_info($class_name, $owner);
+        @{$self->{tables}{$class_name}{primary_key}} = $self->_primary_key($class_name, $owner);
+        @{$self->{tables}{$class_name}{unique_key}}  = $self->_unique_key($class_name, $owner);
+        @{$self->{tables}{$class_name}{foreign_key}} = $self->_foreign_key($class_name, $owner);
 
   _views
 
@@ -340,7 +345,7 @@ PRIVATE METHODS
     This function return the PostgreSQL datatype corresponding to the Oracle
     internal type.
 
-  _column_info TABLE
+  _column_info TABLE OWNER
 
     This function implements a Oracle-native column information.
 
@@ -350,21 +355,21 @@ PRIVATE METHODS
     [( column name, column type, column length, nullable column, default
     value )]
 
-  _primary_key TABLE
+  _primary_key TABLE OWNER
 
     This function implements a Oracle-native primary key column information.
 
     Return a list of all column name defined as primary key for the given
     table.
 
-  _unique_key TABLE
+  _unique_key TABLE OWNER
 
     This function implements a Oracle-native unique key column information.
 
     Return a list of all column name defined as unique key for the given
     table.
 
-  _foreign_key TABLE
+  _foreign_key TABLE OWNER
 
     This function implements a Oracle-native foreign key reference
     information.
@@ -404,7 +409,7 @@ PRIVATE METHODS
 
     Return a hash of all tables grants as an array of associated users.
 
-  _get_indexes TABLE
+  _get_indexes TABLE OWNER
 
     This function implements a Oracle-native indexes information.
 
