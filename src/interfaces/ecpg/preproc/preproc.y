@@ -838,7 +838,7 @@ opt_boolean:  TRUE_P 		{ $$ = make_str("true"); }
 * - an integer or floating point number
 * - a time interval per SQL99
 */
-zone_value:  StringConst		{ $$ = $1; }
+zone_value:  AllConst		{ $$ = $1; }
 		| ConstInterval StringConst opt_interval
 					{
 					  $$ = cat_str(3, $1, $2, $3); 
@@ -847,7 +847,6 @@ zone_value:  StringConst		{ $$ = $1; }
 					{
 					  $$ = cat_str(6, $1, make_str("("), $3, make_str(")"), $5, $6);
 					}
-		| NumConst		{ $$ = $1; }
 		| DEFAULT		{ $$ = make_str("default"); }
 		| LOCAL			{ $$ = make_str("local"); }
 		;
@@ -5156,9 +5155,6 @@ ECPGColLabel:  ECPGColId	{ $$ = $1; }
 		| FREEZE	{ $$ = make_str("freeze"); }
 		| FROM		{ $$ = make_str("from"); }
 		| FULL		{ $$ = make_str("full"); }
-        	| IN            { $$ = make_str("in"); }
-	       	| IS            { $$ = make_str("is"); }
-        	| ISNULL        { $$ = make_str("isnull"); }
 		| GLOBAL	{ $$ = make_str("global"); }
 		| GROUP		{ $$ = make_str("group"); }
 		| HAVING	{ $$ = make_str("having"); }
@@ -5170,6 +5166,8 @@ ECPGColLabel:  ECPGColId	{ $$ = $1; }
 		| INTERSECT	{ $$ = make_str("intersect"); }
 		| INTERVAL	{ $$ = make_str("interval"); }
 		| INTO		{ $$ = make_str("into"); }
+		| IS		{ $$ = make_str("is"); }
+		| ISNULL	{ $$ = make_str("isnull"); }
 		| JOIN		{ $$ = make_str("join"); }
 		| LEADING	{ $$ = make_str("leading"); }
 		| LEFT		{ $$ = make_str("left"); }
