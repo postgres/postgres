@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.64 2001/09/28 08:15:35 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.65 2001/10/03 05:24:22 thomas Exp $
 -->
 
  <chapter id="datatype">
@@ -168,8 +168,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.64 2001/09/28 08:15:35 th
       </row>
 
       <row>
-       <entry><type>numeric(<replaceable>p</replaceable>, <replaceable>s</replaceable>)</type></entry>
-       <entry><type>decimal(<replaceable>p</replaceable>, <replaceable>s</replaceable>)</type></entry>
+       <entry><type>numeric(<replaceable>p</replaceable>,<replaceable>s</replaceable>)</type></entry>
+       <entry><type>decimal(<replaceable>p</replaceable>,<replaceable>s</replaceable>)</type></entry>
        <entry>exact numeric with selectable precision</entry>
       </row>
 
