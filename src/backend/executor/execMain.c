@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.195 2002/12/18 00:14:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.196 2003/01/08 23:32:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -166,7 +166,7 @@ ExecutorStart(QueryDesc *queryDesc)
  *		except to start up/shut down the destination.  Otherwise,
  *		we retrieve up to 'count' tuples in the specified direction.
  *
- *		Note: count = 0 is interpreted as no portal limit, e.g. run to
+ *		Note: count = 0 is interpreted as no portal limit, i.e., run to
  *		completion.
  *
  * ----------------------------------------------------------------
@@ -846,6 +846,7 @@ ExecEndPlan(PlanState *planstate, EState *estate)
  *
  *		processes the query plan to retrieve 'numberTuples' tuples in the
  *		direction specified.
+ *
  *		Retrieves all tuples if numberTuples is 0
  *
  *		result is either a slot containing the last tuple in the case
@@ -1091,10 +1092,10 @@ lnext:	;
 		/*
 		 * check our tuple count.. if we've processed the proper number
 		 * then quit, else loop again and process more tuples.  Zero
-		 * number_tuples means no limit.
+		 * numberTuples means no limit.
 		 */
 		current_tuple_count++;
-		if (numberTuples == current_tuple_count)
+		if (numberTuples && numberTuples == current_tuple_count)
 			break;
 	}
 
