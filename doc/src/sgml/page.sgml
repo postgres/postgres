@@ -1,10 +1,10 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/page.sgml,v 1.18 2004/07/21 22:31:18 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/page.sgml,v 1.19 2004/11/12 21:50:53 tgl Exp $
 -->
 
 <chapter id="page">
 
-<title>Page Files</title>
+<title>Database Page Layout</title>
 
 <abstract>
 <para>
@@ -14,11 +14,15 @@ A description of the database file page format.
 
 <para>
 This section provides an overview of the page format used by
-<productname>PostgreSQL</productname> tables and indexes.  (Index
-access methods need not use this page format.  At present, all index
-methods do use this basic format, but the data kept on index metapages
-usually doesn't follow the item layout rules exactly.)  TOAST tables
-and sequences are formatted just like a regular table.
+<productname>PostgreSQL</productname> tables and indexes.<footnote>
+  <para>
+    Actually, index access methods need not use this page format.
+    All the existing index methods do use this basic format,
+    but the data kept on index metapages usually doesn't follow
+    the item layout rules.
+  </para>
+</footnote>
+TOAST tables and sequences are formatted just like a regular table.
 </para>
 
 <para>
@@ -31,14 +35,22 @@ an item is a row; in an index, an item is an index entry.
 </para>
 
 <para>
+Every table and index is stored as an array of <firstterm>pages</> of a
+fixed size (usually 8K, although a different page size can be selected
+when compiling the server).  In a table, all the pages are logically
+equivalent, so a particular item (row) can be stored in any page.  In
+indexes, the first page is generally reserved as a <firstterm>metapage</>
+holding control information, and there may be different types of pages
+within the index, depending on the index access method.
+</para>
 
-<xref linkend="page-table"> shows the basic layout of a page.
+<para>
+<xref linkend="page-table"> shows the overall layout of a page.
 There are five parts to each page.
-
 </para>
 
 <table tocentry="1" id="page-table">
-<title>Sample Page Layout</title>
+<title>Overall Page Layout</title>
 <titleabbrev>Page Layout</titleabbrev>
 <tgroup cols="2">
 <thead>
@@ -60,12 +72,14 @@ free space pointers.</entry>
 
 <row>
 <entry>ItemPointerData</entry>
-<entry>Array of (offset,length) pairs pointing to the actual items.</entry>
+<entry>Array of (offset,length) pairs pointing to the actual items.
+4 bytes per item.</entry>
 </row>
 
 <row>
 <entry>Free space</entry>
-<entry>The unallocated space. All new rows are allocated from here, generally from the end.</entry>
+<entry>The unallocated space. New item pointers are allocated from the start
+of this area, new items from the end.</entry>
 </row>
 
 <row>
@@ -74,7 +88,7 @@ free space pointers.</entry>
 </row>
 
 <row>
-<entry>Special Space</entry>
+<entry>Special space</entry>
 <entry>Index access method specific data. Different methods store different
 data. Empty in ordinary tables.</entry>
 </row>
@@ -87,13 +101,24 @@ data. Empty in ordinary tables.</entry>
 
   The first 20 bytes of each page consists of a page header
   (PageHeaderData). Its format is detailed in <xref
-  linkend="pageheaderdata-table">. The first two fields deal with WAL
-  related stuff. This is followed by three 2-byte integer fields
+  linkend="pageheaderdata-table">. The first two fields track the most
+  recent WAL entry related to this page. They are followed by three 2-byte
+  integer fields
   (<structfield>pd_lower</structfield>, <structfield>pd_upper</structfield>,
-  and <structfield>pd_special</structfield>). These represent byte offsets to
-  the start
+  and <structfield>pd_special</structfield>). These contain byte offsets
+  from the page start to the start
   of unallocated space, to the end of unallocated space, and to the start of
   the special space. 
+  The last 2 bytes of the page header,
+  <structfield>pd_pagesize_version</structfield>, store both the page size
+  and a version indicator.  Beginning with
+  <productname>PostgreSQL</productname> 8.0 the version number is 2; 
+  <productname>PostgreSQL</productname> 7.3 and 7.4 used version number 1;
+  prior releases used version number 0.
+  (The basic page layout and header format has not changed in these versions,
+  but the layout of heap row headers has.)  The page size
+  is basically only present as a cross-check; there is no support for having
+  more than one page size in an installation.
   
  </para>
  
@@ -156,25 +181,12 @@ data. Empty in ordinary tables.</entry>
   <filename>src/include/storage/bufpage.h</filename>.
  </para>
 
- <para>  
-  Special space is a region at the end of the page that is allocated at page
-  initialization time and contains information specific to an access method. 
-  The last 2 bytes of the page header,
-  <structfield>pd_pagesize_version</structfield>, store both the page size
-  and a version indicator.  Beginning with
-  <productname>PostgreSQL</productname> 7.3 the version number is 1; prior
-  releases used version number 0.  (The basic page layout and header format
-  has not changed, but the layout of heap row headers has.)  The page size
-  is basically only present as a cross-check; there is no support for having
-  more than one page size in an installation.
- </para>
-
  <para>
 
   Following the page header are item identifiers
   (<type>ItemIdData</type>), each requiring four bytes.
   An item identifier contains a byte-offset to
-  the start of an item, its length in bytes, and a set of attribute bits
+  the start of an item, its length in bytes, and a few attribute bits
   which affect its interpretation.
   New item identifiers are allocated
   as needed from the beginning of the unallocated space.
@@ -203,16 +215,18 @@ data. Empty in ordinary tables.</entry>
  <para>
  
   The final section is the <quote>special section</quote> which may
-  contain anything the access method wishes to store. Ordinary tables
-  do not use this at all (indicated by setting
-  <structfield>pd_special</> to equal the pagesize).
+  contain anything the access method wishes to store.  For example,
+  b-tree indexes store links to the page's left and right siblings,
+  as well as some other data relevant to the index structure.
+  Ordinary tables do not use a special section at all (indicated by setting
+  <structfield>pd_special</> to equal the page size).
   
  </para>
  
  <para>
 
-  All table rows are structured the same way. There is a fixed-size
-  header (occupying 23 bytes on most machines), followed by an optional null
+  All table rows are structured in the same way. There is a fixed-size
+  header (occupying 27 bytes on most machines), followed by an optional null
   bitmap, an optional object ID field, and the user data. The header is
   detailed
   in <xref linkend="heaptupleheaderdata-table">.  The actual user data
@@ -258,7 +272,7 @@ data. Empty in ordinary tables.</entry>
    <entry>t_cmin</entry>
    <entry>CommandId</entry>
    <entry>4 bytes</entry>
-   <entry>insert CID stamp (overlays with t_xmax)</entry>
+   <entry>insert CID stamp</entry>
   </row>
   <row>
    <entry>t_xmax</entry>
@@ -276,7 +290,7 @@ data. Empty in ordinary tables.</entry>
    <entry>t_xvac</entry>
    <entry>TransactionId</entry>
    <entry>4 bytes</entry>
-   <entry>XID for VACUUM operation moving row version</entry>
+   <entry>XID for VACUUM operation moving a row version</entry>
   </row>
   <row>
    <entry>t_ctid</entry>
@@ -294,7 +308,7 @@ data. Empty in ordinary tables.</entry>
    <entry>t_infomask</entry>
    <entry>uint16</entry>
    <entry>2 bytes</entry>
-   <entry>various flags</entry>
+   <entry>various flag bits</entry>
   </row>
   <row>
    <entry>t_hoff</entry>
@@ -314,9 +328,10 @@ data. Empty in ordinary tables.</entry>
  <para>
  
   Interpreting the actual data can only be done with information obtained
-  from other tables, mostly <firstterm>pg_attribute</firstterm>. The
-  particular fields are <structfield>attlen</structfield> and
-  <structfield>attalign</structfield>. There is no way to directly get a
+  from other tables, mostly <structname>pg_attribute</structname>. The
+  key values needed to identify field locations are
+  <structfield>attlen</structfield> and <structfield>attalign</structfield>.
+  There is no way to directly get a
   particular attribute, except when there are only fixed width fields and no
   NULLs. All this trickery is wrapped up in the functions
   <firstterm>heap_getattr</firstterm>, <firstterm>fastgetattr</firstterm>
@@ -329,10 +344,11 @@ data. Empty in ordinary tables.</entry>
   whether the field is NULL according to the null bitmap. If it is, go to
   the next. Then make sure you have the right alignment.  If the field is a
   fixed width field, then all the bytes are simply placed. If it's a
-  variable length field (attlen == -1) then it's a bit more complicated,
-  using the variable length structure <type>varattrib</type>.
-  Depending on the flags, the data may be either inline, compressed or in
-  another table (TOAST).
+  variable length field (attlen = -1) then it's a bit more complicated.
+  All variable-length datatypes share the common header structure
+  <type>varattrib</type>, which includes the total length of the stored
+  value and some flag bits.  Depending on the flags, the data may be either
+  inline or in another table (TOAST); it might be compressed, too.
   
  </para>
 </chapter>

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/postgres.sgml,v 1.64 2004/04/20 01:11:49 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/postgres.sgml,v 1.65 2004/11/12 21:50:53 tgl Exp $
 -->
 
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
@@ -235,6 +235,7 @@ $PostgreSQL: pgsql/doc/src/sgml/postgres.sgml,v 1.64 2004/04/20 01:11:49 momjian
   &geqo;
   &indexcost;
   &gist;
+  &filelayout;
   &page;
   &bki;
 

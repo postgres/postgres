@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/filelist.sgml,v 1.38 2004/06/07 04:04:47 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/filelist.sgml,v 1.39 2004/11/12 21:50:53 tgl Exp $ -->
 
 <!entity history    SYSTEM "history.sgml">
 <!entity info       SYSTEM "info.sgml">
@@ -74,6 +74,7 @@
 <!entity arch-dev   SYSTEM "arch-dev.sgml">
 <!entity bki        SYSTEM "bki.sgml">
 <!entity catalogs   SYSTEM "catalogs.sgml">
+<!entity filelayout SYSTEM "filelayout.sgml">
 <!entity geqo       SYSTEM "geqo.sgml">
 <!entity gist       SYSTEM "gist.sgml">
 <!entity indexcost  SYSTEM "indexcost.sgml">
