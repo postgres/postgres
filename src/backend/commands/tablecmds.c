@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.16 2002/05/21 22:05:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.17 2002/06/17 14:31:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2747,7 +2747,8 @@ AlterTableOwner(Oid relationOid, int32 newOwnerSysId)
 	Form_pg_class	tuple_class;
 
 	/* Get exclusive lock till end of transaction on the target table */
-	target_rel = heap_open(relationOid, AccessExclusiveLock);
+	/* Use relation_open here so that we work on indexes... */
+	target_rel = relation_open(relationOid, AccessExclusiveLock);
 
 	/* Get its pg_class tuple, too */
 	class_rel = heap_openr(RelationRelationName, RowExclusiveLock);
@@ -2807,7 +2808,7 @@ AlterTableOwner(Oid relationOid, int32 newOwnerSysId)
 
 	heap_freetuple(tuple);
 	heap_close(class_rel, RowExclusiveLock);
-	heap_close(target_rel, NoLock);
+	relation_close(target_rel, NoLock);
 }
 
 static void
