@@ -10,7 +10,7 @@
  *	Win32 (NT, Win2k, XP).	replace() doesn't work on Win95/98/Me.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/dirmod.c,v 1.31 2004/10/18 19:08:58 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/dirmod.c,v 1.32 2004/10/28 22:09:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,32 +31,85 @@
 #include <dirent.h>
 #include <sys/stat.h>
 
-#define _(x) gettext((x))
-
-#ifndef TEST_VERSION
-
 #if defined(WIN32) || defined(__CYGWIN__)
-
 #ifndef __CYGWIN__
 #include <winioctl.h>
 #else
 #include <windows.h>
 #include <w32api/winioctl.h>
 #endif
+#endif
+
+#define _(x) gettext((x))
 
 #ifndef FRONTEND
+
 /*
- *	Call non-macro versions of palloc, can't reference CurrentMemoryContext
- *	because of DLLIMPORT.
+ *	On Windows, call non-macro versions of palloc; we can't reference
+ *	CurrentMemoryContext in this file because of DLLIMPORT conflict.
+ */
+#if defined(WIN32) || defined(__CYGWIN__)
+#undef palloc
+#undef pstrdup
+#define palloc(sz)		pgport_palloc(sz)
+#define pstrdup(str)	pgport_pstrdup(str)
+#endif
+
+#else /* FRONTEND */
+
+/*
+ *	In frontend, fake palloc behavior with these
  */
 #undef palloc
 #undef pstrdup
-#undef pfree
-#define palloc(sz)		pgport_palloc(sz)
-#define pstrdup(str)	pgport_pstrdup(str)
-#define pfree(pointer)	pgport_pfree(pointer)
-#endif
+#define palloc(sz)		fe_palloc(sz)
+#define pstrdup(str)	fe_pstrdup(str)
+#define repalloc(pointer,sz)	fe_repalloc(pointer,sz)
+#define pfree(pointer)	free(pointer)
 
+static void *
+fe_palloc(Size size)
+{
+	void	   *res;
+
+	if ((res = malloc(size)) == NULL)
+	{
+		fprintf(stderr, _("out of memory\n"));
+		exit(1);
+	}
+	return res;
+}
+
+static char *
+fe_pstrdup(const char *string)
+{
+	char	   *res;
+
+	if ((res = strdup(string)) == NULL)
+	{
+		fprintf(stderr, _("out of memory\n"));
+		exit(1);
+	}
+	return res;
+}
+
+static void *
+fe_repalloc(void *pointer, Size size)
+{
+	void	   *res;
+
+	if ((res = realloc(pointer, size)) == NULL)
+	{
+		fprintf(stderr, _("out of memory\n"));
+		exit(1);
+	}
+	return res;
+}
+
+#endif /* FRONTEND */
+
+
+#if defined(WIN32) || defined(__CYGWIN__)
 
 /*
  *	pgrename
@@ -141,6 +194,7 @@ pgunlink(const char *path)
 
 
 #ifdef WIN32	/* Cygwin has its own symlinks */
+
 /*
  *	pgsymlink support:
  *
@@ -226,10 +280,13 @@ pgsymlink(const char *oldpath, const char *newpath)
 					  MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
 					  (LPSTR) & msg, 0, NULL);
 #ifndef FRONTEND
-		ereport(ERROR, (errcode_for_file_access(),
-		errmsg("Error setting junction for %s: %s", nativeTarget, msg)));
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("Error setting junction for %s: %s",
+						nativeTarget, msg)));
 #else
-		fprintf(stderr, "Error setting junction for %s: %s", nativeTarget, msg);
+		fprintf(stderr, "Error setting junction for %s: %s\n",
+				nativeTarget, msg);
 #endif
 		LocalFree(msg);
 
@@ -242,8 +299,10 @@ pgsymlink(const char *oldpath, const char *newpath)
 
 	return 0;
 }
-#endif
-#endif
+
+#endif /* WIN32 */
+
+#endif /* defined(WIN32) || defined(__CYGWIN__) */
 
 
 /* We undefined this above, so we redefine it */
@@ -251,28 +310,63 @@ pgsymlink(const char *oldpath, const char *newpath)
 #define unlink(path)	pgunlink(path)
 #endif
 
+
 /*
- *	rmt_cleanup
+ * fnames
+ *
+ * return a list of the names of objects in the argument directory 
+ */
+static char **
+fnames(char *path)
+{
+	DIR		   *dir;
+	struct dirent *file;
+	char	  **filenames;
+	int			numnames = 0;
+	int			fnsize = 200;	/* enough for many small dbs */
+
+	dir = opendir(path);
+	if (dir == NULL)
+		return NULL;
+
+	filenames = (char **) palloc(fnsize * sizeof(char *));
+
+	while ((file = readdir(dir)) != NULL)
+	{
+		if (strcmp(file->d_name, ".") != 0 && strcmp(file->d_name, "..") != 0)
+		{
+			if (numnames+1 >= fnsize)
+			{
+				fnsize *= 2;
+				filenames = (char **) repalloc(filenames,
+											   fnsize * sizeof(char *));
+			}
+			filenames[numnames++] = pstrdup(file->d_name);
+		}
+	}
+
+	filenames[numnames] = NULL;
+
+	closedir(dir);
+
+	return filenames;
+}
+
+/*
+ *	fnames_cleanup
  *
  *	deallocate memory used for filenames
  */
 static void
-rmt_cleanup(char **filenames)
+fnames_cleanup(char **filenames)
 {
 	char	  **fn;
 
 	for (fn = filenames; *fn; fn++)
-#ifdef FRONTEND
-		free(*fn);
-
-	free(filenames);
-#else
 		pfree(*fn);
 
 	pfree(filenames);
-#endif
 }
-
 
 /*
  *	rmtree
@@ -281,65 +375,23 @@ rmt_cleanup(char **filenames)
  *	Assumes path points to a valid directory.
  *	Deletes everything under path.
  *	If rmtopdir is true deletes the directory too.
- *
  */
 bool
 rmtree(char *path, bool rmtopdir)
 {
 	char		filepath[MAXPGPATH];
-	DIR		   *dir;
-	struct dirent *file;
 	char	  **filenames;
 	char	  **filename;
-	int			numnames = 0;
 	struct stat statbuf;
 
 	/*
 	 * we copy all the names out of the directory before we start
 	 * modifying it.
 	 */
+	filenames = fnames(path);
 
-	dir = opendir(path);
-	if (dir == NULL)
+	if (filenames == NULL)
 		return false;
-
-	while ((file = readdir(dir)) != NULL)
-	{
-		if (strcmp(file->d_name, ".") != 0 && strcmp(file->d_name, "..") != 0)
-			numnames++;
-	}
-
-	rewinddir(dir);
-
-#ifdef FRONTEND
-	if ((filenames = malloc((numnames + 2) * sizeof(char *))) == NULL)
-	{
-		fprintf(stderr, _("out of memory\n"));
-		exit(1);
-	}
-#else
-	filenames = palloc((numnames + 2) * sizeof(char *));
-#endif
-
-	numnames = 0;
-
-	while ((file = readdir(dir)) != NULL)
-	{
-		if (strcmp(file->d_name, ".") != 0 && strcmp(file->d_name, "..") != 0)
-#ifdef FRONTEND
-			if ((filenames[numnames++] = strdup(file->d_name)) == NULL)
-			{
-				fprintf(stderr, _("out of memory\n"));
-				exit(1);
-			}
-#else
-			filenames[numnames++] = pstrdup(file->d_name);
-#endif
-	}
-
-	filenames[numnames] = NULL;
-
-	closedir(dir);
 
 	/* now we have the names we can start removing things */
 
@@ -349,7 +401,7 @@ rmtree(char *path, bool rmtopdir)
 
 		if (stat(filepath, &statbuf) != 0)
 		{
-			rmt_cleanup(filenames);
+			fnames_cleanup(filenames);
 			return false;
 		}
 
@@ -358,7 +410,7 @@ rmtree(char *path, bool rmtopdir)
 			/* call ourselves recursively for a directory */
 			if (!rmtree(filepath, true))
 			{
-				rmt_cleanup(filenames);
+				fnames_cleanup(filenames);
 				return false;
 			}
 		}
@@ -366,7 +418,7 @@ rmtree(char *path, bool rmtopdir)
 		{
 			if (unlink(filepath) != 0)
 			{
-				rmt_cleanup(filenames);
+				fnames_cleanup(filenames);
 				return false;
 			}
 		}
@@ -376,88 +428,11 @@ rmtree(char *path, bool rmtopdir)
 	{
 		if (rmdir(path) != 0)
 		{
-			rmt_cleanup(filenames);
+			fnames_cleanup(filenames);
 			return false;
 		}
 	}
 
-	rmt_cleanup(filenames);
+	fnames_cleanup(filenames);
 	return true;
 }
-
-
-#else
-
-
-/*
- *	Illustrates problem with Win32 rename() and unlink()
- *	under concurrent access.
- *
- *	Run with arg '1', then less than 5 seconds later, run with
- *	 arg '2' (rename) or '3'(unlink) to see the problem.
- */
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <errno.h>
-
-#define halt(str) \
-do { \
-	fputs(str, stderr); \
-	exit(1); \
-} while (0)
-
-int
-main(int argc, char *argv[])
-{
-	FILE	   *fd;
-
-	if (argc != 2)
-		halt("Arg must be '1' (test), '2' (rename), or '3' (unlink)\n"
-			 "Run '1' first, then less than 5 seconds later, run\n"
-			 "'2' to test rename, or '3' to test unlink.\n");
-
-	if (atoi(argv[1]) == 1)
-	{
-		if ((fd = fopen("/rtest.txt", "w")) == NULL)
-			halt("Can not create file\n");
-		fclose(fd);
-		if ((fd = fopen("/rtest.txt", "r")) == NULL)
-			halt("Can not open file\n");
-		Sleep(5000);
-	}
-	else if (atoi(argv[1]) == 2)
-	{
-		unlink("/rtest.new");
-		if ((fd = fopen("/rtest.new", "w")) == NULL)
-			halt("Can not create file\n");
-		fclose(fd);
-		while (!MoveFileEx("/rtest.new", "/rtest.txt", MOVEFILE_REPLACE_EXISTING))
-		{
-			if (GetLastError() != ERROR_ACCESS_DENIED)
-				halt("Unknown failure\n");
-			else
-				fprintf(stderr, "move failed\n");
-			Sleep(500);
-		}
-		halt("move successful\n");
-	}
-	else if (atoi(argv[1]) == 3)
-	{
-		while (unlink("/rtest.txt"))
-		{
-			if (errno != EACCES)
-				halt("Unknown failure\n");
-			else
-				fprintf(stderr, "unlink failed\n");
-			Sleep(500);
-		}
-		halt("unlink successful\n");
-	}
-	else
-		halt("invalid arg\n");
-
-	return 0;
-}
-
-#endif
