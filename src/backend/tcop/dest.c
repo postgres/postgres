@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.28 1999/04/25 21:50:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.29 1999/04/28 22:17:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -336,7 +336,7 @@ NullCommand(CommandDest dest)
 			 *		tell the fe that we saw an empty query string
 			 * ----------------
 			 */
-			pq_putbytes("I", 1);
+			pq_putbytes("I", 2); /* note we send I and \0 */
 			break;
 
 		case Local:
