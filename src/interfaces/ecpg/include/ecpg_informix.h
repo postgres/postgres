@@ -1,7 +1,7 @@
 /*
  * This file contains stuff needed to be as compatible to Informix as possible.
  *
- * $PostgreSQL: pgsql/src/interfaces/ecpg/include/ecpg_informix.h,v 1.14 2003/12/18 18:55:09 petere Exp $
+ * $PostgreSQL: pgsql/src/interfaces/ecpg/include/ecpg_informix.h,v 1.15 2004/05/10 13:46:06 meskes Exp $
  */
 #ifndef _ECPG_INFORMIX_H
 #define _ECPG_INFORMIX_H
@@ -28,6 +28,11 @@
 #define ECPG_INFORMIX_BAD_EXPONENT	-1216
 #define ECPG_INFORMIX_BAD_DATE		-1218
 #define ECPG_INFORMIX_EXTRA_CHARS	-1264
+
+#ifdef __cplusplus
+extern          "C"
+{
+#endif
 
 extern int	rdatestr(date, char *);
 extern void 	rtoday(date *);
@@ -77,5 +82,9 @@ extern int	dttoasc(timestamp *, char *);
 extern int	dttofmtasc(timestamp *, char *, int, char *);
 extern int	intoasc(interval *, char *);
 extern int	dtcvfmtasc(char *, char *, timestamp *);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ndef _ECPG_INFORMIX_H */

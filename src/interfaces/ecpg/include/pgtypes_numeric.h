@@ -37,6 +37,11 @@ typedef struct
 	NumericDigit digits[DECSIZE];		/* decimal digits */
 }	decimal;
 
+#ifdef __cplusplus
+extern          "C"
+{
+#endif
+	
 numeric    *PGTYPESnumeric_new(void);
 void		PGTYPESnumeric_free(numeric *);
 numeric    *PGTYPESnumeric_from_asc(char *, char **);
@@ -55,5 +60,9 @@ int			PGTYPESnumeric_to_int(numeric *, int *);
 int			PGTYPESnumeric_to_long(numeric *, long *);
 int			PGTYPESnumeric_to_decimal(numeric *, decimal *);
 int			PGTYPESnumeric_from_decimal(decimal *, numeric *);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif   /* PGTYPES_NUMERIC */

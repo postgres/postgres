@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.281 2004/05/07 13:42:49 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.282 2004/05/10 13:46:06 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -209,7 +209,7 @@ adjust_informix(struct arguments *list)
 		original_var = ptr->variable->name;
 		sprintf(temp, "%d))", ecpg_informix_var);
 		
-		if (atoi(ptr->variable->type->size) > 1)
+		if ((ptr->variable->type->type != ECPGt_char && ptr->variable->type->type != ECPGt_unsigned_char) && atoi(ptr->variable->type->size) > 1)
 		{
 			ptr->variable = new_variable(cat_str(4, make_str("("), mm_strdup(ECPGtype_name(ptr->variable->type->u.element->type)), make_str(" *)(ECPG_informix_get_var("), mm_strdup(temp)), ECPGmake_array_type(ECPGmake_simple_type(ptr->variable->type->u.element->type, make_str("1")), ptr->variable->type->size), 0);
 			sprintf(temp, "%d, (", ecpg_informix_var++);

@@ -1790,6 +1790,11 @@ Fri May  7 15:34:05 CEST 2004
 	- Added portability file to pgtypeslib.
 	- Fixed bug that reversed string length in typedefs.
 	- Added additional test case.
+	
+Mon May 10 15:38:58 CEST 2004
+
+	- Argh, just another bug in adjust_informix.
+	- Added "extern C" flags for C++ compiler.
 	- Set pgtypes library version to 1.2.
 	- Set ecpg version to 3.2.0.
 	- Set compat library version to 1.2.
