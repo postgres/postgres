@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/nabstime.c,v 1.119 2004/03/22 15:34:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/nabstime.c,v 1.120 2004/05/05 17:28:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -191,9 +191,9 @@ abstime2tm(AbsoluteTime _time, int *tzp, struct tm * tm, char **tzn)
 		time -= CTimeZone;
 
 	if ((!HasCTZSet) && (tzp != NULL))
-		tx = localtime((time_t *) &time);
+		tx = localtime(&time);
 	else
-		tx = gmtime((time_t *) &time);
+		tx = gmtime(&time);
 
 	tm->tm_year = tx->tm_year + 1900;
 	tm->tm_mon = tx->tm_mon + 1;
@@ -1728,10 +1728,12 @@ timeofday(PG_FUNCTION_ARGS)
 	char		buf[128];
 	text	   *result;
 	int			len;
+	time_t		tt;
 
 	gettimeofday(&tp, &tpz);
+	tt = (time_t) tp.tv_sec;
 	strftime(templ, sizeof(templ), "%a %b %d %H:%M:%S.%%06d %Y %Z",
-			 localtime((time_t *) &tp.tv_sec));
+			 localtime(&tt));
 	snprintf(buf, sizeof(buf), templ, tp.tv_usec);
 
 	len = VARHDRSZ + strlen(buf);
