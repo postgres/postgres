@@ -8,6 +8,7 @@ solaris*)
     i386) PORTNAME='i386_solaris' ;;
   esac ;;
 linux*) PORTNAME='linux' ;;
+bsdi*) PORTNAME='bsdi' ;;
 freebsd*) PORTNAME='BSD44_derived' ;;
 dgux*) PORTNAME='dgux';;
 *) echo ""
