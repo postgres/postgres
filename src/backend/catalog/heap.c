@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.181 2001/11/12 00:00:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.182 2002/02/19 20:11:11 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -912,32 +912,21 @@ RelationRemoveInheritance(Relation relation)
 static void
 RelationRemoveIndexes(Relation relation)
 {
-	Relation	indexRelation;
-	HeapTuple	tuple;
-	HeapScanDesc scan;
-	ScanKeyData entry;
+	List	   *indexoidlist,
+			   *indexoidscan;
 
-	indexRelation = heap_openr(IndexRelationName, RowExclusiveLock);
+	indexoidlist = RelationGetIndexList(relation);
 
-	ScanKeyEntryInitialize(&entry, 0x0, Anum_pg_index_indrelid,
-						   F_OIDEQ,
-						   ObjectIdGetDatum(RelationGetRelid(relation)));
-
-	scan = heap_beginscan(indexRelation,
-						  false,
-						  SnapshotNow,
-						  1,
-						  &entry);
-
-	while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
+	foreach(indexoidscan, indexoidlist)
 	{
-		index_drop(((Form_pg_index) GETSTRUCT(tuple))->indexrelid);
+		Oid			indexoid = lfirsti(indexoidscan);
+
+		index_drop(indexoid);
 		/* advance cmd counter to make catalog changes visible */
 		CommandCounterIncrement();
 	}
 
-	heap_endscan(scan);
-	heap_close(indexRelation, RowExclusiveLock);
+	freeList(indexoidlist);
 }
 
 /* --------------------------------
@@ -984,17 +973,21 @@ RelationTruncateIndexes(Oid heapId)
 {
 	Relation	indexRelation;
 	ScanKeyData entry;
-	HeapScanDesc scan;
+	SysScanDesc	scan;
 	HeapTuple	indexTuple;
 
 	/* Scan pg_index to find indexes on specified heap */
 	indexRelation = heap_openr(IndexRelationName, AccessShareLock);
-	ScanKeyEntryInitialize(&entry, 0, Anum_pg_index_indrelid, F_OIDEQ,
+	ScanKeyEntryInitialize(&entry, 0,
+						   Anum_pg_index_indrelid,
+						   F_OIDEQ,
 						   ObjectIdGetDatum(heapId));
-	scan = heap_beginscan(indexRelation, false, SnapshotNow, 1, &entry);
+	scan = systable_beginscan(indexRelation, IndexIndrelidIndex, true,
+							  SnapshotNow, 1, &entry);
 
-	while (HeapTupleIsValid(indexTuple = heap_getnext(scan, 0)))
+	while (HeapTupleIsValid(indexTuple = systable_getnext(scan)))
 	{
+		Form_pg_index indexform = (Form_pg_index) GETSTRUCT(indexTuple);
 		Oid			indexId;
 		IndexInfo  *indexInfo;
 		Relation	heapRelation,
@@ -1003,8 +996,8 @@ RelationTruncateIndexes(Oid heapId)
 		/*
 		 * For each index, fetch info needed for index_build
 		 */
-		indexId = ((Form_pg_index) GETSTRUCT(indexTuple))->indexrelid;
-		indexInfo = BuildIndexInfo(indexTuple);
+		indexId = indexform->indexrelid;
+		indexInfo = BuildIndexInfo(indexform);
 
 		/*
 		 * We have to re-open the heap rel each time through this loop
@@ -1041,7 +1034,7 @@ RelationTruncateIndexes(Oid heapId)
 	}
 
 	/* Complete the scan and close pg_index */
-	heap_endscan(scan);
+	systable_endscan(scan);
 	heap_close(indexRelation, AccessShareLock);
 }
 

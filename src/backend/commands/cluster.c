@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.71 2002/01/06 00:37:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.72 2002/02/19 20:11:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,7 +61,6 @@ cluster(char *oldrelname, char *oldindexname)
 				OIDNewHeap;
 	Relation	OldHeap,
 				OldIndex;
-	HeapTuple	tuple;
 	bool		istemp;
 	char		NewHeapName[NAMEDATALEN];
 	char		NewIndexName[NAMEDATALEN];
@@ -90,16 +89,9 @@ cluster(char *oldrelname, char *oldindexname)
 	/*
 	 * Check that index is in fact an index on the given relation
 	 */
-	tuple = SearchSysCache(INDEXRELID,
-						   ObjectIdGetDatum(OIDOldIndex),
-						   0, 0, 0);
-	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "CLUSTER: no pg_index entry for index %u",
-			 OIDOldIndex);
-	if (((Form_pg_index) GETSTRUCT(tuple))->indrelid != OIDOldHeap)
+	if (OldIndex->rd_index->indrelid != OIDOldHeap)
 		elog(ERROR, "CLUSTER: \"%s\" is not an index for table \"%s\"",
 			 saveoldindexname, saveoldrelname);
-	ReleaseSysCache(tuple);
 
 	/* Drop relcache refcnts, but do NOT give up the locks */
 	heap_close(OldHeap, NoLock);
@@ -188,10 +180,6 @@ copy_index(Oid OIDOldIndex, Oid OIDNewHeap, char *NewIndexName)
 {
 	Relation	OldIndex,
 				NewHeap;
-	HeapTuple	Old_pg_index_Tuple,
-				Old_pg_index_relation_Tuple;
-	Form_pg_index Old_pg_index_Form;
-	Form_pg_class Old_pg_index_relation_Form;
 	IndexInfo  *indexInfo;
 
 	NewHeap = heap_open(OIDNewHeap, AccessExclusiveLock);
@@ -206,33 +194,18 @@ copy_index(Oid OIDOldIndex, Oid OIDNewHeap, char *NewIndexName)
 	 * its parent table is, so we don't need to do anything special for
 	 * the temp-table case here.
 	 */
-	Old_pg_index_Tuple = SearchSysCache(INDEXRELID,
-										ObjectIdGetDatum(OIDOldIndex),
-										0, 0, 0);
-	Assert(Old_pg_index_Tuple);
-	Old_pg_index_Form = (Form_pg_index) GETSTRUCT(Old_pg_index_Tuple);
-
-	indexInfo = BuildIndexInfo(Old_pg_index_Tuple);
-
-	Old_pg_index_relation_Tuple = SearchSysCache(RELOID,
-										   ObjectIdGetDatum(OIDOldIndex),
-												 0, 0, 0);
-	Assert(Old_pg_index_relation_Tuple);
-	Old_pg_index_relation_Form = (Form_pg_class) GETSTRUCT(Old_pg_index_relation_Tuple);
+	indexInfo = BuildIndexInfo(OldIndex->rd_index);
 
 	index_create(RelationGetRelationName(NewHeap),
 				 NewIndexName,
 				 indexInfo,
-				 Old_pg_index_relation_Form->relam,
-				 Old_pg_index_Form->indclass,
-				 Old_pg_index_Form->indisprimary,
+				 OldIndex->rd_rel->relam,
+				 OldIndex->rd_index->indclass,
+				 OldIndex->rd_index->indisprimary,
 				 allowSystemTableMods);
 
 	setRelhasindex(OIDNewHeap, true,
-				   Old_pg_index_Form->indisprimary, InvalidOid);
-
-	ReleaseSysCache(Old_pg_index_Tuple);
-	ReleaseSysCache(Old_pg_index_relation_Tuple);
+				   OldIndex->rd_index->indisprimary, InvalidOid);
 
 	index_close(OldIndex);
 	heap_close(NewHeap, NoLock);

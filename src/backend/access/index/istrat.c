@@ -9,29 +9,19 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.56 2001/11/05 17:46:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.57 2002/02/19 20:11:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-#include "access/heapam.h"
 #include "access/istrat.h"
-#include "catalog/catname.h"
-#include "catalog/pg_amop.h"
-#include "catalog/pg_amproc.h"
-#include "catalog/pg_index.h"
-#include "catalog/pg_operator.h"
-#include "miscadmin.h"
-#include "utils/fmgroids.h"
-#include "utils/syscache.h"
+
 
 #ifdef USE_ASSERT_CHECKING
 static bool StrategyEvaluationIsValid(StrategyEvaluation evaluation);
 static bool StrategyExpressionIsValid(StrategyExpression expression,
 						  StrategyNumber maxStrategy);
-static ScanKey StrategyMapGetScanKeyEntry(StrategyMap map,
-						   StrategyNumber strategyNumber);
 static bool StrategyOperatorIsValid(StrategyOperator operator,
 						StrategyNumber maxStrategy);
 static bool StrategyTermIsValid(StrategyTerm term,
@@ -63,7 +53,7 @@ static bool StrategyTermIsValid(StrategyTerm term,
  *		Assumes that the index strategy number is valid.
  *		Bounds checking should be done outside this routine.
  */
-static ScanKey
+ScanKey
 StrategyMapGetScanKeyEntry(StrategyMap map,
 						   StrategyNumber strategyNumber)
 {
@@ -452,161 +442,6 @@ RelationInvokeStrategy(Relation relation,
 	return FALSE;
 }
 #endif
-
-/* ----------------
- *		FillScanKeyEntry
- *
- * Initialize a ScanKey entry for the given operator OID.
- * ----------------
- */
-static void
-FillScanKeyEntry(Oid operatorObjectId, ScanKey entry)
-{
-	HeapTuple	tuple;
-
-	tuple = SearchSysCache(OPEROID,
-						   ObjectIdGetDatum(operatorObjectId),
-						   0, 0, 0);
-
-	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "FillScanKeyEntry: unknown operator %u",
-			 operatorObjectId);
-
-	MemSet(entry, 0, sizeof(*entry));
-	entry->sk_flags = 0;
-	entry->sk_procedure = ((Form_pg_operator) GETSTRUCT(tuple))->oprcode;
-
-	ReleaseSysCache(tuple);
-
-	if (!RegProcedureIsValid(entry->sk_procedure))
-		elog(ERROR, "FillScanKeyEntry: no procedure for operator %u",
-			 operatorObjectId);
-
-	/*
-	 * Mark entry->sk_func invalid, until and unless someone sets it up.
-	 */
-	entry->sk_func.fn_oid = InvalidOid;
-}
-
-
-/*
- * IndexSupportInitialize
- *		Initializes an index strategy and associated support procedures.
- *
- * Data is returned into *indexStrategy, *indexSupport, and *isUnique,
- * all of which are objects allocated by the caller.
- *
- * The primary input keys are indexObjectId and accessMethodObjectId.
- * The caller also passes maxStrategyNumber, maxSupportNumber, and
- * maxAttributeNumber, since these indicate the size of the indexStrategy
- * and indexSupport arrays it has allocated --- but in practice these
- * numbers must always match those obtainable from the system catalog
- * entries for the index and access method.
- */
-void
-IndexSupportInitialize(IndexStrategy indexStrategy,
-					   RegProcedure *indexSupport,
-					   bool *isUnique,
-					   Oid indexObjectId,
-					   Oid accessMethodObjectId,
-					   StrategyNumber maxStrategyNumber,
-					   StrategyNumber maxSupportNumber,
-					   AttrNumber maxAttributeNumber)
-{
-	HeapTuple	tuple;
-	Form_pg_index iform;
-	int			attIndex;
-	Oid			operatorClassObjectId[INDEX_MAX_KEYS];
-
-	maxStrategyNumber = AMStrategies(maxStrategyNumber);
-
-	tuple = SearchSysCache(INDEXRELID,
-						   ObjectIdGetDatum(indexObjectId),
-						   0, 0, 0);
-	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "IndexSupportInitialize: no pg_index entry for index %u",
-			 indexObjectId);
-	iform = (Form_pg_index) GETSTRUCT(tuple);
-
-	*isUnique = iform->indisunique;
-
-	/*
-	 * XXX note that the following assumes the INDEX tuple is well formed
-	 * and that the *key and *class are 0 terminated.
-	 */
-	for (attIndex = 0; attIndex < maxAttributeNumber; attIndex++)
-	{
-		if (iform->indkey[attIndex] == InvalidAttrNumber ||
-			!OidIsValid(iform->indclass[attIndex]))
-			elog(ERROR, "IndexSupportInitialize: bogus pg_index tuple");
-		operatorClassObjectId[attIndex] = iform->indclass[attIndex];
-	}
-
-	ReleaseSysCache(tuple);
-
-	/* if support routines exist for this access method, load them */
-	if (maxSupportNumber > 0)
-	{
-		for (attIndex = 0; attIndex < maxAttributeNumber; attIndex++)
-		{
-			Oid			opclass = operatorClassObjectId[attIndex];
-			RegProcedure *loc;
-			StrategyNumber support;
-
-			loc = &indexSupport[attIndex * maxSupportNumber];
-
-			for (support = 0; support < maxSupportNumber; ++support)
-			{
-				tuple = SearchSysCache(AMPROCNUM,
-									   ObjectIdGetDatum(opclass),
-									   Int16GetDatum(support + 1),
-									   0, 0);
-				if (HeapTupleIsValid(tuple))
-				{
-					Form_pg_amproc amprocform;
-
-					amprocform = (Form_pg_amproc) GETSTRUCT(tuple);
-					loc[support] = amprocform->amproc;
-					ReleaseSysCache(tuple);
-				}
-				else
-					loc[support] = InvalidOid;
-			}
-		}
-	}
-
-	/* Now load the strategy information for the index operators */
-	for (attIndex = 0; attIndex < maxAttributeNumber; attIndex++)
-	{
-		Oid			opclass = operatorClassObjectId[attIndex];
-		StrategyMap map;
-		StrategyNumber strategy;
-
-		map = IndexStrategyGetStrategyMap(indexStrategy,
-										  maxStrategyNumber,
-										  attIndex + 1);
-
-		for (strategy = 1; strategy <= maxStrategyNumber; strategy++)
-		{
-			ScanKey		mapentry = StrategyMapGetScanKeyEntry(map, strategy);
-
-			tuple = SearchSysCache(AMOPSTRATEGY,
-								   ObjectIdGetDatum(opclass),
-								   Int16GetDatum(strategy),
-								   0, 0);
-			if (HeapTupleIsValid(tuple))
-			{
-				Form_pg_amop amopform;
-
-				amopform = (Form_pg_amop) GETSTRUCT(tuple);
-				FillScanKeyEntry(amopform->amopopr, mapentry);
-				ReleaseSysCache(tuple);
-			}
-			else
-				ScanKeyEntrySetIllegal(mapentry);
-		}
-	}
-}
 
 /* ----------------
  *		IndexStrategyDisplay

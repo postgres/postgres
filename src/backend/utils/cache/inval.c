@@ -48,6 +48,12 @@
  *	(XXX is it worth testing likewise for duplicate catcache flush entries?
  *	Probably not.)
  *
+ *	If a relcache flush is issued for a system relation that we preload
+ *	from the relcache init file, we must also delete the init file so that
+ *	it will be rebuilt during the next backend restart.  The actual work of
+ *	manipulating the init file is in relcache.c, but we keep track of the
+ *	need for it here.
+ *
  *	All the request lists are kept in TopTransactionContext memory, since
  *	they need not live beyond the end of the current transaction.
  *
@@ -56,7 +62,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.47 2001/11/16 23:30:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.48 2002/02/19 20:11:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,6 +112,8 @@ typedef struct InvalidationListHeader
  * eaten by AtCommit_Cache() in CommitTransaction()
  */
 static InvalidationListHeader GlobalInvalidMsgs;
+
+static bool RelcacheInitFileInval; /* init file must be invalidated? */
 
 /*
  * head of invalidation message list for the current command
@@ -339,6 +347,13 @@ RegisterRelcacheInvalidation(Oid dbId, Oid relId)
 								   dbId, relId);
 	AddRelcacheInvalidationMessage(&LocalInvalidMsgs,
 								   dbId, relId);
+
+	/*
+	 * If the relation being invalidated is one of those cached in the
+	 * relcache init file, mark that we need to zap that file at commit.
+	 */
+	if (RelationIdIsInInitFile(relId))
+		RelcacheInitFileInval = true;
 }
 
 /*
@@ -418,8 +433,8 @@ InvalidateSystemCaches(void)
 
 /*
  * PrepareForTupleInvalidation
- *		Invoke functions for the tuple which register invalidation
- *		of catalog/relation cache.
+ *		Detect whether invalidation of this tuple implies invalidation
+ *		of catalog/relation cache entries; if so, register inval events.
  */
 static void
 PrepareForTupleInvalidation(Relation relation, HeapTuple tuple,
@@ -525,14 +540,27 @@ AtEOXactInvalidationMessages(bool isCommit)
 {
 	if (isCommit)
 	{
+		/*
+		 * Relcache init file invalidation requires processing both
+		 * before and after we send the SI messages.  However, we need
+		 * not do anything unless we committed.
+		 */
+		if (RelcacheInitFileInval)
+			RelationCacheInitFileInvalidate(true);
+
 		ProcessInvalidationMessages(&GlobalInvalidMsgs,
 									SendSharedInvalidMessage);
+
+		if (RelcacheInitFileInval)
+			RelationCacheInitFileInvalidate(false);
 	}
 	else
 	{
 		ProcessInvalidationMessages(&RollbackMsgs,
 									LocalExecuteInvalidationMessage);
 	}
+
+	RelcacheInitFileInval = false;
 
 	DiscardInvalidationMessages(&GlobalInvalidMsgs, false);
 	DiscardInvalidationMessages(&LocalInvalidMsgs, false);

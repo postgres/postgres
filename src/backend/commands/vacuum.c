@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.213 2002/01/06 00:37:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.214 2002/02/19 20:11:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -316,20 +316,6 @@ vacuum_shutdown(VacuumStmt *vacstmt)
 	}
 
 	/*
-	 * If we did a complete vacuum or analyze, then flush the init file
-	 * that relcache.c uses to save startup time. The next backend startup
-	 * will rebuild the init file with up-to-date information from
-	 * pg_class. This lets the optimizer see the stats that we've
-	 * collected for certain critical system indexes.  See relcache.c for
-	 * more details.
-	 *
-	 * Ignore any failure to unlink the file, since it might not be there if
-	 * no backend has been started since the last vacuum.
-	 */
-	if (vacstmt->vacrel == NULL)
-		unlink(RELCACHE_INIT_FILENAME);
-
-	/*
 	 * Clean up working storage --- note we must do this after
 	 * StartTransactionCommand, else we might be trying to delete the
 	 * active context!
@@ -535,8 +521,15 @@ vac_update_relstats(Oid relid, BlockNumber num_pages, double num_tuples,
 	if (!hasindex)
 		pgcform->relhaspkey = false;
 
-	/* invalidate the tuple in the cache and write the buffer */
+	/*
+	 * Invalidate the tuple in the catcaches; this also arranges to flush
+	 * the relation's relcache entry.  (If we fail to commit for some reason,
+	 * no flush will occur, but no great harm is done since there are no
+	 * noncritical state updates here.)
+	 */
 	RelationInvalidateHeapTuple(rd, &rtup);
+
+	/* Write the buffer */
 	WriteBuffer(buffer);
 
 	heap_close(rd, RowExclusiveLock);
@@ -2816,10 +2809,6 @@ vac_close_indexes(int nindexes, Relation *Irel)
 bool
 vac_is_partial_index(Relation indrel)
 {
-	bool		result;
-	HeapTuple	cachetuple;
-	Form_pg_index indexStruct;
-
 	/*
 	 * If the index's AM doesn't support nulls, it's partial for our
 	 * purposes
@@ -2828,18 +2817,7 @@ vac_is_partial_index(Relation indrel)
 		return true;
 
 	/* Otherwise, look to see if there's a partial-index predicate */
-	cachetuple = SearchSysCache(INDEXRELID,
-							  ObjectIdGetDatum(RelationGetRelid(indrel)),
-								0, 0, 0);
-	if (!HeapTupleIsValid(cachetuple))
-		elog(ERROR, "vac_is_partial_index: index %u not found",
-			 RelationGetRelid(indrel));
-	indexStruct = (Form_pg_index) GETSTRUCT(cachetuple);
-
-	result = (VARSIZE(&indexStruct->indpred) > VARHDRSZ);
-
-	ReleaseSysCache(cachetuple);
-	return result;
+	return (VARSIZE(&indrel->rd_index->indpred) > VARHDRSZ);
 }
 
 

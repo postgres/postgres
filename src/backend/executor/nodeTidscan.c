@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeTidscan.c,v 1.22 2002/02/11 20:10:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeTidscan.c,v 1.23 2002/02/19 20:11:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -300,14 +300,13 @@ ExecEndTidScan(TidScan *node)
 	CommonScanState *scanstate;
 	TidScanState *tidstate;
 
+	/*
+	 * extract information from the node
+	 */
 	scanstate = node->scan.scanstate;
 	tidstate = node->tidstate;
 	if (tidstate && tidstate->tss_TidList)
 		pfree(tidstate->tss_TidList);
-
-	/*
-	 * extract information from the node
-	 */
 
 	/*
 	 * Free the projection info and the scan attribute info
@@ -320,9 +319,13 @@ ExecEndTidScan(TidScan *node)
 	ExecFreeExprContext(&scanstate->cstate);
 
 	/*
-	 * close the heap and tid relations
+	 * close the heap relation.
+	 *
+	 * Currently, we do not release the AccessShareLock acquired by
+	 * ExecInitTidScan.  This lock should be held till end of transaction.
+	 * (There is a faction that considers this too much locking, however.)
 	 */
-	ExecCloseR((Plan *) node);
+	heap_close(scanstate->css_currentRelation, NoLock);
 
 	/*
 	 * clear out tuple table slots
@@ -460,14 +463,17 @@ ExecInitTidScan(TidScan *node, EState *estate, Plan *parent)
 
 	/*
 	 * open the base relation
+	 *
+	 * We acquire AccessShareLock for the duration of the scan.
 	 */
 	relid = node->scan.scanrelid;
 	rtentry = rt_fetch(relid, rangeTable);
 	reloid = rtentry->relid;
 
 	currentRelation = heap_open(reloid, AccessShareLock);
+
 	scanstate->css_currentRelation = currentRelation;
-	scanstate->css_currentScanDesc = 0;
+	scanstate->css_currentScanDesc = NULL; /* no heap scan here */
 
 	/*
 	 * get the scan type from the relation descriptor.

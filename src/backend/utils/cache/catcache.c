@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.86 2001/11/05 17:46:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.87 2002/02/19 20:11:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,9 +24,13 @@
 #include "catalog/catname.h"
 #include "catalog/indexing.h"
 #include "miscadmin.h"
+#ifdef CATCACHE_STATS
+#include "storage/ipc.h"		/* for on_proc_exit */
+#endif
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/catcache.h"
+#include "utils/relcache.h"
 #include "utils/syscache.h"
 
 
@@ -94,6 +98,9 @@ static Index CatalogCacheComputeTupleHashIndex(CatCache *cache,
 								  HeapTuple tuple);
 static void CatalogCacheInitializeCache(CatCache *cache);
 static Datum cc_hashname(PG_FUNCTION_ARGS);
+#ifdef CATCACHE_STATS
+static void CatCachePrintStats(void);
+#endif
 
 
 /*
@@ -145,6 +152,46 @@ cc_hashname(PG_FUNCTION_ARGS)
 
 	return DirectFunctionCall1(hashname, NameGetDatum(&my_n));
 }
+
+
+#ifdef CATCACHE_STATS
+
+static void
+CatCachePrintStats(void)
+{
+	CatCache   *cache;
+	long		cc_searches = 0;
+	long		cc_hits = 0;
+	long		cc_newloads = 0;
+
+	elog(DEBUG, "Catcache stats dump: %d/%d tuples in catcaches",
+		 CacheHdr->ch_ntup, CacheHdr->ch_maxtup);
+
+	for (cache = CacheHdr->ch_caches; cache; cache = cache->cc_next)
+	{
+		if (cache->cc_ntup == 0 && cache->cc_searches == 0)
+			continue;			/* don't print unused caches */
+		elog(DEBUG, "Catcache %s/%s: %d tup, %ld srch, %ld hits, %ld loads, %ld not found",
+			 cache->cc_relname,
+			 cache->cc_indname,
+			 cache->cc_ntup,
+			 cache->cc_searches,
+			 cache->cc_hits,
+			 cache->cc_newloads,
+			 cache->cc_searches - cache->cc_hits - cache->cc_newloads);
+		cc_searches += cache->cc_searches;
+		cc_hits += cache->cc_hits;
+		cc_newloads += cache->cc_newloads;
+	}
+	elog(DEBUG, "Catcache totals: %d tup, %ld srch, %ld hits, %ld loads, %ld not found",
+		 CacheHdr->ch_ntup,
+		 cc_searches,
+		 cc_hits,
+		 cc_newloads,
+		 cc_searches - cc_hits - cc_newloads);
+}
+
+#endif /* CATCACHE_STATS */
 
 
 /*
@@ -287,6 +334,30 @@ CatalogCacheInitializeCache(CatCache *cache)
 	 * mark this cache fully initialized
 	 */
 	cache->cc_tupdesc = tupdesc;
+}
+
+/*
+ * InitCatCachePhase2 -- external interface for CatalogCacheInitializeCache
+ *
+ * The only reason to call this routine is to ensure that the relcache
+ * has created entries for all the catalogs and indexes referenced by
+ * catcaches.  Therefore, open the index too.  An exception is the indexes
+ * on pg_am, which we don't use (cf. IndexScanOK).
+ */
+void
+InitCatCachePhase2(CatCache *cache)
+{
+	if (cache->cc_tupdesc == NULL)
+		CatalogCacheInitializeCache(cache);
+
+	if (cache->id != AMOID &&
+		cache->id != AMNAME)
+	{
+		Relation	idesc;
+
+		idesc = index_openr(cache->cc_indname);
+		index_close(idesc);
+	}
 }
 
 /*
@@ -644,11 +715,11 @@ CatalogCacheFlushRelation(Oid relId)
 				{
 					bool		isNull;
 
-					tupRelid = DatumGetObjectId(
-												fastgetattr(&ct->tuple,
-													cache->cc_reloidattr,
-													   cache->cc_tupdesc,
-															&isNull));
+					tupRelid =
+						DatumGetObjectId(fastgetattr(&ct->tuple,
+													 cache->cc_reloidattr,
+													 cache->cc_tupdesc,
+													 &isNull));
 					Assert(!isNull);
 				}
 
@@ -717,19 +788,18 @@ InitCatCache(int id,
 		CacheHdr->ch_ntup = 0;
 		CacheHdr->ch_maxtup = MAXCCTUPLES;
 		DLInitList(&CacheHdr->ch_lrulist);
+#ifdef CATCACHE_STATS
+		on_proc_exit(CatCachePrintStats, 0);
+#endif
 	}
 
 	/*
 	 * allocate a new cache structure
+	 *
+	 * Note: we assume zeroing initializes the bucket headers correctly
 	 */
 	cp = (CatCache *) palloc(sizeof(CatCache) + NCCBUCKETS * sizeof(Dllist));
 	MemSet((char *) cp, 0, sizeof(CatCache) + NCCBUCKETS * sizeof(Dllist));
-
-	/*
-	 * initialize the cache buckets (each bucket is a list header)
-	 */
-	for (i = 0; i < NCCBUCKETS; ++i)
-		DLInitList(&cp->cc_bucket[i]);
 
 	/*
 	 * initialize the cache's relation information for the relation
@@ -777,57 +847,44 @@ InitCatCache(int id,
  *		certain system indexes that support critical syscaches.
  *		We can't use an indexscan to fetch these, else we'll get into
  *		infinite recursion.  A plain heap scan will work, however.
+ *
+ *		Once we have completed relcache initialization (signaled by
+ *		criticalRelcachesBuilt), we don't have to worry anymore.
  */
 static bool
 IndexScanOK(CatCache *cache, ScanKey cur_skey)
 {
 	if (cache->id == INDEXRELID)
 	{
-		static Oid	indexSelfOid = InvalidOid;
-
-		/* One-time lookup of the OID of pg_index_indexrelid_index */
-		if (!OidIsValid(indexSelfOid))
-		{
-			Relation	rel;
-			ScanKeyData key;
-			HeapScanDesc sd;
-			HeapTuple	ntp;
-
-			rel = heap_openr(RelationRelationName, AccessShareLock);
-			ScanKeyEntryInitialize(&key, 0, Anum_pg_class_relname,
-								   F_NAMEEQ,
-								   PointerGetDatum(IndexRelidIndex));
-			sd = heap_beginscan(rel, false, SnapshotNow, 1, &key);
-			ntp = heap_getnext(sd, 0);
-			if (!HeapTupleIsValid(ntp))
-				elog(ERROR, "IndexScanOK: %s not found in %s",
-					 IndexRelidIndex, RelationRelationName);
-			indexSelfOid = ntp->t_data->t_oid;
-			heap_endscan(sd);
-			heap_close(rel, AccessShareLock);
-		}
-
-		/* Looking for pg_index_indexrelid_index? */
-		if (DatumGetObjectId(cur_skey[0].sk_argument) == indexSelfOid)
+		/*
+		 * Since the OIDs of indexes aren't hardwired, it's painful to
+		 * figure out which is which.  Just force all pg_index searches
+		 * to be heap scans while building the relcaches.
+		 */
+		if (!criticalRelcachesBuilt)
 			return false;
 	}
-	else if (cache->id == AMOPSTRATEGY ||
-			 cache->id == AMPROCNUM)
+	else if (cache->id == AMOID ||
+			 cache->id == AMNAME)
 	{
-		/* Looking for an OID or INT2 btree operator or function? */
-		Oid			lookup_oid = DatumGetObjectId(cur_skey[0].sk_argument);
-
-		if (lookup_oid == OID_BTREE_OPS_OID ||
-			lookup_oid == INT2_BTREE_OPS_OID)
-			return false;
+		/*
+		 * Always do heap scans in pg_am, because it's so small there's
+		 * not much point in an indexscan anyway.  We *must* do this when
+		 * initially building critical relcache entries, but we might as
+		 * well just always do it.
+		 */
+		return false;
 	}
 	else if (cache->id == OPEROID)
 	{
-		/* Looking for an OID comparison function? */
-		Oid			lookup_oid = DatumGetObjectId(cur_skey[0].sk_argument);
+		if (!criticalRelcachesBuilt)
+		{
+			/* Looking for an OID comparison function? */
+			Oid		lookup_oid = DatumGetObjectId(cur_skey[0].sk_argument);
 
-		if (lookup_oid >= MIN_OIDCMP && lookup_oid <= MAX_OIDCMP)
-			return false;
+			if (lookup_oid >= MIN_OIDCMP && lookup_oid <= MAX_OIDCMP)
+				return false;
+		}
 	}
 
 	/* Normal case, allow index scan */
@@ -860,6 +917,10 @@ SearchCatCache(CatCache *cache,
 	 */
 	if (cache->cc_tupdesc == NULL)
 		CatalogCacheInitializeCache(cache);
+
+#ifdef CATCACHE_STATS
+	cache->cc_searches++;
+#endif
 
 	/*
 	 * initialize the search key information
@@ -918,6 +979,10 @@ SearchCatCache(CatCache *cache,
 		CACHE3_elog(DEBUG, "SearchCatCache(%s): found in bucket %d",
 					cache->cc_relname, hash);
 #endif   /* CACHEDEBUG */
+
+#ifdef CATCACHE_STATS
+		cache->cc_hits++;
+#endif
 
 		return &ct->tuple;
 	}
@@ -1045,6 +1110,10 @@ SearchCatCache(CatCache *cache,
 
 	DLAddHead(&CacheHdr->ch_lrulist, &ct->lrulist_elem);
 	DLAddHead(&cache->cc_bucket[hash], &ct->cache_elem);
+
+#ifdef CATCACHE_STATS
+	cache->cc_newloads++;
+#endif
 
 	/*
 	 * If we've exceeded the desired size of the caches, try to throw away

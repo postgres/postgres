@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.171 2002/01/06 00:37:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.172 2002/02/19 20:11:11 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -334,79 +334,12 @@ ConstructTupleDescriptor(Relation heapRelation,
 }
 
 /* ----------------------------------------------------------------
- * AccessMethodObjectIdGetForm
- *		Returns an access method tuple given its object identifier,
- *		or NULL if no such AM tuple can be found.
- *
- * Scanning is done using CurrentMemoryContext as working storage,
- * but the returned tuple will be allocated in resultCxt (which is
- * typically CacheMemoryContext).
- *
- * There was a note here about adding indexing, but I don't see a need
- * for it.	There are so few tuples in pg_am that an indexscan would
- * surely be slower.
- * ----------------------------------------------------------------
- */
-Form_pg_am
-AccessMethodObjectIdGetForm(Oid accessMethodObjectId,
-							MemoryContext resultCxt)
-{
-	Relation	pg_am_desc;
-	HeapScanDesc pg_am_scan;
-	HeapTuple	pg_am_tuple;
-	ScanKeyData key;
-	Form_pg_am	aform;
-
-	/*
-	 * form a scan key for the pg_am relation
-	 */
-	ScanKeyEntryInitialize(&key, 0, ObjectIdAttributeNumber,
-						   F_OIDEQ,
-						   ObjectIdGetDatum(accessMethodObjectId));
-
-	/*
-	 * fetch the desired access method tuple
-	 */
-	pg_am_desc = heap_openr(AccessMethodRelationName, AccessShareLock);
-	pg_am_scan = heap_beginscan(pg_am_desc, 0, SnapshotNow, 1, &key);
-
-	pg_am_tuple = heap_getnext(pg_am_scan, 0);
-
-	/*
-	 * return NULL if not found
-	 */
-	if (!HeapTupleIsValid(pg_am_tuple))
-	{
-		heap_endscan(pg_am_scan);
-		heap_close(pg_am_desc, AccessShareLock);
-		return NULL;
-	}
-
-	/*
-	 * if found AM tuple, then copy it into resultCxt and return the copy
-	 */
-	aform = (Form_pg_am) MemoryContextAlloc(resultCxt, sizeof *aform);
-	memcpy(aform, GETSTRUCT(pg_am_tuple), sizeof *aform);
-
-	heap_endscan(pg_am_scan);
-	heap_close(pg_am_desc, AccessShareLock);
-
-	return aform;
-}
-
-/* ----------------------------------------------------------------
  *		ConstructIndexReldesc
  * ----------------------------------------------------------------
  */
 static void
 ConstructIndexReldesc(Relation indexRelation, Oid amoid)
 {
-	/*
-	 * Fill in a copy of relevant pg_am entry
-	 */
-	indexRelation->rd_am = AccessMethodObjectIdGetForm(amoid,
-													 CacheMemoryContext);
-
 	/*
 	 * Set up some additional fields of the index' pg_class entry. In
 	 * particular, initialize knowledge of whether the index is shared.
@@ -953,9 +886,8 @@ index_drop(Oid indexId)
  * ----------------
  */
 IndexInfo *
-BuildIndexInfo(HeapTuple indexTuple)
+BuildIndexInfo(Form_pg_index indexStruct)
 {
-	Form_pg_index indexStruct = (Form_pg_index) GETSTRUCT(indexTuple);
 	IndexInfo  *ii = makeNode(IndexInfo);
 	int			i;
 	int			numKeys;
@@ -1337,9 +1269,6 @@ setNewRelfilenode(Relation relation)
 	}
 	/* schedule unlinking old relfilenode */
 	smgrunlink(DEFAULT_SMGR, relation);
-	/* cleanup pg_internal.init if necessary */
-	if (relation->rd_isnailed)
-		unlink(RELCACHE_INIT_FILENAME);
 	/* create another storage file. Is it a little ugly ? */
 	memcpy((char *) &workrel, relation, sizeof(RelationData));
 	workrel.rd_node.relNode = newrelfilenode;
@@ -1863,11 +1792,7 @@ bool
 reindex_index(Oid indexId, bool force, bool inplace)
 {
 	Relation	iRel,
-				indexRelation,
 				heapRelation;
-	ScanKeyData entry;
-	HeapScanDesc scan;
-	HeapTuple	indexTuple;
 	IndexInfo  *indexInfo;
 	Oid			heapId;
 	bool		old;
@@ -1899,23 +1824,10 @@ reindex_index(Oid indexId, bool force, bool inplace)
 
 	old = SetReindexProcessing(true);
 
-	/* Scan pg_index to find the index's pg_index entry */
-	indexRelation = heap_openr(IndexRelationName, AccessShareLock);
-	ScanKeyEntryInitialize(&entry, 0, Anum_pg_index_indexrelid, F_OIDEQ,
-						   ObjectIdGetDatum(indexId));
-	scan = heap_beginscan(indexRelation, false, SnapshotNow, 1, &entry);
-	indexTuple = heap_getnext(scan, 0);
-	if (!HeapTupleIsValid(indexTuple))
-		elog(ERROR, "reindex_index: index %u not found in pg_index", indexId);
-
 	/* Get OID of index's parent table */
-	heapId = ((Form_pg_index) GETSTRUCT(indexTuple))->indrelid;
+	heapId = iRel->rd_index->indrelid;
 	/* Fetch info needed for index_build */
-	indexInfo = BuildIndexInfo(indexTuple);
-
-	/* Complete the scan and close pg_index */
-	heap_endscan(scan);
-	heap_close(indexRelation, AccessShareLock);
+	indexInfo = BuildIndexInfo(iRel->rd_index);
 
 	/* Open the parent heap relation */
 	heapRelation = heap_open(heapId, ExclusiveLock);

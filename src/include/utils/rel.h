@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rel.h,v 1.55 2001/11/05 17:46:36 momjian Exp $
+ * $Id: rel.h,v 1.56 2002/02/19 20:11:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 #include "access/tupdesc.h"
 #include "catalog/pg_am.h"
 #include "catalog/pg_class.h"
+#include "catalog/pg_index.h"
 #include "rewrite/prs2lock.h"
 #include "storage/block.h"
 #include "storage/fd.h"
@@ -113,19 +114,23 @@ typedef struct RelationData
 	bool		rd_isnailed;	/* rel is nailed in cache */
 	bool		rd_indexfound;	/* true if rd_indexlist is valid */
 	bool		rd_uniqueindex; /* true if rel is a UNIQUE index */
-	Form_pg_am	rd_am;			/* AM tuple (if an index) */
 	Form_pg_class rd_rel;		/* RELATION tuple */
+	TupleDesc	rd_att;			/* tuple descriptor */
 	Oid			rd_id;			/* relation's object id */
 	List	   *rd_indexlist;	/* list of OIDs of indexes on relation */
 	LockInfoData rd_lockInfo;	/* lock mgr's info for locking relation */
-	TupleDesc	rd_att;			/* tuple descriptor */
 	RuleLock   *rd_rules;		/* rewrite rules */
 	MemoryContext rd_rulescxt;	/* private memory cxt for rd_rules, if any */
 	TriggerDesc *trigdesc;		/* Trigger info, or NULL if rel has none */
 
+	/* These are non-NULL only for an index relation: */
+	Form_pg_index rd_index;		/* pg_index tuple describing this index */
+	Form_pg_am	rd_am;			/* pg_am tuple for index's AM */
+
 	/* index access support info (used only for an index relation) */
 	MemoryContext rd_indexcxt;	/* private memory cxt for this stuff */
 	IndexStrategy rd_istrat;	/* operator strategy map */
+	Oid		   *rd_operator;	/* OIDs of index operators */
 	RegProcedure *rd_support;	/* OIDs of support procedures */
 	struct FmgrInfo *rd_supportinfo;	/* lookup info for support
 										 * procedures */

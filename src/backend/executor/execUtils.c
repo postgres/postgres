@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.78 2001/10/25 05:49:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.79 2002/02/19 20:11:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -496,7 +496,6 @@ ExecOpenIndices(ResultRelInfo *resultRelInfo)
 	{
 		Oid			indexOid = lfirsti(indexoidscan);
 		Relation	indexDesc;
-		HeapTuple	indexTuple;
 		IndexInfo  *ii;
 
 		/*
@@ -525,20 +524,9 @@ ExecOpenIndices(ResultRelInfo *resultRelInfo)
 			LockRelation(indexDesc, AccessExclusiveLock);
 
 		/*
-		 * Get the pg_index tuple for the index
+		 * extract index key information from the index's pg_index tuple
 		 */
-		indexTuple = SearchSysCache(INDEXRELID,
-									ObjectIdGetDatum(indexOid),
-									0, 0, 0);
-		if (!HeapTupleIsValid(indexTuple))
-			elog(ERROR, "ExecOpenIndices: index %u not found", indexOid);
-
-		/*
-		 * extract the index key information from the tuple
-		 */
-		ii = BuildIndexInfo(indexTuple);
-
-		ReleaseSysCache(indexTuple);
+		ii = BuildIndexInfo(indexDesc->rd_index);
 
 		relationDescs[i] = indexDesc;
 		indexInfoArray[i] = ii;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.66 2002/02/11 20:10:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.67 2002/02/19 20:11:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -359,14 +359,20 @@ ExecIndexReScan(IndexScan *node, ExprContext *exprCtxt, Plan *parent)
 			int			n_keys;
 			ScanKey		scan_keys;
 			int		   *run_keys;
+			List	   *listscan;
 
 			indxqual = lnext(indxqual);
 			n_keys = numScanKeys[i];
 			scan_keys = scanKeys[i];
 			run_keys = runtimeKeyInfo[i];
 
+			listscan = qual;
 			for (j = 0; j < n_keys; j++)
 			{
+				Expr	   *clause = lfirst(listscan);
+
+				listscan = lnext(listscan);
+
 				/*
 				 * If we have a run-time key, then extract the run-time
 				 * expression and evaluate it with respect to the current
@@ -382,7 +388,6 @@ ExecIndexReScan(IndexScan *node, ExprContext *exprCtxt, Plan *parent)
 				 */
 				if (run_keys[j] != NO_OP)
 				{
-					Expr	   *clause = nth(j, qual);
 					Node	   *scanexpr;
 					Datum		scanvalue;
 					bool		isNull;
@@ -448,6 +453,9 @@ ExecEndIndexScan(IndexScan *node)
 	List	   *indxqual;
 	int		   *numScanKeys;
 	int			numIndices;
+	Relation	relation;
+	RelationPtr indexRelationDescs;
+	IndexScanDescPtr indexScanDescs;
 	int			i;
 
 	scanstate = node->scan.scanstate;
@@ -461,6 +469,9 @@ ExecEndIndexScan(IndexScan *node)
 	numIndices = indexstate->iss_NumIndices;
 	scanKeys = indexstate->iss_ScanKeys;
 	numScanKeys = indexstate->iss_NumScanKeys;
+	indexRelationDescs = indexstate->iss_RelationDescs;
+	indexScanDescs = indexstate->iss_ScanDescs;
+	relation = scanstate->css_currentRelation;
 
 	/*
 	 * Free the projection info and the scan attribute info
@@ -475,9 +486,25 @@ ExecEndIndexScan(IndexScan *node)
 		FreeExprContext(indexstate->iss_RuntimeContext);
 
 	/*
-	 * close the heap and index relations
+	 * close the index relations
 	 */
-	ExecCloseR((Plan *) node);
+	for (i = 0; i < numIndices; i++)
+	{
+		if (indexScanDescs[i] != NULL)
+			index_endscan(indexScanDescs[i]);
+
+		if (indexRelationDescs[i] != NULL)
+			index_close(indexRelationDescs[i]);
+	}
+
+	/*
+	 * close the heap relation.
+	 *
+	 * Currently, we do not release the AccessShareLock acquired by
+	 * ExecInitIndexScan.  This lock should be held till end of transaction.
+	 * (There is a faction that considers this too much locking, however.)
+	 */
+	heap_close(relation, NoLock);
 
 	/*
 	 * free the scan keys used in scanning the indices
@@ -589,6 +616,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 	CommonScanState *scanstate;
 	List	   *indxqual;
 	List	   *indxid;
+	List	   *listscan;
 	int			i;
 	int			numIndices;
 	int			indexPtr;
@@ -603,7 +631,6 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 	Index		relid;
 	Oid			reloid;
 	Relation	currentRelation;
-	HeapScanDesc currentScanDesc;
 	ScanDirection direction;
 
 	/*
@@ -709,6 +736,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 		 * for each opclause in the given qual, convert each qual's
 		 * opclause into a single scan key
 		 */
+		listscan = qual;
 		for (j = 0; j < n_keys; j++)
 		{
 			Expr	   *clause; /* one clause of index qual */
@@ -725,7 +753,8 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 			/*
 			 * extract clause information from the qualification
 			 */
-			clause = nth(j, qual);
+			clause = lfirst(listscan);
+			listscan = lnext(listscan);
 
 			op = (Oper *) clause->oper;
 			if (!IsA(clause, Expr) ||!IsA(op, Oper))
@@ -989,25 +1018,19 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 	direction = estate->es_direction;
 
 	/*
-	 * open the base relation
+	 * open the base relation and acquire AccessShareLock on it.
 	 */
 	relid = node->scan.scanrelid;
 	rtentry = rt_fetch(relid, rangeTable);
 	reloid = rtentry->relid;
 
-	ExecOpenScanR(reloid,		/* relation */
-				  0,			/* nkeys */
-				  (ScanKey) NULL,		/* scan key */
-				  false,		/* is index */
-				  direction,	/* scan direction */
-				  estate->es_snapshot,	/* */
-				  &currentRelation,		/* return: rel desc */
-				  (Pointer *) &currentScanDesc);		/* return: scan desc */
+	currentRelation = heap_open(reloid, AccessShareLock);
 
 	if (!RelationGetForm(currentRelation)->relhasindex)
 		elog(ERROR, "indexes of the relation %u was inactivated", reloid);
+
 	scanstate->css_currentRelation = currentRelation;
-	scanstate->css_currentScanDesc = currentScanDesc;
+	scanstate->css_currentScanDesc = NULL; /* no heap scan here */
 
 	/*
 	 * get the scan type from the relation descriptor.
@@ -1017,24 +1040,30 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 
 	/*
 	 * open the index relations and initialize relation and scan
-	 * descriptors.
+	 * descriptors.  Note we acquire no locks here; the index machinery
+	 * does its own locks and unlocks.	(We rely on having AccessShareLock
+	 * on the parent table to ensure the index won't go away!)
 	 */
+	listscan = indxid;
 	for (i = 0; i < numIndices; i++)
 	{
-		Oid			indexOid = (Oid) nthi(i, indxid);
+		Oid			indexOid = (Oid) lfirsti(listscan);
 
 		if (indexOid != 0)
 		{
-			ExecOpenScanR(indexOid,		/* relation */
-						  numScanKeys[i],		/* nkeys */
-						  scanKeys[i],	/* scan key */
-						  true, /* is index */
-						  direction,	/* scan direction */
-						  estate->es_snapshot,
-						  &(relationDescs[i]),	/* return: rel desc */
-						  (Pointer *) &(scanDescs[i]));
-			/* return: scan desc */
+			relationDescs[i] = index_open(indexOid);
+
+			/*
+			 * Note: index_beginscan()'s second arg is a boolean indicating
+			 * that the scan should be done in reverse.  That is, if you pass
+			 * it true, then the scan is backward.
+			 */
+			scanDescs[i] = index_beginscan(relationDescs[i],
+										   false, /* see above comment */
+										   numScanKeys[i],
+										   scanKeys[i]);
 		}
+		listscan = lnext(listscan);
 	}
 
 	indexstate->iss_RelationDescs = relationDescs;

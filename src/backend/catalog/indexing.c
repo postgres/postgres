@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.82 2001/08/21 16:36:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.83 2002/02/19 20:11:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,12 +80,6 @@ char	   *Name_pg_description_indices[Num_pg_description_indices] =
 
 
 
-static HeapTuple CatalogIndexFetchTuple(Relation heapRelation,
-					   Relation idesc,
-					   ScanKey skey,
-					   int16 num_keys);
-
-
 /*
  * Changes (appends) to catalogs can and do happen at various places
  * throughout the code.  We need a generic routine that will open all of
@@ -151,18 +145,10 @@ CatalogIndexInsert(Relation *idescs,
 
 	for (i = 0; i < nIndices; i++)
 	{
-		HeapTuple	index_tup;
 		IndexInfo  *indexInfo;
 		InsertIndexResult indexRes;
 
-		index_tup = SearchSysCache(INDEXRELID,
-								   ObjectIdGetDatum(idescs[i]->rd_id),
-								   0, 0, 0);
-		if (!HeapTupleIsValid(index_tup))
-			elog(ERROR, "CatalogIndexInsert: index %u not found",
-				 idescs[i]->rd_id);
-		indexInfo = BuildIndexInfo(index_tup);
-		ReleaseSysCache(index_tup);
+		indexInfo = BuildIndexInfo(idescs[i]->rd_index);
 
 		FormIndexDatum(indexInfo,
 					   heapTuple,
@@ -177,128 +163,4 @@ CatalogIndexInsert(Relation *idescs,
 			pfree(indexRes);
 		pfree(indexInfo);
 	}
-}
-
-
-/*
- *	CatalogIndexFetchTuple() -- Get a tuple that satisfies a scan key
- *								from a catalog relation.
- *
- *		Since the index may contain pointers to dead tuples, we need to
- *		iterate until we find a tuple that's valid and satisfies the scan
- *		key.
- */
-static HeapTuple
-CatalogIndexFetchTuple(Relation heapRelation,
-					   Relation idesc,
-					   ScanKey skey,
-					   int16 num_keys)
-{
-	IndexScanDesc sd;
-	RetrieveIndexResult indexRes;
-	HeapTupleData tuple;
-	HeapTuple	result = NULL;
-	Buffer		buffer;
-
-	sd = index_beginscan(idesc, false, num_keys, skey);
-	tuple.t_datamcxt = CurrentMemoryContext;
-	tuple.t_data = NULL;
-	while ((indexRes = index_getnext(sd, ForwardScanDirection)))
-	{
-		tuple.t_self = indexRes->heap_iptr;
-		heap_fetch(heapRelation, SnapshotNow, &tuple, &buffer, sd);
-		pfree(indexRes);
-		if (tuple.t_data != NULL)
-			break;
-	}
-
-	if (tuple.t_data != NULL)
-	{
-		result = heap_copytuple(&tuple);
-		ReleaseBuffer(buffer);
-	}
-
-	index_endscan(sd);
-
-	return result;
-}
-
-
-/*---------------------------------------------------------------------
- *						 Class-specific index lookups
- *---------------------------------------------------------------------
- */
-
-/*
- * The remainder of the file is for individual index scan routines.
- * These routines provide canned scanning code for certain widely-used
- * indexes.  Most indexes don't need one of these.
- */
-
-
-HeapTuple
-AttributeRelidNumIndexScan(Relation heapRelation,
-						   Datum relid,
-						   Datum attnum)
-{
-	Relation	idesc;
-	ScanKeyData skey[2];
-	HeapTuple	tuple;
-
-	ScanKeyEntryInitialize(&skey[0],
-						   (bits16) 0x0,
-						   (AttrNumber) 1,
-						   (RegProcedure) F_OIDEQ,
-						   relid);
-
-	ScanKeyEntryInitialize(&skey[1],
-						   (bits16) 0x0,
-						   (AttrNumber) 2,
-						   (RegProcedure) F_INT2EQ,
-						   attnum);
-
-	idesc = index_openr(AttributeRelidNumIndex);
-	tuple = CatalogIndexFetchTuple(heapRelation, idesc, skey, 2);
-	index_close(idesc);
-	return tuple;
-}
-
-
-HeapTuple
-ClassNameIndexScan(Relation heapRelation, Datum relName)
-{
-	Relation	idesc;
-	ScanKeyData skey[1];
-	HeapTuple	tuple;
-
-	ScanKeyEntryInitialize(&skey[0],
-						   (bits16) 0x0,
-						   (AttrNumber) 1,
-						   (RegProcedure) F_NAMEEQ,
-						   relName);
-
-	idesc = index_openr(ClassNameIndex);
-	tuple = CatalogIndexFetchTuple(heapRelation, idesc, skey, 1);
-	index_close(idesc);
-	return tuple;
-}
-
-
-HeapTuple
-ClassOidIndexScan(Relation heapRelation, Datum relId)
-{
-	Relation	idesc;
-	ScanKeyData skey[1];
-	HeapTuple	tuple;
-
-	ScanKeyEntryInitialize(&skey[0],
-						   (bits16) 0x0,
-						   (AttrNumber) 1,
-						   (RegProcedure) F_OIDEQ,
-						   relId);
-
-	idesc = index_openr(ClassOidIndex);
-	tuple = CatalogIndexFetchTuple(heapRelation, idesc, skey, 1);
-	index_close(idesc);
-	return tuple;
 }

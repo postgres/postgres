@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relcache.h,v 1.29 2001/11/05 17:46:36 momjian Exp $
+ * $Id: relcache.h,v 1.30 2002/02/19 20:11:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,6 +40,7 @@ extern void RelationInitIndexAccessInfo(Relation relation);
  */
 extern void RelationCacheInitialize(void);
 extern void RelationCacheInitializePhase2(void);
+extern void RelationCacheInitializePhase3(void);
 
 /*
  * Routine to create a relcache entry for an about-to-be-created relation
@@ -62,15 +63,18 @@ extern void RelationPurgeLocalRelation(bool xactComitted);
 
 extern void RelationCacheAbort(void);
 
+/*
+ * Routines to help manage rebuilding of relcache init file
+ */
+extern bool RelationIdIsInInitFile(Oid relationId);
+extern void RelationCacheInitFileInvalidate(bool beforeSend);
 
 /* XLOG support */
 extern void CreateDummyCaches(void);
 extern void DestroyDummyCaches(void);
 
-/*
- * both vacuum.c and relcache.c need to know the name of the relcache init file
- */
 
-#define RELCACHE_INIT_FILENAME	"pg_internal.init"
+/* should be used only by relcache.c and catcache.c */
+extern bool criticalRelcachesBuilt;
 
 #endif   /* RELCACHE_H */

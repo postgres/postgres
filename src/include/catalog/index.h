@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: index.h,v 1.43 2001/11/05 17:46:31 momjian Exp $
+ * $Id: index.h,v 1.44 2002/02/19 20:11:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,6 +15,7 @@
 #define INDEX_H
 
 #include "access/itup.h"
+#include "catalog/pg_index.h"
 #include "nodes/execnodes.h"
 
 
@@ -27,9 +28,6 @@ typedef void (*IndexBuildCallback) (Relation index,
 												void *state);
 
 
-extern Form_pg_am AccessMethodObjectIdGetForm(Oid accessMethodObjectId,
-							MemoryContext resultCxt);
-
 extern Oid index_create(char *heapRelationName,
 			 char *indexRelationName,
 			 IndexInfo *indexInfo,
@@ -40,7 +38,7 @@ extern Oid index_create(char *heapRelationName,
 
 extern void index_drop(Oid indexId);
 
-extern IndexInfo *BuildIndexInfo(HeapTuple indexTuple);
+extern IndexInfo *BuildIndexInfo(Form_pg_index indexStruct);
 
 extern void FormIndexDatum(IndexInfo *indexInfo,
 			   HeapTuple heapTuple,

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/genam.c,v 1.30 2001/10/28 06:25:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/genam.c,v 1.31 2002/02/19 20:11:10 tgl Exp $
  *
  * NOTES
  *	  many of the old access method routines have been turned into
@@ -44,11 +44,13 @@
  *		next item pointer using the flags.
  * ----------------------------------------------------------------
  */
-
 #include "postgres.h"
-#include "access/genam.h"
 
+#include "access/genam.h"
+#include "access/heapam.h"
+#include "miscadmin.h"
 #include "pgstat.h"
+
 
 /* ----------------------------------------------------------------
  *		general access method routines
@@ -242,3 +244,156 @@ IndexScanRestorePosition(IndexScanDesc scan)
 }
 
 #endif
+
+
+/* ----------------------------------------------------------------
+ *		heap-or-index-scan access to system catalogs
+ *
+ *		These functions support system catalog accesses that normally use
+ *		an index but need to be capable of being switched to heap scans
+ *		if the system indexes are unavailable.  The interface is
+ *		as easy to use as a heap scan, and hides all the extra cruft of
+ *		the present indexscan API.
+ *
+ *		The specified scan keys must be compatible with the named index.
+ *		Generally this means that they must constrain either all columns
+ *		of the index, or the first K columns of an N-column index.
+ *
+ *		These routines would work fine with non-system tables, actually,
+ *		but they're only useful when there is a known index to use with
+ *		the given scan keys, so in practice they're only good for
+ *		predetermined types of scans of system catalogs.
+ * ----------------------------------------------------------------
+ */
+
+/*
+ * systable_beginscan --- set up for heap-or-index scan
+ *
+ *	rel: catalog to scan, already opened and suitably locked
+ *	indexRelname: name of index to conditionally use
+ *	indexOK: if false, forces a heap scan (see notes below)
+ *	snapshot: time qual to use (usually should be SnapshotNow)
+ *	nkeys, key: scan keys
+ *
+ * The attribute numbers in the scan key should be set for the heap case.
+ * If we choose to index, we reset them to 1..n to reference the index
+ * columns.  Note this means there must be one scankey qualification per
+ * index column!  This is checked by the Asserts in the normal, index-using
+ * case, but won't be checked if the heapscan path is taken.
+ *
+ * The routine checks the normal cases for whether an indexscan is safe,
+ * but caller can make additional checks and pass indexOK=false if needed.
+ * In standard case indexOK can simply be constant TRUE.
+ */
+SysScanDesc
+systable_beginscan(Relation rel,
+				   const char *indexRelname,
+				   bool indexOK,
+				   Snapshot snapshot,
+				   unsigned nkeys, ScanKey key)
+{
+	SysScanDesc sysscan;
+
+	sysscan = (SysScanDesc) palloc(sizeof(SysScanDescData));
+	sysscan->heap_rel = rel;
+	sysscan->snapshot = snapshot;
+	sysscan->tuple.t_datamcxt = NULL;
+	sysscan->tuple.t_data = NULL;
+	sysscan->buffer = InvalidBuffer;
+
+	if (indexOK &&
+		rel->rd_rel->relhasindex &&
+		!IsIgnoringSystemIndexes())
+	{
+		Relation	irel;
+		unsigned	i;
+
+		sysscan->irel = irel = index_openr(indexRelname);
+		/*
+		 * Change attribute numbers to be index column numbers.
+		 *
+		 * This code could be generalized to search for the index key numbers
+		 * to substitute, but for now there's no need.
+		 */
+		for (i = 0; i < nkeys; i++)
+		{
+			Assert(key[i].sk_attno == irel->rd_index->indkey[i]);
+			key[i].sk_attno = i+1;
+		}
+		sysscan->iscan = index_beginscan(irel, false, nkeys, key);
+		sysscan->scan = NULL;
+	}
+	else
+	{
+		sysscan->irel = (Relation) NULL;
+		sysscan->scan = heap_beginscan(rel, false, snapshot, nkeys, key);
+		sysscan->iscan = NULL;
+	}
+
+	return sysscan;
+}
+
+/*
+ * systable_getnext --- get next tuple in a heap-or-index scan
+ *
+ * Returns NULL if no more tuples available.
+ *
+ * Note that returned tuple is a reference to data in a disk buffer;
+ * it must not be modified, and should be presumed inaccessible after
+ * next getnext() or endscan() call.
+ */
+HeapTuple
+systable_getnext(SysScanDesc sysscan)
+{
+	HeapTuple	htup = (HeapTuple) NULL;
+
+	if (sysscan->irel)
+	{
+		RetrieveIndexResult indexRes;
+
+		if (BufferIsValid(sysscan->buffer))
+		{
+			ReleaseBuffer(sysscan->buffer);
+			sysscan->buffer = InvalidBuffer;
+		}
+
+		while ((indexRes = index_getnext(sysscan->iscan, ForwardScanDirection)) != NULL)
+		{
+			sysscan->tuple.t_self = indexRes->heap_iptr;
+			pfree(indexRes);
+			heap_fetch(sysscan->heap_rel, sysscan->snapshot,
+					   &sysscan->tuple, &sysscan->buffer,
+					   sysscan->iscan);
+			if (sysscan->tuple.t_data != NULL)
+			{
+				htup = &sysscan->tuple;
+				break;
+			}
+		}
+	}
+	else
+		htup = heap_getnext(sysscan->scan, 0);
+
+	return htup;
+}
+
+/*
+ * systable_endscan --- close scan, release resources
+ *
+ * Note that it's still up to the caller to close the heap relation.
+ */
+void
+systable_endscan(SysScanDesc sysscan)
+{
+	if (sysscan->irel)
+	{
+		if (BufferIsValid(sysscan->buffer))
+			ReleaseBuffer(sysscan->buffer);
+		index_endscan(sysscan->iscan);
+		index_close(sysscan->irel);
+	}
+	else
+		heap_endscan(sysscan->scan);
+
+	pfree(sysscan);
+}

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.97 2001/11/02 16:30:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.98 2002/02/19 20:11:18 tgl Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -287,16 +287,15 @@ InitPostgres(const char *dbname, const char *username)
 	AmiTransactionOverride(bootstrap);
 
 	/*
-	 * Initialize the relation descriptor cache. The pre-allocated
-	 * reldescs are created here.
+	 * Initialize the relation descriptor cache.  This must create
+	 * at least the minimum set of "nailed-in" cache entries.  No
+	 * catalog access happens here.
 	 */
 	RelationCacheInitialize();
 
 	/*
-	 * Initialize all the system catalog caches.
-	 *
-	 * Does not touch files since all routines are builtins (?) - thomas
-	 * 1997-11-01
+	 * Initialize all the system catalog caches.  Note that no catalog
+	 * access happens here; we only set up the cache structure.
 	 */
 	InitCatalogCache();
 
@@ -313,7 +312,11 @@ InitPostgres(const char *dbname, const char *username)
 	if (!bootstrap)
 		StartTransactionCommand();
 
-	/* replace faked-up relcache entries with the real info */
+	/*
+	 * It's now possible to do real access to the system catalogs.
+	 *
+	 * Replace faked-up relcache entries with correct info.
+	 */
 	RelationCacheInitializePhase2();
 
 	/*
@@ -333,8 +336,10 @@ InitPostgres(const char *dbname, const char *username)
 		}
 	}
 	else
+	{
 		/* normal multiuser case */
 		InitializeSessionUserId(username);
+	}
 
 	/*
 	 * Unless we are bootstrapping, double-check that InitMyDatabaseInfo()
@@ -348,6 +353,13 @@ InitPostgres(const char *dbname, const char *username)
 	/* set default client encoding --- uses info from ReverifyMyDatabase */
 	set_default_client_encoding();
 #endif
+
+	/*
+	 * Final phase of relation cache startup: write a new cache file
+	 * if necessary.  This is done after ReverifyMyDatabase to avoid
+	 * writing a cache file into a dead database.
+	 */
+	RelationCacheInitializePhase3();
 
 	/*
 	 * Set up process-exit callbacks to remove temp relations and then do

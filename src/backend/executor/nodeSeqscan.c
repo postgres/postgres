@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSeqscan.c,v 1.33 2001/10/28 06:25:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSeqscan.c,v 1.34 2002/02/19 20:11:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -154,7 +154,9 @@ InitScanRelation(SeqScan *node, EState *estate,
 
 	/*
 	 * get the relation object id from the relid'th entry in the range
-	 * table, open that relation and initialize the scan state...
+	 * table, open that relation and initialize the scan state.
+	 *
+	 * We acquire AccessShareLock for the duration of the scan.
 	 */
 	relid = node->scanrelid;
 	rangeTable = estate->es_range_table;
@@ -162,14 +164,13 @@ InitScanRelation(SeqScan *node, EState *estate,
 	reloid = rtentry->relid;
 	direction = estate->es_direction;
 
-	ExecOpenScanR(reloid,		/* relation */
-				  0,			/* nkeys */
-				  NULL,			/* scan key */
-				  false,		/* is index */
-				  direction,	/* scan direction */
-				  estate->es_snapshot,
-				  &currentRelation,		/* return: rel desc */
-				  (Pointer *) &currentScanDesc);		/* return: scan desc */
+	currentRelation = heap_open(reloid, AccessShareLock);
+
+	currentScanDesc = heap_beginscan(currentRelation,
+									 ScanDirectionIsBackward(direction),
+									 estate->es_snapshot,
+									 0,
+									 NULL);
 
 	scanstate->css_currentRelation = currentRelation;
 	scanstate->css_currentScanDesc = currentScanDesc;
@@ -189,7 +190,6 @@ ExecInitSeqScan(SeqScan *node, EState *estate, Plan *parent)
 {
 	CommonScanState *scanstate;
 	Oid			reloid;
-	HeapScanDesc scandesc;
 
 	/*
 	 * Once upon a time it was possible to have an outerPlan of a SeqScan,
@@ -229,7 +229,6 @@ ExecInitSeqScan(SeqScan *node, EState *estate, Plan *parent)
 	 */
 	reloid = InitScanRelation(node, estate, scanstate);
 
-	scandesc = scanstate->css_currentScanDesc;
 	scanstate->cstate.cs_TupFromTlist = false;
 
 	/*
@@ -259,11 +258,15 @@ void
 ExecEndSeqScan(SeqScan *node)
 {
 	CommonScanState *scanstate;
+	Relation	relation;
+	HeapScanDesc scanDesc;
 
 	/*
 	 * get information from node
 	 */
 	scanstate = node->scanstate;
+	relation = scanstate->css_currentRelation;
+	scanDesc = scanstate->css_currentScanDesc;
 
 	/*
 	 * Free the projection info and the scan attribute info
@@ -276,9 +279,18 @@ ExecEndSeqScan(SeqScan *node)
 	ExecFreeExprContext(&scanstate->cstate);
 
 	/*
-	 * close scan relation
+	 * close heap scan
 	 */
-	ExecCloseR((Plan *) node);
+	heap_endscan(scanDesc);
+
+	/*
+	 * close the heap relation.
+	 *
+	 * Currently, we do not release the AccessShareLock acquired by
+	 * InitScanRelation.  This lock should be held till end of transaction.
+	 * (There is a faction that considers this too much locking, however.)
+	 */
+	heap_close(relation, NoLock);
 
 	/*
 	 * clean out the tuple table
@@ -303,7 +315,6 @@ ExecSeqReScan(SeqScan *node, ExprContext *exprCtxt, Plan *parent)
 {
 	CommonScanState *scanstate;
 	EState	   *estate;
-	Relation	rel;
 	HeapScanDesc scan;
 	ScanDirection direction;
 
@@ -317,11 +328,13 @@ ExecSeqReScan(SeqScan *node, ExprContext *exprCtxt, Plan *parent)
 		estate->es_evTupleNull[node->scanrelid - 1] = false;
 		return;
 	}
-	rel = scanstate->css_currentRelation;
+
 	scan = scanstate->css_currentScanDesc;
 	direction = estate->es_direction;
-	scan = ExecReScanR(rel, scan, direction, 0, NULL);
-	scanstate->css_currentScanDesc = scan;
+
+	heap_rescan(scan,			/* scan desc */
+				ScanDirectionIsBackward(direction), /* backward flag */
+				NULL);			/* new scan keys */
 }
 
 /* ----------------------------------------------------------------

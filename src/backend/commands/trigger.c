@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.101 2002/01/15 16:52:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.102 2002/02/19 20:11:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,7 +56,7 @@ CreateTrigger(CreateTrigStmt *stmt)
 	char		nulls[Natts_pg_trigger];
 	Relation	rel;
 	Relation	tgrel;
-	HeapScanDesc tgscan;
+	SysScanDesc	tgscan;
 	ScanKeyData key;
 	Relation	pgrel;
 	HeapTuple	tuple;
@@ -151,8 +151,9 @@ CreateTrigger(CreateTrigStmt *stmt)
 	ScanKeyEntryInitialize(&key, 0, Anum_pg_trigger_tgrelid,
 						   F_OIDEQ,
 						   ObjectIdGetDatum(RelationGetRelid(rel)));
-	tgscan = heap_beginscan(tgrel, 0, SnapshotNow, 1, &key);
-	while (HeapTupleIsValid(tuple = heap_getnext(tgscan, 0)))
+	tgscan = systable_beginscan(tgrel, TriggerRelidIndex, true,
+								SnapshotNow, 1, &key);
+	while (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
 	{
 		Form_pg_trigger pg_trigger = (Form_pg_trigger) GETSTRUCT(tuple);
 
@@ -161,7 +162,7 @@ CreateTrigger(CreateTrigStmt *stmt)
 				 stmt->trigname, stmt->relname);
 		found++;
 	}
-	heap_endscan(tgscan);
+	systable_endscan(tgscan);
 
 	/*
 	 * Find and validate the trigger function.
@@ -311,7 +312,7 @@ DropTrigger(DropTrigStmt *stmt)
 {
 	Relation	rel;
 	Relation	tgrel;
-	HeapScanDesc tgscan;
+	SysScanDesc	tgscan;
 	ScanKeyData key;
 	Relation	pgrel;
 	HeapTuple	tuple;
@@ -343,8 +344,9 @@ DropTrigger(DropTrigStmt *stmt)
 	ScanKeyEntryInitialize(&key, 0, Anum_pg_trigger_tgrelid,
 						   F_OIDEQ,
 						   ObjectIdGetDatum(RelationGetRelid(rel)));
-	tgscan = heap_beginscan(tgrel, 0, SnapshotNow, 1, &key);
-	while (HeapTupleIsValid(tuple = heap_getnext(tgscan, 0)))
+	tgscan = systable_beginscan(tgrel, TriggerRelidIndex, true,
+								SnapshotNow, 1, &key);
+	while (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
 	{
 		Form_pg_trigger pg_trigger = (Form_pg_trigger) GETSTRUCT(tuple);
 
@@ -359,14 +361,15 @@ DropTrigger(DropTrigStmt *stmt)
 		else
 			found++;
 	}
+	systable_endscan(tgscan);
+	heap_close(tgrel, RowExclusiveLock);
+
 	if (tgfound == 0)
 		elog(ERROR, "DropTrigger: there is no trigger %s on relation %s",
 			 stmt->trigname, stmt->relname);
 	if (tgfound > 1)
 		elog(NOTICE, "DropTrigger: found (and deleted) %d triggers %s on relation %s",
 			 tgfound, stmt->trigname, stmt->relname);
-	heap_endscan(tgscan);
-	heap_close(tgrel, RowExclusiveLock);
 
 	/*
 	 * Update relation's pg_class entry.  Crucial side-effect: other
@@ -406,7 +409,7 @@ void
 RelationRemoveTriggers(Relation rel)
 {
 	Relation	tgrel;
-	HeapScanDesc tgscan;
+	SysScanDesc	tgscan;
 	ScanKeyData key;
 	HeapTuple	tup;
 	bool		found = false;
@@ -415,10 +418,10 @@ RelationRemoveTriggers(Relation rel)
 	ScanKeyEntryInitialize(&key, 0, Anum_pg_trigger_tgrelid,
 						   F_OIDEQ,
 						   ObjectIdGetDatum(RelationGetRelid(rel)));
+	tgscan = systable_beginscan(tgrel, TriggerRelidIndex, true,
+								SnapshotNow, 1, &key);
 
-	tgscan = heap_beginscan(tgrel, 0, SnapshotNow, 1, &key);
-
-	while (HeapTupleIsValid(tup = heap_getnext(tgscan, 0)))
+	while (HeapTupleIsValid(tup = systable_getnext(tgscan)))
 	{
 		/* Delete any comments associated with this trigger */
 		DeleteComments(tup->t_data->t_oid, RelationGetRelid(tgrel));
@@ -428,7 +431,7 @@ RelationRemoveTriggers(Relation rel)
 		found = true;
 	}
 
-	heap_endscan(tgscan);
+	systable_endscan(tgscan);
 
 	/*
 	 * If we deleted any triggers, must update pg_class entry and advance
@@ -468,9 +471,10 @@ RelationRemoveTriggers(Relation rel)
 	ScanKeyEntryInitialize(&key, 0, Anum_pg_trigger_tgconstrrelid,
 						   F_OIDEQ,
 						   ObjectIdGetDatum(RelationGetRelid(rel)));
+	tgscan = systable_beginscan(tgrel, TriggerConstrRelidIndex, true,
+								SnapshotNow, 1, &key);
 
-	tgscan = heap_beginscan(tgrel, 0, SnapshotNow, 1, &key);
-	while (HeapTupleIsValid(tup = heap_getnext(tgscan, 0)))
+	while (HeapTupleIsValid(tup = systable_getnext(tgscan)))
 	{
 		Form_pg_trigger pg_trigger;
 		Relation	refrel;
@@ -500,7 +504,7 @@ RelationRemoveTriggers(Relation rel)
 		pfree(stmt.relname);
 		pfree(stmt.trigname);
 	}
-	heap_endscan(tgscan);
+	systable_endscan(tgscan);
 
 	heap_close(tgrel, RowExclusiveLock);
 }
@@ -518,68 +522,32 @@ RelationBuildTriggers(Relation relation)
 	TriggerDesc *trigdesc;
 	int			ntrigs = relation->rd_rel->reltriggers;
 	Trigger    *triggers = NULL;
-	Trigger    *build;
+	int			found = 0;
 	Relation	tgrel;
-	Form_pg_trigger pg_trigger;
-	Relation	irel = (Relation) NULL;
 	ScanKeyData skey;
-	HeapTupleData tuple;
-	IndexScanDesc sd = (IndexScanDesc) NULL;
-	HeapScanDesc tgscan = (HeapScanDesc) NULL;
+	SysScanDesc	tgscan;
 	HeapTuple	htup;
-	RetrieveIndexResult indexRes;
-	Buffer		buffer;
 	struct varlena *val;
 	bool		isnull;
-	int			found;
-	bool		hasindex;
-
-	trigdesc = (TriggerDesc *) MemoryContextAlloc(CacheMemoryContext,
-												  sizeof(TriggerDesc));
-	MemSet(trigdesc, 0, sizeof(TriggerDesc));
 
 	ScanKeyEntryInitialize(&skey,
 						   (bits16) 0x0,
-						   (AttrNumber) 1,
+						   (AttrNumber) Anum_pg_trigger_tgrelid,
 						   (RegProcedure) F_OIDEQ,
 						   ObjectIdGetDatum(RelationGetRelid(relation)));
 
 	tgrel = heap_openr(TriggerRelationName, AccessShareLock);
-	hasindex = (tgrel->rd_rel->relhasindex && !IsIgnoringSystemIndexes());
-	if (hasindex)
-	{
-		irel = index_openr(TriggerRelidIndex);
-		sd = index_beginscan(irel, false, 1, &skey);
-	}
-	else
-		tgscan = heap_beginscan(tgrel, 0, SnapshotNow, 1, &skey);
+	tgscan = systable_beginscan(tgrel, TriggerRelidIndex, true,
+								SnapshotNow, 1, &skey);
 
-	for (found = 0;;)
+	while (HeapTupleIsValid(htup = systable_getnext(tgscan)))
 	{
-		if (hasindex)
-		{
-			indexRes = index_getnext(sd, ForwardScanDirection);
-			if (!indexRes)
-				break;
+		Form_pg_trigger pg_trigger = (Form_pg_trigger) GETSTRUCT(htup);
+		Trigger    *build;
 
-			tuple.t_self = indexRes->heap_iptr;
-			heap_fetch(tgrel, SnapshotNow, &tuple, &buffer, sd);
-			pfree(indexRes);
-			if (!tuple.t_data)
-				continue;
-			htup = &tuple;
-		}
-		else
-		{
-			htup = heap_getnext(tgscan, 0);
-			if (!HeapTupleIsValid(htup))
-				break;
-		}
 		if (found == ntrigs)
 			elog(ERROR, "RelationBuildTriggers: unexpected record found for rel %s",
 				 RelationGetRelationName(relation));
-
-		pg_trigger = (Form_pg_trigger) GETSTRUCT(htup);
 
 		if (triggers == NULL)
 			triggers = (Trigger *) MemoryContextAlloc(CacheMemoryContext,
@@ -628,25 +596,20 @@ RelationBuildTriggers(Relation relation)
 			build->tgargs = NULL;
 
 		found++;
-		if (hasindex)
-			ReleaseBuffer(buffer);
 	}
 
-	if (found < ntrigs)
+	systable_endscan(tgscan);
+	heap_close(tgrel, AccessShareLock);
+
+	if (found != ntrigs)
 		elog(ERROR, "RelationBuildTriggers: %d record(s) not found for rel %s",
 			 ntrigs - found,
 			 RelationGetRelationName(relation));
 
-	if (hasindex)
-	{
-		index_endscan(sd);
-		index_close(irel);
-	}
-	else
-		heap_endscan(tgscan);
-	heap_close(tgrel, AccessShareLock);
-
 	/* Build trigdesc */
+	trigdesc = (TriggerDesc *) MemoryContextAlloc(CacheMemoryContext,
+												  sizeof(TriggerDesc));
+	MemSet(trigdesc, 0, sizeof(TriggerDesc));
 	trigdesc->triggers = triggers;
 	trigdesc->numtriggers = ntrigs;
 	for (found = 0; found < ntrigs; found++)
@@ -1741,14 +1704,12 @@ void
 DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 {
 	Relation	tgrel;
-	Relation	irel = (Relation) NULL;
 	List	   *l;
 	List	   *ls;
 	List	   *loid = NIL;
 	MemoryContext oldcxt;
 	bool		found;
 	DeferredTriggerStatus state;
-	bool		hasindex;
 
 	/*
 	 * Handle SET CONSTRAINTS ALL ...
@@ -1817,21 +1778,12 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 	 * ----------
 	 */
 	tgrel = heap_openr(TriggerRelationName, AccessShareLock);
-	hasindex = (tgrel->rd_rel->relhasindex && !IsIgnoringSystemIndexes());
-	if (hasindex)
-		irel = index_openr(TriggerConstrNameIndex);
 
 	foreach(l, stmt->constraints)
 	{
 		ScanKeyData skey;
-		HeapTupleData tuple;
-		IndexScanDesc sd = (IndexScanDesc) NULL;
-		HeapScanDesc tgscan = (HeapScanDesc) NULL;
+		SysScanDesc	tgscan;
 		HeapTuple	htup;
-		RetrieveIndexResult indexRes;
-		Buffer		buffer;
-		Form_pg_trigger pg_trigger;
-		Oid			constr_oid;
 
 		/*
 		 * Check that only named constraints are set explicitly
@@ -1844,47 +1796,28 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 		 */
 		ScanKeyEntryInitialize(&skey,
 							   (bits16) 0x0,
-							   (AttrNumber) 1,
+							   (AttrNumber) Anum_pg_trigger_tgconstrname,
 							   (RegProcedure) F_NAMEEQ,
 							   PointerGetDatum((char *) lfirst(l)));
 
-		if (hasindex)
-			sd = index_beginscan(irel, false, 1, &skey);
-		else
-			tgscan = heap_beginscan(tgrel, 0, SnapshotNow, 1, &skey);
+		tgscan = systable_beginscan(tgrel, TriggerConstrNameIndex, true,
+									SnapshotNow, 1, &skey);
 
 		/*
 		 * ... and search for the constraint trigger row
 		 */
 		found = false;
-		for (;;)
-		{
-			if (hasindex)
-			{
-				indexRes = index_getnext(sd, ForwardScanDirection);
-				if (!indexRes)
-					break;
 
-				tuple.t_self = indexRes->heap_iptr;
-				heap_fetch(tgrel, SnapshotNow, &tuple, &buffer, sd);
-				pfree(indexRes);
-				if (!tuple.t_data)
-					continue;
-				htup = &tuple;
-			}
-			else
-			{
-				htup = heap_getnext(tgscan, 0);
-				if (!HeapTupleIsValid(htup))
-					break;
-			}
+		while (HeapTupleIsValid(htup = systable_getnext(tgscan)))
+		{
+			Form_pg_trigger pg_trigger = (Form_pg_trigger) GETSTRUCT(htup);
+			Oid			constr_oid;
 
 			/*
 			 * If we found some, check that they fit the deferrability but
 			 * skip ON <event> RESTRICT ones, since they are silently
 			 * never deferrable.
 			 */
-			pg_trigger = (Form_pg_trigger) GETSTRUCT(htup);
 			if (stmt->deferred && !pg_trigger->tgdeferrable &&
 				pg_trigger->tgfoid != F_RI_FKEY_RESTRICT_UPD &&
 				pg_trigger->tgfoid != F_RI_FKEY_RESTRICT_DEL)
@@ -1894,24 +1827,16 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 			constr_oid = htup->t_data->t_oid;
 			loid = lappendi(loid, constr_oid);
 			found = true;
-
-			if (hasindex)
-				ReleaseBuffer(buffer);
 		}
+
+		systable_endscan(tgscan);
 
 		/*
 		 * Not found ?
 		 */
 		if (!found)
 			elog(ERROR, "Constraint '%s' does not exist", (char *) lfirst(l));
-
-		if (hasindex)
-			index_endscan(sd);
-		else
-			heap_endscan(tgscan);
 	}
-	if (hasindex)
-		index_close(irel);
 	heap_close(tgrel, AccessShareLock);
 
 	if (!IsTransactionBlock())

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.115 2001/12/12 03:28:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.116 2002/02/19 20:11:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -547,11 +547,9 @@ agg_get_candidates(char *aggname,
 				   Oid typeId,
 				   CandidateList *candidates)
 {
-	CandidateList current_candidate;
 	Relation	pg_aggregate_desc;
-	HeapScanDesc pg_aggregate_scan;
+	SysScanDesc	pg_aggregate_scan;
 	HeapTuple	tup;
-	Form_pg_aggregate agg;
 	int			ncandidates = 0;
 	ScanKeyData aggKey[1];
 
@@ -563,15 +561,15 @@ agg_get_candidates(char *aggname,
 						   NameGetDatum(aggname));
 
 	pg_aggregate_desc = heap_openr(AggregateRelationName, AccessShareLock);
-	pg_aggregate_scan = heap_beginscan(pg_aggregate_desc,
-									   0,
-									   SnapshotSelf,	/* ??? */
-									   1,
-									   aggKey);
+	pg_aggregate_scan = systable_beginscan(pg_aggregate_desc,
+										   AggregateNameTypeIndex, true,
+										   SnapshotNow,
+										   1, aggKey);
 
-	while (HeapTupleIsValid(tup = heap_getnext(pg_aggregate_scan, 0)))
+	while (HeapTupleIsValid(tup = systable_getnext(pg_aggregate_scan)))
 	{
-		agg = (Form_pg_aggregate) GETSTRUCT(tup);
+		Form_pg_aggregate agg = (Form_pg_aggregate) GETSTRUCT(tup);
+		CandidateList current_candidate;
 
 		current_candidate = (CandidateList) palloc(sizeof(struct _CandidateList));
 		current_candidate->args = (Oid *) palloc(sizeof(Oid));
@@ -582,7 +580,7 @@ agg_get_candidates(char *aggname,
 		ncandidates++;
 	}
 
-	heap_endscan(pg_aggregate_scan);
+	systable_endscan(pg_aggregate_scan);
 	heap_close(pg_aggregate_desc, AccessShareLock);
 
 	return ncandidates;
@@ -680,62 +678,46 @@ static CandidateList
 func_get_candidates(char *funcname, int nargs)
 {
 	Relation	heapRelation;
-	Relation	idesc;
-	ScanKeyData skey;
-	HeapTupleData tuple;
-	IndexScanDesc sd;
-	RetrieveIndexResult indexRes;
-	Form_pg_proc pgProcP;
+	ScanKeyData skey[2];
+	HeapTuple	tuple;
+	SysScanDesc	funcscan;
 	CandidateList candidates = NULL;
-	CandidateList current_candidate;
 	int			i;
 
 	heapRelation = heap_openr(ProcedureRelationName, AccessShareLock);
-	ScanKeyEntryInitialize(&skey,
+
+	ScanKeyEntryInitialize(&skey[0],
 						   (bits16) 0x0,
 						   (AttrNumber) Anum_pg_proc_proname,
 						   (RegProcedure) F_NAMEEQ,
 						   PointerGetDatum(funcname));
+	ScanKeyEntryInitialize(&skey[1],
+						   (bits16) 0x0,
+						   (AttrNumber) Anum_pg_proc_pronargs,
+						   (RegProcedure) F_INT2EQ,
+						   Int16GetDatum(nargs));
 
-	idesc = index_openr(ProcedureNameIndex);
+	funcscan = systable_beginscan(heapRelation, ProcedureNameIndex, true,
+								  SnapshotNow, 2, skey);
 
-	sd = index_beginscan(idesc, false, 1, &skey);
-
-	do
+	while (HeapTupleIsValid(tuple = systable_getnext(funcscan)))
 	{
-		indexRes = index_getnext(sd, ForwardScanDirection);
-		if (indexRes)
-		{
-			Buffer		buffer;
+		Form_pg_proc pgProcP = (Form_pg_proc) GETSTRUCT(tuple);
+		CandidateList current_candidate;
 
-			tuple.t_datamcxt = NULL;
-			tuple.t_data = NULL;
-			tuple.t_self = indexRes->heap_iptr;
-			heap_fetch(heapRelation, SnapshotNow, &tuple, &buffer, sd);
-			pfree(indexRes);
-			if (tuple.t_data != NULL)
-			{
-				pgProcP = (Form_pg_proc) GETSTRUCT(&tuple);
-				if (pgProcP->pronargs == nargs)
-				{
-					current_candidate = (CandidateList)
-						palloc(sizeof(struct _CandidateList));
-					current_candidate->args = (Oid *)
-						palloc(FUNC_MAX_ARGS * sizeof(Oid));
-					MemSet(current_candidate->args, 0, FUNC_MAX_ARGS * sizeof(Oid));
-					for (i = 0; i < nargs; i++)
-						current_candidate->args[i] = pgProcP->proargtypes[i];
+		current_candidate = (CandidateList)
+			palloc(sizeof(struct _CandidateList));
+		current_candidate->args = (Oid *)
+			palloc(FUNC_MAX_ARGS * sizeof(Oid));
+		MemSet(current_candidate->args, 0, FUNC_MAX_ARGS * sizeof(Oid));
+		for (i = 0; i < nargs; i++)
+			current_candidate->args[i] = pgProcP->proargtypes[i];
 
-					current_candidate->next = candidates;
-					candidates = current_candidate;
-				}
-				ReleaseBuffer(buffer);
-			}
-		}
-	} while (indexRes);
+		current_candidate->next = candidates;
+		candidates = current_candidate;
+	}
 
-	index_endscan(sd);
-	index_close(idesc);
+	systable_endscan(funcscan);
 	heap_close(heapRelation, AccessShareLock);
 
 	return candidates;

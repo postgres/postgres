@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: genam.h,v 1.31 2001/11/05 17:46:31 momjian Exp $
+ * $Id: genam.h,v 1.32 2002/02/19 20:11:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,9 +31,23 @@ typedef struct IndexBulkDeleteResult
 typedef bool (*IndexBulkDeleteCallback) (ItemPointer itemptr, void *state);
 
 
-/* ----------------
- *		generalized index_ interface routines (in indexam.c)
- * ----------------
+/* Struct for heap-or-index scans of system tables */
+typedef struct SysScanDescData
+{
+	Relation	heap_rel;		/* catalog being scanned */
+	Snapshot	snapshot;		/* time qual (normally SnapshotNow) */
+	Relation	irel;			/* NULL if doing heap scan */
+	HeapScanDesc scan;			/* only valid in heap-scan case */
+	IndexScanDesc iscan;		/* only valid in index-scan case */
+	HeapTupleData tuple;		/* workspace for indexscan */
+	Buffer		buffer;			/* working state for indexscan */
+} SysScanDescData;
+
+typedef SysScanDescData *SysScanDesc;
+
+
+/*
+ * generalized index_ interface routines (in indexam.c)
  */
 extern Relation index_open(Oid relationId);
 extern Relation index_openr(const char *relationName);
@@ -59,9 +73,22 @@ extern RegProcedure index_getprocid(Relation irel, AttrNumber attnum,
 extern struct FmgrInfo *index_getprocinfo(Relation irel, AttrNumber attnum,
 				  uint16 procnum);
 
-/* in genam.c */
+/*
+ * index access method support routines (in genam.c)
+ */
 extern IndexScanDesc RelationGetIndexScan(Relation relation, bool scanFromEnd,
 					 uint16 numberOfKeys, ScanKey key);
 extern void IndexScanEnd(IndexScanDesc scan);
+
+/*
+ * heap-or-index access to system catalogs (in genam.c)
+ */
+extern SysScanDesc systable_beginscan(Relation rel,
+									  const char *indexRelname,
+									  bool indexOK,
+									  Snapshot snapshot,
+									  unsigned nkeys, ScanKey key);
+extern HeapTuple systable_getnext(SysScanDesc sysscan);
+extern void systable_endscan(SysScanDesc sysscan);
 
 #endif   /* GENAM_H */

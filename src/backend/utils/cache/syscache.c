@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.66 2001/10/25 05:49:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.67 2002/02/19 20:11:18 tgl Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -109,6 +109,16 @@ static struct cachedesc cacheinfo[] = {
 		1,
 		{
 			Anum_pg_am_amname,
+			0,
+			0,
+			0
+	}},
+	{AccessMethodRelationName,	/* AMOID */
+		AmOidIndex,
+		0,
+		1,
+		{
+			ObjectIdAttributeNumber,
 			0,
 			0,
 			0
@@ -365,8 +375,7 @@ static struct cachedesc cacheinfo[] = {
 	}}
 };
 
-static CatCache *SysCache[
-						  lengthof(cacheinfo)];
+static CatCache *SysCache[lengthof(cacheinfo)];
 static int	SysCacheSize = lengthof(cacheinfo);
 static bool CacheInitialized = false;
 
@@ -383,7 +392,7 @@ IsCacheInitialized(void)
  *
  * Note that no database access is done here; we only allocate memory
  * and initialize the cache structure.	Interrogation of the database
- * to complete initialization of a cache happens only upon first use
+ * to complete initialization of a cache happens upon first use
  * of that cache.
  */
 void
@@ -408,6 +417,32 @@ InitCatalogCache(void)
 				 cacheinfo[cacheId].name, cacheId);
 	}
 	CacheInitialized = true;
+}
+
+
+/*
+ * InitCatalogCachePhase2 - finish initializing the caches
+ *
+ * Finish initializing all the caches, including necessary database
+ * access.
+ *
+ * This is *not* essential; normally we allow syscaches to be initialized
+ * on first use.  However, it is useful as a mechanism to preload the
+ * relcache with entries for the most-commonly-used system catalogs.
+ * Therefore, we invoke this routine when we need to write a new relcache
+ * init file.
+ */
+void
+InitCatalogCachePhase2(void)
+{
+	int			cacheId;
+
+	Assert(CacheInitialized);
+
+	for (cacheId = 0; cacheId < SysCacheSize; cacheId++)
+	{
+		InitCatCachePhase2(SysCache[cacheId]);
+	}
 }
 
 

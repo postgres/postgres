@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.69 2001/10/25 05:49:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.70 2002/02/19 20:11:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -98,20 +98,15 @@ find_secondary_indexes(Oid relationObjectId)
 	foreach(indexoidscan, indexoidlist)
 	{
 		Oid			indexoid = lfirsti(indexoidscan);
-		HeapTuple	indexTuple;
+		Relation	indexRelation;
 		Form_pg_index index;
 		IndexOptInfo *info;
 		int			i;
-		Relation	indexRelation;
 		int16		amorderstrategy;
 
-		indexTuple = SearchSysCache(INDEXRELID,
-									ObjectIdGetDatum(indexoid),
-									0, 0, 0);
-		if (!HeapTupleIsValid(indexTuple))
-			elog(ERROR, "find_secondary_indexes: index %u not found",
-				 indexoid);
-		index = (Form_pg_index) GETSTRUCT(indexTuple);
+		/* Extract info from the relation descriptor for the index */
+		indexRelation = index_open(indexoid);
+
 		info = makeNode(IndexOptInfo);
 
 		/*
@@ -123,6 +118,7 @@ find_secondary_indexes(Oid relationObjectId)
 		info->ordering = (Oid *) palloc(sizeof(Oid) * (INDEX_MAX_KEYS + 1));
 
 		/* Extract info from the pg_index tuple */
+		index = indexRelation->rd_index;
 		info->indexoid = index->indexrelid;
 		info->indproc = index->indproc; /* functional index ?? */
 		if (VARSIZE(&index->indpred) > VARHDRSZ)		/* partial index ?? */
@@ -156,14 +152,11 @@ find_secondary_indexes(Oid relationObjectId)
 		info->indexkeys[i] = 0;
 		info->nkeys = i;
 
-		/* Extract info from the relation descriptor for the index */
-		indexRelation = index_open(index->indexrelid);
 		info->relam = indexRelation->rd_rel->relam;
 		info->pages = indexRelation->rd_rel->relpages;
 		info->tuples = indexRelation->rd_rel->reltuples;
 		info->amcostestimate = index_cost_estimator(indexRelation);
 		amorderstrategy = indexRelation->rd_am->amorderstrategy;
-		index_close(indexRelation);
 
 		/*
 		 * Fetch the ordering operators associated with the index, if any.
@@ -171,26 +164,16 @@ find_secondary_indexes(Oid relationObjectId)
 		MemSet(info->ordering, 0, sizeof(Oid) * (INDEX_MAX_KEYS + 1));
 		if (amorderstrategy != 0)
 		{
+			int		oprindex = amorderstrategy - 1;
+
 			for (i = 0; i < info->ncolumns; i++)
 			{
-				HeapTuple	amopTuple;
-				Form_pg_amop amop;
-
-				amopTuple =
-					SearchSysCache(AMOPSTRATEGY,
-								   ObjectIdGetDatum(index->indclass[i]),
-								   Int16GetDatum(amorderstrategy),
-								   0, 0);
-				if (!HeapTupleIsValid(amopTuple))
-					elog(ERROR, "find_secondary_indexes: no amop %u %d",
-						 index->indclass[i], (int) amorderstrategy);
-				amop = (Form_pg_amop) GETSTRUCT(amopTuple);
-				info->ordering[i] = amop->amopopr;
-				ReleaseSysCache(amopTuple);
+				info->ordering[i] = indexRelation->rd_operator[oprindex];
+				oprindex += indexRelation->rd_am->amstrategies;
 			}
 		}
 
-		ReleaseSysCache(indexTuple);
+		index_close(indexRelation);
 
 		indexinfos = lcons(info, indexinfos);
 	}

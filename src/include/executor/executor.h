@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: executor.h,v 1.61 2001/11/05 17:46:33 momjian Exp $
+ * $Id: executor.h,v 1.62 2002/02/19 20:11:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,13 +30,7 @@
 /*
  * prototypes from functions in execAmi.c
  */
-extern void ExecOpenScanR(Oid relOid, int nkeys, ScanKey skeys, bool isindex,
-			  ScanDirection dir, Snapshot snapshot,
-			  Relation *returnRelation, Pointer *returnScanDesc);
-extern void ExecCloseR(Plan *node);
 extern void ExecReScan(Plan *node, ExprContext *exprCtxt, Plan *parent);
-extern HeapScanDesc ExecReScanR(Relation relDesc, HeapScanDesc scanDesc,
-			ScanDirection direction, int nkeys, ScanKey skeys);
 extern void ExecMarkPos(Plan *node);
 extern void ExecRestrPos(Plan *node);
 

@@ -8,15 +8,17 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.51 2001/10/25 05:49:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.52 2002/02/19 20:11:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
+#include "access/genam.h"
 #include "access/heapam.h"
 #include "catalog/catname.h"
+#include "catalog/indexing.h"
 #include "catalog/pg_operator.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_func.h"
@@ -80,13 +82,11 @@ static int
 binary_oper_get_candidates(char *opname,
 						   CandidateList *candidates)
 {
-	CandidateList current_candidate;
 	Relation	pg_operator_desc;
-	HeapScanDesc pg_operator_scan;
+	SysScanDesc	pg_operator_scan;
 	HeapTuple	tup;
-	Form_pg_operator oper;
 	int			ncandidates = 0;
-	ScanKeyData opKey[2];
+	ScanKeyData opKey[1];
 
 	*candidates = NULL;
 
@@ -95,37 +95,93 @@ binary_oper_get_candidates(char *opname,
 						   F_NAMEEQ,
 						   NameGetDatum(opname));
 
-	ScanKeyEntryInitialize(&opKey[1], 0,
-						   Anum_pg_operator_oprkind,
-						   F_CHAREQ,
-						   CharGetDatum('b'));
-
 	pg_operator_desc = heap_openr(OperatorRelationName, AccessShareLock);
-	pg_operator_scan = heap_beginscan(pg_operator_desc,
-									  0,
-									  SnapshotSelf,		/* ??? */
-									  2,
-									  opKey);
+	pg_operator_scan = systable_beginscan(pg_operator_desc,
+										  OperatorNameIndex, true,
+										  SnapshotNow,
+										  1, opKey);
 
-	while (HeapTupleIsValid(tup = heap_getnext(pg_operator_scan, 0)))
+	while (HeapTupleIsValid(tup = systable_getnext(pg_operator_scan)))
 	{
-		oper = (Form_pg_operator) GETSTRUCT(tup);
+		Form_pg_operator oper = (Form_pg_operator) GETSTRUCT(tup);
 
-		current_candidate = (CandidateList) palloc(sizeof(struct _CandidateList));
-		current_candidate->args = (Oid *) palloc(2 * sizeof(Oid));
+		if (oper->oprkind == 'b')
+		{
+			CandidateList current_candidate;
 
-		current_candidate->args[0] = oper->oprleft;
-		current_candidate->args[1] = oper->oprright;
-		current_candidate->next = *candidates;
-		*candidates = current_candidate;
-		ncandidates++;
+			current_candidate = (CandidateList) palloc(sizeof(struct _CandidateList));
+			current_candidate->args = (Oid *) palloc(2 * sizeof(Oid));
+
+			current_candidate->args[0] = oper->oprleft;
+			current_candidate->args[1] = oper->oprright;
+			current_candidate->next = *candidates;
+			*candidates = current_candidate;
+			ncandidates++;
+		}
 	}
 
-	heap_endscan(pg_operator_scan);
+	systable_endscan(pg_operator_scan);
 	heap_close(pg_operator_desc, AccessShareLock);
 
 	return ncandidates;
 }	/* binary_oper_get_candidates() */
+
+/* unary_oper_get_candidates()
+ *	given opname, find all possible types for which
+ *	a right/left unary operator named opname exists.
+ *	Build a list of the candidate input types.
+ *	Returns number of candidates found.
+ */
+static int
+unary_oper_get_candidates(char *opname,
+						  CandidateList *candidates,
+						  char rightleft)
+{
+	Relation	pg_operator_desc;
+	SysScanDesc	pg_operator_scan;
+	HeapTuple	tup;
+	int			ncandidates = 0;
+	ScanKeyData opKey[1];
+
+	*candidates = NULL;
+
+	ScanKeyEntryInitialize(&opKey[0], 0,
+						   Anum_pg_operator_oprname,
+						   F_NAMEEQ,
+						   NameGetDatum(opname));
+
+	pg_operator_desc = heap_openr(OperatorRelationName, AccessShareLock);
+	pg_operator_scan = systable_beginscan(pg_operator_desc,
+										  OperatorNameIndex, true,
+										  SnapshotNow,
+										  1, opKey);
+
+	while (HeapTupleIsValid(tup = systable_getnext(pg_operator_scan)))
+	{
+		Form_pg_operator oper = (Form_pg_operator) GETSTRUCT(tup);
+
+		if (oper->oprkind == rightleft)
+		{
+			CandidateList current_candidate;
+
+			current_candidate = (CandidateList) palloc(sizeof(struct _CandidateList));
+			current_candidate->args = (Oid *) palloc(sizeof(Oid));
+
+			if (rightleft == 'r')
+				current_candidate->args[0] = oper->oprleft;
+			else
+				current_candidate->args[0] = oper->oprright;
+			current_candidate->next = *candidates;
+			*candidates = current_candidate;
+			ncandidates++;
+		}
+	}
+
+	systable_endscan(pg_operator_scan);
+	heap_close(pg_operator_desc, AccessShareLock);
+
+	return ncandidates;
+}	/* unary_oper_get_candidates() */
 
 
 /* oper_select_candidate()
@@ -738,66 +794,6 @@ compatible_oper_funcid(char *op, Oid arg1, Oid arg2, bool noError)
 	}
 	return InvalidOid;
 }
-
-/* unary_oper_get_candidates()
- *	given opname, find all possible types for which
- *	a right/left unary operator named opname exists.
- *	Build a list of the candidate input types.
- *	Returns number of candidates found.
- */
-static int
-unary_oper_get_candidates(char *opname,
-						  CandidateList *candidates,
-						  char rightleft)
-{
-	CandidateList current_candidate;
-	Relation	pg_operator_desc;
-	HeapScanDesc pg_operator_scan;
-	HeapTuple	tup;
-	Form_pg_operator oper;
-	int			ncandidates = 0;
-	ScanKeyData opKey[2];
-
-	*candidates = NULL;
-
-	ScanKeyEntryInitialize(&opKey[0], 0,
-						   Anum_pg_operator_oprname,
-						   F_NAMEEQ,
-						   NameGetDatum(opname));
-
-	ScanKeyEntryInitialize(&opKey[1], 0,
-						   Anum_pg_operator_oprkind,
-						   F_CHAREQ,
-						   CharGetDatum(rightleft));
-
-	pg_operator_desc = heap_openr(OperatorRelationName, AccessShareLock);
-	pg_operator_scan = heap_beginscan(pg_operator_desc,
-									  0,
-									  SnapshotSelf,		/* ??? */
-									  2,
-									  opKey);
-
-	while (HeapTupleIsValid(tup = heap_getnext(pg_operator_scan, 0)))
-	{
-		oper = (Form_pg_operator) GETSTRUCT(tup);
-
-		current_candidate = (CandidateList) palloc(sizeof(struct _CandidateList));
-		current_candidate->args = (Oid *) palloc(sizeof(Oid));
-
-		if (rightleft == 'r')
-			current_candidate->args[0] = oper->oprleft;
-		else
-			current_candidate->args[0] = oper->oprright;
-		current_candidate->next = *candidates;
-		*candidates = current_candidate;
-		ncandidates++;
-	}
-
-	heap_endscan(pg_operator_scan);
-	heap_close(pg_operator_desc, AccessShareLock);
-
-	return ncandidates;
-}	/* unary_oper_get_candidates() */
 
 
 /* Given unary right operator (operator on right), return oper struct

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: istrat.h,v 1.23 2001/11/05 17:46:31 momjian Exp $
+ * $Id: istrat.h,v 1.24 2002/02/19 20:11:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,6 +47,8 @@
  */
 #define IndexStrategyIsValid(s) PointerIsValid(s)
 
+extern ScanKey StrategyMapGetScanKeyEntry(StrategyMap map,
+										  StrategyNumber strategyNumber);
 extern StrategyMap IndexStrategyGetStrategyMap(IndexStrategy indexStrategy,
 					  StrategyNumber maxStrategyNum, AttrNumber attrNum);
 
@@ -55,13 +57,5 @@ extern Size AttributeNumberGetIndexStrategySize(AttrNumber maxAttributeNumber,
 extern StrategyNumber RelationGetStrategy(Relation relation,
 			   AttrNumber attributeNumber, StrategyEvaluation evaluation,
 					RegProcedure procedure);
-extern void IndexSupportInitialize(IndexStrategy indexStrategy,
-					   RegProcedure *indexSupport,
-					   bool *isUnique,
-					   Oid indexObjectId,
-					   Oid accessMethodObjectId,
-					   StrategyNumber maxStrategyNumber,
-					   StrategyNumber maxSupportNumber,
-					   AttrNumber maxAttributeNumber);
 
 #endif   /* ISTRAT_H */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.153 2002/02/14 15:24:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.154 2002/02/19 20:11:12 tgl Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -29,6 +29,7 @@
 #include "catalog/pg_attrdef.h"
 #include "catalog/pg_index.h"
 #include "catalog/pg_opclass.h"
+#include "catalog/pg_relcheck.h"
 #include "catalog/pg_type.h"
 #include "commands/command.h"
 #include "commands/trigger.h"
@@ -820,91 +821,7 @@ AlterTableAlterColumnStatistics(const char *relationName,
 #ifdef	_DROP_COLUMN_HACK__
 /*
  *	ALTER TABLE DROP COLUMN trial implementation
- *
  */
-
-/*
- *	system table scan(index scan/sequential scan)
- */
-typedef struct SysScanDescData
-{
-	Relation	heap_rel;
-	Relation	irel;
-	HeapScanDesc scan;
-	IndexScanDesc iscan;
-	HeapTupleData tuple;
-	Buffer		buffer;
-}	SysScanDescData, *SysScanDesc;
-
-static void *
-systable_beginscan(Relation rel, const char *indexRelname, int nkeys, ScanKey entry)
-{
-	bool		hasindex = (rel->rd_rel->relhasindex && !IsIgnoringSystemIndexes());
-	SysScanDesc sysscan;
-
-	sysscan = (SysScanDesc) palloc(sizeof(SysScanDescData));
-	sysscan->heap_rel = rel;
-	sysscan->irel = (Relation) NULL;
-	sysscan->tuple.t_datamcxt = NULL;
-	sysscan->tuple.t_data = NULL;
-	sysscan->buffer = InvalidBuffer;
-	if (hasindex)
-	{
-		sysscan->irel = index_openr((char *) indexRelname);
-		sysscan->iscan = index_beginscan(sysscan->irel, false, nkeys, entry);
-	}
-	else
-		sysscan->scan = heap_beginscan(rel, false, SnapshotNow, nkeys, entry);
-	return (void *) sysscan;
-}
-
-static void
-systable_endscan(void *scan)
-{
-	SysScanDesc sysscan = (SysScanDesc) scan;
-
-	if (sysscan->irel)
-	{
-		if (BufferIsValid(sysscan->buffer))
-			ReleaseBuffer(sysscan->buffer);
-		index_endscan(sysscan->iscan);
-		index_close(sysscan->irel);
-	}
-	else
-		heap_endscan(sysscan->scan);
-	pfree(scan);
-}
-
-static HeapTuple
-systable_getnext(void *scan)
-{
-	SysScanDesc sysscan = (SysScanDesc) scan;
-	HeapTuple	htup = (HeapTuple) NULL;
-	RetrieveIndexResult indexRes;
-
-	if (sysscan->irel)
-	{
-		if (BufferIsValid(sysscan->buffer))
-		{
-			ReleaseBuffer(sysscan->buffer);
-			sysscan->buffer = InvalidBuffer;
-		}
-		while (indexRes = index_getnext(sysscan->iscan, ForwardScanDirection), indexRes != NULL)
-		{
-			sysscan->tuple.t_self = indexRes->heap_iptr;
-			heap_fetch(sysscan->heap_rel, SnapshotNow, &sysscan->tuple, &(sysscan->buffer));
-			pfree(indexRes);
-			if (sysscan->tuple.t_data != NULL)
-			{
-				htup = &sysscan->tuple;
-				break;
-			}
-		}
-	}
-	else
-		htup = heap_getnext(sysscan->scan, 0);
-	return htup;
-}
 
 /*
  *	find a specified attribute in a node entry
@@ -957,10 +874,15 @@ RemoveColumnReferences(Oid reloid, int attnum, bool checkonly, HeapTuple reltup)
 	/*
 	 * Remove/check constraints here
 	 */
-	ScanKeyEntryInitialize(&entry, (bits16) 0x0, Anum_pg_relcheck_rcrelid,
-					   (RegProcedure) F_OIDEQ, ObjectIdGetDatum(reloid));
+	ScanKeyEntryInitialize(&entry, (bits16) 0x0,
+						   Anum_pg_relcheck_rcrelid,
+						   (RegProcedure) F_OIDEQ,
+						   ObjectIdGetDatum(reloid));
+
 	rcrel = heap_openr(RelCheckRelationName, RowExclusiveLock);
-	sysscan = systable_beginscan(rcrel, RelCheckIndex, 1, &entry);
+	sysscan = systable_beginscan(rcrel, RelCheckIndex, true,
+								 SnapshotNow,
+								 1, &entry);
 
 	while (HeapTupleIsValid(htup = systable_getnext(sysscan)))
 	{
@@ -987,6 +909,7 @@ RemoveColumnReferences(Oid reloid, int attnum, bool checkonly, HeapTuple reltup)
 			}
 		}
 	}
+
 	systable_endscan(sysscan);
 	heap_close(rcrel, NoLock);
 
