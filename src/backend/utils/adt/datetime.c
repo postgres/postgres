@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.118.2.1 2003/11/16 20:29:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.118.2.2 2003/12/17 21:45:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3005,7 +3005,7 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct tm * tm, fse
 					if (*cp != '\0')
 						return DTERR_BAD_FORMAT;
 
-					if (val < 0)
+					if (*field[i] == '-')
 						fval = -(fval);
 				}
 				else if (*cp == '\0')
