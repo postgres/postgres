@@ -6,7 +6,7 @@
 # Copyright (c) 1994, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile,v 1.13 1996/12/10 03:03:36 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile,v 1.14 1996/12/19 08:03:46 bryanh Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -22,6 +22,12 @@ ETAGS = etags
 XARGS = xargs
 
 .DEFAULT all:
+	@set - `$(MAKE) -v -f /dev/null 2>&1`.; \
+	if test $$1 != GNU; then \
+	  echo "This Makefile requires GNU make."; \
+	  echo "Please read the file INSTALL in this directory for details."; \
+	  false ; \
+	fi
 	@if test $(PORTNAME) = UNDEFINED; then \
 	  echo You must set the PORTNAME value in Makefile.global before \
 	       you can build Postgres. ;\
