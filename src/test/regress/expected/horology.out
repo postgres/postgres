@@ -548,8 +548,8 @@ SELECT CAST(CAST(date 'today' + time with time zone '01:30'
  03:31:00
 (1 row)
 
-SELECT CAST(CAST(date 'today' + time with time zone '03:30'
-            + interval '1 month 04:01' AS time with time zone) AS time) AS "07:31:00";
+SELECT CAST(cast(date 'today' + time with time zone '03:30-08'
+  + interval '1 month 04:01' as timestamp without time zone) AS time) AS "07:31:00";
  07:31:00 
 ----------
  07:31:00

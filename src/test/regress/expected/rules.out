@@ -1308,8 +1308,8 @@ SELECT viewname, definition FROM pg_views ORDER BY viewname;
 
 SELECT tablename, rulename, definition FROM pg_rules 
 	ORDER BY tablename, rulename;
-   tablename   |    rulename     |                                                                                                                          definition                                                                                                                           
----------------+-----------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+   tablename   |    rulename     |                                                                                                                       definition                                                                                                                       
+---------------+-----------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  rtest_emp     | rtest_emp_del   | CREATE RULE rtest_emp_del AS ON DELETE TO rtest_emp DO INSERT INTO rtest_emplog (ename, who, "action", newsal, oldsal) VALUES (old.ename, "current_user"(), 'fired     '::bpchar, '$0.00'::money, old.salary);
  rtest_emp     | rtest_emp_ins   | CREATE RULE rtest_emp_ins AS ON INSERT TO rtest_emp DO INSERT INTO rtest_emplog (ename, who, "action", newsal, oldsal) VALUES (new.ename, "current_user"(), 'hired     '::bpchar, new.salary, '$0.00'::money);
  rtest_emp     | rtest_emp_upd   | CREATE RULE rtest_emp_upd AS ON UPDATE TO rtest_emp WHERE (new.salary <> old.salary) DO INSERT INTO rtest_emplog (ename, who, "action", newsal, oldsal) VALUES (new.ename, "current_user"(), 'honored   '::bpchar, new.salary, old.salary);
@@ -1335,7 +1335,7 @@ SELECT tablename, rulename, definition FROM pg_rules
  shoelace      | shoelace_del    | CREATE RULE shoelace_del AS ON DELETE TO shoelace DO INSTEAD DELETE FROM shoelace_data WHERE (shoelace_data.sl_name = old.sl_name);
  shoelace      | shoelace_ins    | CREATE RULE shoelace_ins AS ON INSERT TO shoelace DO INSTEAD INSERT INTO shoelace_data (sl_name, sl_avail, sl_color, sl_len, sl_unit) VALUES (new.sl_name, new.sl_avail, new.sl_color, new.sl_len, new.sl_unit);
  shoelace      | shoelace_upd    | CREATE RULE shoelace_upd AS ON UPDATE TO shoelace DO INSTEAD UPDATE shoelace_data SET sl_name = new.sl_name, sl_avail = new.sl_avail, sl_color = new.sl_color, sl_len = new.sl_len, sl_unit = new.sl_unit WHERE (shoelace_data.sl_name = old.sl_name);
- shoelace_data | log_shoelace    | CREATE RULE log_shoelace AS ON UPDATE TO shoelace_data WHERE (new.sl_avail <> old.sl_avail) DO INSERT INTO shoelace_log (sl_name, sl_avail, log_who, log_when) VALUES (new.sl_name, new.sl_avail, 'Al Bundy'::name, 'Thu Jan 01 00:00:00 1970'::"timestamp");
+ shoelace_data | log_shoelace    | CREATE RULE log_shoelace AS ON UPDATE TO shoelace_data WHERE (new.sl_avail <> old.sl_avail) DO INSERT INTO shoelace_log (sl_name, sl_avail, log_who, log_when) VALUES (new.sl_name, new.sl_avail, 'Al Bundy'::name, "timestamp"('epoch'::text));
  shoelace_ok   | shoelace_ok_ins | CREATE RULE shoelace_ok_ins AS ON INSERT TO shoelace_ok DO INSTEAD UPDATE shoelace SET sl_avail = (shoelace.sl_avail + new.ok_quant) WHERE (shoelace.sl_name = new.ok_name);
 (27 rows)
 

@@ -87,8 +87,8 @@ SELECT time with time zone '02:30-08' + interval '36:01' AS "14:31:00-08";
 SELECT CAST(CAST(date 'today' + time with time zone '01:30'
             + interval '02:01' AS time with time zone) AS time) AS "03:31:00";
 
-SELECT CAST(CAST(date 'today' + time with time zone '03:30'
-            + interval '1 month 04:01' AS time with time zone) AS time) AS "07:31:00";
+SELECT CAST(cast(date 'today' + time with time zone '03:30-08'
+  + interval '1 month 04:01' as timestamp without time zone) AS time) AS "07:31:00";
 
 SELECT interval '04:30' - time with time zone '01:02-05' AS "20:32:00-05";
 
