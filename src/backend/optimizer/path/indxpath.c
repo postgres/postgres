@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.106 2001/06/05 17:13:51 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.107 2001/06/17 02:05:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -95,6 +95,7 @@ static bool match_special_index_operator(Expr *clause, Oid opclass, Oid relam,
 							 bool indexkey_on_left);
 static List *prefix_quals(Var *leftop, Oid expr_op,
 			 char *prefix, Pattern_Prefix_Status pstatus);
+static List *network_prefix_quals(Var *leftop, Oid expr_op, Datum rightop);
 static Oid	find_operator(const char *opname, Oid datatype);
 static Datum string_to_datum(const char *str, Oid datatype);
 static Const *string_to_const(const char *str, Oid datatype);
@@ -1761,6 +1762,13 @@ match_special_index_operator(Expr *clause, Oid opclass, Oid relam,
 				pfree(patt);
 			}
 			break;
+
+		case OID_INET_SUB_OP:
+		case OID_INET_SUBEQ_OP:
+		case OID_CIDR_SUB_OP:
+		case OID_CIDR_SUBEQ_OP:
+			isIndexable = true;
+			break;
 	}
 
 	/* done if the expression doesn't look indexable */
@@ -1808,6 +1816,22 @@ match_special_index_operator(Expr *clause, Oid opclass, Oid relam,
 		case OID_NAME_ICREGEXEQ_OP:
 			if (!op_class(find_operator(">=", NAMEOID), opclass, relam) ||
 				!op_class(find_operator("<", NAMEOID), opclass, relam))
+				isIndexable = false;
+			break;
+
+		case OID_INET_SUB_OP:
+		case OID_INET_SUBEQ_OP:
+			/* for SUB we actually need ">" not ">=", but this should do */
+			if (!op_class(find_operator(">=", INETOID), opclass, relam) ||
+				!op_class(find_operator("<=", INETOID), opclass, relam))
+				isIndexable = false;
+			break;
+
+		case OID_CIDR_SUB_OP:
+		case OID_CIDR_SUBEQ_OP:
+			/* for SUB we actually need ">" not ">=", but this should do */
+			if (!op_class(find_operator(">=", CIDROID), opclass, relam) ||
+				!op_class(find_operator("<=", CIDROID), opclass, relam))
 				isIndexable = false;
 			break;
 	}
@@ -1924,6 +1948,16 @@ expand_indexqual_conditions(List *indexquals)
 				pfree(patt);
 				break;
 
+			case OID_INET_SUB_OP:
+			case OID_INET_SUBEQ_OP:
+			case OID_CIDR_SUB_OP:
+			case OID_CIDR_SUBEQ_OP:
+				constvalue = ((Const *) rightop)->constvalue;
+				resultquals = nconc(resultquals,
+									network_prefix_quals(leftop, expr_op,
+														 constvalue));
+				break;
+
 			default:
 				resultquals = lappend(resultquals, clause);
 				break;
@@ -2033,6 +2067,86 @@ prefix_quals(Var *leftop, Oid expr_op,
 		result = lappend(result, expr);
 		pfree(greaterstr);
 	}
+
+	return result;
+}
+
+/*
+ * Given a leftop and a rightop, and a inet-class sup/sub operator,
+ * generate suitable indexqual condition(s).  expr_op is the original
+ * operator. 
+ */
+static List *
+network_prefix_quals(Var *leftop, Oid expr_op, Datum rightop)
+{
+	bool 	   is_eq;
+	char 	   *opr1name;
+ 	Datum	   opr1right;
+ 	Datum	   opr2right;
+	Oid	   opr1oid;
+	Oid	   opr2oid;
+	List	   *result;
+	Oid			datatype;
+	Oper	   *op;
+	Expr	   *expr;
+
+	switch (expr_op)
+	{
+		case OID_INET_SUB_OP:
+			datatype = INETOID; 
+ 			is_eq = false;
+			break;
+		case OID_INET_SUBEQ_OP:
+			datatype = INETOID; 
+ 			is_eq = true;
+			break;
+		case OID_CIDR_SUB_OP:
+			datatype = CIDROID; 
+ 			is_eq = false;
+			break;
+		case OID_CIDR_SUBEQ_OP:
+			datatype = CIDROID; 
+ 			is_eq = true;
+			break;
+		default:
+			elog(ERROR, "network_prefix_quals: unexpected operator %u",
+				 expr_op);
+			return NIL;
+  	}
+
+	/*
+	 * create clause "key >= network_scan_first( rightop )", or ">"
+	 * if the operator disallows equality.
+	 */
+
+	opr1name = is_eq ? ">=" : ">";
+	opr1oid = find_operator(opr1name, datatype);
+	if (opr1oid == InvalidOid)
+		elog(ERROR, "network_prefix_quals: no %s operator for type %u",
+			 opr1name, datatype);
+
+	opr1right = network_scan_first( rightop );
+
+	op = makeOper(opr1oid, InvalidOid, BOOLOID);
+	expr = make_opclause(op, leftop, 
+						 (Var *) makeConst(datatype, -1, opr1right, 
+										   false, false, false, false));
+	result = makeList1(expr);
+
+	/* create clause "key <= network_scan_last( rightop )" */
+
+	opr2oid = find_operator("<=", datatype);
+	if (opr2oid == InvalidOid)
+		elog(ERROR, "network_prefix_quals: no <= operator for type %u",
+			 datatype);
+
+	opr2right = network_scan_last( rightop );
+
+	op = makeOper(opr2oid, InvalidOid, BOOLOID);
+	expr = make_opclause(op, leftop, 
+						 (Var *) makeConst(datatype, -1, opr2right, 
+										   false, false, false, false));
+	result = lappend(result, expr);
 
 	return result;
 }

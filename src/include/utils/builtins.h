@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.154 2001/06/14 01:09:22 tgl Exp $
+ * $Id: builtins.h,v 1.155 2001/06/17 02:05:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -527,6 +527,8 @@ extern double convert_network_to_scalar(Datum value, Oid typid);
 extern Datum text_cidr(PG_FUNCTION_ARGS);
 extern Datum text_inet(PG_FUNCTION_ARGS);
 extern Datum inet_set_masklen(PG_FUNCTION_ARGS);
+extern Datum network_scan_first(Datum in);
+extern Datum network_scan_last(Datum in);
 
 /* mac.c */
 extern Datum macaddr_in(PG_FUNCTION_ARGS);

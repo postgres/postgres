@@ -3,7 +3,7 @@
  *	is for IP V4 CIDR notation, but prepared for V6: just
  *	add the necessary bits where the comments indicate.
  *
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/network.c,v 1.31 2001/06/13 21:08:59 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/network.c,v 1.32 2001/06/17 02:05:20 tgl Exp $
  *
  *	Jon Postel RIP 16 Oct 1998
  */
@@ -706,4 +706,32 @@ v4addressOK(unsigned long a1, int bits)
 	if ((a1 & mask) == a1)
 		return true;
 	return false;
+}
+
+
+/*
+ * These functions are used by planner to generate indexscan limits
+ * for clauses a << b and a <<= b
+ */
+
+/* return the minimal value for an IP on a given network */
+Datum
+network_scan_first(Datum in)
+{
+	return DirectFunctionCall1(network_network, in);
+}
+
+/*
+ * return "last" IP on a given network. It's the broadcast address, 
+ * however, masklen has to be set to 32, since
+ * 192.168.0.255/24 is considered less than 192.168.0.255/32
+ *
+ * NB: this is not IPv6 ready ...
+ */
+Datum
+network_scan_last(Datum in)
+{
+	return DirectFunctionCall2(inet_set_masklen,
+							   DirectFunctionCall1(network_broadcast, in),
+							   Int32GetDatum(32));
 }

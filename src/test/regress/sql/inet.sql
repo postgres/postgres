@@ -8,6 +8,10 @@ DROP TABLE INET_TBL;
 CREATE TABLE INET_TBL (c cidr, i inet);
 INSERT INTO INET_TBL (c, i) VALUES ('192.168.1', '192.168.1.226/24');
 INSERT INTO INET_TBL (c, i) VALUES ('192.168.1.0/24', '192.168.1.226');
+INSERT INTO INET_TBL (c, i) VALUES ('192.168.1', '192.168.1.0/24');
+INSERT INTO INET_TBL (c, i) VALUES ('192.168.1', '192.168.1.0/25');
+INSERT INTO INET_TBL (c, i) VALUES ('192.168.1', '192.168.1.255/24');
+INSERT INTO INET_TBL (c, i) VALUES ('192.168.1', '192.168.1.255/25');
 INSERT INTO INET_TBL (c, i) VALUES ('10', '10.1.2.3/8');
 INSERT INTO INET_TBL (c, i) VALUES ('10.0.0.0', '10.1.2.3/8');
 INSERT INTO INET_TBL (c, i) VALUES ('10.1.2.3', '10.1.2.3/32');
@@ -49,3 +53,11 @@ SELECT '' AS ten, i, c,
 
 -- check the conversion to/from text and set_netmask
 select '' AS ten, set_masklen(inet(text(i)), 24) FROM INET_TBL;
+-- check that index works correctly
+create index inet_idx1 on inet_tbl(i);
+set enable_seqscan to off;
+select * from inet_tbl where i<<'192.168.1.0/24'::cidr;
+select * from inet_tbl where i<<='192.168.1.0/24'::cidr;
+set enable_seqscan to on;
+drop index inet_idx1;
+

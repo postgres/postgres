@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_operator.h,v 1.90 2001/06/10 22:32:35 tgl Exp $
+ * $Id: pg_operator.h,v 1.91 2001/06/17 02:05:20 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -674,9 +674,13 @@ DATA(insert OID = 1204 (  "<="	   PGUID 0 b t f 869 869	 16 1206 1205    0    0 
 DATA(insert OID = 1205 (  ">"	   PGUID 0 b t f 869 869	 16 1203 1204    0    0 network_gt scalargtsel scalargtjoinsel ));
 DATA(insert OID = 1206 (  ">="	   PGUID 0 b t f 869 869	 16 1204 1203    0    0 network_ge scalargtsel scalargtjoinsel ));
 DATA(insert OID = 931  (  "<<"	   PGUID 0 b t f 869 869	 16 933		0    0    0 network_sub - - ));
+#define OID_INET_SUB_OP               931
 DATA(insert OID = 932  (  "<<="    PGUID 0 b t f 869 869	 16 934		0    0    0 network_subeq - - ));
+#define OID_INET_SUBEQ_OP               932
 DATA(insert OID = 933  (  ">>"	   PGUID 0 b t f 869 869	 16 931		0    0    0 network_sup - - ));
+#define OID_INET_SUP_OP               933
 DATA(insert OID = 934  (  ">>="    PGUID 0 b t f 869 869	 16 932		0    0    0 network_supeq - - ));
+#define OID_INET_SUPEQ_OP               934
 
 /* CIDR type */
 DATA(insert OID = 820 (  "="	   PGUID 0 b t f 650 650	 16 820 821 822 822 network_eq eqsel eqjoinsel ));
@@ -686,9 +690,13 @@ DATA(insert OID = 823 (  "<="	   PGUID 0 b t f 650 650	 16 825 824   0   0 netwo
 DATA(insert OID = 824 (  ">"	   PGUID 0 b t f 650 650	 16 822 823   0   0 network_gt scalargtsel scalargtjoinsel ));
 DATA(insert OID = 825 (  ">="	   PGUID 0 b t f 650 650	 16 823 822   0   0 network_ge scalargtsel scalargtjoinsel ));
 DATA(insert OID = 826 (  "<<"	   PGUID 0 b t f 650 650	 16 828   0   0   0 network_sub - - ));
+#define OID_CIDR_SUB_OP  	826
 DATA(insert OID = 827 (  "<<="	   PGUID 0 b t f 650 650	 16 1004  0   0   0 network_subeq - - ));
+#define OID_CIDR_SUBEQ_OP	827
 DATA(insert OID = 828 (  ">>"	   PGUID 0 b t f 650 650	 16 826   0   0   0 network_sup - - ));
+#define OID_CIDR_SUP_OP		828
 DATA(insert OID = 1004 ( ">>="	   PGUID 0 b t f 650 650	 16 827   0   0   0 network_supeq - - ));
+#define OID_CIDR_SUPEQ_OP	1004
 
 /* case-insensitive LIKE hacks */
 DATA(insert OID = 1625 (  "~~*"   PGUID 0 b t f  19   25  16 0 1626 0 0 nameiclike iclikesel iclikejoinsel ));
