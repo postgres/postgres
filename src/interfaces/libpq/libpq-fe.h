@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.98 2003/08/13 16:29:03 tgl Exp $
+ * $Id: libpq-fe.h,v 1.99 2003/08/24 18:36:38 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -103,6 +103,18 @@ typedef enum
 	PQERRORS_DEFAULT,			/* recommended style */
 	PQERRORS_VERBOSE			/* all the facts, ma'am */
 } PGVerbosity;
+
+/* for PQresultErrorField() */
+#define PG_DIAG_SEVERITY		'S'
+#define PG_DIAG_SQLSTATE		'C'
+#define PG_DIAG_MESSAGE_PRIMARY	'M'
+#define PG_DIAG_MESSAGE_DETAIL	'D'
+#define PG_DIAG_MESSAGE_HINT	'H'
+#define PG_DIAG_STATEMENT_POSITION 'P'
+#define PG_DIAG_CONTEXT			'W'
+#define PG_DIAG_SOURCE_FILE		'F'
+#define PG_DIAG_SOURCE_LINE		'L'
+#define PG_DIAG_SOURCE_FUNCTION	'R'
 
 /* PGconn encapsulates a connection to the backend.
  * The contents of this struct are not supposed to be known to applications.

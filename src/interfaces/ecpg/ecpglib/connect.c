@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.16 2003/08/08 13:16:20 petere Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.17 2003/08/24 18:36:38 petere Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -158,8 +158,8 @@ ECPGsetconn(int lineno, const char *connection_name)
 static void
 ECPGnoticeReceiver(void *arg, const PGresult *result)
 {
-	char	   *sqlstate = PQresultErrorField(result, 'C');
-	char	   *message = PQresultErrorField(result, 'M');
+	char	   *sqlstate = PQresultErrorField(result, PG_DIAG_SQLSTATE);
+	char	   *message = PQresultErrorField(result, PG_DIAG_MESSAGE_PRIMARY);
 	struct sqlca_t *sqlca = ECPGget_sqlca();
 
 	int			sqlcode;

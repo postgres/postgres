@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.131 2003/08/13 16:29:03 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.132 2003/08/24 18:36:38 petere Exp $
 -->
 
  <chapter id="libpq">
@@ -1283,20 +1283,138 @@ Returns an individual field of an error report.
 <synopsis>
 char *PQresultErrorField(const PGresult *res, int fieldcode);
 </synopsis>
-<parameter>fieldcode</> is an error field identifier defined by the
-<productname>PostgreSQL</> protocol (see <xref
-linkend="protocol-error-fields">), for example <literal>'C'</> for
-the SQLSTATE error code.  NULL is returned if the
+<parameter>fieldcode</> is an error field identifier; see the symbols
+listed below.  <symbol>NULL</symbol> is returned if the
 <structname>PGresult</structname> is not an error or warning result,
 or does not include the specified field.  Field values will normally
 not include a trailing newline.
 </para>
 
 <para>
-Errors generated internally by libpq will have severity and primary message,
-but typically no other fields.  Errors returned by a pre-3.0-protocol server
-will include severity and primary message, and sometimes a detail message,
-but no other fields.
+The following field codes are available:
+<variablelist>
+
+<varlistentry>
+<term><symbol>PG_DIAG_SEVERITY</></term>
+<listitem>
+<para>
+The severity; the field contents are <literal>ERROR</>,
+<literal>FATAL</>, or <literal>PANIC</> (in an error message), or
+<literal>WARNING</>, <literal>NOTICE</>, <literal>DEBUG</>,
+<literal>INFO</>, or <literal>LOG</> (in a notice message), or a
+localized translation of one of these.  Always present.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term><symbol>PG_DIAG_SQLSTATE</>
+</term>
+<listitem>
+<para>
+The SQLSTATE code for the error (a 5-character string following SQL
+spec conventions).  Not localizable.  Always present.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term><symbol>PG_DIAG_MESSAGE_PRIMARY</></term>
+<listitem>
+<para>
+The primary human-readable error message (typically one line).  Always
+present.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term><symbol>PG_DIAG_MESSAGE_DETAIL</></term>
+<listitem>
+<para>
+Detail: an optional secondary error message carrying more detail about
+the problem.  May run to multiple lines.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term><symbol>PG_DIAG_MESSAGE_HINT</></term>
+<listitem>
+<para>
+Hint: an optional suggestion what to do about the problem.  This is
+intended to differ from detail in that it offers advice (potentially
+inappropriate) rather than hard facts.  May run to multiple lines.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term><symbol>PG_DIAG_STATEMENT_POSITION</></term>
+<listitem>
+<para>
+A string containing a decimal integer indicating an error cursor
+position as an index into the original statement string.  The first
+character has index 1, and positions are measured in characters not
+bytes.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term><symbol>PG_DIAG_CONTEXT</></term>
+<listitem>
+<para>
+An indication of the context in which the error occurred.  Presently
+this includes a call stack traceback of active PL functions.  The
+trace is one entry per line, most recent first.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term><symbol>PG_DIAG_SOURCE_FILE</></term>
+<listitem>
+<para>
+The file name of the source-code location where the error was
+reported.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term><symbol>PG_DIAG_SOURCE_LINE</></term>
+<listitem>
+<para>
+The line number of the source-code location where the error was
+reported.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term><symbol>PG_DIAG_SOURCE_FUNCTION</></term>
+<listitem>
+<para>
+The name of the source-code function reporting the error.
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
+</para>
+
+<para>
+The client is responsible for formatting displayed information to meet
+its needs; in particular it should break long lines as needed.
+Newline characters appearing in the error message fields should be
+treated as paragraph breaks, not line breaks.
+</para>
+
+<para>
+Errors generated internally by <application>libpq</application> will
+have severity and primary message, but typically no other fields.
+Errors returned by a pre-3.0-protocol server will include severity and
+primary message, and sometimes a detail message, but no other fields.
 </para>
 
 <para>

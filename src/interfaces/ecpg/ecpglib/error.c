@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/error.c,v 1.7 2003/08/08 13:16:20 petere Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/error.c,v 1.8 2003/08/24 18:36:38 petere Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -164,10 +164,10 @@ ECPGraise_backend(int line, PGresult *result, PGconn *conn, int compat)
 
 	if (result)
 	{
-		sqlstate = PQresultErrorField(result, 'C');
+		sqlstate = PQresultErrorField(result, PG_DIAG_SQLSTATE);
 		if (sqlstate == NULL)
 			sqlstate = ECPG_SQLSTATE_ECPG_INTERNAL_ERROR;
-		message = PQresultErrorField(result, 'M');
+		message = PQresultErrorField(result, PG_DIAG_MESSAGE_PRIMARY);
 	}
 	else
 	{
