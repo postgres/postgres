@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.139 2000/02/18 09:29:37 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.140 2000/02/21 07:49:40 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -876,7 +876,7 @@ vc_scanheap(VRelStats *vacrelstats, Relation onerel,
 				 * If tuple is recently deleted then we must not remove it
 				 * from relation.
 				 */
-				if (tupgone && tuple.t_data->t_xmax >= XmaxRecent)
+				if (tupgone && (tuple.t_data->t_infomask & HEAP_XMIN_INVALID) == 0 && tuple.t_data->t_xmax >= XmaxRecent)
 				{
 					tupgone = false;
 					nkeep++;
