@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/odbc/Attic/GNUmakefile.in,v 1.8 1998/10/21 05:39:19 thomas Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/odbc/Attic/GNUmakefile.in,v 1.9 1998/10/28 06:49:10 thomas Exp $
 #
 #-------------------------------------------------------------------------
 @SET_MAKE@
@@ -42,6 +42,7 @@ SHLIB_LINK= $(LIBS)
 # Shared library stuff, also default 'all' target
 include $(SRCDIR)/Makefile.shlib
 
+LDFLAGS_SL+= $(LDFLAGS_ODBC)
 
 .PHONY: install install-ini beforeinstall-headers install-headers
 
