@@ -10,7 +10,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Sat Nov 27 00:14:59 EST 2004</P>
+    <P>Last updated: Sat Nov 27 23:55:37 EST 2004</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -111,8 +111,8 @@
     serial/auto-incrementing field?<BR>
      <A href="#4.15.2">4.15.2</A>) How do I get the value of a
     <SMALL>SERIAL</SMALL> insert?<BR>
-     <A href="#4.15.3">4.15.3</A>) Don't <I>currval()</I> and
-    <I>nextval()</I> lead to a race condition with other users?<BR>
+     <A href="#4.15.3">4.15.3</A>) Doesn't <I>currval()</I>
+    lead to a race condition with other users?<BR>
      <A href="#4.15.4">4.15.4</A>) Why aren't my sequence numbers
     reused on transaction abort? Why are there gaps in the numbering of
     my sequence/SERIAL column?<BR>
@@ -395,10 +395,9 @@
 
     <H4><A name="1.13">1.13</A>) How do I submit a bug report?</H4>
 
-    <P>Please visit the PostgreSQL BugTool page at <A href=
-    "http://www.PostgreSQL.org/bugs/bugs.php">http://www.PostgreSQL.org/bugs/bugs.php</A>,
-    which gives guidelines and directions on how to submit a
-    bug report.</P>
+    <P>Visit the PostgreSQL bug form at <A href=
+    "http://www.postgresql.org/bugform.html">
+    http://www.postgresql.org/bugform.html</A>.</P>
 
     <P>Also check out our ftp site <A href=
     "ftp://ftp.PostgreSQL.org/pub">ftp://ftp.PostgreSQL.org/pub</A> to
@@ -546,7 +545,9 @@
     http://www.pgaccess.org</a>), PgAdmin III (<a
     href="http://www.pgadmin.org">http://www.pgadmin.org</a>, RHDB Admin (<a
     href="http://sources.redhat.com/rhdb/">http://sources.redhat.com/rhdb/
-    </a>) and Rekall (<a href="http://www.thekompany.com/products/rekall/">
+    </a>), TORA (<a href="http://www.globecom.net/tora/">http://www.globecom.net/tora/
+    (partly commercial)</a>, and Rekall
+    (<a href="http://www.thekompany.com/products/rekall/">
     http://www.thekompany.com/products/rekall/</a>, proprietary). There is 
     also PhpPgAdmin (<a href="http://phppgadmin.sourceforge.net/">
     http://phppgadmin.sourceforge.net/ </a>), a web-based interface to 
@@ -606,10 +607,9 @@
     how many buffers and backend processes you configure for
     <I>postmaster</I>. For most systems, with default numbers of
     buffers and processes, you need a minimum of ~1 MB. See the <A
-    href=
-    "http://www.PostgreSQL.org/docs/view.php?version=current&amp;idoc=1&amp;file=kernel-resources.html">PostgreSQL
-    Administrator's Guide</A> for more detailed information about
-    shared memory and semaphores.</P>
+    href="http://www.postgresql.org/docs/current/static/kernel-resources.html">PostgreSQL
+    Administrator's Guide/Server Run-time Environment/Managing Kernel Resources</A>
+    section for more detailed information about shared memory and semaphores.</P>
 
     <H4><A name="3.4">3.4</A>) When I try to start <I>postmaster</I>, I
     get <I>IpcSemaphoreCreate</I> errors. Why?</H4>
@@ -645,8 +645,9 @@
     better performance?</H4>
 
     <P>Certainly, indexes can speed up queries. The
-    <SMALL>EXPLAIN ANALYZE</SMALL> command allows you to see how PostgreSQL is
-    interpreting your query, and which indexes are being used.</P>
+    <SMALL>EXPLAIN ANALYZE</SMALL> command allows you to see how
+    PostgreSQL is interpreting your query, and which indexes are
+    being used.</P>
 
     <P>If you are doing many <SMALL>INSERTs</SMALL>, consider doing
     them in a large batch using the <SMALL>COPY</SMALL> command. This
@@ -657,22 +658,23 @@
     reduces the transaction overhead. Also, consider dropping and
     recreating indexes when making large data changes.</P>
 
-    <P>There are several tuning options. You can disable <I>fsync()</I>
-    by starting <I>postmaster</I> with a <I>-o -F</I> option. This will
+    <P>There are several tuning options in the <a href=
+    "http://www.postgresql.org/docs/current/static/runtime.html">
+    Administration Guide/Server Run-time Environment/Run-time Configuration</a>.
+    You can disable <I>fsync()</I> by using <i>fsync</I> option. This will
     prevent <I>fsync()</I>s from flushing to disk after every
     transaction.</P>
 
-    <P>You can also use the <I>postmaster</I> <I>-B</I> option to
+    <P>You can use the <I>shared_buffers</I> option to
     increase the number of shared memory buffers used by the backend
     processes. If you make this parameter too high, the
     <I>postmaster</I> may not start because you have exceeded your
     kernel's limit on shared memory space. Each buffer is 8K and the
-    default is 64 buffers.</P>
+    default is 1000 buffers.</P>
 
-    <P>You can also use the backend <I>-S</I> option to increase the
-    maximum amount of memory used by the backend process for temporary
-    sorts. The <I>-S</I> value is measured in kilobytes, and the
-    default is 512 (i.e. 512K).</P>
+    <P>You can also use the <I>sort_mem</I> and <I>work_mem</I> options
+    to increase the maximum amount of memory used by the backend processes
+    for each temporary sort. The default is 1024 (i.e. 1MB).</P>
 
     <P>You can also use the <SMALL>CLUSTER</SMALL> command to group
     data in tables to match an index. See the <SMALL>CLUSTER</SMALL>
@@ -717,17 +719,18 @@
 
     <P>If <I>postmaster</I> is running, start <I>psql</I> in one
     window, then find the <SMALL>PID</SMALL> of the <I>postgres</I>
-    process used by <I>psql</I>. Use a debugger to attach to the
-    <I>postgres</I> <SMALL>PID</SMALL>. You can set breakpoints in the
-    debugger and issue queries from <I>psql</I>. If you are debugging
-    <I>postgres</I> startup, you can set PGOPTIONS="-W n", then start
-    <I>psql</I>. This will cause startup to delay for <I>n</I> seconds
-    so you can attach to the process with the debugger, set any
-    breakpoints, and continue through the startup sequence.</P>
+    process used by <I>psql</I> using <pre>SELECT pg_backend_pid()</pre>.
+    Use a debugger to attach to the <I>postgres</I> <SMALL>PID</SMALL>.
+    You can set breakpoints in the debugger and issue queries from
+    <I>psql</I>. If you are debugging <I>postgres</I> startup, you can
+    set PGOPTIONS="-W n", then start <I>psql</I>. This will cause startup
+    to delay for <I>n</I> seconds so you can attach to the process with
+    the debugger, set any breakpoints, and continue through the startup
+    sequence.</P>
 
-    <P>The <I>postgres</I> program has <I>-s, -A</I>, and <I>-t</I>
-    options that can be very useful for debugging and performance
-    measurements.</P>
+    <P>There are several <pre>log_*</pre> server configuration variables
+    that enable printing of process statistics which can be very useful
+    for debugging and performance measurements.</P>
 
     <P>You can also compile with profiling to see what functions are
     taking execution time. The backend profile files will be deposited
@@ -947,7 +950,8 @@
 
     <H4><A name="4.8">4.8</A>) My queries are slow or don't make use of
     the indexes. Why?</H4>
-    Indexes are not automatically used by every query. Indexes are only
+
+    <P>Indexes are not automatically used by every query. Indexes are only
     used if the table is larger than a minimum size, and the query
     selects only a small percentage of the rows in the table. This is
     because the random disk access caused by an index scan can be
@@ -997,7 +1001,11 @@
     <I>~*</I> do not utilise indexes. Instead, use functional
     indexes, which are described in section <a href="#4.12">4.12</a>.</LI>
     <LI>The default <I>C</I> locale must be used during
-    <i>initdb</i>.</LI>
+    <i>initdb</i> because it is not possible to know the next-greater
+    character in a non-C locale.  You can create a special
+    <PRE>text_pattern_ops</PRE> index for such cases that work only
+    for <PRE>LIKE</PRE> indexing.
+    </LI>
     </UL>
     <P>
 
@@ -1169,8 +1177,8 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     value is made available via <I>$sth-&gt;{pg_oid_status}</I> after
     <I>$sth-&gt;execute()</I>.
 
-    <H4><A name="4.15.3">4.15.3</A>) Don't <I>currval()</I> and
-    <I>nextval()</I> lead to a race condition with other users?</H4>
+    <H4><A name="4.15.3">4.15.3</A>) Doesn't <I>currval()</I>
+    lead to a race condition with other users?</H4>
 
     <P>No. <I>currval()</I> returns the current value assigned by your
     backend, not by all users.</P>

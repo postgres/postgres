@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Sat Nov 27 00:14:59 EST 2004
+   Last updated: Sat Nov 27 23:55:37 EST 2004
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -79,8 +79,7 @@
    4.14) What is the difference between the various character types?
    4.15.1) How do I create a serial/auto-incrementing field?
    4.15.2) How do I get the value of a SERIAL insert?
-   4.15.3) Don't currval() and nextval() lead to a race condition with
-   other users?
+   4.15.3) Doesn't currval() lead to a race condition with other users?
    4.15.4) Why aren't my sequence numbers reused on transaction abort?
    Why are there gaps in the numbering of my sequence/SERIAL column?
    4.16) What is an OID? What is a TID?
@@ -305,9 +304,8 @@
    
     1.13) How do I submit a bug report?
     
-   Please visit the PostgreSQL BugTool page at
-   http://www.PostgreSQL.org/bugs/bugs.php, which gives guidelines and
-   directions on how to submit a bug report.
+   Visit the PostgreSQL bug form at
+   http://www.postgresql.org/bugform.html.
    
    Also check out our ftp site ftp://ftp.PostgreSQL.org/pub to see if
    there is a more recent PostgreSQL version or patches.
@@ -420,10 +418,11 @@
     
    Yes, there are several graphical interfaces to PostgreSQL available.
    These include PgAccess http://www.pgaccess.org), PgAdmin III
-   (http://www.pgadmin.org, RHDB Admin (http://sources.redhat.com/rhdb/ )
-   and Rekall ( http://www.thekompany.com/products/rekall/, proprietary).
-   There is also PhpPgAdmin ( http://phppgadmin.sourceforge.net/ ), a
-   web-based interface to PostgreSQL.
+   (http://www.pgadmin.org, RHDB Admin (http://sources.redhat.com/rhdb/
+   ), TORA (http://www.globecom.net/tora/ (partly commercial), and Rekall
+   ( http://www.thekompany.com/products/rekall/, proprietary). There is
+   also PhpPgAdmin ( http://phppgadmin.sourceforge.net/ ), a web-based
+   interface to PostgreSQL.
    
    See http://techdocs.postgresql.org/guides/GUITools for a more detailed
    list.
@@ -464,7 +463,8 @@
    kernel. The exact amount you need depends on your architecture and how
    many buffers and backend processes you configure for postmaster. For
    most systems, with default numbers of buffers and processes, you need
-   a minimum of ~1 MB. See the PostgreSQL Administrator's Guide for more
+   a minimum of ~1 MB. See the PostgreSQL Administrator's Guide/Server
+   Run-time Environment/Managing Kernel Resources section for more
    detailed information about shared memory and semaphores.
    
     3.4) When I try to start postmaster, I get IpcSemaphoreCreate errors. Why?
@@ -507,19 +507,20 @@
    overhead. Also, consider dropping and recreating indexes when making
    large data changes.
    
-   There are several tuning options. You can disable fsync() by starting
-   postmaster with a -o -F option. This will prevent fsync()s from
-   flushing to disk after every transaction.
+   There are several tuning options in the Administration Guide/Server
+   Run-time Environment/Run-time Configuration. You can disable fsync()
+   by using fsync option. This will prevent fsync()s from flushing to
+   disk after every transaction.
    
-   You can also use the postmaster -B option to increase the number of
-   shared memory buffers used by the backend processes. If you make this
+   You can use the shared_buffers option to increase the number of shared
+   memory buffers used by the backend processes. If you make this
    parameter too high, the postmaster may not start because you have
    exceeded your kernel's limit on shared memory space. Each buffer is 8K
-   and the default is 64 buffers.
+   and the default is 1000 buffers.
    
-   You can also use the backend -S option to increase the maximum amount
-   of memory used by the backend process for temporary sorts. The -S
-   value is measured in kilobytes, and the default is 512 (i.e. 512K).
+   You can also use the sort_mem and work_mem options to increase the
+   maximum amount of memory used by the backend processes for each
+   temporary sort. The default is 1024 (i.e. 1MB).
    
    You can also use the CLUSTER command to group data in tables to match
    an index. See the CLUSTER manual page for more details.
@@ -556,15 +557,22 @@
    may not be duplicated.
    
    If postmaster is running, start psql in one window, then find the PID
-   of the postgres process used by psql. Use a debugger to attach to the
-   postgres PID. You can set breakpoints in the debugger and issue
-   queries from psql. If you are debugging postgres startup, you can set
-   PGOPTIONS="-W n", then start psql. This will cause startup to delay
-   for n seconds so you can attach to the process with the debugger, set
-   any breakpoints, and continue through the startup sequence.
+   of the postgres process used by psql using
+SELECT pg_backend_pid()
+
+   . Use a debugger to attach to the postgres PID. You can set
+   breakpoints in the debugger and issue queries from psql. If you are
+   debugging postgres startup, you can set PGOPTIONS="-W n", then start
+   psql. This will cause startup to delay for n seconds so you can attach
+   to the process with the debugger, set any breakpoints, and continue
+   through the startup sequence.
    
-   The postgres program has -s, -A, and -t options that can be very
-   useful for debugging and performance measurements.
+   There are several
+log_*
+
+   server configuration variables that enable printing of process
+   statistics which can be very useful for debugging and performance
+   measurements.
    
    You can also compile with profiling to see what functions are taking
    execution time. The backend profile files will be deposited in the
@@ -795,7 +803,13 @@
      * Case-insensitive searches such as ILIKE and ~* do not utilise
        indexes. Instead, use functional indexes, which are described in
        section 4.12.
-     * The default C locale must be used during initdb.
+     * The default C locale must be used during initdb because it is not
+       possible to know the next-greater character in a non-C locale. You
+       can create a special
+text_pattern_ops
+       index for such cases that work only for
+LIKE
+       indexing.
        
    In pre-8.0 releases, indexes often can not be used unless the data
    types exactly match the index's column types. This is particularly
@@ -931,8 +945,7 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
    oid value is made available via $sth->{pg_oid_status} after
    $sth->execute().
    
-    4.15.3) Don't currval() and nextval() lead to a race condition with other
-    users?
+    4.15.3) Doesn't currval() lead to a race condition with other users?
     
    No. currval() returns the current value assigned by your backend, not
    by all users.
