@@ -5,7 +5,7 @@
  * to contain some useful information. Mechanism differs wildly across
  * platforms.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/ps_status.c,v 1.11 2001/11/06 01:15:29 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/ps_status.c,v 1.12 2001/12/21 15:22:09 tgl Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * various details abducted from various places
@@ -265,13 +265,11 @@ set_ps_display(const char *activity)
 
 #ifdef PS_USE_CLOBBER_ARGV
 	{
-		char	   *cp;
+		int		buflen;
 
 		/* pad unused memory */
-		for (cp = ps_buffer + strlen(ps_buffer);
-			 cp < ps_buffer + ps_buffer_size;
-			 cp++)
-			*cp = PS_PADDING;
+		buflen = strlen(ps_buffer);
+		MemSet(ps_buffer + buflen, PS_PADDING, ps_buffer_size - buflen);
 	}
 #endif   /* PS_USE_CLOBBER_ARGV */
 #endif   /* not PS_USE_NONE */
