@@ -3,6 +3,7 @@ trap "rm -f /tmp/$$.c /tmp/$$.o /tmp/$$ /tmp/$$a /tmp/$$b" 0 1 2 3 15
 find . \( -name CVS -a -prune \) -o -type f -print | 
 grep -v '\./postgres.h' |
 grep -v '\./config.h' |
+grep -v '\./c.h' |
 while read FILE
 do
 	if [ "`echo $FILE | sed -n 's/^.*\.\([^\.]*\)$/\1/p'`" = "h" ]
@@ -22,6 +23,7 @@ do
 		[ -s /usr/include/$INCLUDE ] && continue
 		[ "$INCLUDE" = postgres.h ] && continue
 		[ "$INCLUDE" = config.h ] && continue
+		[ "$INCLUDE" = c.h ] && continue
 		# preserve configure-specific includes
 		grep -B1 '^#include[ 	][ 	]*[<"]'"$INCLUDE"'[>"]' "$FILE" |
 		     egrep -q '^#if|^#else' && continue		
