@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtcompare.c,v 1.9 1997/05/22 00:07:15 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtcompare.c,v 1.10 1997/06/11 05:20:05 vadim Exp $
  *
  *  NOTES
  *	These functions are stored in pg_amproc.  For each operator class
@@ -98,7 +98,7 @@ btabstimecmp(AbsoluteTime a, AbsoluteTime b)
 int32
 btcharcmp(char a, char b)
 {
-    return ((int32) (a - b));
+    return ((int32) ((uint8)a - (uint8)b));
 }
 
 int32
@@ -135,9 +135,9 @@ int32
 bttextcmp(struct varlena *a, struct varlena *b)
 {
     int res;
+    unsigned char *ap, *bp;
 
 #ifdef USE_LOCALE
-    unsigned char *ap, *bp;
     int la = VARSIZE(a) - VARHDRSZ;
     int lb = VARSIZE(b) - VARHDRSZ;
     
@@ -155,7 +155,6 @@ bttextcmp(struct varlena *a, struct varlena *b)
     pfree (bp);
 
 #else
-    char *ap, *bp;
     int len = VARSIZE(a);
     
     /* len is the length of the shorter of the two strings */
@@ -164,8 +163,8 @@ bttextcmp(struct varlena *a, struct varlena *b)
 
     len -= VARHDRSZ;
 
-    ap = VARDATA(a);
-    bp = VARDATA(b);
+    ap = (unsigned char *) VARDATA(a);
+    bp = (unsigned char *) VARDATA(b);
     
     /*
      *  If the two strings differ in the first len bytes, or if they're
