@@ -212,7 +212,6 @@ get_data(PGresult *results, int act_tuple, int act_field, int lineno,
 					{
 						ECPGraise(lineno, ECPG_FLOAT_FORMAT, pval);
 						return (false);
-						dres = 0.0;
 					}
 				}
 				else

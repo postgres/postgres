@@ -1199,7 +1199,8 @@ char*	ReadStr(ArchiveHandle* AH)
     return buf;
 }
 
-int _discoverArchiveFormat(ArchiveHandle* AH)
+static int
+_discoverArchiveFormat(ArchiveHandle* AH)
 {
     FILE	*fh;
     char	sig[6]; /* More than enough */
