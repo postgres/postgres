@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.91 1999/11/22 17:56:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.92 1999/11/27 21:52:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -257,14 +257,16 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
 	Relation	rel;
 	extern char *UserName;		/* defined in global.c */
 	const AclMode required_access = from ? ACL_WR : ACL_RD;
-	LOCKMODE	required_lock = from ? AccessExclusiveLock : AccessShareLock;
-	/* Note: AccessExclusive is probably overkill for copying to a relation,
-	 * but that's what the existing code grabs on the rel's indices.  If
-	 * this is relaxed then I think the index locks need relaxed also.
-	 */
 	int			result;
 
-	rel = heap_openr(relname, required_lock);
+	/*
+	 * Open and lock the relation, using the appropriate lock type.
+	 *
+	 * Note: AccessExclusive is probably overkill for copying to a relation,
+	 * but that's what the code grabs on the rel's indices.  If this lock is
+	 * relaxed then I think the index locks need relaxed also.
+	 */
+	rel = heap_openr(relname, (from ? AccessExclusiveLock : AccessShareLock));
 
 	result = pg_aclcheck(relname, UserName, required_access);
 	if (result != ACLCHECK_OK)
@@ -349,7 +351,12 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
 		}
 	}
 
-	heap_close(rel, required_lock);
+	/*
+	 * Close the relation.  If reading, we can release the AccessShareLock
+	 * we got; if writing, we should hold the lock until end of transaction
+	 * to ensure that updates will be committed before lock is released.
+	 */
+	heap_close(rel, (from ? NoLock : AccessShareLock));
 }
 
 
