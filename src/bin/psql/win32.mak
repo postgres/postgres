@@ -28,7 +28,7 @@ CLEAN :
 
 CPP_PROJ=/nologo /ML /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D\
  "_MBCS" /Fp"$(INTDIR)\psql.pch" /YX /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c \
- /I ..\..\include /I ..\..\interfaces\libpq /D "HAVE_STRDUP" /D "BLCKSZ=8192"
+ /I ..\..\include /I ..\..\interfaces\libpq /D "HAVE_STRDUP"
 
 !IFDEF        MULTIBYTE
 !IFNDEF MBFLAGS
