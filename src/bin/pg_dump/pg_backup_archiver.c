@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.99 2004/10/22 16:04:35 petere Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.100 2004/11/06 19:36:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,6 +60,7 @@ static void _reconnectToDB(ArchiveHandle *AH, const char *dbname);
 static void _becomeUser(ArchiveHandle *AH, const char *user);
 static void _becomeOwner(ArchiveHandle *AH, TocEntry *te);
 static void _selectOutputSchema(ArchiveHandle *AH, const char *schemaName);
+static void _selectTablespace(ArchiveHandle *AH, const char *tablespace);
 
 static teReqs _tocEntryRequired(TocEntry *te, RestoreOptions *ropt, bool acl_pass);
 static void _disableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt);
@@ -602,7 +603,9 @@ void
 ArchiveEntry(Archive *AHX,
 			 CatalogId catalogId, DumpId dumpId,
 			 const char *tag,
-			 const char *namespace, const char *owner, bool withOids,
+			 const char *namespace,
+			 const char *tablespace, 
+			 const char *owner, bool withOids,
 			 const char *desc, const char *defn,
 			 const char *dropStmt, const char *copyStmt,
 			 const DumpId *deps, int nDeps,
@@ -629,6 +632,7 @@ ArchiveEntry(Archive *AHX,
 
 	newToc->tag = strdup(tag);
 	newToc->namespace = namespace ? strdup(namespace) : NULL;
+	newToc->tablespace = tablespace ? strdup(tablespace) : NULL;
 	newToc->owner = strdup(owner);
 	newToc->withOids = withOids;
 	newToc->desc = strdup(desc);
@@ -693,6 +697,12 @@ PrintTOCSummary(Archive *AHX, RestoreOptions *ropt)
 	ahprintf(AH, ";     Format: %s\n", fmtName);
 	ahprintf(AH, ";     Integer: %d bytes\n", (int) AH->intSize);
 	ahprintf(AH, ";     Offset: %d bytes\n", (int) AH->offSize);
+	if (AH->archiveRemoteVersion)
+		ahprintf(AH, ";     Dumped from database version: %s\n",
+				 AH->archiveRemoteVersion);
+	if (AH->archiveDumpVersion)
+		ahprintf(AH, ";     Dumped by pg_dump version: %s\n",
+				 AH->archiveDumpVersion);
 
 	ahprintf(AH, ";\n;\n; Selected TOC Entries:\n;\n");
 
@@ -1822,6 +1832,7 @@ WriteToc(ArchiveHandle *AH)
 		WriteStr(AH, te->dropStmt);
 		WriteStr(AH, te->copyStmt);
 		WriteStr(AH, te->namespace);
+		WriteStr(AH, te->tablespace);
 		WriteStr(AH, te->owner);
 		WriteStr(AH, te->withOids ? "true" : "false");
 
@@ -1890,6 +1901,9 @@ ReadToc(ArchiveHandle *AH)
 
 		if (AH->version >= K_VERS_1_6)
 			te->namespace = ReadStr(AH);
+
+		if (AH->version >= K_VERS_1_10)
+			te->tablespace = ReadStr(AH);
 
 		te->owner = ReadStr(AH);
 		if (AH->version >= K_VERS_1_9)
@@ -2293,6 +2307,61 @@ _selectOutputSchema(ArchiveHandle *AH, const char *schemaName)
 	destroyPQExpBuffer(qry);
 }
 
+/*
+ * Issue the commands to select the specified tablespace as the current one
+ * in the target database.
+ */
+static void
+_selectTablespace(ArchiveHandle *AH, const char *tablespace)
+{
+	PQExpBuffer qry;
+	const char	*want, *have;
+
+	have = AH->currTablespace;
+	want = tablespace;
+
+	/* no need to do anything for non-tablespace object */
+	if (!want)
+		return;
+
+	if (have && strcmp(want, have) == 0)
+		return;					/* no need to do anything */
+
+	qry = createPQExpBuffer();
+
+	if (strcmp(want, "") == 0)
+	{
+		/* We want the tablespace to be the database's default */
+		appendPQExpBuffer(qry, "SET default_tablespace = ''");
+	}
+	else
+	{
+		/* We want an explicit tablespace */
+		appendPQExpBuffer(qry, "SET default_tablespace = %s", fmtId(want));
+	}
+
+	if (RestoringToDB(AH))
+	{
+		PGresult   *res;
+
+		res = PQexec(AH->connection, qry->data);
+
+		if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
+			warn_or_die_horribly(AH, modulename, 
+								 "could not set default_tablespace to %s: %s",
+								 fmtId(want), PQerrorMessage(AH->connection));
+
+		PQclear(res);
+	}
+	else
+		ahprintf(AH, "%s;\n\n", qry->data);
+
+	if (AH->currTablespace)
+		free(AH->currTablespace);
+	AH->currTablespace = strdup(want);
+
+	destroyPQExpBuffer(qry);
+}
 
 /**
  * Parses the dropStmt part of a TOC entry and returns
@@ -2378,9 +2447,10 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isDat
 		strcmp(te->desc, "SCHEMA") == 0 && strcmp(te->tag, "public") == 0)
 		return;
 
-	/* Select owner and schema as necessary */
+	/* Select owner, schema, and tablespace as necessary */
 	_becomeOwner(AH, te);
 	_selectOutputSchema(AH, te->namespace);
+	_selectTablespace(AH, te->tablespace);
 
 	/* Set up OID mode too */
 	if (strcmp(te->desc, "TABLE") == 0)
@@ -2411,10 +2481,14 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isDat
 				ahprintf(AH, "\n");
 			}
 		}
-		ahprintf(AH, "-- %sName: %s; Type: %s; Schema: %s; Owner: %s\n",
+		ahprintf(AH, "-- %sName: %s; Type: %s; Schema: %s; Owner: %s",
 				 pfx, te->tag, te->desc,
 				 te->namespace ? te->namespace : "-",
 				 te->owner);
+		if (te->tablespace) 
+			ahprintf(AH, "; Tablespace: %s", te->tablespace);
+		ahprintf(AH, "\n");
+
 		if (AH->PrintExtraTocPtr != NULL)
 			(*AH->PrintExtraTocPtr) (AH, te);
 		ahprintf(AH, "--\n\n");
@@ -2509,6 +2583,8 @@ WriteHead(ArchiveHandle *AH)
 	WriteInt(AH, crtm.tm_year);
 	WriteInt(AH, crtm.tm_isdst);
 	WriteStr(AH, PQdb(AH->connection));
+	WriteStr(AH, AH->public.remoteVersionStr);
+	WriteStr(AH, PG_VERSION);
 }
 
 void
@@ -2593,6 +2669,12 @@ ReadHead(ArchiveHandle *AH)
 
 		if (AH->createDate == (time_t) -1)
 			write_msg(modulename, "WARNING: invalid creation date in header\n");
+	}
+
+	if (AH->version >= K_VERS_1_10)
+	{
+		AH->archiveRemoteVersion = ReadStr(AH);
+		AH->archiveDumpVersion = ReadStr(AH);
 	}
 
 }

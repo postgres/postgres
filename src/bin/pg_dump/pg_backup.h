@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup.h,v 1.33 2004/08/29 05:06:53 momjian Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup.h,v 1.34 2004/11/06 19:36:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,8 +54,10 @@ typedef enum _archiveFormat
 typedef struct _Archive
 {
 	int			verbose;
-	int			remoteVersion;
-	int			minRemoteVersion;
+	char	   *remoteVersionStr;	/* server's version string */
+	int			remoteVersion;		/* same in numeric form */
+
+	int			minRemoteVersion;	/* allowable range */
 	int			maxRemoteVersion;
 
 	/* error handling */
@@ -139,7 +141,8 @@ PGconn *ConnectDatabase(Archive *AH,
 extern void ArchiveEntry(Archive *AHX,
 			 CatalogId catalogId, DumpId dumpId,
 			 const char *tag,
-			 const char *namespace, const char *owner, bool withOids,
+			 const char *namespace, const char *tablespace,
+			 const char *owner, bool withOids,
 			 const char *desc, const char *defn,
 			 const char *dropStmt, const char *copyStmt,
 			 const DumpId *deps, int nDeps,

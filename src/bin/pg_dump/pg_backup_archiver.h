@@ -17,7 +17,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.61 2004/08/29 05:06:53 momjian Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.62 2004/11/06 19:36:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,7 +62,7 @@ typedef z_stream *z_streamp;
 #endif
 
 #define K_VERS_MAJOR 1
-#define K_VERS_MINOR 9
+#define K_VERS_MINOR 10
 #define K_VERS_REV 0
 
 /* Data block types */
@@ -84,8 +84,9 @@ typedef z_stream *z_streamp;
 																 * dependencies */
 #define K_VERS_1_9 (( (1 * 256 + 9) * 256 + 0) * 256 + 0)		/* add default_with_oids
 																 * tracking */
+#define K_VERS_1_10 (( (1 * 256 + 10) * 256 + 0) * 256 + 0)		/* add tablespace */
 
-#define K_VERS_MAX (( (1 * 256 + 9) * 256 + 255) * 256 + 0)
+#define K_VERS_MAX (( (1 * 256 + 10) * 256 + 255) * 256 + 0)
 
 /* No of BLOBs to restore in 1 TX */
 #define BLOB_BATCH_SIZE 100
@@ -170,6 +171,11 @@ typedef struct _archiveHandle
 	char		vmin;
 	char		vrev;
 	int			version;		/* Conveniently formatted version */
+
+	char	   *archiveRemoteVersion;	/* When reading an archive,
+										 * the version of the dumped DB */
+	char	   *archiveDumpVersion;		/* When reading an archive,
+										 * the version of the dumper */
 
 	int			debugLevel;		/* Used for logging (currently only by
 								 * --verbose) */
@@ -260,6 +266,7 @@ typedef struct _archiveHandle
 	/* these vars track state to avoid sending redundant SET commands */
 	char	   *currUser;		/* current username */
 	char	   *currSchema;		/* current schema */
+	char	   *currTablespace;	/* current tablespace */
 	bool		currWithOids;	/* current default_with_oids setting */
 
 	void	   *lo_buf;
@@ -283,6 +290,8 @@ typedef struct _tocEntry
 								 * (used in restore) */
 	char	   *tag;			/* index tag */
 	char	   *namespace;		/* null or empty string if not in a schema */
+	char	   *tablespace;		/* null if not in a tablespace; empty string
+								 * means use database default */
 	char	   *owner;
 	bool		withOids;		/* Used only by "TABLE" tags */
 	char	   *desc;
