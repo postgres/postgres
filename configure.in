@@ -1207,8 +1207,6 @@ AC_OUTPUT(
 	src/interfaces/libpq++/Makefile
 	src/interfaces/libpgeasy/Makefile
 	src/interfaces/libpgtcl/Makefile
-	src/interfaces/libpgtcl/mkMakefile.tcldefs.sh
-	src/interfaces/libpgtcl/mkMakefile.tkdefs.sh
 	src/interfaces/odbc/GNUmakefile
 	src/interfaces/odbc/Makefile.global
 	src/interfaces/python/GNUmakefile

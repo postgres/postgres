@@ -6,7 +6,7 @@
 # Copyright (c) 1994, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile.in,v 1.42 2000/06/13 09:16:39 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile.in,v 1.43 2000/06/14 17:07:31 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -18,14 +18,6 @@ SRCDIR= ../..
 include $(SRCDIR)/Makefile.global
 
 CFLAGS+= -I$(LIBPQDIR)
-
-#
-# Include definitions from the tclConfig.sh file
-#
-include Makefile.tcldefs
-ifeq ($(USE_TK), true)
-include Makefile.tkdefs
-endif
 
 ifdef KRBVERS
 CFLAGS+= $(KRBFLAGS)
@@ -42,7 +34,6 @@ SHLIB_LINK+= $(findstring -lcrypt,$(LIBS))
 
 # Shared library stuff, also default 'all' target
 include $(SRCDIR)/Makefile.shlib
-
 
 .PHONY: install beforeinstall-headers install-headers
 
