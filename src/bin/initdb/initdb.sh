@@ -26,7 +26,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.81 2000/01/19 20:08:24 petere Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.82 2000/01/20 21:51:05 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -47,14 +47,7 @@ exit_nicely(){
 
 
 CMDNAME=`basename $0`
-if [ "$USER" = 'root' -o "$LOGNAME" = 'root' ]
-then
-    echo "You cannot run $CMDNAME as root. Please log in (using, e.g., 'su')"
-    echo "as the (unprivileged) user that will own the server process."
-    exit 1
-fi
 
-EffectiveUser=`id -n -u 2>/dev/null || whoami 2>/dev/null`
 if [ "$TMPDIR" ]; then
     TEMPFILE="$TMPDIR/initdb.$$"
 else
@@ -95,7 +88,7 @@ else
 fi
 
 # Check if needed programs actually exist in path
-for prog in postgres pg_version
+for prog in postgres pg_version pg_id
 do
         if [ ! -x "$PGPATH/$prog" ]
 	then
@@ -108,6 +101,22 @@ do
                 exit 1
         fi
 done
+
+
+# Gotta wait for pg_id existence check above
+EffectiveUser=`$PGPATH/pg_id -n -u`
+if [ -z "$EffectiveUser" ]; then
+    echo "Could not determine current user name. You are really hosed."
+    exit 1
+fi
+
+if [ `$PGPATH/pg_id -u` -eq 0 ]
+then
+    echo "You cannot run $CMDNAME as root. Please log in (using, e.g., 'su')"
+    echo "as the (unprivileged) user that will own the server process."
+    exit 1
+fi
+
 
 # 0 is the default (non-)encoding
 MULTIBYTEID=0
@@ -124,12 +133,9 @@ template_only=0
 #       superuser be the same as the Unix user owning the server process:
 #       The single user postgres backend will only connect as the database
 #       user with the same name as the Unix user running it. That's
-#       a security measure. It might change in the future (why?), but for
-#       now the --username option is only a fallback if both id and whoami
-#       fail, and in that case the argument _must_ be the name of the effective
-#       user.
+#       a security measure.
 POSTGRES_SUPERUSERNAME="$EffectiveUser"
-POSTGRES_SUPERUSERID="`id -u 2>/dev/null || echo 0`"
+POSTGRES_SUPERUSERID=`$PGPATH/pg_id -u`
 
 while [ "$#" -gt 0 ]
 do
@@ -150,17 +156,7 @@ do
                 template_only=1
                 echo "Updating template1 database only."
                 ;;
-# The database superuser. See comments above.
-        --username|-u)
-                POSTGRES_SUPERUSERNAME="$2"
-                shift;;
-        --username=*)
-                POSTGRES_SUPERUSERNAME=`echo $1 | sed 's/^--username=//'`
-                ;;
-        -u*)
-                POSTGRES_SUPERUSERNAME=`echo $1 | sed 's/^-u//'`
-                ;;
-# The sysid of the database superuser. See comments above.
+# The sysid of the database superuser. Can be freely changed.
         --sysid|-i)
                 POSTGRES_SUPERUSERID="$2"
                 shift;;
@@ -284,21 +280,6 @@ then
     exit 1
 fi
 
-#---------------------------------------------------------------------------
-# Figure out who the Postgres superuser for the new database system will be.
-#---------------------------------------------------------------------------
-
-# This means they have neither 'id' nor 'whoami'!
-if [ -z "$POSTGRES_SUPERUSERNAME" ]
-then 
-    echo "$CMDNAME: Could not the determine current username. Please use the -u option."
-    exit 1
-fi
-
-echo "This database system will be initialized with username \"$POSTGRES_SUPERUSERNAME\"."
-echo "This user will own all the data files and must also own the server process."
-echo
-
 
 #-------------------------------------------------------------------------
 # Find the input files
@@ -355,6 +336,10 @@ fi
 
 trap 'echo "Caught signal." ; exit_nicely' 1 2 3 15
 
+# Let's go
+echo "This database system will be initialized with username \"$POSTGRES_SUPERUSERNAME\"."
+echo "This user will own all the data files and must also own the server process."
+echo
 
 # -----------------------------------------------------------------------
 # Create the data directory if necessary

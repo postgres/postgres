@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/initdb.sgml,v 1.8 2000/01/18 00:03:34 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/initdb.sgml,v 1.9 2000/01/20 21:50:54 petere Exp $
 Postgres documentation
 -->
 
@@ -28,7 +28,6 @@ initdb [ --pgdata|-D <replaceable class="parameter">dbdir</replaceable> ]
        [ --pwprompt|-W ]
        [ --encoding|-E <replaceable class="parameter">encoding</replaceable> ]
        [ --pglib|-L <replaceable class="parameter">libdir</replaceable> ]
-       [ --username|-u <replaceable class="parameter">name</replaceable> ]
        [ --noclean | -n ] [ --debug | -d ] [ --template | -t ]
   </synopsis>
 
@@ -117,20 +116,6 @@ initdb [ --pgdata|-D <replaceable class="parameter">dbdir</replaceable> ]
 	<filename>global1.bki.source</filename> and is traditionally installed
         along with the others in the library directory (e.g.,
         <filename>/usr/local/pgsql/lib</filename>).
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>--username=<replaceable class="parameter">name</replaceable></term>
-      <term>-u <replaceable class="parameter">name</replaceable></term>
-      <listitem>
-       <para>
-        The database system will be initialized with the username that is
-        running initdb. That is a requirement. If for some unimaginable
-        reason initdb cannot find out what the current user's name is,
-        you have to use this option. Normally, this will not be necessary
-        and initdb will tell you when it is.
        </para>
       </listitem>
      </varlistentry>

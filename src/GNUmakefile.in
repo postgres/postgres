@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/GNUmakefile.in,v 1.48 2000/01/16 20:04:51 petere Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/GNUmakefile.in,v 1.49 2000/01/20 21:50:56 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -33,13 +33,16 @@ all:
 	echo All of PostgreSQL is successfully made.  Ready to install. ;\
         fi
 
-install:
+install: installdirs
 	$(MAKE) -C utils install
 	$(MAKE) -C backend install
 	$(MAKE) -C interfaces install
 	$(MAKE) -C bin install
 	$(MAKE) -C pl install
 	cat ../register.txt
+
+installdirs: mkinstalldirs
+	$(SRCDIR)/mkinstalldirs $(BINDIR) $(LIBDIR) $(INCLUDEDIR)
 
 clean:
 	$(MAKE) -C utils clean

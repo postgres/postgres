@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Team
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/copy.c,v 1.6 2000/01/18 23:30:23 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/copy.c,v 1.7 2000/01/20 21:51:09 petere Exp $
  */
 #include <c.h>
 #include "copy.h"
@@ -423,7 +423,10 @@ handleCopyIn(PGconn *conn, FILE *copystream, const char *prompt)
 			if (firstload)
 			{
 				if (!strcmp(copybuf, "\\."))
+                                {
 					copydone = true;
+                                        break;
+                                }
 				firstload = false;
 			}
 		}
