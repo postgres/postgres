@@ -1,7 +1,7 @@
 --
 --	PostgreSQL code for ISSNs.
 --
---	$Id: isbn_issn.sql.in,v 1.3 2002/06/23 21:20:38 momjian Exp $
+--	$Id: isbn_issn.sql.in,v 1.4 2002/07/16 00:48:30 momjian Exp $
 --
 
 
@@ -25,6 +25,10 @@ create type issn (
 	input = issn_in,
 	output = issn_out
 );
+
+comment on type issn
+  is 'International Standard Serial Number';
+
 
 --
 --	The various boolean tests:
@@ -116,7 +120,7 @@ create operator <> (
 --
 --	PostgreSQL code for ISBNs.
 --
---	$Id: isbn_issn.sql.in,v 1.3 2002/06/23 21:20:38 momjian Exp $
+--	$Id: isbn_issn.sql.in,v 1.4 2002/07/16 00:48:30 momjian Exp $
 --
 --
 --	Input and output functions and the type itself:
@@ -138,6 +142,10 @@ create type isbn (
 	input = isbn_in,
 	output = isbn_out
 );
+
+comment on type isbn
+  is 'International Standard Book Number';
+
 
 --
 --	The various boolean tests:
