@@ -1,4 +1,4 @@
 rgrepc -l 'Copyright.*PostgreSQL Global Development Group' | while read FILE
 do
-	pipe sed 's/^\(.*Portions Copyright (c) 1996-\)[0-9]*\(, PostgreSQL Global Development Group/\12003\2/g' $FILE
+	pipe sed 's/^\(.*Portions Copyright (c) 1996-\)[0-9]*\(, PostgreSQL Global Development Group.*\)$/\12003\2/g' $FILE
 done
