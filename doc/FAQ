@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Tue Aug 31 23:28:02 EDT 2004
+   Last updated: Sun Nov 14 16:32:47 EST 2004
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -97,8 +97,7 @@
    4.25) How do I return multiple rows or columns from a function?
    4.26) Why can't I reliably create/drop temporary tables in PL/PgSQL
    functions?
-   4.27) What replication options are available?
-   4.28) What encryption options are available?
+   4.27) What encryption options are available?
    
                             Extending PostgreSQL
                                       
@@ -1111,16 +1110,7 @@ CREATE TABLE test (x int, modtime timestamp DEFAULT CURRENT_TIMESTAMP );
    table access in PL/PgSQL. This will cause the query to be reparsed
    every time.
    
-    4.27) What replication options are available?
-    
-   There are several master/slave replication options available. These
-   allow only the master to make database changes and the slave can only
-   do database reads. The bottom of
-   http://gborg.PostgreSQL.org/genpage?replication_research lists them. A
-   multi-master replication solution is being worked on at
-   http://gborg.PostgreSQL.org/project/pgreplication/projdisplay.php.
-   
-    4.28) What encryption options are available?
+    4.27) What encryption options are available?
     
      * contrib/pgcrypto contains many encryption functions for use in SQL
        queries.

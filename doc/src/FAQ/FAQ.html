@@ -10,7 +10,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Tue Aug 31 23:28:02 EDT 2004</P>
+    <P>Last updated: Sun Nov 14 16:32:47 EST 2004</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -137,8 +137,7 @@
     from a function?<BR>
      <A href="#4.26">4.26</A>) Why can't I reliably create/drop
     temporary tables in PL/PgSQL functions?<BR>
-     <A href="#4.27">4.27</A>) What replication options are available?<BR>
-     <A href="#4.28">4.28</A>) What encryption options are available?<BR>
+     <A href="#4.28">4.27</A>) What encryption options are available?<BR>
      
 
     <H2 align="center">Extending PostgreSQL</H2>
@@ -1396,17 +1395,7 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     <SMALL>EXECUTE</SMALL> for temporary table access in PL/PgSQL. This
     will cause the query to be reparsed every time.</P>
 
-    <H4><A name="4.27">4.27</A>) What replication options are available?
-    </H4>
-    <P>There are several master/slave replication options available.
-    These allow only the master to make database changes and the slave
-    can only do database reads. The bottom of <a
-    href="http://gborg.PostgreSQL.org/genpage?replication_research">
-    http://gborg.PostgreSQL.org/genpage?replication_research</a> lists
-    them. A multi-master replication solution is being worked on at <a
-    href="http://gborg.PostgreSQL.org/project/pgreplication/projdisplay.php">http://gborg.PostgreSQL.org/project/pgreplication/projdisplay.php</a>.</P>
-
-    <H4><A name="4.28">4.28</A>) What encryption options are available?
+    <H4><A name="4.27">4.27</A>) What encryption options are available?
     </H4>
     <UL>
     <LI><I>contrib/pgcrypto</I> contains many encryption functions for
