@@ -9,13 +9,14 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.12 1997/03/12 20:48:27 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.13 1997/04/02 04:06:32 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 #include "parser/dbcommands.h"
 #include "access/xact.h"
+#include "access/heapam.h"
 #include "catalog/catalog.h"
 #include "catalog/pg_type.h"
 
@@ -24,6 +25,7 @@
 #include "commands/command.h"
 #include "commands/copy.h"
 #include "commands/creatinh.h"
+#include "commands/sequence.h"
 #include "commands/defrem.h"
 #include "commands/purge.h"
 #include "commands/rename.h"
@@ -159,6 +161,7 @@ ProcessUtility(Node *parsetree,
             DestroyStmt *stmt = (DestroyStmt *)parsetree;
             List *arg;
             List *args = stmt->relNames;
+            Relation rel;
 
             commandTag = "DROP";
             CHECK_IF_ABORTED();
@@ -168,6 +171,19 @@ ProcessUtility(Node *parsetree,
                 if (IsSystemRelationName(relname))
                     elog(WARN, "class \"%-.*s\" is a system catalog",
                          NAMEDATALEN, relname);
+                rel = heap_openr (relname);
+                if ( RelationIsValid (rel) )
+                {
+                    if ( stmt->sequence && 
+                    		rel->rd_rel->relkind != RELKIND_SEQUENCE )
+                    	elog (WARN, "Use DROP TABLE to drop table '%s'",
+                    		relname);
+                    if ( !(stmt->sequence) && 
+                    		rel->rd_rel->relkind == RELKIND_SEQUENCE )
+                    	elog (WARN, "Use DROP SEQUENCE to drop sequence '%s'",
+                    		relname);
+                    heap_close (rel);
+                }
 #ifndef NO_SECURITY
                 if (!pg_ownercheck(userName, relname, RELNAME))
                     elog(WARN, "you do not own class \"%-.*s\"",
@@ -394,6 +410,13 @@ ProcessUtility(Node *parsetree,
 	    DefineQueryRewrite(stmt);
 	}
 	break;
+
+    case T_CreateSeqStmt:
+        commandTag = "CREATE";
+        CHECK_IF_ABORTED();
+      
+        DefineSequence((CreateSeqStmt *)parsetree);
+        break;
       
     case T_ExtendStmt:
 	{
@@ -426,7 +449,7 @@ ProcessUtility(Node *parsetree,
 			 relname);
 #ifndef NO_SECURITY
 		if (!pg_ownercheck(userName, relname, RELNAME))
-		    elog(WARN, "%s: %s", relationName, aclcheck_error_strings[ACLCHECK_NOT_OWNER]);
+		    elog(WARN, "%s: %s", relname, aclcheck_error_strings[ACLCHECK_NOT_OWNER]);
 #endif
 		RemoveIndex(relname);
 		break;
