@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.71 2000/06/30 07:04:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.72 2000/07/03 03:57:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,6 @@ static HeapTuple GetTupleForTrigger(EState *estate, ItemPointer tid,
 				   TupleTableSlot **newSlot);
 static HeapTuple ExecCallTriggerFunc(Trigger *trigger,
 									 TriggerData *trigdata);
-
 static void DeferredTriggerSaveEvent(Relation rel, int event,
 						 HeapTuple oldtup, HeapTuple newtup);
 
@@ -58,12 +57,13 @@ CreateTrigger(CreateTrigStmt *stmt)
 	Relation	idescs[Num_pg_trigger_indices];
 	Relation	ridescs[Num_pg_class_indices];
 	Oid			fargtypes[FUNC_MAX_ARGS];
+	Oid			funcoid;
 	Oid			funclang;
 	int			found = 0;
 	int			i;
 	char		constrtrigname[NAMEDATALEN];
 	char	   *constrname = "";
-	Oid			constrrelid = 0;
+	Oid			constrrelid = InvalidOid;
 
 	if (!allowSystemTableMods && IsSystemRelationName(stmt->relname))
 		elog(ERROR, "CreateTrigger: can't create trigger for system relation %s", stmt->relname);
@@ -82,12 +82,15 @@ CreateTrigger(CreateTrigStmt *stmt)
 	{
 		constrname = stmt->trigname;
 		stmt->trigname = constrtrigname;
-		sprintf(constrtrigname, "RI_ConstraintTrigger_%d", newoid());
+		sprintf(constrtrigname, "RI_ConstraintTrigger_%u", newoid());
 
 		if (strcmp(stmt->constrrelname, "") == 0)
-			constrrelid = 0;
+			constrrelid = InvalidOid;
 		else
 		{
+			/* NoLock is probably sufficient here, since we're only
+			 * interested in getting the relation's OID...
+			 */
 			rel = heap_openr(stmt->constrrelname, NoLock);
 			if (rel == NULL)
 				elog(ERROR, "table \"%s\" does not exist",
@@ -132,7 +135,11 @@ CreateTrigger(CreateTrigStmt *stmt)
 		}
 	}
 
-	/* Scan pg_trigger */
+	/*
+	 * Scan pg_trigger for existing triggers on relation.  NOTE that this
+	 * is cool only because we have AccessExclusiveLock on the relation,
+	 * so the trigger set won't be changing underneath us.
+	 */
 	tgrel = heap_openr(TriggerRelationName, RowExclusiveLock);
 	ScanKeyEntryInitialize(&key, 0, Anum_pg_trigger_tgrelid,
 						   F_OIDEQ, RelationGetRelid(rel));
@@ -144,11 +151,13 @@ CreateTrigger(CreateTrigStmt *stmt)
 		if (namestrcmp(&(pg_trigger->tgname), stmt->trigname) == 0)
 			elog(ERROR, "CreateTrigger: trigger %s already defined on relation %s",
 				 stmt->trigname, stmt->relname);
-		else
-			found++;
+		found++;
 	}
 	heap_endscan(tgscan);
 
+	/*
+	 * Find and validate the trigger function.
+	 */
 	MemSet(fargtypes, 0, FUNC_MAX_ARGS * sizeof(Oid));
 	tuple = SearchSysCacheTuple(PROCNAME,
 								PointerGetDatum(stmt->funcname),
@@ -161,6 +170,7 @@ CreateTrigger(CreateTrigStmt *stmt)
 	if (((Form_pg_proc) GETSTRUCT(tuple))->prorettype != 0)
 		elog(ERROR, "CreateTrigger: function %s() must return OPAQUE",
 			 stmt->funcname);
+	funcoid = tuple->t_data->t_oid;
 	funclang = ((Form_pg_proc) GETSTRUCT(tuple))->prolang;
 	if (funclang != ClanguageId &&
 		funclang != NEWClanguageId &&
@@ -179,19 +189,21 @@ CreateTrigger(CreateTrigStmt *stmt)
 			elog(ERROR, "CreateTrigger: only builtin, C and PL functions are supported");
 	}
 
+	/*
+	 * Build the new pg_trigger tuple.
+	 */
 	MemSet(nulls, ' ', Natts_pg_trigger * sizeof(char));
 
 	values[Anum_pg_trigger_tgrelid - 1] = ObjectIdGetDatum(RelationGetRelid(rel));
 	values[Anum_pg_trigger_tgname - 1] = NameGetDatum(namein(stmt->trigname));
-	values[Anum_pg_trigger_tgfoid - 1] = ObjectIdGetDatum(tuple->t_data->t_oid);
+	values[Anum_pg_trigger_tgfoid - 1] = ObjectIdGetDatum(funcoid);
 	values[Anum_pg_trigger_tgtype - 1] = Int16GetDatum(tgtype);
-
-	values[Anum_pg_trigger_tgenabled - 1] = true;
-	values[Anum_pg_trigger_tgisconstraint - 1] = stmt->isconstraint;
-	values[Anum_pg_trigger_tgconstrname - 1] = PointerGetDatum(constrname);;
-	values[Anum_pg_trigger_tgconstrrelid - 1] = constrrelid;
-	values[Anum_pg_trigger_tgdeferrable - 1] = stmt->deferrable;
-	values[Anum_pg_trigger_tginitdeferred - 1] = stmt->initdeferred;
+	values[Anum_pg_trigger_tgenabled - 1] = BoolGetDatum(true);
+	values[Anum_pg_trigger_tgisconstraint - 1] = BoolGetDatum(stmt->isconstraint);
+	values[Anum_pg_trigger_tgconstrname - 1] = PointerGetDatum(constrname);
+	values[Anum_pg_trigger_tgconstrrelid - 1] = ObjectIdGetDatum(constrrelid);
+	values[Anum_pg_trigger_tgdeferrable - 1] = BoolGetDatum(stmt->deferrable);
+	values[Anum_pg_trigger_tginitdeferred - 1] = BoolGetDatum(stmt->initdeferred);
 
 	if (stmt->args)
 	{
@@ -204,7 +216,7 @@ CreateTrigger(CreateTrigStmt *stmt)
 		{
 			char	   *ar = (char *) lfirst(le);
 
-			len += strlen(ar) + VARHDRSZ;
+			len += strlen(ar) + 4;
 			for (; *ar; ar++)
 			{
 				if (*ar == '\\')
@@ -239,6 +251,10 @@ CreateTrigger(CreateTrigStmt *stmt)
 	values[Anum_pg_trigger_tgattr - 1] = PointerGetDatum(tgattr);
 
 	tuple = heap_formtuple(tgrel->rd_att, values, nulls);
+
+	/*
+	 * Insert tuple into pg_trigger.
+	 */
 	heap_insert(tgrel, tuple);
 	CatalogOpenIndices(Num_pg_trigger_indices, Name_pg_trigger_indices, idescs);
 	CatalogIndexInsert(idescs, Num_pg_trigger_indices, tgrel, tuple);
@@ -249,16 +265,20 @@ CreateTrigger(CreateTrigStmt *stmt)
 	pfree(DatumGetPointer(values[Anum_pg_trigger_tgname - 1]));
 	pfree(DatumGetPointer(values[Anum_pg_trigger_tgargs - 1]));
 
-	/* update pg_class */
+	/*
+	 * Update relation's pg_class entry.  Crucial side-effect: other
+	 * backends (and this one too!) are sent SI message to make them
+	 * rebuild relcache entries.
+	 */
 	pgrel = heap_openr(RelationRelationName, RowExclusiveLock);
 	tuple = SearchSysCacheTupleCopy(RELNAME,
 									PointerGetDatum(stmt->relname),
 									0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "CreateTrigger: relation %s not found in pg_class", stmt->relname);
+		elog(ERROR, "CreateTrigger: relation %s not found in pg_class",
+			 stmt->relname);
 
 	((Form_pg_class) GETSTRUCT(tuple))->reltriggers = found + 1;
-	RelationInvalidateHeapTuple(pgrel, tuple);
 	heap_update(pgrel, &tuple->t_self, tuple, NULL);
 	CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, ridescs);
 	CatalogIndexInsert(ridescs, Num_pg_class_indices, pgrel, tuple);
@@ -271,6 +291,7 @@ CreateTrigger(CreateTrigStmt *stmt)
 	 * fairly pointless since it will happen as a byproduct of the
 	 * upcoming CommandCounterIncrement...
 	 */
+
 	/* Keep lock on target rel until end of xact */
 	heap_close(rel, NoLock);
 }
@@ -295,6 +316,12 @@ DropTrigger(DropTrigStmt *stmt)
 
 	rel = heap_openr(stmt->relname, AccessExclusiveLock);
 
+	/*
+	 * Search pg_trigger, delete target trigger, count remaining triggers
+	 * for relation.  Note this is OK only because we have
+	 * AccessExclusiveLock on the rel, so no one else is creating/deleting
+	 * triggers on this rel at the same time.
+	 */
 	tgrel = heap_openr(TriggerRelationName, RowExclusiveLock);
 	ScanKeyEntryInitialize(&key, 0, Anum_pg_trigger_tgrelid,
 						   F_OIDEQ, RelationGetRelid(rel));
@@ -312,7 +339,6 @@ DropTrigger(DropTrigStmt *stmt)
 
 			heap_delete(tgrel, &tuple->t_self, NULL);
 			tgfound++;
-
 		}
 		else
 			found++;
@@ -326,16 +352,20 @@ DropTrigger(DropTrigStmt *stmt)
 	heap_endscan(tgscan);
 	heap_close(tgrel, RowExclusiveLock);
 
-	/* update pg_class */
+	/*
+	 * Update relation's pg_class entry.  Crucial side-effect: other
+	 * backends (and this one too!) are sent SI message to make them
+	 * rebuild relcache entries.
+	 */
 	pgrel = heap_openr(RelationRelationName, RowExclusiveLock);
 	tuple = SearchSysCacheTupleCopy(RELNAME,
 									PointerGetDatum(stmt->relname),
 									0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "DropTrigger: relation %s not found in pg_class", stmt->relname);
+		elog(ERROR, "DropTrigger: relation %s not found in pg_class",
+			 stmt->relname);
 
 	((Form_pg_class) GETSTRUCT(tuple))->reltriggers = found;
-	RelationInvalidateHeapTuple(pgrel, tuple);
 	heap_update(pgrel, &tuple->t_self, tuple, NULL);
 	CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, ridescs);
 	CatalogIndexInsert(ridescs, Num_pg_class_indices, pgrel, tuple);
@@ -348,10 +378,14 @@ DropTrigger(DropTrigStmt *stmt)
 	 * fairly pointless since it will happen as a byproduct of the
 	 * upcoming CommandCounterIncrement...
 	 */
+
 	/* Keep lock on target rel until end of xact */
 	heap_close(rel, NoLock);
 }
 
+/*
+ * Remove all triggers for a relation that's being deleted.
+ */
 void
 RelationRemoveTriggers(Relation rel)
 {
@@ -374,7 +408,6 @@ RelationRemoveTriggers(Relation rel)
 		DeleteComments(tup->t_data->t_oid);
 
 		heap_delete(tgrel, &tup->t_self, NULL);
-
 	}
 
 	heap_endscan(tgscan);
@@ -1141,6 +1174,7 @@ deferredTriggerCheckState(Oid tgoid, int32 itemstate)
  * deferredTriggerAddEvent()
  *
  *	Add a new trigger event to the queue.
+ *	Caller must have switched into appropriate memory context!
  * ----------
  */
 static void
@@ -1148,8 +1182,6 @@ deferredTriggerAddEvent(DeferredTriggerEvent event)
 {
 	deftrig_events = lappend(deftrig_events, event);
 	deftrig_n_events++;
-
-	return;
 }
 
 
@@ -1288,8 +1320,6 @@ deferredTriggerExecute(DeferredTriggerEvent event, int itemno)
 		ReleaseBuffer(newbuffer);
 
 	heap_close(rel, NoLock);
-
-	return;
 }
 
 
@@ -1410,8 +1440,8 @@ DeferredTriggerBeginXact(void)
 	DeferredTriggerStatus stat;
 
 	if (deftrig_cxt != NULL)
-		elog(FATAL,
-		   "DeferredTriggerBeginXact() called while inside transaction");
+		elog(ERROR,
+			 "DeferredTriggerBeginXact() called while inside transaction");
 
 	/* ----------
 	 * Create the per transaction memory context and copy all states
@@ -1529,7 +1559,6 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 	Relation	irel = (Relation) NULL;
 	List	   *l;
 	List	   *ls;
-	List	   *lnext;
 	List	   *loid = NIL;
 	MemoryContext oldcxt;
 	bool		found;
@@ -1546,11 +1575,7 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 		{
 			/* ----------
 			 * ... outside of a transaction block
-			 * ----------
-			 */
-			oldcxt = MemoryContextSwitchTo(deftrig_gcxt);
-
-			/* ----------
+			 *
 			 * Drop all information about individual trigger states per
 			 * session.
 			 * ----------
@@ -1558,10 +1583,11 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 			l = deftrig_dfl_trigstates;
 			while (l != NIL)
 			{
-				lnext = lnext(l);
+				List   *next = lnext(l);
+
 				pfree(lfirst(l));
 				pfree(l);
-				l = lnext;
+				l = next;
 			}
 			deftrig_dfl_trigstates = NIL;
 
@@ -1572,19 +1598,13 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 			deftrig_dfl_all_isset = true;
 			deftrig_dfl_all_isdeferred = stmt->deferred;
 
-			MemoryContextSwitchTo(oldcxt);
-
 			return;
 		}
 		else
 		{
 			/* ----------
 			 * ... inside of a transaction block
-			 * ----------
-			 */
-			oldcxt = MemoryContextSwitchTo(deftrig_cxt);
-
-			/* ----------
+			 *
 			 * Drop all information about individual trigger states per
 			 * transaction.
 			 * ----------
@@ -1592,10 +1612,11 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 			l = deftrig_trigstates;
 			while (l != NIL)
 			{
-				lnext = lnext(l);
+				List   *next = lnext(l);
+
 				pfree(lfirst(l));
 				pfree(l);
-				l = lnext;
+				l = next;
 			}
 			deftrig_trigstates = NIL;
 
@@ -1605,8 +1626,6 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 			 */
 			deftrig_all_isset = true;
 			deftrig_all_isdeferred = stmt->deferred;
-
-			MemoryContextSwitchTo(oldcxt);
 
 			return;
 		}
@@ -1697,7 +1716,7 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 					 (char *) lfirst(l));
 
 			constr_oid = htup->t_data->t_oid;
-			loid = lappend(loid, (Node *) constr_oid);
+			loid = lappendi(loid, constr_oid);
 			found = true;
 
 			if (hasindex)
@@ -1720,7 +1739,6 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 		index_close(irel);
 	heap_close(tgrel, AccessShareLock);
 
-
 	if (!IsTransactionBlock())
 	{
 		/* ----------
@@ -1736,7 +1754,7 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 			foreach(ls, deftrig_dfl_trigstates)
 			{
 				state = (DeferredTriggerStatus) lfirst(ls);
-				if (state->dts_tgoid == (Oid) lfirst(l))
+				if (state->dts_tgoid == (Oid) lfirsti(l))
 				{
 					state->dts_tgisdeferred = stmt->deferred;
 					found = true;
@@ -1747,7 +1765,7 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 			{
 				state = (DeferredTriggerStatus)
 					palloc(sizeof(DeferredTriggerStatusData));
-				state->dts_tgoid = (Oid) lfirst(l);
+				state->dts_tgoid = (Oid) lfirsti(l);
 				state->dts_tgisdeferred = stmt->deferred;
 
 				deftrig_dfl_trigstates =
@@ -1774,7 +1792,7 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 			foreach(ls, deftrig_trigstates)
 			{
 				state = (DeferredTriggerStatus) lfirst(ls);
-				if (state->dts_tgoid == (Oid) lfirst(l))
+				if (state->dts_tgoid == (Oid) lfirsti(l))
 				{
 					state->dts_tgisdeferred = stmt->deferred;
 					found = true;
@@ -1785,7 +1803,7 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 			{
 				state = (DeferredTriggerStatus)
 					palloc(sizeof(DeferredTriggerStatusData));
-				state->dts_tgoid = (Oid) lfirst(l);
+				state->dts_tgoid = (Oid) lfirsti(l);
 				state->dts_tgisdeferred = stmt->deferred;
 
 				deftrig_trigstates =
@@ -2052,6 +2070,4 @@ DeferredTriggerSaveEvent(Relation rel, int event,
 	oldcxt = MemoryContextSwitchTo(deftrig_cxt);
 	deferredTriggerAddEvent(new_event);
 	MemoryContextSwitchTo(oldcxt);
-
-	return;
 }
