@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: psqlHelp.h,v 1.71 1999/06/17 15:15:51 momjian Exp $
+ * $Id: psqlHelp.h,v 1.72 1999/07/11 22:47:21 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -333,7 +333,7 @@ TIMEZONE|XACTISOLEVEL|CLIENT_ENCODING|SERVER_ENCODING"},
 \tSET TRANSACTION ISOLATION LEVEL 'SERIALIZABLE'|'READ COMMITTED'\n\
 \tSET CLIENT_ENCODING|NAMES TO 'EUC_JP'|'SJIS'|'EUC_CN'|'EUC_KR'|'EUC_TW'|\n\
 \t  'BIG5'|'MULE_INTERNAL'|'LATIN1'|'LATIN2'|'LATIN3'|'LATIN4'|'LATIN5'|\n\
-\t  'KOI8|'WIN'|'ALT'\n\
+\t  'KOI8|'WIN'|'ALT'|'WIN1250'\n\
 \tSET SERVER_ENCODING TO 'EUC_JP'|'SJIS'|'EUC_CN'|'EUC_KR'|'EUC_TW'|\n\
 \t  'BIG5'|'MULE_INTERNAL'|'LATIN1'|'LATIN2'|'LATIN3'|'LATIN4'|'LATIN5'|\n\
 \t  'KOI8|'WIN'|'ALT'"},

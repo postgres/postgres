@@ -1,4 +1,4 @@
-/* $Id: pg_wchar.h,v 1.8 1999/05/25 16:14:04 momjian Exp $ */
+/* $Id: pg_wchar.h,v 1.9 1999/07/11 22:47:19 ishii Exp $ */
 
 #ifndef PG_WCHAR_H
 #define PG_WCHAR_H
@@ -29,6 +29,7 @@
 /* followings are for client encoding only */
 #define SJIS 32					/* Shift JIS */
 #define BIG5 33					/* Big5 */
+#define WIN1250  34				/* windows-1250 */
 
 #ifdef MULTIBYTE
 typedef unsigned int pg_wchar;
@@ -79,7 +80,7 @@ typedef struct
 {
 	int			encoding;		/* encoding symbol value */
 	char	   *name;			/* encoding name */
-	int			is_client_only; /* 0: server/client bothg supported 1:
+	int			is_client_only; /* 0: server/client both supported 1:
 								 * client only */
 	void		(*to_mic) ();	/* client encoding to MIC */
 	void		(*from_mic) (); /* MIC to client encoding */
