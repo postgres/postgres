@@ -1,12 +1,12 @@
 # Postgres documentation makefile
-# $Header: /cvsroot/pgsql/doc/src/Makefile,v 1.11 2000/08/31 16:09:16 petere Exp $
+# $Header: /cvsroot/pgsql/doc/src/Makefile,v 1.12 2000/09/05 18:45:38 petere Exp $
 
 subdir = doc/src
 top_builddir = ../..
 -include $(top_builddir)/src/Makefile.global
 
 TAR= tar
-ZIP= gzip
+GZIP= gzip
 TAREXCLUDE= --exclude=Makefile --exclude='*.sgml' --exclude=ref
 
 SRC= admin postgres programmer tutorial user
