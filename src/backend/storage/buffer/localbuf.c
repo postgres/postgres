@@ -14,6 +14,10 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
+ *
+ * IDENTIFICATION
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/localbuf.c,v 1.38 2000/11/30 19:06:37 vadim Exp $
+ *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
