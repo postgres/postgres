@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/port/BSD44_derived/Attic/Makefile.inc,v 1.2 1996/10/18 04:46:50 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/port/BSD44_derived/Attic/Makefile.inc,v 1.3 1996/10/19 06:36:52 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -16,6 +16,8 @@
 # in case yywrap is defined
 #
 LDADD+= -ll
+
+HAVE_Cplusplus= true
 
 #
 # 4.4-lite BSD-derived OSs have a little trouble with partially-implemented
