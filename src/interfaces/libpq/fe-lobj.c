@@ -7,14 +7,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-lobj.c,v 1.22 1999/07/19 02:27:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-lobj.c,v 1.23 1999/07/19 02:45:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include <unistd.h>
 #include <fcntl.h>
-#include <io.h>
 #include <sys/stat.h>
 
 #include "postgres.h"
@@ -23,6 +22,7 @@
 
 #ifdef WIN32
 #include "win32.h"
+#include "io.h"
 #endif
 
 #include "libpq/libpq-fs.h"		/* must come after sys/stat.h */
