@@ -232,7 +232,7 @@ Allow unprivileged users to change their passwords (Peter E)
 With password authentication enabled, new users without passwords can't
 connect (Peter E)
 Disallow dropping a user who owns a database (Peter E)
-Add initdb --enable-multibyte option (Peter E)
+Change initdb option --with-mb to --enable-multibyte
 Add option for initdb to prompts for superuser password (Peter E)
 Allow complex type casts like col::numeric(9,2) and col::int2::float8 (Tom)
 Updated user interfaces on initdb, initlocation, pg_dump, ipcclean
