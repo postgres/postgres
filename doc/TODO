@@ -2,7 +2,7 @@
 TODO list for PostgreSQL
 ========================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Fri Dec  3 12:07:45 EST 2004
+Last updated:		Mon Dec 13 09:21:27 EST 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -686,6 +686,12 @@ Cache
 	o Parsed query tree
 	o Query execute plan
 	o Query results
+
+* Allow the size of the buffer cache used by temporary objects to be
+  specified as a GUC variable
+
+  Larger local buffer cache sizes requires more efficient handling of
+  local cache lookups.
 
 
 Vacuum
