@@ -178,67 +178,6 @@ Ftp file
 
 <Step Performance="required">
 <Para>
-Some platforms use <application>flex</application>.  
-If your system uses <application>flex</application> then make sure
-     you have a good version.  To check, type 
-<programlisting>
-$ flex --version
-</programlisting>
-
-</Para>
-
-<Para>
-     If the <application>flex</application> command is not found then you probably do not need it.
-     If the version is 2.5.2 or 2.5.4 or greater then you are okay.  If it
-     is 2.5.3 or before 2.5.2 then you will have to upgrade <application>flex</application>.  You may
-     get it at 
-<ulink url="ftp://prep.ai.mit.edu/pub/gnu/flex-2.5.4.tar.gz">ftp://prep.ai.mit.edu/pub/gnu/flex-2.5.4.tar.gz</ulink>.
-</Para>
-
-<Para>
-     If you need <application>flex</application> and don't have it or have the wrong version, then
-     you will be told so when you attempt to compile the program.  Feel
-     free to skip this step if you aren't sure you need it.  If you do
-     need it then you will be told to install/upgrade <application>flex</application> when you try to
-     compile <productname>Postgres</productname>.
-</Para>
-
-<Para>
-You may want to do the entire <application>flex</application> installation from
-the root account, though that is not absolutely necessary.
-Assuming that you want the installation to place files in the usual default
-areas, type the following:
-<ProgramListing>
-$ su -
-$ cd /usr/local/src
-ftp prep.ai.mit.edu
-ftp> cd /pub/gnu/
-ftp> binary
-ftp> get flex-2.5.4.tar.gz
-ftp> quit
-$ gunzip -c flex-2.5.4.tar.gz | tar xvf -
-$ cd flex-2.5.4
-$ configure --prefix=/usr
-$ gmake
-$ gmake check
-# You must be root when typing the next line:
-$ gmake install
-$ cd /usr/local/src
-$ rm -rf flex-2.5.4
-</ProgramListing>
-</Para>
-
-<Para>
-     This will update files <filename>/usr/man/man1/flex.1</filename>,
- <filename>/usr/bin/flex</filename>,
-     <filename>/usr/lib/libfl.a</filename>,
- <filename>/usr/include/FlexLexer.h</filename> and will add a link
-     <filename>/usr/bin/flex++</filename> which points to flex.
-</Para>
-</Step>
-
-<Step Performance="required">
-<Para>
 If you are not upgrading an existing system then skip to 
 <xref linkend="newdirs">.
 If you are upgrading from 6.5, you do not need to dump/reload or initdb.

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.126 2000/01/15 02:59:32 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.127 2000/01/16 20:04:55 petere Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -114,7 +114,7 @@ static Node *doNegate(Node *n);
 }
 
 %type <node>	stmt,
-		AddAttrStmt, ClosePortalStmt,
+		AlterTableStmt, ClosePortalStmt,
 		CopyStmt, CreateStmt, CreateAsStmt, CreateSeqStmt, DefineStmt, DropStmt,
 		TruncateStmt, CommentStmt,
 		ExtendStmt, FetchStmt,	GrantStmt, CreateTrigStmt, DropTrigStmt,
@@ -129,6 +129,9 @@ static Node *doNegate(Node *n);
 		CreateUserStmt, AlterUserStmt, DropUserStmt, RuleActionStmt,
 		RuleActionStmtOrEmpty, ConstraintsSetStmt,
                 CreateGroupStmt, AlterGroupStmt, DropGroupStmt
+
+%type <node>    alter_column_action
+%type <ival>    drop_behavior
 
 %type <str>		createdb_opt_location
 %type <ival>    createdb_opt_encoding
@@ -210,7 +213,7 @@ static Node *doNegate(Node *n);
 %type <astmt>	insert_rest
 
 %type <node>	OptTableElement, ConstraintElem
-%type <node>	columnDef, alter_clause
+%type <node>	columnDef
 %type <defelt>	def_elem
 %type <node>	def_arg, columnElem, where_clause,
 				a_expr, a_expr_or_null, b_expr, com_expr, AexprConst,
@@ -391,7 +394,7 @@ stmtmulti:  stmtmulti ';' stmt
 				}
 		;
 
-stmt :	  AddAttrStmt
+stmt :          AlterTableStmt
                 | AlterGroupStmt
 		| AlterUserStmt
 		| ClosePortalStmt
@@ -797,40 +800,74 @@ constraints_set_mode:	DEFERRED
 
 /*****************************************************************************
  *
- *		QUERY :
- *				addattr ( attr1 = type1 .. attrn = typen ) to <relname> [*]
+ *	ALTER TABLE variations
  *
  *****************************************************************************/
 
-AddAttrStmt:  ALTER TABLE relation_name opt_inh_star alter_clause
-				{
-					AddAttrStmt *n = makeNode(AddAttrStmt);
-					n->relname = $3;
-					n->inh = $4;
-					n->colDef = $5;
-					$$ = (Node *)n;
-				}
-		;
+AlterTableStmt:
+/* ALTER TABLE <name> ADD [COLUMN] <coldef> */
+        ALTER TABLE relation_name opt_inh_star ADD opt_column columnDef
+	{
+		AlterTableStmt *n = makeNode(AlterTableStmt);
+                n->subtype = 'A';
+		n->relname = $3;
+		n->inh = $4;
+		n->def = $7;
+		$$ = (Node *)n;
+	}
+/* ALTER TABLE <name> ALTER [COLUMN] <colname> {SET DEFAULT <expr>|DROP DEFAULT} */
+      | ALTER TABLE relation_name opt_inh_star ALTER opt_column ColId alter_column_action
+        {
+                AlterTableStmt *n = makeNode(AlterTableStmt);
+                n->subtype = 'T';
+                n->relname = $3;
+                n->inh = $4;
+                n->name = $7;
+                n->def = $8;
+                $$ = (Node *)n;
+        }
+/* ALTER TABLE <name> DROP [COLUMN] <name> {RESTRICT|CASCADE} */
+      | ALTER TABLE relation_name opt_inh_star DROP opt_column ColId drop_behavior
+        {
+                AlterTableStmt *n = makeNode(AlterTableStmt);
+                n->subtype = 'D';
+                n->relname = $3;
+                n->inh = $4;
+                n->name = $7;
+                n->behavior = $8;
+                $$ = (Node *)n;
+        }
+/* ALTER TABLE <name> ADD CONSTRAINT ... */
+      | ALTER TABLE relation_name opt_inh_star ADD TableConstraint
+        {
+                AlterTableStmt *n = makeNode(AlterTableStmt);
+                n->subtype = 'A';
+                n->relname = $3;
+                n->inh = $4;
+                n->def = $6;
+                $$ = (Node *)n;
+        }
+/* ALTER TABLE <name> DROP CONSTRAINT <name> {RESTRICT|CASCADE} */
+      | ALTER TABLE relation_name opt_inh_star DROP CONSTRAINT name drop_behavior
+        {
+                AlterTableStmt *n = makeNode(AlterTableStmt);
+                n->relname = $3;
+                n->inh = $4;
+                n->name = $7;
+                n->behavior = $8;
+                $$ = (Node *)n;
+        }
+        ;
 
-alter_clause:  ADD opt_column columnDef
-				{
-					$$ = $3;
-				}
-			| ADD '(' OptTableElementList ')'
-				{
-					if (length($3) != 1)
-						elog(ERROR,"ALTER TABLE/ADD() allows one column only");
-					$$ = (Node *) lfirst($3);
-				}
-			| DROP opt_column ColId
-				{	elog(ERROR,"ALTER TABLE/DROP COLUMN not yet implemented"); }
-			| ALTER opt_column ColId SET DEFAULT a_expr
-				{	elog(ERROR,"ALTER TABLE/ALTER COLUMN/SET DEFAULT not yet implemented"); }
-			| ALTER opt_column ColId DROP DEFAULT
-				{	elog(ERROR,"ALTER TABLE/ALTER COLUMN/DROP DEFAULT not yet implemented"); }
-			| ADD ConstraintElem
-				{	elog(ERROR,"ALTER TABLE/ADD CONSTRAINT not yet implemented"); }
-		;
+alter_column_action:
+        SET DEFAULT a_expr_or_null { $$ = $3; }
+        | DROP DEFAULT          { $$ = NULL; }
+        ;
+
+drop_behavior: CASCADE { $$ = CASCADE; }
+               | RESTRICT { $$ = RESTRICT; }
+        ;
+
 
 
 /*****************************************************************************

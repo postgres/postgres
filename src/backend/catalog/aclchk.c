@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.34 2000/01/15 02:59:28 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.35 2000/01/16 20:04:54 petere Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -444,8 +444,8 @@ pg_aclcheck(char *relname, char *usename, AclMode mode)
 }
 
 int32
-pg_ownercheck(char *usename,
-			  char *value,
+pg_ownercheck(const char *usename,
+			  const char *value,
 			  int cacheid)
 {
 	HeapTuple	tuple;

@@ -4,7 +4,7 @@
 #    Makefile for the plpgsql shared object
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Attic/Makefile.in,v 1.18 1999/10/13 11:38:40 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Attic/Makefile.in,v 1.19 2000/01/16 20:04:59 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -79,6 +79,6 @@ pl_scan.c:	scan.l
 
 clean: clean-shlib
 	rm -f lib$(NAME).a
-	rm -f *.o pl.tab.h pl_gram.c pl_scan.c
+	rm -f *.o
 # And the garbage that might have been left behind by partial build:
 	rm -f y.tab.c y.tab.h lex.yy.c

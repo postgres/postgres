@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.62 1999/12/20 10:40:41 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.63 2000/01/16 20:04:55 petere Exp $
  *
  * NOTES
  *	  The PortalExecutorHeapMemory crap needs to be eliminated
@@ -23,19 +23,23 @@
 #include "postgres.h"
 
 #include "access/heapam.h"
+#include "access/skey.h"
 #include "catalog/catalog.h"
 #include "catalog/catname.h"
 #include "catalog/indexing.h"
+#include "catalog/pg_attrdef.h"
 #include "catalog/pg_type.h"
 #include "commands/command.h"
 #include "executor/execdefs.h"
 #include "executor/executor.h"
+#include "catalog/heap.h"
 #include "miscadmin.h"
 #include "optimizer/prep.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/syscache.h"
 #include "utils/temprel.h"
+
 
 /* ----------------
  *		PortalExecutorHeapMemory stuff
@@ -246,7 +250,8 @@ PerformPortalClose(char *name, CommandDest dest)
 }
 
 /* ----------------
- *		PerformAddAttribute
+ *      AlterTableAddColumn
+ *		(formerly known as PerformAddAttribute)
  *
  *		adds an additional attribute to a relation
  *
@@ -276,8 +281,7 @@ PerformPortalClose(char *name, CommandDest dest)
  * ----------------
  */
 void
-PerformAddAttribute(char *relationName,
-					char *userName,
+AlterTableAddColumn(const char *relationName,
 					bool inherits,
 					ColumnDef *colDef)
 {
@@ -295,6 +299,7 @@ PerformAddAttribute(char *relationName,
 	Relation	idescs[Num_pg_attr_indices];
 	Relation	ridescs[Num_pg_class_indices];
 	bool		hasindex;
+    List       *rawDefaults = NIL;
 
 	/*
 	 * permissions checking.  this would normally be done in utility.c,
@@ -303,19 +308,18 @@ PerformAddAttribute(char *relationName,
 	 * normally, only the owner of a class can change its schema.
 	 */
 	if (!allowSystemTableMods && IsSystemRelationName(relationName))
-		elog(ERROR, "PerformAddAttribute: class \"%s\" is a system catalog",
+		elog(ERROR, "ALTER TABLE: relation \"%s\" is a system catalog",
 			 relationName);
 #ifndef NO_SECURITY
-	if (!pg_ownercheck(userName, relationName, RELNAME))
-		elog(ERROR, "PerformAddAttribute: you do not own class \"%s\"",
-			 relationName);
+	if (!pg_ownercheck(UserName, relationName, RELNAME))
+		elog(ERROR, "ALTER TABLE: permission denied");
 #endif
 
 	/*
 	 * Grab an exclusive lock on the target table, which we will NOT release
 	 * until end of transaction.
 	 */
-	rel = heap_openr(relationName, AccessExclusiveLock);
+	rel = heap_openr((char *)relationName, AccessExclusiveLock);
 	myrelid = RelationGetRelid(rel);
 	heap_close(rel, NoLock);	/* close rel but keep lock! */
 
@@ -324,8 +328,10 @@ PerformAddAttribute(char *relationName,
 	 */
 	if (colDef->is_not_null)
 		elog(ERROR, "Can't add a NOT NULL attribute to an existing relation");
+
 	if (colDef->raw_default || colDef->cooked_default)
-		elog(ERROR, "ADD ATTRIBUTE: DEFAULT not yet implemented");
+        elog(ERROR, "Adding columns with defaults is not implemented.");
+
 
 	/*
 	 * if the first element in the 'schema' list is a "*" then we are
@@ -358,8 +364,8 @@ PerformAddAttribute(char *relationName,
 				if (childrelid == myrelid)
 					continue;
 				rel = heap_open(childrelid, AccessExclusiveLock);
-				PerformAddAttribute(RelationGetRelationName(rel),
-									userName, false, colDef);
+				AlterTableAddColumn(RelationGetRelationName(rel),
+									false, colDef);
 				heap_close(rel, AccessExclusiveLock);
 			}
 		}
@@ -372,7 +378,7 @@ PerformAddAttribute(char *relationName,
 									 0, 0, 0);
 
 	if (!HeapTupleIsValid(reltup))
-		elog(ERROR, "PerformAddAttribute: relation \"%s\" not found",
+		elog(ERROR, "ALTER TABLE: relation \"%s\" not found",
 			 relationName);
 
 	/*
@@ -380,14 +386,14 @@ PerformAddAttribute(char *relationName,
 	 */
 	if (((Form_pg_class) GETSTRUCT(reltup))->relkind == RELKIND_INDEX)
 	{
-		elog(ERROR, "PerformAddAttribute: index relation \"%s\" not changed",
+		elog(ERROR, "ALTER TABLE: index relation \"%s\" not changed",
 			 relationName);
 	}
 
 	minattnum = ((Form_pg_class) GETSTRUCT(reltup))->relnatts;
 	maxatts = minattnum + 1;
 	if (maxatts > MaxHeapAttributeNumber)
-		elog(ERROR, "PerformAddAttribute: relations limited to %d attributes",
+		elog(ERROR, "ALTER TABLE: relations limited to %d columns",
 			 MaxHeapAttributeNumber);
 
 	attrdesc = heap_openr(AttributeRelationName, RowExclusiveLock);
@@ -421,7 +427,7 @@ PerformAddAttribute(char *relationName,
 								  0, 0);
 
 		if (HeapTupleIsValid(tup))
-			elog(ERROR, "PerformAddAttribute: attribute \"%s\" already exists in class \"%s\"",
+			elog(ERROR, "ALTER TABLE: column name \"%s\" already exists in relation \"%s\"",
 				 colDef->colname, relationName);
 
 		/*
@@ -444,7 +450,7 @@ PerformAddAttribute(char *relationName,
 		tform = (Form_pg_type) GETSTRUCT(typeTuple);
 
 		if (!HeapTupleIsValid(typeTuple))
-			elog(ERROR, "Add: type \"%s\" nonexistent", typename);
+			elog(ERROR, "ALTER TABLE: type \"%s\" does not exist", typename);
 		namestrcpy(&(attribute->attname), colDef->colname);
 		attribute->atttypid = typeTuple->t_data->t_oid;
 		attribute->attlen = tform->typlen;
@@ -483,9 +489,223 @@ PerformAddAttribute(char *relationName,
 	CatalogCloseIndices(Num_pg_class_indices, ridescs);
 
 	heap_freetuple(reltup);
-	heap_close(rel, RowExclusiveLock);
+
+	heap_close(rel, NoLock);
 }
 
+
+
+static void drop_default(Oid relid, int16 attnum);
+
+
+/*
+ * ALTER TABLE ALTER COLUMN SET/DROP DEFAULT
+ */
+void
+AlterTableAlterColumn(const char *relationName,
+                      bool inh, const char *colName,
+                      Node *newDefault)
+{
+    Relation rel;
+    HeapTuple tuple;
+    int16 attnum;
+    Oid myrelid;
+
+	if (!allowSystemTableMods && IsSystemRelationName(relationName))
+		elog(ERROR, "ALTER TABLE: relation \"%s\" is a system catalog",
+			 relationName);
+#ifndef NO_SECURITY
+	if (!pg_ownercheck(UserName, relationName, RELNAME))
+		elog(ERROR, "ALTER TABLE: permission denied");
+#endif
+
+    /* XXX should heap_openr take const char * ? */
+    rel = heap_openr((char *)relationName, AccessExclusiveLock);
+    myrelid = RelationGetRelid(rel);
+    heap_close(rel, NoLock);
+
+    /*
+     * Propagate to children if desired
+     */
+	if (inh)
+    {
+        List	   *child,
+            *children;
+
+        /* this routine is actually in the planner */
+        children = find_all_inheritors(myrelid);
+
+        /*
+         * find_all_inheritors does the recursive search of the
+         * inheritance hierarchy, so all we have to do is process all
+         * of the relids in the list that it returns.
+         */
+        foreach(child, children)
+		{
+            Oid		childrelid = lfirsti(child);
+
+            if (childrelid == myrelid)
+                continue;
+            rel = heap_open(childrelid, AccessExclusiveLock);
+            AlterTableAlterColumn(RelationGetRelationName(rel),
+                                  false, colName, newDefault);
+            heap_close(rel, AccessExclusiveLock);
+        }
+    }
+
+    /* -= now do the thing on this relation =- */
+
+    /* reopen the business */
+    rel = heap_openr((char *)relationName, AccessExclusiveLock);
+
+    /*
+     * get the number of the attribute
+     */
+    tuple = SearchSysCacheTuple(ATTNAME,
+                                ObjectIdGetDatum(myrelid),
+                                NameGetDatum(namein((char *)colName)),
+                                0, 0);
+
+    if (!HeapTupleIsValid(tuple))
+    {
+        heap_close(rel, AccessExclusiveLock);
+        elog(ERROR, "ALTER TABLE: relation \"%s\" has no column \"%s\"",
+             relationName, colName);
+    }
+
+    attnum = ((Form_pg_attribute) GETSTRUCT(tuple))->attnum;
+
+    if (newDefault) /* SET DEFAULT */
+    {
+        List* rawDefaults = NIL;
+   		RawColumnDefault *rawEnt;
+
+        /* Get rid of the old one first */
+        drop_default(myrelid, attnum);
+
+		rawEnt = (RawColumnDefault *) palloc(sizeof(RawColumnDefault));
+		rawEnt->attnum = attnum;
+        rawEnt->raw_default = newDefault;
+		rawDefaults = lappend(rawDefaults, rawEnt);
+
+        /*
+         * This function is intended for CREATE TABLE,
+         * so it processes a _list_ of defaults, but we just do one.
+         */
+        AddRelationRawConstraints(rel, rawDefaults, NIL);
+    }
+
+    else /* DROP DEFAULT */
+    {
+        Relation attr_rel;
+        ScanKeyData scankeys[3];
+        HeapScanDesc scan;
+        HeapTuple tuple;
+
+        attr_rel = heap_openr(AttributeRelationName, AccessExclusiveLock);
+        ScanKeyEntryInitialize(&scankeys[0], 0x0, Anum_pg_attribute_attrelid, F_OIDEQ,
+                               ObjectIdGetDatum(myrelid));
+        ScanKeyEntryInitialize(&scankeys[1], 0x0, Anum_pg_attribute_attnum, F_INT2EQ,
+                               Int16GetDatum(attnum));
+        ScanKeyEntryInitialize(&scankeys[2], 0x0, Anum_pg_attribute_atthasdef, F_BOOLEQ,
+                               TRUE);
+
+        scan = heap_beginscan(attr_rel, false, SnapshotNow, 3, scankeys);
+        AssertState(scan!=NULL);
+
+        if (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
+        {
+            HeapTuple newtuple;
+            Relation	irelations[Num_pg_attr_indices];
+
+            /* update to false */
+            newtuple = heap_copytuple(tuple);
+            ((Form_pg_attribute) GETSTRUCT(newtuple))->atthasdef = FALSE;
+            heap_update(attr_rel, &tuple->t_self, newtuple, NULL);
+
+            /* keep the system catalog indices current */
+            CatalogOpenIndices(Num_pg_attr_indices, Name_pg_attr_indices, irelations);
+            CatalogIndexInsert(irelations, Num_pg_attr_indices, attr_rel, newtuple);
+            CatalogCloseIndices(Num_pg_class_indices, irelations);
+
+            /* get rid of actual default definition */
+            drop_default(myrelid, attnum);
+        }
+        else
+            elog(NOTICE, "ALTER TABLE: there was no default on column \"%s\" of relation \"%s\"",
+                 colName, relationName);
+        heap_endscan(scan);
+        heap_close(attr_rel, NoLock);
+    }
+
+	heap_close(rel, NoLock);
+}
+
+
+
+static void
+drop_default(Oid relid, int16 attnum)
+{
+    ScanKeyData scankeys[2];
+    HeapScanDesc scan;
+    Relation attrdef_rel;
+    HeapTuple tuple;
+
+    attrdef_rel = heap_openr(AttrDefaultRelationName, AccessExclusiveLock);
+    ScanKeyEntryInitialize(&scankeys[0], 0x0, Anum_pg_attrdef_adrelid, F_OIDEQ,
+                           ObjectIdGetDatum(relid));
+    ScanKeyEntryInitialize(&scankeys[1], 0x0, Anum_pg_attrdef_adnum, F_INT2EQ,
+                           Int16GetDatum(attnum));
+
+    scan = heap_beginscan(attrdef_rel, false, SnapshotNow, 2, scankeys);
+    AssertState(scan!=NULL);
+
+    if (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
+        heap_delete(attrdef_rel, &tuple->t_self, NULL);
+
+    heap_endscan(scan);
+
+    heap_close(attrdef_rel, NoLock);
+}
+
+
+
+/*
+ * ALTER TABLE DROP COLUMN
+ */
+void
+AlterTableDropColumn(const char *relationName,
+                     bool inh, const char *colName,
+                     int behavior)
+{
+    elog(NOTICE, "ALTER TABLE / DROP COLUMN is not implemented");
+}
+
+
+
+void
+AlterTableAddConstraint(const char *relationName,
+                        bool inh, Node *newConstraint)
+{
+    elog(NOTICE, "ALTER TABLE / ADD CONSTRAINT is not implemented");
+}
+
+
+
+void AlterTableDropConstraint(const char *relationName,
+                              bool inh, const char *constrName,
+                              int behavior)
+{
+    elog(NOTICE, "ALTER TABLE / DROP CONSTRAINT is not implemented");
+}
+
+
+
+/*
+ *
+ * LOCK TABLE
+ *
+ */
 void
 LockTableCommand(LockStmt *lockstmt)
 {

@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/run_check.sh,v 1.6 2000/01/09 20:54:36 tgl Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/run_check.sh,v 1.7 2000/01/16 20:05:00 petere Exp $
 
 # ----------
 # Check call syntax
@@ -37,6 +37,16 @@ export LOGDIR
 export TIMDIR
 export PGPORT
 
+# Needed by psql and pg_encoding (if you run multibyte).
+# I hope this covers all platforms with shared libraries,
+# otherwise feel free to cover your platform here as well.
+if [ "$LD_LIBRARY_PATH" ]; then
+	old_LD_LIBRARY_PATH="$LD_LIBRARY_PATH"
+	LD_LIBRARY_PATH="$LIBDIR:$LD_LIBARY_PATH"
+else
+	LD_LIBRARY_PATH="$LIBDIR"
+fi
+export LD_LIBRARY_PATH
 
 # ----------
 # Get the commandline parameters
@@ -111,6 +121,7 @@ trap '	echo ""
 			echo ""
 		fi
 		echo ""
+		LD_LIBRARY_PATH="$old_LD_LIBRARY_PATH"
 		exit 1
 ' 2 15
 
@@ -434,5 +445,6 @@ done | tee run_check.out 2>&1
 echo "=============== Terminating regression postmaster      ================"
 kill -15 $PMPID
 
+LD_LIBRARY_PATH="$old_LD_LIBRARY_PATH"
 
 exit 0

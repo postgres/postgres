@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/catalog.c,v 1.27 2000/01/15 02:59:28 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/catalog.c,v 1.28 2000/01/16 20:04:54 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,7 +26,7 @@
  *		Perhaps this should be in-line code in relopen().
  */
 char *
-relpath(char *relname)
+relpath(const char *relname)
 {
 	char	   *path;
 	size_t		bufsize = 0;
@@ -52,7 +52,7 @@ relpath(char *relname)
  *		XXX this is way bogus. -- pma
  */
 bool
-IsSystemRelationName(char *relname)
+IsSystemRelationName(const char *relname)
 {
 	if (relname[0] && relname[1] && relname[2])
 		return (relname[0] == 'p' &&
@@ -67,7 +67,7 @@ IsSystemRelationName(char *relname)
  *		True iff name is the name of a shared system catalog relation.
  */
 bool
-IsSharedSystemRelationName(char *relname)
+IsSharedSystemRelationName(const char *relname)
 {
 	int			i;
 

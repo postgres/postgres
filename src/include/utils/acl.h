@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: acl.h,v 1.22 1999/07/15 23:04:19 momjian Exp $
+ * $Id: acl.h,v 1.23 2000/01/16 20:04:59 petere Exp $
  *
  * NOTES
  *	  For backward-compatability purposes we have to allow there
@@ -168,7 +168,7 @@ extern AclId get_grosysid(char *groname);
 extern char *get_groname(AclId grosysid);
 
 extern int32 pg_aclcheck(char *relname, char *usename, AclMode mode);
-extern int32 pg_ownercheck(char *usename, char *value, int cacheid);
+extern int32 pg_ownercheck(const char *usename, const char *value, int cacheid);
 extern int32 pg_func_ownercheck(char *usename, char *funcname,
 				   int nargs, Oid *arglist);
 extern int32 pg_aggr_ownercheck(char *usename, char *aggname,

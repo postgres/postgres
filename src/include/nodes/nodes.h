@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.60 2000/01/09 00:26:42 tgl Exp $
+ * $Id: nodes.h,v 1.61 2000/01/16 20:04:58 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -145,7 +145,7 @@ typedef enum NodeTag
 	T_DeleteStmt,
 	T_UpdateStmt,
 	T_SelectStmt,
-	T_AddAttrStmt,
+    T_AlterTableStmt,
 	T_AggregateStmt,
 	T_ChangeACLStmt,
 	T_ClosePortalStmt,

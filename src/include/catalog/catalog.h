@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: catalog.h,v 1.8 1999/07/15 23:03:41 momjian Exp $
+ * $Id: catalog.h,v 1.9 2000/01/16 20:04:57 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,9 +15,9 @@
 
 #include "access/tupdesc.h"
 
-extern char *relpath(char *relname);
-extern bool IsSystemRelationName(char *relname);
-extern bool IsSharedSystemRelationName(char *relname);
+extern char *relpath(const char *relname);
+extern bool IsSystemRelationName(const char *relname);
+extern bool IsSharedSystemRelationName(const char *relname);
 extern Oid	newoid(void);
 extern void fillatt(TupleDesc att);
 

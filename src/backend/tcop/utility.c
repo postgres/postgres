@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.79 2000/01/15 18:30:30 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.80 2000/01/16 20:04:56 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -270,24 +270,6 @@ ProcessUtility(Node *parsetree,
 			}
 			break;
 
-		case T_AddAttrStmt:
-			{
-				AddAttrStmt *stmt = (AddAttrStmt *) parsetree;
-
-				PS_SET_STATUS(commandTag = "ADD");
-				CHECK_IF_ABORTED();
-
-				/*
-				 * owner checking done in PerformAddAttribute (now
-				 * recursive)
-				 */
-				PerformAddAttribute(stmt->relname,
-									userName,
-									stmt->inh,
-									(ColumnDef *) stmt->colDef);
-			}
-			break;
-
 			/*
 			 * schema
 			 */
@@ -345,6 +327,44 @@ ProcessUtility(Node *parsetree,
 				}
 			}
 			break;
+
+            /* various Alter Table forms */
+
+		case T_AlterTableStmt:
+        {
+            AlterTableStmt *stmt = (AlterTableStmt *) parsetree;
+
+            PS_SET_STATUS(commandTag = "ALTER TABLE");
+            CHECK_IF_ABORTED();
+
+            /*
+             * Some or all of these functions are recursive to cover inherited things,
+             * so permission checks are done there.
+             */
+            switch(stmt->subtype)
+            {
+                case 'A': /* ADD COLUMN */
+                    AlterTableAddColumn(stmt->relname, stmt->inh, (ColumnDef *) stmt->def);
+                    break;
+                case 'T': /* ALTER COLUMN */
+                    AlterTableAlterColumn(stmt->relname, stmt->inh, stmt->name, stmt->def);
+                    break;
+                case 'D': /* ALTER DROP */
+                    AlterTableDropColumn(stmt->relname, stmt->inh, stmt->name, stmt->behavior);
+                    break;
+                case 'C': /* ADD CONSTRAINT */
+                    AlterTableAddConstraint(stmt->relname, stmt->inh, stmt->def);
+                    break;
+                case 'X': /* DROP CONSTRAINT */
+                    AlterTableDropConstraint(stmt->relname, stmt->inh, stmt->name, stmt->behavior);
+                    break;
+                default: /* oops */
+                    elog(ERROR, "T_AlterTableStmt: unknown subtype");
+                    break;
+            }
+        }
+        break;
+
 
 		case T_ChangeACLStmt:
 			{

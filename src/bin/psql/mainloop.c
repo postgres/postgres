@@ -268,8 +268,9 @@ MainLoop(FILE *source, int encoding)
 
             /* colon -> substitute variable */
             /* we need to be on the watch for the '::' operator */
-            else if (line[i] == ':' && !was_bslash &&
-                     strspn(line+i+thislen, VALID_VARIABLE_CHARS)>0
+            else if (line[i] == ':' && !was_bslash
+                     && strspn(line+i+thislen, VALID_VARIABLE_CHARS)>0
+                     && !(prevlen>0 && line[i-prevlen] == ':')                     
                 )
             {
 				size_t		in_length,

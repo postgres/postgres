@@ -545,6 +545,20 @@ AC_SUBST(DASH_N)
 AC_SUBST(BACKSLASH_C)
 
 AC_PROG_LEX
+if test "$LEX" = "flex"; then
+        $LEX --version 2> /dev/null | grep -s '2\.5\.3' >& /dev/null
+        if test $? -eq 0 ; then
+                AC_MSG_WARN([
+***
+You have flex version 2.5.3, which is broken. Get version 2.5.4 or
+a different lex.
+(If you are using the official distribution of PostgreSQL then you
+do not need to worry about this because the lexer files are
+pre-generated. However, other software using flex is likely to be
+broken as well.)
+***])
+        fi
+fi
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
 AC_PROG_RANLIB

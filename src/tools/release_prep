@@ -31,34 +31,39 @@ cd src
 
 ./configure
 
-# Generate parser's gram and lex files.
+# Generate parser's yacc and lex files
 
 cd backend/parser
-
 rm -f gram.c parse.h scan.c
-
 $MAKE gram.c parse.h scan.c
-
 cd ../..
 
-# Generate ecpg preprocessor's gram and lex files.
+# Generate bootstrap parser's yacc and lex files
+
+cd backend/bootstrap
+rm -f bootstrap_tokens.h bootparse.c bootscanner.c
+$MAKE bootstrap_tokens.h bootparse.c bootscanner.c
+cd ../..
+
+# Generate ecpg preprocessor's yacc and lex files
 
 cd interfaces/ecpg/preproc
-
 rm -f preproc.c preproc.h pgc.c
-
 $MAKE preproc.c preproc.h pgc.c
-
 cd ../../..
+
+# Generate plpgsql's yacc and lex files
+
+cd pl/plpgsql
+rm -rf pl_scan.c pl.tab.h pl_gram.c
+$MAKE pl_scan.c pl.tab.h pl_gram.c
+cd ../..
 
 # Generate psql's help on SQL command from the SGML docs
 
 cd bin/psql
-
 rm -f sql_help.h
-
 $MAKE sql_help.h
-
 cd ../..
 
 # Clean up

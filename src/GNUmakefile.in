@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/GNUmakefile.in,v 1.47 2000/01/09 07:53:52 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/GNUmakefile.in,v 1.48 2000/01/16 20:04:51 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -24,7 +24,6 @@ ETAGS = @etags@
 XARGS = @xargs@
 
 all:
-	$(MAKE) lexverify
 	$(MAKE) -C utils all
 	$(MAKE) -C backend all
 	$(MAKE) -C interfaces all
@@ -35,7 +34,6 @@ all:
         fi
 
 install:
-	$(MAKE) lexverify
 	$(MAKE) -C utils install
 	$(MAKE) -C backend install
 	$(MAKE) -C interfaces install
@@ -43,19 +41,7 @@ install:
 	$(MAKE) -C pl install
 	cat ../register.txt
 
-lexverify:
-	$(MAKE) -C lextest all
-	@if test ! -f lextest/lextest; then \
-	  echo "";\
-	  echo "You have a buggy version of flex.  Read INSTALL and search for flex for a fix.";\
-	  echo "";\
-	  false;\
-	else \
-	  true;\
-	fi
-
 clean:
-	$(MAKE) -C lextest clean
 	$(MAKE) -C utils clean
 	$(MAKE) -C backend clean
 	$(MAKE) -C interfaces clean
@@ -108,7 +94,6 @@ distclean: clean
 		test/regress/GNUmakefile
 
 .DEFAULT:
-	$(MAKE) -C lextest $@
 	$(MAKE) -C utils $@
 	$(MAKE) -C backend $@
 	$(MAKE) -C interfaces $@

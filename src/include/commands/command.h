@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: command.h,v 1.15 1999/07/15 23:03:44 momjian Exp $
+ * $Id: command.h,v 1.16 2000/01/16 20:04:58 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,12 +38,29 @@ extern void PerformPortalClose(char *name, CommandDest dest);
 extern void PortalCleanup(Portal portal);
 
 /*
- * PerformAddAttribute
- *		Performs the POSTQUEL function ADD.
+ * ALTER TABLE variants
  */
-extern void PerformAddAttribute(char *relationName, char *userName,
-					bool inh, ColumnDef *colDef);
+extern void AlterTableAddColumn(const char *relationName,
+                                bool inh, ColumnDef *colDef);
 
+extern void AlterTableAlterColumn(const char *relationName,
+                                  bool inh, const char *colName,
+                                  Node *newDefault);
+
+extern void AlterTableDropColumn(const char *relationName,
+                                 bool inh, const char *colName,
+                                 int behavior);
+
+extern void AlterTableAddConstraint(const char *relationName,
+                                    bool inh, Node *newConstraint);
+
+extern void AlterTableDropConstraint(const char *relationName,
+                                     bool inh, const char *constrName,
+                                     int behavior);
+
+/*
+ * LOCK
+ */
 extern void LockTableCommand(LockStmt *lockstmt);
 
 #endif	 /* COMMAND_H */
