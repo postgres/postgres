@@ -7,6 +7,6 @@
 # GNU make uses a make file named "GNUmakefile" in preference to "Makefile"
 # if it exists.  Postgres is shipped with a "GNUmakefile".
 
-all install clean dep depend:
+all install clean dep depend distclean:
 	@echo "You must use GNU make to use Postgres.  It may be installed"
 	@echo "on your system with the name 'gmake'."
