@@ -73,6 +73,7 @@ then
 fi
 
 PORTNAME=${os}
+CPU=${host_cpu}
 AC_LINK_FILES(backend/port/dynloader/${os}.c, backend/port/dynloader.c)
 AC_LINK_FILES(backend/port/dynloader/${os}.h, include/dynloader.h)
 AC_LINK_FILES(include/port/${os}.h, include/os.h)
@@ -419,6 +420,7 @@ echo "- setting LDFLAGS=$LDFLAGS"
 
 AC_SUBST(ELF_SYS)
 AC_SUBST(PORTNAME)
+AC_SUBST(CPU)
 AC_SUBST(SRCDIR)
 AC_SUBST(LDFLAGS)
 AC_SUBST(CPPFLAGS)
