@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sun Jan 16 21:41:53 EST 2000
+Last updated:		Thu Jan 27 22:38:49 EST 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -101,6 +101,7 @@ ADMIN
 * Allow international error message support and add error codes
 * -Generate postmaster pid file and remove flock/fcntl lock code[flock](Tatsuo)
 * Add ability to specifiy location of lock/socket files [flock]
+* Unify configuration into one configuration file
 
 TYPES
 
