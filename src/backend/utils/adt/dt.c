@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.59 1998/10/08 18:30:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.60 1998/12/31 16:30:57 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1454,11 +1454,12 @@ datetime_trunc(text *units, DateTime *datetime)
 				tm->tm_year += 1900;
 				tm->tm_mon += 1;
 
-#ifdef HAVE_INT_TIMEZONE
-				tz = ((tm->tm_isdst > 0) ? (timezone - 3600) : timezone);
-
-#else							/* !HAVE_INT_TIMEZONE */
+#if defined(HAVE_TM_ZONE)
 				tz = -(tm->tm_gmtoff);	/* tm_gmtoff is Sun/DEC-ism */
+#elif defined(HAVE_INT_TIMEZONE)
+				tz = ((tm->tm_isdst > 0) ? (timezone - 3600) : timezone);
+#else
+#error USE_POSIX_TIME is defined but neither HAVE_TM_ZONE or HAVE_INT_TIMEZONE are defined
 #endif
 
 #else							/* !USE_POSIX_TIME */
@@ -2414,16 +2415,17 @@ datetime2tm(DateTime dt, int *tzp, struct tm * tm, double *fsec, char **tzn)
 #ifdef USE_POSIX_TIME
 			tx = localtime(&utime);
 #ifdef DATEDEBUG
-#ifdef HAVE_INT_TIMEZONE
+#if defined(HAVE_TM_ZONE)
+			printf("datetime2tm- (localtime) %d.%02d.%02d %02d:%02d:%02.0f %s dst=%d\n",
+				   tx->tm_year, tx->tm_mon, tx->tm_mday, tx->tm_hour, tx->tm_min, sec,
+				   tx->tm_zone, tx->tm_isdst);
+#elif defined(HAVE_INT_TIMEZONE)
 			printf("datetime2tm- (localtime) %d.%02d.%02d %02d:%02d:%02.0f %s %s dst=%d\n",
 				   tx->tm_year, tx->tm_mon, tx->tm_mday, tx->tm_hour, tx->tm_min, sec,
 				   tzname[0], tzname[1], tx->tm_isdst);
 #else
-			printf("datetime2tm- (localtime) %d.%02d.%02d %02d:%02d:%02.0f %s dst=%d\n",
-				   tx->tm_year, tx->tm_mon, tx->tm_mday, tx->tm_hour, tx->tm_min, sec,
-				   tx->tm_zone, tx->tm_isdst);
+#error USE_POSIX_TIME is defined but neither HAVE_TM_ZONE or HAVE_INT_TIMEZONE are defined
 #endif
-#else
 #endif
 			tm->tm_year = tx->tm_year + 1900;
 			tm->tm_mon = tx->tm_mon + 1;
@@ -2442,18 +2444,19 @@ datetime2tm(DateTime dt, int *tzp, struct tm * tm, double *fsec, char **tzn)
 #endif
 			tm->tm_isdst = tx->tm_isdst;
 
-#ifdef HAVE_INT_TIMEZONE
-			*tzp = (tm->tm_isdst ? (timezone - 3600) : timezone);
-			if (tzn != NULL)
-				*tzn = tzname[(tm->tm_isdst > 0)];
-
-#else							/* !HAVE_INT_TIMEZONE */
+#if defined(HAVE_TM_ZONE)
 			tm->tm_gmtoff = tx->tm_gmtoff;
 			tm->tm_zone = tx->tm_zone;
 
 			*tzp = -(tm->tm_gmtoff);	/* tm_gmtoff is Sun/DEC-ism */
 			if (tzn != NULL)
-				*tzn = tm->tm_zone;
+				*tzn = (char *)tm->tm_zone;
+#elif defined(HAVE_INT_TIMEZONE)
+			*tzp = (tm->tm_isdst ? (timezone - 3600) : timezone);
+			if (tzn != NULL)
+				*tzn = tzname[(tm->tm_isdst > 0)];
+#else
+#error USE_POSIX_TIME is defined but neither HAVE_TM_ZONE or HAVE_INT_TIMEZONE are defined
 #endif
 
 #else							/* !USE_POSIX_TIME */
@@ -2488,7 +2491,10 @@ datetime2tm(DateTime dt, int *tzp, struct tm * tm, double *fsec, char **tzn)
 
 #ifdef DATEDEBUG
 #ifdef USE_POSIX_TIME
-#ifdef HAVE_INT_TIMEZONE
+#if defined(HAVE_TM_ZONE)
+	printf("datetime2tm- timezone is %s; offset is %d\n",
+		   tm->tm_zone, ((tzp != NULL) ? *tzp : 0));
+#elif defined(HAVE_INT_TIMEZONE)
 	printf("datetime2tm- timezone is %s; offset is %d (%d); daylight is %d\n",
 		   tzname[tm->tm_isdst != 0], ((tzp != NULL) ? *tzp : 0), CTimeZone, CDayLight);
 #endif
@@ -3034,11 +3040,12 @@ DecodeDateTime(char **field, int *ftype, int nf,
 			tm->tm_year += 1900;
 			tm->tm_mon += 1;
 
-#ifdef HAVE_INT_TIMEZONE
-			*tzp = ((tm->tm_isdst > 0) ? (timezone - 3600) : timezone);
-
-#else							/* !HAVE_INT_TIMEZONE */
+#if defined(HAVE_TM_ZONE)
 			*tzp = -(tm->tm_gmtoff);	/* tm_gmtoff is Sun/DEC-ism */
+#elif defined(HAVE_INT_TIMEZONE)
+			*tzp = ((tm->tm_isdst > 0) ? (timezone - 3600) : timezone);
+#else
+#error USE_POSIX_TIME is defined but neither HAVE_TM_ZONE or HAVE_INT_TIMEZONE are defined
 #endif
 
 #else							/* !USE_POSIX_TIME */
@@ -4104,12 +4111,14 @@ EncodeDateTime(struct tm * tm, double fsec, int *tzp, char **tzn, int style, cha
 
 #ifdef DATEDEBUG
 #ifdef USE_POSIX_TIME
-#ifdef HAVE_INT_TIMEZONE
+#if defined(HAVE_TM_ZONE)
+	printf("EncodeDateTime- timezone is %s (%s); offset is %ld (%d); daylight is %d (%d)\n",
+		   *tzn, tm->tm_zone, (-tm->tm_gmtoff), CTimeZone, tm->tm_isdst, CDayLight);
+#elif defined(HAVE_INT_TIMEZONE)
 	printf("EncodeDateTime- timezone is %s (%s); offset is %d (%d); daylight is %d (%d)\n",
 		   *tzn, tzname[0], *tzp, CTimeZone, tm->tm_isdst, CDayLight);
 #else
-	printf("EncodeDateTime- timezone is %s (%s); offset is %ld (%d); daylight is %d (%d)\n",
-		   *tzn, tm->tm_zone, (-tm->tm_gmtoff), CTimeZone, tm->tm_isdst, CDayLight);
+#error USE_POSIX_TIME is defined but neither HAVE_TM_ZONE or HAVE_INT_TIMEZONE are defined
 #endif
 #else
 	printf("EncodeDateTime- timezone is %s (%s); offset is %d; daylight is %d\n",

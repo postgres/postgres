@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.25 1998/09/01 03:25:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.26 1998/12/31 16:30:56 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -339,7 +339,7 @@ abstime_date(AbsoluteTime abstime)
  *	and then convert again to try to get the time zones correct.
  */
 static int
-date2tm(DateADT dateVal, int *tzp, struct tm * tm, double *fsec, char **tzn)
+date2tm(DateADT dateVal, int *tzp, struct tm *tm, double *fsec, char **tzn)
 {
 	struct tm  *tx;
 	time_t		utime;
@@ -357,14 +357,18 @@ date2tm(DateADT dateVal, int *tzp, struct tm * tm, double *fsec, char **tzn)
 
 		/* convert to system time */
 		utime = ((dateVal + (date2j(2000, 1, 1) - date2j(1970, 1, 1))) * 86400);
-		utime += (12 * 60 * 60);/* rotate to noon to get the right day in
-								 * time zone */
+		/* rotate to noon to get the right day in time zone */
+		utime += (12 * 60 * 60);
 
 #ifdef USE_POSIX_TIME
 		tx = localtime(&utime);
 
 #ifdef DATEDEBUG
-#ifdef HAVE_INT_TIMEZONE
+#if defined(HAVE_TM_ZONE)
+		printf("date2tm- (localtime) %d.%02d.%02d %02d:%02d:%02.0f %s dst=%d\n",
+			   tx->tm_year, tx->tm_mon, tx->tm_mday, tx->tm_hour, tx->tm_min, (double) tm->tm_sec,
+			   tx->tm_zone, tx->tm_isdst);
+#elif defined(HAVE_INT_TIMEZONE)
 		printf("date2tm- (localtime) %d.%02d.%02d %02d:%02d:%02.0f %s %s dst=%d\n",
 			   tx->tm_year, tx->tm_mon, tx->tm_mday, tx->tm_hour, tx->tm_min, (double) tm->tm_sec,
 			   tzname[0], tzname[1], tx->tm_isdst);
@@ -375,21 +379,21 @@ date2tm(DateADT dateVal, int *tzp, struct tm * tm, double *fsec, char **tzn)
 		tm->tm_mday = tx->tm_mday;
 		tm->tm_isdst = tx->tm_isdst;
 
-#ifdef HAVE_INT_TIMEZONE
-		*tzp = (tm->tm_isdst ? (timezone - 3600) : timezone);
-		if (tzn != NULL)
-			*tzn = tzname[(tm->tm_isdst > 0)];
-
-#else							/* !HAVE_INT_TIMEZONE */
+#if defined(HAVE_TM_ZONE)
 		tm->tm_gmtoff = tx->tm_gmtoff;
 		tm->tm_zone = tx->tm_zone;
 
-		*tzp = (tm->tm_isdst ? (tm->tm_gmtoff - 3600) : tm->tm_gmtoff); /* tm_gmtoff is
-																		 * Sun/DEC-ism */
+		/* tm_gmtoff is Sun/DEC-ism */
+		*tzp = -(tm->tm_gmtoff);
 		if (tzn != NULL)
-			*tzn = tm->tm_zone;
+			*tzn = (char *)tm->tm_zone;
+#elif defined(HAVE_INT_TIMEZONE)
+		*tzp = (tm->tm_isdst ? (timezone - 3600) : timezone);
+		if (tzn != NULL)
+			*tzn = tzname[(tm->tm_isdst > 0)];
+#else
+#error USE_POSIX_TIME is defined but neither HAVE_TM_ZONE or HAVE_INT_TIMEZONE are defined
 #endif
-
 #else							/* !USE_POSIX_TIME */
 		*tzp = CTimeZone;		/* V7 conventions; don't know timezone? */
 		if (tzn != NULL)
@@ -410,6 +414,18 @@ date2tm(DateADT dateVal, int *tzp, struct tm * tm, double *fsec, char **tzn)
 		if (tzn != NULL)
 			*tzn = NULL;
 	}
+
+#ifdef DATEDEBUG
+#if defined(HAVE_TM_ZONE)
+		printf("date2tm- %d.%02d.%02d %02d:%02d:%02.0f (%d %s) dst=%d\n",
+			   tm->tm_year, tm->tm_mon, tm->tm_mday, tm->tm_hour, tm->tm_min, (double) tm->tm_sec,
+			   *tzp, tm->tm_zone, tm->tm_isdst);
+#elif defined(HAVE_INT_TIMEZONE)
+		printf("date2tm- %d.%02d.%02d %02d:%02d:%02.0f (%d %s %s) dst=%d\n",
+			   tm->tm_year, tm->tm_mon, tm->tm_mday, tm->tm_hour, tm->tm_min, (double) tm->tm_sec,
+			   *tzp, tzname[0], tzname[1], tm->tm_isdst);
+#endif
+#endif
 
 	return 0;
 }	/* date2tm() */
