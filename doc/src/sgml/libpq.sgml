@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.49 2000/11/28 06:53:32 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.50 2000/11/30 18:34:36 petere Exp $
 -->
 
  <chapter id="libpq-chapter">
@@ -130,15 +130,6 @@ PGconn *PQconnectdb(const char *conninfo)
      <para>
       Port number to connect to at the server host,
       or socket filename extension for Unix-domain connections.
-     </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-     <term><literal>unixsocket</literal></term>
-     <listitem>
-     <para>
-      Directory for Unix-domain socket file.
      </para>
      </listitem>
     </varlistentry>
@@ -1835,16 +1826,8 @@ socket.
 </listitem>
 <listitem>
 <para>
-<envar>PGPORT</envar> and <envar>PGUNIXSOCKET</envar> set the default
-port or local Unix domain socket file extension for communicating with
+<envar>PGPORT</envar> sets the default port for communicating with
 the <productname>Postgres</productname> backend.
-</para>
-</listitem>
-<listitem>
-<para>
-<envar>PGPORT</envar>  sets the default port or local Unix domain socket
-file extension for communicating with the <productname>Postgres</productname>
-backend.
 </para>
 </listitem>
 <listitem>
