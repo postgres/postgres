@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.7 1996/07/25 06:46:35 julian Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.8 1996/07/27 02:40:45 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1111,10 +1111,10 @@ main(int argc, char** argv)
   extern char* optarg;
   extern int optind;
   
-  char* dbname = NULL;
-  char* host = NULL;
-  char* port = NULL;
-  char* qfilename = NULL;
+  char* dbname = (char *)NULL;
+  char* host = (char *)NULL;
+  char* port = (char *)NULL;
+  char* qfilename = (char *)NULL;
   char errbuf[ERROR_MSG_LENGTH];
 
   PsqlSettings settings;
