@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.162 2004/01/16 20:51:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.163 2004/03/11 01:47:35 ishii Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -460,6 +460,33 @@ relation_open(Oid relationId, LOCKMODE lockmode)
 
 	if (lockmode != NoLock)
 		LockRelation(r, lockmode);
+
+	return r;
+}
+
+Relation
+conditional_relation_open(Oid relationId, LOCKMODE lockmode, bool nowait)
+{
+	Relation	r;
+
+	Assert(lockmode >= NoLock && lockmode < MAX_LOCKMODES);
+
+	/* The relcache does all the real work... */
+	r = RelationIdGetRelation(relationId);
+
+	if (!RelationIsValid(r))
+		elog(ERROR, "could not open relation with OID %u", relationId);
+
+	if (lockmode != NoLock)
+	{
+		if (nowait)
+		{
+			if (!ConditionalLockRelation(r, lockmode))
+				elog(ERROR, "could not aquire relation lock");
+		}
+		else
+			LockRelation(r, lockmode);
+	}
 
 	return r;
 }

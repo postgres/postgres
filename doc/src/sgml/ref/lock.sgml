@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/lock.sgml,v 1.40 2003/12/14 00:05:29 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/lock.sgml,v 1.41 2004/03/11 01:47:35 ishii Exp $
 PostgreSQL documentation
 -->
 
@@ -20,7 +20,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-LOCK [ TABLE ] <replaceable class="PARAMETER">name</replaceable> [, ...] [ IN <replaceable class="PARAMETER">lockmode</replaceable> MODE ]
+LOCK [ TABLE ] <replaceable class="PARAMETER">name</replaceable> [, ...] [ IN <replaceable class="PARAMETER">lockmode</replaceable> MODE ] [ NOWAIT ]
 
 where <replaceable class="PARAMETER">lockmode</replaceable> is one of:
 
@@ -34,8 +34,10 @@ where <replaceable class="PARAMETER">lockmode</replaceable> is one of:
 
   <para>
    <command>LOCK TABLE</command> obtains a table-level lock, waiting if
-   necessary for any conflicting locks to be released.  Once obtained,
-   the lock is held for the remainder of the current transaction.
+   necessary for any conflicting locks to be released.
+   If <literal>NOWAIT</literal> is given, <command>LOCK TABLE</command>
+   does not wait for acquiring lock, and throws an error instead.
+   Once obtained, the lock is held for the remainder of the current transaction.
    (There is no <command>UNLOCK TABLE</command> command; locks are always
    released at transaction end.)
   </para>

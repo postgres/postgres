@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.215 2004/01/14 23:01:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.216 2004/03/11 01:47:35 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1252,6 +1252,7 @@ _equalLockStmt(LockStmt *a, LockStmt *b)
 {
 	COMPARE_NODE_FIELD(relations);
 	COMPARE_SCALAR_FIELD(mode);
+	COMPARE_SCALAR_FIELD(nowait);
 
 	return true;
 }

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.447 2004/03/09 05:05:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.448 2004/03/11 01:47:37 ishii Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -169,6 +169,7 @@ static void doNegateFloat(Value *v);
 %type <ival>	opt_lock lock_type cast_context
 %type <boolean>	opt_force opt_or_replace transaction_access_mode
 				opt_grant_grant_option opt_revoke_grant_option
+				opt_nowait
 
 %type <boolean>	like_including_defaults
 
@@ -375,7 +376,7 @@ static void doNegateFloat(Value *v);
 	MATCH MAXVALUE MINUTE_P MINVALUE MODE MONTH_P MOVE
 
 	NAMES NATIONAL NATURAL NCHAR NEW NEXT NO NOCREATEDB
-	NOCREATEUSER NONE NOT NOTHING NOTIFY NOTNULL NULL_P
+	NOCREATEUSER NONE NOT NOTHING NOTIFY NOTNULL NOWAIT NULL_P
 	NULLIF NUMERIC
 
 	OBJECT_P OF OFF OFFSET OIDS OLD ON ONLY OPERATOR OPTION OR
@@ -4347,12 +4348,13 @@ DeleteStmt: DELETE_P FROM relation_expr where_clause
 				}
 		;
 
-LockStmt:	LOCK_P opt_table qualified_name_list opt_lock
+LockStmt:	LOCK_P opt_table qualified_name_list opt_lock opt_nowait
 				{
 					LockStmt *n = makeNode(LockStmt);
 
 					n->relations = $3;
 					n->mode = $4;
+					n->nowait = $5;
 					$$ = (Node *)n;
 				}
 		;
@@ -4369,6 +4371,10 @@ lock_type:	ACCESS SHARE					{ $$ = AccessShareLock; }
 			| SHARE ROW EXCLUSIVE			{ $$ = ShareRowExclusiveLock; }
 			| EXCLUSIVE						{ $$ = ExclusiveLock; }
 			| ACCESS EXCLUSIVE				{ $$ = AccessExclusiveLock; }
+		;
+
+opt_nowait:	NOWAIT 			{ $$ = TRUE; }
+			| /*EMPTY*/						{ $$ = FALSE; }
 		;
 
 
@@ -7683,6 +7689,7 @@ reserved_keyword:
 			| LOCALTIMESTAMP
 			| NEW
 			| NOT
+			| NOWAIT
 			| NULL_P
 			| OFF
 			| OFFSET
