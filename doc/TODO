@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sun Aug  4 00:16:54 EDT 2002
+Last updated:		Thu Aug  8 19:13:54 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -83,6 +83,8 @@ Data Types
 * Change NUMERIC to enforce the maximum precision, and increase it
 * Add function to return compressed length of TOAST data values (Tom)
 * -Add GUC parameter for DATESTYLE
+* Allow INET subnet tests using non-constants
+
 
 * CONVERSION
 	o Store binary-compatible type information in the system
