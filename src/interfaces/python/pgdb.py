@@ -395,7 +395,7 @@ class pgdbType:
 			return -1
 
 STRING = pgdbType(
-	'char', 'name', 'text', 'varchar'
+	'char', 'bpchar', 'name', 'text', 'varchar'
 )
 
 # BLOB support is pg specific
