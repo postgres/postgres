@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fmgr.h,v 1.25 2002/09/12 00:26:42 momjian Exp $
+ * $Id: fmgr.h,v 1.26 2002/10/25 22:17:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -282,7 +282,8 @@ CppConcat(pg_finfo_,funcname) (void) \
 { \
 	static Pg_finfo_record my_finfo = { 1 }; \
 	return &my_finfo; \
-}
+} \
+extern int no_such_variable
 
 
 /*-------------------------------------------------------------------------
