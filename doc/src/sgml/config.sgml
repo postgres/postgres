@@ -1,5 +1,5 @@
 <chapter id="config">
-<title>Configuration Options</title>
+<title id="install-config">Configuration Options</title>
 
 <sect1>
 <title>Parameters for Configuration (<application>configure</application>)</title>

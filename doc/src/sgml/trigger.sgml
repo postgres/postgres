@@ -2,9 +2,10 @@
 <Title>Triggers</Title>
 
 <Para>
-   While the current version of <ProductName>Postgres</ProductName> has various client interfaces
-such as Perl, Tcl, Python and C, it lacks an actual <FirstTerm>Procedural Language</FirstTerm>
-(PL).  We hope to have a proper PL one day.  In the meantime it is possible
+<ProductName>Postgres</ProductName> has various client interfaces
+such as Perl, Tcl, Python and C, as well as two
+<FirstTerm>Procedural Languages</FirstTerm>
+(PL).  It is also possible
 to call C functions as trigger actions.  Note that STATEMENT-level trigger
 events are not supported in the current version.  You can currently specify
 BEFORE or AFTER on INSERT, DELETE or UPDATE of a tuple as a trigger event.

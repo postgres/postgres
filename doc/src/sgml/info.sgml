@@ -48,7 +48,9 @@ Installation and management information. List of supported machines.
 <Para>
 Information for <ProductName>Postgres</ProductName> developers. This is intended
 for those who are contributing to the <ProductName>Postgres</ProductName>
-project; application development information should appear in the Programmer's Guide.
+project; application development information should appear in the 
+<citetitle>Programmer's Guide</citetitle>.
+Currently included in the <citetitle>Programmer's Guide</citetitle>.
 </Para>
 </ListItem>
 </VarListEntry>
@@ -58,8 +60,7 @@ project; application development information should appear in the Programmer's G
 <ListItem>
 <Para>
 Detailed reference information on command syntax.
-At the moment, this manual is very sparse, but eventually should contain
-information similar to that in the man pages.
+Currently included in the <citetitle>User's Guide</citetitle>.
 </Para>
 </ListItem>
 </VarListEntry>

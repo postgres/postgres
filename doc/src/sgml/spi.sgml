@@ -12,47 +12,49 @@
 <Title>Server Programming Interface</Title>
 
 <Para>
-   The <FirstTerm>Server Programming Interface</FirstTerm> (<Acronym>SPI</Acronym>) is an attempt to give users the
-ability to run <Acronym>SQL</Acronym> queries inside user-defined <Acronym>C</Acronym> functions.
-Given the lack
-of a proper <FirstTerm>Procedural Language</FirstTerm> (<Acronym>PL</Acronym>) in the current version of 
-<ProductName>Postgres</ProductName>,
-<Acronym>SPI</Acronym> is the only way to write server-stored procedures and triggers.  In the future
-<Acronym>SPI</Acronym> will be used as the "workhorse" for a <Acronym>PL</Acronym>.
+The <FirstTerm>Server Programming Interface</FirstTerm> 
+(<Acronym>SPI</Acronym>) gives users the
+ability to run <Acronym>SQL</Acronym> queries inside user-defined 
+<Acronym>C</Acronym> functions.
+The available Procedural Languages (<Acronym>PL</Acronym>) give an alternate
+means to access these capabilities.
 </Para>
 
 <Para>
-   In fact, <Acronym>SPI</Acronym> is just a set of native interface functions to simplify
-access to the Parser, Planner, Optimizer and Executor. <Acronym>SPI</Acronym> also does some
-memory management.
+In fact, <Acronym>SPI</Acronym> is just a set of native interface functions
+to simplify access to the Parser, Planner, Optimizer and Executor. 
+<Acronym>SPI</Acronym> also does some memory management.
 </Para>
 
 <Para>
-   To avoid misunderstanding we'll use <FirstTerm>function</FirstTerm> to mean <Acronym>SPI</Acronym> interface
-functions and <FirstTerm>procedure</FirstTerm> for user-defined C-functions using <Acronym>SPI</Acronym>.
+To avoid misunderstanding we'll use <FirstTerm>function</FirstTerm> 
+to mean <Acronym>SPI</Acronym> interface functions and 
+<FirstTerm>procedure</FirstTerm> for user-defined C-functions 
+using <Acronym>SPI</Acronym>.
 </Para>
 
 <Para>
-   <Acronym>SPI</Acronym> procedures are always called by some (upper) Executor and the <Acronym>SPI</Acronym>
+<Acronym>SPI</Acronym> procedures are always called by some (upper) 
+Executor and the <Acronym>SPI</Acronym>
 manager uses the Executor to run your queries. Other procedures may be
 called by the Executor running queries from your procedure.
 </Para>
 
 <Para>
-   Note, that if during execution of a query from a procedure the transaction
+Note, that if during execution of a query from a procedure the transaction
 is aborted then control will not be returned to your procedure. Rather, all work
 will be rolled back and the server will wait for the next command from the
 client.  This will be changed in future versions.
 </Para>
 
 <Para>
-   Other restrictions are the inability to execute BEGIN, END and ABORT
+Other restrictions are the inability to execute BEGIN, END and ABORT
 (transaction control statements) and cursor operations.  This will also be
 changed in the future.
 </Para>
 
 <Para>
-   If successful, <Acronym>SPI</Acronym> functions return a non-negative result (either via
+If successful, <Acronym>SPI</Acronym> functions return a non-negative result (either via
 a returned integer value or in SPI_result global variable, as described below).
 On error, a negative or NULL result will be returned.
 </Para>
@@ -892,7 +894,7 @@ TBD
 <REFNAME>SPI_execp
 </REFNAME>
 <REFPURPOSE>
-   Executes a plan prepared or returned by <Function>SPI_saveplan</Function>
+Executes a plan from <Function>SPI_saveplan</Function>
 </REFPURPOSE>
 <INDEXTERM ID="IX-SPI-SPIEXECP-1"><PRIMARY>SPI</PRIMARY><SECONDARY>connecting</SECONDARY></INDEXTERM>
 <INDEXTERM ID="IX-SPI-SPIEXECP-2"><PRIMARY>SPI_execp</PRIMARY></INDEXTERM>

@@ -50,7 +50,7 @@ as the driver uses some dynamic
 loading techniques for performance reasons, 
 and <application>javac</application> cannot cope.
 The <filename>Makefile</filename> will generate the jar archive.
-<para>
+</note>
 
 <sect2>
 <title>Installing the Driver</title>
@@ -76,7 +76,7 @@ Loading the driver is covered later on in this chapter.
 <para>
 
 <sect1>
-<title>Preparing the database for <acronym>JDBC</acronym></title>
+<title>Preparing the Database for <acronym>JDBC</acronym></title>
 
 <para>
 Because Java can only use TCP/IP connections, the <application>Postgres</application> postmaster
@@ -89,10 +89,12 @@ to add something like:
 <para>
 host         all         127.0.0.1     255.255.255.255   password
 <para>
-Here access to all databases are possible from the local machine with <acronym>JDBC</acronym>.
+Here access to all databases are possible from the local machine 
+with <acronym>JDBC</acronym>.
 
 <para>
-The <acronym>JDBC</acronym> Driver supports trust, ident, password and crypt authentication methods.
+The <acronym>JDBC</acronym> Driver supports trust, ident, 
+password and crypt authentication methods.
 
 <para>
 
@@ -193,15 +195,15 @@ forms:
 <itemizedlist>
 <listitem>
 <para>
-jdbc:postgresql:<replaceable class="parameter>database</replaceable>
+jdbc:postgresql:<replaceable class="parameter">database</replaceable>
 
 <listitem>
 <para>
-jdbc:postgresql://<replaceable class="parameter>host</replaceable>/<replaceable class="parameter>database</replaceable>
+jdbc:postgresql://<replaceable class="parameter">host</replaceable>/<replaceable class="parameter">database</replaceable>
 
 <listitem>
 <para>
-jdbc:postgresql://<replaceable class="parameter>host</replaceable>:<replaceable class="parameter>port</replaceable>/<replaceable class="parameter>database</replaceable>
+jdbc:postgresql://<replaceable class="parameter">host</replaceable>:<replaceable class="parameter">port</replaceable>/<replaceable class="parameter">database</replaceable>
 </itemizedlist>
 
 where:
@@ -209,7 +211,7 @@ where:
 <variablelist>
 <varlistentry>
 <term>
-<replaceable class="parameter>host</replaceable>
+<replaceable class="parameter">host</replaceable>
 
 <listitem>
 <para>
@@ -217,7 +219,7 @@ The hostname of the server. Defaults to "localhost".
 
 <varlistentry>
 <term>
-<replaceable class="parameter>port</replaceable>
+<replaceable class="parameter">port</replaceable>
 
 <listitem>
 <para>
@@ -226,7 +228,7 @@ standard port number (5432).
 
 <varlistentry>
 <term>
-<replaceable class="parameter>database</replaceable>
+<replaceable class="parameter">database</replaceable>
 
 <listitem>
 <para>
@@ -243,7 +245,7 @@ Connection db = DriverManager.getConnection(url,user,pwd);
 <para>
 
 <sect1>
-<title>Issuing a query and processing the result</title>
+<title>Issuing a Query and Processing the Result</title>
 
 <para>
 Any time you want to issue SQL statements to the database, you require a
@@ -252,11 +254,13 @@ method to issue a query. This will return a ResultSet instance, which contains
 the entire result.
 <para>
 
-<sect1>
-<title>Some notes about using the Statement interface:</title>
+<sect2>
+<title>Using the Statement Interface</title>
+
+<para>
+The following must be considered when using the Statement interface:
 
 <itemizedlist>
-<para>
 <listitem>
 <para>
 You can use a Statement instance as many times as you want. You could
@@ -276,14 +280,16 @@ as it covers some important points.
 </itemizedlist>
 
 
-<sect1>
-<title>Some notes about using the ResultSet interface:</title>
+<sect2>
+<title>Using the ResultSet Interface</title>
+
+<para>
+The following must be considered when using the ResultSet interface:
 
 <itemizedlist>
-<para>
 <listitem>
 <para>
-Before reading any values, you must call next(). This returns true if
+Before reading any values, you must call <function>next()</function>. This returns true if
 there is a result, but more importantly, it prepares the row for processing.
 
 <listitem>
@@ -291,58 +297,60 @@ there is a result, but more importantly, it prepares the row for processing.
 Under the <acronym>JDBC</acronym> spec, you should access a field only once. It's safest
 to stick to this rule, although at the current time, the <application>Postgres</application> driver
 will allow you to access a field as many times as you want.
+
 <listitem>
 <para>
-You must close() a ResultSet once you have finished with it.
+You must close a ResultSet by calling <function>close()</function> once you have finished with it.
+
 <listitem>
 <para>
 Once you request another query with the Statement used to create a
-ResultSet, the currently open instance is closed().
+ResultSet, the currently open instance is closed.
 </itemizedlist>
 
+<para>
+An example is as follows:
+
+<programlisting>
 Statement st = db.createStatement();
 ResultSet rs = st.executeQuery(<literal>select * from mytable</literal>);
 while(rs.next()) {
-<itemizedlist>
-<para>
-<listitem>
-<para>
-System.out.print(<literal>Column 1 returned </literal>);
-<listitem>
-<para>
-System.out.println(rs.getString(1));
+    System.out.print(<literal>Column 1 returned </literal>);
+    System.out.println(rs.getString(1));
 }
 rs.close();
 st.close();
-</itemizedlist>
+</programlisting>
 
 
 <sect1>
-<title>Performing updates</title>
+<title>Performing Updates</title>
 
 <para>
 To perform an update (or any other SQL statement that does not return a
 result), you simply use the executeUpdate() method:
-<para>
- st.executeUpdate(<literal>create table basic (a int2, b int2)</literal>);
 
-<para>
+<programlisting>
+st.executeUpdate(<literal>create table basic (a int2, b int2)</literal>);
+</programlisting>
+
 
 <sect1>
-<title>Closing the connection</title>
+<title>Closing the Connection</title>
 
 <para>
 To close the database connection, simply call the close() method to the Connection:
 
-<para>
+<programlisting>
 db.close();
-<para>
+</programlisting>
 
 <sect1>
 <title>Using Large Objects</title>
 
 <para>
-In <application>Postgres</application>, large objects (also known as BLOBS) are used to hold data in
+In <application>Postgres</application>, 
+large objects (also known as <firstterm>blobs</firstterm>) are used to hold data in
 the database that cannot be stored in a normal SQL table. They are stored as a
 Table/Index pair, and are refered to from your own tables, by an OID value.
 
@@ -357,118 +365,83 @@ In <acronym>JDBC</acronym>, the standard way to access them is using the getBina
 method in ResultSet, and setBinaryStream() method in PreparedStatement. These
 methods make the large object appear as a Java stream, allowing you to use the
 java.io package, and others, to manipulate the object.
+
 <para>
-Example:
-<para>
-You have a table containing the file name of an image, and a large object
+For example, suppose
+you have a table containing the file name of an image, and a large object
 containing that image:
-<para>
-    create table images (imgname name,imgoid oid);
+
+<programlisting>
+create table images (imgname name,imgoid oid);
+</programlisting>
+
 <para>
 To insert an image, you would use:
-<para>
-<itemizedlist>
-<para>
-<listitem>
-<para>
-File file = new File(<literal>myimage.gif</literal>);
-<listitem>
-<para>
-FileInputStream fis = new FileInputStream(file);
-<listitem>
-<para>
-PreparedStatement ps = conn.prepareStatement(<literal>insert into images
-values (?,?)<literal>);
-<listitem>
-<para>
-ps.setString(1,file.getName());
-<listitem>
-<para>
-ps.setBinaryStream(2,fis,file.length());
-<listitem>
-<para>
-ps.executeUpdate();
-<listitem>
-<para>
-ps.close();
-<listitem>
-<para>
-fis.close();
-</itemizedlist>
 
+<programlisting>
+File file = new File(<literal>myimage.gif</literal>);
+FileInputStream fis = new FileInputStream(file);
+PreparedStatement ps = conn.prepareStatement(<literal>insert into images values (?,?)</literal>);
+ps.setString(1,file.getName());
+ps.setBinaryStream(2,fis,file.length());
+ps.executeUpdate();
+ps.close();
+fis.close();
+</programlisting>
+
+<para>
 Now in this example, setBinaryStream transfers a set number of bytes from a
 stream into a large object, and stores the OID into the field holding a
 reference to it.
+
 <para>
 Retrieving an image is even easier (I'm using PreparedStatement here, but
 Statement can equally be used):
-<para>
-<itemizedlist>
-<para>
-<listitem>
-<para>
-PreparedStatement ps = con.prepareStatement(<literal>select oid from
-images where name=?<literal>);
-<listitem>
-<para>
-ps.setString(1,<literal>myimage.gif</literal>);
-<listitem>
-<para>
-ResultSet rs = ps.executeQuery();
-<listitem>
-<para>
-if(rs!=null) {
-<listitem>
-<para>
-    while(rs.next()) {
-<listitem>
-<para>
-&#9;InputStream is = rs.getBinaryInputStream(1);
-<listitem>
-<para>
-&#9;// use the stream in some way here
-<listitem>
-<para>
-&#9;is.close();
-<listitem>
-<para>
-    }
-<listitem>
-<para>
-    rs.close();
-<listitem>
-<para>
-}
-<listitem>
-<para>
-ps.close();
-</itemizedlist>
 
+<programlisting>
+PreparedStatement ps = con.prepareStatement(<literal>select oid from images where name=?</literal>);
+ps.setString(1,<literal>myimage.gif</literal>);
+ResultSet rs = ps.executeQuery();
+if(rs!=null) {
+    while(rs.next()) {
+        InputStream is = rs.getBinaryInputStream(1);
+        // use the stream in some way here
+        is.close();
+    }
+    rs.close();
+}
+ps.close();
+</programlisting>
+
+<para>
 Now here you can see where the Large Object is retrieved as an InputStream.
 You'll also notice that we close the stream before processing the next row in
 the result. This is part of the <acronym>JDBC</acronym> Specification, which states that any
 InputStream returned is closed when ResultSet.next() or ResultSet.close() is called.
 
-<para>
 
 <sect1>
 <title><application>Postgres</application> Extensions to the <acronym>JDBC</acronym> <acronym>API</acronym></title>
 
 <para>
-<application>Postgres</application> is an extensible database system. You can add your own functions
+<application>Postgres</application> is an extensible database system. 
+You can add your own functions
 to the backend, which can then be called from queries, or even add your own
 data types.
 <para>
 Now, as these are facilities unique to us, we support them from Java, with
-a set of extension <acronym>API</acronym>'s. Some features within the core of the standard driver
+a set of extension <acronym>API</acronym>'s. Some features within 
+the core of the standard driver
 actually use these extensions to implement Large Objects, etc.
-<para>
 
 <!--
-  -- Nothing marked up from here on. It looks like it will be tricky:
-  -- what do we want to do with the class inheritance diagrams?
-  -- - thomas 1998-10-23
-  -->
+************************************************************
+Nothing marked up from here on. It looks like it will be tricky:
+what do we want to do with the class inheritance diagrams?
+- thomas 1998-10-23
+************************************************************
+-->
+
 <programlisting>
 Accessing the extensions
 
@@ -2548,10 +2521,10 @@ If you have not yet read it, I'd advise you read the <acronym>JDBC</acronym>
 Documentation (supplied with Sun's <acronym>JDK</acronym>),
  and the <acronym>JDBC</acronym> Specification. 
 Both are available on 
-<ulink url="http://www.javasoft.com>JavaSoft's web site</ulink>.
+<ulink url="http://www.javasoft.com">JavaSoft's web site</ulink>.
 
 <para>
-<ulink url="http://www.retep.org.uk>My own web site</ulink>
+<ulink url="http://www.retep.org.uk">My own web site</ulink>
  contains updated information not included in this 
 document, and also includes precompiled drivers for v6.4, and earlier.
 

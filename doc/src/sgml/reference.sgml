@@ -1,9 +1,18 @@
 <!-- reference.sgml
--
-- Postgres User's Reference documentation.
+
+$Header: /cvsroot/pgsql/doc/src/sgml/reference.sgml,v 1.4 1998/10/30 19:37:12 thomas Exp $
+
+Postgres User's Reference documentation.
 - thomas 1998-08-31
--
-- -->
+
+$Log: reference.sgml,v $
+Revision 1.4  1998/10/30 19:37:12  thomas
+Minor editing and markup changes as a result of preparing the Postscript
+ documentation for v6.4.
+Bigger updates to the installation instructions (install and config).
+
+
+-->
 <!doctype book      PUBLIC "-//Davenport//DTD DocBook V3.0//EN" [
 <!entity intro      SYSTEM "intro.sgml">
 
@@ -61,7 +70,8 @@
 
 <LegalNotice>
 <Para>
-<ProductName>PostgreSQL</ProductName> is copyright (C) 1998 by the Postgres Global Development Group.
+<ProductName>PostgreSQL</ProductName> is copyright (C) 1998 
+by the Postgres Global Development Group.
 </Para>
 </LegalNotice>
 
@@ -101,11 +111,16 @@ It provides SQL92/SQL3 language support,
 
 &commands;
 
+<!--
 &contacts;
+-->
+
 &biblio;
 
+<!--
 <index Id="index">
 </index>
+-->
 
 </Book>
 

@@ -42,7 +42,7 @@ are documented in the current
 <ulink url="http://www.postgresql.org/docs/user/datatype.htm">User's Guide</ulink>
  in the chapter on data types.
 For two-digit years, the significant transition year is 1970, not 2000;
-i.e. <quote>70-01-01</quote> is interpreted as <quote>1970-01-01</quote>,
+e.g. <quote>70-01-01</quote> is interpreted as <quote>1970-01-01</quote>,
 whereas <quote>69-01-01</quote> is interpreted as <quote>2069-01-01</quote>.
 
 <listitem>

@@ -1,11 +1,16 @@
 <!--
-$header$
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/programmer.sgml,v 1.9 1998/10/30 19:37:11 thomas Exp $
 
 Postgres programmer's guide.
 Derived from postgres.sgml.
-thomas 1998-02-24
+thomas 1998-10-27
 
-$log$
+$Log: programmer.sgml,v $
+Revision 1.9  1998/10/30 19:37:11  thomas
+Minor editing and markup changes as a result of preparing the Postscript
+ documentation for v6.4.
+Bigger updates to the installation instructions (install and config).
+
 
 -->
 
@@ -81,7 +86,7 @@ $log$
 
 <Title>PostgreSQL Programmer's Guide</Title>
 <BookInfo>
-    <ReleaseInfo>Covering v6.3 for general release</ReleaseInfo>
+    <ReleaseInfo>Covering v6.4 for general release</ReleaseInfo>
     <BookBiblio>
     <AuthorGroup>
       <CorpAuthor>The PostgreSQL Development Team</CorpAuthor>
@@ -104,7 +109,7 @@ $log$
     <AuthorInitials>TGL</AuthorInitials>
 -->
 
-    <Date>(last updated 1998-02-24)</Date>
+    <Date>(last updated 1998-10-27)</Date>
     </BookBiblio>
 
 <LegalNotice>
@@ -129,7 +134,7 @@ Your name here...
 </Dedication>
 -->
 
-<Preface>
+<Preface id="preface">
 <Title>Summary</Title>
 
 <Para>
@@ -153,13 +158,19 @@ It provides SQL92/SQL3 language support,
 &xaggr;
 &rules;
 &xindex;
-&xplang;
 &gist;
+&xplang;
 &dfunc;
 
 <!-- reference -->
 
+<!--
+The func-ref chapter is not currently useful.
+Disable it until we put in some info.
+- thomas 1998-10-27
 &func-ref;
+-->
+
 &trigger;
 &spi;
 &lobj;
@@ -176,7 +187,7 @@ It provides SQL92/SQL3 language support,
 The arch-dev chapter is current almost identical 
 to the arch-pg chapter appearing earlier in the
 Programmer's Guide. If the Developer's Guide is
-split into a separate document the start using this
+split into a separate document then start using this
 again.
 - thomas 1998-10-23
 &arch-dev; 
@@ -198,7 +209,8 @@ again.
 &biblio;
 
 <!--
-<INDEX> </INDEX>
+<index id="index">
+</index>
 -->
 
 </Book>

@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.6 1998/09/30 05:41:39 thomas Exp $
+#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.7 1998/10/30 19:36:51 thomas Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -119,5 +119,5 @@ distclean::
 # Graphics
 
 %.gif:
-	cp -p ../graphics/%.gif .
+	cp -p ../graphics/$@ .
 

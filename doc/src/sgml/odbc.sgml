@@ -577,8 +577,7 @@ be able to access the <productname>Postgres</productname>
 <title>Enabling ApplixWare Database Access</title>
 
 <para>
-Note that
-these instructions are for the 4.4.1 release of
+These instructions are for the 4.4.1 release of
  <productname>ApplixWare</productname> on <productname>Linux</productname>.
 Refer to the <citetitle>Linux Sys Admin</citetitle> on-line book
  for more detailed information.

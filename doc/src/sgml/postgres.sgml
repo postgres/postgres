@@ -1,11 +1,16 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.12 1998/10/27 06:14:01 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.13 1998/10/30 19:37:09 thomas Exp $
 
 Postgres integrated documentation.
 Other subset docs should be copied and shrunk from here.
 thomas 1998-02-23
 
 $Log: postgres.sgml,v $
+Revision 1.13  1998/10/30 19:37:09  thomas
+Minor editing and markup changes as a result of preparing the Postscript
+ documentation for v6.4.
+Bigger updates to the installation instructions (install and config).
+
 Revision 1.12  1998/10/27 06:14:01  thomas
 Include configuration chapter with new info on configure and make.
 
@@ -13,22 +18,15 @@ Revision 1.11  1998/10/25 00:24:31  thomas
 Add Y2K statement for intros.
 Make sure notation section is included in most intros.
 
-Revision 1.10  1998/10/21 05:31:52  thomas
+Revision 1.7-1.10  1998/10/21 05:31:52  thomas
 Include new information from Massimo. Rearrange ODBC docs.
-
-Revision 1.9  1998/09/30 05:41:49  thomas
-Clean up pages. Add information for operator precedence.
+Add information for operator precedence.
 Split introduction sections into separate files to allow the legal notice
  and notation sections appear in all documents without having the history
  show up everplace too.
 Add full list of reserved and non-reserved key words in syntax.sgml.
 Add a separate chapter to the admin guide on security.
-
-Revision 1.8  1998/08/17 16:20:33  thomas
 Move SQL reference pages up into the User's Guide.
-
-Revision 1.7  1998/08/15 06:52:53  thomas
-Include new chapters.
 
 -->
 
@@ -149,7 +147,8 @@ Include new chapters.
 
 <LegalNotice>
 <Para>
-<ProductName>PostgreSQL</ProductName> is copyright (C) 1998 by the Postgres Global Development Group.
+<ProductName>PostgreSQL</ProductName> is copyright (C) 1998 
+by the Postgres Global Development Group.
 </Para>
 </LegalNotice>
 

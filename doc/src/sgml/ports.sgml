@@ -1,14 +1,19 @@
 <Chapter Id="ports">
 <Title>Ports</Title>
 
-<Sect1>
-<Title>Currently Supported Platforms</Title>
-
 <Para>
 This manual  describes version 6.4 of <ProductName>Postgres</ProductName>.
 The <ProductName>Postgres</ProductName> developer community has
-compiled  and  tested <ProductName>Postgres</ProductName> on the following 
-platforms:
+compiled  and  tested <ProductName>Postgres</ProductName> on a
+number of platforms. Check
+<ulink url="http://www.postgresql.org/docs/admin/ports.htm">the web site</ulink>
+for the latest information.
+
+<Sect1>
+<Title>Currently Supported Platforms</Title>
+
+<para>
+At the time of publication, the following platforms have been tested:
 
 <TABLE TOCENTRY="1">
 <TITLE>Supported Platforms</TITLE>
@@ -24,13 +29,11 @@ platforms:
 </THEAD>
 <TBODY>
   <ROW>
-    <ENTRY>AIX 4.1.x-4.2</ENTRY>
+    <ENTRY>AIX 4.2.1</ENTRY>
     <ENTRY>RS6000</ENTRY>
-    <ENTRY>v6.3</ENTRY>
-    <ENTRY>1998-03-01</ENTRY>
-    <ENTRY>4.1.4.0,4.2 (<ULink url="mailto:darrenk@insightdist.com">Darren King</ULink>),
-           4.1.5 (<ULink url="mailto:Andreas.Zeugswetter@telecom.at">Andreas Zeugswetter</ULink>);
-           3.2.5 confirmed on v6.2.1 (<ULink url="mailto:danaf@ans.net">Frank Dana</ULink>)</ENTRY>
+    <ENTRY>v6.4</ENTRY>
+    <ENTRY>1998-10-27</ENTRY>
+    <ENTRY>(<ULink url="mailto:Andreas.Zeugswetter@telecom.at">Andreas Zeugswetter</ULink>)</ENTRY>
   </ROW>
   <ROW>
     <ENTRY>BSDI</ENTRY>
@@ -42,45 +45,25 @@ platforms:
   <ROW>
     <ENTRY>FreeBSD 2.2.x-3.x</ENTRY>
     <ENTRY>x86</ENTRY>
-    <ENTRY>v6.3</ENTRY>
-    <ENTRY>1998-03-01</ENTRY>
+    <ENTRY>v6.4</ENTRY>
+    <ENTRY>1998-10-26</ENTRY>
     <ENTRY>(<ULink url="mailto:t-ishii@sra.co.jp">Tatsuo Ishii</ULink>,
             <ULink url="mailto:scrappy@hub.org">Marc Fournier</ULink>)</ENTRY>
-  </ROW>
-  <ROW>
-    <ENTRY>NetBSD 1.3.2</ENTRY>
-    <ENTRY>x86</ENTRY>
-    <ENTRY>v6.4</ENTRY>
-    <ENTRY>1998-10-25</ENTRY>
-    <ENTRY>(<ULink url="mailto:brook@trillium.NMSU.Edu">Brook Milligan</ULink>)</ENTRY>
-  </ROW>
-  <ROW>
-    <ENTRY>NetBSD 1.3</ENTRY>
-    <ENTRY>NS32532</ENTRY>
-    <ENTRY>v6.3</ENTRY>
-    <ENTRY>1998-07-20</ENTRY>
-    <ENTRY>(<ULink url="mailto:phil@steelhead.cs.wwu.edu">Phil Nelson</ULink>)</ENTRY>
-  </ROW>
-  <ROW>
-    <ENTRY>NetBSD 1.3</ENTRY>
-    <ENTRY>Sparc</ENTRY>
-    <ENTRY>v6.3</ENTRY>
-    <ENTRY>1998-03-01</ENTRY>
-    <ENTRY>(<ULink url="mailto:tih@hamartun.priv.no">Tom I Helbekkmo</ULink>)</ENTRY>
-  </ROW>
-  <ROW>
-    <ENTRY>NetBSD 1.3</ENTRY>
-    <ENTRY>VAX</ENTRY>
-    <ENTRY>v6.3</ENTRY>
-    <ENTRY>1998-03-01</ENTRY>
-    <ENTRY>(<ULink url="mailto:tih@hamartun.priv.no">Tom I Helbekkmo</ULink>)</ENTRY>
   </ROW>
   <ROW>
     <ENTRY>DGUX 5.4R4.11</ENTRY>
     <ENTRY>m88k</ENTRY>
     <ENTRY>v6.3</ENTRY>
     <ENTRY>1998-03-01</ENTRY>
-    <ENTRY>(<ULink url="mailto:geek+@cmu.edu">Brian E Gallew</ULink>)</ENTRY>
+    <ENTRY>v6.4 probably OK. Needs new maintainer. (<ULink url="mailto:geek+@cmu.edu">Brian E Gallew</ULink>)</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>Digital Unix 4.0</ENTRY>
+    <ENTRY>Alpha</ENTRY>
+    <ENTRY>v6.4</ENTRY>
+    <ENTRY>1998-10-29</ENTRY>
+    <ENTRY>Minor patchable problems
+           (<ULink url="mailto:pjlobo@euitt.upm.es">Pedro J. Lobo</ULink>)</ENTRY>
   </ROW>
   <ROW>
     <ENTRY>HPUX</ENTRY>
@@ -100,29 +83,19 @@ platforms:
            (<ULink url="mailto:martin@biochemistry.ucl.ac.uk">Andrew Martin</ULink>)</ENTRY>
   </ROW>
   <ROW>
-    <ENTRY>Digital 4.0</ENTRY>
-    <ENTRY>Alpha</ENTRY>
-    <ENTRY>v6.3.2</ENTRY>
-    <ENTRY>1998-04-16</ENTRY>
-    <ENTRY>reported working for DUnix/v3.2g
-           (<ULink url="mailto:pjlobo@euitt.upm.es">Pedro J. Lobo</ULink>)</ENTRY>
-  </ROW>
-  <ROW>
     <ENTRY>linux 2.0.x</ENTRY>
     <ENTRY>Alpha</ENTRY>
     <ENTRY>v6.3.2</ENTRY>
     <ENTRY>1998-04-16</ENTRY>
-    <ENTRY>mostly successful
-           (<ULink url="mailto:rkirkpat@nag.cs.colorado.edu">Ryan Kirkpatrick</ULink>,
-            <ULink url="mailto:jsturm@zenacomp.com"> Jeff Sturm </ULink>)</ENTRY>
+    <ENTRY>Mostly successful. Needs work for v6.4.
+           (<ULink url="mailto:rkirkpat@nag.cs.colorado.edu">Ryan Kirkpatrick</ULink>)</ENTRY>
   </ROW>
   <ROW>
     <ENTRY>linux 2.0.x</ENTRY>
     <ENTRY>x86</ENTRY>
     <ENTRY>v6.4</ENTRY>
-    <ENTRY>1998-10-09</ENTRY>
-    <ENTRY>(<ULink url="mailto:lockhart@alumni.caltech.edu">Thomas Lockhart</ULink>,
-            <ULink url="mailto:t-ishii@sra.co.jp">Tatsuo Ishii</ULink>)</ENTRY>
+    <ENTRY>1998-10-27</ENTRY>
+    <ENTRY>(<ULink url="mailto:lockhart@alumni.caltech.edu">Thomas Lockhart</ULink>)</ENTRY>
   </ROW>
   <ROW>
     <ENTRY>linux 2.0.x/glibc2</ENTRY>
@@ -140,33 +113,76 @@ platforms:
     <ENTRY>(<ULink url="mailto:szybist@boxhill.com">Tom Szybist</ULink>)</ENTRY>
   </ROW>
   <ROW>
-    <ENTRY>mklinux</ENTRY>
+    <ENTRY>linuxPPC 2.1.24</ENTRY>
+    <ENTRY>PPC603e</ENTRY>
+    <ENTRY>v6.4</ENTRY>
+    <ENTRY>1998-10-26</ENTRY>
+    <ENTRY>Powerbook 2400c(<ULink url="mailto:t-ishii@sra.co.jp">Tatsuo Ishii</ULink>)</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>mklinux DR3</ENTRY>
     <ENTRY>PPC750</ENTRY>
     <ENTRY>v6.4</ENTRY>
     <ENTRY>1998-09-16</ENTRY>
-    <ENTRY>(<ULink url="mailto:t-ishii@sra.co.jp">Tatsuo Ishii</ULink>)</ENTRY>
+    <ENTRY>PowerMac 7600 (<ULink url="mailto:t-ishii@sra.co.jp">Tatsuo Ishii</ULink>)</ENTRY>
   </ROW>
   <ROW>
-    <ENTRY>SCO</ENTRY>
+    <ENTRY>NetBSD/i386 1.3.2</ENTRY>
+    <ENTRY>x86</ENTRY>
+    <ENTRY>v6.4</ENTRY>
+    <ENTRY>1998-10-25</ENTRY>
+    <ENTRY>(<ULink url="mailto:brook@trillium.NMSU.Edu">Brook Milligan</ULink>)</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>NetBSD-current</ENTRY>
+    <ENTRY>NS32532</ENTRY>
+    <ENTRY>v6.4</ENTRY>
+    <ENTRY>1998-10-27</ENTRY>
+    <ENTRY>(small problems in date/time math (<ULink url="mailto:jonb@metronet.com">Jon Buller</ULink>)</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>NetBSD/sparc 1.3H</ENTRY>
+    <ENTRY>Sparc</ENTRY>
+    <ENTRY>v6.4</ENTRY>
+    <ENTRY>1998-10-27</ENTRY>
+    <ENTRY>(<ULink url="mailto:tih@hamartun.priv.no">Tom I Helbekkmo</ULink>)</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>NetBSD 1.3</ENTRY>
+    <ENTRY>VAX</ENTRY>
+    <ENTRY>v6.3</ENTRY>
+    <ENTRY>1998-03-01</ENTRY>
+    <ENTRY>(<ULink url="mailto:tih@hamartun.priv.no">Tom I Helbekkmo</ULink>)</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>SCO UnixWare 2.x</ENTRY>
     <ENTRY>x86</ENTRY>
     <ENTRY>v6.3</ENTRY>
     <ENTRY>1998-03-01</ENTRY>
-    <ENTRY>partial success
+    <ENTRY>aka UNIVEL
            (<ULink url="mailto:Bill.Allie@mug.org">Billy G. Allie</ULink>)</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>SCO UnixWare 7</ENTRY>
+    <ENTRY>x86</ENTRY>
+    <ENTRY>v6.4</ENTRY>
+    <ENTRY>1998-10-04</ENTRY>
+    <ENTRY>(<ULink url="mailto:Bill.Allie@mug.org">Billy G. Allie</ULink>)</ENTRY>
   </ROW>
   <ROW>
     <ENTRY>Solaris</ENTRY>
     <ENTRY>x86</ENTRY>
-    <ENTRY>v6.3</ENTRY>
-    <ENTRY>1998-03-01</ENTRY>
+    <ENTRY>v6.4</ENTRY>
+    <ENTRY>1998-10-28</ENTRY>
     <ENTRY>(<ULink url="mailto:scrappy@hub.org">Marc Fournier</ULink>)</ENTRY>
   </ROW>
   <ROW>
-    <ENTRY>Solaris 2.5.1-2.6</ENTRY>
+    <ENTRY>Solaris 2.6-2.7</ENTRY>
     <ENTRY>Sparc</ENTRY>
     <ENTRY>v6.4</ENTRY>
-    <ENTRY>1998-10-25</ENTRY>
-    <ENTRY>(<ULink url="mailto:szybist@boxhill.com">Tom Szybist</ULink>)</ENTRY>
+    <ENTRY>1998-10-28</ENTRY>
+    <ENTRY>(<ULink url="mailto:szybist@boxhill.com">Tom Szybist</ULink>,
+            <ULink url="mailto:ridderbusch.pad@sni.de">Frank Ridderbusch</ULink>)</ENTRY>
   </ROW>
   <ROW>
     <ENTRY>SunOS 4.1.4</ENTRY>
@@ -180,7 +196,7 @@ platforms:
     <ENTRY>SVR4</ENTRY>
     <ENTRY>MIPS</ENTRY>
     <ENTRY>v6.4</ENTRY>
-    <ENTRY>1998-10-08</ENTRY>
+    <ENTRY>1998-10-28</ENTRY>
     <ENTRY>no 64-bit int support
            (<ULink url="mailto:ridderbusch.pad@sni.de">Frank Ridderbusch</ULink>)</ENTRY>
   </ROW>
@@ -191,14 +207,6 @@ platforms:
     <ENTRY>1998-03-01</ENTRY>
     <ENTRY>confirmed with patching
            (<ULink url="mailto:dlw@seavme.xroads.com">Doug Winterburn</ULink>)</ENTRY>
-  </ROW>
-  <ROW>
-    <ENTRY>Unixware</ENTRY>
-    <ENTRY>x86</ENTRY>
-    <ENTRY>v6.4</ENTRY>
-    <ENTRY>1998-10-04</ENTRY>
-    <ENTRY>aka UNIVEL
-           (<ULink url="mailto:Bill.Allie@mug.org">Billy G. Allie</ULink>)</ENTRY>
   </ROW>
   <ROW>
     <ENTRY>Windows NT</ENTRY>

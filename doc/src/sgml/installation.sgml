@@ -1,10 +1,15 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.1 1998/10/27 06:11:08 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.2 1998/10/30 19:37:00 thomas Exp $
 
 Postgres quick Installation Guide.
 thomas 1998-10-26
 
 $Log: installation.sgml,v $
+Revision 1.2  1998/10/30 19:37:00  thomas
+Minor editing and markup changes as a result of preparing the Postscript
+ documentation for v6.4.
+Bigger updates to the installation instructions (install and config).
+
 Revision 1.1  1998/10/27 06:11:08  thomas
 First cut at standalone installation guide to replace INSTALL text source.
 
@@ -20,6 +25,7 @@ First cut at standalone installation guide to replace INSTALL text source.
 <!entity notation SYSTEM "notation.sgml">
 <!entity y2k      SYSTEM "y2k.sgml">
 
+<!entity config   SYSTEM "config.sgml">
 <!entity intro-ag SYSTEM "intro-ag.sgml">
 <!entity install  SYSTEM "install.sgml">
 <!entity options  SYSTEM "pg_options.sgml">
@@ -37,9 +43,9 @@ First cut at standalone installation guide to replace INSTALL text source.
 
 <!-- Title information -->
 
-<Title>PostgreSQL Administrator's Guide</Title>
+<Title>PostgreSQL Installation Guide</Title>
 <BookInfo>
-    <ReleaseInfo>Covering v6.3 for general release</ReleaseInfo>
+    <ReleaseInfo>Covering v6.4 for general release</ReleaseInfo>
     <BookBiblio>
     <AuthorGroup>
       <CorpAuthor>The PostgreSQL Development Team</CorpAuthor>
@@ -115,6 +121,7 @@ and installing documentation, and then print or browse the
 </chapter>
 
 &ports;
+&config;
 &install;
 &release;
 

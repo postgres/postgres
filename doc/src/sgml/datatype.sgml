@@ -386,8 +386,8 @@ should use the monetary conventions defined for
 
 <Para>
 <TABLE TOCENTRY="1">
-<TITLE><ProductName>Postgres</ProductName> Numeric Types</TITLE>
-<TITLEABBREV>Numerics</TITLEABBREV>
+<TITLE><ProductName>Postgres</ProductName> Monetary Types</TITLE>
+<TITLEABBREV>Money</TITLEABBREV>
 <TGROUP COLS="4">
 <THEAD>
   <ROW>
@@ -1461,7 +1461,7 @@ The <Type>inet</Type> type stores hosts and networks in CIDR notation.
 
 <Para>
 <TABLE TOCENTRY="1">
-<TITLE><ProductName>Postgres</ProductName>IP Version 4 Type</TITLE>
+<TITLE><ProductName>Postgres</ProductName>IP Version 4 Types</TITLE>
 <TITLEABBREV>IPV4</TITLEABBREV>
 <TGROUP COLS="4">
 <THEAD>
@@ -1500,51 +1500,48 @@ network and "/y" is the number of bits in the netmask.
 If the "/y" part is left off, it is calculated using assumptions from
 the old class system except that it is extended to include at least
 all of the octets in the input.
-Here are some examples.
-
-<!-- There's a lot of examples here.
-  -- Take some out if you think there are too many...
-  -->
+Here are some examples:
 
 <Para> 
 <TABLE TOCENTRY="1">
-<TGROUP COLS="4">
+<TITLE><ProductName>Postgres</ProductName>IP Types Examples</TITLE>
+<TGROUP COLS="2">
 <THEAD> 
   <ROW> 
-    <ENTRY>Input</ENTRY>
-	<ENTRY>Output</ENTRY>
+    <ENTRY>CIDR Input</ENTRY>
+	<ENTRY>CIDR Displayed</ENTRY>
 </THEAD>
 <TBODY>
   <ROW>
-    <ENTRY>select '192.168.1'::cidr</ENTRY>
+    <ENTRY>192.168.1</ENTRY>
     <ENTRY>192.168.1/24</ENTRY>
   </ROW>
   <ROW>
-    <ENTRY>select '192.168'::cidr</ENTRY>
+    <ENTRY>192.168</ENTRY>
     <ENTRY>192.168.0/24</ENTRY>
   </ROW>
   <ROW>
-    <ENTRY>select '128.1'::cidr</ENTRY>
+    <ENTRY>128.1</ENTRY>
     <ENTRY>128.1/16</ENTRY>
   </ROW>
   <ROW>
-    <ENTRY>select '128':::cidr</ENTRY>
+    <ENTRY>128</ENTRY>
     <ENTRY>128.0/16</ENTRY>
   </ROW>
   <ROW>
-    <ENTRY>select '128.1.2'::cidr</ENTRY>
+    <ENTRY>128.1.2</ENTRY>
     <ENTRY>128.1.2/24</ENTRY>
   </ROW>
   <ROW>
-    <ENTRY>select '10.1.2'::cidr</ENTRY>
+    <ENTRY>10.1.2</ENTRY>
     <ENTRY>10.1.2/24</ENTRY>
   </ROW>
   <ROW>
-    <ENTRY>select '10.1'::cidr</ENTRY>
+    <ENTRY>10.1</ENTRY>
     <ENTRY>10.1/16</ENTRY>
   </ROW>
   <ROW>
-    <ENTRY>select '10'::cidr</ENTRY>
+    <ENTRY>10</ENTRY>
     <ENTRY>10/8</ENTRY>
   </ROW>
 </TBODY>

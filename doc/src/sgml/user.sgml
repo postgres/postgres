@@ -1,11 +1,16 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/user.sgml,v 1.6 1998/09/30 05:41:54 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/user.sgml,v 1.7 1998/10/30 19:37:16 thomas Exp $
 
 Postgres User's Manual.
 Derived from postgres.sgml.
 thomas 1998-02-24
 
 $Log: user.sgml,v $
+Revision 1.7  1998/10/30 19:37:16  thomas
+Minor editing and markup changes as a result of preparing the Postscript
+ documentation for v6.4.
+Bigger updates to the installation instructions (install and config).
+
 Revision 1.6  1998/09/30 05:41:54  thomas
 Clean up pages. Add information for operator precedence.
 Split introduction sections into separate files to allow the legal notice
@@ -17,9 +22,6 @@ Add a separate chapter to the admin guide on security.
 Revision 1.5  1998/08/17 16:20:32  thomas
 Move SQL reference pages up into the User's Guide.
 
-Revision 1.4  1998/08/15 06:52:54  thomas
-Include new chapters.
-
 -->
 
 <!doctype book PUBLIC "-//Davenport//DTD DocBook V3.0//EN" [
@@ -29,6 +31,7 @@ Include new chapters.
 <!entity info     SYSTEM "info.sgml">
 <!entity legal    SYSTEM "legal.sgml">
 <!entity notation SYSTEM "notation.sgml">
+<!entity y2k      SYSTEM "y2k.sgml">
 
 <!entity intro    SYSTEM "intro.sgml">
 <!entity advanced SYSTEM "advanced.sgml">
@@ -87,7 +90,8 @@ Include new chapters.
 
 <LegalNotice>
 <Para>
-<ProductName>PostgreSQL</ProductName> is copyright (C) 1998 by the Postgres Global Development Group.
+<ProductName>PostgreSQL</ProductName> is copyright (C) 1998 
+by the Postgres Global Development Group.
 </Para>
 </LegalNotice>
 
@@ -141,10 +145,13 @@ It provides SQL92/SQL3 language support,
 <!--
 &contacts;
 -->
+
 &biblio;
 
+<!--
 <index Id="index">
 </index>
+-->
 
 </Book>
 

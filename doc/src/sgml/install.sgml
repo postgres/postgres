@@ -414,16 +414,20 @@ $ gunzip -c ~/postgresql-v6.4.tar.gz | tar xvf -
      the build process (see the --prefix option below).  Type
 <ProgramListing>
 $ cd /usr/src/pgsql/src
-$ ./configure [ <replaceable>options as described below</replaceable> ]
+$ ./configure [ <replaceable>options</replaceable> ]
 </ProgramListing>
 </Para>
 
+<substeps>
+
+<Step Performance="optional">
 <Para>
      Among other chores, the configure script selects a system-specific
      "template" file from the files provided in the template subdirectory.
      If it cannot guess which one to use for your system, it will say so and
      exit.  In that case you'll need to figure out which one to use and run
-     configure again, this time giving the <option>--with-template=TEMPLATE</option> option to
+     configure again, this time giving the 
+<option>--with-template=TEMPLATE</option> option to
      make the right file be chosen.
 
 <note>
@@ -438,7 +442,14 @@ If your system is not automatically recognized by configure and you have to do t
 
 </Para>
 
+<Step Performance="optional">
 <Para>
+Choose configuration options. Check <xref linkend="config" endterm="install-config">
+for details. However, for a plain-vanilla first installation with no extra
+options like multi-byte character support or locale collation support it may
+be adequate to have chosen the installation areas and to run configure without
+extra options specified.
+
      The configure script accepts many additional options that you can use
      if you don't like the default configuration.  To see them all, type
 <ProgramListing>
@@ -449,35 +460,21 @@ If your system is not automatically recognized by configure and you have to do t
        --prefix=BASEDIR   Selects a different base directory for the
                           installation of the <ProductName>Postgres</ProductName> configuration.
                           The default is /usr/local/pgsql.
-
        --with-template=TEMPLATE
                           Use template file TEMPLATE - the template
                           files are assumed to be in the directory
                           src/template, so look there for proper values.
-
-       --with-pgport=PORT Sets the port that the postmaster process
-                          listens for incoming connections on.  The
-                          default is port 5432.
-
        --with-tcl         Build interface libraries and programs requiring
                           Tcl/Tk, including libpgtcl, pgtclsh, and pgtksh.
-
        --with-perl        Build the Perl interface library.
-
        --with-odbc        Build the ODBC driver package.
-
        --enable-hba       Enables Host Based Authentication (DEFAULT)
-
        --disable-hba      Disables Host Based Authentication
-
        --enable-locale    Enables USE_LOCALE
-
        --enable-cassert   Enables ASSERT_CHECKING
-
        --with-CC=compiler
                           Use a specific C compiler that the configure
                           script cannot find.
-
        --with-CXX=compiler
        --without-CXX
                           Use a specific C++ compiler that the configure
@@ -487,9 +484,11 @@ If your system is not automatically recognized by configure and you have to do t
 </ProgramListing>
 </Para>
 
+<Step Performance="required">
 <Para>
-As an example, here is the configure script used on a Sparc Solaris 2.5 system
- with <filename>/opt/postgres</filename> being the installation base directory:
+Here is the configure script used on a Sparc Solaris 2.5 system
+ with <filename>/opt/postgres</filename> specified as
+ the installation base directory:
 
 <ProgramListing>
 $ ./configure --prefix=/opt/postgres \
@@ -497,10 +496,16 @@ $ ./configure --prefix=/opt/postgres \
     --enable-hba --disable-locale
 </ProgramListing>
 
+<tip>
+<para>
      Of course, you may type these three lines all
      on the same line.
+</tip>
+
 </Para>
 </Step>
+
+</substeps>
 
 <Step Performance="required">
 <Para>
@@ -653,10 +658,13 @@ pg_id: can't load library 'libpq.so'
 Any account that will use <ProductName>Postgres</ProductName> must
      be similarly prepared. 
 
-<note>
 <para>
-There are several ways to influence the runtime environment of the <ProductName>Postgres</ProductName>
-server. Refer to the chapter on <citetitle>Administrator's Guide</citetitle> for more information.
+There are several ways to influence the runtime environment of the
+ <ProductName>Postgres</ProductName>
+server. Refer to the <citetitle>Administrator's Guide</citetitle>
+ for more information.
+
+<note>
 <para>
 The following instructions are for a
  bash/sh shell.  Adapt accordingly for other shells.
@@ -664,8 +672,13 @@ The following instructions are for a
 
 </Para>
 
+<substeps>
+
+<Step Performance="required">
 <Para>
-     Add the following lines to your login shell, <filename>~/.bash_profile</filename>:
+     Add the following lines to your login environment:
+
+ shell, <filename>~/.bash_profile</filename>:
 <ProgramListing>
 PATH=$PATH:/usr/local/pgsql/bin
 MANPATH=$MANPATH:/usr/local/pgsql/man
@@ -675,6 +688,30 @@ export PATH MANPATH PGLIB PGDATA
 </ProgramListing>
 </Para>
 
+<Step Performance="required">
+<para>
+Several regression tests could failed if the user's locale collation
+scheme is different from that of standard C locale.
+
+<para>
+If you configure and compile <ProductName>Postgres</ProductName>
+ with the <option>--enable-locale</option> option then
+ set locale environment to C (or unset all LC_* variables)
+by putting these additional lines to your login environment
+ before starting postmaster:
+<ProgramListing>
+LC_COLLATE=C
+LC_CTYPE=C
+LC_COLLATE=C
+export LC_COLLATE LC_CTYPE LC_COLLATE
+</ProgramListing>
+
+<ProgramListing>
+
+</ProgramListing>
+
+
+<Step Performance="required">
 <Para>
      Make sure that you have defined these variables before continuing
      with the remaining steps.  The easiest way to do this is to type:
@@ -684,10 +721,15 @@ $ source ~/.bash_profile
 </Para>
 </Step>
 
+</substeps>
+
 <Step Performance="required">
 <Para>
- Create the database.  <Emphasis>Do not do the following as root!</Emphasis>
- This would be a major security hole.  Type
+ Create the database installation from your <ProductName>Postgres</ProductName> 
+superuser account (typically account <literal>postgres</literal>).
+
+<Emphasis>Do not do the following as root!</Emphasis>
+This would be a major security hole.  Type
 <ProgramListing>
 $ initdb
 </ProgramListing>
@@ -710,15 +752,151 @@ $ initdb
 </Step>
 
 <Step Performance="required">
-<Para>
-     Run postmaster from your <ProductName>Postgres</ProductName> superuser account (typically
-     account postgres).
-<emphasis>Do not run <application>postmaster</application> from the root account!</emphasis>
+<para>
+Briefly test that the backend will start and run by running it from
+the command line.
+
+<substeps>
+
+<Step Performance="required">
+<para>
      Start the postmaster daemon running in the background by typing
+<ProgramListing>
+$ cd
+$ postmaster -i
+</ProgramListing>
+</Para>
+</Step>
+
+<Step Performance="required">
+<para>
+Create a database by typing
+<ProgramListing>
+$ createdb
+</ProgramListing>
+
+<Step Performance="required">
+<para>
+Connect to the new database:
+<ProgramListing>
+$ psql
+</ProgramListing>
+
+<Step Performance="required">
+<para>
+And run a sample query:
+<ProgramListing>
+postgres=> SELECT datetime 'now';
+</ProgramListing>
+
+<Step Performance="required">
+<para>
+Exit <application>psql</application>:
+<ProgramListing>
+postgres=> \q
+</ProgramListing>
+
+<Step Performance="required">
+<para>
+Remove the test database (unless you will want to use it later for other tests):
+<ProgramListing>
+$ destroydb
+</ProgramListing>
+
+</substeps>
+
+<Step Performance="required">
+<Para>
+     Run postmaster in the background from your <ProductName>Postgres</ProductName> 
+superuser account (typically account <literal>postgres</literal>).
+<emphasis>Do not run <application>postmaster</application> 
+from the root account!</emphasis>
+
+<Para>
+Usually, you will want to modify
+     your computer so that it will automatically start postmaster whenever
+    it boots. It is not required; the <ProductName>Postgres</ProductName> 
+server can
+be run successfully from non-privileged accounts without root intervention.
+
+<para>
+     Here are some suggestions on how to do this, contributed by various
+     users.
+
+<para>
+     Whatever you do, postmaster must be run by 
+the <ProductName>Postgres</ProductName> superuser (<literal>postgres</literal>?)
+<emphasis>and not by root</emphasis>.
+This is why all of the examples below start by switching user
+     (su) to postgres.  These commands also take into account the fact
+     that environment variables like PATH and PGDATA may not be set properly.
+
+     The examples are as follows.  Use them with extreme caution.
+
+<itemizedlist mark="bullet">
+<listitem>
+<para>
+If you are installing from a non-privileged account and have no root access, then
+start the <application>postmaster</application> and send it to the background:
+
 <ProgramListing>
 $ cd
 $ nohup postmaster > regress.log 2>&1 &
 </ProgramListing>
+
+<listitem>
+<para>
+Edit file rc.local on NetBSD or file rc2.d on SPARC Solaris
+          2.5.1 to contain the following single line:
+<programlisting>
+su postgres -c "/usr/local/pgsql/bin/postmaster -S -D /usr/local/pgsql/data"
+</programlisting>
+
+<listitem>
+<para>
+In FreeBSD 2.2-RELEASE edit /usr/local/etc/rc.d/pgsql.sh to
+          contain the following lines and make it chmod 755 and chown
+          root:bin.
+
+<programlisting>
+#!/bin/sh
+[ -x /usr/local/pgsql/bin/postmaster ] && {
+    su -l pgsql -c 'exec /usr/local/pgsql/bin/postmaster
+        -D/usr/local/pgsql/data
+        -S -o -F > /usr/local/pgsql/errlog' &
+    echo -n ' pgsql'
+}
+</programlisting>
+
+          You may put the line breaks as shown above.  The shell is smart
+          enough to keep parsing beyond end-of-line if there is an
+          expression unfinished.  The exec saves one layer of shell under
+          the postmaster process so the parent is init.
+
+<listitem>
+<para>
+In RedHat Linux add a file <filename>/etc/rc.d/init.d/postgres.init</filename>
+which is based on the example in <filename>contrib/linux/</filename>.
+Then make a softlink to this file from
+ <filename>/etc/rc.d/rc5.d/S98postgres.init</filename>.
+
+<listitem>
+<para>
+In RedHat Linux edit file /etc/inittab to add the
+          following as a single line:
+
+<programlisting>
+pg:2345:respawn:/bin/su - postgres -c
+    "/usr/local/pgsql/bin/postmaster -D/usr/local/pgsql/data
+    &gt;&gt; /usr/local/pgsql/server.log 2&gt;&1 &lt;/dev/null"
+</programlisting>
+
+          (The author of this example says this example will revive the
+          postmaster if it dies, but he doesn't know if there are other side
+          effects.)
+
+</itemizedlist>
+
 </Para>
 </Step>
 
@@ -818,82 +996,6 @@ $ gmake clean
 </Step>
 
 </substeps>
-
-<Step Performance="required">
-<Para>
- If you haven't already done so, this would be a good time to modify
-     your computer so that it will automatically start postmaster whenever
-     you boot your computer.
-
-     Here are some suggestions on how to do this, contributed by various
-     users.
-
-<para>
-     Whatever you do, postmaster must be run by 
-the <ProductName>Postgres</ProductName> superuser (<literal>postgres</literal>?)
-<emphasis>and not by root</emphasis>.
-This is why all of the examples below start by switching user
-     (su) to postgres.  These commands also take into account the fact
-     that environment variables like PATH and PGDATA may not be set properly.
-
-     The examples are as follows.  Use them with extreme caution.
-
-<itemizedlist>
-<listitem>
-<para>
-Edit file rc.local on NetBSD or file rc2.d on SPARC Solaris
-          2.5.1 to contain the following single line:
-<programlisting>
-su postgres -c "/usr/local/pgsql/bin/postmaster -S -D /usr/local/pgsql/data"
-</programlisting>
-
-<listitem>
-<para>
-In FreeBSD 2.2-RELEASE edit /usr/local/etc/rc.d/pgsql.sh to
-          contain the following lines and make it chmod 755 and chown
-          root:bin.
-
-<programlisting>
-#!/bin/sh
-[ -x /usr/local/pgsql/bin/postmaster ] && {
-    su -l pgsql -c 'exec /usr/local/pgsql/bin/postmaster
-        -D/usr/local/pgsql/data
-        -S -o -F > /usr/local/pgsql/errlog' &
-    echo -n ' pgsql'
-}
-</programlisting>
-
-          You may put the line breaks as shown above.  The shell is smart
-          enough to keep parsing beyond end-of-line if there is an
-          expression unfinished.  The exec saves one layer of shell under
-          the postmaster process so the parent is init.
-
-<listitem>
-<para>
-In RedHat Linux add a file <filename>/etc/rc.d/init.d/postgres.init</filename>
-which is based on the example in <filename>contrib/linux/</filename>.
-Then make a softlink to this file from
- <filename>/etc/rc.d/rc5.d/S98postgres.init</filename>.
-
-<listitem>
-<para>
-In RedHat Linux edit file /etc/inittab to add the
-          following as a single line:
-
-<programlisting>
-pg:2345:respawn:/bin/su - postgres -c
-    "/usr/local/pgsql/bin/postmaster -D/usr/local/pgsql/data
-    &gt;&gt; /usr/local/pgsql/server.log 2&gt;&1 &lt;/dev/null"
-</programlisting>
-
-          (The author of this example says this example will revive the
-          postmaster if it dies, but he doesn't know if there are other side
-          effects.)
-
-</itemizedlist>
-
-</Para>
-</Step>
 
 <Step Performance="required">
 <Para>

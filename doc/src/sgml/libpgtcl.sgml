@@ -2,8 +2,9 @@
 <Title>pgtcl</Title>
 
 <Para>
-pgtcl is a tcl package for front-end programs to interface with <ProductName>Postgres</ProductName>
-backends.  It makes most of the functionality of libpq available to
+<literal>pgtcl</literal> is a tcl package for front-end programs 
+to interface with <ProductName>Postgres</ProductName>
+backends.  It makes most of the functionality of <literal>libpq</literal> available to
 tcl scripts.
 </Para>
 
@@ -16,7 +17,7 @@ This package was originally written by Jolly Chen.
 
 <Para>
 <TABLE TOCENTRY="1">
-<TITLE>PGTCL Commands</TITLE>
+<TITLE><literal>pgtcl</literal> Commands</TITLE>
 <TGROUP COLS="2">
 <THEAD>
   <ROW>

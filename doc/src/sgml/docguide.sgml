@@ -1,9 +1,14 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/docguide.sgml,v 1.10 1998/10/25 00:25:30 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/docguide.sgml,v 1.11 1998/10/30 19:36:57 thomas Exp $
 Documentation Guide
 Thomas Lockhart
 
 $Log: docguide.sgml,v $
+Revision 1.11  1998/10/30 19:36:57  thomas
+Minor editing and markup changes as a result of preparing the Postscript
+ documentation for v6.4.
+Bigger updates to the installation instructions (install and config).
+
 Revision 1.10  1998/10/25 00:25:30  thomas
 Update info on source files for v6.4.
 Should add/change ToDo list some more before release...
@@ -48,6 +53,9 @@ It should be able to answer
 common questions and to allow a user to find those answers on his own
 without resorting to mailing list support.
 
+<sect1>
+<title>Documentation Roadmap</title>
+
 <para>
 <productname>Postgres</productname> has four primary documentation
 formats:
@@ -64,66 +72,6 @@ Hardcopy, for in-depth reading and reference.
 </para></listitem>
 <listitem><para>
 <acronym>man pages</acronym>, for quick reference.
-</para></listitem>
-</itemizedlist>
-
-<para>
-Documentation sources include plain text files, man pages, and html. However,
-most new <productname>Postgres</productname> documentation will be written using the
-<firstterm>Standard Generalized Markup Language</firstterm>
-(<acronym>SGML</acronym>) 
-<ulink url="http://www.ora.com/davenport/"> <productname>DocBook</productname></ulink>
- <firstterm>Document Type Definition</firstterm> (<acronym>DTD</acronym>).
-Much of the existing documentation has been or will be converted to <acronym>SGML</acronym>.
-</para>
-
-<sect1>
-<title>Documentation Roadmap</title>
-
-<para>
-Documentation has accumulated from several sources. As we integrate
-and assimilate existing documentation into a coherent documentation set,
-the older versions will become obsolete and will be removed from the
-distribution. However, this will not happen immediately, and will not
-happen to all documents at the same time. To ease the transition, and
-to help guide developers and writers, we have defined a transition roadmap.
-
-<para>
-Here is the documentation plan for v6.4:
-
-<itemizedlist>
-<listitem>
-<para>
-Convert <ulink url="sferac@bo.nettuno.it">Jose Soares Da Silva</ulink>'s
- text-based reference pages to <acronym>SGML</acronym>
-reference sections for the User's Guide. 
-<ulink url="olly@lfix.co.uk">Oliver Elphick</ulink> is working on this
-and it is roughly half-way completed.
-
-<listitem>
-<para>
-Write more sections for the User's Guide covering areas outside the reference pages.
-This would include introductory information and suggestions for approaches to typical
- design problems.
-
-<listitem>
-<para>
-Merge information in the existing man pages into the reference pages and User's Guide.
-
-<listitem>
-<para>
-Convert the new sgml reference pages to new man pages, replacing the existing man pages.
-Brandon Ibach is working on the conversion filter.
-
-<listitem>
-<para>
-Rebuild the User's Guide, Reference Guide, and Administrator's Guide
-(the admin guide only if we get release notes and installation
-information updated in <acronym>SGML</acronym>).
-</itemizedlist>
-
-<itemizedlist>
-<listitem><para>
 </para></listitem>
 </itemizedlist>
 
@@ -161,8 +109,151 @@ Description
 </tgroup>
 </table>
 
+<para>
+There are man pages available for installation, as well as a large number
+of plain-text README-type files throughout the <productname>Postgres</productname>
+source tree.
+
 <sect1>
 <title>Documentation Sources</title>
+
+<para>
+Documentation sources include plain text files, man pages, and html. However,
+most new <productname>Postgres</productname> documentation will be written using the
+<firstterm>Standard Generalized Markup Language</firstterm>
+(<acronym>SGML</acronym>) 
+<ulink url="http://www.ora.com/davenport/"> <productname>DocBook</productname></ulink>
+ <firstterm>Document Type Definition</firstterm> (<acronym>DTD</acronym>).
+Much of the existing documentation has been or will be converted to <acronym>SGML</acronym>.
+
+<para>
+The purpose of <acronym>SGML</acronym> is to allow an author to
+specify the structure and content of a document (e.g. using the
+<productname>DocBook</productname> <acronym>DTD</acronym>),  and to
+have the document style define how that content is rendered into a
+final form (e.g. using Norm Walsh's stylesheets).
+
+<para>
+Documentation has accumulated from several sources. As we integrate
+and assimilate existing documentation into a coherent documentation set,
+the older versions will become obsolete and will be removed from the
+distribution. However, this will not happen immediately, and will not
+happen to all documents at the same time. To ease the transition, and
+to help guide developers and writers, we have defined a transition roadmap.
+
+<para>
+Here is the documentation plan for v6.5:
+
+<itemizedlist>
+<listitem>
+<para>
+Start compiling index information for the User's and Administrator's Guides.
+
+<listitem>
+<para>
+Write more sections for the User's Guide covering areas outside the reference pages.
+This would include introductory information and suggestions for approaches to typical
+design problems.
+
+<listitem>
+<para>
+Merge information in the existing man pages into the reference pages and User's Guide.
+Condense the man pages down to reminder information, with references into the
+primary doc set.
+
+<listitem>
+<para>
+Convert the new sgml reference pages to new man pages, replacing the existing man pages.
+
+<listitem>
+<para>
+Convert all source graphics to CGM format files for portability. Currently we mostly have
+Applix Graphics sources from which we can generate .gif output. One graphic is only
+available in .gif and .ps, and should be redrawn or removed.
+
+</itemizedlist>
+
+<sect2>
+<title>Document Structure</title>
+
+<para>
+There are currently five separate documents written in DocBook. Each document
+has a container source document which defines the DocBook environment and other
+document source files. These primary source files are located in 
+<filename>doc/src/sgml/</filename>, along with many of the other source files
+used for the documentation. The primary source files are:
+
+<variablelist>
+<varlistentry>
+<term>postgres.sgml</term>
+<listitem>
+<para>
+This is the integrated document, including all other documents as parts.
+Output is generated in <acronym>HTML</acronym> since the browser interface
+makes it easy to move around all of the documentation by just clicking.
+The other documents are available in both <acronym>HTML</acronym> and hardcopy.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>tutorial.sgml</term>
+<listitem>
+<para>
+The introductory tutorial, with examples. Does not include programming topics,
+and is intended to help a reader unfamiliar with <acronym>SQL</acronym>.
+This is the "getting started" document.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>user.sgml</term>
+<listitem>
+<para>
+The User's Guide. Includes information on data types and user-level interfaces.
+This is the place to put information on "why".
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>reference.sgml</term>
+<listitem>
+<para>
+The Reference Manual. Includes <productname>Postgres</productname> <acronym>SQL</acronym> syntax.
+This is the place to put information on "how".
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>programming.sgml</term>
+<listitem>
+<para>
+The Programmer's Guide. Includes information on <productname>Postgres</productname>
+extensibility and on the programming interfaces.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>admin.sgml</term>
+<listitem>
+<para>
+The Administrator's Guide. Include installation and release notes.
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
+
+<!--
+Disable for the hardcopy production release.
+Too much tabular info and not very helpful in hardcopy.
+- thomas 1998-10-27
+
+<sect2>
+<title>Documentation Files</title>
 
 <para>
 <table tocentry="1">
@@ -333,8 +424,8 @@ Status
 </tgroup>
 </table>
 
-<sect1>
-<title>Document Conversion Status</title>
+<sect2>
+<title>Document Conversion</title>
 
 <para>
 <table tocentry="1">
@@ -579,82 +670,10 @@ Status
 </tgroup>
 </table>
 
-<sect2>
-<title>Document Structure</title>
-
-<para>
-There are currently five separate documents written in DocBook. Each document
-has a container source document which defines the DocBook environment and other
-document source files. These primary source files are located in 
-<filename>doc/src/sgml/</filename>, along with many of the other source files
-used for the documentation. The primary source files are:
-
-<variablelist>
-<varlistentry>
-<term>postgres.sgml</term>
-<listitem>
-<para>
-This is the integrated document, including all other documents as parts.
-Output is generated in <acronym>HTML</acronym> since the browser interface
-makes it easy to move around all of the documentation by just clicking.
-The other documents are available in both <acronym>HTML</acronym> and hardcopy.
-</para>
-</listitem>
-</varlistentry>
-
-<varlistentry>
-<term>tutorial.sgml</term>
-<listitem>
-<para>
-The introductory tutorial, with examples. Does not include programming topics,
-and is intended to help a reader unfamiliar with <acronym>SQL</acronym>.
-This is the "getting started" document.
-</para>
-</listitem>
-</varlistentry>
-
-<varlistentry>
-<term>user.sgml</term>
-<listitem>
-<para>
-The User's Guide. Includes information on data types and user-level interfaces.
-This is the place to put information on "why".
-</para>
-</listitem>
-</varlistentry>
-
-<varlistentry>
-<term>reference.sgml</term>
-<listitem>
-<para>
-The Reference Manual. Includes <productname>Postgres</productname> <acronym>SQL</acronym> syntax.
-This is the place to put information on "how".
-</para>
-</listitem>
-</varlistentry>
-
-<varlistentry>
-<term>programming.sgml</term>
-<listitem>
-<para>
-The Programmer's Guide. Includes information on <productname>Postgres</productname>
-extensibility and on the programming interfaces.
-</para>
-</listitem>
-</varlistentry>
-
-<varlistentry>
-<term>admin.sgml</term>
-<listitem>
-<para>
-The Administrator's Guide. Include installation and release notes.
-</para>
-</listitem>
-</varlistentry>
-</variablelist>
+-->
 
 <sect1>
-<title>Introduction</title>
+<title>The Documentation Project</title>
 
 <para>
 Packaged documentation is available in both
@@ -708,9 +727,9 @@ exporting as a Postscript file.</para>
 for several reasons, including the inability to make minor format
 fixes before committing to hardcopy and generally inadequate table
 support in the <productname>TeX</productname>
-stylesheets.</para></sect1>
+stylesheets.</para>
 
-<sect1>
+<sect2>
 <title>Styles and Conventions</title>
 
 <para>
@@ -755,80 +774,6 @@ be included below.
 </table>
 </para>
 -->
-
-</sect1>
-
-<sect1>
-<title>Document Writing</title>
-
-<sect2>
-<title>Document Structure</title>
-
-<para>
-There are currently five separate documents written in DocBook. Each document
-has a container source document which defines the DocBook environment and other
-document source files. These primary source files are located in 
-<filename>doc/src/sgml/</filename>, along with many of the other source files
-used for the documentation. The primary source files are:
-
-<variablelist>
-<varlistentry>
-<term>postgres.sgml</term>
-<listitem>
-<para>
-This is the integrated document, including all other documents.
-</para>
-</listitem>
-</varlistentry>
-
-<varlistentry>
-<term>tutorial.sgml</term>
-<listitem>
-<para>
-The introductory tutorial, with examples. Does not include programming topics,
-and is intended to help get someone unfamiliar with <acronym>SQL</acronym> started.
-</para>
-</listitem>
-</varlistentry>
-
-<varlistentry>
-<term>user.sgml</term>
-<listitem>
-<para>
-The User's Guide. Includes information on data types and user-level interfaces.
-This is the place to put information on "why".
-</para>
-</listitem>
-</varlistentry>
-
-<varlistentry>
-<term>reference.sgml</term>
-<listitem>
-<para>
-The Reference Manual. Includes <productname>Postgres</productname> <acronym>SQL</acronym> syntax.
-</para>
-</listitem>
-</varlistentry>
-
-<varlistentry>
-<term>programming.sgml</term>
-<listitem>
-<para>
-The Programmer's Guide. Includes information on <productname>Postgres</productname>
-extensibility and on the programming interfaces.
-</para>
-</listitem>
-</varlistentry>
-
-<varlistentry>
-<term>admin.sgml</term>
-<listitem>
-<para>
-The Administrator's Guide. Include installation and release notes.
-</para>
-</listitem>
-</varlistentry>
-</variablelist>
 
 <sect2>
 <title>Authoring Tools</title>
@@ -925,13 +870,14 @@ by typing
 </para></sect1>
 
 <sect1>
-<title>Hardcopy Generation for v6.3</title>
+<title>Hardcopy Generation for v6.4</title>
 
 <para>
 The hardcopy Postscript documentation is generated by converting the
 <acronym>SGML</acronym> source code to <acronym>RTF</acronym>, then
-importing into Applixware. After a little cleanup (see the following
-section) the output is "printed" to a postscript file.</para>
+importing into <productname>ApplixWare-4.4.1</productname>. 
+After a little cleanup (see the following
+section) the output is "printed" to a postscript file.
 
 <para>
 Some figures were redrawn to avoid having bitmap
@@ -941,9 +887,11 @@ was  not time to redraw it. It was converted to fit using the
 following commands:
 
 <programlisting>
-% convert -v -geometry 400x400'>' figure03.gif con.gif
-% convert -v -crop 400x380 con.gif connections.gif
-</programlisting></para>
+% convert -monochrome -v -geometry 500x500'>' catalogs.ps catalogs.gif
+% convert -v -crop 400x500 catalogs.gif catalogs-cropped.gif
+</programlisting>
+
+</para>
 
 <sect2>
 <title><acronym>RTF</acronym> Cleanup Procedure</title>
@@ -1069,7 +1017,7 @@ described below.</para>
 We understand that there are some other packaged distributions for
 these tools.  <productname>FreeBSD</productname> seems to have them
 available.  Please report package status to the docs mailing list and
-we will include that information here.</para>
+we will include that information here.
 
 <sect2>
 <title><acronym>RPM</acronym> installation on
@@ -1085,10 +1033,17 @@ and related packages.
 <sect2>
 <title>Manual installation of tools</title>
 
-<para>This is a brief run-through of the process of obtaining and
+<para>
+This is a brief run-through of the process of obtaining and
 installing the software you'll need to edit DocBook source with Emacs
 and process it with Norman Walsh's DSSSL style sheets to create <acronym>HTML</acronym>
-and <acronym>RTF</acronym>.</para>
+and <acronym>RTF</acronym>.
+
+<para>
+These instructions do not cover new <application>jade</application>/DocBook
+support in the <productname>sgml-tools</productname> package. The authors have
+not tried this package since it adopted DocBook, but it is almost certainly 
+a good candidate for use.
 
 <sect3><title>Prerequisites</title>
 
@@ -1114,9 +1069,9 @@ James Clark's <productname>Jade</productname> version 1.1</ulink>
 <productname>DocBook</productname> version 3.0</ulink>
 </para></listitem>
 <listitem>
-<para><ulink url="http://nwalsh.com/docbook/dsssl/db107.zip">
+<para><ulink url="http://nwalsh.com/docbook/dsssl/db119.zip">
 Norman Walsh's <productname>Modular Stylesheets</productname>
-version 1.07</ulink>
+version 1.19</ulink>
 </para></listitem>
 <listitem>
 <para><ulink url="ftp://ftp.lysator.liu.se/pub/sgml/psgml-1.0.1.tar.gz">
@@ -1145,22 +1100,30 @@ Steve Pepper's Whirlwind Guide</ulink></para></listitem>
 Robin Cover's database of <acronym>SGML</acronym> software</ulink></para></listitem>
 </itemizedlist>
 
-</para>
-
 </sect3>
 
-<sect3><title>Installing Jade</title>
+<sect3>
+<title>Installing Jade</title>
+<para>
 
-<para>First, read the installation instructions at the above listed
-URL.</para>
+<procedure>
+<title>Installing Jade</title>
 
-<para>Unzip the distribution kit in a suitable place.  The command to do
+<step performance="required">
+<para>
+Read the installation instructions at the above listed
+URL.
+
+<step performance="required">
+<para>
+Unzip the distribution kit in a suitable place.  The command to do
 this will be something like
 <programlisting>
 unzip -aU jade1_1.zip
 </programlisting>
 </para>
 
+<step performance="required">
 <para><productname>Jade</productname> is not built using
 <productname>GNU Autoconf</productname>, so you'll need to edit a
 <filename>Makefile</filename> yourself.  Since James Clark has been
@@ -1202,17 +1165,24 @@ doesn't need the above settings for the math library and the
 <filename>Makefile</filename>.
 </para>
 
-<para>Now type <command>make</command> to build Jade and the various
+<step performance="required">
+<para>Type <command>make</command> to build Jade and the various
 <productname>SP</productname> tools.</para>
 
+<step performance="required">
 <para>Once the software is built, <command>make install</command> will
 do the obvious.</para>
 
-</sect3>
+</procedure>
 
-<sect3><title>Installing the <productname>DocBook</productname>
-<acronym>DTD</acronym> kit</title>
+<sect3>
+<title>Installing the <productname>DocBook</productname> <acronym>DTD</acronym> Kit</title>
 
+<para>
+<procedure>
+<title>Installing the <productname>DocBook</productname> <acronym>DTD</acronym> Kit</title>
+
+<step performance="required">
 <para>You'll want to place the files that make up the
 <productname>DocBook</productname> <acronym>DTD</acronym> kit in the
 directory you built <productname>Jade</productname> to expect them in,
@@ -1234,6 +1204,9 @@ the former, by giving it the single line of content:
 <programlisting>
 CATALOG /usr/local/share/sgml/CATALOG
 </programlisting>
+
+<step performance="required">
+<para>
 The <filename>CATALOG</filename> file should then contain three types
 of lines.  The first is the (optional) <acronym>SGML</acronym>
 declaration, thus:
@@ -1250,6 +1223,9 @@ PUBLIC "-//Davenport//ELEMENTS DocBook Information Pool V3.0//EN" dbpool.mod
 PUBLIC "-//Davenport//ELEMENTS DocBook Document Hierarchy V3.0//EN" dbhier.mod
 PUBLIC "-//Davenport//ENTITIES DocBook Additional General Entities V3.0//EN" dbgenent.mod
 </programlisting>
+
+<step performance="required">
+<para>
 Of course, a file containing these comes with the
 <productname>DocBook</productname> kit.  Note that the last item on
 each of these lines is a file name, given here without a path.  You
@@ -1270,14 +1246,20 @@ named <filename>ISO</filename>.  Again, proper catalog entries should
 accompany the entity kit you fetch.
 </para>
 
-</sect3>
+</procedure>
 
-<sect3><title>Installing Norman Walsh's <acronym>DSSSL</acronym>
-style sheets</title>
+<sect3>
+<title>Installing Norman Walsh's <acronym>DSSSL</acronym> Style Sheets</title>
+<para>
 
-<para>First, read the installation instructions at the above listed
+<procedure>
+<title>Installing Norman Walsh's <acronym>DSSSL</acronym> Style Sheets</title>
+
+<step performance="required">
+<para>Read the installation instructions at the above listed
 URL.</para>
 
+<step performance="required">
 <para>To install Norman's style sheets, simply unzip the distribution
 kit in a suitable place.  A good place to dot this would be
 <filename>/usr/local/share</filename>, which places the kit in a
@@ -1288,29 +1270,54 @@ unzip -aU db107.zip
 </programlisting>
 </para>
 
+<step performance="required">
 <para>One way to test the installation is to build the
 <acronym>HTML</acronym> and <acronym>RTF</acronym> forms of the
-<productname>PostgreSQL</productname> manual.  Go to the <acronym>SGML</acronym> source
+<productname>PostgreSQL</productname> manual.  
+
+<substeps>
+
+<step performance="required">
+<para>
+To build the <acronym>HTML</acronym> files,
+ go to the <acronym>SGML</acronym> source
 directory, <filename>doc/src/sgml</filename>, and say
 <programlisting>
 jade -t sgml -d /usr/local/share/docbook/html/docbook.dsl -D ../graphics postgres.sgml
 </programlisting>
-to build the <acronym>HTML</acronym> files ("book1.htm" is the top level node), and
+
+<para>
+<filename>book1.htm</filename> is the top level node of the output..
+
+<step performance="required">
+<para>
+To generate the <acronym>RTF</acronym> output, ready for importing
+into your favorite word processing system and printing, type:
 <programlisting>
 jade -t rtf -d /usr/local/share/docbook/print/docbook.dsl -D ../graphics postgres.sgml
 </programlisting>
-to generate the <acronym>RTF</acronym> output, ready for importing
-into your favorite word processing system and printing.</para>
 
-</sect3>
+</substeps>
 
-<sect3><title>Installing <productname>PSGML</productname></title>
+</procedure>
 
-<para>First, read the installation instructions at the above listed
+<sect3>
+<title>Installing <productname>PSGML</productname></title>
+<para>
+
+<procedure>
+<title>Installing <productname>PSGML</productname></title>
+
+<step performance="required">
+<para>Read the installation instructions at the above listed
 URL.</para>
 
+<step performance="required">
 <para>Unpack the distribution file, run configure, make and make
 install to put the byte-compiled files and info library in place.
+
+<step performance="required">
+<para>
 Then add the following lines to your
 <filename>/usr/local/share/emacs/site-lisp/site-start.el</filename>
 file to make <productname>Emacs</productname> properly load
@@ -1320,6 +1327,9 @@ file to make <productname>Emacs</productname> properly load
       (cons "/usr/local/share/emacs/site-lisp/psgml" load-path))
 (autoload 'sgml-mode "psgml" "Major mode to edit SGML files." t)
 </programlisting>
+
+<step performance="optional">
+<para>
 If you want to use <productname>PSGML</productname> when editing
 <acronym>HTML</acronym> too, also add this:
 <programlisting>
@@ -1328,22 +1338,39 @@ If you want to use <productname>PSGML</productname> when editing
 </programlisting>
 </para>
 
+
+<step performance="optional">
 <para>There is one important thing to note with
 <productname>PSGML</productname>: its author assumed that your main
 <acronym>SGML</acronym> <acronym>DTD</acronym> directory would be
 <filename>/usr/local/lib/sgml</filename>.  If, as in the examples in
 this chapter, you use <filename>/usr/local/share/sgml</filename>, you
-have to compensate for this.  You can set the
-<filename>SGML_CATALOG_FILES</filename> environment variable, you can
+have to compensate for this.
+
+<substeps>
+<step performance="optional">
+<para>
+You can set the
+<filename>SGML_CATALOG_FILES</filename> environment variable.
+
+<step performance="optional">
+<para>
+You can
 customize your <productname>PSGML</productname> installation (its
-manual tells you how), or you can even edit the source file
+manual tells you how).
+
+<step performance="optional">
+<para>
+You can even edit the source file
 <filename>psgml.el</filename> before compiling and installing
 <productname>PSGML</productname>, changing the hard-coded paths to
 match your own default.</para>
 
-</sect3>
+</substeps>
 
-<sect3><title>Optional: installing <productname>JadeTeX</productname></title>
+</procedure>
+
+<sect3><title>Installing <productname>JadeTeX</productname></title>
 
 <para>If you want to, you can also install
 <productname>JadeTeX</productname> to use
@@ -1420,6 +1447,15 @@ vary according to your installation.
 <title>Alternate Toolsets</title>
 
 <para>
+<productname>sgml-tools</productname> v2.x
+now supports <application>jade</application>
+and <productname>DocBook</productname>. It may be the preferred toolset
+for working with <acronym>SGML</acronym> but we have not had a chance to
+evaluate the new package.
+
+<!--
+
+<para>
 The current stable release of <productname>sgml-tools</productname> is
 version 1.0.4. The v1.0 release includes some restructuring of the
 directory tree to more easily support additional document styles,
@@ -1433,11 +1469,8 @@ version of <productname>sgml-tools</productname> evaluated for
 
 <para>
 Install
-<productname>sgml-tools-0.99.0</productname>
+<productname>sgml-tools-0.99.0</productname>.
 </para>
-
-<sect2>
-<title><productname>sgml-tools</productname></title>
 
 <para>
 Apply  <ulink
@@ -1484,6 +1517,8 @@ null.sty to texmf/tex/latex/tools/ or the appropriate area.
 
 Run <productname>texhash</productname> to update the tex database.
 </para></sect2></sect1>
+
+-->
 
 </appendix>
 

@@ -1,11 +1,16 @@
 <!--
-$header$
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/admin.sgml,v 1.7 1998/10/30 19:36:53 thomas Exp $
 
 Postgres Administrator's Guide.
 Derived from postgres.sgml.
-thomas 1998-02-27
+thomas 1998-10-27
 
-$log$
+$Log: admin.sgml,v $
+Revision 1.7  1998/10/30 19:36:53  thomas
+Minor editing and markup changes as a result of preparing the Postscript
+ documentation for v6.4.
+Bigger updates to the installation instructions (install and config).
+
 
 -->
 
@@ -38,7 +43,7 @@ $log$
 
 <Title>PostgreSQL Administrator's Guide</Title>
 <BookInfo>
-    <ReleaseInfo>Covering v6.3 for general release</ReleaseInfo>
+    <ReleaseInfo>Covering v6.4 for general release</ReleaseInfo>
     <BookBiblio>
     <AuthorGroup>
       <CorpAuthor>The PostgreSQL Development Team</CorpAuthor>
@@ -61,12 +66,13 @@ $log$
     <AuthorInitials>TGL</AuthorInitials>
 -->
 
-    <Date>(last updated 1998-02-23)</Date>
+    <Date>(last updated 1998-10-27)</Date>
     </BookBiblio>
 
 <LegalNotice>
 <Para>
-<ProductName>PostgreSQL</ProductName> is copyright (C) 1998 by the Postgres Global Development Group.
+<ProductName>PostgreSQL</ProductName> is copyright (C) 1998 
+by the Postgres Global Development Group.
 </Para>
 </LegalNotice>
 
@@ -114,8 +120,9 @@ It provides SQL92/SQL3 language support,
 
 &biblio;
 
-<!-- Don't bother with an index until we get some index entries.
-  -- - thomas 1998-10-26
+<!--
+Don't bother with an index until we get some index entries.
+- thomas 1998-10-26
 <index id="index">
 </index>
 -->
