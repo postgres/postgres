@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_operator.h,v 1.37 1998/09/13 14:29:06 thomas Exp $
+ * $Id: pg_operator.h,v 1.38 1998/09/14 01:14:48 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -200,8 +200,8 @@ DATA(insert OID = 525 (  ">="	   PGUID 0 b t f  23  23  16 523  97  0  0 int4ge 
 DATA(insert OID = 526 (  "*"	   PGUID 0 b t f  21  21  21 526   0  0  0 int2mul intltsel intltjoinsel ));
 DATA(insert OID = 527 (  "/"	   PGUID 0 b t f  21  21  21   0   0  0  0 int2div intltsel intltjoinsel ));
 DATA(insert OID = 528 (  "/"	   PGUID 0 b t f  23  23  23   0   0  0  0 int4div intltsel intltjoinsel ));
-DATA(insert OID = 529 (  "%"	   PGUID 0 b t f  21  21  21   6   0  0  0 int2mod intltsel intltjoinsel ));
-DATA(insert OID = 530 (  "%"	   PGUID 0 b t f  23  23  23   6   0  0  0 int4mod intltsel intltjoinsel ));
+DATA(insert OID = 529 (  "%"	   PGUID 0 b t f  21  21  21   0   0  0  0 int2mod intltsel intltjoinsel ));
+DATA(insert OID = 530 (  "%"	   PGUID 0 b t f  23  23  23   0   0  0  0 int4mod intltsel intltjoinsel ));
 DATA(insert OID = 531 (  "<>"	   PGUID 0 b t f  25  25  16 531  98   0   0 textne neqsel neqjoinsel ));
 DATA(insert OID = 532 (  "="	   PGUID 0 b t t  21  23  16 533 538  95  97 int24eq eqsel eqjoinsel ));
 DATA(insert OID = 533 (  "="	   PGUID 0 b t t  23  21  16 532 539  97  95 int42eq eqsel eqjoinsel ));
@@ -219,8 +219,8 @@ DATA(insert OID = 544 (  "*"	   PGUID 0 b t f  21  23  23 545   0  0  0 int24mul
 DATA(insert OID = 545 (  "*"	   PGUID 0 b t f  23  21  23 544   0  0  0 int42mul intltsel intltjoinsel ));
 DATA(insert OID = 546 (  "/"	   PGUID 0 b t f  21  23  23   0   0  0  0 int24div intltsel intltjoinsel ));
 DATA(insert OID = 547 (  "/"	   PGUID 0 b t f  23  21  23   0   0  0  0 int42div intltsel intltjoinsel ));
-DATA(insert OID = 548 (  "%"	   PGUID 0 b t f  21  23  23   6   0  0  0 int24mod intltsel intltjoinsel ));
-DATA(insert OID = 549 (  "%"	   PGUID 0 b t f  23  21  23   6   0  0  0 int42mod intltsel intltjoinsel ));
+DATA(insert OID = 548 (  "%"	   PGUID 0 b t f  21  23  23   0   0  0  0 int24mod intltsel intltjoinsel ));
+DATA(insert OID = 549 (  "%"	   PGUID 0 b t f  23  21  23   0   0  0  0 int42mod intltsel intltjoinsel ));
 DATA(insert OID = 550 (  "+"	   PGUID 0 b t f  21  21  21 550   0   0   0 int2pl intltsel intltjoinsel ));
 DATA(insert OID = 551 (  "+"	   PGUID 0 b t f  23  23  23 551   0   0   0 int4pl intltsel intltjoinsel ));
 DATA(insert OID = 552 (  "+"	   PGUID 0 b t f  21  23  23 553   0   0   0 int24pl intltsel intltjoinsel ));

@@ -35,6 +35,7 @@ main(int argc, char **argv)
 		FROM pg_class c, pg_attribute a, pg_type t \
 		WHERE a.attnum > 0 AND \
 			  relkind = 'r' AND \
+			  relhasrules = 'f' AND \
 			  (typname = 'oid' OR \
 			   typname = 'regproc') AND \
 			  a.attrelid = c.oid AND \
@@ -49,6 +50,7 @@ main(int argc, char **argv)
 		SELECT relname \
 		FROM pg_class c \
 		WHERE relkind = 'r' AND \
+			  relhasrules = 'f' AND \
 			  relname != 'pg_user' \
 		ORDER BY 1; \
 		");

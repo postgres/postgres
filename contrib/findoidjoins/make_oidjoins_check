@@ -1,0 +1,35 @@
+:
+# You first run findoidjoins on the template1 database, and send that
+# output into this file to generate a list of SQL statements.
+trap "rm -f /tmp/$$ /tmp/$$a /tmp/$$b" 0 1 2 3 15
+
+cat "$@" >/tmp/$$
+cat /tmp/$$ | cut -d' ' -f2 | sort | uniq -d >/tmp/$$a
+cat /tmp/$$ | while read LINE
+do
+	set -- $LINE
+	grep "$2" /tmp/$$a >/dev/null 2>&1 || echo $LINE
+done >/tmp/$$b
+cat /tmp/$$b |
+awk -F'[ \.]' '\
+	BEGIN \
+	{
+		printf "\
+--\n\
+-- This is created by pgsql/contrib/findoidjoins/make_oidjoin_check\n\
+--\n";
+	}
+	{
+		printf "\
+SELECT	oid, %s.%s \n\
+FROM	%s \n\
+WHERE	%s%s.%s%s NOT IN (SELECT oid FROM %s) AND \n\
+	%s%s.%s%s != 0;\n", 	$2, $3, $2,
+				($5 == "pg_proc") ? "RegprocToOid(" : "",
+				$2, $3,
+				($5 == "pg_proc") ? ")" : "",
+				$5,
+				($5 == "pg_proc") ? "RegprocToOid(" : "",
+				$2, $3,
+				($5 == "pg_proc") ? ")" : "";
+	}'

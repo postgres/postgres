@@ -2,7 +2,7 @@
 # Makefile, requires pgsql/contrib/pginterface
 #
 #
-PGINTERFACE = pginterface.o halt.o # these have to be in your library search path
+PGINTERFACE = ../pginterface/pginterface.o ../pginterface/halt.o # these have to be in your library search path
 TARGET = findoidjoins
 CFLAGS = -g -Wall -I. -I../../src/interfaces/libpq  -I/usr/local/pgsql/include
 LDFLAGS = -L/usr/local/pgsql/lib -lpq
