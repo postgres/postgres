@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.109 2001/06/12 22:54:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.110 2001/06/25 23:03:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -260,7 +260,7 @@ BootstrapMain(int argc, char *argv[])
 										 * parsing */
 				break;
 			case 'F':
-				enableFsync = false;
+				SetConfigOption("fsync", "false", PGC_POSTMASTER, true);
 				break;
 			case 'x':
 				xlogop = atoi(optarg);
@@ -269,7 +269,7 @@ BootstrapMain(int argc, char *argv[])
 				/* indicates fork from postmaster */
 				break;
 			case 'B':
-				NBuffers = atoi(optarg);
+				SetConfigOption("shared_buffers", optarg, PGC_POSTMASTER, true);
 				break;
 			default:
 				usage();
