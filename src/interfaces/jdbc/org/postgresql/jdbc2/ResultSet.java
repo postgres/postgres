@@ -70,11 +70,27 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
    * @param updateCount the number of rows affected by the operation
    * @param cursor the positioned update/delete cursor name
    */
-  public ResultSet(Connection conn, Field[] fields, Vector tuples, String status, int updateCount)
+  public ResultSet(Connection conn, Field[] fields, Vector tuples, String status, int updateCount,int insertOID)
   {
-      super(conn,fields,tuples,status,updateCount);
+      super(conn,fields,tuples,status,updateCount,insertOID);
   }
   
+  /**
+   * Create a new ResultSet - Note that we create ResultSets to
+   * represent the results of everything.
+   *
+   * @param fields an array of Field objects (basically, the
+   *	ResultSet MetaData)
+   * @param tuples Vector of the actual data
+   * @param status the status string returned from the back end
+   * @param updateCount the number of rows affected by the operation
+   * @param cursor the positioned update/delete cursor name
+   */
+  public ResultSet(Connection conn, Field[] fields, Vector tuples, String status, int updateCount)
+  {
+      super(conn,fields,tuples,status,updateCount,0);
+  }
+    
   /**
    * A ResultSet is initially positioned before its first row,
    * the first call to next makes the first row the current row;
@@ -331,6 +347,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 	  } catch (NumberFormatException e) {
 	    throw new PSQLException ("postgresql.res.badbigdec",s);
 	  }
+	if (scale==-1) return val;
 	  try
 	    {
 	      return val.setScale(scale);
@@ -439,7 +456,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
     if(s==null)
 	return null;
     
-    SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:sszzz");
+    SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     
     try {
 	return new Timestamp(df.parse(s).getTime());
@@ -723,7 +740,8 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
       case Types.BIGINT:
 	return new Long(getLong(columnIndex));
       case Types.NUMERIC:
-	return getBigDecimal(columnIndex, ((field.mod-4) & 0xffff));
+	return getBigDecimal
+	    (columnIndex, (field.mod==-1)?-1:((field.mod-4) & 0xffff));
       case Types.REAL:
 	return new Float(getFloat(columnIndex));
       case Types.DOUBLE:
@@ -783,15 +801,34 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
     
     public boolean absolute(int index) throws SQLException
     {
-	// Peter: Added because negative indices read from the end of the
-	// ResultSet
-	if(index<0)
-	    index=rows.size()+index;
-	
-	if (index==0 || index > rows.size())
+	// index is 1-based, but internally we use 0-based indices
+	int internalIndex;
+
+	if (index==0)
+	    throw new SQLException("Cannot move to index of 0");	
+
+	//if index<0, count from the end of the result set, but check
+	//to be sure that it is not beyond the first index
+	if (index<0) 
+	    if (index>=-rows.size())
+		internalIndex=rows.size()+index;
+	    else {
+		beforeFirst();
+		return false;
+	    }
+		
+	//must be the case that index>0, 
+	//find the correct place, assuming that 
+	//the index is not too large
+	if (index<=rows.size())
+	    internalIndex = index-1;
+	else {
+	    afterLast();
 	    return false;
-	
-	this_row = (byte [][])rows.elementAt(index);
+	}
+
+	current_row=internalIndex;
+	this_row = (byte [][])rows.elementAt(internalIndex);
 	return true;
     }
     
@@ -1022,7 +1059,8 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
     // Peter: Implemented in 7.0
     public boolean relative(int rows) throws SQLException
     {
-	return absolute(current_row+rows);
+	//have to add 1 since absolute expects a 1-based index
+	return absolute(current_row+1+rows);
     }
     
     public boolean rowDeleted() throws SQLException

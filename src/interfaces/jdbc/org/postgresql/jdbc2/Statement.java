@@ -417,5 +417,4 @@ public class Statement implements java.sql.Statement
 	throw org.postgresql.Driver.notImplemented();
     }
     
-    
 }

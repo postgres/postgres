@@ -10,7 +10,7 @@ import org.postgresql.largeobject.*;
 import org.postgresql.util.*;
 
 /**
- * $Id: Connection.java,v 1.1 2000/04/26 05:39:32 peter Exp $
+ * $Id: Connection.java,v 1.1.2.1 2000/06/15 04:12:28 momjian Exp $
  *
  * This abstract class is used by org.postgresql.Driver to open either the JDBC1 or
  * JDBC2 versions of the Connection class.
@@ -317,11 +317,14 @@ public abstract class Connection
 	    int fqp = 0;
 	    boolean hfr = false;
 	    String recv_status = null, msg;
-		int update_count = 1;
+	    int update_count = 1;
+	    int insert_oid = 0;
 	    SQLException final_error = null;
 	    
-	    if (sql.length() > 8192)
-		throw new PSQLException("postgresql.con.toolong",sql);
+	    // Commented out as the backend can now handle queries
+	    // larger than 8K. Peter June 6 2000
+	    //if (sql.length() > 8192)
+	    //throw new PSQLException("postgresql.con.toolong",sql);
 	    try
 		{
 		    pg_stream.SendChar('Q');
@@ -357,11 +360,18 @@ public abstract class Connection
 			    recv_status = pg_stream.ReceiveString(8192);
 				
 				// Now handle the update count correctly.
-				if(recv_status.startsWith("INSERT") || recv_status.startsWith("UPDATE")) {
+				if(recv_status.startsWith("INSERT") || recv_status.startsWith("UPDATE") || recv_status.startsWith("DELETE")) {
 					try {
 						update_count = Integer.parseInt(recv_status.substring(1+recv_status.lastIndexOf(' ')));
 					} catch(NumberFormatException nfe) {
 						throw new PSQLException("postgresql.con.fathom",recv_status);
+					}
+					if(recv_status.startsWith("INSERT")) {
+					    try {
+						insert_oid = Integer.parseInt(recv_status.substring(1+recv_status.indexOf(' '),recv_status.lastIndexOf(' ')));
+					    } catch(NumberFormatException nfe) {
+						throw new PSQLException("postgresql.con.fathom",recv_status);
+					    }
 					}
 				}
 			    if (fields != null)
@@ -423,7 +433,7 @@ public abstract class Connection
 	    if (final_error != null)
 		throw final_error;
 		
-	    return getResultSet(this, fields, tuples, recv_status, update_count);
+	    return getResultSet(this, fields, tuples, recv_status, update_count, insert_oid);
 	}
     }
 
@@ -701,14 +711,14 @@ public abstract class Connection
     // the full class name of the handling class.
     //
     private static final String defaultObjectTypes[][] = {
-	{"box",		"postgresql.geometric.PGbox"},
-	{"circle",	"postgresql.geometric.PGcircle"},
-	{"line",	"postgresql.geometric.PGline"},
-	{"lseg",	"postgresql.geometric.PGlseg"},
-	{"path",	"postgresql.geometric.PGpath"},
-	{"point",	"postgresql.geometric.PGpoint"},
-	{"polygon",	"postgresql.geometric.PGpolygon"},
-	{"money",	"postgresql.util.PGmoney"}
+	{"box",		"org.postgresql.geometric.PGbox"},
+	{"circle",	"org.postgresql.geometric.PGcircle"},
+	{"line",	"org.postgresql.geometric.PGline"},
+	{"lseg",	"org.postgresql.geometric.PGlseg"},
+	{"path",	"org.postgresql.geometric.PGpath"},
+	{"point",	"org.postgresql.geometric.PGpoint"},
+	{"polygon",	"org.postgresql.geometric.PGpolygon"},
+	{"money",	"org.postgresql.util.PGmoney"}
     };
     
     // This initialises the objectTypes hashtable
@@ -725,7 +735,7 @@ public abstract class Connection
      * This returns a resultset. It must be overridden, so that the correct
      * version (from jdbc1 or jdbc2) are returned.
      */
-    protected abstract java.sql.ResultSet getResultSet(org.postgresql.Connection conn, Field[] fields, Vector tuples, String status, int updateCount) throws SQLException;
+    protected abstract java.sql.ResultSet getResultSet(org.postgresql.Connection conn, Field[] fields, Vector tuples, String status, int updateCount,int insertOID) throws SQLException;
     
     public abstract void close() throws SQLException;
 	

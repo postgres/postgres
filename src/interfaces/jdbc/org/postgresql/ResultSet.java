@@ -19,6 +19,7 @@ public abstract class ResultSet
   protected Field fields[];		// The field descriptions
   protected String status;		// Status of the result
   protected int updateCount;		// How many rows did we get back?
+  protected int insertOID;		// The oid of an inserted row
   protected int current_row;		// Our pointer to where we are at
   protected byte[][] this_row;		// the current row result
   protected Connection connection;	// the connection which we returned from
@@ -40,15 +41,33 @@ public abstract class ResultSet
    * @param updateCount the number of rows affected by the operation
    * @param cursor the positioned update/delete cursor name
    */
-  public ResultSet(Connection conn, Field[] fields, Vector tuples, String status, int updateCount)
+  public ResultSet(Connection conn, Field[] fields, Vector tuples, String status, int updateCount,int insertOID)
   {
     this.connection = conn;
     this.fields = fields;
     this.rows = tuples;
     this.status = status;
     this.updateCount = updateCount;
+    this.insertOID = insertOID;
     this.this_row = null;
     this.current_row = -1;
+  }
+    
+  
+  /**
+   * Create a new ResultSet - Note that we create ResultSets to
+   * represent the results of everything.
+   *
+   * @param fields an array of Field objects (basically, the
+   *	ResultSet MetaData)
+   * @param tuples Vector of the actual data
+   * @param status the status string returned from the back end
+   * @param updateCount the number of rows affected by the operation
+   * @param cursor the positioned update/delete cursor name
+   */
+  public ResultSet(Connection conn, Field[] fields, Vector tuples, String status, int updateCount)
+  {
+      this(conn,fields,tuples,status,updateCount,0);
   }
     
   /**
@@ -148,6 +167,14 @@ public abstract class ResultSet
      return fields[field-1].getOID();
    }
   
+    /**
+     * returns the OID of the last inserted row
+     */
+    public int getInsertedOID()
+    {
+	return insertOID;
+    }
+    
     /**
      * This is part of the JDBC API, but is required by org.postgresql.Field
      */
