@@ -1,4 +1,4 @@
-<REFENTRY ID="SQL-CLUSTER-1">
+<REFENTRY ID="SQL-CLUSTER">
  <REFMETA>
  <REFENTRYTITLE>
   CLUSTER
@@ -10,7 +10,7 @@
   CLUSTER
  </REFNAME>
  <REFPURPOSE>
-  Gives storage clustering advice to PostgreSQL
+  Gives storage clustering advice to the backend
  </REFPURPOSE>
  
  <REFSYNOPSISDIV>

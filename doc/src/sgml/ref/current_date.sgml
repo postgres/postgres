@@ -1,4 +1,4 @@
-<REFENTRY ID="SQL-CURRENT-DATE-1">
+<REFENTRY ID="SQL-CURRENT-DATE">
  <REFMETA>
   <REFENTRYTITLE>
    SQL_CURRENT_DATE
@@ -10,7 +10,7 @@
    SQL_CURRENT_DATE
   </REFNAME>
   <REFPURPOSE>
-- returns the current date, (i.e "today").
+Returns the current date
   </REFPURPOSE>
  <REFSYNOPSISDIV>
   <REFSYNOPSISDIVINFO>

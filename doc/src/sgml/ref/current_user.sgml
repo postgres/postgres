@@ -1,4 +1,4 @@
-<REFENTRY ID="SQL-CURRENT-USER-1">
+<REFENTRY ID="SQL-CURRENT-USER">
  <REFMETA>
   <REFENTRYTITLE>
    SQL_CURRENT_USER
@@ -10,7 +10,7 @@
    SQL_CURRENT_USER
   </REFNAME>
   <REFPURPOSE>
-   - returns the current user name.
+   Returns the current user name
   </REFPURPOSE>
  <REFSYNOPSISDIV>
   <REFSYNOPSISDIVINFO>

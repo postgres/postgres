@@ -1,4 +1,4 @@
-<REFENTRY ID="SQL-CURRENT-TIME-1">
+<REFENTRY ID="SQL-CURRENT-TIME">
  <REFMETA>
   <REFENTRYTITLE>
    SQL_CURRENT_TIME
@@ -10,7 +10,7 @@
    SQL_CURRENT_TIME
   </REFNAME>
   <REFPURPOSE>
-    - returns the current local time, (i.e "now").
+Returns the current local time
   </REFPURPOSE>
  <REFSYNOPSISDIV>
   <REFSYNOPSISDIVINFO>

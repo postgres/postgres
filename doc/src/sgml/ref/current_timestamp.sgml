@@ -1,4 +1,4 @@
-<REFENTRY ID="SQL-CURRENT-TIMESTAMP-1">
+<REFENTRY ID="SQL-CURRENT-TIMESTAMP">
  <REFMETA>
   <REFENTRYTITLE>
    SQL_CURRENT_TIMESTAMP
@@ -10,8 +10,7 @@
    SQL_CURRENT_TIMESTAMP
   </REFNAME>
   <REFPURPOSE>
-   returns the current timestamp, (i.e the
-   date "today" concatenated with time "now").
+   Returns the current date and time
   </REFPURPOSE>
   
   
