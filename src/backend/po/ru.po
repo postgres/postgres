@@ -5912,7 +5912,7 @@ msgstr ""
 #: ../parser/analyze.c:984
 #, c-format
 msgid ""
-"CREATE TABLE/PRIMARY KEY multiple primary keys for table '%s' are not allowed"
+"CREATE TABLE / PRIMARY KEY multiple primary keys for table '%s' are not allowed"
 msgstr ""
 
 #: ../parser/analyze.c:1039 ../parser/analyze.c:1259 ../parser/analyze.c:1396
@@ -5943,7 +5943,7 @@ msgstr ""
 
 #: ../parser/analyze.c:1173
 #, c-format
-msgid "CREATE TABLE/%s will create implicit index '%s' for table '%s'"
+msgid "CREATE TABLE / %s will create implicit index '%s' for table '%s'"
 msgstr ""
 
 #: ../parser/analyze.c:1201
