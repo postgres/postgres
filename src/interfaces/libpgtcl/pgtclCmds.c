@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.68 2002/09/04 20:31:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.69 2002/10/17 14:51:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -555,7 +555,8 @@ Pg_result(ClientData cData, Tcl_Interp *interp, int argc, char *argv[])
 	result = PgGetResultId(interp, argv[1]);
 	if (result == (PGresult *) NULL)
 	{
-		Tcl_AppendResult(interp, argv[1], " is not a valid query result", 0);
+		Tcl_AppendResult(interp, "\n",
+						 argv[1], " is not a valid query result", 0);
 		return TCL_ERROR;
 	}
 
