@@ -17,7 +17,7 @@
  *
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/ri_triggers.c,v 1.74 2004/10/15 22:40:11 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/ri_triggers.c,v 1.75 2004/10/30 20:52:59 tgl Exp $
  *
  * ----------
  */
@@ -186,6 +186,7 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 	Relation	pk_rel;
 	HeapTuple	new_row;
 	HeapTuple	old_row;
+	Buffer		new_row_buf;
 	RI_QueryKey qkey;
 	void	   *qplan;
 	int			i;
@@ -213,35 +214,30 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 	{
 		old_row = trigdata->tg_trigtuple;
 		new_row = trigdata->tg_newtuple;
+		new_row_buf = trigdata->tg_newtuplebuf;
 	}
 	else
 	{
 		old_row = NULL;
 		new_row = trigdata->tg_trigtuple;
+		new_row_buf = trigdata->tg_trigtuplebuf;
 	}
 
 	/*
 	 * We should not even consider checking the row if it is no longer
 	 * valid since it was either deleted (doesn't matter) or updated (in
 	 * which case it'll be checked with its final values).
-	 *
-	 * We do not know what buffer the new_row is in, but it doesn't matter
-	 * since it's not possible for a hint-bit update to occur here (the
-	 * new_row could only contain our own XID, and we haven't yet committed
-	 * or aborted...)
 	 */
-	if (new_row)
+	Assert(new_row_buf != InvalidBuffer);
+	if (!HeapTupleSatisfiesItself(new_row->t_data, new_row_buf))
 	{
-		if (!HeapTupleSatisfiesItself(new_row->t_data, InvalidBuffer))
-		{
-			heap_close(pk_rel, RowShareLock);
-			return PointerGetDatum(NULL);
-		}
+		heap_close(pk_rel, RowShareLock);
+		return PointerGetDatum(NULL);
 	}
 
 	/* ----------
 	 * SQL3 11.9 <referential constraint definition>
-	 *	Gereral rules 2) a):
+	 *	General rules 2) a):
 	 *		If Rf and Rt are empty (no columns to compare given)
 	 *		constraint is true if 0 < (SELECT COUNT(*) FROM T)
 	 *

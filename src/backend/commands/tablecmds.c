@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.137 2004/10/22 17:20:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.138 2004/10/30 20:52:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4256,6 +4256,8 @@ validateForeignKeyConstraint(FkConstraint *fkconstraint,
 		trigdata.tg_trigtuple = tuple;
 		trigdata.tg_newtuple = NULL;
 		trigdata.tg_trigger = &trig;
+		trigdata.tg_trigtuplebuf = scan->rs_cbuf;
+		trigdata.tg_newtuplebuf = InvalidBuffer;
 
 		fcinfo.context = (Node *) &trigdata;
 

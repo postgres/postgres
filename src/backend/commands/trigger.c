@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.173 2004/10/21 21:33:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.174 2004/10/30 20:52:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1192,8 +1192,10 @@ ExecBSInsertTriggers(EState *estate, ResultRelInfo *relinfo)
 	LocTriggerData.tg_event = TRIGGER_EVENT_INSERT |
 		TRIGGER_EVENT_BEFORE;
 	LocTriggerData.tg_relation = relinfo->ri_RelationDesc;
-	LocTriggerData.tg_newtuple = NULL;
 	LocTriggerData.tg_trigtuple = NULL;
+	LocTriggerData.tg_newtuple = NULL;
+	LocTriggerData.tg_trigtuplebuf = InvalidBuffer;
+	LocTriggerData.tg_newtuplebuf = InvalidBuffer;
 	for (i = 0; i < ntrigs; i++)
 	{
 		Trigger    *trigger = &trigdesc->triggers[tgindx[i]];
@@ -1246,6 +1248,7 @@ ExecBRInsertTriggers(EState *estate, ResultRelInfo *relinfo,
 		TRIGGER_EVENT_BEFORE;
 	LocTriggerData.tg_relation = relinfo->ri_RelationDesc;
 	LocTriggerData.tg_newtuple = NULL;
+	LocTriggerData.tg_newtuplebuf = InvalidBuffer;
 	for (i = 0; i < ntrigs; i++)
 	{
 		Trigger    *trigger = &trigdesc->triggers[tgindx[i]];
@@ -1253,6 +1256,7 @@ ExecBRInsertTriggers(EState *estate, ResultRelInfo *relinfo,
 		if (!trigger->tgenabled)
 			continue;
 		LocTriggerData.tg_trigtuple = oldtuple = newtuple;
+		LocTriggerData.tg_trigtuplebuf = InvalidBuffer;
 		LocTriggerData.tg_trigger = trigger;
 		newtuple = ExecCallTriggerFunc(&LocTriggerData,
 								   relinfo->ri_TrigFunctions + tgindx[i],
@@ -1305,8 +1309,10 @@ ExecBSDeleteTriggers(EState *estate, ResultRelInfo *relinfo)
 	LocTriggerData.tg_event = TRIGGER_EVENT_DELETE |
 		TRIGGER_EVENT_BEFORE;
 	LocTriggerData.tg_relation = relinfo->ri_RelationDesc;
-	LocTriggerData.tg_newtuple = NULL;
 	LocTriggerData.tg_trigtuple = NULL;
+	LocTriggerData.tg_newtuple = NULL;
+	LocTriggerData.tg_trigtuplebuf = InvalidBuffer;
+	LocTriggerData.tg_newtuplebuf = InvalidBuffer;
 	for (i = 0; i < ntrigs; i++)
 	{
 		Trigger    *trigger = &trigdesc->triggers[tgindx[i]];
@@ -1365,6 +1371,7 @@ ExecBRDeleteTriggers(EState *estate, ResultRelInfo *relinfo,
 		TRIGGER_EVENT_BEFORE;
 	LocTriggerData.tg_relation = relinfo->ri_RelationDesc;
 	LocTriggerData.tg_newtuple = NULL;
+	LocTriggerData.tg_newtuplebuf = InvalidBuffer;
 	for (i = 0; i < ntrigs; i++)
 	{
 		Trigger    *trigger = &trigdesc->triggers[tgindx[i]];
@@ -1372,6 +1379,7 @@ ExecBRDeleteTriggers(EState *estate, ResultRelInfo *relinfo,
 		if (!trigger->tgenabled)
 			continue;
 		LocTriggerData.tg_trigtuple = trigtuple;
+		LocTriggerData.tg_trigtuplebuf = InvalidBuffer;
 		LocTriggerData.tg_trigger = trigger;
 		newtuple = ExecCallTriggerFunc(&LocTriggerData,
 								   relinfo->ri_TrigFunctions + tgindx[i],
@@ -1434,8 +1442,10 @@ ExecBSUpdateTriggers(EState *estate, ResultRelInfo *relinfo)
 	LocTriggerData.tg_event = TRIGGER_EVENT_UPDATE |
 		TRIGGER_EVENT_BEFORE;
 	LocTriggerData.tg_relation = relinfo->ri_RelationDesc;
-	LocTriggerData.tg_newtuple = NULL;
 	LocTriggerData.tg_trigtuple = NULL;
+	LocTriggerData.tg_newtuple = NULL;
+	LocTriggerData.tg_trigtuplebuf = InvalidBuffer;
+	LocTriggerData.tg_newtuplebuf = InvalidBuffer;
 	for (i = 0; i < ntrigs; i++)
 	{
 		Trigger    *trigger = &trigdesc->triggers[tgindx[i]];
@@ -1509,6 +1519,8 @@ ExecBRUpdateTriggers(EState *estate, ResultRelInfo *relinfo,
 			continue;
 		LocTriggerData.tg_trigtuple = trigtuple;
 		LocTriggerData.tg_newtuple = oldtuple = newtuple;
+		LocTriggerData.tg_trigtuplebuf = InvalidBuffer;
+		LocTriggerData.tg_newtuplebuf = InvalidBuffer;
 		LocTriggerData.tg_trigger = trigger;
 		newtuple = ExecCallTriggerFunc(&LocTriggerData,
 								   relinfo->ri_TrigFunctions + tgindx[i],
@@ -1896,8 +1908,8 @@ AfterTriggerExecute(AfterTriggerEvent event,
 	HeapTupleData oldtuple;
 	HeapTupleData newtuple;
 	HeapTuple	rettuple;
-	Buffer		oldbuffer;
-	Buffer		newbuffer;
+	Buffer		oldbuffer = InvalidBuffer;
+	Buffer		newbuffer = InvalidBuffer;
 	int			tgindx;
 
 	/*
@@ -1942,16 +1954,22 @@ AfterTriggerExecute(AfterTriggerEvent event,
 		case TRIGGER_EVENT_INSERT:
 			LocTriggerData.tg_trigtuple = &newtuple;
 			LocTriggerData.tg_newtuple = NULL;
+			LocTriggerData.tg_trigtuplebuf = newbuffer;
+			LocTriggerData.tg_newtuplebuf = InvalidBuffer;
 			break;
 
 		case TRIGGER_EVENT_UPDATE:
 			LocTriggerData.tg_trigtuple = &oldtuple;
 			LocTriggerData.tg_newtuple = &newtuple;
+			LocTriggerData.tg_trigtuplebuf = oldbuffer;
+			LocTriggerData.tg_newtuplebuf = newbuffer;
 			break;
 
 		case TRIGGER_EVENT_DELETE:
 			LocTriggerData.tg_trigtuple = &oldtuple;
 			LocTriggerData.tg_newtuple = NULL;
+			LocTriggerData.tg_trigtuplebuf = oldbuffer;
+			LocTriggerData.tg_newtuplebuf = InvalidBuffer;
 			break;
 	}
 
@@ -1970,9 +1988,9 @@ AfterTriggerExecute(AfterTriggerEvent event,
 	/*
 	 * Release buffers
 	 */
-	if (ItemPointerIsValid(&(event->ate_oldctid)))
+	if (oldbuffer != InvalidBuffer)
 		ReleaseBuffer(oldbuffer);
-	if (ItemPointerIsValid(&(event->ate_newctid)))
+	if (newbuffer != InvalidBuffer)
 		ReleaseBuffer(newbuffer);
 }
 
@@ -2916,6 +2934,14 @@ AfterTriggerSaveEvent(ResultRelInfo *relinfo, int event, bool row_trigger,
 				LocTriggerData.tg_trigtuple = oldtup;
 				LocTriggerData.tg_newtuple = newtup;
 				LocTriggerData.tg_trigger = trigger;
+				/*
+				 * We do not currently know which buffers the passed tuples
+				 * are in, but it does not matter because RI_FKey_keyequal_upd
+				 * does not care.  We could expand the API of this function
+				 * if it becomes necessary to set these fields accurately.
+				 */
+				LocTriggerData.tg_trigtuplebuf = InvalidBuffer;
+				LocTriggerData.tg_newtuplebuf = InvalidBuffer;
 
 				if (RI_FKey_keyequal_upd(&LocTriggerData))
 				{
