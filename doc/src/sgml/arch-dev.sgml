@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/arch-dev.sgml,v 2.24 2003/11/29 19:51:36 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/arch-dev.sgml,v 2.25 2005/01/05 23:42:02 tgl Exp $
 -->
 
  <chapter id="overview">
@@ -63,11 +63,11 @@ $PostgreSQL: pgsql/doc/src/sgml/arch-dev.sgml,v 2.24 2003/11/29 19:51:36 pgsql E
       <firstterm>system catalogs</firstterm>) to apply to 
       the query tree.  It performs the
       transformations given in the <firstterm>rule bodies</firstterm>.
-      One application of the rewrite system is in the realization of
-      <firstterm>views</firstterm>.
      </para>
 
      <para>
+      One application of the rewrite system is in the realization of
+      <firstterm>views</firstterm>.
       Whenever a query against a view
       (i.e. a <firstterm>virtual table</firstterm>) is made,
       the rewrite system rewrites the user's query to
@@ -90,8 +90,8 @@ $PostgreSQL: pgsql/doc/src/sgml/arch-dev.sgml,v 2.24 2003/11/29 19:51:36 pgsql E
       relation to be scanned, there are two paths for the
       scan. One possibility is a simple sequential scan and the other
       possibility is to use the index. Next the cost for the execution of
-      each plan is estimated and the
-      cheapest plan is chosen and handed back.
+      each path is estimated and the cheapest path is chosen.  The cheapest
+      path is expanded into a complete plan that the executor can use.
      </para>
     </step>
 
@@ -142,7 +142,8 @@ $PostgreSQL: pgsql/doc/src/sgml/arch-dev.sgml,v 2.24 2003/11/29 19:51:36 pgsql E
     <productname>PostgreSQL</productname> protocol described in
     <xref linkend="protocol">.  Many clients are based on the
     C-language library <application>libpq</>, but several independent
-    implementations exist, such as the Java <application>JDBC</> driver.
+    implementations of the protocol exist, such as the Java
+    <application>JDBC</> driver.
    </para>
 
    <para>
@@ -339,7 +340,7 @@ $PostgreSQL: pgsql/doc/src/sgml/arch-dev.sgml,v 2.24 2003/11/29 19:51:36 pgsql E
     different ways, each of which will produce the same set of
     results.  If it is computationally feasible, the query optimizer
     will examine each of these possible execution plans, ultimately
-    selecting the execution plan that will run the fastest.
+    selecting the execution plan that is expected to run the fastest.
    </para>
 
    <note>
@@ -355,20 +356,26 @@ $PostgreSQL: pgsql/doc/src/sgml/arch-dev.sgml,v 2.24 2003/11/29 19:51:36 pgsql E
    </note>
 
    <para>
-    After the cheapest path is determined, a <firstterm>plan tree</>
-    is built to pass to the executor.  This represents the desired
-    execution plan in sufficient detail for the executor to run it.
+    The planner's search procedure actually works with data structures
+    called <firstterm>paths</>, which are simply cut-down representations of
+    plans containing only as much information as the planner needs to make
+    its decisions. After the cheapest path is determined, a full-fledged
+    <firstterm>plan tree</> is built to pass to the executor.  This represents
+    the desired execution plan in sufficient detail for the executor to run it.
+    In the rest of this section we'll ignore the distinction between paths
+    and plans.
    </para>
 
    <sect2>
     <title>Generating Possible Plans</title>
 
     <para>
-     The planner/optimizer decides which plans should be generated
-     based upon the types of indexes defined on the relations appearing in
-     a query. There is always the possibility of performing a
-     sequential scan on a relation, so a plan using only
-     sequential scans is always created. Assume an index is defined on a
+     The planner/optimizer starts by generating plans for scanning each
+     individual relation (table) used in the query.  The possible plans
+     are determined by the available indexes on each relation.
+     There is always the possibility of performing a
+     sequential scan on a relation, so a sequential scan plan is always
+     created. Assume an index is defined on a
      relation (for example a B-tree index) and a query contains the
      restriction
      <literal>relation.attribute OPR constant</literal>. If
@@ -395,35 +402,45 @@ $PostgreSQL: pgsql/doc/src/sgml/arch-dev.sgml,v 2.24 2003/11/29 19:51:36 pgsql E
      <itemizedlist>
       <listitem>
        <para>
-	<firstterm>nested loop join</firstterm>: The right relation is scanned
-	once for every row found in the left relation. This strategy
-	is easy to implement but can be very time consuming.  (However,
-	if the right relation can be scanned with an index scan, this can
-	be a good strategy.  It is possible to use values from the current
-	row of the left relation as keys for the index scan of the right.)
+        <firstterm>nested loop join</firstterm>: The right relation is scanned
+        once for every row found in the left relation. This strategy
+        is easy to implement but can be very time consuming.  (However,
+        if the right relation can be scanned with an index scan, this can
+        be a good strategy.  It is possible to use values from the current
+        row of the left relation as keys for the index scan of the right.)
        </para>
       </listitem>
 
       <listitem>
        <para>
-	<firstterm>merge sort join</firstterm>: Each relation is sorted on the join
-	attributes before the join starts. Then the two relations are
-	merged together taking into account that both relations are
-	ordered on the join attributes. This kind of join is more
-	attractive because each relation has to be scanned only once.
+        <firstterm>merge sort join</firstterm>: Each relation is sorted on the join
+        attributes before the join starts. Then the two relations are
+        scanned in parallel, and matching rows are combined to form
+        join rows. This kind of join is more
+        attractive because each relation has to be scanned only once.
+        The required sorting may be achieved either by an explicit sort
+        step, or by scanning the relation in the proper order using an
+        index on the join key.
        </para>
       </listitem>
 
       <listitem>
        <para>
-	<firstterm>hash join</firstterm>: the right relation is first scanned
-	and loaded into a hash table, using its join attributes as hash keys.
-	Next the left relation is scanned and the
-	appropriate values of every row found are used as hash keys to
-	locate the matching rows in the table.
+        <firstterm>hash join</firstterm>: the right relation is first scanned
+        and loaded into a hash table, using its join attributes as hash keys.
+        Next the left relation is scanned and the
+        appropriate values of every row found are used as hash keys to
+        locate the matching rows in the table.
        </para>
       </listitem>
      </itemizedlist>
+    </para>
+
+    <para>
+     When the query involves more than two relations, the final result
+     must be built up by a tree of join steps, each with two inputs.
+     The planner examines different possible join sequences to find the
+     cheapest one.
     </para>
 
     <para>
@@ -512,7 +529,7 @@ $PostgreSQL: pgsql/doc/src/sgml/arch-dev.sgml,v 2.24 2003/11/29 19:51:36 pgsql E
     the executor top level uses this information to create a new updated row
     and mark the old row deleted.  For <command>DELETE</>, the only column
     that is actually returned by the plan is the TID, and the executor top
-    level simply uses the TID to visit the target rows and mark them deleted.
+    level simply uses the TID to visit each target row and mark it deleted.
    </para>
 
   </sect1>

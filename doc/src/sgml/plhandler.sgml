@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plhandler.sgml,v 1.3 2004/12/30 21:45:36 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plhandler.sgml,v 1.4 2005/01/05 23:42:03 tgl Exp $
 -->
 
  <chapter id="plhandler">
@@ -56,11 +56,11 @@ $PostgreSQL: pgsql/doc/src/sgml/plhandler.sgml,v 1.3 2004/12/30 21:45:36 tgl Exp
     system table
     <classname>pg_proc</classname> and to analyze the argument
     and return types of the called function. The <literal>AS</> clause from the
-    <command>CREATE FUNCTION</command> of the function will be found
+    <command>CREATE FUNCTION</command> command for the function will be found
     in the <literal>prosrc</literal> column of the
-    <classname>pg_proc</classname> row. This may be the source
-    text in the procedural language itself (like for PL/Tcl), a
-    path name to a file, or anything else that tells the call handler
+    <classname>pg_proc</classname> row. This is commonly source
+    text in the procedural language, but in theory it could be something else,
+    such as a path name to a file, or anything else that tells the call handler
     what to do in detail.
    </para>
 

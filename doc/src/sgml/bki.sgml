@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/bki.sgml,v 1.12 2003/11/29 19:51:36 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/bki.sgml,v 1.13 2005/01/05 23:42:03 tgl Exp $
  -->
 
 <chapter id="bki">
@@ -7,10 +7,11 @@ $PostgreSQL: pgsql/doc/src/sgml/bki.sgml,v 1.12 2003/11/29 19:51:36 pgsql Exp $
 
  <para>
   Backend Interface (<acronym>BKI</acronym>) files are scripts in a
-  special language that are input to the
-  <productname>PostgreSQL</productname> backend running in the special
-  <quote>bootstrap</quote> mode that allows it to perform database
-  functions without a database system already existing.
+  special language that is understood by the
+  <productname>PostgreSQL</productname> backend when running in the
+  <quote>bootstrap</quote> mode.  The bootstrap mode allows system catalogs
+  to be created and filled from scratch, whereas ordinary SQL commands
+  require the catalogs to exist already.
   <acronym>BKI</acronym> files can therefore be used to create the
   database system in the first place.  (And they are probably not
   useful for anything else.)
@@ -21,8 +22,9 @@ $PostgreSQL: pgsql/doc/src/sgml/bki.sgml,v 1.12 2003/11/29 19:51:36 pgsql Exp $
   to do part of its job when creating a new database cluster.  The
   input file used by <application>initdb</application> is created as
   part of building and installing <productname>PostgreSQL</productname>
-  by a program named <filename>genbki.sh</filename> from some
-  specially formatted C header files in the source tree.  The created
+  by a program named <filename>genbki.sh</filename>, which reads some
+  specially formatted C header files in the <filename>src/include/catalog/</>
+  directory of the source tree.  The created
   <acronym>BKI</acronym> file is called <filename>postgres.bki</filename> and is
   normally installed in the
   <filename>share</filename> subdirectory of the installation tree.
@@ -40,9 +42,7 @@ $PostgreSQL: pgsql/doc/src/sgml/bki.sgml,v 1.12 2003/11/29 19:51:36 pgsql Exp $
    This section describes how the <productname>PostgreSQL</productname>
    backend interprets <acronym>BKI</acronym> files.  This description
    will be easier to understand if the <filename>postgres.bki</filename>
-   file is at hand as an example.  You should also study the source
-   code of <application>initdb</application> to get an idea of how the
-   backend is invoked.
+   file is at hand as an example.
   </para>
 
   <para>
@@ -67,6 +67,61 @@ $PostgreSQL: pgsql/doc/src/sgml/bki.sgml,v 1.12 2003/11/29 19:51:36 pgsql Exp $
   <title><acronym>BKI</acronym> Commands</title>
 
   <variablelist>
+   <varlistentry>
+    <term>
+     create 
+     <optional>bootstrap</optional>
+     <optional>shared_relation</optional>
+     <optional>without_oids</optional>
+     <replaceable class="parameter">tablename</replaceable>
+     (<replaceable class="parameter">name1</replaceable> =
+     <replaceable class="parameter">type1</replaceable> <optional>,
+     <replaceable class="parameter">name2</replaceable> = <replaceable
+     class="parameter">type2</replaceable>, ...</optional>)
+    </term>
+
+    <listitem>
+     <para>
+      Create a table named <replaceable
+      class="parameter">tablename</replaceable> with the columns given
+      in parentheses.
+     </para>
+
+     <para>
+      The following column types are supported directly by
+      <filename>bootstrap.c</>: <type>bool</type>,
+      <type>bytea</type>, <type>char</type> (1 byte),
+      <type>name</type>, <type>int2</type>,
+      <type>int4</type>, <type>regproc</type>, <type>regclass</type>,
+      <type>regtype</type>, <type>text</type>,
+      <type>oid</type>, <type>tid</type>, <type>xid</type>,
+      <type>cid</type>, <type>int2vector</type>, <type>oidvector</type>,
+      <type>_int4</type> (array), <type>_text</type> (array),
+      <type>_aclitem</type> (array).  Although it is possible to create
+      tables containing columns of other types, this cannot be done until
+      after <structname>pg_type</> has been created and filled with
+      appropriate entries.
+     </para>
+
+     <para>
+      When <literal>bootstrap</> is specified,
+      the table will only be created on disk; nothing is entered into
+      <structname>pg_class</structname>,
+      <structname>pg_attribute</structname>, etc, for it.  Thus the
+      table will not be accessible by ordinary SQL operations until
+      such entries are made the hard way (with <literal>insert</>
+      commands).  This option is used for creating
+      <structname>pg_class</structname> etc themselves.
+     </para>
+
+     <para>
+      The table is created as shared if <literal>shared_relation</> is
+      specified.
+      It will have OIDs unless <literal>without_oids</> is specified.
+     </para>
+    </listitem>
+   </varlistentry>
+
    <varlistentry>
     <term>
      open <replaceable class="parameter">tablename</replaceable>
@@ -95,51 +150,6 @@ $PostgreSQL: pgsql/doc/src/sgml/bki.sgml,v 1.12 2003/11/29 19:51:36 pgsql Exp $
       class="parameter">tablename</replaceable> is given, then the
       currently open table is closed.
      </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term>
-     create <replaceable class="parameter">tablename</replaceable>
-     (<replaceable class="parameter">name1</replaceable> =
-     <replaceable class="parameter">type1</replaceable> <optional>,
-     <replaceable class="parameter">name2</replaceable> = <replaceable
-     class="parameter">type2</replaceable>, ...</optional>)
-    </term>
-
-    <listitem>
-     <para>
-      Create a table named <replaceable
-      class="parameter">tablename</replaceable> with the columns given
-      in parentheses.
-     </para>
-
-     <para>
-      The <replaceable>type</replaceable> is not necessarily the data
-      type that the column will have in the SQL environment; that is
-      determined by the <structname>pg_attribute</structname> system
-      catalog.  The type here is essentially only used to allocate
-      storage.  The following types are allowed: <type>bool</type>,
-      <type>bytea</type>, <type>char</type> (1 byte),
-      <type>name</type>, <type>int2</type>, <type>int2vector</type>,
-      <type>int4</type>, <type>regproc</type>, <type>regclass</type>,
-      <type>regtype</type>, <type>text</type>,
-      <type>oid</type>, <type>tid</type>, <type>xid</type>,
-      <type>cid</type>, <type>oidvector</type>, <type>smgr</type>,
-      <type>_int4</type> (array), <type>_aclitem</type> (array).
-      Array types can also be indicated by writing
-      <literal>[]</literal> after the name of the element type.
-     </para>
-
-     <note>
-      <para>
-       The table will only be created on disk, it will not
-       automatically be registered in the system catalogs and will
-       therefore not be accessible unless appropriate rows are
-       inserted in <structname>pg_class</structname>,
-       <structname>pg_attribute</structname>, etc.
-      </para>
-     </note>
     </listitem>
    </varlistentry>
 
@@ -190,6 +200,8 @@ $PostgreSQL: pgsql/doc/src/sgml/bki.sgml,v 1.12 2003/11/29 19:51:36 pgsql Exp $
       classes to use are <replaceable
       class="parameter">opclass1</replaceable>, <replaceable
       class="parameter">opclass2</replaceable> etc., respectively.
+      The index file is created and appropriate catalog entries are
+      made for it, but the index contents are not initialized by this command.
      </para>
     </listitem>
    </varlistentry>
@@ -199,7 +211,7 @@ $PostgreSQL: pgsql/doc/src/sgml/bki.sgml,v 1.12 2003/11/29 19:51:36 pgsql Exp $
 
     <listitem>
      <para>
-      Build the indices that have previously been declared.
+      Fill in the indices that have previously been declared.
      </para>
     </listitem>
    </varlistentry>
@@ -212,7 +224,7 @@ $PostgreSQL: pgsql/doc/src/sgml/bki.sgml,v 1.12 2003/11/29 19:51:36 pgsql Exp $
 
   <para>
    The following sequence of commands will create the
-   <literal>test_table</literal> table with the two columns
+   table <literal>test_table</literal> with two columns
    <literal>cola</literal> and <literal>colb</literal> of type
    <type>int4</type> and <type>text</type>, respectively, and insert
    two rows into the table.

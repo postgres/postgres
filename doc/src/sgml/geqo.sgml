@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/geqo.sgml,v 1.26 2003/11/29 19:51:37 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/geqo.sgml,v 1.27 2005/01/05 23:42:03 tgl Exp $
 Genetic Optimizer
 -->
 
@@ -65,8 +65,7 @@ Genetic Optimizer
     enormous amount of time and memory space when the number of joins
     in the query grows large. This makes the ordinary
     <productname>PostgreSQL</productname> query optimizer
-    inappropriate for database application domains that involve the
-    need for extensive queries, such as artificial intelligence.
+    inappropriate for queries that join a large number of tables.
    </para>
 
    <para>
@@ -97,7 +96,7 @@ Genetic Optimizer
    <para>
     The genetic algorithm (<acronym>GA</acronym>) is a heuristic optimization method which
     operates through
-    determined, randomized search. The set of possible solutions for the
+    nondeterministic, randomized search. The set of possible solutions for the
     optimization problem is considered as a
     <firstterm>population</firstterm> of <firstterm>individuals</firstterm>.
     The degree of adaptation of an individual to its environment is specified
@@ -176,11 +175,12 @@ Genetic Optimizer
    <title>Genetic Query Optimization (<acronym>GEQO</acronym>) in PostgreSQL</title>
 
    <para>
-    The <acronym>GEQO</acronym> module is intended for the solution of the query
-    optimization problem similar to a traveling salesman problem (<acronym>TSP</acronym>).
+    The <acronym>GEQO</acronym> module approaches the query
+    optimization problem as though it were the well-known traveling salesman
+    problem (<acronym>TSP</acronym>).
     Possible query plans are encoded as integer strings. Each string
     represents the join order from one relation of the query to the next.
-    E. g., the query tree
+    For example, the join tree
 <literallayout class="monospaced">
    /\
   /\ 2
@@ -245,29 +245,39 @@ Genetic Optimizer
      <para>
       Work is still needed to improve the genetic algorithm parameter
       settings.
-      In file <filename>backend/optimizer/geqo/geqo_params.c</filename>, routines
+      In file <filename>src/backend/optimizer/geqo/geqo_main.c</filename>,
+      routines
       <function>gimme_pool_size</function> and <function>gimme_number_generations</function>,
       we have to find a compromise for the parameter settings
       to satisfy two competing demands:
       <itemizedlist spacing="compact">
        <listitem>
-	<para>
-	 Optimality of the query plan
-	</para>
+        <para>
+         Optimality of the query plan
+        </para>
        </listitem>
        <listitem>
-	<para>
-	 Computing time
-	</para>
+        <para>
+         Computing time
+        </para>
        </listitem>
       </itemizedlist>
+     </para>
+
+     <para>
+      At a more basic level, it is not clear that solving query optimization
+      with a GA algorithm designed for TSP is appropriate.  In the TSP case,
+      the cost associated with any substring (partial tour) is independent
+      of the rest of the tour, but this is certainly not true for query
+      optimization.  Thus it is questionable whether edge recombination
+      crossover is the most effective mutation procedure.
      </para>
 
    </sect2>
   </sect1>
 
  <sect1 id="geqo-biblio">
-  <title>Further Readings</title>
+  <title>Further Reading</title>
 
   <para>
    The following resources contain additional information about

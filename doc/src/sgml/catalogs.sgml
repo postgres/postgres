@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.94 2004/12/13 18:05:07 petere Exp $
+ $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.95 2005/01/05 23:42:03 tgl Exp $
  -->
 
 <chapter id="catalogs">
@@ -33,7 +33,7 @@
    Most system catalogs are copied from the template database during
    database creation and are thereafter database-specific. A few
    catalogs are physically shared across all databases in a cluster;
-   these are marked in the descriptions of the individual catalogs.
+   these are noted in the descriptions of the individual catalogs.
   </para>
 
   <table id="catalog-table">
@@ -85,7 +85,7 @@
 
      <row>
       <entry><link linkend="catalog-pg-class"><structname>pg_class</structname></link></entry>
-      <entry>tables, indexes, sequences (<quote>relations</quote>)</entry>
+      <entry>tables, indexes, sequences, views (<quote>relations</quote>)</entry>
      </row>
 
      <row>
@@ -663,6 +663,14 @@
    </tgroup>
   </table>
 
+   <para>
+    The <structfield>adsrc</structfield> field is historical, and is best
+    not used, because it does not track outside changes that might affect
+    the representation of the default value.  Reverse-compiling the
+    <structfield>adbin</structfield> field (with <function>pg_get_expr</> for
+    example) is a better way to display the default value.
+   </para>
+
  </sect1>
 
 
@@ -678,7 +686,8 @@
    table columns.  There will be exactly one
    <structname>pg_attribute</structname> row for every column in every
    table in the database.  (There will also be attribute entries for
-   indexes and other objects.  See <structname>pg_class</structname>.)
+   indexes, and indeed all objects that have <structname>pg_class</structname>
+   entries.)
   </para>
 
   <para>
@@ -728,7 +737,7 @@
       <entry>
        <structfield>attstattarget</structfield> controls the level of detail
        of statistics accumulated for this column by
-       <command>ANALYZE</command>.
+       <xref linkend="sql-analyze" endterm="sql-analyze-title">.
        A zero value indicates that no statistics should be collected.
        A negative value says to use the system default statistics target.
        The exact meaning of positive values is data type-dependent.
@@ -878,6 +887,17 @@
     </tbody>
    </tgroup>
   </table>
+
+  <para>
+   In a dropped column's <structname>pg_attribute</structname> entry,
+   <structfield>atttypid</structfield> is reset to zero, but 
+   <structfield>attlen</structfield> and the other fields copied from
+   <structname>pg_type</> are still valid.  This arrangement is needed
+   to cope with the situation where the dropped column's data type was
+   later dropped, and so there is no <structname>pg_type</> row anymore.
+   <structfield>attlen</structfield> and the other fields can be used
+   to interpret the contents of a row of the table.
+  </para>
  </sect1>
 
 
@@ -1230,8 +1250,8 @@
       <entry><structfield>relhasrules</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
-      <entry>Table has rules; see
-       <structname>pg_rewrite</structname> catalog
+      <entry>True if table has rules; see
+       <structname>pg_rewrite</structname> catalog.
       </entry>
      </row>
 
@@ -1239,7 +1259,7 @@
       <entry><structfield>relhassubclass</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
-      <entry>At least one table inherits from this one</entry>
+      <entry>True if table has (or once had) any inheritance children.</entry>
      </row>
 
      <row>
@@ -1247,9 +1267,10 @@
       <entry><type>aclitem[]</type></entry>
       <entry></entry>
       <entry>
-       Access privileges; see the descriptions of
-       <command>GRANT</command> and <command>REVOKE</command> for
-       details.
+       Access privileges; see
+       <xref linkend="sql-grant" endterm="sql-grant-title"> and
+       <xref linkend="sql-revoke" endterm="sql-revoke-title">
+       for details.
       </entry>
      </row>
     </tbody>
@@ -1432,8 +1453,10 @@
   </indexterm>
 
   <para>
-   The catalog <structname>pg_conversion</structname> stores encoding conversion information. See
-   <command>CREATE CONVERSION</command> for more information.
+   The catalog <structname>pg_conversion</structname> describes the
+   available encoding conversion procedures.  See
+   <xref linkend="sql-createconversion" endterm="sql-createconversion-title">
+   for more information.
   </para>
 
   <table>
@@ -1643,7 +1666,12 @@
       <entry><structfield>datacl</structfield></entry>
       <entry><type>aclitem[]</type></entry>
       <entry></entry>
-      <entry>Access privileges</entry>
+      <entry>
+       Access privileges; see
+       <xref linkend="sql-grant" endterm="sql-grant-title"> and
+       <xref linkend="sql-revoke" endterm="sql-revoke-title">
+       for details.
+      </entry>
      </row>
     </tbody>
    </tgroup>
@@ -1827,8 +1855,8 @@
   </indexterm>
 
   <para>
-   The catalog <structname>pg_description</> can store an optional description or
-   comment for each database object.  Descriptions can be manipulated
+   The catalog <structname>pg_description</> stores optional descriptions
+   (comments) for each database object.  Descriptions can be manipulated
    with the <command>COMMENT</command> command and viewed with
    <application>psql</application>'s <literal>\d</literal> commands.
    Descriptions of many built-in system objects are provided in the initial
@@ -2081,7 +2109,9 @@
 
   <para>
    The catalog <structname>pg_inherits</> records information about
-   table inheritance hierarchies.
+   table inheritance hierarchies.  There is one entry for each direct
+   child table in the database.  (Indirect inheritance can be determined
+   by following chains of entries.)
   </para>
 
   <table>
@@ -2121,7 +2151,7 @@
       <entry><type>int4</type></entry>
       <entry></entry>
       <entry>
-       If there is more than one parent for a child table (multiple
+       If there is more than one direct parent for a child table (multiple
        inheritance), this number tells the order in which the
        inherited columns are to be arranged.  The count starts at 1.
       </entry>
@@ -2141,10 +2171,10 @@
   </indexterm>
 
   <para>
-   The catalog <structname>pg_language</structname> registers call interfaces or
+   The catalog <structname>pg_language</structname> registers
    languages in which you can write functions or stored procedures.
-   See under <command>CREATE LANGUAGE</command> and in
-   <xref linkend="xplang"> for more information about language handlers.
+   See <xref linkend="sql-createlanguage" endterm="sql-createlanguage-title">
+   and <xref linkend="xplang"> for more information about language handlers.
   </para>
 
   <table>
@@ -2165,7 +2195,7 @@
       <entry><structfield>lanname</structfield></entry>
       <entry><type>name</type></entry>
       <entry></entry>
-      <entry>Name of the language (to be specified when creating a function)</entry>
+      <entry>Name of the language</entry>
      </row>
 
      <row>
@@ -2186,8 +2216,7 @@
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>
-       This is a trusted language.  See under <command>CREATE
-       LANGUAGE</command> what this means.  If this is an internal
+       This is a trusted language.  If this is an internal
        language (<structfield>lanispl</structfield> is false) then
        this column is meaningless.
       </entry>
@@ -2212,8 +2241,7 @@
       <entry>
        This references a language validator function that is responsible
        for checking the syntax and validity of new functions when they
-       are created. See under <command>CREATE LANGUAGE</command> for
-       further information about validators.
+       are created.  Zero if no validator is provided.
       </entry>
      </row>
 
@@ -2221,7 +2249,12 @@
       <entry><structfield>lanacl</structfield></entry>
       <entry><type>aclitem[]</type></entry>
       <entry></entry>
-      <entry>Access privileges</entry>
+      <entry>
+       Access privileges; see
+       <xref linkend="sql-grant" endterm="sql-grant-title"> and
+       <xref linkend="sql-revoke" endterm="sql-revoke-title">
+       for details.
+      </entry>
      </row>
     </tbody>
    </tgroup>
@@ -2309,8 +2342,10 @@
   </indexterm>
 
   <para>
-   The catalog <structname>pg_listener</structname> supports the <command>LISTEN</>
-   and <command>NOTIFY</> commands.  A listener creates an entry in
+   The catalog <structname>pg_listener</structname> supports the
+   <xref linkend="sql-listen" endterm="sql-listen-title"> and
+   <xref linkend="sql-notify" endterm="sql-notify-title">
+   commands.  A listener creates an entry in
    <structname>pg_listener</structname> for each notification name
    it is listening for.  A notifier scans <structname>pg_listener</structname>
    and updates each matching entry to show that a notification has occurred.
@@ -2410,7 +2445,12 @@
       <entry><structfield>nspacl</structfield></entry>
       <entry><type>aclitem[]</type></entry>
       <entry></entry>
-      <entry>Access privileges</entry>
+      <entry>
+       Access privileges; see
+       <xref linkend="sql-grant" endterm="sql-grant-title"> and
+       <xref linkend="sql-revoke" endterm="sql-revoke-title">
+       for details.
+      </entry>
      </row>
     </tbody>
    </tgroup>
@@ -2528,9 +2568,9 @@
   </indexterm>
 
   <para>
-   The catalog <structname>pg_operator</> stores information about operators.  See
-   <command>CREATE OPERATOR</command> and <xref linkend="xoper"> for
-   details on these operator parameters.
+   The catalog <structname>pg_operator</> stores information about operators.
+   See <xref linkend="sql-createoperator" endterm="sql-createoperator-title">
+   and <xref linkend="xoper"> for more information.
   </para>
 
   <table>
@@ -2703,9 +2743,8 @@
 
   <para>
    The catalog <structname>pg_proc</> stores information about functions (or procedures).
-   The description of <command>CREATE FUNCTION</command> and
-   <xref linkend="xfunc"> contain more information about the meaning of
-   some columns.
+   See <xref linkend="sql-createfunction" endterm="sql-createfunction-title">
+   and <xref linkend="xfunc"> for more information.
   </para>
 
   <para>
@@ -2869,16 +2908,21 @@
       <entry><structfield>proacl</structfield></entry>
       <entry><type>aclitem[]</type></entry>
       <entry></entry>
-      <entry>Access privileges</entry>
+      <entry>
+       Access privileges; see
+       <xref linkend="sql-grant" endterm="sql-grant-title"> and
+       <xref linkend="sql-revoke" endterm="sql-revoke-title">
+       for details.
+      </entry>
      </row>
     </tbody>
    </tgroup>
   </table>
 
   <para>
+   For compiled functions, both built-in and dynamically loaded,
    <structfield>prosrc</structfield> contains the function's C-language
-   name (link symbol) for compiled functions, both built-in and
-   dynamically loaded.  For all other language types,
+   name (link symbol).  For all other currently-known language types,
    <structfield>prosrc</structfield> contains the function's source
    text.  <structfield>probin</structfield> is unused except for
    dynamically-loaded C functions, for which it gives the name of the
@@ -3041,7 +3085,7 @@
       <entry><structfield>usesysid</structfield></entry>
       <entry><type>int4</type></entry>
       <entry></entry>
-      <entry>User id (arbitrary number used to reference this user)</entry>
+      <entry>User ID (arbitrary number used to reference this user)</entry>
      </row>
 
      <row>
@@ -3072,14 +3116,14 @@
       <entry><structfield>passwd</structfield></entry>
       <entry><type>text</type></entry>
       <entry></entry>
-      <entry>Password</entry>
+      <entry>Password (possibly encrypted)</entry>
      </row>
 
      <row>
       <entry><structfield>valuntil</structfield></entry>
       <entry><type>abstime</type></entry>
       <entry></entry>
-      <entry>Account expiry time (only used for password authentication)</entry>
+      <entry>Password expiry time (only used for password authentication)</entry>
      </row>
 
      <row>
@@ -3311,7 +3355,12 @@
       <entry><structfield>spcacl</structfield></entry>
       <entry><type>aclitem[]</type></entry>
       <entry></entry>
-      <entry>Access privileges</entry>
+      <entry>
+       Access privileges; see
+       <xref linkend="sql-grant" endterm="sql-grant-title"> and
+       <xref linkend="sql-revoke" endterm="sql-revoke-title">
+       for details.
+      </entry>
      </row>
     </tbody>
    </tgroup>
@@ -3327,8 +3376,9 @@
   </indexterm>
 
   <para>
-   The catalog <structname>pg_trigger</structname> stores triggers on tables.  See under
-   <command>CREATE TRIGGER</command> for more information.
+   The catalog <structname>pg_trigger</structname> stores triggers on tables.
+   See <xref linkend="sql-createtrigger" endterm="sql-createtrigger-title">
+   for more information.
   </para>
 
   <table>
@@ -3443,8 +3493,8 @@
 
   <note>
    <para>
-    <literal>pg_class.reltriggers</literal> needs to match up with the
-    entries in this table.
+    <literal>pg_class.reltriggers</literal> needs to agree with the
+    number of triggers found in this table for the given relation.
    </para>
   </note>
 
@@ -3459,12 +3509,14 @@
   </indexterm>
 
   <para>
-   The catalog <structname>pg_type</structname> stores information about data types.  Base types
-   (scalar types) are created with <command>CREATE TYPE</command>.
+   The catalog <structname>pg_type</structname> stores information about data
+   types.  Base types (scalar types) are created with
+   <xref linkend="sql-createtype" endterm="sql-createtype-title">, and
+   domains with
+   <xref linkend="sql-createdomain" endterm="sql-createdomain-title">.
    A composite type is automatically created for each table in the database, to
    represent the row structure of the table.  It is also possible to create
-   composite types with <command>CREATE TYPE AS</command> and
-   domains with <command>CREATE DOMAIN</command>.
+   composite types with <command>CREATE TYPE AS</command>.
   </para>
 
   <table>
@@ -3797,17 +3849,9 @@
 
   <para>
    In addition to the system catalogs, <productname>PostgreSQL</productname>
-   provides a number of built-in views.  The system views provide convenient
-   access to some commonly used queries on the system catalogs.  Some of these
-   views provide access to internal server state, as well.
-  </para>
-
-  <para>
-   <xref linkend="view-table"> lists the system views described here.
-   More detailed documentation of each view follows below.
-   There are some additional views that provide access to the results of
-   the statistics collector; they are described in <xref
-   linkend="monitoring-stats-views-table">.
+   provides a number of built-in views.  Some system views provide convenient
+   access to some commonly used queries on the system catalogs.  Other views
+   provide access to internal server state.
   </para>
 
   <para>
@@ -3817,6 +3861,14 @@
    described here are <productname>PostgreSQL</productname>-specific,
    it's usually better to use the information schema if it provides all
    the information you need.
+  </para>
+
+  <para>
+   <xref linkend="view-table"> lists the system views described here.
+   More detailed documentation of each view follows below.
+   There are some additional views that provide access to the results of
+   the statistics collector; they are described in <xref
+   linkend="monitoring-stats-views-table">.
   </para>
 
   <para>
@@ -4398,7 +4450,7 @@
    and <structfield>histogram_bounds</> arrays can be set on a
    column-by-column basis using the <command>ALTER TABLE SET STATISTICS</>
    command, or globally by setting the
-   <varname>default_statistics_target</varname> runtime parameter.
+   <xref linkend="guc-default-statistics-target"> runtime parameter.
   </para>
 
  </sect1>
@@ -4515,7 +4567,7 @@
       <entry><structfield>usesysid</structfield></entry>
       <entry><type>int4</type></entry>
       <entry></entry>
-      <entry>User id (arbitrary number used to reference this user)</entry>
+      <entry>User ID (arbitrary number used to reference this user)</entry>
      </row>
 
      <row>
@@ -4553,7 +4605,7 @@
       <entry><structfield>valuntil</structfield></entry>
       <entry><type>abstime</type></entry>
       <entry></entry>
-      <entry>Account expiry time (only used for password authentication)</entry>
+      <entry>Password expiry time (only used for password authentication)</entry>
      </row>
 
      <row>
