@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pg_ctl/Attic/pg_ctl.sh,v 1.30 2002/10/18 22:05:35 petere Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pg_ctl/Attic/pg_ctl.sh,v 1.30.2.1 2004/10/22 00:24:33 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -109,6 +109,14 @@ else
 fi
 
 po_path="$PGPATH/postmaster"
+
+if [ `$PGPATH/pg_id -u` -eq 0 ]
+then
+    echo "$CMDNAME: cannot be run as root" 1>&2
+    echo "Please log in (using, e.g., \"su\") as the (unprivileged) user that will" 1>&2
+    echo "own the server process." 1>&2
+    exit 1
+fi
 
 wait=
 wait_seconds=60
