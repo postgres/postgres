@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heapam.h,v 1.32 1998/06/14 01:34:07 momjian Exp $
+ * $Id: heapam.h,v 1.33 1998/06/15 18:39:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,43 +92,37 @@ typedef HeapAccessStatisticsData *HeapAccessStatistics;
 
 #define fastgetattr(tup, attnum, tupleDesc, isnull) \
 ( \
-	AssertMacro((attnum) > 0) ? \
+	AssertMacro((attnum) > 0), \
+	((isnull) ? (*(isnull) = false) : (dummyret)NULL), \
+	HeapTupleNoNulls(tup) ? \
 	( \
-		((isnull) ? (*(isnull) = false) : (dummyret)NULL), \
-		HeapTupleNoNulls(tup) ? \
+		((tupleDesc)->attrs[(attnum)-1]->attcacheoff != -1 || \
+		 (attnum) == 1) ? \
 		( \
-			((tupleDesc)->attrs[(attnum)-1]->attcacheoff != -1 || \
-			 (attnum) == 1) ? \
-			( \
-				(Datum)fetchatt(&((tupleDesc)->attrs[(attnum)-1]), \
-					(char *) (tup) + (tup)->t_hoff + \
-					( \
-						((attnum) != 1) ? \
-							(tupleDesc)->attrs[(attnum)-1]->attcacheoff \
-						: \
-							0 \
-					) \
+			(Datum)fetchatt(&((tupleDesc)->attrs[(attnum)-1]), \
+				(char *) (tup) + (tup)->t_hoff + \
+				( \
+					((attnum) != 1) ? \
+						(tupleDesc)->attrs[(attnum)-1]->attcacheoff \
+					: \
+						0 \
 				) \
 			) \
-			: \
-				nocachegetattr((tup), (attnum), (tupleDesc), (isnull)) \
 		) \
 		: \
-		( \
-			att_isnull((attnum)-1, (tup)->t_bits) ? \
-			( \
-				((isnull) ? (*(isnull) = true) : (dummyret)NULL), \
-				(Datum)NULL \
-			) \
-			: \
-			( \
-				nocachegetattr((tup), (attnum), (tupleDesc), (isnull)) \
-			) \
-		) \
+			nocachegetattr((tup), (attnum), (tupleDesc), (isnull)) \
 	) \
 	: \
 	( \
-		 (Datum)NULL \
+		att_isnull((attnum)-1, (tup)->t_bits) ? \
+		( \
+			((isnull) ? (*(isnull) = true) : (dummyret)NULL), \
+			(Datum)NULL \
+		) \
+		: \
+		( \
+			nocachegetattr((tup), (attnum), (tupleDesc), (isnull)) \
+		) \
 	) \
 )
 
@@ -208,38 +202,32 @@ static Datum fastgetattr(HeapTuple tup, int attnum, TupleDesc tupleDesc,
 ( \
 	AssertMacro((tup) != NULL && \
 		(attnum) > FirstLowInvalidHeapAttributeNumber && \
-		(attnum) != 0) ? \
+		(attnum) != 0), \
+	((attnum) > (int) (tup)->t_natts) ? \
 	( \
-		((attnum) > (int) (tup)->t_natts) ? \
-		( \
-			((isnull) ? (*(isnull) = true) : (dummyret)NULL), \
-			(Datum)NULL \
-		) \
-		: \
-		( \
-			((attnum) > 0) ? \
-			( \
-				fastgetattr((tup), (attnum), (tupleDesc), (isnull)) \
-			) \
-			: \
-			( \
-				((isnull) ? (*(isnull) = false) : (dummyret)NULL), \
-				((attnum) == SelfItemPointerAttributeNumber) ? \
-				( \
-					(Datum)((char *)(tup) + \
-						heap_sysoffset[-SelfItemPointerAttributeNumber-1]) \
-				) \
-				: \
-				( \
-					(Datum)*(unsigned int *) \
-						((char *)(tup) + heap_sysoffset[-(attnum)-1]) \
-				) \
-			) \
-		) \
+		((isnull) ? (*(isnull) = true) : (dummyret)NULL), \
+		(Datum)NULL \
 	) \
 	: \
 	( \
-		 (Datum)NULL \
+		((attnum) > 0) ? \
+		( \
+			fastgetattr((tup), (attnum), (tupleDesc), (isnull)) \
+		) \
+		: \
+		( \
+			((isnull) ? (*(isnull) = false) : (dummyret)NULL), \
+			((attnum) == SelfItemPointerAttributeNumber) ? \
+			( \
+				(Datum)((char *)(tup) + \
+					heap_sysoffset[-SelfItemPointerAttributeNumber-1]) \
+			) \
+			: \
+			( \
+				(Datum)*(unsigned int *) \
+					((char *)(tup) + heap_sysoffset[-(attnum)-1]) \
+			) \
+		) \
 	) \
 )
 

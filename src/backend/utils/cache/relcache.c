@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.38 1998/04/27 04:07:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.39 1998/06/15 18:39:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -157,86 +157,80 @@ typedef struct relnamecacheent
  * -----------------
  */
 #define RelationCacheInsert(RELATION)	\
-	{	RelIdCacheEnt *idhentry; RelNameCacheEnt *namehentry; \
-		char *relname; Oid reloid; bool found; \
-		relname = (RELATION->rd_rel->relname).data; \
-		namehentry = (RelNameCacheEnt*)hash_search(RelationNameCache, \
-												   relname, \
-												   HASH_ENTER, \
-												   &found); \
-		if (namehentry == NULL) { \
-			elog(FATAL, "can't insert into relation descriptor cache"); \
-		  } \
-		if (found && !IsBootstrapProcessingMode()) { \
-			/* used to give notice -- now just keep quiet */ ; \
-		  } \
-		namehentry->reldesc = RELATION; \
-		reloid = RELATION->rd_id; \
-		idhentry = (RelIdCacheEnt*)hash_search(RelationIdCache, \
-											   (char *)&reloid, \
+do { \
+	RelIdCacheEnt *idhentry; RelNameCacheEnt *namehentry; \
+	char *relname; Oid reloid; bool found; \
+	relname = (RELATION->rd_rel->relname).data; \
+	namehentry = (RelNameCacheEnt*)hash_search(RelationNameCache, \
+											   relname, \
 											   HASH_ENTER, \
 											   &found); \
-		if (idhentry == NULL) { \
-			elog(FATAL, "can't insert into relation descriptor cache"); \
-		  } \
-		if (found && !IsBootstrapProcessingMode()) { \
-			/* used to give notice -- now just keep quiet */ ; \
-		  } \
-		idhentry->reldesc = RELATION; \
-	}
+	if (namehentry == NULL) \
+		elog(FATAL, "can't insert into relation descriptor cache"); \
+	if (found && !IsBootstrapProcessingMode()) \
+		/* used to give notice -- now just keep quiet */ ; \
+	namehentry->reldesc = RELATION; \
+	reloid = RELATION->rd_id; \
+	idhentry = (RelIdCacheEnt*)hash_search(RelationIdCache, \
+										   (char *)&reloid, \
+										   HASH_ENTER, \
+										   &found); \
+	if (idhentry == NULL) \
+		elog(FATAL, "can't insert into relation descriptor cache"); \
+	if (found && !IsBootstrapProcessingMode()) \
+		/* used to give notice -- now just keep quiet */ ; \
+	idhentry->reldesc = RELATION; \
+} while(0)
+
 #define RelationNameCacheLookup(NAME, RELATION) \
-	{	RelNameCacheEnt *hentry; bool found; \
-		hentry = (RelNameCacheEnt*)hash_search(RelationNameCache, \
-											   (char *)NAME,HASH_FIND,&found); \
-		if (hentry == NULL) { \
-			elog(FATAL, "error in CACHE"); \
-		  } \
-		if (found) { \
-			RELATION = hentry->reldesc; \
-		  } \
-		else { \
-			RELATION = NULL; \
-		  } \
-	}
-#define RelationIdCacheLookup(ID, RELATION)		\
-	{	RelIdCacheEnt *hentry; bool found; \
-		hentry = (RelIdCacheEnt*)hash_search(RelationIdCache, \
-											 (char *)&(ID),HASH_FIND, &found); \
-		if (hentry == NULL) { \
-			elog(FATAL, "error in CACHE"); \
-		  } \
-		if (found) { \
-			RELATION = hentry->reldesc; \
-		  } \
-		else { \
-			RELATION = NULL; \
-		  } \
-	}
-#define RelationCacheDelete(RELATION)	\
-	{	RelNameCacheEnt *namehentry; RelIdCacheEnt *idhentry; \
-		char *relname; Oid reloid; bool found; \
-		relname = (RELATION->rd_rel->relname).data; \
-		namehentry = (RelNameCacheEnt*)hash_search(RelationNameCache, \
-												   relname, \
-												   HASH_REMOVE, \
-												   &found); \
-		if (namehentry == NULL) { \
-			elog(FATAL, "can't delete from relation descriptor cache"); \
-		  } \
-		if (!found) { \
-			elog(NOTICE, "trying to delete a reldesc that does not exist."); \
-		  } \
-		reloid = RELATION->rd_id; \
-		idhentry = (RelIdCacheEnt*)hash_search(RelationIdCache, \
-											   (char *)&reloid, \
-											   HASH_REMOVE, &found); \
-		if (idhentry == NULL) { \
-			elog(FATAL, "can't delete from relation descriptor cache"); \
-		  } \
-		if (!found) { \
-			elog(NOTICE, "trying to delete a reldesc that does not exist."); \
-		  } \
-	}
+do { \
+	RelNameCacheEnt *hentry; bool found; \
+	hentry = (RelNameCacheEnt*)hash_search(RelationNameCache, \
+										   (char *)NAME,HASH_FIND,&found); \
+	if (hentry == NULL) \
+		elog(FATAL, "error in CACHE"); \
+	if (found) \
+		RELATION = hentry->reldesc; \
+	else \
+		RELATION = NULL; \
+} while(0)
+
+#define RelationIdCacheLookup(ID, RELATION)	\
+do { \
+	RelIdCacheEnt *hentry; \
+	bool found; \
+	hentry = (RelIdCacheEnt*)hash_search(RelationIdCache, \
+										 (char *)&(ID),HASH_FIND, &found); \
+	if (hentry == NULL) \
+		elog(FATAL, "error in CACHE"); \
+	if (found) \
+		RELATION = hentry->reldesc; \
+	else \
+		RELATION = NULL; \
+} while(0)
+
+#define RelationCacheDelete(RELATION) \
+do { \
+	RelNameCacheEnt *namehentry; RelIdCacheEnt *idhentry; \
+	char *relname; Oid reloid; bool found; \
+	relname = (RELATION->rd_rel->relname).data; \
+	namehentry = (RelNameCacheEnt*)hash_search(RelationNameCache, \
+											   relname, \
+											   HASH_REMOVE, \
+											   &found); \
+	if (namehentry == NULL) \
+		elog(FATAL, "can't delete from relation descriptor cache"); \
+	if (!found) \
+		elog(NOTICE, "trying to delete a reldesc that does not exist."); \
+	reloid = RELATION->rd_id; \
+	idhentry = (RelIdCacheEnt*)hash_search(RelationIdCache, \
+										   (char *)&reloid, \
+										   HASH_REMOVE, &found); \
+	if (idhentry == NULL) \
+		elog(FATAL, "can't delete from relation descriptor cache"); \
+	if (!found) \
+		elog(NOTICE, "trying to delete a reldesc that does not exist."); \
+} while(0)
 
 /* non-export function prototypes */
 static void

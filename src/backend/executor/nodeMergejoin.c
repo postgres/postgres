@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.14 1998/02/27 16:11:28 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.15 1998/06/15 18:39:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,12 +88,12 @@
 static bool MergeCompare(List *eqQual, List *compareQual, ExprContext *econtext);
 
 #define MarkInnerTuple(innerTupleSlot, mergestate) \
-{ \
-	ExecStoreTuple(heap_copytuple(innerTupleSlot->val), \
-				   mergestate->mj_MarkedTupleSlot, \
+( \
+	ExecStoreTuple(heap_copytuple((innerTupleSlot)->val), \
+				   (mergestate)->mj_MarkedTupleSlot, \
 				   InvalidBuffer, \
-				   true); \
-}
+				   true) \
+)
 
 /* ----------------------------------------------------------------
  *		MJFormOSortopI

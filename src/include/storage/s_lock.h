@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.34 1998/05/06 23:25:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.35 1998/06/15 18:40:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -209,19 +209,22 @@ extern void s_lock(slock_t *lock);
 
 #else /* S_LOCK_DEBUG */
 
-#define S_LOCK(lock) if (1) { \
+#define S_LOCK(lock) \
+do { \
 	int spins = 0; \
-	while (TAS(lock)) { \
+	while (TAS(lock)) \
+	{ \
 		struct timeval	delay; \
 		delay.tv_sec = 0; \
 		delay.tv_usec = s_spincycle[spins++ % S_NSPINCYCLE]; \
 		(void) select(0, NULL, NULL, NULL, &delay); \
-		if (spins > S_MAX_BUSY) { \
+		if (spins > S_MAX_BUSY) \
+		{ \
 			/* It's been well over a minute...  */ \
 			s_lock_stuck(lock, __FILE__, __LINE__); \
 		} \
 	} \
-} else
+} while(0)
 
 #endif /* S_LOCK_DEBUG */
 #endif /* S_LOCK */

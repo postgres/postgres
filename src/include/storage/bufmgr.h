@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufmgr.h,v 1.19 1998/04/24 14:43:18 momjian Exp $
+ * $Id: bufmgr.h,v 1.20 1998/06/15 18:40:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -117,8 +117,7 @@ extern int	ShowPinTrace;
  */
 #define BufferGetBlock(buffer) \
 ( \
-	(void)AssertMacro(BufferIsValid(buffer)), \
-\
+	AssertMacro(BufferIsValid(buffer)), \
 	BufferIsLocal(buffer) ? \
 		((Block) MAKE_PTR(LocalBufferDescriptors[-(buffer) - 1].data)) \
 	: \

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/freelist.c,v 1.9 1998/01/07 21:04:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/freelist.c,v 1.10 1998/06/15 18:39:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,14 +40,18 @@ static BufferDesc *SharedFreeList;
 extern SPINLOCK BufMgrLock;
 
 #define IsInQueue(bf) \
-	Assert((bf->freeNext != INVALID_DESCRIPTOR));\
-	Assert((bf->freePrev != INVALID_DESCRIPTOR));\
-	Assert((bf->flags & BM_FREE))
+( \
+	AssertMacro((bf->freeNext != INVALID_DESCRIPTOR)), \
+	AssertMacro((bf->freePrev != INVALID_DESCRIPTOR)), \
+	AssertMacro((bf->flags & BM_FREE)) \
+)
 
 #define NotInQueue(bf) \
-	Assert((bf->freeNext == INVALID_DESCRIPTOR));\
-	Assert((bf->freePrev == INVALID_DESCRIPTOR));\
-	Assert(! (bf->flags & BM_FREE))
+( \
+	AssertMacro((bf->freeNext == INVALID_DESCRIPTOR)), \
+	AssertMacro((bf->freePrev == INVALID_DESCRIPTOR)), \
+	AssertMacro(! (bf->flags & BM_FREE)) \
+)
 
 
 /*

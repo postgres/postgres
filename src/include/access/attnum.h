@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: attnum.h,v 1.6 1997/09/08 02:34:02 momjian Exp $
+ * $Id: attnum.h,v 1.7 1998/06/15 18:39:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,8 +47,10 @@ typedef int16 AttrNumber;
  *		Assumes the attribute number is for an user defined attribute.
  */
 #define AttrNumberGetAttrOffset(attNum) \
-	 (AssertMacro(AttrNumberIsForUserDefinedAttr(attNum)) ? \
-	  ((attNum - 1)) : 0)
+( \
+	AssertMacro(AttrNumberIsForUserDefinedAttr(attNum)), \
+	((attNum) - 1) \
+)
 
 /*
  * AttributeOffsetGetAttributeNumber --

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/xfunc.c,v 1.13 1998/02/26 04:32:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/xfunc.c,v 1.14 1998/06/15 18:39:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1424,9 +1424,12 @@ xfunc_LispRemove(LispValue foo, List bar)
 }
 
 #define Node_Copy(a, b, c, d) \
-	if (NodeCopy((Node)((a)->d), (Node*)&((b)->d), c) != true) { \
-														return false; \
-														}
+do { \
+	if (NodeCopy((Node)((a)->d), (Node*)&((b)->d), c) != true) \
+	{ \
+		return false; \
+	} \
+} while(0)
 
 /*
  ** xfunc_copyrel --

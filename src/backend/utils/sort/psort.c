@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/psort.c,v 1.39 1998/02/26 04:38:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/psort.c,v 1.40 1998/06/15 18:39:45 momjian Exp $
  *
  * NOTES
  *		Sorts the first relation into the second relation.
@@ -222,20 +222,24 @@ inittapes(Sort *node)
  */
 
 
-#define PUTTUP(NODE, TUP, FP) do {\
-	((Psortstate *)NODE->psortstate)->BytesWritten += (TUP)->t_len; \
-	fwrite((char *)TUP, (TUP)->t_len, 1, FP); \
-	fwrite((char *)&((TUP)->t_len), sizeof (tlendummy), 1, FP); \
-	} while (0)
+#define PUTTUP(NODE, TUP, FP) \
+( \
+	((Psortstate *)NODE->psortstate)->BytesWritten += (TUP)->t_len, \
+	fwrite((char *)TUP, (TUP)->t_len, 1, FP), \
+	fwrite((char *)&((TUP)->t_len), sizeof (tlendummy), 1, FP) \
+)
+
 #define ENDRUN(FP)		fwrite((char *)&tlenzero, sizeof (tlenzero), 1, FP)
 #define GETLEN(LEN, FP) fread((char *)&(LEN), sizeof (tlenzero), 1, FP)
 #define ALLOCTUP(LEN)	((HeapTuple)palloc((unsigned)LEN))
-#define GETTUP(NODE, TUP, LEN, FP) do {\
-	IncrProcessed(); \
-	((Psortstate *)NODE->psortstate)->BytesRead += (LEN) - sizeof (tlenzero); \
-	fread((char *)(TUP) + sizeof (tlenzero), (LEN) - sizeof (tlenzero), 1, FP); \
-	fread((char *)&tlendummy, sizeof (tlendummy), 1, FP); \
-	} while (0)
+#define GETTUP(NODE, TUP, LEN, FP) \
+( \
+	IncrProcessed(), \
+	((Psortstate *)NODE->psortstate)->BytesRead += (LEN) - sizeof (tlenzero), \
+	fread((char *)(TUP) + sizeof (tlenzero), (LEN) - sizeof (tlenzero), 1, FP), \
+	fread((char *)&tlendummy, sizeof (tlendummy), 1, FP) \
+)
+
 #define SETTUPLEN(TUP, LEN)		(TUP)->t_len = LEN
 
  /*

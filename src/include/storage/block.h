@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: block.h,v 1.5 1997/09/08 20:58:59 momjian Exp $
+ * $Id: block.h,v 1.6 1998/06/15 18:40:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,19 +79,23 @@ typedef BlockIdData *BlockId;	/* block identifier */
  *		Sets a block identifier to the specified value.
  */
 #define BlockIdSet(blockId, blockNumber) \
-	Assert(PointerIsValid(blockId)); \
-	(blockId)->bi_hi = (blockNumber) >> 16; \
-	(blockId)->bi_lo = (blockNumber) & 0xffff
+( \
+	AssertMacro(PointerIsValid(blockId)), \
+	(blockId)->bi_hi = (blockNumber) >> 16, \
+	(blockId)->bi_lo = (blockNumber) & 0xffff \
+)
 
 /*
  * BlockIdCopy --
  *		Copy a block identifier.
  */
 #define BlockIdCopy(toBlockId, fromBlockId) \
-	Assert(PointerIsValid(toBlockId)); \
-	Assert(PointerIsValid(fromBlockId)); \
-	(toBlockId)->bi_hi = (fromBlockId)->bi_hi; \
-	(toBlockId)->bi_lo = (fromBlockId)->bi_lo
+( \
+	AssertMacro(PointerIsValid(toBlockId)), \
+	AssertMacro(PointerIsValid(fromBlockId)), \
+	(toBlockId)->bi_hi = (fromBlockId)->bi_hi, \
+	(toBlockId)->bi_lo = (fromBlockId)->bi_lo \
+)
 
 /*
  * BlockIdEquals --
@@ -106,8 +110,9 @@ typedef BlockIdData *BlockId;	/* block identifier */
  *		Retrieve the block number from a block identifier.
  */
 #define BlockIdGetBlockNumber(blockId) \
-	(AssertMacro(BlockIdIsValid(blockId)) ? \
-	 (BlockNumber) (((blockId)->bi_hi << 16) | ((uint16) (blockId)->bi_lo)) : \
-	 (BlockNumber) InvalidBlockNumber)
+( \
+	AssertMacro(BlockIdIsValid(blockId)), \
+	(BlockNumber) (((blockId)->bi_hi << 16) | ((uint16) (blockId)->bi_lo)) \
+)
 
 #endif							/* BLOCK_H */

@@ -23,9 +23,11 @@ typedef void (*CopyingFunct) (void *from, void *to);
 #define VARRAY_INITIAL_SIZE 32
 
 #define ENLARGE_VARRAY(ARRAY, INC) \
-  (ARRAY)->maxObj += (INC); \
+( \
+  (ARRAY)->maxObj += (INC), \
   (ARRAY)->val = (void *) realloc((ARRAY)->val, \
-								  (ARRAY)->size * (ARRAY)->maxObj)
+								  (ARRAY)->size * (ARRAY)->maxObj) \
+)
 
 #define VARRAY_NTH(VAL, SIZE, N) (((char *) (VAL)) + (SIZE) * (N))
 

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: psqlHelp.h,v 1.42 1998/03/30 19:04:53 momjian Exp $
+ * $Id: psqlHelp.h,v 1.43 1998/06/15 18:39:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,8 +26,8 @@ static struct _helpStruct QL_HELP[] = {
 	"abort [transaction];"},
 	{"alter table",
 		"add/rename attributes, rename tables",
-	"\talter table <class_name> [*] add column <attr> <type>;\n\
-\talter table <class_name> [*] rename [column] <attr1> to <attr2>;\n\
+	"\talter table <class_name> [*] add column <attr> <type>\n\
+\talter table <class_name> [*] rename [column] <attr1> to <attr2>\n\
 \talter table <class_name1> rename to <class_name2>"},
 	{"alter user",
 		"alter system information for a user",
@@ -128,7 +128,7 @@ static struct _helpStruct QL_HELP[] = {
 		"create a new trigger",
 	"create trigger <trigger_name> after|before event1 [or event2 [or event3] ]\n\
 \ton <class_name> for each row|statement\n\
-\texecute procedure <func_name> ([arguments]);\n\
+\texecute procedure <func_name> ([arguments])\n\
 \n\
 \teventX is one of INSERT, DELETE, UPDATE"},
 	{"create type",
@@ -238,7 +238,7 @@ static struct _helpStruct QL_HELP[] = {
 	{"insert",
 		"insert tuples",
 	"insert into <class_name> [(<attr1>...<attrN>)]\n\
-\tvalues (<expr1>...<exprN>); |\n\
+\tvalues (<expr1>...<exprN>) |\n\
 \tselect [distinct]\n\
 \t<expr1>,...<exprN>\n\
 \t[from <from_clause>]\n\

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execdebug.h,v 1.4 1997/09/08 02:36:12 momjian Exp $
+ * $Id: execdebug.h,v 1.5 1998/06/15 18:39:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -193,14 +193,15 @@ extern int	NIndexTupleInserted;
 #define IncrIndexProcessed()	NIndexTupleProcessed++
 #define IncrIndexInserted()		NIndexTupleInserted++
 #else
-#define IncrRetrieved()
-#define IncrAppended()
-#define IncrDeleted()
-#define IncrReplaced()
-#define IncrInserted()
-#define IncrProcessed()
-#define IncrIndexProcessed()
-#define IncrIndexInserted()
+/*								stop compiler warnings */
+#define IncrRetrieved()			(void)(0)
+#define IncrAppended()			(void)(0)
+#define IncrDeleted()			(void)(0)
+#define IncrReplaced()			(void)(0)
+#define IncrInserted()			(void)(0)
+#define IncrProcessed()			(void)(0)
+#define IncrIndexProcessed()	(void)(0)
+#define IncrIndexInserted()		(void)(0)
 #endif							/* EXEC_TUPLECOUNT */
 
 /* ----------------

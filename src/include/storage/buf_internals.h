@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: buf_internals.h,v 1.21 1998/02/26 04:43:21 momjian Exp $
+ * $Id: buf_internals.h,v 1.22 1998/06/15 18:40:01 momjian Exp $
  *
  * NOTE
  *		If BUFFERPAGE0 is defined, then 0 will be used as a
@@ -55,26 +55,32 @@ struct buftag
 	BlockNumber blockNum;		/* blknum relative to begin of reln */
 };
 
-#define CLEAR_BUFFERTAG(a)\
-  (a)->relId.dbId = InvalidOid; \
-  (a)->relId.relId = InvalidOid; \
-  (a)->blockNum = InvalidBlockNumber
+#define CLEAR_BUFFERTAG(a) \
+( \
+	(a)->relId.dbId = InvalidOid, \
+	(a)->relId.relId = InvalidOid, \
+	(a)->blockNum = InvalidBlockNumber \
+)
 
 #define INIT_BUFFERTAG(a,xx_reln,xx_blockNum) \
-{ \
-  (a)->blockNum = xx_blockNum;\
-  (a)->relId = RelationGetLRelId(xx_reln); \
-}
+( \
+	(a)->blockNum = xx_blockNum, \
+	(a)->relId = RelationGetLRelId(xx_reln) \
+)
+
 #ifdef NOT_USED
-#define COPY_BUFFERTAG(a,b)\
-{ \
-  (a)->blockNum = (b)->blockNum;\
-  LRelIdAssign(*(a),*(b));\
-}
+#define COPY_BUFFERTAG(a,b) \
+( \
+	(a)->blockNum = (b)->blockNum, \
+	LRelIdAssign(*(a),*(b)) \
+)
 
 #define EQUAL_BUFFERTAG(a,b) \
-  (((a)->blockNum == (b)->blockNum) &&\
-   (OID_Equal((a)->relId.relId,(b)->relId.relId)))
+( \
+	((a)->blockNum == (b)->blockNum && \
+   	 OID_Equal((a)->relId.relId,(b)->relId.relId)) \
+)
+
 #endif
 
 #define BAD_BUFFER_ID(bid) ((bid<1) || (bid>(NBuffers)))

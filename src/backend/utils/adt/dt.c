@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.53 1998/05/09 22:38:18 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.54 1998/06/15 18:39:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,8 +66,12 @@ char	   *days[] = {"Sunday", "Monday", "Tuesday", "Wednesday",
 /* TMODULO()
  * Macro to replace modf(), which is broken on some platforms.
  */
-#define TMODULO(t,q,u) {q = ((t < 0)? ceil(t / u): floor(t / u)); \
-						if (q != 0) t -= rint(q * u);}
+#define TMODULO(t,q,u) \
+do { \
+	q = ((t < 0)? ceil(t / u): floor(t / u)); \
+	if (q != 0) \
+		t -= rint(q * u); \
+} while(0)
 
 static void GetEpochTime(struct tm * tm);
 

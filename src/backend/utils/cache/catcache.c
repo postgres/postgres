@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.27 1998/04/26 04:08:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.28 1998/06/15 18:39:40 momjian Exp $
  *
  * Notes:
  *		XXX This needs to use exception.h to handle recovery when
@@ -96,13 +96,17 @@ static long eqproc[] = {
  */
 #ifdef CACHEDEBUG
 #define CatalogCacheInitializeCache_DEBUG1 \
+do { \
 	elog(DEBUG, "CatalogCacheInitializeCache: cache @%08lx", cache); \
 	if (relation) \
 		elog(DEBUG, "CatalogCacheInitializeCache: called w/relation(inval)"); \
 	else \
 		elog(DEBUG, "CatalogCacheInitializeCache: called w/relname %s", \
-			cache->cc_relname)
+			cache->cc_relname) \
+} while(0)
+			
 #define CatalogCacheInitializeCache_DEBUG2 \
+do { \
 		if (cache->cc_key[i] > 0) { \
 			elog(DEBUG, "CatalogCacheInitializeCache: load %d/%d w/%d, %d", \
 				i+1, cache->cc_nkeys, cache->cc_key[i], \
@@ -110,7 +114,9 @@ static long eqproc[] = {
 		} else { \
 			elog(DEBUG, "CatalogCacheInitializeCache: load %d/%d w/%d", \
 				i+1, cache->cc_nkeys, cache->cc_key[i]); \
-		}
+		} \
+} while(0)
+
 #else
 #define CatalogCacheInitializeCache_DEBUG1
 #define CatalogCacheInitializeCache_DEBUG2
@@ -654,16 +660,20 @@ SystemCacheRelationFlushed(Oid relId)
  */
 #ifdef CACHEDEBUG
 #define InitSysCache_DEBUG1 \
-elog(DEBUG, "InitSysCache: rid=%d id=%d nkeys=%d size=%d\n", \
-	 cp->relationId, cp->id, cp->cc_nkeys, cp->cc_size); \
-	for (i = 0; i < nkeys; i += 1) { \
-										 elog(DEBUG, "InitSysCache: key=%d len=%d skey=[%d %d %d %d]\n", \
-											  cp->cc_key[i], cp->cc_klen[i], \
-											  cp->cc_skey[i].sk_flags, \
-											  cp->cc_skey[i].sk_attno, \
-											  cp->cc_skey[i].sk_procedure, \
-											  cp->cc_skey[i].sk_argument); \
-											  }
+do { \
+	elog(DEBUG, "InitSysCache: rid=%d id=%d nkeys=%d size=%d\n", \
+		cp->relationId, cp->id, cp->cc_nkeys, cp->cc_size); \
+	for (i = 0; i < nkeys; i += 1) \
+	{ \
+		elog(DEBUG, "InitSysCache: key=%d len=%d skey=[%d %d %d %d]\n", \
+			 cp->cc_key[i], cp->cc_klen[i], \
+			 cp->cc_skey[i].sk_flags, \
+			 cp->cc_skey[i].sk_attno, \
+			 cp->cc_skey[i].sk_procedure, \
+			 cp->cc_skey[i].sk_argument); \
+	} \
+} while(0)
+											  
 #else
 #define InitSysCache_DEBUG1
 #endif

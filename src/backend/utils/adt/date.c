@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.24 1998/02/26 04:36:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.25 1998/06/15 18:39:34 momjian Exp $
  *
  * NOTES
  *	 This code is actually (almost) unused.
@@ -187,8 +187,11 @@ reltimeout(int32 time)
 }	/* reltimeout() */
 
 
-#define TMODULO(t,q,u) {q = (t / u); \
-						if (q != 0) t -= (q * u);}
+#define TMODULO(t,q,u) \
+do { \
+	q = (t / u); \
+	if (q != 0) t -= (q * u); \
+} while(0)
 
 static void
 reltime2tm(int32 time, struct tm * tm)

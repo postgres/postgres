@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.39 1998/04/06 17:27:49 momjian Exp $
+ * $Id: c.h,v 1.40 1998/06/15 18:39:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -624,7 +624,7 @@ typedef struct Exception
 		Trap(!(condition), FailedAssertion)
 
 #define AssertMacro(condition) \
-		TrapMacro(!(condition), FailedAssertion)
+		(void)TrapMacro(!(condition), FailedAssertion)
 
 #define AssertArg(condition) \
 		Trap(!(condition), BadArg)

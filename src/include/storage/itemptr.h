@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: itemptr.h,v 1.7 1997/09/08 21:54:25 momjian Exp $
+ * $Id: itemptr.h,v 1.8 1998/06/15 18:40:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,60 +48,73 @@ typedef ItemPointerData *ItemPointer;
  *		Returns the block number of a disk item pointer.
  */
 #define ItemPointerGetBlockNumber(pointer) \
-	(AssertMacro(ItemPointerIsValid(pointer)) ? \
-	 BlockIdGetBlockNumber(&(pointer)->ip_blkid) : (BlockNumber) 0)
+( \
+	AssertMacro(ItemPointerIsValid(pointer)), \
+	BlockIdGetBlockNumber(&(pointer)->ip_blkid) \
+)
 
 /*
  * ItemPointerGetOffsetNumber --
  *		Returns the offset number of a disk item pointer.
  */
 #define ItemPointerGetOffsetNumber(pointer) \
-	(AssertMacro(ItemPointerIsValid(pointer)) ? \
-	 (pointer)->ip_posid : \
-	 InvalidOffsetNumber)
+( \
+	AssertMacro(ItemPointerIsValid(pointer)), \
+	(pointer)->ip_posid \
+)
 
 /*
  * ItemPointerSet --
  *		Sets a disk item pointer to the specified block and offset.
  */
 #define ItemPointerSet(pointer, blockNumber, offNum) \
-	Assert(PointerIsValid(pointer)); \
-	BlockIdSet(&((pointer)->ip_blkid), blockNumber); \
-	(pointer)->ip_posid = offNum
+( \
+	AssertMacro(PointerIsValid(pointer)), \
+	BlockIdSet(&((pointer)->ip_blkid), blockNumber), \
+	(pointer)->ip_posid = offNum \
+)
 
 /*
  * ItemPointerSetBlockNumber --
  *		Sets a disk item pointer to the specified block.
  */
 #define ItemPointerSetBlockNumber(pointer, blockNumber) \
-	Assert(PointerIsValid(pointer)); \
-	BlockIdSet(&((pointer)->ip_blkid), blockNumber)
+( \
+	AssertMacro(PointerIsValid(pointer)), \
+	BlockIdSet(&((pointer)->ip_blkid), blockNumber) \
+)
 
 /*
  * ItemPointerSetOffsetNumber --
  *		Sets a disk item pointer to the specified offset.
  */
 #define ItemPointerSetOffsetNumber(pointer, offsetNumber) \
-	AssertMacro(PointerIsValid(pointer)); \
-	(pointer)->ip_posid = (offsetNumber)
+( \
+	AssertMacro(PointerIsValid(pointer)), \
+	(pointer)->ip_posid = (offsetNumber) \
+)
 
 /*
  * ItemPointerCopy --
  *		Copies the contents of one disk item pointer to another.
  */
 #define ItemPointerCopy(fromPointer, toPointer) \
-	Assert(PointerIsValid(toPointer)); \
-	Assert(PointerIsValid(fromPointer)); \
-	*(toPointer) = *(fromPointer)
+( \
+	AssertMacro(PointerIsValid(toPointer)), \
+	AssertMacro(PointerIsValid(fromPointer)), \
+	*(toPointer) = *(fromPointer) \
+)
 
 /*
  * ItemPointerSetInvalid --
  *		Sets a disk item pointer to be invalid.
  */
 #define ItemPointerSetInvalid(pointer) \
-	Assert(PointerIsValid(pointer)); \
-	BlockIdSet(&((pointer)->ip_blkid), InvalidBlockNumber); \
-	(pointer)->ip_posid = InvalidOffsetNumber
+( \
+	AssertMacro(PointerIsValid(pointer)), \
+	BlockIdSet(&((pointer)->ip_blkid), InvalidBlockNumber), \
+	(pointer)->ip_posid = InvalidOffsetNumber \
+)
 
 /* ----------------
  *		externs

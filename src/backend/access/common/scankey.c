@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/scankey.c,v 1.11 1998/01/15 19:41:46 pgsql Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/scankey.c,v 1.12 1998/06/15 18:39:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,8 +22,10 @@
  *		True iff the scan key entry is legal.
  */
 #define ScanKeyEntryIsLegal(entry) \
-	((bool) (AssertMacro(PointerIsValid(entry)) && \
-			 AttributeNumberIsValid(entry->sk_attno)))
+( \
+	AssertMacro(PointerIsValid(entry)), \
+	AttributeNumberIsValid((entry)->sk_attno) \
+)
 
 /*
  * ScanKeyEntrySetIllegal --

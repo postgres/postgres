@@ -43,8 +43,10 @@ typedef struct Arr_TgString
   (Arr_TgString *) NewVarray(ARR_TgString_INITIAL_SIZE, sizeof(TgString))
 
 #define enlargeArr_TgString(A, I) \
-  (A)->size += (I); \
-  (A)->val = (TgString *) realloc((A)->val, (A)->valSize * (A)->size)
+( \
+  (A)->size += (I), \
+  (A)->val = (TgString *) realloc((A)->val, (A)->valSize * (A)->size) \
+)
 
 #define addArr_TgString(A, V) \
   AppendVarray((Varray *) (A), (void *) (V), (CopyingFunct) copyTgString)
@@ -79,8 +81,10 @@ typedef struct Arr_TgElementPtr
   (Arr_TgElementPtr *) NewVarray(ARR_TgElementPtr_INITIAL_SIZE, sizeof(TgElementPtr))
 
 #define enlargeArr_TgElementPtr(A, I) \
-  (A)->size += (I); \
-  (A)->val = (TgElementPtr *) realloc((A)->val, (A)->valSize * (A)->size)
+( \
+  (A)->size += (I), \
+  (A)->val = (TgElementPtr *) realloc((A)->val, (A)->valSize * (A)->size) \
+)
 
 #define addArr_TgElementPtr(A, V) \
   AppendVarray((Varray *) (A), (void *) (V), (CopyingFunct) copyTgElementPtr)
@@ -115,8 +119,10 @@ typedef struct Arr_TgNodePtr
   (Arr_TgNodePtr *) NewVarray(ARR_TgNodePtr_INITIAL_SIZE, sizeof(TgNodePtr))
 
 #define enlargeArr_TgNodePtr(A, I) \
-  (A)->size += (I); \
-  (A)->val = (TgNodePtr *) realloc((A)->val, (A)->valSize * (A)->size)
+( \
+  (A)->size += (I), \
+  (A)->val = (TgNodePtr *) realloc((A)->val, (A)->valSize * (A)->size) \
+)
 
 #define addArr_TgNodePtr(A, V) \
   AppendVarray((Varray *) (A), (void *) (V), (CopyingFunct) copyTgNodePtr)

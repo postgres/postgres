@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lock.h,v 1.11 1998/02/26 04:43:28 momjian Exp $
+ * $Id: lock.h,v 1.12 1998/06/15 18:40:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -191,8 +191,10 @@ typedef struct Lock
 #define LockGetLock_nHolders(l) l->nHolders
 
 #define LockDecrWaitHolders(lock, lockt) \
-  lock->nHolding--; \
-  lock->holders[lockt]--
+( \
+  lock->nHolding--, \
+  lock->holders[lockt]-- \
+)
 
 #define LockLockTable() SpinAcquire(LockMgrLock);
 #define UnlockLockTable() SpinRelease(LockMgrLock);

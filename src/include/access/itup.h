@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: itup.h,v 1.13 1998/02/26 04:40:19 momjian Exp $
+ * $Id: itup.h,v 1.14 1998/06/15 18:39:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -118,49 +118,43 @@ typedef struct PredInfo
  */
 #define index_getattr(tup, attnum, tupleDesc, isnull) \
 ( \
-	AssertMacro(PointerIsValid(isnull) && (attnum) > 0) ? \
+	AssertMacro(PointerIsValid(isnull) && (attnum) > 0), \
+	*(isnull) = false, \
+	IndexTupleNoNulls(tup) ? \
 	( \
-		*(isnull) = false, \
-		IndexTupleNoNulls(tup) ? \
+		((tupleDesc)->attrs[(attnum)-1]->attcacheoff != -1 || \
+		 (attnum) == 1) ? \
 		( \
-			((tupleDesc)->attrs[(attnum)-1]->attcacheoff != -1 || \
-			 (attnum) == 1) ? \
+			(Datum)fetchatt(&((tupleDesc)->attrs[(attnum)-1]), \
+			(char *) (tup) + \
 			( \
-				(Datum)fetchatt(&((tupleDesc)->attrs[(attnum)-1]), \
-					(char *) (tup) + \
-					( \
-						IndexTupleHasMinHeader(tup) ? \
-							sizeof (*(tup)) \
-						: \
-							IndexInfoFindDataOffset((tup)->t_info) \
-					) + \
-					( \
-						((attnum) != 1) ? \
-							(tupleDesc)->attrs[(attnum)-1]->attcacheoff \
-						: \
-							0 \
-					) \
+				IndexTupleHasMinHeader(tup) ? \
+						sizeof (*(tup)) \
+					: \
+						IndexInfoFindDataOffset((tup)->t_info) \
+				) + \
+				( \
+					((attnum) != 1) ? \
+						(tupleDesc)->attrs[(attnum)-1]->attcacheoff \
+					: \
+						0 \
 				) \
 			) \
-			: \
-				nocache_index_getattr((tup), (attnum), (tupleDesc), (isnull)) \
 		) \
 		: \
-		( \
-			(att_isnull((attnum)-1, (char *)(tup) + sizeof(*(tup)))) ? \
-			( \
-				*(isnull) = true, \
-				(Datum)NULL \
-			) \
-			: \
-			( \
-				nocache_index_getattr((tup), (attnum), (tupleDesc), (isnull)) \
-			) \
-		) \
+			nocache_index_getattr((tup), (attnum), (tupleDesc), (isnull)) \
 	) \
 	: \
 	( \
-		 (Datum)NULL \
+		(att_isnull((attnum)-1, (char *)(tup) + sizeof(*(tup)))) ? \
+		( \
+			*(isnull) = true, \
+			(Datum)NULL \
+		) \
+		: \
+		( \
+			nocache_index_getattr((tup), (attnum), (tupleDesc), (isnull)) \
+		) \
 	) \
 )
 
