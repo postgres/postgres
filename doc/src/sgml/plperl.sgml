@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.26 2004/07/21 20:44:52 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.27 2004/08/18 03:37:56 momjian Exp $
 -->
 
  <chapter id="plperl">
@@ -317,23 +317,25 @@ $$  LANGUAGE plperl;
  <sect1 id="plperl-global">
   <title>Global Values in PL/Perl</title>
   <para>
-  You can use the %_SHARED to store data between function calls.  WHY
-IS THIS A HASH, AND NOT A HASH REF?
+  You can use the %_SHARED to store data between function calls.
   </para>
   <para>
 For example:
 <programlisting>
-CREATE OR REPLACE FUNCTION set_var(TEXT) RETURNS TEXT AS $$
-    $_SHARED{first} = 'Hello, PL/Perl!';
-    return 'ok';
+CREATE OR REPLACE FUNCTION set_var(name TEXT, val TEXT) RETURNS TEXT AS $$
+    if ($_SHARED{$_[0]} = $_[1]) {
+        return 'ok';
+    } else {
+        return "Can't set shared variable $_[0] to $_[1]";
+    }
 $$ LANGUAGE plperl;
 
-CREATE OR REPLACE FUNCTION get_var() RETURNS text AS $$
-    return $_SHARED{first};
+CREATE OR REPLACE FUNCTION get_var(name TEXT) RETURNS text AS $$
+    return $_SHARED{$_[0]};
 $$ LANGUAGE plperl;
 
-SELECT set_var('hello plperl');
-SELECT get_var();
+SELECT set_var('sample', $q$Hello, PL/Perl!  How's tricks?$q$);
+SELECT get_var('sample');
 </programlisting>
 
   </para>
