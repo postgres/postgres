@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.176 2005/03/10 23:21:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.177 2005/03/27 06:29:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,16 +65,13 @@ static void fix_indxqual_references(List *indexquals, IndexPath *index_path,
 						List **indxstrategy,
 						List **indxsubtype,
 						List **indxlossy);
-static void fix_indxqual_sublist(List *indexqual,
-					 Relids baserelids, int baserelid,
-					 IndexOptInfo *index,
+static void fix_indxqual_sublist(List *indexqual, IndexOptInfo *index,
 					 List **fixed_quals,
 					 List **strategy,
 					 List **subtype,
 					 List **lossy);
-static Node *fix_indxqual_operand(Node *node, int baserelid,
-					 IndexOptInfo *index,
-					 Oid *opclass);
+static Node *fix_indxqual_operand(Node *node, IndexOptInfo *index,
+								  Oid *opclass);
 static List *get_switched_clauses(List *clauses, Relids outerrelids);
 static List *order_qual_clauses(Query *root, List *clauses);
 static void copy_path_costsize(Plan *dest, Path *src);
@@ -1179,8 +1176,6 @@ fix_indxqual_references(List *indexquals, IndexPath *index_path,
 						List **indxsubtype,
 						List **indxlossy)
 {
-	Relids		baserelids = index_path->path.parent->relids;
-	int			baserelid = index_path->path.parent->relid;
 	List	   *index_info = index_path->indexinfo;
 	ListCell   *iq,
 			   *ii;
@@ -1198,7 +1193,7 @@ fix_indxqual_references(List *indexquals, IndexPath *index_path,
 		List	   *subtype;
 		List	   *lossy;
 
-		fix_indxqual_sublist(indexqual, baserelids, baserelid, index,
+		fix_indxqual_sublist(indexqual, index,
 							 &fixed_qual, &strategy, &subtype, &lossy);
 		*fixed_indexquals = lappend(*fixed_indexquals, fixed_qual);
 		*indxstrategy = lappend(*indxstrategy, strategy);
@@ -1222,9 +1217,7 @@ fix_indxqual_references(List *indexquals, IndexPath *index_path,
  *		the integer list of lossiness flags (1/0)
  */
 static void
-fix_indxqual_sublist(List *indexqual,
-					 Relids baserelids, int baserelid,
-					 IndexOptInfo *index,
+fix_indxqual_sublist(List *indexqual, IndexOptInfo *index,
 					 List **fixed_quals,
 					 List **strategy,
 					 List **subtype,
@@ -1265,7 +1258,7 @@ fix_indxqual_sublist(List *indexqual,
 		 * the clause.	The indexkey should be the side that refers to
 		 * (only) the base relation.
 		 */
-		if (!bms_equal(rinfo->left_relids, baserelids))
+		if (!bms_equal(rinfo->left_relids, index->rel->relids))
 			CommuteClause(newclause);
 
 		/*
@@ -1273,7 +1266,6 @@ fix_indxqual_sublist(List *indexqual,
 		 * indexkey operand as needed, and get the index opclass.
 		 */
 		linitial(newclause->args) = fix_indxqual_operand(linitial(newclause->args),
-														 baserelid,
 														 index,
 														 &opclass);
 
@@ -1295,8 +1287,7 @@ fix_indxqual_sublist(List *indexqual,
 }
 
 static Node *
-fix_indxqual_operand(Node *node, int baserelid, IndexOptInfo *index,
-					 Oid *opclass)
+fix_indxqual_operand(Node *node, IndexOptInfo *index, Oid *opclass)
 {
 	/*
 	 * We represent index keys by Var nodes having the varno of the base
@@ -1316,7 +1307,7 @@ fix_indxqual_operand(Node *node, int baserelid, IndexOptInfo *index,
 		node = (Node *) ((RelabelType *) node)->arg;
 
 	if (IsA(node, Var) &&
-		((Var *) node)->varno == baserelid)
+		((Var *) node)->varno == index->rel->relid)
 	{
 		/* Try to match against simple index columns */
 		int			varatt = ((Var *) node)->varattno;
@@ -1353,7 +1344,7 @@ fix_indxqual_operand(Node *node, int baserelid, IndexOptInfo *index,
 			if (equal(node, indexkey))
 			{
 				/* Found a match */
-				result = makeVar(baserelid, pos + 1,
+				result = makeVar(index->rel->relid, pos + 1,
 								 exprType(lfirst(indexpr_item)), -1,
 								 0);
 				/* return the correct opclass, too */

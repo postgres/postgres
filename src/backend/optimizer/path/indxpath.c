@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.170 2005/03/26 23:29:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.171 2005/03/27 06:29:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,36 +54,31 @@
 	((opclass) == BOOL_BTREE_OPS_OID || (opclass) == BOOL_HASH_OPS_OID)
 
 
-static List *group_clauses_by_indexkey(RelOptInfo *rel, IndexOptInfo *index);
+static List *group_clauses_by_indexkey(IndexOptInfo *index);
 static List *group_clauses_by_indexkey_for_join(Query *root,
-								   RelOptInfo *rel, IndexOptInfo *index,
+								   IndexOptInfo *index,
 								   Relids outer_relids,
 								   JoinType jointype, bool isouterjoin);
-static bool match_clause_to_indexcol(RelOptInfo *rel, IndexOptInfo *index,
+static bool match_clause_to_indexcol(IndexOptInfo *index,
 						 int indexcol, Oid opclass,
 						 RestrictInfo *rinfo);
-static bool match_join_clause_to_indexcol(RelOptInfo *rel, IndexOptInfo *index,
+static bool match_join_clause_to_indexcol(IndexOptInfo *index,
 							  int indexcol, Oid opclass,
 							  RestrictInfo *rinfo);
 static Oid indexable_operator(Expr *clause, Oid opclass,
 				   bool indexkey_on_left);
 static bool pred_test_recurse(Node *clause, Node *predicate);
 static bool pred_test_simple_clause(Expr *predicate, Node *clause);
-static Relids indexable_outerrelids(RelOptInfo *rel, IndexOptInfo *index);
-static Path *make_innerjoin_index_path(Query *root,
-						  RelOptInfo *rel, IndexOptInfo *index,
+static Relids indexable_outerrelids(IndexOptInfo *index);
+static Path *make_innerjoin_index_path(Query *root, IndexOptInfo *index,
 						  List *clausegroups);
 static bool match_index_to_operand(Node *operand, int indexcol,
-					   RelOptInfo *rel, IndexOptInfo *index);
-static bool match_boolean_index_clause(Node *clause,
-									   int indexcol,
-									   RelOptInfo *rel,
+					   IndexOptInfo *index);
+static bool match_boolean_index_clause(Node *clause, int indexcol,
 									   IndexOptInfo *index);
 static bool match_special_index_operator(Expr *clause, Oid opclass,
 							 bool indexkey_on_left);
-static Expr *expand_boolean_index_clause(Node *clause,
-										 int indexcol,
-										 RelOptInfo *rel,
+static Expr *expand_boolean_index_clause(Node *clause, int indexcol,
 										 IndexOptInfo *index);
 static List *expand_indexqual_condition(RestrictInfo *rinfo, Oid opclass);
 static List *prefix_quals(Node *leftop, Oid opclass,
@@ -148,13 +143,13 @@ create_index_paths(Query *root, RelOptInfo *rel)
 		 * 1. Match the index against non-OR restriction clauses. (OR
 		 * clauses will be considered later by orindxpath.c.)
 		 */
-		restrictclauses = group_clauses_by_indexkey(rel, index);
+		restrictclauses = group_clauses_by_indexkey(index);
 
 		/*
 		 * 2. Compute pathkeys describing index's ordering, if any, then
 		 * see how many of them are actually useful for this query.
 		 */
-		index_pathkeys = build_index_pathkeys(root, rel, index,
+		index_pathkeys = build_index_pathkeys(root, index,
 											  ForwardScanDirection);
 		index_is_ordered = (index_pathkeys != NIL);
 		useful_pathkeys = truncate_useless_pathkeys(root, rel,
@@ -173,7 +168,7 @@ create_index_paths(Query *root, RelOptInfo *rel)
 			useful_pathkeys != NIL ||
 			index->indpred != NIL)
 			add_path(rel, (Path *)
-					 create_index_path(root, rel, index,
+					 create_index_path(root, index,
 									   restrictclauses,
 									   useful_pathkeys,
 									   index_is_ordered ?
@@ -187,13 +182,13 @@ create_index_paths(Query *root, RelOptInfo *rel)
 		 */
 		if (index_is_ordered)
 		{
-			index_pathkeys = build_index_pathkeys(root, rel, index,
+			index_pathkeys = build_index_pathkeys(root, index,
 												  BackwardScanDirection);
 			useful_pathkeys = truncate_useless_pathkeys(root, rel,
 														index_pathkeys);
 			if (useful_pathkeys != NIL)
 				add_path(rel, (Path *)
-						 create_index_path(root, rel, index,
+						 create_index_path(root, index,
 										   restrictclauses,
 										   useful_pathkeys,
 										   BackwardScanDirection));
@@ -207,7 +202,7 @@ create_index_paths(Query *root, RelOptInfo *rel)
 		 * joining purposes. We compute both per-index and
 		 * overall-for-relation sets.
 		 */
-		join_outerrelids = indexable_outerrelids(rel, index);
+		join_outerrelids = indexable_outerrelids(index);
 		index->outer_relids = join_outerrelids;
 		all_join_outerrelids = bms_add_members(all_join_outerrelids,
 											   join_outerrelids);
@@ -226,9 +221,6 @@ create_index_paths(Query *root, RelOptInfo *rel)
  * group_clauses_by_indexkey
  *	  Find restriction clauses that can be used with an index.
  *
- * 'rel' is the node of the relation itself.
- * 'index' is a index on 'rel'.
- *
  * Returns a list of sublists of RestrictInfo nodes for clauses that can be
  * used with this index.  Each sublist contains clauses that can be used
  * with one index key (in no particular order); the top list is ordered by
@@ -243,10 +235,10 @@ create_index_paths(Query *root, RelOptInfo *rel)
  * Therefore, there are no empty sublists in the result.
  */
 static List *
-group_clauses_by_indexkey(RelOptInfo *rel, IndexOptInfo *index)
+group_clauses_by_indexkey(IndexOptInfo *index)
 {
 	List	   *clausegroup_list = NIL;
-	List	   *restrictinfo_list = rel->baserestrictinfo;
+	List	   *restrictinfo_list = index->rel->baserestrictinfo;
 	int			indexcol = 0;
 	Oid		   *classes = index->classlist;
 
@@ -263,8 +255,7 @@ group_clauses_by_indexkey(RelOptInfo *rel, IndexOptInfo *index)
 		{
 			RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
 
-			if (match_clause_to_indexcol(rel,
-										 index,
+			if (match_clause_to_indexcol(index,
 										 indexcol,
 										 curClass,
 										 rinfo))
@@ -302,8 +293,7 @@ group_clauses_by_indexkey(RelOptInfo *rel, IndexOptInfo *index)
  * will already have been generated for it.)
  */
 static List *
-group_clauses_by_indexkey_for_join(Query *root,
-								   RelOptInfo *rel, IndexOptInfo *index,
+group_clauses_by_indexkey_for_join(Query *root, IndexOptInfo *index,
 								   Relids outer_relids,
 								   JoinType jointype, bool isouterjoin)
 {
@@ -327,7 +317,7 @@ group_clauses_by_indexkey_for_join(Query *root,
 		 * to get rid of a non-join clause if it appears after a join
 		 * clause it is redundant with.
 		 */
-		foreach(l, rel->baserestrictinfo)
+		foreach(l, index->rel->baserestrictinfo)
 		{
 			RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
 
@@ -335,8 +325,7 @@ group_clauses_by_indexkey_for_join(Query *root,
 			if (isouterjoin && rinfo->is_pushed_down)
 				continue;
 
-			if (match_clause_to_indexcol(rel,
-										 index,
+			if (match_clause_to_indexcol(index,
 										 indexcol,
 										 curClass,
 										 rinfo))
@@ -347,7 +336,7 @@ group_clauses_by_indexkey_for_join(Query *root,
 		numsources = (clausegroup != NIL) ? 1 : 0;
 
 		/* Look for joinclauses that are usable with given outer_relids */
-		foreach(l, rel->joininfo)
+		foreach(l, index->rel->joininfo)
 		{
 			JoinInfo   *joininfo = (JoinInfo *) lfirst(l);
 			bool		jfoundhere = false;
@@ -364,8 +353,7 @@ group_clauses_by_indexkey_for_join(Query *root,
 				if (isouterjoin && rinfo->is_pushed_down)
 					continue;
 
-				if (match_join_clause_to_indexcol(rel,
-												  index,
+				if (match_join_clause_to_indexcol(index,
 												  indexcol,
 												  curClass,
 												  rinfo))
@@ -434,9 +422,7 @@ group_clauses_by_indexkey_for_join(Query *root,
  * restriction clause as qpquals.  FIXME someday.
  */
 List *
-group_clauses_by_indexkey_for_or(RelOptInfo *rel,
-								 IndexOptInfo *index,
-								 Expr *orsubclause)
+group_clauses_by_indexkey_for_or(IndexOptInfo *index, Expr *orsubclause)
 {
 	List	   *clausegroup_list = NIL;
 	bool		matched = false;
@@ -452,8 +438,7 @@ group_clauses_by_indexkey_for_or(RelOptInfo *rel,
 		/* Try to match the OR subclause to the index key */
 		if (IsA(orsubclause, RestrictInfo))
 		{
-			if (match_clause_to_indexcol(rel, index,
-										 indexcol, curClass,
+			if (match_clause_to_indexcol(index, indexcol, curClass,
 										 (RestrictInfo *) orsubclause))
 			{
 				clausegroup = lappend(clausegroup, orsubclause);
@@ -467,8 +452,7 @@ group_clauses_by_indexkey_for_or(RelOptInfo *rel,
 				RestrictInfo *subsubclause = (RestrictInfo *) lfirst(item);
 
 				if (IsA(subsubclause, RestrictInfo) &&
-					match_clause_to_indexcol(rel, index,
-											 indexcol, curClass,
+					match_clause_to_indexcol(index, indexcol, curClass,
 											 subsubclause))
 				{
 					clausegroup = lappend(clausegroup, subsubclause);
@@ -486,12 +470,11 @@ group_clauses_by_indexkey_for_or(RelOptInfo *rel,
 		 */
 		if (clausegroup == NIL)
 		{
-			foreach(item, rel->baserestrictinfo)
+			foreach(item, index->rel->baserestrictinfo)
 			{
 				RestrictInfo *rinfo = (RestrictInfo *) lfirst(item);
 
-				if (match_clause_to_indexcol(rel, index,
-											 indexcol, curClass,
+				if (match_clause_to_indexcol(index, indexcol, curClass,
 											 rinfo))
 					clausegroup = lappend(clausegroup, rinfo);
 			}
@@ -539,8 +522,7 @@ group_clauses_by_indexkey_for_or(RelOptInfo *rel,
  *	  For boolean indexes, it is also possible to match the clause directly
  *	  to the indexkey; or perhaps the clause is (NOT indexkey).
  *
- * 'rel' is the relation of interest.
- * 'index' is an index on 'rel'.
+ * 'index' is the index of interest.
  * 'indexcol' is a column number of 'index' (counting from 0).
  * 'opclass' is the corresponding operator class.
  * 'rinfo' is the clause to be tested (as a RestrictInfo node).
@@ -551,8 +533,7 @@ group_clauses_by_indexkey_for_or(RelOptInfo *rel,
  * responsibility of higher-level routines to cope with those.
  */
 static bool
-match_clause_to_indexcol(RelOptInfo *rel,
-						 IndexOptInfo *index,
+match_clause_to_indexcol(IndexOptInfo *index,
 						 int indexcol,
 						 Oid opclass,
 						 RestrictInfo *rinfo)
@@ -564,8 +545,7 @@ match_clause_to_indexcol(RelOptInfo *rel,
 	/* First check for boolean-index cases. */
 	if (IsBooleanOpclass(opclass))
 	{
-		if (match_boolean_index_clause((Node *) clause,
-									   indexcol, rel, index))
+		if (match_boolean_index_clause((Node *) clause, indexcol, index))
 			return true;
 	}
 
@@ -582,7 +562,7 @@ match_clause_to_indexcol(RelOptInfo *rel,
 	 * (constant operator indexkey). Anything that is a "pseudo constant"
 	 * expression will do.
 	 */
-	if (match_index_to_operand(leftop, indexcol, rel, index) &&
+	if (match_index_to_operand(leftop, indexcol, index) &&
 		is_pseudo_constant_clause_relids(rightop, rinfo->right_relids))
 	{
 		if (is_indexable_operator(clause, opclass, true))
@@ -597,7 +577,7 @@ match_clause_to_indexcol(RelOptInfo *rel,
 		return false;
 	}
 
-	if (match_index_to_operand(rightop, indexcol, rel, index) &&
+	if (match_index_to_operand(rightop, indexcol, index) &&
 		is_pseudo_constant_clause_relids(leftop, rinfo->left_relids))
 	{
 		if (is_indexable_operator(clause, opclass, false))
@@ -638,8 +618,7 @@ match_clause_to_indexcol(RelOptInfo *rel,
  *	  expressions like (a.f1 OP (b.f2 OP a.f3)); that's not processable by
  *	  an indexscan nestloop join, whereas (a.f1 OP (b.f2 OP c.f3)) is.
  *
- * 'rel' is the relation of interest.
- * 'index' is an index on 'rel'.
+ * 'index' is the index of interest.
  * 'indexcol' is a column number of 'index' (counting from 0).
  * 'opclass' is the corresponding operator class.
  * 'rinfo' is the clause to be tested (as a RestrictInfo node).
@@ -650,8 +629,7 @@ match_clause_to_indexcol(RelOptInfo *rel,
  * responsibility of higher-level routines to cope with those.
  */
 static bool
-match_join_clause_to_indexcol(RelOptInfo *rel,
-							  IndexOptInfo *index,
+match_join_clause_to_indexcol(IndexOptInfo *index,
 							  int indexcol,
 							  Oid opclass,
 							  RestrictInfo *rinfo)
@@ -674,25 +652,25 @@ match_join_clause_to_indexcol(RelOptInfo *rel,
 	 * none of the indexed relation's vars and contains no volatile
 	 * functions.
 	 */
-	if (match_index_to_operand(leftop, indexcol, rel, index))
+	if (match_index_to_operand(leftop, indexcol, index))
 	{
 		Relids		othervarnos = rinfo->right_relids;
 		bool		isIndexable;
 
 		isIndexable =
-			!bms_overlap(rel->relids, othervarnos) &&
+			!bms_overlap(index->rel->relids, othervarnos) &&
 			!contain_volatile_functions(rightop) &&
 			is_indexable_operator(clause, opclass, true);
 		return isIndexable;
 	}
 
-	if (match_index_to_operand(rightop, indexcol, rel, index))
+	if (match_index_to_operand(rightop, indexcol, index))
 	{
 		Relids		othervarnos = rinfo->left_relids;
 		bool		isIndexable;
 
 		isIndexable =
-			!bms_overlap(rel->relids, othervarnos) &&
+			!bms_overlap(index->rel->relids, othervarnos) &&
 			!contain_volatile_functions(leftop) &&
 			is_indexable_operator(clause, opclass, false);
 		return isIndexable;
@@ -1423,16 +1401,14 @@ pred_test_simple_clause(Expr *predicate, Node *clause)
  * indexable_outerrelids
  *	  Finds all other relids that participate in any indexable join clause
  *	  for the specified index.	Returns a set of relids.
- *
- * 'rel' is the relation for which 'index' is defined
  */
 static Relids
-indexable_outerrelids(RelOptInfo *rel, IndexOptInfo *index)
+indexable_outerrelids(IndexOptInfo *index)
 {
 	Relids		outer_relids = NULL;
 	ListCell   *l;
 
-	foreach(l, rel->joininfo)
+	foreach(l, index->rel->joininfo)
 	{
 		JoinInfo   *joininfo = (JoinInfo *) lfirst(l);
 		bool		match_found = false;
@@ -1455,8 +1431,7 @@ indexable_outerrelids(RelOptInfo *rel, IndexOptInfo *index)
 			{
 				Oid			curClass = classes[0];
 
-				if (match_join_clause_to_indexcol(rel,
-												  index,
+				if (match_join_clause_to_indexcol(index,
 												  indexcol,
 												  curClass,
 												  rinfo))
@@ -1614,7 +1589,6 @@ best_inner_indexscan(Query *root, RelOptInfo *rel,
 
 			/* find useful clauses for this index and outerjoin set */
 			clausegroups = group_clauses_by_indexkey_for_join(root,
-															  rel,
 															  index,
 													  index_outer_relids,
 															  jointype,
@@ -1622,8 +1596,7 @@ best_inner_indexscan(Query *root, RelOptInfo *rel,
 			if (clausegroups)
 			{
 				/* make the path */
-				path = make_innerjoin_index_path(root, rel, index,
-												 clausegroups);
+				path = make_innerjoin_index_path(root, index, clausegroups);
 			}
 
 			/* Cache the result --- whether positive or negative */
@@ -1661,15 +1634,16 @@ best_inner_indexscan(Query *root, RelOptInfo *rel,
  *	  Create an index path node for a path to be used as an inner
  *	  relation in a nestloop join.
  *
- * 'rel' is the relation for which 'index' is defined
+ * 'index' is the index of interest
  * 'clausegroups' is a list of lists of RestrictInfos that can use 'index'
  */
 static Path *
 make_innerjoin_index_path(Query *root,
-						  RelOptInfo *rel, IndexOptInfo *index,
+						  IndexOptInfo *index,
 						  List *clausegroups)
 {
 	IndexPath  *pathnode = makeNode(IndexPath);
+	RelOptInfo *rel = index->rel;
 	List	   *indexquals,
 			   *allclauses;
 
@@ -1686,7 +1660,7 @@ make_innerjoin_index_path(Query *root,
 	pathnode->path.pathkeys = NIL;
 
 	/* Convert clauses to indexquals the executor can handle */
-	indexquals = expand_indexqual_conditions(rel, index, clausegroups);
+	indexquals = expand_indexqual_conditions(index, clausegroups);
 
 	/* Flatten the clausegroups list to produce indexclauses list */
 	allclauses = flatten_clausegroups_list(clausegroups);
@@ -1729,7 +1703,7 @@ make_innerjoin_index_path(Query *root,
 	/* Like costsize.c, force estimate to be at least one row */
 	pathnode->rows = clamp_row_est(pathnode->rows);
 
-	cost_index(&pathnode->path, root, rel, index, indexquals, true);
+	cost_index(&pathnode->path, root, index, indexquals, true);
 
 	return (Path *) pathnode;
 }
@@ -1798,13 +1772,11 @@ make_expr_from_indexclauses(List *indexclauses)
  *
  * operand: the nodetree to be compared to the index
  * indexcol: the column number of the index (counting from 0)
- * rel: the parent relation
  * index: the index of interest
  */
 static bool
 match_index_to_operand(Node *operand,
 					   int indexcol,
-					   RelOptInfo *rel,
 					   IndexOptInfo *index)
 {
 	int			indkey;
@@ -1825,7 +1797,7 @@ match_index_to_operand(Node *operand,
 		 * Simple index column; operand must be a matching Var.
 		 */
 		if (operand && IsA(operand, Var) &&
-			rel->relid == ((Var *) operand)->varno &&
+			index->rel->relid == ((Var *) operand)->varno &&
 			indkey == ((Var *) operand)->varattno)
 			return true;
 	}
@@ -1933,17 +1905,16 @@ match_index_to_operand(Node *operand,
 static bool
 match_boolean_index_clause(Node *clause,
 						   int indexcol,
-						   RelOptInfo *rel,
 						   IndexOptInfo *index)
 {
 	/* Direct match? */
-	if (match_index_to_operand(clause, indexcol, rel, index))
+	if (match_index_to_operand(clause, indexcol, index))
 		return true;
 	/* NOT clause? */
 	if (not_clause(clause))
 	{
 		if (match_index_to_operand((Node *) get_notclausearg((Expr *) clause),
-								   indexcol, rel, index))
+								   indexcol, index))
 			return true;
 	}
 	/*
@@ -1958,7 +1929,7 @@ match_boolean_index_clause(Node *clause,
 		if (btest->booltesttype == IS_TRUE ||
 			btest->booltesttype == IS_FALSE)
 			if (match_index_to_operand((Node *) btest->arg,
-									   indexcol, rel, index))
+									   indexcol, index))
 				return true;
 	}
 	return false;
@@ -2135,7 +2106,7 @@ match_special_index_operator(Expr *clause, Oid opclass,
  * someday --- tgl 7/00)
  */
 List *
-expand_indexqual_conditions(RelOptInfo *rel, IndexOptInfo *index, List *clausegroups)
+expand_indexqual_conditions(IndexOptInfo *index, List *clausegroups)
 {
 	List	   *resultquals = NIL;
 	ListCell   *clausegroup_item;
@@ -2162,7 +2133,6 @@ expand_indexqual_conditions(RelOptInfo *rel, IndexOptInfo *index, List *clausegr
 
 				boolqual = expand_boolean_index_clause((Node *) rinfo->clause,
 													   indexcol,
-													   rel,
 													   index);
 				if (boolqual)
 				{
@@ -2199,11 +2169,10 @@ expand_indexqual_conditions(RelOptInfo *rel, IndexOptInfo *index, List *clausegr
 static Expr *
 expand_boolean_index_clause(Node *clause,
 							int indexcol,
-							RelOptInfo *rel,
 							IndexOptInfo *index)
 {
 	/* Direct match? */
-	if (match_index_to_operand(clause, indexcol, rel, index))
+	if (match_index_to_operand(clause, indexcol, index))
 	{
 		/* convert to indexkey = TRUE */
 		return make_opclause(BooleanEqualOperator, BOOLOID, false,
@@ -2216,7 +2185,7 @@ expand_boolean_index_clause(Node *clause,
 		Node   *arg = (Node *) get_notclausearg((Expr *) clause);
 
 		/* It must have matched the indexkey */
-		Assert(match_index_to_operand(arg, indexcol, rel, index));
+		Assert(match_index_to_operand(arg, indexcol, index));
 		/* convert to indexkey = FALSE */
 		return make_opclause(BooleanEqualOperator, BOOLOID, false,
 							 (Expr *) arg,
@@ -2228,7 +2197,7 @@ expand_boolean_index_clause(Node *clause,
 		Node   *arg = (Node *) btest->arg;
 
 		/* It must have matched the indexkey */
-		Assert(match_index_to_operand(arg, indexcol, rel, index));
+		Assert(match_index_to_operand(arg, indexcol, index));
 		if (btest->booltesttype == IS_TRUE)
 		{
 			/* convert to indexkey = TRUE */

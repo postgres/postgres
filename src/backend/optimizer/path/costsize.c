@@ -49,7 +49,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.138 2005/03/06 22:15:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.139 2005/03/27 06:29:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -227,7 +227,6 @@ cost_nonsequential_access(double relpages)
  *	  but here we consider the cost of just one pass.
  *
  * 'root' is the query root
- * 'baserel' is the base relation the index is for
  * 'index' is the index to be used
  * 'indexQuals' is the list of applicable qual clauses (implicit AND semantics)
  * 'is_injoin' is T if we are considering using the index scan as the inside
@@ -243,11 +242,11 @@ cost_nonsequential_access(double relpages)
  */
 void
 cost_index(Path *path, Query *root,
-		   RelOptInfo *baserel,
 		   IndexOptInfo *index,
 		   List *indexQuals,
 		   bool is_injoin)
 {
+	RelOptInfo *baserel = index->rel;
 	Cost		startup_cost = 0;
 	Cost		run_cost = 0;
 	Cost		indexStartupCost;

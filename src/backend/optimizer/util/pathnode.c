@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.113 2005/03/26 23:29:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.114 2005/03/27 06:29:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -417,8 +417,7 @@ create_seqscan_path(Query *root, RelOptInfo *rel)
  * create_index_path
  *	  Creates a path node for an index scan.
  *
- * 'rel' is the parent rel
- * 'index' is an index on 'rel'
+ * 'index' is a usable index.
  * 'restriction_clauses' is a list of lists of RestrictInfo nodes
  *			to be used as index qual conditions in the scan.
  * 'pathkeys' describes the ordering of the path.
@@ -430,7 +429,6 @@ create_seqscan_path(Query *root, RelOptInfo *rel)
  */
 IndexPath *
 create_index_path(Query *root,
-				  RelOptInfo *rel,
 				  IndexOptInfo *index,
 				  List *restriction_clauses,
 				  List *pathkeys,
@@ -440,11 +438,11 @@ create_index_path(Query *root,
 	List	   *indexquals;
 
 	pathnode->path.pathtype = T_IndexScan;
-	pathnode->path.parent = rel;
+	pathnode->path.parent = index->rel;
 	pathnode->path.pathkeys = pathkeys;
 
 	/* Convert clauses to indexquals the executor can handle */
-	indexquals = expand_indexqual_conditions(rel, index, restriction_clauses);
+	indexquals = expand_indexqual_conditions(index, restriction_clauses);
 
 	/* Flatten the clause-groups list to produce indexclauses list */
 	restriction_clauses = flatten_clausegroups_list(restriction_clauses);
@@ -466,9 +464,9 @@ create_index_path(Query *root,
 	 * The number of rows is the same as the parent rel's estimate, since
 	 * this isn't a join inner indexscan.
 	 */
-	pathnode->rows = rel->rows;
+	pathnode->rows = index->rel->rows;
 
-	cost_index(&pathnode->path, root, rel, index, indexquals, false);
+	cost_index(&pathnode->path, root, index, indexquals, false);
 
 	return pathnode;
 }
