@@ -499,13 +499,13 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
       // could optimize this a tad to remove too many object creations...
       SimpleDateFormat df = null;
 
-      if (s.length()>23 && subsecond) {
+      if (sbuf.length()>23 && subsecond) {
         df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSzzzzzzzzz");
-      } else if (s.length()>23 && !subsecond) {
+      } else if (sbuf.length()>23 && !subsecond) {
         df = new SimpleDateFormat("yyyy-MM-dd HH:mm:sszzzzzzzzz");
-      } else if (s.length()>10 && subsecond) {
+      } else if (sbuf.length()>10 && subsecond) {
         df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
-      } else if (s.length()>10 && !subsecond) {
+      } else if (sbuf.length()>10 && !subsecond) {
         df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
       } else {
         df = new SimpleDateFormat("yyyy-MM-dd");
