@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.57 2002/09/02 05:44:43 momjian Exp $
+ $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.58 2002/09/02 05:52:34 momjian Exp $
  -->
 
 <chapter id="catalogs">
@@ -159,11 +159,6 @@
      <row>
       <entry>pg_shadow</entry>
       <entry>database users</entry>
-     </row>
-
-     <row>
-      <entry>pg_settings</entry>
-      <entry>current session run-time parameters</entry>
      </row>
 
      <row>
@@ -2863,62 +2858,6 @@
       <entry><type>text[]</type></entry>
       <entry></entry>
       <entry>Session defaults for run-time configuration variables</entry>
-     </row>
-    </tbody>
-   </tgroup>
-  </table>
-
- </sect1>
-
-
- <sect1 id="catalog-pg-settings">
-  <title>pg_settings</title>
-
-  <para>
-   <structname>pg_settings</structname> virtual table allows display and update
-   of current session run-time parameters. There is one entry for each of the 
-   available parameters provided by <command>SHOW ALL</command>. But it is
-   in a form that allows it to be joined with other relations and have a
-   selection criteria applied.
-  </para>
-
-  <para>
-   An <command>UPDATE</command> performed on <structname>pg_settings</structname>
-   is equivalent to executing the <command>SET</command> command on that named
-   parameter. The change only affects the value used by the current session. If
-   an <command>UPDATE</command> is issued within a transaction that is later
-   aborted, the effects of the <command>UPDATE</command> command disappear when
-   the transaction is rolled back. Once the surrounding transaction is
-   committed, the effects will persist until the end of the session, unless
-   overridden by another <command>UPDATE</command> or <command>SET</command>.
-  </para>
-
-  <table>
-   <title>pg_settings Columns</title>
-
-   <tgroup cols=4>
-    <thead>
-     <row>
-      <entry>Name</entry>
-      <entry>Type</entry>
-      <entry>References</entry>
-      <entry>Description</entry>
-     </row>
-    </thead>
-
-    <tbody>
-     <row>
-      <entry>name</entry>
-      <entry><type>text</type></entry>
-      <entry></entry>
-      <entry>The name of a current session run-time parameter</entry>
-     </row>
-
-     <row>
-      <entry>setting</entry>
-      <entry><type>text</type></entry>
-      <entry></entry>
-      <entry>The value of a current session run-time parameter</entry>
      </row>
     </tbody>
    </tgroup>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.133 2002/09/02 05:42:54 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.134 2002/09/02 05:52:34 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -553,6 +553,60 @@ env PGOPTIONS='-c geqo=off' psql
     or the configuration file, and in turn are overridden by per-user
     settings.
    </para>
+
+   <sect2 id="catalog-pg-settings">
+    <title>pg_settings</title>
+  
+    <para>
+     <structname>pg_settings</structname> virtual table allows display and update
+     of current session run-time parameters. There is one entry for each of the 
+     available parameters provided by <command>SHOW ALL</command>. But it is
+     in a form that allows it to be joined with other relations and have a
+     selection criteria applied.
+    </para>
+  
+    <para>
+     An <command>UPDATE</command> performed on <structname>pg_settings</structname>
+     is equivalent to executing the <command>SET</command> command on that named
+     parameter. The change only affects the value used by the current session. If
+     an <command>UPDATE</command> is issued within a transaction that is later
+     aborted, the effects of the <command>UPDATE</command> command disappear when
+     the transaction is rolled back. Once the surrounding transaction is
+     committed, the effects will persist until the end of the session, unless
+     overridden by another <command>UPDATE</command> or <command>SET</command>.
+    </para>
+  
+    <table>
+    <title>pg_settings Columns</title>
+  
+    <tgroup cols=4>
+     <thead>
+      <row>
+       <entry>Name</entry>
+       <entry>Type</entry>
+       <entry>References</entry>
+       <entry>Description</entry>
+      </row>
+     </thead>
+ 
+     <tbody>
+      <row>
+       <entry>name</entry>
+       <entry><type>text</type></entry>
+       <entry></entry>
+       <entry>The name of a current session run-time parameter</entry>
+      </row>
+ 
+      <row>
+       <entry>setting</entry>
+       <entry><type>text</type></entry>
+       <entry></entry>
+       <entry>The value of a current session run-time parameter</entry>
+      </row>
+     </tbody>
+    </tgroup>
+
+   </sect2>
 
    <sect2 id="runtime-config-optimizer">
     <title>Planner and Optimizer Tuning</title>
