@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.48 2000/04/12 17:15:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.49 2000/04/18 05:52:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -471,13 +471,8 @@ new_rangetable_entry(Oid new_relid, RangeTblEntry *old_entry)
 {
 	RangeTblEntry *new_entry = copyObject(old_entry);
 
-	/* ??? someone tell me what the following is doing! - ay 11/94 */
-	if (!strcmp(new_entry->eref->relname, "*CURRENT*") ||
-		!strcmp(new_entry->eref->relname, "*NEW*"))
-		new_entry->ref->relname = get_rel_name(new_relid);
-	else
-		new_entry->relname = get_rel_name(new_relid);
-
+	/* Replace relation real name and OID, but not the reference name */
+	new_entry->relname = get_rel_name(new_relid);
 	new_entry->relid = new_relid;
 	return new_entry;
 }
