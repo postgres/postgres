@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_config 8.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-12-03 13:05-0300\n"
+"POT-Creation-Date: 2005-01-17 10:17-0300\n"
 "PO-Revision-Date: 2004-11-02 23:30 CLST\n"
 "Last-Translator: Alvaro Herrera <alvherre@dcc.uchile.cl>\n"
 "Language-Team: es <pgsql-es-ayuda@postgresql.org>\n"
@@ -139,32 +139,47 @@ msgstr "%s: el argumento no es válido: %s\n"
 msgid "%s: could not find own executable\n"
 msgstr "%s: no se pudo encontrar el propio ejecutable\n"
 
-#: ../../port/exec.c:193 ../../port/exec.c:307 ../../port/exec.c:350
+#: ../../port/exec.c:194 ../../port/exec.c:308 ../../port/exec.c:351
 #, c-format
 msgid "could not identify current directory: %s"
 msgstr "no se pudo identificar el directorio actual: %s"
 
-#: ../../port/exec.c:323 ../../port/exec.c:359
+#: ../../port/exec.c:213
+#, c-format
+msgid "invalid binary \"%s\""
+msgstr "el binario «%s» no es válido"
+
+#: ../../port/exec.c:262
+#, c-format
+msgid "could not read binary \"%s\""
+msgstr "no se pudo leer el binario «%s»"
+
+#: ../../port/exec.c:269
+#, c-format
+msgid "could not find a \"%s\" to execute"
+msgstr "no se pudo encontrar un «%s» para ejecutar"
+
+#: ../../port/exec.c:324 ../../port/exec.c:360
 #, c-format
 msgid "could not change directory to \"%s\""
 msgstr "no se pudo cambiar el directorio a «%s»"
 
-#: ../../port/exec.c:338
+#: ../../port/exec.c:339
 #, c-format
 msgid "could not read symbolic link \"%s\""
 msgstr "no se pudo leer el enlace simbólico «%s»"
 
-#: ../../port/exec.c:569
+#: ../../port/exec.c:587
 #, c-format
 msgid "child process exited with exit code %d"
 msgstr "el proceso hijo terminó con código de salida %d"
 
-#: ../../port/exec.c:572
+#: ../../port/exec.c:590
 #, c-format
 msgid "child process was terminated by signal %d"
 msgstr "el proceso hijo fue terminado por una señal %d"
 
-#: ../../port/exec.c:575
+#: ../../port/exec.c:593
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "el proceso hijo terminó con código no reconocido %d"
