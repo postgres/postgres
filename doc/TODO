@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Dec 27 22:30:09 EST 2001
+Last updated:		Thu Dec 27 23:29:10 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -239,7 +239,8 @@ CLIENTS
 * Add PGPASSWORDFILE environment variable or ~/.pgpass to store
   user/host/password combinations
 * Remove PGPASSWORD because is insecure on some OS's
-* Allow secure single-user use without passwords using Unix socket permissions
+* -Allow secure single-user use without passwords using Unix socket permissions
+* Make single-user local socket permissions the default (Peter E)
 * JDBC
 	o Comprehensive test suite. This may be available already.
 	o Updateable resultSet (must be done in backend code)
