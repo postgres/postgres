@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile,v 1.17 1997/10/28 15:13:10 vadim Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile.in,v 1.1 1998/01/13 04:18:04 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -19,6 +19,8 @@ INCLUDE_OPT= \
              -I$(SRCDIR)/include \
              -I$(LIBPQDIR) \
              -I$(TCL_INCDIR)
+
+PORTNAME=@PORTNAME@
 
 CFLAGS+= $(INCLUDE_OPT)
 ifdef KRBVERS
@@ -39,7 +41,7 @@ ifeq ($(PORTNAME), linux)
   endif
 endif
 
-ifeq ($(PORTNAME), BSD44_derived)
+ifeq ($(PORTNAME), bsd)
   install-shlib-dep	:= install-shlib
   shlib			:= libpgtcl.so.1.0
   LDFLAGS_SL		= -x -Bshareable -Bforcearchive
