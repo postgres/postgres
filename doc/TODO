@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Nov 26 16:07:35 EST 2001
+Last updated:		Mon Nov 26 23:11:04 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -43,7 +43,8 @@ ADMIN
 * -Permission to DELETE table also allows UPDATE (Peter E)
 * Allow elog() to return error codes, module name, file name, line
   number, not just messages (Peter E) [elog]
-* -Allow international error message support and add error codes[elog](Peter E)
+* -Allow international error message support [elog](Peter E)
+* Add error codes [elog](Peter E)
 * -Remove unused sort files on postmaster startup (Bruce)
 * Remove unreferenced table files and temp tables during database vacuum
   or postmaster startup (Bruce)
