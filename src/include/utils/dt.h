@@ -8,7 +8,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dt.h,v 1.8 1997/05/11 15:13:49 thomas Exp $
+ * $Id: dt.h,v 1.9 1997/05/23 05:10:03 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,11 +39,10 @@ typedef struct {
 /*
  * USE_NEW_DATE enables a more efficient Julian day-based date type.
  * USE_NEW_TIME enables a more efficient double-based time type.
- * These have been tested in v6.1beta, but only by myself.
- * These should be enabled for Postgres v7.0 - tgl 97/04/02
  */
-#define USE_NEW_DATE		0
-#define USE_NEW_TIME		0
+
+#define USE_NEW_DATE	1
+#define USE_NEW_TIME	1
 
 
 /* ----------------------------------------------------------------
@@ -130,6 +129,8 @@ typedef struct {
  * Token field definitions for time parsing and decoding.
  * These need to fit into the datetkn table type.
  * At the moment, that means keep them within [-127,127].
+ * These are also used for bit masks in DecodeDateDelta()
+ *  so actually restrict them to within [0,31] for now.
  */
 
 #define DTK_NUMBER	0
@@ -152,21 +153,21 @@ typedef struct {
 #define DTK_TOMORROW	15
 #define DTK_ZULU	16
 
-#define DTK_DELTA	32
-#define DTK_SECOND	33
-#define DTK_MINUTE	34
-#define DTK_HOUR	35
-#define DTK_DAY		36
-#define DTK_WEEK	37
-#define DTK_MONTH	38
-#define DTK_QUARTER	39
-#define DTK_YEAR	40
-#define DTK_DECADE	41
-#define DTK_CENTURY	42
-#define DTK_MILLENIUM	43
-#define DTK_MILLISEC	44
-#define DTK_MICROSEC	45
-#define DTK_AGO		46
+#define DTK_DELTA	17
+#define DTK_SECOND	18
+#define DTK_MINUTE	19
+#define DTK_HOUR	20
+#define DTK_DAY		21
+#define DTK_WEEK	22
+#define DTK_MONTH	23
+#define DTK_QUARTER	24
+#define DTK_YEAR	25
+#define DTK_DECADE	26
+#define DTK_CENTURY	27
+#define DTK_MILLENIUM	28
+#define DTK_MILLISEC	29
+#define DTK_MICROSEC	30
+#define DTK_AGO		31
 
 /*
  * Bit mask definitions for time parsing.
