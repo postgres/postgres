@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.32 1997/06/01 15:39:08 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.33 1997/07/12 20:31:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -374,7 +374,7 @@ process_response_from_backend(FILE *pfin, FILE *pfout, FILE *pfdebug,
                               PGconn *conn, 
                               PGresult **result_p, char * const reason) {
   
-  char id;
+  int id;
     /* The protocol character received from the backend.  The protocol
        character is the first character in the backend's response to our
        query.  It defines the nature of the response.
