@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/data.c,v 1.3 2003/03/27 14:29:17 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/data.c,v 1.4 2003/04/01 14:37:25 meskes Exp $ */
 
 #include "postgres_fe.h"
 
@@ -384,9 +384,9 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 				if (pval)
 				{
 					if (isarray && *pval == '"')
-						nres = PGTYPESnumeric_aton(pval + 1, &scan_length);
+						nres = PGTYPESnumeric_from_asc(pval + 1, &scan_length);
 					else
-						nres = PGTYPESnumeric_aton(pval, &scan_length);
+						nres = PGTYPESnumeric_from_asc(pval, &scan_length);
 
 					if (isarray && *scan_length == '"')
 						scan_length++;
@@ -399,7 +399,7 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 					}
 				}
 				else
-					nres = PGTYPESnumeric_aton("0.0", &scan_length);
+					nres = PGTYPESnumeric_from_asc("0.0", &scan_length);
 
 				PGTYPESnumeric_copy(nres, (Numeric *)(var + offset * act_tuple));
 				break;
@@ -408,9 +408,9 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 				if (pval)
 				{
 					if (isarray && *pval == '"')
-						ires = PGTYPESinterval_atoi(pval + 1, &scan_length);
+						ires = PGTYPESinterval_from_asc(pval + 1, &scan_length);
 					else
-						ires = PGTYPESinterval_atoi(pval, &scan_length);
+						ires = PGTYPESinterval_from_asc(pval, &scan_length);
 
 					if (isarray && *scan_length == '"')
 						scan_length++;
@@ -423,7 +423,7 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 					}
 				}
 				else
-					ires = PGTYPESinterval_atoi("0 seconds", NULL);
+					ires = PGTYPESinterval_from_asc("0 seconds", NULL);
 
 				PGTYPESinterval_copy(ires, (Interval *)(var + offset * act_tuple));
 				break;
@@ -431,9 +431,9 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 				if (pval)
 				{
 					if (isarray && *pval == '"')
-						ddres = PGTYPESdate_atod(pval + 1, &scan_length);
+						ddres = PGTYPESdate_from_asc(pval + 1, &scan_length);
 					else
-						ddres = PGTYPESdate_atod(pval, &scan_length);
+						ddres = PGTYPESdate_from_asc(pval, &scan_length);
 
 					if (isarray && *scan_length == '"')
 						scan_length++;
@@ -453,9 +453,9 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 				if (pval)
 				{
 					if (isarray && *pval == '"')
-						tres = PGTYPEStimestamp_atot(pval + 1, &scan_length);
+						tres = PGTYPEStimestamp_from_asc(pval + 1, &scan_length);
 					else
-						tres = PGTYPEStimestamp_atot(pval, &scan_length);
+						tres = PGTYPEStimestamp_from_asc(pval, &scan_length);
 
 					if (isarray && *scan_length == '"')
 						scan_length++;

@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.7 2003/03/30 11:48:18 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.8 2003/04/01 14:37:25 meskes Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -847,7 +847,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 					{
 						for (element = 0; element < var->arrsize; element++)
 						{
-							str = PGTYPESnumeric_ntoa((Numeric *)((var + var->offset * element)->value), 0);
+							str = PGTYPESnumeric_to_asc((Numeric *)((var + var->offset * element)->value), 0);
 							slen = strlen (str);
 							
 							if (!(mallocedval = ECPGrealloc(mallocedval, strlen(mallocedval) + slen + 5, stmt->lineno)))
@@ -863,7 +863,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 					}
 					else
 					{
-						str = PGTYPESnumeric_ntoa((Numeric *)(var->value), 0);
+						str = PGTYPESnumeric_to_asc((Numeric *)(var->value), 0);
 						slen = strlen (str);
 					
 						if (!(mallocedval = ECPGalloc(slen + 1, stmt->lineno)))
@@ -888,7 +888,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 					{
 						for (element = 0; element < var->arrsize; element++)
 						{
-							str = PGTYPESinterval_itoa((Interval *)((var + var->offset * element)->value));
+							str = PGTYPESinterval_to_asc((Interval *)((var + var->offset * element)->value));
 							slen = strlen (str);
 							
 							if (!(mallocedval = ECPGrealloc(mallocedval, strlen(mallocedval) + slen + 5, stmt->lineno)))
@@ -904,7 +904,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 					}
 					else
 					{
-						str = PGTYPESinterval_itoa((Interval *)(var->value));
+						str = PGTYPESinterval_to_asc((Interval *)(var->value));
 						slen = strlen (str);
 					
 						if (!(mallocedval = ECPGalloc(slen + 1, stmt->lineno)))
@@ -929,7 +929,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 					{
 						for (element = 0; element < var->arrsize; element++)
 						{
-							str = PGTYPESdate_dtoa(*(Date *)((var + var->offset * element)->value));
+							str = PGTYPESdate_to_asc(*(Date *)((var + var->offset * element)->value));
 							slen = strlen (str);
 							
 							if (!(mallocedval = ECPGrealloc(mallocedval, strlen(mallocedval) + slen + 5, stmt->lineno)))
@@ -945,7 +945,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 					}
 					else
 					{
-						str = PGTYPESdate_dtoa(*(Date *)(var->value));
+						str = PGTYPESdate_to_asc(*(Date *)(var->value));
 						slen = strlen (str);
 					
 						if (!(mallocedval = ECPGalloc(slen + 1, stmt->lineno)))
@@ -970,7 +970,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 					{
 						for (element = 0; element < var->arrsize; element++)
 						{
-							str = PGTYPEStimestamp_ttoa(*(Timestamp *)((var + var->offset * element)->value));
+							str = PGTYPEStimestamp_to_asc(*(Timestamp *)((var + var->offset * element)->value));
 							slen = strlen (str);
 							
 							if (!(mallocedval = ECPGrealloc(mallocedval, strlen(mallocedval) + slen + 5, stmt->lineno)))
@@ -986,7 +986,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 					}
 					else
 					{
-						str = PGTYPEStimestamp_ttoa(*(Timestamp *)(var->value));
+						str = PGTYPEStimestamp_to_asc(*(Timestamp *)(var->value));
 						slen = strlen (str);
 					
 						if (!(mallocedval = ECPGalloc(slen + 1, stmt->lineno)))
@@ -1239,9 +1239,7 @@ ECPGexecute(struct statement * stmt)
 	{
 		ECPGlog("ECPGexecute line %d: ASYNC NOTIFY of '%s' from backend pid '%d' received\n",
 				stmt->lineno, notify->relname, notify->be_pid);
-/*		PQfreemem(notify);*/
-		free(notify);
-#warning Remove PQfreemem define
+		PQfreemem(notify);
 	}
 
 	return status;

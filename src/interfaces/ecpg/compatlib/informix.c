@@ -64,7 +64,7 @@ deccvasc(char *cp, int len, Numeric *np)
 		ret = -1201;
 	else
 	{
-		np = PGTYPESnumeric_aton(str, NULL);
+		np = PGTYPESnumeric_from_asc(str, NULL);
 		if (!np)
 		{
 			switch (errno)
@@ -85,19 +85,19 @@ deccvasc(char *cp, int len, Numeric *np)
 int
 deccvdbl(double dbl, Numeric *np)
 {
-	return(PGTYPESnumeric_dton(dbl, np));
+	return(PGTYPESnumeric_from_double(dbl, np));
 }
 
 int
 deccvint(int in, Numeric *np)
 {
-	return(PGTYPESnumeric_iton(in, np));
+	return(PGTYPESnumeric_from_int(in, np));
 }
 
 int
 deccvlong(long lng, Numeric *np)
 {
-	return(PGTYPESnumeric_lton(lng, np));	
+	return(PGTYPESnumeric_from_long(lng, np));	
 }
 
 int
@@ -159,9 +159,9 @@ dectoasc(Numeric *np, char *cp, int len, int right)
 	char *str;
 	
 	if (right >= 0)
-		str = PGTYPESnumeric_ntoa(np, right);
+		str = PGTYPESnumeric_to_asc(np, right);
 	else
-		str = PGTYPESnumeric_ntoa(np, 0);
+		str = PGTYPESnumeric_to_asc(np, 0);
 
 	if (!str)
 		return -1;
@@ -176,13 +176,13 @@ dectoasc(Numeric *np, char *cp, int len, int right)
 int
 dectodbl(Numeric *np, double *dblp)
 {
-	return(PGTYPESnumeric_ntod(np, dblp));
+	return(PGTYPESnumeric_to_double(np, dblp));
 }
 
 int
 dectoint(Numeric *np, int *ip)
 {
-	int ret = PGTYPESnumeric_ntoi(np, ip);
+	int ret = PGTYPESnumeric_to_int(np, ip);
 
 	if (ret == PGTYPES_NUM_OVERFLOW)
 		ret = -1200;
@@ -193,7 +193,7 @@ dectoint(Numeric *np, int *ip)
 int
 dectolong(Numeric *np, long *lngp)	
 {
-	int ret = PGTYPESnumeric_ntol(np, lngp);
+	int ret = PGTYPESnumeric_to_long(np, lngp);
 
 	if (ret == PGTYPES_NUM_OVERFLOW)
 		ret = -1200;
@@ -205,7 +205,7 @@ dectolong(Numeric *np, long *lngp)
 int
 rdatestr (Date d, char *str)
 {
-	char *tmp = PGTYPESdate_dtoa(d);
+	char *tmp = PGTYPESdate_to_asc(d);
 
 	if (!tmp)
 		return -1210;
@@ -214,6 +214,15 @@ rdatestr (Date d, char *str)
 	strcpy(tmp, str);
 	free(str);
 	
+	return 0;
+}
+
+int
+rstrdate (char *str, Date *d)
+{
+	Date dat = PGTYPESdate_from_asc(str, NULL);
+
+	/* XXX: ERROR handling hier und in datetime.c */
 	return 0;
 }
 
@@ -237,7 +246,7 @@ rdefmtdate (Date *d, char *fmt, char *str)
 	/* TODO: take care of DBCENTURY environment variable */
 	/* PGSQL functions allow all centuries */
 
-	if (PGTYPESdate_defmtdate(d, fmt, str) == 0)
+	if (PGTYPESdate_defmt_asc(d, fmt, str) == 0)
 		return 0;
 	
 	switch (errno)
@@ -254,7 +263,7 @@ rdefmtdate (Date *d, char *fmt, char *str)
 int
 rfmtdate (Date d, char *fmt, char *str)
 {
-	if (PGTYPESdate_fmtdate(d, fmt, str) == 0)
+	if (PGTYPESdate_fmt_asc(d, fmt, str) == 0)
 		return 0;
 		
 	if (errno == ENOMEM)
@@ -275,19 +284,36 @@ rmdyjul (short mdy[3], Date *d)
 void
 dtcurrent (Timestamp *ts)
 {
-	return;
+	PGTYPEStimestamp_current (ts);
 }
 
 int
 dtcvasc (char *str, Timestamp *ts)
 {
+	Timestamp ts_tmp;
+        int i;
+        char **endptr = &str;
+
+        ts_tmp = PGTYPEStimestamp_from_asc(str, endptr);
+        i = errno;
+        if (i) {
+                return i;
+        }
+        if (**endptr) {
+                /* extra characters exist at the end */
+                return -1264;
+        }
+
+        /* everything went fine */
+        *ts = ts_tmp;
+								
 	return 0;
 }
 
 int
 dtsub (Timestamp *ts1, Timestamp *ts2, Interval *iv)
 {
-	return 0;
+	return PGTYPEStimestamp_sub(ts1, ts2, iv);
 }
 
 int
@@ -299,22 +325,21 @@ dttoasc (Timestamp *ts, char *output)
 int
 dttofmtasc (Timestamp *ts, char *output, int str_len, char *fmtstr)
 {
-	return 0;
+	return PGTYPEStimestamp_fmt_asc(ts, output, str_len, fmtstr);
 }
 
 int
 intoasc(Interval *i, char *str)
 {
+	str = PGTYPESinterval_to_asc(i);
+	
+	if (!str)
+		return -errno;
+	
 	return 0;
 }
 
 /* And finally some misc functions */
-int
-rstrdate (char *str, Date *d)
-{
-	return 0;
-}
-
 int
 rfmtlong(long lvalue, char *format, char *outbuf)
 {
@@ -352,8 +377,10 @@ rtypmsize(int type, int len)
 }
 
 void
-rupshift(char *s)
+rupshift(char *str)
 {
+	for (; *str != '\0'; str++)
+		if (islower(*str)) *str = toupper(*str);
 	return;
 }
 

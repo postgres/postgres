@@ -4,6 +4,7 @@
 #include <float.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "dt.h"
 #include "extern.h"
@@ -504,6 +505,10 @@ static datetkn    *deltacache[MAXDATEFIELDS] = {NULL};
 char       *months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", NULL};
 
 char       *days[] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", NULL};
+
+char* pgtypes_date_weekdays_short[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", NULL};
+
+char* pgtypes_date_months[] = {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December", NULL};
 
 #ifndef HAVE_RINT
 

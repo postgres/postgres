@@ -1,6 +1,8 @@
 #ifndef PGTYPES_TIMESTAMP
 #define PGTYPES_TIMESTAMP
 
+#include <pgtypes_interval.h>
+
 #ifdef HAVE_INT64_TIMESTAMP
 typedef int64 Timestamp;
 typedef int64 TimestampTz;
@@ -10,7 +12,11 @@ typedef double Timestamp;
 typedef double TimestampTz;
 #endif
 
-extern Timestamp PGTYPEStimestamp_atot(char *, char **);
-extern char *PGTYPEStimestamp_ttoa(Timestamp);
+extern Timestamp PGTYPEStimestamp_from_asc(char *, char **);
+extern char *PGTYPEStimestamp_to_asc(Timestamp);
+extern int PGTYPEStimestamp_sub (Timestamp *, Timestamp *, Interval *);
+extern int PGTYPEStimestamp_fmt_asc (Timestamp *, char *, int, char *);
+extern void PGTYPEStimestamp_current (Timestamp *);
+	
 
 #endif /* PGTYPES_TIMESTAMP */

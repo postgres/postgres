@@ -745,7 +745,7 @@ tm2interval(struct tm * tm, fsec_t fsec, Interval *span)
 }	/* tm2interval() */
 
 Interval *
-PGTYPESinterval_atoi(char *str, char **endptr)
+PGTYPESinterval_from_asc(char *str, char **endptr)
 {
 	Interval	*result = NULL;
 	fsec_t		fsec;
@@ -800,7 +800,7 @@ PGTYPESinterval_atoi(char *str, char **endptr)
 }
 
 char *
-PGTYPESinterval_itoa(Interval *span)
+PGTYPESinterval_to_asc(Interval *span)
 {
 	struct tm	tt,
 			   *tm = &tt;

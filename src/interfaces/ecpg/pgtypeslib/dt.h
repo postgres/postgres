@@ -272,33 +272,38 @@ extern int	day_tab[2][13];
 #define TIMESTAMP_IS_NOEND(j)   ((j) == DT_NOEND)
 #define TIMESTAMP_NOT_FINITE(j) (TIMESTAMP_IS_NOBEGIN(j) || TIMESTAMP_IS_NOEND(j))
 
-extern int DecodeTimeOnly(char **field, int *ftype,
+int DecodeTimeOnly(char **field, int *ftype,
 			   int nf, int *dtype,
 			   struct tm * tm, fsec_t *fsec, int *tzp);
 
-extern int DecodeInterval(char **field, int *ftype,
+int DecodeInterval(char **field, int *ftype,
 			   int nf, int *dtype,
 			   struct tm * tm, fsec_t *fsec);
 
-extern int	EncodeTimeOnly(struct tm * tm, fsec_t fsec, int *tzp, int style, char *str);
-extern int	EncodeDateTime(struct tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, char *str, bool);
-extern int	EncodeInterval(struct tm * tm, fsec_t fsec, int style, char *str);
+int	EncodeTimeOnly(struct tm * tm, fsec_t fsec, int *tzp, int style, char *str);
+int	EncodeDateTime(struct tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, char *str, bool);
+int	EncodeInterval(struct tm * tm, fsec_t fsec, int style, char *str);
 
-extern int	DecodeUnits(int field, char *lowtoken, int *val);
-extern bool	ClearDateCache(bool, bool, bool);
+int	DecodeUnits(int field, char *lowtoken, int *val);
+bool	ClearDateCache(bool, bool, bool);
 
-extern int	j2day(int jd);
+int	j2day(int jd);
 
-extern bool CheckDateTokenTables(void);
+bool CheckDateTokenTables(void);
 
-extern int EncodeDateOnly(struct tm *, int, char *, bool);
-extern void GetEpochTime(struct tm *);
-extern int ParseDateTime(char *, char *, char **, int *, int, int *, char **);
-extern int DecodeDateTime(char **, int *, int, int *, struct tm *, fsec_t *, int *, bool);
-extern void j2date(int, int *, int *, int *);
-extern void GetCurrentDateTime(struct tm*);
-extern int date2j(int, int, int);
-extern double rint(double x);
+int EncodeDateOnly(struct tm *, int, char *, bool);
+void GetEpochTime(struct tm *);
+int ParseDateTime(char *, char *, char **, int *, int, int *, char **);
+int DecodeDateTime(char **, int *, int, int *, struct tm *, fsec_t *, int *, bool);
+void j2date(int, int *, int *, int *);
+void GetCurrentDateTime(struct tm*);
+int date2j(int, int, int);
+double rint(double x);
+
+extern char* pgtypes_date_weekdays_short[];
+extern char* pgtypes_date_months[];
+extern char* months[];
+extern char* days[];
 
 #endif   /* DT_H */
 	

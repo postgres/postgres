@@ -4,18 +4,15 @@
 #include <float.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "dt.h"
 #include "extern.h"
 #include "pgtypes_error.h"
 #include "pgtypes_date.h"
 
-/* XXX: currently not used.
- * pgsql: timestamp_date()
- * Convert timestamp to date data type.
- */
 Date
-PGTYPESdate_ttod(Timestamp dt)
+PGTYPESdate_from_timestamp(Timestamp dt)
 {
 	Date		dDate;
 
@@ -36,7 +33,7 @@ PGTYPESdate_ttod(Timestamp dt)
 }
 
 Date
-PGTYPESdate_atod(char *str, char **endptr)
+PGTYPESdate_from_asc(char *str, char **endptr)
 {
 	
 	Date		dDate;
@@ -87,7 +84,7 @@ PGTYPESdate_atod(char *str, char **endptr)
 }
 
 char *
-PGTYPESdate_dtoa(Date dDate)
+PGTYPESdate_to_asc(Date dDate)
 {
 	struct tm       tt, *tm = &tt;
 	char            buf[MAXDATELEN + 1];
@@ -154,16 +151,8 @@ PGTYPESdate_today (Date *d)
 #define PGTYPES_FMTDATE_YEAR_DIGITS_SHORT	5
 #define PGTYPES_FMTDATE_YEAR_DIGITS_LONG	6
 
-static char* pgtypes_date_weekdays_short[] = {"Sun", "Mon", "Tue", "Wed",
-	"Thu", "Fri", "Sat", NULL};
-
-static char* pgtypes_date_months[] = {"January", "February", "March", "April", "May", "June",
-	"July", "August", "September", "October", "November", "December", NULL};
-static char* pgtypes_date_months_short[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
-	"Jul", "Aug", "Sep", "Oct", "Nov", "Dec", NULL};
-
 int
-PGTYPESdate_fmtdate(Date dDate, char* fmtstring, char* outbuf) {
+PGTYPESdate_fmt_asc(Date dDate, char* fmtstring, char* outbuf) {
 	static struct {
 		char* format;
 		int component;
@@ -179,15 +168,6 @@ PGTYPESdate_fmtdate(Date dDate, char* fmtstring, char* outbuf) {
 			 {"yy",   PGTYPES_FMTDATE_YEAR_DIGITS_SHORT   },
 			 { NULL, 0 }
 	};
-
-
-/* These are the constants that decide which printf() format we'll use in
- * order to get a string representation of the value */
-#define PGTYPES_DATE_REPLACE_STRING_MALLOCED	1
-#define PGTYPES_DATE_REPLACE_STRING_CONSTANT	2
-#define PGTYPES_DATE_REPLACE_UINT		3
-#define PGTYPES_DATE_REPLACE_UINT_2_LZ		4
-#define PGTYPES_DATE_REPLACE_UINT_4_LZ		5
 
 	union {
 		char* replace_str;
@@ -213,44 +193,44 @@ PGTYPESdate_fmtdate(Date dDate, char* fmtstring, char* outbuf) {
 			switch(mapping[i].component) {
 				case PGTYPES_FMTDATE_DOW_LITERAL_SHORT:
 					replace_val.replace_str = pgtypes_date_weekdays_short[dow];
-					replace_type = PGTYPES_DATE_REPLACE_STRING_CONSTANT;
+					replace_type = PGTYPES_REPLACE_STRING_CONSTANT;
 					break;
 				case PGTYPES_FMTDATE_DAY_DIGITS_LZ:
 					replace_val.replace_uint = tm.tm_mday;
-					replace_type = PGTYPES_DATE_REPLACE_UINT_2_LZ;
+					replace_type = PGTYPES_REPLACE_UINT_2_LZ;
 					break;
 				case PGTYPES_FMTDATE_MONTH_LITERAL_SHORT:
-					replace_val.replace_str = pgtypes_date_months_short[tm.tm_mon-1];
-					replace_type = PGTYPES_DATE_REPLACE_STRING_CONSTANT;
+					replace_val.replace_str = months[tm.tm_mon-1];
+					replace_type = PGTYPES_REPLACE_STRING_CONSTANT;
 					break;
 				case PGTYPES_FMTDATE_MONTH_DIGITS_LZ:
 					replace_val.replace_uint = tm.tm_mon;
-					replace_type = PGTYPES_DATE_REPLACE_UINT_2_LZ;
+					replace_type = PGTYPES_REPLACE_UINT_2_LZ;
 					break;
 				case PGTYPES_FMTDATE_YEAR_DIGITS_LONG:
 					replace_val.replace_uint = tm.tm_year;
-					replace_type = PGTYPES_DATE_REPLACE_UINT_4_LZ;
+					replace_type = PGTYPES_REPLACE_UINT_4_LZ;
 					break;
 				case PGTYPES_FMTDATE_YEAR_DIGITS_SHORT:
 					replace_val.replace_uint = tm.tm_year % 1000;
-					replace_type = PGTYPES_DATE_REPLACE_UINT_2_LZ;
+					replace_type = PGTYPES_REPLACE_UINT_2_LZ;
 					break;
 				default:
 					/* should not happen, set something
 					 * anyway */
 					replace_val.replace_str = " ";
-					replace_type = PGTYPES_DATE_REPLACE_STRING_CONSTANT;
+					replace_type = PGTYPES_REPLACE_STRING_CONSTANT;
 			}
 			switch(replace_type) {
-				case PGTYPES_DATE_REPLACE_STRING_MALLOCED:
-				case PGTYPES_DATE_REPLACE_STRING_CONSTANT:
+				case PGTYPES_REPLACE_STRING_MALLOCED:
+				case PGTYPES_REPLACE_STRING_CONSTANT:
 					strncpy(start_pattern, replace_val.replace_str,
 							strlen(replace_val.replace_str));
-					if (replace_type == PGTYPES_DATE_REPLACE_STRING_MALLOCED) {
+					if (replace_type == PGTYPES_REPLACE_STRING_MALLOCED) {
 						free(replace_val.replace_str);
 					}
 					break;
-				case PGTYPES_DATE_REPLACE_UINT:
+				case PGTYPES_REPLACE_UINT:
 					{
 						char* t = pgtypes_alloc(PGTYPES_DATE_NUM_MAX_DIGITS);
 						if (!t) {
@@ -262,7 +242,7 @@ PGTYPESdate_fmtdate(Date dDate, char* fmtstring, char* outbuf) {
 						free(t);
 					}
 					break;
-				case PGTYPES_DATE_REPLACE_UINT_2_LZ:
+				case PGTYPES_REPLACE_UINT_2_LZ:
 					{
 						char* t = pgtypes_alloc(PGTYPES_DATE_NUM_MAX_DIGITS);
 						if (!t) {
@@ -274,7 +254,7 @@ PGTYPESdate_fmtdate(Date dDate, char* fmtstring, char* outbuf) {
 						free(t);
 					}
 					break;
-				case PGTYPES_DATE_REPLACE_UINT_4_LZ:
+				case PGTYPES_REPLACE_UINT_4_LZ:
 					{
 						char* t = pgtypes_alloc(PGTYPES_DATE_NUM_MAX_DIGITS);
 						if (!t) {
@@ -289,7 +269,7 @@ PGTYPESdate_fmtdate(Date dDate, char* fmtstring, char* outbuf) {
 				default:
 					/* doesn't happen (we set
 					 * replace_type to
-					 * PGTYPES_DATE_REPLACE_STRING_CONSTANT
+					 * PGTYPES_REPLACE_STRING_CONSTANT
 					 * in case of an error above) */
 					break;
 			}
@@ -300,7 +280,7 @@ PGTYPESdate_fmtdate(Date dDate, char* fmtstring, char* outbuf) {
 
 
 /*
- * PGTYPESdate_rdefmtdate
+ * PGTYPESdate_defmt_asc
  *
  * function works as follows:
  *   - first we analyze the paramters
@@ -314,7 +294,7 @@ PGTYPESdate_fmtdate(Date dDate, char* fmtstring, char* outbuf) {
 
 #define PGTYPES_DATE_MONTH_MAXLENGTH		20  /* probably even less  :-) */
 int
-PGTYPESdate_defmtdate(Date *d, char *fmt, char *str)
+PGTYPESdate_defmt_asc(Date *d, char *fmt, char *str)
 {
 	/* token[2] = { 4,6 } means that token 2 starts at
 	 * position 4 and ends at (including) position 6 */
@@ -537,7 +517,7 @@ PGTYPESdate_defmtdate(Date *d, char *fmt, char *str)
 			 * variable i */
 			if (list == pgtypes_date_months) {
 				if (list[i+1] == NULL) {
-					list = pgtypes_date_months_short;
+					list = months;
 					i = -1;
 				}
 			}
@@ -612,6 +592,8 @@ PGTYPESdate_defmtdate(Date *d, char *fmt, char *str)
 		errno = PGTYPES_DATE_BAD_DAY;
 		return -1;
 	}
+
+	/* XXX: DBCENTURY ? */
 
 	*d = date2j(tm.tm_year, tm.tm_mon, tm.tm_mday) - date2j(2000, 1, 1);
 

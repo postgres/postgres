@@ -1,8 +1,6 @@
 #ifndef PGTYPES_INTERVAL
 #define PGTYPES_INTERVAL
 
-#include <pgtypes_timestamp.h>
-
 typedef struct
 {
 #ifdef HAVE_INT64_TIMESTAMP
@@ -13,8 +11,8 @@ typedef struct
         long           month;                  /* months and years, after time for alignment */
 } Interval;
 
-extern Interval *PGTYPESinterval_atoi(char *, char **);
-extern char *PGTYPESinterval_itoa(Interval *);
+extern Interval *PGTYPESinterval_from_asc(char *, char **);
+extern char *PGTYPESinterval_to_asc(Interval *);
 extern int PGTYPESinterval_copy(Interval *, Interval *);
 	
 #endif /* PGTYPES_INTERVAL */

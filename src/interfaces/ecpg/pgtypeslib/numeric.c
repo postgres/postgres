@@ -362,14 +362,8 @@ get_str_from_var(Numeric *var, int dscale)
 	return str;
 }
 
-/* ----------
- * PGTYPESnumeric_aton() -
- *
- *	Input function for numeric data type
- * ----------
- */
 Numeric *
-PGTYPESnumeric_aton(char *str, char **endptr)
+PGTYPESnumeric_from_asc(char *str, char **endptr)
 {
 	Numeric *value = (Numeric *)pgtypes_alloc(sizeof(Numeric));
 	int ret;
@@ -394,14 +388,8 @@ PGTYPESnumeric_aton(char *str, char **endptr)
 	return(value);
 }
 
-/* ----------
- * numeric_out() -
- *
- *	Output function for numeric data type
- * ----------
- */
 char *
-PGTYPESnumeric_ntoa(Numeric *num, int dscale)
+PGTYPESnumeric_to_asc(Numeric *num, int dscale)
 {
 	if (dscale <= 0)
 		dscale = num->dscale;
@@ -1328,14 +1316,14 @@ PGTYPESnumeric_cmp(Numeric *var1, Numeric *var2) {
 }
 
 int
-PGTYPESnumeric_iton(signed int int_val, Numeric *var) {
+PGTYPESnumeric_from_int(signed int int_val, Numeric *var) {
 	/* implicit conversion */
 	signed long int long_int = int_val;
-	return PGTYPESnumeric_lton(long_int, var);
+	return PGTYPESnumeric_from_long(long_int, var);
 }
 
 int
-PGTYPESnumeric_lton(signed long int long_val, Numeric *var) {
+PGTYPESnumeric_from_long(signed long int long_val, Numeric *var) {
 	/* calculate the size of the long int number */
 	/* a number n needs log_10 n digits */
 	/* however we multiply by 10 each time and compare instead of
@@ -1408,7 +1396,7 @@ PGTYPESnumeric_copy(Numeric *src, Numeric *dst) {
 }
 
 int
-PGTYPESnumeric_dton(double d, Numeric *dst)
+PGTYPESnumeric_from_double(double d, Numeric *dst)
 {
 	char buffer[100];
 	Numeric *tmp;
@@ -1416,7 +1404,7 @@ PGTYPESnumeric_dton(double d, Numeric *dst)
 	if (sprintf(buffer, "%f", d) == 0)
 		return -1;
 	
-	if ((tmp = PGTYPESnumeric_aton(buffer, NULL)) == NULL)
+	if ((tmp = PGTYPESnumeric_from_asc(buffer, NULL)) == NULL)
 		return -1;
 	if (PGTYPESnumeric_copy(tmp, dst) != 0)
 		return -1;
@@ -1449,7 +1437,7 @@ numericvar_to_double_no_overflow(Numeric *var, double *dp)
 }
 
 int
-PGTYPESnumeric_ntod(Numeric* nv, double* dp) {
+PGTYPESnumeric_to_double(Numeric* nv, double* dp) {
 	double tmp;
 	int i;
 	
@@ -1460,11 +1448,11 @@ PGTYPESnumeric_ntod(Numeric* nv, double* dp) {
 }
 
 int
-PGTYPESnumeric_ntoi(Numeric* nv, int* ip) {
+PGTYPESnumeric_to_int(Numeric* nv, int* ip) {
 	long l;
 	int i;
 	
-	if ((i = PGTYPESnumeric_ntol(nv, &l)) != 0)
+	if ((i = PGTYPESnumeric_to_long(nv, &l)) != 0)
 		return i;
 
 	if (l < -INT_MAX || l > INT_MAX) {
@@ -1477,7 +1465,7 @@ PGTYPESnumeric_ntoi(Numeric* nv, int* ip) {
 }
 
 int
-PGTYPESnumeric_ntol(Numeric* nv, long* lp) {
+PGTYPESnumeric_to_long(Numeric* nv, long* lp) {
 	int i;
 	long l = 0;
 
