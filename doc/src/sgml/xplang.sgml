@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xplang.sgml,v 1.11 2001/02/04 15:28:18 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xplang.sgml,v 1.12 2001/02/09 02:20:52 tgl Exp $
 -->
 
  <chapter id="xplang">
@@ -15,7 +15,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/xplang.sgml,v 1.11 2001/02/04 15:28:18 pete
    text. Instead, the task is passed to a special handler that knows
    the details of the language.  The handler could either do all the
    work of parsing, syntax analysis, execution, etc. itself, or it
-   could serve as a <quote>glue</quote> between
+   could serve as <quote>glue</quote> between
    <productname>Postgres</productname> and an existing implementation
    of a programming language.  The handler itself is a special
    programming language function compiled into a shared object and
@@ -24,33 +24,52 @@ $Header: /cvsroot/pgsql/doc/src/sgml/xplang.sgml,v 1.11 2001/02/04 15:28:18 pete
 
   <para>
    Writing a handler for a new procedural language is outside the
-   scope of this manual.  Several procedural languages are available
-   in the <productname>Postgres</productname> distribution.
+   scope of this manual, although some information is provided in
+   the CREATE LANGUAGE reference page.  Several procedural languages are
+   available in the standard <productname>Postgres</productname> distribution.
   </para>
 
   <sect1 id="xplang-install">
    <title>Installing Procedural Languages</title>
 
+   <para>
+    A procedural language must be <quote>installed</quote> into each
+    database where it is to be used.  But procedural languages installed in
+    the template1 database are automatically available in all
+    subsequently created databases. So the database administrator can
+    decide which languages are available in which databases, and can make
+    some languages available by default if he chooses.
+   </para>
+
+   <para>
+    For the languages supplied with the standard distribution, the
+    shell script <filename>createlang</filename> may be used instead
+    of carrying out the details by hand.  For example, to install PL/pgSQL
+    into the template1 database, use
+<programlisting>
+createlang plpgsql template1
+</programlisting>
+    The manual procedure described below is only recommended for
+    installing custom languages that <filename>createlang</filename>
+    does not know about.
+   </para>
+
    <procedure>
     <title>
-     Procedural Language Installation
+     Manual Procedural Language Installation
     </title>
 
     <para>
      A procedural language is installed in the database in three
-     steps.  A procedural language must be installed into each
-     database where it is to be used.  Procedural languages defined in
-     the template1 database are automatically available in all
-     subsequently created databases. So the administrator can decide
-     which languages are available by default.
+     steps, which must be carried out by a database superuser.
     </para>
 
     <step performance="required">
      <para>
       The shared object for the language handler must be compiled and
-      installed.  This works in the same way as building and
-      installing modules with regular user-defined C functions does;
-      see <xref linkend="dfunc">.
+      installed into an appropriate library directory.  This works in the same
+      way as building and installing modules with regular user-defined C
+      functions does; see <xref linkend="dfunc">.
      </para>
     </step>
 
@@ -84,18 +103,21 @@ CREATE <optional>TRUSTED</optional> <optional>PROCEDURAL</optional> LANGUAGE '<r
       executed inside the database backend, the <acronym>TRUSTED</acronym>
       flag should only be given for
       languages that do not allow access to database backends
-      internals or the filesystem. The languages PL/pgSQL and
-      PL/Tcl are known to be trusted.
+      internals or the filesystem. The languages PL/pgSQL,
+      PL/Tcl, and PL/Perl are known to be trusted; the language PL/TclU
+      should <emphasis>not</emphasis> be marked trusted.
      </para>
     </step>
    </procedure>
 
    <para>
     In a default <productname>Postgres</productname> installation, the
-    handler for the PL/pgSQL is built and installed into the
+    handler for the PL/pgSQL language is built and installed into the
     <quote>library</quote> directory. If Tcl/Tk support is configured
-    in, the handler for PL/Tcl is also built and installed in the same
-    location.
+    in, the handlers for PL/Tcl and PL/TclU are also built and installed in
+    the same location.  Likewise, the PL/Perl handler is built and installed
+    if Perl support is configured.  The <filename>createlang</filename>
+    script automates the two CREATE steps described above.
    </para>
 
    <procedure>
@@ -127,31 +149,6 @@ CREATE TRUSTED PROCEDURAL LANGUAGE 'plpgsql'
      </para>
     </step>
    </procedure>
-
-   <para>
-    For the languages supplied with the standard distribution, the
-    shell script <filename>createlang</filename> can be used instead
-    of carrying out the details manually.  To install PL/pgSQL into
-    the template1 database, use
-<programlisting>
-createlang plpgsql template1
-</programlisting>
-   </para>
-
-     <para>
-      PL handler functions have a special call interface that is
-      different from regular C language functions. One of the arguments
-      given to the handler is the object ID in the <filename>pg_proc</filename>
-      tables entry for the function that should be executed.
-      The handler examines various system catalogs to analyze the
-      functions call arguments and it's return data type. The source
-      text of the functions body is found in the prosrc attribute of
-      <literal>pg_proc</literal>.
-      Due to this, PL functions
-      can be overloaded like SQL language functions. There can be
-      multiple different PL functions having the same function name,
-      as long as the call arguments differ.
-     </para>
 
   </sect1>
 
