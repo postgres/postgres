@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Oct 17 00:08:22 EDT 2000
+Last updated:		Mon Oct 23 18:15:18 EDT 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -133,6 +133,7 @@ COMMANDS
 * Add ALTER TABLE command to change table ownership (Mark H)
 * Add ALTER FUNCTION 
 * Add ALTER TABLE ... DROP CONSTRAINT
+* Add ALTER USER command to change user db attributes
 * Automatically drop constraints/functions when object is dropped
 * Allow CLUSTER on all tables at once, and improve CLUSTER, loses NOT
 	NULL specification, indexes, permissions, etc on table
