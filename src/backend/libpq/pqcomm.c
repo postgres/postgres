@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.27 1997/11/17 16:17:14 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.28 1997/11/19 17:52:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -607,8 +607,6 @@ StreamServerPort(char *hostName, short portName, int *fdP)
 		pqdebug("%s", PQerrormsg);
 		return (STATUS_ERROR);
 	}
-	if (family == AF_UNIX)
-		on_exitpg(do_unlink, (caddr_t) 0);
 	if ((setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (char *) &one,
 					sizeof(one))) == -1)
 	{
@@ -636,14 +634,17 @@ StreamServerPort(char *hostName, short portName, int *fdP)
 	err = bind(fd, (struct sockaddr *) & saddr, len);
 	if (err < 0)
 	{
-		sprintf(PQerrormsg,
-				"FATAL: StreamServerPort: bind() failed: errno=%d\n",
-				errno);
-		pqdebug("%s", PQerrormsg);
-		strcat(PQerrormsg, "\tIs another postmaster already running on that port?\n");
-		strcat(PQerrormsg, "\tIf not, wait a few seconds and retry.\n");
-		fputs(PQerrormsg, stderr);
-		return (STATUS_ERROR);
+	  sprintf(PQerrormsg,
+		  "FATAL: StreamServerPort: bind() failed: errno=%d\n",
+		  errno);
+	  pqdebug("%s", PQerrormsg);
+	  strcat(PQerrormsg, "\tIs another postmaster already running on that port?\n");
+	  if (family == AF_UNIX)
+	    strcat(PQerrormsg, "\tIf not, remove socket node (/tmp/.s.PGSQL.<portnr>)and retry.\n");
+	  else
+	    strcat(PQerrormsg, "\tIf not, wait a few seconds and retry.\n");
+	  fputs(PQerrormsg, stderr);
+	  return (STATUS_ERROR);
 	}
 
 	listen(fd, SOMAXCONN);
@@ -657,6 +658,7 @@ StreamServerPort(char *hostName, short portName, int *fdP)
 	 */
 
 	*fdP = fd;
+	if (family == AF_UNIX) atexit(do_unlink);
 	return (STATUS_OK);
 }
 
