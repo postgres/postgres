@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.38 2001/09/16 16:11:09 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.39 2001/10/26 19:58:12 tgl Exp $
 -->
 
  <chapter id="xfunc">
@@ -72,19 +72,30 @@ $Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.38 2001/09/16 16:11:09 peter
 
    <para>
     SQL functions execute an arbitrary list of SQL statements, returning
-    the results of the last query in the list.  SQL functions in general
-    return sets.  If their returntype is not specified as a
-    <literal>SETOF</literal>,
-    then an arbitrary element of the last query's result will be returned.
+    the results of the last query in the list.  In the simple (non-set)
+    case, the first row of the last query's result will be returned.
+    (Bear in mind that <quote>the first row</quote> is not well-defined
+    unless you use <literal>ORDER BY</>.)  If the last query happens
+    to return no rows at all, NULL will be returned.
+   </para>
+
+   <para>
+    Alternatively, an SQL function may be declared to return a set,
+    by specifying the function's return type
+    as <literal>SETOF</literal> <replaceable>sometype</>.  In this case
+    all rows of the last query's result are returned.  Further details
+    appear below.
    </para>
 
    <para>
     The body of an SQL function should be a list of one or more SQL
     statements separated by semicolons.  Note that because the syntax
-    of the <command>CREATE FUNCTION</command> requires the body of the
-    function to be enclosed in single quotes, single quote marks used
+    of the <command>CREATE FUNCTION</command> command requires the body of the
+    function to be enclosed in single quotes, single quote marks
+    (<literal>'</>) used
     in the body of the function must be escaped, by writing two single
-    quotes where one is desired.
+    quotes (<literal>''</>) or a backslash (<literal>\'</>) where each
+    quote is desired.
    </para>
 
    <para>
@@ -93,7 +104,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.38 2001/09/16 16:11:09 peter
     the first argument, $2 to the second, and so on.  If an argument
     is of a composite type, then the <quote>dot notation</quote>,
     e.g., <literal>$1.emp</literal>, may be used to access attributes
-    of the argument or to invoke functions.
+    of the argument.
    </para>
 
    <sect2>
@@ -104,11 +115,11 @@ $Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.38 2001/09/16 16:11:09 peter
      which might be used to debit a bank account:
 
 <programlisting>
-CREATE FUNCTION tp1 (integer, double precision) RETURNS integer AS '
+CREATE FUNCTION tp1 (integer, numeric) RETURNS integer AS '
     UPDATE bank 
-        SET balance = bank.balance - $2
-        WHERE bank.acctountno = $1;
-        SELECT 1;
+        SET balance = balance - $2
+        WHERE accountno = $1;
+    SELECT 1;
 ' LANGUAGE SQL;
 </programlisting>
 
@@ -121,16 +132,47 @@ SELECT tp1(17, 100.0);
     </para>
 
     <para>
-     The following more interesting example takes a single argument of
-     type <type>EMP</type>, which is really a table that contains data
-     about employees, and retrieves multiple results:
+     In practice one would probably like a more useful result from the
+     function than a constant <quote>1</>, so a more likely definition
+     is
 
 <programlisting>
-CREATE FUNCTION hobbies (EMP) RETURNS SETOF hobbies AS '
-    SELECT hobbies.* FROM hobbies
-        WHERE $1.name = hobbies.person
+CREATE FUNCTION tp1 (integer, numeric) RETURNS numeric AS '
+    UPDATE bank 
+        SET balance = balance - $2
+        WHERE accountno = $1;
+    SELECT balance FROM bank WHERE accountno = $1;
 ' LANGUAGE SQL;
 </programlisting>
+
+     which adjusts the balance and returns the new balance.
+    </para>
+
+    <para>
+     Any collection of commands in the  <acronym>SQL</acronym>
+     language can be packaged together and defined as a function.
+     The commands can include data modification (i.e.,
+     <command>INSERT</command>, <command>UPDATE</command>, and
+     <command>DELETE</command>) as well
+     as <command>SELECT</command> queries.  However, the final command 
+     must be a <command>SELECT</command> that returns whatever is
+     specified as the function's return type.
+
+<programlisting>
+CREATE FUNCTION clean_EMP () RETURNS integer AS '
+    DELETE FROM EMP 
+        WHERE EMP.salary &lt;= 0;
+    SELECT 1 AS ignore_this;
+' LANGUAGE SQL;
+
+SELECT clean_EMP();
+</programlisting>
+
+<screen>
+ x
+---
+ 1
+</screen>
     </para>
    </sect2>
 
@@ -146,21 +188,21 @@ CREATE FUNCTION one() RETURNS integer AS '
     SELECT 1 as RESULT;
 ' LANGUAGE SQL;
 
-SELECT one() AS answer;
+SELECT one();
 </programlisting>
 
 <screen>
- answer
---------
-      1
+ one
+-----
+   1
 </screen>
     </para>
 
     <para>
      Notice that we defined a column alias within the function body for the result of the function
      (with  the  name <literal>RESULT</>),  but this column alias is not visible
-     outside the function.  Hence,  the  result  is labelled <literal>answer</>
-     instead of <literal>one</>.
+     outside the function.  Hence,  the  result  is labelled <literal>one</>
+     instead of <literal>RESULT</>.
     </para>
 
     <para>
@@ -190,10 +232,12 @@ SELECT add_em(1, 2) AS answer;
 
     <para>
      When  specifying  functions with arguments of composite
-     types (such as <type>EMP</type>), we must  not  only  specify  which
+     types, we must  not  only  specify  which
      argument  we  want (as we did above with <literal>$1</> and <literal>$2</literal>) but
-     also the attributes of  that  argument.   For  example,
-     take the function <function>double_salary</function> that computes what your
+     also the attributes of  that  argument.   For  example, suppose that
+     <type>EMP</type> is a table containing employee data, and therefore
+     also the name of the composite type of each row of the table.  Here
+     is a function <function>double_salary</function> that computes what your
      salary would be if it were doubled:
 
 <programlisting>
@@ -214,12 +258,83 @@ SELECT name, double_salary(EMP) AS dream
     </para>
 
     <para>
-     Notice the use of the syntax <literal>$1.salary</literal>.
-     Before launching into the  subject  of  functions  that
-     return  composite  types,  we  must first introduce the
+     Notice the use of the syntax <literal>$1.salary</literal>
+     to select one field of the argument row value.  Also notice
+     how the calling SELECT command uses a table name to denote
+     the entire current row of that table as a composite value.
+    </para>
+
+    <para>
+     It is also possible to build a function that returns a composite type.
+     (However, as we'll see below, there are some
+     unfortunate restrictions on how the function may be used.)
+     This is an example of a function 
+     that returns a single <type>EMP</type> row:
+
+<programlisting>
+CREATE FUNCTION new_emp() RETURNS EMP AS '
+    SELECT text ''None'' AS name,
+        1000 AS salary,
+        25 AS age,
+        point ''(2,2)'' AS cubicle;
+' LANGUAGE SQL;
+</programlisting>
+    </para>
+
+    <para>
+     In this case we have specified each of  the  attributes
+     with  a  constant value, but any computation or expression 
+     could have been substituted for these constants.
+     Note two important things about defining the function:
+
+     <itemizedlist>
+      <listitem>
+       <para>
+	The  target  list  order must be exactly the same as
+	that in which the columns appear in the table associated
+	with the composite type.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+	You must typecast the expressions to match the
+	definition of the composite type, or you will get errors like this:
+<screen>
+<computeroutput>
+ERROR:  function declared to return emp returns varchar instead of text at column 1
+</computeroutput>
+</screen>
+       </para>
+      </listitem>
+     </itemizedlist>
+    </para>     
+
+    <para>
+     In the present release of <productname>PostgreSQL</productname>
+     there are some unpleasant restrictions on how functions returning
+     composite types can be used.  Briefly, when calling a function that
+     returns a row, we cannot retrieve the entire row.  We must either
+     project a single attribute out of the row or pass the entire row into
+     another function.  (Trying to display the entire row value will yield
+     a meaningless number.)  For example,
+
+<programlisting>
+SELECT name(new_emp());
+</programlisting>
+
+<screen>
+ name
+------
+ None
+</screen>
+    </para>
+
+    <para>
+     This example makes use of the
      function notation for projecting attributes.  The  simple  way 
      to explain this is that we can usually use the
-     notations <literal>attribute(table)</>  and  <literal>table.attribute</>  interchangably:
+     notations <literal>attribute(table)</>  and  <literal>table.attribute</>
+     interchangeably:
 
 <programlisting>
 --
@@ -239,108 +354,96 @@ SELECT name(EMP) AS youngster
     </para>
 
     <para>
-     As  we shall see, however, this is not always the case.
-     This function notation is important when we want to use
-     a  function that returns a single row.  We do this
-     by assembling the entire row within the  function,
-     attribute  by attribute.  This is an example of a function 
-     that returns a single <type>EMP</type> row:
-
-<programlisting>
-CREATE FUNCTION new_emp() RETURNS EMP AS '
-    SELECT text ''None'' AS name,
-        1000 AS salary,
-        25 AS age,
-        point ''(2,2)'' AS cubicle;
-' LANGUAGE SQL;
-</programlisting>
-    </para>
-
-    <para>
-     In this case we have specified each of  the  attributes
-     with  a  constant value, but any computation or expression 
-     could have been substituted for these constants.
-     Defining a function like this can be tricky.   Some  of
-     the more important caveats are as follows:
-
-     <itemizedlist>
-      <listitem>
-       <para>
-	The  target  list  order must be exactly the same as
-	that in which the attributes appear  in  the  <command>CREATE
-	TABLE</command> statement that defined the table underlying the composite type.
-       </para>
-      </listitem>
-      <listitem>
-       <para>
-	You must typecast the expressions to match the
-	definition of the composite type, or you will get errors like this:
-<screen>
-<computeroutput>
-ERROR:  function declared to return emp returns varchar instead of text at column 1
-</computeroutput>
-</screen>
-       </para>
-      </listitem>
-      <listitem>
-       <para>
-	When calling a function that returns a row, we
-        cannot retrieve the entire row.  We must either
-        project an attribute out of the row or pass the
-        entire row into another function.
-
-<programlisting>
-SELECT name(new_emp()) AS nobody;
-</programlisting>
-
-<screen>
- nobody
---------
- None
-</screen>
-       </para>
-      </listitem>
-      <listitem>
-       <para>
 	The reason why, in general, we must use the function
         syntax  for projecting attributes of function return
         values is that the parser  just  doesn't  understand
-        the  other (dot) syntax for projection when combined
+        the  dot syntax for projection when combined
         with function calls.
 
 <screen>
 SELECT new_emp().name AS nobody;
-NOTICE:parser: syntax error at or near "."
+ERROR:  parser: parse error at or near "."
 </screen>
-       </para>
-      </listitem>
-     </itemizedlist>
-    </para>     
+    </para>
+
     <para>
-     Any collection of commands in the  <acronym>SQL</acronym>
-     language can be packaged together and defined as a function.
-     The commands can include data modification (i.e.,
-     <command>INSERT</command>, <command>UPDATE</command>, and
-     <command>DELETE</command>) as well
-     as <command>SELECT</command> queries.  However, the final command 
-     must be a <command>SELECT</command> that returns whatever is
-     specified as the function's return type.
+     Another way to use a function returning a row result is to declare a
+     second function accepting a rowtype parameter, and pass the function
+     result to it:
 
 <programlisting>
-CREATE FUNCTION clean_EMP () RETURNS integer AS '
-    DELETE FROM EMP 
-        WHERE EMP.salary &lt;= 0;
-    SELECT 1 AS ignore_this;
-' LANGUAGE SQL;
-
-SELECT clean_EMP();
+CREATE FUNCTION getname(emp) RETURNS text AS
+'SELECT $1.name;'
+LANGUAGE SQL;
 </programlisting>
 
 <screen>
- x
----
- 1
+SELECT getname(new_emp());
+ getname
+---------
+ None
+(1 row)
 </screen>
+    </para>     
+   </sect2>
+
+   <sect2>
+    <title><acronym>SQL</acronym> Functions Returning Sets</title>
+
+    <para>
+     As previously mentioned, an SQL function may be declared as
+     returning <literal>SETOF</literal> <replaceable>sometype</>.
+     In this case the function's final SELECT query is executed to
+     completion, and each row it outputs is returned as an element
+     of the set.
+    </para>
+
+    <para>
+     Functions returning sets may only be called in the target list
+     of a SELECT query.  For each row that the SELECT generates by itself,
+     the function returning set is invoked, and an output row is generated
+     for each element of the function's result set.  An example:
+
+<programlisting>
+CREATE FUNCTION listchildren(text) RETURNS SETOF text AS
+'SELECT name FROM nodes WHERE parent = $1'
+LANGUAGE SQL;
+</programlisting>
+
+<screen>
+SELECT * FROM nodes;
+   name    | parent
+-----------+--------
+ Top       |
+ Child1    | Top
+ Child2    | Top
+ Child3    | Top
+ SubChild1 | Child1
+ SubChild2 | Child1
+(6 rows)
+
+SELECT listchildren('Top');
+ listchildren
+--------------
+ Child1
+ Child2
+ Child3
+(3 rows)
+
+SELECT name, listchildren(name) FROM nodes;
+  name  | listchildren
+--------+--------------
+ Top    | Child1
+ Top    | Child2
+ Top    | Child3
+ Child1 | SubChild1
+ Child1 | SubChild2
+(5 rows)
+</screen>
+
+     Notice that no output row appears for Child2, Child3, etc.
+     This happens because listchildren() returns an empty set
+     for those inputs, so no output rows are generated.
     </para>
    </sect2>
   </sect1>
@@ -412,8 +515,12 @@ CREATE FUNCTION square_root(double precision) RETURNS double precision
     User-defined functions can be written in C (or a language that can
     be made compatible with C, such as C++).  Such functions are
     compiled into dynamically loadable objects (also called shared
-    libraries) and are loaded by the server on demand.  This
-    distinguishes them from internal functions.
+    libraries) and are loaded by the server on demand.  The dynamic
+    loading feature is what distinguishes <quote>C language</> functions
+    from <quote>internal</> functions --- the actual coding conventions
+    are essentially the same for both.  (Hence, the standard internal
+    function library is a rich source of coding examples for user-defined
+    C functions.)
    </para>
 
    <para>
@@ -440,15 +547,6 @@ CREATE FUNCTION square_root(double precision) RETURNS double precision
     object file, and the C name (link symbol) of the specific function to call
     within that object file.  If the C name is not explicitly specified then
     it is assumed to be the same as the SQL function name.
-
-    <note>
-     <para>
-      After it is used for the first time, a dynamically loaded user
-      function is retained in memory, and future calls to the function
-      in the same session will only incur the small overhead of a symbol table
-      lookup.
-     </para>
-    </note>
    </para>
 
    <para>
@@ -459,22 +557,22 @@ CREATE FUNCTION square_root(double precision) RETURNS double precision
     <orderedlist>
      <listitem>
       <para>
-       If the name is an absolute file name, the given file is loaded.
+       If the name is an absolute path, the given file is loaded.
       </para>
      </listitem>
 
      <listitem>
       <para>
        If the name starts with the string <literal>$libdir</literal>,
-       that part is replaced by the PostgreSQL package library directory,
-       which is determined at build time.
+       that part is replaced by the PostgreSQL package library directory
+       name, which is determined at build time.
       </para>
      </listitem>
 
      <listitem>
       <para>
        If the name does not contain a directory part, the file is
-       searched the path specified by the configuration variable
+       searched for in the path specified by the configuration variable
        <varname>dynamic_library_path</varname>.
       </para>
      </listitem>
@@ -506,11 +604,32 @@ CREATE FUNCTION square_root(double precision) RETURNS double precision
    </note>
 
    <para>
-    In any case, the file name that is specified in the
+    In any case, the file name that is given in the
     <command>CREATE FUNCTION</command> command is recorded literally
     in the system catalogs, so if the file needs to be loaded again
     the same procedure is applied.
    </para>
+
+   <note>
+    <para>
+     <application>PostgreSQL</application> will not compile a C function
+     automatically.  The object file must be compiled before it is referenced
+     in a <command>CREATE
+     FUNCTION</> command.  See <xref linkend="dfunc"> for additional
+     information.
+    </para>
+   </note>
+
+   <note>
+    <para>
+     After it is used for the first time, a dynamically loaded object
+     file is retained in memory.  Future calls in the same session to the
+     function(s) in that file will only incur the small overhead of a symbol
+     table lookup.  If you need to force a reload of an object file, for
+     example after recompiling it, use the <command>LOAD</> command or
+     begin a fresh session.
+    </para>
+   </note>
 
    <para>
     It is recommended to locate shared libraries either relative to
@@ -523,11 +642,15 @@ CREATE FUNCTION square_root(double precision) RETURNS double precision
 
    <note>
     <para>
-     <application>PostgreSQL</application> will not compile a function
-     automatically; it must be compiled before it is used in a CREATE
-     FUNCTION command.  See <xref linkend="dfunc"> for additional information.
+     Before <application>PostgreSQL</application> release 7.2, only exact
+     absolute paths to object files could be specified in <command>CREATE
+     FUNCTION</>.  This approach is now deprecated since it makes the
+     function definition unnecessarily unportable.  It's best to specify
+     just the shared library name with no path nor extension, and let
+     the search mechanism provide that information instead.
     </para>
    </note>
+
   </sect2>
 
    <sect2>
@@ -931,39 +1054,42 @@ concat_text(text *arg1, text *arg2)
      
 <programlisting>
 CREATE FUNCTION add_one(int4) RETURNS int4
-     AS '<replaceable>PGROOT</replaceable>/tutorial/funcs.so' LANGUAGE 'c'
+     AS '<replaceable>PGROOT</replaceable>/tutorial/funcs' LANGUAGE 'c'
      WITH (isStrict);
 
 -- note overloading of SQL function name add_one()
 CREATE FUNCTION add_one(float8) RETURNS float8
-     AS '<replaceable>PGROOT</replaceable>/tutorial/funcs.so',
+     AS '<replaceable>PGROOT</replaceable>/tutorial/funcs',
         'add_one_float8'
      LANGUAGE 'c' WITH (isStrict);
 
 CREATE FUNCTION makepoint(point, point) RETURNS point
-     AS '<replaceable>PGROOT</replaceable>/tutorial/funcs.so' LANGUAGE 'c'
+     AS '<replaceable>PGROOT</replaceable>/tutorial/funcs' LANGUAGE 'c'
      WITH (isStrict);
                          
 CREATE FUNCTION copytext(text) RETURNS text
-     AS '<replaceable>PGROOT</replaceable>/tutorial/funcs.so' LANGUAGE 'c'
+     AS '<replaceable>PGROOT</replaceable>/tutorial/funcs' LANGUAGE 'c'
      WITH (isStrict);
 
 CREATE FUNCTION concat_text(text, text) RETURNS text
-     AS '<replaceable>PGROOT</replaceable>/tutorial/funcs.so' LANGUAGE 'c'
+     AS '<replaceable>PGROOT</replaceable>/tutorial/funcs' LANGUAGE 'c'
      WITH (isStrict);
 </programlisting>
     </para>
 
     <para>
      Here <replaceable>PGROOT</replaceable> stands for the full path to
-     the <productname>Postgres</productname> source tree.  Note that
-     depending on your system, the filename for a shared object might
-     not end in <literal>.so</literal>, but in <literal>.sl</literal>
-     or something else; adapt accordingly.
+     the <productname>Postgres</productname> source tree. (Better style would
+     be to use just <literal>'funcs'</> in the <literal>AS</> clause,
+     after having added <replaceable>PGROOT</replaceable><literal>/tutorial</>
+     to the search path.  In any case, we may omit the system-specific
+     extension for a shared library, commonly <literal>.so</literal> or
+     <literal>.sl</literal>.)
     </para>
 
     <para>
-     Notice that we have specified the functions as <quote>strict</quote>, meaning that
+     Notice that we have specified the functions as <quote>strict</quote>,
+     meaning that
      the system should automatically assume a NULL result if any input
      value is NULL.  By doing this, we avoid having to check for NULL inputs
      in the function code.  Without this, we'd have to check for NULLs
@@ -998,8 +1124,8 @@ PG_FUNCTION_INFO_V1(funcname);
 </programlisting>
      must appear in the same source file (conventionally it's written
      just before the function itself).  This macro call is not needed
-     for <literal>internal</>-language functions, since Postgres currently assumes
-     all internal functions are version-1.  However, it is
+     for <literal>internal</>-language functions, since Postgres currently
+     assumes all internal functions are version-1.  However, it is
      <emphasis>required</emphasis> for dynamically-loaded functions.
     </para>
 
@@ -1131,7 +1257,10 @@ concat_text(PG_FUNCTION_ARGS)
      this is only necessary in functions not declared <quote>strict</>).
      As with the
      <function>PG_GETARG_<replaceable>xxx</replaceable>()</function> macros,
-     the input arguments are counted beginning at zero.
+     the input arguments are counted beginning at zero.  Note that one
+     should refrain from executing
+     <function>PG_GETARG_<replaceable>xxx</replaceable>()</function> until
+     one has verified that the argument isn't NULL.
      To return a NULL result, execute <function>PG_RETURN_NULL()</function>;
      this works in both strict and non-strict functions.
     </para>
@@ -1229,7 +1358,7 @@ c_overpaid(PG_FUNCTION_ARGS)
 <programlisting>
 CREATE FUNCTION c_overpaid(emp, int4) 
 RETURNS bool
-AS '<replaceable>PGROOT</replaceable>/tutorial/obj/funcs.so' 
+AS '<replaceable>PGROOT</replaceable>/tutorial/obj/funcs' 
 LANGUAGE 'c';
 </programlisting>
     </para>
@@ -1238,6 +1367,7 @@ LANGUAGE 'c';
      While there are ways to construct new rows or modify  
      existing rows from within a C function, these
      are far too complex to discuss in this manual.
+     Consult the backend source code for examples.
     </para>
    </sect2>
 
@@ -1359,7 +1489,7 @@ LANGUAGE 'c';
    <title>Function Overloading</title>
 
    <para>
-    More than one function may be defined with the same name, so long
+    More than one function may be defined with the same SQL name, so long
     as the arguments they take are different.  In other words,
     function names can be <firstterm>overloaded</firstterm>.  When a
     query is executed, the server will determine which function to
@@ -1428,9 +1558,9 @@ CREATE FUNCTION test(int, int) RETURNS int
    <para>
     All calls to functions that are written in a language other than
     the current <quote>version 1</quote> interface for compiled
-    languages, in particular in user-defined procedural languages, but
-    also functions written in SQL or the version 0 compiled language
-    interface, go through a <firstterm>call handler</firstterm>
+    languages (this includes functions in user-defined procedural languages,
+    functions written in SQL, and functions using the version 0 compiled
+    language interface), go through a <firstterm>call handler</firstterm>
     function for the specific language.  It is the responsibility of
     the call handler to execute the function in a meaningful way, such
     as by interpreting the supplied source text.  This section
@@ -1580,7 +1710,7 @@ plsample_call_handler(PG_FUNCTION_ARGS)
     language:
 <programlisting>
 CREATE FUNCTION plsample_call_handler () RETURNS opaque
-    AS '/usr/local/pgsql/lib/plsample.so'
+    AS '/usr/local/pgsql/lib/plsample'
     LANGUAGE C;
 CREATE LANGUAGE plsample
     HANDLER plsample_call_handler;

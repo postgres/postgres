@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/dfunc.sgml,v 1.14 2001/05/19 09:01:10 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/dfunc.sgml,v 1.15 2001/10/26 19:58:12 tgl Exp $
 -->
 
 <sect2 id="dfunc">
@@ -7,9 +7,9 @@ $Header: /cvsroot/pgsql/doc/src/sgml/dfunc.sgml,v 1.14 2001/05/19 09:01:10 peter
 
  <para>
   Before you are able to use your
-  <productname>PostgreSQL</productname> extension function written in
-  C they need to be compiled and linked in a special way in order to
-  allow it to be dynamically loaded as needed by the server.  To be
+  <productname>PostgreSQL</productname> extension functions written in
+  C, they must be compiled and linked in a special way to produce a file
+  that can be dynamically loaded by the server.  To be
   precise, a <firstterm>shared library</firstterm> needs to be created.
  </para>
 
@@ -31,7 +31,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/dfunc.sgml,v 1.14 2001/05/19 09:01:10 peter
   be created as <firstterm>position-independent code</firstterm>
   (<acronym>PIC</acronym>), which conceptually means that they can be
   placed at an arbitrary location in memory when they are loaded by the
-  executable.  (Object files intended for executables are not compiled
+  executable.  (Object files intended for executables are usually not compiled
   that way.)  The command to link a shared library contains special
   flags to distinguish it from linking an executable. --- At least
   this is the theory.  On some systems the practice is much uglier.
@@ -263,16 +263,14 @@ gcc -shared -o foo.so foo.o
   The resulting shared library file can then be loaded into
   <productname>Postgres</productname>.  When specifying the file name
   to the <command>CREATE FUNCTION</command> command, one must give it
-  the name of the shared library file (ending in
-  <filename>.so</filename>) rather than the intermediate object file.
+  the name of the shared library file, not the intermediate object file.
+  Note that the system's standard shared-library extension (usually
+  <literal>.so</literal> or <literal>.sl</literal>) can be omitted from
+  the <command>CREATE FUNCTION</command> command, and normally should
+  be omitted for best portability.
+ </para>
 
-  <note>
-   <para>
-    Actually, <productname>Postgres</productname> does not care what
-    you name the file as long as it is a shared library file.
-   </para>
-  </note>
-
+ <para>
   Refer back to <xref linkend="xfunc-c-dynload"> about where the
   server expects to find the shared library files.
  </para>

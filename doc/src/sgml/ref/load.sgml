@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/load.sgml,v 1.9 2001/09/03 12:57:50 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/load.sgml,v 1.10 2001/10/26 19:58:12 tgl Exp $
 -->
 
 <refentry id="SQL-LOAD">
@@ -10,7 +10,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/ref/load.sgml,v 1.9 2001/09/03 12:57:50 pet
 
  <refnamediv>
   <refname>LOAD</refname>
-  <refpurpose>load or reload a shared object file</refpurpose>
+  <refpurpose>load or reload a shared library file</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>
@@ -23,12 +23,21 @@ LOAD '<replaceable class="PARAMETER">filename</replaceable>'
   <title>Description</title>
 
   <para>
-   Loads a shared object file into the PostgreSQL backend's address
+   Loads a shared library file into the PostgreSQL backend's address
    space.  If the file had been loaded previously, it is first
    unloaded.  This command is primarily useful to unload and reload a
-   shared object file if it has been changed.  To make use of the
-   shared object, a function needs to be declared using the <xref
+   shared library file that has been changed since the backend first
+   loaded it.  To make use of the
+   shared library, function(s) in it need to be declared using the <xref
    linkend="sql-createfunction"> command.
+  </para>
+
+  <para>
+   The filename is specified in the same way as for shared library
+   names in <xref linkend="sql-createfunction">; in particular, one
+   may rely on a search path and automatic addition of the system's standard
+   shared library filename extension.  See the
+   <citetitle>Programmer's Guide</citetitle> for more detail.
   </para>
  </refsect1>
 
