@@ -1,7 +1,7 @@
 /*
  *	PostgreSQL type definitions for the INET and CIDR types.
  *
- *	$PostgreSQL: pgsql/src/backend/utils/adt/network.c,v 1.48 2003/11/29 19:51:59 pgsql Exp $
+ *	$PostgreSQL: pgsql/src/backend/utils/adt/network.c,v 1.49 2003/12/01 18:50:19 tgl Exp $
  *
  *	Jon Postel RIP 16 Oct 1998
  */
@@ -315,8 +315,8 @@ inet_set_masklen(PG_FUNCTION_ARGS)
 				 errmsg("invalid mask length: %d", bits)));
 
 	/* clone the original data */
-	dst = (inet *) palloc(VARHDRSZ + sizeof(inet_struct));
-	memcpy(dst, src, VARHDRSZ + sizeof(inet_struct));
+	dst = (inet *) palloc(VARSIZE(src));
+	memcpy(dst, src, VARSIZE(src));
 
 	ip_bits(dst) = bits;
 
@@ -658,18 +658,12 @@ network_network(PG_FUNCTION_ARGS)
 	inet	   *dst;
 	int			byte;
 	int			bits;
-	int			maxbytes;
 	unsigned char mask;
 	unsigned char *a,
 			   *b;
 
 	/* make sure any unused bits are zeroed */
 	dst = (inet *) palloc0(VARHDRSZ + sizeof(inet_struct));
-
-	if (ip_family(ip) == PGSQL_AF_INET)
-		maxbytes = 4;
-	else
-		maxbytes = 16;
 
 	bits = ip_bits(ip);
 	a = ip_addr(ip);
@@ -710,17 +704,11 @@ network_netmask(PG_FUNCTION_ARGS)
 	inet	   *dst;
 	int			byte;
 	int			bits;
-	int			maxbytes;
 	unsigned char mask;
 	unsigned char *b;
 
 	/* make sure any unused bits are zeroed */
 	dst = (inet *) palloc0(VARHDRSZ + sizeof(inet_struct));
-
-	if (ip_family(ip) == PGSQL_AF_INET)
-		maxbytes = 4;
-	else
-		maxbytes = 16;
 
 	bits = ip_bits(ip);
 	b = ip_addr(dst);
@@ -744,7 +732,7 @@ network_netmask(PG_FUNCTION_ARGS)
 	}
 
 	ip_family(dst) = ip_family(ip);
-	ip_bits(dst) = ip_bits(ip);
+	ip_bits(dst) = ip_maxbits(ip);
 	ip_type(dst) = 0;
 	VARATT_SIZEP(dst) = VARHDRSZ
 		+ ((char *) ip_addr(dst) - (char *) VARDATA(dst))
@@ -794,7 +782,7 @@ network_hostmask(PG_FUNCTION_ARGS)
 	}
 
 	ip_family(dst) = ip_family(ip);
-	ip_bits(dst) = ip_bits(ip);
+	ip_bits(dst) = ip_maxbits(ip);
 	ip_type(dst) = 0;
 	VARATT_SIZEP(dst) = VARHDRSZ
 		+ ((char *) ip_addr(dst) - (char *) VARDATA(dst))
