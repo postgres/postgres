@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/test/regress/Makefile,v 1.1.1.1 1996/07/09 06:22:24 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/test/regress/Makefile,v 1.2 1996/07/23 03:19:34 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -34,7 +34,7 @@ DLOBJS= regress$(SLSUFF)
 # ... plus test query inputs
 #
 CREATEFILES= $(DLOBJS:%=$(objdir)/%) \
-	create.sql queries.sql errors.sql destroy.sql security.sql
+	create.sql queries.sql errors.sql destroy.sql security.sql expected.out
 
 
 OUTFILES= stud_emp.data onek.data regress.out aportal.out
@@ -46,6 +46,32 @@ $(OUTFILES): $(CREATEFILES)
 	@echo "RESULTS OF REGRESSION ARE SAVED IN $(objdir)/regress.out"
 
 #
+# expected results file
+#
+expected.out: expected.in
+	if [ -z "$$USER" ]; then USER=$$LOGNAME; fi; \
+	if [ -z "$$USER" ]; then USER=`whoami`; fi; \
+	if [ -z "$$USER" ]; then echo 'Cannot deduce $USER.'; exit 1; fi; \
+	rm -f $(objdir)/expected.out; \
+	C="`pwd`"; \
+	sed -e "s:_CWD_:$$C:g" \
+	   -e "s:_OBJWD_:$$C/$(objdir):g" \
+	   -e "s/_USER_/$$USER/g" < expected.in > $(objdir)/expected.out
+
+#
+# make a new expected results file from the current 'results.out'
+# rename 'expected.new' to 'expected.in' by hand to avoid circular makes
+#
+expected.new: regress.out
+	if [ -z "$$USER" ]; then USER=$$LOGNAME; fi; \
+	if [ -z "$$USER" ]; then USER=`whoami`; fi; \
+	if [ -z "$$USER" ]; then echo 'Cannot deduce $USER.'; exit 1; fi; \
+	C="`pwd`"; \
+	sed -e "s:$$C:_CWD_:g" \
+	   -e "s:$$C/$(objdir):_OBJWD_:g" \
+	   -e "s/$$USER/_USER_/g" < $(objdir)/regress.out > expected.new
+ 
+#
 # prepare to run the test (including clean-up after the last run)
 #
 all:: $(CREATEFILES)
@@ -54,7 +80,7 @@ all:: $(CREATEFILES)
 #
 # run the test
 #
-runtest: regress.out
+runtest: expected.out regress.out
 
 #
 # installation
