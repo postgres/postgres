@@ -171,6 +171,18 @@
 	<entry>convert floating point to integer</entry>
 	<entry>integer(2.0)</entry>
        </row>
+       <row>
+	<entry>random()</entry>
+	<entry>float8</entry>
+	<entry>random value in the range 0.0 to 1.0</entry>
+	<entry>random()</entry>
+       </row>
+       <row>
+	<entry>setseed(float8)</entry>
+	<entry>int</entry>
+	<entry>set seed for subsequent random() calls</entry>
+	<entry>setseed(0.54823)</entry>
+       </row>
       </tbody>
      </tgroup>
     </table>

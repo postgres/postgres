@@ -8,7 +8,7 @@
  * or in config.h afterwards.  Of course, if you edit config.h, then your
  * changes will be overwritten the next time you run configure.
  *
- * $Id: config.h.in,v 1.128 2000/07/28 02:13:40 tgl Exp $
+ * $Id: config.h.in,v 1.129 2000/08/07 00:51:38 tgl Exp $
  */
 
 #ifndef CONFIG_H
@@ -483,6 +483,15 @@ extern long random(void);
 #ifndef HAVE_SRANDOM
 extern void srandom(unsigned int seed);
 #endif
+
+/* The random() function is expected to yield values 0 .. MAX_RANDOM_VALUE */
+/* Currently, all known implementations yield 0..2^31-1, so we just hardwire
+ * this constant.  We could do a configure test if it proves to be necessary.
+ * CAUTION: Think not to replace this with RAND_MAX.  RAND_MAX defines the
+ * maximum value of the older rand() function, which is often different from
+ * --- and considerably inferior to --- random().
+ */
+#define MAX_RANDOM_VALUE  (0x7FFFFFFF)
 
 /* Set to 1 if you have libz.a */
 #undef HAVE_LIBZ

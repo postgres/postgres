@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.67 2000/08/01 18:29:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.68 2000/08/07 00:51:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1315,7 +1315,7 @@ drandom(PG_FUNCTION_ARGS)
 	float8		result;
 
 	/* result 0.0-1.0 */
-	result = ((double) random()) / RAND_MAX;
+	result = ((double) random()) / ((double) MAX_RANDOM_VALUE);
 
 	PG_RETURN_FLOAT8(result);
 }
@@ -1328,7 +1328,7 @@ Datum
 setseed(PG_FUNCTION_ARGS)
 {
 	float8		seed = PG_GETARG_FLOAT8(0);
-	int			iseed = (seed * RAND_MAX);
+	int			iseed = (int) (seed * MAX_RANDOM_VALUE);
 
 	srandom((unsigned int) iseed);
 

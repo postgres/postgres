@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_main.c,v 1.22 2000/06/28 03:31:45 tgl Exp $
+ * $Id: geqo_main.c,v 1.23 2000/08/07 00:51:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,9 +106,9 @@ geqo(Query *root)
 /* seed random number generator */
 /* XXX why is this done every time around? */
     if (Geqo_random_seed >= 0)
-        srandom(Geqo_random_seed);
+        srandom((unsigned int) Geqo_random_seed);
     else
-        srandom(time(NULL));
+        srandom((unsigned int) time(NULL));
 
 /* allocate genetic pool memory */
 	pool = alloc_pool(pool_size, number_of_rels);

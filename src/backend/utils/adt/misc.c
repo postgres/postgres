@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/misc.c,v 1.19 2000/06/05 07:28:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/misc.c,v 1.20 2000/08/07 00:51:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,15 +45,18 @@ nonnullvalue(PG_FUNCTION_ARGS)
 
 /*
  * oidrand (oid o, int4 X)-
- *	  takes in an oid and a int4 X, and will return 'true'
- *	about 1/X of the time.
+ *	  Takes in an oid and a int4 X, and will return 'true' about 1/X of
+ *	  the time.  If X == 0, this will always return true.
  *	  Useful for doing random sampling or subsetting.
- *	if X == 0, this will always return true;
  *
  * Example use:
  *	   select * from TEMP where oidrand(TEMP.oid, 10)
  * will return about 1/10 of the tuples in TEMP
  *
+ * NOTE: the OID input is not used at all.  It is there just because of
+ * an old optimizer bug: a qual expression containing no variables was
+ * mistakenly assumed to be a constant.  Pretending to access the row's OID
+ * prevented the optimizer from treating the oidrand() result as constant.
  */
 
 static bool random_initialized = false;
@@ -61,7 +64,6 @@ static bool random_initialized = false;
 Datum
 oidrand(PG_FUNCTION_ARGS)
 {
-	/* XXX seems like we ought to be using the oid for something? */
 #ifdef NOT_USED
 	Oid			o = PG_GETARG_OID(0);
 #endif
@@ -96,7 +98,7 @@ oidsrand(PG_FUNCTION_ARGS)
 {
 	int32		X = PG_GETARG_INT32(0);
 
-	srand(X);
+	srandom((unsigned int) X);
 	random_initialized = true;
 	PG_RETURN_BOOL(true);
 }

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.46 2000/07/14 15:27:14 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.47 2000/08/07 00:51:18 tgl Exp $
 Postgres documentation
 -->
 
@@ -194,9 +194,9 @@ SET TIME ZONE { '<replaceable class="PARAMETER">timezone</replaceable>' | LOCAL 
 	  <listitem>
 	   <para>
 	    The value for the seed to be used by the
-	    <function>random</function> catalog function. Significant
+	    <function>random</function> function. Allowed
 	    values are floating point numbers between 0 and 1, which
-	    are then multiplied by RAND_MAX. This product will
+	    are then multiplied by 2^31-1. This product will
 	    silently overflow if a number outside the range is used.
 	   </para>
 
