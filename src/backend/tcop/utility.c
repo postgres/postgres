@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.130 2002/03/06 20:34:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.131 2002/03/06 21:49:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -644,10 +644,6 @@ ProcessUtility(Node *parsetree,
 			}
 			break;
 
-			/*
-			 * ******************************** dynamic loader ********************************
-			 *
-			 */
 		case T_LoadStmt:
 			{
 				LoadStmt   *stmt = (LoadStmt *) parsetree;
@@ -686,9 +682,6 @@ ProcessUtility(Node *parsetree,
 
 #ifdef NOT_USED
 
-			/*
-			 * ******************************** Tioga-related statements *******************************
-			 */
 		case T_RecipeStmt:
 			{
 				RecipeStmt *stmt = (RecipeStmt *) parsetree;
@@ -698,9 +691,6 @@ ProcessUtility(Node *parsetree,
 			break;
 #endif
 
-			/*
-			 * ******************************** set variable statements *******************************
-			 */
 		case T_VariableSetStmt:
 			{
 				VariableSetStmt *n = (VariableSetStmt *) parsetree;
@@ -725,9 +715,6 @@ ProcessUtility(Node *parsetree,
 			}
 			break;
 
-			/*
-			 * ******************************** TRIGGER statements *******************************
-			 */
 		case T_CreateTrigStmt:
 			CreateTrigger((CreateTrigStmt *) parsetree);
 			break;
@@ -736,9 +723,6 @@ ProcessUtility(Node *parsetree,
 			DropTrigger((DropTrigStmt *) parsetree);
 			break;
 
-			/*
-			 * ************* PROCEDURAL LANGUAGE statements *****************
-			 */
 		case T_CreatePLangStmt:
 			CreateProceduralLanguage((CreatePLangStmt *) parsetree);
 			break;
@@ -747,20 +731,10 @@ ProcessUtility(Node *parsetree,
 			DropProceduralLanguage((DropPLangStmt *) parsetree);
 			break;
 
-			/*
-			 * ******************************** DOMAIN statements ****
-			 *
-			 */
 		case T_CreateDomainStmt:
-			set_ps_display(commandTag = "CREATE DOMAIN");
-
 			DefineDomain((CreateDomainStmt *) parsetree);
 			break;
 
-			/*
-			 * ******************************** USER statements ****
-			 *
-			 */
 		case T_CreateUserStmt:
 			CreateUser((CreateUserStmt *) parsetree);
 			break;
@@ -845,10 +819,6 @@ ProcessUtility(Node *parsetree,
 			}
 			break;
 
-			/*
-			 * ******************************** default ********************************
-			 *
-			 */
 		default:
 			elog(ERROR, "ProcessUtility: command #%d unsupported",
 				 nodeTag(parsetree));
