@@ -1,5 +1,5 @@
 #! /bin/sh
-# $PostgreSQL: pgsql/src/test/regress/pg_regress.sh,v 1.37 2003/11/29 19:52:14 pgsql Exp $
+# $PostgreSQL: pgsql/src/test/regress/pg_regress.sh,v 1.38 2004/01/08 20:04:41 neilc Exp $
 
 me=`basename $0`
 : ${TMPDIR=/tmp}
@@ -666,7 +666,7 @@ do
                 fi
                 ;;
             2)
-                # desaster struck
+                # disaster struck
                 echo "trouble" 1>&2
                 (exit 2); exit;;
         esac
