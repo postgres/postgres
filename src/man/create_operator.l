@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/create_operator.l,v 1.7 1998/07/25 00:17:30 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/create_operator.l,v 1.8 1999/04/15 00:09:00 tgl Exp $
 .TH "CREATE OPERATOR" SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
 create operator - define a new user operator
@@ -13,9 +13,10 @@ create operator - define a new user operator
 	 [\fB, commutator =\fR com_op ]
 	 [\fB, negator =\fR neg_op ]
 	 [\fB, restrict =\fR res_proc ]
-	 [\fB, hashes\fR]
 	 [\fB, join =\fR join_proc ]
-	 [\fB, sort =\fR sor_op1 {\fB,\fR sor_op2 } ]
+	 [\fB, hashes\fR]
+	 [\fB, sort1 =\fR left_sort_op ]
+	 [\fB, sort2 =\fR right_sort_op ]
 	\fB)\fR
 .\" \fB"arg is ("
 .\" type [
@@ -90,8 +91,7 @@ and must have one or two arguments.
 The commutator operator is present so that Postgres can reverse the order
 of the operands if it wishes.  For example, the operator
 area-less-than, >>>, would have a commutator operator,
-area-greater-than, <<<.  Suppose that an operator, area-equal, ===,
-exists, as well as an area not equal, !==.  Hence, the query optimizer
+area-greater-than, <<<.  Hence, the query optimizer
 could freely convert:
 .nf
 
@@ -109,6 +109,8 @@ MYBOXES.description <<< "0,0,1,1"::box
 This allows the execution code to always use the latter representation
 and simplifies the query optimizer somewhat.
 .PP
+Suppose that an operator, area-equal, ===,
+exists, as well as an area not equal, !==.
 The negator operator allows the query optimizer to convert
 .nf
 
@@ -125,53 +127,41 @@ MYBOXES.description !== "0,0,1,1"::box
 .fi
 If a commutator operator name is supplied, Postgres searches for it in
 the catalog.  If it is found and it does not yet have a commutator
-itself, then the commutator's entry is updated to have the current
-(new) operator as its commutator.  This applies to the negator, as
-well.
+itself, then the commutator's entry is updated to have the newly created
+operator as its commutator.  This applies to the negator, as well.
 .PP
 This is to allow the definition of two operators that are the
 commutators or the negators of each other.  The first operator should
 be defined without a commutator or negator (as appropriate).  When the
 second operator is defined, name the first as the commutator or
-negator.  The first will be updated as a side effect.
+negator.  The first will be updated as a side effect.  (As of Postgres 6.5,
+it also works to just have both operators refer to each other.)
 .PP
-The next two specifications are present to support the query optimizer
+The next three specifications are present to support the query optimizer
 in performing joins.  Postgres can always evaluate a join (i.e.,
 processing a clause with two tuple variables separated by an operator
 that returns a boolean) by iterative substitution [WONG76].  In
-addition, Postgres is planning on implementing a hash-join algorithm
+addition, Postgres can use a hash-join algorithm
 along the lines of [SHAP86]; however, it must know whether this
-strategy is applicable.  For example, a hash-join algorithm is usable
-for a clause of the form:
-.nf
-
-.ce 1
-MYBOXES.description === MYBOXES2.description
-
-.fi
-but not for a clause of the form:
-.nf
-
-.ce 1
-MYBOXES.description <<< MYBOXES2.description.
-
-.fi
+strategy is applicable.
+The current hash-join algorithm
+is only correct for operators that represent equality tests;
+furthermore, equality of the datatype must mean bitwise equality
+of the representation of the type.  (For example, a datatype that
+contains unused bits that don't matter for equality tests could
+not be hashjoined.)
 The
 .BR hashes
-flag gives the needed information to the query optimizer concerning
-whether a hash join strategy is usable for the operator in question.
+flag indicates to the query optimizer that a hash join may safely be
+used with this operator.
 .PP
 Similarly, the two sort operators indicate to the query optimizer
-whether merge-sort is a usable join strategy and what operators should
-be used to sort the two operand classes.  For the === clause above,
-the optimizer must sort both relations using the operator, <<<.  On
-the other hand, merge-sort is not usable with the clause:
-.nf
-
-.ce 1
-MYBOXES.description <<< MYBOXES2.description
-
-.fi
+whether merge-sort is a usable join strategy and which operators should
+be used to sort the two operand classes.
+Sort operators should only be provided for an equality
+operator, and they should refer to less-than operators for the
+left and right side data types respectively.
+.PP
 If other join strategies are found to be practical, Postgres will change
 the optimizer and run-time system to use them and will require
 additional specification when an operator is defined.  Fortunately,
@@ -236,9 +226,10 @@ create operator === (
 	commutator = ===,
 	negator = !==,
 	restrict = area_restriction_procedure,
+	join = area_join_procedure,
 	hashes,
-	join = area-join-procedure,
-	sort = <<<, <<<)
+	sort1 = <<<,
+	sort2 = <<<)
 .\"	arg is (box, box)
 .fi
 .SH "SEE ALSO"
@@ -248,7 +239,7 @@ drop_operator(l).
 Operator names cannot be composed of alphabetic characters in 
 Postgres.
 .PP
-If an operator is defined before its commuting operator has been defined
-(a case specifically warned against above), a dummy operator with invalid
-fields will be placed in the system catalogs.  This may interfere with
-the definition of later operators.
+If an operator is defined before its commuting operator has been defined,
+a dummy entry for the commutator (with invalid oprproc field) will be placed
+in the system catalogs.  This entry will be overridden when the commutator
+is eventually defined.

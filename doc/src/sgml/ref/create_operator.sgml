@@ -15,7 +15,7 @@
   </refnamediv>
  <REFSYNOPSISDIV>
   <REFSYNOPSISDIVINFO>
-   <DATE>1998-09-09</DATE>
+   <DATE>1999-04-14</DATE>
   </REFSYNOPSISDIVINFO>
   <SYNOPSIS>
 CREATE OPERATOR <replaceable>name</replaceable> (
@@ -25,15 +25,16 @@ CREATE OPERATOR <replaceable>name</replaceable> (
      [, COMMUTATOR = <replaceable class="parameter">com_op</replaceable> ]
      [, NEGATOR    = <replaceable class="parameter">neg_op</replaceable> ]
      [, RESTRICT   = <replaceable class="parameter">res_proc</replaceable> ]
-     [, HASHES ]
      [, JOIN       = <replaceable class="parameter">join_proc</replaceable> ]
-     [, SORT       = <replaceable class="parameter">sort_op</replaceable> [, ...] ]
+     [, HASHES ]
+     [, SORT1      = <replaceable class="parameter">left_sort_op</replaceable> ]
+     [, SORT2      = <replaceable class="parameter">right_sort_op</replaceable> ]
     )
   </SYNOPSIS>
   
   <REFSECT2 ID="R2-SQL-CREATEOPERATOR-1">
    <REFSECT2INFO>
-    <DATE>1998-09-09</DATE>
+    <DATE>1999-04-14</DATE>
    </REFSECT2INFO>
    <TITLE>
     Inputs
@@ -89,7 +90,7 @@ omitted for a left-unary operator.
 	 </TERM>
 	 <LISTITEM>
 	  <PARA>
-The corresponding commutative operator.
+The commutator for this operator.
 	  </PARA>
 	 </LISTITEM>
 	</VARLISTENTRY>
@@ -99,7 +100,7 @@ The corresponding commutative operator.
 	 </TERM>
 	 <LISTITEM>
 	  <PARA>
-The corresponding negation operator.
+The negator of this operator.
 	  </PARA>
 	 </LISTITEM>
 	</VARLISTENTRY>
@@ -109,17 +110,7 @@ The corresponding negation operator.
 	 </TERM>
 	 <LISTITEM>
 	  <PARA>
-The corresponding restriction operator.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-	<VARLISTENTRY>
-	 <TERM>
-HASHES
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-This operator can support a hash-join algorithm.
+The restriction selectivity estimator function for this operator.
 	  </PARA>
 	 </LISTITEM>
 	</VARLISTENTRY>
@@ -129,17 +120,37 @@ This operator can support a hash-join algorithm.
 	 </TERM>
 	 <LISTITEM>
 	  <PARA>
-Procedure supporting table joins.
+The join selectivity estimator function for this operator.
 	  </PARA>
 	 </LISTITEM>
 	</VARLISTENTRY>
 	<VARLISTENTRY>
 	 <TERM>
-	  <replaceable class="parameter">sort_op</replaceable>
+HASHES
 	 </TERM>
 	 <LISTITEM>
 	  <PARA>
-Operator to use for sorting.
+Indicates this operator can support a hash-join algorithm.
+	  </PARA>
+	 </LISTITEM>
+	</VARLISTENTRY>
+	<VARLISTENTRY>
+	 <TERM>
+	  <replaceable class="parameter">left_sort_op</replaceable>
+	 </TERM>
+	 <LISTITEM>
+	  <PARA>
+Operator that sorts the left-hand data type of this operator.
+	  </PARA>
+	 </LISTITEM>
+	</VARLISTENTRY>
+	<VARLISTENTRY>
+	 <TERM>
+	  <replaceable class="parameter">right_sort_op</replaceable>
+	 </TERM>
+	 <LISTITEM>
+	  <PARA>
+Operator that sorts the right-hand data type of this operator.
 	  </PARA>
 	 </LISTITEM>
 	</VARLISTENTRY>
@@ -149,7 +160,7 @@ Operator to use for sorting.
   
   <REFSECT2 ID="R2-SQL-CREATEOPERATOR-2">
    <REFSECT2INFO>
-    <DATE>1998-09-09</DATE>
+    <DATE>1999-04-14</DATE>
    </REFSECT2INFO>
    <TITLE>
     Outputs
@@ -173,7 +184,7 @@ Operator to use for sorting.
  
  <REFSECT1 ID="R1-SQL-CREATEOPERATOR-1">
   <REFSECT1INFO>
-   <DATE>1998-09-09</DATE>
+   <DATE>1999-04-14</DATE>
   </REFSECT1INFO>
   <TITLE>
    Description
@@ -252,9 +263,9 @@ Operator to use for sorting.
    If  a  commutator  operator  name  is  supplied,  
    <productname>Postgres</productname>
    searches  for  it  in  the catalog.  If it is found and it
-   does not yet have a commutator itself, then  the  commutator's
-   entry is updated to have the current (new) operator
-   as its commutator.  This applies to the negator, as  well.
+   does not yet have a commutator itself, then the commutator's
+   entry is updated to have the newly created operator as its
+   commutator.  This applies to the negator, as well.
   </para>
   <para>
    This  is to allow the definition of two operators that are
@@ -262,41 +273,34 @@ Operator to use for sorting.
    operator should be defined without a commutator or negator
    (as appropriate).  When the second  operator  is  defined,
    name  the  first  as the commutator or negator.  The first
-   will be updated as a side effect.
+   will be updated as a side effect.  (As of Postgres 6.5,
+   it also works to just have both operators refer to each other.)
   </para>
   <para>
-   The next two specifications are  present  to  support  the
+   The next three specifications are  present  to  support  the
    query  optimizer in performing joins.  
    <productname>Postgres</productname> can always
    evaluate a join (i.e., processing a clause with two  tuple
    variables separated by an operator that returns a boolean)
    by iterative substitution [WONG76].  
    In addition, <productname>Postgres</productname>
-   is  planning  on  implementing a hash-join algorithm along
+   can use a hash-join algorithm along
    the lines of [SHAP86]; however, it must know whether  this
-   strategy  is  applicable.   
-   For example, a hash-join
-   algorithm is usable for a clause of the form:
-   <programlisting>
-    MYBOXES.description === MYBOXES2.description
-   </programlisting>
-   but not for a clause of the form:
-   <programlisting>
-    MYBOXES.description &lt;&lt;&lt; MYBOXES2.description.
-   </programlisting>
-   The HASHES flag gives the needed information to the  query
-   optimizer  concerning  whether  a  hash  join  strategy is
-   usable for the operator in question.</para>
+   strategy  is  applicable.   The current hash-join algorithm
+   is only correct for operators that represent equality tests;
+   furthermore, equality of the datatype must mean bitwise equality
+   of the representation of the type.  (For example, a datatype that
+   contains unused bits that don't matter for equality tests could
+   not be hashjoined.)
+   The HASHES flag indicates to the query optimizer that a hash join
+   may safely be used with this operator.</para>
   <para>
    Similarly, the two sort operators indicate  to  the  query
    optimizer whether merge-sort is a usable join strategy and
-   what operators should be used  to  sort  the  two  operand
-   classes.   For  the  ===  clause above, the optimizer must
-   sort both relations using the operator, &lt;&lt;&lt;.  On the other
-   hand, merge-sort is not usable with the clause:
-   <programlisting>
-    MYBOXES.description &lt;&lt;&lt; MYBOXES2.description
-   </programlisting>
+   which operators should be used  to  sort  the  two  operand
+   classes.  Sort operators should only be provided for an equality
+   operator, and they should refer to less-than operators for the
+   left and right side data types respectively.
   </para>
   <para>
    If  other join strategies are found to be practical,
@@ -355,7 +359,7 @@ Operator to use for sorting.
   
   <REFSECT2 ID="R2-SQL-CREATEOPERATOR-3">
    <REFSECT2INFO>
-    <DATE>1998-09-09</DATE>
+    <DATE>1999-04-14</DATE>
    </REFSECT2INFO>
    <TITLE>
     Notes
@@ -385,9 +389,10 @@ Operator to use for sorting.
    COMMUTATOR = ===,
    NEGATOR = !==,
    RESTRICT = area_restriction_procedure,
+   JOIN = area_join_procedure,
    HASHES,
-   JOIN = area-join-procedure,
-   SORT = <<<, <<<)
+   SORT1 = <<<,
+   SORT2 = <<<)
   </ProgramListing>  
  </REFSECT1>
  
@@ -401,7 +406,7 @@ Operator to use for sorting.
   
   <REFSECT2 ID="R2-SQL-CREATEOPERATOR-4">
    <REFSECT2INFO>
-    <DATE>1998-09-09</DATE>
+    <DATE>1999-04-14</DATE>
    </REFSECT2INFO>
    <TITLE>
     SQL92
