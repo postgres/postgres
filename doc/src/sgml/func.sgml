@@ -1423,48 +1423,6 @@ Not defined by this name. Implements the intersection operator '#'
      </tgroup>
     </table>
    </para>
-
-   <para>
-    <table tocentry="1">
-     <title>Geometric Upgrade Functions</title>
-     <tgroup cols="4">
-      <thead>
-       <row>
-	<entry>Function</entry>
-	<entry>Returns</entry>
-	<entry>Description</entry>
-	<entry>Example</entry>
-       </row>
-      </thead>
-      <tbody>
-       <row>
-	<entry>isoldpath(path)</entry>
-	<entry>path</entry>
-	<entry>test path for pre-v6.1 form</entry>
-	<entry>isoldpath('(1,3,0,0,1,1,2,0)'::path)</entry>
-       </row>
-       <row>
-	<entry>revertpoly(polygon)</entry>
-	<entry>polygon</entry>
-	<entry>to pre-v6.1</entry>
-	<entry>revertpoly('((0,0),(1,1),(2,0))'::polygon)</entry>
-       </row>
-       <row>
-	<entry>upgradepath(path)</entry>
-	<entry>path</entry>
-	<entry>to pre-v6.1</entry>
-	<entry>upgradepath('(1,3,0,0,1,1,2,0)'::path)</entry>
-       </row>
-       <row>
-	<entry>upgradepoly(polygon)</entry>
-	<entry>polygon</entry>
-	<entry>to pre-v6.1</entry>
-	<entry>upgradepoly('(0,1,2,0,1,0)'::polygon)</entry>
-       </row>
-      </tbody>
-     </tgroup>
-    </table>
-   </para>
   </sect1>
 
   <sect1>

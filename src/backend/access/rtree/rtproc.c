@@ -8,14 +8,14 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtproc.c,v 1.27 2000/06/14 05:24:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtproc.c,v 1.28 2000/07/29 18:45:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
-#include "utils/builtins.h"
+#include "utils/geo_decls.h"
 
 
 BOX *
@@ -81,15 +81,14 @@ rt_bigbox_size(BOX *a, float *size)
 	rt_box_size(a, size);
 }
 
-POLYGON    *
-rt_poly_union(POLYGON *a, POLYGON *b)
+Datum
+rt_poly_union(PG_FUNCTION_ARGS)
 {
+	POLYGON	   *a = PG_GETARG_POLYGON_P(0);
+	POLYGON	   *b = PG_GETARG_POLYGON_P(1);
 	POLYGON    *p;
 
 	p = (POLYGON *) palloc(sizeof(POLYGON));
-
-	if (!PointerIsValid(p))
-		elog(ERROR, "Cannot allocate polygon for union");
 
 	MemSet((char *) p, 0, sizeof(POLYGON));		/* zero any holes */
 	p->size = sizeof(POLYGON);
@@ -98,7 +97,12 @@ rt_poly_union(POLYGON *a, POLYGON *b)
 	p->boundbox.high.y = Max(a->boundbox.high.y, b->boundbox.high.y);
 	p->boundbox.low.x = Min(a->boundbox.low.x, b->boundbox.low.x);
 	p->boundbox.low.y = Min(a->boundbox.low.y, b->boundbox.low.y);
-	return p;
+
+	/* Avoid leaking memory when handed toasted input. */
+	PG_FREE_IF_COPY(a, 0);
+	PG_FREE_IF_COPY(b, 1);
+
+	PG_RETURN_POLYGON_P(p);
 }
 
 Datum
@@ -125,15 +129,14 @@ rt_poly_size(PG_FUNCTION_ARGS)
 	PG_RETURN_VOID();
 }
 
-POLYGON    *
-rt_poly_inter(POLYGON *a, POLYGON *b)
+Datum
+rt_poly_inter(PG_FUNCTION_ARGS)
 {
+	POLYGON	   *a = PG_GETARG_POLYGON_P(0);
+	POLYGON	   *b = PG_GETARG_POLYGON_P(1);
 	POLYGON    *p;
 
 	p = (POLYGON *) palloc(sizeof(POLYGON));
-
-	if (!PointerIsValid(p))
-		elog(ERROR, "Cannot allocate polygon for intersection");
 
 	MemSet((char *) p, 0, sizeof(POLYGON));		/* zero any holes */
 	p->size = sizeof(POLYGON);
@@ -143,11 +146,16 @@ rt_poly_inter(POLYGON *a, POLYGON *b)
 	p->boundbox.low.x = Max(a->boundbox.low.x, b->boundbox.low.x);
 	p->boundbox.low.y = Max(a->boundbox.low.y, b->boundbox.low.y);
 
-	if (p->boundbox.high.x < p->boundbox.low.x || p->boundbox.high.y < p->boundbox.low.y)
+	/* Avoid leaking memory when handed toasted input. */
+	PG_FREE_IF_COPY(a, 0);
+	PG_FREE_IF_COPY(b, 1);
+
+	if (p->boundbox.high.x < p->boundbox.low.x ||
+		p->boundbox.high.y < p->boundbox.low.y)
 	{
 		pfree(p);
-		return (POLYGON *) NULL;
+		PG_RETURN_NULL();
 	}
 
-	return p;
+	PG_RETURN_POLYGON_P(p);
 }

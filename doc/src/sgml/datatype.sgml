@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.31 2000/07/14 15:26:21 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.32 2000/07/29 18:45:51 tgl Exp $
 -->
 
  <chapter id="datatype">
@@ -1641,13 +1641,6 @@ January 8 04:05:06 1999 PST
 
     <para>
      Paths are output using the first syntax.
-     Note that <productname>Postgres</productname> versions prior to
-     v6.1 used a format for paths which had a single leading parenthesis, 
-     a "closed" flag,
-     an integer count of the number of points, then the list of points followed by a
-     closing parenthesis. 
-     The built-in function <function>upgradepath</function> is supplied to convert
-     paths dumped and reloaded from pre-v6.1 databases.
     </para>
    </sect2>
 
@@ -1687,12 +1680,6 @@ January 8 04:05:06 1999 PST
 
     <para>
      Polygons are output using the first syntax.
-     Note that <productname>Postgres</productname> versions prior to
-     v6.1 used a format for polygons which had a single leading parenthesis, the list
-     of x-axis coordinates, the list of y-axis coordinates,
-     followed by a closing parenthesis.
-     The built-in function <function>upgradepoly</function> is supplied to convert
-     polygons dumped and reloaded from pre-v6.1 databases.
     </para>
    </sect2>
 

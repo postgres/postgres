@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.94 2000/07/29 03:26:43 tgl Exp $
+ * $Id: pg_type.h,v 1.95 2000/07/29 18:46:00 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -267,13 +267,13 @@ DESCR("geometric point '(x, y)'");
 DATA(insert OID = 601 (  lseg	   PGUID 32  48 f b t \054 0 600 lseg_in lseg_out lseg_in lseg_out d p _null_ ));
 DESCR("geometric line segment '(pt1,pt2)'");
 #define LSEGOID			601
-DATA(insert OID = 602 (  path	   PGUID -1  -1 f b t \054 0 0 path_in path_out path_in path_out d p _null_ ));
+DATA(insert OID = 602 (  path	   PGUID -1  -1 f b t \054 0 0 path_in path_out path_in path_out d x _null_ ));
 DESCR("geometric path '(pt1,...)'");
 #define PATHOID			602
 DATA(insert OID = 603 (  box	   PGUID 32 100 f b t \073 0 600 box_in box_out box_in box_out d p _null_ ));
 DESCR("geometric box '(lower left,upper right)'");
 #define BOXOID			603
-DATA(insert OID = 604 (  polygon   PGUID -1  -1 f b t \054 0   0 poly_in poly_out poly_in poly_out d p _null_ ));
+DATA(insert OID = 604 (  polygon   PGUID -1  -1 f b t \054 0   0 poly_in poly_out poly_in poly_out d x _null_ ));
 DESCR("geometric polygon '(pt1,...)'");
 #define POLYGONOID		604
 DATA(insert OID = 605 (  filename  PGUID 256 -1 f b t \054 0  18 filename_in filename_out filename_in filename_out i p _null_ ));

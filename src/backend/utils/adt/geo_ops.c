@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.52 2000/06/14 18:17:42 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.53 2000/07/29 18:45:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,7 +41,6 @@ static CIRCLE *circle_copy(CIRCLE *circle);
 static LINE *line_construct_pm(Point *pt, double m);
 static double lseg_dt(LSEG *l1, LSEG *l2);
 static void make_bound_box(POLYGON *poly);
-static PATH *path_copy(PATH *path);
 static bool plist_same(int npts, Point *p1, Point *p2);
 static Point *point_construct(double x, double y);
 static Point *point_copy(Point *pt);
@@ -434,9 +433,9 @@ box_fill(BOX *result, double x1, double x2, double y1, double y2)
 static BOX *
 box_copy(BOX *box)
 {
-	BOX		   *result = palloc(sizeof(BOX));
+	BOX		   *result = (BOX *) palloc(sizeof(BOX));
 
-	memmove((char *) result, (char *) box, sizeof(BOX));
+	memcpy((char *) result, (char *) box, sizeof(BOX));
 
 	return result;
 }
@@ -1139,19 +1138,16 @@ line_interpt(LINE *l1, LINE *l2)
  *				"(closed, npts, xcoord, ycoord,... )"
  *---------------------------------------------------------*/
 
-PATH *
-path_in(char *str)
+Datum
+path_in(PG_FUNCTION_ARGS)
 {
+	char	   *str = PG_GETARG_CSTRING(0);
 	PATH	   *path;
-
 	int			isopen;
 	char	   *s;
 	int			npts;
 	int			size;
 	int			depth = 0;
-
-	if (!PointerIsValid(str))
-		elog(ERROR, "Bad (null) path external representation");
 
 	if ((npts = pair_count(str, ',')) <= 0)
 		elog(ERROR, "Bad path external representation '%s'", str);
@@ -1167,7 +1163,7 @@ path_in(char *str)
 		depth++;
 	}
 
-	size = offsetof(PATH, p[0]) +(sizeof(path->p[0]) * npts);
+	size = offsetof(PATH, p[0]) + sizeof(path->p[0]) * npts;
 	path = palloc(size);
 
 	path->size = size;
@@ -1179,18 +1175,17 @@ path_in(char *str)
 
 	path->closed = (!isopen);
 
-	return path;
-}	/* path_in() */
+	PG_RETURN_PATH_P(path);
+}
 
 
-char *
-path_out(PATH *path)
+Datum
+path_out(PG_FUNCTION_ARGS)
 {
-	if (!PointerIsValid(path))
-		return NULL;
+	PATH	   *path = PG_GETARG_PATH_P(0);
 
-	return path_encode(path->closed, path->npts, (Point *) &(path->p[0]));
-}	/* path_out() */
+	PG_RETURN_CSTRING(path_encode(path->closed, path->npts, path->p));
+}
 
 
 /*----------------------------------------------------------
@@ -1201,111 +1196,99 @@ path_out(PATH *path)
  *		Better relops and access methods coming soon.
  *---------------------------------------------------------*/
 
-bool
-path_n_lt(PATH *p1, PATH *p2)
+Datum
+path_n_lt(PG_FUNCTION_ARGS)
 {
-	return (p1->npts < p2->npts);
+	PATH	   *p1 = PG_GETARG_PATH_P(0);
+	PATH	   *p2 = PG_GETARG_PATH_P(1);
+
+	PG_RETURN_BOOL(p1->npts < p2->npts);
 }
 
-bool
-path_n_gt(PATH *p1, PATH *p2)
+Datum
+path_n_gt(PG_FUNCTION_ARGS)
 {
-	return (p1->npts > p2->npts);
+	PATH	   *p1 = PG_GETARG_PATH_P(0);
+	PATH	   *p2 = PG_GETARG_PATH_P(1);
+
+	PG_RETURN_BOOL(p1->npts > p2->npts);
 }
 
-bool
-path_n_eq(PATH *p1, PATH *p2)
+Datum
+path_n_eq(PG_FUNCTION_ARGS)
 {
-	return (p1->npts == p2->npts);
+	PATH	   *p1 = PG_GETARG_PATH_P(0);
+	PATH	   *p2 = PG_GETARG_PATH_P(1);
+
+	PG_RETURN_BOOL(p1->npts == p2->npts);
 }
 
-bool
-path_n_le(PATH *p1, PATH *p2)
+Datum
+path_n_le(PG_FUNCTION_ARGS)
 {
-	return (p1->npts <= p2->npts);
+	PATH	   *p1 = PG_GETARG_PATH_P(0);
+	PATH	   *p2 = PG_GETARG_PATH_P(1);
+
+	PG_RETURN_BOOL(p1->npts <= p2->npts);
 }
 
-bool
-path_n_ge(PATH *p1, PATH *p2)
+Datum
+path_n_ge(PG_FUNCTION_ARGS)
 {
-	return (p1->npts >= p2->npts);
-}
+	PATH	   *p1 = PG_GETARG_PATH_P(0);
+	PATH	   *p2 = PG_GETARG_PATH_P(1);
 
+	PG_RETURN_BOOL(p1->npts >= p2->npts);
+}
 
 /*----------------------------------------------------------
  * Conversion operators.
  *---------------------------------------------------------*/
 
-bool
-path_isclosed(PATH *path)
+Datum
+path_isclosed(PG_FUNCTION_ARGS)
 {
-	if (!PointerIsValid(path))
-		return FALSE;
+	PATH	   *path = PG_GETARG_PATH_P(0);
 
-	return path->closed;
-}	/* path_isclosed() */
+	PG_RETURN_BOOL(path->closed);
+}
 
-bool
-path_isopen(PATH *path)
+Datum
+path_isopen(PG_FUNCTION_ARGS)
 {
-	if (!PointerIsValid(path))
-		return FALSE;
+	PATH	   *path = PG_GETARG_PATH_P(0);
 
-	return !path->closed;
-}	/* path_isopen() */
+	PG_RETURN_BOOL(! path->closed);
+}
 
-
-int4
-path_npoints(PATH *path)
+Datum
+path_npoints(PG_FUNCTION_ARGS)
 {
-	if (!PointerIsValid(path))
-		return 0;
+	PATH	   *path = PG_GETARG_PATH_P(0);
 
-	return path->npts;
-}	/* path_npoints() */
+	PG_RETURN_INT32(path->npts);
+}
 
-PATH *
-path_close(PATH *path)
+
+Datum
+path_close(PG_FUNCTION_ARGS)
 {
-	PATH	   *result;
+	PATH	   *path = PG_GETARG_PATH_P_COPY(0);
 
-	if (!PointerIsValid(path))
-		return NULL;
+	path->closed = TRUE;
 
-	result = path_copy(path);
-	result->closed = TRUE;
+	PG_RETURN_PATH_P(path);
+}
 
-	return result;
-}	/* path_close() */
-
-
-PATH *
-path_open(PATH *path)
+Datum
+path_open(PG_FUNCTION_ARGS)
 {
-	PATH	   *result;
+	PATH	   *path = PG_GETARG_PATH_P_COPY(0);
 
-	if (!PointerIsValid(path))
-		return NULL;
+	path->closed = FALSE;
 
-	result = path_copy(path);
-	result->closed = FALSE;
-
-	return result;
-}	/* path_open() */
-
-
-static PATH *
-path_copy(PATH *path)
-{
-	PATH	   *result;
-	int			size;
-
-	size = offsetof(PATH, p[0]) +(sizeof(path->p[0]) * path->npts);
-	result = palloc(size);
-
-	memmove((char *) result, (char *) path, size);
-	return result;
-}	/* path_copy() */
+	PG_RETURN_PATH_P(path);
+}
 
 
 /* path_inter -
@@ -1313,9 +1296,11 @@ path_copy(PATH *path)
  *		Use bounding boxes for a quick (O(n)) check, then do a
  *		O(n^2) iterative edge check.
  */
-bool
-path_inter(PATH *p1, PATH *p2)
+Datum
+path_inter(PG_FUNCTION_ARGS)
 {
+	PATH	   *p1 = PG_GETARG_PATH_P(0);
+	PATH	   *p2 = PG_GETARG_PATH_P(1);
 	BOX			b1,
 				b2;
 	int			i,
@@ -1342,7 +1327,7 @@ path_inter(PATH *p1, PATH *p2)
 		b2.low.y = Min(p2->p[i].y, b2.low.y);
 	}
 	if (!box_overlap(&b1, &b2))
-		return FALSE;
+		PG_RETURN_BOOL(false);
 
 	/* pairwise check lseg intersections */
 	for (i = 0; i < p1->npts - 1; i++)
@@ -1352,90 +1337,71 @@ path_inter(PATH *p1, PATH *p2)
 			statlseg_construct(&seg1, &p1->p[i], &p1->p[i + 1]);
 			statlseg_construct(&seg2, &p2->p[j], &p2->p[j + 1]);
 			if (lseg_intersect(&seg1, &seg2))
-				return TRUE;
+				PG_RETURN_BOOL(true);
 		}
 	}
 
 	/* if we dropped through, no two segs intersected */
-	return FALSE;
-}	/* path_inter() */
+	PG_RETURN_BOOL(false);
+}
 
 /* path_distance()
  * This essentially does a cartesian product of the lsegs in the
- *	two paths, and finds the min distance between any two lsegs
+ *	two paths, and finds the max distance between any two lsegs
  */
-double *
-path_distance(PATH *p1, PATH *p2)
+Datum
+path_distance(PG_FUNCTION_ARGS)
 {
-	double	   *min = NULL,
-			   *tmp;
+	PATH	   *p1 = PG_GETARG_PATH_P(0);
+	PATH	   *p2 = PG_GETARG_PATH_P(1);
+	bool		have_max = false;
+	float8		max = 0.0;		/* initialize to keep compiler quiet */
+	float8		tmp;
 	int			i,
 				j;
 	LSEG		seg1,
 				seg2;
 
-/*
-	statlseg_construct(&seg1, &p1->p[0], &p1->p[1]);
-	statlseg_construct(&seg2, &p2->p[0], &p2->p[1]);
-	min = lseg_distance(&seg1, &seg2);
-*/
-
 	for (i = 0; i < p1->npts - 1; i++)
+	{
 		for (j = 0; j < p2->npts - 1; j++)
 		{
 			statlseg_construct(&seg1, &p1->p[i], &p1->p[i + 1]);
 			statlseg_construct(&seg2, &p2->p[j], &p2->p[j + 1]);
 
-			tmp = lseg_distance(&seg1, &seg2);
-			if ((min == NULL) || (*min < *tmp))
+			tmp = *lseg_distance(&seg1, &seg2);
+			if (!have_max || max < tmp)
 			{
-				if (min != NULL)
-					pfree(min);
-				min = tmp;
+				max = tmp;
+				have_max = true;
 			}
-			else
-				pfree(tmp);
 		}
+	}
 
-	return min;
-}	/* path_distance() */
+	if (! have_max)
+		PG_RETURN_NULL();
+
+	PG_RETURN_FLOAT8(max);
+}
 
 
 /*----------------------------------------------------------
  *	"Arithmetic" operations.
  *---------------------------------------------------------*/
 
-double *
-path_length(PATH *path)
+Datum
+path_length(PG_FUNCTION_ARGS)
 {
-	double	   *result;
+	PATH	   *path = PG_GETARG_PATH_P(0);
+	float8		result;
 	int			i;
 
-	result = palloc(sizeof(double));
-
-	*result = 0;
-	for (i = 0; i < (path->npts - 1); i++)
-		*result += point_dt(&path->p[i], &path->p[i + 1]);
-
-	return result;
-}	/* path_length() */
-
-
-#ifdef NOT_USED
-double
-path_ln(PATH *path)
-{
-	double		result;
-	int			i;
-
-	result = 0;
+	result = 0.0;
 	for (i = 0; i < (path->npts - 1); i++)
 		result += point_dt(&path->p[i], &path->p[i + 1]);
 
-	return result;
-}	/* path_ln() */
-
-#endif
+	PG_RETURN_FLOAT8(result);
+}
 
 /***********************************************************************
  **
@@ -2058,11 +2024,13 @@ dist_ps(Point *pt, LSEG *lseg)
 /*
  ** Distance from a point to a path
  */
-double *
-dist_ppath(Point *pt, PATH *path)
+Datum
+dist_ppath(PG_FUNCTION_ARGS)
 {
-	double	   *result;
-	double	   *tmp;
+	Point	   *pt = PG_GETARG_POINT_P(0);
+	PATH	   *path = PG_GETARG_PATH_P(1);
+	float8		result = 0.0;	/* keep compiler quiet */
+	float8		tmp;
 	int			i;
 	LSEG		lseg;
 
@@ -2070,11 +2038,10 @@ dist_ppath(Point *pt, PATH *path)
 	{
 			/* no points in path? then result is undefined... */
 		case 0:
-			result = NULL;
-			break;
+			PG_RETURN_NULL();
 			/* one point in path? then get distance between two points... */
 		case 1:
-			result = point_distance(pt, &path->p[0]);
+			result = *point_distance(pt, &path->p[0]);
 			break;
 		default:
 			/* make sure the path makes sense... */
@@ -2084,18 +2051,16 @@ dist_ppath(Point *pt, PATH *path)
 			 * the distance from a point to a path is the smallest
 			 * distance from the point to any of its constituent segments.
 			 */
-			result = palloc(sizeof(double));
 			for (i = 0; i < path->npts - 1; i++)
 			{
 				statlseg_construct(&lseg, &path->p[i], &path->p[i + 1]);
-				tmp = dist_ps(pt, &lseg);
-				if (i == 0 || *tmp < *result)
-					*result = *tmp;
-				pfree(tmp);
+				tmp = *dist_ps(pt, &lseg);
+				if (i == 0 || tmp < result)
+					result = tmp;
 			}
 			break;
 	}
-	return result;
+	PG_RETURN_FLOAT8(result);
 }
 
 double *
@@ -2185,26 +2150,22 @@ dist_lb(LINE *line, BOX *box)
 }
 
 
-double *
-dist_cpoly(CIRCLE *circle, POLYGON *poly)
+Datum
+dist_cpoly(PG_FUNCTION_ARGS)
 {
-	double	   *result;
+	CIRCLE	   *circle = PG_GETARG_CIRCLE_P(0);
+	POLYGON	   *poly = PG_GETARG_POLYGON_P(1);
+	float8		result;
+	float8		d;
 	int			i;
-	double	   *d;
 	LSEG		seg;
 
-	if (!PointerIsValid(circle) || !PointerIsValid(poly))
-		elog(ERROR, "Invalid (null) input for distance");
-
-	if (point_inside(&(circle->center), poly->npts, poly->p))
+	if (point_inside(&(circle->center), poly->npts, poly->p) != 0)
 	{
 #ifdef GEODEBUG
 		printf("dist_cpoly- center inside of polygon\n");
 #endif
-		result = palloc(sizeof(double));
-
-		*result = 0;
-		return result;
+		PG_RETURN_FLOAT8(0.0);
 	}
 
 	/* initialize distance with segment between first and last points */
@@ -2212,9 +2173,9 @@ dist_cpoly(CIRCLE *circle, POLYGON *poly)
 	seg.p[0].y = poly->p[0].y;
 	seg.p[1].x = poly->p[poly->npts - 1].x;
 	seg.p[1].y = poly->p[poly->npts - 1].y;
-	result = dist_ps(&(circle->center), &seg);
+	result = *dist_ps(&(circle->center), &seg);
 #ifdef GEODEBUG
-	printf("dist_cpoly- segment 0/n distance is %f\n", *result);
+	printf("dist_cpoly- segment 0/n distance is %f\n", result);
 #endif
 
 	/* check distances for other segments */
@@ -2224,21 +2185,20 @@ dist_cpoly(CIRCLE *circle, POLYGON *poly)
 		seg.p[0].y = poly->p[i].y;
 		seg.p[1].x = poly->p[i + 1].x;
 		seg.p[1].y = poly->p[i + 1].y;
-		d = dist_ps(&(circle->center), &seg);
+		d = *dist_ps(&(circle->center), &seg);
 #ifdef GEODEBUG
-		printf("dist_cpoly- segment %d distance is %f\n", (i + 1), *d);
+		printf("dist_cpoly- segment %d distance is %f\n", (i + 1), d);
 #endif
-		if (*d < *result)
-			*result = *d;
-		pfree(d);
+		if (d < result)
+			result = d;
 	}
 
-	*result -= circle->radius;
-	if (*result < 0)
-		*result = 0;
+	result -= circle->radius;
+	if (result < 0)
+		result = 0;
 
-	return result;
-}	/* dist_cpoly() */
+	PG_RETURN_FLOAT8(result);
+}
 
 
 /*---------------------------------------------------------------------
@@ -2728,18 +2688,17 @@ on_pb(Point *pt, BOX *box)
  *				but not cross.
  *				(we can do p-in-p in lg(n), but it takes preprocessing)
  */
-#define NEXT(A) ((A+1) % path->npts)	/* cyclic "i+1" */
+#define NEXT(A) (((A)+1) % path->npts)	/* cyclic "i+1" */
 
-bool
-on_ppath(Point *pt, PATH *path)
+Datum
+on_ppath(PG_FUNCTION_ARGS)
 {
+	Point	   *pt = PG_GETARG_POINT_P(0);
+	PATH	   *path = PG_GETARG_PATH_P(1);
 	int			i,
 				n;
 	double		a,
 				b;
-
-	if (!PointerIsValid(pt) || !PointerIsValid(path))
-		return FALSE;
 
 	/*-- OPEN --*/
 	if (!path->closed)
@@ -2751,15 +2710,15 @@ on_ppath(Point *pt, PATH *path)
 			b = point_dt(pt, &path->p[i + 1]);
 			if (FPeq(a + b,
 					 point_dt(&path->p[i], &path->p[i + 1])))
-				return TRUE;
+				PG_RETURN_BOOL(true);
 			a = b;
 		}
-		return FALSE;
+		PG_RETURN_BOOL(false);
 	}
 
 	/*-- CLOSED --*/
-	return point_inside(pt, path->npts, path->p);
-}	/* on_ppath() */
+	PG_RETURN_BOOL(point_inside(pt, path->npts, path->p) != 0);
+}
 
 
 bool
@@ -2951,23 +2910,21 @@ make_bound_box(POLYGON *poly)
  *				"x0,y0,...,xn,yn"
  *				also supports the older style "(x1,...,xn,y1,...yn)"
  *------------------------------------------------------------------*/
-POLYGON    *
-poly_in(char *str)
+Datum
+poly_in(PG_FUNCTION_ARGS)
 {
+	char	   *str = PG_GETARG_CSTRING(0);
 	POLYGON    *poly;
 	int			npts;
 	int			size;
 	int			isopen;
 	char	   *s;
 
-	if (!PointerIsValid(str))
-		elog(ERROR, " Bad (null) polygon external representation");
-
 	if ((npts = pair_count(str, ',')) <= 0)
 		elog(ERROR, "Bad polygon external representation '%s'", str);
 
-	size = offsetof(POLYGON, p[0]) +(sizeof(poly->p[0]) * npts);
-	poly = palloc(size);
+	size = offsetof(POLYGON, p[0]) + sizeof(poly->p[0]) * npts;
+	poly = (POLYGON *) palloc(size);
 
 	MemSet((char *) poly, 0, size);		/* zero any holes */
 	poly->size = size;
@@ -2979,22 +2936,20 @@ poly_in(char *str)
 
 	make_bound_box(poly);
 
-	return poly;
-}	/* poly_in() */
+	PG_RETURN_POLYGON_P(poly);
+}
 
 /*---------------------------------------------------------------
  * poly_out - convert internal POLYGON representation to the
  *			  character string format "((f8,f8),...,(f8,f8))"
- *			  also support old format "(f8,f8,...,f8,f8)"
  *---------------------------------------------------------------*/
-char *
-poly_out(POLYGON *poly)
+Datum
+poly_out(PG_FUNCTION_ARGS)
 {
-	if (!PointerIsValid(poly))
-		return NULL;
+	POLYGON	   *poly = PG_GETARG_POLYGON_P(0);
 
-	return path_encode(TRUE, poly->npts, &(poly->p[0]));
-}	/* poly_out() */
+	PG_RETURN_CSTRING(path_encode(TRUE, poly->npts, poly->p));
+}
 
 
 /*-------------------------------------------------------
@@ -3002,10 +2957,13 @@ poly_out(POLYGON *poly)
  * the right most point of A left of the left most point
  * of B?
  *-------------------------------------------------------*/
-bool
-poly_left(POLYGON *polya, POLYGON *polyb)
+Datum
+poly_left(PG_FUNCTION_ARGS)
 {
-	return polya->boundbox.high.x < polyb->boundbox.low.x;
+	POLYGON	   *polya = PG_GETARG_POLYGON_P(0);
+	POLYGON	   *polyb = PG_GETARG_POLYGON_P(1);
+
+	PG_RETURN_BOOL(polya->boundbox.high.x < polyb->boundbox.low.x);
 }
 
 /*-------------------------------------------------------
@@ -3013,10 +2971,13 @@ poly_left(POLYGON *polya, POLYGON *polyb)
  * the left most point of A left of the right most point
  * of B?
  *-------------------------------------------------------*/
-bool
-poly_overleft(POLYGON *polya, POLYGON *polyb)
+Datum
+poly_overleft(PG_FUNCTION_ARGS)
 {
-	return polya->boundbox.low.x <= polyb->boundbox.high.x;
+	POLYGON	   *polya = PG_GETARG_POLYGON_P(0);
+	POLYGON	   *polyb = PG_GETARG_POLYGON_P(1);
+
+	PG_RETURN_BOOL(polya->boundbox.low.x <= polyb->boundbox.high.x);
 }
 
 /*-------------------------------------------------------
@@ -3024,10 +2985,13 @@ poly_overleft(POLYGON *polya, POLYGON *polyb)
  * the left most point of A right of the right most point
  * of B?
  *-------------------------------------------------------*/
-bool
-poly_right(POLYGON *polya, POLYGON *polyb)
+Datum
+poly_right(PG_FUNCTION_ARGS)
 {
-	return polya->boundbox.low.x > polyb->boundbox.high.x;
+	POLYGON	   *polya = PG_GETARG_POLYGON_P(0);
+	POLYGON	   *polyb = PG_GETARG_POLYGON_P(1);
+
+	PG_RETURN_BOOL(polya->boundbox.low.x > polyb->boundbox.high.x);
 }
 
 /*-------------------------------------------------------
@@ -3035,10 +2999,13 @@ poly_right(POLYGON *polya, POLYGON *polyb)
  * the right most point of A right of the left most point
  * of B?
  *-------------------------------------------------------*/
-bool
-poly_overright(POLYGON *polya, POLYGON *polyb)
+Datum
+poly_overright(PG_FUNCTION_ARGS)
 {
-	return polya->boundbox.high.x > polyb->boundbox.low.x;
+	POLYGON	   *polya = PG_GETARG_POLYGON_P(0);
+	POLYGON	   *polyb = PG_GETARG_POLYGON_P(1);
+
+	PG_RETURN_BOOL(polya->boundbox.high.x > polyb->boundbox.low.x);
 }
 
 /*-------------------------------------------------------
@@ -3048,60 +3015,47 @@ poly_overright(POLYGON *polya, POLYGON *polyb)
  *	direction since polygons are non-directional and are
  *	closed shapes.
  *-------------------------------------------------------*/
-bool
-poly_same(POLYGON *polya, POLYGON *polyb)
+Datum
+poly_same(PG_FUNCTION_ARGS)
 {
-	if (!PointerIsValid(polya) || !PointerIsValid(polyb))
-		return FALSE;
+	POLYGON	   *polya = PG_GETARG_POLYGON_P(0);
+	POLYGON	   *polyb = PG_GETARG_POLYGON_P(1);
 
 	if (polya->npts != polyb->npts)
-		return FALSE;
+		PG_RETURN_BOOL(false);
 
-	return plist_same(polya->npts, polya->p, polyb->p);
-
-#ifdef NOT_USED
-	for (i = 0; i < polya->npts; i++)
-	{
-		if ((polya->p[i].x != polyb->p[i].x)
-			|| (polya->p[i].y != polyb->p[i].y))
-			return FALSE;
-	}
-	return TRUE;
-#endif
-}	/* poly_same() */
+	PG_RETURN_BOOL(plist_same(polya->npts, polya->p, polyb->p));
+}
 
 /*-----------------------------------------------------------------
  * Determine if polygon A overlaps polygon B by determining if
  * their bounding boxes overlap.
+ *
+ * XXX ought to do a more correct check?
  *-----------------------------------------------------------------*/
-bool
-poly_overlap(POLYGON *polya, POLYGON *polyb)
+Datum
+poly_overlap(PG_FUNCTION_ARGS)
 {
-	return box_overlap(&(polya->boundbox), &(polyb->boundbox));
+	POLYGON	   *polya = PG_GETARG_POLYGON_P(0);
+	POLYGON	   *polyb = PG_GETARG_POLYGON_P(1);
+
+	PG_RETURN_BOOL(box_overlap(&(polya->boundbox), &(polyb->boundbox)));
 }
 
 
 /*-----------------------------------------------------------------
- * Determine if polygon A contains polygon B by determining if A's
- * bounding box contains B's bounding box.
+ * Determine if polygon A contains polygon B.
  *-----------------------------------------------------------------*/
-#ifdef NOT_USED
-bool
-poly_contain(POLYGON *polya, POLYGON *polyb)
+Datum
+poly_contain(PG_FUNCTION_ARGS)
 {
-	return box_contain(&(polya->boundbox), &(polyb->boundbox));
-}
-
-#endif
-
-bool
-poly_contain(POLYGON *polya, POLYGON *polyb)
-{
+	POLYGON	   *polya = PG_GETARG_POLYGON_P(0);
+	POLYGON	   *polyb = PG_GETARG_POLYGON_P(1);
 	int			i;
 
-	if (!PointerIsValid(polya) || !PointerIsValid(polyb))
-		return FALSE;
-
+	/*
+	 * Quick check to see if bounding box is contained.
+	 */
 	if (box_contain(&(polya->boundbox), &(polyb->boundbox)))
 	{
 		for (i = 0; i < polyb->npts; i++)
@@ -3111,7 +3065,7 @@ poly_contain(POLYGON *polya, POLYGON *polyb)
 #if GEODEBUG
 				printf("poly_contain- point (%f,%f) not in polygon\n", polyb->p[i].x, polyb->p[i].y);
 #endif
-				return FALSE;
+				PG_RETURN_BOOL(false);
 			}
 		}
 		for (i = 0; i < polya->npts; i++)
@@ -3121,38 +3075,33 @@ poly_contain(POLYGON *polya, POLYGON *polyb)
 #if GEODEBUG
 				printf("poly_contain- point (%f,%f) in polygon\n", polya->p[i].x, polya->p[i].y);
 #endif
-				return FALSE;
+				PG_RETURN_BOOL(false);
 			}
 		}
-		return TRUE;
+		PG_RETURN_BOOL(true);
 	}
+
 #if GEODEBUG
 	printf("poly_contain- bound box ((%f,%f),(%f,%f)) not inside ((%f,%f),(%f,%f))\n",
 		   polyb->boundbox.low.x, polyb->boundbox.low.y, polyb->boundbox.high.x, polyb->boundbox.high.y,
 		   polya->boundbox.low.x, polya->boundbox.low.y, polya->boundbox.high.x, polya->boundbox.high.y);
 #endif
-	return FALSE;
-}	/* poly_contain() */
+	PG_RETURN_BOOL(false);
+}
 
 
 /*-----------------------------------------------------------------
  * Determine if polygon A is contained by polygon B by determining
  * if A's bounding box is contained by B's bounding box.
  *-----------------------------------------------------------------*/
-#ifdef NOT_USED
-bool
-poly_contained(POLYGON *polya, POLYGON *polyb)
+Datum
+poly_contained(PG_FUNCTION_ARGS)
 {
-	return box_contained(&(polya->boundbox), &(polyb->boundbox));
+	Datum		polya = PG_GETARG_DATUM(0);
+	Datum		polyb = PG_GETARG_DATUM(1);
+
+	PG_RETURN_DATUM(DirectFunctionCall2(poly_contain, polyb, polya));
 }
-
-#endif
-
-bool
-poly_contained(POLYGON *polya, POLYGON *polyb)
-{
-	return poly_contain(polyb, polya);
-}	/* poly_contained() */
 
 
 /* poly_contain_pt()
@@ -3165,39 +3114,37 @@ poly_contained(POLYGON *polya, POLYGON *polyb)
  * (code offered for use by J. Franks in Linux Journal letter.)
  */
 
-bool
-poly_contain_pt(POLYGON *poly, Point *p)
+Datum
+poly_contain_pt(PG_FUNCTION_ARGS)
 {
-	if (!PointerIsValid(poly) || !PointerIsValid(p))
-		return FALSE;
+	POLYGON	   *poly = PG_GETARG_POLYGON_P(0);
+	Point	   *p = PG_GETARG_POINT_P(1);
 
-	return point_inside(p, poly->npts, &(poly->p[0])) != 0;
-}	/* poly_contain_pt() */
+	PG_RETURN_BOOL(point_inside(p, poly->npts, poly->p) != 0);
+}
 
-bool
-pt_contained_poly(Point *p, POLYGON *poly)
+Datum
+pt_contained_poly(PG_FUNCTION_ARGS)
 {
-	if (!PointerIsValid(p) || !PointerIsValid(poly))
-		return FALSE;
+	Point	   *p = PG_GETARG_POINT_P(0);
+	POLYGON	   *poly = PG_GETARG_POLYGON_P(1);
 
-	return poly_contain_pt(poly, p);
-}	/* pt_contained_poly() */
+	PG_RETURN_BOOL(point_inside(p, poly->npts, poly->p) != 0);
+}
 
 
-double *
-poly_distance(POLYGON *polya, POLYGON *polyb)
+Datum
+poly_distance(PG_FUNCTION_ARGS)
 {
-	double	   *result;
+#ifdef NOT_USED
+	POLYGON	   *polya = PG_GETARG_POLYGON_P(0);
+	POLYGON	   *polyb = PG_GETARG_POLYGON_P(1);
+#endif
 
-	if (!PointerIsValid(polya) || !PointerIsValid(polyb))
-		return NULL;
+	elog(ERROR, "poly_distance not implemented");
 
-	result = palloc(sizeof(double));
-
-	*result = 0;
-
-	return result;
-}	/* poly_distance() */
+	PG_RETURN_NULL();
+}
 
 
 /***********************************************************************
@@ -3384,19 +3331,20 @@ box_div(BOX *box, Point *p)
 /* path_add()
  * Concatenate two paths (only if they are both open).
  */
-PATH *
-path_add(PATH *p1, PATH *p2)
+Datum
+path_add(PG_FUNCTION_ARGS)
 {
+	PATH	   *p1 = PG_GETARG_PATH_P(0);
+	PATH	   *p2 = PG_GETARG_PATH_P(1);
 	PATH	   *result;
 	int			size;
 	int			i;
 
-	if (!(PointerIsValid(p1) && PointerIsValid(p2))
-		|| p1->closed || p2->closed)
-		return NULL;
+	if (p1->closed || p2->closed)
+		PG_RETURN_NULL();
 
-	size = offsetof(PATH, p[0]) +(sizeof(p1->p[0]) * (p1->npts + p2->npts));
-	result = palloc(size);
+	size = offsetof(PATH, p[0]) + sizeof(p1->p[0]) * (p1->npts + p2->npts);
+	result = (PATH *) palloc(size);
 
 	result->size = size;
 	result->npts = (p1->npts + p2->npts);
@@ -3413,134 +3361,112 @@ path_add(PATH *p1, PATH *p2)
 		result->p[i + p1->npts].y = p2->p[i].y;
 	}
 
-	return result;
-}	/* path_add() */
+	PG_RETURN_PATH_P(result);
+}
 
 /* path_add_pt()
- * Translation operator.
+ * Translation operators.
  */
-PATH *
-path_add_pt(PATH *path, Point *point)
+Datum
+path_add_pt(PG_FUNCTION_ARGS)
 {
-	PATH	   *result;
+	PATH	   *path = PG_GETARG_PATH_P_COPY(0);
+	Point	   *point = PG_GETARG_POINT_P(1);
 	int			i;
-
-	if ((!PointerIsValid(path)) || (!PointerIsValid(point)))
-		return NULL;
-
-	result = path_copy(path);
 
 	for (i = 0; i < path->npts; i++)
 	{
-		result->p[i].x += point->x;
-		result->p[i].y += point->y;
+		path->p[i].x += point->x;
+		path->p[i].y += point->y;
 	}
 
-	return result;
-}	/* path_add_pt() */
+	PG_RETURN_PATH_P(path);
+}
 
-PATH *
-path_sub_pt(PATH *path, Point *point)
+Datum
+path_sub_pt(PG_FUNCTION_ARGS)
 {
-	PATH	   *result;
+	PATH	   *path = PG_GETARG_PATH_P_COPY(0);
+	Point	   *point = PG_GETARG_POINT_P(1);
 	int			i;
-
-	if ((!PointerIsValid(path)) || (!PointerIsValid(point)))
-		return NULL;
-
-	result = path_copy(path);
 
 	for (i = 0; i < path->npts; i++)
 	{
-		result->p[i].x -= point->x;
-		result->p[i].y -= point->y;
+		path->p[i].x -= point->x;
+		path->p[i].y -= point->y;
 	}
 
-	return result;
-}	/* path_sub_pt() */
-
+	PG_RETURN_PATH_P(path);
+}
 
 /* path_mul_pt()
  * Rotation and scaling operators.
  */
-PATH *
-path_mul_pt(PATH *path, Point *point)
+Datum
+path_mul_pt(PG_FUNCTION_ARGS)
 {
-	PATH	   *result;
+	PATH	   *path = PG_GETARG_PATH_P_COPY(0);
+	Point	   *point = PG_GETARG_POINT_P(1);
 	Point	   *p;
 	int			i;
-
-	if ((!PointerIsValid(path)) || (!PointerIsValid(point)))
-		return NULL;
-
-	result = path_copy(path);
 
 	for (i = 0; i < path->npts; i++)
 	{
 		p = point_mul(&path->p[i], point);
-		result->p[i].x = p->x;
-		result->p[i].y = p->y;
+		path->p[i].x = p->x;
+		path->p[i].y = p->y;
 		pfree(p);
 	}
 
-	return result;
-}	/* path_mul_pt() */
+	PG_RETURN_PATH_P(path);
+}
 
-PATH *
-path_div_pt(PATH *path, Point *point)
+Datum
+path_div_pt(PG_FUNCTION_ARGS)
 {
-	PATH	   *result;
+	PATH	   *path = PG_GETARG_PATH_P_COPY(0);
+	Point	   *point = PG_GETARG_POINT_P(1);
 	Point	   *p;
 	int			i;
-
-	if ((!PointerIsValid(path)) || (!PointerIsValid(point)))
-		return NULL;
-
-	result = path_copy(path);
 
 	for (i = 0; i < path->npts; i++)
 	{
 		p = point_div(&path->p[i], point);
-		result->p[i].x = p->x;
-		result->p[i].y = p->y;
+		path->p[i].x = p->x;
+		path->p[i].y = p->y;
 		pfree(p);
 	}
 
-	return result;
-}	/* path_div_pt() */
+	PG_RETURN_PATH_P(path);
+}
 
 
-Point *
-path_center(PATH *path)
+Datum
+path_center(PG_FUNCTION_ARGS)
 {
-	Point	   *result;
-
-	if (!PointerIsValid(path))
-		return NULL;
+#ifdef NOT_USED
+	PATH	   *path = PG_GETARG_PATH_P(0);
+#endif
 
 	elog(ERROR, "path_center not implemented");
 
-	result = palloc(sizeof(Point));
-	result = NULL;
+	PG_RETURN_NULL();
+}
 
-	return result;
-}	/* path_center() */
-
-POLYGON    *
-path_poly(PATH *path)
+Datum
+path_poly(PG_FUNCTION_ARGS)
 {
+	PATH	   *path = PG_GETARG_PATH_P(0);
 	POLYGON    *poly;
 	int			size;
 	int			i;
 
-	if (!PointerIsValid(path))
-		return NULL;
-
+	/* This is not very consistent --- other similar cases return NULL ... */
 	if (!path->closed)
 		elog(ERROR, "Open path cannot be converted to polygon");
 
-	size = offsetof(POLYGON, p[0]) +(sizeof(poly->p[0]) * path->npts);
-	poly = palloc(size);
+	size = offsetof(POLYGON, p[0]) + sizeof(poly->p[0]) * path->npts;
+	poly = (POLYGON *) palloc(size);
 
 	poly->size = size;
 	poly->npts = path->npts;
@@ -3553,57 +3479,8 @@ path_poly(PATH *path)
 
 	make_bound_box(poly);
 
-	return poly;
-}	/* path_polygon() */
-
-
-/* upgradepath()
- * Convert path read from old-style string into correct representation.
- *
- * Old-style: '(closed,#pts,x1,y1,...)' where closed is a boolean flag
- * New-style: '((x1,y1),...)' for closed path
- *			  '[(x1,y1),...]' for open path
- */
-PATH *
-upgradepath(PATH *path)
-{
-	PATH	   *result;
-	int			size,
-				npts;
-	int			i;
-
-	if (!PointerIsValid(path) || (path->npts < 2))
-		return NULL;
-
-	if (!isoldpath(path))
-		elog(ERROR, "upgradepath: path already upgraded?");
-
-	npts = (path->npts - 1);
-	size = offsetof(PATH, p[0]) +(sizeof(path->p[0]) * npts);
-	result = palloc(size);
-	MemSet((char *) result, 0, size);
-
-	result->size = size;
-	result->npts = npts;
-	result->closed = (path->p[0].x != 0);
-
-	for (i = 0; i < result->npts; i++)
-	{
-		result->p[i].x = path->p[i + 1].x;
-		result->p[i].y = path->p[i + 1].y;
-	}
-
-	return result;
-}	/* upgradepath() */
-
-bool
-isoldpath(PATH *path)
-{
-	if (!PointerIsValid(path) || (path->npts < 2))
-		return FALSE;
-
-	return path->npts == (path->p[0].y + 1);
-}	/* isoldpath() */
+	PG_RETURN_POLYGON_P(poly);
+}
 
 
 /***********************************************************************
@@ -3612,67 +3489,64 @@ isoldpath(PATH *path)
  **
  ***********************************************************************/
 
-int4
-poly_npoints(POLYGON *poly)
+Datum
+poly_npoints(PG_FUNCTION_ARGS)
 {
-	if (!PointerIsValid(poly))
-		return FALSE;
+	POLYGON	   *poly = PG_GETARG_POLYGON_P(0);
 
-	return poly->npts;
-}	/* poly_npoints() */
+	PG_RETURN_INT32(poly->npts);
+}
 
 
-Point *
-poly_center(POLYGON *poly)
+Datum
+poly_center(PG_FUNCTION_ARGS)
 {
+	POLYGON	   *poly = PG_GETARG_POLYGON_P(0);
 	Point	   *result;
 	CIRCLE	   *circle;
 
-	if (!PointerIsValid(poly))
-		return NULL;
-
-	if (PointerIsValid(circle = poly_circle(poly)))
+	circle = DatumGetCircleP(DirectFunctionCall1(poly_circle,
+												 PolygonPGetDatum(poly)));
+	if (PointerIsValid(circle))
 	{
 		result = circle_center(circle);
 		pfree(circle);
-
 	}
 	else
-		result = NULL;
+		PG_RETURN_NULL();
 
-	return result;
-}	/* poly_center() */
+	PG_RETURN_POINT_P(result);
+}
 
 
-BOX *
-poly_box(POLYGON *poly)
+Datum
+poly_box(PG_FUNCTION_ARGS)
 {
+	POLYGON	   *poly = PG_GETARG_POLYGON_P(0);
 	BOX		   *box;
 
-	if (!PointerIsValid(poly) || (poly->npts < 1))
-		return NULL;
+	if (poly->npts < 1)
+		PG_RETURN_NULL();
 
 	box = box_copy(&poly->boundbox);
 
-	return box;
-}	/* poly_box() */
+	PG_RETURN_BOX_P(box);
+}
 
 
 /* box_poly()
  * Convert a box to a polygon.
  */
-POLYGON    *
-box_poly(BOX *box)
+Datum
+box_poly(PG_FUNCTION_ARGS)
 {
+	BOX		   *box = PG_GETARG_BOX_P(0);
 	POLYGON    *poly;
 	int			size;
 
-	if (!PointerIsValid(box))
-		return NULL;
-
 	/* map four corners of the box to a polygon */
-	size = offsetof(POLYGON, p[0]) +(sizeof(poly->p[0]) * 4);
-	poly = palloc(size);
+	size = offsetof(POLYGON, p[0]) + sizeof(poly->p[0]) * 4;
+	poly = (POLYGON *) palloc(size);
 
 	poly->size = size;
 	poly->npts = 4;
@@ -3686,24 +3560,23 @@ box_poly(BOX *box)
 	poly->p[3].x = box->high.x;
 	poly->p[3].y = box->low.y;
 
-	box_fill(&poly->boundbox, box->high.x, box->low.x, box->high.y, box->low.y);
+	box_fill(&poly->boundbox, box->high.x, box->low.x,
+			 box->high.y, box->low.y);
 
-	return poly;
-}	/* box_poly() */
+	PG_RETURN_POLYGON_P(poly);
+}
 
 
-PATH *
-poly_path(POLYGON *poly)
+Datum
+poly_path(PG_FUNCTION_ARGS)
 {
+	POLYGON	   *poly = PG_GETARG_POLYGON_P(0);
 	PATH	   *path;
 	int			size;
 	int			i;
 
-	if (!PointerIsValid(poly) || (poly->npts < 0))
-		return NULL;
-
-	size = offsetof(PATH, p[0]) +(sizeof(path->p[0]) * poly->npts);
-	path = palloc(size);
+	size = offsetof(PATH, p[0]) + sizeof(path->p[0]) * poly->npts;
+	path = (PATH *) palloc(size);
 
 	path->size = size;
 	path->npts = poly->npts;
@@ -3715,103 +3588,8 @@ poly_path(POLYGON *poly)
 		path->p[i].y = poly->p[i].y;
 	}
 
-	return path;
-}	/* poly_path() */
-
-
-/* upgradepoly()
- * Convert polygon read as pre-v6.1 string to new interpretation.
- * Old-style: '(x1,x2,...,y1,y2,...)'
- * New-style: '(x1,y1,x2,y2,...)'
- */
-POLYGON    *
-upgradepoly(POLYGON *poly)
-{
-	POLYGON    *result;
-	int			size;
-	int			n2,
-				i,
-				ii;
-
-	if (!PointerIsValid(poly) || (poly->npts < 1))
-		return NULL;
-
-	size = offsetof(POLYGON, p[0]) +(sizeof(poly->p[0]) * poly->npts);
-	result = palloc(size);
-	MemSet((char *) result, 0, size);
-
-	result->size = size;
-	result->npts = poly->npts;
-
-	n2 = poly->npts / 2;
-
-	for (i = 0; i < n2; i++)
-	{
-		result->p[2 * i].x = poly->p[i].x;		/* even indices */
-		result->p[2 * i + 1].x = poly->p[i].y;	/* odd indices */
-	}
-
-	if ((ii = ((poly->npts % 2) ? 1 : 0)))
-	{
-		result->p[poly->npts - 1].x = poly->p[n2].x;
-		result->p[0].y = poly->p[n2].y;
-	}
-
-	for (i = 0; i < n2; i++)
-	{
-		result->p[2 * i + ii].y = poly->p[i + n2 + ii].x;		/* even (+offset)
-																 * indices */
-		result->p[2 * i + ii + 1].y = poly->p[i + n2 + ii].y;	/* odd (+offset) indices */
-	}
-
-	return result;
-}	/* upgradepoly() */
-
-/* revertpoly()
- * Reverse effect of upgradepoly().
- */
-POLYGON    *
-revertpoly(POLYGON *poly)
-{
-	POLYGON    *result;
-	int			size;
-	int			n2,
-				i,
-				ii;
-
-	if (!PointerIsValid(poly) || (poly->npts < 1))
-		return NULL;
-
-	size = offsetof(POLYGON, p[0]) +(sizeof(poly->p[0]) * poly->npts);
-	result = palloc(size);
-	MemSet((char *) result, 0, size);
-
-	result->size = size;
-	result->npts = poly->npts;
-
-	n2 = poly->npts / 2;
-
-	for (i = 0; i < n2; i++)
-	{
-		result->p[i].x = poly->p[2 * i].x;		/* even indices */
-		result->p[i].y = poly->p[2 * i + 1].x;	/* odd indices */
-	}
-
-	if ((ii = ((poly->npts % 2) ? 1 : 0)))
-	{
-		result->p[n2].x = poly->p[poly->npts - 1].x;
-		result->p[n2].y = poly->p[0].y;
-	}
-
-	for (i = 0; i < n2; i++)
-	{
-		result->p[i + n2 + ii].x = poly->p[2 * i + ii].y;		/* even (+offset)
-																 * indices */
-		result->p[i + n2 + ii].y = poly->p[2 * i + ii + 1].y;	/* odd (+offset) indices */
-	}
-
-	return result;
-}	/* revertpoly() */
+	PG_RETURN_PATH_P(path);
+}
 
 
 /***********************************************************************
@@ -4398,19 +4176,17 @@ circle_poly(PG_FUNCTION_ARGS)
  * XXX This algorithm should use weighted means of line segments
  *	rather than straight average values of points - tgl 97/01/21.
  */
-CIRCLE *
-poly_circle(POLYGON *poly)
+Datum
+poly_circle(PG_FUNCTION_ARGS)
 {
+	POLYGON	   *poly = PG_GETARG_POLYGON_P(0);
 	CIRCLE	   *circle;
 	int			i;
-
-	if (!PointerIsValid(poly))
-		return NULL;
 
 	if (poly->npts < 2)
 		elog(ERROR, "Unable to convert polygon to circle");
 
-	circle = palloc(sizeof(CIRCLE));
+	circle = (CIRCLE *) palloc(sizeof(CIRCLE));
 
 	circle->center.x = 0;
 	circle->center.y = 0;
@@ -4431,8 +4207,8 @@ poly_circle(POLYGON *poly)
 	if (FPzero(circle->radius))
 		elog(ERROR, "Unable to convert polygon to circle");
 
-	return circle;
-}	/* poly_circle() */
+	PG_RETURN_CIRCLE_P(circle);
+}
 
 
 /***********************************************************************
@@ -4450,7 +4226,6 @@ point_inside(Point *p, int npts, Point *plist)
 				y0;
 	double		px,
 				py;
-
 	int			i;
 	double		x,
 				y;
@@ -4494,7 +4269,7 @@ point_inside(Point *p, int npts, Point *plist)
 	if (crossnum != 0)
 		return 1;
 	return 0;
-}	/* point_inside() */
+}
 
 
 /* lseg_crossing()

@@ -1,5 +1,5 @@
 /*
- * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.41 2000/07/05 23:12:09 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.42 2000/07/29 18:46:12 tgl Exp $
  */
 
 #include <float.h>				/* faked on sunos */
@@ -120,7 +120,8 @@ POLYGON    *poly;
 
 	sprintf(buf, "%c", RDELIM);
 	strcat(output, buf);
-	return path_in(output);
+	return DatumGetPathP(DirectFunctionCall1(path_in,
+											 CStringGetDatum(output)));
 }
 
 /* return the point where two paths intersect.	Assumes that they do. */

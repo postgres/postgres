@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geo_decls.h,v 1.29 2000/06/13 07:35:30 tgl Exp $
+ * $Id: geo_decls.h,v 1.30 2000/07/29 18:46:05 tgl Exp $
  *
  * NOTE
  *	  These routines do *not* use the float types from adt/.
@@ -152,10 +152,12 @@ typedef struct
 #define PG_GETARG_LSEG_P(n) DatumGetLsegP(PG_GETARG_DATUM(n))
 #define PG_RETURN_LSEG_P(x) return LsegPGetDatum(x)
 
-#define DatumGetPathP(X)    ((PATH *) PG_DETOAST_DATUM(X))
-#define PathPGetDatum(X)    PointerGetDatum(X)
-#define PG_GETARG_PATH_P(n) DatumGetPathP(PG_GETARG_DATUM(n))
-#define PG_RETURN_PATH_P(x) return PathPGetDatum(x)
+#define DatumGetPathP(X)         ((PATH *) PG_DETOAST_DATUM(X))
+#define DatumGetPathPCopy(X)     ((PATH *) PG_DETOAST_DATUM_COPY(X))
+#define PathPGetDatum(X)         PointerGetDatum(X)
+#define PG_GETARG_PATH_P(n)      DatumGetPathP(PG_GETARG_DATUM(n))
+#define PG_GETARG_PATH_P_COPY(n) DatumGetPathPCopy(PG_GETARG_DATUM(n))
+#define PG_RETURN_PATH_P(x)      return PathPGetDatum(x)
 
 #define DatumGetLineP(X)    ((LINE *) DatumGetPointer(X))
 #define LinePGetDatum(X)    PointerGetDatum(X)
@@ -167,10 +169,12 @@ typedef struct
 #define PG_GETARG_BOX_P(n) DatumGetBoxP(PG_GETARG_DATUM(n))
 #define PG_RETURN_BOX_P(x) return BoxPGetDatum(x)
 
-#define DatumGetPolygonP(X)    ((POLYGON *) PG_DETOAST_DATUM(X))
-#define PolygonPGetDatum(X)    PointerGetDatum(X)
-#define PG_GETARG_POLYGON_P(n) DatumGetPolygonP(PG_GETARG_DATUM(n))
-#define PG_RETURN_POLYGON_P(x) return PolygonPGetDatum(x)
+#define DatumGetPolygonP(X)         ((POLYGON *) PG_DETOAST_DATUM(X))
+#define DatumGetPolygonPCopy(X)     ((POLYGON *) PG_DETOAST_DATUM_COPY(X))
+#define PolygonPGetDatum(X)         PointerGetDatum(X)
+#define PG_GETARG_POLYGON_P(n)      DatumGetPolygonP(PG_GETARG_DATUM(n))
+#define PG_GETARG_POLYGON_P_COPY(n) DatumGetPolygonPCopy(PG_GETARG_DATUM(n))
+#define PG_RETURN_POLYGON_P(x)      return PolygonPGetDatum(x)
 
 #define DatumGetCircleP(X)    ((CIRCLE *) DatumGetPointer(X))
 #define CirclePGetDatum(X)    PointerGetDatum(X)
@@ -228,7 +232,7 @@ extern Point *lseg_center(LSEG *lseg);
 extern Point *lseg_interpt(LSEG *l1, LSEG *l2);
 extern double *dist_pl(Point *pt, LINE *line);
 extern double *dist_ps(Point *pt, LSEG *lseg);
-extern double *dist_ppath(Point *pt, PATH *path);
+extern Datum dist_ppath(PG_FUNCTION_ARGS);
 extern double *dist_pb(Point *pt, BOX *box);
 extern double *dist_sl(LSEG *lseg, LINE *line);
 extern double *dist_sb(LSEG *lseg, BOX *box);
@@ -244,7 +248,7 @@ extern Point *close_lb(LINE *line, BOX *box);
 extern bool on_pl(Point *pt, LINE *line);
 extern bool on_ps(Point *pt, LSEG *lseg);
 extern bool on_pb(Point *pt, BOX *box);
-extern bool on_ppath(Point *pt, PATH *path);
+extern Datum on_ppath(PG_FUNCTION_ARGS);
 extern bool on_sl(LSEG *lseg, LINE *line);
 extern bool on_sb(LSEG *lseg, BOX *box);
 extern bool inter_sl(LSEG *lseg, LINE *line);
@@ -294,72 +298,62 @@ extern double *box_distance(BOX *box1, BOX *box2);
 extern Point *box_center(BOX *box);
 extern BOX *box_intersect(BOX *box1, BOX *box2);
 extern LSEG *box_diagonal(BOX *box);
-
-/* private routines */
-
-extern double box_dt(BOX *box1, BOX *box2);
-
 extern BOX *box(Point *p1, Point *p2);
 extern BOX *box_add(BOX *box, Point *p);
 extern BOX *box_sub(BOX *box, Point *p);
 extern BOX *box_mul(BOX *box, Point *p);
 extern BOX *box_div(BOX *box, Point *p);
 
+/* private routines */
+extern double box_dt(BOX *box1, BOX *box2);
+
 /* public path routines */
-extern PATH *path_in(char *str);
-extern char *path_out(PATH *path);
-extern bool path_n_lt(PATH *p1, PATH *p2);
-extern bool path_n_gt(PATH *p1, PATH *p2);
-extern bool path_n_eq(PATH *p1, PATH *p2);
-extern bool path_n_le(PATH *p1, PATH *p2);
-extern bool path_n_ge(PATH *p1, PATH *p2);
-extern bool path_inter(PATH *p1, PATH *p2);
-extern double *path_distance(PATH *p1, PATH *p2);
-extern double *path_length(PATH *path);
+extern Datum path_in(PG_FUNCTION_ARGS);
+extern Datum path_out(PG_FUNCTION_ARGS);
+extern Datum path_n_lt(PG_FUNCTION_ARGS);
+extern Datum path_n_gt(PG_FUNCTION_ARGS);
+extern Datum path_n_eq(PG_FUNCTION_ARGS);
+extern Datum path_n_le(PG_FUNCTION_ARGS);
+extern Datum path_n_ge(PG_FUNCTION_ARGS);
+extern Datum path_inter(PG_FUNCTION_ARGS);
+extern Datum path_distance(PG_FUNCTION_ARGS);
+extern Datum path_length(PG_FUNCTION_ARGS);
 
-extern bool path_isclosed(PATH *path);
-extern bool path_isopen(PATH *path);
-extern int4 path_npoints(PATH *path);
+extern Datum path_isclosed(PG_FUNCTION_ARGS);
+extern Datum path_isopen(PG_FUNCTION_ARGS);
+extern Datum path_npoints(PG_FUNCTION_ARGS);
 
-extern PATH *path_close(PATH *path);
-extern PATH *path_open(PATH *path);
-extern PATH *path_add(PATH *p1, PATH *p2);
-extern PATH *path_add_pt(PATH *path, Point *point);
-extern PATH *path_sub_pt(PATH *path, Point *point);
-extern PATH *path_mul_pt(PATH *path, Point *point);
-extern PATH *path_div_pt(PATH *path, Point *point);
+extern Datum path_close(PG_FUNCTION_ARGS);
+extern Datum path_open(PG_FUNCTION_ARGS);
+extern Datum path_add(PG_FUNCTION_ARGS);
+extern Datum path_add_pt(PG_FUNCTION_ARGS);
+extern Datum path_sub_pt(PG_FUNCTION_ARGS);
+extern Datum path_mul_pt(PG_FUNCTION_ARGS);
+extern Datum path_div_pt(PG_FUNCTION_ARGS);
 
-extern Point *path_center(PATH *path);
-extern POLYGON *path_poly(PATH *path);
-
-extern PATH *upgradepath(PATH *path);
-extern bool isoldpath(PATH *path);
+extern Datum path_center(PG_FUNCTION_ARGS);
+extern Datum path_poly(PG_FUNCTION_ARGS);
 
 /* public polygon routines */
-extern POLYGON *poly_in(char *s);
-extern char *poly_out(POLYGON *poly);
-extern bool poly_left(POLYGON *polya, POLYGON *polyb);
-extern bool poly_overleft(POLYGON *polya, POLYGON *polyb);
-extern bool poly_right(POLYGON *polya, POLYGON *polyb);
-extern bool poly_overright(POLYGON *polya, POLYGON *polyb);
-extern bool poly_same(POLYGON *polya, POLYGON *polyb);
-extern bool poly_overlap(POLYGON *polya, POLYGON *polyb);
-extern bool poly_contain(POLYGON *polya, POLYGON *polyb);
-extern bool poly_contained(POLYGON *polya, POLYGON *polyb);
-extern bool poly_contain_pt(POLYGON *poly, Point *p);
-extern bool pt_contained_poly(Point *p, POLYGON *poly);
+extern Datum poly_in(PG_FUNCTION_ARGS);
+extern Datum poly_out(PG_FUNCTION_ARGS);
+extern Datum poly_left(PG_FUNCTION_ARGS);
+extern Datum poly_overleft(PG_FUNCTION_ARGS);
+extern Datum poly_right(PG_FUNCTION_ARGS);
+extern Datum poly_overright(PG_FUNCTION_ARGS);
+extern Datum poly_same(PG_FUNCTION_ARGS);
+extern Datum poly_overlap(PG_FUNCTION_ARGS);
+extern Datum poly_contain(PG_FUNCTION_ARGS);
+extern Datum poly_contained(PG_FUNCTION_ARGS);
+extern Datum poly_contain_pt(PG_FUNCTION_ARGS);
+extern Datum pt_contained_poly(PG_FUNCTION_ARGS);
 
-extern double *poly_distance(POLYGON *polya, POLYGON *polyb);
-extern int4 poly_npoints(POLYGON *poly);
-extern Point *poly_center(POLYGON *poly);
-extern BOX *poly_box(POLYGON *poly);
-extern PATH *poly_path(POLYGON *poly);
-extern POLYGON *box_poly(BOX *box);
-
-extern POLYGON *upgradepoly(POLYGON *poly);
-extern POLYGON *revertpoly(POLYGON *poly);
-
-/* private polygon routines */
+extern Datum poly_distance(PG_FUNCTION_ARGS);
+extern Datum poly_npoints(PG_FUNCTION_ARGS);
+extern Datum poly_center(PG_FUNCTION_ARGS);
+extern Datum poly_box(PG_FUNCTION_ARGS);
+extern Datum poly_path(PG_FUNCTION_ARGS);
+extern Datum box_poly(PG_FUNCTION_ARGS);
 
 /* public circle routines */
 extern CIRCLE *circle_in(char *str);
@@ -391,17 +385,26 @@ extern double *circle_diameter(CIRCLE *circle);
 extern double *circle_radius(CIRCLE *circle);
 extern double *circle_distance(CIRCLE *circle1, CIRCLE *circle2);
 extern double *dist_pc(Point *point, CIRCLE *circle);
-extern double *dist_cpoly(CIRCLE *circle, POLYGON *poly);
+extern Datum dist_cpoly(PG_FUNCTION_ARGS);
 extern Point *circle_center(CIRCLE *circle);
 extern CIRCLE *circle(Point *center, float8 *radius);
 extern CIRCLE *box_circle(BOX *box);
 extern BOX *circle_box(CIRCLE *circle);
-extern CIRCLE *poly_circle(POLYGON *poly);
+extern Datum poly_circle(PG_FUNCTION_ARGS);
 extern Datum circle_poly(PG_FUNCTION_ARGS);
 
 /* private routines */
 extern double *circle_area(CIRCLE *circle);
 extern double circle_dt(CIRCLE *circle1, CIRCLE *circle2);
+
+/* support routines for the rtree access method (rtproc.c) */
+extern BOX *rt_box_union(BOX *a, BOX *b);
+extern BOX *rt_box_inter(BOX *a, BOX *b);
+extern void rt_box_size(BOX *a, float *size);
+extern void rt_bigbox_size(BOX *a, float *size);
+extern Datum rt_poly_size(PG_FUNCTION_ARGS);
+extern Datum rt_poly_union(PG_FUNCTION_ARGS);
+extern Datum rt_poly_inter(PG_FUNCTION_ARGS);
 
 /* geo_selfuncs.c */
 extern Datum areasel(PG_FUNCTION_ARGS);

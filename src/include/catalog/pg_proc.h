@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.150 2000/07/29 03:26:43 tgl Exp $
+ * $Id: pg_proc.h,v 1.151 2000/07/29 18:45:57 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -256,9 +256,9 @@ DATA(insert OID = 119 (  lseg_in		   PGUID 11 f t t t 1 f 601 "0" 100 0 0 100  l
 DESCR("(internal)");
 DATA(insert OID = 120 (  lseg_out		   PGUID 11 f t t t 1 f 23  "0" 100 0 0 100  lseg_out - ));
 DESCR("(internal)");
-DATA(insert OID = 121 (  path_in		   PGUID 11 f t t t 1 f 602 "0" 100 0 0 100  path_in - ));
+DATA(insert OID = 121 (  path_in		   PGUID 12 f t t t 1 f 602 "0" 100 0 0 100  path_in - ));
 DESCR("(internal)");
-DATA(insert OID = 122 (  path_out		   PGUID 11 f t t t 1 f 23  "0" 100 0 0 100  path_out - ));
+DATA(insert OID = 122 (  path_out		   PGUID 12 f t t t 1 f 23  "0" 100 0 0 100  path_out - ));
 DESCR("(internal)");
 DATA(insert OID = 123 (  box_in			   PGUID 11 f t t t 1 f 603 "0" 100 0 0 100  box_in - ));
 DESCR("(internal)");
@@ -288,7 +288,7 @@ DATA(insert OID = 135 (  point_eq		   PGUID 11 f t t t 2 f 16 "600 600" 100 0 0 
 DESCR("same as");
 DATA(insert OID = 136 (  on_pb			   PGUID 11 f t t t 2 f 16 "600 603" 100 0 0 100	on_pb - ));
 DESCR("point is inside");
-DATA(insert OID = 137 (  on_ppath		   PGUID 11 f t t t 2 f 16 "600 602" 100 0 1 0  on_ppath - ));
+DATA(insert OID = 137 (  on_ppath		   PGUID 12 f t t t 2 f 16 "600 602" 100 0 1 0  on_ppath - ));
 DESCR("contained in");
 DATA(insert OID = 138 (  box_center		   PGUID 11 f t t t 1 f 600 "603" 100 1 0 100  box_center - ));
 DESCR("center of");
@@ -408,9 +408,9 @@ DATA(insert OID = 195 (  rt_box_size	   PGUID 11 f t t t 2 f 700 "603 700" 100 0
 DESCR("r-tree");
 DATA(insert OID = 196 (  rt_bigbox_size    PGUID 11 f t t t 2 f 700 "603 700" 100 0 0 100  rt_bigbox_size - ));
 DESCR("r-tree");
-DATA(insert OID = 197 (  rt_poly_union	   PGUID 11 f t t t 2 f 604 "604 604" 100 0 0 100  rt_poly_union - ));
+DATA(insert OID = 197 (  rt_poly_union	   PGUID 12 f t t t 2 f 604 "604 604" 100 0 0 100  rt_poly_union - ));
 DESCR("r-tree");
-DATA(insert OID = 198 (  rt_poly_inter	   PGUID 11 f t t t 2 f 604 "604 604" 100 0 0 100  rt_poly_inter - ));
+DATA(insert OID = 198 (  rt_poly_inter	   PGUID 12 f t t t 2 f 604 "604 604" 100 0 0 100  rt_poly_inter - ));
 DESCR("r-tree");
 DATA(insert OID = 199 (  rt_poly_size	   PGUID 12 f t t t 2 f 23 "604 700" 100 0 0 100  rt_poly_size - ));
 DESCR("r-tree");
@@ -470,9 +470,9 @@ DESCR("smaller of two");
 
 DATA(insert OID = 225 (  lseg_center	   PGUID 11 f t t t 1 f 600 "601" 100 0 0 100  lseg_center - ));
 DESCR("center of");
-DATA(insert OID = 226 (  path_center	   PGUID 11 f t t t 1 f 600 "602" 100 0 0 100  path_center - ));
+DATA(insert OID = 226 (  path_center	   PGUID 12 f t t t 1 f 600 "602" 100 0 0 100  path_center - ));
 DESCR("center of");
-DATA(insert OID = 227 (  poly_center	   PGUID 11 f t t t 1 f 600 "604" 100 0 0 100  poly_center - ));
+DATA(insert OID = 227 (  poly_center	   PGUID 12 f t t t 1 f 600 "604" 100 0 0 100  poly_center - ));
 DESCR("center of");
 
 DATA(insert OID = 228 (  dround			   PGUID 11 f t t t 1 f 701 "701" 100 0 0 100  dround - ));
@@ -709,25 +709,25 @@ DESCR("btree(internal)");
 DATA(insert OID = 338 (  btbuild		   PGUID 12 f t f t 5 f 23 "0 0 0 0 0" 100 0 0 100  btbuild - ));
 DESCR("btree(internal)");
 
-DATA(insert OID = 339 (  poly_same		   PGUID 11 f t t t 2 f 16 "604 604" 100 0 1 0  poly_same - ));
+DATA(insert OID = 339 (  poly_same		   PGUID 12 f t t t 2 f 16 "604 604" 100 0 1 0  poly_same - ));
 DESCR("same as");
-DATA(insert OID = 340 (  poly_contain	   PGUID 11 f t t t 2 f 16 "604 604" 100 0 1 0  poly_contain - ));
+DATA(insert OID = 340 (  poly_contain	   PGUID 12 f t t t 2 f 16 "604 604" 100 0 1 0  poly_contain - ));
 DESCR("contains");
-DATA(insert OID = 341 (  poly_left		   PGUID 11 f t t t 2 f 16 "604 604" 100 0 1 0  poly_left - ));
+DATA(insert OID = 341 (  poly_left		   PGUID 12 f t t t 2 f 16 "604 604" 100 0 1 0  poly_left - ));
 DESCR("is left of");
-DATA(insert OID = 342 (  poly_overleft	   PGUID 11 f t t t 2 f 16 "604 604" 100 0 1 0  poly_overleft - ));
+DATA(insert OID = 342 (  poly_overleft	   PGUID 12 f t t t 2 f 16 "604 604" 100 0 1 0  poly_overleft - ));
 DESCR("overlaps, but does not extend to right of");
-DATA(insert OID = 343 (  poly_overright    PGUID 11 f t t t 2 f 16 "604 604" 100 0 1 0  poly_overright - ));
+DATA(insert OID = 343 (  poly_overright    PGUID 12 f t t t 2 f 16 "604 604" 100 0 1 0  poly_overright - ));
 DESCR("overlaps, but does not extend to left of");
-DATA(insert OID = 344 (  poly_right		   PGUID 11 f t t t 2 f 16 "604 604" 100 0 1 0  poly_right - ));
-DESCR("is left of");
-DATA(insert OID = 345 (  poly_contained    PGUID 11 f t t t 2 f 16 "604 604" 100 0 1 0  poly_contained - ));
+DATA(insert OID = 344 (  poly_right		   PGUID 12 f t t t 2 f 16 "604 604" 100 0 1 0  poly_right - ));
+DESCR("is right of");
+DATA(insert OID = 345 (  poly_contained    PGUID 12 f t t t 2 f 16 "604 604" 100 0 1 0  poly_contained - ));
 DESCR("contained in");
-DATA(insert OID = 346 (  poly_overlap	   PGUID 11 f t t t 2 f 16 "604 604" 100 0 1 0  poly_overlap - ));
+DATA(insert OID = 346 (  poly_overlap	   PGUID 12 f t t t 2 f 16 "604 604" 100 0 1 0  poly_overlap - ));
 DESCR("overlaps");
-DATA(insert OID = 347 (  poly_in		   PGUID 11 f t t t 1 f 604 "0" 100 0 1 0  poly_in - ));
+DATA(insert OID = 347 (  poly_in		   PGUID 12 f t t t 1 f 604 "0" 100 0 1 0  poly_in - ));
 DESCR("(internal)");
-DATA(insert OID = 348 (  poly_out		   PGUID 11 f t t t 1 f 23  "0" 100 0 1 0  poly_out - ));
+DATA(insert OID = 348 (  poly_out		   PGUID 12 f t t t 1 f 23  "0" 100 0 1 0  poly_out - ));
 DESCR("(internal)");
 
 DATA(insert OID = 350 (  btint2cmp		   PGUID 12 f t t t 2 f 23 "21 21" 100 0 0 100  btint2cmp - ));
@@ -771,10 +771,10 @@ DATA(insert OID = 368 (  close_sb		   PGUID 11 f t t t 2 f 600 "601 603" 100 0 0
 DESCR("closest point to line segment on box");
 DATA(insert OID = 369 (  on_ps			   PGUID 11 f t t t 2 f 16 "600 601" 100 0 0 100	on_ps - ));
 DESCR("point contained in segment");
-DATA(insert OID = 370 (  path_distance	   PGUID 11 f t t t 2 f 701 "602 602" 100 0 1 0  path_distance - ));
+DATA(insert OID = 370 (  path_distance	   PGUID 12 f t t t 2 f 701 "602 602" 100 0 1 0  path_distance - ));
 DESCR("distance between paths");
-DATA(insert OID = 371 (  dist_ppath		   PGUID 11 f t t t 2 f 701 "600 602" 100 0 1 0  dist_ppath - ));
-DESCR("distance between point and patch");
+DATA(insert OID = 371 (  dist_ppath		   PGUID 12 f t t t 2 f 701 "600 602" 100 0 1 0  dist_ppath - ));
+DESCR("distance between point and path");
 DATA(insert OID = 372 (  on_sb			   PGUID 11 f t t t 2 f 16 "601 603" 100 0 0 100	on_sb - ));
 DESCR("contained in");
 DATA(insert OID = 373 (  inter_sb		   PGUID 11 f t t t 2 f 16 "601 603" 100 0 0 100	inter_sb - ));
@@ -960,9 +960,9 @@ DATA(insert OID = 726 (  dist_lb		   PGUID 11 f t t t 2 f 701 "628 603" 100 0 0 
 DESCR("distance between line and box");
 DATA(insert OID = 727 (  dist_sl		   PGUID 11 f t t t 2 f 701 "601 628" 100 0 0 100  dist_sl - ));
 DESCR("distance between lseg and line");
-DATA(insert OID = 728 (  dist_cpoly		   PGUID 11 f t t t 2 f 701 "718 604" 100 0 0 100  dist_cpoly - ));
+DATA(insert OID = 728 (  dist_cpoly		   PGUID 12 f t t t 2 f 701 "718 604" 100 0 0 100  dist_cpoly - ));
 DESCR("distance between");
-DATA(insert OID = 729 (  poly_distance	   PGUID 11 f t t t 2 f 701 "604 604" 100 0 0 100  poly_distance - ));
+DATA(insert OID = 729 (  poly_distance	   PGUID 12 f t t t 2 f 701 "604 604" 100 0 0 100  poly_distance - ));
 DESCR("distance between");
 
 DATA(insert OID = 740 (  text_lt		   PGUID 12 f t t t 2 f 16 "25 25" 100 0 0 0	text_lt - ));
@@ -1151,16 +1151,6 @@ DESCR("multiply");
 
 /* OIDS 900 - 999 */
 
-/* isoldpath, upgradepath, upgradepoly, revertpoly are used to update pre-v6.1 to v6.1 - tgl 97/06/03 */
-DATA(insert OID = 936 (  isoldpath		   PGUID 11 f t f t 1 f  16 "602" 100 0 0 100  isoldpath - ));
-DESCR("");
-DATA(insert OID = 937 (  upgradepath	   PGUID 11 f t f t 1 f 602 "602" 100 0 0 100  upgradepath - ));
-DESCR("");
-DATA(insert OID = 938 (  upgradepoly	   PGUID 11 f t f t 1 f 604 "604" 100 0 0 100  upgradepoly - ));
-DESCR("");
-DATA(insert OID = 939 (  revertpoly		   PGUID 11 f t f t 1 f 604 "604" 100 0 0 100  revertpoly - ));
-DESCR("");
-
 DATA(insert OID = 940 (  mod			   PGUID 12 f t t t 2 f 21 "21 21" 100 0 0 100  int2mod - ));
 DESCR("modulus");
 DATA(insert OID = 941 (  mod			   PGUID 12 f t t t 2 f 23 "23 23" 100 0 0 100  int4mod - ));
@@ -1216,7 +1206,7 @@ DESCR("large object unlink(delete)");
 DATA(insert OID = 972 (  regproctooid	   PGUID 12 f t t t 1 f  26 "24" 100 0 0 100	regproctooid - ));
 DESCR("get oid for regproc");
 
-DATA(insert OID = 973 (  path_inter		   PGUID 11 f t t t 2 f  16 "602 602" 100 0 10 100  path_inter - ));
+DATA(insert OID = 973 (  path_inter		   PGUID 12 f t t t 2 f  16 "602 602" 100 0 10 100  path_inter - ));
 DESCR("paths intersect?");
 DATA(insert OID = 975 (  area			   PGUID 11 f t t t 1 f 701 "603" 100 0 0 100  box_area - ));
 DESCR("box area");
@@ -1230,17 +1220,17 @@ DATA(insert OID = 980 (  box_intersect	   PGUID 11 f t t t 2 f 603 "603 603" 100
 DESCR("box intersection (another box)");
 DATA(insert OID = 981 (  diagonal		   PGUID 11 f t t t 1 f 601 "603" 100 0 0 100  box_diagonal - ));
 DESCR("box diagonal");
-DATA(insert OID = 982 (  path_n_lt		   PGUID 11 f t t t 2 f 16 "602 602" 100 0 0 100	path_n_lt - ));
+DATA(insert OID = 982 (  path_n_lt		   PGUID 12 f t t t 2 f 16 "602 602" 100 0 0 100	path_n_lt - ));
 DESCR("less-than");
-DATA(insert OID = 983 (  path_n_gt		   PGUID 11 f t t t 2 f 16 "602 602" 100 0 0 100	path_n_gt - ));
+DATA(insert OID = 983 (  path_n_gt		   PGUID 12 f t t t 2 f 16 "602 602" 100 0 0 100	path_n_gt - ));
 DESCR("greater-than");
-DATA(insert OID = 984 (  path_n_eq		   PGUID 11 f t t t 2 f 16 "602 602" 100 0 0 100	path_n_eq - ));
+DATA(insert OID = 984 (  path_n_eq		   PGUID 12 f t t t 2 f 16 "602 602" 100 0 0 100	path_n_eq - ));
 DESCR("equal");
-DATA(insert OID = 985 (  path_n_le		   PGUID 11 f t t t 2 f 16 "602 602" 100 0 0 100	path_n_le - ));
+DATA(insert OID = 985 (  path_n_le		   PGUID 12 f t t t 2 f 16 "602 602" 100 0 0 100	path_n_le - ));
 DESCR("less-than-or-equal");
-DATA(insert OID = 986 (  path_n_ge		   PGUID 11 f t t t 2 f 16 "602 602" 100 0 0 100	path_n_ge - ));
+DATA(insert OID = 986 (  path_n_ge		   PGUID 12 f t t t 2 f 16 "602 602" 100 0 0 100	path_n_ge - ));
 DESCR("greater-than-or-equal");
-DATA(insert OID = 987 (  path_length	   PGUID 11 f t t t 1 f 701 "602" 100 0 1 0  path_length - ));
+DATA(insert OID = 987 (  path_length	   PGUID 12 f t t t 1 f 701 "602" 100 0 1 0  path_length - ));
 DESCR("sum of path segments");
 DATA(insert OID = 988 (  point_ne		   PGUID 11 f t t t 2 f 16 "600 600" 100 0 0 100	point_ne - ));
 DESCR("not equal");
@@ -1780,36 +1770,36 @@ DATA(insert OID = 1425 (  box_div			PGUID 11 f t t t 2 f 603 "603 600" 100 0 0 1
 DESCR("divide box by point (scale)");
 DATA(insert OID = 1426 (  path_contain_pt	PGUID 14 f t t t 2 f	16 "602 600" 100 0 0 100  "select on_ppath($2, $1)" - ));
 DESCR("path contains point?");
-DATA(insert OID = 1428 (  poly_contain_pt	PGUID 11 f t t t 2 f	16 "604 600" 100 0 0 100  poly_contain_pt - ));
+DATA(insert OID = 1428 (  poly_contain_pt	PGUID 12 f t t t 2 f	16 "604 600" 100 0 0 100  poly_contain_pt - ));
 DESCR("polygon contains point?");
-DATA(insert OID = 1429 (  pt_contained_poly PGUID 11 f t t t 2 f	16 "600 604" 100 0 0 100  pt_contained_poly - ));
+DATA(insert OID = 1429 (  pt_contained_poly PGUID 12 f t t t 2 f	16 "600 604" 100 0 0 100  pt_contained_poly - ));
 DESCR("point contained by polygon?");
 
-DATA(insert OID = 1430 (  isclosed			PGUID 11 f t t t 1 f	16 "602" 100 0 0 100  path_isclosed - ));
+DATA(insert OID = 1430 (  isclosed			PGUID 12 f t t t 1 f	16 "602" 100 0 0 100  path_isclosed - ));
 DESCR("path closed?");
-DATA(insert OID = 1431 (  isopen			PGUID 11 f t t t 1 f	16 "602" 100 0 0 100  path_isopen - ));
+DATA(insert OID = 1431 (  isopen			PGUID 12 f t t t 1 f	16 "602" 100 0 0 100  path_isopen - ));
 DESCR("path open?");
-DATA(insert OID = 1432 (  path_npoints		PGUID 11 f t t t 1 f	23 "602" 100 0 0 100  path_npoints - ));
+DATA(insert OID = 1432 (  path_npoints		PGUID 12 f t t t 1 f	23 "602" 100 0 0 100  path_npoints - ));
 DESCR("# points in path");
 
 /* pclose and popen might better be named close and open, but that crashes initdb.
  * - thomas 97/04/20
  */
 
-DATA(insert OID = 1433 (  pclose			PGUID 11 f t t t 1 f 602 "602" 100 0 0 100  path_close - ));
+DATA(insert OID = 1433 (  pclose			PGUID 12 f t t t 1 f 602 "602" 100 0 0 100  path_close - ));
 DESCR("close path");
-DATA(insert OID = 1434 (  popen				PGUID 11 f t t t 1 f 602 "602" 100 0 0 100  path_open - ));
+DATA(insert OID = 1434 (  popen				PGUID 12 f t t t 1 f 602 "602" 100 0 0 100  path_open - ));
 DESCR("open path");
-DATA(insert OID = 1435 (  path_add			PGUID 11 f t t t 2 f 602 "602 602" 100 0 0 100  path_add - ));
-DESCR("addition");
-DATA(insert OID = 1436 (  path_add_pt		PGUID 11 f t t t 2 f 602 "602 600" 100 0 0 100  path_add_pt - ));
-DESCR("addition");
-DATA(insert OID = 1437 (  path_sub_pt		PGUID 11 f t t t 2 f 602 "602 600" 100 0 0 100  path_sub_pt - ));
-DESCR("subtract");
-DATA(insert OID = 1438 (  path_mul_pt		PGUID 11 f t t t 2 f 602 "602 600" 100 0 0 100  path_mul_pt - ));
-DESCR("multiply");
-DATA(insert OID = 1439 (  path_div_pt		PGUID 11 f t t t 2 f 602 "602 600" 100 0 0 100  path_div_pt - ));
-DESCR("divide");
+DATA(insert OID = 1435 (  path_add			PGUID 12 f t t t 2 f 602 "602 602" 100 0 0 100  path_add - ));
+DESCR("concatenate open paths");
+DATA(insert OID = 1436 (  path_add_pt		PGUID 12 f t t t 2 f 602 "602 600" 100 0 0 100  path_add_pt - ));
+DESCR("add (translate path)");
+DATA(insert OID = 1437 (  path_sub_pt		PGUID 12 f t t t 2 f 602 "602 600" 100 0 0 100  path_sub_pt - ));
+DESCR("subtract (translate path)");
+DATA(insert OID = 1438 (  path_mul_pt		PGUID 12 f t t t 2 f 602 "602 600" 100 0 0 100  path_mul_pt - ));
+DESCR("multiply (rotate/scale path)");
+DATA(insert OID = 1439 (  path_div_pt		PGUID 12 f t t t 2 f 602 "602 600" 100 0 0 100  path_div_pt - ));
+DESCR("divide (rotate/scale path)");
 
 DATA(insert OID = 1440 (  point				PGUID 11 f t t t 2 f 600 "701 701" 100 0 0 100  point - ));
 DESCR("convert x, y to point");
@@ -1822,15 +1812,15 @@ DESCR("multiply points (scale/rotate)");
 DATA(insert OID = 1444 (  point_div			PGUID 11 f t t t 2 f 600 "600 600" 100 0 0 100  point_div - ));
 DESCR("divide points (scale/rotate)");
 
-DATA(insert OID = 1445 (  poly_npoints		PGUID 11 f t t t 1 f	23 "604" 100 0 0 100  poly_npoints - ));
+DATA(insert OID = 1445 (  poly_npoints		PGUID 12 f t t t 1 f	23 "604" 100 0 0 100  poly_npoints - ));
 DESCR("number of points in polygon");
-DATA(insert OID = 1446 (  box				PGUID 11 f t t t 1 f 603 "604" 100 0 0 100  poly_box - ));
+DATA(insert OID = 1446 (  box				PGUID 12 f t t t 1 f 603 "604" 100 0 0 100  poly_box - ));
 DESCR("convert polygon to bounding box");
-DATA(insert OID = 1447 (  path				PGUID 11 f t t t 1 f 602 "604" 100 0 0 100  poly_path - ));
+DATA(insert OID = 1447 (  path				PGUID 12 f t t t 1 f 602 "604" 100 0 0 100  poly_path - ));
 DESCR("convert polygon to path");
-DATA(insert OID = 1448 (  polygon			PGUID 11 f t t t 1 f 604 "603" 100 0 0 100  box_poly - ));
+DATA(insert OID = 1448 (  polygon			PGUID 12 f t t t 1 f 604 "603" 100 0 0 100  box_poly - ));
 DESCR("convert box to polygon");
-DATA(insert OID = 1449 (  polygon			PGUID 11 f t t t 1 f 604 "602" 100 0 0 100  path_poly - ));
+DATA(insert OID = 1449 (  polygon			PGUID 12 f t t t 1 f 604 "602" 100 0 0 100  path_poly - ));
 DESCR("convert path to polygon");
 
 DATA(insert OID = 1450 (  circle_in			PGUID 11 f t t t 1 f 718 "0" 100 0 1 0  circle_in - ));
@@ -1881,7 +1871,7 @@ DATA(insert OID = 1472 (  circle_center		PGUID 11 f t t t 1 f 600 "718" 100 0 1 
 DESCR("center of");
 DATA(insert OID = 1473 (  circle			PGUID 11 f t t t 2 f 718 "600 701" 100 0 1 0	circle - ));
 DESCR("convert point and radius to circle");
-DATA(insert OID = 1474 (  circle			PGUID 11 f t t t 1 f 718 "604" 100 0 1 0	poly_circle - ));
+DATA(insert OID = 1474 (  circle			PGUID 12 f t t t 1 f 718 "604" 100 0 1 0	poly_circle - ));
 DESCR("convert polygon to circle");
 DATA(insert OID = 1475 (  polygon			PGUID 12 f t t t 2 f 604 "23 718" 100 0 1 0  circle_poly - ));
 DESCR("convert vertex count and circle to polygon");
@@ -1940,17 +1930,17 @@ DESCR("lines horizontal?");
 
 DATA(insert OID = 1530 (  length			PGUID 11 f t t t 1 f 701 "601" 100 0 1 0	lseg_length - ));
 DESCR("distance between endpoints");
-DATA(insert OID = 1531 (  length			PGUID 11 f t t t 1 f 701 "602" 100 0 1 0	path_length - ));
+DATA(insert OID = 1531 (  length			PGUID 12 f t t t 1 f 701 "602" 100 0 1 0	path_length - ));
 DESCR("sum of path segments");
 
 
 DATA(insert OID = 1532 (  point				PGUID 11 f t t t 1 f 600 "601" 100 0 0 100  lseg_center - ));
 DESCR("center of");
-DATA(insert OID = 1533 (  point				PGUID 11 f t t t 1 f 600 "602" 100 0 0 100  path_center - ));
+DATA(insert OID = 1533 (  point				PGUID 12 f t t t 1 f 600 "602" 100 0 0 100  path_center - ));
 DESCR("center of");
 DATA(insert OID = 1534 (  point				PGUID 11 f t t t 1 f 600 "603" 100 1 0 100  box_center - ));
 DESCR("center of");
-DATA(insert OID = 1540 (  point				PGUID 11 f t t t 1 f 600 "604" 100 0 0 100  poly_center - ));
+DATA(insert OID = 1540 (  point				PGUID 12 f t t t 1 f 600 "604" 100 0 0 100  poly_center - ));
 DESCR("center of");
 DATA(insert OID = 1541 (  lseg				PGUID 11 f t t t 1 f 601 "603" 100 0 0 100  box_diagonal - ));
 DESCR("");
@@ -1960,9 +1950,9 @@ DATA(insert OID = 1543 (  center			PGUID 11 f t t t 1 f 600 "718" 100 0 1 0	circ
 DESCR("center of");
 DATA(insert OID = 1544 (  polygon			PGUID 14 f t t t 1 f 604 "718" 100 0 0 100  "select polygon(12, $1)" - ));
 DESCR("convert circle to 12-vertex polygon");
-DATA(insert OID = 1545 (  npoints			PGUID 11 f t t t 1 f	23 "602" 100 0 0 100  path_npoints - ));
+DATA(insert OID = 1545 (  npoints			PGUID 12 f t t t 1 f	23 "602" 100 0 0 100  path_npoints - ));
 DESCR("# points in path");
-DATA(insert OID = 1556 (  npoints			PGUID 11 f t t t 1 f	23 "604" 100 0 0 100  poly_npoints - ));
+DATA(insert OID = 1556 (  npoints			PGUID 12 f t t t 1 f	23 "604" 100 0 0 100  poly_npoints - ));
 DESCR("number of points in polygon");
 
 DATA(insert OID = 1564 (  zpbit_in			PGUID 11 f t t t 1 f 1560 "0" 100 0 0 100  zpbit_in - ));
