@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/monitoring.sgml,v 1.12 2002/08/20 04:47:52 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/monitoring.sgml,v 1.13 2002/08/31 17:14:27 tgl Exp $
 -->
 
 <chapter id="monitoring">
@@ -593,22 +593,25 @@ FROM (SELECT pg_stat_get_backend_idset() AS backendid) AS S;
 
    <note>
 	<para>
-	 When the <literal>pg_locks</literal> view is accessed, an
-	 exclusive lock on an internal lock manager data structure must be
-	 acquired to ensure that the data produced by the view is
-	 consistent. The lock held on this structure conflicts with normal
-	 database operations, and can therefore have an effect on overall
-	 database performance. Nevertheless, the performance impact of
-	 accessing this view should be minimal in most situations.
+	 When the <literal>pg_locks</literal> view is accessed, the
+	 internal lock manager data structures are momentarily locked,
+	 and a copy is made for the view to display.  This ensures that
+	 the view produces a consistent set of results, while not blocking
+	 normal lock manager operations longer than necessary.  Nonetheless
+	 there could be some impact on database performance if this view is
+	 examined often.
 	</para>
    </note>
 
    <para>
-	The <literal>pg_locks</literal> view contains one row per
-	lock. This means that if there are multiple locks on a single
-	relation (which may or may not conflict with one another), a
-	single relation may show up many times. Furthermore, only
-	table-level locks are displayed (not row-level ones).
+	The <literal>pg_locks</literal> view contains one row per lockable
+	object and requested lock mode.  Thus, the same lockable object
+	may appear many times, if multiple transactions are holding or
+	waiting for locks on it.  A lockable object is either a relation
+	or a transaction ID.  (Note that this view includes only table-level
+	locks, not row-level ones.  If a transaction is waiting for a
+	row-level lock, it will appear in the view as waiting for the
+	transaction ID of the current holder of that row lock.)
    </para>
 
    <table>
@@ -627,31 +630,50 @@ FROM (SELECT pg_stat_get_backend_idset() AS backendid) AS S;
 	  <row>
 	   <entry><structfield>relation</structfield></entry>
 	   <entry><type>oid</type></entry>
-	   <entry>The OID of the locked relation. When querying
-	   <literal>pg_locks</literal>, this column can be joined with the
-	   <literal>pg_class</literal> system catalog to get more
-	   information on the locked relation.</entry>
+	   <entry>The OID of the locked relation, or NULL if the lockable
+	   object is a transaction ID. This column can be joined
+	   with the <literal>pg_class</literal> system catalog to get more
+	   information on the locked relation.  Note however that this will
+	   only work for relations in the current database (those for which
+	   the <structfield>database</structfield> column is either the
+	   current database's OID or zero).
+	   </entry>
 	  </row>
 
 	  <row>
 	   <entry><structfield>database</structfield></entry>
 	   <entry><type>oid</type></entry>
 	   <entry>The OID of the database in which the locked relation
-		exists. If the lock is on a globally-shared object, this value
-		will be 0. When querying <literal>pg_locks</literal>, this
-		column can be joined with the <literal>pg_database</literal>
-		system catalog to get more information on the locked object's
-		database.</entry>
+	    exists, or NULL if the lockable object is a transaction ID.
+	    If the lock is on a globally-shared table, this field will be
+	    zero. This
+	    column can be joined with the <literal>pg_database</literal>
+	    system catalog to get more information on the locked object's
+	    database.
+	   </entry>
 	  </row>
 
 	  <row>
-	   <entry><structfield>backendpid</structfield></entry>
+	   <entry><structfield>transaction</structfield></entry>
+	   <entry><type>xid</type></entry>
+	   <entry>The ID of a transaction, or NULL if the lockable object
+	   is a relation.  Every transaction holds ExclusiveLock on its
+	   transaction ID for its entire duration.  If one transaction finds
+	   it necessary to wait specifically for another transaction, it
+	   does so by attempting to acquire ShareLock on the other transaction
+	   ID.  That will succeed only when the other transaction terminates
+	   and releases its locks.
+	   </entry>
+	  </row>
+
+	  <row>
+	   <entry><structfield>pid</structfield></entry>
 	   <entry><type>int4</type></entry>
 	   <entry>The process ID of the
 		<productname>PostgreSQL</productname> backend that has
 		acquired or is attempting to acquire the lock. If you have
 		enabled the statistics collector, this column can be joined
-		with the <literal>pg_stat_activity</literal> view to access
+		with the <literal>pg_stat_activity</literal> view to get
 		more information on the backend holding or waiting to hold the
 		lock.</entry>
 	  </row>
@@ -659,7 +681,8 @@ FROM (SELECT pg_stat_get_backend_idset() AS backendid) AS S;
 	  <row>
 	   <entry><structfield>mode</structfield></entry>
 	   <entry><type>text</type></entry>
-	   <entry>The mode of the lock. For more information on the
+	   <entry>The mode of the requested or held lock on the lockable
+	   object. For more information on the
 	   different lock modes available in
 	   <productname>PostgreSQL</productname>, refer to the
 	   <citetitle>User's Guide</citetitle>.</entry>
@@ -667,13 +690,14 @@ FROM (SELECT pg_stat_get_backend_idset() AS backendid) AS S;
 
 	  <row>
 	   <entry><structfield>isgranted</structfield></entry>
-	   <entry><type>text</type></entry>
-	   <entry>A boolean column indicating whether or not this
-	   particular lock has been granted. If the lock has not been
-	   granted, the backend atempting to acquire it will sleep until
-	   the lock is released (or a deadlock situation is detected). A
-	   single backend can be waiting to acquire at most one lock at
-	   any given time.</entry>
+	   <entry><type>bool</type></entry>
+	   <entry>True if this lock has been granted (is held by this
+	   backend).  False indicates that this backend is currently
+	   waiting to acquire this lock, which implies that some other
+	   backend is holding a conflicting lock mode on the same lockable
+	   object.  This backend will sleep until the other lock is released
+	   (or a deadlock situation is detected). A single backend can be
+	   waiting to acquire at most one lock at a time.</entry>
 	  </row>
 	 </tbody>
 	</tgroup>

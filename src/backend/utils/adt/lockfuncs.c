@@ -1,36 +1,46 @@
-/*
+/*-------------------------------------------------------------------------
+ *
  * lockfuncs.c
  *		Set-returning functions to view the state of locks within the DB.
  * 
  * Copyright (c) 2002, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/backend/utils/adt/lockfuncs.c,v 1.4 2002/08/29 17:14:33 tgl Exp $
+ *		$Header: /cvsroot/pgsql/src/backend/utils/adt/lockfuncs.c,v 1.5 2002/08/31 17:14:28 tgl Exp $
+ *
+ *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include "funcapi.h"
+#include "access/heapam.h"
 #include "catalog/pg_type.h"
-#include "storage/lmgr.h"
 #include "storage/lock.h"
-#include "storage/lwlock.h"
 #include "storage/proc.h"
 #include "utils/builtins.h"
 
 
-static int next_lock(int locks[]);
+/* Working status for pg_lock_status */
+typedef struct
+{
+	LockData   *lockData;		/* state data from lmgr */
+	int			currIdx;		/* current PROCLOCK index */
+} PG_Lock_Status;
 
-
+/*
+ * pg_lock_status - produce a view with one row per held or awaited lock mode
+ */
 Datum
 pg_lock_status(PG_FUNCTION_ARGS)
 {
 	FuncCallContext	   *funcctx;
-	LockData		   *lockData;
-	MemoryContext		oldcontext;
+	PG_Lock_Status	   *mystatus;
+	LockData   *lockData;
 
 	if (SRF_IS_FIRSTCALL())
 	{
 		TupleDesc		tupdesc;
+		MemoryContext	oldcontext;
 
 		/* create a function context for cross-call persistence */
 		funcctx = SRF_FIRSTCALL_INIT();
@@ -38,124 +48,132 @@ pg_lock_status(PG_FUNCTION_ARGS)
 		/* switch to memory context appropriate for multiple function calls */
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-		tupdesc = CreateTemplateTupleDesc(5, WITHOUTOID);
+		/* build tupdesc for result tuples */
+		/* this had better match pg_locks view in initdb.sh */
+		tupdesc = CreateTemplateTupleDesc(6, WITHOUTOID);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "relation",
 						   OIDOID, -1, 0, false);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "database",
 						   OIDOID, -1, 0, false);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 3, "backendpid",
+		TupleDescInitEntry(tupdesc, (AttrNumber) 3, "transaction",
+						   XIDOID, -1, 0, false);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 4, "pid",
 						   INT4OID, -1, 0, false);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 4, "mode",
+		TupleDescInitEntry(tupdesc, (AttrNumber) 5, "mode",
 						   TEXTOID, -1, 0, false);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 5, "isgranted",
+		TupleDescInitEntry(tupdesc, (AttrNumber) 6, "granted",
 						   BOOLOID, -1, 0, false);
 
 		funcctx->slot = TupleDescGetSlot(tupdesc);
-		funcctx->attinmeta = TupleDescGetAttInMetadata(tupdesc);
 
 		/*
-		 * Preload all the locking information that we will eventually format
-		 * and send out as a result set. This is palloc'ed, but since the
-		 * MemoryContext is reset when the SRF finishes, we don't need to
-		 * free it ourselves.
+		 * Collect all the locking information that we will format
+		 * and send out as a result set.
 		 */
-		funcctx->user_fctx = (LockData *) palloc(sizeof(LockData));
+		mystatus = (PG_Lock_Status *) palloc(sizeof(PG_Lock_Status));
+		funcctx->user_fctx = (void *) mystatus;
 
-		GetLockStatusData(funcctx->user_fctx);
+		mystatus->lockData = GetLockStatusData();
+		mystatus->currIdx = 0;
 
 		MemoryContextSwitchTo(oldcontext);
 	}
 
 	funcctx	= SRF_PERCALL_SETUP();
-	lockData = (LockData *) funcctx->user_fctx;
+	mystatus = (PG_Lock_Status *) funcctx->user_fctx;
+	lockData = mystatus->lockData;
 
-	while (lockData->currIdx < lockData->nelements)
+	while (mystatus->currIdx < lockData->nelements)
 	{
 		PROCLOCK		 *holder;
 		LOCK			 *lock;
 		PGPROC			 *proc;
+		bool			granted;
+		LOCKMODE		  mode;
+		Datum			values[6];
+		char			nulls[6];
 		HeapTuple		  tuple;
 		Datum			  result;
-		char			**values;
-		LOCKMODE		  mode;
-		int				  num_attrs;
-		int				  i;
-		int				  currIdx = lockData->currIdx;
 
-		holder		= &(lockData->holders[currIdx]);
-		lock		= &(lockData->locks[currIdx]);
-		proc		= &(lockData->procs[currIdx]);
-		num_attrs	= funcctx->attinmeta->tupdesc->natts;
-
-		values = (char **) palloc(sizeof(*values) * num_attrs);
-
-		for (i = 0; i < num_attrs; i++)
-			values[i] = (char *) palloc(32);
-
-		/* The OID of the locked relation */
-		snprintf(values[0], 32, "%u", lock->tag.relId);
-		/* The database the relation is in */
-		snprintf(values[1], 32, "%u", lock->tag.dbId);
-		/* The PID of the backend holding or waiting for the lock */
-		snprintf(values[2], 32, "%d", proc->pid);
+		holder		= &(lockData->holders[mystatus->currIdx]);
+		lock		= &(lockData->locks[mystatus->currIdx]);
+		proc		= &(lockData->procs[mystatus->currIdx]);
 
 		/*
-		 * We need to report both the locks held (i.e. successfully acquired)
-		 * by this holder, as well as the locks upon which it is still
-		 * waiting, if any. Since a single PROCLOCK struct may contain
-		 * multiple locks, we may need to loop several times before we
-		 * advance the array index and continue on.
+		 * Look to see if there are any held lock modes in this PROCLOCK.
+		 * If so, report, and destructively modify lockData so we don't
+		 * report again.
 		 */
-		if (holder->nHolding > 0)
+		granted = false;
+		for (mode = 0; mode < MAX_LOCKMODES; mode++)
 		{
-			/* Already held locks */
-			mode = next_lock(holder->holding);
-			holder->holding[mode]--;
-			holder->nHolding--;
-
-			strcpy(values[4], "t");
+			if (holder->holding[mode] > 0)
+			{
+				granted = true;
+				holder->holding[mode] = 0;
+				break;
+			}
 		}
-		else if (proc->waitLock != NULL)
-		{
-			/* Lock that is still being waited on */
-			mode = proc->waitLockMode;
-			proc->waitLock = NULL;
-			proc->waitLockMode = NoLock;
 
-			strcpy(values[4], "f");
+		/*
+		 * If no (more) held modes to report, see if PROC is waiting for
+		 * a lock on this lock.
+		 */
+		if (!granted)
+		{
+			if (proc->waitLock == (LOCK *) MAKE_PTR(holder->tag.lock))
+			{
+				/* Yes, so report it with proper mode */
+				mode = proc->waitLockMode;
+				/*
+				 * We are now done with this PROCLOCK, so advance pointer
+				 * to continue with next one on next call.
+				 */
+				mystatus->currIdx++;
+			}
+			else
+			{
+				/*
+				 * Okay, we've displayed all the locks associated with this
+				 * PROCLOCK, proceed to the next one.
+				 */
+				mystatus->currIdx++;
+				continue;
+			}
+		}
+
+		/*
+		 * Form tuple with appropriate data.
+		 */
+		MemSet(values, 0, sizeof(values));
+		MemSet(nulls, ' ', sizeof(nulls));
+
+		if (lock->tag.relId == XactLockTableId && lock->tag.dbId == 0)
+		{
+			/* Lock is for transaction ID */
+			nulls[0] = 'n';
+			nulls[1] = 'n';
+			values[2] = TransactionIdGetDatum(lock->tag.objId.xid);
 		}
 		else
 		{
-			/*
-			 * Okay, we've displayed all the lock's belonging to this PROCLOCK,
-			 * procede to the next one.
-			 */
-			lockData->currIdx++;
-			continue;
+			/* Lock is for a relation */
+			values[0] = ObjectIdGetDatum(lock->tag.relId);
+			values[1] = ObjectIdGetDatum(lock->tag.dbId);
+			nulls[2] = 'n';
+
 		}
 
-		strncpy(values[3], GetLockmodeName(mode), 32);
+		values[3] = Int32GetDatum(proc->pid);
+		values[4] = DirectFunctionCall1(textin,
+									CStringGetDatum(GetLockmodeName(mode)));
+		values[5] = BoolGetDatum(granted);
 
-		tuple = BuildTupleFromCStrings(funcctx->attinmeta, values);
+		tuple = heap_formtuple(funcctx->slot->ttc_tupleDescriptor,
+							   values, nulls);
 		result = TupleGetDatum(funcctx->slot, tuple);
 		SRF_RETURN_NEXT(funcctx, result);
 	}
 
 	SRF_RETURN_DONE(funcctx);
-}
-
-static LOCKMODE
-next_lock(int locks[])
-{
-	LOCKMODE i;
-
-	for (i = 0; i < MAX_LOCKMODES; i++)
-	{
-		if (locks[i] != 0)
-			return i;
-	}
-
-	/* No locks found: this should not occur */
-	Assert(false);
-	return -1;
 }

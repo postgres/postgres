@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.112 2002/08/17 13:04:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.113 2002/08/31 17:14:27 tgl Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -1361,59 +1361,68 @@ LockShmemSize(int maxBackends)
 
 /*
  * GetLockStatusData - Return a summary of the lock manager's internal
- * status, for use in a user-level statistical reporting function.
+ * status, for use in a user-level reporting function.
  *
- * This function should be passed a pointer to a LockData struct. It fills
- * the structure with the appropriate information and returns. The goal
- * is to hold the LockMgrLock for as short a time as possible; thus, the
- * function simply makes a copy of the necessary data and releases the
- * lock, allowing the caller to contemplate and format the data for
- * as long as it pleases.
+ * The return data consists of an array of PROCLOCK objects, with the
+ * associated PGPROC and LOCK objects for each.  Note that multiple
+ * copies of the same PGPROC and/or LOCK objects are likely to appear.
+ * It is the caller's responsibility to match up duplicates if wanted.
+ *
+ * The design goal is to hold the LockMgrLock for as short a time as possible;
+ * thus, this function simply makes a copy of the necessary data and releases
+ * the lock, allowing the caller to contemplate and format the data for as
+ * long as it pleases.
  */
-void
-GetLockStatusData(LockData *data)
+LockData *
+GetLockStatusData(void)
 {
+	LockData	*data;
 	HTAB		*holderTable;
 	PROCLOCK	*holder;
 	HASH_SEQ_STATUS seqstat;
-	int i = 0;
+	int i;
 
-	data->currIdx = 0;
+	data = (LockData *) palloc(sizeof(LockData));
 
 	LWLockAcquire(LockMgrLock, LW_EXCLUSIVE);
 
 	holderTable = LockMethodTable[DEFAULT_LOCKMETHOD]->holderHash;
 
-	data->nelements = holderTable->hctl->nentries;
+	data->nelements = i = holderTable->hctl->nentries;
 
-	data->procs = (PGPROC *) palloc(sizeof(PGPROC) * data->nelements);
-	data->locks = (LOCK *) palloc(sizeof(LOCK) * data->nelements);
-	data->holders = (PROCLOCK *) palloc(sizeof(PROCLOCK) * data->nelements);
+	if (i == 0)
+		i = 1;					/* avoid palloc(0) if empty table */
+
+	data->holderaddrs = (SHMEM_OFFSET *) palloc(sizeof(SHMEM_OFFSET) * i);
+	data->holders = (PROCLOCK *) palloc(sizeof(PROCLOCK) * i);
+	data->procs = (PGPROC *) palloc(sizeof(PGPROC) * i);
+	data->locks = (LOCK *) palloc(sizeof(LOCK) * i);
 
 	hash_seq_init(&seqstat, holderTable);
 
+	i = 0;
 	while ( (holder = hash_seq_search(&seqstat)) )
 	{
-		PGPROC	*proc;
-		LOCK	*lock;
+		PGPROC	*proc = (PGPROC *) MAKE_PTR(holder->tag.proc);
+		LOCK	*lock = (LOCK *) MAKE_PTR(holder->tag.lock);
 
-		/* Only do a shallow copy */
-		proc = (PGPROC *) MAKE_PTR(holder->tag.proc);
-		lock = (LOCK *) MAKE_PTR(holder->tag.lock);
-
+		data->holderaddrs[i] = MAKE_OFFSET(holder);
+		memcpy(&(data->holders[i]), holder, sizeof(PROCLOCK));
 		memcpy(&(data->procs[i]), proc, sizeof(PGPROC));
 		memcpy(&(data->locks[i]), lock, sizeof(LOCK));
-		memcpy(&(data->holders[i]), holder, sizeof(PROCLOCK));
 
 		i++;
 	}
 
+	LWLockRelease(LockMgrLock);
+
 	Assert(i == data->nelements);
 
-	LWLockRelease(LockMgrLock);
+	return data;
 }
 
-char *
+/* Provide the textual name of any lock mode */
+const char *
 GetLockmodeName(LOCKMODE mode)
 {
 	Assert(mode <= MAX_LOCKMODES);

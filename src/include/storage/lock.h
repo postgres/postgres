@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lock.h,v 1.65 2002/08/17 13:04:18 momjian Exp $
+ * $Id: lock.h,v 1.66 2002/08/31 17:14:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -204,19 +204,20 @@ typedef struct PROCLOCK
 		(((LOCK *) MAKE_PTR((holder).tag.lock))->tag.lockmethod)
 
 /*
- * This struct is used to encapsulate information passed from lmgr
- * internals to the lock listing statistical functions (lockfuncs.c).
- * It's just a convenient bundle of other lock.h structures. All
- * the information at a given index (holders[i], procs[i], locks[i])
- * is related.
+ * This struct holds information passed from lmgr internals to the lock
+ * listing user-level functions (lockfuncs.c).  For each PROCLOCK in the
+ * system, the SHMEM_OFFSET, PROCLOCK itself, and associated PGPROC and
+ * LOCK objects are stored.  (Note there will often be multiple copies
+ * of the same PGPROC or LOCK.)  We do not store the SHMEM_OFFSET of the
+ * PGPROC or LOCK separately, since they're in the PROCLOCK's tag fields.
  */
 typedef struct
 {
-	int		  nelements;	/* The length of holders, procs, & locks */
-	int		  currIdx;		/* Current element being examined */
+	int		  nelements;	/* The length of each of the arrays */
+	SHMEM_OFFSET *holderaddrs;
+	PROCLOCK *holders;
 	PGPROC	 *procs;
 	LOCK	 *locks;
-	PROCLOCK *holders;
 } LockData;
 
 /*
@@ -242,8 +243,8 @@ extern void RemoveFromWaitQueue(PGPROC *proc);
 extern int	LockShmemSize(int maxBackends);
 extern bool DeadLockCheck(PGPROC *proc);
 extern void InitDeadLockChecking(void);
-extern void GetLockStatusData(LockData *data);
-extern char *GetLockmodeName(LOCKMODE mode);
+extern LockData *GetLockStatusData(void);
+extern const char *GetLockmodeName(LOCKMODE mode);
 
 #ifdef LOCK_DEBUG
 extern void DumpLocks(void);
