@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.67 2001/08/28 14:20:25 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.68 2001/09/04 00:18:18 petere Exp $
 -->
 
  <chapter id="libpq">
@@ -1999,17 +1999,17 @@ call <function>fe_setauthsvc</function> at all.
 
   <para>
    To build (i.e., compile and link) your libpq programs you need to
-   do the following things:
+   do all of the following things:
 
    <itemizedlist>
     <listitem>
      <para>
       Include the <filename>libpq-fe.h</filename> header file:
 <programlisting>
-#include &lt;libpq-fe&gt;
+#include &lt;libpq-fe.h&gt;
 </programlisting>
       If you failed to do that then you will normally get error
-      messages from your compiler, such as
+      messages from your compiler similar to
 <screen>
 foo.c: In function `main':
 foo.c:34: `PGconn' undeclared (first use in this function)
