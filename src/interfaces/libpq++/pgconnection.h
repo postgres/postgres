@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  * 
- * $Id: pgconnection.h,v 1.16 2002/03/11 15:08:18 momjian Exp $
+ * $Id: pgconnection.h,v 1.17 2002/06/15 18:49:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,7 +26,7 @@ extern "C" {
 }
 
 /* We assume that the C++ compiler will have these keywords, even though
- * pg_config.h may have #define'd them to empty because C compiler doesn't.
+ * pg_config.h may have #define'd them to empty because the C compiler doesn't.
  */
 #undef const
 #undef inline

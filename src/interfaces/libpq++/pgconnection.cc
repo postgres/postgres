@@ -10,7 +10,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/pgconnection.cc,v 1.13 2002/03/11 15:08:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/pgconnection.cc,v 1.14 2002/06/15 18:49:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,6 @@
 #ifdef HAVE_NAMESPACE_STD
 using namespace std;
 #endif
-
 
 // ****************************************************************
 //
@@ -38,9 +37,8 @@ PgConnection::PgConnection()
 PgConnection::PgConnection(const char* conninfo)
 	: pgConn(NULL), pgResult(NULL), pgCloseConnection(true)
 {
-    
   // Connect to the database
-  Connect( conninfo );
+  Connect(conninfo);
 }
 
 
@@ -59,12 +57,14 @@ PgConnection::~PgConnection()
 void PgConnection::CloseConnection() 
 {
   // if the connection is open, close it first
-  if ( pgCloseConnection ) {    
-       if(pgResult) PQclear(pgResult);
-       pgResult=NULL;
-       if(pgConn) PQfinish(pgConn);
-       pgConn=NULL;
-       pgCloseConnection=false;
+  if (pgCloseConnection) {    
+       if (pgResult)
+		   PQclear(pgResult);
+       pgResult = NULL;
+       if (pgConn)
+		   PQfinish(pgConn);
+       pgConn = NULL;
+       pgCloseConnection = false;
   }
 }
 
@@ -95,7 +95,7 @@ ConnStatusType PgConnection::Status() const
 // PgConnection::exec  -- send a query to the backend
 ExecStatusType PgConnection::Exec(const char* query)
 {
-  // Clear the Result Stucture if needed
+  // Clear the result stucture if needed
   if (pgResult)
     PQclear(pgResult); 
 
@@ -113,24 +113,20 @@ ExecStatusType PgConnection::Exec(const char* query)
 int PgConnection::ExecCommandOk(const char* query)
 {
 	return Exec(query) == PGRES_COMMAND_OK;
-} // End ExecCommandOk()
+}
 
 int PgConnection::ExecTuplesOk(const char* query)
 {
 	return Exec(query) == PGRES_TUPLES_OK;
-} // End ExecTuplesOk()
-
-
+}
 
 // Don't know why these next two need to be part of Connection
 
 // PgConnection::notifies() -- returns a notification from a list of unhandled notifications
 PGnotify* PgConnection::Notifies()
 {
-  Exec(" "); 
   return PQnotifies(pgConn);
 }
-
 
 // From Integer To String Conversion Function
 string PgConnection::IntToString(int n)
@@ -140,27 +136,23 @@ string PgConnection::IntToString(int n)
   return buffer;
 }
 
-
-
 bool PgConnection::ConnectionBad() const
 { 
-return Status() == CONNECTION_BAD; 
+  return Status() == CONNECTION_BAD; 
 }
-
 
 const char* PgConnection::ErrorMessage() const
 { 
-return (const char *)PQerrorMessage(pgConn); 
+  return (const char *)PQerrorMessage(pgConn); 
 }
   
-
 const char* PgConnection::DBName() const
 { 
-return (const char *)PQdb(pgConn); 
+  return (const char *)PQdb(pgConn); 
 }
 
 PQnoticeProcessor PgConnection::SetNoticeProcessor(PQnoticeProcessor proc, void *arg)
 {
-return PQsetNoticeProcessor(pgConn, proc, arg);
+  return PQsetNoticeProcessor(pgConn, proc, arg);
 }
 

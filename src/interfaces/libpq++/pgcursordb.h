@@ -14,7 +14,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- *  $Id: pgcursordb.h,v 1.9 2001/09/30 22:30:37 tgl Exp $
+ *  $Id: pgcursordb.h,v 1.10 2002/06/15 18:49:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,6 @@
 #else
 #define PGSTD
 #endif
-
 
 // ****************************************************************
 //
@@ -50,7 +49,7 @@ public:
   ~PgCursor();	// close connection and clean up
   
   // Commands associated with cursor interface
-  int Declare(PGSTD string query, bool binary=false);	// Declare a cursor with given name
+  int Declare(PGSTD string query, bool binary = false);	// Declare a cursor with given name
   int Fetch(const char* dir = "FORWARD");		// Fetch ALL tuples in given direction
   int Fetch(unsigned num, const char* dir = "FORWARD");	// Fetch specified amount of tuples
   int Close();	// Close the cursor

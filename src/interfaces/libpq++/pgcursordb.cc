@@ -10,7 +10,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/pgcursordb.cc,v 1.6 2001/09/30 22:30:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/pgcursordb.cc,v 1.7 2002/06/15 18:49:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,26 +60,26 @@ int PgCursor::Declare(string query, bool binary)
 	     cmd += " BINARY";
 	cmd += " CURSOR FOR " + query;
 	return ExecCommandOk( cmd.c_str() );
-} // End Declare()
+}
 
 // Fetch ALL tuples in given direction
 int PgCursor::Fetch(const char* dir)
 {
 	return Fetch("ALL", dir);
-} // End Fetch()
+}
 
 // Fetch specified amount of tuples in given direction
 int PgCursor::Fetch(unsigned num, const char* dir)
 {
 	return Fetch( IntToString(num), dir );
-} // End Fetch()
+}
 
 // Create and execute the actual fetch command with the given arguments
 int PgCursor::Fetch(string num, string dir)
 {
 	string cmd = "FETCH " + dir + " " + num + " IN " + pgCursor;
 	return ExecTuplesOk( cmd.c_str() );
-} // End Fetch()
+}
 
 // Close the cursor: no more queries using the cursor should be allowed
 // Actually, the backend should take care of it.
@@ -87,4 +87,4 @@ int PgCursor::Close()
 {
 	string cmd = "CLOSE " + pgCursor;
 	return ExecCommandOk( cmd.c_str() );
-} // End CloseCursor()
+}

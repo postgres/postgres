@@ -16,13 +16,16 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq++.h,v 1.10 2001/01/24 19:43:32 momjian Exp $
+ * $Id: libpq++.h,v 1.11 2002/06/15 18:49:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
+
 #ifndef LIBPQXX_H
 #define LIBPQXX_H
+
+#include <string.h>
 
 #include "libpq++/pgconnection.h"
 #include "libpq++/pgdatabase.h"

@@ -10,7 +10,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/pglobject.cc,v 1.8 2001/09/30 22:30:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/pglobject.cc,v 1.9 2002/06/15 18:49:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -104,7 +104,7 @@ void PgLargeObject::Open()
 }
 
 // PgLargeObject::unlink
-// destruct large object and delete from it from the database
+// destroy large object and delete from it from the database
 int PgLargeObject::Unlink()
 {
   // Unlink the object
@@ -155,13 +155,13 @@ int PgLargeObject::Tell() const
 
 Oid PgLargeObject::Import(const char* filename) 
 { 
-  return pgObject = lo_import(pgConn, (char*)filename); 
+  return pgObject = lo_import(pgConn, filename); 
 }
 
 
 int PgLargeObject::Export(const char* filename) 
 { 
-  return lo_export(pgConn, pgObject, (char*)filename); 
+  return lo_export(pgConn, pgObject, filename); 
 }
 
 

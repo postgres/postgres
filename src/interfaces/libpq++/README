@@ -1,4 +1,3 @@
-
 Based on the original work by William Wanders (wwanders@sci.kun.nl)
 and Jolly Chen (jolly@cs.berkeley.edu), this is the first set of
 changes to libpq++ since ~1997.  Pgenv has been removed, deprecated 
@@ -10,8 +9,9 @@ the function of libpq++.
 The API provided herein is subject to change in later versions of 
 PostgreSQL.
 
-For details on how to to use libpq++, see the man page in the man/
-subdirectory and the test programs in the examples/ subdirectory.
+For details on how to to use libpq++, see Section 3 in Part 1 of
+the PostgreSQL Developer's Guide and the test programs in the
+examples/ subdirectory.
 
 ** PgConnection has been changed to accept either the environment
 variables or conninfo style strings.  See the PQconnectdb in the
