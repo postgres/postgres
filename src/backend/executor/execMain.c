@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.66 1999/01/29 09:22:57 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.67 1999/01/29 10:15:09 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,7 +65,7 @@ static TupleDesc InitPlan(CmdType operation, Query *parseTree,
 static void EndPlan(Plan *plan, EState *estate);
 static TupleTableSlot *ExecutePlan(EState *estate, Plan *plan,
 			CmdType operation, int numberTuples, ScanDirection direction,
-			void (*printfunc) ());
+			DestReceiver *destfunc);
 static void ExecRetrieve(TupleTableSlot *slot, 
 						 DestReceiver *destfunc,
 						 EState *estate);
@@ -756,7 +756,7 @@ ExecutePlan(EState *estate,
 			CmdType operation,
 			int numberTuples,
 			ScanDirection direction,
-			void (*printfunc) ())
+			DestReceiver *destfunc)
 {
 	JunkFilter *junkfilter;
 
@@ -941,7 +941,7 @@ lmark:;
 		{
 			case CMD_SELECT:
 				ExecRetrieve(slot,		/* slot containing tuple */
-							 printfunc, /* print function */
+							 destfunc,	/* print function */
 							 estate);	/* */
 				result = slot;
 				break;
@@ -997,7 +997,7 @@ lmark:;
  */
 static void
 ExecRetrieve(TupleTableSlot *slot,
-			 void (*printfunc) (),
+			 DestReceiver *destfunc,
 			 EState *estate)
 {
 	HeapTuple	tuple;
@@ -1139,8 +1139,7 @@ ExecDelete(TupleTableSlot *slot,
 {
 	RelationInfo	   *resultRelationInfo;
 	Relation			resultRelationDesc;
-	ItemPointerData		ctid,
-						oldtid;
+	ItemPointerData		ctid;
 	int					result;
 
 	/******************
@@ -1180,12 +1179,11 @@ ldelete:;
 				elog(ERROR, "Can't serialize access due to concurrent update");
 			else if (!(ItemPointerEquals(tupleid, &ctid)))
 			{
-				TupleTableSlot *slot = EvalPlanQual(estate, 
+				TupleTableSlot *epqslot = EvalPlanQual(estate, 
 						resultRelationInfo->ri_RangeTableIndex, &ctid);
 
-				if (!TupIsNull(slot))
+				if (!TupIsNull(epqslot))
 				{
-					tupleid = &oldtid;
 					*tupleid = ctid;
 					goto ldelete;
 				}
@@ -1238,8 +1236,7 @@ ExecReplace(TupleTableSlot *slot,
 	HeapTuple			tuple;
 	RelationInfo	   *resultRelationInfo;
 	Relation			resultRelationDesc;
-	ItemPointerData		ctid,
-						oldtid;
+	ItemPointerData		ctid;
 	int					result;
 	int					numIndices;
 
@@ -1321,13 +1318,14 @@ lreplace:;
 				elog(ERROR, "Can't serialize access due to concurrent update");
 			else if (!(ItemPointerEquals(tupleid, &ctid)))
 			{
-				TupleTableSlot *slot = EvalPlanQual(estate, 
+				TupleTableSlot *epqslot = EvalPlanQual(estate, 
 						resultRelationInfo->ri_RangeTableIndex, &ctid);
 
-				if (!TupIsNull(slot))
+				if (!TupIsNull(epqslot))
 				{
-					tupleid = &oldtid;
 					*tupleid = ctid;
+					tuple = ExecRemoveJunk(estate->es_junkFilter, epqslot);
+					slot = ExecStoreTuple(tuple, slot, InvalidBuffer, true);
 					goto lreplace;
 				}
 			}
