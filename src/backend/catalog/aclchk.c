@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.87 2003/08/04 02:39:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.88 2003/09/04 15:53:04 tgl Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -72,6 +72,8 @@ dumpacl(Acl *acl)
  * If is_grant is true, adds the given privileges for the list of
  * grantees to the existing old_acl.  If is_grant is false, the
  * privileges for the given grantees are removed from old_acl.
+ *
+ * NB: the original old_acl is pfree'd.
  */
 static Acl *
 merge_acl_with_grant(Acl *old_acl, bool is_grant,
@@ -92,24 +94,25 @@ merge_acl_with_grant(Acl *old_acl, bool is_grant,
 	foreach(j, grantees)
 	{
 		PrivGrantee *grantee = (PrivGrantee *) lfirst(j);
-		AclItem aclitem;
+		AclItem		aclitem;
 		uint32		idtype;
+		Acl		   *newer_acl;
 
 		if (grantee->username)
 		{
-			aclitem.	ai_grantee = get_usesysid(grantee->username);
+			aclitem.ai_grantee = get_usesysid(grantee->username);
 
 			idtype = ACL_IDTYPE_UID;
 		}
 		else if (grantee->groupname)
 		{
-			aclitem.	ai_grantee = get_grosysid(grantee->groupname);
+			aclitem.ai_grantee = get_grosysid(grantee->groupname);
 
 			idtype = ACL_IDTYPE_GID;
 		}
 		else
 		{
-			aclitem.	ai_grantee = ACL_ID_WORLD;
+			aclitem.ai_grantee = ACL_ID_WORLD;
 
 			idtype = ACL_IDTYPE_WORLD;
 		}
@@ -126,14 +129,18 @@ merge_acl_with_grant(Acl *old_acl, bool is_grant,
 					(errcode(ERRCODE_INVALID_GRANT_OPERATION),
 					 errmsg("grant options can only be granted to individual users")));
 
-		aclitem.	ai_grantor = GetUserId();
+		aclitem.ai_grantor = GetUserId();
 
 		ACLITEM_SET_PRIVS_IDTYPE(aclitem,
 				(is_grant || !grant_option) ? privileges : ACL_NO_RIGHTS,
 				(grant_option || !is_grant) ? privileges : ACL_NO_RIGHTS,
 								 idtype);
 
-		new_acl = aclinsert3(new_acl, &aclitem, modechg, behavior);
+		newer_acl = aclinsert3(new_acl, &aclitem, modechg, behavior);
+
+		/* avoid memory leak when there are many grantees */
+		pfree(new_acl);
+		new_acl = newer_acl;
 
 #ifdef ACLDEBUG
 		dumpacl(new_acl);
@@ -269,7 +276,6 @@ ExecuteGrantStmt_Relation(GrantStmt *stmt)
 		/* keep the catalog indexes up to date */
 		CatalogUpdateIndexes(relation, newtuple);
 
-		pfree(old_acl);
 		pfree(new_acl);
 
 		heap_close(relation, RowExclusiveLock);
@@ -366,7 +372,6 @@ ExecuteGrantStmt_Database(GrantStmt *stmt)
 		/* keep the catalog indexes up to date */
 		CatalogUpdateIndexes(relation, newtuple);
 
-		pfree(old_acl);
 		pfree(new_acl);
 
 		heap_endscan(scan);
@@ -465,7 +470,6 @@ ExecuteGrantStmt_Function(GrantStmt *stmt)
 		/* keep the catalog indexes up to date */
 		CatalogUpdateIndexes(relation, newtuple);
 
-		pfree(old_acl);
 		pfree(new_acl);
 
 		heap_close(relation, RowExclusiveLock);
@@ -565,7 +569,6 @@ ExecuteGrantStmt_Language(GrantStmt *stmt)
 		/* keep the catalog indexes up to date */
 		CatalogUpdateIndexes(relation, newtuple);
 
-		pfree(old_acl);
 		pfree(new_acl);
 
 		heap_close(relation, RowExclusiveLock);
@@ -662,7 +665,6 @@ ExecuteGrantStmt_Namespace(GrantStmt *stmt)
 		/* keep the catalog indexes up to date */
 		CatalogUpdateIndexes(relation, newtuple);
 
-		pfree(old_acl);
 		pfree(new_acl);
 
 		heap_close(relation, RowExclusiveLock);
