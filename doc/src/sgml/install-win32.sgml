@@ -1,9 +1,9 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.20 2004/12/24 18:37:26 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.21 2004/12/24 19:20:18 momjian Exp $
 -->
 
 <chapter id="install-win32">
- <title>Installation on <productname>Windows</productname></title>
+ <title>Client-Only Installation on <productname>Windows</productname></title>
 
  <indexterm>
   <primary>installation</primary>
@@ -12,8 +12,9 @@ $PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.20 2004/12/24 18:37:26 mo
 
  <para>
   Although <productname>PostgreSQL</productname> is written for
-  Unix-like operating systems and compiles under
-  <productname>MinGW</productname>, the C client library
+  Unix-like operating systems and can be built using
+  <productname>MinGW</productname> and
+  <productname>Cygwin</productname>, the C client library
   (<application>libpq</application>) and the interactive terminal
   (<application>psql</application>) can be compiled using other Windows
   tool sets. Makefiles are included in the source distribution for
