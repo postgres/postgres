@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.44 2000/05/19 03:22:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.45 2000/05/25 21:30:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,6 @@
 #include "access/heapam.h"
 #include "catalog/catname.h"
 #include "catalog/pg_type.h"
-#include "utils/syscache.h"
 #include "catalog/heap.h"
 #include "catalog/indexing.h"
 #include "catalog/catalog.h"
@@ -29,6 +28,7 @@
 #include "optimizer/prep.h"
 #include "utils/acl.h"
 #include "utils/relcache.h"
+#include "utils/syscache.h"
 
 
 /*
@@ -183,6 +183,7 @@ renamerel(const char *oldrelname, const char *newrelname)
 	Relation	targetrelation;
 	Relation	relrelation;	/* for RELATION relation */
 	HeapTuple	oldreltup;
+	Oid			reloid;
 	char		relkind;
 	char		oldpath[MAXPGPATH],
 				newpath[MAXPGPATH],
@@ -228,6 +229,7 @@ renamerel(const char *oldrelname, const char *newrelname)
 	if (IsTransactionBlock() && !targetrelation->rd_myxactonly)
 		elog(NOTICE, "Caution: RENAME TABLE cannot be rolled back, so don't abort now");
 
+	reloid = RelationGetRelid(targetrelation);
 	relkind = targetrelation->rd_rel->relkind;
 
 	/*
@@ -254,12 +256,17 @@ renamerel(const char *oldrelname, const char *newrelname)
 
 	/*
 	 * Close rel, but keep exclusive lock!
-	 *
-	 * Note: we don't do anything about updating the relcache entry; we
-	 * assume it will be flushed by shared cache invalidate. XXX is this
-	 * good enough?  What if relation is myxactonly?
 	 */
 	heap_close(targetrelation, NoLock);
+
+	/*
+	 * Flush the relcache entry (easier than trying to change it at exactly
+	 * the right instant).  It'll get rebuilt on next access to relation.
+	 *
+	 * XXX What if relation is myxactonly?
+	 */
+	targetrelation = NULL;		/* make sure I don't touch it again */
+	RelationIdInvalidateRelationCacheByRelationId(reloid);
 
 	/*
 	 * Find relation's pg_class tuple, and make sure newrelname isn't in
@@ -277,8 +284,30 @@ renamerel(const char *oldrelname, const char *newrelname)
 		elog(ERROR, "renamerel: relation \"%s\" exists", newrelname);
 
 	/*
+	 * Update pg_class tuple with new relname.
+	 */
+	StrNCpy(NameStr(((Form_pg_class) GETSTRUCT(oldreltup))->relname),
+			newrelname, NAMEDATALEN);
+
+	heap_update(relrelation, &oldreltup->t_self, oldreltup, NULL);
+
+	/* keep the system catalog indices current */
+	CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, irelations);
+	CatalogIndexInsert(irelations, Num_pg_class_indices, relrelation, oldreltup);
+	CatalogCloseIndices(Num_pg_class_indices, irelations);
+
+	heap_close(relrelation, NoLock);
+
+	/*
+	 * Also rename the associated type, if any.
+	 */
+	if (relkind != RELKIND_INDEX)
+		TypeRename(oldrelname, newrelname);
+
+	/*
 	 * Perform physical rename of files.  If this fails, we haven't yet
-	 * done anything irreversible.
+	 * done anything irreversible.  NOTE that this MUST be the last step;
+	 * an error occurring afterwards would leave the relation hosed!
 	 *
 	 * XXX smgr.c ought to provide an interface for this; doing it directly
 	 * is bletcherous.
@@ -304,25 +333,4 @@ renamerel(const char *oldrelname, const char *newrelname)
 				 toldpath, tnewpath);
 		}
 	}
-
-	/*
-	 * Update pg_class tuple with new relname.
-	 */
-	StrNCpy(NameStr(((Form_pg_class) GETSTRUCT(oldreltup))->relname),
-			newrelname, NAMEDATALEN);
-
-	heap_update(relrelation, &oldreltup->t_self, oldreltup, NULL);
-
-	/* keep the system catalog indices current */
-	CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, irelations);
-	CatalogIndexInsert(irelations, Num_pg_class_indices, relrelation, oldreltup);
-	CatalogCloseIndices(Num_pg_class_indices, irelations);
-
-	heap_close(relrelation, RowExclusiveLock);
-
-	/*
-	 * Also rename the associated type, if any.
-	 */
-	if (relkind != RELKIND_INDEX)
-		TypeRename(oldrelname, newrelname);
 }
