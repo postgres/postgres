@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Apr 30 11:56:47 EDT 2001
+Last updated:		Fri May  4 16:47:54 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -288,6 +288,7 @@ SOURCE CODE
 * Move platform-specific ps status display info from ps_status.c to ports
 * Decide on spelling of indexes/indices
 * Allow ps status display to work on Solaris/SVr4-based systems
+* Move some things from /contrib into main tree, like soundex
 
 ---------------------------------------------------------------------------
 
