@@ -1,10 +1,10 @@
 # ru.po
 # POSTGRES Translated Messages into the Russian Language (KOI8-R)
 #
-# $Header: /cvsroot/pgsql/src/backend/po/Attic/ru.po,v 1.22 2004/08/24 21:45:40 petere Exp $
+# $Header: /cvsroot/pgsql/src/backend/po/Attic/ru.po,v 1.23 2004/09/13 20:49:43 petere Exp $
 #
 # ChangeLog:
-#   - March 27 - August 21, 2004: Updates for 7.4.x/8.0 branches; <mokhov@cs.concordia.ca>
+#   - March 27 - August 28, 2004: Updates for 7.4.x/8.0 branches; <mokhov@cs.concordia.ca>
 #   - July - August 23, 2003: Updates for 7.4.x; <mokhov@cs.concordia.ca>
 #   - January 2, 2003: Fuzzy fixes, Serguei A. Mokhov <mokhov@cs.concordia.ca>
 #   - October 12, 2002: Post-7.3 beta 2, Fuzzy fixes, Serguei A. Mokhov <mokhov@cs.concordia.ca>
@@ -15,8 +15,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.4.x\n"
-"POT-Creation-Date: 2004-08-18 01:09-0300\n"
-"PO-Revision-Date: 2004-08-21 16:45-0500\n"
+"POT-Creation-Date: 2004-08-24 19:09-0300\n"
+"PO-Revision-Date: 2004-08-28 21:16-0500\n"
 "Last-Translator: Serguei A. Mokhov <mokhov@cs.concordia.ca>\n"
 "Language-Team: pgsql-rus <pgsql-rus@yahoogroups.com>\n"
 "MIME-Version: 1.0\n"
@@ -805,7 +805,7 @@ msgstr "Вместо этого вы можете удалить %s."
 #: catalog/dependency.c:714
 #, c-format
 msgid "drop auto-cascades to %s"
-msgstr ""
+msgstr "удаление автоматически снисходит до %s"
 
 #: catalog/dependency.c:541
 #: catalog/dependency.c:691
@@ -817,7 +817,7 @@ msgstr "%s зависит от %s"
 #: catalog/dependency.c:698
 #, c-format
 msgid "drop cascades to %s"
-msgstr ""
+msgstr "удаление снисходит до %s"
 
 #: catalog/aclchk.c:160
 msgid "grant options can only be granted to individual users"
@@ -1794,7 +1794,7 @@ msgstr "не получилось инициализировать  директорию баз данных"
 #: commands/dbcommands.c:961
 #, c-format
 msgid "Failing system command was: %s"
-msgstr ""
+msgstr "Системная команда с ошибкой: %s"
 
 #: commands/dbcommands.c:372
 #: commands/dbcommands.c:377
@@ -1992,7 +1992,7 @@ msgstr "COPY %s, строка %d"
 #: commands/copy.c:1159
 #, c-format
 msgid "COPY %s, line %d, column %s: \"%s\""
-msgstr ""
+msgstr "COPY %s, строка %d, колонка %s: \"%s\""
 
 #: commands/copy.c:1186
 #, c-format
@@ -2005,28 +2005,28 @@ msgstr ""
 
 #: commands/copy.c:1395
 msgid "invalid COPY file header (missing flags)"
-msgstr ""
+msgstr "неверный заголовок файла COPY (отсутствуют флаги)"
 
 #: commands/copy.c:1401
 msgid "unrecognized critical flags in COPY file header"
-msgstr ""
+msgstr "нераспознаны критические флаги в заголовоке файла COPY"
 
 #: commands/copy.c:1407
 msgid "invalid COPY file header (missing length)"
-msgstr ""
+msgstr "неверный заголовок файла COPY (отсутствует длина)"
 
 #: commands/copy.c:1415
 msgid "invalid COPY file header (wrong length)"
-msgstr ""
+msgstr "неверный заголовок файла COPY (неправильная длина)"
 
 #: commands/copy.c:1492
 msgid "null OID in COPY data"
-msgstr ""
+msgstr "нулевой (null) OID в данных COPY"
 
 #: commands/copy.c:1501
 #: commands/copy.c:1584
 msgid "invalid OID in COPY data"
-msgstr ""
+msgstr "неверный OID в данных COPY"
 
 #: commands/copy.c:1521
 #, c-format
@@ -2035,12 +2035,12 @@ msgstr "отсутствуют данные для колонки \"%s\""
 
 #: commands/copy.c:1553
 msgid "extra data after last expected column"
-msgstr ""
+msgstr "дополнительные данные за последней ожидавшейся колонкой"
 
 #: commands/copy.c:1570
 #, c-format
 msgid "row field count is %d, expected %d"
-msgstr ""
+msgstr "количество полей в строке: %d, ожидалось: %d"
 
 #: commands/copy.c:1786
 #: commands/copy.c:1804
@@ -2050,7 +2050,7 @@ msgstr ""
 #: commands/copy.c:1787
 #: commands/copy.c:1805
 msgid "Use \"\\r\" to represent carriage return."
-msgstr ""
+msgstr "Используйте \"\\r\" для представления новой строки."
 
 #: commands/copy.c:1822
 msgid "literal newline found in data"
@@ -2061,6 +2061,8 @@ msgid ""
 "Use \"\\n"
 "\" to represent newline."
 msgstr ""
+"Используйте \"\\n"
+"\" для представления новой строки."
 
 #: commands/copy.c:1843
 #: commands/copy.c:1859
@@ -2075,7 +2077,7 @@ msgstr ""
 #: commands/copy.c:2070
 #: commands/copy.c:2092
 msgid "unexpected EOF in COPY data"
-msgstr ""
+msgstr "неожиданный конец файла (EOF) в данных COPY"
 
 #: commands/copy.c:2079
 msgid "invalid field size"
@@ -2083,7 +2085,7 @@ msgstr "неверный размер поля"
 
 #: commands/copy.c:2106
 msgid "incorrect binary data format"
-msgstr ""
+msgstr "неверный двоичный формат данных"
 
 #: commands/copy.c:2225
 #: parser/parse_target.c:500
@@ -2099,7 +2101,7 @@ msgstr "SQL-функция не может возвращать тип оболочки %s"
 #: commands/functioncmds.c:88
 #, c-format
 msgid "return type %s is only a shell"
-msgstr ""
+msgstr "тип возрата %s является только оболочкой"
 
 #: commands/functioncmds.c:114
 #, c-format
@@ -2142,12 +2144,12 @@ msgstr "язык не указан"
 #: commands/functioncmds.c:333
 #, c-format
 msgid "unrecognized function attribute \"%s\" ignored"
-msgstr ""
+msgstr "нераспознанный атрибут функции \"%s\" -- проигнорирован"
 
 #: commands/functioncmds.c:377
 #, c-format
 msgid "only one AS item needed for language \"%s\""
-msgstr ""
+msgstr "нужно только одно выражение AS для языка \"%s\""
 
 #: commands/functioncmds.c:448
 msgid "You need to use \"createlang\" to load the language into the database."
@@ -2191,22 +2193,22 @@ msgstr "исходные тип данных и тип назначения одинаковы"
 #: commands/functioncmds.c:832
 #, c-format
 msgid "source data type %s is only a shell"
-msgstr ""
+msgstr "исходный тип данных %s является только оболочкой"
 
 #: commands/functioncmds.c:838
 #, c-format
 msgid "target data type %s is only a shell"
-msgstr ""
+msgstr "тип данных назначения %s является только оболочкой"
 
 #: commands/functioncmds.c:844
 #, c-format
 msgid "source data type %s is a pseudo-type"
-msgstr ""
+msgstr "исходный тип данных %s является псевдо-типом"
 
 #: commands/functioncmds.c:850
 #, c-format
 msgid "target data type %s is a pseudo-type"
-msgstr ""
+msgstr "тип данных назначения %s является псевдо-типом"
 
 #: commands/functioncmds.c:858
 #: commands/functioncmds.c:1073
@@ -2244,7 +2246,7 @@ msgstr ""
 
 #: commands/functioncmds.c:946
 msgid "source and target data types are not physically compatible"
-msgstr ""
+msgstr "исходный тип и тип назначения физически не совместимы"
 
 #: commands/functioncmds.c:981
 #, c-format
@@ -2341,7 +2343,7 @@ msgstr "класс операторов \"%s\" для метода доступа \"%s\" уже существует"
 #: commands/opclasscmds.c:287
 #, c-format
 msgid "could not make operator class \"%s\" be default for type %s"
-msgstr ""
+msgstr "не получилось установить класс операторов \"%s\" по умолчанию для типа %s"
 
 #: commands/opclasscmds.c:290
 #, c-format
@@ -2365,7 +2367,7 @@ msgstr "класс операторов \"%s\" для метода доступа \"%s\" уже существует в схеме
 
 #: commands/indexcmds.c:92
 msgid "must specify at least one column"
-msgstr ""
+msgstr "как минимум одна колонка должна быть указана"
 
 #: commands/indexcmds.c:96
 #, c-format
@@ -2375,16 +2377,16 @@ msgstr "число колонок в индексе не может превышать %d"
 #: commands/indexcmds.c:152
 #, c-format
 msgid "access method \"%s\" does not support unique indexes"
-msgstr ""
+msgstr "метод доступа \"%s\" не поддерживает уникальные индексы"
 
 #: commands/indexcmds.c:157
 #, c-format
 msgid "access method \"%s\" does not support multicolumn indexes"
-msgstr ""
+msgstr "метод доступа \"%s\" не поддерживает индексы по многим колонкам"
 
 #: commands/indexcmds.c:171
 msgid "index expressions and predicates may refer only to the table being indexed"
-msgstr ""
+msgstr "индексные выражения и предикаты могут ссылаться только на индексируемую таблицу"
 
 #: commands/indexcmds.c:202
 msgid "primary keys cannot be expressions"
@@ -2459,7 +2461,7 @@ msgstr "таблица \"%s\" не имеет идексов"
 
 #: commands/indexcmds.c:685
 msgid "can only reindex the currently open database"
-msgstr ""
+msgstr "можно переиндексовать только открытую базу"
 
 #: commands/indexcmds.c:768
 #, c-format
@@ -2478,7 +2480,7 @@ msgstr "атрибут оператора \"%s\" не распознан"
 
 #: commands/operatorcmds.c:151
 msgid "operator procedure must be specified"
-msgstr ""
+msgstr "должна быть указана процедура оператора"
 
 #: commands/portalcmds.c:54
 #: commands/portalcmds.c:164
@@ -2555,7 +2557,7 @@ msgstr "язык \"%s\" уже существует"
 #: commands/proclang.c:97
 #, c-format
 msgid "changing return type of function %s from \"opaque\" to \"language_handler\""
-msgstr ""
+msgstr "изменение типа возврата функции %s из \"opaque\" на \"language_handler\""
 
 #: commands/proclang.c:104
 #, c-format
@@ -2602,22 +2604,22 @@ msgstr "доступ запрещён для последовательности %s"
 #: commands/sequence.c:477
 #, c-format
 msgid "nextval: reached maximum value of sequence \"%s\" (%s)"
-msgstr ""
+msgstr "nextval: достигнуто максимальное значение последовательности \"%s\" (%s)"
 
 #: commands/sequence.c:500
 #, c-format
 msgid "nextval: reached minimum value of sequence \"%s\" (%s)"
-msgstr ""
+msgstr "nextval: достигнуто минимальное значение последовательности \"%s\" (%s)"
 
 #: commands/sequence.c:598
 #, c-format
 msgid "currval of sequence \"%s\" is not yet defined in this session"
-msgstr ""
+msgstr "currval (текущее значение) последовательности \"%s\" ещё не определено в этой сессии"
 
 #: commands/sequence.c:652
 #, c-format
 msgid "setval: value %s is out of bounds for sequence \"%s\" (%s..%s)"
-msgstr ""
+msgstr "setval: значение %s вне пределов последовательности \"%s\" (%s..%s)"
 
 #: commands/sequence.c:799
 #: executor/execGrouping.c:328
@@ -2683,26 +2685,26 @@ msgstr "INCREMENT не может быть нулём"
 #: commands/sequence.c:990
 #, c-format
 msgid "MINVALUE (%s) must be less than MAXVALUE (%s)"
-msgstr ""
+msgstr "MINVALUE (%s) должно быть меньше чем MAXVALUE (%s)"
 
 #: commands/sequence.c:1021
 #, c-format
 msgid "START value (%s) can't be less than MINVALUE (%s)"
-msgstr ""
+msgstr "значение START (%s) не может быть меньше чем MINVALUE (%s)"
 
 #: commands/sequence.c:1033
 #, c-format
 msgid "START value (%s) can't be greater than MAXVALUE (%s)"
-msgstr ""
+msgstr "значение START (%s) не может быть больше чем MAXVALUE (%s)"
 
 #: commands/sequence.c:1048
 #, c-format
 msgid "CACHE (%s) must be greater than zero"
-msgstr ""
+msgstr "CACHE (%s) должно быть больше нуля"
 
 #: commands/tablecmds.c:151
 msgid "ON COMMIT can only be used on temporary tables"
-msgstr ""
+msgstr "ON COMMIT может только использоваться для временных таблиц"
 
 #: commands/tablecmds.c:211
 #, c-format
@@ -2749,12 +2751,12 @@ msgstr "наследованное отношение \"%s\" не является таблицей"
 #: commands/tablecmds.c:541
 #, c-format
 msgid "cannot inherit from temporary relation \"%s\""
-msgstr ""
+msgstr "нельзя наследовать временное отношение \"%s\""
 
 #: commands/tablecmds.c:558
 #, c-format
 msgid "inherited relation \"%s\" duplicated"
-msgstr ""
+msgstr "повторное наследованное отношение \"%s\""
 
 #: commands/tablecmds.c:611
 #, c-format
@@ -2764,7 +2766,7 @@ msgstr ""
 #: commands/tablecmds.c:618
 #, c-format
 msgid "inherited column \"%s\" has a type conflict"
-msgstr ""
+msgstr "наследованная колонка \"%s\" имеет конфликт типов"
 
 #: commands/tablecmds.c:620
 #: commands/tablecmds.c:775
@@ -2789,11 +2791,11 @@ msgstr "конфликт типов для колонки \"%s\""
 #: commands/tablecmds.c:814
 #, c-format
 msgid "column \"%s\" inherits conflicting default values"
-msgstr ""
+msgstr "колонка \"%s\" наследует конфликтующие значения по умолчанию"
 
 #: commands/tablecmds.c:816
 msgid "To resolve the conflict, specify a default explicitly."
-msgstr ""
+msgstr "Для решения конфликта укажите желаемое значение по умолчанию."
 
 #: commands/tablecmds.c:1109
 #, c-format
@@ -2836,15 +2838,15 @@ msgstr ""
 
 #: commands/tablecmds.c:1736
 msgid "Add the column, then use ALTER TABLE SET DEFAULT."
-msgstr ""
+msgstr "Добавьте колонку и затем используйте  ALTER TABLE SET DEFAULT."
 
 #: commands/tablecmds.c:1741
 msgid "adding NOT NULL columns is not implemented"
-msgstr ""
+msgstr "добавление колонок NOT NULL не реализовано"
 
 #: commands/tablecmds.c:1742
 msgid "Add the column, then use ALTER TABLE SET NOT NULL."
-msgstr ""
+msgstr "Добавьте колонку и затем используйте ALTER TABLE SET NOT NULL."
 
 #: commands/tablecmds.c:1955
 #: commands/tablecmds.c:2099
@@ -2891,7 +2893,7 @@ msgstr ""
 
 #: commands/tablecmds.c:2516
 msgid "ALTER TABLE WITH OIDS is not yet implemented"
-msgstr ""
+msgstr "ALTER TABLE WITH OIDS ещё не реализовано"
 
 #: commands/tablecmds.c:2597
 #, c-format
@@ -2916,7 +2918,7 @@ msgstr ""
 #: commands/tablecmds.c:3047
 #, c-format
 msgid "referenced relation \"%s\" is not a table"
-msgstr ""
+msgstr "ссылаемое отношение \"%s\" не является таблицей"
 
 #: commands/tablecmds.c:3081
 msgid "cannot reference temporary table from permanent table constraint"
@@ -2965,7 +2967,7 @@ msgstr ""
 #: commands/tablecmds.c:3863
 #, c-format
 msgid "\"%s\" is not a table, TOAST table, index, view, or sequence"
-msgstr ""
+msgstr "\"%s\" не является таюлицей, TOAST-таблицей, индексом, представлением или последовательностью"
 
 #: commands/tablecmds.c:4047
 msgid "shared tables cannot be toasted after initdb"
@@ -3007,7 +3009,7 @@ msgstr "триггер \"%s\" для связи \"%s\" уже существует"
 #: commands/trigger.c:290
 #, c-format
 msgid "changing return type of function %s from \"opaque\" to \"trigger\""
-msgstr ""
+msgstr "изменение типа возврата функции %s из \"opaque\" на \"trigger\""
 
 #: commands/trigger.c:297
 #, c-format
@@ -3044,12 +3046,12 @@ msgstr ""
 #: commands/typecmds.c:135
 #, c-format
 msgid "type names must be %d characters or less"
-msgstr ""
+msgstr "имена типов могут содержать %d или менее символов"
 
 #: commands/typecmds.c:167
 #, c-format
 msgid "array element type cannot be %s"
-msgstr ""
+msgstr "тип элемента массива не может быть %s"
 
 #: commands/typecmds.c:200
 #, c-format
@@ -3077,7 +3079,7 @@ msgstr ""
 #: commands/typecmds.c:275
 #, c-format
 msgid "changing return type of function %s from \"opaque\" to %s"
-msgstr ""
+msgstr "изменение типа возврата функции %s из \"opaque\" на %s"
 
 #: commands/typecmds.c:282
 #, c-format
@@ -3087,7 +3089,7 @@ msgstr ""
 #: commands/typecmds.c:292
 #, c-format
 msgid "changing return type of function %s from \"opaque\" to \"cstring\""
-msgstr ""
+msgstr "изменение типа возврата функции %s из \"opaque\" на \"cstring\""
 
 #: commands/typecmds.c:299
 #, c-format
@@ -3107,7 +3109,7 @@ msgstr ""
 #: commands/typecmds.c:520
 #, c-format
 msgid "domain names must be %d characters or less"
-msgstr ""
+msgstr "имена доменов могут содержать %d или менее символов"
 
 #: commands/typecmds.c:541
 #, c-format
@@ -3153,12 +3155,12 @@ msgstr "\"%s\" не является доменом"
 #: commands/typecmds.c:878
 #, c-format
 msgid "changing argument type of function %s from \"opaque\" to \"cstring\""
-msgstr ""
+msgstr "изменение типа аргумента функции %s из \"opaque\" на \"cstring\""
 
 #: commands/typecmds.c:948
 #, c-format
 msgid "changing argument type of function %s from \"opaque\" to %s"
-msgstr ""
+msgstr "изменение типа аргумента функции %s из \"opaque\" на %s"
 
 #: commands/typecmds.c:1059
 msgid "composite type must have at least one attribute"
@@ -3229,7 +3231,7 @@ msgstr ""
 #: commands/user.c:609
 #, c-format
 msgid "user name \"%s\" is reserved"
-msgstr ""
+msgstr "имя пользователя \"%s\" зарезервировано"
 
 #: commands/user.c:646
 #: commands/user.c:1191
@@ -3259,25 +3261,25 @@ msgstr ""
 
 #: commands/user.c:1060
 msgid "current user cannot be dropped"
-msgstr ""
+msgstr "текущий пользователь не может быть удалён"
 
 #: commands/user.c:1064
 msgid "session user cannot be dropped"
-msgstr ""
+msgstr "пользователь сессии не может быть удалён"
 
 #: commands/user.c:1090
 #, c-format
 msgid "user \"%s\" cannot be dropped"
-msgstr ""
+msgstr "пользователь \"%s\" не может быть удалён"
 
 #: commands/user.c:1091
 #, c-format
 msgid "The user owns database \"%s\"."
-msgstr ""
+msgstr "Пользователь владеет базой \"%s\"."
 
 #: commands/user.c:1183
 msgid "session user may not be renamed"
-msgstr ""
+msgstr "пользователь сессии не может быть переименован"
 
 #: commands/user.c:1197
 msgid "must be superuser to rename users"
@@ -3286,16 +3288,16 @@ msgstr ""
 #: commands/user.c:1230
 #, c-format
 msgid "before using passwords you must revoke privileges on %s"
-msgstr ""
+msgstr "перед использованием паролей вы должны удалить привилегии на %s"
 
 #: commands/user.c:1232
 msgid "This restriction is to prevent unprivileged users from reading the passwords."
-msgstr ""
+msgstr "Это ограничение введено для предотвращения чтения паролей непривилегированными пользователями."
 
 #: commands/user.c:1233
 #, c-format
 msgid "Try REVOKE ALL ON \"%s\" FROM PUBLIC."
-msgstr ""
+msgstr "Попробуйте REVOKE ALL ON \"%s\" FROM PUBLIC."
 
 #: commands/user.c:1297
 msgid "group ID must be positive"
@@ -3308,7 +3310,7 @@ msgstr ""
 #: commands/user.c:1315
 #, c-format
 msgid "group name \"%s\" is reserved"
-msgstr ""
+msgstr "имя группы \"%s\" зарезервировано"
 
 #: commands/user.c:1352
 #: commands/user.c:1734
@@ -3328,7 +3330,7 @@ msgstr ""
 #: commands/user.c:1516
 #, c-format
 msgid "group \"%s\" does not have any members"
-msgstr ""
+msgstr "нет членов в группе  \"%s\""
 
 #: commands/user.c:1544
 #, c-format
@@ -3345,7 +3347,7 @@ msgstr ""
 
 #: commands/vacuum.c:466
 msgid "oldest xmin is far in the past"
-msgstr ""
+msgstr "самый старый xmin далеко в прошлом"
 
 #: commands/vacuum.c:467
 msgid "Close open transactions soon to avoid wraparound problems."
@@ -3353,7 +3355,7 @@ msgstr ""
 
 #: commands/vacuum.c:684
 msgid "some databases have not been vacuumed in over 2 billion transactions"
-msgstr ""
+msgstr "сборка мусора не была произведена в некоторых базах с более 2 миллиардов транзакций"
 
 #: commands/vacuum.c:685
 msgid "You may have already suffered transaction-wraparound data loss."
@@ -3361,7 +3363,7 @@ msgstr ""
 
 #: commands/vacuum.c:696
 msgid "some databases have not been vacuumed in over 1 billion transactions"
-msgstr ""
+msgstr "сборка мусора не была произведена в некоторых базах с более 1 миллиарда транзакций"
 
 #: commands/vacuum.c:697
 msgid "Better vacuum them soon, or you may have a wraparound failure."
@@ -3370,7 +3372,7 @@ msgstr ""
 #: commands/vacuum.c:704
 #, c-format
 msgid "some databases have not been vacuumed in %d transactions"
-msgstr ""
+msgstr "сборка мусора не была произведена в некоторых базах с числом транзакций: %d"
 
 #: commands/vacuum.c:706
 #, c-format
@@ -3380,7 +3382,7 @@ msgstr ""
 #: commands/vacuum.c:795
 #, c-format
 msgid "skipping \"%s\" --- only table or database owner can vacuum it"
-msgstr ""
+msgstr "пропускается \"%s\" --- только владелец таблицы или базы может производить сборку мусора в данном объекте"
 
 #: commands/vacuum.c:809
 #, c-format
@@ -3397,23 +3399,23 @@ msgstr "производится сборка мусора для \"%s.%s\""
 #: commands/vacuumlazy.c:263
 #, c-format
 msgid "relation \"%s\" page %u is uninitialized --- fixing"
-msgstr ""
+msgstr "отношение: \"%s\", страница %u не инициализирована --- исправляется"
 
 #: commands/vacuum.c:1192
 #, c-format
 msgid "relation \"%s\" TID %u/%u: InsertTransactionInProgress %u --- can't shrink relation"
-msgstr ""
+msgstr "отношение \"%s\" TID %u/%u: InsertTransactionInProgress %u --- не в состоянии уменьшить отношение"
 
 #: commands/vacuum.c:1205
 #, c-format
 msgid "relation \"%s\" TID %u/%u: DeleteTransactionInProgress %u --- can't shrink relation"
-msgstr ""
+msgstr "отношение \"%s\" TID %u/%u: DeleteTransactionInProgress %u --- не в состоянии уменьшить отношение"
 
 #: commands/vacuum.c:1367
 #: commands/vacuumlazy.c:428
 #, c-format
 msgid "\"%s\": found %.0f removable, %.0f nonremovable row versions in %u pages"
-msgstr ""
+msgstr "\"%s\": найдено %.0f удалямых, %.0f неудаляемых версий строки в страницах: %u"
 
 #: commands/vacuum.c:1370
 #, c-format
@@ -3454,7 +3456,7 @@ msgstr ""
 #: commands/vacuumlazy.c:657
 #, c-format
 msgid "index \"%s\" now contains %.0f row versions in %u pages"
-msgstr ""
+msgstr "индекс \"%s\" теперь содержит версий строки: %.0f, на страницах: %u"
 
 #: commands/vacuum.c:2656
 #: commands/vacuumlazy.c:601
@@ -3463,12 +3465,14 @@ msgid ""
 "%u index pages have been deleted, %u are currently reusable.\n"
 "%s"
 msgstr ""
+"страниц индекса удалено: %u, готово к переиспользованию: %u.\n"
+"%s"
 
 #: commands/vacuum.c:2670
 #: commands/vacuum.c:2739
 #, c-format
 msgid "index \"%s\" contains %.0f row versions, but table contains %.0f row versions"
-msgstr ""
+msgstr "индекс содержит \"%s\" содержит версий строки: %.0f, а таблица содержит: %.0f"
 
 #: commands/vacuum.c:2673
 #: commands/vacuum.c:2742
@@ -3483,6 +3487,9 @@ msgid ""
 "%u index pages have been deleted, %u are currently reusable.\n"
 "%s"
 msgstr ""
+"версий троки индекса удалено: %.0f.\n"
+"страниц индекса удалено: %u, страниц готово к переиспользованию: %u.\n"
+"%s"
 
 #: commands/vacuumlazy.c:431
 #, c-format
@@ -3496,7 +3503,7 @@ msgstr ""
 #: commands/vacuumlazy.c:486
 #, c-format
 msgid "\"%s\": removed %d row versions in %d pages"
-msgstr ""
+msgstr "\"%s\": удалено версий строк: %d, в страницах: %d"
 
 #: commands/variable.c:75
 msgid "invalid list syntax for parameter \"datestyle\""
@@ -3518,40 +3525,40 @@ msgstr ""
 #: commands/variable.c:557
 #, c-format
 msgid "unrecognized time zone name: \"%s\""
-msgstr ""
+msgstr "нераспознанное имя временной зоны: \"%s\""
 
 #: commands/variable.c:565
 #, c-format
 msgid "time zone \"%s\" appears to use leap seconds"
-msgstr ""
+msgstr "временная зона \"%s\" похоже использует високосные секунды"
 
 #: commands/variable.c:567
 msgid "PostgreSQL does not support leap seconds."
-msgstr ""
+msgstr "PostgreSQL не поддерживает високосные секунды."
 
 #: commands/variable.c:636
 msgid "SET TRANSACTION ISOLATION LEVEL must be called before any query"
-msgstr ""
+msgstr "команда SET TRANSACTION ISOLATION LEVEL должна быть выполнена перед другими запросами"
 
 #: commands/variable.c:713
 #: utils/mb/mbutils.c:188
 #, c-format
 msgid "conversion between %s and %s is not supported"
-msgstr ""
+msgstr "преобразование между %s и %s не поддерживается"
 
 #: commands/view.c:89
 msgid "view must have at least one column"
-msgstr ""
+msgstr "представление должно иметь как минимум одну колонку"
 
 #: commands/view.c:169
 #: commands/view.c:181
 msgid "cannot change number of columns in view"
-msgstr ""
+msgstr "нельзя изменить число колонок в представлении"
 
 #: commands/view.c:186
 #, c-format
 msgid "cannot change name of view column \"%s\""
-msgstr ""
+msgstr "нельзя изменить имя колонки \"%s\" в представлении"
 
 #: commands/view.c:193
 #, c-format
@@ -3598,12 +3605,12 @@ msgstr "число размерностей массива (%d) превышает лимит (%d)"
 #: executor/execQual.c:512
 #, c-format
 msgid "no value found for parameter \"%s\""
-msgstr ""
+msgstr "значение не найдено для параметра \"%s\""
 
 #: executor/execQual.c:517
 #, c-format
 msgid "no value found for parameter %d"
-msgstr ""
+msgstr "значение не найдено для параметра %d"
 
 #: executor/execQual.c:694
 msgid "functions and operators can take at most one set argument"
@@ -3641,11 +3648,11 @@ msgstr ""
 
 #: executor/execQual.c:1284
 msgid "IS DISTINCT FROM does not support set arguments"
-msgstr ""
+msgstr "IS DISTINCT FROM не поддерживает аргументы-множества"
 
 #: executor/execQual.c:1352
 msgid "op ANY/ALL (array) does not support set arguments"
-msgstr ""
+msgstr "операторы ANY/ALL (массив) не поддерживают аргументы-множества"
 
 #: executor/execQual.c:1742
 msgid "cannot merge incompatible arrays"
@@ -3662,12 +3669,12 @@ msgstr ""
 
 #: executor/execQual.c:1886
 msgid "NULLIF does not support set arguments"
-msgstr ""
+msgstr "NULLIF не поддерживает аргументы-множества"
 
 #: executor/execQual.c:2067
 #, c-format
 msgid "domain %s does not allow null values"
-msgstr ""
+msgstr "домен %s не позволяет нулевые (null) значения"
 
 #: executor/execQual.c:2097
 #, c-format
@@ -3688,7 +3695,7 @@ msgstr "не в состоянии определить реальный тип результата для функции задекларир
 #: executor/functions.c:254
 #, c-format
 msgid "could not determine actual type of argument declared %s"
-msgstr ""
+msgstr "не получилось определить настоящий тип аргумента задекларированного как %s"
 
 #: executor/functions.c:673
 #, c-format
@@ -8657,7 +8664,7 @@ msgstr ""
 
 #: utils/misc/guc.c:762
 msgid "Encrypt passwords."
-msgstr ""
+msgstr "Шифровать пароли."
 
 #: utils/misc/guc.c:763
 msgid "When a password is specified in CREATE USER or ALTER USER without writing either ENCRYPTED or UNENCRYPTED, this parameter determines whether the password is to be encrypted."
@@ -8749,7 +8756,7 @@ msgstr ""
 
 #: utils/misc/guc.c:920
 msgid "Uses syslog for logging."
-msgstr ""
+msgstr "Использует syslog для ведения журнала."
 
 #: utils/misc/guc.c:921
 msgid "If this parameter is 1, messages go both to syslog and the standard output. A value of 2 sends output only to syslog. (Some messages will still go to the standard output/error.) The default is 0, which means syslog is off."
@@ -8919,7 +8926,7 @@ msgstr ""
 
 #: utils/misc/guc.c:1285
 msgid "Sets the client's character set encoding."
-msgstr ""
+msgstr "Устанавливает кодировку символов клиента."
 
 #: utils/misc/guc.c:1295
 msgid "Sets the message levels that are sent to the client."
@@ -8943,7 +8950,7 @@ msgstr ""
 
 #: utils/misc/guc.c:1319
 msgid "Valid values are \"terse\", \"default\", and \"verbose\"."
-msgstr ""
+msgstr "Верные значения: \"terse\", \"default\" и \"verbose\"."
 
 #: utils/misc/guc.c:1327
 msgid "Causes all statements generating error at or above this level to be logged."
@@ -8955,7 +8962,7 @@ msgstr ""
 
 #: utils/misc/guc.c:1337
 msgid "Sets the display format for date and time values."
-msgstr ""
+msgstr "Устанавливает формат отображения для дат и времени."
 
 #: utils/misc/guc.c:1338
 msgid "Also controls interpretation of ambiguous date inputs."
@@ -8963,11 +8970,11 @@ msgstr ""
 
 #: utils/misc/guc.c:1348
 msgid "Sets the transaction isolation level of each new transaction."
-msgstr ""
+msgstr "Устанавливает уровень изоляции транзакций каждой новой транзакции."
 
 #: utils/misc/guc.c:1349
 msgid "Each SQL transaction has an isolation level, which can be either \"read committed\" or \"serializable\"."
-msgstr ""
+msgstr "Каждая SQL-транзакция имеет уровень изоляции, который может быть \"read committed\" или \"serializable\"."
 
 #: utils/misc/guc.c:1358
 msgid "Sets the path for dynamically loadable modules."
@@ -8995,19 +9002,19 @@ msgstr ""
 
 #: utils/misc/guc.c:1410
 msgid "Sets the language in which messages are displayed."
-msgstr ""
+msgstr "Устанавливает язык для отображения сообщений."
 
 #: utils/misc/guc.c:1419
 msgid "Sets the locale for formatting monetary amounts."
-msgstr ""
+msgstr "Устанавливает локаль для форматирования денежных сумм."
 
 #: utils/misc/guc.c:1428
 msgid "Sets the locale for formatting numbers."
-msgstr ""
+msgstr "Устанавливает локаль для форматирования чисел."
 
 #: utils/misc/guc.c:1437
 msgid "Sets the locale for formatting date and time values."
-msgstr ""
+msgstr "Устанавливает локаль для форматирования значений дат и времени."
 
 #: utils/misc/guc.c:1446
 msgid "Lists shared libraries to preload into server."
@@ -9027,7 +9034,7 @@ msgstr ""
 
 #: utils/misc/guc.c:1476
 msgid "Sets the server (database) character set encoding."
-msgstr ""
+msgstr "Устанавливает кодировку символов сервера (базы данных)."
 
 #: utils/misc/guc.c:1487
 msgid "Shows the server version."
@@ -9035,7 +9042,7 @@ msgstr "Показываеи версия сервера."
 
 #: utils/misc/guc.c:1498
 msgid "Shows the session user name."
-msgstr ""
+msgstr "Показывает имя пользователя сессии."
 
 #: utils/misc/guc.c:1509
 msgid "Sets the syslog \"facility\" to be used when syslog enabled."
@@ -9047,7 +9054,7 @@ msgstr "Верные значения: LOCAL0, LOCAL1, LOCAL2, LOCAL3, LOCAL4, LOCAL5, LOCAL6 
 
 #: utils/misc/guc.c:1518
 msgid "Sets the program name used to identify PostgreSQL messages in syslog."
-msgstr ""
+msgstr "Устанавливает имя программы для идентификации сообщений PostgreSQL в syslog."
 
 #: utils/misc/guc.c:1529
 msgid "Sets the time zone for displaying and interpreting time stamps."
@@ -9055,7 +9062,7 @@ msgstr ""
 
 #: utils/misc/guc.c:1538
 msgid "Shows the current transaction's isolation level."
-msgstr ""
+msgstr "Показывает текущий уровень изоляции транзакций."
 
 #: utils/misc/guc.c:1548
 msgid "Sets the owning group of the Unix-domain socket."
@@ -9067,7 +9074,7 @@ msgstr ""
 
 #: utils/misc/guc.c:1558
 msgid "Sets the directory where the Unix-domain socket will be created."
-msgstr ""
+msgstr "Устанавливает директорию для создания Unix-domain сокетов."
 
 #: utils/misc/guc.c:1567
 msgid "Sets the host name or IP address to listen to."
@@ -9138,7 +9145,7 @@ msgstr "параметр \"%s\" требует целое значение"
 #: utils/misc/guc.c:2644
 #, c-format
 msgid "%d is outside the valid range for parameter \"%s\" (%d .. %d)"
-msgstr ""
+msgstr "%d вне диапазона для параметра \"%s\" (%d .. %d)"
 
 #: utils/misc/guc.c:2659
 msgid "Must be superuser to increase this value or set it to zero."
@@ -9152,7 +9159,7 @@ msgstr "параметр \"%s\" требует числовое значение"
 #: utils/misc/guc.c:2741
 #, c-format
 msgid "%g is outside the valid range for parameter \"%s\" (%g .. %g)"
-msgstr ""
+msgstr "%g вне диапазона для параметра \"%s\" (%g .. %g)"
 
 #: utils/misc/guc.c:2755
 #: utils/misc/guc.c:2854
@@ -9195,14 +9202,14 @@ msgstr "ошибка синтаксиса в фале \"%s\" строка %u, рядом с \"%s\""
 #: utils/mmgr/aset.c:336
 #, c-format
 msgid "Failed while creating memory context \"%s\"."
-msgstr ""
+msgstr "Ошибка при создании контекста памяти \"%s\"."
 
 #: utils/mmgr/aset.c:502
 #: utils/mmgr/aset.c:699
 #: utils/mmgr/aset.c:892
 #, c-format
 msgid "Failed on request of size %lu."
-msgstr ""
+msgstr "Ошибка при запросе размера %lu."
 
 #: utils/mmgr/portalmem.c:170
 #, c-format
