@@ -20,6 +20,7 @@ int4/.*-aix4=int4-too-large
 float8/alpha.*-dec-osf=float8-fp-exception
 float4/.*-qnx4=float4-exp-three-digits
 float8/.*-qnx4=float8-exp-three-digits
+float8/.*-netbsd=float8-small-is-zero
 geometry/hppa=geometry-positive-zeros
 geometry/.*-netbsd=geometry-positive-zeros
 geometry/.*-freebsd=geometry-positive-zeros
