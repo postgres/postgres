@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.18 1999/02/22 05:26:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.19 1999/02/22 06:08:47 momjian Exp $
  *
  * NOTES
  *	  XXX a few of the following functions are duplicated to handle
@@ -29,6 +29,11 @@
 #include "utils/elog.h"
 #include "utils/palloc.h"
 
+/*
+ *	makeList
+ *
+ *	Take varargs, terminated by -1, and make a List
+ */
 List *
 makeList(void *elem,...)
 {
@@ -57,6 +62,11 @@ makeList(void *elem,...)
 	return retval;
 }
 
+/*
+ *	lcons
+ *
+ *	Add obj to the front of list, or make a new list if 'list' is NIL
+ */
 List *
 lcons(void *obj, List *list)
 {
@@ -67,6 +77,11 @@ lcons(void *obj, List *list)
 	return l;
 }
 
+/*
+ *	lconsi
+ *
+ *	Same as lcons, but for integer data
+ */
 List *
 lconsi(int datum, List *list)
 {
@@ -77,18 +92,35 @@ lconsi(int datum, List *list)
 	return l;
 }
 
+/*
+ *	lappend
+ *
+ *	Add obj to the end of list, or make a new list if 'list' is NIL
+ *	
+ * MORE EXPENSIVE THAN lcons
+ */
 List *
 lappend(List *list, void *obj)
 {
 	return nconc(list, lcons(obj, NIL));
 }
 
+/*
+ *	lappendi
+ *
+ *	Same as lappend, but for integers
+ */
 List *
 lappendi(List *list, int datum)
 {
 	return nconc(list, lconsi(datum, NIL));
 }
 
+/*
+ *	nconc
+ *
+ *	Concat l2 on to the end of l1
+ */
 List *
 nconc(List *l1, List *l2)
 {
@@ -131,6 +163,9 @@ nreverse(List *list)
 }
 #endif
 
+/*
+ *	makeInteger
+ */
 Value *
 makeInteger(long i)
 {
@@ -141,6 +176,9 @@ makeInteger(long i)
 	return v;
 }
 
+/*
+ *	makeFloat
+ */
 Value *
 makeFloat(double d)
 {
@@ -151,6 +189,9 @@ makeFloat(double d)
 	return v;
 }
 
+/*
+ *	makeString
+ */
 Value *
 makeString(char *str)
 {
@@ -161,7 +202,11 @@ makeString(char *str)
 	return v;
 }
 
-/* n starts with 0 */
+/*
+ *	nth
+ *
+ *	Get the n'th element of the list.  First element is 0th.
+ */
 void *
 nth(int n, List *l)
 {
@@ -174,6 +219,11 @@ nth(int n, List *l)
 	return lfirst(l);
 }
 
+/*
+ *	nthi
+ *
+ *	Same as nthi, but for integers
+ */
 int
 nthi(int n, List *l)
 {
@@ -200,6 +250,11 @@ set_nth(List *l, int n, void *elem)
 	return;
 }
 
+/*
+ *	length
+ *
+ *	Get the length of l
+ */
 int
 length(List *l)
 {
@@ -213,6 +268,11 @@ length(List *l)
 	return i;
 }
 
+/*
+ *	freeList
+ *
+ *	Free the List nodes of a list
+ */
 void
 freeList(List *list)
 {
@@ -415,6 +475,9 @@ lremove(void *elem, List *list)
 	return result;
 }
 
+/*
+ *	LispRemove
+ */
 List *
 LispRemove(void *elem, List *list)
 {
@@ -466,6 +529,11 @@ intLispRemove(int elem, List *list)
 
 #endif
 
+/*
+ *	set_difference
+ *
+ *	Return l1 without the elements in l2.
+ */
 List *
 set_difference(List *l1, List *l2)
 {
@@ -483,6 +551,11 @@ set_difference(List *l1, List *l2)
 	return result;
 }
 
+/*
+ *	set_differencei
+ *
+ *	Same as set_difference, but for integers
+ */
 List *
 set_differencei(List *l1, List *l2)
 {
