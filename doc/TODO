@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sat Jan 29 12:23:49 EST 2000
+Last updated:		Fri Feb  4 17:40:21 EST 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -82,6 +82,8 @@ MISC
 * SELECT ... UNION ... ORDER BY fails when sort expr not in result list
 * SELECT ... UNION ... GROUP BY fails if column types disagree, no type
   promotion occurs
+* Modification  of  pg_class  can  happen while table in use by
+  another backend.  Might  lead  to  MVCC  inside  of  syscache
 
 ENHANCEMENTS
 ------------
