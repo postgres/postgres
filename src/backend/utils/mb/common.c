@@ -2,7 +2,7 @@
  * This file contains some public functions
  * usable for both the backend and the frontend.
  * Tatsuo Ishii
- * $Id: common.c,v 1.12 2001/02/11 01:59:22 ishii Exp $
+ * $Id: common.c,v 1.13 2001/04/16 02:42:01 tgl Exp $
  */
 #include "postgres.h"
 
@@ -91,8 +91,9 @@ Datum
 PG_encoding_to_char(PG_FUNCTION_ARGS)
 {
 	int32		encoding = PG_GETARG_INT32(0);
+	const char *encoding_name = pg_encoding_to_char(encoding);
 
-	PG_RETURN_NAME(pg_encoding_to_char(encoding));
+	return DirectFunctionCall1(namein, CStringGetDatum(encoding_name));
 }
 
 #endif

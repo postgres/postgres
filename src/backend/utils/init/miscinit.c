@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.64 2001/03/22 04:00:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.65 2001/04/16 02:42:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -168,13 +168,13 @@ SetDataDir(const char *dir)
 Datum
 getdatabaseencoding(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_NAME("SQL_ASCII");
+	return DirectFunctionCall1(namein, CStringGetDatum("SQL_ASCII"));
 }
 
 Datum
 PG_encoding_to_char(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_NAME("SQL_ASCII");
+	return DirectFunctionCall1(namein, CStringGetDatum("SQL_ASCII"));
 }
 
 Datum
