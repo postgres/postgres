@@ -3355,7 +3355,7 @@ Character:  character '(' Iconst ')'
 						yyerror(errortext);
 					}
 					else if (atol($3) > MaxAttrSize) {
-						sprintf(errortext, "length for type '%s' cannot exceed %d",$1,MaxAttrSize);
+						sprintf(errortext, "length for type '%s' cannot exceed %ld",$1,(long) MaxAttrSize);
 						yyerror(errortext);
 					}
 
