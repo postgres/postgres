@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.6 1996/09/21 06:27:11 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.7 1996/09/23 08:21:52 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -17,12 +17,10 @@
 # in your custom makefile, ../Makefile.custom.)
 BIGOBJS= true
 
-
-PROG=	postgres
+PROG=	postgres global1.bki.source local1_template1.bki.source
 
 MKDIR=	../mk
 include $(MKDIR)/postgres.mk
-
 
 include $(CURDIR)/access/Makefile.inc
 include $(CURDIR)/bootstrap/Makefile.inc
@@ -60,6 +58,7 @@ OBJS:= $(subst .s,.o,$(SRCS:%.c=$(objdir)/%.o))
 CLEANFILES+= $(notdir $(OBJS))
 endif
 
+
 #############################################################################
 #
 # TIOGA stuff
@@ -86,7 +85,7 @@ CFLAGS+=  -DPOSTGRESDIR='"$(POSTGRESDIR)"' \
 	-I$(CURDIR)/$(objdir) \
 	-I$(CURDIR)/include \
 	-I$(CURDIR)/port/$(PORTNAME) \
-	-I$(SRCDIR)/include
+	-I../include
 
 # turn this on if you prefer European style dates instead of American
 # style dates
@@ -192,52 +191,33 @@ endif
 #
 # Installation.
 #
-# Install the bki files to the data directory.  We also copy a version
-# of them that has "PGUID" intact, so one can change the value of the
-# postgres userid before running initdb in the case of customizing the
-# binary release (i.e., fixing up PGUID w/o recompiling the system).
-# Those files are copied out as foo.source.  The program newbki(1) can
-# be run later to reset the postgres login id (but it must be run before
-# initdb is run, or after clearing the data directory with
-# cleardbdir(1)). [newbki distributed with v4r2 but not with Postgres95.]
+# Install the backend program (postgres) to the binary directory and 
+# make a link as "postmaster".  Install the bki files templates and sample 
+# files to the library directory.
 #
+# (History:  Before Release 2, make install generated a bki.source file
+# and then used build parameters to convert it to a bki file, then installed
+# that bki file in the /files subdirectory of the default data directory.
+# Initdb then used the bki file to generate the database catalog classes.
+# That had to change because (1) there can be more than one database system,
+# and (2) the parameters of a database system should be set at initdb time,
+# not at postgres build time.
 
-# 	NAMEDATALEN=`egrep "^#define NAMEDATALEN" $(CURDIR)/include/postgres.h | awk '{print $$3}'`; \
-# 	OIDNAMELEN=`egrep "^#define OIDNAMELEN" $(CURDIR)/include/postgres.h | awk '{print $$3}'`; \
-
-install: beforeinstall pg_id $(BKIFILES) postgres
-	$(INSTALL) $(INSTL_EXE_OPTS) $(objdir)/postgres $(DESTDIR)$(BINDIR)/postgres
+install: beforeinstall postgres fmgr.h\
+         global1.bki.source local1_template1.bki.source \
+         libpq/pg_hba.sample
+	
+	$(INSTALL) $(INSTL_EXE_OPTS) $(objdir)/postgres \
+	  $(DESTDIR)$(BINDIR)/postgres
 	@rm -f $(DESTDIR)$(BINDIR)/postmaster
 	cd $(DESTDIR)$(BINDIR); ln -s postgres postmaster
-	@cd $(objdir); \
-	PG_UID=`./pg_id $(POSTGRESLOGIN)`; \
-	POSTGRESLOGIN=$(POSTGRESLOGIN);\
- 	echo "NAMEDATALEN = $(NAMEDATALEN)"; \
- 	echo "OIDNAMELEN = $(OIDNAMELEN)"; \
-	case $$PG_UID in "NOUSER") \
-		echo "Warning: no account named $(POSTGRESLOGIN), using yours";\
-		POSTGRESLOGIN=`whoami`; \
-		PG_UID=`./pg_id`;; \
-	esac ;\
-	for bki in $(BKIFILES); do \
-		sed \
-		    -e "s/postgres PGUID/$$POSTGRESLOGIN $$PG_UID/" \
-		    -e "s/NAMEDATALEN/$(NAMEDATALEN)/g" \
-		    -e "s/OIDNAMELEN/$(OIDNAMELEN)/g" \
-		    -e "s/PGUID/$$PG_UID/" \
-		    < $$bki > $$bki.sed ; \
-		echo "Installing $(DESTDIR)$(DATADIR)/files/$$bki."; \
-		$(INSTALL) $(INSTLOPTS) \
-		    $$bki.sed $(DESTDIR)$(DATADIR)/files/$$bki; \
-		rm -f $$bki.sed; \
-		echo "Installing $(DESTDIR)$(DATADIR)/files/$$bki.source."; \
-		$(INSTALL) $(INSTLOPTS) \
-		    $$bki $(DESTDIR)$(DATADIR)/files/$$bki.source; \
-	done;
-	@echo "Installing $(DATADIR)/pg_hba";
-	@cp $(srcdir)/libpq/pg_hba $(DATADIR)
-	@chmod 644 $(DATADIR)/pg_hba
-
+	$(INSTALL) $(INSTLOPTS) $(objdir)/fmgr.h $(HEADERDIR)/fmgr.h
+	$(INSTALL) $(INSTLOPTS) $(objdir)/global1.bki.source \
+	  $(DESTDIR)$(LIBDIR)/global1.bki.source
+	$(INSTALL) $(INSTLOPTS) $(objdir)/local1_template1.bki.source \
+	  $(DESTDIR)$(LIBDIR)/local1_template1.bki.source
+	$(INSTALL) $(INSTLOPTS) libpq/pg_hba.sample \
+	  $(DESTDIR)$(LIBDIR)/pg_hba.sample
 
 # so we can get the UID of the postgres owner (w/o moving pg_id to
 # src/tools). We just want the vanilla LDFLAGS for pg_id
@@ -247,10 +227,8 @@ ifeq ($(CC), cc)
 IDLDFLAGS+= -Aa -D_HPUX_SOURCE
 endif
 endif
-pg_id:	$(srcdir)/bin/pg_id/pg_id.c
-	$(CC) $(IDLDFLAGS) -o $(objdir)/$(@F) $<
 
-CLEANFILES+= pg_id postgres
+CLEANFILES+= postgres
 
 
 #############################################################################

@@ -4,34 +4,24 @@
 # cleardbdir.sh--
 #    completely clear out the database directory
 #
-#    this program clears out the database directory, but leaves the .bki
-#    files so that initdb(1) can be run again.
+#    A program by this name used to be necessary because the database 
+#    files were mixed in with postgres program files.  Now, the database
+#    files are in their own directory so you can just rm it.
 #
+#    We have to ship this program, which now just tells the user there's
+#    no such program, to make sure that the old program from
+#    a prior release gets deleted.  If it hung around, it could confuse 
+#    the user.
 #
 # Copyright (c) 1994, Regents of the University of California
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/cleardbdir/Attic/cleardbdir.sh,v 1.1.1.1 1996/07/09 06:22:11 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/bin/cleardbdir/Attic/cleardbdir.sh,v 1.2 1996/09/23 08:23:03 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
-[ -z "$PGDATA" ] && PGDATA=_fUnKy_DATADIR_sTuFf_
-
-echo "This program completely destroys all the databases in the directory"
-echo "$PGDATA"
-echo _fUnKy_DASH_N_sTuFf_ "Are you sure you want to do this (y/n) [n]? "_fUnKy_BACKSLASH_C_sTuFf_
-read resp || exit
-case $resp in
-	y*)	: ;;
-	*)	exit ;;
-esac
-
-cd $PGDATA || exit
-for i in *
-do
-if [ $i != "files" -a $i != "pg_hba" ]
-then
-	/bin/rm -rf $i
-fi
-done
+echo "The cleardbir program no longer exists.  To remove an old database"
+echo "system, simply wipe out the whole directory that contains it."
+echo
+echo "You can create a new database system with initdb."

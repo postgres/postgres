@@ -9,7 +9,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/mk/Attic/postgres.mk,v 1.2 1996/07/27 02:04:12 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/mk/Attic/postgres.mk,v 1.3 1996/09/23 08:24:11 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -123,10 +123,8 @@ beforeinstall: localobj
 		then mkdir $(DESTDIR)$(LIBDIR); fi
 	@-if test ! -d $(DESTDIR)$(BINDIR); \
 		then mkdir $(DESTDIR)$(BINDIR); fi
-	@-if test ! -d $(DESTDIR)$(DATADIR); \
-		then mkdir $(DESTDIR)$(DATADIR); fi
-	@-if test ! -d $(DESTDIR)$(DATADIR)/files; \
-		then mkdir $(DESTDIR)$(DATADIR)/files; fi
+	@-if test ! -d $(HEADERDIR); \
+		then mkdir $(HEADERDIR); fi
 else
 beforeinstall: localobj
 endif

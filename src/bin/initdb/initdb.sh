@@ -2,221 +2,266 @@
 #-------------------------------------------------------------------------
 #
 # initdb.sh--
-#    create a postgres template database
+#     Create (initialize) a Postgres database system.  
+# 
+#     A database system is a collection of Postgres databases all managed
+#     by the same postmaster.  
 #
-#    this program feeds the proper input to the ``postgres'' program
-#    to create a postgres database and register it in the
-#    shared ``pg_database'' database.
+#     To create the database system, we create the directory that contains
+#     all its data, create the files that hold the global classes, create
+#     a few other control files for it, and create one database:  the
+#     template database.
+#
+#     The template database is an ordinary Postgres database.  Its data
+#     never changes, though.  It exists to make it easy for Postgres to 
+#     create other databases -- it just copies.
+#
+#     Optionally, we can skip creating the database system and just create
+#     (or replace) the template database.
+#
+#     To create all those classes, we run the postgres (backend) program and
+#     feed it data from bki files that are in the Postgres library directory.
 #
 # Copyright (c) 1994, Regents of the University of California
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.5 1996/09/21 06:24:41 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.6 1996/09/23 08:23:17 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
 # ----------------
 #       Set paths from environment or default values.
-#       The _fUnKy_..._sTuFf_ gets set when the script is installed
-#       from the default value for this build.
-#       Currently the only thing wee look for from the environment is
-#       PGDATA, PGHOST, and PGPORT
+#       The _fUnKy_..._sTuFf_ gets set when the script is built (with make)
+#       from parameters set in the make file.
+#       Currently the only thing we look for from the environment is
+#       PGDATA, PGHOST, and PGPORT.  However, we should have environment
+#       variables for all the paths.  
 #
 # ----------------
 [ -z "$PGDATA" ] && { PGDATA=_fUnKy_DATADIR_sTuFf_; export PGDATA; }
 [ -z "$PGPORT" ] && { PGPORT=_fUnKy_POSTPORT_sTuFf_; export PGPORT; }
 [ -z "$PGHOST" ] && { PGHOST=localhost; export PGHOST; }
-POSTGRESDIR=_fUnKy_POSTGRESDIR_sTuFf_
 BINDIR=_fUnKy_BINDIR_sTuFf_
-FILESDIR=$PGDATA/files
+LIBDIR=_fUnKy_LIBDIR_sTuFf_
+NAMEDATALEN=_fUnKy_NAMEDATALEN_sTuFf_
+OIDNAMELEN=_fUnKy_OIDNAMELEN_sTuFf_
 PATH=$BINDIR:$PATH
 export PATH
 
 CMDNAME=`basename $0`
 
-# ----------------
-# 	check arguments:
-# 	    -d indicates debug mode.
-#	    -n means don't clean up on error (so your cores don't go away)
-# ----------------
+# Set defaults:
 debug=0
 noclean=0
-verbose=0
+template_only=0
+POSTGRES_SUPERUSERNAME=$USER
 
-for ARG
-do
-	case "$ARG" in
-	-d)	debug=1; echo "$CMDNAME: debug mode on";;
-	-n)	noclean=1; echo "$CMDNAME: noclean mode on";;
-	-v)	verbose=1; echo "$CMDNAME: verbose mode on";;
-	*)	echo "initdb [-d][-n][-v]\n -d : debug mode\n -n : noclean mode, leaves temp files around \n -v : verbose mode";  exit 0;
-	esac
+for ARG ; do
+    if [ $ARG = "--debug" -o $ARG = "-d" ]; then
+        debug=1
+        echo "Running with debug mode on."
+    elif [ $ARG = "--noclean" -o $ARG = "-n" ]; then
+        noclean=1
+        echo "Running with noclean mode on.  Mistakes will not be cleaned up."
+    elif [ $ARG = "--template" ]; then
+        template_only=1
+        echo "updating template1 database only."
+    elif [ ${ARG#--username=} != $ARG ]; then
+        POSTGRES_SUPERUSERNAME=${ARG,"--username="}
+    elif [ ${ARG#--pgdata=} != $ARG ]; then
+        PGDATA=${ARG#--pgdata=}
+    else    
+        echo "initdb [--template] [--debug] [--noclean]" \
+             "[--username=SUPERUSER] [--pgdata=DATADIR]"
+    fi
 done
 
-# ----------------
-# 	if the debug flag is set, then 
-# ----------------
-if test "$debug" -eq 1
-then
+if [ "$debug" -eq 1 ]; then
     BACKENDARGS="-boot -C -F -d"
 else
     BACKENDARGS="-boot -C -F -Q"
 fi
 
+TEMPLATE=$LIBDIR/local1_template1.bki.source
+GLOBAL=$LIBDIR/global1.bki.source
+PG_HBA_SAMPLE=$LIBDIR/pg_hba.sample
 
-TEMPLATE=$FILESDIR/local1_template1.bki
-GLOBAL=$FILESDIR/global1.bki
-if [ ! -f $TEMPLATE -o ! -f $GLOBAL ]
-then
-    echo "$CMDNAME: error: database initialization files not found."
-    echo "$CMDNAME: either gmake install has not been run or you're trying to"
-    echo "$CMDNAME: run this program on a machine that does not store the"
-    echo "$CMDNAME: database (PGHOST doesn't work for this)."
+#-------------------------------------------------------------------------
+# Find the input files
+#-------------------------------------------------------------------------
+
+for PREREQ_FILE in $TEMPLATE $GLOBAL $PG_HBA_SAMPLE; do
+    if [ ! -f $PREREQ_FILE ]; then 
+        echo "$CMDNAME does not find the file '$PREREQ_FILE'."
+        echo "This means Postgres95 is incorrectly installed."
+        exit 1
+    fi
+done
+
+echo "$CMDNAME: using $TEMPLATE as input to create the template database."
+if [ $template_only -eq 0 ]; then
+    echo "$CMDNAME: using $GLOBAL as input to create the global classes."
+    echo "$CMDNAME: using $PG_HBA_SAMPLE as the host-based authentication" \
+         "control file."
+fi  
+
+#---------------------------------------------------------------------------
+# Figure out who the Postgres superuser for the new database system will be.
+#---------------------------------------------------------------------------
+
+if [ -z $POSTGRES_SUPERUSERNAME ]; then 
+    echo "Can't tell what username to use.  You don't have the USER"
+    echo "environment variable set to your username and didn't specify the "
+    echo "--username option"
     exit 1
 fi
 
-if test "$verbose" -eq 1
-then
-    echo "$CMDNAME: using $TEMPLATE"
-    echo "$CMDNAME: using $GLOBAL"
+POSTGRES_SUPERUID=`pg_id $POSTGRES_SUPERUSERNAME`
+
+if [ $POSTGRES_SUPERUID = NOUSER ]; then
+    echo "Valid username not given.  You must specify the username for "
+    echo "the Postgres superuser for the database system you are "
+    echo "initializing, either with the --username option or by default "
+    echo "to the USER environment variable."
+    exit 10
 fi
 
-#
-# Figure out who I am...
-#
-
-PG_UID=`pg_id`
-
-if test $PG_UID -eq 0
-then
-    echo "$CMDNAME: do not install POSTGRES as root"
-    exit 1
+if [ $POSTGRES_SUPERUID -ne `pg_id` -a `pg_id` -ne 0 ]; then 
+    echo "Only the unix superuser may initialize a database with a different"
+    echo "Postgres superuser.  (You must be able to create files that belong"
+    echo "to the specified Postgres userid)."
+    exit 2
 fi
 
-# ----------------
-# 	create the template database if necessary
-#	the first we do is create data/base, so we'll check for that.
-# ----------------
+echo "We are initializing the database system with username" \
+  "$POSTGRES_SUPERUSERNAME (uid=$POSTGRES_SUPERUID)."   
+echo "Please be aware that Postgres is not secure.  Anyone who can connect"
+echo "to the database can act as user $POSTGRES_SUPERUSERNAME " \
+     "with very little effort."
 
-if test -d "$PGDATA/base"
-then
-	echo "$CMDNAME: error: it looks like initdb has already been run.  You must"
-	echo "clean out the database directory first with the cleardbdir program"
-	exit 1
-fi
+# -----------------------------------------------------------------------
+# Create the data directory if necessary
+# -----------------------------------------------------------------------
 
 # umask must disallow access to group, other for files and dirs
 umask 077
 
-mkdir $PGDATA/base $PGDATA/base/template1
-
-if test "$verbose" -eq 1
-then
-    echo "$CMDNAME: creating SHARED relations in $PGDATA"
-    echo "$CMDNAME: creating template database in $PGDATA/base/template1"
-    echo "postgres $BACKENDARGS template1 < $TEMPLATE "
+if [ -d "$PGDATA" ]; then
+    if [ $template_only -eq 0 ]; then
+        echo "$CMDNAME: error: Directory $PGDATA already exists."
+        echo "This probably means initdb has already been run and the "
+        echo "database system already exists."
+        echo 
+        echo "If you want to create a new database system, either remove "
+        echo "the $PGDATA directory or run initdb with environment variable"
+        echo "PGDATA set to something other than $PGDATA."
+        exit 1
+    fi
+else
+    if [ ! -d $PGDATA ]; then
+        echo "Creating Postgres database system directory $PGDATA"
+        mkdir $PGDATA
+        if [ $? -ne 0 ]; then exit 5; fi
+    fi
+    if [ ! -d $PGDATA/base ]; then
+        echo "Creating Postgres database system directory $PGDATA/base"
+        mkdir $PGDATA/base
+        if [ $? -ne 0 ]; then exit 5; fi
+    fi
 fi
 
-postgres $BACKENDARGS template1 < $TEMPLATE 
+#----------------------------------------------------------------------------
+# Create the template1 database
+#----------------------------------------------------------------------------
 
+rm -rf $PGDATA/base/template1
+mkdir $PGDATA/base/template1
 
-if test $? -ne 0
-then
+echo "$CMDNAME: creating template database in $PGDATA/base/template1"
+echo "Running: postgres $BACKENDARGS template1"
+
+cat $TEMPLATE \
+| sed -e "s/postgres PGUID/$POSTGRES_SUPERUSERNAME $POSTGRES_SUPERUID/" \
+      -e "s/NAMEDATALEN/$NAMEDATALEN/g" \
+      -e "s/OIDNAMELEN/$OIDNAMELEN/g" \
+      -e "s/PGUID/$POSTGRES_SUPERUID/" \
+| postgres $BACKENDARGS template1
+
+if [ $? -ne 0 ]; then
     echo "$CMDNAME: could not create template database"
-    if test $noclean -eq 0
-    then
-	    echo "$CMDNAME: cleaning up."
-	    cd $PGDATA
-	    for i in *
-	    do
-		if [ $i != "files" -a $i != "pg_hba" ]
-		then
-			/bin/rm -rf $i
-		fi
-	    done
-        else
-	    echo "$CMDNAME: cleanup not done (noclean mode set)."
+    if [ $noclean -eq 0 ]; then
+        echo "$CMDNAME: cleaning up by wiping out $PGDATA/base/template1"
+        rm -rf $PGDATA/base/template1
+    else
+        echo "$CMDNAME: cleanup not done because noclean options was used."
     fi
-	exit 1;
+    exit 1;
 fi
 
 pg_version $PGDATA/base/template1
 
-#
-# Add the template database to pg_database
-#
+#----------------------------------------------------------------------------
+# Create the global classes, if requested.
+#----------------------------------------------------------------------------
 
-echo "open pg_database" > /tmp/create.$$
-echo "insert (template1 $PG_UID template1)" >> /tmp/create.$$
-#echo "show" >> /tmp/create.$$
-echo "close pg_database" >> /tmp/create.$$
+if [ $template_only -eq 0 ]; then
+    echo "$CMDNAME: creating global classes in $PGDATA"
 
-if test "$verbose" -eq 1
-then
-	echo "postgres $BACKENDARGS template1 < $GLOBAL"
-fi
+    echo "Creating global classes in $PG_DATA/base"
+    echo "Running: postgres $BACKENDARGS template1"
 
-postgres $BACKENDARGS template1 < $GLOBAL 
+    cat $GLOBAL \
+    | sed -e "s/postgres PGUID/$POSTGRES_SUPERUSERNAME $POSTGRES_SUPERUID/" \
+        -e "s/NAMEDATALEN/$NAMEDATALEN/g" \
+        -e "s/OIDNAMELEN/$OIDNAMELEN/g" \
+        -e "s/PGUID/$POSTGRES_SUPERUID/" \
+    | postgres $BACKENDARGS template1
 
-if (test $? -ne 0)
-then
-    echo "$CMDNAME: could create shared relations"
-    if (test $noclean -eq 0)
+    if (test $? -ne 0)
     then
-	    echo "$CMDNAME: cleaning up."
-	    cd $PGDATA
-	    for i in *
-	    do
-		if [ $i != "files" ]
-		then
-			/bin/rm -rf $i
-		fi
-	    done
-    else
-	    echo "$CMDNAME: cleanup not done (noclean mode set)."
+        echo "$CMDNAME: could not create global classes."
+        if (test $noclean -eq 0); then
+            echo "$CMDNAME: cleaning up."
+            rm -rf $PGDATA
+        else
+            echo "$CMDNAME: cleanup not done (noclean mode set)."
+        fi
+        exit 1;
     fi
-	exit 1;
-fi
 
-pg_version $PGDATA
+    pg_version $PGDATA
 
-if test "$verbose" -eq 1
-then
-	echo "postgres $BACKENDARGS template1 < /tmp/create.$$"
-fi
+    cp $PG_HBA_SAMPLE $PGDATA/pg_hba
 
-postgres $BACKENDARGS template1 < /tmp/create.$$ 
+    echo "Adding template1 database to pg_database..."
 
-if test $? -ne 0
-then
-    echo "$CMDNAME: could not log template database"
-    if (test $noclean -eq 0)
-    then
-	    echo "$CMDNAME: cleaning up."
-	    cd $PGDATA
-	    for i in *
-	    do
-		if [ $i != "files" ]
-		then
-			/bin/rm -rf $i
-		fi
-	    done
-    else
-	    echo "$CMDNAME: cleanup not done (noclean mode set)."
+    echo "open pg_database" > /tmp/create.$$
+    echo "insert (template1 $POSTGRES_SUPERUID template1)" >> /tmp/create.$$
+    #echo "show" >> /tmp/create.$$
+    echo "close pg_database" >> /tmp/create.$$
+
+    echo "Running: postgres $BACKENDARGS template1 < /tmp/create.$$"
+
+    postgres $BACKENDARGS template1 < /tmp/create.$$ 
+
+    if [ $? -ne 0 ]; then
+        echo "$CMDNAME: could not log template database"
+        if [ $noclean -eq 0 ]; then
+            echo "$CMDNAME: cleaning up."
+            rm -rf $PGDATA
+        else
+            echo "$CMDNAME: cleanup not done (noclean mode set)."
+        fi
+        exit 1;
     fi
-	exit 1;
+    rm -f /tmp/create.$$
 fi
 
-if test $debug -eq 0
-then
-
-if test "$verbose" -eq 1
-then
+if [ $debug -eq 0 ]; then
     echo "vacuuming template1"
-fi
 
     echo "vacuum" | postgres -F -Q template1 > /dev/null
 fi
 
-rm -f /tmp/create.$$
+
