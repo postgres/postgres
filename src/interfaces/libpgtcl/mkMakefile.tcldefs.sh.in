@@ -1,0 +1,16 @@
+
+if [ ! -f @TCL_CONFIG_SH@ ]; then
+    echo "@TCL_CONFIG_SH@ not found"
+    echo "I need this file! Please make a symbolic link to this file"
+    echo "and start make again."
+    exit 1
+fi
+
+cat @TCL_CONFIG_SH@ |
+    egrep '^TCL_' |
+    while read inp
+    do
+	    eval eval echo $inp
+    done >Makefile.tcldefs
+
+exit 0
