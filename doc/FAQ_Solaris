@@ -1,9 +1,9 @@
-=======================================================
-Frequently Asked Questions (FAQ) for PostgreSQL  V6.5
-Sun Solaris Specific
-TO BE READ IN CONJUNCTION WITH THE NORMAL FAQ
-=======================================================
-last updated:        $Date: 2000/10/19 03:18:56 $
+============================================================
+Frequently Asked Questions (FAQ) for PostgreSQL  V7.1
+Sun Solaris specific
+to be read in conjunction with the installation instructions
+============================================================
+last updated:        $Date: 2001/03/13 20:42:11 $
 
 current maintainer:  Marc Liyanage (liyanage@access.ch)
 original author:     Marc Liyanage (liyanage@access.ch)
@@ -11,36 +11,19 @@ original author:     Marc Liyanage (liyanage@access.ch)
 
 Contents:
 
-1.1) What tools do I need to build and install PostgreSQL on Solaris?
-1.2) What else do I have to do before building PostgreSQL? 
+1) What tools do I need to build and install PostgreSQL on Solaris?
+2) Why do I get problems when building with OpenSSL support?
 
 
-Notes:
-
-- The commands given here are for the bash shell. If you use
-  a different shell, you'll have to change the commands accordingly,
-  especially these regarding environment variables.
-
-- These instructions are written for Solaris 2.6
-
-
-----------------------------------------------------------------------
-Section 1:  Building and Installing PostgreSQL
-----------------------------------------------------------------------
-
-1.1) What tools do I need to build and install PostgreSQL on Solaris?
+1) What tools do I need to build and install PostgreSQL on Solaris?
 
 You will need
 
-- GNU flex 2.5.4 or better (the lex included in Solaris 2.6 won't work)
-- GNU bison (the yacc included in Solaris 2.6 won't work)
-- GNU zip (gzip and especially gunzip for installing the docs)
+- GNU zip (for installing the documentation)
 - GNU make
-- GNU readline library
+- GNU readline library (optional)
 
-We also used
-
-- GNU cc (gcc 2.8.1)
+Both GCC and the Sun compiler suite work.
 
 If you like Solaris packages, you can find these tools here:
 http://www.sunfreeware.com
@@ -49,33 +32,19 @@ If you prefer sources, look here:
 http://www.gnu.org/order/ftp.html
 
 
+2) Why do I get problems when building with OpenSSL support?
 
-1.2) What else do I have to do before building PostgreSQL?
+When you build PostgreSQL with OpenSSL support you will probably get
+compilation errors in the following files:
 
-Shared libraries
-----------------
+src/backend/libpq/crypt.c
+src/backend/libpq/password.c
+src/interfaces/libpq/fe-auth.c
+src/interfaces/libpq/fe-connect.c
 
-The default installation procedure puts the shared libraries
-into "/usr/local/pgsql/lib", but the dynamic loader won't
-find them there at runtime unless you use some hack like
-symlinking the libraries in /usr/lib or setting LD_LIBRARY_PATH
-for every user that will use the DB system.
+This is because of a namespace conflict between the standard
+/usr/include/crypt.h header and the header files provided by OpenSSL.
+We believe that this should be fixed by OpenSSL.
 
-The first time you'll encounter this problem is usually when
-running "initdb". It will fail with something like
-   
-   ld.so.1: pg_id: fatal: libpq.so: open failed: No such file or directory  
-   
-We recommend that you store the path of the directory containing
-the libraries in the environment variable LD_RUN_PATH *before*
-starting the build. This will cause the linker to store this
-path in the binaries.
-
-Do this:
-
-# export LD_RUN_PATH=/usr/local/pgsql/lib
-
-(or wherever you choose to put the libraries)
-
-There is some good information about this here:
-http://www.visi.com/~barr/ldpath.html
+The problem can be worked around by removing the inclusion of
+<crypt.h> in these four files.
