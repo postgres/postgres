@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.36 1997/12/04 00:28:03 scrappy Exp $
+ * $Id: parsenodes.h,v 1.37 1997/12/04 23:55:52 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,7 +61,7 @@ typedef struct Query
 	/* internal to planner */
 	List	   *base_relation_list_;	/* base relation list */
 	List	   *join_relation_list_;	/* list of relations */
-}			Query;
+} Query;
 
 
 /*****************************************************************************
@@ -82,7 +82,7 @@ typedef struct AddAttrStmt
 	NodeTag		type;
 	char	   *relname;		/* the relation to add attr */
 	bool		inh;			/* add recursively to children? */
-	struct ColumnDef *colDef;	/* the attribute definition */
+	Node	   *colDef;			/* the attribute definition */
 } AddAttrStmt;
 
 /* ----------------------
@@ -95,7 +95,7 @@ typedef struct ChangeACLStmt
 	struct AclItem *aclitem;
 	unsigned	modechg;
 	List	   *relNames;
-}			ChangeACLStmt;
+} ChangeACLStmt;
 
 /* ----------------------
  *		Close Portal Statement
@@ -105,7 +105,7 @@ typedef struct ClosePortalStmt
 {
 	NodeTag		type;
 	char	   *portalname;		/* name of the portal (cursor) */
-}			ClosePortalStmt;
+} ClosePortalStmt;
 
 /* ----------------------
  *		Copy Statement
@@ -120,7 +120,7 @@ typedef struct CopyStmt
 	int			direction;		/* TO or FROM */
 	char	   *filename;		/* if NULL, use stdin/stdout */
 	char	   *delimiter;		/* delimiter character, \t by default */
-}			CopyStmt;
+} CopyStmt;
 
 /* ----------------------
  *		Create Table Statement
@@ -130,23 +130,25 @@ typedef struct CreateStmt
 {
 	NodeTag		type;
 	char	   *relname;		/* the relation to create */
-	List	   *tableElts;		/* column definitions list of ColumnDef */
+	List	   *tableElts;		/* column definitions list of Column */
 	List	   *inhRelnames;	/* relations to inherit from list of Value
 								 * (string) */
 	List	   *constraints;	/* list of constraints (ConstaintDef) */
-}			CreateStmt;
+} CreateStmt;
 
-typedef enum ConstrType
+typedef enum ConstrType			/* type of constaints */
 {
-	CONSTR_NONE, CONSTR_CHECK	/* type of constaints */
-}			ConstrType;
+	CONSTR_NONE, CONSTR_NOTNULL, CONSTR_DEFAULT, CONSTR_CHECK, CONSTR_PRIMARY, CONSTR_UNIQUE
+} ConstrType;
 
-typedef struct ConstraintDef
+typedef struct Constraint
 {
-	ConstrType	type;
+	NodeTag		type;
+	ConstrType	contype;
 	char	   *name;			/* name */
 	void	   *def;			/* definition */
-}			ConstraintDef;
+	void	   *keys;			/* list of primary keys */
+} Constraint;
 
 /* ----------------------
  *		Create/Drop TRIGGER Statements
@@ -167,14 +169,14 @@ typedef struct CreateTrigStmt
 	char	   *text;			/* AS 'text' */
 	List	   *attr;			/* UPDATE OF a, b,... (NI) or NULL */
 	char	   *when;			/* WHEN 'a > 10 ...' (NI) or NULL */
-}			CreateTrigStmt;
+} CreateTrigStmt;
 
 typedef struct DropTrigStmt
 {
 	NodeTag		type;
 	char	   *trigname;		/* TRIGGER' name */
 	char	   *relname;		/* triggered relation */
-}			DropTrigStmt;
+} DropTrigStmt;
 
 
 /* ----------------------
@@ -188,13 +190,13 @@ typedef struct CreatePLangStmt
 	char	   *plhandler;		/* PL call handler function */
 	char	   *plcompiler;		/* lancompiler text */
 	bool		pltrusted;		/* PL is trusted */
-}			CreatePLangStmt;
+} CreatePLangStmt;
 
 typedef struct DropPLangStmt
 {
 	NodeTag		type;
 	char	   *plname;			/* PL name */
-}			DropPLangStmt;
+} DropPLangStmt;
 
 
 /* ----------------------
@@ -231,7 +233,7 @@ typedef struct CreateSeqStmt
 	NodeTag		type;
 	char	   *seqname;		/* the relation to create */
 	List	   *options;
-}			CreateSeqStmt;
+} CreateSeqStmt;
 
 /* ----------------------
  *		Create Version Statement
@@ -244,7 +246,7 @@ typedef struct VersionStmt
 	int			direction;		/* FORWARD | BACKWARD */
 	char	   *fromRelname;	/* relation to create a version */
 	char	   *date;			/* date of the snapshot */
-}			VersionStmt;
+} VersionStmt;
 
 /* ----------------------
  *		Create {Operator|Type|Aggregate} Statement
@@ -256,7 +258,7 @@ typedef struct DefineStmt
 	int			defType;		/* OPERATOR|P_TYPE|AGGREGATE */
 	char	   *defname;
 	List	   *definition;		/* a list of DefElem */
-}			DefineStmt;
+} DefineStmt;
 
 /* ----------------------
  *		Drop Table Statement
@@ -267,7 +269,7 @@ typedef struct DestroyStmt
 	NodeTag		type;
 	List	   *relNames;		/* relations to be dropped */
 	bool		sequence;
-}			DestroyStmt;
+} DestroyStmt;
 
 /* ----------------------
  *		Extend Index Statement
@@ -280,7 +282,7 @@ typedef struct ExtendStmt
 	Node	   *whereClause;	/* qualifications */
 	List	   *rangetable;		/* range table, filled in by
 								 * transformStmt() */
-}			ExtendStmt;
+} ExtendStmt;
 
 /* ----------------------
  *		Begin Recipe Statement
@@ -290,7 +292,7 @@ typedef struct RecipeStmt
 {
 	NodeTag		type;
 	char	   *recipeName;		/* name of the recipe */
-}			RecipeStmt;
+} RecipeStmt;
 
 /* ----------------------
  *		Fetch Statement
@@ -303,7 +305,7 @@ typedef struct FetchStmt
 	int			howMany;		/* amount to fetch ("ALL" --> 0) */
 	char	   *portalname;		/* name of portal (cursor) */
 	bool		ismove;			/* TRUE if MOVE */
-}			FetchStmt;
+} FetchStmt;
 
 /* ----------------------
  *		Create Index Statement
@@ -322,7 +324,7 @@ typedef struct IndexStmt
 								 * transformStmt() */
 	bool	   *lossy;			/* is index lossy? */
 	bool		unique;			/* is index unique? */
-}			IndexStmt;
+} IndexStmt;
 
 /* ----------------------
  *		Create Function Statement
@@ -339,7 +341,7 @@ typedef struct ProcedureStmt
 	List	   *withClause;		/* a list of ParamString */
 	char	   *as;				/* the SQL statement or filename */
 	char	   *language;		/* C or SQL */
-}			ProcedureStmt;
+} ProcedureStmt;
 
 /* ----------------------
  *		Drop Aggregate Statement
@@ -350,7 +352,7 @@ typedef struct RemoveAggrStmt
 	NodeTag		type;
 	char	   *aggname;		/* aggregate to drop */
 	char	   *aggtype;		/* for this type */
-}			RemoveAggrStmt;
+} RemoveAggrStmt;
 
 /* ----------------------
  *		Drop Function Statement
@@ -361,7 +363,7 @@ typedef struct RemoveFuncStmt
 	NodeTag		type;
 	char	   *funcname;		/* function to drop */
 	List	   *args;			/* types of the arguments */
-}			RemoveFuncStmt;
+} RemoveFuncStmt;
 
 /* ----------------------
  *		Drop Operator Statement
@@ -372,7 +374,7 @@ typedef struct RemoveOperStmt
 	NodeTag		type;
 	char	   *opname;			/* operator to drop */
 	List	   *args;			/* types of the arguments */
-}			RemoveOperStmt;
+} RemoveOperStmt;
 
 /* ----------------------
  *		Drop {Type|Index|Rule|View} Statement
@@ -383,7 +385,7 @@ typedef struct RemoveStmt
 	NodeTag		type;
 	int			removeType;		/* P_TYPE|INDEX|RULE|VIEW */
 	char	   *name;			/* name to drop */
-}			RemoveStmt;
+} RemoveStmt;
 
 /* ----------------------
  *		Alter Table Statement
@@ -398,7 +400,7 @@ typedef struct RenameStmt
 								 * the new name. Otherwise, rename this
 								 * column name. */
 	char	   *newname;		/* the new name */
-}			RenameStmt;
+} RenameStmt;
 
 /* ----------------------
  *		Create Rule Statement
@@ -413,7 +415,7 @@ typedef struct RuleStmt
 	struct Attr *object;		/* object affected */
 	bool		instead;		/* is a 'do instead'? */
 	List	   *actions;		/* the action statements */
-}			RuleStmt;
+} RuleStmt;
 
 /* ----------------------
  *		Notify Statement
@@ -423,7 +425,7 @@ typedef struct NotifyStmt
 {
 	NodeTag		type;
 	char	   *relname;		/* relation to notify */
-}			NotifyStmt;
+} NotifyStmt;
 
 /* ----------------------
  *		Listen Statement
@@ -433,7 +435,7 @@ typedef struct ListenStmt
 {
 	NodeTag		type;
 	char	   *relname;		/* relation to listen on */
-}			ListenStmt;
+} ListenStmt;
 
 /* ----------------------
  *		{Begin|Abort|End} Transaction Statement
@@ -443,7 +445,7 @@ typedef struct TransactionStmt
 {
 	NodeTag		type;
 	int			command;		/* BEGIN|END|ABORT */
-}			TransactionStmt;
+} TransactionStmt;
 
 /* ----------------------
  *		Create View Statement
@@ -454,7 +456,7 @@ typedef struct ViewStmt
 	NodeTag		type;
 	char	   *viewname;		/* name of the view */
 	Query	   *query;			/* the SQL statement */
-}			ViewStmt;
+} ViewStmt;
 
 /* ----------------------
  *		Load Statement
@@ -464,7 +466,7 @@ typedef struct LoadStmt
 {
 	NodeTag		type;
 	char	   *filename;		/* file to load */
-}			LoadStmt;
+} LoadStmt;
 
 /* ----------------------
  *		Createdb Statement
@@ -475,7 +477,7 @@ typedef struct CreatedbStmt
 	NodeTag		type;
 	char	   *dbname;			/* database to create */
 	char	   *dbpath;			/* location of database */
-}			CreatedbStmt;
+} CreatedbStmt;
 
 /* ----------------------
  *		Destroydb Statement
@@ -485,7 +487,7 @@ typedef struct DestroydbStmt
 {
 	NodeTag		type;
 	char	   *dbname;			/* database to drop */
-}			DestroydbStmt;
+} DestroydbStmt;
 
 /* ----------------------
  *		Cluster Statement (support pbrown's cluster index implementation)
@@ -496,7 +498,7 @@ typedef struct ClusterStmt
 	NodeTag		type;
 	char	   *relname;		/* relation being indexed */
 	char	   *indexname;		/* original index defined */
-}			ClusterStmt;
+} ClusterStmt;
 
 /* ----------------------
  *		Vacuum Statement
@@ -509,7 +511,7 @@ typedef struct VacuumStmt
 	bool		analyze;		/* analyze data */
 	char	   *vacrel;			/* table to vacuum */
 	List	   *va_spec;		/* columns to analyse */
-}			VacuumStmt;
+} VacuumStmt;
 
 /* ----------------------
  *		Explain Statement
@@ -520,7 +522,7 @@ typedef struct ExplainStmt
 	NodeTag		type;
 	Query	   *query;			/* the query */
 	bool		verbose;		/* print plan info */
-}			ExplainStmt;
+} ExplainStmt;
 
 /* ----------------------
  * Set Statement
@@ -532,7 +534,7 @@ typedef struct VariableSetStmt
 	NodeTag		type;
 	char	   *name;
 	char	   *value;
-}			VariableSetStmt;
+} VariableSetStmt;
 
 /* ----------------------
  * Show Statement
@@ -543,7 +545,7 @@ typedef struct VariableShowStmt
 {
 	NodeTag		type;
 	char	   *name;
-}			VariableShowStmt;
+} VariableShowStmt;
 
 /* ----------------------
  * Reset Statement
@@ -554,7 +556,7 @@ typedef struct VariableResetStmt
 {
 	NodeTag		type;
 	char	   *name;
-}			VariableResetStmt;
+} VariableResetStmt;
 
 
 /*****************************************************************************
@@ -584,7 +586,7 @@ typedef struct DeleteStmt
 	NodeTag		type;
 	char	   *relname;		/* relation to delete from */
 	Node	   *whereClause;	/* qualifications */
-}			DeleteStmt;
+} DeleteStmt;
 
 /* ----------------------
  *		Update Statement
@@ -597,7 +599,7 @@ typedef struct ReplaceStmt
 	List	   *targetList;		/* the target list (of ResTarget) */
 	Node	   *whereClause;	/* qualifications */
 	List	   *fromClause;		/* the from clause */
-}			ReplaceStmt;
+} ReplaceStmt;
 
 /* ----------------------
  *		Create Cursor Statement
@@ -614,7 +616,7 @@ typedef struct CursorStmt
 	Node	   *whereClause;	/* qualifications */
 	List	   *groupClause;	/* group by clause */
 	List	   *sortClause;		/* sort clause (a list of SortGroupBy's) */
-}			CursorStmt;
+} CursorStmt;
 
 /* ----------------------
  *		Select Statement
@@ -632,7 +634,7 @@ typedef struct RetrieveStmt
 	Node	   *havingClause;	/* having conditional-expression */
 	List	   *selectClause;	/* subselect parameters */
 	List	   *sortClause;		/* sort clause (a list of SortGroupBy's) */
-}			RetrieveStmt;
+} RetrieveStmt;
 
 
 /****************************************************************************
@@ -651,7 +653,7 @@ typedef struct SubSelect
 	Node	   *whereClause;	/* qualifications */
 	List	   *groupClause;	/* group by clause */
 	Node	   *havingClause;	/* having conditional-expression */
-}			SubSelect;
+} SubSelect;
 
 /*
  * TypeName - specifies a type in definitions
@@ -664,7 +666,7 @@ typedef struct TypeName
 	bool		setof;			/* is a set? */
 	List	   *arrayBounds;	/* array bounds */
 	int			typlen;			/* length for char() and varchar() */
-}			TypeName;
+} TypeName;
 
 /*
  * ParamNo - specifies a parameter reference
@@ -674,7 +676,7 @@ typedef struct ParamNo
 	NodeTag		type;
 	int			number;			/* the number of the parameter */
 	TypeName   *typename;		/* the typecast */
-}			ParamNo;
+} ParamNo;
 
 /*
  * A_Expr - binary expressions
@@ -725,7 +727,8 @@ typedef struct ColumnDef
 	TypeName   *typename;		/* type of column */
 	bool		is_not_null;	/* flag to NOT NULL constraint */
 	char	   *defval;			/* default value of column */
-}			ColumnDef;
+	List	   *constraints;	/* constraints on column */
+} ColumnDef;
 
 /*
  * Ident -
@@ -741,7 +744,7 @@ typedef struct Ident
 	List	   *indirection;	/* array references */
 	bool		isRel;			/* is a relation - filled in by
 								 * transformExpr() */
-}			Ident;
+} Ident;
 
 /*
  * FuncCall - a function/aggregate invocation
@@ -751,7 +754,7 @@ typedef struct FuncCall
 	NodeTag		type;
 	char	   *funcname;		/* name of function */
 	List	   *args;			/* the arguments (list of exprs) */
-}			FuncCall;
+} FuncCall;
 
 /*
  * A_Indices - array reference or bounds ([lidx:uidx] or [uidx])
@@ -774,7 +777,7 @@ typedef struct ResTarget
 	List	   *indirection;	/* array references */
 	Node	   *val;			/* the value of the result (A_Expr or
 								 * Attr) (or A_Const) */
-}			ResTarget;
+} ResTarget;
 
 /*
  * ParamString - used in with clauses
@@ -784,7 +787,7 @@ typedef struct ParamString
 	NodeTag		type;
 	char	   *name;
 	char	   *val;
-}			ParamString;
+} ParamString;
 
 /*
  * RelExpr - relation expressions
@@ -794,7 +797,7 @@ typedef struct RelExpr
 	NodeTag		type;
 	char	   *relname;		/* the relation name */
 	bool		inh;			/* inheritance query */
-}			RelExpr;
+} RelExpr;
 
 /*
  * SortGroupBy - for order by clause
@@ -806,7 +809,7 @@ typedef struct SortGroupBy
 	char	   *range;
 	char	   *name;			/* name of column to sort on */
 	char	   *useOp;			/* operator to use */
-}			SortGroupBy;
+} SortGroupBy;
 
 /*
  * RangeVar - range variable, used in from clauses
@@ -816,7 +819,7 @@ typedef struct RangeVar
 	NodeTag		type;
 	RelExpr    *relExpr;		/* the relation expression */
 	char	   *name;			/* the name to be referenced (optional) */
-}			RangeVar;
+} RangeVar;
 
 /*
  * IndexElem - index parameters (used in create index)
@@ -828,7 +831,7 @@ typedef struct IndexElem
 	List	   *args;			/* if not NULL, function index */
 	char	   *class;
 	TypeName   *tname;			/* type of index's keys (optional) */
-}			IndexElem;
+} IndexElem;
 
 /*
  * DefElem -
@@ -839,7 +842,7 @@ typedef struct DefElem
 	NodeTag		type;
 	char	   *defname;
 	Node	   *arg;			/* a (Value *) or a (TypeName *) */
-}			DefElem;
+} DefElem;
 
 
 /****************************************************************************
@@ -859,7 +862,7 @@ typedef struct TargetEntry
 	Resdom	   *resdom;			/* fjoin overload this to be a list?? */
 	Fjoin	   *fjoin;
 	Node	   *expr;			/* can be a list too */
-}			TargetEntry;
+} TargetEntry;
 
 /*
  * RangeTblEntry -
@@ -882,7 +885,7 @@ typedef struct RangeTblEntry
 	Oid			relid;
 	bool		inh;			/* inheritance? */
 	bool		inFromCl;		/* comes from From Clause */
-}			RangeTblEntry;
+} RangeTblEntry;
 
 /*
  * SortClause -
@@ -893,7 +896,7 @@ typedef struct SortClause
 	NodeTag		type;
 	Resdom	   *resdom;			/* attributes in tlist to be sorted */
 	Oid			opoid;			/* sort operators */
-}			SortClause;
+} SortClause;
 
 /*
  * GroupClause -
@@ -904,6 +907,6 @@ typedef struct GroupClause
 	NodeTag		type;
 	TargetEntry *entry;			/* attributes to group on */
 	Oid			grpOpoid;		/* the sort operator to use */
-}			GroupClause;
+} GroupClause;
 
 #endif							/* PARSENODES_H */
