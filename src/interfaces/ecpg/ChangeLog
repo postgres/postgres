@@ -985,5 +985,9 @@ Sun Oct 22 15:35:53 CEST 2000
 Wed Oct 25 08:53:07 CEST 2000
 
 	- Added some more C constructs to the parser.
+
+Wed Oct 25 21:22:17 CEST 2000
+
+	- Synced gram.y and preproc.y.
 	- Set ecpg version to 2.8.0. 
 	- Set library version to 3.2.0.

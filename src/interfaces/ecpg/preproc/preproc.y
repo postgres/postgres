@@ -286,7 +286,7 @@ make_name(void)
 %type  <str>	CreateAsElement OptCreateAs CreateAsList CreateAsStmt
 %type  <str>	OptUnder key_reference comment_text ConstraintDeferrabilitySpec
 %type  <str>    key_match ColLabel SpecialRuleRelation ColId columnDef
-%type  <str>    ColConstraint ColConstraintElem
+%type  <str>    ColConstraint ColConstraintElem drop_type
 %type  <str>    OptTableElementList OptTableElement TableConstraint
 %type  <str>    ConstraintElem key_actions ColQualList TokenId DropSchemaStmt
 %type  <str>    target_list target_el update_target_list alias_clause
@@ -321,7 +321,7 @@ make_name(void)
 %type  <str>	RuleActionStmtOrEmpty RuleActionMulti func_as reindex_type
 %type  <str>    RuleStmt opt_column opt_name oper_argtypes sysid_clause
 %type  <str>    MathOp RemoveFuncStmt aggr_argtype for_update_clause
-%type  <str>    RemoveAggrStmt remove_type RemoveStmt ExtendStmt
+%type  <str>    RemoveAggrStmt ExtendStmt
 %type  <str>    RemoveOperStmt RenameStmt all_Op user_valid_clause
 %type  <str>    VariableSetStmt var_value zone_value VariableShowStmt
 %type  <str>    VariableResetStmt AlterTableStmt DropUserStmt from_list
@@ -434,7 +434,6 @@ stmt:  AlterSchemaStmt 			{ output_statement($1, 0, NULL, connection); }
 		| RemoveAggrStmt	{ output_statement($1, 0, NULL, connection); }
 		| RemoveOperStmt	{ output_statement($1, 0, NULL, connection); }
 		| RemoveFuncStmt	{ output_statement($1, 0, NULL, connection); }
-		| RemoveStmt		{ output_statement($1, 0, NULL, connection); }
 		| RenameStmt		{ output_statement($1, 0, NULL, connection); }
 		| RevokeStmt		{ output_statement($1, 0, NULL, connection); }
                 | OptimizableStmt	{
@@ -1553,19 +1552,24 @@ def_arg:  func_return		{  $$ = $1; }
 /*****************************************************************************
  *
  *		QUERY:
- *				drop <relname1> [, <relname2> .. <relnameN> ]
+ *
+ *             DROP itemtype itemname [, itemname ...]       
  *
  *****************************************************************************/
 
-DropStmt:  DROP TABLE relation_name_list
+DropStmt:  DROP drop_type relation_name_list
 				{
-					$$ = cat2_str(make_str("drop table"), $3);
-				}
-		| DROP SEQUENCE relation_name_list
-				{
-					$$ = cat2_str(make_str("drop sequence"), $3);
+					$$ = cat_str(3, make_str("drop"), $2, $3);
 				}
 		;
+
+drop_type:	TABLE		{ $$ = make_str("table"); }
+	|	SEQUENCE	{ $$ = make_str("sequence"); }
+	|	VIEW		{ $$ = make_str("view"); }
+	|	INDEX		{ $$ = make_str("index"); }
+	|	RULE		{ $$ = make_str("rule"); }
+	|	TYPE_P		{ $$ = make_str("type"); }
+	;
 
 /*****************************************************************************
  *
@@ -1985,31 +1989,17 @@ func_return:  Typename
  *
  *		QUERY:
  *
- *		remove function <funcname>
- *				(REMOVE FUNCTION "funcname" (arg1, arg2, ...))
- *		remove aggregate <aggname>
- *				(REMOVE AGGREGATE "aggname" "aggtype")
- *		remove operator <opname>
- *				(REMOVE OPERATOR "opname" (leftoperand_typ rightoperand_typ))
- *		remove type <typename>
- *				(REMOVE TYPE "typename")
- *		remove rule <rulename>
- *				(REMOVE RULE "rulename")
+ *             DROP FUNCTION funcname (arg1, arg2, ...)
+ *             DROP AGGREGATE aggname aggtype
+ *             DROP OPERATOR opname (leftoperand_typ rightoperand_typ) 
  *
  *****************************************************************************/
 
-RemoveStmt:  DROP remove_type name
+RemoveFuncStmt:  DROP FUNCTION func_name func_args   
 				{
-					$$ = cat_str(3, make_str("drop"), $2, $3);
+					$$ = cat_str(3, make_str("drop function"), $3, $4);
 				}
 		;
-
-remove_type:  TYPE_P		{  $$ = make_str("type"); }
-		| INDEX		{  $$ = make_str("index"); }
-		| RULE		{  $$ = make_str("rule"); }
-		| VIEW		{  $$ = make_str("view"); }
-		;
-
 
 RemoveAggrStmt:  DROP AGGREGATE name aggr_argtype
 				{
@@ -2019,13 +2009,6 @@ RemoveAggrStmt:  DROP AGGREGATE name aggr_argtype
 
 aggr_argtype:  Typename			{ $$ = $1; }
 		| '*'			{ $$ = make_str("*"); }
-		;
-
-
-RemoveFuncStmt:  DROP FUNCTION func_name func_args
-				{
-						$$ = cat_str(3, make_str("drop function"), $3, $4);
-				}
 		;
 
 
