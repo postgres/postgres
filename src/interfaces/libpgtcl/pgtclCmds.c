@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.35 1998/09/21 01:02:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.36 1998/10/01 01:45:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -508,7 +508,6 @@ int
 Pg_result(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 {
 	PGresult   *result;
-	PGconn	   *conn;
 	char	   *opt;
 	int			i;
 	int			tupno;
@@ -538,24 +537,8 @@ Pg_result(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 	}
 	else if (strcmp(opt, "-error") == 0)
 	{
-		switch (PQresultStatus(result)) {
-			case PGRES_EMPTY_QUERY:
-			case PGRES_COMMAND_OK:
-			case PGRES_TUPLES_OK:
-			case PGRES_COPY_OUT:
-			case PGRES_COPY_IN:
-				Tcl_ResetResult(interp);
-				break;
-			default:
-				if (PgGetConnByResultId(interp, argv[1]) != TCL_OK)
-					return TCL_ERROR;
-				conn = PgGetConnectionId(interp, interp->result,
-										 (Pg_ConnectionId **) NULL);
-				if (conn == (PGconn *) NULL)
-					return TCL_ERROR;
-				Tcl_SetResult(interp, PQerrorMessage(conn), TCL_VOLATILE);
-				break;
-		}
+		Tcl_SetResult(interp, (char*) PQresultErrorMessage(result),
+					  TCL_STATIC);
 		return TCL_OK;
 	}
 	else if (strcmp(opt, "-conn") == 0)
@@ -1270,7 +1253,7 @@ Pg_select(ClientData cData, Tcl_Interp * interp, int argc, char **argv)
 
 	if ((result = PQexec(conn, argv[2])) == 0)
 	{
-		/* error occurred during the query */
+		/* error occurred sending the query */
 		Tcl_SetResult(interp, PQerrorMessage(conn), TCL_VOLATILE);
 		return TCL_ERROR;
 	}
@@ -1278,9 +1261,19 @@ Pg_select(ClientData cData, Tcl_Interp * interp, int argc, char **argv)
 	/* Transfer any notify events from libpq to Tcl event queue. */
 	PgNotifyTransferEvents(connid);
 
+	if (PQresultStatus(result) != PGRES_TUPLES_OK)
+	{
+		/* query failed, or it wasn't SELECT */
+		Tcl_SetResult(interp, (char*) PQresultErrorMessage(result),
+					  TCL_VOLATILE);
+		PQclear(result);
+		return TCL_ERROR;
+	}
+
 	if ((info = (struct info_s *) ckalloc(sizeof(*info) * (ncols = PQnfields(result)))) == NULL)
 	{
 		Tcl_AppendResult(interp, "Not enough memory", 0);
+		PQclear(result);
 		return TCL_ERROR;
 	}
 
@@ -1311,7 +1304,10 @@ Pg_select(ClientData cData, Tcl_Interp * interp, int argc, char **argv)
 		if ((r = Tcl_Eval(interp, argv[4])) != TCL_OK && r != TCL_CONTINUE)
 		{
 			if (r == TCL_BREAK)
+			{
+				PQclear(result);
 				return TCL_OK;
+			}
 
 			if (r == TCL_ERROR)
 			{
@@ -1322,13 +1318,14 @@ Pg_select(ClientData cData, Tcl_Interp * interp, int argc, char **argv)
 				Tcl_AddErrorInfo(interp, msg);
 			}
 
+			PQclear(result);
 			return r;
 		}
 	}
 
 	ckfree((void *) info);
 	Tcl_UnsetVar(interp, argv[3], 0);
-	Tcl_AppendResult(interp, "", 0);
+	PQclear(result);
 	return TCL_OK;
 }
 
@@ -1352,7 +1349,7 @@ Pg_have_listener (Pg_ConnectionId *connid, const char * relname)
 		if (interp == NULL)
 			continue;			/* ignore deleted interpreter */
 
-		entry = Tcl_FindHashEntry(&notifies->notify_hash, relname);
+		entry = Tcl_FindHashEntry(&notifies->notify_hash, (char*) relname);
 		if (entry == NULL)
 			continue;			/* no pg_listen in this interpreter */
 
