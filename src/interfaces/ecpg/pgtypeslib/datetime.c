@@ -87,7 +87,7 @@ PGTYPESdate_to_asc(Date dDate)
 {
 	struct tm       tt, *tm = &tt;
 	char            buf[MAXDATELEN + 1];
-	int DateStyle=0;
+	int DateStyle=1;
 	bool		EuroDates = FALSE;
 						   
 	j2date((dDate + date2j(2000, 1, 1)), &(tm->tm_year), &(tm->tm_mon), &(tm->tm_mday));

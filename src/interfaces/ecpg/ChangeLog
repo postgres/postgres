@@ -1546,6 +1546,10 @@ Wed Jul  2 09:45:59 CEST 2003
 
 	- Fixed initialization bug in compatlib.
 	- Added postgres_fe.h to all files in pgtypeslib.
+	
+Fri Jul  4 13:51:11 CEST 2003
+
+	- date, interval and timestamp data should be quoted. 
 	- Set ecpg version to 3.0.0
 	- Set ecpg library to 4.0.0
 	- Set pgtypes library to 1.0.0

@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.15 2003/07/04 11:30:48 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.16 2003/07/04 12:00:52 meskes Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -885,7 +885,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 					{
 						for (element = 0; element < var->arrsize; element++)
 						{
-							str = PGTYPESinterval_to_asc((Interval *)((var + var->offset * element)->value));
+							str = quote_postgres(PGTYPESinterval_to_asc((Interval *)((var + var->offset * element)->value)), stmt->lineno);
 							slen = strlen (str);
 							
 							if (!(mallocedval = ECPGrealloc(mallocedval, strlen(mallocedval) + slen + 5, stmt->lineno)))
@@ -901,7 +901,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 					}
 					else
 					{
-						str = PGTYPESinterval_to_asc((Interval *)(var->value));
+						str = quote_postgres(PGTYPESinterval_to_asc((Interval *)(var->value)), stmt->lineno);
 						slen = strlen (str);
 					
 						if (!(mallocedval = ECPGalloc(slen + 1, stmt->lineno)))
@@ -926,7 +926,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 					{
 						for (element = 0; element < var->arrsize; element++)
 						{
-							str = PGTYPESdate_to_asc(*(Date *)((var + var->offset * element)->value));
+							str = quote_postgres(PGTYPESdate_to_asc(*(Date *)((var + var->offset * element)->value)), stmt->lineno);
 							slen = strlen (str);
 							
 							if (!(mallocedval = ECPGrealloc(mallocedval, strlen(mallocedval) + slen + 5, stmt->lineno)))
@@ -942,7 +942,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 					}
 					else
 					{
-						str = PGTYPESdate_to_asc(*(Date *)(var->value));
+						str = quote_postgres(PGTYPESdate_to_asc(*(Date *)(var->value)), stmt->lineno);
 						slen = strlen (str);
 					
 						if (!(mallocedval = ECPGalloc(slen + 1, stmt->lineno)))
@@ -967,7 +967,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 					{
 						for (element = 0; element < var->arrsize; element++)
 						{
-							str = PGTYPEStimestamp_to_asc(*(Timestamp *)((var + var->offset * element)->value));
+							str = quote_postgres(PGTYPEStimestamp_to_asc(*(Timestamp *)((var + var->offset * element)->value)), stmt->lineno);
 							slen = strlen (str);
 							
 							if (!(mallocedval = ECPGrealloc(mallocedval, strlen(mallocedval) + slen + 5, stmt->lineno)))
@@ -983,7 +983,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 					}
 					else
 					{
-						str = PGTYPEStimestamp_to_asc(*(Timestamp *)(var->value));
+						str = quote_postgres(PGTYPEStimestamp_to_asc(*(Timestamp *)(var->value)), stmt->lineno);
 						slen = strlen (str);
 					
 						if (!(mallocedval = ECPGalloc(slen + 1, stmt->lineno)))
