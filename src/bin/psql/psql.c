@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.131 1998/01/28 20:44:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.132 1998/02/06 17:46:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -308,7 +308,7 @@ int
 tableList(PsqlSettings *pset, bool deep_tablelist, char info_type,
 	bool system_tables)
 {
-	char		listbuf[256];
+	char		listbuf[512];
 	int			nColumns;
 	int			i;
 	char	   *rk;
@@ -436,7 +436,7 @@ tableList(PsqlSettings *pset, bool deep_tablelist, char info_type,
 			pclose(fout);
 			pqsignal(SIGPIPE, SIG_DFL);
 		}
-		return (0);
+		return 0;
 
 	}
 	else
@@ -458,7 +458,7 @@ tableList(PsqlSettings *pset, bool deep_tablelist, char info_type,
 				fprintf(stderr, "Couldn't find any tables, sequences or indices!\n");
 				break;
 		}
-		return (-1);
+		return -1;
 	}
 }
 
@@ -469,7 +469,7 @@ tableList(PsqlSettings *pset, bool deep_tablelist, char info_type,
 int
 rightsList(PsqlSettings *pset)
 {
-	char		listbuf[256];
+	char		listbuf[512];
 	int			nColumns;
 	int			i;
 	int			usePipe = 0;
@@ -537,12 +537,12 @@ rightsList(PsqlSettings *pset)
 			pclose(fout);
 			pqsignal(SIGPIPE, SIG_DFL);
 		}
-		return (0);
+		return 0;
 	}
 	else
 	{
 		fprintf(stderr, "Couldn't find any tables!\n");
-		return (-1);
+		return -1;
 	}
 }
 
@@ -556,7 +556,7 @@ rightsList(PsqlSettings *pset)
 int
 tableDesc(PsqlSettings *pset, char *table, FILE *fout)
 {
-	char		descbuf[256];
+	char		descbuf[512];
 	int			nColumns;
 	char	   *rtype;
 	char	   *rnotnull;
@@ -700,20 +700,18 @@ tableDesc(PsqlSettings *pset, char *table, FILE *fout)
 			fprintf(fout,"\n");
 		}
 		fprintf(fout,"+----------------------------------+----------------------------------+-------+\n");
-
 		PQclear(res);
 		if (usePipe)
 		{
 			pclose(fout);
 			pqsignal(SIGPIPE, SIG_DFL);
 		}
-		return (0);
-
+		return 0;
 	}
 	else
 	{
 		fprintf(stderr, "Couldn't find table %s!\n", table);
-		return (-1);
+		return -1;
 	}
 }
 
@@ -727,7 +725,7 @@ tableDesc(PsqlSettings *pset, char *table, FILE *fout)
 int
 objectDescription(PsqlSettings *pset, char *object, FILE *fout)
 {
-	char		descbuf[256];
+	char		descbuf[512];
 	int			nDescriptions;
 	int			i;
 	PGresult   *res;
@@ -886,13 +884,13 @@ objectDescription(PsqlSettings *pset, char *object, FILE *fout)
 			pclose(fout);
 			pqsignal(SIGPIPE, SIG_DFL);
 		}
-		return (0);
+		return 0;
 
 	}
 	else
 	{
 		fprintf(stderr, "Couldn't find comments for object %s!\n", object);
-		return (-1);
+		return -1;
 	}
 }
 
@@ -907,7 +905,7 @@ gets_noreadline(char *prompt, FILE *source)
 {
 	fputs(prompt, stdout);
 	fflush(stdout);
-	return (gets_fromFile(prompt, stdin));
+	return gets_fromFile(prompt, stdin);
 }
 
 /*
