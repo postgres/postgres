@@ -2121,7 +2121,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 						     "ic.relname AS COLUMN_NAME," +
 						     "'1' as KEY_SEQ,"+ // -- fake it as a String for now
 						     "t.typname as PK_NAME " +
-						     " FROM pg_class bc, pg_class ic, pg_index i, pg_attribute a " +
+						     " FROM pg_class bc, pg_class ic, pg_index i, pg_attribute a, pg_type t " +
 						     " WHERE relkind = 'r' " + //    -- not indices
 						     "  and bc.relname ~ '"+table+"'" +
 						     "  and i.indrelid = bc.oid" +

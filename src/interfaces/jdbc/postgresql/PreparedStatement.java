@@ -470,14 +470,19 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 			case Types.VARCHAR:
 			case Types.LONGVARCHAR:
 				setString(parameterIndex, x.toString());
+				break;
 			case Types.DATE:
 				setDate(parameterIndex, (java.sql.Date)x);
+				break;
 			case Types.TIME:
 				setTime(parameterIndex, (Time)x);
+				break;
 			case Types.TIMESTAMP:
 				setTimestamp(parameterIndex, (Timestamp)x);
+				break;
 			case Types.OTHER:
 				setString(parameterIndex, ((PGobject)x).getValue());
+				break;
 			default:
 				throw new SQLException("Unknown Types value");
 		}
