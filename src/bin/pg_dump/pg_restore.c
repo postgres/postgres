@@ -34,7 +34,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_restore.c,v 1.27 2001/10/25 05:49:53 momjian Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_restore.c,v 1.28 2001/11/04 04:05:36 pjw Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *
@@ -66,6 +66,9 @@
 #ifdef HAVE_TERMIOS_H
 #include <termios.h>
 #endif
+
+/* FreeBSD 4.3 seems to put getopt in unistd.h */
+#include <unistd.h>
 
 #ifdef HAVE_GETOPT_H
 #include <getopt.h>

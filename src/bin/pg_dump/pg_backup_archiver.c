@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.35 2001/10/25 05:49:52 momjian Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.36 2001/11/04 04:05:36 pjw Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *
@@ -57,6 +57,11 @@
  *	  - Make allowance for data entries that did not have a data dumper
  *		routine (eg. SEQUENCE SET)
  *
+ * Modifications - 01-Nov-2001 - pjw@rhyme.com.au
+ *	  - Fix handling of {data/schema}-only restores when using a full
+ *      backup file; prior version was restoring schema in data-only
+ *		restores. Added enum to make code easier to understand.
+ *
  *-------------------------------------------------------------------------
  */
 
@@ -70,6 +75,12 @@
 #include "pqexpbuffer.h"
 #include "libpq/libpq-fs.h"
 
+typedef enum _teReqs_ {
+	REQ_SCHEMA = 1,
+    REQ_DATA = 2,
+    REQ_ALL = REQ_SCHEMA + REQ_DATA
+} teReqs;
+
 static void _SortToc(ArchiveHandle *AH, TocSortCompareFn fn);
 static int	_tocSortCompareByOIDNum(const void *p1, const void *p2);
 static int	_tocSortCompareByIDNum(const void *p1, const void *p2);
@@ -80,7 +91,7 @@ static int	_printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt,
 static void _reconnectAsOwner(ArchiveHandle *AH, const char *dbname, TocEntry *te);
 static void _reconnectAsUser(ArchiveHandle *AH, const char *dbname, const char *user);
 
-static int	_tocEntryRequired(TocEntry *te, RestoreOptions *ropt);
+static teReqs	_tocEntryRequired(TocEntry *te, RestoreOptions *ropt);
 static void _disableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt);
 static void _enableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt);
 static TocEntry *_getTocEntry(ArchiveHandle *AH, int id);
@@ -155,7 +166,7 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 {
 	ArchiveHandle *AH = (ArchiveHandle *) AHX;
 	TocEntry   *te = AH->toc->next;
-	int			reqs;
+	teReqs		reqs;
 	OutputContext sav;
 	int			impliedDataOnly;
 	bool		defnDumped;
@@ -221,7 +232,7 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 		while (te != AH->toc)
 		{
 			reqs = _tocEntryRequired(te, ropt);
-			if ((reqs & 1) != 0)
+			if ((reqs & REQ_SCHEMA) != 0)
 			{					/* It's schema, and it's wanted */
 				impliedDataOnly = 0;
 				break;
@@ -258,7 +269,7 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 		while (te != AH->toc)
 		{
 			reqs = _tocEntryRequired(te, ropt);
-			if (((reqs & 1) != 0) && te->dropStmt)
+			if (((reqs & REQ_SCHEMA) != 0) && te->dropStmt)
 			{
 				/* We want the schema */
 				ahlog(AH, 1, "dropping %s %s\n", te->desc, te->name);
@@ -292,7 +303,7 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 
 		defnDumped = false;
 
-		if ((reqs & 1) != 0)	/* We want the schema */
+		if ((reqs & REQ_SCHEMA) != 0)	/* We want the schema */
 		{
 			/* Reconnect if necessary */
 			_reconnectAsOwner(AH, NULL, te);
@@ -312,7 +323,7 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 		/*
 		 * If we have a data component, then process it
 		 */
-		if ((reqs & 2) != 0)
+		if ((reqs & REQ_DATA) != 0)
 		{
 			/*
 			 * hadDumper will be set if there is genuine data component
@@ -325,7 +336,7 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 				/*
 				 * If we can output the data, then restore it.
 				 */
-				if (AH->PrintTocDataPtr !=NULL && (reqs & 2) != 0)
+				if (AH->PrintTocDataPtr !=NULL && (reqs & REQ_DATA) != 0)
 				{
 #ifndef HAVE_LIBZ
 					if (AH->compression != 0)
@@ -415,7 +426,7 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 
 				reqs = _tocEntryRequired(te, ropt);
 
-				if ((reqs & 2) != 0)	/* We loaded the data */
+				if ((reqs & REQ_DATA) != 0)	/* We loaded the data */
 				{
 					ahlog(AH, 1, "fixing up large object cross-reference for %s\n", te->name);
 					FixupBlobRefs(AH, te->name);
@@ -1840,10 +1851,10 @@ ReadToc(ArchiveHandle *AH)
 	}
 }
 
-static int
+static teReqs
 _tocEntryRequired(TocEntry *te, RestoreOptions *ropt)
 {
-	int			res = 3;		/* Schema = 1, Data = 2, Both = 3 */
+	teReqs			res = 3;		/* Schema = 1, Data = 2, Both = 3 */
 
 	/* If it's an ACL, maybe ignore it */
 	if (ropt->aclsSkip && strcmp(te->desc, "ACL") == 0)
@@ -1887,21 +1898,27 @@ _tocEntryRequired(TocEntry *te, RestoreOptions *ropt)
 			return 0;
 	}
 
-	/* Special Case: If 'SEQUENCE SET' then it is considered a data entry */
-	if (strcmp(te->desc, "SEQUENCE SET") == 0)
-		res = res & 2;
+	/* Check if we had a dataDumper. Indicates if the entry is schema or data */
+    if (!te->hadDumper) {
+	    /* Special Case: If 'SEQUENCE SET' then it is considered a data entry */
+	    if (strcmp(te->desc, "SEQUENCE SET") == 0) {
+		    res = res & REQ_DATA;
+		} else {
+			res = res & ~REQ_DATA;
+		}
+	}
 
 	/* Mask it if we only want schema */
 	if (ropt->schemaOnly)
-		res = res & 1;
+		res = res & REQ_SCHEMA;
 
 	/* Mask it we only want data */
 	if (ropt->dataOnly)
-		res = res & 2;
+		res = res & REQ_DATA;
 
 	/* Mask it if we don't have a schema contribition */
 	if (!te->defn || strlen(te->defn) == 0)
-		res = res & 2;
+		res = res & ~REQ_SCHEMA;
 
 	/* Finally, if we used a list, limit based on that as well */
 	if (ropt->limitToList && !ropt->idWanted[te->id - 1])
