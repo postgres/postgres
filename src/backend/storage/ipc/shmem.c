@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.38 1999/03/28 20:32:22 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.39 1999/04/02 04:51:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -737,5 +737,4 @@ GetXmaxRecent(TransactionId *XmaxRecent)
 
 	SpinRelease(ShmemIndexLock);
 	elog(ERROR, "GetXmaxRecent: ShmemIndex corrupted");
-	return NULL;
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.97 1999/03/28 20:32:01 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.98 1999/04/02 04:51:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,7 +66,6 @@ static Portal vc_portal;
 static int	MESSAGE_LEVEL;		/* message level */
 
 static TransactionId	XmaxRecent;
-extern void		GetXmaxRecent(TransactionId *xid);
 
 #define swapLong(a,b)	{long tmp; tmp=a; a=b; b=tmp;}
 #define swapInt(a,b)	{int tmp; tmp=a; a=b; b=tmp;}
@@ -2421,16 +2420,16 @@ vc_find_eq(void *bot, int nelem, int size, void *elm,
 		}
 		if (last_move == true)
 		{
-			res = compar(elm, bot + last * size);
+			res = compar(elm, (void *)((char *)bot + last * size));
 			if (res > 0)
 				return NULL;
 			if (res == 0)
-				return bot + last * size;
+				return (void *)((char *)bot + last * size);
 			last_move = false;
 		}
-		res = compar(elm, bot + celm * size);
+		res = compar(elm, (void *)((char *)bot + celm * size));
 		if (res == 0)
-			return bot + celm * size;
+			return (void *)((char *)bot + celm * size);
 		if (res < 0)
 		{
 			if (celm == 0)
@@ -2445,7 +2444,7 @@ vc_find_eq(void *bot, int nelem, int size, void *elm,
 			return NULL;
 
 		last = last - celm - 1;
-		bot = bot + (celm + 1) * size;
+		bot = (void *)((char *)bot + (celm + 1) * size);
 		celm = (last + 1) / 2;
 		first_move = true;
 	}

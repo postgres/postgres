@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: shmem.h,v 1.15 1999/02/13 23:22:10 momjian Exp $
+ * $Id: shmem.h,v 1.16 1999/04/02 04:51:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,6 +71,7 @@ extern SHMEM_OFFSET ShmemPIDDestroy(int pid);
 extern long *ShmemInitStruct(char *name, unsigned long size,
 				bool *foundPtr);
 extern bool TransactionIdIsInProgress(TransactionId xid);
+extern void	GetXmaxRecent(TransactionId *XmaxRecent);
 
 
 typedef int TableID;
