@@ -16,7 +16,7 @@
  *	use header files that are otherwise internal to Postgres to interface
  *	with the backend.
  *
- * $Id: postgres_ext.h,v 1.4 1999/06/04 21:12:07 tgl Exp $
+ * $Id: postgres_ext.h,v 1.5 2000/12/22 21:36:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,9 +24,17 @@
 #ifndef POSTGRES_EXT_H
 #define POSTGRES_EXT_H
 
+/*
+ * Object ID is a fundamental type in Postgres.
+ */
 typedef unsigned int Oid;
 
-/* NAMEDATALEN is the max length for system identifiers (e.g. table names,
+#define OID_MAX  UINT_MAX
+/* you will need to include <limits.h> to use the above #define */
+
+
+/*
+ * NAMEDATALEN is the max length for system identifiers (e.g. table names,
  * attribute names, function names, etc.)
  *
  * NOTE that databases with different NAMEDATALEN's cannot interoperate!

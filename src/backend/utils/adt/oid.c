@@ -1,14 +1,14 @@
 /*-------------------------------------------------------------------------
  *
  * oid.c
- *	  Functions for the built-in type Oid.
+ *	  Functions for the built-in type Oid ... also oidvector.
  *
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/oid.c,v 1.41 2000/12/03 20:45:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/oid.c,v 1.42 2000/12/22 21:36:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,12 +16,92 @@
 
 #include <ctype.h>
 #include <errno.h>
+#include <limits.h>
 
 #include "utils/builtins.h"
 
 /*****************************************************************************
  *	 USER I/O ROUTINES														 *
  *****************************************************************************/
+
+static Oid
+oidin_subr(const char *funcname, const char *s, char **endloc)
+{
+	unsigned long cvt;
+	char	   *endptr;
+	Oid			result;
+
+	errno = 0;
+
+	cvt = strtoul(s, &endptr, 10);
+
+	/*
+	 * strtoul() normally only sets ERANGE.  On some systems it also
+	 * may set EINVAL, which simply means it couldn't parse the
+	 * input string.  This is handled by the second "if" consistent
+	 * across platforms.  Note that for historical reasons we accept
+	 * an empty string as meaning 0.
+	 */
+	if (errno && errno != EINVAL)
+		elog(ERROR, "%s: error reading \"%s\": %m",
+			 funcname, s);
+	if (endptr == s && *endptr)
+		elog(ERROR, "%s: error in \"%s\": can't parse \"%s\"",
+			 funcname, s, endptr);
+
+	if (endloc)
+	{
+		/* caller wants to deal with rest of string */
+		*endloc = endptr;
+	}
+	else
+	{
+		/* allow only whitespace after number */
+		while (*endptr && isspace((unsigned char) *endptr))
+			endptr++;
+		if (*endptr)
+			elog(ERROR, "%s: error in \"%s\": can't parse \"%s\"",
+				 funcname, s, endptr);
+	}
+
+	result = (Oid) cvt;
+
+	/*
+	 * Cope with possibility that unsigned long is wider than Oid.
+	 *
+	 * To ensure consistent results on 32-bit and 64-bit platforms,
+	 * make sure the error message is the same as if strtoul() had
+	 * returned ERANGE.
+	 */
+#if OID_MAX < ULONG_MAX
+	if (cvt > (unsigned long) OID_MAX)
+		elog(ERROR, "%s: error reading \"%s\": %s",
+			 funcname, s, strerror(ERANGE));
+#endif
+
+	return result;
+}
+
+Datum
+oidin(PG_FUNCTION_ARGS)
+{
+	char	   *s = PG_GETARG_CSTRING(0);
+	Oid			result;
+
+	result = oidin_subr("oidin", s, NULL);
+	PG_RETURN_OID(result);
+}
+
+Datum
+oidout(PG_FUNCTION_ARGS)
+{
+	Oid			o = PG_GETARG_OID(0);
+	char	   *result = (char *) palloc(12);
+
+	snprintf(result, 12, "%u", o);
+	PG_RETURN_CSTRING(result);
+}
+
 
 /*
  *		oidvectorin			- converts "num num ..." to internal form
@@ -38,14 +118,13 @@ oidvectorin(PG_FUNCTION_ARGS)
 
 	result = (Oid *) palloc(sizeof(Oid[INDEX_MAX_KEYS]));
 
-	for (slot = 0; *oidString && slot < INDEX_MAX_KEYS; slot++)
+	for (slot = 0; slot < INDEX_MAX_KEYS; slot++)
 	{
-		if (sscanf(oidString, "%u", &result[slot]) != 1)
-			break;
 		while (*oidString && isspace((unsigned char) *oidString))
 			oidString++;
-		while (*oidString && isdigit((unsigned char) *oidString))
-			oidString++;
+		if (*oidString == '\0')
+			break;
+		result[slot] = oidin_subr("oidvectorin", oidString, &oidString);
 	}
 	while (*oidString && isspace((unsigned char) *oidString))
 		oidString++;
@@ -85,49 +164,6 @@ oidvectorout(PG_FUNCTION_ARGS)
 			;
 	}
 	*rp = '\0';
-	PG_RETURN_CSTRING(result);
-}
-
-Datum
-oidin(PG_FUNCTION_ARGS)
-{
-	char	   *s = PG_GETARG_CSTRING(0);
-	unsigned long cvt;
-	char	   *endptr;
-	Oid			result;
-
-	errno = 0;
-
-	cvt = strtoul(s, &endptr, 10);
-
-	/*
-	 * strtoul() normally only sets ERANGE.  On some systems it also
-	 * may set EINVAL, which simply means it couldn't parse the
-	 * input string.  This is handled by the second "if" consistent
-	 * across platforms.
-	 */
-	if (errno && errno != EINVAL)
-		elog(ERROR, "oidin: error reading \"%s\": %m", s);
-	if (endptr && *endptr)
-		elog(ERROR, "oidin: error in \"%s\": can't parse \"%s\"", s, endptr);
-
-	/*
-	 * Cope with possibility that unsigned long is wider than Oid.
-	 */
-	result = (Oid) cvt;
-	if ((unsigned long) result != cvt)
-		elog(ERROR, "oidin: error reading \"%s\": value too large", s);
-
-	return ObjectIdGetDatum(result);
-}
-
-Datum
-oidout(PG_FUNCTION_ARGS)
-{
-	Oid			o = PG_GETARG_OID(0);
-	char	   *result = (char *) palloc(12);
-
-	snprintf(result, 12, "%u", o);
 	PG_RETURN_CSTRING(result);
 }
 
@@ -294,8 +330,8 @@ text_oid(PG_FUNCTION_ARGS)
 	memcpy(str, VARDATA(string), len);
 	*(str + len) = '\0';
 
-	result = DatumGetObjectId(DirectFunctionCall1(oidin,
-												  CStringGetDatum(str)));
+	result = oidin_subr("text_oid", str, NULL);
+
 	pfree(str);
 
 	PG_RETURN_OID(result);
