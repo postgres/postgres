@@ -116,3 +116,68 @@ insert into dup17 values (13);
 select count(*) from dup17 where x = 13;
 
 DROP TABLE dup17;
+
+create sequence ttdummy_seq increment 10 start 0 minvalue 0;
+
+create table tttest (
+	price_id	int4, 
+	price_val	int4, 
+	price_on	int4 default nextval('ttdummy_seq'),
+	price_off	int4 default 999999
+);
+
+insert into tttest values (1, 1, null, null);
+insert into tttest values (2, 2, null, null);
+insert into tttest values (3, 3, null, null);
+
+create trigger ttdummy 
+	before delete or update on tttest
+	for each row 
+	execute procedure 
+	ttdummy (price_on, price_off);
+
+select * from tttest;
+delete from tttest where price_id = 2;
+select * from tttest;
+-- what do we see ?
+
+-- get current prices
+select * from tttest where price_off = 999999;
+
+-- change price for price_id == 3
+update tttest set price_val = 30 where price_id = 3;
+select * from tttest;
+
+-- now we want to change pric_id in ALL tuples
+-- this gets us not what we need
+update tttest set price_id = 5 where price_id = 3;
+select * from tttest;
+
+-- restore data as before last update:
+select set_ttdummy(0);
+delete from tttest where price_id = 5;
+update tttest set price_off = 999999 where price_val = 30;
+select * from tttest;
+
+-- and try change price_id now!
+update tttest set price_id = 5 where price_id = 3;
+select * from tttest;
+-- isn't it what we need ?
+
+select set_ttdummy(1);
+
+-- we want to correct some "date"
+update tttest set price_on = -1 where price_id = 1;
+-- but this doesn't work
+
+-- try in this way
+select set_ttdummy(0);
+update tttest set price_on = -1 where price_id = 1;
+select * from tttest;
+-- isn't it what we need ?
+
+-- get price for price_id == 5 as it was @ "date" 25
+select * from tttest where price_on <= 25 and price_off > 25 and price_id = 5;
+
+drop table tttest;
+drop sequence ttdummy_seq;

@@ -9,16 +9,26 @@ QUERY: CREATE FUNCTION widget_out(opaque)
    LANGUAGE 'c';
 QUERY: CREATE FUNCTION check_primary_key ()
 	RETURNS opaque
-	AS '_OBJWD_/../../../contrib/spi/refint.so'
+	AS '_OBJWD_/../../../contrib/spi/refint_DLSUFFIX_'
 	LANGUAGE 'c'
 ;
 QUERY: CREATE FUNCTION check_foreign_key ()
 	RETURNS opaque
-	AS '_OBJWD_/../../../contrib/spi/refint.so'
+	AS '_OBJWD_/../../../contrib/spi/refint_DLSUFFIX_'
 	LANGUAGE 'c'
 ;
 QUERY: CREATE FUNCTION funny_dup17 ()
         RETURNS opaque
-        AS '_OBJWD_/regress.so'
+        AS '_OBJWD_/regress_DLSUFFIX_'
+        LANGUAGE 'c'
+;
+QUERY: CREATE FUNCTION ttdummy ()
+        RETURNS opaque
+        AS '_OBJWD_/regress_DLSUFFIX_'
+        LANGUAGE 'c'
+;
+QUERY: CREATE FUNCTION set_ttdummy (int4)
+        RETURNS int4
+        AS '_OBJWD_/regress_DLSUFFIX_'
         LANGUAGE 'c'
 ;

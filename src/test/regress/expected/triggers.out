@@ -159,3 +159,122 @@ count
 (1 row)
 
 QUERY: DROP TABLE dup17;
+QUERY: create sequence ttdummy_seq increment 10 start 0 minvalue 0;
+QUERY: create table tttest (
+	price_id	int4,
+	price_val	int4,
+	price_on	int4 default nextval('ttdummy_seq'),
+	price_off	int4 default 999999
+);
+QUERY: insert into tttest values (1, 1, null, null);
+QUERY: insert into tttest values (2, 2, null, null);
+QUERY: insert into tttest values (3, 3, null, null);
+QUERY: create trigger ttdummy
+	before delete or update on tttest
+	for each row
+	execute procedure
+	ttdummy (price_on, price_off);
+QUERY: select * from tttest;
+price_id|price_val|price_on|price_off
+--------+---------+--------+---------
+       1|        1|       0|   999999
+       2|        2|      10|   999999
+       3|        3|      20|   999999
+(3 rows)
+
+QUERY: delete from tttest where price_id = 2;
+QUERY: select * from tttest;
+price_id|price_val|price_on|price_off
+--------+---------+--------+---------
+       1|        1|       0|   999999
+       3|        3|      20|   999999
+       2|        2|      10|       30
+(3 rows)
+
+QUERY: select * from tttest where price_off = 999999;
+price_id|price_val|price_on|price_off
+--------+---------+--------+---------
+       1|        1|       0|   999999
+       3|        3|      20|   999999
+(2 rows)
+
+QUERY: update tttest set price_val = 30 where price_id = 3;
+QUERY: select * from tttest;
+price_id|price_val|price_on|price_off
+--------+---------+--------+---------
+       1|        1|       0|   999999
+       2|        2|      10|       30
+       3|       30|      40|   999999
+       3|        3|      20|       40
+(4 rows)
+
+QUERY: update tttest set price_id = 5 where price_id = 3;
+QUERY: select * from tttest;
+price_id|price_val|price_on|price_off
+--------+---------+--------+---------
+       1|        1|       0|   999999
+       2|        2|      10|       30
+       3|        3|      20|       40
+       5|       30|      50|   999999
+       3|       30|      40|       50
+(5 rows)
+
+QUERY: select set_ttdummy(0);
+set_ttdummy
+-----------
+          1
+(1 row)
+
+QUERY: delete from tttest where price_id = 5;
+QUERY: update tttest set price_off = 999999 where price_val = 30;
+QUERY: select * from tttest;
+price_id|price_val|price_on|price_off
+--------+---------+--------+---------
+       1|        1|       0|   999999
+       2|        2|      10|       30
+       3|        3|      20|       40
+       3|       30|      40|   999999
+(4 rows)
+
+QUERY: update tttest set price_id = 5 where price_id = 3;
+QUERY: select * from tttest;
+price_id|price_val|price_on|price_off
+--------+---------+--------+---------
+       1|        1|       0|   999999
+       2|        2|      10|       30
+       5|        3|      20|       40
+       5|       30|      40|   999999
+(4 rows)
+
+QUERY: select set_ttdummy(1);
+set_ttdummy
+-----------
+          0
+(1 row)
+
+QUERY: update tttest set price_on = -1 where price_id = 1;
+WARN:ttdummy (tttest): you can't change price_on and/or price_off columns (use set_ttdummy)
+QUERY: select set_ttdummy(0);
+set_ttdummy
+-----------
+          1
+(1 row)
+
+QUERY: update tttest set price_on = -1 where price_id = 1;
+QUERY: select * from tttest;
+price_id|price_val|price_on|price_off
+--------+---------+--------+---------
+       2|        2|      10|       30
+       5|        3|      20|       40
+       5|       30|      40|   999999
+       1|        1|      -1|   999999
+(4 rows)
+
+QUERY: select * from tttest where price_on <= 25 and price_off > 25 and price_id = 5;
+price_id|price_val|price_on|price_off
+--------+---------+--------+---------
+       5|        3|      20|       40
+(1 row)
+
+QUERY: drop table tttest;
+QUERY: drop sequence ttdummy_seq;
