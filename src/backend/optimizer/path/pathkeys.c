@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.35 2001/10/28 06:25:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.36 2001/11/11 20:33:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -752,24 +752,42 @@ find_mergeclauses_for_pathkeys(Query *root,
 	List	   *mergeclauses = NIL;
 	List	   *i;
 
+	/* make sure we have pathkeys cached in the clauses */
+	foreach(i, restrictinfos)
+	{
+		RestrictInfo *restrictinfo = lfirst(i);
+
+		cache_mergeclause_pathkeys(root, restrictinfo);
+	}
+
 	foreach(i, pathkeys)
 	{
 		List	   *pathkey = lfirst(i);
-		RestrictInfo *matched_restrictinfo = NULL;
+		List	   *matched_restrictinfos = NIL;
 		List	   *j;
 
 		/*
 		 * We can match a pathkey against either left or right side of any
-		 * mergejoin clause we haven't used yet.  For the moment we use a
-		 * dumb "greedy" algorithm with no backtracking.  Is it worth
-		 * being any smarter to make a longer list of usable mergeclauses?
-		 * Probably not.
+		 * mergejoin clause.  (We examine both sides since we aren't told if
+		 * the given pathkeys are for inner or outer input path; no confusion
+		 * is possible.)  Furthermore, if there are multiple matching
+		 * clauses, take them all.  In plain inner-join scenarios we expect
+		 * only one match, because redundant-mergeclause elimination will
+		 * have removed any redundant mergeclauses from the input list.
+		 * However, in outer-join scenarios there might be multiple matches.
+		 * An example is
+		 *
+		 *		select * from a full join b on
+		 *		a.v1 = b.v1 and a.v2 = b.v2 and a.v1 = b.v2;
+		 *
+		 * Given the pathkeys ((a.v1), (a.v2)) it is okay to return all
+		 * three clauses (in the order a.v1=b.v1, a.v1=b.v2, a.v2=b.v2)
+		 * and indeed we *must* do so or we will be unable to form a
+		 * valid plan.
 		 */
 		foreach(j, restrictinfos)
 		{
 			RestrictInfo *restrictinfo = lfirst(j);
-
-			cache_mergeclause_pathkeys(root, restrictinfo);
 
 			/*
 			 * We can compare canonical pathkey sublists by simple pointer
@@ -779,8 +797,8 @@ find_mergeclauses_for_pathkeys(Query *root,
 				 pathkey == restrictinfo->right_pathkey) &&
 				!ptrMember(restrictinfo, mergeclauses))
 			{
-				matched_restrictinfo = restrictinfo;
-				break;
+				matched_restrictinfos = lappend(matched_restrictinfos,
+												restrictinfo);
 			}
 		}
 
@@ -789,14 +807,14 @@ find_mergeclauses_for_pathkeys(Query *root,
 		 * sort-key positions in the pathkeys are useless.	(But we can
 		 * still mergejoin if we found at least one mergeclause.)
 		 */
-		if (!matched_restrictinfo)
+		if (matched_restrictinfos == NIL)
 			break;
 
 		/*
-		 * If we did find a usable mergeclause for this sort-key position,
-		 * add it to result list.
+		 * If we did find usable mergeclause(s) for this sort-key position,
+		 * add them to result list.
 		 */
-		mergeclauses = lappend(mergeclauses, matched_restrictinfo);
+		mergeclauses = nconc(mergeclauses, matched_restrictinfos);
 	}
 
 	return mergeclauses;
