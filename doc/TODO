@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Mar 20 15:30:50 EST 2001
+Last updated:		Tue Mar 20 15:31:46 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -273,6 +273,7 @@ PERFORMANCE
 * Delay fsync() when other backends are about to commit too [fsync]
 	* Determine optimal commit_delay value
 * Determine optimal fdatasync/fsync, O_SYNC/O_DSYNC options
+	* Allow multiple blocks to we written to WAL in one write()
 
 INDEXES
 
