@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.65 1999/10/15 04:56:52 momjian Exp $
+ * $Id: pg_type.h,v 1.66 1999/10/15 16:19:40 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -352,7 +352,7 @@ DATA(insert OID = 1040 (  _macaddr	 PGUID -1 -1 f b t \054 0  829 array_in array
 DATA(insert OID = 1041 (  _inet    PGUID -1 -1 f b t \054 0  869 array_in array_out array_in array_out i _null_ ));
 DATA(insert OID = 651  (  _cidr    PGUID -1 -1 f b t \054 0  650 array_in array_out array_in array_out i _null_ ));
 DATA(insert OID = 1042 ( bpchar		 PGUID -1  -1 f b t \054 0	18 bpcharin bpcharout bpcharin bpcharout i _null_ ));
-DESCR("blank-padded characters, length specifed when created");
+DESCR("blank-padded characters, length specified when created");
 #define BPCHAROID		1042
 DATA(insert OID = 1043 ( varchar	 PGUID -1  -1 f b t \054 0	18 varcharin varcharout varcharin varcharout i _null_ ));
 DESCR("non-blank-padded-length string, length specified when created");
