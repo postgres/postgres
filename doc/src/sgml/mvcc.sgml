@@ -1,0 +1,545 @@
+ <chapter id="mvcc">
+  <title>Multi-Version Concurrency Control</title>
+
+  <abstract>
+   <para>
+    Multi-Version Concurrency Control
+    (MVCC)
+    is an advanced technique for improving database performance in a
+    multi-user environment. 
+    <ulink url="mailto:vadim@krs.ru">Vadim Mikheev</ulink> provided
+    the implementation for <productname>Postgres</productname>.
+   </para>
+  </abstract>
+
+  <sect1>
+   <title>Introduction</title>
+
+   <para>
+    Unlike most other database systems which use locks for concurrency control,
+    <productname>Postgres</productname>
+    maintains data consistency by using a multiversion model. 
+    This means that while querying database each transaction sees
+    a snapshot of data (a <firstterm>database version</firstterm>)
+    as it was some
+    time ago, regardless of the current state of data queried.
+    This protects the transaction from viewing inconsistent data that
+    could be caused by (other) concurrent transaction updates on the same
+    data rows, providing <firstterm>transaction isolation</firstterm>
+    for each database session.
+   </para>
+
+   <para>
+    The main difference between multiversion and lock models is that
+    in MVCC locks acquired for querying (reading) data don't conflict
+    with locks acquired for writing data and so reading never blocks
+    writing and writing never blocks reading.
+   </para>
+  </sect1>
+
+  <sect1>
+   <title>Transaction Isolation</title>
+
+   <para>
+    The <acronym>ANSI</acronym>/<acronym>ISO</acronym> <acronym>SQL</acronym>
+    standard defines four levels of transaction
+    isolation in terms of three phenomena that must be prevented 
+    between concurrent transactions.
+    These undesirable phenomena are:
+
+    <variablelist>
+     <varlistentry>
+      <term>
+       dirty reads
+      </term>
+     <listitem>
+      <para>
+	A transaction reads data written by concurrent uncommitted transaction.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>
+       non-repeatable reads
+      </term>
+     <listitem>
+      <para>
+	A transaction re-reads data it has previously read and finds that data
+	has been modified by another committed transaction.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>
+       phantom read
+      </term>
+     <listitem>
+      <para>
+	A transaction re-executes a query returning a set of rows that satisfy a
+	search condition and finds that additional rows satisfying the condition
+	has been inserted by another committed transaction.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+
+   <para>
+    Accordingly, the four isolation levels are defined to be:
+
+    <segmentedlist>
+     <segtitle>
+      Isolation Level
+     </segtitle>
+     <segtitle>
+      Dirty Read
+     </segtitle>
+     <segtitle>
+      Non-Repeatable Read
+     </segtitle>
+     <segtitle>
+      Phantom Read
+     </segtitle>
+     <seglistitem>
+      <seg>
+       Read uncommitted
+      </seg>
+      <seg>
+       Possible
+      </seg>
+      <seg>
+       Possible
+      </seg>
+      <seg>
+       Possible
+      </seg>
+     </seglistitem>
+
+     <seglistitem>
+      <seg>
+       Read committed
+      </seg>
+      <seg>
+       Not possible
+      </seg>
+      <seg>
+       Possible
+      </seg>
+      <seg>
+       Possible
+      </seg>
+     </seglistitem>
+
+     <seglistitem>
+      <seg>
+       Repeatable read
+      </seg>
+      <seg>
+       Not possible
+      </seg>
+      <seg>
+       Not possible
+      </seg>
+      <seg>
+       Possible
+      </seg>
+     </seglistitem>
+
+     <seglistitem>
+      <seg>
+       Serializable
+      </seg>
+      <seg>
+       Not possible
+      </seg>
+      <seg>
+       Not possible
+      </seg>
+      <seg>
+       Not possible
+      </seg>
+     </seglistitem>
+    </segmentedlist>
+
+    <productname>Postgres</productname>
+    offers the read committed and serializable isolation levels.
+   </para>
+  </sect1>
+
+  <sect1>
+   <title>Read Committed Isolation Level</title>
+
+   <para>
+    This is the default isolation level in <productname>Postgres</productname>. 
+    When a transaction runs on this isolation level, a query sees only
+    data committed before the query began and never sees either dirty data or
+    concurrent transaction changes committed during query execution.
+   </para>
+
+   <para>
+    If a row returned by a query while executing an
+    <command>UPDATE</command> statement
+    (or <command>DELETE</command>
+    or <command>SELECT FOR UPDATE</command>)
+    is being updated by a
+    concurrent uncommitted transaction then the second transaction
+    that tries to update this row will wait for the other transaction to
+    commit or rollback. In the case of rollback, the waiting transaction
+    can proceed to change the row. In the case of commit (and if the
+    row still exists; i.e. was not deleted by the other transaction), the
+    query will be re-executed for this row to check that new row
+    version satisfies query search condition. If the new row version
+    satisfies the query search condition then row will be
+    updated (or deleted or marked for update).
+   </para>
+
+   <para>
+    Note that the results of execution of SELECT or INSERT (with a query) 
+    statements will not be affected by concurrent transactions.
+   </para>
+  </sect1>
+
+  <sect1>
+   <title>Serializable Isolation Level</title>
+
+   <para>
+    This level provides the highest transaction isolation. When a
+    transaction is on the <firstterm>serializable</firstterm> level,
+    a query sees only data
+    committed before the transaction began and never see either dirty data
+    or concurrent transaction changes committed during transaction
+    execution. So, this level emulates serial transaction execution,
+    as if transactions would be executed one after another, serially,
+    rather than concurrently.
+   </para>
+
+   <para>
+    If a row returned by query while executing
+    <command>UPDATE</command>/<command>DELETE</command>/<command>SELECT FOR UPDATE</command>
+    statement is being updated by
+    a concurrent uncommitted transaction then the second transaction
+    that tries to update this row will wait for the other transaction to
+    commit or rollback. In the case of rollback, the waiting transaction
+    can proceed to change the row. In the case of a concurrent
+    transaction commit, a serializable transaction will be rolled back
+    with the message
+
+    <programlisting>
+ERROR:  Can't serialize access due to concurrent update
+    </programlisting>
+
+    because a serializable transaction cannot modify rows changed by
+    other transactions after the serializable transaction began.
+   </para>
+
+   <note>
+    <para>
+     Note that results of execution of <command>SELECT</command>
+     or <command>INSERT</command> (with a query) 
+     will not be affected by concurrent transactions.
+    </para>
+   </note>
+  </sect1>
+
+  <sect1>
+   <title>Locking and Tables</title>
+
+   <para>
+    <productname>Postgres</productname>
+    provides various lock modes to control concurrent
+    access to data in tables. Some of these lock modes are acquired by
+    <productname>Postgres</productname>
+    automatically before statement execution, while others are
+    provided to be used by applications. All lock modes (except for
+    AccessShareLock) acquired in a transaction are held for the duration
+    of the transaction.
+   </para>
+
+   <para>
+    In addition to locks, short-term share/exclusive latches are used
+    to control read/write access to table pages in shared buffer pool.
+    Latches are released immediately after a tuple is fetched or updated.
+   </para>
+
+   <sect2>
+    <title>Table-level locks</title>
+
+    <para>
+     <variablelist>
+      <varlistentry>
+       <term>
+	AccessShareLock
+       </term>
+       <listitem>
+	<para>
+	 An internal lock mode acquiring automatically over tables
+	 being queried. <productname>Postgres</productname>
+	 releases these locks after statement is
+	 done.
+	</para>
+
+	<para>
+	 Conflicts with AccessExclusiveLock only.
+	</para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term>
+	RowShareLock
+       </term>
+       <listitem>
+	<para>
+	 Acquired by <command>SELECT FOR UPDATE</command>
+	 and <command>LOCK TABLE</command>
+	 for <option>IN ROW SHARE MODE</option> statements.
+	</para>
+
+	<para>
+	 Conflicts with ExclusiveLock and AccessExclusiveLock modes.
+	</para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term>
+	RowExclusiveLock
+       </term>
+       <listitem>
+	<para>
+	 Acquired by <command>UPDATE</command>, <command>DELETE</command>,
+	 <command>INSERT</command> and <command>LOCK TABLE</command>
+	 for <option>IN ROW EXCLUSIVE MODE</option> statements.
+	</para>
+
+	<para>
+	 Conflicts with ShareLock, ShareRowExclusiveLock, ExclusiveLock and
+	 AccessExclusiveLock modes.
+	</para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term>
+	ShareLock
+       </term>
+       <listitem>
+	<para>
+	 Acquired by <command>CREATE INDEX</command>
+	 and <command>LOCK TABLE</command> table
+	 for <option>IN SHARE MODE</option>
+	 statements.
+	</para>
+
+	<para>
+	 Conflicts with RowExclusiveLock, ShareRowExclusiveLock,
+	 ExclusiveLock and AccessExclusiveLock modes.
+	</para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term>
+	ShareRowExclusiveLock
+       </term>
+       <listitem>
+	<para>
+	 Acquired by <command>LOCK TABLE</command> for
+	 <option>IN SHARE ROW EXCLUSIVE MODE</option> statements.
+	</para>
+
+	<para>
+	 Conflicts with RowExclusiveLock, ShareLock, ShareRowExclusiveLock,
+	 ExclusiveLock and AccessExclusiveLock modes.
+	</para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term>
+	ExclusiveLock
+       </term>
+       <listitem>
+	<para>
+	 Acquired by <command>LOCK TABLE</command> table 
+	 for <option>IN EXCLUSIVE MODE</option> statements.
+	</para>
+
+	<para>
+	 Conflicts with RowShareLock, RowExclusiveLock, ShareLock,
+	 ShareRowExclusiveLock, ExclusiveLock and AccessExclusiveLock
+	 modes.
+	</para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term>
+	AccessExclusiveLock
+       </term>
+       <listitem>
+	<para>
+	 Acquired by <command>ALTER TABLE</command>,
+	 <command>DROP TABLE</command>,
+	 <command>VACUUM</command> and <command>LOCK TABLE</command>
+	 statements.
+	</para>
+
+	<para>
+	 Conflicts with RowShareLock, RowExclusiveLock, ShareLock,
+	 ShareRowExclusiveLock, ExclusiveLock and AccessExclusiveLock
+	 modes.
+
+	 <note>
+	  <para>
+	   Note that only AccessExclusiveLock blocks <command>SELECT</command> (without FOR
+	   UPDATE) statement.
+	  </para>
+	 </note>
+	</para>
+       </listitem>
+      </varlistentry>
+     </variablelist>
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Row-level locks</title>
+
+    <para>
+     These locks are acquired by means of modification of internal
+     fields of row being updated/deleted/marked for update.
+     <productname>Postgres</productname>
+     doesn't remember any information about modified rows in memory and
+     so hasn't limit for locked rows without lock escalation.
+    </para>
+
+    <para>
+     However, take into account that <command>SELECT FOR UPDATE</command> will modify
+     selected rows to mark them and so will results in disk writes.
+    </para>
+
+    <para>
+     Row-level locks don't affect data querying. They are used to block
+     writers to <emphasis>the same row</emphasis> only.
+    </para>
+   </sect2>
+  </sect1>
+
+  <sect1>
+   <title>Locking and Indices</title>
+
+   <para>
+    Though <productname>Postgres</productname>
+    provides unblocking read/write access to table
+    data, it is not the case for all index access methods implemented
+    in <productname>Postgres</productname>.
+   </para>
+
+   <para>
+    The various index types are handled as follows:
+
+    <variablelist>
+     <varlistentry>
+      <term>
+       GiST and R-Tree indices
+      </term>
+      <listitem>
+       <para>
+	Share/exclusive INDEX-level locks are used for read/write access.
+	Locks are released after statement is done.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>
+       Hash indices
+      </term>
+      <listitem>
+       <para>
+	Share/exclusive PAGE-level locks are used for read/write access.
+	Locks are released after page is processed.
+       </para>
+
+       <para>
+	Page-level locks produces better concurrency than index-level ones
+	but are subject to deadlocks.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>
+       Btree
+      </term>
+      <listitem>
+       <para>
+	Short-term share/exclusive PAGE-level latches are used for
+	read/write access. Latches are released immediately after the index
+	tuple is inserted/fetched.
+       </para>
+
+       <para>
+	Btree indices provide highest concurrency without deadlock
+	conditions.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+  </sect1>
+
+  <sect1>
+   <title>Data consistency checks at the application level</title>
+
+   <para>
+    Because readers in <productname>Postgres</productname>
+    don't lock data, regardless of
+    transaction isolation level, data read by one transaction can be
+    overwritten by another. In the other words, if a row is returned
+    by <command>SELECT</command> it doesn't mean that this row really
+    exists at the time it is returned (i.e. sometime after the
+    statement or transaction began) nor
+    that the row is protected from deletion/updation by concurrent
+    transactions before the current transaction commit or rollback. 
+   </para>
+
+   <para>
+    To ensure the actual existance of a row and protect it against
+    concurrent updates one must use <command>SELECT FOR UPDATE</command> or
+    an appropriate <command>LOCK TABLE</command> statement.
+    This should be taken into account when porting applications using
+    serializable mode to <productname>Postgres</productname> from other environments.
+
+    <note>
+     <para>
+      Before version 6.5 <productname>Postgres</productname>
+      used read-locks and so the
+      above consideration is also the case
+      when upgrading to 6.5 (or higher) from previous
+      <productname>Postgres</productname> versions.
+     </para>
+    </note>
+   </para>
+  </sect1>
+ </chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:nil
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+sgml-parent-document:nil
+sgml-default-dtd-file:"./reference.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:"/usr/lib/sgml/catalog"
+sgml-local-ecat-files:nil
+End:
+-->
