@@ -1,0 +1,142 @@
+From pgsql-hackers-owner+M8916@postgresql.org Thu May 17 11:51:45 2001
+Return-path: <pgsql-hackers-owner+M8916@postgresql.org>
+Received: from postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.10.1/8.10.1) with ESMTP id f4HFpid02613
+	for <pgman@candle.pha.pa.us>; Thu, 17 May 2001 11:51:44 -0400 (EDT)
+Received: from postgresql.org.org (webmail.postgresql.org [216.126.85.28])
+	by postgresql.org (8.11.3/8.11.1) with SMTP id f4HFoiA36759;
+	Thu, 17 May 2001 11:50:44 -0400 (EDT)
+	(envelope-from pgsql-hackers-owner+M8916@postgresql.org)
+Received: from fred.plzen-city.cz (gate.plzen-city.cz [194.212.191.10])
+	by postgresql.org (8.11.3/8.11.1) with ESMTP id f4HFMLA24019
+	for <pgsql-hackers@postgreSQL.org>; Thu, 17 May 2001 11:22:21 -0400 (EDT)
+	(envelope-from horak@sit.plzen-city.cz)
+Received: from exchange.mmp.plzen-city.cz ([192.168.4.42])
+	by fred.plzen-city.cz (8.12.0.Beta7/8.12.0.Beta7/Wim) with ESMTP id f4HFMGoQ007660
+	for <pgsql-hackers@postgreSQL.org>; Thu, 17 May 2001 17:22:16 +0200
+Subject: [HACKERS] possible DOMAIN implementation
+MIME-Version: 1.0
+Content-Type: text/plain;
+	charset="iso-8859-2"
+Content-Class: urn:content-classes:message
+X-MimeOLE: Produced By Microsoft Exchange V6.0.4418.65
+Date: Thu, 17 May 2001 17:22:05 +0200
+Message-ID: <9C8918CC8CDAAC4AA79D4594A480648901E68C2B@EXCHANGE.mmp.plzen-city.cz>
+Thread-Topic: possible DOMAIN implementation
+Thread-Index: AcDe5WK0+5JgskVMEdWdCQAQS2oI5Q==
+From: =?iso-8859-2?Q?Hor=E1k_Daniel?= <horak@sit.plzen-city.cz>
+To: <pgsql-hackers@postgresql.org>
+Content-Transfer-Encoding: 8bit
+X-MIME-Autoconverted: from quoted-printable to 8bit by postgresql.org id f4HFMMA24022
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Hello,
+
+I have spend some thinking about implementation of DOMAIN capability.
+Here are my ideas.
+
+What is a domain? It is an alias for a type with size, constraints and
+default values. It is like one column of a table. And this is the main
+idea of my "implementation". It should be possible to implement it using
+existing system tables.
+
+New rules for grammar can be easily created from already existing pieces
+(column definition of a table).
+
+How to store information about a domain in system tables?
+When a new domain is created it will:
+- put a record into pg_type with typnam = domain name, new code for
+typtype = 'd' and typrelid = oid of a new record in pg_class (next line)
+- put a record into pg_class to create a fictional table with a new
+relkind ('d'?), relnatts = 1, relname can be system generated
+(pg_d_<domainname>)
+- put a records into pg_attribute and pg_attrdef with "column
+(attribute) definition" - real type, size, default value etc., owner
+will the fictional table from the previous step
+
+Then it will be required to modify functions that works with types. When
+typtype of a retrieved type is 'd' then it will perform lookups into
+pg_class, pg_attribute and pg_attrdef to find the real definition of the
+domain. These additional lookups will also create a performace penalty
+of using domains. But every feature has its costs. I know this paragraph
+about the real implementation is very short, but I think there are
+people that know the "type mechanism" better then I know. And can easier
+tell if it is possible to go this way.
+
+I hope you understand my explanation. It is also possible that I don't
+know some aspects of the backend code that makes my idea wrong.
+
+			Dan
+
+----------------------------------------------
+Ing. Daniel Horak
+network and system administrator
+e-mail: horak@sit.plzen-city.cz
+privat e-mail: dan.horak@email.cz ICQ:36448176
+----------------------------------------------
+
+---------------------------(end of broadcast)---------------------------
+TIP 1: subscribe and unsubscribe commands go to majordomo@postgresql.org
+
+From pgsql-hackers-owner+M8925@postgresql.org Thu May 17 14:04:29 2001
+Return-path: <pgsql-hackers-owner+M8925@postgresql.org>
+Received: from postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.10.1/8.10.1) with ESMTP id f4HI4Sd12032
+	for <pgman@candle.pha.pa.us>; Thu, 17 May 2001 14:04:28 -0400 (EDT)
+Received: from postgresql.org.org (webmail.postgresql.org [216.126.85.28])
+	by postgresql.org (8.11.3/8.11.1) with SMTP id f4HI3hA18949;
+	Thu, 17 May 2001 14:03:43 -0400 (EDT)
+	(envelope-from pgsql-hackers-owner+M8925@postgresql.org)
+Received: from sss.pgh.pa.us (sss.pgh.pa.us [216.151.103.158])
+	by postgresql.org (8.11.3/8.11.1) with ESMTP id f4HHx4A16857
+	for <pgsql-hackers@postgresql.org>; Thu, 17 May 2001 13:59:04 -0400 (EDT)
+	(envelope-from tgl@sss.pgh.pa.us)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.11.3/8.11.3) with ESMTP id f4HHwjR12171;
+	Thu, 17 May 2001 13:58:45 -0400 (EDT)
+To: =?iso-8859-2?Q?Hor=E1k_Daniel?= <horak@sit.plzen-city.cz>
+cc: pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] possible DOMAIN implementation 
+In-Reply-To: <9C8918CC8CDAAC4AA79D4594A480648901E68C2B@EXCHANGE.mmp.plzen-city.cz> 
+References: <9C8918CC8CDAAC4AA79D4594A480648901E68C2B@EXCHANGE.mmp.plzen-city.cz>
+Comments: In-reply-to =?iso-8859-2?Q?Hor=E1k_Daniel?= <horak@sit.plzen-city.cz>
+	message dated "Thu, 17 May 2001 17:22:05 +0200"
+Date: Thu, 17 May 2001 13:58:45 -0400
+Message-ID: <12167.990122325@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+=?iso-8859-2?Q?Hor=E1k_Daniel?= <horak@sit.plzen-city.cz> writes:
+> When a new domain is created it will:
+> - put a record into pg_type with typnam = domain name, new code for
+> typtype = 'd' and typrelid = oid of a new record in pg_class (next line)
+> - put a record into pg_class to create a fictional table with a new
+> relkind ('d'?), relnatts = 1, relname can be system generated
+> (pg_d_<domainname>)
+
+Ugh.  Don't overload pg_class with things that are not tables.  I see no
+reason that either pg_class or pg_attribute should be involved in the
+definition of a domain.  Make new system tables if you need to, but
+don't confuse the semantics of critical tables.
+
+> - put a records into pg_attribute and pg_attrdef with "column
+> (attribute) definition" - real type, size, default value etc., owner
+> will the fictional table from the previous step
+
+> Then it will be required to modify functions that works with types. When
+> typtype of a retrieved type is 'd' then it will perform lookups into
+> pg_class, pg_attribute and pg_attrdef to find the real definition of the
+> domain. These additional lookups will also create a performace penalty
+> of using domains.
+
+Why shouldn't this info be directly available from the pg_type row?
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 1: subscribe and unsubscribe commands go to majordomo@postgresql.org
+
