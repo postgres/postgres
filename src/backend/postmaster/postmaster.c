@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.229 2001/06/29 16:05:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.230 2001/07/01 00:06:23 tgl Exp $
  *
  * NOTES
  *
@@ -1357,7 +1357,11 @@ pmdie(SIGNAL_ARGS)
 				return;
 			}
 			if (ShutdownPID > 0)
+			{
+				postmaster_error("Shutdown process %d already running",
+								 ShutdownPID);
 				abort();
+			}
 
 			ShutdownPID = ShutdownDataBase();
 			errno = save_errno;
@@ -1409,7 +1413,11 @@ pmdie(SIGNAL_ARGS)
 				return;
 			}
 			if (ShutdownPID > 0)
+			{
+				postmaster_error("Shutdown process %d already running",
+								 ShutdownPID);
 				abort();
+			}
 
 			ShutdownPID = ShutdownDataBase();
 			errno = save_errno;
@@ -1481,27 +1489,21 @@ reaper(SIGNAL_ARGS)
 			continue;
 		}
 
-		if (ShutdownPID > 0)
+		if (ShutdownPID > 0 && pid == ShutdownPID)
 		{
-			if (pid != ShutdownPID)
-				abort();
 			if (exitstatus != 0)
 			{
 				postmaster_error("Shutdown proc %d exited with status %d", pid, exitstatus);
-				fflush(stderr);
 				ExitPostmaster(1);
 			}
 			ExitPostmaster(0);
 		}
-		if (StartupPID > 0)
+		if (StartupPID > 0 && pid == StartupPID)
 		{
-			if (pid != StartupPID)
-				abort();
 			if (exitstatus != 0)
 			{
 				postmaster_error("Startup proc %d exited with status %d - abort",
 								 pid, exitstatus);
-				fflush(stderr);
 				ExitPostmaster(1);
 			}
 			StartupPID = 0;
@@ -1509,7 +1511,11 @@ reaper(SIGNAL_ARGS)
 			if (Shutdown > NoShutdown)
 			{
 				if (ShutdownPID > 0)
+				{
+					postmaster_error("Shutdown process %d already running",
+									 ShutdownPID);
 					abort();
+				}
 				ShutdownPID = ShutdownDataBase();
 			}
 
@@ -1533,7 +1539,6 @@ reaper(SIGNAL_ARGS)
 
 	if (FatalError)
 	{
-
 		/*
 		 * Wait for all children exit, then reset shmem and
 		 * StartupDataBase.
