@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pg_ctl/Attic/pg_ctl.sh,v 1.9 2000/02/07 04:31:10 ishii Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pg_ctl/Attic/pg_ctl.sh,v 1.10 2000/03/14 08:34:47 ishii Exp $
 #
 #-------------------------------------------------------------------------
 CMDNAME=`basename $0`
@@ -47,7 +47,7 @@ else
 fi
 
 # Check if needed programs actually exist in path
-for prog in postmaster
+for prog in postmaster psql
 do
         if [ ! -x "$PGPATH/$prog" ]
 	then
@@ -245,7 +245,10 @@ if [ $op = "start" -o $op = "restart" ];then
 	$ECHO_N "Waiting for postmaster starting up.."$ECHO_C
 	while :
 	do
-	    if [ ! -f $PIDFILE ];then
+	    if psql -l >/dev/null 2>&1
+	    then
+		break;
+	    else
 		$ECHO_N "."$ECHO_C
 		cnt=`expr $cnt + 1`
 		if [ $cnt -gt 60 ];then
@@ -253,8 +256,6 @@ if [ $op = "start" -o $op = "restart" ];then
 		    exit 1
 		fi
 		sleep 1
-	    else
-		break
 	    fi
 	done
 	$ECHO "done."
