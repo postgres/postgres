@@ -40,7 +40,7 @@ check:
 	@echo "Do 'make install', then 'make installcheck' instead."
 
 install: all installdirs install-lib
-	#$(INSTALL_DATA) $(srcdir)/README.$(NAME)  $(docdir)/contrib
+	$(INSTALL_DATA) $(srcdir)/README.$(NAME)  $(docdir)/contrib
 	$(INSTALL_DATA) $(NAME).sql $(datadir)/contrib
 
 installdirs:
