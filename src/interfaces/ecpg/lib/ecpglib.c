@@ -434,12 +434,20 @@ ECPGexecute(struct statement * stmt)
 			switch (var->type)
 			{
 				case ECPGt_short:
+					sprintf(buff, "%d", *(short *) var->value);
+					tobeinserted = buff;
+					break;
+
 				case ECPGt_int:
 					sprintf(buff, "%d", *(int *) var->value);
 					tobeinserted = buff;
 					break;
 
 				case ECPGt_unsigned_short:
+					sprintf(buff, "%d", *(unsigned short *) var->value);
+					tobeinserted = buff;
+					break;
+
 				case ECPGt_unsigned_int:
 					sprintf(buff, "%d", *(unsigned int *) var->value);
 					tobeinserted = buff;
