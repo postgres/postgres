@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.90 2002/04/25 02:56:55 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.91 2002/04/25 20:14:43 tgl Exp $
 -->
 
  <chapter id="datatype">
@@ -2924,6 +2924,18 @@ SELECT SUBSTRING(b FROM 1 FOR 2) FROM test;
     <primary>regtype</primary>
    </indexterm>
 
+   <indexterm zone="datatype-oid">
+    <primary>xid</primary>
+   </indexterm>
+
+   <indexterm zone="datatype-oid">
+    <primary>cid</primary>
+   </indexterm>
+
+   <indexterm zone="datatype-oid">
+    <primary>tid</primary>
+   </indexterm>
+
    <para>
     Object identifiers (OIDs) are used internally by
     <productname>PostgreSQL</productname> as primary keys for various system
@@ -3034,7 +3046,7 @@ SELECT SUBSTRING(b FROM 1 FOR 2) FROM test;
    </para>
 
    <para>
-    All of the alias types accept schema-qualified names, and will
+    All of the OID alias types accept schema-qualified names, and will
     display schema-qualified names on output if the object would not
     be found in the current search path without being qualified.
     The <type>regproc</> and <type>regoper</> alias types will only
@@ -3043,6 +3055,52 @@ SELECT SUBSTRING(b FROM 1 FOR 2) FROM test;
     <type>regoperator</> is more appropriate.  For <type>regoperator</>,
     unary operators are identified by writing NONE for the unused
     operand.
+   </para>
+
+   <para>
+    OIDs are 32-bit quantities and are assigned from a single cluster-wide
+    counter.  In a large or long-lived database, it is possible for the
+    counter to wrap around.  Hence, it is bad practice to assume that OIDs
+    are unique, unless you take steps to ensure that they are unique.
+    Recommended practice when using OIDs for row identification is to create
+    a unique constraint on the OID column of each table for which the OID will
+    be used.  Never assume that OIDs are unique across tables; use the
+    combination of <structfield>tableoid</> and row OID if you need a
+    database-wide identifier.  (Future releases of
+    <productname>PostgreSQL</productname> are likely to use a separate
+    OID counter for each table, so that <structfield>tableoid</>
+    <emphasis>must</> be included to arrive at a globally unique identifier.)
+   </para>
+
+   <para>
+    Another identifier type used by the system is <type>xid</>, or transaction
+    (abbreviated xact) identifier.  This is the datatype of the system columns
+    <structfield>xmin</> and <structfield>xmax</>.
+    Transaction identifiers are 32-bit quantities.  In a long-lived
+    database it is possible for transaction IDs to wrap around.  This
+    is not a fatal problem given appropriate maintenance procedures;
+    see the <citetitle>Administrator's Guide</> for details.  However, it is
+    unwise to depend on uniqueness of transaction IDs over the long term
+    (more than one billion transactions).
+   </para>
+
+   <para>
+    A third identifier type used by the system is <type>cid</>, or command
+    identifier.  This is the datatype of the system columns
+    <structfield>cmin</> and <structfield>cmax</>.
+    Command identifiers are also 32-bit quantities.  This creates a hard
+    limit of 2<superscript>32</> (4 billion) SQL commands within a single
+    transaction.
+    In practice this limit is not a problem --- note that the limit is on
+    number of SQL queries, not number of tuples processed.
+   </para>
+
+   <para>
+    A final identifier type used by the system is <type>tid</>, or tuple
+    identifier.  This is the datatype of the system column
+    <structfield>ctid</>.  A tuple ID is a pair
+    (block number, tuple index within block) that identifies the
+    physical location of the tuple within its table.
    </para>
 
   </sect1>

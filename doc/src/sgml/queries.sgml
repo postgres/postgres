@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/queries.sgml,v 1.14 2001/11/28 20:49:10 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/queries.sgml,v 1.15 2002/04/25 20:14:43 tgl Exp $ -->
 
 <chapter id="queries">
  <title>Queries</title>
@@ -86,7 +86,8 @@ SELECT random();
 FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_reference</replaceable> <optional>, ...</optional></optional>
 </synopsis>
 
-    A table reference may be a table name or a derived table such as a
+    A table reference may be a table name (possibly schema-qualified),
+    or a derived table such as a
     subquery, a table join, or complex combinations of these.  If more
     than one table reference is listed in the FROM clause they are
     cross-joined (see below) to form the derived table that may then
