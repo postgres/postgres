@@ -3,14 +3,12 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.71 2003/08/08 21:42:24 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.72 2003/08/14 18:48:35 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
 
 #include <ctype.h>
-#include <errno.h>
-#include <stdarg.h>
 #ifndef HAVE_STRDUP
 #include <strdup.h>
 #endif
