@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.133 2005/02/11 04:19:05 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.134 2005/03/14 06:19:01 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -179,8 +179,8 @@ PostgreSQL documentation
       <listitem>
       <para>
       Use <replaceable class="parameter">separator</replaceable> as the
-      field separator. This is equivalent to <command>\pset
-      fieldsep</command> or <command>\f</command>.
+      field separator for unaligned output. This is equivalent to
+      <command>\pset fieldsep</command> or <command>\f</command>.
       </para>
       </listitem>
     </varlistentry>
@@ -283,8 +283,8 @@ PostgreSQL documentation
       <listitem>
       <para>
       Use <replaceable class="parameter">separator</replaceable> as the
-      record separator. This is equivalent to the <command>\pset
-      recordsep</command> command.
+      record separator for unaligned output. This is equivalent to the
+      <command>\pset recordsep</command> command.
       </para>
       </listitem>
     </varlistentry>
