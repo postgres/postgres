@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.10 1997/04/12 09:24:23 scrappy Exp $
+ * $Id: c.h,v 1.11 1997/04/15 17:55:37 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -735,9 +735,11 @@ extern char *form(char *fmt, ...);
  * ----------------------------------------------------------------
  */
 
+#ifdef FIXADE
 #if defined(hpux) 
 #include "port/hpux/fixade.h"		/* for unaligned access fixup */
 #endif /* hpux */
+#endif
 
 #if defined(sunos4)
 #define	memmove(d, s, l)	bcopy(s, d, l)
