@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.95 2001/07/16 05:06:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.96 2001/08/13 18:45:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -134,7 +134,15 @@ static void convert_string_to_scalar(unsigned char *value,
 						 double *scaledlobound,
 						 unsigned char *hibound,
 						 double *scaledhibound);
+static void convert_bytea_to_scalar(Datum value,
+						 double *scaledvalue,
+						 Datum lobound,
+						 double *scaledlobound,
+						 Datum hibound,
+						 double *scaledhibound);
 static double convert_one_string_to_scalar(unsigned char *value,
+							 int rangelo, int rangehi);
+static double convert_one_bytea_to_scalar(unsigned char *value, int valuelen,
 							 int rangelo, int rangehi);
 static unsigned char *convert_string_datum(Datum value, Oid typid);
 static double convert_timevalue_to_scalar(Datum value, Oid typid);
@@ -1664,6 +1672,9 @@ icnlikejoinsel(PG_FUNCTION_ARGS)
  * which is explained below.  The reason why this routine deals with
  * three values at a time, not just one, is that we need it for strings.
  *
+ * The bytea datatype is just enough different from strings that it has
+ * to be treated separately.
+ *
  * The several datatypes representing absolute times are all converted
  * to Timestamp, which is actually a double, and then we just use that
  * double value.  Note this will give bad results for the various "special"
@@ -1715,6 +1726,17 @@ convert_to_scalar(Datum value, Oid valuetypid, double *scaledvalue,
 				pfree(valstr);
 				pfree(lostr);
 				pfree(histr);
+				return true;
+			}
+
+		/*
+		 * Built-in bytea type
+		 */
+		case BYTEAOID:
+			{
+				convert_bytea_to_scalar(value, scaledvalue,
+										lobound, scaledlobound,
+										hibound, scaledhibound);
 				return true;
 			}
 
@@ -1994,6 +2016,99 @@ convert_string_datum(Datum value, Oid typid)
 #endif
 
 	return (unsigned char *) val;
+}
+
+/*
+ * Do convert_to_scalar()'s work for any bytea data type.
+ *
+ * Very similar to convert_string_to_scalar except we can't assume
+ * null-termination and therefore pass explicit lengths around.
+ *
+ * Also, assumptions about likely "normal" ranges of characters have been
+ * removed - a data range of 0..255 is always used, for now.  (Perhaps
+ * someday we will add information about actual byte data range to
+ * pg_statistic.)
+ */
+static void
+convert_bytea_to_scalar(Datum value,
+						double *scaledvalue,
+						Datum lobound,
+						double *scaledlobound,
+						Datum hibound,
+						double *scaledhibound)
+{
+	int			rangelo,
+				rangehi,
+				valuelen = VARSIZE(DatumGetPointer(value)) - VARHDRSZ,
+				loboundlen = VARSIZE(DatumGetPointer(lobound)) - VARHDRSZ,
+				hiboundlen = VARSIZE(DatumGetPointer(hibound)) - VARHDRSZ,
+				i,
+				minlen;
+	unsigned char *valstr = (unsigned char *) VARDATA(DatumGetPointer(value)),
+				*lostr = (unsigned char *) VARDATA(DatumGetPointer(lobound)),
+				*histr = (unsigned char *) VARDATA(DatumGetPointer(hibound));
+
+	/*
+	 * Assume bytea data is uniformly distributed across all byte values.
+	 */
+	rangelo = 0;
+	rangehi = 255;
+
+	/*
+	 * Now strip any common prefix of the three strings.
+	 */
+	minlen = Min(Min(valuelen, loboundlen), hiboundlen);
+	for (i = 0; i < minlen; i++)
+	{
+		if (*lostr != *histr || *lostr != *valstr)
+			break;
+		lostr++, histr++, valstr++;
+		loboundlen--, hiboundlen--, valuelen--;
+	}
+
+	/*
+	 * Now we can do the conversions.
+	 */
+	*scaledvalue = convert_one_bytea_to_scalar(valstr, valuelen, rangelo, rangehi);
+	*scaledlobound = convert_one_bytea_to_scalar(lostr, loboundlen, rangelo, rangehi);
+	*scaledhibound = convert_one_bytea_to_scalar(histr, hiboundlen, rangelo, rangehi);
+}
+
+static double
+convert_one_bytea_to_scalar(unsigned char *value, int valuelen,
+							int rangelo, int rangehi)
+{
+	double		num,
+				denom,
+				base;
+
+	if (valuelen <= 0)
+		return 0.0;				/* empty string has scalar value 0 */
+
+	/*
+	 * Since base is 256, need not consider more than about 10
+	 * chars (even this many seems like overkill)
+	 */
+	if (valuelen > 10)
+		valuelen = 10;
+
+	/* Convert initial characters to fraction */
+	base = rangehi - rangelo + 1;
+	num = 0.0;
+	denom = base;
+	while (valuelen-- > 0)
+	{
+		int			ch = *value++;
+
+		if (ch < rangelo)
+			ch = rangelo - 1;
+		else if (ch > rangehi)
+			ch = rangehi + 1;
+		num += ((double) (ch - rangelo)) / denom;
+		denom *= base;
+	}
+
+	return num;
 }
 
 /*

@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_amproc.h,v 1.28 2001/08/10 18:57:39 tgl Exp $
+ * $Id: pg_amproc.h,v 1.29 2001/08/13 18:45:36 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -101,6 +101,7 @@ DATA(insert (403 1690 1693 1));
 DATA(insert (403 1399 1358 1));
 DATA(insert (403  424 1596 1));
 DATA(insert (403  425 1672 1));
+DATA(insert (403 1961 1954 1));
 
 
 /* hash */

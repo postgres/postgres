@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.70 2001/05/03 19:00:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.71 2001/08/13 18:45:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -874,4 +874,163 @@ name_text(PG_FUNCTION_ARGS)
 	memcpy(VARDATA(result), NameStr(*s), len);
 
 	PG_RETURN_TEXT_P(result);
+}
+
+
+/*****************************************************************************
+ *	Comparison Functions used for bytea
+ *
+ * Note: btree indexes need these routines not to leak memory; therefore,
+ * be careful to free working copies of toasted datums.  Most places don't
+ * need to be so careful.
+ *****************************************************************************/
+
+Datum
+byteaeq(PG_FUNCTION_ARGS)
+{
+	bytea	    *arg1 = PG_GETARG_BYTEA_P(0);
+	bytea   	*arg2 = PG_GETARG_BYTEA_P(1);
+	int			len1,
+				len2;
+	bool		result;
+
+	len1 = VARSIZE(arg1) - VARHDRSZ;
+	len2 = VARSIZE(arg2) - VARHDRSZ;
+
+	/* fast path for different-length inputs */
+	if (len1 != len2)
+		result = false;
+	else
+		result = (memcmp(VARDATA(arg1), VARDATA(arg2), len1) == 0);
+
+	PG_FREE_IF_COPY(arg1, 0);
+	PG_FREE_IF_COPY(arg2, 1);
+
+	PG_RETURN_BOOL(result);
+}
+
+Datum
+byteane(PG_FUNCTION_ARGS)
+{
+	bytea		*arg1 = PG_GETARG_BYTEA_P(0);
+	bytea		*arg2 = PG_GETARG_BYTEA_P(1);
+	int			len1,
+				len2;
+	bool		result;
+
+	len1 = VARSIZE(arg1) - VARHDRSZ;
+	len2 = VARSIZE(arg2) - VARHDRSZ;
+
+	/* fast path for different-length inputs */
+	if (len1 != len2)
+		result = true;
+	else
+		result = (memcmp(VARDATA(arg1), VARDATA(arg2), len1) != 0);
+
+	PG_FREE_IF_COPY(arg1, 0);
+	PG_FREE_IF_COPY(arg2, 1);
+
+	PG_RETURN_BOOL(result);
+}
+
+Datum
+bytealt(PG_FUNCTION_ARGS)
+{
+	bytea		*arg1 = PG_GETARG_BYTEA_P(0);
+	bytea		*arg2 = PG_GETARG_BYTEA_P(1);
+	int			len1,
+				len2;
+	int			cmp;
+
+	len1 = VARSIZE(arg1) - VARHDRSZ;
+	len2 = VARSIZE(arg2) - VARHDRSZ;
+
+	cmp = memcmp(VARDATA(arg1), VARDATA(arg2), Min(len1, len2));
+
+	PG_FREE_IF_COPY(arg1, 0);
+	PG_FREE_IF_COPY(arg2, 1);
+
+	PG_RETURN_BOOL((cmp < 0) || ((cmp == 0) && (len1 < len2)));
+}
+
+Datum
+byteale(PG_FUNCTION_ARGS)
+{
+	bytea		*arg1 = PG_GETARG_BYTEA_P(0);
+	bytea		*arg2 = PG_GETARG_BYTEA_P(1);
+	int			len1,
+				len2;
+	int			cmp;
+
+	len1 = VARSIZE(arg1) - VARHDRSZ;
+	len2 = VARSIZE(arg2) - VARHDRSZ;
+
+	cmp = memcmp(VARDATA(arg1), VARDATA(arg2), Min(len1, len2));
+
+	PG_FREE_IF_COPY(arg1, 0);
+	PG_FREE_IF_COPY(arg2, 1);
+
+	PG_RETURN_BOOL((cmp < 0) || ((cmp == 0) && (len1 <= len2)));
+}
+
+Datum
+byteagt(PG_FUNCTION_ARGS)
+{
+	bytea		*arg1 = PG_GETARG_BYTEA_P(0);
+	bytea		*arg2 = PG_GETARG_BYTEA_P(1);
+	int			len1,
+				len2;
+	int			cmp;
+
+	len1 = VARSIZE(arg1) - VARHDRSZ;
+	len2 = VARSIZE(arg2) - VARHDRSZ;
+
+	cmp = memcmp(VARDATA(arg1), VARDATA(arg2), Min(len1, len2));
+
+	PG_FREE_IF_COPY(arg1, 0);
+	PG_FREE_IF_COPY(arg2, 1);
+
+	PG_RETURN_BOOL((cmp > 0) || ((cmp == 0) && (len1 > len2)));
+}
+
+Datum
+byteage(PG_FUNCTION_ARGS)
+{
+	bytea		*arg1 = PG_GETARG_BYTEA_P(0);
+	bytea		*arg2 = PG_GETARG_BYTEA_P(1);
+	int			len1,
+				len2;
+	int			cmp;
+
+	len1 = VARSIZE(arg1) - VARHDRSZ;
+	len2 = VARSIZE(arg2) - VARHDRSZ;
+
+	cmp = memcmp(VARDATA(arg1), VARDATA(arg2), Min(len1, len2));
+
+	PG_FREE_IF_COPY(arg1, 0);
+	PG_FREE_IF_COPY(arg2, 1);
+
+	PG_RETURN_BOOL((cmp > 0) || ((cmp == 0) && (len1 >= len2)));
+}
+
+Datum
+byteacmp(PG_FUNCTION_ARGS)
+{
+	bytea		*arg1 = PG_GETARG_BYTEA_P(0);
+	bytea		*arg2 = PG_GETARG_BYTEA_P(1);
+	int			len1,
+				len2;
+	int			cmp;
+
+	len1 = VARSIZE(arg1) - VARHDRSZ;
+	len2 = VARSIZE(arg2) - VARHDRSZ;
+
+	cmp = memcmp(VARDATA(arg1), VARDATA(arg2), Min(len1, len2));
+	if ((cmp == 0) && (len1 != len2))
+		cmp = (len1 < len2) ? -1 : 1;
+
+	PG_FREE_IF_COPY(arg1, 0);
+	PG_FREE_IF_COPY(arg2, 1);
+
+	PG_RETURN_INT32(cmp);
 }

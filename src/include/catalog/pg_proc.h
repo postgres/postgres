@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.202 2001/08/10 20:52:25 tgl Exp $
+ * $Id: pg_proc.h,v 1.203 2001/08/13 18:45:36 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2699,6 +2699,22 @@ DATA(insert OID = 1946 (  encode						PGUID 12 f t t t 2 f 25 "17 25" 100 0 0 10
 DESCR("Convert bytea value into some ascii-only text string");
 DATA(insert OID = 1947 (  decode						PGUID 12 f t t t 2 f 17 "25 25" 100 0 0 100	binary_decode - ));
 DESCR("Convert ascii-encoded text string into bytea value");
+
+DATA(insert OID = 1948 (  byteaeq		   PGUID 12 f t t t 2 f 16 "17 17" 100 0 0 100	byteaeq - ));
+DESCR("equal");
+DATA(insert OID = 1949 (  bytealt		   PGUID 12 f t t t 2 f 16 "17 17" 100 0 0 100	bytealt - ));
+DESCR("less-than");
+DATA(insert OID = 1950 (  byteale		   PGUID 12 f t t t 2 f 16 "17 17" 100 0 0 100	byteale - ));
+DESCR("less-than-or-equal");
+DATA(insert OID = 1951 (  byteagt		   PGUID 12 f t t t 2 f 16 "17 17" 100 0 0 100	byteagt - ));
+DESCR("greater-than");
+DATA(insert OID = 1952 (  byteage		   PGUID 12 f t t t 2 f 16 "17 17" 100 0 0 100	byteage - ));
+DESCR("greater-than-or-equal");
+DATA(insert OID = 1953 (  byteane		   PGUID 12 f t t t 2 f 16 "17 17" 100 0 0 100	byteane - ));
+DESCR("not equal");
+DATA(insert OID = 1954 (  byteacmp		   PGUID 12 f t t t 2 f 23 "17 17" 100 0 0 100	byteacmp - ));
+DESCR("less-equal-greater");
+
  
 /*
  * prototypes for functions pg_proc.c
