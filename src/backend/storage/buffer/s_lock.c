@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/Attic/s_lock.c,v 1.15 1998/12/26 18:15:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/Attic/s_lock.c,v 1.16 1999/01/17 03:04:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,8 +16,7 @@
 #include <sys/time.h>
 #include <unistd.h>
 
-#include "config.h"
-#include "c.h"
+#include "postgres.h"
 #include "storage/s_lock.h"
 
 

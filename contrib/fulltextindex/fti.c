@@ -1,6 +1,6 @@
+#include "postgres.h"
 #include "executor/spi.h"
 #include "commands/trigger.h"
-#include "c.h"		/* endof() macro */
 #include <ctype.h>	/* tolower */
 #include <stdio.h>	/* debugging */
 

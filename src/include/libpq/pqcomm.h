@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqcomm.h,v 1.31 1999/01/17 01:45:42 tgl Exp $
+ * $Id: pqcomm.h,v 1.32 1999/01/17 03:04:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,7 @@
 #include <netinet/in.h>
 #endif
 
-#include "c.h"
+#include "postgres.h"
 
 /* Define a generic socket address type. */
 

@@ -12,8 +12,8 @@
 #include <sys/ldr.h>
 #include <a.out.h>
 #include <ldfcn.h>
+#include "postgres.h"
 #include "dynloader.h"
-#include "c.h"
 
 /*
  * We simulate dlopen() et al. through a call to load. Because AIX has

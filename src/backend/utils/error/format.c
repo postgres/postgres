@@ -7,13 +7,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/format.c,v 1.8 1999/01/01 04:48:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/format.c,v 1.9 1999/01/17 03:04:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <stdio.h>
 #include <stdarg.h>
-#include "c.h"
+#include "postgres.h"
 
 #define FormMaxSize		1024
 #define FormMinSize		(FormMaxSize / 8)
