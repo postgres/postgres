@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/heapam.h,v 1.94 2005/01/27 23:24:11 neilc Exp $
+ * $PostgreSQL: pgsql/src/include/access/heapam.h,v 1.95 2005/03/14 04:41:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,9 +39,6 @@
  *		lookups, and call nocachegetattr() for the rest.
  * ----------------
  */
-
-extern Datum nocachegetattr(HeapTuple tup, int attnum,
-			   TupleDesc att, bool *isnull);
 
 #if !defined(DISABLE_COMPLEX_MACRO)
 
@@ -114,9 +111,6 @@ extern Datum fastgetattr(HeapTuple tup, int attnum, TupleDesc tupleDesc,
 			heap_getsysattr((tup), (attnum), (tupleDesc), (isnull)) \
 	) \
 )
-
-extern Datum heap_getsysattr(HeapTuple tup, int attnum, TupleDesc tupleDesc,
-				bool *isnull);
 
 
 /* ----------------
@@ -191,6 +185,8 @@ extern void DataFill(char *data, TupleDesc tupleDesc,
 extern int	heap_attisnull(HeapTuple tup, int attnum);
 extern Datum nocachegetattr(HeapTuple tup, int attnum,
 			   TupleDesc att, bool *isnull);
+extern Datum heap_getsysattr(HeapTuple tup, int attnum, TupleDesc tupleDesc,
+				bool *isnull);
 extern HeapTuple heap_copytuple(HeapTuple tuple);
 extern void heap_copytuple_with_tuple(HeapTuple src, HeapTuple dest);
 extern HeapTuple heap_formtuple(TupleDesc tupleDescriptor,

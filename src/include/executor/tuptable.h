@@ -7,11 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/tuptable.h,v 1.26 2004/12/31 22:03:29 pgsql Exp $
- *
- * NOTES
- *	  The tuple table interface is getting pretty ugly.
- *	  It should be redesigned soon.
+ * $PostgreSQL: pgsql/src/include/executor/tuptable.h,v 1.27 2005/03/14 04:41:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,65 +16,60 @@
 
 #include "access/htup.h"
 
-/* ----------------
- *		The executor tuple table is managed and manipulated by special
- *		code in executor/execTuples.c.
+
+/*
+ * The executor stores pointers to tuples in a "tuple table"
+ * which is composed of TupleTableSlots.  Sometimes the tuples
+ * are pointers to buffer pages, while others are pointers to
+ * palloc'ed memory; the shouldFree variable tells us whether
+ * we may call pfree() on a tuple.  When shouldFree is true,
+ * the tuple is "owned" by the TupleTableSlot and should be
+ * freed when the slot's reference to the tuple is dropped.
  *
- *		TupleTableSlot information
+ * shouldFreeDesc is similar to shouldFree: if it's true, then the
+ * tupleDescriptor is "owned" by the TupleTableSlot and should be
+ * freed when the slot's reference to the descriptor is dropped.
  *
- *			val					current tuple, or NULL if no tuple
- *			shouldFree			boolean - should we pfree() tuple
- *			descIsNew			boolean - true when tupleDescriptor changes
- *			tupleDescriptor		type information for the tuple data
- *			shouldFreeDesc		boolean - should we free tupleDescriptor
- *			buffer				the buffer for tuples pointing to disk pages
+ * If buffer is not InvalidBuffer, then the slot is holding a pin
+ * on the indicated buffer page; drop the pin when we release the
+ * slot's reference to that buffer.  (shouldFree should always be
+ * false in such a case, since presumably val is pointing at the
+ * buffer page.)
  *
- *		The executor stores pointers to tuples in a ``tuple table''
- *		which is composed of TupleTableSlots.  Sometimes the tuples
- *		are pointers to buffer pages, while others are pointers to
- *		palloc'ed memory; the shouldFree variable tells us when
- *		we may call pfree() on a tuple.  -cim 9/23/90
- *
- *		If buffer is not InvalidBuffer, then the slot is holding a pin
- *		on the indicated buffer page; drop the pin when we release the
- *		slot's reference to that buffer.
- *
- *		In the implementation of nested-dot queries such as
- *		"retrieve (EMP.hobbies.all)", a single scan may return tuples
- *		of many types, so now we return pointers to tuple descriptors
- *		along with tuples returned via the tuple table.  -cim 1/18/90
- *
- *		shouldFreeDesc is similar to shouldFree: if it's true, then the
- *		tupleDescriptor is "owned" by the TupleTableSlot and should be
- *		freed when the slot's reference to the descriptor is dropped.
- *
- *		See executor.h for decls of functions defined in execTuples.c
- *		-jolly
- *
- * ----------------
+ * The slot_getattr() routine allows extraction of attribute values from
+ * a TupleTableSlot's current tuple.  It is equivalent to heap_getattr()
+ * except that it can optimize fetching of multiple values more efficiently.
+ * The cache_xxx fields of TupleTableSlot are support for slot_getattr().
  */
 typedef struct TupleTableSlot
 {
-	NodeTag		type;
-	HeapTuple	val;
-	bool		ttc_shouldFree;
-	bool		ttc_descIsNew;
-	bool		ttc_shouldFreeDesc;
-	TupleDesc	ttc_tupleDescriptor;
-	Buffer		ttc_buffer;
+	NodeTag		type;			/* vestigial ... allows IsA tests */
+	HeapTuple	val;			/* current tuple, or NULL if none */
+	TupleDesc	ttc_tupleDescriptor;	/* tuple's descriptor */
+	bool		ttc_shouldFree;			/* should pfree tuple? */
+	bool		ttc_shouldFreeDesc;		/* should pfree descriptor? */
+	Buffer		ttc_buffer;		/* tuple's buffer, or InvalidBuffer */
+	MemoryContext ttc_mcxt;		/* slot itself is in this context */
+	Datum	   *cache_values;	/* currently extracted values */
+	int			cache_natts;	/* # of valid values in cache_values */
+	bool		cache_slow;		/* saved state for slot_getattr */
+	long		cache_off;		/* saved state for slot_getattr */
 } TupleTableSlot;
 
-/* ----------------
- *		tuple table data structure
- * ----------------
+/*
+ * Tuple table data structure: an array of TupleTableSlots.
  */
 typedef struct TupleTableData
 {
-	int			size;			/* size of the table */
+	int			size;			/* size of the table (number of slots) */
 	int			next;			/* next available slot number */
-	TupleTableSlot *array;		/* array of TupleTableSlot's */
-} TupleTableData;
+	TupleTableSlot array[1];	/* VARIABLE LENGTH ARRAY - must be last */
+} TupleTableData;				/* VARIABLE LENGTH STRUCT */
 
 typedef TupleTableData *TupleTable;
+
+
+/* in access/common/heaptuple.c */
+extern Datum slot_getattr(TupleTableSlot *slot, int attnum, bool *isnull);
 
 #endif   /* TUPTABLE_H */

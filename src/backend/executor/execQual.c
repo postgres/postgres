@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.171 2004/12/31 21:59:45 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.172 2005/03/14 04:41:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -438,11 +438,8 @@ ExecEvalVar(ExprState *exprstate, ExprContext *econtext,
 			bool *isNull, ExprDoneCond *isDone)
 {
 	Var		   *variable = (Var *) exprstate->expr;
-	Datum		result;
 	TupleTableSlot *slot;
 	AttrNumber	attnum;
-	HeapTuple	heapTuple;
-	TupleDesc	tuple_type;
 
 	if (isDone)
 		*isDone = ExprSingleResult;
@@ -475,35 +472,19 @@ ExecEvalVar(ExprState *exprstate, ExprContext *econtext,
 			break;
 	}
 
-	/*
-	 * extract tuple information from the slot
-	 */
-	heapTuple = slot->val;
-	tuple_type = slot->ttc_tupleDescriptor;
-
+#ifdef USE_ASSERT_CHECKING
 	/*
 	 * Some checks that are only applied for user attribute numbers (bogus
-	 * system attnums will be caught inside heap_getattr).
+	 * system attnums will be caught inside slot_getattr).
 	 */
 	if (attnum > 0)
 	{
+		TupleDesc	tuple_type = slot->ttc_tupleDescriptor;
+
 		/*
 		 * This assert checks that the attnum is valid.
 		 */
-		Assert(attnum <= tuple_type->natts &&
-			   tuple_type->attrs[attnum - 1] != NULL);
-
-		/*
-		 * If the attribute's column has been dropped, we force a NULL
-		 * result. This case should not happen in normal use, but it could
-		 * happen if we are executing a plan cached before the column was
-		 * dropped.
-		 */
-		if (tuple_type->attrs[attnum - 1]->attisdropped)
-		{
-			*isNull = true;
-			return (Datum) 0;
-		}
+		Assert(attnum <= tuple_type->natts);
 
 		/*
 		 * This assert checks that the datatype the plan expects to get
@@ -515,16 +496,12 @@ ExecEvalVar(ExprState *exprstate, ExprContext *econtext,
 		 * Note that we can't check dropped columns, since their atttypid has
 		 * been zeroed.
 		 */
-		Assert(variable->vartype == tuple_type->attrs[attnum - 1]->atttypid);
+		Assert(variable->vartype == tuple_type->attrs[attnum - 1]->atttypid ||
+			   tuple_type->attrs[attnum - 1]->attisdropped);
 	}
+#endif /* USE_ASSERT_CHECKING */
 
-	result = heap_getattr(heapTuple,	/* tuple containing attribute */
-						  attnum,		/* attribute number of desired
-										 * attribute */
-						  tuple_type,	/* tuple descriptor of tuple */
-						  isNull);		/* return: is attribute null? */
-
-	return result;
+	return slot_getattr(slot, attnum, isNull);
 }
 
 /* ----------------------------------------------------------------

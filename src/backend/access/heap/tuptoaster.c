@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/tuptoaster.c,v 1.47 2005/01/01 05:43:06 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/tuptoaster.c,v 1.48 2005/03/14 04:41:12 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1197,9 +1197,9 @@ toast_fetch_datum(varattrib *attr)
 		/*
 		 * Have a chunk, extract the sequence number and the data
 		 */
-		residx = DatumGetInt32(heap_getattr(ttup, 2, toasttupDesc, &isnull));
+		residx = DatumGetInt32(fastgetattr(ttup, 2, toasttupDesc, &isnull));
 		Assert(!isnull);
-		chunk = DatumGetPointer(heap_getattr(ttup, 3, toasttupDesc, &isnull));
+		chunk = DatumGetPointer(fastgetattr(ttup, 3, toasttupDesc, &isnull));
 		Assert(!isnull);
 		chunksize = VARATT_SIZE(chunk) - VARHDRSZ;
 
@@ -1372,9 +1372,9 @@ toast_fetch_datum_slice(varattrib *attr, int32 sliceoffset, int32 length)
 		/*
 		 * Have a chunk, extract the sequence number and the data
 		 */
-		residx = DatumGetInt32(heap_getattr(ttup, 2, toasttupDesc, &isnull));
+		residx = DatumGetInt32(fastgetattr(ttup, 2, toasttupDesc, &isnull));
 		Assert(!isnull);
-		chunk = DatumGetPointer(heap_getattr(ttup, 3, toasttupDesc, &isnull));
+		chunk = DatumGetPointer(fastgetattr(ttup, 3, toasttupDesc, &isnull));
 		Assert(!isnull);
 		chunksize = VARATT_SIZE(chunk) - VARHDRSZ;
 

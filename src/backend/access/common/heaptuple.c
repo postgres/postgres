@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/heaptuple.c,v 1.96 2005/01/27 23:23:49 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/heaptuple.c,v 1.97 2005/03/14 04:41:12 tgl Exp $
  *
  * NOTES
  *	  The old interface functions have been converted to macros
@@ -23,6 +23,7 @@
 #include "access/heapam.h"
 #include "access/tuptoaster.h"
 #include "catalog/pg_type.h"
+#include "executor/tuptable.h"
 
 
 /* ----------------------------------------------------------------
@@ -751,6 +752,7 @@ heap_deformtuple(HeapTuple tuple,
 				 char *nulls)
 {
 	HeapTupleHeader tup = tuple->t_data;
+	bool		hasnulls = HeapTupleHasNulls(tuple);
 	Form_pg_attribute *att = tupleDesc->attrs;
 	int			tdesc_natts = tupleDesc->natts;
 	int			natts;			/* number of atts to extract */
@@ -775,7 +777,9 @@ heap_deformtuple(HeapTuple tuple,
 
 	for (attnum = 0; attnum < natts; attnum++)
 	{
-		if (HeapTupleHasNulls(tuple) && att_isnull(attnum, bp))
+		Form_pg_attribute thisatt = att[attnum];
+
+		if (hasnulls && att_isnull(attnum, bp))
 		{
 			values[attnum] = (Datum) 0;
 			nulls[attnum] = 'n';
@@ -785,21 +789,21 @@ heap_deformtuple(HeapTuple tuple,
 
 		nulls[attnum] = ' ';
 
-		if (!slow && att[attnum]->attcacheoff >= 0)
-			off = att[attnum]->attcacheoff;
+		if (!slow && thisatt->attcacheoff >= 0)
+			off = thisatt->attcacheoff;
 		else
 		{
-			off = att_align(off, att[attnum]->attalign);
+			off = att_align(off, thisatt->attalign);
 
 			if (!slow)
-				att[attnum]->attcacheoff = off;
+				thisatt->attcacheoff = off;
 		}
 
-		values[attnum] = fetchatt(att[attnum], tp + off);
+		values[attnum] = fetchatt(thisatt, tp + off);
 
-		off = att_addlength(off, att[attnum]->attlen, tp + off);
+		off = att_addlength(off, thisatt->attlen, tp + off);
 
-		if (att[attnum]->attlen <= 0)
+		if (thisatt->attlen <= 0)
 			slow = true;		/* can't use attcacheoff anymore */
 	}
 
@@ -812,6 +816,177 @@ heap_deformtuple(HeapTuple tuple,
 		values[attnum] = (Datum) 0;
 		nulls[attnum] = 'n';
 	}
+}
+
+/* ----------------
+ *		slot_deformtuple
+ *
+ *		Given a TupleTableSlot, extract data into cache_values array 
+ *		from the slot's tuple.
+ *
+ *		This is essentially an incremental version of heap_deformtuple:
+ *		on each call we extract attributes up to the one needed, without
+ *		re-computing information about previously extracted attributes.
+ *		slot->cache_natts is the number of attributes already extracted.
+ *
+ *		This only gets called from slot_getattr.  Note that slot_getattr
+ *		must check for a null attribute since we don't create an array
+ *		of null indicators.
+ * ----------------
+ */
+static void
+slot_deformtuple(TupleTableSlot *slot, int natts)
+{
+	HeapTuple		tuple = slot->val;
+	TupleDesc		tupleDesc = slot->ttc_tupleDescriptor;
+	Datum	   *values = slot->cache_values;
+	HeapTupleHeader	tup = tuple->t_data;
+	bool		hasnulls = HeapTupleHasNulls(tuple);
+	Form_pg_attribute *att = tupleDesc->attrs;
+	int			attnum;
+	char	   *tp;					/* ptr to tuple data */
+	long		off;				/* offset in tuple data */
+	bits8	   *bp = tup->t_bits;	/* ptr to null bitmask in tuple */
+	bool		slow;				/* can we use/set attcacheoff? */
+
+	/*
+	 * Check whether the first call for this tuple, and initialize or
+	 * restore loop state.
+	 */
+	attnum = slot->cache_natts;
+	if (attnum == 0)
+	{
+		/* Start from the first attribute */
+		off = 0;
+		slow = false;
+	}
+	else
+	{
+		/* Restore state from previous execution */
+		off = slot->cache_off;
+		slow = slot->cache_slow;
+	}
+
+	tp = (char *) tup + tup->t_hoff;
+
+	for (; attnum < natts; attnum++)
+	{
+		Form_pg_attribute thisatt = att[attnum];
+
+		if (hasnulls && att_isnull(attnum, bp))
+		{
+			values[attnum] = (Datum) 0;
+			slow = true;        /* can't use attcacheoff anymore */
+			continue;
+		}
+
+		if (!slow && thisatt->attcacheoff >= 0)
+			off = thisatt->attcacheoff;
+		else
+		{
+			off = att_align(off, thisatt->attalign);
+
+			if (!slow)
+				thisatt->attcacheoff = off;
+		}
+
+		values[attnum] = fetchatt(thisatt, tp + off);
+
+		off = att_addlength(off, thisatt->attlen, tp + off);
+
+		if (thisatt->attlen <= 0)
+			slow = true;        /* can't use attcacheoff anymore */
+	}
+
+	/*
+	 * Save state for next execution
+	 */
+	slot->cache_natts = attnum;
+	slot->cache_off = off;
+	slot->cache_slow = slow;
+}
+
+/* --------------------------------
+ *		slot_getattr
+ *
+ *		This function fetches an attribute of the slot's current tuple.
+ *		It is functionally equivalent to heap_getattr, but fetches of
+ *		multiple attributes of the same tuple will be optimized better,
+ *		because we avoid O(N^2) behavior from multiple calls of
+ *		nocachegetattr(), even when attcacheoff isn't usable.
+ * --------------------------------
+ */
+Datum
+slot_getattr(TupleTableSlot *slot, int attnum, bool *isnull)
+{
+	HeapTuple		tuple = slot->val;
+	TupleDesc		tupleDesc = slot->ttc_tupleDescriptor;
+	HeapTupleHeader	tup;
+
+	/*
+	 * system attributes are handled by heap_getsysattr
+	 */
+	if (attnum <= 0)
+		return heap_getsysattr(tuple, attnum, tupleDesc, isnull);
+
+	/*
+	 * check if attnum is out of range according to either the tupdesc
+	 * or the tuple itself; if so return NULL
+	 */
+	tup = tuple->t_data;
+
+	if (attnum > tup->t_natts || attnum > tupleDesc->natts)
+	{
+		*isnull = true;
+		return (Datum) 0;
+	}
+
+	/*
+	 * check if target attribute is null
+	 */
+	if (HeapTupleHasNulls(tuple) && att_isnull(attnum - 1, tup->t_bits))
+	{
+		*isnull = true;
+		return (Datum) 0;
+	}
+
+	/*
+	 * If the attribute's column has been dropped, we force a NULL
+	 * result. This case should not happen in normal use, but it could
+	 * happen if we are executing a plan cached before the column was
+	 * dropped.
+	 */
+	if (tupleDesc->attrs[attnum - 1]->attisdropped)
+	{
+		*isnull = true;
+		return (Datum) 0;
+	}
+
+	/*
+	 * If attribute wasn't already extracted, extract it and preceding
+	 * attributes.
+	 */
+	if (attnum > slot->cache_natts)
+	{
+		/*
+		 * If first time for this TupleTableSlot, allocate the cache
+		 * workspace.  It must have the same lifetime as the slot, so allocate
+		 * it in the slot's own context.  We size the array according to what
+		 * the tupdesc says, NOT the tuple.
+		 */
+		if (slot->cache_values == NULL)
+			slot->cache_values = (Datum *)
+				MemoryContextAlloc(slot->ttc_mcxt,
+								   tupleDesc->natts * sizeof(Datum));
+
+		slot_deformtuple(slot, attnum);
+	}
+
+	/*
+	 * The result is acquired from cache_values array.
+	 */
+	*isnull = false;
+	return slot->cache_values[attnum - 1];
 }
 
 /* ----------------
