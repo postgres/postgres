@@ -4,6 +4,11 @@ a searchable data type (textual) with indexed access.
 All work was done by Teodor Sigaev (teodor@stack.net) and Oleg Bartunov
 (oleg@sai.msu.su).
 
+CHANGES:
+
+August 13, 2002
+	Use parser of OpenFTS v0.33.
+
 IMPORTANT NOTICE:
 
 This is a first step of our work on integration of OpenFTS

@@ -5,18 +5,17 @@
 
 /* postgres allocation function */
 #include "postgres.h"
-#define free	pfree
-#define malloc	palloc
+#define free    pfree
+#define malloc  palloc
 #define realloc repalloc
 
 #ifdef strdup
 #undef strdup
 #endif
-#define strdup	pstrdup
-
+#define strdup  pstrdup
 
 char *token = NULL;  /* pointer to token */
-char *s     = NULL;  /* for returning full defis-word */
+char *s     = NULL;  /* to return WHOLE hyphenated-word */
 
 YY_BUFFER_STATE buf = NULL; /* buffer to parse; it need for parse from string */
 
@@ -57,21 +56,21 @@ int bytestoread = 0;	/* for limiting read from filehandle */
 %option nounput
 %option noyywrap
 
-
-/* parser's state for parsing defis-word */
+/* parser's state for parsing hyphenated-word */
 %x DELIM  
 /* parser's state for parsing URL*/
 %x URL  
 %x SERVER  
 
-/* parser's state for parsing filepath */
-
+/* parser's state for parsing TAGS */
 %x INTAG
 %x QINTAG
+%x INCOMMENT
+%x INSCRIPT
 
-/* NONLATIN char */
-NONLATINALNUM	[0-9\200-\377]
-NONLATINALPHA	[\200-\377]
+/* cyrillic koi8 char */
+CYRALNUM	[0-9\200-\377]
+CYRALPHA	[\200-\377]
 ALPHA		[a-zA-Z\200-\377]
 ALNUM		[0-9a-zA-Z\200-\377]
 
@@ -81,66 +80,59 @@ URI		[-_[:alnum:]/%,\.;=&?#]+
 
 %%
 
-"<"[[:alpha:]]	{ BEGIN INTAG;
-	token = tsearch_yytext;
-	tokenlen = tsearch_yyleng;
-	return SYMTAG;
- }
+"<"[Ss][Cc][Rr][Ii][Pp][Tt] { BEGIN INSCRIPT; }
 
-"</"[[:alpha:]]	{ BEGIN INTAG;
-	token = tsearch_yytext;
-	tokenlen = tsearch_yyleng;
-	return SYMTAG;
- }
-
-"<>" {
-	token = tsearch_yytext;
-	tokenlen = tsearch_yyleng;
-	return SYMTAG;
-}
-
-"<"[^>[:alpha:]] { 
+<INSCRIPT>"</"[Ss][Cc][Rr][Ii][Pp][Tt]">" {
+	BEGIN INITIAL; 
+	*tsearch_yytext=' '; *(tsearch_yytext+1) = '\0'; 
 	token = tsearch_yytext;
 	tokenlen = tsearch_yyleng;
 	return SPACE;
 }
 
-<INTAG>"\""	{ BEGIN QINTAG;
-	token = tsearch_yytext;
-	tokenlen = tsearch_yyleng;
-	return SYMTAG;
- }
+"<!--"	{ BEGIN INCOMMENT; }
 
-<QINTAG>"\\\""	{
+<INCOMMENT>"-->"	{ 
+	BEGIN INITIAL;
+	*tsearch_yytext=' '; *(tsearch_yytext+1) = '\0'; 
 	token = tsearch_yytext;
 	tokenlen = tsearch_yyleng;
-	return SYMTAG;
+	return SPACE;
 }
 
-<QINTAG>"\""	{ BEGIN INTAG;
-	token = tsearch_yytext;
-	tokenlen = tsearch_yyleng;
-	return SYMTAG;
- }
 
-<QINTAG>.|\n	{
+"<"[\![:alpha:]]	{ BEGIN INTAG; }
+
+"</"[[:alpha:]]	{ BEGIN INTAG; }
+
+<INTAG>"\""	{ BEGIN QINTAG; }
+
+<QINTAG>"\\\""	;
+
+<QINTAG>"\""	{ BEGIN INTAG; }
+
+<INTAG>">"	{ 
+	BEGIN INITIAL;
 	token = tsearch_yytext;
-	tokenlen = tsearch_yyleng;
-	return SYMTAG;
+	*tsearch_yytext=' '; 
+	token = tsearch_yytext;
+	tokenlen = 1;
+	return TAG;
 }
 
-<INTAG>">"	{ BEGIN INITIAL;
-	token = tsearch_yytext;
-	tokenlen = tsearch_yyleng;
-	return SYMTAG;
- }
+<QINTAG,INTAG,INCOMMENT,INSCRIPT>.|\n 	;
 
-<INTAG>.|\n    {
+\&(quot|amp|nbsp|lt|gt)\;   {
 	token = tsearch_yytext;
 	tokenlen = tsearch_yyleng;
-	return SYMTAG;
+	return HTMLENTITY;
 }
 
+\&\#[0-9][0-9]?[0-9]?\; {
+	token = tsearch_yytext;
+	tokenlen = tsearch_yyleng;
+	return HTMLENTITY;
+}
  
 [-_\.[:alnum:]]+@{HOSTNAME}  /* Emails */ { 
 	token = tsearch_yytext; 
@@ -148,22 +140,34 @@ URI		[-_[:alnum:]/%,\.;=&?#]+
 	return EMAIL; 
 }
 
-<DELIM,INITIAL>[0-9] 	/* digit's and point (might be a version) */ { 
+[+-]?[0-9]+(\.[0-9]+)?[eEdD][+-]?[0-9]+  /* float */ 	{ 
 	token = tsearch_yytext; 
 	tokenlen = tsearch_yyleng;
-	return FINT; 
+	return SCIENTIFIC; 
 }
 
-<DELIM,INITIAL>[0-9]+[0-9\.]*[0-9] 	/* digit's and point (might be a version) */ { 
-	token = tsearch_yytext; 
+[0-9]+\.[0-9]+\.[0-9\.]*[0-9] {
+	token = tsearch_yytext;
 	tokenlen = tsearch_yyleng;
-	return FINT; 
+	return VERSIONNUMBER;
 }
 
-[+-]?[0-9\.]+[eE][+-]?[0-9]+  /* float */ 	{ 
+[+-]?[0-9]+\.[0-9]+ {
+	token = tsearch_yytext;
+	tokenlen = tsearch_yyleng;
+	return DECIMAL;
+}
+
+[+-][0-9]+ { 
 	token = tsearch_yytext; 
 	tokenlen = tsearch_yyleng;
-	return FLOAT; 
+	return SIGNEDINT; 
+}
+
+<DELIM,INITIAL>[0-9]+ { 
+	token = tsearch_yytext; 
+	tokenlen = tsearch_yyleng;
+	return UNSIGNEDINT; 
 }
 
 http"://"        { 
@@ -208,52 +212,58 @@ ftp"://"        {
 	return FILEPATH;
 }
 
-({NONLATINALNUM}+-)+{NONLATINALPHA}+ /* composite-word */	{
+({CYRALPHA}+-)+{CYRALPHA}+ /* composite-word */	{
 	BEGIN DELIM;
 	if (s) { free(s); s=NULL; } 
 	s = strdup( tsearch_yytext );
 	tokenlen = tsearch_yyleng;
 	yyless( 0 );
 	token = s;
-	return DEFISNONLATINWORD;
+	return CYRHYPHENWORD;
 }
 
-([[:alnum:]]+-)+[[:alpha:]]+ /* composite-word */	{
+([[:alpha:]]+-)+[[:alpha:]]+ /* composite-word */	{
 	 BEGIN DELIM;
 	if (s) { free(s); s=NULL; } 
-	tokenlen = tsearch_yyleng;
 	s = strdup( tsearch_yytext );
+	tokenlen = tsearch_yyleng;
 	yyless( 0 );
 	token = s;
-	return DEFISLATWORD;
+	return LATHYPHENWORD;
 }
 
-({ALNUM}+-)+{ALPHA}+ /* composite-word */	{
+({ALNUM}+-)+{ALNUM}+ /* composite-word */	{
 	BEGIN DELIM;
 	if (s) { free(s); s=NULL; } 
 	s = strdup( tsearch_yytext );
 	tokenlen = tsearch_yyleng;
 	yyless( 0 );
 	token = s;
-	return DEFISWORD;
+	return HYPHENWORD;
 }
 
-<DELIM>{NONLATINALNUM}+  /* one word in composite-word */	{ 
-	token = tsearch_yytext; 
+<DELIM>\+?[0-9]+\.[0-9]+ {
+	token = tsearch_yytext;
 	tokenlen = tsearch_yyleng;
-	return NONLATINPARTWORD; 
+	return DECIMAL;
 }
 
-<DELIM>[[:alnum:]]+  /* one word in composite-word */	{ 
+<DELIM>{CYRALPHA}+  /* one word in composite-word */	{ 
 	token = tsearch_yytext; 
 	tokenlen = tsearch_yyleng;
-	return LATPARTWORD; 
+	return CYRPARTHYPHENWORD; 
+}
+
+<DELIM>[[:alpha:]]+  /* one word in composite-word */	{ 
+	token = tsearch_yytext; 
+	tokenlen = tsearch_yyleng;
+	return LATPARTHYPHENWORD; 
 }
 
 <DELIM>{ALNUM}+  /* one word in composite-word */	{ 
 	token = tsearch_yytext; 
 	tokenlen = tsearch_yyleng;
-	return PARTWORD; 
+	return PARTHYPHENWORD; 
 }
 
 <DELIM>-  { 
@@ -264,17 +274,16 @@ ftp"://"        {
 
 <DELIM,SERVER,URL>.|\n /* return in basic state */	{
 	BEGIN INITIAL;
-	tokenlen = tsearch_yyleng;
 	yyless( 0 );
 }
 
-{NONLATINALNUM}+ /* normal word */	{ 
+{CYRALPHA}+ /* normal word */	{ 
 	token = tsearch_yytext; 
 	tokenlen = tsearch_yyleng;
-	return NONLATINWORD; 
+	return CYRWORD; 
 }
 
-[[:alnum:]]+ /* normal word */	{ 
+[[:alpha:]]+ /* normal word */	{ 
 	token = tsearch_yytext; 
 	tokenlen = tsearch_yyleng;
 	return LATWORD; 
@@ -286,7 +295,13 @@ ftp"://"        {
 	return UWORD; 
 }
 
-.|\n {
+[ \r\n\t]+ {
+	token = tsearch_yytext;
+	tokenlen = tsearch_yyleng;
+	return SPACE;
+}
+
+. {
 	token = tsearch_yytext;
 	tokenlen = tsearch_yyleng;
 	return SPACE;
