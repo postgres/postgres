@@ -31,7 +31,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.32 2001/02/16 03:26:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.33 2001/03/07 16:18:08 momjian Exp $
  *
  **********************************************************************/
 
@@ -250,7 +250,7 @@ pltcl_init_interp(Tcl_Interp *interp)
  *				  table pltcl_modules (if it exists)
  **********************************************************************/
 static void
-pltcl_init_load_unknown(void)
+pltcl_init_load_unknown(Tcl_Interp *interp)
 {
 	int			spi_rc;
 	int			tcl_rc;
