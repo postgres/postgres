@@ -8,21 +8,33 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pg_ctl/Attic/pg_ctl.sh,v 1.5 1999/12/22 04:41:17 ishii Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pg_ctl/Attic/pg_ctl.sh,v 1.6 2000/01/09 12:06:52 ishii Exp $
 #
 #-------------------------------------------------------------------------
 CMDNAME=`basename $0`
 
+# Check for echo -n vs echo \c
+
+ECHO=echo
+if echo '\c' | grep -s c >/dev/null 2>&1
+then
+    ECHO_N="echo -n"
+    ECHO_C=""
+else
+    ECHO_N="echo"
+    ECHO_C='\c'
+fi
+
 #
 # Find out where we're located
 #
-if echo "$0" | grep '/' > /dev/null 2>&1 
+if $ECHO "$0" | grep '/' > /dev/null 2>&1 
 then
         # explicit dir name given
-        PGPATH=`echo $0 | sed 's,/[^/]*$,,'`       # (dirname command is not portable)
+        PGPATH=`$ECHO $0 | sed 's,/[^/]*$,,'`       # (dirname command is not portable)
 else
         # look for it in PATH ('which' command is not portable)
-        for dir in `echo "$PATH" | sed 's/:/ /g'`
+        for dir in `$ECHO "$PATH" | sed 's/:/ /g'`
 	do
                 # empty entry in path means current dir
                 [ -z "$dir" ] && dir='.'
@@ -39,12 +51,12 @@ for prog in postmaster
 do
         if [ ! -x "$PGPATH/$prog" ]
 	then
-                echo "The program $prog needed by $CMDNAME could not be found. It was"
-                echo "expected at:"
-                echo "    $PGPATH/$prog"
-                echo "If this is not the correct directory, please start $CMDNAME"
-                echo "with a full search path. Otherwise make sure that the program"
-                echo "was installed successfully."
+                $ECHO "The program $prog needed by $CMDNAME could not be found. It was"
+                $ECHO "expected at:"
+                $ECHO "    $PGPATH/$prog"
+                $ECHO "If this is not the correct directory, please start $CMDNAME"
+                $ECHO "with a full search path. Otherwise make sure that the program"
+                $ECHO "was installed successfully."
                 exit 1
         fi
 done
@@ -79,7 +91,7 @@ do
 		    sig="-QUIT"
 		    ;;
 	    *)
-		echo "$CMDNAME: Wrong shutdown mode $sigopt"
+		$ECHO "$CMDNAME: Wrong shutdown mode $sigopt"
 		usage=1
 		;;
 	    esac
@@ -112,15 +124,15 @@ do
 done
 
 if [ "$usage" = 1 -o "$op" = "" ];then
-    echo "Usage: $CMDNAME [-w][-D database_dir][-p path_to_postmaster][-o \"postmaster_opts\"] start"
-    echo "       $CMDNAME [-w][-D database_dir][-m s[mart]|f[ast]|i[mmediate]] stop"
-    echo "       $CMDNAME [-w][-D database_dir][-m s[mart]|f[ast]|i[mmediate]][-o \"postmaster_opts\"] restart"
-    echo "       $CMDNAME [-D database_dir] status"
+    $ECHO "Usage: $CMDNAME [-w][-D database_dir][-p path_to_postmaster][-o \"postmaster_opts\"] start"
+    $ECHO "       $CMDNAME [-w][-D database_dir][-m s[mart]|f[ast]|i[mmediate]] stop"
+    $ECHO "       $CMDNAME [-w][-D database_dir][-m s[mart]|f[ast]|i[mmediate]][-o \"postmaster_opts\"] restart"
+    $ECHO "       $CMDNAME [-D database_dir] status"
     exit 1
 fi
 
 if [ -z "$PGDATA" ];then
-    echo "$CMDNAME: No database directory or environment variable \$PGDATA is specified"
+    $ECHO "$CMDNAME: No database directory or environment variable \$PGDATA is specified"
     exit 1
 fi
 
@@ -130,32 +142,46 @@ PIDFILE=$PGDATA/postmaster.pid
 
 if [ $op = "status" ];then
     if [ -f $PIDFILE ];then
-	echo "$CMDNAME: postmaster is running (pid: `cat $PIDFILE`)"
-	echo "options are:"
-	echo "`cat $POSTOPTSFILE`"
+	PID=`cat $PIDFILE`
+	if [ $PID -lt 0 ];then
+	    PID=`expr 0 - $PID`
+	    $ECHO "$CMDNAME: postgres is running (pid: $PID)"
+	else
+	    $ECHO "$CMDNAME: postmaster is running (pid: $PID)"
+	    $ECHO "options are:"
+	    $ECHO "`cat $POSTOPTSFILE`"
+	fi
 	exit 0
     else
-	echo "$CMDNAME: postmaster is not running"
+	$ECHO "$CMDNAME: postmaster or postgres is not running"
 	exit 1
     fi
 fi
 
 if [ $op = "stop" -o $op = "restart" ];then
     if [ -f $PIDFILE ];then
+	PID=`cat $PIDFILE`
+	if [ $PID -lt 0 ];then
+	    PID=`expr 0 - $PID`
+	    $ECHO "$CMDNAME: Cannot restart postmaster. postgres is running (pid: $PID)"
+	    $ECHO "Please terminate postgres and try again"
+	    exit 1
+	fi
+
 	kill $sig `cat $PIDFILE`
 
 	# wait for postmaster shutting down
 	if [ "$wait" = 1 -o $op = "restart" ];then
 	    cnt=0
-	    echo -n "Waiting for postmaster shutting down.."
+	    $ECHO_N "Waiting for postmaster shutting down.."$ECHO_C
 
 	    while :
 	    do
 		if [ -f $PIDFILE ];then
-		    echo -n "."
+		    $ECHO_N "."$ECHO_C
 		    cnt=`expr $cnt + 1`
 		    if [ $cnt -gt 60 ];then
-			echo "$CMDNAME: postmaster does not shut down"
+			$ECHO "$CMDNAME: postmaster does not shut down"
 			exit 1
 		    fi
 		else
@@ -163,16 +189,16 @@ if [ $op = "stop" -o $op = "restart" ];then
 		fi
 		sleep 1
 	    done
-	    echo "done."
+	    $ECHO "done."
 	fi
 
-	echo "postmaster successfully shut down."
+	$ECHO "postmaster successfully shut down."
 
     else
-	echo "$CMDNAME: Can't find $PIDFILE."
-	echo "Is postmaster running?"
+	$ECHO "$CMDNAME: Can't find $PIDFILE."
+	$ECHO "Is postmaster running?"
 	if [ $op = "restart" ];then
-	    echo "Anyway, I'm going to start up postmaster..."
+	    $ECHO "Anyway, I'm going to start up postmaster..."
 	else
 	    exit 1
 	fi
@@ -181,7 +207,7 @@ fi
 
 if [ $op = "start" -o $op = "restart" ];then
     if [ -f $PIDFILE ];then
-	echo "$CMDNAME: It seems another postmaster is running. Try to start postmaster anyway."
+	$ECHO "$CMDNAME: It seems another postmaster is running. Try to start postmaster anyway."
 	pid=`cat $PIDFILE`
     fi
 
@@ -192,7 +218,7 @@ if [ $op = "start" -o $op = "restart" ];then
 	    if [ -f $DEFPOSTOPTS ];then
 		eval `cat $DEFPOSTOPTS` &
 	    else
-		echo "$CMDNAME: Can't find $DEFPOSTOPTS"
+		$ECHO "$CMDNAME: Can't find $DEFPOSTOPTS"
 		exit 1
 	    fi
 	else
@@ -205,7 +231,7 @@ if [ $op = "start" -o $op = "restart" ];then
 
     if [ -f $PIDFILE ];then
 	if [ "`cat $PIDFILE`" = "$pid" ];then
-	    echo "$CMDNAME: Cannot start postmaster. Is another postmaster is running?"
+	    $ECHO "$CMDNAME: Cannot start postmaster. Is another postmaster is running?"
 	    exit 1
         fi
     fi
@@ -213,14 +239,14 @@ if [ $op = "start" -o $op = "restart" ];then
     # wait for postmaster starting up
     if [ "$wait" = 1 ];then
 	cnt=0
-	echo -n "Waiting for postmaster starting up.."
+	$ECHO_N "Waiting for postmaster starting up.."$ECHO_C
 	while :
 	do
 	    if [ ! -f $PIDFILE ];then
-		echo -n "."
+		$ECHO_N "."$ECHO_C
 		cnt=`expr $cnt + 1`
 		if [ $cnt -gt 60 ];then
-		    echo "$CMDNAME: postmaster does not start up"
+		    $ECHO "$CMDNAME: postmaster does not start up"
 		    exit 1
 		fi
 		sleep 1
@@ -228,10 +254,10 @@ if [ $op = "start" -o $op = "restart" ];then
 		break
 	    fi
 	done
-	echo "done."
+	$ECHO "done."
     fi
 
-    echo "postmaster successfully started up."
+    $ECHO "postmaster successfully started up."
 fi
 
 exit 0
