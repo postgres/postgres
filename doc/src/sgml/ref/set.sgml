@@ -201,9 +201,9 @@ default
 	  Setting the <envar>PGDATESTYLE</envar> environment variable.
 	 </member>
 	 <member>
-	  Running postmaster using the <option>-oe</option> parameter to set
+	  Running postmaster using the option <option>-o -e</option> to set
 	  dates to the <literal>European</literal> convention.
-	  Note that this affects only the some combinations of date styles; for example
+	  Note that this affects only some combinations of date styles; for example
 	  the ISO style is not affected by this parameter.
 	 </member>
 	 <member>

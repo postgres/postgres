@@ -1,16 +1,16 @@
 <refentry id="SQL-SELECTINTO">
  <refmeta>
   <refentrytitle>
-SELECT INTO
+   SELECT INTO
   </refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
  <refnamediv>
   <refname>
-SELECT INTO
+   SELECT INTO
   </refname>
   <refpurpose>
-Create a new table from an existing table or view
+   Create a new table from an existing table or view
   </refpurpose></refnamediv>
  <refsynopsisdiv>
   <refsynopsisdivinfo>
@@ -37,7 +37,8 @@ SELECT [ ALL | DISTINCT ] <replaceable class="PARAMETER">expression</replaceable
     Inputs
    </title>
    <para>
-All input fields are described in detail for SELECT.
+    All input fields are described in detail for
+    <xref linkend="select-title" endterm="select-title">.
    </para>
   </refsect2>
 
@@ -49,7 +50,8 @@ All input fields are described in detail for SELECT.
     Outputs
    </title>
    <para>
-All output fields are described in detail for SELECT.
+    All output fields are described in detail for
+    <xref linkend="select-title" endterm="select-title">.
    </para>
   </refsect2>
  </refsynopsisdiv>
@@ -62,12 +64,14 @@ All output fields are described in detail for SELECT.
    Description
   </title>
   <para>
-   SELECT INTO creates a new table from the results of a query. Typically, this
+   <command>SELECT INTO</command> creates a new table from the results
+   of a query. Typically, this
    query draws data from an existing table, but any SQL query is allowed.
+
    <note>
-	<para>
-	 CREATE TABLE AS is functionally equivalent to the SELECT INTO command.
-	</para>
+    <para>
+     CREATE TABLE AS is functionally equivalent to the SELECT INTO command.
+    </para>
    </note>
   </para>
  </refsect1>
@@ -76,7 +80,7 @@ All output fields are described in detail for SELECT.
 <!-- Keep this comment at the end of the file
 Local variables:
 mode: sgml
-sgml-omittag:
+sgml-omittag:nil
 sgml-shorttag:t
 sgml-minimize-attributes:nil
 sgml-always-quote-attributes:t

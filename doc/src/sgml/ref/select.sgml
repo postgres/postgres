@@ -1,13 +1,13 @@
 <refentry id="SQL-SELECT">
  <refmeta>
   <refentrytitle>
-SELECT
+   SELECT
   </refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
  <refnamediv>
   <refname>
-SELECT
+   SELECT
   </refname>
   <refpurpose>
    Retrieve rows from a table or view.
@@ -17,20 +17,17 @@ SELECT
    <date>1998-09-24</date>
   </refsynopsisdivinfo>
   <synopsis>
-SELECT [ALL|DISTINCT [ON <replaceable class="PARAMETER">column</replaceable>] ]
-    <replaceable class="PARAMETER">expression</replaceable> [ AS
-   <replaceable class="PARAMETER">name</replaceable> ] [, ...]
-    [ INTO [TEMP] [TABLE] <replaceable class="PARAMETER">new_table</replaceable> ]
-    [ FROM <replaceable class="PARAMETER">table</replaceable>
-   [<replaceable class="PARAMETER">alias</replaceable> ] [, ...] ]
+SELECT [ ALL | DISTINCT [ ON <replaceable class="PARAMETER">column</replaceable> ] ]
+    <replaceable class="PARAMETER">expression</replaceable> [ AS <replaceable class="PARAMETER">name</replaceable> ] [, ...]
+    [ INTO [ TEMPORARY | TEMP ] [ TABLE ] <replaceable class="PARAMETER">new_table</replaceable> ]
+    [ FROM <replaceable class="PARAMETER">table</replaceable> [ <replaceable class="PARAMETER">alias</replaceable> ] [, ...] ]
     [ WHERE <replaceable class="PARAMETER">condition</replaceable> ]
     [ GROUP BY <replaceable class="PARAMETER">column</replaceable> [, ...] ]
     [ HAVING <replaceable class="PARAMETER">condition</replaceable> [, ...] ]
-    [ { UNION [ALL] | INTERSECT | EXCEPT } <replaceable
-    class="PARAMETER">select</replaceable> ]
+    [ { UNION [ ALL ] | INTERSECT | EXCEPT } <replaceable class="PARAMETER">select</replaceable> ]
     [ ORDER BY <replaceable class="PARAMETER">column</replaceable> [ ASC | DESC ] [, ...] ]
-    [ FOR UPDATE [OF class_name...]]
-    [ LIMIT count [OFFSET|, count]]
+    [ FOR UPDATE [ OF class_name... ] ]
+    [ LIMIT { count | ALL } [ { OFFSET | , } count ] ]
   </synopsis>
   
   <refsect2 id="R2-SQL-SELECT-1">
@@ -40,13 +37,11 @@ SELECT [ALL|DISTINCT [ON <replaceable class="PARAMETER">column</replaceable>] ]
    <title>
     Inputs
    </title>
-   
+
    <para>
     <variablelist>
      <varlistentry>
-      <term>
-       <replaceable class="PARAMETER">expression</replaceable>
-      </term>
+      <term><replaceable class="PARAMETER">expression</replaceable></term>
       <listitem>
        <para>
 	The name of a table's column or an expression.
@@ -55,9 +50,7 @@ SELECT [ALL|DISTINCT [ON <replaceable class="PARAMETER">column</replaceable>] ]
      </varlistentry>
      
      <varlistentry>
-      <term>
-       <replaceable class="PARAMETER">name</replaceable>
-      </term>
+      <term><replaceable class="PARAMETER">name</replaceable></term>
       <listitem>
        <para>
 	Specifies another name for a column or an expression using
@@ -70,9 +63,8 @@ SELECT [ALL|DISTINCT [ON <replaceable class="PARAMETER">column</replaceable>] ]
      </varlistentry>
      
     <varlistentry>
-     <term>
-     TEMP
-     </term>
+     <term>TEMPORARY</term>
+     <term>TEMP</term>
      <listitem>
       <para>
 	The table is created unique to this session, and is
@@ -82,9 +74,7 @@ SELECT [ALL|DISTINCT [ON <replaceable class="PARAMETER">column</replaceable>] ]
     </varlistentry>
 
      <varlistentry>
-      <term>
-       <replaceable class="PARAMETER">new_table</replaceable>
-      </term>
+      <term><replaceable class="PARAMETER">new_table</replaceable></term>
       <listitem>
        <para>
 	If the INTO TABLE clause is specified, the result of the
@@ -105,9 +95,7 @@ SELECT [ALL|DISTINCT [ON <replaceable class="PARAMETER">column</replaceable>] ]
      </varlistentry>
      
      <varlistentry>
-      <term>
-       <replaceable class="PARAMETER">table</replaceable>
-      </term>
+      <term><replaceable class="PARAMETER">table</replaceable></term>
       <listitem>
        <para>
 	The name of an existing table referenced by the FROM clause.
@@ -116,9 +104,7 @@ SELECT [ALL|DISTINCT [ON <replaceable class="PARAMETER">column</replaceable>] ]
      </varlistentry>
      
      <varlistentry>
-      <term>
-       <replaceable class="PARAMETER">alias</replaceable>
-      </term>
+      <term><replaceable class="PARAMETER">alias</replaceable></term>
       <listitem>
        <para>
 	An alternate name for the preceding
@@ -130,9 +116,7 @@ SELECT [ALL|DISTINCT [ON <replaceable class="PARAMETER">column</replaceable>] ]
      </varlistentry>
      
      <varlistentry>
-      <term>
-       <replaceable class="PARAMETER">condition</replaceable>
-      </term>
+      <term><replaceable class="PARAMETER">condition</replaceable></term>
       <listitem>
        <para>
 	A boolean expression giving a result of true or false.
@@ -142,9 +126,7 @@ SELECT [ALL|DISTINCT [ON <replaceable class="PARAMETER">column</replaceable>] ]
      </varlistentry>
      
      <varlistentry>
-      <term>
-       <replaceable class="PARAMETER">column</replaceable>
-      </term>
+      <term><replaceable class="PARAMETER">column</replaceable></term>
       <listitem>
        <para>
 	The name of a table's column.
@@ -153,9 +135,7 @@ SELECT [ALL|DISTINCT [ON <replaceable class="PARAMETER">column</replaceable>] ]
      </varlistentry>
      
      <varlistentry>
-      <term>
-       <replaceable class="PARAMETER">select</replaceable>
-      </term>
+      <term><replaceable class="PARAMETER">select</replaceable></term>
       <listitem>
        <para>
 	A select statement with all features except the ORDER BY clause.
@@ -175,34 +155,32 @@ SELECT [ALL|DISTINCT [ON <replaceable class="PARAMETER">column</replaceable>] ]
     Outputs
    </title>
    <para>
-	
-	<variablelist>
-	 <varlistentry>
-	  <term>
-	   Rows
-	  </term>
-	  <listitem>
-	   <para>
-		The complete set of rows resulting from the query specification.
-	   </para>
-	  </listitem>
-	 </varlistentry>
-	 
-	 <varlistentry>
-	  <term>
-	   <returnvalue><replaceable>count</replaceable></returnvalue>
-	  </term>
-	  <listitem>
-	   <para>
-		The count of rows returned by the query.
-	   </para>
-	  </listitem>
-	 </varlistentry>
-	</variablelist>
+
+    <variablelist>
+     <varlistentry>
+      <term>Rows</term>
+      <listitem>
+       <para>
+	The complete set of rows resulting from the query specification.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>
+       <returnvalue><replaceable>count</replaceable></returnvalue>
+      </term>
+      <listitem>
+       <para>
+	The count of rows returned by the query.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
    </para>
   </refsect2>
  </refsynopsisdiv>
- 
+
  <refsect1 id="R1-SQL-SELECT-1">
   <refsect1info>
    <date>1998-09-24</date>
@@ -213,69 +191,84 @@ SELECT [ALL|DISTINCT [ON <replaceable class="PARAMETER">column</replaceable>] ]
   <para>
    <command>SELECT</command> will return rows from one or more tables.
    Candidates for selection are rows which satisfy the WHERE condition;
-   if WHERE is omitted, all rows are candidates.</para>
+   if WHERE is omitted, all rows are candidates.
+   (See <xref linkend="where-title" endterm="where-title">.)
+  </para>
+
   <para>
    <command>DISTINCT</command> will eliminate all duplicate rows from the
    selection.
-   <command>DISTINCT ON <replaceable class="PARAMETER">column</replaceable></command> will eliminate all duplicates in the specified column; this is
-equivalent to using <command>GROUP BY <replaceable
-     class="PARAMETER">column</replaceable></command>.  <command>ALL</command> will return all candidate rows,
-including duplicates.</para>
+   <command>DISTINCT ON <replaceable class="PARAMETER">column</replaceable></command>
+   will eliminate all duplicates in the specified column; this is
+   equivalent to using
+   <command>GROUP BY <replaceable class="PARAMETER">column</replaceable></command>.
+   <command>ALL</command> will return all candidate rows,
+   including duplicates.
+  </para>
 
   <para>
    The GROUP BY clause allows a user to divide a table
-   conceptually into groups. (See GROUP BY clause).</para>
-   
+   conceptually into groups.
+   (See <xref linkend="group-by-title" endterm="group-by-title">.)
+  </para>
+
   <para>
    The HAVING clause specifies a grouped table derived by the
    elimination of groups from the result of the previously
-   specified clause. (See HAVING clause).</para>
+   specified clause.
+   (See <xref linkend="having-title" endterm="having-title">.)
+  </para>
    
   <para>
    The ORDER BY clause allows a user to specify that he/she
    wishes the rows sorted according to the ASCending or 
-   DESCending mode operator. (See ORDER BY clause)</para>
+   DESCending mode operator.
+   (See <xref linkend="order-by-title" endterm="order-by-title">.)
+  </para>
    
   <para>
    The UNION clause allows the result to be the collection of rows
-   returned by the queries involved. (See UNION clause).</para>
+   returned by the queries involved.
+   (See <xref linkend="union-title" endterm="union-title">.)
+  </para>
    
   <para>
    The INTERSECT give you the rows that are common to both queries.
-   (See INTERSECT clause).</para>
+   (See <xref linkend="intersect-title" endterm="intersect-title">.)
+  </para>
    
   <para>
    The EXCEPT give you the rows in the upper query not in the lower query.
-   (See EXCEPT clause).</para>
+   (See <xref linkend="except-title" endterm="except-title">.)
+  </para>
    
   <para>
    The FOR UPDATE clause allows the SELECT statement to perform 
    exclusive locking of selected rows.
-   (See EXCEPT clause).</para>
+  </para>
    
   <para>
    The LIMIT...OFFSET clause allows control over which rows are
-   returned by the query.</para>   
+   returned by the query.
+  </para>
 
   <para>
    You must have SELECT privilege to a table to read its values
-   (See <command>GRANT</command>/<command>REVOKE</command> statements).
-</para>
+   (See the <command>GRANT</command>/<command>REVOKE</command> statements).
+  </para>
    
   <refsect2 id="R2-SQL-WHERE-2">
    <refsect2info>
     <date>1998-09-24</date>
    </refsect2info>
-   <title>
+   <title id="where-title">
     WHERE Clause
    </title>
    <para>
     The optional WHERE condition has the general form:
     
     <synopsis>
-WHERE <replaceable class="PARAMETER">expr</replaceable> <replaceable
-class="PARAMETER">ETER">c</replaceable>e<replaceable class="PARAMETER">"PAR</replaceable>replaceable> [ <replaceable
-class="PARAMETER">log_op</replaceable> ... ]
+WHERE <replaceable class="PARAMETER">expr</replaceable> <replaceable class="PARAMETER">ETER">c</replaceable>e<replaceable class="PARAMETER">"PAR</replaceable>replaceable> [ <replaceable class="PARAMETER">log_op</replaceable> ... ]
     </synopsis>
     
     where <replaceable class="PARAMETER">cond_op</replaceable> can be
@@ -294,7 +287,7 @@ class="PARAMETER">log_op</replaceable> ... ]
    <refsect2info>
     <date>1998-09-24</date>
    </refsect2info>
-   <title>
+   <title id="group-by-title">
     GROUP BY Clause
    </title>
    <para>
@@ -302,19 +295,24 @@ class="PARAMETER">log_op</replaceable> ... ]
     of this clause:
     <synopsis>
 GROUP BY <replaceable class="PARAMETER">column</replaceable> [, ...]
-    </synopsis></para>
-    <para>
-     GROUP BY will condense into a single row all rows that share the same values for the
-     grouped columns; aggregates return values derived from all rows that make up the group.  The value returned for an ungrouped
-     and unaggregated column is dependent on the order in which rows happen to be read from the database.
-    </para>
-</refsect2>
-    
+    </synopsis>
+   </para>
+
+   <para>
+    GROUP BY will condense into a single row all rows that share the
+    same values for the
+    grouped columns; aggregates return values derived from all rows
+    that make up the group.  The value returned for an ungrouped
+    and unaggregated column is dependent on the order in which rows
+    happen to be read from the database.
+   </para>
+  </refsect2>
+
   <refsect2 id="R2-SQL-HAVING-2">
    <refsect2info>
     <date>1998-09-24</date>
    </refsect2info>
-   <title>
+   <title id="having-title">
     HAVING Clause
    </title>
    <para>
@@ -325,16 +323,17 @@ HAVING <replaceable class="PARAMETER">cond_expr</replaceable>
     </synopsis>
     
     where <replaceable class="PARAMETER">cond_expr</replaceable> is the same
-    as specified for the WHERE clause.</para>
+    as specified for the WHERE clause.
+   </para>
     
    <para>
     HAVING specifies a grouped table derived by the elimination
     of groups from the result of the previously specified clause
     that do not meet the <replaceable class="PARAMETER">cond_expr</replaceable>.</para>
-    
+
    <para>
     Each column referenced in 
-<replaceable class="PARAMETER">cond_expr</replaceable> shall unambiguously
+    <replaceable class="PARAMETER">cond_expr</replaceable> shall unambiguously
     reference a grouping column.
    </para>
   </refsect2>
@@ -343,7 +342,7 @@ HAVING <replaceable class="PARAMETER">cond_expr</replaceable>
    <refsect2info>
     <date>1998-09-24</date>
    </refsect2info>
-   <title>
+   <title id="order-by-title">
     ORDER BY Clause
    </title>
    <para>
@@ -353,7 +352,8 @@ ORDER BY <replaceable class="PARAMETER">column</replaceable> [ ASC | DESC ] [, .
     
    <para>
     <replaceable class="PARAMETER">column</replaceable> can be either a column
-    name or an ordinal number.</para>
+    name or an ordinal number.
+   </para>
    <para>
     The ordinal numbers refers to the ordinal (left-to-right) position
     of the column. This feature makes it possible to define an ordering
@@ -366,130 +366,136 @@ SELECT title, date_prod + 1 AS newlen FROM films ORDER BY newlen;
     </programlisting></para>
     
    <para>
-    From release 6.4 of PostgreSQL, the columns in the ORDER BY clause do not need to appear in the SELECT clause.
+    From release 6.4 of PostgreSQL, the columns in the ORDER BY clause
+    do not need to appear in the SELECT clause.
     Thus the following statement is now legal:
     <programlisting>
 SELECT name FROM distributors ORDER BY code;
-    </programlisting></para>
+    </programlisting>
+   </para>
     
    <para>
     Optionally one may add the keyword DESC (descending)
     or ASC (ascending) after each column name in the ORDER BY clause.
-    If not specified, ASC is assumed by default.</para>
+    If not specified, ASC is assumed by default.
+   </para>
   </refsect2>
   
   <refsect2 id="R2-SQL-UNION-2">
    <refsect2info>
     <date>1998-09-24</date>
    </refsect2info>
-   <title>
+   <title id="union-title">
     UNION Clause
    </title>
    <para>
     <synopsis>
-<replaceable class="PARAMETER">table_query</replaceable> UNION [ ALL ]
-<replaceable class="PARAMETER">table_query</replaceable>
-     [ ORDER BY <replaceable class="PARAMETER">column</replaceable> [ ASC | DESC ] [, ...] ]
+<replaceable class="PARAMETER">table_query</replaceable> UNION [ ALL ] <replaceable class="PARAMETER">table_query</replaceable>
+    [ ORDER BY <replaceable class="PARAMETER">column</replaceable> [ ASC | DESC ] [, ...] ]
     </synopsis>
-    
+
     where
     <replaceable class="PARAMETER">table_query</replaceable>
-    specifies any select expression without an ORDER BY clause.</para>
+    specifies any select expression without an ORDER BY clause.
+   </para>
     
    <para>
     The UNION clause allows the result to be the collection of rows
     returned by the queries involved. (See UNION clause).
     The two tables that represent the direct operands of the UNION must
     have the same number of columns, and corresponding columns must be
-    of compatible data types.</para>
+    of compatible data types.
+   </para>
     
    <para>
     By default, the result of UNION does not contain any duplicate rows
-    unless the ALL clause is specified.</para>
+    unless the ALL clause is specified.
+   </para>
     
    <para>
     Multiple UNION operators in the same SELECT statement are
     evaluated left to right.
     Note that the ALL keyword is not global in nature, being 
-    applied only for the current pair of table results.</para>
-    
+    applied only for the current pair of table results.
+   </para>
+
   </refsect2>
 
   <refsect2 id="R2-SQL-INTERSECT-2">
    <refsect2info>
     <date>1998-09-24</date>
    </refsect2info>
-   <title>
+   <title id="intersect-title">
     INTERSECT Clause
    </title>
    <para>
     <synopsis>
-<replaceable class="PARAMETER">table_query</replaceable> INTERSECT
-<replaceable class="PARAMETER">table_query</replaceable>
-     [ ORDER BY <replaceable class="PARAMETER">column</replaceable> [ ASC | DESC ] [, ...] ]
+<replaceable class="PARAMETER">table_query</replaceable> INTERSECT <replaceable class="PARAMETER">table_query</replaceable>
+    [ ORDER BY <replaceable class="PARAMETER">column</replaceable> [ ASC | DESC ] [, ...] ]
     </synopsis>
     
     where
     <replaceable class="PARAMETER">table_query</replaceable>
-    specifies any select expression without an ORDER BY clause.</para>
-    
+    specifies any select expression without an ORDER BY clause.
+   </para>
+
    <para>
     The INTERSECT clause allows the result to be all rows that are 
-    common to the involved queries.  (See INTERSECT clause).
+    common to the involved queries.
     The two tables that represent the direct operands of the INTERSECT must
     have the same number of columns, and corresponding columns must be
-    of compatible data types.</para>
+    of compatible data types.
+   </para>
     
    <para>
     Multiple INTERSECT operators in the same SELECT statement are
     evaluated left to right.
-    </para>
-    
+   </para>
   </refsect2>
 
   <refsect2 id="R2-SQL-EXCEPT-2">
    <refsect2info>
     <date>1998-09-24</date>
    </refsect2info>
-   <title>
+   <title id="except-title">
     EXCEPT Clause
    </title>
    <para>
     <synopsis>
-<replaceable class="PARAMETER">table_query</replaceable> EXCEPT
-     <replaceable class="PARAMETER">table_query</replaceable>
+<replaceable class="PARAMETER">table_query</replaceable> EXCEPT <replaceable class="PARAMETER">table_query</replaceable>
      [ ORDER BY <replaceable class="PARAMETER">column</replaceable> [ ASC | DESC ] [, ...] ]
     </synopsis>
     
     where
     <replaceable class="PARAMETER">table_query</replaceable>
-    specifies any select expression without an ORDER BY clause.</para>
-    
+    specifies any select expression without an ORDER BY clause.
+   </para>
+
    <para>
     The EXCEPT clause allows the result to be rows from the upper query
     that are not in the lower query.  (See EXCEPT clause).
     The two tables that represent the direct operands of the EXCEPT must
     have the same number of columns, and corresponding columns must be
-    of compatible data types.</para>
-    
+    of compatible data types.
+   </para>
+
    <para>
     Multiple EXCEPT operators in the same SELECT statement are
     evaluated left to right.
-    </para>
-    
+   </para>
   </refsect2>
+ </refsect1>
 
-</refsect1>
-  
  <refsect1 id="R1-SQL-SELECT-2">
   <title>
    Usage
   </title>
+
   <para>
    To join the table <literal>films</literal> with the table
    <literal>distributors</literal>:
-  </para>
-  <programlisting>
+
+   <programlisting>
 SELECT f.title, f.did, d.name, f.date_prod, f.kind
     FROM distributors d, films f
     WHERE f.did = d.did
@@ -513,12 +519,14 @@ Storia di una donna      |108|Westward        |1970-08-15|Romantic
 The King and I           |109|20th Century Fox|1956-08-11|Musical
 Das Boot                 |110|Bavaria Atelier |1981-11-11|Drama
 Bed Knobs and Broomsticks|111|Walt Disney     |          |Musical
-  </programlisting>
+   </programlisting>
+  </para>
+
   <para>
    To sum the column <literal>len</literal> of all films and group
    the results by <literal>kind</literal>:
-  </para>
-  <programlisting>
+
+   <programlisting>
 SELECT kind, SUM(len) AS total FROM films GROUP BY kind;
 
     kind      |total
@@ -528,14 +536,15 @@ SELECT kind, SUM(len) AS total FROM films GROUP BY kind;
     Drama     | 14:28
     Musical   | 06:42
     Romantic  | 04:38
-  </programlisting>
+   </programlisting>
+  </para>
 
   <para>
    To sum the column <literal>len</literal> of all films, group
    the results by <literal>kind</literal> and show those group totals
    that are less than 5 hours:
-  </para>
-  <programlisting>
+
+   <programlisting>
 SELECT kind, SUM(len) AS total
     FROM films
     GROUP BY kind
@@ -545,13 +554,15 @@ SELECT kind, SUM(len) AS total
     ----------+------
     Comedy    | 02:58
     Romantic  | 04:38
-  </programlisting>
+   </programlisting>
+  </para>
+
   <para>
-    The following two examples are identical ways of sorting the individual
+   The following two examples are identical ways of sorting the individual
    results according to the contents of the second column
    (<literal>name</literal>):
-  </para>
-  <programlisting>
+
+   <programlisting>
 SELECT * FROM distributors ORDER BY name;
 SELECT * FROM distributors ORDER BY 2;
 
@@ -570,7 +581,8 @@ SELECT * FROM distributors ORDER BY 2;
     111|Walt Disney
     112|Warner Bros.
     108|Westward
-  </programlisting>
+   </programlisting>
+  </para>
 
   <para>
    This example shows how to obtain the union of the tables
@@ -578,8 +590,8 @@ SELECT * FROM distributors ORDER BY 2;
    <literal>actors</literal>, restricting the results to those that begin
    with letter W in each table.  Only distinct rows are to be used, so the
    ALL keyword is omitted:
-  </para>
-  <programlisting>
+
+   <programlisting>
     --        distributors:                actors:
     --        did|name                     id|name
     --        ---+------------             --+--------------
@@ -604,8 +616,8 @@ Warner Bros.
 Warren Beatty
 Westward
 Woody Allen
-  </programlisting>
-  
+   </programlisting>
+  </para>
  </refsect1>
  
  <refsect1 id="R1-SQL-SELECT-3">
@@ -705,7 +717,7 @@ SELECT distributors.* WHERE name = 'Westwood';
 <!-- Keep this comment at the end of the file
 Local variables:
 mode: sgml
-sgml-omittag:
+sgml-omittag:nil
 sgml-shorttag:t
 sgml-minimize-attributes:nil
 sgml-always-quote-attributes:t

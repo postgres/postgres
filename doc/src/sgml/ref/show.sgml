@@ -18,7 +18,7 @@
    <date>1998-09-24</date>
   </refsynopsisdivinfo>
   <synopsis>
-SHOW <replaceable class="PARAMETER">variable</replaceable>
+SHOW <replaceable class="PARAMETER">keyword</replaceable>
   </synopsis>
 
   <refsect2 id="R2-SQL-SHOW-1">
@@ -28,17 +28,15 @@ SHOW <replaceable class="PARAMETER">variable</replaceable>
    <title>
     Inputs
    </title>
-   <para>
 
+   <para>
     <variablelist>
      <varlistentry>
-      <term>
-       <replaceable class="PARAMETER">variable</replaceable>
-      </term>
+      <term><replaceable class="PARAMETER">keyword</replaceable></term>
       <listitem>
        <para>
 	Refer to <command>SET</command> for more information on available
-	variables.
+	arguments.
        </para>
       </listitem>
      </varlistentry>
@@ -53,40 +51,40 @@ SHOW <replaceable class="PARAMETER">variable</replaceable>
    <title>
     Outputs
    </title>
-   <para>
 
+   <para>
     <variablelist>
      <varlistentry>
-      <term>
-       <returnvalue>NOTICE: <replaceable
-	 class="PARAMETER">">variab</replaceable>E> is <replaceable>value</replaceable></returnvalue>
-       SHOW VARIABLE
-      </term>
+      <term><computeroutput>
+NOTICE: <replaceable class="PARAMETER">variable</replaceable> is <replaceable>value</replaceable>
+SHOW VARIABLE
+       </computeroutput></term>
       <listitem>
        <para>
-	Message returned if successfully.
+	Message returned if successful.
        </para>
       </listitem>
      </varlistentry>
      <varlistentry>
-      <term>
-       <returnvalue>NOTICE:  Unrecognized variable <replaceable>value</replaceable></returnvalue>
-      </term>
+      <term><computeroutput>
+NOTICE:  Unrecognized variable <replaceable>value</replaceable>
+       </computeroutput></term>
       <listitem>
        <para>
 	Message returned if <returnvalue>value</returnvalue> does not exist.
        </para>
       </listitem>
      </varlistentry>
-     
+
      <varlistentry>
-      <term>
-       NOTICE:  Time zone is unknown
-       SHOW VARIABLE
-      </term>
+      <term><computeroutput>
+NOTICE:  Time zone is unknown
+SHOW VARIABLE
+       </computeroutput></term>
       <listitem>
        <para>
-	If the TZ environment variable is not set.
+	If the <envar>TZ</envar> or <envar>PGTZ</envar> environment
+	variable is not set.
        </para>
       </listitem>
      </varlistentry>
@@ -138,12 +136,17 @@ SHOW <replaceable class="PARAMETER">variable</replaceable>
    Usage
   </title>
   <para>
+   Show the current <literal>DateStyle</literal> setting:
+
    <programlisting>
--- show DateStyle;
 SHOW DateStyle;
 NOTICE:DateStyle is Postgres with US (NonEuropean) conventions
+   </programlisting>
+  </para>
 
--- show Geqo;
+  <para>
+   Show the current genetic optimizer (<literal>geqo</literal>) setting:
+   <programlisting>
 SHOW GEQO;
 NOTICE:GEQO is ON
    </programlisting>
@@ -183,7 +186,7 @@ sgml-indent-data:t
 sgml-parent-document:nil
 sgml-default-dtd-file:"../reference.ced"
 sgml-exposed-tags:nil
-sgml-local-catalogs:"/usr/lib/sgml/CATALOG"
+sgml-local-catalogs:"/usr/lib/sgml/catalog"
 sgml-local-ecat-files:nil
 End:
 -->

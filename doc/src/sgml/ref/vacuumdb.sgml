@@ -18,12 +18,9 @@
    <date>1998-10-04</date>
   </refsynopsisdivinfo>
   <synopsis>
-vacuumdb [ --analyze | -z ] [ --verbose | -v ] [ <replaceable
-    class="parameter">dbname</replaceable> ]
-vacuumdb [ -h <replaceable class="parameter">host</replaceable> ] [ -p
-   <replaceable class="parameter">port</replaceable> ]
-    [ --table '<replaceable class="parameter">table</replaceable> [ (
-   <replaceable class="parameter">column</replaceable> [,...] ) ]' ]
+vacuumdb [ --analyze | -z ] [ --verbose | -v ] [ <replaceable class="parameter">dbname</replaceable> ]
+vacuumdb [ -h <replaceable class="parameter">host</replaceable> ] [ -p <replaceable class="parameter">port</replaceable> ]
+    [ --table '<replaceable class="parameter">table</replaceable> [ ( <replaceable class="parameter">column</replaceable> [,...] ) ]' ]
     [ <replaceable class="parameter">dbname</replaceable> ]
   </synopsis>
 
@@ -39,9 +36,7 @@ vacuumdb [ -h <replaceable class="parameter">host</replaceable> ] [ -p
     
     <variablelist>
      <varlistentry>
-      <term>
-       <replaceable class="parameter">dbname</replaceable>
-      </term>
+      <term><replaceable class="parameter">dbname</replaceable></term>
       <listitem>
        <para>
 	Specifies the name of the database to be cleaned or analyzed.
@@ -52,44 +47,30 @@ vacuumdb [ -h <replaceable class="parameter">host</replaceable> ] [ -p
        </para>
       </listitem>
      </varlistentry>
-     
+
      <varlistentry>
-      <term>
-       --analyze
-      </term>
-      <term>
-       -z
-      </term>
+      <term>--analyze</term>
+      <term>-z</term>
       <listitem>
        <para>
 	Calculate statistics on the database for use by the optimizer.
        </para>
       </listitem>
      </varlistentry>
-     
+
      <varlistentry>
-      <term>
-       --verbose
-      </term>
-      <term>
-       -v
-      </term>
+      <term>--verbose</term>
+      <term>-v</term>
       <listitem>
        <para>
 	Print detailed information during processing.
        </para>
       </listitem>
      </varlistentry>
-     
+
      <varlistentry>
-      <term>
-       --table <replaceable class="parameter">table</replaceable> [
-       (<replaceable class="parameter">column</replaceable> [,...]) ]
-      </term>
-      <term>
-       -t <replaceable class="parameter">table</replaceable> [
-       (<replaceable class="parameter">column</replaceable> [,...]) ]
-      </term>
+      <term>--table <replaceable class="parameter">table</replaceable> [ (<replaceable class="parameter">column</replaceable> [,...]) ]</term>
+      <term>-t <replaceable class="parameter">table</replaceable> [ (<replaceable class="parameter">column</replaceable> [,...]) ]</term>
       <listitem>
        <para>
 	Clean or analyze <replaceable class="parameter">table</replaceable> only.
@@ -98,18 +79,17 @@ vacuumdb [ -h <replaceable class="parameter">host</replaceable> ] [ -p
        </para>
       </listitem>
      </varlistentry>
-     
+
     </variablelist>
    </para>
+
    <para>
     <application>vacuumdb</application> also accepts 
     the following command line arguments for connection parameters:
     
     <variablelist>
      <varlistentry>
-      <term>
-       -h <replaceable class="parameter">host</replaceable>
-      </term>
+      <term>-h <replaceable class="parameter">host</replaceable></term>
       <listitem>
        <para>
 	Specifies the hostname of the machine on which the 
@@ -119,11 +99,9 @@ vacuumdb [ -h <replaceable class="parameter">host</replaceable> ] [ -p
        </para>
       </listitem>
      </varlistentry>
-     
+
      <varlistentry>
-      <term>
-       -p <replaceable class="parameter">port</replaceable>
-      </term>
+      <term>-p <replaceable class="parameter">port</replaceable></term>
       <listitem>
        <para>
 	Specifies the Internet TCP/IP port or local Unix domain socket file 
@@ -134,11 +112,9 @@ vacuumdb [ -h <replaceable class="parameter">host</replaceable> ] [ -p
        </para>
       </listitem>
      </varlistentry>
-     
+
      <varlistentry>
-      <term>
-       -u
-      </term>
+      <term>-u</term>
       <listitem>
        <para>
 	Use password authentication. 
@@ -148,7 +124,6 @@ vacuumdb [ -h <replaceable class="parameter">host</replaceable> ] [ -p
        </para>
       </listitem>
      </varlistentry>
-
     </variablelist>
    </para>
   </refsect2>
@@ -166,11 +141,10 @@ vacuumdb [ -h <replaceable class="parameter">host</replaceable> ] [ -p
 
     <variablelist>
      <varlistentry>
-      <term>
-       ERROR:  Can't vacuum columns, only tables.  You can 'vacuum analyze' columns.
-       vacuumdb: database vacuum failed on <replaceable
-	class="parameter">dbname</replaceable>.
-      </term>
+      <term><computeroutput>
+ERROR:  Can't vacuum columns, only tables.  You can 'vacuum analyze' columns.
+vacuumdb: database vacuum failed on <replaceable class="parameter">dbname</replaceable>.
+       </computeroutput></term>
       <listitem>
        <para>
 	The non-analyze mode requires cleaning full tables or databases.
@@ -180,11 +154,11 @@ vacuumdb [ -h <replaceable class="parameter">host</replaceable> ] [ -p
      </varlistentry>
 
      <varlistentry>
-      <term>
-       Connection to database 'template1' failed.
-       connectDB() failed: Is the postmaster running and accepting connections
-       at 'UNIX Socket' on port '<replaceable class="parameter">port</replaceable>'?
-      </term>
+      <term><computeroutput>
+Connection to database 'template1' failed.
+connectDB() failed: Is the postmaster running and accepting connections
+at 'UNIX Socket' on port '<replaceable class="parameter">port</replaceable>'?
+       </computeroutput></term>
       <listitem>
        <para>
 	<application>vacuumdb</application> could not attach to the 
@@ -199,10 +173,10 @@ vacuumdb [ -h <replaceable class="parameter">host</replaceable> ] [ -p
      </varlistentry>
 
      <varlistentry>
-      <term>
-       Connection to database '<replaceable class="parameter">dbname</replaceable>' failed.
-       FATAL 1:  SetUserId: user '<replaceable class="parameter">username</replaceable>' is not in 'pg_shadow'
-      </term>
+      <term><computeroutput>
+Connection to database '<replaceable class="parameter">dbname</replaceable>' failed.
+FATAL 1:  SetUserId: user '<replaceable class="parameter">username</replaceable>' is not in 'pg_shadow'
+       </computeroutput></term>
       <listitem>
        <para>
 	You do not have a valid entry in the relation <literal>pg_shadow</literal>
@@ -211,7 +185,6 @@ vacuumdb [ -h <replaceable class="parameter">host</replaceable> ] [ -p
        </para>
       </listitem>
      </varlistentry>
-     
     </variablelist>
    </para>
 
@@ -234,7 +207,7 @@ vacuumdb [ -h <replaceable class="parameter">host</replaceable> ] [ -p
   <title>
    Description
   </title>
-  
+
   <para>
    <application>vacuumdb</application> is a utility for cleaning a
    <productname>Postgres</productname> database.
@@ -250,7 +223,7 @@ vacuumdb [ -h <replaceable class="parameter">host</replaceable> ] [ -p
   <title>
    Notes
   </title>
-  
+
   <para>
    See <xref endterm="vacuum" linkend="vacuum"> for more details.
   </para>
@@ -267,22 +240,23 @@ vacuumdb [ -h <replaceable class="parameter">host</replaceable> ] [ -p
    To clean a database of the same name as the user:
    
    <programlisting>
-    % vacuumdb
+% vacuumdb
    </programlisting>
   </para>
+
   <para>
    To analyze a database named <literal>bigdb</literal> for the optimizer:
 
    <programlisting>
-    % vacuumdb --analyze bigdb
+% vacuumdb --analyze bigdb
    </programlisting>
   </para>
   <para>
    To analyze a single column <literal>bar</literal> in table <literal>foo</literal>
    in a database named <literal>xyzzy</literal> for the optimizer:
-   
+
    <programlisting>
-    % vacuumdb --analyze --verbose --table 'foo(bar)' xyzzy
+% vacuumdb --analyze --verbose --table 'foo(bar)' xyzzy
    </programlisting>
   </para>
  </refsect1>
