@@ -6475,7 +6475,7 @@ X-MimeOLE: Produced By Microsoft MimeOLE V6.00.2600.0000
 X-Spam-Status: Yes, hits=5.0 required=5.0 tests=RCVD_IN_OSIRUSOFT_COM,X_OSIRU_SPAM_SRC version=2.20
 X-Spam-Flag: YES
 X-Spam-Level: *****
-X-Spam-Checker-Version: SpamAssassin 2.20 (devel $Id: win32,v 1.4 2002/09/23 01:59:40 momjian Exp $)
+X-Spam-Checker-Version: SpamAssassin 2.20 (devel $Id: win32,v 1.5 2003/05/23 16:34:35 momjian Exp $)
 X-Spam-Report: Detailed Report
 SPAM: -------------------- Start SpamAssassin results ----------------------
   SPAM: This mail is probably spam.  The original message has been altered
@@ -7359,7 +7359,7 @@ X-Virus-Scanned: by AMaViS new-20020517
 Precedence: bulk
 Sender: pgsql-hackers-owner@postgresql.org
 X-Virus-Scanned: by AMaViS new-20020517
-Status: OR
+Status: RO
 
 I wrote:
 > scott.marlowe wrote:
@@ -7447,7 +7447,7 @@ References: <Pine.LNX.4.33.0209120945260.10924-100000@css120.ihs.com>
 Content-Type: text/plain; charset=us-ascii; format=flowed
 Content-Transfer-Encoding: 7bit
 X-MailScanner: Found to be clean
-Status: OR
+Status: RO
 
 scott.marlowe wrote:
 > On Fri, 13 Sep 2002, Justin Clift wrote:
@@ -7538,7 +7538,7 @@ X-Virus-Scanned: by AMaViS new-20020517
 Precedence: bulk
 Sender: pgsql-hackers-owner@postgresql.org
 X-Virus-Scanned: by AMaViS new-20020517
-Status: ORr
+Status: ROr
 
 Curt Sampson <cjs@cynic.net> writes:
 > On Thu, 12 Sep 2002, Justin Clift wrote:
@@ -7610,7 +7610,7 @@ X-Virus-Scanned: by AMaViS new-20020517
 Precedence: bulk
 Sender: pgsql-hackers-owner@postgresql.org
 X-Virus-Scanned: by AMaViS new-20020517
-Status: OR
+Status: RO
 
 On Wed, Sep 18, 2002 at 08:01:42PM -0400, Bruce Momjian wrote:
  
@@ -7625,91 +7625,6 @@ Ross
 
 ---------------------------(end of broadcast)---------------------------
 TIP 1: subscribe and unsubscribe commands go to majordomo@postgresql.org
-
-From mascarm@mascari.com Thu Sep 19 01:24:42 2002
-Return-path: <mascarm@mascari.com>
-Received: from corvette.mascari.com (dhcp065-024-158-068.columbus.rr.com [65.24.158.68])
-	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g8J5ObE18446
-	for <pgman@candle.pha.pa.us>; Thu, 19 Sep 2002 01:24:40 -0400 (EDT)
-Received: from mascari.com (ferrari.mascari.com [192.168.2.1])
-	by corvette.mascari.com (8.9.3/8.9.3) with ESMTP id BAA15293;
-	Thu, 19 Sep 2002 01:23:54 -0400
-Message-ID: <3D895F60.4010902@mascari.com>
-Date: Thu, 19 Sep 2002 01:23:45 -0400
-From: Mike Mascari <mascarm@mascari.com>
-User-Agent: Mozilla/5.0 (Windows; U; WinNT4.0; en-US; rv:1.0.1) Gecko/20020823 Netscape/7.0
-X-Accept-Language: en-us, en
-MIME-Version: 1.0
-To: Bruce Momjian <pgman@candle.pha.pa.us>
-cc: PostgreSQL-development <pgsql-hackers@postgresql.org>
-Subject: Re: [HACKERS] Win32 rename()/unlink() questions
-References: <200209190001.g8J01gG13849@candle.pha.pa.us>
-Content-Type: text/plain; charset=us-ascii; format=flowed
-Content-Transfer-Encoding: 7bit
-X-MailScanner: Found to be clean
-Status: OR
-
-Bruce Momjian wrote:
-> I am working with several groups getting the Win32 port ready for 7.4
-> and I have a few questions:
-> 
-> What is the standard workaround for the fact that rename() isn't atomic
-> on Win32?  Do we need to create our own locking around the
-> reading/writing of files that are normally updated in place using
-> rename()?
-
-Visual C++ comes with the source to Microsoft's C library:
-
-rename() calls MoveFile() which will error if:
-
-1. The target file exists
-2. The source file is in use
-
-MoveFileEx() (not available on 95/98) can overwrite the target 
-file if it exists. The Apache APR portability library uses 
-MoveFileEx() to rename files if under NT/XP/2K vs. a sequence of :
-
-1. CreateFile() to test for target file existence
-2. DeleteFile() to remove the target file
-3. MoveFile() to rename the old file to new
-
-under Windows 95/98. Of course, some other process could create 
-the target file between 2 and 3, so their rename() would just 
-error out in that situation. I haven't tested it, but I recall 
-reading somewhere that MoveFileEx() has the ability to rename an 
-opened file. I'm 99% sure MoveFile() will fail if the source 
-file is open.
-
-> 
-> Second, when you unlink() a file on Win32, do applications continue
-> accessing the old file contents if they had the file open before the
-> unlink?
-> 
-
-unlink() just calls DeleteFile() which will error if:
-
-1. The target file is in use
-
-CreateFile() has the option:
-
-FILE_FLAG_DELETE_ON_CLOSE
-
-which might be able to be used to simulate traditional unlink() 
-behavior.
-
-Hope that helps,
-
-Mike Mascari
-mascarm@mascari.com
-
-
-
-
-
-
-
-
-
 
 From pgsql-hackers-owner+M29091@postgresql.org Thu Sep 19 01:24:54 2002
 Return-path: <pgsql-hackers-owner+M29091@postgresql.org>
@@ -7748,7 +7663,7 @@ X-Virus-Scanned: by AMaViS new-20020517
 Precedence: bulk
 Sender: pgsql-hackers-owner@postgresql.org
 X-Virus-Scanned: by AMaViS new-20020517
-Status: ORr
+Status: ROr
 
 Bruce Momjian wrote:
 > I am working with several groups getting the Win32 port ready for 7.4
@@ -7862,7 +7777,7 @@ X-Virus-Scanned: by AMaViS new-20020517
 Precedence: bulk
 Sender: pgsql-hackers-owner@postgresql.org
 X-Virus-Scanned: by AMaViS new-20020517
-Status: OR
+Status: RO
 
 > On Wed, Sep 18, 2002 at 08:01:42PM -0400, Bruce Momjian wrote:
 >
@@ -7922,7 +7837,7 @@ X-Virus-Scanned: by AMaViS new-20020517
 Precedence: bulk
 Sender: pgsql-hackers-owner@postgresql.org
 X-Virus-Scanned: by AMaViS new-20020517
-Status: OR
+Status: RO
 
 Christopher Kings-Lynne wrote:
 >>On Wed, Sep 18, 2002 at 08:01:42PM -0400, Bruce Momjian wrote:
@@ -7996,7 +7911,7 @@ X-Virus-Scanned: by AMaViS new-20020517
 Precedence: bulk
 Sender: pgsql-hackers-owner@postgresql.org
 X-Virus-Scanned: by AMaViS new-20020517
-Status: ORr
+Status: ROr
 
 Mike Mascari wrote:
 > Bruce Momjian wrote:
@@ -8094,7 +8009,7 @@ X-Mailer: ELM [version 2.4ME+ PL99 (25)]
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Type: text/plain; charset=US-ASCII
-Status: OR
+Status: RO
 
 Bruce Momjian wrote:
 > > > Second, when you unlink() a file on Win32, do applications continue
@@ -8132,84 +8047,6 @@ test it.
   pgman@candle.pha.pa.us               |  (610) 359-1001
   +  If your life is a hard drive,     |  13 Roberts Road
   +  Christ can be your backup.        |  Newtown Square, Pennsylvania 19073
-
-From pgsql-hackers-owner+M29166@postgresql.org Thu Sep 19 22:52:08 2002
-Return-path: <pgsql-hackers-owner+M29166@postgresql.org>
-Received: from postgresql.org (postgresql.org [64.49.215.8])
-	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g8K2q7E29312
-	for <pgman@candle.pha.pa.us>; Thu, 19 Sep 2002 22:52:07 -0400 (EDT)
-Received: from localhost (postgresql.org [64.49.215.8])
-	by postgresql.org (Postfix) with ESMTP
-	id 5B1CE47620D; Thu, 19 Sep 2002 22:51:36 -0400 (EDT)
-Received: from postgresql.org (postgresql.org [64.49.215.8])
-	by postgresql.org (Postfix) with SMTP
-	id 6CC8F47651C; Thu, 19 Sep 2002 22:51:13 -0400 (EDT)
-Received: from localhost (postgresql.org [64.49.215.8])
-	by postgresql.org (Postfix) with ESMTP id 77E1F476476
-	for <pgsql-hackers@postgresql.org>; Thu, 19 Sep 2002 22:50:57 -0400 (EDT)
-Received: from candle.pha.pa.us (momjian.navpoint.com [207.106.42.251])
-	by postgresql.org (Postfix) with ESMTP id 8CF61476459
-	for <pgsql-hackers@postgresql.org>; Thu, 19 Sep 2002 22:50:55 -0400 (EDT)
-Received: (from pgman@localhost)
-	by candle.pha.pa.us (8.11.6/8.10.1) id g8K2ofr29042;
-	Thu, 19 Sep 2002 22:50:41 -0400 (EDT)
-From: Bruce Momjian <pgman@candle.pha.pa.us>
-Message-ID: <200209200250.g8K2ofr29042@candle.pha.pa.us>
-Subject: Re: [HACKERS] Win32 rename()/unlink() questions
-In-Reply-To: <200209192024.g8JKO1g10337@candle.pha.pa.us>
-To: Bruce Momjian <pgman@candle.pha.pa.us>
-Date: Thu, 19 Sep 2002 22:50:41 -0400 (EDT)
-cc: Mike Mascari <mascarm@mascari.com>,
-   PostgreSQL-development <pgsql-hackers@postgresql.org>
-X-Mailer: ELM [version 2.4ME+ PL99 (25)]
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Type: text/plain; charset=US-ASCII
-X-Virus-Scanned: by AMaViS new-20020517
-Precedence: bulk
-Sender: pgsql-hackers-owner@postgresql.org
-X-Virus-Scanned: by AMaViS new-20020517
-Status: OR
-
-Bruce Momjian wrote:
-> > > Second, when you unlink() a file on Win32, do applications continue
-> > > accessing the old file contents if they had the file open before the
-> > > unlink?
-> > > 
-> > 
-> > unlink() just calls DeleteFile() which will error if:
-> > 
-> > 1. The target file is in use
-> > 
-> > CreateFile() has the option:
-> > 
-> > FILE_FLAG_DELETE_ON_CLOSE
-> > 
-> > which might be able to be used to simulate traditional unlink() 
-> > behavior.
-> 
-> No, that flag isn't going to help us.  I wonder what MoveFileEx does if
-> the target file exists _and_ is open by another user?  I don't see any
-> loop in that Win32 rename() routine, and I looked at the Unix version of
-> apr_file_rename and its just a straight rename() call.
-
-This says that if the target is in use, it is overwritten:
-
-	http://support.microsoft.com/default.aspx?scid=KB;EN-US;q140570&
-
-While I think that is good news, does it open the problem of other
-readers reading partial updates to the file and therefore seeing
-garbage.  Not sure how to handle that, nor am I even sure how I would
-test it.
-
--- 
-  Bruce Momjian                        |  http://candle.pha.pa.us
-  pgman@candle.pha.pa.us               |  (610) 359-1001
-  +  If your life is a hard drive,     |  13 Roberts Road
-  +  Christ can be your backup.        |  Newtown Square, Pennsylvania 19073
-
----------------------------(end of broadcast)---------------------------
-TIP 1: subscribe and unsubscribe commands go to majordomo@postgresql.org
 
 From mascarm@mascari.com Fri Sep 20 00:02:33 2002
 Return-path: <mascarm@mascari.com>
@@ -8232,7 +8069,7 @@ References: <200209200250.g8K2ofr29042@candle.pha.pa.us>
 Content-Type: text/plain; charset=us-ascii; format=flowed
 Content-Transfer-Encoding: 7bit
 X-MailScanner: Found to be clean
-Status: ORr
+Status: ROr
 
 Bruce Momjian wrote:
 > Bruce Momjian wrote:
@@ -8313,7 +8150,7 @@ X-Virus-Scanned: by AMaViS new-20020517
 Precedence: bulk
 Sender: pgsql-hackers-owner@postgresql.org
 X-Virus-Scanned: by AMaViS new-20020517
-Status: OR
+Status: RO
 
 Mike Mascari wrote:
 > I read the article and did not come away with that conclusion. 
@@ -8382,7 +8219,7 @@ X-Virus-Scanned: by AMaViS new-20020517
 Precedence: bulk
 Sender: pgsql-hackers-owner@postgresql.org
 X-Virus-Scanned: by AMaViS new-20020517
-Status: OR
+Status: RO
 
 Bruce Momjian wrote:
 > Mike Mascari wrote:
@@ -8418,72 +8255,6 @@ mascarm@mascari.com
 
 ---------------------------(end of broadcast)---------------------------
 TIP 1: subscribe and unsubscribe commands go to majordomo@postgresql.org
-
-From mascarm@mascari.com Fri Sep 20 01:01:37 2002
-Return-path: <mascarm@mascari.com>
-Received: from corvette.mascari.com (dhcp065-024-158-068.columbus.rr.com [65.24.158.68])
-	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g8K51WE17352
-	for <pgman@candle.pha.pa.us>; Fri, 20 Sep 2002 01:01:35 -0400 (EDT)
-Received: from mascari.com (ferrari.mascari.com [192.168.2.1])
-	by corvette.mascari.com (8.9.3/8.9.3) with ESMTP id BAA18603;
-	Fri, 20 Sep 2002 01:00:49 -0400
-Message-ID: <3D8AAB8F.8010001@mascari.com>
-Date: Fri, 20 Sep 2002 01:01:03 -0400
-From: Mike Mascari <mascarm@mascari.com>
-User-Agent: Mozilla/5.0 (Windows; U; WinNT4.0; en-US; rv:1.0.1) Gecko/20020823 Netscape/7.0
-X-Accept-Language: en-us, en
-MIME-Version: 1.0
-To: Mike Mascari <mascarm@mascari.com>
-cc: Bruce Momjian <pgman@candle.pha.pa.us>,
-   PostgreSQL-development
-	<pgsql-hackers@postgresql.org>
-Subject: Re: [HACKERS] Win32 rename()/unlink() questions
-References: <200209200405.g8K45RV12655@candle.pha.pa.us> <3D8AA4B2.8090507@mascari.com>
-Content-Type: text/plain; charset=us-ascii; format=flowed
-Content-Transfer-Encoding: 7bit
-X-MailScanner: Found to be clean
-Status: ORr
-
-Mike Mascari wrote:
-> Bruce Momjian wrote:
-> 
->> Mike Mascari wrote:
->>
->>> I will do some testing with concurrency and let you know. But don't 
->>> get your hopes up. This is one of the many advantages that 
->>> TABLESPACEs have when more than one relation is stored in a single 
->>> DATAFILE. There was Oracle for MS-DOS, after all..
->>
->>
->>
->> I was focusing on handling of pg_pwd and other config file that are
->> written by various backend while other backends are reading them.  The
->> actual data files should be OK because we have an exclusive lock when we
->> are adding/removing them.
->>
-> 
-> OK. So you want to test:
-> 
-> 1. Process 1 opens "foo"
-> 2. Process 2 opens "foo"
-> 3. Process 1 renames "foo" to "bar"
-> 4. Process 2 can safely read from its open file handle
-
-Actually, looking at the pg_pwd code, you want to determine a 
-way for:
-
-1. Process 1 opens "foo"
-2. Process 2 opens "foo"
-3. Process 1 creates "bar"
-4. Process 1 renames "bar" to "foo"
-5. Process 2 can continue to read data from the open file handle 
-and get the original "foo" data.
-
-Is that correct?
-
-Mike Mascari
-mascarm@mascari.com
-
 
 From pgsql-hackers-owner+M29180@postgresql.org Fri Sep 20 01:02:47 2002
 Return-path: <pgsql-hackers-owner+M29180@postgresql.org>
@@ -8523,7 +8294,7 @@ X-Virus-Scanned: by AMaViS new-20020517
 Precedence: bulk
 Sender: pgsql-hackers-owner@postgresql.org
 X-Virus-Scanned: by AMaViS new-20020517
-Status: OR
+Status: RO
 
 Mike Mascari wrote:
 > Bruce Momjian wrote:
@@ -8606,7 +8377,7 @@ X-Virus-Scanned: by AMaViS new-20020517
 Precedence: bulk
 Sender: pgsql-hackers-owner@postgresql.org
 X-Virus-Scanned: by AMaViS new-20020517
-Status: OR
+Status: RO
 
 Mike Mascari wrote:
 > Actually, looking at the pg_pwd code, you want to determine a 
@@ -8668,7 +8439,7 @@ X-Virus-Scanned: by AMaViS new-20020517
 Precedence: bulk
 Sender: pgsql-hackers-owner@postgresql.org
 X-Virus-Scanned: by AMaViS new-20020517
-Status: OR
+Status: RO
 
 Bruce Momjian wrote:
 > Mike Mascari wrote:
@@ -8700,66 +8471,6 @@ mascarm@mascari.com
 
 ---------------------------(end of broadcast)---------------------------
 TIP 4: Don't 'kill -9' the postmaster
-
-From sszabo@megazone23.bigpanda.com Fri Sep 20 01:50:39 2002
-Return-path: <sszabo@megazone23.bigpanda.com>
-Received: from megazone.bigpanda.com (megazone.bigpanda.com [63.150.15.178])
-	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g8K5oaE22843
-	for <pgman@candle.pha.pa.us>; Fri, 20 Sep 2002 01:50:38 -0400 (EDT)
-Received: by megazone.bigpanda.com (Postfix, from userid 1001)
-	id 709D1D61E; Thu, 19 Sep 2002 22:50:36 -0700 (PDT)
-Received: from localhost (localhost [127.0.0.1])
-	by megazone.bigpanda.com (Postfix) with ESMTP
-	id 624665C02; Thu, 19 Sep 2002 22:50:36 -0700 (PDT)
-Date: Thu, 19 Sep 2002 22:50:36 -0700 (PDT)
-From: Stephan Szabo <sszabo@megazone23.bigpanda.com>
-To: Mike Mascari <mascarm@mascari.com>
-cc: Bruce Momjian <pgman@candle.pha.pa.us>,
-   PostgreSQL-development <pgsql-hackers@postgresql.org>
-Subject: Re: [HACKERS] Win32 rename()/unlink() questions
-In-Reply-To: <3D8AB39B.80708@mascari.com>
-Message-ID: <20020919224718.H36366-100000@megazone23.bigpanda.com>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Status: OR
-
-
-On Fri, 20 Sep 2002, Mike Mascari wrote:
-
-> Bruce Momjian wrote:
-> > Mike Mascari wrote:
-> >
-> >>Actually, looking at the pg_pwd code, you want to determine a
-> >>way for:
-> >>
-> >>1. Process 1 opens "foo"
-> >>2. Process 2 opens "foo"
-> >>3. Process 1 creates "bar"
-> >>4. Process 1 renames "bar" to "foo"
-> >>5. Process 2 can continue to read data from the open file handle
-> >>and get the original "foo" data.
-> >
-> >
-> > Yep, that's it.
-> >
->
-> So far, MoveFileEx("foo", "bar", MOVEFILE_REPLACE_EXISTING)
-> returns "Access Denied" when Process 1 attempts the rename. But
-> I'm continuing to investigate the possibilities...
-
-Does a sequence like
-Process 1 opens "foo"
-Process 2 opens "foo"
-Process 1 creates "bar"
-Process 1 renames "foo" to <something>
- - where something is generated to not overlap an existing file
-Process 1 renames "bar" to "foo"
-Process 2 continues reading
-let you do the replace and keep reading (at the penalty that
-you've now got to have a way to know when to remove the
-various <something>s)
-
-
 
 From pgsql-hackers-owner+M29183@postgresql.org Fri Sep 20 01:50:47 2002
 Return-path: <pgsql-hackers-owner+M29183@postgresql.org>
@@ -8797,7 +8508,7 @@ X-Virus-Scanned: by AMaViS new-20020517
 Precedence: bulk
 Sender: pgsql-hackers-owner@postgresql.org
 X-Virus-Scanned: by AMaViS new-20020517
-Status: OR
+Status: RO
 
 
 On Fri, 20 Sep 2002, Mike Mascari wrote:
@@ -8841,90 +8552,6 @@ various <something>s)
 TIP 2: you can get off all lists at once with the unregister command
     (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
 
-From pgsql-hackers-owner+M29184@postgresql.org Fri Sep 20 02:06:47 2002
-Return-path: <pgsql-hackers-owner+M29184@postgresql.org>
-Received: from postgresql.org (postgresql.org [64.49.215.8])
-	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g8K66jE24908
-	for <pgman@candle.pha.pa.us>; Fri, 20 Sep 2002 02:06:45 -0400 (EDT)
-Received: from localhost (postgresql.org [64.49.215.8])
-	by postgresql.org (Postfix) with ESMTP
-	id E6AB6476994; Fri, 20 Sep 2002 02:06:43 -0400 (EDT)
-Received: from postgresql.org (postgresql.org [64.49.215.8])
-	by postgresql.org (Postfix) with SMTP
-	id 5626C4760AB; Fri, 20 Sep 2002 02:06:41 -0400 (EDT)
-Received: from localhost (postgresql.org [64.49.215.8])
-	by postgresql.org (Postfix) with ESMTP id 0BFDC475EEE
-	for <pgsql-hackers@postgresql.org>; Fri, 20 Sep 2002 02:05:04 -0400 (EDT)
-Received: from corvette.mascari.com (dhcp065-024-158-068.columbus.rr.com [65.24.158.68])
-	by postgresql.org (Postfix) with ESMTP id BFD01475E83
-	for <pgsql-hackers@postgresql.org>; Fri, 20 Sep 2002 02:05:02 -0400 (EDT)
-Received: from mascari.com (ferrari.mascari.com [192.168.2.1])
-	by corvette.mascari.com (8.9.3/8.9.3) with ESMTP id CAA18737;
-	Fri, 20 Sep 2002 02:03:29 -0400
-Message-ID: <3D8ABA3F.6030002@mascari.com>
-Date: Fri, 20 Sep 2002 02:03:43 -0400
-From: Mike Mascari <mascarm@mascari.com>
-User-Agent: Mozilla/5.0 (Windows; U; WinNT4.0; en-US; rv:1.0.1) Gecko/20020823 Netscape/7.0
-X-Accept-Language: en-us, en
-MIME-Version: 1.0
-To: Stephan Szabo <sszabo@megazone23.bigpanda.com>
-cc: Bruce Momjian <pgman@candle.pha.pa.us>,
-   PostgreSQL-development <pgsql-hackers@postgresql.org>
-Subject: Re: [HACKERS] Win32 rename()/unlink() questions
-References: <20020919224718.H36366-100000@megazone23.bigpanda.com>
-Content-Type: text/plain; charset=us-ascii; format=flowed
-Content-Transfer-Encoding: 7bit
-X-MailScanner: Found to be clean
-X-Virus-Scanned: by AMaViS new-20020517
-Precedence: bulk
-Sender: pgsql-hackers-owner@postgresql.org
-X-Virus-Scanned: by AMaViS new-20020517
-Status: ORr
-
-Stephan Szabo wrote:
-> On Fri, 20 Sep 2002, Mike Mascari wrote:
->>Bruce Momjian wrote:
->>>Mike Mascari wrote:
->>>>Actually, looking at the pg_pwd code, you want to determine a
->>>>way for:
->>>>
->>>>1. Process 1 opens "foo"
->>>>2. Process 2 opens "foo"
->>>>3. Process 1 creates "bar"
->>>>4. Process 1 renames "bar" to "foo"
->>>>5. Process 2 can continue to read data from the open file handle
->>>>and get the original "foo" data.
->>>
->>>
->>>Yep, that's it.
->>>
->>
->>So far, MoveFileEx("foo", "bar", MOVEFILE_REPLACE_EXISTING)
->>returns "Access Denied" when Process 1 attempts the rename. But
->>I'm continuing to investigate the possibilities...
-> 
-> 
-> Does a sequence like
-> Process 1 opens "foo"
-> Process 2 opens "foo"
-> Process 1 creates "bar"
-> Process 1 renames "foo" to <something>
->  - where something is generated to not overlap an existing file
-> Process 1 renames "bar" to "foo"
-> Process 2 continues reading
-> let you do the replace and keep reading (at the penalty that
-> you've now got to have a way to know when to remove the
-> various <something>s)
-
-Yes! Indeed that does work.
-
-Mike Mascari
-mascarm@mascari.com
-
-
----------------------------(end of broadcast)---------------------------
-TIP 1: subscribe and unsubscribe commands go to majordomo@postgresql.org
-
 From mascarm@mascari.com Fri Sep 20 02:04:41 2002
 Return-path: <mascarm@mascari.com>
 Received: from corvette.mascari.com (dhcp065-024-158-068.columbus.rr.com [65.24.158.68])
@@ -8948,7 +8575,7 @@ References: <20020919224718.H36366-100000@megazone23.bigpanda.com>
 Content-Type: text/plain; charset=us-ascii; format=flowed
 Content-Transfer-Encoding: 7bit
 X-MailScanner: Found to be clean
-Status: OR
+Status: RO
 
 Stephan Szabo wrote:
 > On Fri, 20 Sep 2002, Mike Mascari wrote:
@@ -8989,57 +8616,6 @@ Yes! Indeed that does work.
 
 Mike Mascari
 mascarm@mascari.com
-
-
-From sszabo@megazone23.bigpanda.com Fri Sep 20 02:14:23 2002
-Return-path: <sszabo@megazone23.bigpanda.com>
-Received: from megazone.bigpanda.com (megazone.bigpanda.com [63.150.15.178])
-	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g8K6EDE25582
-	for <pgman@candle.pha.pa.us>; Fri, 20 Sep 2002 02:14:21 -0400 (EDT)
-Received: by megazone.bigpanda.com (Postfix, from userid 1001)
-	id B10E9D61E; Thu, 19 Sep 2002 23:14:14 -0700 (PDT)
-Received: from localhost (localhost [127.0.0.1])
-	by megazone.bigpanda.com (Postfix) with ESMTP
-	id A6B475C03; Thu, 19 Sep 2002 23:14:14 -0700 (PDT)
-Date: Thu, 19 Sep 2002 23:14:14 -0700 (PDT)
-From: Stephan Szabo <sszabo@megazone23.bigpanda.com>
-To: Mike Mascari <mascarm@mascari.com>
-cc: Bruce Momjian <pgman@candle.pha.pa.us>,
-   PostgreSQL-development <pgsql-hackers@postgresql.org>
-Subject: Re: [HACKERS] Win32 rename()/unlink() questions
-In-Reply-To: <3D8ABA3F.6030002@mascari.com>
-Message-ID: <20020919230827.A36505-100000@megazone23.bigpanda.com>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Status: OR
-
-On Fri, 20 Sep 2002, Mike Mascari wrote:
-
-> Stephan Szabo wrote:
-> > On Fri, 20 Sep 2002, Mike Mascari wrote:
-> >>So far, MoveFileEx("foo", "bar", MOVEFILE_REPLACE_EXISTING)
-> >>returns "Access Denied" when Process 1 attempts the rename. But
-> >>I'm continuing to investigate the possibilities...
-> >
-> >
-> > Does a sequence like
-> > Process 1 opens "foo"
-> > Process 2 opens "foo"
-> > Process 1 creates "bar"
-> > Process 1 renames "foo" to <something>
-> >  - where something is generated to not overlap an existing file
-> > Process 1 renames "bar" to "foo"
-> > Process 2 continues reading
-> > let you do the replace and keep reading (at the penalty that
-> > you've now got to have a way to know when to remove the
-> > various <something>s)
->
-> Yes! Indeed that does work.
-
-Thinking back, I think that may still fail on Win95 (using MoveFile).
-Once in the past I had to work on (un)installers for Win* and I
-vaguely remember Win95 being more strict than Win98 but that may just
-have been with moving the executable you're currently running.
 
 
 From pgsql-hackers-owner+M29185@postgresql.org Fri Sep 20 02:14:29 2002
@@ -9078,7 +8654,7 @@ X-Virus-Scanned: by AMaViS new-20020517
 Precedence: bulk
 Sender: pgsql-hackers-owner@postgresql.org
 X-Virus-Scanned: by AMaViS new-20020517
-Status: OR
+Status: RO
 
 On Fri, 20 Sep 2002, Mike Mascari wrote:
 
@@ -9112,98 +8688,6 @@ have been with moving the executable you're currently running.
 ---------------------------(end of broadcast)---------------------------
 TIP 1: subscribe and unsubscribe commands go to majordomo@postgresql.org
 
-From pgsql-hackers-owner+M29189@postgresql.org Fri Sep 20 03:22:41 2002
-Return-path: <pgsql-hackers-owner+M29189@postgresql.org>
-Received: from postgresql.org (postgresql.org [64.49.215.8])
-	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g8K7MdE01450
-	for <pgman@candle.pha.pa.us>; Fri, 20 Sep 2002 03:22:39 -0400 (EDT)
-Received: from localhost (postgresql.org [64.49.215.8])
-	by postgresql.org (Postfix) with ESMTP
-	id 211C1476DAC; Fri, 20 Sep 2002 03:20:05 -0400 (EDT)
-Received: from postgresql.org (postgresql.org [64.49.215.8])
-	by postgresql.org (Postfix) with SMTP
-	id D76C4475F73; Fri, 20 Sep 2002 03:18:20 -0400 (EDT)
-Received: from localhost (postgresql.org [64.49.215.8])
-	by postgresql.org (Postfix) with ESMTP id 8C2E0476D57
-	for <pgsql-hackers@postgresql.org>; Fri, 20 Sep 2002 03:15:32 -0400 (EDT)
-Received: from corvette.mascari.com (dhcp065-024-158-068.columbus.rr.com [65.24.158.68])
-	by postgresql.org (Postfix) with ESMTP id 5098F476839
-	for <pgsql-hackers@postgresql.org>; Fri, 20 Sep 2002 03:15:26 -0400 (EDT)
-Received: from mascari.com (ferrari.mascari.com [192.168.2.1])
-	by corvette.mascari.com (8.9.3/8.9.3) with ESMTP id DAA18894;
-	Fri, 20 Sep 2002 03:13:06 -0400
-Message-ID: <3D8ACA96.80504@mascari.com>
-Date: Fri, 20 Sep 2002 03:13:26 -0400
-From: Mike Mascari <mascarm@mascari.com>
-User-Agent: Mozilla/5.0 (Windows; U; WinNT4.0; en-US; rv:1.0.1) Gecko/20020823 Netscape/7.0
-X-Accept-Language: en-us, en
-MIME-Version: 1.0
-To: Stephan Szabo <sszabo@megazone23.bigpanda.com>
-cc: Bruce Momjian <pgman@candle.pha.pa.us>,
-   PostgreSQL-development <pgsql-hackers@postgresql.org>
-Subject: Re: [HACKERS] Win32 rename()/unlink() questions
-References: <20020919230827.A36505-100000@megazone23.bigpanda.com>
-Content-Type: text/plain; charset=us-ascii; format=flowed
-Content-Transfer-Encoding: 7bit
-X-MailScanner: Found to be clean
-X-Virus-Scanned: by AMaViS new-20020517
-Precedence: bulk
-Sender: pgsql-hackers-owner@postgresql.org
-X-Virus-Scanned: by AMaViS new-20020517
-Status: ORr
-
-Stephan Szabo wrote:
-> On Fri, 20 Sep 2002, Mike Mascari wrote:
->>
->>Yes! Indeed that does work.
-> 
-> 
-> Thinking back, I think that may still fail on Win95 (using MoveFile).
-> Once in the past I had to work on (un)installers for Win* and I
-> vaguely remember Win95 being more strict than Win98 but that may just
-> have been with moving the executable you're currently running.
-
-Well, here's the test:
-
-foo.txt contains "This is FOO!"
-bar.txt contains "This is BAR!"
-
-Process 1 opens foo.txt
-Process 2 opens foo.txt
-Process 1 sleeps 7.5 seconds
-Process 2 sleeps 15 seconds
-Process 1 uses MoveFile() to rename "foo.txt" to "foo2.txt"
-Process 1 uses MoveFile() to rename "bar.txt" to "foo.txt"
-Process 1 uses DeleteFile() to remove "foo2.txt"
-Process 2 awakens and displays "This is FOO!"
-
-On the filesystem, we then have:
-
-foo.txt containing "This is BAR!"
-
-The good news is that this works fine under NT 4 using just 
-MoveFile(). The bad news is that it requires the files be opened 
-using CreateFile() with the FILE_SHARE_DELETE flag set. The C 
-library which ships with Visual C++ 6 ultimately calls 
-CreateFile() via fopen() but with no opportunity through the 
-standard C library routines to use the FILE_SHARE_DELETE flag. 
-And the FILE_SHARE_DELETE flag cannot be used under Windows 
-95/98 (Bad Parameter). Which means, on those platforms, there 
-still doesn't appear to be a solution. Under NT/XP/2K, 
-AllocateFile() will have to modified to call CreateFile() 
-instead of fopen(). I'm not sure about ME, but I suspect it 
-behaves similarly to 95/98.
-
-Mike Mascari
-mascarm@mascari.com
-
-
-
-
-
----------------------------(end of broadcast)---------------------------
-TIP 1: subscribe and unsubscribe commands go to majordomo@postgresql.org
-
 From mascarm@mascari.com Fri Sep 20 03:14:03 2002
 Return-path: <mascarm@mascari.com>
 Received: from corvette.mascari.com (dhcp065-024-158-068.columbus.rr.com [65.24.158.68])
@@ -9227,7 +8711,7 @@ References: <20020919230827.A36505-100000@megazone23.bigpanda.com>
 Content-Type: text/plain; charset=us-ascii; format=flowed
 Content-Transfer-Encoding: 7bit
 X-MailScanner: Found to be clean
-Status: OR
+Status: RO
 
 Stephan Szabo wrote:
 > On Fri, 20 Sep 2002, Mike Mascari wrote:
@@ -9277,42 +8761,6 @@ mascarm@mascari.com
 
 
 
-
-From tgl@sss.pgh.pa.us Fri Sep 20 10:28:40 2002
-Return-path: <tgl@sss.pgh.pa.us>
-Received: from sss.pgh.pa.us (root@[192.204.191.242])
-	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g8KESbE13042
-	for <pgman@candle.pha.pa.us>; Fri, 20 Sep 2002 10:28:39 -0400 (EDT)
-Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
-	by sss.pgh.pa.us (8.12.5/8.12.5) with ESMTP id g8KERq5D016068;
-	Fri, 20 Sep 2002 10:27:52 -0400 (EDT)
-To: Stephan Szabo <sszabo@megazone23.bigpanda.com>
-cc: Mike Mascari <mascarm@mascari.com>, Bruce Momjian <pgman@candle.pha.pa.us>,
-   PostgreSQL-development <pgsql-hackers@postgresql.org>
-Subject: Re: [HACKERS] Win32 rename()/unlink() questions 
-In-Reply-To: <20020919224718.H36366-100000@megazone23.bigpanda.com> 
-References: <20020919224718.H36366-100000@megazone23.bigpanda.com>
-Comments: In-reply-to Stephan Szabo <sszabo@megazone23.bigpanda.com>
-	message dated "Thu, 19 Sep 2002 22:50:36 -0700"
-Date: Fri, 20 Sep 2002 10:27:52 -0400
-Message-ID: <16067.1032532072@sss.pgh.pa.us>
-From: Tom Lane <tgl@sss.pgh.pa.us>
-Status: OR
-
-Stephan Szabo <sszabo@megazone23.bigpanda.com> writes:
-> ... let you do the replace and keep reading (at the penalty that
-> you've now got to have a way to know when to remove the
-> various <something>s)
-
-That is the hard part.  Mike's description omitted one crucial step:
-
-6. The old "foo" goes away when the last open file handle for it is
-closed.
-
-I doubt there is any practical way for Postgres to cause that to happen
-if the OS itself does not have any support for it.
-
-			regards, tom lane
 
 From pgsql-hackers-owner+M29205@postgresql.org Fri Sep 20 10:36:48 2002
 Return-path: <pgsql-hackers-owner+M29205@postgresql.org>
@@ -9349,7 +8797,7 @@ X-Virus-Scanned: by AMaViS new-20020517
 Precedence: bulk
 Sender: pgsql-hackers-owner@postgresql.org
 X-Virus-Scanned: by AMaViS new-20020517
-Status: OR
+Status: RO
 
 Stephan Szabo <sszabo@megazone23.bigpanda.com> writes:
 > ... let you do the replace and keep reading (at the penalty that
@@ -9405,7 +8853,7 @@ X-Virus-Scanned: by AMaViS new-20020517
 Precedence: bulk
 Sender: pgsql-hackers-owner@postgresql.org
 X-Virus-Scanned: by AMaViS new-20020517
-Status: OR
+Status: RO
 
 
 I don't think we are not going to be supporting Win9X so there isn't an
@@ -9487,57 +8935,6 @@ TIP 6: Have you searched our list archives?
 
 http://archives.postgresql.org
 
-From mascarm@mascari.com Fri Sep 20 10:57:31 2002
-Return-path: <mascarm@mascari.com>
-Received: from corvette.mascari.com (dhcp065-024-158-068.columbus.rr.com [65.24.158.68])
-	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g8KEvRE16100
-	for <pgman@candle.pha.pa.us>; Fri, 20 Sep 2002 10:57:29 -0400 (EDT)
-Received: from mascari.com (ferrari.mascari.com [192.168.2.1])
-	by corvette.mascari.com (8.9.3/8.9.3) with ESMTP id KAA20019;
-	Fri, 20 Sep 2002 10:56:39 -0400
-Message-ID: <3D8B373C.7060102@mascari.com>
-Date: Fri, 20 Sep 2002 10:57:00 -0400
-From: Mike Mascari <mascarm@mascari.com>
-User-Agent: Mozilla/5.0 (Windows; U; WinNT4.0; en-US; rv:1.0.1) Gecko/20020823 Netscape/7.0
-X-Accept-Language: en-us, en
-MIME-Version: 1.0
-To: Bruce Momjian <pgman@candle.pha.pa.us>
-cc: Stephan Szabo <sszabo@megazone23.bigpanda.com>,
-   PostgreSQL-development
-	<pgsql-hackers@postgresql.org>
-Subject: Re: [HACKERS] Win32 rename()/unlink() questions
-References: <200209201431.g8KEVMg13344@candle.pha.pa.us>
-Content-Type: text/plain; charset=us-ascii; format=flowed
-Content-Transfer-Encoding: 7bit
-X-MailScanner: Found to be clean
-Status: ORr
-
-Bruce Momjian wrote:
-> I don't think we are not going to be supporting Win9X so there isn't an
-> issue there.  We will be supporting Win2000/NT/XP.
-> 
-> I don't understand FILE_SHARE_DELETE.  I read the description at:
-> 
-> 	http://msdn.microsoft.com/library/default.asp?url=/library/en-us/fileio/base/createfile.asp
-> 
-> but I don't understand it:
-> 
-> 	FILE_SHARE_DELETE - Windows NT/2000/XP: Subsequent open operations on
-> 	the object will succeed only if delete access is requested.
-
-I think that's a rather poor description. I think it just means 
-that if the file is opened once via CreateFile() with 
-FILE_SHARE_DELETE, then any subsequent CreateFile() calls will 
-fail unless they too have FILE_SHARE_DELETE. In other words, if 
-one of us can delete this file while its open, any of us can.
-
-Mike Mascari
-mascarm@mascari.com
-
-
-
-
-
 From pgsql-hackers-owner+M29208@postgresql.org Fri Sep 20 11:30:26 2002
 Return-path: <pgsql-hackers-owner+M29208@postgresql.org>
 Received: from west.navpoint.com (west.navpoint.com [207.106.42.13])
@@ -9579,7 +8976,7 @@ X-Virus-Scanned: by AMaViS new-20020517
 Precedence: bulk
 Sender: pgsql-hackers-owner@postgresql.org
 X-Virus-Scanned: by AMaViS new-20020517
-Status: OR
+Status: RO
 
 Bruce Momjian wrote:
 > I don't think we are not going to be supporting Win9X so there isn't an
@@ -9646,7 +9043,7 @@ X-Virus-Scanned: by AMaViS new-20020517
 Precedence: bulk
 Sender: pgsql-hackers-owner@postgresql.org
 X-Virus-Scanned: by AMaViS new-20020517
-Status: OR
+Status: RO
 
 Mike Mascari wrote:
 > Bruce Momjian wrote:
@@ -9679,73 +9076,6 @@ I don't understand what that gets us.
 ---------------------------(end of broadcast)---------------------------
 TIP 4: Don't 'kill -9' the postmaster
 
-From pgsql-hackers-owner+M29210@postgresql.org Fri Sep 20 11:26:52 2002
-Return-path: <pgsql-hackers-owner+M29210@postgresql.org>
-Received: from postgresql.org (postgresql.org [64.49.215.8])
-	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g8KFQoE24268
-	for <pgman@candle.pha.pa.us>; Fri, 20 Sep 2002 11:26:51 -0400 (EDT)
-Received: from localhost (postgresql.org [64.49.215.8])
-	by postgresql.org (Postfix) with ESMTP
-	id 7ED2C476E31; Fri, 20 Sep 2002 11:25:32 -0400 (EDT)
-Received: from postgresql.org (postgresql.org [64.49.215.8])
-	by postgresql.org (Postfix) with SMTP
-	id 89A6C476E66; Fri, 20 Sep 2002 11:25:18 -0400 (EDT)
-Received: from localhost (postgresql.org [64.49.215.8])
-	by postgresql.org (Postfix) with ESMTP id 4033C476DD3
-	for <pgsql-hackers@postgresql.org>; Fri, 20 Sep 2002 11:11:44 -0400 (EDT)
-Received: from megazone.bigpanda.com (megazone.bigpanda.com [63.150.15.178])
-	by postgresql.org (Postfix) with ESMTP id A46C9476D7C
-	for <pgsql-hackers@postgresql.org>; Fri, 20 Sep 2002 11:11:43 -0400 (EDT)
-Received: by megazone.bigpanda.com (Postfix, from userid 1001)
-	id 5F343D61C; Fri, 20 Sep 2002 08:10:19 -0700 (PDT)
-Received: from localhost (localhost [127.0.0.1])
-	by megazone.bigpanda.com (Postfix) with ESMTP
-	id 54E705C02; Fri, 20 Sep 2002 08:10:19 -0700 (PDT)
-Date: Fri, 20 Sep 2002 08:10:19 -0700 (PDT)
-From: Stephan Szabo <sszabo@megazone23.bigpanda.com>
-To: Mike Mascari <mascarm@mascari.com>
-cc: Bruce Momjian <pgman@candle.pha.pa.us>,
-   PostgreSQL-development <pgsql-hackers@postgresql.org>
-Subject: Re: [HACKERS] Win32 rename()/unlink() questions
-In-Reply-To: <3D8B373C.7060102@mascari.com>
-Message-ID: <20020920080949.H40440-100000@megazone23.bigpanda.com>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-X-Virus-Scanned: by AMaViS new-20020517
-Precedence: bulk
-Sender: pgsql-hackers-owner@postgresql.org
-X-Virus-Scanned: by AMaViS new-20020517
-Status: OR
-
-On Fri, 20 Sep 2002, Mike Mascari wrote:
-
-> Bruce Momjian wrote:
-> > I don't think we are not going to be supporting Win9X so there isn't an
-> > issue there.  We will be supporting Win2000/NT/XP.
-> >
-> > I don't understand FILE_SHARE_DELETE.  I read the description at:
-> >
-> > 	http://msdn.microsoft.com/library/default.asp?url=/library/en-us/fileio/base/createfile.asp
-> >
-> > but I don't understand it:
-> >
-> > 	FILE_SHARE_DELETE - Windows NT/2000/XP: Subsequent open operations on
-> > 	the object will succeed only if delete access is requested.
->
-> I think that's a rather poor description. I think it just means
-> that if the file is opened once via CreateFile() with
-> FILE_SHARE_DELETE, then any subsequent CreateFile() calls will
-> fail unless they too have FILE_SHARE_DELETE. In other words, if
-> one of us can delete this file while its open, any of us can.
-
-The question is, what happens if two people have the file open
-and one goes and tries to delete it?  Can the other still read
-from it?
-
-
----------------------------(end of broadcast)---------------------------
-TIP 4: Don't 'kill -9' the postmaster
-
 From sszabo@megazone23.bigpanda.com Fri Sep 20 11:29:09 2002
 Return-path: <sszabo@megazone23.bigpanda.com>
 Received: from west.navpoint.com (west.navpoint.com [207.106.42.13])
@@ -9769,7 +9099,7 @@ In-Reply-To: <3D8B373C.7060102@mascari.com>
 Message-ID: <20020920080949.H40440-100000@megazone23.bigpanda.com>
 MIME-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
-Status: OR
+Status: RO
 
 On Fri, 20 Sep 2002, Mike Mascari wrote:
 
@@ -9796,49 +9126,6 @@ The question is, what happens if two people have the file open
 and one goes and tries to delete it?  Can the other still read
 from it?
 
-
-From JanWieck@Yahoo.com Fri Sep 20 11:36:53 2002
-Return-path: <JanWieck@Yahoo.com>
-Received: from smtp017.mail.yahoo.com (smtp017.mail.yahoo.com [216.136.174.114])
-	by candle.pha.pa.us (8.11.6/8.10.1) with SMTP id g8KFalE25760
-	for <pgman@candle.pha.pa.us>; Fri, 20 Sep 2002 11:36:52 -0400 (EDT)
-Received: from psc.progress.com (HELO Yahoo.com) (janwieck@192.233.92.200 with plain)
-  by smtp.mail.vip.sc5.yahoo.com with SMTP; 20 Sep 2002 15:36:41 -0000
-Message-ID: <3D8B4087.AF0CD803@Yahoo.com>
-Date: Fri, 20 Sep 2002 11:36:39 -0400
-From: Jan Wieck <JanWieck@Yahoo.com>
-Organization: Home
-X-Mailer: Mozilla 4.79 [en] (Windows NT 5.0; U)
-X-Accept-Language: en,ru
-MIME-Version: 1.0
-To: Mike Mascari <mascarm@mascari.com>
-cc: Stephan Szabo <sszabo@megazone23.bigpanda.com>,
-   Bruce Momjian <pgman@candle.pha.pa.us>,
-   PostgreSQL-development <pgsql-hackers@postgresql.org>
-Subject: Re: [HACKERS] Win32 rename()/unlink() questions
-References: <20020919230827.A36505-100000@megazone23.bigpanda.com> <3D8ACA96.80504@mascari.com>
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Status: OR
-
-Mike Mascari wrote:
-
-> instead of fopen(). I'm not sure about ME, but I suspect it
-> behaves similarly to 95/98.
-
-I just checked with Katie and the good news (tm) is that the Win32 port
-we did here at PeerDirect doesn't support 95/98 and ME anyway. It does
-support NT4, 2000 and XP. So don't bother.
-
-
-Jan
-
--- 
-
-#======================================================================#
-# It's easier to get forgiveness for being wrong than for being right. #
-# Let's break this rule - forgive me.                                  #
-#================================================== JanWieck@Yahoo.com #
 
 From pgsql-hackers-owner+M29216@postgresql.org Fri Sep 20 11:45:47 2002
 Return-path: <pgsql-hackers-owner+M29216@postgresql.org>
@@ -9878,7 +9165,7 @@ X-Virus-Scanned: by AMaViS new-20020517
 Precedence: bulk
 Sender: pgsql-hackers-owner@postgresql.org
 X-Virus-Scanned: by AMaViS new-20020517
-Status: OR
+Status: RO
 
 Mike Mascari wrote:
 
@@ -9942,7 +9229,7 @@ X-Virus-Scanned: by AMaViS new-20020517
 Precedence: bulk
 Sender: pgsql-hackers-owner@postgresql.org
 X-Virus-Scanned: by AMaViS new-20020517
-Status: OR
+Status: RO
 
 Stephan Szabo wrote:
 > On Fri, 20 Sep 2002, Mike Mascari wrote:
@@ -9986,132 +9273,6 @@ mascarm@mascari.com
 ---------------------------(end of broadcast)---------------------------
 TIP 1: subscribe and unsubscribe commands go to majordomo@postgresql.org
 
-From mascarm@mascari.com Fri Sep 20 11:55:47 2002
-Return-path: <mascarm@mascari.com>
-Received: from corvette.mascari.com (dhcp065-024-158-068.columbus.rr.com [65.24.158.68])
-	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g8KFthE27924
-	for <pgman@candle.pha.pa.us>; Fri, 20 Sep 2002 11:55:45 -0400 (EDT)
-Received: from mascari.com (ferrari.mascari.com [192.168.2.1])
-	by corvette.mascari.com (8.9.3/8.9.3) with ESMTP id LAA20244;
-	Fri, 20 Sep 2002 11:54:31 -0400
-Message-ID: <3D8B44CC.6070802@mascari.com>
-Date: Fri, 20 Sep 2002 11:54:52 -0400
-From: Mike Mascari <mascarm@mascari.com>
-User-Agent: Mozilla/5.0 (Windows; U; WinNT4.0; en-US; rv:1.0.1) Gecko/20020823 Netscape/7.0
-X-Accept-Language: en-us, en
-MIME-Version: 1.0
-To: Stephan Szabo <sszabo@megazone23.bigpanda.com>
-cc: Bruce Momjian <pgman@candle.pha.pa.us>,
-   PostgreSQL-development
-	<pgsql-hackers@postgresql.org>
-Subject: Re: [HACKERS] Win32 rename()/unlink() questions
-References: <20020920080949.H40440-100000@megazone23.bigpanda.com>
-Content-Type: text/plain; charset=us-ascii; format=flowed
-Content-Transfer-Encoding: 7bit
-X-MailScanner: Found to be clean
-Status: OR
-
-Stephan Szabo wrote:
-> On Fri, 20 Sep 2002, Mike Mascari wrote:
-> 
-> 
->>I think that's a rather poor description. I think it just means
->>that if the file is opened once via CreateFile() with
->>FILE_SHARE_DELETE, then any subsequent CreateFile() calls will
->>fail unless they too have FILE_SHARE_DELETE. In other words, if
->>one of us can delete this file while its open, any of us can.
-> 
-> 
-> The question is, what happens if two people have the file open
-> and one goes and tries to delete it?  Can the other still read
-> from it?
-
-Yes. I just tested it and it worked. I'll test Bruce's scenario 
-as well:
-
-foo contains: "FOO"
-bar contains: "BAR"
-
-1. Process 1 opens "foo"
-2. Process 2 opens "foo"
-3. Process 1 calls MoveFile("foo", "foo2");
-4. Process 3 opens "foo" <- Successful?
-5. Process 1 calls MoveFile("bar", "foo");
-6. Process 4 opens "foo" <- Successful?
-7. Process 1 calls DeleteFile("foo2");
-8. Process 1, 2, 3, 4 all read from their respective handles.
-
-I think the thing to worry about is a race condition between the 
-two MoveFile() attempts. A very ugly hack would be to loop in a 
-CreateFile() in an attempt to open "foo", giving up if the error 
-is not a NOT EXISTS error code.
-
-Mike Mascari
-mascarm@mascari.com
-
-
-From mascarm@mascari.com Fri Sep 20 12:29:18 2002
-Return-path: <mascarm@mascari.com>
-Received: from corvette.mascari.com (dhcp065-024-158-068.columbus.rr.com [65.24.158.68])
-	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g8KGTEE01796
-	for <pgman@candle.pha.pa.us>; Fri, 20 Sep 2002 12:29:17 -0400 (EDT)
-Received: from mascari.com (ferrari.mascari.com [192.168.2.1])
-	by corvette.mascari.com (8.9.3/8.9.3) with ESMTP id MAA20365;
-	Fri, 20 Sep 2002 12:27:10 -0400
-Message-ID: <3D8B4C74.2050708@mascari.com>
-Date: Fri, 20 Sep 2002 12:27:32 -0400
-From: Mike Mascari <mascarm@mascari.com>
-User-Agent: Mozilla/5.0 (Windows; U; WinNT4.0; en-US; rv:1.0.1) Gecko/20020823 Netscape/7.0
-X-Accept-Language: en-us, en
-MIME-Version: 1.0
-To: PostgreSQL-development <pgsql-hackers@postgresql.org>
-cc: Stephan Szabo <sszabo@megazone23.bigpanda.com>,
-   Bruce Momjian
-	<pgman@candle.pha.pa.us>
-Subject: Re: [HACKERS] Win32 rename()/unlink() questions
-References: <20020920080949.H40440-100000@megazone23.bigpanda.com> <3D8B44CC.6070802@mascari.com>
-Content-Type: text/plain; charset=us-ascii; format=flowed
-Content-Transfer-Encoding: 7bit
-X-MailScanner: Found to be clean
-Status: ORr
-
-I wrote:
-> Stephan Szabo wrote:
- >>
->> The question is, what happens if two people have the file open
->> and one goes and tries to delete it?  Can the other still read
->> from it?
-> 
-> Yes. I just tested it and it worked. I'll test Bruce's scenario as well:
-> 
-> foo contains: "FOO"
-> bar contains: "BAR"
-> 
-> 1. Process 1 opens "foo"
-> 2. Process 2 opens "foo"
-> 3. Process 1 calls MoveFile("foo", "foo2");
-> 4. Process 3 opens "foo" <- Successful?
-> 5. Process 1 calls MoveFile("bar", "foo");
-> 6. Process 4 opens "foo" <- Successful?
-> 7. Process 1 calls DeleteFile("foo2");
-> 8. Process 1, 2, 3, 4 all read from their respective handles.
-
-Process 1: "FOO"
-Process 2: "FOO"
-Process 3: Error - File does not exist
-Process 4: "BAR"
-
-Its interesting in that it allows for Unix-style rename() and 
-unlink() behavior, but with a race condition. Without Stephan's 
-two MoveFile() trick and the FILE_SHARE_DELETE flag, however, 
-the result would be Access Denied. Are the places in the backend 
-that use rename() and unlink() renaming and unlinking files that 
-are only opened for a brief moment by other backends?
-
-Mike Mascari
-mascarm@mascari.com
-
-
 From pgsql-hackers-owner+M29230@postgresql.org Fri Sep 20 13:12:45 2002
 Return-path: <pgsql-hackers-owner+M29230@postgresql.org>
 Received: from postgresql.org (postgresql.org [64.49.215.8])
@@ -10150,7 +9311,7 @@ X-Virus-Scanned: by AMaViS new-20020517
 Precedence: bulk
 Sender: pgsql-hackers-owner@postgresql.org
 X-Virus-Scanned: by AMaViS new-20020517
-Status: ORr
+Status: ROr
 
 I wrote:
 > Stephan Szabo wrote:
@@ -10230,7 +9391,7 @@ X-Virus-Scanned: by AMaViS new-20020517
 Precedence: bulk
 Sender: pgsql-hackers-owner@postgresql.org
 X-Virus-Scanned: by AMaViS new-20020517
-Status: OR
+Status: RO
 
 Mike Mascari wrote:
 > Its interesting in that it allows for Unix-style rename() and 
@@ -10289,7 +9450,7 @@ X-Virus-Scanned: by AMaViS new-20020517
 Precedence: bulk
 Sender: pgsql-hackers-owner@postgresql.org
 X-Virus-Scanned: by AMaViS new-20020517
-Status: OR
+Status: RO
 
 Mike Mascari wrote:
 > > foo contains: "FOO"
@@ -10373,7 +9534,7 @@ X-Virus-Scanned: by AMaViS new-20020517
 Precedence: bulk
 Sender: pgsql-hackers-owner@postgresql.org
 X-Virus-Scanned: by AMaViS new-20020517
-Status: OR
+Status: RO
 
 
 It is good that moving the file out of the way works, but it doesn't
@@ -10475,7 +9636,7 @@ Comments: In-reply-to Bruce Momjian <pgman@candle.pha.pa.us>
 Date: Fri, 20 Sep 2002 11:50:17 -0400
 Message-ID: <16739.1032537017@sss.pgh.pa.us>
 From: Tom Lane <tgl@sss.pgh.pa.us>
-Status: ORr
+Status: ROr
 
 Bruce Momjian <pgman@candle.pha.pa.us> writes:
 > I think we may be best just looping on MoveFileEx() until is succeeds. 
@@ -10529,7 +9690,7 @@ X-Virus-Scanned: by AMaViS new-20020517
 Precedence: bulk
 Sender: pgsql-hackers-owner@postgresql.org
 X-Virus-Scanned: by AMaViS new-20020517
-Status: OR
+Status: RO
 
 Tom Lane wrote:
 > Bruce Momjian <pgman@candle.pha.pa.us> writes:
