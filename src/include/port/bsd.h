@@ -28,15 +28,16 @@
 #define HAS_TEST_AND_SET
 #endif
 
-#if defined(__powerpc__)
-#define HAS_TEST_AND_SET
-typedef unsigned int slock_t;
-
-#endif
 #if defined(__mips__)
 /* #	undef HAS_TEST_AND_SET */
 #endif
-#if !defined(__powerpc__)
-typedef unsigned char slock_t;
 
+#if defined(__powerpc__)
+#define HAS_TEST_AND_SET
+#endif
+
+#if defined(__powerpc__)
+typedef unsigned int slock_t;
+#else
+typedef unsigned char slock_t;
 #endif

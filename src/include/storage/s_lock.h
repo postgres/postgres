@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.62 1999/07/13 20:00:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.63 1999/07/13 20:12:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,7 +78,7 @@ extern void s_lock_sleep(unsigned spin);
  * All the gcc inlines
  */
 
-#if defined(__alpha)
+#if defined(__alpha__)
 #define TAS(lock) tas(lock)
 #define S_UNLOCK(lock) { __asm__("mb"); *(lock) = 0; }
 
@@ -104,7 +104,7 @@ __asm__("    ldq   $0, %0              \n\
 	return (int) _res;
 }
 
-#endif	 /* __alpha */
+#endif	 /* __alpha__ */
 
 
 
@@ -226,7 +226,7 @@ tas(volatile slock_t *lock)
  * All non gcc
  */
 
-#if defined(__alpha)
+#if defined(__alpha__)
 /*
  * OSF/1 (Alpha AXP)
  *
@@ -237,7 +237,7 @@ tas(volatile slock_t *lock)
 #define S_UNLOCK(lock)	msem_unlock((lock), 0)
 #define S_INIT_LOCK(lock)	msem_init((lock), MSEM_UNLOCKED)
 #define S_LOCK_FREE(lock)	(!(lock)->msem_state)
-#endif	 /* __alpha */
+#endif	 /* __alpha__ */
 
 
 

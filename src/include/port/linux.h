@@ -8,17 +8,17 @@
 #define USE_POSIX_TIME
 #define HAS_TEST_AND_SET
 
-#if defined(__powerpc__)
+#if if defined(__i386__)
+typedef unsigned char slock_t;
+
+#elif defined(__powerpc__)
 typedef unsigned int slock_t;
 
-#elif defined(__alpha)
+#elif defined(__alpha__)
 typedef long int slock_t;
 
-#elif defined(__mips)
+#elif defined(__mips__)
 typedef unsigned int slock_t;
-
-#else							/* i386 probably */
-typedef unsigned char slock_t;
 
 #endif
 

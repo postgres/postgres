@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.42 1999/05/25 16:12:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.43 1999/07/13 20:12:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -134,7 +134,7 @@ extern double rint(double x);
  * until the distributions are updated.
  *								--djm 12/16/96
  */
-#if ( defined(linux) && defined(__alpha) ) && !defined(UNSAFE_FLOATS)
+#if ( defined(linux) && defined(__alpha__) ) && !defined(UNSAFE_FLOATS)
 #define UNSAFE_FLOATS
 #endif
 
