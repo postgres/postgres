@@ -81,6 +81,7 @@ nextstep*) template=nextstep ;;
         esac ;;
    sysv4*) template=svr4 ;;
  sysv5uw*) template=unixware ;;
+ sysv5*) template=unixware ;;
   ultrix*) template=ultrix4 ;;
 esac
 
@@ -637,7 +638,7 @@ AC_PROG_LN_S
 AC_PROG_LD
 AC_SUBST(LD)
 AC_SUBST(with_gnu_ld)
-case $host_os in sysv5uw*)
+case $host_os in sysv5*)
   AC_CACHE_CHECK([whether ld -R works], [pgac_cv_prog_ld_R],
   [
     pgac_save_LDFLAGS=$LDFLAGS; LDFLAGS="$LDFLAGS -Wl,-R/usr/lib"
