@@ -216,10 +216,10 @@ struct StatementClass_
 	int		stmt_size_limit;	
 
 	char		pre_executing;	/* This statement is prematurely executing */
-	char		inaccurate_result;		/* Current status is PREMATURE but
+	char		inaccurate_result;	/* Current status is PREMATURE but
 										 * result is inaccurate */
-	char		errormsg_malloced;		/* Current status is PREMATURE but
-										 * result is inaccurate */
+	char		errormsg_malloced;	/* Current error message is malloed (not in a static variable) ? */
+	char		miscinfo;
 };
 
 #define SC_get_conn(a)	  (a->hdbc)
@@ -228,6 +228,14 @@ struct StatementClass_
 /*	options for SC_free_params() */
 #define STMT_FREE_PARAMS_ALL				0
 #define STMT_FREE_PARAMS_DATA_AT_EXEC_ONLY	1
+
+/*	misc info */
+#define SC_set_pre_executable(a) (a->miscinfo |= 1L)
+#define SC_no_pre_executable(a)	(a->miscinfo &= ~1L)
+#define SC_is_pre_executable(a)	(a->miscinfo & 1L != 0)
+#define SC_set_fetchcursor(a)	(a->miscinfo |= 2L)
+#define SC_no_fetchcursor(a)	(a->miscinfo &= ~2L)
+#define SC_is_fetchcursor(a)	(a->miscinfo & 2L != 0)
 
 /*	Statement prototypes */
 StatementClass *SC_Constructor(void);

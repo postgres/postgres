@@ -29,8 +29,8 @@ typedef struct
 	int			ss;
 } SIMPLE_TIME;
 
-int			copy_and_convert_field_bindinfo(StatementClass *stmt, Int4 field_type, void *value, int col);
-int copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 fCType,
+int			copy_and_convert_field_bindinfo(StatementClass *stmt, Int4 field_type, const void *value, int col);
+int copy_and_convert_field(StatementClass *stmt, Int4 field_type, const void *value, Int2 fCType,
 					   PTR rgbValue, SDWORD cbValueMax, SDWORD *pcbValue);
 
 int			copy_statement_with_parameters(StatementClass *stmt);
@@ -38,14 +38,14 @@ char	   *convert_escape(char *value);
 char	   *convert_money(char *s);
 char		parse_datetime(char *buf, SIMPLE_TIME *st);
 int		convert_linefeeds(const char *s, char *dst, size_t max, BOOL *changed);
-int	   convert_special_chars(char *si, char *dst, int used);
+int	   convert_special_chars(const char *si, char *dst, int used);
 
-int			convert_pgbinary_to_char(char *value, char *rgbValue, int cbValueMax);
-int			convert_from_pgbinary(unsigned char *value, unsigned char *rgbValue, int cbValueMax);
-int			convert_to_pgbinary(unsigned char *in, char *out, int len);
-void		encode(char *in, char *out);
-void		decode(char *in, char *out);
-int convert_lo(StatementClass *stmt, void *value, Int2 fCType, PTR rgbValue,
+int			convert_pgbinary_to_char(const char *value, char *rgbValue, int cbValueMax);
+int			convert_from_pgbinary(const unsigned char *value, unsigned char *rgbValue, int cbValueMax);
+int			convert_to_pgbinary(const unsigned char *in, char *out, int len);
+void		encode(const char *in, char *out);
+void		decode(const char *in, char *out);
+int convert_lo(StatementClass *stmt, const void *value, Int2 fCType, PTR rgbValue,
 		   SDWORD cbValueMax, SDWORD *pcbValue);
 
 #endif

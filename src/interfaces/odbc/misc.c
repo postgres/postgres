@@ -30,11 +30,11 @@
 #endif
 
 extern GLOBAL_VALUES globals;
-void		generate_filename(char *, char *, char *);
+void	generate_filename(const char *, const char *, char *);
 
 
 void
-generate_filename(char *dirname, char *prefix, char *filename)
+generate_filename(const char *dirname, const char *prefix, char *filename)
 {
 	int			pid = 0;
 
@@ -58,6 +58,33 @@ generate_filename(char *dirname, char *prefix, char *filename)
 	return;
 }
 
+static	int	mylog_on = 0, qlog_on = 0;
+void logs_on_off(int cnopen, int mylog_onoff, int qlog_onoff)
+{
+	static	int	mylog_on_count = 0, mylog_off_count = 0,
+			qlog_on_count = 0, qlog_off_count = 0;
+
+	if (mylog_onoff)
+		mylog_on_count += cnopen;
+	else 
+		mylog_off_count += cnopen;
+	if (mylog_on_count > 0)
+		mylog_on = 1;
+	else if (mylog_off_count > 0)
+		mylog_on = 0;
+	else
+		mylog_on = globals.debug;
+	if (qlog_onoff)
+		qlog_on_count += cnopen;
+	else 
+		qlog_off_count += cnopen;
+	if (qlog_on_count > 0)
+		qlog_on = 1;
+	else if (qlog_off_count > 0)
+		qlog_on = 0;
+	else
+		qlog_on = globals.commlog;
+}
 
 #ifdef MY_LOG
 void
@@ -65,9 +92,9 @@ mylog(char *fmt,...)
 {
 	va_list		args;
 	char		filebuf[80];
-	FILE	   *LOGFP = globals.mylogFP;
+	static FILE	*LOGFP = NULL;
 
-	if (globals.debug)
+	if (mylog_on)
 	{
 		va_start(args, fmt);
 
@@ -75,7 +102,6 @@ mylog(char *fmt,...)
 		{
 			generate_filename(MYLOGDIR, MYLOGFILE, filebuf);
 			LOGFP = fopen(filebuf, PG_BINARY_W);
-			globals.mylogFP = LOGFP;
 			setbuf(LOGFP, NULL);
 		}
 
@@ -95,9 +121,9 @@ qlog(char *fmt,...)
 {
 	va_list		args;
 	char		filebuf[80];
-	FILE	   *LOGFP = globals.qlogFP;
+	static FILE   *LOGFP = NULL;
 
-	if (globals.commlog)
+	if (qlog_on)
 	{
 		va_start(args, fmt);
 
@@ -105,7 +131,6 @@ qlog(char *fmt,...)
 		{
 			generate_filename(QLOGDIR, QLOGFILE, filebuf);
 			LOGFP = fopen(filebuf, PG_BINARY_W);
-			globals.qlogFP = LOGFP;
 			setbuf(LOGFP, NULL);
 		}
 
@@ -139,7 +164,7 @@ qlog(char *fmt,...)
  *	(not including null term)
  */
 int
-my_strcpy(char *dst, int dst_len, char *src, int src_len)
+my_strcpy(char *dst, int dst_len, const char *src, int src_len)
 {
 	if (dst_len <= 0)
 		return STRCPY_FAIL;
@@ -214,7 +239,7 @@ strncpy_null(char *dst, const char *src, int len)
  *------
  */
 char *
-make_string(char *s, int len, char *buf)
+make_string(const char *s, int len, char *buf)
 {
 	int			length;
 	char	   *str;
@@ -248,7 +273,7 @@ make_string(char *s, int len, char *buf)
  *	This routine could be modified to use vsprintf() to handle multiple arguments.
  */
 char *
-my_strcat(char *buf, char *fmt, char *s, int len)
+my_strcat(char *buf, const char *fmt, const char *s, int len)
 {
 	if (s && (len > 0 || (len == SQL_NTS && strlen(s) > 0)))
 	{

@@ -58,7 +58,6 @@ typedef signed char SCHAR;
 #endif
 #endif
 
-extern GLOBAL_VALUES globals;
 
 /*
  *	How to map ODBC scalar functions {fn func(args)} to Postgres.
@@ -132,10 +131,10 @@ char	   *mapFuncs[][2] = {
 	{0, 0}
 };
 
-char	   *mapFunction(char *func);
-unsigned int conv_from_octal(unsigned char *s);
-unsigned int conv_from_hex(unsigned char *s);
-char	   *conv_to_octal(unsigned char val);
+static char   *mapFunction(const char *func);
+static unsigned int conv_from_octal(const unsigned char *s);
+static unsigned int conv_from_hex(const unsigned char *s);
+static char	   *conv_to_octal(unsigned char val);
 
 /*---------
  *			A Guide for date/time/timestamp conversions
@@ -180,14 +179,16 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 	struct tm  *tim;
 	int			pcbValueOffset,
 				rgbValueOffset;
-	char	   *rgbValueBindRow,
-			   *ptr;
+	char	   *rgbValueBindRow;
+	const char	*ptr;
 	int			bind_row = stmt->bind_row;
 	int			bind_size = stmt->options.bind_size;
 	int			result = COPY_OK;
 	BOOL		changed;
 	static		char *tempBuf= NULL;
 	static		unsigned int tempBuflen = 0;
+	const char *neutstr = value;
+	char	midtemp[16];
 
 	if (!tempBuf)
 		tempBuflen = 0;
@@ -298,11 +299,13 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 					This is bad ;)
 
 				*/
-					
-				if (s[0] == 'T' || s[0] == 't' || s[0] == '1')
-					s[0] = '1';
+
+				strcpy(midtemp, value);
+				if (s[0] == 'f' || s[0] == 'F' || s[0] == 'n' || s[0] == 'N' || s[0] == '0')
+					midtemp[0] = '0';
 				else
-				    s[0] = '0';
+					midtemp[0] = '1';
+				neutstr = midtemp;
 
 			}
 			break;
@@ -312,7 +315,7 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 			{
 				int			nval,
 							i;
-				char	   *vp;
+				const char	*vp;
 
 				/* this is an array of eight integers */
 				short	   *short_array = (short *) ((char *) rgbValue + rgbValueOffset);
@@ -423,7 +426,7 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 				len = 1;
 				if (cbValueMax > len)
 				{
-					strcpy(rgbValueBindRow, value);
+					strcpy(rgbValueBindRow, neutstr);
 					mylog("PG_TYPE_BOOL: rgbValueBindRow = '%s'\n", rgbValueBindRow);
 				}
 				break;
@@ -607,13 +610,13 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 			case SQL_C_BIT:
 				len = 1;
 				if (bind_size > 0)
-					*(UCHAR *) ((char *) rgbValue + (bind_row * bind_size)) = atoi(value);
+					*(UCHAR *) ((char *) rgbValue + (bind_row * bind_size)) = atoi(neutstr);
 				else
-					*((UCHAR *) rgbValue + bind_row) = atoi(value);
+					*((UCHAR *) rgbValue + bind_row) = atoi(neutstr);
 
 				/*
-				 * mylog("SQL_C_BIT: val = %d, cb = %d, rgb=%d\n",
-				 * atoi(value), cbValueMax, *((UCHAR *)rgbValue));
+				 * mylog("SQL_C_BIT: bind_row = %d val = %d, cb = %d, rgb=%d\n",
+				 * bind_row, atoi(neutstr), cbValueMax, *((UCHAR *)rgbValue));
 				 */
 				break;
 
@@ -966,10 +969,17 @@ copy_statement_with_parameters(StatementClass *stmt)
 	int			lobj_fd,
 				retval;
 	BOOL	check_select_into = FALSE; /* select into check */
+	BOOL	proc_no_param = TRUE;
 	unsigned int	declare_pos;
+	ConnectionClass	*conn = SC_get_conn(stmt);
+	ConnInfo	*ci = &(conn->connInfo);
+	BOOL	prepare_dummy_cursor = FALSE;
 #ifdef	DRIVER_CURSOR_IMPLEMENT
 	BOOL ins_ctrl = FALSE;
 #endif /* DRIVER_CURSOR_IMPLEMENT */
+#ifdef	PREPARE_TRIAL
+	prepare_dummy_cursor = stmt->pre_executing;
+#endif /* PREPARE_TRIAL */
 
 
 	if (!old_statement)
@@ -985,22 +995,6 @@ copy_statement_with_parameters(StatementClass *stmt)
 	st.m = tim->tm_mon + 1;
 	st.d = tim->tm_mday;
 	st.y = tim->tm_year + 1900;
-
-	/* If the application hasn't set a cursor name, then generate one */
-	if (stmt->cursor_name[0] == '\0')
-		sprintf(stmt->cursor_name, "SQL_CUR%p", stmt);
-
-	oldstmtlen = strlen(old_statement);
-	CVT_INIT(oldstmtlen);
-	/* For selects, prepend a declare cursor to the statement */
-	if (stmt->statement_type == STMT_TYPE_SELECT && globals.use_declarefetch)
-	{
-		sprintf(new_statement, "declare %s cursor for ", stmt->cursor_name);
-		npos = strlen(new_statement);
-		check_select_into = TRUE;
-		declare_pos = npos;
-	}
-	param_number = -1;
 
 #ifdef	DRIVER_CURSOR_IMPLEMENT
 	if (stmt->statement_type != STMT_TYPE_SELECT)
@@ -1021,6 +1015,34 @@ copy_statement_with_parameters(StatementClass *stmt)
 		else ins_ctrl = TRUE;
 	}
 #endif /* DRIVER_CURSOR_IMPLEMENT */
+
+	/* If the application hasn't set a cursor name, then generate one */
+	if (stmt->cursor_name[0] == '\0')
+		sprintf(stmt->cursor_name, "SQL_CUR%p", stmt);
+	oldstmtlen = strlen(old_statement);
+	CVT_INIT(oldstmtlen);
+	stmt->miscinfo = 0;
+	/* For selects, prepend a declare cursor to the statement */
+	if (stmt->statement_type == STMT_TYPE_SELECT)
+	{
+		SC_set_pre_executable(stmt);
+		if (prepare_dummy_cursor || ci->drivers.use_declarefetch)
+		{
+			if (prepare_dummy_cursor)
+			{
+				if (!CC_is_in_trans(conn))
+					strcpy(new_statement, "begin;");
+			}
+			else if (ci->drivers.use_declarefetch)
+				SC_set_fetchcursor(stmt);
+			sprintf(new_statement, "%s declare %s cursor for ",
+				 new_statement, stmt->cursor_name);
+			npos = strlen(new_statement);
+			check_select_into = TRUE;
+			declare_pos = npos;
+		}
+	}
+	param_number = -1;
 #ifdef MULTIBYTE
 	multibyte_init();
 #endif
@@ -1087,7 +1109,9 @@ copy_statement_with_parameters(StatementClass *stmt)
 			/* procedure calls */
 			if (stmt->statement_type == STMT_TYPE_PROCCALL)
 			{
+				int	lit_call_len = 4;
 				while (isspace((unsigned char) old_statement[++opos]));
+				/* '=?' to accept return values exists ? */
 				if (old_statement[opos] == '?')
 				{
 					param_number++;
@@ -1099,13 +1123,16 @@ copy_statement_with_parameters(StatementClass *stmt)
 					}
 					while (isspace((unsigned char) old_statement[++opos]));
 				}
-				if (strnicmp(&old_statement[opos], "call", 4))
+				if (strnicmp(&old_statement[opos], "call", lit_call_len) ||
+					!isspace(old_statement[opos + lit_call_len]))
 				{
 					opos--;
 					continue;
 				}
-				opos += (4 - 1);
-				CVT_APPEND_STR("SELECT");
+				opos += lit_call_len; 
+				CVT_APPEND_STR("SELECT ");
+				if (strchr(&old_statement[opos], '('))
+					proc_no_param = FALSE;
 				continue; 
 			}
 			*end = '\0';
@@ -1128,7 +1155,11 @@ copy_statement_with_parameters(StatementClass *stmt)
 		}
 		/* End of a procedure call */
 		else if (oldchar == '}' && stmt->statement_type == STMT_TYPE_PROCCALL)
+		{
+			if (proc_no_param)
+				CVT_APPEND_STR("()");
 			continue;
+		}
 
 		/*
 		 * Can you have parameter markers inside of quotes?  I dont think
@@ -1151,6 +1182,8 @@ copy_statement_with_parameters(StatementClass *stmt)
     				 into_table_from(&old_statement[opos]))
 			{
 				stmt->statement_type = STMT_TYPE_CREATE;
+				SC_no_pre_executable(stmt);
+				SC_no_fetchcursor(stmt);
 				stmt->options.scroll_concurrency = SQL_CONCUR_READ_ONLY;
 				memmove(new_statement, new_statement + declare_pos, npos - declare_pos);
 				npos -= declare_pos;
@@ -1446,12 +1479,12 @@ copy_statement_with_parameters(StatementClass *stmt)
 				else
 				{
 					/* begin transaction if needed */
-					if (!CC_is_in_trans(stmt->hdbc))
+					if (!CC_is_in_trans(conn))
 					{
 						QResultClass *res;
 						char		ok;
 
-						res = CC_send_query(stmt->hdbc, "BEGIN", NULL);
+						res = CC_send_query(conn, "BEGIN", NULL);
 						if (!res)
 						{
 							stmt->errormsg = "Could not begin (in-line) a transaction";
@@ -1469,11 +1502,11 @@ copy_statement_with_parameters(StatementClass *stmt)
 							return SQL_ERROR;
 						}
 
-						CC_set_in_trans(stmt->hdbc);
+						CC_set_in_trans(conn);
 					}
 
 					/* store the oid */
-					lobj_oid = lo_creat(stmt->hdbc, INV_READ | INV_WRITE);
+					lobj_oid = lo_creat(conn, INV_READ | INV_WRITE);
 					if (lobj_oid == 0)
 					{
 						stmt->errornumber = STMT_EXEC_ERROR;
@@ -1483,7 +1516,7 @@ copy_statement_with_parameters(StatementClass *stmt)
 					}
 
 					/* store the fd */
-					lobj_fd = lo_open(stmt->hdbc, lobj_oid, INV_WRITE);
+					lobj_fd = lo_open(conn, lobj_oid, INV_WRITE);
 					if (lobj_fd < 0)
 					{
 						stmt->errornumber = STMT_EXEC_ERROR;
@@ -1492,17 +1525,17 @@ copy_statement_with_parameters(StatementClass *stmt)
 						return SQL_ERROR;
 					}
 
-					retval = lo_write(stmt->hdbc, lobj_fd, buffer, used);
+					retval = lo_write(conn, lobj_fd, buffer, used);
 
-					lo_close(stmt->hdbc, lobj_fd);
+					lo_close(conn, lobj_fd);
 
 					/* commit transaction if needed */
-					if (!globals.use_declarefetch && CC_is_in_autocommit(stmt->hdbc))
+					if (!ci->drivers.use_declarefetch && CC_is_in_autocommit(conn))
 					{
 						QResultClass *res;
 						char		ok;
 
-						res = CC_send_query(stmt->hdbc, "COMMIT", NULL);
+						res = CC_send_query(conn, "COMMIT", NULL);
 						if (!res)
 						{
 							stmt->errormsg = "Could not commit (in-line) a transaction";
@@ -1520,7 +1553,7 @@ copy_statement_with_parameters(StatementClass *stmt)
 							return SQL_ERROR;
 						}
 
-						CC_set_no_trans(stmt->hdbc);
+						CC_set_no_trans(conn);
 					}
 				}
 
@@ -1589,11 +1622,11 @@ copy_statement_with_parameters(StatementClass *stmt)
 	/* make sure new_statement is always null-terminated */
 	CVT_TERMINATE
 
-	if (stmt->hdbc->DriverToDataSource != NULL)
+	if (conn->DriverToDataSource != NULL)
 	{
 		int			length = strlen(new_statement);
 
-		stmt->hdbc->DriverToDataSource(stmt->hdbc->translation_option,
+		conn->DriverToDataSource(conn->translation_option,
 									   SQL_CHAR,
 									   new_statement, length,
 									   new_statement, length, NULL,
@@ -1604,12 +1637,25 @@ copy_statement_with_parameters(StatementClass *stmt)
 	if (ins_ctrl)
 		stmt->options.scroll_concurrency = SQL_CONCUR_READ_ONLY;
 #endif /* DRIVER_CURSOR_IMPLEMENT */
+#ifdef	PREPARE_TRIAL
+	if (prepare_dummy_cursor && SC_is_pre_executable(stmt))
+	{
+		char fetchstr[128];	
+		sprintf(fetchstr, ";fetch backward in %s;close %s;",
+				stmt->cursor_name, stmt->cursor_name);
+		if (!CC_is_in_trans(conn))
+			strcat(fetchstr, "commit;");
+		CVT_APPEND_STR(fetchstr);
+		stmt->inaccurate_result = TRUE;
+	}
+#endif /* PREPARE_TRIAL */
+
 	return SQL_SUCCESS;
 }
 
 
 char *
-mapFunction(char *func)
+mapFunction(const char *func)
 {
 	int			i;
 
@@ -1850,7 +1896,7 @@ convert_linefeeds(const char *si, char *dst, size_t max, BOOL *changed)
  *	Plus, escape any special characters.
  */
 int
-convert_special_chars(char *si, char *dst, int used)
+convert_special_chars(const char *si, char *dst, int used)
 {
 	size_t		i = 0,
 				out = 0,
@@ -1904,7 +1950,7 @@ convert_special_chars(char *si, char *dst, int used)
 
 /*	!!! Need to implement this function !!!  */
 int
-convert_pgbinary_to_char(char *value, char *rgbValue, int cbValueMax)
+convert_pgbinary_to_char(const char *value, char *rgbValue, int cbValueMax)
 {
 	mylog("convert_pgbinary_to_char: value = '%s'\n", value);
 
@@ -1914,7 +1960,7 @@ convert_pgbinary_to_char(char *value, char *rgbValue, int cbValueMax)
 
 
 unsigned int
-conv_from_octal(unsigned char *s)
+conv_from_octal(const unsigned char *s)
 {
 	int			i,
 				y = 0;
@@ -1928,7 +1974,7 @@ conv_from_octal(unsigned char *s)
 
 
 unsigned int
-conv_from_hex(unsigned char *s)
+conv_from_hex(const unsigned char *s)
 {
 	int			i,
 				y = 0,
@@ -1952,7 +1998,7 @@ conv_from_hex(unsigned char *s)
 
 /*	convert octal escapes to bytes */
 int
-convert_from_pgbinary(unsigned char *value, unsigned char *rgbValue, int cbValueMax)
+convert_from_pgbinary(const unsigned char *value, unsigned char *rgbValue, int cbValueMax)
 {
 	size_t		i, ilen = strlen(value);
 	int			o = 0;
@@ -2007,7 +2053,7 @@ conv_to_octal(unsigned char val)
 
 /*	convert non-ascii bytes to octal escape sequences */
 int
-convert_to_pgbinary(unsigned char *in, char *out, int len)
+convert_to_pgbinary(const unsigned char *in, char *out, int len)
 {
 	int			i,
 				o = 0;
@@ -2031,7 +2077,7 @@ convert_to_pgbinary(unsigned char *in, char *out, int len)
 
 
 void
-encode(char *in, char *out)
+encode(const char *in, char *out)
 {
 	unsigned int i, ilen = strlen(in),
 				o = 0;
@@ -2058,7 +2104,7 @@ encode(char *in, char *out)
 
 
 void
-decode(char *in, char *out)
+decode(const char *in, char *out)
 {
 	unsigned int i, ilen = strlen(in),
 				o = 0;
@@ -2104,7 +2150,8 @@ convert_lo(StatementClass *stmt, void *value, Int2 fCType, PTR rgbValue,
 				result,
 				left = -1;
 	BindInfoClass *bindInfo = NULL;
-
+	ConnectionClass	*conn = SC_get_conn(stmt);
+	ConnInfo	*ci = &(conn->connInfo);
 
 	/* If using SQLGetData, then current_col will be set */
 	if (stmt->current_col >= 0)
@@ -2121,12 +2168,12 @@ convert_lo(StatementClass *stmt, void *value, Int2 fCType, PTR rgbValue,
 	if (!bindInfo || bindInfo->data_left == -1)
 	{
 		/* begin transaction if needed */
-		if (!CC_is_in_trans(stmt->hdbc))
+		if (!CC_is_in_trans(conn))
 		{
 			QResultClass *res;
 			char		ok;
 
-			res = CC_send_query(stmt->hdbc, "BEGIN", NULL);
+			res = CC_send_query(conn, "BEGIN", NULL);
 			if (!res)
 			{
 				stmt->errormsg = "Could not begin (in-line) a transaction";
@@ -2142,11 +2189,11 @@ convert_lo(StatementClass *stmt, void *value, Int2 fCType, PTR rgbValue,
 				return COPY_GENERAL_ERROR;
 			}
 
-			CC_set_in_trans(stmt->hdbc);
+			CC_set_in_trans(conn);
 		}
 
 		oid = atoi(value);
-		stmt->lobj_fd = lo_open(stmt->hdbc, oid, INV_READ);
+		stmt->lobj_fd = lo_open(conn, oid, INV_READ);
 		if (stmt->lobj_fd < 0)
 		{
 			stmt->errornumber = STMT_EXEC_ERROR;
@@ -2155,15 +2202,15 @@ convert_lo(StatementClass *stmt, void *value, Int2 fCType, PTR rgbValue,
 		}
 
 		/* Get the size */
-		retval = lo_lseek(stmt->hdbc, stmt->lobj_fd, 0L, SEEK_END);
+		retval = lo_lseek(conn, stmt->lobj_fd, 0L, SEEK_END);
 		if (retval >= 0)
 		{
-			left = lo_tell(stmt->hdbc, stmt->lobj_fd);
+			left = lo_tell(conn, stmt->lobj_fd);
 			if (bindInfo)
 				bindInfo->data_left = left;
 
 			/* return to beginning */
-			lo_lseek(stmt->hdbc, stmt->lobj_fd, 0L, SEEK_SET);
+			lo_lseek(conn, stmt->lobj_fd, 0L, SEEK_SET);
 		}
 	}
 
@@ -2177,18 +2224,18 @@ convert_lo(StatementClass *stmt, void *value, Int2 fCType, PTR rgbValue,
 		return COPY_GENERAL_ERROR;
 	}
 
-	retval = lo_read(stmt->hdbc, stmt->lobj_fd, (char *) rgbValue, cbValueMax);
+	retval = lo_read(conn, stmt->lobj_fd, (char *) rgbValue, cbValueMax);
 	if (retval < 0)
 	{
-		lo_close(stmt->hdbc, stmt->lobj_fd);
+		lo_close(conn, stmt->lobj_fd);
 
 		/* commit transaction if needed */
-		if (!globals.use_declarefetch && CC_is_in_autocommit(stmt->hdbc))
+		if (!ci->drivers.use_declarefetch && CC_is_in_autocommit(conn))
 		{
 			QResultClass *res;
 			char		ok;
 
-			res = CC_send_query(stmt->hdbc, "COMMIT", NULL);
+			res = CC_send_query(conn, "COMMIT", NULL);
 			if (!res)
 			{
 				stmt->errormsg = "Could not commit (in-line) a transaction";
@@ -2204,7 +2251,7 @@ convert_lo(StatementClass *stmt, void *value, Int2 fCType, PTR rgbValue,
 				return COPY_GENERAL_ERROR;
 			}
 
-			CC_set_no_trans(stmt->hdbc);
+			CC_set_no_trans(conn);
 		}
 
 		stmt->lobj_fd = -1;
@@ -2227,15 +2274,15 @@ convert_lo(StatementClass *stmt, void *value, Int2 fCType, PTR rgbValue,
 
 	if (!bindInfo || bindInfo->data_left == 0)
 	{
-		lo_close(stmt->hdbc, stmt->lobj_fd);
+		lo_close(conn, stmt->lobj_fd);
 
 		/* commit transaction if needed */
-		if (!globals.use_declarefetch && CC_is_in_autocommit(stmt->hdbc))
+		if (!ci->drivers.use_declarefetch && CC_is_in_autocommit(conn))
 		{
 			QResultClass *res;
 			char		ok;
 
-			res = CC_send_query(stmt->hdbc, "COMMIT", NULL);
+			res = CC_send_query(conn, "COMMIT", NULL);
 			if (!res)
 			{
 				stmt->errormsg = "Could not commit (in-line) a transaction";
@@ -2251,7 +2298,7 @@ convert_lo(StatementClass *stmt, void *value, Int2 fCType, PTR rgbValue,
 				return COPY_GENERAL_ERROR;
 			}
 
-			CC_set_no_trans(stmt->hdbc);
+			CC_set_no_trans(conn);
 		}
 
 		stmt->lobj_fd = -1;		/* prevent further reading */

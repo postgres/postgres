@@ -33,7 +33,6 @@
 #include "pgapifunc.h"
 
 
-extern GLOBAL_VALUES globals;
 
 RETCODE set_statement_option(ConnectionClass *conn,
 					 StatementClass *stmt,
@@ -49,7 +48,12 @@ set_statement_option(ConnectionClass *conn,
 {
 	static char *func = "set_statement_option";
 	char		changed = FALSE;
+	ConnInfo *ci = NULL;
 
+	if (conn)
+		ci = &(conn->connInfo);
+	else if (stmt)
+		ci = &(SC_get_conn(stmt)->connInfo);
 	switch (fOption)
 	{
 		case SQL_ASYNC_ENABLE:	/* ignored */
@@ -70,7 +74,7 @@ set_statement_option(ConnectionClass *conn,
 			 * read-only
 			 */
 			mylog("SetStmtOption(): SQL_CONCURRENCY = %d\n", vParam);
-			if (globals.lie || vParam == SQL_CONCUR_READ_ONLY || vParam == SQL_CONCUR_ROWVER)
+			if (ci->drivers.lie || vParam == SQL_CONCUR_READ_ONLY || vParam == SQL_CONCUR_ROWVER)
 			{
 				if (conn)
 			 		conn->stmtOptions.scroll_concurrency = vParam;
@@ -95,7 +99,7 @@ set_statement_option(ConnectionClass *conn,
 			 */
 			mylog("SetStmtOption(): SQL_CURSOR_TYPE = %d\n", vParam);
 
-			if (globals.lie)
+			if (ci->drivers.lie)
 			{
 				if (conn)
 					conn->stmtOptions.cursor_type = vParam;
@@ -104,7 +108,7 @@ set_statement_option(ConnectionClass *conn,
 			}
 			else
 			{
-				if (globals.use_declarefetch)
+				if (ci->drivers.use_declarefetch)
 				{
 					if (conn)
 						conn->stmtOptions.cursor_type = SQL_CURSOR_FORWARD_ONLY;
@@ -147,7 +151,7 @@ set_statement_option(ConnectionClass *conn,
 			break;
 
 			/*-------
-			 *	if (globals.lie)
+			 *	if (ci->drivers.lie)
 			 *		stmt->keyset_size = vParam;
 			 *	else
 			 *	{
@@ -433,6 +437,7 @@ PGAPI_GetConnectOption(
 {
 	static char *func = "PGAPI_GetConnectOption";
 	ConnectionClass *conn = (ConnectionClass *) hdbc;
+	ConnInfo *ci = &(conn->connInfo);
 
 	mylog("%s: entering...\n", func);
 
@@ -464,7 +469,7 @@ PGAPI_GetConnectOption(
 			break;
 
 		case SQL_PACKET_SIZE:	/* NOT SUPPORTED */
-			*((UDWORD *) pvParam) = globals.socket_buffersize;
+			*((UDWORD *) pvParam) = ci->drivers.socket_buffersize;
 			break;
 
 		case SQL_QUIET_MODE:	/* NOT SUPPORTED */
@@ -536,6 +541,7 @@ PGAPI_GetStmtOption(
 	static char *func = "PGAPI_GetStmtOption";
 	StatementClass *stmt = (StatementClass *) hstmt;
 	QResultClass *res;
+	ConnInfo *ci = &(SC_get_conn(stmt)->connInfo);
 
 	mylog("%s: entering...\n", func);
 
@@ -557,7 +563,7 @@ PGAPI_GetStmtOption(
 
 			res = stmt->result;
 
-			if (stmt->manual_result || !globals.use_declarefetch)
+			if (stmt->manual_result || !ci->drivers.use_declarefetch)
 			{
 				/* make sure we're positioned on a valid row */
 				if ((stmt->currTuple < 0) ||

@@ -34,7 +34,7 @@
 #include "lobj.h"
 #include "pgapifunc.h"
 
-extern GLOBAL_VALUES globals;
+/*extern GLOBAL_VALUES globals;*/
 
 
 /*		Perform a Prepare on the SQL statement */
@@ -340,7 +340,32 @@ PGAPI_Execute(
 		return retval;
 
 	mylog("   stmt_with_params = '%s'\n", stmt->stmt_with_params);
-
+#ifdef PREPARE_TRIAL
+	if (stmt->inaccurate_result)
+		if (SC_is_pre_executable(stmt))
+		{
+			BOOL	in_trans = CC_is_in_trans(conn);
+			QResultClass	*res;
+			CC_set_in_trans(conn);
+			stmt->result = res = CC_send_query(conn, stmt->stmt_with_params, NULL);
+			if (res && QR_aborted(res))
+			{
+				CC_abort(conn);
+				stmt->errornumber = STMT_EXEC_ERROR;
+				stmt->errormsg = "Handle prepare error";
+				return SQL_ERROR;
+			}
+			else
+			{
+				if (!in_trans)
+					CC_set_no_trans(conn);
+				stmt->status =STMT_FINISHED;
+				return SQL_SUCCESS;
+			}
+		}
+		else
+			return SQL_SUCCESS;
+#endif	/* PREPARE_TRIAL */
 	return SC_execute(stmt);
 }
 
@@ -437,6 +462,7 @@ PGAPI_Cancel(
 #ifdef WIN32
 	HMODULE		hmodule;
 	FARPROC		addr;
+	ConnInfo *ci;
 
 #endif
 
@@ -448,6 +474,7 @@ PGAPI_Cancel(
 		SC_log_error(func, "", NULL);
 		return SQL_INVALID_HANDLE;
 	}
+	ci = &(SC_get_conn(stmt)->connInfo);
 
 	/*
 	 * Not in the middle of SQLParamData/SQLPutData so cancel like a
@@ -466,7 +493,7 @@ PGAPI_Cancel(
 		 */
 
 #ifdef WIN32
-		if (globals.cancel_as_freestmt)
+		if (ci->drivers.cancel_as_freestmt)
 		{
 			hmodule = GetModuleHandle("ODBC32");
 			addr = GetProcAddress(hmodule, "SQLFreeStmt");
@@ -569,6 +596,7 @@ PGAPI_ParamData(
 	StatementClass *stmt = (StatementClass *) hstmt;
 	int			i,
 				retval;
+	ConnInfo *ci;
 
 	mylog("%s: entering...\n", func);
 
@@ -577,6 +605,7 @@ PGAPI_ParamData(
 		SC_log_error(func, "", NULL);
 		return SQL_INVALID_HANDLE;
 	}
+	ci = &(SC_get_conn(stmt)->connInfo);
 
 	mylog("%s: data_at_exec=%d, params_alloc=%d\n", func, stmt->data_at_exec, stmt->parameters_allocated);
 
@@ -602,7 +631,7 @@ PGAPI_ParamData(
 		lo_close(stmt->hdbc, stmt->lobj_fd);
 
 		/* commit transaction if needed */
-		if (!globals.use_declarefetch && CC_is_in_autocommit(stmt->hdbc))
+		if (!ci->drivers.use_declarefetch && CC_is_in_autocommit(stmt->hdbc))
 		{
 			QResultClass *res;
 			char		ok;

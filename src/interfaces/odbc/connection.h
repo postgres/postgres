@@ -159,6 +159,7 @@ typedef struct
 	char		translation_dll[MEDIUM_REGISTRY_LEN];
 	char		translation_option[SMALL_REGISTRY_LEN];
 	char		focus_password;
+	GLOBAL_VALUES	drivers; /* moved from driver's option */
 } ConnInfo;
 
 /*	Macro to determine is the connection using 6.2 protocol? */

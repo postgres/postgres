@@ -254,7 +254,7 @@ RETCODE  SQL_API SQLGetData(HSTMT StatementHandle,
 RETCODE  SQL_API SQLGetFunctions(HDBC ConnectionHandle,
            SQLUSMALLINT FunctionId, SQLUSMALLINT *Supported)
 {
-	mylog("[SQLGetFunctions");
+	mylog("[SQLGetFunctions]");
 #if (ODBCVER >= 0x3000)
 	if (FunctionId == SQL_API_ODBC3_ALL_FUNCTIONS)
 		return PGAPI_GetFunctions30(ConnectionHandle, FunctionId, Supported);
@@ -270,10 +270,12 @@ RETCODE  SQL_API SQLGetInfo(HDBC ConnectionHandle,
 	mylog("[SQLGetInfo(30)]");
 	if ((ret = PGAPI_GetInfo(ConnectionHandle, InfoType, InfoValue,
            	BufferLength, StringLength)) == SQL_ERROR)
-		return PGAPI_GetInfo30(ConnectionHandle, InfoType, InfoValue,
-           	BufferLength, StringLength);
-	else
-		return ret;
+	{
+		if (((ConnectionClass *) ConnectionHandle)->driver_version >= 0x3000)
+			return PGAPI_GetInfo30(ConnectionHandle, InfoType, InfoValue,
+           			BufferLength, StringLength);
+	}
+	return ret;
 #else
 	mylog("[SQLGetInfo]");
 	return PGAPI_GetInfo(ConnectionHandle, InfoType, InfoValue,

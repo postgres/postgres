@@ -395,7 +395,7 @@ RETCODE  SQL_API SQLSetEnvAttr(HENV EnvironmentHandle,
 			/* *((unsigned int *) Value) = SQL_CP_RELAXED_MATCH; */
 			return SQL_SUCCESS;
 		case SQL_ATTR_ODBC_VERSION:
-			if ((SQLUINTEGER) Value == SQL_OV_ODBC3)
+			if ((SQLUINTEGER) Value == SQL_OV_ODBC2)
 				return SQL_SUCCESS;
 			break;
 		case SQL_ATTR_OUTPUT_NTS:

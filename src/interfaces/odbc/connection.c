@@ -110,6 +110,7 @@ PGAPI_Connect(
 
 	/* get the values for the DSN from the registry */
 	getDSNinfo(ci, CONN_OVERWRITE);
+	logs_on_off(1, ci->drivers.debug, ci->drivers.commlog);
 	/* initialize pg_version from connInfo.protocol    */
 	CC_initialize_pg_version(conn);
 
@@ -182,6 +183,7 @@ PGAPI_Disconnect(
 		return SQL_ERROR;
 	}
 
+	logs_on_off(-1, conn->connInfo.drivers.debug, conn->connInfo.drivers.commlog);
 	mylog("%s: about to CC_cleanup\n", func);
 
 	/* Close the connection and free statements */
@@ -249,8 +251,8 @@ CC_Constructor()
 		rv->transact_status = CONN_IN_AUTOCOMMIT;		/* autocommit by default */
 
 		memset(&rv->connInfo, 0, sizeof(ConnInfo));
-
-		rv->sock = SOCK_Constructor();
+memcpy(&(rv->connInfo.drivers), &globals, sizeof(globals));
+		rv->sock = SOCK_Constructor(rv);
 		if (!rv->sock)
 			return NULL;
 
@@ -519,31 +521,31 @@ CC_connect(ConnectionClass *self, char do_password)
 	{
 		qlog("Global Options: Version='%s', fetch=%d, socket=%d, unknown_sizes=%d, max_varchar_size=%d, max_longvarchar_size=%d\n",
 			 POSTGRESDRIVERVERSION,
-			 globals.fetch_max,
-			 globals.socket_buffersize,
-			 globals.unknown_sizes,
-			 globals.max_varchar_size,
-			 globals.max_longvarchar_size);
+			 ci->drivers.fetch_max,
+			 ci->drivers.socket_buffersize,
+			 ci->drivers.unknown_sizes,
+			 ci->drivers.max_varchar_size,
+			 ci->drivers.max_longvarchar_size);
 		qlog("                disable_optimizer=%d, ksqo=%d, unique_index=%d, use_declarefetch=%d\n",
-			 globals.disable_optimizer,
-			 globals.ksqo,
-			 globals.unique_index,
-			 globals.use_declarefetch);
+			 ci->drivers.disable_optimizer,
+			 ci->drivers.ksqo,
+			 ci->drivers.unique_index,
+			 ci->drivers.use_declarefetch);
 		qlog("                text_as_longvarchar=%d, unknowns_as_longvarchar=%d, bools_as_char=%d\n",
-			 globals.text_as_longvarchar,
-			 globals.unknowns_as_longvarchar,
-			 globals.bools_as_char);
+			 ci->drivers.text_as_longvarchar,
+			 ci->drivers.unknowns_as_longvarchar,
+			 ci->drivers.bools_as_char);
 
 #ifdef MULTIBYTE
-		check_client_encoding(globals.conn_settings);
+		check_client_encoding(ci->drivers.conn_settings);
 		qlog("                extra_systable_prefixes='%s', conn_settings='%s' conn_encoding='%s'\n",
-			 globals.extra_systable_prefixes,
-			 globals.conn_settings,
-			 check_client_encoding(globals.conn_settings));
+			 ci->drivers.extra_systable_prefixes,
+			 ci->drivers.conn_settings,
+			 check_client_encoding(ci->drivers.conn_settings));
 #else
 		qlog("                extra_systable_prefixes='%s', conn_settings='%s'\n",
-			 globals.extra_systable_prefixes,
-			 globals.conn_settings);
+			 ci->drivers.extra_systable_prefixes,
+			 ci->drivers.conn_settings);
 #endif
 
 		if (self->status != CONN_NOT_CONNECTED)
@@ -568,7 +570,7 @@ CC_connect(ConnectionClass *self, char do_password)
 		 */
 		if (!self->sock)
 		{
-			self->sock = SOCK_Constructor();
+			self->sock = SOCK_Constructor(self);
 			if (!self->sock)
 			{
 				self->errornumber = CONNECTION_SERVER_NOT_REACHED;
@@ -646,17 +648,21 @@ CC_connect(ConnectionClass *self, char do_password)
 	 */
 
 	if (!PROTOCOL_62(ci))
+	{
+		BOOL before_64 = PG_VERSION_LT(self, 6.4), ReadyForQuery = FALSE;
 		do
 		{
 			if (do_password)
 				beresp = 'R';
 			else
+			{
 				beresp = SOCK_get_char(sock);
+				mylog("auth got '%c'\n", beresp);
+			}
 
 			switch (beresp)
 			{
 				case 'E':
-					mylog("auth got 'E'\n");
 
 					SOCK_get_string(sock, msgbuffer, ERROR_MSG_LENGTH);
 					self->errornumber = CONN_INVALID_AUTHENTICATION;
@@ -673,7 +679,6 @@ CC_connect(ConnectionClass *self, char do_password)
 					}
 					else
 					{
-						mylog("auth got 'R'\n");
 
 						areq = SOCK_get_int(sock, 4);
 						if (areq == AUTH_REQ_MD5)
@@ -734,13 +739,28 @@ CC_connect(ConnectionClass *self, char do_password)
 							return 0;
 					}
 					break;
+				case 'K':			/* Secret key (6.4 protocol) */
+					(void) SOCK_get_int(sock, 4);	/* pid */
+					(void) SOCK_get_int(sock, 4);	/* key */
+
+					break;
+				case 'Z':			/* Backend is ready for new query (6.4) */
+					ReadyForQuery = TRUE;
+					break;
 				default:
 					self->errormsg = "Unexpected protocol character during authentication";
 					self->errornumber = CONN_INVALID_AUTHENTICATION;
 					return 0;
 			}
 
-		} while (areq != AUTH_REQ_OK);
+			/* 
+			 *	There were no ReadyForQuery responce
+			 *	before 6.4.
+			 */
+			if (before_64 && areq == AUTH_REQ_OK)
+				ReadyForQuery = TRUE;
+		} while (!ReadyForQuery);
+	}
 
 
 	CC_clear_error(self);		/* clear any password error */
@@ -917,13 +937,14 @@ CC_get_error(ConnectionClass *self, int *number, char **message)
 QResultClass *
 CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi)
 {
-	QResultClass *result_in,
-			   *res = NULL;
+	QResultClass *result_in = NULL, *res = NULL, *retres = NULL;
 	char		swallow;
 	int			id;
 	SocketClass *sock = self->sock;
-	int		maxlen;
-	BOOL		msg_truncated;
+	int		maxlen, empty_reqs;
+	BOOL		msg_truncated, ReadyToReturn,
+			tuples_return = FALSE, query_completed = FALSE,
+			before_64 = PG_VERSION_LT(self, 6.4);
 
 	/* ERROR_MSG_LENGTH is suffcient */
 	static char msgbuffer[ERROR_MSG_LENGTH + 1];
@@ -976,7 +997,11 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi)
 
 	mylog("send_query: done sending query\n");
 
-	while (1)
+	ReadyToReturn = FALSE;
+	empty_reqs = 0;
+	if (strcmp(query, " ") == 0)
+		empty_reqs = 1;
+	while (!ReadyToReturn)
 	{
 		/* what type of message is coming now ? */
 		id = SOCK_get_char(sock);
@@ -985,12 +1010,12 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi)
 		{
 			self->errornumber = CONNECTION_NO_RESPONSE;
 			self->errormsg = "No response from the backend";
-			if (res)
-				QR_Destructor(res);
 
 			mylog("send_query: 'id' - %s\n", self->errormsg);
 			CC_set_no_trans(self);
-			return NULL;
+			ReadyToReturn = TRUE;
+			retres = NULL;
+			break;
 		}
 
 		mylog("send_query: got id = '%c'\n", id);
@@ -1012,9 +1037,9 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi)
 					self->errormsg = "No response from backend while receiving a portal query command";
 					mylog("send_query: 'C' - %s\n", self->errormsg);
 					CC_set_no_trans(self);
-					if (res)
-						QR_Destructor(res);
-					return NULL;
+					ReadyToReturn = TRUE;
+					retres = NULL;
+					break;
 				}
 				else
 				{
@@ -1031,7 +1056,9 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi)
 					if (QR_command_successful(res))
 						QR_set_status(res, PGRES_COMMAND_OK);
 					QR_set_command(res, cmdbuffer);
-
+					query_completed = TRUE;
+					if (!before_64)
+						break;
 					/*
 					 * (Quotation from the original comments) since
 					 * backend may produce more than one result for some
@@ -1041,8 +1068,13 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi)
 					 */
 
 
-					SOCK_put_string(sock, "Q ");
-					SOCK_flush_output(sock);
+					if (empty_reqs == 0)
+					{
+						SOCK_put_string(sock, "Q ");
+						SOCK_flush_output(sock);
+						empty_reqs++;
+					}
+					break;
 
 					while (!clear)
 					{
@@ -1071,7 +1103,7 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi)
 								break;
 							case 'E':
 								msg_truncated = SOCK_get_string(sock, msgbuffer, ERROR_MSG_LENGTH);
-mylog("ERROR from backend during clear: '%s'\n", msgbuffer);
+								mylog("ERROR from backend during clear: '%s'\n", msgbuffer);
 								qlog("ERROR from backend during clear: '%s'\n", msgbuffer);
 
 								/*
@@ -1098,14 +1130,21 @@ mylog("ERROR from backend during clear: '%s'\n", msgbuffer);
 					}
 
 					mylog("send_query: returning res = %u\n", res);
-					return res;
+					break;
 				}
-			case 'K':			/* Secret key (6.4 protocol) */
-				(void) SOCK_get_int(sock, 4);	/* pid */
-				(void) SOCK_get_int(sock, 4);	/* key */
-
-				break;
 			case 'Z':			/* Backend is ready for new query (6.4) */
+				if (empty_reqs == 0)
+				{
+					ReadyToReturn = TRUE;
+					if (res && QR_get_aborted(res))
+						retres = res;
+					else if (tuples_return)
+						retres = result_in;
+					else if (query_completed)
+						retres = res;
+					else
+						ReadyToReturn = FALSE;
+				}
 				break;
 			case 'N':			/* NOTICE: */
 				msg_truncated = SOCK_get_string(sock, cmdbuffer, ERROR_MSG_LENGTH);
@@ -1126,22 +1165,26 @@ mylog("ERROR from backend during clear: '%s'\n", msgbuffer);
 			case 'I':			/* The server sends an empty query */
 				/* There is a closing '\0' following the 'I', so we eat it */
 				swallow = SOCK_get_char(sock);
+				if (!res)
+					res = QR_Constructor();
 				if ((swallow != '\0') || SOCK_get_errcode(sock) != 0)
 				{
 					self->errornumber = CONNECTION_BACKEND_CRAZY;
 					self->errormsg = "Unexpected protocol character from backend (send_query - I)";
-					if (!res)
-						res = QR_Constructor();
 					QR_set_status(res, PGRES_FATAL_ERROR);
-					return res;
+					ReadyToReturn = TRUE;
+					retres = res;
+					break;
 				}
 				else
 				{
 					/* We return the empty query */
-					if (!res)
-						res = QR_Constructor();
 					QR_set_status(res, PGRES_EMPTY_QUERY);
-					return res;
+				}
+				if (empty_reqs > 0)
+				{
+					if (--empty_reqs == 0)
+						query_completed = TRUE;
 				}
 				break;
 			case 'E':
@@ -1174,7 +1217,8 @@ mylog("ERROR from backend during clear: '%s'\n", msgbuffer);
 				while (msg_truncated)
 					msg_truncated = SOCK_get_string(sock, cmdbuffer, ERROR_MSG_LENGTH);
 
-				return res;		/* instead of NULL. Zoltan */
+				query_completed = TRUE;
+				break;
 
 			case 'P':			/* get the Portal name */
 				SOCK_get_string(sock, msgbuffer, ERROR_MSG_LENGTH);
@@ -1190,7 +1234,9 @@ mylog("ERROR from backend during clear: '%s'\n", msgbuffer);
 					{
 						self->errornumber = CONNECTION_COULD_NOT_RECEIVE;
 						self->errormsg = "Could not create result info in send_query.";
-						return NULL;
+						ReadyToReturn = TRUE;
+						retres = NULL;
+						break;
 					}
 
 					if (qi)
@@ -1200,43 +1246,87 @@ mylog("ERROR from backend during clear: '%s'\n", msgbuffer);
 					{
 						self->errornumber = CONNECTION_COULD_NOT_RECEIVE;
 						self->errormsg = QR_get_message(result_in);
-						return NULL;
+						ReadyToReturn = TRUE;
+						retres = NULL;
+						break;
 					}
 				}
 				else
 				{				/* next fetch, so reuse an existing result */
+					/*
+					 *	called from QR_next_tuple
+					 *	and must return immediately.
+					 */
+					ReadyToReturn = TRUE;
 					if (!QR_fetch_tuples(result_in, NULL, NULL))
 					{
 						self->errornumber = CONNECTION_COULD_NOT_RECEIVE;
 						self->errormsg = QR_get_message(result_in);
-						return NULL;
+						retres = NULL;
+						break;
 					}
+					retres = result_in;
 				}
 
-				return result_in;
+				tuples_return = TRUE;
+				break;
 			case 'D':			/* Copy in command began successfully */
 				if (!res)
 					res = QR_Constructor();
 				if (QR_command_successful(res))
 					QR_set_status(res, PGRES_COPY_IN);
-				return res;
+				ReadyToReturn = TRUE;
+				retres = res;
+				break;
 			case 'B':			/* Copy out command began successfully */
 				if (!res)
 					res = QR_Constructor();
 				if (QR_command_successful(res))
 					QR_set_status(res, PGRES_COPY_OUT);
-				return res;
+				ReadyToReturn = TRUE;
+				retres = res;
+				break;
 			default:
 				self->errornumber = CONNECTION_BACKEND_CRAZY;
 				self->errormsg = "Unexpected protocol character from backend (send_query)";
 				CC_set_no_trans(self);
 
 				mylog("send_query: error - %s\n", self->errormsg);
-				if (res)
-					QR_Destructor(res);
-				return NULL;
+				ReadyToReturn = TRUE;
+				retres = NULL;
+				break;
+		}
+		/*
+		 *	There were no ReadyForQuery response before 6.4.
+		 */
+		if (before_64)
+		{
+			if (empty_reqs == 0 && (query_completed || tuples_return))
+				break;
 		}
 	}
+	/*
+	 *	set notice message to result_in.
+	 */
+	if (result_in && res && retres == result_in)
+	{
+		if (QR_command_successful(result_in))
+			QR_set_status(result_in, QR_get_status(res));
+		QR_set_notice(result_in, QR_get_notice(res));
+	}
+	/*
+	 *	Cleanup garbage results before returning.
+	 */
+	if (res && retres != res)
+		QR_Destructor(res);
+	if (result_in && retres != result_in)
+	{
+		if (qi && qi->result_in)
+			;
+		else
+			QR_Destructor(result_in);
+	}
+	return retres;
 }
 
 
@@ -1430,7 +1520,7 @@ CC_send_settings(ConnectionClass *self)
 	mylog("%s: result %d, status %d from set DateStyle\n", func, result, status);
 
 	/* Disable genetic optimizer based on global flag */
-	if (globals.disable_optimizer)
+	if (ci->drivers.disable_optimizer)
 	{
 		result = PGAPI_ExecDirect(hstmt, "set geqo to 'OFF'", SQL_NTS);
 		if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
@@ -1441,7 +1531,7 @@ CC_send_settings(ConnectionClass *self)
 	}
 
 	/* KSQO */
-	if (globals.ksqo)
+	if (ci->drivers.ksqo)
 	{
 		result = PGAPI_ExecDirect(hstmt, "set ksqo to 'ON'", SQL_NTS);
 		if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
@@ -1452,9 +1542,9 @@ CC_send_settings(ConnectionClass *self)
 	}
 
 	/* Global settings */
-	if (globals.conn_settings[0] != '\0')
+	if (ci->drivers.conn_settings[0] != '\0')
 	{
-		cs = strdup(globals.conn_settings);
+		cs = strdup(ci->drivers.conn_settings);
 		ptr = strtok(cs, ";");
 		while (ptr)
 		{

@@ -27,7 +27,6 @@
 #define INTFUNC  __stdcall
 
 extern HINSTANCE NEAR s_hModule;/* Saved module handle. */
-extern GLOBAL_VALUES globals;
 
 /* Constants */
 #define MIN(x,y)	  ((x) < (y) ? (x) : (y))
@@ -218,48 +217,48 @@ ConfigDlgProc(HWND hdlg,
 			  WPARAM wParam,
 			  LPARAM lParam)
 {
+	LPSETUPDLG	lpsetupdlg;
+	ConnInfo	*ci;
 	switch (wMsg)
 	{
-			/* Initialize the dialog */
-			case WM_INITDIALOG:
+		/* Initialize the dialog */
+		case WM_INITDIALOG:
+			lpsetupdlg = (LPSETUPDLG) lParam;
+			ci = &lpsetupdlg->ci;
+
+			/* Hide the driver connect message */
+			ShowWindow(GetDlgItem(hdlg, DRV_MSG_LABEL), SW_HIDE);
+
+			SetWindowLong(hdlg, DWL_USER, lParam);
+			CenterDialog(hdlg);		/* Center dialog */
+
+			/*
+			 * NOTE: Values supplied in the attribute string will
+			 * always
+			 */
+			/* override settings in ODBC.INI */
+
+			/* Get the rest of the common attributes */
+			getDSNinfo(ci, CONN_DONT_OVERWRITE);
+
+			/* Fill in any defaults */
+			getDSNdefaults(ci);
+
+			/* Initialize dialog fields */
+			SetDlgStuff(hdlg, ci);
+
+			if (lpsetupdlg->fDefault)
 			{
-				LPSETUPDLG	lpsetupdlg = (LPSETUPDLG) lParam;
-				ConnInfo   *ci = &lpsetupdlg->ci;
-
-				/* Hide the driver connect message */
-				ShowWindow(GetDlgItem(hdlg, DRV_MSG_LABEL), SW_HIDE);
-
-				SetWindowLong(hdlg, DWL_USER, lParam);
-				CenterDialog(hdlg);		/* Center dialog */
-
-				/*
-				 * NOTE: Values supplied in the attribute string will
-				 * always
-				 */
-				/* override settings in ODBC.INI */
-
-				/* Get the rest of the common attributes */
-				getDSNinfo(ci, CONN_DONT_OVERWRITE);
-
-				/* Fill in any defaults */
-				getDSNdefaults(ci);
-
-				/* Initialize dialog fields */
-				SetDlgStuff(hdlg, ci);
-
-				if (lpsetupdlg->fDefault)
-				{
-					EnableWindow(GetDlgItem(hdlg, IDC_DSNAME), FALSE);
-					EnableWindow(GetDlgItem(hdlg, IDC_DSNAMETEXT), FALSE);
-				}
-				else
-					SendDlgItemMessage(hdlg, IDC_DSNAME,
-							 EM_LIMITTEXT, (WPARAM) (MAXDSNAME - 1), 0L);
-
-				SendDlgItemMessage(hdlg, IDC_DESC,
-							   EM_LIMITTEXT, (WPARAM) (MAXDESC - 1), 0L);
-				return TRUE;	/* Focus was not set */
+				EnableWindow(GetDlgItem(hdlg, IDC_DSNAME), FALSE);
+				EnableWindow(GetDlgItem(hdlg, IDC_DSNAMETEXT), FALSE);
 			}
+			else
+				SendDlgItemMessage(hdlg, IDC_DSNAME,
+						 EM_LIMITTEXT, (WPARAM) (MAXDSNAME - 1), 0L);
+
+			SendDlgItemMessage(hdlg, IDC_DESC,
+						   EM_LIMITTEXT, (WPARAM) (MAXDESC - 1), 0L);
+			return TRUE;	/* Focus was not set */
 
 			/* Process buttons */
 		case WM_COMMAND:
@@ -286,21 +285,17 @@ ConfigDlgProc(HWND hdlg,
 
 					/* Accept results */
 				case IDOK:
-					{
-						LPSETUPDLG	lpsetupdlg;
-
-						lpsetupdlg = (LPSETUPDLG) GetWindowLong(hdlg, DWL_USER);
-						/* Retrieve dialog values */
-						if (!lpsetupdlg->fDefault)
-							GetDlgItemText(hdlg, IDC_DSNAME,
+					lpsetupdlg = (LPSETUPDLG) GetWindowLong(hdlg, DWL_USER);
+					/* Retrieve dialog values */
+					if (!lpsetupdlg->fDefault)
+						GetDlgItemText(hdlg, IDC_DSNAME,
 										   lpsetupdlg->ci.dsn,
 										   sizeof(lpsetupdlg->ci.dsn));
-						/* Get Dialog Values */
-						GetDlgStuff(hdlg, &lpsetupdlg->ci);
+					/* Get Dialog Values */
+					GetDlgStuff(hdlg, &lpsetupdlg->ci);
 
-						/* Update ODBC.INI */
-						SetDSNAttributes(hdlg, lpsetupdlg);
-					}
+					/* Update ODBC.INI */
+					SetDSNAttributes(hdlg, lpsetupdlg);
 
 					/* Return to caller */
 				case IDCANCEL:
@@ -308,22 +303,18 @@ ConfigDlgProc(HWND hdlg,
 					return TRUE;
 
 				case IDC_DRIVER:
+					lpsetupdlg = (LPSETUPDLG) GetWindowLong(hdlg, DWL_USER);
 					DialogBoxParam(s_hModule, MAKEINTRESOURCE(DLG_OPTIONS_DRV),
-								hdlg, driver_optionsProc, (LPARAM) NULL);
-
+								hdlg, driver_optionsProc, (LPARAM) &lpsetupdlg->ci);
 					return TRUE;
 
 				case IDC_DATASOURCE:
-					{
-						LPSETUPDLG	lpsetupdlg;
+					lpsetupdlg = (LPSETUPDLG) GetWindowLong(hdlg, DWL_USER);
 
-						lpsetupdlg = (LPSETUPDLG) GetWindowLong(hdlg, DWL_USER);
-
-						DialogBoxParam(s_hModule, MAKEINTRESOURCE(DLG_OPTIONS_DS),
+					DialogBoxParam(s_hModule, MAKEINTRESOURCE(DLG_OPTIONS_DS),
 						 hdlg, ds_optionsProc, (LPARAM) &lpsetupdlg->ci);
 
-						return TRUE;
-					}
+					return TRUE;
 			}
 			break;
 	}

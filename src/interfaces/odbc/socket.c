@@ -13,6 +13,7 @@
  */
 
 #include "socket.h"
+#include "connection.h"
 
 #ifndef WIN32
 #include <stdlib.h>
@@ -41,7 +42,7 @@ SOCK_clear_error(SocketClass *self)
 
 
 SocketClass *
-SOCK_Constructor()
+SOCK_Constructor(const ConnectionClass *conn)
 {
 	SocketClass *rv;
 
@@ -54,14 +55,18 @@ SOCK_Constructor()
 		rv->buffer_filled_out = 0;
 		rv->buffer_read_in = 0;
 
-		rv->buffer_in = (unsigned char *) malloc(globals.socket_buffersize);
+		if (rv)
+			rv->buffer_size = conn->connInfo.drivers.socket_buffersize;
+		else
+			rv->buffer_size = globals.socket_buffersize;
+		rv->buffer_in = (unsigned char *) malloc(rv->buffer_size);
 		if (!rv->buffer_in)
 		{
 			free(rv);
 			return NULL;
 		}
 
-		rv->buffer_out = (unsigned char *) malloc(globals.socket_buffersize);
+		rv->buffer_out = (unsigned char *) malloc(rv->buffer_size);
 		if (!rv->buffer_out)
 		{
 			free(rv->buffer_in);
@@ -79,6 +84,7 @@ SOCK_Constructor()
 void
 SOCK_Destructor(SocketClass *self)
 {
+mylog("SOCK_Destructor\n");
 	if (self->socket != -1)
 	{
 		SOCK_put_char(self, 'X');
@@ -305,9 +311,9 @@ SOCK_get_next_byte(SocketClass *self)
 		 * there are no more bytes left in the buffer so reload the buffer
 		 */
 		self->buffer_read_in = 0;
-		self->buffer_filled_in = recv(self->socket, (char *) self->buffer_in, globals.socket_buffersize, 0);
+		self->buffer_filled_in = recv(self->socket, (char *) self->buffer_in, self->buffer_size, 0);
 
-		mylog("read %d, global_socket_buffersize=%d\n", self->buffer_filled_in, globals.socket_buffersize);
+		mylog("read %d, global_socket_buffersize=%d\n", self->buffer_filled_in, self->buffer_size);
 
 		if (self->buffer_filled_in < 0)
 		{
@@ -335,11 +341,11 @@ SOCK_put_next_byte(SocketClass *self, unsigned char next_byte)
 
 	self->buffer_out[self->buffer_filled_out++] = next_byte;
 
-	if (self->buffer_filled_out == globals.socket_buffersize)
+	if (self->buffer_filled_out == self->buffer_size)
 	{
 		/* buffer is full, so write it out */
-		bytes_sent = send(self->socket, (char *) self->buffer_out, globals.socket_buffersize, 0);
-		if (bytes_sent != globals.socket_buffersize)
+		bytes_sent = send(self->socket, (char *) self->buffer_out, self->buffer_size, 0);
+		if (bytes_sent != self->buffer_size)
 		{
 			self->errornumber = SOCKET_WRITE_ERROR;
 			self->errormsg = "Error while writing to the socket.";

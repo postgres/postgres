@@ -49,11 +49,15 @@
 #endif
 
 extern GLOBAL_VALUES globals;
-
+#ifdef	WIN32
+static int driver_optionsDraw(HWND, const ConnInfo *, int src, BOOL enable);
+static int driver_options_update(HWND hdlg, ConnInfo *ci, BOOL);
+#endif
+static void updateCommons(const ConnInfo *ci);
 
 #ifdef WIN32
 void
-SetDlgStuff(HWND hdlg, ConnInfo *ci)
+SetDlgStuff(HWND hdlg, const ConnInfo *ci)
 {
 
 	/*
@@ -87,145 +91,204 @@ GetDlgStuff(HWND hdlg, ConnInfo *ci)
 }
 
 
+static int
+driver_optionsDraw(HWND hdlg, const ConnInfo *ci, int src, BOOL enable)
+{
+	const GLOBAL_VALUES	*comval;
+	static BOOL	defset = FALSE;
+	static GLOBAL_VALUES	defval;
+		
+	switch (src)
+	{
+		case 0: /* driver common */
+			comval = &globals;
+			break;
+		case 1: /* dsn specific */
+			comval = &(ci->drivers);
+			break;
+		case 2: /* default */
+			if (!defset)
+			{
+				defval.commlog = DEFAULT_COMMLOG;
+				defval.disable_optimizer = DEFAULT_OPTIMIZER;
+				defval.ksqo = DEFAULT_KSQO;
+				defval.unique_index = DEFAULT_UNIQUEINDEX;
+				defval.onlyread = DEFAULT_READONLY;
+				defval.use_declarefetch = DEFAULT_USEDECLAREFETCH;
+
+				defval.parse = DEFAULT_PARSE;
+				defval.cancel_as_freestmt = DEFAULT_CANCELASFREESTMT;
+				defval.debug = DEFAULT_DEBUG;
+
+				/* Unknown Sizes */
+				defval.unknown_sizes = DEFAULT_UNKNOWNSIZES;
+				defval.text_as_longvarchar = DEFAULT_TEXTASLONGVARCHAR;
+				defval.unknowns_as_longvarchar = DEFAULT_UNKNOWNSASLONGVARCHAR;
+				defval.bools_as_char = DEFAULT_BOOLSASCHAR;
+			}
+			defset = TRUE;
+			comval = &defval;
+			break;
+	}
+
+	CheckDlgButton(hdlg, DRV_COMMLOG, comval->commlog);
+	CheckDlgButton(hdlg, DRV_OPTIMIZER, comval->disable_optimizer);
+	CheckDlgButton(hdlg, DRV_KSQO, comval->ksqo);
+	CheckDlgButton(hdlg, DRV_UNIQUEINDEX, comval->unique_index);
+	EnableWindow(GetDlgItem(hdlg, DRV_UNIQUEINDEX), enable);
+	CheckDlgButton(hdlg, DRV_READONLY, comval->onlyread);
+	EnableWindow(GetDlgItem(hdlg, DRV_READONLY), enable);
+	CheckDlgButton(hdlg, DRV_USEDECLAREFETCH, comval->use_declarefetch);
+
+	/* Unknown Sizes clear */
+	CheckDlgButton(hdlg, DRV_UNKNOWN_DONTKNOW, 0);
+	CheckDlgButton(hdlg, DRV_UNKNOWN_LONGEST, 0);
+	CheckDlgButton(hdlg, DRV_UNKNOWN_MAX, 0);
+	/* Unknown (Default) Data Type sizes */
+	switch (comval->unknown_sizes)
+	{
+		case UNKNOWNS_AS_DONTKNOW:
+			CheckDlgButton(hdlg, DRV_UNKNOWN_DONTKNOW, 1);
+			break;
+		case UNKNOWNS_AS_LONGEST:
+			CheckDlgButton(hdlg, DRV_UNKNOWN_LONGEST, 1);
+			break;
+		case UNKNOWNS_AS_MAX:
+		default:
+			CheckDlgButton(hdlg, DRV_UNKNOWN_MAX, 1);
+			break;
+	}
+
+	CheckDlgButton(hdlg, DRV_TEXT_LONGVARCHAR, comval->text_as_longvarchar);
+	CheckDlgButton(hdlg, DRV_UNKNOWNS_LONGVARCHAR, comval->unknowns_as_longvarchar);
+	CheckDlgButton(hdlg, DRV_BOOLS_CHAR, comval->bools_as_char);
+	CheckDlgButton(hdlg, DRV_PARSE, comval->parse);
+	CheckDlgButton(hdlg, DRV_CANCELASFREESTMT, comval->cancel_as_freestmt);
+	CheckDlgButton(hdlg, DRV_DEBUG, comval->debug);
+	SetDlgItemInt(hdlg, DRV_CACHE_SIZE, comval->fetch_max, FALSE);
+	SetDlgItemInt(hdlg, DRV_VARCHAR_SIZE, comval->max_varchar_size, FALSE);
+	SetDlgItemInt(hdlg, DRV_LONGVARCHAR_SIZE, comval->max_longvarchar_size, TRUE);
+	SetDlgItemText(hdlg, DRV_EXTRASYSTABLEPREFIXES, comval->extra_systable_prefixes);
+
+	/* Driver Connection Settings */
+	SetDlgItemText(hdlg, DRV_CONNSETTINGS, comval->conn_settings);
+	EnableWindow(GetDlgItem(hdlg, DRV_CONNSETTINGS), enable);
+	return 0;
+}
+static int
+driver_options_update(HWND hdlg, ConnInfo *ci, BOOL updateProfile)
+{
+	GLOBAL_VALUES	*comval;
+
+	if (ci)
+		comval = &(ci->drivers);
+	else
+		comval = &globals;
+	comval->commlog = IsDlgButtonChecked(hdlg, DRV_COMMLOG);
+	comval->disable_optimizer = IsDlgButtonChecked(hdlg, DRV_OPTIMIZER);
+	comval->ksqo = IsDlgButtonChecked(hdlg, DRV_KSQO);
+	if (!ci)
+	{
+		comval->unique_index = IsDlgButtonChecked(hdlg, DRV_UNIQUEINDEX);
+		comval->onlyread = IsDlgButtonChecked(hdlg, DRV_READONLY);
+	}
+	comval->use_declarefetch = IsDlgButtonChecked(hdlg, DRV_USEDECLAREFETCH);
+
+	/* Unknown (Default) Data Type sizes */
+	if (IsDlgButtonChecked(hdlg, DRV_UNKNOWN_MAX))
+		comval->unknown_sizes = UNKNOWNS_AS_MAX;
+	else if (IsDlgButtonChecked(hdlg, DRV_UNKNOWN_DONTKNOW))
+		comval->unknown_sizes = UNKNOWNS_AS_DONTKNOW;
+	else if (IsDlgButtonChecked(hdlg, DRV_UNKNOWN_LONGEST))
+		comval->unknown_sizes = UNKNOWNS_AS_LONGEST;
+	else
+		comval->unknown_sizes = UNKNOWNS_AS_MAX;
+
+	comval->text_as_longvarchar = IsDlgButtonChecked(hdlg, DRV_TEXT_LONGVARCHAR);
+	comval->unknowns_as_longvarchar = IsDlgButtonChecked(hdlg, DRV_UNKNOWNS_LONGVARCHAR);
+	comval->bools_as_char = IsDlgButtonChecked(hdlg, DRV_BOOLS_CHAR);
+
+	comval->parse = IsDlgButtonChecked(hdlg, DRV_PARSE);
+
+	comval->cancel_as_freestmt = IsDlgButtonChecked(hdlg, DRV_CANCELASFREESTMT);
+	comval->debug = IsDlgButtonChecked(hdlg, DRV_DEBUG);
+
+	comval->fetch_max = GetDlgItemInt(hdlg, DRV_CACHE_SIZE, NULL, FALSE);
+	comval->max_varchar_size = GetDlgItemInt(hdlg, DRV_VARCHAR_SIZE, NULL, FALSE);
+	comval->max_longvarchar_size = GetDlgItemInt(hdlg, DRV_LONGVARCHAR_SIZE, NULL, TRUE);		/* allows for
+																												 * SQL_NO_TOTAL */
+
+	GetDlgItemText(hdlg, DRV_EXTRASYSTABLEPREFIXES, comval->extra_systable_prefixes, sizeof(comval->extra_systable_prefixes));
+
+	/* Driver Connection Settings */
+	if (!ci)
+		GetDlgItemText(hdlg, DRV_CONNSETTINGS, comval->conn_settings, sizeof(comval->conn_settings));
+
+	if (updateProfile)
+		updateCommons(ci);
+
+	/* fall through */
+	return 0;
+}
+
 int			CALLBACK
 driver_optionsProc(HWND hdlg,
 				   WORD wMsg,
 				   WPARAM wParam,
 				   LPARAM lParam)
 {
+	ConnInfo *ci;
 	switch (wMsg)
 	{
-			case WM_INITDIALOG:
-
-			CheckDlgButton(hdlg, DRV_COMMLOG, globals.commlog);
-			CheckDlgButton(hdlg, DRV_OPTIMIZER, globals.disable_optimizer);
-			CheckDlgButton(hdlg, DRV_KSQO, globals.ksqo);
-			CheckDlgButton(hdlg, DRV_UNIQUEINDEX, globals.unique_index);
-			CheckDlgButton(hdlg, DRV_READONLY, globals.onlyread);
-			CheckDlgButton(hdlg, DRV_USEDECLAREFETCH, globals.use_declarefetch);
-
-			/* Unknown (Default) Data Type sizes */
-			switch (globals.unknown_sizes)
+		case WM_INITDIALOG:
+			SetWindowLong(hdlg, DWL_USER, lParam);	/* save for OK etc */
+			ci = (ConnInfo *) lParam;
+			if (ci && ci->dsn && ci->dsn[0])
 			{
-				case UNKNOWNS_AS_DONTKNOW:
-					CheckDlgButton(hdlg, DRV_UNKNOWN_DONTKNOW, 1);
-					break;
-				case UNKNOWNS_AS_LONGEST:
-					CheckDlgButton(hdlg, DRV_UNKNOWN_LONGEST, 1);
-					break;
-				case UNKNOWNS_AS_MAX:
-				default:
-					CheckDlgButton(hdlg, DRV_UNKNOWN_MAX, 1);
-					break;
+				driver_optionsDraw(hdlg, NULL, 0, TRUE);
 			}
-
-			CheckDlgButton(hdlg, DRV_TEXT_LONGVARCHAR, globals.text_as_longvarchar);
-			CheckDlgButton(hdlg, DRV_UNKNOWNS_LONGVARCHAR, globals.unknowns_as_longvarchar);
-			CheckDlgButton(hdlg, DRV_BOOLS_CHAR, globals.bools_as_char);
-
-			CheckDlgButton(hdlg, DRV_PARSE, globals.parse);
-
-			CheckDlgButton(hdlg, DRV_CANCELASFREESTMT, globals.cancel_as_freestmt);
-
-			SetDlgItemInt(hdlg, DRV_CACHE_SIZE, globals.fetch_max, FALSE);
-			SetDlgItemInt(hdlg, DRV_VARCHAR_SIZE, globals.max_varchar_size, FALSE);
-			SetDlgItemInt(hdlg, DRV_LONGVARCHAR_SIZE, globals.max_longvarchar_size, TRUE);
-
-			SetDlgItemText(hdlg, DRV_EXTRASYSTABLEPREFIXES, globals.extra_systable_prefixes);
-
-			/* Driver Connection Settings */
-			SetDlgItemText(hdlg, DRV_CONNSETTINGS, globals.conn_settings);
-
+			else
+			{
+				CheckDlgButton(hdlg, DRV_OR_DSN, 1);
+				ShowWindow(GetDlgItem(hdlg, DRV_OR_DSN), SW_HIDE);
+				driver_optionsDraw(hdlg, ci, 1, FALSE);
+			}
 			break;
 
 		case WM_COMMAND:
 			switch (GET_WM_COMMAND_ID(wParam, lParam))
 			{
 				case IDOK:
-					globals.commlog = IsDlgButtonChecked(hdlg, DRV_COMMLOG);
-					globals.disable_optimizer = IsDlgButtonChecked(hdlg, DRV_OPTIMIZER);
-					globals.ksqo = IsDlgButtonChecked(hdlg, DRV_KSQO);
-					globals.unique_index = IsDlgButtonChecked(hdlg, DRV_UNIQUEINDEX);
-					globals.onlyread = IsDlgButtonChecked(hdlg, DRV_READONLY);
-					globals.use_declarefetch = IsDlgButtonChecked(hdlg, DRV_USEDECLAREFETCH);
-
-					/* Unknown (Default) Data Type sizes */
-					if (IsDlgButtonChecked(hdlg, DRV_UNKNOWN_MAX))
-						globals.unknown_sizes = UNKNOWNS_AS_MAX;
-					else if (IsDlgButtonChecked(hdlg, DRV_UNKNOWN_DONTKNOW))
-						globals.unknown_sizes = UNKNOWNS_AS_DONTKNOW;
-					else if (IsDlgButtonChecked(hdlg, DRV_UNKNOWN_LONGEST))
-						globals.unknown_sizes = UNKNOWNS_AS_LONGEST;
-					else
-						globals.unknown_sizes = UNKNOWNS_AS_MAX;
-
-					globals.text_as_longvarchar = IsDlgButtonChecked(hdlg, DRV_TEXT_LONGVARCHAR);
-					globals.unknowns_as_longvarchar = IsDlgButtonChecked(hdlg, DRV_UNKNOWNS_LONGVARCHAR);
-					globals.bools_as_char = IsDlgButtonChecked(hdlg, DRV_BOOLS_CHAR);
-
-					globals.parse = IsDlgButtonChecked(hdlg, DRV_PARSE);
-
-					globals.cancel_as_freestmt = IsDlgButtonChecked(hdlg, DRV_CANCELASFREESTMT);
-
-					globals.fetch_max = GetDlgItemInt(hdlg, DRV_CACHE_SIZE, NULL, FALSE);
-					globals.max_varchar_size = GetDlgItemInt(hdlg, DRV_VARCHAR_SIZE, NULL, FALSE);
-					globals.max_longvarchar_size = GetDlgItemInt(hdlg, DRV_LONGVARCHAR_SIZE, NULL, TRUE);		/* allows for
-																												 * SQL_NO_TOTAL */
-
-					GetDlgItemText(hdlg, DRV_EXTRASYSTABLEPREFIXES, globals.extra_systable_prefixes, sizeof(globals.extra_systable_prefixes));
-
-					/* Driver Connection Settings */
-					GetDlgItemText(hdlg, DRV_CONNSETTINGS, globals.conn_settings, sizeof(globals.conn_settings));
-
-					updateGlobals();
-
-					/* fall through */
+					ci = (ConnInfo *) GetWindowLong(hdlg, DWL_USER);
+					driver_options_update(hdlg, IsDlgButtonChecked(hdlg, DRV_OR_DSN) ? ci : NULL,
+						ci && ci->dsn && ci->dsn[0]);
 
 				case IDCANCEL:
 					EndDialog(hdlg, GET_WM_COMMAND_ID(wParam, lParam) == IDOK);
 					return TRUE;
 
 				case IDDEFAULTS:
-					CheckDlgButton(hdlg, DRV_COMMLOG, DEFAULT_COMMLOG);
-					CheckDlgButton(hdlg, DRV_OPTIMIZER, DEFAULT_OPTIMIZER);
-					CheckDlgButton(hdlg, DRV_KSQO, DEFAULT_KSQO);
-					CheckDlgButton(hdlg, DRV_UNIQUEINDEX, DEFAULT_UNIQUEINDEX);
-					CheckDlgButton(hdlg, DRV_READONLY, DEFAULT_READONLY);
-					CheckDlgButton(hdlg, DRV_USEDECLAREFETCH, DEFAULT_USEDECLAREFETCH);
-
-					CheckDlgButton(hdlg, DRV_PARSE, DEFAULT_PARSE);
-					CheckDlgButton(hdlg, DRV_CANCELASFREESTMT, DEFAULT_CANCELASFREESTMT);
-
-					/* Unknown Sizes */
-					CheckDlgButton(hdlg, DRV_UNKNOWN_DONTKNOW, 0);
-					CheckDlgButton(hdlg, DRV_UNKNOWN_LONGEST, 0);
-					CheckDlgButton(hdlg, DRV_UNKNOWN_MAX, 0);
-					switch (DEFAULT_UNKNOWNSIZES)
+					if (IsDlgButtonChecked(hdlg, DRV_OR_DSN))
 					{
-						case UNKNOWNS_AS_DONTKNOW:
-							CheckDlgButton(hdlg, DRV_UNKNOWN_DONTKNOW, 1);
-							break;
-						case UNKNOWNS_AS_LONGEST:
-							CheckDlgButton(hdlg, DRV_UNKNOWN_LONGEST, 1);
-							break;
-						case UNKNOWNS_AS_MAX:
-							CheckDlgButton(hdlg, DRV_UNKNOWN_MAX, 1);
-							break;
+						ConnInfo   *ci = (ConnInfo *) GetWindowLong(hdlg, DWL_USER);
+						driver_optionsDraw(hdlg, ci, 0, FALSE);
 					}
+					else
+						driver_optionsDraw(hdlg, NULL, 2, TRUE);
+					break;
 
-					CheckDlgButton(hdlg, DRV_TEXT_LONGVARCHAR, DEFAULT_TEXTASLONGVARCHAR);
-					CheckDlgButton(hdlg, DRV_UNKNOWNS_LONGVARCHAR, DEFAULT_UNKNOWNSASLONGVARCHAR);
-					CheckDlgButton(hdlg, DRV_BOOLS_CHAR, DEFAULT_BOOLSASCHAR);
-
-					SetDlgItemInt(hdlg, DRV_CACHE_SIZE, FETCH_MAX, FALSE);
-					SetDlgItemInt(hdlg, DRV_VARCHAR_SIZE, MAX_VARCHAR_SIZE, FALSE);
-					SetDlgItemInt(hdlg, DRV_LONGVARCHAR_SIZE, TEXT_FIELD_SIZE, TRUE);
-
-					SetDlgItemText(hdlg, DRV_EXTRASYSTABLEPREFIXES, DEFAULT_EXTRASYSTABLEPREFIXES);
-
-					/* Driver Connection Settings */
-					SetDlgItemText(hdlg, DRV_CONNSETTINGS, "");
-
+				case DRV_OR_DSN:
+					if (GET_WM_COMMAND_CMD(wParam, lParam) == BN_CLICKED)
+					{
+						mylog("DRV_OR_DSN clicked\n");
+						if (IsDlgButtonChecked(hdlg, DRV_OR_DSN))
+						{
+							ConnInfo   *ci = (ConnInfo *) GetWindowLong(hdlg, DWL_USER);
+							driver_optionsDraw(hdlg, ci, ci ? 1 : 0, ci == NULL);
+						}
+						else
+							driver_optionsDraw(hdlg, NULL, 0, TRUE);
+					}
 					break;
 			}
 	}
@@ -331,10 +394,11 @@ ds_optionsProc(HWND hdlg,
 
 
 void
-makeConnectString(char *connect_string, ConnInfo *ci)
+makeConnectString(char *connect_string, const ConnInfo *ci, UWORD len)
 {
 	char		got_dsn = (ci->dsn[0] != '\0');
 	char		encoded_conn_settings[LARGE_REGISTRY_LEN];
+	UWORD		hlen;
 
 	/* fundamental info */
 	sprintf(connect_string, "%s=%s;DATABASE=%s;SERVER=%s;PORT=%s;UID=%s;PWD=%s",
@@ -349,20 +413,64 @@ makeConnectString(char *connect_string, ConnInfo *ci)
 	encode(ci->conn_settings, encoded_conn_settings);
 
 	/* extra info */
-	sprintf(&connect_string[strlen(connect_string)],
-			";READONLY=%s;PROTOCOL=%s;FAKEOIDINDEX=%s;SHOWOIDCOLUMN=%s;ROWVERSIONING=%s;SHOWSYSTEMTABLES=%s;CONNSETTINGS=%s",
+	hlen = strlen(connect_string),
+	sprintf(&connect_string[hlen],
+			";READONLY=%s;PROTOCOL=%s;FAKEOIDINDEX=%s;SHOWOIDCOLUMN=%s;ROWVERSIONING=%s;SHOWSYSTEMTABLES=%s;CONNSETTINGS=%s;FETCH=%d;SOCKET=%d;UNKNOWNSIZES=%d;MAXVARCHARSIZE=%d;MAXLONGVARCHARSIZE=%d;DEBUG=%d;COMMLOG=%d;OPTIMIZER=%d;KSQO=%d;USEDECLAREFETCH=%d;TEXTASLONGVARCHAR=%d;UNKNOWNSASLONGVARCHAR=%d;BOOLSASCHAR=%d;PARSE=%d;CANCELASFREESTMT=%d;EXTRASYSTABLEPREFIXES=%s",
 			ci->onlyread,
 			ci->protocol,
 			ci->fake_oid_index,
 			ci->show_oid_column,
 			ci->row_versioning,
 			ci->show_system_tables,
-			encoded_conn_settings);
+			encoded_conn_settings,
+			ci->drivers.fetch_max,
+			ci->drivers.socket_buffersize,
+			ci->drivers.unknown_sizes,
+			ci->drivers.max_varchar_size,
+			ci->drivers.max_longvarchar_size,
+			ci->drivers.debug,
+			ci->drivers.commlog,
+			ci->drivers.disable_optimizer,
+			ci->drivers.ksqo,
+			ci->drivers.use_declarefetch,
+			ci->drivers.text_as_longvarchar,
+			ci->drivers.unknowns_as_longvarchar,
+			ci->drivers.bools_as_char,
+			ci->drivers.parse,
+			ci->drivers.cancel_as_freestmt,
+			ci->drivers.extra_systable_prefixes);
+	/* Abbrebiation is needed ? */
+	if (strlen(connect_string) >= len)
+		sprintf(&connect_string[hlen],
+			";A0=%s;A1=%s;A2=%s;A3=%s;A4=%s;A5=%s;A6=%s;A7=%d;A8=%d;A9=%d;B0=%d;B1=%d;B2=%d;B3=%d;B4=%d;B5=%d;B6=%d;B7=%d;B8=%d;B9=%d;C0=%d;C1=%d;C2=%s",
+			ci->onlyread,
+			ci->protocol,
+			ci->fake_oid_index,
+			ci->show_oid_column,
+			ci->row_versioning,
+			ci->show_system_tables,
+			encoded_conn_settings,
+			ci->drivers.fetch_max,
+			ci->drivers.socket_buffersize,
+			ci->drivers.unknown_sizes,
+			ci->drivers.max_varchar_size,
+			ci->drivers.max_longvarchar_size,
+			ci->drivers.debug,
+			ci->drivers.commlog,
+			ci->drivers.disable_optimizer,
+			ci->drivers.ksqo,
+			ci->drivers.use_declarefetch,
+			ci->drivers.text_as_longvarchar,
+			ci->drivers.unknowns_as_longvarchar,
+			ci->drivers.bools_as_char,
+			ci->drivers.parse,
+			ci->drivers.cancel_as_freestmt,
+			ci->drivers.extra_systable_prefixes);
 }
 
 
 void
-copyAttributes(ConnInfo *ci, char *attribute, char *value)
+copyAttributes(ConnInfo *ci, const char *attribute, const char *value)
 {
 	if (stricmp(attribute, "DSN") == 0)
 		strcpy(ci->dsn, value);
@@ -385,31 +493,91 @@ copyAttributes(ConnInfo *ci, char *attribute, char *value)
 	else if (stricmp(attribute, INI_PORT) == 0)
 		strcpy(ci->port, value);
 
-	else if (stricmp(attribute, INI_READONLY) == 0)
+	else if (stricmp(attribute, INI_READONLY) == 0 || stricmp(attribute, "A0") == 0)
 		strcpy(ci->onlyread, value);
 
-	else if (stricmp(attribute, INI_PROTOCOL) == 0)
+	else if (stricmp(attribute, INI_PROTOCOL) == 0 || stricmp(attribute, "A1") == 0)
 		strcpy(ci->protocol, value);
 
-	else if (stricmp(attribute, INI_SHOWOIDCOLUMN) == 0)
+	else if (stricmp(attribute, INI_SHOWOIDCOLUMN) == 0 || stricmp(attribute, "A3") == 0)
 		strcpy(ci->show_oid_column, value);
 
-	else if (stricmp(attribute, INI_FAKEOIDINDEX) == 0)
+	else if (stricmp(attribute, INI_FAKEOIDINDEX) == 0 || stricmp(attribute, "A2") == 0)
 		strcpy(ci->fake_oid_index, value);
 
-	else if (stricmp(attribute, INI_ROWVERSIONING) == 0)
+	else if (stricmp(attribute, INI_ROWVERSIONING) == 0 || stricmp(attribute, "A4") == 0)
 		strcpy(ci->row_versioning, value);
 
-	else if (stricmp(attribute, INI_SHOWSYSTEMTABLES) == 0)
+	else if (stricmp(attribute, INI_SHOWSYSTEMTABLES) == 0 || stricmp(attribute, "A5") == 0)
 		strcpy(ci->show_system_tables, value);
 
-	else if (stricmp(attribute, INI_CONNSETTINGS) == 0)
+	else if (stricmp(attribute, INI_CONNSETTINGS) == 0 || stricmp(attribute, "A6") == 0)
 	{
 		decode(value, ci->conn_settings);
 		/* strcpy(ci->conn_settings, value); */
 	}
 
 	mylog("copyAttributes: DSN='%s',server='%s',dbase='%s',user='%s',passwd='%s',port='%s',onlyread='%s',protocol='%s', conn_settings='%s')\n", ci->dsn, ci->server, ci->database, ci->username, ci->password, ci->port, ci->onlyread, ci->protocol, ci->conn_settings);
+}
+
+void
+copyCommonAttributes(ConnInfo *ci, const char *attribute, const char *value)
+{
+	if (stricmp(attribute, INI_FETCH) == 0 || stricmp(attribute, "A7") == 0)
+		ci->drivers.fetch_max = atoi(value);
+	else if (stricmp(attribute, INI_SOCKET) == 0 || stricmp(attribute, "A8") == 0)
+		ci->drivers.socket_buffersize = atoi(value);
+	else if (stricmp(attribute, INI_DEBUG) == 0 || stricmp(attribute, "B2") == 0)
+		ci->drivers.debug = atoi(value);
+	else if (stricmp(attribute, INI_COMMLOG) == 0 || stricmp(attribute, "B3") == 0)
+		ci->drivers.commlog = atoi(value);
+	else if (stricmp(attribute, INI_OPTIMIZER) == 0 || stricmp(attribute, "B4") == 0)
+		ci->drivers.disable_optimizer = atoi(value);
+	else if (stricmp(attribute, INI_KSQO) == 0 || stricmp(attribute, "B5") == 0)
+		ci->drivers.ksqo = atoi(value);
+	/*
+	else if (stricmp(attribute, INI_UNIQUEINDEX) == 0 || stricmp(attribute, "UIX") == 0)
+		ci->drivers.unique_index = atoi(value);
+	*/
+	else if (stricmp(attribute, INI_UNKNOWNSIZES) == 0 || stricmp(attribute, "A9") == 0)
+		ci->drivers.unknown_sizes = atoi(value);
+	else if (stricmp(attribute, INI_LIE) == 0)
+		ci->drivers.lie = atoi(value);
+	else if (stricmp(attribute, INI_PARSE) == 0 || stricmp(attribute, "C0") == 0)
+		ci->drivers.parse = atoi(value);
+	else if (stricmp(attribute, INI_CANCELASFREESTMT) == 0 || stricmp(attribute, "C1") == 0)
+		ci->drivers.cancel_as_freestmt = atoi(value);
+	else if (stricmp(attribute, INI_USEDECLAREFETCH) == 0 || stricmp(attribute, "B6") == 0)
+		ci->drivers.use_declarefetch = atoi(value);
+	else if (stricmp(attribute, INI_MAXVARCHARSIZE) == 0 || stricmp(attribute, "B0") == 0)
+		ci->drivers.max_varchar_size = atoi(value);
+	else if (stricmp(attribute, INI_MAXLONGVARCHARSIZE) == 0 || stricmp(attribute, "B1") == 0)
+		ci->drivers.max_longvarchar_size = atoi(value);
+	else if (stricmp(attribute, INI_TEXTASLONGVARCHAR) == 0 || stricmp(attribute, "B7") == 0)
+		ci->drivers.text_as_longvarchar = atoi(value);
+	else if (stricmp(attribute, INI_UNKNOWNSASLONGVARCHAR) == 0 || stricmp(attribute, "B8") == 0)
+		ci->drivers.unknowns_as_longvarchar = atoi(value);
+	else if (stricmp(attribute, INI_BOOLSASCHAR) == 0 || stricmp(attribute, "B9") == 0)
+		ci->drivers.bools_as_char = atoi(value);
+	else if (stricmp(attribute, INI_EXTRASYSTABLEPREFIXES) == 0 || stricmp(attribute, "C2") == 0)
+		strcpy(ci->drivers.extra_systable_prefixes, value);
+	mylog("CopyCommonAttributes: A7=%d;A8=%d;A9=%d;B0=%d;B1=%d;B2=%d;B3=%d;B4=%d;B5=%d;B6=%d;B7=%d;B8=%d;B9=%d;C0=%d;C1=%d;C2=%s",
+			ci->drivers.fetch_max,
+			ci->drivers.socket_buffersize,
+			ci->drivers.unknown_sizes,
+			ci->drivers.max_varchar_size,
+			ci->drivers.max_longvarchar_size,
+			ci->drivers.debug,
+			ci->drivers.commlog,
+			ci->drivers.disable_optimizer,
+			ci->drivers.ksqo,
+			ci->drivers.use_declarefetch,
+			ci->drivers.text_as_longvarchar,
+			ci->drivers.unknowns_as_longvarchar,
+			ci->drivers.bools_as_char,
+			ci->drivers.parse,
+			ci->drivers.cancel_as_freestmt,
+			ci->drivers.extra_systable_prefixes);
 }
 
 
@@ -449,6 +617,7 @@ getDSNinfo(ConnInfo *ci, char overwrite)
  *	If a driver keyword was present, then dont use a DSN and return.
  *	If DSN is null and no driver, then use the default datasource.
  */
+	memcpy(&ci->drivers, &globals, sizeof(globals));
 	if (DSN[0] == '\0')
 	{
 		if (ci->driver[0] != '\0')
@@ -512,7 +681,8 @@ getDSNinfo(ConnInfo *ci, char overwrite)
 		SQLGetPrivateProfileString(DSN, INI_TRANSLATIONOPTION, "", ci->translation_option, sizeof(ci->translation_option), ODBC_INI);
 
 	/* Allow override of odbcinst.ini parameters here */
-	getGlobalDefaults(DSN, ODBC_INI, TRUE);
+	/* getGlobalDefaults(DSN, ODBC_INI, TRUE); */
+	getCommonDefaults(DSN, ODBC_INI, ci);
 
 	qlog("DSN info: DSN='%s',server='%s',port='%s',dbase='%s',user='%s',passwd='%s'\n",
 		 DSN,
@@ -546,9 +716,9 @@ getDSNinfo(ConnInfo *ci, char overwrite)
 
 /*	This is for datasource based options only */
 void
-writeDSNinfo(ConnInfo *ci)
+writeDSNinfo(const ConnInfo *ci)
 {
-	char	   *DSN = ci->dsn;
+	const char   *DSN = ci->dsn;
 	char		encoded_conn_settings[LARGE_REGISTRY_LEN];
 
 	encode(ci->conn_settings, encoded_conn_settings);
@@ -625,152 +795,159 @@ writeDSNinfo(ConnInfo *ci)
  *	the registry and gets any driver defaults.
  */
 void
-getGlobalDefaults(char *section, char *filename, char override)
+getCommonDefaults(const char *section, const char *filename, ConnInfo *ci)
 {
 	char		temp[256];
+	GLOBAL_VALUES	*comval;
 
+	if (ci)
+		comval = &(ci->drivers);
+	else
+		comval = &globals;
 	/* Fetch Count is stored in driver section */
 	SQLGetPrivateProfileString(section, INI_FETCH, "",
 							   temp, sizeof(temp), filename);
 	if (temp[0])
 	{
-		globals.fetch_max = atoi(temp);
+		comval->fetch_max = atoi(temp);
 		/* sanity check if using cursors */
-		if (globals.fetch_max <= 0)
-			globals.fetch_max = FETCH_MAX;
+		if (comval->fetch_max <= 0)
+			comval->fetch_max = FETCH_MAX;
 	}
-	else if (!override)
-		globals.fetch_max = FETCH_MAX;
+	else if (!ci)
+		comval->fetch_max = FETCH_MAX;
 
 	/* Socket Buffersize is stored in driver section */
 	SQLGetPrivateProfileString(section, INI_SOCKET, "",
 							   temp, sizeof(temp), filename);
 	if (temp[0])
-		globals.socket_buffersize = atoi(temp);
-	else if (!override)
-		globals.socket_buffersize = SOCK_BUFFER_SIZE;
+		comval->socket_buffersize = atoi(temp);
+	else if (!ci)
+		comval->socket_buffersize = SOCK_BUFFER_SIZE;
 
 	/* Debug is stored in the driver section */
 	SQLGetPrivateProfileString(section, INI_DEBUG, "",
 							   temp, sizeof(temp), filename);
 	if (temp[0])
-		globals.debug = atoi(temp);
-	else if (!override)
-		globals.debug = DEFAULT_DEBUG;
+		comval->debug = atoi(temp);
+	else if (!ci)
+		comval->debug = DEFAULT_DEBUG;
 
 	/* CommLog is stored in the driver section */
 	SQLGetPrivateProfileString(section, INI_COMMLOG, "",
 							   temp, sizeof(temp), filename);
 	if (temp[0])
-		globals.commlog = atoi(temp);
-	else if (!override)
-		globals.commlog = DEFAULT_COMMLOG;
+		comval->commlog = atoi(temp);
+	else if (!ci)
+		comval->commlog = DEFAULT_COMMLOG;
 
+	if (!ci)
+		logs_on_off(0, 0, 0);
 	/* Optimizer is stored in the driver section only */
 	SQLGetPrivateProfileString(section, INI_OPTIMIZER, "",
 							   temp, sizeof(temp), filename);
 	if (temp[0])
-		globals.disable_optimizer = atoi(temp);
-	else if (!override)
-		globals.disable_optimizer = DEFAULT_OPTIMIZER;
+		comval->disable_optimizer = atoi(temp);
+	else if (!ci)
+		comval->disable_optimizer = DEFAULT_OPTIMIZER;
 
 	/* KSQO is stored in the driver section only */
 	SQLGetPrivateProfileString(section, INI_KSQO, "",
 							   temp, sizeof(temp), filename);
 	if (temp[0])
-		globals.ksqo = atoi(temp);
-	else if (!override)
-		globals.ksqo = DEFAULT_KSQO;
+		comval->ksqo = atoi(temp);
+	else if (!ci)
+		comval->ksqo = DEFAULT_KSQO;
 
 	/* Recognize Unique Index is stored in the driver section only */
 	SQLGetPrivateProfileString(section, INI_UNIQUEINDEX, "",
 							   temp, sizeof(temp), filename);
 	if (temp[0])
-		globals.unique_index = atoi(temp);
-	else if (!override)
-		globals.unique_index = DEFAULT_UNIQUEINDEX;
+		comval->unique_index = atoi(temp);
+	else if (!ci)
+		comval->unique_index = DEFAULT_UNIQUEINDEX;
 
 
 	/* Unknown Sizes is stored in the driver section only */
 	SQLGetPrivateProfileString(section, INI_UNKNOWNSIZES, "",
 							   temp, sizeof(temp), filename);
 	if (temp[0])
-		globals.unknown_sizes = atoi(temp);
-	else if (!override)
-		globals.unknown_sizes = DEFAULT_UNKNOWNSIZES;
+		comval->unknown_sizes = atoi(temp);
+	else if (!ci)
+		comval->unknown_sizes = DEFAULT_UNKNOWNSIZES;
 
 
 	/* Lie about supported functions? */
 	SQLGetPrivateProfileString(section, INI_LIE, "",
 							   temp, sizeof(temp), filename);
 	if (temp[0])
-		globals.lie = atoi(temp);
-	else if (!override)
-		globals.lie = DEFAULT_LIE;
+		comval->lie = atoi(temp);
+	else if (!ci)
+		comval->lie = DEFAULT_LIE;
 
 	/* Parse statements */
 	SQLGetPrivateProfileString(section, INI_PARSE, "",
 							   temp, sizeof(temp), filename);
 	if (temp[0])
-		globals.parse = atoi(temp);
-	else if (!override)
-		globals.parse = DEFAULT_PARSE;
+		comval->parse = atoi(temp);
+	else if (!ci)
+		comval->parse = DEFAULT_PARSE;
 
 	/* SQLCancel calls SQLFreeStmt in Driver Manager */
 	SQLGetPrivateProfileString(section, INI_CANCELASFREESTMT, "",
 							   temp, sizeof(temp), filename);
 	if (temp[0])
-		globals.cancel_as_freestmt = atoi(temp);
-	else if (!override)
-		globals.cancel_as_freestmt = DEFAULT_CANCELASFREESTMT;
+		comval->cancel_as_freestmt = atoi(temp);
+	else if (!ci)
+		comval->cancel_as_freestmt = DEFAULT_CANCELASFREESTMT;
 
 	/* UseDeclareFetch is stored in the driver section only */
 	SQLGetPrivateProfileString(section, INI_USEDECLAREFETCH, "",
 							   temp, sizeof(temp), filename);
 	if (temp[0])
-		globals.use_declarefetch = atoi(temp);
-	else if (!override)
-		globals.use_declarefetch = DEFAULT_USEDECLAREFETCH;
+		comval->use_declarefetch = atoi(temp);
+	else if (!ci)
+		comval->use_declarefetch = DEFAULT_USEDECLAREFETCH;
 
 	/* Max Varchar Size */
 	SQLGetPrivateProfileString(section, INI_MAXVARCHARSIZE, "",
 							   temp, sizeof(temp), filename);
 	if (temp[0])
-		globals.max_varchar_size = atoi(temp);
-	else if (!override)
-		globals.max_varchar_size = MAX_VARCHAR_SIZE;
+		comval->max_varchar_size = atoi(temp);
+	else if (!ci)
+		comval->max_varchar_size = MAX_VARCHAR_SIZE;
 
 	/* Max TextField Size */
 	SQLGetPrivateProfileString(section, INI_MAXLONGVARCHARSIZE, "",
 							   temp, sizeof(temp), filename);
 	if (temp[0])
-		globals.max_longvarchar_size = atoi(temp);
-	else if (!override)
-		globals.max_longvarchar_size = TEXT_FIELD_SIZE;
+		comval->max_longvarchar_size = atoi(temp);
+	else if (!ci)
+		comval->max_longvarchar_size = TEXT_FIELD_SIZE;
 
 	/* Text As LongVarchar	*/
 	SQLGetPrivateProfileString(section, INI_TEXTASLONGVARCHAR, "",
 							   temp, sizeof(temp), filename);
 	if (temp[0])
-		globals.text_as_longvarchar = atoi(temp);
-	else if (!override)
-		globals.text_as_longvarchar = DEFAULT_TEXTASLONGVARCHAR;
+		comval->text_as_longvarchar = atoi(temp);
+	else if (!ci)
+		comval->text_as_longvarchar = DEFAULT_TEXTASLONGVARCHAR;
 
 	/* Unknowns As LongVarchar	*/
 	SQLGetPrivateProfileString(section, INI_UNKNOWNSASLONGVARCHAR, "",
 							   temp, sizeof(temp), filename);
 	if (temp[0])
-		globals.unknowns_as_longvarchar = atoi(temp);
-	else if (!override)
-		globals.unknowns_as_longvarchar = DEFAULT_UNKNOWNSASLONGVARCHAR;
+		comval->unknowns_as_longvarchar = atoi(temp);
+	else if (!ci)
+		comval->unknowns_as_longvarchar = DEFAULT_UNKNOWNSASLONGVARCHAR;
 
 	/* Bools As Char */
 	SQLGetPrivateProfileString(section, INI_BOOLSASCHAR, "",
 							   temp, sizeof(temp), filename);
 	if (temp[0])
-		globals.bools_as_char = atoi(temp);
-	else if (!override)
-		globals.bools_as_char = DEFAULT_BOOLSASCHAR;
+		comval->bools_as_char = atoi(temp);
+	else if (!ci)
+		comval->bools_as_char = DEFAULT_BOOLSASCHAR;
 
 	/* Extra Systable prefixes */
 
@@ -781,15 +958,15 @@ getGlobalDefaults(char *section, char *filename, char override)
 	SQLGetPrivateProfileString(section, INI_EXTRASYSTABLEPREFIXES, "@@@",
 							   temp, sizeof(temp), filename);
 	if (strcmp(temp, "@@@"))
-		strcpy(globals.extra_systable_prefixes, temp);
-	else if (!override)
-		strcpy(globals.extra_systable_prefixes, DEFAULT_EXTRASYSTABLEPREFIXES);
+		strcpy(comval->extra_systable_prefixes, temp);
+	else if (!ci)
+		strcpy(comval->extra_systable_prefixes, DEFAULT_EXTRASYSTABLEPREFIXES);
 
-	mylog("globals.extra_systable_prefixes = '%s'\n", globals.extra_systable_prefixes);
+	mylog("globals.extra_systable_prefixes = '%s'\n", comval->extra_systable_prefixes);
 
 
 	/* Dont allow override of an override! */
-	if (!override)
+	if (!ci)
 	{
 
 		/*
@@ -797,15 +974,15 @@ getGlobalDefaults(char *section, char *filename, char override)
 		 * for override
 		 */
 		SQLGetPrivateProfileString(section, INI_CONNSETTINGS, "",
-		 globals.conn_settings, sizeof(globals.conn_settings), filename);
+			comval->conn_settings, sizeof(comval->conn_settings), filename);
 
 		/* Default state for future DSN's Readonly attribute */
 		SQLGetPrivateProfileString(section, INI_READONLY, "",
 								   temp, sizeof(temp), filename);
 		if (temp[0])
-			globals.onlyread = atoi(temp);
+			comval->onlyread = atoi(temp);
 		else
-			globals.onlyread = DEFAULT_READONLY;
+			comval->onlyread = DEFAULT_READONLY;
 
 		/*
 		 * Default state for future DSN's protocol attribute This isn't a
@@ -815,85 +992,113 @@ getGlobalDefaults(char *section, char *filename, char override)
 		SQLGetPrivateProfileString(section, INI_PROTOCOL, "@@@",
 								   temp, sizeof(temp), filename);
 		if (strcmp(temp, "@@@"))
-			strcpy(globals.protocol, temp);
+			strcpy(comval->protocol, temp);
 		else
-			strcpy(globals.protocol, DEFAULT_PROTOCOL);
+			strcpy(comval->protocol, DEFAULT_PROTOCOL);
 	}
 }
-
 
 /*
  *	This function writes any global parameters (that can be manipulated)
  *	to the ODBCINST.INI portion of the registry
  */
-void
-updateGlobals(void)
+static void
+updateCommons(const ConnInfo *ci)
 {
+	const	char		*sectionName;
+	const	char		*fileName;
+	const	GLOBAL_VALUES	*comval;
 	char		tmp[128];
 
-	sprintf(tmp, "%d", globals.fetch_max);
-	SQLWritePrivateProfileString(DBMS_NAME,
-								 INI_FETCH, tmp, ODBCINST_INI);
+	if (ci)
+		if (ci->dsn && ci->dsn[0])
+		{
+			mylog("DSN=%s updating\n", ci->dsn);
+			comval = &(ci->drivers);
+			sectionName = ci->dsn;
+			fileName = ODBC_INI;
+		}
+		else
+		{
+			mylog("ci but dsn==NULL\n");
+			return;
+		} 
+	else
+	{
+		mylog("drivers updating\n");
+		comval = &globals;
+		sectionName = DBMS_NAME;
+		fileName = ODBCINST_INI;
+	}
+	sprintf(tmp, "%d", comval->fetch_max);
+	SQLWritePrivateProfileString(sectionName,
+								 INI_FETCH, tmp, fileName);
 
-	sprintf(tmp, "%d", globals.commlog);
-	SQLWritePrivateProfileString(DBMS_NAME,
-								 INI_COMMLOG, tmp, ODBCINST_INI);
+	sprintf(tmp, "%d", comval->commlog);
+	SQLWritePrivateProfileString(sectionName,
+								 INI_COMMLOG, tmp, fileName);
 
-	sprintf(tmp, "%d", globals.disable_optimizer);
-	SQLWritePrivateProfileString(DBMS_NAME,
-								 INI_OPTIMIZER, tmp, ODBCINST_INI);
+	sprintf(tmp, "%d", comval->debug);
+	SQLWritePrivateProfileString(sectionName,
+								 INI_DEBUG, tmp, fileName);
 
-	sprintf(tmp, "%d", globals.ksqo);
-	SQLWritePrivateProfileString(DBMS_NAME,
-								 INI_KSQO, tmp, ODBCINST_INI);
+	sprintf(tmp, "%d", comval->disable_optimizer);
+	SQLWritePrivateProfileString(sectionName,
+								 INI_OPTIMIZER, tmp, fileName);
 
-	sprintf(tmp, "%d", globals.unique_index);
-	SQLWritePrivateProfileString(DBMS_NAME,
-								 INI_UNIQUEINDEX, tmp, ODBCINST_INI);
+	sprintf(tmp, "%d", comval->ksqo);
+	SQLWritePrivateProfileString(sectionName,
+								 INI_KSQO, tmp, fileName);
 
-	sprintf(tmp, "%d", globals.onlyread);
-	SQLWritePrivateProfileString(DBMS_NAME,
-								 INI_READONLY, tmp, ODBCINST_INI);
+	/* Never update the onlyread, unique_index from this module 
+	sprintf(tmp, "%d", comval->unique_index);
+	SQLWritePrivateProfileString(sectionName,
+								 INI_UNIQUEINDEX, tmp, fileName);
 
-	sprintf(tmp, "%d", globals.use_declarefetch);
-	SQLWritePrivateProfileString(DBMS_NAME,
-								 INI_USEDECLAREFETCH, tmp, ODBCINST_INI);
+	sprintf(tmp, "%d", comval->onlyread);
+	SQLWritePrivateProfileString(sectionName,
+								 INI_READONLY, tmp, fileName);*/
 
-	sprintf(tmp, "%d", globals.unknown_sizes);
-	SQLWritePrivateProfileString(DBMS_NAME,
-								 INI_UNKNOWNSIZES, tmp, ODBCINST_INI);
+	sprintf(tmp, "%d", comval->use_declarefetch);
+	SQLWritePrivateProfileString(sectionName,
+								 INI_USEDECLAREFETCH, tmp, fileName);
 
-	sprintf(tmp, "%d", globals.text_as_longvarchar);
-	SQLWritePrivateProfileString(DBMS_NAME,
-							   INI_TEXTASLONGVARCHAR, tmp, ODBCINST_INI);
+	sprintf(tmp, "%d", comval->unknown_sizes);
+	SQLWritePrivateProfileString(sectionName,
+								 INI_UNKNOWNSIZES, tmp, fileName);
 
-	sprintf(tmp, "%d", globals.unknowns_as_longvarchar);
-	SQLWritePrivateProfileString(DBMS_NAME,
-						   INI_UNKNOWNSASLONGVARCHAR, tmp, ODBCINST_INI);
+	sprintf(tmp, "%d", comval->text_as_longvarchar);
+	SQLWritePrivateProfileString(sectionName,
+							   INI_TEXTASLONGVARCHAR, tmp, fileName);
 
-	sprintf(tmp, "%d", globals.bools_as_char);
-	SQLWritePrivateProfileString(DBMS_NAME,
-								 INI_BOOLSASCHAR, tmp, ODBCINST_INI);
+	sprintf(tmp, "%d", comval->unknowns_as_longvarchar);
+	SQLWritePrivateProfileString(sectionName,
+						   INI_UNKNOWNSASLONGVARCHAR, tmp, fileName);
 
-	sprintf(tmp, "%d", globals.parse);
-	SQLWritePrivateProfileString(DBMS_NAME,
-								 INI_PARSE, tmp, ODBCINST_INI);
+	sprintf(tmp, "%d", comval->bools_as_char);
+	SQLWritePrivateProfileString(sectionName,
+								 INI_BOOLSASCHAR, tmp, fileName);
 
-	sprintf(tmp, "%d", globals.cancel_as_freestmt);
-	SQLWritePrivateProfileString(DBMS_NAME,
-								 INI_CANCELASFREESTMT, tmp, ODBCINST_INI);
+	sprintf(tmp, "%d", comval->parse);
+	SQLWritePrivateProfileString(sectionName,
+								 INI_PARSE, tmp, fileName);
 
-	sprintf(tmp, "%d", globals.max_varchar_size);
-	SQLWritePrivateProfileString(DBMS_NAME,
-								 INI_MAXVARCHARSIZE, tmp, ODBCINST_INI);
+	sprintf(tmp, "%d", comval->cancel_as_freestmt);
+	SQLWritePrivateProfileString(sectionName,
+								 INI_CANCELASFREESTMT, tmp, fileName);
 
-	sprintf(tmp, "%d", globals.max_longvarchar_size);
-	SQLWritePrivateProfileString(DBMS_NAME,
-							  INI_MAXLONGVARCHARSIZE, tmp, ODBCINST_INI);
+	sprintf(tmp, "%d", comval->max_varchar_size);
+	SQLWritePrivateProfileString(sectionName,
+								 INI_MAXVARCHARSIZE, tmp, fileName);
 
-	SQLWritePrivateProfileString(DBMS_NAME,
-								 INI_EXTRASYSTABLEPREFIXES, globals.extra_systable_prefixes, ODBCINST_INI);
+	sprintf(tmp, "%d", comval->max_longvarchar_size);
+	SQLWritePrivateProfileString(sectionName,
+							  INI_MAXLONGVARCHARSIZE, tmp, fileName);
 
-	SQLWritePrivateProfileString(DBMS_NAME,
-				  INI_CONNSETTINGS, globals.conn_settings, ODBCINST_INI);
+	SQLWritePrivateProfileString(sectionName,
+								 INI_EXTRASYSTABLEPREFIXES, comval->extra_systable_prefixes, fileName);
+
+	/* Never update the conn_setting from this module 
+	SQLWritePrivateProfileString(sectionName,
+				  INI_CONNSETTINGS, comval->conn_settings, fileName); */
 }

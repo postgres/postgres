@@ -60,7 +60,7 @@ DllMain(HANDLE hInst, ULONG ul_reason_for_call, LPVOID lpReserved)
 				return FALSE;
 			}
 
-			getGlobalDefaults(DBMS_NAME, ODBCINST_INI, FALSE);
+			getCommonDefaults(DBMS_NAME, ODBCINST_INI, NULL);
 			break;
 
 		case DLL_THREAD_ATTACH:
@@ -99,7 +99,7 @@ static BOOL
 __attribute__((constructor))
 init(void)
 {
-	getGlobalDefaults(DBMS_NAME, ODBCINST_INI, FALSE);
+	getCommonDefaults(DBMS_NAME, ODBCINST_INI, NULL);
 	return TRUE;
 }
 
@@ -112,7 +112,7 @@ init(void)
 BOOL
 _init(void)
 {
-	getGlobalDefaults(DBMS_NAME, ODBCINST_INI, FALSE);
+	getCommonDefaults(DBMS_NAME, ODBCINST_INI, NULL);
 	return TRUE;
 }
 

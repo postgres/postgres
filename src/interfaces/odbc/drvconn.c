@@ -51,7 +51,8 @@
 #include "dlg_specific.h"
 
 /* prototypes */
-void		dconn_get_connect_attributes(UCHAR FAR *connect_string, ConnInfo *ci);
+void		dconn_get_connect_attributes(const UCHAR FAR *connect_string, ConnInfo *ci);
+static void	dconn_get_common_attributes(const UCHAR FAR *connect_string, ConnInfo *ci);
 
 #ifdef WIN32
 BOOL FAR PASCAL dconn_FDriverConnectProc(HWND hdlg, UINT wMsg, WPARAM wParam, LPARAM lParam);
@@ -60,8 +61,6 @@ RETCODE		dconn_DoDialog(HWND hwnd, ConnInfo *ci);
 extern HINSTANCE NEAR s_hModule;/* Saved module handle. */
 
 #endif
-
-extern GLOBAL_VALUES globals;
 
 
 RETCODE SQL_API
@@ -115,6 +114,8 @@ PGAPI_DriverConnect(
 	 * given -- if not, it does nothing!)
 	 */
 	getDSNinfo(ci, CONN_DONT_OVERWRITE);
+	dconn_get_common_attributes(connStrIn, ci);
+	logs_on_off(1, ci->drivers.debug, ci->drivers.commlog);
 
 	/* Fill in any default parameters if they are not there. */
 	getDSNdefaults(ci);
@@ -210,7 +211,7 @@ dialog:
 	 */
 	result = SQL_SUCCESS;
 
-	makeConnectString(connStrOut, ci);
+	makeConnectString(connStrOut, ci, cbConnStrOutMax);
 	len = strlen(connStrOut);
 
 	if (szConnStrOut)
@@ -238,7 +239,7 @@ dialog:
 	if (pcbConnStrOut)
 		*pcbConnStrOut = len;
 
-	mylog("szConnStrOut = '%s'\n", szConnStrOut);
+	mylog("szConnStrOut = '%s' len=%d,%d\n", szConnStrOut, len, cbConnStrOutMax);
 	qlog("conn=%u, PGAPI_DriverConnect(out)='%s'\n", conn, szConnStrOut);
 
 
@@ -323,8 +324,9 @@ dconn_FDriverConnectProc(
 					return TRUE;
 
 				case IDC_DRIVER:
+					ci = (ConnInfo *) GetWindowLong(hdlg, DWL_USER);
 					DialogBoxParam(s_hModule, MAKEINTRESOURCE(DLG_OPTIONS_DRV),
-								hdlg, driver_optionsProc, (LPARAM) NULL);
+								hdlg, driver_optionsProc, (LPARAM) ci);
 					break;
 
 				case IDC_DATASOURCE:
@@ -342,7 +344,7 @@ dconn_FDriverConnectProc(
 
 
 void
-dconn_get_connect_attributes(UCHAR FAR *connect_string, ConnInfo *ci)
+dconn_get_connect_attributes(const UCHAR FAR *connect_string, ConnInfo *ci)
 {
 	char	   *our_connect_string;
 	char	   *pair,
@@ -381,6 +383,50 @@ dconn_get_connect_attributes(UCHAR FAR *connect_string, ConnInfo *ci)
 
 		/* Copy the appropriate value to the conninfo  */
 		copyAttributes(ci, attribute, value);
+
+	}
+
+	free(our_connect_string);
+}
+
+static void
+dconn_get_common_attributes(const UCHAR FAR *connect_string, ConnInfo *ci)
+{
+	char	   *our_connect_string;
+	char	   *pair,
+			   *attribute,
+			   *value,
+			   *equals;
+	char	   *strtok_arg;
+
+	our_connect_string = strdup(connect_string);
+	strtok_arg = our_connect_string;
+
+	mylog("our_connect_string = '%s'\n", our_connect_string);
+
+	while (1)
+	{
+		pair = strtok(strtok_arg, ";");
+		if (strtok_arg)
+			strtok_arg = 0;
+		if (!pair)
+			break;
+
+		equals = strchr(pair, '=');
+		if (!equals)
+			continue;
+
+		*equals = '\0';
+		attribute = pair;		/* ex. DSN */
+		value = equals + 1;		/* ex. 'CEO co1' */
+
+		mylog("attribute = '%s', value = '%s'\n", attribute, value);
+
+		if (!attribute || !value)
+			continue;
+
+		/* Copy the appropriate value to the conninfo  */
+		copyCommonAttributes(ci, attribute, value);
 
 	}
 

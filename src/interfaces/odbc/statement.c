@@ -32,7 +32,6 @@
 #endif
 #include "pgapifunc.h"
 
-extern GLOBAL_VALUES globals;
 
 #ifndef WIN32
 #ifndef HAVE_STRICMP
@@ -291,6 +290,7 @@ SC_Constructor(void)
 
 		rv->pre_executing = FALSE;
 		rv->inaccurate_result = FALSE;
+		rv->miscinfo = 0;
 	}
 	return rv;
 }
@@ -560,6 +560,7 @@ SC_pre_execute(StatementClass *self)
 	{
 		mylog("              preprocess: status = READY\n");
 
+		self->miscinfo = 0;
 		if (self->statement_type == STMT_TYPE_SELECT)
 		{
 			char		old_pre_executing = self->pre_executing;
@@ -577,7 +578,7 @@ SC_pre_execute(StatementClass *self)
 				self->status = STMT_PREMATURE;
 			}
 		}
-		else
+		if (!SC_is_pre_executable(self))
 		{
 			self->result = QR_Constructor();
 			QR_set_status(self->result, PGRES_TUPLES_OK);
@@ -718,15 +719,16 @@ SC_fetch(StatementClass *self)
 				lf;
 	Oid			type;
 	char	   *value;
-	ColumnInfoClass *ci;
+	ColumnInfoClass *coli;
 	/* TupleField *tupleField; */
+	ConnInfo *ci = &(SC_get_conn(self)->connInfo);
 
 	self->last_fetch_count = 0;
-	ci = QR_get_fields(res);	/* the column info */
+	coli = QR_get_fields(res);	/* the column info */
 
-	mylog("manual_result = %d, use_declarefetch = %d\n", self->manual_result, globals.use_declarefetch);
+	mylog("manual_result = %d, use_declarefetch = %d\n", self->manual_result, ci->drivers.use_declarefetch);
 
-	if (self->manual_result || !globals.use_declarefetch)
+	if (self->manual_result || !ci->drivers.use_declarefetch)
 	{
 		if (self->currTuple >= QR_get_num_tuples(res) - 1 ||
 			(self->options.maxRows > 0 && self->currTuple == self->options.maxRows - 1))
@@ -807,7 +809,7 @@ SC_fetch(StatementClass *self)
 			/* this column has a binding */
 
 			/* type = QR_get_field_type(res, lf); */
-			type = CI_get_oid(ci, lf);	/* speed things up */
+			type = CI_get_oid(coli, lf);	/* speed things up */
 
 			mylog("type = %d\n", type);
 
@@ -816,7 +818,7 @@ SC_fetch(StatementClass *self)
 				value = QR_get_value_manual(res, self->currTuple, lf);
 				mylog("manual_result\n");
 			}
-			else if (globals.use_declarefetch)
+			else if (ci->drivers.use_declarefetch)
 				value = QR_get_value_backend(res, lf);
 			else
 				value = QR_get_value_backend_row(res, self->currTuple, lf);
@@ -895,9 +897,11 @@ SC_execute(StatementClass *self)
 	Int2		oldstatus,
 				numcols;
 	QueryInfo	qi;
+	ConnInfo *ci;
 
 
 	conn = SC_get_conn(self);
+	ci = &(conn->connInfo);
 
 	/* Begin a transaction if one is not already in progress */
 
@@ -910,7 +914,8 @@ SC_execute(StatementClass *self)
 	 * OTHER.
 	 */
 	if (!self->internal && !CC_is_in_trans(conn) &&
-		((globals.use_declarefetch && self->statement_type == STMT_TYPE_SELECT) || (!CC_is_in_autocommit(conn) && self->statement_type != STMT_TYPE_OTHER)))
+	    ((ci->drivers.use_declarefetch && self->statement_type == STMT_TYPE_SELECT) ||
+	     (!CC_is_in_autocommit(conn) && self->statement_type != STMT_TYPE_OTHER)))
 	{
 		mylog("   about to begin a transaction on statement = %u\n", self);
 		res = CC_send_query(conn, "BEGIN", NULL);
@@ -959,7 +964,7 @@ SC_execute(StatementClass *self)
 		/* send the declare/select */
 		self->result = CC_send_query(conn, self->stmt_with_params, NULL);
 
-		if (globals.use_declarefetch && self->result != NULL &&
+		if (ci->drivers.use_declarefetch && self->result != NULL &&
 			QR_command_successful(self->result))
 		{
 			QR_Destructor(self->result);
@@ -970,7 +975,7 @@ SC_execute(StatementClass *self)
 			 */
 			qi.result_in = NULL;
 			qi.cursor = self->cursor_name;
-			qi.row_size = globals.fetch_max;
+			qi.row_size = ci->drivers.fetch_max;
 
 			/*
 			 * Most likely the rowset size will not be set by the
@@ -1075,21 +1080,21 @@ SC_execute(StatementClass *self)
 	    (self->errornumber == STMT_OK ||
 	     self->errornumber == STMT_INFO_ONLY) &&
 	    self->parameters &&
-	    self->parameters[0].buflen > 0 &&
+	    self->parameters[0].buffer &&
 	    self->parameters[0].paramType == SQL_PARAM_OUTPUT)
 	{	/* get the return value of the procedure call */
 		RETCODE	ret;
 		HSTMT hstmt = (HSTMT) self;
-		ret = PGAPI_BindCol(hstmt, 1, self->parameters[0].CType, self->parameters[0].buffer, self->parameters[0].buflen, self->parameters[0].used);
-		if (ret == SQL_SUCCESS || ret == SQL_SUCCESS_WITH_INFO) 
-			SC_fetch(hstmt);
-		else
-		{
-			self->errornumber = STMT_EXEC_ERROR;
-			self->errormsg = "BindCol to Procedure return failed.";
+		ret = SC_fetch(hstmt);
+		if (ret == SQL_SUCCESS || ret == SQL_SUCCESS_WITH_INFO)
+		{ 
+			ret = PGAPI_GetData(hstmt, 1, self->parameters[0].CType, self->parameters[0].buffer, self->parameters[0].buflen, self->parameters[0].used);
+			if (ret != SQL_SUCCESS) 
+			{
+				self->errornumber = STMT_EXEC_ERROR;
+				self->errormsg = "GetData to Procedure return failed.";
+			}
 		}
-		if (ret == SQL_SUCCESS || ret == SQL_SUCCESS_WITH_INFO) 
-			PGAPI_BindCol(hstmt, 1, self->parameters[0].CType, NULL, 0, NULL);
 		else
 		{
 			self->errornumber = STMT_EXEC_ERROR;

@@ -38,7 +38,6 @@
 #endif
 #include "pgapifunc.h"
 
-extern GLOBAL_VALUES globals;
 
 
 RETCODE SQL_API
@@ -51,12 +50,14 @@ PGAPI_RowCount(
 	QResultClass *res;
 	char	   *msg,
 			   *ptr;
+	ConnInfo *ci;
 
 	if (!stmt)
 	{
 		SC_log_error(func, "", NULL);
 		return SQL_INVALID_HANDLE;
 	}
+	ci = &(SC_get_conn(stmt)->connInfo);
 	if (stmt->manual_result)
 	{
 		if (pcrow)
@@ -72,7 +73,7 @@ PGAPI_RowCount(
 
 			if (res && pcrow)
 			{
-				*pcrow = globals.use_declarefetch ? -1 : QR_get_num_tuples(res);
+				*pcrow = ci->drivers.use_declarefetch ? -1 : QR_get_num_tuples(res);
 				return SQL_SUCCESS;
 			}
 		}
@@ -119,17 +120,19 @@ PGAPI_NumResultCols(
 	StatementClass *stmt = (StatementClass *) hstmt;
 	QResultClass *result;
 	char		parse_ok;
+	ConnInfo *ci;
 
 	if (!stmt)
 	{
 		SC_log_error(func, "", NULL);
 		return SQL_INVALID_HANDLE;
 	}
+	ci = &(SC_get_conn(stmt)->connInfo);
 
 	SC_clear_error(stmt);
 
 	parse_ok = FALSE;
-	if (globals.parse && stmt->statement_type == STMT_TYPE_SELECT)
+	if (ci->drivers.parse && stmt->statement_type == STMT_TYPE_SELECT)
 	{
 		if (stmt->parse_status == STMT_PARSE_NONE)
 		{
@@ -211,7 +214,7 @@ PGAPI_DescribeCol(
 		return SQL_INVALID_HANDLE;
 	}
 
-	ci = &(stmt->hdbc->connInfo);
+	ci = &(SC_get_conn(stmt)->connInfo);
 
 	SC_clear_error(stmt);
 
@@ -223,7 +226,7 @@ PGAPI_DescribeCol(
 	icol--;						/* use zero based column numbers */
 
 	parse_ok = FALSE;
-	if (globals.parse && stmt->statement_type == STMT_TYPE_SELECT)
+	if (ci->drivers.parse && stmt->statement_type == STMT_TYPE_SELECT)
 	{
 		if (stmt->parse_status == STMT_PARSE_NONE)
 		{
@@ -288,7 +291,7 @@ PGAPI_DescribeCol(
 		fieldtype = QR_get_field_type(res, icol);
 
 		/* atoi(ci->unknown_sizes) */
-		precision = pgtype_precision(stmt, fieldtype, icol, globals.unknown_sizes);
+		precision = pgtype_precision(stmt, fieldtype, icol, ci->drivers.unknown_sizes);
 	}
 
 	mylog("describeCol: col %d fieldname = '%s'\n", icol, col_name);
@@ -400,7 +403,7 @@ PGAPI_ColAttributes(
 		return SQL_INVALID_HANDLE;
 	}
 
-	ci = &(stmt->hdbc->connInfo);
+	ci = &(SC_get_conn(stmt)->connInfo);
 
 	/*
 	 * Dont check for bookmark column.	This is the responsibility of the
@@ -411,14 +414,14 @@ PGAPI_ColAttributes(
 	icol--;
 
 	/* atoi(ci->unknown_sizes); */
-	unknown_sizes = globals.unknown_sizes;
+	unknown_sizes = ci->drivers.unknown_sizes;
 
 	/* not appropriate for SQLColAttributes() */
 	if (unknown_sizes == UNKNOWNS_AS_DONTKNOW)
 		unknown_sizes = UNKNOWNS_AS_MAX;
 
 	parse_ok = FALSE;
-	if (globals.parse && stmt->statement_type == STMT_TYPE_SELECT)
+	if (ci->drivers.parse && stmt->statement_type == STMT_TYPE_SELECT)
 	{
 		if (stmt->parse_status == STMT_PARSE_NONE)
 		{
@@ -660,6 +663,7 @@ PGAPI_GetData(
 	void	   *value = NULL;
 	int			result;
 	char		get_bookmark = FALSE;
+	ConnInfo *ci;
 
 	mylog("PGAPI_GetData: enter, stmt=%u\n", stmt);
 
@@ -668,6 +672,7 @@ PGAPI_GetData(
 		SC_log_error(func, "", NULL);
 		return SQL_INVALID_HANDLE;
 	}
+	ci = &(SC_get_conn(stmt)->connInfo);
 	res = stmt->result;
 
 	if (STMT_EXECUTING == stmt->status)
@@ -723,7 +728,7 @@ PGAPI_GetData(
 		}
 	}
 
-	if (stmt->manual_result || !globals.use_declarefetch)
+	if (stmt->manual_result || !ci->drivers.use_declarefetch)
 	{
 		/* make sure we're positioned on a valid row */
 		num_rows = QR_get_num_tuples(res);
@@ -913,6 +918,7 @@ PGAPI_ExtendedFetch(
 	RETCODE		result;
 	char		truncated,
 				error;
+	ConnInfo *ci;
 
 	mylog("PGAPI_ExtendedFetch: stmt=%u\n", stmt);
 
@@ -921,8 +927,9 @@ PGAPI_ExtendedFetch(
 		SC_log_error(func, "", NULL);
 		return SQL_INVALID_HANDLE;
 	}
+	ci = &(SC_get_conn(stmt)->connInfo);
 
-	if (globals.use_declarefetch && !stmt->manual_result)
+	if (ci->drivers.use_declarefetch && !stmt->manual_result)
 	{
 		if (fFetchType != SQL_FETCH_NEXT)
 		{
@@ -1101,7 +1108,7 @@ PGAPI_ExtendedFetch(
 	 * Handle Declare Fetch style specially because the end is not really
 	 * the end...
 	 */
-	if (globals.use_declarefetch && !stmt->manual_result)
+	if (ci->drivers.use_declarefetch && !stmt->manual_result)
 	{
 		if (QR_end_tuples(res))
 			return SQL_NO_DATA_FOUND;
@@ -1183,7 +1190,7 @@ PGAPI_ExtendedFetch(
 	stmt->currTuple = stmt->rowset_start;
 
 	/* For declare/fetch, need to reset cursor to beginning of rowset */
-	if (globals.use_declarefetch && !stmt->manual_result)
+	if (ci->drivers.use_declarefetch && !stmt->manual_result)
 		QR_set_position(res, 0);
 
 	/* Set the number of rows retrieved */

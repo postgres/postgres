@@ -54,7 +54,7 @@
 #define TRIGGER_UPDATE 0x02
 
 
-extern GLOBAL_VALUES globals;
+/* extern GLOBAL_VALUES globals; */
 
 
 
@@ -83,7 +83,7 @@ PGAPI_GetInfo(
 		return SQL_INVALID_HANDLE;
 	}
 
-	ci = &conn->connInfo;
+	ci = &(conn->connInfo);
 
 	switch (fInfoType)
 	{
@@ -113,7 +113,7 @@ PGAPI_GetInfo(
 		case SQL_BOOKMARK_PERSISTENCE:	/* ODBC 2.0 */
 			/* very simple bookmark support */
 			len = 4;
-			value = globals.use_declarefetch ? 0 : (SQL_BP_SCROLL);
+			value = ci->drivers.use_declarefetch ? 0 : (SQL_BP_SCROLL);
 			break;
 
 		case SQL_COLUMN_ALIAS:	/* ODBC 2.0 */
@@ -167,7 +167,7 @@ PGAPI_GetInfo(
 			len = 2;
 			value = SQL_CB_CLOSE;
 #ifdef	DRIVER_CURSOR_IMPLEMENT
-			if (!globals.use_declarefetch)
+			if (!ci->drivers.use_declarefetch)
 				value = SQL_CB_PRESERVE;
 #endif /* DRIVER_CURSOR_IMPLEMENT */
 			break;
@@ -176,7 +176,7 @@ PGAPI_GetInfo(
 			len = 2;
 			value = SQL_CB_CLOSE;
 #ifdef	DRIVER_CURSOR_IMPLEMENT
-			if (!globals.use_declarefetch)
+			if (!ci->drivers.use_declarefetch)
 				value = SQL_CB_PRESERVE;
 #endif /* DRIVER_CURSOR_IMPLEMENT */
 			break;
@@ -261,7 +261,7 @@ PGAPI_GetInfo(
 
 		case SQL_FETCH_DIRECTION:		/* ODBC 1.0 */
 			len = 4;
-			value = globals.use_declarefetch ? (SQL_FD_FETCH_NEXT) : (SQL_FD_FETCH_NEXT |
+			value = ci->drivers.use_declarefetch ? (SQL_FD_FETCH_NEXT) : (SQL_FD_FETCH_NEXT |
 													 SQL_FD_FETCH_FIRST |
 													  SQL_FD_FETCH_LAST |
 													 SQL_FD_FETCH_PRIOR |
@@ -315,7 +315,7 @@ PGAPI_GetInfo(
 
 		case SQL_LOCK_TYPES:	/* ODBC 2.0 */
 			len = 4;
-			value = globals.lie ? (SQL_LCK_NO_CHANGE | SQL_LCK_EXCLUSIVE | SQL_LCK_UNLOCK) : SQL_LCK_NO_CHANGE;
+			value = ci->drivers.lie ? (SQL_LCK_NO_CHANGE | SQL_LCK_EXCLUSIVE | SQL_LCK_UNLOCK) : SQL_LCK_NO_CHANGE;
 			break;
 
 		case SQL_MAX_BINARY_LITERAL_LEN:		/* ODBC 2.0 */
@@ -523,12 +523,12 @@ PGAPI_GetInfo(
 
 		case SQL_POS_OPERATIONS:		/* ODBC 2.0 */
 			len = 4;
-			value = globals.lie ? (SQL_POS_POSITION | SQL_POS_REFRESH | SQL_POS_UPDATE | SQL_POS_DELETE | SQL_POS_ADD) : (SQL_POS_POSITION | SQL_POS_REFRESH);
+			value = ci->drivers.lie ? (SQL_POS_POSITION | SQL_POS_REFRESH | SQL_POS_UPDATE | SQL_POS_DELETE | SQL_POS_ADD) : (SQL_POS_POSITION | SQL_POS_REFRESH);
 			break;
 
 		case SQL_POSITIONED_STATEMENTS: /* ODBC 2.0 */
 			len = 4;
-			value = globals.lie ? (SQL_PS_POSITIONED_DELETE |
+			value = ci->drivers.lie ? (SQL_PS_POSITIONED_DELETE |
 								   SQL_PS_POSITIONED_UPDATE |
 								   SQL_PS_SELECT_FOR_UPDATE) : 0;
 			break;
@@ -571,12 +571,12 @@ PGAPI_GetInfo(
 			 * Driver doesn't support keyset-driven or mixed cursors, so
 			 * not much point in saying row updates are supported
 			 */
-			p = globals.lie ? "Y" : "N";
+			p = ci->drivers.lie ? "Y" : "N";
 			break;
 
 		case SQL_SCROLL_CONCURRENCY:	/* ODBC 1.0 */
 			len = 4;
-			value = globals.lie ? (SQL_SCCO_READ_ONLY |
+			value = ci->drivers.lie ? (SQL_SCCO_READ_ONLY |
 								   SQL_SCCO_LOCK |
 								   SQL_SCCO_OPT_ROWVER |
 							 SQL_SCCO_OPT_VALUES) : (SQL_SCCO_READ_ONLY);
@@ -584,11 +584,11 @@ PGAPI_GetInfo(
 
 		case SQL_SCROLL_OPTIONS:		/* ODBC 1.0 */
 			len = 4;
-			value = globals.lie ? (SQL_SO_FORWARD_ONLY |
+			value = ci->drivers.lie ? (SQL_SO_FORWARD_ONLY |
 								   SQL_SO_STATIC |
 								   SQL_SO_KEYSET_DRIVEN |
 								   SQL_SO_DYNAMIC |
-								   SQL_SO_MIXED) : (globals.use_declarefetch ? SQL_SO_FORWARD_ONLY : (SQL_SO_FORWARD_ONLY | SQL_SO_STATIC));
+								   SQL_SO_MIXED) : (ci->drivers.use_declarefetch ? SQL_SO_FORWARD_ONLY : (SQL_SO_FORWARD_ONLY | SQL_SO_STATIC));
 			break;
 
 		case SQL_SEARCH_PATTERN_ESCAPE: /* ODBC 1.0 */
@@ -605,7 +605,7 @@ PGAPI_GetInfo(
 
 		case SQL_STATIC_SENSITIVITY:	/* ODBC 2.0 */
 			len = 4;
-			value = globals.lie ? (SQL_SS_ADDITIONS | SQL_SS_DELETIONS | SQL_SS_UPDATES) : 0;
+			value = ci->drivers.lie ? (SQL_SS_ADDITIONS | SQL_SS_DELETIONS | SQL_SS_UPDATES) : 0;
 			break;
 
 		case SQL_STRING_FUNCTIONS:		/* ODBC 1.0 */
@@ -782,7 +782,7 @@ PGAPI_GetTypeInfo(
 
 	for (i = 0, sqlType = sqlTypes[0]; sqlType; sqlType = sqlTypes[++i])
 	{
-		pgType = sqltype_to_pgtype(sqlType);
+		pgType = sqltype_to_pgtype(stmt, sqlType);
 
 		if (fSqlType == SQL_ALL_TYPES || fSqlType == sqlType)
 		{
@@ -833,12 +833,13 @@ PGAPI_GetFunctions(
 				UWORD FAR *pfExists)
 {
 	static char *func = "PGAPI_GetFunctions";
+	ConnInfo *ci = &(((ConnectionClass *)hdbc)->connInfo);
 
 	mylog("%s: entering...%u\n", func, fFunction);
 
 	if (fFunction == SQL_API_ALL_FUNCTIONS)
 	{
-		if (globals.lie)
+		if (ci->drivers.lie)
 		{
 			int			i;
 
@@ -923,7 +924,7 @@ PGAPI_GetFunctions(
 	}
 	else
 	{
-		if (globals.lie)
+		if (ci->drivers.lie)
 			*pfExists = TRUE;
 		else
 		{
@@ -1156,8 +1157,8 @@ PGAPI_Tables(
 	stmt->manual_result = TRUE;
 	stmt->errormsg_created = TRUE;
 
-	conn = (ConnectionClass *) (stmt->hdbc);
-	ci = &stmt->hdbc->connInfo;
+	conn = SC_get_conn(stmt);
+	ci = &(conn->connInfo);
 
 	result = PGAPI_AllocStmt(stmt->hdbc, &htbl_stmt);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
@@ -1188,7 +1189,7 @@ PGAPI_Tables(
 	my_strcat(tables_query, " and relname like '%.*s'", szTableName, cbTableName);
 
 	/* Parse the extra systable prefix	*/
-	strcpy(prefixes, globals.extra_systable_prefixes);
+	strcpy(prefixes, ci->drivers.extra_systable_prefixes);
 	i = 0;
 	prefix[i] = strtok(prefixes, ";");
 	while (prefix[i] && i < 32)
@@ -1477,8 +1478,8 @@ PGAPI_Columns(
 	stmt->manual_result = TRUE;
 	stmt->errormsg_created = TRUE;
 
-	conn = (ConnectionClass *) (stmt->hdbc);
-	ci = &stmt->hdbc->connInfo;
+	conn = SC_get_conn(stmt);
+	ci = &(conn->connInfo);
 
 	/*
 	 * Create the query to find out the columns (Note: pre 6.3 did not
@@ -1778,8 +1779,8 @@ PGAPI_Columns(
 			if (mod_length >= 4)
 				mod_length -= 4;/* the length is in atttypmod - 4 */
 
-			if (mod_length > globals.max_varchar_size || mod_length <= 0)
-				mod_length = globals.max_varchar_size;
+			if (mod_length > ci->drivers.max_varchar_size || mod_length <= 0)
+				mod_length = ci->drivers.max_varchar_size;
 
 			mylog("%s: field type is VARCHAR,BPCHAR: field_type = %d, mod_length = %d\n", func, field_type, mod_length);
 
@@ -1896,7 +1897,7 @@ PGAPI_SpecialColumns(
 		SC_log_error(func, "", NULL);
 		return SQL_INVALID_HANDLE;
 	}
-	ci = &stmt->hdbc->connInfo;
+	ci = &(SC_get_conn(stmt)->connInfo);
 
 	stmt->manual_result = TRUE;
 
@@ -2062,7 +2063,7 @@ PGAPI_Statistics(
 	stmt->manual_result = TRUE;
 	stmt->errormsg_created = TRUE;
 
-	ci = &stmt->hdbc->connInfo;
+	ci = &(SC_get_conn(stmt)->connInfo);
 
 	stmt->result = QR_Constructor();
 	if (!stmt->result)
@@ -2301,7 +2302,7 @@ PGAPI_Statistics(
 		set_tuplefield_string(&row->tuple[2], table_name);
 
 		/* non-unique index? */
-		set_tuplefield_int2(&row->tuple[3], (Int2) (globals.unique_index ? FALSE : TRUE));
+		set_tuplefield_int2(&row->tuple[3], (Int2) (ci->drivers.unique_index ? FALSE : TRUE));
 
 		/* no index qualifier */
 		set_tuplefield_string(&row->tuple[4], "");
@@ -2345,7 +2346,7 @@ PGAPI_Statistics(
 				set_tuplefield_string(&row->tuple[2], table_name);
 
 				/* non-unique index? */
-				if (globals.unique_index)
+				if (ci->drivers.unique_index)
 					set_tuplefield_int2(&row->tuple[3], (Int2) (atoi(isunique) ? FALSE : TRUE));
 				else
 					set_tuplefield_int2(&row->tuple[3], TRUE);
@@ -2556,7 +2557,7 @@ PGAPI_PrimaryKeys(
 		return SQL_ERROR;
 	}
 
-	conn = (ConnectionClass *) (stmt->hdbc);
+	conn = SC_get_conn(stmt);
 	if (PG_VERSION_LE(conn, 6.4))
 		qstart = 2;
 	else

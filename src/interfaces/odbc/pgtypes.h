@@ -68,7 +68,7 @@ extern Int2 sqlTypes[];
 /*	Defines for pgtype_precision */
 #define PG_STATIC				(-1)
 
-Int4		sqltype_to_pgtype(Int2 fSqlType);
+Int4		sqltype_to_pgtype(StatementClass *stmt, Int2 fSqlType);
 
 Int2		pgtype_to_sqltype(StatementClass *stmt, Int4 type);
 Int2		pgtype_to_ctype(StatementClass *stmt, Int4 type);

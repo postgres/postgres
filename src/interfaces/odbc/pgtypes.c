@@ -34,7 +34,6 @@
 #endif
 
 
-extern GLOBAL_VALUES globals;
 
 Int4		getCharPrecision(StatementClass *stmt, Int4 type, int col, int handle_unknown_size_as);
 
@@ -105,9 +104,10 @@ Int2		sqlTypes[] = {
 
 
 Int4
-sqltype_to_pgtype(SWORD fSqlType)
+sqltype_to_pgtype(StatementClass *stmt, SWORD fSqlType)
 {
 	Int4		pgType;
+	ConnInfo *ci = &(SC_get_conn(stmt)->connInfo);
 
 	switch (fSqlType)
 	{
@@ -120,7 +120,7 @@ sqltype_to_pgtype(SWORD fSqlType)
 			break;
 
 		case SQL_BIT:
-			pgType = globals.bools_as_char ? PG_TYPE_CHAR : PG_TYPE_BOOL;
+			pgType = ci->drivers.bools_as_char ? PG_TYPE_CHAR : PG_TYPE_BOOL;
 			break;
 
 		case SQL_DATE:
@@ -150,7 +150,7 @@ sqltype_to_pgtype(SWORD fSqlType)
 			break;
 
 		case SQL_LONGVARCHAR:
-			pgType = globals.text_as_longvarchar ? PG_TYPE_TEXT : PG_TYPE_VARCHAR;
+			pgType = ci->drivers.text_as_longvarchar ? PG_TYPE_TEXT : PG_TYPE_VARCHAR;
 			break;
 
 		case SQL_REAL:
@@ -202,6 +202,7 @@ sqltype_to_pgtype(SWORD fSqlType)
 Int2
 pgtype_to_sqltype(StatementClass *stmt, Int4 type)
 {
+	ConnInfo *ci = &(SC_get_conn(stmt)->connInfo);
 	switch (type)
 	{
 		case PG_TYPE_CHAR:
@@ -218,7 +219,7 @@ pgtype_to_sqltype(StatementClass *stmt, Int4 type)
 			return SQL_VARCHAR;
 
 		case PG_TYPE_TEXT:
-			return globals.text_as_longvarchar ? SQL_LONGVARCHAR : SQL_VARCHAR;
+			return ci->drivers.text_as_longvarchar ? SQL_LONGVARCHAR : SQL_VARCHAR;
 
 		case PG_TYPE_BYTEA:
 			return SQL_VARBINARY;
@@ -255,7 +256,7 @@ pgtype_to_sqltype(StatementClass *stmt, Int4 type)
 		case PG_TYPE_MONEY:
 			return SQL_FLOAT;
 		case PG_TYPE_BOOL:
-			return globals.bools_as_char ? SQL_CHAR : SQL_BIT;
+			return ci->drivers.bools_as_char ? SQL_CHAR : SQL_BIT;
 
 		default:
 
@@ -268,7 +269,7 @@ pgtype_to_sqltype(StatementClass *stmt, Int4 type)
 			if (type == stmt->hdbc->lobj_type)
 				return SQL_LONGVARBINARY;
 
-			return globals.unknowns_as_longvarchar ? SQL_LONGVARCHAR : SQL_VARCHAR;
+			return ci->drivers.unknowns_as_longvarchar ? SQL_LONGVARCHAR : SQL_VARCHAR;
 	}
 }
 
@@ -276,6 +277,7 @@ pgtype_to_sqltype(StatementClass *stmt, Int4 type)
 Int2
 pgtype_to_ctype(StatementClass *stmt, Int4 type)
 {
+	ConnInfo *ci = &(SC_get_conn(stmt)->connInfo);
 	switch (type)
 	{
 		case PG_TYPE_INT8:
@@ -303,7 +305,7 @@ pgtype_to_ctype(StatementClass *stmt, Int4 type)
 		case PG_TYPE_MONEY:
 			return SQL_C_FLOAT;
 		case PG_TYPE_BOOL:
-			return globals.bools_as_char ? SQL_C_CHAR : SQL_C_BIT;
+			return ci->drivers.bools_as_char ? SQL_C_CHAR : SQL_C_BIT;
 
 		case PG_TYPE_BYTEA:
 			return SQL_C_BINARY;
@@ -470,6 +472,7 @@ getCharPrecision(StatementClass *stmt, Int4 type, int col, int handle_unknown_si
 				maxsize;
 	QResultClass *result;
 	ColumnInfoClass *flds;
+	ConnInfo *ci = &(SC_get_conn(stmt)->connInfo);
 
 	mylog("getCharPrecision: type=%d, col=%d, unknown = %d\n", type, col, handle_unknown_size_as);
 
@@ -477,22 +480,22 @@ getCharPrecision(StatementClass *stmt, Int4 type, int col, int handle_unknown_si
 	switch (type)
 	{
 		case PG_TYPE_TEXT:
-			if (globals.text_as_longvarchar)
-				maxsize = globals.max_longvarchar_size;
+			if (ci->drivers.text_as_longvarchar)
+				maxsize = ci->drivers.max_longvarchar_size;
 			else
-				maxsize = globals.max_varchar_size;
+				maxsize = ci->drivers.max_varchar_size;
 			break;
 
 		case PG_TYPE_VARCHAR:
 		case PG_TYPE_BPCHAR:
-			maxsize = globals.max_varchar_size;
+			maxsize = ci->drivers.max_varchar_size;
 			break;
 
 		default:
-			if (globals.unknowns_as_longvarchar)
-				maxsize = globals.max_longvarchar_size;
+			if (ci->drivers.unknowns_as_longvarchar)
+				maxsize = ci->drivers.max_longvarchar_size;
 			else
-				maxsize = globals.max_varchar_size;
+				maxsize = ci->drivers.max_varchar_size;
 			break;
 	}
 

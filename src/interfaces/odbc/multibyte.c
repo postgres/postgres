@@ -88,7 +88,7 @@ check_client_encoding(unsigned char *str)
 		multibyte_client_encoding = BIG5;
 		return ("BIG5");
 	}
-	return ("OHTER");
+	return ("OTHER");
 }
 
 

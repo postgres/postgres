@@ -43,7 +43,7 @@ PGAPI_AllocEnv(HENV FAR *phenv)
 	 * should work.
 	 */
 	if (globals.socket_buffersize <= 0)
-		getGlobalDefaults(DBMS_NAME, ODBCINST_INI, FALSE);
+		getCommonDefaults(DBMS_NAME, ODBCINST_INI, NULL);
 
 	*phenv = (HENV) EN_Constructor();
 	if (!*phenv)

@@ -53,6 +53,7 @@ typedef unsigned int in_addr_t;
 struct SocketClass_
 {
 
+	int			buffer_size;
 	int			buffer_filled_in;
 	int			buffer_filled_out;
 	int			buffer_read_in;
@@ -79,7 +80,7 @@ struct SocketClass_
 
 
 /* Socket prototypes */
-SocketClass *SOCK_Constructor(void);
+SocketClass *SOCK_Constructor(const ConnectionClass *conn);
 void		SOCK_Destructor(SocketClass *self);
 char		SOCK_connect_to(SocketClass *self, unsigned short port, char *hostname);
 void		SOCK_get_n_char(SocketClass *self, char *buffer, int len);
