@@ -22,13 +22,22 @@
  *	  if it did much with shared memory then it would be prone to crashing
  *	  along with the backends.
  *
+ *	  When a request message is received, we now fork() immediately.
+ *	  The child process performs authentication of the request, and
+ *	  then becomes a backend if successful.  This allows the auth code
+ *	  to be written in a simple single-threaded style (as opposed to the
+ *	  crufty "poor man's multitasking" code that used to be needed).
+ *	  More importantly, it ensures that blockages in non-multithreaded
+ *	  libraries like SSL or PAM cannot cause denial of service to other
+ *	  clients.
+ *
  *
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.224 2001/06/20 18:07:55 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.225 2001/06/21 16:43:24 tgl Exp $
  *
  * NOTES
  *
@@ -102,17 +111,16 @@
 #ifdef HAVE_SIGPROCMASK
 sigset_t	UnBlockSig,
 			BlockSig;
-
 #else
 int			UnBlockSig,
 			BlockSig;
-
 #endif
 
 /*
- * Info for garbage collection.  Whenever a process dies, the Postmaster
- * cleans up after it.	Currently, NO information is required for cleanup,
- * but I left this structure around in case that changed.
+ * List of active backends (or child processes anyway; we don't actually
+ * know whether a given child has become a backend or is still in the
+ * authorization phase).  This is used mainly to keep track of how many
+ * children we have and send them appropriate signals when necessary.
  */
 typedef struct bkend
 {
@@ -120,7 +128,6 @@ typedef struct bkend
 	long		cancel_key;		/* cancel key for cancels for this backend */
 } Backend;
 
-/* list of active backends.  For garbage collection only now. */
 static Dllist *BackendList;
 
 /* The socket number we are listening for connections on */
@@ -155,12 +162,10 @@ static int	ServerSock_INET = INVALID_SOCK;		/* stream socket server */
 
 #ifdef HAVE_UNIX_SOCKETS
 static int	ServerSock_UNIX = INVALID_SOCK;		/* stream socket server */
-
 #endif
 
 #ifdef USE_SSL
 static SSL_CTX *SSL_context = NULL;		/* Global SSL context */
-
 #endif
 
 /*
@@ -178,12 +183,14 @@ static char ExtraOptions[MAXPGPATH];
 static bool Reinit = true;
 static int	SendStop = false;
 
+/* still more option variables */
 bool		NetServer = false;	/* listen on TCP/IP */
 bool		EnableSSL = false;
 bool		SilentMode = false; /* silent mode (-S) */
 
 int			CheckPointTimeout = 300;
 
+/* Startup/shutdown state */
 static pid_t StartupPID = 0,
 			ShutdownPID = 0,
 			CheckPointPID = 0;
@@ -230,7 +237,7 @@ static void ExitPostmaster(int status);
 static void usage(const char *);
 static int	ServerLoop(void);
 static int	BackendStartup(Port *port);
-static int	ProcessStartupPacket(Port *port);
+static int	ProcessStartupPacket(Port *port, bool SSLdone);
 static void	processCancelRequest(Port *port, void *pkt);
 static int	initMasks(fd_set *rmask, fd_set *wmask);
 static char *canAcceptConnections(void);
@@ -580,6 +587,20 @@ PostmasterMain(int argc, char *argv[])
 	}
 
 	/*
+	 * Initialize SSL library, if specified.
+	 */
+#ifdef USE_SSL
+	if (EnableSSL && !NetServer)
+	{
+		postmaster_error("For SSL, TCP/IP connections must be enabled.");
+		fprintf(stderr, gettext("Try '%s --help' for more information.\n"), progname);
+		ExitPostmaster(1);
+	}
+	if (EnableSSL)
+		InitSSL();
+#endif
+
+	/*
 	 * Fork away from controlling terminal, if -S specified.
 	 *
 	 * Must do this before we grab any interlock files, else the interlocks
@@ -609,17 +630,6 @@ PostmasterMain(int argc, char *argv[])
 	/*
 	 * Establish input sockets.
 	 */
-#ifdef USE_SSL
-	if (EnableSSL && !NetServer)
-	{
-		postmaster_error("For SSL, TCP/IP connections must be enabled.");
-		fprintf(stderr, gettext("Try '%s --help' for more information.\n"), progname);
-		ExitPostmaster(1);
-	}
-	if (EnableSSL)
-		InitSSL();
-#endif
-
 	if (NetServer)
 	{
 		status = StreamServerPort(AF_INET, VirtualHost,
@@ -653,8 +663,7 @@ PostmasterMain(int argc, char *argv[])
 	reset_shared(PostPortNumber);
 
 	/*
-	 * Initialize the list of active backends.	This list is only used for
-	 * garbage collecting the backend processes.
+	 * Initialize the list of active backends.
 	 */
 	BackendList = DLNewList();
 
@@ -811,7 +820,6 @@ ServerLoop(void)
 
 			if (CheckPointTimeout + checkpointed > now)
 			{
-
 				/*
 				 * Not time for checkpoint yet, so set a timeout for
 				 * select
@@ -883,7 +891,8 @@ ServerLoop(void)
 		}
 
 		/*
-		 * new connection pending on our well-known port's socket?
+		 * New connection pending on our well-known port's socket?
+		 * If so, fork a child process to deal with it.
 		 */
 
 #ifdef HAVE_UNIX_SOCKETS
@@ -892,9 +901,15 @@ ServerLoop(void)
 		{
 			port = ConnCreate(ServerSock_UNIX);
 			if (port)
+			{
 				BackendStartup(port);
-			StreamClose(port->sock);
-			ConnFree(port);
+				/*
+				 * We no longer need the open socket or port structure
+				 * in this process
+				 */
+				StreamClose(port->sock);
+				ConnFree(port);
+			}
 		}
 #endif
 
@@ -903,9 +918,15 @@ ServerLoop(void)
 		{
 			port = ConnCreate(ServerSock_INET);
 			if (port)
+			{
 				BackendStartup(port);
-			StreamClose(port->sock);
-			ConnFree(port);
+				/*
+				 * We no longer need the open socket or port structure
+				 * in this process
+				 */
+				StreamClose(port->sock);
+				ConnFree(port);
+			}
 		}
 	}
 }
@@ -952,7 +973,7 @@ initMasks(fd_set *rmask, fd_set *wmask)
  * not return at all.
  */
 static int
-ProcessStartupPacket(Port *port)
+ProcessStartupPacket(Port *port, bool SSLdone)
 {
 	StartupPacket *packet;
 	char	   *rejectMsg;
@@ -983,7 +1004,7 @@ ProcessStartupPacket(Port *port)
 		return 127;				/* XXX */
 	}
 
-	if (port->proto == NEGOTIATE_SSL_CODE)
+	if (port->proto == NEGOTIATE_SSL_CODE && !SSLdone)
 	{
 		char		SSLok;
 
@@ -1016,10 +1037,9 @@ ProcessStartupPacket(Port *port)
 			}
 		}
 #endif
-		/* regular startup packet should follow... */
-		/* FIXME: by continuing to send SSL negotiation packets, a
-           client could run us out of stack space */
-		return ProcessStartupPacket(port);
+		/* regular startup packet, cancel, etc packet should follow... */
+		/* but not another SSL negotiation request */
+		return ProcessStartupPacket(port, true);
 	}
 
 	/* Could add additional special packet types here */
@@ -1211,11 +1231,8 @@ ConnFree(Port *conn)
  * ClosePostmasterPorts -- close all the postmaster's open sockets
  *
  * This is called during child process startup to release file descriptors
- * that are not needed by that child process.
- *
- * Note that closing the child's descriptor does not destroy the client
- * connection prematurely, since the parent (postmaster) process still
- * has the socket open.
+ * that are not needed by that child process.  The postmaster still has
+ * them open, of course.
  */
 static void
 ClosePostmasterPorts(void)
@@ -1685,9 +1702,7 @@ SignalChildren(int signal)
 /*
  * BackendStartup -- start backend process
  *
- * returns: STATUS_ERROR if the fork/exec failed, STATUS_OK
- *		otherwise.
- *
+ * returns: STATUS_ERROR if the fork/exec failed, STATUS_OK otherwise.
  */
 static int
 BackendStartup(Port *port)
@@ -1814,7 +1829,8 @@ split_opts(char **argv, int *argcp, char *s)
 }
 
 /*
- * DoBackend -- set up the backend's argument list and invoke backend main().
+ * DoBackend -- perform authentication, and if successful, set up the
+ *		backend's argument list and invoke backend main().
  *
  * This used to perform an execv() but we no longer exec the backend;
  * it's the same executable as the postmaster.
@@ -1849,6 +1865,9 @@ DoBackend(Port *port)
 	 * Signal handlers setting is moved to tcop/postgres...
 	 */
 
+	/* Close the postmaster's other sockets */
+	ClosePostmasterPorts();
+
 	SetProcessingMode(InitProcessing);
 
 	/* Save port etc. for ps status */
@@ -1859,12 +1878,9 @@ DoBackend(Port *port)
 
 	whereToSendOutput = Remote;
 
-	status = ProcessStartupPacket(port);
+	status = ProcessStartupPacket(port, false);
 	if (status == 127)
 		return 0;				/* cancel request processed */
-
-	/* Close the postmaster's other sockets */
-	ClosePostmasterPorts();
 
 	/*
 	 * Don't want backend to be able to see the postmaster random number
