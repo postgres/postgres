@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.94 2003/11/29 19:51:47 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.95 2004/01/10 23:28:44 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,6 +47,7 @@
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
+#include "utils/guc.h"
 #include "utils/inval.h"
 #include "utils/lsyscache.h"
 #include "utils/relcache.h"
@@ -185,7 +186,25 @@ DefineRelation(CreateStmt *stmt, char relkind)
 	 */
 	descriptor = BuildDescForRelation(schema);
 
-	descriptor->tdhasoid = (stmt->hasoids || parentHasOids);
+	if (parentHasOids)
+		descriptor->tdhasoid = true;
+	else
+	{
+		switch (stmt->hasoids)
+		{
+			case MUST_HAVE_OIDS:
+				descriptor->tdhasoid = true;
+				break;
+
+			case MUST_NOT_HAVE_OIDS:
+				descriptor->tdhasoid = false;
+				break;
+
+			case DEFAULT_OIDS:
+				descriptor->tdhasoid = default_with_oids;
+				break;
+		}
+	}
 
 	if (old_constraints != NIL)
 	{

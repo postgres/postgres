@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.444 2004/01/10 02:21:08 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.445 2004/01/10 23:28:45 neilc Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -63,7 +63,6 @@
 #include "utils/numeric.h"
 #include "utils/datetime.h"
 #include "utils/date.h"
-#include "utils/guc.h"
 
 extern List *parsetree;			/* final parse result is delivered here */
 
@@ -109,6 +108,7 @@ static void doNegateFloat(Value *v);
 	JoinType			jtype;
 	DropBehavior		dbehavior;
 	OnCommitAction		oncommit;
+	ContainsOids		withoids;
 	List				*list;
 	FastList			fastlist;
 	Node				*node;
@@ -235,8 +235,9 @@ static void doNegateFloat(Value *v);
 %type <fun_param> func_arg
 %type <typnam>	func_return func_type aggr_argtype
 
-%type <boolean> arg_class TriggerForType OptTemp OptWithOids
-%type <oncommit>	OnCommitOption
+%type <boolean> arg_class TriggerForType OptTemp
+%type <oncommit> OnCommitOption
+%type <withoids> OptWithOids WithOidsAs
 
 %type <list>	for_update_clause opt_for_update_clause update_list
 %type <boolean>	opt_all
@@ -1824,14 +1825,9 @@ OptInherit: INHERITS '(' qualified_name_list ')'	{ $$ = $3; }
 		;
 
 OptWithOids:
-			WITH OIDS								{ $$ = TRUE; }
-			| WITHOUT OIDS							{ $$ = FALSE; }
-			/*
-			 * If the user didn't explicitely specify WITH or WITHOUT
-			 * OIDS, decide whether to include OIDs based on the
-			 * "default_with_oids" GUC var
-			 */
-			| /*EMPTY*/								{ $$ = default_with_oids; }
+			WITH OIDS								{ $$ = MUST_HAVE_OIDS; }
+			| WITHOUT OIDS							{ $$ = MUST_NOT_HAVE_OIDS; }
+			| /*EMPTY*/								{ $$ = DEFAULT_OIDS; }
 		;
 
 OnCommitOption:  ON COMMIT DROP				{ $$ = ONCOMMIT_DROP; }
@@ -1847,7 +1843,7 @@ OnCommitOption:  ON COMMIT DROP				{ $$ = ONCOMMIT_DROP; }
  */
 
 CreateAsStmt:
-			CREATE OptTemp TABLE qualified_name OptCreateAs AS SelectStmt
+			CREATE OptTemp TABLE qualified_name OptCreateAs WithOidsAs SelectStmt
 				{
 					/*
 					 * When the SelectStmt is a set-operation tree, we must
@@ -1864,9 +1860,22 @@ CreateAsStmt:
 					$4->istemp = $2;
 					n->into = $4;
 					n->intoColNames = $5;
+					n->intoHasOids = $6;
 					$$ = $7;
 				}
 		;
+
+/*
+ * To avoid a shift/reduce conflict in CreateAsStmt, we need to
+ * include the 'AS' terminal in the parsing of WITH/WITHOUT
+ * OIDS. Unfortunately that means this production is effectively a
+ * duplicate of OptWithOids.
+ */
+WithOidsAs:
+			WITH OIDS AS 							{ $$ = MUST_HAVE_OIDS; }
+			| WITHOUT OIDS AS 						{ $$ = MUST_NOT_HAVE_OIDS; }
+			| AS 									{ $$ = DEFAULT_OIDS; }
+			;
 
 OptCreateAs:
 			'(' CreateAsList ')'					{ $$ = $2; }
@@ -4531,6 +4540,7 @@ simple_select:
 					n->targetList = $3;
 					n->into = $4;
 					n->intoColNames = NIL;
+					n->intoHasOids = DEFAULT_OIDS;
 					n->fromClause = $5;
 					n->whereClause = $6;
 					n->groupClause = $7;

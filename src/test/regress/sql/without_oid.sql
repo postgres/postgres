@@ -33,3 +33,30 @@ SELECT min(relpages) < max(relpages), min(reltuples) - max(reltuples)
 
 DROP TABLE wi;
 DROP TABLE wo;
+
+--
+-- WITH / WITHOUT OIDS in CREATE TABLE AS
+--
+CREATE TABLE create_table_test (
+    a int,
+    b int
+);
+
+COPY create_table_test FROM stdin;
+5	10
+10	15
+\.
+
+CREATE TABLE create_table_test2 WITH OIDS AS
+    SELECT a + b AS c1, a - b AS c2 FROM create_table_test;
+
+CREATE TABLE create_table_test3 WITHOUT OIDS AS
+    SELECT a + b AS c1, a - b AS c2 FROM create_table_test;
+
+SELECT count(oid) FROM create_table_test2;
+-- should fail
+SELECT count(oid) FROM create_table_test3;
+
+DROP TABLE create_table_test;
+DROP TABLE create_table_test2;
+DROP TABLE create_table_test3;
