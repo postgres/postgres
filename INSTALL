@@ -366,10 +366,14 @@ To upgrade to PostgreSQL v6.1 do the following:
  18) If you wish to skip the regression tests then skip to step 21.
      However, we think skipping the tests is a BAD idea!
 
+     The file /usr/src/pgsql/src/test/regress/README has detailed
+     instructions for running and interpreting the regression tests.
+     A short version follows here:
+
      Start the postmaster in preparation for the regression tests.  First,
      set the timezone for Berkeley, California.  On some systems you may do
      this by setting environment variable TZ.  I.e., using bash, type
-        export TZ=PST8PDT7,M04.01.0,M10.05.03
+        export TZ=PST8PDT
 
      Now start the postmaster daemon running in the background by typing
         cd
@@ -402,33 +406,20 @@ To upgrade to PostgreSQL v6.1 do the following:
      PostgreSQL.
 
      Here is an example from a i686/Linux-ELF platform (this is the platform
-     on which most of the regression tests were generated). float8 failed
-     on exponentiation and logarithmic operations due to known differences
-     in error handling for those math functions between this platform
-     and the original Sun (?) Postgres v4.2 development environment.
+     on which most of the regression tests were generated). No tests failed
+     since this is the v6.1 regression reference platform.
 
      Here is an example from the SPARC/Linux-ELF platform.  Using the
      970525 beta version of PostgreSQL v6.1 the following tests "failed".
      float8 and geometry "failed" due to minor precision differences in
-     floating point numbers.  float8 also "failed" due to a table being
-     printed out in place of the expected warning message of a floating
-     point number being out of range.  timespan and horology fail
-     because of a bug on this platform that causes a timespan of
-     "14 secs ago" to be returned as "1 day 23 hours 59 mins 46 secs
-     ago".  (If you don't intend to use the timespan data type, then
-     this would not be a problem for you.)  datetime also fails due
-     to similar problems with the timespan data type.  errors fail
-     due to a parsing error.  (This bug was introduced within the
-     previous week, and is probably in the regression test itself.)
-     select_views produces massively different output, but the
-     differences are due to the timespan bug and minor floating point
-     differences.  (Note:  The timespan bug was fixed before v6.1 came out.)
+     floating point numbers.  select_views produces massively different output,
+     but the differences are due to minor floating point differences.
 
      Conclusion?  If you do see failures, try to understand the nature of
      the differences and then decide if those differences will affect your
      intended use of PostgreSQL.  However, keep in mind that this is likely
      to be the most solid release of PostgreSQL to date, incorporating many
-     bug fixes from v6.0, and that previous versions of PostgreSQL has been
+     bug fixes from v6.0, and that previous versions of PostgreSQL have been
      in use successfully for some time now.
 
      After running the tests, type
@@ -510,6 +501,20 @@ To upgrade to PostgreSQL v6.1 do the following:
      Type
         cd
         psql -e template1 < db.out
+
+     If your old database uses either path or polygon geometric data types,
+     then you will need to upgrade any columns containing those types. To
+     do so, type (from within psql)
+        update YourTable set PathCol = UpgradePath(PathCol);
+        update YourTable set PolyCol = UpgradePoly(PolyCol);
+        ...
+        vacuum;
+
+     UpgradePath() checks to see that a path value is consistant with the
+     old syntax, and will not update a column which fails that examination.
+     UpgradePoly() cannot verify that a polygon is in fact from an old
+     syntax, but RevertPoly() is provided to reverse the effects of a
+     mis-applied upgrade.
 
  24) If you are a new user, you may wish to play with postgres as described
      below.
