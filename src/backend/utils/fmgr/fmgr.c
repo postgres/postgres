@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.12 1998/01/31 05:22:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.13 1998/01/31 05:31:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,9 +32,6 @@
 #include "nodes/parsenodes.h"
 #include "commands/trigger.h"
 
-
-/* We don't make this static so fmgr_faddr() macros can access it */
-FmgrInfo        *fmgr_pl_finfo;
 
 static char      * 
 fmgr_pl(char *arg0, ...)
