@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.211 2000/12/03 14:50:54 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.212 2000/12/22 07:07:58 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -161,7 +161,7 @@ static void doNegateFloat(Value *v);
 %type <str>		TriggerEvents
 %type <value>	TriggerFuncArg
 
-%type <str>		relation_name, copy_file_name, copy_delimiter, copy_null, def_name,
+%type <str>		relation_name, copy_file_name, copy_delimiter, copy_null,
 		database_name, access_method_clause, access_method, attr_name,
 		class, index_name, name, func_name, file_name
 
@@ -206,7 +206,7 @@ static void doNegateFloat(Value *v);
 				opt_with_copy, index_opt_unique, opt_verbose, opt_analyze
 %type <boolean> opt_cursor
 
-%type <ival>	copy_dirn, def_type, direction, reindex_type, drop_type,
+%type <ival>	copy_dirn, direction, reindex_type, drop_type,
 		opt_column, event, comment_type, comment_cl,
 		comment_ag, comment_fn, comment_op, comment_tg
 
@@ -1635,7 +1635,7 @@ IntegerOnly:  Iconst
  *****************************************************************************/
 
 CreatePLangStmt:  CREATE PLangTrusted opt_procedural LANGUAGE Sconst 
-			HANDLER def_name LANCOMPILER Sconst
+			HANDLER func_name LANCOMPILER Sconst
 			{
 				CreatePLangStmt *n = makeNode(CreatePLangStmt);
 				n->plname = $5;
@@ -1854,29 +1854,34 @@ DropTrigStmt:  DROP TRIGGER name ON relation_name
 /*****************************************************************************
  *
  *		QUERY :
- *				define (type,operator,aggregate)
+ *				define (aggregate,operator,type)
  *
  *****************************************************************************/
 
-DefineStmt:  CREATE def_type def_name definition
+DefineStmt:  CREATE AGGREGATE func_name definition
 				{
 					DefineStmt *n = makeNode(DefineStmt);
-					n->defType = $2;
+					n->defType = AGGREGATE;
 					n->defname = $3;
 					n->definition = $4;
 					$$ = (Node *)n;
 				}
-		;
-
-def_type:  OPERATOR							{ $$ = OPERATOR; }
-		| TYPE_P							{ $$ = TYPE_P; }
-		| AGGREGATE							{ $$ = AGGREGATE; }
-		;
-
-def_name:  PROCEDURE						{ $$ = "procedure"; }
-		| JOIN								{ $$ = "join"; }
-		| all_Op							{ $$ = $1; }
-		| ColId								{ $$ = $1; }
+		| CREATE OPERATOR all_Op definition
+				{
+					DefineStmt *n = makeNode(DefineStmt);
+					n->defType = OPERATOR;
+					n->defname = $3;
+					n->definition = $4;
+					$$ = (Node *)n;
+				}
+		| CREATE TYPE_P name definition
+				{
+					DefineStmt *n = makeNode(DefineStmt);
+					n->defType = TYPE_P;
+					n->defname = $3;
+					n->definition = $4;
+					$$ = (Node *)n;
+				}
 		;
 
 definition:  '(' def_list ')'				{ $$ = $2; }
@@ -1886,23 +1891,17 @@ def_list:  def_elem							{ $$ = makeList1($1); }
 		| def_list ',' def_elem				{ $$ = lappend($1, $3); }
 		;
 
-def_elem:  def_name '=' def_arg
+def_elem:  ColLabel '=' def_arg
 				{
 					$$ = makeNode(DefElem);
 					$$->defname = $1;
 					$$->arg = (Node *)$3;
 				}
-		| def_name
+		| ColLabel
 				{
 					$$ = makeNode(DefElem);
 					$$->defname = $1;
 					$$->arg = (Node *)NULL;
-				}
-		| DEFAULT '=' def_arg
-				{
-					$$ = makeNode(DefElem);
-					$$->defname = "default";
-					$$->arg = (Node *)$3;
 				}
 		;
 
@@ -2538,7 +2537,7 @@ RemoveFuncStmt:  DROP FUNCTION func_name func_args
 				}
 		;
 
-RemoveAggrStmt:  DROP AGGREGATE name aggr_argtype
+RemoveAggrStmt:  DROP AGGREGATE func_name aggr_argtype
 				{
 						RemoveAggrStmt *n = makeNode(RemoveAggrStmt);
 						n->aggname = $3;
@@ -5498,6 +5497,7 @@ TokenId:  ABSOLUTE						{ $$ = "absolute"; }
 		| PRIOR							{ $$ = "prior"; }
 		| PRIVILEGES					{ $$ = "privileges"; }
 		| PROCEDURAL					{ $$ = "procedural"; }
+		| PROCEDURE						{ $$ = "procedure"; }
 		| READ							{ $$ = "read"; }
 		| REINDEX						{ $$ = "reindex"; }
 		| RELATIVE						{ $$ = "relative"; }
@@ -5644,7 +5644,6 @@ ColLabel:  ColId						{ $$ = $1; }
 		| POSITION						{ $$ = "position"; }
 		| PRECISION						{ $$ = "precision"; }
 		| PRIMARY						{ $$ = "primary"; }
-		| PROCEDURE						{ $$ = "procedure"; }
 		| PUBLIC						{ $$ = "public"; }
 		| REFERENCES					{ $$ = "references"; }
 		| RESET							{ $$ = "reset"; }
