@@ -38,16 +38,13 @@ array_iterator(Oid elemtype, Oid proc, int and, ArrayType *array, Datum value)
 	Form_pg_type typ_struct;
 	bool		typbyval;
 	int			typlen;
-	func_ptr	proc_fn;
-	int			pronargs;
 	int			nitems,
-				i,
-				result;
+				i;
+	Datum		result;
 	int			ndim,
 			   *dim;
 	char	   *p;
-	FmgrInfo	finf;			/* Tobias Gabele Jan 18 1999 */
-
+	FmgrInfo	finfo;
 
 	/* Sanity checks */
 	if ((array == (ArrayType *) NULL)
@@ -66,7 +63,8 @@ array_iterator(Oid elemtype, Oid proc, int and, ArrayType *array, Datum value)
 	}
 
 	/* Lookup element type information */
-	typ_tuple = SearchSysCacheTuple(TYPEOID, ObjectIdGetDatum(elemtype), 0, 0, 0);
+	typ_tuple = SearchSysCacheTuple(TYPEOID, ObjectIdGetDatum(elemtype),
+									0, 0, 0);
 	if (!HeapTupleIsValid(typ_tuple))
 	{
 		elog(ERROR, "array_iterator: cache lookup failed for type %u", elemtype);
@@ -77,18 +75,15 @@ array_iterator(Oid elemtype, Oid proc, int and, ArrayType *array, Datum value)
 	typbyval = typ_struct->typbyval;
 
 	/* Lookup the function entry point */
-	proc_fn = (func_ptr) NULL;
-	fmgr_info(proc, &finf);		/* Tobias Gabele Jan 18 1999 */
-	proc_fn = finf.fn_addr;		/* Tobias Gabele Jan 18 1999 */
-	pronargs = finf.fn_nargs;	/* Tobias Gabele Jan 18 1999 */
-	if ((proc_fn == NULL) || (pronargs != 2))
+	fmgr_info(proc, &finfo);
+	if (finfo.fn_nargs != 2)
 	{
-		elog(ERROR, "array_iterator: fmgr_info lookup failed for oid %u", proc);
+		elog(ERROR, "array_iterator: proc %u does not take 2 args", proc);
 		return (0);
 	}
 
 	/* Scan the array and apply the operator to each element */
-	result = 0;
+	result = BoolGetDatum(false);
 	p = ARR_DATA_PTR(array);
 	for (i = 0; i < nitems; i++)
 	{
@@ -97,27 +92,33 @@ array_iterator(Oid elemtype, Oid proc, int and, ArrayType *array, Datum value)
 			switch (typlen)
 			{
 				case 1:
-					result = (int) (*proc_fn) (*p, value);
+					result = FunctionCall2(&finfo,
+										   CharGetDatum(*p),
+										   value);
 					break;
 				case 2:
-					result = (int) (*proc_fn) (*(int16 *) p, value);
+					result = FunctionCall2(&finfo,
+										   Int16GetDatum(*(int16 *) p),
+										   value);
 					break;
 				case 3:
 				case 4:
-					result = (int) (*proc_fn) (*(int32 *) p, value);
+					result = FunctionCall2(&finfo,
+										   Int32GetDatum(*(int32 *) p),
+										   value);
 					break;
 			}
 			p += typlen;
 		}
 		else
 		{
-			result = (int) (*proc_fn) (p, value);
+			result = FunctionCall2(&finfo, PointerGetDatum(p), value);
 			if (typlen > 0)
 				p += typlen;
 			else
 				p += INTALIGN(*(int32 *) p);
 		}
-		if (result)
+		if (DatumGetBool(result))
 		{
 			if (!and)
 				return (1);
@@ -129,7 +130,7 @@ array_iterator(Oid elemtype, Oid proc, int and, ArrayType *array, Datum value)
 		}
 	}
 
-	if (and && result)
+	if (and && DatumGetBool(result))
 		return (1);
 	else
 		return (0);
