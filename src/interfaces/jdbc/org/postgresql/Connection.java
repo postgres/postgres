@@ -10,7 +10,7 @@ import org.postgresql.largeobject.*;
 import org.postgresql.util.*;
 
 /**
- * $Id: Connection.java,v 1.10 2000/11/20 08:15:30 peter Exp $
+ * $Id: Connection.java,v 1.11 2000/12/22 03:08:52 momjian Exp $
  *
  * This abstract class is used by org.postgresql.Driver to open either the JDBC1 or
  * JDBC2 versions of the Connection class.
@@ -125,8 +125,6 @@ public abstract class Connection
     PG_HOST = host;
     PG_STATUS = CONNECTION_BAD;
 
-    encoding = info.getProperty("charSet");  // could be null
-    
     // Now make the initial connection
     try
       {
@@ -265,10 +263,84 @@ public abstract class Connection
       // This may cause some clients to break when they assume anything other than ISO,
       // but then - they should be using the proper methods ;-)
       //
+      // We also ask the DB for certain properties (i.e. DatabaseEncoding at this time)
       //
       firstWarning = null;
       
-      ExecSQL("set datestyle to 'ISO'");
+      java.sql.ResultSet initrset = ExecSQL("set datestyle to 'ISO'; select getdatabaseencoding()");
+
+      String dbEncoding = null;
+      //retrieve DB properties
+      if(initrset.next()) {
+
+        //handle DatabaseEncoding
+        dbEncoding = initrset.getString(1);
+        //convert from the PostgreSQL name to the Java name
+        if (dbEncoding.equals("SQL_ASCII")) {
+          dbEncoding = "ASCII";
+        } else if (dbEncoding.equals("UNICODE")) {
+          dbEncoding = "UTF8";
+        } else if (dbEncoding.equals("LATIN1")) {
+          dbEncoding = "ISO8859_1";
+        } else if (dbEncoding.equals("LATIN2")) {
+          dbEncoding = "ISO8859_2";
+        } else if (dbEncoding.equals("LATIN3")) {
+          dbEncoding = "ISO8859_3";
+        } else if (dbEncoding.equals("LATIN4")) {
+          dbEncoding = "ISO8859_4";
+        } else if (dbEncoding.equals("LATIN5")) {
+          dbEncoding = "ISO8859_5";
+        } else if (dbEncoding.equals("LATIN6")) {
+          dbEncoding = "ISO8859_6";
+        } else if (dbEncoding.equals("LATIN7")) {
+          dbEncoding = "ISO8859_7";
+        } else if (dbEncoding.equals("LATIN8")) {
+          dbEncoding = "ISO8859_8";
+        } else if (dbEncoding.equals("LATIN9")) {
+          dbEncoding = "ISO8859_9";
+        } else if (dbEncoding.equals("EUC_JP")) {
+          dbEncoding = "EUC_JP";
+        } else if (dbEncoding.equals("EUC_CN")) {
+          dbEncoding = "EUC_CN";
+        } else if (dbEncoding.equals("EUC_KR")) {
+          dbEncoding = "EUC_KR";
+        } else if (dbEncoding.equals("EUC_TW")) {
+          dbEncoding = "EUC_TW";
+        } else if (dbEncoding.equals("KOI8")) {
+          dbEncoding = "KOI8_R";
+        } else if (dbEncoding.equals("WIN")) {
+          dbEncoding = "Cp1252";
+        } else {
+          dbEncoding = null;
+        }
+      }
+
+
+      //Set the encoding for this connection
+      //Since the encoding could be specified or obtained from the DB we use the
+      //following order:
+      //  1.  passed as a property
+      //  2.  value from DB if supported by current JVM
+      //  3.  default for JVM (leave encoding null)
+      String passedEncoding = info.getProperty("charSet");  // could be null
+
+      if (passedEncoding != null) {
+        encoding = passedEncoding;
+      } else {
+        if (dbEncoding != null) {
+          //test DB encoding
+          try {
+            "TEST".getBytes(dbEncoding);
+            //no error the encoding is supported by the current JVM
+            encoding = dbEncoding;
+          } catch (UnsupportedEncodingException uee) {
+            //dbEncoding is not supported by the current JVM
+            encoding = null;
+          }
+        } else {
+          encoding = null;
+        }
+      }
       
       // Initialise object handling
       initObjectTypes();
