@@ -7,7 +7,7 @@
 --
 -- Copyright (c) 1994, Regents of the University of California
 --
--- $Id: advanced.source,v 1.1.1.1 1996/07/09 06:22:34 scrappy Exp $
+-- $Id: advanced.source,v 1.2 1998/02/28 23:37:08 scrappy Exp $
 --
 ---------------------------------------------------------------------------
 
@@ -25,21 +25,21 @@ CREATE TABLE cities (
 	name		text,
 	population	float8,
 	altitude	int		-- (in ft)
-)
+);
 
 CREATE TABLE capitals (
 	state		char2
 ) INHERITS (cities);
 
 -- now, let's populate the tables
-INSERT INTO cities VALUES ('San Francisco', 7.24E+5, 63)
-INSERT INTO cities VALUES ('Las Vegas', 2.583E+5, 2174)
-INSERT INTO cities VALUES ('Mariposa', 1200, 1953)
+INSERT INTO cities VALUES ('San Francisco', 7.24E+5, 63);
+INSERT INTO cities VALUES ('Las Vegas', 2.583E+5, 2174);
+INSERT INTO cities VALUES ('Mariposa', 1200, 1953);
 
-INSERT INTO capitals VALUES ('Sacramento', 3.694E+5, 30, 'CA')
-INSERT INTO capitals VALUES ('Madison', 1.913E+5, 845, 'WI')
+INSERT INTO capitals VALUES ('Sacramento', 3.694E+5, 30, 'CA');
+INSERT INTO capitals VALUES ('Madison', 1.913E+5, 845, 'WI');
 
-SELECT * FROM cities
+SELECT * FROM cities;
 SELECT * FROM capitals;
 
 -- like before, a regular query references rows of the base table only
@@ -59,25 +59,27 @@ WHERE c.altitude > 500;
 -----------------------------
 -- Time Travel:
 --	this feature allows you to run historical queries. 
+--	removed for v6.3, but possible using triggers.
+--	see contrib/spi/README for more information.
 -----------------------------
 
 -- first, let's make some changes to the cities table (suppose Mariposa's
 -- population grows 10% this year)
 
-UPDATE cities
-SET population = population * 1.1
-WHERE name = 'Mariposa';
+-- UPDATE cities
+-- SET population = population * 1.1
+-- WHERE name = 'Mariposa';
 
 -- the default time is the current time ('now'):
 
-SELECT * FROM cities WHERE name = 'Mariposa';
+-- SELECT * FROM cities WHERE name = 'Mariposa';
 
 -- we can also retrieve the population of Mariposa ever has. ('epoch' is the
 -- earliest time representable by the system)
 
-SELECT name, population
-FROM cities['epoch', 'now']	-- can be abbreviated to cities[,]
-WHERE name = 'Mariposa';
+-- SELECT name, population
+-- FROM cities['epoch', 'now']	-- can be abbreviated to cities[,]
+-- WHERE name = 'Mariposa';
 
 
 ----------------------
@@ -96,7 +98,7 @@ CREATE TABLE sal_emp (
 INSERT INTO sal_emp VALUES (
 	'Bill',
 	'{10000,10000,10000,10000}',
-	'{{"meeting", "lunch"}, {}}')
+	'{{"meeting", "lunch"}, {}}');
 
 INSERT INTO sal_emp VALUES (
 	'Carol',
@@ -120,6 +122,6 @@ SELECT sal_emp.schedule[1:2][1:1] FROM sal_emp WHERE
 
 
 -- clean up (you must remove the children first)
-DROP TABLE sal_emp
-DROP TABLE capitals
+DROP TABLE sal_emp;
+DROP TABLE capitals;
 DROP TABLE cities;

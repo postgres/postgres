@@ -7,7 +7,7 @@
 --
 -- Copyright (c) 1994, Regents of the University of California
 --
--- $Id: complex.source,v 1.2 1996/12/28 02:22:07 momjian Exp $
+-- $Id: complex.source,v 1.3 1998/02/28 23:37:09 scrappy Exp $
 --
 ---------------------------------------------------------------------------
 
@@ -64,8 +64,8 @@ CREATE TABLE test_complex (
 -- data for user-defined type are just strings in the proper textual
 -- representation. 
 
-INSERT INTO test_complex VALUES ('(1.0, 2.5)', '(4.2, 3.55 )')
-INSERT INTO test_complex VALUES ('(33.0, 51.4)', '(100.42, 93.55)')
+INSERT INTO test_complex VALUES ('(1.0, 2.5)', '(4.2, 3.55 )');
+INSERT INTO test_complex VALUES ('(33.0, 51.4)', '(100.42, 93.55)');
 
 SELECT * FROM test_complex;
 
@@ -138,13 +138,13 @@ SELECT 'READ ABOVE!' AS STOP;
 
 -- first, define the required operators
 CREATE FUNCTION complex_abs_lt(complex, complex) RETURNS bool
-   AS '_OBJWD_/complex.so' LANGUAGE 'c'
+   AS '_OBJWD_/complex.so' LANGUAGE 'c';
 CREATE FUNCTION complex_abs_le(complex, complex) RETURNS bool
-   AS '_OBJWD_/complex.so' LANGUAGE 'c'
+   AS '_OBJWD_/complex.so' LANGUAGE 'c';
 CREATE FUNCTION complex_abs_eq(complex, complex) RETURNS bool
-   AS '_OBJWD_/complex.so' LANGUAGE 'c'
+   AS '_OBJWD_/complex.so' LANGUAGE 'c';
 CREATE FUNCTION complex_abs_ge(complex, complex) RETURNS bool
-   AS '_OBJWD_/complex.so' LANGUAGE 'c'
+   AS '_OBJWD_/complex.so' LANGUAGE 'c';
 CREATE FUNCTION complex_abs_gt(complex, complex) RETURNS bool
    AS '_OBJWD_/complex.so' LANGUAGE 'c';
 
@@ -153,25 +153,25 @@ CREATE FUNCTION complex_abs_gt(complex, complex) RETURNS bool
 CREATE OPERATOR < (
    leftarg = complex, rightarg = complex, procedure = complex_abs_lt,
    restrict = intltsel, join = intltjoinsel
-)
+);
 CREATE OPERATOR <= (
    leftarg = complex, rightarg = complex, procedure = complex_abs_le,
    restrict = intltsel, join = intltjoinsel
-)
+);
 CREATE OPERATOR = (
    leftarg = complex, rightarg = complex, procedure = complex_abs_eq,
    restrict = eqsel, join = eqjoinsel
-)
+);
 CREATE OPERATOR >= (
    leftarg = complex, rightarg = complex, procedure = complex_abs_ge,
    restrict = intgtsel, join = intgtjoinsel
-)
+);
 CREATE OPERATOR > (
    leftarg = complex, rightarg = complex, procedure = complex_abs_gt,
    restrict = intgtsel, join = intgtjoinsel
 );
 
-INSERT INTO pg_opclass VALUES ('complex_abs_ops')
+INSERT INTO pg_opclass VALUES ('complex_abs_ops');
 
 SELECT oid, opcname FROM pg_opclass WHERE opcname = 'complex_abs_ops';
 
@@ -241,7 +241,7 @@ INSERT INTO pg_amproc (amid, amopclaid, amproc, amprocnum)
 -- now, we can define a btree index on complex types. First, let's populate
 -- the table. Note that postgres needs many more tuples to start using the
 -- btree index during selects.
-INSERT INTO test_complex VALUES ('(56.0,-22.5)', '(-43.2,-0.07)')
+INSERT INTO test_complex VALUES ('(56.0,-22.5)', '(-43.2,-0.07)');
 INSERT INTO test_complex VALUES ('(-91.9,33.6)', '(8.6,3.0)');
 
 CREATE INDEX test_cplx_ind ON test_complex
@@ -250,3 +250,22 @@ CREATE INDEX test_cplx_ind ON test_complex
 SELECT * from test_complex where a = '(56.0,-22.5)';
 SELECT * from test_complex where a < '(56.0,-22.5)';
 SELECT * from test_complex where a > '(56.0,-22.5)';
+
+DROP FUNCTION complex_in(opaque);
+DROP FUNCTION complex_out(opaque);
+DROP FUNCTION complex_add(complex, complex);
+DROP FUNCTION complex_abs_lt(complex, complex);
+DROP FUNCTION complex_abs_le(complex, complex);
+DROP FUNCTION complex_abs_eq(complex, complex);
+DROP FUNCTION complex_abs_ge(complex, complex);
+DROP FUNCTION complex_abs_gt(complex, complex);
+DROP FUNCTION complex_abs_cmp(complex, complex);
+DROP OPERATOR + (complex, complex);
+DROP OPERATOR < (complex, complex);
+DROP OPERATOR <= (complex, complex);
+DROP OPERATOR = (complex, complex);
+DROP OPERATOR >= (complex, complex);
+DROP OPERATOR > (complex, complex);
+DROP AGGREGATE complex_sum complex;
+DROP TYPE complex;
+DROP TABLE test_complex;

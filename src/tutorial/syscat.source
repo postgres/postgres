@@ -6,7 +6,7 @@
 --
 -- Copyright (c) 1994, Regents of the University of California
 --
--- $Id: syscat.source,v 1.1.1.1 1996/07/09 06:22:34 scrappy Exp $
+-- $Id: syscat.source,v 1.2 1998/02/28 23:37:10 scrappy Exp $
 --
 ---------------------------------------------------------------------------
 
@@ -80,11 +80,11 @@ SELECT u.usename, t.typname
 -- lists all left unary operators
 --
 SELECT o.oprname AS left_unary, 
-       right.typname AS operand,
+       right_type.typname AS operand,
        result.typname AS return_type
-  FROM pg_operator o, pg_type right, pg_type result
+  FROM pg_operator o, pg_type right_type, pg_type result
   WHERE o.oprkind = 'l'           -- left unary
-    and o.oprright = right.oid
+    and o.oprright = right_type.oid
     and o.oprresult = result.oid
   ORDER BY operand;
 
@@ -93,11 +93,11 @@ SELECT o.oprname AS left_unary,
 -- lists all right unary operators
 --
 SELECT o.oprname AS right_unary,
-       left.typname AS operand,
+       left_type.typname AS operand,
        result.typname AS return_type
-  FROM pg_operator o, pg_type left, pg_type result
+  FROM pg_operator o, pg_type left_type, pg_type result
   WHERE o.oprkind = 'r'          -- right unary
-    and o.oprleft = left.oid
+    and o.oprleft = left_type.oid
     and o.oprresult = result.oid
   ORDER BY operand;
 
@@ -105,13 +105,13 @@ SELECT o.oprname AS right_unary,
 -- lists all binary operators
 --
 SELECT o.oprname AS binary_op,
-       left.typname AS left_opr,
-       right.typname AS right_opr,
+       left_type.typname AS left_opr,
+       right_type.typname AS right_opr,
        result.typname AS return_type
-  FROM pg_operator o, pg_type left, pg_type right, pg_type result
+  FROM pg_operator o, pg_type left_type, pg_type right_type, pg_type result
   WHERE o.oprkind = 'b'         -- binary
-    and o.oprleft = left.oid
-    and o.oprright = right.oid
+    and o.oprleft = left_type.oid
+    and o.oprright = right_type.oid
     and o.oprresult = result.oid
   ORDER BY left_opr, right_opr;
 
