@@ -50,6 +50,7 @@
 #  define USE_POSIX_SIGNALS
 #  define DISABLE_XOPEN_NLS 
 #  define HAS_LONG_LONG
+#  define NEED_ISINF
 #  define NEED_UNION_SEMUN 
 #  define HAS_TEST_AND_SET
 #  include <sys/mman.h>  /* for msemaphore */

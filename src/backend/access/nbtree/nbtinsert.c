@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.9 1997/01/10 10:06:20 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.10 1997/01/25 21:08:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -982,7 +982,7 @@ _bt_updateitem(Relation rel,
     maxoff = PageGetMaxOffsetNumber(page);
     
     /* locate item on the page */
-    first = P_RIGHTMOST((BTPageOpaque) PageGetSpecialPointer(page)) \
+    first = P_RIGHTMOST((BTPageOpaque) PageGetSpecialPointer(page))
         ? P_HIKEY : P_FIRSTKEY;
     i = first;
     do {
