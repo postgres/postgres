@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/destroyuser/Attic/destroyuser.sh,v 1.10 1998/09/01 15:57:00 thomas Exp $
+#    $Header: /cvsroot/pgsql/src/bin/destroyuser/Attic/destroyuser.sh,v 1.11 1999/03/14 16:00:55 momjian Exp $
 #
 # Note - this should NOT be setuid.
 #
@@ -79,9 +79,10 @@ then
     exit 1
 fi
 
-if [ $ADDUSER != "t" ]
+if [ x$ADDUSER != xt ]
 then
     echo "$CMDNAME: $USER cannot delete users."
+    exit 1
 fi
 
 #
@@ -152,7 +153,7 @@ then
 #
 
     yn=f
-    while [ $yn != y -a $yn != n ]
+    while [ "$yn" != y -a "$yn" != n ]
     do
         echo PG_OPT_DASH_N_PARAM "Deleting user $DELUSER will destroy them. Continue (y/n)? PG_OPT_BACKSLASH_C_PARAM"
         read yn
