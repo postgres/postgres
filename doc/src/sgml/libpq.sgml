@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.175 2005/01/06 18:29:07 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.176 2005/01/06 21:20:43 tgl Exp $
 -->
 
  <chapter id="libpq">
@@ -3882,7 +3882,8 @@ The file <filename>.pgpass</filename> in a user's home directory is a file
 that can contain passwords to be used if the connection requires a
 password (and no password has been specified otherwise).
 On Microsoft Windows the file is named
-<filename>APPDATA/postgresql/pgpass.txt</>.
+<filename>%APPDATA%\postgresql\pgpass.txt</> (where <filename>%APPDATA%</>
+refers to the Application Data subdirectory in the user's profile).
 </para>
 
 <para>
@@ -3932,8 +3933,8 @@ however.)
    A matching private key file <filename>~/.postgresql/postgresql.key</>
    must also be present, and must not be world-readable.
    (On Microsoft Windows these files are named
-   <filename>APPDATA/postgresql/postgresql.crt</filename> and
-   <filename>APPDATA/postgresql/postgresql.key</filename>.)
+   <filename>%APPDATA%\postgresql\postgresql.crt</filename> and
+   <filename>%APPDATA%\postgresql\postgresql.key</filename>.)
   </para>
 
   <para>
@@ -3942,7 +3943,7 @@ however.)
    <application>libpq</application> will use the certificate list stored
    therein to verify the server's certificate.
    (On Microsoft Windows the file is named
-   <filename>APPDATA/postgresql/root.crt</filename>.)
+   <filename>%APPDATA%\postgresql\root.crt</filename>.)
    The SSL connection will
    fail if the server does not present a certificate; therefore, to
    use this feature the server must also have a <filename>root.crt</> file.
