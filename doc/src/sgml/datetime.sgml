@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.9 2000/05/02 20:01:51 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.10 2000/05/02 20:36:21 thomas Exp $
 Date/time details
 -->
 
@@ -624,7 +624,7 @@ Date/time details
  </sect1>
 
  <sect1>
-  <title>History</title>
+  <title>History of Units</title>
 
   <note>
    <para>
