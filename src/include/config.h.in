@@ -113,17 +113,6 @@
 
 #include "os.h"
 
-/* This patch changes the behavior of aclcheck for groups. Currently an user
- * can access a table only if he has the required permission for ALL the groups
- * defined for that table. With my patch he can access a table if he has the
- * permission for ONE of the groups, which seems to me a more useful thing.
- * 
- * Used in: src/backend/tcop/aclchk.c
- * Submitted by: Massimo Dal Zotto <dz@cs.unitn.it>
- */
-#define	ACLGROUP_PATCH
-
-
 /*
  * The following is used as the arg list for signal handlers.  Any ports
  * that take something other than an int argument should change this in

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/Attic/aclchk.c,v 1.8 1997/04/03 19:55:12 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/Attic/aclchk.c,v 1.9 1997/04/03 21:31:47 scrappy Exp $
  *
  * NOTES
  *    See acl.h.
@@ -300,22 +300,10 @@ aclcheck(Acl *acl, AclId id, AclIdType idtype, AclMode mode)
 	     i < num && aip->ai_idtype == ACL_IDTYPE_GID;
 	     ++i, ++aip) {
 	    if (in_group(id, aip->ai_id)) {
-#ifdef ACLGROUP_PATCH
 		if (aip->ai_mode & mode) {
 		    found_group = 1;
                     break;
 		}
-#else
-		if (aip->ai_mode & mode)
-		    ++found_group;
-		else {
-#ifdef ACLDEBUG_TRACE
-		    elog(DEBUG, "aclcheck: found %d/%d",
-			 aip->ai_id, aip->ai_mode);
-#endif
-		    return ACLCHECK_NO_PRIV;
-		}
-#endif
 	    }
 	}
 	if (found_group) {
