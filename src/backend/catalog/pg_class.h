@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_class.h,v 1.1.1.1 1996/07/09 06:21:16 scrappy Exp $
+ * $Id: pg_class.h,v 1.1.1.1.2.1 1996/08/21 04:23:34 scrappy Exp $
  *
  * NOTES
  *    ``pg_relation'' is being replaced by ``pg_class''.  currently
@@ -66,6 +66,10 @@ CATALOG(pg_class) BOOTSTRAP {
      char 	relkind;
      char 	relarch; /* 'h' = heavy, 'l' = light, 'n' = no archival*/
      int2 	relnatts;
+       /* relnatts is the number of user attributes this class has.  There 
+          must be exactly this many instances in Class pg_attribute for this 
+          class which have attnum > 0 (= user attribute).
+          */
      int2	relsmgr;
      int28 	relkey;			/* not used */
      oid8	relkeyop;		/* not used */
@@ -126,7 +130,7 @@ DATA(insert OID =  76 (  pg_demon 76          PGUID 0 0 0 0 0 f t r n 4 0 - - f 
 DATA(insert OID =  80 (  pg_magic 80         PGUID 0 0 0 0 0 f t r n 2 0 - - f _null_ ));
 DATA(insert OID =  81 (  pg_proc 81          PGUID 0 0 0 0 0 f f r n 16 0 - - f _null_ ));
 DATA(insert OID =  82 (  pg_server 82         PGUID 0 0 0 0 0 f t r n 3 0 - - f _null_ ));
-DATA(insert OID =  83 (  pg_class 83         PGUID 0 0 0 0 0 f f r n 17 0 - - f _null_ ));    
+DATA(insert OID =  83 (  pg_class 83         PGUID 0 0 0 0 0 f f r n 18 0 - - f _null_ ));    
 DATA(insert OID =  86 (  pg_user 86          PGUID 0 0 0 0 0 f t r n 6 0 - - f _null_ ));
 DATA(insert OID =  87 (  pg_group 87          PGUID 0 0 0 0 0 f t s n 3 0 - - f _null_ ));
 DATA(insert OID =  88 (  pg_database 88      PGUID 0 0 0 0 0 f t r n 3 0 - - f _null_ ));
