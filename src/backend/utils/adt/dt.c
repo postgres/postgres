@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.43 1997/10/25 05:18:17 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.44 1997/11/17 16:23:33 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1803,6 +1803,14 @@ datetime_part(text *units, DateTime *datetime)
 					*result = j2day(date2j(tm->tm_year, tm->tm_mon, tm->tm_mday));
 					break;
 
+				case DTK_DOY:
+					if (datetime2tm(dt, &tz, tm, &fsec, &tzn) != 0)
+						elog(WARN, "Unable to encode datetime", NULL);
+
+					*result = (date2j(tm->tm_year, tm->tm_mon, tm->tm_mday)
+						- date2j(tm->tm_year, 1, 1) + 1);
+					break;
+
 				default:
 					elog(WARN, "Datetime units '%s' not supported", lowunits);
 					*result = 0;
@@ -2101,6 +2109,7 @@ static datetkn datetktbl[] = {
 	{"december",	MONTH,		12},
 	{"dnt",			TZ,			6},				/* Dansk Normal Tid */
 	{"dow",			RESERV,		DTK_DOW},		/* day of week */
+	{"doy",			RESERV,		DTK_DOY},		/* day of year */
 	{"dst",			DTZMOD,		6},
 	{"east",		TZ,			NEG(60)},		/* East Australian Std Time */
 	{"edt",			DTZ,		NEG(24)},		/* Eastern Daylight Time */
@@ -2674,7 +2683,7 @@ ParseDateTime(char *timestr, char *lowstr,
 		field[nf] = lp;
 
 		/* leading digit? then date or time */
-		if (isdigit(*cp))
+		if (isdigit(*cp) || (*cp == '.'))
 		{
 			*lp++ = *cp++;
 			while (isdigit(*cp))
@@ -2686,29 +2695,23 @@ ParseDateTime(char *timestr, char *lowstr,
 				while (isdigit(*cp) || (*cp == ':') || (*cp == '.'))
 					*lp++ = *cp++;
 
-				/* date field? allow embedded text month */
 			}
+			/* date field? allow embedded text month */
 			else if ((*cp == '-') || (*cp == '/') || (*cp == '.'))
 			{
 				ftype[nf] = DTK_DATE;
 				while (isalnum(*cp) || (*cp == '-') || (*cp == '/') || (*cp == '.'))
 					*lp++ = tolower(*cp++);
 
-				/*
-				 * otherwise, number only and will determine year, month,
-				 * or day later
-				 */
 			}
+			/* otherwise, number only and will determine year, month, or day later */
 			else
 			{
 				ftype[nf] = DTK_NUMBER;
 			}
 
-			/*
-			 * text? then date string, month, day of week, special, or
-			 * timezone
-			 */
 		}
+		/* text? then date string, month, day of week, special, or timezone */
 		else if (isalpha(*cp))
 		{
 			ftype[nf] = DTK_STRING;
@@ -3696,6 +3699,9 @@ DecodeSpecial(int field, char *lowtoken, int *val)
  * Interpret previously parsed fields for general time interval.
  * Return 0 if decoded and -1 if problems.
  *
+ * Allow "date" field DTK_DATE since this could be just
+ *  an unsigned floating point number. - thomas 1997-11-16
+ *
  * If code is changed to read fields from first to last,
  *	then use READ_FORWARD-bracketed code to allow sign
  *	to persist to subsequent unsigned fields.
@@ -3709,6 +3715,7 @@ DecodeDateDelta(char *field[], int ftype[], int nf, int *dtype, struct tm * tm, 
 	int			is_neg = FALSE;
 #endif
 
+	char	   *cp;
 	int			fmask = 0,
 				tmask,
 				type;
@@ -3716,7 +3723,7 @@ DecodeDateDelta(char *field[], int ftype[], int nf, int *dtype, struct tm * tm, 
 				ii;
 	int			flen,
 				val;
-	char	   *cp;
+	double		fval;
 	double		sec;
 
 	*dtype = DTK_DELTA;
@@ -3774,6 +3781,7 @@ DecodeDateDelta(char *field[], int ftype[], int nf, int *dtype, struct tm * tm, 
 				is_neg = (*field[i] == '-');
 #endif
 
+			case DTK_DATE:
 			case DTK_NUMBER:
 				val = strtol(field[i], &cp, 10);
 #if READ_FORWARD
@@ -3782,70 +3790,102 @@ DecodeDateDelta(char *field[], int ftype[], int nf, int *dtype, struct tm * tm, 
 #endif
 				if (*cp == '.')
 				{
+					fval = strtod(cp, &cp);
+					if (*cp != '\0')
+						return -1;
+
+					if (val < 0)
+						fval = -(fval);
+#if FALSE
 					*fsec = strtod(cp, NULL);
 					if (val < 0)
 						*fsec = -(*fsec);
+#endif
 				}
+				else if (*cp == '\0')
+					fval = 0;
+				else
+					return -1;
+
 				flen = strlen(field[i]);
 				tmask = 0;		/* DTK_M(type); */
 
 				switch (type)
 				{
 					case DTK_MICROSEC:
-						*fsec += (val * 1e-6);
+						*fsec += ((val + fval) * 1e-6);
 						break;
 
 					case DTK_MILLISEC:
-						*fsec += (val * 1e-3);
+						*fsec += ((val +fval) * 1e-3);
 						break;
 
 					case DTK_SECOND:
 						tm->tm_sec += val;
+						*fsec += fval;
 						tmask = DTK_M(SECOND);
 						break;
 
 					case DTK_MINUTE:
 						tm->tm_min += val;
+						if (fval != 0)
+							tm->tm_sec += (fval * 60);
 						tmask = DTK_M(MINUTE);
 						break;
 
 					case DTK_HOUR:
 						tm->tm_hour += val;
+						if (fval != 0)
+							tm->tm_sec += (fval * 3600);
 						tmask = DTK_M(HOUR);
 						break;
 
 					case DTK_DAY:
 						tm->tm_mday += val;
+						if (fval != 0)
+							tm->tm_sec += (fval * 86400);
 						tmask = ((fmask & DTK_M(DAY)) ? 0 : DTK_M(DAY));
 						break;
 
 					case DTK_WEEK:
 						tm->tm_mday += val * 7;
+						if (fval != 0)
+							tm->tm_sec += (fval * (7*86400));
 						tmask = ((fmask & DTK_M(DAY)) ? 0 : DTK_M(DAY));
 						break;
 
 					case DTK_MONTH:
 						tm->tm_mon += val;
+						if (fval != 0)
+							tm->tm_sec += (fval * (30*86400));
 						tmask = DTK_M(MONTH);
 						break;
 
 					case DTK_YEAR:
 						tm->tm_year += val;
+						if (fval != 0)
+							tm->tm_mon += (fval * 12);
 						tmask = ((fmask & DTK_M(YEAR)) ? 0 : DTK_M(YEAR));
 						break;
 
 					case DTK_DECADE:
 						tm->tm_year += val * 10;
+						if (fval != 0)
+							tm->tm_mon += (fval * 120);
 						tmask = ((fmask & DTK_M(YEAR)) ? 0 : DTK_M(YEAR));
 						break;
 
 					case DTK_CENTURY:
 						tm->tm_year += val * 100;
+						if (fval != 0)
+							tm->tm_mon += (fval * 1200);
 						tmask = ((fmask & DTK_M(YEAR)) ? 0 : DTK_M(YEAR));
 						break;
 
 					case DTK_MILLENIUM:
 						tm->tm_year += val * 1000;
+						if (fval != 0)
+							tm->tm_mon += (fval * 12000);
 						tmask = ((fmask & DTK_M(YEAR)) ? 0 : DTK_M(YEAR));
 						break;
 
