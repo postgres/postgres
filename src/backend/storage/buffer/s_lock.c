@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/Attic/s_lock.c,v 1.33 2001/02/18 04:39:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/Attic/s_lock.c,v 1.34 2001/02/24 22:42:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,8 +91,8 @@ s_lock_sleep(unsigned spins, int timeout, int microsec,
 
 	if (microsec > 0)
 	{
-		delay.tv_sec = 0;
-		delay.tv_usec = microsec;
+		delay.tv_sec = microsec / 1000000;
+		delay.tv_usec = microsec % 1000000;
 	}
 	else
 	{
