@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.56 2005/01/14 01:16:22 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.57 2005/01/15 03:38:44 tgl Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -2787,17 +2787,12 @@ CREATE OR REPLACE FUNCTION maint_sales_summary_bytime() RETURNS TRIGGER AS $main
                             amount_sold, 
                             units_sold, 
                             amount_cost)
-                    SELECT  f.time_key, 
-                            sum(f.amount_sold), 
-                            sum(f.units_sold), 
-                            sum(f.amount_cost)
-                    FROM sales_fact f
-                    WHERE f.time_key = delta_time_key
-                    GROUP BY f.time_key;
-                -- This query can potentially be very expensive if the trigger 
-                -- is created on sales_fact without the time_key indexes.
-                -- Some care is needed to ensure that this situation does 
-                -- *not* occur.
+                    VALUES ( 
+                            delta_time_key,
+                            delta_amount_sold,
+                            delta_units_sold,
+                            delta_amount_cost
+                           );
             EXCEPTION
                 --
                 -- Catch race condition when two transactions are adding data
