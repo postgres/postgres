@@ -405,7 +405,7 @@ PGTYPESdate_defmt_asc(date * d, char *fmt, char *str)
 	reading_digit = 1;
 	for (i = 0; str[i]; i++)
 	{
-		if (!isdigit(str[i]))
+		if (!isdigit((unsigned char) str[i]))
 		{
 			reading_digit = 0;
 			break;
@@ -495,7 +495,7 @@ PGTYPESdate_defmt_asc(date * d, char *fmt, char *str)
 
 		/* convert the whole string to lower case */
 		for (i = 0; str_copy[i]; i++)
-			str_copy[i] = (char) tolower(str_copy[i]);
+			str_copy[i] = (char) tolower((unsigned char) str_copy[i]);
 	}
 
 	/* look for numerical tokens */
@@ -503,14 +503,14 @@ PGTYPESdate_defmt_asc(date * d, char *fmt, char *str)
 	token_count = 0;
 	for (i = 0; i < strlen(str_copy); i++)
 	{
-		if (!isdigit(str_copy[i]) && reading_digit)
+		if (!isdigit((unsigned char) str_copy[i]) && reading_digit)
 		{
 			/* the token is finished */
 			token[token_count][1] = i - 1;
 			reading_digit = 0;
 			token_count++;
 		}
-		else if (isdigit(str_copy[i]) && !reading_digit)
+		else if (isdigit((unsigned char) str_copy[i]) && !reading_digit)
 		{
 			/* we have found a token */
 			token[token_count][0] = i;
@@ -565,7 +565,7 @@ PGTYPESdate_defmt_asc(date * d, char *fmt, char *str)
 		{
 			for (j = 0; j < PGTYPES_DATE_MONTH_MAXLENGTH; j++)
 			{
-				month_lower_tmp[j] = (char) tolower(list[i][j]);
+				month_lower_tmp[j] = (char) tolower((unsigned char) list[i][j]);
 				if (!month_lower_tmp[j])
 				{
 					/* properly terminated */
