@@ -36,7 +36,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/typcache.c,v 1.7 2004/06/05 01:55:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/typcache.c,v 1.8 2004/06/19 18:19:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -409,8 +409,8 @@ lookup_rowtype_tupdesc_noerror(Oid type_id, int32 typmod, bool noError)
 		if (typentry->tupDesc == NULL && !noError)
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("type %u is not composite",
-							type_id)));
+					 errmsg("type %s is not composite",
+							format_type_be(type_id))));
 		return typentry->tupDesc;
 	}
 	else

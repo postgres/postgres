@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.121 2004/06/09 19:08:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.122 2004/06/19 18:19:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,6 +26,7 @@
 #include "parser/parse_type.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
+#include "utils/typcache.h"
 
 
 static void markTargetListOrigin(ParseState *pstate, Resdom *res, Var *var);
@@ -37,7 +38,9 @@ static Node *transformAssignmentIndirection(ParseState *pstate,
 							   int32 targetTypMod,
 							   ListCell *indirection,
 							   Node *rhs);
+static List *ExpandColumnRefStar(ParseState *pstate, ColumnRef *cref);
 static List *ExpandAllTables(ParseState *pstate);
+static List *ExpandIndirectionStar(ParseState *pstate, A_Indirection *ind);
 static char *FigureColname(Node *node);
 static int	FigureColnameInternal(Node *node, char **name);
 
@@ -108,103 +111,47 @@ transformTargetList(ParseState *pstate, List *targetlist)
 	{
 		ResTarget  *res = (ResTarget *) lfirst(o_target);
 
+		/*
+		 * Check for "something.*".  Depending on the complexity of the
+		 * "something", the star could appear as the last name in ColumnRef,
+		 * or as the last indirection item in A_Indirection.
+		 */
 		if (IsA(res->val, ColumnRef))
 		{
 			ColumnRef  *cref = (ColumnRef *) res->val;
-			List	   *fields = cref->fields;
 
-			if (strcmp(strVal(llast(fields)), "*") == 0)
+			if (strcmp(strVal(llast(cref->fields)), "*") == 0)
 			{
-				int		numnames = list_length(fields);
-
-				if (numnames == 1)
-				{
-					/*
-					 * Target item is a single '*', expand all tables
-					 * (e.g., SELECT * FROM emp)
-					 */
-					p_target = list_concat(p_target,
-										   ExpandAllTables(pstate));
-				}
-				else
-				{
-					/*
-					 * Target item is relation.*, expand that table
-					 * (e.g., SELECT emp.*, dname FROM emp, dept)
-					 */
-					char	   *schemaname;
-					char	   *relname;
-					RangeTblEntry *rte;
-					int			sublevels_up;
-
-					switch (numnames)
-					{
-						case 2:
-							schemaname = NULL;
-							relname = strVal(linitial(fields));
-							break;
-						case 3:
-							schemaname = strVal(linitial(fields));
-							relname = strVal(lsecond(fields));
-							break;
-						case 4:
-						{
-							char	   *name1 = strVal(linitial(fields));
-
-							/*
-							 * We check the catalog name and then ignore
-							 * it.
-							 */
-							if (strcmp(name1, get_database_name(MyDatabaseId)) != 0)
-								ereport(ERROR,
-										(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-										 errmsg("cross-database references are not implemented: %s",
-												NameListToString(fields))));
-							schemaname = strVal(lsecond(fields));
-							relname = strVal(lthird(fields));
-							break;
-						}
-						default:
-							ereport(ERROR,
-									(errcode(ERRCODE_SYNTAX_ERROR),
-									 errmsg("improper qualified name (too many dotted names): %s",
-											NameListToString(fields))));
-							schemaname = NULL;		/* keep compiler quiet */
-							relname = NULL;
-							break;
-					}
-
-					rte = refnameRangeTblEntry(pstate, schemaname, relname,
-											   &sublevels_up);
-					if (rte == NULL)
-						rte = addImplicitRTE(pstate, makeRangeVar(schemaname,
-																  relname));
-
-					p_target = list_concat(p_target,
-										   expandRelAttrs(pstate, rte));
-				}
-			}
-			else
-			{
-				/* Plain ColumnRef node, treat it as an expression */
-				p_target = lappend(p_target,
-								   transformTargetEntry(pstate,
-														res->val,
-														NULL,
-														res->name,
-														false));
+				/* It is something.*, expand into multiple items */
+				p_target = list_concat(p_target,
+									   ExpandColumnRefStar(pstate, cref));
+				continue;
 			}
 		}
-		else
+		else if (IsA(res->val, A_Indirection))
 		{
-			/* Everything else but ColumnRef */
-			p_target = lappend(p_target,
-							   transformTargetEntry(pstate,
-													res->val,
-													NULL,
-													res->name,
-													false));
+			A_Indirection  *ind = (A_Indirection *) res->val;
+			Node	*lastitem = llast(ind->indirection);
+
+			if (IsA(lastitem, String) &&
+				strcmp(strVal(lastitem), "*") == 0)
+			{
+				/* It is something.*, expand into multiple items */
+				p_target = list_concat(p_target,
+									   ExpandIndirectionStar(pstate, ind));
+				continue;
+			}
 		}
+
+		/*
+		 * Not "something.*", so transform as a single expression
+		 */
+		p_target = lappend(p_target,
+						   transformTargetEntry(pstate,
+												res->val,
+												NULL,
+												res->name,
+												false));
 	}
 
 	return p_target;
@@ -719,8 +666,90 @@ checkInsertTargets(ParseState *pstate, List *cols, List **attrnos)
 	return cols;
 }
 
-/* ExpandAllTables()
- * Turns '*' (in the target list) into a list of targetlist entries.
+/*
+ * ExpandColumnRefStar()
+ *		Turns foo.* (in the target list) into a list of targetlist entries.
+ *
+ * This handles the case where '*' appears as the last or only name in a
+ * ColumnRef.
+ */
+static List *
+ExpandColumnRefStar(ParseState *pstate, ColumnRef *cref)
+{
+	List	   *fields = cref->fields;
+	int			numnames = list_length(fields);
+
+	if (numnames == 1)
+	{
+		/*
+		 * Target item is a bare '*', expand all tables
+		 *
+		 * (e.g., SELECT * FROM emp, dept)
+		 */
+		return ExpandAllTables(pstate);
+	}
+	else
+	{
+		/*
+		 * Target item is relation.*, expand that table
+		 *
+		 * (e.g., SELECT emp.*, dname FROM emp, dept)
+		 */
+		char	   *schemaname;
+		char	   *relname;
+		RangeTblEntry *rte;
+		int			sublevels_up;
+
+		switch (numnames)
+		{
+			case 2:
+				schemaname = NULL;
+				relname = strVal(linitial(fields));
+				break;
+			case 3:
+				schemaname = strVal(linitial(fields));
+				relname = strVal(lsecond(fields));
+				break;
+			case 4:
+			{
+				char	   *name1 = strVal(linitial(fields));
+
+				/*
+				 * We check the catalog name and then ignore
+				 * it.
+				 */
+				if (strcmp(name1, get_database_name(MyDatabaseId)) != 0)
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("cross-database references are not implemented: %s",
+									NameListToString(fields))));
+				schemaname = strVal(lsecond(fields));
+				relname = strVal(lthird(fields));
+				break;
+			}
+			default:
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("improper qualified name (too many dotted names): %s",
+								NameListToString(fields))));
+				schemaname = NULL;		/* keep compiler quiet */
+				relname = NULL;
+				break;
+		}
+
+		rte = refnameRangeTblEntry(pstate, schemaname, relname,
+								   &sublevels_up);
+		if (rte == NULL)
+			rte = addImplicitRTE(pstate, makeRangeVar(schemaname,
+													  relname));
+
+		return expandRelAttrs(pstate, rte);
+	}
+}
+
+/*
+ * ExpandAllTables()
+ *		Turns '*' (in the target list) into a list of targetlist entries.
  *
  * tlist entries are generated for each relation appearing at the top level
  * of the query's namespace, except for RTEs marked not inFromCl.  (These
@@ -768,6 +797,84 @@ ExpandAllTables(ParseState *pstate)
 			  errmsg("SELECT * with no tables specified is not valid")));
 
 	return target;
+}
+
+/*
+ * ExpandIndirectionStar()
+ *		Turns foo.* (in the target list) into a list of targetlist entries.
+ *
+ * This handles the case where '*' appears as the last item in A_Indirection.
+ */
+static List *
+ExpandIndirectionStar(ParseState *pstate, A_Indirection *ind)
+{
+	Node	   *expr;
+	TupleDesc	tupleDesc;
+	int			numAttrs;
+	int			i;
+	List	   *te_list = NIL;
+
+	/* Strip off the '*' to create a reference to the rowtype object */
+	ind = copyObject(ind);
+	ind->indirection = list_truncate(ind->indirection,
+									 list_length(ind->indirection) - 1);
+
+	/* And transform that */
+	expr = transformExpr(pstate, (Node *) ind);
+
+	/* Verify it's a composite type, and get the tupdesc */
+	tupleDesc = lookup_rowtype_tupdesc(exprType(expr), exprTypmod(expr));
+
+	/* Generate a list of references to the individual fields */
+	numAttrs = tupleDesc->natts;
+	for (i = 0; i < numAttrs; i++)
+	{
+		Form_pg_attribute att = tupleDesc->attrs[i];
+		Node	   *fieldnode;
+		TargetEntry *te;
+
+		if (att->attisdropped)
+			continue;
+
+		/*
+		 * If we got a whole-row Var from the rowtype reference, we can
+		 * expand the fields as simple Vars.  Otherwise we must generate
+		 * multiple copies of the rowtype reference and do FieldSelects.
+		 */
+		if (IsA(expr, Var) &&
+			((Var *) expr)->varattno == InvalidAttrNumber)
+		{
+			Var		   *var = (Var *) expr;
+
+			fieldnode = (Node *) makeVar(var->varno,
+										 i + 1,
+										 att->atttypid,
+										 att->atttypmod,
+										 var->varlevelsup);
+		}
+		else
+		{
+			FieldSelect *fselect = makeNode(FieldSelect);
+
+			fselect->arg = (Expr *) copyObject(expr);
+			fselect->fieldnum = i + 1;
+			fselect->resulttype = att->atttypid;
+			fselect->resulttypmod = att->atttypmod;
+
+			fieldnode = (Node *) fselect;
+		}
+
+		te = makeNode(TargetEntry);
+		te->resdom = makeResdom((AttrNumber) pstate->p_next_resno++,
+								att->atttypid,
+								att->atttypmod,
+								pstrdup(NameStr(att->attname)),
+								false);
+		te->expr = (Expr *) fieldnode;
+		te_list = lappend(te_list, te);
+	}
+
+	return te_list;
 }
 
 /*

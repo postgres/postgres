@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.171 2004/06/16 01:26:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.172 2004/06/19 18:19:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,7 +38,6 @@ static Oid **argtype_inherit(int nargs, Oid *argtypes);
 
 static int	find_inheritors(Oid relid, Oid **supervec);
 static Oid **gen_cross_product(InhPaths *arginh, int nargs);
-static FieldSelect *setup_field_select(Node *input, char *attname, Oid relid);
 static void unknown_attribute(ParseState *pstate, Node *relref, char *attname);
 
 
@@ -1132,33 +1131,6 @@ make_fn_arguments(ParseState *pstate,
 }
 
 /*
- * setup_field_select
- *		Build a FieldSelect node that says which attribute to project to.
- *		This routine is called by ParseFuncOrColumn() when we have found
- *		a projection on a function result or parameter.
- */
-static FieldSelect *
-setup_field_select(Node *input, char *attname, Oid relid)
-{
-	FieldSelect *fselect = makeNode(FieldSelect);
-	AttrNumber	attno;
-
-	attno = get_attnum(relid, attname);
-	if (attno == InvalidAttrNumber)
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_COLUMN),
-			 errmsg("column \"%s\" of relation \"%s\" does not exist",
-					attname, get_rel_name(relid))));
-
-	fselect->arg = (Expr *) input;
-	fselect->fieldnum = attno;
-	fselect->resulttype = get_atttype(relid, attno);
-	fselect->resulttypmod = get_atttypmod(relid, attno);
-
-	return fselect;
-}
-
-/*
  * ParseComplexProjection -
  *	  handles function calls with a single argument that is of complex type.
  *	  If the function call is actually a column projection, return a suitably
@@ -1170,6 +1142,7 @@ ParseComplexProjection(ParseState *pstate, char *funcname, Node *first_arg)
 	Oid			argtype;
 	Oid			argrelid;
 	AttrNumber	attnum;
+	FieldSelect *fselect;
 
 	/*
 	 * Special case for whole-row Vars so that we can resolve (foo.*).bar
@@ -1205,7 +1178,14 @@ ParseComplexProjection(ParseState *pstate, char *funcname, Node *first_arg)
 		return NULL;			/* funcname does not match any column */
 
 	/* Success, so generate a FieldSelect expression */
-	return (Node *) setup_field_select(first_arg, funcname, argrelid);
+	fselect = makeNode(FieldSelect);
+	fselect->arg = (Expr *) first_arg;
+	fselect->fieldnum = attnum;
+	get_atttypetypmod(argrelid, attnum,
+					  &fselect->resulttype,
+					  &fselect->resulttypmod);
+
+	return (Node *) fselect;
 }
 
 /*
