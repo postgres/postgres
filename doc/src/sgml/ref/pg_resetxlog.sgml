@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_resetxlog.sgml,v 1.3 2002/08/17 05:07:18 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_resetxlog.sgml,v 1.4 2002/08/17 20:24:51 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -73,7 +73,7 @@ PostgreSQL documentation
 
   <para>
    The <literal>-x</> and <literal>-l</> switches are intended for use by
-   <application>pg_upgrade</>.  In most case they should not be used in
+   <application>pg_upgrade</>.  In most cases they should not be used in
    manual recovery operations.
   </para>
  </refsect1>
