@@ -67,7 +67,6 @@ work    [wW][oO][rR][kK]
 <SQL>{sqlerror}		{ dbg(SQL_SQLERROR); return SQL_SQLERROR; }
 <SQL>{sqlprint}		{ dbg(SQL_SQLPRINT); return SQL_SQLPRINT; }
 <SQL>{not}{ws}{found}	{ dbg(SQL_NOT_FOUND); return SQL_NOT_FOUND; }
-<SQL>{break}		{ dbg(SQL_BREAK); return SQL_BREAK; }
 <SQL>{continue}		{ dbg(SQL_CONTINUE); return SQL_CONTINUE; }
 <SQL>{into}		{ dbg(SQL_INTO); return SQL_INTO; }
 <SQL>{goto}		{ dbg(SQL_GOTO); return SQL_GOTO; }
