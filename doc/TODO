@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sat Jan 27 00:49:01 EST 2001
+Last updated:		Sun Jan 28 00:03:41 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -192,6 +192,9 @@ CLIENTS
 	* Allow dump/load of CSV format
 * fix array handling for ECPG
 * -add pg_dump option to dump type names as standard ANSI types
+* have pg_dump use LEFT OUTER JOIN in multi-table SELECTs
+  or multiple SELECTS to avoid bad system catalog entries
+
 * -make pg_dump dump in oid order, so dependencies are resolved (Philip)
 * allow psql \d to show primary and foreign keys
 * allow psql \d to show temporary table structure
