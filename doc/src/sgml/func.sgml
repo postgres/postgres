@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.148 2003/03/25 16:15:36 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.149 2003/03/27 16:35:30 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -4365,7 +4365,7 @@ substring('foobar' from 'o(.)b')   <lineannotation>o</lineannotation>
        </row>          
        <row>
         <entry><literal>to_char(-0.1, '99.99')</literal></entry>
-        <entry><literal>'&nbsp;-.10'</literal></entry>
+        <entry><literal>'&nbsp;&nbsp;-.10'</literal></entry>
        </row>
        <row>
         <entry><literal>to_char(-0.1, 'FM9.99')</literal></entry>
@@ -4381,7 +4381,7 @@ substring('foobar' from 'o(.)b')   <lineannotation>o</lineannotation>
        </row>
        <row>
         <entry><literal>to_char(12, 'FM9990999.9')</literal></entry>
-        <entry><literal>'0012'</literal></entry>
+        <entry><literal>'0012.'</literal></entry>
        </row>
        <row>
         <entry><literal>to_char(485, '999')</literal></entry>
@@ -4405,8 +4405,18 @@ substring('foobar' from 'o(.)b')   <lineannotation>o</lineannotation>
        </row>
        <row>
         <entry><literal>to_char(148.5, '999.999')</literal></entry>
-        <entry><literal>' 148.500'</literal></entry>
+        <entry><literal>'&nbsp;148.500'</literal></entry>
        </row>
+       <row>
+        <entry><literal>to_char(148.5, 'FM999.999')</literal></entry>
+        <entry><literal>'148.5'</literal></entry>
+       </row>
+       <row>
+       <row>
+        <entry><literal>to_char(148.5, 'FM999.990')</literal></entry>
+        <entry><literal>'148.500'</literal></entry>
+       </row>
+       <row>
        <row>
         <entry><literal>to_char(148.5, '999D999')</literal></entry>
         <entry><literal>'&nbsp;148,500'</literal></entry>	 
@@ -4425,6 +4435,10 @@ substring('foobar' from 'o(.)b')   <lineannotation>o</lineannotation>
        </row>
        <row>
         <entry><literal>to_char(485, '999MI')</literal></entry>
+        <entry><literal>'485&nbsp;'</literal></entry>		
+       </row>
+       <row>
+        <entry><literal>to_char(485, 'FM999MI')</literal></entry>
         <entry><literal>'485'</literal></entry>		
        </row>
        <row>

@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.60 2003/03/22 02:12:24 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.61 2003/03/27 16:35:30 momjian Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2002, PostgreSQL Global Development Group
@@ -276,17 +276,19 @@ typedef struct
  * Flags for NUMBER version
  * ----------
  */
-#define NUM_F_DECIMAL	0x01
-#define NUM_F_LDECIMAL	0x02
-#define NUM_F_ZERO	0x04
-#define NUM_F_BLANK 0x08
-#define NUM_F_FILLMODE	0x10
-#define NUM_F_LSIGN 0x20
-#define NUM_F_BRACKET	0x40
-#define NUM_F_MINUS 0x80
-#define NUM_F_PLUS	0x100
-#define NUM_F_ROMAN 0x200
-#define NUM_F_MULTI 0x400
+#define NUM_F_DECIMAL		(1 << 1)
+#define NUM_F_LDECIMAL		(1 << 2)
+#define NUM_F_ZERO		(1 << 3)
+#define NUM_F_BLANK 		(1 << 4)
+#define NUM_F_FILLMODE		(1 << 5)
+#define NUM_F_LSIGN 		(1 << 6)
+#define NUM_F_BRACKET		(1 << 7)
+#define NUM_F_MINUS 		(1 << 8)
+#define NUM_F_PLUS		(1 << 9)
+#define NUM_F_ROMAN 		(1 << 10)
+#define NUM_F_MULTI		(1 << 11)
+#define NUM_F_PLUS_POST 	(1 << 12)
+#define NUM_F_MINUS_POST	(1 << 13)
 
 #define NUM_LSIGN_PRE	-1
 #define NUM_LSIGN_POST	1
@@ -828,7 +830,6 @@ typedef struct NUMProc
 
 	int			sign,			/* '-' or '+'			*/
 				sign_wrote,		/* was sign write		*/
-				sign_pos,		/* pre number sign position */
 				num_count,		/* number of write digits	*/
 				num_in,			/* is inside number		*/
 				num_curr,		/* current position in number	*/
@@ -1052,6 +1053,8 @@ NUMDesc_prepare(NUMDesc *num, FormatNode *n)
 				elog(ERROR, "to_char/to_number(): can't use 'S' and 'MI' together.");
 			}
 			num->flag |= NUM_F_MINUS;
+			if (IS_DECIMAL(num))
+				num->flag |= NUM_F_MINUS_POST;
 			break;
 
 		case NUM_PL:
@@ -1061,6 +1064,8 @@ NUMDesc_prepare(NUMDesc *num, FormatNode *n)
 				elog(ERROR, "to_char/to_number(): can't use 'S' and 'PL' together.");
 			}
 			num->flag |= NUM_F_PLUS;
+			if (IS_DECIMAL(num))
+				num->flag |= NUM_F_PLUS_POST;
 			break;
 
 		case NUM_SG:
@@ -3556,7 +3561,7 @@ NUM_numpart_from_char(NUMProc *Np, int id, int plen)
 		 * simple + - < >
 		 */
 		if (*Np->inout_p == '-' || (IS_BRACKET(Np->Num) &&
-									*Np->inout_p == '<'))
+			*Np->inout_p == '<'))
 		{
 
 			*Np->number = '-';	/* set - */
@@ -3629,6 +3634,12 @@ NUM_numpart_from_char(NUMProc *Np, int id, int plen)
 	}
 }
 
+#define IS_PREDEC_SPACE(_n) \
+		(IS_ZERO((_n)->Num)==FALSE && \
+		 (_n)->number == (_n)->number_p && \
+		 *(_n)->number == '0' && \
+                 (_n)->Num->post != 0)
+
 /* ----------
  * Add digit or sign to number-string
  * ----------
@@ -3658,67 +3669,54 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 	Np->num_in = FALSE;
 
 	/*
-	 * Write sign
+	 * Write sign if real number will write to output
+	 * Note: IS_PREDEC_SPACE() handle "9.9" --> " .1"
 	 */
-	if (Np->num_curr == Np->sign_pos && Np->sign_wrote == FALSE)
-	{
-
-#ifdef DEBUG_TO_FROM_CHAR
-		elog(DEBUG_elog_output, "Writing sign to position: %d", Np->num_curr);
-#endif
+	if (Np->sign_wrote == FALSE && 
+		(Np->num_curr >= Np->num_pre || (IS_ZERO(Np->Num) && Np->Num->zero_start == Np->num_curr )) && 
+		(IS_PREDEC_SPACE(Np)==FALSE || (Np->last_relevant && *Np->last_relevant == '.')))
+	{	
 		if (IS_LSIGN(Np->Num))
 		{
-			/*
-			 * Write locale SIGN
-			 */
-			if (Np->sign == '-')
-				strcpy(Np->inout_p, Np->L_negative_sign);
-			else
-				strcpy(Np->inout_p, Np->L_positive_sign);
-			Np->inout_p += strlen(Np->inout_p);
-
+			if (Np->Num->lsign == NUM_LSIGN_PRE)
+			{
+				if (Np->sign == '-')
+					strcpy(Np->inout_p, Np->L_negative_sign);
+				else
+					strcpy(Np->inout_p, Np->L_positive_sign);
+				Np->inout_p += strlen(Np->inout_p);
+				Np->sign_wrote = TRUE;
+			}
 		}
 		else if (IS_BRACKET(Np->Num))
 		{
-			*Np->inout_p = '<'; /* Write < */
+			*Np->inout_p = Np->sign == '+' ? ' ' : '<';
 			++Np->inout_p;
-
+			Np->sign_wrote = TRUE;
 		}
 		else if (Np->sign == '+')
 		{
-			*Np->inout_p = ' '; /* Write + */
-			++Np->inout_p;
-
+			if (!IS_FILLMODE(Np->Num))
+			{
+				*Np->inout_p = ' '; /* Write + */
+				++Np->inout_p;
+			}
+			Np->sign_wrote = TRUE;
 		}
 		else if (Np->sign == '-')
 		{						/* Write - */
 			*Np->inout_p = '-';
 			++Np->inout_p;
+			Np->sign_wrote = TRUE;
 		}
-		Np->sign_wrote = TRUE;
-
 	}
-	else if (Np->sign_wrote && IS_BRACKET(Np->Num) &&
-			 (Np->num_curr == Np->num_count + (Np->num_pre ? 1 : 0)
-			  + (IS_DECIMAL(Np->Num) ? 1 : 0)))
-	{
-		/*
-		 * Write close BRACKET
-		 */
-#ifdef DEBUG_TO_FROM_CHAR
-		elog(DEBUG_elog_output, "Writing bracket to position %d", Np->num_curr);
-#endif
-		*Np->inout_p = '>';		/* Write '>' */
-		++Np->inout_p;
-	}
-
+	 
+	
 	/*
 	 * digits / FM / Zero / Dec. point
 	 */
-	if (id == NUM_9 || id == NUM_0 || id == NUM_D || id == NUM_DEC ||
-		(id == NUM_S && Np->num_curr < Np->num_pre))
+	if (id == NUM_9 || id == NUM_0 || id == NUM_D || id == NUM_DEC)
 	{
-
 		if (Np->num_curr < Np->num_pre &&
 			(Np->Num->zero_start > Np->num_curr || !IS_ZERO(Np->Num)))
 		{
@@ -3727,9 +3725,6 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 			 */
 			if (!IS_FILLMODE(Np->Num))
 			{
-#ifdef DEBUG_TO_FROM_CHAR
-				elog(DEBUG_elog_output, "Writing blank space to position %d", Np->num_curr);
-#endif
 				*Np->inout_p = ' ';		/* Write ' ' */
 				++Np->inout_p;
 			}
@@ -3742,9 +3737,6 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 			/*
 			 * Write ZERO
 			 */
-#ifdef DEBUG_TO_FROM_CHAR
-			elog(DEBUG_elog_output, "Writing zero to position %d", Np->num_curr);
-#endif
 			*Np->inout_p = '0'; /* Write '0' */
 			++Np->inout_p;
 			Np->num_in = TRUE;
@@ -3760,12 +3752,8 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 
 				if (!Np->last_relevant || *Np->last_relevant != '.')
 				{
-#ifdef DEBUG_TO_FROM_CHAR
-					elog(DEBUG_elog_output, "Writing decimal point to position %d", Np->num_curr);
-#endif
 					strcpy(Np->inout_p, Np->decimal);	/* Write DEC/D */
 					Np->inout_p += strlen(Np->inout_p);
-
 				}
 				/*
 				 * Ora 'n' -- FM9.9 --> 'n.'
@@ -3788,10 +3776,9 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 					id != NUM_0)
 					;
 				/*
-				 * terrible Ora format: '0.1' -- 9.9 --> '  .1'
+				 * '0.1' -- 9.9 --> '  .1'
 				 */
-				else if (!IS_ZERO(Np->Num) && *Np->number == '0' &&
-						 Np->number == Np->number_p && Np->Num->post != 0)
+				else if (IS_PREDEC_SPACE(Np))
 				{
 					if (!IS_FILLMODE(Np->Num))
 					{
@@ -3799,7 +3786,7 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 						++Np->inout_p;
 					}
 					/*
-					 * total terrible Ora: '0' -- FM9.9 --> '0.'
+					 * '0' -- FM9.9 --> '0.'
 					 */
 					else if (Np->last_relevant && *Np->last_relevant == '.')
 					{
@@ -3809,16 +3796,34 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 				}
 				else
 				{
-#ifdef DEBUG_TO_FROM_CHAR
-					elog(DEBUG_elog_output, "Writing digit '%c' to position %d",
-						 *Np->number_p, Np->num_curr);
-#endif
 					*Np->inout_p = *Np->number_p;		/* Write DIGIT */
 					++Np->inout_p;
 					Np->num_in = TRUE;
 				}
 			}
 			++Np->number_p;
+		}
+
+		int end = Np->num_count + (Np->num_pre ? 1 : 0) + (IS_DECIMAL(Np->Num) ? 1 : 0);
+		
+		if (Np->last_relevant && Np->last_relevant == Np->number_p)
+			end = Np->num_curr;
+		
+		if (Np->num_curr+1 == end)
+		{
+			if (Np->sign_wrote == TRUE && IS_BRACKET(Np->Num))
+			{
+				*Np->inout_p = Np->sign == '+' ? ' ' : '>';
+				++Np->inout_p;
+			}
+			else if (IS_LSIGN(Np->Num) && Np->Num->lsign == NUM_LSIGN_POST)
+			{
+				if (Np->sign == '-')
+					strcpy(Np->inout_p, Np->L_negative_sign);
+				else
+					strcpy(Np->inout_p, Np->L_positive_sign);
+				Np->inout_p += strlen(Np->inout_p);
+			}
 		}
 	}
 
@@ -3847,7 +3852,7 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 
 	if (Np->Num->zero_start)
 		--Np->Num->zero_start;
-
+	
 	/*
 	 * Roman correction
 	 */
@@ -3875,33 +3880,37 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 	if (type == FROM_CHAR)
 	{
 		Np->sign = FALSE;
-		Np->sign_pos = -1;
 	}
 	else
 	{
 		Np->sign = sign;
-
-		if (Np->sign != '-')
-		{
-			Np->Num->flag &= ~NUM_F_BRACKET;
-			Np->Num->flag &= ~NUM_F_MINUS;
-		}
-		else if (Np->sign != '+')
-			Np->Num->flag &= ~NUM_F_PLUS;
-
-		if (Np->sign == '+' && IS_FILLMODE(Np->Num) && !IS_LSIGN(Np->Num))
-			Np->sign_wrote = TRUE;		/* needn't sign */
-		else
-			Np->sign_wrote = FALSE;		/* need sign */
-
-		Np->sign_pos = -1;
-
-		if (Np->Num->lsign == NUM_LSIGN_PRE && Np->Num->pre == Np->Num->pre_lsign_num)
-			Np->Num->lsign = NUM_LSIGN_POST;
-
+		
 		/* MI/PL/SG - write sign itself and not in number */
 		if (IS_PLUS(Np->Num) || IS_MINUS(Np->Num))
-			Np->sign_wrote = TRUE;		/* needn't sign */
+		{
+			if (IS_PLUS(Np->Num) && IS_MINUS(Np->Num)==FALSE)
+				Np->sign_wrote = FALSE;
+		}
+		else
+		{
+			if (Np->sign != '-')
+			{
+				if (IS_BRACKET(Np->Num) && IS_FILLMODE(Np->Num))
+					Np->Num->flag &= ~NUM_F_BRACKET;
+				if (IS_MINUS(Np->Num))
+					Np->Num->flag &= ~NUM_F_MINUS;
+			}
+			else if (Np->sign != '+' && IS_PLUS(Np->Num))
+				Np->Num->flag &= ~NUM_F_PLUS;
+
+			if (Np->sign == '+' && IS_FILLMODE(Np->Num) && IS_LSIGN(Np->Num)==FALSE)
+				Np->sign_wrote = TRUE;		/* needn't sign */
+			else
+				Np->sign_wrote = FALSE;		/* need sign */
+
+			if (Np->Num->lsign == NUM_LSIGN_PRE && Np->Num->pre == Np->Num->pre_lsign_num)
+				Np->Num->lsign = NUM_LSIGN_POST;
+		}
 	}
 
 	/*
@@ -3917,51 +3926,13 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 		{
 			if (IS_DECIMAL(Np->Num))
 				Np->last_relevant = get_last_relevant_decnum(
-															 Np->number +
+								 Np->number +
 								 ((Np->Num->zero_end - Np->num_pre > 0) ?
 								  Np->Num->zero_end - Np->num_pre : 0));
 		}
 
-		if (!Np->sign_wrote && Np->num_pre == 0)
+		if (Np->sign_wrote==FALSE && Np->num_pre == 0)
 			++Np->num_count;
-
-		if (!Np->sign_wrote)
-		{
-			/*
-			 * Set SING position
-			 */
-			if (Np->Num->lsign == NUM_LSIGN_POST)
-			{
-				Np->sign_pos = Np->num_count + (Np->num_pre ? 1 : 0);
-
-				if (IS_DECIMAL(Np->Num))		/* decimal point correction */
-					++Np->sign_pos;
-			}
-			else if (IS_ZERO(Np->Num) && Np->num_pre > Np->Num->zero_start)
-				Np->sign_pos = Np->Num->zero_start ? Np->Num->zero_start : 0;
-
-			else
-				Np->sign_pos = Np->num_pre && !IS_FILLMODE(Np->Num) ? Np->num_pre : 0;
-
-			/*
-			 * terrible Ora format
-			 */
-			if (!IS_ZERO(Np->Num) && *Np->number == '0' &&
-				!IS_FILLMODE(Np->Num) && Np->Num->post != 0)
-			{
-
-				++Np->sign_pos;
-
-				if (IS_LSIGN(Np->Num))
-				{
-					if (Np->Num->lsign == NUM_LSIGN_PRE)
-						++Np->sign_pos;
-					else
-						--Np->sign_pos;
-				}
-			}
-		}
-
 	}
 	else
 	{
@@ -3975,20 +3946,24 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 
 #ifdef DEBUG_TO_FROM_CHAR
 	elog(DEBUG_elog_output,
-
-		 "\n\tNUM: '%s'\n\tPRE: %d\n\tPOST: %d\n\tNUM_COUNT: %d\n\tNUM_PRE: %d\n\tSIGN_POS: %d\n\tSIGN_WROTE: %s\n\tZERO: %s\n\tZERO_START: %d\n\tZERO_END: %d\n\tLAST_RELEVANT: %s",
+		 "\n\tSIGN: '%c'\n\tNUM: '%s'\n\tPRE: %d\n\tPOST: %d\n\tNUM_COUNT: %d\n\tNUM_PRE: %d\n\tSIGN_WROTE: %s\n\tZERO: %s\n\tZERO_START: %d\n\tZERO_END: %d\n\tLAST_RELEVANT: %s\n\tBRACKET: %s\n\tPLUS: %s\n\tMINUS: %s\n\tFILLMODE: %s\n\tROMAN: %s",
+		 Np->sign,
 		 Np->number,
 		 Np->Num->pre,
 		 Np->Num->post,
 		 Np->num_count,
 		 Np->num_pre,
-		 Np->sign_pos,
 		 Np->sign_wrote ? "Yes" : "No",
 		 IS_ZERO(Np->Num) ? "Yes" : "No",
 		 Np->Num->zero_start,
 		 Np->Num->zero_end,
-		 Np->last_relevant ? Np->last_relevant : "<not set>"
-		);
+		 Np->last_relevant ? Np->last_relevant : "<not set>",
+		 IS_BRACKET(Np->Num) ? "Yes" : "No",
+		 IS_PLUS(Np->Num) ? "Yes" : "No",
+		 IS_MINUS(Np->Num) ? "Yes" : "No",
+		 IS_FILLMODE(Np->Num) ? "Yes" : "No",
+		 IS_ROMAN(Np->Num) ? "Yes" : "No"
+	);
 #endif
 
 	/*
@@ -4031,8 +4006,6 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 				case NUM_0:
 				case NUM_DEC:
 				case NUM_D:
-				case NUM_S:
-				case NUM_PR:
 					if (Np->type == TO_CHAR)
 					{
 						NUM_numpart_to_char(Np, n->key->id);
@@ -4163,6 +4136,8 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 					{
 						if (Np->sign == '-')
 							*Np->inout_p = '-';
+						else if (IS_FILLMODE(Np->Num))
+							continue;
 						else
 							*Np->inout_p = ' ';
 
@@ -4179,6 +4154,8 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 					{
 						if (Np->sign == '+')
 							*Np->inout_p = '+';
+						else if (IS_FILLMODE(Np->Num))
+							continue;
 						else
 							*Np->inout_p = ' ';
 
@@ -4262,6 +4239,7 @@ do { \
 	if (len <= 0)							\
 		return DirectFunctionCall1(textin, CStringGetDatum(""));	\
 	result	= (text *) palloc( (len * NUM_MAX_ITEM_SIZ) + 1 + VARHDRSZ); \
+	memset(result, 0,  (len * NUM_MAX_ITEM_SIZ) + 1 + VARHDRSZ ); \
 	format	= NUM_cache(len, &Num, VARDATA(fmt), &shouldFree);		\
 } while (0)
 
