@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_controldata.sgml,v 1.2 2002/08/16 20:36:25 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_controldata.sgml,v 1.3 2002/08/17 02:43:08 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -33,7 +33,8 @@ PostgreSQL documentation
   </para>
 
   <para>
-   This utility may only be run by the user who installed the server.
+   This utility may only be run by the user who installed the server because
+   it requires read access to the <literal>datadir</>.
    You can specify the data directory on the command line, or use 
    the environment variable <envar>PGDATA</>.
   </para>
