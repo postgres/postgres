@@ -1,5 +1,91 @@
 namespace eval Schema {
 
+proc {clm_rename} {{tbl_name} {old_name} {new_name}} {
+		global PgAcVar CurrentDB
+ 		catch {
+				wpg_select $CurrentDB "select schemaname from pga_schema where (schematables like '%$tbl_name %') order by schemaname" rec {
+					set Names $rec(schemaname)
+					do_clm_rename $tbl_name $old_name $new_name $Names
+				}
+    }
+}
+
+proc {do_clm_rename} {{tbl_name} {old_name} {new_name} {schema}} {
+		 global PgAcVar CurrentDB
+	init
+	set PgAcVar(schema,name) $schema
+	if {[set pgres [wpg_exec $CurrentDB "select schematables,schemalinks,oid from pga_schema where schemaname='$PgAcVar(schema,name)'"]]==0} then {
+		showError [intlmsg "Error retrieving schema definition"]
+		return
+	}
+	if {[pg_result $pgres -numTuples]==0} {
+		showError [format [intlmsg "Schema '%s' was not found!"] $PgAcVar(schema,name)]
+		pg_result $pgres -clear
+		return
+	}
+	set tuple [pg_result $pgres -getTuple 0]
+	set links [lindex $tuple 1]
+	pg_result $pgres -clear
+	set linkslist {}
+	set PgAcVar(schema,links) $links
+	foreach link $PgAcVar(schema,links) {
+				set linklist { }
+				foreach {tbl fld} $link {
+								if {$tbl==$tbl_name} {
+									 if {$fld==$old_name} { set fld $new_name}
+								} 
+								lappend linklist $tbl $fld
+				}
+				lappend linkslist $linklist
+	}
+		 sql_exec noquiet "update pga_schema set schemalinks='$linkslist' where schemaname='$schema'"
+}
+
+proc {tbl_rename} {{old_name} {new_name}} {
+		global PgAcVar CurrentDB
+ 		catch {
+				wpg_select $CurrentDB "select schemaname from pga_schema where (schematables like '$old_name %') or (schematables like '% $old_name %') order by schemaname" rec {
+					set Names $rec(schemaname)
+					do_tbl_rename $old_name $new_name $Names
+				}
+    }
+}
+
+proc {do_tbl_rename} {{old_name} {new_name} {schema}} {
+		 global PgAcVar CurrentDB
+	init
+	set PgAcVar(schema,name) $schema
+	if {[set pgres [wpg_exec $CurrentDB "select schematables,schemalinks,oid from pga_schema where schemaname='$PgAcVar(schema,name)'"]]==0} then {
+		showError [intlmsg "Error retrieving schema definition"]
+		return
+	}
+	if {[pg_result $pgres -numTuples]==0} {
+		showError [format [intlmsg "Schema '%s' was not found!"] $PgAcVar(schema,name)]
+		pg_result $pgres -clear
+		return
+	}
+	set tuple [pg_result $pgres -getTuple 0]
+	set tables [lindex $tuple 0]
+	set links [lindex $tuple 1]
+	pg_result $pgres -clear
+	set tablelist {}
+	foreach {t x y} $tables {
+		if {$t==$old_name} { set t $new_name} 
+		lappend tablelist $t $x $y
+	}
+	set linkslist {}
+
+	set PgAcVar(schema,links) $links
+	foreach link $PgAcVar(schema,links) {
+				set linklist { }
+				foreach {tbl fld} $link {
+								if {$tbl==$old_name} { set tbl $new_name} 
+								lappend linklist $tbl $fld
+				}
+				lappend linkslist $linklist
+	}
+		 sql_exec noquiet "update pga_schema set schematables='$tablelist', schemalinks='$linkslist' where schemaname='$schema'"
+}
 
 proc {new} {} {
 global PgAcVar
@@ -39,8 +125,10 @@ global PgAcVar CurrentDB
 	}
 	set PgAcVar(schema,links) $links
 	drawLinks
+	drawCoord
+#### This makes new page size
 	foreach {ulx uly lrx lry} [.pgaw:Schema.c bbox all] {
-		wm geometry .pgaw:Schema [expr $lrx+30]x[expr $lry+30]
+#		wm geometry .pgaw:Schema [expr $lrx+30]x[expr $lry+30]
 	}
 }
 
@@ -89,6 +177,7 @@ if {$PgAcVar(schema,ntables)==1} {
 } else {
    drawTable [expr $PgAcVar(schema,ntables)-1]
 }
+#lappend PgAcVar(schema,tables) $PgAcVar(schema,newtablename)  $PgAcVar(schema,tablex[expr $PgAcVar(schema,ntables)-1]) $PgAcVar(schema,tabley[expr $PgAcVar(schema,ntables)-1])
 lappend PgAcVar(schema,tables) $PgAcVar(schema,newtablename)  $PgAcVar(schema,tablex[expr $PgAcVar(schema,ntables)-1]) $PgAcVar(schema,tabley[expr $PgAcVar(schema,ntables)-1])
 set PgAcVar(schema,newtablename) {}
 focus .pgaw:Schema.f.e
@@ -116,8 +205,11 @@ proc {drawTable} {it} {
 global PgAcVar
 
 if {$PgAcVar(schema,tablex$it)==0} {
-	set posy $PgAcVar(schema,nexty)
-	set posx $PgAcVar(schema,nextx)
+	set posx 380
+	set posy 265
+	
+#	set posy $PgAcVar(schema,nexty)
+#	set posx $PgAcVar(schema,nextx)
 	set PgAcVar(schema,tablex$it) $posx
 	set PgAcVar(schema,tabley$it) $posy
 } else {
@@ -149,7 +241,11 @@ if {$nextx > [winfo width .pgaw:Schema.c] } {
 }
 set PgAcVar(schema,nextx) $nextx
 set PgAcVar(schema,nexty) $nexty
-
+}
+proc {drawCoord} {} {
+		 global PgAcVar
+		 .pgaw:Schema.c create line 365 265 395 265 -fill "#ff0000" -width "1.0" -tags .pgaw:Schema.c
+		 .pgaw:Schema.c create line 380 250 380 280 -fill "#ff0000" -width "1.0" -tags .pgaw:Schema.c
 }
 
 proc {deleteObject} {} {
@@ -207,6 +303,7 @@ global PgAcVar
 	} else {
 		$w move $PgAcVar(draginfo,obj) $dx $dy
 	}
+#	showError [intlmsg "$dx\n$dy"]
 	set PgAcVar(draginfo,x) $x
 	set PgAcVar(draginfo,y) $y
 }
@@ -268,8 +365,11 @@ set PgAcVar(schema,panstarted) 0
 if {$PgAcVar(draginfo,is_a_table)} {
 	set tabnum [getTagInfo $PgAcVar(draginfo,obj) tab]
 	foreach w [.pgaw:Schema.c find withtag $PgAcVar(draginfo,tabletag)] {
+#						$PgAcVar(schema,coordx)\n$PgAcVar(schema,coordy)
 		if {[lsearch [.pgaw:Schema.c gettags $w] outer] != -1} {
 			foreach [list PgAcVar(schema,tablex$tabnum) PgAcVar(schema,tabley$tabnum) x1 y1] [.pgaw:Schema.c coords $w] {}
+			set PgAcVar(schema,tablex$tabnum) [expr $PgAcVar(schema,tablex$tabnum)+$PgAcVar(schema,coordx)+1]
+			set PgAcVar(schema,tabley$tabnum) [expr $PgAcVar(schema,tabley$tabnum)+$PgAcVar(schema,coordy)-1]
 			break
 		}
 	}
@@ -408,6 +508,8 @@ global PgAcVar
 	set PgAcVar(schema,links) {}
 	set PgAcVar(schema,ntables) 0
 	set PgAcVar(schema,newtablename) {}
+	set PgAcVar(schema,coordx) 0
+	set PgAcVar(schema,coordy) 0
 }
 
 
@@ -431,6 +533,8 @@ global PgAcVar
 	set dy [expr $y-$PgAcVar(schema,panstarty)]
 	set PgAcVar(schema,panstartx) $x
 	set PgAcVar(schema,panstarty) $y
+	set PgAcVar(schema,coordx) [expr $PgAcVar(schema,coordx)-$dx]
+	set PgAcVar(schema,coordy) [expr $PgAcVar(schema,coordy)-$dy]
 	if {$PgAcVar(schema,panobject)=="tables"} {
 		.pgaw:Schema.c move mov $dx $dy
 		.pgaw:Schema.c move links $dx $dy
@@ -461,22 +565,24 @@ proc print {c} {
 proc {canvasClick} {x y w} {
 global PgAcVar
 set PgAcVar(schema,panstarted) 0
-if {$w==".pgaw:Schema.c"} {
-	set canpan 1
-	if {[llength [.pgaw:Schema.c find overlapping $x $y $x $y]]!=0} {set canpan 0}
-	set PgAcVar(schema,panobject) tables
-	if {$canpan} {
-		if {[.pgaw:Schema.c find withtag hili]!=""} {
-			.pgaw:Schema.c itemconfigure hili -fill black
-			.pgaw:Schema.c dtag hili
+	if {$w==".pgaw:Schema.c"} {
+		set canpan 1
+		if {[llength [.pgaw:Schema.c find overlapping $x $y $x $y]]!=0} {set canpan 0}
+		set PgAcVar(schema,panobject) tables
+		if {$canpan} {
+			if {[.pgaw:Schema.c find withtag hili]!=""} {
+				.pgaw:Schema.c itemconfigure hili -fill black
+				.pgaw:Schema.c dtag hili
+				.pgaw:Schema.c dtag dragme
+				
+			}
+	
+			.pgaw:Schema configure -cursor hand1
+			set PgAcVar(schema,panstartx) $x
+			set PgAcVar(schema,panstarty) $y
+			set PgAcVar(schema,panstarted) 1
 		}
-
-		.pgaw:Schema configure -cursor hand1
-		set PgAcVar(schema,panstartx) $x
-		set PgAcVar(schema,panstarty) $y
-		set PgAcVar(schema,panstarted) 1
-	}
-}
+  }
 }
 
 }
@@ -491,25 +597,27 @@ global PgAcVar
 	}
 	toplevel $base -class Toplevel
 	wm focusmodel $base passive
-	wm geometry $base 759x530+10+13
+	wm geometry $base 760x530+10+13
 	wm maxsize $base [winfo screenwidth .] [winfo screenheight .]
 	wm minsize $base 1 1
 	wm overrideredirect $base 0
 	wm resizable $base 1 1
 	wm title $base [intlmsg "Visual schema designer"]
-	bind $base <B1-Motion> {
+  
+
+	canvas $base.c  -background #fefefe -borderwidth 2 -relief ridge  -takefocus 0 -width 295 -height 300
+	bind $base.c <B1-Motion> {
 		Schema::canvasPanning %x %y
 	}
-	bind $base <Button-1> {
+	bind $base.c <Button-1> {
 		Schema::canvasClick %x %y %W
 	}
-	bind $base <ButtonRelease-1> {
+	bind $base.c <ButtonRelease-1> {
 		Schema::dragStop %x %y
 	}
-	bind $base <Key-Delete> {
+	bind $base.c <Key-Delete> {
 		Schema::deleteObject
 	}
-	canvas $base.c  -background #fefefe -borderwidth 2 -height 207 -relief ridge  -takefocus 0 -width 295 
 	frame $base.f \
         -height 75 -relief groove -width 125 
 	label $base.f.l -text [intlmsg {Add table}]
@@ -523,7 +631,7 @@ global PgAcVar
         -command {if {[winfo exists .pgaw:Schema.ddf]} {
 	destroy .pgaw:Schema.ddf
 } else {
-	create_drop_down .pgaw:Schema 70 27 200
+	create_drop_down .pgaw:Schema 50 27 200
 	focus .pgaw:Schema.ddf.sb
 	foreach tbl [Database::getTablesList] {.pgaw:Schema.ddf.lb insert end $tbl}
 	bind .pgaw:Schema.ddf.lb <ButtonRelease-1> {
@@ -553,6 +661,7 @@ Window destroy .pgaw:Schema} -padx 2 -pady 3 -text [intlmsg Close]
 		set pgres [wpg_exec $CurrentDB "insert into pga_schema values ('$PgAcVar(schema,name)','$tables','$PgAcVar(schema,links)')"]
 	} else {
 		set pgres [wpg_exec $CurrentDB "update pga_schema set schemaname='$PgAcVar(schema,name)',schematables='$tables',schemalinks='$PgAcVar(schema,links)' where oid=$PgAcVar(schema,oid)"]
+#		showError [intlmsg "$tables"]
 	}
 	setCursor DEFAULT
 	if {$PgAcVar(pgsql,status)!="PGRES_COMMAND_OK"} then {
@@ -586,9 +695,6 @@ Window destroy .pgaw:Schema} -padx 2 -pady 3 -text [intlmsg Close]
 		-in .pgaw:Schema.f -anchor center -expand 0 -fill none -side right 
 	pack $base.f.lsn \
 		-in .pgaw:Schema.f -anchor center -expand 0 -fill none -side right 
-
-	pack $base.f -side top -anchor ne -expand 0 -fill x
+  pack $base.f -side top -anchor ne -expand 0 -fill x
 	pack $base.c -side bottom -fill both -expand 1
 }
-
-

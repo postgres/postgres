@@ -80,8 +80,8 @@ global PgAcVar CurrentDB
 		}
 	}
 	set PgAcVar(tblinfo,indexlist) {}
-	wpg_select $CurrentDB "select indexrelid from pg_index, pg_class where (pg_class.relname='$PgAcVar(tblinfo,tablename)') and (pg_class.oid=pg_index.indrelid)" rec {
-		lappend PgAcVar(tblinfo,indexlist) $rec(indexrelid)
+	wpg_select $CurrentDB "select oid,indexrelid from pg_index where (pg_class.relname='$PgAcVar(tblinfo,tablename)') and (pg_class.oid=pg_index.indrelid)" rec {
+		lappend PgAcVar(tblinfo,indexlist) $rec(oid)
 		wpg_select $CurrentDB "select relname from pg_class where oid=$rec(indexrelid)" rec1 {
 			.pgaw:TableInfo.f2.fl.ilb insert end $rec1(relname)
 		}
@@ -544,8 +544,7 @@ if {$PgAcVar(mw,$wn,row_edited)==$PgAcVar(mw,$wn,last_rownum)} {
 		set PgAcVar(mw,$wn,newrec_values) [lreplace $PgAcVar(mw,$wn,newrec_values) $sfp $sfp]
 	}			
 	lappend PgAcVar(mw,$wn,newrec_fields) "\"$fld\""
-	regsub -all {'} $fldval '' fldvalfixed
-	lappend PgAcVar(mw,$wn,newrec_values) '$fldvalfixed'
+	lappend PgAcVar(mw,$wn,newrec_values) '$fldval'
 	# Remove the untouched tag from the object
 	$wn.c dtag $PgAcVar(mw,$wn,id_edited) unt
 		$wn.c itemconfigure $PgAcVar(mw,$wn,id_edited) -fill red
@@ -814,10 +813,6 @@ set PgAcVar(mw,$wn,toprec) 0
 setScrollbar $wn
 if {$PgAcVar(mw,$wn,updatable)} then {
 	$wn.c bind q <Key> "Tables::editText $wn %A %K"
-	if {[info commands kanjiInput] == "kanjiInput"} then {
-		$wn.c bind q <Control-backslash> "pgaccess_kinput_start %W";
-		$wn.c bind q <Control-Kanji> "pgaccess_kinput_start %W";
-	}
 } else {
 	$wn.c bind q <Key> {}
 }
@@ -1029,6 +1024,7 @@ global PgAcVar CurrentDB
 		}
 	}
 	if {[sql_exec noquiet "alter table \"$PgAcVar(tblinfo,tablename)\" rename column \"$old_name\" to \"$PgAcVar(tblinfo,new_cn)\""]} {
+		Schema::clm_rename $PgAcVar(tblinfo,tablename) $old_name $PgAcVar(tblinfo,new_cn)
 		refreshTableInformation
 		Window destroy .pgaw:RenameField
 	}
@@ -2176,7 +2172,7 @@ proc vTclWindow.pgaw:Permissions {base} {
 #
 # This file contains Tcl procedures used to input Japanese text.
 #
-# $Header: /cvsroot/pgsql/src/bin/pgaccess/lib/Attic/tables.tcl,v 1.12 2002/04/04 06:27:45 momjian Exp $
+# $Header: /cvsroot/pgsql/src/bin/pgaccess/lib/Attic/tables.tcl,v 1.13 2002/07/02 06:11:23 momjian Exp $
 #
 # Copyright (c) 1993  Software Research Associates, Inc.
 #

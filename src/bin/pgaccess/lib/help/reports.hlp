@@ -1,10 +1,37 @@
 .pgaw:Help.f.t insert end "The Reports module is still in alpha stage.
 
-The module should be able to design and execute a report based on a table\
-or from an existing query.
+DONE:
+# Allows for reports based on tables or views. 
+# Formulas are just Tcl evals, where column names are available as variables.
+  Try: concat \$colname1 \$colname2
+# Pictures must be gif or bmp files (and not stored in the database). 
+# Page header is the first record on a page, page footer is the last.
+# Detail section is all the records that can fit on a page, row by row.
+# Multiple pages.
+# Printing puts the report into a Postscript file.\
+  The pages printed are the ones in and between the boxes on preview mode.
+  You can also pipe the output by entering it in the dialog when prompted.\
+  Try: |lpr
+# Page resizing can be done by typing in the Page size boxes.
+# Report resizing can be done by typing in the Report size boxes and hitting\
+enter or dragging the window and clicking in it with the mouse.
 
-Grouping, sorting, subtotals, expressions should be implemented.
-Report output can be printed as a Postscript file.
+DOING:
+# Allow for reports based on queries.
+# Report headers and footers.
+# Grouping, sorting, subtotals.
+# Drawing simple shapes like lines or circles.
+# Font choice needs expanding.
+# Putting stuff into columns when the page is wider than the report.
 
-For the moment I have no time to do that so volunteers are welcome.
+Also, there are a couple Postscript items to be addressed:
+# Since the Tk canvas widget outputs Encapsulated Postscript,\
+each page printed is a separate piece of Encapsulated Postscript.\
+Putting all those pieces together into one Postscript file was\
+a bit of a kluge, so right now you get every other page blank.  Doh.
+# Each time a picture is displayed, the Postscript grows by about 10 times\
+the size of the picture.  It seems in general Postscript gets enormous\
+fast, at least with the Tk canvas widget's method of outputting it.
+
+Please send patches, proposals, problems, pickles, etc., to Chris Maj <cmaj@freedomcorpse.info> or visit pgaccess.org
 "

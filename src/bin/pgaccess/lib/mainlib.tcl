@@ -105,18 +105,12 @@ global CurrentDB
 
 
 proc {cmd_Functions} {} {
-global PgAcVar CurrentDB
+global CurrentDB
 	set maxim 16384
 	setCursor CLOCK
-	set dbname $PgAcVar(opendb,dbname)
-	if [catch {wpg_select $CurrentDB "select datlastsysoid from pg_database where datname='$dbname'" rec {
-			set maxim $rec(datlastsysoid)
-		}
-	}] {
-		catch {
-			wpg_select $CurrentDB "select oid from pg_database where datname='template1'" rec {
-				set maxim $rec(oid)
-			}
+	catch {
+		wpg_select $CurrentDB "select oid from pg_database where datname='template1'" rec {
+			set maxim $rec(oid)
 		}
 	}
 	.pgaw:Main.lb delete 0 end
@@ -301,17 +295,19 @@ catch {
 }
 
 proc {cmd_Views} {} {
-global CurrentDB PgAcVar
+global CurrentDB
 setCursor CLOCK
 .pgaw:Main.lb delete 0 end
 catch {
-	if {! $PgAcVar(pref,systemtables)} {
-		set sysconstraint "where (viewname !~ '^pg_') and (viewname !~ '^pga_')"
-	} else {
-		set sysconstraint ""
+	wpg_select $CurrentDB "select c.relname,count(c.relname) from pg_class C, pg_rewrite R where (relname !~ '^pg_') and (r.ev_class = C.oid) and (r.ev_type = '1') group by relname" rec {
+		if {$rec(count)!=0} {
+			set itsaview($rec(relname)) 1
+		}
 	}
-	wpg_select $CurrentDB "select viewname from pg_views $sysconstraint order by viewname" rec {
-		.pgaw:Main.lb insert end $rec(viewname)
+	wpg_select $CurrentDB "select relname from pg_class where (relname !~ '^pg_') and (relkind='r') and (relhasrules) order by relname" rec {
+		if {[info exists itsaview($rec(relname))]} {
+			.pgaw:Main.lb insert end $rec(relname)
+		}
 	}
 }
 setCursor DEFAULT
@@ -636,8 +632,6 @@ proc vTclWindow.pgaw:ImportExport {base} {
 	if {$PgAcVar(impexp,delimiter)==""} {
 		set sup ""
 	} else {
-		# now we use WITH DELIMITER, but keep old syntax for
-		# backward compatibility.  2002-06-15
 		set sup " USING DELIMITERS '$PgAcVar(impexp,delimiter)'"
 	}
 	if {[.pgaw:ImportExport.expbtn cget -text]=="Import"} {
@@ -695,6 +689,7 @@ proc vTclWindow.pgaw:RenameObject {base} {
 				showError [intlmsg "You must give object a new name!"]
 			} elseif {$PgAcVar(activetab)=="Tables"} {
 				set retval [sql_exec noquiet "alter table \"$PgAcVar(Old_Object_Name)\" rename to \"$PgAcVar(New_Object_Name)\""]
+				Schema::tbl_rename $PgAcVar(Old_Object_Name) $PgAcVar(New_Object_Name)
 				if {$retval} {
 					sql_exec quiet "update pga_layout set tablename='$PgAcVar(New_Object_Name)' where tablename='$PgAcVar(Old_Object_Name)'"
 					Mainlib::cmd_Tables
@@ -909,11 +904,11 @@ proc vTclWindow.pgaw:About {base} {
 	wm title $base [intlmsg "About"]
 	label $base.l1  -borderwidth 3 -font -Adobe-Helvetica-Bold-R-Normal-*-*-180-*-*-*-*-*  -relief ridge -text PgAccess 
 	label $base.l2  -relief groove  -text [intlmsg "A Tcl/Tk interface to\nPostgreSQL\nby Constantin Teodorescu"]
-	label $base.l3  -borderwidth 0 -relief sunken -text {v 0.98.7}
+	label $base.l3  -borderwidth 0 -relief sunken -text {v 0.99.1}
 	label $base.l4  -relief groove  -text "[intlmsg {You will always get the latest version at:}]
-http://www.flex.ro/pgaccess
+http://www.pgaccess.org/
 
-[intlmsg {Suggestions at}] : teo@flex.ro"
+[intlmsg {Suggestions at}] : developers@pgaccess.org"
 	button $base.b1  -borderwidth 1 -command {Window destroy .pgaw:About} -text Ok 
 	place $base.l1  -x 10 -y 10 -width 196 -height 103 -anchor nw -bordermode ignore 
 	place $base.l2  -x 10 -y 115 -width 198 -height 55 -anchor nw -bordermode ignore 

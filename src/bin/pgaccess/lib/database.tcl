@@ -1,5 +1,10 @@
 namespace eval Database {
 
+# i have no idea why views were being discriminated against here
+# when i first touched the code you could only make reports from tables
+# i just commented out two lines below
+# -cmaj
+
 proc {getTablesList} {} {
 global CurrentDB PgAcVar
 	set tlist {}
@@ -16,10 +21,10 @@ global CurrentDB PgAcVar
 		} else {
 			set sysconstraint ""
 		}
-		wpg_select $CurrentDB "select relname from pg_class where (relkind='r') $sysconstraint order by relname" rec {
-			if {![info exists itsaview($rec(relname))]} {
+		wpg_select $CurrentDB "select relname from pg_class where (relkind='r') or (relkind='v') $sysconstraint order by relname" rec {
+		#	if {![info exists itsaview($rec(relname))]} {
 				lappend tlist $rec(relname)
-			}
+		#	}
 		}
 	} gterrmsg]} {
 		showError $gterrmsg
