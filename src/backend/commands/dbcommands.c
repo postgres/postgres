@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.133 2004/05/26 04:41:10 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.134 2004/05/26 13:56:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -775,6 +775,52 @@ AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
 	heap_close(rel, RowExclusiveLock);
 }
 
+
+/*
+ * ALTER DATABASE name OWNER TO newowner
+ */
+void
+AlterDatabaseOwner(const char *dbname, const char *newowner)
+{
+	AclId		newdatdba;
+	HeapTuple	tuple,
+				newtuple;
+	Relation	rel;
+	ScanKeyData scankey;
+	SysScanDesc scan;
+
+	rel = heap_openr(DatabaseRelationName, RowExclusiveLock);
+	ScanKeyInit(&scankey,
+				Anum_pg_database_datname,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				NameGetDatum(dbname));
+	scan = systable_beginscan(rel, DatabaseNameIndex, true,
+							  SnapshotNow, 1, &scankey);
+	tuple = systable_getnext(scan);
+	if (!HeapTupleIsValid(tuple))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_DATABASE),
+				 errmsg("database \"%s\" does not exist", dbname)));
+
+	/* obtain sysid of proposed owner */
+	newdatdba = get_usesysid(newowner); /* will ereport if no such user */
+
+	/* changing owner's database for someone else: must be superuser */
+	/* note that the someone else need not have any permissions */
+	if (!superuser())
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("must be superuser to change owner's database for another user")));
+
+	/* change owner */
+	newtuple = heap_copytuple(tuple);
+	((Form_pg_database) GETSTRUCT(newtuple))->datdba = newdatdba;
+	simple_heap_update(rel, &tuple->t_self, newtuple);
+	CatalogUpdateIndexes(rel, newtuple);
+
+	systable_endscan(scan);
+	heap_close(rel, NoLock);
+}
 
 
 /*

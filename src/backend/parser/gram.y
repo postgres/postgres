@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.455 2004/05/26 04:41:29 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.456 2004/05/26 13:56:51 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -152,6 +152,7 @@ static void doNegateFloat(Value *v);
 		VariableResetStmt VariableSetStmt VariableShowStmt
 		ViewStmt CheckPointStmt CreateConversionStmt
 		DeallocateStmt PrepareStmt ExecuteStmt
+		AlterDbOwnerStmt
 
 %type <node>	select_no_parens select_with_parens select_clause
 				simple_select
@@ -486,7 +487,8 @@ stmtmulti:	stmtmulti ';' stmt
 		;
 
 stmt :
-			AlterDatabaseSetStmt
+			AlterDbOwnerStmt
+			| AlterDatabaseSetStmt
 			| AlterDomainStmt
 			| AlterGroupStmt
 			| AlterSeqStmt
@@ -3917,6 +3919,15 @@ opt_equal:	'='										{}
  *		ALTER DATABASE
  *
  *****************************************************************************/
+
+AlterDbOwnerStmt: ALTER DATABASE database_name OWNER TO UserId
+				{
+					AlterDbOwnerStmt *n = makeNode(AlterDbOwnerStmt);
+					n->dbname = $3;
+					n->uname = $6;
+					$$ = (Node *)n;
+				}
+		;
 
 AlterDatabaseSetStmt:
 			ALTER DATABASE database_name SET set_rest

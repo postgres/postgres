@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.283 2004/05/21 13:50:12 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.284 2004/05/26 13:57:04 momjian Exp $ */
 
 /* Copyright comment */
 %{
@@ -519,7 +519,6 @@ add_additional_variables(char *name, bool insert)
 %type  <str>	CharacterWithoutLength BitWithLength BitWithoutLength
 %type  <str>	ConstBit GenericType TableFuncElementList opt_analyze
 %type  <str>	opt_sort_clause transaction_access_mode subquery_Op
-
 %type  <str>	ECPGWhenever ECPGConnect connection_target ECPGOpen
 %type  <str>	indicator ECPGExecute ECPGPrepare ecpg_using ecpg_into 
 %type  <str>	storage_declaration storage_clause opt_initializer c_anything
@@ -544,6 +543,7 @@ add_additional_variables(char *name, bool insert)
 %type  <str>	inf_val_list inf_col_list using_descriptor into_descriptor 
 %type  <str>	ecpg_into_using prepared_name struct_union_type_with_symbol
 %type  <str>	ECPGunreserved ECPGunreserved_interval cvariable
+%type  <str>	AlterDatabaseOwnerStmt
 
 %type  <struct_union> s_struct_union_symbol
 
@@ -594,6 +594,7 @@ opt_at: AT connection_target
 		};
 
 stmt:  AlterDatabaseSetStmt		{ output_statement($1, 0, connection); }
+		| AlterDatabaseOwnerStmt	{ output_statement($1, 0, connection); }
 		| AlterDomainStmt	{ output_statement($1, 0, connection); }
 		| AlterGroupStmt	{ output_statement($1, 0, connection); }
 		| AlterSeqStmt		{ output_statement($1, 0, connection); }
@@ -2535,6 +2536,8 @@ opt_equal: '='					{ $$ = make_str("="); }
  *
  *****************************************************************************/
 
+AlterDatabaseOwnerStmt: ALTER DATABASE database_name OWNER TO UserId
+		      	{ $$ = cat_str(4, make_str("alter database"), $3, make_str("owner to"), $6); }
 AlterDatabaseSetStmt: ALTER DATABASE database_name SET set_rest
 			{ $$ = cat_str(4, make_str("alter database"), $3, make_str("set"), $5); }
 		| ALTER DATABASE database_name VariableResetStmt
