@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/stringutils.c,v 1.13 1998/02/26 04:39:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/stringutils.c,v 1.14 1998/05/13 03:27:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,11 +56,20 @@ leftTrim(char *s)
 char *
 rightTrim(char *s)
 {
-	char	   *sEnd;
+	char	   *sEnd, *bsEnd;
+	bool		in_bs = false;
 
 	sEnd = s + strlen(s) - 1;
 	while (sEnd >= s && isspace(*sEnd))
 		sEnd--;
+	bsEnd = sEnd;
+	while (bsEnd >= s && *bsEnd == '\\')
+	{
+		in_bs = (in_bs == false);
+		bsEnd--;
+	}
+	if (in_bs && *sEnd)
+		sEnd++;
 	if (sEnd < s)
 		s[0] = '\0';
 	else
