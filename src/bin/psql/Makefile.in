@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/psql/Attic/Makefile.in,v 1.18 1999/11/26 04:24:16 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/psql/Attic/Makefile.in,v 1.19 1999/11/27 19:43:20 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -29,38 +29,50 @@ CFLAGS+= $(MBFLAGS)
 endif
 
 OBJS=command.o common.o help.o input.o stringutils.o mainloop.o \
-copy.o startup.o prompt.o variables.o large_obj.o print.o describe.o \
-tab-complete.o @STRDUP@ @STRERROR2@ @SNPRINTF@
+	copy.o startup.o prompt.o variables.o large_obj.o print.o describe.o \
+	tab-complete.o
 
 all: submake psql
 
-# Move this to the utils directory
-ifneq (@SNPRINTF@,)
-OBJS+=../../backend/port/snprintf.o
+ifneq (@STRDUP@,)
+OBJS+=$(SRCDIR)/utils/strdup.o
 
-../../backend/port/snprintf.o:
-	$(MAKE) -C ../../backend/port snprintf.o
+$(SRCDIR)/utils/strdup.o:
+	$(MAKE) -C $(SRCDIR)/utils strdup.o
 endif
+
+# Move these to the utils directory?
+
+ifneq (@STRERROR@,)
+OBJS+=$(SRCDIR)/backend/port/strerror.o
+
+$(SRCDIR)/backend/port/strerror.o:
+	$(MAKE) -C $(SRCDIR)/backend/port strerror.o
+endif
+
+ifneq (@SNPRINTF@,)
+OBJS+=$(SRCDIR)/backend/port/snprintf.o
+
+$(SRCDIR)/backend/port/snprintf.o:
+	$(MAKE) -C $(SRCDIR)/backend/port snprintf.o
+endif
+
+# End of hacks for picking up backend 'port' modules
 
 psql: $(OBJS) $(LIBPQDIR)/libpq.a
 	$(CC) -o psql -L$(LIBPQDIR) $(OBJS) -lpq $(LDFLAGS)
 
-../../utils/strdup.o:
-	$(MAKE) -C ../../utils strdup.o
-
-OBJS:
-	$(CC) $(CFLAGS) -c $< -o $@
-
 help.o: sql_help.h
 
 ifneq ($(strip $(PERL)),) 
-sql_help.h: $(wildcard ../../../doc/src/sgml/ref/*.sgml) create_help.pl
+sql_help.h: $(wildcard $(SRCDIR)/../doc/src/sgml/ref/*.sgml) create_help.pl
 	$(PERL) create_help.pl sql_help.h 
 else
 sql_help.h:
 endif
 
 .PHONY: submake
+
 submake:
 	$(MAKE) -C $(LIBPQDIR) libpq.a
 
