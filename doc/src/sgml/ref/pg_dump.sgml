@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.13 2000/01/18 00:03:34 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.14 2000/01/24 19:34:13 petere Exp $
 Postgres documentation
 -->
 
@@ -27,7 +27,7 @@ pg_dump [ <replaceable class="parameter">dbname</replaceable> ]
 pg_dump [ -h <replaceable class="parameter">host</replaceable> ] [ -p <replaceable class="parameter">port</replaceable> ]
     [ -t <replaceable class="parameter">table</replaceable> ]
     [ -a ] [ -c ] [ -d ] [ -D ] [ -n ] [ -N ]
-    [ -O ] [ -s ] [ -u ] [ -v ] [ -x ]
+    [ -o ] [ -s ] [ -u ] [ -v ] [ -x ]
     [ <replaceable class="parameter">dbname</replaceable> ]
   </synopsis>
 
@@ -115,7 +115,7 @@ pg_dump [ -h <replaceable class="parameter">host</replaceable> ] [ -p <replaceab
      </varlistentry>
 
      <varlistentry>
-      <term>-O</term>
+      <term>-o</term>
       <listitem>
        <para>
 	Dump object identifiers (<acronym>OID</acronym>s) for every table.

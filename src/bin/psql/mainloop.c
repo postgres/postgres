@@ -1,9 +1,9 @@
 /*
  * psql - the PostgreSQL interactive terminal
  *
- * Copyright 2000 by PostgreSQL Global Development Team
+ * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.15 2000/01/18 23:30:23 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.16 2000/01/24 19:34:17 petere Exp $
  */
 #include <c.h>
 #include "mainloop.h"
@@ -44,12 +44,13 @@ MainLoop(FILE *source)
 
 	bool		success;
 	char		in_quote;		/* == 0 for no in_quote */
-	bool		was_bslash;		/* backslash */
 	bool        xcomment;		/* in extended comment */
 	int			paren_level;
 	unsigned int query_start;
     int         count_eof;
     const char *var;
+    bool         was_bslash;
+    unsigned int bslash_count;
 
 	int			i,
 				prevlen,
@@ -236,12 +237,16 @@ MainLoop(FILE *source)
 		{
 			/* was the previous character a backslash? */
 			was_bslash = (i > 0 && line[i - prevlen] == '\\');
+            if (was_bslash)
+                bslash_count++;
+            else
+                bslash_count = 0;
 
 			/* in quote? */
 			if (in_quote)
 			{
 				/* end of quote */
-				if (line[i] == in_quote && !was_bslash)
+				if (line[i] == in_quote && bslash_count % 2 == 0)
 					in_quote = '\0';
 			}
 

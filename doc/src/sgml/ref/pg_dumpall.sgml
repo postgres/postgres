@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.6 2000/01/18 00:03:34 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.7 2000/01/24 19:34:13 petere Exp $
 Postgres documentation
 -->
 
@@ -77,7 +77,7 @@ pg_dumpall [ -h <replaceable class="parameter">host</replaceable> ] [ -p <replac
      </varlistentry>
 
      <varlistentry>
-      <term>-O</term>
+      <term>-o</term>
       <listitem>
        <para>
 	Dump object identifiers (<acronym>OID</acronym>s) for every table.

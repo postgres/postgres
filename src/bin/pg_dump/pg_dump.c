@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.137 2000/01/19 20:08:30 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.138 2000/01/24 19:34:15 petere Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -140,7 +140,7 @@ help(const char *progname)
         "  -h, --host <hostname>    server host name\n"
         "  -n, --no-quotes          suppress most quotes around identifiers\n"
         "  -N, --quotes             enable most quotes around identifiers\n"
-        "  -O, --oids               dump object ids (oids)\n"
+        "  -o, --oids               dump object ids (oids)\n"
         "  -p, --port <port>        server port number\n"
         "  -s, --schema-only        dump out only the schema, no data\n"
         "  -t, --table <table>      dump for this table only\n"
@@ -157,7 +157,7 @@ help(const char *progname)
         "  -h <hostname>            server host name\n"
         "  -n                       suppress most quotes around identifiers\n"
         "  -N                       enable most quotes around identifiers\n"
-        "  -O                       dump object ids (oids)\n"
+        "  -o                       dump object ids (oids)\n"
         "  -p <port>                server port number\n"
         "  -s                       dump out only the schema, no data\n"
         "  -t <table>               dump for this table only\n"
@@ -557,11 +557,10 @@ main(int argc, char **argv)
 		{"clean", no_argument, NULL, 'c'},
 		{"inserts",no_argument, NULL, 'd'},
 		{"attribute-inserts", no_argument, NULL, 'D'},
-		{"output", required_argument, NULL, '\037'}, /* see note below */
 		{"host", required_argument, NULL, 'h'},
 		{"no-quotes", no_argument, NULL, 'n'},
 		{"quotes", no_argument, NULL, 'N'},
-		{"oids", no_argument, NULL, 'O'},
+		{"oids", no_argument, NULL, 'o'},
 		{"port", required_argument, NULL, 'p'},
 		{"schema-only", no_argument, NULL, 's'},
 		{"table", required_argument, NULL, 't'},
@@ -592,25 +591,15 @@ main(int argc, char **argv)
     /*
      * A note on options:
      *
-     * The standard option for specifying an output file is -o/--output.
-     * The standard option for specifying an input file is -f/--file.
-     * pg_dump used to use -f for specifying an output file.
-     * Unfortunately, -o is already in use for oids.
-     *
-     * Therefore I instituted the following:
-     * + The -f option is gone. Most people use > for output redirection anyway
-     *   so there is really not a big point in supporting output files.
-     * + If you like, and can, you can use --output, but it's not documented.
-     * + The preferred option for oids is now -O. -o generates a warning.
-     * + In the (very far) future the -o option could be used to used for
-     *   specifying an output file.
-     *                                           -- petere 2000-01-17
+     * The -f option was yanked because in the rest of the world (and
+     * PostgreSQL) it specifies an *input* file. You can use the shell's
+     * output redirection to achieve the same.
      */
 
 #ifdef HAVE_GETOPT_LONG
-	while ((c = getopt_long(argc, argv, "acdDf:h:nNoOp:st:uvxzV?\037", long_options, &optindex)) != -1)
+	while ((c = getopt_long(argc, argv, "acdDf:h:nNop:st:uvxzV?", long_options, &optindex)) != -1)
 #else
-    while ((c = getopt(argc, argv, "acdDf:h:nNoOp:st:uvxzV?-")) != -1)
+    while ((c = getopt(argc, argv, "acdDf:h:nNop:st:uvxzV?-")) != -1)
 #endif
 	{
 		switch (c)
@@ -634,9 +623,6 @@ main(int argc, char **argv)
                 fprintf(stderr, "%s: The -f option is obsolete. You can achieve the same by writing %s > %s.\n",
                         progname, progname, optarg);
                 exit(1);
-			case '\037':		/* output file name, see note above */
-				filename = optarg;
-				break;
 			case 'h':			/* server host */
 				pghost = optarg;
 				break;
@@ -647,10 +633,7 @@ main(int argc, char **argv)
 			case 'N':			/* Force double-quotes on identifiers */
 				force_quotes = true;
 				break;
-            case 'o':
-                fprintf(stderr, "%s: The -o option for dumping oids is deprecated. Please use -O.\n", progname);
-				/* FALLTHRU */
-			case 'O':			/* Dump oids */
+            case 'o': 		/* Dump oids */
 				oids = true;
 				break;
 			case 'p':			/* server port */
