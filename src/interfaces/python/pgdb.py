@@ -379,9 +379,8 @@ def connect(dsn = None, user = None, password = None, host = None, database = No
 		dbuser = None
 
 	# open the connection
-	cnx = _pg.connect(host = dbhost, dbname = dbbase, port = dbport,
-						opt = dbopt, tty = dbtty,
-						user = dbuser, passwd = dbpasswd)
+	cnx = _pg.connect(dbbase, dbhost, dbport, dbopt,
+		dbtty, dbuser, dbpasswd)
 	return pgdbCnx(cnx)
 
 ### types handling
