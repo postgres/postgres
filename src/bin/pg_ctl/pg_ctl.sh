@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pg_ctl/Attic/pg_ctl.sh,v 1.26 2002/07/19 13:50:06 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pg_ctl/Attic/pg_ctl.sh,v 1.27 2002/07/19 15:31:42 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -332,12 +332,12 @@ if [ "$op" = "start" -o "$op" = "restart" ];then
     fi
 
     if [ -n "$logfile" ]; then
-        "$po_path" ${1:+"$@"} </dev/null >>$logfile 2>&1 &
+        "$po_path" ${1+"$@"} </dev/null >>$logfile 2>&1 &
     else
         # when starting without log file, redirect stderr to stdout, so
         # pg_ctl can be invoked with >$logfile and still have pg_ctl's
         # stderr on the terminal.
-        "$po_path" ${1:+"$@"} </dev/null 2>&1 &
+        "$po_path" ${1+"$@"} </dev/null 2>&1 &
     fi
 
     # if had an old lockfile, check to see if we were able to start

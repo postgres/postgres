@@ -10,4 +10,4 @@ export PGACCESS_HOME
 export PGLIB
 export PGPORT
 
-exec "${PATH_TO_WISH}" "${PGACCESS_HOME}/main.tcl" "$@"
+exec "${PATH_TO_WISH}" "${PGACCESS_HOME}/main.tcl" ${1+"$@"}
