@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Jan  4 16:08:21 EST 2002
+Last updated:		Fri Jan  4 16:32:12 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -359,6 +359,8 @@ CACHE
 * Shared catalog cache, reduce lseek()'s by caching table size in shared area
 * Add free-behind capability for large sequential scans (Bruce)
 * Allow binding query args over FE/BE protocol
+* Consider use of open/fctl(O_DIRECT) to minimize OS caching
+* Make blind writes go through the file descriptor cache
 
 VACUUM
 
@@ -388,7 +390,6 @@ MISCELLANEOUS
 * Allow persistent backends [persistent]
 * Create a transaction processor to aid in persistent connections and
   connection pooling
-* Make blind writes go through the file descriptor cache
 * Allow logging of query durations
 * Add hash for evaluating GROUP BY aggregates
 * -Read pg_hba.conf only on postmaster startup or SIGHUP (Bruce)
@@ -406,7 +407,6 @@ MISCELLANEOUS
   evaluated only once or once per query
 * Change FIXED_CHAR_SEL to 0.20 from 0.04 to give better selectivity (Bruce)
 * Make locking of shared data structures more fine-grained
-* Consider use of open/fctl(O_DIRECT) to minimize OS caching
 
 SOURCE CODE
 -----------
