@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/fetch.l,v 1.3 1997/03/01 15:26:42 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/fetch.l,v 1.4 1997/09/08 17:49:41 momjian Exp $
 .TH FETCH SQL 01/23/93 PostgreSQL PostgreSQL
 .SH NAME
 fetch \(em fetch instance(s) from a cursor
@@ -64,7 +64,3 @@ end(l),
 close(l),
 move(l),
 select(l).
-.SH BUGS
-Currently, the smallest transaction in Postgres is a single SQL
-command.  It should be possible for a single fetch to be a
-transaction.

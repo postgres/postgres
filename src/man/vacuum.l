@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/vacuum.l,v 1.4 1997/05/13 04:41:54 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/vacuum.l,v 1.5 1997/09/08 17:49:43 momjian Exp $
 .TH VACUUM SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
 vacuum \(em vacuum a database
@@ -40,5 +40,11 @@ choices in planning user queries.
 .PP
 The purge(l) command can be used to control the archive retention
 characteristics of a given table.
+.PP
+If the server crashes during a vacuum command, chances are it will leave
+a lock file hanging around.  Attempts to re-run the vacuum command
+result in an error message about the creation of a lock file.  If you
+are sure vacuum is not running, remove the pg_vlock file in your
+database directory(i.e. data/base/dbname/pg_vlock).
 .SH "SEE ALSO"
 purge(l).
