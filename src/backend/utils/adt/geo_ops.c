@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.62 2002/06/20 20:29:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.63 2002/07/16 03:30:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -815,6 +815,7 @@ line_in(PG_FUNCTION_ARGS)
 	LINE	   *line;
 
 #ifdef ENABLE_LINE_TYPE
+	/* when fixed, modify "not implemented", catalog/pg_type.h and SGML */
 	LSEG		lseg;
 	int			isopen;
 	char	   *s;
@@ -843,6 +844,7 @@ line_out(PG_FUNCTION_ARGS)
 	char	   *result;
 
 #ifdef ENABLE_LINE_TYPE
+	/* when fixed, modify "not implemented", catalog/pg_type.h and SGML */
 	LSEG		lseg;
 
 	if (FPzero(line->B))

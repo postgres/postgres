@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.93 2002/06/11 15:32:32 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.94 2002/07/16 03:30:26 momjian Exp $
 -->
 
  <chapter id="datatype">
@@ -143,7 +143,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.93 2002/06/11 15:32:32 th
       <row>
        <entry><type>line</type></entry>
        <entry></entry>
-       <entry>infinite line in 2D plane</entry>
+       <entry>infinite line in 2D plane (not implemented)</entry>
       </row>
 
       <row>
@@ -2247,7 +2247,7 @@ SELECT * FROM test1 WHERE a;
 	<entry><type>line</type></entry>
 	<entry>32 bytes</entry>
 	<entry>((x1,y1),(x2,y2))</entry>
-	<entry>Infinite line</entry>
+	<entry>Infinite line (not implemented)</entry>
        </row>
        <row>
 	<entry><type>lseg</type></entry>
