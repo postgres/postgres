@@ -270,3 +270,10 @@ Mon Aug  3 17:23:18 CEST 1998
 	- Fixed cursor handling
 	- Set version to 2.3.5
 	- Set library version to 2.4
+
+Fri Aug  7 12:38:50 CEST 1998
+
+	- Fixed cursor handling once again
+	- Added support for variables in cursor
+	- Set version to 2.3.6
+	- Set library version to 2.5

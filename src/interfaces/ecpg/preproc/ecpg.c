@@ -23,6 +23,7 @@ extern char *optarg;
 
 struct _include_path *include_paths;
 static int no_auto_trans = 0;
+struct cursor *cur = NULL;
 
 static void
 usage(char *progname)
@@ -138,6 +139,24 @@ main(int argc, char *const argv[])
 			{
 				struct cursor *ptr;
 				
+				/* remove old cursor definitions if any are still there */
+				for (ptr = cur; ptr != NULL; ptr=ptr->next)
+				{
+					struct arguments *l1, *l2;
+					
+					free(ptr->command);
+					free(ptr->name);
+					for (l1 = argsinsert; l1; l1 = l2)
+					{
+						l2 = l1->next;
+						free(l1);
+					}
+					for (l1 = argsresult; l1; l1 = l2)
+					{
+						l2 = l1->next;
+						free(l1);
+					}
+				}
 				/* initialize lex */
 				lex_init();
 				

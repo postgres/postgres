@@ -13,9 +13,6 @@ bool		ECPGdisconnect(int, const char *);
 
 void		ECPGlog(const char *format,...);
 
-bool		ECPGdeclare(int, const char *, char *);
-bool		ECPGopen(int, const char *);
-
 #ifdef LIBPQ_FE_H
 bool		ECPGsetdb(PGconn *);
 

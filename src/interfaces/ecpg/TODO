@@ -1,9 +1,7 @@
-What happens to a cursor declaration with variables?
-
 The complete structure definition has to be listed inside the declare
 section of the structure variable for ecpg to be able to understand it.
 
-Variable type bool has to be checked. I never used it so far.
+Variable type bool has to be tested. I never used it so far.
 
 The error message for "no data" in an exec sql insert select from statement
 has to be 100.

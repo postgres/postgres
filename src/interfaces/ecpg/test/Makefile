@@ -1,6 +1,6 @@
 all: test1 test2 perftest
 
-LDFLAGS=-g -I ../include -I ../../libpq -L../lib -lecpg -L../../libpq -lpq -lcrypt --static
+LDFLAGS=-g -I ../include -I ../../libpq -L../lib -lecpg -L../../libpq -lpq -lcrypt
 
 test1: test1.c
 test1.c: test1.pgc

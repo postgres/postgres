@@ -245,14 +245,9 @@ remove_variables(int brace_level)
  * These are of two kinds: input and output.
  * I will make two lists for them.
  */
-struct arguments {
-    struct variable * variable;
-    struct variable * indicator;
-    struct arguments * next;
-};
 
-static struct arguments * argsinsert = NULL;
-static struct arguments * argsresult = NULL;
+struct arguments * argsinsert = NULL;
+struct arguments * argsresult = NULL;
 
 static void
 reset_variables(void)
@@ -279,7 +274,7 @@ add_variable(struct arguments ** list, struct variable * var, struct variable * 
    deletes the list as we go on.
  */
 static void
-dump_variables(struct arguments * list)
+dump_variables(struct arguments * list, int mode)
 {
     if (list == NULL)
     {
@@ -290,7 +285,7 @@ dump_variables(struct arguments * list)
        end of the list:
      */
 
-    dump_variables(list->next);
+    dump_variables(list->next, mode);
 
     /* Then the current element and its indicator */
     ECPGdump_a_type(yyout, list->variable->name, list->variable->type,
@@ -298,7 +293,8 @@ dump_variables(struct arguments * list)
 	(list->indicator->type->typ != ECPGt_NO_INDICATOR) ? list->indicator->type : NULL, NULL, NULL);
 
     /* Then release the list element. */
-    free(list);
+    if (mode != 0)
+    	free(list);
 }
 
 static void
@@ -494,9 +490,9 @@ output_statement(char * stmt, int mode)
 	fputs("\", ", yyout);
 
 	/* dump variables to C file*/
-	dump_variables(argsinsert);
+	dump_variables(argsinsert, 1);
 	fputs("ECPGt_EOIT, ", yyout);
-	dump_variables(argsresult);
+	dump_variables(argsresult, 1);
 	fputs("ECPGt_EORT);", yyout);
 	whenever_action(mode);
 	free(stmt);
@@ -737,10 +733,9 @@ stmt:  AddAttrStmt			{ output_statement($1, 0); }
 		| RenameStmt		{ output_statement($1, 0); }
 		| RevokeStmt		{ output_statement($1, 0); }
                 | OptimizableStmt	{
-						if (strncmp($1, "ECPGdeclare" , sizeof("ECPGdeclare")-1) == 0)
+						if (strncmp($1, "/* " , sizeof("/* ")-1) == 0)
 						{
 							fputs($1, yyout);
-							whenever_action(0);
 							free($1);
 						}
 						else
@@ -775,7 +770,27 @@ stmt:  AddAttrStmt			{ output_statement($1, 0); }
 						whenever_action(0);
 						free($1);
 					}
-		| ECPGOpen		{	fprintf(yyout, "ECPGopen(__LINE__, %s);", $1);
+		| ECPGOpen		{	
+						struct cursor *ptr;
+						 
+						for (ptr = cur; ptr != NULL; ptr=ptr->next)
+						{
+					               if (strcmp(ptr->name, $1) == 0)
+						       		break;
+						}
+						
+						if (ptr == NULL)
+						{
+							sprintf(errortext, "trying to open undeclared cursor %s\n", $1);
+							yyerror(errortext);
+						}
+                  
+						fprintf(yyout, "ECPGdo(__LINE__, \"%s\",", ptr->command);
+						/* dump variables to C file*/
+						dump_variables(ptr->argsinsert, 0);
+						fputs("ECPGt_EOIT, ", yyout);
+						dump_variables(ptr->argsresult, 0);
+						fputs("ECPGt_EORT);", yyout);
 						whenever_action(0);
 						free($1);
 					}
@@ -2359,7 +2374,31 @@ CursorStmt:  DECLARE name opt_binary CURSOR FOR
 			 group_clause having_clause
 			 union_clause sort_clause
 				{
-					$$ = make5_str(make1_str("ECPGdeclare(__LINE__, \""), $2, make1_str("\", \""), cat4_str(cat5_str(cat5_str(make1_str("declare"), strdup($2), $3, make1_str("cursor for select"), $7), $8, $9, $10, $11), $12, $13, $14), make1_str("\");"));
+					struct cursor *ptr, *this;
+	
+					for (ptr = cur; ptr != NULL; ptr = ptr->next)
+					{
+						if (strcmp($2, ptr->name) == 0)
+						{
+						        /* re-definition is a bug*/
+							sprintf(errortext, "cursor %s already defined", $2);
+							yyerror(errortext);
+				                }
+        				}
+                        
+        				this = (struct cursor *) mm_alloc(sizeof(struct cursor));
+
+			        	/* initial definition */
+				        this->next = cur;
+				        this->name = $2;
+				        this->command = cat4_str(cat5_str(cat5_str(make1_str("declare"), strdup($2), $3, make1_str("cursor for select"), $7), $8, $9, $10, $11), $12, $13, $14);
+					this->argsinsert = argsinsert;
+					this->argsresult = argsresult;
+					argsinsert = argsresult = NULL;
+											
+			        	cur = this;
+					
+					$$ = cat3_str(make1_str("/*"), strdup(this->command), make1_str("*/"));
 				}
 		;
 
@@ -4221,7 +4260,7 @@ execstring: cvariable |
  * open is an open cursor, at the moment this has to be removed
  */
 ECPGOpen: SQL_OPEN name open_opts {
-		$$ = make3_str(make1_str("\""), $2, make1_str("\""));
+		$$ = $2;
 };
 
 open_opts: /* empty */		{ $$ = make1_str(""); }

@@ -19,6 +19,10 @@ exec sql begin declare section;
 	long ind_married;
 	char married[9];
 exec sql end declare section;
+
+exec sql declare cur cursor for
+       select name, born, age, married from meskes;
+
 	char msg[128], command[128];
 	FILE *dbgs;
 
@@ -26,7 +30,7 @@ exec sql end declare section;
                 ECPGdebug(1, dbgs);
 
 	strcpy(msg, "connect");
-	exec sql connect to tcp:postgresql://localhost:5432/mm;
+	exec sql connect to tcp:postgresql://localhost:5432/mm; 
 
 	strcpy(msg, "create");
 	exec sql create table meskes(name char(8), born integer, age smallint, married char(8));
@@ -40,10 +44,6 @@ exec sql end declare section;
 
 	strcpy(msg, "commit");
 	exec sql commit;
-
-	strcpy(msg, "declare");
-	exec sql declare cur cursor for
-                select name, born, age, married from meskes;
 
 	strcpy(msg, "open");
 	exec sql open cur;

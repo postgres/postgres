@@ -4,7 +4,7 @@ include $(SRCDIR)/Makefile.global
 PQ_INCLUDE=-I$(SRCDIR)/interfaces/libpq
 
 SO_MAJOR_VERSION=2
-SO_MINOR_VERSION=4
+SO_MINOR_VERSION=5
 
 PORTNAME=@PORTNAME@
 

@@ -16,6 +16,15 @@ struct _include_path {  char * path;
 
 extern struct _include_path *include_paths;
 
+struct cursor { char *name;
+                char *command;
+                struct arguments * argsinsert;
+                struct arguments * argsresult;
+                struct cursor *next;
+              };
+                                           
+extern struct cursor *cur;
+
 /* This is a linked list of the variable names and types. */
 struct variable
 {
@@ -27,6 +36,15 @@ struct variable
                 
 extern struct ECPGtype ecpg_no_indicator;
 extern struct variable no_indicator;
+
+struct arguments {
+    struct variable * variable;
+    struct variable * indicator;
+    struct arguments * next;
+};
+
+extern struct arguments * argsinsert;
+extern struct arguments * argsresult;
 
 /* functions */
 
