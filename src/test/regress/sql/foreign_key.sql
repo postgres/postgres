@@ -583,3 +583,94 @@ create table pktable(ptest1 inet, ptest2 inet, primary key(base1, ptest1), forei
 drop table pktable;
 drop table pktable_base;
 
+--
+-- Deferrable constraints
+--		(right now, only FOREIGN KEY constraints can be deferred)
+--
+
+-- deferrable, explicitely deferred
+CREATE TABLE pktable (
+	id		INT4 PRIMARY KEY,
+	other	INT4
+);
+
+CREATE TABLE fktable (
+	id		INT4 PRIMARY KEY,
+	fk		INT4 REFERENCES pktable DEFERRABLE
+);
+
+-- default to immediate: should fail
+INSERT INTO fktable VALUES (5, 10);
+
+-- explicitely defer the constraint
+BEGIN;
+
+SET CONSTRAINTS ALL DEFERRED;
+
+INSERT INTO fktable VALUES (10, 15);
+INSERT INTO pktable VALUES (15, 0); -- make the FK insert valid
+
+COMMIT;
+
+DROP TABLE fktable, pktable;
+
+-- deferrable, initially deferred
+CREATE TABLE pktable (
+	id		INT4 PRIMARY KEY,
+	other	INT4
+);
+
+CREATE TABLE fktable (
+	id		INT4 PRIMARY KEY,
+	fk		INT4 REFERENCES pktable DEFERRABLE INITIALLY DEFERRED
+);
+
+-- default to deferred, should succeed
+BEGIN;
+
+INSERT INTO fktable VALUES (100, 200);
+INSERT INTO pktable VALUES (200, 500); -- make the FK insert valid
+
+COMMIT;
+
+-- default to deferred, explicitely make immediate
+BEGIN;
+
+SET CONSTRAINTS ALL IMMEDIATE;
+
+-- should fail
+INSERT INTO fktable VALUES (500, 1000);
+
+COMMIT;
+
+DROP TABLE fktable, pktable;
+
+-- tricky behavior: according to SQL99, if a deferred constraint is set
+-- to 'immediate' mode, it should be checked for validity *immediately*,
+-- not when the current transaction commits (i.e. the mode change applies
+-- retroactively)
+CREATE TABLE pktable (
+	id		INT4 PRIMARY KEY,
+	other	INT4
+);
+
+CREATE TABLE fktable (
+	id		INT4 PRIMARY KEY,
+	fk		INT4 REFERENCES pktable DEFERRABLE
+);
+
+BEGIN;
+
+SET CONSTRAINTS ALL DEFERRED;
+
+-- should succeed, for now
+INSERT INTO fktable VALUES (1000, 2000);
+
+-- should cause transaction abort, due to preceding error
+SET CONSTRAINTS ALL IMMEDIATE;
+
+INSERT INTO pktable VALUES (2000, 3); -- too late
+
+COMMIT;
+
+DROP TABLE fktable, pktable;

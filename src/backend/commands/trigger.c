@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.125 2002/08/13 17:22:08 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.126 2002/08/17 12:15:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1266,12 +1266,10 @@ static MemoryContext deftrig_cxt = NULL;
  * state IMMEDIATE or DEFERRED.
  * ----------
  */
-static bool deftrig_dfl_all_isset = false;
-static bool deftrig_dfl_all_isdeferred = false;
 static List *deftrig_dfl_trigstates = NIL;
 
-static bool deftrig_all_isset;
-static bool deftrig_all_isdeferred;
+static bool deftrig_all_isset = false;
+static bool deftrig_all_isdeferred = false;
 static List *deftrig_trigstates;
 
 /* ----------
@@ -1702,8 +1700,11 @@ DeferredTriggerBeginXact(void)
 										ALLOCSET_DEFAULT_MAXSIZE);
 	oldcxt = MemoryContextSwitchTo(deftrig_cxt);
 
-	deftrig_all_isset = deftrig_dfl_all_isset;
-	deftrig_all_isdeferred = deftrig_dfl_all_isdeferred;
+	deftrig_all_isset = false;
+	/*
+	 * If unspecified, constraints default to IMMEDIATE, per SQL
+	 */
+	deftrig_all_isdeferred = false;
 
 	deftrig_trigstates = NIL;
 	foreach(l, deftrig_dfl_trigstates)
@@ -1793,189 +1794,125 @@ DeferredTriggerAbortXact(void)
 /* ----------
  * DeferredTriggerSetState()
  *
- *	Called for the users SET CONSTRAINTS ... utility command.
+ *	Called for the SET CONSTRAINTS ... utility command.
  * ----------
  */
 void
 DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 {
-	Relation	tgrel;
 	List	   *l;
-	List	   *ls;
-	List	   *loid = NIL;
-	MemoryContext oldcxt;
-	bool		found;
-	DeferredTriggerStatus state;
+
+	/*
+	 * If called outside a transaction block, we can safely return: this
+	 * command cannot effect any subsequent transactions, and there
+	 * are no "session-level" trigger settings.
+	 */
+	if (!IsTransactionBlock())
+		return;
 
 	/*
 	 * Handle SET CONSTRAINTS ALL ...
 	 */
 	if (stmt->constraints == NIL)
 	{
-		if (!IsTransactionBlock())
+		/*
+		 * Drop all per-transaction information about individual trigger
+		 * states.
+		 */
+		l = deftrig_trigstates;
+		while (l != NIL)
 		{
-			/*
-			 * ... outside of a transaction block
-			 *
-			 * Drop all information about individual trigger states per
-			 * session.
-			 */
-			l = deftrig_dfl_trigstates;
-			while (l != NIL)
-			{
-				List	   *next = lnext(l);
+			List	   *next = lnext(l);
 
-				pfree(lfirst(l));
-				pfree(l);
-				l = next;
-			}
-			deftrig_dfl_trigstates = NIL;
-
-			/*
-			 * Set the session ALL state to known.
-			 */
-			deftrig_dfl_all_isset = true;
-			deftrig_dfl_all_isdeferred = stmt->deferred;
-
-			return;
+			pfree(lfirst(l));
+			pfree(l);
+			l = next;
 		}
-		else
-		{
-			/*
-			 * ... inside of a transaction block
-			 *
-			 * Drop all information about individual trigger states per
-			 * transaction.
-			 */
-			l = deftrig_trigstates;
-			while (l != NIL)
-			{
-				List	   *next = lnext(l);
-
-				pfree(lfirst(l));
-				pfree(l);
-				l = next;
-			}
-			deftrig_trigstates = NIL;
-
-			/*
-			 * Set the per transaction ALL state to known.
-			 */
-			deftrig_all_isset = true;
-			deftrig_all_isdeferred = stmt->deferred;
-
-			return;
-		}
-	}
-
-	/* ----------
-	 * Handle SET CONSTRAINTS constraint-name [, ...]
-	 * First lookup all trigger Oid's for the constraint names.
-	 * ----------
-	 */
-	tgrel = heap_openr(TriggerRelationName, AccessShareLock);
-
-	foreach(l, stmt->constraints)
-	{
-		char	   *cname = strVal(lfirst(l));
-		ScanKeyData skey;
-		SysScanDesc	tgscan;
-		HeapTuple	htup;
+		deftrig_trigstates = NIL;
 
 		/*
-		 * Check that only named constraints are set explicitly
+		 * Set the per-transaction ALL state to known.
 		 */
-		if (strlen(cname) == 0)
-			elog(ERROR, "unnamed constraints cannot be set explicitly");
-
-		/*
-		 * Setup to scan pg_trigger by tgconstrname ...
-		 */
-		ScanKeyEntryInitialize(&skey,
-							   (bits16) 0x0,
-							   (AttrNumber) Anum_pg_trigger_tgconstrname,
-							   (RegProcedure) F_NAMEEQ,
-							   PointerGetDatum(cname));
-
-		tgscan = systable_beginscan(tgrel, TriggerConstrNameIndex, true,
-									SnapshotNow, 1, &skey);
-
-		/*
-		 * ... and search for the constraint trigger row
-		 */
-		found = false;
-
-		while (HeapTupleIsValid(htup = systable_getnext(tgscan)))
-		{
-			Form_pg_trigger pg_trigger = (Form_pg_trigger) GETSTRUCT(htup);
-			Oid			constr_oid;
-
-			/*
-			 * If we found some, check that they fit the deferrability but
-			 * skip ON <event> RESTRICT ones, since they are silently
-			 * never deferrable.
-			 */
-			if (stmt->deferred && !pg_trigger->tgdeferrable &&
-				pg_trigger->tgfoid != F_RI_FKEY_RESTRICT_UPD &&
-				pg_trigger->tgfoid != F_RI_FKEY_RESTRICT_DEL)
-				elog(ERROR, "Constraint '%s' is not deferrable",
-					 cname);
-
-			AssertTupleDescHasOid(tgrel->rd_att);
-			constr_oid = HeapTupleGetOid(htup);
-			loid = lappendi(loid, constr_oid);
-			found = true;
-		}
-
-		systable_endscan(tgscan);
-
-		/*
-		 * Not found ?
-		 */
-		if (!found)
-			elog(ERROR, "Constraint '%s' does not exist", cname);
-	}
-	heap_close(tgrel, AccessShareLock);
-
-	if (!IsTransactionBlock())
-	{
-		/*
-		 * Outside of a transaction block set the trigger states of
-		 * individual triggers on session level.
-		 */
-		oldcxt = MemoryContextSwitchTo(deftrig_gcxt);
-
-		foreach(l, loid)
-		{
-			found = false;
-			foreach(ls, deftrig_dfl_trigstates)
-			{
-				state = (DeferredTriggerStatus) lfirst(ls);
-				if (state->dts_tgoid == (Oid) lfirsti(l))
-				{
-					state->dts_tgisdeferred = stmt->deferred;
-					found = true;
-					break;
-				}
-			}
-			if (!found)
-			{
-				state = (DeferredTriggerStatus)
-					palloc(sizeof(DeferredTriggerStatusData));
-				state->dts_tgoid = (Oid) lfirsti(l);
-				state->dts_tgisdeferred = stmt->deferred;
-
-				deftrig_dfl_trigstates =
-					lappend(deftrig_dfl_trigstates, state);
-			}
-		}
-
-		MemoryContextSwitchTo(oldcxt);
-
-		return;
+		deftrig_all_isset = true;
+		deftrig_all_isdeferred = stmt->deferred;
 	}
 	else
 	{
+		Relation	tgrel;
+		MemoryContext oldcxt;
+		bool		found;
+		DeferredTriggerStatus state;
+		List	   *ls;
+		List	   *loid = NIL;
+
+		/* ----------
+		 * Handle SET CONSTRAINTS constraint-name [, ...]
+		 * First lookup all trigger Oid's for the constraint names.
+		 * ----------
+		 */
+		tgrel = heap_openr(TriggerRelationName, AccessShareLock);
+
+		foreach(l, stmt->constraints)
+		{
+			char	   *cname = strVal(lfirst(l));
+			ScanKeyData skey;
+			SysScanDesc	tgscan;
+			HeapTuple	htup;
+
+			/*
+			 * Check that only named constraints are set explicitly
+			 */
+			if (strlen(cname) == 0)
+				elog(ERROR, "unnamed constraints cannot be set explicitly");
+
+			/*
+			 * Setup to scan pg_trigger by tgconstrname ...
+			 */
+			ScanKeyEntryInitialize(&skey, (bits16) 0x0,
+								   (AttrNumber) Anum_pg_trigger_tgconstrname,
+								   (RegProcedure) F_NAMEEQ,
+								   PointerGetDatum(cname));
+
+			tgscan = systable_beginscan(tgrel, TriggerConstrNameIndex, true,
+										SnapshotNow, 1, &skey);
+
+			/*
+			 * ... and search for the constraint trigger row
+			 */
+			found = false;
+
+			while (HeapTupleIsValid(htup = systable_getnext(tgscan)))
+			{
+				Form_pg_trigger pg_trigger = (Form_pg_trigger) GETSTRUCT(htup);
+				Oid			constr_oid;
+
+				/*
+				 * If we found some, check that they fit the deferrability but
+				 * skip ON <event> RESTRICT ones, since they are silently
+				 * never deferrable.
+				 */
+				if (stmt->deferred && !pg_trigger->tgdeferrable &&
+					pg_trigger->tgfoid != F_RI_FKEY_RESTRICT_UPD &&
+					pg_trigger->tgfoid != F_RI_FKEY_RESTRICT_DEL)
+					elog(ERROR, "Constraint '%s' is not deferrable",
+						 cname);
+
+				AssertTupleDescHasOid(tgrel->rd_att);
+				constr_oid = HeapTupleGetOid(htup);
+				loid = lappendi(loid, constr_oid);
+				found = true;
+			}
+
+			systable_endscan(tgscan);
+
+			/*
+			 * Not found ?
+			 */
+			if (!found)
+				elog(ERROR, "Constraint '%s' does not exist", cname);
+		}
+		heap_close(tgrel, AccessShareLock);
+
 		/*
 		 * Inside of a transaction block set the trigger states of
 		 * individual triggers on transaction level.
@@ -2008,9 +1945,17 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 		}
 
 		MemoryContextSwitchTo(oldcxt);
-
-		return;
 	}
+
+	/*
+	 * SQL99 requires that when a constraint is set to IMMEDIATE, any
+	 * deferred checks against that constraint must be made when the
+	 * SET CONSTRAINTS command is executed -- i.e. the effects of the
+	 * SET CONSTRAINTS command applies retroactively. This happens "for
+	 * free" since we have already made the necessary modifications to
+	 * the constraints, and deferredTriggerEndQuery() is called by
+	 * finish_xact_command().
+	 */
 }
 
 

@@ -945,3 +945,80 @@ ERROR:  Unable to identify an operator '=' for types 'inet' and 'integer'
 drop table pktable;
 ERROR:  table "pktable" does not exist
 drop table pktable_base;
+--
+-- Deferrable constraints
+--		(right now, only FOREIGN KEY constraints can be deferred)
+--
+-- deferrable, explicitely deferred
+CREATE TABLE pktable (
+	id		INT4 PRIMARY KEY,
+	other	INT4
+);
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index 'pktable_pkey' for table 'pktable'
+CREATE TABLE fktable (
+	id		INT4 PRIMARY KEY,
+	fk		INT4 REFERENCES pktable DEFERRABLE
+);
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index 'fktable_pkey' for table 'fktable'
+NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+-- default to immediate: should fail
+INSERT INTO fktable VALUES (5, 10);
+ERROR:  $1 referential integrity violation - key referenced from fktable not found in pktable
+-- explicitely defer the constraint
+BEGIN;
+SET CONSTRAINTS ALL DEFERRED;
+INSERT INTO fktable VALUES (10, 15);
+INSERT INTO pktable VALUES (15, 0); -- make the FK insert valid
+COMMIT;
+DROP TABLE fktable, pktable;
+-- deferrable, initially deferred
+CREATE TABLE pktable (
+	id		INT4 PRIMARY KEY,
+	other	INT4
+);
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index 'pktable_pkey' for table 'pktable'
+CREATE TABLE fktable (
+	id		INT4 PRIMARY KEY,
+	fk		INT4 REFERENCES pktable DEFERRABLE INITIALLY DEFERRED
+);
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index 'fktable_pkey' for table 'fktable'
+NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+-- default to deferred, should succeed
+BEGIN;
+INSERT INTO fktable VALUES (100, 200);
+INSERT INTO pktable VALUES (200, 500); -- make the FK insert valid
+COMMIT;
+-- default to deferred, explicitely make immediate
+BEGIN;
+SET CONSTRAINTS ALL IMMEDIATE;
+-- should fail
+INSERT INTO fktable VALUES (500, 1000);
+ERROR:  $1 referential integrity violation - key referenced from fktable not found in pktable
+COMMIT;
+DROP TABLE fktable, pktable;
+-- tricky behavior: according to SQL99, if a deferred constraint is set
+-- to 'immediate' mode, it should be checked for validity *immediately*,
+-- not when the current transaction commits (i.e. the mode change applies
+-- retroactively)
+CREATE TABLE pktable (
+	id		INT4 PRIMARY KEY,
+	other	INT4
+);
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index 'pktable_pkey' for table 'pktable'
+CREATE TABLE fktable (
+	id		INT4 PRIMARY KEY,
+	fk		INT4 REFERENCES pktable DEFERRABLE
+);
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index 'fktable_pkey' for table 'fktable'
+NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+BEGIN;
+SET CONSTRAINTS ALL DEFERRED;
+-- should succeed, for now
+INSERT INTO fktable VALUES (1000, 2000);
+-- should cause transaction abort, due to preceding error
+SET CONSTRAINTS ALL IMMEDIATE;
+ERROR:  $1 referential integrity violation - key referenced from fktable not found in pktable
+INSERT INTO pktable VALUES (2000, 3); -- too late
+ERROR:  current transaction is aborted, queries ignored until end of transaction block
+COMMIT;
+DROP TABLE fktable, pktable;

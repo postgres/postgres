@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.170 2002/08/15 16:36:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.171 2002/08/17 12:15:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -215,9 +215,8 @@ ProcessUtility(Node *parsetree,
 							BeginTransactionBlock();
 
 							/*
-							 * Currently, the only option that can be set is
-							 * the transaction isolation level by START
-							 * TRANSACTION.
+							 * Currently, the only option that can be set by
+							 * START TRANSACTION is the isolation level.
 							 */
 							if (stmt->options)
 							{

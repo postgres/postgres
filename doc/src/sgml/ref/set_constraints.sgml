@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/set_constraints.sgml,v 1.4 2002/06/03 01:10:38 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/set_constraints.sgml,v 1.5 2002/08/17 12:15:48 momjian Exp $ -->
 <refentry id="SQL-SET-CONSTRAINTS">
  <refmeta>
   <refentrytitle id="SQL-SET-CONSTRAINTS-title">SET CONSTRAINTS</refentrytitle>
@@ -22,10 +22,32 @@ SET CONSTRAINTS { ALL | <replaceable class="parameter">constraint</replaceable> 
 
   <para>
    <command>SET CONSTRAINTS</command> sets the behavior of constraint
-   evaluation in the current transaction. In
-   <option>IMMEDIATE</option> mode, constraints are checked at the end
-   of each statement. In <option>DEFERRED</option> mode, constraints
-   are not checked until transaction commit.
+   evaluation in the current transaction. In <option>IMMEDIATE
+   </option> mode, constraints are checked at the end of each
+   statement. In <option>DEFERRED</option> mode, constraints are not
+   checked until transaction commit.
+  </para>
+
+  <note>
+   <para>
+	This command only alters the behavior of constraints within the
+	current transaction. Thus, if you execute this command outside
+	of an explicit transaction block (such as one started with
+	<command>BEGIN</command>), it will not appear to have any effect.
+	If you wish to change the behavior of a constraint without needing
+	to issue a <command>SET CONSTRAINTS</command> command in every
+	transaction, specify <option>INITIALLY DEFERRED</option> or
+	<option>INITIALLY IMMEDIATE</option> when you create the constraint.
+   </para>
+  </note>
+
+  <para>
+   When you change the mode of a constraint to be <option>IMMEDIATE
+   </option>, the new constraint mode takes effect retroactively:
+   any outstanding data modifications that would have been checked
+   at the end of the transaction (when using
+   <option>DEFERRED</option>) are instead checked during the
+   execution of the <command>SET CONSTRAINTS</command> command.
   </para>
 
   <para>
@@ -52,7 +74,11 @@ SET CONSTRAINTS { ALL | <replaceable class="parameter">constraint</replaceable> 
 
    <para>
     <command>SET CONSTRAINTS</command> is defined in
-    <acronym>SQL92</acronym> and <acronym>SQL99</acronym>.
+    <acronym>SQL92</acronym> and <acronym>SQL99</acronym>. The
+    implementation in <productname>PostgreSQL</productname> complies
+    with the behavior defined in the standard, except for the
+    <productname>PostgreSQL</productname> limitation that <command>SET
+    CONSTRAINTS</command> cannot be applied to check or unique constraints.
    </para>
   </refsect2>
  </refsect1>
