@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.11 1999/09/18 19:06:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.12 1999/10/02 21:33:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,7 +50,7 @@ static char *GetDefaultOpClass(Oid atttypid);
  *
  * 'attributeList' is a list of IndexElem specifying either a functional
  *		index or a list of attributes to index on.
- * 'parameterList' is a list of ParamString specified in the with clause.
+ * 'parameterList' is a list of DefElem specified in the with clause.
  * 'predicate' is the qual specified in the where clause.
  * 'rangetable' is for the predicate
  *
@@ -116,21 +116,19 @@ DefineIndex(char *heapRelationName,
 	}
 	accessMethodId = tuple->t_data->t_oid;
 
-
 	/*
-	 * Handle parameters [param list is now different (NOT USED, really) -
-	 * ay 10/94]
-	 *
 	 * WITH clause reinstated to handle lossy indices. -- JMH, 7/22/96
 	 */
 	foreach(pl, parameterList)
 	{
-		ParamString *param = (ParamString *) lfirst(pl);
+		DefElem *param = (DefElem *) lfirst(pl);
 
-		if (!strcasecmp(param->name, "islossy"))
+		if (!strcasecmp(param->defname, "islossy"))
 			lossy = TRUE;
+		else
+			elog(NOTICE, "Unrecognized index attribute '%s' ignored",
+				 param->defname);
 	}
-
 
 	/*
 	 * Convert the partial-index predicate from parsetree form to plan

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.34 1999/09/28 11:27:13 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.35 1999/10/02 21:33:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,15 +42,16 @@ fmgr_dynamic(Oid procedureId, int *pronargs)
 	HeapTuple	procedureTuple;
 	Form_pg_proc procedureStruct;
 	char	   *proname,
-			   *probinstring,
-			   *prosrcstring,
-			   *linksymbol;
+			   *linksymbol,
+			   *probinstring;
+	char	   *prosrcstring = NULL;
 	Datum		probinattr;
 	Datum		prosrcattr;
 	func_ptr	user_fn;
 	Relation	rel;
 	bool		isnull;
 
+	/* Implement simple one-element cache for function lookups */
 	if (procedureId == procedureId_save)
 	{
 		*pronargs = pronargs_save;
@@ -91,8 +92,6 @@ fmgr_dynamic(Oid procedureId, int *pronargs)
 	}
 	probinstring = textout((struct varlena *) probinattr);
 
-	heap_close(rel, AccessShareLock);
-
 	prosrcattr = heap_getattr(procedureTuple,
 							  Anum_pg_proc_prosrc,
 							  RelationGetDescr(rel), &isnull);
@@ -118,9 +117,12 @@ fmgr_dynamic(Oid procedureId, int *pronargs)
 			linksymbol = prosrcstring;
 	}
 
+	heap_close(rel, AccessShareLock);
+
 	user_fn = handle_load(probinstring, linksymbol);
 
 	pfree(probinstring);
+	if (prosrcstring) pfree(prosrcstring);
 
 	procedureId_save = procedureId;
 	user_fn_save = user_fn;

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.35 1999/09/28 04:34:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.36 1999/10/02 21:33:24 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -53,6 +53,7 @@
 #include "utils/syscache.h"
 
 static char *defGetString(DefElem *def);
+static double defGetNumeric(DefElem *def);
 static int	defGetTypeLength(DefElem *def);
 
 #define DEFAULT_TYPDELIM		','
@@ -103,9 +104,8 @@ compute_return_type(const Node *returnType,
 }
 
 
-
 static void
-compute_full_attributes(const List *parameters, int32 *byte_pct_p,
+compute_full_attributes(List *parameters, int32 *byte_pct_p,
 						int32 *perbyte_cpu_p, int32 *percall_cpu_p,
 						int32 *outin_ratio_p, bool *canCache_p)
 {
@@ -113,7 +113,17 @@ compute_full_attributes(const List *parameters, int32 *byte_pct_p,
   Interpret the parameters *parameters and return their contents as
   *byte_pct_p, etc.
 
-  These are the full parameters of a C or internal function.
+  These parameters supply optional information about a function.
+  All have defaults if not specified.
+
+  Note: as of version 6.6, canCache is used (if set, the optimizer's
+  constant-folder is allowed to pre-evaluate the function if all its
+  inputs are constant).  The other four are not used.  They used to be
+  used in the "expensive functions" optimizer, but that's been dead code
+  for a long time.
+
+  Since canCache is useful for any function, we now allow attributes to be
+  supplied for all functions regardless of language.
 ---------------------------------------------------------------------------*/
 	List	   *pl;
 
@@ -122,58 +132,33 @@ compute_full_attributes(const List *parameters, int32 *byte_pct_p,
 	*perbyte_cpu_p = PERBYTE_CPU;
 	*percall_cpu_p = PERCALL_CPU;
 	*outin_ratio_p = OUTIN_RATIO;
+	*canCache_p = false;
 
-	foreach(pl, (List *) parameters)
+	foreach(pl, parameters)
 	{
-		ParamString *param = (ParamString *) lfirst(pl);
+		DefElem *param = (DefElem *) lfirst(pl);
 
-		if (strcasecmp(param->name, "iscachable") == 0)
+		if (strcasecmp(param->defname, "iscachable") == 0)
 			*canCache_p = true;
-		else if (strcasecmp(param->name, "trusted") == 0)
+		else if (strcasecmp(param->defname, "trusted") == 0)
 		{
-
 			/*
 			 * we don't have untrusted functions any more. The 4.2
 			 * implementation is lousy anyway so I took it out. -ay 10/94
 			 */
 			elog(ERROR, "untrusted function has been decommissioned.");
 		}
-		else if (strcasecmp(param->name, "byte_pct") == 0)
-		{
-
-			/*
-			 * * handle expensive function parameters
-			 */
-			*byte_pct_p = atoi(param->val);
-		}
-		else if (strcasecmp(param->name, "perbyte_cpu") == 0)
-		{
-			if (sscanf(param->val, "%d", perbyte_cpu_p) == 0)
-			{
-				int			count;
-				char	   *ptr;
-
-				for (count = 0, ptr = param->val; *ptr != '\0'; ptr++)
-					if (*ptr == '!')
-						count++;
-				*perbyte_cpu_p = (int) pow(10.0, (double) count);
-			}
-		}
-		else if (strcasecmp(param->name, "percall_cpu") == 0)
-		{
-			if (sscanf(param->val, "%d", percall_cpu_p) == 0)
-			{
-				int			count;
-				char	   *ptr;
-
-				for (count = 0, ptr = param->val; *ptr != '\0'; ptr++)
-					if (*ptr == '!')
-						count++;
-				*percall_cpu_p = (int) pow(10.0, (double) count);
-			}
-		}
-		else if (strcasecmp(param->name, "outin_ratio") == 0)
-			*outin_ratio_p = atoi(param->val);
+		else if (strcasecmp(param->defname, "byte_pct") == 0)
+			*byte_pct_p = (int) defGetNumeric(param);
+		else if (strcasecmp(param->defname, "perbyte_cpu") == 0)
+			*perbyte_cpu_p = (int) defGetNumeric(param);
+		else if (strcasecmp(param->defname, "percall_cpu") == 0)
+			*percall_cpu_p = (int) defGetNumeric(param);
+		else if (strcasecmp(param->defname, "outin_ratio") == 0)
+			*outin_ratio_p = (int) defGetNumeric(param);
+		else
+			elog(NOTICE, "Unrecognized function attribute '%s' ignored",
+				 param->defname);
 	}
 }
 
@@ -215,8 +200,8 @@ interpret_AS_clause(const char *languageName, const List *as,
 		*probin_str_p = "-";
 
 		if (lnext(as) != NULL)
-			elog(ERROR, "CREATE FUNCTION: parse error in 'AS %s, %s'.",
-				 strVal(lfirst(as)), strVal(lsecond(as)));
+			elog(ERROR, "CREATE FUNCTION: only one AS item needed for %s language",
+				 languageName);
 	}
 }
 
@@ -246,39 +231,37 @@ CreateFunction(ProcedureStmt *stmt, CommandDest dest)
 	 * or "SQL"
 	 */
 
+	bool		returnsSet;
+	/* The function returns a set of values, as opposed to a singleton. */
+
+	bool		lanisPL = false;
+
 	/*
-	 * The following are attributes of the function, as expressed in the
-	 * CREATE FUNCTION statement, where applicable.
+	 * The following are optional user-supplied attributes of the function.
 	 */
 	int32		byte_pct,
 				perbyte_cpu,
 				percall_cpu,
 				outin_ratio;
 	bool		canCache;
-	bool		returnsSet;
-
-	bool		lanisPL = false;
-
-	/* The function returns a set of values, as opposed to a singleton. */
 
 
 	case_translate_language_name(stmt->language, languageName);
 
-	compute_return_type(stmt->returnType, &prorettype, &returnsSet);
-
 	if (strcmp(languageName, "C") == 0 ||
 		strcmp(languageName, "internal") == 0)
 	{
-		compute_full_attributes(stmt->withClause,
-								&byte_pct, &perbyte_cpu, &percall_cpu,
-								&outin_ratio, &canCache);
+		if (!superuser())
+			elog(ERROR,
+				 "Only users with Postgres superuser privilege are "
+				 "permitted to create a function "
+				 "in the '%s' language.  Others may use the 'sql' language "
+				 "or the created procedural languages.",
+				 languageName);
 	}
 	else if (strcmp(languageName, "sql") == 0)
 	{
-		/* query optimizer groks sql, these are meaningless */
-		perbyte_cpu = percall_cpu = 0;
-		byte_pct = outin_ratio = 100;
-		canCache = false;
+		/* No security check needed for SQL functions */
 	}
 	else
 	{
@@ -321,47 +304,34 @@ CreateFunction(ProcedureStmt *stmt, CommandDest dest)
 		}
 
 		lanisPL = true;
-
-		/*
-		 * These are meaningless
-		 */
-		perbyte_cpu = percall_cpu = 0;
-		byte_pct = outin_ratio = 100;
-		canCache = false;
 	}
+
+	compute_return_type(stmt->returnType, &prorettype, &returnsSet);
+
+	compute_full_attributes(stmt->withClause,
+							&byte_pct, &perbyte_cpu, &percall_cpu,
+							&outin_ratio, &canCache);
 
 	interpret_AS_clause(languageName, stmt->as, &prosrc_str, &probin_str);
 
-	if (strcmp(languageName, "sql") != 0 && lanisPL == false && !superuser())
-		elog(ERROR,
-			 "Only users with Postgres superuser privilege are permitted "
-			 "to create a function "
-			 "in the '%s' language.  Others may use the 'sql' language "
-			 "or the created procedural languages.",
-			 languageName);
-	/* Above does not return. */
-	else
-	{
-
-		/*
-		 * And now that we have all the parameters, and know we're
-		 * permitted to do so, go ahead and create the function.
-		 */
-		ProcedureCreate(stmt->funcname,
-						returnsSet,
-						prorettype,
-						languageName,
-						prosrc_str,		/* converted to text later */
-						probin_str,		/* converted to text later */
-						canCache,
-						true,	/* (obsolete "trusted") */
-						byte_pct,
-						perbyte_cpu,
-						percall_cpu,
-						outin_ratio,
-						stmt->defArgs,
-						dest);
-	}
+	/*
+	 * And now that we have all the parameters, and know we're
+	 * permitted to do so, go ahead and create the function.
+	 */
+	ProcedureCreate(stmt->funcname,
+					returnsSet,
+					prorettype,
+					languageName,
+					prosrc_str,		/* converted to text later */
+					probin_str,		/* converted to text later */
+					canCache,
+					true,			/* (obsolete "trusted") */
+					byte_pct,
+					perbyte_cpu,
+					percall_cpu,
+					outin_ratio,
+					stmt->defArgs,
+					dest);
 }
 
 
@@ -732,6 +702,25 @@ defGetString(DefElem *def)
 	if (nodeTag(def->arg) != T_String)
 		elog(ERROR, "Define: \"%s\" = what?", def->defname);
 	return strVal(def->arg);
+}
+
+static double
+defGetNumeric(DefElem *def)
+{
+	if (def->arg == NULL)
+		elog(ERROR, "Define: \"%s\" requires a numeric value",
+			 def->defname);
+	switch (nodeTag(def->arg))
+	{
+		case T_Integer:
+			return (double) intVal(def->arg);
+		case T_Float:
+			return floatVal(def->arg);
+		default:
+			elog(ERROR, "Define: \"%s\" requires a numeric value",
+				 def->defname);
+	}
+	return 0;					/* keep compiler quiet */
 }
 
 static int

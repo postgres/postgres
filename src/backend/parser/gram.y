@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.104 1999/09/29 16:06:06 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.105 1999/10/02 21:33:21 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -103,7 +103,6 @@ Oid	param_type(int t); /* used in parse_expr.c */
 
 	TypeName			*typnam;
 	DefElem				*defelt;
-	ParamString			*param;
 	SortGroupBy			*sortgroupby;
 	JoinExpr			*joinexpr;
 	IndexElem			*ielem;
