@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/GNUmakefile.in,v 1.4 1997/02/04 08:53:45 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/GNUmakefile.in,v 1.5 1997/02/04 09:13:56 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -44,7 +44,7 @@ ifneq ($(wildcard man), )
 	$(MAKE) -C man $@
 endif
 	@if test $@. = all. -o $@. = .; then \
-	echo All of Postgres95 is successfully made.  Ready to install. ;\
+	echo All of PostgreSQL is successfully made.  Ready to install. ;\
         fi
 
 TAGS:
