@@ -2421,7 +2421,7 @@ DeleteStmt:  DELETE FROM relation_expr where_clause
 				}
 		;
 
-LockStmt:  LOCK_P opt_table relation_name_list opt_lock
+LockStmt:  LOCK_P opt_table relation_name opt_lock
 				{
 					$$ = cat_str(4, make_str("lock"), $2, $3, $4);
 				}

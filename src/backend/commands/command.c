@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.137 2001/08/04 19:38:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.138 2001/08/04 22:01:38 momjian Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -1984,7 +1984,8 @@ needs_toast_table(Relation rel)
 		MAXALIGN(data_length);
 	return (tuple_length > TOAST_TUPLE_THRESHOLD);
 }
-	
+
+
 /*
  *
  * LOCK TABLE
@@ -1993,104 +1994,26 @@ needs_toast_table(Relation rel)
 void
 LockTableCommand(LockStmt *lockstmt)
 {
-	int         relCnt;
+	Relation	rel;
+	int			aclresult;
 
-	relCnt = length(lockstmt -> rellist);
+	rel = heap_openr(lockstmt->relname, NoLock);
 
-	/* Handle a single relation lock specially to avoid overhead on likely the
-	   most common case */
+	if (rel->rd_rel->relkind != RELKIND_RELATION)
+		elog(ERROR, "LOCK TABLE: %s is not a table", lockstmt->relname);
 
-	if(relCnt == 1)
-	{
+	if (lockstmt->mode == AccessShareLock)
+		aclresult = pg_aclcheck(lockstmt->relname, GetUserId(), ACL_SELECT);
+	else
+		aclresult = pg_aclcheck(lockstmt->relname, GetUserId(),
+								ACL_UPDATE | ACL_DELETE);
 
-		/* Locking a single table */
+	if (aclresult != ACLCHECK_OK)
+		elog(ERROR, "LOCK TABLE: permission denied");
 
-		Relation	rel;
-		int			aclresult;
-		char *relname;
+	LockRelation(rel, lockstmt->mode);
 
-		relname = strVal(lfirst(lockstmt->rellist));
-
-		freeList(lockstmt->rellist);
-
-		rel = heap_openr(relname, NoLock);
-
-		if (rel->rd_rel->relkind != RELKIND_RELATION)
-			elog(ERROR, "LOCK TABLE: %s is not a table", relname);
-
-		if (lockstmt->mode == AccessShareLock)
-			aclresult = pg_aclcheck(relname, GetUserId(),
-									ACL_SELECT);
-		else
-			aclresult = pg_aclcheck(relname, GetUserId(),
-									ACL_UPDATE | ACL_DELETE);
-
-		if (aclresult != ACLCHECK_OK)
-			elog(ERROR, "LOCK TABLE: permission denied");
-
-		LockRelation(rel, lockstmt->mode);
-
-		pfree(relname);
-
-		heap_close(rel, NoLock);	/* close rel, keep lock */
-	} 
-	else 
-	{
-		List *p;
-		Relation *RelationArray;
-		Relation *pRel;
-
-		/* Locking multiple tables */
-
-		/* Create an array of relations */
-
-		RelationArray = palloc(relCnt * sizeof(Relation));
-		pRel = RelationArray;
-
-		/* Iterate over the list and populate the relation array */
-
-		foreach(p, lockstmt->rellist)
-		{
-			char* relname = strVal(lfirst(p));
-			int			aclresult;
-
-			*pRel = heap_openr(relname, NoLock);
-
-			if ((*pRel)->rd_rel->relkind != RELKIND_RELATION)
-				elog(ERROR, "LOCK TABLE: %s is not a table", 
-					 relname);
-
-			if (lockstmt->mode == AccessShareLock)
-				aclresult = pg_aclcheck(relname, GetUserId(),
-										ACL_SELECT);
-			else
-				aclresult = pg_aclcheck(relname, GetUserId(),
-										ACL_UPDATE | ACL_DELETE);
-
-			if (aclresult != ACLCHECK_OK)
-				elog(ERROR, "LOCK TABLE: permission denied");
-
-			pRel++;
-			pfree(relname);
-		}
-
-		/* Now, lock all the relations, closing each after it is locked
-		   (Keeping the locks)
-		 */
-
-		for(pRel = RelationArray;
-			pRel < RelationArray + relCnt;
-			pRel++)
-			{
-				LockRelation(*pRel, lockstmt->mode);
-
-				heap_close(*pRel, NoLock);
-			}
-
-		/* Free the relation array */
-
-		pfree(RelationArray);
-	}
+	heap_close(rel, NoLock);	/* close rel, keep lock */
 }
 
 

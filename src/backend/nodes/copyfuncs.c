@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.149 2001/08/04 19:38:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.150 2001/08/04 22:01:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2425,8 +2425,8 @@ _copyLockStmt(LockStmt *from)
 {
 	LockStmt   *newnode = makeNode(LockStmt);
 
-	Node_Copy(from, newnode, rellist);
-	
+	if (from->relname)
+		newnode->relname = pstrdup(from->relname);
 	newnode->mode = from->mode;
 
 	return newnode;
