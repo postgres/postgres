@@ -44,6 +44,8 @@ dt2local(Timestamp dt, int tz)
  * Convert a tm structure to a timestamp data type.
  * Note that year is _not_ 1900-based, but is an explicit full value.
  * Also, month is one-based, _not_ zero-based.
+ *
+ * Returns -1 on failure (overflow).
  */
 static int
 tm2timestamp(struct tm * tm, fsec_t fsec, int *tzp, Timestamp *result)
@@ -64,10 +66,13 @@ tm2timestamp(struct tm * tm, fsec_t fsec, int *tzp, Timestamp *result)
 	date = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - date2j(2000, 1, 1);
 	time = time2t(tm->tm_hour, tm->tm_min, tm->tm_sec, fsec);
 #ifdef HAVE_INT64_TIMESTAMP
-	*result = ((date * INT64CONST(86400000000)) + time);
-	if ((*result < 0 && date >= 0) || (*result >= 0 && date < 0))
-		elog(ERROR, "TIMESTAMP out of range '%04d-%02d-%02d'",
-			tm->tm_year, tm->tm_mon, tm->tm_mday);
+	*result = (date * INT64CONST(86400000000)) + time;
+	/* check for major overflow */
+	if ((*result - time) / INT64CONST(86400000000) != date)
+		return -1;
+	/* check for just-barely overflow (okay except time-of-day wraps) */
+	if ((*result < 0) ? (date >= 0) : (date < 0))
+		return -1;
 #else
 	*result = ((date * 86400) + time);
 #endif
