@@ -18,104 +18,10 @@ Moves cursor position
 <DATE>1998-09-01</DATE>
 </REFSYNOPSISDIVINFO>
 <SYNOPSIS>
-MOVE [ <REPLACEABLE CLASS="PARAMETER">selector</REPLACEABLE> ] { [ <REPLACEABLE CLASS="PARAMETER">#</REPLACEABLE> | ALL ] } IN <REPLACEABLE CLASS="PARAMETER">cursor</REPLACEABLE>
+MOVE [ <REPLACEABLE CLASS="PARAMETER">selector</REPLACEABLE> ] [ <REPLACEABLE CLASS="PARAMETER">count</REPLACEABLE> ] 
+    { IN | FROM } <REPLACEABLE CLASS="PARAMETER">cursor</REPLACEABLE>
+FETCH [ RELATIVE ] [ { [ <REPLACEABLE CLASS="PARAMETER">#</REPLACEABLE> | ALL | NEXT | PRIOR ] } ] FROM ] <REPLACEABLE CLASS="PARAMETER">cursor</REPLACEABLE>
 </SYNOPSIS>
-
-<REFSECT2 ID="R2-SQL-MOVE-1">
-<REFSECT2INFO>
-<DATE>1998-09-01</DATE>
-</REFSECT2INFO>
-<TITLE>
-Inputs
-</TITLE>
-<PARA>
-</PARA>
-<VARIABLELIST>
-<VARLISTENTRY>
-<TERM>
-<REPLACEABLE CLASS="PARAMETER">selector</REPLACEABLE>
-</TERM>
-<LISTITEM>
-<PARA>
-
-<variablelist>
-<varlistentry>
-<term>
-FORWARD
-</term>
-<listitem>
-<para>
-Skip next row(s), it is assumed by default
-                       if selector is omitted.
-
-<varlistentry>
-<term>
-BACKWARD
-</term>
-<listitem>
-<para>
-Skip previous row(s).
-
-</variablelist>
-
-<VARLISTENTRY>
-<TERM>
-<REPLACEABLE CLASS="PARAMETER">#</REPLACEABLE>
-</TERM>
-<LISTITEM>
-<PARA>
-         An unsigned integer that specify how many rows to skip.
-
-<VARLISTENTRY>
-<TERM>
-ALL
-</TERM>
-<LISTITEM>
-<PARA>
-Skip all remaining rows.
-
-<VARLISTENTRY>
-<TERM>
-<REPLACEABLE CLASS="PARAMETER">cursor</REPLACEABLE>
-</TERM>
-<LISTITEM>
-<PARA>
-         An open cursor's name.
-
-</VARIABLELIST>
-
-</REFSECT2>
-
-<REFSECT2 ID="R2-SQL-MOVE-2">
-<REFSECT2INFO>
-<DATE>1998-09-01</DATE>
-</REFSECT2INFO>
-<TITLE>
-Outputs
-</TITLE>
-<PARA>
-</PARA>
-<VARIABLELIST>
-<VARLISTENTRY>
-<TERM>
-MOVE
-</TERM>
-<LISTITEM>
-<PARA>
-         Message returned if successfully. 
-
-<VARLISTENTRY>
-<TERM>
-NOTICE:  PerformPortalFetch: portal <REPLACEABLE CLASS="PARAMETER">cursor</REPLACEABLE> not found.
-</TERM>
-<LISTITEM>
-<PARA>
-         If cursor is not declared.
-
-</VARIABLELIST>
-
-</REFSECT2>
-</REFSYNOPSISDIV>
 
 <REFSECT1 ID="R1-SQL-MOVE-1">
 <REFSECT1INFO>
@@ -125,9 +31,13 @@ NOTICE:  PerformPortalFetch: portal <REPLACEABLE CLASS="PARAMETER">cursor</REPLA
 Description
 </TITLE>
 <PARA>
-   MOVE allows a user to move cursor position for specified
-   number of rows. MOVE works like fetch command: it
-   fetches rows, but put them nowhere.
+   MOVE allows a user to move cursor position a specified
+   number of rows. MOVE works like the FETCH command, but only
+positions the cursor and does
+not return rows.
+
+<para>
+Refer to the FETCH command for details on syntax and usage.
 
 <REFSECT2 ID="R2-SQL-MOVE-3">
 <REFSECT2INFO>
@@ -140,9 +50,9 @@ Notes
 MOVE is a <productname>Postgres</productname> language extension.
 
 <para>
-   Refer to FETCH statements for further description
+   Refer to FETCH for a description
      of valid arguments.
-   Refer to DECLARE statements to declare a cursor.
+   Refer to DECLARE to declare a cursor.
    Refer to BEGIN WORK, COMMIT WORK, ROLLBACK WORK statements
      for further information about transactions.
 
@@ -195,5 +105,6 @@ Compatibility
 SQL92
 </TITLE>
 <PARA>
-   There is no SQL92 MOVE statement.
+   There is no SQL92 MOVE statement. Instead, <acronym>SQL92</acronym> allows
+one to FETCH rows from an absolute cursor position.
 </REFENTRY>

@@ -17,7 +17,9 @@ Gets rows using a cursor
 <DATE>1998-09-01</DATE>
 </REFSYNOPSISDIVINFO>
 <SYNOPSIS>
-FETCH [ <REPLACEABLE CLASS="PARAMETER">selector</REPLACEABLE> ] { [ <REPLACEABLE CLASS="PARAMETER">#</REPLACEABLE> | ALL ] } { IN | FROM } <REPLACEABLE CLASS="PARAMETER">cursor</REPLACEABLE>
+FETCH [ <REPLACEABLE CLASS="PARAMETER">selector</REPLACEABLE> ] [ <REPLACEABLE CLASS="PARAMETER">count</REPLACEABLE> ] 
+    { IN | FROM } <REPLACEABLE CLASS="PARAMETER">cursor</REPLACEABLE>
+FETCH [ RELATIVE ] [ { [ <REPLACEABLE CLASS="PARAMETER">#</REPLACEABLE> | ALL | NEXT | PRIOR ] } ] FROM ] <REPLACEABLE CLASS="PARAMETER">cursor</REPLACEABLE>
 </SYNOPSIS>
 
 <REFSECT2 ID="R2-SQL-FETCH-1">
@@ -36,7 +38,8 @@ Inputs
 </TERM>
 <LISTITEM>
 <PARA>
-Selector define fetch direction and it can be one
+<REPLACEABLE CLASS="PARAMETER">selector</REPLACEABLE>
+defines the fetch direction. It can be one
          the following:
 
 <VARIABLELIST>
@@ -46,8 +49,8 @@ FORWARD
 </TERM>
 <LISTITEM>
 <PARA>
-fetch next row(s), it is assumed by default
-                       if selector is omitted.
+fetch next row(s). This is the default
+ if <REPLACEABLE CLASS="PARAMETER">selector</REPLACEABLE> is omitted.
 
 <VARLISTENTRY>
 <TERM>
@@ -57,15 +60,35 @@ BACKWARD
 <PARA>
 fetch previous row(s).
 
+<VARLISTENTRY>
+<TERM>
+RELATIVE
+</TERM>
+<LISTITEM>
+<PARA>
+Noise word for SQL92 compatibility.
+
 </VARIABLELIST>
 
+<VARLISTENTRY>
+<TERM>
+<REPLACEABLE CLASS="PARAMETER">count</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+<REPLACEABLE CLASS="PARAMETER">count</REPLACEABLE>
+determines how many rows to fetch. It can be one of the following:
+
+<VARIABLELIST>
 <VARLISTENTRY>
 <TERM>
 <REPLACEABLE CLASS="PARAMETER">#</REPLACEABLE>
 </TERM>
 <LISTITEM>
 <PARA>
-An unsigned integer that specify how many rows to fetch.
+A signed integer that specify how many rows to fetch.
+Note that a negative integer is equivalent to changing the sense of
+FORWARD and BACKWARD.
 
 <VARLISTENTRY>
 <TERM>
@@ -74,6 +97,24 @@ ALL
 <LISTITEM>
 <PARA>
 Retrieve all remaining rows.
+
+<VARLISTENTRY>
+<TERM>
+NEXT
+</TERM>
+<LISTITEM>
+<PARA>
+Equivalent to specifying a count of <command>1</command>.
+
+<VARLISTENTRY>
+<TERM>
+PRIOR
+</TERM>
+<LISTITEM>
+<PARA>
+Equivalent to specifying a count of <command>-1</command>.
+
+</VARIABLELIST>
 
 <VARLISTENTRY>
 <TERM>
@@ -108,6 +149,34 @@ NOTICE:  PerformPortalFetch: portal "<REPLACEABLE CLASS="PARAMETER">cursor</REPL
 If <REPLACEABLE CLASS="PARAMETER">cursor</REPLACEABLE> is not previously declared.
 The cursor must be declared within a transaction block.
 
+<VARLISTENTRY>
+<TERM>
+NOTICE:  FETCH/ABSOLUTE not supported, using RELATIVE
+</TERM>
+<LISTITEM>
+<PARA>
+<productname>Postgres</productname> does not support absolute
+positioning of cursors.
+
+<VARLISTENTRY>
+<TERM>
+ERROR:  FETCH/RELATIVE at current position is not supported
+</TERM>
+<LISTITEM>
+<PARA>
+<acronym>SQL92</acronym> allows one to repetatively retrieve the cursor
+at its "current position" using the syntax
+<programlisting>
+FETCH RELATIVE 0 FROM <REPLACEABLE CLASS="PARAMETER">cursor</REPLACEABLE>
+</programlisting>
+
+<productname>Postgres</productname> does not currently support
+this notion; in fact the value zero is reserved to indicate that
+all rows should be retrieved and is equivalent to specifying the ALL keyword.
+If the RELATIVE keyword has been used, the <productname>Postgres</productname> 
+assumes that the user intended <acronym>SQL92</acronym> behavior
+and returns this error message.
+
 </variablelist>
 
 </REFSECT2>
@@ -122,13 +191,30 @@ Description
 </TITLE>
 <PARA>
    FETCH allows a user to retrieve rows using a cursor.
-   The number of rows retrieved is specified by #.
+   The number of rows retrieved is specified by
+ <REPLACEABLE CLASS="PARAMETER">#</REPLACEABLE>.
    If the number of rows remaining in the cursor is less
-   than #, then only those available are fetched.
+   than <REPLACEABLE CLASS="PARAMETER">#</REPLACEABLE>,
+ then only those available are fetched.
    Substituting the keyword ALL in place of a number will
    cause all remaining rows in the cursor to be retrieved.
-   Instances may be fetched in both forward and backward
-   directions. The default direction is forward.
+   Instances may be fetched in both FORWARD and BACKWARD
+   directions. The default direction is FORWARD.
+
+<tip>
+<para>
+Negative numbers are now allowed to be specified for the
+row count. A negative number is equivalent to reversing
+the sense of the FORWARD and BACKWARD keywords. For example,
+<command>FORWARD -1</command> is the same as <command>BACKWARD 1</command>.
+</tip>
+
+<para>
+Note that the FORWARD and BACKWARD keywords are
+ <productname>Postgres</productname> extensions.
+The <acronym>SQL92</acronym> syntax is also supported, specified
+in the second form of the command. See below for details
+on compatibility issues.
 
 <para>
    Once all rows are fetched, every other fetch access returns
@@ -138,8 +224,9 @@ Description
    Updating data in a cursor is not supported by 
 <productname>Postgres</productname>,
    because mapping cursor updates back to base tables is
-not generally possible, similarly to VIEW updates. Consequently,
-   users must issue explicit replace commands to update data.
+not generally possible, as is also the case with VIEW updates.
+ Consequently,
+   users must issue explicit UPDATE commands to replace data.
 
 <para>
    Cursors may only be used inside of transactions because
@@ -216,87 +303,25 @@ Compatibility
 SQL92
 </TITLE>
 <PARA>
-   SQL92 specifies some additional capabilities for FETCH statement.
+SQL92 allows absolute positioning of the cursor for
+FETCH, and allows placing the results into explicit variables.
 
 <synopsis>
-FETCH [ [ <REPLACEABLE CLASS="PARAMETER">selector</REPLACEABLE> ] FROM ] <REPLACEABLE CLASS="PARAMETER">cursor</REPLACEABLE>
+FETCH ABSOLUTE <REPLACEABLE CLASS="PARAMETER">#</REPLACEABLE>
+    FROM <REPLACEABLE CLASS="PARAMETER">cursor</REPLACEABLE>
     INTO :<REPLACEABLE CLASS="PARAMETER">variable</REPLACEABLE> [, ...]
 </synopsis>
 
 <VARIABLELIST>
 <VARLISTENTRY>
 <TERM>
-<REPLACEABLE CLASS="PARAMETER">selector</REPLACEABLE>
+ABSOLUTE
 </TERM>
 <LISTITEM>
 <PARA>
-Defines the fetch direction with one of the following values:
-
-<VARIABLELIST>
-<VARLISTENTRY>
-<TERM>
-NEXT
-</TERM>
-<LISTITEM>
-<PARA>
-Fetch next row, it is assumed by default
-                       if selector is omitted.
-                       This is the only legal selector unless cursor is
-                       declared with the SCROLL option.
-
-<VARLISTENTRY>
-<TERM>
-PRIOR
-</TERM>
-<LISTITEM>
-<PARA>
-Fetch previous row.
-
-<VARLISTENTRY>
-<TERM>
-FIRST
-</TERM>
-<LISTITEM>
-<PARA>
-Fetch first row.
-
-<VARLISTENTRY>
-<TERM>
-LAST
-</TERM>
-<LISTITEM>
-<PARA>
-Fetch last row.
-
-<VARLISTENTRY>
-<TERM>
-ABSOLUTE <REPLACEABLE CLASS="PARAMETER">#</REPLACEABLE>
-</TERM>
-<LISTITEM>
-<PARA>
-Refers to the <REPLACEABLE CLASS="PARAMETER">#</REPLACEABLE>th row
- in the table associated with the cursor.
-
-<VARLISTENTRY>
-<TERM>
-RELATIVE <REPLACEABLE CLASS="PARAMETER">#</REPLACEABLE>
-</TERM>
-<LISTITEM>
-<PARA>
-Refers to the <REPLACEABLE CLASS="PARAMETER">#</REPLACEABLE>th row
- relative to the cursor position.
-A negative number is equivalent to reversing the sense of the FORWARD and
- BACKWARD keywords.
-
-</variablelist>
-
-<VARLISTENTRY>
-<TERM>
-<REPLACEABLE CLASS="PARAMETER">cursor</REPLACEABLE>
-</TERM>
-<LISTITEM>
-<PARA>
-A cursor previously defined in the same transaction block using BEGIN and DECLARE.
+The cursor should be positioned to the specified absolute
+row number. All row numbers in <productname>Postgres</productname>
+are relative numbers so this capability is not supported.
 
 <VARLISTENTRY>
 <TERM>
