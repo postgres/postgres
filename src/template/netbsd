@@ -1,1 +1,5 @@
 # tools/thread/thread_test must be run
+case $build in
+	*-netbsdelf[2-9]*) THREAD_CPPFLAGS="-pthread"; THREAD_LIBS="-pthread" ;;
+esac
+
