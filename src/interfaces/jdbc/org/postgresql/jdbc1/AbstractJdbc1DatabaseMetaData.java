@@ -2960,7 +2960,7 @@ public abstract class AbstractJdbc1DatabaseMetaData
 		 */
 
 		if (connection.haveMinimumServerVersion("7.3")) {
-			select = "SELECT n1.nspname as pnspname,n2.nspname as fnspname, ";
+			select = "SELECT DISTINCT n1.nspname as pnspname,n2.nspname as fnspname, ";
 			from = " FROM pg_catalog.pg_namespace n1 "+
 				" JOIN pg_catalog.pg_class c1 ON (c1.relnamespace = n1.oid) "+
 				" JOIN pg_catalog.pg_index i ON (c1.oid=i.indrelid) "+
@@ -2979,7 +2979,7 @@ public abstract class AbstractJdbc1DatabaseMetaData
 				where += " AND n2.nspname = '"+escapeQuotes(foreignSchema)+"' ";
 			}
 		} else {
-			select = "SELECT NULL::text as pnspname, NULL::text as fnspname, ";
+			select = "SELECT DISTINCT NULL::text as pnspname, NULL::text as fnspname, ";
 			from = " FROM pg_class c1 "+
 				" JOIN pg_index i ON (c1.oid=i.indrelid) "+
 				" JOIN pg_class ic ON (i.indexrelid=ic.oid) "+
