@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.318 2003/03/20 07:02:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.319 2003/03/22 04:23:34 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -927,6 +927,10 @@ pg_exec_query_string(StringInfo query_string,	/* string to execute */
 		EndCommand(commandTag, dest);
 	}							/* end loop over parsetrees */
 
+	/* No parsetree - return empty result */
+	if (!parsetree_list)
+		NullCommand(dest);
+
 	/*
 	 * Close down transaction statement, if one is open. (Note that this
 	 * will only happen if the querystring was empty.)
@@ -1789,7 +1793,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.318 $ $Date: 2003/03/20 07:02:10 $\n");
+		puts("$Revision: 1.319 $ $Date: 2003/03/22 04:23:34 $\n");
 	}
 
 	/*
@@ -1995,36 +1999,23 @@ PostgresMain(int argc, char *argv[], const char *username)
 				 * 'Q' indicates a user query
 				 */
 			case 'Q':
-				if (strspn(parser_input->data, " \t\r\n") == parser_input->len)
-				{
-					/*
-					 * if there is nothing in the input buffer, don't
-					 * bother trying to parse and execute anything; just
-					 * send back a quick NullCommand response.
-					 */
-					if (IsUnderPostmaster)
-						NullCommand(Remote);
-				}
-				else
-				{
-					/*
-					 * otherwise, process the input string.
-					 *
-					 * Note: transaction command start/end is now done within
-					 * pg_exec_query_string(), not here.
-					 */
-					if (log_statement_stats)
-						ResetUsage();
+				/*
+				 * otherwise, process the input string.
+				 *
+				 * Note: transaction command start/end is now done within
+				 * pg_exec_query_string(), not here.
+				 */
+				if (log_statement_stats)
+					ResetUsage();
 
-					pgstat_report_activity(parser_input->data);
+				pgstat_report_activity(parser_input->data);
 
-					pg_exec_query_string(parser_input,
-										 whereToSendOutput,
-										 QueryContext);
+				pg_exec_query_string(parser_input,
+									 whereToSendOutput,
+									 QueryContext);
 
-					if (log_statement_stats)
-						ShowUsage("QUERY STATISTICS");
-				}
+				if (log_statement_stats)
+					ShowUsage("QUERY STATISTICS");
 				break;
 
 				/*
