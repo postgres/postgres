@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.165 2002/07/18 17:14:19 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.166 2002/08/04 19:48:09 momjian Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -1004,6 +1004,8 @@ _outRangeTblEntry(StringInfo str, RangeTblEntry *node)
 		case RTE_FUNCTION:
 			appendStringInfo(str, ":funcexpr ");
 			_outNode(str, node->funcexpr);
+			appendStringInfo(str, ":coldeflist ");
+			_outNode(str, node->coldeflist);
 			break;
 		case RTE_JOIN:
 			appendStringInfo(str, ":jointype %d :joinaliasvars ",

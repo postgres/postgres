@@ -19,7 +19,7 @@
 SELECT p1.oid, p1.typname
 FROM pg_type as p1
 WHERE (p1.typlen <= 0 AND p1.typlen != -1) OR
-    (p1.typtype != 'b' AND p1.typtype != 'c') OR
+    (p1.typtype != 'b' AND p1.typtype != 'c' AND p1.typtype != 'p') OR
     NOT p1.typisdefined OR
     (p1.typalign != 'c' AND p1.typalign != 's' AND
      p1.typalign != 'i' AND p1.typalign != 'd') OR
@@ -55,7 +55,7 @@ WHERE (p1.typtype = 'c' AND p1.typrelid = 0) OR
 
 SELECT p1.oid, p1.typname
 FROM pg_type as p1
-WHERE p1.typtype != 'c' AND p1.typname NOT LIKE '\\_%' AND NOT EXISTS
+WHERE p1.typtype = 'b' AND p1.typname NOT LIKE '\\_%' AND NOT EXISTS
     (SELECT 1 FROM pg_type as p2
      WHERE p2.typname = ('_' || p1.typname)::name AND
            p2.typelem = p1.oid);

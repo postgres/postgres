@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.146 2002/08/04 04:31:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.147 2002/08/04 19:48:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1607,6 +1607,8 @@ _equalRangeVar(RangeVar *a, RangeVar *b)
 		return false;
 	if (!equal(a->alias, b->alias))
 		return false;
+	if (!equal(a->coldeflist, b->coldeflist))
+		return false;
 
 	return true;
 }
@@ -1741,6 +1743,8 @@ _equalRangeTblEntry(RangeTblEntry *a, RangeTblEntry *b)
 	if (!equal(a->subquery, b->subquery))
 		return false;
 	if (!equal(a->funcexpr, b->funcexpr))
+		return false;
+	if (!equal(a->coldeflist, b->coldeflist))
 		return false;
 	if (a->jointype != b->jointype)
 		return false;

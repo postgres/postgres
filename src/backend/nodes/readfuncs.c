@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.126 2002/07/18 17:14:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.127 2002/08/04 19:48:09 momjian Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -1545,6 +1545,10 @@ _readRangeTblEntry(void)
 		case RTE_FUNCTION:
 			token = pg_strtok(&length); /* eat :funcexpr */
 			local_node->funcexpr = nodeRead(true);		/* now read it */
+
+			token = pg_strtok(&length); /* eat :coldeflist */
+			local_node->coldeflist = nodeRead(true);	/* now read it */
+
 			break;
 
 		case RTE_JOIN:

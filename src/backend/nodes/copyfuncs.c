@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.199 2002/08/04 04:31:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.200 2002/08/04 19:48:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1482,6 +1482,7 @@ _copyRangeTblEntry(RangeTblEntry *from)
 	newnode->relid = from->relid;
 	Node_Copy(from, newnode, subquery);
 	Node_Copy(from, newnode, funcexpr);
+	Node_Copy(from, newnode, coldeflist);
 	newnode->jointype = from->jointype;
 	Node_Copy(from, newnode, joinaliasvars);
 	Node_Copy(from, newnode, alias);
@@ -1707,6 +1708,7 @@ _copyRangeFunction(RangeFunction *from)
 
 	Node_Copy(from, newnode, funccallnode);
 	Node_Copy(from, newnode, alias);
+	Node_Copy(from, newnode, coldeflist);
 
 	return newnode;
 }

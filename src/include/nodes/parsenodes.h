@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.197 2002/08/04 04:31:44 momjian Exp $
+ * $Id: parsenodes.h,v 1.198 2002/08/04 19:48:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -400,6 +400,8 @@ typedef struct RangeFunction
 	NodeTag		type;
 	Node	   *funccallnode;	/* untransformed function call tree */
 	Alias	   *alias;			/* table alias & optional column aliases */
+	List	   *coldeflist;		/* list of ColumnDef nodes for runtime
+								 * assignment of RECORD TupleDesc */
 } RangeFunction;
 
 /*
@@ -527,6 +529,8 @@ typedef struct RangeTblEntry
 	 * Fields valid for a function RTE (else NULL):
 	 */
 	Node	   *funcexpr;		/* expression tree for func call */
+	List	   *coldeflist;		/* list of ColumnDef nodes for runtime
+								 * assignment of RECORD TupleDesc */
 
 	/*
 	 * Fields valid for a join RTE (else NULL/zero):

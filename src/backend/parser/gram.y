@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.354 2002/08/04 06:51:23 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.355 2002/08/04 19:48:09 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -215,7 +215,8 @@ static void doNegateFloat(Value *v);
 				target_list, update_target_list, insert_column_list,
 				insert_target_list, def_list, opt_indirection,
 				group_clause, TriggerFuncArgs, select_limit,
-				opt_select_limit, opclass_item_list, trans_options
+				opt_select_limit, opclass_item_list, trans_options,
+				tableFuncElementList
 
 %type <range>	into_clause, OptTempTableName
 
@@ -256,8 +257,8 @@ static void doNegateFloat(Value *v);
 
 %type <vsetstmt> set_rest
 
-%type <node>	OptTableElement, ConstraintElem
-%type <node>	columnDef
+%type <node>	OptTableElement, ConstraintElem, tableFuncElement
+%type <node>	columnDef, tableFuncColumnDef
 %type <defelt>	def_elem
 %type <node>	def_arg, columnElem, where_clause, insert_column_item,
 				a_expr, b_expr, c_expr, r_expr, AexprConst,
@@ -4448,6 +4449,34 @@ table_ref:	relation_expr
 				{
 					RangeFunction *n = makeNode(RangeFunction);
 					n->funccallnode = $1;
+					n->coldeflist = NIL;
+					$$ = (Node *) n;
+				}
+			| func_table AS '(' tableFuncElementList ')'
+				{
+					RangeFunction *n = makeNode(RangeFunction);
+					n->funccallnode = $1;
+					n->coldeflist = $4;
+					$$ = (Node *) n;
+				}
+			| func_table AS ColId '(' tableFuncElementList ')'
+				{
+					RangeFunction *n = makeNode(RangeFunction);
+					Alias *a = makeNode(Alias);
+					n->funccallnode = $1;
+					a->aliasname = $3;
+					n->alias = a;
+					n->coldeflist = $5;
+					$$ = (Node *) n;
+				}
+			| func_table ColId '(' tableFuncElementList ')'
+				{
+					RangeFunction *n = makeNode(RangeFunction);
+					Alias *a = makeNode(Alias);
+					n->funccallnode = $1;
+					a->aliasname = $2;
+					n->alias = a;
+					n->coldeflist = $4;
 					$$ = (Node *) n;
 				}
 			| func_table alias_clause
@@ -4455,6 +4484,7 @@ table_ref:	relation_expr
 					RangeFunction *n = makeNode(RangeFunction);
 					n->funccallnode = $1;
 					n->alias = $2;
+					n->coldeflist = NIL;
 					$$ = (Node *) n;
 				}
 			| select_with_parens
@@ -4702,6 +4732,39 @@ where_clause:
 			| /*EMPTY*/								{ $$ = NULL; }
 		;
 
+
+tableFuncElementList:
+			tableFuncElementList ',' tableFuncElement
+				{
+					if ($3 != NULL)
+						$$ = lappend($1, $3);
+					else
+						$$ = $1;
+				}
+			| tableFuncElement
+				{
+					if ($1 != NULL)
+						$$ = makeList1($1);
+					else
+						$$ = NIL;
+				}
+			| /*EMPTY*/							{ $$ = NIL; }
+		;
+
+tableFuncElement:
+			tableFuncColumnDef					{ $$ = $1; }
+		;
+
+tableFuncColumnDef:	ColId Typename
+				{
+					ColumnDef *n = makeNode(ColumnDef);
+					n->colname = $1;
+					n->typename = $2;
+					n->constraints = NIL;
+
+					$$ = (Node *)n;
+				}
+		;
 
 /*****************************************************************************
  *

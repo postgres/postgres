@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.54 2002/04/23 02:07:16 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.55 2002/08/04 19:48:09 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -39,6 +39,12 @@ where <replaceable class="PARAMETER">from_item</replaceable> can be:
 |
 ( <replaceable class="PARAMETER">select</replaceable> )
     [ AS ] <replaceable class="PARAMETER">alias</replaceable> [ ( <replaceable class="PARAMETER">column_alias_list</replaceable> ) ]
+|
+<replaceable class="PARAMETER">table_function_name</replaceable> ( [ <replaceable class="parameter">argtype</replaceable> [, ...] ] )
+    [ AS ] <replaceable class="PARAMETER">alias</replaceable> [ ( <replaceable class="PARAMETER">column_alias_list</replaceable> | <replaceable class="PARAMETER">column_definition_list</replaceable> ) ]
+|
+<replaceable class="PARAMETER">table_function_name</replaceable> ( [ <replaceable class="parameter">argtype</replaceable> [, ...] ] )
+    AS ( <replaceable class="PARAMETER">column_definition_list</replaceable> )
 |
 <replaceable class="PARAMETER">from_item</replaceable> [ NATURAL ] <replaceable class="PARAMETER">join_type</replaceable> <replaceable class="PARAMETER">from_item</replaceable>
     [ ON <replaceable class="PARAMETER">join_condition</replaceable> | USING ( <replaceable class="PARAMETER">join_column_list</replaceable> ) ]
@@ -82,7 +88,7 @@ where <replaceable class="PARAMETER">from_item</replaceable> can be:
       <term><replaceable class="PARAMETER">from_item</replaceable></term>
       <listitem>
        <para>
-        A table reference, sub-SELECT, or JOIN clause.  See below for details.
+        A table reference, sub-SELECT, table function, or JOIN clause.  See below for details.
        </para>
       </listitem>
      </varlistentry>
@@ -153,6 +159,23 @@ where <replaceable class="PARAMETER">from_item</replaceable> can be:
 	this single SELECT command.  Note that the sub-SELECT must be
 	surrounded by parentheses, and an alias <emphasis>must</emphasis>
 	be provided for it.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="PARAMETER">table function</replaceable></term>
+      <listitem>
+       <para>
+	A table function can appear in the FROM clause.  This acts as though
+	its output were created as a temporary table for the duration of
+	this single SELECT command. An alias may also be used. If an alias is
+	written, a column alias list can also be written to provide	substitute names
+	for one or more columns of the table function. If the table function has been
+	defined as returning the RECORD data type, an alias, or the keyword AS, must
+    also be present, followed by a column definition list in the form
+	( <replaceable class="PARAMETER">column_name</replaceable> <replaceable class="PARAMETER">data_type</replaceable> [, ... ] ).
+	The column definition list must match the actual number and types returned by the function.
        </para>
       </listitem>
      </varlistentry>
@@ -378,6 +401,19 @@ where <replaceable class="PARAMETER">from_item</replaceable> can be:
     alias clause is required for a sub-SELECT!).  This is an extremely
     handy feature since it's the only way to get multiple levels of
     grouping, aggregation, or sorting in a single query.
+   </para>
+
+   <para>
+    A FROM item can be a table function (i.e. a function that returns
+    multiple rows and columns).  When a table function is created, it may
+	be defined to return a named scalar or composite data type (an existing
+	scalar data type, or a table or view name), or it may be defined to return
+	a RECORD data type. When a table function is defined to return RECORD, it
+	must be followed in the FROM clause by an alias, or the keyword AS alone,
+	and then by a parenthesized list of column names and types. This provides
+	a query-time composite type definition. The FROM clause composite type
+	must match the actual composite type returned from the function or an
+	ERROR will be generated.
    </para>
 
    <para>
@@ -925,6 +961,43 @@ SELECT actors.name
  Warren Beatty
  Westward
  Woody Allen
+</programlisting>
+  </para>
+
+  <para>
+   This example shows how to use a table function, both with and without
+   a column definition list.
+
+<programlisting>
+distributors:
+ did |     name
+-----+--------------
+ 108 | Westward
+ 111 | Walt Disney
+ 112 | Warner Bros.
+ ...
+
+CREATE FUNCTION distributors(int)
+  RETURNS SETOF distributors AS '
+  SELECT * FROM distributors WHERE did = $1;
+  ' LANGUAGE SQL;
+
+SELECT * FROM distributors(111);
+ did |    name
+-----+-------------
+ 111 | Walt Disney
+(1 row)
+
+CREATE FUNCTION distributors_2(int)
+  RETURNS SETOF RECORD AS '
+  SELECT * FROM distributors WHERE did = $1;
+  ' LANGUAGE SQL;
+
+SELECT * FROM distributors_2(111) AS (f1 int, f2 text);
+ f1  |     f2
+-----+-------------
+ 111 | Walt Disney
+(1 row)
 </programlisting>
   </para>
  </refsect1>

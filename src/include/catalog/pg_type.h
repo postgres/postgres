@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.125 2002/07/24 19:11:13 petere Exp $
+ * $Id: pg_type.h,v 1.126 2002/08/04 19:48:10 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -60,10 +60,10 @@ CATALOG(pg_type) BOOTSTRAP
 	bool		typbyval;
 
 	/*
-	 * typtype is 'b' for a basic type and 'c' for a catalog type (ie a
-	 * class). If typtype is 'c', typrelid is the OID of the class' entry
-	 * in pg_class. (Why do we need an entry in pg_type for classes,
-	 * anyway?)
+	 * typtype is 'b' for a basic type, 'c' for a catalog type (ie a
+	 * class), or 'p' for a pseudo type. If typtype is 'c', typrelid is the
+	 * OID of the class' entry in pg_class. (Why do we need an entry in
+	 * pg_type for classes, anyway?)
 	 */
 	char		typtype;
 
@@ -501,6 +501,16 @@ DATA(insert OID = 2209 ( _regoperator  PGNSP PGUID -1 f b t \054 0 2204 array_in
 DATA(insert OID = 2210 ( _regclass     PGNSP PGUID -1 f b t \054 0 2205 array_in array_out i x f 0 -1 0 _null_ _null_ ));
 DATA(insert OID = 2211 ( _regtype      PGNSP PGUID -1 f b t \054 0 2206 array_in array_out i x f 0 -1 0 _null_ _null_ ));
 
+/*
+ * pseudo-types 
+ *
+ * types with typtype='p' are special types that represent classes of types
+ * that are not easily defined in advance. Currently there is only one pseudo
+ * type -- record. The record type is used to specify that the value is a
+ * tuple, but of unknown structure until runtime. 
+ */
+DATA(insert OID = 2249 ( record        PGNSP PGUID  4 t p t \054 0 0 oidin oidout          i p f 0 -1 0 _null_ _null_ ));
+#define RECORDOID		2249
 
 /*
  * prototypes for functions in pg_type.c

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.94 2002/06/20 20:29:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.95 2002/08/04 19:48:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -515,7 +515,7 @@ transformRangeFunction(ParseState *pstate, RangeFunction *r)
 	 * OK, build an RTE for the function.
 	 */
 	rte = addRangeTableEntryForFunction(pstate, funcname, funcexpr,
-										r->alias, true);
+										r, true);
 
 	/*
 	 * We create a RangeTblRef, but we do not add it to the joinlist or

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeFunctionscan.c,v 1.3 2002/07/20 05:16:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeFunctionscan.c,v 1.4 2002/08/04 19:48:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,6 +31,7 @@
 #include "executor/nodeFunctionscan.h"
 #include "parser/parsetree.h"
 #include "parser/parse_expr.h"
+#include "parser/parse_relation.h"
 #include "parser/parse_type.h"
 #include "storage/lmgr.h"
 #include "tcop/pquery.h"
@@ -39,14 +40,11 @@
 #include "utils/tuplestore.h"
 
 static TupleTableSlot *FunctionNext(FunctionScan *node);
-static TupleTableSlot *function_getonetuple(TupleTableSlot *slot,
-											Node *expr,
-											ExprContext *econtext,
-											TupleDesc tupdesc,
-											bool returnsTuple,
+static TupleTableSlot *function_getonetuple(FunctionScanState *scanstate,
 											bool *isNull,
 											ExprDoneCond *isDone);
 static FunctionMode get_functionmode(Node *expr);
+static bool tupledesc_mismatch(TupleDesc tupdesc1, TupleDesc tupdesc2);
 
 /* ----------------------------------------------------------------
  *						Scan Support
@@ -62,9 +60,6 @@ static TupleTableSlot *
 FunctionNext(FunctionScan *node)
 {
 	TupleTableSlot	   *slot;
-	Node			   *expr;
-	ExprContext		   *econtext;
-	TupleDesc			tupdesc;
 	EState			   *estate;
 	ScanDirection		direction;
 	Tuplestorestate	   *tuplestorestate;
@@ -78,11 +73,8 @@ FunctionNext(FunctionScan *node)
 	scanstate = (FunctionScanState *) node->scan.scanstate;
 	estate = node->scan.plan.state;
 	direction = estate->es_direction;
-	econtext = scanstate->csstate.cstate.cs_ExprContext;
 
 	tuplestorestate = scanstate->tuplestorestate;
-	tupdesc = scanstate->tupdesc;
-	expr = scanstate->funcexpr;
 
 	/*
 	 * If first time through, read all tuples from function and pass them to
@@ -108,10 +100,7 @@ FunctionNext(FunctionScan *node)
 
 			isNull = false;
 			isDone = ExprSingleResult;
-			slot = function_getonetuple(scanstate->csstate.css_ScanTupleSlot,
-										expr, econtext, tupdesc,
-										scanstate->returnsTuple,
-										&isNull, &isDone);
+			slot = function_getonetuple(scanstate, &isNull, &isDone);
 			if (TupIsNull(slot))
 				break;
 
@@ -169,7 +158,8 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate, Plan *parent)
 	RangeTblEntry	   *rte;
 	Oid					funcrettype;
 	Oid					funcrelid;
-	TupleDesc			tupdesc;
+	char				functyptype;
+	TupleDesc			tupdesc = NULL;
 
 	/*
 	 * FunctionScan should not have any children.
@@ -209,25 +199,36 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate, Plan *parent)
 	rte = rt_fetch(node->scan.scanrelid, estate->es_range_table);
 	Assert(rte->rtekind == RTE_FUNCTION);
 	funcrettype = exprType(rte->funcexpr);
-	funcrelid = typeidTypeRelid(funcrettype);
+
+	/*
+	 * Now determine if the function returns a simple or composite type,
+	 * and check/add column aliases.
+	 */
+	functyptype = typeid_get_typtype(funcrettype);
 
 	/*
 	 * Build a suitable tupledesc representing the output rows
 	 */
-	if (OidIsValid(funcrelid))
+	if (functyptype == 'c')
 	{
-		/*
-		 * Composite data type, i.e. a table's row type
-		 * Same as ordinary relation RTE
-		 */
-		Relation	rel;
+		funcrelid = typeidTypeRelid(funcrettype);
+		if (OidIsValid(funcrelid))
+		{
+			/*
+			 * Composite data type, i.e. a table's row type
+			 * Same as ordinary relation RTE
+			 */
+			Relation	rel;
 
-		rel = relation_open(funcrelid, AccessShareLock);
-		tupdesc = CreateTupleDescCopy(RelationGetDescr(rel));
-		relation_close(rel, AccessShareLock);
-		scanstate->returnsTuple = true;
+			rel = relation_open(funcrelid, AccessShareLock);
+			tupdesc = CreateTupleDescCopy(RelationGetDescr(rel));
+			relation_close(rel, AccessShareLock);
+			scanstate->returnsTuple = true;
+		}
+		else
+			elog(ERROR, "Invalid return relation specified for function");
 	}
-	else
+	else if (functyptype == 'b')
 	{
 		/*
 		 * Must be a base data type, i.e. scalar
@@ -244,6 +245,21 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate, Plan *parent)
 						   false);
 		scanstate->returnsTuple = false;
 	}
+	else if (functyptype == 'p' && funcrettype == RECORDOID)
+	{
+		/*
+		 * Must be a pseudo type, i.e. record
+		 */
+		List *coldeflist = rte->coldeflist;
+
+		tupdesc = BuildDescForRelation(coldeflist);
+		scanstate->returnsTuple = true;
+	}
+	else
+		elog(ERROR, "Unknown kind of return type specified for function");
+
+	scanstate->fn_typeid = funcrettype;
+	scanstate->fn_typtype = functyptype;
 	scanstate->tupdesc = tupdesc;
 	ExecSetSlotDescriptor(scanstate->csstate.css_ScanTupleSlot,
 						  tupdesc, false);
@@ -404,17 +420,20 @@ ExecFunctionReScan(FunctionScan *node, ExprContext *exprCtxt, Plan *parent)
  * Run the underlying function to get the next tuple
  */
 static TupleTableSlot *
-function_getonetuple(TupleTableSlot *slot,
-					 Node *expr,
-					 ExprContext *econtext,
-					 TupleDesc tupdesc,
-					 bool returnsTuple,
+function_getonetuple(FunctionScanState *scanstate,
 					 bool *isNull,
 					 ExprDoneCond *isDone)
 {
-	HeapTuple			tuple;
-	Datum				retDatum;
-	char				nullflag;
+	HeapTuple		tuple;
+	Datum			retDatum;
+	char			nullflag;
+	TupleDesc		tupdesc = scanstate->tupdesc;
+	bool			returnsTuple = scanstate->returnsTuple;
+	Node		   *expr = scanstate->funcexpr;
+	Oid				fn_typeid = scanstate->fn_typeid;
+	char			fn_typtype = scanstate->fn_typtype;
+	ExprContext	   *econtext = scanstate->csstate.cstate.cs_ExprContext;
+	TupleTableSlot *slot = scanstate->csstate.css_ScanTupleSlot;
 
 	/*
 	 * get the next Datum from the function
@@ -435,6 +454,16 @@ function_getonetuple(TupleTableSlot *slot,
 			 * function returns pointer to tts??
 			 */
 			slot = (TupleTableSlot *) retDatum;
+
+			/*
+			 * if function return type was RECORD, we need to check to be
+			 * sure the structure from the query matches the actual return
+			 * structure
+			 */
+			if (fn_typtype == 'p' && fn_typeid == RECORDOID)
+				if (tupledesc_mismatch(tupdesc, slot->ttc_tupleDescriptor))
+					elog(ERROR, "Query specified return tuple and actual"
+									" function return tuple do not match");
 		}
 		else
 		{
@@ -466,4 +495,27 @@ get_functionmode(Node *expr)
 	 * for the moment, hardwire this
 	 */
 	return PM_REPEATEDCALL;
+}
+
+static bool
+tupledesc_mismatch(TupleDesc tupdesc1, TupleDesc tupdesc2)
+{
+	int			i;
+
+	if (tupdesc1->natts != tupdesc2->natts)
+		return true;
+
+	for (i = 0; i < tupdesc1->natts; i++)
+	{
+		Form_pg_attribute attr1 = tupdesc1->attrs[i];
+		Form_pg_attribute attr2 = tupdesc2->attrs[i];
+
+		/*
+		 * We really only care about number of attributes and data type
+		 */
+		if (attr1->atttypid != attr2->atttypid)
+			return true;
+	}
+
+	return false;
 }

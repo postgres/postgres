@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.83 2002/08/02 18:15:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.84 2002/08/04 19:48:09 momjian Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -24,6 +24,7 @@
 #include "catalog/namespace.h"
 #include "catalog/pg_type.h"
 #include "nodes/parsenodes.h"
+#include "parser/parse_relation.h"
 #include "parser/parse_type.h"
 #include "utils/builtins.h"
 #include "utils/syscache.h"
@@ -600,46 +601,53 @@ RelationNameGetTupleDesc(char *relname)
 TupleDesc
 TypeGetTupleDesc(Oid typeoid, List *colaliases)
 {
-	Oid			relid = typeidTypeRelid(typeoid);
-	TupleDesc	tupdesc;
+	char		functyptype = typeid_get_typtype(typeoid);
+	TupleDesc	tupdesc = NULL;
 
 	/*
 	 * Build a suitable tupledesc representing the output rows
 	 */
-	if (OidIsValid(relid))
+	if (functyptype == 'c')
 	{
 		/* Composite data type, i.e. a table's row type */
-		Relation	rel;
-		int			natts;
+		Oid			relid = typeidTypeRelid(typeoid);
 
-		rel = relation_open(relid, AccessShareLock);
-		tupdesc = CreateTupleDescCopy(RelationGetDescr(rel));
-		natts = tupdesc->natts;
-		relation_close(rel, AccessShareLock);
-
-		/* check to see if we've given column aliases */
-		if(colaliases != NIL)
+		if (OidIsValid(relid))
 		{
-			char	   *label;
-			int			varattno;
+			Relation	rel;
+			int			natts;
 
-			/* does the List length match the number of attributes */
-			if (length(colaliases) != natts)
-				elog(ERROR, "TypeGetTupleDesc: number of aliases does not match number of attributes");
+			rel = relation_open(relid, AccessShareLock);
+			tupdesc = CreateTupleDescCopy(RelationGetDescr(rel));
+			natts = tupdesc->natts;
+			relation_close(rel, AccessShareLock);
 
-			/* OK, use the aliases instead */
-			for (varattno = 0; varattno < natts; varattno++)
+			/* check to see if we've given column aliases */
+			if(colaliases != NIL)
 			{
-				label = strVal(nth(varattno, colaliases));
+				char	   *label;
+				int			varattno;
 
-				if (label != NULL)
-					namestrcpy(&(tupdesc->attrs[varattno]->attname), label);
-				else
-					MemSet(NameStr(tupdesc->attrs[varattno]->attname), 0, NAMEDATALEN);
+				/* does the List length match the number of attributes */
+				if (length(colaliases) != natts)
+					elog(ERROR, "TypeGetTupleDesc: number of aliases does not match number of attributes");
+
+				/* OK, use the aliases instead */
+				for (varattno = 0; varattno < natts; varattno++)
+				{
+					label = strVal(nth(varattno, colaliases));
+
+					if (label != NULL)
+						namestrcpy(&(tupdesc->attrs[varattno]->attname), label);
+					else
+						MemSet(NameStr(tupdesc->attrs[varattno]->attname), 0, NAMEDATALEN);
+				}
 			}
 		}
+		else
+			elog(ERROR, "Invalid return relation specified for function");
 	}
-	else
+	else if (functyptype == 'b')
 	{
 		/* Must be a base data type, i.e. scalar */
 		char	   *attname;
@@ -664,6 +672,11 @@ TypeGetTupleDesc(Oid typeoid, List *colaliases)
 						   0,
 						   false);
 	}
+	else if (functyptype == 'p' && typeoid == RECORDOID)
+		elog(ERROR, "Unable to determine tuple description for function"
+						" returning \"record\"");
+	else
+		elog(ERROR, "Unknown kind of return type specified for function");
 
 	return tupdesc;
 }

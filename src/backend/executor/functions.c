@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.52 2002/06/20 20:29:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.53 2002/08/04 19:48:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -194,7 +194,8 @@ init_sql_fcache(FmgrInfo *finfo)
 	 * get the type length and by-value flag from the type tuple
 	 */
 	fcache->typlen = typeStruct->typlen;
-	if (typeStruct->typrelid == InvalidOid)
+
+	if (typeStruct->typtype == 'b')
 	{
 		/* The return type is not a relation, so just use byval */
 		fcache->typbyval = typeStruct->typbyval;

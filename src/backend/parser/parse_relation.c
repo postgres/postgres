@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.71 2002/08/02 18:15:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.72 2002/08/04 19:48:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -699,12 +699,14 @@ RangeTblEntry *
 addRangeTableEntryForFunction(ParseState *pstate,
 							  char *funcname,
 							  Node *funcexpr,
-							  Alias *alias,
+							  RangeFunction *rangefunc,
 							  bool inFromCl)
 {
 	RangeTblEntry *rte = makeNode(RangeTblEntry);
 	Oid			funcrettype = exprType(funcexpr);
-	Oid			funcrelid;
+	char		functyptype;
+	Alias	   *alias = rangefunc->alias;
+	List	   *coldeflist = rangefunc->coldeflist;
 	Alias	   *eref;
 	int			numaliases;
 	int			varattno;
@@ -713,6 +715,7 @@ addRangeTableEntryForFunction(ParseState *pstate,
 	rte->relid = InvalidOid;
 	rte->subquery = NULL;
 	rte->funcexpr = funcexpr;
+	rte->coldeflist = coldeflist;
 	rte->alias = alias;
 
 	eref = alias ? (Alias *) copyObject(alias) : makeAlias(funcname, NIL);
@@ -724,47 +727,56 @@ addRangeTableEntryForFunction(ParseState *pstate,
 	 * Now determine if the function returns a simple or composite type,
 	 * and check/add column aliases.
 	 */
-	funcrelid = typeidTypeRelid(funcrettype);
+	functyptype = typeid_get_typtype(funcrettype);
 
-	if (OidIsValid(funcrelid))
+	if (functyptype == 'c')
 	{
 		/*
-		 * Composite data type, i.e. a table's row type
-		 *
-		 * Get the rel's relcache entry.  This access ensures that we have an
-		 * up-to-date relcache entry for the rel.
+		 * Named composite data type, i.e. a table's row type
 		 */
-		Relation	rel;
-		int			maxattrs;
+		Oid			funcrelid = typeidTypeRelid(funcrettype);
 
-		rel = heap_open(funcrelid, AccessShareLock);
-
-		/*
-		 * Since the rel is open anyway, let's check that the number of column
-		 * aliases is reasonable.
-		 */
-		maxattrs = RelationGetNumberOfAttributes(rel);
-		if (maxattrs < numaliases)
-			elog(ERROR, "Table \"%s\" has %d columns available but %d columns specified",
-				 RelationGetRelationName(rel), maxattrs, numaliases);
-
-		/* fill in alias columns using actual column names */
-		for (varattno = numaliases; varattno < maxattrs; varattno++)
+		if (OidIsValid(funcrelid))
 		{
-			char	   *attrname;
+			/*
+			 * Get the rel's relcache entry.  This access ensures that we have an
+			 * up-to-date relcache entry for the rel.
+			 */
+			Relation	rel;
+			int			maxattrs;
 
-			attrname = pstrdup(NameStr(rel->rd_att->attrs[varattno]->attname));
-			eref->colnames = lappend(eref->colnames, makeString(attrname));
+			rel = heap_open(funcrelid, AccessShareLock);
+
+			/*
+			 * Since the rel is open anyway, let's check that the number of column
+			 * aliases is reasonable.
+			 */
+			maxattrs = RelationGetNumberOfAttributes(rel);
+			if (maxattrs < numaliases)
+				elog(ERROR, "Table \"%s\" has %d columns available but %d columns specified",
+					 RelationGetRelationName(rel), maxattrs, numaliases);
+
+			/* fill in alias columns using actual column names */
+			for (varattno = numaliases; varattno < maxattrs; varattno++)
+			{
+				char	   *attrname;
+
+				attrname = pstrdup(NameStr(rel->rd_att->attrs[varattno]->attname));
+				eref->colnames = lappend(eref->colnames, makeString(attrname));
+			}
+
+			/*
+			 * Drop the rel refcount, but keep the access lock till end of
+			 * transaction so that the table can't be deleted or have its schema
+			 * modified underneath us.
+			 */
+			heap_close(rel, NoLock);
 		}
-
-		/*
-		 * Drop the rel refcount, but keep the access lock till end of
-		 * transaction so that the table can't be deleted or have its schema
-		 * modified underneath us.
-		 */
-		heap_close(rel, NoLock);
+		else
+			elog(ERROR, "Invalid return relation specified for function %s",
+				 funcname);
 	}
-	else
+	else if (functyptype == 'b')
 	{
 		/*
 		 * Must be a base data type, i.e. scalar.
@@ -776,6 +788,22 @@ addRangeTableEntryForFunction(ParseState *pstate,
 		if (numaliases == 0)
 			eref->colnames = makeList1(makeString(funcname));
 	}
+	else if (functyptype == 'p' && funcrettype == RECORDOID)
+	{
+		List	   *col;
+
+		foreach(col, coldeflist)
+		{
+			char	   *attrname;
+			ColumnDef  *n = lfirst(col);
+
+			attrname = pstrdup(n->colname);
+			eref->colnames = lappend(eref->colnames, makeString(attrname));
+		}
+	}
+	else
+		elog(ERROR, "Unknown kind of return type specified for function %s",
+			 funcname);
 
 	/*----------
 	 * Flags:
@@ -1051,56 +1079,70 @@ expandRTE(ParseState *pstate, RangeTblEntry *rte,
 		case RTE_FUNCTION:
 			{
 				/* Function RTE */
-				Oid			funcrettype = exprType(rte->funcexpr);
-				Oid			funcrelid = typeidTypeRelid(funcrettype);
+				Oid	funcrettype = exprType(rte->funcexpr);
+				char functyptype = typeid_get_typtype(funcrettype);
+				List *coldeflist = rte->coldeflist;
 
-				if (OidIsValid(funcrelid))
+				/*
+				 * Build a suitable tupledesc representing the output rows
+				 */
+				if (functyptype == 'c')
 				{
-					/*
-					 * Composite data type, i.e. a table's row type
-					 * Same as ordinary relation RTE
-					 */
-					Relation	rel;
-					int			maxattrs;
-					int			numaliases;
-
-					rel = heap_open(funcrelid, AccessShareLock);
-					maxattrs = RelationGetNumberOfAttributes(rel);
-					numaliases = length(rte->eref->colnames);
-
-					for (varattno = 0; varattno < maxattrs; varattno++)
+					Oid	funcrelid = typeidTypeRelid(funcrettype);
+					if (OidIsValid(funcrelid))
 					{
-						Form_pg_attribute attr = rel->rd_att->attrs[varattno];
 
-						if (attr->attisdropped)
-							continue;
+						/*
+						 * Composite data type, i.e. a table's row type
+						 * Same as ordinary relation RTE
+						 */
+						Relation	rel;
+						int			maxattrs;
+						int			numaliases;
 
-						if (colnames)
+						rel = heap_open(funcrelid, AccessShareLock);
+						maxattrs = RelationGetNumberOfAttributes(rel);
+						numaliases = length(rte->eref->colnames);
+
+						for (varattno = 0; varattno < maxattrs; varattno++)
 						{
-							char	   *label;
+							Form_pg_attribute attr = rel->rd_att->attrs[varattno];
 
-							if (varattno < numaliases)
-								label = strVal(nth(varattno, rte->eref->colnames));
-							else
-								label = NameStr(attr->attname);
-							*colnames = lappend(*colnames, makeString(pstrdup(label)));
+							if (attr->attisdropped)
+								continue;
+
+							if (colnames)
+							{
+								char	   *label;
+
+								if (varattno < numaliases)
+									label = strVal(nth(varattno, rte->eref->colnames));
+								else
+									label = NameStr(attr->attname);
+								*colnames = lappend(*colnames, makeString(pstrdup(label)));
+							}
+
+							if (colvars)
+							{
+								Var		   *varnode;
+
+								varnode = makeVar(rtindex,
+												attr->attnum,
+												attr->atttypid,
+												attr->atttypmod,
+												sublevels_up);
+
+								*colvars = lappend(*colvars, varnode);
+							}
 						}
 
-						if (colvars)
-						{
-							Var		   *varnode;
-
-							varnode = makeVar(rtindex, attr->attnum,
-											  attr->atttypid, attr->atttypmod,
-											  sublevels_up);
-
-							*colvars = lappend(*colvars, varnode);
-						}
+						heap_close(rel, AccessShareLock);
 					}
-
-					heap_close(rel, AccessShareLock);
+					else
+						elog(ERROR, "Invalid return relation specified"
+									" for function");
 				}
-				else
+				else if (functyptype == 'b')
 				{
 					/*
 					 * Must be a base data type, i.e. scalar
@@ -1120,6 +1162,47 @@ expandRTE(ParseState *pstate, RangeTblEntry *rte,
 						*colvars = lappend(*colvars, varnode);
 					}
 				}
+				else if (functyptype == 'p' && funcrettype == RECORDOID)
+				{
+					List	   *col;
+					int			attnum = 0;
+
+					foreach(col, coldeflist)
+					{
+						ColumnDef  *colDef = lfirst(col);
+
+						attnum++;
+						if (colnames)
+						{
+							char	   *attrname;
+
+							attrname = pstrdup(colDef->colname);
+							*colnames = lappend(*colnames, makeString(attrname));
+						}
+
+						if (colvars)
+						{
+							Var		   *varnode;
+							HeapTuple	typeTuple;
+							Oid			atttypid;
+
+							typeTuple = typenameType(colDef->typename);
+							atttypid = HeapTupleGetOid(typeTuple);
+							ReleaseSysCache(typeTuple);
+
+							varnode = makeVar(rtindex,
+											attnum,
+											atttypid,
+											-1,
+											sublevels_up);
+
+							*colvars = lappend(*colvars, varnode);
+						}
+					}
+				}
+				else
+					elog(ERROR, "Unknown kind of return type specified"
+								" for function");
 			}
 			break;
 		case RTE_JOIN:
@@ -1308,40 +1391,52 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
 		case RTE_FUNCTION:
 			{
 				/* Function RTE */
-				Oid			funcrettype = exprType(rte->funcexpr);
-				Oid			funcrelid = typeidTypeRelid(funcrettype);
+				Oid funcrettype = exprType(rte->funcexpr);
+				char functyptype = typeid_get_typtype(funcrettype);
+				List *coldeflist = rte->coldeflist;
 
-				if (OidIsValid(funcrelid))
+				/*
+				 * Build a suitable tupledesc representing the output rows
+				 */
+				if (functyptype == 'c')
 				{
 					/*
 					 * Composite data type, i.e. a table's row type
 					 * Same as ordinary relation RTE
 					 */
-					HeapTuple			tp;
-					Form_pg_attribute	att_tup;
+					Oid funcrelid = typeidTypeRelid(funcrettype);
 
-					tp = SearchSysCache(ATTNUM,
-										ObjectIdGetDatum(funcrelid),
-										Int16GetDatum(attnum),
-										0, 0);
-					/* this shouldn't happen... */
-					if (!HeapTupleIsValid(tp))
-						elog(ERROR, "Relation %s does not have attribute %d",
-							 get_rel_name(funcrelid), attnum);
-					att_tup = (Form_pg_attribute) GETSTRUCT(tp);
-					/*
-					 * If dropped column, pretend it ain't there.  See notes
-					 * in scanRTEForColumn.
-					 */
-					if (att_tup->attisdropped)
-						elog(ERROR, "Relation \"%s\" has no column \"%s\"",
-							 get_rel_name(funcrelid),
-							 NameStr(att_tup->attname));
-					*vartype = att_tup->atttypid;
-					*vartypmod = att_tup->atttypmod;
-					ReleaseSysCache(tp);
+					if (OidIsValid(funcrelid))
+					{
+						HeapTuple			tp;
+						Form_pg_attribute	att_tup;
+
+						tp = SearchSysCache(ATTNUM,
+											ObjectIdGetDatum(funcrelid),
+											Int16GetDatum(attnum),
+											0, 0);
+						/* this shouldn't happen... */
+						if (!HeapTupleIsValid(tp))
+							elog(ERROR, "Relation %s does not have attribute %d",
+								 get_rel_name(funcrelid), attnum);
+						att_tup = (Form_pg_attribute) GETSTRUCT(tp);
+						/*
+						 * If dropped column, pretend it ain't there.  See notes
+						 * in scanRTEForColumn.
+						 */
+						if (att_tup->attisdropped)
+							elog(ERROR, "Relation \"%s\" has no column \"%s\"",
+								 get_rel_name(funcrelid),
+								 NameStr(att_tup->attname));
+						*vartype = att_tup->atttypid;
+						*vartypmod = att_tup->atttypmod;
+						ReleaseSysCache(tp);
+					}
+					else
+						elog(ERROR, "Invalid return relation specified"
+									" for function");
 				}
-				else
+				else if (functyptype == 'b')
 				{
 					/*
 					 * Must be a base data type, i.e. scalar
@@ -1349,6 +1444,22 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
 					*vartype = funcrettype;
 					*vartypmod = -1;
 				}
+				else if (functyptype == 'p' && funcrettype == RECORDOID)
+				{
+					ColumnDef  *colDef = nth(attnum - 1, coldeflist);
+					HeapTuple	typeTuple;
+					Oid			atttypid;
+
+					typeTuple = typenameType(colDef->typename);
+					atttypid = HeapTupleGetOid(typeTuple);
+					ReleaseSysCache(typeTuple);
+
+					*vartype = atttypid;
+					*vartypmod = -1;
+				}
+				else
+					elog(ERROR, "Unknown kind of return type specified"
+								" for function");
 			}
 			break;
 		case RTE_JOIN:
@@ -1575,4 +1686,29 @@ warnAutoRange(ParseState *pstate, RangeVar *relation)
 		elog(NOTICE, "Adding missing FROM-clause entry%s for table \"%s\"",
 			 pstate->parentParseState != NULL ? " in subquery" : "",
 			 relation->relname);
+}
+
+char
+typeid_get_typtype(Oid typeid)
+{
+	HeapTuple		typeTuple;
+	Form_pg_type	typeStruct;
+	char			result;
+
+	/*
+	 * determine if the function returns a simple, named composite,
+	 * or anonymous composite type
+	 */
+ 	typeTuple = SearchSysCache(TYPEOID,
+ 							   ObjectIdGetDatum(typeid),
+ 							   0, 0, 0);
+ 	if (!HeapTupleIsValid(typeTuple))
+ 		elog(ERROR, "cache lookup for type %u failed", typeid);
+ 	typeStruct = (Form_pg_type) GETSTRUCT(typeTuple);
+ 
+	result = typeStruct->typtype;
+
+ 	ReleaseSysCache(typeTuple);
+
+	return result;
 }

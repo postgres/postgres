@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.70 2002/06/20 20:29:49 momjian Exp $
+ * $Id: execnodes.h,v 1.71 2002/08/04 19:48:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -509,11 +509,17 @@ typedef struct SubqueryScanState
  *		Function nodes are used to scan the results of a
  *		function appearing in FROM (typically a function returning set).
  *
- *		functionmode			function operating mode:
+ *		functionmode		function operating mode:
  *							- repeated call
  *							- materialize
  *							- return query
+ *		tupdesc				function's return tuple description
  *		tuplestorestate		private state of tuplestore.c
+ *		funcexpr			function expression being evaluated
+ *		returnsTuple		does function return tuples?
+ *		fn_typeid			OID of function return type
+ *		fn_typtype			return Datum type, i.e. 'b'ase,
+ *							'c'atalog, or 'p'seudo
  * ----------------
  */
 typedef enum FunctionMode
@@ -525,12 +531,14 @@ typedef enum FunctionMode
 
 typedef struct FunctionScanState
 {
-	CommonScanState csstate;	/* its first field is NodeTag */
+	CommonScanState csstate;		/* its first field is NodeTag */
 	FunctionMode	functionmode;
 	TupleDesc		tupdesc;
 	void		   *tuplestorestate;
-	Node		   *funcexpr;	/* function expression being evaluated */
-	bool			returnsTuple; /* does function return tuples? */
+	Node		   *funcexpr;
+	bool			returnsTuple;
+	Oid				fn_typeid;
+	char			fn_typtype;
 } FunctionScanState;
 
 /* ----------------------------------------------------------------

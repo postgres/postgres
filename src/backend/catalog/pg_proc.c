@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.82 2002/08/02 18:15:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.83 2002/08/04 19:48:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,6 +25,7 @@
 #include "miscadmin.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
+#include "parser/parse_relation.h"
 #include "parser/parse_type.h"
 #include "tcop/tcopprot.h"
 #include "utils/builtins.h"
@@ -33,7 +34,7 @@
 #include "utils/syscache.h"
 
 
-static void checkretval(Oid rettype, List *queryTreeList);
+static void checkretval(Oid rettype, char fn_typtype, List *queryTreeList);
 Datum fmgr_internal_validator(PG_FUNCTION_ARGS);
 Datum fmgr_c_validator(PG_FUNCTION_ARGS);
 Datum fmgr_sql_validator(PG_FUNCTION_ARGS);
@@ -367,94 +368,113 @@ checkretval(Oid rettype, List *queryTreeList)
 	 */
 	tlistlen = ExecCleanTargetListLength(tlist);
 
-	/*
-	 * For base-type returns, the target list should have exactly one
-	 * entry, and its type should agree with what the user declared. (As
-	 * of Postgres 7.2, we accept binary-compatible types too.)
-	 */
 	typerelid = typeidTypeRelid(rettype);
-	if (typerelid == InvalidOid)
-	{
-		if (tlistlen != 1)
-			elog(ERROR, "function declared to return %s returns multiple columns in final SELECT",
-				 format_type_be(rettype));
 
-		restype = ((TargetEntry *) lfirst(tlist))->resdom->restype;
-		if (!IsBinaryCompatible(restype, rettype))
-			elog(ERROR, "return type mismatch in function: declared to return %s, returns %s",
-				 format_type_be(rettype), format_type_be(restype));
+	if (fn_typtype == 'b')
+	{
+		/*
+		 * For base-type returns, the target list should have exactly one
+		 * entry, and its type should agree with what the user declared. (As
+		 * of Postgres 7.2, we accept binary-compatible types too.)
+		 */
+
+		if (typerelid == InvalidOid)
+		{
+			if (tlistlen != 1)
+				elog(ERROR, "function declared to return %s returns multiple columns in final SELECT",
+					 format_type_be(rettype));
+
+			restype = ((TargetEntry *) lfirst(tlist))->resdom->restype;
+			if (!IsBinaryCompatible(restype, rettype))
+				elog(ERROR, "return type mismatch in function: declared to return %s, returns %s",
+					 format_type_be(rettype), format_type_be(restype));
+
+			return;
+		}
+
+		/*
+		 * If the target list is of length 1, and the type of the varnode in
+		 * the target list matches the declared return type, this is okay.
+		 * This can happen, for example, where the body of the function is
+		 * 'SELECT func2()', where func2 has the same return type as the
+		 * function that's calling it.
+		 */
+		if (tlistlen == 1)
+		{
+			restype = ((TargetEntry *) lfirst(tlist))->resdom->restype;
+			if (IsBinaryCompatible(restype, rettype))
+				return;
+		}
+	}
+	else if (fn_typtype == 'c')
+	{
+		/*
+		 * By here, the procedure returns a tuple or set of tuples.  This part
+		 * of the typechecking is a hack. We look up the relation that is the
+		 * declared return type, and scan the non-deleted attributes to ensure
+		 * that they match the datatypes of the non-resjunk columns.
+		 */
+		reln = heap_open(typerelid, AccessShareLock);
+		relnatts = reln->rd_rel->relnatts;
+		rellogcols = 0;				/* we'll count nondeleted cols as we go */
+		colindex = 0;
+
+		foreach(tlistitem, tlist)
+		{
+			TargetEntry *tle = (TargetEntry *) lfirst(tlistitem);
+			Form_pg_attribute attr;
+			Oid			tletype;
+			Oid			atttype;
+
+			if (tle->resdom->resjunk)
+				continue;
+
+			do {
+				colindex++;
+				if (colindex > relnatts)
+					elog(ERROR, "function declared to return %s does not SELECT the right number of columns (%d)",
+						 format_type_be(rettype), rellogcols);
+				attr = reln->rd_att->attrs[colindex - 1];
+			} while (attr->attisdropped);
+			rellogcols++;
+
+			tletype = exprType(tle->expr);
+			atttype = attr->atttypid;
+			if (!IsBinaryCompatible(tletype, atttype))
+				elog(ERROR, "function declared to return %s returns %s instead of %s at column %d",
+					 format_type_be(rettype),
+					 format_type_be(tletype),
+					 format_type_be(atttype),
+					 rellogcols);
+		}
+
+		for (;;)
+		{
+			colindex++;
+			if (colindex > relnatts)
+				break;
+			if (!reln->rd_att->attrs[colindex - 1]->attisdropped)
+				rellogcols++;
+		}
+
+		if (tlistlen != rellogcols)
+			elog(ERROR, "function declared to return %s does not SELECT the right number of columns (%d)",
+				 format_type_be(rettype), rellogcols);
+
+		heap_close(reln, AccessShareLock);
 
 		return;
 	}
-
-	/*
-	 * If the target list is of length 1, and the type of the varnode in
-	 * the target list matches the declared return type, this is okay.
-	 * This can happen, for example, where the body of the function is
-	 * 'SELECT func2()', where func2 has the same return type as the
-	 * function that's calling it.
-	 */
-	if (tlistlen == 1)
+	else if (fn_typtype == 'p' && rettype == RECORDOID)
 	{
-		restype = ((TargetEntry *) lfirst(tlist))->resdom->restype;
-		if (IsBinaryCompatible(restype, rettype))
-			return;
+		/*
+		 * For RECORD return type, defer this check until we get the
+		 * first tuple.
+		 */
+		return;
 	}
-
-	/*
-	 * By here, the procedure returns a tuple or set of tuples.  This part
-	 * of the typechecking is a hack. We look up the relation that is the
-	 * declared return type, and scan the non-deleted attributes to ensure
-	 * that they match the datatypes of the non-resjunk columns.
-	 */
-	reln = heap_open(typerelid, AccessShareLock);
-	relnatts = reln->rd_rel->relnatts;
-	rellogcols = 0;				/* we'll count nondeleted cols as we go */
-	colindex = 0;
-
-	foreach(tlistitem, tlist)
-	{
-		TargetEntry *tle = (TargetEntry *) lfirst(tlistitem);
-		Form_pg_attribute attr;
-		Oid			tletype;
-		Oid			atttype;
-
-		if (tle->resdom->resjunk)
-			continue;
-
-		do {
-			colindex++;
-			if (colindex > relnatts)
-				elog(ERROR, "function declared to return %s does not SELECT the right number of columns (%d)",
-					 format_type_be(rettype), rellogcols);
-			attr = reln->rd_att->attrs[colindex - 1];
-		} while (attr->attisdropped);
-		rellogcols++;
-
-		tletype = exprType(tle->expr);
-		atttype = attr->atttypid;
-		if (!IsBinaryCompatible(tletype, atttype))
-			elog(ERROR, "function declared to return %s returns %s instead of %s at column %d",
-				 format_type_be(rettype),
-				 format_type_be(tletype),
-				 format_type_be(atttype),
-				 rellogcols);
-	}
-
-	for (;;)
-	{
-		colindex++;
-		if (colindex > relnatts)
-			break;
-		if (!reln->rd_att->attrs[colindex - 1]->attisdropped)
-			rellogcols++;
-	}
-
-	if (tlistlen != rellogcols)
-		elog(ERROR, "function declared to return %s does not SELECT the right number of columns (%d)",
-			 format_type_be(rettype), rellogcols);
-
-	heap_close(reln, AccessShareLock);
+	else
+		elog(ERROR, "Unknown kind of return type specified for function");
 }
 
 
@@ -553,6 +573,7 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 	bool		isnull;
 	Datum		tmp;
 	char	   *prosrc;
+	char		functyptype;
 
 	tuple = SearchSysCache(PROCOID, funcoid, 0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
@@ -569,8 +590,11 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 
 	prosrc = DatumGetCString(DirectFunctionCall1(textout, tmp));
 
+	/* check typtype to see if we have a predetermined return type */
+	functyptype = typeid_get_typtype(proc->prorettype);
+
 	querytree_list = pg_parse_and_rewrite(prosrc, proc->proargtypes, proc->pronargs);
-	checkretval(proc->prorettype, querytree_list);
+	checkretval(proc->prorettype, functyptype, querytree_list);
 
 	ReleaseSysCache(tuple);
 	PG_RETURN_BOOL(true);
