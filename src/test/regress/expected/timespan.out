@@ -1,149 +1,154 @@
-QUERY: CREATE TABLE TIMESPAN_TBL (f1 timespan);
-QUERY: INSERT INTO TIMESPAN_TBL (f1) VALUES ('@ 1 minute');
-QUERY: INSERT INTO TIMESPAN_TBL (f1) VALUES ('@ 5 hour');
-QUERY: INSERT INTO TIMESPAN_TBL (f1) VALUES ('@ 10 day');
-QUERY: INSERT INTO TIMESPAN_TBL (f1) VALUES ('@ 34 year');
-QUERY: INSERT INTO TIMESPAN_TBL (f1) VALUES ('@ 3 months');
-QUERY: INSERT INTO TIMESPAN_TBL (f1) VALUES ('@ 14 seconds ago');
-QUERY: INSERT INTO TIMESPAN_TBL (f1) VALUES ('1 day 2 hours 3 minutes 4 seconds');
-QUERY: INSERT INTO TIMESPAN_TBL (f1) VALUES ('6 years');
-QUERY: INSERT INTO TIMESPAN_TBL (f1) VALUES ('5 months');
-QUERY: INSERT INTO TIMESPAN_TBL (f1) VALUES ('5 months 12 hours');
-QUERY: INSERT INTO TIMESPAN_TBL (f1) VALUES ('badly formatted timespan');
+--
+-- TIMESPAN
+--
+CREATE TABLE TIMESPAN_TBL (f1 timespan);
+INSERT INTO TIMESPAN_TBL (f1) VALUES ('@ 1 minute');
+INSERT INTO TIMESPAN_TBL (f1) VALUES ('@ 5 hour');
+INSERT INTO TIMESPAN_TBL (f1) VALUES ('@ 10 day');
+INSERT INTO TIMESPAN_TBL (f1) VALUES ('@ 34 year');
+INSERT INTO TIMESPAN_TBL (f1) VALUES ('@ 3 months');
+INSERT INTO TIMESPAN_TBL (f1) VALUES ('@ 14 seconds ago');
+INSERT INTO TIMESPAN_TBL (f1) VALUES ('1 day 2 hours 3 minutes 4 seconds');
+INSERT INTO TIMESPAN_TBL (f1) VALUES ('6 years');
+INSERT INTO TIMESPAN_TBL (f1) VALUES ('5 months');
+INSERT INTO TIMESPAN_TBL (f1) VALUES ('5 months 12 hours');
+-- badly formatted timespan
+INSERT INTO TIMESPAN_TBL (f1) VALUES ('badly formatted timespan');
 ERROR:  Bad timespan external representation 'badly formatted timespan'
-QUERY: INSERT INTO TIMESPAN_TBL (f1) VALUES ('@ 30 eons ago');
+INSERT INTO TIMESPAN_TBL (f1) VALUES ('@ 30 eons ago');
 ERROR:  Bad timespan external representation '@ 30 eons ago'
-QUERY: SELECT '' AS ten, TIMESPAN_TBL.*;
-ten|f1                           
----+-----------------------------
-   |@ 1 min                      
-   |@ 5 hours                    
-   |@ 10 days                    
-   |@ 34 years                   
-   |@ 3 mons                     
-   |@ 14 secs ago                
-   |@ 1 day 2 hours 3 mins 4 secs
-   |@ 6 years                    
-   |@ 5 mons                     
-   |@ 5 mons 12 hours            
+-- test timespan operators
+SELECT '' AS ten, TIMESPAN_TBL.*;
+ ten |              f1               
+-----+-------------------------------
+     | @ 1 min
+     | @ 5 hours
+     | @ 10 days
+     | @ 34 years
+     | @ 3 mons
+     | @ 14 secs ago
+     | @ 1 day 2 hours 3 mins 4 secs
+     | @ 6 years
+     | @ 5 mons
+     | @ 5 mons 12 hours
 (10 rows)
 
-QUERY: SELECT '' AS nine, TIMESPAN_TBL.*
-   WHERE TIMESPAN_TBL.f1 <> '@ 10 days'::timespan;
-nine|f1                           
-----+-----------------------------
-    |@ 1 min                      
-    |@ 5 hours                    
-    |@ 34 years                   
-    |@ 3 mons                     
-    |@ 14 secs ago                
-    |@ 1 day 2 hours 3 mins 4 secs
-    |@ 6 years                    
-    |@ 5 mons                     
-    |@ 5 mons 12 hours            
+SELECT '' AS nine, TIMESPAN_TBL.*
+   WHERE TIMESPAN_TBL.f1 <> timespan '@ 10 days';
+ nine |              f1               
+------+-------------------------------
+      | @ 1 min
+      | @ 5 hours
+      | @ 34 years
+      | @ 3 mons
+      | @ 14 secs ago
+      | @ 1 day 2 hours 3 mins 4 secs
+      | @ 6 years
+      | @ 5 mons
+      | @ 5 mons 12 hours
 (9 rows)
 
-QUERY: SELECT '' AS three, TIMESPAN_TBL.*
-   WHERE TIMESPAN_TBL.f1 <= '@ 5 hours'::timespan;
-three|f1           
------+-------------
-     |@ 1 min      
-     |@ 5 hours    
-     |@ 14 secs ago
+SELECT '' AS three, TIMESPAN_TBL.*
+   WHERE TIMESPAN_TBL.f1 <= timespan '@ 5 hours';
+ three |      f1       
+-------+---------------
+       | @ 1 min
+       | @ 5 hours
+       | @ 14 secs ago
 (3 rows)
 
-QUERY: SELECT '' AS three, TIMESPAN_TBL.*
-   WHERE TIMESPAN_TBL.f1 < '@ 1 day'::timespan;
-three|f1           
------+-------------
-     |@ 1 min      
-     |@ 5 hours    
-     |@ 14 secs ago
+SELECT '' AS three, TIMESPAN_TBL.*
+   WHERE TIMESPAN_TBL.f1 < timespan '@ 1 day';
+ three |      f1       
+-------+---------------
+       | @ 1 min
+       | @ 5 hours
+       | @ 14 secs ago
 (3 rows)
 
-QUERY: SELECT '' AS one, TIMESPAN_TBL.*
-   WHERE TIMESPAN_TBL.f1 = '@ 34 years'::timespan;
-one|f1        
----+----------
-   |@ 34 years
+SELECT '' AS one, TIMESPAN_TBL.*
+   WHERE TIMESPAN_TBL.f1 = timespan '@ 34 years';
+ one |     f1     
+-----+------------
+     | @ 34 years
 (1 row)
 
-QUERY: SELECT '' AS five, TIMESPAN_TBL.*
-   WHERE TIMESPAN_TBL.f1 >= '@ 1 month'::timespan;
-five|f1               
-----+-----------------
-    |@ 34 years       
-    |@ 3 mons         
-    |@ 6 years        
-    |@ 5 mons         
-    |@ 5 mons 12 hours
+SELECT '' AS five, TIMESPAN_TBL.* 
+   WHERE TIMESPAN_TBL.f1 >= timespan '@ 1 month';
+ five |        f1         
+------+-------------------
+      | @ 34 years
+      | @ 3 mons
+      | @ 6 years
+      | @ 5 mons
+      | @ 5 mons 12 hours
 (5 rows)
 
-QUERY: SELECT '' AS nine, TIMESPAN_TBL.*
-   WHERE TIMESPAN_TBL.f1 > '@ 3 seconds ago'::timespan;
-nine|f1                           
-----+-----------------------------
-    |@ 1 min                      
-    |@ 5 hours                    
-    |@ 10 days                    
-    |@ 34 years                   
-    |@ 3 mons                     
-    |@ 1 day 2 hours 3 mins 4 secs
-    |@ 6 years                    
-    |@ 5 mons                     
-    |@ 5 mons 12 hours            
+SELECT '' AS nine, TIMESPAN_TBL.*
+   WHERE TIMESPAN_TBL.f1 > timespan '@ 3 seconds ago';
+ nine |              f1               
+------+-------------------------------
+      | @ 1 min
+      | @ 5 hours
+      | @ 10 days
+      | @ 34 years
+      | @ 3 mons
+      | @ 1 day 2 hours 3 mins 4 secs
+      | @ 6 years
+      | @ 5 mons
+      | @ 5 mons 12 hours
 (9 rows)
 
-QUERY: SELECT '' AS fortyfive, r1.*, r2.*
+SELECT '' AS fortyfive, r1.*, r2.*
    FROM TIMESPAN_TBL r1, TIMESPAN_TBL r2
    WHERE r1.f1 > r2.f1
    ORDER BY r1.f1, r2.f1;
-fortyfive|f1                           |f1                           
----------+-----------------------------+-----------------------------
-         |@ 1 min                      |@ 14 secs ago                
-         |@ 5 hours                    |@ 14 secs ago                
-         |@ 5 hours                    |@ 1 min                      
-         |@ 1 day 2 hours 3 mins 4 secs|@ 14 secs ago                
-         |@ 1 day 2 hours 3 mins 4 secs|@ 1 min                      
-         |@ 1 day 2 hours 3 mins 4 secs|@ 5 hours                    
-         |@ 10 days                    |@ 14 secs ago                
-         |@ 10 days                    |@ 1 min                      
-         |@ 10 days                    |@ 5 hours                    
-         |@ 10 days                    |@ 1 day 2 hours 3 mins 4 secs
-         |@ 3 mons                     |@ 14 secs ago                
-         |@ 3 mons                     |@ 1 min                      
-         |@ 3 mons                     |@ 5 hours                    
-         |@ 3 mons                     |@ 1 day 2 hours 3 mins 4 secs
-         |@ 3 mons                     |@ 10 days                    
-         |@ 5 mons                     |@ 14 secs ago                
-         |@ 5 mons                     |@ 1 min                      
-         |@ 5 mons                     |@ 5 hours                    
-         |@ 5 mons                     |@ 1 day 2 hours 3 mins 4 secs
-         |@ 5 mons                     |@ 10 days                    
-         |@ 5 mons                     |@ 3 mons                     
-         |@ 5 mons 12 hours            |@ 14 secs ago                
-         |@ 5 mons 12 hours            |@ 1 min                      
-         |@ 5 mons 12 hours            |@ 5 hours                    
-         |@ 5 mons 12 hours            |@ 1 day 2 hours 3 mins 4 secs
-         |@ 5 mons 12 hours            |@ 10 days                    
-         |@ 5 mons 12 hours            |@ 3 mons                     
-         |@ 5 mons 12 hours            |@ 5 mons                     
-         |@ 6 years                    |@ 14 secs ago                
-         |@ 6 years                    |@ 1 min                      
-         |@ 6 years                    |@ 5 hours                    
-         |@ 6 years                    |@ 1 day 2 hours 3 mins 4 secs
-         |@ 6 years                    |@ 10 days                    
-         |@ 6 years                    |@ 3 mons                     
-         |@ 6 years                    |@ 5 mons                     
-         |@ 6 years                    |@ 5 mons 12 hours            
-         |@ 34 years                   |@ 14 secs ago                
-         |@ 34 years                   |@ 1 min                      
-         |@ 34 years                   |@ 5 hours                    
-         |@ 34 years                   |@ 1 day 2 hours 3 mins 4 secs
-         |@ 34 years                   |@ 10 days                    
-         |@ 34 years                   |@ 3 mons                     
-         |@ 34 years                   |@ 5 mons                     
-         |@ 34 years                   |@ 5 mons 12 hours            
-         |@ 34 years                   |@ 6 years                    
+ fortyfive |              f1               |              f1               
+-----------+-------------------------------+-------------------------------
+           | @ 1 min                       | @ 14 secs ago
+           | @ 5 hours                     | @ 14 secs ago
+           | @ 5 hours                     | @ 1 min
+           | @ 1 day 2 hours 3 mins 4 secs | @ 14 secs ago
+           | @ 1 day 2 hours 3 mins 4 secs | @ 1 min
+           | @ 1 day 2 hours 3 mins 4 secs | @ 5 hours
+           | @ 10 days                     | @ 14 secs ago
+           | @ 10 days                     | @ 1 min
+           | @ 10 days                     | @ 5 hours
+           | @ 10 days                     | @ 1 day 2 hours 3 mins 4 secs
+           | @ 3 mons                      | @ 14 secs ago
+           | @ 3 mons                      | @ 1 min
+           | @ 3 mons                      | @ 5 hours
+           | @ 3 mons                      | @ 1 day 2 hours 3 mins 4 secs
+           | @ 3 mons                      | @ 10 days
+           | @ 5 mons                      | @ 14 secs ago
+           | @ 5 mons                      | @ 1 min
+           | @ 5 mons                      | @ 5 hours
+           | @ 5 mons                      | @ 1 day 2 hours 3 mins 4 secs
+           | @ 5 mons                      | @ 10 days
+           | @ 5 mons                      | @ 3 mons
+           | @ 5 mons 12 hours             | @ 14 secs ago
+           | @ 5 mons 12 hours             | @ 1 min
+           | @ 5 mons 12 hours             | @ 5 hours
+           | @ 5 mons 12 hours             | @ 1 day 2 hours 3 mins 4 secs
+           | @ 5 mons 12 hours             | @ 10 days
+           | @ 5 mons 12 hours             | @ 3 mons
+           | @ 5 mons 12 hours             | @ 5 mons
+           | @ 6 years                     | @ 14 secs ago
+           | @ 6 years                     | @ 1 min
+           | @ 6 years                     | @ 5 hours
+           | @ 6 years                     | @ 1 day 2 hours 3 mins 4 secs
+           | @ 6 years                     | @ 10 days
+           | @ 6 years                     | @ 3 mons
+           | @ 6 years                     | @ 5 mons
+           | @ 6 years                     | @ 5 mons 12 hours
+           | @ 34 years                    | @ 14 secs ago
+           | @ 34 years                    | @ 1 min
+           | @ 34 years                    | @ 5 hours
+           | @ 34 years                    | @ 1 day 2 hours 3 mins 4 secs
+           | @ 34 years                    | @ 10 days
+           | @ 34 years                    | @ 3 mons
+           | @ 34 years                    | @ 5 mons
+           | @ 34 years                    | @ 5 mons 12 hours
+           | @ 34 years                    | @ 6 years
 (45 rows)
 

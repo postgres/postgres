@@ -1,159 +1,175 @@
-QUERY: CREATE TABLE ABSTIME_TBL (f1 abstime);
-QUERY: INSERT INTO ABSTIME_TBL (f1) VALUES ('Jan 14, 1973 03:14:21');
-QUERY: INSERT INTO ABSTIME_TBL (f1) VALUES ('Mon May  1 00:30:30 1995'::abstime);
-QUERY: INSERT INTO ABSTIME_TBL (f1) VALUES ('epoch'::abstime);
-QUERY: INSERT INTO ABSTIME_TBL (f1) VALUES ('current'::abstime);
-QUERY: INSERT INTO ABSTIME_TBL (f1) VALUES ('infinity'::abstime);
-QUERY: INSERT INTO ABSTIME_TBL (f1) VALUES ('-infinity'::abstime);
-QUERY: INSERT INTO ABSTIME_TBL (f1) VALUES ('May 10, 1947 23:59:12');
-QUERY: INSERT INTO ABSTIME_TBL (f1) VALUES ('Feb 35, 1946 10:00:00');
+--
+-- ABSTIME
+-- testing built-in time type abstime
+-- uses reltime and tinterval
+--
+--
+-- timezones may vary based not only on location but the operating
+-- system.  the main correctness issue is that the OS may not get 
+-- daylight savings time right for times prior to Unix epoch (jan 1 1970).
+--
+CREATE TABLE ABSTIME_TBL (f1 abstime);
+INSERT INTO ABSTIME_TBL (f1) VALUES ('Jan 14, 1973 03:14:21');
+-- was INSERT INTO ABSTIME_TBL (f1) VALUES (abstime 'now'):
+INSERT INTO ABSTIME_TBL (f1) VALUES (abstime 'Mon May  1 00:30:30 1995');
+INSERT INTO ABSTIME_TBL (f1) VALUES (abstime 'epoch');
+INSERT INTO ABSTIME_TBL (f1) VALUES (abstime 'current');
+INSERT INTO ABSTIME_TBL (f1) VALUES (abstime 'infinity');
+INSERT INTO ABSTIME_TBL (f1) VALUES (abstime '-infinity');
+INSERT INTO ABSTIME_TBL (f1) VALUES (abstime 'May 10, 1947 23:59:12');
+-- what happens if we specify slightly misformatted abstime? 
+INSERT INTO ABSTIME_TBL (f1) VALUES ('Feb 35, 1946 10:00:00');
 ERROR:  Bad abstime external representation 'Feb 35, 1946 10:00:00'
-QUERY: INSERT INTO ABSTIME_TBL (f1) VALUES ('Feb 28, 1984 25:08:10');
+INSERT INTO ABSTIME_TBL (f1) VALUES ('Feb 28, 1984 25:08:10');
 ERROR:  Bad abstime external representation 'Feb 28, 1984 25:08:10'
-QUERY: INSERT INTO ABSTIME_TBL (f1) VALUES ('bad date format');
+-- badly formatted abstimes:  these should result in invalid abstimes 
+INSERT INTO ABSTIME_TBL (f1) VALUES ('bad date format');
 ERROR:  Bad abstime external representation 'bad date format'
-QUERY: INSERT INTO ABSTIME_TBL (f1) VALUES ('Jun 10, 1843');
-QUERY: SELECT '' AS eight, ABSTIME_TBL.*;
-eight|f1                          
------+----------------------------
-     |Sun Jan 14 03:14:21 1973 PST
-     |Mon May 01 00:30:30 1995 PDT
-     |epoch                       
-     |current                     
-     |infinity                    
-     |-infinity                   
-     |Sat May 10 23:59:12 1947 PST
-     |invalid                     
+INSERT INTO ABSTIME_TBL (f1) VALUES ('Jun 10, 1843');
+-- test abstime operators
+SELECT '' AS eight, ABSTIME_TBL.*;
+ eight |              f1              
+-------+------------------------------
+       | Sun Jan 14 03:14:21 1973 PST
+       | Mon May 01 00:30:30 1995 PDT
+       | epoch
+       | current
+       | infinity
+       | -infinity
+       | Sat May 10 23:59:12 1947 PST
+       | invalid
 (8 rows)
 
-QUERY: SELECT '' AS six, ABSTIME_TBL.*
-   WHERE ABSTIME_TBL.f1 < 'Jun 30, 2001'::abstime;
-six|f1                          
----+----------------------------
-   |Sun Jan 14 03:14:21 1973 PST
-   |Mon May 01 00:30:30 1995 PDT
-   |epoch                       
-   |current                     
-   |-infinity                   
-   |Sat May 10 23:59:12 1947 PST
+SELECT '' AS six, ABSTIME_TBL.*
+   WHERE ABSTIME_TBL.f1 < abstime 'Jun 30, 2001';
+ six |              f1              
+-----+------------------------------
+     | Sun Jan 14 03:14:21 1973 PST
+     | Mon May 01 00:30:30 1995 PDT
+     | epoch
+     | current
+     | -infinity
+     | Sat May 10 23:59:12 1947 PST
 (6 rows)
 
-QUERY: SELECT '' AS six, ABSTIME_TBL.*
-   WHERE ABSTIME_TBL.f1 > '-infinity'::abstime;
-six|f1                          
----+----------------------------
-   |Sun Jan 14 03:14:21 1973 PST
-   |Mon May 01 00:30:30 1995 PDT
-   |epoch                       
-   |current                     
-   |infinity                    
-   |Sat May 10 23:59:12 1947 PST
+SELECT '' AS six, ABSTIME_TBL.*
+   WHERE ABSTIME_TBL.f1 > abstime '-infinity';
+ six |              f1              
+-----+------------------------------
+     | Sun Jan 14 03:14:21 1973 PST
+     | Mon May 01 00:30:30 1995 PDT
+     | epoch
+     | current
+     | infinity
+     | Sat May 10 23:59:12 1947 PST
 (6 rows)
 
-QUERY: SELECT '' AS six, ABSTIME_TBL.*
-   WHERE 'May 10, 1947 23:59:12'::abstime <> ABSTIME_TBL.f1;
-six|f1                          
----+----------------------------
-   |Sun Jan 14 03:14:21 1973 PST
-   |Mon May 01 00:30:30 1995 PDT
-   |epoch                       
-   |current                     
-   |infinity                    
-   |-infinity                   
+SELECT '' AS six, ABSTIME_TBL.*
+   WHERE abstime 'May 10, 1947 23:59:12' <> ABSTIME_TBL.f1;
+ six |              f1              
+-----+------------------------------
+     | Sun Jan 14 03:14:21 1973 PST
+     | Mon May 01 00:30:30 1995 PDT
+     | epoch
+     | current
+     | infinity
+     | -infinity
 (6 rows)
 
-QUERY: SELECT '' AS one, ABSTIME_TBL.*
-   WHERE 'current'::abstime = ABSTIME_TBL.f1;
-one|f1     
----+-------
-   |current
+SELECT '' AS one, ABSTIME_TBL.*
+   WHERE abstime 'current' = ABSTIME_TBL.f1;
+ one |   f1    
+-----+---------
+     | current
 (1 row)
 
-QUERY: SELECT '' AS three, ABSTIME_TBL.*
-   WHERE 'epoch'::abstime >= ABSTIME_TBL.f1;
-three|f1                          
------+----------------------------
-     |epoch                       
-     |-infinity                   
-     |Sat May 10 23:59:12 1947 PST
+SELECT '' AS three, ABSTIME_TBL.*
+   WHERE abstime 'epoch' >= ABSTIME_TBL.f1;
+ three |              f1              
+-------+------------------------------
+       | epoch
+       | -infinity
+       | Sat May 10 23:59:12 1947 PST
 (3 rows)
 
-QUERY: SELECT '' AS four, ABSTIME_TBL.*
-   WHERE ABSTIME_TBL.f1 <= 'Jan 14, 1973 03:14:21'::abstime;
-four|f1                          
-----+----------------------------
-    |Sun Jan 14 03:14:21 1973 PST
-    |epoch                       
-    |-infinity                   
-    |Sat May 10 23:59:12 1947 PST
+SELECT '' AS four, ABSTIME_TBL.*
+   WHERE ABSTIME_TBL.f1 <= abstime 'Jan 14, 1973 03:14:21';
+ four |              f1              
+------+------------------------------
+      | Sun Jan 14 03:14:21 1973 PST
+      | epoch
+      | -infinity
+      | Sat May 10 23:59:12 1947 PST
 (4 rows)
 
-QUERY: SELECT '' AS four, ABSTIME_TBL.*
+SELECT '' AS four, ABSTIME_TBL.*
   WHERE ABSTIME_TBL.f1 <?>
-	'["Apr 1 1950 00:00:00" "Dec 30 1999 23:00:00"]'::tinterval;
-four|f1                          
-----+----------------------------
-    |Sun Jan 14 03:14:21 1973 PST
-    |Mon May 01 00:30:30 1995 PDT
-    |epoch                       
-    |current                     
-(4 rows)
-
-QUERY: SELECT '' AS three, ABSTIME_TBL.*
-  WHERE  (ABSTIME_TBL.f1 + '@ 3 year'::reltime) 
-	< 'Jan 14 14:00:00 1977'::abstime;
-three|f1                          
------+----------------------------
-     |Sun Jan 14 03:14:21 1973 PST
-     |epoch                       
-     |Sat May 10 23:59:12 1947 PST
+	tinterval '["Apr 1 1950 00:00:00" "Dec 30 1999 23:00:00"]';
+ four |              f1              
+------+------------------------------
+      | Sun Jan 14 03:14:21 1973 PST
+      | Mon May 01 00:30:30 1995 PDT
+      | epoch
 (3 rows)
 
-QUERY: SELECT '' AS three, ABSTIME_TBL.*
-   WHERE  (ABSTIME_TBL.f1 + '@ 3 year ago'::reltime)	
-	< 'Jan 14 14:00:00 1971'::abstime;
-three|f1                          
------+----------------------------
-     |Sun Jan 14 03:14:21 1973 PST
-     |epoch                       
-     |Sat May 10 23:59:12 1947 PST
+-- these four queries should return the same answer
+-- the "infinity" and "-infinity" tuples in ABSTIME_TBL cannot be added and
+-- therefore, should not show up in the results.
+SELECT '' AS three, ABSTIME_TBL.*
+  WHERE  (ABSTIME_TBL.f1 + reltime '@ 3 year') -- +3 years
+	< abstime 'Jan 14 14:00:00 1977';
+ three |              f1              
+-------+------------------------------
+       | Sun Jan 14 03:14:21 1973 PST
+       | epoch
+       | Sat May 10 23:59:12 1947 PST
 (3 rows)
 
-QUERY: SELECT '' AS three, ABSTIME_TBL.*
-   WHERE  (ABSTIME_TBL.f1 - '@ 3 year'::reltime)        
-	< 'Jan 14 14:00:00 1971'::abstime;
-three|f1                          
------+----------------------------
-     |Sun Jan 14 03:14:21 1973 PST
-     |epoch                       
-     |Sat May 10 23:59:12 1947 PST
+SELECT '' AS three, ABSTIME_TBL.*
+   WHERE  (ABSTIME_TBL.f1 + reltime '@ 3 year ago')	-- -3 years
+	< abstime 'Jan 14 14:00:00 1971';
+ three |              f1              
+-------+------------------------------
+       | Sun Jan 14 03:14:21 1973 PST
+       | epoch
+       | Sat May 10 23:59:12 1947 PST
 (3 rows)
 
-QUERY: SELECT '' AS three, ABSTIME_TBL.*
-   WHERE  (ABSTIME_TBL.f1 - '@ 3 year ago'::reltime)    
-        < 'Jan 14 14:00:00 1977'::abstime;
-three|f1                          
------+----------------------------
-     |Sun Jan 14 03:14:21 1973 PST
-     |epoch                       
-     |Sat May 10 23:59:12 1947 PST
+SELECT '' AS three, ABSTIME_TBL.*
+   WHERE  (ABSTIME_TBL.f1 - reltime '@ 3 year')        -- -(+3) years
+	< abstime 'Jan 14 14:00:00 1971';
+ three |              f1              
+-------+------------------------------
+       | Sun Jan 14 03:14:21 1973 PST
+       | epoch
+       | Sat May 10 23:59:12 1947 PST
 (3 rows)
 
-QUERY: SELECT '' AS ten, ABSTIME_TBL.f1 AS abstime, RELTIME_TBL.f1 AS reltime
+SELECT '' AS three, ABSTIME_TBL.*
+   WHERE  (ABSTIME_TBL.f1 - reltime '@ 3 year ago')    -- -(-3) years
+        < abstime 'Jan 14 14:00:00 1977';
+ three |              f1              
+-------+------------------------------
+       | Sun Jan 14 03:14:21 1973 PST
+       | epoch
+       | Sat May 10 23:59:12 1947 PST
+(3 rows)
+
+SELECT '' AS ten, ABSTIME_TBL.f1 AS abstime, RELTIME_TBL.f1 AS reltime
    WHERE (ABSTIME_TBL.f1 + RELTIME_TBL.f1)
-	< 'Jan 14 14:00:00 1971'::abstime
+	< abstime 'Jan 14 14:00:00 1971'
    ORDER BY abstime, reltime;
-ten|abstime                     |reltime      
----+----------------------------+-------------
-   |Sat May 10 23:59:12 1947 PST|@ 14 secs ago
-   |Sat May 10 23:59:12 1947 PST|@ 1 min      
-   |Sat May 10 23:59:12 1947 PST|@ 5 hours    
-   |Sat May 10 23:59:12 1947 PST|@ 10 days    
-   |Sat May 10 23:59:12 1947 PST|@ 3 mons     
-   |epoch                       |@ 14 secs ago
-   |epoch                       |@ 1 min      
-   |epoch                       |@ 5 hours    
-   |epoch                       |@ 10 days    
-   |epoch                       |@ 3 mons     
+ ten |           abstime            |    reltime    
+-----+------------------------------+---------------
+     | Sat May 10 23:59:12 1947 PST | @ 14 secs ago
+     | Sat May 10 23:59:12 1947 PST | @ 1 min
+     | Sat May 10 23:59:12 1947 PST | @ 5 hours
+     | Sat May 10 23:59:12 1947 PST | @ 10 days
+     | Sat May 10 23:59:12 1947 PST | @ 3 mons
+     | epoch                        | @ 14 secs ago
+     | epoch                        | @ 1 min
+     | epoch                        | @ 5 hours
+     | epoch                        | @ 10 days
+     | epoch                        | @ 3 mons
 (10 rows)
 

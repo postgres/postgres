@@ -1,38 +1,44 @@
-QUERY: CREATE TABLE LSEG_TBL (s lseg);
-QUERY: INSERT INTO LSEG_TBL VALUES ('[(1,2),(3,4)]');
-QUERY: INSERT INTO LSEG_TBL VALUES ('(0,0),(6,6)');
-QUERY: INSERT INTO LSEG_TBL VALUES ('10,-10 ,-3,-4');
-QUERY: INSERT INTO LSEG_TBL VALUES ('[-1e6,2e2,3e5, -4e1]');
-QUERY: INSERT INTO LSEG_TBL VALUES ('(11,22,33,44)');
-QUERY: INSERT INTO LSEG_TBL VALUES ('(3asdf,2 ,3,4r2)');
+--
+-- LSEG
+-- Line segments
+--
+--DROP TABLE LSEG_TBL;
+CREATE TABLE LSEG_TBL (s lseg);
+INSERT INTO LSEG_TBL VALUES ('[(1,2),(3,4)]');
+INSERT INTO LSEG_TBL VALUES ('(0,0),(6,6)');
+INSERT INTO LSEG_TBL VALUES ('10,-10 ,-3,-4');
+INSERT INTO LSEG_TBL VALUES ('[-1e6,2e2,3e5, -4e1]');
+INSERT INTO LSEG_TBL VALUES ('(11,22,33,44)');
+-- bad values for parser testing
+INSERT INTO LSEG_TBL VALUES ('(3asdf,2 ,3,4r2)');
 ERROR:  Bad lseg external representation '(3asdf,2 ,3,4r2)'
-QUERY: INSERT INTO LSEG_TBL VALUES ('[1,2,3, 4');
+INSERT INTO LSEG_TBL VALUES ('[1,2,3, 4');
 ERROR:  Bad lseg external representation '[1,2,3, 4'
-QUERY: INSERT INTO LSEG_TBL VALUES ('[(,2),(3,4)]');
+INSERT INTO LSEG_TBL VALUES ('[(,2),(3,4)]');
 ERROR:  Bad lseg external representation '[(,2),(3,4)]'
-QUERY: INSERT INTO LSEG_TBL VALUES ('[(1,2),(3,4)');
+INSERT INTO LSEG_TBL VALUES ('[(1,2),(3,4)');
 ERROR:  Bad lseg external representation '[(1,2),(3,4)'
-QUERY: select * from LSEG_TBL;
-s                            
------------------------------
-[(1,2),(3,4)]                
-[(0,0),(6,6)]                
-[(10,-10),(-3,-4)]           
-[(-1000000,200),(300000,-40)]
-[(11,22),(33,44)]            
+select * from LSEG_TBL;
+               s               
+-------------------------------
+ [(1,2),(3,4)]
+ [(0,0),(6,6)]
+ [(10,-10),(-3,-4)]
+ [(-1000000,200),(300000,-40)]
+ [(11,22),(33,44)]
 (5 rows)
 
-QUERY: SELECT * FROM LSEG_TBL WHERE s <= '[(1,2),(3,4)]'::lseg;
-s            
--------------
-[(1,2),(3,4)]
+SELECT * FROM LSEG_TBL WHERE s <= lseg '[(1,2),(3,4)]';
+       s       
+---------------
+ [(1,2),(3,4)]
 (1 row)
 
-QUERY: SELECT * FROM LSEG_TBL WHERE (s <-> '[(1,2),(3,4)]'::lseg) < 10;
-s                 
-------------------
-[(1,2),(3,4)]     
-[(0,0),(6,6)]     
-[(10,-10),(-3,-4)]
+SELECT * FROM LSEG_TBL WHERE (s <-> lseg '[(1,2),(3,4)]') < 10;
+         s          
+--------------------
+ [(1,2),(3,4)]
+ [(0,0),(6,6)]
+ [(10,-10),(-3,-4)]
 (3 rows)
 

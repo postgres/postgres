@@ -1,100 +1,105 @@
-QUERY: CREATE TABLE RELTIME_TBL (f1 reltime);
-QUERY: INSERT INTO RELTIME_TBL (f1) VALUES ('@ 1 minute');
-QUERY: INSERT INTO RELTIME_TBL (f1) VALUES ('@ 5 hour');
-QUERY: INSERT INTO RELTIME_TBL (f1) VALUES ('@ 10 day');
-QUERY: INSERT INTO RELTIME_TBL (f1) VALUES ('@ 34 year');
-QUERY: INSERT INTO RELTIME_TBL (f1) VALUES ('@ 3 months');
-QUERY: INSERT INTO RELTIME_TBL (f1) VALUES ('@ 14 seconds ago');
-QUERY: INSERT INTO RELTIME_TBL (f1) VALUES ('badly formatted reltime');
+--
+-- RELTIME
+--
+CREATE TABLE RELTIME_TBL (f1 reltime);
+INSERT INTO RELTIME_TBL (f1) VALUES ('@ 1 minute');
+INSERT INTO RELTIME_TBL (f1) VALUES ('@ 5 hour');
+INSERT INTO RELTIME_TBL (f1) VALUES ('@ 10 day');
+INSERT INTO RELTIME_TBL (f1) VALUES ('@ 34 year');
+INSERT INTO RELTIME_TBL (f1) VALUES ('@ 3 months');
+INSERT INTO RELTIME_TBL (f1) VALUES ('@ 14 seconds ago');
+-- badly formatted reltimes
+INSERT INTO RELTIME_TBL (f1) VALUES ('badly formatted reltime');
 ERROR:  Bad reltime external representation 'badly formatted reltime'
-QUERY: INSERT INTO RELTIME_TBL (f1) VALUES ('@ 30 eons ago');
+INSERT INTO RELTIME_TBL (f1) VALUES ('@ 30 eons ago');
 ERROR:  Bad reltime external representation '@ 30 eons ago'
-QUERY: SELECT '' AS six, RELTIME_TBL.*;
-six|f1           
----+-------------
-   |@ 1 min      
-   |@ 5 hours    
-   |@ 10 days    
-   |@ 34 years   
-   |@ 3 mons     
-   |@ 14 secs ago
+-- test reltime operators
+SELECT '' AS six, RELTIME_TBL.*;
+ six |      f1       
+-----+---------------
+     | @ 1 min
+     | @ 5 hours
+     | @ 10 days
+     | @ 34 years
+     | @ 3 mons
+     | @ 14 secs ago
 (6 rows)
 
-QUERY: SELECT '' AS five, RELTIME_TBL.*
-   WHERE RELTIME_TBL.f1 <> '@ 10 days'::reltime;
-five|f1           
-----+-------------
-    |@ 1 min      
-    |@ 5 hours    
-    |@ 34 years   
-    |@ 3 mons     
-    |@ 14 secs ago
+SELECT '' AS five, RELTIME_TBL.*
+   WHERE RELTIME_TBL.f1 <> reltime '@ 10 days';
+ five |      f1       
+------+---------------
+      | @ 1 min
+      | @ 5 hours
+      | @ 34 years
+      | @ 3 mons
+      | @ 14 secs ago
 (5 rows)
 
-QUERY: SELECT '' AS three, RELTIME_TBL.*
-   WHERE RELTIME_TBL.f1 <= '@ 5 hours'::reltime;
-three|f1           
------+-------------
-     |@ 1 min      
-     |@ 5 hours    
-     |@ 14 secs ago
+SELECT '' AS three, RELTIME_TBL.*
+   WHERE RELTIME_TBL.f1 <= reltime '@ 5 hours';
+ three |      f1       
+-------+---------------
+       | @ 1 min
+       | @ 5 hours
+       | @ 14 secs ago
 (3 rows)
 
-QUERY: SELECT '' AS three, RELTIME_TBL.*
-   WHERE RELTIME_TBL.f1 < '@ 1 day'::reltime;
-three|f1           
------+-------------
-     |@ 1 min      
-     |@ 5 hours    
-     |@ 14 secs ago
+SELECT '' AS three, RELTIME_TBL.*
+   WHERE RELTIME_TBL.f1 < reltime '@ 1 day';
+ three |      f1       
+-------+---------------
+       | @ 1 min
+       | @ 5 hours
+       | @ 14 secs ago
 (3 rows)
 
-QUERY: SELECT '' AS one, RELTIME_TBL.*
-   WHERE RELTIME_TBL.f1 = '@ 34 years'::reltime;
-one|f1        
----+----------
-   |@ 34 years
+SELECT '' AS one, RELTIME_TBL.*
+   WHERE RELTIME_TBL.f1 = reltime '@ 34 years';
+ one |     f1     
+-----+------------
+     | @ 34 years
 (1 row)
 
-QUERY: SELECT '' AS two, RELTIME_TBL.*
-   WHERE RELTIME_TBL.f1 >= '@ 1 month'::reltime;
-two|f1        
----+----------
-   |@ 34 years
-   |@ 3 mons  
+SELECT '' AS two, RELTIME_TBL.* 
+   WHERE RELTIME_TBL.f1 >= reltime '@ 1 month';
+ two |     f1     
+-----+------------
+     | @ 34 years
+     | @ 3 mons
 (2 rows)
 
-QUERY: SELECT '' AS five, RELTIME_TBL.*
-   WHERE RELTIME_TBL.f1 > '@ 3 seconds ago'::reltime;
-five|f1        
-----+----------
-    |@ 1 min   
-    |@ 5 hours 
-    |@ 10 days 
-    |@ 34 years
-    |@ 3 mons  
+SELECT '' AS five, RELTIME_TBL.*
+   WHERE RELTIME_TBL.f1 > reltime '@ 3 seconds ago';
+ five |     f1     
+------+------------
+      | @ 1 min
+      | @ 5 hours
+      | @ 10 days
+      | @ 34 years
+      | @ 3 mons
 (5 rows)
 
-QUERY: SELECT '' AS fifteen, r1.*, r2.*
+SELECT '' AS fifteen, r1.*, r2.*
    FROM RELTIME_TBL r1, RELTIME_TBL r2
    WHERE r1.f1 > r2.f1
    ORDER BY r1.f1, r2.f1;
-fifteen|f1        |f1           
--------+----------+-------------
-       |@ 1 min   |@ 14 secs ago
-       |@ 5 hours |@ 14 secs ago
-       |@ 5 hours |@ 1 min      
-       |@ 10 days |@ 14 secs ago
-       |@ 10 days |@ 1 min      
-       |@ 10 days |@ 5 hours    
-       |@ 3 mons  |@ 14 secs ago
-       |@ 3 mons  |@ 1 min      
-       |@ 3 mons  |@ 5 hours    
-       |@ 3 mons  |@ 10 days    
-       |@ 34 years|@ 14 secs ago
-       |@ 34 years|@ 1 min      
-       |@ 34 years|@ 5 hours    
-       |@ 34 years|@ 10 days    
-       |@ 34 years|@ 3 mons     
+ fifteen |     f1     |      f1       
+---------+------------+---------------
+         | @ 1 min    | @ 14 secs ago
+         | @ 5 hours  | @ 14 secs ago
+         | @ 5 hours  | @ 1 min
+         | @ 10 days  | @ 14 secs ago
+         | @ 10 days  | @ 1 min
+         | @ 10 days  | @ 5 hours
+         | @ 3 mons   | @ 14 secs ago
+         | @ 3 mons   | @ 1 min
+         | @ 3 mons   | @ 5 hours
+         | @ 3 mons   | @ 10 days
+         | @ 34 years | @ 14 secs ago
+         | @ 34 years | @ 1 min
+         | @ 34 years | @ 5 hours
+         | @ 34 years | @ 10 days
+         | @ 34 years | @ 3 mons
 (15 rows)
 

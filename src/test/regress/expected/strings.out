@@ -1,154 +1,169 @@
-QUERY: SELECT 'first line'
+--
+-- STRINGS
+-- Test various data entry syntaxes.
+--
+-- SQL92 string continuation syntax
+SELECT 'first line'
 ' - next line'
 	' - third line'
 	AS "Three lines to one";
-Three lines to one                 
------------------------------------
-first line - next line - third line
+         Three lines to one          
+-------------------------------------
+ first line - next line - third line
 (1 row)
 
-QUERY: SELECT 'first line'
+-- illegal string continuation syntax
+SELECT 'first line'
 ' - next line' /* this comment is not allowed here */
 ' - third line'
 	AS "Illegal comment within continuation";
 ERROR:  parser: parse error at or near "'"
-QUERY: SELECT CAST(f1 AS text) AS "text(char)" FROM CHAR_TBL;
-text(char)
-----------
-a         
-ab        
-abcd      
-abcd      
+--
+-- test conversions between various string types
+--
+SELECT CAST(f1 AS text) AS "text(char)" FROM CHAR_TBL;
+ text(char) 
+------------
+ a   
+ ab  
+ abcd
+ abcd
 (4 rows)
 
-QUERY: SELECT CAST(f1 AS text) AS "text(varchar)" FROM VARCHAR_TBL;
-text(varchar)
--------------
-a            
-ab           
-abcd         
-abcd         
+SELECT CAST(f1 AS text) AS "text(varchar)" FROM VARCHAR_TBL;
+ text(varchar) 
+---------------
+ a
+ ab
+ abcd
+ abcd
 (4 rows)
 
-QUERY: SELECT CAST(name 'namefield' AS text) AS "text(name)";
-text(name)
-----------
-namefield 
+SELECT CAST(name 'namefield' AS text) AS "text(name)";
+ text(name) 
+------------
+ namefield
 (1 row)
 
-QUERY: SELECT CAST(f1 AS char) AS "char(text)" FROM TEXT_TBL;
-char(text)       
------------------
-doh!             
-hi de ho neighbor
-(2 rows)
-
-QUERY: SELECT CAST(f1 AS char) AS "char(varchar)" FROM VARCHAR_TBL;
-char(varchar)
--------------
-a            
-ab           
-abcd         
-abcd         
-(4 rows)
-
-QUERY: SELECT CAST(name 'namefield' AS char) AS "char(name)";
-char(name)
-----------
-namefield 
-(1 row)
-
-QUERY: SELECT CAST(f1 AS varchar) AS "varchar(text)" FROM TEXT_TBL;
-varchar(text)    
------------------
-doh!             
-hi de ho neighbor
-(2 rows)
-
-QUERY: SELECT CAST(f1 AS varchar) AS "varchar(char)" FROM CHAR_TBL;
-varchar(char)
--------------
-a            
-ab           
-abcd         
-abcd         
-(4 rows)
-
-QUERY: SELECT CAST(name 'namefield' AS varchar) AS "varchar(name)";
-varchar(name)
--------------
-namefield    
-(1 row)
-
-QUERY: SELECT TRIM(BOTH FROM '  bunch o blanks  ') AS "bunch o blanks";
-bunch o blanks
---------------
-bunch o blanks
-(1 row)
-
-QUERY: SELECT TRIM(LEADING FROM '  bunch o blanks  ') AS "bunch o blanks  ";
-bunch o blanks  
-----------------
-bunch o blanks  
-(1 row)
-
-QUERY: SELECT TRIM(TRAILING FROM '  bunch o blanks  ') AS "  bunch o blanks";
-  bunch o blanks
-----------------
-  bunch o blanks
-(1 row)
-
-QUERY: SELECT TRIM(BOTH 'x' FROM 'xxxxxsome Xsxxxxx') AS "some Xs";
-some Xs
--------
-some Xs
-(1 row)
-
-QUERY: SELECT SUBSTRING('1234567890' FROM 3) AS "34567890";
-34567890
---------
-34567890
-(1 row)
-
-QUERY: SELECT SUBSTRING('1234567890' FROM 4 FOR 3) AS "456";
-456
----
-456
-(1 row)
-
-QUERY: SELECT POSITION('4' IN '1234567890') AS "4";
-4
--
-4
-(1 row)
-
-QUERY: SELECT POSITION(5 IN '1234567890') AS "5";
-5
--
-5
-(1 row)
-
-QUERY: SELECT 'unknown' || ' and unknown' AS "Concat unknown types";
-Concat unknown types
---------------------
-unknown and unknown 
-(1 row)
-
-QUERY: SELECT text 'text' || ' and unknown' AS "Concat text to unknown type";
-Concat text to unknown type
----------------------------
-text and unknown           
-(1 row)
-
-QUERY: SELECT text 'text' || char ' and char' AS "Concat text to char";
-Concat text to char
+SELECT CAST(f1 AS char) AS "char(text)" FROM TEXT_TBL;
+    char(text)     
 -------------------
-text and char      
+ doh!
+ hi de ho neighbor
+(2 rows)
+
+SELECT CAST(f1 AS char) AS "char(varchar)" FROM VARCHAR_TBL;
+ char(varchar) 
+---------------
+ a
+ ab
+ abcd
+ abcd
+(4 rows)
+
+SELECT CAST(name 'namefield' AS char) AS "char(name)";
+ char(name) 
+------------
+ namefield
 (1 row)
 
-QUERY: SELECT text 'text' || varchar ' and varchar' AS "Concat text to varchar";
-Concat text to varchar
+SELECT CAST(f1 AS varchar) AS "varchar(text)" FROM TEXT_TBL;
+   varchar(text)   
+-------------------
+ doh!
+ hi de ho neighbor
+(2 rows)
+
+SELECT CAST(f1 AS varchar) AS "varchar(char)" FROM CHAR_TBL;
+ varchar(char) 
+---------------
+ a   
+ ab  
+ abcd
+ abcd
+(4 rows)
+
+SELECT CAST(name 'namefield' AS varchar) AS "varchar(name)";
+ varchar(name) 
+---------------
+ namefield
+(1 row)
+
+--
+-- test SQL92 string functions
+--
+SELECT TRIM(BOTH FROM '  bunch o blanks  ') AS "bunch o blanks";
+ bunch o blanks 
+----------------
+ bunch o blanks
+(1 row)
+
+SELECT TRIM(LEADING FROM '  bunch o blanks  ') AS "bunch o blanks  ";
+ bunch o blanks   
+------------------
+ bunch o blanks  
+(1 row)
+
+SELECT TRIM(TRAILING FROM '  bunch o blanks  ') AS "  bunch o blanks";
+   bunch o blanks 
+------------------
+   bunch o blanks
+(1 row)
+
+SELECT TRIM(BOTH 'x' FROM 'xxxxxsome Xsxxxxx') AS "some Xs";
+ some Xs 
+---------
+ some Xs
+(1 row)
+
+SELECT SUBSTRING('1234567890' FROM 3) AS "34567890";
+ 34567890 
+----------
+ 34567890
+(1 row)
+
+SELECT SUBSTRING('1234567890' FROM 4 FOR 3) AS "456";
+ 456 
+-----
+ 456
+(1 row)
+
+SELECT POSITION('4' IN '1234567890') AS "4";
+ 4 
+---
+ 4
+(1 row)
+
+SELECT POSITION(5 IN '1234567890') AS "5";
+ 5 
+---
+ 5
+(1 row)
+
+--
+-- test implicit type conversion
+--
+SELECT 'unknown' || ' and unknown' AS "Concat unknown types";
+ Concat unknown types 
 ----------------------
-text and varchar      
+ unknown and unknown
+(1 row)
+
+SELECT text 'text' || ' and unknown' AS "Concat text to unknown type";
+ Concat text to unknown type 
+-----------------------------
+ text and unknown
+(1 row)
+
+SELECT text 'text' || char ' and char' AS "Concat text to char";
+ Concat text to char 
+---------------------
+ text and char
+(1 row)
+
+SELECT text 'text' || varchar ' and varchar' AS "Concat text to varchar";
+ Concat text to varchar 
+------------------------
+ text and varchar
 (1 row)
 
