@@ -27,7 +27,7 @@
 # Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.203 2003/09/27 16:27:57 momjian Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.204 2003/10/13 21:06:44 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -550,30 +550,20 @@ echo "$short_version" > "$PGDATA/PG_VERSION"         || exit_nicely
 #
 # DETERMINE PLATFORM-SPECIFIC CONFIG SETTINGS
 #
-# Use reasonable values if kernel will let us, else scale back
+# Use reasonable values if kernel will let us, else scale back.  Probe for
+# max_connections first since it is subject to more constraints than
+# shared_buffers.
 
 # common backend options
 PGSQL_OPT="-F -D$PGDATA"
 
 cp /dev/null "$PGDATA"/postgresql.conf               || exit_nicely
 
-$ECHO_N "selecting default shared_buffers... "$ECHO_C
-
-for nbuffers in 1000 900 800 700 600 500 400 300 200 100 50
-do
-    TEST_OPT="$PGSQL_OPT -c shared_buffers=$nbuffers -c max_connections=5"
-    if "$PGPATH"/postgres -boot -x0 $TEST_OPT template1 </dev/null >/dev/null 2>&1
-    then
-	break
-    fi
-done
-
-echo "$nbuffers"
-
 $ECHO_N "selecting default max_connections... "$ECHO_C
 
 for nconns in 100 50 40 30 20 10
 do
+    nbuffers=`expr $nconns '*' 5`
     TEST_OPT="$PGSQL_OPT -c shared_buffers=$nbuffers -c max_connections=$nconns"
     if "$PGPATH"/postgres -boot -x0 $TEST_OPT template1 </dev/null >/dev/null 2>&1
     then
@@ -582,6 +572,19 @@ do
 done
 
 echo "$nconns"
+
+$ECHO_N "selecting default shared_buffers... "$ECHO_C
+
+for nbuffers in 1000 900 800 700 600 500 400 300 200 100 50
+do
+    TEST_OPT="$PGSQL_OPT -c shared_buffers=$nbuffers -c max_connections=$nconns"
+    if "$PGPATH"/postgres -boot -x0 $TEST_OPT template1 </dev/null >/dev/null 2>&1
+    then
+	break
+    fi
+done
+
+echo "$nbuffers"
 
 ##########################################################################
 #
@@ -1088,12 +1091,9 @@ $ECHO_N "creating information schema... "$ECHO_C
 
   echo "UPDATE information_schema.sql_implementation_info SET character_value = '$combined_version' WHERE implementation_info_name = 'DBMS VERSION';"
 
-  echo "COPY information_schema.sql_features (feature_id, feature_name, sub_feature_id, sub_feature_name, is_supported, comments) FROM STDIN;"
-  cat "$datadir"/sql_features.txt
-  echo "\."
-) |
-tr -d '\r' | # make newlines consistent for Win32
-"$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+  echo "COPY information_schema.sql_features (feature_id, feature_name, sub_feature_id, sub_feature_name, is_supported, comments) FROM '$datadir/sql_features.txt';"
+) \
+	| "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
 echo "ok"
 
 $ECHO_N "vacuuming database template1... "$ECHO_C
