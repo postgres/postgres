@@ -17,15 +17,6 @@ freebsd*) PORTNAME='BSD44_derived' ;;
    echo "configure does not currently recognize your operating system,"
    echo "therefore you must do a manual configuration of:"
    echo ""
-   echo "             Makefile.global"
-   echo "             include/config.h"
-   echo ""
-   echo "Currently recognized operating systems:"
-   echo ""
-   echo "             FreeBSD v3.0 and v2.2"
-   echo "             Solaris v2.5 under Sparc"
-   echo "             RedHat v3.0"
-   echo ""
    echo "Please contact scrappy@hub.org to see about rectifying this, "
    echo "including the above 'checking host system type...' line "
    echo "*************************************************************"
@@ -106,11 +97,11 @@ AC_PATH_PROG(xargs, xargs)
 AC_PATH_PROG(ipcs, ipcs)
 AC_PATH_PROG(ipcrm, ipcrm)
 
-AC_CHECK_LIB(readline, main)
-AC_CHECK_LIB(readline, write_history, AC_DEFINE(HAVE_HISTORY))
-AC_CHECK_LIB(history,  main)
 AC_CHECK_LIB(curses,   main)
 AC_CHECK_LIB(termcap,  main)
+AC_CHECK_LIB(history,  main)
+AC_CHECK_LIB(readline, main)
+AC_CHECK_LIB(readline, write_history, AC_DEFINE(HAVE_HISTORY))
 AC_CHECK_LIB(m,        main)
 AC_CHECK_LIB(dl,       main)
 AC_CHECK_LIB(socket,   main)
