@@ -27,7 +27,7 @@ Datum		spell_lexize(PG_FUNCTION_ARGS);
 static void
 freeDictISpell(DictISpell * d)
 {
-	FreeIspell(&(d->obj));
+	NIFree(&(d->obj));
 	freestoplist(&(d->stoplist));
 	free(d);
 }
@@ -71,7 +71,7 @@ spell_init(PG_FUNCTION_ARGS)
 					  (errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 					   errmsg("dictionary already loaded")));
 			}
-			if (ImportDictionary(&(d->obj), pcfg->value))
+			if (NIImportDictionary(&(d->obj), pcfg->value))
 			{
 				freeDictISpell(d);
 				ereport(ERROR,
@@ -90,7 +90,7 @@ spell_init(PG_FUNCTION_ARGS)
 					  (errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 					   errmsg("affixes already loaded")));
 			}
-			if (ImportAffixes(&(d->obj), pcfg->value))
+			if (NIImportAffixes(&(d->obj), pcfg->value))
 			{
 				freeDictISpell(d);
 				ereport(ERROR,
@@ -132,8 +132,8 @@ spell_init(PG_FUNCTION_ARGS)
 
 	if (affloaded && dictloaded)
 	{
-		SortDictionary(&(d->obj));
-		SortAffixes(&(d->obj));
+		NISortDictionary(&(d->obj));
+		NISortAffixes(&(d->obj));
 	}
 	else if (!affloaded)
 	{
@@ -168,7 +168,7 @@ spell_lexize(PG_FUNCTION_ARGS)
 
 	res = palloc(sizeof(char *) * 2);
 	txt = pnstrdup(in, PG_GETARG_INT32(2));
-	res = NormalizeWord(&(d->obj), txt);
+	res = NINormalizeWord(&(d->obj), txt);
 	pfree(txt);
 
 	if (res == NULL)
