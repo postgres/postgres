@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.86 2004/08/29 05:06:42 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.87 2004/09/06 18:10:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -285,6 +285,11 @@ postquel_getnext(execution_state *es)
 
 	if (es->qd->operation == CMD_UTILITY)
 	{
+		/* Can't handle starting or committing a transaction */
+		if (IsA(es->qd->parsetree->utilityStmt, TransactionStmt))
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("cannot begin/end transactions in SQL functions")));
 		ProcessUtility(es->qd->parsetree->utilityStmt, es->qd->params,
 					   es->qd->dest, NULL);
 		return NULL;
