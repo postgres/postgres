@@ -399,6 +399,7 @@ else
 	export YACC
 fi
 
+AC_CHECK_LIB(sfio,     main)
 AC_CHECK_LIB(curses,   main)
 AC_CHECK_LIB(termcap,  main)
 AC_CHECK_LIB(history,  main)

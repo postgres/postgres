@@ -25,7 +25,7 @@ dep depend:
 
 # Rule that really do something.
 ecpg: y.tab.o pgc.o type.o ecpg.o ../lib/typename.o
-	$(CC) -o ecpg y.tab.o pgc.o type.o ecpg.o ../lib/typename.o $(LEXLIB)
+	$(CC) -o ecpg y.tab.o pgc.o type.o ecpg.o ../lib/typename.o $(LEXLIB) $(LDFLAGS)
 
 y.tab.h y.tab.c: preproc.y
 	$(YACC) $(YFLAGS) $<
