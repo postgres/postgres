@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.93 2000/09/06 14:15:14 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.94 2000/10/21 15:43:24 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -345,6 +345,7 @@ BootstrapMain(int argc, char *argv[])
 
 	if (IsUnderPostmaster && xloginit)
 	{
+		SetProcessingMode(NormalProcessing);
 		StartupXLOG();
 		proc_exit(0);
 	}
@@ -360,6 +361,7 @@ BootstrapMain(int argc, char *argv[])
 
 	if (IsUnderPostmaster && !xloginit)
 	{
+		SetProcessingMode(NormalProcessing);
 		ShutdownXLOG();
 		proc_exit(0);
 	}

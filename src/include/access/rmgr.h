@@ -2,22 +2,13 @@
  *
  * rmgr.h
  *
- * Resource managers description table
+ * Resource managers definition
  *
  */
 #ifndef RMGR_H
 #define RMGR_H
 
 typedef uint8 RmgrId;
-
-typedef struct RmgrData
-{
-	char	   *rm_name;
-	void	   (*rm_redo)();	/* REDO(XLogRecPtr lsn, XLogRecord rptr) */
-	void	   (*rm_undo)();	/* UNDO(XLogRecPtr lsn, XLogRecord rptr) */
-} RmgrData;
-
-extern RmgrData *RmgrTable;
 
 /*
  * Built-in resource managers

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nbtree.h,v 1.45 2000/10/13 12:05:22 vadim Exp $
+ * $Id: nbtree.h,v 1.46 2000/10/21 15:43:33 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -266,9 +266,9 @@ typedef struct xl_btree_insert
 typedef struct xl_btree_split
 {
 	xl_btreetid			target;		/* inserted tuple id */
-	BlockId				otherblk;	/* second block participated in split: */
+	BlockIdData			otherblk;	/* second block participated in split: */
 									/* first one is stored in target' tid */
-	BlockId				rightblk;	/* next right block */
+	BlockIdData			rightblk;	/* next right block */
 	/* 
 	 * We log all btitems from the right sibling. If new btitem goes on
 	 * the left sibling then we log it too and it will be the first
@@ -277,7 +277,7 @@ typedef struct xl_btree_split
 	 */
 } xl_btree_split;
 
-#define SizeOfBtreeSplit	(offsetof(xl_btree_insert, rightblk) + sizeof(BlockId))
+#define SizeOfBtreeSplit	(offsetof(xl_btree_split, rightblk) + sizeof(BlockIdData))
 
 /* 
  * New root log record. 
@@ -285,11 +285,11 @@ typedef struct xl_btree_split
 typedef struct xl_btree_newroot
 {
 	RelFileNode			node;
-	BlockId				rootblk;
+	BlockIdData			rootblk;
 	/* 0 or 2 BTITEMS FOLLOW AT END OF STRUCT */
 } xl_btree_newroot;
 
-#define SizeOfBtreeNewroot	(offsetof(xl_btree_newroot, rootblk) + sizeof(BlockId))
+#define SizeOfBtreeNewroot	(offsetof(xl_btree_newroot, rootblk) + sizeof(BlockIdData))
 
 /* end of XLOG stuff */
 

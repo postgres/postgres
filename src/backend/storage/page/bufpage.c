@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.32 2000/10/20 11:28:39 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.33 2000/10/21 15:43:29 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -245,7 +245,11 @@ itemidcompare(const void *itemidp1, const void *itemidp2)
 
 /*
  * PageRepairFragmentation
- *		Frees fragmented space on a page.
+ *
+ * Frees fragmented space on a page.
+ * It doesn't remove unused line pointers! Please don't change this.
+ * This routine is usable for heap pages only.
+ *
  */
 void
 PageRepairFragmentation(Page page)
@@ -264,6 +268,8 @@ PageRepairFragmentation(Page page)
 	for (i = 0; i < nline; i++)
 	{
 		lp = ((PageHeader) page)->pd_linp + i;
+		if ((*lp).lp_flags & LP_DELETE)		/* marked for deletion */
+			(*lp).lp_flags &= ~(LP_USED | LP_DELETE);
 		if ((*lp).lp_flags & LP_USED)
 			nused++;
 	}
@@ -341,6 +347,31 @@ PageGetFreeSpace(Page page)
 	space -= sizeof(ItemIdData);/* XXX not always true */
 
 	return space;
+}
+
+/*
+ * PageRepairFragmentation un-useful for index page cleanup because
+ * of it doesn't remove line pointers. This routine could be more
+ * effective but ... no time -:)
+ */
+void
+IndexPageCleanup(Buffer buffer)
+{
+	Page			page = (Page) BufferGetPage(buffer);
+	ItemId			lp;
+	OffsetNumber	maxoff;
+	OffsetNumber	i;
+
+	maxoff = PageGetMaxOffsetNumber(page);
+	for (i = 0; i < maxoff; i++)
+	{
+		lp = ((PageHeader) page)->pd_linp + i;
+		if ((*lp).lp_flags & LP_DELETE)		/* marked for deletion */
+		{
+			PageIndexTupleDelete(page, i + 1);
+			maxoff--;
+		}
+	}
 }
 
 /*

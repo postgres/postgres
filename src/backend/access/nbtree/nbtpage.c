@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.39 2000/10/13 02:03:00 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.40 2000/10/21 15:43:18 vadim Exp $
  *
  *	NOTES
  *	   Postgres btree pages look like ordinary relation pages.	The opaque
@@ -171,13 +171,14 @@ _bt_getroot(Relation rel, int access)
 #ifdef XLOG
 			/* XLOG stuff */
 			{
-				xl_btree_newroot	   xlrec;
+				xl_btree_newroot	xlrec;
+				XLogRecPtr			recptr;
 
 				xlrec.node = rel->rd_node;
 				BlockIdSet(&(xlrec.rootblk), rootblkno);
 
-				XLogRecPtr recptr = XLogInsert(RM_BTREE_ID, XLOG_BTREE_NEWROOT,
-					&xlrec, SizeOfBtreeNewroot, NULL, 0);
+				recptr = XLogInsert(RM_BTREE_ID, XLOG_BTREE_NEWROOT,
+					(char*)&xlrec, SizeOfBtreeNewroot, NULL, 0);
 
 				PageSetLSN(rootpage, recptr);
 				PageSetSUI(rootpage, ThisStartUpID);
@@ -404,10 +405,12 @@ _bt_pagedel(Relation rel, ItemPointer tid)
 	/* XLOG stuff */
 	{
 		xl_btree_delete	xlrec;
+		XLogRecPtr		recptr;
+
 		xlrec.target.node = rel->rd_node;
 		xlrec.target.tid = *tid;
-		XLogRecPtr recptr = XLogInsert(RM_BTREE_ID, XLOG_BTREE_DELETE,
-			(char*) xlrec, SizeOfBtreeDelete, NULL, 0);
+		recptr = XLogInsert(RM_BTREE_ID, XLOG_BTREE_DELETE,
+			(char*) &xlrec, SizeOfBtreeDelete, NULL, 0);
 
 		PageSetLSN(page, recptr);
 		PageSetSUI(page, ThisStartUpID);

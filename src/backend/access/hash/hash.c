@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.42 2000/07/14 22:17:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.43 2000/10/21 15:43:11 vadim Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -25,8 +25,15 @@
 #include "executor/executor.h"
 #include "miscadmin.h"
 
-
 bool		BuildingHash = false;
+
+#ifdef XLOG
+#include "access/xlogutils.h"
+void hash_redo(XLogRecPtr lsn, XLogRecord *record);
+void hash_undo(XLogRecPtr lsn, XLogRecord *record);
+void hash_desc(char *buf, uint8 xl_info, char* rec);
+#endif
+
 
 /*
  *	hashbuild() -- build a new hash index.
@@ -478,3 +485,22 @@ hashdelete(PG_FUNCTION_ARGS)
 
 	PG_RETURN_VOID();
 }
+
+#ifdef XLOG
+void
+hash_redo(XLogRecPtr lsn, XLogRecord *record)
+{
+	elog(STOP, "hash_redo: unimplemented");
+}
+
+void
+hash_undo(XLogRecPtr lsn, XLogRecord *record)
+{
+	elog(STOP, "hash_undo: unimplemented");
+}
+ 
+void
+hash_desc(char *buf, uint8 xl_info, char* rec)
+{
+}
+#endif

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.73 2000/10/20 11:01:04 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.74 2000/10/21 15:43:22 vadim Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -224,6 +224,7 @@ int			CommitDelay;
 
 void		xact_redo(XLogRecPtr lsn, XLogRecord *record);
 void		xact_undo(XLogRecPtr lsn, XLogRecord *record);
+void		xact_desc(char *buf, uint8 xl_info, char* rec);
 
 static void (*_RollbackFunc)(void*) = NULL;
 static void *_RollbackData = NULL;
@@ -692,6 +693,7 @@ RecordTransactionCommit()
 		TransactionIdCommit(xid);
 
 #ifdef XLOG
+		if (MyLastRecPtr.xlogid != 0 || MyLastRecPtr.xrecoff != 0)
 		{
 			xl_xact_commit	xlrec;
 			struct timeval	delay;
@@ -711,6 +713,9 @@ RecordTransactionCommit()
 			delay.tv_sec = 0;
 			delay.tv_usec = CommitDelay;
 			(void) select(0, NULL, NULL, NULL, &delay);
+			XLogFlush(recptr);
+			MyLastRecPtr.xlogid = 0;
+			MyLastRecPtr.xrecoff = 0;
 		}
 #endif
 		/*
@@ -823,7 +828,7 @@ RecordTransactionAbort()
 		TransactionIdAbort(xid);
 
 #ifdef XLOG
-	if (SharedBufferChanged)
+	if (MyLastRecPtr.xlogid != 0 || MyLastRecPtr.xrecoff != 0)
 	{
 		xl_xact_abort	xlrec;
 		XLogRecPtr		recptr;
@@ -1176,6 +1181,8 @@ AbortTransaction()
 	AtEOXact_Files();
 
 	/* Here we'll rollback xaction changes */
+	MyLastRecPtr.xlogid = 0;
+	MyLastRecPtr.xrecoff = 0;
 
 	AtAbort_Locks();
 
@@ -1747,6 +1754,33 @@ xact_undo(XLogRecPtr lsn, XLogRecord *record)
 		elog(STOP, "xact_undo: can't undo committed xaction");
 	else if (info != XLOG_XACT_ABORT)
 		elog(STOP, "xact_redo: unknown op code %u", info);
+}
+ 
+void
+xact_desc(char *buf, uint8 xl_info, char* rec)
+{
+	uint8	info = xl_info & ~XLR_INFO_MASK;
+
+	if (info == XLOG_XACT_COMMIT)
+	{
+		xl_xact_commit	*xlrec = (xl_xact_commit*) rec;
+		struct tm	    *tm = localtime(&xlrec->xtime);
+
+		sprintf(buf + strlen(buf), "commit: %04u-%02u-%02u %02u:%02u:%02u",
+			tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,
+			tm->tm_hour, tm->tm_min, tm->tm_sec);
+	}
+	else if (info == XLOG_XACT_ABORT)
+	{
+		xl_xact_abort	*xlrec = (xl_xact_abort*) rec;
+		struct tm	    *tm = localtime(&xlrec->xtime);
+
+		sprintf(buf + strlen(buf), "abort: %04u-%02u-%02u %02u:%02u:%02u",
+			tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,
+			tm->tm_hour, tm->tm_min, tm->tm_sec);
+	}
+	else
+		strcat(buf, "UNKNOWN");
 }
 
 void

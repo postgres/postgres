@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.172 2000/10/16 14:52:08 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.173 2000/10/21 15:43:26 vadim Exp $
  *
  * NOTES
  *
@@ -219,6 +219,10 @@ static unsigned int random_seed = 0;
 extern char *optarg;
 extern int	optind,
 			opterr;
+
+extern char XLogDir[];
+extern char ControlFilePath[];
+extern void SetThisStartUpID(void);
 
 /*
  * postmaster.c - function prototypes
@@ -599,6 +603,10 @@ PostmasterMain(int argc, char *argv[])
 #endif
 	/* set up shared memory and semaphores */
 	reset_shared(PostPortName);
+
+	/* Init XLOG pathes */
+	snprintf(XLogDir, MAXPGPATH, "%s/pg_xlog", DataDir);
+	snprintf(ControlFilePath, MAXPGPATH, "%s/global/pg_control", DataDir);
 
 	/*
 	 * Initialize the list of active backends.	This list is only used for
@@ -1449,6 +1457,12 @@ reaper(SIGNAL_ARGS)
 					abort();
 				ShutdownPID = ShutdownDataBase();
 			}
+
+			/*
+			 * Startup succeeded - remember its ID
+			 */
+			SetThisStartUpID();
+
 			pqsignal(SIGCHLD, reaper);
 			return;
 		}

@@ -90,6 +90,17 @@ typedef XLogPageHeaderData *XLogPageHeader;
 typedef	uint32		StartUpID;
 extern	StartUpID	ThisStartUpID;
 extern	bool		InRecovery;
+extern	XLogRecPtr	MyLastRecPtr;
+
+typedef struct RmgrData
+{
+	char	   *rm_name;
+	void	   (*rm_redo)(XLogRecPtr lsn, XLogRecord *rptr);
+	void	   (*rm_undo)(XLogRecPtr lsn, XLogRecord *rptr);
+	void	   (*rm_desc)(char *buf, uint8 xl_info, char *rec);
+} RmgrData;
+
+extern RmgrData RmgrTable[];
 
 extern XLogRecPtr XLogInsert(RmgrId rmid, uint8 info, 
 			char *hdr, uint32 hdrlen,

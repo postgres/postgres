@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.40 2000/10/16 14:52:12 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.41 2000/10/21 15:43:31 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -538,4 +538,27 @@ smgriswo(int16 smgrno)
 	return smgrwo[smgrno];
 }
 
+#endif
+
+#ifdef XLOG
+#include "access/xlog.h"
+
+void smgr_redo(XLogRecPtr lsn, XLogRecord *record);
+void smgr_undo(XLogRecPtr lsn, XLogRecord *record);
+void smgr_desc(char *buf, uint8 xl_info, char* rec);
+
+void
+smgr_redo(XLogRecPtr lsn, XLogRecord *record)
+{
+}
+
+void
+smgr_undo(XLogRecPtr lsn, XLogRecord *record)
+{
+}
+ 
+void
+smgr_desc(char *buf, uint8 xl_info, char* rec)
+{
+}
 #endif

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.18 2000/10/20 11:01:04 vadim Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.19 2000/10/21 15:43:22 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,6 +27,8 @@
 #include "storage/spin.h"
 #include "storage/s_lock.h"
 
+#include "miscadmin.h"
+
 void		UpdateControlFile(void);
 int			XLOGShmemSize(void);
 void		XLOGShmemInit(void);
@@ -41,6 +43,9 @@ uint32		XLOGbuffers = 0;
 XLogRecPtr	MyLastRecPtr = {0, 0};
 bool		StopIfError = false;
 bool		InRecovery = false;
+StartUpID	ThisStartUpID = 0;
+
+int			XLOG_DEBUG = 1;
 
 SPINLOCK	ControlFileLockId;
 SPINLOCK	XidGenLockId;
@@ -93,6 +98,7 @@ typedef struct XLogCtlData
 	XLogRecPtr *xlblocks;		/* 1st byte ptr-s + BLCKSZ */
 	uint32		XLogCacheByte;
 	uint32		XLogCacheBlck;
+	StartUpID	ThisStartUpID;
 #ifdef HAS_TEST_AND_SET
 	slock_t		insert_lck;
 	slock_t		info_lck;
@@ -137,15 +143,19 @@ static ControlFileData *ControlFile = NULL;
 
 typedef struct CheckPoint
 {
-	XLogRecPtr	redo;			/* next RecPtr available when we */
-	/* began to create CheckPoint */
-	/* (i.e. REDO start point) */
-	XLogRecPtr	undo;			/* first record of oldest in-progress */
-	/* transaction when we started */
-	/* (i.e. UNDO end point) */
-	TransactionId nextXid;
-	Oid			nextOid;
+	XLogRecPtr		redo;		/* next RecPtr available when we */
+								/* began to create CheckPoint */
+								/* (i.e. REDO start point) */
+	XLogRecPtr		undo;		/* first record of oldest in-progress */
+								/* transaction when we started */
+								/* (i.e. UNDO end point) */
+	StartUpID		ThisStartUpID;
+	TransactionId	nextXid;
+	Oid				nextOid;
+	bool			Shutdown;
 } CheckPoint;
+
+#define XLOG_CHECKPOINT		0x00
 
 /*
  * We break each log file in 16Mb segments
@@ -190,6 +200,7 @@ static int	XLogFileInit(uint32 log, uint32 seg);
 static int	XLogFileOpen(uint32 log, uint32 seg, bool econt);
 static XLogRecord *ReadRecord(XLogRecPtr *RecPtr, char *buffer);
 static char *str_time(time_t tnow);
+static void xlog_outrec(char *buf, XLogRecord *record);
 
 static XLgwrResult LgwrResult = {{0, 0}, {0, 0}};
 static XLgwrRqst LgwrRqst = {{0, 0}, {0, 0}};
@@ -224,6 +235,13 @@ XLogInsert(RmgrId rmid, uint8 info, char *hdr, uint32 hdrlen, char *buf, uint32 
 	Assert(!(info & XLR_INFO_MASK));
 	if (len == 0 || len > MAXLOGRECSZ)
 		elog(STOP, "XLogInsert: invalid record len %u", len);
+
+	if (IsBootstrapProcessingMode())
+	{
+		RecPtr.xlogid = 0;
+		RecPtr.xrecoff = SizeOfXLogPHD;	/* start of 1st checkpoint record */
+		return (RecPtr);
+	}
 
 	/* obtain xlog insert lock */
 	if (TAS(&(XLogCtl->insert_lck)))	/* busy */
@@ -310,6 +328,23 @@ XLogInsert(RmgrId rmid, uint8 info, char *hdr, uint32 hdrlen, char *buf, uint32 
 		MyProc->logRec = RecPtr;
 		SpinRelease(SInvalLock);
 	}
+	Insert->PrevRecord = RecPtr;
+
+	if (XLOG_DEBUG)
+	{
+		char	buf[8192];
+
+		sprintf(buf, "INSERT @ %u/%u: ", RecPtr.xlogid, RecPtr.xrecoff);
+		xlog_outrec(buf, record);
+		if (hdr != NULL)
+		{
+			strcat(buf, " - ");
+			RmgrTable[record->xl_rmid].rm_desc(buf, record->xl_info, hdr);
+		}
+		strcat(buf, "\n");
+		write(2, buf, strlen(buf));
+	}
+
 	MyLastRecPtr = RecPtr;	/* begin of record */
 	Insert->currpos += SizeOfXLogRecord;
 	if (freespace > 0)
@@ -330,7 +365,7 @@ XLogInsert(RmgrId rmid, uint8 info, char *hdr, uint32 hdrlen, char *buf, uint32 
 			Insert->currpos += wlen;
 		}
 		Insert->currpos = ((char *) Insert->currpage) +
-			DOUBLEALIGN(Insert->currpos - ((char *) Insert->currpage));
+			MAXALIGN(Insert->currpos - ((char *) Insert->currpage));
 		len = hdrlen + buflen;
 	}
 
@@ -391,7 +426,7 @@ nbuf:
 		/* we don't store info in subrecord' xl_info */
 		subrecord->xl_info = 0;
 		Insert->currpos = ((char *) Insert->currpage) +
-			DOUBLEALIGN(Insert->currpos - ((char *) Insert->currpage));
+			MAXALIGN(Insert->currpos - ((char *) Insert->currpage));
 	}
 	freespace = ((char *) Insert->currpage) + BLCKSZ - Insert->currpos;
 
@@ -738,7 +773,7 @@ XLogFileInit(uint32 log, uint32 seg)
 
 	fd = BasicOpenFile(path, O_RDWR | O_CREAT | O_EXCL | PG_BINARY, S_IRUSR | S_IWUSR);
 	if (fd < 0)
-		elog(STOP, "Open(logfile %u seg %u) failed: %d",
+		elog(STOP, "Init(logfile %u seg %u) failed: %d",
 			 logId, logSeg, errno);
 
 	if (lseek(fd, XLogSegSize - 1, SEEK_SET) != (off_t) (XLogSegSize - 1))
@@ -777,6 +812,7 @@ XLogFileOpen(uint32 log, uint32 seg, bool econt)
 				 logId, logSeg);
 			return (fd);
 		}
+		abort();
 		elog(STOP, "Open(logfile %u seg %u) failed: %d",
 			 logId, logSeg, errno);
 	}
@@ -876,7 +912,7 @@ got_record:;
 		XLogSubRecord *subrecord;
 		uint32		len = record->xl_len;
 
-		if (DOUBLEALIGN(record->xl_len) + RecPtr->xrecoff % BLCKSZ + 
+		if (MAXALIGN(record->xl_len) + RecPtr->xrecoff % BLCKSZ + 
 			SizeOfXLogRecord != BLCKSZ)
 		{
 			elog(emode, "ReadRecord: invalid fragmented record len %u in (%u, %u)",
@@ -938,7 +974,7 @@ got_record:;
 			buffer += subrecord->xl_len;
 			if (subrecord->xl_info & XLR_TO_BE_CONTINUED)
 			{
-				if (DOUBLEALIGN(subrecord->xl_len) +
+				if (MAXALIGN(subrecord->xl_len) +
 					SizeOfXLogPHD + SizeOfXLogSubRecord != BLCKSZ)
 				{
 					elog(emode, "ReadRecord: invalid fragmented subrecord len %u in logfile %u seg %u off %u",
@@ -949,26 +985,26 @@ got_record:;
 			}
 			break;
 		}
-		if (BLCKSZ - SizeOfXLogRecord >= DOUBLEALIGN(subrecord->xl_len) + 
+		if (BLCKSZ - SizeOfXLogRecord >= MAXALIGN(subrecord->xl_len) + 
 			SizeOfXLogPHD + SizeOfXLogSubRecord)
 		{
 			nextRecord = (XLogRecord *) ((char *) subrecord + 
-				DOUBLEALIGN(subrecord->xl_len) + SizeOfXLogSubRecord);
+				MAXALIGN(subrecord->xl_len) + SizeOfXLogSubRecord);
 		}
 		EndRecPtr.xlogid = readId;
 		EndRecPtr.xrecoff = readSeg * XLogSegSize + readOff * BLCKSZ +
 			SizeOfXLogPHD + SizeOfXLogSubRecord + 
-			DOUBLEALIGN(subrecord->xl_len);
+			MAXALIGN(subrecord->xl_len);
 		ReadRecPtr = *RecPtr;
 		return (record);
 	}
-	if (BLCKSZ - SizeOfXLogRecord >= DOUBLEALIGN(record->xl_len) + 
+	if (BLCKSZ - SizeOfXLogRecord >= MAXALIGN(record->xl_len) + 
 		RecPtr->xrecoff % BLCKSZ + SizeOfXLogRecord)
 		nextRecord = (XLogRecord *) ((char *) record + 
-			DOUBLEALIGN(record->xl_len) + SizeOfXLogRecord);
+			MAXALIGN(record->xl_len) + SizeOfXLogRecord);
 	EndRecPtr.xlogid = RecPtr->xlogid;
 	EndRecPtr.xrecoff = RecPtr->xrecoff + 
-		DOUBLEALIGN(record->xl_len) + SizeOfXLogRecord;
+		MAXALIGN(record->xl_len) + SizeOfXLogRecord;
 	ReadRecPtr = *RecPtr;
 
 	return (record);
@@ -1130,7 +1166,7 @@ BootStrapXLOG()
 	char		buffer[BLCKSZ];
 	CheckPoint	checkPoint;
 
-#ifdef NOT_USED
+#ifdef XLOG
 	XLogPageHeader page = (XLogPageHeader) buffer;
 	XLogRecord *record;
 
@@ -1146,8 +1182,9 @@ BootStrapXLOG()
 	checkPoint.undo = checkPoint.redo;
 	checkPoint.nextXid = FirstTransactionId;
 	checkPoint.nextOid = BootstrapObjectIdData;
+	checkPoint.ThisStartUpID = 0;
 
-#ifdef NOT_USED
+#ifdef XLOG
 
 	memset(buffer, 0, BLCKSZ);
 	page->xlp_magic = XLOG_PAGE_MAGIC;
@@ -1213,7 +1250,7 @@ str_time(time_t tnow)
 void
 StartupXLOG()
 {
-#ifdef NOT_USED
+#ifdef XLOG
 	XLogCtlInsert *Insert;
 	CheckPoint	checkPoint;
 	XLogRecPtr	RecPtr,
@@ -1291,7 +1328,7 @@ StartupXLOG()
 		elog(LOG, "Data Base System was interrupted being in production at %s",
 			 str_time(ControlFile->time));
 
-#ifdef NOT_USED
+#ifdef XLOG
 
 	LastRec = RecPtr = ControlFile->checkPoint;
 	if (!XRecOffIsValid(RecPtr.xrecoff))
@@ -1312,16 +1349,19 @@ StartupXLOG()
 		 checkPoint.nextXid, checkPoint.nextOid);
 	if (checkPoint.nextXid < FirstTransactionId ||
 		checkPoint.nextOid < BootstrapObjectIdData)
-#ifdef XLOG
+
+#ifdef XLOG_2
 		elog(STOP, "Invalid NextTransactionId/NextOid");
 #else
 		elog(LOG, "Invalid NextTransactionId/NextOid");
 #endif
 
-#ifdef XLOG
+#ifdef XLOG_2
 	ShmemVariableCache->nextXid = checkPoint.nextXid;
 	ShmemVariableCache->nextOid = checkPoint.nextOid;
 #endif
+
+	ThisStartUpID = checkPoint.ThisStartUpID;
 
 	if (XLByteLT(RecPtr, checkPoint.redo))
 		elog(STOP, "Invalid redo in checkPoint record");
@@ -1364,10 +1404,23 @@ StartupXLOG()
 				 ReadRecPtr.xlogid, ReadRecPtr.xrecoff);
 			do
 			{
-#ifdef XLOG
+#ifdef XLOG_2
 				if (record->xl_xid >= ShmemVariableCache->nextXid)
 					ShmemVariableCache->nextXid = record->xl_xid + 1;
 #endif
+				if (XLOG_DEBUG)
+				{
+					char	buf[8192];
+
+					sprintf(buf, "REDO @ %u/%u: ", ReadRecPtr.xlogid, ReadRecPtr.xrecoff);
+					xlog_outrec(buf, record);
+					strcat(buf, " - ");
+					RmgrTable[record->xl_rmid].rm_desc(buf, 
+						record->xl_info, XLogRecGetData(record));
+					strcat(buf, "\n");
+					write(2, buf, strlen(buf));
+				}
+
 				RmgrTable[record->xl_rmid].rm_redo(EndRecPtr, record);
 				record = ReadRecord(NULL, buffer);
 			} while (record->xl_len != 0);
@@ -1422,6 +1475,7 @@ StartupXLOG()
 
 	if (recovery > 0)
 	{
+#ifdef NOT_USED
 		int			i;
 
 		/*
@@ -1429,19 +1483,35 @@ StartupXLOG()
 		 */
 		for (i = 0; i <= RM_MAX_ID; i++)
 			RmgrTable[record->xl_rmid].rm_redo(ReadRecPtr, NULL);
+#endif
 		CreateCheckPoint(true);
 		StopIfError = sie_saved;
 	}
 
-#endif	 /* NOT_USED */
+#endif	 /* XLOG */
 
 	ControlFile->state = DB_IN_PRODUCTION;
 	ControlFile->time = time(NULL);
 	UpdateControlFile();
 
+	ThisStartUpID++;
+	XLogCtl->ThisStartUpID = ThisStartUpID;
+
 	elog(LOG, "Data Base System is in production state at %s", str_time(time(NULL)));
 
 	return;
+}
+
+/*
+ * Postmaster uses it to set ThisStartUpID from XLogCtlData
+ * located in shmem after successful startup.
+ */
+void	SetThisStartUpID(void);
+
+void
+SetThisStartUpID(void)
+{
+	ThisStartUpID = XLogCtl->ThisStartUpID;
 }
 
 /*
@@ -1461,7 +1531,7 @@ ShutdownXLOG()
 void
 CreateCheckPoint(bool shutdown)
 {
-#ifdef NOT_USED
+#ifdef XLOG
 	CheckPoint	checkPoint;
 	XLogRecPtr	recptr;
 	XLogCtlInsert *Insert = &XLogCtl->Insert;
@@ -1475,6 +1545,8 @@ CreateCheckPoint(bool shutdown)
 		ControlFile->time = time(NULL);
 		UpdateControlFile();
 	}
+	checkPoint.ThisStartUpID = ThisStartUpID;
+	checkPoint.Shutdown = shutdown;
 
 	/* Get REDO record ptr */
 	while (TAS(&(XLogCtl->insert_lck)))
@@ -1517,20 +1589,21 @@ CreateCheckPoint(bool shutdown)
 	if (shutdown && checkPoint.undo.xrecoff != 0)
 		elog(STOP, "Active transaction while data base is shutting down");
 
-	recptr = XLogInsert(RM_XLOG_ID, (char *) &checkPoint, sizeof(checkPoint), NULL, 0);
+	recptr = XLogInsert(RM_XLOG_ID, XLOG_CHECKPOINT, (char *) &checkPoint, 
+			sizeof(checkPoint), NULL, 0);
 
 	if (shutdown && !XLByteEQ(checkPoint.redo, MyLastRecPtr))
 		elog(STOP, "XLog concurrent activity while data base is shutting down");
 
 	XLogFlush(recptr);
 
-#endif	 /* NOT_USED */
+#endif	 /* XLOG */
 
 	SpinAcquire(ControlFileLockId);
 	if (shutdown)
 		ControlFile->state = DB_SHUTDOWNED;
 
-#ifdef NOT_USED
+#ifdef XLOG
 	ControlFile->checkPoint = MyLastRecPtr;
 #else
 	ControlFile->checkPoint.xlogid = 0;
@@ -1542,4 +1615,48 @@ CreateCheckPoint(bool shutdown)
 	SpinRelease(ControlFileLockId);
 
 	return;
+}
+
+void xlog_redo(XLogRecPtr lsn, XLogRecord *record);
+void xlog_undo(XLogRecPtr lsn, XLogRecord *record);
+void xlog_desc(char *buf, uint8 xl_info, char* rec);
+
+void
+xlog_redo(XLogRecPtr lsn, XLogRecord *record)
+{
+}
+ 
+void
+xlog_undo(XLogRecPtr lsn, XLogRecord *record)
+{
+}
+ 
+void
+xlog_desc(char *buf, uint8 xl_info, char* rec)
+{
+	uint8	info = xl_info & ~XLR_INFO_MASK;
+
+	if (info == XLOG_CHECKPOINT)
+	{
+		CheckPoint	*checkpoint = (CheckPoint*) rec;
+		sprintf(buf + strlen(buf), "checkpoint: redo %u/%u; undo %u/%u; "
+		"sui %u; xid %u; oid %u; %s",
+			checkpoint->redo.xlogid, checkpoint->redo.xrecoff,
+			checkpoint->undo.xlogid, checkpoint->undo.xrecoff,
+			checkpoint->ThisStartUpID, checkpoint->nextXid, 
+			checkpoint->nextOid,
+			(checkpoint->Shutdown) ? "shutdown" : "online");
+	}
+	else
+		strcat(buf, "UNKNOWN");
+}
+
+static void
+xlog_outrec(char *buf, XLogRecord *record)
+{
+	sprintf(buf + strlen(buf), "prev %u/%u; xprev %u/%u; xid %u: %s",
+		record->xl_prev.xlogid, record->xl_prev.xrecoff,
+		record->xl_xact_prev.xlogid, record->xl_xact_prev.xrecoff,
+		record->xl_xid, 
+		RmgrTable[record->xl_rmid].rm_name);
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.89 2000/10/20 11:01:02 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.90 2000/10/21 15:43:14 vadim Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -86,12 +86,14 @@
 #include "utils/inval.h"
 #include "utils/relcache.h"
 
-#ifdef XLOG	/* comments are in heap_update */
+#ifdef XLOG
 #include "access/xlogutils.h"
 
 void heap_redo(XLogRecPtr lsn, XLogRecord *record);
 void heap_undo(XLogRecPtr lsn, XLogRecord *record);
+void heap_desc(char *buf, uint8 xl_info, char* rec);
 
+/* comments are in heap_update */
 static xl_heaptid	_locked_tuple_;
 static void _heap_unlock_tuple(void *data);
 
@@ -2478,6 +2480,55 @@ HeapPageCleanup(Buffer buffer)
 {
 	Page page = (Page) BufferGetPage(buffer);
 	PageRepairFragmentation(page);
+}
+
+static void
+out_target(char *buf, xl_heaptid *target)
+{
+	sprintf(buf + strlen(buf), "node %u/%u; cid %u; tid %u/%u",
+		target->node.tblNode, target->node.relNode,
+		target->cid,
+		ItemPointerGetBlockNumber(&(target->tid)), 
+		ItemPointerGetOffsetNumber(&(target->tid)));
+}
+ 
+void
+heap_desc(char *buf, uint8 xl_info, char* rec)
+{
+	uint8	info = xl_info & ~XLR_INFO_MASK;
+
+	if (info == XLOG_HEAP_INSERT)
+	{
+		xl_heap_insert	*xlrec = (xl_heap_insert*) rec;
+		strcat(buf, "insert: ");
+		out_target(buf, &(xlrec->target));
+	}
+	else if (info == XLOG_HEAP_DELETE)
+	{
+		xl_heap_delete	*xlrec = (xl_heap_delete*) rec;
+		strcat(buf, "delete: ");
+		out_target(buf, &(xlrec->target));
+	}
+	else if (info == XLOG_HEAP_UPDATE)
+	{
+		xl_heap_update	*xlrec = (xl_heap_update*) rec;
+		strcat(buf, "update: ");
+		out_target(buf, &(xlrec->target));
+		sprintf(buf + strlen(buf), "; new %u/%u",
+			ItemPointerGetBlockNumber(&(xlrec->newtid)), 
+			ItemPointerGetOffsetNumber(&(xlrec->newtid)));
+	}
+	else if (info == XLOG_HEAP_MOVE)
+	{
+		xl_heap_move	*xlrec = (xl_heap_move*) rec;
+		strcat(buf, "move: ");
+		out_target(buf, &(xlrec->target));
+		sprintf(buf + strlen(buf), "; new %u/%u",
+			ItemPointerGetBlockNumber(&(xlrec->newtid)), 
+			ItemPointerGetOffsetNumber(&(xlrec->newtid)));
+	}
+	else
+		strcat(buf, "UNKNOWN");
 }
 
 #endif	/* XLOG */

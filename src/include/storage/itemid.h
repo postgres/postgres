@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: itemid.h,v 1.13 2000/10/20 11:01:21 vadim Exp $
+ * $Id: itemid.h,v 1.14 2000/10/21 15:43:36 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,14 +31,10 @@ typedef ItemIdData *ItemId;
  */
 #define LP_USED			0x01	/* this line pointer is being used */
 
-#ifdef XLOG
-
 #define LP_DELETE		0x02    /* item is to be deleted */
 
 #define ItemIdDeleted(itemId) \
 	(((itemId)->lp_flags & LP_DELETE) != 0)
-
-#endif
 
 /*
  * This bit may be passed to PageAddItem together with

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.53 2000/07/30 20:43:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.54 2000/10/21 15:43:20 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,12 @@
 #include "executor/executor.h"
 #include "miscadmin.h"
 
+#ifdef XLOG
+#include "access/xlogutils.h"
+void rtree_redo(XLogRecPtr lsn, XLogRecord *record);
+void rtree_undo(XLogRecPtr lsn, XLogRecord *record);
+void rtree_desc(char *buf, uint8 xl_info, char* rec);
+#endif
 
 typedef struct SPLITVEC
 {
@@ -1066,3 +1072,22 @@ _rtdump(Relation r)
 }
 
 #endif	 /* defined RTDEBUG */
+
+#ifdef XLOG
+void
+rtree_redo(XLogRecPtr lsn, XLogRecord *record)
+{
+	elog(STOP, "rtree_redo: unimplemented");
+}
+ 
+void
+rtree_undo(XLogRecPtr lsn, XLogRecord *record)
+{
+	elog(STOP, "rtree_undo: unimplemented");
+}
+ 
+void
+rtree_desc(char *buf, uint8 xl_info, char* rec)
+{
+}
+#endif

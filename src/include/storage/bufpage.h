@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufpage.h,v 1.33 2000/10/20 11:01:21 vadim Exp $
+ * $Id: bufpage.h,v 1.34 2000/10/21 15:43:36 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -324,6 +324,7 @@ extern void PageRestoreTempPage(Page tempPage, Page oldPage);
 extern void PageRepairFragmentation(Page page);
 extern Size PageGetFreeSpace(Page page);
 extern void PageIndexTupleDelete(Page page, OffsetNumber offset);
+extern void IndexPageCleanup(Buffer buffer);
 
 
 #endif	 /* BUFPAGE_H */

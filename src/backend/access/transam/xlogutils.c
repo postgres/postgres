@@ -276,6 +276,9 @@ _xl_init_rel_cache(void)
 	_xlpgcarr = (Form_pg_class) malloc(sizeof(FormData_pg_class) * _xlcnt);
 	memset(_xlpgcarr, 0, sizeof(XLogRelDesc) * _xlcnt);
 
+	_xlrelarr[0].moreRecently = &(_xlrelarr[0]);
+	_xlrelarr[0].lessRecently = &(_xlrelarr[0]);
+
 	memset(&ctl, 0, (int) sizeof(ctl));
 	ctl.keysize = sizeof(RelFileNode);
 	ctl.datasize = sizeof(XLogRelDesc*);
@@ -383,6 +386,7 @@ XLogOpenRelation(bool redo, RmgrId rmid, RelFileNode rnode)
 		hentry->rdesc = res;
 
 		res->reldata.rd_unlinked = true;	/* look smgropen */
+		res->reldata.rd_fd = -1;
 		res->reldata.rd_fd = smgropen(DEFAULT_SMGR, &(res->reldata));
 	}
 

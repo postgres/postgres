@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.88 2000/10/20 11:01:07 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.89 2000/10/21 15:43:27 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -609,7 +609,7 @@ BufferAlloc(Relation reln,
 	}
 
 	/* record the database name and relation name for this buffer */
-	strcpy(buf->blind.dbname, DatabaseName);
+	strcpy(buf->blind.dbname, (DatabaseName) ? DatabaseName : "Recovery");
 	strcpy(buf->blind.relname, RelationGetPhysicalRelationName(reln));
 	buf->relId = reln->rd_lockInfo.lockRelId;
 
@@ -1168,8 +1168,9 @@ BufferSync()
 
 		SpinRelease(BufMgrLock);
 	}
-
+#ifndef XLOG
 	LocalBufferSync();
+#endif
 }
 
 
