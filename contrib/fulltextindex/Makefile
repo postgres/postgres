@@ -1,5 +1,5 @@
 #
-# $Header: /cvsroot/pgsql/contrib/fulltextindex/Attic/Makefile,v 1.5 2000/06/19 13:53:30 momjian Exp $
+# $Header: /cvsroot/pgsql/contrib/fulltextindex/Attic/Makefile,v 1.6 2000/07/04 16:16:48 momjian Exp $
 #
 
 TOPDIR=../..
@@ -23,7 +23,7 @@ OTHER_CLEAN = $(SQLS)
 all: $(MODS) $(SQLS)
 
 %.sql: %.sql.in
-	$(SED) "s|MODULE_PATHNAME|$(CONTRIB_MODDIR)/$@|" < $< > $@
+	$(SED) "s|MODULE_PATHNAME|$(CONTRIB_MODDIR)/$(@:.sql=$(DLSUFFIX))|" < $< > $@
 
 install: install_doc install_sql install_mod install_bin
 

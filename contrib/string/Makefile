@@ -1,5 +1,5 @@
  #
-# $Header: /cvsroot/pgsql/contrib/string/Attic/Makefile,v 1.10 2000/06/19 13:54:20 momjian Exp $
+# $Header: /cvsroot/pgsql/contrib/string/Attic/Makefile,v 1.11 2000/07/04 16:17:17 momjian Exp $
 #
 
 TOPDIR=../..
@@ -24,7 +24,7 @@ all: $(MODS) $(SQLS)
 
 
 %.sql: %.sql.in
-	$(SED) "s|MODULE_PATHNAME|$(CONTRIB_MODDIR)/$@|" < $< > $@
+	$(SED) "s|MODULE_PATHNAME|$(CONTRIB_MODDIR)/$(@:.sql=$(DLSUFFIX))|" < $< > $@
 
 install: install_doc install_sql install_mod
 

@@ -1,5 +1,5 @@
 #
-# $Header: /cvsroot/pgsql/contrib/spi/Makefile,v 1.15 2000/06/19 13:54:15 momjian Exp $
+# $Header: /cvsroot/pgsql/contrib/spi/Makefile,v 1.16 2000/07/04 16:17:11 momjian Exp $
 #
 
 TOPDIR=../..
@@ -27,7 +27,7 @@ OTHER_CLEAN = $(SQLS)
 all: $(MODS) $(SQLS)
 
 %.sql: %.sql.in
-	$(SED) "s|MODULE_PATHNAME|$(CONTRIB_MODDIR)/$@|" < $< > $@
+	$(SED) "s|MODULE_PATHNAME|$(CONTRIB_MODDIR)/$(@:.sql=$(DLSUFFIX))|" < $< > $@
 
 install: install_doc install_sql install_mod install_example
 
