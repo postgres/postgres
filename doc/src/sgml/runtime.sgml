@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.98 2001/11/28 00:13:30 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.99 2001/11/28 20:49:10 petere Exp $
 -->
 
 <Chapter Id="runtime">
@@ -74,7 +74,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.98 2001/11/28 00:13:30 mom
    file system location of your database system is indicated by the
    <option>-D</option> option, for example
 <screen>
-&gt; <userinput>initdb -D /usr/local/pgsql/data</userinput>
+<prompt>$</> <userinput>initdb -D /usr/local/pgsql/data</userinput>
 </screen>
    Note that you must execute this command while being logged in to
    the <productname>PostgreSQL</productname> user account, which is described in the previous
@@ -102,7 +102,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.98 2001/11/28 00:13:30 mom
 root# <userinput>mkdir /usr/local/pgsql/data</userinput>
 root# <userinput>chown postgres /usr/local/pgsql/data</userinput>
 root# <userinput>su postgres</userinput>
-postgres&gt; <userinput>initdb -D /usr/local/pgsql/data</userinput>
+postgres$ <userinput>initdb -D /usr/local/pgsql/data</userinput>
 </screen>
   </para>
 
@@ -151,7 +151,7 @@ NOTICE:  Initializing database with en_US collation order.
    <literal>LC_ALL</literal> or <literal>LANG</literal>.  The sort order used
    within a particular database cluster is set by <command>initdb</command>
    and cannot be changed later, short of dumping all data, rerunning <command>initdb</command>,
-   reload data.  So it's important to make this choice correctly now.
+   and reloading the data.  So it's important to make this choice correctly now.
   </para>
  </sect1>
 
@@ -169,7 +169,7 @@ NOTICE:  Initializing database with en_US collation order.
    to work on. This is done with the <option>-D</option> option. Thus,
    the simplest way to start the server is, for example,
 <screen>
-&gt; <userinput>postmaster -D /usr/local/pgsql/data</userinput>
+$ <userinput>postmaster -D /usr/local/pgsql/data</userinput>
 </screen>
    which will leave the server running in the foreground. This must
    again be done while logged in to the <productname>PostgreSQL</productname> user account. Without
@@ -182,13 +182,13 @@ NOTICE:  Initializing database with en_US collation order.
    To start the <application>postmaster</application> in the
    background, use the usual shell syntax:
 <screen>
-&gt; <userinput>postmaster -D /usr/local/pgsql/data &gt; logfile 2&gt;&amp;1 &amp;</userinput>
+$ <userinput>postmaster -D /usr/local/pgsql/data &gt; logfile 2&gt;&amp;1 &amp;</userinput>
 </screen>
    It is an extremely good idea to keep the server's stdout and stderr
    output around somewhere, as suggested here. It will help both for auditing
    purposes and to diagnose problems.
    (See <xref linkend="logfile-maintenance"> for a more thorough discussion
-   of logfile handling.)
+   of log file handling.)
   </para>
 
   <para>
@@ -196,8 +196,8 @@ NOTICE:  Initializing database with en_US collation order.
     <primary>TCP/IP</primary>
    </indexterm>
    The postmaster also takes a number of other command line options.
-   For more information see the reference page and below under runtime
-   configuration. In particular, in order for the postmaster to accept
+   For more information see the reference page and <xref linkend="runtime-config"> below.
+   In particular, in order for the server to accept
    TCP/IP connections (rather than just Unix domain socket ones), you
    must also specify the <option>-i</option> option.
   </para>
@@ -347,7 +347,7 @@ FATAL: StreamServerPort: bind() failed: Address already in use
      example, trying to start a postmaster on a reserved port number
      may draw something like
 <screen>
-&gt; <userinput>postmaster -i -p 666</userinput>
+$ <userinput>postmaster -i -p 666</userinput>
 FATAL: StreamServerPort: bind() failed: Permission denied
         Is another postmaster already running on that port?
 </screen>
@@ -405,7 +405,7 @@ IpcSemaphoreCreate: semget(key=5440026, num=16, 01600) failed: No space left on 
 
     <para>
      Although the possible error conditions on the client side are
-     both virtually infinite and application dependent, a few of them
+     both virtually infinite and application-dependent, a few of them
      might be directly related to how the server was started up.
      Conditions other than those shown below should be documented with
      the respective client application.
@@ -420,7 +420,7 @@ psql: could not connect to server: Connection refused
      This is the generic <quote>I couldn't find a server to talk
      to</quote> failure. It looks like the above when TCP/IP
      communication is attempted. A common mistake is to forget the
-     <option>-i</option> to the postmaster to allow TCP/IP
+     <option>-i</option> option to allow the postmaster to accept TCP/IP
      connections.
     </para>
 
@@ -612,7 +612,7 @@ env PGOPTIONS='-c geqo=off' psql
       <term><varname>ENABLE_INDEXSCAN</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
-        Enables or disables the query planner's use of index scan plan
+        Enables or disables the query planner's use of index-scan plan
         types. The default is on. This is mostly useful to debug the
         query planner.
        </para>
@@ -739,8 +739,8 @@ env PGOPTIONS='-c geqo=off' psql
       <listitem>
        <para>
         Use genetic query optimization to plan queries with at least
-        this many FROM items involved.  (Note that a JOIN construct
-	counts as only one FROM item.) The default is 11. For simpler
+        this many <literal>FROM</> items involved.  (Note that a <literal>JOIN</> construct
+	counts as only one <literal>FROM</> item.) The default is 11. For simpler
 	queries it is usually best to use the
         deterministic, exhaustive planner.  This parameter also controls
         how hard the optimizer will try to merge subquery
@@ -755,12 +755,12 @@ env PGOPTIONS='-c geqo=off' psql
        <para>
         The <firstterm>Key Set Query Optimizer</firstterm>
         (<acronym>KSQO</acronym>) causes the query planner to convert
-        queries whose WHERE clause contains many OR'ed AND clauses
+        queries whose <literal>WHERE</> clause contains many OR'ed AND clauses
         (such as <literal>WHERE (a=1 AND b=2) OR (a=2 AND b=3)
-        ...</literal>) into a UNION query. This method can be faster
+        ...</literal>) into a union query. This method can be faster
         than the default implementation, but it doesn't necessarily
-        give exactly the same results, since UNION implicitly adds a
-        SELECT DISTINCT clause to eliminate identical output rows.
+        give exactly the same results, since <literal>UNION</> implicitly adds a
+        <literal>SELECT DISTINCT</> clause to eliminate identical output rows.
         <acronym>KSQO</acronym> is commonly used when working with products like
         <productname>Microsoft Access</productname>, which tend to
         generate queries of this form.
@@ -771,7 +771,7 @@ env PGOPTIONS='-c geqo=off' psql
         with many OR'ed AND clauses, but in
         <productname>PostgreSQL</productname> 7.0 and later the standard
         planner handles these queries fairly successfully. Hence the
-        default is OFF.
+        default is off.
        </para>
       </listitem>
      </varlistentry>
@@ -815,7 +815,7 @@ env PGOPTIONS='-c geqo=off' psql
         To use this option, the macro <literal>USE_ASSERT_CHECKING</literal>
         must be defined when <productname>PostgreSQL</productname> is built (see the configure option
 	<literal>--enable-cassert</literal>).  Note that
-	<literal>DEBUG_ASSERTIONS</literal> defaults to ON if <productname>PostgreSQL</productname>
+	<literal>DEBUG_ASSERTIONS</literal> defaults to on if <productname>PostgreSQL</productname>
 	has been built this way.
        </para>
       </listitem>
@@ -1612,7 +1612,7 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
       <listitem>
        <para>
         Minimum number of concurrent open transactions to require before
-	performing the COMMIT_DELAY delay.  A larger value makes it more
+	performing the <varname>COMMIT_DELAY</> delay.  A larger value makes it more
 	probable that at least one other transaction will become ready to
 	commit during the delay interval.
        </para>
@@ -1765,7 +1765,7 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
     passed to the individual backend process via the
     <option>-o</option> postmaster option, for example,
 <screen>
-&gt; <userinput>postmaster -o '-S 1024 -s'</userinput>
+$ <userinput>postmaster -o '-S 1024 -s'</userinput>
 </screen>
     or via <envar>PGOPTIONS</envar> from the client side, as explained
     above.
@@ -2382,7 +2382,7 @@ default:\
    <filename>postmaster.pid</filename> in the data directory. So for
    example, to do a fast shutdown:
 <screen>
-&gt; <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput>
+$ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput>
 </screen>
   </para>
   <para>
@@ -2404,24 +2404,24 @@ default:\
    <acronym>SSL</> to encrypt
    client/server communications for increased security. This requires
    <productname>OpenSSL</productname> to be installed on both client
-   and server systems and support enabled at build-time (see <xref
+   and server systems and support enabled at build time (see <xref
    linkend="installation">).
   </para>
 
   <para>
    With SSL support compiled in, the <productname>PostgreSQL</> server
    can be started with the argument <option>-l</> (ell) to enable
-   SSL connections. When starting in SSL mode, the postmaster will look
+   SSL connections. When starting in SSL mode, the server will look
    for the files <filename>server.key</> and <filename>server.crt</> in
    the data directory.  These files should contain the server private key
    and certificate respectively. These files must be set up correctly
    before an SSL-enabled server can start. If the private key is protected
-   with a passphrase, the postmaster will prompt for the passphrase and will
+   with a passphrase, the server will prompt for the passphrase and will
    not start until it has been entered.
   </para>
 
   <para>
-   The postmaster will listen for both standard and SSL connections
+   The server will listen for both standard and SSL connections
    on the same TCP/IP port, and will negotiate with any connecting
    client whether or not to use SSL.
    See <xref linkend="client-authentication">
@@ -2434,7 +2434,7 @@ default:\
    refer to the <productname>OpenSSL</> documentation. A simple self-signed
    certificate can be used to get started for testing, but a certificate signed
    by a <acronym>CA</> (either one of the global <acronym>CAs</> or a local one) should be used in 
-   production so the client can verify the servers identity. To create
+   production so the client can verify the server's identity. To create
    a quick self-signed certificate, use the following <productname>OpenSSL</productname> command:
 <programlisting>
 openssl req -new -text -out cert.req
@@ -2444,7 +2444,7 @@ openssl req -new -text -out cert.req
    left blank. The script will generate a key that is passphrase protected;
    it will not accept a pass phrase that is less than four characters long.
    To remove the passphrase (as you must if you want automatic start-up of
-   the postmaster), run the commands
+   the server), run the commands
 <programlisting>
 openssl rsa -in privkey.pem -out cert.pem
 </programlisting>
@@ -2455,7 +2455,7 @@ cp cert.pem <replaceable>$PGDATA</replaceable>/server.key
 cp cert.cert <replaceable>$PGDATA</replaceable>/server.crt
 </programlisting>
    to turn the certificate into a self-signed certificate and to copy the
-   key and certificate to where the postmaster will look for them.
+   key and certificate to where the server will look for them.
   </para>
  </sect1>
 
@@ -2489,12 +2489,12 @@ cp cert.cert <replaceable>$PGDATA</replaceable>/server.crt
    <command>ssh</command> as some user. Then you can establish a secure tunnel with a
    command like this from the client machine:
 <programlisting>
-&gt; <userinput>ssh -L 3333:foo.com:5432 joe@foo.com</userinput>
+$ <userinput>ssh -L 3333:foo.com:5432 joe@foo.com</userinput>
 </programlisting>
    The first number in the <option>-L</option> argument, 3333, is the
    port number of your end of the tunnel; it can be chosen freely. The
    second number, 5432, is the remote end of the tunnel -- the port
-   number your backend is using. The name or the address in between
+   number your server is using. The name or the address in between
    the port numbers is the host with the database server you are going
    to connect to. In order to connect to the database server using
    this tunnel, you connect to port 3333 on the local machine:

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/charset.sgml,v 2.18 2001/11/21 05:53:40 thomas Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/charset.sgml,v 2.19 2001/11/28 20:49:09 petere Exp $ -->
 
 <chapter id="charset">
  <title>Localization</>
@@ -317,7 +317,7 @@ perl: warning: Falling back to the standard locale ("C").
    <para>
     Multibyte (<acronym>MB</acronym>) support is intended to allow
     <productname>PostgreSQL</productname> to handle
-    multiple-byte character sets such as <acronym>EUC</> (Extended Unix Code), Unicode and
+    multiple-byte character sets such as <acronym>EUC</> (Extended Unix Code), Unicode, and
     Mule internal code. With <acronym>MB</acronym> enabled you can use multibyte
     character sets in regular expressions (regexp), LIKE, and some
     other functions. The default
@@ -326,27 +326,19 @@ perl: warning: Falling back to the standard locale ("C").
     <application>initdb</application>. Note that this can be
     overridden when you create a database using
     <application>createdb</application> or by using the SQL command
-    CREATE DATABASE. So you can have multiple databases each with
+    <command>CREATE DATABASE</>. So you can have multiple databases each with
     a different encoding system.
    </para>
 
-   <para>
-    <acronym>MB</acronym> also fixes some problems concerning 8-bit single byte
-    character sets including ISO8859. (I would not say all problems
-    have been fixed. I just confirmed that the regression test ran fine
-    and a few French characters could be used with the patch. Please let
-    me know if you find any problem while using 8-bit characters.)
-   </para>
-
    <sect2>
-    <title>Enabling MB</title>
+    <title>Enabling Multibyte Support</title>
 
     <para>
      Run configure with the multibyte option:
 
-     <programlisting>
-% ./configure --enable-multibyte[=<replaceable>encoding_system</replaceable>]
-     </programlisting>
+<synopsis>
+./configure --enable-multibyte<optional>=<replaceable>encoding_system</replaceable></optional>
+</synopsis>
 
      where <replaceable>encoding_system</replaceable> can be one of the
      values in the following table:
@@ -364,7 +356,7 @@ perl: warning: Falling back to the standard locale ("C").
        <tbody>
 	<row>
 	 <entry><literal>SQL_ASCII</literal></entry>
-	 <entry><acronym>US ASCII</acronym></entry>
+	 <entry><acronym>ASCII</acronym></entry>
 	</row>
 	<row>
 	 <entry><literal>EUC_JP</literal></entry>
@@ -463,33 +455,38 @@ perl: warning: Falling back to the standard locale ("C").
      </table>
     </para>
 
-    <para>
-    CAUTION1: Note that before 7.2 LATIN5 meant ISO 8859-5 mistakely.  In 7.2
-    LATIN5 measn ISO 8859-9. If you have LATIN5 database created on
-    7.1 or before and want to migrate to 7.2, you should be very
-    carefull about this change.
-    </para>
+    <important>
+     <para>
+      Before <productname>PostgreSQL</>7.2, <literal>LATIN5</> mistakenly
+      meant ISO 8859-5.  From 7.2 on,
+      <literal>LATIN5</> means ISO 8859-9. If you have a <literal>LATIN5</>
+      database created on 7.1 or earlier and want to migrate to 7.2 (or
+      later), you should be very careful about this change.
+     </para>
+    </important>
 
-    <para>
-     CAUTION2: Not all API supports encodings listed above. For example,
-     <productname>PostgreSQL</>
-     JDBC driver does not support MULE_INTERNAL, LATIN6,
-     LATIN8 and LATIN10.
-    </para>
+    <important>
+     <para>
+      Not all APIs supports all the encodings listed above. For example, the
+      <productname>PostgreSQL</>
+      JDBC driver does not support <literal>MULE_INTERNAL</>, <literal>LATIN6</>,
+      <literal>LATIN8</>, and <literal>LATIN10</>.
+     </para>
+    </important>
     
     <para>
      Here is an example of configuring
      <productname>PostgreSQL</productname> to use a Japanese encoding by
      default:
 
-     <programlisting>
-% ./configure --enable-multibyte=EUC_JP
-     </programlisting>
+<screen>
+$ <userinput>./configure --enable-multibyte=EUC_JP</userinput>
+</screen>
     </para>
 
     <para>
-     If the encoding system is omitted (./configure --enable-multibyte),
-     SQL_ASCII is assumed.
+     If the encoding system is omitted (<literal>./configure --enable-multibyte</literal>),
+     <literal>SQL_ASCII</> is assumed.
     </para>
    </sect2>
 
@@ -500,39 +497,39 @@ perl: warning: Falling back to the standard locale ("C").
      <application>initdb</application> defines the default encoding
      for a <productname>PostgreSQL</productname> installation. For example:
 
-     <programlisting>
-% initdb -E EUC_JP
-     </programlisting>
+<screen>
+$ <userinput>initdb -E EUC_JP</>
+</screen>
 
      sets the default encoding to <literal>EUC_JP</literal> (Extended Unix Code for Japanese).
      Note that you can use <option>--encoding</option> instead of <option>-E</option> if you prefer
      to type longer option strings. 
-     If no -E or --encoding option is given, the encoding
+     If no <option>-E</> or <option>--encoding</option> option is given, the encoding
      specified at configure time is used.
     </para>
 
     <para>
      You can create a database with a different encoding:
 
-     <programlisting>
-% createdb -E EUC_KR korean
-     </programlisting>
+<screen>
+$ <userinput>createdb -E EUC_KR korean</>
+</screen>
 
      will create a database named <database>korean</database> with <literal>EUC_KR</literal> encoding.
      Another way to accomplish this is to use a SQL command:
 
-     <programlisting>
+<programlisting>
 CREATE DATABASE korean WITH ENCODING = 'EUC_KR';
-     </programlisting>
+</programlisting>
 
      The encoding for a database is represented as an
      <firstterm>encoding column</firstterm>  in the
      <literal>pg_database</literal> system catalog.
-     You can see that by using <option>-l</option> or <command>\l</command> of <command>psql</command>
-     command.
+     You can see that by using the <option>-l</option> option or the
+     <command>\l</command> command of <command>psql</command>.
 
-     <programlisting>
-$ psql -l
+<screen>
+$ <userinput>psql -l</userinput>
             List of databases
    Database    |  Owner  |   Encoding    
 ---------------+---------+---------------
@@ -546,20 +543,22 @@ $ psql -l
  test          | t-ishii | EUC_JP
  unicode       | t-ishii | UNICODE
 (9 rows)
-     </programlisting>
+</screen>
     </para>
    </sect2>
 
    <sect2>
-    <title>Automatic encoding translation between backend and
-     frontend</title>
+    <title>Automatic encoding translation between server and
+     client</title>
 
     <para>
      <productname>PostgreSQL</productname> supports an automatic
-     encoding translation between backend
-     and frontend for some encodings.
+     encoding translation between server
+     and client for some encodings.  The available combinations are
+     listed in <xref linkend="multibyte-translation-table">.
+    </para>
 
-     <table tocentry="1">
+     <table tocentry="1" id="multibyte-translation-table">
       <title>Client/Server Character Set Encodings</title>
       <titleabbrev>Communication Encodings</titleabbrev>
       <tgroup cols="2">
@@ -724,12 +723,11 @@ $ psql -l
        </tbody>
       </tgroup>
      </table>
-    </para>
 
     <para>
      To enable the automatic encoding translation, you have to tell
      <productname>PostgreSQL</productname> the encoding you would like
-     to use in frontend. There are
+     to use in the client. There are
      several ways to accomplish this.
 
      <itemizedlist>
@@ -737,13 +735,13 @@ $ psql -l
        <para>
 	Using the <command>\encoding</command> command in
 	<application>psql</application>.
-	<command>\encoding</command> allows you to change frontend
+	<command>\encoding</command> allows you to change client
 	encoding on the fly. For
 	example, to change the encoding to <literal>SJIS</literal>, type:
 
-	<programlisting>
+<programlisting>
 \encoding SJIS
-	</programlisting>
+</programlisting>
        </para>
       </listitem>
 
@@ -753,27 +751,27 @@ $ psql -l
 	<command>\encoding</command> actually calls
 	<function>PQsetClientEncoding()</function> for its purpose.
 
-	<programlisting>
+<synopsis>
 int PQsetClientEncoding(PGconn *<replaceable>conn</replaceable>, const char *<replaceable>encoding</replaceable>)
-	</programlisting>
+</synopsis>
 
-	where <replaceable>conn</replaceable> is a connection to the backend,
+	where <replaceable>conn</replaceable> is a connection to the server,
 	and <replaceable>encoding</replaceable> is an encoding you
 	want to use. If it successfully sets the encoding, it returns 0,
 	otherwise -1. The current encoding for this connection can be shown by
 	using:
 
-	<programlisting>
+<synopsis>
 int PQclientEncoding(const PGconn *<replaceable>conn</replaceable>)
-	</programlisting>
+</synopsis>
 
-	Note that it returns the encoding id, not the encoding symbol string
-	such as <literal>EUC_JP</literal>. To convert an encoding id to an encoding symbol, you
+	Note that it returns the encoding ID, not a symbolic string
+	such as <literal>EUC_JP</literal>. To convert an encoding ID to an encoding name, you
 	can use:
 
-	<programlisting>
+<synopsis>
 char *pg_encoding_to_char(int <replaceable>encoding_id</replaceable>)
-	</programlisting>
+</synopsis>
        </para>
       </listitem>
 
@@ -781,29 +779,29 @@ char *pg_encoding_to_char(int <replaceable>encoding_id</replaceable>)
        <para>
 	Using <command>SET CLIENT_ENCODING TO</command>.
 
-	Setting the frontend side encoding can be done by this SQL command:
+	Setting the client encoding can be done with this SQL command:
 
-	<programlisting>
+<programlisting>
 SET CLIENT_ENCODING TO 'encoding';
-	</programlisting>
+</programlisting>
 
-	Also you can use SQL92 syntax <literal>SET NAMES</literal> for this purpose:
+	Also you can use the SQL92 syntax <literal>SET NAMES</literal> for this purpose:
 
-	<programlisting>
+<programlisting>
 SET NAMES 'encoding';
-	</programlisting>
+</programlisting>
 
-	To query the current frontend encoding:
+	To query the current client encoding:
 
-	<programlisting>
+<programlisting>
 SHOW CLIENT_ENCODING;
-	</programlisting>
+</programlisting>
 
 	To return to the default encoding:
 
-	<programlisting>
+<programlisting>
 RESET CLIENT_ENCODING;
-	</programlisting>
+</programlisting>
        </para>
       </listitem>
 
@@ -813,7 +811,7 @@ RESET CLIENT_ENCODING;
 
 	If environment variable <envar>PGCLIENTENCODING</envar> is defined
 	in the client's environment, that client encoding is automatically
-	selected when a backend connection is made.  (This can subsequently
+	selected when a connection to the server is made.  (This can subsequently
 	be overridden using any of the other methods mentioned above.)
        </para>
       </listitem>
@@ -845,14 +843,15 @@ RESET CLIENT_ENCODING;
     <title>What happens if the translation is not possible?</title>
 
     <para>
-     Suppose you choose <literal>EUC_JP</literal> for the backend, <literal>LATIN1</literal> for the frontend,
-     then some Japanese characters could not be translated into <literal>LATIN1</literal>. In
+     Suppose you choose <literal>EUC_JP</literal> for the server
+     and <literal>LATIN1</literal> for the client,
+     then some Japanese characters cannot be translated into <literal>LATIN1</literal>. In
      this case, a letter that cannot be represented in the <literal>LATIN1</literal> character set
      would be transformed as:
 
-     <programlisting>
+<synopsis>
 (HEXA DECIMAL)
-     </programlisting>
+</synopsis>
     </para>
    </sect2>
 
@@ -1016,62 +1015,24 @@ Sorry for my Eglish and C code, I'm not native :-)
        <para>
 	Success depends on proper system locales. This has been tested
 	with <systemitem class="osname">Red Hat 6.0</> and <systemitem
-	class="osname">Slackware 3.6</>, with <literal>cs_CZ.iso8859-2</literal> locale.
+	class="osname">Slackware 3.6</>, with the
+        <literal>cs_CZ.iso8859-2</literal> locale.
        </para>
       </listitem>
 
       <listitem>
        <para>
-	Never try to set the server multibyte database encoding to WIN1250.
-	Always use LATIN2 instead since there is not a WIN1250 locale
+	Never try to set the server's database encoding to WIN1250.
+	Always use LATIN2 instead since there is no WIN1250 locale
 	in Unix.
        </para>
       </listitem>
 
       <listitem>
        <para>
-	WIN1250 encoding is usable only for Windows ODBC clients. The
+	The WIN1250 encoding is usable only for Windows ODBC clients. The
 	characters are recoded on the fly, to be displayed and stored
 	back properly.
-       </para>
-      </listitem>
-     </itemizedlist>
-    </para>
-
-    <para>
-     When running, it is important to remember the following:
-
-     <itemizedlist>
-      <listitem>
-       <para>
-	This configuration reorders your sort order depending on your
-	<envar>LC_<replaceable>x</replaceable></envar> settings. Don't be
-	confused with the regression test results since they don't use
-	locale.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-	A locale such as <literal>ch</literal> is correctly sorted
-	only if your system
-	supports that locale; older systems may not do so but new ones
-	(e.g. RH6.0) do.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-	You have to insert money as '<literal>162,50</literal>' (note
-	comma within the single-quotes).
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-	At the time of writing (early 1999), this configuration has
-	not received extensive testing. Please let us know of any
-	changes you had to make!
        </para>
       </listitem>
      </itemizedlist>
@@ -1082,36 +1043,31 @@ Sorry for my Eglish and C code, I'm not native :-)
      <step>
       <para>
        Compile <productname>PostgreSQL</productname> with locale enabled
-       and the multibyte encoding set to <literal>LATIN2</literal>.
+       and the server-side encoding set to <literal>LATIN2</literal>.
       </para>
      </step>
 
      <step>
       <para>
        Set up your installation. Do not forget to create locale
-       variables in your profile (environment). For example (this may
+       variables in your environment. For example (this may
        not be correct for <emphasis>your</emphasis> environment):
 
-       <programlisting>
+<programlisting>
 LC_ALL=cs_CZ.ISO8859-2
-LC_COLLATE=cs_CZ.ISO8859-2
-LC_CTYPE=cs_CZ.ISO8859-2
-LC_MONETARY=cs_CZ.ISO8859-2
-LC_NUMERIC=cs_CZ.ISO8859-2
-LC_TIME=cs_CZ.ISO8859-2
-       </programlisting>
+</programlisting>
       </para>
      </step>
 
      <step>
       <para>
-       You have to start the postmaster with locales set!
+       You have to start the server with locales set!
       </para>
      </step>
 
      <step>
       <para>
-       Try it with Czech language, and have it sort on a query.
+       Try it with the Czech language, and have it sort on a query.
       </para>
      </step>
 
@@ -1123,12 +1079,12 @@ LC_TIME=cs_CZ.ISO8859-2
 
      <step>
       <para>
-       Setup properly your data source. Include this line in your ODBC
-       configuration dialog in the field <literal>Connect Settings</literal>:
+       Set up your data source properly. Include this line in your ODBC
+       configuration dialog in the field <guilabel>Connect Settings</guilabel>:
 
-       <programlisting>
+<programlisting>
 SET CLIENT_ENCODING = 'WIN1250';
-       </programlisting>
+</programlisting>
       </para>
      </step>
 
@@ -1206,7 +1162,7 @@ HostCharset      <replaceable>host_spec</>    <replaceable>host_charset</>
    cannot use different encodings on the same host at the same
    time. It is also inconvenient when you boot your client hosts into
    multiple operating systems.  Nevertheless, when these restrictions are
-   not limiting and you do not need multibyte characters than it is a
+   not limiting and you do not need multibyte characters then it is a
    simple and effective solution.
   </para>
  </sect1>

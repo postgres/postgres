@@ -1,7 +1,10 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/queries.sgml,v 1.13 2001/11/21 05:53:41 thomas Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/queries.sgml,v 1.14 2001/11/28 20:49:10 petere Exp $ -->
 
 <chapter id="queries">
  <title>Queries</title>
+
+ <sect1 id="queries-overview">
+  <title>Overview</title>
 
  <para>
   A <firstterm>query</firstterm> is the process of retrieving or the command
@@ -51,6 +54,7 @@ SELECT 3 * 4;
 SELECT random();
 </programlisting>
  </para>
+ </sect1>
 
  <sect1 id="queries-table-expressions">
   <title>Table Expressions</title>

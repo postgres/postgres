@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/createuser.sgml,v 1.20 2001/09/03 12:57:49 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/createuser.sgml,v 1.21 2001/11/28 20:49:10 petere Exp $
 Postgres documentation
 -->
 
@@ -37,10 +37,10 @@ Postgres documentation
       <term>-h, --host <replaceable class="parameter">host</replaceable></term>
       <listitem>
        <para>
-	Specifies the hostname of the machine on which the 
-	<application>postmaster</application>
+	Specifies the host name of the machine on which the 
+	server
 	is running.  If host begins with a slash, it is used 
-	as the directory for the unix domain socket.
+	as the directory for the Unix domain socket.
        </para>
       </listitem>
      </varlistentry>
@@ -50,7 +50,7 @@ Postgres documentation
       <listitem>
        <para>
 	Specifies the Internet TCP/IP port or local Unix domain socket file 
-	extension on which the <application>postmaster</application>
+	extension on which the server
 	is listening for connections.
        </para>
       </listitem>
@@ -61,7 +61,7 @@ Postgres documentation
       <listitem>
        <para>
         Echo the queries that <application>createuser</application> generates
-	and sends to the backend.
+	and sends to the server.
        </para>
       </listitem>
      </varlistentry>
@@ -156,8 +156,8 @@ Postgres documentation
       <term><replaceable class="parameter">username</replaceable></term>
       <listitem>
        <para>
-	Specifies the name of the <productname>Postgres</productname> user to be created. 
-	This name must be unique among all <productname>Postgres</productname> users.
+	Specifies the name of the <productname>PostgreSQL</productname> user to be created. 
+	This name must be unique among all <productname>PostgreSQL</productname> users.
        </para>
       </listitem>
      </varlistentry>  
@@ -214,17 +214,17 @@ Postgres documentation
   </title>
   <para>
    <application>createuser</application> creates a 
-   new <productname>Postgres</productname> user.  
+   new <productname>PostgreSQL</productname> user.  
    Only users with <literal>usesuper</literal> set in
    the <literal>pg_shadow</literal> table can create 
-   new <productname>Postgres</productname> users.
+   new <productname>PostgreSQL</productname> users.
   </para>
 
   <para>
    <application>createuser</application> is a shell script wrapper around the
    <acronym>SQL</acronym> command
    <xref linkend="SQL-CREATEUSER" endterm="SQL-CREATEUSER-title"> via
-   the <productname>Postgres</productname> interactive terminal
+   the <productname>PostgreSQL</productname> interactive terminal
    <xref linkend="APP-PSQL">. Thus, there is nothing
    special about creating users via this or other methods. This means
    that the <application>psql</application> must be found by the script and that
@@ -255,7 +255,7 @@ Postgres documentation
   <informalexample>
    <para>
     To create the same user <literal>joe</literal> using the
-    postmaster on host eden, port 5000, avoiding the prompts and
+    server on host eden, port 5000, avoiding the prompts and
     taking a look at the underlying query:
 <screen>
 <prompt>$ </prompt><userinput>createuser -p 5000 -h eden -D -A -e joe</userinput>

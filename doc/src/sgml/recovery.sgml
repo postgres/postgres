@@ -24,7 +24,7 @@
 
   <para>
    A filled data disk may result in subsequent corruption of database
-   indices, but not of the fundamental data tables. If the WAL files
+   indexes, but not of the fundamental data tables. If the WAL files
    are on the same disk (as is the case for a default configuration)
    then a filled disk during database initialization may result in
    corrupted or incomplete WAL files. This failure condition is
@@ -84,21 +84,6 @@
   </para>
  </sect1>
 -->
-
-</chapter>
-
-<chapter Id="recovery">
- <title>Database Recovery</title>
-
- <para>
-  Database recovery is necessary in the event of hardware or software
-  failure. There are several categories of failures; some of these
-  require relatively minor adjustments to the database, while others
-  may depend on the existance of previously prepared database dumps
-  and other recovery data sets. It should be emphasized that if your
-  data is important and/or difficult to regenerate, then you should
-  have considered and prepared for various failure scenarios.
- </para>
 
 </chapter>
 

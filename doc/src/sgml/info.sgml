@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/info.sgml,v 1.14 2001/11/21 05:53:41 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/info.sgml,v 1.15 2001/11/28 20:49:10 petere Exp $
 -->
 
 <sect1 id="resources">
@@ -137,14 +137,14 @@ $Header: /cvsroot/pgsql/doc/src/sgml/info.sgml,v 1.14 2001/11/21 05:53:41 thomas
     <term>Yourself!</term>
     <listitem>
      <para>
-      <productname>PostgreSQL</productname> is an open source effort.
+      <productname>PostgreSQL</productname> is an open-source effort.
       As such, it depends on the user community for ongoing support.
       As you begin to use <productname>PostgreSQL</productname>, you
       will rely on others for help, either through the documentation
       or through the mailing lists.  Consider contributing your
       knowledge back. If you learn something which is not in the
       documentation, write it up and contribute it.  If you add
-      features to the code, contribute it.
+      features to the code, contribute them.
      </para>
 
      <para>

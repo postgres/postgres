@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.52 2001/11/21 06:09:45 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.53 2001/11/28 20:49:10 petere Exp $
 -->
 
 <chapter id="sql-syntax">
@@ -415,13 +415,13 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
      for the type, as recorded in its <literal>pg_type</literal>
      entry.  (For all built-in types, this is the comma character
      <quote><literal>,</literal></>.)  Each <replaceable>val</replaceable> is either a constant
-     of the array element type, or a sub-array.  An example of an
+     of the array element type, or a subarray.  An example of an
      array constant is
 <programlisting>
 '{{1,2,3},{4,5,6},{7,8,9}}'
 </programlisting>
-     This constant is a two-dimensional, 3 by 3 array consisting of three
-     sub-arrays of integers.
+     This constant is a two-dimensional, 3-by-3 array consisting of three
+     subarrays of integers.
     </para>
 
     <para>
@@ -750,7 +750,7 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
 
     <para>
      Command identifiers are also 32-bit quantities.  This creates a hard
-     limit of 2^32 (4 billion) SQL commands within a single transaction.
+     limit of 2<superscript>32</> (4 billion) SQL commands within a single transaction.
      In practice this limit is not a problem --- note that the limit is on
      number of SQL queries, not number of tuples processed.
     </para>
@@ -877,7 +877,7 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
 
     <replaceable>correlation</replaceable> is either the name of a
     table, an alias for a table defined by means of a FROM clause, or
-    the keyword <literal>NEW</literal> or <literal>OLD</literal>.
+    the key words <literal>NEW</literal> or <literal>OLD</literal>.
     (NEW and OLD can only appear in the action portion of a rule,
     while other correlation names can be used in any SQL statement.)
     The correlation name can be omitted if the column name is unique

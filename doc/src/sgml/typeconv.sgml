@@ -49,8 +49,8 @@ mixed-type expressions to be meaningful even with user-defined types.
 
 <para>
 The <productname>PostgreSQL</productname> scanner/parser decodes lexical
-elements into only five fundamental categories: integers, floats, strings,
-names, and keywords.  Most extended types are first tokenized into
+elements into only five fundamental categories: integers, floating-point numbers, strings,
+names, and key words.  Most extended types are first tokenized into
 strings. The <acronym>SQL</acronym> language definition allows specifying type
 names with strings, and this mechanism can be used in
 <productname>PostgreSQL</productname> to start the parser down the correct
@@ -84,8 +84,8 @@ Operators
 <listitem>
 <para>
 <productname>PostgreSQL</productname> allows expressions with
-prefix and postfix unary (one argument) operators,
-as well as binary (two argument) operators.
+prefix and postfix unary (one-argument) operators,
+as well as binary (two-argument) operators.
 </para>
 </listitem>
 </varlistentry>
@@ -620,7 +620,7 @@ tgl=> SELECT substr(text(varchar '1234'), 3);
 <note>
 <para>
 Actually, the parser is aware that <type>text</type> and <type>varchar</type>
-are <firstterm>binary compatible</>, meaning that one can be passed to a function that
+are <firstterm>binary-compatible</>, meaning that one can be passed to a function that
 accepts the other without doing any physical conversion.  Therefore, no
 explicit type conversion call is really inserted in this case.
 </para>

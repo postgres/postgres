@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/query.sgml,v 1.22 2001/11/23 21:08:51 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/query.sgml,v 1.23 2001/11/28 20:49:10 petere Exp $
 -->
 
  <chapter id="tutorial-sql">
@@ -247,8 +247,8 @@ INSERT INTO weather (date, city, temp_hi, temp_lo)
     </indexterm>
 
     You could also have used <command>COPY</command> to load large
-    amounts of data from flat text files.  This is usually faster
-    because the <command>COPY</command> is optimized for this
+    amounts of data from flat-text files.  This is usually faster
+    because the <command>COPY</command> command is optimized for this
     application while allowing less flexibility than
     <command>INSERT</command>.  An example would be:
 
@@ -256,7 +256,7 @@ INSERT INTO weather (date, city, temp_hi, temp_lo)
 COPY weather FROM '/home/user/weather.txt';
 </programlisting>
 
-    where the path name for the source file must be available to the
+    where the file name for the source file must be available to the
     backend server machine, not the client, since the backend server
     reads the file directly.  You can read more about the
     <command>COPY</command> command in the <citetitle>Reference
@@ -272,14 +272,14 @@ COPY weather FROM '/home/user/weather.txt';
     <indexterm><primary>query</primary></indexterm>
     <indexterm><primary>SELECT</primary></indexterm>
 
-    To retrieve data from a table it is
+    To retrieve data from a table, the table is
     <firstterm>queried</firstterm>.  An <acronym>SQL</acronym>
     <command>SELECT</command> statement is used to do this.  The
     statement is divided into a select list (the part that lists the
     columns to be returned), a table list (the part that lists the
     tables from which to retrieve the data), and an optional
     qualification (the part that specifies any restrictions).  For
-    example, to retrieve all the rows of
+    example, to retrieve all the rows of table
     <classname>weather</classname>, type:
 <programlisting>
 SELECT * FROM weather;
@@ -424,7 +424,7 @@ SELECT *
        There are two columns containing the city name.  This is
        correct because the lists of columns of the
        <classname>weather</classname> and the
-       <classname>cities</classname> tables are concatenated.  In
+       <classname>cities</classname> table are concatenated.  In
        practice this is undesirable, though, so you will probably want
        to list the output columns explicitly rather than using
        <literal>*</literal>:
@@ -678,7 +678,7 @@ SELECT city, max(temp_lo)
 </screen>
 
     which gives us the same results for only the cities that have all
-    <literal>temp_lo</> values below forty.  Finally, if we only care about
+    <literal>temp_lo</> values below 40.  Finally, if we only care about
     cities whose
     names begin with <quote><literal>S</literal></quote>, we might do
 
@@ -705,7 +705,7 @@ SELECT city, max(temp_lo)
     will be inputs to the aggregates.  On the other hand,
     <literal>HAVING</literal> clauses always contain aggregate functions.
     (Strictly speaking, you are allowed to write a <literal>HAVING</literal>
-    clause that doesn't use aggregates, but it's wasteful; the same condition
+    clause that doesn't use aggregates, but it's wasteful: The same condition
     could be used more efficiently at the <literal>WHERE</literal> stage.)
    </para>
 

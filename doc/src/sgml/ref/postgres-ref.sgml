@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/postgres-ref.sgml,v 1.21 2001/11/25 01:11:36 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/postgres-ref.sgml,v 1.22 2001/11/28 20:49:10 petere Exp $
 Postgres documentation
 -->
 
@@ -99,7 +99,7 @@ Postgres documentation
    queries and the results will be printed to the screen, but in a
    form that is more useful for developers than end users.  But note
    that running a single-user backend is not truly suitable for
-   debugging the server since no realistic inter-process communication
+   debugging the server since no realistic interprocess communication
    and locking will happen.
   </para>
 
@@ -355,7 +355,7 @@ Postgres documentation
   <title>Usage</title>
 
    <para>
-    Start a standalone backend with a command like
+    Start a stand-alone backend with a command like
 <screen>
 <userinput>postgres -D $PGDATA <replaceable>other-options</> my_database</userinput>
 </screen>
@@ -365,7 +365,7 @@ Postgres documentation
    </para>
 
    <para>
-    Normally, the standalone backend treats newline as the command
+    Normally, the stand-alone backend treats newline as the command
     entry terminator; there is no intelligence about semicolons,
     as there is in <application>psql</>.  To continue a command
     across multiple lines, you must type backslash just before each
@@ -374,19 +374,22 @@ Postgres documentation
 
    <para>
     But if you use the <option>-N</> command line switch, then newline does
-    not terminate command entry.  The backend will read stdin until EOF, then
+    not terminate command entry.  The backend will read the standard input
+    until the end-of-file (EOF) marker, then
     process the input as a single query string.  Backslash-newline is not
     treated specially in this case.
    </para>
 
    <para>
-    The standalone backend does not have readline input processing
-    (no command history, for example).
+    To quit the session, type EOF
+    (<keycombo action="simul"><keycap>Control</><keycap>D</></>, usually).
+    If you've
+    used <option>-N</>, two consecutive EOFs are needed to exit.
    </para>
 
    <para>
-    To quit the backend, type EOF (control-D, usually).  If you've
-    used <option>-N</>, two consecutive EOFs are needed to exit.
+    Note that the stand-alone backend does not provide sophisticated
+    line-editing features (no command history, for example).
    </para>
 
  </refsect1>

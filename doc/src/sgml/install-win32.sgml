@@ -108,7 +108,7 @@
  <para>
   To use the libraries, you must add the
   <filename>libpqdll.lib</filename> file to your project.  (In Visual
-  C++, just right-click on the project and chose to add it.)
+  C++, just right-click on the project and choose to add it.)
  </para>
 
 </chapter>

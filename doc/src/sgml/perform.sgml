@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.14 2001/11/21 05:53:41 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.15 2001/11/28 20:49:10 petere Exp $
 -->
 
  <chapter id="performance-tips">
@@ -630,10 +630,10 @@ SELECT * FROM d LEFT JOIN
   </para>
 
   <sect2 id="disable-autocommit">
-   <title>Disable Auto-commit</title>
+   <title>Disable Autocommit</title>
 
    <para>
-    Turn off auto-commit and just do one commit at
+    Turn off autocommit and just do one commit at
     the end.  (In plain SQL, this means issuing <command>BEGIN</command>
     at the start and <command>COMMIT</command> at the end.  Some client
     libraries may do this behind your back, in which case you need to
@@ -651,9 +651,9 @@ SELECT * FROM d LEFT JOIN
     Use <command>COPY FROM STDIN</command> to load all the records in one
     command, instead of using
     a series of <command>INSERT</command> commands.  This reduces parsing,
-    planning, etc
-    overhead a great deal. If you do this then it's not necessary to fool
-    around with auto-commit, since it's only one command anyway.
+    planning, etc.
+    overhead a great deal. If you do this then it is not necessary to turn
+    off autocommit, since it is only one command anyway.
    </para>
   </sect2>
 
@@ -673,8 +673,8 @@ SELECT * FROM d LEFT JOIN
     INDEX</command>, load the table, then recreate the index. Of
     course, the database performance for other users may be adversely 
     affected during the time that the index is missing.  One should also
-    think twice before dropping UNIQUE indexes, since the error checking
-    afforded by the UNIQUE constraint will be lost while the index is missing.
+    think twice before dropping unique indexes, since the error checking
+    afforded by the unique constraint will be lost while the index is missing.
    </para>
   </sect2>
 

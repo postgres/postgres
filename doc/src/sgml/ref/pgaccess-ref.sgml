@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pgaccess-ref.sgml,v 1.11 2001/09/03 12:57:50 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pgaccess-ref.sgml,v 1.12 2001/11/28 20:49:10 petere Exp $
 Postgres documentation
 -->
 
@@ -47,21 +47,21 @@ Postgres documentation
    Description
   </title>
   <para>
-   <application>pgaccess</application> provides a graphical interface
-   for <productname>Postgres</productname>
+   <application>PgAccess</application> provides a graphical interface
+   for <productname>PostgreSQL</productname>
    wherein you
    can manage your tables, edit them, define queries, sequences and
    functions.
   </para>
 
   <para>
-   <application>pgaccess</application> can:
+   <application>PgAccess</application> can:
 
    <itemizedlist mark="bullet" spacing="compact">
     <listitem>
      <para>
       Open any database on a specified host at the specified port,
-      username, and password.
+      user name, and password.
      </para>
     </listitem>
 
@@ -80,7 +80,7 @@ Postgres documentation
   </para>
 
   <para>
-   For tables, <application>pgaccess</application> can:
+   For tables, <application>PgAccess</application> can:
 
    <itemizedlist mark="bullet" spacing="compact">
     <listitem>
@@ -139,7 +139,7 @@ Postgres documentation
 
     <listitem>
      <para>
-      Delete records; point to the record, press <keycap>Delete</keycap> key.
+      Delete records; point to the record, press the <keycap>Delete</keycap> key.
      </para>
     </listitem>
 
@@ -170,7 +170,7 @@ Postgres documentation
   </para>
 
   <para>
-   For queries, <application>pgaccess</application> can:
+   For queries, <application>PgAccess</application> can:
 
    <itemizedlist mark="bullet" spacing="compact">
     <listitem>
@@ -222,7 +222,7 @@ select * from invoices where year=[parameter "Year of selection"]
   </para>
 
   <para>
-   For sequences, <application>pgaccess</application> can:
+   For sequences, <application>PgAccess</application> can:
 
    <itemizedlist mark="bullet" spacing="compact">
     <listitem>
@@ -246,7 +246,7 @@ select * from invoices where year=[parameter "Year of selection"]
   </para>
 
   <para>
-   For views, <application>pgaccess</application> can:
+   For views, <application>PgAccess</application> can:
 
    <itemizedlist mark="bullet" spacing="compact">
     <listitem>
@@ -276,7 +276,7 @@ select * from invoices where year=[parameter "Year of selection"]
   </para>
 
   <para>
-   For functions, <application>pgaccess</application> can:
+   For functions, <application>PgAccess</application> can:
 
    <itemizedlist mark="bullet" spacing="compact">
     <listitem>
@@ -300,7 +300,7 @@ select * from invoices where year=[parameter "Year of selection"]
   </para>
 
   <para>
-   For reports, <application>pgaccess</application> can:
+   For reports, <application>PgAccess</application> can:
 
    <itemizedlist mark="bullet" spacing="compact">
     <listitem>
@@ -330,7 +330,7 @@ select * from invoices where year=[parameter "Year of selection"]
   </para>
 
   <para>
-   For forms, <application>pgaccess</application> can:
+   For forms, <application>PgAccess</application> can:
 
    <itemizedlist mark="bullet" spacing="compact">
     <listitem>
@@ -354,7 +354,7 @@ select * from invoices where year=[parameter "Year of selection"]
   </para>
 
   <para>
-   For scripts, <application>pgaccess</application> can:
+   For scripts, <application>PgAccess</application> can:
 
    <itemizedlist mark="bullet" spacing="compact">
     <listitem>
@@ -382,9 +382,9 @@ select * from invoices where year=[parameter "Year of selection"]
   <title>Notes</title>
 
   <para>
-   <application>pgaccess</application> is written in Tcl/Tk.  Your
+   <application>PgAccess</application> is written in Tcl/Tk.  Your
    <productname>PostgreSQL</productname> installation needs to be
-   built with Tcl support for <application>pgaccess</application> to
+   built with Tcl support for <application>PgAccess</application> to
    be available.
   </para>
  </refsect1>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/start.sgml,v 1.20 2001/11/23 21:08:51 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/start.sgml,v 1.21 2001/11/28 20:49:10 petere Exp $
 -->
 
  <chapter id="tutorial-start">
@@ -61,7 +61,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/start.sgml,v 1.20 2001/11/23 21:08:51 tgl E
     Before we proceed, you should understand the basic
     <productname>PostgreSQL</productname> system architecture.
     Understanding how the parts of
-    <productname>PostgreSQL</productname> interact will make the next
+    <productname>PostgreSQL</productname> interact will make this
     chapter somewhat clearer.
    </para>
 
@@ -105,7 +105,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/start.sgml,v 1.20 2001/11/23 21:08:51 tgl E
     over a TCP/IP network connection.  You should keep this in mind,
     because the files that can be accessed on a client machine might
     not be accessible (or might only be accessible using a different
-    file path) on the database server machine.
+    file name) on the database server machine.
    </para>
 
    <para>

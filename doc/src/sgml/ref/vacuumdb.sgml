@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuumdb.sgml,v 1.18 2001/09/03 12:57:50 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuumdb.sgml,v 1.19 2001/11/28 20:49:10 petere Exp $
 Postgres documentation
 -->
 
@@ -59,7 +59,7 @@ Postgres documentation
 
      <varlistentry>
       <term>-a</term>
-      <term>--alldb</term>
+      <term>--all</term>
       <listitem>
        <para>
 	Vacuum all databases.
@@ -128,10 +128,10 @@ Postgres documentation
       <term>--host <replaceable class="parameter">host</replaceable></term>
       <listitem>
        <para>
-	Specifies the hostname of the machine on which the 
-	<application>postmaster</application>
+	Specifies the host name of the machine on which the 
+	server
 	is running.  If host begins with a slash, it is used 
-	as the directory for the unix domain socket.
+	as the directory for the Unix domain socket.
        </para>
       </listitem>
      </varlistentry>
@@ -142,7 +142,7 @@ Postgres documentation
       <listitem>
        <para>
 	Specifies the Internet TCP/IP port or local Unix domain socket file 
-	extension on which the <application>postmaster</application>
+	extension on which the server
 	is listening for connections.
        </para>
       </listitem>
@@ -153,7 +153,7 @@ Postgres documentation
       <term>--username <replaceable class="parameter">username</replaceable></term>
       <listitem>
        <para>
-        Username to connect as.
+        User name to connect as
        </para>
       </listitem>
      </varlistentry>
@@ -174,7 +174,7 @@ Postgres documentation
       <listitem>
        <para>
         Echo the commands that <application>vacuumdb</application> generates
-	and sends to the backend.
+	and sends to the server.
        </para>
       </listitem>
      </varlistentry>
@@ -235,16 +235,16 @@ Postgres documentation
 
   <para>
    <application>vacuumdb</application> is a utility for cleaning a
-   <productname>Postgres</productname> database.
+   <productname>PostgreSQL</productname> database.
    <application>vacuumdb</application> will also generate internal statistics
-   used by the <productname>Postgres</productname> query optimizer.
+   used by the <productname>PostgreSQL</productname> query optimizer.
   </para>
 
   <para>
    <application>vacuumdb</application> is a shell script wrapper around the
    backend command
    <xref linkend="SQL-VACUUM" endterm="SQL-VACUUM-title"> via
-   the <productname>Postgres</productname> interactive terminal
+   the <productname>PostgreSQL</productname> interactive terminal
    <xref linkend="APP-PSQL">. There is no effective
    difference between vacuuming databases via this or other methods.
    <application>psql</application> must be found by the script and

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.29 2001/11/21 05:53:40 thomas Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.30 2001/11/28 20:49:09 petere Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -38,9 +38,9 @@
   separate from user names of the operating system in which the server
   runs.  If all the users of a particular server also have accounts on
   the server's machine, it makes sense to assign database user names
-  that match their Unix user ids.  However, a server that accepts remote
+  that match their operating system user names.  However, a server that accepts remote
   connections may have many users who have no local account, and in such
-  cases there need be no connection between database user names and Unix
+  cases there need be no connection between database user names and OS
   user names.
  </para>
 
@@ -57,7 +57,7 @@
    <filename>/usr/local/pgsql/data/pg_hba.conf</filename>. (<acronym>HBA</> stands
    for host-based authentication.) A default <filename>pg_hba.conf</filename>
    file is installed when the
-   data area is initialized by <application>initdb</application>.
+   data area is initialized by <command>initdb</command>.
   </para>
 
   <para>
@@ -73,7 +73,7 @@
    (if relevant for the connection type), a database name or names,
    and the authentication method to be used for connections matching
    these parameters.
-   The first record that matches the type, client address and requested
+   The first record that matches the type, client address, and requested
    database name of a connection attempt is used to do the
    authentication step.  There is no <quote>fall-through</> or
    <quote>backup</>: if one record is chosen and the authentication
@@ -348,7 +348,7 @@ hostssl <replaceable>database</replaceable> <replaceable>IP-address</replaceable
 
   <para>
    Since the <filename>pg_hba.conf</filename> records are examined
-   sequentially for each connection attempt, order of the records is
+   sequentially for each connection attempt, the order of the records is
    very significant.  Typically, earlier records will have tight
    connection match parameters and weaker authentication methods,
    while later records will have looser match parameters and stronger
@@ -368,7 +368,7 @@ hostssl <replaceable>database</replaceable> <replaceable>IP-address</replaceable
    and when the <application>postmaster</> receives a
    <systemitem>SIGHUP</systemitem> signal. If you edit the file on an
    active system, you will need to signal the <application>postmaster</>
-   (using <application>pg_ctl reload</> or <application>kill -HUP</>)
+   (using <literal>pg_ctl reload</> or <literal>kill -HUP</>)
    to make it re-read the file.
   </para>
 
@@ -482,7 +482,7 @@ local        all                                          md5  admins
 <synopsis>
 <replaceable>username</replaceable>:<replaceable>password</replaceable>
 </synopsis>
-    Any extra colon separated fields following the password are
+    Any extra colon-separated fields following the password are
     ignored. The password is expected to be encrypted using the
     system's <function>crypt()</function> function. The utility
     program <application>pg_passwd</application> that is installed
@@ -558,7 +558,7 @@ local        all                                          md5  admins
    </para>
 
    <para>
-    Client principals must have their <productname>PostgreSQL</> username as
+    Client principals must have their <productname>PostgreSQL</> user name as
     their first component, for example
     <replaceable>pgusername/otherstuff@realm</>.
     At present the realm of the client is not checked by
@@ -591,8 +591,8 @@ local        all                                          md5  admins
 
    <para>
     When connecting to the database make sure you have a ticket for a
-    principal matching the requested database username. 
-    An example: For database username <literal>fred</>, both principal
+    principal matching the requested database user name. 
+    An example: For database user name <literal>fred</>, both principal
     <literal>fred@EXAMPLE.COM</> and
     <literal>fred/users.example.com@EXAMPLE.COM</> can be
     used to authenticate to the database server. 
@@ -696,7 +696,7 @@ local        all                                          md5  admins
    and when the <application>postmaster</> receives a
    <systemitem>SIGHUP</systemitem> signal. If you edit the file on an
    active system, you will need to signal the <application>postmaster</>
-   (using <application>pg_ctl reload</> or <application>kill -HUP</>)
+   (using <literal>pg_ctl reload</> or <literal>kill -HUP</>)
    to make it re-read the file.
   </para>
 
@@ -744,7 +744,7 @@ omicron        bryanh       guest1
 No pg_hba.conf entry for host 123.123.123.123, user joeblow, database testdb
 </ProgramListing>
     This is what you are most likely to get if you succeed in
-    contacting the server, but it doesn't want to talk to you. As the
+    contacting the server, but it does not want to talk to you. As the
     message suggests, the server refused the connection request
     because it found no authorizing entry in its <filename>pg_hba.conf</filename>
     configuration file.
@@ -755,10 +755,10 @@ No pg_hba.conf entry for host 123.123.123.123, user joeblow, database testdb
 Password authentication failed for user 'joeblow'
 </ProgramListing>
     Messages like this indicate that you contacted the server, and
-    it's willing to talk to you, but not until you pass the
+    it is willing to talk to you, but not until you pass the
     authorization method specified in the
-    <filename>pg_hba.conf</filename> file. Check the password you're
-    providing, or check your Kerberos or IDENT software if the
+    <filename>pg_hba.conf</filename> file. Check the password you are
+    providing, or check your Kerberos or ident software if the
     complaint mentions one of those authentication types.
    </para>
 
@@ -766,15 +766,15 @@ Password authentication failed for user 'joeblow'
 <ProgramListing>
 FATAL 1:  user "joeblow" does not exist
 </ProgramListing>
-    The indicated user name was not found in pg_shadow.
+    The indicated user name was not found.
    </para>
 
    <para>
 <ProgramListing>
 FATAL 1:  Database "testdb" does not exist in the system catalog.
 </ProgramListing>
-    The database you're trying to connect to doesn't exist. Note that
-    if you don't specify a database name, it defaults to the database
+    The database you are trying to connect to does not exist. Note that
+    if you do not specify a database name, it defaults to the database
     user name, which may or may not be the right thing.
    </para>
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/createdb.sgml,v 1.21 2001/11/18 20:35:02 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/createdb.sgml,v 1.22 2001/11/28 20:49:10 petere Exp $
 Postgres documentation
 -->
 
@@ -38,9 +38,8 @@ Postgres documentation
       <term>-h, --host <replaceable class="parameter">host</replaceable></term>
       <listitem>
        <para>
-	Specifies the hostname of the machine on which the 
-	<application>postmaster</application>
-	is running.  If host begins with a slash, it is used 
+	Specifies the host name of the machine on which the 
+	server is running.  If host begins with a slash, it is used 
 	as the directory for the Unix domain socket.
        </para>
       </listitem>
@@ -51,8 +50,7 @@ Postgres documentation
       <listitem>
        <para>
 	Specifies the Internet TCP/IP port or the local Unix domain socket file 
-	extension on which the <command>postmaster</command>
-	is listening for connections.
+	extension on which the server is listening for connections.
        </para>
       </listitem>
      </varlistentry>
@@ -61,7 +59,7 @@ Postgres documentation
       <term>-U, --username <replaceable class="parameter">username</replaceable></term>
       <listitem>
        <para>
-        Username to connect as.
+        User name to connect as
        </para>
       </listitem>
      </varlistentry>
@@ -80,7 +78,7 @@ Postgres documentation
       <listitem>
        <para>
         Echo the queries that <application>createdb</application> generates
-	and sends to the backend.
+	and sends to the server.
        </para>
       </listitem>
      </varlistentry>
@@ -127,7 +125,7 @@ Postgres documentation
       <listitem>
        <para>
 	Specifies the name of the database to be created.  The name must be
-	unique among all <productname>Postgres</productname> databases in this installation.
+	unique among all <productname>PostgreSQL</productname> databases in this installation.
         The default is to create a database with the same name as the
         current system user.
        </para>
@@ -203,7 +201,7 @@ Postgres documentation
    Description
   </title>
   <para>
-   <application>createdb</application> creates a new <productname>Postgres</productname>
+   <application>createdb</application> creates a new <productname>PostgreSQL</productname>
    database. The user who executes this command becomes the database owner.
   </para>
 
@@ -211,7 +209,7 @@ Postgres documentation
    <application>createdb</application> is a shell script wrapper around the
    <acronym>SQL</acronym> command
    <xref linkend="SQL-CREATEDATABASE" endterm="SQL-CREATEDATABASE-title"> via
-   the <productname>Postgres</productname> interactive terminal
+   the <productname>PostgreSQL</productname> interactive terminal
    <xref linkend="APP-PSQL">. Thus, there is nothing
    special about creating databases via this or other methods. This means
    that the <application>psql</application> program must be found by the script and that
@@ -240,7 +238,7 @@ Postgres documentation
   <informalexample>
    <para>
     To create the database <literal>demo</literal> using the
-    postmaster on host eden, port 5000, using the
+    server on host eden, port 5000, using the
     <literal>LATIN1</literal> encoding scheme with a look at the
     underlying query:
 <screen>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/createlang.sgml,v 1.19 2001/10/26 21:17:03 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/createlang.sgml,v 1.20 2001/11/28 20:49:10 petere Exp $
 Postgres documentation
 -->
 
@@ -86,8 +86,8 @@ Postgres documentation
       <listitem>
        <para>
 	Specifies the directory in which the language interpreter is
-        to be found.  Use of this option is deprecated; the directory
-	is normally found automatically.
+        to be found.  The directory is normally found automatically; this
+        option is primarily for debugging purposes.
        </para>
       </listitem>
      </varlistentry>
@@ -104,10 +104,10 @@ Postgres documentation
       <term>-h, --host <replaceable class="parameter">host</replaceable></term>
       <listitem>
        <para>
-	Specifies the hostname of the machine on which the 
-	<application>postmaster</application>
+	Specifies the host name of the machine on which the 
+	server
 	is running.  If host begins with a slash, it is used 
-	as the directory for the unix domain socket.
+	as the directory for the Unix domain socket.
        </para>
       </listitem>
      </varlistentry>
@@ -117,7 +117,7 @@ Postgres documentation
       <listitem>
        <para>
 	Specifies the Internet TCP/IP port or local Unix domain socket file 
-	extension on which the <application>postmaster</application>
+	extension on which the server
 	is listening for connections.
        </para>
       </listitem>
@@ -127,7 +127,7 @@ Postgres documentation
       <term>-U, --username <replaceable class="parameter">username</replaceable></term>
       <listitem>
        <para>
-        Username to connect as.
+        User name to connect as
        </para>
       </listitem>
      </varlistentry>
@@ -166,10 +166,10 @@ Postgres documentation
 
   <para>
    <application>createlang</application> is a utility for adding a new 
-   programming language to a <productname>Postgres</productname> database.
-   <application>createlang</application> currently accepts several
-   languages, <literal>plpgsql, pltcl, pltclu,</literal> and <literal>
-   plperl</literal>.
+   programming language to a <productname>PostgreSQL</productname> database.
+   <application>createlang</application> can handle all the languages
+   supplied in the default <productname>PostgreSQL</> distribution, but
+   not languages provided by other parties.
   </para>
   <para>
    Although backend programming languages can be added directly using

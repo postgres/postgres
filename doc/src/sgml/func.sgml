@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.85 2001/11/21 22:33:14 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.86 2001/11/28 20:49:09 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -774,10 +774,10 @@ PostgreSQL documentation
    VARYING</type>, and <type>TEXT</type>.  Unless otherwise noted, all
    of the functions listed below work on all of these types, but be
    wary of potential effects of the automatic padding when using the
-   <type>CHARACTER</type> type.  Generally the functions described
+   <type>CHARACTER</type> type.  Generally, the functions described
    here also work on data of non-string types by converting that data
    to a string representation first.  Some functions also exist
-   natively for bit string types.
+   natively for bit-string types.
   </para>
 
   <para>
@@ -1430,8 +1430,8 @@ PostgreSQL documentation
     you must write two backslashes in the query.  Thus, writing a pattern
     that actually matches a literal backslash means writing four backslashes
     in the query.  You can avoid this by selecting a different escape
-    character with <literal>ESCAPE</literal>; then backslash isn't special
-    to <function>LIKE</> anymore. (But it's still special to the string
+    character with <literal>ESCAPE</literal>; then backslash is not special
+    to <function>LIKE</> anymore. (But it is still special to the string
     literal parser, so you still need two of them.)
    </para>
 
@@ -1865,7 +1865,7 @@ PostgreSQL documentation
     In an output template string, there are certain patterns that are
     recognized and replaced with appropriately-formatted data from the value
     to be formatted.  Any text that is not a template pattern is simply
-    copied verbatim.  Similarly, in an input template string template patterns
+    copied verbatim.  Similarly, in an input template string, template patterns
     identify the parts of the input data string to be looked at and the
     values to be found there.
    </para>
@@ -2179,17 +2179,23 @@ PostgreSQL documentation
      <listitem>
       <para>
        Millisecond <literal>MS</literal> and microsecond <literal>US</literal>
-       values are in conversion from string to time stamp used as part of
-       second after decimal point. For example 
+       values in a conversion from string to time stamp are used as part of the
+       seconds after the decimal point. For example 
        <literal>to_timestamp('12:3', 'SS:MS')</literal> is not 3 milliseconds,
-       but 300, because the conversion count it as <literal>12 + 0.3</literal>.
-       It means for format 'SS:MS' is '12:3' or '12:30' or '12:300' same
-       number of milliseconds. For the three milliseconds must be used
-       '12:003' that the conversion count as
-       <literal> 12 + 0.003 = 12.003 seconds </literal>. Here is a more 
+       but 300, because the conversion counts it as 12 + 0.3.
+       This means for the format <literal>SS:MS</>, the input values
+       <literal>12:3</>, <literal>12:30</>, and <literal>12:300</> specify the
+       same number of milliseconds. To get three milliseconds, one must use
+       <literal>12:003</>, which the conversion counts as
+       12 + 0.003 = 12.003 seconds.
+      </para>
+
+      <para>
+       Here is a more 
        complex example: 
        <literal>to_timestamp('15:12:02.020.001230','HH:MI:SS.MS.US')</literal>
-       is 15 hours, 12 minutes, 2.021230 seconds. 
+       is 15 hours, 12 minutes, and 2 seconds + 20 milliseconds +
+       1230 microseconds = 2.021230 seconds. 
       </para>
      </listitem>
     </itemizedlist>
@@ -2269,7 +2275,7 @@ PostgreSQL documentation
        </row>
        <row>
 	<entry><literal>EEEE</literal></entry>
-	<entry>scientific numbers (not supported yet)</entry>
+	<entry>scientific notation (not implemented yet)</entry>
        </row>
       </tbody>
      </tgroup>
@@ -2282,10 +2288,11 @@ PostgreSQL documentation
     <itemizedlist>
      <listitem>
       <para>
-       A sign formatted using 'SG', 'PL' or 'MI' is not an anchor in
+       A sign formatted using <literal>SG</>, <literal>PL</>, or
+       <literal>MI</> is not an anchor in
        the number; for example,
-       to_char(-12, 'S9999') produces <literal>'  -12'</literal>,
-       but to_char(-12, 'MI9999') produces <literal>'-  12'</literal>.
+       <literal>to_char(-12, 'S9999')</> produces <literal>'  -12'</literal>,
+       but <literal>to_char(-12, 'MI9999')</> produces <literal>'-  12'</literal>.
        The Oracle implementation does not allow the use of
        <literal>MI</literal> ahead of <literal>9</literal>, but rather
        requires that <literal>9</literal> precede

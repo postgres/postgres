@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/array.sgml,v 1.16 2001/11/21 05:53:40 thomas Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/array.sgml,v 1.17 2001/11/28 20:49:09 petere Exp $ -->
 
 <chapter id="arrays">
  <title>Arrays</title>
@@ -68,8 +68,8 @@ SELECT name FROM sal_emp WHERE pay_by_quarter[1] &lt;&gt; pay_by_quarter[2];
   The array subscript numbers are written within square brackets.
   <productname>PostgreSQL</productname> uses the
   <quote>one-based</quote> numbering convention for arrays, that is,
-  an array of n elements starts with <literal>array[1]</literal> and
-  ends with <literal>array[n]</literal>.
+  an array of <replaceable>n</> elements starts with <literal>array[1]</literal> and
+  ends with <literal>array[<replaceable>n</>]</literal>.
  </para>
 
  <para>
@@ -232,7 +232,7 @@ SELECT * FROM sal_emp WHERE pay_by_quarter **= 10000;
 
  <tip>
   <para>
-   Arrays are not lists; using arrays in the manner described in the
+   Arrays are not sets; using arrays in the manner described in the
    previous paragraph is often a sign of database misdesign.  The
    array field should generally be split off into a separate table.
    Tables can obviously be searched easily.

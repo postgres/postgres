@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/ecpg-ref.sgml,v 1.12 2001/11/18 20:35:02 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/ecpg-ref.sgml,v 1.13 2001/11/28 20:49:10 petere Exp $
 Postgres documentation
 -->
 
@@ -67,11 +67,11 @@ Postgres documentation
       <listitem>
        <para>
 	Specify an additional include path.
-	Defaults are <filename>.</filename>,
+	Defaults are <filename>.</filename> (current directory),
 	<filename>/usr/local/include</filename>, the
-	<productname>Postgres</productname> include path which is
+	<productname>PostgreSQL</productname> include path which is
 	defined at compile time (default:
-	<filename>/usr/local/pgsql/lib</filename>), and
+	<filename>/usr/local/pgsql/include</filename>), and
 	<filename>/usr/include</filename>.
        </para>
       </listitem>
@@ -118,7 +118,7 @@ Postgres documentation
 
     <variablelist>
      <varlistentry>
-      <term><replaceable>return value</replaceable></term>
+      <term>Return value</term>
       <listitem>
        <para>
 	<application>ecpg</application> returns 0 to the shell on successful completion, non-zero
@@ -136,7 +136,7 @@ Postgres documentation
   <para>
    <application>ecpg</application>
    is an embedded SQL preprocessor for the C language and the
-   <productname>Postgres</productname>. It
+   <productname>PostgreSQL</productname>. It
    enables development of C programs with embedded SQL code.
   </para>
 
@@ -160,9 +160,9 @@ Postgres documentation
    <para>
     An embedded SQL source file must be preprocessed before
     compilation: 
-    <programlisting>
+<synopsis>
 ecpg [ -d ] [ -o <replaceable>file</replaceable> ] <replaceable>file</replaceable>.pgc
-    </programlisting>
+</synopsis>
 
     where the optional <option>-d</option> flag turns on debugging.
     The <literal>.pgc</literal> extension is an 
@@ -178,13 +178,13 @@ ecpg [ -d ] [ -o <replaceable>file</replaceable> ] <replaceable>file</replaceabl
    <title>Compiling and Linking</title>
 
    <para>
-    Assuming the <productname>Postgres</productname> binaries are in
+    Assuming the <productname>PostgreSQL</productname> binaries are in
     <filename>/usr/local/pgsql</filename>, you will need to compile
     and link your preprocessed source file:
 
-    <programlisting>
+<synopsis>
 gcc -g -I /usr/local/pgsql/include [ -o <replaceable>file</replaceable> ] <replaceable>file</replaceable>.c -L /usr/local/pgsql/lib -lecpg -lpq
-    </programlisting>
+</synopsis>
    </para>
   </refsect2>
  </refsect1>
@@ -198,10 +198,10 @@ gcc -g -I /usr/local/pgsql/include [ -o <replaceable>file</replaceable> ] <repla
    <para>
     The preprocessor will prepend two directives to the source:
 
-    <programlisting>
+<programlisting>
 #include &lt;ecpgtype.h&gt;
 #include &lt;ecpglib.h&gt;
-    </programlisting>
+</programlisting>
    </para>
   </refsect2>
 
@@ -211,26 +211,26 @@ gcc -g -I /usr/local/pgsql/include [ -o <replaceable>file</replaceable> ] <repla
    <para>
     Variables declared within <application>ecpg</application> source code must be prepended with:
 
-    <programlisting>
+<programlisting>
 EXEC SQL BEGIN DECLARE SECTION;
-    </programlisting>
+</programlisting>
    </para>
 
    <para>
     Similarly, variable declaration sections must terminate with:
 
-    <programlisting>
+<programlisting>
 EXEC SQL END DECLARE SECTION;
-    </programlisting>
+</programlisting>
 
     <note>
      <para>
       Prior to version 2.1.0, each variable had to be declared 
       on a separate line.  As of version 2.1.0 multiple variables may
       be declared on a single line:
-      <programlisting>
+<programlisting>
 char  foo[16], bar[16];
-      </programlisting>
+</programlisting>
      </para>
     </note>
    </para>
@@ -242,51 +242,53 @@ char  foo[16], bar[16];
    <para>
     The SQL communication area is defined with:
 
-    <programlisting>
+<programlisting>
 EXEC SQL INCLUDE sqlca;
-    </programlisting>
+</programlisting>
+   </para>
 
     <note>
      <para>
       The <literal>sqlca</literal> is in lowercase.
       While SQL convention may be 
       followed, i.e., using uppercase to separate embedded SQL 
-      from C statements, sqlca (which includes the sqlca.h 
-      header file) MUST be lowercase.  This is because the EXEC SQL
-      prefix indicates that this INCLUDE will be parsed by <application>ecpg</application>.
-      <application>ecpg</application> observes case sensitivity (SQLCA.h will not be found).
+      from C statements, sqlca (which includes the <filename>sqlca.h</>
+      header file) <emphasis>must</> be lowercase.  This is because the
+      EXEC SQL prefix indicates that this inclusion will be parsed by
+      <application>ecpg</application>.
+      <application>ecpg</application> observes case sensitivity
+      (<filename>SQLCA.h</> will not be found).
       <command>EXEC SQL INCLUDE</command>
       can be used to include other header files
       as long as case sensitivity is observed.
      </para>
     </note>
-   </para>
 
    <para>
     The sqlprint command is used with the EXEC SQL WHENEVER
     statement to turn on error handling throughout the 
     program:
 
-    <programlisting>
+<programlisting>
 EXEC SQL WHENEVER sqlerror sqlprint;
-    </programlisting>
+</programlisting>
 
     and
 
-    <programlisting>
+<programlisting>
 EXEC SQL WHENEVER not found sqlprint;
-    </programlisting>
+</programlisting>
+   </para>
 
     <note>
      <para>
       This is <emphasis>not</emphasis> an exhaustive example of usage for
       the <command>EXEC SQL WHENEVER</command> statement.
       Further examples of usage may
-      be found in SQL manuals (e.g., `The LAN TIMES Guide to SQL' by
+      be found in SQL manuals (e.g., <citetitle>The LAN TIMES Guide to SQL</> by
       Groff and Weinberg).
      </para>
     </note>
-   </para>
   </refsect2>
 
   <refsect2 id="R2-APP-ECPG-connecting">
@@ -295,9 +297,9 @@ EXEC SQL WHENEVER not found sqlprint;
    <para>
     One connects to a database using the following:
 
-    <programlisting>
+<programlisting>
 EXEC SQL CONNECT TO <replaceable>dbname</replaceable>;
-    </programlisting>
+</programlisting>
 
     where the database name is not quoted. Prior to version 2.1.0, the 
     database name was required to be inside single quotes.
@@ -307,15 +309,15 @@ EXEC SQL CONNECT TO <replaceable>dbname</replaceable>;
     Specifying a server and port name in the connect statement is also 
     possible. The syntax is:
 
-    <programlisting>
+<synopsis>
 <replaceable>dbname</replaceable>[@<replaceable>server</replaceable>][:<replaceable>port</replaceable>]
-    </programlisting>
+</synopsis>
 
     or
 
-    <programlisting>
+<synopsis>
 &lt;tcp|unix&gt;:postgresql://<replaceable>server</replaceable>[:<replaceable>port</replaceable>][/<replaceable>dbname</replaceable>][?<replaceable>options</replaceable>]
-    </programlisting>
+</synopsis>
    </para>
   </refsect2>
 
@@ -331,20 +333,20 @@ EXEC SQL CONNECT TO <replaceable>dbname</replaceable>;
    <para>
     Create Table:
 
-    <programlisting>
+<programlisting>
 EXEC SQL CREATE TABLE foo (number int4, ascii char(16));
 EXEC SQL CREATE UNIQUE index num1 on foo(number);
 EXEC SQL COMMIT;
-    </programlisting>
+</programlisting>
    </para>
 
    <para>
     Insert:
 
-    <programlisting>
+<programlisting>
 EXEC SQL INSERT INTO foo (number, ascii) VALUES (9999, 'doodad');
 EXEC SQL COMMIT;
-    </programlisting>
+</programlisting>
    </para>
 
    <para>
@@ -353,21 +355,21 @@ EXEC SQL COMMIT;
 <programlisting>
 EXEC SQL DELETE FROM foo WHERE number = 9999;
 EXEC SQL COMMIT;
-    </programlisting>
+</programlisting>
    </para>
 
    <para>
     Singleton Select:
 
-    <programlisting>
+<programlisting>
 EXEC SQL SELECT foo INTO :FooBar FROM table1 WHERE ascii = 'doodad';
-    </programlisting>
+</programlisting>
    </para>
 
    <para>
     Select using Cursors:
 
-    <programlisting>
+<programlisting>
 EXEC SQL DECLARE foo_bar CURSOR FOR
     SELECT number, ascii FROM foo
     ORDER BY ascii;
@@ -375,17 +377,17 @@ EXEC SQL FETCH foo_bar INTO :FooBar, DooDad;
 ...
 EXEC SQL CLOSE foo_bar;
 EXEC SQL COMMIT;
-    </programlisting>
+</programlisting>
    </para>
 
    <para>
     Updates:
-    <programlisting>
+<programlisting>
 EXEC SQL UPDATE foo
     SET ascii = 'foobar'
     WHERE number = 9999;
 EXEC SQL COMMIT;
-    </programlisting>
+</programlisting>
    </para>
   </refsect2>
  </refsect1>

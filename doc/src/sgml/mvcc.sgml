@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.20 2001/11/21 05:53:41 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.21 2001/11/28 20:49:10 petere Exp $
 -->
 
  <chapter id="mvcc">
@@ -243,7 +243,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.20 2001/11/21 05:53:41 thomas
     adequate for many applications, and this level is fast and simple to use.
     However, for applications that do complex queries and updates, it may
     be necessary to guarantee a more rigorously consistent view of the
-    database than Read Committed level provides.
+    database than the Read Committed level provides.
    </para>
   </sect1>
 
@@ -289,9 +289,9 @@ $Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.20 2001/11/21 05:53:41 thomas
     transaction commit, a serializable transaction will be rolled back
     with the message
 
-    <programlisting>
+<screen>
 ERROR:  Can't serialize access due to concurrent update
-    </programlisting>
+</screen>
 
     because a serializable transaction cannot modify rows changed by
     other transactions after the serializable transaction began.
@@ -309,13 +309,13 @@ ERROR:  Can't serialize access due to concurrent update
    </para>
 
    <para>
-    Serializable transaction level provides a rigorous guarantee that each
+    The Serializable transaction level provides a rigorous guarantee that each
     transaction sees a wholly consistent view of the database.  However,
     the application has to be prepared to retry transactions when concurrent
     updates make it impossible to sustain the illusion of serial execution,
     and the cost of redoing complex transactions may be significant.  So
     this level is recommended only when update queries contain logic
-    sufficiently complex that they may give wrong answers in Read Committed
+    sufficiently complex that they may give wrong answers in the Read Committed
     level.
    </para>
   </sect1>
@@ -329,7 +329,7 @@ ERROR:  Can't serialize access due to concurrent update
     transaction isolation level, data read by one transaction can be
     overwritten by another concurrent transaction. In other words,
     if a row is returned by <command>SELECT</command> it doesn't mean that
-    the row still exists at the time it is returned (i.e. sometime after the
+    the row still exists at the time it is returned (i.e., sometime after the
     current transaction began); the row might have been modified or deleted
     by an already-committed transaction that committed after this one started.
     Even if the row is still valid <quote>now</quote>, it could be changed or deleted
@@ -552,7 +552,7 @@ ERROR:  Can't serialize access due to concurrent update
     <title>Row-level locks</title>
 
     <para>
-     These locks are acquired when rows are being updated (or deleted or
+     Row-level locks are acquired when rows are being updated (or deleted or
      marked for update).
      Row-level locks don't affect data querying. They block
      writers to <emphasis>the same row</emphasis> only.

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/initdb.sgml,v 1.17 2001/09/08 15:24:00 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/initdb.sgml,v 1.18 2001/11/28 20:49:10 petere Exp $
 Postgres documentation
 -->
 
@@ -141,10 +141,10 @@ Postgres documentation
       <term>-E <replaceable class="parameter">encoding</replaceable></term>
       <listitem>
        <para>
-        Selects the multibyte encoding of the template database. This will also
+        Selects the encoding of the template database. This will also
         be the default encoding of any database you create later, unless you
-        override it there. To use the multibyte encoding feature, you must
-        specify so at build time, at which time you also select the default
+        override it there. To use the encoding feature, you must
+        have enabled it at build time, at which time you also select the default
         for this option.
        </para>
       </listitem>

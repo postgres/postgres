@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_ctl-ref.sgml,v 1.10 2001/11/19 03:58:25 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_ctl-ref.sgml,v 1.11 2001/11/28 20:49:10 petere Exp $
 Postgres documentation
 -->
 
@@ -79,7 +79,7 @@ Postgres documentation
    started manually, <application>pg_ctl</application> encapulates
    tasks such as redirecting log output, properly detaching from the
    terminal and process group, and it provides convenient options for
-   controlled shut down.
+   controlled shutdown.
   </para>
 
   <para>
@@ -117,10 +117,10 @@ Postgres documentation
   </para>
 
   <para>
-   <option>reload</option> mode simply sends the postmaster a SIGHUP signal,
+   <option>reload</option> mode simply sends the postmaster a <systemitem>SIGHUP</> signal,
    causing it to reread its configuration files
    (<filename>postgresql.conf</filename>, <filename>pg_hba.conf</filename>,
-   etc).  This allows changing of configuration-file options that do not
+   etc.).  This allows changing of configuration-file options that do not
    require a complete restart to take effect.
   </para>
 
@@ -199,6 +199,15 @@ Postgres documentation
      </varlistentry>
 
      <varlistentry>
+      <term>-s</term>
+      <listitem>
+       <para>
+        Only print errors, no informational messages.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term>-w</term>
       <listitem>
        <para>
@@ -214,15 +223,6 @@ Postgres documentation
        <para>
         Do not wait for start or shutdown to complete.  This is the
         default for starts and restarts.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>-s</term>
-      <listitem>
-       <para>
-        Only print errors, no informational messages.
        </para>
       </listitem>
      </varlistentry>
@@ -251,7 +251,7 @@ Postgres documentation
    <title>Starting the postmaster</title>
 
    <para>
-    To start up <application>postmaster</application>:
+    To start up a <application>postmaster</application>:
 <screen>
 <prompt>$</prompt> <userinput>pg_ctl start</userinput>
 </screen>
@@ -259,7 +259,7 @@ Postgres documentation
 
    <para>
     An example of starting the <application>postmaster</application>,
-    blocking until postmaster comes up is:
+    blocking until the postmaster comes up is:
 <screen>
 <prompt>$</prompt> <userinput>pg_ctl -w start</userinput>
 </screen>
@@ -280,7 +280,7 @@ Postgres documentation
 <screen>
 <prompt>$</prompt> <userinput>pg_ctl stop</userinput>
 </screen>
-    stops postmaster. Using the <option>-m</option> switch allows one
+    stops the postmaster. Using the <option>-m</option> switch allows one
     to control <emphasis>how</emphasis> the backend shuts down.
    </para>
   </refsect2>
@@ -290,10 +290,10 @@ Postgres documentation
 
    <para>
     This is almost equivalent to stopping the
-    <application>postmaster</application> then starting it again
+    <application>postmaster</application> and starting it again
     except that pg_ctl saves and reuses the command line options that
     were passed to the previously running instance.  To restart
-    <application>postmaster</application> in the simplest form:
+    the <application>postmaster</application> in the simplest form:
 <screen>
 <prompt>$</prompt> <userinput>pg_ctl restart</userinput>
 </screen>

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.66 2001/11/27 20:35:08 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.67 2001/11/28 20:49:10 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -59,7 +59,7 @@ su - postgres
       <application>make</> programs will <emphasis>not</> work.
       <acronym>GNU</> <application>make</> is often installed under
       the name <filename>gmake</filename>; this document will always
-      refer to it by that name. (On <systemitem class="osname">GNU/Linux</> systems GNU make is the
+      refer to it by that name. (On some systems GNU make is the
       default tool with the name <filename>make</>.) To test for
       <acronym>GNU</acronym> <application>make</application> enter
 <screen>
@@ -149,9 +149,9 @@ su - postgres
 
   <para>
    Also check that you have sufficient disk space. You will need about
-   30 MB for the source tree during compilation and about 5 MB for the
-   installation directory. An empty database takes about 1 MB, later
-   it takes about five times the amount of space that a flat text file
+   30 MB for the source tree during compilation and about 10 MB for the
+   installation directory. An empty database cluster takes about 20 MB, databases
+   take about five times the amount of space that a flat text file
    with the same data would take. If you are going to run the
    regression tests you will temporarily need an extra 20 MB. Use the
    <command>df</command> command to check for disk space.
@@ -166,15 +166,15 @@ su - postgres
    The <productname>PostgreSQL</> &version; sources can be obtained by
    anonymous FTP from <ulink
    url="ftp://ftp.postgresql.org/pub/postgresql-&version;.tar.gz"></ulink>.
-   Use a mirror if possible. Then unpack it:
+   Use a mirror if possible. After you have obtained the file, unpack it:
 <screen>
 <userinput>gunzip postgresql-&version;.tar.gz</userinput>
 <userinput>tar xf postgresql-&version;.tar</userinput>
 </screen>
    This will create a directory
-   <filename>postgresql-&version;</filename> with the
-    <productname>PostgreSQL</> sources 
-   in the current directory. Change into that directory for the rest
+   <filename>postgresql-&version;</filename> under the current directory
+   with the <productname>PostgreSQL</> sources.
+   Change into that directory for the rest
    of the installation procedure.
   </para>
  </sect1>
@@ -367,7 +367,7 @@ su - postgres
          <replaceable>PREFIX</> was set to. This can be useful to
          share architecture-independent files between hosts. If you
          omit this, then <replaceable>EXEC-PREFIX</> is set equal to
-         <replaceable>PREFIX</> and both architecture dependent and
+         <replaceable>PREFIX</> and both architecture-dependent and
          independent files will be installed under the same tree,
          which is probably what you want.
         </para>
@@ -545,12 +545,17 @@ su - postgres
        <term><option>--enable-multibyte</option></term>
        <listitem>
         <para>
-         Allows the use of multibyte character encodings. This is
-         primarily for languages like Japanese, Korean, and Chinese.
-         Read 
+         Allows the use of multibyte character encodings (including Unicode)
+         and character set encoding conversion. Read 
          <![%standalone-include[the <citetitle>Administrator's Guide</citetitle>]]>
          <![%standalone-ignore[<xref linkend="multibyte">]]>
          for details.
+        </para>
+
+        <para>
+         Note that some interfaces (such as Tcl or Java) expect all character
+         strings to be in Unicode, so this option will be required to correctly
+         support these interfaces.
         </para>
        </listitem>
       </varlistentry>
@@ -690,7 +695,10 @@ su - postgres
        <term><option>--enable-odbc</option></term>
        <listitem>
         <para>
-         Build the ODBC driver.
+         Build the ODBC driver.  By default, the driver will be independent
+         of a driver manager.  To work better with a driver manager already
+         installed on your system, use one of the following options.  More
+         information can be found in the <citetitle>Programmer's Guide</citetitle>.
         </para>
        </listitem>
       </varlistentry>
@@ -852,7 +860,7 @@ su - postgres
 	 Also, having the tests turned on won't necessarily enhance the
 	 stability of your server!  The assertion checks are not categorized
 	 for severity, and so what might be a relatively harmless bug will
-	 still lead to postmaster restarts if it triggers an assertion
+	 still lead to server restarts if it triggers an assertion
 	 failure.  Currently, this option is not recommended for
          production use, but you should have it on for development work
 	 or when running a beta version.
@@ -954,9 +962,7 @@ All of PostgreSQL is successfully made. Ready to install.
 <userinput>gmake -C src/interfaces/perl5 install</userinput>
 <userinput>gmake -C src/interfaces/python install</userinput>
 </screen>
-    Due to a quirk in the Perl build environment the first command
-    will actually rebuild the complete interface and then install it.
-    This is not harmful, just unusual. If you do not have superuser
+    If you do not have superuser
     access you are on your own: you can still take the required files
     and place them in other directories where Perl or Python can find
     them, but how to do that is left as an exercise.
@@ -971,7 +977,7 @@ All of PostgreSQL is successfully made. Ready to install.
 <screen>
 <userinput>gmake install-all-headers</userinput>
 </screen>
-    This adds a megabyte or two to the install footprint, and is only
+    This adds a megabyte or two to the installation footprint, and is only
     useful if you don't plan to keep the whole source tree around for
     reference.  (If you do, you can just use the source's include
     directory when building server-side software.)
@@ -992,8 +998,7 @@ All of PostgreSQL is successfully made. Ready to install.
 
    <para>
     To undo the installation use the command <command>gmake
-    uninstall</>. However, this will not remove the Perl and Python
-    interfaces and it will not remove any directories.
+    uninstall</>. However, this will not remove any directories.
    </para>
   </step>
   </procedure>
@@ -1664,7 +1669,7 @@ gunzip -c user.ps.gz \
       <entry>7.1</entry>
       <entry>2001-03-26, Magnus Hagander (<email>mha@sollentuna.net</email>)</entry>
       <entry>
-       client-side libraries (<application>libpq</> and <application>psql</>) or ODBC/JDBC, no server-side;
+       client-side libraries (<application>libpq</> and <application>psql</>) or ODBC or JDBC, no server-side;
 <![%standalone-include[see Administrator's Guide]]>
 <![%standalone-ignore[see <xref linkend="install-win32">]]>
        for instructions

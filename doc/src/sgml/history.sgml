@@ -1,9 +1,9 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/history.sgml,v 1.17 2001/11/23 22:06:20 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/history.sgml,v 1.18 2001/11/28 20:49:10 petere Exp $
 -->
 
 <sect1 id="history">
- <title>A Short History of <productname>Postgres</productname></title>
+ <title>A Short History of <productname>PostgreSQL</productname></title>
 
  <para>
   The object-relational database management system now known as 
@@ -134,7 +134,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/history.sgml,v 1.17 2001/11/23 22:06:20 tgl
      <para>
       In addition to the monitor program, a new program
       (<application>psql</application>) was provided for interactive SQL queries
-      using <acronym>GNU</acronym> <filename>readline</filename>.
+      using <acronym>GNU</acronym> <application>Readline</application>.
      </para>
     </listitem>
 
@@ -143,7 +143,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/history.sgml,v 1.17 2001/11/23 22:06:20 tgl
       A new  front-end  library,  <filename>libpgtcl</filename>,
       supported  <acronym>Tcl</acronym>-based  clients.   A sample shell, 
       <command>pgtclsh</command>, provided new Tcl  commands  to  interface
-      <application>tcl</application>
+      <application>Tcl</application>
       programs with the <productname>Postgres95</productname> backend.
      </para>
     </listitem>
@@ -167,7 +167,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/history.sgml,v 1.17 2001/11/23 22:06:20 tgl
      <para>
       A short tutorial introducing regular <acronym>SQL</acronym> features as
       well as those of <productname>Postgres95</productname> was
-      distributed with the source code.
+      distributed with the source code
      </para>
     </listitem>
 

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.20 2001/11/26 23:09:21 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.21 2001/11/28 20:49:10 petere Exp $ -->
 
 <refentry id="APP-PGRESTORE">
  <docinfo>
@@ -60,7 +60,7 @@
 
   <para>
    <command>pg_restore</command> is a utility for restoring a
-   <productname>Postgres</productname> database from an archive
+   <productname>PostgreSQL</productname> database from an archive
    created by <xref linkend="app-pgdump"> in one of the non-plain-text
    formats.  It
    will issue the commands necessary to re-generate all user-defined
@@ -394,7 +394,7 @@
         current database user (e.g., to set correct object
         ownerships), a new connection to the database must be opened,
         which might require manual interaction (e.g., passwords).  If
-        you use the <option>-X use-set-session-authorization</option>,
+        you use the <option>-X use-set-session-authorization</option> option,
         then <command>pg_restore</command> will instead use the <xref
         linkend="sql-set-session-authorization"> command.  This has
         the same effect, but it requires that the user restoring the
@@ -418,7 +418,7 @@
       <listitem>
        <para>
 	Specifies the host name of the machine on which the
-	<command>postmaster</command>
+	server
 	is running.  If host begins with a slash, it is used 
 	as the directory for the Unix domain socket.
        </para>
@@ -431,7 +431,7 @@
       <listitem>
        <para>
 	Specifies the Internet TCP/IP port or local Unix domain socket file
-	extension on which the <command>postmaster</command>
+	extension on which the server
 	is listening for connections.  The port number defaults to 5432,
 	or the value of the <envar>PGPORT</envar>
 	environment variable (if set).
@@ -487,7 +487,7 @@ connectDBStart() -- connect() failed: No such file or directory
 	<command>pg_restore</command> could not attach to the
 	<command>postmaster</command>
 	process on the specified host and port.  If you see this message,
-	ensure that the <command>postmaster</command>
+	ensure that the server
 	is running on the proper host and that you have specified the proper
 	port.  If your site uses an authentication system, ensure that you
 	have obtained the required authentication credentials.

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/manage-ag.sgml,v 2.19 2001/11/21 05:53:41 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/manage-ag.sgml,v 2.20 2001/11/28 20:49:10 petere Exp $
 -->
 
 <chapter id="managing-databases">
@@ -45,10 +45,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/manage-ag.sgml,v 2.19 2001/11/21 05:53:41 t
 CREATE DATABASE <replaceable>name</>
 </synopsis>
    where <replaceable>name</> follows the usual rules for SQL identifiers.
-   (Depending on the
-   current implementation, certain characters that are special to the
-   underlying operating system might be prohibited. There will be
-   run-time checks for that.) The current user automatically becomes
+   The current user automatically becomes
    the owner of the new database. It is the privilege of the owner of
    a database to remove it later on (which also removes all the
    objects in it, even if they have a different owner).
@@ -140,7 +137,7 @@ createdb <replaceable class="parameter">dbname</replaceable>
    one might copy any database in an installation by specifying its name
    as the template for <command>CREATE DATABASE</>.  It is important to
    understand, however, that this is not (yet) intended as
-   a general-purpose COPY DATABASE facility.  In particular, it is
+   a general-purpose <quote>COPY DATABASE</quote> facility.  In particular, it is
    essential that the source database be idle (no data-altering transactions
    in progress)
    for the duration of the copying operation.  <command>CREATE DATABASE</>
@@ -159,7 +156,7 @@ createdb <replaceable class="parameter">dbname</replaceable>
    may be set to indicate that a database is intended as a template for
    <command>CREATE DATABASE</>.  If this flag is set, the database may be
    cloned by 
-   any user with CREATEDB privileges; if it is not set, only superusers
+   any user with <literal>CREATEDB</> privileges; if it is not set, only superusers
    and the owner of the database may clone it.
    If <literal>datallowconn</literal> is false, then no new connections
    to that database will be allowed (but existing sessions are not killed
@@ -261,7 +258,7 @@ setenv PGDATA2 /home/postgres/data
 initlocation PGDATA2
 </programlisting>
     </informalexample>
-    The you can restart the server.
+    Then you can restart the server.
    </para>
 
    <para>

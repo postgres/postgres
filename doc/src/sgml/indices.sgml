@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/indices.sgml,v 1.28 2001/11/21 05:53:41 thomas Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/indices.sgml,v 1.29 2001/11/28 20:49:10 petere Exp $ -->
 
 <chapter id="indexes">
  <title id="indexes-title">Indexes</title>
@@ -91,7 +91,7 @@ CREATE INDEX test1_id_index ON test1 (id);
   </para>
 
   <para>
-   When an index is created, it has to be kept synchronized with the
+   When an index is created, the system has to keep it synchronized with the
    table.  This adds overhead to data manipulation operations.
    Therefore indexes that are non-essential or do not get used at all
    should be removed.  Note that a

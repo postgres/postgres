@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.24 2001/11/26 19:41:55 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.25 2001/11/28 20:49:10 petere Exp $
 Postgres documentation
 -->
 
@@ -159,10 +159,11 @@ Postgres documentation
       <term>-h <replaceable class="parameter">hostname</replaceable></term>
       <listitem>
        <para>
-	Specifies the TCP/IP hostname or address on which the
+	Specifies the TCP/IP host name or address on which the
 	<application>postmaster</application> is to listen for
 	connections from client applications.  Defaults to
-	listening on all configured addresses (including localhost).
+	listening on all configured addresses (including
+        <systemitem class="systemname">localhost</systemitem>).
        </para>
       </listitem>
      </varlistentry>
@@ -274,11 +275,6 @@ Postgres documentation
         Sets a named run-time parameter; a shorter form of
         <option>-c</>.
        </para>
-       <para>
-	The <option>--</> option will not work on FreeBSD or OpenBSD.
-	Use <option>-c</> instead. This should be fixed in
-	<productname>PostgreSQL</productname> 7.3.
-       </para>
       </listitem>
      </varlistentry>
 
@@ -360,9 +356,9 @@ semget: No space left on device
 	<tip>
 	 <para>
 	  You may be able to postpone
-	  reconfiguring your kernel by decreasing -B to reduce
-	  <productname>Postgres</productname>' shared memory
-	  consumption, and/or by reducing -N to reduce Postgres' semaphore
+	  reconfiguring your kernel by decreasing <option>-B</option> to reduce
+	  the shared memory consumption of <productname>PostgreSQL</>,
+	  and/or by reducing <option>-N</option> to reduce the semaphore
 	  consumption.
 	 </para>
 	</tip>
@@ -441,6 +437,14 @@ StreamServerPort: cannot bind to port
    start and shut down the <application>postmaster</application>
    safely and comfortably.
   </para>
+
+  <para>
+   The <option>--</> options will not work on FreeBSD or OpenBSD.
+   Use <option>-c</> instead. This is a bug in the affected operating
+   systems; a future release of <productname>PostgreSQL</productname> will
+   provide a workaround if this is not fixed.
+  </para>
+
  </refsect1>
 
  <refsect1 id="app-postmaster-usage">

@@ -22,7 +22,7 @@ CREATE USER <replaceable>name</replaceable>
 </synopsis>
    <replaceable>name</replaceable> follows the rules for SQL
    identifiers: either unadorned without special characters, or
-   double-quoted. To remove an existing user, use the analog
+   double-quoted. To remove an existing user, use the analogous
    <command>DROP USER</command> command.
   </para>
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.76 2001/11/24 19:57:06 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.77 2001/11/28 20:49:09 petere Exp $
 -->
 
  <chapter id="datatype">
@@ -226,19 +226,19 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.76 2001/11/24 19:57:06 tg
 
       <row>
        <entry><type>time with time zone</type></entry>
-       <entry>timetz</entry>
+       <entry><type>timetz</type></entry>
        <entry>time of day, including time zone</entry>
       </row>
 
       <row>
        <entry><type>timestamp without time zone</type></entry>
-       <entry>timestamp</entry>
+       <entry><type>timestamp</type></entry>
        <entry>date and time</entry>
       </row>
 
       <row>
        <entry><type>timestamp [ with time zone ]</type></entry>
-       <entry>timestamptz</entry>
+       <entry><type>timestamptz</type></entry>
        <entry>date and time, including time zone</entry>
       </row>
      </tbody>
@@ -546,7 +546,7 @@ NUMERIC
      limit on precision.  A column of this kind will not coerce input
      values to any particular scale, whereas <type>numeric</type> columns
      with a declared scale will coerce input values to that scale.
-     (The SQL standard requires a default scale of 0, ie, coercion to
+     (The SQL standard requires a default scale of 0, i.e., coercion to
      integer accuracy.  We find this a bit useless.  If you're concerned about
      portability, always specify the precision and scale explicitly.)
     </para>
@@ -694,7 +694,7 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (
      names <type>bigserial</type> and <type>serial8</type> work just
      the same way, except that they create a <type>bigint</type>
      column.  <type>bigserial</type> should be used if you anticipate
-     use of more than 2^31 identifiers over the lifetime of the table.
+     use of more than 2<superscript>31</> identifiers over the lifetime of the table.
     </para>
 
     <para>
@@ -861,7 +861,7 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
     The storage requirement for data of these types is 4 bytes plus
     the actual string, and in case of <type>character</type> plus the
     padding.  Long strings will be compressed by the system
-    automatically, so the physical requirement on-disk may be less.
+    automatically, so the physical requirement on disk may be less.
     In any case, the longest possible character string
     that can be stored is about 1 GB.  (The maximum value that will be
     allowed for <replaceable>n</> in the data type declaration is
@@ -1004,7 +1004,7 @@ SELECT b, char_length(b) FROM test2;
     Octets of certain values <emphasis>must</emphasis> be escaped (but all
     octet values <emphasis>may</emphasis> be escaped) when used as part of
     a string literal in an <acronym>SQL</acronym> statement. In general,
-    to escape an octet, it is converted into the three digit octal number
+    to escape an octet, it is converted into the three-digit octal number
     equivalent of its decimal octet value, and preceded by two
     backslashes. Some octet values have alternate escape sequences, as
     shown in <xref linkend="datatype-binary-sqlesc">.
@@ -1112,12 +1112,12 @@ SELECT b, char_length(b) FROM test2;
     <acronym>SQL</acronym> string literals (input strings) must be
     preceded with two backslashes due to the fact that they must pass
     through two parsers in the PostgreSQL backend. The first backslash
-    is interpreted as an escape character by the string literal parser,
+    is interpreted as an escape character by the string-literal parser,
     and therefore is consumed, leaving the octets that follow.
     The remaining backslash is recognized by the <type>bytea</type> input
     function as the prefix of a three digit octal value. For example, a string
     literal passed to the backend as <literal>'\\001'</literal> becomes
-    <literal>'\001'</literal> after passing through the string literal
+    <literal>'\001'</literal> after passing through the string-literal
     parser. The <literal>'\001'</literal> is then sent to the
     <type>bytea</type> input function, where it is converted to a single
     octet with a decimal value of 1.
@@ -1127,12 +1127,12 @@ SELECT b, char_length(b) FROM test2;
     For a similar reason, a backslash must be input as
     <literal>'\\\\'</literal> (or <literal>'\\134'</literal>). The first
     and third backslashes are interpreted as escape characters by the
-    string literal parser, and therefore are consumed, leaving two
+    string-literal parser, and therefore are consumed, leaving two
     backslashes in the string passed to the <type>bytea</type> input function,
     which interprets them as representing a single backslash.
     For example, a string literal passed to the
     backend as <literal>'\\\\'</literal> becomes <literal>'\\'</literal>
-    after passing through the string literal parser. The
+    after passing through the string-literal parser. The
     <literal>'\\'</literal> is then sent to the <type>bytea</type> input
     function, where it is converted to a single octet with a decimal
     value of 92.
@@ -1147,7 +1147,7 @@ SELECT b, char_length(b) FROM test2;
     <type>bytea</type> input function does <emphasis>not</emphasis>
     recognize a single quote as a special octet. Therefore a string
     literal passed to the backend as <literal>'\''</literal> becomes
-    <literal>'''</literal> after passing through the string literal
+    <literal>'''</literal> after passing through the string-literal
     parser. The <literal>'''</literal> is then sent to the
     <type>bytea</type> input function, where it is retains its single
     octet decimal value of 39.
@@ -1223,8 +1223,8 @@ SELECT b, char_length(b) FROM test2;
         <entry> Operators operating on and returning binary strings
                 include concatenation, substring, overlay, and trim</entry>
         <entry> Operators operating on and returning binary strings
-                include concatenation, substring, and trim. The <literal>
-                'leading'</literal> and <literal>'trailing'</literal>
+                include concatenation, substring, and trim. The
+                <literal>leading</literal> and <literal>trailing</literal>
                 arguments for trim are not yet implemented.
                 </entry>
        </row>
@@ -1327,12 +1327,12 @@ SELECT b, char_length(b) FROM test2;
 
     <note>
      <para>
-      Time zones, and time zone conventions, are influenced by
+      Time zones, and time-zone conventions, are influenced by
       political conventions, not just physical effects. Time zones have
       become somewhat standardized during the 1900's, but continue to
       be prone to arbitrary changes with time.
       <productname>PostgreSQL</productname> uses your operating
-      system's underlying features to provide time zone
+      system's underlying features to provide time-zone
       support, and these systems usually contain information for only
       the time period 1902 through 2038 (corresponding to the full
       range of conventional Unix system time).
@@ -1364,7 +1364,7 @@ SELECT b, char_length(b) FROM test2;
 
     <para>
      Date and time input is accepted in almost any reasonable format, including
-     <acronym>ISO-8601</acronym>, <acronym>SQL</acronym>-compatible, 
+     <acronym>ISO 8601</acronym>, <acronym>SQL</acronym>-compatible, 
      traditional <productname>PostgreSQL</productname>, and others.
      The ordering of month and day in date input can be ambiguous, therefore a setting
      exists to specify how it should be interpreted in ambiguous cases. The command
@@ -1422,15 +1422,15 @@ SELECT b, char_length(b) FROM test2;
 	</row>
 	<row>
 	 <entry>1/8/1999</entry>
-	 <entry>US; read as August 1 in European mode</entry>
+	 <entry>U.S.; read as August 1 in European mode</entry>
 	</row>
 	<row>
 	 <entry>8/1/1999</entry>
-	 <entry>European; read as August 1 in US mode</entry>
+	 <entry>European; read as August 1 in U.S. mode</entry>
 	</row>
 	<row>
 	 <entry>1/18/1999</entry>
-	 <entry>US; read as January 18 in any mode</entry>
+	 <entry>U.S.; read as January 18 in any mode</entry>
 	</row>
 	<row>
 	 <entry>19990108</entry>
@@ -1600,19 +1600,19 @@ SELECT b, char_length(b) FROM test2;
 	<tbody>
 	 <row>
 	  <entry>04:05:06.789</entry>
-	  <entry>ISO-8601</entry>
+	  <entry>ISO 8601</entry>
 	 </row>
 	 <row>
 	  <entry>04:05:06</entry>
-	  <entry>ISO-8601</entry>
+	  <entry>ISO 8601</entry>
 	 </row>
 	 <row>
 	  <entry>04:05</entry>
-	  <entry>ISO-8601</entry>
+	  <entry>ISO 8601</entry>
 	 </row>
 	 <row>
 	  <entry>040506</entry>
-	  <entry>ISO-8601</entry>
+	  <entry>ISO 8601</entry>
 	 </row>
 	 <row>
 	  <entry>04:05 AM</entry>
@@ -1679,19 +1679,19 @@ SELECT b, char_length(b) FROM test2;
        <tbody>
 	<row>
 	 <entry>04:05:06.789-8</entry>
-	 <entry>ISO-8601</entry>
+	 <entry>ISO 8601</entry>
 	</row>
 	<row>
 	 <entry>04:05:06-08:00</entry>
-	 <entry>ISO-8601</entry>
+	 <entry>ISO 8601</entry>
 	</row>
 	<row>
 	 <entry>04:05-08:00</entry>
-	 <entry>ISO-8601</entry>
+	 <entry>ISO 8601</entry>
 	</row>
 	<row>
 	 <entry>040506-08</entry>
-	 <entry>ISO-8601</entry>
+	 <entry>ISO 8601</entry>
 	</row>
        </tbody>
       </tgroup>
@@ -1911,8 +1911,9 @@ January 8 04:05:06 1999 PST
 
       <literal>'now'</literal> is
       evaluated when the value is first interpreted.
+     </para>
 
-      <caution>
+      <note>
        <para>
 	As of <productname>PostgreSQL</> version 7.2,
 	<literal>'current'</literal> is no longer supported as a
@@ -1920,11 +1921,10 @@ January 8 04:05:06 1999 PST
 	Previously,
 	<literal>'current'</literal> was stored as a special value,
 	and evaluated to <literal>'now'</literal> only when
-	used in a math operation or type
+	used in an expression or type
 	conversion.
        </para>
-      </caution>
-     </para>
+      </note>
     </sect3>
    </sect2>
 
@@ -1945,7 +1945,7 @@ January 8 04:05:06 1999 PST
 
     <para>
      Output formats can be set to one of the four styles
-     ISO-8601, <acronym>SQL</acronym> (Ingres), traditional
+     ISO 8601, <acronym>SQL</acronym> (Ingres), traditional
      PostgreSQL, and German, using the <command>SET DateStyle</command>.
      The default is the <acronym>ISO</acronym> format.
 
@@ -1993,14 +1993,14 @@ January 8 04:05:06 1999 PST
 
     <para>
      The <acronym>SQL</acronym> style has European and non-European
-     (US) variants, 
+     (U.S.) variants, 
      which determines whether month follows day or vice versa. (See
      also <xref linkend="datatype-datetime-input">
      for how this setting affects interpretation of
      input values.) 
 
      <table tocentry="1">
-      <title>Date Order Conventions</title>
+      <title>Date-Order Conventions</title>
       <tgroup cols="3">
        <thead>
 	<row>
@@ -2082,7 +2082,7 @@ January 8 04:05:06 1999 PST
 	<type>time</type> type can.
 	Time zones in the real world can have no meaning unless 
 	associated with a date as well as a time
-	since the offset may vary through the year with daylight savings
+	since the offset may vary through the year with daylight-saving
 	time boundaries.
        </para>
       </listitem>
@@ -2090,7 +2090,7 @@ January 8 04:05:06 1999 PST
       <listitem>
        <para>
 	The default time zone is specified as a constant integer offset 
-	from GMT/UTC. It is not possible to adapt to daylight savings
+	from GMT/UTC. It is not possible to adapt to daylight-saving
 	time when doing date/time arithmetic across
 	<acronym>DST</acronym> boundaries.
        </para>
@@ -2102,20 +2102,20 @@ January 8 04:05:06 1999 PST
     <para>
      To address these difficulties, we recommend using date/time
      types that contain both date and time when using time zones. We
-     recommend <emphasis>not</emphasis> using the SQL92 type TIME
-     WITH TIME ZONE (though it is supported by
+     recommend <emphasis>not</emphasis> using the SQL92 type <type>time
+     with time zone</type> (though it is supported by
      <productname>PostgreSQL</productname> for legacy applications and
      for compatibility with other RDBMS implementations).
      <productname>PostgreSQL</productname> 
      assumes local time for any type containing only
      date or time. Further, time zone support is derived from 
      the underlying operating system
-     time zone capabilities, and hence can handle daylight savings time 
+     time-zone capabilities, and hence can handle daylight-saving time 
      and other expected behavior.
     </para>
 
     <para>
-     <productname>PostgreSQL</productname> obtains time zone support 
+     <productname>PostgreSQL</productname> obtains time-zone support 
      from the underlying operating system for dates between 1902 and
      2038 (near the typical date limits for Unix-style
      systems). Outside of this range, all dates are assumed to be
@@ -2131,7 +2131,7 @@ January 8 04:05:06 1999 PST
     </para>
 
     <para>
-     There are several ways to affect the time zone behavior:
+     There are several ways to affect the time-zone behavior:
 
      <itemizedlist spacing="compact" mark="bullet">
       <listitem>
@@ -2404,7 +2404,7 @@ SELECT * FROM test1 WHERE a;
        <term><replaceable>x</replaceable></term>
        <listitem>
 	<para>
-	 The x-axis coordinate as a floating point number.
+	 The x-axis coordinate as a floating-point number
 	</para>
        </listitem>
       </varlistentry>
@@ -2413,7 +2413,7 @@ SELECT * FROM test1 WHERE a;
        <term><replaceable>y</replaceable></term>
        <listitem>
 	<para>
-	 The y-axis coordinate as a floating point number.
+	 The y-axis coordinate as a floating-point number
 	</para>
        </listitem>
       </varlistentry>
@@ -2449,7 +2449,7 @@ SELECT * FROM test1 WHERE a;
        <term>(<replaceable>x2</replaceable>,<replaceable>y2</replaceable>)</term>
        <listitem>
 	<para>
-	 The end points of the line segment.
+	 The end points of the line segment
 	</para>
        </listitem>
       </varlistentry>
@@ -2486,7 +2486,7 @@ SELECT * FROM test1 WHERE a;
        <term>(<replaceable>x2</replaceable>,<replaceable>y2</replaceable>)</term>
        <listitem>
 	<para>
-	 Opposite corners of the box.
+	 Opposite corners of the box
 	</para>
        </listitem>
       </varlistentry>
@@ -2587,7 +2587,7 @@ SELECT * FROM test1 WHERE a;
        <listitem>
 	<para>
 	 End points of the line segments comprising the boundary of the
-	 polygon.
+	 polygon
 	</para>
        </listitem>
       </varlistentry>
@@ -2627,7 +2627,7 @@ SELECT * FROM test1 WHERE a;
        <term>(<replaceable>x</replaceable>,<replaceable>y</replaceable>)</term>
        <listitem>
 	<para>
-	 Center of the circle.
+	 Center of the circle
 	</para>
        </listitem>
       </varlistentry>
@@ -2636,7 +2636,7 @@ SELECT * FROM test1 WHERE a;
        <term><replaceable>r</replaceable></term>
        <listitem>
 	<para>
-	 Radius of the circle.
+	 Radius of the circle
 	</para>
        </listitem>
       </varlistentry>

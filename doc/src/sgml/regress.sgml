@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/regress.sgml,v 1.21 2001/09/21 18:37:05 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/regress.sgml,v 1.22 2001/11/28 20:49:10 petere Exp $ -->
 
  <chapter id="regress">
   <title id="regress-title">Regression Tests</title>
@@ -71,7 +71,7 @@
 <prompt>root# </prompt><userinput>chmod -R a+w src/test/regress</userinput>
 <prompt>root# </prompt><userinput>chmod -R a+w contrib/spi</userinput>
 <prompt>root# </prompt><userinput>su - joeuser</userinput>
-<prompt>joeuser$ </prompt><userinput>cd &lt;build top-level directory&gt;</userinput>
+<prompt>joeuser$ </prompt><userinput>cd <replaceable>top-level build directory</></userinput>
 <prompt>joeuser$ </prompt><userinput>gmake check</userinput>
 </screen>
     (The only possible <quote>security risk</quote> here is that other
@@ -184,11 +184,11 @@
 
     <para>
      Some of the queries in the <filename>timestamp</filename> test will
-     fail if you run the test on the day of a daylight-savings time
+     fail if you run the test on the day of a daylight-saving time
      changeover, or the day before or after one.  These queries assume
      that the intervals between midnight yesterday, midnight today and
      midnight tomorrow are exactly twenty-four hours -- which is wrong
-     if daylight-savings time went into or out of effect meanwhile.
+     if daylight-saving time went into or out of effect meanwhile.
     </para>
 
     <para>
@@ -224,7 +224,7 @@ PGTZ='PST8PDT7,M04.01.0,M10.05.03'; export PGTZ
 
     <para>
      Some systems using older time zone libraries fail to apply
-     daylight-savings corrections to dates before 1970, causing
+     daylight-saving corrections to dates before 1970, causing
      pre-1970 <acronym>PDT</acronym> times to be displayed in <acronym>PST</acronym> instead.  This will
      result in localized differences in the test results.
     </para>
@@ -370,7 +370,7 @@ testname/platformpattern=comparisonfilename
 
    <para>
     For example: some systems using older time zone libraries fail to apply
-    daylight-savings corrections to dates before 1970, causing
+    daylight-saving corrections to dates before 1970, causing
     pre-1970 <acronym>PDT</acronym> times to be displayed in <acronym>PST</acronym> instead.  This causes a
     few differences in the <filename>horology</> regression test.
     Therefore, we provide a variant comparison file,

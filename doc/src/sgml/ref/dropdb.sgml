@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/dropdb.sgml,v 1.11 2001/09/03 12:57:50 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/dropdb.sgml,v 1.12 2001/11/28 20:49:10 petere Exp $
 Postgres documentation
 -->
 
@@ -37,8 +37,8 @@ Postgres documentation
       <term>-h, --host <replaceable class="parameter">host</replaceable></term>
       <listitem>
        <para>
-	Specifies the hostname of the machine on which the 
-	<application>postmaster</application>
+	Specifies the host name of the machine on which the 
+	server
 	is running.  If host begins with a slash, it is used 
 	as the directory for the unix domain socket.
        </para>
@@ -50,7 +50,7 @@ Postgres documentation
       <listitem>
        <para>
 	Specifies the Internet TCP/IP port or local Unix domain socket file 
-	extension on which the <application>postmaster</application>
+	extension on which the server
 	is listening for connections.
        </para>
       </listitem>
@@ -60,7 +60,7 @@ Postgres documentation
       <term>-U, --username <replaceable class="parameter">username</replaceable></term>
       <listitem>
        <para>
-        Username to connect as.
+        User name to connect as
        </para>
       </listitem>
      </varlistentry>
@@ -79,7 +79,7 @@ Postgres documentation
       <listitem>
        <para>
         Echo the queries that <application>dropdb</application> generates
-	and sends to the backend.
+	and sends to the server.
        </para>
       </listitem>
      </varlistentry>
@@ -107,7 +107,7 @@ Postgres documentation
       <listitem>
        <para>
 	Specifies the name of the database to be removed.  The database
-	must be one of the existing <productname>Postgres</productname> databases
+	must be one of the existing <productname>PostgreSQL</productname> databases
 	in this installation.
        </para>
       </listitem>
@@ -157,7 +157,7 @@ Postgres documentation
   </title>
   <para>
    <application>dropdb</application> destroys an existing
-   <productname>Postgres</productname> database.
+   <productname>PostgreSQL</productname> database.
    The user who executes this command must be a database
    superuser or the owner of the database.
   </para>
@@ -166,7 +166,7 @@ Postgres documentation
    <application>dropdb</application> is a shell script wrapper around the
    <acronym>SQL</acronym> command
    <xref linkend="SQL-DROPDATABASE" endterm="SQL-DROPDATABASE-title"> via
-   the <productname>Postgres</productname> interactive terminal
+   the <productname>PostgreSQL</productname> interactive terminal
    <xref linkend="APP-PSQL">. Thus, there is nothing
    special about dropping databases via this or other methods. This means
    that the <application>psql</application> must be found by the script and that
@@ -193,7 +193,7 @@ Postgres documentation
   <informalexample>
    <para>
     To destroy the database <literal>demo</literal> using the
-    postmaster on host eden, port 5000, with verification and a peek
+    server on host eden, port 5000, with verification and a peek
     at the underlying query:
 <screen>
 <prompt>$ </prompt><userinput>dropdb -p 5000 -h eden -i -e demo</userinput>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/droplang.sgml,v 1.13 2001/09/14 09:49:00 ishii Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/droplang.sgml,v 1.14 2001/11/28 20:49:10 petere Exp $
 Postgres documentation
 -->
 
@@ -92,10 +92,10 @@ Postgres documentation
       <term>-h, --host <replaceable class="parameter">host</replaceable></term>
       <listitem>
        <para>
-	Specifies the hostname of the machine on which the 
-	<application>postmaster</application>
+	Specifies the host name of the machine on which the 
+	server
 	is running.  If host begins with a slash, it is used 
-	as the directory for the unix domain socket.
+	as the directory for the Unix domain socket.
        </para>
       </listitem>
      </varlistentry>
@@ -105,7 +105,7 @@ Postgres documentation
       <listitem>
        <para>
 	Specifies the Internet TCP/IP port or local Unix domain socket file 
-	extension on which the <application>postmaster</application>
+	extension on which the server
 	is listening for connections.
        </para>
       </listitem>
@@ -115,7 +115,7 @@ Postgres documentation
       <term>-U, --username <replaceable class="parameter">username</replaceable></term>
       <listitem>
        <para>
-        Username to connect as.
+        User name to connect as
        </para>
       </listitem>
      </varlistentry>
@@ -155,9 +155,9 @@ Postgres documentation
   <para>
    <application>droplang</application> is a utility for removing an 
    existing programming language from a
-   <productname>Postgres</productname> database.
-   <application>droplang</application> currently accepts two
-   languages, <literal>plsql</literal> and <literal>pltcl</literal>.
+   <productname>PostgreSQL</productname> database.
+   <application>droplang</application> can drop any procedural language,
+   even those not supplied by the <productname>PostgreSQL</> distribution.
   </para>
   <para>
    Although backend programming languages can be removed directly using
