@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.150 2003/06/24 23:14:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.151 2003/06/25 20:07:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -925,23 +925,29 @@ func_get_detail(List *funcname,
  *	argtype_inherit() -- Construct an argtype vector reflecting the
  *						 inheritance properties of the supplied argv.
  *
- *		This function is used to disambiguate among functions with the
- *		same name but different signatures.  It takes an array of input
- *		type ids.  For each type id in the array that's a complex type
- *		(a class), it walks up the inheritance tree, finding all
- *		superclasses of that type.	A vector of new Oid type arrays
- *		is returned to the caller, reflecting the structure of the
- *		inheritance tree above the supplied arguments.
+ *		This function is used to handle resolution of function calls when
+ *		there is no match to the given argument types, but there might be
+ *		matches based on considering complex types as members of their
+ *		superclass types (parent classes).
+ *
+ *		It takes an array of input type ids.  For each type id in the array
+ *		that's a complex type (a class), it walks up the inheritance tree,
+ *		finding all superclasses of that type. A vector of new Oid type
+ *		arrays is returned to the caller, listing possible alternative
+ *		interpretations of the input typeids as members of their superclasses
+ *		rather than the actually given argument types.  The vector is
+ *		terminated by a NULL pointer.
  *
  *		The order of this vector is as follows:  all superclasses of the
  *		rightmost complex class are explored first.  The exploration
  *		continues from right to left.  This policy means that we favor
  *		keeping the leftmost argument type as low in the inheritance tree
  *		as possible.  This is intentional; it is exactly what we need to
- *		do for method dispatch.  The last type array we return is all
- *		zeroes.  This will match any functions for which return types are
- *		not defined.  There are lots of these (mostly builtins) in the
- *		catalogs.
+ *		do for method dispatch.
+ *
+ *		The vector does not include the case where no complex classes have
+ *		been promoted, since that was already tried before this routine
+ *		got called.
  */
 static Oid **
 argtype_inherit(int nargs, Oid *argtypes)
@@ -950,22 +956,13 @@ argtype_inherit(int nargs, Oid *argtypes)
 	int			i;
 	InhPaths	arginh[FUNC_MAX_ARGS];
 
-	for (i = 0; i < FUNC_MAX_ARGS; i++)
+	for (i = 0; i < nargs; i++)
 	{
-		if (i < nargs)
-		{
-			arginh[i].self = argtypes[i];
-			if ((relid = typeidTypeRelid(argtypes[i])) != InvalidOid)
-				arginh[i].nsupers = find_inheritors(relid, &(arginh[i].supervec));
-			else
-			{
-				arginh[i].nsupers = 0;
-				arginh[i].supervec = (Oid *) NULL;
-			}
-		}
+		arginh[i].self = argtypes[i];
+		if ((relid = typeidTypeRelid(argtypes[i])) != InvalidOid)
+			arginh[i].nsupers = find_inheritors(relid, &(arginh[i].supervec));
 		else
 		{
-			arginh[i].self = InvalidOid;
 			arginh[i].nsupers = 0;
 			arginh[i].supervec = (Oid *) NULL;
 		}
@@ -975,6 +972,13 @@ argtype_inherit(int nargs, Oid *argtypes)
 	return gen_cross_product(arginh, nargs);
 }
 
+/*
+ * Look up the parent superclass(es) of the given relation.
+ *
+ * *supervec is set to an array of the type OIDs (not the relation OIDs)
+ * of the parents, with nearest ancestors listed first.  It's set to NULL
+ * if there are no parents.  The return value is the number of parents.
+ */
 static int
 find_inheritors(Oid relid, Oid **supervec)
 {
@@ -1068,58 +1072,81 @@ find_inheritors(Oid relid, Oid **supervec)
 	return nvisited;
 }
 
+/*
+ * Generate the ordered list of substitute argtype vectors to try.
+ *
+ * See comments for argtype_inherit.
+ */
 static Oid **
 gen_cross_product(InhPaths *arginh, int nargs)
 {
 	int			nanswers;
-	Oid		  **result,
-			  **iter;
+	Oid		  **result;
 	Oid		   *oneres;
 	int			i,
 				j;
 	int			cur[FUNC_MAX_ARGS];
 
+	/*
+	 * At each position we want to try the original datatype, plus each
+	 * supertype.  So the number of possible combinations is this:
+	 */
 	nanswers = 1;
 	for (i = 0; i < nargs; i++)
-	{
-		nanswers *= (arginh[i].nsupers + 2);
-		cur[i] = 0;
-	}
+		nanswers *= (arginh[i].nsupers + 1);
 
-	iter = result = (Oid **) palloc(sizeof(Oid *) * nanswers);
+	/*
+	 * We also need an extra slot for the terminating NULL in the result
+	 * array, but that cancels out with the fact that we don't want to
+	 * generate the zero-changes case.  So we need exactly nanswers slots.
+	 */
+	result = (Oid **) palloc(sizeof(Oid *) * nanswers);
+	j = 0;
 
-	/* compute the cross product from right to left */
+	/*
+	 * Compute the cross product from right to left.  When cur[i] == 0,
+	 * generate the original input type at position i.  When cur[i] == k
+	 * for k > 0, generate its k'th supertype.
+	 */
+	MemSet(cur, 0, sizeof(cur));
+
 	for (;;)
 	{
-		oneres = (Oid *) palloc0(FUNC_MAX_ARGS * sizeof(Oid));
+		/*
+		 * Find a column we can increment.  All the columns after it get
+		 * reset to zero.  (Essentially, we're adding one to the multi-
+		 * digit number represented by cur[].)
+		 */
+		for (i = nargs - 1; i >= 0 && cur[i] >= arginh[i].nsupers; i--)
+			cur[i] = 0;
 
-		for (i = nargs - 1; i >= 0 && cur[i] > arginh[i].nsupers; i--)
-			continue;
-
-		/* if we're done, terminate with NULL pointer */
+		/* if none, we're done */
 		if (i < 0)
-		{
-			*iter = NULL;
-			return result;
-		}
+			break;
 
-		/* no, increment this column and zero the ones after it */
-		cur[i] = cur[i] + 1;
-		for (j = nargs - 1; j > i; j--)
-			cur[j] = 0;
+		/* increment this column */
+		cur[i] += 1;
+
+		/* Generate the proper output type-OID vector */
+		oneres = (Oid *) palloc0(FUNC_MAX_ARGS * sizeof(Oid));
 
 		for (i = 0; i < nargs; i++)
 		{
 			if (cur[i] == 0)
 				oneres[i] = arginh[i].self;
-			else if (cur[i] > arginh[i].nsupers)
-				oneres[i] = 0;	/* wild card */
 			else
 				oneres[i] = arginh[i].supervec[cur[i] - 1];
 		}
 
-		*iter++ = oneres;
+		result[j++] = oneres;
 	}
+
+	/* terminate result vector with NULL pointer */
+	result[j++] = NULL;
+
+	Assert(j == nanswers);
+
+	return result;
 }
 
 
