@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.102 2001/09/28 08:09:09 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.103 2001/10/08 21:46:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -426,15 +426,23 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 		case T_CaseExpr:
 			{
 				CaseExpr   *c = (CaseExpr *) expr;
-				CaseWhen   *w;
+				CaseExpr   *newc = makeNode(CaseExpr);
+				List	   *newargs = NIL;
 				List	   *typeids = NIL;
 				List	   *args;
+				Node	   *defresult;
 				Oid			ptype;
 
 				/* transform the list of arguments */
 				foreach(args, c->args)
 				{
-					w = lfirst(args);
+					CaseWhen   *w = (CaseWhen *) lfirst(args);
+					CaseWhen   *neww = makeNode(CaseWhen);
+					Node	   *warg;
+
+					Assert(IsA(w, CaseWhen));
+
+					warg = w->expr;
 					if (c->arg != NULL)
 					{
 						/* shorthand form was specified, so expand... */
@@ -443,31 +451,51 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 						a->oper = OP;
 						a->opname = "=";
 						a->lexpr = c->arg;
-						a->rexpr = w->expr;
-						w->expr = (Node *) a;
+						a->rexpr = warg;
+						warg = (Node *) a;
 					}
-					lfirst(args) = transformExpr(pstate, (Node *) w, precedence);
-					typeids = lappendi(typeids, exprType(w->result));
+					neww->expr = transformExpr(pstate, warg, precedence);
+
+					if (! coerce_to_boolean(pstate, &neww->expr))
+						elog(ERROR, "WHEN clause must have a boolean result");
+
+					/*
+					 * result is NULL for NULLIF() construct - thomas
+					 * 1998-11-11
+					 */
+					warg = w->result;
+					if (warg == NULL)
+					{
+						A_Const    *n = makeNode(A_Const);
+
+						n->val.type = T_Null;
+						warg = (Node *) n;
+					}
+					neww->result = transformExpr(pstate, warg, precedence);
+
+					newargs = lappend(newargs, neww);
+					typeids = lappendi(typeids, exprType(neww->result));
 				}
+
+				newc->args = newargs;
 
 				/*
 				 * It's not shorthand anymore, so drop the implicit
-				 * argument. This is necessary to keep the executor from
-				 * seeing an untransformed expression... not to mention
-				 * keeping a re-application of transformExpr from doing
-				 * the wrong thing.
+				 * argument. This is necessary to keep any re-application
+				 * of transformExpr from doing the wrong thing.
 				 */
-				c->arg = NULL;
+				newc->arg = NULL;
 
 				/* transform the default clause */
-				if (c->defresult == NULL)
+				defresult = c->defresult;
+				if (defresult == NULL)
 				{
 					A_Const    *n = makeNode(A_Const);
 
 					n->val.type = T_Null;
-					c->defresult = (Node *) n;
+					defresult = (Node *) n;
 				}
-				c->defresult = transformExpr(pstate, c->defresult, precedence);
+				newc->defresult = transformExpr(pstate, defresult, precedence);
 
 				/*
 				 * Note: default result is considered the most significant
@@ -475,49 +503,29 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 				 * code worked before, but it seems a little bogus to me
 				 * --- tgl
 				 */
-				typeids = lconsi(exprType(c->defresult), typeids);
+				typeids = lconsi(exprType(newc->defresult), typeids);
 
 				ptype = select_common_type(typeids, "CASE");
-				c->casetype = ptype;
+				newc->casetype = ptype;
 
 				/* Convert default result clause, if necessary */
-				c->defresult = coerce_to_common_type(pstate, c->defresult,
-													 ptype, "CASE/ELSE");
+				newc->defresult = coerce_to_common_type(pstate,
+														newc->defresult,
+														ptype,
+														"CASE/ELSE");
 
 				/* Convert when-clause results, if necessary */
-				foreach(args, c->args)
+				foreach(args, newc->args)
 				{
-					w = lfirst(args);
-					w->result = coerce_to_common_type(pstate, w->result,
-													  ptype, "CASE/WHEN");
+					CaseWhen   *w = (CaseWhen *) lfirst(args);
+
+					w->result = coerce_to_common_type(pstate,
+													  w->result,
+													  ptype,
+													  "CASE/WHEN");
 				}
 
-				result = expr;
-				break;
-			}
-
-		case T_CaseWhen:
-			{
-				CaseWhen   *w = (CaseWhen *) expr;
-
-				w->expr = transformExpr(pstate, w->expr, precedence);
-
-				if (! coerce_to_boolean(pstate, &w->expr))
-					elog(ERROR, "WHEN clause must have a boolean result");
-
-				/*
-				 * result is NULL for NULLIF() construct - thomas
-				 * 1998-11-11
-				 */
-				if (w->result == NULL)
-				{
-					A_Const    *n = makeNode(A_Const);
-
-					n->val.type = T_Null;
-					w->result = (Node *) n;
-				}
-				w->result = transformExpr(pstate, w->result, precedence);
-				result = expr;
+				result = (Node *) newc;
 				break;
 			}
 
