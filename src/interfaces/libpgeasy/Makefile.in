@@ -4,7 +4,7 @@
 #    Makefile for pgeasy library
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpgeasy/Attic/Makefile.in,v 1.1 1999/10/11 18:03:00 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpgeasy/Attic/Makefile.in,v 1.2 1999/10/11 18:16:06 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -53,37 +53,3 @@ depend dep:
 ifeq (depend,$(wildcard depend))
 include depend
 endif
-
-
-
-PGEASY = pgeasy.o halt.o 
-TARGET = libpgeasy.a pginsert pgwordcount pgnulltest
-CFLAGS = -g -Wall -I. -I../../src/interfaces/libpq  -I/usr/local/pgsql/include
-LDFLAGS = -L/usr/local/pgsql/lib -lpq
-
-all : $(TARGET)
-
-libpgeasy.a:	pgeasy.o halt.o
-	ar r libpgeasy.a pgeasy.o halt.o
-
-pgeasy.o:	pgeasy.c
-	gcc -c $(CFLAGS) pgeasy.c
-
-halt.o:	halt.c
-	gcc -c $(CFLAGS) halt.c
-
-pginsert:	$(PGEASY) pginsert.c
-	gcc -o $@ $(CFLAGS) $@.c $(PGEASY) $(LDFLAGS)
-
-pgwordcount:	$(PGEASY) pgwordcount.c
-	gcc -o $@ $(CFLAGS) $@.c $(PGEASY) $(LDFLAGS)
-
-pgnulltest:	$(PGEASY) pgnulltest.c
-	gcc -o $@ $(CFLAGS) $@.c $(PGEASY) $(LDFLAGS)
-
-clean:
-	rm -f *.o $(TARGET) log core
-
-install:
-	install -s -o bin -g bin $(TARGET) /usr/local/pgsql/bin
-
