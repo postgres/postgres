@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.135 2000/01/15 22:43:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.136 2000/01/19 22:23:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -285,6 +285,9 @@ vc_getrels(NameData *VacRelP)
 
 	if (NameStr(*VacRelP))
 	{
+	/* we could use the cache here, but it is clearer to use
+	 *  scankeys for both vacuum cases, bjm 2000/01/19
+	 */
 		ScanKeyEntryInitialize(&key, 0x0, Anum_pg_class_relname,
 							   F_NAMEEQ,
 							   PointerGetDatum(NameStr(*VacRelP)));
@@ -766,7 +769,6 @@ vc_scanheap(VRelStats *vacrelstats, Relation onerel,
 					}
 					else if (!TransactionIdIsInProgress(tuple.t_data->t_xmin))
 					{
-
 						/*
 						 * Not Aborted, Not Committed, Not in Progress -
 						 * so it's from crashed process. - vadim 11/26/96
@@ -817,7 +819,6 @@ vc_scanheap(VRelStats *vacrelstats, Relation onerel,
 				}
 				else if (!TransactionIdIsInProgress(tuple.t_data->t_xmax))
 				{
-
 					/*
 					 * Not Aborted, Not Committed, Not in Progress - so it
 					 * from crashed process. - vadim 06/02/97
@@ -920,7 +921,8 @@ vc_scanheap(VRelStats *vacrelstats, Relation onerel,
 		}
 		else
 			dobufrel = true;
-		if (tempPage != (Page) NULL)
+
+	if (tempPage != (Page) NULL)
 		{						/* Some tuples are gone */
 			PageRepairFragmentation(tempPage);
 			vpc->vpd_free = ((PageHeader) tempPage)->pd_upper - ((PageHeader) tempPage)->pd_lower;
@@ -1266,7 +1268,7 @@ vc_rpfheap(VRelStats *vacrelstats, Relation onerel,
 						 * This means that in the middle of chain there was
 						 * tuple updated by older (than XmaxRecent) xaction
 						 * and this tuple is already deleted by me. Actually,
-						 * upper part of chain should be removed and seems 
+						 * upper part of chain should be removed and seems
 						 * that this should be handled in vc_scanheap(), but
 						 * it's not implemented at the moment and so we
 						 * just stop shrinking here.
@@ -1307,9 +1309,10 @@ vc_rpfheap(VRelStats *vacrelstats, Relation onerel,
 							if (vc_enough_space(fraged_pages->vpl_pagedesc[i], tlen))
 								break;
 						}
-						if (i == num_fraged_pages)		/* can't move item
-														 * anywhere */
-						{
+
+			/* can't move item anywhere */
+						if (i == num_fraged_pages)
+			{
 							for (i = 0; i < num_vtmove; i++)
 							{
 								Assert(vtmove[i].vpd->vpd_offsets_used > 0);
@@ -1341,16 +1344,12 @@ vc_rpfheap(VRelStats *vacrelstats, Relation onerel,
 					free_vtmove--;
 					num_vtmove++;
 
-					/*
-					 * All done ?
-					 */
+					/* All done ? */
 					if (!(tp.t_data->t_infomask & HEAP_UPDATED) ||
 						tp.t_data->t_xmin < XmaxRecent)
 						break;
 
-					/*
-					 * Well, try to find tuple with old row version
-					 */
+					/* Well, try to find tuple with old row version */
 					for (;;)
 					{
 						Buffer		Pbuf;
@@ -1384,9 +1383,9 @@ vc_rpfheap(VRelStats *vacrelstats, Relation onerel,
 						/*
 						 * Read above about cases when !ItemIdIsUsed(Citemid)
 						 * (child item is removed)... Due to the fact that
-						 * at the moment we don't remove unuseful part of 
+						 * at the moment we don't remove unuseful part of
 						 * update-chain, it's possible to get too old
-						 * parent row here. Like as in the case which 
+						 * parent row here. Like as in the case which
 						 * caused this problem, we stop shrinking here.
 						 * I could try to find real parent row but want
 						 * not to do it because of real solution will
@@ -1660,7 +1659,7 @@ failed to add item with len = %u to page %u (free space %u, nusd %u, noff %u)",
 				}
 			}
 
-		}						/* walk along page */
+		}  		/* walk along page */
 
 		if (offnum < maxoff && keep_tuples > 0)
 		{
@@ -1683,9 +1682,9 @@ failed to add item with len = %u to page %u (free space %u, nusd %u, noff %u)",
 					elog(ERROR, "HEAP_MOVED_IN was not expected (2)");
 				if (tuple.t_data->t_infomask & HEAP_MOVED_OFF)
 				{
-					if (chain_tuple_moved)		/* some chains was moved
-												 * while */
-					{			/* cleaning this page */
+					/* some chains was moved while */
+		    if (chain_tuple_moved)
+		    {			/* cleaning this page */
 						Assert(vpc->vpd_offsets_free > 0);
 						for (i = 0; i < vpc->vpd_offsets_free; i++)
 						{
@@ -1831,9 +1830,7 @@ failed to add item with len = %u to page %u (free space %u, nusd %u, noff %u)",
 							 vacrelstats->num_tuples, keep_tuples);
 		}
 
-		/*
-		 * clean moved tuples from last page in Nvpl list
-		 */
+		/* clean moved tuples from last page in Nvpl list */
 		if (vpc->vpd_blkno == blkno - 1 && vpc->vpd_offsets_free > 0)
 		{
 			buf = ReadBuffer(onerel, vpc->vpd_blkno);
