@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.7 1997/09/08 21:44:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.8 1997/12/19 16:54:15 momjian Exp $
  *
  * NOTES
  *	  XXX a few of the following functions are duplicated to handle
@@ -278,19 +278,19 @@ nreverse(List *list)
  * XXX only good for IntList	-ay
  */
 bool
-same(List *foo, List *bar)
+same(List *l1, List *l2)
 {
 	List	   *temp = NIL;
 
-	if (foo == NULL)
-		return (bar == NULL);
-	if (bar == NULL)
-		return (foo == NULL);
-	if (length(foo) == length(bar))
+	if (l1 == NULL)
+		return (l2 == NULL);
+	if (l2 == NULL)
+		return (l1 == NULL);
+	if (length(l1) == length(l2))
 	{
-		foreach(temp, foo)
+		foreach(temp, l1)
 		{
-			if (!intMember(lfirsti(temp), bar))
+			if (!intMember(lfirsti(temp), l2))
 				return (false);
 		}
 		return (true);
@@ -300,21 +300,21 @@ same(List *foo, List *bar)
 }
 
 List	   *
-LispUnion(List *foo, List *bar)
+LispUnion(List *l1, List *l2)
 {
 	List	   *retval = NIL;
 	List	   *i = NIL;
 	List	   *j = NIL;
 
-	if (foo == NIL)
-		return (bar);			/* XXX - should be copy of bar */
+	if (l1 == NIL)
+		return (l2);			/* XXX - should be copy of l2 */
 
-	if (bar == NIL)
-		return (foo);			/* XXX - should be copy of foo */
+	if (l2 == NIL)
+		return (l1);			/* XXX - should be copy of l1 */
 
-	foreach(i, foo)
+	foreach(i, l1)
 	{
-		foreach(j, bar)
+		foreach(j, l2)
 		{
 			if (!equal(lfirst(i), lfirst(j)))
 			{
@@ -323,7 +323,7 @@ LispUnion(List *foo, List *bar)
 			}
 		}
 	}
-	foreach(i, bar)
+	foreach(i, l2)
 	{
 		retval = lappend(retval, lfirst(i));
 	}
@@ -332,21 +332,21 @@ LispUnion(List *foo, List *bar)
 }
 
 List	   *
-LispUnioni(List *foo, List *bar)
+LispUnioni(List *l1, List *l2)
 {
 	List	   *retval = NIL;
 	List	   *i = NIL;
 	List	   *j = NIL;
 
-	if (foo == NIL)
-		return (bar);			/* XXX - should be copy of bar */
+	if (l1 == NIL)
+		return (l2);			/* XXX - should be copy of l2 */
 
-	if (bar == NIL)
-		return (foo);			/* XXX - should be copy of foo */
+	if (l2 == NIL)
+		return (l1);			/* XXX - should be copy of l1 */
 
-	foreach(i, foo)
+	foreach(i, l1)
 	{
-		foreach(j, bar)
+		foreach(j, l2)
 		{
 			if (lfirsti(i) != lfirsti(j))
 			{
@@ -355,7 +355,7 @@ LispUnioni(List *foo, List *bar)
 			}
 		}
 	}
-	foreach(i, bar)
+	foreach(i, l2)
 	{
 		retval = lappendi(retval, lfirsti(i));
 	}
@@ -365,27 +365,27 @@ LispUnioni(List *foo, List *bar)
 
 /*
  * member()
- * - nondestructive, returns t iff foo is a member of the list
- *	 bar
+ * - nondestructive, returns t iff l1 is a member of the list
+ *	 l2
  */
 bool
-member(void *foo, List *bar)
+member(void *l1, List *l2)
 {
 	List	   *i;
 
-	foreach(i, bar)
-		if (equal((Node *) (lfirst(i)), (Node *) foo))
+	foreach(i, l2)
+		if (equal((Node *) (lfirst(i)), (Node *) l1))
 		return (true);
 	return (false);
 }
 
 bool
-intMember(int foo, List *bar)
+intMember(int l1, List *l2)
 {
 	List	   *i;
 
-	foreach(i, bar)
-		if (foo == lfirsti(i))
+	foreach(i, l2)
+		if (l1 == lfirsti(i))
 		return (true);
 	return (false);
 }
@@ -473,34 +473,34 @@ intLispRemove(int elem, List *list)
 #endif
 
 List	   *
-set_difference(List *list1, List *list2)
+set_difference(List *l1, List *l2)
 {
 	List	   *temp1 = NIL;
 	List	   *result = NIL;
 
-	if (list2 == NIL)
-		return (list1);
+	if (l2 == NIL)
+		return (l1);
 
-	foreach(temp1, list1)
+	foreach(temp1, l1)
 	{
-		if (!member(lfirst(temp1), list2))
+		if (!member(lfirst(temp1), l2))
 			result = lappend(result, lfirst(temp1));
 	}
 	return (result);
 }
 
 List	   *
-set_differencei(List *list1, List *list2)
+set_differencei(List *l1, List *l2)
 {
 	List	   *temp1 = NIL;
 	List	   *result = NIL;
 
-	if (list2 == NIL)
-		return (list1);
+	if (l2 == NIL)
+		return (l1);
 
-	foreach(temp1, list1)
+	foreach(temp1, l1)
 	{
-		if (!intMember(lfirsti(temp1), list2))
+		if (!intMember(lfirsti(temp1), l2))
 			result = lappendi(result, lfirsti(temp1));
 	}
 	return (result);
