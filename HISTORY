@@ -129,7 +129,7 @@ Use local buffer cache for temporary tables so no WAL overhead (Tom)
 
 Privileges
 ==========
-Add privileges on functions and procedural languages
+Add privileges on functions and procedural languages (Peter)
 Add OWNER to CREATE DATABASE so superusers can create databases
   on behalf of unprivileged users.  (Gavin Sherry, Tom)
 Add new object permission bits EXECUTE and USAGE (Tom)
@@ -213,7 +213,7 @@ Auto-destroy sequence on DROP of table with SERIAL (Rod)
 Prevent column dropping if column is used by foreign key (Rod)
 Automatically drop constraints/functions when object is dropped (Rod)
 Add CREATE/DROP OPERATOR CLASS (Bill Studenmund, Tom)
-Add ALTER TABLE DROP COLUMN (Christopher)
+Add ALTER TABLE DROP COLUMN (Christopher, Tom, Hiroshi)
 Prevent inherited columns from being removed or renamed (Alvaro Herrera)
 Add CREATE OR REPLACE VIEW, CREATE OR REPLACE RULE (Gavin, Neil, Tom)
 Fix foreign key constraints to not error on intermediate db states (Stephan)
@@ -253,6 +253,7 @@ Add clusterdb utility that will auto-cluster an entire database based on
   previous CLUSTER operations (Alvaro Herrera)
 Overhaul pg_dumpall (Peter)
 Allow REINDEX of TOAST tables (Tom)
+Implemented START TRANSACTION, per SQL99 (Neil)
 
 Data Types and Functions
 ========================
@@ -299,7 +300,7 @@ Fix cash_words() to not overflow buffer (Tom)
 Add functions replace(), split(), to_hex() (Joe)
 Fix LIKE for bytea as a right-hand argument (Joe)
 Prevent crashes caused by SELECT cash_out(2)
-Triggers are now fired in alphabetical order
+Triggers are now fired in alphabetical order (Tom)
 
 Internationalization
 ====================
@@ -320,7 +321,7 @@ Server-side Languages
 =====================
 Allow recursive SQL function (Peter)
 Change PL/Tcl build to use configured compiler and Makefile.shlib (Peter)
-Have PL/PgSQL FOUND return proper value for PERFORM and SELECT INTO (Tom, Neil)
+Overhaul the PL/PgSQL FOUND variable to be more Oracle-compatible (Tom, Neil)
 Allow PL/PgSQL to handle quoted identifiers (Tom)
 Allow PL/pgSQL functions can return sets (Neil)
 
@@ -416,9 +417,9 @@ Fix memory leak in rtree (Kenneth Been)
 Modify a few error messages for consistency (Bruce)
 Remove unused system table columns (Peter)
 Make system columns NOT NULL where appropriate (Tom)
-Clean up use of sprintf in favor of snprintf()
+Clean up use of sprintf in favor of snprintf() (Neil, Jukka Holappa)
 Remove OPAQUE and create specific subtypes (Tom)
-Cleanups in array internal handling (Joe)
+Cleanups in array internal handling (Joe, Tom)
 Disallow pg_atoi('') (Bruce)
 Remove GUC parameter wal_files because WAL files are now recycled (Bruce)
 
