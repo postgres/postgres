@@ -16,7 +16,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.58 2002/07/30 16:08:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.59 2002/09/02 01:05:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,7 +83,6 @@ HeapTupleSatisfiesItself(HeapTupleHeader tuple)
 					return false;
 				}
 				tuple->t_infomask |= HEAP_XMIN_COMMITTED;
-				tuple->t_infomask &= ~HEAP_MOVED;
 			}
 		}
 		else if (tuple->t_infomask & HEAP_MOVED_IN)
@@ -93,10 +92,7 @@ HeapTupleSatisfiesItself(HeapTupleHeader tuple)
 				if (TransactionIdIsInProgress(HeapTupleHeaderGetXvac(tuple)))
 					return false;
 				if (TransactionIdDidCommit(HeapTupleHeaderGetXvac(tuple)))
-				{
 					tuple->t_infomask |= HEAP_XMIN_COMMITTED;
-					tuple->t_infomask &= ~HEAP_MOVED;
-				}
 				else
 				{
 					tuple->t_infomask |= HEAP_XMIN_INVALID;
@@ -223,7 +219,6 @@ HeapTupleSatisfiesNow(HeapTupleHeader tuple)
 					return false;
 				}
 				tuple->t_infomask |= HEAP_XMIN_COMMITTED;
-				tuple->t_infomask &= ~HEAP_MOVED;
 			}
 		}
 		else if (tuple->t_infomask & HEAP_MOVED_IN)
@@ -233,10 +228,7 @@ HeapTupleSatisfiesNow(HeapTupleHeader tuple)
 				if (TransactionIdIsInProgress(HeapTupleHeaderGetXvac(tuple)))
 					return false;
 				if (TransactionIdDidCommit(HeapTupleHeaderGetXvac(tuple)))
-				{
 					tuple->t_infomask |= HEAP_XMIN_COMMITTED;
-					tuple->t_infomask &= ~HEAP_MOVED;
-				}
 				else
 				{
 					tuple->t_infomask |= HEAP_XMIN_INVALID;
@@ -344,7 +336,6 @@ HeapTupleSatisfiesToast(HeapTupleHeader tuple)
 					return false;
 				}
 				tuple->t_infomask |= HEAP_XMIN_COMMITTED;
-				tuple->t_infomask &= ~HEAP_MOVED;
 			}
 		}
 		else if (tuple->t_infomask & HEAP_MOVED_IN)
@@ -354,10 +345,7 @@ HeapTupleSatisfiesToast(HeapTupleHeader tuple)
 				if (TransactionIdIsInProgress(HeapTupleHeaderGetXvac(tuple)))
 					return false;
 				if (TransactionIdDidCommit(HeapTupleHeaderGetXvac(tuple)))
-				{
 					tuple->t_infomask |= HEAP_XMIN_COMMITTED;
-					tuple->t_infomask &= ~HEAP_MOVED;
-				}
 				else
 				{
 					tuple->t_infomask |= HEAP_XMIN_INVALID;
@@ -401,7 +389,6 @@ HeapTupleSatisfiesUpdate(HeapTuple htuple, CommandId curcid)
 					return HeapTupleInvisible;
 				}
 				tuple->t_infomask |= HEAP_XMIN_COMMITTED;
-				tuple->t_infomask &= ~HEAP_MOVED;
 			}
 		}
 		else if (tuple->t_infomask & HEAP_MOVED_IN)
@@ -411,10 +398,7 @@ HeapTupleSatisfiesUpdate(HeapTuple htuple, CommandId curcid)
 				if (TransactionIdIsInProgress(HeapTupleHeaderGetXvac(tuple)))
 					return HeapTupleInvisible;
 				if (TransactionIdDidCommit(HeapTupleHeaderGetXvac(tuple)))
-				{
 					tuple->t_infomask |= HEAP_XMIN_COMMITTED;
-					tuple->t_infomask &= ~HEAP_MOVED;
-				}
 				else
 				{
 					tuple->t_infomask |= HEAP_XMIN_INVALID;
@@ -536,7 +520,6 @@ HeapTupleSatisfiesDirty(HeapTupleHeader tuple)
 					return false;
 				}
 				tuple->t_infomask |= HEAP_XMIN_COMMITTED;
-				tuple->t_infomask &= ~HEAP_MOVED;
 			}
 		}
 		else if (tuple->t_infomask & HEAP_MOVED_IN)
@@ -546,10 +529,7 @@ HeapTupleSatisfiesDirty(HeapTupleHeader tuple)
 				if (TransactionIdIsInProgress(HeapTupleHeaderGetXvac(tuple)))
 					return false;
 				if (TransactionIdDidCommit(HeapTupleHeaderGetXvac(tuple)))
-				{
 					tuple->t_infomask |= HEAP_XMIN_COMMITTED;
-					tuple->t_infomask &= ~HEAP_MOVED;
-				}
 				else
 				{
 					tuple->t_infomask |= HEAP_XMIN_INVALID;
@@ -671,7 +651,6 @@ HeapTupleSatisfiesSnapshot(HeapTupleHeader tuple, Snapshot snapshot)
 					return false;
 				}
 				tuple->t_infomask |= HEAP_XMIN_COMMITTED;
-				tuple->t_infomask &= ~HEAP_MOVED;
 			}
 		}
 		else if (tuple->t_infomask & HEAP_MOVED_IN)
@@ -681,10 +660,7 @@ HeapTupleSatisfiesSnapshot(HeapTupleHeader tuple, Snapshot snapshot)
 				if (TransactionIdIsInProgress(HeapTupleHeaderGetXvac(tuple)))
 					return false;
 				if (TransactionIdDidCommit(HeapTupleHeaderGetXvac(tuple)))
-				{
 					tuple->t_infomask |= HEAP_XMIN_COMMITTED;
-					tuple->t_infomask &= ~HEAP_MOVED;
-				}
 				else
 				{
 					tuple->t_infomask |= HEAP_XMIN_INVALID;
@@ -833,7 +809,6 @@ HeapTupleSatisfiesVacuum(HeapTupleHeader tuple, TransactionId OldestXmin)
 				return HEAPTUPLE_DEAD;
 			}
 			tuple->t_infomask |= HEAP_XMIN_COMMITTED;
-			tuple->t_infomask &= ~HEAP_MOVED;
 		}
 		else if (tuple->t_infomask & HEAP_MOVED_IN)
 		{
@@ -842,10 +817,7 @@ HeapTupleSatisfiesVacuum(HeapTupleHeader tuple, TransactionId OldestXmin)
 			if (TransactionIdIsInProgress(HeapTupleHeaderGetXvac(tuple)))
 				return HEAPTUPLE_INSERT_IN_PROGRESS;
 			if (TransactionIdDidCommit(HeapTupleHeaderGetXvac(tuple)))
-			{
 				tuple->t_infomask |= HEAP_XMIN_COMMITTED;
-				tuple->t_infomask &= ~HEAP_MOVED;
-			}
 			else
 			{
 				tuple->t_infomask |= HEAP_XMIN_INVALID;

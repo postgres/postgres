@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.91 2002/08/29 00:17:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.92 2002/09/02 01:05:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -230,7 +230,6 @@ ProcedureCreate(const char *procedureName,
 		/* start out with empty permissions */
 		nulls[Anum_pg_proc_proacl-1] = 'n';
 
-		AssertTupleDescHasOid(tupDesc);
 		tup = heap_formtuple(tupDesc, values, nulls);
 		simple_heap_insert(rel, tup);
 		is_update = false;
@@ -239,7 +238,6 @@ ProcedureCreate(const char *procedureName,
 	/* Need to update indexes for either the insert or update case */
 	CatalogUpdateIndexes(rel, tup);
 
-	AssertTupleDescHasOid(tupDesc);
 	retval = HeapTupleGetOid(tup);
 
 	/*

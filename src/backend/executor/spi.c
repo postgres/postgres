@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.72 2002/07/20 05:16:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.73 2002/09/02 01:05:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -392,7 +392,6 @@ SPI_modifytuple(Relation rel, HeapTuple tuple, int natts, int *attnum,
 	MemoryContext oldcxt = NULL;
 	HeapTuple	mtuple;
 	int			numberOfAttributes;
-	uint8		infomask;
 	Datum	   *v;
 	char	   *n;
 	bool		isnull;
@@ -434,14 +433,13 @@ SPI_modifytuple(Relation rel, HeapTuple tuple, int natts, int *attnum,
 	if (i == natts)				/* no errors in *attnum */
 	{
 		mtuple = heap_formtuple(rel->rd_att, v, n);
-		infomask = mtuple->t_data->t_infomask;
 		/*
-		 * copy t_xmin, t_cid, t_xmax, t_ctid, t_natts, t_infomask
+		 * copy the identification info of the old tuple: t_ctid, t_self,
+		 * and OID (if any)
 		 */
-		memmove((char *)mtuple->t_data, (char *)tuple->t_data,
-				offsetof(HeapTupleHeaderData, t_hoff));
-		mtuple->t_data->t_infomask = infomask;
-		mtuple->t_data->t_natts = numberOfAttributes;
+		mtuple->t_data->t_ctid = tuple->t_data->t_ctid;
+		mtuple->t_self = tuple->t_self;
+		mtuple->t_tableOid = tuple->t_tableOid;
 		if (rel->rd_rel->relhasoids)
 			HeapTupleSetOid(mtuple, HeapTupleGetOid(tuple));
 	}

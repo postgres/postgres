@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.85 2002/08/29 00:17:03 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.86 2002/09/02 01:05:04 tgl Exp $
  *
  */
 
@@ -69,7 +69,7 @@ ExplainQuery(ExplainStmt *stmt, CommandDest dest)
 	List	   *l;
 
 	/* need a tuple descriptor representing a single TEXT column */
-	tupdesc = CreateTemplateTupleDesc(1, WITHOUTOID);
+	tupdesc = CreateTemplateTupleDesc(1, false);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "QUERY PLAN",
 					   TEXTOID, -1, 0, false);
 

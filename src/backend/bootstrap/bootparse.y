@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.51 2002/08/30 22:18:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.52 2002/09/02 01:05:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -166,20 +166,20 @@ Boot_CreateStmt:
 				}
 		  RPAREN
 				{
+					TupleDesc tupdesc;
+
 					do_start();
+
+					tupdesc = CreateTupleDesc(numattr, !($4), attrtypes);
 
 					if ($2)
 					{
-						TupleDesc tupdesc;
-
 						if (boot_reldesc)
 						{
 							elog(DEBUG3, "create bootstrap: warning, open relation exists, closing first");
 							closerel(NULL);
 						}
 
-						tupdesc = CreateTupleDesc(numattr, attrtypes);
-						tupdesc->tdhasoid = BoolToHasOid(! ($4));
 						boot_reldesc = heap_create(LexIDStr($5),
 												   PG_CATALOG_NAMESPACE,
 												   tupdesc,
@@ -191,15 +191,12 @@ Boot_CreateStmt:
 					else
 					{
 						Oid id;
-						TupleDesc tupdesc;
 
-						tupdesc = CreateTupleDesc(numattr,attrtypes);
 						id = heap_create_with_catalog(LexIDStr($5),
 													  PG_CATALOG_NAMESPACE,
 													  tupdesc,
 													  RELKIND_RELATION,
 													  $3,
-													  ! ($4),
 													  true);
 						elog(DEBUG3, "relation created with oid %u", id);
 					}

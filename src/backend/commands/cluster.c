@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.87 2002/08/27 03:38:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.88 2002/09/02 01:05:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -199,7 +199,6 @@ make_new_heap(Oid OIDOldHeap, const char *NewName)
 										  tupdesc,
 										  OldHeap->rd_rel->relkind,
 										  OldHeap->rd_rel->relisshared,
-										  OldHeap->rd_rel->relhasoids,
 										  allowSystemTableMods);
 
 	/*

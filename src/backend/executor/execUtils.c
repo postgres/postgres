@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.88 2002/08/06 02:36:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.89 2002/09/02 01:05:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -291,22 +291,36 @@ void
 ExecAssignResultTypeFromTL(Plan *node, CommonState *commonstate)
 {
 	ResultRelInfo *ri;
-	Relation	rel;
-	hasoid_t	withoid;
+	bool		hasoid = false;
 	TupleDesc	tupDesc;
 
+	/*
+	 * This is pretty grotty: we need to ensure that result tuples have
+	 * space for an OID iff they are going to be stored into a relation
+	 * that has OIDs.  We assume that estate->es_result_relation_info
+	 * is already set up to describe the target relation.  One reason
+	 * this is ugly is that all plan nodes in the plan tree will emit
+	 * tuples with space for an OID, though we really only need the topmost
+	 * plan to do so.
+	 *
+	 * It would be better to have InitPlan adjust the topmost plan node's
+	 * output descriptor after plan tree initialization.  However, that
+	 * doesn't quite work because in an UPDATE that spans an inheritance
+	 * tree, some of the target relations may have OIDs and some not.
+	 * We have to make the decision on a per-relation basis as we initialize
+	 * each of the child plans of the topmost Append plan.  So, this is ugly
+	 * but it works, for now ...
+	 */
 	ri = node->state->es_result_relation_info;
 	if (ri != NULL)
-		rel = ri->ri_RelationDesc;
-	else
-		rel = node->state->es_into_relation_descriptor;
+	{
+		Relation	rel = ri->ri_RelationDesc;
 
-	if (rel != NULL)
-		withoid = BoolToHasOid(rel->rd_rel->relhasoids);
-	else
-		withoid = WITHOUTOID;
+		if (rel != NULL)
+			hasoid = rel->rd_rel->relhasoids;
+	}
 		
-	tupDesc = ExecTypeFromTL(node->targetlist, withoid);
+	tupDesc = ExecTypeFromTL(node->targetlist, hasoid);
 	ExecAssignResultType(commonstate, tupDesc, true);
 }
 

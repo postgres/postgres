@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.112 2002/08/30 22:18:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.113 2002/09/02 01:05:06 tgl Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -98,7 +98,6 @@ ReverifyMyDatabase(const char *name)
 	pgdbscan = heap_beginscan(pgdbrel, SnapshotNow, 1, &key);
 
 	tup = heap_getnext(pgdbscan, ForwardScanDirection);
-	AssertTupleDescHasOid(pgdbrel->rd_att);
 	if (!HeapTupleIsValid(tup) ||
 		HeapTupleGetOid(tup) != MyDatabaseId)
 	{

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tupdesc.h,v 1.37 2002/07/20 05:16:59 momjian Exp $
+ * $Id: tupdesc.h,v 1.38 2002/09/02 01:05:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,14 +41,9 @@ typedef struct tupleConstr
 	bool		has_not_null;
 } TupleConstr;
 
-typedef char hasoid_t;
-#define WITHOID 'C'
-#define WITHOUTOID 'S'
-#define UNDEFOID '?'
-#define BoolToHasOid(b) ((b) ? WITHOID : WITHOUTOID)
 /*
  * This structure contains all information (i.e. from Classes
- * pg_attribute, pg_attrdef, pg_constraint) for a tuple.
+ * pg_attribute, pg_attrdef, pg_constraint) for the structure of a tuple.
  */
 typedef struct tupleDesc
 {
@@ -56,29 +51,14 @@ typedef struct tupleDesc
 	Form_pg_attribute *attrs;
 	/* attrs[N] is a pointer to the description of Attribute Number N+1.  */
 	TupleConstr *constr;
-	hasoid_t	tdhasoid;		/* Tuple has an oid attribute in its header */
+	bool		tdhasoid;		/* Tuple has oid attribute in its header */
 }	*TupleDesc;
 
-#ifdef DEBUG_TUPLE_ACCESS
 
-#define AssertTupleDescHasOidIsValid(td) \
-	Assert(((td)->tdhasoid == WITHOID) || ((td)->tdhasoid == WITHOUTOID))
-#define AssertTupleDescHasOid(td) \
-	Assert((td)->tdhasoid == WITHOID)
-#define AssertTupleDescHasNoOid(td) \
-	Assert((td)->tdhasoid == WITHOUTOID)
+extern TupleDesc CreateTemplateTupleDesc(int natts, bool hasoid);
 
-#else
-
-#define AssertTupleDescHasOidIsValid(td)
-#define AssertTupleDescHasOid(td)
-#define AssertTupleDescHasNoOid(td)
-
-#endif
-
-extern TupleDesc CreateTemplateTupleDesc(int natts, hasoid_t withoid);
-
-extern TupleDesc CreateTupleDesc(int natts, Form_pg_attribute *attrs);
+extern TupleDesc CreateTupleDesc(int natts, bool hasoid,
+								 Form_pg_attribute *attrs);
 
 extern TupleDesc CreateTupleDescCopy(TupleDesc tupdesc);
 

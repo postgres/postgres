@@ -16,7 +16,7 @@
  *
  *	Copyright (c) 2001, PostgreSQL Global Development Group
  *
- *	$Header: /cvsroot/pgsql/src/backend/postmaster/pgstat.c,v 1.24 2002/08/29 07:22:23 ishii Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/postmaster/pgstat.c,v 1.25 2002/09/02 01:05:05 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -620,7 +620,6 @@ pgstat_vacuum_tabstat(void)
 			dbidlist = (Oid *) repalloc((char *) dbidlist,
 										sizeof(Oid) * dbidalloc);
 		}
-		AssertTupleDescHasOid(dbrel->rd_att);
 		dbidlist[dbidused++] = HeapTupleGetOid(dbtup);
 	}
 	heap_endscan(dbscan);

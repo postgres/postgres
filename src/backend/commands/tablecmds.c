@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.37 2002/08/30 19:23:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.38 2002/09/02 01:05:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -150,7 +150,8 @@ DefineRelation(CreateStmt *stmt, char relkind)
 	 * have to copy inherited constraints here.)
 	 */
 	descriptor = BuildDescForRelation(schema);
-	descriptor->tdhasoid = BoolToHasOid(stmt->hasoids || parentHasOids);
+
+	descriptor->tdhasoid = (stmt->hasoids || parentHasOids);
 
 	if (old_constraints != NIL)
 	{
@@ -212,7 +213,6 @@ DefineRelation(CreateStmt *stmt, char relkind)
 										  descriptor,
 										  relkind,
 										  false,
-										  stmt->hasoids || parentHasOids,
 										  allowSystemTableMods);
 
 	StoreCatalogInheritance(relationId, inheritOids);
@@ -1733,7 +1733,6 @@ AlterTableAddColumn(Oid myrelid,
 
 	ReleaseSysCache(typeTuple);
 
-	AssertTupleDescHasNoOid(attrdesc->rd_att);
 	simple_heap_insert(attrdesc, attributeTuple);
 
 	/* Update indexes on pg_attribute */
@@ -1747,7 +1746,7 @@ AlterTableAddColumn(Oid myrelid,
 	newreltup = heap_copytuple(reltup);
 
 	((Form_pg_class) GETSTRUCT(newreltup))->relnatts = maxatts;
-	AssertTupleDescHasOid(pgclass->rd_att);
+
 	simple_heap_update(pgclass, &newreltup->t_self, newreltup);
 
 	/* keep catalog indexes current */
@@ -3430,7 +3429,7 @@ AlterTableCreateToastTable(Oid relOid, bool silent)
 	snprintf(toast_idxname, NAMEDATALEN, "pg_toast_%u_index", relOid);
 
 	/* this is pretty painful...  need a tuple descriptor */
-	tupdesc = CreateTemplateTupleDesc(3, WITHOUTOID);
+	tupdesc = CreateTemplateTupleDesc(3, false);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1,
 					   "chunk_id",
 					   OIDOID,
@@ -3464,7 +3463,6 @@ AlterTableCreateToastTable(Oid relOid, bool silent)
 										   tupdesc,
 										   RELKIND_TOASTVALUE,
 										   shared_relation,
-										   false,
 										   true);
 
 	/* make the toast relation visible, else index creation will fail */

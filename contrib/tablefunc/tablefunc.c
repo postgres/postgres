@@ -614,7 +614,7 @@ make_crosstab_tupledesc(TupleDesc spi_tupdesc, int num_catagories)
 	 * spi result input column.
 	 */
 	natts = num_catagories + 1;
-	tupdesc = CreateTemplateTupleDesc(natts, WITHOUTOID);
+	tupdesc = CreateTemplateTupleDesc(natts, false);
 
 	/* first the rowname column */
 	attnum = 1;

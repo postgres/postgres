@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.235 2002/08/30 22:18:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.236 2002/09/02 01:05:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -396,7 +396,6 @@ getrels(const RangeVar *vacrel, const char *stmttype)
 		{
 			/* Make a relation list entry for this guy */
 			oldcontext = MemoryContextSwitchTo(vac_context);
-			AssertTupleDescHasOid(pgclass->rd_att);
 			vrl = lappendi(vrl, HeapTupleGetOid(tuple));
 			MemoryContextSwitchTo(oldcontext);
 		}
@@ -1861,8 +1860,9 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 					/* NO ELOG(ERROR) TILL CHANGES ARE LOGGED */
 					START_CRIT_SECTION();
 
-					tuple.t_data->t_infomask &=
-						~(HEAP_XMIN_COMMITTED | HEAP_XMIN_INVALID | HEAP_MOVED_IN);
+					tuple.t_data->t_infomask &= ~(HEAP_XMIN_COMMITTED |
+												  HEAP_XMIN_INVALID |
+												  HEAP_MOVED_IN);
 					tuple.t_data->t_infomask |= HEAP_MOVED_OFF;
 					HeapTupleHeaderSetXvac(tuple.t_data, myXID);
 
@@ -1901,12 +1901,16 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 					 * Update the state of the copied tuple, and store it
 					 * on the destination page.
 					 */
-					newtup.t_data->t_infomask &=
-						~(HEAP_XMIN_COMMITTED | HEAP_XMIN_INVALID | HEAP_MOVED_OFF);
+					newtup.t_data->t_infomask &= ~(HEAP_XMIN_COMMITTED |
+												   HEAP_XMIN_INVALID |
+												   HEAP_MOVED_OFF);
 					newtup.t_data->t_infomask |= HEAP_MOVED_IN;
 					HeapTupleHeaderSetXvac(newtup.t_data, myXID);
-					newoff = PageAddItem(ToPage, (Item) newtup.t_data, tuple_len,
-										 InvalidOffsetNumber, LP_USED);
+					newoff = PageAddItem(ToPage,
+										 (Item) newtup.t_data,
+										 tuple_len,
+										 InvalidOffsetNumber,
+										 LP_USED);
 					if (newoff == InvalidOffsetNumber)
 					{
 						elog(PANIC, "moving chain: failed to add item with len = %lu to page %u",
@@ -2038,11 +2042,11 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 			START_CRIT_SECTION();
 
 			/*
-			 * Mark new tuple as moved_in by vacuum and store vacuum XID
-			 * in t_cid !!!
+			 * Mark new tuple as MOVED_IN by me.
 			 */
-			newtup.t_data->t_infomask &=
-				~(HEAP_XMIN_COMMITTED | HEAP_XMIN_INVALID | HEAP_MOVED_OFF);
+			newtup.t_data->t_infomask &= ~(HEAP_XMIN_COMMITTED |
+										   HEAP_XMIN_INVALID |
+										   HEAP_MOVED_OFF);
 			newtup.t_data->t_infomask |= HEAP_MOVED_IN;
 			HeapTupleHeaderSetXvac(newtup.t_data, myXID);
 
@@ -2064,11 +2068,11 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 			newtup.t_self = newtup.t_data->t_ctid;
 
 			/*
-			 * Mark old tuple as moved_off by vacuum and store vacuum XID
-			 * in t_cid !!!
+			 * Mark old tuple as MOVED_OFF by me.
 			 */
-			tuple.t_data->t_infomask &=
-				~(HEAP_XMIN_COMMITTED | HEAP_XMIN_INVALID | HEAP_MOVED_IN);
+			tuple.t_data->t_infomask &= ~(HEAP_XMIN_COMMITTED |
+										  HEAP_XMIN_INVALID |
+										  HEAP_MOVED_IN);
 			tuple.t_data->t_infomask |= HEAP_MOVED_OFF;
 			HeapTupleHeaderSetXvac(tuple.t_data, myXID);
 

@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.73 2002/08/22 00:01:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.74 2002/09/02 01:05:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -110,7 +110,6 @@ regprocin(PG_FUNCTION_ARGS)
 
 		while (HeapTupleIsValid(tuple = systable_getnext(sysscan)))
 		{
-			AssertTupleDescHasOid(hdesc->rd_att);
 			result = (RegProcedure) HeapTupleGetOid(tuple);
 			if (++matches > 1)
 				break;
@@ -425,7 +424,6 @@ regoperin(PG_FUNCTION_ARGS)
 
 		while (HeapTupleIsValid(tuple = systable_getnext(sysscan)))
 		{
-			AssertTupleDescHasOid(hdesc->rd_att);
 			result = HeapTupleGetOid(tuple);
 			if (++matches > 1)
 				break;
@@ -756,10 +754,7 @@ regclassin(PG_FUNCTION_ARGS)
 									 SnapshotNow, 1, skey);
 
 		if (HeapTupleIsValid(tuple = systable_getnext(sysscan)))
-		{
-			AssertTupleDescHasOid(hdesc->rd_att);
 			result = HeapTupleGetOid(tuple);
-		}
 		else
 			elog(ERROR, "No class with name %s", class_name_or_oid);
 
@@ -912,10 +907,7 @@ regtypein(PG_FUNCTION_ARGS)
 									 SnapshotNow, 1, skey);
 
 		if (HeapTupleIsValid(tuple = systable_getnext(sysscan)))
-		{
-			AssertTupleDescHasOid(hdesc->rd_att);
 			result = HeapTupleGetOid(tuple);
-		}
 		else
 			elog(ERROR, "No type with name %s", typ_name_or_oid);
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeFunctionscan.c,v 1.10 2002/08/31 19:09:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeFunctionscan.c,v 1.11 2002/09/02 01:05:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -209,7 +209,7 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate, Plan *parent)
 		 */
 		char	   *attname = strVal(lfirst(rte->eref->colnames));
 
-		tupdesc = CreateTemplateTupleDesc(1, WITHOUTOID);
+		tupdesc = CreateTemplateTupleDesc(1, false);
 		TupleDescInitEntry(tupdesc,
 						   (AttrNumber) 1,
 						   attname,
@@ -223,10 +223,7 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate, Plan *parent)
 		/*
 		 * Must be a pseudo type, i.e. record
 		 */
-		List *coldeflist = rte->coldeflist;
-
-		tupdesc = BuildDescForRelation(coldeflist);
-		tupdesc->tdhasoid = WITHOUTOID;
+		tupdesc = BuildDescForRelation(rte->coldeflist);
 	}
 	else
 		elog(ERROR, "Unknown kind of return type specified for function");

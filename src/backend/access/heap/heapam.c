@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.146 2002/08/29 00:17:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.147 2002/09/02 01:05:03 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1116,6 +1116,10 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid)
 
 	if (relation->rd_rel->relhasoids)
 	{
+#ifdef NOT_USED
+		/* this is redundant with an Assert in HeapTupleSetOid */
+		Assert(tup->t_data->t_infomask & HEAP_HASOID);
+#endif
 		/*
 		 * If the object id of this tuple has already been assigned, trust
 		 * the caller.	There are a couple of ways this can happen.  At
@@ -1125,22 +1129,21 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid)
 		 * to support a persistent object store (objects need to contain
 		 * pointers to one another).
 		 */
-		AssertTupleDescHasOid(relation->rd_att);
 		if (!OidIsValid(HeapTupleGetOid(tup)))
 			HeapTupleSetOid(tup, newoid());
 		else
 			CheckMaxObjectId(HeapTupleGetOid(tup));
 	}
+	else
+	{
+		/* check there is not space for an OID */
+		Assert(!(tup->t_data->t_infomask & HEAP_HASOID));
+	}
 
 	tup->t_data->t_infomask &= ~(HEAP_XACT_MASK);
+	tup->t_data->t_infomask |= HEAP_XMAX_INVALID;
 	HeapTupleHeaderSetXmin(tup->t_data, GetCurrentTransactionId());
 	HeapTupleHeaderSetCmin(tup->t_data, cid);
-	HeapTupleHeaderSetXmaxInvalid(tup->t_data);
-	/*
-	 * Do *not* set Cmax!  This would overwrite Cmin.
-	 */
-	/* HeapTupleHeaderSetCmax(tup->t_data, FirstCommandId); */
-	tup->t_data->t_infomask |= HEAP_XMAX_INVALID;
 	tup->t_tableOid = relation->rd_id;
 
 #ifdef TUPLE_TOASTER_ACTIVE
@@ -1181,13 +1184,7 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid)
 		rdata[0].len = SizeOfHeapInsert;
 		rdata[0].next = &(rdata[1]);
 
-		if (relation->rd_rel->relhasoids)
-		{
-			AssertTupleDescHasOid(relation->rd_att);
-			xlhdr.t_oid = HeapTupleGetOid(tup);
-		}
-		else
-			xlhdr.t_oid = InvalidOid;
+		xlhdr.t_oid = HeapTupleGetOid(tup);
 		xlhdr.t_natts = tup->t_data->t_natts;
 		xlhdr.t_hoff = tup->t_data->t_hoff;
 		xlhdr.mask = tup->t_data->t_infomask;
@@ -1234,10 +1231,6 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid)
 	 */
 	CacheInvalidateHeapTuple(relation, tup);
 
-	if (!relation->rd_rel->relhasoids)
-		return InvalidOid;
-		
-	AssertTupleDescHasOid(relation->rd_att);
 	return HeapTupleGetOid(tup);
 }
 
@@ -1343,7 +1336,9 @@ l1:
 
 	/* store transaction information of xact deleting the tuple */
 	tp.t_data->t_infomask &= ~(HEAP_XMAX_COMMITTED |
-							 HEAP_XMAX_INVALID | HEAP_MARKED_FOR_UPDATE);
+							   HEAP_XMAX_INVALID |
+							   HEAP_MARKED_FOR_UPDATE |
+							   HEAP_MOVED);
 	HeapTupleHeaderSetXmax(tp.t_data, GetCurrentTransactionId());
 	HeapTupleHeaderSetCmax(tp.t_data, cid);
 	/* Make sure there is no forward chain link in t_ctid */
@@ -1543,14 +1538,22 @@ l2:
 	/* Fill in OID and transaction status data for newtup */
 	if (relation->rd_rel->relhasoids)
 	{
-		AssertTupleDescHasOid(relation->rd_att);
+#ifdef NOT_USED
+		/* this is redundant with an Assert in HeapTupleSetOid */
+		Assert(newtup->t_data->t_infomask & HEAP_HASOID);
+#endif
 		HeapTupleSetOid(newtup, HeapTupleGetOid(&oldtup));
 	}
+	else
+	{
+		/* check there is not space for an OID */
+		Assert(!(newtup->t_data->t_infomask & HEAP_HASOID));
+	}
+
 	newtup->t_data->t_infomask &= ~(HEAP_XACT_MASK);
 	newtup->t_data->t_infomask |= (HEAP_XMAX_INVALID | HEAP_UPDATED);
 	HeapTupleHeaderSetXmin(newtup->t_data, GetCurrentTransactionId());
 	HeapTupleHeaderSetCmin(newtup->t_data, cid);
-	HeapTupleHeaderSetXmaxInvalid(newtup->t_data);
 
 	/*
 	 * If the toaster needs to be activated, OR if the new tuple will not
@@ -1586,7 +1589,8 @@ l2:
 
 		oldtup.t_data->t_infomask &= ~(HEAP_XMAX_COMMITTED |
 									   HEAP_XMAX_INVALID |
-									   HEAP_MARKED_FOR_UPDATE);
+									   HEAP_MARKED_FOR_UPDATE |
+									   HEAP_MOVED);
 		oldtup.t_data->t_infomask |= HEAP_XMAX_UNLOGGED;
 		HeapTupleHeaderSetXmax(oldtup.t_data, GetCurrentTransactionId());
 		HeapTupleHeaderSetCmax(oldtup.t_data, cid);
@@ -1677,7 +1681,8 @@ l2:
 	{
 		oldtup.t_data->t_infomask &= ~(HEAP_XMAX_COMMITTED |
 									   HEAP_XMAX_INVALID |
-									   HEAP_MARKED_FOR_UPDATE);
+									   HEAP_MARKED_FOR_UPDATE |
+									   HEAP_MOVED);
 		HeapTupleHeaderSetXmax(oldtup.t_data, GetCurrentTransactionId());
 		HeapTupleHeaderSetCmax(oldtup.t_data, cid);
 	}
@@ -1852,7 +1857,9 @@ l3:
 	((PageHeader) BufferGetPage(*buffer))->pd_sui = ThisStartUpID;
 
 	/* store transaction information of xact marking the tuple */
-	tuple->t_data->t_infomask &= ~(HEAP_XMAX_COMMITTED | HEAP_XMAX_INVALID);
+	tuple->t_data->t_infomask &= ~(HEAP_XMAX_COMMITTED |
+								   HEAP_XMAX_INVALID |
+								   HEAP_MOVED);
 	tuple->t_data->t_infomask |= HEAP_MARKED_FOR_UPDATE;
 	HeapTupleHeaderSetXmax(tuple->t_data, GetCurrentTransactionId());
 	HeapTupleHeaderSetCmax(tuple->t_data, cid);
@@ -2032,13 +2039,7 @@ log_heap_update(Relation reln, Buffer oldbuf, ItemPointerData from,
 	rdata[1].len = 0;
 	rdata[1].next = &(rdata[2]);
 
-	if (reln->rd_rel->relhasoids)
-	{
-		AssertTupleDescHasOid(reln->rd_att);
-		xlhdr.hdr.t_oid = HeapTupleGetOid(newtup);
-	}
-	else
-		xlhdr.hdr.t_oid = InvalidOid;
+	xlhdr.hdr.t_oid = HeapTupleGetOid(newtup);
 	xlhdr.hdr.t_natts = newtup->t_data->t_natts;
 	xlhdr.hdr.t_hoff = newtup->t_data->t_hoff;
 	xlhdr.hdr.mask = newtup->t_data->t_infomask;
@@ -2197,12 +2198,10 @@ heap_xlog_delete(bool redo, XLogRecPtr lsn, XLogRecord *record)
 
 	if (redo)
 	{
-		/*
-		 * On redo from WAL we cannot rely on a tqual-routine
-		 * to have reset HEAP_MOVED.
-		 */
-		htup->t_infomask &= ~(HEAP_MOVED | HEAP_XMAX_COMMITTED |
-							  HEAP_XMAX_INVALID | HEAP_MARKED_FOR_UPDATE);
+		htup->t_infomask &= ~(HEAP_XMAX_COMMITTED |
+							  HEAP_XMAX_INVALID |
+							  HEAP_MARKED_FOR_UPDATE |
+							  HEAP_MOVED);
 		HeapTupleHeaderSetXmax(htup, record->xl_xid);
 		HeapTupleHeaderSetCmax(htup, FirstCommandId);
 		/* Make sure there is no forward chain link in t_ctid */
@@ -2284,14 +2283,9 @@ heap_xlog_insert(bool redo, XLogRecPtr lsn, XLogRecord *record)
 		htup->t_infomask = HEAP_XMAX_INVALID | xlhdr.mask;
 		HeapTupleHeaderSetXmin(htup, record->xl_xid);
 		HeapTupleHeaderSetCmin(htup, FirstCommandId);
-		HeapTupleHeaderSetXmaxInvalid(htup);
-		HeapTupleHeaderSetCmax(htup, FirstCommandId);
 		htup->t_ctid = xlrec->target.tid;
 		if (reln->rd_rel->relhasoids)
-		{
-			AssertTupleDescHasOid(reln->rd_att);
 			HeapTupleHeaderSetOid(htup, xlhdr.t_oid);
-		}
 
 		offnum = PageAddItem(page, (Item) htup, newlen, offnum,
 							 LP_USED | OverwritePageMode);
@@ -2372,8 +2366,9 @@ heap_xlog_update(bool redo, XLogRecPtr lsn, XLogRecord *record, bool move)
 	{
 		if (move)
 		{
-			htup->t_infomask &=
-				~(HEAP_XMIN_COMMITTED | HEAP_XMIN_INVALID | HEAP_MOVED_IN);
+			htup->t_infomask &= ~(HEAP_XMIN_COMMITTED |
+								  HEAP_XMIN_INVALID |
+								  HEAP_MOVED_IN);
 			htup->t_infomask |= HEAP_MOVED_OFF;
 			HeapTupleHeaderSetXvac(htup, record->xl_xid);
 			/* Make sure there is no forward chain link in t_ctid */
@@ -2381,12 +2376,10 @@ heap_xlog_update(bool redo, XLogRecPtr lsn, XLogRecord *record, bool move)
 		}
 		else
 		{
-			/*
-			 * On redo from WAL we cannot rely on a tqual-routine
-			 * to have reset HEAP_MOVED.
-			 */
-			htup->t_infomask &= ~(HEAP_MOVED | HEAP_XMAX_COMMITTED |
-							 HEAP_XMAX_INVALID | HEAP_MARKED_FOR_UPDATE);
+			htup->t_infomask &= ~(HEAP_XMAX_COMMITTED |
+								  HEAP_XMAX_INVALID |
+								  HEAP_MARKED_FOR_UPDATE |
+								  HEAP_MOVED);
 			HeapTupleHeaderSetXmax(htup, record->xl_xid);
 			HeapTupleHeaderSetCmax(htup, FirstCommandId);
 			/* Set forward chain link in t_ctid */
@@ -2466,10 +2459,8 @@ newsame:;
 		htup->t_natts = xlhdr.t_natts;
 		htup->t_hoff = xlhdr.t_hoff;
 		if (reln->rd_rel->relhasoids)
-		{
-			AssertTupleDescHasOid(reln->rd_att);
 			HeapTupleHeaderSetOid(htup, xlhdr.t_oid);
-		}
+
 		if (move)
 		{
 			TransactionId xid[2];   /* xmax, xmin */
@@ -2479,7 +2470,8 @@ newsame:;
 			       (char *) xlrec + hsize, 2 * sizeof(TransactionId));
 			htup->t_infomask = xlhdr.mask;
 			htup->t_infomask &= ~(HEAP_XMIN_COMMITTED |
-								  HEAP_XMIN_INVALID | HEAP_MOVED_OFF);
+								  HEAP_XMIN_INVALID |
+								  HEAP_MOVED_OFF);
 			htup->t_infomask |= HEAP_MOVED_IN;
 			HeapTupleHeaderSetXmin(htup, xid[1]);
 			HeapTupleHeaderSetXmax(htup, xid[0]);
@@ -2490,8 +2482,6 @@ newsame:;
 			htup->t_infomask = HEAP_XMAX_INVALID | xlhdr.mask;
 			HeapTupleHeaderSetXmin(htup, record->xl_xid);
 			HeapTupleHeaderSetCmin(htup, FirstCommandId);
-			HeapTupleHeaderSetXmaxInvalid(htup);
-			HeapTupleHeaderSetCmax(htup, FirstCommandId);
 		}
 		/* Make sure there is no forward chain link in t_ctid */
 		htup->t_ctid = xlrec->newtid;

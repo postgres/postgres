@@ -74,7 +74,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.53 2002/07/20 05:16:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.54 2002/09/02 01:05:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -525,10 +525,7 @@ PrepareForTupleInvalidation(Relation relation, HeapTuple tuple,
 	tupleRelId = RelationGetRelid(relation);
 
 	if (tupleRelId == RelOid_pg_class)
-	{
-		AssertTupleDescHasOid(relation->rd_att);
 		relationId = HeapTupleGetOid(tuple);
-	}
 	else if (tupleRelId == RelOid_pg_attribute)
 		relationId = ((Form_pg_attribute) GETSTRUCT(tuple))->attrelid;
 	else

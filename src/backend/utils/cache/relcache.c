@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.172 2002/08/11 21:17:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.173 2002/09/02 01:05:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -434,7 +434,8 @@ AllocateRelationDesc(Relation relation, Form_pg_class relp)
 	relation->rd_rel = relationForm;
 
 	/* and allocate attribute tuple form storage */
-	relation->rd_att = CreateTemplateTupleDesc(relationForm->relnatts, BoolToHasOid(relationForm->relhasoids));
+	relation->rd_att = CreateTemplateTupleDesc(relationForm->relnatts,
+											   relationForm->relhasoids);
 
 	MemoryContextSwitchTo(oldcxt);
 
@@ -459,6 +460,8 @@ RelationBuildTupleDesc(RelationBuildDescInfo buildinfo,
 	TupleConstr *constr;
 	AttrDefault *attrdef = NULL;
 	int			ndef = 0;
+
+	relation->rd_att->tdhasoid = RelationGetForm(relation)->relhasoids;
 
 	constr = (TupleConstr *) MemoryContextAlloc(CacheMemoryContext,
 												sizeof(TupleConstr));
@@ -695,7 +698,6 @@ RelationBuildRuleLock(Relation relation)
 		rule = (RewriteRule *) MemoryContextAlloc(rulescxt,
 												  sizeof(RewriteRule));
 
-		AssertTupleDescHasOid(rewrite_tupdesc);
 		rule->ruleId = HeapTupleGetOid(rewrite_tuple);
 
 		rule->event = rewrite_form->ev_type - '0';
@@ -871,7 +873,6 @@ RelationBuildDesc(RelationBuildDescInfo buildinfo,
 	 * initialize the tuple descriptor (relation->rd_att).
 	 */
 	RelationBuildTupleDesc(buildinfo, relation);
-	RelationGetDescr(relation)->tdhasoid = BoolToHasOid(RelationGetForm(relation)->relhasoids);
 
 	/*
 	 * Fetch rules and triggers that affect this relation
@@ -1405,7 +1406,8 @@ formrdesc(const char *relationName,
 	 * right because it will never be replaced.  The input values must be
 	 * correctly defined by macros in src/include/catalog/ headers.
 	 */
-	relation->rd_att = CreateTemplateTupleDesc(natts, BoolToHasOid(relation->rd_rel->relhasoids));
+	relation->rd_att = CreateTemplateTupleDesc(natts,
+											   relation->rd_rel->relhasoids);
 
 	/*
 	 * initialize tuple desc info
@@ -2101,7 +2103,7 @@ RelationBuildLocalRelation(const char *relname,
 	rel->rd_rel->relnamespace = relnamespace;
 
 	rel->rd_rel->relkind = RELKIND_UNCATALOGED;
-	rel->rd_rel->relhasoids = (rel->rd_att->tdhasoid == WITHOID);
+	rel->rd_rel->relhasoids = rel->rd_att->tdhasoid;
 	rel->rd_rel->relnatts = natts;
 	rel->rd_rel->reltype = InvalidOid;
 
@@ -2304,7 +2306,7 @@ RelationCacheInitializePhase2(void)
 			 */
 			Assert(relation->rd_rel != NULL);
 			memcpy((char *) relation->rd_rel, (char *) relp, CLASS_TUPLE_SIZE);
-			relation->rd_att->tdhasoid = BoolToHasOid(relp->relhasoids);
+			relation->rd_att->tdhasoid = relp->relhasoids;
 
 			ReleaseSysCache(htup);
 		}
@@ -2766,7 +2768,8 @@ load_relcache_init_file(void)
 		rel->rd_rel = relform;
 
 		/* initialize attribute tuple forms */
-		rel->rd_att = CreateTemplateTupleDesc(relform->relnatts, BoolToHasOid(relform->relhasoids));
+		rel->rd_att = CreateTemplateTupleDesc(relform->relnatts,
+											  relform->relhasoids);
 
 		/* next read all the attribute tuple form data entries */
 		for (i = 0; i < relform->relnatts; i++)

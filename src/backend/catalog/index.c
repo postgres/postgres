@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.192 2002/08/30 19:23:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.193 2002/09/02 01:05:04 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -111,7 +111,7 @@ BuildFuncTupleDesc(Oid funcOid,
 	/*
 	 * Allocate and zero a tuple descriptor for a one-column tuple.
 	 */
-	funcTupDesc = CreateTemplateTupleDesc(1, UNDEFOID);
+	funcTupDesc = CreateTemplateTupleDesc(1, false);
 	funcTupDesc->attrs[0] = (Form_pg_attribute) palloc(ATTRIBUTE_TUPLE_SIZE);
 	MemSet(funcTupDesc->attrs[0], 0, ATTRIBUTE_TUPLE_SIZE);
 
@@ -199,7 +199,7 @@ ConstructTupleDescriptor(Relation heapRelation,
 	 * allocate the new tuple descriptor
 	 */
 
-	indexTupDesc = CreateTemplateTupleDesc(numatts, WITHOUTOID);
+	indexTupDesc = CreateTemplateTupleDesc(numatts, false);
 
 	/* ----------------
 	 *	  for each attribute we are indexing, obtain its attribute
@@ -328,7 +328,6 @@ UpdateRelationRelation(Relation indexRelation)
 	 * the new tuple must have the oid already chosen for the index.
 	 * sure would be embarrassing to do this sort of thing in polite company.
 	 */
-	AssertTupleDescHasOid(pg_class->rd_att);
 	HeapTupleSetOid(tuple, RelationGetRelid(indexRelation));
 	simple_heap_insert(pg_class, tuple);
 
@@ -577,7 +576,7 @@ index_create(Oid heapRelationId,
 											indexInfo->ii_KeyAttrNumbers,
 												classObjectId);
 
-	indexTupDesc->tdhasoid = WITHOUTOID;
+	indexTupDesc->tdhasoid = false;
 	/*
 	 * create the index relation's relcache entry and physical disk file.
 	 * (If we fail further down, it's the smgr's responsibility to remove
@@ -609,7 +608,7 @@ index_create(Oid heapRelationId,
 	indexRelation->rd_rel->relowner = GetUserId();
 	indexRelation->rd_rel->relam = accessMethodObjectId;
 	indexRelation->rd_rel->relkind = RELKIND_INDEX;
-	indexRelation->rd_rel->relhasoids = false;  /* WITHOUTOID! */
+	indexRelation->rd_rel->relhasoids = false;
 
 	/*
 	 * store index's pg_class entry

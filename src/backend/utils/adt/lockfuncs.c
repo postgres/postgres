@@ -6,7 +6,7 @@
  * Copyright (c) 2002, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/backend/utils/adt/lockfuncs.c,v 1.5 2002/08/31 17:14:28 tgl Exp $
+ *		$Header: /cvsroot/pgsql/src/backend/utils/adt/lockfuncs.c,v 1.6 2002/09/02 01:05:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,7 +50,7 @@ pg_lock_status(PG_FUNCTION_ARGS)
 
 		/* build tupdesc for result tuples */
 		/* this had better match pg_locks view in initdb.sh */
-		tupdesc = CreateTemplateTupleDesc(6, WITHOUTOID);
+		tupdesc = CreateTemplateTupleDesc(6, false);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "relation",
 						   OIDOID, -1, 0, false);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "database",

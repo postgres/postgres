@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufpage.h,v 1.51 2002/08/06 19:37:10 tgl Exp $
+ * $Id: bufpage.h,v 1.52 2002/09/02 01:05:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -97,12 +97,20 @@ typedef uint16 LocationIndex;
  *		pd_lower   	- offset to start of free space.
  *		pd_upper   	- offset to end of free space.
  *		pd_special 	- offset to start of special space.
- *		pd_pagesize	- size in bytes.
- *					  Minimum possible page size is perhaps 64B to fit
- *					  page header, opaque space and a minimal tuple;
- *					  of course, in reality you want it much bigger.
- *					  On the high end, we can only support pages up
- *					  to 32KB because lp_off/lp_len are 15 bits.
+ *		pd_pagesize_version	- size in bytes and page layout version number.
+ *
+ * The page version number and page size are packed together into a single
+ * uint16 field.  This is for historical reasons: before PostgreSQL 7.3,
+ * there was no concept of a page version number, and doing it this way
+ * lets us pretend that pre-7.3 databases have page version number zero.
+ * We constrain page sizes to be multiples of 256, leaving the low eight
+ * bytes available for a version number.
+ *
+ * Minimum possible page size is perhaps 64B to fit page header, opaque space
+ * and a minimal tuple; of course, in reality you want it much bigger, so
+ * the constraint on pagesize mod 256 is not an important restriction.
+ * On the high end, we can only support pages up to 32KB because lp_off/lp_len
+ * are 15 bits.
  */
 typedef struct PageHeaderData
 {
@@ -116,11 +124,17 @@ typedef struct PageHeaderData
 	LocationIndex pd_lower;		/* offset to start of free space */
 	LocationIndex pd_upper;		/* offset to end of free space */
 	LocationIndex pd_special;	/* offset to start of special space */
-	uint16		pd_pagesize;
+	uint16		pd_pagesize_version;
 	ItemIdData	pd_linp[1];		/* beginning of line pointer array */
 } PageHeaderData;
 
 typedef PageHeaderData *PageHeader;
+
+/*
+ * Page layout version number 0 is for pre-7.3 Postgres releases.  The
+ * current version number is 1, denoting a new HeapTupleHeader layout.
+ */
+#define PG_PAGE_LAYOUT_VERSION		1
 
 
 /* ----------------------------------------------------------------
@@ -178,7 +192,7 @@ typedef PageHeaderData *PageHeader;
 	((char *) (&((PageHeader) (page))->pd_linp[0]))
 
 /* ----------------
- *		macros to access opaque space
+ *		macros to access page size info
  * ----------------
  */
 
@@ -203,14 +217,32 @@ typedef PageHeaderData *PageHeader;
  * however, it can be called on a page for which there is no buffer.
  */
 #define PageGetPageSize(page) \
-	((Size) ((PageHeader) (page))->pd_pagesize)
+	((Size) (((PageHeader) (page))->pd_pagesize_version & (uint16) 0xFF00))
 
 /*
- * PageSetPageSize
- *		Sets the page size of a page.
+ * PageGetPageLayoutVersion
+ *		Returns the page layout version of a page.
+ *
+ * this can only be called on a formatted page (unlike
+ * BufferGetPageSize, which can be called on an unformatted page).
+ * however, it can be called on a page for which there is no buffer.
  */
-#define PageSetPageSize(page, size) \
-	(((PageHeader) (page))->pd_pagesize = (size))
+#define PageGetPageLayoutVersion(page) \
+	(((PageHeader) (page))->pd_pagesize_version & 0x00FF)
+
+/*
+ * PageSetPageSizeAndVersion
+ *		Sets the page size and page layout version number of a page.
+ *
+ * We could support setting these two values separately, but there's
+ * no real need for it at the moment.
+ */
+#define PageSetPageSizeAndVersion(page, size, version) \
+( \
+	AssertMacro(((size) & 0xFF00) == (size)), \
+	AssertMacro(((version) & 0x00FF) == (version)), \
+	((PageHeader) (page))->pd_pagesize_version = (size) | (version) \
+)
 
 /* ----------------
  *		page special data macros

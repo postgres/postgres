@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.80 2002/08/25 17:20:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.81 2002/09/02 01:05:03 tgl Exp $
  *
  * NOTES
  *	  The old interface functions have been converted to macros
@@ -80,7 +80,7 @@ DataFill(char *data,
 		bitmask = CSIGNBIT;
 	}
 
-	*infomask &= HEAP_XACT_MASK;
+	*infomask &= ~(HEAP_HASNULL | HEAP_HASVARWIDTH | HEAP_HASEXTENDED);
 
 	for (i = 0; i < numberOfAttributes; i++)
 	{
@@ -584,8 +584,6 @@ heap_formtuple(TupleDesc tupleDescriptor,
 		elog(ERROR, "heap_formtuple: numberOfAttributes %d exceeds limit %d",
 			 numberOfAttributes, MaxTupleAttributeNumber);
 
-	AssertTupleDescHasOidIsValid(tupleDescriptor);
-
 	for (i = 0; i < numberOfAttributes; i++)
 	{
 		if (nulls[i] != ' ')
@@ -600,7 +598,7 @@ heap_formtuple(TupleDesc tupleDescriptor,
 	if (hasnull)
 		len += BITMAPLEN(numberOfAttributes);
 
-	if (tupleDescriptor->tdhasoid == WITHOID)
+	if (tupleDescriptor->tdhasoid)
 		len += sizeof(Oid);
 
 	hoff = len = MAXALIGN(len); /* align user data safely */
@@ -625,6 +623,9 @@ heap_formtuple(TupleDesc tupleDescriptor,
 			 nulls,
 			 &td->t_infomask,
 			 (hasnull ? td->t_bits : NULL));
+
+	if (tupleDescriptor->tdhasoid)
+		td->t_infomask |= HEAP_HASOID;
 
 	td->t_infomask |= HEAP_XMAX_INVALID;
 
@@ -651,7 +652,6 @@ heap_modifytuple(HeapTuple tuple,
 	char	   *nulls;
 	bool		isNull;
 	HeapTuple	newTuple;
-	uint8		infomask;
 
 	/*
 	 * sanity checks
@@ -702,18 +702,10 @@ heap_modifytuple(HeapTuple tuple,
 							  nulls);
 
 	/*
-	 * copy the header except for t_len, t_natts, t_hoff, t_bits,
-	 * t_infomask
+	 * copy the identification info of the old tuple: t_ctid, t_self,
+	 * and OID (if any)
 	 */
-	infomask = newTuple->t_data->t_infomask;
-	/*
-	 * copy t_xmin, t_cid, t_xmax, t_ctid, t_natts, t_infomask
-	 */
-	memmove((char *) newTuple->t_data,	/* XXX */
-			(char *) tuple->t_data,
-			offsetof(HeapTupleHeaderData, t_hoff));	/* XXX */
-	newTuple->t_data->t_infomask = infomask;
-	newTuple->t_data->t_natts = numberOfAttributes;
+	newTuple->t_data->t_ctid = tuple->t_data->t_ctid;
 	newTuple->t_self = tuple->t_self;
 	newTuple->t_tableOid = tuple->t_tableOid;
 	if (relation->rd_rel->relhasoids)
@@ -776,11 +768,11 @@ heap_addheader(int natts,		/* max domain index */
 	tuple->t_datamcxt = CurrentMemoryContext;
 	tuple->t_data = td = (HeapTupleHeader) ((char *) tuple + HEAPTUPLESIZE);
 
-	MemSet((char *) td, 0, len);
+	MemSet((char *) td, 0, hoff);
 
 	td->t_hoff = hoff;
 	td->t_natts = natts;
-	td->t_infomask = HEAP_XMAX_INVALID; /* XXX sufficient? */
+	td->t_infomask = withoid ? (HEAP_XMAX_INVALID | HEAP_HASOID) : HEAP_XMAX_INVALID;
 
 	memcpy((char *) td + hoff, structure, structlen);
 

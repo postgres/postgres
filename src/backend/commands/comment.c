@@ -7,7 +7,7 @@
  * Copyright (c) 1996-2001, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.58 2002/08/29 00:17:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.59 2002/09/02 01:05:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -516,7 +516,6 @@ CommentRule(List *qualname, char *comment)
 		if (HeapTupleIsValid(tuple))
 		{
 			reloid = ((Form_pg_rewrite) GETSTRUCT(tuple))->ev_class;
-			AssertTupleDescHasOid(RewriteRelation->rd_att);
 			ruleoid = HeapTupleGetOid(tuple);
 		}
 		else
@@ -557,7 +556,6 @@ CommentRule(List *qualname, char *comment)
 		if (!HeapTupleIsValid(tuple))
 			elog(ERROR, "rule \"%s\" does not exist", rulename);
 		Assert(reloid == ((Form_pg_rewrite) GETSTRUCT(tuple))->ev_class);
-		AssertTupleDescHasOid(relation->rd_att);
 		ruleoid = HeapTupleGetOid(tuple);
 		ReleaseSysCache(tuple);
 	}
@@ -769,7 +767,6 @@ CommentTrigger(List *qualname, char *comment)
 		elog(ERROR, "trigger \"%s\" for relation \"%s\" does not exist",
 			 trigname, RelationGetRelationName(relation));
 
-	AssertTupleDescHasOid(pg_trigger->rd_att);
 	oid = HeapTupleGetOid(triggertuple);
 
 	systable_endscan(scan);

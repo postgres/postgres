@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAppend.c,v 1.45 2002/06/20 20:29:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAppend.c,v 1.46 2002/09/02 01:05:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -217,7 +217,9 @@ ExecInitAppend(Append *node, EState *estate, Plan *parent)
 
 	/*
 	 * call ExecInitNode on each of the plans to be executed and save the
-	 * results into the array "initialized"
+	 * results into the array "initialized".  Note we *must* set
+	 * estate->es_result_relation_info correctly while we initialize each
+	 * sub-plan; ExecAssignResultTypeFromTL depends on that!
 	 */
 	for (i = appendstate->as_firstplan; i <= appendstate->as_lastplan; i++)
 	{

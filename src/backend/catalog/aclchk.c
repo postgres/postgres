@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.75 2002/08/22 00:01:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.76 2002/09/02 01:05:03 tgl Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -565,7 +565,6 @@ ExecuteGrantStmt_Namespace(GrantStmt *stmt)
 			elog(ERROR, "namespace \"%s\" not found", nspname);
 		pg_namespace_tuple = (Form_pg_namespace) GETSTRUCT(tuple);
 
-		AssertTupleDescHasOid(relation->rd_att);
 		if (!pg_namespace_ownercheck(HeapTupleGetOid(tuple), GetUserId()))
 			aclcheck_error(ACLCHECK_NOT_OWNER, nspname);
 

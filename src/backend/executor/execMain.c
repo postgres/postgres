@@ -27,7 +27,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.176 2002/08/29 00:17:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.177 2002/09/02 01:05:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -713,13 +713,17 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 								   get_namespace_name(namespaceId));
 
 				/*
-				 * new "INTO" table is created WITH OIDS
-				 */
-				tupType->tdhasoid = WITHOID;
-				/*
 				 * have to copy tupType to get rid of constraints
 				 */
 				tupdesc = CreateTupleDescCopy(tupType);
+
+				/*
+				 * Formerly we forced the output table to have OIDs, but
+				 * as of 7.3 it will not have OIDs, because it's too late
+				 * here to change the tupdescs of the already-initialized
+				 * plan tree.  (Perhaps we could recurse and change them
+				 * all, but it's not really worth the trouble IMHO...)
+				 */
 
 				intoRelationId =
 					heap_create_with_catalog(intoName,
@@ -727,7 +731,6 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 											 tupdesc,
 											 RELKIND_RELATION,
 											 false,
-											 true,
 											 allowSystemTableMods);
 
 				FreeTupleDesc(tupdesc);

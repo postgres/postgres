@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/tuptoaster.c,v 1.34 2002/08/06 02:36:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/tuptoaster.c,v 1.35 2002/09/02 01:05:03 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -726,7 +726,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 		new_len = offsetof(HeapTupleHeaderData, t_bits);
 		if (has_nulls)
 			new_len += BITMAPLEN(numAttrs);
-		if (rel->rd_rel->relhasoids)
+		if (olddata->t_infomask & HEAP_HASOID)
 			new_len += sizeof(Oid);
 		new_len = MAXALIGN(new_len);
 		Assert(new_len == olddata->t_hoff);

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.52 2002/08/27 03:56:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.53 2002/09/02 01:05:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -116,7 +116,6 @@ SetDefine(char *querystr, Oid elemType)
 
 		simple_heap_update(procrel, &newtup->t_self, newtup);
 
-		AssertTupleDescHasOid(procrel->rd_att);
 		setoid = HeapTupleGetOid(newtup);
 
 		CatalogUpdateIndexes(procrel, newtup);

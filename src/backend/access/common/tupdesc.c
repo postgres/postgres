@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.87 2002/08/30 19:23:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.88 2002/09/02 01:05:03 tgl Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -37,7 +37,7 @@
  * ----------------------------------------------------------------
  */
 TupleDesc
-CreateTemplateTupleDesc(int natts, hasoid_t withoid)
+CreateTemplateTupleDesc(int natts, bool hasoid)
 {
 	uint32		size;
 	TupleDesc	desc;
@@ -59,7 +59,7 @@ CreateTemplateTupleDesc(int natts, hasoid_t withoid)
 	MemSet(desc->attrs, 0, size);
 
 	desc->natts = natts;
-	desc->tdhasoid = withoid;
+	desc->tdhasoid = hasoid;
 
 	return desc;
 }
@@ -67,11 +67,12 @@ CreateTemplateTupleDesc(int natts, hasoid_t withoid)
 /* ----------------------------------------------------------------
  *		CreateTupleDesc
  *
- *		This function allocates a new TupleDesc from Form_pg_attribute array
+ *		This function allocates a new TupleDesc pointing to a given
+ *		Form_pg_attribute array
  * ----------------------------------------------------------------
  */
 TupleDesc
-CreateTupleDesc(int natts, Form_pg_attribute *attrs)
+CreateTupleDesc(int natts, bool hasoid, Form_pg_attribute *attrs)
 {
 	TupleDesc	desc;
 
@@ -84,7 +85,7 @@ CreateTupleDesc(int natts, Form_pg_attribute *attrs)
 	desc->attrs = attrs;
 	desc->natts = natts;
 	desc->constr = NULL;
-	desc->tdhasoid = UNDEFOID;
+	desc->tdhasoid = hasoid;
 
 	return desc;
 }
@@ -129,7 +130,6 @@ CreateTupleDescCopy(TupleDesc tupdesc)
  *
  *		This function creates a new TupleDesc by copying from an existing
  *		TupleDesc (with Constraints)
- *
  * ----------------------------------------------------------------
  */
 TupleDesc
@@ -477,6 +477,9 @@ TupleDescInitEntry(TupleDesc desc,
  * BuildDescForRelation
  *
  * Given a relation schema (list of ColumnDef nodes), build a TupleDesc.
+ *
+ * Note: the default assumption is no OIDs; caller may modify the returned
+ * TupleDesc if it wants OIDs.
  */
 TupleDesc
 BuildDescForRelation(List *schema)
@@ -497,7 +500,7 @@ BuildDescForRelation(List *schema)
 	 * allocate a new tuple descriptor
 	 */
 	natts = length(schema);
-	desc = CreateTemplateTupleDesc(natts, UNDEFOID);
+	desc = CreateTemplateTupleDesc(natts, false);
 	constr->has_not_null = false;
 
 	attnum = 0;
@@ -667,7 +670,7 @@ TypeGetTupleDesc(Oid typeoid, List *colaliases)
 		/* OK, get the column alias */
 		attname = strVal(lfirst(colaliases));
 
-		tupdesc = CreateTemplateTupleDesc(1, WITHOUTOID);
+		tupdesc = CreateTemplateTupleDesc(1, false);
 		TupleDescInitEntry(tupdesc,
 						   (AttrNumber) 1,
 						   attname,

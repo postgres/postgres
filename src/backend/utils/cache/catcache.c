@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.97 2002/07/20 05:16:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.98 2002/09/02 01:05:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -907,7 +907,6 @@ CatalogCacheInitializeCache(CatCache *cache)
 	 * copy the relcache's tuple descriptor to permanent cache storage
 	 */
 	tupdesc = CreateTupleDescCopyConstr(RelationGetDescr(relation));
-	AssertTupleDescHasOidIsValid(tupdesc);
 
 	/*
 	 * get the relation's OID and relisshared flag, too
@@ -1687,10 +1686,7 @@ build_dummy_tuple(CatCache *cache, int nkeys, ScanKey skeys)
 
 	ntp = heap_formtuple(tupDesc, values, nulls);
 	if (tupOid != InvalidOid)
-	{
-		AssertTupleDescHasOid(tupDesc);
 		HeapTupleSetOid(ntp, tupOid);
-	}
 
 	pfree(values);
 	pfree(nulls);

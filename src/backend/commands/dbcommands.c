@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.100 2002/08/29 07:22:21 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.101 2002/09/02 01:05:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -335,7 +335,6 @@ createdb(const CreatedbStmt *stmt)
 
 	tuple = heap_formtuple(pg_database_dsc, new_record, new_record_nulls);
 
-	AssertTupleDescHasOid(pg_database_dsc);
 	HeapTupleSetOid(tuple, dboid);		/* override heap_insert's OID
 										 * selection */
 
@@ -589,10 +588,7 @@ get_db_info(const char *name, Oid *dbIdP, int4 *ownerIdP,
 
 		/* oid of the database */
 		if (dbIdP)
-		{
-			AssertTupleDescHasOid(relation->rd_att);
 			*dbIdP = HeapTupleGetOid(tuple);
-		}
 		/* sysid of the owner */
 		if (ownerIdP)
 			*ownerIdP = dbform->datdba;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.223 2002/08/29 04:38:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.224 2002/09/02 01:05:03 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -349,7 +349,7 @@ heap_storage_create(Relation rel)
  * --------------------------------
  */
 static void
-CheckAttributeNames(TupleDesc tupdesc, bool relhasoids, char relkind)
+CheckAttributeNames(TupleDesc tupdesc, char relkind)
 {
 	int			i;
 	int			j;
@@ -366,7 +366,7 @@ CheckAttributeNames(TupleDesc tupdesc, bool relhasoids, char relkind)
 		for (i = 0; i < natts; i++)
 		{
 			if (SystemAttributeByName(NameStr(tupdesc->attrs[i]->attname),
-									  relhasoids) != NULL)
+									  tupdesc->tdhasoid) != NULL)
 				elog(ERROR, "name of column \"%s\" conflicts with an existing system column",
 					 NameStr(tupdesc->attrs[i]->attname));
 		}
@@ -419,7 +419,6 @@ CheckAttributeNames(TupleDesc tupdesc, bool relhasoids, char relkind)
 static void
 AddNewAttributeTuples(Oid new_rel_oid,
 					  TupleDesc tupdesc,
-					  bool relhasoids,
 					  char relkind)
 {
 	Form_pg_attribute *dpp;
@@ -483,7 +482,8 @@ AddNewAttributeTuples(Oid new_rel_oid,
 		dpp = SysAtt;
 		for (i = 0; i < -1 - FirstLowInvalidHeapAttributeNumber; i++)
 		{
-			if (relhasoids || (*dpp)->attnum != ObjectIdAttributeNumber)
+			if (tupdesc->tdhasoid ||
+				(*dpp)->attnum != ObjectIdAttributeNumber)
 			{
 				Form_pg_attribute attStruct;
 
@@ -595,7 +595,6 @@ AddNewRelationTuple(Relation pg_class_desc,
 						 (void *) new_rel_reltup);
 
 	/* force tuple to have the desired OID */
-	AssertTupleDescHasOid(pg_class_desc->rd_att);
 	HeapTupleSetOid(tup, new_rel_oid);
 
 	/*
@@ -671,7 +670,6 @@ heap_create_with_catalog(const char *relname,
 						 TupleDesc tupdesc,
 						 char relkind,
 						 bool shared_relation,
-						 bool relhasoids,
 						 bool allow_system_table_mods)
 {
 	Relation	pg_class_desc;
@@ -687,12 +685,10 @@ heap_create_with_catalog(const char *relname,
 		elog(ERROR, "Number of columns is out of range (1 to %d)",
 			 MaxHeapAttributeNumber);
 
-	CheckAttributeNames(tupdesc, relhasoids, relkind);
+	CheckAttributeNames(tupdesc, relkind);
 
 	if (get_relname_relid(relname, relnamespace))
 		elog(ERROR, "Relation '%s' already exists", relname);
-
-	tupdesc->tdhasoid = BoolToHasOid(relhasoids);
 	
 	/*
 	 * Create the relcache entry (mostly dummy at this point) and the
@@ -747,8 +743,7 @@ heap_create_with_catalog(const char *relname,
 	 * now add tuples to pg_attribute for the attributes in our new
 	 * relation.
 	 */
-	AddNewAttributeTuples(new_rel_oid, new_rel_desc->rd_att,
-						  relhasoids, relkind);
+	AddNewAttributeTuples(new_rel_oid, new_rel_desc->rd_att, relkind);
 
 	/*
 	 * make a dependency link to force the relation to be deleted if
@@ -987,7 +982,6 @@ RemoveAttrDefault(Oid relid, AttrNumber attnum,
 	scan = systable_beginscan(attrdef_rel, AttrDefaultIndex, true,
 							  SnapshotNow, 2, scankeys);
 
-	AssertTupleDescHasOid(attrdef_rel->rd_att);
 	/* There should be at most one matching tuple, but we loop anyway */
 	while (HeapTupleIsValid(tuple = systable_getnext(scan)))
 	{
@@ -1774,7 +1768,6 @@ RemoveRelConstraints(Relation rel, const char *constrName,
 	conscan = systable_beginscan(conrel, ConstraintRelidIndex, true,
 								 SnapshotNow, 1, key);
 
-	AssertTupleDescHasOid(conrel->rd_att);
 	/*
 	 * Scan over the result set, removing any matching entries.
 	 */

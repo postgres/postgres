@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.47 2002/08/06 19:41:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.48 2002/09/02 01:05:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,7 @@ PageInit(Page page, Size pageSize, Size specialSize)
 	p->pd_lower = SizeOfPageHeaderData;
 	p->pd_upper = pageSize - specialSize;
 	p->pd_special = pageSize - specialSize;
-	PageSetPageSize(page, pageSize);
+	PageSetPageSizeAndVersion(page, pageSize, PG_PAGE_LAYOUT_VERSION);
 }
 
 

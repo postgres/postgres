@@ -102,10 +102,7 @@ _rserv_log_()
 
 	if (keynum == ObjectIdAttributeNumber)
 	{
-		snprintf(oidbuf, "%u", 64,
-				 rel->rd_rel->relhasoids
-		         ? HeapTupleGetOid(tuple)
-		         : InvalidOid);
+		snprintf(oidbuf, "%u", sizeof(oidbuf), HeapTupleGetOid(tuple));
 		key = oidbuf;
 	}
 	else

@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.33 2002/08/30 22:18:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.34 2002/09/02 01:05:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1585,7 +1585,6 @@ RemoveTempRelations(Oid tempNamespaceId)
 			case RELKIND_RELATION:
 			case RELKIND_SEQUENCE:
 			case RELKIND_VIEW:
-				AssertTupleDescHasOid(pgclass->rd_att);
 				object.classId = RelOid_pg_class;
 				object.objectId = HeapTupleGetOid(tuple);
 				object.objectSubId = 0;

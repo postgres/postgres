@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.129 2002/08/25 17:20:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.130 2002/09/02 01:05:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -301,7 +301,6 @@ CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
 	tuple = heap_formtuple(tgrel->rd_att, values, nulls);
 
 	/* force tuple to have the desired OID */
-	AssertTupleDescHasOid(tgrel->rd_att);
 	HeapTupleSetOid(tuple, trigoid);
 
 	/*
@@ -421,7 +420,6 @@ DropTrigger(Oid relid, const char *trigname, DropBehavior behavior)
 	if (!pg_class_ownercheck(relid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, get_rel_name(relid));
 
-	AssertTupleDescHasOid(tgrel->rd_att);
 	object.classId = RelationGetRelid(tgrel);
 	object.objectId = HeapTupleGetOid(tup);
 	object.objectSubId = 0;
@@ -683,7 +681,6 @@ RelationBuildTriggers(Relation relation)
 				 RelationGetRelationName(relation));
 		build = &(triggers[found]);
 
-		AssertTupleDescHasOid(tgrel->rd_att);
 		build->tgoid = HeapTupleGetOid(htup);
 		build->tgname = MemoryContextStrdup(CacheMemoryContext,
 							 DatumGetCString(DirectFunctionCall1(nameout,
@@ -1923,7 +1920,6 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 					elog(ERROR, "Constraint '%s' is not deferrable",
 						 cname);
 
-				AssertTupleDescHasOid(tgrel->rd_att);
 				constr_oid = HeapTupleGetOid(htup);
 				loid = lappendi(loid, constr_oid);
 				found = true;
