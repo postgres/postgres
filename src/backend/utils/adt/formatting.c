@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.36 2001/03/23 04:49:54 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.37 2001/05/03 22:53:07 tgl Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2000, PostgreSQL Global Development Group
@@ -2936,37 +2936,7 @@ to_timestamp(PG_FUNCTION_ARGS)
 #ifdef DEBUG_TO_FROM_CHAR
 	NOTICE_TM;
 #endif
-	if (IS_VALID_UTIME(tm->tm_year, tm->tm_mon, tm->tm_mday))
-	{
-
-#if defined(HAVE_TM_ZONE) || defined(HAVE_INT_TIMEZONE)
-		tm->tm_isdst = -1;
-		tm->tm_year -= 1900;
-		tm->tm_mon -= 1;
-
-#ifdef DEBUG_TO_FROM_CHAR
-		elog(DEBUG_elog_output, "TO-FROM_CHAR: Call mktime()");
-		NOTICE_TM;
-#endif
-		mktime(tm);
-		tm->tm_year += 1900;
-		tm->tm_mon += 1;
-
-#if defined(HAVE_TM_ZONE)
-		tz = -(tm->tm_gmtoff);	/* tm_gmtoff is Sun/DEC-ism */
-#elif defined(HAVE_INT_TIMEZONE)
-		tz = ((tm->tm_isdst > 0) ? (TIMEZONE_GLOBAL - 3600) : TIMEZONE_GLOBAL);
-#endif
-
-#else							/* not (HAVE_TM_ZONE || HAVE_INT_TIMEZONE) */
-		tz = CTimeZone;
-#endif
-	}
-	else
-	{
-		tm->tm_isdst = 0;
-		tz = 0;
-	}
+	tz = DetermineLocalTimeZone(tm);
 #ifdef DEBUG_TO_FROM_CHAR
 	NOTICE_TM;
 #endif

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.48 2001/05/03 19:00:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.49 2001/05/03 22:53:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -990,32 +990,7 @@ timestamp_pl_span(PG_FUNCTION_ARGS)
 				if (tm->tm_mday > day_tab[isleap(tm->tm_year)][tm->tm_mon - 1])
 					tm->tm_mday = (day_tab[isleap(tm->tm_year)][tm->tm_mon - 1]);
 
-				if (IS_VALID_UTIME(tm->tm_year, tm->tm_mon, tm->tm_mday))
-				{
-#if defined(HAVE_TM_ZONE) || defined(HAVE_INT_TIMEZONE)
-					tm->tm_year -= 1900;
-					tm->tm_mon -= 1;
-					tm->tm_isdst = -1;
-					mktime(tm);
-					tm->tm_year += 1900;
-					tm->tm_mon += 1;
-
-#if defined(HAVE_TM_ZONE)
-					tz = -(tm->tm_gmtoff);		/* tm_gmtoff is
-												 * Sun/DEC-ism */
-#elif defined(HAVE_INT_TIMEZONE)
-					tz = ((tm->tm_isdst > 0) ? (TIMEZONE_GLOBAL - 3600) : TIMEZONE_GLOBAL);
-#endif
-
-#else							/* not (HAVE_TM_ZONE || HAVE_INT_TIMEZONE) */
-					tz = CTimeZone;
-#endif
-				}
-				else
-				{
-					tm->tm_isdst = 0;
-					tz = 0;
-				}
+				tz = DetermineLocalTimeZone(tm);
 
 				if (tm2timestamp(tm, fsec, &tz, &dt) != 0)
 					elog(ERROR, "Unable to add timestamp and interval");
@@ -1631,31 +1606,7 @@ timestamp_trunc(PG_FUNCTION_ARGS)
 					result = 0;
 			}
 
-			if (IS_VALID_UTIME(tm->tm_year, tm->tm_mon, tm->tm_mday))
-			{
-#if defined(HAVE_TM_ZONE) || defined(HAVE_INT_TIMEZONE)
-				tm->tm_year -= 1900;
-				tm->tm_mon -= 1;
-				tm->tm_isdst = -1;
-				mktime(tm);
-				tm->tm_year += 1900;
-				tm->tm_mon += 1;
-
-#if defined(HAVE_TM_ZONE)
-				tz = -(tm->tm_gmtoff);	/* tm_gmtoff is Sun/DEC-ism */
-#elif defined(HAVE_INT_TIMEZONE)
-				tz = ((tm->tm_isdst > 0) ? (TIMEZONE_GLOBAL - 3600) : TIMEZONE_GLOBAL);
-#endif
-
-#else							/* not (HAVE_TM_ZONE || HAVE_INT_TIMEZONE) */
-				tz = CTimeZone;
-#endif
-			}
-			else
-			{
-				tm->tm_isdst = 0;
-				tz = 0;
-			}
+			tz = DetermineLocalTimeZone(tm);
 
 			if (tm2timestamp(tm, fsec, &tz, &result) != 0)
 				elog(ERROR, "Unable to truncate timestamp to '%s'", lowunits);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.63 2001/04/03 18:05:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.64 2001/05/03 22:53:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -869,37 +869,75 @@ DecodeDateTime(char **field, int *ftype, int nf,
 			if (fmask & DTK_M(DTZMOD))
 				return -1;
 
-			if (IS_VALID_UTIME(tm->tm_year, tm->tm_mon, tm->tm_mday))
-			{
-#if defined(HAVE_TM_ZONE) || defined(HAVE_INT_TIMEZONE)
-				tm->tm_year -= 1900;
-				tm->tm_mon -= 1;
-				tm->tm_isdst = -1;
-				mktime(tm);
-				tm->tm_year += 1900;
-				tm->tm_mon += 1;
-
-#if defined(HAVE_TM_ZONE)
-				*tzp = -(tm->tm_gmtoff);		/* tm_gmtoff is
-												 * Sun/DEC-ism */
-#elif defined(HAVE_INT_TIMEZONE)
-				*tzp = ((tm->tm_isdst > 0) ? (TIMEZONE_GLOBAL - 3600) : TIMEZONE_GLOBAL);
-#endif	 /* HAVE_INT_TIMEZONE */
-
-#else							/* not (HAVE_TM_ZONE || HAVE_INT_TIMEZONE) */
-				*tzp = CTimeZone;
-#endif
-			}
-			else
-			{
-				tm->tm_isdst = 0;
-				*tzp = 0;
-			}
+			*tzp = DetermineLocalTimeZone(tm);
 		}
 	}
 
 	return 0;
 }	/* DecodeDateTime() */
+
+
+/* DetermineLocalTimeZone()
+ * Given a struct tm in which tm_year, tm_mon, tm_mday, tm_hour, tm_min, and
+ * tm_sec fields are set, attempt to determine the applicable local zone
+ * (ie, regular or daylight-savings time) at that time.  Set the struct tm's
+ * tm_isdst field accordingly, and return the actual timezone offset.
+ *
+ * This subroutine exists mainly to centralize uses of mktime() and defend
+ * against mktime() bugs on various platforms...
+ */
+int
+DetermineLocalTimeZone(struct tm * tm)
+{
+	int			tz;
+
+	if (IS_VALID_UTIME(tm->tm_year, tm->tm_mon, tm->tm_mday))
+	{
+#if defined(HAVE_TM_ZONE) || defined(HAVE_INT_TIMEZONE)
+		/*
+		 * Some buggy mktime() implementations may change the year/month/day
+		 * when given a time right at a DST boundary.  To prevent corruption
+		 * of the caller's data, give mktime() a copy...
+		 */
+		struct tm	tt,
+				   *tmp = &tt;
+
+		*tmp = *tm;
+		/* change to Unix conventions for year/month */
+		tmp->tm_year -= 1900;
+		tmp->tm_mon -= 1;
+
+		/* indicate timezone unknown */
+		tmp->tm_isdst = -1;
+
+		mktime(tmp);
+
+		tm->tm_isdst = tmp->tm_isdst;
+
+#if defined(HAVE_TM_ZONE)
+		/* tm_gmtoff is Sun/DEC-ism */
+		if (tmp->tm_isdst >= 0)
+			tz = -(tmp->tm_gmtoff);
+		else
+			tz = 0;				/* assume GMT if mktime failed */
+#elif defined(HAVE_INT_TIMEZONE)
+		tz = ((tmp->tm_isdst > 0) ? (TIMEZONE_GLOBAL - 3600) : TIMEZONE_GLOBAL);
+#endif	 /* HAVE_INT_TIMEZONE */
+
+#else							/* not (HAVE_TM_ZONE || HAVE_INT_TIMEZONE) */
+		tm->tm_isdst = 0;
+		tz = CTimeZone;
+#endif
+	}
+	else
+	{
+		/* Given date is out of range, so assume GMT */
+		tm->tm_isdst = 0;
+		tz = 0;
+	}
+
+	return tz;
+}
 
 
 /* DecodeTimeOnly()
@@ -1119,22 +1157,8 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 		tmp->tm_min = tm->tm_min;
 		tmp->tm_sec = tm->tm_sec;
 
-#if defined(HAVE_TM_ZONE) || defined(HAVE_INT_TIMEZONE)
-		tmp->tm_year -= 1900;
-		tmp->tm_mon -= 1;
-		tmp->tm_isdst = -1;
-		mktime(tmp);
+		*tzp = DetermineLocalTimeZone(tmp);
 		tm->tm_isdst = tmp->tm_isdst;
-
-#if defined(HAVE_TM_ZONE)
-		*tzp = -(tmp->tm_gmtoff);		/* tm_gmtoff is Sun/DEC-ism */
-#elif defined(HAVE_INT_TIMEZONE)
-		*tzp = ((tmp->tm_isdst > 0) ? (TIMEZONE_GLOBAL - 3600) : TIMEZONE_GLOBAL);
-#endif
-
-#else							/* not (HAVE_TM_ZONE || HAVE_INT_TIMEZONE) */
-		*tzp = CTimeZone;
-#endif
 	}
 
 	return 0;

@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: datetime.h,v 1.17 2001/01/24 19:43:28 momjian Exp $
+ * $Id: datetime.h,v 1.18 2001/05/03 22:53:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -254,6 +254,8 @@ extern int DecodeTimeOnly(char **field, int *ftype,
 extern int DecodeDateDelta(char **field, int *ftype,
 				int nf, int *dtype,
 				struct tm * tm, double *fsec);
+
+extern int	DetermineLocalTimeZone(struct tm * tm);
 
 extern int	EncodeDateOnly(struct tm * tm, int style, char *str);
 extern int	EncodeTimeOnly(struct tm * tm, double fsec, int *tzp, int style, char *str);
