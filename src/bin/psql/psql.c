@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.29 1996/11/14 16:08:03 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.30 1996/11/20 22:34:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -475,6 +475,7 @@ SendQuery(bool * success_p, PsqlSettings * settings, const char *query,
 		    pclose(fp);
 		else
 		    fclose(fp);
+		free(settings->gfname);
 		settings->gfname = NULL;
 		break;
 	    } else {
@@ -1011,7 +1012,11 @@ HandleSlashCmds(PsqlSettings * settings,
 	if (settings->opt.caption)
 	    free(settings->opt.caption);
 	if (!optarg)
+	{
+	    if (settings->opt.caption)
+	    	free(settings->opt.caption);
 	    settings->opt.caption = NULL;
+	}
 	else if (!(settings->opt.caption = strdup(optarg))) {
 	    perror("malloc");
 	    exit(1);
@@ -1083,7 +1088,7 @@ HandleSlashCmds(PsqlSettings * settings,
 	    if (optarg)
 		fs = optarg;
 	    if (settings->opt.fieldSep);
-	    free(settings->opt.fieldSep);
+	    	free(settings->opt.fieldSep);
 	    if (!(settings->opt.fieldSep = strdup(fs))) {
 		perror("malloc");
 		exit(1);
@@ -1093,7 +1098,7 @@ HandleSlashCmds(PsqlSettings * settings,
 	    break;
 	}
     case 'g':			/* \g means send query */
-	settings->gfname = optarg;
+	settings->gfname = strdup(optarg);
 	status = 0;
 	break;
     case 'h':			/* help */
@@ -1151,12 +1156,14 @@ HandleSlashCmds(PsqlSettings * settings,
 	if (toggle(settings, &settings->opt.standard, "standard SQL separaters and padding")) {
 	    settings->opt.html3 = settings->opt.expanded = 0;
 	    settings->opt.align = settings->opt.header = 1;
-	    free(settings->opt.fieldSep);
+	    if (settings->opt.fieldSep)
+		free(settings->opt.fieldSep);
 	    settings->opt.fieldSep = strdup("|");
 	    if (!settings->quiet)
 		fprintf(stderr, "field separater changed to '%s'\n", settings->opt.fieldSep);
 	} else {
-	    free(settings->opt.fieldSep);
+	    if (settings->opt.fieldSep)
+	    	free(settings->opt.fieldSep);
 	    settings->opt.fieldSep = strdup(DEFAULT_FIELD_SEP);
 	    if (!settings->quiet)
 		fprintf(stderr, "field separater changed to '%s'\n", settings->opt.fieldSep);
