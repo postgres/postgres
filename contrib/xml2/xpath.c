@@ -582,7 +582,10 @@ pgxml_result_to_text(xmlXPathObjectPtr res,
 	text	   *xpres;
 
 	if (res == NULL)
+	{
+		xmlCleanupParser();
 		return NULL;
+	}
 	switch (res->type)
 	{
 		case XPATH_NODESET:
