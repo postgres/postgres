@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.11 1997/09/12 22:07:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.12 1997/09/13 11:45:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -725,7 +725,7 @@ _copyConst(Const *from)
 	 *	puts in the right values here.
 	 * ----------------
 	 */
-	if (!from->constisnull && cached_type != from->consttype) {
+	if (!from->constisnull && cached_type != from->consttype)
 	{
 		HeapTuple	typeTuple;
 		TypeTupleForm typeStruct;
