@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.87 2003/10/16 20:03:09 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.88 2003/10/16 23:45:29 petere Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -223,7 +223,7 @@ initialize_readline(void)
 "  WHERE substring(pg_catalog.pg_encoding_to_char(conforencoding),1,%d)=UPPER('%s')"
 
 #define Query_for_list_of_functions \
-" SELECT pg_catalog.quote_ident(proname) || '()' "\
+" SELECT pg_catalog.quote_ident(proname) "\
 "   FROM pg_catalog.pg_proc p "\
 "  WHERE substring(pg_catalog.quote_ident(proname),1,%d)='%s'"\
 "    AND pg_catalog.pg_function_is_visible(p.oid) "\
