@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.34 2000/03/07 23:58:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.35 2000/03/14 23:06:36 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -659,8 +659,8 @@ int42mod(int32 arg1, int32 arg2)
 	return arg1 % arg2;
 }
 
-/*
- *		int[24]fac		- returns arg1!
+/* int[24]fac()
+ * Factorial
  */
 int32
 int4fac(int32 arg1)
@@ -678,7 +678,7 @@ int4fac(int32 arg1)
 int32
 int2fac(int16 arg1)
 {
-	int16		result;
+	int32		result;
 
 	if (arg1 < 1)
 		result = 0;
@@ -686,6 +686,21 @@ int2fac(int16 arg1)
 		for (result = 1; arg1 > 0; --arg1)
 			result *= arg1;
 	return result;
+}
+
+/* int[24]abs()
+ * Absolute value
+ */
+int32
+int4abs(int32 arg1)
+{
+	return ((arg1 < 0)? -arg1: arg1);
+}
+
+int16
+int2abs(int16 arg1)
+{
+	return ((arg1 < 0)? -arg1: arg1);
 }
 
 int16

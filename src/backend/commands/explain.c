@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.54 2000/02/15 20:49:08 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.55 2000/03/14 23:06:12 thomas Exp $
  *
  */
 
@@ -232,9 +232,33 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 
 				appendStringInfo(str, " on %s",
 								 stringStringInfo(rte->relname));
-				if (rte->ref && strcmp(rte->ref->relname, rte->relname) != 0)
-					appendStringInfo(str, " %s",
-									 stringStringInfo(rte->ref->relname));
+				if (rte->ref != NULL)
+				{
+					if ((strcmp(rte->ref->relname, rte->relname) != 0)
+						|| (length(rte->ref->attrs) > 0))
+					{
+						appendStringInfo(str, " %s",
+										 stringStringInfo(rte->ref->relname));
+
+						if (length(rte->ref->attrs) > 0)
+						{
+							List *c;
+							int firstEntry = true;
+
+							appendStringInfo(str, " (");
+							foreach (c, rte->ref->attrs)
+							{
+								if (! firstEntry)
+								{
+									appendStringInfo(str, ", ");
+									firstEntry = false;
+								}
+								appendStringInfo(str, "%s", strVal(lfirst(c)));
+							}
+							appendStringInfo(str, ")");
+						}
+					}
+				}
 			}
 			break;
 		default:

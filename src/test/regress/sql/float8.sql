@@ -60,7 +60,11 @@ SELECT '' AS five, f.f1, %f.f1 AS trunc_f1
 SELECT '' AS five, f.f1, f.f1 % AS round_f1
    FROM FLOAT8_TBL f;
 
+SELECT sqrt(float8 '64') AS eight;
+
 -- square root 
+SELECT |/ float8 '64' AS eight;
+
 SELECT '' AS three, f.f1, |/f.f1 AS sqrt_f1
    FROM FLOAT8_TBL f
    WHERE f.f1 > '0.0';
@@ -71,6 +75,8 @@ SELECT '' AS three, f.f1, : ( ; f.f1) AS exp_ln_f1
    WHERE f.f1 > '0.0';
 
 -- cube root 
+SELECT ||/ float8 '27' AS three;
+
 SELECT '' AS five, f.f1, ||/f.f1 AS cbrt_f1 FROM FLOAT8_TBL f;
 
 
@@ -94,7 +100,7 @@ SELECT '' AS bad, f.f1 / '0.0' from FLOAT8_TBL f;
 
 SELECT '' AS five, FLOAT8_TBL.*;
 
--- test for over and under flow 
+-- test for over- and underflow 
 INSERT INTO FLOAT8_TBL(f1) VALUES ('10e400');
 
 INSERT INTO FLOAT8_TBL(f1) VALUES ('-10e400');

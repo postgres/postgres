@@ -359,6 +359,63 @@ int8div(int64 *val1, int64 *val2)
 	return result;
 }	/* int8div() */
 
+/* int8abs()
+ * Absolute value
+ */
+int64 *
+int8abs(int64 *arg1)
+{
+	int64	   *result;
+
+	if (!PointerIsValid(arg1))
+		return NULL;
+
+	result = palloc(sizeof(*result));
+
+	*result = ((*arg1 < 0)? -*arg1: *arg1);
+
+	return result;
+}
+
+/* int8mod()
+ * Modulo operation.
+ */
+int64 *
+int8mod(int64 *val1, int64 *val2)
+{
+	int64	   *result;
+
+	/* use the divide operation to check params and allocate storage */
+	result = int8div(val1, val2);
+	*result *= *val2;
+	*result = *val1 - *result;
+
+	return result;
+}	/* int8mod() */
+
+/* int8fac()
+ * Factorial
+ */
+int64 *
+int8fac(int64 *arg1)
+{
+	int64	   *result;
+	int64	   i;
+
+	if (!PointerIsValid(arg1))
+		return NULL;
+
+	result = palloc(sizeof(*result));
+
+	if (*arg1 < 1)
+		*result = 0;
+	else
+		for (i = *arg1, *result = 1; i > 0; --i)
+			*result *= i;
+
+	return result;
+}
+
 int64 *
 int8larger(int64 *val1, int64 *val2)
 {
@@ -634,4 +691,4 @@ int8_text(int64 *val)
 	memmove(VARDATA(result), s, len);
 
 	return result;
-}	/* int8out() */
+}	/* int8_text() */

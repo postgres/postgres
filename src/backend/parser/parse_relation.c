@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.36 2000/03/09 05:00:24 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.37 2000/03/14 23:06:33 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,8 +68,12 @@ static char *attnum_type[SPECIALS] = {
 /* refnameRangeTableEntries()
  * Given refname, return a list of range table entries
  * This is possible with JOIN syntax, where tables in a join
- * acquire the same reference name
+ * acquire the same reference name.
  * - thomas 2000-01-20
+ * But at the moment we aren't carrying along a full list of
+ * table/column aliases, so we don't have the full mechanism
+ * to support outer joins in place yet.
+ * - thomas 2000-03-04
  */
 List *
 refnameRangeTableEntries(ParseState *pstate, char *refname);
@@ -86,7 +90,7 @@ refnameRangeTableEntries(ParseState *pstate, char *refname)
 		{
 			RangeTblEntry *rte = lfirst(temp);
 
-			if (strcmp(rte->ref->relname, refname) == 0)
+			if (strcmp(rte->eref->relname, refname) == 0)
 				rteList = lappend(rteList, rte);
 		}
 		/* only allow correlated columns in WHERE clause */
@@ -110,11 +114,7 @@ refnameRangeTableEntry(ParseState *pstate, char *refname)
 		{
 			RangeTblEntry *rte = lfirst(temp);
 
-#ifndef DISABLE_JOIN_SYNTAX
-			if (strcmp(rte->ref->relname, refname) == 0)
-#else
-			if (!strcmp(rte->refname, refname))
-#endif
+			if (strcmp(rte->eref->relname, refname) == 0)
 				return rte;
 		}
 		/* only allow correlated columns in WHERE clause */
@@ -143,11 +143,7 @@ refnameRangeTablePosn(ParseState *pstate, char *refname, int *sublevels_up)
 		{
 			RangeTblEntry *rte = lfirst(temp);
 
-#ifndef DISABLE_JOIN_SYNTAX
-			if (strcmp(rte->ref->relname, refname) == 0)
-#else
-			if (!strcmp(rte->refname, refname))
-#endif
+			if (strcmp(rte->eref->relname, refname) == 0)
 				return index;
 			index++;
 		}
@@ -191,7 +187,7 @@ colnameRangeTableEntry(ParseState *pstate, char *colname)
 			if (!rte->inFromCl && rte != pstate->p_target_rangetblentry)
 				continue;
 
-			if (rte->ref->attrs != NULL)
+			if (rte->eref->attrs != NULL)
 			{
 				List *c;
 				foreach (c, rte->ref->attrs)
@@ -253,6 +249,7 @@ addRangeTableEntry(ParseState *pstate,
 {
 	Relation		rel;
 	RangeTblEntry  *rte;
+	Attr		   *eref;
 	int				maxattrs;
 	int				sublevels_up;
 	int				varattno;
@@ -286,19 +283,22 @@ addRangeTableEntry(ParseState *pstate,
 	rel = heap_openr(relname, AccessShareLock);
 	rte->relid = RelationGetRelid(rel);
 	maxattrs = RelationGetNumberOfAttributes(rel);
-	if (maxattrs < length(ref->attrs))
+
+	eref = copyObject(ref);
+	if (maxattrs < length(eref->attrs))
 		elog(ERROR, "Table '%s' has %d columns available but %d columns specified",
-			 relname, maxattrs, length(ref->attrs));
+			 relname, maxattrs, length(eref->attrs));
 
 	/* fill in any unspecified alias columns */
-	for (varattno = length(ref->attrs); varattno < maxattrs; varattno++)
+	for (varattno = length(eref->attrs); varattno < maxattrs; varattno++)
 	{
 		char	   *attrname;
 
 		attrname = pstrdup(NameStr(rel->rd_att->attrs[varattno]->attname));
-		ref->attrs = lappend(ref->attrs, makeString(attrname));
+		eref->attrs = lappend(eref->attrs, makeString(attrname));
 	}
 	heap_close(rel, AccessShareLock);
+	rte->eref = eref;
 
 	/*
 	 * Flags:
@@ -337,10 +337,9 @@ expandTable(ParseState *pstate, char *refname, bool getaliases)
 
 	rte = refnameRangeTableEntry(pstate, refname);
 
-	if (getaliases && (rte != NULL) && (rte->ref != NULL)
-		&& (length(rte->ref->attrs) > 0))
+	if (getaliases && (rte != NULL))
 	{
-		return rte->ref;
+		return rte->eref;
 	}
 
 	if (rte != NULL)
@@ -415,8 +414,8 @@ expandAll(ParseState *pstate, char *relname, Attr *ref, int *this_resno)
 		attrname = pstrdup(NameStr(rel->rd_att->attrs[varattno]->attname));
 
 		/* varattno is zero-based, so check that length() is always greater */
-		if (length(rte->ref->attrs) > varattno)
-			label = pstrdup(strVal(nth(varattno, rte->ref->attrs)));
+		if (length(rte->eref->attrs) > varattno)
+			label = pstrdup(strVal(nth(varattno, rte->eref->attrs)));
 		else
 			label = attrname;
 		varnode = make_var(pstate, rte->relid, relname, attrname);

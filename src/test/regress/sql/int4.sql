@@ -103,10 +103,3 @@ SELECT 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 AS ten;
 SELECT 2 + 2 / 2 AS three;
 
 SELECT (2 + 2) / 2 AS two;
-
-SELECT dsqrt(float8 '64') AS eight;
-
-SELECT |/float8 '64' AS eight;
-
-SELECT ||/float8 '27' AS three;
-

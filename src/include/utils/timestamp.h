@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: timestamp.h,v 1.1 2000/02/16 17:26:26 thomas Exp $
+ * $Id: timestamp.h,v 1.2 2000/03/14 23:06:51 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,10 +31,8 @@ typedef double Timestamp;
 
 typedef struct
 {
-	double		time;			/* all time units other than months and
-								 * years */
-	int4		month;			/* months and years, after time for
-								 * alignment */
+	double		time;	/* all time units other than months and years */
+	int4		month;	/* months and years, after time for alignment */
 } Interval;
 
 
@@ -101,49 +99,6 @@ extern int	timestamp_is_epoch(double j);
 #define JROUND(j) (rint(((double) (j))*TIME_PREC_INV)/TIME_PREC_INV)
 
 
-#if 0
-
-
-/*
- * Date/time validation
- * Include check for leap year.
- */
-
-extern int	day_tab[2][13];
-
-#define isleap(y) (((y) % 4) == 0 && (((y) % 100) != 0 || ((y) % 400) == 0))
-
-/* Julian date support for date2j() and j2date()
- * Set the minimum year to one greater than the year of the first valid day
- *	to avoid having to check year and day both. - tgl 97/05/08
- */
-
-#define JULIAN_MINYEAR (-4713)
-#define JULIAN_MINMONTH (11)
-#define JULIAN_MINDAY (23)
-
-#define IS_VALID_JULIAN(y,m,d) ((y > JULIAN_MINYEAR) \
- || ((y == JULIAN_MINYEAR) && ((m > JULIAN_MINMONTH) \
-  || ((m == JULIAN_MINMONTH) && (d >= JULIAN_MINDAY)))))
-
-#define UTIME_MINYEAR (1901)
-#define UTIME_MINMONTH (12)
-#define UTIME_MINDAY (14)
-#define UTIME_MAXYEAR (2038)
-#define UTIME_MAXMONTH (01)
-#define UTIME_MAXDAY (18)
-
-#define IS_VALID_UTIME(y,m,d) (((y > UTIME_MINYEAR) \
- || ((y == UTIME_MINYEAR) && ((m > UTIME_MINMONTH) \
-  || ((m == UTIME_MINMONTH) && (d >= UTIME_MINDAY))))) \
- && ((y < UTIME_MAXYEAR) \
- || ((y == UTIME_MAXYEAR) && ((m < UTIME_MAXMONTH) \
-  || ((m == UTIME_MAXMONTH) && (d <= UTIME_MAXDAY))))))
-
-
-#endif
-
-
 /*
  * timestamp.c prototypes
  */
@@ -193,9 +148,10 @@ extern Interval *timestamp_mi(Timestamp *dt1, Timestamp *dt2);
 extern Timestamp *timestamp_pl_span(Timestamp *dt, Interval *span);
 extern Timestamp *timestamp_mi_span(Timestamp *dt, Interval *span);
 extern Interval *timestamp_age(Timestamp *dt1, Timestamp *dt2);
+extern bool overlaps_timestamp(Timestamp *dt1, Timestamp *dt2, Timestamp *dt3, Timestamp *dt4);
 
-extern int	tm2timestamp(struct tm * tm, double fsec, int *tzp, Timestamp *dt);
-extern int	timestamp2tm(Timestamp dt, int *tzp, struct tm * tm, double *fsec, char **tzn);
+extern int tm2timestamp(struct tm * tm, double fsec, int *tzp, Timestamp *dt);
+extern int timestamp2tm(Timestamp dt, int *tzp, struct tm * tm, double *fsec, char **tzn);
 
 extern Timestamp SetTimestamp(Timestamp timestamp);
 extern Timestamp dt2local(Timestamp dt, int timezone);

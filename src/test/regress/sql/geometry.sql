@@ -85,7 +85,7 @@ SELECT '' AS twenty, b.f1 / p.f1 AS rotation
 
 SET geqo TO 'off';
 
-SELECT '' AS eight, points(f1) AS npoints, f1 AS path FROM PATH_TBL;
+SELECT '' AS eight, npoints(f1) AS npoints, f1 AS path FROM PATH_TBL;
 
 SELECT '' AS four, path(f1) FROM POLYGON_TBL;
 
@@ -110,7 +110,7 @@ SELECT '' AS twentyfour, p.f1, poly.f1, poly.f1 ~ p.f1 AS contains
 SELECT '' AS twentyfour, p.f1, poly.f1, p.f1 @ poly.f1 AS contained
    FROM POLYGON_TBL poly, POINT_TBL p;
 
-SELECT '' AS four, points(f1) AS npoints, f1 AS polygon
+SELECT '' AS four, npoints(f1) AS npoints, f1 AS polygon
    FROM POLYGON_TBL;
 
 SELECT '' AS four, polygon(f1)

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.72 2000/03/07 23:30:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.73 2000/03/14 23:06:32 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -574,15 +574,7 @@ transformIdent(ParseState *pstate, Ident *ident, int precedence)
 		if ((rte = colnameRangeTableEntry(pstate, ident->name)) != NULL)
 		{
 			/* Convert it to a fully qualified Attr, and transform that */
-#ifndef DISABLE_JOIN_SYNTAX
-			Attr	   *att = makeAttr(rte->ref->relname, ident->name);
-#else
-			Attr	   *att = makeNode(Attr);
-
-			att->relname = rte->refname;
-			att->paramNo = NULL;
-			att->attrs = lcons(makeString(ident->name), NIL);
-#endif
+			Attr	   *att = makeAttr(rte->eref->relname, ident->name);
 			att->indirection = ident->indirection;
 			return transformAttr(pstate, att, precedence);
 		}

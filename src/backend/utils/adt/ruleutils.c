@@ -3,7 +3,7 @@
  *			  out of its tuple
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.44 2000/02/26 21:13:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.45 2000/03/14 23:06:37 thomas Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -923,6 +923,8 @@ get_select_query_def(Query *query, deparse_context *context)
 			continue;
 
 		rte = (RangeTblEntry *) lfirst(l);
+		if (rte->ref == NULL)
+			continue;
 		if (!strcmp(rte->ref->relname, "*NEW*"))
 			continue;
 		if (!strcmp(rte->ref->relname, "*CURRENT*"))
@@ -982,9 +984,10 @@ get_select_query_def(Query *query, deparse_context *context)
 			{
 				rte = (RangeTblEntry *) lfirst(l);
 
+				if (rte->ref == NULL)
+					continue;
 				if (!strcmp(rte->ref->relname, "*NEW*"))
 					continue;
-
 				if (!strcmp(rte->ref->relname, "*CURRENT*"))
 					continue;
 
@@ -1008,7 +1011,9 @@ get_select_query_def(Query *query, deparse_context *context)
 				 * Since we don't really support SQL joins yet, dropping
 				 * the list of column aliases doesn't hurt anything...
 				 */
-				if (strcmp(rte->relname, rte->ref->relname) != 0)
+				if ((rte->ref != NULL)
+					&& ((strcmp(rte->relname, rte->ref->relname) != 0)
+						|| (rte->ref->attrs != NIL)))
 				{
 					appendStringInfo(buf, " %s",
 									 quote_identifier(rte->ref->relname));
@@ -1104,6 +1109,8 @@ get_insert_query_def(Query *query, deparse_context *context)
 			continue;
 
 		rte = (RangeTblEntry *) lfirst(l);
+		if (rte->ref == NULL)
+			continue;
 		if (!strcmp(rte->ref->relname, "*NEW*"))
 			continue;
 		if (!strcmp(rte->ref->relname, "*CURRENT*"))
@@ -1274,7 +1281,10 @@ get_rule_expr(Node *node, deparse_context *context)
 
 				if (context->varprefix)
 				{
-					if (!strcmp(rte->ref->relname, "*NEW*"))
+					if (rte->ref == NULL)
+						appendStringInfo(buf, "%s.",
+										 quote_identifier(rte->relname));
+					else if (!strcmp(rte->ref->relname, "*NEW*"))
 						appendStringInfo(buf, "new.");
 					else if (!strcmp(rte->ref->relname, "*CURRENT*"))
 						appendStringInfo(buf, "old.");

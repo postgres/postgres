@@ -40,7 +40,7 @@ ERROR:  Attribute 'foobar' not found
  
 -- missing relation name (this had better not wildcard!) 
 delete from;
-ERROR:  parser: parse error at or near ""
+ERROR:  parser: parse error at or near ";"
 -- no such relation 
 delete from nonesuch;
 ERROR:  Relation 'nonesuch' does not exist
@@ -49,7 +49,7 @@ ERROR:  Relation 'nonesuch' does not exist
  
 -- missing relation name (this had better not wildcard!) 
 drop table;
-ERROR:  parser: parse error at or near ""
+ERROR:  parser: parse error at or near ";"
 -- no such relation 
 drop table nonesuch;
 ERROR:  Relation 'nonesuch' does not exist
@@ -59,7 +59,7 @@ ERROR:  Relation 'nonesuch' does not exist
 -- relation renaming 
 -- missing relation name 
 alter table rename;
-ERROR:  parser: parse error at or near ""
+ERROR:  parser: parse error at or near ";"
 -- no such relation 
 alter table nonesuch rename to newnonesuch;
 ERROR:  Relation 'nonesuch' does not exist
@@ -144,7 +144,7 @@ ERROR:  AggregateCreate: transition function 2 MUST have an initial value
  
 -- missing index name 
 drop index;
-ERROR:  parser: parse error at or near ""
+ERROR:  parser: parse error at or near ";"
 -- bad index name 
 drop index 314159;
 ERROR:  parser: parse error at or near "314159"
@@ -156,16 +156,16 @@ ERROR:  index "nonesuch" nonexistent
  
 -- missing aggregate name 
 drop aggregate;
-ERROR:  parser: parse error at or near ""
+ERROR:  parser: parse error at or near ";"
 -- bad aggregate name 
 drop aggregate 314159;
 ERROR:  parser: parse error at or near "314159"
 -- no such aggregate 
 drop aggregate nonesuch;
-ERROR:  parser: parse error at or near ""
+ERROR:  parser: parse error at or near ";"
 -- missing aggregate type
 drop aggregate newcnt1;
-ERROR:  parser: parse error at or near ""
+ERROR:  parser: parse error at or near ";"
 -- bad aggregate type
 drop aggregate newcnt nonesuch;
 ERROR:  RemoveAggregate: type 'nonesuch' does not exist
@@ -189,7 +189,7 @@ ERROR:  RemoveFunction: function 'nonesuch()' does not exist
  
 -- missing type name 
 drop type;
-ERROR:  parser: parse error at or near ""
+ERROR:  parser: parse error at or near ";"
 -- bad type name 
 drop type 314159;
 ERROR:  parser: parse error at or near "314159"
@@ -201,13 +201,13 @@ ERROR:  RemoveType: type 'nonesuch' does not exist
  
 -- missing everything 
 drop operator;
-ERROR:  parser: parse error at or near ""
+ERROR:  parser: parse error at or near ";"
 -- bad operator name 
 drop operator equals;
 ERROR:  parser: parse error at or near "equals"
 -- missing type list 
 drop operator ===;
-ERROR:  parser: parse error at or near ""
+ERROR:  parser: parse error at or near ";"
 -- missing parentheses 
 drop operator int4, int4;
 ERROR:  parser: parse error at or near "int4"
@@ -243,7 +243,7 @@ ERROR:  parser: parse error at or near ")"
  
 -- missing rule name 
 drop rule;
-ERROR:  parser: parse error at or near ""
+ERROR:  parser: parse error at or near ";"
 -- bad rule name 
 drop rule 314159;
 ERROR:  parser: parse error at or near "314159"

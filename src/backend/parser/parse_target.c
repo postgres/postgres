@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.56 2000/03/09 05:00:24 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.57 2000/03/14 23:06:33 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -430,7 +430,7 @@ ExpandAllTables(ParseState *pstate)
 			continue;
 
 		target = nconc(target,
-					   expandAll(pstate, rte->ref->relname, rte->ref,
+					   expandAll(pstate, rte->eref->relname, rte->eref,
 								 &pstate->p_last_resno));
 	}
 	return target;

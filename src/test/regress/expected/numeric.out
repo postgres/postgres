@@ -646,10 +646,10 @@ SELECT t1.id1, t1.result, t2.expected
 (0 rows)
 
 -- ******************************
--- * POWER(10, LN(value)) check
+-- * POW(10, LN(value)) check
 -- ******************************
 DELETE FROM num_result;
-INSERT INTO num_result SELECT id, 0, POWER(numeric '10', LN(ABS(round(val,200))))
+INSERT INTO num_result SELECT id, 0, POW(numeric '10', LN(ABS(round(val,200))))
     FROM num_data
     WHERE val != '0.0';
 SELECT t1.id1, t1.result, t2.expected

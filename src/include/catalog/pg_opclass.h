@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_opclass.h,v 1.30 2000/02/27 12:02:33 wieck Exp $
+ * $Id: pg_opclass.h,v 1.31 2000/03/14 23:06:43 thomas Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -63,64 +63,66 @@ typedef FormData_pg_opclass *Form_pg_opclass;
  * (see the README in this directory), so just put zeros
  * in, which are invalid OID's anyway.  --djm
  */
-DATA(insert OID =  421 (	int2_ops		 21   ));
+DATA(insert OID =  421 (	int2_ops         21   ));
 DESCR("");
-DATA(insert OID =  422 (	box_ops			603   ));
+DATA(insert OID =  422 (	box_ops         603   ));
 DESCR("");
-DATA(insert OID =  423 (	float8_ops		701   ));
+DATA(insert OID =  423 (	float8_ops      701   ));
 DESCR("");
-DATA(insert OID =  424 (	int24_ops		  0   ));
+DATA(insert OID =  424 (	int24_ops         0   ));
 DESCR("");
-DATA(insert OID =  425 (	int42_ops		  0   ));
+DATA(insert OID =  425 (	int42_ops         0   ));
 DESCR("");
-DATA(insert OID =  426 (	int4_ops		 23   ));
+DATA(insert OID =  426 (	int4_ops         23   ));
 DESCR("");
 #define INT4_OPS_OID 426
-DATA(insert OID =  427 (	oid_ops			 26   ));
+DATA(insert OID =  427 (	oid_ops          26   ));
 DESCR("");
-DATA(insert OID =  428 (	float4_ops		700   ));
+DATA(insert OID =  428 (	float4_ops      700   ));
 DESCR("");
-DATA(insert OID =  429 (	char_ops		 18   ));
+DATA(insert OID =  429 (	char_ops         18   ));
 DESCR("");
-DATA(insert OID =  431 (	text_ops		 25   ));
+DATA(insert OID =  431 (	text_ops         25   ));
 DESCR("");
-DATA(insert OID =  432 (	abstime_ops		702   ));
+DATA(insert OID =  432 (	abstime_ops     702   ));
 DESCR("");
-DATA(insert OID =  433 (	bigbox_ops		603   ));
+DATA(insert OID =  433 (	bigbox_ops      603   ));
 DESCR("");
-DATA(insert OID =  434 (	poly_ops		604   ));
+DATA(insert OID =  434 (	poly_ops        604   ));
 DESCR("");
-DATA(insert OID =  435 (	oidvector_ops	 30   ));
+DATA(insert OID =  435 (	oidvector_ops    30   ));
 DESCR("");
-DATA(insert OID =  714 (	circle_ops		718   ));
+DATA(insert OID =  714 (	circle_ops      718   ));
 DESCR("");
-DATA(insert OID =  754 (	int8_ops		 20   ));
+DATA(insert OID =  754 (	int8_ops         20   ));
 DESCR("");
-DATA(insert OID = 1076 (	bpchar_ops	   1042   ));
+DATA(insert OID = 1076 (	bpchar_ops     1042   ));
 DESCR("");
 DATA(insert OID = 1077 (	varchar_ops    1043   ));
 DESCR("");
-DATA(insert OID = 1114 (	date_ops	   1082   ));
+DATA(insert OID = 1114 (	date_ops       1082   ));
 DESCR("");
-DATA(insert OID = 1115 (	time_ops	   1083   ));
+DATA(insert OID = 1115 (	time_ops       1083   ));
 DESCR("");
-DATA(insert OID = 1181 (	name_ops		 19   ));
+DATA(insert OID = 1181 (	name_ops         19   ));
 DESCR("");
 DATA(insert OID = 1312 (	timestamp_ops  1184   ));
 DESCR("");
 DATA(insert OID = 1313 (	interval_ops   1186   ));
 DESCR("");
-DATA(insert OID = 810  (	macaddr_ops     829	  ));
+DATA(insert OID = 810  (	macaddr_ops     829   ));
 DESCR("");
-DATA(insert OID = 935  (	inet_ops	    869	  ));
+DATA(insert OID = 935  (	inet_ops        869   ));
 DESCR("");
-DATA(insert OID = 652  (	cidr_ops        650	  ));
+DATA(insert OID = 652  (	cidr_ops        650   ));
 DESCR("");
-DATA(insert OID = 1768 (	numeric_ops    1700	  ));
+DATA(insert OID = 1768 (	numeric_ops    1700   ));
 DESCR("");
-DATA(insert OID = 1663 (    lztext_ops     1625   ));
+DATA(insert OID = 1663 (	lztext_ops     1625   ));
 DESCR("");
-DATA(insert OID = 1690 (	bool_ops    16	  ));
+DATA(insert OID = 1690 (	bool_ops         16   ));
+DESCR("");
+DATA(insert OID = 1399 (	timetz_ops     1266   ));
 DESCR("");
 
 #endif	 /* PG_OPCLASS_H */

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_amop.h,v 1.31 2000/02/27 12:02:33 wieck Exp $
+ * $Id: pg_amop.h,v 1.32 2000/03/14 23:06:43 thomas Exp $
  *
  * NOTES
  *	 the genbki.sh script reads this file and generates .bki
@@ -285,7 +285,17 @@ DATA(insert OID = 0 (  403 1115 1113 4 ));
 DATA(insert OID = 0 (  403 1115 1112 5 ));
 
 /*
- *	nbtree datetime_ops
+ *	nbtree timetz_ops
+ */
+
+DATA(insert OID = 0 (  403 1399 1552 1 ));
+DATA(insert OID = 0 (  403 1399 1553 2 ));
+DATA(insert OID = 0 (  403 1399 1550 3 ));
+DATA(insert OID = 0 (  403 1399 1555 4 ));
+DATA(insert OID = 0 (  403 1399 1554 5 ));
+
+/*
+ *	nbtree timestamp_ops
  */
 
 DATA(insert OID = 0 (  403 1312 1322 1 ));
@@ -295,7 +305,7 @@ DATA(insert OID = 0 (  403 1312 1325 4 ));
 DATA(insert OID = 0 (  403 1312 1324 5 ));
 
 /*
- *	nbtree timespan_ops
+ *	nbtree interval_ops
  */
 
 DATA(insert OID = 0 (  403 1313 1332 1 ));
@@ -397,9 +407,11 @@ DATA(insert OID = 0 (  405 1077 1062 1 ));
 DATA(insert OID = 0 (  405 1114 1093 1 ));
 /* time_ops */
 DATA(insert OID = 0 (  405 1115 1108 1 ));
-/* datetime_ops */
+/* timetz_ops */
+DATA(insert OID = 0 (  405 1399 1550 1 ));
+/* timestamp_ops */
 DATA(insert OID = 0 (  405 1312 1320 1 ));
-/* timespan_ops */
+/* interval_ops */
 DATA(insert OID = 0 (  405 1313 1330 1 ));
 /* macaddr_ops */
 DATA(insert OID = 0 (  405 810 1220 1 ));

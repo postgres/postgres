@@ -189,7 +189,7 @@ DELETE FROM tmp3 where a=5;
 -- Try (and succeed)
 ALTER TABLE tmp3 add constraint tmpconstr foreign key (a) references tmp2 match full;
 
-DROP TABLE tmp3
+DROP TABLE tmp3;
 
-DROP TABLE tmp2
+DROP TABLE tmp2;
 

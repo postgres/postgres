@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.42 2000/02/16 18:17:02 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.43 2000/03/14 23:06:36 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -618,8 +618,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 	tm->tm_min = 0;
 	tm->tm_sec = 0;
 	*fsec = 0;
-	tm->tm_isdst = -1;			/* don't know daylight savings time status
-								 * apriori */
+	tm->tm_isdst = -1;	/* don't know daylight savings time status apriori */
 	if (tzp != NULL)
 		*tzp = 0;
 
@@ -897,8 +896,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 				tm->tm_mon += 1;
 
 #if defined(HAVE_TM_ZONE)
-				*tzp = -(tm->tm_gmtoff);		/* tm_gmtoff is
-												 * Sun/DEC-ism */
+				*tzp = -(tm->tm_gmtoff);	/* tm_gmtoff is Sun/DEC-ism */
 #elif defined(HAVE_INT_TIMEZONE)
 #ifdef __CYGWIN__
 				*tzp = ((tm->tm_isdst > 0) ? (_timezone - 3600) : _timezone);
@@ -927,9 +925,18 @@ DecodeDateTime(char **field, int *ftype, int nf,
 
 /* DecodeTimeOnly()
  * Interpret parsed string as time fields only.
+ * Note that support for time zone is here for
+ * SQL92 TIME WITH TIME ZONE, but it reveals
+ * bogosity with SQL92 date/time standards, since
+ * we must infer a time zone from current time.
+ * XXX Later, we should probably support
+ * SET TIME ZONE <integer>
+ * which of course is a screwed up convention.
+ * - thomas 2000-03-10
  */
 int
-DecodeTimeOnly(char **field, int *ftype, int nf, int *dtype, struct tm * tm, double *fsec)
+DecodeTimeOnly(char **field, int *ftype, int nf,
+			   int *dtype, struct tm * tm, double *fsec, int *tzp)
 {
 	int			fmask,
 				tmask,
@@ -944,9 +951,10 @@ DecodeTimeOnly(char **field, int *ftype, int nf, int *dtype, struct tm * tm, dou
 	tm->tm_hour = 0;
 	tm->tm_min = 0;
 	tm->tm_sec = 0;
-	tm->tm_isdst = -1;			/* don't know daylight savings time status
-								 * apriori */
 	*fsec = 0;
+	tm->tm_isdst = -1;	/* don't know daylight savings time status apriori */
+	if (tzp != NULL)
+		*tzp = 0;
 
 	fmask = DTK_DATE_M;
 
@@ -957,6 +965,14 @@ DecodeTimeOnly(char **field, int *ftype, int nf, int *dtype, struct tm * tm, dou
 			case DTK_TIME:
 				if (DecodeTime(field[i], fmask, &tmask, tm, fsec) != 0)
 					return -1;
+				break;
+
+			case DTK_TZ:
+				if (tzp == NULL)
+					return -1;
+				if (DecodeTimezone(field[i], tzp) != 0)
+					return -1;
+				tmask = DTK_M(TZ);
 				break;
 
 			case DTK_NUMBER:
@@ -1034,6 +1050,45 @@ DecodeTimeOnly(char **field, int *ftype, int nf, int *dtype, struct tm * tm, dou
 
 	if ((fmask & DTK_TIME_M) != DTK_TIME_M)
 		return -1;
+
+	/* timezone not specified? then find local timezone if possible */
+	if ((tzp != NULL) && (!(fmask & DTK_M(TZ))))
+	{
+		struct tm tt, *tmp = &tt;
+
+		/*
+		 * daylight savings time modifier but no standard timezone?
+		 * then error
+		 */
+		if (fmask & DTK_M(DTZMOD))
+			return -1;
+
+		GetCurrentTime(tmp);
+		tmp->tm_hour = tm->tm_hour;
+		tmp->tm_min = tm->tm_min;
+		tmp->tm_sec = tm->tm_sec;
+
+#ifdef USE_POSIX_TIME
+		tmp->tm_isdst = -1;
+		mktime(tmp);
+		tm->tm_isdst = tmp->tm_isdst;
+
+#if defined(HAVE_TM_ZONE)
+		*tzp = -(tmp->tm_gmtoff);	/* tm_gmtoff is Sun/DEC-ism */
+#elif defined(HAVE_INT_TIMEZONE)
+#ifdef __CYGWIN__
+		*tzp = ((tmp->tm_isdst > 0) ? (_timezone - 3600) : _timezone);
+#else
+		*tzp = ((tmp->tm_isdst > 0) ? (timezone - 3600) : timezone);
+#endif
+#else
+#error USE_POSIX_TIME is defined but neither HAVE_TM_ZONE or HAVE_INT_TIMEZONE are defined
+#endif
+
+#else							/* !USE_POSIX_TIME */
+		*tzp = CTimeZone;
+#endif
+	}
 
 	return 0;
 }	/* DecodeTimeOnly() */
@@ -1830,7 +1885,7 @@ EncodeDateOnly(struct tm * tm, int style, char *str)
  * Encode time fields only.
  */
 int
-EncodeTimeOnly(struct tm * tm, double fsec, int style, char *str)
+EncodeTimeOnly(struct tm * tm, double fsec, int *tzp, int style, char *str)
 {
 	double		sec;
 
@@ -1841,6 +1896,15 @@ EncodeTimeOnly(struct tm * tm, double fsec, int style, char *str)
 
 	sprintf(str, "%02d:%02d:", tm->tm_hour, tm->tm_min);
 	sprintf((str + 6), ((fsec != 0) ? "%05.2f" : "%02.0f"), sec);
+
+	if (tzp != NULL)
+	{
+		int hour, min;
+
+		hour = -(*tzp / 3600);
+		min = ((abs(*tzp) / 60) % 60);
+		sprintf((str + strlen(str)), ((min != 0) ? "%+03d:%02d" : "%+03d"), hour, min);
+	}
 
 	return TRUE;
 }	/* EncodeTimeOnly() */

@@ -291,5 +291,7 @@ DELETE FROM tmp3 where a=5;
 -- Try (and succeed)
 ALTER TABLE tmp3 add constraint tmpconstr foreign key (a) references tmp2 match full;
 NOTICE:  ALTER TABLE ... ADD CONSTRAINT will create implicit trigger(s) for FOREIGN KEY check(s)
-DROP TABLE tmp3
-DROP TABLE tmp2
+DROP TABLE tmp3;
+NOTICE:  DROP TABLE implicitly drops referential integrity trigger from table "tmp2"
+NOTICE:  DROP TABLE implicitly drops referential integrity trigger from table "tmp2"
+DROP TABLE tmp2;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.45 2000/02/15 20:49:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.46 2000/03/14 23:06:29 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -454,8 +454,8 @@ new_rangetable_entry(Oid new_relid, RangeTblEntry *old_entry)
 	RangeTblEntry *new_entry = copyObject(old_entry);
 
 	/* ??? someone tell me what the following is doing! - ay 11/94 */
-	if (!strcmp(new_entry->ref->relname, "*CURRENT*") ||
-		!strcmp(new_entry->ref->relname, "*NEW*"))
+	if (!strcmp(new_entry->eref->relname, "*CURRENT*") ||
+		!strcmp(new_entry->eref->relname, "*NEW*"))
 		new_entry->ref->relname = get_rel_name(new_relid);
 	else
 		new_entry->relname = get_rel_name(new_relid);

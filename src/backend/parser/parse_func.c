@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.73 2000/03/11 23:17:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.74 2000/03/14 23:06:32 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -325,7 +325,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 			 * now allow column aliases.
 			 * - thomas 2000-02-07
 			 */
-			if (rte->ref->attrs != NULL)
+			if (rte->eref->attrs != NULL)
 			{
 				List   *c;
 				/* start counting attributes/columns from one.
@@ -333,7 +333,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 				 * - thomas 2000-01-27
 				 */
 				int		i = 1;
-				foreach (c, rte->ref->attrs)
+				foreach (c, rte->eref->attrs)
 				{
 					char *colname = strVal(lfirst(c));
 					/* found a match? */
@@ -550,7 +550,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 
 			relname = rte->relname;
 
-			vnum = refnameRangeTablePosn(pstate, rte->ref->relname, NULL);
+			vnum = refnameRangeTablePosn(pstate, rte->eref->relname, NULL);
 
 			/*
 			 * for func(relname), the param to the function is the tuple

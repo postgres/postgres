@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: int8.h,v 1.18 2000/02/21 03:36:59 tgl Exp $
+ * $Id: int8.h,v 1.19 2000/03/14 23:06:50 thomas Exp $
  *
  * NOTES
  * These data types are supported on all 64-bit architectures, and may
@@ -76,6 +76,9 @@ extern int64 *int8pl(int64 *val1, int64 *val2);
 extern int64 *int8mi(int64 *val1, int64 *val2);
 extern int64 *int8mul(int64 *val1, int64 *val2);
 extern int64 *int8div(int64 *val1, int64 *val2);
+extern int64 *int8abs(int64 *val1);
+extern int64 *int8fac(int64 *val1);
+extern int64 *int8mod(int64 *val1, int64 *val2);
 extern int64 *int8larger(int64 *val1, int64 *val2);
 extern int64 *int8smaller(int64 *val1, int64 *val2);
 

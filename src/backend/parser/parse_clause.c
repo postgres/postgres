@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.55 2000/02/19 23:45:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.56 2000/03/14 23:06:32 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -478,7 +478,7 @@ parseFromClause(ParseState *pstate, List *frmList)
 			{
 				Assert(IsA(j->larg, RangeVar));
 				l_rte = transformTableEntry(pstate, (RangeVar *) j->larg);
-				l_name = expandTable(pstate, l_rte->ref->relname, TRUE);
+				l_name = expandTable(pstate, l_rte->eref->relname, TRUE);
 			}
 
 			if (IsA(j->rarg, JoinExpr))
@@ -490,7 +490,7 @@ parseFromClause(ParseState *pstate, List *frmList)
 			{
 				Assert(IsA(j->rarg, RangeVar));
 				r_rte = transformTableEntry(pstate, (RangeVar *) j->rarg);
-				r_name = expandTable(pstate, r_rte->ref->relname, TRUE);
+				r_name = expandTable(pstate, r_rte->eref->relname, TRUE);
 			}
 
 			/* Natural join does not explicitly specify columns; must generate columns to join.

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.34 2000/03/11 23:19:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.35 2000/03/14 23:06:32 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -319,6 +319,7 @@ TypeCategory(Oid inType)
 
 		case (DATEOID):
 		case (TIMEOID):
+		case (TIMETZOID):
 		case (ABSTIMEOID):
 		case (TIMESTAMPOID):
 			result = DATETIME_TYPE;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.34 2000/02/15 03:37:47 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.35 2000/03/14 23:06:32 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -111,7 +111,7 @@ check_ungrouped_columns_walker(Node *node,
 			elog(ERROR, "cache lookup of attribute %d in relation %u failed",
 				 var->varattno, rte->relid);
 		elog(ERROR, "Attribute %s.%s must be GROUPed or used in an aggregate function",
-			 rte->ref->relname, attname);
+			 rte->eref->relname, attname);
 	}
 	/* Otherwise, recurse. */
 	return expression_tree_walker(node, check_ungrouped_columns_walker,

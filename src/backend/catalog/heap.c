@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.122 2000/02/18 09:28:40 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.123 2000/03/14 23:06:06 thomas Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1719,8 +1719,10 @@ StoreAttrDefault(Relation rel, AttrNumber attnum, char *adbin,
 	 */
 	rte = makeNode(RangeTblEntry);
 	rte->relname = RelationGetRelationName(rel);
+#ifndef DISABLE_EREF
 	rte->ref = makeNode(Attr);
 	rte->ref->relname = RelationGetRelationName(rel);
+#endif
 	rte->relid = RelationGetRelid(rel);
 	rte->inh = false;
 	rte->inFromCl = true;
@@ -1799,8 +1801,10 @@ StoreRelCheck(Relation rel, char *ccname, char *ccbin)
 	 */
 	rte = makeNode(RangeTblEntry);
 	rte->relname = RelationGetRelationName(rel);
+#ifndef DISABLE_EREF
 	rte->ref = makeNode(Attr);
 	rte->ref->relname = RelationGetRelationName(rel);
+#endif
 	rte->relid = RelationGetRelid(rel);
 	rte->inh = false;
 	rte->inFromCl = true;

@@ -36,7 +36,7 @@ SELECT '' AS four, BOX_TBL.*;
       | (3,3),(3,3)
 (4 rows)
 
-SELECT '' AS four, b.*, box_area(b.f1) as barea
+SELECT '' AS four, b.*, area(b.f1) as barea
    FROM BOX_TBL b;
  four |         f1          | barea 
 ------+---------------------+-------

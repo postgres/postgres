@@ -39,7 +39,7 @@ INSERT INTO BOX_TBL (f1) VALUES ('asdfasdf(ad');
 
 SELECT '' AS four, BOX_TBL.*;
 
-SELECT '' AS four, b.*, box_area(b.f1) as barea
+SELECT '' AS four, b.*, area(b.f1) as barea
    FROM BOX_TBL b;
 
 -- overlap 

@@ -4,7 +4,7 @@
 
 -- Shorthand values
 -- Not directly usable for regression testing since these are not constants.
--- So, just try to test parser and hope for the best - tgl 97/04/26
+-- So, just try to test parser and hope for the best - thomas 97/04/26
 
 SELECT (timestamp 'today' = (timestamp 'yesterday' + interval '1 day')) as "True";
 SELECT (timestamp 'today' = (timestamp 'tomorrow' - interval '1 day')) as "True";
@@ -12,8 +12,10 @@ SELECT (timestamp 'tomorrow' = (timestamp 'yesterday' + interval '2 days')) as "
 SELECT (timestamp 'current' = 'now') as "True";
 SELECT (timestamp 'now' - 'current') AS "ZeroSecs";
 
-SET DateStyle = 'Postgres,noneuropean';
-SELECT timestamp('1994-01-01', '11:00') AS "Jan_01_1994_11am";
+SET DateStyle = 'Postgres,NonEuropean';
+SELECT timestamp(date '1994-01-01', time '11:00') AS "Jan_01_1994_11am";
+SELECT timestamp(date '1994-01-01', time '10:00') AS "Jan_01_1994_10am";
+SELECT timestamp(date '1994-01-01', time with time zone '11:00-5') AS "Jan_01_1994_8am";
 
 CREATE TABLE TIMESTAMP_TBL ( d1 timestamp);
 

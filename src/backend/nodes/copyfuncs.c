@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.108 2000/02/21 18:47:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.109 2000/03/14 23:06:27 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1366,6 +1366,7 @@ _copyRangeTblEntry(RangeTblEntry *from)
 	if (from->relname)
 		newnode->relname = pstrdup(from->relname);
 	Node_Copy(from, newnode, ref);
+	Node_Copy(from, newnode, eref);
 	newnode->relid = from->relid;
 	newnode->inh = from->inh;
 	newnode->inFromCl = from->inFromCl;

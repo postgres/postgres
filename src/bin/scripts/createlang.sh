@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createlang.sh,v 1.6 2000/01/19 20:08:35 petere Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createlang.sh,v 1.7 2000/03/14 23:06:41 thomas Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -241,11 +241,11 @@ if [ $? -ne 0 ]; then
 	echo "$CMDNAME: language installation failed"
 	exit 1
 fi
+
 $PSQL "CREATE ${trusted}PROCEDURAL LANGUAGE '$langname' HANDLER $handler LANCOMPILER '$lancomp'"
 if [ $? -ne 0 ]; then
 	echo "$CMDNAME: language installation failed"
 	exit 1
 fi
 
-echo "Ok"
 exit 0

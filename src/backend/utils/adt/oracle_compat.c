@@ -1,24 +1,14 @@
 /*
  *	Edmund Mergl <E.Mergl@bawue.de>
  *
- *	$Id: oracle_compat.c,v 1.20 1999/07/15 15:20:19 momjian Exp $
+ *	$Id: oracle_compat.c,v 1.21 2000/03/14 23:06:37 thomas Exp $
  *
  */
 
 
 #include <ctype.h>
 #include "postgres.h"
-
-text	   *lower(text *string);
-text	   *upper(text *string);
-text	   *initcap(text *string);
-text	   *lpad(text *string1, int4 len, text *string2);
-text	   *rpad(text *string1, int4 len, text *string2);
-text	   *btrim(text *string, text *set);
-text	   *ltrim(text *string, text *set);
-text	   *rtrim(text *string, text *set);
-text	   *substr(text *string, int4 m, int4 n);
-text	   *translate(text *string, char from, char to);
+#include "utils/builtins.h"
 
 
 /********************************************************************
@@ -506,42 +496,68 @@ substr(text *string, int4 m, int4 n)
  *
  * Syntax:
  *
- *	 text *translate(text *string, char from, char to)
+ *	 text *translate(text *string, text *from, text *to)
  *
  * Purpose:
  *
  *	 Returns string after replacing all occurences of from with
  *	 the corresponding character in to. TRANSLATE will not remove
  *	  characters.
+ *	 Modified to work with strings rather than single character
+ *	  for the substitution arguments.
+ *	 Modifications from Edwin Ramirez <ramirez@doc.mssm.edu>.
  *
  ********************************************************************/
 
 text *
-translate(text *string, char from, char to)
+translate(text *string, text *from, text *to)
 {
-	text	   *ret;
-	char	   *ptr,
-			   *ptr_ret;
-	int			m;
+	text   *ret;
+	char   *ptr_ret, *from_ptr, *to_ptr;
+	char   *source, *target, *temp, rep;
+	int		m, fromlen, tolen, retlen, i;
 
 	if ((string == (text *) NULL) ||
 		((m = VARSIZE(string) - VARHDRSZ) <= 0))
 		return string;
 
-	ret = (text *) palloc(VARSIZE(string));
-	VARSIZE(ret) = VARSIZE(string);
+	target   = (char *) palloc(VARSIZE(string) - VARHDRSZ);
+	source   = VARDATA(string);
+	temp     = target;
 
-	ptr = VARDATA(string);
-	ptr_ret = VARDATA(ret);
-
+	fromlen = VARSIZE(from) - VARHDRSZ;
+	from_ptr = VARDATA(from);
+	tolen = VARSIZE(to) - VARHDRSZ;
+	to_ptr   = VARDATA(to);
+	retlen = 0;
 	while (m--)
 	{
-		*ptr_ret++ = *ptr == from ? to : *ptr;
-		ptr++;
+		rep = *source;
+		for(i=0;i<fromlen;i++) {
+            if(from_ptr[i] == *source)  {
+				if(i < tolen) {
+					rep = to_ptr[i];
+				} else {
+					rep = 0;
+				}
+				break;
+            }
+		}
+		if(rep != 0) {
+            *target++ = rep;
+            retlen++;
+		}
+		source++;
 	}
 
+	ret = (text *) palloc(retlen + VARHDRSZ);
+	VARSIZE(ret) = retlen + VARHDRSZ;
+	ptr_ret = VARDATA(ret);
+	for(i=0;i<retlen;i++) {
+		*ptr_ret++ = temp[i];
+	}
+	pfree(target);
 	return ret;
 }
-
 
 /* EOF */

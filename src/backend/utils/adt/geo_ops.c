@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.48 2000/01/26 05:57:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.49 2000/03/14 23:06:36 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3508,29 +3508,6 @@ path_div_pt(PATH *path, Point *point)
 
 	return result;
 }	/* path_div_pt() */
-
-
-bool
-path_contain_pt(PATH *path, Point *p)
-{
-	if (!PointerIsValid(path) || !PointerIsValid(p))
-		return FALSE;
-
-	return (on_ppath(p, path));
-}	/* path_contain_pt() */
-
-/* pt_contained_path
- * Point in or on path? This is the same as on_ppath.
- * - thomas 1998-10-29
- */
-bool
-pt_contained_path(Point *p, PATH *path)
-{
-	if (!PointerIsValid(p) || !PointerIsValid(path))
-		return FALSE;
-
-	return path_contain_pt(path, p);
-}	/* pt_contained_path() */
 
 
 Point *

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geo_decls.h,v 1.25 2000/02/17 03:39:51 tgl Exp $
+ * $Id: geo_decls.h,v 1.26 2000/03/14 23:06:50 thomas Exp $
  *
  * NOTE
  *	  These routines do *not* use the float types from adt/.
@@ -284,8 +284,6 @@ extern PATH *path_add_pt(PATH *path, Point *point);
 extern PATH *path_sub_pt(PATH *path, Point *point);
 extern PATH *path_mul_pt(PATH *path, Point *point);
 extern PATH *path_div_pt(PATH *path, Point *point);
-extern bool path_contain_pt(PATH *path, Point *p);
-extern bool pt_contained_path(Point *p, PATH *path);
 
 extern Point *path_center(PATH *path);
 extern POLYGON *path_poly(PATH *path);

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.155 2000/03/12 20:09:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.156 2000/03/14 23:06:31 thomas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -307,7 +307,7 @@ static void doNegateFloat(Value *v);
 		ISOLATION, JOIN, KEY, LANGUAGE, LEADING, LEFT, LEVEL, LIKE, LOCAL,
 		MATCH, MINUTE_P, MONTH_P, NAMES,
 		NATIONAL, NATURAL, NCHAR, NEXT, NO, NOT, NULLIF, NULL_P, NUMERIC,
-		OF, ON, ONLY, OPTION, OR, ORDER, OUTER_P,
+		OF, ON, ONLY, OPTION, OR, ORDER, OUTER_P, OVERLAPS,
 		PARTIAL, POSITION, PRECISION, PRIMARY, PRIOR, PRIVILEGES, PROCEDURE, PUBLIC,
 		READ, REFERENCES, RELATIVE, REVOKE, RIGHT, ROLLBACK,
 		SCROLL, SECOND_P, SELECT, SESSION_USER, SET, SUBSTRING,
@@ -363,6 +363,7 @@ static void doNegateFloat(Value *v);
 %right		'='
 %nonassoc	'<' '>'
 %nonassoc	LIKE
+%nonassoc	OVERLAPS
 %nonassoc	BETWEEN
 %nonassoc	IN
 %left		Op				/* multi-character ops and user-defined operators */
@@ -1903,7 +1904,7 @@ comment_text:	Sconst { $$ = $1; }
  *
  *****************************************************************************/
 
-FetchStmt:	FETCH direction fetch_how_many from_in name
+FetchStmt:  FETCH direction fetch_how_many from_in name
 				{
 					FetchStmt *n = makeNode(FetchStmt);
 					if ($2 == RELATIVE)
@@ -1923,7 +1924,7 @@ FetchStmt:	FETCH direction fetch_how_many from_in name
 					n->ismove = false;
 					$$ = (Node *)n;
 				}
-		| 	FETCH fetch_how_many from_in name
+		| FETCH fetch_how_many from_in name
 				{
 					FetchStmt *n = makeNode(FetchStmt);
 					if ($2 < 0)
@@ -1940,7 +1941,7 @@ FetchStmt:	FETCH direction fetch_how_many from_in name
 					n->ismove = false;
 					$$ = (Node *)n;
 				}
-		|	FETCH direction from_in name
+		| FETCH direction from_in name
 				{
 					FetchStmt *n = makeNode(FetchStmt);
 					if ($2 == RELATIVE)
@@ -1953,7 +1954,7 @@ FetchStmt:	FETCH direction fetch_how_many from_in name
 					n->ismove = false;
 					$$ = (Node *)n;
 				}
-		|	FETCH from_in name
+		| FETCH from_in name
 				{
 					FetchStmt *n = makeNode(FetchStmt);
 					n->direction = FORWARD;
@@ -1962,7 +1963,7 @@ FetchStmt:	FETCH direction fetch_how_many from_in name
 					n->ismove = false;
 					$$ = (Node *)n;
 				}
-		|	FETCH name
+		| FETCH name
 				{
 					FetchStmt *n = makeNode(FetchStmt);
 					n->direction = FORWARD;
@@ -1972,7 +1973,7 @@ FetchStmt:	FETCH direction fetch_how_many from_in name
 					$$ = (Node *)n;
 				}
 
-		|	MOVE direction fetch_how_many from_in name
+		| MOVE direction fetch_how_many from_in name
 				{
 					FetchStmt *n = makeNode(FetchStmt);
 					if ($3 < 0)
@@ -1986,7 +1987,7 @@ FetchStmt:	FETCH direction fetch_how_many from_in name
 					n->ismove = TRUE;
 					$$ = (Node *)n;
 				}
-		|	MOVE fetch_how_many from_in name
+		| MOVE fetch_how_many from_in name
 				{
 					FetchStmt *n = makeNode(FetchStmt);
 					if ($2 < 0)
@@ -2003,7 +2004,7 @@ FetchStmt:	FETCH direction fetch_how_many from_in name
 					n->ismove = TRUE;
 					$$ = (Node *)n;
 				}
-		|	MOVE direction from_in name
+		| MOVE direction from_in name
 				{
 					FetchStmt *n = makeNode(FetchStmt);
 					n->direction = $2;
@@ -2021,7 +2022,7 @@ FetchStmt:	FETCH direction fetch_how_many from_in name
 					n->ismove = TRUE;
 					$$ = (Node *)n;
 				}
-		|	MOVE name
+		| MOVE name
 				{
 					FetchStmt *n = makeNode(FetchStmt);
 					n->direction = FORWARD;
@@ -2659,11 +2660,12 @@ opt_trans: WORK									{ $$ = TRUE; }
  *
  *****************************************************************************/
 
-ViewStmt:  CREATE VIEW name AS SelectStmt
+ViewStmt:  CREATE VIEW name opt_column_list AS SelectStmt
 				{
 					ViewStmt *n = makeNode(ViewStmt);
 					n->viewname = $3;
-					n->query = (Query *)$5;
+					n->aliases = $4;
+					n->query = (Query *)$6;
 					if (((SelectStmt *)n->query)->sortClause != NULL)
 						elog(ERROR,"ORDER BY and DISTINCT on views are not implemented");
 					if (((SelectStmt *)n->query)->unionClause != NULL)
@@ -2737,7 +2739,7 @@ createdb_opt_encoding:
             int i;
             i = pg_char_to_encoding($3);
             if (i == -1)
-                elog(ERROR, "%s is not a valid encoding name.", $3);
+                elog(ERROR, "%s is not a valid encoding name", $3);
             $$ = i;
 #else
             elog(ERROR, "Multi-byte support is not enabled");
@@ -2747,7 +2749,7 @@ createdb_opt_encoding:
         {
 #ifdef MULTIBYTE
             if (!pg_get_encent_by_encoding($3))
-                elog(ERROR, "%d is not a valid encoding code.", $3);
+                elog(ERROR, "%d is not a valid encoding code", $3);
             $$ = $3;
 #else
             elog(ERROR, "Multi-byte support is not enabled");
@@ -3979,10 +3981,13 @@ Datetime:  datetime
 					$$->timezone = $2;
 					$$->typmod = -1;
 				}
-		| TIME
+		| TIME opt_timezone
 				{
 					$$ = makeNode(TypeName);
-					$$->name = xlateSqlType("time");
+					if ($2)
+						$$->name = xlateSqlType("timetz");
+					else
+						$$->name = xlateSqlType("time");
 					$$->typmod = -1;
 				}
 		| INTERVAL opt_interval
@@ -4076,6 +4081,27 @@ row_expr: '(' row_descriptor ')' IN '(' SubSelect ')'
 		| '(' row_descriptor ')' all_Op '(' row_descriptor ')'
 				{
 					$$ = makeRowExpr($4, $2, $6);
+				}
+		| '(' row_descriptor ')' OVERLAPS '(' row_descriptor ')'
+				{
+					FuncCall *n = makeNode(FuncCall);
+					List *largs = $2;
+					List *rargs = $6;
+					n->funcname = xlateSqlFunc("overlaps");
+					if (length(largs) == 1)
+						largs = lappend(largs, $2);
+					else if (length(largs) != 2)
+						elog(ERROR, "Wrong number of parameters"
+							 " on left side of OVERLAPS expression");
+					if (length(rargs) == 1)
+						rargs = lappend(rargs, $6);
+					else if (length(rargs) != 2)
+						elog(ERROR, "Wrong number of parameters"
+							 " on right side of OVERLAPS expression");
+					n->args = nconc(largs, rargs);
+					n->agg_star = false;
+					n->agg_distinct = false;
+					$$ = (Node *)n;
 				}
 		;
 
@@ -4579,7 +4605,8 @@ c_expr:  attr
 					n->agg_distinct = false;
 
 					if ($3 != 0)
-						elog(NOTICE,"CURRENT_TIME(%d) precision not implemented; zero used instead",$3);
+						elog(NOTICE,"CURRENT_TIME(%d) precision not implemented"
+							 "; zero used instead",$3);
 
 					$$ = (Node *)n;
 				}
@@ -4632,7 +4659,8 @@ c_expr:  attr
 					n->agg_distinct = false;
 
 					if ($3 != 0)
-						elog(NOTICE,"CURRENT_TIMESTAMP(%d) precision not implemented; zero used instead",$3);
+						elog(NOTICE,"CURRENT_TIMESTAMP(%d) precision not implemented"
+							 "; zero used instead",$3);
 
 					$$ = (Node *)n;
 				}
@@ -5219,6 +5247,7 @@ ColId:  IDENT							{ $$ = $1; }
 		| ONLY							{ $$ = "only"; }
 		| OPERATOR						{ $$ = "operator"; }
 		| OPTION						{ $$ = "option"; }
+		| OVERLAPS						{ $$ = "overlaps"; }
 		| PASSWORD						{ $$ = "password"; }
 		| PENDANT						{ $$ = "pendant"; }
 		| PRIOR							{ $$ = "prior"; }
@@ -5454,9 +5483,8 @@ mapTargetColumns(List *src, List *dst)
 static char *
 xlateSqlFunc(char *name)
 {
-	if (!strcasecmp(name,"character_length")
-	 || !strcasecmp(name,"char_length"))
-		return "length";
+	if (!strcasecmp(name,"character_length"))
+		return "char_length";
 	else
 		return name;
 } /* xlateSqlFunc() */

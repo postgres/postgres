@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.42 2000/02/16 18:17:02 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.43 2000/03/14 23:06:35 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -198,7 +198,7 @@ date_timestamp(DateADT dateVal)
 	double		fsec = 0;
 	char	   *tzn;
 
-	result = palloc(sizeof(Timestamp));
+	result = palloc(sizeof(*result));
 
 	if (date2tm(dateVal, &tz, tm, &fsec, &tzn) != 0)
 		elog(ERROR, "Unable to convert date to timestamp");
@@ -392,10 +392,10 @@ time_in(char *str)
 		elog(ERROR, "Bad (null) time external representation");
 
 	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
-		|| (DecodeTimeOnly(field, ftype, nf, &dtype, tm, &fsec) != 0))
+		|| (DecodeTimeOnly(field, ftype, nf, &dtype, tm, &fsec, NULL) != 0))
 		elog(ERROR, "Bad time external representation '%s'", str);
 
-	time = palloc(sizeof(TimeADT));
+	time = palloc(sizeof(*time));
 
 	*time = ((((tm->tm_hour * 60) + tm->tm_min) * 60) + tm->tm_sec + fsec);
 
@@ -422,7 +422,7 @@ time_out(TimeADT *time)
 
 	fsec = 0;
 
-	EncodeTimeOnly(tm, fsec, DateStyle, buf);
+	EncodeTimeOnly(tm, fsec, NULL, DateStyle, buf);
 
 	result = palloc(strlen(buf) + 1);
 
@@ -456,8 +456,8 @@ time_lt(TimeADT *time1, TimeADT *time2)
 	if (!PointerIsValid(time1) || !PointerIsValid(time2))
 		return FALSE;
 
-	return *time1 < *time2;
-}	/* time_eq() */
+	return (*time1 < *time2);
+}	/* time_lt() */
 
 bool
 time_le(TimeADT *time1, TimeADT *time2)
@@ -465,8 +465,8 @@ time_le(TimeADT *time1, TimeADT *time2)
 	if (!PointerIsValid(time1) || !PointerIsValid(time2))
 		return FALSE;
 
-	return *time1 <= *time2;
-}	/* time_eq() */
+	return (*time1 <= *time2);
+}	/* time_le() */
 
 bool
 time_gt(TimeADT *time1, TimeADT *time2)
@@ -474,8 +474,8 @@ time_gt(TimeADT *time1, TimeADT *time2)
 	if (!PointerIsValid(time1) || !PointerIsValid(time2))
 		return FALSE;
 
-	return *time1 > *time2;
-}	/* time_eq() */
+	return (*time1 > *time2);
+}	/* time_gt() */
 
 bool
 time_ge(TimeADT *time1, TimeADT *time2)
@@ -483,8 +483,8 @@ time_ge(TimeADT *time1, TimeADT *time2)
 	if (!PointerIsValid(time1) || !PointerIsValid(time2))
 		return FALSE;
 
-	return *time1 >= *time2;
-}	/* time_eq() */
+	return (*time1 >= *time2);
+}	/* time_ge() */
 
 int
 time_cmp(TimeADT *time1, TimeADT *time2)
@@ -492,6 +492,43 @@ time_cmp(TimeADT *time1, TimeADT *time2)
 	return (*time1 < *time2) ? -1 : (((*time1 > *time2) ? 1 : 0));
 }	/* time_cmp() */
 
+TimeADT *
+time_larger(TimeADT *time1, TimeADT *time2)
+{
+	return time_gt(time1, time2)? time1: time2;
+}	/* time_larger() */
+
+TimeADT *
+time_smaller(TimeADT *time1, TimeADT *time2)
+{
+	return time_lt(time1, time2)? time1: time2;
+}	/* time_smaller() */
+
+/* overlaps_time()
+ * Implements the SQL92 OVERLAPS operator.
+ * Algorithm from Date and Darwen, 1997
+ */
+bool
+overlaps_time(TimeADT *ts1, TimeADT *te1, TimeADT *ts2, TimeADT *te2)
+{
+	/* Make sure we have ordered pairs... */
+	if (time_gt(ts1, te1))
+	{
+		TimeADT *tt = ts1;
+		ts1 = te1;
+		te1 = tt;
+	}
+	if (time_gt(ts2, te2))
+	{
+		TimeADT *tt = ts2;
+		ts2 = te2;
+		te2 = tt;
+	}
+
+	return ((time_gt(ts1, ts2) && (time_lt(ts1, te2) || time_lt(te1, te2)))
+			|| (time_gt(ts2, ts1) && (time_lt(ts2, te1) || time_lt(te2, te1)))
+			|| time_eq(ts1, ts2));
+}
 
 /* timestamp_time()
  * Convert timestamp to time data type.
@@ -515,12 +552,10 @@ timestamp_time(Timestamp *timestamp)
 	if (TIMESTAMP_IS_EPOCH(*timestamp))
 	{
 		timestamp2tm(SetTimestamp(*timestamp), NULL, tm, &fsec, NULL);
-
 	}
 	else if (TIMESTAMP_IS_CURRENT(*timestamp))
 	{
 		timestamp2tm(SetTimestamp(*timestamp), &tz, tm, &fsec, &tzn);
-
 	}
 	else
 	{
@@ -528,7 +563,7 @@ timestamp_time(Timestamp *timestamp)
 			elog(ERROR, "Unable to convert timestamp to date");
 	}
 
-	result = palloc(sizeof(TimeADT));
+	result = palloc(sizeof(*result));
 
 	*result = ((((tm->tm_hour * 60) + tm->tm_min) * 60) + tm->tm_sec + fsec);
 
@@ -546,7 +581,7 @@ datetime_timestamp(DateADT date, TimeADT *time)
 
 	if (!PointerIsValid(time))
 	{
-		result = palloc(sizeof(Timestamp));
+		result = palloc(sizeof(*result));
 		TIMESTAMP_INVALID(*result);
 	}
 	else
@@ -557,3 +592,270 @@ datetime_timestamp(DateADT date, TimeADT *time)
 
 	return result;
 }	/* datetime_timestamp() */
+
+
+/* time_interval()
+ * Convert time to interval data type.
+ */
+Interval   *
+time_interval(TimeADT *time)
+{
+	Interval   *result;
+
+	if (!PointerIsValid(time))
+		return NULL;
+
+	result = palloc(sizeof(*result));
+	result->time = *time;
+	result->month = 0;
+
+	return result;
+}	/* time_interval() */
+
+
+/*****************************************************************************
+ *	 Time With Time Zone ADT
+ *****************************************************************************/
+
+
+TimeTzADT    *
+timetz_in(char *str)
+{
+	TimeTzADT  *time;
+
+	double		fsec;
+	struct tm	tt,
+			   *tm = &tt;
+	int			tz;
+
+	int			nf;
+	char		lowstr[MAXDATELEN + 1];
+	char	   *field[MAXDATEFIELDS];
+	int			dtype;
+	int			ftype[MAXDATEFIELDS];
+
+	if (!PointerIsValid(str))
+		elog(ERROR, "Bad (null) time external representation");
+
+	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
+		|| (DecodeTimeOnly(field, ftype, nf, &dtype, tm, &fsec, &tz) != 0))
+		elog(ERROR, "Bad time external representation '%s'", str);
+
+	time = palloc(sizeof(*time));
+
+	time->time = ((((tm->tm_hour * 60) + tm->tm_min) * 60) + tm->tm_sec + fsec);
+	time->zone = tz;
+
+	return time;
+}	/* timetz_in() */
+
+
+char *
+timetz_out(TimeTzADT *time)
+{
+	char	   *result;
+	struct tm	tt,
+			   *tm = &tt;
+
+	double		fsec;
+	int			tz;
+	char		buf[MAXDATELEN + 1];
+
+	if (!PointerIsValid(time))
+		return NULL;
+
+	tm->tm_hour = (time->time / (60 * 60));
+	tm->tm_min = (((int) (time->time / 60)) % 60);
+	tm->tm_sec = (((int) time->time) % 60);
+
+	fsec = 0;
+	tz = time->zone;
+
+	EncodeTimeOnly(tm, fsec, &tz, DateStyle, buf);
+
+	result = palloc(strlen(buf) + 1);
+
+	strcpy(result, buf);
+
+	return result;
+}	/* timetz_out() */
+
+
+bool
+timetz_eq(TimeTzADT *time1, TimeTzADT *time2)
+{
+	if (!PointerIsValid(time1) || !PointerIsValid(time2))
+		return FALSE;
+
+	return ((time1->time + time1->zone) == (time2->time + time2->zone));
+}	/* timetz_eq() */
+
+bool
+timetz_ne(TimeTzADT *time1, TimeTzADT *time2)
+{
+	if (!PointerIsValid(time1) || !PointerIsValid(time2))
+		return FALSE;
+
+	return ((time1->time + time1->zone) != (time2->time + time2->zone));
+}	/* timetz_ne() */
+
+bool
+timetz_lt(TimeTzADT *time1, TimeTzADT *time2)
+{
+	if (!PointerIsValid(time1) || !PointerIsValid(time2))
+		return FALSE;
+
+	return ((time1->time + time1->zone) < (time2->time + time2->zone));
+}	/* timetz_lt() */
+
+bool
+timetz_le(TimeTzADT *time1, TimeTzADT *time2)
+{
+	if (!PointerIsValid(time1) || !PointerIsValid(time2))
+		return FALSE;
+
+	return ((time1->time + time1->zone) <= (time2->time + time2->zone));
+}	/* timetz_le() */
+
+bool
+timetz_gt(TimeTzADT *time1, TimeTzADT *time2)
+{
+	if (!PointerIsValid(time1) || !PointerIsValid(time2))
+		return FALSE;
+
+	return ((time1->time + time1->zone) > (time2->time + time2->zone));
+}	/* timetz_gt() */
+
+bool
+timetz_ge(TimeTzADT *time1, TimeTzADT *time2)
+{
+	if (!PointerIsValid(time1) || !PointerIsValid(time2))
+		return FALSE;
+
+	return ((time1->time + time1->zone) >= (time2->time + time2->zone));
+}	/* timetz_ge() */
+
+int
+timetz_cmp(TimeTzADT *time1, TimeTzADT *time2)
+{
+	return (timetz_lt(time1, time2) ? -1 : (timetz_gt(time1, time2)? 1: 0));
+}	/* timetz_cmp() */
+
+TimeTzADT *
+timetz_larger(TimeTzADT *time1, TimeTzADT *time2)
+{
+	return timetz_gt(time1, time2)? time1: time2;
+}	/* timetz_larger() */
+
+TimeTzADT *
+timetz_smaller(TimeTzADT *time1, TimeTzADT *time2)
+{
+	return timetz_lt(time1, time2)? time1: time2;
+}	/* timetz_smaller() */
+
+/* overlaps_timetz()
+ * Implements the SQL92 OVERLAPS operator.
+ * Algorithm from Date and Darwen, 1997
+ */
+bool
+overlaps_timetz(TimeTzADT *ts1, TimeTzADT *te1, TimeTzADT *ts2, TimeTzADT *te2)
+{
+	/* Make sure we have ordered pairs... */
+	if (timetz_gt(ts1, te1))
+	{
+		TimeTzADT *tt = ts1;
+		ts1 = te1;
+		te1 = tt;
+	}
+	if (timetz_gt(ts2, te2))
+	{
+		TimeTzADT *tt = ts2;
+		ts2 = te2;
+		te2 = tt;
+	}
+
+	return ((timetz_gt(ts1, ts2) && (timetz_lt(ts1, te2) || timetz_lt(te1, te2)))
+			|| (timetz_gt(ts2, ts1) && (timetz_lt(ts2, te1) || timetz_lt(te2, te1)))
+			|| timetz_eq(ts1, ts2));
+}	/* overlaps_timetz() */
+
+/* timestamp_timetz()
+ * Convert timestamp to timetz data type.
+ */
+TimeTzADT    *
+timestamp_timetz(Timestamp *timestamp)
+{
+	TimeTzADT    *result;
+	struct tm	tt,
+			   *tm = &tt;
+	int			tz;
+	double		fsec;
+	char	   *tzn;
+
+	if (!PointerIsValid(timestamp))
+		elog(ERROR, "Unable to convert null timestamp to date");
+
+	if (TIMESTAMP_NOT_FINITE(*timestamp))
+		elog(ERROR, "Unable to convert timestamp to date");
+
+	if (TIMESTAMP_IS_EPOCH(*timestamp))
+	{
+		timestamp2tm(SetTimestamp(*timestamp), NULL, tm, &fsec, NULL);
+		tz = 0;
+	}
+	else if (TIMESTAMP_IS_CURRENT(*timestamp))
+	{
+		timestamp2tm(SetTimestamp(*timestamp), &tz, tm, &fsec, &tzn);
+	}
+	else
+	{
+		if (timestamp2tm(*timestamp, &tz, tm, &fsec, &tzn) != 0)
+			elog(ERROR, "Unable to convert timestamp to date");
+	}
+
+	result = palloc(sizeof(*result));
+
+	result->time = ((((tm->tm_hour * 60) + tm->tm_min) * 60) + tm->tm_sec + fsec);
+	result->zone = tz;
+
+	return result;
+}	/* timestamp_timetz() */
+
+
+/* datetimetz_timestamp()
+ * Convert date and timetz to timestamp data type.
+ * Timestamp is stored in GMT, so add the time zone
+ * stored with the timetz to the result.
+ * - thomas 2000-03-10
+ */
+Timestamp   *
+datetimetz_timestamp(DateADT date, TimeTzADT *time)
+{
+	Timestamp  *result;
+	struct tm	tt,
+			   *tm = &tt;
+	int			tz;
+	double		fsec = 0;
+	char	   *tzn;
+
+	result = palloc(sizeof(*result));
+
+	if (!PointerIsValid(date) || !PointerIsValid(time))
+	{
+		TIMESTAMP_INVALID(*result);
+	}
+	else
+	{
+		if (date2tm(date, &tz, tm, &fsec, &tzn) != 0)
+			elog(ERROR, "Unable to convert date to timestamp");
+
+		if (tm2timestamp(tm, fsec, &time->zone, result) != 0)
+			elog(ERROR, "Timestamp out of range");
+
+		*result += time->time;
+	}
+
+	return result;
+}	/* datetimetz_timestamp() */
+
+

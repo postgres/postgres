@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_amproc.h,v 1.21 2000/02/27 12:02:33 wieck Exp $
+ * $Id: pg_amproc.h,v 1.22 2000/03/14 23:06:43 thomas Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -95,12 +95,13 @@ DATA(insert OID = 0 (403 1115 1107 1));
 DATA(insert OID = 0 (403 1181  359 1));
 DATA(insert OID = 0 (403 1312 1314 1));
 DATA(insert OID = 0 (403 1313 1315 1));
-DATA(insert OID = 0 (403 810 836 1));
-DATA(insert OID = 0 (403 935 926 1));
-DATA(insert OID = 0 (403 652 926 1));
+DATA(insert OID = 0 (403  810  836 1));
+DATA(insert OID = 0 (403  935  926 1));
+DATA(insert OID = 0 (403  652  926 1));
 DATA(insert OID = 0 (403 1768 1769 1));
 DATA(insert OID = 0 (403 1690 1693 1));
 DATA(insert OID = 0 (403 1663 1636 1));
+DATA(insert OID = 0 (403 1399 1358 1));
 
 
 
@@ -120,5 +121,6 @@ DATA(insert OID = 0 (405 1115  452 1));
 DATA(insert OID = 0 (405 1181  455 1));
 DATA(insert OID = 0 (405 1312  452 1));
 DATA(insert OID = 0 (405 1313  452 1));
+DATA(insert OID = 0 (405 1399  452 1));
 
 #endif	 /* PG_AMPROC_H */

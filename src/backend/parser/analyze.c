@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: analyze.c,v 1.139 2000/03/01 05:18:20 tgl Exp $
+ *	$Id: analyze.c,v 1.140 2000/03/14 23:06:30 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -146,6 +146,34 @@ transformStmt(ParseState *pstate, Node *parseTree)
 				ViewStmt   *n = (ViewStmt *) parseTree;
 
 				n->query = (Query *) transformStmt(pstate, (Node *) n->query);
+
+				/* If a list of column names was given, run through and insert these
+				 * into the actual query tree. - thomas 2000-03-08
+				 */
+				if (n->aliases != NIL)
+				{
+					int i;
+					List *targetList = n->query->targetList;
+
+					if (length(targetList) < length(n->aliases))
+						elog(ERROR, "CREATE VIEW specifies %d columns"
+							 " but only %d columns are present",
+							 length(targetList), length(n->aliases));
+
+					for (i = 0; i < length(n->aliases); i++)
+					{
+						Ident *id;
+						TargetEntry *te;
+						Resdom *rd;
+						id = nth(i, n->aliases);
+						Assert(nodeTag(id) == T_Ident);
+						te = nth(i, targetList);
+						Assert(nodeTag(te) == T_TargetEntry);
+						rd = te->resdom;
+						Assert(nodeTag(rd) == T_Resdom);
+						rd->resname = pstrdup(id->name);
+					}
+				}
 				result = makeNode(Query);
 				result->commandType = CMD_UTILITY;
 				result->utilityStmt = (Node *) n;
@@ -1904,7 +1932,7 @@ transformForUpdate(Query *qry, List *forUpdate)
 		i = 1;
 		foreach(l2, qry->rtable)
 		{
-			if (strcmp(((RangeTblEntry *) lfirst(l2))->ref->relname, relname) == 0)
+			if (strcmp(((RangeTblEntry *) lfirst(l2))->eref->relname, relname) == 0)
 			{
 				List	   *l3;
 
@@ -1925,7 +1953,7 @@ transformForUpdate(Query *qry, List *forUpdate)
 			i++;
 		}
 		if (l2 == NULL)
-			elog(ERROR, "FOR UPDATE: relation %s not found in FROM clause",
+			elog(ERROR, "FOR UPDATE: relation '%s' not found in FROM clause",
 				 relname);
 	}
 

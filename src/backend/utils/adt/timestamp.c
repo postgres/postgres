@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.22 2000/02/16 17:24:48 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.23 2000/03/14 23:06:37 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -951,6 +951,32 @@ interval_cmp(Interval *interval1, Interval *interval2)
 
 	return (span1 < span2) ? -1 : (span1 > span2) ? 1 : 0;
 }	/* interval_cmp() */
+
+/* overlaps_timestamp()
+ * Implements the SQL92 OVERLAPS operator.
+ * Algorithm from Date and Darwen, 1997
+ */
+bool
+overlaps_timestamp(Timestamp *ts1, Timestamp *te1, Timestamp *ts2, Timestamp *te2)
+{
+	/* Make sure we have ordered pairs... */
+	if (timestamp_gt(ts1, te1))
+	{
+		Timestamp *tt = ts1;
+		ts1 = te1;
+		te1 = tt;
+	}
+	if (timestamp_gt(ts2, te2))
+	{
+		Timestamp *tt = ts2;
+		ts2 = te2;
+		te2 = tt;
+	}
+
+	return ((timestamp_gt(ts1, ts2) && (timestamp_lt(ts1, te2) || timestamp_lt(te1, te2)))
+			|| (timestamp_gt(ts2, ts1) && (timestamp_lt(ts2, te1) || timestamp_lt(te2, te1)))
+			|| timestamp_eq(ts1, ts2));
+} /* overlaps_timestamp() */
 
 
 /*----------------------------------------------------------

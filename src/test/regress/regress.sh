@@ -1,8 +1,7 @@
 #!/bin/sh
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/regress.sh,v 1.43 2000/03/01 21:10:04 petere Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/regress.sh,v 1.44 2000/03/14 23:06:55 thomas Exp $
 #
-if [ $# -eq 0 ]
-then
+if [ $# -eq 0 ]; then
 	echo "Syntax: $0 <hostname> [extra-tests]"
 	exit 1
 fi
@@ -11,8 +10,7 @@ hostname=$1
 shift
 extratests="$*"
 
-if [ "x$hostname" = "xwin" -o "x$hostname" = "xi386-pc-qnx4" ]
-then
+if [ "x$hostname" = "xwin" -o "x$hostname" = "xi386-pc-qnx4" ]; then
 	HOSTLOC="-h localhost"
 else
 	HOSTLOC=""
@@ -81,21 +79,22 @@ if [ $? -ne 0 ]; then
      exit 1
 fi
 
-if [ "x$hostname" != "xi386-pc-qnx4" ]
-then
-echo "=============== installing PL/pgSQL...                ================="
+if [ "x$hostname" != "xi386-pc-qnx4" ]; then
+echo "=============== installing languages...                ================="
+$ECHO_N "installing PL/pgSQL .. " $ECHO_C
 createlang $HOSTLOC plpgsql regression
 if [ $? -ne 0 -a $? -ne 2 ]; then
-     echo createlang failed
+     echo failed
      exit 1
+else
+	echo ok
 fi
 fi
 
 echo "=============== running regression queries...         ================="
 echo "" > regression.diffs
 
-if [ "x$hostname" = "xi386-pc-qnx4" ]
-then
+if [ "x$hostname" = "xi386-pc-qnx4" ]; then
 	DIFFOPT="-b"
 else
 	DIFFOPT="-w"
@@ -126,8 +125,7 @@ do
 		fi
 	done
 
-	if [ `diff ${DIFFOPT} ${EXPECTED} results/${tst}.out | wc -l` -ne 0 ]
-	then
+	if [ `diff ${DIFFOPT} ${EXPECTED} results/${tst}.out | wc -l` -ne 0 ]; then
 		( diff ${DIFFOPT} -C3 ${EXPECTED} results/${tst}.out; \
 		echo "";  \
 		echo "----------------------"; \
@@ -147,24 +145,23 @@ $FRONTEND regression < errors.sql
 #set this to 1 to avoid clearing the database
 debug=0
 
-if test "$debug" -eq 1
-then
-echo Skipping clearing and deletion of the regression database
+if [ test "$debug" -eq 1 ]; then
+	echo Skipping clearing and deletion of the regression database
 else
-echo "=============== clearing regression database...       ================="
-$FRONTEND regression < drop.sql
-if [ $? -ne 0 ]; then
-     echo the drop script has an error
-     exit 1
-fi
+	echo "=============== clearing regression database...       ================="
+	$FRONTEND regression < drop.sql
+	if [ $? -ne 0 ]; then
+		echo the drop script has an error
+		exit 1
+	fi
 
-exit 0
-echo "=============== dropping regression database...       ================="
-dropdb regression
-if [ $? -ne 0 ]; then
-     echo dropdb failed
-     exit 1
-fi
+	exit 0
+	echo "=============== dropping regression database...       ================="
+	dropdb regression
+	if [ $? -ne 0 ]; then
+		echo dropdb failed
+		exit 1
+	fi
 
-exit 0
+	exit 0
 fi

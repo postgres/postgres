@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_coerce.h,v 1.18 2000/02/16 17:26:16 thomas Exp $
+ * $Id: parse_coerce.h,v 1.19 2000/03/14 23:06:48 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,6 +53,9 @@ typedef enum CATEGORY
 		|| ((t) == INTERVALOID) \
 		|| ((t) == ABSTIMEOID) \
 		|| ((t) == RELTIMEOID) \
+		|| ((t) == DATEOID) \
+		|| ((t) == TIMEOID) \
+		|| ((t) == TIMETZOID) \
 		|| ((t) == CHAROID) \
 		|| ((t) == NAMEOID) \
 		|| ((t) == CASHOID) \

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/Attic/freefuncs.c,v 1.38 2000/02/21 18:47:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/Attic/freefuncs.c,v 1.39 2000/03/14 23:06:28 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1031,6 +1031,7 @@ _freeRangeTblEntry(RangeTblEntry *node)
 	if (node->relname)
 		pfree(node->relname);
 	freeObject(node->ref);
+	freeObject(node->eref);
 
 	pfree(node);
 }
