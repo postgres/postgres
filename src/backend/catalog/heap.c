@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.13 1997/04/02 03:41:16 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.14 1997/06/04 08:59:22 vadim Exp $
  *
  * INTERFACE ROUTINES
  *	heap_creatr()		- Create an uncataloged heap relation
@@ -1229,6 +1229,7 @@ void
 heap_destroy(char *relname)
 {
     Relation	rdesc;
+    Oid rid;
     
     /* ----------------
      *	first open the relation.  if the relation does exist,
@@ -1236,10 +1237,11 @@ heap_destroy(char *relname)
      * ----------------
      */
     rdesc = heap_openr(relname);
-    if (rdesc == NULL)
-	elog(WARN,"Relation %s Does Not Exist!", relname);
+    if ( rdesc == NULL )
+	elog (WARN, "Relation %s Does Not Exist!", relname);
 
     RelationSetLockForWrite(rdesc);
+    rid = rdesc->rd_id;
     
     /* ----------------
      *	prevent deletion of system relations
@@ -1268,7 +1270,7 @@ heap_destroy(char *relname)
      * ----------------
      */
     if (rdesc->rd_rules != NULL) {
-	RelationRemoveRules(rdesc->rd_id);
+	RelationRemoveRules(rid);
     }
     
     /* ----------------
@@ -1300,8 +1302,9 @@ heap_destroy(char *relname)
     /* ----------------
      *	flush the relation from the relcache
      * ----------------
-     */
+     * Does nothing!!! Flushing moved below.	- vadim 06/04/97
     RelationIdInvalidateRelationCacheByRelationId(rdesc->rd_id);
+     */
 
     /* ----------------
      *	unlink the relation and finish up.
@@ -1316,6 +1319,9 @@ heap_destroy(char *relname)
     RelationUnsetLockForWrite(rdesc);
 
     heap_close(rdesc);
+
+    /* ok - flush the relation from the relcache */
+    RelationForgetRelation (rid);
 }
 
 /*
