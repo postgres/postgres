@@ -259,6 +259,10 @@ Allow pqInternalNotice() to accept a format string and args instead of
   just a preformatted message (Tom, Sean Chittenden)
 Allow control SSL negotiation with sslmode values "disable", "allow", 
   "Prefer", and "require" (Jon Jensen)
+Allow new error codes and levels of text (Tom)
+Allow access to the underlying table and column of a query result (Tom)
+Allow access to the current transaction status (Tom)
+Add ability to pass binary data directly to the backend (Tom)
 
      _________________________________________________________________
 
