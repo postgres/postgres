@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.43 1999/07/17 20:17:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.44 1999/07/24 23:21:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -304,8 +304,6 @@ _equalRestrictInfo(RestrictInfo *a, RestrictInfo *b)
 	if (!equal(a->clause, b->clause))
 		return false;
 	if (a->selectivity != b->selectivity)
-		return false;
-	if (a->notclause != b->notclause)
 		return false;
 #ifdef EqualMergeOrderExists
 	if (!EqualMergeOrder(a->mergejoinorder, b->mergejoinorder))

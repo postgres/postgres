@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.62 1999/07/17 20:17:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.63 1999/07/24 23:21:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -301,54 +301,30 @@ create_seqscan_node(Path *best_path, List *tlist, List *scan_clauses)
  * create_indexscan_node
  *	  Returns a indexscan node for the base relation scanned by 'best_path'
  *	  with restriction clauses 'scan_clauses' and targetlist 'tlist'.
+ *
+ * If an 'or' clause is to be used with this index, the indxqual field
+ * will contain a list of the 'or' clause arguments, e.g., the
+ * clause(OR a b c) will generate: ((a) (b) (c)).  Otherwise, the
+ * indxqual will simply contain one conjunctive qualification: ((a)).
  */
 static IndexScan *
 create_indexscan_node(IndexPath *best_path,
 					  List *tlist,
 					  List *scan_clauses)
 {
-
-	/*
-	 * Extract the(first if conjunct, only if disjunct) clause from the
-	 * restrictinfo list.
-	 */
-	Expr	   *index_clause = (Expr *) NULL;
-	List	   *indxqual = NIL;
-	List	   *qpqual = NIL;
-	List	   *fixed_indxqual = NIL;
+	List	   *indxqual = best_path->indexqual;
+	List	   *qpqual;
+	List	   *fixed_indxqual;
 	List	   *ixid;
-	IndexScan  *scan_node = (IndexScan *) NULL;
-	bool		lossy = FALSE;
-	HeapTuple	indexTuple;
-	Form_pg_index index;
-
-	/*
-	 * If an 'or' clause is to be used with this index, the indxqual field
-	 * will contain a list of the 'or' clause arguments, e.g., the
-	 * clause(OR a b c) will generate: ((a) (b) (c)).  Otherwise, the
-	 * indxqual will simply contain one conjunctive qualification: ((a)).
-	 */
-	if (best_path->indexqual != NULL)
-		/* added call to fix_opids, JMH 6/23/92 */
-		index_clause = (Expr *)
-			lfirst(fix_opids(get_actual_clauses(best_path->indexqual)));
-
-	if (or_clause((Node *) index_clause))
-	{
-		List	   *temp = NIL;
-
-		foreach(temp, index_clause->args)
-			indxqual = lappend(indxqual, lcons(lfirst(temp), NIL));
-	}
-	else
-	{
-		indxqual = lcons(get_actual_clauses(best_path->indexqual),
-						 NIL);
-	}
+	IndexScan  *scan_node;
+	bool		lossy = false;
 
 	/* check and see if any indices are lossy */
 	foreach(ixid, best_path->indexid)
 	{
+		HeapTuple	indexTuple;
+		Form_pg_index index;
+
 		indexTuple = SearchSysCacheTuple(INDEXRELID,
 										 ObjectIdGetDatum(lfirsti(ixid)),
 										 0, 0, 0);
@@ -356,34 +332,70 @@ create_indexscan_node(IndexPath *best_path,
 			elog(ERROR, "create_plan: index %u not found", lfirsti(ixid));
 		index = (Form_pg_index) GETSTRUCT(indexTuple);
 		if (index->indislossy)
-			lossy = TRUE;
+		{
+			lossy = true;
+			break;
+		}
 	}
 
-
 	/*
-	 * The qpqual field contains all restrictions not automatically
+	 * The qpqual list must contain all restrictions not automatically
 	 * handled by the index.  Note that for non-lossy indices, the
 	 * predicates in the indxqual are handled by the index, while for
 	 * lossy indices the indxqual predicates need to be double-checked
 	 * after the index fetches the best-guess tuples.
+	 *
+	 * There should not be any clauses in scan_clauses that duplicate
+	 * expressions checked by the index, but just in case, we will
+	 * get rid of them via set_difference.
 	 */
-	if (or_clause((Node *) index_clause))
+	if (length(indxqual) > 1)
 	{
+		/*
+		 * Build an expression representation of the indexqual, expanding
+		 * the implicit OR and AND semantics of the first- and second-level
+		 * lists.  XXX Is it really necessary to do a deep copy here?
+		 */
+		List	   *orclauses = NIL;
+		List	   *orclause;
+		Expr	   *indxqual_expr;
+
+		foreach(orclause, indxqual)
+		{
+			orclauses = lappend(orclauses,
+								make_ands_explicit((List *) copyObject(lfirst(orclause))));
+		}
+		indxqual_expr = make_orclause(orclauses);
+
+		/* this set_difference is almost certainly a waste of time... */
 		qpqual = set_difference(scan_clauses,
-								lcons(index_clause, NIL));
+								lcons(indxqual_expr, NIL));
 
 		if (lossy)
-			qpqual = lappend(qpqual, (List *) copyObject(index_clause));
+			qpqual = lappend(qpqual, indxqual_expr);
 	}
-	else
+	else if (indxqual != NIL)
 	{
+		/* Here, we can simply treat the first sublist as an independent
+		 * set of qual expressions, since there is no top-level OR behavior.
+		 */
 		qpqual = set_difference(scan_clauses, lfirst(indxqual));
 		if (lossy)
-			qpqual = nconc(qpqual,
-						   (List *) copyObject(lfirst(indxqual)));
+			qpqual = nconc(qpqual, (List *) copyObject(lfirst(indxqual)));
 	}
+	else
+		qpqual = NIL;
 
-	fixed_indxqual = (List *) fix_indxqual_references((Node *) indxqual, (Path *) best_path);
+	/*
+	 * Fix opids in the completed indxqual.  We don't want to do this sooner
+	 * since it would screw up the set_difference calcs above.  Really,
+	 * this ought to only happen at final exit from the planner...
+	 */
+	indxqual = fix_opids(indxqual);
+
+	/* The executor needs a copy with index attrs substituted for table ones */
+	fixed_indxqual = (List *) fix_indxqual_references((Node *) indxqual,
+													  (Path *) best_path);
 
 	scan_node = make_indexscan(tlist,
 							   qpqual,

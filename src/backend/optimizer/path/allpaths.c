@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.50 1999/07/17 20:17:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.51 1999/07/24 23:21:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -86,8 +86,8 @@ make_one_rel(Query *root, List *rels)
  * set_base_rel_pathlist
  *	  Finds all paths available for scanning each relation entry in
  *	  'rels'.  Sequential scan and any available indices are considered
- *	  if possible(indices are not considered for lower nesting levels).
- *	  All unique paths are attached to the relation's 'pathlist' field.
+ *	  if possible (indices are not considered for lower nesting levels).
+ *	  All useful paths are attached to the relation's 'pathlist' field.
  *
  *	  MODIFIES: rels
  */
@@ -98,21 +98,32 @@ set_base_rel_pathlist(Query *root, List *rels)
 
 	foreach(temp, rels)
 	{
+		RelOptInfo *rel = (RelOptInfo *) lfirst(temp);
+		List	   *indices = find_relation_indices(root, rel);
 		List	   *sequential_scan_list;
 		List	   *rel_index_scan_list;
 		List	   *or_index_scan_list;
-		RelOptInfo *rel = (RelOptInfo *) lfirst(temp);
 
 		sequential_scan_list = lcons(create_seqscan_path(rel), NIL);
 
 		rel_index_scan_list = create_index_paths(root,
 												 rel,
-										find_relation_indices(root, rel),
+												 indices,
 												 rel->restrictinfo,
 												 rel->joininfo);
 
-		or_index_scan_list = create_or_index_paths(root, rel, rel->restrictinfo);
+		/* Note: create_or_index_paths depends on create_index_paths
+		 * to have marked OR restriction clauses with relevant indices;
+		 * this is why it doesn't need to be given the full list of indices.
+		 */
 
+		or_index_scan_list = create_or_index_paths(root, rel,
+												   rel->restrictinfo);
+
+		/* add_pathlist will discard any paths that are dominated by
+		 * another available path, keeping only those paths that are
+		 * superior along at least one dimension of cost or sortedness.
+		 */
 		rel->pathlist = add_pathlist(rel,
 									 sequential_scan_list,
 									 nconc(rel_index_scan_list,
@@ -128,7 +139,6 @@ set_base_rel_pathlist(Query *root, List *rels)
 		rel->size = compute_rel_size(rel);
 		rel->width = compute_rel_width(rel);
 	}
-	return;
 }
 
 /*

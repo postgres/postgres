@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/orindxpath.c,v 1.28 1999/07/16 04:59:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/orindxpath.c,v 1.29 1999/07/24 23:21:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,61 +26,66 @@
 #include "parser/parsetree.h"
 
 
-static void best_or_subclause_indices(Query *root, RelOptInfo *rel, List *subclauses,
-				List *indices, List **indexids, Cost *cost, Cost *selec);
-static void best_or_subclause_index(Query *root, RelOptInfo *rel, Expr *subclause,
-				   List *indices, int *indexid, Cost *cost, Cost *selec);
+static void best_or_subclause_indices(Query *root, RelOptInfo *rel,
+									  List *subclauses, List *indices,
+									  List **indexids,
+									  Cost *cost, Cost *selec);
+static void best_or_subclause_index(Query *root, RelOptInfo *rel,
+									Expr *subclause, List *indices,
+									int *indexid, Cost *cost, Cost *selec);
 
 
 /*
  * create_or_index_paths
  *	  Creates index paths for indices that match 'or' clauses.
+ *	  create_index_paths() must already have been called.
  *
  * 'rel' is the relation entry for which the paths are to be defined on
  * 'clauses' is the list of available restriction clause nodes
  *
- * Returns a list of these index path nodes.
+ * Returns a list of index path nodes.
  *
  */
 List *
 create_or_index_paths(Query *root,
 					  RelOptInfo *rel, List *clauses)
 {
-	List	   *t_list = NIL;
+	List	   *path_list = NIL;
 	List	   *clist;
 
 	foreach(clist, clauses)
 	{
-		RestrictInfo *clausenode = (RestrictInfo *) (lfirst(clist));
+		RestrictInfo *clausenode = (RestrictInfo *) lfirst(clist);
 
 		/*
 		 * Check to see if this clause is an 'or' clause, and, if so,
 		 * whether or not each of the subclauses within the 'or' clause
-		 * has been matched by an index (the 'Index field was set in
-		 * (match_or)  if no index matches a given subclause, one of the
-		 * lists of index nodes returned by (get_index) will be 'nil').
+		 * has been matched by an index.  The information used was
+		 * saved by create_index_paths().
 		 */
-		if (valid_or_clause(clausenode) &&
+		if (restriction_is_or_clause(clausenode) &&
 			clausenode->indexids)
 		{
-			List	   *temp = NIL;
-			List	   *index_list = NIL;
-			bool		index_flag = true;
+			bool		all_indexable = true;
+			List	   *temp;
 
-			index_list = clausenode->indexids;
-			foreach(temp, index_list)
+			foreach(temp, clausenode->indexids)
 			{
-				if (!lfirst(temp))
+				if (lfirst(temp) == NIL)
 				{
-					index_flag = false;
+					all_indexable = false;
 					break;
 				}
 			}
-			/* do they all have indexes? */
-			if (index_flag)
-			{					/* used to be a lisp every function */
+			if (all_indexable)
+			{
+				/*
+				 * OK, build an IndexPath for this OR clause, using the
+				 * best available index for each subclause.
+				 */
 				IndexPath  *pathnode = makeNode(IndexPath);
-				List	   *indexids = NIL;
+				List	   *indexids;
+				List	   *orclause;
 				Cost		cost;
 				Cost		selec;
 
@@ -98,16 +103,35 @@ create_or_index_paths(Query *root,
 				pathnode->path.pathorder->ordtype = SORTOP_ORDER;
 
 				/*
-				 * This is an IndexScan, but it does index lookups based
-				 * on the order of the fields specified in the WHERE
-				 * clause, not in any order, so the sortop is NULL.
+				 * This is an IndexScan, but the overall result will consist
+				 * of tuples extracted in multiple passes (one for each
+				 * subclause of the OR), so the result cannot be claimed
+				 * to have any particular ordering.
 				 */
 				pathnode->path.pathorder->ord.sortop = NULL;
 				pathnode->path.pathkeys = NIL;
 
-				pathnode->indexqual = lcons(clausenode, NIL);
+				/*
+				 * Generate an indexqual list from the OR clause's args.
+				 * We want two levels of sublist: the first is implicit OR
+				 * and the second is implicit AND.  (Currently, we will never
+				 * see a sub-AND-clause because of cnfify(), but someday maybe
+				 * the code below will do something useful...)
+				 */
+				pathnode->indexqual = NIL;
+				foreach(orclause, clausenode->clause->args)
+				{
+					List	*sublist;
+					if (and_clause(lfirst(orclause)))
+						sublist = ((Expr *) lfirst(orclause))->args;
+					else
+						sublist = lcons(lfirst(orclause), NIL);
+					pathnode->indexqual = lappend(pathnode->indexqual,
+												  sublist);
+				}
 				pathnode->indexid = indexids;
 				pathnode->path.path_cost = cost;
+				clausenode->selectivity = (Cost) selec;
 
 				/*
 				 * copy restrictinfo list into path for expensive function
@@ -121,33 +145,28 @@ create_or_index_paths(Query *root,
 				if (XfuncMode != XFUNC_OFF)
 					((Path *) pathnode)->path_cost += xfunc_get_path_cost((Path) pathnode);
 #endif
-				clausenode->selectivity = (Cost) selec;
-				t_list = lappend(t_list, pathnode);
+				path_list = lappend(path_list, pathnode);
 			}
 		}
 	}
 
-	return t_list;
+	return path_list;
 }
 
 /*
  * best_or_subclause_indices
  *	  Determines the best index to be used in conjunction with each subclause
  *	  of an 'or' clause and the cost of scanning a relation using these
- *	  indices.	The cost is the sum of the individual index costs.
+ *	  indices.	The cost is the sum of the individual index costs, since
+ *	  the executor will perform a scan for each subclause of the 'or'.
  *
- * 'rel' is the node of the relation on which the index is defined
+ * 'rel' is the node of the relation on which the indexes are defined
  * 'subclauses' are the subclauses of the 'or' clause
- * 'indices' are those index nodes that matched subclauses of the 'or'
- *		clause
- * 'examined_indexids' is a list of those index ids to be used with
- *		subclauses that have already been examined
- * 'subcost' is the cost of using the indices in 'examined_indexids'
- * 'selec' is a list of all subclauses that have already been examined
- *
- * Returns a list of the indexids, cost, and selectivities of each
- * subclause, e.g., ((i1 i2 i3) cost (s1 s2 s3)), where 'i' is an OID,
- * 'cost' is a flonum, and 's' is a flonum.
+ * 'indices' is a list of sublists of the index nodes that matched each
+ *		subclause of the 'or' clause
+ * '*indexids' gets a list of the best index ID to use for each subclause
+ * '*cost' gets the total cost of the path
+ * '*selec' gets the total selectivity of the path.
  */
 static void
 best_or_subclause_indices(Query *root,
@@ -155,11 +174,12 @@ best_or_subclause_indices(Query *root,
 						  List *subclauses,
 						  List *indices,
 						  List **indexids,		/* return value */
-						  Cost *cost,	/* return value */
-						  Cost *selec)	/* return value */
+						  Cost *cost,			/* return value */
+						  Cost *selec)			/* return value */
 {
 	List	   *slist;
 
+	*indexids = NIL;
 	*selec = (Cost) 0.0;
 	*cost = (Cost) 0.0;
 
@@ -180,8 +200,6 @@ best_or_subclause_indices(Query *root,
 
 		indices = lnext(indices);
 	}
-
-	return;
 }
 
 /*
@@ -193,10 +211,9 @@ best_or_subclause_indices(Query *root,
  * 'rel' is the node of the relation on which the index is defined
  * 'subclause' is the subclause
  * 'indices' is a list of index nodes that match the subclause
- *
- * Returns a list (index_id index_subcost index_selectivity)
- * (a fixnum, a fixnum, and a flonum respectively).
- *
+ * '*retIndexid' gets the ID of the best index
+ * '*retCost' gets the cost of a scan with that index
+ * '*retSelec' gets the selectivity of that scan
  */
 static void
 best_or_subclause_index(Query *root,
@@ -207,49 +224,60 @@ best_or_subclause_index(Query *root,
 						Cost *retCost,	/* return value */
 						Cost *retSelec) /* return value */
 {
-	List	   *ilist;
+	Oid			relid = getrelid(lfirsti(rel->relids),
+								 root->rtable);
+	Oid			opno = ((Oper *) subclause->oper)->opno;
+	AttrNumber	attno = (get_leftop(subclause))->varattno;
+	bool		constant_on_right = non_null((Expr *) get_rightop(subclause));
+	Datum		value;
+	int			flag;
+	List	   *opnos,
+			   *attnos,
+			   *values,
+			   *flags;
 	bool		first_run = true;
+	List	   *ilist;
 
 	/* if we don't match anything, return zeros */
 	*retIndexid = 0;
-	*retCost = 0.0;
-	*retSelec = 0.0;
+	*retCost = (Cost) 0.0;
+	*retSelec = (Cost) 0.0;
+
+	if (constant_on_right)		/* XXX looks pretty bogus ... tgl */
+		value = ((Const *) get_rightop(subclause))->constvalue;
+	else
+		value = NameGetDatum("");
+	if (constant_on_right)
+		flag = (_SELEC_IS_CONSTANT_ || _SELEC_CONSTANT_RIGHT_);
+	else
+		flag = _SELEC_CONSTANT_RIGHT_;
+
+	/* prebuild lists since we will pass same list to each index */
+	opnos = lconsi(opno, NIL);
+	attnos = lconsi(attno, NIL);
+	values = lconsi(value, NIL);
+	flags = lconsi(flag, NIL);
 
 	foreach(ilist, indices)
 	{
 		RelOptInfo *index = (RelOptInfo *) lfirst(ilist);
-
-		Datum		value;
-		int			flag = 0;
+		Oid			indexid = (Oid) lfirsti(index->relids);
 		Cost		subcost;
-		AttrNumber	attno = (get_leftop(subclause))->varattno;
-		Oid			opno = ((Oper *) subclause->oper)->opno;
-		bool		constant_on_right = non_null((Expr *) get_rightop(subclause));
 		float		npages,
 					selec;
 
-		if (constant_on_right)
-			value = ((Const *) get_rightop(subclause))->constvalue;
-		else
-			value = NameGetDatum("");
-		if (constant_on_right)
-			flag = (_SELEC_IS_CONSTANT_ || _SELEC_CONSTANT_RIGHT_);
-		else
-			flag = _SELEC_CONSTANT_RIGHT_;
-
-		index_selectivity(lfirsti(index->relids),
+		index_selectivity(indexid,
 						  index->classlist,
-						  lconsi(opno, NIL),
-						  getrelid(lfirsti(rel->relids),
-								   root->rtable),
-						  lconsi(attno, NIL),
-						  lconsi(value, NIL),
-						  lconsi(flag, NIL),
+						  opnos,
+						  relid,
+						  attnos,
+						  values,
+						  flags,
 						  1,
 						  &npages,
 						  &selec);
 
-		subcost = cost_index((Oid) lfirsti(index->relids),
+		subcost = cost_index(indexid,
 							 (int) npages,
 							 (Cost) selec,
 							 rel->pages,
@@ -260,12 +288,11 @@ best_or_subclause_index(Query *root,
 
 		if (first_run || subcost < *retCost)
 		{
-			*retIndexid = lfirsti(index->relids);
+			*retIndexid = indexid;
 			*retCost = subcost;
 			*retSelec = selec;
 			first_run = false;
 		}
 	}
 
-	return;
 }

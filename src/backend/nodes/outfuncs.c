@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: outfuncs.c,v 1.90 1999/07/18 19:02:49 tgl Exp $
+ *	$Id: outfuncs.c,v 1.91 1999/07/24 23:21:07 tgl Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -1110,9 +1110,8 @@ _outRestrictInfo(StringInfo str, RestrictInfo *node)
 	_outNode(str, node->clause);
 
 	appendStringInfo(str,
-					 " :selectivity %f :notclause %s :indexids ",
-					 node->selectivity,
-					 node->notclause ? "true" : "false");
+					 " :selectivity %f :indexids ",
+					 node->selectivity);
 	_outNode(str, node->indexids);
 
 	appendStringInfo(str, " :mergejoinorder ");

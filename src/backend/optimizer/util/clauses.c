@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.40 1999/07/16 04:59:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.41 1999/07/24 23:21:13 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -290,6 +290,21 @@ make_andclause(List *andclauses)
 	return expr;
 }
 
+/*
+ * Sometimes (such as in the result of cnfify), we use lists of expression
+ * nodes with implicit AND semantics.  This function converts back to an
+ * explicit-AND representation.
+ */
+Expr *
+make_ands_explicit(List *andclauses)
+{
+	if (andclauses == NIL)
+		return NULL;
+	else if (length(andclauses) == 1)
+		return (Expr *) lfirst(andclauses);
+	else
+		return make_andclause(andclauses);
+}
 
 /*****************************************************************************
  *		CASE clause functions
@@ -408,38 +423,6 @@ NumRelids(Node *clause)
 	}
 
 	return length(var_list);
-}
-
-/*
- * contains_not
- *
- * Returns t iff the clause is a 'not' clause or if any of the
- * subclauses within an 'or' clause contain 'not's.
- *
- * NOTE that only the top-level AND/OR structure is searched for NOTs;
- * we are not interested in buried substructure.
- */
-bool
-contains_not(Node *clause)
-{
-	if (single_node(clause))
-		return false;
-
-	if (not_clause(clause))
-		return true;
-
-	if (or_clause(clause) || and_clause(clause))
-	{
-		List	   *a;
-
-		foreach(a, ((Expr *) clause)->args)
-		{
-			if (contains_not(lfirst(a)))
-				return true;
-		}
-	}
-
-	return false;
 }
 
 /*

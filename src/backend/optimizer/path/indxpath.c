@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.62 1999/07/23 03:34:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.63 1999/07/24 23:21:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,12 +109,25 @@ create_index_paths(Query *root,
 				continue;
 
 		/*
-		 * 1. Try matching the index against subclauses of an 'or' clause.
-		 * The fields of the restrictinfo nodes are marked with lists of
-		 * the matching indices.  No paths are actually created.  We
-		 * currently only look to match the first key.	We don't find
-		 * multi-key index cases where an AND matches the first key, and
-		 * the OR matches the second key.
+		 * 1. Try matching the index against subclauses of restriction 'or'
+		 * clauses (ie, 'or' clauses that reference only this relation).
+		 * The restrictinfo nodes for the 'or' clauses are marked with lists
+		 * of the matching indices.  No paths are actually created now;
+		 * that will be done in orindxpath.c after all indexes for the rel
+		 * have been examined.  (We need to do it that way because we can
+		 * potentially use a different index for each subclause of an 'or',
+		 * so we can't build a path for an 'or' clause until all indexes have
+		 * been matched against it.)
+		 *
+		 * We currently only look to match the first key of each index against
+		 * 'or' subclauses.  There are cases where a later key of a multi-key
+		 * index could be used (if other top-level clauses match earlier keys
+		 * of the index), but our poor brains are hurting already...
+		 *
+		 * We don't even think about special handling of 'or' clauses that
+		 * involve more than one relation, since they can't be processed by
+		 * a single indexscan path anyway.  Currently, cnfify() is certain
+		 * to have restructured any such toplevel 'or' clauses anyway.
 		 */
 		match_index_orclauses(rel,
 							  index,
@@ -123,7 +136,7 @@ create_index_paths(Query *root,
 							  restrictinfo_list);
 
 		/*
-		 * 2. If the keys of this index match any of the available
+		 * 2. If the keys of this index match any of the available non-'or'
 		 * restriction clauses, then create a path using those clauses
 		 * as indexquals.
 		 */
@@ -179,11 +192,14 @@ create_index_paths(Query *root,
 /*
  * match_index_orclauses
  *	  Attempt to match an index against subclauses within 'or' clauses.
- *	  If the index does match, then the clause is marked with information
- *	  about the index.
+ *	  Each subclause that does match is marked with the index's node.
  *
- *	  Essentially, this adds 'index' to the list of indices in the
- *	  RestrictInfo field of each of the clauses which it matches.
+ *	  Essentially, this adds 'index' to the list of subclause indices in
+ *	  the RestrictInfo field of each of the 'or' clauses where it matches.
+ *	  NOTE: we can use storage in the RestrictInfo for this purpose because
+ *	  this processing is only done on single-relation restriction clauses.
+ *	  Therefore, we will never have indexes for more than one relation
+ *	  mentioned in the same RestrictInfo node's list.
  *
  * 'rel' is the node of the relation on which the index is defined.
  * 'index' is the index node.
@@ -204,12 +220,11 @@ match_index_orclauses(RelOptInfo *rel,
 	{
 		RestrictInfo *restrictinfo = (RestrictInfo *) lfirst(i);
 
-		if (valid_or_clause(restrictinfo))
+		if (restriction_is_or_clause(restrictinfo))
 		{
 			/*
-			 * Mark the 'or' clause with a list of indices which match
-			 * each of its subclauses.	We add entries to the existing
-			 * list, if any.
+			 * Add this index to the subclause index list for each
+			 * subclause that it matches.
 			 */
 			restrictinfo->indexids =
 				match_index_orclause(rel, index,
@@ -253,7 +268,9 @@ match_index_orclause(RelOptInfo *rel,
 	List	   *index_list;
 	List	   *clist;
 
-	/* first time through, we create empty list of same length as OR clause */
+	/* first time through, we create list of same length as OR clause,
+	 * containing an empty sublist for each subclause.
+	 */
 	if (!other_matching_indices)
 	{
 		matching_indices = NIL;
@@ -1186,9 +1203,13 @@ index_innerjoin(Query *root, RelOptInfo *rel, List *clausegroup_list,
 		pathnode->path.pathorder->ord.sortop = index->ordering;
 		pathnode->path.pathkeys = NIL;
 
+		/* Note that we are making a pathnode for a single-scan indexscan;
+		 * therefore, both indexid and indexqual should be single-element
+		 * lists.
+		 */
 		pathnode->indexid = index->relids;
 		pathnode->indexkeys = index->indexkeys;
-		pathnode->indexqual = clausegroup;
+		pathnode->indexqual = lcons(get_actual_clauses(clausegroup), NIL);
 
 		pathnode->path.joinid = ((RestrictInfo *) lfirst(clausegroup))->restrictinfojoinid;
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.69 1999/07/17 20:17:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.70 1999/07/24 23:21:08 tgl Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -1855,14 +1855,6 @@ _readRestrictInfo()
 	token = lsptok(NULL, &length);		/* now read it */
 
 	local_node->selectivity = atof(token);
-
-	token = lsptok(NULL, &length);		/* get :notclause */
-	token = lsptok(NULL, &length);		/* now read it */
-
-	if (!strncmp(token, "true", 4))
-		local_node->notclause = true;
-	else
-		local_node->notclause = false;
 
 	token = lsptok(NULL, &length);		/* get :indexids */
 	local_node->indexids = nodeRead(true);		/* now read it */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.86 1999/07/17 20:17:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.87 1999/07/24 23:21:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1317,7 +1317,6 @@ _copyRestrictInfo(RestrictInfo *from)
 	Node_Copy(from, newnode, clause);
 
 	newnode->selectivity = from->selectivity;
-	newnode->notclause = from->notclause;
 
 	Node_Copy(from, newnode, indexids);
 	Node_Copy(from, newnode, mergejoinorder);

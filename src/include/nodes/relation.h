@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relation.h,v 1.34 1999/07/15 23:03:56 momjian Exp $
+ * $Id: relation.h,v 1.35 1999/07/24 23:21:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -151,6 +151,23 @@ typedef struct Path
 	List	   *loc_restrictinfo;
 } Path;
 
+/*----------
+ * IndexPath represents an index scan.  Although an indexscan can only read
+ * a single relation, it can scan it more than once, potentially using a
+ * different index during each scan.  The result is the union (OR) of all the
+ * tuples matched during any scan.  (The executor is smart enough not to return
+ * the same tuple more than once, even if it is matched in multiple scans.)
+ * 'indexid' is a list of index relation OIDs, one per scan to be performed.
+ * 'indexqual' is a list of index qualifications, also one per scan.
+ * Each entry in 'indexqual' is a sublist of qualification expressions with
+ * implicit AND semantics across the sublist items.  Each one of the sublist
+ * items must be an operator expression of the form (var op something) or
+ * (something op var), where the var is a field the associated index keys on
+ * and the op is a member of the operator class of the index.
+ * NOTE that the semantics of the top-level list in 'indexqual' is OR
+ * combination, while the sublists are implicitly AND combinations!
+ *----------
+ */
 typedef struct IndexPath
 {
 	Path		path;
@@ -205,16 +222,20 @@ typedef struct JoinKey
 } JoinKey;
 
 /*
- * clause info
+ * Restriction clause info.
+ * We create one of these for each AND sub-clause of a restriction condition
+ * (WHERE clause).  Since the restriction clauses are logically ANDed, we
+ * can use any one of them or any subset of them to filter out tuples,
+ * without having to evaluate the rest.  The RestrictInfo node itself stores
+ * data used by the optimizer while choosing the best query plan.
  */
 
 typedef struct RestrictInfo
 {
 	NodeTag		type;
-	Expr	   *clause;			/* should be an OP clause */
-	Cost		selectivity;
-	bool		notclause;
-	List	   *indexids;
+	Expr	   *clause;			/* the represented subclause of WHERE cond */
+	Cost		selectivity;	/* estimated selectivity */
+	List	   *indexids;		/* subclause index IDs if clause is an OR */
 
 	/* mergejoin only */
 	MergeOrder *mergejoinorder;
