@@ -11,7 +11,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.45 1999/10/23 03:13:30 tgl Exp $
+ * $Id: miscadmin.h,v 1.46 2000/01/09 12:19:27 ishii Exp $
  *
  * NOTES
  *	  some of the information in this file will be moved to
@@ -194,5 +194,17 @@ extern bool IsInitProcessingMode(void);
 extern bool IsNormalProcessingMode(void);
 extern void SetProcessingMode(ProcessingMode mode);
 extern ProcessingMode GetProcessingMode(void);
+
+/* 
+ * "postmaster.pid" is a file containing postmaster's pid, being
+ * created uder $PGDATA upon postmaster's starting up. When postmaster
+ * shuts down, it will be unlinked.
+*/
+#define PIDFNAME	"postmaster.pid"
+
+extern void SetPidFname(char *datadir);
+extern char *GetPidFname(void);
+extern void UnlinkPidFile(void);
+extern int SetPidFile(pid_t pid);
 
 #endif	 /* MISCADMIN_H */
