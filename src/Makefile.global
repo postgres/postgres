@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.76 1996/12/04 03:05:45 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.77 1996/12/09 01:16:51 bryanh Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the 
@@ -720,14 +720,18 @@ endif
 # Common values for COPT are: -g for debuggable binaries, -m486 if you are
 # using a i486 or better.
 
-ifneq ($(CUSTOM_COPT),)
-COPT= $(CUSTOM_COPT)
-else
-ifeq ($(CC), gcc)
-COPT= -O2 -Werror
-else
-COPT= -O
+ifneq ($(CUSTOM_CC),)
+  CC= $(CUSTOM_CC)
 endif
+
+ifneq ($(CUSTOM_COPT),)
+  COPT= $(CUSTOM_COPT)
+else
+  ifeq ($(CC), gcc)
+    COPT= -O2 -Werror
+  else
+    COPT= -O
+  endif
 endif
 
 
