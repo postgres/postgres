@@ -14,7 +14,8 @@ include $(top_srcdir)/src/Makefile.shlib
 install: all
 	$(INSTALL_SHLIB) $(shlib) $(DESTDIR)$(pkglibdir)/$(NAME)$(DLSUFFIX)
 
-uninstall: uninstall-lib
+uninstall:
+	rm -f $(DESTDIR)$(pkglibdir)/$(NAME)$(DLSUFFIX)
 
 clean distclean maintainer-clean: clean-lib
 	rm -f $(OBJS)

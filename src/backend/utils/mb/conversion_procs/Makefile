@@ -4,7 +4,7 @@
 #    Makefile for utils/mb/conversion_procs
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/Makefile,v 1.8 2003/08/08 14:31:12 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/Makefile,v 1.9 2003/08/23 04:22:34 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -185,10 +185,10 @@ installdirs:
 	$(mkinstalldirs) $(DESTDIR)$(datadir) $(DESTDIR)$(pkglibdir)
 
 uninstall:
-
-dep depend distprep:
+	rm -f $(DESTDIR)$(datadir)/$(SQLSCRIPT)
+	@for dir in $(DIRS); do $(MAKE) -C $$dir $@ || exit; done
 
 clean distclean maintainer-clean:
-	$(RM) $(SQLSCRIPT)
+	rm -f $(SQLSCRIPT)
 	@for dir in $(DIRS); do $(MAKE) -C $$dir $@; done
 
