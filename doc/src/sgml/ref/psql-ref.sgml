@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.116 2004/06/18 06:13:05 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.117 2004/07/12 20:41:08 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -784,7 +784,7 @@ testdb=>
         <para>
         For each relation (table, view, index, or sequence) matching the
         <replaceable class="parameter">pattern</replaceable>, show all
-        columns, their types, and any special
+        columns, their types, the tablespace (if not the default) and any special
         attributes such as <literal>NOT NULL</literal> or defaults, if
         any. Associated indexes, constraints, rules, and triggers are
         also shown, as is the view definition if the relation is a view.

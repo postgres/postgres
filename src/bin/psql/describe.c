@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.99 2004/06/18 06:14:04 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.100 2004/07/12 20:41:13 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -38,6 +38,9 @@ static void processNamePattern(PQExpBuffer buf, const char *pattern,
 				   bool have_where, bool force_escape,
 				   const char *schemavar, const char *namevar,
 				   const char *altnamevar, const char *visibilityrule);
+
+static void add_tablespace_footer(char relkind, Oid tablespace, 
+		char **footers, int *count, PQExpBufferData buf);
 
 /*----------------
  * Handlers for various slash commands displaying some sort of list
@@ -682,6 +685,7 @@ describeOneTableDetails(const char *schemaname,
 		bool		hasindex;
 		bool		hasrules;
 		bool	    hasoids;
+		Oid			tablespace;
 	}			tableinfo;
 	bool		show_modifiers = false;
 	bool		retval;
@@ -694,7 +698,8 @@ describeOneTableDetails(const char *schemaname,
 
 	/* Get general table info */
 	printfPQExpBuffer(&buf,
-	 "SELECT relhasindex, relkind, relchecks, reltriggers, relhasrules, relhasoids\n"
+	 "SELECT relhasindex, relkind, relchecks, reltriggers, relhasrules, \n" 
+					"relhasoids, reltablespace \n"
 					  "FROM pg_catalog.pg_class WHERE oid = '%s'",
 					  oid);
 	res = PSQLexec(buf.data, false);
@@ -717,6 +722,7 @@ describeOneTableDetails(const char *schemaname,
 	tableinfo.hasindex = strcmp(PQgetvalue(res, 0, 0), "t") == 0;
 	tableinfo.hasrules = strcmp(PQgetvalue(res, 0, 4), "t") == 0;
 	tableinfo.hasoids = strcmp(PQgetvalue(res, 0, 5), "t") == 0;
+	tableinfo.tablespace = atooid(PQgetvalue(res, 0, 6));
 	PQclear(res);
 
 	headers[0] = _("Column");
@@ -897,6 +903,7 @@ describeOneTableDetails(const char *schemaname,
 			char	   *indamname = PQgetvalue(result, 0, 3);
 			char	   *indtable = PQgetvalue(result, 0, 4);
 			char	   *indpred = PQgetvalue(result, 0, 5);
+			int			count_footers = 0;
 
 			if (strcmp(indisprimary, "t") == 0)
 				printfPQExpBuffer(&tmpbuf, _("PRIMARY KEY, "));
@@ -916,9 +923,12 @@ describeOneTableDetails(const char *schemaname,
 			if (strcmp(indisclustered, "t") == 0)
 				appendPQExpBuffer(&tmpbuf, _(", CLUSTER"));
 
-			footers = pg_malloc_zero(2 * sizeof(*footers));
-			footers[0] = pg_strdup(tmpbuf.data);
-			footers[1] = NULL;
+			footers = pg_malloc_zero(4 * sizeof(*footers));
+			footers[count_footers++] = pg_strdup(tmpbuf.data);
+	        add_tablespace_footer(tableinfo.relkind, tableinfo.tablespace,
+    	        footers, &count_footers, tmpbuf);
+			footers[count_footers] = NULL;
+
 		}
 
 		PQclear(result);
@@ -1103,7 +1113,7 @@ describeOneTableDetails(const char *schemaname,
 		else
 			inherits_count = PQntuples(result6);
 
-		footers = pg_malloc_zero((index_count + check_count + rule_count + trigger_count + foreignkey_count + inherits_count + 6)
+		footers = pg_malloc_zero((index_count + check_count + rule_count + trigger_count + foreignkey_count + inherits_count + 7 + 1)
 								 * sizeof(*footers));
 
 		/* print indexes */
@@ -1236,6 +1246,8 @@ describeOneTableDetails(const char *schemaname,
 			footers[count_footers++] = pg_strdup(buf.data);
 		}
 
+		add_tablespace_footer(tableinfo.relkind, tableinfo.tablespace,
+			footers, &count_footers, buf);
 		/* end of list marker */
 		footers[count_footers] = NULL;
 
@@ -1286,6 +1298,40 @@ error_return:
 	return retval;
 }
 
+
+static void
+add_tablespace_footer(char relkind, Oid tablespace, char **footers, 
+		int *count, PQExpBufferData buf)
+{
+	/* relkinds for which we support tablespaces */
+	if(relkind == 'r' || relkind == 'i')
+	{
+		/*
+		 * We ignore the database default tablespace so that users not
+		 * using tablespaces don't need to know about them.
+		 */
+		if(tablespace != 0)
+		{
+			PGresult   *result1 = NULL;
+			printfPQExpBuffer(&buf, "SELECT spcname FROM pg_tablespace \n"
+				"WHERE oid = '%u';", tablespace);
+			result1 = PSQLexec(buf.data, false);
+	        if (!result1)
+				return;
+			/* Should always be the case, but.... */
+			if(PQntuples(result1) > 0)
+			{
+				printfPQExpBuffer(&buf, _("Tablespace:"));
+				footers[(*count)++] = pg_strdup(buf.data);
+				printfPQExpBuffer(&buf, _("    \"%s\""),
+									  PQgetvalue(result1, 0, 0));
+	
+				footers[(*count)++] = pg_strdup(buf.data);
+			}
+			PQclear(result1);
+		}
+	}
+}
 
 /*
  * \du
