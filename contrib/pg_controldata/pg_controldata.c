@@ -6,7 +6,7 @@
  * copyright (c) Oliver Elphick <olly@lfix.co.uk>, 2001;
  * licence: BSD
  *
- * $Header: /cvsroot/pgsql/contrib/pg_controldata/Attic/pg_controldata.c,v 1.6 2002/07/05 15:31:16 thomas Exp $
+ * $Header: /cvsroot/pgsql/contrib/pg_controldata/Attic/pg_controldata.c,v 1.7 2002/08/14 03:01:43 momjian Exp $
  */
 #include "postgres.h"
 
@@ -137,8 +137,8 @@ main(int argc, char *argv[])
 		   ControlFile.relseg_size,
 		   ControlFile.nameDataLen,
 		   ControlFile.funcMaxArgs,
-		   (ControlFile.enableIntTimes?
-			"64-bit integers": "Floating point"),
+		   (ControlFile.enableIntTimes ?
+			"64-bit integers" : "Floating point"),
 		   ControlFile.localeBuflen,
 		   ControlFile.lc_collate,
 		   ControlFile.lc_ctype);
