@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/bin/initdb/initdb.c,v 1.7 2003/11/13 23:46:31 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/initdb/initdb.c,v 1.8 2003/11/14 17:19:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -163,7 +163,7 @@ static char *get_id(void);
 static char *get_encoding_id(char *);
 static char *get_short_version(void);
 static int	mkdir_p(char *, mode_t);
-static bool check_data_dir(void);
+static int	check_data_dir(void);
 static bool mkdatadir(char *);
 static bool chklocale(const char *);
 static void setlocales(void);
@@ -274,8 +274,8 @@ rmtree(char *path, bool rmtopdir)
 	char		buf[MAXPGPATH + 64];
 
 #ifndef WIN32
-	/* doesn't handle .* files */
-	snprintf(buf, sizeof(buf), "rm -rf '%s%s'", path,
+	/* doesn't handle .* files, but we don't make any... */
+	snprintf(buf, sizeof(buf), "rm -rf \"%s\"%s", path,
 			 rmtopdir ? "" : "/*");
 #else
 	snprintf(buf, sizeof(buf), "%s /s /q \"%s\"",
@@ -707,18 +707,23 @@ get_short_version(void)
 
 /*
  * make sure the data directory either doesn't exist or is empty
+ *
+ * Returns 0 if nonexistent, 1 if exists and empty, 2 if not empty,
+ * or -1 if trouble accessing directory
  */
-static bool
+static int
 check_data_dir(void)
 {
 	DIR		   *chkdir;
 	struct dirent *file;
-	bool		empty = true;
+	int			result = 1;
+
+	errno = 0;
 
 	chkdir = opendir(pg_data);
 
 	if (!chkdir)
-		return (errno == ENOENT);
+		return (errno == ENOENT) ? 0 : -1;
 
 	while ((file = readdir(chkdir)) != NULL)
 	{
@@ -729,14 +734,17 @@ check_data_dir(void)
 		}
 		else
 		{
-			empty = false;
+			result = 2;			/* not empty */
 			break;
 		}
 	}
 
 	closedir(chkdir);
 
-	return empty;
+	if (errno != 0)
+		result = -1;			/* some kind of I/O error? */
+
+	return result;
 }
 
 /*
@@ -2315,35 +2323,54 @@ main(int argc, char *argv[])
 	pqsignal(SIGTERM, trapsig);
 #endif
 
-	/* clear this we'll use it in a few lines */
-	errno = 0;
-
-	if (!check_data_dir())
+	switch (check_data_dir())
 	{
-		fprintf(stderr,
-				"%s: directory \"%s\" exists but is not empty\n"
-				"If you want to create a new database system, either remove or empty\n"
-				"the directory \"%s\" or run %s\n"
-				"with an argument other than \"%s\".\n",
-				progname, pg_data, pg_data, progname, pg_data);
-		exit(1);
-	}
+		case 0:
+			/* PGDATA not there, must create it */
+			printf("creating directory %s ... ",
+				   pg_data);
+			fflush(stdout);
 
-	/*
-	 * check_data_dir() called opendir - the errno should still be hanging
-	 * around
-	 */
-	if (errno == ENOENT)
-	{
-		printf("creating directory %s ... ", pg_data);
-		fflush(stdout);
+			if (!mkdatadir(NULL))
+				exit_nicely();
+			else
+				check_ok();
 
-		if (!mkdatadir(NULL))
-			exit_nicely();
-		else
-			check_ok();
+			made_new_pgdata = true;
+			break;
 
-		made_new_pgdata = true;
+		case 1:
+			/* Present but empty, fix permissions and use it */
+			printf("fixing permissions on existing directory %s ... ",
+				   pg_data);
+			fflush(stdout);
+
+			if (chmod(pg_data, 0700) != 0)
+			{
+				perror(pg_data);
+				/* don't exit_nicely(), it'll try to remove pg_data contents */
+				exit(1);
+			}
+			else
+				check_ok();
+			break;
+
+		case 2:
+			/* Present and not empty */
+			fprintf(stderr,
+					"%s: directory \"%s\" exists but is not empty\n"
+					"If you want to create a new database system, either remove or empty\n"
+					"the directory \"%s\" or run %s\n"
+					"with an argument other than \"%s\".\n",
+					progname, pg_data, pg_data, progname, pg_data);
+			/* don't exit_nicely(), it'll try to remove pg_data contents */
+			exit(1);
+
+		default:
+			/* Trouble accessing directory */
+			perror(pg_data);
+			/* don't exit_nicely(), it'll try to remove pg_data contents */
+			exit(1);
 	}
 
 	/* Create required subdirectories */
