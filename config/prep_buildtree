@@ -29,7 +29,7 @@ for item in `find "$sourcetree" -type d \( -name CVS -prune -o -print \)`; do
     fi
 done
 
-for item in `find "$sourcetree" -name Makefile -o -name GNUmakefile`; do
+for item in `find "$sourcetree" -name Makefile -print -o -name GNUmakefile -print`; do
     subdir=`expr "$item" : "$sourcetree\(.*\)"`
     if test ! -f "${item}.in"; then
         ln -fs "$item" "$buildtree/$subdir" || exit 1
