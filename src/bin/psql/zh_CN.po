@@ -1,0 +1,1128 @@
+# simplified Chinese translation file for psql
+# Weiping He <laser@zhengmai.com.cn>, 2001.
+#
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PostgreSQL 7.2\n"
+"POT-Creation-Date: 2001-10-01 10:02+0800\n"
+"PO-Revision-Date: 2001-10-01 17:10:02+0800\n"
+"Last-Translator: Weiping He <laser@zhengmai.com.cn>\n"
+"Language-Team: Weiping He <laser@zhengmai.com.cn>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=gb_2312\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: command.c:152
+msgid "Warning: This syntax is deprecated.\n"
+msgstr "警告: 这种语法已经废弃.\n"
+
+#: command.c:159
+#, c-format
+msgid "Invalid command \\%s. Try \\? for help.\n"
+msgstr "无效的命令 \\%s. 用 \\? 获取帮助.\n"
+
+#: command.c:161
+#, c-format
+msgid "invalid command \\%s\n"
+msgstr "无效的命令 \\%s\n"
+
+#: command.c:278
+#, c-format
+msgid "could not get home directory: %s\n"
+msgstr "无法获得家目录: %s\n"
+
+#: command.c:292
+#, c-format
+msgid "\\%s: could not change directory to '%s': %s\n"
+msgstr "\\%s: 不能改变到 '%s' 目录: %s\n"
+
+#: command.c:380 command.c:726
+msgid "no query buffer\n"
+msgstr "无查询缓冲区\n"
+
+#: command.c:436
+#, c-format
+msgid "%s: invalid encoding name\n"
+msgstr "%s: 无效编码名字\n"
+
+#: command.c:445
+#, c-format
+msgid "\\%s: multibyte support is not enabled\n"
+msgstr "\\%s: 多字节支持未打开\n"
+
+#: command.c:499 command.c:530 command.c:541 command.c:555 command.c:597
+#: command.c:706 command.c:735
+#, c-format
+msgid "\\%s: missing required argument\n"
+msgstr "\\%s: 缺少所需参数\n"
+
+#: command.c:585
+msgid "Query buffer is empty."
+msgstr "查询缓冲区为空."
+
+#: command.c:616
+msgid "Query buffer reset (cleared)."
+msgstr "重置(清空)查询缓冲区."
+
+#: command.c:627
+#, c-format
+msgid "Wrote history to %s.\n"
+msgstr "向 %s 中写出历史.\n"
+
+#: command.c:668 command.c:900 command.c:1114 command.c:1160 command.c:1844
+#: common.c:57 copy.c:87 describe.c:449 mainloop.c:80 mainloop.c:384
+msgid "out of memory\n"
+msgstr "内存用尽\n"
+
+#: command.c:677 command.c:711
+#, c-format
+msgid "\\%s: error\n"
+msgstr "\\%s: 错误\n"
+
+#: command.c:750 command.c:770 command.c:1005 command.c:1018 command.c:1028
+#: command.c:1501 command.c:1514 command.c:1526 command.c:1539 command.c:1553
+#: command.c:1567 command.c:1597 common.c:106 copy.c:290
+#, c-format
+msgid "%s: %s\n"
+msgstr "%s: %s\n"
+
+#: command.c:835
+#, c-format
+msgid "\\%s: extra argument '%s' ignored\n"
+msgstr "\\%s: 忽略多余的参数 '%s'\n"
+
+#: command.c:892 command.c:966 command.c:994
+msgid "parse error at the end of line\n"
+msgstr "在行尾发生分析错\n"
+
+#: command.c:1275 command.c:1299 startup.c:183 startup.c:201
+msgid "Password: "
+msgstr "口令: "
+
+#: command.c:1313 common.c:155 common.c:331 common.c:496
+#, c-format
+msgid "%s"
+msgstr ""
+
+#: command.c:1317
+msgid "Previous connection kept\n"
+msgstr "保留上一次联接\n"
+
+#: command.c:1330
+#, c-format
+msgid "\\connect: %s"
+msgstr ""
+
+#: command.c:1342
+#, c-format
+msgid "You are now connected to database %s.\n"
+msgstr "你现在已经联接到数据库 %s.\n"
+
+#: command.c:1344
+#, c-format
+msgid "You are now connected as new user %s.\n"
+msgstr "你现在是作为新用户 %s 联接的.\n"
+
+#: command.c:1347
+#, c-format
+msgid "You are now connected to database %s as user %s.\n"
+msgstr "你现在是以用户 %s 的身份联接到数据库 %s .\n"
+
+#: command.c:1438
+#, c-format
+msgid "could not start editor %s\n"
+msgstr "无法运行编辑器 %s\n"
+
+#: command.c:1440
+msgid "could not start /bin/sh\n"
+msgstr "无法运行 /bin/sh\n"
+
+#: command.c:1486
+#, c-format
+msgid "could not open temporary file %s: %s\n"
+msgstr "无法打开临时文件 %s: %s\n"
+
+#: command.c:1670
+msgid "\\pset: allowed formats are unaligned, aligned, html, latex\n"
+msgstr "\\pset: 允许的格式是无对齐, 对齐, html, latex\n"
+
+#: command.c:1675
+#, c-format
+msgid "Output format is %s.\n"
+msgstr "输出格式是 %s.\n"
+
+#: command.c:1685
+#, c-format
+msgid "Border style is %d.\n"
+msgstr "边界风格是 %d.\n"
+
+#: command.c:1694
+msgid "Expanded display is on.\n"
+msgstr "扩展显示已打开.\n"
+
+#: command.c:1695
+msgid "Expanded display is off.\n"
+msgstr "扩展显示已关闭.\n"
+
+#: command.c:1707
+#, c-format
+msgid "Null display is '%s'.\n"
+msgstr "Null 显示为 '%s'.\n"
+
+#: command.c:1719
+#, c-format
+msgid "Field separator is '%s'.\n"
+msgstr "域分隔符是 '%s'.\n"
+
+#: command.c:1733
+msgid "Record separator is <newline>."
+msgstr "记录分隔符是 <新行>."
+
+#: command.c:1735
+#, c-format
+msgid "Record separator is '%s'.\n"
+msgstr "记录分隔符是 '%s'.\n"
+
+#: command.c:1746
+msgid "Showing only tuples."
+msgstr "只显示元组."
+
+#: command.c:1748
+msgid "Tuples only is off."
+msgstr "关闭只显示元组."
+
+#: command.c:1764
+#, c-format
+msgid "Title is \"%s\".\n"
+msgstr "标题是 \"%s\".\n"
+
+#: command.c:1766
+msgid "Title is unset.\n"
+msgstr "无标题.\n"
+
+#: command.c:1782
+#, c-format
+msgid "Table attribute is \"%s\".\n"
+msgstr "表属性是 \"%s\".\n"
+
+#: command.c:1784
+msgid "Table attributes unset.\n"
+msgstr "未设置表属性.\n"
+
+#: command.c:1795
+msgid "Using pager is on."
+msgstr "打开分页器的使用."
+
+#: command.c:1797
+msgid "Using pager is off."
+msgstr "关闭分页器的使用."
+
+#: command.c:1808
+msgid "Default footer is on."
+msgstr "打开缺省脚标."
+
+#: command.c:1810
+msgid "Default footer is off."
+msgstr "关闭缺省脚标."
+
+#: command.c:1816
+#, c-format
+msgid "\\pset: unknown option: %s\n"
+msgstr "\\pset: 未知选项: %s\n"
+
+#: command.c:1859
+msgid "\\!: failed\n"
+msgstr "\\!: 失败\n"
+
+#: common.c:50
+#, c-format
+msgid "%s: xstrdup: cannot duplicate null pointer (internal error)\n"
+msgstr "%s: xstrdup: 无法复制空指针(内部错误)\n"
+
+#: common.c:299 common.c:385
+msgid "You are currently not connected to a database.\n"
+msgstr "你目前没有与数据库联接.\n"
+
+#: common.c:338 common.c:506
+msgid "connection to server was lost\n"
+msgstr "与数据库的联接丢失\n"
+
+#: common.c:341 common.c:509
+msgid "The connection to the server was lost. Attempting reset: "
+msgstr "与服务器的联接已丢失. 尝试重置: "
+
+#: common.c:345 common.c:513
+msgid "Failed.\n"
+msgstr "失败.\n"
+
+#: common.c:355 common.c:525
+msgid "Succeeded.\n"
+msgstr "成功.\n"
+
+#: common.c:393
+#, c-format
+msgid ""
+"***(Single step mode: Verify "
+"query)*********************************************\n"
+"%s\n"
+"***(press return to proceed or enter x and return to "
+"cancel)********************\n"
+msgstr ""
+"***(单步模式: 验证 "
+"查询)**********************************************\n"
+"%s\n"
+"***(敲回车继续或者敲 x 然后敲回车"
+"取消)**********************\n"
+
+#: common.c:485
+msgid ""
+"Enter data to be copied followed by a newline.\n"
+"End with a backslash and a period on a line by itself."
+msgstr ""
+"输入要拷贝的数据然后输入一个新行.\n"
+"在独立的一行上输入一个反斜扛和一个句点结束."
+
+#: common.c:531
+#, c-format
+msgid "Asynchronous NOTIFY '%s' from backend with pid %d received.\n"
+msgstr "收到来自进程号为 %2$d 的后端的异步 NOTIFY (通知) '%1$s'.\n"
+
+#: copy.c:81
+msgid "\\copy: arguments required\n"
+msgstr "\\copy: 需要参数\n"
+
+#: copy.c:211
+#, c-format
+msgid "\\copy: parse error at '%s'\n"
+msgstr "\\copy: 在 '%s' 分析错误\n"
+
+#: copy.c:213
+msgid "\\copy: parse error at end of line\n"
+msgstr "\\copy: 在行尾分析错误\n"
+
+#: copy.c:310
+#, c-format
+msgid "\\copy: %s"
+msgstr ""
+
+#: copy.c:314
+#, c-format
+msgid "\\copy: unexpected response (%d)\n"
+msgstr "\\copy: 意外响应(%d)\n"
+
+#: help.c:70
+#, c-format
+msgid "could not get current user name: %s\n"
+msgstr "无法获取当前用户名字: %s\n"
+
+#: help.c:79
+msgid "This is psql, the PostgreSQL interactive terminal.\n"
+msgstr "这里是 psql, PostgreSQL 的交互终端.\n"
+
+#: help.c:80
+msgid "Usage:"
+msgstr "用法:"
+
+#: help.c:81
+msgid "  psql [options] [dbname [username]]\n"
+msgstr " psql [选项] [数据库名 [用户名]]\n"
+
+#: help.c:82
+msgid "Options:"
+msgstr "选项:"
+
+#: help.c:83
+msgid "  -a              Echo all input from script"
+msgstr " -a              回显所有来自脚本的输入"
+
+#: help.c:84
+msgid "  -A              Unaligned table output mode (-P format=unaligned)"
+msgstr " -A              非对齐的表输出模式(-P format=unaligned)"
+
+#: help.c:85
+msgid "  -c COMMAND      Run only single command (SQL or internal) and exit"
+msgstr " -c 命令         只运行一条命令(SQL 或者内部)然后退出"
+
+#: help.c:91
+#, c-format
+msgid "  -d DBNAME       Specify database name to connect to (default: %s)\n"
+msgstr " -d 数据库名     声明要联接的数据库名(缺省: %s)\n"
+
+#: help.c:93
+msgid "  -e              Echo commands sent to server"
+msgstr " -e              回显发送给服务器的命令"
+
+#: help.c:94
+msgid "  -E              Display queries that internal commands generate"
+msgstr "  -E             显示内部命令生成的查询"
+
+#: help.c:95
+msgid "  -f FILENAME     Execute commands from file, then exit"
+msgstr "  -f 文件名      执行来自文件的命令, 然后退出"
+
+#: help.c:96
+#, c-format
+msgid ""
+"  -F STRING       Set field separator (default: \"%s\") (-P fieldsep=)\n"
+msgstr ""
+"  -F 字串         设置域分隔符 (缺省: \"%s\") (-P fieldsep=)\n"
+
+#: help.c:101
+#, c-format
+msgid "  -h HOSTNAME     Specify database server host (default: %s)\n"
+msgstr "  -h 主机名      声明数据库服务器主机 (缺省: %s)\n"
+
+#: help.c:102
+msgid "local socket"
+msgstr ""
+
+#: help.c:104
+msgid "  -H              HTML table output mode (-P format=html)"
+msgstr "  -H             HTML 表输出模式 (-P format=html)"
+
+#: help.c:105
+msgid "  -l              List available databases, then exit"
+msgstr "  -l             列出所有可用数据库, 然后退出"
+
+#: help.c:106
+msgid "  -n              Disable enhanced command line editing (readline)"
+msgstr "  -n             关闭增强的命令行编辑功能 (readline)"
+
+#: help.c:107
+msgid "  -o FILENAME     Send query results to file (or |pipe)"
+msgstr " -o 文件名       向文件(或者 |管道)发送查询结果"
+
+#: help.c:111
+#, c-format
+msgid "  -p PORT         Specify database server port (default: %s)\n"
+msgstr " -p PORT         声明数据库服务器端口 (缺省: %s)\n"
+
+#: help.c:114
+msgid ""
+"  -P VAR[=ARG]    Set printing option 'VAR' to 'ARG' (see \\pset command)"
+msgstr ""
+"  -P VAR[=ARG]    把打印选项 'VAR' 设置为 'ARG' (见 \\pset 命令)"
+
+#: help.c:115
+msgid "  -q              Run quietly (no messages, only query output)"
+msgstr "  -q             安静运行 (没有信息, 只有查询输出)"
+
+#: help.c:116
+msgid ""
+"  -R STRING       Set record separator (default: newline) (-P recordsep=)"
+msgstr ""
+"  -R 字串         设置记录分隔符 (缺省: 新行) (-P recordsep=)"
+
+#: help.c:117
+msgid "  -s              Single step mode (confirm each query)"
+msgstr "  -s             单步模式 (核实每个查询)"
+
+#: help.c:118
+msgid "  -S              Single line mode (end of line terminates SQL command)"
+msgstr "  -S             单行模式 (一行结束同时也标志着 SQL 命令结束)"
+
+#: help.c:119
+msgid "  -t              Print rows only (-P tuples_only)"
+msgstr "  -t             只打印行 (-P tuples_onle)"
+
+#: help.c:120
+msgid ""
+"  -T TEXT         Set HTML table tag attributes (width, border) (-P "
+"tableattr=)"
+msgstr ""
+"  -T 文本         设置 HTML 表标记属性 (表宽, 边宽) (-P "
+"tableattr=)"
+
+#: help.c:126
+#, c-format
+msgid "  -U NAME         Specify database user name (default: %s)\n"
+msgstr "  -U 名字        声明数据库用户名 (缺省: %s)\n"
+
+#: help.c:128
+msgid "  -v NAME=VALUE   Set psql variable 'NAME' to 'VALUE'"
+msgstr "  -v 名字=数值   设置 psql 变量 '名字' 为 '数值'"
+
+#: help.c:129
+msgid "  -V              Show version information and exit"
+msgstr "  -V             显示版本信息然后退出"
+
+#: help.c:130
+msgid "  -W              Prompt for password (should happen automatically)"
+msgstr "  -W             提示输入口令 (将自动发生)"
+
+#: help.c:131
+msgid "  -x              Turn on expanded table output (-P expanded)"
+msgstr "  -x             打开扩展表输出 (-P expended)"
+
+#: help.c:132
+msgid "  -X              Do not read startup file (~/.psqlrc)"
+msgstr "  -X             不要读取启动文件 (~/.psqlrc)"
+
+#: help.c:135
+msgid ""
+"\n"
+"For more information, type \"\\?\" (for internal commands) or \"\\help\"\n"
+"(for SQL commands) from within psql, or consult the psql section in\n"
+"the PostgreSQL documentation.\n"
+"\n"
+"Report bugs to <pgsql-bugs@postgresql.org>."
+msgstr ""
+"\n"
+"更多的相关信息, 在 psql 里键入 \"\\?\" (用于内部命令) 或者 \"\\help\"\n"
+"(用于 SQL 命令), 或者参考 PostgreSQL 文档里的 psql 节\n"
+"\n"
+"向 <pgsql-bugs@postgresql.org> 汇报臭虫."
+
+#: help.c:194
+msgid " \\a             toggle between unaligned and aligned output mode\n"
+msgstr " \\a            在非对齐和对齐的输出模式之间切换\n"
+
+#: help.c:195
+#, c-format
+msgid ""
+" \\c[onnect] [DBNAME|- [USER]]\n"
+"                connect to new database (currently \"%s\")\n"
+msgstr ""
+" \\c[onnect] [数据库名|- [用户名]]\n"
+"                联接到新的数据库 (当前为 \"%s\")\n"
+
+#: help.c:198
+msgid " \\C TITLE       set table title\n"
+msgstr " \\C 标题       设置表标题\n"
+
+#: help.c:199
+msgid " \\cd [DIRNAME]  change the current working directory\n"
+msgstr " \\cd [目录名]  改变当前的工作目录\n"
+
+#: help.c:200
+msgid " \\copy ...      perform SQL COPY with data stream to the client host\n"
+msgstr " \\copy ...     执行 SQL COPY, 数据流指向客户端主机\n"
+
+#: help.c:201
+msgid " \\copyright     show PostgreSQL usage and distribution terms\n"
+msgstr " \\copyright     显示 PostgreSQL 用法和发布信息\n"
+
+#: help.c:202
+msgid " \\d TABLE       describe table (or view, index, sequence)\n"
+msgstr " \\d 表         描述表 (或者视图, 索引, 序列)\n"
+
+#: help.c:203
+msgid " \\d{t|i|s|v}... list tables/indexes/sequences/views\n"
+msgstr " \\d{t|i|s|v}... 列出表/索引/序列/视图\n"
+
+#: help.c:204
+msgid ""
+" \\d{p|S|l}      list access privileges, system tables, or large objects\n"
+msgstr ""
+" \\d{p|S|l}      列出访问权限, 系统表, 或者大对象\n"
+
+#: help.c:205
+msgid " \\da            list aggregate functions\n"
+msgstr " \\da           列出聚集函数\n"
+
+#: help.c:206
+msgid " \\dd NAME       show comment for table, type, function, or operator\n"
+msgstr " \\dd 名字      显示表, 类型, 函数, 或者操作符的注释\n"
+
+#: help.c:207
+msgid " \\df            list functions\n"
+msgstr " \\df           列出函数\n"
+
+#: help.c:208
+msgid " \\do            list operators\n"
+msgstr " \\do           列出操作符\n"
+
+#: help.c:209
+msgid " \\dT            list data types\n"
+msgstr " \\dT           列出数据类型\n"
+
+#: help.c:210
+msgid ""
+" \\e FILENAME    edit the current query buffer or file with external editor\n"
+msgstr ""
+" \\e 文件名      用一个外部编辑器编辑当前查询缓冲区或者文件\n"
+
+#: help.c:211
+msgid " \\echo TEXT     write text to standard output\n"
+msgstr " \\echo TEXT    向标准输出写出文本\n"
+
+#: help.c:212
+msgid " \\encoding ENCODING  set client encoding\n"
+msgstr " \\encoding 编码     设置客户端编码\n"
+
+#: help.c:213
+msgid " \\f STRING      set field separator\n"
+msgstr " \\f 字串       设置域分隔符\n"
+
+#: help.c:214
+msgid ""
+" \\g FILENAME    send SQL command to server (and write results to file or "
+"|pipe)\n"
+msgstr ""
+" \\g 文件名      向服务器发送 SQL 命令 (并且把结果写到文件或者 "
+"|管道)\n"
+
+#: help.c:215
+msgid " \\h NAME        help on syntax of SQL commands, * for all commands\n"
+msgstr " \\h 名字       SQL 命令的语法帮助, 用 * 可以看所有命令的帮助\n"
+
+#: help.c:216
+#, c-format
+msgid " \\H             toggle HTML output mode (currently %s)\n"
+msgstr " \\H            在 HTML 输出模式之间切换 (当前是 %s)\n"
+
+#: help.c:218
+msgid " \\i FILENAME    execute commands from file\n"
+msgstr " \\i 文件名     执行来自文件的命令\n"
+
+#: help.c:219
+msgid " \\l             list all databases\n"
+msgstr " \\l            列出所有数据库\n"
+
+#: help.c:220
+msgid ""
+" \\lo_export, \\lo_import, \\lo_list, \\lo_unlink\n"
+"                large object operations\n"
+msgstr ""
+" \\lo_export, \\lo_import, \\lo_list, \\lo_unlink\n"
+"                大对象操作\n"
+
+#: help.c:222
+msgid " \\o FILENAME    send all query results to file or |pipe\n"
+msgstr " \\o 文件名     向文件或者 |管道 发送所有查询结果\n"
+
+#: help.c:223
+msgid " \\p             show the content of the current query buffer\n"
+msgstr " \\p            显示当前查询缓冲区的内容\n"
+
+#: help.c:224
+msgid ""
+" \\pset VAR      set table output option (VAR := {format|border|expanded|\n"
+"                fieldsep|null|recordsep|tuples_only|title|tableattr|pager})\n"
+msgstr ""
+" \\pset VAR      设置表的输出选项 (VAR := {foramt|border|expaned|\n"
+"                 fieldsep|null|recordsep|tuples_only|title|tableattr|pager})\n"
+
+#: help.c:226
+msgid " \\q             quit psql\n"
+msgstr " \\q            退出 psql\n"
+
+#: help.c:227
+msgid " \\qecho TEXT    write text to query output stream (see \\o)\n"
+msgstr " \\qecho 文本   向查询输出流写出文本 (见 \\o)\n"
+
+#: help.c:228
+msgid " \\r             reset (clear) the query buffer\n"
+msgstr " \\r            重置 (清理) 查询缓冲区\n"
+
+#: help.c:229
+msgid " \\s FILENAME    print history or save it to file\n"
+msgstr " \\s 文件名     打印历史或者将其保存到文件\n"
+
+#: help.c:230
+msgid " \\set NAME VALUE  set internal variable\n"
+msgstr " \\set 名字 数值  设置内部变量\n"
+
+#: help.c:231
+#, c-format
+msgid " \\t             show only rows (currently %s)\n"
+msgstr " \\t            只显示行 (当前是 %s)\n"
+
+#: help.c:233
+msgid " \\T TEXT        set HTML table tag attributes\n"
+msgstr " \\T 文本       设置 HTML 表标记属性\n"
+
+#: help.c:234
+msgid " \\unset NAME    unset (delete) internal variable\n"
+msgstr " \\unset 名字   删除内部变量\n"
+
+#: help.c:235
+msgid " \\w FILENAME    write current query buffer to file\n"
+msgstr " \\w 文件名     将当前查询缓冲区写出到文件\n"
+
+#: help.c:236
+#, c-format
+msgid " \\x             toggle expanded output (currently %s)\n"
+msgstr " \\x            在扩展输出之间切换 (目前是 %s)\n"
+
+#: help.c:238
+msgid " \\z             list table access privileges\n"
+msgstr " \\z            列出表访问权限\n"
+
+#: help.c:239
+msgid " \\! [COMMAND]   execute command in shell or start interactive shell\n"
+msgstr " \\! [命令]     在 shell 里执行命令或者开始一个交互的 shell\n"
+
+#: help.c:266
+msgid "Available help:"
+msgstr "可用帮助:"
+
+#: help.c:297
+#, c-format
+msgid ""
+"Command:     %s\n"
+"Description: %s\n"
+"Syntax:\n"
+"%s\n"
+"\n"
+msgstr ""
+"命令:     %s\n"
+"描述:     %s\n"
+"语法:\n"
+"%s\n"
+"\n"
+
+#: help.c:308
+#, c-format
+msgid ""
+"No help available for '%-.*s'.\n"
+"Try \\h with no arguments to see available help.\n"
+msgstr ""
+"还没有 '%-.*s' 的可用帮助.\n"
+"用不带参数的 \\h 获取可用帮助.\n"
+
+#: input.c:178
+#, c-format
+msgid "could not save history to %s: %s\n"
+msgstr "无法将历史保存到 %s: %s\n"
+
+#: large_obj.c:66
+msgid "Warning: Your transaction in progress has been committed."
+msgstr "警告: 你的正在处理的事务已经提交."
+
+#: large_obj.c:68
+msgid "Warning: Your transaction in progress has been rolled back."
+msgstr "警告: 你的正在处理的事务已经回卷."
+
+#: large_obj.c:95
+msgid "\\lo_export: not connected to a database\n"
+msgstr "\\lo_export: 未与数据库联接\n"
+
+#: large_obj.c:162
+msgid "\\lo_import: not connected to a database\n"
+msgstr "\\lo_import: 未与数据库联接\n"
+
+#: large_obj.c:276
+msgid "\\lo_unlink: not connected to a database\n"
+msgstr "\\lo_unlink: 未与数据库联接\n"
+
+#: describe.c:57 describe.c:110 describe.c:169 describe.c:221 describe.c:269
+#: describe.c:401 describe.c:530 describe.c:1034 large_obj.c:353
+msgid "Description"
+msgstr "描述"
+
+#: large_obj.c:361
+msgid "Large objects"
+msgstr "大对象"
+
+#: mainloop.c:242
+#, c-format
+msgid "Use \"\\q\" to leave %s.\n"
+msgstr "使用 \"\\q\" 离开 %s.\n"
+
+#: print.c:370
+msgid "(No rows)\n"
+msgstr "(没有行)\n"
+
+#: print.c:1075
+msgid "(1 row)"
+msgstr "(1 行)"
+
+#: print.c:1077
+#, c-format
+msgid "(%d rows)"
+msgstr "(%d 行)"
+
+#: startup.c:141 startup.c:615
+#, c-format
+msgid "%s: out of memory\n"
+msgstr "%s: 内存用尽\n"
+
+#: startup.c:177
+msgid "User name: "
+msgstr "用户名:"
+
+#: startup.c:286
+#, c-format
+msgid ""
+"Welcome to %s, the PostgreSQL interactive terminal.\n"
+"\n"
+"Type:  \\copyright for distribution terms\n"
+"       \\h for help with SQL commands\n"
+"       \\? for help on internal slash commands\n"
+"       \\g or terminate with semicolon to execute query\n"
+"       \\q to quit\n"
+"\n"
+msgstr ""
+"欢迎来到 %s, PostgreSQL 的交互终端.\n"
+"\n"
+"键入:  \\copyright 获取发布信息\n"
+"       \\h 获取 SQL 命令的帮助\n"
+"       \\? 获取内部反斜扛命令的帮助\n"
+"       \\g 或者以分号结尾执行查询\n"
+"       \\q 退出\n"
+"\n"
+
+#: startup.c:461
+#, c-format
+msgid "%s: couldn't set printing parameter %s\n"
+msgstr "%s: 无法设置打印参数 %s\n"
+
+#: startup.c:507
+#, c-format
+msgid "%s: could not delete variable %s\n"
+msgstr "%s: 无法删除变量 %s\n"
+
+#: startup.c:517
+#, c-format
+msgid "%s: could not set variable %s\n"
+msgstr "%s: 无法设置变量 %s\n"
+
+#: startup.c:548 startup.c:563
+#, c-format
+msgid "Try '%s --help' for more information.\n"
+msgstr "用 '%s --help' 获取更多信息.\n"
+
+#: startup.c:556
+#, c-format
+msgid ""
+"%s was compiled without support for long options.\n"
+"Use --help for help on invocation options.\n"
+msgstr ""
+"%s 没有带着长选项支持编译.\n"
+"用 --help 获取关于调用选项的帮助.\n"
+
+#: startup.c:581
+#, c-format
+msgid "%s: warning: extra option %s ignored\n"
+msgstr "%s: 警告: 忽略额外的选项 %s\n"
+
+#: startup.c:588
+#, c-format
+msgid "%s: Warning: The -u option is deprecated. Use -U.\n"
+msgstr "%s: 警告: -u 选项已经废弃. 请用 -U.\n"
+
+#: startup.c:644
+msgid "contains support for: "
+msgstr "包括的支持:"
+
+#: startup.c:647
+msgid "readline"
+msgstr ""
+
+#: startup.c:657
+msgid "history"
+msgstr "历史"
+
+#: startup.c:666
+msgid "multibyte"
+msgstr "多字节"
+
+#: startup.c:674
+msgid ""
+"Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group\n"
+"Portions Copyright (c) 1996, Regents of the University of California\n"
+"Read the file COPYRIGHT or use the command \\copyright to see the\n"
+"usage and distribution terms."
+msgstr ""
+"部分版权 (c) 1996-2001, PostgreSQL 全球开发组\n"
+"部分版权 (c) 1996, University of California 理事\n"
+"阅读 COPYRIGHT 或者使用 \\copyright 命令查看\n"
+"用法和发布条款."
+
+#: startup.c:699
+#, c-format
+msgid ""
+"SSL connection (cipher: %s, bits: %i)\n"
+"\n"
+msgstr ""
+"SSL 联接 (加密: %s, 位: %i)\n"
+"\n"
+
+#: describe.c:56 describe.c:100 describe.c:158 describe.c:220 describe.c:260
+#: describe.c:401 describe.c:1028
+msgid "Name"
+msgstr "名字"
+
+#: describe.c:56
+msgid "(all types)"
+msgstr "(所有类型)"
+
+#: describe.c:57
+msgid "Data type"
+msgstr "数据类型"
+
+#: describe.c:73
+msgid "List of aggregate functions"
+msgstr "聚集函数列表"
+
+#: describe.c:100
+msgid "Result data type"
+msgstr "结果数据类型"
+
+#: describe.c:101
+msgid "Argument data types"
+msgstr "参数数据类型"
+
+#: describe.c:109 describe.c:260 describe.c:1029
+msgid "Owner"
+msgstr "所有者"
+
+#: describe.c:109
+msgid "Language"
+msgstr "语言"
+
+#: describe.c:110
+msgid "Source code"
+msgstr "源代码"
+
+#: describe.c:135
+msgid "List of functions"
+msgstr "函数列表"
+
+#: describe.c:166
+msgid "Internal name"
+msgstr "内部名称"
+
+#: describe.c:166
+msgid "Size"
+msgstr "大小"
+
+#: describe.c:193
+msgid "List of data types"
+msgstr "数据类型列表"
+
+#: describe.c:220
+msgid "Left arg type"
+msgstr "左参数类型"
+
+#: describe.c:220
+msgid "Right arg type"
+msgstr "右参数类型"
+
+#: describe.c:221
+msgid "Result type"
+msgstr "结果类型"
+
+#: describe.c:236
+msgid "List of operators"
+msgstr "操作符列表"
+
+#: describe.c:264
+msgid "Encoding"
+msgstr "编码"
+
+#: describe.c:279
+msgid "List of databases"
+msgstr "数据库列表"
+
+#: describe.c:306
+msgid "Table"
+msgstr "表"
+
+#: describe.c:306
+msgid "Access privileges"
+msgstr "访问权限"
+
+#: describe.c:320
+#, c-format
+msgid "Access privileges for database \"%s\""
+msgstr "数据库 \"%s\" 的访问权限"
+
+#: describe.c:401
+msgid "Object"
+msgstr "对象"
+
+#: describe.c:402
+msgid "aggregate"
+msgstr "聚集"
+
+#: describe.c:402
+msgid "function"
+msgstr "函数"
+
+#: describe.c:402
+msgid "operator"
+msgstr "操作符"
+
+#: describe.c:403
+msgid "data type"
+msgstr "数据类型"
+
+#: describe.c:403 describe.c:1028
+msgid "table"
+msgstr "表"
+
+#: describe.c:403 describe.c:1028
+msgid "view"
+msgstr "视图"
+
+#: describe.c:404 describe.c:1028
+msgid "index"
+msgstr "索引"
+
+#: describe.c:404 describe.c:1028
+msgid "sequence"
+msgstr "序列"
+
+#: describe.c:404
+msgid "rule"
+msgstr "规则"
+
+#: describe.c:405
+msgid "trigger"
+msgstr "触发器"
+
+#: describe.c:422
+msgid "Object descriptions"
+msgstr "对象描述"
+
+#: describe.c:503
+#, c-format
+msgid "Did not find any relation named \"%s\".\n"
+msgstr "没有找到任何名为 \"%s\" 的关系.\n"
+
+#: describe.c:517
+msgid "Column"
+msgstr "列"
+
+#: describe.c:518 describe.c:1029
+msgid "Type"
+msgstr "类型"
+
+#: describe.c:524
+msgid "Modifiers"
+msgstr "修饰词"
+
+#: describe.c:628
+#, c-format
+msgid "Table \"%s\""
+msgstr "表 \"%s\""
+
+#: describe.c:631
+#, c-format
+msgid "View \"%s\""
+msgstr "视图 \"%s\""
+
+#: describe.c:634
+#, c-format
+msgid "Sequence \"%s\""
+msgstr "序列 \"%s\""
+
+#: describe.c:637
+#, c-format
+msgid "Index \"%s\""
+msgstr "索引 \"%s\""
+
+#: describe.c:640
+#, c-format
+msgid "Special relation \"%s\""
+msgstr "特殊关系 \"%s\""
+
+#: describe.c:643
+#, c-format
+msgid "TOAST table \"%s\""
+msgstr "TOAST 表 \"%s\""
+
+#: describe.c:646
+#, c-format
+msgid "?%c? \"%s\""
+msgstr ""
+
+#: describe.c:676
+msgid "unique "
+msgstr "唯一 "
+
+#: describe.c:681
+msgid " (primary key)"
+msgstr " (主键)"
+
+#: describe.c:686
+#, c-format
+msgid "Index predicate: %s"
+msgstr "索引谓词: %s"
+
+#: describe.c:701
+#, c-format
+msgid "View definition: %s"
+msgstr "视图定义: %s"
+
+#: describe.c:817
+msgid "Indexes"
+msgstr "索引"
+
+#: describe.c:832
+msgid "Primary key"
+msgstr "主键"
+
+#: describe.c:847
+msgid "Unique keys"
+msgstr "唯一键字"
+
+#: describe.c:862
+msgid "Check constraints"
+msgstr "检查约束"
+
+#: describe.c:865
+#, c-format
+msgid "%s: \"%s\" %s"
+msgstr ""
+
+#: describe.c:868
+#, c-format
+msgid "%*s  \"%s\" %s"
+msgstr ""
+
+#: describe.c:876
+msgid "Rules"
+msgstr "规则"
+
+#: describe.c:891
+msgid "Triggers"
+msgstr "触发器"
+
+#: describe.c:962
+msgid "User name"
+msgstr "用户名"
+
+#: describe.c:962
+msgid "User ID"
+msgstr "用户 ID"
+
+#: describe.c:963
+msgid "superuser, create database"
+msgstr "超级用户, 创建数据库"
+
+#: describe.c:964
+msgid "superuser"
+msgstr "超级用户"
+
+#: describe.c:964
+msgid "create database"
+msgstr "创建数据库"
+
+#: describe.c:965
+msgid "Attributes"
+msgstr "属性"
+
+#: describe.c:979
+msgid "List of database users"
+msgstr "数据库用户列表" 
+
+#: describe.c:1029
+msgid "special"
+msgstr "特殊"
+
+#: describe.c:1072
+msgid "No matching relations found.\n"
+msgstr "没有找到匹配的关系.\n"
+
+#: describe.c:1074
+msgid "No relations found.\n"
+msgstr "没有找到关系.\n"
+
+#: describe.c:1079
+msgid "List of relations"
+msgstr "关系列表"

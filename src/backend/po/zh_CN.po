@@ -1,0 +1,327 @@
+# simplified Chinese translation file for PostgreSQL server
+# Weiping He <laser@zhengmai.com.cn>, 2001.
+#
+#
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PostgreSQL 7.2\n"
+"POT-Creation-Date: 2001-10-01 09:32+0800\n"
+"PO-Revision-Date: 2001-10-01 16:54:30+0800\n"
+"Last-Translator: Weiping He <laser@zhengmai.com.cn>\n"
+"Language-Team: Weiping He <laser@zhengmai.com.cn>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=GB2312\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: ../bootstrap/bootstrap.c:189
+msgid ""
+"Usage:\n"
+"  postgres -boot [-d] [-D datadir] [-F] [-o file] [-x num] dbname\n"
+"  -d               debug mode\n"
+"  -D datadir       data directory\n"
+"  -F               turn off fsync\n"
+"  -o file          send debug output to file\n"
+"  -x num           internal use\n"
+msgstr ""
+"用法:\n"
+"  postgres -boot [-d] [-D datadir] [-F] [-o file] [-x num] dbname\n"
+"  -d               调试模式\n"
+"  -D datadir       数据目录\n"
+"  -F               关闭 fsync\n"
+"  -o file          把调试信息输出到文件 file\n"
+"  -x num           内部使用\n"
+
+
+#: ../bootstrap/bootstrap.c:296 ../postmaster/postmaster.c:278
+#, c-format
+msgid ""
+"%s does not know where to find the database system data.\n"
+"You must specify the directory that contains the database system\n"
+"either by specifying the -D invocation option or by setting the\n"
+"PGDATA environment variable.\n"
+"\n"
+msgstr ""
+"%s 不知道在哪里可以找到数据库系统数据.\n"
+"你必须通过声明 -D 调用选项或者通过设置\n"
+"PGDATA 环境变量声明包含数据库系统的目录.\n"
+"\n"
+
+#: ../main/main.c:84
+#, c-format
+msgid "%s: setsysinfo failed: %s\n"
+msgstr "%s: setsysinfo 失败: %s\n"
+
+#: ../main/main.c:127
+msgid ""
+"\"root\" execution of the PostgreSQL server is not permitted.\n"
+"\n"
+"The server must be started under an unprivileged user id to prevent\n"
+"a possible system security compromise.  See the documentation for\n"
+"more information on how to properly start the server.\n"
+"\n"
+msgstr ""
+"不允许 \"root\" 执行 PostgreSQL 服务器.\n"
+"\n"
+"服务器必须以一个非特权的用户身份启动以避免\n"
+"可能的系统安全性问题.参阅文档获取更多\n"
+"有关如何正确启动服务器的信息.\n"
+"\n"
+
+#: ../main/main.c:147
+#, c-format
+msgid "%s: real and effective user ids must match\n"
+msgstr "%s: 真实和有效用户标识必须相互匹配\n"
+
+#: ../main/main.c:196
+#, c-format
+msgid "%s: invalid current euid %d\n"
+msgstr "%s: 非法的当前 euid %d\n"
+
+#: ../postmaster/postmaster.c:292
+#, c-format
+msgid ""
+"%s does not find the database system.\n"
+"Expected to find it in the PGDATA directory \"%s\",\n"
+"but unable to open file \"%s\": %s\n"
+"\n"
+msgstr ""
+"%s 未找到数据库系统.\n"
+"预期在 PGDATA 目录 \"%s\" 找到,\n"
+"但是无法打开文件 \"%s\": %s\n"
+"\n"
+
+#: ../postmaster/postmaster.c:400 ../postmaster/postmaster.c:411
+#: ../postmaster/postmaster.c:549 ../postmaster/postmaster.c:588
+#, c-format
+msgid "Try '%s --help' for more information.\n"
+msgstr "用 '%s --help' 获取更多的信息.\n"
+
+#: ../postmaster/postmaster.c:410
+#, c-format
+msgid "invalid argument -- %s"
+msgstr "无效参数 -- %s"
+
+#: ../postmaster/postmaster.c:434
+msgid "Assert checking is not compiled in."
+msgstr "没有把断言检查编译到程序里."
+
+#: ../postmaster/postmaster.c:564
+msgid ""
+"The number of buffers (-B) must be at least twice the number of allowed "
+"connections (-N) and at least 16."
+msgstr ""
+"缓冲区的数量 (-B) 必须至少是允许的联接数 (-N)"
+"的两倍并且至少为 16."
+
+#: ../postmaster/postmaster.c:587
+msgid "For SSL, TCP/IP connections must be enabled."
+msgstr "对于 SSL 而言, 必须打开 TCP/IP 联接."
+
+#: ../postmaster/postmaster.c:633
+msgid "cannot create INET stream port"
+msgstr "无法创建 INET 流端口"
+
+#: ../postmaster/postmaster.c:645
+msgid "cannot create UNIX stream port"
+msgstr "无法创建 UNIX 流端口"
+
+#: ../postmaster/postmaster.c:732
+#, c-format
+msgid "fork failed: %s"
+msgstr "fork 失败: %s"
+
+#: ../postmaster/postmaster.c:750
+#, c-format
+msgid "cannot disassociate from controlling TTY: %s"
+msgstr "无法与控制 TTY: %s 断开联系"
+
+#: ../postmaster/postmaster.c:770
+#, c-format
+msgid ""
+"%s is the PostgreSQL server.\n"
+"\n"
+msgstr ""
+"%s 是 PostgreSQL 服务器.\n"
+"\n"
+
+#: ../postmaster/postmaster.c:771
+#, c-format
+msgid ""
+"Usage:\n"
+"  %s [options...]\n"
+"\n"
+msgstr ""
+"用法:\n"
+"  %s [选项...]\n"
+"\n"
+
+#: ../postmaster/postmaster.c:772
+msgid "Options:\n"
+msgstr "选项:\n"
+
+#: ../postmaster/postmaster.c:774
+msgid "  -A 1|0          enable/disable run-time assert checking\n"
+msgstr "  -A 1|0          打开/关闭运行时断言检查\n"
+
+#: ../postmaster/postmaster.c:776
+#, c-format
+msgid "  -B NBUFFERS     number of shared buffers (default %d)\n"
+msgstr "  -B 缓冲区数量   共享缓冲区的数量 (缺省是 %d)\n"
+
+#: ../postmaster/postmaster.c:777
+msgid "  -c NAME=VALUE   set run-time parameter\n"
+msgstr "  -c 名字=数值   设置运行时参数\n"
+
+#: ../postmaster/postmaster.c:778
+msgid "  -d 1-5          debugging level\n"
+msgstr "  -d 1-5         调试级别\n"
+
+#: ../postmaster/postmaster.c:779
+msgid "  -D DATADIR      database directory\n"
+msgstr "  -D 数据目录     数据库目录\n"
+
+#: ../postmaster/postmaster.c:780
+msgid "  -F              turn fsync off\n"
+msgstr "  -F              关闭 fsync\n"
+
+#: ../postmaster/postmaster.c:781
+msgid "  -h HOSTNAME     host name or IP address to listen on\n"
+msgstr "  -h 主机名       侦听的主机名或者 IP 地址\n"
+
+#: ../postmaster/postmaster.c:782
+msgid "  -i              enable TCP/IP connections\n"
+msgstr "  -i              打开 TCP/IP 联接\n"
+
+#: ../postmaster/postmaster.c:783
+msgid "  -k DIRECTORY    Unix-domain socket location\n"
+msgstr "  -k 目录         Unix 域套接字的位置\n"
+
+#: ../postmaster/postmaster.c:785
+msgid "  -l              enable SSL connections\n"
+msgstr "  -l              打开 SSL 联接\n"
+
+#: ../postmaster/postmaster.c:787
+#, c-format
+msgid "  -N MAX-CONNECT  maximum number of allowed connections (default %d)\n"
+msgstr "  -N 最大联接     允许建立的最大联接数目 (缺省是 %d)\n"
+
+#: ../postmaster/postmaster.c:789
+msgid "  -o OPTIONS      pass 'OPTIONS' to each backend server\n"
+msgstr "  -o 选项         把'选项'传递给每一个后端服务器\n"
+
+#: ../postmaster/postmaster.c:790
+#, c-format
+msgid "  -p PORT         port number to listen on (default %d)\n"
+msgstr "  -p PORT         侦听的端口号 (缺省是 %d)\n"
+
+#: ../postmaster/postmaster.c:791
+msgid ""
+"  -S              silent mode (start in background without logging output)\n"
+msgstr ""
+"  -S              安静模式(后端启动之后不再记录日志输出)\n"
+
+#: ../postmaster/postmaster.c:793
+msgid ""
+"\n"
+"Developer options:\n"
+msgstr ""
+"\n"
+"开发人员选项:\n"
+
+#: ../postmaster/postmaster.c:794
+msgid ""
+"  -n              do not reinitialize shared memory after abnormal exit\n"
+msgstr ""
+"  -n              在异常退出之后不再重新初始化共享内存\n"
+
+#: ../postmaster/postmaster.c:795
+msgid "  -s              send SIGSTOP to all backend servers if one dies\n"
+msgstr "  -s              如果一个后端退出, 那么向所有后端发送 SIGSTOP\n"
+
+#: ../postmaster/postmaster.c:797
+msgid ""
+"\n"
+"Please read the documentation for the complete list of run-time\n"
+"configuration settings and how to set them on the command line or in\n"
+"the configuration file.\n"
+"\n"
+"Report bugs to <pgsql-bugs@postgresql.org>.\n"
+msgstr ""
+"\n"
+"请阅读文档获取运行时配置设置的完整列表\n"
+"以及如何在命令行或者在配置文件里设置它们的详细信息.\n"
+"\n"
+"请向 <pgsql-bugs@postgresql.org> 报告臭虫.\n"
+
+#: ../postmaster/postmaster.c:2216
+#, c-format
+msgid "failed to create SSL context: %s"
+msgstr "创建 SSL 环境失败: %s"
+
+#: ../postmaster/postmaster.c:2223
+#, c-format
+msgid "failed to load server certificate (%s): %s"
+msgstr "装载服务器认证 (%s) 失败: %s"
+
+#: ../postmaster/postmaster.c:2230
+#, c-format
+msgid "failed to load private key file (%s): %s"
+msgstr "装载私钥文件 (%s) 失败: %s"
+
+#: ../postmaster/postmaster.c:2236
+#, c-format
+msgid "check of private key failed: %s"
+msgstr "检查私钥失败: %s"
+
+#: ../postmaster/postmaster.c:2390
+#, c-format
+msgid "cannot create file %s: %s"
+msgstr "无法创建文件 %s: %s"
+
+#: ../postmaster/postmaster.c:2402
+#, c-format
+msgid "writing file %s failed"
+msgstr "写入文件 %s 失败"
+
+#. translator: This string will be truncated at 31 characters.
+#: ../utils/error/elog.c:174
+#, c-format
+msgid "copy: line %d, "
+msgstr "拷贝: 行 %d, "
+
+#. translator: This must fit in fmt_fixedbuf.
+#: ../utils/error/elog.c:197 ../utils/error/elog.c:293
+msgid "elog: out of memory"
+msgstr "elog: 内存用尽"
+
+#: ../utils/error/elog.c:725
+msgid "Numerical result out of range"
+msgstr "数值结果超出范围"
+
+#. translator: This string will be truncated at 47 characters expanded.
+#: ../utils/error/elog.c:736
+#, c-format
+msgid "operating system error %d"
+msgstr "操作系统错误 %d"
+
+#: ../utils/error/elog.c:753
+msgid "DEBUG:  "
+msgstr "调试:  "
+
+#: ../utils/error/elog.c:756
+msgid "NOTICE:  "
+msgstr "注意:  "
+
+#: ../utils/error/elog.c:759
+msgid "ERROR:  "
+msgstr "错误:  "
+
+#: ../utils/error/elog.c:762
+msgid "FATAL 1:  "
+msgstr "致命错误 1:  "
+
+#: ../utils/error/elog.c:765
+msgid "FATAL 2:  "
+msgstr "致命错误 2:  "
