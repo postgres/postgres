@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.74 2002/08/06 05:33:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.75 2002/08/06 05:34:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -807,7 +807,7 @@ addRangeTableEntryForFunction(ParseState *pstate,
 			elog(ERROR, "Too many column aliases specified for function %s",
 				 funcname);
 		if (numaliases == 0)
-			eref->colnames = makeList1(makeString(funcname));
+			eref->colnames = makeList1(makeString(eref->aliasname));
 	}
 	else if (functyptype == 'p' && funcrettype == RECORDOID)
 	{
