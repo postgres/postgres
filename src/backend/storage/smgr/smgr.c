@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.67 2003/12/12 18:45:09 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.68 2004/01/06 18:07:31 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -382,7 +382,7 @@ smgrblindwrt(int16 which,
 }
 
 /*
- *	smgrnblocks() -- Calculate the number of POSTGRES blocks in the
+ *	smgrnblocks() -- Calculate the number of blocks in the
  *					 supplied relation.
  *
  *		Returns the number of blocks on success, aborts the current
@@ -411,8 +411,8 @@ smgrnblocks(int16 which, Relation reln)
 }
 
 /*
- *	smgrtruncate() -- Truncate supplied relation to a specified number
- *						of blocks
+ *	smgrtruncate() -- Truncate supplied relation to the specified number
+ *					  of blocks
  *
  *		Returns the number of blocks on success, aborts the current
  *		transaction on failure.
@@ -444,7 +444,7 @@ smgrtruncate(int16 which, Relation reln, BlockNumber nblocks)
 }
 
 /*
- * smgrDoPendingDeletes() -- take care of relation deletes at end of xact.
+ *	smgrDoPendingDeletes() -- Take care of relation deletes at end of xact.
  */
 int
 smgrDoPendingDeletes(bool isCommit)
@@ -494,7 +494,7 @@ smgrDoPendingDeletes(bool isCommit)
  *	smgrcommit() -- Prepare to commit changes made during the current
  *					transaction.
  *
- * This is called before we actually commit.
+ *		This is called before we actually commit.
  */
 int
 smgrcommit(void)
@@ -538,7 +538,7 @@ smgrabort(void)
 }
 
 /*
- * Sync files to disk at checkpoint time.
+ *	smgrsync() -- Sync files to disk at checkpoint time.
  */
 int
 smgrsync(void)

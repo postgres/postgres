@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/smgr/md.c,v 1.99 2003/11/29 19:51:57 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/smgr/md.c,v 1.100 2004/01/06 18:07:31 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,18 +25,15 @@
 #include "utils/inval.h"
 #include "utils/memutils.h"
 
-
-#undef DIAGNOSTIC
-
 /*
- *	The magnetic disk storage manager keeps track of open file descriptors
- *	in its own descriptor pool.  This happens for two reasons.	First, at
- *	transaction boundaries, we walk the list of descriptors and flush
- *	anything that we've dirtied in the current transaction.  Second, we want
- *	to support relations larger than the OS' file size limit (often 2GBytes).
- *	In order to do that, we break relations up into chunks of < 2GBytes
- *	and store one chunk in each of several files that represent the relation.
- *	See the BLCKSZ and RELSEG_SIZE configuration constants in include/pg_config.h.
+ *	The magnetic disk storage manager keeps track of open file
+ *	descriptors in its own descriptor pool.  This is done to make it
+ *	easier to support relations that are larger than the operating
+ *	system's file size limit (often 2GBytes).  In order to do that, we
+ *	we break relations up into chunks of < 2GBytes and store one chunk
+ *	in each of several files that represent the relation.  See the
+ *	BLCKSZ and RELSEG_SIZE configuration constants in
+ *	include/pg_config.h.
  *
  *	The file descriptor stored in the relation cache (see RelationGetFile())
  *	is actually an index into the Md_fdvec array.  -1 indicates not open.
@@ -67,7 +64,7 @@ static MdfdVec *Md_fdvec = (MdfdVec *) NULL;
 static int	Md_Free = -1;		/* head of freelist of unused fdvec
 								 * entries */
 static int	CurFd = 0;			/* first never-used fdvec index */
-static MemoryContext MdCxt;		/* context for all my allocations */
+static MemoryContext MdCxt;		/* context for all md.c allocations */
 
 /* routines declared here */
 static void mdclose_fd(int fd);
@@ -84,11 +81,8 @@ static BlockNumber _mdnblocks(File file, Size blcksz);
 /*
  *	mdinit() -- Initialize private state for magnetic disk storage manager.
  *
- *		We keep a private table of all file descriptors.  Whenever we do
- *		a write to one, we mark it dirty in our table.	Whenever we force
- *		changes to disk, we mark the file descriptor clean.  At transaction
- *		commit, we force changes to disk for all dirty file descriptors.
- *		This routine allocates and initializes the table.
+ *		We keep a private table of all file descriptors.  This routine
+ *		allocates and initializes the table.
  *
  *		Returns SM_SUCCESS or SM_FAIL with errno set as appropriate.
  */
@@ -247,16 +241,13 @@ mdextend(Relation reln, BlockNumber blocknum, char *buffer)
 
 #ifndef LET_OS_MANAGE_FILESIZE
 	seekpos = (long) (BLCKSZ * (blocknum % ((BlockNumber) RELSEG_SIZE)));
-#ifdef DIAGNOSTIC
-	if (seekpos >= BLCKSZ * RELSEG_SIZE)
-		elog(FATAL, "seekpos too big");
-#endif
+	Assert(seekpos < BLCKSZ * RELSEG_SIZE);
 #else
 	seekpos = (long) (BLCKSZ * (blocknum));
 #endif
 
 	/*
-	 * Note: because caller obtained blocknum by calling mdnblocks, which
+	 * Note: because caller obtained blocknum by calling _mdnblocks, which
 	 * did a seek(SEEK_END), this seek is often redundant and will be
 	 * optimized away by fd.c.	It's not redundant, however, if there is a
 	 * partial page at the end of the file.  In that case we want to try
@@ -282,10 +273,7 @@ mdextend(Relation reln, BlockNumber blocknum, char *buffer)
 	}
 
 #ifndef LET_OS_MANAGE_FILESIZE
-#ifdef DIAGNOSTIC
-	if (_mdnblocks(v->mdfd_vfd, BLCKSZ) > ((BlockNumber) RELSEG_SIZE))
-		elog(FATAL, "segment too big");
-#endif
+	Assert(_mdnblocks(v->mdfd_vfd, BLCKSZ) <= ((BlockNumber) RELSEG_SIZE));
 #endif
 
 	return SM_SUCCESS;
@@ -335,11 +323,7 @@ mdopen(Relation reln)
 	Md_fdvec[vfd].mdfd_flags = (uint16) 0;
 #ifndef LET_OS_MANAGE_FILESIZE
 	Md_fdvec[vfd].mdfd_chain = (MdfdVec *) NULL;
-
-#ifdef DIAGNOSTIC
-	if (_mdnblocks(fd, BLCKSZ) > ((BlockNumber) RELSEG_SIZE))
-		elog(FATAL, "segment too big");
-#endif
+	Assert(_mdnblocks(fd, BLCKSZ) <= ((BlockNumber) RELSEG_SIZE));
 #endif
 
 	return vfd;
@@ -348,7 +332,7 @@ mdopen(Relation reln)
 /*
  *	mdclose() -- Close the specified relation, if it isn't closed already.
  *
- *		AND FREE fd vector! It may be re-used for other relation!
+ *		AND FREE fd vector! It may be re-used for other relations!
  *		reln should be flushed from cache after closing !..
  *
  *		Returns SM_SUCCESS or SM_FAIL with errno set as appropriate.
@@ -418,11 +402,7 @@ mdread(Relation reln, BlockNumber blocknum, char *buffer)
 
 #ifndef LET_OS_MANAGE_FILESIZE
 	seekpos = (long) (BLCKSZ * (blocknum % ((BlockNumber) RELSEG_SIZE)));
-
-#ifdef DIAGNOSTIC
-	if (seekpos >= BLCKSZ * RELSEG_SIZE)
-		elog(FATAL, "seekpos too big");
-#endif
+	Assert(seekpos < BLCKSZ * RELSEG_SIZE);
 #else
 	seekpos = (long) (BLCKSZ * (blocknum));
 #endif
@@ -466,10 +446,7 @@ mdwrite(Relation reln, BlockNumber blocknum, char *buffer)
 
 #ifndef LET_OS_MANAGE_FILESIZE
 	seekpos = (long) (BLCKSZ * (blocknum % ((BlockNumber) RELSEG_SIZE)));
-#ifdef DIAGNOSTIC
-	if (seekpos >= BLCKSZ * RELSEG_SIZE)
-		elog(FATAL, "seekpos too big");
-#endif
+	Assert(seekpos < BLCKSZ * RELSEG_SIZE);
 #else
 	seekpos = (long) (BLCKSZ * (blocknum));
 #endif
@@ -505,10 +482,7 @@ mdblindwrt(RelFileNode rnode,
 
 #ifndef LET_OS_MANAGE_FILESIZE
 	seekpos = (long) (BLCKSZ * (blkno % ((BlockNumber) RELSEG_SIZE)));
-#ifdef DIAGNOSTIC
-	if (seekpos >= BLCKSZ * RELSEG_SIZE)
-		elog(FATAL, "seekpos too big");
-#endif
+	Assert(seekpos < BLCKSZ * RELSEG_SIZE);
 #else
 	seekpos = (long) (BLCKSZ * (blkno));
 #endif
@@ -722,8 +696,6 @@ mdcommit(void)
 
 /*
  *	mdabort() -- Abort a transaction.
- *
- *		Changes need not be forced to disk at transaction abort.
  */
 int
 mdabort(void)
@@ -748,7 +720,7 @@ mdsync(void)
 }
 
 /*
- *	_fdvec_alloc () -- grab a free (or new) md file descriptor vector.
+ *	_fdvec_alloc() -- Grab a free (or new) md file descriptor vector.
  */
 static int
 _fdvec_alloc(void)
@@ -802,7 +774,7 @@ _fdvec_alloc(void)
 }
 
 /*
- *	_fdvec_free () -- free md file descriptor vector.
+ *	_fdvec_free() -- free md file descriptor vector.
  *
  */
 static
@@ -853,19 +825,18 @@ _mdfd_openseg(Relation reln, BlockNumber segno, int oflags)
 	v->mdfd_flags = (uint16) 0;
 #ifndef LET_OS_MANAGE_FILESIZE
 	v->mdfd_chain = (MdfdVec *) NULL;
-
-#ifdef DIAGNOSTIC
-	if (_mdnblocks(fd, BLCKSZ) > ((BlockNumber) RELSEG_SIZE))
-		elog(FATAL, "segment too big");
-#endif
+	Assert(_mdnblocks(fd, BLCKSZ) <= ((BlockNumber) RELSEG_SIZE));
 #endif
 
 	/* all done */
 	return v;
 }
 
-/* Get the fd for the relation, opening it if it's not already open */
-
+/*
+ *	_mdfd_getrelnfd() -- Get the (virtual) fd for the relation,
+ *						 opening it if it's not already open
+ *
+ */
 static int
 _mdfd_getrelnfd(Relation reln)
 {
@@ -882,8 +853,11 @@ _mdfd_getrelnfd(Relation reln)
 	return fd;
 }
 
-/* Find the segment of the relation holding the specified block */
-
+/*
+ *	_mdfd_getseg() -- Find the segment of the relation holding the
+ *					  specified block
+ *
+ */
 static MdfdVec *
 _mdfd_getseg(Relation reln, BlockNumber blkno)
 {
@@ -942,7 +916,6 @@ _mdfd_getseg(Relation reln, BlockNumber blkno)
  *
  * The return value is the kernel descriptor, or -1 on failure.
  */
-
 static int
 _mdfd_blind_getseg(RelFileNode rnode, BlockNumber blkno)
 {

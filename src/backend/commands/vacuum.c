@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.269 2003/11/29 19:51:47 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.270 2004/01/06 18:07:31 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -108,7 +108,7 @@ static TransactionId FreezeLimit;
 
 
 /* non-export function prototypes */
-static List *getrels(const RangeVar *vacrel, const char *stmttype);
+static List *get_rel_oids(const RangeVar *vacrel, const char *stmttype);
 static void vac_update_dbstats(Oid dbid,
 				   TransactionId vacuumXID,
 				   TransactionId frozenXID);
@@ -161,7 +161,7 @@ vacuum(VacuumStmt *vacstmt)
 	TransactionId initialOldestXmin = InvalidTransactionId;
 	TransactionId initialFreezeLimit = InvalidTransactionId;
 	bool		all_rels;
-	List	   *vrl,
+	List	   *relations,
 			   *cur;
 
 	if (vacstmt->verbose)
@@ -216,7 +216,7 @@ vacuum(VacuumStmt *vacstmt)
 	all_rels = (vacstmt->relation == NULL);
 
 	/* Build list of relations to process (note this lives in vac_context) */
-	vrl = getrels(vacstmt->relation, stmttype);
+	relations = get_rel_oids(vacstmt->relation, stmttype);
 
 	/*
 	 * Formerly, there was code here to prevent more than one VACUUM from
@@ -282,7 +282,7 @@ vacuum(VacuumStmt *vacstmt)
 	/*
 	 * Loop to process each selected relation.
 	 */
-	foreach(cur, vrl)
+	foreach(cur, relations)
 	{
 		Oid			relid = lfirsto(cur);
 
@@ -383,21 +383,21 @@ vacuum(VacuumStmt *vacstmt)
  * per-relation transactions.
  */
 static List *
-getrels(const RangeVar *vacrel, const char *stmttype)
+get_rel_oids(const RangeVar *vacrel, const char *stmttype)
 {
-	List	   *vrl = NIL;
+	List	   *oid_list = NIL;
 	MemoryContext oldcontext;
 
 	if (vacrel)
 	{
-		/* Process specific relation */
+		/* Process a specific relation */
 		Oid			relid;
 
 		relid = RangeVarGetRelid(vacrel, false);
 
 		/* Make a relation list entry for this guy */
 		oldcontext = MemoryContextSwitchTo(vac_context);
-		vrl = lappendo(vrl, relid);
+		oid_list = lappendo(oid_list, relid);
 		MemoryContextSwitchTo(oldcontext);
 	}
 	else
@@ -421,7 +421,7 @@ getrels(const RangeVar *vacrel, const char *stmttype)
 		{
 			/* Make a relation list entry for this guy */
 			oldcontext = MemoryContextSwitchTo(vac_context);
-			vrl = lappendo(vrl, HeapTupleGetOid(tuple));
+			oid_list = lappendo(oid_list, HeapTupleGetOid(tuple));
 			MemoryContextSwitchTo(oldcontext);
 		}
 
@@ -429,7 +429,7 @@ getrels(const RangeVar *vacrel, const char *stmttype)
 		heap_close(pgclass, AccessShareLock);
 	}
 
-	return vrl;
+	return oid_list;
 }
 
 /*
@@ -818,8 +818,9 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind)
 	}
 
 	/*
-	 * Check that it's a plain table; we used to do this in getrels() but
-	 * seems safer to check after we've locked the relation.
+	 * Check that it's a plain table; we used to do this in
+	 * get_rel_oids() but seems safer to check after we've locked the
+	 * relation.
 	 */
 	if (onerel->rd_rel->relkind != expected_relkind)
 	{

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/rel.h,v 1.71 2003/11/29 22:41:16 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/utils/rel.h,v 1.72 2004/01/06 18:07:32 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -104,7 +104,9 @@ typedef struct PgStat_Info
 
 typedef struct RelationData
 {
-	File		rd_fd;			/* open file descriptor, or -1 if none */
+	File		rd_fd;			/* open file descriptor, or -1 if
+								 * none; this is NOT an operating
+								 * system file descriptor */
 	RelFileNode rd_node;		/* file node (physical identifier) */
 	BlockNumber rd_nblocks;		/* number of blocks in rel */
 	BlockNumber rd_targblock;	/* current insertion target block, or
@@ -220,22 +222,21 @@ typedef Relation *RelationPtr;
 
 /*
  * RelationGetRelid
- *
- *	returns the OID of the relation
+ *		Returns the OID of the relation
  */
 #define RelationGetRelid(relation) ((relation)->rd_id)
 
 /*
  * RelationGetFile
- *
- *	  Returns the open file descriptor for the rel
+ *	  Returns the open file descriptor for the rel, or -1 if
+ *	  none. This is NOT an operating system file descriptor; see md.c
+ *	  for more information
  */
 #define RelationGetFile(relation) ((relation)->rd_fd)
 
 /*
  * RelationGetNumberOfAttributes
- *
- *	  Returns the number of attributes.
+ *		Returns the number of attributes in a relation.
  */
 #define RelationGetNumberOfAttributes(relation) ((relation)->rd_rel->relnatts)
 
@@ -247,8 +248,7 @@ typedef Relation *RelationPtr;
 
 /*
  * RelationGetRelationName
- *
- *	  Returns the rel's name.
+ *		Returns the rel's name.
  *
  * Note that the name is only unique within the containing namespace.
  */
@@ -257,8 +257,7 @@ typedef Relation *RelationPtr;
 
 /*
  * RelationGetNamespace
- *
- *	  Returns the rel's namespace OID.
+ *		Returns the rel's namespace OID.
  */
 #define RelationGetNamespace(relation) \
 	((relation)->rd_rel->relnamespace)

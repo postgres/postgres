@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.65 2003/11/29 19:51:47 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.66 2004/01/06 18:07:31 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -204,8 +204,9 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 	}
 
 	/*
-	 * Check that it's a plain table; we used to do this in getrels() but
-	 * seems safer to check after we've locked the relation.
+	 * Check that it's a plain table; we used to do this in
+	 * get_rel_oids() but seems safer to check after we've locked the
+	 * relation.
 	 */
 	if (onerel->rd_rel->relkind != RELKIND_RELATION)
 	{

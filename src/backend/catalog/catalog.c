@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/catalog.c,v 1.50 2003/11/29 19:51:42 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/catalog.c,v 1.51 2004/01/06 18:07:31 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -165,8 +165,9 @@ IsToastNamespace(Oid namespaceId)
  * IsReservedName
  *		True iff name starts with the pg_ prefix.
  *
- *		For some classes of objects, the prefix pg_ is reserved
- *		for system objects only.
+ *		For some classes of objects, the prefix pg_ is reserved for
+ *		system objects only. As of 7.3, this is now only true for
+ *		schema names.
  */
 bool
 IsReservedName(const char *name)
