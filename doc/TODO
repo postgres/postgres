@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Jan  6 14:48:41 EST 2004
+Last updated:		Tue Jan  6 23:32:51 EST 2004
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -239,7 +239,7 @@ Commands
 	  without using PL/PgSQL EXECUTE, needs cache prevention/invalidation
         o Fix PL/pgSQL RENAME to work on variables other than OLD/NEW
 	o Improve PL/PgSQL exception handling
-	o Allow parameters to be specified by name and type during definition
+	o -Allow parameters to be specified by name and type during definition
 	o Allow function parameters to be passed by name,
 	  get_employee_salary(emp_id => 12345, tax_year => 2001)
 	o Add PL/PgSQL packages
@@ -462,7 +462,7 @@ Source Code
 * Acquire lock on a relation before building a relcache entry for it
 * Research interaction of setitimer() and sleep() used by statement_timeout
 * Add checks for fclose() failure
-* Change CVS $PostgreSQL: pgsql/doc/TODO,v 1.1184 2004/01/06 20:01:13 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1184 2004/01/06 20:01:13 momjian Exp $
+* Change CVS $PostgreSQL: pgsql/doc/TODO,v 1.1185 2004/01/07 04:32:56 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1185 2004/01/07 04:32:56 momjian Exp $
 * Exit postmaster if postgresql.conf can not be opened
 * Rename /scripts directory because they are all C programs now
 * Allow the regression tests to start postmaster with -i so the tests
