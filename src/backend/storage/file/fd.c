@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.87 2001/11/05 17:46:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.88 2002/02/10 22:56:31 tgl Exp $
  *
  * NOTES:
  *
@@ -110,7 +110,7 @@ int			max_files_per_process = 1000;
 
 #define FileIsNotOpen(file) (VfdCache[file].fd == VFD_CLOSED)
 
-#define FileUnknownPos (-1)
+#define FileUnknownPos (-1L)
 
 typedef struct vfd
 {
@@ -380,7 +380,6 @@ static void
 LruDelete(File file)
 {
 	Vfd		   *vfdP;
-	int			returnValue;
 
 	Assert(file != 0);
 
@@ -394,19 +393,21 @@ LruDelete(File file)
 
 	/* save the seek position */
 	vfdP->seekPos = (long) lseek(vfdP->fd, 0L, SEEK_CUR);
-	Assert(vfdP->seekPos != -1);
+	Assert(vfdP->seekPos != -1L);
 
 	/* if we have written to the file, sync it before closing */
 	if (vfdP->fdstate & FD_DIRTY)
 	{
-		returnValue = pg_fsync(vfdP->fd);
-		Assert(returnValue != -1);
+		if (pg_fsync(vfdP->fd))
+			elog(DEBUG, "LruDelete: failed to fsync %s: %m",
+				 vfdP->fileName);
 		vfdP->fdstate &= ~FD_DIRTY;
 	}
 
 	/* close the file */
-	returnValue = close(vfdP->fd);
-	Assert(returnValue != -1);
+	if (close(vfdP->fd))
+		elog(DEBUG, "LruDelete: failed to close %s: %m",
+			 vfdP->fileName);
 
 	--nfile;
 	vfdP->fd = VFD_CLOSED;
@@ -437,7 +438,6 @@ static int
 LruInsert(File file)
 {
 	Vfd		   *vfdP;
-	int			returnValue;
 
 	Assert(file != 0);
 
@@ -475,8 +475,10 @@ LruInsert(File file)
 		/* seek to the right position */
 		if (vfdP->seekPos != 0L)
 		{
-			returnValue = lseek(vfdP->fd, vfdP->seekPos, SEEK_SET);
-			Assert(returnValue != -1);
+			long		returnValue;
+
+			returnValue = (long) lseek(vfdP->fd, vfdP->seekPos, SEEK_SET);
+			Assert(returnValue != -1L);
 		}
 	}
 
@@ -824,43 +826,48 @@ OpenTemporaryFile(void)
 void
 FileClose(File file)
 {
-	int			returnValue;
+	Vfd		   *vfdP;
 
 	Assert(FileIsValid(file));
 
 	DO_DB(elog(DEBUG, "FileClose: %d (%s)",
 			   file, VfdCache[file].fileName));
 
+	vfdP = &VfdCache[file];
+
 	if (!FileIsNotOpen(file))
 	{
-
 		/* remove the file from the lru ring */
 		Delete(file);
 
 		/* if we did any writes, sync the file before closing */
-		if (VfdCache[file].fdstate & FD_DIRTY)
+		if (vfdP->fdstate & FD_DIRTY)
 		{
-			returnValue = pg_fsync(VfdCache[file].fd);
-			Assert(returnValue != -1);
-			VfdCache[file].fdstate &= ~FD_DIRTY;
+			if (pg_fsync(vfdP->fd))
+				elog(DEBUG, "FileClose: failed to fsync %s: %m",
+					 vfdP->fileName);
+			vfdP->fdstate &= ~FD_DIRTY;
 		}
 
 		/* close the file */
-		returnValue = close(VfdCache[file].fd);
-		Assert(returnValue != -1);
+		if (close(vfdP->fd))
+			elog(DEBUG, "FileClose: failed to close %s: %m",
+				 vfdP->fileName);
 
 		--nfile;
-		VfdCache[file].fd = VFD_CLOSED;
+		vfdP->fd = VFD_CLOSED;
 	}
 
 	/*
 	 * Delete the file if it was temporary
 	 */
-	if (VfdCache[file].fdstate & FD_TEMPORARY)
+	if (vfdP->fdstate & FD_TEMPORARY)
 	{
 		/* reset flag so that die() interrupt won't cause problems */
-		VfdCache[file].fdstate &= ~FD_TEMPORARY;
-		unlink(VfdCache[file].fileName);
+		vfdP->fdstate &= ~FD_TEMPORARY;
+		if (unlink(vfdP->fileName))
+			elog(DEBUG, "FileClose: failed to unlink %s: %m",
+				 vfdP->fileName);
 	}
 
 	/*
