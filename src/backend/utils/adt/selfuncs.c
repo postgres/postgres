@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.55 2000/02/15 20:49:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.56 2000/02/16 00:59:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -144,10 +144,13 @@ eqsel(Oid opid,
 					selec = 1.0 - commonfrac - nullfrac;
 					if (selec > commonfrac)
 						selec = commonfrac;
-					/* and in fact it's probably less, so apply a fudge
-					 * factor.
+					/* and in fact it's probably less, so we should apply
+					 * a fudge factor.  The only case where we don't is
+					 * for a boolean column, where indeed we have estimated
+					 * the less-common value's frequency exactly!
 					 */
-					selec *= 0.5;
+					if (typid != BOOLOID)
+						selec *= 0.5;
 				}
 			}
 			else
@@ -310,20 +313,20 @@ scalarltsel(Oid opid,
 			/* If we trusted the stats fully, we could return a small or
 			 * large selec depending on which side of the single data point
 			 * the constant is on.  But it seems better to assume that the
-			 * stats are out of date and return a default...
+			 * stats are wrong and return a default...
 			 */
 			*result = DEFAULT_INEQ_SEL;
-	}
-		else if (val <= low || val >= high)
+		}
+		else if (val < low || val > high)
 		{
 			/* If given value is outside the statistical range, return a
 			 * small or large value; but not 0.0/1.0 since there is a chance
 			 * the stats are out of date.
 			 */
 			if (flag & SEL_RIGHT)
-				*result = (val <= low) ? 0.01 : 0.99;
+				*result = (val < low) ? 0.001 : 0.999;
 			else
-				*result = (val <= low) ? 0.99 : 0.01;
+				*result = (val < low) ? 0.999 : 0.001;
 		}
 		else
 		{
