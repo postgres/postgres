@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sat Mar 31 10:28:08 EST 2001
+Last updated:		Sat Mar 31 12:25:25 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -74,10 +74,9 @@ ADMIN
 
 * More access control over who can create tables and use locks (Karel)
 * -Test syslog functionality
-* Convert remaining fprintf(stderr,...)/perror() to elog()
 * Allow elog() to return error codes, module name, file name, line
-  number, not just messages
-* Allow international error message support and add error codes
+  number, not just messages [elog]
+* Allow international error message support and add error codes [elog]
 * -Unify configuration into one configuration file (Peter E)
 * -use setproctitle() if it exists for 'ps' display of status
 * -Prevent initdb from running wrong version of postmaster/postgres (Peter E)
@@ -345,7 +344,7 @@ SOURCE CODE
 * Remove SET KSQO option now that OR processing is improved (Tom)
 * -Use macros to define NT open() file parameters, remove NT-specific defines
 * -Change CURRENT to OLD internally for rules (Bruce)
-* Replace the use of fprint(stderr, ...) with elog() in backend code
+* Convert remaining fprintf(stderr,...)/perror() to elog()
 * -Allow libedit to be used in place of libreadline
 * -BSD/OS does not support locale because there is no LC_MESSAGES (Bruce)
 * Remove unused pg_variable, pg_inheritproc, pg_ipl tables
