@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.169 2004/07/01 00:49:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.170 2004/07/01 20:11:02 tgl Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -196,6 +196,7 @@ static void StartSubTransaction(void);
 static void CommitSubTransaction(void);
 static void AbortSubTransaction(void);
 static void CleanupSubTransaction(void);
+static void StartAbortedSubTransaction(void);
 static void PushTransaction(void);
 static void PopTransaction(void);
 
@@ -317,7 +318,7 @@ IsAbortedTransactionBlockState(void)
 	TransactionState s = CurrentTransactionState;
 
 	if (s->blockState == TBLOCK_ABORT || 
-			s->blockState == TBLOCK_SUBABORT)
+		s->blockState == TBLOCK_SUBABORT)
 		return true;
 
 	return false;
@@ -1579,10 +1580,9 @@ StartTransactionCommand(void)
 			break;
 
 			/*
-			 * This is the case when are somewhere in a transaction block
+			 * This is the case when we are somewhere in a transaction block
 			 * and about to start a new command.  For now we do nothing
-			 * but someday we may do command-local resource
-			 * initialization.
+			 * but someday we may do command-local resource initialization.
 			 */
 		case TBLOCK_INPROGRESS:
 		case TBLOCK_SUBINPROGRESS:
@@ -1699,7 +1699,9 @@ CommitTransactionCommand(void)
 
 			/*
 			 * We were just issued a BEGIN inside a transaction block.
-			 * Start a subtransaction.
+			 * Start a subtransaction.  (BeginTransactionBlock already
+			 * did PushTransaction, so as to have someplace to put the
+			 * SUBBEGIN state.)
 			 */
 		case TBLOCK_SUBBEGIN:
 			StartSubTransaction();
@@ -1711,8 +1713,7 @@ CommitTransactionCommand(void)
 			 * Start a subtransaction, and put it in aborted state.
 			 */
 		case TBLOCK_SUBBEGINABORT:
-			StartSubTransaction();
-			AbortSubTransaction();
+			StartAbortedSubTransaction();
 			s->blockState = TBLOCK_SUBABORT;
 			break;
 
@@ -1724,7 +1725,7 @@ CommitTransactionCommand(void)
 			break;
 
 			/*
-			 * We where issued a COMMIT command, so we end the current
+			 * We were issued a COMMIT command, so we end the current
 			 * subtransaction and return to the parent transaction.
 			 */
 		case TBLOCK_SUBEND:
@@ -1740,7 +1741,7 @@ CommitTransactionCommand(void)
 			break;
 
 			/*
-			 * We are ending a subtransaction that aborted nicely,
+			 * We are ending an aborted subtransaction via ROLLBACK,
 			 * so the parent can be allowed to live.
 			 */
 		case TBLOCK_SUBENDABORT_OK:
@@ -1750,9 +1751,8 @@ CommitTransactionCommand(void)
 			break;
 
 			/*
-			 * We are ending a subtransaction that aborted in a unclean
-			 * way (e.g. the user issued COMMIT in an aborted subtrasaction.)
-			 * Abort the subtransaction, and abort the parent too.
+			 * We are ending an aborted subtransaction via COMMIT.
+			 * End the subtransaction, and abort the parent too.
 			 */
 		case TBLOCK_SUBENDABORT_ERROR:
 			CleanupSubTransaction();
@@ -1791,7 +1791,7 @@ AbortCurrentTransaction(void)
 			break;
 
 			/*
-			 * If we are in the TBLOCK_BEGIN it means something screwed up
+			 * If we are in TBLOCK_BEGIN it means something screwed up
 			 * right after reading "BEGIN TRANSACTION" so we enter the
 			 * abort state.  Eventually an "END TRANSACTION" will fix
 			 * things.
@@ -1803,10 +1803,10 @@ AbortCurrentTransaction(void)
 			break;
 
 			/*
-			 * This is the case when are somewhere in a transaction block
-			 * which aborted so we abort the transaction and set the ABORT
-			 * state.  Eventually an "END TRANSACTION" will fix things and
-			 * restore us to a normal state.
+			 * This is the case when we are somewhere in a transaction block
+			 * and we've gotten a failure, so we abort the transaction and
+			 * set up the persistent ABORT state.  We will stay in ABORT
+			 * until we get an "END TRANSACTION".
 			 */
 		case TBLOCK_INPROGRESS:
 			AbortTransaction();
@@ -1817,7 +1817,7 @@ AbortCurrentTransaction(void)
 			/*
 			 * Here, the system was fouled up just after the user wanted
 			 * to end the transaction block so we abort the transaction
-			 * and put us back into the default state.
+			 * and return to the default state.
 			 */
 		case TBLOCK_END:
 			AbortTransaction();
@@ -1852,10 +1852,7 @@ AbortCurrentTransaction(void)
 			 */
 		case TBLOCK_SUBBEGIN:
 		case TBLOCK_SUBBEGINABORT:
-			PushTransaction();
-			s = CurrentTransactionState;		/* changed by push */
-			StartSubTransaction();
-			AbortSubTransaction();
+			StartAbortedSubTransaction();
 			s->blockState = TBLOCK_SUBABORT;
 			break;
 
@@ -2092,8 +2089,10 @@ CallEOXactCallbacks(bool isCommit)
  *					   transaction block support
  * ----------------------------------------------------------------
  */
+
 /*
  *	BeginTransactionBlock
+ *		This executes a BEGIN command.
  */
 void
 BeginTransactionBlock(void)
@@ -2102,7 +2101,7 @@ BeginTransactionBlock(void)
 
 	switch (s->blockState) {
 			/*
-			 * We are inside a transaction, so allow a transaction block
+			 * We are not inside a transaction block, so allow one
 			 * to begin.
 			 */
 		case TBLOCK_STARTED:
@@ -2149,6 +2148,7 @@ BeginTransactionBlock(void)
 
 /*
  *	EndTransactionBlock
+ *		This executes a COMMIT command.
  */
 void
 EndTransactionBlock(void)
@@ -2176,9 +2176,9 @@ EndTransactionBlock(void)
 			break;
 
 			/*
-			 * here, we are in a transaction block which aborted and since the
-			 * AbortTransaction() was already done, we do whatever is needed
-			 * and change to the special "END ABORT" state.  The upcoming
+			 * here, we are in a transaction block which aborted. Since the
+			 * AbortTransaction() was already done, we need only
+			 * change to the special "END ABORT" state.  The upcoming
 			 * CommitTransactionCommand() will recognise this and then put us
 			 * back in the default state.
 			 */
@@ -2189,7 +2189,8 @@ EndTransactionBlock(void)
 			/*
 			 * here we are in an aborted subtransaction.  Signal
 			 * CommitTransactionCommand() to clean up and return to the
-			 * parent transaction.
+			 * parent transaction.  Since the user said COMMIT, we must
+			 * fail the parent transaction.
 			 */
 		case TBLOCK_SUBABORT:
 			s->blockState = TBLOCK_SUBENDABORT_ERROR;
@@ -2209,7 +2210,7 @@ EndTransactionBlock(void)
 			s->blockState = TBLOCK_ENDABORT;
 			break;
 
-			/* These cases are invalid.  Reject them altogether. */
+			/* these cases are invalid. */
 		case TBLOCK_DEFAULT:
 		case TBLOCK_BEGIN:
 		case TBLOCK_ENDABORT:
@@ -2227,6 +2228,7 @@ EndTransactionBlock(void)
 
 /*
  *	UserAbortTransactionBlock
+ *		This executes a ROLLBACK command.
  */
 void
 UserAbortTransactionBlock(void)
@@ -2244,7 +2246,10 @@ UserAbortTransactionBlock(void)
 			s->blockState = TBLOCK_ENDABORT;
 			break;
 
-			/* Ditto, for a subtransaction. */
+			/*
+			 * Ditto, for a subtransaction.  Here it is okay to allow the
+			 * parent transaction to continue.
+			 */
 		case TBLOCK_SUBABORT:
 			s->blockState = TBLOCK_SUBENDABORT_OK;
 			break;
@@ -2336,8 +2341,8 @@ AbortOutOfAnyTransaction(void)
 			case TBLOCK_SUBBEGIN:
 			case TBLOCK_SUBBEGINABORT:
 				/*
-				 * Just starting a new transaction -- return to parent.
-				 * FIXME -- Is this correct?
+				 * We didn't get as far as starting the subxact, so there's
+				 * nothing to abort.  Just pop back to parent.
 				 */
 				PopTransaction();
 				s = CurrentTransactionState;		/* changed by pop */
@@ -2353,6 +2358,7 @@ AbortOutOfAnyTransaction(void)
 			case TBLOCK_SUBABORT:
 			case TBLOCK_SUBENDABORT_OK:
 			case TBLOCK_SUBENDABORT_ERROR:
+				/* As above, but AbortSubTransaction already done */
 				CleanupSubTransaction();
 				PopTransaction();
 				s = CurrentTransactionState;		/* changed by pop */
@@ -2521,6 +2527,8 @@ CommitSubTransaction(void)
 	AtSubCommit_Portals(s->parent->transactionIdData);
 	DeferredTriggerEndSubXact(true);
 
+	s->state = TRANS_COMMIT;
+
 	/* Mark subtransaction as subcommitted */
 	CommandCounterIncrement();
 	RecordSubTransactionCommit();
@@ -2643,6 +2651,49 @@ CleanupSubTransaction(void)
 }
 
 /*
+ * StartAbortedSubTransaction
+ *
+ * This function is used to start a subtransaction and put it immediately
+ * into aborted state.  The end result should be equivalent to
+ * StartSubTransaction immediately followed by AbortSubTransaction.
+ * The reason we don't implement it just that way is that many of the backend
+ * modules aren't designed to handle starting a subtransaction when not
+ * inside a valid transaction.  Rather than making them all capable of
+ * doing that, we just omit the paired start and abort calls in this path.
+ */
+static void
+StartAbortedSubTransaction(void)
+{
+	TransactionState s = CurrentTransactionState;
+
+	if (s->state != TRANS_DEFAULT)
+		elog(WARNING, "StartAbortedSubTransaction and not in default state");
+
+	s->state = TRANS_START;
+
+	/*
+	 * We don't bother to generate a new Xid, so the end state is not
+	 * *exactly* like we had done a full Start/AbortSubTransaction...
+	 */
+	s->transactionIdData = InvalidTransactionId;
+
+	/* Make sure currentUser is reasonably valid */
+	Assert(s->parent != NULL);
+	s->currentUser = s->parent->currentUser;
+	
+	/*
+	 * Initialize only what has to be there for CleanupSubTransaction to work.
+	 */
+	AtSubStart_Memory();
+
+	s->state = TRANS_ABORT;
+
+	AtSubAbort_Memory();
+
+	ShowTransactionState("StartAbortedSubTransaction");
+}
+
+/*
  * PushTransaction
  *		Set up transaction state for a subtransaction
  */
@@ -2672,6 +2723,7 @@ PushTransaction(void)
 	 */
 	s->transactionIdData = p->transactionIdData;
 	s->curTransactionContext = p->curTransactionContext;
+	s->currentUser = p->currentUser;
 
 	CurrentTransactionState = s;
 }

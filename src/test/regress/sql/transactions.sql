@@ -96,6 +96,38 @@ COMMIT;
 SELECT * FROM foo;		-- should have 1 and 3
 SELECT * FROM barbaz;	-- should have 1
 
+-- check that starting a subxact in a failed xact or subxact works
+BEGIN;
+	SELECT 0/0;		-- fail the outer xact
+	BEGIN;
+		SELECT 1;	-- this should NOT work
+	COMMIT;
+	SELECT 1;		-- this should NOT work
+	BEGIN;
+		SELECT 1;	-- this should NOT work
+	ROLLBACK;
+	SELECT 1;		-- this should NOT work
+COMMIT;
+SELECT 1;			-- this should work
+
+BEGIN;
+	BEGIN;
+		SELECT 1;	-- this should work
+		SELECT 0/0;	-- fail the subxact
+		SELECT 1;	-- this should NOT work
+		BEGIN;
+			SELECT 1;	-- this should NOT work
+		ROLLBACK;
+		BEGIN;
+			SELECT 1;	-- this should NOT work
+		COMMIT;
+		SELECT 1;	-- this should NOT work
+	ROLLBACK;
+	SELECT 1;		-- this should work
+COMMIT;
+SELECT 1;			-- this should work
+
+
 DROP TABLE foo;
 DROP TABLE baz;
 DROP TABLE barbaz;
