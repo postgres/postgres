@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/Makefile,v 1.2 1997/09/16 18:47:16 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/Makefile,v 1.3 1997/10/30 04:38:30 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -25,4 +25,7 @@ ifeq ($(USE_TCL), true)
 	$(MAKE) -C libpgtcl $@
 endif
 
-#	$(MAKE) -C perl5 $@
+ifeq ($(USE_PERL), true)
+      cd perl5 && perl Makefile.PL
+      $(MAKE) -C perl5 $@
+endif
