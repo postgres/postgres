@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.31 1999/02/21 01:55:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.32 1999/02/22 05:26:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -104,7 +104,8 @@ update_rels_pathlist_for_joins(Query *root, List *joinrels)
 										lfirsti(innerrel->relids));
 
 		/* need to flatten the relids list */
-		joinrel->relids = intAppend(outerrelids, innerrelids);
+		joinrel->relids = nconc(listCopy(outerrelids),
+								listCopy(innerrelids));
 
 		/*
 		 * 1. Consider mergejoin paths where both relations must be
@@ -213,11 +214,11 @@ sort_inner_and_outer(RelOptInfo *joinrel,
 	{
 		xmergeinfo = (MergeInfo *) lfirst(i);
 
-		outerkeys = extract_path_keys(xmergeinfo->jmethod.jmkeys,
+		outerkeys = make_pathkeys_from_joinkeys(xmergeinfo->jmethod.jmkeys,
 							  outerrel->targetlist,
 							  OUTER);
 
-		innerkeys = extract_path_keys(xmergeinfo->jmethod.jmkeys,
+		innerkeys = make_pathkeys_from_joinkeys(xmergeinfo->jmethod.jmkeys,
 							  innerrel->targetlist,
 							  INNER);
 
@@ -352,7 +353,7 @@ match_unsorted_outer(RelOptInfo *joinrel,
 							innerrel->width, false))));
 			if (!path_is_cheaper_than_sort)
 			{
-				varkeys = extract_path_keys(matchedJoinKeys,
+				varkeys = make_pathkeys_from_joinkeys(matchedJoinKeys,
 									  innerrel->targetlist,
 									  INNER);
 			}
@@ -473,7 +474,7 @@ match_unsorted_inner(RelOptInfo *joinrel,
 
 			if (temp2)
 			{
-				List	   *outerkeys = extract_path_keys(matchedJoinKeys,
+				List	   *outerkeys = make_pathkeys_from_joinkeys(matchedJoinKeys,
 								  outerrel->targetlist,
 								  OUTER);
 				List	   *merge_pathkeys = new_join_pathkeys(outerkeys,
@@ -551,10 +552,12 @@ hash_inner_and_outer(RelOptInfo *joinrel,
 	foreach(i, hashinfo_list)
 	{
 		xhashinfo = (HashInfo *) lfirst(i);
-		outerkeys = extract_path_keys(((JoinMethod *) xhashinfo)->jmkeys,
+		outerkeys = make_pathkeys_from_joinkeys(
+							  ((JoinMethod *) xhashinfo)->jmkeys,
 							  outerrel->targetlist,
 							  OUTER);
-		innerkeys = extract_path_keys(((JoinMethod *) xhashinfo)->jmkeys,
+		innerkeys = make_pathkeys_from_joinkeys(
+							  ((JoinMethod *) xhashinfo)->jmkeys,
 							  innerrel->targetlist,
 							  INNER);
 		hash_pathkeys = new_join_pathkeys(outerkeys,

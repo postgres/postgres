@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.16 1999/02/13 23:16:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.17 1999/02/22 05:26:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -234,6 +234,9 @@ pull_var_clause(Node *clause)
 
 /*
  *		var_equal
+ *
+ *		The only difference between this an equal() is that this does not
+ *		test varnoold and varoattno.
  *
  *		Returns t iff two var nodes correspond to the same attribute.
  */

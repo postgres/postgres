@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.36 1999/02/21 03:49:18 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.37 1999/02/22 05:26:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -97,7 +97,7 @@ gatherRewriteMeta(Query *parsetree,
 		info->current_varno = rt_index;
 		info->rt = parsetree->rtable;
 		rt_length = length(info->rt);
-		info->rt = append(info->rt, info->rule_action->rtable);
+		info->rt = nconc(info->rt, copyObject(info->rule_action->rtable));
 
 		info->new_varno = PRS2_NEW_VARNO + rt_length;
 		OffsetVarNodes(info->rule_action->qual, rt_length, 0);
@@ -2206,7 +2206,7 @@ CopyAndAddQual(Query *parsetree,
 
 		rtable = new_tree->rtable;
 		rt_length = length(rtable);
-		rtable = append(rtable, listCopy(rule_action->rtable));
+		rtable = nconc(rtable, copyObject(rule_action->rtable));
 		new_tree->rtable = rtable;
 		OffsetVarNodes(new_qual, rt_length, 0);
 		ChangeVarNodes(new_qual, PRS2_CURRENT_VARNO + rt_length, rt_index, 0);

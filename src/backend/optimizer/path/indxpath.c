@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.52 1999/02/21 03:48:44 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.53 1999/02/22 05:26:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1384,7 +1384,7 @@ create_index_path_group(Query *root,
 static List *
 add_index_paths(List *indexpaths, List *new_indexpaths)
 {
-	return append(indexpaths, new_indexpaths);
+	return nconc(indexpaths, new_indexpaths);
 }
 
 static bool

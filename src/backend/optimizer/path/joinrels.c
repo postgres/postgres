@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.30 1999/02/18 06:00:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.31 1999/02/22 05:26:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,7 +62,7 @@ make_rels_by_joins(Query *root, List *old_rels)
 			joined_rels = make_rels_by_clauseless_joins(old_rel,
 														root->base_rel_list);
 			joined_rels = append(joined_rels,
-								 make_rels_by_clauseless_joins(old_rel,
+								make_rels_by_clauseless_joins(old_rel,
 															   old_rels));
 		}
 
@@ -235,9 +235,11 @@ make_join_rel(RelOptInfo *outer_rel, RelOptInfo *inner_rel, JoinInfo *joininfo)
 	if (joininfo)
 		joinrel->restrictinfo = joininfo->jinfo_restrictinfo;
 
-	joinrel_joininfo_list = new_joininfo_list(append(outer_rel->joininfo,
-													 inner_rel->joininfo),
-						intAppend(outer_rel->relids, inner_rel->relids));
+	joinrel_joininfo_list = new_joininfo_list(
+										append(outer_rel->joininfo,
+											   inner_rel->joininfo),
+										nconc(listCopy(outer_rel->relids),
+								  			   listCopy(inner_rel->relids)));
 
 	joinrel->joininfo = joinrel_joininfo_list;
 

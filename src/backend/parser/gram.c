@@ -242,7 +242,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/Attic/gram.c,v 2.73 1999/02/14 05:14:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/Attic/gram.c,v 2.74 1999/02/22 05:26:33 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -11574,7 +11574,7 @@ makeRowExpr(char *opr, List *largs, List *rargs)
 		elog(ERROR,"Operator '%s' not implemented for row expressions",opr);
 	}
 
-#if FALSE
+#ifdef NOT_USED
 	while ((largs != NIL) && (rargs != NIL))
 	{
 		larg = lfirst(largs);

@@ -24,7 +24,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.22 1998/09/20 04:51:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.23 1999/02/22 05:26:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -438,8 +438,8 @@ tryAgain2:
 definitelyFailed:
 	sprintf(conn->errorMessage,
 			"pqReadData() -- backend closed the channel unexpectedly.\n"
-			"\tThis probably means the backend terminated abnormally"
-			" before or while processing the request.\n");
+			"\tThis probably means the backend terminated abnormally\n"
+			"\tbefore or while processing the request.\n");
 	conn->status = CONNECTION_BAD;		/* No more connection to backend */
 #ifdef WIN32
 	closesocket(conn->sock);

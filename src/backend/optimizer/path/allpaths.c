@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.43 1999/02/21 03:48:41 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.44 1999/02/22 05:26:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -126,7 +126,7 @@ set_base_rel_pathlist(Query *root, List *rels)
 
 		rel->pathlist = add_pathlist(rel,
 									 sequential_scan_list,
-									 append(rel_index_scan_list,
+									 nconc(rel_index_scan_list,
 											or_index_scan_list));
 
 		set_cheapest(rel, rel->pathlist);

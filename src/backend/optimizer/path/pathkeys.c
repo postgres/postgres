@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.6 1999/02/21 01:55:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.7 1999/02/22 05:26:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,9 +27,9 @@
 
 static int match_pathkey_joinkeys(List *pathkey, List *joinkeys,
 						int outer_or_inner);
-static List *new_join_pathkey(List *subkeys, List *considered_subkeys,
-					 	List *join_rel_tlist, List *joinclauses);
-static List *new_matching_subkeys(Var *subkey, List *considered_subkeys,
+static List *new_join_pathkey(List *pathkeys, List *join_rel_tlist,
+							  List *joinclauses);
+static List *get_joinvars_for_var(Var *pathkey, List **considered_pathkeys,
 					 	List *join_rel_tlist, List *joinclauses);
 
 
@@ -86,7 +86,7 @@ static List *new_matching_subkeys(Var *subkey, List *considered_subkeys,
  *		( (outer inner) (outer inner) ... )
  * 'joinclauses' is a list of clauses corresponding to the join keys in
  *		'joinkeys'
- * 'outer_or_inner' is a flag that selects the desired subkey of a join key
+ * 'outer_or_inner' is a flag that selects the desired pathkey of a join key
  *		in 'joinkeys'
  *
  * Returns the join keys and corresponding join clauses in a list if all
@@ -133,10 +133,11 @@ order_joinkeys_by_pathkeys(List *pathkeys,
 				matched_joinkeys = lappend(matched_joinkeys, joinkey);
 			}
 			
-			if (matchedJoinClausesPtr && joinclauses)
+			if (matchedJoinClausesPtr)
 			{
 				Expr	   *joinclause = nth(matched_joinkey_index,
 											 joinclauses);
+				Assert(joinclauses);
 				matched_joinclauses = lappend(matched_joinclauses, joinclause);
 			}
 		}
@@ -169,7 +170,7 @@ order_joinkeys_by_pathkeys(List *pathkeys,
 /*
  * match_pathkey_joinkeys
  *	  Returns the 0-based index into 'joinkeys' of the first joinkey whose
- *	  outer or inner subkey matches any subkey of 'pathkey'.
+ *	  outer or inner pathkey matches any subkey of 'pathkey'.
  *
  *	All these keys are equivalent, so any of them can match.  See above.
  */
@@ -178,19 +179,19 @@ match_pathkey_joinkeys(List *pathkey,
 					   List *joinkeys,
 					   int outer_or_inner)
 {
-	Var		   *path_subkey;
+	Var		   *key;
 	int			pos;
 	List	   *i, *x;
 	JoinKey    *jk;
 
 	foreach(i, pathkey)
 	{
-		path_subkey = (Var *) lfirst(i);
+		key = (Var *) lfirst(i);
 		pos = 0;
 		foreach(x, joinkeys)
 		{
 			jk = (JoinKey *) lfirst(x);
-			if (var_equal(path_subkey, extract_join_key(jk, outer_or_inner)))
+			if (equal(key, extract_join_key(jk, outer_or_inner)))
 				return pos;
 			pos++;
 		}
@@ -204,9 +205,9 @@ match_pathkey_joinkeys(List *pathkey,
  *	  Attempts to find a path in 'paths' whose keys match a set of join
  *	  keys 'joinkeys'.	To match,
  *	  1. the path node ordering must equal 'ordering'.
- *	  2. each subkey of a given path must match(i.e., be(var_equal) to) the
- *		 appropriate subkey of the corresponding join key in 'joinkeys',
- *		 i.e., the Nth path key must match its subkeys against the subkey of
+ *	  2. each pathkey of a given path must match(i.e., be(equal) to) the
+ *		 appropriate pathkey of the corresponding join key in 'joinkeys',
+ *		 i.e., the Nth path key must match its pathkeys against the pathkey of
  *		 the Nth join key in 'joinkeys'.
  *
  * 'joinkeys' is the list of key pairs to which the path keys must be
@@ -215,7 +216,7 @@ match_pathkey_joinkeys(List *pathkey,
  *		must correspond
  * 'paths' is a list of(inner) paths which are to be matched against
  *		each join key in 'joinkeys'
- * 'outer_or_inner' is a flag that selects the desired subkey of a join key
+ * 'outer_or_inner' is a flag that selects the desired pathkey of a join key
  *		in 'joinkeys'
  *
  *	Find the cheapest path that matches the join keys
@@ -232,7 +233,7 @@ get_cheapest_path_for_joinkeys(List *joinkeys,
 	foreach(i, paths)
 	{
 		Path	   *path = (Path *) lfirst(i);
-		int			better_sort, better_key;
+		int			better_sort;
 		
 		if (order_joinkeys_by_pathkeys(path->pathkeys, joinkeys, NIL,
 									   outer_or_inner, NULL, NULL) &&
@@ -251,23 +252,23 @@ get_cheapest_path_for_joinkeys(List *joinkeys,
 
 
 /*
- * extract_path_keys
- *	  Builds a subkey list for a path by pulling one of the subkeys from
+ * make_pathkeys_from_joinkeys
+ *	  Builds a pathkey list for a path by pulling one of the pathkeys from
  *	  a list of join keys 'joinkeys' and then finding the var node in the
- *	  target list 'tlist' that corresponds to that subkey.
+ *	  target list 'tlist' that corresponds to that pathkey.
  *
  * 'joinkeys' is a list of join key pairs
  * 'tlist' is a relation target list
- * 'outer_or_inner' is a flag that selects the desired subkey of a join key
+ * 'outer_or_inner' is a flag that selects the desired pathkey of a join key
  *	in 'joinkeys'
  *
  * Returns a list of pathkeys: ((tlvar1)(tlvar2)...(tlvarN)).
  * It is a list of lists because of multi-key indexes.
  */
 List *
-extract_path_keys(List *joinkeys,
-				  List *tlist,
-				  int outer_or_inner)
+make_pathkeys_from_joinkeys(List *joinkeys,
+							  List *tlist,
+							  int outer_or_inner)
 {
 	List	   *pathkeys = NIL;
 	List	   *jk;
@@ -275,30 +276,38 @@ extract_path_keys(List *joinkeys,
 	foreach(jk, joinkeys)
 	{
 		JoinKey    *jkey = (JoinKey *) lfirst(jk);
-		Var		   *var,
-				   *key;
-		List	   *p;
+		Var		   *key;
+		List	   *p, *p2;
+		bool		found = false;
 
-		/*
-		 * find the right Var in the target list for this key
-		 */
-		var = (Var *) extract_join_key(jkey, outer_or_inner);
-		key = (Var *) matching_tlist_var(var, tlist);
+		key = (Var *) extract_join_key(jkey, outer_or_inner);
 
-		/*
-		 * Include it in the pathkeys list if we haven't already done so
-		 */
-		foreach(p, pathkeys)
+		/* check to see if it is in the target list */
+		if (matching_tlist_var(key, tlist))
 		{
-			Var		   *pkey = lfirst((List *) lfirst(p));		/* XXX fix me */
-
-			if (key == pkey)
-				break;
+			/*
+			 * Include it in the pathkeys list if we haven't already done so
+			 */
+			foreach(p, pathkeys)
+			{
+				List	   *pathkey = lfirst(p);
+	
+				foreach(p2, pathkey)
+				{
+					Var		   *pkey = lfirst(p2);
+	
+					if (equal(key, pkey))
+					{
+						found = true;
+						break;
+					}
+				}
+				if (found)
+					break;
+			}
+			if (!found)
+				pathkeys = lappend(pathkeys, lcons(key, NIL));
 		}
-		if (p != NIL)
-			continue;			/* key already in pathkeys */
-
-		pathkeys = lappend(pathkeys, lcons(key, NIL));
 	}
 	return pathkeys;
 }
@@ -331,99 +340,100 @@ new_join_pathkeys(List *outer_pathkeys,
 				  List *joinclauses)
 {
 	List	   *outer_pathkey = NIL;
-	List	   *t_list = NIL;
-	List	   *x;
+	List	   *final_pathkeys = NIL;
+	List	   *new_pathkey;
 	List	   *i = NIL;
 
 	foreach(i, outer_pathkeys)
 	{
 		outer_pathkey = lfirst(i);
-		x = new_join_pathkey(outer_pathkey, NIL, join_rel_tlist, joinclauses);
-		if (x != NIL)
-			t_list = lappend(t_list, x);
+		new_pathkey = new_join_pathkey(outer_pathkey, join_rel_tlist,
+										joinclauses);
+		if (new_pathkey != NIL)
+			final_pathkeys = lappend(final_pathkeys, new_pathkey);
 	}
-	return t_list;
+	return final_pathkeys;
 }
 
 /*
  * new_join_pathkey
- *	  Finds new vars that become subkeys due to qualification clauses that
- *	  contain any previously considered subkeys.  These new subkeys plus the
- *	  subkeys from 'subkeys' form a new pathkey for the join relation.
+ *	  Finds new vars that become pathkeys due to qualification clauses that
+ *	  contain any previously considered pathkeys.  These new pathkeys plus the
+ *	  pathkeys from 'pathkeys' form a new pathkey for the join relation.
  *
- *	  Note that each returned subkey is the var node found in
+ *	  Note that each returned pathkey is the var node found in
  *	  'join_rel_tlist' rather than the joinclause var node.
  *
- * 'subkeys' is a list of subkeys for which matching subkeys are to be
+ * 'pathkeys' is a list of pathkeys for which matching pathkeys are to be
  *		found
- * 'considered_subkeys' is the current list of all subkeys corresponding
+ * 'considered_pathkeys' is the current list of all pathkeys corresponding
  *		to a given pathkey
  *
- * Returns a new pathkey(list of subkeys).
+ * Returns a new pathkey(list of pathkeys).
  *
  */
 static List *
-new_join_pathkey(List *subkeys,
-				 List *considered_subkeys,
+new_join_pathkey(List *pathkey,
 				 List *join_rel_tlist,
 				 List *joinclauses)
 {
-	List	   *t_list = NIL;
-	Var		   *subkey;
+	List	   *final_pathkey = NIL;
 	List	   *i = NIL;
-	List	   *matched_subkeys = NIL;
-	Expr	   *tlist_key = (Expr *) NULL;
-	List	   *newly_considered_subkeys = NIL;
+	List	   *considered_pathkeys = NIL;
 
-	foreach(i, subkeys)
+	foreach(i, pathkey)
 	{
-		subkey = (Var *) lfirst(i);
-		if (subkey == NULL)
-			break;				/* XXX something is wrong */
-		matched_subkeys = new_matching_subkeys(subkey, considered_subkeys,
-								 join_rel_tlist, joinclauses);
-		tlist_key = matching_tlist_var(subkey, join_rel_tlist);
-		newly_considered_subkeys = NIL;
+		Var		   *key = (Var *) lfirst(i);
+		List	   *joined_keys;
+		Expr	   *tlist_key;
 
-		if (tlist_key)
+		Assert(key);
+		joined_keys = get_joinvars_for_var(key, &considered_pathkeys,
+										join_rel_tlist, joinclauses);
+		if (joined_keys)
 		{
-			if (!member(tlist_key, matched_subkeys))
-				newly_considered_subkeys = lcons(tlist_key, matched_subkeys);
+			considered_pathkeys =  nconc(considered_pathkeys, joined_keys);
+			final_pathkey = nconc(final_pathkey, joined_keys);
 		}
-		else
-			newly_considered_subkeys = matched_subkeys;
-
-		considered_subkeys =  append(considered_subkeys, newly_considered_subkeys);
-
-		t_list = nconc(t_list, newly_considered_subkeys);
+									
+		tlist_key = matching_tlist_var(key, join_rel_tlist);
+		if (tlist_key && !member(tlist_key, considered_pathkeys))
+		{
+			/*
+			 *	If pathkey is in the target list, and not considered,
+			 *	add it
+			 */
+			considered_pathkeys =  lcons(tlist_key, considered_pathkeys);
+			final_pathkey = lcons(tlist_key, final_pathkey);
+		}
 	}
-	return t_list;
+	return copyObject(final_pathkey);
 }
 
 /*
- * new_matching_subkeys
- *	  Returns a list of new subkeys:
- *	  (1) which are not listed in 'considered_subkeys'
+ * get_joinvars_for_var
+ *	  Returns a list of new pathkeys:
+ *	  (1) which are not listed in 'considered_pathkeys'
  *	  (2) for which the "other" variable in some clause in 'joinclauses' is
- *		  'subkey'
+ *		  'pathkey'
  *	  (3) which are mentioned in 'join_rel_tlist'
  *
- *	  Note that each returned subkey is the var node found in
+ *	  Note that each returned pathkey is the var node found in
  *	  'join_rel_tlist' rather than the joinclause var node.
  *
- * 'subkey' is the var node for which we are trying to find matching
+ * 'pathkey' is the var node for which we are trying to find matching
  *		clauses
  *
- * Returns a list of new subkeys.
+ * Returns a list of new pathkeys.
  *
  */
 static List *
-new_matching_subkeys(Var *subkey,
-					 List *considered_subkeys,
+get_joinvars_for_var(Var *key,
+					 List **considered_pathkeys,
 					 List *join_rel_tlist,
 					 List *joinclauses)
 {
-	List	   *t_list = NIL;
+	List	   *final_pathkey = NIL;
 	Expr	   *joinclause;
 	List	   *i;
 	Expr	   *tlist_other_var;
@@ -431,25 +441,20 @@ new_matching_subkeys(Var *subkey,
 	foreach(i, joinclauses)
 	{
 		joinclause = lfirst(i);
+
 		tlist_other_var = matching_tlist_var(
-									other_join_clause_var(subkey, joinclause),
-									join_rel_tlist);
-
+								other_join_clause_var(key, joinclause),
+								join_rel_tlist);
 		if (tlist_other_var &&
-			!(member(tlist_other_var, considered_subkeys)))
+			!member(tlist_other_var, *considered_pathkeys))
 		{
-
-			/* XXX was "push" function	*/
-			considered_subkeys = lappend(considered_subkeys,
-										 tlist_other_var);
-
 			/*
-			 * considered_subkeys = nreverse(considered_subkeys); XXX -- I
-			 * am not sure of this.
+			 *	The key has a join variable that is in the target list,
+			 *	and has not been considered.
 			 */
-
-			t_list = lappend(t_list, tlist_other_var);
+			*considered_pathkeys = lcons(tlist_other_var, *considered_pathkeys);
+			final_pathkey = lcons(tlist_other_var, final_pathkey);
 		}
 	}
-	return t_list;
+	return final_pathkey;
 }

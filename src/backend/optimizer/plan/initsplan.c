@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.28 1999/02/18 00:49:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.29 1999/02/22 05:26:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,7 +72,7 @@ make_var_only_tlist(Query *root, List *tlist)
 	{
 		TargetEntry *entry = (TargetEntry *) lfirst(l);
 
-		tlist_vars = append(tlist_vars, pull_var_clause(entry->expr));
+		tlist_vars = nconc(tlist_vars, pull_var_clause(entry->expr));
 	}
 
 	/* now, the target list only contains Var nodes */
