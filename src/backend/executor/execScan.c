@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execScan.c,v 1.27 2003/08/08 21:41:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execScan.c,v 1.28 2003/09/25 19:41:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -196,9 +196,7 @@ tlist_matches_tupdesc(List *tlist, Index varno, TupleDesc tupdesc)
 
 	for (attrno = 1; attrno <= numattrs; attrno++)
 	{
-#ifdef USE_ASSERT_CHECKING		/* only used in Assert() */
 		Form_pg_attribute att_tup = tupdesc->attrs[attrno - 1];
-#endif
 		Var		   *var;
 
 		if (tlist == NIL)
@@ -207,11 +205,13 @@ tlist_matches_tupdesc(List *tlist, Index varno, TupleDesc tupdesc)
 		if (!var || !IsA(var, Var))
 			return false;		/* tlist item not a Var */
 		Assert(var->varno == varno);
+		Assert(var->varlevelsup == 0);
 		if (var->varattno != attrno)
 			return false;		/* out of order */
+		if (att_tup->attisdropped)
+			return false;		/* table contains dropped columns */
 		Assert(var->vartype == att_tup->atttypid);
 		Assert(var->vartypmod == att_tup->atttypmod);
-		Assert(var->varlevelsup == 0);
 
 		tlist = lnext(tlist);
 	}
