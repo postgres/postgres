@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.6 1996/12/31 06:47:30 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.7 1997/01/14 05:40:45 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1227,33 +1227,29 @@ BufferGetBlock(Buffer buffer)
 }
 
 /* ---------------------------------------------------------------------
- *      ReleaseTmpRelBuffers
+ *      ReleaseRelationBuffers
  *
- *      this function unmarks all the dirty pages of a temporary
- *      relation in the buffer pool so that at the end of transaction
+ *      this function unmarks all the dirty pages of a relation 
+ *	in the buffer pool so that at the end of transaction
  *      these pages will not be flushed.
  *      XXX currently it sequentially searches the buffer pool, should be
  *      changed to more clever ways of searching.
  * --------------------------------------------------------------------
  */
 void
-ReleaseTmpRelBuffers(Relation tempreldesc)
+ReleaseRelationBuffers (Relation rdesc)
 {
     register int i;
     int holding = 0;
     BufferDesc *buf;
     
-    /*
-     * Is tempreldesc->rd_islocal == FALSE possible at all ?
-     * But I don't want to mess something now. - vadim 12/31/96
-     */
-    if ( tempreldesc->rd_islocal )
+    if ( rdesc->rd_islocal )
     {
     	for (i = 0; i < NLocBuffer; i++)
     	{
 	    buf = &LocalBufferDescriptors[i];
 	    if ((buf->flags & BM_DIRTY) &&
-		(buf->tag.relId.relId == tempreldesc->rd_id))
+		(buf->tag.relId.relId == rdesc->rd_id))
 	    {
 		buf->flags &= ~BM_DIRTY;
 	    }
@@ -1269,7 +1265,7 @@ ReleaseTmpRelBuffers(Relation tempreldesc)
 	}
         if ((buf->flags & BM_DIRTY) &&
             (buf->tag.relId.dbId == MyDatabaseId) &&
-            (buf->tag.relId.relId == tempreldesc->rd_id)) {
+            (buf->tag.relId.relId == rdesc->rd_id)) {
             buf->flags &= ~BM_DIRTY;
             if (!(buf->flags & BM_FREE)) {
 		SpinRelease(BufMgrLock);
