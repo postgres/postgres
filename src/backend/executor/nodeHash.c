@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- *	$Id: nodeHash.c,v 1.57 2001/05/27 20:42:18 tgl Exp $
+ *	$Id: nodeHash.c,v 1.58 2001/06/11 00:17:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,13 +16,11 @@
  *		ExecHash		- generate an in-memory hash table of the relation
  *		ExecInitHash	- initialize node and subnodes
  *		ExecEndHash		- shutdown node and subnodes
- *
  */
+#include "postgres.h"
 
 #include <sys/types.h>
 #include <math.h>
-
-#include "postgres.h"
 
 #include "executor/execdebug.h"
 #include "executor/nodeHash.h"
@@ -209,111 +207,27 @@ ExecEndHash(Hash *node)
  *		create a hashtable in shared memory for hashjoin.
  * ----------------------------------------------------------------
  */
-#define FUDGE_FAC				2.0
-
 HashJoinTable
 ExecHashTableCreate(Hash *node)
 {
-	Plan	   *outerNode;
-	double		ntuples;
-	int			tupsize;
-	double		inner_rel_bytes;
-	double		hash_table_bytes;
-	int			nbatch;
 	HashJoinTable hashtable;
-	int			nbuckets;
+	Plan	   *outerNode;
 	int			totalbuckets;
-	int			bucketsize;
+	int			nbuckets;
+	int			nbatch;
 	int			i;
 	MemoryContext oldcxt;
 
 	/*
 	 * Get information about the size of the relation to be hashed (it's
 	 * the "outer" subtree of this node, but the inner relation of the
-	 * hashjoin).
-	 *
-	 * Caution: this is only the planner's estimates, and so can't be trusted
-	 * too far.  Apply a healthy fudge factor.
+	 * hashjoin).  Compute the appropriate size of the hash table.
 	 */
 	outerNode = outerPlan(node);
-	ntuples = outerNode->plan_rows;
-	if (ntuples <= 0.0)			/* force a plausible size if no info */
-		ntuples = 1000.0;
 
-	/*
-	 * estimate tupsize based on footprint of tuple in hashtable... but
-	 * what about palloc overhead?
-	 */
-	tupsize = MAXALIGN(outerNode->plan_width) +
-		MAXALIGN(sizeof(HashJoinTupleData));
-	inner_rel_bytes = ntuples * tupsize * FUDGE_FAC;
+	ExecChooseHashTableSize(outerNode->plan_rows, outerNode->plan_width,
+							&totalbuckets, &nbuckets, &nbatch);
 
-	/*
-	 * Target hashtable size is SortMem kilobytes, but not less than
-	 * sqrt(estimated inner rel size), so as to avoid horrible
-	 * performance.
-	 */
-	hash_table_bytes = sqrt(inner_rel_bytes);
-	if (hash_table_bytes < (SortMem * 1024L))
-		hash_table_bytes = SortMem * 1024L;
-
-	/*
-	 * Count the number of hash buckets we want for the whole relation,
-	 * for an average bucket load of NTUP_PER_BUCKET (per virtual
-	 * bucket!).
-	 */
-	totalbuckets = (int) ceil(ntuples * FUDGE_FAC / NTUP_PER_BUCKET);
-
-	/*
-	 * Count the number of buckets we think will actually fit in the
-	 * target memory size, at a loading of NTUP_PER_BUCKET (physical
-	 * buckets). NOTE: FUDGE_FAC here determines the fraction of the
-	 * hashtable space reserved to allow for nonuniform distribution of
-	 * hash values. Perhaps this should be a different number from the
-	 * other uses of FUDGE_FAC, but since we have no real good way to pick
-	 * either one...
-	 */
-	bucketsize = NTUP_PER_BUCKET * tupsize;
-	nbuckets = (int) (hash_table_bytes / (bucketsize * FUDGE_FAC));
-	if (nbuckets <= 0)
-		nbuckets = 1;
-
-	if (totalbuckets <= nbuckets)
-	{
-
-		/*
-		 * We have enough space, so no batching.  In theory we could even
-		 * reduce nbuckets, but since that could lead to poor behavior if
-		 * estimated ntuples is much less than reality, it seems better to
-		 * make more buckets instead of fewer.
-		 */
-		totalbuckets = nbuckets;
-		nbatch = 0;
-	}
-	else
-	{
-
-		/*
-		 * Need to batch; compute how many batches we want to use. Note
-		 * that nbatch doesn't have to have anything to do with the ratio
-		 * totalbuckets/nbuckets; in fact, it is the number of groups we
-		 * will use for the part of the data that doesn't fall into the
-		 * first nbuckets hash buckets.
-		 */
-		nbatch = (int) ceil((inner_rel_bytes - hash_table_bytes) /
-							hash_table_bytes);
-		if (nbatch <= 0)
-			nbatch = 1;
-	}
-
-	/*
-	 * Now, totalbuckets is the number of (virtual) hashbuckets for the
-	 * whole relation, and nbuckets is the number of physical hashbuckets
-	 * we will use in the first pass.  Data falling into the first
-	 * nbuckets virtual hashbuckets gets handled in the first pass;
-	 * everything else gets divided into nbatch batches to be processed in
-	 * additional passes.
-	 */
 #ifdef HJDEBUG
 	printf("nbatch = %d, totalbuckets = %d, nbuckets = %d\n",
 		   nbatch, totalbuckets, nbuckets);
@@ -406,6 +320,117 @@ ExecHashTableCreate(Hash *node)
 
 	return hashtable;
 }
+
+
+/*
+ * Compute appropriate size for hashtable given the estimated size of the
+ * relation to be hashed (number of rows and average row width).
+ *
+ * Caution: the input is only the planner's estimates, and so can't be
+ * trusted too far.  Apply a healthy fudge factor.
+ *
+ * This is exported so that the planner's costsize.c can use it.
+ */
+
+/* Target bucket loading (tuples per bucket) */
+#define NTUP_PER_BUCKET			10
+/* Fudge factor to allow for inaccuracy of input estimates */
+#define FUDGE_FAC				2.0
+
+void
+ExecChooseHashTableSize(double ntuples, int tupwidth,
+						int *virtualbuckets,
+						int *physicalbuckets,
+						int *numbatches)
+{
+	int			tupsize;
+	double		inner_rel_bytes;
+	double		hash_table_bytes;
+	int			nbatch;
+	int			nbuckets;
+	int			totalbuckets;
+	int			bucketsize;
+
+	/* Force a plausible relation size if no info */
+	if (ntuples <= 0.0)
+		ntuples = 1000.0;
+
+	/*
+	 * Estimate tupsize based on footprint of tuple in hashtable... but
+	 * what about palloc overhead?
+	 */
+	tupsize = MAXALIGN(tupwidth) + MAXALIGN(sizeof(HashJoinTupleData));
+	inner_rel_bytes = ntuples * tupsize * FUDGE_FAC;
+
+	/*
+	 * Target hashtable size is SortMem kilobytes, but not less than
+	 * sqrt(estimated inner rel size), so as to avoid horrible
+	 * performance.
+	 */
+	hash_table_bytes = sqrt(inner_rel_bytes);
+	if (hash_table_bytes < (SortMem * 1024L))
+		hash_table_bytes = SortMem * 1024L;
+
+	/*
+	 * Count the number of hash buckets we want for the whole relation,
+	 * for an average bucket load of NTUP_PER_BUCKET (per virtual
+	 * bucket!).
+	 */
+	totalbuckets = (int) ceil(ntuples * FUDGE_FAC / NTUP_PER_BUCKET);
+
+	/*
+	 * Count the number of buckets we think will actually fit in the
+	 * target memory size, at a loading of NTUP_PER_BUCKET (physical
+	 * buckets). NOTE: FUDGE_FAC here determines the fraction of the
+	 * hashtable space reserved to allow for nonuniform distribution of
+	 * hash values. Perhaps this should be a different number from the
+	 * other uses of FUDGE_FAC, but since we have no real good way to pick
+	 * either one...
+	 */
+	bucketsize = NTUP_PER_BUCKET * tupsize;
+	nbuckets = (int) (hash_table_bytes / (bucketsize * FUDGE_FAC));
+	if (nbuckets <= 0)
+		nbuckets = 1;
+
+	if (totalbuckets <= nbuckets)
+	{
+		/*
+		 * We have enough space, so no batching.  In theory we could even
+		 * reduce nbuckets, but since that could lead to poor behavior if
+		 * estimated ntuples is much less than reality, it seems better to
+		 * make more buckets instead of fewer.
+		 */
+		totalbuckets = nbuckets;
+		nbatch = 0;
+	}
+	else
+	{
+		/*
+		 * Need to batch; compute how many batches we want to use. Note
+		 * that nbatch doesn't have to have anything to do with the ratio
+		 * totalbuckets/nbuckets; in fact, it is the number of groups we
+		 * will use for the part of the data that doesn't fall into the
+		 * first nbuckets hash buckets.
+		 */
+		nbatch = (int) ceil((inner_rel_bytes - hash_table_bytes) /
+							hash_table_bytes);
+		if (nbatch <= 0)
+			nbatch = 1;
+	}
+
+	/*
+	 * Now, totalbuckets is the number of (virtual) hashbuckets for the
+	 * whole relation, and nbuckets is the number of physical hashbuckets
+	 * we will use in the first pass.  Data falling into the first
+	 * nbuckets virtual hashbuckets gets handled in the first pass;
+	 * everything else gets divided into nbatch batches to be processed in
+	 * additional passes.
+	 */
+	*virtualbuckets = totalbuckets;
+	*physicalbuckets = nbuckets;
+	*numbatches = nbatch;
+}
+
 
 /* ----------------------------------------------------------------
  *		ExecHashTableDestroy

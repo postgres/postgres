@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.76 2001/06/10 02:59:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.77 2001/06/11 00:17:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -791,19 +791,19 @@ cost_hashjoin(Path *path, Query *root,
  * smart enough to figure out how the restrict clauses might change the
  * distribution, so this will have to do for now.
  *
- * The executor tries for average bucket loading of NTUP_PER_BUCKET by setting
- * number of buckets equal to ntuples / NTUP_PER_BUCKET, which would yield
- * a bucketsize fraction of NTUP_PER_BUCKET / ntuples.  But that goal will
- * be reached only if the data values are uniformly distributed among the
- * buckets, which requires (a) at least ntuples / NTUP_PER_BUCKET distinct
- * data values, and (b) a not-too-skewed data distribution.  Otherwise the
- * buckets will be nonuniformly occupied.  If the other relation in the join
- * has a similar distribution, the most-loaded buckets are exactly those
- * that will be probed most often.  Therefore, the "average" bucket size for
- * costing purposes should really be taken as something close to the "worst
- * case" bucket size.  We try to estimate this by first scaling up if there
- * are too few distinct data values, and then scaling up again by the
- * ratio of the most common value's frequency to the average frequency.
+ * We can get the number of buckets the executor will use for the given
+ * input relation.  If the data were perfectly distributed, with the same
+ * number of tuples going into each available bucket, then the bucketsize
+ * fraction would be 1/nbuckets.  But this happy state of affairs will occur
+ * only if (a) there are at least nbuckets distinct data values, and (b)
+ * we have a not-too-skewed data distribution.  Otherwise the buckets will
+ * be nonuniformly occupied.  If the other relation in the join has a key
+ * distribution similar to this one's, then the most-loaded buckets are
+ * exactly those that will be probed most often.  Therefore, the "average"
+ * bucket size for costing purposes should really be taken as something close
+ * to the "worst case" bucket size.  We try to estimate this by adjusting the
+ * fraction if there are too few distinct data values, and then scaling up
+ * by the ratio of the most common value's frequency to the average frequency.
  *
  * If no statistics are available, use a default estimate of 0.1.  This will
  * discourage use of a hash rather strongly if the inner relation is large,
@@ -815,11 +815,13 @@ estimate_hash_bucketsize(Query *root, Var *var)
 {
 	Oid			relid;
 	RelOptInfo *rel;
+	int			virtualbuckets;
+	int			physicalbuckets;
+	int			numbatches;
 	HeapTuple	tuple;
 	Form_pg_statistic stats;
 	double		estfract,
 				ndistinct,
-				needdistinct,
 				mcvfreq,
 				avgfreq;
 	float4	   *numbers;
@@ -841,6 +843,12 @@ estimate_hash_bucketsize(Query *root, Var *var)
 	if (rel->tuples <= 0.0 || rel->rows <= 0.0)
 		return 0.1;				/* ensure we can divide below */
 
+	/* Get hash table size that executor would use for this relation */
+	ExecChooseHashTableSize(rel->rows, rel->width,
+							&virtualbuckets,
+							&physicalbuckets,
+							&numbatches);
+
 	tuple = SearchSysCache(STATRELATT,
 						   ObjectIdGetDatum(relid),
 						   Int16GetDatum(var->varattno),
@@ -857,7 +865,7 @@ estimate_hash_bucketsize(Query *root, Var *var)
 			case ObjectIdAttributeNumber:
 			case SelfItemPointerAttributeNumber:
 				/* these are unique, so buckets should be well-distributed */
-				return (double) NTUP_PER_BUCKET / rel->rows;
+				return 1.0 / (double) virtualbuckets;
 			case TableOidAttributeNumber:
 				/* hashing this is a terrible idea... */
 				return 1.0;
@@ -873,6 +881,12 @@ estimate_hash_bucketsize(Query *root, Var *var)
 	if (ndistinct < 0.0)
 		ndistinct = -ndistinct * rel->tuples;
 
+	if (ndistinct <= 0.0)		/* ensure we can divide */
+	{
+		ReleaseSysCache(tuple);
+		return 0.1;
+	}
+
 	/* Also compute avg freq of all distinct data values in raw relation */
 	avgfreq = (1.0 - stats->stanullfrac) / ndistinct;
 
@@ -887,20 +901,14 @@ estimate_hash_bucketsize(Query *root, Var *var)
 	ndistinct *= rel->rows / rel->tuples;
 
 	/*
-	 * Form initial estimate of bucketsize fraction.  Here we use rel->rows,
-	 * ie the number of rows after applying restriction clauses, because
-	 * that's what the fraction will eventually be multiplied by in
-	 * cost_heapjoin.
+	 * Initial estimate of bucketsize fraction is 1/nbuckets as long as
+	 * the number of buckets is less than the expected number of distinct
+	 * values; otherwise it is 1/ndistinct.
 	 */
-	estfract = (double) NTUP_PER_BUCKET / rel->rows;
-
-	/*
-	 * Adjust estimated bucketsize if too few distinct values (after
-	 * restriction clauses) to fill all the buckets.
-	 */
-	needdistinct = rel->rows / (double) NTUP_PER_BUCKET;
-	if (ndistinct < needdistinct)
-		estfract *= needdistinct / ndistinct;
+	if (ndistinct > (double) virtualbuckets)
+		estfract = 1.0 / (double) virtualbuckets;
+	else
+		estfract = 1.0 / ndistinct;
 
 	/*
 	 * Look up the frequency of the most common value, if available.
