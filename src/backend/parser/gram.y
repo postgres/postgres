@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.373.2.1 2003/02/05 20:16:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.373.2.2 2003/05/04 00:04:10 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -967,10 +967,17 @@ zone_value:
 			| ConstInterval '(' Iconst ')' Sconst opt_interval
 				{
 					A_Const *n = (A_Const *) makeStringConst($5, $1);
-					if (($3 < 0) || ($3 > MAX_INTERVAL_PRECISION))
+					if ($3 < 0)
 						elog(ERROR,
-							"INTERVAL(%d) precision must be between %d and %d",
-							$3, 0, MAX_INTERVAL_PRECISION);
+							 "INTERVAL(%d) precision must not be negative",
+							 $3);
+					if ($3 > MAX_INTERVAL_PRECISION)
+					{
+						elog(NOTICE,
+							 "INTERVAL(%d) precision reduced to maximum allowed, %d",
+							 $3, MAX_INTERVAL_PRECISION);
+						$3 = MAX_INTERVAL_PRECISION;
+					}
 
 					if (($6 != INTERVAL_FULL_RANGE)
 						&& (($6 & ~(INTERVAL_MASK(HOUR) | INTERVAL_MASK(MINUTE))) != 0))
@@ -1403,23 +1410,16 @@ CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
 /*
  * Redundancy here is needed to avoid shift/reduce conflicts,
  * since TEMP is not a reserved word.  See also OptTempTableName.
+ *
+ * NOTE: we accept both GLOBAL and LOCAL options; since we have no modules
+ * the LOCAL keyword is really meaningless.
  */
 OptTemp:	TEMPORARY						{ $$ = TRUE; }
 			| TEMP							{ $$ = TRUE; }
 			| LOCAL TEMPORARY				{ $$ = TRUE; }
 			| LOCAL TEMP					{ $$ = TRUE; }
-			| GLOBAL TEMPORARY
-				{
-					elog(ERROR,
-					"GLOBAL TEMPORARY TABLE is not currently supported");
-					$$ = TRUE;
-				}
-			| GLOBAL TEMP
-				{
-					elog(ERROR,
-					"GLOBAL TEMPORARY TABLE is not currently supported");
-					$$ = TRUE;
-				}
+			| GLOBAL TEMPORARY				{ $$ = TRUE; }
+			| GLOBAL TEMP					{ $$ = TRUE; }
 			| /*EMPTY*/						{ $$ = FALSE; }
 		;
 
@@ -1455,8 +1455,8 @@ columnDef:	ColId Typename ColQualList opt_collate
 
 					if ($4 != NULL)
 						elog(NOTICE,
-							"CREATE TABLE / COLLATE %s not yet implemented; "
-							"clause ignored", $4);
+							 "CREATE TABLE / COLLATE %s not yet implemented; "
+							 "clause ignored", $4);
 
 					$$ = (Node *)n;
 				}
@@ -3206,7 +3206,7 @@ RemoveOperStmt:
 oper_argtypes:
 			Typename
 				{
-				   elog(ERROR,"parser: argument type missing (use NONE for unary operators)");
+				   elog(ERROR, "parser: argument type missing (use NONE for unary operators)");
 				}
 			| Typename ',' Typename
 					{ $$ = makeList2($1, $3); }
@@ -3704,7 +3704,7 @@ CreateDomainStmt:
 
 					if ($7 != NULL)
 						elog(NOTICE,"CREATE DOMAIN / COLLATE %s not yet "
-							"implemented; clause ignored", $7);
+							 "implemented; clause ignored", $7);
 					$$ = (Node *)n;
 				}
 		;
@@ -4291,15 +4291,11 @@ OptTempTableName:
 				}
 			| GLOBAL TEMPORARY opt_table qualified_name
 				{
-					elog(ERROR,
-						"GLOBAL TEMPORARY TABLE is not currently supported");
 					$$ = $4;
 					$$->istemp = true;
 				}
 			| GLOBAL TEMP opt_table qualified_name
 				{
-					elog(ERROR,
-						"GLOBAL TEMPORARY TABLE is not currently supported");
 					$$ = $4;
 					$$->istemp = true;
 				}
@@ -4889,10 +4885,17 @@ SimpleTypename:
 			| ConstInterval '(' Iconst ')' opt_interval
 				{
 					$$ = $1;
-					if (($3 < 0) || ($3 > MAX_INTERVAL_PRECISION))
+					if ($3 < 0)
 						elog(ERROR,
-						"INTERVAL(%d) precision must be between %d and %d",
-							 $3, 0, MAX_INTERVAL_PRECISION);
+							 "INTERVAL(%d) precision must not be negative",
+							 $3);
+					if ($3 > MAX_INTERVAL_PRECISION)
+					{
+						elog(NOTICE,
+							 "INTERVAL(%d) precision reduced to maximum allowed, %d",
+							 $3, MAX_INTERVAL_PRECISION);
+						$3 = MAX_INTERVAL_PRECISION;
+					}
 					$$->typmod = INTERVAL_TYPMOD($3, $5);
 				}
 			| type_name attrs
@@ -5248,11 +5251,18 @@ ConstDatetime:
 					 * - thomas 2001-09-06
 					 */
 					$$->timezone = $5;
-					if (($3 < 0) || ($3 > MAX_TIMESTAMP_PRECISION))
+					if ($3 < 0)
 						elog(ERROR,
-						"TIMESTAMP(%d)%s precision must be between %d and %d",
-							 $3, ($5 ? " WITH TIME ZONE": ""), 0,
+							 "TIMESTAMP(%d)%s precision must not be negative",
+							 $3, ($5 ? " WITH TIME ZONE": ""));
+					if ($3 > MAX_TIMESTAMP_PRECISION)
+					{
+						elog(NOTICE,
+							 "TIMESTAMP(%d)%s precision reduced to maximum allowed, %d",
+							 $3, ($5 ? " WITH TIME ZONE": ""),
 							 MAX_TIMESTAMP_PRECISION);
+						$3 = MAX_TIMESTAMP_PRECISION;
+					}
 					$$->typmod = $3;
 				}
 			| TIMESTAMP opt_timezone
@@ -5280,11 +5290,18 @@ ConstDatetime:
 						$$ = SystemTypeName("timetz");
 					else
 						$$ = SystemTypeName("time");
-					if (($3 < 0) || ($3 > MAX_TIME_PRECISION))
+					if ($3 < 0)
 						elog(ERROR,
-						"TIME(%d)%s precision must be between %d and %d",
-							 $3, ($5 ? " WITH TIME ZONE": ""), 0,
+							 "TIME(%d)%s precision must not be negative",
+							 $3, ($5 ? " WITH TIME ZONE": ""));
+					if ($3 > MAX_TIME_PRECISION)
+					{
+						elog(NOTICE,
+							 "TIME(%d)%s precision reduced to maximum allowed, %d",
+							 $3, ($5 ? " WITH TIME ZONE": ""),
 							 MAX_TIME_PRECISION);
+						$3 = MAX_TIME_PRECISION;
+					}
 					$$->typmod = $3;
 				}
 			| TIME opt_timezone
@@ -6073,10 +6090,17 @@ c_expr:		columnref								{ $$ = (Node *) $1; }
 					s->val.val.str = "now";
 					s->typename = SystemTypeName("text");
 					d = SystemTypeName("timetz");
-					if (($3 < 0) || ($3 > MAX_TIME_PRECISION))
+					if ($3 < 0)
 						elog(ERROR,
-						"CURRENT_TIME(%d) precision must be between %d and %d",
-							 $3, 0, MAX_TIME_PRECISION);
+							 "CURRENT_TIME(%d) precision must not be negative",
+							 $3);
+					if ($3 > MAX_TIME_PRECISION)
+					{
+						elog(NOTICE,
+							 "CURRENT_TIME(%d) precision reduced to maximum allowed, %d",
+							 $3, MAX_TIME_PRECISION);
+						$3 = MAX_TIME_PRECISION;
+					}
 					d->typmod = $3;
 
 					$$ = (Node *)makeTypeCast((Node *)s, d);
@@ -6118,11 +6142,17 @@ c_expr:		columnref								{ $$ = (Node *) $1; }
 					s->typename = SystemTypeName("text");
 
 					d = SystemTypeName("timestamptz");
-					if (($3 < 0) || ($3 > MAX_TIMESTAMP_PRECISION))
+					if ($3 < 0)
 						elog(ERROR,
-						"CURRENT_TIMESTAMP(%d) precision "
-						"must be between %d and %d",
-							 $3, 0, MAX_TIMESTAMP_PRECISION);
+							 "CURRENT_TIMESTAMP(%d) precision must not be negative",
+							 $3);
+					if ($3 > MAX_TIMESTAMP_PRECISION)
+					{
+						elog(NOTICE,
+							 "CURRENT_TIMESTAMP(%d) precision reduced to maximum allowed, %d",
+							 $3, MAX_TIMESTAMP_PRECISION);
+						$3 = MAX_TIMESTAMP_PRECISION;
+					}
 					d->typmod = $3;
 
 					$$ = (Node *)makeTypeCast((Node *)s, d);
@@ -6163,10 +6193,17 @@ c_expr:		columnref								{ $$ = (Node *) $1; }
 					s->val.val.str = "now";
 					s->typename = SystemTypeName("text");
 					d = SystemTypeName("time");
-					if (($3 < 0) || ($3 > MAX_TIME_PRECISION))
+					if ($3 < 0)
 						elog(ERROR,
-						"LOCALTIME(%d) precision must be between %d and %d",
-							 $3, 0, MAX_TIME_PRECISION);
+							 "LOCALTIME(%d) precision must not be negative",
+							 $3);
+					if ($3 > MAX_TIME_PRECISION)
+					{
+						elog(NOTICE,
+							 "LOCALTIME(%d) precision reduced to maximum allowed, %d",
+							 $3, MAX_TIME_PRECISION);
+						$3 = MAX_TIME_PRECISION;
+					}
 					d->typmod = $3;
 
 					$$ = (Node *)makeTypeCast((Node *)s, d);
@@ -6208,11 +6245,17 @@ c_expr:		columnref								{ $$ = (Node *) $1; }
 					s->typename = SystemTypeName("text");
 
 					d = SystemTypeName("timestamp");
-					if (($3 < 0) || ($3 > MAX_TIMESTAMP_PRECISION))
+					if ($3 < 0)
 						elog(ERROR,
-						"LOCALTIMESTAMP(%d) precision must be "
-						"between %d and %d",
-							 $3, 0, MAX_TIMESTAMP_PRECISION);
+							 "LOCALTIMESTAMP(%d) precision must not be negative",
+							 $3);
+					if ($3 > MAX_TIMESTAMP_PRECISION)
+					{
+						elog(NOTICE,
+							 "LOCALTIMESTAMP(%d) precision reduced to maximum allowed, %d",
+							 $3, MAX_TIMESTAMP_PRECISION);
+						$3 = MAX_TIMESTAMP_PRECISION;
+					}
 					d->typmod = $3;
 
 					$$ = (Node *)makeTypeCast((Node *)s, d);
@@ -6772,8 +6815,8 @@ qualified_name:
 							break;
 						default:
 							elog(ERROR,
-							"Improper qualified name "
-							"(too many dotted names): %s",
+								 "Improper qualified name "
+								 "(too many dotted names): %s",
 								 NameListToString($1));
 							break;
 					}
@@ -6876,10 +6919,17 @@ AexprConst: Iconst
 					n->val.type = T_String;
 					n->val.val.str = $5;
 					/* precision specified, and fields may be... */
-					if (($3 < 0) || ($3 > MAX_INTERVAL_PRECISION))
+					if ($3 < 0)
 						elog(ERROR,
-						"INTERVAL(%d) precision must be between %d and %d",
-							 $3, 0, MAX_INTERVAL_PRECISION);
+							 "INTERVAL(%d) precision must not be negative",
+							 $3);
+					if ($3 > MAX_INTERVAL_PRECISION)
+					{
+						elog(NOTICE,
+							"INTERVAL(%d) precision reduced to maximum allowed, %d",
+							$3, MAX_INTERVAL_PRECISION);
+						$3 = MAX_INTERVAL_PRECISION;
+					}
 					n->typename->typmod = INTERVAL_TYPMOD($3, $6);
 					$$ = (Node *)n;
 				}
