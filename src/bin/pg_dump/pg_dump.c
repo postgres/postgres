@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.353 2003/10/08 03:52:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.354 2003/10/21 04:46:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -5822,9 +5822,10 @@ setMaxOid(Archive *fout)
 /*
  * findLastBuiltInOid -
  * find the last built in oid
- * we do this by retrieving datlastsysoid from the pg_database entry for this database,
+ *
+ * For 7.1 and 7.2, we do this by retrieving datlastsysoid from the
+ * pg_database entry for the current database
  */
-
 static Oid
 findLastBuiltinOid_V71(const char *dbname)
 {
@@ -5864,10 +5865,11 @@ findLastBuiltinOid_V71(const char *dbname)
 /*
  * findLastBuiltInOid -
  * find the last built in oid
- * we do this by looking up the oid of 'template1' in pg_database,
- * this is probably not foolproof but comes close
-*/
-
+ *
+ * For 7.0, we do this by assuming that the last thing that initdb does is to
+ * create the pg_indexes view.  This sucks in general, but seeing that 7.0.x
+ * initdb won't be changing anymore, it'll do.
+ */
 static Oid
 findLastBuiltinOid_V70(void)
 {
@@ -5876,7 +5878,7 @@ findLastBuiltinOid_V70(void)
 	int			last_oid;
 
 	res = PQexec(g_conn,
-			  "SELECT oid from pg_database where datname = 'template1'");
+				 "SELECT oid FROM pg_class WHERE relname = 'pg_indexes'");
 	if (res == NULL ||
 		PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
