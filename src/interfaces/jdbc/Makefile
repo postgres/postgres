@@ -4,7 +4,7 @@
 #    Makefile for Java JDBC interface
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/jdbc/Attic/Makefile,v 1.17 2000/03/08 01:58:25 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/jdbc/Attic/Makefile,v 1.18 2000/03/14 15:55:17 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -151,7 +151,7 @@ jdbc2real: postgresql/DriverClass.class \
 # Note:	This works by storing all compiled classes under the postgresql
 #	directory. We use this later for compiling the dual-mode driver.
 #
-postgresql.jar: $(OBJ) $(OBJ_COMMON)
+postgresql.jar: $(OBJ_COMMON)
 	$(JAR) -c0f $@ `$(FIND) postgresql -name "*.class" -print` \
 		$(wildcard postgresql/*.properties)
 
