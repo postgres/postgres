@@ -43,9 +43,9 @@ extern		"C"
 
 	extern struct sqlca sqlca;
 
-#endif
 
 #ifdef __cplusplus
 }
+#endif
 
 #endif
