@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/Attic/parse_query.c,v 1.1.1.1 1996/07/09 06:21:40 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/Attic/parse_query.c,v 1.2 1996/07/19 07:24:09 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -617,7 +617,11 @@ make_const(Value *value)
 
 	    /* null const */
 	    con = makeConst(0, 0, (Datum)NULL, TRUE, 0, FALSE);
+#ifdef NULL_PATCH
+	    return con;
+#else
 	    return NULL /*con*/;
+#endif
 	}
     }
 

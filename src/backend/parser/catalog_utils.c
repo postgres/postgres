@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/Attic/catalog_utils.c,v 1.1.1.1 1996/07/09 06:21:40 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/Attic/catalog_utils.c,v 1.2 1996/07/19 07:24:08 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -470,6 +470,11 @@ oper(char *op, int arg1, int arg2)
     HeapTuple tup;
     CandidateList candidates;
     int ncandidates;
+
+#ifdef NULL_PATCH
+    if (!arg2) arg2=arg1;
+    if (!arg1) arg1=arg2;
+#endif
 
     if (!(tup = SearchSysCacheTuple(OPRNAME,
 				    PointerGetDatum(op),
