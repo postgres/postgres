@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.38 2001/01/26 22:04:22 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.39 2001/02/10 07:08:44 tgl Exp $
 -->
 
 <chapter id="sql-syntax">
@@ -49,7 +49,7 @@ INSERT INTO MY_TABLE VALUES (3, 'hi there');
 </programlisting>
     This is a sequence of three commands, one per line (although this
     is not required; more than one command can be on a line, and
-    commands can be usefully split across lines).
+    commands can usefully be split across lines).
    </para>
   </informalexample>
 
@@ -115,7 +115,7 @@ UPDATE MY_TABLE SET A = 5;
 <programlisting>
 uPDaTE my_TabLE SeT a = 5;
 </programlisting>
-    A good convention to adopt is perhaps to write key words in upper
+    A convention often used is to write key words in upper
     case and names in lower case, e.g.,
 <programlisting>
 UPDATE my_table SET a = 5;
@@ -131,10 +131,10 @@ UPDATE my_table SET a = 5;
     identifier is always an identifier, never a key word.  So
     <literal>"select"</literal> could be used to refer to a column or
     table named <quote>select</quote>, whereas an unquoted
-    <literal>select</literal> would be taken as part of a command and
+    <literal>select</literal> would be taken as a key word and
     would therefore provoke a parse error when used where a table or
     column name is expected.  The example can be written with quoted
-    identifiers like so:
+    identifiers like this:
 <programlisting>
 UPDATE "my_table" SET "a" = 5;
 </programlisting>
@@ -157,11 +157,13 @@ UPDATE "my_table" SET "a" = 5;
     each other.
     <footnote>
      <para>
-      This is incompatible with SQL, where unquoted names are folded to
-      upper case.  Thus, <literal>foo</literal> is equivalent to
-      <literal>"FOO"</literal>.  If you want to write portable
-      applications you are advised to always quote a particular name or
-      never quote it.
+      <productname>Postgres</productname>' folding of unquoted names to lower
+      case is incompatible with the SQL standard, which says that unquoted
+      names should be folded to upper case.  Thus, <literal>foo</literal>
+      should be equivalent to <literal>"FOO"</literal> not
+      <literal>"foo"</literal> according to the standard.  If you want to
+      write portable applications you are advised to always quote a particular
+      name or never quote it.
      </para>
     </footnote>
    </para>
@@ -241,7 +243,7 @@ SELECT 'foo'      'bar';
      opening quote (no intervening whitespace), e.g.,
      <literal>B'1001'</literal>.  The only characters allowed within
      bit string constants are <literal>0</literal> and
-     <literal>1</literal>.  Bit strings constants can be continued
+     <literal>1</literal>.  Bit string constants can be continued
      across lines in the same way as regular string constants.
     </para>
    </sect3>
@@ -271,7 +273,7 @@ SELECT 'foo'      'bar';
 </synopsis>
      where <replaceable>digits</replaceable> is one or more decimal
      digits.  At least one digit must be before or after the decimal
-     point and after the <literal>e</literal> if you use that option.
+     point, and after the <literal>e</literal> if you use that option.
      Thus, a floating point constant is distinguished from an integer
      constant by the presence of either the decimal point or the
      exponent clause (or both).  There must not be a space or other
@@ -486,8 +488,8 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
     <listitem>
      <para>
       The semicolon (<literal>;</literal>) terminates an SQL command.
-      It cannot appear anywhere within a command, except when quoted
-      as a string constant or identifier.
+      It cannot appear anywhere within a command, except within a
+      string constant or quoted identifier.
      </para>
     </listitem>
 
@@ -648,7 +650,7 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
     <para>
      For further information on the system attributes consult
      <xref linkend="STON87a" endterm="STON87a">.
-     Transaction and command identifiers are 32 bit quantities.
+     Transaction and command identifiers are 32-bit quantities.
     </para>
 
   </sect1>
@@ -658,7 +660,7 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
   <title>Value Expressions</title>
 
   <para>
-   Value expressions are used in a variety of syntactic contexts, such
+   Value expressions are used in a variety of contexts, such
    as in the target list of the <command>SELECT</command> command, as
    new column values in <command>INSERT</command> or
    <command>UPDATE</command>, or in search conditions in a number of
@@ -692,13 +694,13 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
       An operator invocation:
       <simplelist>
        <member><replaceable>expression</replaceable> <replaceable>operator</replaceable> <replaceable>expression</replaceable> (binary infix operator)</member>
-       <member><replaceable>expression</replaceable> <replaceable>operator</replaceable> (unary postfix operator)</member>
        <member><replaceable>operator</replaceable> <replaceable>expression</replaceable> (unary prefix operator)</member>
+       <member><replaceable>expression</replaceable> <replaceable>operator</replaceable> (unary postfix operator)</member>
       </simplelist>
       where <replaceable>operator</replaceable> follows the syntax
       rules of <xref linkend="sql-syntax-operators"> or is one of the
       tokens <token>AND</token>, <token>OR</token>, and
-      <token>NOT</token>.  What particular operators exist and whether
+      <token>NOT</token>.  Which particular operators exist and whether
       they are unary or binary depends on what operators have been
       defined by the system or the user.  <xref linkend="functions">
       describes the built-in operators.
@@ -733,7 +735,7 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
     <listitem>
      <para>
       A scalar subquery.  This is an ordinary
-      <command>SELECT</command> in parenthesis that returns exactly one
+      <command>SELECT</command> in parentheses that returns exactly one
       row with one column.  It is an error to use a subquery that
       returns more than one row or more than one column in the context
       of a value expression.
@@ -813,9 +815,9 @@ CREATE FUNCTION dept (text) RETURNS dept
    <title>Function Calls</title>
 
    <para>
-    The syntax for a function call is the name of a legal function
-    (subject to the syntax rules for identifiers of <xref
-    linkend="sql-syntax-identifiers"> , followed by its argument list
+    The syntax for a function call is the name of a function
+    (which is subject to the syntax rules for identifiers of <xref
+    linkend="sql-syntax-identifiers">), followed by its argument list
     enclosed in parentheses:
 
 <synopsis>
@@ -862,7 +864,9 @@ sqrt(2)
    <para>
     The first form of aggregate expression invokes the aggregate
     across all input rows for which the given expression yields a
-    non-NULL value.  The second form is the same as the first, since
+    non-NULL value.  (Actually, it is up to the aggregate function
+    whether to ignore NULLs or not --- but all the standard ones do.)
+    The second form is the same as the first, since
     <literal>ALL</literal> is the default.  The third form invokes the
     aggregate for all distinct non-NULL values of the expression found
     in the input rows.  The last form invokes the aggregate once for
@@ -881,7 +885,8 @@ sqrt(2)
 
    <para>
     The predefined aggregate functions are described in <xref
-    linkend="functions-aggregate">.
+    linkend="functions-aggregate">.  Other aggregate functions may be added
+    by the user. 
    </para>
   </sect2>
 
@@ -900,15 +905,19 @@ sqrt(2)
     you will sometimes need to add parentheses when using combinations
     of binary and unary operators.  For instance
 <programlisting>
-SELECT 5 &amp; ~ 6;
+SELECT 5 ! ~ 6;
 </programlisting>
    will be parsed as
 <programlisting>
-SELECT (5 &amp;) ~ 6;
+SELECT 5 ! (~ 6);
 </programlisting>
-    because the parser has no idea that <token>&amp;</token> is
-    defined as a binary operator.  This is the price one pays for
-    extensibility.
+    because the parser has no idea --- until it's too late --- that
+    <token>!</token> is defined as a postfix operator not an infix one.
+    To get the desired behavior in this case, you must write
+<programlisting>
+SELECT (5 !) ~ 6;
+</programlisting>
+    This is the price one pays for extensibility.
    </para>
 
    <table tocentry="1">
