@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.201 2003/08/31 17:32:19 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.202 2003/09/05 02:54:09 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -3081,14 +3081,61 @@ kernel.shmmax = 134217728
        </para>
 
        <para>
-        Linux has poor default memory overcommit behavior.  Rather than
-        failing if it can not reserve enough memory, it returns success, 
-        but later fails when the memory can't be mapped and terminates 
-        the application with <literal>kill -9</>.  To prevent unpredictable 
-        process termination, use:
+	Linux kernel version 2.4.* has poor default memory overcommit 
+	behavior, which can result in the postmaster being killed by the 
+	kernel due to memory demands by another process if the system 
+	runs out of memory.
+	</para>
+
+       <para>
+	The symptom of this occuring is a kernel message looking like 
+	this (consult your system documentation and configuration on 
+	where to look for such a message):
+<programlisting>
+ Out of Memory: Killed process 12345 (postmaster). 
+</programlisting>
+	</para>
+
+       <para>
+	To avoid this situation, run <productname>PostgreSQL</productname> 
+	on a machine where you 
+	can be sure that other processes will not run the machine out 
+	of memory. If your kernel supports strict and/or paranoid modes 
+	of overcommit handling, you can also relieve this problem by 
+	altering the system's default behaviour. This can be determined 
+	by examining the function <function>vm_enough_memory</>
+	in the file <filename>mm/mmap.c</>in the kernel source. 
+	If this file reveals that strict and/or paranoid modes are 
+	supported by your kernel, turn one of these modes on by using
+<programlisting>
+sysctl -w vm.overcommit_memory=2
+</programlisting>
+	 for strict mode or
 <programlisting>
 sysctl -w vm.overcommit_memory=3
 </programlisting>
+	for paranoid mode, or placing an equivalent entry in 
+	<filename>/etc/sysctl.conf</>.
+	</para>
+
+       <note>
+	<para>
+	 Warning: using these settings in a kernel which does not support 
+	 these modes will almost certainly increase the danger of the 
+	 kernel killing the postmaster, rather than reducing it. 
+	 If in any doubt, consult a kernel expert or your kernel vendor.
+	</para>
+       </note>
+
+       <para>
+	These modes are expected to be supported in all 2.6 and later 
+	kernels. Some vendor 2.4 kernels may also support these modes. 
+	However, it is known that some vendor documents suggest that 
+	they support them while examination of the kernel source reveals 
+	that they do not.
+	</para>
+
+       <para>
         Note, you will need enough swap space to cover all your memory needs.
        </para>
       </listitem>
