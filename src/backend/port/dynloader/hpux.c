@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/hpux.c,v 1.15 2001/01/24 19:43:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/hpux.c,v 1.16 2001/02/07 17:59:58 tgl Exp $
  *
  *	NOTES
  *		all functions are defined here -- it's impossible to trace the
@@ -34,7 +34,9 @@ pg_dlopen(char *filename)
 	 * from shl_load(), rather than an abort() later on when we attempt to
 	 * call the library!
 	 */
-	shl_t		handle = shl_load(filename, BIND_IMMEDIATE | BIND_VERBOSE, 0);
+	shl_t		handle = shl_load(filename,
+								  BIND_IMMEDIATE | BIND_VERBOSE | DYNAMIC_PATH,
+								  0L);
 
 	return (void *) handle;
 }
