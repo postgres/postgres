@@ -801,19 +801,6 @@ AC_CHECK_FUNCS([fcvt getopt_long memmove pstat setproctitle setsid sigprocmask s
 dnl Check whether <unistd.h> declares fdatasync().
 AC_EGREP_HEADER(fdatasync, unistd.h, AC_DEFINE(HAVE_FDATASYNC_DECL))
 
-AC_MSG_CHECKING([for SO_PEERCRED])
-AC_EGREP_CPP(HAVE_SO_PEERCRED,
-#include <sys/socket.h>
-#ifdef SO_PEERCRED
-HAVE_SO_PEERCRED
-#endif
-],
-[
-  AC_MSG_RESULT(yes)
-  AC_DEFINE(HAVE_SO_PEERCRED)
-],
-[AC_MSG_RESULT(no)])
-
 AC_CACHE_CHECK([for PS_STRINGS], [pgac_cv_var_PS_STRINGS],
 [AC_TRY_LINK(
 [#include <machine/vmparam.h>

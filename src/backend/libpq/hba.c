@@ -5,7 +5,12 @@
  *	  wherein you authenticate a user by seeing what IP address the system
  *	  says he comes from and possibly using ident).
  *
- *	$Id: hba.c,v 1.58 2001/08/01 23:25:39 tgl Exp $
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ *
+ * IDENTIFICATION
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.59 2001/08/01 23:52:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -292,7 +297,7 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 		if (port->auth_method == uaKrb4 ||
 			port->auth_method == uaKrb5)
 			goto hba_syntax;
-#ifndef HAVE_SO_PEERCRED
+#ifndef SO_PEERCRED
 		if (port->auth_method == uaIdent)
 		{
 			/* Give a special error message for this case... */
@@ -861,7 +866,8 @@ ident_inet(const struct in_addr remote_ip_addr,
 	return ident_return;
 }
 
-#ifdef HAVE_SO_PEERCRED
+#ifdef SO_PEERCRED
+
 /*
  *  Ask kernel about the credentials of the connecting process and
  *  determine the symbolic name of the corresponding user.
@@ -923,7 +929,8 @@ ident_unix(int sock, char *ident_user)
 
 	return true;
 }
-#endif
+
+#endif /* SO_PEERCRED */
 
 /*
  *  Determine the username of the initiator of the connection described
@@ -947,7 +954,7 @@ authident(hbaPort *port)
 							port->laddr.in.sin_port, ident_user))
 				return STATUS_ERROR;
 			break;
-#ifdef HAVE_SO_PEERCRED
+#ifdef SO_PEERCRED
 		case AF_UNIX:
 			if (!ident_unix(port->sock, ident_user))
 				return STATUS_ERROR;
