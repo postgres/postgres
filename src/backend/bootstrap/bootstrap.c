@@ -7,41 +7,96 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.7 1996/10/18 05:47:12 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.8 1996/10/21 08:31:23 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <string.h>
-#include <unistd.h>
-#include "libpq/pqsignal.h"	/* substitute for <signal.h> */
-#include <setjmp.h>
-
 #define BOOTSTRAP_INCLUDE	/* mask out stuff in tcop/tcopprot.h */
 
-#include "bootstrap/bootstrap.h"
 #include "postgres.h"
-#include "miscadmin.h"
-#include "tcop/tcopprot.h"
 
-#include "access/heapam.h"
-#include "access/genam.h"
+#include "catalog/pg_attribute.h"
+#include "access/attnum.h"
+#include "nodes/pg_list.h"
 #include "access/tupdesc.h"
-#include "utils/builtins.h"
+#include "storage/fd.h"
+#include "catalog/pg_am.h"
+#include "catalog/pg_class.h"
+#include "nodes/nodes.h"
+#include "rewrite/prs2lock.h"
+#include "access/skey.h"
+#include "access/strat.h"
 #include "utils/rel.h"
+
+#include <time.h>
+#include "storage/block.h"
+#include "storage/off.h"
+#include "storage/itemptr.h"
+#include "utils/nabstime.h"
+#include "access/htup.h"
 #include "utils/tqual.h"
-#include "utils/lsyscache.h"
-#include "access/xact.h"
-#include "utils/exc.h"	/* for ExcAbort and <setjmp.h> */
+#include "storage/buf.h" 
+#include "access/relscan.h"
+#include "access/heapam.h"
+
 #include "fmgr.h"
-#include "utils/palloc.h"
-#include "utils/mcxt.h"
-#include "storage/smgr.h"
-#include "commands/defrem.h"
+
+#include "access/funcindex.h"
+
+#include "nodes/memnodes.h"
+
+#include <stdio.h>
+#include <signal.h>
+#include <setjmp.h>
+
+#include "miscadmin.h"
 
 #include "catalog/pg_type.h"
+
+#include "access/itup.h"  
+#include "bootstrap/bootstrap.h"
+
+#include "tcop/tcopprot.h"
+
+#include "storage/ipc.h"
+#include "storage/spin.h"
+#include "utils/hsearch.h"
+#include "storage/shmem.h"
+#include "storage/lock.h"
+
+#include "access/xact.h"
+
+#ifndef HAVE_MEMMOVE
+# include "regex/utils.h"
+#endif
+#include <string.h>
+
+#include "nodes/primnodes.h"
+#include "nodes/parsenodes.h"
+#include "nodes/params.h"
+#include "access/sdir.h"
+#include "executor/hashjoin.h"
+#include "executor/tuptable.h"
+#include "nodes/execnodes.h"
+#include "nodes/plannodes.h"
+#include "tcop/dest.h"
+#include "executor/execdesc.h"
+#include "utils/portal.h"
+
+#include "utils/mcxt.h"
+
 #include "catalog/catname.h"
-#include "catalog/indexing.h"
+
+#include "utils/geo-decls.h"
+#include "utils/builtins.h"
+
 #include "catalog/index.h"
+
+#include "access/genam.h"
+
+#include "utils/lsyscache.h"
+
+#include "utils/palloc.h"
 
 #define ALLOC(t, c)	(t *)calloc((unsigned)(c), sizeof(t))
 #define FIRST_TYPE_OID 16	/* OID of the first type */
@@ -191,6 +246,7 @@ void err_out()
 */
 static void
 usage()
+{
     fprintf(stderr,"Usage: postgres -boot [-d] [-C] [-F] [-O] [-Q] ");
     fprintf(stderr,"[-P portno] [dbName]\n");
     fprintf(stderr,"     d: debug mode\n");

@@ -8,24 +8,54 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.2 1996/08/13 01:28:27 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.3 1996/10/21 08:31:18 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include "access/heapam.h"
-#include "access/tupdesc.h"
-#include "bootstrap/bootstrap.h"
-#include "utils/portal.h" 
-#include "storage/smgr.h" 
+
+#include "postgres.h"
+
+#include "catalog/pg_attribute.h"
+#include "access/attnum.h" 
 #include "nodes/pg_list.h"
-#include "catalog/catalog.h"
-#include "catalog/catname.h"
-#include "catalog/heap.h"
-#include "catalog/index.h"
-#include "commands/rename.h"
-#include "commands/defrem.h"
-#include "access/transam.h"
+#include "access/tupdesc.h" 
+#include "storage/fd.h"
+#include "catalog/pg_am.h" 
+#include "catalog/pg_class.h"
+#include "nodes/nodes.h"
+#include "rewrite/prs2lock.h"
+#include "access/skey.h"
+#include "access/strat.h"
+#include "utils/rel.h"
+
+#include "nodes/primnodes.h"
+#include <time.h>
+#include "utils/nabstime.h"
+#include "storage/block.h"
+#include "storage/off.h"
+#include "storage/itemptr.h"
+#include "access/htup.h"
+#include "utils/tqual.h"
+#include "nodes/parsenodes.h"
+
 #include "access/xact.h"
+
+#include <stdio.h>
+
+#include "catalog/heap.h"
+
+#include "storage/ipc.h"
+#include "storage/spin.h"
+#include "storage/smgr.h"
+
+#include "tcop/dest.h"
+#include "commands/defrem.h"
+
+#include "access/itup.h"
+#include "access/funcindex.h"
+#include "bootstrap/bootstrap.h"
+
+#include "miscadmin.h"
 
 #define DO_START { StartTransactionCommand();\
 		 }
