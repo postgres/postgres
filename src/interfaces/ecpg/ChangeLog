@@ -487,5 +487,16 @@ Fri Feb 26 07:18:25 CET 1999
 Sat Feb 27 20:30:03 CET 1999
 
 	- Added automatic allocating for NULL pointers.
+
+Mon Mar  1 20:16:24 CET 1999
+
+	- Fixed parser bug that caused it to miss some blanks during output.
+
+Thu Mar  4 19:49:28 CET 1999
+
+	- Fixed bug in ecpglib.c that caused it to allocate to few memory.
+	- Switched memory allocation to calloc() to make sure memory is
+	  cleared.
+	- Fixed varchar auto-allocating.
 	- Set library version to 3.0.0
 	- Set ecpg version to 3.0.0
