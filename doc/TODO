@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Apr 18 00:04:58 EDT 2002
+Last updated:		Thu Apr 18 00:08:03 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -363,7 +363,7 @@ FSYNC
 
 CACHE
 -----
-* Cache most recent query plan(s) (Karel) [prepare]
+* Cache most recent query plan(s) (Neil) [prepare]
 * Shared catalog cache, reduce lseek()'s by caching table size in shared area
 * Add free-behind capability for large sequential scans (Bruce)
 * Allow binding query args over FE/BE protocol
@@ -510,6 +510,7 @@ Developers who have claimed items are:
 * Mark is Mark Hollomon <mhh@mindspring.com>
 * Marko is Marko Kreen <marko@l-t.ee>
 * Michael is Michael Meskes <meskes@postgresql.org>
+* Neil is Neil Conway <nconway@klamath.dyndns.org>
 * Oleg is Oleg Bartunov <oleg@sai.msu.su>
 * Peter M is Peter T Mount <peter@retep.org.uk>
 * Peter E is Peter Eisentraut<peter_e@gmx.net>
