@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.35 1998/02/11 03:56:07 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.36 1998/02/18 07:22:40 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -311,6 +311,25 @@ other			.
 					return (PARAM);
 				}
 
+{identifier}/{space}*-{number}	{
+					int i;
+					ScanKeyword		*keyword;
+
+					BEGIN(xm);
+					for(i = 0; yytext[i]; i++)
+						if (isupper(yytext[i]))
+							yytext[i] = tolower(yytext[i]);
+
+					keyword = ScanKeywordLookup((char*)yytext);
+					if (keyword != NULL) {
+						return (keyword->value);
+					}
+					else
+					{
+						yylval.str = pstrdup((char*)yytext);
+						return (IDENT);
+					}
+				}
 {integer}/{space}*-{number}	{
 					char* endptr;
 
