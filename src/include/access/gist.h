@@ -24,8 +24,15 @@
 /* 
 ** You can have as many strategies as you please in GiSTs, as
 ** long as your consistent method can handle them
-*/
+**
+** But strat.h->StrategyEvaluationData->StrategyExpression  expression[12]
+** - so 12 is real max # of strategies, or StrategyEvaluationIsValid
+** crashes backend...		- vadim 05/21/97
+
 #define GISTNStrategies			100
+
+*/
+#define GISTNStrategies			12
 
 /*
 ** Helper routines
