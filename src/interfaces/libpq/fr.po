@@ -1,7 +1,7 @@
 # French message translation file for libpq
 # Peter Eisentraut <peter_e@gmx.net>, 2001.
 #
-# $Header: /cvsroot/pgsql/src/interfaces/libpq/Attic/fr.po,v 1.1 2001/12/10 13:03:55 petere Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/libpq/Attic/fr.po,v 1.2 2001/12/13 22:04:40 petere Exp $
 #
 # Use these quotes: «%s»
 #
@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.2\n"
 "POT-Creation-Date: 2001-12-05 20:41+0100\n"
-"PO-Revision-Date: 2001-12-10 00:23+0100\n"
+"PO-Revision-Date: 2001-12-11 00:02+0100\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: French <peter_e@gmx.net>\n"
 "MIME-Version: 1.0\n"
@@ -24,7 +24,7 @@ msgstr "erreur de Kerberos 4: %s\n"
 #: fe-auth.c:391
 #, c-format
 msgid "could not set socket to blocking mode: %s\n"
-msgstr ""
+msgstr "n'a pas pu activer le mode bloquant pour le socket: %s\n"
 
 #: fe-auth.c:407
 #, c-format
@@ -34,7 +34,7 @@ msgstr "authentification Kerberos 5 rejetée: %*s\n"
 #: fe-auth.c:427
 #, c-format
 msgid "could not restore non-blocking mode on socket: %s\n"
-msgstr ""
+msgstr "n'a pas pu rétablir le mode non-bloquant pour le socket: %s\n"
 
 #: fe-auth.c:490
 msgid "SCM_CRED authentication method not supported\n"
@@ -78,12 +78,12 @@ msgstr "n'a pas pu déterminer le nom d'utilisateur à utiliser\n"
 #: fe-connect.c:703
 #, c-format
 msgid "could not set socket to non-blocking mode: %s\n"
-msgstr ""
+msgstr "n'a pas pu activer le mode non-bloquant pour le socket: %s\n"
 
 #: fe-connect.c:727
 #, c-format
 msgid "could not set socket to TCP no delay mode: %s\n"
-msgstr ""
+msgstr "n'a pas pu activer le mode non-bloquant de TCP pour le socket: %s\n"
 
 #: fe-connect.c:747
 #, c-format
@@ -94,7 +94,7 @@ msgid ""
 msgstr ""
 "n'a pas pu connecter au serveur: %s\n"
 "\tEst-ce que le serveur est en éxecution à l'hôte local\n"
-"\tet en acceptant des connexion au socket Unix «%s»?\n"
+"\tet en acceptant des connexions au socket Unix «%s»?\n"
 
 #: fe-connect.c:756
 #, c-format
@@ -105,17 +105,17 @@ msgid ""
 msgstr ""
 "n'a pas pu connecter au serveur: %s\n"
 "\tEst-ce que le serveur est en éxecution à l'hôte %s\n"
-"\tet en acceptant des connexion TCP/IP au port %s?\n"
+"\tet en acceptant des connexions TCP/IP au port %s?\n"
 
 #: fe-connect.c:820
 #, c-format
 msgid "invalid host address: %s\n"
-msgstr "adresse de l'hôte invalide: %s\n"
+msgstr "adresse invalide de l'hôte: %s\n"
 
 #: fe-connect.c:839
 #, c-format
 msgid "unknown host name: %s\n"
-msgstr "nom de l'hôte inconnu: %s\n"
+msgstr "nom inconnu de l'hôte: %s\n"
 
 #: fe-connect.c:881
 #, c-format
@@ -145,7 +145,7 @@ msgstr "n'a pas pu établir la connexion SSL: %s\n"
 #: fe-connect.c:999
 #, c-format
 msgid "received invalid response to SSL negotiation: %c\n"
-msgstr "réponse invalide au négociation SSL était reçu: %c\n"
+msgstr "réponse invalide au négociation SSL était reçue: %c\n"
 
 #: fe-connect.c:1008
 msgid "server does not support SSL, but SSL was required\n"
@@ -153,12 +153,12 @@ msgstr "le serveur ne supporte pas SSL, mais SSL était exigé\n"
 
 #: fe-connect.c:1174
 msgid "invalid connection state, probably indicative of memory corruption\n"
-msgstr "état invalide de connextion, probablement une indication de mémoire corrompue\n"
+msgstr "état invalide de connexion, probablement une indication de mémoire corrompue\n"
 
 #: fe-connect.c:1205
 #, c-format
 msgid "could not get socket error status: %s\n"
-msgstr ""
+msgstr "n'a pas pu déterminer l'erreur du socket: %s\n"
 
 #: fe-connect.c:1225
 #, c-format
@@ -168,7 +168,7 @@ msgstr "n'a pas pu obtenir l'adresse du client du socket: %s\n"
 #: fe-connect.c:1264
 #, c-format
 msgid "could not send startup packet: %s\n"
-msgstr ""
+msgstr "n'a pas pu transmettre le paquet de démarrage: %s\n"
 
 #: fe-connect.c:1320
 #, c-format
@@ -182,7 +182,7 @@ msgstr "message inattendu du serveur lors de démarrage\n"
 #: fe-connect.c:1491
 #, c-format
 msgid "invalid connection state %c, probably indicative of memory corruption\n"
-msgstr "état invalide de connextion (%c), probablement une indication de mémoire corrompue\n"
+msgstr "état invalide de connexion (%c), probablement une indication de mémoire corrompue\n"
 
 #: fe-connect.c:1590
 #, c-format
@@ -210,12 +210,12 @@ msgstr "«=» manquant après «%s» dans la chaîne de paramètres de connexion\n"
 
 #: fe-connect.c:2471
 msgid "unterminated quoted string in connection info string\n"
-msgstr ""
+msgstr "chaîne incomplète entre guillemets dans la chaîne de paramètres de connexion\n"
 
 #: fe-connect.c:2505
 #, c-format
 msgid "invalid connection option \"%s\"\n"
-msgstr "option invalide de connextion «%s»\n"
+msgstr "option invalide de connexion «%s»\n"
 
 #: fe-connect.c:2720
 msgid "connection pointer is NULL\n"
@@ -227,7 +227,7 @@ msgstr ""
 
 #: fe-exec.c:641
 msgid "no connection to the server\n"
-msgstr "aucune connextion au serveur\n"
+msgstr "aucune connexion au serveur\n"
 
 #: fe-exec.c:648
 msgid "another command is already in progress\n"
@@ -379,12 +379,12 @@ msgstr ""
 #: fe-misc.c:281
 #, c-format
 msgid "integer of size %lu not supported by pqGetInt\n"
-msgstr ""
+msgstr "entier de taille %lu non supporté par pqGetInt\n"
 
 #: fe-misc.c:319
 #, c-format
 msgid "integer of size %lu not supported by pqPutInt\n"
-msgstr ""
+msgstr "entier de taille %lu non supporté par pqPutInt\n"
 
 #: fe-misc.c:357 fe-misc.c:391 fe-misc.c:779
 #, c-format
