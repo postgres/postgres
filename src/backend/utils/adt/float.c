@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.36 1999/01/10 17:13:06 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.37 1999/01/17 03:28:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,6 +69,10 @@
 #endif
 #ifndef SHRT_MIN
 #define SHRT_MIN (-32768)
+#endif
+
+#ifndef NAN
+#define NAN		(0.0/0.0)
 #endif
 
 #define FORMAT			'g'		/* use "g" output format as standard
