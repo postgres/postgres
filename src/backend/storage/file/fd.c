@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.82 2001/06/18 16:13:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.83 2001/08/04 19:42:34 momjian Exp $
  *
  * NOTES:
  *
@@ -290,8 +290,13 @@ pg_nofile(void)
 		no_files = sysconf(_SC_OPEN_MAX);
 		if (no_files == -1)
 		{
+/* tweak for Hurd, which does not support NOFILE */
+#ifdef NOFILE
 			elog(DEBUG, "pg_nofile: Unable to get _SC_OPEN_MAX using sysconf(); using %d", NOFILE);
 			no_files = (long) NOFILE;
+#else
+			elog(FATAL, "pg_nofile: Unable to get _SC_OPEN_MAX using sysconf() and NOFILE is undefined");
+#endif
 		}
 #endif
 
