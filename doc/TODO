@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Jan  4 16:32:12 EST 2002
+Last updated:		Fri Jan  4 23:03:33 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -359,7 +359,7 @@ CACHE
 * Shared catalog cache, reduce lseek()'s by caching table size in shared area
 * Add free-behind capability for large sequential scans (Bruce)
 * Allow binding query args over FE/BE protocol
-* Consider use of open/fctl(O_DIRECT) to minimize OS caching
+* Consider use of open/fcntl(O_DIRECT) to minimize OS caching
 * Make blind writes go through the file descriptor cache
 
 VACUUM
