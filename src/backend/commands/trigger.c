@@ -41,7 +41,7 @@ void
 CreateTrigger(CreateTrigStmt *stmt)
 {
 	int16		tgtype;
-	int16		tgattr[FUNC_MAX_ARGS] = {0};
+	int16		tgattr[FUNC_MAX_ARGS];
 	Datum		values[Natts_pg_trigger];
 	char		nulls[Natts_pg_trigger];
 	Relation	rel;
@@ -228,6 +228,7 @@ CreateTrigger(CreateTrigStmt *stmt)
 		values[Anum_pg_trigger_tgnargs - 1] = Int16GetDatum(0);
 		values[Anum_pg_trigger_tgargs - 1] = PointerGetDatum(byteain(""));
 	}
+	MemSet(tgattr, 0, FUNC_MAX_ARGS * sizeof(int16));
 	values[Anum_pg_trigger_tgattr - 1] = PointerGetDatum(tgattr);
 
 	tuple = heap_formtuple(tgrel->rd_att, values, nulls);
