@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.66 2000/11/10 03:53:44 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.67 2000/11/23 01:08:57 vadim Exp $
  *
  * NOTES:
  *
@@ -672,9 +672,9 @@ fileNameOpenFile(FileName fileName,
 	 */
 	if (fileFlags & O_CREAT)
 		vfdP->fdstate = FD_DIRTY;
-#else
-	vfdP->fdstate = 0x0;
+	else
 #endif
+		vfdP->fdstate = 0x0;
 
 	return file;
 }
