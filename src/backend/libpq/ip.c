@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/ip.c,v 1.22 2003/09/08 00:56:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/ip.c,v 1.23 2003/09/12 20:18:51 tgl Exp $
  *
  * This file and the IPV6 implementation were initially provided by
  * Nigel Kukard <nkukard@lbsd.net>, Linux Based Systems Design
@@ -252,7 +252,7 @@ getnameinfo_unix(const struct sockaddr_un * sa, int salen,
 
 	if (node)
 	{
-		ret = snprintf(node, nodelen, "%s", "localhost");
+		ret = snprintf(node, nodelen, "%s", "[local]");
 		if (ret == -1 || ret > nodelen)
 			return EAI_MEMORY;
 	}
