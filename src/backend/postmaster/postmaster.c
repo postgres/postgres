@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.85 1998/06/09 04:06:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.86 1998/06/09 17:13:03 momjian Exp $
  *
  * NOTES
  *
@@ -324,7 +324,7 @@ PostmasterMain(int argc, char *argv[])
 			new_argv[i] = "";
 		new_argv[4] = NULL;
 
-		if (!Execfile[0] && FindExec(Execfile, argv[0]) < 0)
+		if (!Execfile[0] && FindExec(Execfile, argv[0], "postmaster") < 0)
 		{
 			fprintf(stderr, "%s: could not find postmaster to execute...\n",
 					argv[0]);
@@ -385,7 +385,7 @@ PostmasterMain(int argc, char *argv[])
 				break;
 			case 'b':
 				/* Set the backend executable file to use. */
-				if (!ValidateBackend(optarg))
+				if (!ValidateBinary(optarg))
 					strcpy(Execfile, optarg);
 				else
 				{
@@ -479,7 +479,7 @@ PostmasterMain(int argc, char *argv[])
 		exit(2);
 	}
 
-	if (!Execfile[0] && FindExec(Execfile, argv[0]) < 0)
+	if (!Execfile[0] && FindExec(Execfile, argv[0], "postgres") < 0)
 	{
 		fprintf(stderr, "%s: could not find backend to execute...\n",
 				argv[0]);

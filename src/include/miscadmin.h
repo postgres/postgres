@@ -11,7 +11,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.25 1998/06/08 22:28:30 momjian Exp $
+ * $Id: miscadmin.h,v 1.26 1998/06/09 17:13:06 momjian Exp $
  *
  * NOTES
  *	  some of the information in this file will be moved to
@@ -125,8 +125,8 @@ extern char *getpgusername(void);
 extern void SetPgUserName(void);
 extern Oid	GetUserId(void);
 extern void SetUserId(void);
-extern int	ValidateBackend(char *path);
-extern int	FindExec(char *backend, char *argv0);
+extern int	ValidateBinary(char *path);
+extern int	FindExec(char *backend, char *argv0, char *binary_name);
 extern int	CheckPathAccess(char *path, char *name, int open_mode);
 
 /* lower case version for case-insensitive SQL referenced in pg_proc.h */

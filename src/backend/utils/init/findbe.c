@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/Attic/findbe.c,v 1.8 1998/06/08 22:28:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/Attic/findbe.c,v 1.9 1998/06/09 17:13:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,14 +34,14 @@
 #endif
 
 /*
- * ValidateBackend -- validate "path" as a POSTGRES executable file
+ * ValidateBinary -- validate "path" as a POSTMASTER/POSTGRES executable file
  *
  * returns 0 if the file is found and no error is encountered.
  *		  -1 if the regular file "path" does not exist or cannot be executed.
  *		  -2 if the file is otherwise valid but cannot be read.
  */
 int
-ValidateBackend(char *path)
+ValidateBinary(char *path)
 {
 	struct stat buf;
 	uid_t		euid;
@@ -61,7 +61,7 @@ ValidateBackend(char *path)
 	if (strlen(path) >= MAXPGPATH)
 	{
 		if (DebugLvl > 1)
-			fprintf(stderr, "ValidateBackend: pathname \"%s\" is too long\n",
+			fprintf(stderr, "ValidateBinary: pathname \"%s\" is too long\n",
 					path);
 		return (-1);
 	}
@@ -69,14 +69,14 @@ ValidateBackend(char *path)
 	if (stat(path, &buf) < 0)
 	{
 		if (DebugLvl > 1)
-			fprintf(stderr, "ValidateBackend: can't stat \"%s\"\n",
+			fprintf(stderr, "ValidateBinary: can't stat \"%s\"\n",
 					path);
 		return (-1);
 	}
 	if (!(buf.st_mode & S_IFREG))
 	{
 		if (DebugLvl > 1)
-			fprintf(stderr, "ValidateBackend: \"%s\" is not a regular file\n",
+			fprintf(stderr, "ValidateBinary: \"%s\" is not a regular file\n",
 					path);
 		return (-1);
 	}
@@ -85,7 +85,7 @@ ValidateBackend(char *path)
 	 * Ensure that we are using an authorized backend.
 	 *
 	 * XXX I'm open to suggestions here.  I would like to enforce ownership
-	 * of backends by user "postgres" but people seem to like to run as
+	 * of binaries by user "postgres" but people seem to like to run as
 	 * users other than "postgres"...
 	 */
 
@@ -102,7 +102,7 @@ ValidateBackend(char *path)
 		is_r = buf.st_mode & S_IRUSR;
 		is_x = buf.st_mode & S_IXUSR;
 		if (DebugLvl > 1 && !(is_r && is_x))
-			fprintf(stderr, "ValidateBackend: \"%s\" is not user read/execute\n",
+			fprintf(stderr, "ValidateBinary: \"%s\" is not user read/execute\n",
 					path);
 		return (is_x ? (is_r ? 0 : -2) : -1);
 	}
@@ -130,7 +130,7 @@ ValidateBackend(char *path)
 			is_r = buf.st_mode & S_IRGRP;
 			is_x = buf.st_mode & S_IXGRP;
 			if (DebugLvl > 1 && !(is_r && is_x))
-				fprintf(stderr, "ValidateBackend: \"%s\" is not group read/execute\n",
+				fprintf(stderr, "ValidateBinary: \"%s\" is not group read/execute\n",
 						path);
 			return (is_x ? (is_r ? 0 : -2) : -1);
 		}
@@ -138,7 +138,7 @@ ValidateBackend(char *path)
 	is_r = buf.st_mode & S_IROTH;
 	is_x = buf.st_mode & S_IXOTH;
 	if (DebugLvl > 1 && !(is_r && is_x))
-		fprintf(stderr, "ValidateBackend: \"%s\" is not other read/execute\n",
+		fprintf(stderr, "ValidateBinary: \"%s\" is not other read/execute\n",
 				path);
 	return (is_x ? (is_r ? 0 : -2) : -1);
 }
@@ -147,11 +147,12 @@ ValidateBackend(char *path)
  * FindExec -- find an absolute path to a valid backend executable
  *
  * The reason we have to work so hard to find an absolute path is that
- * we need to feed the backend server the location of its actual
- * executable file -- otherwise, we can't do dynamic loading.
+ * we need to feed the binary the location of its actual executable file,
+ * otherwise, we can't do dynamic loading.  It needs a full pathname because
+ * we change directories to the /data directory.
  */
 int
-FindExec(char *backend, char *argv0)
+FindExec(char *full_path, char *argv0, char *binary_name)
 {
 	char		buf[MAXPGPATH + 2];
 	char	   *p;
@@ -161,7 +162,7 @@ FindExec(char *backend, char *argv0)
 	int			pathlen;
 
 	/*
-	 * for the postmaster: First try: use the backend that's located in
+	 * for the postmaster: First try: use the binary that's located in
 	 * the same directory as the postmaster, if it was invoked with an
 	 * explicit path. Presumably the user used an explicit path because it
 	 * wasn't in PATH, and we don't want to use incompatible executables.
@@ -171,7 +172,7 @@ FindExec(char *backend, char *argv0)
 	 * trees (obj/post{master,gres}) because they all put the two binaries
 	 * in the same place.
 	 *
-	 * for the backend server: First try: if we're given some kind of path,
+	 * for the binary: First try: if we're given some kind of path,
 	 * use it (making sure that a relative path is made absolute before
 	 * returning it).
 	 */
@@ -183,16 +184,16 @@ FindExec(char *backend, char *argv0)
 			strcat(buf, "/");
 		strcat(buf, argv0);
 		p = strrchr(buf, '/');
-		strcpy(++p, "postgres");
-		if (!ValidateBackend(buf))
+		strcpy(++p, binary_name);
+		if (!ValidateBinary(buf))
 		{
-			strncpy(backend, buf, MAXPGPATH);
+			strncpy(full_path, buf, MAXPGPATH);
 			if (DebugLvl)
 				fprintf(stderr, "FindExec: found \"%s\" using argv[0]\n",
-						backend);
+						full_path);
 			return (0);
 		}
-		fprintf(stderr, "FindExec: invalid backend \"%s\"\n",
+		fprintf(stderr, "FindExec: invalid binary \"%s\"\n",
 				buf);
 		return (-1);
 	}
@@ -219,20 +220,21 @@ FindExec(char *backend, char *argv0)
 			if (*startp == '/' || !getcwd(buf, MAXPGPATH))
 				buf[0] = '\0';
 			strcat(buf, startp);
-			strcat(buf, "/postgres");
-			switch (ValidateBackend(buf))
+			strcat(buf, "/");
+			strcat(buf, binary_name);
+			switch (ValidateBinary(buf))
 			{
 				case 0: /* found ok */
-					strncpy(backend, buf, MAXPGPATH);
+					strncpy(full_path, buf, MAXPGPATH);
 					if (DebugLvl)
 						fprintf(stderr, "FindExec: found \"%s\" using PATH\n",
-								backend);
+								full_path);
 					free(path);
 					return (0);
 				case -1:		/* wasn't even a candidate, keep looking */
 					break;
 				case -2:		/* found but disqualified */
-					fprintf(stderr, "FindExec: could not read backend \"%s\"\n",
+					fprintf(stderr, "FindExec: could not read binary \"%s\"\n",
 							buf);
 					free(path);
 					return (-1);
@@ -243,6 +245,6 @@ FindExec(char *backend, char *argv0)
 		free(path);
 	}
 
-	fprintf(stderr, "FindExec: could not find a backend to execute...\n");
+	fprintf(stderr, "FindExec: could not find a %s to execute...\n", binary_name);
 	return (-1);
 }
