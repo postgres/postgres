@@ -7,6 +7,12 @@ All work was done by Teodor Sigaev (teodor@stack.net) and Oleg Bartunov
 for additional information.
 
 CHANGES:
+     Oct 10 MSD 2001
+
+     1. Implemented new linear algorithm for picksplit
+         ref. ( 'New Linear Node Splitting Algorithm for R-tree',
+               C.H.Ang and T.C.Tan )
+
      Tue May 29 17:04:16 MSD 2001
      
      1. Small fixes in polygon code
