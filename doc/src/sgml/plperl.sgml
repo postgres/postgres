@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/plperl.sgml,v 2.13 2002/01/08 05:39:26 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/plperl.sgml,v 2.14 2002/01/08 16:13:41 petere Exp $
 -->
 
 <chapter id="plperl">
@@ -178,13 +178,14 @@ CREATE FUNCTION badfunc() RETURNS integer AS '
    <literal>plperlu</>, execution would succeed.
   </para>
   <para>
-   Access to database itself from your Perl function can be done via
+   Access to the database itself from your Perl function can be done via
    an experimental module <ulink
-   url="http://cpan.digisle.net/authors/id/A/AP/APILOS/"><literal>DBD::PgSPI</literal></ulink>
-   (also on <ulink url="http://www.cpan.org">CPAN</ulink>). This
-   module makes available a <acronym>DBI</>-compliant database-handle
-   named <varname>$pg_dbh</varname>, and you can use that to perform
-   queries with normal <acronym>DBI</> syntax.
+   url="http://www.cpan.org/modules/by-module/DBD/APILOS/"><literal>DBD::PgSPI</literal></ulink>
+   (also available at <ulink url="http://www.cpan.org/SITES.html">CPAN
+   mirror sites</ulink>). This module makes available a
+   <acronym>DBI</>-compliant database-handle named
+   <varname>$pg_dbh</varname> that can be used to perform queries
+   with normal <acronym>DBI</> syntax.
   </para>
 
  </sect1>
