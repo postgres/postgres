@@ -165,7 +165,7 @@ The following arguments are used on Windows only:
 -N service user: Name of the Windows user account under which the service
    will run. Only used when installing as a Windows service.
    
--W service password: The password for the service account.Only used when 
+-W service password: The password for the service account. Only used when 
    installing as a Windows service.
 
 -R Uninstall pg_autovacuum as a service.
