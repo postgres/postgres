@@ -1,6 +1,6 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/notify.sgml,v 1.15 2001/09/13 15:55:24 petere Exp $
-Postgres documentation
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/notify.sgml,v 1.16 2001/12/08 03:24:37 thomas Exp $
+PostgreSQL documentation
 -->
 
 <refentry id="SQL-NOTIFY">
@@ -112,7 +112,7 @@ NOTIFY
   <para>
    <command>NOTIFY</command> provides a simple form of signal or
    IPC (interprocess communication) mechanism for a collection of processes
-   accessing the same <productname>Postgres</productname> database.
+   accessing the same <productname>PostgreSQL</productname> database.
    Higher-level mechanisms can be built by using tables in the database to
    pass additional data (beyond a mere condition name) from notifier to
    listener(s).
@@ -158,13 +158,13 @@ NOTIFY
    notify event, just like all the other listening frontends.  Depending on the
    application logic, this could result in useless work---for example,
    re-reading a database table to find the same updates that that frontend just
-   wrote out.  In <productname>Postgres</productname> 6.4 and later, it is
+   wrote out.  In <productname>PostgreSQL</productname> 6.4 and later, it is
    possible to avoid such extra work by noticing whether the notifying backend
    process's PID (supplied in the notify event message) is the same as one's own
    backend's PID (available from libpq).  When they are the same, the notify
    event is one's own work bouncing back, and can be ignored.  (Despite what was
    said in the preceding paragraph, this is a safe technique.
-   <productname>Postgres</productname> keeps self-notifies separate from notifies
+   <productname>PostgreSQL</productname> keeps self-notifies separate from notifies
    arriving from other backends, so you cannot miss an outside notify by ignoring
    your own notifies.)
   </para>
@@ -186,13 +186,13 @@ NOTIFY
    </para>
    <para>
     In some previous releases of
-    <productname>Postgres</productname>,
+    <productname>PostgreSQL</productname>,
     <replaceable class="PARAMETER">name</replaceable>
     had to be enclosed in double-quotes when it did not correspond to any existing
     table name, even if syntactically valid as a name.  That is no longer required.
    </para>
    <para>
-    In <productname>Postgres</productname> releases prior to 6.4, the backend
+    In <productname>PostgreSQL</productname> releases prior to 6.4, the backend
     PID delivered in a notify message was always the PID of the frontend's own
     backend.  So it was not possible to distinguish one's own notifies from other
     clients' notifies in those earlier releases.

@@ -1,6 +1,6 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.21 2001/11/18 22:17:30 tgl Exp $
-Postgres documentation
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.22 2001/12/08 03:24:39 thomas Exp $
+PostgreSQL documentation
 -->
 
 <refentry id="SQL-VACUUM">
@@ -163,7 +163,7 @@ NOTICE:  Index <replaceable class="PARAMETER">index</replaceable>: Pages 28;
   </title>
   <para>
    <command>VACUUM</command> reclaims storage occupied by deleted tuples.
-   In normal <productname>Postgres</productname> operation, tuples that
+   In normal <productname>PostgreSQL</productname> operation, tuples that
    are DELETEd or obsoleted by UPDATE are not physically removed from
    their table; they remain present until a <command>VACUUM</command> is
    done.  Therefore it's necessary to do <command>VACUUM</command>
@@ -226,7 +226,7 @@ NOTICE:  Index <replaceable class="PARAMETER">index</replaceable>: Pages 28;
     ANALYZE</command> command for the affected table. This will update the
     system catalogs with
     the results of all recent changes, and allow the
-    <productname>Postgres</productname> query optimizer to make better
+    <productname>PostgreSQL</productname> query optimizer to make better
     choices in planning user queries.
    </para>
 

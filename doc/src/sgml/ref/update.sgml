@@ -1,6 +1,6 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/update.sgml,v 1.17 2001/09/13 15:55:24 petere Exp $
-Postgres documentation
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/update.sgml,v 1.18 2001/12/08 03:24:39 thomas Exp $
+PostgreSQL documentation
 -->
 
 <refentry id="SQL-UPDATE">
@@ -64,7 +64,7 @@ UPDATE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> SET <replacea
       <term><replaceable class="PARAMETER">fromlist</replaceable></term>
       <listitem>
        <para>
-	A <productname>Postgres</productname>
+	A <productname>PostgreSQL</productname>
 	non-standard extension to allow columns
 	from other tables to appear in the WHERE condition.
        </para>

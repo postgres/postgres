@@ -1,6 +1,6 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuumdb.sgml,v 1.19 2001/11/28 20:49:10 petere Exp $
-Postgres documentation
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuumdb.sgml,v 1.20 2001/12/08 03:24:40 thomas Exp $
+PostgreSQL documentation
 -->
 
 <refentry id="APP-VACUUMDB">

@@ -1,6 +1,6 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pgtksh.sgml,v 1.3 2001/03/06 17:43:56 petere Exp $
-Postgres documentation
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pgtksh.sgml,v 1.4 2001/12/08 03:24:38 thomas Exp $
+PostgreSQL documentation
 -->
 
 <refentry id="APP-PGTKSH">
@@ -37,7 +37,7 @@ Postgres documentation
 
   <para>
    <command>pgtksh</command> is a <application>Tcl/Tk</application>
-   shell interface extended with <productname>Postgres</productname>
+   shell interface extended with <productname>PostgreSQL</productname>
    database access functions.  (Essentially, it is
    <command>wish</command> with <filename>libpgtcl</filename> loaded.)
    Like with <command>wish</command>, the regular
@@ -50,7 +50,7 @@ Postgres documentation
 
   <para>
    A plain <application>Tcl</application> shell with
-   <productname>Postgres</productname> functions is available as <xref
+   <productname>PostgreSQL</productname> functions is available as <xref
    linkend="app-pgtclsh">.
   </para>
  </refsect1>

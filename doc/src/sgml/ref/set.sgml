@@ -1,6 +1,6 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.53 2001/09/03 12:57:50 petere Exp $
-Postgres documentation
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.54 2001/12/08 03:24:39 thomas Exp $
+PostgreSQL documentation
 -->
 
 <refentry id="SQL-SET">
@@ -65,7 +65,7 @@ SET TIME ZONE { '<replaceable class="PARAMETER">timezone</replaceable>' | LOCAL 
 
       <para>
        This option is only available if
-       <productname>Postgres</productname> is build with multibyte
+       <productname>PostgreSQL</productname> is build with multibyte
        support.
       </para>
      </listitem>
@@ -106,10 +106,10 @@ SET TIME ZONE { '<replaceable class="PARAMETER">timezone</replaceable>' | LOCAL 
 	</varlistentry>
 
         <varlistentry>
-	 <term>Postgres</term>
+	 <term>PostgreSQL</term>
 	 <listitem>
 	  <para>
-	   Use traditional <productname>Postgres</productname> format.
+	   Use traditional <productname>PostgreSQL</productname> format.
 	  </para>
 	 </listitem>
 	</varlistentry>
@@ -127,7 +127,7 @@ SET TIME ZONE { '<replaceable class="PARAMETER">timezone</replaceable>' | LOCAL 
 
       <para>
        The following two options determine both a substyle of the
-       <quote>SQL</quote> and <quote>Postgres</quote> output formats
+       <quote>SQL</quote> and <quote>PostgreSQL</quote> output formats
        and the preferred interpretation of ambiguous date input.
 
        <variablelist>
@@ -225,7 +225,7 @@ SELECT setseed(<replaceable>value</replaceable>);
 
        <para>
 	This option is only available if
-	<productname>Postgres</productname> was built with multibyte
+	<productname>PostgreSQL</productname> was built with multibyte
 	support.
        </para>
       </listitem>
@@ -357,9 +357,10 @@ SELECT setseed(<replaceable>value</replaceable>);
  <refsect1>
   <title>Examples</title>
   <para>
-   Set the style of date to traditional Postgres with European conventions:
+   Set the style of date to traditional
+   <productname>PostgreSQL</productname> with European conventions:
 <screen>
-SET DATESTYLE TO Postgres,European;
+SET DATESTYLE TO PostgreSQL,European;
 </screen>
 
    Set the time zone for Berkeley, California, using double quotes to
@@ -402,7 +403,7 @@ SELECT CURRENT_TIMESTAMP AS today;
     attempts to mimic <acronym>SQL92</acronym>. However, SQL allows
     only numeric time zone offsets. All other parameter settings as
     well as the first syntax shown above are a
-    <productname>Postgres</productname> extension.
+    <productname>PostgreSQL</productname> extension.
    </para>
   </refsect2>
  </refsect1>

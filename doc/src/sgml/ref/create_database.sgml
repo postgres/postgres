@@ -1,6 +1,6 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_database.sgml,v 1.21 2001/11/18 00:38:00 tgl Exp $
-Postgres documentation
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_database.sgml,v 1.22 2001/12/08 03:24:34 thomas Exp $
+PostgreSQL documentation
 -->
 
 <refentry id="SQL-CREATEDATABASE">
@@ -170,7 +170,7 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
   </title>
   <para>
    <command>CREATE DATABASE</command> creates a new
-   <productname>Postgres</productname> database.
+   <productname>PostgreSQL</productname> database.
    The creator becomes the owner of the new database.
   </para>
 
@@ -201,7 +201,8 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
    <replaceable class="parameter">name</replaceable>.  In particular,
    by writing <literal>TEMPLATE = template0</>, you can create a virgin
    database containing only the standard objects predefined by your
-   version of Postgres.  This is useful if you wish to avoid copying
+   version of <application>PostgreSQL</application>.  This is useful
+   if you wish to avoid copying
    any installation-local objects that may have been added to
    <literal>template1</>. 
   </para>
@@ -226,7 +227,7 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
     Notes
    </title>
    <para>
-    <command>CREATE DATABASE</command> is a <productname>Postgres</productname>
+    <command>CREATE DATABASE</command> is a <productname>PostgreSQL</productname>
     language extension.
    </para>
    <para>
@@ -250,7 +251,7 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
 comment from Olly; response from Thomas...
   <comment>
    initlocation does not create a PG_VERSION file in the specified location.
-   How will Postgres handle the situation if it is upgraded to an 
+   How will PostgreSQL handle the situation if it is upgraded to an 
    incompatible database version?
   </comment>
    Hmm. This isn't an issue since the upgrade would do
@@ -287,7 +288,14 @@ comment from Olly; response from Thomas...
    <programlisting>
 <prompt>$</prompt> <userinput>mkdir private_db</userinput>
 <prompt>$</prompt> <userinput>initlocation ~/private_db</userinput>
-<computeroutput>Creating Postgres database system directory /home/olly/private_db/base</computeroutput>
+    <computeroutput>
+The location will be initialized with username "olly".
+This user will own all the files and must also own the server process.
+Creating directory /home/olly/private_db
+Creating directory /home/olly/private_db/base
+
+initlocation is complete.
+    </computeroutput>
    
 <prompt>$</prompt> <userinput>psql olly</userinput>
 <computeroutput>

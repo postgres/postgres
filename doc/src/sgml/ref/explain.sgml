@@ -1,6 +1,6 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/explain.sgml,v 1.13 2001/09/18 01:59:05 tgl Exp $
-Postgres documentation
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/explain.sgml,v 1.14 2001/12/08 03:24:36 thomas Exp $
+PostgreSQL documentation
 -->
 
 <refentry id="SQL-EXPLAIN">
@@ -82,7 +82,7 @@ NOTICE:  QUERY PLAN:
       </computeroutput></term>
       <listitem>
        <para>
-	Explicit query plan from the <productname>Postgres</productname> backend.
+	Explicit query plan from the <productname>PostgreSQL</productname> backend.
        </para>
       </listitem>
      </varlistentry>
@@ -110,7 +110,8 @@ EXPLAIN
   </title>
 
   <para>
-   This command displays the execution plan that the Postgres planner
+   This command displays the execution plan that the
+   <application>PostgreSQL</application> planner
    generates for the supplied query.  The execution plan shows how
    the table(s) referenced by the query will be scanned---by plain
    sequential scan, index scan, etc.---and if multiple tables are
@@ -143,7 +144,8 @@ EXPLAIN
   <para>
    The VERBOSE option emits the full internal representation of the plan tree,
    rather than just a summary (and sends it to the postmaster log file, too).
-   Usually this option is only useful for debugging Postgres.
+   Usually this option is only useful for debugging
+   <application>PostgreSQL</application>. 
   </para>
 
   <caution>
@@ -172,7 +174,7 @@ ROLLBACK;
    </title>
    <para>
     There is only sparse documentation on the optimizer's use of cost
-    information in <productname>Postgres</productname>.
+    information in <productname>PostgreSQL</productname>.
     Refer to the <citetitle>User's Guide</citetitle> and
     <citetitle>Programmer's Guide</citetitle> for more information.
    </para>
@@ -236,7 +238,8 @@ Aggregate  (cost=0.42..0.42 rows=1 width=4)
 
   <para>
    Note that the specific numbers shown, and even the selected query
-   strategy, may vary between Postgres releases due to planner improvements.
+   strategy, may vary between <application>PostgreSQL</application>
+   releases due to planner improvements.
   </para>
  </refsect1>
 

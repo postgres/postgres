@@ -1,6 +1,6 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.49 2001/11/18 20:35:02 petere Exp $
-Postgres documentation
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.50 2001/12/08 03:24:35 thomas Exp $
+PostgreSQL documentation
 -->
 
 <refentry id="SQL-CREATETABLE">
@@ -186,7 +186,8 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
      </para>
 <!--
      <para>
-      Postgres automatically allows the created table to inherit
+      <application>PostgreSQL</application> automatically allows the
+     created table to inherit
       functions on tables above it in the inheritance hierarchy; that
       is, if we create table <literal>foo</literal> inheriting from
       <literal>bar</literal>, then functions that accept the tuple

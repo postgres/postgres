@@ -1,6 +1,6 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/cluster.sgml,v 1.12 2001/10/31 04:49:43 momjian Exp $
-Postgres documentation
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/cluster.sgml,v 1.13 2001/12/08 03:24:34 thomas Exp $
+PostgreSQL documentation
 -->
 
 <refentry id="SQL-CLUSTER">
@@ -114,7 +114,7 @@ ERROR: Relation <replaceable class="PARAMETER">table</replaceable> does not exis
    Description
   </title>
   <para>
-   <command>CLUSTER</command> instructs <productname>Postgres</productname> 
+   <command>CLUSTER</command> instructs <productname>PostgreSQL</productname> 
    to cluster the table specified
    by <replaceable class="parameter">table</replaceable> approximately
    based on the index specified by
@@ -174,7 +174,7 @@ ERROR: Relation <replaceable class="PARAMETER">table</replaceable> does not exis
     on large tables because the rows are fetched from the heap
     in index order, and if the heap table is unordered, the
     entries are on random pages, so there is one disk page
-    retrieved for every row moved. <productname>Postgres</productname> has a cache,
+    retrieved for every row moved. <productname>PostgreSQL</productname> has a cache,
     but the majority of a big table will not fit in the cache.
    </para>
 
@@ -186,7 +186,7 @@ SELECT <replaceable class="parameter">columnlist</replaceable> INTO TABLE <repla
      FROM <replaceable class="parameter">table</replaceable> ORDER BY <replaceable class="parameter">columnlist</replaceable>
     </programlisting>
 
-    which uses the <productname>Postgres</productname> sorting code in 
+    which uses the <productname>PostgreSQL</productname> sorting code in 
     the ORDER BY clause to match the index, and which is much faster for
     unordered data. You then drop the old table, use
     <command>ALTER TABLE...RENAME</command>

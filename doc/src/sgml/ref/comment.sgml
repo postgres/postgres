@@ -1,6 +1,6 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/comment.sgml,v 1.10 2001/10/03 20:54:20 tgl Exp $
-Postgres documentation
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/comment.sgml,v 1.11 2001/12/08 03:24:34 thomas Exp $
+PostgreSQL documentation
 -->
 
 <refentry id="SQL-COMMENT">

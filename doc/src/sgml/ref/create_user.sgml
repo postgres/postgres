@@ -1,6 +1,6 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_user.sgml,v 1.21 2001/09/21 20:31:45 tgl Exp $
-Postgres documentation
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_user.sgml,v 1.22 2001/12/08 03:24:35 thomas Exp $
+PostgreSQL documentation
 -->
 
 <refentry id="SQL-CREATEUSER">
@@ -59,7 +59,7 @@ where <replaceable class="PARAMETER">option</replaceable> can be:
       <listitem>
        <para>
         The <literal>SYSID</literal> clause can be used to choose
-        the <productname>Postgres</productname> user id of the user
+        the <productname>PostgreSQL</productname> user id of the user
         that is being created. It is not at all necessary that those
         match the <acronym>UNIX</acronym> user ids, but some people
         choose to keep the numbers the same.
@@ -193,7 +193,7 @@ where <replaceable class="PARAMETER">option</replaceable> can be:
   </title>
   <para>
    <command>CREATE USER</command> will add a new user to an instance of 
-   <productname>Postgres</productname>. Refer to the administrator's
+   <productname>PostgreSQL</productname>. Refer to the administrator's
    guide for information about managing users and authentication.
    You must be a database superuser to use this command.
   </para>
@@ -203,7 +203,7 @@ where <replaceable class="PARAMETER">option</replaceable> can be:
    endterm="SQL-DROPUSER-title"> to remove a user.
    Use <xref linkend="SQL-ALTERGROUP" endterm="SQL-ALTERGROUP-title">
    to add or remove the user from other groups.
-   <productname>Postgres</productname>
+   <productname>PostgreSQL</productname>
    comes with a script <xref linkend="APP-CREATEUSER"
    endterm="APP-CREATEUSER-title">
    which has the same functionality as this command (in fact, it calls this command)

@@ -1,6 +1,6 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_group.sgml,v 1.5 2001/09/14 07:59:31 ishii Exp $
-Postgres documentation
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_group.sgml,v 1.6 2001/12/08 03:24:34 thomas Exp $
+PostgreSQL documentation
 -->
 
 <refentry id="SQL-CREATEGROUP">
@@ -55,7 +55,7 @@ where <replaceable class="PARAMETER">option</replaceable> can be:
       <listitem>
        <para>
         The <literal>SYSID</literal> clause can be used to choose
-        the <productname>Postgres</productname> group id of the new
+        the <productname>PostgreSQL</productname> group id of the new
         group. It is not necessary to do so, however.
        </para>
        <para>

@@ -1,6 +1,6 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/truncate.sgml,v 1.4 2001/11/18 21:14:20 tgl Exp $
-Postgres documentation
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/truncate.sgml,v 1.5 2001/12/08 03:24:39 thomas Exp $
+PostgreSQL documentation
 -->
 
 <refentry id="SQL-TRUNCATE">

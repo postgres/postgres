@@ -1,6 +1,6 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/createlang.sgml,v 1.20 2001/11/28 20:49:10 petere Exp $
-Postgres documentation
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/createlang.sgml,v 1.21 2001/12/08 03:24:35 thomas Exp $
+PostgreSQL documentation
 -->
 
 <refentry id="APP-CREATELANG">

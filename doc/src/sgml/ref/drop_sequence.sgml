@@ -1,6 +1,6 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_sequence.sgml,v 1.10 2001/09/03 12:57:49 petere Exp $
-Postgres documentation
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_sequence.sgml,v 1.11 2001/12/08 03:24:36 thomas Exp $
+PostgreSQL documentation
 -->
 
 <refentry id="SQL-DROPSEQUENCE">
@@ -105,7 +105,7 @@ ERROR: sequence "<replaceable class="parameter">name</replaceable>" does not exi
    </title>
    <para>
     The <command>DROP SEQUENCE</command> statement is a
-    <productname>Postgres</productname>
+    <productname>PostgreSQL</productname>
     language extension.
    </para>
    <para>

@@ -1,6 +1,6 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_database.sgml,v 1.13 2001/11/18 00:38:00 tgl Exp $
-Postgres documentation
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_database.sgml,v 1.14 2001/12/08 03:24:35 thomas Exp $
+PostgreSQL documentation
 -->
 
 <refentry id="SQL-DROPDATABASE">
@@ -148,7 +148,7 @@ DROP DATABASE <replaceable class="PARAMETER">name</replaceable>
 
    <para>
     <command>DROP DATABASE</command> statement is a
-    <productname>Postgres</productname> language extension;
+    <productname>PostgreSQL</productname> language extension;
     there is no such command in <acronym>SQL92</acronym>.
    </para>
   </refsect2>

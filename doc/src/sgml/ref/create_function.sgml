@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.29 2001/11/18 20:35:02 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.30 2001/12/08 03:24:34 thomas Exp $
 -->
 
 <refentry id="SQL-CREATEFUNCTION">
@@ -200,7 +200,7 @@ CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable>
     Refer to the chapter in the
     <citetitle>PostgreSQL Programmer's Guide</citetitle>
     on the topic of extending
-    <productname>Postgres</productname> via functions 
+    <productname>PostgreSQL</productname> via functions 
     for further information on writing external functions.
    </para>
 
@@ -215,7 +215,7 @@ CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable>
    </para>
 
    <para>
-    <productname>Postgres</productname> allows function <firstterm>overloading</firstterm>;
+    <productname>PostgreSQL</productname> allows function <firstterm>overloading</firstterm>;
     that is, the same name can be used for several different functions
     so long as they have distinct argument types.  This facility must
     be used with caution for internal and C-language functions, however.    

@@ -1,6 +1,6 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_aggregate.sgml,v 1.13 2001/10/03 20:54:20 tgl Exp $
-Postgres documentation
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_aggregate.sgml,v 1.14 2001/12/08 03:24:35 thomas Exp $
+PostgreSQL documentation
 -->
 
 <refentry id="SQL-DROPAGGREGATE">
@@ -153,7 +153,7 @@ DROP AGGREGATE myavg(int4);
    <para>
     There is no <command>DROP AGGREGATE</command> statement
     in <acronym>SQL92</acronym>; the statement is a
-    <productname>Postgres</productname>
+    <productname>PostgreSQL</productname>
     language extension.
    </para>
   </refsect2>

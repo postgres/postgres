@@ -1,6 +1,6 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_aggregate.sgml,v 1.15 2001/09/13 15:55:24 petere Exp $
-Postgres documentation
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_aggregate.sgml,v 1.16 2001/12/08 03:24:34 thomas Exp $
+PostgreSQL documentation
 -->
 
 <refentry id="SQL-CREATEAGGREGATE">
@@ -157,7 +157,7 @@ CREATE
   </title>
   <para>
    <command>CREATE AGGREGATE</command> 
-   allows a user or programmer to extend <productname>Postgres</productname>
+   allows a user or programmer to extend <productname>PostgreSQL</productname>
    functionality by defining new aggregate functions. Some aggregate functions
    for base types such as <function>min(integer)</function>
    and <function>avg(double precision)</function> are already provided in the base
@@ -185,7 +185,7 @@ CREATE
    </programlisting>
   </para>
   <para>
-   <productname>Postgres</productname> creates a temporary variable
+   <productname>PostgreSQL</productname> creates a temporary variable
    of data type <replaceable class="PARAMETER">stype</replaceable>
    to hold the current internal state of the aggregate.  At each input
    data item,
@@ -284,7 +284,7 @@ CREATE
    </title>
    <para>
     <command>CREATE AGGREGATE</command> 
-    is a <productname>Postgres</productname> language extension.
+    is a <productname>PostgreSQL</productname> language extension.
     There is no <command>CREATE AGGREGATE</command> in SQL92.
    </para>
   </refsect2>

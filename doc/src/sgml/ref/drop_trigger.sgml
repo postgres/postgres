@@ -1,6 +1,6 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_trigger.sgml,v 1.8 2001/09/13 18:17:44 petere Exp $
-Postgres documentation
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_trigger.sgml,v 1.9 2001/12/08 03:24:36 thomas Exp $
+PostgreSQL documentation
 -->
 
 <refentry id="SQL-DROPTRIGGER">

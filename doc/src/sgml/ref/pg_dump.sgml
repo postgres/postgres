@@ -1,6 +1,6 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.40 2001/11/28 20:49:10 petere Exp $
-Postgres documentation
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.41 2001/12/08 03:24:37 thomas Exp $
+PostgreSQL documentation
 -->
 
 <refentry id="APP-PGDUMP">
@@ -670,9 +670,9 @@ connectDBStart() -- connect() failed: No such file or directory
 
   <para>
    The <command>pg_dump</command> utility first appeared in
-   <application>Postgres95 release 0.02</application>.  The
+   <application>Postgres95</application> release <literal>0.02</literal>.  The
    non-plain-text output formats were introduced in
-   <application>PostgreSQL 7.1</application>.
+   <application>PostgreSQL</application> release <literal>7.1</literal>.
   </para>
  </refsect1>
 

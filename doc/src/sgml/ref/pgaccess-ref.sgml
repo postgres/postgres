@@ -1,6 +1,6 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pgaccess-ref.sgml,v 1.12 2001/11/28 20:49:10 petere Exp $
-Postgres documentation
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pgaccess-ref.sgml,v 1.13 2001/12/08 03:24:38 thomas Exp $
+PostgreSQL documentation
 -->
 
 <refentry id="APP-PGACCESS">

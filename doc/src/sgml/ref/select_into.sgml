@@ -1,6 +1,6 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/select_into.sgml,v 1.14 2001/10/23 16:42:36 momjian Exp $
-Postgres documentation
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/select_into.sgml,v 1.15 2001/12/08 03:24:39 thomas Exp $
+PostgreSQL documentation
 -->
 
 <refentry id="SQL-SELECTINTO">
@@ -148,7 +148,7 @@ where <replaceable class="PARAMETER">from_item</replaceable> can be:
     SQL92 uses <command>SELECT ... INTO</command> to represent selecting
     values into scalar variables of a host program, rather than creating
     a new table.  This indeed is the usage found in PL/pgSQL and ecpg.
-    The <productname>Postgres</productname> usage of <command>SELECT
+    The <productname>PostgreSQL</productname> usage of <command>SELECT
     INTO</command> to represent table creation is historical.  It's best
     to use <command>CREATE TABLE AS</command> for this purpose in new code.
     (<command>CREATE TABLE AS</command> isn't standard either, but it's

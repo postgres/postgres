@@ -1,6 +1,6 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_function.sgml,v 1.15 2001/11/19 03:58:25 tgl Exp $
-Postgres documentation
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_function.sgml,v 1.16 2001/12/08 03:24:36 thomas Exp $
+PostgreSQL documentation
 -->
 
 <refentry id="SQL-DROPFUNCTION">

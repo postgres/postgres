@@ -1,6 +1,6 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/listen.sgml,v 1.10 2001/09/03 12:57:50 petere Exp $
-Postgres documentation
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/listen.sgml,v 1.11 2001/12/08 03:24:37 thomas Exp $
+PostgreSQL documentation
 -->
 
 <refentry id="SQL-LISTEN">
@@ -93,7 +93,7 @@ NOTICE Async_Listen: We are already listening on <replaceable class="PARAMETER">
 
   <para>
    <command>LISTEN</command> registers the current 
-   <productname>Postgres</productname> backend as a
+   <productname>PostgreSQL</productname> backend as a
    listener on the notify condition
    <replaceable class="PARAMETER">name</replaceable>.
   </para>
@@ -116,7 +116,7 @@ NOTICE Async_Listen: We are already listening on <replaceable class="PARAMETER">
 
   <para>
    The method a frontend application must use to detect notify events depends on
-   which <productname>Postgres</productname> application programming interface it
+   which <productname>PostgreSQL</productname> application programming interface it
    uses.  With the basic libpq library, the application issues
    <command>LISTEN</command> as an ordinary SQL command, and then must
    periodically call the routine <function>PQnotifies</function> to find out
@@ -152,7 +152,7 @@ NOTICE Async_Listen: We are already listening on <replaceable class="PARAMETER">
    </para>
    <para>
     In some previous releases of
-    <productname>Postgres</productname>,
+    <productname>PostgreSQL</productname>,
     <replaceable class="PARAMETER">name</replaceable>
     had to be enclosed in double-quotes when it did not correspond to any existing
     table name, even if syntactically valid as a name.  That is no longer required.

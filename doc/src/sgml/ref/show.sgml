@@ -1,6 +1,6 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/show.sgml,v 1.14 2001/09/14 08:47:00 ishii Exp $
-Postgres documentation
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/show.sgml,v 1.15 2001/12/08 03:24:39 thomas Exp $
+PostgreSQL documentation
 -->
 
 <refentry id="SQL-SHOW">
@@ -120,7 +120,7 @@ NOTICE:  geqo is on
 
   <para>
    The <command>SHOW</command> command is a
-   <productname>Postgres</productname> extension.
+   <productname>PostgreSQL</productname> extension.
   </para>
  </refsect1>
 </refentry>

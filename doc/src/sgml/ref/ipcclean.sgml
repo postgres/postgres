@@ -1,6 +1,6 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/ipcclean.sgml,v 1.5 2001/09/04 00:22:34 petere Exp $
-Postgres documentation
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/ipcclean.sgml,v 1.6 2001/12/08 03:24:37 thomas Exp $
+PostgreSQL documentation
 -->
 
 <refentry id="APP-IPCCLEAN">

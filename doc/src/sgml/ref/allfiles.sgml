@@ -1,6 +1,6 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/allfiles.sgml,v 1.30 2001/05/08 21:06:42 petere Exp $
-Postgres documentation
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/allfiles.sgml,v 1.31 2001/12/08 03:24:33 thomas Exp $
+PostgreSQL documentation
 Complete list of usable sgml source files in this directory.
 -->
 

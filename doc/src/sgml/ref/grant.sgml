@@ -1,6 +1,6 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/grant.sgml,v 1.16 2001/11/19 19:03:56 tgl Exp $
-Postgres documentation
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/grant.sgml,v 1.17 2001/12/08 03:24:37 thomas Exp $
+PostgreSQL documentation
 -->
 
 <refentry id="SQL-GRANT">
@@ -155,7 +155,7 @@ GRANT { { SELECT | INSERT | UPDATE | DELETE | RULE | REFERENCES | TRIGGER } [,..
   <title>Notes</title>
 
    <para>
-    Currently, to grant privileges in <productname>Postgres</productname>
+    Currently, to grant privileges in <productname>PostgreSQL</productname>
     to only a few columns, you must
     create a view having the desired columns and then grant privileges
     to that view.

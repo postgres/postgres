@@ -1,6 +1,6 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/current_user.sgml,v 1.4 1999/07/22 15:09:09 thomas Exp $
-Postgres documentation
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/current_user.sgml,v 1.5 2001/12/08 03:24:35 thomas Exp $
+PostgreSQL documentation
 -->
 
 <REFENTRY ID="SQL-CURRENT-USER">

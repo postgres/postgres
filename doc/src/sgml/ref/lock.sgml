@@ -1,6 +1,6 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/lock.sgml,v 1.28 2001/09/03 12:57:50 petere Exp $
-Postgres documentation
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/lock.sgml,v 1.29 2001/12/08 03:24:37 thomas Exp $
+PostgreSQL documentation
 -->
 
 <refentry id="SQL-LOCK">
@@ -257,7 +257,7 @@ ERROR <replaceable class="PARAMETER">name</replaceable>: Table does not exist.
   <para>
    <command>LOCK TABLE</command> controls concurrent access to a table
    for the duration of a transaction.
-   <productname>Postgres</productname> always uses the least restrictive
+   <productname>PostgreSQL</productname> always uses the least restrictive
    lock mode whenever possible. <command>LOCK TABLE</command> 
    provides for cases when you might need more restrictive locking.
   </para>
@@ -379,7 +379,7 @@ ERROR <replaceable class="PARAMETER">name</replaceable>: Table does not exist.
 
   <note>
    <para>
-    <productname>Postgres</productname> does detect deadlocks and will
+    <productname>PostgreSQL</productname> does detect deadlocks and will
     rollback at least one waiting transaction to resolve the deadlock. 
    </para>
   </note>
@@ -399,13 +399,13 @@ ERROR <replaceable class="PARAMETER">name</replaceable>: Table does not exist.
    </title>
 
    <para>
-    <command>LOCK</command> is a <productname>Postgres</productname>
+    <command>LOCK</command> is a <productname>PostgreSQL</productname>
     language extension.
    </para>
 
    <para>
     Except for ACCESS SHARE, ACCESS EXCLUSIVE, and SHARE UPDATE EXCLUSIVE lock
-    modes, the <productname>Postgres</productname> lock modes and the
+    modes, the <productname>PostgreSQL</productname> lock modes and the
     <command>LOCK TABLE</command> syntax are compatible with those
     present in <productname>Oracle</productname>.
    </para>

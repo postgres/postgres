@@ -1,6 +1,6 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_index.sgml,v 1.24 2001/09/14 08:05:55 ishii Exp $
-Postgres documentation
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_index.sgml,v 1.25 2001/12/08 03:24:34 thomas Exp $
+PostgreSQL documentation
 -->
 
 <refentry id="SQL-CREATEINDEX">
@@ -78,7 +78,7 @@ CREATE [ UNIQUE ] INDEX <replaceable class="parameter">index_name</replaceable> 
        <para>
 	The name of the access method to be used for
 	the index. The default access method is BTREE.
-	Postgres provides four access methods for indexes:
+	<application>PostgreSQL</application> provides four access methods for indexes:
 
 	<variablelist>
 	 <varlistentry>
@@ -236,7 +236,7 @@ ERROR: Cannot create index: 'index_name' already exists.
   </para>
 
   <para>
-   Postgres provides btree, rtree, hash, and GiST access methods for
+   <application>PostgreSQL</application> provides btree, rtree, hash, and GiST access methods for
    indexes.  The btree access method is an implementation of
    Lehman-Yao high-concurrency btrees.  The rtree access method
    implements standard rtrees using Guttman's quadratic split algorithm.
@@ -292,7 +292,7 @@ ERROR: Cannot create index: 'index_name' already exists.
    </title>
 
    <para>
-    The <productname>Postgres</productname>
+    The <productname>PostgreSQL</productname>
     query optimizer will consider using a btree index whenever
     an indexed attribute is involved in a comparison using one of:
 
@@ -306,7 +306,7 @@ ERROR: Cannot create index: 'index_name' already exists.
    </para>
 
    <para>
-    The <productname>Postgres</productname>
+    The <productname>PostgreSQL</productname>
     query optimizer will consider using an rtree index whenever
     an indexed attribute is involved in a comparison using one of:
 
@@ -322,7 +322,7 @@ ERROR: Cannot create index: 'index_name' already exists.
    </para>
 
    <para>
-    The <productname>Postgres</productname>
+    The <productname>PostgreSQL</productname>
     query optimizer will consider using a hash index whenever
     an indexed attribute is involved in a comparison using
     the <literal>=</literal> operator.
@@ -331,7 +331,8 @@ ERROR: Cannot create index: 'index_name' already exists.
    <para>
     Currently, only the btree and gist access methods support multi-column
     indexes. Up to 16 keys may be specified by default (this limit
-    can be altered when building Postgres).  Only btree currently supports
+    can be altered when building
+    <application>PostgreSQL</application>).  Only btree currently supports
     unique indexes.
    </para>
 
@@ -428,7 +429,7 @@ SELECT * FROM points
     SQL92
    </title>
    <para>
-    CREATE INDEX is a <productname>Postgres</productname> language extension.
+    CREATE INDEX is a <productname>PostgreSQL</productname> language extension.
    </para>
    <para>
     There is no <command>CREATE INDEX</command> command in SQL92.

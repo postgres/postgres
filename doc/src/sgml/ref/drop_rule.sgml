@@ -1,6 +1,6 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_rule.sgml,v 1.10 2001/09/03 12:57:49 petere Exp $
-Postgres documentation
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_rule.sgml,v 1.11 2001/12/08 03:24:36 thomas Exp $
+PostgreSQL documentation
 -->
 
 <refentry id="SQL-DROPRULE">
@@ -90,8 +90,8 @@ ERROR:  Rule or view "<replaceable class="parameter">name</replaceable>" not fou
   </title>
   <para>
    <command>DROP RULE</command> drops a rule from the specified
-   <productname>Postgres</productname> rule
-   system. <productname>Postgres</productname>
+   <productname>PostgreSQL</productname> rule
+   system. <productname>PostgreSQL</productname>
    will immediately cease enforcing it and
    will purge its definition from the system catalogs.
   </para>
@@ -105,7 +105,7 @@ ERROR:  Rule or view "<replaceable class="parameter">name</replaceable>" not fou
    </title>
    <para>
     The <command>DROP RULE</command> statement is a
-    <productname>Postgres</productname>
+    <productname>PostgreSQL</productname>
     language extension.
    </para>
 

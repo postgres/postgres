@@ -1,6 +1,6 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/fetch.sgml,v 1.16 2001/09/13 15:55:24 petere Exp $
-Postgres documentation
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/fetch.sgml,v 1.17 2001/12/08 03:24:36 thomas Exp $
+PostgreSQL documentation
 -->
 
 <refentry id="SQL-FETCH">
@@ -175,7 +175,7 @@ NOTICE:  FETCH/ABSOLUTE not supported, using RELATIVE
        </computeroutput></term>
       <listitem>
        <para>
-	<productname>Postgres</productname> does not support absolute
+	<productname>PostgreSQL</productname> does not support absolute
 	positioning of cursors.
        </para>
       </listitem>
@@ -195,10 +195,10 @@ FETCH RELATIVE 0 FROM <replaceable class="PARAMETER">cursor</replaceable>.
        </para>
 
        <para>
-	<productname>Postgres</productname> does not currently support
+	<productname>PostgreSQL</productname> does not currently support
 	this notion; in fact the value zero is reserved to indicate that
 	all rows should be retrieved and is equivalent to specifying the ALL keyword.
-	If the RELATIVE keyword has been used, <productname>Postgres</productname> 
+	If the RELATIVE keyword has been used, <productname>PostgreSQL</productname> 
 	assumes that the user intended <acronym>SQL92</acronym> behavior
 	and returns this error message.
        </para>
@@ -250,7 +250,7 @@ FETCH RELATIVE 0 FROM <replaceable class="PARAMETER">cursor</replaceable>.
 
    <para>
     Note that the FORWARD and BACKWARD keywords are
-    <productname>Postgres</productname> extensions.
+    <productname>PostgreSQL</productname> extensions.
     The <acronym>SQL92</acronym> syntax is also supported, specified
     in the second form of the command. See below for details
     on compatibility issues.
@@ -258,7 +258,7 @@ FETCH RELATIVE 0 FROM <replaceable class="PARAMETER">cursor</replaceable>.
 
    <para>
     Updating data in a cursor is not supported by 
-    <productname>Postgres</productname>,
+    <productname>PostgreSQL</productname>,
     because mapping cursor updates back to base tables is
     not generally possible, as is also the case with VIEW updates.
     Consequently,
@@ -346,7 +346,7 @@ COMMIT WORK;
    <para>
     <note>
      <para>
-      The non-embedded use of cursors is a <productname>Postgres</productname>
+      The non-embedded use of cursors is a <productname>PostgreSQL</productname>
       extension. The syntax and usage of cursors is being compared
       against the embedded form of cursors defined in <acronym>SQL92</acronym>.
      </para>
@@ -369,7 +369,7 @@ FETCH ABSOLUTE <replaceable class="PARAMETER">#</replaceable>
       <listitem>
        <para>
 	The cursor should be positioned to the specified absolute
-	row number. All row numbers in <productname>Postgres</productname>
+	row number. All row numbers in <productname>PostgreSQL</productname>
 	are relative numbers so this capability is not supported.
        </para>
       </listitem>

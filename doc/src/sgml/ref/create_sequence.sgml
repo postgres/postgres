@@ -1,6 +1,6 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_sequence.sgml,v 1.22 2001/11/28 15:33:48 tgl Exp $
-Postgres documentation
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_sequence.sgml,v 1.23 2001/12/08 03:24:35 thomas Exp $
+PostgreSQL documentation
 -->
 
 <refentry id="SQL-CREATESEQUENCE">
@@ -362,7 +362,7 @@ END;
    </title>
 
    <para>
-    <command>CREATE SEQUENCE</command> is a <productname>Postgres</productname>
+    <command>CREATE SEQUENCE</command> is a <productname>PostgreSQL</productname>
     language extension.
     There is no <command>CREATE SEQUENCE</command> statement
     in <acronym>SQL92</acronym>.

@@ -1,6 +1,6 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.25 2001/11/28 20:49:10 petere Exp $
-Postgres documentation
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.26 2001/12/08 03:24:38 thomas Exp $
+PostgreSQL documentation
 -->
 
 <refentry id="app-postmaster">

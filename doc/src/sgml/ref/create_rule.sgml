@@ -1,6 +1,6 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.29 2001/11/06 23:54:32 tgl Exp $
-Postgres documentation
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.30 2001/12/08 03:24:35 thomas Exp $
+PostgreSQL documentation
 -->
 
 <refentry id="SQL-CREATERULE">
@@ -148,7 +148,7 @@ CREATE
   </title>
 
   <para>
-   The <productname>Postgres</productname> 
+   The <productname>PostgreSQL</productname> 
    <firstterm>rule system</firstterm> allows one to define an
    alternate action to be performed on inserts, updates, or deletions
    from database tables. Rules are used to
@@ -255,8 +255,8 @@ CREATE
     It is very important to take care to avoid circular rules.
     For example, though each
     of the following two rule definitions are accepted by
-    <productname>Postgres</productname>, the
-    select command will cause <productname>Postgres</productname> to 
+    <productname>PostgreSQL</productname>, the
+    select command will cause <productname>PostgreSQL</productname> to 
     report an error because the query cycled too many times:
 
 <programlisting>
@@ -272,7 +272,7 @@ CREATE RULE "_RETtoyemp" AS
 </programlisting>
 
       This attempt to select from EMP will cause
-      <productname>Postgres</productname> to issue an error
+      <productname>PostgreSQL</productname> to issue an error
       because the queries cycled too many times:
 
  <programlisting>
@@ -310,7 +310,7 @@ UPDATE mytable SET name = 'foo' WHERE id = 42;
    </title>
 
    <para>
-    <command>CREATE RULE</command> statement is a <productname>Postgres</productname>
+    <command>CREATE RULE</command> statement is a <productname>PostgreSQL</productname>
     language extension.
     There is no <command>CREATE RULE</command> statement in <acronym>SQL92</acronym>.
    </para>

@@ -1,6 +1,6 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.50 2001/10/31 04:50:52 momjian Exp $
-Postgres documentation
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.51 2001/12/08 03:24:39 thomas Exp $
+PostgreSQL documentation
 -->
 
 <refentry id="SQL-SELECT">
@@ -365,7 +365,7 @@ where <replaceable class="PARAMETER">from_item</replaceable> can be:
     from sub-tables (inheritance children) of the table.
     <command>ONLY</command> will
     suppress rows from sub-tables of the table.  Before
-    <Productname>Postgres</Productname> 7.1,
+    <Productname>PostgreSQL</Productname> 7.1,
     this was the default result, and adding sub-tables was done
     by appending <command>*</command> to the table name.
     This old behaviour is available via the command 
@@ -776,7 +776,7 @@ SELECT name FROM distributors ORDER BY code;
    </para>
 
    <para>
-    As of <productname>Postgres</productname> 7.0, the
+    As of <productname>PostgreSQL</productname> 7.0, the
     query optimizer takes LIMIT into account when generating a query plan,
     so you are very likely to get different plans (yielding different row
     orders) depending on what you use for LIMIT and OFFSET.  Thus, using
@@ -942,7 +942,7 @@ SELECT actors.name
    </title>
 
    <para>
-<productname>Postgres</productname> allows one to omit 
+<productname>PostgreSQL</productname> allows one to omit 
 the <command>FROM</command> clause from a query. This feature
 was retained from the original PostQuel query language.  It has
 a straightforward use to compute the results of simple constant
@@ -983,7 +983,7 @@ rather than the unconstrained join
 SELECT distributors.* FROM distributors d, distributors distributors;
   </programlisting>
 that he will actually get.  To help detect this sort of mistake,
-<Productname>Postgres</Productname> 7.1
+<Productname>PostgreSQL</Productname> 7.1
 and later will warn if the implicit-FROM feature is used in a query that also
 contains an explicit FROM clause.
 
@@ -1011,7 +1011,7 @@ contains an explicit FROM clause.
      In the <acronym>SQL92</acronym> standard, the optional keyword <literal>AS</>
      is just noise and can be 
      omitted without affecting the meaning.
-     The <productname>Postgres</productname> parser requires this keyword when
+     The <productname>PostgreSQL</productname> parser requires this keyword when
      renaming output columns because the type extensibility features lead to
      parsing ambiguities
      in this context.  <literal>AS</literal> is optional in FROM items, however.</para>
@@ -1025,10 +1025,10 @@ contains an explicit FROM clause.
      In <acronym>SQL92</acronym>, an ORDER BY clause may only use result
      column names or numbers, while a GROUP BY clause may only use input
      column names.
-     <productname>Postgres</productname> extends each of these clauses to
+     <productname>PostgreSQL</productname> extends each of these clauses to
      allow the other choice as well (but it uses the standard's interpretation
      if there is ambiguity).
-     <productname>Postgres</productname> also allows both clauses to specify
+     <productname>PostgreSQL</productname> also allows both clauses to specify
      arbitrary expressions.  Note that names appearing in an expression will
      always be taken as input-column names, not as result-column names.
     </para>
@@ -1052,7 +1052,7 @@ contains an explicit FROM clause.
 
     <para>
      The CORRESPONDING BY clause is not supported by
-     <productname>Postgres</productname>.
+     <productname>PostgreSQL</productname>.
     </para>
    </refsect3>
    

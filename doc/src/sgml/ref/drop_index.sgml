@@ -1,6 +1,6 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_index.sgml,v 1.11 2001/09/03 12:57:49 petere Exp $
-Postgres documentation
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_index.sgml,v 1.12 2001/12/08 03:24:36 thomas Exp $
+PostgreSQL documentation
 -->
 
 <refentry id="SQL-DROPINDEX">
@@ -103,7 +103,7 @@ ERROR: index "<replaceable class="PARAMETER">index_name</replaceable>" does not 
     Notes
    </title>
    <para>
-    <command>DROP INDEX</command> is a <productname>Postgres</productname>
+    <command>DROP INDEX</command> is a <productname>PostgreSQL</productname>
     language extension.
    </para>
    <para>

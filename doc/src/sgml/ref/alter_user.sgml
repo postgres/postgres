@@ -1,6 +1,6 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_user.sgml,v 1.17 2001/09/21 20:31:45 tgl Exp $
-Postgres documentation
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_user.sgml,v 1.18 2001/12/08 03:24:33 thomas Exp $
+PostgreSQL documentation
 -->
 
 <refentry id="SQL-ALTERUSER">
@@ -155,7 +155,7 @@ ERROR:  ALTER USER: user "username" does not exist
   </title>
   <para>
    <command>ALTER USER</command> is used to change the attributes of a user's
-   <productname>Postgres</productname> account.  Attributes not mentioned
+   <productname>PostgreSQL</productname> account.  Attributes not mentioned
    in the command retain their previous settings.
   </para>
   <para>

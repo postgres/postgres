@@ -1,6 +1,6 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/declare.sgml,v 1.14 2001/09/13 15:55:24 petere Exp $
-Postgres documentation
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/declare.sgml,v 1.15 2001/12/08 03:24:35 thomas Exp $
+PostgreSQL documentation
 -->
 
 <refentry id="SQL-DECLARE">
@@ -62,7 +62,7 @@ DECLARE <replaceable class="parameter">cursorname</replaceable> [ BINARY ] [ INS
 	<acronym>SQL92</acronym> keyword indicating that data retrieved
 	from the cursor should be unaffected by updates from other processes or cursors.
 	Since cursor operations occur within transactions
-	in <productname>Postgres</productname> this is always the case.
+	in <productname>PostgreSQL</productname> this is always the case.
 	This keyword has no effect.
        </para>
       </listitem>
@@ -74,7 +74,7 @@ DECLARE <replaceable class="parameter">cursorname</replaceable> [ BINARY ] [ INS
        <para>
 	<acronym>SQL92</acronym> keyword indicating that data may be retrieved
 	in multiple rows per FETCH operation. Since this is allowed at all times
-	by <productname>Postgres</productname> this keyword has no effect.
+	by <productname>PostgreSQL</productname> this keyword has no effect.
        </para>
       </listitem>
      </varlistentry>
@@ -97,7 +97,7 @@ DECLARE <replaceable class="parameter">cursorname</replaceable> [ BINARY ] [ INS
        <para>
 	<acronym>SQL92</acronym> keyword indicating that the cursor will be used
 	in a read only mode. Since this is the only cursor access mode
-	available in <productname>Postgres</productname> this keyword has no effect.
+	available in <productname>PostgreSQL</productname> this keyword has no effect.
        </para>
       </listitem>
      </varlistentry>
@@ -108,7 +108,7 @@ DECLARE <replaceable class="parameter">cursorname</replaceable> [ BINARY ] [ INS
        <para>
 	<acronym>SQL92</acronym> keyword indicating that the cursor will be used
 	to update tables. Since cursor updates are not currently
-	supported in <productname>Postgres</productname> this keyword
+	supported in <productname>PostgreSQL</productname> this keyword
 	provokes an informational error message.
        </para>
       </listitem>
@@ -120,7 +120,7 @@ DECLARE <replaceable class="parameter">cursorname</replaceable> [ BINARY ] [ INS
        <para>
 	Column(s) to be updated.
 	Since cursor updates are not currently
-	supported in <productname>Postgres</productname> the UPDATE clause
+	supported in <productname>PostgreSQL</productname> the UPDATE clause
 	provokes an informational error message.
        </para>
       </listitem>
@@ -196,7 +196,7 @@ ERROR:  DECLARE CURSOR may only be used in begin/end transaction blocks
 
   <para>
    Normal cursors return data in text format, either ASCII or another
-   encoding scheme depending on how the <productname>Postgres</productname>
+   encoding scheme depending on how the <productname>PostgreSQL</productname>
    backend was built. Since
    data is stored natively in binary format, the system must
    do a conversion to produce the text format. In addition,
@@ -224,7 +224,7 @@ ERROR:  DECLARE CURSOR may only be used in begin/end transaction blocks
   <para>
    String representation is architecture-neutral whereas binary
    representation can differ between different machine architectures.
-   <emphasis><productname>Postgres</productname> does not resolve
+   <emphasis><productname>PostgreSQL</productname> does not resolve
     byte ordering or representation issues for binary cursors</emphasis>.
    Therefore, if your client machine and server machine use different
    representations (e.g., <quote>big-endian</quote> versus <quote>little-endian</quote>),
@@ -263,11 +263,11 @@ ERROR:  DECLARE CURSOR may only be used in begin/end transaction blocks
    <para>
     In <acronym>SQL92</acronym> cursors are only available in
     embedded <acronym>SQL</acronym> (<acronym>ESQL</acronym>) applications. 
-    The <productname>Postgres</productname> backend
+    The <productname>PostgreSQL</productname> backend
     does not implement an explicit <command>OPEN cursor</command>
     statement; a cursor is considered to be open when it is declared.
     However, <application>ecpg</application>, the
-    embedded SQL preprocessor for <productname>Postgres</productname>,
+    embedded SQL preprocessor for <productname>PostgreSQL</productname>,
     supports the <acronym>SQL92</acronym> cursor conventions, including those
     involving DECLARE and OPEN statements.
    </para>
@@ -302,12 +302,12 @@ DECLARE liahona CURSOR
    </title>
    <para>
     <acronym>SQL92</acronym> allows cursors only in embedded <acronym>SQL</acronym>
-    and in modules. <productname>Postgres</productname> permits cursors to be used
+    and in modules. <productname>PostgreSQL</productname> permits cursors to be used
     interactively.
     <acronym>SQL92</acronym> allows embedded or modular cursors to
     update database information.
-    All <productname>Postgres</productname> cursors are read only.
-    The BINARY keyword is a <productname>Postgres</productname> extension.
+    All <productname>PostgreSQL</productname> cursors are read only.
+    The BINARY keyword is a <productname>PostgreSQL</productname> extension.
    </para>
   </refsect2>
  </refsect1>

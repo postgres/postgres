@@ -1,6 +1,6 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_group.sgml,v 1.6 2001/09/12 01:55:25 ishii Exp $
-Postgres documentation
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_group.sgml,v 1.7 2001/12/08 03:24:33 thomas Exp $
+PostgreSQL documentation
 -->
 
 <refentry id="SQL-ALTERGROUP">

@@ -1,6 +1,6 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/delete.sgml,v 1.14 2001/09/03 12:57:49 petere Exp $
-Postgres documentation
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/delete.sgml,v 1.15 2001/12/08 03:24:35 thomas Exp $
+PostgreSQL documentation
 -->
 
 <refentry id="SQL-DELETE">
@@ -110,7 +110,7 @@ DELETE <replaceable class="parameter">count</replaceable>
    <tip>
     <para>
      <xref linkend="sql-truncate" endterm="sql-truncate-title"> is a
-     <productname>Postgres</productname> extension which provides a
+     <productname>PostgreSQL</productname> extension which provides a
      faster mechanism to remove all rows from a table.
     </para>
    </tip>
@@ -187,7 +187,7 @@ DELETE FROM <replaceable class="parameter">table</replaceable> WHERE
 
     where <replaceable class="parameter">cursor</replaceable>
     identifies an open cursor.
-    Interactive cursors in <productname>Postgres</productname> are read-only.
+    Interactive cursors in <productname>PostgreSQL</productname> are read-only.
    </para>
   </refsect2>
  </refsect1>

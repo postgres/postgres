@@ -1,6 +1,6 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.33 2001/11/22 03:42:32 momjian Exp $
-Postgres documentation
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.34 2001/12/08 03:24:33 thomas Exp $
+PostgreSQL documentation
 -->
 
 <refentry id="SQL-ALTERTABLE">
@@ -313,7 +313,7 @@ ALTER TABLE distributors ADD CONSTRAINT dist_id_zipcode_key UNIQUE (dist_id, zip
 
     <para>
      SQL92 specifies some additional capabilities for <command>ALTER TABLE</command>
-     statement which are not yet directly supported by <productname>Postgres</productname>:
+     statement which are not yet directly supported by <productname>PostgreSQL</productname>:
 
     <variablelist>
     <varlistentry>
@@ -345,7 +345,7 @@ DROP TABLE temp;
 
    <para>
     The clauses to rename tables, columns, indexes, and sequences are
-    <productname>Postgres</productname> extensions from SQL92.
+    <productname>PostgreSQL</productname> extensions from SQL92.
    </para>
  
   </refsect2>

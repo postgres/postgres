@@ -1,6 +1,6 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/end.sgml,v 1.5 2001/09/03 12:57:50 petere Exp $
-Postgres documentation
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/end.sgml,v 1.6 2001/12/08 03:24:36 thomas Exp $
+PostgreSQL documentation
 -->
 
 <refentry id="SQL-END">
@@ -94,7 +94,7 @@ NOTICE:  COMMIT: no transaction in progress
   </title>
 
   <para>
-   <command>END</command> is a <productname>Postgres</productname>
+   <command>END</command> is a <productname>PostgreSQL</productname>
    extension, and is a synonym for the SQL92-compatible
    <xref linkend="sql-commit" endterm="sql-commit-title">.
   </para>

@@ -1,6 +1,6 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pg_passwd.sgml,v 1.9 2001/11/28 20:49:10 petere Exp $
-Postgres documentation
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pg_passwd.sgml,v 1.10 2001/12/08 03:24:38 thomas Exp $
+PostgreSQL documentation
 -->
 
 <refentry id="APP-PG-PASSWD">
