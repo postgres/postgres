@@ -1,0 +1,605 @@
+# SOME DESCRIPTIVE TITLE.
+# This file is put in the public domain.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PostgreSQL 7.4\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2003-08-05 22:14+0000\n"
+"PO-Revision-Date: 2003-09-15 21:03+0000\n"
+"Last-Translator: Bao Wei <bao_paul@yahoo.com.cn>\n"
+"Language-Team: Weiping He <laser@zhengmai.com.cn>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=GB2312\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: createdb.c:101 createdb.c:120 createlang.c:94 createlang.c:115
+#: createlang.c:157 createuser.c:116 createuser.c:131 dropdb.c:83 dropdb.c:92
+#: dropdb.c:100 droplang.c:88 droplang.c:109 droplang.c:151 dropuser.c:83
+#: dropuser.c:98 clusterdb.c:96 clusterdb.c:111 vacuumdb.c:112 vacuumdb.c:127
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "请用 \"%s --help\" 获取更多的信息.\n"
+
+#: createdb.c:118 createlang.c:113 createuser.c:129 dropdb.c:98 droplang.c:107
+#: dropuser.c:96 clusterdb.c:109 vacuumdb.c:125
+#, c-format
+msgid "%s: too many command-line arguments (first is \"%s\")\n"
+msgstr "%s: 太多的命令行参数 (第一个是 \"%s\")\n"
+
+#: createdb.c:128
+#, c-format
+msgid "%s: \"%s\" is not a valid encoding name\n"
+msgstr "%s: \"%s\" 不是一个有效的编码名称\n"
+
+#: createdb.c:170
+#, c-format
+msgid "%s: database creation failed: %s"
+msgstr "%s: 创建数据库失败: %s"
+
+#: createdb.c:195
+#, c-format
+msgid "%s: comment creation failed (database was created): %s"
+msgstr "%s: 创建注释失败 (数据库已创建): %s"
+
+#: createdb.c:213
+#, c-format
+msgid ""
+"%s creates a PostgreSQL database.\n"
+"\n"
+msgstr ""
+"%s 创建一个 PostgreSQL 数据库.\n"
+"\n"
+
+#: createdb.c:214 createlang.c:272 createuser.c:236 dropdb.c:143
+#: droplang.c:242 dropuser.c:143 clusterdb.c:232 vacuumdb.c:256
+msgid "Usage:\n"
+msgstr "使用方法:\n"
+
+#: createdb.c:215
+#, c-format
+msgid "  %s [OPTION]... [DBNAME] [DESCRIPTION]\n"
+msgstr "  %s [选项]... [数据库名称] [描述]\n"
+
+#: createdb.c:216 createlang.c:274 createuser.c:238 dropdb.c:145
+#: droplang.c:244 dropuser.c:145 clusterdb.c:234 vacuumdb.c:258
+msgid ""
+"\n"
+"Options:\n"
+msgstr ""
+"\n"
+"选项:\n"
+
+#: createdb.c:217
+msgid "  -D, --location=PATH       alternative place to store the database\n"
+msgstr "  -D, --location=PATH       选择一个地方存放数据库\n"
+
+#: createdb.c:218
+msgid "  -E, --encoding=ENCODING   encoding for the database\n"
+msgstr "  -E, --encoding=ENCODING   数据库编码\n"
+
+#: createdb.c:219
+msgid "  -O, --owner=OWNER         database user to own the new database\n"
+msgstr "  -O, --owner=OWNER         新数据库的所属用户\n"
+
+#: createdb.c:220
+msgid "  -T, --template=TEMPLATE   template database to copy\n"
+msgstr "  -T, --template=TEMPLATE   要拷贝的数据库模板\n"
+
+#: createdb.c:221 createlang.c:276 createuser.c:247 dropdb.c:146
+#: droplang.c:246 dropuser.c:146 clusterdb.c:238
+msgid ""
+"  -e, --echo                show the commands being sent to the server\n"
+msgstr ""
+"  -e, --echo                显示发送到服务端的命令\n"
+
+#: createdb.c:222 createuser.c:248 dropdb.c:148 dropuser.c:148 clusterdb.c:239
+msgid "  -q, --quiet               don't write any messages\n"
+msgstr "  -q, --quiet               不写任何信息\n"
+
+#: createdb.c:223 createlang.c:283 createuser.c:249 dropdb.c:153
+#: droplang.c:252 dropuser.c:153 clusterdb.c:240
+msgid "  --help                    show this help, then exit\n"
+msgstr "  --help                    显示此帮助信息, 然后退出\n"
+
+#: createdb.c:224 createlang.c:284 createuser.c:250 dropdb.c:154
+#: droplang.c:253 dropuser.c:154 clusterdb.c:241
+msgid "  --version                 output version information, then exit\n"
+msgstr "  --version                 输出版本信息, 然后退出\n"
+
+#: createdb.c:225 createuser.c:251 clusterdb.c:242 vacuumdb.c:269
+msgid ""
+"\n"
+"Connection options:\n"
+msgstr ""
+"\n"
+"联接选项:\n"
+
+#: createdb.c:226 createlang.c:279 createuser.c:252 dropdb.c:149
+#: droplang.c:248 dropuser.c:149 clusterdb.c:243 vacuumdb.c:270
+msgid "  -h, --host=HOSTNAME       database server host or socket directory\n"
+msgstr "  -h, --host=HOSTNAM        数据库服务器所在机器的主机名或套接字目录\n"
+
+#: createdb.c:227 createlang.c:280 createuser.c:253 dropdb.c:150
+#: droplang.c:249 dropuser.c:150 clusterdb.c:244 vacuumdb.c:271
+msgid "  -p, --port=PORT           database server port\n"
+msgstr "  -p, --port=PORT           数据库服务器端口号\n"
+
+#: createdb.c:228 createlang.c:281 dropdb.c:151 droplang.c:250 clusterdb.c:245
+#: vacuumdb.c:272
+msgid "  -U, --username=USERNAME   user name to connect as\n"
+msgstr "  -U, --username=USERNAME   联接的用户名\n"
+
+#: createdb.c:229 createlang.c:282 dropdb.c:152 droplang.c:251 clusterdb.c:246
+#: vacuumdb.c:273
+msgid "  -W, --password            prompt for password\n"
+msgstr "  -W, --password            提示输入口令\n"
+
+#: createdb.c:230
+msgid ""
+"\n"
+"By default, a database with the same name as the current user is created.\n"
+msgstr ""
+"\n"
+"默认情况下, 以当前用户的用户名创建数据库.\n"
+
+#: createdb.c:231 createlang.c:285 createuser.c:258 dropdb.c:155
+#: droplang.c:254 dropuser.c:155 clusterdb.c:248 vacuumdb.c:275
+msgid ""
+"\n"
+"Report bugs to <pgsql-bugs@postgresql.org>.\n"
+msgstr ""
+"\n"
+"臭虫报告至 <pgsql-bugs@postgresql.org>.\n"
+
+#: createlang.c:140 droplang.c:134
+msgid "Name"
+msgstr "名字"
+
+#: createlang.c:140 droplang.c:134
+msgid "yes"
+msgstr "yes"
+
+#: createlang.c:140 droplang.c:134
+msgid "no"
+msgstr "no"
+
+#: createlang.c:140 droplang.c:134
+msgid "Trusted?"
+msgstr "是否信任?"
+
+#: createlang.c:147 droplang.c:141
+msgid "Procedural Languages"
+msgstr "过程语言"
+
+#: createlang.c:156 droplang.c:150
+#, c-format
+msgid "%s: missing required argument language name\n"
+msgstr "%s: 缺少要求的语言名称参数\n"
+
+#: createlang.c:206
+#, c-format
+msgid "%s: unsupported language \"%s\"\n"
+msgstr "%s: 不支持语言 \"%s\"\n"
+
+#: createlang.c:207
+msgid ""
+"Supported languages are plpgsql, pltcl, pltclu, plperl, plperlu, and "
+"plpythonu.\n"
+msgstr "已支持的语言有 plpgsql, pltcl, pltclu, plperl, plperlu, 和 plpythonu.\n"
+
+#: createlang.c:222
+#, c-format
+msgid "%s: language \"%s\" is already installed in database \"%s\"\n"
+msgstr "%1$s: 数据库 \"%3$s\" 中已经安装了语言 \"%2$s\"\n"
+
+#: createlang.c:256
+#, c-format
+msgid "%s: language installation failed: %s"
+msgstr "%s: 语言安装失败: %s"
+
+#: createlang.c:271
+#, c-format
+msgid ""
+"%s installs a procedural language into a PostgreSQL database.\n"
+"\n"
+msgstr "%s 安装一个过程语言进 PostgreSQL 数据库.\n\n"
+
+#: createlang.c:273 droplang.c:243
+#, c-format
+msgid "  %s [OPTION]... LANGNAME [DBNAME]\n"
+msgstr "  %s [选项]... 语言名称 [数据库名]\n"
+
+#: createlang.c:275
+msgid "  -d, --dbname=DBNAME       database to install language in\n"
+msgstr "  -d, --dbname=DBNAME       要安装语言的数据库\n"
+
+#: createlang.c:277 droplang.c:247
+msgid ""
+"  -l, --list                show a list of currently installed languages\n"
+msgstr ""
+"  -l, --list                显示当前已经安装了的语言列表\n"
+
+#: createlang.c:278
+msgid ""
+"  -L, --pglib=DIRECTORY     find language interpreter file in DIRECTORY\n"
+msgstr ""
+"  -L, --pglib=DIRECTORY     在 DIRECTORY 目录中查找语言翻译文件\n"
+
+#: createuser.c:141
+#, c-format
+msgid "%s: user ID must be a positive number\n"
+msgstr "%s: 用户 ID 必需为一个正数\n"
+
+#: createuser.c:147
+msgid "Enter name of user to add: "
+msgstr "输入要增加的用户名: "
+
+#: createuser.c:154
+msgid "Enter password for new user: "
+msgstr "输入新用户的口令: "
+
+#: createuser.c:155
+msgid "Enter it again: "
+msgstr "再输入一遍: "
+
+#: createuser.c:158
+msgid "Passwords didn't match.\n"
+msgstr "口令不匹配.\n"
+
+#: createuser.c:169
+msgid "Shall the new user be allowed to create databases? (y/n) "
+msgstr "新用户允许创建数据库吗? (y/n) "
+
+#: createuser.c:180
+msgid "Shall the new user be allowed to create more new users? (y/n) "
+msgstr "新用户允许创建用户吗? (y/n) "
+
+#: createuser.c:219
+#, c-format
+msgid "%s: creation of new user failed: %s"
+msgstr "%s: 创建新用户失败: %s"
+
+#: createuser.c:235
+#, c-format
+msgid ""
+"%s creates a new PostgreSQL user.\n"
+"\n"
+msgstr ""
+"%s 创建一个新的 PostgreSQL 用户.\n"
+"\n"
+
+#: createuser.c:237 dropuser.c:144
+#, c-format
+msgid "  %s [OPTION]... [USERNAME]\n"
+msgstr "  %s [选项]... [用户名]\n"
+
+#: createuser.c:239
+msgid "  -a, --adduser             user can add new users\n"
+msgstr "  -a, --adduser             此用户可以创建其他新用户\n"
+
+#: createuser.c:240
+msgid "  -A, --no-adduser          user cannot add new users\n"
+msgstr "  -A, --no-adduser          此用户不可以创建其他新用户\n"
+
+#: createuser.c:241
+msgid "  -d, --createdb            user can create new databases\n"
+msgstr "  -d, --createdb            此用户可以创建新数据库\n"
+
+#: createuser.c:242
+msgid "  -D, --no-createdb         user cannot create databases\n"
+msgstr "  -D, --no-createdb         此用户不可以创建新数据库\n"
+
+#: createuser.c:243
+msgid "  -P, --pwprompt            assign a password to new user\n"
+msgstr "  -P, --pwprompt            给新用户指定口令\n"
+
+#: createuser.c:244
+msgid "  -E, --encrypted           encrypt stored password\n"
+msgstr "  -E, --encrypted           口令加密存储\n"
+
+#: createuser.c:245
+msgid "  -N, --unencrypted         do no encrypt stored password\n"
+msgstr "  -N, --unencrypted         口令不加密存储\n"
+
+#: createuser.c:246
+msgid "  -i, --sysid=SYSID         select sysid for new user\n"
+msgstr "  -i, --sysid=SYSID         选择一个 sysid 给新用户\n"
+
+#: createuser.c:254
+msgid ""
+"  -U, --username=USERNAME   user name to connect as (not the one to create)\n"
+msgstr ""
+"  -U, --username=USERNAME   联接用户 (不是要创建的用户名)\n"
+
+#: createuser.c:255 dropuser.c:152
+msgid "  -W, --password            prompt for password to connect\n"
+msgstr "  -W, --password            联接提示口令输入\n"
+
+#: createuser.c:256
+msgid ""
+"\n"
+"If one of -a, -A, -d, -D, and USERNAME is not specified, you will\n"
+"be prompted interactively.\n"
+msgstr ""
+"\n"
+"如果 -a, -A, -d, -D, 和 USERNAME 一个都没有指定,将使用交互式提示\n"
+"你.\n"
+
+#: dropdb.c:91
+#, c-format
+msgid "%s: missing required argument database name\n"
+msgstr "%s: 缺少需要的数据库名参数\n"
+
+#: dropdb.c:108
+#, c-format
+msgid "Database \"%s\" will be permanently removed.\n"
+msgstr "数据库 \"%s\" 将被永久的删除.\n"
+
+#: dropdb.c:109 dropuser.c:110
+msgid "Are you sure? (y/n) "
+msgstr "你确定吗? (y/n) "
+
+#: dropdb.c:126
+#, c-format
+msgid "%s: database removal failed: %s"
+msgstr "%s: 数据库删除失败: %s"
+
+#: dropdb.c:142
+#, c-format
+msgid ""
+"%s removes a PostgreSQL database.\n"
+"\n"
+msgstr ""
+"%s 删除一个 PostgreSQL 数据库.\n"
+"\n"
+
+#: dropdb.c:144
+#, c-format
+msgid "  %s [OPTION]... DBNAME\n"
+msgstr "  %s [选项]... 数据库名\n"
+
+#: dropdb.c:147 dropuser.c:147
+msgid "  -i, --interactive         prompt before deleting anything\n"
+msgstr "  -i, --interactive         删除任何东西之前给予提示\n"
+
+#: droplang.c:170
+#, c-format
+msgid "%s: language \"%s\" is not installed in database \"%s\"\n"
+msgstr "%1$s: 数据库 \"%3$s\" 中, 没有安装语言 \"%2$s\"\n"
+
+#: droplang.c:186
+#, c-format
+msgid ""
+"%s: still %s functions declared in language \"%s\"; language not removed\n"
+msgstr "%s: 函数 %s 是用语言 \"%s\" 声明的; 语言未被删除\n"
+
+#: droplang.c:227
+#, c-format
+msgid "%s: language removal failed: %s"
+msgstr "%s: 语言删除失败: %s"
+
+#: droplang.c:241
+#, c-format
+msgid ""
+"%s removes a procedural language from a database.\n"
+"\n"
+msgstr ""
+"%s 从数据库中删除一个过程语言.\n"
+"\n"
+
+#: droplang.c:245
+msgid ""
+"  -d, --dbname=DBNAME       database from which to remove the language\n"
+msgstr ""
+"  -d, --dbname=DBNAME       要删除语言的数据库\n"
+
+#: dropuser.c:103
+msgid "Enter name of user to drop: "
+msgstr "输入要删除的用户名: "
+
+#: dropuser.c:109
+#, c-format
+msgid "User \"%s\" will be permanently removed.\n"
+msgstr "用户 \"%s\" 将被永久删除.\n"
+
+#: dropuser.c:126
+#, c-format
+msgid "%s: removal of user \"%s\" failed: %s"
+msgstr "%s: 删除用户 \"%s\" 失败: %s"
+
+#: dropuser.c:142
+#, c-format
+msgid ""
+"%s removes a PostgreSQL user.\n"
+"\n"
+msgstr ""
+"%s 删除一个 PostgreSQL 用户.\n"
+"\n"
+
+#: dropuser.c:151
+msgid ""
+"  -U, --username=USERNAME   user name to connect as (not the one to drop)\n"
+msgstr ""
+"  -U, --username=USERNAME   联接用户 (不是要删除的用户名)\n"
+
+#: clusterdb.c:119
+#, c-format
+msgid "%s: cannot cluster all databases and a specific one at the same time\n"
+msgstr "%s: 无法对所有数据库和一个指定的数据库同时建簇\n"
+
+#: clusterdb.c:125
+#, c-format
+msgid "%s: cannot cluster a specific table in all databases\n"
+msgstr "%s: 无法在所有数据库中对一个指定的表进行建簇\n"
+
+#: clusterdb.c:181
+#, c-format
+msgid "%s: clustering of table \"%s\" in database \"%s\" failed: %s"
+msgstr "%1$s: 在数据库 \"%3$s\" 中的表 \"%2$s\" 建簇失败: %4$s"
+
+#: clusterdb.c:184
+#, c-format
+msgid "%s: clustering of database \"%s\" failed: %s"
+msgstr "%s: 数据库 \"%s\" 建簇失败: %s"
+
+#: clusterdb.c:217
+#, c-format
+msgid "%s: clustering database \"%s\"\n"
+msgstr "%s: 对数据库 \"%s\" 进行建簇\n"
+
+#: clusterdb.c:231
+#, c-format
+msgid ""
+"%s clusters all previously clustered tables in a database.\n"
+"\n"
+msgstr ""
+"%s 对一个数据库中先前已经建过簇的表进行建簇.\n"
+"\n"
+
+#: clusterdb.c:233 vacuumdb.c:257
+#, c-format
+msgid "  %s [OPTION]... [DBNAME]\n"
+msgstr "  %s [选项]... [数据库名]\n"
+
+#: clusterdb.c:235
+msgid "  -a, --all                 cluster all databases\n"
+msgstr "  -a, --all                 对所有数据库建簇\n"
+
+#: clusterdb.c:236
+msgid "  -d, --dbname=DBNAME       database to cluster\n"
+msgstr "  -d, --dbname=DBNAME       对数据库 DBNAME 建簇\n"
+
+#: clusterdb.c:237
+msgid "  -t, --table=TABLE         cluster specific table only\n"
+msgstr "  -t, --table=TABLE         只对指定的表 TABLE 建簇\n"
+
+#: clusterdb.c:247
+msgid ""
+"\n"
+"Read the description of the SQL command CLUSTER for details.\n"
+msgstr ""
+"\n"
+"阅读 SQL 命令 CLUSTER 的描述信息, 以便获得更详细的信息.\n"
+
+#: vacuumdb.c:135
+#, c-format
+msgid "%s: cannot vacuum all databases and a specific one at the same time\n"
+msgstr "%s: 无法对所有数据库和一个指定的数据库同时清理\n"
+
+#: vacuumdb.c:141
+#, c-format
+msgid "%s: cannot vacuum a specific table in all databases\n"
+msgstr "%s: 无法在所有数据库中对一个指定的表进行清理\n"
+
+#: vacuumdb.c:204
+#, c-format
+msgid "%s: vacuuming of table \"%s\" in database \"%s\" failed: %s"
+msgstr "%1$s: 在数据库 \"%3$s\" 中的表 \"%2$s\" 清理失败: %4$s"
+
+#: vacuumdb.c:207
+#, c-format
+msgid "%s: vacuuming of database \"%s\" failed: %s"
+msgstr "%s: 数据库 \"%s\" 清理失败: %s"
+
+#: vacuumdb.c:241
+#, c-format
+msgid "%s: vacuuming database \"%s\"\n"
+msgstr "%s: 清理数据库 \"%s\"\n"
+
+#: vacuumdb.c:255
+#, c-format
+msgid ""
+"%s cleans and analyzes a PostgreSQL database.\n"
+"\n"
+msgstr ""
+"%s 清理并且优化一个 PostgreSQL 数据库.\n"
+"\n"
+
+#: vacuumdb.c:259
+msgid "  -a, --all                       vacuum all databases\n"
+msgstr "  -a, --all                       清理所有的数据库\n"
+
+#: vacuumdb.c:260
+msgid "  -d, --dbname=DBNAME             database to vacuum\n"
+msgstr "  -d, --dbname=DBNAME             清理数据库 DBNAME\n"
+
+#: vacuumdb.c:261
+msgid "  -t, --table='TABLE[(COLUMNS)]'  vacuum specific table only\n"
+msgstr "  -t, --table='TABLE[(COLUMNS)]'  只清理指定的表 TABLE\n"
+
+#: vacuumdb.c:262
+msgid "  -f, --full                      do full vacuuming\n"
+msgstr "  -f, --full                      完全清理\n"
+
+#: vacuumdb.c:263
+msgid "  -z, --analyze                   update optimizer hints\n"
+msgstr "  -z, --anaylze                   更新优化器信息\n"
+
+#: vacuumdb.c:264
+msgid ""
+"  -e, --echo                      show the commands being sent to the "
+"server\n"
+msgstr ""
+"  -e, --echo                      显示发送到服务端的命令\n"
+
+#: vacuumdb.c:265
+msgid "  -q, --quiet                     don't write any messages\n"
+msgstr "  -q, --quiet                     不写任何信息\n"
+
+#: vacuumdb.c:266
+msgid "  -v, --verbose                   write a lot of output\n"
+msgstr "  -v, --verbose                   写大量的输出\n"
+
+#: vacuumdb.c:267
+msgid "  --help                          show this help, then exit\n"
+msgstr "  --help                          显示此帮助信息, 然后退出\n"
+
+#: vacuumdb.c:268
+msgid ""
+"  --version                       output version information, then exit\n"
+msgstr ""
+"  --versoin                       输出版本信息, 然后退出\n"
+
+#: vacuumdb.c:274
+msgid ""
+"\n"
+"Read the description of the SQL command VACUUM for details.\n"
+msgstr ""
+"\n"
+"阅读 SQL 命令 VACUUM 的描述信息, 以便获得更详细的信息.\n"
+
+#: common.c:88 common.c:114
+msgid "Password: "
+msgstr "口令: "
+
+#: common.c:101
+#, c-format
+msgid "%s: could not connect to database %s\n"
+msgstr "%s: 无法联接到数据库 %s\n"
+
+#: common.c:124
+#, c-format
+msgid "%s: could not connect to database %s: %s"
+msgstr "%s: 无法联接到数据库 %s: %s"
+
+#: common.c:148
+#, c-format
+msgid "%s: query failed: %s"
+msgstr "%s: 查询失败: %s"
+
+#: common.c:149
+#, c-format
+msgid "%s: query was: %s\n"
+msgstr "%s: 查询是: %s\n"
+
+#. translator: Make sure the (y/n) prompts match the translation of this.
+#: common.c:163
+msgid "y"
+msgstr "y"
+
+#. translator: Make sure the (y/n) prompts match the translation of this.
+#: common.c:165
+msgid "n"
+msgstr "n"

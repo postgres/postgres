@@ -1,6 +1,6 @@
-# $Header: /cvsroot/pgsql/src/bin/scripts/nls.mk,v 1.6 2003/08/11 15:19:58 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/scripts/nls.mk,v 1.7 2003/09/15 20:41:59 petere Exp $
 CATALOG_NAME    := pgscripts
-AVAIL_LANGUAGES := cs de ru sv
+AVAIL_LANGUAGES := cs de ru sv zh_CN
 GETTEXT_FILES   := createdb.c createlang.c createuser.c \
                    dropdb.c droplang.c dropuser.c \
                    clusterdb.c vacuumdb.c \
