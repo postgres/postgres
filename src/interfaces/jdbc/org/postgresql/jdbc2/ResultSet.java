@@ -1591,115 +1591,113 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 		}
 	}
 
-	public static Timestamp toTimestamp(String s, ResultSet resultSet) throws SQLException
+	/**
+	* Parse a string and return a timestamp representing its value.
+	*
+	* The driver is set to return ISO date formated strings. We modify this 
+	* string from the ISO format to a format that Java can understand. Java
+	* expects timezone info as 'GMT+09:00' where as ISO gives '+09'.
+	* Java also expects fractional seconds to 3 places where postgres
+	* will give, none, 2 or 6 depending on the time and postgres version.
+	* From version 7.2 postgres returns fractional seconds to 6 places.
+	* If available, we drop the last 3 digits.
+	*
+	* @param s         The ISO formated date string to parse.
+	* @param resultSet The ResultSet this date is part of.
+	*
+	* @return null if s is null or a timestamp of the parsed string s.
+	*
+	* @throws SQLException if there is a problem parsing s.
+	**/
+	public static Timestamp toTimestamp(String s, ResultSet resultSet)
+	throws SQLException
 	{
 		if (s == null)
 			return null;
 
-		boolean subsecond;
-		//if string contains a '.' we have fractional seconds
-		if (s.indexOf('.') == -1)
-		{
-			subsecond = false;
-		}
-		else
-		{
-			subsecond = true;
-		}
-
-		//here we are modifying the string from ISO format to a format java can understand
-		//java expects timezone info as 'GMT-08:00' instead of '-08' in postgres ISO format
-		//and java expects three digits if fractional seconds are present instead of two for postgres
-		//so this code strips off timezone info and adds on the GMT+/-...
-		//as well as adds a third digit for partial seconds if necessary
+		// We must be synchronized here incase more theads access the ResultSet
+		// bad practice but possible. Anyhow this is to protect sbuf and
+		// SimpleDateFormat objects
 		synchronized (resultSet)
 		{
-			// We must be synchronized here incase more theads access the ResultSet
-			// bad practice but possible. Anyhow this is to protect sbuf and
-			// SimpleDateFormat objects
+			SimpleDateFormat df = null;
 
-			// First time?
+			// If first time, create the buffer, otherwise clear it.
 			if (resultSet.sbuf == null)
 				resultSet.sbuf = new StringBuffer();
+			else
+				resultSet.sbuf.setLength(0);
 
-			resultSet.sbuf.setLength(0);
+			// Copy s into sbuf for parsing.
 			resultSet.sbuf.append(s);
 
-			//we are looking to see if the backend has appended on a timezone.
-			//currently postgresql will return +/-HH:MM or +/-HH for timezone offset
-			//(i.e. -06, or +06:30, note the expectation of the leading zero for the
-			//hours, and the use of the : for delimiter between hours and minutes)
-			//if the backend ISO format changes in the future this code will
-			//need to be changed as well
-			char sub = resultSet.sbuf.charAt(resultSet.sbuf.length() - 3);
-			if (sub == '+' || sub == '-')
+			if (s.length() > 19)
 			{
-				//we have found timezone info of format +/-HH
+				// The len of the ISO string to the second value is 19 chars. If
+				// greater then 19, there should be tz info and perhaps fractional
+				// second info which we need to change to java to read it.
 
-				resultSet.sbuf.setLength(resultSet.sbuf.length() - 3);
-				if (subsecond)
+				// cut the copy to second value "2001-12-07 16:29:22"
+				int i = 19;
+				resultSet.sbuf.setLength(i);
+
+				char c = s.charAt(i++);
+				if (c == '.')
 				{
-					resultSet.sbuf.append('0').append("GMT").append(s.substring(s.length() - 3)).append(":00");
+					// Found a fractional value. Append up to 3 digits including
+					// the leading '.'
+					do
+					{
+						if (i < 24)
+							resultSet.sbuf.append(c);
+						c = s.charAt(i++);
+					} while (Character.isDigit(c));
+
+					// If there wasn't at least 3 digits we should add some zeros
+					// to make up the 3 digits we tell java to expect.
+					for (int j = i; j < 24; j++)
+						resultSet.sbuf.append('0');
 				}
 				else
 				{
-					resultSet.sbuf.append("GMT").append(s.substring(s.length() - 3)).append(":00");
+					// No fractional seconds, lets add some.
+					resultSet.sbuf.append(".000");
 				}
-			}
-			else if (sub == ':')
-			{
-				//we may have found timezone info of format +/-HH:MM, or there is no
-				//timezone info at all and this is the : preceding the seconds
-				char sub2 = resultSet.sbuf.charAt(resultSet.sbuf.length() - 5);
-				if (sub2 == '+' || sub2 == '-')
-				{
-					//we have found timezone info of format +/-HH:MM
-					resultSet.sbuf.setLength(resultSet.sbuf.length() - 5);
-					if (subsecond)
-					{
-						resultSet.sbuf.append('0').append("GMT").append(s.substring(s.length() - 5));
-					}
-					else
-					{
-						resultSet.sbuf.append("GMT").append(s.substring(s.length() - 5));
-					}
-				}
-				else if (subsecond)
-				{
-					resultSet.sbuf.append('0');
-				}
-			}
-			else if (subsecond)
-			{
-				resultSet.sbuf.append('0');
-			}
 
-			// could optimize this a tad to remove too many object creations...
-			SimpleDateFormat df = null;
+				// prepend the GMT part and then add the remaining bit of
+				// the string.
+				resultSet.sbuf.append(" GMT");
+				resultSet.sbuf.append(c);
+				resultSet.sbuf.append(s.substring(i, s.length()));
 
-			if (resultSet.sbuf.length() > 23 && subsecond)
-			{
-				df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSzzzzzzzzz");
+				// Lastly, if the tz part doesn't specify the :MM part then
+				// we add ":00" for java.
+				if (s.length() - i < 5)
+					resultSet.sbuf.append(":00");
+
+				// we'll use this dateformat string to parse the result.
+				df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS z");
 			}
-			else if (resultSet.sbuf.length() > 23 && !subsecond)
+			else if (s.length() == 19)
 			{
-				df = new SimpleDateFormat("yyyy-MM-dd HH:mm:sszzzzzzzzz");
-			}
-			else if (resultSet.sbuf.length() > 10 && subsecond)
-			{
-				df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
-			}
-			else if (resultSet.sbuf.length() > 10 && !subsecond)
-			{
+				// No tz or fractional second info. 
+				// I'm not sure if it is
+				// possible to have a string in this format, as pg
+				// should give us tz qualified timestamps back, but it was
+				// in the old code, so I'm handling it for now.
 				df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 			}
 			else
 			{
+				// We must just have a date. This case is 
+				// needed if this method is called on a date
+				// column
 				df = new SimpleDateFormat("yyyy-MM-dd");
 			}
 
 			try
 			{
+				// All that's left is to parse the string and return the ts.
 				return new Timestamp(df.parse(resultSet.sbuf.toString()).getTime());
 			}
 			catch (ParseException e)
@@ -1708,7 +1706,5 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 			}
 		}
 	}
-
-
 }
 
