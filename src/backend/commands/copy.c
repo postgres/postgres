@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.155 2002/05/21 22:05:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.156 2002/05/21 22:59:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -447,6 +447,7 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp,
 	bool	   *isvarlena;
 	int16		fld_size;
 	char	   *string;
+	Snapshot	mySnapshot;
 
 	if (oids && !rel->rd_rel->relhasoids)
 		elog(ERROR, "COPY: table %s does not have OIDs",
@@ -494,7 +495,9 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp,
 		CopySendData(&tmp, sizeof(int32), fp);
 	}
 
-	scandesc = heap_beginscan(rel, QuerySnapshot, 0, NULL);
+	mySnapshot = CopyQuerySnapshot();
+
+	scandesc = heap_beginscan(rel, mySnapshot, 0, NULL);
 
 	while ((tuple = heap_getnext(scandesc, ForwardScanDirection)) != NULL)
 	{

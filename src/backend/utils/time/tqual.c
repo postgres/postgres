@@ -16,7 +16,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.51 2002/05/21 22:05:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.52 2002/05/21 22:59:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -961,6 +961,40 @@ SetQuerySnapshot(void)
 		QuerySnapshot = GetSnapshotData(false);
 
 	Assert(QuerySnapshot != NULL);
+}
+
+/*
+ * CopyQuerySnapshot
+ *		Copy the current query snapshot.
+ *
+ * Copying the snapshot is done so that a query is guaranteed to use a
+ * consistent snapshot for its entire execution life, even if the command
+ * counter is incremented or SetQuerySnapshot() is called while it runs
+ * (as could easily happen, due to triggers etc. executing queries).
+ *
+ * The copy is palloc'd in the current memory context.
+ */
+Snapshot
+CopyQuerySnapshot(void)
+{
+	Snapshot	snapshot;
+
+	if (QuerySnapshot == NULL)	/* should be set already, but... */
+		SetQuerySnapshot();
+
+	snapshot = (Snapshot) palloc(sizeof(SnapshotData));
+	memcpy(snapshot, QuerySnapshot, sizeof(SnapshotData));
+	if (snapshot->xcnt > 0)
+	{
+		snapshot->xip = (TransactionId *)
+			palloc(snapshot->xcnt * sizeof(TransactionId));
+		memcpy(snapshot->xip, QuerySnapshot->xip,
+			   snapshot->xcnt * sizeof(TransactionId));
+	}
+	else
+		snapshot->xip = NULL;
+
+	return snapshot;
 }
 
 /*

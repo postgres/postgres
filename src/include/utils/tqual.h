@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tqual.h,v 1.39 2002/05/21 22:05:55 tgl Exp $
+ * $Id: tqual.h,v 1.40 2002/05/21 22:59:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -112,6 +112,7 @@ extern HTSV_Result HeapTupleSatisfiesVacuum(HeapTupleHeader tuple,
 
 extern Snapshot GetSnapshotData(bool serializable);
 extern void SetQuerySnapshot(void);
+extern Snapshot CopyQuerySnapshot(void);
 extern void FreeXactSnapshot(void);
 
 #endif   /* TQUAL_H */
