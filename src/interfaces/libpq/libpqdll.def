@@ -65,3 +65,4 @@ EXPORTS
 	lo_export		@ 62
 	pgresStatus		@ 63
 	PQmblen			@ 64
+	PQresultErrorMessage	@ 65
