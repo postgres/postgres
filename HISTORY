@@ -1,4 +1,217 @@
   ------------------------------------------------------------------------
+                                Release 7.2
+  ------------------------------------------------------------------------
+
+
+Release 7.2  (2001-??-??)
+
+
+This release improved PostgreSQL for use in high volume applications.
+
+Major changes in this release:
+
+        VACUUM -  VACUUM no longer locks tables, allowing normal user
+access during the VACUUM.  A new VACUUM FULL command does old-style
+vacuum by locking the table and shrinking the on-disk copy of the table.
+
+        Security -  A new MD5 encryption option allows much more secure
+storage and transfer of passwords.  A new unix-domain socket
+authentication option is available on Linux and *BSD systems.
+
+        Statistics -  Administrators can use the new table access
+statistics module to get fine-grained information about table and index
+usage.
+
+Migration to 7.1
+
+   A dump/restore using pg_dump is required for those wishing to migrate
+   data from any previous release.
+
+
+
+AS OF 2001-09-13
+
+Bug Fixes
+---------
+Prevent unadorned relations names in target list (Bruce)
+Change UPDATE, DELETE permissions to be distinct (Peter E)
+PLpgSQL fix for SELECT... FOR UPDATE (Tom)
+Fix for PL/pgSQL PERFORM returning multiple rows (Tom)
+Fix for inherited CHECK constraints (Stephan Szabo)
+Fix bug in permission modifications in newly created table (Tom)
+Disallow access to pg_statistic for non-super user (Tom)
+Fix SERIAL in temporary tables (Bruce)
+Fire INSERT rules after statement (Jan)
+Fix INITIALLY DEFERRED bug in ecpg 
+Remove VACUUM warning about index tuples fewer than heap (Martijn van Oosterhout)
+Disable COPY TO/FROM on views (Bruce)
+Fix problem with LIMIT and subqueries (Tom)
+Fix for LIMIT, DISTINCT ON pushed into subqueryies (Tom)
+PL/pgSQL memory leak fix (Jan, Tom)
+Fix nested EXCEPT/INTERSECT (Tom)
+Python fix fetchone() (Gerhard Häring)
+ECPG fixes (Michael, Christof Petig)
+
+
+Enhancements
+------------
+VACUUM now does not lock table (Tom)
+New VACUUM FULL to force reclaimation of disk space (Tom)
+Statistical collector for table, index access (Jan)
+SPI portal creation of prepared/saved plans (Jan)
+PL/pgSQL uses portals for SELECT loops allowing huge result sets (Jan)
+PL/pgSQL CURSOR and REFCURSOR support (Jan)
+PL/pgSQL can now return open cursors (Jan)
+Add ELSEIF to PL/pgSQL (Klaus Reger)
+New REFERENCES, TRIGGER privileges (Peter E)
+Have psql \d display indexes in unique, primary groupings (Christopher Kings-Lynne)
+Improve PL/pgSQL error reporting (Tom)
+Add DROP CONSTRAINT for CHECK constraints (Christopher Kings-Lynne)
+PL/pgSQL Allow IS and FOR in cursors (Bruce)
+Native language error messages, psql, pg_dump, libpq, configure --enable-nls (Peter E)
+Allow NULL to appear at beginning/end based on ORDER BY (Tom)
+Add %TYPE capability to CREATE TYPE (Ian Lance Taylor)
+Truncate extra-long sequence names to a reasonable value (Tom)
+Add RESET ALL, SHOW ALL (Marko Kreen)
+Allow GRANT/REVOKE to/from with more than one user (Peter E)
+New has_table_privilege() function (Joe Conway)
+Allow non-super user to vacuum database (Tom)
+New Australian timezone GUC setting (Bruce)
+Untrusted PlPerl (Alex Pilosov)
+New IS UNKNOWN, IS NOT UNKNOWN boolean tests (Tom)
+Fork postmaster before doing authentication to prevent hangs (Peter E)
+Add Temporary sequences (Bruce)
+New GUC set default isolation level (Peter E)
+New SHARE UPDATE EXCLUSIVE lock mode (Tom)
+CREATE/ALTER USER/GROUP now allows options in any order (Vince)
+New encode() function installed by default (Marko Kreen)
+Enable partial indexes (Martijn van Oosterhout)
+Add unix domain socket user authentication in Linux, *BSD (Helge Bahmann, Oliver Elphick, Teodor Sigaev, Bruce)
+Pltcl add spi_lastoid capability (bob@redivi.com)
+Add LOCK A,B,C functionality(Neil Padgett)
+Make OID's optional using WITHOUT OIDS (Tom)
+Allow column renaming in views
+SUM(), AVG(), COUNT() now uses int8 internally for speed (Tom)
+Add convert(), convert2() (Tatsuo)
+Add MD5 encryption (Bruce)
+Allow encryption of stored passwords using MD5 (Bruce)
+Greater randomization of encryption keys using MD5 (Bruce)
+New ENCRYPTED/UNENCRYPTED option to CREATE/ALTER USER (Bruce)
+Sequences now use int8 internally (Tom)
+New SERIAL8 creates int8 columns with sequences, default still SERIAL4 (Tom)
+New option to output SET SESSION AUTHORIZATION commands (Peter E)
+Add automatic return type data casting for SQL functions (Tom)
+Allow safe transaction id wraparound (Tom)
+Use UTF, Unicode in TCL where appropriate (Vsevolod Lobko, Reinhard Max)
+Improved to_*() conversion functions (Karel Zak)
+PAM authentication (Dominic J. Eidson)
+Fix TCL COPY TO/FROM (ljb)
+Allow ALTER TABLE ADD UNIQUE (Christopher Kings-Lynne)
+Super-user id now defaults to 1 (Peter E)
+Reject invalid multibyte character sequences (Tatsuo)
+New libpq PQescapeString() function to escape query strings (Florian Weimer)
+
+Types
+-----
+CHAR(n)/VARCHAR(n) represents letters, not bytes (Tatsuo)
+CHAR(), VARCHAR() now returns error on storage of too long string (Peter E)
+BIT, BIT VARYING now returns error on too long input (Peter E)
+New function bit_length() (Peter E)
+inet, cidr text conversion functions (Alex Pilosov)
+inet, cidr operators << and <<= indexable (Alex Pilosov)
+Bytea comparison improvements (Joe Conway)
+
+Performance
+-----------
+Optimizer improvements (Tom)
+New histogram column statistics for optimizer (Tom)
+Reuse write-ahead log files rather than discarding them (Tom)
+Cache improvements (Tom)
+IS NULL, IS NOT NULL optimizer improvement (Tom)
+Load pg_hba.conf only on startup and SIGHUP (Bruce)
+
+Interfaces
+----------
+JDBC
+	return oid of INSERT (Ken K)
+	hande more data types (Ken K)
+	handle single quotes and newlines in strings (Ken K)
+	handle NULL variables (Ken K)
+	fix for timezone handling (Barry Lind)
+	Improved Druid support
+	Allow eight-bit characters with non-multibyte server (Barry Lind)
+	support BIT, BINARY types (Ned Wolpert)
+	reduce memory usage (Michael Stephens, Dave Cramer)
+	update DatabaseMetaData (Peter E)
+	add DatabaseMetaData.getCatalogs() (Peter E)
+	encoding fixes (Anders Bengtsson)
+	get/setCatalog methods (Jason Davies)
+	DatabaseMetaData.getColumns() now returns column defaults (Jason Davies)
+	jdbc1 and jdbc2 merging (Anders Bengtsson)
+	transaction performance improvements (Barry Lind)
+	array fixes (Greg Zoller)
+	Serialize addition 
+	fix batch processing (Ren? Pijlman)
+	ExecSQL method reorganization (Anders Bengtsson)
+	getColumn() fixes (Jeroen van Vianen)
+	fix isWriteable() function (Ren? Pijlman)
+	Improved passage of jdbc2 conformance tests (Ren? Pijlman)
+	Add bytea type capability (Barry Lind)
+ODBC
+	remove query limit (Hiroshi)
+	remove text field size limit (Hiroshi)
+	fix for SQLPrimaryKeys() (Hiroshi)
+	procedure calls (Hiroshi)
+	FETCH first fix (Aidan Mountford)
+	updatable cursors (Hiroshi)
+	Most configure options on setable via DSN (Hiroshi)
+	multibyte, performance fixes (Hiroshi)
+
+
+Source Code
+-----------
+Configure, dynamic loader, and shared library fixes (Peter E)
+Watcom fixes (Bernd Tegge)
+QNX fixes
+Cygwin, Win32 server fixes (Jason Tishler)
+Cygwin, Win32 fixes for TCL, perl, Python, PlPython, psql, libpq, libpq++ (Jason Tishler, Gerhard H?ring, Dmitry Yurtaev, Darko Prenosil, Mikhail Terekhov)
+Remove SEP_CHAR (Bruce)
+GIST index improvements (Oleg Bartunov, Teodor Sigaev, Tom)
+New contrib/rtree_gist ((Oleg Bartunov, Teodor Sigaev)
+Create temporary files into a separate directory (Bruce)
+Delete orphanded temporary files on postmaster startup (Bruce)
+Add unique index to some system tables (Tom)
+New GUC hooks (Tom)
+Add /contrib/dblink for remote database access (Joe Conway)
+/contrib/ora2pg Oracle conversion utility (Gilles Darold)
+Merge GUC and command line handling (Marko Kreen)
+Remove EXTEND INDEX (Martijn van Oosterhout, Tom)
+/contrib/xml XML conversion utility (John Gray)
+Correct description of translate() function (Bruce)
+/contrib/fulltextindex fixes (Christopher Kings-Lynne)
+Fix for Win32 socket communication failures (Magnus, Mikhail Terekhov)
+/contrib/intarray fixes (Oleg Bartunov)
+Hurd compile fix (Oliver Elphick)
+New /contrib/fuzzystrmatch with lievnshtein and metaphone, soundex merged (Joe Conway)
+Beos fixes (Cyril VELTER)
+Remove OID's from some system tables (Tom)
+/contrib/pgcrypto improvements (Marko Kreen)
+System table operator reorganization (Oleg Bartunov, Teodor Sigaev, Tom)
+Rename config.h to pg_config.h (Peter E)
+pg_log now pg_clog (Tom)
+PL/Perl compile fixes (Peter E)
+PL/Python now builds by default on some platforms (Peter E)
+Remove define of true/false when compiling under C++ (Leandro Fanzone, Tom)
+Client header reorganization (Peter E)
+Please SQL language manual pages into OS-specific directories (Peter E)
+Better cleanup for semaphore resource failure (Tatsuo, Tom)
+Remove compile-time limit on number of backends (Tom)
+Enable SIGTERM, SIGQUIT to kill backends (Jan)
+New pgjindent utility to indent java code (Bruce)
+
+
+
+  ------------------------------------------------------------------------
                                 Release 7.1.3
   ------------------------------------------------------------------------
 
