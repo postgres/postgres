@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/manage-ag.sgml,v 2.13 2001/03/29 18:25:10 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/manage-ag.sgml,v 2.14 2001/09/09 23:52:12 petere Exp $
 -->
 
 <chapter id="managing-databases">
@@ -85,11 +85,11 @@ CREATE DATABASE <replaceable>name</>
 createdb <replaceable class="parameter">dbname</replaceable>
 </synopsis>
 
-   <filename>createdb</> does no magic. It connects to the template1
+   <command>createdb</> does no magic. It connects to the template1
    database and executes the <command>CREATE DATABASE</> command,
    exactly as described above. It uses <application>psql</> program
-   internally. The reference page on createdb contains the invocation
-   details. In particular, createdb without any arguments will create
+   internally. The reference page on <command>createdb</> contains the invocation
+   details. In particular, <command>createdb</> without any arguments will create
    a database with the current user name, which may or may not be what
    you want.
   </para>
@@ -132,7 +132,7 @@ export PGDATA2
 setenv PGDATA2 /home/postgres/data
 </programlisting>
     </informalexample>
-    in csh or tcsh. You have to make sure that this environment
+    in <application>csh</> or <application>tcsh</>. You have to make sure that this environment
     variable is always defined in the server environment, otherwise
     you won't be able to access that database. Therefore you probably
     want to set it in some sort of shell start-up file or server

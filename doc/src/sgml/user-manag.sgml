@@ -39,7 +39,7 @@ CREATE USER <replaceable>name</replaceable>
    <command>initdb</command>) it will have the same name as the
    operating system user that initialized the area (and is presumably
    being used as the user that runs the server). Customarily, this user
-   will be called <quote>postgres</quote>. In order to create more
+   will be called <systemitem>postgres</systemitem>. In order to create more
    users you have to first connect as this initial user.
   </para>
 
@@ -132,7 +132,7 @@ ALTER GROUP <replaceable>name</replaceable> DROP USER <replaceable>uname1</repla
   <para>
    When a database object is created, it is assigned an owner. The
    owner is the user that executed the creation statement. There is
-   currenty no polished interface for changing the owner of a database
+   currently no polished interface for changing the owner of a database
    object. By default, only an owner (or a superuser) can do anything
    with the object. In order to allow other users to use it,
    <firstterm>privileges</firstterm> must be granted.
@@ -169,7 +169,7 @@ GRANT SELECT ON accounts TO GROUP staff;
 REVOKE ALL ON accounts FROM PUBLIC;
 </programlisting>
    The set of privileges held by the table owner is always implicit
-   and is never revokable.
+   and cannot be revoked.
   </para>
  </sect1>
 
@@ -179,7 +179,7 @@ REVOKE ALL ON accounts FROM PUBLIC;
   <para>
    Functions and triggers allow users to insert code into the backend
    server that other users may execute without knowing it. Hence, both
-   mechanisms permit users to <firstterm>trojan horse</firstterm>
+   mechanisms permit users to <firstterm>Trojan horse</firstterm>
    others with relative impunity. The only real protection is tight
    control over who can define functions (e.g., write to relations
    with SQL fields) and triggers. Audit trails and alerters on the

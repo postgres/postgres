@@ -22,7 +22,7 @@
   Windows.  The makefiles included in the source distribution are
   written for <productname>Microsoft Visual C++</productname> and will
   probably not work with other systems.  It should be possible to
-  compile the libaries manually in other cases.
+  compile the libraries manually in other cases.
  </para>
 
  <tip>
@@ -99,7 +99,7 @@
  </para>
 
  <para>
-  If you plan to do development using libpq on this machine, you will
+  If you plan to do development using <application>libpq</application> on this machine, you will
   have to add the <filename>src\include</filename> and
   <filename>src\interfaces\libpq</filename> subdirectories of the
   source tree to the include path in your compilers settings.

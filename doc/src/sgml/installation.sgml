@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.52 2001/09/06 02:56:32 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.53 2001/09/09 23:52:12 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%flattext-install-include[<productname>PostgreSQL</>]]>
@@ -55,7 +55,7 @@ su - postgres
       <application>make</> programs will <emphasis>not</> work.
       <acronym>GNU</> <application>make</> is often installed under
       the name <filename>gmake</filename>; this document will always
-      refer to it by that name. (On GNU/Linux systems GNU make is the
+      refer to it by that name. (On <systemitem class="osname">GNU/Linux</> systems GNU make is the
       default tool with the name <filename>make</>.) To test for
       <acronym>GNU</acronym> <application>make</application> enter
 <screen>
@@ -112,9 +112,9 @@ su - postgres
       need these programs only when building from a CVS tree or when
       the actual scanner and parser definition files were changed. If
       you need them, be sure to get <application>Flex</> 2.5.4 or
-      later and <application>Bison</> 1.28 or later. Other yacc
+      later and <application>Bison</> 1.28 or later. Other <application>yacc</>
       programs can sometimes be used, but doing so requires extra
-      efforts and is not recommended. Other lex programs will
+      efforts and is not recommended. Other <application>lex</> programs will
       definitely not work.
      </para>
     </listitem>
@@ -248,7 +248,7 @@ su - postgres
     <para>
      On systems that have <productname>PostgreSQL</> started at boot time, there is
      probably a start-up file that will accomplish the same thing. For
-     example, on a Red Hat Linux system one might find that
+     example, on a <systemitem class="osname">Red Hat Linux</> system one might find that
 <screen>
 <userinput>/etc/rc.d/init.d/postgresql stop</userinput>
 </screen>
@@ -335,7 +335,7 @@ su - postgres
 
      <variablelist>
       <varlistentry>
-       <term>--prefix=<replaceable>PREFIX</></term>
+       <term><option>--prefix=<replaceable>PREFIX</></option></term>
        <listitem>
         <para>
          Install all files under the directory <replaceable>PREFIX</>
@@ -353,7 +353,7 @@ su - postgres
       </varlistentry>
 
       <varlistentry>
-       <term>--exec-prefix=<replaceable>EXEC-PREFIX</></term>
+       <term><option>--exec-prefix=<replaceable>EXEC-PREFIX</></option></term>
        <listitem>
         <para>
          You can install architecture-dependent files under a
@@ -369,7 +369,7 @@ su - postgres
       </varlistentry>
 
       <varlistentry>
-       <term>--bindir=<replaceable>DIRECTORY</></term>
+       <term><option>--bindir=<replaceable>DIRECTORY</></option></term>
        <listitem>
         <para>
          Specifies the directory for executable programs. The default
@@ -380,7 +380,7 @@ su - postgres
       </varlistentry>
 
       <varlistentry>
-       <term>--datadir=<replaceable>DIRECTORY</></term>
+       <term><option>--datadir=<replaceable>DIRECTORY</></option></term>
        <listitem>
         <para>
          Sets the directory for read-only data files used by the
@@ -392,7 +392,7 @@ su - postgres
       </varlistentry>
 
       <varlistentry>
-       <term>--sysconfdir=<replaceable>DIRECTORY</></term>
+       <term><option>--sysconfdir=<replaceable>DIRECTORY</></option></term>
        <listitem>
         <para>
          The directory for various configuration files,
@@ -402,7 +402,7 @@ su - postgres
       </varlistentry>
 
       <varlistentry>
-       <term>--libdir=<replaceable>DIRECTORY</></term>
+       <term><option>--libdir=<replaceable>DIRECTORY</></option></term>
        <listitem>
         <para>
          The location to install libraries and dynamically loadable
@@ -413,7 +413,7 @@ su - postgres
       </varlistentry>
 
       <varlistentry>
-       <term>--includedir=<replaceable>DIRECTORY</></term>
+       <term><option>--includedir=<replaceable>DIRECTORY</></option></term>
        <listitem>
         <para>
          The directory for installing C and C++ header files. The
@@ -423,7 +423,7 @@ su - postgres
       </varlistentry>
 
       <varlistentry>
-       <term>--docdir=<replaceable>DIRECTORY</></term>
+       <term><option>--docdir=<replaceable>DIRECTORY</></option></term>
        <listitem>
         <para>
          Documentation files, except <quote>man</> pages, will be
@@ -434,7 +434,7 @@ su - postgres
       </varlistentry>
 
       <varlistentry>
-       <term>--mandir=<replaceable>DIRECTORY</></term>
+       <term><option>--mandir=<replaceable>DIRECTORY</></option></term>
        <listitem>
         <para>
          The man pages that come with <productname>PostgreSQL</> will be installed under
@@ -456,7 +456,7 @@ su - postgres
        automatically appended to <varname>datadir</varname>,
        <varname>sysconfdir</varname>, and <varname>docdir</varname>,
        unless the fully expanded directory name already contains the
-       string <quote>postgres</quote> or <quote>pgsql</quote>.  For
+       string <quote><literal>postgres</></quote> or <quote><literal>pgsql</></quote>.  For
        example, if you choose <filename>/usr/local</filename> as
        prefix, the documentation will be installed in
        <filename>/usr/local/doc/postgresql</filename>, but if the
@@ -478,13 +478,13 @@ su - postgres
     <para>
      <variablelist>
       <varlistentry>
-       <term>--with-includes=<replaceable>DIRECTORIES</></term>
+       <term><option>--with-includes=<replaceable>DIRECTORIES</></option></term>
        <listitem>
         <para>
          <replaceable>DIRECTORIES</> is a colon-separated list of
          directories that will be added to the list the compiler
          searches for header files. If you have optional packages
-         (such as GNU Readline) installed in a non-standard location
+         (such as GNU <application>Readline</>) installed in a non-standard location
          you have to use this option and probably the corresponding
          <option>--with-libraries</> option.
         </para>
@@ -495,7 +495,7 @@ su - postgres
       </varlistentry>
 
       <varlistentry>
-       <term>--with-libraries=<replaceable>DIRECTORIES</></term>
+       <term><option>--with-libraries=<replaceable>DIRECTORIES</></option></term>
        <listitem>
         <para>
          <replaceable>DIRECTORIES</> is a colon-separated list of
@@ -511,7 +511,7 @@ su - postgres
       </varlistentry>
 
       <varlistentry>
-       <term>--enable-locale</term>
+       <term><option>--enable-locale</option></term>
        <listitem>
         <para>
          Enables locale support. There is a performance penalty
@@ -522,7 +522,7 @@ su - postgres
       </varlistentry>
 
       <varlistentry>
-       <term>--enable-recode</term>
+       <term><option>--enable-recode</option></term>
        <listitem>
         <para>
          Enables single-byte character set recode support. See
@@ -533,7 +533,7 @@ su - postgres
       </varlistentry>
 
       <varlistentry>
-       <term>--enable-multibyte</term>
+       <term><option>--enable-multibyte</option></term>
        <listitem>
         <para>
          Allows the use of multibyte character encodings. This is
@@ -547,10 +547,10 @@ su - postgres
       </varlistentry>
 
       <varlistentry>
-       <term>--enable-nls<optional>=<replaceable>LANGUAGES</replaceable></optional></term>
+       <term><option>--enable-nls<optional>=<replaceable>LANGUAGES</replaceable></optional></option></term>
        <listitem>
         <para>
-         Enables Native Language Support (NLS), that is, the ability
+         Enables Native Language Support (<acronym>NLS</acronym>), that is, the ability
          to display a program's message in a language other than
          English.  <replaceable>LANGUAGES</replaceable> is a space
          separated list of codes of the languages that you want
@@ -566,13 +566,13 @@ su - postgres
 
         <para>
          To use this option, you will need an implementation of the
-         gettext API.  Some operating systems have this built-in
-         (e.g., Linux, NetBSD, Solaris), for other systems you can download
+         <application>gettext</> API.  Some operating systems have this built-in
+         (e.g., <systemitem class="osname">Linux</>, <systemitem class="osname">NetBSD</>, <systemitem class="osname">Solaris</>), for other systems you can download
          an add-on package from here:  <ulink
          url="http://www.postgresql.org/~petere/gettext.html"
-         >http://www.postgresql.org/~petere/gettext.html</ulink>.  If
-         you are using the gettext implementation in the GNU C library
-         then you will additionally need the GNU gettext package for
+         ><systemitem class="resource">http://www.postgresql.org/~petere/gettext.html</></ulink>.  If
+         you are using the <application>gettext</> implementation in the GNU C library
+         then you will additionally need the <productname>GNU gettext</productname> package for
          some utility programs.  For any of the other implementations
          you will not need it.
         </para>
@@ -585,7 +585,7 @@ su - postgres
       </varlistentry>
 
       <varlistentry>
-       <term>--with-pgport=<replaceable>NUMBER</></term>
+       <term><option>--with-pgport=<replaceable>NUMBER</></option></term>
        <listitem>
         <para>
          Set <replaceable>NUMBER</> as the default port number for
@@ -598,7 +598,7 @@ su - postgres
       </varlistentry>
 
       <varlistentry>
-       <term>--with-CXX</term>
+       <term><option>--with-CXX</option></term>
        <listitem>
         <para>
          Build the C++ interface library.
@@ -607,7 +607,7 @@ su - postgres
       </varlistentry>
 
       <varlistentry>
-       <term>--with-perl</term>
+       <term><option>--with-perl</option></term>
        <listitem>
         <para>
          Build the Perl interface module. The Perl interface
@@ -621,7 +621,7 @@ su - postgres
       </varlistentry>
 
       <varlistentry>
-       <term>--with-python</term>
+       <term><option>--with-python</option></term>
        <listitem>
         <para>
          Build the Python interface module. You need to have root
@@ -637,30 +637,33 @@ su - postgres
       </varlistentry>
 
       <varlistentry>
-       <term>--with-tcl</term>
+       <term><option>--with-tcl</option></term>
        <listitem>
         <para>
-         Builds components that require Tcl/Tk, which are libpgtcl,
-         pgtclsh, pgtksh, pgaccess, and PL/Tcl.  But see below about
+         Builds components that require Tcl/Tk, which are
+         <application>libpgtcl</>, <application>pgtclsh</>,
+         <application>pgtksh</application>, <application>PgAccess</>,
+         and <application>PL/Tcl</>.  But see below about
          <option>--without-tk</>.
         </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
-       <term>--without-tk</term>
+       <term><option>--without-tk</option></term>
        <listitem>
         <para>
          If you specify <option>--with-tcl</> and this option, then
-         programs that require <productname>Tk</> (i.e., pgtksh and pgaccess)
-         will be excluded.
+         programs that require <productname>Tk</>
+         (<application>pgtksh</> and <application>PgAccess</>) will be
+         excluded.
         </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
-       <term>--with-tclconfig=<replaceable>DIRECTORY</replaceable></term>
-       <term>--with-tkconfig=<replaceable>DIRECTORY</replaceable></term>
+       <term><option>--with-tclconfig=<replaceable>DIRECTORY</replaceable></option></term>
+       <term><option>--with-tkconfig=<replaceable>DIRECTORY</replaceable></option></term>
        <listitem>
         <para>
          Tcl/Tk installs the files <filename>tclConfig.sh</filename> and
@@ -675,7 +678,7 @@ su - postgres
       </varlistentry>
 
       <varlistentry>
-       <term>--enable-pltcl-unknown</term>
+       <term><option>--enable-pltcl-unknown</option></term>
        <listitem>
         <para>
          Enables enables PL/Tcl unknown support.
@@ -684,10 +687,10 @@ su - postgres
       </varlistentry>
 
       <varlistentry>
-       <term>--enable-pltcl-utf</term>
+       <term><option>--enable-pltcl-utf</option></term>
        <listitem>
         <para>
-         Enables enables PL/Tcl Tcl_UtfToExternal and Tcl_ExternalToUtf
+         Enables enables PL/Tcl <function>Tcl_UtfToExternal</> and <function>Tcl_ExternalToUtf</>
          conversion support. These functions needed for Tcl versions 8.1
          and above for proper handling of 8-bit characters.
         </para>
@@ -695,7 +698,7 @@ su - postgres
       </varlistentry>
 
       <varlistentry>
-       <term>--enable-odbc</term>
+       <term><option>--enable-odbc</option></term>
        <listitem>
         <para>
          Build the ODBC driver package.
@@ -704,7 +707,7 @@ su - postgres
       </varlistentry>
 
       <varlistentry>
-       <term>--with-odbcinst=<replaceable>DIRECTORY</></term>
+       <term><option>--with-odbcinst=<replaceable>DIRECTORY</></option></term>
        <listitem>
         <para>
          Specifies the directory where the ODBC driver will expect its
@@ -719,8 +722,8 @@ su - postgres
       </varlistentry>
 
       <varlistentry>
-       <term>--with-krb4=<replaceable>DIRECTORY</></term>
-       <term>--with-krb5=<replaceable>DIRECTORY</></term>
+       <term><option>--with-krb4=<replaceable>DIRECTORY</></option></term>
+       <term><option>--with-krb5=<replaceable>DIRECTORY</></option></term>
        <listitem>
         <para>
          Build with support for Kerberos authentication. You can use
@@ -746,11 +749,11 @@ su - postgres
       </varlistentry>
 
       <varlistentry>
-       <term>--with-krb-srvnam=<replaceable>NAME</></term>
+       <term><option>--with-krb-srvnam=<replaceable>NAME</></option></term>
        <listitem>
         <para>
          The name of the Kerberos service principal.
-         <quote>postgres</quote> is the default. There's probably no
+         <literal>postgres</literal> is the default. There's probably no
          reason to change this.
         </para>
        </listitem>
@@ -762,7 +765,7 @@ su - postgres
         <seealso>SSL</seealso>
        </indexterm>
 
-       <term>--with-openssl=<replaceable>DIRECTORY</></term>
+       <term><option>--with-openssl=<replaceable>DIRECTORY</></option></term>
        <listitem>
         <para>
          Build with support for <acronym>SSL</> (encrypted) connections. 
@@ -781,7 +784,7 @@ su - postgres
       </varlistentry>
 
       <varlistentry>
-       <term>--with-java</term>
+       <term><option>--with-java</option></term>
        <listitem>
         <para>
          Build the <acronym>JDBC</acronym> driver and associated Java
@@ -796,12 +799,12 @@ su - postgres
       </varlistentry>
 
       <varlistentry>
-       <term>--enable-syslog</term>
+       <term><option>--enable-syslog</option></term>
        <listitem>
         <para>
          Enables the <productname>PostgreSQL</> server to use the
-         syslog logging facility. (Using this option does not mean
-         that you must log with syslog or even that it will be done
+         <systemitem>syslog</> logging facility. (Using this option does not mean
+         that you must log with <systemitem>syslog</> or even that it will be done
          by default, it simply makes it possible to turn this option
          on at run time.)
         </para>
@@ -809,13 +812,13 @@ su - postgres
       </varlistentry>
 
       <varlistentry>
-       <term>--enable-debug</term>
+       <term><option>--enable-debug</option></term>
        <listitem>
         <para>
          Compiles all programs and libraries with debugging symbols.
          This means that you can run the programs through a debugger
          to analyze problems. This enlarges the size of the installed
-	 executables considerably, and on non-gcc compilers it usually
+	 executables considerably, and on non-GCC compilers it usually
 	 also disables compiler optimization, causing slowdowns. However,
 	 having the symbols available is extremely helpful for dealing
 	 with any problems that may arise.  Currently, this option is
@@ -827,7 +830,7 @@ su - postgres
       </varlistentry>
 
       <varlistentry>
-       <term>--enable-cassert</term>
+       <term><option>--enable-cassert</option></term>
        <listitem>
         <para>
 	 Enables <firstterm>assertion</> checks in the server, which test for
@@ -948,7 +951,7 @@ All of PostgreSQL is successfully made. Ready to install.
    <para>
     The standard install installs only the header files needed for client
     application development.  If you plan to do any server-side program
-    development (such as custom functions or datatypes written in C),
+    development (such as custom functions or data types written in C),
     then you may want to install the entire <productname>PostgreSQL</>
     include tree into your target include directory.  To do that, enter
 <screen>
@@ -1008,21 +1011,26 @@ All of PostgreSQL is successfully made. Ready to install.
     On some systems that have shared libraries (which most systems do)
     you need to tell your system how to find the newly installed
     shared libraries.  The systems on which this is
-    <emphasis>not</emphasis> necessary include FreeBSD, HP/UX, Irix,
-    Linux, NetBSD, OpenBSD, OSF/1 (Digital Unix, Tru64 UNIX), and
-    Solaris.
+    <emphasis>not</emphasis> necessary include <systemitem
+    class="osname">BSD/OS</>, <systemitem class="osname">FreeBSD</>,
+    <systemitem class="osname">HP-UX</>, <systemitem
+    class="osname">IRIX</>, <systemitem class="osname">Linux</>,
+    <systemitem class="osname">NetBSD</>, <systemitem
+    class="osname">OpenBSD</>, <systemitem class="osname">Tru64
+    UNIX</> (formerly <systemitem class="osname">Digital UNIX</>), and
+    <systemitem class="osname">Solaris</>.
    </para>
 
    <para>
     The method to set the shared library search path varies between
     platforms, but the most widely usable method is to set the
     environment variable <envar>LD_LIBRARY_PATH</> like so: In Bourne
-    shells (sh, ksh, bash, zsh)
+    shells (<command>sh</>, <command>ksh</>, <command>bash</>, <command>zsh</>)
 <programlisting>
 LD_LIBRARY_PATH=/usr/local/pgsql/lib
 export LD_LIBRARY_PATH
 </programlisting>
-    or in csh or tcsh
+    or in <command>csh</> or <command>tcsh</>
 <programlisting>
 setenv LD_LIBRARY_PATH /usr/local/pgsql/lib
 </programlisting>
@@ -1082,7 +1090,7 @@ libpq.so.2.1: cannot open shared object file: No such file or directory
 <programlisting>
 PATH=$PATH:/usr/local/pgsql/bin
 </programlisting>
-    If you are using csh or tcsh, then use this command:
+    If you are using <command>csh</> or <command>tcsh</>, then use this command:
 <programlisting>
 set path = ( /usr/local/pgsql/bin $path )
 </programlisting>
@@ -1317,210 +1325,210 @@ gunzip -c user.ps.gz \
       </thead>
       <tbody>
        <row>
-	<entry>AIX 4.3.3</entry>
-	<entry>RS6000</entry>
+	<entry><systemitem class="osname">AIX 4.3.3</></entry>
+	<entry><systemitem>RS6000</></entry>
 	<entry>7.1</entry>
 	<entry>2001-03-21, Gilles Darold (<email>gilles@darold.net</email>)</entry>
         <entry>see also <filename>doc/FAQ_AIX</filename></entry>
        </row>
        <row>
-	<entry>BeOS 5.0.4</entry>
-	<entry>x86</entry>
+	<entry><systemitem class="osname">BeOS 5.0.4</></entry>
+	<entry><systemitem>x86</></entry>
 	<entry>7.1</entry>
 	<entry>2001-02-26, Cyril Velter (<email>cyril.velter@libertysurf.fr</email>)</entry>
         <entry>requires new BONE networking stack</entry>
        </row>
        <row>
-	<entry>BSD/OS 4.01</entry>
-	<entry>x86</entry>
+	<entry><systemitem class="osname">BSD/OS 4.01</></entry>
+	<entry><systemitem>x86</></entry>
 	<entry>7.1</entry>
 	<entry>2001-03-20, Bruce Momjian (<email>pgman@candle.pha.pa.us</email>)</entry>
         <entry></entry>
        </row>
        <row>
-	<entry>Compaq Tru64 UNIX</entry>
-	<entry>Alpha</entry>
-	<entry>7.1</entry>
-	<entry>2001-03-26, Adriaan Joubert (<email>a.joubert@albourne.com</email>)</entry>
-        <entry>4.0-5.0, cc and gcc</entry>
-       </row>
-       <row>
-	<entry>FreeBSD 4.3</entry>
-	<entry>x86</entry>
+	<entry><systemitem class="osname">FreeBSD 4.3</></entry>
+	<entry><systemitem>x86</></entry>
 	<entry>7.1</entry>
 	<entry>2001-03-19, Vince Vielhaber (<email>vev@hub.org</email>)</entry>
         <entry></entry>
        </row>
        <row>
-	<entry>HP/UX</entry>
-	<entry>PA-RISC</entry>
+	<entry><systemitem class="osname">HP-UX</></entry>
+	<entry><systemitem>PA-RISC</></entry>
 	<entry>7.1</entry>
 	<entry>2001-03-19, 10.20 Tom Lane (<email>tgl@sss.pgh.pa.us</email>),
 	       2001-03-22, 11.00, 11i Giles Lean (<email>giles@nemeton.com.au</email>)</entry>
         <entry>32- and 64-bit on 11.00; see also <filename>doc/FAQ_HPUX</filename></entry>
        </row>
        <row>
-	<entry>IRIX 6.5.11</entry>
-	<entry>MIPS</entry>
+	<entry><systemitem class="osname">IRIX 6.5.11</></entry>
+	<entry><systemitem>MIPS</></entry>
 	<entry>7.1</entry>
 	<entry>2001-03-22, Robert Bruccoleri (<email>bruc@acm.org</email>)</entry>
 	<entry>32-bit compilation model</entry>
        </row>
        <row>
-	<entry>Linux 2.2.x</entry>
-	<entry>Alpha</entry>
+	<entry><systemitem class="osname">Linux 2.2.x</></entry>
+	<entry><systemitem>Alpha</></entry>
 	<entry>7.1</entry>
 	<entry>2001-01-23, Ryan Kirkpatrick (<email>pgsql@rkirkpat.net</email>)</entry>
 	<entry></entry>
        </row>
        <row>
-	<entry>Linux 2.2.x</entry>
-	<entry>armv4l</entry>
+	<entry><systemitem class="osname">Linux 2.2.x</></entry>
+	<entry><systemitem>armv4l</></entry>
 	<entry>7.1</entry>
 	<entry>2001-02-22, Mark Knox (<email>segfault@hardline.org</email>)</entry>
 	<entry></entry>
        </row>
        <row>
-	<entry>Linux 2.0.x</entry>
-	<entry>MIPS</entry>
+	<entry><systemitem class="osname">Linux 2.0.x</></entry>
+	<entry><systemitem>MIPS</></entry>
 	<entry>7.1</entry>
 	<entry>2001-03-30, Dominic Eidson (<email>sauron@the-infinite.org</email>)</entry>
-	<entry>Cobalt Qube</entry>
+	<entry><productname>Cobalt Qube</></entry>
        </row>
        <row>
-	<entry>Linux 2.2.18</entry>
-	<entry>PPC74xx</entry>
+	<entry><systemitem class="osname">Linux 2.2.18</></entry>
+	<entry><systemitem>PPC74xx</></entry>
 	<entry>7.1</entry>
 	<entry>2001-03-19, Tom Lane (<email>tgl@sss.pgh.pa.us</email>)</entry>
 	<entry>Apple G3</entry>
        </row>
        <row>
-	<entry>Linux</entry>
-	<entry>S/390</entry>
+	<entry><systemitem class="osname">Linux</></entry>
+	<entry><systemitem>S/390</></entry>
 	<entry>7.1</entry>
 	<entry>2000-11-17, Neale Ferguson (<email>Neale.Ferguson@softwareAG-usa.com</email>)</entry>
 	<entry></entry>
        </row>
        <row>
-	<entry>Linux 2.2.15</entry>
-	<entry>Sparc</entry>
+	<entry><systemitem class="osname">Linux 2.2.15</></entry>
+	<entry><systemitem>Sparc</></entry>
 	<entry>7.1</entry>
 	<entry>2001-01-30, Ryan Kirkpatrick (<email>pgsql@rkirkpat.net</email>)</entry>
 	<entry></entry>
        </row>
        <row>
-	<entry>Linux</entry>
-	<entry>x86</entry>
+	<entry><systemitem class="osname">Linux</></entry>
+	<entry><systemitem>x86</></entry>
 	<entry>7.1</entry>
 	<entry>2001-03-19, Thomas Lockhart (<email>thomas@fourpalms.org</email>)</entry>
 	<entry>2.0.x, 2.2.x, 2.4.2</entry>
        </row>
        <row>
-	<entry>MacOS X</entry>
-	<entry>PPC</entry>
+	<entry><systemitem class="osname">MacOS X</></entry>
+	<entry><systemitem>PPC</></entry>
 	<entry>7.1</entry>
 	<entry>2000-12-11, Peter Bierman (<email>bierman@apple.com</email>),
 	       2000-12-11, Daniel Luke (<email>dluke@geeklair.net</email>)</entry>
 	<entry>Darwin (only) Beta-2 or higher</entry>
        </row>
        <row>
-	<entry>NetBSD 1.5</entry>
-	<entry>Alpha</entry>
+	<entry><systemitem class="osname">NetBSD 1.5</></entry>
+	<entry><systemitem>Alpha</></entry>
 	<entry>7.1</entry>
 	<entry>2001-03-22, Giles Lean (<email>giles@nemeton.com.au</email>)</entry>
 	<entry></entry>
        </row>
        <row>
-	<entry>NetBSD 1.5E</entry>
-	<entry>arm32</entry>
+	<entry><systemitem class="osname">NetBSD 1.5E</></entry>
+	<entry><systemitem>arm32</></entry>
 	<entry>7.1</entry>
 	<entry>2001-03-21, Patrick Welche (<email>prlw1@cam.ac.uk</email>)</entry>
 	<entry></entry>
        </row>
        <row>
-	<entry>NetBSD</entry>
-	<entry>m68k</entry>
+	<entry><systemitem class="osname">NetBSD</></entry>
+	<entry><systemitem>m68k</></entry>
 	<entry>7.0</entry>
 	<entry>2000-04-10, Henry B. Hotz (<email>hotz@jpl.nasa.gov</email>)</entry>
 	<entry>Mac 8xx</entry>
        </row>
        <row>
-	<entry>NetBSD</entry>
-	<entry>PPC</entry>
+	<entry><systemitem class="osname">NetBSD</></entry>
+	<entry><systemitem>PPC</></entry>
 	<entry>7.1</entry>
 	<entry>2001-04-05, Henry B. Hotz (<email>hotz@jpl.nasa.gov</email>)</entry>
 	<entry>Mac G4</entry>
        </row>
        <row>
-	<entry>NetBSD</entry>
-	<entry>Sparc</entry>
+	<entry><systemitem class="osname">NetBSD</></entry>
+	<entry><systemitem>Sparc</></entry>
 	<entry>7.1</entry>
 	<entry>2000-04-05, Matthew Green (<email>mrg@eterna.com.au</email>)</entry>
 	<entry>32- and 64-bit builds</entry>
        </row>
        <row>
-        <entry>NetBSD 1.5</entry>
-        <entry>VAX</entry>
+        <entry><systemitem class="osname">NetBSD 1.5</></entry>
+        <entry><systemitem>VAX</></entry>
         <entry>7.1</entry>
         <entry>2001-03-30, Tom I. Helbekkmo (<email>tih@kpnQwest.no</email>)</entry>
         <entry></entry>
        </row>
        <row>
-	<entry>NetBSD 1.5</entry>
-	<entry>x86</entry>
+	<entry><systemitem class="osname">NetBSD 1.5</></entry>
+	<entry><systemitem>x86</></entry>
 	<entry>7.1</entry>
 	<entry>2001-03-23, Giles Lean (<email>giles@nemeton.com.au</email>)</entry>
 	<entry></entry>
        </row>
        <row>
-	<entry>OpenBSD 2.8</entry>
-	<entry>Sparc</entry>
+	<entry><systemitem class="osname">OpenBSD 2.8</></entry>
+	<entry><systemitem>Sparc</></entry>
 	<entry>7.1</entry>
 	<entry>2001-03-23, Brandon Palmer (<email>bpalmer@crimelabs.net</email>)</entry>
         <entry></entry>
        </row>
        <row>
-	<entry>OpenBSD 2.8</entry>
-	<entry>x86</entry>
+	<entry><systemitem class="osname">OpenBSD 2.8</></entry>
+	<entry><systemitem>x86</></entry>
 	<entry>7.1</entry>
 	<entry>2001-03-21, Brandon Palmer (<email>bpalmer@crimelabs.net</email>)</entry>
         <entry></entry>
        </row>
        <row>
-	<entry>SCO UnixWare 7.1.1</entry>
-	<entry>x86</entry>
+	<entry><systemitem class="osname">SCO UnixWare 7.1.1</></entry>
+	<entry><systemitem>x86</></entry>
 	<entry>7.1</entry>
 	<entry>2001-03-19, Larry Rosenman (<email>ler@lerctr.org</email>)</entry>
-	<entry>UDK FS compiler; see also <filename>doc/FAQ_SCO</filename></entry>
+	<entry><productname>UDK FS</productname> compiler; see also <filename>doc/FAQ_SCO</filename></entry>
        </row>
        <row>
-	<entry>Solaris 2.7-8</entry>
-	<entry>Sparc</entry>
+	<entry><systemitem class="osname">Solaris 2.7-8</></entry>
+	<entry><systemitem>Sparc</></entry>
 	<entry>7.1</entry>
 	<entry>2001-03-22, Marc Fournier (<email>scrappy@hub.org</email>),
        2001-03-25, Justin Clift (<email>justin@postgresql.org</email>)</entry>
 	<entry>see also <filename>doc/FAQ_Solaris</filename></entry>
        </row>
        <row>
-	<entry>Solaris 2.8</entry>
-	<entry>x86</entry>
+	<entry><systemitem class="osname">Solaris 2.8</></entry>
+	<entry><systemitem>x86</></entry>
 	<entry>7.1</entry>
 	<entry>2001-03-27, Mathijs Brands (<email>mathijs@ilse.nl</email>)</entry>
 	<entry>see also <filename>doc/FAQ_Solaris</filename></entry>
        </row>
        <row>
-	<entry>SunOS 4.1.4</entry>
-	<entry>Sparc</entry>
+	<entry><systemitem class="osname">SunOS 4.1.4</></entry>
+	<entry><systemitem>Sparc</></entry>
 	<entry>7.1</entry>
 	<entry>2001-03-23, Tatsuo Ishii (<email>t-ishii@sra.co.jp</email>)</entry>
 	<entry></entry>
        </row>
        <row>
-	<entry>Windows NT/2000 with Cygwin</entry>
-	<entry>x86</entry>
+	<entry><systemitem class="osname">Tru64 UNIX</></entry>
+	<entry><systemitem>Alpha</></entry>
+	<entry>7.1</entry>
+	<entry>2001-03-26, Adriaan Joubert (<email>a.joubert@albourne.com</email>)</entry>
+        <entry>4.0-5.0, <command>cc</> and <command>gcc</></entry>
+       </row>
+       <row>
+	<entry><systemitem class="osname">Windows NT/2000</> with <application>Cygwin</></entry>
+	<entry><systemitem>x86</></entry>
 	<entry>7.1</entry>
 	<entry>2001-03-16, Jason Tishler (<email>Jason.Tishler@dothill.com</email>)</entry>
-        <entry>with <application>Cygwin</application> toolset, see <filename>doc/FAQ_MSWIN</filename></entry>
+        <entry>with <application>Cygwin</application> tool set, see <filename>doc/FAQ_MSWIN</filename></entry>
        </row>
       </tbody>
      </tgroup>
@@ -1552,75 +1560,75 @@ gunzip -c user.ps.gz \
 
     <tbody>
      <row>
-      <entry>DGUX 5.4R4.11</entry>
-      <entry>m88k</entry>
+      <entry><systemitem class="osname">DGUX 5.4R4.11</></entry>
+      <entry><systemitem>m88k</></entry>
       <entry>6.3</entry>
       <entry>1998-03-01, Brian E Gallew (<email>geek+@cmu.edu</email>)</entry>
       <entry>6.4 probably OK</entry>
      </row>
      <row>
-      <entry>MkLinux DR1</entry>
-      <entry>PPC750</entry>
+      <entry><systemitem class="osname">MkLinux DR1</></entry>
+      <entry><systemitem>PPC750</></entry>
       <entry>7.0</entry>
       <entry>2001-04-03, Tatsuo Ishii (<email>t-ishii@sra.co.jp</email>)</entry>
       <entry>7.1 needs OS update?</entry>
      </row>
      <row>
-      <entry>NextStep</entry>
-      <entry>x86</entry>
+      <entry><systemitem class="osname">NextStep</></entry>
+      <entry><systemitem>x86</></entry>
       <entry>6.x</entry>
       <entry>1998-03-01, David Wetzel (<email>dave@turbocat.de</email>)</entry>
       <entry>bit rot suspected</entry>
      </row>
      <row>
-      <entry>QNX 4.25</entry>
-      <entry>x86</entry>
+      <entry><systemitem class="osname">QNX 4.25</></entry>
+      <entry><systemitem>x86</></entry>
       <entry>7.0</entry>
       <entry>2000-04-01, Dr. Andreas Kardos (<email>kardos@repas-aeg.de</email>)</entry>
       <entry>Spinlock code needs work.  See also <filename>doc/FAQ_QNX4</filename>.</entry>
      </row>
      <row>
-      <entry>SCO OpenServer 5</entry>
-      <entry>x86</entry>
+      <entry><systemitem class="osname">SCO OpenServer 5</></entry>
+      <entry><systemitem>x86</></entry>
       <entry>6.5</entry>
       <entry>1999-05-25, Andrew Merrill (<email>andrew@compclass.com</>)</entry>
       <entry>7.1 should work, but no reports; see also <filename>doc/FAQ_SCO</filename></entry>
      </row>
      <row>
-      <entry>System V R4</entry>
-      <entry>m88k</entry>
+      <entry><systemitem class="osname">System V R4</></entry>
+      <entry><systemitem>m88k</></entry>
       <entry>6.2.1</entry>
       <entry>1998-03-01, Doug Winterburn (<email>dlw@seavme.xroads.com</email>)</entry>
-      <entry>needs new TAS spinlock code</entry>
+      <entry>needs new <acronym>TAS</acronym> spinlock code</entry>
      </row>
      <row>
-      <entry>System V R4</entry>
-      <entry>MIPS</entry>
+      <entry><systemitem class="osname">System V R4</></entry>
+      <entry><systemitem>MIPS</></entry>
       <entry>6.4</entry>
       <entry>1998-10-28, Frank Ridderbusch (<email>ridderbusch.pad@sni.de</email>)</entry>
       <entry>no 64-bit integer</entry>
      </row>
      <row>
-      <entry>Ultrix</entry>
-      <entry>MIPS</entry>
+      <entry><systemitem class="osname">Ultrix</></entry>
+      <entry><systemitem>MIPS</></entry>
       <entry>7.1</entry>
       <entry>2001-03-26</entry>
-      <entry>TAS spinlock code not detected</entry>
+      <entry><acronym>TAS</acronym> spinlock code not detected</entry>
      </row>
      <row>
-      <entry>Ultrix</entry>
-      <entry>VAX</entry>
+      <entry><systemitem class="osname">Ultrix</></entry>
+      <entry><systemitem>VAX</></entry>
       <entry>6.x</entry>
       <entry>1998-03-01</entry>
       <entry>No recent reports. Obsolete?</entry>
      </row>
      <row>
-      <entry>Windows 9x, ME, NT, 2000 (native)</entry>
-      <entry>x86</entry>
+      <entry><systemitem class="osname">Windows 9x, ME, NT, 2000</> (native)</entry>
+      <entry><systemitem>x86</></entry>
       <entry>7.1</entry>
       <entry>2001-03-26, Magnus Hagander (<email>mha@sollentuna.net</email>)</entry>
       <entry>
-       client-side libraries (libpq and psql) or ODBC/JDBC, no server-side;
+       client-side libraries (<application>libpq</> and <application>psql</>) or ODBC/JDBC, no server-side;
 <![%flattext-install-include[see Administrator's Guide]]>
 <![%flattext-install-ignore[see <xref linkend="install-win32">]]>
        for instructions

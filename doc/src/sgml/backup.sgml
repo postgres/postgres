@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/backup.sgml,v 2.12 2001/08/25 18:52:41 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/backup.sgml,v 2.13 2001/09/09 23:52:12 petere Exp $ -->
 <chapter id="backup">
  <title>Backup and Restore</title>
 
@@ -236,10 +236,10 @@ cat <replaceable class="parameter">filename</replaceable>.* | psql <replaceable 
    <formalpara>
     <title>Use the custom dump format (V7.1).</title>
     <para>
-     If PostgreSQL was built on a system with the zlib compression library
+     If PostgreSQL was built on a system with the <application>zlib</> compression library
      installed, the custom dump format will compress data as it writes it
      to the output file. For large databases, this will produce similar dump
-     sizes to using gzip, but has the added advantage that the tables can be
+     sizes to using <command>gzip</command>, but has the added advantage that the tables can be
      restored selectively. The following command dumps a database using the
      custom dump format:
 

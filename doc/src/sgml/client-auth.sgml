@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.18 2001/09/06 03:23:38 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.19 2001/09/09 23:52:12 petere Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -39,8 +39,8 @@
   the server's machine, it makes sense to assign database user names
   that match their Unix user ids.  However, a server that accepts remote
   connections may have many users who have no local account, and in such
-  cases there need be no connection between database usernames and Unix
-  usernames.
+  cases there need be no connection between database user names and Unix
+  user names.
  </para>
 
  <sect1 id="pg-hba.conf">
@@ -52,8 +52,8 @@
 
   <para>
    Client authentication is controlled by the file
-   <filename>pg_hba.conf</filename> in the $PGDATA directory, e.g.,
-   <filename>/usr/local/pgsql/data/pg_hba.conf</filename>. (HBA stands
+   <filename>pg_hba.conf</filename> in the data directory, e.g.,
+   <filename>/usr/local/pgsql/data/pg_hba.conf</filename>. (<acronym>HBA</> stands
    for host-based authentication.) A default <filename>pg_hba.conf</filename>
    file is installed when the
    data area is initialized by <application>initdb</application>.
@@ -156,7 +156,7 @@ hostssl <replaceable>database</replaceable> <replaceable>IP-address</replaceable
 
        <variablelist>
         <varlistentry>
-         <term>trust</>
+         <term><literal>trust</></term>
          <listitem>
          <para>
           The connection is allowed unconditionally. This method allows
@@ -167,7 +167,7 @@ hostssl <replaceable>database</replaceable> <replaceable>IP-address</replaceable
        </varlistentry>
 
        <varlistentry>
-        <term>reject</>
+        <term><literal>reject</></term>
         <listitem>
          <para>
           The connection is rejected unconditionally. This is mostly
@@ -177,7 +177,7 @@ hostssl <replaceable>database</replaceable> <replaceable>IP-address</replaceable
        </varlistentry>
 
        <varlistentry>
-        <term>password</>
+        <term><literal>password</></term>
         <listitem>
          <para>
           The client is required to supply a password with the connection
@@ -201,7 +201,7 @@ hostssl <replaceable>database</replaceable> <replaceable>IP-address</replaceable
        </varlistentry>
 
        <varlistentry>
-        <term>md5</>
+        <term><literal>md5</></term>
         <listitem>
          <para>
           Like the <literal>password</literal> method, but the password
@@ -215,7 +215,7 @@ hostssl <replaceable>database</replaceable> <replaceable>IP-address</replaceable
        </varlistentry>
 
        <varlistentry>
-        <term>crypt</>
+        <term><literal>crypt</></term>
         <listitem>
          <para>
           Like the <literal>md5</literal> method but uses older crypt
@@ -225,7 +225,7 @@ hostssl <replaceable>database</replaceable> <replaceable>IP-address</replaceable
        </varlistentry>
 
        <varlistentry>
-        <term>krb4</>
+        <term><literal>krb4</></term>
         <listitem>
          <para>
           Kerberos V4 is used to authenticate the user. This is only
@@ -235,7 +235,7 @@ hostssl <replaceable>database</replaceable> <replaceable>IP-address</replaceable
        </varlistentry>
 
        <varlistentry>
-        <term>krb5</term>
+        <term><literal>krb5</></term>
         <listitem>
          <para>
           Kerberos V5 is used to authenticate the user. This is only
@@ -245,7 +245,7 @@ hostssl <replaceable>database</replaceable> <replaceable>IP-address</replaceable
        </varlistentry>
 
        <varlistentry>
-        <term>ident</term>
+        <term><literal>ident</></term>
         <listitem>
 	 <para>
 	  The identity of the user as determined on login to the
@@ -258,15 +258,16 @@ hostssl <replaceable>database</replaceable> <replaceable>IP-address</replaceable
 	  server; ident authentication should never be used for remote hosts
 	  whose administrators are not trustworthy.)
 	  On operating systems
-	  supporting SO_PEERCRED requests for Unix domain sockets,
+	  supporting <symbol>SO_PEERCRED</> requests for Unix domain sockets,
 	  ident authentication is possible for local connections;
 	  the system is then asked for the connecting user's identity.
 	 </para>
          <para>
-	  On systems without SO_PEERCRED requests, ident authentication
+	  On systems without <symbol>SO_PEERCRED</> requests, ident authentication
 	  is only available for TCP/IP connections.  As a workaround,
 	  it is possible to
-	  specify the localhost address 127.0.0.1 and make connections
+	  specify the <systemitem class="systemname">localhost</> address
+          <systemitem class="systemname">127.0.0.1</> and make connections
 	  to this address.
 	 </para>
          <para>
@@ -280,7 +281,7 @@ hostssl <replaceable>database</replaceable> <replaceable>IP-address</replaceable
        </varlistentry>
 
        <varlistentry>
-        <term>pam</term>
+        <term><literal>pam</></term>
         <listitem>
          <para>
           This authentication type operates similar to
@@ -289,11 +290,11 @@ hostssl <replaceable>database</replaceable> <replaceable>IP-address</replaceable
           authentication mechanism. The <replaceable>authentication
           option</replaceable> following the <literal>pam</> keyword
           specifies the service name that will be passed to PAM. The
-          default service name is <firstterm>postgresql</firstterm>.
-          For more information about PAM, please read <ulink
-          url="http://www.kernel.org/pub/linux/libs/pam/">Linux-PAM
-          Page</ulink> and <ulink 
-          url="http://www.sun.com/software/solaris/pam/">Solaris-PAM
+          default service name is <literal>postgresql</literal>.
+          For more information about PAM, please read the <ulink
+          url="http://www.kernel.org/pub/linux/libs/pam/"><productname>Linux-PAM</productname>
+          Page</ulink> and/or the <ulink 
+          url="http://www.sun.com/software/solaris/pam/"><systemitem class="osname">Solaris</> PAM
           Page</ulink>.
          </para>
         </listitem>
@@ -316,19 +317,19 @@ hostssl <replaceable>database</replaceable> <replaceable>IP-address</replaceable
     </varlistentry>
    </variablelist>
 
-   The first record that matches a connection attempt's client IP address
-   and requested database name is used to do the authentication step.
-   There is no <quote>fall-through</> or <quote>backup</>: if
-   one record is chosen and the
-   authentication fails, the following records are not considered. If
-   no record matches, the access will be denied.
+   The first record that matches the client IP address and requested
+   database name of a connection attempt is used to do the
+   authentication step.  There is no <quote>fall-through</> or
+   <quote>backup</>: if one record is chosen and the authentication
+   fails, the following records are not considered. If no record
+   matches, the access will be denied.
   </para>
 
   <para>
    The <filename>pg_hba.conf</filename> file is loaded only on startup
-   and when the <application>postmaster</> receives a SIGHUP signal. If
+   and when the <application>postmaster</> receives a <systemitem>SIGHUP</systemitem> signal. If
    you edit the file on an active system, you will need to issue a
-   SIGHUP to the <application>postmaster</> using <application>kill</>
+   <systemitem>SIGHUP</systemitem> to the <application>postmaster</> using <application>kill</>
    to make it re-read the file.
   </para>
 
@@ -511,7 +512,7 @@ host         all        192.168.0.0    255.255.0.0        ident     omicron
 <prompt>kadmin% </><userinput>ank -randkey postgres/server.my.domain.org</>
 <prompt>kadmin% </><userinput>ktadd -k krb5.keytab postgres/server.my.domain.org</>
 </screen>
-    Read the <productname>Kerberos</> documentation for defails.
+    Read the <productname>Kerberos</> documentation for details.
    </para>
 
    <para>
@@ -528,7 +529,7 @@ host         all        192.168.0.0    255.255.0.0        ident     omicron
      <listitem>
       <para>
        The <productname>Postgres</> service is assumed to be have two
-       components, the service name and a hostname, canonicalized as
+       components, the service name and a host name, canonicalized as
        in Version 4 (i.e., with all domain suffixes removed).
       </para>
      </listitem>
@@ -561,8 +562,8 @@ host         all        192.168.0.0    255.255.0.0        ident     omicron
    </para>
 
    <para>
-    If you use mod_auth_krb and mod_perl on your Apache web server,
-    you can use AuthType KerberosV5SaveCredentials with a mod_perl
+    If you use <application>mod_auth_krb</application> and <application>mod_perl</application> on your <productname>Apache</productname> web server,
+    you can use <literal>AuthType KerberosV5SaveCredentials</literal> with a <application>mod_perl</application>
     script. This gives secure database access over the web, no extra
     passwords required.
    </para>
@@ -610,7 +611,7 @@ host         all        192.168.0.0    255.255.0.0        ident     omicron
    </para>
 
    <para>
-    On systems supporting SO_PEERCRED requests for Unix-domain sockets,
+    On systems supporting <symbol>SO_PEERCRED</symbol> requests for Unix-domain sockets,
     ident authentication can also be applied to local connections.  In this
     case, no security risk is added by using ident authentication; indeed
     it is a preferable choice for such a system.
@@ -654,12 +655,12 @@ host         all        192.168.0.0    255.255.0.0        ident     omicron
     linkend="example-pg-hba.conf"> is shown in <xref
     linkend="example-pg-ident.conf">. In this example setup, anyone
     logged in to a machine on the 192.168 network that does not have
-    the Unix user name bryanh, ann, or robert would not be granted access.
-    Unix user robert would only be allowed access when he tries to
-    connect as Postgres user <quote>bob</quote>, not as <quote>robert</quote>
-    or anyone else. <quote>ann</quote> would only be allowed to connect as
-    <quote>ann</>. User bryanh would be allowed to connect as either
-    <quote>bryanh</> himself or as <quote>guest1</>.
+    the Unix user name <systemitem>bryanh</>, <systemitem>ann</>, or <systemitem>robert</> would not be granted access.
+    Unix user <systemitem>robert</> would only be allowed access when he tries to
+    connect as Postgres user <systemitem>bob</>, not as <systemitem>robert</>
+    or anyone else. <systemitem>ann</> would only be allowed to connect as
+    <systemitem>ann</>. User <systemitem>bryanh</> would be allowed to connect as either
+    <systemitem>bryanh</> himself or as <systemitem>guest1</>.
    </para>
 
    <example id="example-pg-ident.conf">
@@ -726,7 +727,7 @@ FATAL 1:  Database "testdb" does not exist in the system catalog.
    </para>
 
    <para>
-    Note that the postmaster's stderr log may contain more information
+    Note that the server log may contain more information
     about an authentication failure than is reported to the client.
     If you are confused about the reason for a failure, check the log.
    </para>

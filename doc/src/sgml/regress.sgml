@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/regress.sgml,v 1.18 2001/08/06 22:53:26 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/regress.sgml,v 1.19 2001/09/09 23:52:12 petere Exp $ -->
 
  <chapter id="regress">
   <title id="regress-title">Regression Tests</title>
@@ -102,7 +102,7 @@
 <prompt>$ </prompt><userinput>gmake installcheck</userinput>
 </screen>
    The tests will expect to contact the server at the local host and the
-   default port number, unless directed otherwise by PGHOST and PGPORT
+   default port number, unless directed otherwise by <envar>PGHOST</envar> and <envar>PGPORT</envar>
    environment variables.
   </para>
 
@@ -178,7 +178,7 @@
     <title>Date and time differences</title>
 
     <para>
-     Some of the queries in the <quote>timestamp</quote> test will
+     Some of the queries in the <filename>timestamp</filename> test will
      fail if you run the test on the day of a daylight-savings time
      changeover, or the day before or after one.  These queries assume
      that the intervals between midnight yesterday, midnight today and
@@ -189,21 +189,21 @@
     <para>
      Most of the date and time results are dependent on the time zone
      environment.  The reference files are generated for time zone
-     PST8PDT (Berkeley, California) and there will be apparent
+     <literal>PST8PDT</literal> (Berkeley, California) and there will be apparent
      failures if the tests are not run with that time zone setting.
      The regression test driver sets environment variable
      <envar>PGTZ</envar> to <literal>PST8PDT</literal>, which normally
      ensures proper results.  However, your system must provide library
-     support for the PST8PDT time zone, or the time zone-dependent
+     support for the <literal>PST8PDT</literal> time zone, or the time zone-dependent
      tests will fail. To verify that your machine does have this
      support, type the following:
 <screen>
 <prompt>$ </prompt><userinput>env TZ=PST8PDT date</userinput>
 </screen>
      The command above should have returned the current system time in
-     the PST8PDT time zone. If the PST8PDT database is not available,
+     the <literal>PST8PDT</literal> time zone. If the <literal>PST8PDT</literal> database is not available,
      then your system may have returned the time in GMT. If the
-     PST8PDT time zone is not available, you can set the time zone
+     <literal>PST8PDT</literal> time zone is not available, you can set the time zone
      rules explicitly:
 <programlisting>
 PGTZ='PST8PDT7,M04.01.0,M10.05.03'; export PGTZ
@@ -220,7 +220,7 @@ PGTZ='PST8PDT7,M04.01.0,M10.05.03'; export PGTZ
     <para>
      Some systems using older time zone libraries fail to apply
      daylight-savings corrections to dates before 1970, causing
-     pre-1970 PDT times to be displayed in PST instead.  This will
+     pre-1970 <acronym>PDT</acronym> times to be displayed in <acronym>PST</acronym> instead.  This will
      result in localized differences in the test results.
     </para>
    </sect2>
@@ -300,7 +300,7 @@ ORDER BY to that particular query and thereby eliminate the bogus
     </para>
 
     <para>
-You might wonder why we don't ORDER all the regress test SELECTs to
+You might wonder why we don't order all the regress test queries explicitly to
 get rid of this issue once and for all.  The reason is that that would
 make the regression tests less useful, not more, since they'd tend
 to exercise query plan types that produce ordered results to the
@@ -352,7 +352,7 @@ testname/platformpattern=comparisonfilename
 </synopsis>
     The test name is just the name of the particular regression test
     module.  The platform pattern is a pattern in the style of
-    expr(1) (that is, a regular expression with an implicit
+    <citerefentry><refentrytitle>expr</><manvolnum>1</></citerefentry> (that is, a regular expression with an implicit
     <literal>^</literal> anchor
     at the start).  It is matched against the platform name as printed
     by <filename>config.guess</filename> followed by
@@ -365,19 +365,19 @@ testname/platformpattern=comparisonfilename
    <para>
     For example: some systems using older time zone libraries fail to apply
     daylight-savings corrections to dates before 1970, causing
-    pre-1970 PDT times to be displayed in PST instead.  This causes a
+    pre-1970 <acronym>PDT</acronym> times to be displayed in <acronym>PST</acronym> instead.  This causes a
     few differences in the <filename>horology</> regression test.
     Therefore, we provide a variant comparison file,
     <filename>horology-no-DST-before-1970.out</filename>, which includes
     the results to be expected on these systems.  To silence the bogus
-    <quote>failure</quote> message on HPPA platforms, resultmap
+    <quote>failure</quote> message on <systemitem>HPPA</systemitem> platforms, <filename>resultmap</filename>
     includes
 <programlisting>
 horology/hppa=horology-no-DST-before-1970
 </programlisting>
-    which will trigger on any machine for which config.guess's output
+    which will trigger on any machine for which the output of <command>config.guess</command>
     begins with <quote><literal>hppa</literal></quote>.  Other lines
-    in resultmap select the variant comparison file for other
+    in <filename>resultmap</> select the variant comparison file for other
     platforms where it's appropriate.
    </para>
     

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.98 2001/08/14 23:38:20 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.99 2001/09/09 23:52:12 petere Exp $
 -->
 
  <appendix id="release">
@@ -239,7 +239,7 @@ outer join syntax.
       <listitem>
        <para>
 The previous C function manager did not
-handle NULLs properly, nor did it support 64-bit CPU's (Alpha).  The new
+handle NULLs properly, nor did it support 64-bit <acronym>CPU</acronym>'s (Alpha).  The new
 function manager does.  You can continue using your old custom
 functions, but you may want to rewrite them in the future to use the new
 function manager call interface.
@@ -723,12 +723,12 @@ ecpg changes (Michael)
 
      <varlistentry>
       <term>
-       Updated psql
+       Updated <application>psql</application>
       </term>
       <listitem>
        <para>
 	<application>psql</application>, our interactive terminal monitor, has been
-	updated with a variety of new features. See the psql manual page for details.
+	updated with a variety of new features. See the <application>psql</application> manual page for details.
        </para>
       </listitem>
      </varlistentry>
@@ -783,7 +783,7 @@ ecpg changes (Michael)
       <listitem>
        <para>
 	The date/time types <type>datetime</type> and
-	<type>timespan</type> have been superceded by the
+	<type>timespan</type> have been superseded by the
 	SQL92-defined types <type>timestamp</type> and
 	<type>interval</type>. Although there has been some effort to
 	ease the transition by allowing
@@ -1176,7 +1176,7 @@ New multibyte encodings
 
    <para>
     This is basically a cleanup release for 6.5.2.  We have added a new
-    pgaccess that was missing in 6.5.2, and installed an NT-specific fix.
+    <application>PgAccess</> that was missing in 6.5.2, and installed an NT-specific fix.
    </para>
 
 
@@ -1394,7 +1394,7 @@ Add Win1250 (Czech) support (Pavel Behal)
       <listitem>
        <para>
 	<application>pg_dump</application> takes advantage of the new
-	MVCC features to give a consistant database dump/backup while
+	MVCC features to give a consistent database dump/backup while
 	the database stays online and available for queries.
        </para>
       </listitem>
@@ -1457,7 +1457,7 @@ Add Win1250 (Czech) support (Pavel Behal)
       <listitem>
        <para>
 	We continue to expand our port list, this time including
-	WinNT/ix86 and NetBSD/arm32.
+	<systemitem class="osname">Windows NT</>/<systemitem>ix86</> and <systemitem class="osname">NetBSD</>/<systemitem>arm32</>.
        </para>
       </listitem>
      </varlistentry>
@@ -1482,7 +1482,7 @@ Add Win1250 (Czech) support (Pavel Behal)
        <para>
 	New and updated material is present throughout the
 	documentation. New <acronym>FAQ</acronym>s have been
-	contributed for SGI and AIX platforms.
+	contributed for <systemitem class="osname">SGI</> and <systemitem class="osname">AIX</> platforms.
 	The <citetitle>Tutorial</citetitle> has introductory information
 	on <acronym>SQL</acronym> from Stefan Simkovics.
 	For the <citetitle>User's Guide</citetitle>, there are
@@ -1547,7 +1547,7 @@ Add Win1250 (Czech) support (Pavel Behal)
      <para>
       Keep the above in mind if you are using
       <filename>contrib/refint.*</filename> triggers for
-      referential integrity. Additional technics are required now. One way is
+      referential integrity. Additional techniques are required now. One way is
       to use <command>LOCK parent_table IN SHARE ROW EXCLUSIVE MODE</command>
       command if a transaction is going to update/delete a primary key and
       use <command>LOCK parent_table IN SHARE MODE</command> command if a
@@ -1557,7 +1557,7 @@ Add Win1250 (Czech) support (Pavel Behal)
        <para>
 	Note that if you run a transaction in SERIALIZABLE mode then you must
 	execute the <command>LOCK</command> commands above before execution of any
-	DML statement
+	<acronym>DML</acronym> statement
 	(<command>SELECT/INSERT/DELETE/UPDATE/FETCH/COPY_TO</command>) in the
 	transaction.
        </para>
@@ -1901,8 +1901,8 @@ for the <citetitle>Programmer's Guide</citetitle>.
 </listitem>
 <listitem>
 <para>
-Jan also contributed a second procedural language, PL/pgSQL, to go with the
-original PL/pgTCL procedural language he contributed last release.
+Jan also contributed a second procedural language, <application>PL/pgSQL</application>, to go with the
+original <application>PL/pgTCL</application> procedural language he contributed last release.
 </para>
 </listitem>
 
@@ -2194,7 +2194,7 @@ new Makefile.shlib for shared library configuration(Tom)
 -->
 
 <para>
-This is a bugfix release for 6.3.x.
+This is a bug-fix release for 6.3.x.
 Refer to the release notes for version 6.3 for a more complete summary of new features.
 </para>
 <para>
@@ -2218,7 +2218,7 @@ Correctly handles function calls on the left side of BETWEEN and LIKE clauses.
 </para>
 <para>
 A dump/restore is NOT required for those running 6.3 or 6.3.1.  A 
-'make distclean', 'make', and 'make install' is all that is required.
+<literal>make distclean</>, <literal>make</>, and <literal>make install</> is all that is required.
 This last step should be performed while the postmaster is not running.
 You should re-link any custom applications that use <productname>Postgres</productname> libraries.
 </para>
@@ -2306,7 +2306,7 @@ Improvements to the configuration autodetection for installation.
 </para>
 <para>
 A dump/restore is NOT required for those running 6.3.  A 
-'make distclean', 'make', and 'make install' is all that is required.
+<literal>make distclean</>, <literal>make</>, and <literal>make install</> is all that is required.
 This last step should be performed while the postmaster is not running.
 You should re-link any custom applications that use <productname>Postgres</productname> libraries.
 </para>
@@ -2435,18 +2435,18 @@ Better identify tcl and tk libs and includes(Bruce)
     use them in the target list.
    </para>
    <para>
-    Second, 6.3 uses unix domain sockets rather than TCP/IP by default.  To
+    Second, 6.3 uses Unix domain sockets rather than TCP/IP by default.  To
     enable connections from other machines, you have to use the new
-    postmaster -i option, and of course edit pg_hba.conf.  Also, for this
-    reason, the format of pg_hba.conf has changed.
+    postmaster -i option, and of course edit <filename>pg_hba.conf</filename>.  Also, for this
+    reason, the format of <filename>pg_hba.conf</filename> has changed.
    </para>
    <para>
-    Third, char() fields will now allow faster access than varchar() or
-    text. Specifically, the text and varchar() have a penalty for access to
-    any columns after the first column of this type.  char() used to also
+    Third, <type>char()</type> fields will now allow faster access than <type>varchar()</type> or
+    <type>text</type>. Specifically, the <type>text</> and <type>varchar()</type> have a penalty for access to
+    any columns after the first column of this type.  <type>char()</type> used to also
     have this access penalty, but it no longer does.  This may suggest that
     you redesign some of your tables, especially if you have short character
-    columns that you have defined as varchar() or text.  This and other
+    columns that you have defined as <type>varchar()</type> or <type>text</type>.  This and other
     changes make 6.3 even faster than earlier releases.
    </para>
    <para>
@@ -2455,7 +2455,7 @@ Better identify tcl and tk libs and includes(Bruce)
     See the <citetitle>Administrator's Guide</citetitle> for more
     information.  There is a new table, pg_shadow, which is used to store
     user information and user passwords, and it by default only SELECT-able
-    by the postgres super-user.  pg_user is now a view of pg_shadow, and is
+    by the <systemitem>postgres</systemitem> super-user.  pg_user is now a view of pg_shadow, and is
     SELECT-able by PUBLIC.  You should keep using pg_user in your
     application without changes.
    </para>
@@ -2467,20 +2467,20 @@ Better identify tcl and tk libs and includes(Bruce)
    </para>
    <para>
     We also have real deadlock detection code.  No more sixty-second
-    timeouts.  And the new locking code implements a FIFO better, so there
+    timeouts.  And the new locking code implements a <acronym>FIFO</acronym> better, so there
     should be less resource starvation during heavy use.
    </para>
    <para>
-    Many complaints have been made about inadequate documenation in previous
+    Many complaints have been made about inadequate documentation in previous
     releases.  Thomas has put much effort into many new manuals for this
     release.  Check out the doc/ directory.
    </para>
    <para>
     For performance reasons, time travel is gone, but can be implemented
-    using triggers (see pgsql/contrib/spi/README).  Please check out the new
+    using triggers (see <filename>pgsql/contrib/spi/README</filename>).  Please check out the new
     \d command for types, operators, etc.  Also, views have their own
     permissions now, not based on the underlying tables, so permissions on
-    them have to be set separately.  Check /pgsql/interfaces for some new
+    them have to be set separately.  Check <filename>/pgsql/interfaces</filename> for some new
     ways to talk to <productname>Postgres</productname>.
    </para>
    <para>
@@ -2735,7 +2735,7 @@ upon updating the executables.
 </para>
 <para>
 Another way to avoid dump/reload is to use the following SQL command
-from psql to update the existing system table:
+from <command>psql</command> to update the existing system table:
 
 <programlisting>
   update pg_aggregate set aggfinalfn = 'cash_div_flt8'
@@ -2800,7 +2800,7 @@ This migration requires a complete dump of the 6.1 database and a
 restore of the database in 6.2.
 </para>
 <para>
-Note that the pg_dump and pg_dumpall utility from 6.2 should be used
+Note that the <command>pg_dump</command> and <command>pg_dumpall</command> utility from 6.2 should be used
 to dump the 6.1 database.
 </para>
 </sect2>
@@ -3014,9 +3014,9 @@ pg_dumpall now returns proper status, portability fix(Bruce)
 </para>
 
 <para>
-  Three new data types (datetime, timespan, and circle) have been added to
+  Three new data types (<type>datetime</type>, <type>timespan</type>, and <type>circle</type>) have been added to
   the native set of <productname>Postgres</productname> types. Points, boxes, paths, and polygons
-  have had their output formats made consistant across the data types.
+  have had their output formats made consistent across the data types.
   The polygon output in misc.out has only been spot-checked for correctness
   relative to the original regression output.
 </para>
@@ -3043,7 +3043,7 @@ optimizer which uses <firstterm>genetic</firstterm>
 
 <para>
   The float8 regression test fails on at least some platforms. This is due
-  to differences in implementations of pow() and exp() and the signaling
+  to differences in implementations of <function>pow()</function> and <function>exp()</function> and the signaling
   mechanisms used for overflow and underflow conditions.
 </para>
 
@@ -3379,21 +3379,21 @@ releases.
 
 <para>
 Here is a new migration file for 1.02.1.  It includes the 'copy' change
-and a script to convert old ascii files.
+and a script to convert old <acronym>ASCII</acronym> files.
 </para>
 <note>
 <para>
 The following notes are for the benefit of users who want to migrate
-databases from postgres95 1.01 and 1.02 to postgres95 1.02.1.
+databases from <productname>Postgres95</> 1.01 and 1.02 to <productname>Postgres95</> 1.02.1.
 </para>
 <para>
-If you are starting afresh with postgres95 1.02.1 and do not need
+If you are starting afresh with <productname>Postgres95</> 1.02.1 and do not need
 to migrate old databases, you do not need to read any further.
 </para>
 </note>
 
 <para>
-In order to upgrade older postgres95 version 1.01 or 1.02 databases to
+In order to upgrade older <productname>Postgres95</> version 1.01 or 1.02 databases to
 version 1.02.1, the following steps are required:
 </para>
 <procedure>
@@ -3407,9 +3407,9 @@ Start up a new 1.02.1 postmaster
 Add the new built-in functions and operators of 1.02.1 to 1.01 or 1.02
    databases.  This is done by running the new 1.02.1 server against
    your own 1.01 or 1.02 database and applying the queries attached at
-   the end of thie file.   This can be done easily through psql.  If your
-   1.01 or 1.02 database is named "testdb" and you have cut the commands
-   from the end of this file and saved them in addfunc.sql:
+   the end of the file.   This can be done easily through <command>psql</>.  If your
+   1.01 or 1.02 database is named <literal>testdb</literal> and you have cut the commands
+   from the end of this file and saved them in <filename>addfunc.sql</filename>:
 <programlisting>
 	% psql testdb -f addfunc.sql
 </programlisting>
@@ -3426,9 +3426,9 @@ not a cause for concern.
 <title>Dump/Reload Procedure</title>
 
 <para>
-If you are trying to reload a pg_dump or text-mode 'copy tablename to
-stdout' generated with a previous version, you will need to run the
-attached sed script on the ASCII file before loading it into the
+If you are trying to reload a pg_dump or text-mode, <literal>copy tablename to
+stdout</literal> generated with a previous version, you will need to run the
+attached <command>sed</command> script on the ASCII file before loading it into the
 database.  The old format used '.' as end-of-data, while '\.' is now the
 end-of-data marker.  Also, empty strings are now loaded in as '' rather
 than NULL. See the copy manual page for full details.
@@ -3539,21 +3539,21 @@ Contributors (appologies to any missed)
 
 <para>
 The following notes are for the benefit of users who want to migrate
-databases from postgres95 1.0 to postgres95 1.01.  
+databases from <productname>Postgres95</> 1.0 to <productname>Postgres95</> 1.01.  
 </para>
 <para>
-If you are starting afresh with postgres95 1.01 and do not need
+If you are starting afresh with <productname>Postgres95</> 1.01 and do not need
 to migrate old databases, you do not need to read any further.
 </para>
 <para>
-In order to postgres95 version 1.01 with databases created with
-postgres95 version 1.0, the following steps are required:  
+In order to <productname>Postgres95</> version 1.01 with databases created with
+<productname>Postgres95</> version 1.0, the following steps are required:  
 </para>
 <procedure>
 <step>
 <para>
-Set the definition of NAMEDATALEN in src/Makefile.global to 16
-   and OIDNAMELEN to 20.
+Set the definition of <symbol>NAMEDATALEN</symbol> in <filename>src/Makefile.global</filename> to 16
+   and <symbol>OIDNAMELEN</symbol> to 20.
 </para>
 </step>
 <step>
@@ -3563,8 +3563,8 @@ Decide whether you want to use Host based authentication.
 <substeps>
 <step>
 <para>
-If you do, you must create a file name "pg_hba" in your top-level data
-   directory (typically the value of your $PGDATA).  src/libpq/pg_hba
+If you do, you must create a file name <literal>pg_hba</literal> in your top-level data
+   directory (typically the value of your <envar>$PGDATA</envar>).  <filename>src/libpq/pg_hba</filename>
    shows an example syntax.
 </para>
 </step>
@@ -3575,7 +3575,7 @@ If you do not want host-based authentication, you can comment out
 <programlisting>
 	HBA = 1
 </programlisting>
-   in src/Makefile.global
+   in <filename>src/Makefile.global</filename>
 </para>
 <para>
    Note that host-based authentication is turned on by default, and if
@@ -3588,24 +3588,24 @@ If you do not want host-based authentication, you can comment out
 
 <step>
 <para>
-Compile and install 1.01, but DO NOT do the initdb step.
+Compile and install 1.01, but DO NOT do the <command>initdb</command> step.
 </para>
 </step>
 <step>
 <para>
 Before doing anything else, terminate your 1.0 postmaster, and
-   backup your existing $PGDATA directory.   
+   backup your existing <envar>$PGDATA</envar> directory.   
 </para>
 </step>
 <step>
 <para>
-Set your PGDATA environment variable to your 1.0 databases, but set up
+Set your <envar>PGDATA</envar> environment variable to your 1.0 databases, but set up
    path up so that 1.01 binaries are being used.
 </para>
 </step>
 <step>
 <para>
-Modify the file $PGDATA/PG_VERSION from 5.0 to 5.1
+Modify the file <filename><envar>$PGDATA</envar>/PG_VERSION</filename> from 5.0 to 5.1
 </para>
 </step>
 <step>
@@ -3618,8 +3618,8 @@ Start up a new 1.01 postmaster
 Add the new built-in functions and operators of 1.01 to 1.0
    databases.  This is done by running the new 1.01 server against
    your own 1.0 database and applying the queries attached and saving 
-   in the file 1.0_to_1.01.sql.   This can be done easily through psql.
-   If your 1.0 database is name "testdb":
+   in the file 1.0_to_1.01.sql.   This can be done easily through <command>psql</command>.
+   If your 1.0 database is name <literal>testdb</literal>:
 
 <programlisting>
 	% psql testdb -f 1.0_to_1.01.sql
@@ -4049,7 +4049,7 @@ Initial release.
   04:21  Dual Pentium Pro 180, 224MB, UW-SCSI, Linux 2.0.36, gcc 2.7.2.3 -O2 -m486
      </programlisting>
 
-     For the linux system above, using UW-SCSI disks rather than (older) IDE
+     For the <systemitem class="osname">Linux</systemitem> system above, using <acronym>UW-SCSI</acronym> disks rather than (older) <acronym>IDE</acronym>
      disks leads to a 50% improvement in speed on the regression test.
     </para>
    </sect2>
