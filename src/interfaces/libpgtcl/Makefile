@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile,v 1.25 2001/02/20 19:20:29 petere Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile,v 1.26 2001/05/11 01:46:33 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -14,7 +14,7 @@ include ../../Makefile.global
 
 NAME= pgtcl
 SO_MAJOR_VERSION= 2
-SO_MINOR_VERSION= 1
+SO_MINOR_VERSION= 2
 
 override CPPFLAGS := -I$(libpq_srcdir) $(CPPFLAGS)
 

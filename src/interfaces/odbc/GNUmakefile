@@ -2,7 +2,7 @@
 #
 # GNUMakefile for psqlodbc (Postgres ODBC driver)
 #
-# $Header: /cvsroot/pgsql/src/interfaces/odbc/Attic/GNUmakefile,v 1.15 2001/03/26 09:34:17 inoue Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/odbc/Attic/GNUmakefile,v 1.16 2001/05/11 01:46:33 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -13,7 +13,7 @@ include $(top_builddir)/src/Makefile.global
 # Shared library parameters
 NAME = psqlodbc
 SO_MAJOR_VERSION = 0
-SO_MINOR_VERSION = 26
+SO_MINOR_VERSION = 27
 
 override CPPFLAGS := -I$(srcdir) $(CPPFLAGS) -DHAVE_CONFIG_H -DODBCINSTDIR='"$(odbcinst_ini_dir)"'
 
