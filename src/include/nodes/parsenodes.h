@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.174 2002/04/24 02:48:55 momjian Exp $
+ * $Id: parsenodes.h,v 1.175 2002/04/28 19:54:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -510,17 +510,14 @@ typedef struct RangeTblEntry
 	/*
 	 * Fields valid for a join RTE (else NULL/zero):
 	 *
-	 * joincoltypes/joincoltypmods identify the column datatypes of the
-	 * join result.  joinleftcols and joinrightcols identify the source
-	 * columns from the join's inputs: each entry is either a source column
-	 * AttrNumber or zero.  For normal columns exactly one is nonzero,
-	 * but both are nonzero for a column "merged" by USING or NATURAL.
+	 * joinaliasvars is a list of Vars or COALESCE expressions corresponding
+	 * to the columns of the join result.  An alias Var referencing column
+	 * K of the join result can be replaced by the K'th element of
+	 * joinaliasvars --- but to simplify the task of reverse-listing aliases
+	 * correctly, we do not do that until planning time.
 	 */
 	JoinType	jointype;		/* type of join */
-	List	   *joincoltypes;	/* integer list of column type OIDs */
-	List	   *joincoltypmods;	/* integer list of column typmods */
-	List	   *joinleftcols;	/* integer list of left-side column #s */
-	List	   *joinrightcols;	/* integer list of right-side column #s */
+	List	   *joinaliasvars;	/* list of alias-var expansions */
 
 	/*
 	 * Fields valid in all RTEs:

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.119 2002/04/11 20:00:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.120 2002/04/28 19:54:28 tgl Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -421,10 +421,6 @@ _getJoin(Join *node)
 
 	token = pg_strtok(&length); /* skip the :joinqual */
 	node->joinqual = nodeRead(true);	/* get the joinqual */
-
-	token = pg_strtok(&length); /* skip the :joinrti */
-	token = pg_strtok(&length); /* get the joinrti */
-	node->joinrti = atoi(token);
 }
 
 
@@ -1523,17 +1519,8 @@ _readRangeTblEntry(void)
 			token = pg_strtok(&length); /* get jointype */
 			local_node->jointype = (JoinType) atoi(token);
 
-			token = pg_strtok(&length); /* eat :joincoltypes */
-			local_node->joincoltypes = toOidList(nodeRead(true));
-
-			token = pg_strtok(&length); /* eat :joincoltypmods */
-			local_node->joincoltypmods = toIntList(nodeRead(true));
-
-			token = pg_strtok(&length); /* eat :joinleftcols */
-			local_node->joinleftcols = toIntList(nodeRead(true));
-
-			token = pg_strtok(&length); /* eat :joinrightcols */
-			local_node->joinrightcols = toIntList(nodeRead(true));
+			token = pg_strtok(&length); /* eat :joinaliasvars */
+			local_node->joinaliasvars = nodeRead(true);	/* now read it */
 			break;
 
 		default:

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.89 2002/04/16 23:08:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.90 2002/04/28 19:54:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,7 +39,7 @@
 
 static char *clauseText[] = {"ORDER BY", "GROUP BY", "DISTINCT ON"};
 
-static void extractUniqueColumns(List *common_colnames,
+static void extractRemainingColumns(List *common_colnames,
 					 List *src_colnames, List *src_colvars,
 					 List **res_colnames, List **res_colvars);
 static Node *transformJoinUsingClause(ParseState *pstate,
@@ -51,6 +51,8 @@ static RangeTblRef *transformRangeSubselect(ParseState *pstate,
 						RangeSubselect *r);
 static Node *transformFromClauseItem(ParseState *pstate, Node *n,
 						List **containedRels);
+static Node *buildMergedJoinVar(JoinType jointype,
+								Var *l_colvar, Var *r_colvar);
 static TargetEntry *findTargetlistEntry(ParseState *pstate, Node *node,
 					List *tlist, int clause);
 static List *addTargetToSortList(TargetEntry *tle, List *sortlist,
@@ -194,9 +196,9 @@ interpretInhOption(InhOption inhOpt)
  * Extract all not-in-common columns from column lists of a source table
  */
 static void
-extractUniqueColumns(List *common_colnames,
-					 List *src_colnames, List *src_colvars,
-					 List **res_colnames, List **res_colvars)
+extractRemainingColumns(List *common_colnames,
+						List *src_colnames, List *src_colvars,
+						List **res_colnames, List **res_colvars)
 {
 	List	   *new_colnames = NIL;
 	List	   *new_colvars = NIL;
@@ -496,10 +498,7 @@ transformFromClauseItem(ParseState *pstate, Node *n, List **containedRels)
 				   *res_colnames,
 				   *l_colvars,
 				   *r_colvars,
-				   *coltypes,
-				   *coltypmods,
-				   *leftcolnos,
-				   *rightcolnos;
+				   *res_colvars;
 		Index		leftrti,
 					rightrti;
 		RangeTblEntry *rte;
@@ -597,17 +596,14 @@ transformFromClauseItem(ParseState *pstate, Node *n, List **containedRels)
 		 * Now transform the join qualifications, if any.
 		 */
 		res_colnames = NIL;
-		coltypes = NIL;
-		coltypmods = NIL;
-		leftcolnos = NIL;
-		rightcolnos = NIL;
+		res_colvars = NIL;
 
 		if (j->using)
 		{
 			/*
 			 * JOIN/USING (or NATURAL JOIN, as transformed above).
 			 * Transform the list into an explicit ON-condition, and
-			 * generate a list of result columns.
+			 * generate a list of merged result columns.
 			 */
 			List	   *ucols = j->using;
 			List	   *l_usingvars = NIL;
@@ -620,14 +616,22 @@ transformFromClauseItem(ParseState *pstate, Node *n, List **containedRels)
 			{
 				char	   *u_colname = strVal(lfirst(ucol));
 				List	   *col;
-				Var		   *l_colvar,
-						   *r_colvar;
-				Oid			outcoltype;
-				int32		outcoltypmod;
 				int			ndx;
 				int			l_index = -1;
 				int			r_index = -1;
+				Var		   *l_colvar,
+						   *r_colvar;
 
+				/* Check for USING(foo,foo) */
+				foreach(col, res_colnames)
+				{
+					char	   *res_colname = strVal(lfirst(col));
+
+					if (strcmp(res_colname, u_colname) == 0)
+						elog(ERROR, "USING column name \"%s\" appears more than once", u_colname);
+				}
+
+				/* Find it in left input */
 				ndx = 0;
 				foreach(col, l_colnames)
 				{
@@ -645,6 +649,7 @@ transformFromClauseItem(ParseState *pstate, Node *n, List **containedRels)
 					elog(ERROR, "JOIN/USING column \"%s\" not found in left table",
 						 u_colname);
 
+				/* Find it in right input */
 				ndx = 0;
 				foreach(col, r_colnames)
 				{
@@ -667,30 +672,11 @@ transformFromClauseItem(ParseState *pstate, Node *n, List **containedRels)
 				r_colvar = nth(r_index, r_colvars);
 				r_usingvars = lappend(r_usingvars, r_colvar);
 
-				res_colnames = lappend(res_colnames,
-									   nth(l_index, l_colnames));
-				/*
-				 * Choose output type if input types are dissimilar.
-				 */
-				outcoltype = l_colvar->vartype;
-				outcoltypmod = l_colvar->vartypmod;
-				if (outcoltype != r_colvar->vartype)
-				{
-					outcoltype =
-						select_common_type(makeListi2(l_colvar->vartype,
-													  r_colvar->vartype),
-										   "JOIN/USING");
-					outcoltypmod = -1; /* ie, unknown */
-				}
-				else if (outcoltypmod != r_colvar->vartypmod)
-				{
-					/* same type, but not same typmod */
-					outcoltypmod = -1; /* ie, unknown */
-				}
-				coltypes = lappendi(coltypes, outcoltype);
-				coltypmods = lappendi(coltypmods, outcoltypmod);
-				leftcolnos = lappendi(leftcolnos, l_index+1);
-				rightcolnos = lappendi(rightcolnos, r_index+1);
+				res_colnames = lappend(res_colnames, lfirst(ucol));
+				res_colvars = lappend(res_colvars,
+									  buildMergedJoinVar(j->jointype,
+														 l_colvar,
+														 r_colvar));
 			}
 
 			j->quals = transformJoinUsingClause(pstate,
@@ -708,34 +694,16 @@ transformFromClauseItem(ParseState *pstate, Node *n, List **containedRels)
 		}
 
 		/* Add remaining columns from each side to the output columns */
-		extractUniqueColumns(res_colnames,
-							 l_colnames, l_colvars,
-							 &l_colnames, &l_colvars);
-		extractUniqueColumns(res_colnames,
-							 r_colnames, r_colvars,
-							 &r_colnames, &r_colvars);
+		extractRemainingColumns(res_colnames,
+								l_colnames, l_colvars,
+								&l_colnames, &l_colvars);
+		extractRemainingColumns(res_colnames,
+								r_colnames, r_colvars,
+								&r_colnames, &r_colvars);
 		res_colnames = nconc(res_colnames, l_colnames);
-		while (l_colvars)
-		{
-			Var	   *l_var = (Var *) lfirst(l_colvars);
-
-			coltypes = lappendi(coltypes, l_var->vartype);
-			coltypmods = lappendi(coltypmods, l_var->vartypmod);
-			leftcolnos = lappendi(leftcolnos, l_var->varattno);
-			rightcolnos = lappendi(rightcolnos, 0);
-			l_colvars = lnext(l_colvars);
-		}
+		res_colvars = nconc(res_colvars, l_colvars);
 		res_colnames = nconc(res_colnames, r_colnames);
-		while (r_colvars)
-		{
-			Var	   *r_var = (Var *) lfirst(r_colvars);
-
-			coltypes = lappendi(coltypes, r_var->vartype);
-			coltypmods = lappendi(coltypmods, r_var->vartypmod);
-			leftcolnos = lappendi(leftcolnos, 0);
-			rightcolnos = lappendi(rightcolnos, r_var->varattno);
-			r_colvars = lnext(r_colvars);
-		}
+		res_colvars = nconc(res_colvars, r_colvars);
 
 		/*
 		 * Check alias (AS clause), if any.
@@ -753,11 +721,12 @@ transformFromClauseItem(ParseState *pstate, Node *n, List **containedRels)
 		/*
 		 * Now build an RTE for the result of the join
 		 */
-		rte = addRangeTableEntryForJoin(pstate, res_colnames,
+		rte = addRangeTableEntryForJoin(pstate,
+										res_colnames,
 										j->jointype,
-										coltypes, coltypmods,
-										leftcolnos, rightcolnos,
-										j->alias, true);
+										res_colvars,
+										j->alias,
+										true);
 
 		/* assume new rte is at end */
 		j->rtindex = length(pstate->p_rtable);
@@ -775,6 +744,115 @@ transformFromClauseItem(ParseState *pstate, Node *n, List **containedRels)
 			 "\n\t%s", nodeToString(n));
 	return NULL;				/* can't get here, just keep compiler
 								 * quiet */
+}
+
+/*
+ * buildMergedJoinVar -
+ *	  generate a suitable replacement expression for a merged join column
+ */
+static Node *
+buildMergedJoinVar(JoinType jointype, Var *l_colvar, Var *r_colvar)
+{
+	Oid			outcoltype;
+	int32		outcoltypmod;
+	Node	   *l_node,
+			   *r_node,
+			   *res_node;
+
+	/*
+	 * Choose output type if input types are dissimilar.
+	 */
+	outcoltype = l_colvar->vartype;
+	outcoltypmod = l_colvar->vartypmod;
+	if (outcoltype != r_colvar->vartype)
+	{
+		outcoltype = select_common_type(makeListi2(l_colvar->vartype,
+												   r_colvar->vartype),
+										"JOIN/USING");
+		outcoltypmod = -1;		/* ie, unknown */
+	}
+	else if (outcoltypmod != r_colvar->vartypmod)
+	{
+		/* same type, but not same typmod */
+		outcoltypmod = -1;		/* ie, unknown */
+	}
+
+	/*
+	 * Insert coercion functions if needed.  Note that a difference in
+	 * typmod can only happen if input has typmod but outcoltypmod is -1.
+	 * In that case we insert a RelabelType to clearly mark that result's
+	 * typmod is not same as input.
+	 */
+	if (l_colvar->vartype != outcoltype)
+		l_node = coerce_type(NULL, (Node *) l_colvar, l_colvar->vartype,
+							 outcoltype, outcoltypmod, false);
+	else if (l_colvar->vartypmod != outcoltypmod)
+		l_node = (Node *) makeRelabelType((Node *) l_colvar,
+										  outcoltype, outcoltypmod);
+	else
+		l_node = (Node *) l_colvar;
+
+	if (r_colvar->vartype != outcoltype)
+		r_node = coerce_type(NULL, (Node *) r_colvar, r_colvar->vartype,
+							 outcoltype, outcoltypmod, false);
+	else if (r_colvar->vartypmod != outcoltypmod)
+		r_node = (Node *) makeRelabelType((Node *) r_colvar,
+										  outcoltype, outcoltypmod);
+	else
+		r_node = (Node *) r_colvar;
+
+	/*
+	 * Choose what to emit
+	 */
+	switch (jointype)
+	{
+		case JOIN_INNER:
+			/*
+			 * We can use either var; prefer non-coerced one if available.
+			 */
+			if (IsA(l_node, Var))
+				res_node = l_node;
+			else if (IsA(r_node, Var))
+				res_node = r_node;
+			else
+				res_node = l_node;
+			break;
+		case JOIN_LEFT:
+			/* Always use left var */
+			res_node = l_node;
+			break;
+		case JOIN_RIGHT:
+			/* Always use right var */
+			res_node = r_node;
+			break;
+		case JOIN_FULL:
+		{
+			/*
+			 * Here we must build a COALESCE expression to ensure that
+			 * the join output is non-null if either input is.
+			 */
+			CaseExpr   *c = makeNode(CaseExpr);
+			CaseWhen   *w = makeNode(CaseWhen);
+			NullTest   *n = makeNode(NullTest);
+
+			n->arg = l_node;
+			n->nulltesttype = IS_NOT_NULL;
+			w->expr = (Node *) n;
+			w->result = l_node;
+			c->casetype = outcoltype;
+			c->args = makeList1(w);
+			c->defresult = r_node;
+			res_node = (Node *) c;
+			break;
+		}
+		default:
+			elog(ERROR, "buildMergedJoinVar: unexpected jointype %d",
+				 (int) jointype);
+			res_node = NULL;	/* keep compiler quiet */
+			break;
+	}
+
+	return res_node;
 }
 
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.68 2002/04/16 23:08:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.69 2002/04/28 19:54:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -173,16 +173,14 @@ add_vars_to_targetlist(Query *root, List *vars)
 		if (rel->reloptkind == RELOPT_OTHER_JOIN_REL)
 		{
 			/* Var is an alias */
-			Var	   *leftsubvar,
-				   *rightsubvar;
+			Node   *expansion;
+			List   *varsused;
 
-			build_join_alias_subvars(root, var,
-									 &leftsubvar, &rightsubvar);
-
-			rel = find_base_rel(root, leftsubvar->varno);
-			add_var_to_tlist(rel, leftsubvar);
-			rel = find_base_rel(root, rightsubvar->varno);
-			add_var_to_tlist(rel, rightsubvar);
+			expansion = flatten_join_alias_vars((Node *) var,
+												root, true);
+			varsused = pull_var_clause(expansion, false);
+			add_vars_to_targetlist(root, varsused);
+			freeList(varsused);
 		}
 	}
 }

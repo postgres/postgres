@@ -217,6 +217,78 @@ INSERT INTO t3 VALUES ( 'cc', 33 );
 SELECT * FROM t1 FULL JOIN t2 USING (name) FULL JOIN t3 USING (name);
 
 --
+-- Test interactions of join syntax and subqueries
+--
+
+-- Basic cases (we expect planner to pull up the subquery here)
+SELECT * FROM
+(SELECT * FROM t2) as s2
+INNER JOIN
+(SELECT * FROM t3) s3
+USING (name);
+
+SELECT * FROM
+(SELECT * FROM t2) as s2
+LEFT JOIN
+(SELECT * FROM t3) s3
+USING (name);
+
+SELECT * FROM
+(SELECT * FROM t2) as s2
+FULL JOIN
+(SELECT * FROM t3) s3
+USING (name);
+
+-- Cases with non-nullable expressions in subquery results;
+-- make sure these go to null as expected
+SELECT * FROM
+(SELECT name, n as s2_n, 2 as s2_2 FROM t2) as s2
+NATURAL INNER JOIN
+(SELECT name, n as s3_n, 3 as s3_2 FROM t3) s3;
+
+SELECT * FROM
+(SELECT name, n as s2_n, 2 as s2_2 FROM t2) as s2
+NATURAL LEFT JOIN
+(SELECT name, n as s3_n, 3 as s3_2 FROM t3) s3;
+
+SELECT * FROM
+(SELECT name, n as s2_n, 2 as s2_2 FROM t2) as s2
+NATURAL FULL JOIN
+(SELECT name, n as s3_n, 3 as s3_2 FROM t3) s3;
+
+SELECT * FROM
+(SELECT name, n as s1_n, 1 as s1_1 FROM t1) as s1
+NATURAL INNER JOIN
+(SELECT name, n as s2_n, 2 as s2_2 FROM t2) as s2
+NATURAL INNER JOIN
+(SELECT name, n as s3_n, 3 as s3_2 FROM t3) s3;
+
+SELECT * FROM
+(SELECT name, n as s1_n, 1 as s1_1 FROM t1) as s1
+NATURAL FULL JOIN
+(SELECT name, n as s2_n, 2 as s2_2 FROM t2) as s2
+NATURAL FULL JOIN
+(SELECT name, n as s3_n, 3 as s3_2 FROM t3) s3;
+
+SELECT * FROM
+(SELECT name, n as s1_n FROM t1) as s1
+NATURAL FULL JOIN
+  (SELECT * FROM
+    (SELECT name, n as s2_n FROM t2) as s2
+    NATURAL FULL JOIN
+    (SELECT name, n as s3_n FROM t3) as s3
+  ) ss2;
+
+SELECT * FROM
+(SELECT name, n as s1_n FROM t1) as s1
+NATURAL FULL JOIN
+  (SELECT * FROM
+    (SELECT name, n as s2_n, 2 as s2_2 FROM t2) as s2
+    NATURAL FULL JOIN
+    (SELECT name, n as s3_n FROM t3) as s3
+  ) ss2;
+
+--
 -- Clean up
 --
 

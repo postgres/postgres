@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.74 2002/03/12 00:51:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.75 2002/04/28 19:54:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,6 @@ typedef struct
 	List	   *outer_tlist;
 	List	   *inner_tlist;
 	Index		acceptable_rel;
-	Index		join_rti;
 } join_references_context;
 
 typedef struct
@@ -271,8 +270,7 @@ set_join_references(Query *root, Join *join)
 											root,
 											outer_tlist,
 											inner_tlist,
-											(Index) 0,
-											join->joinrti);
+											(Index) 0);
 }
 
 /*
@@ -367,8 +365,6 @@ set_uppernode_references(Plan *plan, Index subvarno)
  * 'inner_tlist' is the target list of the inner join relation, or NIL
  * 'acceptable_rel' is either zero or the rangetable index of a relation
  *		whose Vars may appear in the clause without provoking an error.
- * 'join_rti' is either zero or the join RTE index of join alias variables
- *		that should be expanded.
  *
  * Returns the new expression tree.  The original clause structure is
  * not modified.
@@ -378,8 +374,7 @@ join_references(List *clauses,
 				Query *root,
 				List *outer_tlist,
 				List *inner_tlist,
-				Index acceptable_rel,
-				Index join_rti)
+				Index acceptable_rel)
 {
 	join_references_context context;
 
@@ -387,7 +382,6 @@ join_references(List *clauses,
 	context.outer_tlist = outer_tlist;
 	context.inner_tlist = inner_tlist;
 	context.acceptable_rel = acceptable_rel;
-	context.join_rti = join_rti;
 	return (List *) join_references_mutator((Node *) clauses, &context);
 }
 
@@ -401,6 +395,7 @@ join_references_mutator(Node *node,
 	{
 		Var		   *var = (Var *) node;
 		Resdom	   *resdom;
+		Node	   *newnode;
 
 		/* First look for the var in the input tlists */
 		resdom = tlist_member((Node *) var, context->outer_tlist);
@@ -423,13 +418,11 @@ join_references_mutator(Node *node,
 		}
 
 		/* Perhaps it's a join alias that can be resolved to input vars? */
-		if (var->varno == context->join_rti)
+		newnode = flatten_join_alias_vars((Node *) var,
+										  context->root,
+										  true);
+		if (!equal(newnode, (Node *) var))
 		{
-			Node   *newnode;
-
-			newnode = flatten_join_alias_vars((Node *) var,
-											  context->root,
-											  context->join_rti);
 			/* Must now resolve the input vars... */
 			newnode = join_references_mutator(newnode, context);
 			return newnode;

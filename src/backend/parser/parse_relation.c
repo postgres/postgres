@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.67 2002/04/02 08:51:51 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.68 2002/04/28 19:54:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -681,10 +681,7 @@ RangeTblEntry *
 addRangeTableEntryForJoin(ParseState *pstate,
 						  List *colnames,
 						  JoinType jointype,
-						  List *coltypes,
-						  List *coltypmods,
-						  List *leftcols,
-						  List *rightcols,
+						  List *aliasvars,
 						  Alias *alias,
 						  bool inFromCl)
 {
@@ -696,10 +693,7 @@ addRangeTableEntryForJoin(ParseState *pstate,
 	rte->relid = InvalidOid;
 	rte->subquery = NULL;
 	rte->jointype = jointype;
-	rte->joincoltypes = coltypes;
-	rte->joincoltypmods = coltypmods;
-	rte->joinleftcols = leftcols;
-	rte->joinrightcols = rightcols;
+	rte->joinaliasvars = aliasvars;
 	rte->alias = alias;
 
 	eref = alias ? (Alias *) copyObject(alias) : makeAlias("unnamed_join", NIL);
@@ -922,13 +916,12 @@ expandRTE(ParseState *pstate, RangeTblEntry *rte,
 	{
 		/* Join RTE */
 		List	   *aliasp = rte->eref->colnames;
-		List	   *coltypes = rte->joincoltypes;
-		List	   *coltypmods = rte->joincoltypmods;
+		List	   *aliasvars = rte->joinaliasvars;
 
 		varattno = 0;
 		while (aliasp)
 		{
-			Assert(coltypes && coltypmods);
+			Assert(aliasvars);
 			varattno++;
 
 			if (colnames)
@@ -940,21 +933,21 @@ expandRTE(ParseState *pstate, RangeTblEntry *rte,
 
 			if (colvars)
 			{
+				Node	   *aliasvar = (Node *) lfirst(aliasvars);
 				Var		   *varnode;
 
 				varnode = makeVar(rtindex, varattno,
-								  (Oid) lfirsti(coltypes),
-								  (int32) lfirsti(coltypmods),
+								  exprType(aliasvar),
+								  exprTypmod(aliasvar),
 								  sublevels_up);
 
 				*colvars = lappend(*colvars, varnode);
 			}
 
 			aliasp = lnext(aliasp);
-			coltypes = lnext(coltypes);
-			coltypmods = lnext(coltypmods);
+			aliasvars = lnext(aliasvars);
 		}
-		Assert(coltypes == NIL && coltypmods == NIL);
+		Assert(aliasvars == NIL);
 	}
 	else
 		elog(ERROR, "expandRTE: unsupported RTE kind %d",
@@ -1091,10 +1084,13 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
 	}
 	else if (rte->rtekind == RTE_JOIN)
 	{
-		/* Join RTE --- get type info directly from join RTE */
-		Assert(attnum > 0 && attnum <= length(rte->joincoltypes));
-		*vartype = (Oid) nthi(attnum-1, rte->joincoltypes);
-		*vartypmod = nthi(attnum-1, rte->joincoltypmods);
+		/* Join RTE --- get type info from join RTE's alias variable */
+		Node   *aliasvar;
+
+		Assert(attnum > 0 && attnum <= length(rte->joinaliasvars));
+		aliasvar = (Node *) nth(attnum-1, rte->joinaliasvars);
+		*vartype = exprType(aliasvar);
+		*vartypmod = exprTypmod(aliasvar);
 	}
 	else
 		elog(ERROR, "get_rte_attribute_type: unsupported RTE kind %d",

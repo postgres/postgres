@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.96 2002/04/05 00:31:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.97 2002/04/28 19:54:28 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1902,6 +1902,8 @@ query_tree_walker(Query *query,
 				  void *context,
 				  bool visitQueryRTEs)
 {
+	List	   *rt;
+
 	Assert(query != NULL && IsA(query, Query));
 
 	if (walker((Node *) query->targetList, context))
@@ -1912,17 +1914,25 @@ query_tree_walker(Query *query,
 		return true;
 	if (walker(query->havingQual, context))
 		return true;
-	if (visitQueryRTEs)
+	foreach(rt, query->rtable)
 	{
-		List	   *rt;
+		RangeTblEntry *rte = (RangeTblEntry *) lfirst(rt);
 
-		foreach(rt, query->rtable)
+		switch (rte->rtekind)
 		{
-			RangeTblEntry *rte = (RangeTblEntry *) lfirst(rt);
-
-			if (rte->subquery)
-				if (walker(rte->subquery, context))
+			case RTE_RELATION:
+			case RTE_SPECIAL:
+				/* nothing to do */
+				break;
+			case RTE_SUBQUERY:
+				if (visitQueryRTEs)
+					if (walker(rte->subquery, context))
+						return true;
+				break;
+			case RTE_JOIN:
+				if (walker(rte->joinaliasvars, context))
 					return true;
+				break;
 		}
 	}
 	return false;
@@ -2281,32 +2291,42 @@ query_tree_mutator(Query *query,
 				   void *context,
 				   bool visitQueryRTEs)
 {
+	List	   *newrt = NIL;
+	List	   *rt;
+
 	Assert(query != NULL && IsA(query, Query));
 
 	MUTATE(query->targetList, query->targetList, List *);
 	MUTATE(query->jointree, query->jointree, FromExpr *);
 	MUTATE(query->setOperations, query->setOperations, Node *);
 	MUTATE(query->havingQual, query->havingQual, Node *);
-	if (visitQueryRTEs)
+	foreach(rt, query->rtable)
 	{
-		List	   *newrt = NIL;
-		List	   *rt;
+		RangeTblEntry *rte = (RangeTblEntry *) lfirst(rt);
+		RangeTblEntry *newrte;
 
-		foreach(rt, query->rtable)
+		switch (rte->rtekind)
 		{
-			RangeTblEntry *rte = (RangeTblEntry *) lfirst(rt);
-
-			if (rte->subquery)
-			{
-				RangeTblEntry *newrte;
-
+			case RTE_RELATION:
+			case RTE_SPECIAL:
+				/* nothing to do, don't bother to make a copy */
+				break;
+			case RTE_SUBQUERY:
+				if (visitQueryRTEs)
+				{
+					FLATCOPY(newrte, rte, RangeTblEntry);
+					CHECKFLATCOPY(newrte->subquery, rte->subquery, Query);
+					MUTATE(newrte->subquery, newrte->subquery, Query *);
+					rte = newrte;
+				}
+				break;
+			case RTE_JOIN:
 				FLATCOPY(newrte, rte, RangeTblEntry);
-				CHECKFLATCOPY(newrte->subquery, rte->subquery, Query);
-				MUTATE(newrte->subquery, newrte->subquery, Query *);
+				MUTATE(newrte->joinaliasvars, rte->joinaliasvars, List *);
 				rte = newrte;
-			}
-			newrt = lappend(newrt, rte);
+				break;
 		}
-		query->rtable = newrt;
+		newrt = lappend(newrt, rte);
 	}
+	query->rtable = newrt;
 }

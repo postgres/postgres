@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.115 2002/03/12 00:51:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.116 2002/04/28 19:54:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,8 +41,10 @@
 #define EXPRKIND_HAVING 2
 
 
-static Node *pull_up_subqueries(Query *parse, Node *jtnode);
+static Node *pull_up_subqueries(Query *parse, Node *jtnode,
+								bool below_outer_join);
 static bool is_simple_subquery(Query *subquery);
+static bool has_nullable_targetlist(Query *subquery);
 static void resolvenew_in_jointree(Node *jtnode, int varno, List *subtlist);
 static Node *preprocess_jointree(Query *parse, Node *jtnode);
 static Node *preprocess_expression(Query *parse, Node *expr, int kind);
@@ -153,7 +155,7 @@ subquery_planner(Query *parse, double tuple_fraction)
 	 * this query.
 	 */
 	parse->jointree = (FromExpr *)
-		pull_up_subqueries(parse, (Node *) parse->jointree);
+		pull_up_subqueries(parse, (Node *) parse->jointree, false);
 
 	/*
 	 * If so, we may have created opportunities to simplify the jointree.
@@ -264,6 +266,9 @@ subquery_planner(Query *parse, double tuple_fraction)
  *		the parent query.  If the subquery has no special features like
  *		grouping/aggregation then we can merge it into the parent's jointree.
  *
+ * below_outer_join is true if this jointree node is within the nullable
+ * side of an outer join.  This restricts what we can do.
+ *
  * A tricky aspect of this code is that if we pull up a subquery we have
  * to replace Vars that reference the subquery's outputs throughout the
  * parent query, including quals attached to jointree nodes above the one
@@ -274,7 +279,7 @@ subquery_planner(Query *parse, double tuple_fraction)
  * copy of the tree; we have to invoke it just on the quals, instead.
  */
 static Node *
-pull_up_subqueries(Query *parse, Node *jtnode)
+pull_up_subqueries(Query *parse, Node *jtnode, bool below_outer_join)
 {
 	if (jtnode == NULL)
 		return NULL;
@@ -288,16 +293,26 @@ pull_up_subqueries(Query *parse, Node *jtnode)
 		 * Is this a subquery RTE, and if so, is the subquery simple
 		 * enough to pull up?  (If not, do nothing at this node.)
 		 *
+		 * If we are inside an outer join, only pull up subqueries whose
+		 * targetlists are nullable --- otherwise substituting their tlist
+		 * entries for upper Var references would do the wrong thing
+		 * (the results wouldn't become NULL when they're supposed to).
+		 * XXX This could be improved by generating pseudo-variables for
+		 * such expressions; we'd have to figure out how to get the pseudo-
+		 * variables evaluated at the right place in the modified plan tree.
+		 * Fix it someday.
+		 *
 		 * Note: even if the subquery itself is simple enough, we can't pull
-		 * it up if there is a reference to its whole tuple result.
+		 * it up if there is a reference to its whole tuple result.  Perhaps
+		 * a pseudo-variable is the answer here too.
 		 */
-		if (subquery && is_simple_subquery(subquery) &&
+		if (rte->rtekind == RTE_SUBQUERY && is_simple_subquery(subquery) &&
+			(!below_outer_join || has_nullable_targetlist(subquery)) &&
 			!contain_whole_tuple_var((Node *) parse, varno, 0))
 		{
 			int			rtoffset;
-			Node	   *subjointree;
 			List	   *subtlist;
-			List	   *l;
+			List	   *rt;
 
 			/*
 			 * First, recursively pull up the subquery's subqueries, so
@@ -311,48 +326,60 @@ pull_up_subqueries(Query *parse, Node *jtnode)
 			 * having chunks of structure multiply linked.
 			 */
 			subquery->jointree = (FromExpr *)
-				pull_up_subqueries(subquery, (Node *) subquery->jointree);
+				pull_up_subqueries(subquery, (Node *) subquery->jointree,
+								   below_outer_join);
 
 			/*
-			 * Append the subquery's rangetable to mine (currently, no
-			 * adjustments will be needed in the subquery's rtable).
+			 * Now make a modifiable copy of the subquery that we can
+			 * run OffsetVarNodes on.
+			 */
+			subquery = copyObject(subquery);
+
+			/*
+			 * Adjust varnos in subquery so that we can append its
+			 * rangetable to upper query's.
 			 */
 			rtoffset = length(parse->rtable);
-			parse->rtable = nconc(parse->rtable,
-								  copyObject(subquery->rtable));
-
-			/*
-			 * Make copies of the subquery's jointree and targetlist with
-			 * varnos adjusted to match the merged rangetable.
-			 */
-			subjointree = copyObject(subquery->jointree);
-			OffsetVarNodes(subjointree, rtoffset, 0);
-			subtlist = copyObject(subquery->targetList);
-			OffsetVarNodes((Node *) subtlist, rtoffset, 0);
+			OffsetVarNodes((Node *) subquery, rtoffset, 0);
 
 			/*
 			 * Replace all of the top query's references to the subquery's
 			 * outputs with copies of the adjusted subtlist items, being
 			 * careful not to replace any of the jointree structure.
+			 * (This'd be a lot cleaner if we could use query_tree_mutator.)
 			 */
+			subtlist = subquery->targetList;
 			parse->targetList = (List *)
 				ResolveNew((Node *) parse->targetList,
 						   varno, 0, subtlist, CMD_SELECT, 0);
 			resolvenew_in_jointree((Node *) parse->jointree, varno, subtlist);
+			Assert(parse->setOperations == NULL);
 			parse->havingQual =
 				ResolveNew(parse->havingQual,
 						   varno, 0, subtlist, CMD_SELECT, 0);
 
-			/*
-			 * Pull up any FOR UPDATE markers, too.
-			 */
-			foreach(l, subquery->rowMarks)
+			foreach(rt, parse->rtable)
 			{
-				int			submark = lfirsti(l);
+				RangeTblEntry *rte = (RangeTblEntry *) lfirst(rt);
 
-				parse->rowMarks = lappendi(parse->rowMarks,
-										   submark + rtoffset);
+				if (rte->rtekind == RTE_JOIN)
+					rte->joinaliasvars = (List *)
+						ResolveNew((Node *) rte->joinaliasvars,
+								   varno, 0, subtlist, CMD_SELECT, 0);
 			}
+
+			/*
+			 * Now append the adjusted rtable entries to upper query.
+			 * (We hold off until after fixing the upper rtable entries;
+			 * no point in running that code on the subquery ones too.)
+			 */
+			parse->rtable = nconc(parse->rtable, subquery->rtable);
+
+			/*
+			 * Pull up any FOR UPDATE markers, too.  (OffsetVarNodes
+			 * already adjusted the marker values, so just nconc the list.)
+			 */
+			parse->rowMarks = nconc(parse->rowMarks, subquery->rowMarks);
 
 			/*
 			 * Miscellaneous housekeeping.
@@ -364,7 +391,7 @@ pull_up_subqueries(Query *parse, Node *jtnode)
 			 * Return the adjusted subquery jointree to replace the
 			 * RangeTblRef entry in my jointree.
 			 */
-			return subjointree;
+			return (Node *) subquery->jointree;
 		}
 	}
 	else if (IsA(jtnode, FromExpr))
@@ -373,35 +400,39 @@ pull_up_subqueries(Query *parse, Node *jtnode)
 		List	   *l;
 
 		foreach(l, f->fromlist)
-			lfirst(l) = pull_up_subqueries(parse, lfirst(l));
+			lfirst(l) = pull_up_subqueries(parse, lfirst(l),
+										   below_outer_join);
 	}
 	else if (IsA(jtnode, JoinExpr))
 	{
 		JoinExpr   *j = (JoinExpr *) jtnode;
 
-		/*
-		 * At the moment, we can't pull up subqueries that are inside the
-		 * nullable side of an outer join, because substituting their
-		 * target list entries for upper Var references wouldn't do the
-		 * right thing (the entries wouldn't go to NULL when they're
-		 * supposed to). Suppressing the pullup is an ugly,
-		 * performance-losing hack, but I see no alternative for now. Find
-		 * a better way to handle this when we redesign query trees ---
-		 * tgl 4/30/01.
-		 */
+		/* Recurse, being careful to tell myself when inside outer join */
 		switch (j->jointype)
 		{
 			case JOIN_INNER:
-				j->larg = pull_up_subqueries(parse, j->larg);
-				j->rarg = pull_up_subqueries(parse, j->rarg);
+				j->larg = pull_up_subqueries(parse, j->larg,
+											 below_outer_join);
+				j->rarg = pull_up_subqueries(parse, j->rarg,
+											 below_outer_join);
 				break;
 			case JOIN_LEFT:
-				j->larg = pull_up_subqueries(parse, j->larg);
+				j->larg = pull_up_subqueries(parse, j->larg,
+											 below_outer_join);
+				j->rarg = pull_up_subqueries(parse, j->rarg,
+											 true);
 				break;
 			case JOIN_FULL:
+				j->larg = pull_up_subqueries(parse, j->larg,
+											 true);
+				j->rarg = pull_up_subqueries(parse, j->rarg,
+											 true);
 				break;
 			case JOIN_RIGHT:
-				j->rarg = pull_up_subqueries(parse, j->rarg);
+				j->larg = pull_up_subqueries(parse, j->larg,
+											 true);
+				j->rarg = pull_up_subqueries(parse, j->rarg,
+											 below_outer_join);
 				break;
 			case JOIN_UNION:
 
@@ -481,6 +512,37 @@ is_simple_subquery(Query *subquery)
 	if (subquery->jointree->fromlist == NIL)
 		return false;
 
+	return true;
+}
+
+/*
+ * has_nullable_targetlist
+ *	  Check a subquery in the range table to see if all the non-junk
+ *	  targetlist items are simple variables (and, hence, will correctly
+ *	  go to NULL when examined above the point of an outer join).
+ *
+ * A possible future extension is to accept strict functions of simple
+ * variables, eg, "x + 1".
+ */
+static bool
+has_nullable_targetlist(Query *subquery)
+{
+	List	   *l;
+
+	foreach(l, subquery->targetList)
+	{
+		TargetEntry *tle = (TargetEntry *) lfirst(l);
+
+		/* ignore resjunk columns */
+		if (tle->resdom->resjunk)
+			continue;
+
+		/* Okay if tlist item is a simple Var */
+		if (tle->expr && IsA(tle->expr, Var))
+			continue;
+
+		return false;
+	}
 	return true;
 }
 
@@ -675,7 +737,7 @@ preprocess_expression(Query *parse, Node *expr, int kind)
 		}
 	}
 	if (has_join_rtes)
-		expr = flatten_join_alias_vars(expr, parse, 0);
+		expr = flatten_join_alias_vars(expr, parse, false);
 
 	return expr;
 }

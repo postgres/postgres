@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.129 2002/04/24 02:48:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.130 2002/04/28 19:54:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1680,13 +1680,7 @@ _equalRangeTblEntry(RangeTblEntry *a, RangeTblEntry *b)
 		return false;
 	if (a->jointype != b->jointype)
 		return false;
-	if (!equali(a->joincoltypes, b->joincoltypes))
-		return false;
-	if (!equali(a->joincoltypmods, b->joincoltypmods))
-		return false;
-	if (!equali(a->joinleftcols, b->joinleftcols))
-		return false;
-	if (!equali(a->joinrightcols, b->joinrightcols))
+	if (!equal(a->joinaliasvars, b->joinaliasvars))
 		return false;
 	if (!equal(a->alias, b->alias))
 		return false;

@@ -8,18 +8,16 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.35 2002/04/11 20:00:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.36 2002/04/28 19:54:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-#include "nodes/makefuncs.h"
 #include "nodes/plannodes.h"
 #include "optimizer/clauses.h"
 #include "optimizer/var.h"
 #include "parser/parsetree.h"
-#include "parser/parse_coerce.h"
 
 
 typedef struct
@@ -44,7 +42,7 @@ typedef struct
 typedef struct
 {
 	Query	   *root;
-	int			expandRTI;
+	bool		force;
 } flatten_join_alias_vars_context;
 
 static bool pull_varnos_walker(Node *node,
@@ -56,8 +54,6 @@ static bool pull_var_clause_walker(Node *node,
 					   pull_var_clause_context *context);
 static Node *flatten_join_alias_vars_mutator(Node *node,
 						flatten_join_alias_vars_context *context);
-static Node *flatten_join_alias_var(Var *var, Query *root, int expandRTI);
-static Node *find_jointree_item(Node *jtnode, int rtindex);
 
 
 /*
@@ -314,26 +310,30 @@ pull_var_clause_walker(Node *node, pull_var_clause_context *context)
 
 /*
  * flatten_join_alias_vars
- *	  Whereever possible, replace Vars that reference JOIN outputs with
- *	  references to the original relation variables instead.  This allows
- *	  quals involving such vars to be pushed down.  Vars that cannot be
- *	  simplified to non-join Vars are replaced by COALESCE expressions
- *	  if they have varno = expandRTI, and are left as JOIN RTE references
- *	  otherwise.  (Pass expandRTI = 0 to prevent all COALESCE expansion.)
+ *	  Replace Vars that reference JOIN outputs with references to the original
+ *	  relation variables instead.  This allows quals involving such vars to be
+ *	  pushed down.
  *
- *	  Upper-level vars (with varlevelsup > 0) are ignored; normally there
- *	  should not be any by the time this routine is called.
+ * If force is TRUE then we will reduce all JOIN alias Vars to non-alias Vars
+ * or expressions thereof (there may be COALESCE and/or type conversions
+ * involved).  If force is FALSE we will not expand a Var to a non-Var
+ * expression.  This is a hack to avoid confusing mergejoin planning, which
+ * currently cannot cope with non-Var join items --- we leave the join vars
+ * as Vars till after planning is done, then expand them during setrefs.c.
+ *
+ * Upper-level vars (with varlevelsup > 0) are ignored; normally there
+ * should not be any by the time this routine is called.
  *
  * Does not examine subqueries, therefore must only be used after reduction
  * of sublinks to subplans!
  */
 Node *
-flatten_join_alias_vars(Node *node, Query *root, int expandRTI)
+flatten_join_alias_vars(Node *node, Query *root, bool force)
 {
 	flatten_join_alias_vars_context context;
 
 	context.root = root;
-	context.expandRTI = expandRTI;
+	context.force = force;
 
 	return flatten_join_alias_vars_mutator(node, &context);
 }
@@ -347,326 +347,24 @@ flatten_join_alias_vars_mutator(Node *node,
 	if (IsA(node, Var))
 	{
 		Var	   *var = (Var *) node;
+		RangeTblEntry *rte;
+		Node   *newvar;
 
 		if (var->varlevelsup != 0)
 			return node;		/* no need to copy, really */
-		return flatten_join_alias_var(var, context->root, context->expandRTI);
+		rte = rt_fetch(var->varno, context->root->rtable);
+		if (rte->rtekind != RTE_JOIN)
+			return node;
+		Assert(var->varattno > 0);
+		newvar = (Node *) nth(var->varattno - 1, rte->joinaliasvars);
+		if (IsA(newvar, Var) || context->force)
+		{
+			/* expand it; recurse in case join input is itself a join */
+			return flatten_join_alias_vars_mutator(newvar, context);
+		}
+		/* we don't want to force expansion of this alias Var */
+		return node;
 	}
 	return expression_tree_mutator(node, flatten_join_alias_vars_mutator,
 								   (void *) context);
-}
-
-static Node *
-flatten_join_alias_var(Var *var, Query *root, int expandRTI)
-{
-	Index		varno = var->varno;
-	AttrNumber	varattno = var->varattno;
-	Oid			vartype = var->vartype;
-	int32		vartypmod = var->vartypmod;
-	JoinExpr   *jexpr = NULL;
-
-	/*
-	 * Loop to cope with joins of joins
-	 */
-	for (;;)
-	{
-		RangeTblEntry *rte = rt_fetch(varno, root->rtable);
-		Index		leftrti,
-					rightrti;
-		AttrNumber	leftattno,
-					rightattno;
-		RangeTblEntry *subrte;
-		Oid			subtype;
-		int32		subtypmod;
-
-		if (rte->rtekind != RTE_JOIN)
-			break;				/* reached a non-join RTE */
-		/*
-		 * Find the RT indexes of the left and right children of the
-		 * join node.  We have to search the join tree to do this,
-		 * which is a major pain in the neck --- but keeping RT indexes
-		 * in other RT entries is worse, because it makes modifying
-		 * querytrees difficult.  (Perhaps we can improve on the
-		 * rangetable/jointree datastructure someday.)  One thing we
-		 * can do is avoid repeated searches while tracing a single
-		 * variable down to its baserel.
-		 */
-		if (jexpr == NULL)
-			jexpr = (JoinExpr *)
-				find_jointree_item((Node *) root->jointree, varno);
-		if (jexpr == NULL ||
-			!IsA(jexpr, JoinExpr) ||
-			jexpr->rtindex != varno)
-			elog(ERROR, "flatten_join_alias_var: failed to find JoinExpr");
-		if (IsA(jexpr->larg, RangeTblRef))
-			leftrti = ((RangeTblRef *) jexpr->larg)->rtindex;
-		else if (IsA(jexpr->larg, JoinExpr))
-			leftrti = ((JoinExpr *) jexpr->larg)->rtindex;
-		else
-		{
-			elog(ERROR, "flatten_join_alias_var: unexpected subtree type");
-			leftrti = 0;		/* keep compiler quiet */
-		}
-		if (IsA(jexpr->rarg, RangeTblRef))
-			rightrti = ((RangeTblRef *) jexpr->rarg)->rtindex;
-		else if (IsA(jexpr->rarg, JoinExpr))
-			rightrti = ((JoinExpr *) jexpr->rarg)->rtindex;
-		else
-		{
-			elog(ERROR, "flatten_join_alias_var: unexpected subtree type");
-			rightrti = 0;		/* keep compiler quiet */
-		}
-		/*
-		 * See if the join var is from the left side, the right side,
-		 * or both (ie, it is a USING/NATURAL JOIN merger column).
-		 */
-		Assert(varattno > 0);
-		leftattno = (AttrNumber) nthi(varattno-1, rte->joinleftcols);
-		rightattno = (AttrNumber) nthi(varattno-1, rte->joinrightcols);
-		if (leftattno && rightattno)
-		{
-			/*
-			 * Var is a merge var.  If a left or right join, we can replace
-			 * it by the left or right input var respectively; we only need
-			 * a COALESCE for a full join.  However, beware of the possibility
-			 * that there's been a type promotion to make the input vars
-			 * compatible; do not replace a var by one of a different type!
-			 */
-			if (rte->jointype == JOIN_INNER ||
-				rte->jointype == JOIN_LEFT)
-			{
-				subrte = rt_fetch(leftrti, root->rtable);
-				get_rte_attribute_type(subrte, leftattno,
-									   &subtype, &subtypmod);
-				if (vartype == subtype && vartypmod == subtypmod)
-				{
-					varno = leftrti;
-					varattno = leftattno;
-					jexpr = (JoinExpr *) jexpr->larg;
-					continue;
-				}
-			}
-			if (rte->jointype == JOIN_INNER ||
-				rte->jointype == JOIN_RIGHT)
-			{
-				subrte = rt_fetch(rightrti, root->rtable);
-				get_rte_attribute_type(subrte, rightattno,
-									   &subtype, &subtypmod);
-				if (vartype == subtype && vartypmod == subtypmod)
-				{
-					varno = rightrti;
-					varattno = rightattno;
-					jexpr = (JoinExpr *) jexpr->rarg;
-					continue;
-				}
-			}
-			/*
-			 * This var cannot be substituted directly, only with a COALESCE.
-			 * Do so only if it belongs to the particular join indicated by
-			 * the caller.
-			 */
-			if (varno != expandRTI)
-				break;
-			{
-				Node   *l_var,
-					   *r_var;
-				CaseExpr   *c = makeNode(CaseExpr);
-				CaseWhen   *w = makeNode(CaseWhen);
-				NullTest   *n = makeNode(NullTest);
-
-				subrte = rt_fetch(leftrti, root->rtable);
-				get_rte_attribute_type(subrte, leftattno,
-									   &subtype, &subtypmod);
-				l_var = (Node *) makeVar(leftrti,
-										 leftattno,
-										 subtype,
-										 subtypmod,
-										 0);
-				if (subtype != vartype)
-				{
-					l_var = coerce_type(NULL, l_var, subtype,
-										vartype, vartypmod, false);
-					l_var = coerce_type_typmod(NULL, l_var,
-											   vartype, vartypmod);
-				}
-				else if (subtypmod != vartypmod)
-					l_var = coerce_type_typmod(NULL, l_var,
-											   vartype, vartypmod);
-
-				subrte = rt_fetch(rightrti, root->rtable);
-				get_rte_attribute_type(subrte, rightattno,
-									   &subtype, &subtypmod);
-				r_var = (Node *) makeVar(rightrti,
-										 rightattno,
-										 subtype,
-										 subtypmod,
-										 0);
-				if (subtype != vartype)
-				{
-					r_var = coerce_type(NULL, r_var, subtype,
-										vartype, vartypmod, false);
-					r_var = coerce_type_typmod(NULL, r_var,
-											   vartype, vartypmod);
-				}
-				else if (subtypmod != vartypmod)
-					r_var = coerce_type_typmod(NULL, r_var,
-											   vartype, vartypmod);
-
-				n->arg = l_var;
-				n->nulltesttype = IS_NOT_NULL;
-				w->expr = (Node *) n;
-				w->result = l_var;
-				c->casetype = vartype;
-				c->args = makeList1(w);
-				c->defresult = r_var;
-				return (Node *) c;
-			}
-		}
-		else if (leftattno)
-		{
-			/* Here we do not need to check the type */
-			varno = leftrti;
-			varattno = leftattno;
-			jexpr = (JoinExpr *) jexpr->larg;
-		}
-		else
-		{
-			Assert(rightattno);
-			/* Here we do not need to check the type */
-			varno = rightrti;
-			varattno = rightattno;
-			jexpr = (JoinExpr *) jexpr->rarg;
-		}
-	}
-
-	/*
-	 * When we fall out of the loop, we've reached the base Var.
-	 */
-	return (Node *) makeVar(varno,
-							varattno,
-							vartype,
-							vartypmod,
-							0);
-}
-
-/*
- * Given a join alias Var, construct Vars for the two input vars it directly
- * depends on.  Note that this should *only* be called for merger alias Vars.
- * In practice it is only used for Vars that got past flatten_join_alias_vars.
- */
-void
-build_join_alias_subvars(Query *root, Var *aliasvar,
-						 Var **leftsubvar, Var **rightsubvar)
-{
-	Index		varno = aliasvar->varno;
-	AttrNumber	varattno = aliasvar->varattno;
-	RangeTblEntry *rte;
-	JoinExpr   *jexpr;
-	Index		leftrti,
-				rightrti;
-	AttrNumber	leftattno,
-				rightattno;
-	RangeTblEntry *subrte;
-	Oid			subtype;
-	int32		subtypmod;
-
-	Assert(aliasvar->varlevelsup == 0);
-	rte = rt_fetch(varno, root->rtable);
-	Assert(rte->rtekind == RTE_JOIN);
-
-	/*
-	 * Find the RT indexes of the left and right children of the
-	 * join node.
-	 */
-	jexpr = (JoinExpr *) find_jointree_item((Node *) root->jointree, varno);
-	if (jexpr == NULL ||
-		!IsA(jexpr, JoinExpr) ||
-		jexpr->rtindex != varno)
-		elog(ERROR, "build_join_alias_subvars: failed to find JoinExpr");
-	if (IsA(jexpr->larg, RangeTblRef))
-		leftrti = ((RangeTblRef *) jexpr->larg)->rtindex;
-	else if (IsA(jexpr->larg, JoinExpr))
-		leftrti = ((JoinExpr *) jexpr->larg)->rtindex;
-	else
-	{
-		elog(ERROR, "build_join_alias_subvars: unexpected subtree type");
-		leftrti = 0;			/* keep compiler quiet */
-	}
-	if (IsA(jexpr->rarg, RangeTblRef))
-		rightrti = ((RangeTblRef *) jexpr->rarg)->rtindex;
-	else if (IsA(jexpr->rarg, JoinExpr))
-		rightrti = ((JoinExpr *) jexpr->rarg)->rtindex;
-	else
-	{
-		elog(ERROR, "build_join_alias_subvars: unexpected subtree type");
-		rightrti = 0;			/* keep compiler quiet */
-	}
-
-	Assert(varattno > 0);
-	leftattno = (AttrNumber) nthi(varattno-1, rte->joinleftcols);
-	rightattno = (AttrNumber) nthi(varattno-1, rte->joinrightcols);
-	if (!(leftattno && rightattno))
-		elog(ERROR, "build_join_alias_subvars: non-merger variable");
-
-	subrte = rt_fetch(leftrti, root->rtable);
-	get_rte_attribute_type(subrte, leftattno,
-						   &subtype, &subtypmod);
-	*leftsubvar = makeVar(leftrti,
-						  leftattno,
-						  subtype,
-						  subtypmod,
-						  0);
-
-	subrte = rt_fetch(rightrti, root->rtable);
-	get_rte_attribute_type(subrte, rightattno,
-						   &subtype, &subtypmod);
-	*rightsubvar = makeVar(rightrti,
-						   rightattno,
-						   subtype,
-						   subtypmod,
-						   0);
-}
-
-/*
- * Find jointree item matching the specified RT index
- */
-static Node *
-find_jointree_item(Node *jtnode, int rtindex)
-{
-	if (jtnode == NULL)
-		return NULL;
-	if (IsA(jtnode, RangeTblRef))
-	{
-		if (((RangeTblRef *) jtnode)->rtindex == rtindex)
-			return jtnode;
-	}
-	else if (IsA(jtnode, FromExpr))
-	{
-		FromExpr   *f = (FromExpr *) jtnode;
-		List	   *l;
-
-		foreach(l, f->fromlist)
-		{
-			jtnode = find_jointree_item(lfirst(l), rtindex);
-			if (jtnode)
-				return jtnode;
-		}
-	}
-	else if (IsA(jtnode, JoinExpr))
-	{
-		JoinExpr   *j = (JoinExpr *) jtnode;
-
-		if (j->rtindex == rtindex)
-			return jtnode;
-		jtnode = find_jointree_item(j->larg, rtindex);
-		if (jtnode)
-			return jtnode;
-		jtnode = find_jointree_item(j->rarg, rtindex);
-		if (jtnode)
-			return jtnode;
-	}
-	else
-		elog(ERROR, "find_jointree_item: unexpected node type %d",
-			 nodeTag(jtnode));
-	return NULL;
 }

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.232 2002/04/24 02:22:54 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.233 2002/04/28 19:54:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2075,7 +2075,7 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	Node	   *node;
 	List	   *lefttl,
 			   *dtlist,
-			   *colMods,
+			   *targetvars,
 			   *targetnames,
 			   *sv_namespace,
 			   *sv_rtable;
@@ -2145,14 +2145,12 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	/*
 	 * Generate dummy targetlist for outer query using column names of
 	 * leftmost select and common datatypes of topmost set operation. Also
-	 * make a list of the column names for use in parsing ORDER BY.
-	 *
-	 * XXX colMods is a hack to provide a dummy typmod list below.  We
-	 * should probably keep track of common typmod instead.
+	 * make lists of the dummy vars and their names for use in parsing
+	 * ORDER BY.
 	 */
 	qry->targetList = NIL;
+	targetvars = NIL;
 	targetnames = NIL;
-	colMods = NIL;
 	lefttl = leftmostQuery->targetList;
 	foreach(dtlist, sostmt->colTypes)
 	{
@@ -2174,8 +2172,8 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 								0);
 		qry->targetList = lappend(qry->targetList,
 								  makeTargetEntry(resdom, expr));
+		targetvars = lappend(targetvars, expr);
 		targetnames = lappend(targetnames, makeString(colName));
-		colMods = lappendi(colMods, -1);
 		lefttl = lnext(lefttl);
 	}
 
@@ -2232,10 +2230,7 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	jrte = addRangeTableEntryForJoin(NULL,
 									 targetnames,
 									 JOIN_INNER,
-									 sostmt->colTypes,
-									 colMods,
-									 NIL,
-									 NIL,
+									 targetvars,
 									 NULL,
 									 true);
 	jrtr = makeNode(RangeTblRef);

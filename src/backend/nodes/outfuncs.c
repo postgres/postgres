@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.156 2002/04/17 20:57:56 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.157 2002/04/28 19:54:28 tgl Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -408,8 +408,6 @@ _outJoin(StringInfo str, Join *node)
 	appendStringInfo(str, " :jointype %d :joinqual ",
 					 (int) node->jointype);
 	_outNode(str, node->joinqual);
-	appendStringInfo(str, " :joinrti %d ",
-					 node->joinrti);
 }
 
 /*
@@ -423,8 +421,6 @@ _outNestLoop(StringInfo str, NestLoop *node)
 	appendStringInfo(str, " :jointype %d :joinqual ",
 					 (int) node->join.jointype);
 	_outNode(str, node->join.joinqual);
-	appendStringInfo(str, " :joinrti %d ",
-					 node->join.joinrti);
 }
 
 /*
@@ -438,8 +434,6 @@ _outMergeJoin(StringInfo str, MergeJoin *node)
 	appendStringInfo(str, " :jointype %d :joinqual ",
 					 (int) node->join.jointype);
 	_outNode(str, node->join.joinqual);
-	appendStringInfo(str, " :joinrti %d ",
-					 node->join.joinrti);
 
 	appendStringInfo(str, " :mergeclauses ");
 	_outNode(str, node->mergeclauses);
@@ -456,8 +450,6 @@ _outHashJoin(StringInfo str, HashJoin *node)
 	appendStringInfo(str, " :jointype %d :joinqual ",
 					 (int) node->join.jointype);
 	_outNode(str, node->join.joinqual);
-	appendStringInfo(str, " :joinrti %d ",
-					 node->join.joinrti);
 
 	appendStringInfo(str, " :hashclauses ");
 	_outNode(str, node->hashclauses);
@@ -982,22 +974,16 @@ _outRangeTblEntry(StringInfo str, RangeTblEntry *node)
 	{
 		case RTE_RELATION:
 		case RTE_SPECIAL:
-			appendStringInfo(str, ":relid %u ", node->relid);
+			appendStringInfo(str, ":relid %u", node->relid);
 			break;
 		case RTE_SUBQUERY:
 			appendStringInfo(str, ":subquery ");
 			_outNode(str, node->subquery);
 			break;
 		case RTE_JOIN:
-			appendStringInfo(str, ":jointype %d :joincoltypes ",
+			appendStringInfo(str, ":jointype %d :joinaliasvars ",
 							 (int) node->jointype);
-			_outOidList(str, node->joincoltypes);
-			appendStringInfo(str, " :joincoltypmods ");
-			_outIntList(str, node->joincoltypmods);
-			appendStringInfo(str, " :joinleftcols ");
-			_outIntList(str, node->joinleftcols);
-			appendStringInfo(str, " :joinrightcols ");
-			_outIntList(str, node->joinrightcols);
+			_outNode(str, node->joinaliasvars);
 			break;
 		default:
 			elog(ERROR, "bogus rte kind %d", (int) node->rtekind);
