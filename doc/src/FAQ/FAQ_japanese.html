@@ -8,7 +8,7 @@
 <H1>
 PostgreSQL(ポストグレス・キュー・エル)についてよくある質問とその解答(FAQ)</H1>
 <P>
-原文最終更新日:		Mon Mar 29 00:07:11 EST 2004</P>
+原文最終更新日:		Fri Jun  4 00:09:16 EDT 2004</P>
 <P>
 現在の維持管理者:	Bruce Momjian (<A
 HREF="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -42,7 +42,7 @@ http://www.PostgreSQL.org/docs/faqs/FAQ.html</A>
 
 	この和訳についてお気づきの点は(<A HREF="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</A>)までメールでお寄せ下さい。
 
-						2003年09月20日    桑村 潤
+						2004年08月22日    桑村 潤
 ]
 </PRE></SMALL>
 
@@ -92,6 +92,7 @@ http://www.PostgreSQL.org/docs/faqs/FAQ.html</A>
 <A HREF="#3.8">3.8</A>)	接続しようとするときに <I>'Sorry, too many clients'</I> が出るのはなぜですか？<BR>
 <A HREF="#3.9">3.9</A>)	<I>pgsql_tmp</I> ディレクトリの中には何がありますか？<BR>
 <A href="#3.10">3.10</A>) PostgreSQLのメジャーリリースをアップデートするのにダンプとリストアをしなくてはならないのはなぜですか？<br>
+<A href="#3.11">3.11</A>) ハードウェアにはどんなコンピュータを使えばよいですか？<BR>
 
 
 
@@ -142,7 +143,7 @@ http://www.PostgreSQL.org/docs/faqs/FAQ.html</A>
 
 <H4><A NAME="1.1">1.1</A>)	PostgreSQL とは何ですか？  何と読みますか？</H4>
 
-<P><I>Post-Gres-Q-L.</I>(ポスト - グレス - キュー - エル) と発音します。
+<P><I>Post-Gres-Q-L</I>(ポスト - グレス - キュー - エル) と発音します。
 この発音を聞きたい人のために、オーディオファイルを http://www.postgresql.org/postgresql.mp3 に用意してあります。</P>
 <P>PostgreSQL は次世代 <SMALL>DBMS</SMALL> 研究用のプロトタイプであった POSTGRES データベース管理システムの改良版です（このため、今でもときどき "Postgres" と呼ばれることがあります）。PostgreSQL は POSTGRES の強力なデータ・モデルと豊富なデータ・タイプ(型)を保持しながら、POSTGRES で使われた PostQuel 問い合わせ言語を、拡張した <SMALL>SQL</SMALL> のサブセットに置き換えています。PostgreSQL は無料で完全なソースを利用できます。
 
@@ -150,7 +151,7 @@ http://www.PostgreSQL.org/docs/faqs/FAQ.html</A>
 "http://www.PostgreSQL.org/docs/faqs/FAQ_DEV.html">http://www.PostgreSQL.org/docs/faqs/FAQ_DEV.html</A> にある開発者向けのFAQを見てください。
 </P>
 
-<P>Postgres95-1.01 の中心的な開発者は Andrew Yu と Jolly Chen でしたが、その他大勢の人々がこのコードの移植、テスト、デバグ、および、改良に参加しました。PostgreSQL の派生元コードである POSTGRES はカリフォルニア大学バークレイ校において、 Michael Stonebraker 教授の指揮のもと、多くの学生、卒業生、本職のプログラマたちの努力により作られました。
+<P>Postgres95-1.01 の中心的な開発者は Andrew Yu と Jolly Chen でしたが、その他大勢の人々がこのコードの移植、テスト、デバグ、および、改良に参加しました。PostgreSQL の派生元コードである Postgres はカリフォルニア大学バークレイ校において、 Michael Stonebraker 教授の指揮のもと、多くの学生、卒業生、本職のプログラマたちの努力により作られました。
 
 <P>バークレイにおけるこのソフトウェアのもとの名前は Postgres でしたが、<SMALL>SQL</SMALL> の機能が追加された 1995 年にその名前は Postgres95 に変更され、1996 年の終りにその名前は PostgreSQL に変更されました。
 
@@ -235,30 +236,19 @@ MODIFICATIONS.</P>
 <P> Win32 <I>libpq</I> ライブラリと psql を作るために、<I>win32.mak</I> が配布に含まれてます。PostgreSQLは <SMALL>ODBC</SMALL> クライアントとも通信できます。</P>
 
 <P><STRONG>サーバ</STRONG></P>
+
 <P> 現在、Cygnus Unix/NT 移植ライブラリの Cygwin を使って、PostgreSQL データベースサーバは Windows NT と Win2k 上で稼働しています。配布に含まれる<I>pgsql/doc/FAQ_MSWIN</I>、あるいは、
 <A href="http://www.PostgreSQL.org/docs/faqs/text/FAQ_MSWIN">http://www.PostgreSQL.org/docs/faqs/text/FAQ_MSWIN</A>にある MS Windows FAQ をご覧下さい。</P>
+
 <P>MS Win NT/2000/XP ネイティブ版への移植が現在進行中です。もっと詳しいWindows版PostgreSQLの近況は、<a href="http://techdocs.postgresql.org/guides/Windows">http://techdocs.postgresql.org/guides/Windows</a>と
 <a href="http://momjian.postgresql.org/main/writings/pgsql/win32.html">
 http://momjian.postgresql.org/main/writings/pgsql/win32.html</a>
 を見てください。
 </p>
 
-<BR>
-[訳注：
-<BR>
-<h6><FONT COLOR="orange">
-Win32ネイティーブ版(Win32 Native version)
-</FONT></H6>
-<PRE>
-	  Windows-Native サーバー & クライアントパッケージが斉藤さんにより
-	維持管理されています。
-	    <A href="http://hp.vector.co.jp/authors/VA023283/PostgreSQL.html">http://hp.vector.co.jp/authors/VA023283/PostgreSQL.html</A>
-	(Windows-Native Server&Client Package for PostgreSQL by Hiroshi Saito)
-	    <A href="http://hp.vector.co.jp/authors/VA023283/PostgreSQLe.html">http://hp.vector.co.jp/authors/VA023283/PostgreSQLe.html</A>
+    <p>Novell Netware 6 の移植もあります。
+    <a href="http://forge.novell.com">http://forge.novell.com</a>.</p>
 
-</PRE>
-<BR>
-]
 <BR>
 
 
@@ -275,6 +265,7 @@ href="ftp://ftp.PostgreSQL.org/pub/">ftp://ftp.PostgreSQL.org/pub/</A>
 
 	以下は日本のミラーサイトです:
 
+       Japan: <A HREF="ftp://ftp.jp.postgresql.org/">ftp://ftp.jp.postgresql.org/</A>
        Japan: <A HREF="ftp://mirror.nucba.ac.jp/mirror/PostgreSQL/pub/">ftp://mirror.nucba.ac.jp/mirror/PostgreSQL/pub/</A>
        Japan: <A HREF="ftp://ring.ip-kyoto.ad.jp/pub/misc/db/PostgreSQL/">ftp://ring.ip-kyoto.ad.jp/pub/misc/db/PostgreSQL/</A>
        Japan: <A HREF="ftp://ring.crl.go.jp/pub/misc/db/PostgreSQL/">ftp://ring.crl.go.jp/pub/misc/db/PostgreSQL/</A>
@@ -291,7 +282,7 @@ href="ftp://ftp.PostgreSQL.org/pub/">ftp://ftp.PostgreSQL.org/pub/</A>
 
 <H4><A NAME="1.6">1.6</A>)	サポートはどこで受けられますか？</H4>
 
-<P>主要なメーリング・リストは: <A HREF="mailto:pgsql-general@PostgreSQL.org">pgsql-general@PostgreSQL.org</A>です。PostgreSQL に関することであれば議論ができます。このリストへの参加のは、電子メールの本文(Subject 行ではありません)に次の２行を書いて、</P>
+<P>主要なメーリング・リストは: <A HREF="mailto:pgsql-general@PostgreSQL.org">pgsql-general@PostgreSQL.org</A>です。PostgreSQL に関することであれば議論ができます。このリストへの参加は、電子メールの本文(Subject 行ではありません)に次の２行を書いて、</P>
 <PRE>
 	subscribe
 	end
@@ -315,7 +306,7 @@ href="ftp://ftp.PostgreSQL.org/pub/">ftp://ftp.PostgreSQL.org/pub/</A>
 	end
 </PRE>
 と書いて<A
-HREF="mailto:bugs-request@PostgreSQL.org">bugs-request@PostgreSQL.org</A>
+HREF="mailto:pgsql-bugs-request@PostgreSQL.org">pgsql-bugs-request@PostgreSQL.org</A>
 
 へ電子メールを送って下さい。</P>
 
@@ -332,45 +323,35 @@ HREF="mailto:bugs-request@PostgreSQL.org">bugs-request@PostgreSQL.org</A>
 		<A HREF="http://www.PostgreSQL.org">http://www.PostgreSQL.org</A>
 </BLOCKQUOTE>
 </P>
-<P>EFNetに <I>#PostgreSQL</I> という IRC チャンネルもあります。
+<P>Freenode および EFNetに <I>#PostgreSQL</I> という IRC チャンネルもあります。
 UNIX コマンドで
  <CODE>irc -c '#PostgreSQL' "$USER" irc.phoenix.net.</CODE> あるいは、
  <CODE>irc -c '#PostgreSQL' "$USER" irc.freenode.net.</CODE> を使って参加できます。
 </P>
 
+
+
 <P>
 <SMALL><PRE>
     [訳注:
-	  1999年7月23日、日本PostgreSQLユーザー会(にほん ぽすとぐれす ゆーざー かい)、略称JPUG
-	が設立されました。JPUG は非営利組織で、PostgreSQLを利用する人達の相互協力の場となっています。  
-	2003年5月17日の総会を以って、「日本PostgreSQLユーザ会」に名称を改めました。
+	  1999年7月23日、日本ポストグレスユーザー会、略称JPUGが設立されました。
+	JPUG は非営利組織で、PostgreSQLを利用する人達の相互協力の場となっています。  
+	(2003年5月17日、「日本PostgreSQLユーザ会」に名称を改めました。)
 	正会員の会費は無料ですが、協賛会員の会費と会員の積極的な貢献が会の運営を助けています。
 	詳しくは、JPUG のWeb サイト:
 		<A HREF="http://www.PostgreSQL.jp/">http://www.PostgreSQL.jp/</A>
 	をご覧ください。会員登録も可能となっています。
-	  1990年代中ごろより、ポストグレスの日本語メーリング・リストを石井 達夫さんが主催しています。詳細は、
-		<A HREF="http://www.sra.co.jp/people/t-ishii/PostgreSQL/ML/info.html">http://www.sra.co.jp/people/t-ishii/PostgreSQL/ML/info.html</A>
-	をご覧下さい。アーカイブを、いわきりさんのpgsql-jp ML検索システム
-		<A HREF="http://datula.mio.org/~iwakiri/pgsql_jp/">http://datula.mio.org/~iwakiri/pgsql_jp/</A>
-	で検索することもできます。
-	]
+
+	日本語のIRCチャンネル '#PostgreSQL*jp' も存在します。
 </PRE></SMALL>
 
 
 <P>商用サポート会社のリストは<a href="http://techdocs.postgresql.org/companies.php">http://techdocs.postgresql.org/companies.php</a>にあります。</P>
-<P>
-<SMALL><PRE>
-    [訳注:
-	 日本では、<A HREF="http://osb.sra.co.jp/">SRA Inc. オープンシステム事業部</A> にて商用サポートが行なわれています。
-	<A HREF="http://www.miraclelinux.co.jp/">ミラクル・リナックス株式会社</A> で "Miracle Linux for PostgreSQL" の販売とサポートが
-	開始されました。
-    ]
-</PRE></SMALL>
-</P>
+
 
 <H4><A NAME="1.7">1.7</A>)	最新版はどれですか</H4>
 <P>
-PostgreSQL の最新版はバージョン 7.4.2 です。</P>
+PostgreSQL の最新版はバージョン 7.4.5 です。</P>
 <P>
 我々は、6〜8カ月毎にメジャーリリースを行なうことを計画しています。</P>
 
@@ -508,8 +489,6 @@ http://www.PostgreSQL.org/docs/awbook.html</A>
 <P><A
 href="http://www.PostgreSQL.org/bugs/bugs.php">http://www.PostgreSQL.org/bugs/bugs.php</A>PostgreSQL BugTool (バグツール)のページを訪れてみて下さい。 バグレポートを提出する仕方についての手引と指針があります。</P>
 
-<P> その前に <A HREF="http://PostgreSQL.org">http://PostgreSQL.org</A>にある最新の FAQ をチェックして下さい。</P>
-
 <P> それと同時に ftp サイト <A HREF="ftp://ftp.PostgreSQL.org/pub/">ftp://ftp.PostgreSQL.org/pub/</A>で、もっと新しいバージョンの PostgreSQL あるいはパッチをさがしてみて下さい。</P>
 
 <H4><A NAME="1.14">1.14</A>)	他の<SMALL>DBMS</SMALL>と比べてPostgreSQLはどうなのですか？
@@ -526,15 +505,12 @@ href="http://www.PostgreSQL.org/bugs/bugs.php">http://www.PostgreSQL.org/bugs/bu
 
  <DT> <B>性能(Performance)</B></DT>
  <DD>
-      PostgreSQLは他の商用あるいはオープンソースのデータベースと互角の性能も持ちます。ある面ではより早かったり、ほかの面ではより遅かったりします。MySQLなどの特化型データベース・システムにくらべて、PostgreSQL は複数ユーザや複雑な問い合わせ、また、 read/write 問い合わせのロードがより高速です。MySQLは少ないユーザでの単純な SELECT 問い合わせでは高速です。もちろん、MySQLには上記の<I>Features</I>の節に示すような機能はまったくありません。我々は、PostgreSQLに柔軟性と機能性を組み込みながらも、絶えず、プロファイラーに掛けたりソースコードを解析したりして、性能の改善を続けています。PostgreSQL と MySQL とを比較している面白い Web ページが<A href="http://openacs.org/philosophy/why-not-mysql.html">http://openacs.org/philosophy/why-not-mysql.html</A>にあります。また、MySQLは、製品をオープンソースを通じて配布して、クローズソースソフトウェアとしての商用ライセンスを要求する企業でもあり、PostgreSQLのようなオープンソース開発コミュニティではありません。
-
-      <BR>
-PostgreSQLは、Unixプロセスを起動することによりユーザー接続を操作します。複数のバックエンド・プロセスが情報をロックしながらデータ・バッファーを共有します。マルチCPUでは、簡単に複数のバックエンドをそれぞれのCPUで走らせることができます。<BR>
+      PostgreSQLは他の商用あるいはオープンソースのデータベースと互角の性能も持ちます。ある面ではより早かったり、ほかの面ではより遅かったりします。MySQLなどの特化型データベース・システムにくらべて、PostgreSQL は複数ユーザや複雑な問い合わせ、また、 read/write 問い合わせのロードがより高速です。MySQLは少ないユーザでの単純な SELECT 問い合わせでは高速です。もちろん、MySQLには上記の<I>Features</I>の節に示すような機能はほとんどありません。我々は、PostgreSQLに柔軟性と機能性を組み込みながらも、絶えず性能の改善を続けています。PostgreSQL と MySQL とを比較している面白い Web ページが<A href="http://openacs.org/philosophy/why-not-mysql.html">http://openacs.org/philosophy/why-not-mysql.html</A>にあります。また、MySQLは、製品をオープンソースを通じて配布して、クローズソースソフトウェアとしての商用ライセンスを要求する企業でもあり、PostgreSQLのようなオープンソース開発コミュニティではありません。
       </DD>
 
  <DT> <B>信頼性(Reliability)</B></DT>
  <DD>
-      我々は、<SMALL>DBMS</SMALL>の信頼性が高くなくてはその価値が無いことを理解してます。十分テストして、安定したコードをバグを最小にしてからリリースするように勤めてます。それぞれのリリースは少なくとも1カ月以上のベータ・テストを行ない、これまでのリリースの履歴が、製品版として安定した堅固なリリースであることを物語っています。この分野では、他のデータベースと比べても遜色がないことに自信を持っています。<BR>
+      我々は、<SMALL>DBMS</SMALL>の信頼性が高くなくてはその価値が無いことを理解してます。十分テストして、安定したコードをバグを最小にしてからリリースするように努めてます。それぞれのリリースは少なくとも1カ月以上のベータ・テストを行ない、これまでのリリースの履歴が、製品版として安定した堅固なリリースであることを物語っています。この分野では、他のデータベースと比べても遜色がないことに自信を持っています。<BR>
       </DD>
 
  <DT> <B>サポート(Support)</B></DT>
@@ -557,7 +533,7 @@ PostgreSQLは、Unixプロセスを起動することによりユーザー接続を操作します。複数のバ
 <P>質の良い基盤はオープンソース・プロジェクトにとってはとても大切なもので、前進する勢いを失うプロジェクトの分裂を回避します。</P>
 
 <P>もちろん、この基盤は安いものではありません。維持し続けるためには毎月あるいは一時の経費がかかります。もし、あなたやあなたの会社に、こうした努力のための資金を助けるために施すことができるようでしたら、<A 
-href="https://store.pgsql.com/shopping/">https://store.pgsql.com/shopping/</A>から寄付をお願いします。
+href="http://store.pgsql.com/shopping/">http://store.pgsql.com/shopping/</A>から寄付をお願いします。
 
 <P>また、Webページには PostgreSQL,Inc とありますが、そこの"義援(contributions)"アイテムは PostgreSQL プロジェクトをサポートするためだけのためで、決して特定の会社のための資金のためではありません。もし、手形(check)の方が都合がよければ連絡先の住所へお送り下さい。</P>
 
@@ -636,7 +612,7 @@ Programmer's Guide</A>
 </H4>
   <p>もちろん、PostgreSQL へのグラフィカルインターフェイスがいくつかあります。
 その中にPgAccess <a
-    href="http://www.pgaccess.com">http://www.pgaccess.com</a>
+    href="http://www.pgaccess.org">http://www.pgaccess.org</a>
 も含まれます。 
 PgAdmin III (<a
     href="http://www.pgadmin.org">http://www.pgadmin.org</a>)もあります。
@@ -648,8 +624,6 @@ RHDB Admin (<a
 PhpPgAdmin (<a href="http://phppgadmin.sourceforge.net/">
     http://phppgadmin.sourceforge.net/ </a>) はPostgreSQLへのWebベースの
 インターフェイスを提供します。
-
-<P> PgAccess と呼ばれる素晴らしいグラフィカル・ユーザ・インターフェイスがあり、この配布と共に出荷されます。PgAccess にはレポート・ジェネレータもあります。Web ページは<A HREF="http://www.pgaccess.org/">http://www.pgaccess.org/</A>です。
 
 <P>より詳細なリストについては、<a
     href="http://techdocs.postgresql.org/guides/GUITools">http://techdocs.postgresql.org/guides/GUITools</a>
@@ -666,15 +640,13 @@ PhpPgAdmin (<a href="http://phppgadmin.sourceforge.net/">
 <P>以下のインターフェイスはPostgreSQLの配布に含まれています。
 
 <UL>
-<LI>C (libpq, libpgeasy)
+<LI>C (libpq)
 <LI>埋め込みC (ecpg)
 <LI>Java (jdbc)
 <LI>Python (<A HREF="http://www.druid.net/pygresql/">PyGreSQL</A>)
 <LI>TCL (libpgtcl)
 </UL>
     <P>その他の利用可能なインターフェイスは <a 
-href="http://www.PostgreSQL.org/interfaces.html">http://www.PostgreSQL.org/interfaces.html</a>
-    および、
 <a href="http://gborg.postgresql.org">http://gborg.postgresql.org</A>
 の<I>Drivers/Interfaces</I>のセクションにあります。
     </P>
@@ -707,7 +679,7 @@ href="http://www.PostgreSQL.org/interfaces.html">http://www.PostgreSQL.org/inter
 
 <P> カーネルが共有メモリーを持つ設定になっていなかったか、でなければ、カーネルに対して使える共有メモリーの大きさを大きく設定する必要があります。具体的な大きさは、使っているアーキテクチャと<I>postmaster</I> を走らせるときに設定するバッファの数とバックエンドプロセスに依存します。ほとんどのシステムでは、既定値のバッファサイズのままで、少なくとも約1MBが必要です。
 <A ref=
-	"http://www.PostgreSQL.org/docs/view.php?version=current&amp;idoc=1&amp;file=kernel-resources.html">PostgreSQL Administrator's Gide
+	"http://www.PostgreSQL.org/docs/view.php?version=current&amp;idoc=1&amp;file=kernel-resources.html">PostgreSQL Administrator's Guide
 </A>に共有メモリーとセマフォについての情報の詳細がありますのでご覧ください。</P>
 
 
@@ -722,7 +694,7 @@ href="http://www.PostgreSQL.org/interfaces.html">http://www.PostgreSQL.org/inter
 </P>
 
 <P>もし、エラーメッセージがなにか他のものであれば、カーネルの構成でまったくセマフォのサポートをしていないかもしれません。
-PostgreSQL Administrator's Gide に共有メモリーとセマフォについての情報の詳細があります。</P>
+PostgreSQL Administrator's Guide に共有メモリーとセマフォについての情報の詳細があります。</P>
 
 <P>
 
@@ -730,7 +702,7 @@ PostgreSQL Administrator's Gide に共有メモリーとセマフォについての情報の詳細があ
 </H4>
 
 <P>	既定値では、PostgreSQL は unix ドメインソケットを使うローカルマシンからの接続しか許しません。postgresql.conf の中の tcpip_sockets を有効にし、<I>$PGDATA/pg_hba.conf</I> ファイルを適切に直して、ホスト主導型の認証を使わないかぎりは他のマシンからは接続できないでしょう。これによりTCP/IPの接続が可能になります。
-<p>操作不能なセマフォも過度のデータベースアクセス中にクラッシュを引き起こすことがあります。
+</p>
 
 <P>
 <H4><A NAME="3.6">3.6</A>)	より良い性能を得るためには、データベース・エンジンをどのように調整すれば良いですか？
@@ -787,14 +759,12 @@ PostgreSQL Administrator's Gide に共有メモリーとセマフォについての情報の詳細があ
 <P> <I>postmasterが</I>同時始動できるバックエンドプロセスに対する制限数を増やす必要があります。
 <P>既定の最大プロセスは32プロセスです。<I>-N</I>に適切な値を引数にして<I>postmaster</I>を再起動するか、PostgreSQL.conf を修正することによって、その値を増やすことができます。
 
-既定の構成では<I>-N</I>は最大1024まで設定できます。もし、もっと必要であれば<I>include/config.h</I>の中の<SMALL>MAXBACKENDS</SMALL>を増加させ、再構築します。もし、望むなら<I>configure</I>の <I>--with-maxbackends</I>切替を使って、<I>-N</I>の既定値を構成時に設定できます。
-
 <P>もし、<I>-N</I> を 32よりも大きくするのであれば、<I>-B</I>も既定の64より大きい値に増加させなくてはならないし、<I>-B</I> は少なくとも <I>-N</I> の2倍はなくてはならず、おそらく最高性能を望むならばそれより大きい値が必要なはずです。バックエンドプロセスをたくさんにすると、いろいろなUnixカーネル構成パラメータも増やすことが必要になるかもしれません。
 共有メモリー・ブロックの最大値(<SMALL>SHMMAX</SMALL>)、
 セマフォの最大数(<SMALL>SEMMNS</SMALL>と<SMALL>SEMMNI</SMALL>)、
 プロセスの最大数(<SMALL>NPROC</SMALL>)、
 ユーザ毎の最大プロセス数(<SMALL>MAXUPRC</SMALL>)、
-開くファイルの最大数(<SMALL>NFILE</SMALL>と<SMALL>NINODE</SMALL>
+開くファイルの最大数(<SMALL>NFILE</SMALL>と<SMALL>NINODE</SMALL>)
 も確認事項に含まれます。
 PostgreSQLに許されるバックエンドのプロセス数が制限されているのは、
 システムのリソースを使い果してしまうことを避けるためです。
@@ -819,12 +789,19 @@ PostgreSQLに許されるバックエンドのプロセス数が制限されているのは、
 	pg_options は PostgreSQL.conf になっています。)
     ]
 </PRE></SMALL>
+
 <P>
 <H4><A name="3.10">3.10</A>)  PostgreSQLのメジャーリリースをアップデートするのにダンプとリストアをしなくてはならないのはなぜですか？</H4>
 <P>
-PostgreSQLチームはマイナーリリースでは小さな変更しか行ないませんので、7.2 から 7.2.1 へのアップグレードにはダンプとリストアの必要はありません。しかし、メジャーリリース(たとえば、7.2から7.3へのような)では、システムテーブルやデータファイルの内部フォーマットの変更をしばしば行ないます。これらの変更はたいてい複雑で、そのため我々はデータファイルのための後方互換性を維持することができません。ダンプは汎用フォーマットでデータを出力し、それを新しい内部フォーマットに読み込むことができます。
+PostgreSQLチームはマイナーリリースでは小さな変更しか行ないませんので、7.2 から 7.2.1 へのアップグレードにはダンプとリストアの必要はありません。しかし、メジャーリリース(たとえば、7.2から7.3へのような)では、システムテーブルやデータファイルの内部フォーマットの変更をしばしば行ないます。これらの変更はたいてい複雑で、そのため我々はデータファイルのための後方互換性を維持することができません。ダンプは汎用フォーマットでデータを出力し、それを新しい内部フォーマットに読み込むことができます。</P>
 <P>
-同一リリースではディスク上でのフォーマットに変更はないので、アップグレードにはダンプ／リストアではなく、<I>pg_upgrade</I> スクリプトを使うことができます。リリースノートには、<I>pg_upgrade</I> が利用可能なリリースかどうか記されています。</P>
+ディスク上でのフォーマットに変更のない同一リリースでは、アップグレードは、ダンプ／リストアではなく、<I>pg_upgrade</I> スクリプトを使うことができます。リリースノートには、<I>pg_upgrade</I> が利用可能なリリースかどうか記されています。</P>
+
+<P>
+<H4><A name="3.11">3.11</A>) ハードウェアにはどんなコンピュータを使えばよいですか？</H4>
+<P>
+PCハードウェアはほとんど互換性がありますので、ほとんどの人は、すべてのPCハードウェアが同じ品質だと思い込む傾向があります。しかし、それは間違いです。ECC RAM、SCSI、および、高品質マザーボードは、安いハードウェアに比べると、より信頼性が高く、より性能も良いのです。PostgreSQL はほとんどのハードウェアで稼働しますが、信頼性や性能が重要な場合は、ハードウェアのオプションを研究することが賢明です。メーリングリストでもハードウェアオプションとトレードオフについて議論することができます。</P>
+
 
 <P>
 <HR>
@@ -857,7 +834,7 @@ PostgreSQLチームはマイナーリリースでは小さな変更しか行ないませんので、7.2 から 7
 <H4><A NAME="4.3">4.3</A>)	テーブルやその他の情報のリストを <I>psql</I> で見るにはどうしますか？
 </H4>
 <P>
-  <I>psql</I>の中で、 \dt コマンドを使ってテーブルを見ます。psql の中のコマンドの完全なリストには \? を使えます。あるいは、<I>psql</I>のソースコードの<I>pgsql/src/bin/psql/describe.c</I>ファイルを見るることもできて、その中には<I>psql</I>のバックスラッシュコマンドの出力を生成する<SMALL>SQL</SMALL>コマンドが含まれています。また、<I>psql</I>を -E オプションと一緒に開始すると、実行させたコマンドを実行するために使う問い合わせを出力するようになります。PostgreSQLはまた、<SMALL>SQLi</SMALL>対応の INFORMATION SCHEMA インターフェースを用意していて、データベースについての情報を得るために問い合わせを使うことができます。
+  <I>psql</I>の中で、 \dt コマンドを使ってテーブルを見ます。psql の中のコマンドの完全なリストには \? を使えます。あるいは、<I>psql</I>のソースコードの<I>pgsql/src/bin/psql/describe.c</I>ファイルを見ることもできて、その中には<I>psql</I>のバックスラッシュコマンドの出力を生成する<SMALL>SQL</SMALL>コマンドが含まれています。また、<I>psql</I>を -E オプションと一緒に開始すると、実行させたコマンドを実行するために使う問い合わせを出力するようになります。PostgreSQLはまた、<SMALL>SQLi</SMALL>対応の INFORMATION SCHEMA インターフェースを用意していて、データベースについての情報を得るために問い合わせを使うことができます。
 </P>
 
 
@@ -884,7 +861,7 @@ PostgreSQLチームはマイナーリリースでは小さな変更しか行ないませんので、7.2 から 7
     BEGIN;
     ALTER TABLE tab ADD COLUMN new_col <i>new_data_type</i>;
     UPDATE tab SET new_col = CAST(old_col AS <i>new_data_type</i>);
-    ALTER TABLE DROP tab COLUMN old_col;
+    ALTER TABLE tab DROP COLUMN old_col;
     COMMIT;
 </PRE>
 
@@ -902,14 +879,14 @@ PostgreSQLチームはマイナーリリースでは小さな変更しか行ないませんので、7.2 から 7
 フィールドの最大サイズ?         1GB
 テーブル内での最大ロウ数?       制限無し
 テーブル内での最大カラム数?     カラムの型により250-1600
-テーブル内での最大インデクス数? 制限無し
+テーブル内での最大インデックス数? 制限無し
 </PRE>
 
 <P> もちろん、これらは実際は無制限ではなく、ディスク容量とメモリーやスワップスペースの大きさにより制限されます。性能はこれらの値がことのほか大きな時に煽りを受けます。
 
 <P> 最大テーブルサイズの32TBはオペレーティングシステムによる巨大ファイルのサポートは必要としません。巨大なテーブルは複数の1GBのファイルに分けて保存されますので、ファイルシステムの制限は重要ではありません。
 
-<P> デフォルトのブロックサイズを32kにすることで、最大テーブルサイズと最大カラム数とが４倍させることができます。
+<P> デフォルトのブロックサイズを32kにすることで、最大テーブルサイズと最大カラム数とを４倍にすることができます。
 
 
 <P>
@@ -924,23 +901,23 @@ PostgreSQLチームはマイナーリリースでは小さな変更しか行ないませんので、7.2 から 7
 ファイルの大きさは次のように約6.4MBと見積もることができます：
 
 <PRE>
-    36 bytes: 各ロウのヘッダ(概算)
+    32 bytes: 各ロウのヘッダ(概算)
     24 bytes: 整数(int)フィールドとテキスト(text)フィールド
    + 4 bytes: ページ上のタップルへのポインタ
    ----------------------------------------
-   64 bytes per row
+   60 bytes per row
 
    PostgreSQL のデータページサイズは 8192バイト(8KB)なので:
 
    8192 bytes per page
-   -------------------   =  128 rows per database page (切り上げ)
-     64 bytes per row
+   -------------------   =  136 rows per database page (切り捨て)
+     60 bytes per row
 
    100000 data rows
-   --------------------  =  782 database pages
+   --------------------  =  782 database pages (切り上げ)
       128 rows per page
  
-782 database pages * 8192 bytes per page  =  6,406,144 bytes (6.4 MB)
+  735 database pages * 8192 bytes per page  =  6,021,120 bytes (6 MB)
 </PRE>
 
 <P>
@@ -952,8 +929,9 @@ PostgreSQLチームはマイナーリリースでは小さな変更しか行ないませんので、7.2 から 7
 <H4><A NAME="4.7">4.7</A>)	定義されたテーブル、インデックス、データベース、および、ユーザをどのようにして見つけ出しますか？
 </H4>
 
-<P> <I>psql</I> にはいろいろなバックスラッシュ・コマンドがあり、こうした情報を表示します。バックスラッシュ・コマンドの種類を見るには \? を使って下さい。
-<P> また、<I>pgsql/src/tutorial/syscat.source</I> ファイルを走らせてみて下さい。それは、沢山の <SMALL>SELECT</SMALL> 文により必要な情報をデータベースのシステム・テーブルから取り出して例示してくれます。また、<i>pg_</i> で始まるシステムテーブルにも記述されています。さらに、<i>psql -l</i> はすべてのデータベースをリスト表示します。
+<P> <I>psql</I> にはいろいろなバックスラッシュ・コマンドがあり、こうした情報を表示します。バックスラッシュ・コマンドの種類を見るには \? を使って下さい。また、<i>pg_</i> で始まるシステムテーブルにも記述されています。さらに、<i>psql -l</i> はすべてのデータベースをリスト表示します。
+
+<P> また、<I>pgsql/src/tutorial/syscat.source</I> ファイルを走らせてみて下さい。それは、沢山の <SMALL>SELECT</SMALL> 文により必要な情報をデータベースのシステム・テーブルから取り出して例示してくれます。
 
 <P>
 <H4><A NAME="4.8">4.8</A>)	問い合わせが遅いうえ、インデックスを使っている様子がありません。なぜですか？
@@ -969,7 +947,7 @@ PostgreSQLチームはマイナーリリースでは小さな変更しか行ないませんので、7.2 から 7
 ての統計情報を持たなければなりません。この統計情報は、<SMALL>VACUUM
 ANALYZE</SMALL>または、単に <SMALL>ANALYZE</SMALL> を使って収集すること
 ができます。統計情報を使ってオブティマイザはテーブルの中にあるロウ数を知
-り、インデックスを使うべきかのの決定をより正しくできます。統計情報は最適
+り、インデックスを使うべきかの決定をより正しくできます。統計情報は最適
 な結合順や結合方法を決める上でも貴重なものもあります。統計情報の収集は、
 テーブルの内容がかわると毎に繰返しなされるべきです。</P>
 
@@ -988,7 +966,7 @@ ORDER BY と LIMIT を使ってインデックスを使って取り出すことが可能です:
     LIMIT 1;
 </PRE>
 
-    <P>もし、オプティマイザが間違ってシーケンシャルスキャンを選択したことに疑いがなければ、<CODE>SET enable_seqscan TO 'off'</CODE>を使ってインデクススキャンでまちがいなく速くなっているかをテストをしてみてください。</P>
+    <P>もし、オプティマイザが間違ってシーケンシャルスキャンを選択したことに疑いがなければ、<CODE>SET enable_seqscan TO 'off'</CODE>を使ってインデックススキャンでまちがいなく速くなっているかをテストをしてみてください。</P>
 
     <P> <SMALL>LIKE</SMALL> あるいは <I>~</I> のようなワイルドカード演算
 子は特別な環境でしか使えません：
@@ -1081,13 +1059,6 @@ Proceedings of the 1984 ACM SIGMOD Int'l Conf on Mgmt of Data, 45-57.
    </PRE>
 
 
-
-
-<PRE>
-	WHERE lower(textfield) LIKE lower(pattern)
-</PRE>
-
-
 <P>
 <H4><A NAME="4.13">4.13</A>)	問い合わせの中で、フィールドが <SMALL>NULL</SMALL> であることを検出するにはどうしますか？
 </H4>
@@ -1102,11 +1073,11 @@ Proceedings of the 1984 ACM SIGMOD Int'l Conf on Mgmt of Data, 45-57.
 <PRE>
 Type            Internal Name   Notes
 --------------------------------------------------
-CHAR(n)         bpchar          指定された固定長となるように空白が詰められる
-"char"          char            １文字
 VARCHAR(n)      varchar         最大長のサイズを指定する、詰め物無し
+CHAR(n)         bpchar          指定された固定長となるように空白が詰められる
 TEXT            text            長さに上限の無いテキスト
 BYTEA           bytea           可変長のバイト配列(null-byte safe)
+"char"          char            １文字
 </PRE>
 
 <P> 内部名にお目にかかるのは、システム・カタログを調べるときや、エラーメッセージを受け取るときです。
@@ -1114,7 +1085,7 @@ BYTEA           bytea           可変長のバイト配列(null-byte safe)
 
 <P> 上記の型のうち最初の４つの型は "varlena" 型です(すなわち、ディスクの最初の４バイトがデータ長で、それの後に実際のデータが続きます)。このように実際の空間は宣言された大きさよりも少し大きくなります。しかし、これらのデータ型は<SMALL>TOAST</SMALL>により圧縮されたり複数ロウに渡って保存されたりして、ディスク上の空間は思ったより小さくなります。
 
-<P><SMALL>VARCHAR(n)</SMALL> は可変長の文字列を保存するのに最適ですが、保存できる文字列の長さに制限があります。<SMALL>TEXT</SMALL> は長さに制限の無い文字列の保存ためのもので、最大で 1ギガバイトです。 <SMALL>CHAR(n)</SMALL>は、<SMALL>VARCHAR(n)</SMALL>が与えられた文字だけを保存するのに対し、ブランクを詰め込んでいつも同じ長さで文字列を保存するのに最適です。<SMALL>BYTEA</SMALL>は、部分的に<SMALL>NULL</SMALL> のバイトを含むバイナリデータを保存するためのものです。これらのタイプは同じくらいの性能特性をもちます。</P>
+<P><SMALL>VARCHAR(n)</SMALL> は可変長の文字列を保存するのに最適ですが、保存できる文字列の長さに制限があります。<SMALL>TEXT</SMALL> は長さに制限の無い文字列の保存のためのもので、最大で 1ギガバイトです。 <SMALL>CHAR(n)</SMALL>は、<SMALL>VARCHAR(n)</SMALL>が与えられた文字だけを保存するのに対し、ブランクを詰め込んでいつも同じ長さで文字列を保存するのに最適です。<SMALL>BYTEA</SMALL>は、部分的に<SMALL>NULL</SMALL> のバイトを含むバイナリデータを保存するためのものです。これらのタイプは同じくらいの性能特性をもちます。</P>
 
 <P>
 <H4><A NAME="4.15.1">4.15.1</A>)	通番(serial)／自動増分フィールドはどのようにつくりますか？
@@ -1144,8 +1115,6 @@ BYTEA           bytea           可変長のバイト配列(null-byte safe)
 
 通番についてのもっと詳しい情報は、オンラインマニュアルで <I>create_sequence</I> をご覧下さい。
 <P> また、各ロウの<I>OID</I>フィールドを一意値として使うこともできます。しかしながら、もしもデータベースをダンプしてリロードする必要がある場合は、<SMALL>OID</SMALL>を温存するために<I>pg_dump</I> で <I>-o</I>オプションを使うか、または、<SMALL>COPY WITH OIDS</small>オプションを使う必要があります。
-
- Bruce Momjian の<A HREF="http://www.PostgreSQL.org/docs/aw_pgsql_book">(http://www.PostgreSQL.org/docs/aw_pgsql_book)の Numbering Rows</A>の章にありあます。
 
 
 <H4><A NAME="4.15.2">4.15.2</A>)	<SMALL>SERIAL</SMALL>データ型に挿入される値は、どうすれば得られますか？
@@ -1195,15 +1164,11 @@ BYTEA           bytea           可変長のバイト配列(null-byte safe)
 
 
 <PRE>
-        CREATE TABLE new (old_oid oid, mycol int);
-        SELECT old_oid, mycol INTO new FROM old;
-        COPY new TO '/tmp/pgtable';
-        DELETE FROM new;
-        COPY new WITH OIDS FROM '/tmp/pgtable';
-<!--
-	CREATE TABLE new_table (mycol int);
-	INSERT INTO new_table (oid, mycol) SELECT oid, mycol FROM old_table;
--->
+        CREATE TABLE new_table(mycol int);
+        SELECT oid AS old_oid, mycol INTO tmp_table FROM old_table;
+        COPY tmp_table TO '/tmp/pgtable';
+        COPY new_table WITH OIDS FROM '/tmp/pgtable';
+        DROP TABLE tmp_table;
 </PRE>
 
 <P> O<SMALL>ID</SMALL> は、4バイトの整数として保存されているので、40億を越えると溢れてしまうでしょう。誰もこれが起きたと報告してくる人はいませんでしたが、そうなる前にこの制限を取り除くことを計画しています。
@@ -1269,7 +1234,7 @@ href="http://hea-www.harvard.edu/MST/simul/software/docs/pkgs/pgsql/glossary/glo
 
 <P><i>CURRENT_TIMESTAMP</i>を使います:
 <PRE>
-	CREATE TABLE test (x int, modtime timestamp DEFAULT >CURRENT_TIMESTAMP );
+	CREATE TABLE test (x int, modtime timestamp DEFAULT CURRENT_TIMESTAMP );
 </PRE>
 <P>
 
@@ -1284,7 +1249,7 @@ href="http://hea-www.harvard.edu/MST/simul/software/docs/pkgs/pgsql/glossary/glo
 <PRE>
 	SELECT *
 	FROM tab
-	WHERE col1 IN (SELECT subcol FROM subtab)
+	WHERE col IN (SELECT subcol FROM subtab)
 </PRE>
 を、置き換えて：
 <PRE>
@@ -1313,7 +1278,7 @@ PostgreSQL は SQL 標準構文を使う外部結合(アウタージョイン)をサポートします。ここ
 	FROM t1 LEFT OUTER JOIN t2 USING (col);
 </PRE>
 
-これらの象徴的な問い合わせでは t1.col を t2.col と結合して、t1 の結合されなかったロウ(t2 と一致しなかったロウ)も返しています。<SMALL>RIGHT</SMALL> 結合は t2 の結合されなかったロウを加えるでしょう。<SMALL>FULL</SMALL> 結合は、一致したロウに t1 と t2 からは結合されなかったロウを返すでしょう。<SMALL>OUTER</SMALL> という言葉はオプションで <SMALL>LEFT</SMALL>, <SMALL>RIGHT</SMALL>, または <SMALL>FULL</SMALL> などの結合を仮定されています。
+これらの象徴的な問い合わせでは t1.col を t2.col と結合して、t1 の結合されなかったロウ(t2 と一致しなかったロウ)も返しています。<SMALL>RIGHT</SMALL> 結合は t2 の結合されなかったロウを加えるでしょう。<SMALL>FULL</SMALL> 結合は、一致したロウに t1 と t2 からは結合されなかったロウを返すでしょう。<SMALL>OUTER</SMALL> という言葉はオプションで <SMALL>LEFT</SMALL>, <SMALL>RIGHT</SMALL>, または <SMALL>FULL</SMALL> などの結合を仮定されています。通常、結合は<SMALL>INNER</SMALL>結合と呼ばれます。
 
 以前のリリースでは外部結合(outer join)を<SMALL>UNION</SMALL> と <SMALL>NOT IN</SMALL> を使ってシミュレートできます。
 たとえば、<i>tab1</i> と <i>tab2</i> を結合するときは、次の問い合わせで二つのテーブルを<i>外部</i>結合します。
@@ -1341,7 +1306,7 @@ PostgreSQL は SQL 標準構文を使う外部結合(アウタージョイン)をサポートします。ここ
 <P>
 <H4><A NAME="4.25">4.25</A>) 関数で複数のロウまたはカラムを返すにはどうしますか？<BR></H4>
 
-<P>7.3では関数から、複数行のや複数カラムを簡単に返せます。
+<P>7.3では関数から、複数のロウや複数カラムを簡単に返せます。
 <a href="http://techdocs.postgresql.org/guides/SetReturningFunctions">http://techdocs.postgresql.org/guides/SetReturningFunctions</a>。
 
 
@@ -1425,7 +1390,7 @@ http://gborg.PostgreSQL.org/project/pgreplication/projdisplay.php</a>
 [訳注：
   日本語版の製作については以下の通りです。
 
-  最終更新日:	2004年04月28日
+  最終更新日:	2004年08月22日
   翻訳者:	桑村 潤 (<A HREF="mailto:juk at PostgreSQL.jp">Jun Kuwamura &lt;juk at PostgreSQL.jp&gt;</A>)
 
   このFAQの和訳の作成にあたり協力をしてくださった方々(敬称は略させていただきます):
@@ -1447,8 +1412,8 @@ http://gborg.PostgreSQL.org/project/pgreplication/projdisplay.php</a>
 		稲葉 香理(<A HREF="mailto:i-kaori at sra.co.jp">Kaori Inaba &lt;i-kaori at sra.co.jp&gt;</A>)
 
   をはじめ、ポストグレスに関する話題豊富な<A HREF="http://www.sra.co.jp/people/t-ishii/PostgreSQL/ML/info.html">日本語ポストグレス・メーリングリスト</A>、
-和訳のきっかけを作ってくれた <A HREF="http://jf.linux.or.jp/">JF(Linux Japanese FAQ Mailing List)プロジェクト</A>、その他、
-直接あるいは間接的にかかわっているすべてのオープンソースコミュニティーの皆さんに感謝します。
+和訳のきっかけを作ってくれた <A HREF="http://jf.linux.or.jp/">JF(Linux Japanese FAQ Mailing List)プロジェクト</A>、
+その他、直接あるいは間接的にかかわっているすべてのオープンソースコミュニティーの皆さんに感謝します。
 
   日本語版のこの文書は、以下からもたどれます。
 	<A HREF="http://www.rccm.co.jp/~juk/pgsql/">http://www.rccm.co.jp/~juk/pgsql/</A>(FAQ和訳 PostgreSQL についてよくある質問)
