@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.24 1998/08/11 20:55:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.25 1998/08/11 22:39:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -589,7 +589,7 @@ IndexSupportInitialize(IndexStrategy indexStrategy,
 
 		relation = heap_openr(AccessMethodProcedureRelationName);
 
-		for (attributeNumer = 1; attributeNumber <= maxAttributeNumber;
+		for (attributeNumber = 1; attributeNumber <= maxAttributeNumber;
 			attributeNumber++)
 		{
 			int16		support;
