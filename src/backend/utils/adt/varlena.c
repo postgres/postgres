@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.31 1998/02/26 04:37:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.32 1998/03/15 08:07:01 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -291,7 +291,7 @@ text_substr(text *string, int32 m, int32 n)
 	len = VARSIZE(string) - VARHDRSZ;
 
 	/* m will now become a zero-based starting position */
-	if (m >= len)
+	if (m > len)
 	{
 		m = 0;
 		n = 0;
