@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.63 2000/03/24 01:39:55 tgl Exp $
+ * $Id: libpq-fe.h,v 1.64 2000/03/30 02:59:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -342,8 +342,7 @@ extern		"C"
 	extern int PQenv2encoding(void);
 
 #ifdef __cplusplus
-};
-
+}
 #endif
 
 #endif	 /* LIBPQ_FE_H */
