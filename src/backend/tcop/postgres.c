@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.149 2000/04/04 21:44:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.150 2000/04/04 23:52:50 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -149,19 +149,6 @@ int			UseNewLine = 0;		/* Use EOF as query delimiters */
 ** Flags for expensive function optimization -- JMH 3/9/92
 */
 int			XfuncMode = 0;
-
-/*
- * ----------------
- *	 Note: _exec_repeat_ defaults to 1 but may be changed
- *		   by a DEBUG command.	 If you set this to a large
- *		   number N, run a single query, and then set it
- *		   back to 1 and run N queries, you can get an idea
- *		   of how much time is being spent in the parser and
- *		   planner b/c in the first case this overhead only
- *		   happens once.  -cim 6/9/91
- * ----------------
-*/
-int			_exec_repeat_ = 1;
 
 /* ----------------------------------------------------------------
  *		decls for routines only used in this file
@@ -634,9 +621,8 @@ pg_exec_query_dest(char *query_string,	/* string to execute */
 		else
 		{
 			Plan	   *plan;
-			int			j;
 
-			/* If aborted transaction, quit now */
+			/* If aborted transaction, skip planning and execution */
 			if (IsAbortedTransactionBlockState())
 			{
 				/* ----------------
@@ -651,7 +637,11 @@ pg_exec_query_dest(char *query_string,	/* string to execute */
 
 				EndCommand(tag, dest);
 
-				break;
+				/* We continue in the loop, on the off chance that there
+				 * is a COMMIT or ROLLBACK utility command later in the
+				 * query string.
+				 */
+				continue;
 			}
 
 			plan = pg_plan_query(querytree);
@@ -669,12 +659,9 @@ pg_exec_query_dest(char *query_string,	/* string to execute */
 			if (ShowExecutorStats)
 				ResetUsage();
 
-			for (j = 0; j < _exec_repeat_; j++)
-			{
-				if (Verbose)
-					TPRINTF(TRACE_VERBOSE, "ProcessQuery");
-				ProcessQuery(querytree, plan, dest);
-			}
+			if (Verbose)
+				TPRINTF(TRACE_VERBOSE, "ProcessQuery");
+			ProcessQuery(querytree, plan, dest);
 
 			if (ShowExecutorStats)
 			{
@@ -1462,7 +1449,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.149 $ $Date: 2000/04/04 21:44:39 $\n");
+		puts("$Revision: 1.150 $ $Date: 2000/04/04 23:52:50 $\n");
 	}
 
 	/*
